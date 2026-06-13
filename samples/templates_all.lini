@@ -1,0 +1,17 @@
+// Exercises every built-in template (SPEC section 9).
+
+{
+  |scene| layout:(4, 2) gap:20 padding:20
+}
+
+|group|  "group"   cell:(1, 1)
+|badge|  "badge"   cell:(2, 1)
+|button| "button"  cell:(3, 1)
+|card|   "card"    cell:(4, 1)
+
+|note|   "note"    cell:(1, 2)
+fridge |table| layout:(2, 2) col-widths:[60, 60] row-heights:24 cell:(2, 2) {
+  |cell| "A"; |cell| "B"
+  |cell| "C"; |cell| "D"
+}
+|cell| "cell"      cell:(3, 2)

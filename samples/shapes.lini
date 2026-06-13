@@ -1,0 +1,19 @@
+{
+  // attr bundle form
+  |treat:rect|  radius:5
+  |nest:slant|  fill:gray
+
+  // container with layout
+  |toolbox:group| layout:row gap:10 {
+    |icon| name:save
+    |icon| name:copy
+  }
+
+  // base + body — full composition.
+  |den:group| layout:column gap:8 padding:12 {
+    |text| "Title" at:top weight:bold
+    |text| "Content"
+  }
+}
+
+|rect| "hello"

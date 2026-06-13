@@ -1,0 +1,15 @@
+// Padding / gap / radius accept 1-, 2-, or 4-value forms (SPEC section 6).
+
+{
+  |scene| layout:column gap:12 padding:(4, 8)
+  --radius:6
+}
+
+|rect| "scalar padding"   size:(200, 30)
+|rect| "(y, x) padding"   size:(200, 30) padding:(4, 12)
+|rect| "(t, r, b, l)"     size:(200, 30) padding:(2, 8, 16, 24)
+|rect| "radius scalar:8"  size:(200, 30) radius:8
+|rect| "radius (top,bot)" size:(200, 30) radius:(2, 20)
+inner |group| "(2,8,16,24) gap demo" layout:column gap:(4, 8) padding:(2, 8, 16, 24) {
+  |rect| size:(80, 20); |rect| size:(80, 20); |rect| size:(80, 20)
+}

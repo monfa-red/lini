@@ -1,0 +1,31 @@
+// Anchors: inner anchors sit against the parent's bbox; out-* anchors sit just
+// outside it (computed against the bbox that excludes the out-* children, so
+// they don't push each other further out).
+
+{
+  |scene| layout:column gap:90 padding:60
+}
+
+inner |rect| size:(200, 120) fill:#eee {
+  |rect| "C"  size:(18, 14) fill:red   at:center
+  |rect| "T"  size:(18, 14) fill:red   at:top
+  |rect| "B"  size:(18, 14) fill:red   at:bottom
+  |rect| "L"  size:(18, 14) fill:red   at:left
+  |rect| "R"  size:(18, 14) fill:red   at:right
+  |rect| "TL" size:(20, 14) fill:blue  at:top-left
+  |rect| "TR" size:(20, 14) fill:blue  at:top-right
+  |rect| "BL" size:(20, 14) fill:blue  at:bottom-left
+  |rect| "BR" size:(20, 14) fill:blue  at:bottom-right
+  |rect| "Co" size:(18, 14) fill:green at:center offset:(40, 20)
+}
+
+outer |rect| size:(160, 100) fill:#eee {
+  |rect| "T"  size:(20, 14) fill:orange at:out-top
+  |rect| "B"  size:(20, 14) fill:orange at:out-bottom
+  |rect| "L"  size:(20, 14) fill:orange at:out-left
+  |rect| "R"  size:(20, 14) fill:orange at:out-right
+  |rect| "TL" size:(18, 14) fill:purple at:out-top-left
+  |rect| "TR" size:(18, 14) fill:purple at:out-top-right
+  |rect| "BL" size:(18, 14) fill:purple at:out-bottom-left
+  |rect| "BR" size:(18, 14) fill:purple at:out-bottom-right
+}

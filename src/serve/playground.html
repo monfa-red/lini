@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>lini — {{TITLE}}</title>
+        <style>
+            * {
+                box-sizing: border-box;
+            }
+            html,
+            body {
+                margin: 0;
+                height: 100%;
+            }
+            body {
+                font:
+                    13px/1.4 system-ui,
+                    -apple-system,
+                    sans-serif;
+                background: #1c1c1c;
+                display: flex;
+                flex-direction: column;
+            }
+            header {
+                flex: 0 0 auto;
+                padding: 8px 16px;
+                background: #111;
+                color: #eee;
+                border-bottom: 1px solid #333;
+                display: flex;
+                gap: 16px;
+                align-items: center;
+            }
+            header strong {
+                color: #6ab7ff;
+                letter-spacing: 0.5px;
+            }
+            .status {
+                font-size: 12px;
+                color: #888;
+                margin-left: auto;
+            }
+            .status.ok {
+                color: #5fcf5f;
+            }
+            .status.err {
+                color: #ff6666;
+            }
+            main {
+                flex: 1 1 auto;
+                overflow: auto;
+                padding: 24px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #2a2a2a;
+            }
+            #svg-host {
+                background: white;
+                padding: 16px;
+                border-radius: 6px;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+                max-width: 100%;
+                max-height: 100%;
+            }
+            #svg-host svg {
+                display: block;
+                max-width: 100%;
+                height: auto;
+            }
+            #error-host {
+                display: none;
+                background: #2a1010;
+                color: #ffaaaa;
+                padding: 16px;
+                border-radius: 6px;
+                border: 1px solid #5a2020;
+                font:
+                    12px/1.5 ui-monospace,
+                    monospace;
+                white-space: pre-wrap;
+                max-width: 80ch;
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <strong>lini serve</strong>
+            <span>{{TITLE}}</span>
+            <span class="status" id="status">connecting…</span>
+        </header>
+        <main>
+            <div id="svg-host"></div>
+            <div id="error-host"></div>
+        </main>
+        <script>
+            const svgHost = document.getElementById("svg-host");
+            const errHost = document.getElementById("error-host");
+            const status = document.getElementById("status");
+
+            function setStatus(text, cls) {
+                status.textContent = text;
+                status.className = "status" + (cls ? " " + cls : "");
+            }
+
+            async function reload() {
+                try {
+                    const r = await fetch("/svg", { cache: "no-store" });
+                    const text = await r.text();
+                    if (
+                        r.headers
+                            .get("content-type")
+                            ?.startsWith("image/svg+xml")
+                    ) {
+                        svgHost.innerHTML = text;
+                        svgHost.style.display = "block";
+                        errHost.style.display = "none";
+                        setStatus(
+                            "rendered " + new Date().toLocaleTimeString(),
+                            "ok",
+                        );
+                    } else {
+                        // Compile error — body is plain text.
+                        errHost.textContent = text;
+                        errHost.style.display = "block";
+                        svgHost.style.display = "none";
+                        setStatus("compile error", "err");
+                    }
+                } catch (e) {
+                    setStatus("fetch failed: " + e.message, "err");
+                }
+            }
+
+            const events = new EventSource("/events");
+            events.addEventListener("reload", () => reload());
+            events.onopen = () => setStatus("watching", "ok");
+            events.onerror = () => setStatus("disconnected (retrying…)", "err");
+
+            reload();
+        </script>
+    </body>
+</html>

@@ -1,0 +1,18 @@
+// SPEC section 4: `|name|` in the defs block sets defaults for every instance of
+// that type. Lowest-specificity layer — anything more specific wins.
+
+{
+  |scene| layout:row gap:30 padding:20
+
+  // Every rect rounds; every text starts small; every oval gets a thick
+  // outline (the alert shape inherits and tightens it).
+  |rect| radius:6
+  |text| text-size:11 weight:bold
+  |oval| stroke:#444 thickness:2
+
+  |alert:oval| stroke:red size:36
+}
+
+cat   |rect| "Cat"
+dog   |rect| "Dog" radius:0          // inline overrides the |rect| default
+mouse |alert| "Mouse"

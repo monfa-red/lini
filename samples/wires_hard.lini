@@ -1,0 +1,82 @@
+// The hard scene — a genuinely contended 3×3 layout. The engine must fan a
+// hub through one shared port and stub, run bundles as rails, detour around
+// full corridors, honour forced sides, route a parent→child wire inside its
+// group, wrap a forced outer pair around the whole scene, and land
+// group-to-group wires through occupied faces.
+//
+// Expected: all four laws hold with several forced crossings — the two .hot
+// forced-left wires interleave on the same west-facing column (Jordan
+// curve), and the late east -> west takes the margins the two diagonals and
+// the west fence already hold: it crosses each fence wire once, and the
+// diagonals lose their uncrossed wrap to it. Everything else routes
+// crossing-free; east -> hub slides its port off east's centre row (Law 2's
+// slide clause) instead of grazing the ee1 approaches.
+
+{
+  |scene| layout:(3,3) gap:30
+  |wire|  clearance:8
+
+  .hot  stroke:red thickness:2
+  .cool stroke:blue
+  .attention stroke:orange thickness:2
+
+  |unit:rect| radius:4 padding:12
+}
+
+alpha |unit| "Alpha" cell:(1,1)
+north |group| "North" cell:(2,1) layout:row gap:20 {
+  nn1 |unit| "N1"
+  nn2 |unit| "N2"
+}
+beta  |unit| "Beta" cell:(3,1)
+
+west  |group| "West" cell:(1,2) layout:column gap:16 {
+  ww1 |unit| "W1"
+  ww2 |unit| "W2"
+}
+hub   |unit| "Hub" cell:(2,2)
+// East has padding so the parent→child wire below has interior room to run.
+east  |group| "East" cell:(3,2) layout:column padding:16 gap:16 {
+  ee1 |unit| "E1"
+  ee2 |unit| "E2"
+}
+
+gamma |unit| "Gamma" cell:(1,3)
+south |group| "South" cell:(2,3) layout:row gap:20 {
+  ss1 |unit| "S1"
+  ss2 |unit| "S2"
+}
+delta |unit| "Delta" cell:(3,3)
+
+// Hub fans to all four compass groups: siblings share one port and one stub
+// on hub (WIRING §Special shapes); branches split off the trunk one by one.
+hub -> north.nn1 & west.ww1 & east.ee1 & south.ss1
+
+// Bundles contending for the same corridors.
+north.nn2 -> east.ee1 .cool
+north.nn2 -> east.ee1 .cool
+north.nn2 -> east.ee1 .cool
+west.ww2 -> south.ss1
+west.ww2 -> south.ss1
+
+// Long hauls past the hub: opposite diagonals, still routable uncrossed.
+alpha -> delta "diag"
+beta -> gamma "diag"
+
+// A chain threading three cells.
+gamma -> south.ss1 -> delta "relay"
+
+// Parent → child: runs inside the group, lands on the parent's inner side.
+east -> east.ee2
+
+// Forced sides that interleave on the west column face: the one true crossing.
+alpha.left -> west.ww2.left .hot
+west.ww1.left -> gamma.left .hot
+
+// A forced outer pair: nested, so it wraps the scene without crossing.
+beta.right -> delta.right
+
+
+// New test
+east -> west .attention
+east -> hub .attention

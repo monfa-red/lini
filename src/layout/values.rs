@@ -1,0 +1,96 @@
+//! Extract layout-time numeric values from `ResolvedValue`s. Follows
+//! `LiveVar.baked` for Layout vars; errors on Visual vars used where a number
+//! is required.
+
+use crate::error::Error;
+use crate::resolve::{ResolvedValue, VarTable};
+use crate::span::Span;
+
+pub fn as_number(value: &ResolvedValue, span: Span) -> Result<f64, Error> {
+    match value {
+        ResolvedValue::Number(n) => Ok(*n),
+        ResolvedValue::LiveVar { baked: Some(b), .. } => as_number(b, span),
+        ResolvedValue::LiveVar { name, .. } => Err(Error::at(
+            span,
+            format!(
+                "var(--lini-{}) is a visual variable; layout attrs require a number",
+                name
+            ),
+        )),
+        other => Err(Error::at(
+            span,
+            format!("expected a number, got {}", describe(other)),
+        )),
+    }
+}
+
+pub fn as_number_tuple(value: &ResolvedValue, span: Span) -> Result<Vec<f64>, Error> {
+    match value {
+        ResolvedValue::Number(n) => Ok(vec![*n]),
+        ResolvedValue::Tuple(items) => {
+            let mut out = Vec::with_capacity(items.len());
+            for item in items {
+                out.push(as_number(item, span)?);
+            }
+            Ok(out)
+        }
+        ResolvedValue::LiveVar { baked: Some(b), .. } => as_number_tuple(b, span),
+        ResolvedValue::LiveVar { name, .. } => Err(Error::at(
+            span,
+            format!(
+                "var(--lini-{}) is a visual variable; layout attrs require a number or tuple",
+                name
+            ),
+        )),
+        other => Err(Error::at(
+            span,
+            format!("expected a number or tuple, got {}", describe(other)),
+        )),
+    }
+}
+
+pub fn as_pair(value: &ResolvedValue, span: Span) -> Result<(f64, f64), Error> {
+    let nums = as_number_tuple(value, span)?;
+    if nums.len() != 2 {
+        return Err(Error::at(
+            span,
+            format!("expected a 2-tuple, got {} value(s)", nums.len()),
+        ));
+    }
+    Ok((nums[0], nums[1]))
+}
+
+/// Expand a padding/gap/radius value into (top, right, bottom, left).
+/// - `N`        → all four sides
+/// - `(y, x)`   → (y, x, y, x)
+/// - `(t, r, b, l)` → as written
+pub fn expand_box_value(value: &ResolvedValue, span: Span) -> Result<(f64, f64, f64, f64), Error> {
+    let nums = as_number_tuple(value, span)?;
+    match nums.len() {
+        1 => Ok((nums[0], nums[0], nums[0], nums[0])),
+        2 => Ok((nums[0], nums[1], nums[0], nums[1])),
+        4 => Ok((nums[0], nums[1], nums[2], nums[3])),
+        n => Err(Error::at(
+            span,
+            format!("expected 1, 2, or 4 values, got {}", n),
+        )),
+    }
+}
+
+/// Look up a layout default from the var table.
+pub fn layout_var(vars: &VarTable, name: &str) -> Option<f64> {
+    vars.get(name)?.value.as_number()
+}
+
+fn describe(v: &ResolvedValue) -> &'static str {
+    match v {
+        ResolvedValue::Number(_) => "number",
+        ResolvedValue::String(_) => "string",
+        ResolvedValue::Hex(_) => "hex color",
+        ResolvedValue::Ident(_) => "identifier",
+        ResolvedValue::Tuple(_) => "tuple",
+        ResolvedValue::List(_) => "list",
+        ResolvedValue::Call(_) => "function call",
+        ResolvedValue::LiveVar { .. } => "var() reference",
+    }
+}

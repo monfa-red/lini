@@ -1,0 +1,23 @@
+// Exercises every built-in primitive (SPEC section 8) at known dimensions.
+
+{
+  |scene| layout:(4, 4) gap:20 padding:20
+}
+
+|rect|    "rect"    size:(80, 40)           cell:(1, 1)
+|oval|    "oval"    size:(80, 40)           cell:(2, 1)
+|hex|     "hex"     size:(80, 60)           cell:(3, 1)
+|slant|   "slant"   size:(80, 40) skew:20   cell:(4, 1)
+
+|cyl|     "cyl"     size:(70, 70)                  cell:(1, 2)
+|diamond| "diamond" size:(60, 60)                  cell:(2, 2)
+|cloud|   "cloud"   size:(100, 60)                 cell:(3, 2)
+|poly|    points:[(0, -30), (30, 30), (-30, 30)]   cell:(4, 2)
+
+|text| "text"                                                  cell:(1, 3)
+|line| points:[(-30, 0), (30, 0)]                              cell:(2, 3)
+|line| points:[(-30, 0), (30, 0)] marker-end:arrow             cell:(3, 3)
+|icon| name:star size:32                                       cell:(4, 3)
+
+|path|  d:"M -25 -15 Q 0 -35 25 -15 L 25 15 Q 0 35 -25 15 Z" cell:(1, 4)
+|image| href:"img/example.png" size:(60, 40)                 cell:(2, 4)

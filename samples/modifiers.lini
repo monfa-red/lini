@@ -1,0 +1,11 @@
+// Visual modifiers on closed shapes: line, double, shadow, rotation.
+
+{
+  |scene| layout:row gap:24 padding:24
+}
+
+|rect| "dashed"  size:(80, 40) line:dashed
+|rect| "dotted"  size:(80, 40) line:dotted
+|rect| "double"  size:(80, 40) double:4
+|rect| "shadow"  size:(80, 40) shadow:(2, 2, 4)
+|rect| "rotate"  size:(80, 40) rotation:15

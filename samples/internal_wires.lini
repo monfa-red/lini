@@ -1,0 +1,14 @@
+// SPEC section 10 internal wires in shape defs — each instance materialises its own.
+
+{
+  |room:group| layout:column gap:10 padding:12 {
+    inlet  |rect| "Inlet"
+    outlet |rect| "Outlet"
+    inlet -> outlet "flows"
+  }
+}
+
+garden  |room| "Garden"
+kitchen |room| "Kitchen"
+
+garden.outlet -> kitchen.inlet "carries"

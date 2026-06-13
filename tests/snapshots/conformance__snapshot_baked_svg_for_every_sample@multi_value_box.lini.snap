@@ -1,0 +1,62 @@
+---
+source: tests/conformance.rs
+expression: svg
+input_file: samples/multi_value_box.lini
+---
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-120.5 -182.8 241 365.6" width="241" height="365.6" class="lini">
+  <style>
+    .lini { font-family: sans-serif; font-size: 13px; color: black; }
+    .lini .lini-shape-rect { fill: white; stroke: #444; stroke-width: 1; stroke-dasharray: none; }
+    .lini .lini-shape-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
+    .lini .lini-shape-group { fill: rgba(0, 0, 0, 0.03); stroke: #bbb; }
+  </style>
+  <defs/>
+  <g class="lini-scene">
+    <g class="lini-node lini-shape-rect" transform="translate(0,-147.3)">
+      <rect x="-100" y="-15" width="200" height="30" rx="0" ry="0"/>
+      <g class="lini-node lini-shape-text" transform="translate(0,0)">
+        <text x="0" y="0">scalar padding</text>
+      </g>
+    </g>
+    <g class="lini-node lini-shape-rect" transform="translate(0,-104.3)">
+      <rect x="-100" y="-15" width="200" height="30" rx="0" ry="0"/>
+      <g class="lini-node lini-shape-text" transform="translate(0,0)">
+        <text x="0" y="0">(y, x) padding</text>
+      </g>
+    </g>
+    <g class="lini-node lini-shape-rect" transform="translate(0,-61.3)">
+      <rect x="-100" y="-15" width="200" height="30" rx="0" ry="0"/>
+      <g class="lini-node lini-shape-text" transform="translate(0,0)">
+        <text x="0" y="0">(t, r, b, l)</text>
+      </g>
+    </g>
+    <g class="lini-node lini-shape-rect" transform="translate(0,-18.3)">
+      <rect x="-100" y="-15" width="200" height="30" rx="8" ry="8"/>
+      <g class="lini-node lini-shape-text" transform="translate(0,0)">
+        <text x="0" y="0">radius scalar:8</text>
+      </g>
+    </g>
+    <g class="lini-node lini-shape-rect" transform="translate(0,24.7)">
+      <rect x="-100" y="-15" width="200" height="30" rx="0" ry="0"/>
+      <g class="lini-node lini-shape-text" transform="translate(0,0)">
+        <text x="0" y="0">radius (top,bot)</text>
+      </g>
+    </g>
+    <g class="lini-node lini-shape-group lini-shape-rect" data-id="inner" transform="translate(0,107.5)">
+      <rect x="-88" y="-54.8" width="176" height="109.6" rx="6" ry="6"/>
+      <g class="lini-node lini-shape-text" transform="translate(0,-37.5)">
+        <text x="0" y="0">(2,8,16,24) gap demo</text>
+      </g>
+      <g class="lini-node lini-shape-rect" transform="translate(0,-14.7)">
+        <rect x="-40" y="-10" width="80" height="20" rx="0" ry="0"/>
+      </g>
+      <g class="lini-node lini-shape-rect" transform="translate(0,10.3)">
+        <rect x="-40" y="-10" width="80" height="20" rx="0" ry="0"/>
+      </g>
+      <g class="lini-node lini-shape-rect" transform="translate(0,35.3)">
+        <rect x="-40" y="-10" width="80" height="20" rx="0" ry="0"/>
+      </g>
+    </g>
+  </g>
+  <g class="lini-wires"/>
+</svg>

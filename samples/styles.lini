@@ -1,0 +1,10 @@
+{
+  .thin   stroke:#444 thickness:1
+  .bold   weight:bold
+  .power  stroke:red  thickness:2
+  .base   thickness:1 stroke:#444
+  .warn   .base stroke:orange
+  .ghost  opacity:0.3
+}
+
+|rect| "hello"

@@ -1,0 +1,22 @@
+---
+source: tests/hello.rs
+expression: svg
+---
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-54.875 -44.8 109.75 89.6" width="109.75" height="89.6" class="lini">
+  <style>
+    @layer lini.defaults { :root, .lini { --lini-accent: #0a84ff;  --lini-airwire: crimson;  --lini-bg: white;  --lini-danger: crimson;  --lini-fg: black;  --lini-fill: white;  --lini-font: sans-serif;  --lini-group-fill: rgba(0, 0, 0, 0.03);  --lini-group-stroke: #bbb;  --lini-muted: #888;  --lini-note-bg: #fff9c4;  --lini-on-accent: white;  --lini-shadow: rgba(0, 0, 0, 0.2);  --lini-stroke: #444;  --lini-text-color: var(--lini-fg);  --lini-warn: orange; } }
+    .lini { font-family: var(--lini-font); font-size: 13px; color: var(--lini-text-color); }
+    .lini .lini-shape-rect { fill: var(--lini-fill); stroke: var(--lini-stroke); stroke-width: 1; stroke-dasharray: none; }
+    .lini .lini-shape-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
+  </style>
+  <defs/>
+  <g class="lini-scene">
+    <g class="lini-node lini-shape-rect" transform="translate(0,0)">
+      <rect x="-34.375" y="-24.3" width="68.75" height="48.6" rx="0" ry="0"/>
+      <g class="lini-node lini-shape-text" transform="translate(0,0)">
+        <text x="0" y="0">hello</text>
+      </g>
+    </g>
+  </g>
+  <g class="lini-wires"/>
+</svg>
