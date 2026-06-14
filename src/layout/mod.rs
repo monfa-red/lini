@@ -254,11 +254,23 @@ fn layout_inst(
         let text_only = inst.attrs.get("layout").is_none()
             && children.iter().all(|c| c.shape == ShapeKind::Text);
 
-        if let Some(explicit) = explicit_size(inst, vars)? {
+        let b = if let Some(explicit) = explicit_size(inst, vars)? {
             explicit
         } else {
             primitives::auto_sized_bbox(inst, content_bbox, vars, text_only)?
+        };
+
+        // A cloud's body sits below its bbox center — the lobes fill the top —
+        // so a centered label reads too high. Drop the label into the body by a
+        // fixed fraction of the height (the cloud outline is scale-invariant).
+        if inst.shape == ShapeKind::Cloud && text_only {
+            const CLOUD_LABEL_DROP: f64 = 0.15;
+            let dy = b.h() * CLOUD_LABEL_DROP;
+            for c in &mut children {
+                c.cy += dy;
+            }
         }
+        b
     };
 
     let rotation = inst
