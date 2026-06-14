@@ -156,27 +156,45 @@ fn emit_cyl(out: &mut String, n: &PlacedNode, indent: &str, thickness: f64) {
 }
 
 fn emit_cloud(out: &mut String, n: &PlacedNode, indent: &str, thickness: f64) {
-    // Stylized cloud. Reference path is sized for 100 × 60; scale to bbox.
+    // Minimal cloud outline (after Inkscape "cloudSimple"): a small left lobe, a
+    // larger right lobe, and a flat bottom with rounded corners. Reference
+    // coordinates (their own bbox 42.77..158.47 × 114.33..180.02) are normalized
+    // to the node bbox by point — never a non-uniform transform — so the stroke
+    // stays an even width at any size.
     let (w, h) = dim_excluding_stroke(n, thickness);
-    let sx = w / 100.0;
-    let sy = h / 60.0;
-    let pt = |x: f64, y: f64| (x * sx - w / 2.0, y * sy - h / 2.0);
-    let d = format!(
-        "M {a} Q {b} {c} Q {d} {e} Q {f} {g} Q {h} {i} Q {j} {k} Q {l} {m} Z",
-        a = fmt_pt(pt(25.0, 60.0)),
-        b = fmt_pt(pt(5.0, 60.0)),
-        c = fmt_pt(pt(5.0, 40.0)),
-        d = fmt_pt(pt(5.0, 20.0)),
-        e = fmt_pt(pt(25.0, 25.0)),
-        f = fmt_pt(pt(30.0, 5.0)),
-        g = fmt_pt(pt(55.0, 15.0)),
-        h = fmt_pt(pt(75.0, 5.0)),
-        i = fmt_pt(pt(75.0, 25.0)),
-        j = fmt_pt(pt(95.0, 30.0)),
-        k = fmt_pt(pt(95.0, 50.0)),
-        l = fmt_pt(pt(95.0, 70.0)),
-        m = fmt_pt(pt(75.0, 60.0)),
-    );
+    let p = |x: f64, y: f64| {
+        let nx = (x - 42.768) / 115.706;
+        let ny = (y - 114.328) / 65.689;
+        fmt_pt((nx * w - w / 2.0, ny * h - h / 2.0))
+    };
+    // 11 cubic segments as (c1x, c1y, c2x, c2y, endx, endy). The flat bottom is a
+    // straight line inserted between the 7th and 8th segment.
+    const SEGS: [[f64; 6]; 11] = [
+        [107.942, 114.332, 98.406, 120.038, 93.496, 129.180],
+        [90.025, 126.557, 85.796, 125.134, 81.446, 125.125],
+        [70.373, 125.125, 61.397, 134.101, 61.397, 145.174],
+        [61.401, 145.385, 61.408, 145.595, 61.419, 145.805],
+        [60.918, 145.758, 60.416, 145.733, 59.913, 145.730],
+        [50.444, 145.730, 42.768, 153.405, 42.769, 162.874],
+        [42.769, 172.342, 50.444, 180.017, 59.913, 180.017],
+        [150.798, 180.017, 158.473, 172.342, 158.474, 162.874],
+        [158.470, 155.286, 153.478, 148.603, 146.203, 146.446],
+        [146.397, 145.146, 146.500, 143.834, 146.511, 142.519],
+        [146.511, 126.949, 133.889, 114.328, 118.320, 114.328],
+    ];
+    let mut d = format!("M {}", p(118.320, 114.328));
+    for (i, s) in SEGS.iter().enumerate() {
+        if i == 7 {
+            d.push_str(&format!(" L {}", p(141.330, 180.017)));
+        }
+        d.push_str(&format!(
+            " C {} {} {}",
+            p(s[0], s[1]),
+            p(s[2], s[3]),
+            p(s[4], s[5])
+        ));
+    }
+    d.push_str(" Z");
     writeln!(out, r#"{}<path d="{}"/>"#, indent, d).unwrap();
 }
 
