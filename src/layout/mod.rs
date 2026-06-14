@@ -265,10 +265,11 @@ fn layout_inst(
         // and a centered label reads too high. Drop a text-only label into the
         // body by a shape-specific fraction of the height (the outlines are
         // scale-invariant, so a fraction holds at any size).
-        const CLOUD_LABEL_DROP: f64 = 0.075;
+        const CLOUD_LABEL_DROP: f64 = 0.1;
+        const CYL_LABEL_DROP: f64 = 0.03;
         let label_drop = match inst.shape {
             ShapeKind::Cloud => CLOUD_LABEL_DROP,
-            ShapeKind::Cyl => CLOUD_LABEL_DROP / 4.0,
+            ShapeKind::Cyl => CYL_LABEL_DROP,
             _ => 0.0,
         };
         if label_drop > 0.0 && text_only {
