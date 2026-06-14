@@ -137,6 +137,8 @@ Visual defaults (colors, fonts, shadow) emit as live `var(--lini-*)` references 
 
 Geometry is always baked into the SVG, so layout never depends on the host. For non-browser renderers (resvg, librsvg) and email, `--bake-vars` inlines every variable into a self-contained file that renders identically anywhere. Every `lini-*` class is a stable styling hook, too.
 
+The default font is `sans-serif`. To make an **embedded** diagram adopt the host page's font instead, set `--lini-font: inherit` — in the diagram (`{ --font:inherit }`), via `--theme`, or from the page's own CSS.
+
 ---
 
 ## The CLI
