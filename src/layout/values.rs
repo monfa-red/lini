@@ -88,6 +88,7 @@ fn describe(v: &ResolvedValue) -> &'static str {
         ResolvedValue::String(_) => "string",
         ResolvedValue::Hex(_) => "hex color",
         ResolvedValue::Ident(_) => "identifier",
+        ResolvedValue::RawCss(_) => "CSS value",
         ResolvedValue::Tuple(_) => "tuple",
         ResolvedValue::List(_) => "list",
         ResolvedValue::Call(_) => "function call",

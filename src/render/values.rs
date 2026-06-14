@@ -15,6 +15,7 @@ pub fn format_value(value: &ResolvedValue, vars: &VarTable, opts: &Options) -> S
         ResolvedValue::String(s) => format!("\"{}\"", s),
         ResolvedValue::Hex(h) => format!("#{}", h),
         ResolvedValue::Ident(s) => s.clone(),
+        ResolvedValue::RawCss(s) => s.clone(),
         ResolvedValue::Tuple(items) => {
             let parts: Vec<String> = items.iter().map(|v| format_value(v, vars, opts)).collect();
             parts.join(" ")

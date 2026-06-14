@@ -15,6 +15,62 @@ fn render_baked(src: &str) -> String {
     .expect("compile")
 }
 
+fn render_themed(src: &str, theme_css: &str) -> String {
+    lini::compile_str_with(
+        src,
+        &Options {
+            theme_css: Some(theme_css.to_string()),
+            ..Default::default()
+        },
+    )
+    .expect("compile")
+}
+
+#[test]
+fn theme_font_stack_emits_verbatim() {
+    // SPEC §12: a `--theme` font value is valid CSS already. A family stack must
+    // round-trip into the @layer block as-is — not get wrapped into one bogus
+    // quoted family (`"Inter, system-ui, sans-serif"`).
+    let svg = render_themed(
+        "|rect| \"hi\"\n",
+        ".lini { --lini-font: Inter, system-ui, sans-serif; }",
+    );
+    assert!(
+        svg.contains("--lini-font: Inter, system-ui, sans-serif;"),
+        "font stack should emit verbatim: {}",
+        svg
+    );
+}
+
+#[test]
+fn theme_quoted_font_family_is_not_double_wrapped() {
+    // A family with spaces arrives already quoted; re-quoting yields the
+    // malformed `""Helvetica Neue", sans-serif"`.
+    let svg = render_themed(
+        "|rect| \"hi\"\n",
+        ".lini { --lini-font: \"Helvetica Neue\", sans-serif; }",
+    );
+    assert!(
+        svg.contains("--lini-font: \"Helvetica Neue\", sans-serif;"),
+        "quoted family must not be double-wrapped: {}",
+        svg
+    );
+    assert!(!svg.contains("\"\"Helvetica"), "double-wrapped: {}", svg);
+}
+
+#[test]
+fn theme_font_inherit_stays_a_keyword() {
+    // SPEC §12: `--lini-font: inherit` lets an embedded diagram pick up the host
+    // page's font. It must stay the bare CSS keyword, never quoted.
+    let svg = render_themed("|rect| \"hi\"\n", ".lini { --lini-font: inherit; }");
+    assert!(svg.contains("--lini-font: inherit;"), "{}", svg);
+    assert!(
+        !svg.contains("\"inherit\""),
+        "inherit must be a keyword: {}",
+        svg
+    );
+}
+
 #[test]
 fn live_mode_emits_var_refs_for_visual_attrs() {
     let svg = render_live("|rect| \"hi\"\n");

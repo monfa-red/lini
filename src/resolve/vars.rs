@@ -111,11 +111,12 @@ fn parse_theme_value(raw: &str) -> ResolvedValue {
     if let Some(v) = try_parse_via_lini(s) {
         return v;
     }
-    // Anything we can't parse stays a literal CSS string. Emits verbatim in
-    // the style block (e.g. `rgba(0,0,0,0.2)`, `Inter, sans-serif`) — perfect
-    // for visual vars; layout vars that fall through here have no numeric
-    // meaning and will trigger the visual-var error if used in a layout attr.
-    ResolvedValue::String(s.to_string())
+    // Anything we can't parse is raw CSS — emit it verbatim in the style block
+    // (e.g. `Inter, system-ui, sans-serif`, `"Helvetica Neue", sans-serif`).
+    // `RawCss` (not `String`) keeps it unquoted; quoting would collapse a font
+    // stack into one bogus family. Layout vars that fall through here have no
+    // numeric meaning and trigger the visual-var error if used in a layout attr.
+    ResolvedValue::RawCss(s.to_string())
 }
 
 fn try_parse_via_lini(s: &str) -> Option<ResolvedValue> {

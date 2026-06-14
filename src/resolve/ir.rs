@@ -151,6 +151,10 @@ pub enum ResolvedValue {
     String(String),
     Hex(String),
     Ident(String),
+    /// Raw CSS text from a `--theme` value that isn't a typed Lini value (e.g. a
+    /// font stack `Inter, system-ui, sans-serif`). Emitted verbatim — unlike
+    /// `String`, it is never quote-wrapped.
+    RawCss(String),
     Tuple(Vec<ResolvedValue>),
     List(Vec<ResolvedValue>),
     Call(ResolvedCall),
