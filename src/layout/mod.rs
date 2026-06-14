@@ -260,12 +260,19 @@ fn layout_inst(
             primitives::auto_sized_bbox(inst, content_bbox, vars, text_only)?
         };
 
-        // A cloud's body sits below its bbox center — the lobes fill the top —
-        // so a centered label reads too high. Drop the label into the body by a
-        // fixed fraction of the height (the cloud outline is scale-invariant).
-        if inst.shape == ShapeKind::Cloud && text_only {
-            const CLOUD_LABEL_DROP: f64 = 0.15;
-            let dy = b.h() * CLOUD_LABEL_DROP;
+        // Some closed shapes carry decoration at the top — a cloud's lobes, a
+        // cylinder's rim — so the optical body-center sits below the bbox center
+        // and a centered label reads too high. Drop a text-only label into the
+        // body by a shape-specific fraction of the height (the outlines are
+        // scale-invariant, so a fraction holds at any size).
+        const CLOUD_LABEL_DROP: f64 = 0.075;
+        let label_drop = match inst.shape {
+            ShapeKind::Cloud => CLOUD_LABEL_DROP,
+            ShapeKind::Cyl => CLOUD_LABEL_DROP / 4.0,
+            _ => 0.0,
+        };
+        if label_drop > 0.0 && text_only {
+            let dy = b.h() * label_drop;
             for c in &mut children {
                 c.cy += dy;
             }
