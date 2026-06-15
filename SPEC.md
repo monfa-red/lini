@@ -424,8 +424,14 @@ pattern is common.
 | `\|note\|` | `\|rect\|` | `radius:2 padding:12 shadow:2 stroke:none fill:--note-bg` | Sticky note. |
 | `\|row\|` | `\|rect\|` | `layout:row fill:none stroke:none padding:0` | Frameless wrapper — children in a row. |
 | `\|col\|` | `\|rect\|` | `layout:column fill:none stroke:none padding:0` | Frameless wrapper — children in a column. |
-| `\|table\|` | `\|group\|` | `gap:0 stroke:none`; use with `layout:(c,r)`, `col-widths:`, `row-heights:` | Container for `\|cell\|`s. |
-| `\|cell\|` | `\|rect\|` | `padding:8 stroke:--stroke thickness:1 fill:none` | Bordered cell. |
+| `\|table\|` | `\|group\|` | `gap:0 padding:0 fill:none stroke:--stroke`; draws its own grid (frame + separators) in `--stroke`. Use with `layout:(c,r)`, `col-widths:`, `row-heights:` | Ruled grid of `\|cell\|`s. |
+| `\|cell\|` | `\|rect\|` | `padding:8 stroke:none fill:none` | Borderless cell — the table draws the lines. |
+
+A `\|table\|` renders its grid as one ruled path — the outer frame plus the
+separators between adjacent cells — so cells stay borderless and a shared edge
+is never drawn twice; a separator never crosses the interior of a spanning
+cell. `row` / `col` are the frameless counterparts: they only lay out (a `col`
+of `row`s reads like a table, but a table aligns its columns across every row).
 
 Extend any of them: `|panel:group| stroke:--accent`. Common shapes need no
 template:

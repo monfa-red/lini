@@ -79,8 +79,9 @@ fn attempt(program: &Program, growth: &GapGrowth) -> Result<Attempt, Error> {
     }
 
     // Apply scene-level layout to top-level children (scene itself is a
-    // container; its attrs drive how its children are positioned).
-    let bbox = lay_out_container_children(
+    // container; its attrs drive how its children are positioned). The scene
+    // is never a table, so its grid rules — if any — are discarded.
+    let (bbox, _) = lay_out_container_children(
         &mut top_nodes,
         &program.scene.attrs,
         &program.vars,
@@ -236,18 +237,24 @@ fn layout_inst(
     }
 
     // Determine this node's bbox + arrange children inside.
+    let mut grid_rules: Vec<GridRule> = Vec::new();
     let bbox = if children.is_empty() {
         // Leaf primitive.
         primitives::leaf_bbox(inst, vars)?
     } else {
         // Container or closed shape with content.
-        let content_bbox = lay_out_container_children(
+        let (content_bbox, rules) = lay_out_container_children(
             &mut children,
             &inst.attrs,
             vars,
             inst.span,
             gap_bump(growth, path),
         )?;
+
+        // Only a table draws its grid lines; other grids place silently.
+        if is_table(&inst.type_chain) {
+            grid_rules = rules;
+        }
 
         // A closed shape whose content is text only auto-sizes with text-pad;
         // anything else sizes to content + padding.
@@ -303,8 +310,15 @@ fn layout_inst(
         bbox,
         rotation,
         children,
+        grid_rules,
         span: inst.span,
     })
+}
+
+/// Whether a resolved type chain is (or extends) the `table` template — the
+/// only node that draws grid rules.
+fn is_table(type_chain: &[String]) -> bool {
+    type_chain.iter().any(|t| t == "table")
 }
 
 /// Position children within their container per its `layout=` attr.
@@ -317,9 +331,9 @@ fn lay_out_container_children(
     vars: &VarTable,
     span: Span,
     grow: (f64, f64),
-) -> Result<Bbox, Error> {
+) -> Result<(Bbox, Vec<GridRule>), Error> {
     if children.is_empty() {
-        return Ok(Bbox::empty());
+        return Ok((Bbox::empty(), Vec::new()));
     }
     let grown;
     let container_attrs = if grow == (0.0, 0.0) {
@@ -352,6 +366,7 @@ fn lay_out_container_children(
     // Lay out the flow children per the container's `layout=` attr.
     let mode = read_layout_mode(container_attrs, span)?;
 
+    let mut grid_rules: Vec<GridRule> = Vec::new();
     let flow_bbox = if !flow_indices.is_empty() {
         let mut flow_children: Vec<PlacedNode> =
             flow_indices.iter().map(|i| children[*i].clone()).collect();
@@ -367,7 +382,10 @@ fn lay_out_container_children(
                 span,
             )?,
             LayoutMode::Grid(cols, rows) => {
-                grid::lay_out_grid(&mut flow_children, cols, rows, container_attrs, vars, span)?
+                let (bbox, rules) =
+                    grid::lay_out_grid(&mut flow_children, cols, rows, container_attrs, vars, span)?;
+                grid_rules = rules;
+                bbox
             }
         };
         for (slot, placed) in flow_indices.iter().zip(flow_children) {
@@ -413,7 +431,7 @@ fn lay_out_container_children(
     } else {
         flow_bbox
     };
-    Ok(abs_boxes.fold(union, Bbox::union))
+    Ok((abs_boxes.fold(union, Bbox::union), grid_rules))
 }
 
 /// Container layout mode, parsed from the `layout=` attr.

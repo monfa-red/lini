@@ -234,6 +234,7 @@ mod tests {
             bbox: Bbox::centered(w, h),
             rotation: 0.0,
             children,
+            grid_rules: Vec::new(),
             span: Span::empty(),
         }
     }

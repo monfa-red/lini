@@ -234,6 +234,23 @@ pub(super) fn template_attrs(name: &str) -> Vec<ResolvedAttr> {
             attr("stroke", ident("none")),
             attr("padding", num(0.0)),
         ],
+        // The table draws its own grid lines (frame + separators) in
+        // `--lini-stroke`; no wash, no padding, cells abut at gap:0. The
+        // rule geometry is built in layout and rendered by the table itself.
+        "table" => vec![
+            attr("gap", num(0.0)),
+            attr("padding", num(0.0)),
+            attr("radius", num(0.0)),
+            attr("fill", ident("none")),
+            attr("stroke", live("stroke")),
+        ],
+        // A cell is a borderless padded slot — the table owns every line, so
+        // a cell never strokes its own edge (that is what used to double).
+        "cell" => vec![
+            attr("stroke", ident("none")),
+            attr("fill", ident("none")),
+            attr("padding", num(8.0)),
+        ],
         _ => Vec::new(),
     }
 }

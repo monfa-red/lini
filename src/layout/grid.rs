@@ -4,13 +4,16 @@
 //! themselves with `cell:(c, r)` and span tracks with `span:(c, r)`. Both
 //! tuples use (horizontal, vertical) = (x, y) = (col, row) order.
 
-use super::ir::{Bbox, PlacedNode};
+use super::ir::{Bbox, GridRule, PlacedNode};
 use super::primitives;
 use super::values::{as_number_tuple, as_pair};
 use crate::error::Error;
 use crate::resolve::{AttrMap, ResolvedValue, VarTable};
 use crate::span::Span;
 
+/// Lay out a grid and return its content bbox plus the rule segments a table
+/// would draw (frame + interior separators, span-aware). Non-table callers
+/// ignore the rules.
 pub fn lay_out_grid(
     children: &mut [PlacedNode],
     cols: usize,
@@ -18,16 +21,18 @@ pub fn lay_out_grid(
     attrs: &AttrMap,
     vars: &VarTable,
     span: Span,
-) -> Result<Bbox, Error> {
+) -> Result<(Bbox, Vec<GridRule>), Error> {
     let (gap_y, gap_x) = primitives::gap(attrs, vars, span)?;
 
     // Track sizes: explicit col-widths / row-heights, else auto from children.
     let explicit_col = read_track_sizes(attrs, "col-widths", cols, span)?;
     let explicit_row = read_track_sizes(attrs, "row-heights", rows, span)?;
 
-    // Assign positions: build a 2D occupancy map.
+    // Assign positions: build a 2D occupancy map. `owner` records which cell
+    // owns each track slot, so a table's rules skip the interior of a span.
     let mut placements: Vec<Placement> = Vec::with_capacity(children.len());
     let mut occupied = vec![vec![false; cols]; rows];
+    let mut owner: Vec<Vec<Option<usize>>> = vec![vec![None; cols]; rows];
 
     for (i, child) in children.iter().enumerate() {
         let (cs, rs) = read_span(&child.attrs, child.span)?;
@@ -63,9 +68,11 @@ pub fn lay_out_grid(
             ));
         }
 
+        let pi = placements.len();
         for dr in 0..rs {
             for dc in 0..cs {
                 occupied[row + dr][col + dc] = true;
+                owner[row + dr][col + dc] = Some(pi);
             }
         }
         placements.push(Placement {
@@ -140,7 +147,61 @@ pub fn lay_out_grid(
         child.cy = cell_cy - local_offset_y;
     }
 
-    Ok(Bbox::centered(total_w, total_h))
+    let rules = rule_segments(&col_offsets, &row_offsets, total_w, total_h, cols, rows, &owner);
+    Ok((Bbox::centered(total_w, total_h), rules))
+}
+
+/// The grid lines a table draws: the outer frame plus interior separators,
+/// each interior run merged across the tracks where it is a real boundary —
+/// so a spanning cell has no line crossing its interior. Coords are
+/// node-local (the grid is centred on the origin); tracks abut at `gap:0`,
+/// the table default, so the lines sit exactly on cell edges.
+fn rule_segments(
+    col_offsets: &[f64],
+    row_offsets: &[f64],
+    total_w: f64,
+    total_h: f64,
+    cols: usize,
+    rows: usize,
+    owner: &[Vec<Option<usize>>],
+) -> Vec<GridRule> {
+    let x = |i: usize| col_offsets[i] - total_w / 2.0;
+    let y = |j: usize| row_offsets[j] - total_h / 2.0;
+    let mut segs: Vec<GridRule> = vec![
+        (x(0), y(0), x(cols), y(0)),       // top
+        (x(0), y(rows), x(cols), y(rows)), // bottom
+        (x(0), y(0), x(0), y(rows)),       // left
+        (x(cols), y(0), x(cols), y(rows)), // right
+    ];
+    // Interior verticals: boundary between columns c-1 and c.
+    for c in 1..cols {
+        let mut start: Option<usize> = None;
+        for r in 0..=rows {
+            let real = r < rows && owner[r][c - 1] != owner[r][c];
+            if real && start.is_none() {
+                start = Some(r);
+            } else if !real
+                && let Some(s) = start.take()
+            {
+                segs.push((x(c), y(s), x(c), y(r)));
+            }
+        }
+    }
+    // Interior horizontals: boundary between rows r-1 and r.
+    for r in 1..rows {
+        let mut start: Option<usize> = None;
+        for c in 0..=cols {
+            let real = c < cols && owner[r - 1][c] != owner[r][c];
+            if real && start.is_none() {
+                start = Some(c);
+            } else if !real
+                && let Some(s) = start.take()
+            {
+                segs.push((x(s), y(r), x(c), y(r)));
+            }
+        }
+    }
+    segs
 }
 
 struct Placement {

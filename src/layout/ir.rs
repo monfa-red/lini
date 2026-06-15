@@ -77,6 +77,11 @@ pub struct ViewBox {
     pub h: f64,
 }
 
+/// One straight rule segment `(x1, y1, x2, y2)` in node-local coords — a
+/// table's drawn grid lines (frame + interior separators). Empty for every
+/// node that isn't a table.
+pub type GridRule = (f64, f64, f64, f64);
+
 #[derive(Clone)]
 pub struct PlacedNode {
     pub id: Option<String>,
@@ -93,6 +98,10 @@ pub struct PlacedNode {
     pub bbox: Bbox,
     pub rotation: f64,
     pub children: Vec<PlacedNode>,
+    /// A table's grid lines, drawn once by the table itself so cells stay
+    /// borderless and no shared edge is ever doubled (WIRING-style ownership:
+    /// the container owns its rules). Empty for non-tables.
+    pub grid_rules: Vec<GridRule>,
     pub span: Span,
 }
 

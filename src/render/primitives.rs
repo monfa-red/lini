@@ -23,6 +23,22 @@ pub fn render_geometry(
     filters: &FilterTable,
     opts: &Options,
 ) {
+    // A table draws its own grid — frame + interior separators — as one path,
+    // so its cells stay borderless and no shared edge is ever doubled. The
+    // segments come from layout (span-aware); the table's rect is not drawn.
+    if !n.grid_rules.is_empty() {
+        let indent = "  ".repeat(depth);
+        let d: Vec<String> = n
+            .grid_rules
+            .iter()
+            .map(|(x1, y1, x2, y2)| {
+                format!("M {} {} L {} {}", num(*x1), num(*y1), num(*x2), num(*y2))
+            })
+            .collect();
+        writeln!(out, r#"{}<path d="{}" fill="none"/>"#, indent, d.join(" ")).unwrap();
+        return;
+    }
+
     // A drop shadow wraps the geometry only — never the label — so text on a
     // shadowed card stays crisp.
     let shadow = filters.id_for(n, vars, opts);
