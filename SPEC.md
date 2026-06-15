@@ -394,7 +394,7 @@ an ellipse in a 60×40 box; `|oval| size:40` is a circle.
 | `line` | `solid` / `dashed` / `dotted` | Stroke pattern. Default `solid`. |
 | `double` | `N` / `(x, y)` | Draw twice with an offset, second copy behind. Scalar = `(N, -N)`. |
 | `rotation` | `N` degrees | Rotate around the bbox center. |
-| `shadow` | `N` / `(dx, dy)` / `(dx, dy, blur)` / `(dx, dy, blur, color)` | Drop shadow via SVG `<filter>`. |
+| `shadow` | `N` / `(dx, dy)` / `(dx, dy, blur)` / `(dx, dy, blur, color)` | Drop shadow via SVG `<filter>`. Scalar `N` = offset `(N, N)`, blur `N`; the tint defaults to `--lini-shadow`. |
 
 ### Markers (on `|line|` and wires)
 

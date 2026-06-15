@@ -8,10 +8,11 @@
 //! different paint, stated per element (element-level presentation attrs
 //! only fight inheritance, which they win — no class rule matches them).
 
+use super::filters::FilterTable;
 use super::values::{attr_or_var, attr_points, attr_str, escape_xml, num};
 use crate::Options;
 use crate::layout::PlacedNode;
-use crate::resolve::{ShapeKind, VarTable};
+use crate::resolve::{ResolvedValue, ShapeKind, VarTable};
 use std::fmt::Write;
 
 pub fn render_geometry(
@@ -19,8 +20,55 @@ pub fn render_geometry(
     n: &PlacedNode,
     depth: usize,
     vars: &VarTable,
+    filters: &FilterTable,
     opts: &Options,
 ) {
+    // A drop shadow wraps the geometry only — never the label — so text on a
+    // shadowed card stays crisp.
+    let shadow = filters.id_for(n, vars, opts);
+    let body_depth = match &shadow {
+        Some(id) => {
+            writeln!(out, r#"{}<g filter="url(#{})">"#, "  ".repeat(depth), id).unwrap();
+            depth + 1
+        }
+        None => depth,
+    };
+
+    // `double:` draws an offset copy behind the shape (SPEC §8); both copies
+    // sit inside the shadow group, so the doubled silhouette casts one shadow.
+    if let Some((dx, dy)) = double_offset(n) {
+        let indent = "  ".repeat(body_depth);
+        writeln!(
+            out,
+            r#"{}<g transform="translate({},{})">"#,
+            indent,
+            num(dx),
+            num(dy)
+        )
+        .unwrap();
+        emit_shape(out, n, body_depth + 1, vars, opts);
+        writeln!(out, "{}</g>", indent).unwrap();
+    }
+
+    emit_shape(out, n, body_depth, vars, opts);
+
+    if shadow.is_some() {
+        writeln!(out, "{}</g>", "  ".repeat(depth)).unwrap();
+    }
+}
+
+/// The `(dx, dy)` of a `double:` offset copy (SPEC §8): scalar `N` ⇒ `(N, -N)`.
+fn double_offset(n: &PlacedNode) -> Option<(f64, f64)> {
+    match n.attrs.get("double")? {
+        ResolvedValue::Number(v) => Some((*v, -*v)),
+        ResolvedValue::Tuple(items) if items.len() == 2 => {
+            Some((items[0].as_number()?, items[1].as_number()?))
+        }
+        _ => None,
+    }
+}
+
+fn emit_shape(out: &mut String, n: &PlacedNode, depth: usize, vars: &VarTable, opts: &Options) {
     let indent = "  ".repeat(depth);
     let thickness = n.attrs.number("thickness").unwrap_or(1.0);
 

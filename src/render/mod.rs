@@ -1,4 +1,5 @@
 pub(crate) mod markers; // `marker_size` is read by the router to reserve stub room
+mod filters;
 mod primitives;
 mod rules;
 mod style_block;
@@ -8,6 +9,7 @@ mod wires;
 use crate::Options;
 use crate::layout::{LaidOut, PlacedNode};
 use crate::resolve::{ShapeKind, VarTable};
+use filters::FilterTable;
 use rules::RuleSet;
 use values::{escape_xml, format_value, num};
 
@@ -33,11 +35,19 @@ pub fn render(laid_out: &LaidOut, opts: &Options) -> String {
     // color) for the whole tree. Per-node differences ride `style=`.
     let ruleset = rules::build(laid_out, opts);
     style_block::emit(&mut out, &laid_out.vars, &ruleset, opts);
-    out.push_str("  <defs/>\n");
+
+    let filters = FilterTable::collect(&laid_out.nodes, &laid_out.vars, opts);
+    if filters.is_empty() {
+        out.push_str("  <defs/>\n");
+    } else {
+        out.push_str("  <defs>\n");
+        filters.emit_defs(&mut out, &laid_out.vars, opts);
+        out.push_str("  </defs>\n");
+    }
 
     out.push_str("  <g class=\"lini-scene\">\n");
     for node in &laid_out.nodes {
-        render_node(&mut out, node, 2, &laid_out.vars, &ruleset, opts);
+        render_node(&mut out, node, 2, &laid_out.vars, &ruleset, &filters, opts);
     }
     out.push_str("  </g>\n");
 
@@ -71,6 +81,7 @@ fn render_node(
     depth: usize,
     vars: &VarTable,
     ruleset: &RuleSet,
+    filters: &FilterTable,
     opts: &Options,
 ) {
     use std::fmt::Write;
@@ -99,9 +110,9 @@ fn render_node(
     )
     .unwrap();
 
-    primitives::render_geometry(out, n, depth + 1, vars, opts);
+    primitives::render_geometry(out, n, depth + 1, vars, filters, opts);
     for child in &n.children {
-        render_node(out, child, depth + 1, vars, ruleset, opts);
+        render_node(out, child, depth + 1, vars, ruleset, filters, opts);
     }
 
     writeln!(out, "{}</g>", indent).unwrap();
