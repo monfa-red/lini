@@ -333,8 +333,8 @@ pub(super) fn is_reserved(name: &str) -> bool {
         // Primitives
         | "rect" | "oval" | "line" | "path" | "poly" | "text"
         | "hex" | "slant" | "cyl" | "diamond" | "cloud" | "icon" | "image"
-        // Templates
-        | "group" | "badge" | "button" | "card" | "note"
+        // Templates ("row" is reserved above as a layout value)
+        | "group" | "badge" | "note" | "col"
         | "table" | "cell"
         // Defs-only specials
         | "scene" | "wire"

@@ -11,9 +11,9 @@ const MAX_INHERITANCE_DEPTH: usize = 16;
 pub(super) const TEMPLATES: &[(&str, &str)] = &[
     ("group", "rect"),
     ("badge", "rect"),
-    ("button", "rect"),
-    ("card", "rect"),
     ("note", "rect"),
+    ("row", "rect"),
+    ("col", "rect"),
     ("table", "group"),
     ("cell", "rect"),
 ];
@@ -172,14 +172,11 @@ impl ShapesTable {
 }
 
 /// Built-in template attrs — the lowest-specificity layer of a template, so
-/// defs-block defaults and instance attrs override freely. Groups get a
-/// quiet container look out of the box: themable gray stroke and faint wash
-/// (`--lini-group-stroke` / `--lini-group-fill`), rounded corners, and
-/// enough padding that children sit clear of the border.
+/// defs-block defaults and instance attrs override freely (SPEC §9). Visual
+/// values stay live `--lini-*` references so a host page can re-theme them;
+/// `row`/`col` carry no paint at all — they only lay out. `table`/`cell` are
+/// handled by the grid-rule machinery (see the renderer), not here.
 pub(super) fn template_attrs(name: &str) -> Vec<ResolvedAttr> {
-    if name != "group" {
-        return Vec::new();
-    }
     let live = |var: &str| ResolvedValue::LiveVar {
         name: var.into(),
         raw: false,
@@ -190,12 +187,55 @@ pub(super) fn template_attrs(name: &str) -> Vec<ResolvedAttr> {
         value,
         span: Span::empty(),
     };
-    vec![
-        attr("stroke", live("group-stroke")),
-        attr("fill", live("group-fill")),
-        attr("radius", ResolvedValue::Number(6.0)),
-        attr("padding", ResolvedValue::Number(10.0)),
-    ]
+    let num = ResolvedValue::Number;
+    let ident = |s: &str| ResolvedValue::Ident(s.into());
+    let pair = |a: f64, b: f64| ResolvedValue::Tuple(vec![num(a), num(b)]);
+
+    match name {
+        // Frame + label: a quiet container — themable grey stroke, faint wash,
+        // rounded corners, padding that keeps children clear of the border.
+        "group" => vec![
+            attr("stroke", live("group-stroke")),
+            attr("fill", live("group-fill")),
+            attr("radius", num(6.0)),
+            attr("padding", num(10.0)),
+        ],
+        // Corner pill: small on-accent text on an accent capsule, lifted above
+        // its host. `color`/`text-size` cascade to the label.
+        "badge" => vec![
+            attr("at", ident("top-right")),
+            attr("radius", num(999.0)),
+            attr("padding", pair(2.0, 8.0)),
+            attr("shadow", num(2.0)),
+            attr("fill", live("accent")),
+            attr("color", live("on-accent")),
+            attr("text-size", num(11.0)),
+            attr("z", num(10.0)),
+        ],
+        // Sticky note: pale fill, soft shadow, no border.
+        "note" => vec![
+            attr("radius", num(2.0)),
+            attr("padding", num(12.0)),
+            attr("shadow", num(2.0)),
+            attr("stroke", ident("none")),
+            attr("fill", live("note-bg")),
+        ],
+        // Frameless layout wrappers — invisible, zero padding, direction baked
+        // in so `|row| { … }` / `|col| { … }` need no `layout:`.
+        "row" => vec![
+            attr("layout", ident("row")),
+            attr("fill", ident("none")),
+            attr("stroke", ident("none")),
+            attr("padding", num(0.0)),
+        ],
+        "col" => vec![
+            attr("layout", ident("column")),
+            attr("fill", ident("none")),
+            attr("stroke", ident("none")),
+            attr("padding", num(0.0)),
+        ],
+        _ => Vec::new(),
+    }
 }
 
 // ───────────────────────── Build helpers ─────────────────────────

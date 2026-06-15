@@ -126,7 +126,7 @@ fn err_shape_name_collides_with_primitive() {
 
 #[test]
 fn err_shape_name_collides_with_template() {
-    assert_resolve_error("{ |card:rect| }\ncat |rect|\n", "'card' is reserved");
+    assert_resolve_error("{ |note:rect| }\ncat |rect|\n", "'note' is reserved");
 }
 
 #[test]
@@ -136,7 +136,7 @@ fn err_reserved_scene_id() {
 
 #[test]
 fn err_reserved_style_name() {
-    assert_resolve_error("{ .card weight:bold }\ncat |rect|\n", "'card' is reserved");
+    assert_resolve_error("{ .note weight:bold }\ncat |rect|\n", "'note' is reserved");
 }
 
 #[test]

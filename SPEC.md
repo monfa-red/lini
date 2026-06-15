@@ -419,15 +419,15 @@ pattern is common.
 
 | Template | Base | Defaults | For |
 |---|---|---|---|
-| `\|group\|` | `\|rect\|` | `line:dashed stroke:--muted fill:none padding:15`; text `at:top weight:bold` | Frame + label. |
+| `\|group\|` | `\|rect\|` | `stroke:--group-stroke fill:--group-fill radius:6 padding:10` | Frame + label. |
 | `\|badge\|` | `\|rect\|` | `at:top-right radius:999 padding:(2,8) shadow:2 fill:--accent z:10`; small on-accent text | Corner pill. |
-| `\|button\|` | `\|rect\|` | `radius:4 padding:(8,16) shadow:2 fill:--accent`; on-accent text | Click target (with link). |
-| `\|card\|` | `\|rect\|` | `radius:8 padding:16 shadow:2 stroke:none fill:--fill` | Content surface. |
 | `\|note\|` | `\|rect\|` | `radius:2 padding:12 shadow:2 stroke:none fill:--note-bg` | Sticky note. |
+| `\|row\|` | `\|rect\|` | `layout:row fill:none stroke:none padding:0` | Frameless wrapper — children in a row. |
+| `\|col\|` | `\|rect\|` | `layout:column fill:none stroke:none padding:0` | Frameless wrapper — children in a column. |
 | `\|table\|` | `\|group\|` | `gap:0 stroke:none`; use with `layout:(c,r)`, `col-widths:`, `row-heights:` | Container for `\|cell\|`s. |
 | `\|cell\|` | `\|rect\|` | `padding:8 stroke:--stroke thickness:1 fill:none` | Bordered cell. |
 
-Extend any of them: `|mybox:card| stroke:--accent`. Common shapes need no
+Extend any of them: `|panel:group| stroke:--accent`. Common shapes need no
 template:
 
 | For | Write |
@@ -660,6 +660,8 @@ depends on the host CSS.
 --lini-warn          orange
 --lini-airwire       crimson
 --lini-note-bg       #fff9c4
+--lini-group-stroke  #bbb
+--lini-group-fill    rgba(0, 0, 0, 0.03)
 --lini-font          sans-serif
 --lini-text-color    var(--lini-fg)
 --lini-shadow        rgba(0, 0, 0, 0.2)
@@ -968,7 +970,7 @@ free (`Start`, `Card`, …).
 - **Wire-route anchor:** `mid` (`start`/`end` overlap alignment values; resolved by context).
 - **Origin:** `top-left`.
 - **Primitives:** `rect`, `oval`, `line`, `path`, `poly`, `text`, `hex`, `slant`, `cyl`, `diamond`, `cloud`, `icon`, `image`.
-- **Templates:** `group`, `badge`, `button`, `card`, `note`, `table`, `cell`.
+- **Templates:** `group`, `badge`, `note`, `row`, `col`, `table`, `cell` (`row` also a layout value).
 - **Special:** `scene`, `wire` (defs block only).
 - **Constants:** `true`, `false`, `none`, `auto`.
 - **Functions:** `var`, `rgb`, `rgba`, `hsl`.

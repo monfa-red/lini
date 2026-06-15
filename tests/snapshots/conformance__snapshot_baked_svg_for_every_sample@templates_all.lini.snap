@@ -3,76 +3,137 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/templates_all.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-231.55 -99.3 463.1 198.6" width="463.1" height="198.6" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-170.5 -223.1 341 446.2" width="341" height="446.2" class="lini">
   <style>
     .lini { font-family: sans-serif; font-size: 13px; color: black; }
     .lini .lini-shape-rect { fill: white; stroke: #444; stroke-width: 1; stroke-dasharray: none; }
     .lini .lini-shape-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-shape-group { fill: rgba(0, 0, 0, 0.03); stroke: #bbb; }
+    .lini .lini-shape-badge { fill: #0a84ff; color: white; font-size: 11px; }
+    .lini .lini-shape-note { fill: #fff9c4; stroke: none; }
+    .lini .lini-shape-row { fill: none; stroke: none; }
+    .lini .lini-shape-col { fill: none; stroke: none; }
   </style>
-  <defs/>
+  <defs>
+    <filter id="lini-shadow-1" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="2" dy="2" stdDeviation="2" flood-color="rgba(0, 0, 0, 0.2)"/></filter>
+  </defs>
   <g class="lini-scene">
-    <g class="lini-node lini-shape-group lini-shape-rect" transform="translate(-180.25,-54.5)">
-      <rect x="-28.375" y="-18.3" width="56.75" height="36.6" rx="6" ry="6"/>
-      <g class="lini-node lini-shape-text" transform="translate(0,0)">
-        <text x="0" y="0">group</text>
+    <g class="lini-node lini-shape-group lini-shape-rect" data-id="frame" transform="translate(0,-132.5)">
+      <rect x="-117.1" y="-70.1" width="234.2" height="140.2" rx="6" ry="6"/>
+      <g class="lini-node lini-shape-text" transform="translate(-88.725,0)">
+        <text x="0" y="0">Group</text>
       </g>
-    </g>
-    <g class="lini-node lini-shape-badge lini-shape-rect" transform="translate(-48.45,-54.5)">
-      <rect x="-34.375" y="-24.3" width="68.75" height="48.6" rx="0" ry="0"/>
-      <g class="lini-node lini-shape-text" transform="translate(0,0)">
-        <text x="0" y="0">badge</text>
-      </g>
-    </g>
-    <g class="lini-node lini-shape-button lini-shape-rect" transform="translate(90.5,-54.5)">
-      <rect x="-37.95" y="-24.3" width="75.9" height="48.6" rx="0" ry="0"/>
-      <g class="lini-node lini-shape-text" transform="translate(0,0)">
-        <text x="0" y="0">button</text>
-      </g>
-    </g>
-    <g class="lini-node lini-shape-card lini-shape-rect" transform="translate(180.25,-54.5)">
-      <rect x="-30.8" y="-24.3" width="61.6" height="48.6" rx="0" ry="0"/>
-      <g class="lini-node lini-shape-text" transform="translate(0,0)">
-        <text x="0" y="0">card</text>
-      </g>
-    </g>
-    <g class="lini-node lini-shape-note lini-shape-rect" transform="translate(-180.25,34.8)">
-      <rect x="-30.8" y="-24.3" width="61.6" height="48.6" rx="0" ry="0"/>
-      <g class="lini-node lini-shape-text" transform="translate(0,0)">
-        <text x="0" y="0">note</text>
-      </g>
-    </g>
-    <g class="lini-node lini-shape-table lini-shape-group lini-shape-rect" data-id="fridge" transform="translate(-48.45,34.8)">
-      <rect x="-80" y="-44" width="160" height="88" rx="6" ry="6"/>
-      <g class="lini-node lini-shape-cell lini-shape-rect" transform="translate(-40,-22)">
-        <rect x="-29.5" y="-11.5" width="59" height="23" rx="0" ry="0"/>
-        <g class="lini-node lini-shape-text" transform="translate(0,0)">
-          <text x="0" y="0">A</text>
+      <g class="lini-node lini-shape-row lini-shape-rect" transform="translate(-2.7,0)">
+        <rect x="-51.15" y="-24.8" width="102.3" height="49.6" rx="0" ry="0"/>
+        <g class="lini-node lini-shape-rect" data-id="a" transform="translate(-30.575,0)">
+          <rect x="-20.075" y="-24.3" width="40.15" height="48.6" rx="0" ry="0"/>
+          <g class="lini-node lini-shape-text" transform="translate(0,0)">
+            <text x="0" y="0">a</text>
+          </g>
+        </g>
+        <g class="lini-node lini-shape-rect" data-id="b" transform="translate(30.575,0)">
+          <rect x="-20.075" y="-24.3" width="40.15" height="48.6" rx="0" ry="0"/>
+          <g class="lini-node lini-shape-text" transform="translate(0,0)">
+            <text x="0" y="0">b</text>
+          </g>
         </g>
       </g>
-      <g class="lini-node lini-shape-cell lini-shape-rect" transform="translate(40,-22)">
-        <rect x="-29.5" y="-11.5" width="59" height="23" rx="0" ry="0"/>
-        <g class="lini-node lini-shape-text" transform="translate(0,0)">
-          <text x="0" y="0">B</text>
+      <g class="lini-node lini-shape-col lini-shape-rect" transform="translate(86.025,0)">
+        <rect x="-20.575" y="-59.6" width="41.15" height="119.2" rx="0" ry="0"/>
+        <g class="lini-node lini-shape-rect" data-id="p" transform="translate(0,-34.8)">
+          <rect x="-20.075" y="-24.3" width="40.15" height="48.6" rx="0" ry="0"/>
+          <g class="lini-node lini-shape-text" transform="translate(0,0)">
+            <text x="0" y="0">p</text>
+          </g>
         </g>
-      </g>
-      <g class="lini-node lini-shape-cell lini-shape-rect" transform="translate(-40,22)">
-        <rect x="-29.5" y="-11.5" width="59" height="23" rx="0" ry="0"/>
-        <g class="lini-node lini-shape-text" transform="translate(0,0)">
-          <text x="0" y="0">C</text>
-        </g>
-      </g>
-      <g class="lini-node lini-shape-cell lini-shape-rect" transform="translate(40,22)">
-        <rect x="-29.5" y="-11.5" width="59" height="23" rx="0" ry="0"/>
-        <g class="lini-node lini-shape-text" transform="translate(0,0)">
-          <text x="0" y="0">D</text>
+        <g class="lini-node lini-shape-rect" data-id="q" transform="translate(0,34.8)">
+          <rect x="-20.075" y="-24.3" width="40.15" height="48.6" rx="0" ry="0"/>
+          <g class="lini-node lini-shape-text" transform="translate(0,0)">
+            <text x="0" y="0">q</text>
+          </g>
         </g>
       </g>
     </g>
-    <g class="lini-node lini-shape-cell lini-shape-rect" transform="translate(90.5,34.8)">
-      <rect x="-30.8" y="-24.3" width="61.6" height="48.6" rx="0" ry="0"/>
-      <g class="lini-node lini-shape-text" transform="translate(0,0)">
-        <text x="0" y="0">cell</text>
+    <g class="lini-node lini-shape-row lini-shape-rect" data-id="band" transform="translate(0,-4.9)">
+      <rect x="-134.825" y="-32.5" width="269.65" height="65" rx="0" ry="0"/>
+      <g class="lini-node lini-shape-rect" data-id="svc" transform="translate(-64.325,0)">
+        <rect x="-70" y="-32" width="140" height="64" rx="0" ry="0"/>
+        <g class="lini-node lini-shape-text" transform="translate(0,0)">
+          <text x="0" y="0">Service</text>
+        </g>
+        <g class="lini-node lini-shape-badge lini-shape-rect" transform="translate(70,-32)">
+          <g filter="url(#lini-shadow-1)">
+            <rect x="-17.575" y="-9.1" width="35.15" height="18.2" rx="999" ry="999"/>
+          </g>
+          <g class="lini-node lini-shape-text" style="font-size: 11px" transform="translate(0,0)">
+            <text x="0" y="0">NEW</text>
+          </g>
+        </g>
+      </g>
+      <g class="lini-node lini-shape-note lini-shape-rect" transform="translate(82.5,0)">
+        <g filter="url(#lini-shadow-1)">
+          <rect x="-51.825" y="-20.3" width="103.65" height="40.6" rx="2" ry="2"/>
+        </g>
+        <g class="lini-node lini-shape-text" transform="translate(0,0)">
+          <text x="0" y="0">Sticky note</text>
+        </g>
+      </g>
+    </g>
+    <g class="lini-node lini-shape-table lini-shape-group lini-shape-rect" data-id="basket" transform="translate(0,127.6)">
+      <rect x="-150" y="-75" width="300" height="150" rx="6" ry="6"/>
+      <g class="lini-node lini-shape-cell lini-shape-rect" transform="translate(-100,-50)">
+        <rect x="-39.5" y="-14.5" width="79" height="29" rx="0" ry="0"/>
+        <g class="lini-node lini-shape-text" transform="translate(0,0)">
+          <text x="0" y="0">Fruit</text>
+        </g>
+      </g>
+      <g class="lini-node lini-shape-cell lini-shape-rect" transform="translate(0,-50)">
+        <rect x="-39.5" y="-14.5" width="79" height="29" rx="0" ry="0"/>
+        <g class="lini-node lini-shape-text" transform="translate(0,0)">
+          <text x="0" y="0">Qty</text>
+        </g>
+      </g>
+      <g class="lini-node lini-shape-cell lini-shape-rect" transform="translate(100,-50)">
+        <rect x="-39.5" y="-14.5" width="79" height="29" rx="0" ry="0"/>
+        <g class="lini-node lini-shape-text" transform="translate(0,0)">
+          <text x="0" y="0">Note</text>
+        </g>
+      </g>
+      <g class="lini-node lini-shape-cell lini-shape-rect" transform="translate(-100,0)">
+        <rect x="-39.5" y="-14.5" width="79" height="29" rx="0" ry="0"/>
+        <g class="lini-node lini-shape-text" transform="translate(0,0)">
+          <text x="0" y="0">Apple</text>
+        </g>
+      </g>
+      <g class="lini-node lini-shape-cell lini-shape-rect" transform="translate(0,0)">
+        <rect x="-39.5" y="-14.5" width="79" height="29" rx="0" ry="0"/>
+        <g class="lini-node lini-shape-text" transform="translate(0,0)">
+          <text x="0" y="0">12</text>
+        </g>
+      </g>
+      <g class="lini-node lini-shape-cell lini-shape-rect" transform="translate(100,0)">
+        <rect x="-39.5" y="-14.5" width="79" height="29" rx="0" ry="0"/>
+        <g class="lini-node lini-shape-text" transform="translate(0,0)">
+          <text x="0" y="0">fresh</text>
+        </g>
+      </g>
+      <g class="lini-node lini-shape-cell lini-shape-rect" transform="translate(-100,50)">
+        <rect x="-39.5" y="-14.5" width="79" height="29" rx="0" ry="0"/>
+        <g class="lini-node lini-shape-text" transform="translate(0,0)">
+          <text x="0" y="0">Mango</text>
+        </g>
+      </g>
+      <g class="lini-node lini-shape-cell lini-shape-rect" transform="translate(0,50)">
+        <rect x="-39.5" y="-14.5" width="79" height="29" rx="0" ry="0"/>
+        <g class="lini-node lini-shape-text" transform="translate(0,0)">
+          <text x="0" y="0">3</text>
+        </g>
+      </g>
+      <g class="lini-node lini-shape-cell lini-shape-rect" transform="translate(100,50)">
+        <rect x="-39.5" y="-14.5" width="79" height="29" rx="0" ry="0"/>
+        <g class="lini-node lini-shape-text" transform="translate(0,0)">
+          <text x="0" y="0">ripe</text>
+        </g>
       </g>
     </g>
   </g>

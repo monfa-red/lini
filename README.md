@@ -106,7 +106,7 @@ services |group| "Services" layout:row gap:24 {
 |path|    "path"  d:"M -34 6 C -34 -34 34 -34 34 6 C 20 34 -20 34 -34 6 Z"
 ```
 
-Rect, oval, hex, slant, cylinder, diamond, cloud, polygon, line, text, icon (Material Symbols), image — plus `path` for anything else. Templates (`group`, `card`, `badge`, `button`, `note`, `table`, `cell`) bundle the common patterns, and you can define your own shapes by extending any base: `|callout:card| stroke:--accent`.
+Rect, oval, hex, slant, cylinder, diamond, cloud, polygon, line, text, icon (Material Symbols), image — plus `path` for anything else. Templates (`group`, `badge`, `note`, `row`, `col`, `table`, `cell`) bundle the common patterns, and you can define your own shapes by extending any base: `|panel:group| stroke:--accent`.
 
 ---
 
