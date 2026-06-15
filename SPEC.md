@@ -163,7 +163,7 @@ order, each identified by its leading sigil:
   .loud   stroke:red thickness:2                           // style def
   |treat:rect| radius:5                                    // shape def
   |den:group|  layout:column gap:8 padding:12 {            // shape def with body
-    |text| "Title" at:top weight:bold
+    |title| "Title" weight:bold
     body  |text| "Content"
   }
 }
@@ -224,7 +224,7 @@ styles/attrs (these may interleave) → `{ body }`.
 
 ```
 garden |group| {
-  |text| "Title" at:top weight:bold
+  |title| "Title" weight:bold
   body |text| "Content"          // id'd, so a wire can reach it
 }
 ```
@@ -304,14 +304,15 @@ axis.
 | Attr | Effect |
 |---|---|
 | `at:(x, y)` | Bbox center at (x, y). Removes from flow. |
-| `side: top\|bottom\|left\|right` | Anchor to an edge; `align:` slides, `place:` in/out. Removes from flow. See [Positioning](#7-positioning--anchors). |
+| `side: top\|bottom\|left\|right` | Anchor to an edge; `align:` slides, `place:` in/on/out (reserve vs overlay). Removes from flow. See [Positioning](#7-positioning--anchors). |
 | `offset:(x, y)` | Fine-tune from `at:` / `side:`. |
 | `cell:(c, r)` | Grid placement, 1-indexed. |
 | `span:(c, r)` | Grid span. Default `(1, 1)`. |
 | `z:N` | Render-order override; source order is the tiebreak. |
 
-`at:` always beats `cell:`. An absolutely-positioned child still expands the
-parent's bbox. Out-of-range cells are an error.
+`at:` always beats `cell:`. A reserved child (`place:in`/`out`) grows the
+parent's bbox; an absolute overlay (`at:`/`place:on`) does not (§7). Out-of-range
+cells are an error.
 
 ---
 
@@ -334,25 +335,39 @@ stroke included.
 
 ### Positioning a child
 
-A child leaves the flow when it carries **`at:`** or **`side:`** — one
-positioning model, no compound anchor names:
+A child leaves the flow when it carries **`at:`** or **`side:`** — one model,
+no compound anchor names:
 
 - **`at:(x, y)`** — bbox center at explicit parent-local coords (the origin is
   the parent's center, so `at:(0, 0)` centers).
 - **`side: top | bottom | left | right`** — anchor to an edge. **`align: start
   | center | end`** slides along it, so a corner needs no special name
-  (`side:top align:end` = top-right; `start`/`end` are the low/high ends of the
-  edge — left/top is `start`). **`place: in | out`** sets the child flush
-  **inside** the edge or just **outside** it — *size-aware*: it clears the edge
-  by its own extent, staying flush at any size. Defaults `align:center
-  place:in`.
+  (`side:top align:end` = top-right; `start`/`end` are the low/high ends —
+  left/top is `start`). **`place: in | on | out`** decides how the edge is met,
+  *size-aware* — the child clears the edge by its own extent at any size:
+  - **`in`** — flush inside, and **reserves a band**: flow content shifts to
+    clear it and the box grows (top/bottom only; left/right fall back to top).
+    `gap:` is the space to the content (default `title-gap` = 4; `gap:0` = the
+    band is exactly the child's height). This is what `|title|` does.
+  - **`out`** — flush outside, reserving the band outside the box.
+  - **`on`** — centred on the edge/corner (a corner anchor straddles it); an
+    **overlay**, no reserve.
 
-`offset:(x, y)` nudges from `at:` or `side:`. An out-of-flow child still expands
-the parent's bbox (so an outside title or caption grows the box around itself).
+  Defaults `align:center place:in`.
+
+**Reserve vs overlay is the whole rule, for every shape.** `place:in`/`out`
+*reserve* — the parent grows to hold the band, so the child never overlaps.
+`place:on` and `at:(x, y)` are *absolute overlays*: positioned against the
+parent but they **don't grow it**, and a parent holding only overlays (with no
+`size:`) collapses — `position:absolute` against a `position:relative` parent.
+An overlay is still drawn, and the canvas always includes it (never clipped).
+No element is special here: `|title|` is just `|text|` with `place:in side:top`;
+`|badge|` is a rect with `place:on`.
+
+`offset:(x, y)` nudges from `at:` or `side:`.
 
 **Wire-route anchors are separate** — only on a `|text|` child of a wire
-(`start` / `mid` / `end`, or a fraction `0..1` along the route). They position
-*along a line*, not against a box, so they share none of the above.
+(`start` / `mid` / `end`, or a fraction `0..1`). They position *along a line*.
 
 ### Auto-sizing
 
@@ -422,13 +437,14 @@ arrow, end dot.
 
 ## 9. Templates
 
-7 templates — each an attribute bundle over a primitive base, named because the
+8 templates — each an attribute bundle over a primitive base, named because the
 pattern is common.
 
 | Template | Base | Defaults | For |
 |---|---|---|---|
 | `\|group\|` | `\|rect\|` | `stroke:--group-stroke fill:--group-fill radius:6 padding:10` | Frame + label. |
-| `\|badge\|` | `\|rect\|` | `side:top align:end place:out offset:(6,6) radius:999 padding:(2,8) shadow:2 fill:--accent z:10`; small on-accent text | Corner pill. |
+| `\|badge\|` | `\|rect\|` | `side:top align:end place:on radius:999 padding:(2,8) shadow:2 fill:--accent z:10`; small on-accent text | Corner pill (straddles the corner, grows nothing). |
+| `\|title\|` | `\|text\|` | `side:top place:in align:start` | A caption that reserves a band on the edge (see [§7](#7-positioning--anchors)). |
 | `\|note\|` | `\|rect\|` | `radius:2 padding:12 shadow:2 stroke:none fill:--note-bg` | Sticky note. |
 | `\|row\|` | `\|rect\|` | `layout:row fill:none stroke:none padding:0` | Frameless wrapper — children in a row. |
 | `\|col\|` | `\|rect\|` | `layout:column fill:none stroke:none padding:0` | Frameless wrapper — children in a column. |
@@ -615,7 +631,7 @@ for *labels*, `fill` for *bodies*.
 |---|---|---|
 | `at` | `(x, y)` | Bbox center at coords; removes from flow. |
 | `side` | `top` / `bottom` / `left` / `right` | Edge anchor (with `align` / `place`); removes from flow. See [§7](#7-positioning--anchors). |
-| `place` | `in` / `out` | Flush inside or outside the `side` edge. Default `in`. Size-aware. |
+| `place` | `in` / `on` / `out` | `in`/`out` reserve a band inside/outside the `side` edge; `on` is an overlay centred on it (no reserve). Default `in`. Size-aware. |
 | `offset` | `(x, y)` | Nudge from `at:` / `side:`. |
 | `size` | `N` or `(w,h)` | Bbox dimensions. |
 | `points` | `[(x,y),…]` | Vertex list. |
@@ -708,7 +724,7 @@ Baked compile-time defaults — override per-node, per-wire, on `|scene|` /
 ```
 text-size 13   text-pad 16   thickness 1   radius 0
 gap 20         padding 0     clearance 16  icon-size 24
-canvas-pad 20
+canvas-pad 20  title-gap 4
 ```
 
 Per-shape default sizes are in [Positioning → Auto-sizing](#7-positioning--anchors).
@@ -986,7 +1002,7 @@ free (`Start`, `Card`, …).
 - **Wire-route anchor:** `mid` (`start`/`end` overlap alignment values; resolved by context).
 - **Origin:** `top-left`.
 - **Primitives:** `rect`, `oval`, `line`, `path`, `poly`, `text`, `hex`, `slant`, `cyl`, `diamond`, `cloud`, `icon`, `image`.
-- **Templates:** `group`, `badge`, `note`, `row`, `col`, `table`, `cell` (`row` also a layout value).
+- **Templates:** `group`, `badge`, `note`, `title`, `row`, `col`, `table`, `cell` (`row` also a layout value).
 - **Special:** `scene`, `wire` (defs block only).
 - **Constants:** `true`, `false`, `none`, `auto`.
 - **Functions:** `var`, `rgb`, `rgba`, `hsl`.
@@ -1069,7 +1085,7 @@ basket |table| layout:(3,3) col-widths:[80,140,80] row-heights:28 {
 }
 
 dim1 |line| points:[(0,200),(300,200)] marker:arrow color:#666 {
-  |text| "300 mm" at:center text-size:11
+  |text| "300 mm" at:(0, 0) text-size:11
 }
 ```
 

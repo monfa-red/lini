@@ -175,6 +175,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
         // properties, so they flow from the text's <g> into the element.
         // `stroke: none` masks a container's stroke from bleeding into the
         // glyphs (text never strokes; the wire-label halo is element-level).
+        // `|title|` is a text template, so it shares this rule via lini-shape-text.
         rules.push(Rule {
             class: "lini-shape-text".into(),
             props: vec![

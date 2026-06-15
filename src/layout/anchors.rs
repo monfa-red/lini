@@ -29,10 +29,15 @@ pub enum Align {
     End,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 pub enum Place {
+    /// Flush inside the edge — reserves a band (content shifts to clear it).
     In,
+    /// Flush outside the edge — reserves a band outside (the parent gap).
     Out,
+    /// Centred on the edge/corner — no reserve, an absolute overlay (like
+    /// `at:(x,y)`); it doesn't grow the parent.
+    On,
 }
 
 /// How a non-flow child is positioned in its parent's local frame.
@@ -49,7 +54,7 @@ pub enum Pos {
 }
 
 impl Side {
-    fn parse(s: &str) -> Option<Self> {
+    pub fn parse(s: &str) -> Option<Self> {
         Some(match s {
             "top" => Self::Top,
             "bottom" => Self::Bottom,
@@ -79,8 +84,14 @@ impl Place {
         Some(match s {
             "in" => Self::In,
             "out" => Self::Out,
+            "on" => Self::On,
             _ => return None,
         })
+    }
+
+    /// `in`/`out` reserve a band; `on` is an absolute overlay (no reserve).
+    pub fn reserves(self) -> bool {
+        matches!(self, Self::In | Self::Out)
     }
 }
 
@@ -117,6 +128,28 @@ pub fn parse_offset(value: &ResolvedValue, span: Span) -> Result<(f64, f64), Err
     as_pair(value, span)
 }
 
+/// A child's layout role, by how it is positioned.
+#[derive(Clone, Copy, PartialEq)]
+pub enum Role {
+    /// No `at:`/`side:` — laid out by the container's `layout`.
+    Flow,
+    /// `side:` with `place:in`/`out` — reserves a band; the parent grows.
+    Reserve,
+    /// `at:(x,y)`, or `side:` with `place:on` — an absolute overlay; the parent
+    /// does not grow for it.
+    Absolute,
+}
+
+/// Classify a child from its positioning attrs.
+pub fn child_role(attrs: &AttrMap, span: Span) -> Result<Role, Error> {
+    Ok(match read_pos(attrs, span)? {
+        None => Role::Flow,
+        Some(Pos::Coord(..)) => Role::Absolute,
+        Some(Pos::Edge { place, .. }) if place.reserves() => Role::Reserve,
+        Some(Pos::Edge { .. }) => Role::Absolute,
+    })
+}
+
 /// Resolve a `Pos` into the child's target bbox-center in the parent's local
 /// frame. `place` is size-aware: the child's facing edge lands flush on the
 /// parent edge, inside or outside, by shifting half the child's extent.
@@ -132,10 +165,12 @@ pub fn resolve(pos: Pos, parent: Bbox, child: Bbox) -> (f64, f64) {
                 Align::End => max - size / 2.0,
             };
             // Distance across the edge: inside pulls the child in by its half
-            // extent, outside pushes it out — flush either way.
+            // extent, outside pushes it out (flush either way), `on` centres it
+            // on the edge — so a corner anchor straddles the corner.
             let across = |edge: f64, half: f64, place: Place, outward: f64| match place {
                 Place::In => edge - outward * half,
                 Place::Out => edge + outward * half,
+                Place::On => edge,
             };
             match side {
                 Side::Top => (

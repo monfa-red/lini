@@ -4,12 +4,12 @@
 // group, wrap a forced outer pair around the whole scene, and land
 // group-to-group wires through occupied faces.
 //
-// Expected: all four laws hold with several forced crossings — the two .hot
-// forced-left wires interleave on the same west-facing column (Jordan
-// curve), and the late east -> west takes the margins the two diagonals and
-// the west fence already hold: it crosses each fence wire once, and the
-// diagonals lose their uncrossed wrap to it. Everything else routes
-// crossing-free; east -> hub slides its port off east's centre row (Law 2's
+// Expected: all four laws hold, with several forced crossings. The four
+// compass groups carry titles, so each reserves a band — with the dense gap
+// the scene is heavily contended and the engine keeps a number of square-on
+// crossings (pinned in tests/wiring.rs), led by the two .hot forced-left wires
+// interleaving on the same west-facing column (a Jordan curve). Every edge is
+// still drawn; east -> hub slides its port off east's centre row (Law 2's
 // slide clause) instead of grazing the ee1 approaches.
 
 {
@@ -59,7 +59,7 @@ north.nn2 -> east.ee1 .cool
 west.ww2 -> south.ss1
 west.ww2 -> south.ss1
 
-// Long hauls past the hub: opposite diagonals, still routable uncrossed.
+// Long hauls past the hub: opposite diagonals (crossed under the tight layout).
 alpha -> delta "diag"
 beta -> gamma "diag"
 

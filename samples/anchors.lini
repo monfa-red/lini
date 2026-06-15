@@ -1,27 +1,21 @@
-// Positioning: `side` picks an edge, `align` slides along it (start/center/end),
-// `place` puts the child inside or just outside that edge — size-aware, so it
-// lands flush at any size. `at:(x, y)` is raw parent-local coords. Corners fall
-// out of side + align (`side:top align:end` = top-right); no compound names.
+// Positioning (SPEC §7): `side` picks an edge, `align` slides along it, and
+// `place` decides reserve vs overlay — `in`/`out` reserve a band (that's what
+// `|title|` does), while `on` is an overlay that straddles the edge/corner and
+// grows nothing (like `at:(x,y)`). Corners fall out of side + align; no
+// compound names. `offset:(x,y)` nudges.
 
 {
-  |scene| layout:row gap:90 padding:50
+  |scene| padding:40
 }
 
-// Inside (place:in, the default): labels hug each edge; align spreads the top.
-inner |rect| size:(220, 140) fill:#eee {
-  |rect| "C" size:(18, 14) fill:green at:(0, 0)
-  |rect| "T<" size:(22, 14) fill:red side:top align:start
-  |rect| "T" size:(18, 14) fill:red side:top
-  |rect| "T>" size:(22, 14) fill:red side:top align:end
-  |rect| "B" size:(18, 14) fill:red side:bottom
-  |rect| "L" size:(18, 14) fill:red side:left
-  |rect| "R" size:(18, 14) fill:red side:right
-}
-
-// Outside (place:out): the same anchors, child sits just past the edge.
-outer |rect| size:(220, 140) fill:#eee {
-  |rect| "T" size:(18, 14) fill:blue side:top place:out
-  |rect| "B" size:(18, 14) fill:blue side:bottom place:out
-  |rect| "L" size:(18, 14) fill:blue side:left place:out
-  |rect| "R" size:(18, 14) fill:blue side:right place:out
+box |rect| size:(240, 150) fill:#eee {
+  |text| "C" at:(0, 0) fill:green
+  |text| "T<" side:top align:start place:on fill:red
+  |text| "T" side:top place:on fill:red
+  |text| "T>" side:top align:end place:on fill:red
+  |text| "L" side:left place:on fill:red
+  |text| "R" side:right place:on fill:red
+  |text| "BL" side:bottom align:start place:on fill:blue
+  |text| "B" side:bottom place:on fill:blue
+  |text| "BR" side:bottom align:end place:on fill:blue
 }

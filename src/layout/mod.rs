@@ -4,6 +4,7 @@ mod grid;
 mod ir;
 mod primitives;
 mod text;
+mod titles;
 mod values;
 mod wires;
 
@@ -161,11 +162,27 @@ fn child_path(parent: &str, inst: &ResolvedInst) -> String {
     }
 }
 
+/// Union every node's drawn extent into `bbox`, in world coords — so the
+/// canvas includes absolute overlays that don't grow their parent's bbox.
+fn accumulate_extent(n: &PlacedNode, ox: f64, oy: f64, bbox: &mut Bbox) {
+    let (wx, wy) = (ox + n.cx, oy + n.cy);
+    *bbox = bbox.union(n.bbox.shifted(wx, wy));
+    for c in &n.children {
+        accumulate_extent(c, wx, wy, bbox);
+    }
+}
+
 fn finish(program: &Program, attempt: Attempt) -> LaidOut {
     // Viewbox = scene bbox + wire paths, labels, airwires + canvas-pad on
     // every side.
     let pad = values::layout_var(&program.vars, "canvas-pad").unwrap_or(20.0);
+    // Absolute overlays don't grow their parent's bbox, so the scene bbox can
+    // miss one that overflows; the canvas must still include every drawn node,
+    // so take the true visual extent of the whole tree.
     let mut bbox = attempt.bbox;
+    for n in &attempt.nodes {
+        accumulate_extent(n, 0.0, 0.0, &mut bbox);
+    }
     let routing = attempt.routing;
     let wire_points = routing.wires.iter().flat_map(|w| &w.path);
     let air_points = routing.airwires.iter().flat_map(|a| [&a.from, &a.to]);
@@ -351,15 +368,17 @@ fn lay_out_container_children(
         &grown
     };
 
-    // Separate flow vs absolutely-positioned children. A child leaves the flow
-    // when it carries `at:` (coords) or `side:` (an edge anchor).
+    // Sort children into three roles (SPEC §7). `side:` with `place:in`/`out`
+    // reserves an edge band (the parent grows); `at:(x,y)` or `place:on` is an
+    // absolute overlay (the parent does not grow); everything else flows.
     let mut flow_indices: Vec<usize> = Vec::new();
     let mut abs_indices: Vec<usize> = Vec::new();
+    let mut reserve_indices: Vec<usize> = Vec::new();
     for (i, c) in children.iter().enumerate() {
-        if c.attrs.get("at").is_some() || c.attrs.get("side").is_some() {
-            abs_indices.push(i);
-        } else {
-            flow_indices.push(i);
+        match anchors::child_role(&c.attrs, c.span)? {
+            anchors::Role::Flow => flow_indices.push(i),
+            anchors::Role::Reserve => reserve_indices.push(i),
+            anchors::Role::Absolute => abs_indices.push(i),
         }
     }
 
@@ -396,10 +415,26 @@ fn lay_out_container_children(
         Bbox::empty()
     };
 
-    // Resolution bbox for named anchors. If the container has explicit
-    // dimensions (e.g. `size:(200, 120)`), anchors snap to those
-    // edges; otherwise we fall back to the flow-children extent.
-    let anchor_parent_bbox = container_anchor_bbox(container_attrs).unwrap_or(flow_bbox);
+    // Reserve children carve a band on the top/bottom edge: content shifts to
+    // clear them and the box grows. The result — content + bands — is the body
+    // the anchors and the parent bbox resolve against.
+    let body_bbox = if reserve_indices.is_empty() {
+        flow_bbox
+    } else {
+        titles::reserve_bands(
+            children,
+            &flow_indices,
+            &reserve_indices,
+            flow_bbox,
+            &mut grid_rules,
+            vars,
+        )
+    };
+
+    // Resolution bbox for edge anchors. If the container has explicit
+    // dimensions (e.g. `size:(200, 120)`), anchors snap to those edges;
+    // otherwise we fall back to the body extent.
+    let anchor_parent_bbox = container_anchor_bbox(container_attrs).unwrap_or(body_bbox);
 
     // Absolutely positioned children.
     for i in &abs_indices {
@@ -418,16 +453,12 @@ fn lay_out_container_children(
         children[*i].cy = target_cy + offset.1 - local_off_y;
     }
 
-    // Compose union of flow and absolutely-positioned extents.
-    let mut abs_boxes = abs_indices
-        .iter()
-        .map(|&i| children[i].bbox.shifted(children[i].cx, children[i].cy));
-    let union = if flow_indices.is_empty() {
-        abs_boxes.next().unwrap_or(Bbox::empty())
-    } else {
-        flow_bbox
-    };
-    Ok((abs_boxes.fold(union, Bbox::union), grid_rules))
+    // Absolute overlays (`at:`, `place:on`) are positioned above, but they do
+    // NOT grow the parent (SPEC §7): the parent sizes to its flow + reserved
+    // bands only. An absolutes-only container with no explicit `size:` collapses
+    // — that's the deal. The canvas viewBox still includes them (see `finish`),
+    // so an overlay is never clipped.
+    Ok((body_bbox, grid_rules))
 }
 
 /// Container layout mode, parsed from the `layout=` attr.

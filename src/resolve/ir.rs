@@ -53,7 +53,9 @@ pub struct ResolvedInst {
     pub span: Span,
 }
 
-/// One of the 13 built-in primitives. All user shapes resolve to one of these.
+/// One of the built-in primitives. All user shapes resolve to one of these.
+/// (`|title|` is not here — it's a `|text|` template; a title is just text
+/// whose `place` reserves a band, SPEC §7.)
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ShapeKind {
     Rect,

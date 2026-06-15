@@ -192,12 +192,12 @@ fn seg_rect_distance(a: (f64, f64), b: (f64, f64), r: (f64, f64, f64, f64)) -> f
 }
 
 /// Law 3 pins: the three wiring scenes carry a known number of forced
-/// crossings — zero, zero, and seven at the default group padding: the
-/// provable `.hot` interleave, `east -> west` over each west-fence wire (it
-/// lands on west's top through the corner the fence wraps), the diagonals
-/// against each other, the ss1 contention pair (twice), and `east -> hub`
-/// over the ee1 approach. Behaviour pins, not coordinate pins — if the
-/// audit ever finds fewer, lower the pin, never the engine.
+/// crossings — zero, zero, and the count below. The four compass groups carry
+/// titles, so each reserves a band; with the dense gap that leaves little
+/// corridor room and the scene is heavily contended. Behaviour pin, not a
+/// coordinate pin — if the audit ever finds fewer, lower the pin, never the
+/// engine. (The scene's gap is the density dial if a cleaner showcase is
+/// wanted; widening it drops the count sharply.)
 #[test]
 fn crossing_counts_are_pinned() {
     let crossings = |path: &str| {
@@ -210,7 +210,7 @@ fn crossing_counts_are_pinned() {
     };
     assert_eq!(crossings("samples/wires_simple.lini"), 0);
     assert_eq!(crossings("samples/wires_medium.lini"), 0);
-    assert_eq!(crossings("samples/wires_hard.lini"), 7);
+    assert_eq!(crossings("samples/wires_hard.lini"), 15);
 }
 
 /// Law 3 (Economy), audit accept: a crossing a longer route can remove is
@@ -450,7 +450,7 @@ fn the_kept_crossing_names_its_wire_pair() {
         .into_iter()
         .filter(|v| v.rule == Rule::Crossing)
         .collect();
-    assert_eq!(kept.len(), 7);
+    assert_eq!(kept.len(), 15);
     assert!(
         kept.iter().any(|v| v.wires
             == vec![

@@ -329,7 +329,7 @@ pub(super) fn is_reserved(name: &str) -> bool {
         | "in" | "out"
         | "mid"
         // Primitives
-        | "rect" | "oval" | "line" | "path" | "poly" | "text"
+        | "rect" | "oval" | "line" | "path" | "poly" | "text" | "title"
         | "hex" | "slant" | "cyl" | "diamond" | "cloud" | "icon" | "image"
         // Templates ("row" is reserved above as a layout value)
         | "group" | "badge" | "note" | "col"
@@ -509,7 +509,10 @@ fn resolve_inst(
     let markers = resolve_markers(&ordered, MarkerKind::None, MarkerKind::None)?;
     let mut attrs = collapse(&ordered);
 
-    if resolved_shape.kind == ShapeKind::Text {
+    // `|text|` (and so `|title|`, a text template) carries its own label, is
+    // sized to its glyphs, and inherits cascaded text attrs; `size` is an error.
+    let text_like = resolved_shape.kind == ShapeKind::Text;
+    if text_like {
         if attrs.get("size").is_some() {
             return Err(size_on_text_error(inst.span));
         }
@@ -548,11 +551,18 @@ fn resolve_inst(
     // Body assembly: shape-def intrinsic children, then label sugar (non-text),
     // then explicit body items from the source.
     let mut body_items: Vec<BodyItem> = resolved_shape.body_items.clone();
-    let own_label = if resolved_shape.kind == ShapeKind::Text {
+    let own_label = if text_like {
         inst.label.clone()
     } else {
         if let Some(label) = &inst.label {
-            body_items.push(BodyItem::Inst(label_sugar_text(label, inst.span)));
+            // A group's label is a title (it reserves a top band, SPEC §7); every
+            // other shape's label is centred content text.
+            let kind = if resolved_shape.type_chain.iter().any(|t| t == "group") {
+                "title"
+            } else {
+                "text"
+            };
+            body_items.push(BodyItem::Inst(label_sugar(label, inst.span, kind)));
         }
         None
     };
@@ -597,11 +607,11 @@ fn resolve_inst(
     })
 }
 
-fn label_sugar_text(text: &str, span: Span) -> ShapeInst {
+fn label_sugar(text: &str, span: Span, ty: &str) -> ShapeInst {
     ShapeInst {
         id: None,
         ty: TypeRef {
-            name: "text".to_string(),
+            name: ty.to_string(),
             span,
         },
         label: Some(text.to_string()),

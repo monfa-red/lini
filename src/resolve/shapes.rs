@@ -12,6 +12,7 @@ pub(super) const TEMPLATES: &[(&str, &str)] = &[
     ("group", "rect"),
     ("badge", "rect"),
     ("note", "rect"),
+    ("title", "text"),
     ("row", "rect"),
     ("col", "rect"),
     ("table", "group"),
@@ -200,15 +201,14 @@ pub(super) fn template_attrs(name: &str) -> Vec<ResolvedAttr> {
             attr("radius", num(6.0)),
             attr("padding", num(10.0)),
         ],
-        // Corner pill: small on-accent text on an accent capsule, anchored
-        // just outside the host's top-right corner (`side`/`align`/`place`),
-        // nudged to sit over the corner. `color`/`text-size` cascade to the
+        // Corner pill: small on-accent text on an accent capsule, centred on
+        // the host's top-right corner (`place:on` — an overlay that straddles
+        // the corner and grows nothing). `color`/`text-size` cascade to the
         // label.
         "badge" => vec![
             attr("side", ident("top")),
             attr("align", ident("end")),
-            attr("place", ident("out")),
-            attr("offset", pair(6.0, 6.0)),
+            attr("place", ident("on")),
             attr("radius", num(999.0)),
             attr("padding", pair(2.0, 8.0)),
             attr("shadow", num(2.0)),
@@ -216,6 +216,14 @@ pub(super) fn template_attrs(name: &str) -> Vec<ResolvedAttr> {
             attr("color", live("on-accent")),
             attr("text-size", num(11.0)),
             attr("z", num(10.0)),
+        ],
+        // A caption that reserves a band on its container's top edge — tight
+        // (text height + `title-gap`), left-aligned. `place:in` keeps it inside
+        // the frame; override `side`/`place`/`align` to move it.
+        "title" => vec![
+            attr("side", ident("top")),
+            attr("place", ident("in")),
+            attr("align", ident("start")),
         ],
         // Sticky note: pale fill, soft shadow, no border.
         "note" => vec![
