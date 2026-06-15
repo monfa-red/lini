@@ -103,7 +103,8 @@ pub fn lay_out_grid(
     let total_w = col_offsets[cols] - gap_x;
     let total_h = row_offsets[rows] - gap_y;
 
-    // Place each child centered in its (possibly spanning) cell.
+    // Place each child in its (possibly spanning) cell.
+    let (fill_w, fill_h) = (explicit_col.is_some(), explicit_row.is_some());
     for p in &placements {
         let cell_x_start = col_offsets[p.col];
         let cell_y_start = row_offsets[p.row];
@@ -113,6 +114,26 @@ pub fn lay_out_grid(
         let cell_cy = (cell_y_start + cell_y_end) / 2.0 - total_h / 2.0;
 
         let child = &mut children[p.child_index];
+
+        // SPEC §6: with explicit col-widths / row-heights, a cell takes the
+        // track size exactly — an explicit child `size:` still wins. A child
+        // that set no size fills its track rather than floating in it; its
+        // content stays centred (the bbox is recentred on the origin, which
+        // every laid-out child already is).
+        if child.attrs.get("size").is_none() {
+            let w = if fill_w {
+                cell_x_end - cell_x_start
+            } else {
+                child.bbox.w()
+            };
+            let h = if fill_h {
+                cell_y_end - cell_y_start
+            } else {
+                child.bbox.h()
+            };
+            child.bbox = Bbox::centered(w, h);
+        }
+
         let local_offset_x = (child.bbox.min_x + child.bbox.max_x) / 2.0;
         let local_offset_y = (child.bbox.min_y + child.bbox.max_y) / 2.0;
         child.cx = cell_cx - local_offset_x;

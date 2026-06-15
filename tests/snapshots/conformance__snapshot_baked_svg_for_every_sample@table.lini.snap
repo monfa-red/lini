@@ -15,55 +15,55 @@ input_file: samples/table.lini
     <g class="lini-node lini-shape-table lini-shape-group lini-shape-rect" data-id="basket" transform="translate(0,0)">
       <rect x="-180" y="-72" width="360" height="144" rx="6" ry="6"/>
       <g class="lini-node lini-shape-cell lini-shape-rect" style="font-weight: bold" transform="translate(-130,-48)">
-        <rect x="-34.375" y="-24.3" width="68.75" height="48.6" rx="0" ry="0"/>
+        <rect x="-39.5" y="-13.5" width="79" height="27" rx="0" ry="0"/>
         <g class="lini-node lini-shape-text" style="font-weight: bold" transform="translate(0,0)">
           <text x="0" y="0">Fruit</text>
         </g>
       </g>
       <g class="lini-node lini-shape-cell lini-shape-rect" style="font-weight: bold" transform="translate(0,-48)">
-        <rect x="-45.1" y="-24.3" width="90.2" height="48.6" rx="0" ry="0"/>
+        <rect x="-69.5" y="-13.5" width="139" height="27" rx="0" ry="0"/>
         <g class="lini-node lini-shape-text" style="font-weight: bold" transform="translate(0,0)">
           <text x="0" y="0">Quantity</text>
         </g>
       </g>
       <g class="lini-node lini-shape-cell lini-shape-rect" style="font-weight: bold" transform="translate(130,-48)">
-        <rect x="-34.375" y="-24.3" width="68.75" height="48.6" rx="0" ry="0"/>
+        <rect x="-39.5" y="-13.5" width="79" height="27" rx="0" ry="0"/>
         <g class="lini-node lini-shape-text" style="font-weight: bold" transform="translate(0,0)">
           <text x="0" y="0">Notes</text>
         </g>
       </g>
       <g class="lini-node lini-shape-cell lini-shape-rect" transform="translate(-130,0)">
-        <rect x="-34.375" y="-24.3" width="68.75" height="48.6" rx="0" ry="0"/>
+        <rect x="-39.5" y="-13.5" width="79" height="27" rx="0" ry="0"/>
         <g class="lini-node lini-shape-text" transform="translate(0,0)">
           <text x="0" y="0">Apple</text>
         </g>
       </g>
       <g class="lini-node lini-shape-cell lini-shape-rect" transform="translate(0,0)">
-        <rect x="-23.65" y="-24.3" width="47.3" height="48.6" rx="0" ry="0"/>
+        <rect x="-69.5" y="-13.5" width="139" height="27" rx="0" ry="0"/>
         <g class="lini-node lini-shape-text" transform="translate(0,0)">
           <text x="0" y="0">12</text>
         </g>
       </g>
       <g class="lini-node lini-shape-cell lini-shape-rect" transform="translate(130,0)">
-        <rect x="-34.375" y="-24.3" width="68.75" height="48.6" rx="0" ry="0"/>
+        <rect x="-39.5" y="-13.5" width="79" height="27" rx="0" ry="0"/>
         <g class="lini-node lini-shape-text" transform="translate(0,0)">
           <text x="0" y="0">fresh</text>
         </g>
       </g>
       <g class="lini-node lini-shape-cell lini-shape-rect" transform="translate(-130,48)">
-        <rect x="-34.375" y="-24.3" width="68.75" height="48.6" rx="0" ry="0"/>
+        <rect x="-39.5" y="-13.5" width="79" height="27" rx="0" ry="0"/>
         <g class="lini-node lini-shape-text" transform="translate(0,0)">
           <text x="0" y="0">Mango</text>
         </g>
       </g>
       <g class="lini-node lini-shape-cell lini-shape-rect" transform="translate(0,48)">
-        <rect x="-20.075" y="-24.3" width="40.15" height="48.6" rx="0" ry="0"/>
+        <rect x="-69.5" y="-13.5" width="139" height="27" rx="0" ry="0"/>
         <g class="lini-node lini-shape-text" transform="translate(0,0)">
           <text x="0" y="0">3</text>
         </g>
       </g>
       <g class="lini-node lini-shape-cell lini-shape-rect" transform="translate(130,48)">
-        <rect x="-30.8" y="-24.3" width="61.6" height="48.6" rx="0" ry="0"/>
+        <rect x="-39.5" y="-13.5" width="79" height="27" rx="0" ry="0"/>
         <g class="lini-node lini-shape-text" transform="translate(0,0)">
           <text x="0" y="0">ripe</text>
         </g>

@@ -45,25 +45,25 @@ input_file: samples/templates_all.lini
     <g class="lini-node lini-shape-table lini-shape-group lini-shape-rect" data-id="fridge" transform="translate(-48.45,34.8)">
       <rect x="-80" y="-44" width="160" height="88" rx="6" ry="6"/>
       <g class="lini-node lini-shape-cell lini-shape-rect" transform="translate(-40,-22)">
-        <rect x="-20.075" y="-24.3" width="40.15" height="48.6" rx="0" ry="0"/>
+        <rect x="-29.5" y="-11.5" width="59" height="23" rx="0" ry="0"/>
         <g class="lini-node lini-shape-text" transform="translate(0,0)">
           <text x="0" y="0">A</text>
         </g>
       </g>
       <g class="lini-node lini-shape-cell lini-shape-rect" transform="translate(40,-22)">
-        <rect x="-20.075" y="-24.3" width="40.15" height="48.6" rx="0" ry="0"/>
+        <rect x="-29.5" y="-11.5" width="59" height="23" rx="0" ry="0"/>
         <g class="lini-node lini-shape-text" transform="translate(0,0)">
           <text x="0" y="0">B</text>
         </g>
       </g>
       <g class="lini-node lini-shape-cell lini-shape-rect" transform="translate(-40,22)">
-        <rect x="-20.075" y="-24.3" width="40.15" height="48.6" rx="0" ry="0"/>
+        <rect x="-29.5" y="-11.5" width="59" height="23" rx="0" ry="0"/>
         <g class="lini-node lini-shape-text" transform="translate(0,0)">
           <text x="0" y="0">C</text>
         </g>
       </g>
       <g class="lini-node lini-shape-cell lini-shape-rect" transform="translate(40,22)">
-        <rect x="-20.075" y="-24.3" width="40.15" height="48.6" rx="0" ry="0"/>
+        <rect x="-29.5" y="-11.5" width="59" height="23" rx="0" ry="0"/>
         <g class="lini-node lini-shape-text" transform="translate(0,0)">
           <text x="0" y="0">D</text>
         </g>
