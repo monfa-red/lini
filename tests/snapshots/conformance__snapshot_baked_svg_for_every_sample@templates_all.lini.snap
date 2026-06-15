@@ -63,7 +63,7 @@ input_file: samples/templates_all.lini
         <g class="lini-node lini-shape-text" transform="translate(0,0)">
           <text x="0" y="0">Service</text>
         </g>
-        <g class="lini-node lini-shape-badge lini-shape-rect" transform="translate(70,-32)">
+        <g class="lini-node lini-shape-badge lini-shape-rect" transform="translate(57.925,-35.6)">
           <g filter="url(#lini-shadow-1)">
             <rect x="-17.575" y="-9.1" width="35.15" height="18.2" rx="999" ry="999"/>
           </g>

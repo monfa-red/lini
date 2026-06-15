@@ -1,120 +1,167 @@
-//! Anchor + absolute positioning for children inside a parent's bbox.
+//! Relative + absolute positioning for children inside a parent's bbox.
+//!
+//! A child leaves the flow when it carries either `at:(x, y)` — explicit
+//! parent-local coords — or `side:` — an edge anchor. For an edge anchor:
+//! `side` picks the edge, `align` slides along it (start / center / end),
+//! `place` puts the child inside or outside that edge — **size-aware**: the
+//! child clears the edge by its own extent, so it lands flush at any size —
+//! and `offset:(x, y)` nudges. Corners fall out of `side` + `align`
+//! (`side:top align:end` = top-right); there are no compound anchor names.
 
 use super::ir::Bbox;
 use super::values::as_pair;
 use crate::error::Error;
-use crate::resolve::ResolvedValue;
+use crate::resolve::{AttrMap, ResolvedValue};
 use crate::span::Span;
 
 #[derive(Clone, Copy)]
-pub enum AbsolutePos {
-    Coord(f64, f64),
-    Anchor(NamedAnchor),
-}
-
-#[derive(Clone, Copy)]
-pub enum NamedAnchor {
-    Center,
+pub enum Side {
     Top,
     Bottom,
     Left,
     Right,
-    TopLeft,
-    TopRight,
-    BottomLeft,
-    BottomRight,
-    OutTop,
-    OutBottom,
-    OutLeft,
-    OutRight,
-    OutTopLeft,
-    OutTopRight,
-    OutBottomLeft,
-    OutBottomRight,
 }
 
-impl NamedAnchor {
-    pub fn parse(name: &str) -> Option<Self> {
-        Some(match name {
-            "center" => Self::Center,
+#[derive(Clone, Copy)]
+pub enum Align {
+    Start,
+    Center,
+    End,
+}
+
+#[derive(Clone, Copy)]
+pub enum Place {
+    In,
+    Out,
+}
+
+/// How a non-flow child is positioned in its parent's local frame.
+#[derive(Clone, Copy)]
+pub enum Pos {
+    /// `at:(x, y)` — bbox center at explicit parent-local coords.
+    Coord(f64, f64),
+    /// `side:` — anchored to an edge, slid by `align`, inside/outside by `place`.
+    Edge {
+        side: Side,
+        align: Align,
+        place: Place,
+    },
+}
+
+impl Side {
+    fn parse(s: &str) -> Option<Self> {
+        Some(match s {
             "top" => Self::Top,
             "bottom" => Self::Bottom,
             "left" => Self::Left,
             "right" => Self::Right,
-            "top-left" => Self::TopLeft,
-            "top-right" => Self::TopRight,
-            "bottom-left" => Self::BottomLeft,
-            "bottom-right" => Self::BottomRight,
-            "out-top" => Self::OutTop,
-            "out-bottom" => Self::OutBottom,
-            "out-left" => Self::OutLeft,
-            "out-right" => Self::OutRight,
-            "out-top-left" => Self::OutTopLeft,
-            "out-top-right" => Self::OutTopRight,
-            "out-bottom-left" => Self::OutBottomLeft,
-            "out-bottom-right" => Self::OutBottomRight,
             _ => return None,
         })
     }
 }
 
-/// Parse `at=` value. `(x, y)` → Coord; named ident → Anchor.
-pub fn parse_at(value: &ResolvedValue, span: Span) -> Result<AbsolutePos, Error> {
-    match value {
-        ResolvedValue::Tuple(_) => {
-            let (x, y) = as_pair(value, span)?;
-            Ok(AbsolutePos::Coord(x, y))
-        }
-        ResolvedValue::Ident(name) => NamedAnchor::parse(name)
-            .map(AbsolutePos::Anchor)
-            .ok_or_else(|| Error::at(span, format!("unknown anchor '{}'", name))),
-        _ => Err(Error::at(span, "'at=' expects (x,y) or an anchor name")),
+impl Align {
+    /// `start`/`center`/`end`, with `left`/`right` accepted as the horizontal
+    /// synonyms (`left` = start, `right` = end) since `align` is also the text
+    /// attr. Defaults to `center`.
+    pub fn parse(s: &str) -> Option<Self> {
+        Some(match s {
+            "start" | "left" => Self::Start,
+            "center" => Self::Center,
+            "end" | "right" => Self::End,
+            _ => return None,
+        })
     }
+}
+
+impl Place {
+    fn parse(s: &str) -> Option<Self> {
+        Some(match s {
+            "in" => Self::In,
+            "out" => Self::Out,
+            _ => return None,
+        })
+    }
+}
+
+/// A child's positioning, or `None` if it is a flow child (no `at:`/`side:`).
+/// `at:` takes coords only; `side:` carries the edge anchor with its optional
+/// `align` (default center) and `place` (default in).
+pub fn read_pos(attrs: &AttrMap, span: Span) -> Result<Option<Pos>, Error> {
+    if let Some(v) = attrs.get("at") {
+        let (x, y) = as_pair(v, span)?;
+        return Ok(Some(Pos::Coord(x, y)));
+    }
+    let Some(side_v) = attrs.get("side") else {
+        return Ok(None);
+    };
+    let side = ident(side_v)
+        .and_then(Side::parse)
+        .ok_or_else(|| Error::at(span, "'side' expects top, bottom, left, or right"))?;
+    let align = match attrs.get("align") {
+        Some(v) => ident(v)
+            .and_then(Align::parse)
+            .ok_or_else(|| Error::at(span, "'align' expects start, center, or end"))?,
+        None => Align::Center,
+    };
+    let place = match attrs.get("place") {
+        Some(v) => ident(v)
+            .and_then(Place::parse)
+            .ok_or_else(|| Error::at(span, "'place' expects in or out"))?,
+        None => Place::In,
+    };
+    Ok(Some(Pos::Edge { side, align, place }))
 }
 
 pub fn parse_offset(value: &ResolvedValue, span: Span) -> Result<(f64, f64), Error> {
     as_pair(value, span)
 }
 
-/// Resolve a named anchor against a parent bbox into a target center
-/// position in the parent's local frame. The child's bbox is used to align
-/// the child's bbox EDGE/CORNER to the parent's anchor for `out-*` anchors
-/// and for keeping the child's own bbox tangent.
-pub fn resolve_anchor(anchor: NamedAnchor, parent_bbox: Bbox, child_bbox: Bbox) -> (f64, f64) {
-    let parent_cx = (parent_bbox.min_x + parent_bbox.max_x) / 2.0;
-    let parent_cy = (parent_bbox.min_y + parent_bbox.max_y) / 2.0;
-    let child_w = child_bbox.w();
-    let child_h = child_bbox.h();
+/// Resolve a `Pos` into the child's target bbox-center in the parent's local
+/// frame. `place` is size-aware: the child's facing edge lands flush on the
+/// parent edge, inside or outside, by shifting half the child's extent.
+pub fn resolve(pos: Pos, parent: Bbox, child: Bbox) -> (f64, f64) {
+    let (cw, ch) = (child.w(), child.h());
+    match pos {
+        Pos::Coord(x, y) => (x, y),
+        Pos::Edge { side, align, place } => {
+            // Position along the anchored edge, from the child's extent on that axis.
+            let along = |min: f64, max: f64, size: f64, align: Align| match align {
+                Align::Start => min + size / 2.0,
+                Align::Center => (min + max) / 2.0,
+                Align::End => max - size / 2.0,
+            };
+            // Distance across the edge: inside pulls the child in by its half
+            // extent, outside pushes it out — flush either way.
+            let across = |edge: f64, half: f64, place: Place, outward: f64| match place {
+                Place::In => edge - outward * half,
+                Place::Out => edge + outward * half,
+            };
+            match side {
+                Side::Top => (
+                    along(parent.min_x, parent.max_x, cw, align),
+                    across(parent.min_y, ch / 2.0, place, -1.0),
+                ),
+                Side::Bottom => (
+                    along(parent.min_x, parent.max_x, cw, align),
+                    across(parent.max_y, ch / 2.0, place, 1.0),
+                ),
+                Side::Left => (
+                    across(parent.min_x, cw / 2.0, place, -1.0),
+                    along(parent.min_y, parent.max_y, ch, align),
+                ),
+                Side::Right => (
+                    across(parent.max_x, cw / 2.0, place, 1.0),
+                    along(parent.min_y, parent.max_y, ch, align),
+                ),
+            }
+        }
+    }
+}
 
-    match anchor {
-        NamedAnchor::Center => (parent_cx, parent_cy),
-        NamedAnchor::Top => (parent_cx, parent_bbox.min_y),
-        NamedAnchor::Bottom => (parent_cx, parent_bbox.max_y),
-        NamedAnchor::Left => (parent_bbox.min_x, parent_cy),
-        NamedAnchor::Right => (parent_bbox.max_x, parent_cy),
-        NamedAnchor::TopLeft => (parent_bbox.min_x, parent_bbox.min_y),
-        NamedAnchor::TopRight => (parent_bbox.max_x, parent_bbox.min_y),
-        NamedAnchor::BottomLeft => (parent_bbox.min_x, parent_bbox.max_y),
-        NamedAnchor::BottomRight => (parent_bbox.max_x, parent_bbox.max_y),
-        NamedAnchor::OutTop => (parent_cx, parent_bbox.min_y - child_h / 2.0),
-        NamedAnchor::OutBottom => (parent_cx, parent_bbox.max_y + child_h / 2.0),
-        NamedAnchor::OutLeft => (parent_bbox.min_x - child_w / 2.0, parent_cy),
-        NamedAnchor::OutRight => (parent_bbox.max_x + child_w / 2.0, parent_cy),
-        NamedAnchor::OutTopLeft => (
-            parent_bbox.min_x - child_w / 2.0,
-            parent_bbox.min_y - child_h / 2.0,
-        ),
-        NamedAnchor::OutTopRight => (
-            parent_bbox.max_x + child_w / 2.0,
-            parent_bbox.min_y - child_h / 2.0,
-        ),
-        NamedAnchor::OutBottomLeft => (
-            parent_bbox.min_x - child_w / 2.0,
-            parent_bbox.max_y + child_h / 2.0,
-        ),
-        NamedAnchor::OutBottomRight => (
-            parent_bbox.max_x + child_w / 2.0,
-            parent_bbox.max_y + child_h / 2.0,
-        ),
+fn ident(v: &ResolvedValue) -> Option<&str> {
+    match v {
+        ResolvedValue::Ident(s) => Some(s.as_str()),
+        _ => None,
     }
 }

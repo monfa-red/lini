@@ -15,7 +15,6 @@ use crate::error::Error;
 use crate::resolve::{Program, ResolvedInst, ResolvedValue, ShapeKind, VarTable};
 use crate::span::Span;
 
-use anchors::AbsolutePos;
 use flex::Axis;
 
 /// Extra gap per container (dot-path → `(Δy, Δx)` px), accumulated by gap
@@ -352,11 +351,12 @@ fn lay_out_container_children(
         &grown
     };
 
-    // Separate flow vs absolutely-positioned children.
+    // Separate flow vs absolutely-positioned children. A child leaves the flow
+    // when it carries `at:` (coords) or `side:` (an edge anchor).
     let mut flow_indices: Vec<usize> = Vec::new();
     let mut abs_indices: Vec<usize> = Vec::new();
     for (i, c) in children.iter().enumerate() {
-        if c.attrs.get("at").is_some() {
+        if c.attrs.get("at").is_some() || c.attrs.get("side").is_some() {
             abs_indices.push(i);
         } else {
             flow_indices.push(i);
@@ -403,17 +403,13 @@ fn lay_out_container_children(
 
     // Absolutely positioned children.
     for i in &abs_indices {
-        let pos = anchors::parse_at(children[*i].attrs.get("at").unwrap(), children[*i].span)?;
+        let pos = anchors::read_pos(&children[*i].attrs, children[*i].span)?
+            .expect("abs child carries at: or side:");
         let offset = match children[*i].attrs.get("offset") {
             Some(v) => anchors::parse_offset(v, children[*i].span)?,
             None => (0.0, 0.0),
         };
-        let (target_cx, target_cy) = match pos {
-            AbsolutePos::Coord(x, y) => (x, y),
-            AbsolutePos::Anchor(name) => {
-                anchors::resolve_anchor(name, anchor_parent_bbox, children[*i].bbox)
-            }
-        };
+        let (target_cx, target_cy) = anchors::resolve(pos, anchor_parent_bbox, children[*i].bbox);
         // `at:(x,y)` puts the bbox CENTER at (x,y) per SPEC §7 rule 1.
         let cb = children[*i].bbox;
         let local_off_x = (cb.min_x + cb.max_x) / 2.0;

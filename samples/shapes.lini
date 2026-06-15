@@ -11,7 +11,7 @@
 
   // base + body — full composition.
   |den:group| layout:column gap:8 padding:12 {
-    |text| "Title" at:top weight:bold
+    |text| "Title" side:top weight:bold
     |text| "Content"
   }
 }

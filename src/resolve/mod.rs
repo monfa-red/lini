@@ -324,11 +324,9 @@ pub(super) fn is_reserved(name: &str) -> bool {
         // Layout values
         "row" | "column" | "grid"
         | "start" | "center" | "end" | "stretch" | "between" | "around" | "evenly"
-        // Anchors / endpoint sides
+        // Edge sides (also endpoint sides) + place values
         | "top" | "bottom" | "left" | "right"
-        | "top-left" | "top-right" | "bottom-left" | "bottom-right"
-        | "out-top" | "out-bottom" | "out-left" | "out-right"
-        | "out-top-left" | "out-top-right" | "out-bottom-left" | "out-bottom-right"
+        | "in" | "out"
         | "mid"
         // Primitives
         | "rect" | "oval" | "line" | "path" | "poly" | "text"

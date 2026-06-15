@@ -304,8 +304,8 @@ axis.
 | Attr | Effect |
 |---|---|
 | `at:(x, y)` | Bbox center at (x, y). Removes from flow. |
-| `at:anchor` | Named anchor — see [Positioning](#7-positioning--anchors). |
-| `offset:(x, y)` | Fine-tune from an anchor. |
+| `side: top\|bottom\|left\|right` | Anchor to an edge; `align:` slides, `place:` in/out. Removes from flow. See [Positioning](#7-positioning--anchors). |
+| `offset:(x, y)` | Fine-tune from `at:` / `side:`. |
 | `cell:(c, r)` | Grid placement, 1-indexed. |
 | `span:(c, r)` | Grid span. Default `(1, 1)`. |
 | `z:N` | Render-order override; source order is the tiebreak. |
@@ -332,19 +332,27 @@ stroke included.
 6. **Rotation** applies last as an SVG transform; the rotated bounding rectangle
    propagates upward.
 
-### Anchors
+### Positioning a child
 
-Relative to the parent's bbox.
+A child leaves the flow when it carries **`at:`** or **`side:`** — one
+positioning model, no compound anchor names:
 
-- **Inside:** `center`, `top`, `bottom`, `left`, `right`, and the four corners
-  (`top-left`, …).
-- **Outside** (child's facing edge tangent to the parent's): `out-top`,
-  `out-bottom`, `out-left`, `out-right`, plus the four corner variants. Computed
-  against the parent's bbox **excluding** out-\* children, so they can't recurse.
-- **Wire-route** (only on a `|text|` child of a wire): `start`, `mid`, `end`, or a
-  fraction `0..1` along the route.
+- **`at:(x, y)`** — bbox center at explicit parent-local coords (the origin is
+  the parent's center, so `at:(0, 0)` centers).
+- **`side: top | bottom | left | right`** — anchor to an edge. **`align: start
+  | center | end`** slides along it, so a corner needs no special name
+  (`side:top align:end` = top-right; `start`/`end` are the low/high ends of the
+  edge — left/top is `start`). **`place: in | out`** sets the child flush
+  **inside** the edge or just **outside** it — *size-aware*: it clears the edge
+  by its own extent, staying flush at any size. Defaults `align:center
+  place:in`.
 
-`offset:(x,y)` shifts from any anchor.
+`offset:(x, y)` nudges from `at:` or `side:`. An out-of-flow child still expands
+the parent's bbox (so an outside title or caption grows the box around itself).
+
+**Wire-route anchors are separate** — only on a `|text|` child of a wire
+(`start` / `mid` / `end`, or a fraction `0..1` along the route). They position
+*along a line*, not against a box, so they share none of the above.
 
 ### Auto-sizing
 
@@ -420,7 +428,7 @@ pattern is common.
 | Template | Base | Defaults | For |
 |---|---|---|---|
 | `\|group\|` | `\|rect\|` | `stroke:--group-stroke fill:--group-fill radius:6 padding:10` | Frame + label. |
-| `\|badge\|` | `\|rect\|` | `at:top-right radius:999 padding:(2,8) shadow:2 fill:--accent z:10`; small on-accent text | Corner pill. |
+| `\|badge\|` | `\|rect\|` | `side:top align:end place:out offset:(6,6) radius:999 padding:(2,8) shadow:2 fill:--accent z:10`; small on-accent text | Corner pill. |
 | `\|note\|` | `\|rect\|` | `radius:2 padding:12 shadow:2 stroke:none fill:--note-bg` | Sticky note. |
 | `\|row\|` | `\|rect\|` | `layout:row fill:none stroke:none padding:0` | Frameless wrapper — children in a row. |
 | `\|col\|` | `\|rect\|` | `layout:column fill:none stroke:none padding:0` | Frameless wrapper — children in a column. |
@@ -605,8 +613,10 @@ for *labels*, `fill` for *bodies*.
 
 | Attr | Type | Notes |
 |---|---|---|
-| `at` | `(x,y)` or anchor | Bbox center / anchor. |
-| `offset` | `(x,y)` | From an anchor. |
+| `at` | `(x, y)` | Bbox center at coords; removes from flow. |
+| `side` | `top` / `bottom` / `left` / `right` | Edge anchor (with `align` / `place`); removes from flow. See [§7](#7-positioning--anchors). |
+| `place` | `in` / `out` | Flush inside or outside the `side` edge. Default `in`. Size-aware. |
+| `offset` | `(x, y)` | Nudge from `at:` / `side:`. |
 | `size` | `N` or `(w,h)` | Bbox dimensions. |
 | `points` | `[(x,y),…]` | Vertex list. |
 | `d` | string | Raw SVG path (`\|path\|` only). |
@@ -623,8 +633,8 @@ for *labels*, `fill` for *bodies*.
 
 | Attr | Default | Notes |
 |---|---|---|
-| `at` | `center` | Anchor or `(x,y)`. `|text|` only. |
-| `align` | `center` | `left` / `center` / `right` — multi-line alignment. |
+| `at` / `side` | flow | Position like any child (§7); a bare `|text|` flows (centred in a closed shape). |
+| `align` | `center` | `start\|center\|end` (`left`/`right` = start/end) — multi-line text alignment, and the slide along a `side:` edge. |
 | `text-size` | 13 | Font size, px. |
 | `font` | `--font` | Font family: ident, string, or `--var` reference. |
 | `weight` | `normal` | `normal` / `bold`. |
@@ -972,7 +982,7 @@ free (`Start`, `Card`, …).
 
 - **Layout:** `row`, `column`, `grid`.
 - **Alignment:** `start`, `center`, `end`, `stretch`, `between`, `around`, `evenly`.
-- **Node anchors / endpoint sides:** `top`, `bottom`, `left`, `right`, the 4 corners, the 8 `out-*`.
+- **Edge sides / endpoint sides:** `top`, `bottom`, `left`, `right`. **Place:** `in`, `out`.
 - **Wire-route anchor:** `mid` (`start`/`end` overlap alignment values; resolved by context).
 - **Origin:** `top-left`.
 - **Primitives:** `rect`, `oval`, `line`, `path`, `poly`, `text`, `hex`, `slant`, `cyl`, `diamond`, `cloud`, `icon`, `image`.
