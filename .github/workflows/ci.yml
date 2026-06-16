@@ -13,8 +13,10 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@v5
+      # Pinned to match rust-toolchain.toml, so CI and local agree on rustfmt
+      # and clippy — version drift was silently breaking `cargo fmt --check`.
+      - uses: dtolnay/rust-toolchain@1.89.0
         with:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2

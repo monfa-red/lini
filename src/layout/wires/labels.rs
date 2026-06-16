@@ -143,7 +143,10 @@ pub fn place(
 /// sharing a hop at its internal `(j+1)/(k+1)` fractions — even spread, never
 /// on a junction. One entry per auto text, consumed in order.
 fn distribute_auto(texts: &[ResolvedText], lens: &[f64], total: f64) -> Vec<f64> {
-    let m = texts.iter().filter(|t| matches!(t.at, WireAt::Auto)).count();
+    let m = texts
+        .iter()
+        .filter(|t| matches!(t.at, WireAt::Auto))
+        .count();
     let n = lens.len();
     if m == 0 {
         return Vec::new();

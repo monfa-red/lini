@@ -11,11 +11,11 @@ use crate::ast::{
     ShapeDef, ShapeInst, StyleDef, TypeDefaults, TypeRef, Value, VarOverride, WireConfig, WireDecl,
     WireEndpoint, WireOp,
 };
-use shapes::ShapesTable;
-use styles::StyleTable;
 use crate::error::Error;
 use crate::span::Span;
+use shapes::ShapesTable;
 use std::collections::{HashMap, HashSet};
+use styles::StyleTable;
 
 #[cfg(test)]
 pub fn resolve(file: File) -> Result<Program, Error> {

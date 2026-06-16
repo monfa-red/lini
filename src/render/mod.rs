@@ -1,5 +1,5 @@
-pub(crate) mod markers; // `marker_size` is read by the router to reserve stub room
 mod filters;
+pub(crate) mod markers; // `marker_size` is read by the router to reserve stub room
 mod primitives;
 mod rules;
 mod style_block;
@@ -92,7 +92,13 @@ fn render_node(
         _ => None,
     };
     let depth = if let Some(href) = &link {
-        writeln!(out, r#"{}<a href="{}">"#, "  ".repeat(depth), escape_xml(href)).unwrap();
+        writeln!(
+            out,
+            r#"{}<a href="{}">"#,
+            "  ".repeat(depth),
+            escape_xml(href)
+        )
+        .unwrap();
         depth + 1
     } else {
         depth

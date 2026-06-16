@@ -127,11 +127,25 @@ pub fn place_out_bands(
     // from its bottom edge. The cursor tracks the outer edge reached so far.
     let mut cursor = frame.min_y;
     for &i in &top {
-        cursor = place_out(&mut children[i], cursor, -1.0, gap, frame.w(), &mut footprint)?;
+        cursor = place_out(
+            &mut children[i],
+            cursor,
+            -1.0,
+            gap,
+            frame.w(),
+            &mut footprint,
+        )?;
     }
     let mut cursor = frame.max_y;
     for &i in &bottom {
-        cursor = place_out(&mut children[i], cursor, 1.0, gap, frame.w(), &mut footprint)?;
+        cursor = place_out(
+            &mut children[i],
+            cursor,
+            1.0,
+            gap,
+            frame.w(),
+            &mut footprint,
+        )?;
     }
     Ok((footprint, true))
 }

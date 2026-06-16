@@ -761,7 +761,9 @@ mod tests {
              |text| \"Cap\" place:out\n  a |rect| size:(80, 30)\n}\n",
         );
         let g = &l.nodes[0];
-        let frame = g.frame.expect("place:out splits the drawn frame from the footprint");
+        let frame = g
+            .frame
+            .expect("place:out splits the drawn frame from the footprint");
         assert!(
             (frame.min_y + frame.max_y).abs() < 0.01,
             "frame stays centred on the origin"

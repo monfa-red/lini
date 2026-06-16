@@ -147,7 +147,15 @@ pub fn lay_out_grid(
         child.cy = cell_cy - local_offset_y;
     }
 
-    let rules = rule_segments(&col_offsets, &row_offsets, total_w, total_h, cols, rows, &owner);
+    let rules = rule_segments(
+        &col_offsets,
+        &row_offsets,
+        total_w,
+        total_h,
+        cols,
+        rows,
+        &owner,
+    );
     Ok((Bbox::centered(total_w, total_h), rules))
 }
 
@@ -156,6 +164,9 @@ pub fn lay_out_grid(
 /// so a spanning cell has no line crossing its interior. Coords are
 /// node-local (the grid is centred on the origin); tracks abut at `gap:0`,
 /// the table default, so the lines sit exactly on cell edges.
+// The boundary scans run one index past the data (`0..=rows` / `0..=cols`) to
+// close a run at the final edge, so they can't iterate `owner` directly.
+#[allow(clippy::needless_range_loop)]
 fn rule_segments(
     col_offsets: &[f64],
     row_offsets: &[f64],
@@ -180,9 +191,7 @@ fn rule_segments(
             let real = r < rows && owner[r][c - 1] != owner[r][c];
             if real && start.is_none() {
                 start = Some(r);
-            } else if !real
-                && let Some(s) = start.take()
-            {
+            } else if !real && let Some(s) = start.take() {
                 segs.push((x(c), y(s), x(c), y(r)));
             }
         }
@@ -194,9 +203,7 @@ fn rule_segments(
             let real = c < cols && owner[r - 1][c] != owner[r][c];
             if real && start.is_none() {
                 start = Some(c);
-            } else if !real
-                && let Some(s) = start.take()
-            {
+            } else if !real && let Some(s) = start.take() {
                 segs.push((x(s), y(r), x(c), y(r)));
             }
         }

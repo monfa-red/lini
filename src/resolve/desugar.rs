@@ -57,7 +57,11 @@ fn desugar_inst(inst: &ShapeInst, shapes: &ShapesTable) -> ShapeInst {
     ShapeInst {
         id: inst.id.clone(),
         ty: inst.ty.clone(),
-        labels: if is_text { inst.labels.clone() } else { Vec::new() },
+        labels: if is_text {
+            inst.labels.clone()
+        } else {
+            Vec::new()
+        },
         items: inst.items.clone(),
         body: (!body.is_empty()).then_some(body),
         span: inst.span,

@@ -23,7 +23,10 @@ fn group_second_label_becomes_a_bottom_footer() {
 fn plain_shape_label_is_a_centred_text_child() {
     let out = desugar_source("cat |rect| \"Cat\"\n").unwrap();
     assert!(out.contains("|text| \"Cat\""), "{out}");
-    assert!(!out.contains("place:in"), "a plain label has no place: {out}");
+    assert!(
+        !out.contains("place:in"),
+        "a plain label has no place: {out}"
+    );
 }
 
 #[test]
