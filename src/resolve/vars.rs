@@ -59,7 +59,11 @@ pub fn built_in_defaults() -> VarTable {
     );
 
     // Layout vars — baked at compile time. SPEC §12.3.
-    set_layout_n(&mut t, "text-size", 13.0);
+    // Text sizing splits three ways — body text, wire labels, and group
+    // title/footer captions — so each can be tuned without touching the others.
+    set_layout_n(&mut t, "text-size", 14.0);
+    set_layout_n(&mut t, "wire-text-size", 13.0);
+    set_layout_n(&mut t, "title-text-size", 13.0);
     set_layout_n(&mut t, "text-pad", 16.0);
     set_layout_n(&mut t, "gap", 20.0);
     set_layout_n(&mut t, "padding", 0.0);

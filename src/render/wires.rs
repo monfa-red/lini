@@ -66,6 +66,15 @@ pub fn render_wire(
         format!(r#" style="{}""#, body.join("; "))
     };
 
+    // `link:` makes the wire clickable, mirroring a node's `<a href>` wrap.
+    let link = match w.attrs.get("link") {
+        Some(crate::resolve::ResolvedValue::String(s)) => Some(s.clone()),
+        _ => None,
+    };
+    if let Some(href) = &link {
+        writeln!(out, r#"    <a href="{}">"#, escape_xml(href)).unwrap();
+    }
+
     writeln!(
         out,
         r#"    <g class="{}"{} data-from="{}" data-to="{}">"#,
@@ -99,6 +108,9 @@ pub fn render_wire(
     }
 
     out.push_str("    </g>\n");
+    if link.is_some() {
+        out.push_str("    </a>\n");
+    }
 }
 
 /// An airwire (WIRING §Impossible layouts): a dashed straight segment in the

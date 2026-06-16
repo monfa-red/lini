@@ -60,7 +60,11 @@ west.ww2 -> south.ss1
 west.ww2 -> south.ss1
 
 // Long hauls past the hub: opposite diagonals (crossed under the tight layout).
-alpha -> delta "diag"
+alpha -> delta {
+ |text| "One"
+ |text| "Two"
+ |text| "Three"
+}
 beta -> gamma "diag"
 
 // A chain threading three cells.

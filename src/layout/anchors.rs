@@ -31,6 +31,9 @@ pub enum Align {
 
 #[derive(Clone, Copy, PartialEq)]
 pub enum Place {
+    /// In the parent's normal flow/grid layout — the default for any child.
+    /// `side`/`align` don't apply.
+    None,
     /// Flush inside the edge — reserves a band (content shifts to clear it).
     In,
     /// Flush outside the edge — reserves a band outside (the parent gap).
@@ -82,6 +85,7 @@ impl Align {
 impl Place {
     fn parse(s: &str) -> Option<Self> {
         Some(match s {
+            "none" => Self::None,
             "in" => Self::In,
             "out" => Self::Out,
             "on" => Self::On,
@@ -95,31 +99,41 @@ impl Place {
     }
 }
 
-/// A child's positioning, or `None` if it is a flow child (no `at:`/`side:`).
-/// `at:` takes coords only; `side:` carries the edge anchor with its optional
-/// `align` (default center) and `place` (default in).
+/// A child's positioning, or `None` if it is a flow child (`at:` absent and
+/// `place:none`, the default). `at:` takes coords only. Otherwise `place` is the
+/// switch: `in`/`out`/`on` anchor the child to an edge (`side` default top,
+/// `align` default center); `none` flows. A bare `side:` with no `place:` is an
+/// error — naming an edge without saying how to meet it is meaningless.
 pub fn read_pos(attrs: &AttrMap, span: Span) -> Result<Option<Pos>, Error> {
     if let Some(v) = attrs.get("at") {
         let (x, y) = as_pair(v, span)?;
         return Ok(Some(Pos::Coord(x, y)));
     }
-    let Some(side_v) = attrs.get("side") else {
-        return Ok(None);
+    let place = match attrs.get("place") {
+        Some(v) => ident(v)
+            .and_then(Place::parse)
+            .ok_or_else(|| Error::at(span, "'place' expects none, in, out, or on"))?,
+        None => {
+            if attrs.get("side").is_some() {
+                return Err(Error::at(span, "'side:' needs a 'place:' — in, out, or on"));
+            }
+            Place::None
+        }
     };
-    let side = ident(side_v)
-        .and_then(Side::parse)
-        .ok_or_else(|| Error::at(span, "'side' expects top, bottom, left, or right"))?;
+    if place == Place::None {
+        return Ok(None);
+    }
+    let side = match attrs.get("side") {
+        Some(v) => ident(v)
+            .and_then(Side::parse)
+            .ok_or_else(|| Error::at(span, "'side' expects top, bottom, left, or right"))?,
+        None => Side::Top,
+    };
     let align = match attrs.get("align") {
         Some(v) => ident(v)
             .and_then(Align::parse)
             .ok_or_else(|| Error::at(span, "'align' expects start, center, or end"))?,
         None => Align::Center,
-    };
-    let place = match attrs.get("place") {
-        Some(v) => ident(v)
-            .and_then(Place::parse)
-            .ok_or_else(|| Error::at(span, "'place' expects in or out"))?,
-        None => Place::In,
     };
     Ok(Some(Pos::Edge { side, align, place }))
 }
@@ -177,7 +191,9 @@ pub fn resolve(pos: Pos, parent: Bbox, child: Bbox) -> (f64, f64) {
             let across = |edge: f64, half: f64, place: Place, outward: f64| match place {
                 Place::In => edge - outward * half,
                 Place::Out => edge + outward * half,
-                Place::On => edge,
+                // `On`, and the unreachable `None` (an Edge is never built from
+                // it), sit centred on the edge.
+                Place::On | Place::None => edge,
             };
             match side {
                 Side::Top => (

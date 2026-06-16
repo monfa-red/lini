@@ -163,7 +163,7 @@ order, each identified by its leading sigil:
   .loud   stroke:red thickness:2                           // style def
   |treat:rect| radius:5                                    // shape def
   |den:group|  layout:column gap:8 padding:12 {            // shape def with body
-    |title| "Title" weight:bold
+    |text| "Title" place:in weight:bold
     body  |text| "Content"
   }
 }
@@ -204,11 +204,12 @@ by `.other` (applied left-to-right). Cycles are an error.
 ## 5. Node Declarations
 
 ```
-id [|type|] ["label"] ["href"] [.style…] [attrs…] [{ body }]
+id [|type|] ["label"…] [.style…] [attrs…] [{ body }]
 ```
 
-Everything but `id` is optional. **Order is strict:** id → type → label → href →
-styles/attrs (these may interleave) → `{ body }`.
+Everything but `id` is optional. **Order is strict:** id → type → labels →
+styles/attrs (these may interleave) → `{ body }`. Any number of positional label
+strings are allowed; a link is the `link:` attribute, not a positional string.
 
 | Form | Effect |
 |---|---|
@@ -216,7 +217,7 @@ styles/attrs (these may interleave) → `{ body }`.
 | `cat \|treat\|` | Shape `treat`, label "cat". |
 | `cat "Friendly cat"` | `\|rect\|`, label "Friendly cat". |
 | `cat \|treat\| ""` | Shape `treat`, **no** label. |
-| `cat \|treat\| "Cat" "https://example.com"` | Label + link (whole shape wrapped in `<a>`). |
+| `cat \|treat\| "Cat" link:"https://example.com"` | Label + clickable (whole shape wrapped in `<a>`). |
 | `cat \|treat\| .bold .loud cell:1 padding:5` | Shape + styles + attrs. |
 | `garden \|group\| { … }` | Container with a body. |
 
@@ -224,7 +225,7 @@ styles/attrs (these may interleave) → `{ body }`.
 
 ```
 garden |group| {
-  |title| "Title" weight:bold
+  |text| "Title" place:in weight:bold
   body |text| "Content"          // id'd, so a wire can reach it
 }
 ```
@@ -238,19 +239,22 @@ with the id as its label. Declaring the id anywhere — before or after the wire
 a shape instance), nothing is created: the wire must use the full path, and the
 error suggests it. Body wires never auto-create.
 
-**Label sugar.** `id |type| "label"` expands to a `|text|` child:
+**Label sugar.** Each positional string expands to a `|text|` child:
 
 ```
 cat |treat| "Cat"     ≡     cat |treat| { |text| "Cat" }
 ```
 
-If both sugar and explicit `|text|` children are present, the sugar's text comes
-first. Multi-line labels use `\n`; the text bbox sizes to the widest line, line
-spacing is `size × 1.2`.
+A closed shape stacks its labels as centred text. A **`group`** is positional:
+the 1st label becomes a top caption and the 2nd a bottom footer — both reserved
+`place:in` bands at `--title-text-size` — and any beyond the 2nd are plain
+centred text (see [§9](#9-templates)). If both sugar and explicit `|text|`
+children are present, the sugar's text comes first. Multi-line labels use `\n`;
+the text bbox sizes to the widest line, line spacing is `size × 1.2`.
 
-**href.** A second positional string after the label wraps the whole shape in
-`<a href>` (every child becomes clickable). On a bare `|text|`, only that text is
-wrapped.
+**`link:`.** A `link:"url"` attribute wraps the whole node in `<a href>` (every
+child becomes clickable); it works on any shape, `|text|`, or wire. There is no
+positional href — a second string is just another label.
 
 ---
 
@@ -336,22 +340,23 @@ stroke included.
 
 ### Positioning a child
 
-A child leaves the flow when it carries **`at:`** or **`side:`** — one model,
-no compound anchor names:
+**`place` is the switch.** It says how a child relates to its parent, and any
+value but `none` takes it out of the flow — one model, no compound anchor names:
 
-- **`at:(x, y)`** — bbox center at explicit parent-local coords (the origin is
-  the parent's center, so `at:(0, 0)` centers).
-- **`side: top | bottom | left | right`** — anchor to an edge. **`align: start
-  | center | end`** slides along it, so a corner needs no special name
-  (`side:top align:end` = top-right; `start`/`end` are the low/high ends —
-  left/top is `start`). **`place: in | on | out`** decides how the edge is met,
-  *size-aware* — the child clears the edge by its own extent at any size:
+- **`place: none`** *(default)* — a normal flow/grid child, laid out by the
+  parent's `layout:`. `side`/`align` don't apply.
+- **`place: in | out | on`** — anchor to an edge. **`side: top | bottom | left
+  | right`** picks it (default `top`) and **`align: start | center | end`**
+  slides along it, so a corner needs no special name (`side:top align:end` =
+  top-right; `start`/`end` are the low/high ends — left/top is `start`). The
+  meeting is *size-aware* — the child clears the edge by its own extent at any
+  size:
   - **`in`** — flush inside, and **reserves a band**: flow content shifts to
     clear it and the box grows (top/bottom only; left/right fall back to top).
     The band is separated from the content by the container's own `gap` — a
     reserved child is spaced like a flow sibling — so a caption lines up evenly
-    with the rows below it. This is what `|title|` does; tighten or loosen one
-    with `margin:` (below). 
+    with the rows below it. This is a group's caption; tighten or loosen one
+    with `margin:` (below).
   - **`out`** — flush *outside the border*: the band sits a container `gap`
     beyond the drawn frame, and the footprint grows to reserve it. The border
     keeps hugging the content (and any `place:in` bands) while the caption rides
@@ -361,7 +366,11 @@ no compound anchor names:
   - **`on`** — centred on the edge/corner (a corner anchor straddles it); an
     **overlay**, no reserve.
 
-  Defaults `align:center place:in`.
+  Defaults `align:center`; a bare `side:` with no `place:` is an error.
+
+**`at:(x, y)`** is the orthogonal escape hatch — bbox center at explicit
+parent-local coords (the origin is the parent's center, so `at:(0, 0)` centers).
+It's an overlay and overrides `place`.
 
 **Reserve vs overlay is the whole rule, for every shape.** `place:in`/`out`
 *reserve* — the parent grows to hold the band, so the child never overlaps.
@@ -369,7 +378,7 @@ no compound anchor names:
 parent but they **don't grow it**, and a parent holding only overlays (with no
 `size:`) collapses — `position:absolute` against a `position:relative` parent.
 An overlay is still drawn, and the canvas always includes it (never clipped).
-No element is special here: `|title|` is just `|text|` with `place:in side:top`;
+No element is special here: a group caption is just `|text|` with `place:in`;
 `|badge|` is a rect with `place:on`.
 
 `offset:(x, y)` nudges from `at:` or `side:`.
@@ -378,8 +387,8 @@ No element is special here: `|title|` is just `|text|` with `place:in side:top`;
 `(t, r, b, l)`, like `padding` but allowed negative. It inflates (or, negative,
 shrinks) the room the child reserves in its parent: positive spreads it from its
 siblings and grows the parent; negative eats the surrounding gap (and padding),
-tightening the parent to match. Its headline use is pulling a `|title|` closer
-to its frame and content — `|title| "X" margin:(-6, 0, -12, 0)`. A margin so
+tightening the parent to match. Its headline use is pulling a caption closer
+to its frame and content — `|text| "X" place:in margin:(-6, 0, -12, 0)`. A margin so
 negative it outruns the available space simply lets shapes overlap; nothing
 clips. Unlike `offset:` (a pure render-time nudge that moves only the one
 child), `margin:` changes the layout around it.
@@ -455,19 +464,25 @@ arrow, end dot.
 
 ## 9. Templates
 
-8 templates — each an attribute bundle over a primitive base, named because the
-pattern is common.
+7 templates — each an attribute bundle over a primitive base, named because the
+pattern is common. (There is no `|title|` — a caption is just `|text|` with
+`place:in`; see below.)
 
 | Template | Base | Defaults | For |
 |---|---|---|---|
-| `\|group\|` | `\|rect\|` | `stroke:--group-stroke fill:--group-fill radius:6 padding:10` | Frame + label. |
+| `\|group\|` | `\|rect\|` | `stroke:--group-stroke fill:--group-fill radius:6 padding:10` | Frame + caption/footer. |
 | `\|badge\|` | `\|rect\|` | `side:top align:end place:on radius:999 padding:(2,8) shadow:2 fill:--accent z:10`; small on-accent text | Corner pill (straddles the corner, grows nothing). |
-| `\|title\|` | `\|text\|` | `side:top place:in align:start` | A caption reserving a band on the edge — inside the border by default, `place:out` to lift it outside (see [§7](#7-positioning--anchors)). |
 | `\|note\|` | `\|rect\|` | `radius:2 padding:12 shadow:2 stroke:none fill:--note-bg` | Sticky note. |
 | `\|row\|` | `\|rect\|` | `layout:row fill:none stroke:none padding:0` | Frameless wrapper — children in a row. |
 | `\|col\|` | `\|rect\|` | `layout:column fill:none stroke:none padding:0` | Frameless wrapper — children in a column. |
 | `\|table\|` | `\|group\|` | `gap:0 padding:0 fill:none stroke:--stroke`; draws its own grid (frame + separators) in `--stroke`. Use with `layout:(c,r)`, `col-widths:`, `row-heights:` | Ruled grid of `\|cell\|`s. |
 | `\|cell\|` | `\|rect\|` | `padding:8 stroke:none fill:none` | Borderless cell — the table draws the lines. |
+
+**Group captions.** A `group`'s positional labels are placed by order: the 1st
+becomes a top caption, the 2nd a bottom footer — both reserved `place:in` bands
+at `--title-text-size`, centred — and any beyond the 2nd are plain centred text.
+`group "Title" "Footer" { … }` is the common form; write a `|text| place:…`
+child by hand for anything else (a `place:out` caption, an explicit `align`).
 
 A `\|table\|` renders its grid as one ruled path — the outer frame plus the
 separators between adjacent cells — so cells stay borderless and a shared edge
@@ -570,17 +585,26 @@ geometry; with a side, that edge is forced.
 
 ### Labels & wire-text children
 
-`a -> b "label"` expands to `a -> b { |text| "label" at:mid }`. For chains and
-fans, the label sits at the midpoint of the whole route. Children take wire-route
-anchors only (`start` / `mid` / `end` / `0..1`); `offset:(x,y)` shifts in the
-route's tangent frame (`x` along the wire, `y` to its left). A label rides its
-wire — it is an obstacle to nothing, and may slide along the wire to keep clear
-of nodes and other labels; the wire never moves for it:
+`a -> b "x" "y"` expands to `a -> b { |text| "x" |text| "y" }` — each inline
+string is a wire text. Children take wire-route anchors with `at:` (`start` /
+`mid` / `end` / `0..1`, along the route) and `place:` (across it):
+
+- **`at:`** defaults to *auto* — the texts distribute along the route: spread
+  evenly across the hops, each at its hop's `(j+1)/(k+1)` fractions. So one
+  label on a chain never lands on a junction, and several never pile up. An
+  explicit `at:` pins a text to a fraction of the whole route.
+- **`place:`** is `on` (default — centred on the line) or `out` (lifted just off
+  the line, clear of the stroke). `place:in` is an error — a line has no inside.
+
+`offset:(x,y)` shifts in the route's tangent frame (`x` along the wire, `y` to
+its left), and `--wire-text-size` sets the default size. A label rides its wire
+— it is an obstacle to nothing, and may slide along the wire to keep clear of
+nodes and other labels; the wire never moves for it:
 
 ```
 a -> b {
   |text| "label" at:mid text-size:10
-  |text| "↓"     at:0.75
+  |text| "caption" place:out
 }
 ```
 
@@ -647,11 +671,13 @@ for *labels*, `fill` for *bodies*.
 
 | Attr | Type | Notes |
 |---|---|---|
-| `at` | `(x, y)` | Bbox center at coords; removes from flow. |
-| `side` | `top` / `bottom` / `left` / `right` | Edge anchor (with `align` / `place`); removes from flow. See [§7](#7-positioning--anchors). |
-| `place` | `in` / `on` / `out` | `in`/`out` reserve a band inside/outside the `side` edge; `on` is an overlay centred on it (no reserve). Default `in`. Size-aware. |
+| `place` | `none` / `in` / `out` / `on` | The flow switch: `none` (default) flows; `in`/`out` reserve a band inside/outside the `side` edge; `on` is an overlay centred on it (no reserve). Size-aware. See [§7](#7-positioning--anchors). |
+| `side` | `top` / `bottom` / `left` / `right` | Which edge `place:in/out/on` meets (default `top`); a bare `side:` with no `place:` is an error. |
+| `align` | `start` / `center` / `end` | Slides the child along the `side` edge (default `center`). |
+| `at` | `(x, y)` | Bbox center at coords; an overlay, overrides `place`. |
 | `offset` | `(x, y)` | Nudge from `at:` / `side:`. |
 | `margin` | `N` / `(y,x)` / `(t,r,b,l)` | Signed outer spacing on any child; negatives tighten. See [§7](#7-positioning--anchors). |
+| `link` | string | Wraps the node (and children) in `<a href>` — clickable. Any shape, text, or wire. |
 | `size` | `N` or `(w,h)` | Bbox dimensions. |
 | `points` | `[(x,y),…]` | Vertex list. |
 | `d` | string | Raw SVG path (`\|path\|` only). |
@@ -668,9 +694,9 @@ for *labels*, `fill` for *bodies*.
 
 | Attr | Default | Notes |
 |---|---|---|
-| `at` / `side` | flow | Position like any child (§7); a bare `|text|` flows (centred in a closed shape). |
+| `place` / `side` | flow | Position like any child (§7); a bare `|text|` flows (centred in a closed shape), `place:in` makes a caption band. |
 | `align` | `center` | `start\|center\|end` (`left`/`right` = start/end) — multi-line text alignment, and the slide along a `side:` edge. |
-| `text-size` | 13 | Font size, px. |
+| `text-size` | `--text-size` (14) | Font size, px. Wire labels default `--wire-text-size`, group captions `--title-text-size`. |
 | `font` | `--font` | Font family: ident, string, or `--var` reference. |
 | `weight` | `normal` | `normal` / `bold`. |
 | `fill` | inherited (`currentColor`) | Text color; set `color` on an ancestor. |
@@ -685,7 +711,7 @@ honesty as runtime `--lini-font` theming).
 ### Accessibility & interaction
 
 `title` emits a `<title>` child (tooltip + screen reader); `aria-label` is emitted
-on the `<g>`. Links use the positional second string after the label (see [Node
+on the `<g>`. `link:"url"` makes a node clickable (see [Node
 Declarations](#5-node-declarations)).
 
 ---
@@ -741,10 +767,13 @@ Baked compile-time defaults — override per-node, per-wire, on `|scene|` /
 `|wire|`, or via styles:
 
 ```
-text-size 13   text-pad 16   thickness 1   radius 0
-gap 20         padding 0     clearance 16  icon-size 24
-canvas-pad 20
+text-size 14   wire-text-size 13   title-text-size 13   text-pad 16
+thickness 1    radius 0            gap 20               padding 0
+clearance 16   icon-size 24        canvas-pad 20
 ```
+
+`text-size` is body text; `wire-text-size` wire labels; `title-text-size` group
+captions and footers.
 
 Per-shape default sizes are in [Positioning → Auto-sizing](#7-positioning--anchors).
 
@@ -917,10 +946,11 @@ Format: `filename:line:col: error: <message>` (LSP-compatible).
 `thickness`, `line`, `opacity`, `radius`, `double`, `rotation`, `shadow`,
 `weight`, `align`, `variant`, `font`, `text-size`.
 
-**Always inline-OK (structural):** type / class / id / label / href / `title` /
-`aria-label`; placement (`at`, `offset`, `margin`, `cell`, `span`, `z`); container
-(`layout`, `gap`, `padding`, `col-widths`, `row-heights`); geometry (`size`,
-`points`, `d`, `skew`); wire `marker*` / `clearance`; and `size` / `name` on `|icon|`.
+**Always inline-OK (structural):** type / class / id / label / link / `title` /
+`aria-label`; placement (`place`, `side`, `at`, `offset`, `margin`, `cell`,
+`span`, `z`); container (`layout`, `gap`, `padding`, `col-widths`, `row-heights`);
+geometry (`size`, `points`, `d`, `skew`, `href`); wire `marker*` / `clearance`;
+and `size` / `name` on `|icon|`.
 
 ---
 
@@ -1021,7 +1051,7 @@ free (`Start`, `Card`, …).
 - **Wire-route anchor:** `mid` (`start`/`end` overlap alignment values; resolved by context).
 - **Origin:** `top-left`.
 - **Primitives:** `rect`, `oval`, `line`, `path`, `poly`, `text`, `hex`, `slant`, `cyl`, `diamond`, `cloud`, `icon`, `image`.
-- **Templates:** `group`, `badge`, `note`, `title`, `row`, `col`, `table`, `cell` (`row` also a layout value).
+- **Templates:** `group`, `badge`, `note`, `row`, `col`, `table`, `cell` (`row` also a layout value).
 - **Special:** `scene`, `wire` (defs block only).
 - **Constants:** `true`, `false`, `none`, `auto`.
 - **Functions:** `var`, `rgb`, `rgba`, `hsl`.
@@ -1035,7 +1065,7 @@ Out of scope for v3; the syntax stays forward-compatible.
 - **Auto-layout** — you position nodes (flex/grid/anchors); Lini does not place
   or route them for you (no force-directed or hierarchical placement).
 - **Multi-file imports.**
-- **Animation**, and interactivity beyond `href`.
+- **Animation**, and interactivity beyond `link:` (`<a href>`).
 - **Manual wire waypoints.**
 - **Cross-instance addressing** into a shape definition's internals — internal
   wires and dot-path reads work, but an external wire cannot reach into and

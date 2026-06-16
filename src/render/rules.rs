@@ -175,7 +175,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
         // properties, so they flow from the text's <g> into the element.
         // `stroke: none` masks a container's stroke from bleeding into the
         // glyphs (text never strokes; the wire-label halo is element-level).
-        // `|title|` is a text template, so it shares this rule via lini-shape-text.
+        // Group captions are `|text|`, so they share this rule via lini-shape-text.
         rules.push(Rule {
             class: "lini-shape-text".into(),
             props: vec![
@@ -344,7 +344,7 @@ mod tests {
     fn root_rule_carries_inherited_text_props() {
         let css = emit_str(&rules_for("x |rect| \"hi\"\n"));
         assert!(
-            css.contains(".lini { font-family: var(--lini-font); font-size: 13px; color: var(--lini-text-color); }"),
+            css.contains(".lini { font-family: var(--lini-font); font-size: 14px; color: var(--lini-text-color); }"),
             "{}",
             css
         );

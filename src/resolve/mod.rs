@@ -6,8 +6,8 @@ mod vars;
 pub use ir::*;
 
 use crate::ast::{
-    AttrItem, BodyItem, DefsBlock, DefsEntry, EndpointGroup, File, LineStyle, SceneConfig,
-    ShapeDef, ShapeInst, StyleDef, TypeDefaults, TypeRef, VarOverride, WireConfig, WireDecl,
+    Attr, AttrItem, BodyItem, DefsBlock, DefsEntry, EndpointGroup, File, LineStyle, SceneConfig,
+    ShapeDef, ShapeInst, StyleDef, TypeDefaults, TypeRef, Value, VarOverride, WireConfig, WireDecl,
     WireEndpoint, WireOp,
 };
 use crate::error::Error;
@@ -294,8 +294,7 @@ fn auto_created_inst(id: &str, span: Span) -> ShapeInst {
             name: "rect".to_string(),
             span,
         },
-        label: Some(id.to_string()),
-        href: None,
+        labels: vec![id.to_string()],
         items: Vec::new(),
         body: None,
         span,
@@ -331,7 +330,7 @@ pub(super) fn is_reserved(name: &str) -> bool {
         | "in" | "out"
         | "mid"
         // Primitives
-        | "rect" | "oval" | "line" | "path" | "poly" | "text" | "title"
+        | "rect" | "oval" | "line" | "path" | "poly" | "text"
         | "hex" | "slant" | "cyl" | "diamond" | "cloud" | "icon" | "image"
         // Templates ("row" is reserved above as a layout value)
         | "group" | "badge" | "note" | "col"
@@ -511,8 +510,8 @@ fn resolve_inst(
     let markers = resolve_markers(&ordered, MarkerKind::None, MarkerKind::None)?;
     let mut attrs = collapse(&ordered);
 
-    // `|text|` (and so `|title|`, a text template) carries its own label, is
-    // sized to its glyphs, and inherits cascaded text attrs; `size` is an error.
+    // `|text|` carries its own label, is sized to its glyphs, and inherits
+    // cascaded text attrs; `size` is an error.
     let text_like = resolved_shape.kind == ShapeKind::Text;
     if text_like {
         if attrs.get("size").is_some() {
@@ -554,17 +553,17 @@ fn resolve_inst(
     // then explicit body items from the source.
     let mut body_items: Vec<BodyItem> = resolved_shape.body_items.clone();
     let own_label = if text_like {
-        inst.label.clone()
+        // `|text|` carries its own glyphs; multiple positional strings stack as
+        // lines (SPEC §5).
+        (!inst.labels.is_empty()).then(|| inst.labels.join("\n"))
     } else {
-        if let Some(label) = &inst.label {
-            // A group's label is a title (it reserves a top band, SPEC §7); every
-            // other shape's label is centred content text.
-            let kind = if resolved_shape.type_chain.iter().any(|t| t == "group") {
-                "title"
-            } else {
-                "text"
-            };
-            body_items.push(BodyItem::Inst(label_sugar(label, inst.span, kind)));
+        // A closed shape's labels become text children (SPEC §5/§9). A `group`
+        // is smart about position: the 1st label is a top caption, the 2nd a
+        // bottom footer (both reserved bands), the rest plain centred text;
+        // every other shape stacks all of them as centred content.
+        let is_group = resolved_shape.type_chain.iter().any(|t| t == "group");
+        for (i, label) in inst.labels.iter().enumerate() {
+            body_items.push(BodyItem::Inst(label_sugar(label, inst.span, is_group, i)));
         }
         None
     };
@@ -618,18 +617,69 @@ fn is_blank_anon_text(r: &ResolvedInst) -> bool {
     r.id.is_none() && r.shape == ShapeKind::Text && r.label.as_deref().is_none_or(str::is_empty)
 }
 
-fn label_sugar(text: &str, span: Span, ty: &str) -> ShapeInst {
+/// Desugar one positional label into a `|text|` child. `index` is its position
+/// among the host's labels; `is_group` enables the caption/footer promotion.
+/// A `group`'s 1st label reserves a top band, its 2nd a bottom band (both at
+/// `--title-text-size`); everything else is plain centred text (SPEC §5/§9).
+fn label_sugar(text: &str, span: Span, is_group: bool, index: usize) -> ShapeInst {
+    let attr = |name: &str, value: Value| {
+        AttrItem::Attr(Attr {
+            name: name.to_string(),
+            value,
+            span,
+        })
+    };
+    let band = |side: &str| {
+        vec![
+            attr("place", Value::Ident("in".into())),
+            attr("side", Value::Ident(side.into())),
+            attr("text-size", Value::RawCssVar("title-text-size".into())),
+        ]
+    };
+    let items = match (is_group, index) {
+        (true, 0) => band("top"),
+        (true, 1) => band("bottom"),
+        _ => Vec::new(),
+    };
     ShapeInst {
         id: None,
         ty: TypeRef {
-            name: ty.to_string(),
+            name: "text".to_string(),
             span,
         },
-        label: Some(text.to_string()),
-        href: None,
-        items: Vec::new(),
+        labels: vec![text.to_string()],
+        items,
         body: None,
         span,
+    }
+}
+
+/// Default a wire text's `text-size` to `--wire-text-size` when the author left
+/// it unset, so wire labels read a touch smaller than body text.
+fn wire_text_attrs(mut map: AttrMap, vars: &VarTable) -> AttrMap {
+    if map.get("text-size").is_none() {
+        map.insert(
+            "text-size".to_string(),
+            baked_layout_var(vars, "wire-text-size"),
+        );
+    }
+    map
+}
+
+/// A `--name` reference carrying the baked value of a layout var — so it reads
+/// as a number at layout time yet still prints as `--name` in live mode.
+fn baked_layout_var(vars: &VarTable, name: &str) -> ResolvedValue {
+    let baked = match vars.get(name) {
+        Some(VarEntry {
+            kind: VarKind::Layout,
+            value,
+        }) => Some(Box::new(value.clone())),
+        _ => None,
+    };
+    ResolvedValue::LiveVar {
+        name: name.to_string(),
+        raw: false,
+        baked,
     }
 }
 
@@ -750,19 +800,20 @@ fn resolve_wire(
     // Synthesize the line attr for operator variants per SPEC section 10.
     inject_line_style(&mut attrs, w.op.line);
 
-    // Text children: label sugar + explicit body texts.
+    // Text children: inline labels (distributed along the route by default) +
+    // explicit body `|text|`s. Each wire text defaults to `--wire-text-size`.
     let mut texts: Vec<ResolvedText> = Vec::new();
-    if let Some(label) = &w.label {
+    for label in &w.labels {
         texts.push(ResolvedText {
             text: label.clone(),
-            at: WireAt::Mid,
-            attrs: AttrMap::new(),
+            at: WireAt::Auto,
+            attrs: wire_text_attrs(AttrMap::new(), vars),
         });
     }
     if let Some(body) = &w.body {
         for t in body {
             let t_attrs = resolve_attrs(&t.items, styles_table, vars)?;
-            let mut at = WireAt::Mid;
+            let mut at = WireAt::Auto;
             let mut t_map = AttrMap::new();
             for item in &t_attrs {
                 if item.name == "size" {
@@ -775,6 +826,15 @@ fn resolve_wire(
                             "|text| anchor on a wire must be start/mid/end or 0..1",
                         )
                     })?;
+                } else if item.name == "place" {
+                    // A wire has no inside; only `on` (default) and `out` apply.
+                    if matches!(&item.value, ResolvedValue::Ident(s) if s == "in") {
+                        return Err(Error::at(
+                            item.span,
+                            "place:in is not valid on a wire — use place:on (default) or place:out",
+                        ));
+                    }
+                    t_map.insert(item.name.clone(), item.value.clone());
                 } else {
                     t_map.insert(item.name.clone(), item.value.clone());
                 }
@@ -782,7 +842,7 @@ fn resolve_wire(
             texts.push(ResolvedText {
                 text: t.text.clone(),
                 at,
-                attrs: t_map,
+                attrs: wire_text_attrs(t_map, vars),
             });
         }
     }
@@ -1168,8 +1228,8 @@ mod tests {
             !group.scene.nodes[0]
                 .children
                 .iter()
-                .any(|c| c.type_chain.iter().any(|t| t == "title")),
-            "no phantom title band"
+                .any(|c| c.shape == ShapeKind::Text),
+            "no phantom caption band"
         );
 
         let bare = resolve_str("|text| \"\"\n");

@@ -12,7 +12,6 @@ pub(super) const TEMPLATES: &[(&str, &str)] = &[
     ("group", "rect"),
     ("badge", "rect"),
     ("note", "rect"),
-    ("title", "text"),
     ("row", "rect"),
     ("col", "rect"),
     ("table", "group"),
@@ -216,15 +215,6 @@ pub(super) fn template_attrs(name: &str) -> Vec<ResolvedAttr> {
             attr("color", live("on-accent")),
             attr("text-size", num(11.0)),
             attr("z", num(10.0)),
-        ],
-        // A caption that reserves a band on its container's top edge, separated
-        // from the content by the container's own `gap` and left-aligned.
-        // `place:in` keeps it inside the frame; override `side`/`place`/`align`
-        // to move it, or `margin:` to tighten the band.
-        "title" => vec![
-            attr("side", ident("top")),
-            attr("place", ident("in")),
-            attr("align", ident("start")),
         ],
         // Sticky note: pale fill, soft shadow, no border.
         "note" => vec![

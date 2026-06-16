@@ -20,14 +20,15 @@
 
 cat |oval| "Cat"
 
-kitchen |group|  layout:column {
-        |text| "Kitchen"
+kitchen |group| layout:column {
+        |text|  "Kitchen"
   bowl  |treat| "Bowl"
   water |treat| "Water"
 }
 
 garden |group| layout:column padding:16 gap:24 {
-  |title| "Garden" margin:(0, 0, -20, 0)   // tighten the caption below its gap:24
+       |text|  "Garden" place:in margin:(0, 0, -20, 0)
+  // tighten the caption below its gap:24
   dog  |treat| "Dog"
   bird |treat| "Bird"
 }
@@ -54,7 +55,6 @@ garden.bird -> roof
 kitchen.water <-> garden.bird .quiet
 kitchen.water -> roof .happy
 kitchen.water -> roof .happy
-
 
 // New test
 garden -> kitchen.bowl .loud

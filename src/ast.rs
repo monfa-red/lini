@@ -103,8 +103,11 @@ pub struct ShapeDef {
 pub struct ShapeInst {
     pub id: Option<String>,
     pub ty: TypeRef,
-    pub label: Option<String>,
-    pub href: Option<String>,
+    /// Positional label strings, in source order. A closed shape stacks them as
+    /// centred text children; a `group` promotes the first to a top caption and
+    /// the second to a bottom footer (SPEC §5/§9). Links are the `link:` attr,
+    /// not a positional string.
+    pub labels: Vec<String>,
     pub items: Vec<AttrItem>,
     pub body: Option<Vec<BodyItem>>,
     pub span: Span,
@@ -158,7 +161,10 @@ pub struct StyleRef {
 pub struct WireDecl {
     pub chain: Vec<EndpointGroup>,
     pub op: WireOp,
-    pub label: Option<String>,
+    /// Inline label strings, in source order — each becomes a wire text,
+    /// distributed along the route (SPEC §10). Full control (anchor, place)
+    /// comes from `|text|` children in the body.
+    pub labels: Vec<String>,
     pub items: Vec<AttrItem>,
     pub body: Option<Vec<TextDecl>>,
     pub span: Span,

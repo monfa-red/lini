@@ -1,6 +1,6 @@
 // Positioning (SPEC §7): `side` picks an edge, `align` slides along it, and
-// `place` decides reserve vs overlay — `in`/`out` reserve a band (that's what
-// `|title|` does), while `on` is an overlay that straddles the edge/corner and
+// `place` decides reserve vs overlay — `in`/`out` reserve a band (that's how a
+// group caption works), while `on` is an overlay that straddles the edge/corner and
 // grows nothing (like `at:(x,y)`). Corners fall out of side + align; no
 // compound names. `offset:(x,y)` nudges.
 

@@ -613,19 +613,18 @@ impl<'a> Parser<'a> {
 
     // ─────────── Node decls ───────────
 
-    /// Parse an anonymous primitive: `|type| [label [href]] (attr|style)* [{body}]`.
+    /// Parse an anonymous primitive: `|type| label* (attr|style)* [{body}]`.
     fn parse_anonymous_inst(&mut self) -> Result<ShapeInst, Error> {
         let start = self.next_span();
         let ty = self.parse_type_use()?;
-        let (label, href) = self.parse_label_and_href();
+        let labels = self.parse_labels();
         let items = self.parse_attr_items()?;
         let body = self.parse_optional_body()?;
         let end = self.last_span();
         Ok(ShapeInst {
             id: None,
             ty,
-            label,
-            href,
+            labels,
             items,
             body,
             span: Span::new(start.start, end.end),
@@ -649,29 +648,28 @@ impl<'a> Parser<'a> {
                 span: id_span,
             }
         };
-        let (label, href) = self.parse_label_and_href();
+        let labels = self.parse_labels();
         let items = self.parse_attr_items()?;
         let body = self.parse_optional_body()?;
         let end = self.last_span();
         Ok(ShapeInst {
             id,
             ty,
-            label,
-            href,
+            labels,
             items,
             body,
             span: Span::new(id_span.start, end.end),
         })
     }
 
-    fn parse_label_and_href(&mut self) -> (Option<String>, Option<String>) {
-        let label = self.eat_string();
-        let href = if label.is_some() {
-            self.eat_string()
-        } else {
-            None
-        };
-        (label, href)
+    /// Collect the leading positional label strings (zero or more). A `link:`
+    /// attribute — not a positional string — makes a node clickable (SPEC §5).
+    fn parse_labels(&mut self) -> Vec<String> {
+        let mut labels = Vec::new();
+        while let Some(s) = self.eat_string() {
+            labels.push(s);
+        }
+        labels
     }
 
     // ─────────── Wire decls ───────────
@@ -700,7 +698,7 @@ impl<'a> Parser<'a> {
             }
         }
 
-        let label = self.eat_string();
+        let labels = self.parse_labels();
         let items = self.parse_attr_items()?;
         let body = if matches!(self.peek_kind(), Some(TokKind::LBrace)) {
             Some(self.parse_wire_text_body()?)
@@ -711,7 +709,7 @@ impl<'a> Parser<'a> {
         Ok(WireDecl {
             chain,
             op,
-            label,
+            labels,
             items,
             body,
             span: Span::new(start.start, end.end),

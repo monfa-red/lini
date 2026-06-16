@@ -54,8 +54,8 @@ pub struct ResolvedInst {
 }
 
 /// One of the built-in primitives. All user shapes resolve to one of these.
-/// (`|title|` is not here — it's a `|text|` template; a title is just text
-/// whose `place` reserves a band, SPEC §7.)
+/// (There is no title primitive — a caption is just `|text|` whose `place`
+/// reserves a band, SPEC §7.)
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ShapeKind {
     Rect,
@@ -287,6 +287,9 @@ pub struct ResolvedText {
 
 #[derive(Clone, Debug)]
 pub enum WireAt {
+    /// No explicit anchor — the label pass distributes it along the route
+    /// (SPEC §10), so a single label avoids junctions and several spread out.
+    Auto,
     Start,
     Mid,
     End,

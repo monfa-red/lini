@@ -5,7 +5,7 @@ input_file: samples/table.lini
 ---
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-170.5 -62.5 341 125" width="341" height="125" class="lini">
   <style>
-    .lini { font-family: sans-serif; font-size: 13px; color: black; }
+    .lini { font-family: sans-serif; font-size: 14px; color: black; }
     .lini .lini-shape-rect { fill: white; stroke: #444; stroke-width: 1; stroke-dasharray: none; }
     .lini .lini-shape-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-shape-group { fill: rgba(0, 0, 0, 0.03); stroke: #bbb; }

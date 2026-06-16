@@ -85,6 +85,18 @@ fn render_node(
     opts: &Options,
 ) {
     use std::fmt::Write;
+    // `link:` wraps the whole node in an `<a href>` so the shape (and its
+    // children) is clickable (SPEC §5). The group sits one level deeper inside.
+    let link = match n.attrs.get("link") {
+        Some(crate::resolve::ResolvedValue::String(s)) => Some(s.clone()),
+        _ => None,
+    };
+    let depth = if let Some(href) = &link {
+        writeln!(out, r#"{}<a href="{}">"#, "  ".repeat(depth), escape_xml(href)).unwrap();
+        depth + 1
+    } else {
+        depth
+    };
     let indent = "  ".repeat(depth);
     let class_list = values::class_list(n.shape.as_str(), &n.type_chain, &n.applied_styles);
     let classes = class_list.join(" ");
@@ -116,6 +128,9 @@ fn render_node(
     }
 
     writeln!(out, "{}</g>", indent).unwrap();
+    if link.is_some() {
+        writeln!(out, "{}</a>", "  ".repeat(depth - 1)).unwrap();
+    }
 }
 
 /// The node's paint, as the difference against what the stylesheet already

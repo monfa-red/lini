@@ -5,7 +5,7 @@ input_file: samples/markers_all.lini
 ---
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-80.5 -73 161 146" width="161" height="146" class="lini">
   <style>
-    .lini { font-family: sans-serif; font-size: 13px; color: black; }
+    .lini { font-family: sans-serif; font-size: 14px; color: black; }
     .lini .lini-shape-line { fill: none; stroke: #444; stroke-width: 1; stroke-dasharray: none; }
   </style>
   <defs/>

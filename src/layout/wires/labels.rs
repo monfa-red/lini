@@ -10,7 +10,7 @@ use super::rect::Rect;
 use super::scene::SceneIndex;
 use crate::layout::ir::{RoutedText, RoutedWire};
 use crate::layout::text::{approx_height, approx_width};
-use crate::resolve::{Program, ResolvedValue, WireAt};
+use crate::resolve::{Program, ResolvedText, ResolvedValue, WireAt};
 use crate::span::Span;
 
 /// Breathing room a label keeps from the things it dodges.
@@ -62,19 +62,41 @@ pub fn place(
             continue;
         }
 
+        // Default (`at:auto`) labels distribute along the route: spread evenly
+        // across the hops, each at its hop's `(j+1)/(k+1)` fractions — so one
+        // never lands on a junction and several never pile up (SPEC §10).
+        let auto_anchors = distribute_auto(&w.texts, &lens, total);
+        let mut auto_i = 0;
+
         for t in &w.texts {
             let size = t.attrs.number("text-size").unwrap_or(11.0);
             let (bw, bh) = (approx_width(&t.text, size), approx_height(&t.text, size));
             let (ox, oy) = offset_of(t.attrs.get("offset"));
             let s0 = match t.at {
+                WireAt::Auto => {
+                    let s = auto_anchors[auto_i];
+                    auto_i += 1;
+                    s
+                }
                 WireAt::Start => 0.0,
                 WireAt::Mid => total / 2.0,
                 WireAt::End => total,
                 WireAt::Fraction(f) => f * total,
             };
+            // `place:out` lifts the label off the line by its own half-height —
+            // clear of the stroke, on the upper side (left of a vertical run).
+            let out = matches!(t.attrs.get("place"), Some(ResolvedValue::Ident(s)) if s == "out");
             let spot = |s: f64| {
                 let (p, tan, si) = at_arc(wires, &segs, &lens, s);
-                let pos = (p.0 + ox * tan.0 - oy * tan.1, p.1 + ox * tan.1 + oy * tan.0);
+                let mut pos = (p.0 + ox * tan.0 - oy * tan.1, p.1 + ox * tan.1 + oy * tan.0);
+                if out {
+                    let mut d = (-tan.1, tan.0);
+                    if d.1 > 0.0 {
+                        d = (-d.0, -d.1);
+                    }
+                    let mag = bh / 2.0 + MARGIN;
+                    pos = (pos.0 + d.0 * mag, pos.1 + d.1 * mag);
+                }
                 (pos, tan, si)
             };
             let boxed = |pos: (f64, f64)| {
@@ -114,6 +136,35 @@ pub fn place(
             });
         }
     }
+}
+
+/// Arc anchors for the `at:auto` texts, in their order within `texts`. Assigns
+/// the `m` auto labels across the `n` hops (`hop = ⌊i·n/m⌋`) and places those
+/// sharing a hop at its internal `(j+1)/(k+1)` fractions — even spread, never
+/// on a junction. One entry per auto text, consumed in order.
+fn distribute_auto(texts: &[ResolvedText], lens: &[f64], total: f64) -> Vec<f64> {
+    let m = texts.iter().filter(|t| matches!(t.at, WireAt::Auto)).count();
+    let n = lens.len();
+    if m == 0 {
+        return Vec::new();
+    }
+    if n == 0 {
+        return vec![total / 2.0; m];
+    }
+    // Cumulative arc length before each hop.
+    let mut cum = vec![0.0; n + 1];
+    for h in 0..n {
+        cum[h + 1] = cum[h] + lens[h];
+    }
+    let hop = |i: usize| (i * n / m).min(n - 1);
+    (0..m)
+        .map(|i| {
+            let h = hop(i);
+            let k = (0..m).filter(|&x| hop(x) == h).count();
+            let j = (0..i).filter(|&x| hop(x) == h).count();
+            cum[h] + (j as f64 + 1.0) / (k as f64 + 1.0) * lens[h]
+        })
+        .collect()
 }
 
 fn arc_len(poly: &[(f64, f64)]) -> f64 {

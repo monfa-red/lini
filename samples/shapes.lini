@@ -1,7 +1,7 @@
 {
   // attr bundle form
-  |treat:rect|  radius:5
-  |nest:slant|  fill:gray
+  |treat:rect| radius:5
+  |nest:slant| fill:gray
 
   // container with layout
   |toolbox:group| layout:row gap:10 {
@@ -11,7 +11,7 @@
 
   // base + body — full composition.
   |den:group| layout:column gap:8 padding:12 {
-    |title| "Title" weight:bold
+    |text| "Title" place:in weight:bold
     |text| "Content"
   }
 }

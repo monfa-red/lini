@@ -17,7 +17,7 @@ loose |group| "Default" layout:column gap:24 {
 // frame above and the content below — and shrinks the group with it. (Write the
 // title explicitly, rather than as the group's sugar label, to attach margin.)
 tight |group| layout:column gap:24 {
-  |title| "Tight" margin:(-6, 0, -14, 0)
+    |text| "Tight" place:in margin:(-6, 0, -14, 0)
   a |rect| "Row A"
   b |rect| "Row B"
 }

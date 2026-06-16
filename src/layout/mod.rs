@@ -739,7 +739,7 @@ mod tests {
         let group_h = |title_margin: &str| {
             let l = lay_out(&format!(
                 "g |group| layout:column gap:20 {{\n\
-                 |title| \"T\"{title_margin}\n  a |rect| size:(80, 30)\n}}\n"
+                 |text| \"T\" place:in{title_margin}\n  a |rect| size:(80, 30)\n}}\n"
             ));
             l.nodes[0].bbox.h()
         };
@@ -758,7 +758,7 @@ mod tests {
         // origin while the footprint extends above it.
         let l = lay_out(
             "g |group| layout:column gap:16 {\n\
-             |title| \"Cap\" place:out\n  a |rect| size:(80, 30)\n}\n",
+             |text| \"Cap\" place:out\n  a |rect| size:(80, 30)\n}\n",
         );
         let g = &l.nodes[0];
         let frame = g.frame.expect("place:out splits the drawn frame from the footprint");
@@ -786,7 +786,7 @@ mod tests {
         let plain = frame_h("g |group| layout:column gap:16 {\n  a |rect| size:(80, 30)\n}\n");
         let out = frame_h(
             "g |group| layout:column gap:16 {\n\
-             |title| \"Cap\" place:out\n  a |rect| size:(80, 30)\n}\n",
+             |text| \"Cap\" place:out\n  a |rect| size:(80, 30)\n}\n",
         );
         assert!((plain - out).abs() < 0.01, "plain={plain} out={out}");
     }

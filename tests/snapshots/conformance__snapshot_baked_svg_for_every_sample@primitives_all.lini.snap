@@ -1,12 +1,11 @@
 ---
 source: tests/conformance.rs
-assertion_line: 43
 expression: svg
 input_file: samples/primitives_all.lini
 ---
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-222 -153 444 306" width="444" height="306" class="lini">
   <style>
-    .lini { font-family: sans-serif; font-size: 13px; color: black; }
+    .lini { font-family: sans-serif; font-size: 14px; color: black; }
     .lini .lini-shape-rect { fill: white; stroke: #444; stroke-width: 1; stroke-dasharray: none; }
     .lini .lini-shape-oval { fill: white; stroke: #444; stroke-width: 1; stroke-dasharray: none; }
     .lini .lini-shape-hex { fill: white; stroke: #444; stroke-width: 1; stroke-dasharray: none; }

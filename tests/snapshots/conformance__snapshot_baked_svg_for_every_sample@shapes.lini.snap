@@ -1,19 +1,18 @@
 ---
 source: tests/conformance.rs
-assertion_line: 43
 expression: svg
 input_file: samples/shapes.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-54.875 -43.5 109.75 87" width="109.75" height="87" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-56.25 -44 112.5 88" width="112.5" height="88" class="lini">
   <style>
-    .lini { font-family: sans-serif; font-size: 13px; color: black; }
+    .lini { font-family: sans-serif; font-size: 14px; color: black; }
     .lini .lini-shape-rect { fill: white; stroke: #444; stroke-width: 1; stroke-dasharray: none; }
     .lini .lini-shape-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
   </style>
   <defs/>
   <g class="lini-scene">
     <g class="lini-node lini-shape-rect" transform="translate(0,0)">
-      <rect x="-34.375" y="-23" width="68.75" height="46" rx="0" ry="0"/>
+      <rect x="-35.75" y="-23.5" width="71.5" height="47" rx="0" ry="0"/>
       <g class="lini-node lini-shape-text" transform="translate(0,0)">
         <text x="0" y="0">hello</text>
       </g>

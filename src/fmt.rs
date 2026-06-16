@@ -237,8 +237,7 @@ impl<'a> Emitter<'a> {
 
     fn emit_shape_inst(&mut self, inst: &ShapeInst, depth: usize, w: NodeWidths) {
         self.indent(depth);
-        let has_label = inst.label.is_some();
-        let has_href = inst.href.is_some();
+        let has_label = !inst.labels.is_empty();
         let has_attrs = !inst.items.is_empty();
         let has_body = inst.body.is_some();
 
@@ -268,17 +267,13 @@ impl<'a> Emitter<'a> {
         // Type column
         let ty_text = format!("|{}|", inst.ty.name);
         self.out.push_str(&ty_text);
-        if w.ty > 0 && (has_label || has_href || has_attrs || has_body) {
+        if w.ty > 0 && (has_label || has_attrs || has_body) {
             pad(self.out, w.ty.saturating_sub(ty_text.len()));
         }
 
-        if let Some(label) = &inst.label {
+        for label in &inst.labels {
             self.out.push(' ');
             self.emit_string(label);
-        }
-        if let Some(href) = &inst.href {
-            self.out.push(' ');
-            self.emit_string(href);
         }
         self.emit_attr_items(&inst.items);
         self.emit_body(&inst.body, inst.span.end, depth);
@@ -340,7 +335,7 @@ impl<'a> Emitter<'a> {
                 }
             }
         }
-        if let Some(label) = &w.label {
+        for label in &w.labels {
             self.out.push(' ');
             self.emit_string(label);
         }

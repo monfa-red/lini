@@ -1,16 +1,16 @@
-//! Title bands.
+//! Caption bands.
 //!
-//! A `|title|` child reserves a strip on its container's **top** or **bottom**
-//! edge: the flow content shifts to clear it, the box grows, and the title is
-//! placed in the strip (slid by `align`). So a container's caption never
-//! collides with its content — at any size, and regardless of the content's
-//! own layout direction. The separation between a title and the content is the
-//! container's own `gap` — a title is spaced like any sibling, so a caption
-//! lines up evenly with the rows below it. Tighten (or loosen) a single title
-//! with `margin:` (negative eats the spacing); the band already accounts for
-//! it, since margin inflates the title's footprint before it lands here.
-//! Left/right sides fall back to top — horizontal text only reads on a top or
-//! bottom band.
+//! A `place:in` child (e.g. a group's caption — a `|text|` with `place:in`)
+//! reserves a strip on its container's **top** or **bottom** edge: the flow
+//! content shifts to clear it, the box grows, and the caption is placed in the
+//! strip (slid by `align`). So a container's caption never collides with its
+//! content — at any size, and regardless of the content's own layout direction.
+//! The separation from the content is the container's own `gap` — a caption is
+//! spaced like any sibling, so it lines up evenly with the rows below it.
+//! Tighten (or loosen) one with `margin:` (negative eats the spacing); the band
+//! already accounts for it, since margin inflates the footprint before it lands
+//! here. Left/right sides fall back to top — horizontal text only reads on a
+//! top or bottom band.
 //!
 //! `place` decides which side of the border the band lands on. `reserve_bands`
 //! handles **`place:in`** — inside the frame, before padding is added, so the
@@ -182,14 +182,14 @@ fn side(attrs: &AttrMap) -> Side {
     }
 }
 
-/// Titles default to `start` (a label hugs the leading edge), unlike the
-/// `center` default for generic positioning.
+/// Bands slide by `align`, defaulting to `center` — the one alignment default
+/// across the language (a left-hugging caption is `align:start`).
 fn align(attrs: &AttrMap) -> Align {
     attrs
         .get("align")
         .and_then(ident)
         .and_then(Align::parse)
-        .unwrap_or(Align::Start)
+        .unwrap_or(Align::Center)
 }
 
 fn ident(v: &ResolvedValue) -> Option<&str> {
