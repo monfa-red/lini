@@ -175,6 +175,8 @@ pub fn resolve_with_theme(file: File, theme: &[(String, String)]) -> Result<Prog
         wire_defaults: collapse(&wires_defaults),
     };
 
+    scene_nodes.retain(|c| !is_blank_anon_text(c));
+
     Ok(Program {
         vars,
         scene: ResolvedScene {
@@ -593,6 +595,7 @@ fn resolve_inst(
             }
         }
     }
+    children.retain(|c| !is_blank_anon_text(c));
 
     Ok(ResolvedInst {
         id: inst.id.clone(),
@@ -605,6 +608,14 @@ fn resolve_inst(
         children,
         span: inst.span,
     })
+}
+
+/// A `|text|` instance with no visible content and no id — produced by an empty
+/// label (`""`) or a bare `|text| ""`. SPEC §5: `""` suppresses the label, so the
+/// node is dropped; left in, it would reserve a band / centred-text slot and emit
+/// an empty `<text>`. An id'd empty is kept, so a wire endpoint never dangles.
+fn is_blank_anon_text(r: &ResolvedInst) -> bool {
+    r.id.is_none() && r.shape == ShapeKind::Text && r.label.as_deref().is_none_or(str::is_empty)
 }
 
 fn label_sugar(text: &str, span: Span, ty: &str) -> ShapeInst {
@@ -1143,6 +1154,26 @@ mod tests {
         let t = &r.children[0];
         assert_eq!(t.shape, ShapeKind::Text);
         assert_eq!(t.label.as_deref(), Some("hello"));
+    }
+
+    #[test]
+    fn empty_label_suppresses_the_text_child() {
+        // SPEC §5: `""` suppresses the label — no centred text, no title band,
+        // and no empty `<text>` left to reserve layout space.
+        let rect = resolve_str("cat |rect| \"\"\n");
+        assert!(rect.scene.nodes[0].children.is_empty(), "no sugar child");
+
+        let group = resolve_str("g |group| \"\" {\n  x |rect| \"X\"\n}\n");
+        assert!(
+            !group.scene.nodes[0]
+                .children
+                .iter()
+                .any(|c| c.type_chain.iter().any(|t| t == "title")),
+            "no phantom title band"
+        );
+
+        let bare = resolve_str("|text| \"\"\n");
+        assert!(bare.scene.nodes.is_empty(), "blank bare text is dropped");
     }
 
     #[test]
