@@ -17,13 +17,13 @@ pub enum Stmt {
 
 // ─────────────────────────── Defs block ───────────────────────────
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DefsBlock {
     pub entries: Vec<DefsEntry>,
     pub span: Span,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum DefsEntry {
     SceneConfig(SceneConfig),
     WireConfig(WireConfig),
@@ -47,7 +47,7 @@ impl DefsEntry {
 }
 
 /// `|scene|` line — root scene container config.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SceneConfig {
     pub items: Vec<AttrItem>,
     pub span: Span,
@@ -55,7 +55,7 @@ pub struct SceneConfig {
 
 /// `|wire|` line — global wire defaults (lowest specificity, layered under
 /// styles and per-wire attrs).
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct WireConfig {
     pub items: Vec<AttrItem>,
     pub span: Span,
@@ -64,7 +64,7 @@ pub struct WireConfig {
 /// `|name|` line in the defs block — defaults applied to every instance of
 /// the named type (primitive, template, or user shape). Sits as the lowest
 /// specificity layer under inheritance, styles, and inline attrs.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TypeDefaults {
     pub name: String,
     pub items: Vec<AttrItem>,
@@ -72,21 +72,21 @@ pub struct TypeDefaults {
 }
 
 /// `--name:value` line — CSS variable override.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct VarOverride {
     pub name: String,
     pub value: Value,
     pub span: Span,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct StyleDef {
     pub name: String,
     pub items: Vec<AttrItem>,
     pub span: Span,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ShapeDef {
     pub name: String,
     pub base: TypeRef,

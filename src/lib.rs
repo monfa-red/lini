@@ -13,6 +13,17 @@ mod theme;
 
 pub use error::{Diagnostic, Error, Level};
 pub use fmt::format as format_source;
+
+/// Expand a source file's sugar — positional labels and inline wire labels —
+/// into the explicit children they stand for, and print it as canonical
+/// `.lini`. Types, variables, and attributes are left exactly as written;
+/// comments are not preserved. This is what `lini desugar` prints.
+pub fn desugar_source(src: &str) -> Result<String, Error> {
+    let tokens = lexer::lex(src)?;
+    let file = parser::parse(&tokens)?;
+    let desugared = resolve::desugar_source(&file, &[])?;
+    Ok(fmt::print_file(&desugared))
+}
 pub use layout::{Rule, Severity, Violation};
 pub use serve::serve;
 pub use theme::extract_lini_vars;

@@ -64,6 +64,9 @@ fn main() -> ExitCode {
     if args.len() >= 2 && args[1] == "serve" {
         return run_serve(&args[2..]);
     }
+    if args.len() >= 2 && args[1] == "desugar" {
+        return run_desugar(&args[2..]);
+    }
 
     let cli = match Cli::try_parse() {
         Ok(c) => c,
@@ -374,6 +377,68 @@ fn run_fmt(args: &[String]) -> ExitCode {
         return ExitCode::from(2);
     }
     ExitCode::SUCCESS
+}
+
+fn run_desugar(args: &[String]) -> ExitCode {
+    let mut input: Option<String> = None;
+    for a in args {
+        match a.as_str() {
+            "-h" | "--help" => {
+                println!("lini desugar <input.lini>");
+                println!();
+                println!("  Expand label and wire-label sugar into the explicit children it");
+                println!("  stands for, and print to stdout. Types, vars, and attrs are kept");
+                println!("  as written; comments are dropped. Use '-' to read stdin.");
+                return ExitCode::SUCCESS;
+            }
+            flag if flag.starts_with('-') && flag != "-" => {
+                eprintln!("error: unknown flag for `lini desugar`: {}", flag);
+                return ExitCode::from(3);
+            }
+            other => {
+                if input.is_some() {
+                    eprintln!("error: `lini desugar` takes one input file");
+                    return ExitCode::from(3);
+                }
+                input = Some(other.to_string());
+            }
+        }
+    }
+    let input_arg = match input {
+        Some(p) => p,
+        None => {
+            eprintln!("error: `lini desugar` requires an input file (or '-' for stdin)");
+            return ExitCode::from(3);
+        }
+    };
+
+    let (filename, source) = if input_arg == "-" {
+        let mut buf = String::new();
+        if let Err(e) = std::io::stdin().read_to_string(&mut buf) {
+            eprintln!("error: failed to read stdin: {}", e);
+            return ExitCode::from(2);
+        }
+        ("<stdin>".to_string(), buf)
+    } else {
+        match std::fs::read_to_string(&input_arg) {
+            Ok(s) => (input_arg.clone(), s),
+            Err(e) => {
+                eprintln!("error: {}: {}", input_arg, e);
+                return ExitCode::from(2);
+            }
+        }
+    };
+
+    match lini::desugar_source(&source) {
+        Ok(s) => {
+            print!("{}", s);
+            ExitCode::SUCCESS
+        }
+        Err(e) => {
+            eprintln!("{}", e.display_with_source(&source, &filename));
+            ExitCode::from(1)
+        }
+    }
 }
 
 fn recompile(input: &Path, output: &Path, opts: &lini::Options, check_only: bool) {

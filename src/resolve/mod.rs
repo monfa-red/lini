@@ -1,3 +1,4 @@
+mod desugar;
 mod ir;
 mod shapes;
 mod styles;
@@ -10,6 +11,8 @@ use crate::ast::{
     ShapeDef, ShapeInst, StyleDef, TypeDefaults, TypeRef, Value, VarOverride, WireConfig, WireDecl,
     WireEndpoint, WireOp,
 };
+use shapes::ShapesTable;
+use styles::StyleTable;
 use crate::error::Error;
 use crate::span::Span;
 use std::collections::{HashMap, HashSet};
@@ -21,22 +24,12 @@ pub fn resolve(file: File) -> Result<Program, Error> {
 
 pub fn resolve_with_theme(file: File, theme: &[(String, String)]) -> Result<Program, Error> {
     // ─── Phase 2.1 — vars & defs setup ───
-    let mut vars = vars::built_in_defaults();
-    vars::apply_theme(&mut vars, theme);
-
-    let split = split_defs(&file.defs)?;
-
-    if !split.var_overrides.is_empty() {
-        vars::apply_var_overrides(&mut vars, &split.var_overrides)?;
-    }
-
-    let styles_table = styles::StyleTable::build(&split.style_defs, &vars)?;
-    let shapes_table = shapes::ShapesTable::build(
-        &split.shape_defs,
-        &split.type_defaults,
-        &styles_table,
-        &vars,
-    )?;
+    let DefTables {
+        vars,
+        styles: styles_table,
+        shapes: shapes_table,
+        split,
+    } = build_def_tables(&file.defs, theme)?;
 
     // ─── Phase 2.2 — partition top-level stmts ───
     let (root_nodes, root_wires) = partition_stmts(&file.stmts);
@@ -189,6 +182,45 @@ pub fn resolve_with_theme(file: File, theme: &[(String, String)]) -> Result<Prog
 }
 
 // ─────────────────────────── Defs partitioning ───────────────────────────
+
+/// Expand a source file's sugar (label → text children with the group
+/// caption/footer rules; inline wire labels → wire-text children) into an
+/// explicit AST, leaving types, vars, and attrs exactly as written. Used by the
+/// `desugar` CLI command to show what a node really means.
+pub fn desugar_source(file: &File, theme: &[(String, String)]) -> Result<File, Error> {
+    let tables = build_def_tables(&file.defs, theme)?;
+    Ok(desugar::desugar_file(file, &tables.shapes))
+}
+
+/// The defs-block tables, built once: CSS vars, the style table, the shape
+/// table, and the partitioned defs (which borrows `defs`). Shared by full
+/// resolution and the `desugar` pass.
+struct DefTables<'a> {
+    vars: VarTable,
+    styles: StyleTable,
+    shapes: ShapesTable,
+    split: SplitDefs<'a>,
+}
+
+fn build_def_tables<'a>(
+    defs: &'a Option<DefsBlock>,
+    theme: &[(String, String)],
+) -> Result<DefTables<'a>, Error> {
+    let mut vars = vars::built_in_defaults();
+    vars::apply_theme(&mut vars, theme);
+    let split = split_defs(defs)?;
+    if !split.var_overrides.is_empty() {
+        vars::apply_var_overrides(&mut vars, &split.var_overrides)?;
+    }
+    let styles = StyleTable::build(&split.style_defs, &vars)?;
+    let shapes = ShapesTable::build(&split.shape_defs, &split.type_defaults, &styles, &vars)?;
+    Ok(DefTables {
+        vars,
+        styles,
+        shapes,
+        split,
+    })
+}
 
 struct SplitDefs<'a> {
     scene_config: Option<&'a SceneConfig>,
@@ -562,9 +594,11 @@ fn resolve_inst(
         // bottom footer (both reserved bands), the rest plain centred text;
         // every other shape stacks all of them as centred content.
         let is_group = resolved_shape.type_chain.iter().any(|t| t == "group");
-        for (i, label) in inst.labels.iter().enumerate() {
-            body_items.push(BodyItem::Inst(label_sugar(label, inst.span, is_group, i)));
-        }
+        body_items.extend(
+            expand_labels(&inst.labels, is_group, inst.span)
+                .into_iter()
+                .map(BodyItem::Inst),
+        );
         None
     };
     if let Some(b) = &inst.body {
@@ -615,6 +649,16 @@ fn resolve_inst(
 /// an empty `<text>`. An id'd empty is kept, so a wire endpoint never dangles.
 fn is_blank_anon_text(r: &ResolvedInst) -> bool {
     r.id.is_none() && r.shape == ShapeKind::Text && r.label.as_deref().is_none_or(str::is_empty)
+}
+
+/// Expand a shape's positional labels into `|text|` children — the one place
+/// the label-sugar rules live, shared by resolution and the `desugar` pass.
+pub(super) fn expand_labels(labels: &[String], is_group: bool, span: Span) -> Vec<ShapeInst> {
+    labels
+        .iter()
+        .enumerate()
+        .map(|(i, label)| label_sugar(label, span, is_group, i))
+        .collect()
 }
 
 /// Desugar one positional label into a `|text|` child. `index` is its position

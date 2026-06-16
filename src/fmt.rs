@@ -35,6 +35,21 @@ pub fn format(src: &str) -> Result<String, Error> {
     Ok(out)
 }
 
+/// Print an AST directly in canonical form, with no source to draw comments
+/// from — for a synthesized `File` (e.g. the desugar pass), whose nodes carry
+/// no real spans. Same emitter, empty trivia: clean output, comments dropped.
+pub(crate) fn print_file(file: &File) -> String {
+    let mut out = String::new();
+    let mut emitter = Emitter {
+        src: "",
+        trivia: &[],
+        cursor: 0,
+        out: &mut out,
+    };
+    emitter.emit_file(file);
+    out
+}
+
 // ─────────────────────────── Trivia (comments + blank lines) ───────────────────────────
 
 #[derive(Debug, Clone)]

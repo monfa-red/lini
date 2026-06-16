@@ -307,8 +307,9 @@ axis.
 
 | Attr | Effect |
 |---|---|
-| `at:(x, y)` | Bbox center at (x, y). Removes from flow. |
-| `side: top\|bottom\|left\|right` | Anchor to an edge; `align:` slides, `place:` in/on/out (reserve vs overlay). Removes from flow. See [Positioning](#7-positioning--anchors). |
+| `place: none\|in\|out\|on` | The flow switch (default `none` = in flow). `in`/`out`/`on` anchor to the `side` edge (reserve vs overlay). See [Positioning](#7-positioning--anchors). |
+| `side: top\|bottom\|left\|right` | Which edge `place:in/out/on` meets (default `top`); `align:` slides along it. |
+| `at:(x, y)` | Bbox center at (x, y). An overlay; overrides `place`. |
 | `offset:(x, y)` | Fine-tune from `at:` / `side:`. |
 | `margin:N \| (y,x) \| (t,r,b,l)` | Signed outer spacing. Grows (or, negative, shrinks) the room the child reserves in its parent — adding to the gaps and the parent's size. See [Positioning](#7-positioning--anchors). |
 | `cell:(c, r)` | Grid placement, 1-indexed. |
@@ -882,6 +883,7 @@ via the `@layer`ed variables or by restyling the classes.
 ```
 lini [options] <input.lini>
 lini fmt [--check] [--stdout] <input.lini>
+lini desugar <input.lini>
 lini serve [--port N] [--bake-vars] <input.lini>
 ```
 
@@ -903,6 +905,12 @@ local live-reloading preview (default port 7700).
 **`lini fmt`** reformats to canonical style — 2-space indent, column-aligned
 id/type/label/attrs within a block, comments and blank lines preserved. `--check`
 exits 1 if it would change anything; `--stdout` writes instead of rewriting.
+
+**`lini desugar`** prints the file with its sugar expanded — positional labels
+and inline wire labels become the explicit `|text|` children they stand for
+(group caption/footer included) — while types, variables, and attributes stay
+exactly as written. A teaching/debugging view; it prints to stdout and never
+rewrites the file (comments are not preserved).
 
 Exit codes: 0 success · 1 parse/resolution error or `--check` reformat needed · 2
 I/O · 3 invalid CLI.
