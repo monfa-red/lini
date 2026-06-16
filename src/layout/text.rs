@@ -15,11 +15,25 @@ pub fn approx_width(text: &str, font_size: f64) -> f64 {
         .fold(0.0_f64, f64::max)
 }
 
-/// Height of a (possibly multi-line) text block: line_count × size × 1.2 per
-/// SPEC §5.
+/// Per-line box for multi-line text: lines render ~1.2 em tall and abut at this
+/// spacing (SPEC §5), so a multi-line block needs the full `n × 1.2` or its
+/// outer lines clip.
+const LINE_SPACING: f64 = 1.2;
+/// A single line's tight box — about one em, so the glyphs nearly fill it.
+/// `dominant-baseline:central` keeps them centred, so a snug box just hugs them:
+/// with `padding:0` the text almost touches the edges, no slack 1.2 halo.
+const LINE_HEIGHT: f64 = 1.0;
+
+/// Height of a (possibly multi-line) text block. A lone line gets the tight box;
+/// multi-line keeps the full per-line leading so nothing clips (SPEC §5).
 pub fn approx_height(text: &str, font_size: f64) -> f64 {
     let line_count = text.split('\n').count().max(1) as f64;
-    line_count * font_size * 1.2
+    let ems = if line_count > 1.0 {
+        line_count * LINE_SPACING
+    } else {
+        LINE_HEIGHT
+    };
+    ems * font_size
 }
 
 #[cfg(test)]
@@ -42,9 +56,10 @@ mod tests {
 
     #[test]
     fn height_grows_with_lines() {
+        // One line is a tight em (10); multi-line keeps the full 1.2 per line.
         let h1 = approx_height("a", 10.0);
         let h2 = approx_height("a\nb", 10.0);
-        assert!((h1 - 12.0).abs() < 0.01);
-        assert!((h2 - 24.0).abs() < 0.01);
+        assert!((h1 - 10.0).abs() < 0.01, "got {h1}");
+        assert!((h2 - 24.0).abs() < 0.01, "got {h2}");
     }
 }

@@ -9,7 +9,7 @@
   |wire|  clearance:10
 }
 
-ant  |rect| "Ant"
+ant  |rect| "Ant" size:(60,60)   // sized so the self-loop has port room at every swept clearance
 wall |rect| "Wall" size:(60,140)
 bee  |rect| "Bee"
 owl  |oval| "Owl"

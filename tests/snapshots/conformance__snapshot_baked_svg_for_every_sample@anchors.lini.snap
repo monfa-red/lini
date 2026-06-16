@@ -1,9 +1,10 @@
 ---
 source: tests/conformance.rs
+assertion_line: 43
 expression: svg
 input_file: samples/anchors.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-144.075 -103.3 288.15 206.6" width="288.15" height="206.6" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-144.075 -102 288.15 204" width="288.15" height="204" class="lini">
   <style>
     .lini { font-family: sans-serif; font-size: 13px; color: black; }
     .lini .lini-shape-rect { fill: white; stroke: #444; stroke-width: 1; stroke-dasharray: none; }

@@ -1,5 +1,6 @@
 // The realistic scene — a mid-size diagram with groups, exercising every
-// common wiring pattern at once. Expected: all four laws hold, ZERO crossings.
+// common wiring pattern at once. Expected: all four laws hold, with a single
+// forced crossing in the contended kitchen↔garden↔roof corridors.
 //
 //   top-level → group-interior · group → different group · group → top-level
 //   triple bundle between groups · duplicate rails · a fan from a top-level
