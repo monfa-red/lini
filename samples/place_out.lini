@@ -1,0 +1,31 @@
+// `place` decides which side of a frame's border a reserved caption lands on
+// (SPEC §7). Both `in` and `out` reserve space — the group's footprint grows
+// so neighbours never collide — but `in` keeps the caption inside the border
+// while `out` lifts it a container `gap` outside, leaving the border hugging
+// the content. Default for `|title|` is `place:in`.
+
+{
+  |scene| layout:row gap:40 padding:20 v:start
+}
+
+// Inside the border (the default).
+inside |group| layout:column gap:16 {
+    |title| "Inside"
+  a |rect|  "Row A"
+  b |rect|  "Row B"
+}
+
+// Above the border: the caption sits outside, the frame wraps only the rows.
+above |group| layout:column gap:16 {
+    |title| "Above" place:out
+  a |rect|  "Row A"
+  b |rect|  "Row B"
+}
+
+// Captions on both edges, outside — a header and a footer clear of the frame.
+both |group| layout:column gap:16 {
+    |title| "Header" place:out
+  a |rect|  "Row A"
+  b |rect|  "Row B"
+    |title| "Footer" side:bottom place:out
+}

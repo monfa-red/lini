@@ -11,9 +11,18 @@
 //! it, since margin inflates the title's footprint before it lands here.
 //! Left/right sides fall back to top — horizontal text only reads on a top or
 //! bottom band.
+//!
+//! `place` decides which side of the border the band lands on. `reserve_bands`
+//! handles **`place:in`** — inside the frame, before padding is added, so the
+//! border wraps the band. `place_out_bands` handles **`place:out`** — outside
+//! the drawn frame, after padding is known: the band sits a `gap` beyond the
+//! border and the layout footprint grows to reserve it, so the border still
+//! hugs the content while siblings clear the caption (SPEC §7).
 
-use super::anchors::{Align, Side};
+use super::anchors::{Align, Side, is_out_band};
 use super::ir::{Bbox, GridRule, PlacedNode};
+use super::primitives;
+use crate::error::Error;
 use crate::resolve::{AttrMap, ResolvedValue};
 
 /// Reserve bands for the title children and lay them out around the
@@ -79,6 +88,75 @@ pub fn reserve_bands(
     }
 
     Bbox::centered(total_w, total_h)
+}
+
+/// Place every `place:out` child outside the drawn `frame` and return the
+/// layout footprint (`frame` ∪ the out-bands) plus whether any were placed.
+///
+/// Each out child sits flush beyond its edge — a container `gap` past the
+/// border, the same spacing a flow sibling gets — and stacks outward when
+/// several share an edge. The frame stays put (centred on the origin, where
+/// the shape draws); the footprint grows asymmetrically outward, exactly as a
+/// child's `margin:` grows its footprint, so siblings clear the whole caption
+/// while the border keeps hugging the content. A child's own `margin:` insets
+/// it within its band, just as it does for `place:in` (so a negative facing
+/// margin pulls the caption toward the border). Top/bottom only; left/right
+/// fall back to top, matching the inside bands.
+pub fn place_out_bands(
+    children: &mut [PlacedNode],
+    frame: Bbox,
+    gap: f64,
+) -> Result<(Bbox, bool), Error> {
+    let mut top: Vec<usize> = Vec::new();
+    let mut bottom: Vec<usize> = Vec::new();
+    for (i, c) in children.iter().enumerate() {
+        if !is_out_band(&c.attrs) {
+            continue;
+        }
+        match side(&c.attrs) {
+            Side::Bottom => bottom.push(i),
+            _ => top.push(i),
+        }
+    }
+    if top.is_empty() && bottom.is_empty() {
+        return Ok((frame, false));
+    }
+
+    let mut footprint = frame;
+    // Top bands stack upward from the frame's top edge; bottom bands downward
+    // from its bottom edge. The cursor tracks the outer edge reached so far.
+    let mut cursor = frame.min_y;
+    for &i in &top {
+        cursor = place_out(&mut children[i], cursor, -1.0, gap, frame.w(), &mut footprint)?;
+    }
+    let mut cursor = frame.max_y;
+    for &i in &bottom {
+        cursor = place_out(&mut children[i], cursor, 1.0, gap, frame.w(), &mut footprint)?;
+    }
+    Ok((footprint, true))
+}
+
+/// Place one out-band child flush beyond `edge` in direction `dir` (-1 up, +1
+/// down), a `gap` clear of it, slid along the band by `align` within `band_w`.
+/// Unions the placed (margin-inflated) footprint into `footprint` and returns
+/// the new outer edge. The child's `margin:` inflates its footprint for the
+/// band, then the drawn box deflates back margin-inset within it.
+fn place_out(
+    node: &mut PlacedNode,
+    edge: f64,
+    dir: f64,
+    gap: f64,
+    band_w: f64,
+    footprint: &mut Bbox,
+) -> Result<f64, Error> {
+    let (t, r, b, l) = primitives::margin(&node.attrs, node.span)?;
+    let drawn = node.bbox;
+    node.bbox = drawn.expand(t, r, b, l);
+    let h = node.bbox.h();
+    place(node, edge + dir * (gap + h / 2.0), band_w);
+    *footprint = footprint.union(node.bbox.shifted(node.cx, node.cy));
+    node.bbox = drawn;
+    Ok(edge + dir * (gap + h))
 }
 
 /// Land the title's footprint centre at `band_cy`, slid along the band by

@@ -140,6 +140,13 @@ pub enum Role {
     Absolute,
 }
 
+/// Whether a child anchors with `place:out` — a band reserved *outside* the
+/// drawn frame (vs `place:in`, which reserves inside it). Only meaningful on a
+/// reserve child (one that carries `side:`).
+pub fn is_out_band(attrs: &AttrMap) -> bool {
+    matches!(attrs.get("place").and_then(ident), Some("out"))
+}
+
 /// Classify a child from its positioning attrs.
 pub fn child_role(attrs: &AttrMap, span: Span) -> Result<Role, Error> {
     Ok(match read_pos(attrs, span)? {

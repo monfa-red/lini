@@ -232,6 +232,7 @@ mod tests {
             cx,
             cy,
             bbox: Bbox::centered(w, h),
+            frame: None,
             rotation: 0.0,
             children,
             grid_rules: Vec::new(),

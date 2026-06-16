@@ -352,7 +352,12 @@ no compound anchor names:
     reserved child is spaced like a flow sibling — so a caption lines up evenly
     with the rows below it. This is what `|title|` does; tighten or loosen one
     with `margin:` (below). 
-  - **`out`** — flush outside, reserving the band outside the box.
+  - **`out`** — flush *outside the border*: the band sits a container `gap`
+    beyond the drawn frame, and the footprint grows to reserve it. The border
+    keeps hugging the content (and any `place:in` bands) while the caption rides
+    just outside it; siblings still clear the whole footprint. Top/bottom only,
+    like `in`. With no border or padding (the scene, `|row|` / `|col|`) there is
+    no frame to sit outside of, so it coincides with `in`.
   - **`on`** — centred on the edge/corner (a corner anchor straddles it); an
     **overlay**, no reserve.
 
@@ -457,7 +462,7 @@ pattern is common.
 |---|---|---|---|
 | `\|group\|` | `\|rect\|` | `stroke:--group-stroke fill:--group-fill radius:6 padding:10` | Frame + label. |
 | `\|badge\|` | `\|rect\|` | `side:top align:end place:on radius:999 padding:(2,8) shadow:2 fill:--accent z:10`; small on-accent text | Corner pill (straddles the corner, grows nothing). |
-| `\|title\|` | `\|text\|` | `side:top place:in align:start` | A caption that reserves a band on the edge (see [§7](#7-positioning--anchors)). |
+| `\|title\|` | `\|text\|` | `side:top place:in align:start` | A caption reserving a band on the edge — inside the border by default, `place:out` to lift it outside (see [§7](#7-positioning--anchors)). |
 | `\|note\|` | `\|rect\|` | `radius:2 padding:12 shadow:2 stroke:none fill:--note-bg` | Sticky note. |
 | `\|row\|` | `\|rect\|` | `layout:row fill:none stroke:none padding:0` | Frameless wrapper — children in a row. |
 | `\|col\|` | `\|rect\|` | `layout:column fill:none stroke:none padding:0` | Frameless wrapper — children in a column. |

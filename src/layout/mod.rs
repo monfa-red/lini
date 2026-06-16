@@ -89,6 +89,13 @@ fn attempt(program: &Program, growth: &GapGrowth) -> Result<Attempt, Error> {
         gap_bump(growth, ""),
     )?;
 
+    // The scene has no border or padding, so a scene-level `place:out` band has
+    // no frame to sit outside of — it coincides with `place:in`, reserved just
+    // beyond the content extent. Place it before routing so wires see it.
+    let (scene_gap_y, _) = primitives::gap(&program.scene.attrs, &program.vars, Span::empty())?;
+    let (bbox, _) =
+        titles::place_out_bands(&mut top_nodes, bbox, scene_gap_y + gap_bump(growth, "").0)?;
+
     // Route wires once the nodes are placed.
     let routing = wires::route_wires(program, &top_nodes)?;
     Ok(Attempt {
@@ -254,6 +261,9 @@ fn layout_inst(
 
     // Determine this node's bbox + arrange children inside.
     let mut grid_rules: Vec<GridRule> = Vec::new();
+    // The drawn frame, set only when a `place:out` band grows the footprint
+    // past it; otherwise the footprint is the drawn box (`frame` stays None).
+    let mut frame: Option<Bbox> = None;
     let bbox = if children.is_empty() {
         // Leaf primitive.
         primitives::leaf_bbox(inst, vars)?
@@ -301,7 +311,17 @@ fn layout_inst(
                 c.cy += dy;
             }
         }
-        b
+
+        // `place:out` bands sit a container `gap` outside the drawn frame `b`.
+        // The footprint grows to reserve them — so siblings clear the caption —
+        // while the shape keeps drawing at `b`.
+        let (gap_y, _) = primitives::gap(&inst.attrs, vars, inst.span)?;
+        let (footprint, has_out) =
+            titles::place_out_bands(&mut children, b, gap_y + gap_bump(growth, path).0)?;
+        if has_out {
+            frame = Some(b);
+        }
+        footprint
     };
 
     let rotation = inst
@@ -324,6 +344,7 @@ fn layout_inst(
         cx: 0.0,
         cy: 0.0,
         bbox,
+        frame,
         rotation,
         children,
         grid_rules,
@@ -435,10 +456,18 @@ fn lay_out_container_children(
         Bbox::empty()
     };
 
-    // Reserve children carve a band on the top/bottom edge: content shifts to
-    // clear them and the box grows. The result — content + bands — is the body
+    // Reserve children carve a band on the top/bottom edge. `place:in` bands
+    // sit inside the frame, so the box grows around them here — before padding,
+    // so the border wraps them. `place:out` bands sit outside the drawn frame
+    // and are placed by the caller (`titles::place_out_bands`) once padding has
+    // fixed the border. The result here — content + inside bands — is the body
     // the anchors and the parent bbox resolve against.
-    let body_bbox = if reserve_indices.is_empty() {
+    let in_indices: Vec<usize> = reserve_indices
+        .iter()
+        .copied()
+        .filter(|&i| !anchors::is_out_band(&children[i].attrs))
+        .collect();
+    let body_bbox = if in_indices.is_empty() {
         flow_bbox
     } else {
         // A title is separated from the content by the container's vertical gap
@@ -447,7 +476,7 @@ fn lay_out_container_children(
         titles::reserve_bands(
             children,
             &flow_indices,
-            &reserve_indices,
+            &in_indices,
             flow_bbox,
             &mut grid_rules,
             gap_y,
@@ -720,6 +749,46 @@ mod tests {
             (plain - tight - 12.0).abs() < 0.5,
             "plain={plain} tight={tight}"
         );
+    }
+
+    #[test]
+    fn place_out_title_reserves_a_band_outside_the_frame() {
+        // The drawn frame wraps only the content; the layout footprint grows
+        // upward to reserve the caption band, so the frame stays centred on the
+        // origin while the footprint extends above it.
+        let l = lay_out(
+            "g |group| layout:column gap:16 {\n\
+             |title| \"Cap\" place:out\n  a |rect| size:(80, 30)\n}\n",
+        );
+        let g = &l.nodes[0];
+        let frame = g.frame.expect("place:out splits the drawn frame from the footprint");
+        assert!(
+            (frame.min_y + frame.max_y).abs() < 0.01,
+            "frame stays centred on the origin"
+        );
+        assert!(
+            g.bbox.h() > frame.h() + 10.0,
+            "footprint {} reserves the band beyond frame {}",
+            g.bbox.h(),
+            frame.h()
+        );
+        assert!(
+            g.bbox.min_y < frame.min_y && (g.bbox.max_y - frame.max_y).abs() < 0.01,
+            "footprint grows only above the frame (caption on top)"
+        );
+    }
+
+    #[test]
+    fn place_out_frame_hugs_content_like_an_untitled_group() {
+        // A place:out caption lives outside the border, so the border wraps
+        // exactly the content — the same drawn box as a group with no caption.
+        let frame_h = |src: &str| lay_out(src).nodes[0].draw_box().h();
+        let plain = frame_h("g |group| layout:column gap:16 {\n  a |rect| size:(80, 30)\n}\n");
+        let out = frame_h(
+            "g |group| layout:column gap:16 {\n\
+             |title| \"Cap\" place:out\n  a |rect| size:(80, 30)\n}\n",
+        );
+        assert!((plain - out).abs() < 0.01, "plain={plain} out={out}");
     }
 
     #[test]

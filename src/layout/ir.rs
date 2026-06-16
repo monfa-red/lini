@@ -94,8 +94,15 @@ pub struct PlacedNode {
     /// Local origin position in parent coords.
     pub cx: f64,
     pub cy: f64,
-    /// Bbox in local coords (relative to this node's own origin).
+    /// Bbox in local coords (relative to this node's own origin) — the layout
+    /// **footprint**: what siblings space against and the canvas includes.
     pub bbox: Bbox,
+    /// The box the shape's geometry is drawn at, when it differs from the
+    /// footprint. `None` ⇒ draw at `bbox`. A `place:out` band grows the
+    /// footprint outward while the shape still draws at this smaller frame, so
+    /// a bordered group's border wraps its content while a caption sits outside
+    /// it (SPEC §7).
+    pub frame: Option<Bbox>,
     pub rotation: f64,
     pub children: Vec<PlacedNode>,
     /// A table's grid lines, drawn once by the table itself so cells stay
@@ -103,6 +110,14 @@ pub struct PlacedNode {
     /// the container owns its rules). Empty for non-tables.
     pub grid_rules: Vec<GridRule>,
     pub span: Span,
+}
+
+impl PlacedNode {
+    /// The box the shape's geometry draws at — the `frame` when a `place:out`
+    /// band has grown the footprint past it, else the footprint `bbox`.
+    pub fn draw_box(&self) -> Bbox {
+        self.frame.unwrap_or(self.bbox)
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
