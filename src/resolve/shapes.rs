@@ -217,9 +217,10 @@ pub(super) fn template_attrs(name: &str) -> Vec<ResolvedAttr> {
             attr("text-size", num(11.0)),
             attr("z", num(10.0)),
         ],
-        // A caption that reserves a band on its container's top edge — tight
-        // (text height + `title-gap`), left-aligned. `place:in` keeps it inside
-        // the frame; override `side`/`place`/`align` to move it.
+        // A caption that reserves a band on its container's top edge, separated
+        // from the content by the container's own `gap` and left-aligned.
+        // `place:in` keeps it inside the frame; override `side`/`place`/`align`
+        // to move it, or `margin:` to tighten the band.
         "title" => vec![
             attr("side", ident("top")),
             attr("place", ident("in")),

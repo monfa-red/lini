@@ -210,7 +210,7 @@ fn crossing_counts_are_pinned() {
     };
     assert_eq!(crossings("samples/wires_simple.lini"), 0);
     assert_eq!(crossings("samples/wires_medium.lini"), 0);
-    assert_eq!(crossings("samples/wires_hard.lini"), 15);
+    assert_eq!(crossings("samples/wires_hard.lini"), 17);
 }
 
 /// Law 3 (Economy), audit accept: a crossing a longer route can remove is
@@ -450,7 +450,7 @@ fn the_kept_crossing_names_its_wire_pair() {
         .into_iter()
         .filter(|v| v.rule == Rule::Crossing)
         .collect();
-    assert_eq!(kept.len(), 15);
+    assert_eq!(kept.len(), 17);
     assert!(
         kept.iter().any(|v| v.wires
             == vec![

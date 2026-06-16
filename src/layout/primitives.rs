@@ -73,6 +73,16 @@ pub fn padding(attrs: &AttrMap, vars: &VarTable, span: Span) -> Result<PaddingBo
     }
 }
 
+/// A child's `margin:` as `(top, right, bottom, left)` — signed outer spacing,
+/// `N` / `(y, x)` / `(t, r, b, l)` like padding, but negatives are allowed (and
+/// the point: they tighten). Absent → all zero (there is no margin default).
+pub fn margin(attrs: &AttrMap, span: Span) -> Result<(f64, f64, f64, f64), Error> {
+    match attrs.get("margin") {
+        Some(v) => expand_box_value(v, span),
+        None => Ok((0.0, 0.0, 0.0, 0.0)),
+    }
+}
+
 pub fn gap(attrs: &AttrMap, vars: &VarTable, span: Span) -> Result<(f64, f64), Error> {
     // gap → (y_between_rows, x_between_cols). Scalar collapses to both equal;
     // (y, x) takes the form directly.

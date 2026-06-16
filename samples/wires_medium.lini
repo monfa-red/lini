@@ -25,7 +25,8 @@ kitchen |group|  layout:column {
   water |treat| "Water"
 }
 
-garden |group| "Garden" layout:column padding:16 gap:24 {
+garden |group| layout:column padding:16 gap:24 {
+  |title| "Garden" margin:(0, 0, -20, 0)   // tighten the caption below its gap:24
   dog  |treat| "Dog"
   bird |treat| "Bird"
 }

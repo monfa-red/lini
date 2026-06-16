@@ -368,6 +368,20 @@ fn lay_out_container_children(
         &grown
     };
 
+    // `margin:` is signed outer spacing on a child. Inflate each child's bbox
+    // into its layout footprint up front; every layout routine below then
+    // spaces and sizes against the footprint (so margin grows/shrinks the
+    // parent and the gaps), and we deflate back to the drawn box at the end.
+    // Negative margins simply make the footprint smaller than the box — they
+    // tighten, and may overlap, which is the intent.
+    let margins: Vec<(f64, f64, f64, f64)> = children
+        .iter()
+        .map(|c| primitives::margin(&c.attrs, c.span))
+        .collect::<Result<_, _>>()?;
+    for (c, &(t, r, b, l)) in children.iter_mut().zip(&margins) {
+        c.bbox = c.bbox.expand(t, r, b, l);
+    }
+
     // Sort children into three roles (SPEC §7). `side:` with `place:in`/`out`
     // reserves an edge band (the parent grows); `at:(x,y)` or `place:on` is an
     // absolute overlay (the parent does not grow); everything else flows.
@@ -401,8 +415,14 @@ fn lay_out_container_children(
                 span,
             )?,
             LayoutMode::Grid(cols, rows) => {
-                let (bbox, rules) =
-                    grid::lay_out_grid(&mut flow_children, cols, rows, container_attrs, vars, span)?;
+                let (bbox, rules) = grid::lay_out_grid(
+                    &mut flow_children,
+                    cols,
+                    rows,
+                    container_attrs,
+                    vars,
+                    span,
+                )?;
                 grid_rules = rules;
                 bbox
             }
@@ -421,13 +441,16 @@ fn lay_out_container_children(
     let body_bbox = if reserve_indices.is_empty() {
         flow_bbox
     } else {
+        // A title is separated from the content by the container's vertical gap
+        // — the same gap that spaces flow siblings (SPEC §7).
+        let (gap_y, _) = primitives::gap(container_attrs, vars, span)?;
         titles::reserve_bands(
             children,
             &flow_indices,
             &reserve_indices,
             flow_bbox,
             &mut grid_rules,
-            vars,
+            gap_y,
         )
     };
 
@@ -458,6 +481,14 @@ fn lay_out_container_children(
     // bands only. An absolutes-only container with no explicit `size:` collapses
     // — that's the deal. The canvas viewBox still includes them (see `finish`),
     // so an overlay is never clipped.
+
+    // Deflate footprints back to drawn boxes. Each routine placed the footprint
+    // centre at its target, so the box — sitting margin-inset within the
+    // footprint — is already in the right spot; only its bbox shrinks back.
+    for (c, &(t, r, b, l)) in children.iter_mut().zip(&margins) {
+        c.bbox = c.bbox.expand(-t, -r, -b, -l);
+    }
+
     Ok((body_bbox, grid_rules))
 }
 
@@ -650,6 +681,45 @@ mod tests {
         assert_eq!(l.nodes.len(), 3);
         assert!(l.nodes[0].cx < l.nodes[1].cx);
         assert!(l.nodes[2].cy > l.nodes[0].cy);
+    }
+
+    #[test]
+    fn negative_margin_packs_flow_siblings() {
+        // gap:20 between two boxes → 20 px apart; a -10 bottom margin on the
+        // first eats half of it, leaving a 10 px gap (centers 10 px closer).
+        let src = "{ |scene| layout:column gap:20 }\n\
+                   |rect| size:(100, 40) margin:(0, 0, -10, 0)\n\
+                   |rect| size:(100, 40)\n";
+        let dy = |s: &str| {
+            let l = lay_out(s);
+            l.nodes[1].cy - l.nodes[0].cy
+        };
+        let packed = dy(src);
+        let plain = dy("{ |scene| layout:column gap:20 }\n\
+                        |rect| size:(100, 40)\n|rect| size:(100, 40)\n");
+        assert!(
+            (plain - packed - 10.0).abs() < 0.5,
+            "plain={plain} packed={packed}"
+        );
+    }
+
+    #[test]
+    fn negative_margin_on_a_title_shrinks_its_group() {
+        // The title's band is the container gap; a -12 bottom margin tightens it
+        // to the content by 12, so the whole group is 12 px shorter.
+        let group_h = |title_margin: &str| {
+            let l = lay_out(&format!(
+                "g |group| layout:column gap:20 {{\n\
+                 |title| \"T\"{title_margin}\n  a |rect| size:(80, 30)\n}}\n"
+            ));
+            l.nodes[0].bbox.h()
+        };
+        let plain = group_h("");
+        let tight = group_h(" margin:(0, 0, -12, 0)");
+        assert!(
+            (plain - tight - 12.0).abs() < 0.5,
+            "plain={plain} tight={tight}"
+        );
     }
 
     #[test]

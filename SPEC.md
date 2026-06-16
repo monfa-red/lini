@@ -306,6 +306,7 @@ axis.
 | `at:(x, y)` | Bbox center at (x, y). Removes from flow. |
 | `side: top\|bottom\|left\|right` | Anchor to an edge; `align:` slides, `place:` in/on/out (reserve vs overlay). Removes from flow. See [Positioning](#7-positioning--anchors). |
 | `offset:(x, y)` | Fine-tune from `at:` / `side:`. |
+| `margin:N \| (y,x) \| (t,r,b,l)` | Signed outer spacing. Grows (or, negative, shrinks) the room the child reserves in its parent — adding to the gaps and the parent's size. See [Positioning](#7-positioning--anchors). |
 | `cell:(c, r)` | Grid placement, 1-indexed. |
 | `span:(c, r)` | Grid span. Default `(1, 1)`. |
 | `z:N` | Render-order override; source order is the tiebreak. |
@@ -347,8 +348,10 @@ no compound anchor names:
   *size-aware* — the child clears the edge by its own extent at any size:
   - **`in`** — flush inside, and **reserves a band**: flow content shifts to
     clear it and the box grows (top/bottom only; left/right fall back to top).
-    `gap:` is the space to the content (default `title-gap` = 4; `gap:0` = the
-    band is exactly the child's height). This is what `|title|` does.
+    The band is separated from the content by the container's own `gap` — a
+    reserved child is spaced like a flow sibling — so a caption lines up evenly
+    with the rows below it. This is what `|title|` does; tighten or loosen one
+    with `margin:` (below). 
   - **`out`** — flush outside, reserving the band outside the box.
   - **`on`** — centred on the edge/corner (a corner anchor straddles it); an
     **overlay**, no reserve.
@@ -365,6 +368,16 @@ No element is special here: `|title|` is just `|text|` with `place:in side:top`;
 `|badge|` is a rect with `place:on`.
 
 `offset:(x, y)` nudges from `at:` or `side:`.
+
+**`margin:`** is signed *outer* spacing on any child — `N` / `(y, x)` /
+`(t, r, b, l)`, like `padding` but allowed negative. It inflates (or, negative,
+shrinks) the room the child reserves in its parent: positive spreads it from its
+siblings and grows the parent; negative eats the surrounding gap (and padding),
+tightening the parent to match. Its headline use is pulling a `|title|` closer
+to its frame and content — `|title| "X" margin:(-6, 0, -12, 0)`. A margin so
+negative it outruns the available space simply lets shapes overlap; nothing
+clips. Unlike `offset:` (a pure render-time nudge that moves only the one
+child), `margin:` changes the layout around it.
 
 **Wire-route anchors are separate** — only on a `|text|` child of a wire
 (`start` / `mid` / `end`, or a fraction `0..1`). They position *along a line*.
@@ -633,6 +646,7 @@ for *labels*, `fill` for *bodies*.
 | `side` | `top` / `bottom` / `left` / `right` | Edge anchor (with `align` / `place`); removes from flow. See [§7](#7-positioning--anchors). |
 | `place` | `in` / `on` / `out` | `in`/`out` reserve a band inside/outside the `side` edge; `on` is an overlay centred on it (no reserve). Default `in`. Size-aware. |
 | `offset` | `(x, y)` | Nudge from `at:` / `side:`. |
+| `margin` | `N` / `(y,x)` / `(t,r,b,l)` | Signed outer spacing on any child; negatives tighten. See [§7](#7-positioning--anchors). |
 | `size` | `N` or `(w,h)` | Bbox dimensions. |
 | `points` | `[(x,y),…]` | Vertex list. |
 | `d` | string | Raw SVG path (`\|path\|` only). |
@@ -724,7 +738,7 @@ Baked compile-time defaults — override per-node, per-wire, on `|scene|` /
 ```
 text-size 13   text-pad 16   thickness 1   radius 0
 gap 20         padding 0     clearance 16  icon-size 24
-canvas-pad 20  title-gap 4
+canvas-pad 20
 ```
 
 Per-shape default sizes are in [Positioning → Auto-sizing](#7-positioning--anchors).
@@ -899,9 +913,9 @@ Format: `filename:line:col: error: <message>` (LSP-compatible).
 `weight`, `align`, `variant`, `font`, `text-size`.
 
 **Always inline-OK (structural):** type / class / id / label / href / `title` /
-`aria-label`; placement (`at`, `offset`, `cell`, `span`, `z`); container (`layout`,
-`gap`, `padding`, `col-widths`, `row-heights`); geometry (`size`, `points`, `d`,
-`skew`); wire `marker*` / `clearance`; and `size` / `name` on `|icon|`.
+`aria-label`; placement (`at`, `offset`, `margin`, `cell`, `span`, `z`); container
+(`layout`, `gap`, `padding`, `col-widths`, `row-heights`); geometry (`size`,
+`points`, `d`, `skew`); wire `marker*` / `clearance`; and `size` / `name` on `|icon|`.
 
 ---
 

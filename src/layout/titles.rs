@@ -4,27 +4,31 @@
 //! edge: the flow content shifts to clear it, the box grows, and the title is
 //! placed in the strip (slid by `align`). So a container's caption never
 //! collides with its content — at any size, and regardless of the content's
-//! own layout direction. `gap:` (default `title-gap`) is the breathing room
-//! between the title and the content; `gap:0` makes the band exactly the
-//! title's height. Left/right sides fall back to top — horizontal text only
-//! reads on a top or bottom band.
+//! own layout direction. The separation between a title and the content is the
+//! container's own `gap` — a title is spaced like any sibling, so a caption
+//! lines up evenly with the rows below it. Tighten (or loosen) a single title
+//! with `margin:` (negative eats the spacing); the band already accounts for
+//! it, since margin inflates the title's footprint before it lands here.
+//! Left/right sides fall back to top — horizontal text only reads on a top or
+//! bottom band.
 
 use super::anchors::{Align, Side};
 use super::ir::{Bbox, GridRule, PlacedNode};
-use super::values::layout_var;
-use crate::resolve::{AttrMap, ResolvedValue, VarTable};
+use crate::resolve::{AttrMap, ResolvedValue};
 
 /// Reserve bands for the title children and lay them out around the
 /// already-placed flow content. Mutates flow children (shifted to clear the
 /// bands), the grid rules (shifted with them), and the titles (placed in their
-/// bands). Returns the container body bbox (content + bands), centred.
+/// bands). `gap` is the container's vertical gap — the space between a title
+/// and the content, the same gap that separates flow siblings. Returns the
+/// container body bbox (content + bands), centred.
 pub fn reserve_bands(
     children: &mut [PlacedNode],
     flow_indices: &[usize],
     reserve_indices: &[usize],
     flow_bbox: Bbox,
     grid_rules: &mut [GridRule],
-    vars: &VarTable,
+    gap: f64,
 ) -> Bbox {
     let mut top: Vec<usize> = Vec::new();
     let mut bottom: Vec<usize> = Vec::new();
@@ -35,12 +39,9 @@ pub fn reserve_bands(
         }
     }
 
-    // Each title contributes its own height plus its gap to the band.
-    let band = |idxs: &[usize]| -> f64 {
-        idxs.iter()
-            .map(|&i| children[i].bbox.h() + gap(&children[i].attrs, vars))
-            .sum()
-    };
+    // Each title contributes its (margin-inflated) footprint height plus one
+    // container gap — separating stacked titles, and the last from the content.
+    let band = |idxs: &[usize]| -> f64 { idxs.iter().map(|&i| children[i].bbox.h() + gap).sum() };
     let top_band = band(&top);
     let bottom_band = band(&bottom);
 
@@ -66,30 +67,34 @@ pub fn reserve_bands(
     // Place top titles from the top edge down, bottom titles from below content.
     let mut cursor = -total_h / 2.0;
     for &i in &top {
-        let (h, g) = (children[i].bbox.h(), gap(&children[i].attrs, vars));
+        let h = children[i].bbox.h();
         place(&mut children[i], cursor + h / 2.0, total_w);
-        cursor += h + g;
+        cursor += h + gap;
     }
     let mut cursor = total_h / 2.0;
     for &i in &bottom {
-        let (h, g) = (children[i].bbox.h(), gap(&children[i].attrs, vars));
+        let h = children[i].bbox.h();
         place(&mut children[i], cursor - h / 2.0, total_w);
-        cursor -= h + g;
+        cursor -= h + gap;
     }
 
     Bbox::centered(total_w, total_h)
 }
 
-/// A title's bbox is centred, so its target band centre is its `cx`/`cy`
-/// directly; `align` slides it along the band.
+/// Land the title's footprint centre at `band_cy`, slid along the band by
+/// `align`. The footprint may be off-centre (asymmetric `margin:`), so subtract
+/// its centre — exactly as flex does — to get the `cx`/`cy` of the local origin.
 fn place(node: &mut PlacedNode, band_cy: f64, total_w: f64) {
     let w = node.bbox.w();
-    node.cx = match align(&node.attrs) {
+    let center_x = (node.bbox.min_x + node.bbox.max_x) / 2.0;
+    let center_y = (node.bbox.min_y + node.bbox.max_y) / 2.0;
+    let target_x = match align(&node.attrs) {
         Align::Start => -total_w / 2.0 + w / 2.0,
         Align::Center => 0.0,
         Align::End => total_w / 2.0 - w / 2.0,
     };
-    node.cy = band_cy;
+    node.cx = target_x - center_x;
+    node.cy = band_cy - center_y;
 }
 
 fn side(attrs: &AttrMap) -> Side {
@@ -107,13 +112,6 @@ fn align(attrs: &AttrMap) -> Align {
         .and_then(ident)
         .and_then(Align::parse)
         .unwrap_or(Align::Start)
-}
-
-fn gap(attrs: &AttrMap, vars: &VarTable) -> f64 {
-    attrs
-        .number("gap")
-        .or_else(|| layout_var(vars, "title-gap"))
-        .unwrap_or(6.0)
 }
 
 fn ident(v: &ResolvedValue) -> Option<&str> {

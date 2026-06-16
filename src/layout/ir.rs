@@ -150,6 +150,19 @@ impl Bbox {
         }
     }
 
+    /// Expand each side independently (signed): top/left grow the min edges
+    /// outward, right/bottom grow the max edges. Negative values shrink — the
+    /// inverse is `expand(-t, -r, -b, -l)`. Used for `margin:`, which inflates a
+    /// child's layout footprint then deflates back to its drawn box.
+    pub fn expand(self, top: f64, right: f64, bottom: f64, left: f64) -> Self {
+        Self {
+            min_x: self.min_x - left,
+            min_y: self.min_y - top,
+            max_x: self.max_x + right,
+            max_y: self.max_y + bottom,
+        }
+    }
+
     /// Union with another bbox already expressed in this frame.
     pub fn union(self, other: Bbox) -> Self {
         Self {
