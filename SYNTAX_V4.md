@@ -141,16 +141,18 @@ bare group word is sugar for its obvious sub-property.
 | Property | Notes |
 |---|---|
 | `layout` | `row \| column \| grid` |
-| `align` | **cross axis** — `start \| center \| end \| stretch` |
-| `justify` | **main axis** — `start \| center \| end \| between \| around \| evenly` |
+| `align` | **cross axis** — `start \| center \| end \| stretch \| evenly` |
+| `justify` | **main axis** — `start \| center \| end \| stretch \| evenly` |
 | `divider` | `none` (default) \| `all` \| `rows` \| `columns` — separators between flow children, painted by `stroke*`. `all` adapts (1-D → the one axis); span-aware in grids; skips mounted children |
 
 `align`/`justify` follow flexbox: `justify` runs *along* the flow, `align`
-*across* it — which is why distributions belong to `justify` and `stretch` to
-`align`. (CSS's `align-items`/`justify-content`, shortened.) Default is
-`center`: a child keeps its **natural size, centred**; `stretch` makes its box
-**fill** the track (content still centred). `|table|` ships `stretch` on cells;
-a plain grid does not.
+*across* it; default `center` for both. `stretch` fills the child's **box**
+along that axis — it doesn't touch the child's content, which is placed by the
+child's *own* `align`/`justify` (also `center`), so a stretched table cell
+centres its text for free. `evenly` spreads children with equal gaps. All of
+these are **no-ops unless the container is larger than its packed children**
+(auto-sized containers have no slack), and `evenly` needs multiple tracks —
+`justify` always, `align` only across a grid's rows, never a 1-D cross axis.
 
 ### Grid
 
@@ -212,7 +214,8 @@ live `var()`; layout values bake.
 `size` (→ `width`+`height`), `origin` (was a no-op), per-corner radius, all
 coordinate/box **tuples** (→ space lists), wire `at:start|mid|end` sugar (→ numeric
 `at`), `row-gap`/`column-gap` (→ `gap`), `col-span`/`row-span` (→ `span`), the
-positional href (→ `link`), and `|title|` / `|cell|` (see §5–6).
+positional href (→ `link`), `|title|` / `|cell|` (see §5–6), and the
+`between`/`around` distributions (`evenly` stays).
 
 ---
 
@@ -258,9 +261,9 @@ is ever doubled.
 Cells are ordinary children that auto-flow into the tracks left-to-right,
 wrapping at the column count; `cell:` pins one explicitly and the rest flow
 around it. There is no `|cell|` type — a cell is the default `|rect|`. The
-shipped `stretch` rule is what makes each cell **fill** its track (box fills,
-content centred); a plain `layout: grid` leaves its children at their natural
-size, centred in each cell.
+shipped `stretch` rule makes each cell **fill** its track; its text centres for
+free because the cell's own `align`/`justify` default to `center`. A plain
+`layout: grid` leaves its children at their natural size, centred in each cell.
 
 ```lini
 basket |table| {
@@ -357,9 +360,6 @@ apart by its `{`.
 - `stroke-style: double` / `wavy` rendering on shapes.
 - `radius` on non-rect shapes (hex/diamond/slant/poly).
 - numeric `font-weight` (`100…900`).
-- `align`/`justify` distributions `between | around | evenly`. (`stretch` is
-  **not** deferred — it's core: it fills the box while keeping content centred,
-  not CSS's start-align, and `|table|` ships it on cells.)
 - `|icon|` Material Symbols glyph embedding (currently a placeholder).
 - embedded font metrics (text sizing is approximate until then).
 
