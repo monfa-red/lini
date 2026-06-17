@@ -128,12 +128,16 @@ and an AST that models stylesheet / instances / wires.
 - **Selectors & defines.** Element (`rect`), class (`.hot`), descendant
   (`table rect`, `.sidebar rect`), define (`name::base`). A node requires ≥1 of
   id / `|type|` / label / block; `|wire|` as an instance is an error.
-- This is a from-scratch rewrite of `ast.rs` + `parser.rs`. Don't preserve the
-  v3 defs-block AST.
+- **Built alongside v3 (strangler).** Changing the AST in place breaks the
+  *compilation* of `resolve` / `fmt` / `lint` / `desugar`, so parser tests can't
+  run. Instead the v4 front end lives in `src/syntax/` (`ast.rs` + `parser.rs`;
+  lexer `::` is shared), with the v3 front end left intact and green. Phase 3
+  cuts the pipeline over and retires v3.
 
-**Done when.** Unit tests parse every construct in SPEC §3–§9 and §20, and
-reject the error cases in §15 that are syntactic (ordering, empty node,
-`|wire|`, inline decl).
+**Done when.** The v4 parser unit-tests every construct in SPEC §3–§9 / §20 and
+the syntactic §15 errors, the crate compiles, and the v3 suite stays green.
+*(Done — `src/syntax/`, 19 tests; the module carries `#![allow(dead_code)]`
+until resolve consumes it in Phase 3.)*
 
 ---
 
@@ -142,6 +146,11 @@ reject the error cases in §15 that are syntactic (ordering, empty node,
 **Goal.** Turn the AST into the resolved scene + wires, applying the v4 cascade.
 
 **Key points.**
+- **Cut the pipeline over.** Point `compile_str*` at the v4 parser
+  (`syntax::parse`) and make `resolve` consume `syntax::ast`. The v3 front end
+  (`src/ast.rs`, `src/parser.rs`) is still read by `fmt` / `lint` / `desugar` —
+  keep those compiling (they migrate in their own phases, 6/7); delete v3 only
+  once nothing reads it. v3-syntax samples/tests go red here until Phase 8.
 - **No defs block.** Root bare declarations configure the scene; `wire { }` sets
   wire defaults; rules form a whole-file stylesheet. Drop `split_defs` /
   `|scene|` / `|wire|`-singleton machinery.

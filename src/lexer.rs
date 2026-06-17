@@ -10,12 +10,13 @@ pub enum TokKind {
     Hex(String),       // hex digits without leading '#'
     RawCssVar(String), // CSS var name without leading '--'
 
-    Pipe,  // |
-    Colon, // : (attr binding, inheritance)
-    Dot,   // . (style ref or endpoint side)
-    Amp,   // &
-    Semi,  // ;
-    Comma, // ,
+    Pipe,   // |
+    Colon,  // : (attr binding)
+    DColon, // :: (v4 define operator)
+    Dot,    // . (style ref or endpoint side)
+    Amp,    // &
+    Semi,   // ;
+    Comma,  // ,
     LBrace,
     RBrace,
     LParen,
@@ -82,6 +83,7 @@ impl<'a> Lexer<'a> {
                     self.push_punct(TokKind::RBracket, 1);
                 }
                 b'|' => self.push_punct(TokKind::Pipe, 1),
+                b':' if self.peek(1) == Some(b':') => self.push_punct(TokKind::DColon, 2),
                 b':' => self.push_punct(TokKind::Colon, 1),
                 b';' => self.push_punct(TokKind::Semi, 1),
                 b',' => self.push_punct(TokKind::Comma, 1),

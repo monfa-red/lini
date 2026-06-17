@@ -836,6 +836,7 @@ fn tok_desc(k: &TokKind) -> String {
         TokKind::RawCssVar(s) => format!("'--{}'", s),
         TokKind::Pipe => "'|'".to_string(),
         TokKind::Colon => "':'".to_string(),
+        TokKind::DColon => "'::'".to_string(),
         TokKind::Dot => "'.'".to_string(),
         TokKind::Amp => "'&'".to_string(),
         TokKind::Semi => "';'".to_string(),

@@ -9,6 +9,7 @@ mod render;
 mod resolve;
 mod serve;
 mod span;
+mod syntax;
 mod theme;
 
 pub use error::{Diagnostic, Error, Level};
