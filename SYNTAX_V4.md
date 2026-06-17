@@ -68,15 +68,15 @@ declarations, child nodes, and internal wires, in any order.
 ```lini
 db |cyl| "Postgres" .primary {
   fill: #eef;
-  badge |rect| "v16" { place: on; side: top; align: end; }
+  badge |rect| "v16" { mount: on; side: top; align: end; }
 }
 ```
 
 - **Omit the type** → `|rect|`. **Omit the id** → anonymous (can't be wired to).
 - **Labels are positional strings.** A `|group|`'s 1st label is a **top
-  caption**, its 2nd a **bottom footer** (both reserved `place:in` bands); the
+  caption**, its 2nd a **bottom footer** (both reserved `mount:in` bands); the
   rest are centred text. Every other shape just centres all its labels. There is
-  no `|title|` — a caption is a `|text|` with `place:in`.
+  no `|title|` — a caption is a `|text|` with `mount:in`.
 - An empty label `""` suppresses it.
 
 ### Implicit nodes
@@ -89,8 +89,9 @@ so `cat -> dog -> bird` is a complete three-box diagram.
 ## 3. Declarations (property reference)
 
 Values are **space-separated and positional**, like CSS (`padding: 5 2 5 5`,
-`shadow: 2 2 4 #0003`, `at: 100 50`). Commas separate only list items (`points`).
-Names are **dash-case**; a bare group word is sugar for its obvious sub-property.
+`shadow: 2 2 4 #0003`, `at: 100 50`). Commas separate only list items (`points`);
+functions use parens (`rgb()`, `hsl()`, `repeat()`). Names are **dash-case**; a
+bare group word is sugar for its obvious sub-property.
 
 ### Paint
 
@@ -118,10 +119,10 @@ Names are **dash-case**; a bare group word is sugar for its obvious sub-property
 | Property | Notes |
 |---|---|
 | `width`, `height` | bbox dims. **Set one → the other auto-sizes** to content/default. `\|image\|` needs both |
-| `at` | `x y` — centre at absolute parent-local coords; removes from flow |
-| `side` | `top \| right \| bottom \| left` — which edge `place` anchors to |
-| `place` | `none` (default, in flow) \| `in` \| `out` \| `on`. `in`/`out` reserve a band, `on` overlays |
-| `align` | on a placed child: position along its anchored edge |
+| `at` | `x y` — centre at absolute parent-local coords; removes from flow. (On a wire label, `at: 0.5` = fraction along the route — see §6.) |
+| `side` | `top \| right \| bottom \| left` — which edge `mount` anchors to |
+| `mount` | `none` (default, in flow) \| `in` \| `out` \| `on`. `in`/`out` reserve a band, `on` overlays. (was: `place`) |
+| `align` | on a mounted child: position along its anchored edge |
 | `offset` | `x y` — visual nudge after placement |
 | `layer` | render order (ties break on source order) |
 | `points` | `x y, x y, …` (`\|poly\|`, `\|line\|`) |
@@ -133,7 +134,7 @@ Names are **dash-case**; a bare group word is sugar for its obvious sub-property
 |---|---|
 | `padding` | `N` \| `v h` \| `t r b l`; longhands `padding-top`/`-right`/`-bottom`/`-left` |
 | `margin` | same forms + longhands. Per-child outer spacing, **signed** (negative tightens) |
-| `gap` | `N` \| `row col`; longhands `row-gap`/`column-gap` (space between children) |
+| `gap` | `N` (both) \| `row col` (CSS order); space between children |
 
 ### Layout
 
@@ -142,21 +143,26 @@ Names are **dash-case**; a bare group word is sugar for its obvious sub-property
 | `layout` | `row \| column \| grid` |
 | `align` | **cross axis** — `start \| center \| end \| stretch` |
 | `justify` | **main axis** — `start \| center \| end \| between \| around \| evenly` |
+| `divider` | `none` (default) \| `all` \| `rows` \| `columns` — separators between flow children, painted by `stroke*`. `all` adapts (1-D → the one axis); span-aware in grids; skips mounted children |
 
 `align`/`justify` follow flexbox: `justify` runs *along* the flow, `align`
 *across* it — which is why distributions belong to `justify` and `stretch` to
-`align`. (CSS's `align-items`/`justify-content`, shortened.)
+`align`. (CSS's `align-items`/`justify-content`, shortened.) Default is
+`center`: a child keeps its **natural size, centred**; `stretch` makes its box
+**fill** the track (content still centred). `|table|` ships `stretch` on cells;
+a plain grid does not.
 
 ### Grid
 
 | Property | Notes |
 |---|---|
-| `columns`, `rows` | a **single number** = that many auto tracks; a **list** = explicit track sizes (`columns: 80 140 80`, `rows: auto 40`). Count = list length |
-| `cell` | child placement `col row`, 1-indexed |
-| `col-span`, `row-span` | child span (default 1) |
+| `columns`, `rows` | a **track list** — sizes or `auto` (`columns: 80 140 80`, `rows: auto 40`); count = length. `repeat(N)` / `repeat(N, size)` for many equal tracks |
+| `cell` | child placement `column row`, 1-indexed |
+| `span` | child span `columns rows` (default `1 1`; `span: 2` = `2 1`) |
 
-`columns`/`rows`/`cell`/`*-span` are only valid on a grid (`layout: grid` or
-`|table|`); using them elsewhere is an error.
+`columns`/`rows`/`cell`/`span` are only valid on a grid (`layout: grid` or
+`|table|`); using them elsewhere is an error. Grid lines come from `divider`
+(see Layout), not from the grid props.
 
 ### Text
 
@@ -204,8 +210,9 @@ live `var()`; layout values bake.
 ### Dropped
 
 `size` (→ `width`+`height`), `origin` (was a no-op), per-corner radius, all
-coordinate/box **tuples** (→ space lists), wire `at:start|mid|end` (→ `along`),
-the positional href (→ `link`), and `|title|` / `|cell|` (see §5–6).
+coordinate/box **tuples** (→ space lists), wire `at:start|mid|end` sugar (→ numeric
+`at`), `row-gap`/`column-gap` (→ `gap`), `col-span`/`row-span` (→ `span`), the
+positional href (→ `link`), and `|title|` / `|cell|` (see §5–6).
 
 ---
 
@@ -236,17 +243,24 @@ cascade):
 
 ## 5. Layout, tables
 
-`row`/`column` are 1-D flex; `grid` is 2-D. A **table is a ruled grid** — the
-same engine plus a drawn border. Cells are ordinary children that auto-flow into
-the tracks left-to-right, wrapping at the column count; `cell:` pins one
-explicitly and the rest flow around it.
-
-There is no `|cell|` type — a cell is just the default `|rect|`, flattened by a
-rule the `|table|` ships:
+`row`/`column` are 1-D flex; `grid` is 2-D. A **`|table|` is just sugar** — a
+grid that draws dividers. Two things ship with the type:
 
 ```lini
-table rect { stroke-width: 0; padding: 8; }   // shipped with |table|
+table:group { layout: grid; divider: all; stroke: --stroke; }                   // the type
+table rect  { stroke-width: 0; padding: 8; align: stretch; justify: stretch; }  // fill cells
 ```
+
+So a table's outer frame is its group border and its inner lines are
+`divider: all`, both painted by its `stroke*`; cells are borderless, so no edge
+is ever doubled.
+
+Cells are ordinary children that auto-flow into the tracks left-to-right,
+wrapping at the column count; `cell:` pins one explicitly and the rest flow
+around it. There is no `|cell|` type — a cell is the default `|rect|`. The
+shipped `stretch` rule is what makes each cell **fill** its track (box fills,
+content centred); a plain `layout: grid` leaves its children at their natural
+size, centred in each cell.
 
 ```lini
 basket |table| {
@@ -281,16 +295,16 @@ The op is `[start-marker][line][end-marker]`: line `-`/`--`/`-.-`/`~`, markers
 `stroke-style` attrs override the op.
 
 **Wire labels** are `|text|` children — inline sugar `a -> b "label"` still
-works. They ride the wire; no `place`:
+works. They ride the wire — no `mount`; `at` + `offset` place them:
 
 | Property | Notes |
 |---|---|
-| `along` | `0..1` position along the route; unset = auto-distribute across the hops |
+| `at` | `0..1` along the route; unset = auto-distribute across the hops |
 | `offset` | `x y` in the route's tangent frame — lifts the label off the line |
 
 ```lini
 cat.right -> kitchen.bowl.left {
-  |text| "watches" { along: 0.5; font-size: 10; }
+  |text| "watches" { at: 0.5; font-size: 10; }
 }
 ```
 
@@ -308,7 +322,8 @@ CSS has no word for these, so they stay Lini-specific:
   because wires and open lines have a stroke but no border, and `fill`+`stroke`
   stay consistent across every shape.
 - **`layout: row|column|grid`** — one word instead of `display` + `flex-direction`.
-- **`place` / `side`** — edge anchoring (captions, badges).
+- **`divider`** — separators between flow children; `|table|` is `grid` + `divider: all`.
+- **`mount` / `side`** — edge anchoring (captions, badges).
 - **Wire operators**, **`marker*`**, **`clearance`** — routing.
 - **`stack`** — the offset-duplicate effect.
 
@@ -342,7 +357,9 @@ apart by its `{`.
 - `stroke-style: double` / `wavy` rendering on shapes.
 - `radius` on non-rect shapes (hex/diamond/slant/poly).
 - numeric `font-weight` (`100…900`).
-- `align`/`justify` values `stretch | between | around | evenly`.
+- `align`/`justify` distributions `between | around | evenly`. (`stretch` is
+  **not** deferred — it's core: it fills the box while keeping content centred,
+  not CSS's start-align, and `|table|` ships it on cells.)
 - `|icon|` Material Symbols glyph embedding (currently a placeholder).
 - embedded font metrics (text sizing is approximate until then).
 
@@ -359,9 +376,16 @@ apart by its `{`.
   stacking contexts to justify `z-index`'s baggage.
 - **`align` / `justify`, not `align-items` / `justify-content`** — same flexbox
   model, shorter.
-- **`columns`/`rows` overloaded** (count *or* track list) over a `columns` +
-  `widths` split — fewer names; the forms (one number vs a list) are visually
-  distinct.
+- **`columns`/`rows` are always a track list** (`auto` for auto-sized,
+  `repeat(N)` for many) — a bare number would read like a width; the list form
+  has no such ambiguity.
+- **`mount` (was `place`)** — renamed so it doesn't blur with `at`; reads with
+  the values ("mounted *in* / *on* / *out* the `side` edge").
+- **`at` does double duty** — node coords (`at: x y`) and a wire label's route
+  fraction (`at: 0.5`); a node never has a route and a label never has coords,
+  so it's unambiguous per element (and matches the current language).
+- **`divider`** — one separator control for every layout, painted by `stroke*`;
+  it's what lets `|table|` be plain `grid + divider: all` instead of a magic type.
 - **`line-height`** kept (CSS-familiar) even though the single-line box is snug —
   the multiple still describes multi-line spacing.
 - **`clearance` separate from `margin`** — routing keep-out (inherits) vs. layout
