@@ -1,9 +1,11 @@
-//! Row / column flex layout.
+//! Row / column flex layout (SPEC §5).
 //!
-//! Stacks children along the main axis with `gap` between them; centers them
-//! on the cross axis by default. `h:` / `v:` alignment supports `start`,
-//! `center`, `end`; the `between` / `around` / `evenly` distributions and
-//! `stretch` (SPEC §6) are not implemented yet.
+//! `justify` runs *along* the main axis, `align` runs *across* it; both default
+//! `center`. `start`/`center`/`end` pack the line at an edge / centre /
+//! opposite; `stretch` grows children's boxes to fill; `evenly` (main only)
+//! spreads equal gaps between and around. All of these are **no-ops without
+//! slack** — an auto-sized container is exactly its packed children, so
+//! distribution needs an explicit `width`/`height`, passed in as `avail`.
 
 use super::ir::{Bbox, PlacedNode};
 use super::primitives;
@@ -17,133 +19,192 @@ pub enum Axis {
     Column,
 }
 
+/// A concrete bbox dimension, so stretch/measurement read the right axis.
 #[derive(Clone, Copy, PartialEq, Eq)]
-pub enum Align {
+enum Dim {
+    W,
+    H,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Cross {
     Start,
     Center,
     End,
+    Stretch,
 }
 
-/// Lay out already-bboxed children in row or column order. Positions the
-/// children's `cx`/`cy` and returns the union bbox (in the parent's local
-/// frame, i.e. centered on the container's origin).
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Main {
+    Start,
+    Center,
+    End,
+    Stretch,
+    Evenly,
+}
+
+/// Lay out already-bboxed children in row or column order, positioning each
+/// child's `cx`/`cy` and returning the flow's bbox (centred on the container's
+/// origin). `avail` is the container's content-area `(width, height)` when it is
+/// explicitly sized — the only source of slack; `None` on an axis means auto.
 pub fn lay_out_flex(
     axis: Axis,
     children: &mut [PlacedNode],
     attrs: &AttrMap,
     vars: &VarTable,
     span: Span,
+    avail: (Option<f64>, Option<f64>),
 ) -> Result<Bbox, Error> {
     if children.is_empty() {
         return Ok(Bbox::empty());
     }
-
     let (gap_y, gap_x) = primitives::gap(attrs, vars, span)?;
-    let h_align = parse_align(attrs, "h").unwrap_or(Align::Center);
-    let v_align = parse_align(attrs, "v").unwrap_or(Align::Center);
-
-    // Determine the cross-axis extent (max of children's cross sizes).
-    let cross_size = match axis {
-        Axis::Row => children.iter().map(|c| c.bbox.h()).fold(0.0_f64, f64::max),
-        Axis::Column => children.iter().map(|c| c.bbox.w()).fold(0.0_f64, f64::max),
-    };
-
-    // Total main-axis extent = sum of sizes + (n-1)*gap.
-    let total_main: f64 = children
-        .iter()
-        .map(|c| match axis {
-            Axis::Row => c.bbox.w(),
-            Axis::Column => c.bbox.h(),
-        })
-        .sum::<f64>()
-        + gap_main(axis, gap_x, gap_y) * (children.len() as f64 - 1.0);
-
-    // Place children starting at the left/top of the line, centered as a whole
-    // on the container's local origin.
-    let mut cursor = -total_main / 2.0;
-    for child in children.iter_mut() {
-        let (main_size, cross_size_child) = match axis {
-            Axis::Row => (child.bbox.w(), child.bbox.h()),
-            Axis::Column => (child.bbox.h(), child.bbox.w()),
-        };
-
-        let main_origin = cursor + main_size / 2.0 - child_offset(child.bbox, axis);
-        let cross_origin = cross_align(
-            cross_size,
-            cross_size_child,
-            cross_axis_align(axis, h_align, v_align),
-        ) - child_offset(child.bbox, cross_of(axis));
-
-        match axis {
-            Axis::Row => {
-                child.cx = main_origin;
-                child.cy = cross_origin;
-            }
-            Axis::Column => {
-                child.cx = cross_origin;
-                child.cy = main_origin;
-            }
-        }
-
-        cursor += main_size + gap_main(axis, gap_x, gap_y);
-    }
-
-    // Union of children bboxes in container frame.
-    let mut union = children[0].bbox.shifted(children[0].cx, children[0].cy);
-    for c in children.iter().skip(1) {
-        union = union.union(c.bbox.shifted(c.cx, c.cy));
-    }
-    Ok(union)
-}
-
-fn child_offset(bbox: Bbox, axis: Axis) -> f64 {
-    // For asymmetric bboxes (e.g., lines starting at local 0,0), the
-    // bbox center isn't at the local origin. `cursor + main_size/2` puts the
-    // bbox CENTER at the right spot; subtract the local-origin offset to get
-    // the placement's `cx`/`cy` (which is the local origin).
-    match axis {
-        Axis::Row => (bbox.min_x + bbox.max_x) / 2.0,
-        Axis::Column => (bbox.min_y + bbox.max_y) / 2.0,
-    }
-}
-
-fn gap_main(axis: Axis, gap_x: f64, gap_y: f64) -> f64 {
-    match axis {
+    let gap = match axis {
         Axis::Row => gap_x,
         Axis::Column => gap_y,
+    };
+    let main = parse_main(attrs);
+    let cross = parse_cross(attrs);
+    let (main_dim, cross_dim) = match axis {
+        Axis::Row => (Dim::W, Dim::H),
+        Axis::Column => (Dim::H, Dim::W),
+    };
+    let (avail_main, avail_cross) = match axis {
+        Axis::Row => (avail.0, avail.1),
+        Axis::Column => (avail.1, avail.0),
+    };
+    let n = children.len() as f64;
+
+    let packed = children.iter().map(|c| len(c, main_dim)).sum::<f64>() + gap * (n - 1.0);
+    let main_extent = avail_main.map_or(packed, |a| a.max(packed));
+    let max_cross = children.iter().map(|c| len(c, cross_dim)).fold(0.0, f64::max);
+    let cross_extent = avail_cross.map_or(max_cross, |a| a.max(max_cross));
+
+    // Cross stretch: each unpinned child's box fills the cross axis.
+    if cross == Cross::Stretch {
+        for c in children.iter_mut() {
+            if !pinned(c, cross_dim) {
+                set_dim(c, cross_dim, cross_extent);
+            }
+        }
+    }
+    // Main stretch: grow each unpinned child's box by an equal share of slack.
+    if main == Main::Stretch {
+        let slack = (main_extent - packed).max(0.0);
+        let grow: Vec<usize> = (0..children.len())
+            .filter(|&i| !pinned(&children[i], main_dim))
+            .collect();
+        if slack > 0.0 && !grow.is_empty() {
+            let add = slack / grow.len() as f64;
+            for &i in &grow {
+                let m = len(&children[i], main_dim) + add;
+                set_dim(&mut children[i], main_dim, m);
+            }
+        }
+    }
+
+    // Leading offset + inter-child gap from the main alignment.
+    let used = children.iter().map(|c| len(c, main_dim)).sum::<f64>() + gap * (n - 1.0);
+    let remaining = (main_extent - used).max(0.0);
+    let (leading, inter) = match main {
+        Main::Start => (0.0, gap),
+        Main::Center | Main::Stretch => (remaining / 2.0, gap),
+        Main::End => (remaining, gap),
+        Main::Evenly => {
+            let bodies = children.iter().map(|c| len(c, main_dim)).sum::<f64>();
+            let eg = (main_extent - bodies) / (n + 1.0);
+            (eg, eg)
+        }
+    };
+
+    let mut cursor = -main_extent / 2.0 + leading;
+    for c in children.iter_mut() {
+        let m = len(c, main_dim);
+        let main_center = cursor + m / 2.0;
+        let cross_center = align_cross(cross_extent, len(c, cross_dim), cross);
+        place(c, axis, main_center, cross_center);
+        cursor += m + inter;
+    }
+
+    Ok(match axis {
+        Axis::Row => Bbox::centered(main_extent, cross_extent),
+        Axis::Column => Bbox::centered(cross_extent, main_extent),
+    })
+}
+
+fn len(c: &PlacedNode, dim: Dim) -> f64 {
+    match dim {
+        Dim::W => c.bbox.w(),
+        Dim::H => c.bbox.h(),
     }
 }
 
-fn cross_of(axis: Axis) -> Axis {
+/// Resize a child's box along one dimension, centred — the stretch fill. An
+/// explicit size pins the axis (checked by the caller via [`pinned`]), so the
+/// recentre never discards an author's dimension.
+fn set_dim(c: &mut PlacedNode, dim: Dim, v: f64) {
+    c.bbox = match dim {
+        Dim::W => Bbox::centered(v, c.bbox.h()),
+        Dim::H => Bbox::centered(c.bbox.w(), v),
+    };
+}
+
+fn pinned(c: &PlacedNode, dim: Dim) -> bool {
+    match dim {
+        Dim::W => c.attrs.get("width").is_some(),
+        Dim::H => c.attrs.get("height").is_some(),
+    }
+}
+
+/// The child's cross-axis centre within `extent` for the given alignment.
+fn align_cross(extent: f64, child: f64, cross: Cross) -> f64 {
+    match cross {
+        Cross::Start => -extent / 2.0 + child / 2.0,
+        Cross::Center | Cross::Stretch => 0.0,
+        Cross::End => extent / 2.0 - child / 2.0,
+    }
+}
+
+/// Land the child's bbox centre at `(main_center, cross_center)` in the
+/// container frame, subtracting the bbox's own centre offset (asymmetric
+/// children — a line from local 0,0 — keep their geometry).
+fn place(c: &mut PlacedNode, axis: Axis, main_center: f64, cross_center: f64) {
+    let cbx = (c.bbox.min_x + c.bbox.max_x) / 2.0;
+    let cby = (c.bbox.min_y + c.bbox.max_y) / 2.0;
     match axis {
-        Axis::Row => Axis::Column,
-        Axis::Column => Axis::Row,
+        Axis::Row => {
+            c.cx = main_center - cbx;
+            c.cy = cross_center - cby;
+        }
+        Axis::Column => {
+            c.cy = main_center - cby;
+            c.cx = cross_center - cbx;
+        }
     }
 }
 
-fn cross_axis_align(main_axis: Axis, h_align: Align, v_align: Align) -> Align {
-    match main_axis {
-        Axis::Row => v_align,
-        Axis::Column => h_align,
+fn parse_main(attrs: &AttrMap) -> Main {
+    match ident(attrs.get("justify")) {
+        Some("start") => Main::Start,
+        Some("end") => Main::End,
+        Some("stretch") => Main::Stretch,
+        Some("evenly") => Main::Evenly,
+        _ => Main::Center,
     }
 }
 
-fn cross_align(track_size: f64, item_size: f64, align: Align) -> f64 {
-    match align {
-        Align::Start => -track_size / 2.0 + item_size / 2.0,
-        Align::Center => 0.0,
-        Align::End => track_size / 2.0 - item_size / 2.0,
+fn parse_cross(attrs: &AttrMap) -> Cross {
+    match ident(attrs.get("align")) {
+        Some("start") => Cross::Start,
+        Some("end") => Cross::End,
+        Some("stretch") => Cross::Stretch,
+        _ => Cross::Center,
     }
 }
 
-fn parse_align(attrs: &AttrMap, name: &str) -> Option<Align> {
-    match attrs.get(name)? {
-        ResolvedValue::Ident(s) => match s.as_str() {
-            "start" => Some(Align::Start),
-            "center" => Some(Align::Center),
-            "end" => Some(Align::End),
-            _ => None,
-        },
+fn ident(v: Option<&ResolvedValue>) -> Option<&str> {
+    match v {
+        Some(ResolvedValue::Ident(s)) => Some(s.as_str()),
         _ => None,
     }
 }

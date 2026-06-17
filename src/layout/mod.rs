@@ -408,21 +408,38 @@ fn lay_out_container_children(
 
     // Lay out the flow children per the container's `layout=` attr.
     let mode = read_layout_mode(container_attrs, span)?;
+    // Slack for align/justify/stretch comes only from an explicit container
+    // size: the content area is the declared dimension minus padding (SPEC §5).
+    let pad = primitives::padding(container_attrs, vars, span)?;
+    let avail = (
+        container_attrs
+            .number("width")
+            .map(|w| (w - pad.left - pad.right).max(0.0)),
+        container_attrs
+            .number("height")
+            .map(|h| (h - pad.top - pad.bottom).max(0.0)),
+    );
 
     let mut grid_rules: Vec<GridRule> = Vec::new();
     let flow_bbox = if !flow_indices.is_empty() {
         let mut flow_children: Vec<PlacedNode> =
             flow_indices.iter().map(|i| children[*i].clone()).collect();
         let bbox = match mode {
-            LayoutMode::Row => {
-                flex::lay_out_flex(Axis::Row, &mut flow_children, container_attrs, vars, span)?
-            }
+            LayoutMode::Row => flex::lay_out_flex(
+                Axis::Row,
+                &mut flow_children,
+                container_attrs,
+                vars,
+                span,
+                avail,
+            )?,
             LayoutMode::Column => flex::lay_out_flex(
                 Axis::Column,
                 &mut flow_children,
                 container_attrs,
                 vars,
                 span,
+                avail,
             )?,
             LayoutMode::Grid(cols, rows) => {
                 let (bbox, rules) = grid::lay_out_grid(
@@ -699,5 +716,49 @@ mod tests {
             .find(|c| c.shape == ShapeKind::Rect)
             .expect("rect child");
         assert!(cap.cy < rect.cy, "cap.cy={} rect.cy={}", cap.cy, rect.cy);
+    }
+
+    // ── Flex distribution with slack (SPEC §5) ──
+
+    #[test]
+    fn justify_orders_children_start_center_end() {
+        let first_cx = |j: &str| {
+            let src = format!(
+                "g |row| {{ width: 300; justify: {j};\n  a |rect| {{ width: 40; height: 20; }}\n  b |rect| {{ width: 40; height: 20; }}\n}}\n"
+            );
+            lay_out(&src).nodes[0].children[0].cx
+        };
+        let (start, center, end) = (first_cx("start"), first_cx("center"), first_cx("end"));
+        assert!(start < center && center < end, "start={start} center={center} end={end}");
+    }
+
+    #[test]
+    fn justify_evenly_spaces_children_equally() {
+        let l = lay_out(
+            "g |row| { width: 300; justify: evenly;\n  a |rect| { width: 20; height: 20; }\n  b |rect| { width: 20; height: 20; }\n  c |rect| { width: 20; height: 20; }\n}\n",
+        );
+        let cx: Vec<f64> = l.nodes[0].children.iter().map(|c| c.cx).collect();
+        assert!(((cx[1] - cx[0]) - (cx[2] - cx[1])).abs() < 0.01, "centers {cx:?}");
+    }
+
+    #[test]
+    fn align_stretch_fills_the_cross_axis() {
+        // An unsized child grows to the row's content height (row pads 0).
+        let l = lay_out("g |row| { height: 80; align: stretch;\n  a |rect| { width: 40; }\n}\n");
+        let a = &l.nodes[0].children[0];
+        assert!((a.bbox.h() - 80.0).abs() < 1.0, "a.h={}", a.bbox.h());
+    }
+
+    #[test]
+    fn no_slack_means_no_distribution() {
+        // An auto-width row ignores justify — children stay packed at the gap.
+        let span = |j: &str| {
+            let src = format!(
+                "g |row| {{ justify: {j};\n  a |rect| {{ width: 40; height: 20; }}\n  b |rect| {{ width: 40; height: 20; }}\n}}\n"
+            );
+            let l = lay_out(&src);
+            l.nodes[0].children[1].cx - l.nodes[0].children[0].cx
+        };
+        assert!((span("start") - span("end")).abs() < 0.01, "auto row: justify is a no-op");
     }
 }
