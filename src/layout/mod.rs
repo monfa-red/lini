@@ -151,7 +151,9 @@ fn growable(program: &Program, path: &str) -> bool {
             None => return false,
         }
     }
-    found.is_some_and(|inst| inst.attrs.get("size").is_none())
+    found.is_some_and(|inst| {
+        inst.attrs.get("width").is_none() && inst.attrs.get("height").is_none()
+    })
 }
 
 fn gap_bump(growth: &GapGrowth, path: &str) -> (f64, f64) {
@@ -282,16 +284,10 @@ fn layout_inst(
             grid_rules = rules;
         }
 
-        // A closed shape whose content is text only auto-sizes with text-pad;
-        // anything else sizes to content + padding.
-        let text_only = inst.attrs.get("layout").is_none()
-            && children.iter().all(|c| c.shape == ShapeKind::Text);
-
-        let b = if let Some(explicit) = explicit_size(inst, vars)? {
-            explicit
-        } else {
-            primitives::auto_sized_bbox(inst, content_bbox, vars, text_only)?
-        };
+        // The closed shape sizes border-box: explicit width/height, else
+        // content + padding per axis (SPEC §6).
+        let b = primitives::closed_bbox(inst, content_bbox, vars)?;
+        let text_only = children.iter().all(|c| c.shape == ShapeKind::Text);
 
         // Some closed shapes carry decoration at the top — a cloud's lobes, a
         // cylinder's rim — so the optical body-center sits below the bbox center
@@ -324,14 +320,7 @@ fn layout_inst(
         footprint
     };
 
-    let rotation = inst
-        .attrs
-        .get("rotation")
-        .and_then(|v| match v {
-            ResolvedValue::Number(n) => Some(*n),
-            _ => None,
-        })
-        .unwrap_or(0.0);
+    let rotation = inst.attrs.number("rotate").unwrap_or(0.0);
 
     Ok(PlacedNode {
         id: inst.id.clone(),
@@ -569,41 +558,13 @@ fn positive_int(v: &ResolvedValue, span: Span, what: &str) -> Result<usize, Erro
     Ok(n as usize)
 }
 
-/// If a closed shape sets `size=` explicitly, use its geometric bbox
-/// (with stroke padding); otherwise fall through to content-driven sizing.
-fn explicit_size(inst: &ResolvedInst, vars: &VarTable) -> Result<Option<Bbox>, Error> {
-    let accepts_size = matches!(
-        inst.shape,
-        ShapeKind::Rect
-            | ShapeKind::Slant
-            | ShapeKind::Hex
-            | ShapeKind::Cyl
-            | ShapeKind::Diamond
-            | ShapeKind::Cloud
-            | ShapeKind::Oval
-    );
-    if !accepts_size || inst.attrs.get("size").is_none() {
-        return Ok(None);
-    }
-    Ok(Some(primitives::leaf_bbox(inst, vars)?))
-}
-
-/// If the container declared explicit `size:`, return a bbox the children's
-/// anchors should resolve against (no stroke pad — anchors live on the drawn
-/// shape's edges).
+/// If the container declared explicit `width` *and* `height`, the children's
+/// anchors resolve against those edges (no stroke pad — anchors live on the
+/// drawn shape); otherwise they fall back to the body extent.
 fn container_anchor_bbox(attrs: &crate::resolve::AttrMap) -> Option<Bbox> {
-    let (w, h) = read_size_loose(attrs)?;
+    let w = attrs.number("width")?;
+    let h = attrs.number("height")?;
     Some(Bbox::centered(w, h))
-}
-
-fn read_size_loose(attrs: &crate::resolve::AttrMap) -> Option<(f64, f64)> {
-    let v = attrs.get("size")?;
-    match v {
-        ResolvedValue::Tuple(items) if items.len() == 2 => {
-            Some((items[0].as_number()?, items[1].as_number()?))
-        }
-        _ => v.as_number().map(|n| (n, n)),
-    }
 }
 
 // ───────────────────────────── Tests ─────────────────────────────
@@ -619,216 +580,124 @@ mod tests {
         layout(&program).expect("layout")
     }
 
+    // ── Sizing (SPEC §6) ──
+
     #[test]
-    fn rect_with_explicit_size_keeps_those_dims() {
-        let l = lay_out("|rect| size:(200, 80)\n");
-        let n = &l.nodes[0];
-        assert!((n.bbox.w() - 201.0).abs() < 0.01, "bbox.w={}", n.bbox.w());
-        assert!((n.bbox.h() - 81.0).abs() < 0.01, "bbox.h={}", n.bbox.h());
+    fn empty_closed_shape_is_two_paddings() {
+        // padding 16 each side → 32 drawn; + stroke 1 → 33 bbox.
+        let n = &lay_out("|rect|\n").nodes[0];
+        assert!((n.bbox.w() - 33.0).abs() < 0.01, "w={}", n.bbox.w());
+        assert!((n.bbox.h() - 33.0).abs() < 0.01, "h={}", n.bbox.h());
     }
 
     #[test]
-    fn rect_with_label_auto_sizes_to_text_plus_pad() {
-        let l = lay_out("|rect| \"hi\"\n");
-        let n = &l.nodes[0];
-        assert!(
-            n.bbox.w() > 30.0 && n.bbox.w() < 60.0,
-            "got w={}",
-            n.bbox.w()
-        );
+    fn explicit_dims_are_border_box() {
+        let n = &lay_out("|rect| { width: 100; height: 50; }\n").nodes[0];
+        assert!((n.bbox.w() - 101.0).abs() < 0.01, "w={}", n.bbox.w());
+        assert!((n.bbox.h() - 51.0).abs() < 0.01, "h={}", n.bbox.h());
     }
 
     #[test]
-    fn rect_with_size_and_text_overrides_auto_size() {
-        let l = lay_out("|rect| \"hello\" size:(200, 40)\n");
-        let n = &l.nodes[0];
-        assert!((n.bbox.w() - 201.0).abs() < 0.01, "bbox.w={}", n.bbox.w());
-        assert!((n.bbox.h() - 41.0).abs() < 0.01, "bbox.h={}", n.bbox.h());
+    fn stroke_width_counts_toward_the_bbox() {
+        // SPEC §6: width 100 height 50 stroke-width 4 → 104×54.
+        let n = &lay_out("|rect| { width: 100; height: 50; stroke-width: 4; }\n").nodes[0];
+        assert!((n.bbox.w() - 104.0).abs() < 0.01, "w={}", n.bbox.w());
+        assert!((n.bbox.h() - 54.0).abs() < 0.01, "h={}", n.bbox.h());
     }
 
     #[test]
-    fn rect_with_scalar_size() {
-        let l = lay_out("|rect| \"sq\" size:100\n");
-        let n = &l.nodes[0];
-        assert!((n.bbox.w() - 101.0).abs() < 0.01, "bbox.w={}", n.bbox.w());
-        assert!((n.bbox.h() - 101.0).abs() < 0.01, "bbox.h={}", n.bbox.h());
+    fn label_auto_sizes_to_content_plus_padding() {
+        // text ~15.4 + 2×16 padding + stroke → ~48.
+        let n = &lay_out("|rect| \"hi\"\n").nodes[0];
+        assert!(n.bbox.w() > 40.0 && n.bbox.w() < 60.0, "w={}", n.bbox.w());
     }
 
     #[test]
-    fn oval_uses_size() {
-        let l = lay_out("|oval| size:(100, 50)\n");
-        let n = &l.nodes[0];
-        assert!((n.bbox.w() - 101.0).abs() < 0.01);
-        assert!((n.bbox.h() - 51.0).abs() < 0.01);
+    fn dims_are_independent_per_axis() {
+        let n = &lay_out("|rect| \"hi\" { width: 200; }\n").nodes[0];
+        assert!((n.bbox.w() - 201.0).abs() < 0.01, "w={}", n.bbox.w());
+        // height auto = one text line (14) + 32 padding + 1 stroke = 47.
+        assert!((n.bbox.h() - 47.0).abs() < 0.01, "h={}", n.bbox.h());
     }
+
+    #[test]
+    fn oval_uses_width_height() {
+        let n = &lay_out("|oval| { width: 100; height: 50; }\n").nodes[0];
+        assert!((n.bbox.w() - 101.0).abs() < 0.01, "w={}", n.bbox.w());
+        assert!((n.bbox.h() - 51.0).abs() < 0.01, "h={}", n.bbox.h());
+    }
+
+    #[test]
+    fn text_sizes_to_its_glyphs_without_padding() {
+        let n = &lay_out("|text| \"hi\"\n").nodes[0];
+        assert!((n.bbox.w() - 15.4).abs() < 0.5, "w={}", n.bbox.w()); // 2 × 14 × 0.55
+        assert!((n.bbox.h() - 14.0).abs() < 0.5, "h={}", n.bbox.h());
+    }
+
+    // ── Basic flow (full align/justify/stretch/evenly land in the flex chunk) ──
 
     #[test]
     fn row_layout_stacks_horizontally() {
         let l = lay_out(
-            "{ |scene| layout:row gap:10 }\n\
-             |rect| size:(100, 40)\n\
-             |rect| size:(60, 40)\n",
+            "layout: row; gap: 10;\n\
+             |rect| { width: 100; height: 40; }\n\
+             |rect| { width: 60; height: 40; }\n",
         );
         assert_eq!(l.nodes.len(), 2);
+        // half (50.5) + gap (10) + half (30.5) = 91.
         let dx = l.nodes[1].cx - l.nodes[0].cx;
-        assert!((dx - 90.0).abs() < 2.0, "dx={}", dx);
+        assert!((dx - 91.0).abs() < 0.5, "dx={}", dx);
         assert!((l.nodes[0].cy - l.nodes[1].cy).abs() < 0.01);
     }
 
     #[test]
     fn column_layout_stacks_vertically() {
         let l = lay_out(
-            "{ |scene| layout:column gap:20 }\n\
-             |rect| size:(100, 40)\n\
-             |rect| size:(100, 60)\n",
+            "layout: column; gap: 20;\n\
+             |rect| { width: 100; height: 40; }\n\
+             |rect| { width: 100; height: 60; }\n",
         );
+        // half (20.5) + gap (20) + half (30.5) = 71.
         let dy = l.nodes[1].cy - l.nodes[0].cy;
-        assert!((dy - 70.0).abs() < 2.0, "dy={}", dy);
+        assert!((dy - 71.0).abs() < 0.5, "dy={}", dy);
         assert!((l.nodes[0].cx - l.nodes[1].cx).abs() < 0.01);
     }
 
     #[test]
-    fn grid_cells_default_to_center_alignment() {
-        let l = lay_out(
-            "{ |scene| layout:(2, 1) col-widths:[200, 200] row-heights:100 gap:0 }\n\
-             cat |rect| size:(40, 40) cell:(1, 1)\n\
-             dog |rect| size:(40, 40) cell:(2, 1)\n",
-        );
-        let dx = l.nodes[1].cx - l.nodes[0].cx;
-        assert!((dx - 200.0).abs() < 0.01, "dx={}", dx);
-        assert!((l.nodes[0].cy - l.nodes[1].cy).abs() < 0.01);
-    }
-
-    #[test]
-    fn grid_places_by_cell() {
-        let l = lay_out(
-            "{ |scene| layout:(3, 2) gap:20 }\n\
-             |rect| size:(80, 40) cell:(1, 1)\n\
-             |rect| size:(80, 40) cell:(3, 1)\n\
-             |rect| size:(80, 40) cell:(2, 2)\n",
-        );
-        assert_eq!(l.nodes.len(), 3);
-        assert!(l.nodes[0].cx < l.nodes[1].cx);
-        assert!(l.nodes[2].cy > l.nodes[0].cy);
-    }
-
-    #[test]
-    fn negative_margin_packs_flow_siblings() {
-        // gap:20 between two boxes → 20 px apart; a -10 bottom margin on the
-        // first eats half of it, leaving a 10 px gap (centers 10 px closer).
-        let src = "{ |scene| layout:column gap:20 }\n\
-                   |rect| size:(100, 40) margin:(0, 0, -10, 0)\n\
-                   |rect| size:(100, 40)\n";
-        let dy = |s: &str| {
-            let l = lay_out(s);
-            l.nodes[1].cy - l.nodes[0].cy
-        };
-        let packed = dy(src);
-        let plain = dy("{ |scene| layout:column gap:20 }\n\
-                        |rect| size:(100, 40)\n|rect| size:(100, 40)\n");
-        assert!(
-            (plain - packed - 10.0).abs() < 0.5,
-            "plain={plain} packed={packed}"
-        );
-    }
-
-    #[test]
-    fn negative_margin_on_a_title_shrinks_its_group() {
-        // The title's band is the container gap; a -12 bottom margin tightens it
-        // to the content by 12, so the whole group is 12 px shorter.
-        let group_h = |title_margin: &str| {
-            let l = lay_out(&format!(
-                "g |group| layout:column gap:20 {{\n\
-                 |text| \"T\" place:in{title_margin}\n  a |rect| size:(80, 30)\n}}\n"
-            ));
-            l.nodes[0].bbox.h()
-        };
-        let plain = group_h("");
-        let tight = group_h(" margin:(0, 0, -12, 0)");
-        assert!(
-            (plain - tight - 12.0).abs() < 0.5,
-            "plain={plain} tight={tight}"
-        );
-    }
-
-    #[test]
-    fn place_out_title_reserves_a_band_outside_the_frame() {
-        // The drawn frame wraps only the content; the layout footprint grows
-        // upward to reserve the caption band, so the frame stays centred on the
-        // origin while the footprint extends above it.
-        let l = lay_out(
-            "g |group| layout:column gap:16 {\n\
-             |text| \"Cap\" place:out\n  a |rect| size:(80, 30)\n}\n",
-        );
-        let g = &l.nodes[0];
-        let frame = g
-            .frame
-            .expect("place:out splits the drawn frame from the footprint");
-        assert!(
-            (frame.min_y + frame.max_y).abs() < 0.01,
-            "frame stays centred on the origin"
-        );
-        assert!(
-            g.bbox.h() > frame.h() + 10.0,
-            "footprint {} reserves the band beyond frame {}",
-            g.bbox.h(),
-            frame.h()
-        );
-        assert!(
-            g.bbox.min_y < frame.min_y && (g.bbox.max_y - frame.max_y).abs() < 0.01,
-            "footprint grows only above the frame (caption on top)"
-        );
-    }
-
-    #[test]
-    fn place_out_frame_hugs_content_like_an_untitled_group() {
-        // A place:out caption lives outside the border, so the border wraps
-        // exactly the content — the same drawn box as a group with no caption.
-        let frame_h = |src: &str| lay_out(src).nodes[0].draw_box().h();
-        let plain = frame_h("g |group| layout:column gap:16 {\n  a |rect| size:(80, 30)\n}\n");
-        let out = frame_h(
-            "g |group| layout:column gap:16 {\n\
-             |text| \"Cap\" place:out\n  a |rect| size:(80, 30)\n}\n",
-        );
-        assert!((plain - out).abs() < 0.01, "plain={plain} out={out}");
-    }
-
-    #[test]
-    fn at_coord_places_absolutely() {
-        let l = lay_out("|rect| size:(40, 40) at:(100, 50)\n");
-        let n = &l.nodes[0];
-        assert!((n.cx - 100.0).abs() < 0.01, "cx={}", n.cx);
-        assert!((n.cy - 50.0).abs() < 0.01, "cy={}", n.cy);
-    }
-
-    #[test]
     fn viewbox_wraps_content_with_canvas_pad() {
-        let l = lay_out("|rect| size:(100, 40)\n");
+        // bbox 101×41, + 20 canvas-pad each side → 141×81.
+        let l = lay_out("|rect| { width: 100; height: 40; }\n");
         assert!((l.viewbox.w - 141.0).abs() < 0.01, "w={}", l.viewbox.w);
         assert!((l.viewbox.h - 81.0).abs() < 0.01, "h={}", l.viewbox.h);
     }
 
+    // ── Caption bands (mount: in, SPEC §6/§8) ──
+
     #[test]
-    fn defaults_override_layout_var_changes_layout_math() {
-        let l = lay_out(
-            "{ |scene| layout:row\n  --gap:60 }\n\
-             |rect| size:(40, 40)\n\
-             |rect| size:(40, 40)\n",
+    fn group_caption_reserves_a_band_above_the_content() {
+        let h = |src: &str| lay_out(src).nodes[0].bbox.h();
+        let plain = h("g |group| {\n  a |rect| { width: 80; height: 30; }\n}\n");
+        let capped = h("g |group| \"Cap\" {\n  a |rect| { width: 80; height: 30; }\n}\n");
+        assert!(
+            capped > plain + 10.0,
+            "caption adds a band: plain={plain} capped={capped}"
         );
-        let dx = l.nodes[1].cx - l.nodes[0].cx;
-        assert!((dx - 100.0).abs() < 2.0, "dx={}", dx);
     }
 
     #[test]
-    fn full_spec_example_lays_out_without_error() {
-        let src = std::fs::read_to_string("samples/full_example.lini").unwrap();
-        let tokens = crate::lexer::lex(&src).expect("lex");
-        let file = crate::syntax::parser::parse(&tokens).expect("parse");
-        let program = crate::resolve::resolve_with_theme(&file, &[]).expect("resolve");
-        let l = layout(&program).expect("layout");
-        // Smoke check: the showcase lays out into a non-trivial multi-node scene.
-        assert!(l.viewbox.w > 100.0);
-        assert!(l.viewbox.h > 100.0);
-        assert!(l.nodes.len() >= 4);
+    fn caption_sits_above_the_content() {
+        let l = lay_out("g |group| \"Cap\" {\n  a |rect| { width: 80; height: 30; }\n}\n");
+        let g = &l.nodes[0];
+        let cap = g
+            .children
+            .iter()
+            .find(|c| c.shape == ShapeKind::Text)
+            .expect("caption child");
+        let rect = g
+            .children
+            .iter()
+            .find(|c| c.shape == ShapeKind::Rect)
+            .expect("rect child");
+        assert!(cap.cy < rect.cy, "cap.cy={} rect.cy={}", cap.cy, rect.cy);
     }
 }

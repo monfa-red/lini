@@ -109,13 +109,13 @@ pub fn read_pos(attrs: &AttrMap, span: Span) -> Result<Option<Pos>, Error> {
         let (x, y) = as_pair(v, span)?;
         return Ok(Some(Pos::Coord(x, y)));
     }
-    let place = match attrs.get("place") {
+    let place = match attrs.get("mount") {
         Some(v) => ident(v)
             .and_then(Place::parse)
-            .ok_or_else(|| Error::at(span, "'place' expects none, in, out, or on"))?,
+            .ok_or_else(|| Error::at(span, "'mount' expects none, in, out, or on"))?,
         None => {
             if attrs.get("side").is_some() {
-                return Err(Error::at(span, "'side:' needs a 'place:' — in, out, or on"));
+                return Err(Error::at(span, "a bare 'side:' needs a 'mount:' — in, out, or on"));
             }
             Place::None
         }
@@ -158,7 +158,7 @@ pub enum Role {
 /// drawn frame (vs `place:in`, which reserves inside it). Only meaningful on a
 /// reserve child (one that carries `side:`).
 pub fn is_out_band(attrs: &AttrMap) -> bool {
-    matches!(attrs.get("place").and_then(ident), Some("out"))
+    matches!(attrs.get("mount").and_then(ident), Some("out"))
 }
 
 /// Classify a child from its positioning attrs.

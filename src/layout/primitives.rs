@@ -1,6 +1,10 @@
-//! Per-shape bbox computation. Closed shapes with text-only children auto-size
-//! to the text plus padding (or text-pad if no padding is set). Container
-//! shapes get their bbox from already-laid-out children plus padding.
+//! Per-shape bbox computation (SPEC §6–§7).
+//!
+//! A closed shape sizes **border-box**: `width`/`height` each default `auto` =
+//! content + `padding` on that axis; an empty one is `2 × padding`; an explicit
+//! dimension is the exact drawn size with padding inside it. Strokes count
+//! toward the bbox (half each side). `|text|` sizes to its glyphs (no padding),
+//! `|icon|` to `icon-size`, and the geometry primitives to their `points`/`src`.
 
 use super::ir::Bbox;
 use super::text;
@@ -28,33 +32,62 @@ impl PaddingBox {
     }
 }
 
-/// Bbox for a leaf primitive (no children — purely shape-driven dimensions).
+/// Bbox for a leaf primitive (no flow children). A closed shape is empty here —
+/// `2 × padding` (or its explicit dims); text / icon / geometry size to their
+/// own content.
 pub fn leaf_bbox(inst: &ResolvedInst, vars: &VarTable) -> Result<Bbox, Error> {
-    let bbox = geom_bbox(inst, vars)?;
-    Ok(bbox.inflate(stroke_half(inst, vars)))
+    match inst.shape {
+        ShapeKind::Rect
+        | ShapeKind::Oval
+        | ShapeKind::Hex
+        | ShapeKind::Slant
+        | ShapeKind::Cyl
+        | ShapeKind::Diamond
+        | ShapeKind::Cloud => closed_bbox(inst, Bbox::empty(), vars),
+        ShapeKind::Text => {
+            let size = font_size(inst, vars);
+            let label = inst.label.as_deref().unwrap_or("");
+            Ok(Bbox::centered(
+                text::approx_width(label, size),
+                text::approx_height(label, size),
+            ))
+        }
+        ShapeKind::Icon => {
+            let size = inst
+                .attrs
+                .number("width")
+                .or_else(|| inst.attrs.number("height"))
+                .or_else(|| layout_var(vars, "icon-size"))
+                .unwrap_or(24.0);
+            Ok(Bbox::centered(size, size))
+        }
+        ShapeKind::Line => Ok(bounding_box(&require_points(inst, "line", 2)?)
+            .inflate(stroke_half(inst, vars))),
+        ShapeKind::Poly => Ok(bounding_box(&require_points(inst, "poly", 3)?)
+            .inflate(stroke_half(inst, vars))),
+        ShapeKind::Image => {
+            let (w, h) = image_dims(inst)?;
+            Ok(Bbox::centered(w, h))
+        }
+        // Native top-left coords (SPEC §7); a real bbox needs SVG path parsing.
+        ShapeKind::Path => Ok(Bbox::empty()),
+    }
 }
 
-/// Bbox for a closed shape that has been auto-sized to its content (text or
-/// nested children) plus padding.
-pub fn auto_sized_bbox(
-    inst: &ResolvedInst,
-    content_bbox: Bbox,
-    vars: &VarTable,
-    use_text_pad: bool,
-) -> Result<Bbox, Error> {
-    let pad = if use_text_pad && !has_padding_attr(&inst.attrs) {
-        PaddingBox::uniform(layout_var(vars, "text-pad").unwrap_or(16.0))
-    } else {
-        padding(&inst.attrs, vars, inst.span)?
-    };
-    let w = content_bbox.w() + pad.left + pad.right;
-    let h = content_bbox.h() + pad.top + pad.bottom;
-    let bbox = Bbox::centered(w, h);
-    Ok(bbox.inflate(stroke_half(inst, vars)))
-}
-
-fn has_padding_attr(attrs: &AttrMap) -> bool {
-    attrs.get("padding").is_some()
+/// A closed shape's bbox: each axis is its explicit `width`/`height` (border-box
+/// — padding inside it) or `content + padding` on that axis, then inflated by
+/// half the stroke so the outline counts toward the bbox (SPEC §6).
+pub fn closed_bbox(inst: &ResolvedInst, content: Bbox, vars: &VarTable) -> Result<Bbox, Error> {
+    let pad = padding(&inst.attrs, vars, inst.span)?;
+    let w = inst
+        .attrs
+        .number("width")
+        .unwrap_or(content.w() + pad.left + pad.right);
+    let h = inst
+        .attrs
+        .number("height")
+        .unwrap_or(content.h() + pad.top + pad.bottom);
+    Ok(Bbox::centered(w, h).inflate(stroke_half(inst, vars)))
 }
 
 pub fn padding(attrs: &AttrMap, vars: &VarTable, span: Span) -> Result<PaddingBox, Error> {
@@ -67,15 +100,12 @@ pub fn padding(attrs: &AttrMap, vars: &VarTable, span: Span) -> Result<PaddingBo
             left: l,
         })
     } else {
-        Ok(PaddingBox::uniform(
-            layout_var(vars, "padding").unwrap_or(0.0),
-        ))
+        Ok(PaddingBox::uniform(layout_var(vars, "padding").unwrap_or(16.0)))
     }
 }
 
 /// A child's `margin:` as `(top, right, bottom, left)` — signed outer spacing,
-/// `N` / `(y, x)` / `(t, r, b, l)` like padding, but negatives are allowed (and
-/// the point: they tighten). Absent → all zero (there is no margin default).
+/// `N` / `v h` / `t r b l`, negatives allowed (they tighten). Absent → zero.
 pub fn margin(attrs: &AttrMap, span: Span) -> Result<(f64, f64, f64, f64), Error> {
     match attrs.get("margin") {
         Some(v) => expand_box_value(v, span),
@@ -83,9 +113,9 @@ pub fn margin(attrs: &AttrMap, span: Span) -> Result<(f64, f64, f64, f64), Error
     }
 }
 
+/// `gap` → `(between_rows, between_cols)`. Scalar = both equal; `row col` (CSS
+/// order) per axis. Negative allowed.
 pub fn gap(attrs: &AttrMap, vars: &VarTable, span: Span) -> Result<(f64, f64), Error> {
-    // gap → (y_between_rows, x_between_cols). Scalar collapses to both equal;
-    // (y, x) takes the form directly.
     if let Some(v) = attrs.get("gap") {
         let nums = super::values::as_number_tuple(v, span)?;
         Ok(match nums.len() {
@@ -104,103 +134,43 @@ pub fn gap(attrs: &AttrMap, vars: &VarTable, span: Span) -> Result<(f64, f64), E
     }
 }
 
-// ───────────────────────── Internal bbox computation ─────────────────────────
+// ───────────────────────── Internal helpers ─────────────────────────
 
-fn geom_bbox(inst: &ResolvedInst, vars: &VarTable) -> Result<Bbox, Error> {
-    let attrs = &inst.attrs;
-    match inst.shape {
-        ShapeKind::Rect
-        | ShapeKind::Slant
-        | ShapeKind::Cyl
-        | ShapeKind::Diamond
-        | ShapeKind::Cloud
-        | ShapeKind::Hex
-        | ShapeKind::Oval => {
-            let (w, h) = closed_shape_dims(inst, vars)?;
-            Ok(Bbox::centered(w, h))
-        }
-        ShapeKind::Text => {
-            let size = attrs
-                .number("text-size")
-                .or_else(|| layout_var(vars, "text-size"))
-                .unwrap_or(13.0);
-            let label = inst.label.as_deref().unwrap_or("");
-            let w = text::approx_width(label, size);
-            let h = text::approx_height(label, size);
-            Ok(Bbox::centered(w, h))
-        }
-        ShapeKind::Line => {
-            let points = attr_points(attrs, "points", inst.span)?.ok_or_else(|| {
-                Error::at(
-                    inst.span,
-                    format!("'|{}|' requires 'points'", inst.shape.as_str()),
-                )
-            })?;
-            if points.len() < 2 {
-                return Err(Error::at(
-                    inst.span,
-                    format!("'|{}|' requires at least 2 points", inst.shape.as_str()),
-                ));
-            }
-            Ok(bounding_box(&points))
-        }
-        ShapeKind::Icon => {
-            let size = attrs
-                .number("size")
-                .or_else(|| layout_var(vars, "icon-size"))
-                .unwrap_or(24.0);
-            Ok(Bbox::centered(size, size))
-        }
-        ShapeKind::Image => {
-            let (w, h) = read_size(attrs, inst.span)?
-                .ok_or_else(|| Error::at(inst.span, "'|image|' requires 'size'"))?;
-            Ok(Bbox::centered(w, h))
-        }
-        ShapeKind::Poly => {
-            let points = attr_points(attrs, "points", inst.span)?
-                .ok_or_else(|| Error::at(inst.span, "'|poly|' requires 'points'"))?;
-            if points.len() < 3 {
-                return Err(Error::at(inst.span, "'|poly|' requires at least 3 points"));
-            }
-            Ok(bounding_box(&points))
-        }
-        ShapeKind::Path => {
-            // Native top-left coords (SPEC §7 rule 5). Real bbox needs SVG path
-            // parsing; v1 returns a zero bbox.
-            Ok(Bbox::empty())
-        }
-    }
+fn font_size(inst: &ResolvedInst, vars: &VarTable) -> f64 {
+    inst.attrs
+        .number("font-size")
+        .or_else(|| layout_var(vars, "font-size"))
+        .unwrap_or(14.0)
 }
 
-/// Read the `size:` attr in its two forms: `size:N` (scalar = square) or
-/// `size:(w, h)` (tuple = rectangle). Returns `Ok(None)` if absent.
-pub fn read_size(attrs: &AttrMap, span: Span) -> Result<Option<(f64, f64)>, Error> {
-    let Some(v) = attrs.get("size") else {
-        return Ok(None);
-    };
-    match v.as_number() {
-        Some(n) => Ok(Some((n, n))),
-        None => Ok(Some(as_pair(v, span)?)),
-    }
+fn stroke_half(inst: &ResolvedInst, vars: &VarTable) -> f64 {
+    inst.attrs
+        .number("stroke-width")
+        .or_else(|| layout_var(vars, "stroke-width"))
+        .unwrap_or(1.0)
+        / 2.0
 }
 
-fn closed_shape_dims(inst: &ResolvedInst, vars: &VarTable) -> Result<(f64, f64), Error> {
-    if let Some(dims) = read_size(&inst.attrs, inst.span)? {
-        return Ok(dims);
+fn require_points(inst: &ResolvedInst, name: &str, min: usize) -> Result<Vec<(f64, f64)>, Error> {
+    let points = attr_points(&inst.attrs, "points", inst.span)?
+        .ok_or_else(|| Error::at(inst.span, format!("'|{}|' requires 'points'", name)))?;
+    if points.len() < min {
+        return Err(Error::at(
+            inst.span,
+            format!("'|{}|' requires at least {} points", name, min),
+        ));
     }
-    let (default_w, default_h) = match inst.shape {
-        ShapeKind::Rect | ShapeKind::Slant => (
-            layout_var(vars, "rect-w").unwrap_or(100.0),
-            layout_var(vars, "rect-h").unwrap_or(40.0),
-        ),
-        ShapeKind::Oval => (
-            layout_var(vars, "oval-w").unwrap_or(60.0),
-            layout_var(vars, "oval-h").unwrap_or(40.0),
-        ),
-        ShapeKind::Hex | ShapeKind::Cyl | ShapeKind::Diamond | ShapeKind::Cloud => (60.0, 60.0),
-        _ => (0.0, 0.0),
-    };
-    Ok((default_w, default_h))
+    Ok(points)
+}
+
+fn image_dims(inst: &ResolvedInst) -> Result<(f64, f64), Error> {
+    match (inst.attrs.number("width"), inst.attrs.number("height")) {
+        (Some(w), Some(h)) => Ok((w, h)),
+        _ => Err(Error::at(
+            inst.span,
+            "'|image|' requires 'width' and 'height'",
+        )),
+    }
 }
 
 fn bounding_box(points: &[(f64, f64)]) -> Bbox {
@@ -219,15 +189,6 @@ fn bounding_box(points: &[(f64, f64)]) -> Bbox {
     bb
 }
 
-fn stroke_half(inst: &ResolvedInst, vars: &VarTable) -> f64 {
-    let t = inst
-        .attrs
-        .number("thickness")
-        .or_else(|| layout_var(vars, "thickness"))
-        .unwrap_or(1.0);
-    t / 2.0
-}
-
 pub fn attr_points(
     attrs: &AttrMap,
     name: &str,
@@ -241,9 +202,11 @@ pub fn attr_points(
             }
             Ok(Some(out))
         }
+        // A single `x y` group resolves to a Tuple, not a List — one point.
+        Some(ResolvedValue::Tuple(_)) => Ok(Some(vec![as_pair(attrs.get(name).unwrap(), span)?])),
         Some(_) => Err(Error::at(
             span,
-            format!("'{}' expects a list of (x,y) tuples", name),
+            format!("'{}' expects a list of (x, y) points", name),
         )),
         None => Ok(None),
     }

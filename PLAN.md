@@ -250,6 +250,16 @@ read the v4 attr names + the new sizing model.
 - **Caption bands** (`mount: in`/`out`): `titles.rs` is reusable largely as-is
   (rename `place`→`mount` reads).
 
+**Progress (this session).** Sizing model done — `primitives.rs` rewritten:
+border-box `width`/`height`, auto = content + `padding` per axis, empty =
+`2 × padding`, stroke counts toward the bbox; text → glyphs; reads
+`stroke-width` / `font-size` / `width` / `height`; per-shape defaults +
+`text-pad` dropped. `place`→`mount` done (`anchors.rs`); caption bands work.
+`rotation`→`rotate`. **12 layout tests green.** Remaining: flex
+`align`/`justify`/`stretch`/`evenly` (replace v3 `h:`/`v:` in `flex.rs`), grid
+track lists + `columns`/`rows` (`grid.rs` + `read_layout_mode`), and dividers +
+table-frame (drop the `is_table` frame special-casing).
+
 **Done when.** Unit tests pin sizes (empty = 2×padding, text = text+padding,
 explicit = exact), align/justify/stretch/evenly with slack, grid track lists +
 implicit rows + repeat, and dividers (1-D and grid, span-aware).
