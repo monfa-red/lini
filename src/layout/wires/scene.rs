@@ -235,7 +235,7 @@ mod tests {
             frame: None,
             rotation: 0.0,
             children,
-            grid_rules: Vec::new(),
+            dividers: Vec::new(),
             span: Span::empty(),
         }
     }

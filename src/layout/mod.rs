@@ -262,7 +262,7 @@ fn layout_inst(
     }
 
     // Determine this node's bbox + arrange children inside.
-    let mut grid_rules: Vec<GridRule> = Vec::new();
+    let mut dividers: Vec<GridRule> = Vec::new();
     // The drawn frame, set only when a `place:out` band grows the footprint
     // past it; otherwise the footprint is the drawn box (`frame` stays None).
     let mut frame: Option<Bbox> = None;
@@ -279,10 +279,10 @@ fn layout_inst(
             gap_bump(growth, path),
         )?;
 
-        // Only a table draws its grid lines; other grids place silently.
-        if is_table(&inst.type_chain) {
-            grid_rules = rules;
-        }
+        // Interior dividers (grid or 1-D) the container draws, per `divider:`.
+        // A table is just a group with `divider: all` — no special-casing; its
+        // border is the group rect, its inner lines these dividers.
+        dividers = rules;
 
         // The closed shape sizes border-box: explicit width/height, else
         // content + padding per axis (SPEC §6).
@@ -336,15 +336,41 @@ fn layout_inst(
         frame,
         rotation,
         children,
-        grid_rules,
+        dividers,
         span: inst.span,
     })
 }
 
-/// Whether a resolved type chain is (or extends) the `table` template — the
-/// only node that draws grid rules.
-fn is_table(type_chain: &[String]) -> bool {
-    type_chain.iter().any(|t| t == "table")
+/// Interior separators between adjacent flow children — perpendicular to the
+/// flow at each gap's midpoint, spanning the flow's cross extent (SPEC §5,
+/// 1-D `divider`).
+fn one_d_dividers(
+    children: &[PlacedNode],
+    flow: &[usize],
+    mode: LayoutMode,
+    flow_bbox: Bbox,
+) -> Vec<GridRule> {
+    let row = matches!(mode, LayoutMode::Row);
+    let main = |i: usize| if row { children[i].cx } else { children[i].cy };
+    let half = |i: usize| {
+        if row {
+            children[i].bbox.w() / 2.0
+        } else {
+            children[i].bbox.h() / 2.0
+        }
+    };
+    let mut order: Vec<usize> = flow.to_vec();
+    order.sort_by(|&a, &b| main(a).total_cmp(&main(b)));
+    let mut segs = Vec::new();
+    for pair in order.windows(2) {
+        let mid = (main(pair[0]) + half(pair[0]) + main(pair[1]) - half(pair[1])) / 2.0;
+        if row {
+            segs.push((mid, flow_bbox.min_y, mid, flow_bbox.max_y));
+        } else {
+            segs.push((flow_bbox.min_x, mid, flow_bbox.max_x, mid));
+        }
+    }
+    segs
 }
 
 /// Position children within their container per its `layout=` attr.
@@ -441,15 +467,9 @@ fn lay_out_container_children(
                 span,
                 avail,
             )?,
-            LayoutMode::Grid(cols, rows) => {
-                let (bbox, rules) = grid::lay_out_grid(
-                    &mut flow_children,
-                    cols,
-                    rows,
-                    container_attrs,
-                    vars,
-                    span,
-                )?;
+            LayoutMode::Grid => {
+                let (bbox, rules) =
+                    grid::lay_out_grid(&mut flow_children, container_attrs, vars, span)?;
                 grid_rules = rules;
                 bbox
             }
@@ -461,6 +481,15 @@ fn lay_out_container_children(
     } else {
         Bbox::empty()
     };
+
+    // 1-D dividers between flow children (a grid produced its own above),
+    // painted by the container's own stroke (SPEC §5).
+    if matches!(mode, LayoutMode::Row | LayoutMode::Column)
+        && grid::read_divider(container_attrs) != grid::Divider::None
+        && flow_indices.len() > 1
+    {
+        grid_rules = one_d_dividers(children, &flow_indices, mode, flow_bbox);
+    }
 
     // Reserve children carve a band on the top/bottom edge. `place:in` bands
     // sit inside the frame, so the box grows around them here — before padding,
@@ -532,8 +561,8 @@ fn lay_out_container_children(
 enum LayoutMode {
     Row,
     Column,
-    /// `layout=(cols, rows)` — 2D grid with the given dimensions.
-    Grid(usize, usize),
+    /// 2D grid; sized by its `columns` / `rows` track lists (read in `grid`).
+    Grid,
 }
 
 fn read_layout_mode(attrs: &crate::resolve::AttrMap, span: Span) -> Result<LayoutMode, Error> {
@@ -542,37 +571,14 @@ fn read_layout_mode(attrs: &crate::resolve::AttrMap, span: Span) -> Result<Layou
         Some(ResolvedValue::Ident(s)) => match s.as_str() {
             "row" => Ok(LayoutMode::Row),
             "column" => Ok(LayoutMode::Column),
+            "grid" => Ok(LayoutMode::Grid),
             other => Err(Error::at(
                 span,
-                format!(
-                    "unknown layout '{}' — expected 'row', 'column', or (cols, rows)",
-                    other
-                ),
+                format!("unknown layout '{}' — expected row, column, or grid", other),
             )),
         },
-        Some(ResolvedValue::Tuple(items)) if items.len() == 2 => {
-            let cols = positive_int(&items[0], span, "layout.cols")?;
-            let rows = positive_int(&items[1], span, "layout.rows")?;
-            Ok(LayoutMode::Grid(cols, rows))
-        }
-        Some(_) => Err(Error::at(
-            span,
-            "layout= expects 'row', 'column', or a (cols, rows) tuple",
-        )),
+        Some(_) => Err(Error::at(span, "'layout' expects row, column, or grid")),
     }
-}
-
-fn positive_int(v: &ResolvedValue, span: Span, what: &str) -> Result<usize, Error> {
-    let n = v
-        .as_number()
-        .ok_or_else(|| Error::at(span, format!("{} must be a positive integer", what)))?;
-    if n < 1.0 || n.fract() != 0.0 {
-        return Err(Error::at(
-            span,
-            format!("{} must be a positive integer, got {}", what, n),
-        ));
-    }
-    Ok(n as usize)
 }
 
 /// If the container declared explicit `width` *and* `height`, the children's
@@ -760,5 +766,83 @@ mod tests {
             l.nodes[0].children[1].cx - l.nodes[0].children[0].cx
         };
         assert!((span("start") - span("end")).abs() < 0.01, "auto row: justify is a no-op");
+    }
+
+    // ── Grid (SPEC §5) ──
+
+    #[test]
+    fn grid_fixed_columns_place_children_in_order() {
+        let l = lay_out(
+            "layout: grid; columns: 80 80 80; gap: 0;\n\
+             a |rect| { width: 40; height: 40; }\n\
+             b |rect| { width: 40; height: 40; }\n\
+             c |rect| { width: 40; height: 40; }\n",
+        );
+        let cx: Vec<f64> = l.nodes.iter().map(|n| n.cx).collect();
+        assert!((cx[1] - cx[0] - 80.0).abs() < 0.5, "dx={}", cx[1] - cx[0]);
+        assert!((cx[2] - cx[1] - 80.0).abs() < 0.5);
+        assert!((l.nodes[0].cy - l.nodes[1].cy).abs() < 0.01);
+    }
+
+    #[test]
+    fn grid_repeat_makes_auto_columns_and_wraps() {
+        let l = lay_out(
+            "layout: grid; columns: repeat(2);\n\
+             a |rect| { width: 30; height: 30; }\n\
+             b |rect| { width: 30; height: 30; }\n\
+             c |rect| { width: 30; height: 30; }\n",
+        );
+        // 2 columns, 3 children → c wraps to the second row.
+        assert!(l.nodes[2].cy > l.nodes[0].cy, "c below a");
+    }
+
+    #[test]
+    fn grid_cell_pins_placement() {
+        let l = lay_out(
+            "layout: grid; columns: repeat(3);\n\
+             a |rect| \"a\" { cell: 3 1; }\n\
+             b |rect| \"b\"\n",
+        );
+        // a pins to column 3; b auto-flows to the first free cell (column 1).
+        assert!(l.nodes[0].cx > l.nodes[1].cx, "a (col 3) right of b (col 1)");
+    }
+
+    #[test]
+    fn grid_cell_fills_its_track_under_stretch() {
+        let l = lay_out(
+            "layout: grid; columns: 120 120; gap: 0;\n\
+             a |rect| \"x\" { justify: stretch; align: stretch; }\n\
+             b |rect| \"y\"\n",
+        );
+        assert!((l.nodes[0].bbox.w() - 120.0).abs() < 1.0, "a.w={}", l.nodes[0].bbox.w());
+    }
+
+    #[test]
+    fn grid_without_columns_is_an_error() {
+        let tokens = crate::lexer::lex("layout: grid;\na |rect|\nb |rect|\n").expect("lex");
+        let file = crate::syntax::parser::parse(&tokens).expect("parse");
+        let program = crate::resolve::resolve_with_theme(&file, &[]).expect("resolve");
+        assert!(layout(&program).is_err());
+    }
+
+    // ── Dividers (SPEC §5) ──
+
+    #[test]
+    fn table_draws_interior_dividers_no_frame() {
+        let l = lay_out(
+            "t |table| { columns: 40 40;\n  a |rect| \"a\"\n  b |rect| \"b\"\n  c |rect| \"c\"\n  d |rect| \"d\"\n}\n",
+        );
+        // 2×2 grid with the table's divider: all → interior separators.
+        assert!(!l.nodes[0].dividers.is_empty(), "table has interior dividers");
+        // A plain group draws none.
+        assert!(lay_out("g |group| { x |rect| \"x\" }\n").nodes[0].dividers.is_empty());
+    }
+
+    #[test]
+    fn one_d_divider_falls_between_flow_children() {
+        let l = lay_out(
+            "g |row| { divider: all;\n  a |rect| { width: 30; height: 30; }\n  b |rect| { width: 30; height: 30; }\n  c |rect| { width: 30; height: 30; }\n}\n",
+        );
+        assert_eq!(l.nodes[0].dividers.len(), 2, "two separators between three children");
     }
 }

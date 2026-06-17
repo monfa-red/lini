@@ -1,80 +1,67 @@
-//! Grid layout.
+//! Grid layout (SPEC §5).
 //!
-//! Container declares grid mode via `layout:(cols, rows)`. Children place
-//! themselves with `cell:(c, r)` and span tracks with `span:(c, r)`. Both
-//! tuples use (horizontal, vertical) = (x, y) = (col, row) order.
+//! `layout: grid` sizes from track lists: `columns` (required) and `rows`
+//! (optional — implicit, auto-sized rows). A track is a fixed size, `auto`
+//! (sized to its widest / tallest single-span child), or `repeat(N)` /
+//! `repeat(N, size)`; the track count is the list length. Children flow
+//! left-to-right, wrapping at the column count; `cell: c r` pins one (1-indexed)
+//! and `span: c r` widens it. A cell fills its track only when it carries
+//! `align`/`justify: stretch` (the table's shipped `table rect { … }` rule) and
+//! has no explicit size on that axis; otherwise it sits at natural size, centred.
 
 use super::ir::{Bbox, GridRule, PlacedNode};
 use super::primitives;
-use super::values::{as_number_tuple, as_pair};
+use super::values::as_pair;
 use crate::error::Error;
 use crate::resolve::{AttrMap, ResolvedValue, VarTable};
 use crate::span::Span;
 
-/// Lay out a grid and return its content bbox plus the rule segments a table
-/// would draw (frame + interior separators, span-aware). Non-table callers
-/// ignore the rules.
+#[derive(Clone, Copy)]
+enum Track {
+    Fixed(f64),
+    Auto,
+}
+
+/// Lay out a grid; returns the content bbox plus the rule segments a table
+/// draws (frame + interior separators, span-aware). Non-table callers ignore
+/// the rules.
 pub fn lay_out_grid(
     children: &mut [PlacedNode],
-    cols: usize,
-    rows: usize,
     attrs: &AttrMap,
     vars: &VarTable,
     span: Span,
 ) -> Result<(Bbox, Vec<GridRule>), Error> {
     let (gap_y, gap_x) = primitives::gap(attrs, vars, span)?;
 
-    // Track sizes: explicit col-widths / row-heights, else auto from children.
-    let explicit_col = read_track_sizes(attrs, "col-widths", cols, span)?;
-    let explicit_row = read_track_sizes(attrs, "row-heights", rows, span)?;
+    let col_tracks = match attrs.get("columns") {
+        Some(v) => parse_tracks(v, span)?,
+        None => return Err(Error::at(span, "'layout: grid' requires 'columns'")),
+    };
+    let cols = col_tracks.len();
+    if cols == 0 {
+        return Err(Error::at(span, "'columns' needs at least one track"));
+    }
+    let row_tracks: Option<Vec<Track>> = match attrs.get("rows") {
+        Some(v) => Some(parse_tracks(v, span)?),
+        None => None,
+    };
 
-    // Assign positions: build a 2D occupancy map. `owner` records which cell
-    // owns each track slot, so a table's rules skip the interior of a span.
+    // Place children: an explicit `cell` pins, the rest auto-flow.
+    let mut grid = Occupancy::new(cols);
     let mut placements: Vec<Placement> = Vec::with_capacity(children.len());
-    let mut occupied = vec![vec![false; cols]; rows];
-    let mut owner: Vec<Vec<Option<usize>>> = vec![vec![None; cols]; rows];
-
     for (i, child) in children.iter().enumerate() {
         let (cs, rs) = read_span(&child.attrs, child.span)?;
-        let (explicit_col_idx, explicit_row_idx) = read_cell(&child.attrs, child.span)?;
-
-        let (col, row) = match (explicit_col_idx, explicit_row_idx) {
-            (Some(c), Some(r)) => (c.saturating_sub(1), r.saturating_sub(1)),
-            (Some(c), None) => {
-                let c = c.saturating_sub(1);
-                let r = find_row_for(c, cs, &occupied, rows);
-                (c, r)
-            }
-            (None, Some(r)) => {
-                let r = r.saturating_sub(1);
-                let c = find_col_for(r, cs, &occupied, cols);
-                (c, r)
-            }
-            (None, None) => next_open(cs, rs, &occupied, cols, rows).unwrap_or((0, 0)),
+        let (col, row) = match read_cell(&child.attrs, child.span)? {
+            Some((c, r)) => (c - 1, r - 1),
+            None => grid.next_open(cs, rs),
         };
-
-        if col + cs > cols || row + rs > rows {
+        if col + cs > cols {
             return Err(Error::at(
                 child.span,
-                format!(
-                    "cell=({}, {}) with span=({}, {}) exceeds grid layout=({}, {})",
-                    col + 1,
-                    row + 1,
-                    cs,
-                    rs,
-                    cols,
-                    rows
-                ),
+                format!("cell: {} _ exceeds columns={}", col + 1, cols),
             ));
         }
-
-        let pi = placements.len();
-        for dr in 0..rs {
-            for dc in 0..cs {
-                occupied[row + dr][col + dc] = true;
-                owner[row + dr][col + dc] = Some(pi);
-            }
-        }
+        grid.occupy(row, col, cs, rs, placements.len());
         placements.push(Placement {
             child_index: i,
             col,
@@ -84,187 +71,140 @@ pub fn lay_out_grid(
         });
     }
 
-    // Compute auto-sized tracks (max child size per track, considering spans
-    // only when they distribute evenly).
-    let mut col_widths = explicit_col.clone().unwrap_or_else(|| vec![0.0_f64; cols]);
-    let mut row_heights = explicit_row.clone().unwrap_or_else(|| vec![0.0_f64; rows]);
-    if explicit_col.is_none() {
-        for p in &placements {
-            if p.colspan == 1 {
-                col_widths[p.col] = col_widths[p.col].max(children[p.child_index].bbox.w());
+    let rows = match &row_tracks {
+        Some(tracks) => {
+            if grid.rows() > tracks.len() {
+                return Err(Error::at(
+                    span,
+                    format!("cell row {} exceeds rows={}", grid.rows(), tracks.len()),
+                ));
             }
+            tracks.len()
         }
-    }
-    if explicit_row.is_none() {
-        for p in &placements {
-            if p.rowspan == 1 {
-                row_heights[p.row] = row_heights[p.row].max(children[p.child_index].bbox.h());
-            }
-        }
-    }
+        None => grid.rows().max(1),
+    };
+    grid.ensure(rows);
 
-    // Cumulative offsets per track.
-    let col_offsets = cumulative(&col_widths, gap_x);
-    let row_offsets = cumulative(&row_heights, gap_y);
+    let implicit_rows = vec![Track::Auto; rows];
+    let row_tracks = row_tracks.as_deref().unwrap_or(&implicit_rows);
+    let col_sizes = track_sizes(&col_tracks, &placements, children, Axis::Col);
+    let row_sizes = track_sizes(row_tracks, &placements, children, Axis::Row);
 
-    let total_w = col_offsets[cols] - gap_x;
-    let total_h = row_offsets[rows] - gap_y;
+    let col_off = cumulative(&col_sizes, gap_x);
+    let row_off = cumulative(&row_sizes, gap_y);
+    let total_w = (col_off[cols] - gap_x).max(0.0);
+    let total_h = (row_off[rows] - gap_y).max(0.0);
 
-    // Place each child in its (possibly spanning) cell.
-    let (fill_w, fill_h) = (explicit_col.is_some(), explicit_row.is_some());
     for p in &placements {
-        let cell_x_start = col_offsets[p.col];
-        let cell_y_start = row_offsets[p.row];
-        let cell_x_end = col_offsets[p.col + p.colspan] - gap_x;
-        let cell_y_end = row_offsets[p.row + p.rowspan] - gap_y;
-        let cell_cx = (cell_x_start + cell_x_end) / 2.0 - total_w / 2.0;
-        let cell_cy = (cell_y_start + cell_y_end) / 2.0 - total_h / 2.0;
-
+        let (x0, x1) = (col_off[p.col], col_off[p.col + p.colspan] - gap_x);
+        let (y0, y1) = (row_off[p.row], row_off[p.row + p.rowspan] - gap_y);
         let child = &mut children[p.child_index];
 
-        // SPEC §6: with explicit col-widths / row-heights, a cell takes the
-        // track size exactly — an explicit child `size:` still wins. A child
-        // that set no size fills its track rather than floating in it; its
-        // content stays centred (the bbox is recentred on the origin, which
-        // every laid-out child already is).
-        if child.attrs.get("size").is_none() {
-            let w = if fill_w {
-                cell_x_end - cell_x_start
-            } else {
-                child.bbox.w()
-            };
-            let h = if fill_h {
-                cell_y_end - cell_y_start
-            } else {
-                child.bbox.h()
-            };
+        // Cell-fill (SPEC §5/§8): the cell's own `align`/`justify: stretch` fills
+        // its track, unless an explicit size pins that axis.
+        let fill_w = stretch(&child.attrs, "justify") && child.attrs.get("width").is_none();
+        let fill_h = stretch(&child.attrs, "align") && child.attrs.get("height").is_none();
+        if fill_w || fill_h {
+            let w = if fill_w { x1 - x0 } else { child.bbox.w() };
+            let h = if fill_h { y1 - y0 } else { child.bbox.h() };
             child.bbox = Bbox::centered(w, h);
         }
 
-        let local_offset_x = (child.bbox.min_x + child.bbox.max_x) / 2.0;
-        let local_offset_y = (child.bbox.min_y + child.bbox.max_y) / 2.0;
-        child.cx = cell_cx - local_offset_x;
-        child.cy = cell_cy - local_offset_y;
+        let cell_cx = (x0 + x1) / 2.0 - total_w / 2.0;
+        let cell_cy = (y0 + y1) / 2.0 - total_h / 2.0;
+        let off_x = (child.bbox.min_x + child.bbox.max_x) / 2.0;
+        let off_y = (child.bbox.min_y + child.bbox.max_y) / 2.0;
+        child.cx = cell_cx - off_x;
+        child.cy = cell_cy - off_y;
     }
 
-    let rules = rule_segments(
-        &col_offsets,
-        &row_offsets,
+    let dividers = divider_segments(
+        read_divider(attrs),
+        &col_off,
+        &row_off,
         total_w,
         total_h,
         cols,
         rows,
-        &owner,
+        &grid.owner,
     );
-    Ok((Bbox::centered(total_w, total_h), rules))
+    Ok((Bbox::centered(total_w, total_h), dividers))
 }
 
-/// The grid lines a table draws: the outer frame plus interior separators,
-/// each interior run merged across the tracks where it is a real boundary —
-/// so a spanning cell has no line crossing its interior. Coords are
-/// node-local (the grid is centred on the origin); tracks abut at `gap:0`,
-/// the table default, so the lines sit exactly on cell edges.
-// The boundary scans run one index past the data (`0..=rows` / `0..=cols`) to
-// close a run at the final edge, so they can't iterate `owner` directly.
-#[allow(clippy::needless_range_loop)]
-fn rule_segments(
-    col_offsets: &[f64],
-    row_offsets: &[f64],
-    total_w: f64,
-    total_h: f64,
-    cols: usize,
-    rows: usize,
-    owner: &[Vec<Option<usize>>],
-) -> Vec<GridRule> {
-    let x = |i: usize| col_offsets[i] - total_w / 2.0;
-    let y = |j: usize| row_offsets[j] - total_h / 2.0;
-    let mut segs: Vec<GridRule> = vec![
-        (x(0), y(0), x(cols), y(0)),       // top
-        (x(0), y(rows), x(cols), y(rows)), // bottom
-        (x(0), y(0), x(0), y(rows)),       // left
-        (x(cols), y(0), x(cols), y(rows)), // right
-    ];
-    // Interior verticals: boundary between columns c-1 and c.
-    for c in 1..cols {
-        let mut start: Option<usize> = None;
-        for r in 0..=rows {
-            let real = r < rows && owner[r][c - 1] != owner[r][c];
-            if real && start.is_none() {
-                start = Some(r);
-            } else if !real && let Some(s) = start.take() {
-                segs.push((x(c), y(s), x(c), y(r)));
-            }
-        }
-    }
-    // Interior horizontals: boundary between rows r-1 and r.
-    for r in 1..rows {
-        let mut start: Option<usize> = None;
-        for c in 0..=cols {
-            let real = c < cols && owner[r - 1][c] != owner[r][c];
-            if real && start.is_none() {
-                start = Some(c);
-            } else if !real && let Some(s) = start.take() {
-                segs.push((x(s), y(r), x(c), y(r)));
-            }
-        }
-    }
-    segs
-}
+// ───────────────────────── Track lists ─────────────────────────
 
-struct Placement {
-    child_index: usize,
-    col: usize,
-    row: usize,
-    colspan: usize,
-    rowspan: usize,
-}
-
-fn read_track_sizes(
-    attrs: &AttrMap,
-    name: &str,
-    track_count: usize,
-    span: Span,
-) -> Result<Option<Vec<f64>>, Error> {
-    match attrs.get(name) {
-        Some(ResolvedValue::Number(n)) => Ok(Some(vec![*n; track_count])),
-        Some(ResolvedValue::List(items)) => {
-            if items.len() != track_count {
-                return Err(Error::at(
-                    span,
-                    format!(
-                        "'{}' has {} values but {}={}",
-                        name,
-                        items.len(),
-                        if name == "col-widths" { "cols" } else { "rows" },
-                        track_count
-                    ),
-                ));
-            }
-            let mut out = Vec::with_capacity(items.len());
+fn parse_tracks(value: &ResolvedValue, span: Span) -> Result<Vec<Track>, Error> {
+    let mut out = Vec::new();
+    match value {
+        ResolvedValue::Tuple(items) => {
             for item in items {
-                out.push(super::values::as_number(item, span)?);
+                push_track(&mut out, item, span)?;
             }
-            Ok(Some(out))
         }
-        Some(other) => {
-            // Allow tuple form too.
-            let nums = as_number_tuple(other, span)?;
-            if nums.len() != track_count {
+        single => push_track(&mut out, single, span)?,
+    }
+    Ok(out)
+}
+
+fn push_track(out: &mut Vec<Track>, v: &ResolvedValue, span: Span) -> Result<(), Error> {
+    match v {
+        ResolvedValue::Ident(s) if s == "auto" => out.push(Track::Auto),
+        ResolvedValue::Call(c) if c.name == "repeat" => {
+            let n = c
+                .args
+                .first()
+                .and_then(ResolvedValue::as_number)
+                .filter(|n| *n >= 1.0 && n.fract() == 0.0)
+                .ok_or_else(|| Error::at(span, "repeat() needs a positive integer count"))?
+                as usize;
+            let size = c.args.get(1).and_then(ResolvedValue::as_number);
+            for _ in 0..n {
+                out.push(size.map_or(Track::Auto, Track::Fixed));
+            }
+        }
+        other => match other.as_number() {
+            Some(n) => out.push(Track::Fixed(n)),
+            None => {
                 return Err(Error::at(
                     span,
-                    format!(
-                        "'{}' has {} values but {}={}",
-                        name,
-                        nums.len(),
-                        if name == "col-widths" { "cols" } else { "rows" },
-                        track_count
-                    ),
+                    "a track is a size, 'auto', or repeat(N[, size])",
                 ));
             }
-            Ok(Some(nums))
-        }
-        None => Ok(None),
+        },
     }
+    Ok(())
+}
+
+#[derive(Clone, Copy)]
+enum Axis {
+    Col,
+    Row,
+}
+
+/// Fixed tracks take their size; auto tracks the max single-span child extent.
+fn track_sizes(
+    tracks: &[Track],
+    placements: &[Placement],
+    children: &[PlacedNode],
+    axis: Axis,
+) -> Vec<f64> {
+    let mut sizes: Vec<f64> = tracks
+        .iter()
+        .map(|t| match t {
+            Track::Fixed(n) => *n,
+            Track::Auto => 0.0,
+        })
+        .collect();
+    for p in placements {
+        let (idx, span_n, extent) = match axis {
+            Axis::Col => (p.col, p.colspan, children[p.child_index].bbox.w()),
+            Axis::Row => (p.row, p.rowspan, children[p.child_index].bbox.h()),
+        };
+        if span_n == 1 && idx < sizes.len() && matches!(tracks[idx], Track::Auto) {
+            sizes[idx] = sizes[idx].max(extent);
+        }
+    }
+    sizes
 }
 
 fn cumulative(sizes: &[f64], gap: f64) -> Vec<f64> {
@@ -278,76 +218,196 @@ fn cumulative(sizes: &[f64], gap: f64) -> Vec<f64> {
     out
 }
 
-fn find_row_for(col: usize, cs: usize, occupied: &[Vec<bool>], _rows: usize) -> usize {
-    for (r, row) in occupied.iter().enumerate() {
-        if (0..cs).all(|dc| col + dc < row.len() && !row[col + dc]) {
-            return r;
-        }
-    }
-    0
+fn stretch(attrs: &AttrMap, name: &str) -> bool {
+    matches!(attrs.get(name), Some(ResolvedValue::Ident(s)) if s == "stretch")
 }
 
-fn find_col_for(row: usize, cs: usize, occupied: &[Vec<bool>], cols: usize) -> usize {
-    for c in 0..cols.saturating_sub(cs.saturating_sub(1)) {
-        if (0..cs).all(|dc| !occupied[row][c + dc]) {
-            return c;
-        }
-    }
-    0
+// ───────────────────────── Placement / occupancy ─────────────────────────
+
+struct Placement {
+    child_index: usize,
+    col: usize,
+    row: usize,
+    colspan: usize,
+    rowspan: usize,
 }
 
-fn next_open(
-    cs: usize,
-    rs: usize,
-    occupied: &[Vec<bool>],
+/// A growable column×row occupancy map; rows extend as children flow or pin
+/// past the current bottom (implicit rows have no fixed count).
+struct Occupancy {
     cols: usize,
-    rows: usize,
-) -> Option<(usize, usize)> {
-    for r in 0..rows.saturating_sub(rs.saturating_sub(1)) {
-        for c in 0..cols.saturating_sub(cs.saturating_sub(1)) {
-            let free = (0..rs).all(|dr| (0..cs).all(|dc| !occupied[r + dr][c + dc]));
-            if free {
-                return Some((c, r));
+    occ: Vec<Vec<bool>>,
+    owner: Vec<Vec<Option<usize>>>,
+}
+
+impl Occupancy {
+    fn new(cols: usize) -> Self {
+        Self {
+            cols,
+            occ: Vec::new(),
+            owner: Vec::new(),
+        }
+    }
+
+    fn rows(&self) -> usize {
+        self.occ.len()
+    }
+
+    fn ensure(&mut self, rows: usize) {
+        while self.occ.len() < rows {
+            self.occ.push(vec![false; self.cols]);
+            self.owner.push(vec![None; self.cols]);
+        }
+    }
+
+    fn is_free(&self, row: usize, col: usize, cs: usize, rs: usize) -> bool {
+        if col + cs > self.cols {
+            return false;
+        }
+        (0..rs).all(|dr| {
+            (0..cs).all(|dc| {
+                self.occ
+                    .get(row + dr)
+                    .and_then(|r| r.get(col + dc))
+                    .copied()
+                    .map(|filled| !filled)
+                    .unwrap_or(true)
+            })
+        })
+    }
+
+    fn occupy(&mut self, row: usize, col: usize, cs: usize, rs: usize, who: usize) {
+        self.ensure(row + rs);
+        for dr in 0..rs {
+            for dc in 0..cs {
+                if col + dc < self.cols {
+                    self.occ[row + dr][col + dc] = true;
+                    self.owner[row + dr][col + dc] = Some(who);
+                }
             }
         }
     }
-    None
-}
 
-/// Read `cell=(c, r)` on a child — returns the 1-indexed grid position (or
-/// `(None, None)` if absent so the caller can auto-flow). One axis may be
-/// omitted by leaving the other unset; the engine picks the missing axis.
-fn read_cell(attrs: &AttrMap, span: Span) -> Result<(Option<usize>, Option<usize>), Error> {
-    match attrs.get("cell") {
-        None => Ok((None, None)),
-        Some(v) => {
-            let (c, r) = as_pair(v, span)?;
-            check_positive_int("cell.col", c, span)?;
-            check_positive_int("cell.row", r, span)?;
-            Ok((Some(c as usize), Some(r as usize)))
+    /// First free `(col, row)` for a `cs×rs` cell, scanning row by row and
+    /// growing downward as needed.
+    fn next_open(&mut self, cs: usize, rs: usize) -> (usize, usize) {
+        let mut row = 0;
+        loop {
+            self.ensure(row + rs);
+            for col in 0..=self.cols.saturating_sub(cs) {
+                if self.is_free(row, col, cs, rs) {
+                    return (col, row);
+                }
+            }
+            row += 1;
         }
     }
 }
 
-/// Read `span=(c, r)` on a child — defaults to (1, 1) if absent.
+fn read_cell(attrs: &AttrMap, span: Span) -> Result<Option<(usize, usize)>, Error> {
+    match attrs.get("cell") {
+        None => Ok(None),
+        Some(v) => {
+            let (c, r) = as_pair(v, span)?;
+            Ok(Some((positive_int("cell column", c, span)?, positive_int("cell row", r, span)?)))
+        }
+    }
+}
+
 fn read_span(attrs: &AttrMap, span: Span) -> Result<(usize, usize), Error> {
     match attrs.get("span") {
         None => Ok((1, 1)),
+        // `span: N` is `N 1` (SPEC §5).
+        Some(ResolvedValue::Number(n)) => Ok((positive_int("span", *n, span)?.max(1), 1)),
         Some(v) => {
             let (c, r) = as_pair(v, span)?;
-            check_positive_int("span.col", c, span)?;
-            check_positive_int("span.row", r, span)?;
-            Ok(((c as usize).max(1), (r as usize).max(1)))
+            Ok((
+                positive_int("span column", c, span)?.max(1),
+                positive_int("span row", r, span)?.max(1),
+            ))
         }
     }
 }
 
-fn check_positive_int(name: &str, n: f64, span: Span) -> Result<(), Error> {
+fn positive_int(name: &str, n: f64, span: Span) -> Result<usize, Error> {
     if n < 1.0 || n.fract() != 0.0 {
         return Err(Error::at(
             span,
             format!("'{}' expects a positive integer, got {}", name, n),
         ));
     }
-    Ok(())
+    Ok(n as usize)
+}
+
+// ───────────────────────── Dividers ─────────────────────────
+
+/// Which interior separators a container draws (SPEC §5). The outer frame is the
+/// container's own border, so dividers are **interior only** — never doubled.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum Divider {
+    None,
+    All,
+    Rows,
+    Columns,
+}
+
+pub fn read_divider(attrs: &AttrMap) -> Divider {
+    match attrs.get("divider") {
+        Some(ResolvedValue::Ident(s)) => match s.as_str() {
+            "all" => Divider::All,
+            "rows" => Divider::Rows,
+            "columns" => Divider::Columns,
+            _ => Divider::None,
+        },
+        _ => Divider::None,
+    }
+}
+
+/// The interior separators of a grid, each run merged across the tracks where it
+/// is a real boundary — so a spanning cell has no line crossing its interior.
+/// Node-local coords (the grid is centred on the origin). No frame: the
+/// container's own border supplies the outer edge.
+// The boundary scans run one index past the data to close a run at the final
+// edge, so they can't iterate `owner` directly.
+#[allow(clippy::needless_range_loop)]
+fn divider_segments(
+    divider: Divider,
+    col_offsets: &[f64],
+    row_offsets: &[f64],
+    total_w: f64,
+    total_h: f64,
+    cols: usize,
+    rows: usize,
+    owner: &[Vec<Option<usize>>],
+) -> Vec<GridRule> {
+    let x = |i: usize| col_offsets[i] - total_w / 2.0;
+    let y = |j: usize| row_offsets[j] - total_h / 2.0;
+    let mut segs: Vec<GridRule> = Vec::new();
+    if matches!(divider, Divider::All | Divider::Columns) {
+        for c in 1..cols {
+            let mut start: Option<usize> = None;
+            for r in 0..=rows {
+                let real = r < rows && owner[r][c - 1] != owner[r][c];
+                if real && start.is_none() {
+                    start = Some(r);
+                } else if !real && let Some(s) = start.take() {
+                    segs.push((x(c), y(s), x(c), y(r)));
+                }
+            }
+        }
+    }
+    if matches!(divider, Divider::All | Divider::Rows) {
+        for r in 1..rows {
+            let mut start: Option<usize> = None;
+            for c in 0..=cols {
+                let real = c < cols && owner[r - 1][c] != owner[r][c];
+                if real && start.is_none() {
+                    start = Some(c);
+                } else if !real && let Some(s) = start.take() {
+                    segs.push((x(s), y(r), x(c), y(r)));
+                }
+            }
+        }
+    }
+    segs
 }

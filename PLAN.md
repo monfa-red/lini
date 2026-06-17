@@ -250,27 +250,25 @@ read the v4 attr names + the new sizing model.
 - **Caption bands** (`mount: in`/`out`): `titles.rs` is reusable largely as-is
   (rename `place`→`mount` reads).
 
-**Progress.** The **1D layout is fully v4**: the sizing model (`primitives.rs` —
-border-box `width`/`height`, auto = content + `padding` per axis, empty =
-`2 × padding`, stroke counts; text → glyphs; reads `stroke-width`/`font-size`/
-`width`/`height`; per-shape defaults + `text-pad` dropped), `place`→`mount`
-(`anchors.rs`, caption bands work), `rotation`→`rotate`, and flex
-`align`/`justify`/`stretch`/`evenly` (`flex.rs`, slack threaded from the
-container's explicit-size content area). **16 layout tests green, 0 warnings.**
+**Done.** Layout is fully v4: the sizing model (`primitives.rs` — border-box
+`width`/`height`, auto = content + `padding` per axis, empty = `2 × padding`,
+stroke counts; text → glyphs), `place`→`mount` (`anchors.rs`, caption bands),
+`rotation`→`rotate`, flex `align`/`justify`/`stretch`/`evenly` (`flex.rs`, slack
+threaded from the container's explicit-size content area), grid `columns`/`rows`
+track lists with `auto`/fixed/`repeat` + `cell`/`span` + stretch-fill (`grid.rs`
++ `read_layout_mode`), and `divider` (interior-only, grid + 1-D). The `is_table`
+frame special-casing is gone — a `|table|` is a group with `divider: all`, so
+render draws the group border + the interior dividers (no doubling). **23 layout
+tests green, 0 warnings.** Cell-fill is driven by the *cell's own*
+`align`/`justify: stretch` (the shipped `table rect { … }` rule), an explicit
+child dimension pinning that axis. Visual verification waits on Phase 5 (the
+segments/sizes are unit-tested; the SVG is still v3-name-wrong).
 
-**Remaining (2D layout):**
-- **`grid.rs` + `read_layout_mode`** — `layout: grid` with `columns` (required) /
-  `rows` (optional, implicit auto rows) track lists: `auto` / fixed / `repeat(N)`
-  / `repeat(N, size)`, count = list length. `cell` / `span` placement (the
-  occupancy/auto-flow logic carries over). **Cell-fill gotcha:** a cell fills its
-  track via the *cell's own* `align`/`justify: stretch` (the shipped
-  `table rect { … }` rule), not the container's — a plain grid leaves children at
-  natural size, centred. An explicit child dimension pins that axis.
-- **dividers + table frame** — `divider: none/all/rows/columns` painted by the
-  container `stroke*`; 1-D (between flex children) is new, the grid case reuses
-  `grid.rs::rule_segments`. A `|table|` now draws its border the normal way (its
-  group rect stroke) **plus** interior dividers — drop the v3 `is_table` frame
-  special-casing in `layout/mod.rs` + `render/primitives.rs`.
+**Next: Phase 5 (render)** makes `lini <v4-file>` produce correct SVG — the
+attr-name reads (`thickness`→`stroke-width`, `text-size`→`font-size`,
+`double`→`stack`, `rotation`→`rotate`, `line`→`stroke-style`, icon/image src,
+…), the `WireAt::Start/Mid/End` trim (+ `layout/wires/labels.rs`), the
+`SheetInputs` reshape, and canvas `fill` / `<title>` emission.
 
 **Done when.** Unit tests pin sizes (empty = 2×padding, text = text+padding,
 explicit = exact), align/justify/stretch/evenly with slack, grid track lists +
