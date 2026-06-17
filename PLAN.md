@@ -250,15 +250,27 @@ read the v4 attr names + the new sizing model.
 - **Caption bands** (`mount: in`/`out`): `titles.rs` is reusable largely as-is
   (rename `place`→`mount` reads).
 
-**Progress (this session).** Sizing model done — `primitives.rs` rewritten:
+**Progress.** The **1D layout is fully v4**: the sizing model (`primitives.rs` —
 border-box `width`/`height`, auto = content + `padding` per axis, empty =
-`2 × padding`, stroke counts toward the bbox; text → glyphs; reads
-`stroke-width` / `font-size` / `width` / `height`; per-shape defaults +
-`text-pad` dropped. `place`→`mount` done (`anchors.rs`); caption bands work.
-`rotation`→`rotate`. **12 layout tests green.** Remaining: flex
-`align`/`justify`/`stretch`/`evenly` (replace v3 `h:`/`v:` in `flex.rs`), grid
-track lists + `columns`/`rows` (`grid.rs` + `read_layout_mode`), and dividers +
-table-frame (drop the `is_table` frame special-casing).
+`2 × padding`, stroke counts; text → glyphs; reads `stroke-width`/`font-size`/
+`width`/`height`; per-shape defaults + `text-pad` dropped), `place`→`mount`
+(`anchors.rs`, caption bands work), `rotation`→`rotate`, and flex
+`align`/`justify`/`stretch`/`evenly` (`flex.rs`, slack threaded from the
+container's explicit-size content area). **16 layout tests green, 0 warnings.**
+
+**Remaining (2D layout):**
+- **`grid.rs` + `read_layout_mode`** — `layout: grid` with `columns` (required) /
+  `rows` (optional, implicit auto rows) track lists: `auto` / fixed / `repeat(N)`
+  / `repeat(N, size)`, count = list length. `cell` / `span` placement (the
+  occupancy/auto-flow logic carries over). **Cell-fill gotcha:** a cell fills its
+  track via the *cell's own* `align`/`justify: stretch` (the shipped
+  `table rect { … }` rule), not the container's — a plain grid leaves children at
+  natural size, centred. An explicit child dimension pins that axis.
+- **dividers + table frame** — `divider: none/all/rows/columns` painted by the
+  container `stroke*`; 1-D (between flex children) is new, the grid case reuses
+  `grid.rs::rule_segments`. A `|table|` now draws its border the normal way (its
+  group rect stroke) **plus** interior dividers — drop the v3 `is_table` frame
+  special-casing in `layout/mod.rs` + `render/primitives.rs`.
 
 **Done when.** Unit tests pin sizes (empty = 2×padding, text = text+padding,
 explicit = exact), align/justify/stretch/evenly with slack, grid track lists +
