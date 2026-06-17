@@ -127,7 +127,7 @@ says otherwise:
 | Form | Whitespace rule |
 |---|---|
 | `key: value` | `:` separates name and value; surrounding space is optional, canonical is one space after (`radius: 5`). |
-| `name::base` | The define operator; canonical is tight, no surrounding space (`treat::rect`). |
+| `name::base` | The define operator; surrounding space optional like `:` (canonical tight: `treat::rect`). |
 | `\|…\|` | Opening and closing `\|` paired; whitespace allowed inside, not at an ident boundary. |
 | `.name` (class) | **Space required before** when it follows an ident or `\|` (`box .hot`). `box.hot` parses as a wire endpoint dot-path. |
 | `id.side` | **No space**, wire endpoints only (`cat.right`). |

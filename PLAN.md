@@ -60,22 +60,24 @@ and the property-name surface.
 
 ## Phase 0 — Centralized defaults
 
-**Goal.** One module that owns every baked default, so the whole look is tuned in
-one file (an explicit ask). Today defaults are scattered across
-`resolve/vars.rs` (constants + visual vars) and `resolve/shapes.rs::template_attrs`.
+**Goal.** One module (`src/resolve/defaults.rs`) that owns the baked defaults, so
+the whole look is tuned in one file (an explicit ask). Today they're split across
+`resolve/vars.rs` (the variable defaults) and `resolve/shapes.rs::template_attrs`.
 
 **Key points.**
-- Collect: layout constants (`font-size 14`, `wire-font-size 12`,
-  `caption-font-size 13`, `stroke-width 1`, `radius 0`, `gap 20`, `padding 16`,
-  `clearance 16`, `icon-size 24`, `canvas-pad 20`), the visual `--lini-*`
-  defaults (SPEC §11.1), and the per-template attribute bundles (SPEC §8).
-- Visual vars stay live `var()`; everything else bakes (SPEC §11). Layout
-  constants are **not** `--name` variables — they are plain consts set via
-  properties/rules.
-- This is foundational — later phases read from here.
+- **Behavior-preserving.** Move the *existing* defaults as-is — keep the current
+  (v3) values so `cargo test` stays green. The v4 *values* (padding 16, the
+  font-size unification, the caption type, …) change in place during the phases
+  that introduce them; Phase 0 only establishes the home.
+- Start with the variable defaults (`built_in_defaults`): the visual `--lini-*`
+  set (live) and the baked layout constants (sizes, gaps, paddings, thicknesses).
+  The per-template bundles (`template_attrs`) and per-shape sizes fold in when
+  they're rewritten (Phase 3/4) — no point moving them twice.
+- Layout constants are **not** `--name` variables (SPEC §11) — plain consts set
+  via properties/rules; visual vars stay live `var()`.
 
-**Done when.** A single source for defaults exists and the rest of the code reads
-it (even if some consumers land in later phases).
+**Done when.** `resolve/defaults.rs` holds the variable defaults, the rest of
+resolve reads it, and `cargo test` is green.
 
 ---
 
@@ -90,6 +92,12 @@ it (even if some consumers land in later phases).
 - Dash-case idents, `--name`, strings, numbers, wire-ops, `&`, braces, parens,
   brackets — unchanged. Wire-op lexing is unchanged.
 - Commas remain a token (now only meaningful inside value lists / call args).
+- **This phase is thin** — `:`/`::` spacing is parser business, not the lexer's.
+  `::` is two adjacent colons → one token; surrounding whitespace is then
+  optional, like `:` (tight within, flexible around — SPEC §2). Drop the v3
+  `current_glued_to_prev` colon checks in the parser. The only lexer change is
+  emitting that `::` token, so fold this phase into Phase 2 rather than adding a
+  token nothing consumes yet.
 
 **Done when.** Unit tests tokenize the SPEC's lexical examples (§2) and the
 quickstart.
