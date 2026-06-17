@@ -1,7 +1,12 @@
-# Lini — Language Specification (v3)
+# Lini — Language Specification (v4)
 
 A small, human-readable language for plain-text diagrams. Flex/grid layout,
 composable primitives, CSS-driven theming — compiles to clean SVG.
+
+**Lini reads like CSS.** `key: value;` declarations in `{ }` blocks, dash-case
+property names, space-separated values, real selectors. Only a handful of
+concepts stay Lini-specific — the ones CSS has no word for (the `|type|` sigil,
+edge anchoring, wire operators).
 
 This document is complete: an implementer can build a conforming engine from it
 alone. Wire **routing** has its own contract — see [`WIRING.md`](WIRING.md).
@@ -11,14 +16,14 @@ alone. Wire **routing** has its own contract — see [`WIRING.md`](WIRING.md).
 ## Table of Contents
 
 **Language** — 1 [Mental Model](#1-mental-model) · 2 [Lexical Syntax](#2-lexical-syntax) ·
-3 [Sigils](#3-sigils) · 4 [Defs Block](#4-defs-block) · 5 [Node Declarations](#5-node-declarations) ·
-6 [Layout](#6-layout) · 7 [Positioning & Anchors](#7-positioning--anchors) ·
-8 [Primitives](#8-primitives) · 9 [Templates](#9-templates) · 10 [Wires](#10-wires)
+3 [Statements](#3-statements) · 4 [Selectors & the Cascade](#4-selectors--the-cascade) ·
+5 [Layout](#5-layout) · 6 [Positioning & Anchors](#6-positioning--anchors) ·
+7 [Primitives](#7-primitives) · 8 [Templates](#8-templates) · 9 [Wires](#9-wires)
 
-**Reference** — 11 [Attributes](#11-attributes) · 12 [Variables & Defaults](#12-variables--defaults) ·
-13 [Specificity](#13-specificity) · 14 [SVG Output](#14-svg-output) · 15 [CLI](#15-cli) ·
-16 [Errors](#16-errors) · 17 [Grammar](#17-grammar-ebnf) · 18 [Implementer Algorithm](#18-implementer-algorithm) ·
-19 [Reserved Words](#19-reserved-words) · 20 [Non-Goals](#20-non-goals) · 21 [Examples](#21-examples)
+**Reference** — 10 [Properties](#10-properties) · 11 [Variables & Defaults](#11-variables--defaults) ·
+12 [Specificity](#12-specificity) · 13 [SVG Output](#13-svg-output) · 14 [CLI](#14-cli) ·
+15 [Errors](#15-errors) · 16 [Grammar](#16-grammar-ebnf) · 17 [Implementer Algorithm](#17-implementer-algorithm) ·
+18 [Reserved Words](#18-reserved-words) · 19 [Deferred & Non-Goals](#19-deferred--non-goals) · 20 [Examples](#20-examples)
 
 ---
 
@@ -30,13 +35,14 @@ cat -> dog -> bird
 
 That's a complete diagram: three boxes, two arrows. Lini fills in the rest.
 
-| Sigil | Means |
+| Form | Means |
 |---|---|
-| `\|name\|` | A type — built-in or user-defined (`\|rect\|`, `\|group\|`). |
-| `key:value` | An attribute. **No spaces around `:`** (`radius:5`). |
-| `.name` | Apply a style (space before required: `cat .loud`). |
-| `id.side` | A wire endpoint's side (no space: `cat.right`). |
-| `--name` | A themeable CSS variable (`fill:--accent`). |
+| `\|name\|` | An instance — draw this type (`\|rect\|`, `\|group\|`). **Bars = canvas.** |
+| `name { … }` | A rule — style every `name`. **Bare name = stylesheet.** |
+| `key: value;` | A declaration — configures the thing it's in. |
+| `.name` | A class — define it (`.hot { … }`) or apply it (`box .hot`). |
+| `--name` | A themeable variable (`fill: --accent`). |
+| `a -> b` | A wire. |
 
 Three defaults make small diagrams trivial:
 
@@ -44,50 +50,63 @@ Three defaults make small diagrams trivial:
 - Omit the label → the node's id (`""` to suppress it).
 - Name an undeclared id in a wire → it's auto-created as a `|rect|`.
 
-A file is **one optional `{ defs }` block, then the scene**:
+**The file *is* the root container's body** — no wrapping block. The stylesheet
+comes first (bare declarations configure the scene; rules and defines style it),
+then the instances, then the wires:
 
 ```
-{
-  |scene| layout:row gap:30          // root container
-  |wire|  stroke:#444 clearance:8    // defaults for every wire
-  .loud   stroke:red                 // a reusable style
-  |treat:rect| radius:5              // a new shape type
-}
+layout: grid;  columns: repeat(3);  gap: 30;   // scene config — bare declarations
 
-cat |treat| "Cat"
-dog |treat| "Dog"
-cat -> dog "chases"
+rect { radius: 6; }                             // a rule (stylesheet) — draws nothing
+.hot { stroke-width: 2; }
+
+server |rect| "Server"                          // an instance (canvas) — drawn
+client |rect| "Client"
+server -> client "requests"                     // a wire
 ```
 
 ---
 
 ## 1. Mental Model
 
-A Lini file is at most one anonymous **defs block** `{ … }` followed by the
-**scene** — node and wire statements at the root, in any order. The defs block,
-if present, must come first.
+A Lini file has three parts, **in order**: the **stylesheet**, the **canvas**,
+then the **wires**. Every statement is one of four kinds — **scan the left
+edge:**
 
-The defs block holds reusable declarations (scene config, wire defaults, type
-defaults, styles, shape definitions, variable overrides). The scene is what gets
-drawn. See [Defs Block](#4-defs-block) and [Node Declarations](#5-node-declarations).
+| Starts with | Kind | Drawn? |
+|---|---|---|
+| `\|type\|`, an **id**, or a `"label"` | an **instance** (node) | yes — on the canvas |
+| a bare **type name**, `.class`, `name::base`, or `--var` | a **rule** (stylesheet / define) | no — it styles |
+| `key: value;` | a **declaration** (configures its container) | — |
+| `… -> …` | a **wire** | yes |
 
-**Defs resolve together; the scene reads top-down.** Within the defs block,
-styles, shape defs, and type-defaults may reference one another regardless of
-order (like CSS rules) — cycles are still an error. Scene statements are read in
-source order, which is also render order. Wires are the exception to needing a
-declaration at all: naming an id that is declared nowhere in the file
-auto-creates it; a declaration anywhere, before or after the wire, simply wins.
+That one split — **bars = canvas, bare names = stylesheet** — removes every "is
+this drawn or just styled?" ambiguity.
 
-**Two kinds of defaults.**
+**The file is the root container.** There is no defs block and no `|scene|`.
+Bare declarations at the top set the root container's own properties (`layout`,
+`gap`, `padding`, `fill`, `font-size`, …); inheritable ones (`font-*`, `color`)
+cascade to every node.
 
-- *Visual* defaults — colors, fonts, shadow tint — are exposed as CSS variables
-  (`--lini-fg`, `--lini-accent`, …) so a host page can re-theme them at runtime.
-- *Layout* defaults — gaps, paddings, sizes, thicknesses — are language
-  constants, baked into the SVG. They are settable per-node, per-wire, via
-  `|scene|` / `|wire|`, or via styles, but never left as runtime `var()`s — so a
-  standalone SVG always looks right.
+**The order is fixed** — detailed in [§3](#3-statements), and nested the same
+inside any body. It keeps the parser single-pass and reads as "configure, draw,
+connect"; deliberately strict for v1, relaxable later without breaking files.
 
-See [Variables & Defaults](#12-variables--defaults).
+**Render order is source order; the cascade is whole-file.** Instances draw in
+the order written (later on top; `layer:` overrides), and every rule applies to
+every instance. Wires are the one thing that needs no declaration: naming an id
+declared nowhere auto-creates it (see [§3](#3-statements)).
+
+**Two kinds of variable.**
+
+- *Visual* values that don't affect layout — colours, the font family, the
+  shadow tint — are exposed as live CSS variables (`--lini-fill`,
+  `--lini-accent`, …) so a host page can re-theme them at runtime.
+- *Layout* values — sizes, gaps, paddings, thicknesses, **and font size** —
+  bake into the SVG as literals. Text is measured at compile time, so its size
+  can never be a runtime `var()`; a standalone SVG always looks right.
+
+See [Variables & Defaults](#11-variables--defaults).
 
 ---
 
@@ -100,27 +119,33 @@ See [Variables & Defaults](#12-variables--defaults).
 | Line endings | LF or CRLF (normalized on read) |
 | Comments | `// …` to end of line. No block comments. |
 | Statement end | newline or `;` |
-| Identifier | `[a-zA-Z_][a-zA-Z0-9_-]*` — case-sensitive, ASCII |
+| Identifier | `[a-zA-Z_][a-zA-Z0-9_-]*` — case-sensitive, ASCII, dash-case |
 
-Whitespace is insignificant except as a token separator and where a sigil rule
+Whitespace is insignificant except as a token separator and where a rule below
 says otherwise:
 
 | Form | Whitespace rule |
 |---|---|
+| `key: value` | `:` separates name and value; surrounding space is optional, canonical is one space after (`radius: 5`). |
+| `name::base` | The define operator; canonical is tight, no surrounding space (`treat::rect`). |
 | `\|…\|` | Opening and closing `\|` paired; whitespace allowed inside, not at an ident boundary. |
-| `key:value` | **No whitespace either side of `:`.** `radius: 5` is an error. |
-| `.name` (style) | **Space required before** when it follows an ident or `\|`. `cat .loud` ✓; `cat.loud` parses as an endpoint dot-path. |
-| `id.side` | **No space before.** Only in wire endpoints. |
-| `--name` | As an attr value, or at a defs line start to override a variable. |
+| `.name` (class) | **Space required before** when it follows an ident or `\|` (`box .hot`). `box.hot` parses as a wire endpoint dot-path. |
+| `id.side` | **No space**, wire endpoints only (`cat.right`). |
+| `--name` | A variable, in a value or at a statement start to declare one. |
 
-**Strings** — double-quoted UTF-8. Escapes: `\"`, `\\`, `\n`, `\t`. Single quotes
-are not strings.
+`:` (single) always begins a declaration value; `::` always begins a define.
+The two never collide, and neither depends on whitespace.
+
+**Strings** — double-quoted UTF-8. Escapes: `\"`, `\\`, `\n`, `\t`. Single
+quotes are not strings.
 
 **Numbers** — integer or decimal, optional sign, no units (px for lengths,
-degrees for angles, 0–1 for opacities). `10`, `-5`, `0.25`, `+3`.
+degrees for angles, 0–1 for opacities/fractions). `10`, `-5`, `0.25`, `+3`.
 
-**Tuples & lists** — `(10, 20)`, `(2, 2, 4, gray)` (2–5 components); `[(0,0),
-(10,10)]`. The component count is fixed by the receiving attr.
+**Values are space-separated and positional**, like CSS: `padding: 5 2 5 5`,
+`shadow: 2 2 4 #0003`, `at: 100 50`, `columns: 80 140 80`. A **comma** separates
+list items and appears only where a property takes a list of groups (`points:
+0 0, 10 10`). **Functions** use parentheses: `rgb(…)`, `hsl(…)`, `repeat(…)`.
 
 **Colors** — `#fff`, `#ffaa00`, `#ffaa00cc` (alpha), CSS names (`red`,
 `cornflowerblue`), `rgb(…)`, `rgba(…)`, `hsl(…)`, a `--name` variable reference,
@@ -128,384 +153,419 @@ or `none`. Out-of-range channels are an error.
 
 ---
 
-## 3. Sigils
+## 3. Statements
 
-Each row is a parsing rule. The `:` and `.` sigils each do two jobs,
-disambiguated by whitespace and position; the pipe form takes its meaning from
-context.
+Statements come in three phases — **stylesheet → canvas → wires** ([§1](#1-mental-model)).
+The stylesheet holds variable declarations, root configuration, rules, and
+`name::base` defines (each type defined before its first use); the canvas holds
+instances; then come the wires. A body nests the same order: declarations, then
+child nodes, then internal wires.
 
-| Form | Where | Means |
+### The three type forms
+
+| Form | Kind | Means |
 |---|---|---|
-| `\|rect\|` | node decl | Reference a built-in or user type. |
-| `\|rect\|` | defs (no `:base`) | Set defaults for every `\|rect\|`. |
-| `\|scene\|` | defs (≤ 1) | Configure the root scene container. |
-| `\|wire\|` | defs (≤ 1) | Defaults for every wire. |
-| `\|treat:rect\|` | defs | Define shape `treat`, base `rect`. |
-| `key:value` | attr lists | Attribute binding. |
-| `name:base` | inside `\|…\|` in defs | Inheritance binding. |
-| `.alert` | after type (space before) | Apply style `alert`. |
-| `cat.right` | wire endpoint (no space) | Side `right` of node `cat`. |
-| `--accent` | attr value, or defs line start | Reference / override `--lini-accent`. |
+| `\|rect\|` | instance | draw a rect (bars = canvas) |
+| `rect { … }` | rule | style every rect (a CSS element selector) |
+| `treat::rect { … }` | define | a new type `treat`, base `rect`, with its defaults |
 
----
+A bare type name can only be a rule because **type names are reserved** — `rect`
+can never be a node id. `treat::rect` reads "treat **is a** rect" (and the `::`
+sets it apart from a `key: value` declaration at a glance). Defines chain
+(`panel::treat`) and may carry intrinsic children. Max inheritance depth 16;
+cycles are an error.
 
-## 4. Defs Block
-
-One optional `{ … }` at the top of the file. It holds these line kinds, in any
-order, each identified by its leading sigil:
+### Node declaration
 
 ```
-{
-  |scene| layout:(3,2) gap:40 padding:20 background:--bg   // scene config (≤ 1)
-  |wire|  stroke:#444 thickness:1 clearance:8              // wire defaults (≤ 1)
-  |rect|  radius:4                                         // type defaults
-  --accent:#0a84ff                                         // variable override
-  .loud   stroke:red thickness:2                           // style def
-  |treat:rect| radius:5                                    // shape def
-  |den:group|  layout:column gap:8 padding:12 {            // shape def with body
-    |text| "Title" place:in weight:bold
-    body  |text| "Content"
-  }
+[id] [|type|] ["label" …] [.class …] [ { block } ]
+```
+
+Everything is optional; the type defaults to `rect`. The block holds, in this
+order, declarations, then child nodes, then internal wires.
+
+```
+db |cyl| "Postgres" .primary {
+  fill: #eef;
+  badge |rect| "v16" { mount: on; side: top; align: end; }
 }
 ```
-
-| First token | Line kind |
-|---|---|
-| `\|scene\|` | Scene config (singleton). |
-| `\|wire\|` | Wire defaults (singleton). |
-| `\|name:base\|` | New shape def — base is any primitive, template, or earlier user shape. |
-| `\|name\|` (existing type) | Type defaults — applies to every instance of that type. |
-| `.name` | Style def. |
-| `--name` | Variable override. |
-
-**The three pipe roles.**
-
-- **`|scene|`** — the root container: `layout`, `gap`, `padding`, `background`,
-  `h`, `v`, `col-widths`, `row-heights`. Defaults to `layout:row gap:20
-  padding:20` if omitted.
-- **`|wire|`** — defaults for every wire: `stroke`, `thickness`, `line`,
-  `clearance`, `color`, `marker*`, `opacity`. Wire-relevant attrs only.
-- **`|name|`** (a primitive, template, or user shape) — defaults for every
-  instance of that type, sitting at the lowest specificity layer (see
-  [Specificity](#13-specificity)). One entry per name. Composes with
-  inheritance: `|rect| fill:lightyellow` tints every `|rect|`, `|card|`, and
-  `|treat:rect|` instance.
-
-**`|name:base| attrs… { body }`** defines a new type. At least one of attrs or
-body must be present. Max inheritance depth 16; cycles are an error. A body may
-contain id'd children **and** internal wires referencing those ids (see
-[Wires](#10-wires)); internal ids are scoped to the body.
-
-**`.name attrs…`** is a reusable attribute bundle. It may reference other styles
-by `.other` (applied left-to-right). Cycles are an error.
-
----
-
-## 5. Node Declarations
-
-```
-id [|type|] ["label"…] [.style…] [attrs…] [{ body }]
-```
-
-Everything but `id` is optional. **Order is strict:** id → type → labels →
-styles/attrs (these may interleave) → `{ body }`. Any number of positional label
-strings are allowed; a link is the `link:` attribute, not a positional string.
 
 | Form | Effect |
 |---|---|
 | `cat` | `\|rect\|`, label "cat". |
-| `cat \|treat\|` | Shape `treat`, label "cat". |
+| `cat \|treat\|` | Type `treat`, label "cat". |
 | `cat "Friendly cat"` | `\|rect\|`, label "Friendly cat". |
-| `cat \|treat\| ""` | Shape `treat`, **no** label. |
-| `cat \|treat\| "Cat" link:"https://example.com"` | Label + clickable (whole shape wrapped in `<a>`). |
-| `cat \|treat\| .bold .loud cell:1 padding:5` | Shape + styles + attrs. |
+| `cat \|treat\| ""` | Type `treat`, **no** label. |
+| `cat .bold .loud { padding: 5; }` | Type + classes + own declarations. |
 | `garden \|group\| { … }` | Container with a body. |
+| `\|text\| "Title"` | Anonymous primitive (can't be wired to). |
 
-**Inside a body**, primitives may be anonymous, declared starting with `|type|`:
+- **Labels are positional strings** — a closed shape stacks them as centred text;
+  a `|group|`'s 1st and 2nd become a top **caption** and bottom **footer**
+  (`|caption|` children, [§8](#8-templates)), the rest centred; `""` suppresses one.
+- A `link:` declaration (not a positional string) makes a node clickable.
 
-```
-garden |group| {
-  |text| "Title" place:in weight:bold
-  body |text| "Content"          // id'd, so a wire can reach it
-}
-```
+Multi-line labels use `\n`; the text box sizes to the widest line, spacing is
+`font-size × line-height`.
 
-Without an id a primitive can't be wired to.
+### Implicit nodes
 
-**Implicit nodes.** A root wire's single-segment endpoint naming an id that
-exists nowhere in the file auto-creates an empty `|rect|` at the scene root
-with the id as its label. Declaring the id anywhere — before or after the wire
-— prevents auto-creation. If the id exists only deeper in the tree (say inside
-a shape instance), nothing is created: the wire must use the full path, and the
+A root wire's single-segment endpoint naming an id declared nowhere in the file
+auto-creates an empty `|rect|` at the scene root with the id as its label — so
+`cat -> dog -> bird` is a complete three-box diagram. Declaring the id anywhere
+— before or after the wire — prevents auto-creation. If the id exists only
+deeper in the tree, nothing is created: the wire must use the full path, and the
 error suggests it. Body wires never auto-create.
 
-**Label sugar.** Each positional string expands to a `|text|` child:
+### Declarations
 
-```
-cat |treat| "Cat"     ≡     cat |treat| { |text| "Cat" }
-```
+A declaration `key: value;` configures the statement it sits in — the root (at
+file top), a node (in its block), a wire, or a wire label. Property names are
+dash-case; values are space-separated and positional. See
+[Properties](#10-properties).
 
-A closed shape stacks its labels as centred text. A **`group`** is positional:
-the 1st label becomes a top caption and the 2nd a bottom footer — both reserved
-`place:in` bands at `--title-text-size` — and any beyond the 2nd are plain
-centred text (see [§9](#9-templates)). If both sugar and explicit `|text|`
-children are present, the sugar's text comes first. Multi-line labels use `\n`;
-the text bbox sizes to the widest line, line spacing is `size × 1.2`.
-
-**`link:`.** A `link:"url"` attribute wraps the whole node in `<a href>` (every
-child becomes clickable); it works on any shape, `|text|`, or wire. There is no
-positional href — a second string is just another label.
+A declaration is itself a statement, so it binds to a node or wire only **inside
+that one's block** — an inline `key: value` on the line would read as a separate
+root declaration. So: the line is *identity* (id, type, labels, classes); the
+block is *configuration + content*. The root is the exception — its block is the
+whole file, so its declarations are the bare top-level statements.
 
 ---
 
-## 6. Layout
+## 4. Selectors & the Cascade
 
-A container picks a mode via `layout`:
+A **rule** is `selector { declarations }`. Selectors are CSS-shaped:
+
+```
+rect { … }                  // every rect (element selector)
+.hot { … }                  // every node with class .hot (class selector)
+table rect { … }            // every rect inside a table (descendant)
+.sidebar rect { … }         // every rect inside a .sidebar
+```
+
+In a selector the type is **bare** — `table rect`, never `table |rect|` —
+because bars are only for instances. A descendant selector is two or more parts
+separated by whitespace; it matches a node whose ancestor chain contains each
+part in order (not necessarily adjacent), exactly like a CSS descendant
+combinator.
+
+A **define** introduces a new type from a base: `treat::rect { … }`. Its
+declarations are the type's defaults; an optional body gives it intrinsic
+children (materialized per instance — see [§9](#9-wires)).
+
+**Classes** are defined by a `.name { … }` rule and **applied** by writing
+`.name` on a node (`box .hot`). Each selector part is a single element *or* a
+single class; compound parts (`.card.hot`, `rect.hot`) are not supported.
+
+**Specificity** — the most specific source wins; ties break by **source order**
+(the CSS cascade):
+
+1. **Type rule** (`rect { }`) and a type's own define defaults
+2. **Descendant rule** (`table rect { }`, `.sidebar rect { }`)
+3. **Class** (`.hot { }`)
+4. **The instance's own block** (`client |rect| { fill: white; }`) — wins
+
+For a wire: `wire { }` defaults → descendant/class rules → the wire's own
+declarations.
+
+Complex values (`at: x y`, `padding: t r b l`) replace wholesale — the merge is
+per-property, not deep.
+
+---
+
+## 5. Layout
+
+A container picks a mode with `layout`:
 
 | Value | Behavior |
 |---|---|
-| `layout:row` | 1D horizontal flex. |
-| `layout:column` | 1D vertical flex. |
-| `layout:(COLS, ROWS)` | 2D grid. |
+| `layout: row` | 1D horizontal flex. |
+| `layout: column` | 1D vertical flex. |
+| `layout: grid` | 2D grid — sized by `columns` / `rows`. |
 
-Grid children place with `cell:(c, r)` and span with `span:(c, r)` — both in
-**(col, row) = (x, y)** order, 1-indexed.
+**Defaults:** every container — the root included — defaults to `layout: column`
+with `gap: 20`. A normal container pads its content by 16; the root pads by 0
+(its margin is the fixed `canvas-pad`, 20 px), as do the frameless `|row|` /
+`|column|` (see [§8](#8-templates)).
 
-### Container attrs
+### Flex — `align` / `justify`
 
-| Attr | Applies to | Notes |
+Flexbox model: `justify` runs *along* the flow (main axis), `align` runs
+*across* it (cross axis). Both default `center`.
+
+| Value | `justify` (main axis) | `align` (cross axis) |
 |---|---|---|
-| `layout` | all | `row`, `column`, or `(c, r)`. |
-| `gap` | all | Space between children. Scalar = both axes; `(y, x)` = vertical / horizontal. Negative allowed. |
-| `padding` | all | Inner padding. `N`, `(y, x)`, or `(t, r, b, l)`. |
-| `col-widths`, `row-heights` | grid | Fixed track sizes. Scalar = all equal; list = per track. |
-| `h`, `v` | all | Alignment / distribution. |
-| `background` | scene only | Canvas background color. |
+| `start` / `center` / `end` | pack at the edge / centre / opposite | align each child to the edge / centre / opposite |
+| `stretch` | (fills children to span the main axis) | each child's **box** fills the cross axis |
+| `evenly` | equal gaps between and around children | (treated as `center`) |
 
-With `col-widths` / `row-heights` set, cells take exactly those sizes (an
-explicit child `size:` still wins). Omitted → tracks auto-size to their widest /
-tallest child.
+`stretch` fills the child's **box**, not its *content* (placed by the child's own
+`align`/`justify`, also `center`) — so a stretched table cell fills its track and
+centres its text for free. `evenly` needs multiple children.
 
-**Multi-value `padding` / `radius`:** `N` = all four sides; `(y, x)` = vertical,
-horizontal; `(t, r, b, l)` = clockwise from top. For `radius`, the 2-value form is
-`(top-corners, bottom-corners)`.
+All of `align`/`justify`/`stretch`/`evenly` are **no-ops unless the container is
+larger than its packed children** — an auto-sized container has no slack to
+distribute. Slack comes from an explicit `width`/`height`, or from a grid's
+fixed tracks.
 
-### `h` / `v` values
+### Grid — `columns` / `rows` / `cell` / `span`
 
-| Value | Stacking axis | Cross axis |
-|---|---|---|
-| `start` / `center` / `end` | Pack at edge / center / opposite | Align child to edge / center / opposite |
-| `stretch` | (no effect) | Children fill the cross axis |
-| `between` / `around` / `evenly` | Distribute | (treated as `start`) |
+A grid is sized by its track lists:
 
-For `layout:row` the stacking axis is horizontal; for `column`, vertical; for
-grids, both axes stack and `h`/`v` align cell content. **Defaults:** grid cells
-`h:center v:center`; flex `start` on the stacking axis, `stretch` on the cross
-axis.
-
-### Child positioning
-
-| Attr | Effect |
+| Property | Notes |
 |---|---|
-| `place: none\|in\|out\|on` | The flow switch (default `none` = in flow). `in`/`out`/`on` anchor to the `side` edge (reserve vs overlay). See [Positioning](#7-positioning--anchors). |
-| `side: top\|bottom\|left\|right` | Which edge `place:in/out/on` meets (default `top`); `align:` slides along it. |
-| `at:(x, y)` | Bbox center at (x, y). An overlay; overrides `place`. |
-| `offset:(x, y)` | Fine-tune from `at:` / `side:`. |
-| `margin:N \| (y,x) \| (t,r,b,l)` | Signed outer spacing. Grows (or, negative, shrinks) the room the child reserves in its parent — adding to the gaps and the parent's size. See [Positioning](#7-positioning--anchors). |
-| `cell:(c, r)` | Grid placement, 1-indexed. |
-| `span:(c, r)` | Grid span. Default `(1, 1)`. |
-| `z:N` | Render-order override; source order is the tiebreak. |
+| `columns` | **Required.** A track list — `columns: 80 140 80` (3 fixed) or `columns: repeat(3)` (3 auto) or a mix (`auto 40 auto`). The grid's column count is the list length. |
+| `rows` | Optional. Same track-list form. Omitted → rows are implicit and auto-sized, the count `⌈children / columns⌉`. |
+| `cell` | Child placement `column row`, 1-indexed (`cell: 2 1`). |
+| `span` | Child span `columns rows`, default `1 1` (`span: 2` = `2 1`). |
 
-`at:` always beats `cell:`. A reserved child (`place:in`/`out`) grows the
-parent's bbox; an absolute overlay (`at:`/`place:on`) does not (§7). Out-of-range
-cells are an error.
+A **track** is a size (`80`), `auto` (sized to its widest/tallest child), or
+`repeat(N)` / `repeat(N, size)` for many equal tracks (`repeat(N)` = N auto
+tracks; `repeat(N, 80)` = N tracks of 80). The count comes from the list length.
+
+**Auto-flow.** Cells without `cell:` flow into the tracks left-to-right, wrapping
+at the column count; a `cell:` pins one explicitly and the rest flow around it.
+A child fills its track only under `align`/`justify: stretch` — a plain grid
+leaves children at their natural size, centred in each cell.
+
+`columns`/`rows`/`cell`/`span` are valid only on a grid (`layout: grid` or
+`|table|`); using them elsewhere is an error.
+
+### Dividers
+
+`divider` draws separators between flow children, painted by the container's
+`stroke` / `stroke-width` / `stroke-style`:
+
+| Value | Effect |
+|---|---|
+| `none` (default) | no separators |
+| `all` | every **interior** separator — in 1-D, between children; in a grid, between rows and columns |
+| `rows` / `columns` | grid only — separators along that axis |
+
+Dividers are **interior only** — the outer frame is just the container's own
+border (its `stroke`), so a frameless grid (`stroke: none`) shows only inner
+lines and a bordered one is never doubled. `divider` is span-aware in grids (a
+separator never crosses a spanning cell's interior, and a shared edge is never
+drawn twice) and skips mounted children. This is what lets `|table|` be plain
+`grid + divider: all` rather than a magic type (see [§8](#8-templates)).
+
+### Container properties
+
+| Property | Applies to | Notes |
+|---|---|---|
+| `layout` | all | `row`, `column`, `grid`. |
+| `gap` | all | Space between children. `N` = both axes; `row col` (CSS order) per axis. Negative allowed. |
+| `padding` | all | Inner padding. `N`, `v h`, or `t r b l`. |
+| `align` / `justify` | all | Cross / main axis (above). |
+| `columns` / `rows` | grid | Track lists (above). |
+| `divider` | all | Separators (above). |
+| `fill` | all | Body colour; on the root it is the **canvas** colour. |
 
 ---
 
-## 7. Positioning & Anchors
+## 6. Positioning & Anchors
 
 A shape's **bounding box** is the smallest axis-aligned rectangle containing it,
 stroke included.
 
 1. **Center origin.** Every bbox is centered at the parent's origin by default;
-   `at:(x,y)` puts the center at (x,y).
-2. **`origin:top-left`** opts into top-left positioning — per instance, or
-   globally via `|scene| origin:top-left`.
-3. **Source order = render order;** later draws on top. `z:N` overrides; ties
-   break by source order.
-4. **Strokes count** toward the bbox — `size:(100,50) thickness:4` → 104×54.
-5. **`|path|`** is the only center-origin exception — `d:` uses native top-left
-   coordinates.
-6. **Rotation** applies last as an SVG transform; the rotated bounding rectangle
+   `at: x y` puts the center at (x, y).
+2. **Source order = render order;** later draws on top. `layer: N` overrides;
+   ties break by source order.
+3. **Strokes count** toward the bbox — `width: 100 height: 50 stroke-width: 4`
+   → 104×54.
+4. **`|path|`** is the only center-origin exception — `path:` uses native
+   top-left coordinates.
+5. **Rotation** applies last as an SVG transform; the rotated bounding rectangle
    propagates upward.
 
 ### Positioning a child
 
-**`place` is the switch.** It says how a child relates to its parent, and any
-value but `none` takes it out of the flow — one model, no compound anchor names:
+**`mount` is the switch.** It says how a child relates to its parent; any value
+but `none` takes it out of the flow — one model, no compound anchor names:
 
-- **`place: none`** *(default)* — a normal flow/grid child, laid out by the
-  parent's `layout:`. `side`/`align` don't apply.
-- **`place: in | out | on`** — anchor to an edge. **`side: top | bottom | left
-  | right`** picks it (default `top`) and **`align: start | center | end`**
-  slides along it, so a corner needs no special name (`side:top align:end` =
+- **`mount: none`** *(default)* — a normal flow/grid child. `side`/`align`
+  don't apply.
+- **`mount: in | out | on`** — anchor to an edge. **`side: top | bottom | left |
+  right`** picks it (default `top`) and **`align: start | center | end`** slides
+  along it, so a corner needs no special name (`side: top align: end` =
   top-right; `start`/`end` are the low/high ends — left/top is `start`). The
   meeting is *size-aware* — the child clears the edge by its own extent at any
   size:
   - **`in`** — flush inside, and **reserves a band**: flow content shifts to
     clear it and the box grows (top/bottom only; left/right fall back to top).
-    The band is separated from the content by the container's own `gap` — a
-    reserved child is spaced like a flow sibling — so a caption lines up evenly
-    with the rows below it. This is a group's caption; tighten or loosen one
-    with `margin:` (below).
+    The band is separated from the content by the container's own `gap`. This is
+    a group's caption; tighten or loosen it with `margin:`.
   - **`out`** — flush *outside the border*: the band sits a container `gap`
     beyond the drawn frame, and the footprint grows to reserve it. The border
-    keeps hugging the content (and any `place:in` bands) while the caption rides
-    just outside it; siblings still clear the whole footprint. Top/bottom only,
-    like `in`. With no border or padding (the scene, `|row|` / `|col|`) there is
-    no frame to sit outside of, so it coincides with `in`.
+    keeps hugging the content while the caption rides just outside it. Top/bottom
+    only. With no border or padding (the root, `|row|`/`|column|`) it coincides
+    with `in`.
   - **`on`** — centred on the edge/corner (a corner anchor straddles it); an
     **overlay**, no reserve.
 
-  Defaults `align:center`; a bare `side:` with no `place:` is an error.
+  Default `align: center`; a bare `side:` with no `mount:` is an error.
 
-**`at:(x, y)`** is the orthogonal escape hatch — bbox center at explicit
-parent-local coords (the origin is the parent's center, so `at:(0, 0)` centers).
-It's an overlay and overrides `place`.
+**`at: x y`** is the orthogonal escape hatch — bbox center at explicit
+parent-local coords (`at: 0 0` centers). It's an overlay and overrides `mount`.
 
-**Reserve vs overlay is the whole rule, for every shape.** `place:in`/`out`
-*reserve* — the parent grows to hold the band, so the child never overlaps.
-`place:on` and `at:(x, y)` are *absolute overlays*: positioned against the
-parent but they **don't grow it**, and a parent holding only overlays (with no
-`size:`) collapses — `position:absolute` against a `position:relative` parent.
-An overlay is still drawn, and the canvas always includes it (never clipped).
-No element is special here: a group caption is just `|text|` with `place:in`;
-`|badge|` is a rect with `place:on`.
+**Reserve vs overlay is the whole rule.** `mount: in`/`out` *reserve* — the
+parent grows to hold the band, so the child never overlaps. `mount: on` and
+`at: x y` are *overlays*: positioned against the parent but they **don't grow
+it** (a parent of only overlays collapses to `2 × padding`). An overlay still
+draws, and the canvas always includes it (never clipped).
 
-`offset:(x, y)` nudges from `at:` or `side:`.
+**`offset: x y`** nudges from `at:` or `side:` — a pure render-time shift of the
+one child.
 
-**`margin:`** is signed *outer* spacing on any child — `N` / `(y, x)` /
-`(t, r, b, l)`, like `padding` but allowed negative. It inflates (or, negative,
-shrinks) the room the child reserves in its parent: positive spreads it from its
-siblings and grows the parent; negative eats the surrounding gap (and padding),
-tightening the parent to match. Its headline use is pulling a caption closer
-to its frame and content — `|text| "X" place:in margin:(-6, 0, -12, 0)`. A margin so
-negative it outruns the available space simply lets shapes overlap; nothing
-clips. Unlike `offset:` (a pure render-time nudge that moves only the one
-child), `margin:` changes the layout around it.
-
-**Wire-route anchors are separate** — only on a `|text|` child of a wire
-(`start` / `mid` / `end`, or a fraction `0..1`). They position *along a line*.
+**`margin:`** is signed *outer* spacing on any child — `N` / `v h` / `t r b l`,
+like `padding` but negatives allowed. It changes the room the child reserves:
+positive spreads it from siblings and grows the parent; negative eats the
+surrounding gap and padding, tightening the parent (and, past zero, overlapping —
+nothing clips). Unlike `offset:`, it reshapes the surrounding layout.
 
 ### Auto-sizing
 
-Closed shapes auto-size to their text children + 16 px padding per side when
-`size:` is omitted (text width from embedded font metrics). With neither `size:`
-nor text:
+`width` and `height` default to **`auto`** — the bbox sizes to its content (text
+or child nodes) **plus `padding` on each side** — the one padding knob (default
+16; there is no separate text padding). Sizing is **border-box**: an
+explicit `width` / `height` is the exact outer dimension with padding *inside* it
+(never added on top), and the two are independent (set one, the other stays
+`auto`). A shape with no in-flow content — empty, or holding only `at:` /
+`mount: on` overlays — is therefore **`2 × padding`** on each axis, so the
+default `padding` (16) sets an empty box's minimum size (32 × 32).
 
-| Shape | Default size |
-|---|---|
-| `\|rect\|`, `\|group\|`, `\|slant\|` | `(100, 40)` |
-| `\|oval\|` | `(60, 40)` |
-| `\|hex\|`, `\|cyl\|`, `\|diamond\|`, `\|cloud\|` | `(60, 60)` |
-| `\|icon\|` | `24` |
-| `\|poly\|`, `\|image\|`, `\|line\|` | Error if required attrs missing |
+Exceptions: a `|text|` sizes to its glyphs (no padding); `|icon|` defaults to
+`icon-size` (24); `|line|` / `|poly|` / `|image|` / `|path|` require their
+geometry (`points` / `src` / `path`) and error without it.
+
+Text width uses an approximate metric (≈ 0.55 em per character) until embedded
+font metrics land (see [§19](#19-deferred--non-goals)); setting `font-family`
+restyles without re-measuring.
 
 ---
 
-## 8. Primitives
+## 7. Primitives
 
-13 primitives. All accept position and visual attrs; closed shapes also accept
-`double:`, `rotation:`, `shadow:`.
+13 primitives. All accept position and visual properties; closed shapes also
+accept `stack`, `rotate`, `shadow`.
 
-**Dimensions** use `size:` — `size:N` is square/circle, `size:(w, h)` is a
-rectangle/ellipse. `size:` is always **bbox dimensions**: `|oval| size:(60,40)` is
-an ellipse in a 60×40 box; `|oval| size:40` is a circle.
+**Dimensions** use `width` / `height`, each defaulting to `auto` (content +
+padding, **border-box** — see [§6](#6-positioning--anchors)). They are always
+**bbox dimensions**: `|oval| width: 60 height: 40` is an ellipse in a 60×40 box;
+equal dimensions (or an empty `|oval|`) make a circle.
 
 | Primitive | Required | Notes |
 |---|---|---|
-| `\|rect\|` | `size` (auto) | Rounded via `radius:`. |
-| `\|oval\|` | `size` (auto) | Bbox ellipse; `size:N` = circle. |
-| `\|hex\|` | `size` (auto) | Regular hex, flat top/bottom. |
-| `\|slant\|` | `size` (auto) | Parallelogram; top edge shifted `tan(skew) × h`. `skew` in degrees, (-89, 89). |
-| `\|cyl\|` | `size` (auto) | Cylinder; body height `h`, end ellipses ±h/8. |
-| `\|diamond\|` | `size` (auto) | Rhombus inscribed in the bbox. |
-| `\|cloud\|` | `size` (auto) | Cloud path scaled to fit. |
-| `\|poly\|` | `points:[(x,y),…]` | ≥3 points, local (center-origin) coords. Closed. |
-| `\|path\|` | `d:"…"` | Raw SVG path. **Native top-left coords.** |
-| `\|text\|` | label string | See [label sugar](#5-node-declarations) and [text attrs](#11-attributes). |
-| `\|line\|` | `points:[(x,y),…]` | 2+ points. Markers via `marker*:`. |
-| `\|icon\|` | `name` | Material Symbols. `variant:outlined\|filled\|rounded\|sharp`, `size:N`. Only referenced icons are bundled. |
-| `\|image\|` | `href size` | `<image href="…">`. External URLs only. |
+| `\|rect\|` | size (auto) | Rounded via `radius:`. |
+| `\|oval\|` | size (auto) | Bbox ellipse; equal width/height = circle. |
+| `\|hex\|` | size (auto) | Regular hex, flat top/bottom. |
+| `\|slant\|` | size (auto) | Parallelogram; top edge shifted `tan(skew) × h`. `skew` in degrees, (-89, 89). |
+| `\|cyl\|` | size (auto) | Cylinder; end ellipses ≈ h/10. |
+| `\|diamond\|` | size (auto) | Rhombus inscribed in the bbox. |
+| `\|cloud\|` | size (auto) | Cloud path scaled to fit. |
+| `\|poly\|` | `points` | ≥3 points, local (center-origin) coords. Closed. |
+| `\|path\|` | `path` | Raw SVG path. **Native top-left coords.** |
+| `\|text\|` | label string | See [label sugar](#3-statements) and [text properties](#10-properties). |
+| `\|line\|` | `points` | 2+ points. Markers via `marker*:`. |
+| `\|icon\|` | label (glyph name) | Material Symbols; the glyph name is the label (`\|icon\| "home"`). `icon-variant`, size via `width`/`height`. |
+| `\|image\|` | `src`, `width`, `height` | `<image href="…">`. External URLs only; both dimensions required. |
 
 ### Visual modifiers (closed shapes)
 
-| Attr | Forms | Effect |
+| Property | Forms | Effect |
 |---|---|---|
-| `line` | `solid` / `dashed` / `dotted` | Stroke pattern. Default `solid`. |
-| `double` | `N` / `(x, y)` | Draw twice with an offset, second copy behind. Scalar = `(N, -N)`. |
-| `rotation` | `N` degrees | Rotate around the bbox center. |
-| `shadow` | `N` / `(dx, dy)` / `(dx, dy, blur)` / `(dx, dy, blur, color)` | Drop shadow via SVG `<filter>`. Scalar `N` = offset `(N, N)`, blur `N`; the tint defaults to `--lini-shadow`. |
+| `stroke-style` | `solid` / `dashed` / `dotted` | Stroke pattern. Default `solid`. (`wavy` / `double` deferred — [§19](#19-deferred--non-goals).) |
+| `stack` | `N` / `dx dy` | Draw an offset duplicate behind the shape. Scalar `N` = `N -N`. |
+| `rotate` | `N` degrees | Rotate around the bbox center. |
+| `shadow` | `N` / `dx dy` / `dx dy blur` / `dx dy blur color` | Drop shadow via SVG `<filter>`. Scalar `N` = offset `N N`, blur `N`; tint defaults to `--lini-shadow`. |
 
 ### Markers (on `|line|` and wires)
 
-| Attr | Effect |
+| Property | Effect |
 |---|---|
-| `marker:X` | Both ends. |
-| `marker-start:X` | Start end (wire source). |
-| `marker-end:X` | End end (wire target). |
+| `marker: X` | Both ends. |
+| `marker-start: X` | Start end (wire source). |
+| `marker-end: X` | End end (wire target). |
 
-Values: `none`, `arrow`, `dot`, `diamond`, `crow`. Markers scale with thickness,
-floor 5 px; color follows the stroke. `|line|` is bare by default — write `|line|
-marker-end:arrow` for a one-shot arrow. For wires the operator picks markers (see
-[Wires](#10-wires)). Source order wins: `marker:arrow marker-end:dot` → start
-arrow, end dot.
+Values: `none`, `arrow`, `dot`, `diamond`, `crow`. Markers scale with
+`stroke-width`, floor 5 px; color follows the stroke. `|line|` is bare by default
+— write `|line| { marker-end: arrow; }` for a one-shot arrow. For wires the operator
+picks markers (see [§9](#9-wires)). Source order wins: `marker: arrow
+marker-end: dot` → start arrow, end dot.
 
 ---
 
-## 9. Templates
+## 8. Templates
 
-7 templates — each an attribute bundle over a primitive base, named because the
-pattern is common. (There is no `|title|` — a caption is just `|text|` with
-`place:in`; see below.)
+Built-in types — each a bundle over a primitive base, named because the pattern
+is common.
 
 | Template | Base | Defaults | For |
 |---|---|---|---|
-| `\|group\|` | `\|rect\|` | `stroke:--group-stroke fill:--group-fill radius:6 padding:10` | Frame + caption/footer. |
-| `\|badge\|` | `\|rect\|` | `side:top align:end place:on radius:999 padding:(2,8) shadow:2 fill:--accent z:10`; small on-accent text | Corner pill (straddles the corner, grows nothing). |
-| `\|note\|` | `\|rect\|` | `radius:2 padding:12 shadow:2 stroke:none fill:--note-bg` | Sticky note. |
-| `\|row\|` | `\|rect\|` | `layout:row fill:none stroke:none padding:0` | Frameless wrapper — children in a row. |
-| `\|col\|` | `\|rect\|` | `layout:column fill:none stroke:none padding:0` | Frameless wrapper — children in a column. |
-| `\|table\|` | `\|group\|` | `gap:0 padding:0 fill:none stroke:--stroke`; draws its own grid (frame + separators) in `--stroke`. Use with `layout:(c,r)`, `col-widths:`, `row-heights:` | Ruled grid of `\|cell\|`s. |
-| `\|cell\|` | `\|rect\|` | `padding:8 stroke:none fill:none` | Borderless cell — the table draws the lines. |
+| `\|group\|` | `\|rect\|` | `stroke: --group-stroke; fill: --group-fill; radius: 6` | Frame + caption/footer (padding via the default 16). |
+| `\|caption\|` | `\|text\|` | `mount: in; font-size: 13` | A group's caption/footer band. |
+| `\|badge\|` | `\|rect\|` | `mount: on; side: top; align: end; radius: 999; padding: 2 8; shadow: 2; fill: --accent; color: --on-accent; font-size: 11; layer: 10` | Corner pill (straddles the corner, grows nothing). |
+| `\|note\|` | `\|rect\|` | `radius: 2; shadow: 2; stroke: none; fill: --note-bg` | Sticky note (padding via the default 16). |
+| `\|row\|` | `\|rect\|` | `layout: row; fill: none; stroke: none; padding: 0` | Frameless wrapper — children in a row. |
+| `\|column\|` | `\|rect\|` | `layout: column; fill: none; stroke: none; padding: 0` | Frameless wrapper — children in a column. |
+| `\|table\|` | `\|group\|` | `layout: grid; divider: all; padding: 0; fill: none; stroke: --stroke` | Ruled grid (see below). |
 
-**Group captions.** A `group`'s positional labels are placed by order: the 1st
-becomes a top caption, the 2nd a bottom footer — both reserved `place:in` bands
-at `--title-text-size`, centred — and any beyond the 2nd are plain centred text.
-`group "Title" "Footer" { … }` is the common form; write a `|text| place:…`
-child by hand for anything else (a `place:out` caption, an explicit `align`).
+**Captions.** A group's positional labels desugar to `|caption|` children: the
+1st a top caption, the 2nd a bottom footer (`side: bottom`), any beyond the 2nd
+plain centred `|text|`. A caption is just a `|text|` with `mount: in` — write one
+by hand (`|caption| "X"` or a `|text| mount: …`) for anything else. Style every
+caption globally with `caption { font-size: 16; font-weight: bold; }`; that
+targets captions without touching body text (which `group text { }` would catch).
 
-A `\|table\|` renders its grid as one ruled path — the outer frame plus the
-separators between adjacent cells — so cells stay borderless and a shared edge
-is never drawn twice; a separator never crosses the interior of a spanning
-cell. `row` / `col` are the frameless counterparts: they only lay out (a `col`
-of `row`s reads like a table, but a table aligns its columns across every row).
+**Tables.** A `|table|` is sugar — a `group` that is a grid and draws dividers.
+Two rules ship with it:
 
-Extend any of them: `|panel:group| stroke:--accent`. Common shapes need no
+```
+table::group { layout: grid; divider: all; stroke: --stroke; fill: none; padding: 0; }
+table rect  { stroke-width: 0; padding: 4 8; align: stretch; justify: stretch; }
+```
+
+So the outer frame is the group border and the inner lines are `divider: all`,
+both painted by its `stroke*`; cells are borderless (the shipped `stretch` rule
+fills each cell, its text centring for free), so no edge is ever doubled. There
+is no `|cell|` type — a cell is the default `|rect|`, auto-flowing into the
+tracks:
+
+```
+basket |table| {
+  columns: 80 140 80;
+  rows: auto 40;
+
+  "Fruit" { font-weight: bold; }  "Qty" { font-weight: bold; }  "Notes"
+  "Apple"                         "12"                          "fresh"
+  "Mango"                         "3"                           "ripe"
+}
+```
+
+`fmt` aligns the cells into visual columns, so the flat form reads like a table.
+Style cells in bulk with `.my-table rect { … }`.
+
+Extend any template: `panel::group { stroke: --accent; }`. Common shapes need no
 template:
 
 | For | Write |
 |---|---|
-| Circle | `\|oval\| size:N` |
+| Circle | `\|oval\| { width: 40; }` |
 | Database | `\|cyl\|` |
-| Arrow | `\|line\| marker-end:arrow points:[(0,0),(50,0)]` |
-| Dimension line | `\|line\| marker:arrow points:[…]` |
+| Arrow | `\|line\| { marker-end: arrow; points: 0 0, 50 0; }` |
 
 ---
 
-## 10. Wires
+## 9. Wires
 
-Wires connect scene-node ids.
+Wires connect scene-node ids with an operator (`a -> b`); a wire is never written
+as a `|wire|` instance.
+
+Defaults for every wire — `stroke`, `stroke-width`, `stroke-style`, `clearance`,
+`marker*` — come from a **`wire { }`** rule: the element selector for the routing
+layer. `clearance` additionally inherits from the root.
 
 ### Operators
 
@@ -519,28 +579,24 @@ A wire op is `[start_marker?][line][end_marker?]`, no spaces:
 
 The same glyph differs by position (`<` is arrow at the start, crow at the end).
 
-| Op | Markers | Line |
-|---|---|---|
-| `->` | none / arrow | solid |
-| `<-` / `<->` | arrow / none, arrow / arrow | solid |
-| `-*` / `*-` / `*-*` | dot combinations | solid |
-| `-<>` / `<>-<>` | diamond | solid |
-| `-<` / `>-<` | crow | solid |
-| `*->` / `<-*` | mixed | solid |
-| `-->` `--*` `--<` | (same markers) | dashed |
-| `-.->` `-.-*` | (same markers) | dotted |
-| `~>` `~*` `~<>` | (same markers) | wavy |
-| `-` `--` `-.-` `~` | none | (each style) |
+| Op | Markers / Line |
+|---|---|
+| `->` `<-` `<->` | arrow combinations, solid |
+| `-*` `*-` `*-*` | dot combinations |
+| `-<>` `<>-<>` | diamond |
+| `-<` `>-<` | crow |
+| `-->` `-.->` `~>` | dashed / dotted / wavy |
+| `-` `--` `-.-` `~` | no markers (each line style) |
 
 If the operator carries no markers, there are none on both ends. Explicit
-`marker:` / `marker-start:` / `marker-end:` attrs override the operator (source
-order wins). The operator's line part sets the wire's pattern (`--` ⇒
-`line:dashed`, `-.-` ⇒ `line:dotted`); an explicit `line:` attr overrides it.
+`marker:` / `marker-start:` / `marker-end:` override the operator (source order
+wins). The operator's line part sets the wire's `stroke-style` (`--` ⇒ `dashed`,
+`-.-` ⇒ `dotted`, `~` ⇒ `wavy`); an explicit `stroke-style:` overrides it.
 
 ### Syntax
 
 ```
-endpoints op endpoints [op endpoints …] ["label"] [.style…] [attrs…] [{ children }]
+endpoints op endpoints [op endpoints …] ["label" …] [.class …] [{ declarations & |text| children }]
 ```
 
 `endpoints` is one or more endpoints joined by `&`:
@@ -551,180 +607,191 @@ a -> b -> c          // chain: 2 wires
 a -> b & c           // fan-out: a→b, a→c
 a & b -> c           // fan-in
 a & b -> c & d       // cartesian: 4 wires
-a -> b -> c & d      // chain + fan: a→b, b→c, b→d
+a -> b -> c & d      // chain + fan
 ```
 
-Mixing operators in one chain is a parse error. Children may only be `|text|`
-(labels).
+Mixing operators in one chain is a parse error. A wire body may contain only
+`|text|` children.
 
-### Endpoints
+### Endpoints & scope
 
 ```
 endpoint = ident { "." ident } [ "." side ]
-side     = left | right | top | bottom
+side     = top | bottom | left | right
 ```
 
 Every wire resolves in a **scope** — the scene root for top-level wires, the
-container's body for wires written inside one, the shape body for internal
-wires. An endpoint is a path walked from that scope: the first segment names a
-node directly in the scope, each further segment a child of the previous, and a
-final segment matching a side name forces that side. **There is no search**: a
-name that isn't reachable this way is an error even if it exists elsewhere, and
-the error suggests full paths of same-named nodes —
+container's body for wires written inside one. An endpoint is a path walked from
+that scope: the first segment names a node in the scope, each further segment a
+child of the previous, a final segment matching a side name forces that side.
+**There is no search**: a name not reachable this way is an error, and the error
+suggests full paths of same-named nodes —
 `wire endpoint 'bowl' not found at scene root; did you mean 'kitchen.counter.bowl'?`
 
-| Endpoint (in a root wire) | Resolves to |
+| Endpoint (root wire) | Resolves to |
 |---|---|
 | `cat` | root node `cat` |
 | `kitchen.counter.bowl` | exactly that path |
 | `kitchen.counter.bowl.left` | the same node, left side forced |
 
 Bodies are **sealed**: a body wire connects nodes of its own subtree only.
-Cross-container wires are written at the lowest level where both ends are
-visible — usually the root. Without a side, the router picks edges by
-geometry; with a side, that edge is forced.
+Cross-container wires are written at the lowest level where both ends are visible
+— usually the root. Without a side the router picks edges by geometry; with a
+side, that edge is forced.
 
-### Labels & wire-text children
+### Labels
 
-`a -> b "x" "y"` expands to `a -> b { |text| "x" |text| "y" }` — each inline
-string is a wire text. Children take wire-route anchors with `at:` (`start` /
-`mid` / `end` / `0..1`, along the route) and `place:` (across it):
+`a -> b "x" "y"` expands to `a -> b { |text| "x"; |text| "y" }` — each inline
+string is a wire label. Labels ride the wire — there is no `mount`:
 
-- **`at:`** defaults to *auto* — the texts distribute along the route: spread
-  evenly across the hops, each at its hop's `(j+1)/(k+1)` fractions. So one
-  label on a chain never lands on a junction, and several never pile up. An
-  explicit `at:` pins a text to a fraction of the whole route.
-- **`place:`** is `on` (default — centred on the line) or `out` (lifted just off
-  the line, clear of the stroke). `place:in` is an error — a line has no inside.
+| Property | Notes |
+|---|---|
+| `at` | `0..1` along the route; unset = auto-distribute across the hops, so one label avoids junctions and several spread out. |
+| `offset` | `x y` in the route's tangent frame (`x` along the wire, `y` to its left) — lifts the label off the line. |
 
-`offset:(x,y)` shifts in the route's tangent frame (`x` along the wire, `y` to
-its left), and `--wire-text-size` sets the default size. A label rides its wire
-— it is an obstacle to nothing, and may slide along the wire to keep clear of
-nodes and other labels; the wire never moves for it:
+A label is an obstacle to nothing, and may slide along the wire to keep clear of
+nodes and other labels; the wire never moves for it. Wire labels default to
+`font-size: 12`.
 
 ```
-a -> b {
-  |text| "label" at:mid text-size:10
-  |text| "caption" place:out
+cat.right -> kitchen.bowl.left {
+  |text| "watches" { at: 0.5; font-size: 10; }
+  |text| "note" { offset: 0 -8; }
 }
 ```
 
-### Internal wires in shape defs
+### Internal wires in defines
 
-A shape body may wire its own children; ids are local and materialize per
-instance — the same sealed-body rule as any container. From outside, the
-dot-path navigates in:
+A define's body may wire its own children; ids are local and materialize per
+instance — the same sealed-body rule. From outside, the dot-path navigates in:
 
 ```
-{
-  |room:group| layout:column gap:10 {
-    inlet  |rect| "Inlet"
-    outlet |rect| "Outlet"
-    inlet -> outlet "flows"
-  }
+room::group {
+  layout: column;  gap: 10;
+  inlet  |rect| "Inlet"
+  outlet |rect| "Outlet"
+  inlet -> outlet "flows"
 }
-garden |room| "Garden"
+
+garden  |room| "Garden"
 kitchen |room| "Kitchen"
 garden.outlet -> kitchen.inlet "carries"
 ```
 
 ### Routing
 
-Wires route **orthogonally** — horizontal and vertical runs through the free space
-between nodes, corners rounded. The router picks entry/exit sides globally unless an
-explicit `.side` forces one. A single **`clearance`** (default 16), set once on
-`|wire|` or `|scene|`, is the minimum gap every wire keeps from nodes and from other
-wires.
+Wires route **orthogonally** — horizontal and vertical runs through the free
+space between nodes, corners rounded. The router picks entry/exit sides unless an
+explicit `.side` forces one. `clearance` (above; default 16) is the minimum gap
+every wire keeps from nodes and from other wires.
 
-The full routing contract — clearance, spacing, crossings, priority, fan-out,
-self-loops — lives in [`WIRING.md`](WIRING.md), the source of truth for routing.
-Marker tips sit on their endpoint, touching the shape edge.
+The full routing contract — clearance, spacing, crossings, fan-out, self-loops —
+lives in [`WIRING.md`](WIRING.md), the source of truth for routing.
 
 ---
 
-## 11. Attributes
+## 10. Properties
 
-Every attr is `name:value` — no bare attrs.
+Every property is `name: value;`. Dash-case names; positional, space-separated
+values.
 
-### Visual (style)
+### Paint
 
-Inline use (outside the defs block) emits a lint warning — see [Errors](#16-errors).
-
-| Attr | Type | Default |
+| Property | Type | Default |
 |---|---|---|
-| `fill` | color | `--fill` (closed shapes); `currentColor` for `\|text\|`; `--stroke` for icons |
-| `stroke` | color | `--stroke` |
-| `color` | color | inherits — sets text color for descendant `\|text\|`; on `\|text\|`, an alias for `fill` |
-| `thickness` | number | 1 |
-| `line` | `solid` / `dashed` / `dotted` | `solid` |
+| `fill` | color | `--fill` (closed shapes); `currentColor` on `\|text\|`; `--stroke` for icons; **the canvas** on the root (default transparent) |
+| `color` | color | inherits — sets text/icon glyph colour for descendants; on `\|text\|`, an alias for `fill` |
 | `opacity` | 0..1 | 1 |
-| `radius` | scalar / (y,x) / (t,r,b,l) | 0 |
-| `double` | `N` / `(x,y)` | off |
-| `rotation` | degrees | 0 |
-| `shadow` | `N` / `(dx,dy)` / `(dx,dy,blur)` / `(dx,dy,blur,color)` | off |
-| `marker`, `marker-start`, `marker-end` | marker name | per-type |
+| `radius` | number | 0 (`\|rect\|` only) |
+| `rotate` | degrees | 0 |
+| `skew` | degrees | 15 (`\|slant\|` only) |
+| `shadow` | `N` / `dx dy` / `dx dy blur` / `dx dy blur color` | off |
+| `stack` | `N` / `dx dy` | off (shapes only) |
 
-`color` cascades through the SVG tree via native `currentColor`: set it on a
-container to recolor every `|text|` descendant that doesn't override. Use `color`
-for *labels*, `fill` for *bodies*.
+`color` cascades through the SVG via native `currentColor`: set it on a container
+to recolour every descendant `|text|` that doesn't override. Use `color` for
+*labels*, `fill` for *bodies*.
 
-### Geometry
+### Stroke
 
-| Attr | Type | Notes |
+| Property | Type | Default |
 |---|---|---|
-| `place` | `none` / `in` / `out` / `on` | The flow switch: `none` (default) flows; `in`/`out` reserve a band inside/outside the `side` edge; `on` is an overlay centred on it (no reserve). Size-aware. See [§7](#7-positioning--anchors). |
-| `side` | `top` / `bottom` / `left` / `right` | Which edge `place:in/out/on` meets (default `top`); a bare `side:` with no `place:` is an error. |
-| `align` | `start` / `center` / `end` | Slides the child along the `side` edge (default `center`). |
-| `at` | `(x, y)` | Bbox center at coords; an overlay, overrides `place`. |
-| `offset` | `(x, y)` | Nudge from `at:` / `side:`. |
-| `margin` | `N` / `(y,x)` / `(t,r,b,l)` | Signed outer spacing on any child; negatives tighten. See [§7](#7-positioning--anchors). |
-| `link` | string | Wraps the node (and children) in `<a href>` — clickable. Any shape, text, or wire. |
-| `size` | `N` or `(w,h)` | Bbox dimensions. |
-| `points` | `[(x,y),…]` | Vertex list. |
-| `d` | string | Raw SVG path (`\|path\|` only). |
-| `skew` | number | Slant degrees (`\|slant\|` only). |
-| `origin` | `center` / `top-left` | Bbox origin. |
-| `z` | integer | Render order. |
+| `stroke` | color | `--stroke` (the outline/line/wire colour) |
+| `stroke-width` | number | 1 |
+| `stroke-style` | `solid` / `dashed` / `dotted` | `solid` |
 
-### Container & grid
+### Geometry & placement
 
-`layout`, `gap`, `padding`, `col-widths`, `row-heights`, `h`, `v`, `background`,
-`cell`, `span` — see [Layout](#6-layout).
+| Property | Type | Notes |
+|---|---|---|
+| `width`, `height` | number / `auto` | bbox dims, **border-box** (padding inside, not added); default `auto` = content + padding. `\|image\|` needs both. |
+| `at` | `x y` | bbox center at parent-local coords; an overlay, overrides `mount`. (On a wire label, `at: 0.5` = route fraction.) |
+| `mount` | `none` / `in` / `out` / `on` | The flow switch ([§6](#6-positioning--anchors)). |
+| `side` | `top` / `bottom` / `left` / `right` | Which edge `mount` meets (default `top`); a bare `side:` with no `mount:` is an error. |
+| `align` | `start`/`center`/`end` (+ `stretch`/`evenly` on a container) | Mounted child: slide along its edge (default `center`). Container: cross-axis alignment ([§5](#5-layout)). |
+| `offset` | `x y` | Nudge from `at:` / `side:`. |
+| `margin` | `N` / `v h` / `t r b l` | Signed outer spacing; negatives tighten ([§6](#6-positioning--anchors)). |
+| `layer` | integer | Render order (ties break on source order). |
+| `points` | `x y, x y, …` | Vertex list (`\|poly\|`, `\|line\|`). |
+| `path` | string | Raw SVG path (`\|path\|`, native top-left coords). |
+
+(`align` on a plain flow child has no effect — the container's `align` governs;
+`justify` is its container-only main-axis partner; multi-line text uses
+`text-align`.)
+
+### Spacing & layout
+
+`padding`, `margin`, `gap`, `layout`, `align`, `justify`, `columns`, `rows`,
+`cell`, `span`, `divider` — see [Layout](#5-layout) and [Positioning](#6-positioning--anchors).
+Longhands `padding-top`/`-right`/`-bottom`/`-left` (and the `margin-*` set) are
+accepted.
 
 ### Text
 
-| Attr | Default | Notes |
+| Property | Default | Notes |
 |---|---|---|
-| `place` / `side` | flow | Position like any child (§7); a bare `|text|` flows (centred in a closed shape), `place:in` makes a caption band. |
-| `align` | `center` | `start\|center\|end` (`left`/`right` = start/end) — multi-line text alignment, and the slide along a `side:` edge. |
-| `text-size` | `--text-size` (14) | Font size, px. Wire labels default `--wire-text-size`, group captions `--title-text-size`. |
-| `font` | `--font` | Font family: ident, string, or `--var` reference. |
-| `weight` | `normal` | `normal` / `bold`. |
-| `fill` | inherited (`currentColor`) | Text color; set `color` on an ancestor. |
+| `font-family` | `--font-family` | ident, string, or `--var`. |
+| `font-size` | 14 (body), 13 (caption), 12 (wire label) | px; a baked layout constant. |
+| `font-weight` | `normal` | `normal` / `bold`. |
+| `font-style` | `normal` | `normal` / `italic` / `oblique`. |
+| `text-align` | `center` | `start` / `center` / `end` — multi-line justification (`left`/`right` = start/end). |
+| `line-height` | 1.2 | baseline-to-baseline multiple; a single line's box stays snug. |
+| `letter-spacing` | 0 | feeds width measurement. |
 
-`font`, `text-size`, `weight`, `align`, and `color` may be set on **any** node
-and cascade to every descendant `|text|` — nearest ancestor wins, exactly like
-CSS inheritance. `size` always means bbox dimensions; on a `|text|` it is an
-error (`'size' is not a text attr; use 'text-size'`). Text metrics use the
-embedded default font; setting `font` restyles without re-measuring (the same
-honesty as runtime `--lini-font` theming).
+`font-family`, `font-size`, `font-weight`, `font-style`, `text-align`,
+`line-height`, `letter-spacing`, and `color` cascade to descendant `|text|` —
+nearest ancestor wins, like CSS. `width`/`height` on a `|text|` are an error
+(`use 'font-size'`).
 
-### Accessibility & interaction
+### Markers & routing
 
-`title` emits a `<title>` child (tooltip + screen reader); `aria-label` is emitted
-on the `<g>`. `link:"url"` makes a node clickable (see [Node
-Declarations](#5-node-declarations)).
+`marker`, `marker-start`, `marker-end` ([§7](#7-primitives)); `clearance`
+([§9](#9-wires) — set on `wire {}` or the root, inherits to every wire).
+
+### Media & accessibility
+
+| Property | Notes |
+|---|---|
+| `src` | image source (`\|image\|`). |
+| `link` | wraps this node or wire in `<a href>` — clickable. |
+| `icon-variant` | `outlined` / `filled` / `rounded` / `sharp`. |
+| `title` | emits a `<title>` child (tooltip + screen-reader name). |
+
+### Variables
+
+`--name: value;` declares a themeable variable; `--name` in a value references
+one. Visual variables stay live `var()`; layout values bake. See
+[Variables & Defaults](#11-variables--defaults).
 
 ---
 
-## 12. Variables & Defaults
+## 11. Variables & Defaults
 
-CSS variables are for **visual theming only** — colors, fonts, shadow tint.
-Everything that affects layout is a baked language constant (settable per-node,
-per-wire, via `|scene|` / `|wire|`, or via styles), so standalone SVG never
-depends on the host CSS.
+CSS variables are for **visual theming only** — colours, the font family, the
+shadow tint. Everything that affects layout — including font *size* — is a baked
+constant, so a standalone SVG never depends on host CSS.
 
-### 12.1 Visual variables (themeable)
+### 11.1 Visual variables (live, themeable)
 
 ```
 --lini-bg            white
@@ -740,92 +807,97 @@ depends on the host CSS.
 --lini-note-bg       #fff9c4
 --lini-group-stroke  #bbb
 --lini-group-fill    rgba(0, 0, 0, 0.03)
---lini-font          sans-serif
+--lini-font-family   sans-serif
 --lini-text-color    var(--lini-fg)
 --lini-shadow        rgba(0, 0, 0, 0.2)
 ```
 
 These emit as live `var(--lini-*)` references, and the compiler ships an `@layer
-lini.defaults` block alongside the SVG — so unlayered host CSS wins automatically,
-no `!important`.
+lini.defaults` block alongside the SVG — so unlayered host CSS wins
+automatically, no `!important`.
 
-### 12.2 `--name` references
+### 11.2 `--name` references
 
-Any `--name` value is a Lini visual-var reference: the compiler prepends
-`--lini-` and emits `var(--lini-name)`. Layout values can't be referenced this
-way (they aren't themeable). Declare your own themeable var in the defs:
+`--name` is the **visual-variable namespace, and only that**. `--name: value;`
+declares one (a built-in `--lini-*` name keeps its meaning; a new name is yours),
+and `--name` in a value references it, emitting `var(--lini-name)`:
 
 ```
-{ --brand:#ff6600 }
-cat |rect| fill:--brand
+--brand: #ff6600;
+cat |rect| { fill: --brand; }
 ```
 
 Alias a host var from CSS: `.lini { --lini-accent: var(--my-brand-blue); }`.
 
-### 12.3 Layout constants
+Layout values — sizes, gaps, padding, `font-size`, `clearance` — are **not**
+`--name` variables: they aren't themeable, so there is nothing to reference or
+re-theme at runtime. Set them with properties and rules instead (`gap: 30;`,
+`rect { radius: 4; }`, `font-size: 16;` at the root).
 
-Baked compile-time defaults — override per-node, per-wire, on `|scene|` /
-`|wire|`, or via styles:
+### 11.3 Layout constants (baked)
+
+Baked compile-time defaults — override per-node, on `wire { }` / the root, in
+rules, or in an instance block:
 
 ```
-text-size 14   wire-text-size 13   title-text-size 13   text-pad 16
-thickness 1    radius 0            gap 20               padding 0
-clearance 16   icon-size 24        canvas-pad 20
+font-size 14    wire-font-size 12   caption-font-size 13
+stroke-width 1  radius 0            gap 20                 padding 16
+clearance 16    icon-size 24        canvas-pad 20
 ```
 
-`text-size` is body text; `wire-text-size` wire labels; `title-text-size` group
-captions and footers.
+`font-size` is body text. Wire labels and captions carry their own baked
+defaults (12 and 13); a global `font-size:` at the root sets body text and
+cascades, `wire { font-size: … }` sets wire labels, and `caption { font-size: …
+}` sets captions.
 
-Per-shape default sizes are in [Positioning → Auto-sizing](#7-positioning--anchors).
+Padding defaults to 16, with the frameless `|row|` / `|column|`, the root, and
+the table container at 0, and table cells at `4 8`. It doubles as the minimum
+size of an empty shape (`2 × padding`; see [Auto-sizing](#6-positioning--anchors)).
+**Every baked default — these constants and the template bundles — lives in one
+place**, so the whole look is tuned from a single file.
 
-### 12.4 `--bake-vars`
+### 11.4 `--bake-vars`
 
-`<style>` class rules and inline `style=` work everywhere, browsers and
-non-browser renderers alike — but CSS *variables* don't: resvg and librsvg fail
-`var()` in every position (fallback syntax included). Browsers need nothing,
-even for `<img>`-embedded SVGs — the defaults ship inside the file.
-`--bake-vars` is the switch for everything else: it keeps the rules and inlines
-every `var(--lini-name)` as its resolved literal — no runtime theming, but a
-self-contained SVG that renders identically anywhere.
+Class rules and inline `style=` work everywhere, but CSS *variables* don't —
+resvg and librsvg fail `var()` in every position (browsers, even `<img>`-embedded,
+are fine). `--bake-vars` keeps the rules but inlines every `var(--lini-name)` as
+its literal: no runtime theming, but a self-contained SVG that renders anywhere.
 
 ---
 
-## 13. Specificity
+## 12. Specificity
 
-Attrs on a node merge like CSS — **the more specific source wins**, ties broken
-by **later wins**:
+Properties on a node merge like CSS — **the more specific source wins**, ties
+broken by **later wins** (source order):
 
 1. **Type cascade** — walked from the base primitive up to the node's declared
-   type. Each step layers in that type's `|name|` defaults (from the defs
-   block) and then its own definition, so a more-derived type overrides what it
-   builds on. `|mybox:rect| fill:pink` paints pink even when a `|rect|
-   fill:yellow` default is in scope: `mybox` is the more specific type, and an
-   attr it sets itself wins over the inherited default.
-2. **Style classes** — applied after the type cascade, in defs-block
-   **definition order**; the order they are listed on the node is irrelevant,
-   exactly as with CSS classes.
-3. **Inline attrs** — on the line itself; the most specific, they beat
-   everything above.
+   type, layering each type's element-rule (`rect { }`) and define defaults. A
+   more-derived type overrides what it builds on.
+2. **Descendant rules** — `table rect { }`, `.sidebar rect { }`, matched against
+   the ancestor chain.
+3. **Class rules** — `.hot { }`, applied via `.hot` on the node.
+4. **The instance's own block** — `client |rect| { fill: white; }` — the most
+   specific, beats everything above.
 
-For a wire: `|wire|` defaults → style classes (definition order) → inline attrs.
+For a wire: `wire { }` defaults → descendant/class rules → the wire's own
+declarations.
 
-Complex values (`at:(x,y)`, `padding:(t,r,b,l)`) replace wholesale — the merge
-is per-key, not deep. `at:` always beats `cell:`.
+Complex values (`at: x y`, `padding: t r b l`) replace wholesale — the merge is
+per-property, not deep. `at:` always beats `cell:`.
 
 ---
 
-## 14. SVG Output
+## 13. SVG Output
 
 ```svg
 <svg xmlns="http://www.w3.org/2000/svg"
      viewBox="X Y W H" width="W" height="H" class="lini">
   <style>
     @layer lini.defaults { :root, .lini { /* --lini-* variables */ } }
-    .lini { font-family: var(--lini-font); font-size: 13px; color: var(--lini-text-color); }
+    .lini { font-family: var(--lini-font-family); font-size: 14px; color: var(--lini-text-color); }
     .lini .lini-shape-rect { fill: var(--lini-fill); stroke: var(--lini-stroke); stroke-width: 1; }
-    .lini .lini-style-loud { stroke: red; stroke-width: 2; }   /* one rule per style def */
+    .lini .lini-style-hot { stroke-width: 2; }   /* one rule per class def */
     .lini .lini-wire { stroke: var(--lini-stroke); stroke-width: 1; fill: none; }
-    .lini .lini-marker { fill: var(--lini-stroke); }
   </style>
   <defs><!-- filters, clipPaths, icon symbols --></defs>
   <g class="lini-scene"> <!-- scene tree --> </g>
@@ -833,52 +905,48 @@ is per-key, not deep. `at:` always beats `cell:`.
 </svg>
 ```
 
-`viewBox` auto-sizes to content + a 20 px canvas pad.
+`viewBox` auto-sizes to content + a 20 px canvas pad. A root `fill:` paints a
+backing rect over the viewBox.
 
 **Paint compiles to CSS; geometry bakes.** Shape and wire paint defaults — and
-every `.style` def — are stated once as class rules; only the shape classes
-and styles actually used are emitted. A node whose resolved paint differs from
-what those rules provide carries the difference as an inline `style="…"`
-(inline style beats class rules, mirroring [Specificity](#13-specificity)).
-Geometry — sizes, positions, radii, points, paths, transforms — is always
-baked into attributes. Inherited text properties (`font-family`, `font-size`,
-`font-weight`, `color`) are stated on `.lini` and cascade natively; a node's
-`font:` / `text-size:` / `weight:` / `color:` emits on its `<g>` and inherits
-to its subtree. The variable block stays inside `@layer lini.defaults` so
-unlayered host CSS wins; structural rules are unlayered so non-browser
-renderers (which skip `@layer`) still parse them.
-
-**Classes are a styling surface.** Host CSS may restyle any `lini-`-prefixed
-class — the prefix makes collisions a non-issue. Variables remain the designed
-theming surface. One caveat: layout is computed at compile time, so runtime
-restyling (say a fatter `stroke-width`) restyles without re-layout.
+every rule — are stated once as class rules; only the classes actually used are
+emitted. A node whose resolved paint differs from those rules carries the
+difference as an inline `style="…"` (inline beats class, mirroring
+[Specificity](#12-specificity)). Geometry — sizes, positions, radii, points,
+paths, transforms — is always baked into attributes. Inherited text properties
+(`font-family`, `font-size`, `font-weight`, `color`) state on `.lini` and cascade
+natively; a node's own text property emits on its `<g>` and inherits to its
+subtree.
 
 **Node:**
 
 ```svg
-<g class="lini-node lini-shape-{type} lini-shape-{parent} lini-style-{s}"
-   data-id="ID" transform="translate(X,Y)">  <!-- geometry, then children --></g>
+<g class="lini-node lini-shape-{type} lini-shape-{base} lini-style-{class}"
+   data-id="ID" transform="translate(X,Y)">
+  <title>…</title>            <!-- when `title:` is set -->
+  <!-- geometry, then children -->
+</g>
 ```
 
 Auto-classes: `lini-node` (every node); `lini-shape-{name}` (the type and every
-type it inherits); `lini-style-{name}` (per applied style). With rotation, the
+type it inherits); `lini-style-{name}` (per applied class). With rotation, the
 transform becomes `translate(X,Y) rotate(N)`.
 
 **Wire:**
 
 ```svg
-<g class="lini-wire lini-style-{s}" data-from="A" data-to="B">
+<g class="lini-wire lini-style-{class}" data-from="A" data-to="B">
   <path d="…" fill="none" stroke="…"/>
   <polygon class="lini-marker lini-marker-arrow" …/>
 </g>
 ```
 
-Standalone output always embeds the full `<style>` block; host pages override
-via the `@layer`ed variables or by restyling the classes.
+Host CSS may restyle any `lini-`-prefixed class; layout is computed at compile
+time, so runtime restyling (a fatter `stroke-width`) restyles without re-layout.
 
 ---
 
-## 15. CLI
+## 14. CLI
 
 ```
 lini [options] <input.lini>
@@ -891,7 +959,6 @@ lini serve [--port N] [--bake-vars] <input.lini>
 |---|---|
 | `-o FILE` | Output path (default stdout). |
 | `--format svg\|html` | `svg` (default) or HTML wrapper. |
-| `--standalone` | Accepted for compatibility; the default output already embeds the CSS. |
 | `--check` | Parse + resolve only — layout/render errors still surface on a full compile. |
 | `--theme FILE` | CSS file of `--lini-*` overrides. |
 | `--no-warn` / `--strict` | Silence warnings / treat them as errors. |
@@ -902,228 +969,236 @@ lini serve [--port N] [--bake-vars] <input.lini>
 `lini -` reads stdin (filename `<stdin>` in errors). **`lini serve`** runs a
 local live-reloading preview (default port 7700).
 
-**`lini fmt`** reformats to canonical style — 2-space indent, column-aligned
-id/type/label/attrs within a block, comments and blank lines preserved. `--check`
-exits 1 if it would change anything; `--stdout` writes instead of rewriting.
+**`lini fmt`** reformats to canonical style — 2-space indent, `key: value;`
+declarations, column-aligned id/type/label and table cells within a block,
+comments and blank lines preserved. `--check` exits 1 if it would change
+anything; `--stdout` writes instead of rewriting.
 
 **`lini desugar`** prints the file with its sugar expanded — positional labels
-and inline wire labels become the explicit `|text|` children they stand for
-(group caption/footer included) — while types, variables, and attributes stay
-exactly as written. A teaching/debugging view; it prints to stdout and never
-rewrites the file (comments are not preserved).
+and inline wire labels become the explicit `|text|` / `|caption|` children they
+stand for — while types, variables, and properties stay as written. A
+teaching/debugging view; prints to stdout, never rewrites, comments not
+preserved.
 
 Exit codes: 0 success · 1 parse/resolution error or `--check` reformat needed · 2
 I/O · 3 invalid CLI.
 
 ---
 
-## 16. Errors
+## 15. Errors
 
 Format: `filename:line:col: error: <message>` (LSP-compatible).
 
 | Condition | Message |
 |---|---|
 | Duplicate id | `duplicate id 'X' (previously at L:C)` |
-| Unknown endpoint | `wire endpoint 'X' not found at <scope>` + `; did you mean 'A', 'B'?` when same-named nodes exist |
+| Unknown endpoint | `wire endpoint 'X' not found at <scope>` + `; did you mean 'A', 'B'?` |
 | Chain mixes operators | `wire chain mixes operators 'X' and 'Y'` |
 | Chain < 2 nodes | `wire requires at least two endpoints` |
-| Unknown type / style | `unknown type '\|X\|'` / `unknown style '.X'` |
+| Unknown type / class | `unknown type 'X'` / `unknown class '.X'` |
 | Inheritance cycle / depth | `cycle in 'X' → … → 'X'` / `'X' exceeds max inheritance depth (16)` |
-| Forward reference | `'X' used before its definition (L:C)` |
-| Defs block not first | `defs block must be the first statement` |
-| Missing required attr | `'\|line\|' requires 'points'` |
-| Unknown attr | `unknown attr 'foo' on '\|rect\|'` (warning) |
-| Renamed attr | `unknown attr 'stroke-style'; use 'line'` (warning) |
-| `size` on text | `'size' is not a text attr; use 'text-size'` |
-| Wire body non-text | `wire body may only contain \|text\| primitives` |
-| Wire text node anchor | `wire labels accept only start/mid/end/0..1` |
+| Define shadows builtin | `'X' shadows a built-in type` |
+| Missing required property | `'\|line\|' requires 'points'` |
+| Unknown property | `unknown property 'foo' on '\|rect\|'` (warning) |
+| `width`/`height` on text | `'width' is not a text property; use 'font-size'` |
+| Wire body non-text | `wire body may only contain \|text\| children` |
+| Wire label anchor | `wire labels accept only 'at' (0..1) and 'offset'` |
 | Invalid / out-of-range color | `invalid color 'XYZ'` / `rgb(300,0,0): component out of range` |
-| Reserved identifier | `'start' is reserved (ids are case-sensitive — 'Start' is free)` |
-| Grid out of range | `cell:(5, _) exceeds grid cols=3` |
-| `skew` out of range | `skew:N must be in (-89, 89)` |
-| Unknown icon | `unknown icon name 'XYZ'` |
-| Track length mismatch | `col-widths has N values but grid cols=M` |
-| Whitespace around `:` | `binding ':' must have no whitespace on either side` |
-| Duplicate `\|scene\|` / `\|wire\|` | `'\|scene\|' may appear at most once in the defs block` |
-| Non-wire attr on `\|wire\|` | `attr 'layout' is not valid on '\|wire\|'` |
-| Type-defaults unknown type | `unknown type '\|frog\|' in defs` |
-| Duplicate type-defaults | `duplicate type-defaults entry '\|rect\|'` |
-| Visual attr inline (lint) | `visual attr 'fill' inline; consider a .style` (warning) |
-
-**Visual-attr lint category** (the paint set): `fill`, `stroke`, `color`,
-`thickness`, `line`, `opacity`, `radius`, `double`, `rotation`, `shadow`,
-`weight`, `align`, `variant`, `font`, `text-size`.
-
-**Always inline-OK (structural):** type / class / id / label / link / `title` /
-`aria-label`; placement (`place`, `side`, `at`, `offset`, `margin`, `cell`,
-`span`, `z`); container (`layout`, `gap`, `padding`, `col-widths`, `row-heights`);
-geometry (`size`, `points`, `d`, `skew`, `href`); wire `marker*` / `clearance`;
-and `size` / `name` on `|icon|`.
+| Reserved identifier | `'rect' is reserved (ids are case-sensitive — 'Rect' is free)` |
+| Empty statement | `a node needs an id, type, label, or block` |
+| `\|wire\|` as instance | `wires are drawn by operators, not the '\|wire\|' type` |
+| Grid out of range | `cell: 5 _ exceeds columns=3` |
+| Grid props off a grid | `'cell' is valid only on a grid` |
+| Missing `columns` | `'layout: grid' requires 'columns'` |
+| `skew` out of range | `skew: N must be in (-89, 89)` |
 
 ---
 
-## 17. Grammar (EBNF)
+## 16. Grammar (EBNF)
 
 ```
-file           = [ defs_block ] { stmt | comment | newline } EOF
-defs_block     = "{" { defs_line | comment | newline } "}"
+file        = stylesheet instances wires           # the three phases, in order
+stylesheet  = { vardecl | decl | rule | define | comment | newline }
+instances   = { node | comment | newline }
+wires       = { wire | comment | newline }
+decl        = ident ":" values end
+vardecl     = css_var ":" values end               # --name : value
+rule        = selector block                       # selector parts are bare type/class names
+define      = ident "::" ident block               # name :: base
+node        = [ ident ] [ "|" ident "|" ] { string } { "." ident } [ block ]
+                                                   # ≥1 of id / |type| / label / block
+wire        = endpoints wire_op endpoints { wire_op endpoints }
+              { string } { "." ident } [ wire_block ]
+selector    = sel_part { sel_part }                # whitespace-separated = descendant
+sel_part    = ident | "." ident
+endpoints   = endpoint { "&" endpoint }
+endpoint    = ident { "." ident } [ "." side ]
+side        = "top" | "bottom" | "left" | "right"
+block       = "{" { decl } { node } { wire } "}"   # body: declarations, then children, then internal wires
+wire_block  = "{" { decl | text_decl | comment | newline } "}"
+text_decl   = "|text|" string { "." ident } [ "{" { decl } "}" ] end
 
-defs_line      = scene_config | wire_config | type_defaults | shape_def | style_def | var_override
-scene_config   = "|scene|" { attr } end          # ≤ 1
-wire_config    = "|wire|"  { attr } end           # ≤ 1
-type_defaults  = "|" ident "|" { attr } end       # ident ≠ scene/wire; a known type
-shape_def      = "|" ident ":" ident "|" { style_ref | attr } [ "{" body "}" ] end
-style_def      = "." ident { style_ref | attr } end
-var_override   = "--" ident ":" value end
+values      = value_group { "," value_group }      # comma only between list items
+value_group = value { value }                      # space-separated scalars
+value       = number | string | hex | ident | call | css_var
+call        = ident "(" [ value { "," value } ] ")"
+css_var     = "--" ident { "-" ident }
 
-stmt           = node_decl | wire_decl
-node_decl      = ident [ type_use ] [ string [ string ] ] { style_ref | attr } [ "{" body "}" ] end
-primitive_decl = type_use [ string [ string ] ] { style_ref | attr } [ "{" body "}" ] end
-type_use       = "|" ident "|"
-body           = { node_decl | primitive_decl | wire_decl | comment | newline }
+wire_op     = [ marker ] line [ marker ]
+line        = "-" | "--" | "-.-" | "~"
+marker      = "<" | ">" | "*" | "<>"
 
-wire_decl      = endpoint_group wire_op endpoint_group { wire_op endpoint_group }
-                 [ string ] { style_ref | attr } [ "{" { text_decl } "}" ] end
-endpoint_group = endpoint { "&" endpoint }
-endpoint       = ident { "." ident } [ "." side ]
-side           = "left" | "right" | "top" | "bottom"
-text_decl      = "|text|" string { style_ref | attr } end
-
-wire_op        = [ start_marker ] line [ end_marker ]
-line           = "-" | "--" | "-.-" | "~"
-start_marker   = "<" | ">" | "*" | "<>"
-end_marker     = ">" | "<" | "*" | "<>"
-
-attr           = ident ":" value                  # no whitespace around ":"
-style_ref      = "." ident                         # whitespace before required
-value          = number | string | color | tuple | list | ident | lini_var
-tuple          = "(" value { "," value } ")"
-list           = "[" [ value { "," value } ] "]"
-color          = "#" hexdigit{3|6|8} | css_name | "rgb(" … ")" | "rgba(" … ")" | "hsl(" … ")" | "none"
-lini_var      = "--" ident { "-" ident }
-number         = [ "+" | "-" ] ( digit+ [ "." digit+ ] | "." digit+ )
-string         = '"' { char | escape } '"'
-escape         = "\\" ( '"' | "\\" | "n" | "t" )
-ident          = ( letter | "_" ) { letter | digit | "_" | "-" }
-comment        = "//" { not-newline } newline
-end            = newline | ";"
+ident       = ( letter | "_" ) { letter | digit | "_" | "-" }
+number      = [ "+" | "-" ] ( digit+ [ "." digit+ ] | "." digit+ )
+string      = '"' { char | escape } '"'
+escape      = "\" ( '"' | "\" | "n" | "t" )
+comment     = "//" { not-newline } newline
+end         = newline | ";"
 ```
 
-LL(1) — single-token lookahead suffices; a hand-written recursive-descent parser
-fits in ~600 LOC.
+**Single-pass LL(1).** The three-phase order (stylesheet → instances → wires)
+plus the rule that **a type is defined before it is used** make one token of
+lookahead enough. Leading tokens decide every form: `--name :` → variable;
+`.name` → class rule; `ident ::` → define; `ident :` → declaration; two bare
+idents → descendant rule; `|type|` or a leading string → instance; an `ident`
+followed by a wire-op / `&` / glued `.side` → wire. The lone `ident { … }` is a
+**rule** when `ident` is a known type (built-in or already-defined) and a
+**node** otherwise — and because types are defined first, the type set is always
+complete at that point. No prescan, no second pass.
 
 ---
 
-## 18. Implementer Algorithm
+## 17. Implementer Algorithm
 
 A reference pipeline; implementations may differ if the observable output matches.
 
-**Parse.** Lex to tokens, then recursive-descent to an AST.
+**Parse.** Lex to tokens, then a single recursive-descent pass to the AST — the
+ordering contract (§16) keeps the type set complete as types are first defined,
+so `ident { … }` resolves rule-vs-node with one token of lookahead, no prescan.
 
 **Resolve** (top-to-bottom):
 
-1. *Defs:* merge visual-var defaults ← `--theme` ← `--name:value`; apply `|scene|`
-   (else `layout:row gap:20 padding:20`); capture `|wire|` defaults; register
-   styles, shape defs (detect cycles / depth > 16), and type-defaults (validate
-   the name; reject duplicates).
-2. *Scene tree:* resolve each node's type and styles; layer attrs per
-   [Specificity](#13-specificity); expand shape instances, scoping internal
-   ids; build the path index, then auto-create root rects for single-segment
-   root-wire endpoints absent from it.
-3. *Wires:* resolve endpoints by scoped path walk (root wires from the scene
-   root, body wires from their container) with suggestion errors; merge wire
-   attrs; cartesian-expand fan groups into one resolved wire per pair.
+1. *Variables & rules:* merge visual-var defaults ← `--theme` ← `--name: value`;
+   register element/descendant/class rules and defines (detect cycles / depth >
+   16); validate selectors reference known types.
+2. *Scene tree:* resolve each node's type and classes; layer properties per
+   [Specificity](#12-specificity) (type cascade → descendant rules → class rules
+   → instance block); expand defines, scoping internal ids; expand label sugar
+   (group captions → `|caption|`); build the path index; auto-create root rects
+   for single-segment root-wire endpoints absent from it.
+3. *Wires:* resolve endpoints by scoped path walk with suggestion errors; merge
+   wire properties; cartesian-expand fan groups into one resolved wire per pair;
+   the operator's line sets `stroke-style` unless overridden.
 
-**Layout** (bottom-up): leaf bbox from `size:` or defaults (+ half-`thickness`
-stroke per side); arrange children per `layout`; `at:` children skip flow but
-expand the bbox; apply `padding`, then place via `at:`/`offset:`; `rotation` last.
+**Layout** (bottom-up): leaf bbox from `width`/`height` or defaults (+
+half-`stroke-width` per side); arrange flow children per `layout` honouring
+`align`/`justify`/`stretch`/`evenly` when there is slack; place mounted bands
+(`mount: in`/`out`) and overlays (`mount: on`/`at:`); compute dividers; apply
+`padding`; `rotate` last.
 
-**Route wires.** Per the contract in [`WIRING.md`](WIRING.md) — orthogonal,
-clearance-respecting, deterministic. Then place markers (sized `max(5,
-thickness × 4)`, tip on the endpoint) and wire-text at their anchors.
+**Route wires.** Per [`WIRING.md`](WIRING.md) — orthogonal, clearance-respecting,
+deterministic. Place markers (sized `max(5, stroke-width × 4)`, tip on the
+endpoint) and wire labels at their `at`/`offset` anchors.
 
-**Render.** Depth-first emit SVG per [SVG Output](#14-svg-output).
-
----
-
-## 19. Reserved Words
-
-User identifiers cannot be any of the words below. The list is deliberately
-maximal for v3 — relaxing a reservation later is backward compatible, the
-reverse is not. Ids are case-sensitive, so a capitalized variant is always
-free (`Start`, `Card`, …).
-
-- **Layout:** `row`, `column`, `grid`.
-- **Alignment:** `start`, `center`, `end`, `stretch`, `between`, `around`, `evenly`.
-- **Edge sides / endpoint sides:** `top`, `bottom`, `left`, `right`. **Place:** `in`, `out`.
-- **Wire-route anchor:** `mid` (`start`/`end` overlap alignment values; resolved by context).
-- **Origin:** `top-left`.
-- **Primitives:** `rect`, `oval`, `line`, `path`, `poly`, `text`, `hex`, `slant`, `cyl`, `diamond`, `cloud`, `icon`, `image`.
-- **Templates:** `group`, `badge`, `note`, `row`, `col`, `table`, `cell` (`row` also a layout value).
-- **Special:** `scene`, `wire` (defs block only).
-- **Constants:** `true`, `false`, `none`, `auto`.
-- **Functions:** `var`, `rgb`, `rgba`, `hsl`.
+**Render.** Depth-first emit SVG per [SVG Output](#13-svg-output).
 
 ---
 
-## 20. Non-Goals
+## 18. Reserved Words
 
-Out of scope for v3; the syntax stays forward-compatible.
+Type names cannot be node ids — that is what makes `rect { }` a rule, not a
+node. The four sides are reserved too (they are peeled from endpoint paths). Ids
+are case-sensitive, so a capitalized variant is always free (`Start`, `Rect`).
 
-- **Auto-layout** — you position nodes (flex/grid/anchors); Lini does not place
-  or route them for you (no force-directed or hierarchical placement).
+- **Primitives:** `rect`, `oval`, `line`, `path`, `poly`, `text`, `hex`, `slant`,
+  `cyl`, `diamond`, `cloud`, `icon`, `image`.
+- **Templates:** `group`, `caption`, `badge`, `note`, `row`, `column`, `table`.
+- **Sides:** `top`, `bottom`, `left`, `right`.
+- **Special:** `wire` — the rule target for wire defaults (`wire { … }`); it is
+  not an instantiable type, so `|wire|` is an error.
+- **Reserved for the future:** `circle` (today a circle is `|oval|` with equal or
+  unset dimensions).
+
+Value keywords are **contextual**, not reserved as ids — `grid`, `start`,
+`center`, `end`, `stretch`, `evenly`, `none`, `in`, `out`, `on`, `auto`, `true`,
+`false` mean their keyword only after the property that expects them
+(`layout: grid`, `align: stretch`). Function names `rgb`, `rgba`, `hsl`, `repeat`
+are reserved only before `(`.
+
+---
+
+## 19. Deferred & Non-Goals
+
+**Deferred** — named in the language, not built yet; the syntax is stable:
+
+- `stroke-style: double` / `wavy` rendering on shapes.
+- `radius` on non-rect shapes (hex / diamond / slant / poly).
+- numeric `font-weight` (`100…900`).
+- `|icon|` Material Symbols glyph embedding (currently a placeholder square).
+- embedded font metrics (text sizing is approximate until then).
+- `aria-label`, and a "did you mean" property-name hint table.
+
+**Non-goals** — out of scope; the syntax stays forward-compatible:
+
+- **Auto-layout** — you position nodes (flex / grid / anchors); Lini does not
+  place or route them for you.
 - **Multi-file imports.**
 - **Animation**, and interactivity beyond `link:` (`<a href>`).
 - **Manual wire waypoints.**
-- **Cross-instance addressing** into a shape definition's internals — internal
-  wires and dot-path reads work, but an external wire cannot reach into and
-  restructure another instance's private nodes.
+- **Cross-instance addressing** into a define's internals — internal wires and
+  dot-path reads work, but an external wire cannot reach into and restructure
+  another instance's private nodes.
 
 ---
 
-## 21. Examples
+## 20. Examples
 
 ```
-{
-  |scene| layout:(3,2) gap:40 padding:20 background:--bg
-  |wire|  stroke:#666 thickness:1 clearance:6
-  |rect|  radius:4                                   // every rect rounds
+layout: grid;  columns: repeat(3);  gap: 40;  padding: 20;
+fill: --bg;
 
-  --accent:#0a84ff
+wire { stroke: #666; stroke-width: 1; clearance: 6; }
+rect { radius: 4; }                          // every rect rounds
 
-  .thin   stroke:#444 thickness:1
-  .bold   weight:bold
-  .loud   stroke:red thickness:2
+--accent: #0a84ff;
 
-  |treat:rect| radius:5
-  |nest:slant| fill:gray
-  |alert:oval| stroke:red size:36                    // a circle
+.thin { stroke: #444; }
+.bold { font-weight: bold; }
+.loud { stroke: red; stroke-width: 2; }
 
-  |room:group| layout:column gap:8 {
-    inlet  |rect| "Inlet"
-    outlet |rect| "Outlet"
-    inlet -> outlet "flows"
+treat::rect  { radius: 5; }
+nest::slant  { fill: gray; }
+alert::oval  { stroke: red; width: 36; height: 36; }   // a circle
+
+room::group {
+  layout: column;  gap: 8;
+  inlet  |rect| "Inlet"
+  outlet |rect| "Outlet"
+  inlet -> outlet "flows"
+}
+
+cat |oval| "Cat — patient hunter" { cell: 1 1; }
+
+kitchen |group| "Kitchen" {
+  cell: 2 1;  layout: column;  gap: 20;
+  counter |group| "Counter" {
+    layout: row;  gap: 10;
+    bowl  |treat| "Bowl of oats"
+    water |nest|  "Water"
   }
 }
 
-cat |oval| "Cat — patient hunter" cell:(1,1)
-
-kitchen |group| "Kitchen" cell:(2,1) layout:column gap:20 {
-  counter |group| "Counter" layout:row gap:10 {
-    bowl |treat| "Bowl of oats"
-    water |nest| "Water"
+garden |group| "Garden" {
+  cell: 3 1;  layout: column;  gap: 20;
+  den |group| "Den" {
+    layout: row;  gap: 15;
+    rabbit |alert| "Rabbit" { badge |badge| "FAST" }
+    carrot |rect|  "Carrot patch" { stack: 4; width: 80; height: 40; fill: white; }
   }
 }
 
-garden |group| "Garden" cell:(3,1) layout:column gap:20 {
-  den |group| "Den" layout:row gap:15 {
-    rabbit |alert| "Rabbit" { |badge| "FAST" }
-    carrot |rect|  "Carrot patch" double:4 size:(80,40) fill:white
-  }
-}
-
-closet |room| "Closet" cell:(1,2)
-fridge |room| "Fridge" cell:(2,2)
+closet |room| "Closet" { cell: 1 2; }
+fridge |room| "Fridge" { cell: 2 2; }
 
 // wires — full paths from the wire's scope (here: the root)
 cat.right -> kitchen.counter.bowl.left -> kitchen.counter.water
@@ -1135,14 +1210,16 @@ closet.outlet -> fridge.inlet "restocks"
 ### Table + dimension line
 
 ```
-basket |table| layout:(3,3) col-widths:[80,140,80] row-heights:28 {
-  |cell| "Fruit" weight:bold; |cell| "Qty" weight:bold; |cell| "Notes" weight:bold
-  |cell| "Apple"; |cell| "12"; |cell| "fresh"
-  |cell| "Mango"; |cell| "3";  |cell| "ripe"
+basket |table| {
+  columns: 80 140 80;  rows: auto 28;
+  "Fruit" { font-weight: bold; }  "Qty" { font-weight: bold; }  "Notes"
+  "Apple"                         "12"                          "fresh"
+  "Mango"                         "3"                           "ripe"
 }
 
-dim1 |line| points:[(0,200),(300,200)] marker:arrow color:#666 {
-  |text| "300 mm" at:(0, 0) text-size:11
+dim |line| {
+  points: 0 200, 300 200;
+  marker: arrow;  color: #666;
 }
 ```
 
