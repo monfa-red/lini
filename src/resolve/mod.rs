@@ -1,3 +1,4 @@
+mod defaults;
 mod desugar;
 mod ir;
 mod shapes;
@@ -206,7 +207,7 @@ fn build_def_tables<'a>(
     defs: &'a Option<DefsBlock>,
     theme: &[(String, String)],
 ) -> Result<DefTables<'a>, Error> {
-    let mut vars = vars::built_in_defaults();
+    let mut vars = defaults::built_in_defaults();
     vars::apply_theme(&mut vars, theme);
     let split = split_defs(defs)?;
     if !split.var_overrides.is_empty() {
