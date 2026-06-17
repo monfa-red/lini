@@ -15,15 +15,17 @@ mod theme;
 pub use error::{Diagnostic, Error, Level};
 pub use fmt::format as format_source;
 
-/// Expand a source file's sugar — positional labels and inline wire labels —
-/// into the explicit children they stand for, and print it as canonical
-/// `.lini`. Types, variables, and attributes are left exactly as written;
-/// comments are not preserved. This is what `lini desugar` prints.
-pub fn desugar_source(src: &str) -> Result<String, Error> {
-    let tokens = lexer::lex(src)?;
-    let file = parser::parse(&tokens)?;
-    let desugared = resolve::desugar_source(&file, &[])?;
-    Ok(fmt::print_file(&desugared))
+/// Expand a source file's sugar into the explicit children it stands for and
+/// print canonical `.lini` — what `lini desugar` shows.
+///
+/// **Temporarily disabled:** the v3 desugar consumed the v3 resolve internals,
+/// retired at the Phase-3 pipeline flip. It is reimplemented on the v4 front end
+/// in PLAN Phase 7 (alongside `fmt`).
+pub fn desugar_source(_src: &str) -> Result<String, Error> {
+    Err(Error::at(
+        span::Span::empty(),
+        "desugar is being migrated to the v4 front end (PLAN Phase 7)",
+    ))
 }
 pub use layout::{Rule, Severity, Violation};
 pub use serve::serve;
@@ -85,7 +87,7 @@ fn finish_svg(laid_out: &layout::LaidOut, opts: &Options) -> String {
 /// resolve/layout/render.
 pub fn check_parse(src: &str) -> Result<(), Error> {
     let tokens = lexer::lex(src)?;
-    let _file = parser::parse(&tokens)?;
+    let _file = syntax::parser::parse(&tokens)?;
     Ok(())
 }
 
@@ -136,12 +138,12 @@ fn routing_diagnostics_of(violations: Vec<Violation>) -> Vec<Diagnostic> {
 
 fn resolve_pipeline(src: &str, opts: &Options) -> Result<resolve::Program, Error> {
     let tokens = lexer::lex(src)?;
-    let file = parser::parse(&tokens)?;
+    let file = syntax::parser::parse(&tokens)?;
     let theme = match &opts.theme_css {
         Some(css) => theme::extract_lini_vars(css),
         None => Vec::new(),
     };
-    resolve::resolve_with_theme(file, &theme)
+    resolve::resolve_with_theme(&file, &theme)
 }
 
 fn wrap_html(svg: &str) -> String {

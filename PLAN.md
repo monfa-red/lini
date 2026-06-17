@@ -169,9 +169,52 @@ until resolve consumes it in Phase 3.)*
 - Keep wire resolution (endpoints, scope walk, fan expansion, auto-create) —
   only its property names change (Phase 5's rename list).
 
-**Done when.** Unit tests cover the cascade ladder, descendant selectors,
-defines, caption sugar, and the §15 resolve errors (unknown type/class, cycle,
-duplicate id, missing `columns`, grid-prop-off-grid, etc.).
+**Done (this session).** Resolve was rewritten for v4 and the pipeline flipped:
+`compile_str*` / `check*` now parse with `syntax::parser` and resolve through new
+one-concept-per-file modules. The crate **builds with 0 warnings**; `resolve` +
+the v4 parser are **green (66 tests)**.
+
+- `resolve/value.rs` — value groups → `ResolvedValue` (scalar / `Tuple` / `List`;
+  `--name` → `LiveVar`, layout vars baked). *(7)*
+- `resolve/cascade.rs` — `Stylesheet`: rule compile, element/class/descendant
+  selectors, the descendant-combinator matcher, the tier-2/tier-3 query. *(11)*
+- `resolve/types.rs` — define/template/primitive chain, type-cascade defaults,
+  cycle / depth-16 / shadow errors; v4 templates + `template_attrs`. *(11)*
+- `resolve/scene.rs` — node tree: cascade ladder, caption/label sugar →
+  `|caption|`/`|text|`, text inheritance, define materialization, id index,
+  auto-create. `PathIndex` lives here.
+- `resolve/wires.rs` — wire cascade, scoped endpoints + suggestions, fan
+  expansion, operator → markers / `stroke-style`, labels (`at` 0..1 / auto).
+- `resolve/merge.rs` — fold ordered decls → `AttrMap`, extract markers.
+- `resolve/program.rs` — orchestrator (`resolve`), built-in `table rect` rule,
+  root config, `SheetInputs`. *(18 integration tests)*
+- `resolve/defaults.rs` — v4 names/values (`font-size`, `stroke-width`, `mount`,
+  padding 16, `--lini-font-family`, …).
+- **Deleted:** v3 `shapes.rs` / `styles.rs` / `vars.rs` / `desugar.rs` and the v3
+  `resolve` orchestrator.
+
+**Intentionally red until later phases** (the v3→v4 break, pre-release): every
+test/sample written in v3 syntax now fails to parse under the v4 front end —
+`tests/` (conformance, rendering, resolution, wiring, hello, cli, parsing, fmt
+cross-check) and the v3-string unit tests in `layout`/`render` (21 lib + the
+integration suites). They re-green in **Phase 8** once samples/tests are rewritten
+to v4. Layout/render also still read v3 attr names, so even a v4-parsed file lays
+out / renders wrong until **Phases 4–5** — `lini <v4-file>` will not produce a
+correct SVG yet. This is expected and sanctioned.
+
+**Carried to Phase 5** (touching them now would break code that phase owns):
+the `WireAt::Start/Mid/End` trim (the router's `labels.rs` still matches them),
+the `SheetInputs` reshape + descendant-selector CSS, and the router/render
+attr-name reads (`thickness`→`stroke-width`, `text-size`→`font-size`, wire-label
+`place`, …). Resolve already *emits* the v4 names; Phase 5 makes the readers agree.
+
+**v3 island, retired in Phases 6–7:** `ast.rs` / `parser.rs` / `fmt.rs` /
+`lint.rs` still parse v3 syntax for `fmt`/`lint`; `lini desugar` is stubbed
+(returns a "being migrated" error) pending its v4 rewrite.
+
+**Next session starts at Phase 4** (layout): read `SPEC.md` §5–§7 and this file,
+`cargo test --lib resolve` to confirm the green baseline, then make `layout/`
+read the v4 attr names + the new sizing model.
 
 ---
 
@@ -219,6 +262,12 @@ implicit rows + repeat, and dividers (1-D and grid, span-aware).
 this mostly *aligns input names with output*.
 
 **Key points.**
+- **Carried from Phase 3:** resolve already emits v4 attr names — this phase
+  makes the readers agree. Also: the `WireAt::Start/Mid/End` trim (drop them from
+  `ir.rs` and the router's `labels.rs`), the `SheetInputs` reshape (element /
+  descendant / class rules + define defaults), and descendant rules emitted as
+  compound-selector CSS (today their paint bakes inline via the cascade, which is
+  spec-correct but verbose).
 - **`PAINT_PROPS`** (`render/rules.rs`) becomes near-identity: `stroke-width`,
   `font-size`, `font-family`, `font-weight` are now the input names too;
   `stroke-style` → `stroke-dasharray`. Update the table and the node `style=`

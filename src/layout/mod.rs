@@ -614,8 +614,8 @@ mod tests {
 
     fn lay_out(src: &str) -> LaidOut {
         let tokens = crate::lexer::lex(src).expect("lex");
-        let file = crate::parser::parse(&tokens).expect("parse");
-        let program = crate::resolve::resolve(file).expect("resolve");
+        let file = crate::syntax::parser::parse(&tokens).expect("parse");
+        let program = crate::resolve::resolve_with_theme(&file, &[]).expect("resolve");
         layout(&program).expect("layout")
     }
 
@@ -823,8 +823,8 @@ mod tests {
     fn full_spec_example_lays_out_without_error() {
         let src = std::fs::read_to_string("samples/full_example.lini").unwrap();
         let tokens = crate::lexer::lex(&src).expect("lex");
-        let file = crate::parser::parse(&tokens).expect("parse");
-        let program = crate::resolve::resolve(file).expect("resolve");
+        let file = crate::syntax::parser::parse(&tokens).expect("parse");
+        let program = crate::resolve::resolve_with_theme(&file, &[]).expect("resolve");
         let l = layout(&program).expect("layout");
         // Smoke check: the showcase lays out into a non-trivial multi-node scene.
         assert!(l.viewbox.w > 100.0);

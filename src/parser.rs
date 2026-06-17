@@ -1,3 +1,7 @@
+//! The v3 parser, retained for `fmt`/`lint` (which still parse v3 source) until
+//! they migrate to the v4 front end in `crate::syntax` (PLAN Phases 6–7).
+#![allow(dead_code)]
+
 use crate::ast::*;
 use crate::error::Error;
 use crate::lexer::{TokKind, Token};

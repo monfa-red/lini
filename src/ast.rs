@@ -1,3 +1,8 @@
+//! The v3 syntax tree, retained for `fmt`/`lint` (which still parse v3 source)
+//! until they migrate to the v4 front end (PLAN Phases 6–7). Its `Side`,
+//! `WireOp`, `LineStyle`, and `WireMarker` are shared, permanent vocabulary.
+#![allow(dead_code)]
+
 use crate::span::Span;
 
 /// A Lini file: optional defs block, then a stream of root statements

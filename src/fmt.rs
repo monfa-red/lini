@@ -38,6 +38,9 @@ pub fn format(src: &str) -> Result<String, Error> {
 /// Print an AST directly in canonical form, with no source to draw comments
 /// from — for a synthesized `File` (e.g. the desugar pass), whose nodes carry
 /// no real spans. Same emitter, empty trivia: clean output, comments dropped.
+// Idle while `desugar_source` is stubbed; revived when desugar moves to the v4
+// front end (PLAN Phase 7).
+#[allow(dead_code)]
 pub(crate) fn print_file(file: &File) -> String {
     let mut out = String::new();
     let mut emitter = Emitter {

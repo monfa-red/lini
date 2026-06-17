@@ -112,15 +112,6 @@ impl ShapeKind {
     }
 }
 
-/// One ordered attr from a style or inline merge. Used as intermediate
-/// storage before the SPEC §13 specificity collapse.
-#[derive(Clone, Debug)]
-pub struct ResolvedAttr {
-    pub name: String,
-    pub value: ResolvedValue,
-    pub span: Span,
-}
-
 /// Final attribute values after section 13 specificity merging. Marker attrs are
 /// extracted into `Markers` and not stored here.
 #[derive(Default, Clone, Debug)]
@@ -285,34 +276,16 @@ pub struct ResolvedText {
     pub attrs: AttrMap,
 }
 
+/// Where a label rides its wire. v4 resolve produces only `Auto` (distribute
+/// along the route, SPEC §9) and `Fraction` (an explicit `at: 0..1`).
+/// `Start`/`Mid`/`End` survive only because the router's label placer still
+/// matches them; they retire in Phase 5 when it drops them.
 #[derive(Clone, Debug)]
+#[allow(dead_code)]
 pub enum WireAt {
-    /// No explicit anchor — the label pass distributes it along the route
-    /// (SPEC §10), so a single label avoids junctions and several spread out.
     Auto,
     Start,
     Mid,
     End,
     Fraction(f64),
-}
-
-impl WireAt {
-    pub fn parse(value: &ResolvedValue) -> Option<Self> {
-        match value {
-            ResolvedValue::Ident(s) => match s.as_str() {
-                "start" => Some(Self::Start),
-                "mid" => Some(Self::Mid),
-                "end" => Some(Self::End),
-                _ => None,
-            },
-            ResolvedValue::Number(n) => {
-                if (0.0..=1.0).contains(n) {
-                    Some(Self::Fraction(*n))
-                } else {
-                    None
-                }
-            }
-            _ => None,
-        }
-    }
 }

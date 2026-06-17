@@ -1,47 +1,44 @@
-//! Built-in defaults — the one place to tune Lini's look. These are the values
-//! the lowest specificity layer provides: the visual `--lini-*` variables (live
-//! at runtime) and the baked layout constants (sizes, gaps, paddings,
-//! thicknesses). Theme application and variable resolution live in [`super::vars`];
-//! this module is the data.
-//!
-//! Per-template attribute bundles and per-shape default sizes fold in here when
-//! they are rewritten for v4 (see PLAN, phases 3–4).
+//! Built-in defaults — the one place to tune Lini's look (SPEC §11). The lowest
+//! specificity layer: the visual `--lini-*` variables (live at runtime) and the
+//! baked layout constants (sizes, gaps, paddings, thicknesses). Theme and
+//! `--name` application live in [`super::program`]; value resolution in
+//! [`super::value`]. This module is the data.
 
 use super::ir::{ResolvedCall, ResolvedValue, VarKind, VarTable};
 
-/// Built-in CSS variable defaults per SPEC §12.1. Names are stored without the
-/// `--lini-` prefix.
+/// The built-in defaults (SPEC §11). Visual `--lini-*` vars stay live; layout
+/// constants bake. Names are stored without the `--lini-` prefix.
 pub fn built_in_defaults() -> VarTable {
     let mut t = VarTable::new();
-
-    // Visual vars — live at runtime.
-    set_visual(&mut t, "bg", ResolvedValue::Ident("white".into()));
-    set_visual(&mut t, "fg", ResolvedValue::Ident("black".into()));
-    set_visual(&mut t, "fill", ResolvedValue::Ident("white".into()));
-    set_visual(&mut t, "stroke", ResolvedValue::Hex("444".into()));
-    set_visual(&mut t, "accent", ResolvedValue::Hex("0a84ff".into()));
-    set_visual(&mut t, "on-accent", ResolvedValue::Ident("white".into()));
-    set_visual(&mut t, "muted", ResolvedValue::Hex("888".into()));
-    set_visual(&mut t, "danger", ResolvedValue::Ident("crimson".into()));
-    set_visual(&mut t, "warn", ResolvedValue::Ident("orange".into()));
-    set_visual(&mut t, "airwire", ResolvedValue::Ident("crimson".into()));
-    set_visual(&mut t, "note-bg", ResolvedValue::Hex("fff9c4".into()));
-    set_visual(&mut t, "group-stroke", ResolvedValue::Hex("bbb".into()));
-    set_visual(
-        &mut t,
-        "group-fill",
+    let ident = |s: &str| ResolvedValue::Ident(s.into());
+    let hex = |s: &str| ResolvedValue::Hex(s.into());
+    let rgba = |r: f64, g: f64, b: f64, a: f64| {
         ResolvedValue::Call(ResolvedCall {
             name: "rgba".into(),
             args: vec![
-                ResolvedValue::Number(0.0),
-                ResolvedValue::Number(0.0),
-                ResolvedValue::Number(0.0),
-                ResolvedValue::Number(0.03),
+                ResolvedValue::Number(r),
+                ResolvedValue::Number(g),
+                ResolvedValue::Number(b),
+                ResolvedValue::Number(a),
             ],
-        }),
-    );
-    set_visual(&mut t, "font", ResolvedValue::Ident("sans-serif".into()));
-    // text-color defaults to var(--lini-fg).
+        })
+    };
+
+    // Visual vars — live at runtime (SPEC §11.1).
+    set_visual(&mut t, "bg", ident("white"));
+    set_visual(&mut t, "fg", ident("black"));
+    set_visual(&mut t, "fill", ident("white"));
+    set_visual(&mut t, "stroke", hex("444"));
+    set_visual(&mut t, "accent", hex("0a84ff"));
+    set_visual(&mut t, "on-accent", ident("white"));
+    set_visual(&mut t, "muted", hex("888"));
+    set_visual(&mut t, "danger", ident("crimson"));
+    set_visual(&mut t, "warn", ident("orange"));
+    set_visual(&mut t, "airwire", ident("crimson"));
+    set_visual(&mut t, "note-bg", hex("fff9c4"));
+    set_visual(&mut t, "group-stroke", hex("bbb"));
+    set_visual(&mut t, "group-fill", rgba(0.0, 0.0, 0.0, 0.03));
+    set_visual(&mut t, "font-family", ident("sans-serif"));
     set_visual(
         &mut t,
         "text-color",
@@ -51,38 +48,19 @@ pub fn built_in_defaults() -> VarTable {
             baked: None,
         },
     );
-    set_visual(
-        &mut t,
-        "shadow",
-        ResolvedValue::Call(ResolvedCall {
-            name: "rgba".into(),
-            args: vec![
-                ResolvedValue::Number(0.0),
-                ResolvedValue::Number(0.0),
-                ResolvedValue::Number(0.0),
-                ResolvedValue::Number(0.2),
-            ],
-        }),
-    );
+    set_visual(&mut t, "shadow", rgba(0.0, 0.0, 0.0, 0.2));
 
-    // Layout vars — baked at compile time. SPEC §12.3.
-    // Text sizing splits three ways — body text, wire labels, and group
-    // title/footer captions — so each can be tuned without touching the others.
-    set_layout_n(&mut t, "text-size", 14.0);
-    set_layout_n(&mut t, "wire-text-size", 13.0);
-    set_layout_n(&mut t, "title-text-size", 13.0);
-    set_layout_n(&mut t, "text-pad", 16.0);
-    set_layout_n(&mut t, "gap", 20.0);
-    set_layout_n(&mut t, "padding", 0.0);
-    set_layout_n(&mut t, "thickness", 1.0);
+    // Layout constants — baked at compile time (SPEC §11.3).
+    set_layout_n(&mut t, "font-size", 14.0);
+    set_layout_n(&mut t, "wire-font-size", 12.0);
+    set_layout_n(&mut t, "caption-font-size", 13.0);
+    set_layout_n(&mut t, "stroke-width", 1.0);
     set_layout_n(&mut t, "radius", 0.0);
-    set_layout_n(&mut t, "rect-w", 100.0);
-    set_layout_n(&mut t, "rect-h", 40.0);
-    set_layout_n(&mut t, "oval-w", 60.0);
-    set_layout_n(&mut t, "oval-h", 40.0);
+    set_layout_n(&mut t, "gap", 20.0);
+    set_layout_n(&mut t, "padding", 16.0);
+    set_layout_n(&mut t, "clearance", 16.0);
     set_layout_n(&mut t, "icon-size", 24.0);
     set_layout_n(&mut t, "canvas-pad", 20.0);
-    set_layout_n(&mut t, "clearance", 16.0);
 
     t
 }
