@@ -29,7 +29,7 @@ Most diagram tools make you pick a side: **draw by hand** (precise, but tedious 
 - **Genuinely small syntax.** Five sigils, sensible defaults. `cat -> dog` is a valid diagram. You can learn the whole thing in a coffee break.
 - **Any shape you need.** 12 primitives and 8 templates out of the box — and a raw `path` primitive that accepts any SVG path string. If SVG can draw it, you can place it and wire to it.
 - **Fast, and a single file.** A 1.5 MB native binary with one runtime dependency. No Node, no JVM, no headless browser. Typical diagrams compile in **~2 ms** — process startup included.
-- **Output you can trust.** Compilation is **byte-identical across runs**, so renders diff cleanly in review and never churn in CI. 332 tests back it, including property tests that assert the router's laws on every sample.
+- **Output you can trust.** Compilation is **byte-identical across runs**, so renders diff cleanly in review and never churn in CI. 336 tests back it, including property tests that assert the router's laws on every sample.
 - **Themeable like a web page.** Colors and fonts ship as CSS variables inside an `@layer`, so a host page restyles a diagram without recompiling — or bake everything to a self-contained file for email and raster renderers.
 
 ---
@@ -145,8 +145,9 @@ The default font is `sans-serif`. To make an **embedded** diagram adopt the host
 
 ```
 lini [options] <input.lini>
-lini fmt   [--check] [--stdout] <input.lini>
-lini serve [--port N] [--bake-vars] <input.lini>
+lini fmt     [--check] [--stdout] <input.lini>
+lini serve   [--port N] [--bake-vars] <input.lini>
+lini desugar <input.lini>
 ```
 
 | Flag | Meaning |
@@ -159,7 +160,7 @@ lini serve [--port N] [--bake-vars] <input.lini>
 | `--watch` | Recompile on every change (with `-o`). |
 | `--no-warn` / `--strict` | Silence lint warnings / promote them to errors. |
 
-Errors are LSP-formatted (`file:line:col: error: …`) and suggest fixes — an unknown endpoint says *did you mean `kitchen.counter.bowl`?*. `lini serve` runs a live-reloading preview (default port 7700).
+Errors are LSP-formatted (`file:line:col: error: …`) and suggest fixes — an unknown endpoint says *did you mean `kitchen.counter.bowl`?*. `lini serve` runs a live-reloading preview (default port 7700), and `lini desugar` prints a file with its sugar expanded (id-as-label, trailing labels, auto-distributed wire labels) — a teaching and debugging view.
 
 ---
 
@@ -204,14 +205,14 @@ Parse is recursive-descent over an LL(1) grammar; resolve applies CSS-like speci
 
 ## Status
 
-**v0.1.** The language (the box/text model — see [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md)) is stable, and the whole pipeline is implemented and tested — wires route and render, layout and theming are complete, and the formatter and dev server ship in the same binary.
+**v0.2.** The language (the box/text model — see [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md)) is stable, and the whole pipeline is implemented and tested — wires route and render, layout and theming are complete, and the formatter and dev server ship in the same binary.
 
 **Non-goals**, by design: automatic node *placement* (you position; Lini routes), multi-file imports, animation, and manual wire waypoints. The syntax stays forward-compatible for all of these.
 
 ## Development
 
 ```bash
-cargo test                               # 332 tests
+cargo test                               # 336 tests
 cargo run -- samples/hello.lini
 cargo run -- serve samples/full_example.lini
 ```
