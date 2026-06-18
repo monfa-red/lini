@@ -477,6 +477,14 @@ fn lay_out_container_children(
                 avail,
             )?,
             LayoutMode::Grid => {
+                // A table (a grid with dividers) reads `padding` as the per-cell
+                // inset (SPEC §8): inflate each cell so auto tracks size to
+                // content + inset and the text centres with that breathing room.
+                if grid::is_inset_grid(container_attrs) {
+                    for c in &mut flow_children {
+                        c.bbox = c.bbox.expand(pad.top, pad.right, pad.bottom, pad.left);
+                    }
+                }
                 let (bbox, rules) =
                     grid::lay_out_grid(&mut flow_children, container_attrs, vars, span)?;
                 grid_rules = rules;

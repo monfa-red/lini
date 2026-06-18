@@ -354,6 +354,14 @@ pub fn read_divider(attrs: &AttrMap) -> Divider {
     }
 }
 
+/// A grid that insets its cells — a `|table|` (SPEC §8): its `padding` is the
+/// per-cell text-to-divider inset, not outer box padding. A grid drawing
+/// dividers is exactly that, so the divider is the signal.
+pub(super) fn is_inset_grid(attrs: &AttrMap) -> bool {
+    matches!(attrs.get("layout"), Some(ResolvedValue::Ident(s)) if s == "grid")
+        && read_divider(attrs) != Divider::None
+}
+
 /// The interior separators of a grid, each run merged across the tracks where it
 /// is a real boundary — so a spanning cell has no line crossing its interior.
 /// Node-local coords (the grid is centred on the origin). No frame: the

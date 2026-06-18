@@ -78,7 +78,13 @@ pub fn leaf_bbox(inst: &ResolvedInst, vars: &VarTable) -> Result<Bbox, Error> {
 /// — padding inside it) or `content + padding` on that axis, then inflated by
 /// half the stroke so the outline counts toward the bbox (SPEC §6).
 pub fn closed_bbox(inst: &ResolvedInst, content: Bbox, vars: &VarTable) -> Result<Bbox, Error> {
-    let pad = padding(&inst.attrs, vars, inst.span)?;
+    // A table consumes its `padding` as a per-cell inset inside the grid (SPEC
+    // §8), so its outer box adds none.
+    let pad = if super::grid::is_inset_grid(&inst.attrs) {
+        PaddingBox::default()
+    } else {
+        padding(&inst.attrs, vars, inst.span)?
+    };
     let w = inst
         .attrs
         .number("width")

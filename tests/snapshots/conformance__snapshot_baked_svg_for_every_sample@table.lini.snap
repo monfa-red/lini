@@ -3,7 +3,7 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/table.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-178.5 -45.5 357 91" width="357" height="91" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-170.5 -53.5 341 107" width="341" height="107" class="lini">
   <style>
     .lini { font-family: sans-serif; font-size: 14px; color: black; }
     .lini .lini-shape-box { fill: white; stroke: #444; stroke-width: 1; stroke-dasharray: none; }
@@ -14,17 +14,17 @@ input_file: samples/table.lini
   <defs/>
   <g class="lini-scene">
     <g class="lini-node lini-shape-table lini-shape-group lini-shape-box" data-id="basket" transform="translate(0,0)">
-      <rect x="-158" y="-25" width="316" height="50" rx="6" ry="6"/>
-      <path d="M -70 -21 L -70 21 M 70 -21 L 70 21 M -150 -7 L 150 -7 M -150 7 L 150 7" fill="none"/>
-      <text class="lini-text" x="-110" y="-14">Fruit</text>
-      <text class="lini-text" x="0" y="-14">Quantity</text>
-      <text class="lini-text" x="110" y="-14">Notes</text>
+      <rect x="-150" y="-33" width="300" height="66" rx="6" ry="6"/>
+      <path d="M -70 -33 L -70 33 M 70 -33 L 70 33 M -150 -11 L 150 -11 M -150 11 L 150 11" fill="none"/>
+      <text class="lini-text" x="-110" y="-22">Fruit</text>
+      <text class="lini-text" x="0" y="-22">Quantity</text>
+      <text class="lini-text" x="110" y="-22">Notes</text>
       <text class="lini-text" x="-110" y="0">Apple</text>
       <text class="lini-text" x="0" y="0">12</text>
       <text class="lini-text" x="110" y="0">fresh</text>
-      <text class="lini-text" x="-110" y="14">Mango</text>
-      <text class="lini-text" x="0" y="14">3</text>
-      <text class="lini-text" x="110" y="14">ripe</text>
+      <text class="lini-text" x="-110" y="22">Mango</text>
+      <text class="lini-text" x="0" y="22">3</text>
+      <text class="lini-text" x="110" y="22">ripe</text>
     </g>
   </g>
   <g class="lini-wires"/>
