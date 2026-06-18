@@ -59,84 +59,57 @@ fn err_duplicate_id_reports_previous_location() {
 
 #[test]
 fn err_duplicate_id_nested_in_container() {
-    // SPEC §16: a duplicate is an error in any scope, not just the root — the
-    // path index requires unique paths. Previously siblings inside a group
-    // were silently accepted.
+    // SPEC §15: a duplicate is an error in any scope — the path index requires
+    // unique paths.
     assert_resolve_error("g |group| { a |rect|\na |rect| }\n", "duplicate id 'a'");
 }
 
 #[test]
 fn same_local_id_across_instances_is_ok() {
-    // Two instances of a shape def share the local id `inlet`, but their full
-    // paths differ (a.inlet vs b.inlet), so this must not collide.
-    lini::check("{ |room:group| { inlet |rect| } }\na |room|\nb |room|\n")
+    // Two instances of a define share the local id `inlet`, but their full paths
+    // differ (a.inlet vs b.inlet), so this must not collide.
+    lini::check("room::group { inlet |rect| }\na |room|\nb |room|\n")
         .expect("distinct instance paths must not collide");
 }
 
 #[test]
-fn err_duplicate_scene_config() {
-    assert_resolve_error(
-        "{ |scene| gap:10\n|scene| gap:20 }\nx |rect|\n",
-        "'|scene|' may appear at most once",
-    );
-}
-
-#[test]
-fn err_duplicate_wire_config() {
-    assert_resolve_error(
-        "{ |wire| stroke:red\n|wire| stroke:blue }\nx |rect|\n",
-        "'|wire|' may appear at most once",
-    );
-}
-
-#[test]
 fn err_slant_skew_out_of_range() {
-    // SPEC §8/§16: skew must be in (-89, 89). 90° gives tan→huge, an absurd
+    // SPEC §7/§15: skew must be in (-89, 89). 90° gives tan→huge, an absurd
     // shift, so it must be rejected, not silently rendered off-canvas.
-    assert_resolve_error("a |slant| \"x\" skew:90\n", "skew:90 must be in (-89, 89)");
+    assert_resolve_error(
+        "a |slant| \"x\" { skew: 90; }\n",
+        "skew: 90 must be in (-89, 89)",
+    );
 }
 
 #[test]
 fn err_unknown_shape_type() {
-    assert_resolve_error("cat |nosuch| \"x\"\n", "unknown type '|nosuch|'");
+    assert_resolve_error("cat |nosuch| \"x\"\n", "unknown type 'nosuch'");
 }
 
 #[test]
-fn err_unknown_style() {
-    assert_resolve_error("cat |rect| \"x\" .nope\n", "unknown style '.nope'");
+fn err_unknown_class() {
+    assert_resolve_error("cat |rect| \"x\" .nope\n", "unknown class '.nope'");
 }
 
 #[test]
-fn err_style_cycle() {
-    assert_resolve_error(
-        "{ .alpha .beta\n  .beta .alpha }\ncat |rect|\n",
-        "cycle in style",
-    );
+fn err_define_cycle() {
+    assert_resolve_error("looper::looper { }\ncat |rect|\n", "cycle in");
 }
 
 #[test]
-fn err_shape_cycle() {
-    assert_resolve_error("{ |looper:looper| }\ncat |rect|\n", "cycle in");
+fn err_define_name_collides_with_primitive() {
+    assert_resolve_error("rect::oval { }\ncat |rect|\n", "'rect' shadows a built-in type");
 }
 
 #[test]
-fn err_shape_name_collides_with_primitive() {
-    assert_resolve_error("{ |rect:oval| }\ncat |rect|\n", "'rect' is reserved");
-}
-
-#[test]
-fn err_shape_name_collides_with_template() {
-    assert_resolve_error("{ |note:rect| }\ncat |rect|\n", "'note' is reserved");
+fn err_define_name_collides_with_template() {
+    assert_resolve_error("note::rect { }\ncat |rect|\n", "'note' shadows a built-in type");
 }
 
 #[test]
 fn err_reserved_scene_id() {
     assert_resolve_error("rect |rect| \"x\"\n", "'rect' is reserved");
-}
-
-#[test]
-fn err_reserved_style_name() {
-    assert_resolve_error("{ .note weight:bold }\ncat |rect|\n", "'note' is reserved");
 }
 
 #[test]
@@ -146,22 +119,25 @@ fn wire_endpoint_dotpath_navigates_into_groups() {
 }
 
 #[test]
-fn type_defaults_apply_to_every_instance() {
-    // `|rect| radius:5` in defs gives every rect a default radius of 5.
-    lini::check("{ |rect| radius:5 }\ncat |rect| \"Cat\"\n").expect("rect defaults");
+fn element_rule_applies_to_every_instance() {
+    // `rect { radius: 5; }` gives every rect a default radius of 5.
+    lini::check("rect { radius: 5; }\ncat |rect| \"Cat\"\n").expect("rect defaults");
 }
 
 #[test]
-fn type_defaults_unknown_type_errors() {
-    let err = lini::check("{ |frog| fill:green }\ncat |rect|\n").expect_err("unknown");
+fn selector_unknown_type_errors() {
+    // A lone `frog { }` with an unknown name is a *node*, not a rule (SPEC §16);
+    // an unknown type surfaces in a descendant selector, whose parts must name
+    // known types.
+    let err = lini::check("table frog { fill: green; }\ncat |rect|\n").expect_err("unknown");
     assert!(err.to_string().contains("unknown type"), "got: {}", err);
 }
 
 #[test]
-fn type_defaults_duplicate_errors() {
-    let err =
-        lini::check("{ |rect| radius:5\n  |rect| radius:9 }\ncat |rect|\n").expect_err("duplicate");
-    assert!(err.to_string().contains("duplicate"), "got: {}", err);
+fn duplicate_define_errors() {
+    let err = lini::check("treat::rect { radius: 5; }\ntreat::rect { radius: 9; }\ncat |treat|\n")
+        .expect_err("duplicate");
+    assert!(err.to_string().contains("duplicate type"), "got: {}", err);
 }
 
 #[test]
@@ -189,11 +165,7 @@ fn body_wire_suggestion_is_scope_relative() {
         lini::check("garden |group| { shelf |group| { bowl |rect| }\npot |rect|\nbowl -> pot }\n")
             .expect_err("not found");
     let msg = err.to_string();
-    assert!(
-        msg.contains("'shelf.bowl'"),
-        "scope-relative suggestion: {}",
-        msg
-    );
+    assert!(msg.contains("'shelf.bowl'"), "scope-relative suggestion: {}", msg);
     assert!(
         !msg.contains("garden.shelf.bowl"),
         "must not suggest the un-typeable root path: {}",
@@ -215,17 +187,5 @@ fn body_wire_suggestion_stays_in_scope() {
         !msg.contains("kitchen.mouse"),
         "sealed body must not suggest an unreachable sibling: {}",
         msg
-    );
-}
-
-#[test]
-fn stroke_style_lints_with_rename_hint() {
-    let diags = lini::lint_str("x |rect| stroke-style:dashed\n").expect("lint");
-    assert!(
-        diags.iter().any(|d| d
-            .message
-            .contains("unknown attr 'stroke-style'; use 'line'")),
-        "got: {:?}",
-        diags.iter().map(|d| &d.message).collect::<Vec<_>>()
     );
 }
