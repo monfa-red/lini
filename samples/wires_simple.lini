@@ -7,12 +7,12 @@
 layout: row; gap: 50;
 -> { clearance: 10; }
 
-ant  |box| "Ant" { width: 60; height: 60; }
-wall |box| "Wall" { width: 60; height: 140; }
-bee  |box| "Bee"
-owl  |oval| "Owl"
+ant  |box| { width: 60; height: 60; "Ant" }
+wall |box| { width: 60; height: 140; "Wall" }
+bee  |box| { "Bee" }
+owl  |oval| { "Owl" }
 
-ant -> bee "over"
+ant -> bee { "over" }
 // detours around Wall
 ant -> ant
 // self-loop: out one side, back an adjacent one
@@ -22,7 +22,8 @@ bee -> owl
 // duplicate: adjacent parallel rail
 ant -> wall & owl {
   // fan: shared port and stub, trunk, split
-  |text| "fan" { at: 0.2; font-size: 9; offset: 0 -7; }
+  along: 0.2;
+  |plain| { font-size: 9; offset: 0 -7; "fan" }
 }
-bee <-> ant "chat"
+bee <-> ant { "chat" }
 // bidirectional, also detours around Wall

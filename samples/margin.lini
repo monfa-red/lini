@@ -2,21 +2,23 @@
 
 layout: row; gap: 40; padding: 20; align: start;
 
-loose |group| "Default" {
+loose |group| {
   layout: column; gap: 24;
-  a |box| "Row A"
-  b |box| "Row B"
+  |caption| { "Default" }
+  a |box| { "Row A" }
+  b |box| { "Row B" }
 }
 
 tight |group| {
   layout: column; gap: 24;
-    |text| "Tight" { mount: in; margin: -6 0 -14 0; }
-  a |box| "Row A"
-  b |box| "Row B"
+  |caption| { margin: -6 0 -14 0; "Tight" }
+  a |box| { "Row A" }
+  b |box| { "Row B" }
 }
 
-packed |group| "Packed" {
+packed |group| {
   layout: column; gap: 24;
-  a |box| "Row A" { margin: 0 0 -16 0; }
-  b |box| "Row B"
+  |caption| { "Packed" }
+  a |box| { margin: 0 0 -16 0; "Row A" }
+  b |box| { "Row B" }
 }

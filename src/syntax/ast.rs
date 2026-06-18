@@ -12,7 +12,7 @@ use crate::span::Span;
 #[derive(Debug, Clone)]
 pub struct File {
     pub stylesheet: Vec<StyleItem>,
-    pub instances: Vec<Node>,
+    pub instances: Vec<Child>,
     pub wires: Vec<Wire>,
 }
 
@@ -62,51 +62,58 @@ pub struct Define {
     pub span: Span,
 }
 
-/// An instance — a drawn node. At least one of id / type / label / block is
-/// present (a statement that is only a newline is not a node).
+/// A box — a drawn node (SPEC §3). At least one of id / type / block is present.
+/// Its text is a `Child::Text` in the block, or its id (id-as-label) when the
+/// block supplies none.
 #[derive(Debug, Clone)]
 pub struct Node {
     pub id: Option<String>,
     /// `|type|`; `None` means the default `box`, filled at resolve.
     pub ty: Option<String>,
-    pub labels: Vec<String>,
     pub classes: Vec<String>,
     pub block: Option<Block>,
     pub span: Span,
 }
 
-/// A node or define body: declarations, then child nodes, then internal wires
-/// (SPEC §3 — the fixed in-block order).
+/// A box or define body: declarations, then children (boxes and text, in source
+/// order), then internal wires (SPEC §3 — the fixed in-block order).
 #[derive(Debug, Clone, Default)]
 pub struct Block {
     pub decls: Vec<Decl>,
-    pub nodes: Vec<Node>,
+    pub children: Vec<Child>,
     pub wires: Vec<Wire>,
+}
+
+/// A body child, in source order: a box or a bare text node (SPEC §3).
+#[derive(Debug, Clone)]
+pub enum Child {
+    Box(Node),
+    Text(TextNode),
+}
+
+/// Bare text content `"…"` (SPEC §3) — a label, a cell, a wire label. No id,
+/// type, classes, or block; never a wrapped node.
+#[derive(Debug, Clone)]
+pub struct TextNode {
+    pub text: String,
+    pub span: Span,
 }
 
 #[derive(Debug, Clone)]
 pub struct Wire {
     pub chain: Vec<EndpointGroup>,
     pub op: WireOp,
-    pub labels: Vec<String>,
     pub classes: Vec<String>,
     pub block: Option<WireBlock>,
     pub span: Span,
 }
 
-/// A wire body: declarations and `|text|` children, in any order (SPEC §16).
+/// A wire body (SPEC §9): declarations (including `along:`) and labels — bare
+/// text, or a `|plain|` box for a styled / offset label.
 #[derive(Debug, Clone, Default)]
 pub struct WireBlock {
     pub decls: Vec<Decl>,
-    pub texts: Vec<TextChild>,
-}
-
-#[derive(Debug, Clone)]
-pub struct TextChild {
-    pub text: String,
-    pub classes: Vec<String>,
-    pub decls: Vec<Decl>,
-    pub span: Span,
+    pub labels: Vec<Child>,
 }
 
 #[derive(Debug, Clone)]

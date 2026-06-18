@@ -3,17 +3,17 @@
 treat::box { radius: 5; }
 nest::slant { fill: gray; }
 
-|treat| "Treat"
-|nest|  "Nest"
+|treat| { "Treat" }
+|nest|  { "Nest" }
 
 toolbox |group| {
   layout: row; gap: 10;
-  |icon| "save"
-  |icon| "copy"
+  |icon| { "save" }
+  |icon| { "copy" }
 }
 
 den |group| {
   layout: column; gap: 8; padding: 12;
-  |caption| "Title" { font-weight: bold; }
-  |text|    "Content"
+  |caption| { font-weight: bold; "Title" }
+  "Content"
 }

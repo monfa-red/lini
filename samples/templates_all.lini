@@ -2,36 +2,32 @@
 
 layout: column; gap: 24; padding: 20;
 
-frame |group| "Group" {
+frame |group| {
   layout: row; gap: 16;
-  |row|    {
-    a |box| "a"
-    b |box| "b"
+  |caption| { "Group" }
+  |row| {
+    a |box| { "a" }
+    b |box| { "b" }
   }
   |column| {
-    p |box| "p"
-    q |box| "q"
+    p |box| { "p" }
+    q |box| { "q" }
   }
 }
 
 band |row| {
   gap: 24;
-  svc |box| "Service" {
+  svc |box| {
     width: 140; height: 64;
-    |badge| "NEW"
+    "Service"
+    |badge| { "NEW" }
   }
-      |note| "Sticky note"
+  |note| { "Sticky note" }
 }
 
 basket |table| {
   columns: 80 80 80;
-  "Fruit"
-  "Qty"
-  "Note"
-  "Apple"
-  "12"
-  "fresh"
-  "Mango"
-  "3"
-  "ripe"
+  "Fruit" "Qty" "Note"
+  "Apple" "12"  "fresh"
+  "Mango" "3"   "ripe"
 }

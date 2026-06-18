@@ -2,20 +2,20 @@
 
 layout: grid; columns: repeat(4); gap: 20; padding: 20;
 
-|box|  "box" { width: 80; height: 40; cell: 1 1; }
-|oval|  "oval" { width: 80; height: 40; cell: 2 1; }
-|hex|   "hex" { width: 80; height: 60; cell: 3 1; }
-|slant| "slant" { width: 80; height: 40; skew: 20; cell: 4 1; }
+|box|   { width: 80; height: 40; cell: 1 1; "box" }
+|oval|  { width: 80; height: 40; cell: 2 1; "oval" }
+|hex|   { width: 80; height: 60; cell: 3 1; "hex" }
+|slant| { width: 80; height: 40; skew: 20; cell: 4 1; "slant" }
 
-|cyl|     "cyl" { width: 70; height: 70; cell: 1 2; }
-|diamond| "diamond" { width: 60; height: 60; cell: 2 2; }
-|cloud|   "cloud" { width: 100; height: 60; cell: 3 2; }
+|cyl|     { width: 70; height: 70; cell: 1 2; "cyl" }
+|diamond| { width: 60; height: 60; cell: 2 2; "diamond" }
+|cloud|   { width: 100; height: 60; cell: 3 2; "cloud" }
 |poly|    { points: 0 -30, 30 30, -30 30; cell: 4 2; }
 
-|text| "text" { cell: 1 3; }
-|line| { points: -30 0, 30 0; cell: 2 3; }
-|line| { points: -30 0, 30 0; marker-end: arrow; cell: 3 3; }
-|icon| "star" { width: 32; height: 32; cell: 4 3; }
+|plain| { cell: 1 3; "text" }
+|line|  { points: -30 0, 30 0; cell: 2 3; }
+|line|  { points: -30 0, 30 0; marker-end: arrow; cell: 3 3; }
+|icon|  { width: 32; height: 32; cell: 4 3; "star" }
 
 |path|  { path: "M -25 -15 Q 0 -35 25 -15 L 25 15 Q 0 35 -25 15 Z"; cell: 1 4; }
 |image| { src: "img/example.png"; width: 60; height: 40; cell: 2 4; }

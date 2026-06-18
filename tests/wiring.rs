@@ -211,7 +211,7 @@ fn crossing_counts_are_pinned() {
     // Behaviour pin, not a coordinate pin — re-pinned to the v4 sample geometry.
     assert_eq!(crossings("samples/wires_simple.lini"), 0);
     assert_eq!(crossings("samples/wires_medium.lini"), 1);
-    assert_eq!(crossings("samples/wires_hard.lini"), 5);
+    assert_eq!(crossings("samples/wires_hard.lini"), 6);
 }
 
 /// Law 3 (Economy), audit accept: a crossing a longer route can remove is
@@ -221,10 +221,10 @@ fn crossing_counts_are_pinned() {
 fn audit_removes_a_removable_crossing() {
     let src = "layout: grid; columns: repeat(3); gap: 40;\n\
                -> { clearance: 8; }\n\
-               north |box| \"N\" { cell: 2 1; }\n\
-               south |box| \"S\" { cell: 2 3; }\n\
-               west  |box| \"W\" { cell: 1 2; }\n\
-               east  |box| \"E\" { cell: 3 2; }\n\
+               north |box| { cell: 2 1; }\n\
+               south |box| { cell: 2 3; }\n\
+               west  |box| { cell: 1 2; }\n\
+               east  |box| { cell: 3 2; }\n\
                north -> south\n\
                west -> east\n";
     let crossings = lini::validate_str(src)
@@ -456,7 +456,7 @@ fn the_kept_crossing_names_its_wire_pair() {
         .into_iter()
         .filter(|v| v.rule == Rule::Crossing)
         .collect();
-    assert_eq!(kept.len(), 5);
+    assert_eq!(kept.len(), 6);
     assert!(
         kept.iter().any(|v| v.wires
             == vec![

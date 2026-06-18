@@ -18,7 +18,7 @@ use super::ir::{ResolvedValue, ShapeKind, VarTable};
 use super::value::resolve_groups;
 use crate::error::Error;
 use crate::span::Span;
-use crate::syntax::ast::{Define, Node, Wire};
+use crate::syntax::ast::{Child, Define, Wire};
 use std::collections::HashMap;
 
 const MAX_INHERITANCE_DEPTH: usize = 16;
@@ -26,12 +26,13 @@ const MAX_INHERITANCE_DEPTH: usize = 16;
 /// Built-in templates and their base type (SPEC §8). Each is a bundle over a
 /// primitive (or, for `table`, over `group`).
 pub(super) const TEMPLATES: &[(&str, &str)] = &[
+    ("plain", "box"),
     ("group", "box"),
-    ("caption", "text"),
+    ("caption", "plain"),
     ("badge", "box"),
     ("note", "box"),
-    ("row", "box"),
-    ("column", "box"),
+    ("row", "plain"),
+    ("column", "plain"),
     ("table", "group"),
 ];
 
@@ -50,7 +51,7 @@ pub(crate) fn template_base(name: &str) -> Option<&'static str> {
 struct DefineEntry {
     base: String,
     decls: Vec<(String, ResolvedValue)>,
-    body_nodes: Vec<Node>,
+    body_children: Vec<Child>,
     body_wires: Vec<Wire>,
     span: Span,
 }
@@ -70,7 +71,7 @@ pub struct ResolvedType {
     pub kind: ShapeKind,
     pub type_chain: Vec<String>,
     pub defaults: Vec<(String, ResolvedValue)>,
-    pub body_nodes: Vec<Node>,
+    pub body_children: Vec<Child>,
     pub body_wires: Vec<Wire>,
 }
 
@@ -100,7 +101,7 @@ impl<'a> Types<'a> {
                 DefineEntry {
                     base: d.base.clone(),
                     decls,
-                    body_nodes: d.body.nodes.clone(),
+                    body_children: d.body.children.clone(),
                     body_wires: d.body.wires.clone(),
                     span: d.span,
                 },
@@ -150,7 +151,7 @@ impl<'a> Types<'a> {
                 kind,
                 type_chain: Vec::new(),
                 defaults: self.sheet.element_decls(name),
-                body_nodes: Vec::new(),
+                body_children: Vec::new(),
                 body_wires: Vec::new(),
             });
         }
@@ -172,7 +173,7 @@ impl<'a> Types<'a> {
             r.defaults.extend(entry.decls.iter().cloned());
             r.defaults.extend(self.sheet.element_decls(name));
             r.type_chain.insert(0, name.to_string());
-            r.body_nodes.extend(entry.body_nodes.iter().cloned());
+            r.body_children.extend(entry.body_children.iter().cloned());
             r.body_wires.extend(entry.body_wires.iter().cloned());
             return Ok(r);
         }
@@ -204,6 +205,11 @@ pub(super) fn template_attrs(name: &str) -> Vec<(String, ResolvedValue)> {
     let attr = |n: &str, v: ResolvedValue| (n.to_string(), v);
 
     match name {
+        "plain" => vec![
+            attr("stroke", ident("none")),
+            attr("fill", ident("none")),
+            attr("padding", num(0.0)),
+        ],
         "group" => vec![
             attr("stroke", live("group-stroke")),
             attr("fill", live("group-fill")),
@@ -228,22 +234,15 @@ pub(super) fn template_attrs(name: &str) -> Vec<(String, ResolvedValue)> {
             attr("stroke", ident("none")),
             attr("fill", live("note-bg")),
         ],
-        "row" => vec![
-            attr("layout", ident("row")),
-            attr("fill", ident("none")),
-            attr("stroke", ident("none")),
-            attr("padding", num(0.0)),
-        ],
-        "column" => vec![
-            attr("layout", ident("column")),
-            attr("fill", ident("none")),
-            attr("stroke", ident("none")),
-            attr("padding", num(0.0)),
-        ],
+        // `row` / `column` inherit the frameless paint + zero padding from
+        // `plain`; they add only their flow direction.
+        "row" => vec![attr("layout", ident("row"))],
+        "column" => vec![attr("layout", ident("column"))],
         "table" => vec![
             attr("layout", ident("grid")),
             attr("divider", ident("all")),
-            attr("padding", num(0.0)),
+            attr("gap", num(0.0)),
+            attr("padding", pair(4.0, 8.0)),
             attr("fill", ident("none")),
             attr("stroke", live("stroke")),
         ],
@@ -323,10 +322,10 @@ mod tests {
     }
 
     #[test]
-    fn caption_resolves_over_text() {
+    fn caption_resolves_over_plain() {
         let t = resolve_ok("", "caption");
-        assert_eq!(t.kind, ShapeKind::Text);
-        assert_eq!(t.type_chain, vec!["caption"]);
+        assert_eq!(t.kind, ShapeKind::Box);
+        assert_eq!(t.type_chain, vec!["caption", "plain"]);
     }
 
     #[test]

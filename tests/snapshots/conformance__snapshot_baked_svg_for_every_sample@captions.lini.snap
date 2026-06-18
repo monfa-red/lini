@@ -3,28 +3,32 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/captions.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-247.8 -111.5 495.6 223" width="495.6" height="223" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-247.8 -112.5 495.6 225" width="495.6" height="225" class="lini">
   <style>
     .lini { font-family: sans-serif; font-size: 14px; color: black; }
     .lini .lini-shape-box { fill: white; stroke: #444; stroke-width: 1; stroke-dasharray: none; }
     .lini .lini-shape-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
+    .lini .lini-shape-plain { fill: none; stroke: none; }
     .lini .lini-shape-group { fill: rgba(0, 0, 0, 0.03); stroke: #bbb; }
     .lini .lini-shape-caption { font-size: 13px; }
   </style>
   <defs/>
   <g class="lini-scene">
-    <g class="lini-node lini-shape-group lini-shape-box" data-id="card" transform="translate(-148.6,-11.5)">
-      <rect x="-78.7" y="-79.5" width="157.4" height="159" rx="6" ry="6"/>
-      <g class="lini-node lini-shape-caption lini-shape-text" transform="translate(0,-57)">
-        <text x="0" y="0">Profile</text>
+    <g class="lini-node lini-shape-group lini-shape-box" data-id="card" transform="translate(-148.6,-12)">
+      <rect x="-78.7" y="-80" width="157.4" height="160" rx="6" ry="6"/>
+      <g class="lini-node lini-shape-caption lini-shape-plain lini-shape-box" transform="translate(0,-57)">
+        <rect x="-25.025" y="-6.5" width="50.05" height="13" rx="0" ry="0"/>
+        <g class="lini-node lini-shape-text" style="font-size: 13px" transform="translate(0,0)">
+          <text x="0" y="0">Profile</text>
+        </g>
       </g>
-      <g class="lini-node lini-shape-box" data-id="name" transform="translate(0,-17)">
+      <g class="lini-node lini-shape-box" data-id="name" transform="translate(0,-16.5)">
         <rect x="-62.2" y="-23" width="124.4" height="46" rx="0" ry="0"/>
         <g class="lini-node lini-shape-text" transform="translate(0,0)">
           <text x="0" y="0">Ada Lovelace</text>
         </g>
       </g>
-      <g class="lini-node lini-shape-box" data-id="role" transform="translate(0,40)">
+      <g class="lini-node lini-shape-box" data-id="role" transform="translate(0,40.5)">
         <rect x="-46.8" y="-23" width="93.6" height="46" rx="0" ry="0"/>
         <g class="lini-node lini-shape-text" transform="translate(0,0)">
           <text x="0" y="0">Engineer</text>
@@ -32,12 +36,18 @@ input_file: samples/captions.lini
       </g>
     </g>
     <g class="lini-node lini-shape-group lini-shape-box" data-id="panel" transform="translate(18.7,0)">
-      <rect x="-55.6" y="-91" width="111.2" height="182" rx="6" ry="6"/>
-      <g class="lini-node lini-shape-caption lini-shape-text" transform="translate(0,-68.5)">
-        <text x="0" y="0">Sales</text>
+      <rect x="-55.6" y="-92" width="111.2" height="184" rx="6" ry="6"/>
+      <g class="lini-node lini-shape-caption lini-shape-plain lini-shape-box" transform="translate(0,-69)">
+        <rect x="-17.875" y="-6.5" width="35.75" height="13" rx="0" ry="0"/>
+        <g class="lini-node lini-shape-text" style="font-size: 13px" transform="translate(0,0)">
+          <text x="0" y="0">Sales</text>
+        </g>
       </g>
-      <g class="lini-node lini-shape-caption lini-shape-text" transform="translate(0,68.5)">
-        <text x="0" y="0">Q3 2026</text>
+      <g class="lini-node lini-shape-caption lini-shape-plain lini-shape-box" transform="translate(0,69)">
+        <rect x="-25.025" y="-6.5" width="50.05" height="13" rx="0" ry="0"/>
+        <g class="lini-node lini-shape-text" style="font-size: 13px" transform="translate(0,0)">
+          <text x="0" y="0">Q3 2026</text>
+        </g>
       </g>
       <g class="lini-node lini-shape-box" data-id="a" transform="translate(0,-28.5)">
         <rect x="-31.4" y="-23" width="62.8" height="46" rx="0" ry="0"/>
@@ -53,7 +63,7 @@ input_file: samples/captions.lini
       </g>
     </g>
     <a href="https://example.com">
-      <g class="lini-node lini-shape-box" data-id="docs" transform="translate(167.3,-67)">
+      <g class="lini-node lini-shape-box" data-id="docs" transform="translate(167.3,-68)">
         <rect x="-60" y="-24" width="120" height="48" rx="0" ry="0"/>
         <g class="lini-node lini-shape-text" transform="translate(0,0)">
           <text x="0" y="0">Docs</text>

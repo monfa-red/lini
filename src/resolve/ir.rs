@@ -86,7 +86,6 @@ impl ShapeKind {
             "cloud" => Self::Cloud,
             "poly" => Self::Poly,
             "path" => Self::Path,
-            "text" => Self::Text,
             "line" => Self::Line,
             "icon" => Self::Icon,
             "image" => Self::Image,

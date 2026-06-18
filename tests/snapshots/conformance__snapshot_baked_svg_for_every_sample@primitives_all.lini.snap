@@ -18,6 +18,7 @@ input_file: samples/primitives_all.lini
     .lini .lini-shape-line { fill: none; stroke: #444; stroke-width: 1; stroke-dasharray: none; }
     .lini .lini-shape-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-shape-icon { fill: #444; }
+    .lini .lini-shape-plain { fill: none; stroke: none; }
   </style>
   <defs/>
   <g class="lini-scene">
@@ -67,8 +68,11 @@ input_file: samples/primitives_all.lini
     <g class="lini-node lini-shape-poly" transform="translate(161.5,-15.5)">
       <polygon points="0,-30 30,30 -30,30"/>
     </g>
-    <g class="lini-node lini-shape-text" transform="translate(-161.5,56)">
-      <text x="0" y="0">text</text>
+    <g class="lini-node lini-shape-plain lini-shape-box" transform="translate(-161.5,56)">
+      <rect x="-15.4" y="-7" width="30.8" height="14" rx="0" ry="0"/>
+      <g class="lini-node lini-shape-text" transform="translate(0,0)">
+        <text x="0" y="0">text</text>
+      </g>
     </g>
     <g class="lini-node lini-shape-line" transform="translate(-60.5,56)">
       <line x1="-30" y1="0" x2="30" y2="0"/>

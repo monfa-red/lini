@@ -42,12 +42,12 @@ fn assert_resolve_error(src: &str, expect_msg_substr: &str) {
 
 #[test]
 fn err_duplicate_scene_id() {
-    assert_resolve_error("cat |box| \"1\"\ncat |box| \"2\"\n", "duplicate id 'cat'");
+    assert_resolve_error("cat |box| { \"1\" }\ncat |box| { \"2\" }\n", "duplicate id 'cat'");
 }
 
 #[test]
 fn err_duplicate_id_reports_previous_location() {
-    let src = "cat |box| \"1\"\ncat |box| \"2\"\n";
+    let src = "cat |box| { \"1\" }\ncat |box| { \"2\" }\n";
     let err = lini::check(src).expect_err("expected resolve error");
     let shown = err.display_with_source(src, "<test>").to_string();
     assert!(
@@ -77,19 +77,19 @@ fn err_slant_skew_out_of_range() {
     // SPEC §7/§15: skew must be in (-89, 89). 90° gives tan→huge, an absurd
     // shift, so it must be rejected, not silently rendered off-canvas.
     assert_resolve_error(
-        "a |slant| \"x\" { skew: 90; }\n",
+        "a |slant| { skew: 90; \"x\" }\n",
         "skew: 90 must be in (-89, 89)",
     );
 }
 
 #[test]
 fn err_unknown_shape_type() {
-    assert_resolve_error("cat |nosuch| \"x\"\n", "unknown type 'nosuch'");
+    assert_resolve_error("cat |nosuch| { \"x\" }\n", "unknown type 'nosuch'");
 }
 
 #[test]
 fn err_unknown_class() {
-    assert_resolve_error("cat |box| \"x\" .nope\n", "unknown class '.nope'");
+    assert_resolve_error("cat |box| .nope { \"x\" }\n", "unknown class '.nope'");
 }
 
 #[test]
@@ -109,7 +109,7 @@ fn err_define_name_collides_with_template() {
 
 #[test]
 fn err_reserved_scene_id() {
-    assert_resolve_error("rect |box| \"x\"\n", "'rect' is reserved");
+    assert_resolve_error("rect |box| { \"x\" }\n", "'rect' is reserved");
 }
 
 #[test]
@@ -120,8 +120,8 @@ fn wire_endpoint_dotpath_navigates_into_groups() {
 
 #[test]
 fn element_rule_applies_to_every_instance() {
-    // `box { radius: 5; }` gives every rect a default radius of 5.
-    lini::check("box { radius: 5; }\ncat |box| \"Cat\"\n").expect("rect defaults");
+    // `box { radius: 5; }` gives every box a default radius of 5.
+    lini::check("box { radius: 5; }\ncat |box| { \"Cat\" }\n").expect("box defaults");
 }
 
 #[test]

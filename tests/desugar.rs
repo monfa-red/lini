@@ -1,47 +1,46 @@
-//! `lini desugar` — label and wire-label sugar expanded to explicit children,
-//! with types/vars/properties left as written.
+//! `lini desugar` — the surface sugar expanded to its explicit form (SPEC §14):
+//! a box's id-as-label into a `{ "id" }` text child, a wire's auto-distributed
+//! labels into an explicit `along:`. Types/vars/properties are left as written.
 
 use lini::desugar_source;
 
 #[test]
-fn group_first_label_becomes_a_top_caption() {
-    let out = desugar_source("g |group| \"Hi\" {\n  a |box| \"A\"\n}\n").unwrap();
-    // A group's first label is a |caption| (mount: in via the caption template).
-    assert!(out.contains("|caption| \"Hi\""), "{out}");
+fn id_as_label_becomes_an_explicit_text() {
+    let out = desugar_source("cat |box|\n").unwrap();
+    assert!(out.contains("cat |box| { \"cat\" }"), "{out}");
 }
 
 #[test]
-fn group_second_label_becomes_a_bottom_footer() {
-    let out = desugar_source("g |group| \"Top\" \"Bot\" {}\n").unwrap();
-    assert!(out.contains("|caption| \"Top\""), "{out}");
-    assert!(out.contains("|caption| \"Bot\""), "{out}");
-    assert!(out.contains("side: bottom;"), "the footer carries side: bottom: {out}");
+fn an_explicit_label_is_left_alone() {
+    let out = desugar_source("cat |box| { \"Cat\" }\n").unwrap();
+    assert!(out.contains("\"Cat\""), "{out}");
+    // No second, id-derived label is added.
+    assert!(!out.contains("\"cat\""), "{out}");
 }
 
 #[test]
-fn plain_shape_label_is_a_centred_text_child() {
-    let out = desugar_source("cat |box| \"Cat\"\n").unwrap();
-    assert!(out.contains("|text| \"Cat\""), "{out}");
-    assert!(!out.contains("|caption|"), "a plain rect has no caption: {out}");
+fn a_container_keeps_its_children_and_takes_no_label() {
+    let out = desugar_source("g |group| {\n  a |box|\n}\n").unwrap();
+    assert!(!out.contains("\"g\""), "a group's id is not a label: {out}");
+    assert!(out.contains("a |box| { \"a\" }"), "the leaf child gains its id label: {out}");
 }
 
 #[test]
-fn inline_wire_label_becomes_a_text_child() {
-    let out = desugar_source("a |box|\nb |box|\na -> b \"x\"\n").unwrap();
-    assert!(out.contains("a -> b {"), "{out}");
-    assert!(out.contains("|text| \"x\""), "{out}");
+fn icon_glyph_is_not_expanded() {
+    let out = desugar_source("home |icon|\n").unwrap();
+    assert!(!out.contains("{"), "an icon's glyph stays on the line: {out}");
 }
 
 #[test]
-fn user_shape_extending_group_still_promotes_its_caption() {
-    // The group-ness comes from the type chain, not a literal `|group|`.
-    let out = desugar_source("panel::group { }\np |panel| \"Title\" {}\n").unwrap();
-    assert!(out.contains("|caption| \"Title\""), "{out}");
+fn wire_labels_gain_an_explicit_along() {
+    let out = desugar_source("a |box|\nb |box|\na -> b { \"x\" }\n").unwrap();
+    assert!(out.contains("along: 0.5;"), "one label centres at 0.5: {out}");
+    assert!(out.contains("\"x\""), "{out}");
 }
 
 #[test]
 fn desugar_is_idempotent() {
-    let src = "g |group| \"T\" \"F\" {\n  a |box| \"A\"\n}\nx |box|\ny |box|\nx -> y \"w\"\n";
+    let src = "g |group| {\n  |caption| { \"T\" }\n  a |box|\n}\nx |box|\ny |box|\nx -> y { \"w\" }\n";
     let once = desugar_source(src).unwrap();
     let twice = desugar_source(&once).unwrap();
     assert_eq!(once, twice, "desugar must be idempotent");

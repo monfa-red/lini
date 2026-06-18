@@ -25,8 +25,8 @@ pub fn parse(tokens: &[Token]) -> Result<File, Error> {
 /// it is reserved but not a type, so `wire { }` reads as a (reserved-id) node,
 /// not a rule — wire defaults are the `-> { }` rule.
 const BUILTIN_TYPES: &[&str] = &[
-    "box", "oval", "line", "path", "poly", "text", "hex", "slant", "cyl", "diamond", "cloud",
-    "icon", "image", "group", "caption", "badge", "note", "row", "column", "table",
+    "box", "oval", "line", "path", "poly", "hex", "slant", "cyl", "diamond", "cloud", "icon",
+    "image", "plain", "group", "caption", "badge", "note", "row", "column", "table",
 ];
 
 /// What a statement at the cursor is.
@@ -147,13 +147,18 @@ impl<'a> Parser<'a> {
         Ok(s)
     }
 
-    /// Consume a statement terminator (newline / `;`), or accept `}` / EOF.
+    /// Consume a statement terminator (newline / `;`), or accept `}` / EOF. A
+    /// following `string` also ends the statement without a separator: a string
+    /// is self-delimiting, so `"a" "b" "c"` is three text nodes (SPEC §3).
     fn terminator(&mut self) -> Result<(), Error> {
         if matches!(self.kind(), Some(TokKind::Newline) | Some(TokKind::Semi)) {
             self.pos += 1;
             self.skip_newlines();
             Ok(())
-        } else if matches!(self.kind(), Some(TokKind::RBrace) | None) {
+        } else if matches!(
+            self.kind(),
+            Some(TokKind::RBrace) | Some(TokKind::String(_)) | None
+        ) {
             Ok(())
         } else {
             Err(self.err("expected newline, ';' or '}'"))
@@ -226,7 +231,7 @@ impl<'a> Parser<'a> {
                         return Err(self.err("instances must come before wires"));
                     }
                     phase = Phase::Instances;
-                    file.instances.push(self.parse_node()?);
+                    file.instances.push(self.parse_child()?);
                 }
                 Kind::Wire => {
                     phase = Phase::Wires;
@@ -442,6 +447,18 @@ impl<'a> Parser<'a> {
 
     // ───────────────────────── Nodes ─────────────────────────
 
+    /// A drawn child (SPEC §3): a bare string is a text node; anything else is a
+    /// box. A box's label is a `Child::Text` *inside* its block, never positional.
+    fn parse_child(&mut self) -> Result<Child, Error> {
+        if matches!(self.kind(), Some(TokKind::String(_))) {
+            let span = self.span();
+            let text = self.expect_string()?;
+            Ok(Child::Text(TextNode { text, span }))
+        } else {
+            Ok(Child::Box(self.parse_node()?))
+        }
+    }
+
     fn parse_node(&mut self) -> Result<Node, Error> {
         let start = self.span();
         let id = if matches!(self.kind(), Some(TokKind::Ident(_))) {
@@ -454,10 +471,6 @@ impl<'a> Parser<'a> {
         } else {
             None
         };
-        let mut labels = Vec::new();
-        while matches!(self.kind(), Some(TokKind::String(_))) {
-            labels.push(self.expect_string()?);
-        }
         let mut classes = Vec::new();
         while matches!(self.kind(), Some(TokKind::Dot)) {
             self.pos += 1;
@@ -468,14 +481,18 @@ impl<'a> Parser<'a> {
         } else {
             None
         };
-        if id.is_none() && ty.is_none() && labels.is_empty() && block.is_none() {
-            return Err(self.err("a node needs an id, type, label, or block"));
+        // A string after the head is a positional label — gone in the box/text
+        // model (SPEC §3); the label belongs in the block.
+        if matches!(self.kind(), Some(TokKind::String(_))) {
+            return Err(self.err("a label is a child, not positional — put it in the block: { \"…\" }"));
+        }
+        if id.is_none() && ty.is_none() && block.is_none() {
+            return Err(self.err("a node needs an id, type, or block"));
         }
         let end = self.last_span();
         Ok(Node {
             id,
             ty,
-            labels,
             classes,
             block,
             span: Span::new(start.start, end.end),
@@ -513,7 +530,7 @@ impl<'a> Parser<'a> {
                         return Err(self.err("child nodes must come before internal wires"));
                     }
                     phase = Phase::Instances;
-                    block.nodes.push(self.parse_node()?);
+                    block.children.push(self.parse_child()?);
                 }
                 Kind::Wire => {
                     phase = Phase::Wires;
@@ -550,14 +567,13 @@ impl<'a> Parser<'a> {
             self.pos += 1;
             chain.push(self.parse_endpoint_group()?);
         }
-        let mut labels = Vec::new();
-        while matches!(self.kind(), Some(TokKind::String(_))) {
-            labels.push(self.expect_string()?);
-        }
         let mut classes = Vec::new();
         while matches!(self.kind(), Some(TokKind::Dot)) {
             self.pos += 1;
             classes.push(self.expect_ident()?.0);
+        }
+        if matches!(self.kind(), Some(TokKind::String(_))) {
+            return Err(self.err("a wire label goes in the body: { \"…\" }"));
         }
         let block = if matches!(self.kind(), Some(TokKind::LBrace)) {
             Some(self.parse_wire_block()?)
@@ -568,7 +584,6 @@ impl<'a> Parser<'a> {
         Ok(Wire {
             chain,
             op,
-            labels,
             classes,
             block,
             span: Span::new(start.start, end.end),
@@ -634,7 +649,8 @@ impl<'a> Parser<'a> {
         }
     }
 
-    /// A wire body: declarations and `|text|` children, in any order.
+    /// A wire body (SPEC §9): declarations (including `along:`) and labels — bare
+    /// text, or a `|plain|` box for a styled / offset label.
     fn parse_wire_block(&mut self) -> Result<WireBlock, Error> {
         if !self.eat(&TokKind::LBrace) {
             return Err(self.err("expected '{'"));
@@ -642,12 +658,12 @@ impl<'a> Parser<'a> {
         self.skip_newlines();
         let mut wb = WireBlock::default();
         while !matches!(self.kind(), Some(TokKind::RBrace) | None) {
-            if matches!(self.kind(), Some(TokKind::Pipe)) {
-                wb.texts.push(self.parse_text_child()?);
+            if matches!(self.kind(), Some(TokKind::String(_)) | Some(TokKind::Pipe)) {
+                wb.labels.push(self.parse_child()?);
             } else if matches!(self.classify()?, Kind::Decl) {
                 wb.decls.push(self.parse_decl()?);
             } else {
-                return Err(self.err("a wire body holds only declarations and |text| children"));
+                return Err(self.err("a wire body holds only labels and 'along:'"));
             }
             self.terminator()?;
         }
@@ -655,37 +671,6 @@ impl<'a> Parser<'a> {
             return Err(self.err("expected '}'"));
         }
         Ok(wb)
-    }
-
-    fn parse_text_child(&mut self) -> Result<TextChild, Error> {
-        let start = self.span();
-        self.expect_pipe()?;
-        let (kw, kw_span) = self.expect_ident()?;
-        if kw != "text" {
-            return Err(Error::at(
-                kw_span,
-                "a wire body may contain only |text| children",
-            ));
-        }
-        self.expect_pipe()?;
-        let text = self.expect_string()?;
-        let mut classes = Vec::new();
-        while matches!(self.kind(), Some(TokKind::Dot)) {
-            self.pos += 1;
-            classes.push(self.expect_ident()?.0);
-        }
-        let decls = if matches!(self.kind(), Some(TokKind::LBrace)) {
-            self.parse_rule_block()?
-        } else {
-            Vec::new()
-        };
-        let end = self.last_span();
-        Ok(TextChild {
-            text,
-            classes,
-            decls,
-            span: Span::new(start.start, end.end),
-        })
     }
 }
 
@@ -715,6 +700,14 @@ mod tests {
         }
     }
 
+    /// The i-th top-level instance as a box, panicking if it is bare text.
+    fn instance(f: &File, i: usize) -> &Node {
+        match &f.instances[i] {
+            Child::Box(n) => n,
+            Child::Text(_) => panic!("instance {i} is text, not a box"),
+        }
+    }
+
     #[test]
     fn quickstart_three_box_chain() {
         let f = parse_ok("cat -> dog -> bird\n");
@@ -727,7 +720,7 @@ mod tests {
     fn three_phases() {
         let f = parse_ok(
             "layout: grid;\nbox { radius: 6; }\n.hot { stroke-width: 2; }\n\
-             server |box| \"Server\"\nclient |box| \"Client\"\nserver -> client \"requests\"\n",
+             server |box|\nclient |box|\nserver -> client { \"requests\" }\n",
         );
         assert_eq!(f.stylesheet.len(), 3); // root decl, element rule, class rule
         assert_eq!(f.instances.len(), 2);
@@ -739,12 +732,12 @@ mod tests {
         let f = parse_ok("box { radius: 4; }\nserver { fill: red; }\n");
         assert!(matches!(f.stylesheet[0], StyleItem::Rule(_)));
         assert_eq!(f.instances.len(), 1);
-        assert_eq!(f.instances[0].id.as_deref(), Some("server"));
+        assert_eq!(instance(&f, 0).id.as_deref(), Some("server"));
     }
 
     #[test]
     fn define_then_use() {
-        let f = parse_ok("treat::box { radius: 5; }\nx |treat| \"X\"\n");
+        let f = parse_ok("treat::box { radius: 5; }\nx |treat|\n");
         match &f.stylesheet[0] {
             StyleItem::Define(d) => {
                 assert_eq!(d.name, "treat");
@@ -752,7 +745,7 @@ mod tests {
             }
             _ => panic!("expected a define"),
         }
-        assert_eq!(f.instances[0].ty.as_deref(), Some("treat"));
+        assert_eq!(instance(&f, 0).ty.as_deref(), Some("treat"));
     }
 
     #[test]
@@ -777,25 +770,30 @@ mod tests {
     }
 
     #[test]
-    fn node_with_id_type_labels_classes_block() {
+    fn node_with_id_type_classes_block_and_text() {
         let f = parse_ok(
-            "db |cyl| \"Postgres\" .primary {\n  fill: #eef;\n  badge |box| \"v16\" { mount: on; }\n}\n",
+            "db |cyl| .primary {\n  fill: #eef;\n  \"Postgres\"\n  badge |box| { mount: on; \"v16\" }\n}\n",
         );
-        let n = &f.instances[0];
+        let n = instance(&f, 0);
         assert_eq!(n.id.as_deref(), Some("db"));
         assert_eq!(n.ty.as_deref(), Some("cyl"));
-        assert_eq!(n.labels, vec!["Postgres"]);
         assert_eq!(n.classes, vec!["primary"]);
         let b = n.block.as_ref().unwrap();
         assert_eq!(b.decls.len(), 1);
-        assert_eq!(b.nodes.len(), 1);
-        assert_eq!(b.nodes[0].id.as_deref(), Some("badge"));
+        assert_eq!(b.children.len(), 2); // text "Postgres", then the badge box
+        assert!(matches!(&b.children[0], Child::Text(t) if t.text == "Postgres"));
+        assert!(matches!(&b.children[1], Child::Box(n) if n.id.as_deref() == Some("badge")));
+    }
+
+    #[test]
+    fn a_positional_label_is_rejected() {
+        assert!(parse_err("cat |box| \"Cat\"\n").contains("put it in the block"));
     }
 
     #[test]
     fn value_groups_space_and_comma() {
         let f = parse_ok("|line| { points: 0 0, 10 10, 20 0; at: 100 50; }\n");
-        let b = f.instances[0].block.as_ref().unwrap();
+        let b = instance(&f, 0).block.as_ref().unwrap();
         let points = b.decls.iter().find(|d| d.name == "points").unwrap();
         assert_eq!(points.groups.len(), 3);
         assert_eq!(points.groups[0].len(), 2);
@@ -822,14 +820,15 @@ mod tests {
     }
 
     #[test]
-    fn wire_block_decls_and_text() {
+    fn wire_block_decls_and_labels() {
         let f = parse_ok(
-            "a -> b {\n  stroke: red;\n  |text| \"watches\" { at: 0.5; }\n  |text| \"x\" .small\n}\n",
+            "a -> b {\n  along: 0.3 0.7;\n  \"watches\"\n  |plain| { color: red; \"x\" }\n}\n",
         );
         let wb = f.wires[0].block.as_ref().unwrap();
-        assert_eq!(wb.decls.len(), 1);
-        assert_eq!(wb.texts.len(), 2);
-        assert_eq!(wb.texts[1].classes, vec!["small"]);
+        assert_eq!(wb.decls.len(), 1); // along
+        assert_eq!(wb.labels.len(), 2);
+        assert!(matches!(&wb.labels[0], Child::Text(t) if t.text == "watches"));
+        assert!(matches!(&wb.labels[1], Child::Box(_)));
     }
 
     #[test]
@@ -852,10 +851,16 @@ mod tests {
     }
 
     #[test]
-    fn leading_string_node() {
-        let f = parse_ok("\"Fruit\" { font-weight: bold; }\n");
-        assert_eq!(f.instances[0].labels, vec!["Fruit"]);
-        assert!(f.instances[0].id.is_none());
+    fn bare_string_is_a_text_node() {
+        let f = parse_ok("\"Fruit\"\n");
+        assert!(matches!(&f.instances[0], Child::Text(t) if t.text == "Fruit"));
+    }
+
+    #[test]
+    fn consecutive_strings_are_separate_text_nodes() {
+        let f = parse_ok("\"a\" \"b\" \"c\"\n");
+        assert_eq!(f.instances.len(), 3);
+        assert!(f.instances.iter().all(|c| matches!(c, Child::Text(_))));
     }
 
     // ── Errors ──

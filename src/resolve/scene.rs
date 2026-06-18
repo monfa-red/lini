@@ -5,13 +5,13 @@
 //! internal wires lifted out for the wire pass.
 
 use super::cascade::{NodeFacts, Stylesheet};
-use super::ir::{AttrMap, MarkerKind, ResolvedInst, ResolvedValue, ShapeKind, VarTable};
+use super::ir::{AttrMap, MarkerKind, Markers, ResolvedInst, ResolvedValue, ShapeKind, VarTable};
 use super::merge::{collapse, resolve_markers};
 use super::types::Types;
 use super::value::resolve_groups;
 use crate::error::Error;
 use crate::span::Span;
-use crate::syntax::ast::{Block, Decl, Node, Value, Wire};
+use crate::syntax::ast::{Child, Node, Wire};
 use std::collections::HashMap;
 
 /// Text properties that cascade to descendant text (SPEC §10): nearest ancestor
@@ -45,7 +45,7 @@ pub struct SceneCtx<'a> {
 /// Resolve the top-level instances into scene nodes, collecting lifted internal
 /// wires. `text_ctx` seeds the inheritable text properties from the root config.
 pub fn resolve_instances(
-    instances: &[Node],
+    instances: &[Child],
     ctx: &SceneCtx,
     text_ctx: &AttrMap,
     id_seen: &mut HashMap<String, Span>,
@@ -53,13 +53,31 @@ pub fn resolve_instances(
 ) -> Result<Vec<ResolvedInst>, Error> {
     let mut ancestors = Vec::new();
     let mut nodes = Vec::with_capacity(instances.len());
-    for node in instances {
-        nodes.push(resolve_node(
-            node, ctx, &mut ancestors, &[], text_ctx, id_seen, lifted,
+    for child in instances {
+        nodes.push(resolve_child(
+            child, ctx, &mut ancestors, &[], text_ctx, id_seen, lifted,
         )?);
     }
     nodes.retain(|n| !is_blank_anon_text(n));
     Ok(nodes)
+}
+
+/// Resolve a body child (SPEC §3): a box recurses; a bare string becomes a text
+/// node carrying the inherited text properties.
+#[allow(clippy::too_many_arguments)]
+fn resolve_child(
+    child: &Child,
+    ctx: &SceneCtx,
+    ancestors: &mut Vec<NodeFacts>,
+    path_prefix: &[String],
+    text_ctx: &AttrMap,
+    id_seen: &mut HashMap<String, Span>,
+    lifted: &mut Vec<LiftedWire>,
+) -> Result<ResolvedInst, Error> {
+    match child {
+        Child::Box(n) => resolve_node(n, ctx, ancestors, path_prefix, text_ctx, id_seen, lifted),
+        Child::Text(t) => Ok(text_inst(&t.text, text_ctx, t.span)),
+    }
 }
 
 /// Resolve one node into a [`ResolvedInst`], recursing into its children.
@@ -117,24 +135,7 @@ pub fn resolve_node(
     }
 
     let markers = resolve_markers(&ordered, MarkerKind::None, MarkerKind::None, node.span)?;
-    let mut attrs = collapse(&ordered);
-
-    let text_like = rt.kind == ShapeKind::Text;
-    if text_like {
-        if let Some(prop) = ["width", "height"].iter().find(|p| attrs.get(p).is_some()) {
-            return Err(Error::at(
-                node.span,
-                format!("'{}' is not a text property; use 'font-size'", prop),
-            ));
-        }
-        for name in INHERITED_TEXT {
-            if attrs.get(name).is_none()
-                && let Some(v) = text_ctx.get(name)
-            {
-                attrs.insert(*name, v.clone());
-            }
-        }
-    }
+    let attrs = collapse(&ordered);
 
     if rt.kind == ShapeKind::Slant
         && let Some(skew) = attrs.number("skew")
@@ -146,31 +147,12 @@ pub fn resolve_node(
         ));
     }
 
-    // Inherited text context for children: overlay this node's text props.
+    // Inherited text context for children: overlay this node's own text props.
     let mut child_text_ctx = text_ctx.clone();
     for name in INHERITED_TEXT {
         if let Some(v) = attrs.get(name) {
             child_text_ctx.insert(*name, v.clone());
         }
-    }
-
-    let is_group = rt.type_chain.iter().any(|t| t == "group");
-    // A `|text|` carries its label as content; an `|icon|` carries it as the
-    // glyph name (SPEC §7). Both consume their own labels — every other shape
-    // stacks them as `|text|` children via label sugar.
-    let consumes_label = text_like || rt.kind == ShapeKind::Icon;
-    let own_label =
-        consumes_label.then(|| (!node.labels.is_empty()).then(|| node.labels.join("\n")))
-            .flatten();
-
-    // Body order (SPEC §3): define intrinsic children, then label sugar, then
-    // the block's own children.
-    let mut child_nodes: Vec<Node> = rt.body_nodes.clone();
-    if !consumes_label {
-        child_nodes.extend(label_sugar(&node.labels, is_group, node.span));
-    }
-    if let Some(block) = &node.block {
-        child_nodes.extend(block.nodes.iter().cloned());
     }
 
     let mut child_prefix = path_prefix.to_vec();
@@ -187,18 +169,48 @@ pub fn resolve_node(
         });
     }
 
+    // Body order (SPEC §3): a define's intrinsic children, then the block's own.
+    let block_children = node.block.as_ref().map(|b| b.children.as_slice()).unwrap_or(&[]);
+    let body: Vec<&Child> = rt.body_children.iter().chain(block_children.iter()).collect();
+
+    // An `|icon|` consumes its text as the glyph name (SPEC §7): its block's first
+    // string, else its id. It renders no text child; every other shape renders
+    // its strings as `Text` children.
+    let is_icon = rt.kind == ShapeKind::Icon;
+    let own_label = if is_icon {
+        first_text(&body).map(str::to_string).or_else(|| node.id.clone())
+    } else {
+        None
+    };
+
     ancestors.push(facts);
-    let mut children = Vec::with_capacity(child_nodes.len());
-    for child in &child_nodes {
-        children.push(resolve_node(
-            child,
-            ctx,
-            ancestors,
-            &child_prefix,
-            &child_text_ctx,
-            id_seen,
-            lifted,
-        )?);
+    let mut children = Vec::new();
+    if !is_icon {
+        for child in &body {
+            children.push(resolve_child(
+                child,
+                ctx,
+                ancestors,
+                &child_prefix,
+                &child_text_ctx,
+                id_seen,
+                lifted,
+            )?);
+        }
+        // id-as-label: a leaf box with no content of its own shows its id,
+        // centred (SPEC §3). A `{ "" }` counts as content (an empty text), so it
+        // suppresses the label. Geometry-only shapes (line / poly / path / image)
+        // hold no centred text, so their id is not a label.
+        let text_capable = !matches!(
+            rt.kind,
+            ShapeKind::Line | ShapeKind::Poly | ShapeKind::Path | ShapeKind::Image
+        );
+        if text_capable
+            && children.is_empty()
+            && let Some(id) = &node.id
+        {
+            children.push(text_inst(id, &child_text_ctx, node.span));
+        }
     }
     ancestors.pop();
     children.retain(|c| !is_blank_anon_text(c));
@@ -216,48 +228,40 @@ pub fn resolve_node(
     })
 }
 
-/// Expand a host's positional labels into synthesized child nodes (SPEC §8): a
-/// group's 1st label is a top `|caption|`, its 2nd a bottom `|caption|`, the
-/// rest plain centred `|text|`; every other shape stacks all labels as `|text|`.
-/// Empty labels resolve to blank text and are dropped downstream.
-fn label_sugar(labels: &[String], is_group: bool, span: Span) -> Vec<Node> {
-    labels
-        .iter()
-        .enumerate()
-        .map(|(i, label)| {
-            let (ty, footer) = match (is_group, i) {
-                (true, 0) => ("caption", false),
-                (true, 1) => ("caption", true),
-                _ => ("text", false),
-            };
-            let block = footer.then(|| Block {
-                decls: vec![ident_decl("side", "bottom", span)],
-                nodes: Vec::new(),
-                wires: Vec::new(),
-            });
-            Node {
-                id: None,
-                ty: Some(ty.to_string()),
-                labels: vec![label.clone()],
-                classes: Vec::new(),
-                block,
-                span,
-            }
-        })
-        .collect()
-}
-
-fn ident_decl(name: &str, value: &str, span: Span) -> Decl {
-    Decl {
-        name: name.to_string(),
-        groups: vec![vec![Value::Ident(value.to_string())]],
+/// A resolved text node (SPEC §3/§10): bare content carrying the text properties
+/// inherited from its container. `Text` is internal — never a user `|type|`,
+/// only the shape of a string node (a label, a cell, canvas text).
+fn text_inst(text: &str, text_ctx: &AttrMap, span: Span) -> ResolvedInst {
+    let mut attrs = AttrMap::new();
+    for name in INHERITED_TEXT {
+        if let Some(v) = text_ctx.get(name) {
+            attrs.insert(*name, v.clone());
+        }
+    }
+    ResolvedInst {
+        id: None,
+        shape: ShapeKind::Text,
+        type_chain: Vec::new(),
+        applied_styles: Vec::new(),
+        label: Some(text.to_string()),
+        attrs,
+        markers: Markers::default(),
+        children: Vec::new(),
         span,
     }
 }
 
-/// A `|text|` with no visible content and no id — from a `""` label. SPEC §8:
+/// The first bare string among a body's children — an `|icon|`'s glyph name.
+fn first_text<'a>(children: &[&'a Child]) -> Option<&'a str> {
+    children.iter().find_map(|c| match c {
+        Child::Text(t) => Some(t.text.as_str()),
+        Child::Box(_) => None,
+    })
+}
+
+/// A text node with no visible content and no id — from a `""` label. SPEC §3:
 /// `""` suppresses the label, so the node is dropped (a kept empty text would
-/// reserve a band / centred slot and emit an empty `<text>`).
+/// reserve a centred slot and emit an empty `<text>`).
 fn is_blank_anon_text(r: &ResolvedInst) -> bool {
     r.id.is_none() && r.shape == ShapeKind::Text && r.label.as_deref().is_none_or(str::is_empty)
 }

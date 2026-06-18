@@ -19,8 +19,9 @@ fn idempotent(src: &str) {
 }
 
 #[test]
-fn node_id_type_label() {
-    assert_eq!(fmt("x|box|\"hi\"\n"), "x |box| \"hi\"\n");
+fn node_id_type_and_label_block() {
+    // The label is a text child in the block; a short block collapses inline.
+    assert_eq!(fmt("x|box|{\"hi\"}\n"), "x |box| { \"hi\" }\n");
 }
 
 #[test]
@@ -106,7 +107,12 @@ fn classes_on_a_node() {
 
 #[test]
 fn simple_wire() {
-    assert_eq!(fmt("a -> b \"x\"\n"), "a -> b \"x\"\n");
+    assert_eq!(fmt("a -> b\n"), "a -> b\n");
+}
+
+#[test]
+fn wire_label_collapses_inline() {
+    assert_eq!(fmt("a -> b {\"x\"}\n"), "a -> b { \"x\" }\n");
 }
 
 #[test]
@@ -127,10 +133,10 @@ fn wire_defaults_rule_uses_the_arrow_glyph() {
 }
 
 #[test]
-fn wire_with_text_children() {
+fn wire_labels_with_along() {
     assert_eq!(
-        fmt("a -> b {|text|\"watches\"{at:0.5}}\n"),
-        "a -> b {\n  |text| \"watches\" { at: 0.5; }\n}\n"
+        fmt("a -> b {along:0.3 0.7\n\"near a\" \"near b\"}\n"),
+        "a -> b { along: 0.3 0.7; \"near a\" \"near b\" }\n"
     );
 }
 
@@ -165,8 +171,8 @@ fn runs_of_blank_lines_collapse_to_one() {
 #[test]
 fn sibling_id_and_type_columns_align() {
     assert_eq!(
-        fmt("g|group|{bowl|treat|\"Bowl\"\nwater|box|\"Water\"}\n"),
-        "g |group| {\n  bowl  |treat| \"Bowl\"\n  water |box|   \"Water\"\n}\n"
+        fmt("g|group|{bowl|treat|{\"Bowl\"}\nwater|box|{\"Water\"}}\n"),
+        "g |group| {\n  bowl  |treat| { \"Bowl\" }\n  water |box|   { \"Water\" }\n}\n"
     );
 }
 
@@ -188,11 +194,12 @@ box { radius: 4; }
 treat::box { radius: 5; }
 .loud { stroke: red; stroke-width: 2; }
 
-cat |oval| \"Cat\" { cell: 1 1; }
-kitchen |group| \"Kitchen\" {
-  bowl |treat| \"Bowl\"
-  water |box| \"Water\"
-  bowl -> water \"flows\"
+cat |oval| { cell: 1 1; \"Cat\" }
+kitchen |group| {
+  |caption| { \"Kitchen\" }
+  bowl |treat| { \"Bowl\" }
+  water |box| { \"Water\" }
+  bowl -> water { \"flows\" }
 }
 
 cat -> kitchen.bowl .loud

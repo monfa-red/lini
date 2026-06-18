@@ -89,6 +89,13 @@ impl<'a> Lexer<'a> {
                 b',' => self.push_punct(TokKind::Comma, 1),
                 b'&' => self.push_punct(TokKind::Amp, 1),
                 b'"' => self.lex_string()?,
+                // Single quotes are reserved, not strings (SPEC §2/§18).
+                b'\'' => {
+                    return Err(Error::at(
+                        Span::new(self.i, self.i + 1),
+                        "single quotes are not strings — use \"…\"",
+                    ));
+                }
                 b'#' => self.lex_hex()?,
                 b'.' => {
                     if self.peek(1).is_some_and(|c| c.is_ascii_digit()) {

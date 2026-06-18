@@ -6,8 +6,8 @@
 //! columns. Idempotent: `fmt(fmt(x)) == fmt(x)`.
 
 use crate::syntax::ast::{
-    Block, Decl, Define, Endpoint, File, Node, Rule, SelPart, Selector, StyleItem, TextChild,
-    Value, Wire, WireBlock,
+    Block, Child, Decl, Define, Endpoint, File, Node, Rule, SelPart, Selector, StyleItem, Value,
+    Wire, WireBlock,
 };
 use crate::ast::{Side, WireOp};
 use crate::error::Error;
@@ -99,7 +99,7 @@ impl Emitter<'_> {
         }
         if !file.instances.is_empty() {
             self.section_break(phases_emitted);
-            self.emit_nodes(&file.instances, 0);
+            self.emit_children(&file.instances, 0);
             phases_emitted += 1;
         }
         if !file.wires.is_empty() {
@@ -188,17 +188,24 @@ impl Emitter<'_> {
 
     // ───────── Instances ─────────
 
-    fn emit_nodes(&mut self, nodes: &[Node], depth: usize) {
+    fn emit_children(&mut self, children: &[Child], depth: usize) {
         let widths = if self.align {
-            align::node_widths(nodes, self.trivia)
+            align::child_widths(children, self.trivia)
         } else {
-            vec![align::NodeWidths::default(); nodes.len()]
+            vec![align::NodeWidths::default(); children.len()]
         };
-        for (i, n) in nodes.iter().enumerate() {
-            self.emit_trivia_before(n.span.start, depth);
-            self.emit_node(n, depth, widths[i]);
+        for (i, c) in children.iter().enumerate() {
+            let span = child_span(c);
+            self.emit_trivia_before(span.start, depth);
+            match c {
+                Child::Box(n) => self.emit_node(n, depth, widths[i]),
+                Child::Text(t) => {
+                    self.indent(depth);
+                    self.emit_string(&t.text);
+                }
+            }
             self.out.push('\n');
-            self.cursor = n.span.end;
+            self.cursor = span.end;
         }
     }
 
@@ -226,11 +233,6 @@ impl Emitter<'_> {
         } else if w.ty > 0 {
             self.space_if(wrote);
             pad(self.out, w.ty);
-            wrote = true;
-        }
-        for label in &node.labels {
-            self.space_if(wrote);
-            self.emit_string(label);
             wrote = true;
         }
         for class in &node.classes {
@@ -280,23 +282,32 @@ impl Emitter<'_> {
         self.trivia.iter().any(|t| t.pos >= start && t.pos < end)
     }
 
-    /// Try to collapse a declarations-only block onto the current line —
-    /// ` { a; b; }`. Returns `true` (and keeps it) when there's no comment/blank
-    /// inside and the finished line fits [`MAX_LINE`]; otherwise emits nothing
-    /// and returns `false`, so the caller falls through to the multi-line form.
-    /// `end` is the block's source end (no trivia past the decls, by the check).
-    fn try_inline_block(&mut self, decls: &[&Decl], end: usize) -> bool {
+    /// Try to collapse a body of declarations + bare-text labels onto the current
+    /// line — ` { cell: 1 1; "Cat" }`. Restores and returns `false` if there's a
+    /// comment/blank inside or the finished line exceeds [`MAX_LINE`], so the
+    /// caller falls through to the multi-line form. A box child or internal wire
+    /// is the caller's cue never to try.
+    fn try_inline(&mut self, decls: &[Decl], texts: &[&str], end: usize) -> bool {
         if self.has_trivia_between(self.cursor, end) {
             return false;
         }
         let line_start = self.out.rfind('\n').map_or(0, |i| i + 1);
         let saved = self.out.len();
         self.out.push_str(" { ");
-        for (i, d) in decls.iter().enumerate() {
-            if i > 0 {
+        let mut first = true;
+        for d in decls {
+            if !first {
                 self.out.push(' ');
             }
             self.emit_decl(d, false);
+            first = false;
+        }
+        for t in texts {
+            if !first {
+                self.out.push(' ');
+            }
+            self.emit_string(t);
+            first = false;
         }
         self.out.push_str(" }");
         if self.out.len() - line_start <= MAX_LINE {
@@ -309,21 +320,25 @@ impl Emitter<'_> {
     }
 
     fn emit_block(&mut self, block: &Block, end: usize, depth: usize) {
-        let empty = block.decls.is_empty() && block.nodes.is_empty() && block.wires.is_empty();
+        let empty = block.decls.is_empty() && block.children.is_empty() && block.wires.is_empty();
         if empty && !self.has_comment_in(self.cursor, end) {
             self.out.push_str(" {}");
             self.cursor = end;
             return;
         }
-        let decls: Vec<&Decl> = block.decls.iter().collect();
-        // A block with a child node or wire always breaks; a declarations-only
-        // body may collapse onto one line when it fits.
-        if block.nodes.is_empty() && block.wires.is_empty() && self.try_inline_block(&decls, end) {
-            return;
+        // A box child or internal wire forces the multi-line form; a body of only
+        // declarations and bare text may collapse onto one line when it fits.
+        let has_box = block.children.iter().any(|c| matches!(c, Child::Box(_)));
+        if !has_box && block.wires.is_empty() {
+            let texts = text_strs(&block.children);
+            if self.try_inline(&block.decls, &texts, end) {
+                return;
+            }
         }
         self.out.push_str(" {\n");
+        let decls: Vec<&Decl> = block.decls.iter().collect();
         self.emit_grouped_decls(&decls, depth + 1);
-        self.emit_nodes(&block.nodes, depth + 1);
+        self.emit_children(&block.children, depth + 1);
         for wire in &block.wires {
             self.emit_trivia_before(wire.span.start, depth + 1);
             self.emit_wire(wire, depth + 1);
@@ -342,11 +357,11 @@ impl Emitter<'_> {
             self.cursor = end;
             return;
         }
-        let refs: Vec<&Decl> = decls.iter().collect();
-        if self.try_inline_block(&refs, end) {
+        if self.try_inline(decls, &[], end) {
             return;
         }
         self.out.push_str(" {\n");
+        let refs: Vec<&Decl> = decls.iter().collect();
         self.emit_grouped_decls(&refs, depth + 1);
         self.emit_trivia_before(end, depth + 1);
         self.indent(depth);
@@ -370,10 +385,6 @@ impl Emitter<'_> {
                 self.emit_endpoint(ep);
             }
         }
-        for label in &w.labels {
-            self.out.push(' ');
-            self.emit_string(label);
-        }
         for class in &w.classes {
             self.out.push_str(" .");
             self.out.push_str(class);
@@ -392,45 +403,26 @@ impl Emitter<'_> {
     }
 
     fn emit_wire_block(&mut self, block: &WireBlock, end: usize, depth: usize) {
-        let empty = block.decls.is_empty() && block.texts.is_empty();
+        let empty = block.decls.is_empty() && block.labels.is_empty();
         if empty && !self.has_comment_in(self.cursor, end) {
             self.out.push_str(" {}");
             self.cursor = end;
             return;
         }
-        let decls: Vec<&Decl> = block.decls.iter().collect();
-        if block.texts.is_empty() && self.try_inline_block(&decls, end) {
-            return;
+        let has_box = block.labels.iter().any(|c| matches!(c, Child::Box(_)));
+        if !has_box {
+            let texts = text_strs(&block.labels);
+            if self.try_inline(&block.decls, &texts, end) {
+                return;
+            }
         }
         self.out.push_str(" {\n");
+        let decls: Vec<&Decl> = block.decls.iter().collect();
         self.emit_grouped_decls(&decls, depth + 1);
-        for t in &block.texts {
-            self.emit_trivia_before(t.span.start, depth + 1);
-            self.indent(depth + 1);
-            self.emit_text_child(t);
-            self.out.push('\n');
-            self.cursor = t.span.end;
-        }
+        self.emit_children(&block.labels, depth + 1);
         self.emit_trivia_before(end, depth + 1);
         self.indent(depth);
         self.out.push('}');
-    }
-
-    fn emit_text_child(&mut self, t: &TextChild) {
-        self.out.push_str("|text| ");
-        self.emit_string(&t.text);
-        for class in &t.classes {
-            self.out.push_str(" .");
-            self.out.push_str(class);
-        }
-        if !t.decls.is_empty() {
-            self.out.push_str(" {");
-            for d in &t.decls {
-                self.out.push(' ');
-                self.emit_decl(d, false);
-            }
-            self.out.push_str(" }");
-        }
     }
 
     // ───────── Declarations & values ─────────
@@ -565,6 +557,25 @@ fn pad(out: &mut String, n: usize) {
     for _ in 0..n {
         out.push(' ');
     }
+}
+
+fn child_span(c: &Child) -> Span {
+    match c {
+        Child::Box(n) => n.span,
+        Child::Text(t) => t.span,
+    }
+}
+
+/// The bare-text labels among a body's children, in order — used to test whether
+/// the body fits inline (boxes are checked separately by the caller).
+fn text_strs(children: &[Child]) -> Vec<&str> {
+    children
+        .iter()
+        .filter_map(|c| match c {
+            Child::Text(t) => Some(t.text.as_str()),
+            Child::Box(_) => None,
+        })
+        .collect()
 }
 
 fn format_number(n: f64) -> String {

@@ -1,18 +1,21 @@
-// A group's positional labels desugar by position (SPEC §8): 1st a top caption,
-// 2nd a bottom footer, the rest centred. link: wraps a shape in <a href>.
+// A group's title is an explicit |caption| (SPEC §8): mounted inside the top by
+// default, a footer with side: bottom. link: wraps a shape in <a href>.
 
 layout: row; gap: 32; padding: 20; align: start;
 
-card |group| "Profile" {
+card |group| {
   layout: column; gap: 10;
-  name |box| "Ada Lovelace"
-  role |box| "Engineer"
+  |caption| { "Profile" }
+  name |box| { "Ada Lovelace" }
+  role |box| { "Engineer" }
 }
 
-panel |group| "Sales" "Q3 2026" {
+panel |group| {
   layout: column; gap: 10;
-  a |box| "Plan"
-  b |box| "Actual"
+  |caption| { "Sales" }
+  |caption| { side: bottom; "Q3 2026" }
+  a |box| { "Plan" }
+  b |box| { "Actual" }
 }
 
-docs |box| "Docs" { link: "https://example.com"; width: 120; height: 48; }
+docs |box| { link: "https://example.com"; width: 120; height: 48; "Docs" }

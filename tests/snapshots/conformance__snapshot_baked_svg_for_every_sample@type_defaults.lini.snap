@@ -3,29 +3,29 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/type_defaults.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-120.15 -42 240.3 84" width="240.3" height="84" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-125.1 -43.5 250.45 87" width="250.45" height="87" class="lini">
   <style>
     .lini { font-family: sans-serif; font-size: 14px; color: black; }
     .lini .lini-shape-box { fill: white; stroke: #444; stroke-width: 1; stroke-dasharray: none; }
     .lini .lini-shape-oval { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-shape-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; font-size: 11px; font-weight: bold; }
+    .lini .lini-shape-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-shape-alert { stroke: red; }
   </style>
   <defs/>
   <g class="lini-scene">
-    <g class="lini-node lini-shape-box" data-id="cat" transform="translate(-74.575,0)">
-      <rect x="-25.075" y="-21.5" width="50.15" height="43" rx="6" ry="6"/>
+    <g class="lini-node lini-shape-box" data-id="cat" transform="translate(-77.05,0)">
+      <rect x="-27.55" y="-23" width="55.1" height="46" rx="6" ry="6"/>
       <g class="lini-node lini-shape-text" transform="translate(0,0)">
         <text x="0" y="0">Cat</text>
       </g>
     </g>
-    <g class="lini-node lini-shape-box" data-id="dog" transform="translate(6.575,0)">
-      <rect x="-25.075" y="-21.5" width="50.15" height="43" rx="0" ry="0"/>
+    <g class="lini-node lini-shape-box" data-id="dog" transform="translate(9.05,0)">
+      <rect x="-27.55" y="-23" width="55.1" height="46" rx="0" ry="0"/>
       <g class="lini-node lini-shape-text" transform="translate(0,0)">
         <text x="0" y="0">Dog</text>
       </g>
     </g>
-    <g class="lini-node lini-shape-alert lini-shape-oval" data-id="mouse" transform="translate(81.15,0)">
+    <g class="lini-node lini-shape-alert lini-shape-oval" data-id="mouse" transform="translate(86.1,0)">
       <ellipse cx="0" cy="0" rx="18" ry="18"/>
       <g class="lini-node lini-shape-text" transform="translate(0,0)">
         <text x="0" y="0">Mouse</text>

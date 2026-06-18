@@ -62,10 +62,11 @@ fn err_invalid_hex_color() {
 }
 
 #[test]
-fn err_wire_body_non_text() {
+fn err_wire_body_holds_only_labels() {
+    // A wire body holds labels (text / |plain|) and `along:` — not a nested wire.
     assert_parse_error(
-        "a |box|\nb |box|\na -> b { |box| \"oops\" }\n",
-        "only |text| children",
+        "a |box|\nb |box|\na -> b { c -> d }\n",
+        "only labels and 'along:'",
     );
 }
 

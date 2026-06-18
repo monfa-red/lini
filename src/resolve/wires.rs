@@ -13,7 +13,7 @@ use super::scene::{PathIndex, SceneCtx};
 use super::value::resolve_groups;
 use crate::ast::LineStyle;
 use crate::error::Error;
-use crate::syntax::ast::{Endpoint, EndpointGroup, Wire};
+use crate::syntax::ast::{Child, Endpoint, EndpointGroup, Wire};
 
 /// Resolve one wire statement into one resolved wire per cartesian pair.
 /// `path_prefix` scopes a lifted internal wire to its host instance;
@@ -53,40 +53,20 @@ pub fn resolve_wire(
     let mut attrs = collapse(&ordered);
     inject_line_style(&mut attrs, w.op.line);
 
-    // Labels: inline (auto-distributed) then body `|text|` children.
+    // `along:` distributes the labels along the drawn route (SPEC §9): one
+    // fraction (0..1) per label, in order; an absent fraction is `Auto` (the
+    // router spreads it). It is a placement directive, not a paint attr.
+    let along: Vec<f64> = attrs.get("along").map(collect_fractions).unwrap_or_default();
+    attrs.map.remove("along");
+
+    // Labels are bare strings or `|plain|` boxes (a styled / offset label).
     let mut texts: Vec<ResolvedText> = Vec::new();
-    for label in &w.labels {
-        texts.push(ResolvedText {
-            text: label.clone(),
-            at: WireAt::Auto,
-            attrs: wire_text_attrs(AttrMap::new(), ctx.vars),
-        });
-    }
     if let Some(block) = &w.block {
-        for t in &block.texts {
-            let mut at = WireAt::Auto;
-            let mut map = AttrMap::new();
-            for d in &t.decls {
-                let value = resolve_groups(&d.groups, d.span, ctx.vars)?;
-                match d.name.as_str() {
-                    "at" => {
-                        at = wire_at(&value).ok_or_else(|| {
-                            Error::at(d.span, "wire labels accept only 'at' (0..1) and 'offset'")
-                        })?
-                    }
-                    "width" | "height" => {
-                        return Err(Error::at(
-                            d.span,
-                            format!("'{}' is not a text property; use 'font-size'", d.name),
-                        ));
-                    }
-                    _ => {
-                        map.insert(d.name.clone(), value);
-                    }
-                }
-            }
+        for (i, label) in block.labels.iter().enumerate() {
+            let at = along.get(i).copied().map_or(WireAt::Auto, WireAt::Fraction);
+            let (text, map) = resolve_wire_label(label, ctx)?;
             texts.push(ResolvedText {
-                text: t.text.clone(),
+                text,
                 at,
                 attrs: wire_text_attrs(map, ctx.vars),
             });
@@ -145,12 +125,41 @@ fn inject_line_style(attrs: &mut AttrMap, line: LineStyle) {
     }
 }
 
-/// A wire label's `at` is a route fraction in 0..1 (SPEC §9); anything else is
-/// rejected by the caller.
-fn wire_at(value: &ResolvedValue) -> Option<WireAt> {
-    match value {
-        ResolvedValue::Number(n) if (0.0..=1.0).contains(n) => Some(WireAt::Fraction(*n)),
-        _ => None,
+/// The `along:` value as a list of route fractions — one number, or a group.
+fn collect_fractions(v: &ResolvedValue) -> Vec<f64> {
+    match v {
+        ResolvedValue::Number(n) => vec![*n],
+        ResolvedValue::Tuple(xs) | ResolvedValue::List(xs) => {
+            xs.iter().filter_map(ResolvedValue::as_number).collect()
+        }
+        _ => Vec::new(),
+    }
+}
+
+/// A wire label's text and per-label attrs (SPEC §9): a bare string carries no
+/// styling; a `|plain|` box contributes its first string as the text and its
+/// declarations (`offset`, `font-*`, `color`) as the attrs.
+fn resolve_wire_label(label: &Child, ctx: &SceneCtx) -> Result<(String, AttrMap), Error> {
+    match label {
+        Child::Text(t) => Ok((t.text.clone(), AttrMap::new())),
+        Child::Box(n) => {
+            let block = n.block.as_ref();
+            let text = block
+                .and_then(|b| {
+                    b.children.iter().find_map(|c| match c {
+                        Child::Text(t) => Some(t.text.clone()),
+                        Child::Box(_) => None,
+                    })
+                })
+                .unwrap_or_default();
+            let mut map = AttrMap::new();
+            if let Some(b) = block {
+                for d in &b.decls {
+                    map.insert(d.name.clone(), resolve_groups(&d.groups, d.span, ctx.vars)?);
+                }
+            }
+            Ok((text, map))
+        }
     }
 }
 

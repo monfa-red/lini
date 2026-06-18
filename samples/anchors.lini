@@ -1,17 +1,18 @@
 // Positioning (SPEC §6): side picks an edge, align slides along it, mount
 // decides reserve vs overlay. `on` is an overlay that straddles the edge/corner.
+// To place text, wrap it in a |plain| and position the box.
 
 padding: 40;
 
 frame |box| {
   width: 240; height: 150; fill: #eee;
-  |text| "C" { at: 0 0; fill: green; }
-  |text| "T<" { side: top; align: start; mount: on; fill: red; }
-  |text| "T" { side: top; mount: on; fill: red; }
-  |text| "T>" { side: top; align: end; mount: on; fill: red; }
-  |text| "L" { side: left; mount: on; fill: red; }
-  |text| "R" { side: right; mount: on; fill: red; }
-  |text| "BL" { side: bottom; align: start; mount: on; fill: blue; }
-  |text| "B" { side: bottom; mount: on; fill: blue; }
-  |text| "BR" { side: bottom; align: end; mount: on; fill: blue; }
+  |plain| { at: 0 0; fill: green; "C" }
+  |plain| { side: top; align: start; mount: on; fill: red; "T<" }
+  |plain| { side: top; mount: on; fill: red; "T" }
+  |plain| { side: top; align: end; mount: on; fill: red; "T>" }
+  |plain| { side: left; mount: on; fill: red; "L" }
+  |plain| { side: right; mount: on; fill: red; "R" }
+  |plain| { side: bottom; align: start; mount: on; fill: blue; "BL" }
+  |plain| { side: bottom; mount: on; fill: blue; "B" }
+  |plain| { side: bottom; align: end; mount: on; fill: blue; "BR" }
 }

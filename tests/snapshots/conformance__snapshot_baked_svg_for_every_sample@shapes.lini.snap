@@ -3,32 +3,33 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/shapes.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-65.5 -155.5 131 311" width="131" height="311" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-65.5 -156 131 312" width="131" height="312" class="lini">
   <style>
     .lini { font-family: sans-serif; font-size: 14px; color: black; }
     .lini .lini-shape-box { fill: white; stroke: #444; stroke-width: 1; stroke-dasharray: none; }
     .lini .lini-shape-slant { fill: white; stroke: #444; stroke-width: 1; stroke-dasharray: none; }
     .lini .lini-shape-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-shape-icon { fill: #444; }
+    .lini .lini-shape-plain { fill: none; stroke: none; }
     .lini .lini-shape-group { fill: rgba(0, 0, 0, 0.03); stroke: #bbb; }
     .lini .lini-shape-caption { font-size: 13px; }
     .lini .lini-shape-nest { fill: gray; }
   </style>
   <defs/>
   <g class="lini-scene">
-    <g class="lini-node lini-shape-treat lini-shape-box" transform="translate(0,-112)">
+    <g class="lini-node lini-shape-treat lini-shape-box" transform="translate(0,-112.5)">
       <rect x="-35.25" y="-23" width="70.5" height="46" rx="5" ry="5"/>
       <g class="lini-node lini-shape-text" transform="translate(0,0)">
         <text x="0" y="0">Treat</text>
       </g>
     </g>
-    <g class="lini-node lini-shape-nest lini-shape-slant" transform="translate(0,-45)">
+    <g class="lini-node lini-shape-nest lini-shape-slant" transform="translate(0,-45.5)">
       <polygon points="-25.2372,-23 37.5628,-23 25.2372,23 -37.5628,23"/>
       <g class="lini-node lini-shape-text" transform="translate(0,0)">
         <text x="0" y="0">Nest</text>
       </g>
     </g>
-    <g class="lini-node lini-shape-group lini-shape-box" data-id="toolbox" transform="translate(0,27)">
+    <g class="lini-node lini-shape-group lini-shape-box" data-id="toolbox" transform="translate(0,26.5)">
       <rect x="-45" y="-28" width="90" height="56" rx="6" ry="6"/>
       <g class="lini-node lini-shape-icon" transform="translate(-17,0)">
         <rect x="-12" y="-12" width="24" height="24" fill="none" stroke="#444" stroke-width="1"/>
@@ -40,11 +41,14 @@ input_file: samples/shapes.lini
       </g>
     </g>
     <g class="lini-node lini-shape-group lini-shape-box" data-id="den" transform="translate(0,105.5)">
-      <rect x="-38.95" y="-29.5" width="77.9" height="59" rx="6" ry="6"/>
-      <g class="lini-node lini-shape-caption lini-shape-text" style="font-weight: bold" transform="translate(0,-11)">
-        <text x="0" y="0">Title</text>
+      <rect x="-38.95" y="-30" width="77.9" height="60" rx="6" ry="6"/>
+      <g class="lini-node lini-shape-caption lini-shape-plain lini-shape-box" style="font-weight: bold" transform="translate(0,-11)">
+        <rect x="-17.875" y="-6.5" width="35.75" height="13" rx="0" ry="0"/>
+        <g class="lini-node lini-shape-text" style="font-size: 13px; font-weight: bold" transform="translate(0,0)">
+          <text x="0" y="0">Title</text>
+        </g>
       </g>
-      <g class="lini-node lini-shape-text" transform="translate(0,10.5)">
+      <g class="lini-node lini-shape-text" transform="translate(0,11)">
         <text x="0" y="0">Content</text>
       </g>
     </g>

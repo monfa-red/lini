@@ -15,7 +15,7 @@ use super::wires;
 use super::defaults;
 use crate::error::Error;
 use crate::span::Span;
-use crate::syntax::ast::{Decl, Define, File, Node, Rule, SelPart, Selector, StyleItem, Value};
+use crate::syntax::ast::{Decl, Define, File, Node, Rule, SelPart, StyleItem};
 use std::collections::{HashMap, HashSet};
 
 /// Resolve a parsed v4 file into a [`Program`].
@@ -202,10 +202,10 @@ fn auto_created(index: &PathIndex, file: &File) -> Vec<Node> {
 }
 
 fn auto_rect(id: &str, span: Span) -> Node {
+    // No block → id-as-label gives it the id as its centred text (SPEC §3).
     Node {
         id: Some(id.to_string()),
         ty: Some("box".to_string()),
-        labels: vec![id.to_string()],
         classes: Vec::new(),
         block: None,
         span,
@@ -214,28 +214,11 @@ fn auto_rect(id: &str, span: Span) -> Node {
 
 // ─────────────────────────── Built-in rules ───────────────────────────
 
-/// The rules that ship with the language. Today: `table box { … }` makes table
-/// cells borderless, padded, and track-filling (SPEC §8).
+/// The rules that ship with the language. None today: `|table|` cells are bare
+/// text that auto-flows and centres in its track (SPEC §8), so there is no
+/// `table box` cell rule — table paint lives in the `table` template bundle.
 fn builtin_rules() -> Vec<Rule> {
-    let sp = Span::empty();
-    let decl = |name: &str, groups: Vec<Vec<Value>>| Decl {
-        name: name.into(),
-        groups,
-        span: sp,
-    };
-    vec![Rule {
-        selector: Selector {
-            parts: vec![SelPart::Type("table".into()), SelPart::Type("box".into())],
-            span: sp,
-        },
-        decls: vec![
-            decl("stroke-width", vec![vec![Value::Number(0.0)]]),
-            decl("padding", vec![vec![Value::Number(4.0), Value::Number(8.0)]]),
-            decl("align", vec![vec![Value::Ident("stretch".into())]]),
-            decl("justify", vec![vec![Value::Ident("stretch".into())]]),
-        ],
-        span: sp,
-    }]
+    Vec::new()
 }
 
 // ─────────────────────────── Render inputs ───────────────────────────
@@ -330,10 +313,10 @@ mod tests {
 
     #[test]
     fn descendant_rule_matches_a_nested_node() {
-        let p = rv4("table box { fill: gray; }\nt |table| {\n  \"A\"\n}\n");
-        // The cell `"A"` is a box inside the table; the descendant rule paints it.
-        let cell = &p.scene.nodes[0].children[0];
-        assert!(matches!(cell.attrs.get("fill"), Some(ResolvedValue::Ident(s)) if s == "gray"));
+        let p = rv4("group box { fill: gray; }\ng |group| {\n  a |box|\n}\n");
+        // `a` is a box inside the group; the descendant rule paints it.
+        let a = &p.scene.nodes[0].children[0];
+        assert!(matches!(a.attrs.get("fill"), Some(ResolvedValue::Ident(s)) if s == "gray"));
     }
 
     #[test]
@@ -350,28 +333,37 @@ mod tests {
     }
 
     #[test]
-    fn group_caption_sugar_makes_a_caption_child() {
-        let p = rv4("g |group| \"Title\"\n");
-        let cap = &p.scene.nodes[0].children[0];
-        assert_eq!(cap.shape, ShapeKind::Text);
-        assert!(cap.type_chain.iter().any(|t| t == "caption"));
-        assert_eq!(cap.label.as_deref(), Some("Title"));
-        assert!(matches!(cap.attrs.get("mount"), Some(ResolvedValue::Ident(s)) if s == "in"));
+    fn id_becomes_a_centred_label() {
+        // SPEC §3: a leaf box with no block text shows its id as a text child.
+        let p = rv4("cat |box|\n");
+        let label = &p.scene.nodes[0].children[0];
+        assert_eq!(label.shape, ShapeKind::Text);
+        assert_eq!(label.label.as_deref(), Some("cat"));
     }
 
     #[test]
-    fn group_second_label_is_a_bottom_footer() {
-        let p = rv4("g |group| \"Head\" \"Foot\"\n");
-        let foot = &p.scene.nodes[0].children[1];
-        assert_eq!(foot.label.as_deref(), Some("Foot"));
-        assert!(matches!(foot.attrs.get("side"), Some(ResolvedValue::Ident(s)) if s == "bottom"));
+    fn an_empty_label_suppresses_the_id() {
+        // SPEC §3: `{ "" }` is content, so it overrides id-as-label with nothing.
+        let p = rv4("cat |box| { \"\" }\n");
+        assert!(p.scene.nodes[0].children.is_empty());
+    }
+
+    #[test]
+    fn explicit_caption_is_a_box_mounted_in() {
+        // SPEC §8: a caption is a `|plain|`-based box mounted inside an edge, with
+        // its title as a text child — no positional magic.
+        let p = rv4("g |group| {\n  |caption| { \"Title\" }\n}\n");
+        let cap = &p.scene.nodes[0].children[0];
+        assert!(cap.type_chain.iter().any(|t| t == "caption"));
+        assert!(matches!(cap.attrs.get("mount"), Some(ResolvedValue::Ident(s)) if s == "in"));
+        assert_eq!(cap.children[0].label.as_deref(), Some("Title"));
     }
 
     #[test]
     fn icon_label_is_the_glyph_name_not_a_child() {
-        // SPEC §7: an icon's positional label is its glyph name, carried on the
-        // node — never expanded into a stacked |text| child.
-        let p = rv4("i |icon| \"home\"\n");
+        // SPEC §7: an icon's text is its glyph name, carried on the node — never a
+        // rendered text child.
+        let p = rv4("i |icon| { \"home\" }\n");
         assert_eq!(p.scene.nodes[0].shape, ShapeKind::Icon);
         assert_eq!(p.scene.nodes[0].label.as_deref(), Some("home"));
         assert!(p.scene.nodes[0].children.is_empty());
@@ -379,7 +371,7 @@ mod tests {
 
     #[test]
     fn text_properties_inherit_to_descendants() {
-        let p = rv4("g |group| {\n  font-size: 10;\n  t |text| \"hi\"\n}\n");
+        let p = rv4("g |group| {\n  font-size: 10;\n  \"hi\"\n}\n");
         let t = &p.scene.nodes[0].children[0];
         assert_eq!(t.shape, ShapeKind::Text);
         assert_eq!(t.attrs.number("font-size"), Some(10.0));
@@ -387,7 +379,7 @@ mod tests {
 
     #[test]
     fn define_body_materializes_per_instance() {
-        let p = rv4("room::group {\n  inlet |box| \"In\"\n}\nr |room|\n");
+        let p = rv4("room::group {\n  inlet |box|\n}\nr |room|\n");
         let inlet = &p.scene.nodes[0].children[0];
         assert_eq!(inlet.id.as_deref(), Some("inlet"));
     }

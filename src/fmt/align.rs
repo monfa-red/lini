@@ -1,14 +1,14 @@
-//! Column alignment for sibling instances (SPEC §14): within a run of nodes
-//! with no blank line between them, the id and `|type|` columns line up so the
-//! labels start at the same offset. A blank line starts a fresh group.
+//! Column alignment for sibling boxes (SPEC §14): within a run of children with
+//! no blank line between them, the id and `|type|` columns of the *boxes* line
+//! up so their blocks start at the same offset. Bare-text children don't carry
+//! id/type, so they take no alignment. A blank line starts a fresh group.
 //!
-//! Aligning the anonymous string *cells* of a table into visual columns (the
-//! flat table form) waits on the parser accepting multiple node statements per
-//! line — until then each cell is its own line and needs no horizontal
-//! alignment.
+//! Aligning a table's bare-text *cells* into visual columns (the flat table
+//! form) is the formatter's table pass (SPEC §8), separate from this.
 
 use super::trivia::{Trivia, TriviaToken};
-use crate::syntax::ast::Node;
+use crate::span::Span;
+use crate::syntax::ast::Child;
 
 #[derive(Default, Clone, Copy)]
 pub struct NodeWidths {
@@ -18,18 +18,20 @@ pub struct NodeWidths {
     pub ty: usize,
 }
 
-/// Per-node alignment widths: nodes sharing a blank-line-free group share the
-/// group's max id / type widths.
-pub fn node_widths(nodes: &[Node], trivia: &[TriviaToken]) -> Vec<NodeWidths> {
-    let mut out = vec![NodeWidths::default(); nodes.len()];
-    for group in split_groups(nodes, trivia) {
+/// Per-child alignment widths: boxes sharing a blank-line-free group share the
+/// group's max id / type widths; text children get zeros.
+pub fn child_widths(children: &[Child], trivia: &[TriviaToken]) -> Vec<NodeWidths> {
+    let mut out = vec![NodeWidths::default(); children.len()];
+    for group in split_groups(children, trivia) {
         let mut w = NodeWidths::default();
         for &i in &group {
-            if let Some(id) = &nodes[i].id {
-                w.id = w.id.max(id.len());
-            }
-            if let Some(ty) = &nodes[i].ty {
-                w.ty = w.ty.max(ty.len() + 2); // |type|
+            if let Child::Box(n) = &children[i] {
+                if let Some(id) = &n.id {
+                    w.id = w.id.max(id.len());
+                }
+                if let Some(ty) = &n.ty {
+                    w.ty = w.ty.max(ty.len() + 2); // |type|
+                }
             }
         }
         for i in group {
@@ -39,15 +41,15 @@ pub fn node_widths(nodes: &[Node], trivia: &[TriviaToken]) -> Vec<NodeWidths> {
     out
 }
 
-/// Index groups of consecutive nodes uninterrupted by a blank line.
-fn split_groups(nodes: &[Node], trivia: &[TriviaToken]) -> Vec<Vec<usize>> {
-    if nodes.is_empty() {
+/// Index groups of consecutive children uninterrupted by a blank line.
+fn split_groups(children: &[Child], trivia: &[TriviaToken]) -> Vec<Vec<usize>> {
+    if children.is_empty() {
         return Vec::new();
     }
     let mut groups: Vec<Vec<usize>> = vec![vec![0]];
-    for i in 1..nodes.len() {
-        let prev_end = nodes[i - 1].span.end;
-        let curr_start = nodes[i].span.start;
+    for i in 1..children.len() {
+        let prev_end = child_span(&children[i - 1]).end;
+        let curr_start = child_span(&children[i]).start;
         let blank = trivia.iter().any(|t| {
             matches!(t.kind, Trivia::BlankLine) && t.pos >= prev_end && t.pos < curr_start
         });
@@ -58,4 +60,11 @@ fn split_groups(nodes: &[Node], trivia: &[TriviaToken]) -> Vec<Vec<usize>> {
         }
     }
     groups
+}
+
+fn child_span(c: &Child) -> Span {
+    match c {
+        Child::Box(n) => n.span,
+        Child::Text(t) => t.span,
+    }
 }

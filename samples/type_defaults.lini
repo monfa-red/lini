@@ -4,11 +4,10 @@
 layout: row; gap: 30; padding: 20;
 
 box { radius: 6; }
-text { font-size: 11; font-weight: bold; }
 oval { stroke: #444; stroke-width: 2; }
 
 alert::oval { stroke: red; width: 36; height: 36; }
 
-cat   |box|  "Cat"
-dog   |box|  "Dog" { radius: 0; }
-mouse |alert| "Mouse"
+cat   |box|   { "Cat" }
+dog   |box|   { radius: 0; "Dog" }
+mouse |alert| { "Mouse" }

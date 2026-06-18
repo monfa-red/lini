@@ -1,127 +1,99 @@
-//! `lini desugar` (SPEC §14): expand the surface sugar — a node's positional
-//! labels into `|caption|` / `|text|` children, a wire's inline labels into
-//! `|text|` children — into the explicit form they stand for, then re-print.
-//! Types, variables, and properties stay as written; comments are not preserved.
-//! A teaching / debugging view, never a rewrite.
+//! `lini desugar` (SPEC §14): expand the surface sugar — a box's id-as-label
+//! into an explicit `{ "id" }` text child, a wire's auto-distributed labels into
+//! an explicit `along:` — into the form it stands for, then re-print. Types,
+//! variables, and properties stay as written; comments are not preserved. A
+//! teaching / debugging view, never a rewrite.
 
 use crate::resolve::type_chain_contains;
-use crate::span::Span;
-use crate::syntax::ast::{Block, Decl, File, Node, TextChild, Value, Wire, WireBlock};
+use crate::syntax::ast::{Block, Child, Decl, File, Node, TextNode, Value, Wire, WireBlock};
 
-/// Expand label/wire sugar across the whole file. The stylesheet is untouched —
-/// only instances and wires carry the positional-label sugar.
+/// Expand the surface sugar across the whole file. The stylesheet is untouched.
 pub fn desugar(file: &File) -> File {
     File {
         stylesheet: file.stylesheet.clone(),
-        instances: file.instances.iter().map(|n| desugar_node(n, file)).collect(),
+        instances: file.instances.iter().map(|c| desugar_child(c, file)).collect(),
         wires: file.wires.iter().map(desugar_wire).collect(),
+    }
+}
+
+fn desugar_child(child: &Child, file: &File) -> Child {
+    match child {
+        Child::Box(n) => Child::Box(desugar_node(n, file)),
+        Child::Text(t) => Child::Text(t.clone()),
     }
 }
 
 fn desugar_node(node: &Node, file: &File) -> Node {
     let ty = node.ty.as_deref().unwrap_or("box");
-    // A text-derived type (`|text|`, `|caption|`, …) keeps its label as content
-    // and an `|icon|` keeps it as the glyph name (SPEC §7) — neither expands, so
-    // a second pass is a no-op. Every other type's positional labels become
-    // children.
-    let consumes_label =
-        type_chain_contains(ty, "text", file) || type_chain_contains(ty, "icon", file);
-    let expand = !consumes_label && !node.labels.is_empty();
 
-    let mut nodes = if expand {
-        let is_group = type_chain_contains(ty, "group", file);
-        label_sugar(&node.labels, is_group, node.span)
-    } else {
-        Vec::new()
-    };
-    if let Some(block) = &node.block {
-        nodes.extend(block.nodes.iter().map(|c| desugar_node(c, file)));
+    let mut children: Vec<Child> = node
+        .block
+        .as_ref()
+        .map(|b| b.children.iter().map(|c| desugar_child(c, file)).collect())
+        .unwrap_or_default();
+
+    // id-as-label (SPEC §3): a leaf box with no content of its own shows its id.
+    // An `|icon|` consumes its text as the glyph name, and a container (group /
+    // table / group-based define) holds its children — neither expands.
+    let is_icon = type_chain_contains(ty, "icon", file);
+    let is_container = type_chain_contains(ty, "group", file);
+    let leaf = children.is_empty();
+    if leaf && !is_icon && !is_container && let Some(id) = &node.id {
+        children.push(Child::Text(TextNode { text: id.clone(), span: node.span }));
     }
 
     let decls = node.block.as_ref().map(|b| b.decls.clone()).unwrap_or_default();
     let wires = node.block.as_ref().map(|b| b.wires.clone()).unwrap_or_default();
-    let block = if decls.is_empty() && nodes.is_empty() && wires.is_empty() {
+    let block = if decls.is_empty() && children.is_empty() && wires.is_empty() {
         node.block.clone() // preserve a `{}` vs. no block
     } else {
-        Some(Block { decls, nodes, wires })
+        Some(Block { decls, children, wires })
     };
 
     Node {
         id: node.id.clone(),
         ty: node.ty.clone(),
-        labels: if expand { Vec::new() } else { node.labels.clone() },
         classes: node.classes.clone(),
         block,
         span: node.span,
     }
 }
 
-/// A host's positional labels as explicit child nodes (mirrors the resolver's
-/// own expansion, SPEC §8): a group's 1st label is a top `|caption|`, its 2nd a
-/// bottom `|caption|` (`side: bottom`), the rest plain `|text|`; every other
-/// shape stacks all labels as `|text|`.
-fn label_sugar(labels: &[String], is_group: bool, span: Span) -> Vec<Node> {
-    labels
-        .iter()
-        .enumerate()
-        .map(|(i, label)| {
-            let (ty, footer) = match (is_group, i) {
-                (true, 0) => ("caption", false),
-                (true, 1) => ("caption", true),
-                _ => ("text", false),
-            };
-            let block = footer.then(|| Block {
-                decls: vec![ident_decl("side", "bottom", span)],
-                nodes: Vec::new(),
-                wires: Vec::new(),
-            });
-            Node {
-                id: None,
-                ty: Some(ty.to_string()),
-                labels: vec![label.clone()],
-                classes: Vec::new(),
-                block,
-                span,
-            }
-        })
-        .collect()
-}
-
+/// Make a wire's auto-distributed labels explicit: add an `along:` list of even
+/// fractions when labels are present and no `along:` was written (SPEC §14).
 fn desugar_wire(w: &Wire) -> Wire {
-    if w.labels.is_empty() {
+    let Some(block) = &w.block else {
+        return w.clone();
+    };
+    let n = block.labels.len();
+    let has_along = block.decls.iter().any(|d| d.name == "along");
+    if n == 0 || has_along {
         return w.clone();
     }
-    let mut texts: Vec<TextChild> = w
-        .labels
-        .iter()
-        .map(|label| TextChild {
-            text: label.clone(),
-            classes: Vec::new(),
-            decls: Vec::new(),
-            span: w.span,
+    let fractions: Vec<Value> = (0..n)
+        .map(|i| {
+            let f = (i as f64 + 1.0) / (n as f64 + 1.0);
+            Value::Number((f * 100.0).round() / 100.0)
         })
         .collect();
-    let decls = if let Some(block) = &w.block {
-        texts.extend(block.texts.iter().cloned());
-        block.decls.clone()
-    } else {
-        Vec::new()
-    };
+    let mut decls = block.decls.clone();
+    decls.insert(
+        0,
+        Decl {
+            name: "along".to_string(),
+            groups: vec![fractions],
+            span: w.span,
+        },
+    );
     Wire {
         chain: w.chain.clone(),
         op: w.op,
-        labels: Vec::new(),
         classes: w.classes.clone(),
-        block: Some(WireBlock { decls, texts }),
+        block: Some(WireBlock {
+            decls,
+            labels: block.labels.clone(),
+        }),
         span: w.span,
-    }
-}
-
-fn ident_decl(name: &str, value: &str, span: Span) -> Decl {
-    Decl {
-        name: name.to_string(),
-        groups: vec![vec![Value::Ident(value.to_string())]],
-        span,
     }
 }
 
@@ -132,49 +104,40 @@ mod tests {
     }
 
     #[test]
-    fn rect_label_becomes_a_text_child() {
-        assert_eq!(desugar("x |box| \"hi\"\n"), "x |box| {\n  |text| \"hi\"\n}\n");
+    fn id_becomes_an_explicit_label() {
+        assert_eq!(desugar("cat |box|\n"), "cat |box| { \"cat\" }\n");
     }
 
     #[test]
-    fn group_labels_become_caption_and_footer() {
+    fn an_explicit_label_is_left_alone() {
+        assert_eq!(desugar("cat |box| { \"Cat\" }\n"), "cat |box| { \"Cat\" }\n");
+    }
+
+    #[test]
+    fn icon_glyph_is_not_expanded() {
+        assert_eq!(desugar("home |icon|\n"), "home |icon|\n");
+    }
+
+    #[test]
+    fn a_container_keeps_its_children() {
+        // A group holds its children; its id is not a label.
+        let out = desugar("g |group| {\n  a |box|\n}\n");
+        assert!(!out.contains("\"g\""), "{out}");
+        assert!(out.contains("a |box|"), "{out}");
+    }
+
+    #[test]
+    fn wire_labels_gain_an_explicit_along() {
         assert_eq!(
-            desugar("g |group| \"Head\" \"Foot\"\n"),
-            "g |group| {\n  |caption| \"Head\"\n  |caption| \"Foot\" { side: bottom; }\n}\n"
+            desugar("a -> b { \"near a\" \"near b\" }\n"),
+            "a -> b { along: 0.33 0.67; \"near a\" \"near b\" }\n"
         );
     }
 
     #[test]
-    fn text_keeps_its_own_label() {
-        assert_eq!(desugar("|text| \"raw\"\n"), "|text| \"raw\"\n");
-    }
-
-    #[test]
-    fn icon_keeps_its_glyph_label() {
-        assert_eq!(desugar("|icon| \"home\"\n"), "|icon| \"home\"\n");
-    }
-
-    #[test]
-    fn user_define_over_group_gets_captions() {
-        // panel::group derives from group, so its label is a caption.
-        let out = desugar("panel::group { }\np |panel| \"Title\"\n");
-        assert!(out.contains("|caption| \"Title\""), "{out}");
-    }
-
-    #[test]
-    fn wire_labels_become_text_children() {
-        assert_eq!(
-            desugar("a -> b \"watches\"\n"),
-            "a -> b {\n  |text| \"watches\"\n}\n"
-        );
-    }
-
-    #[test]
-    fn properties_and_existing_children_are_kept() {
-        let out = desugar("g |group| \"Cap\" {\n  fill: red;\n  a |box| \"A\"\n}\n");
-        assert!(out.contains("fill: red;"), "{out}");
-        assert!(out.contains("|caption| \"Cap\""), "{out}");
-        // the inner box's own label is expanded too
-        assert!(out.contains("a |box| {"), "{out}");
+    fn an_explicit_along_is_left_alone() {
+        let out = desugar("a -> b { along: 0.2; \"x\" }\n");
+        assert!(out.contains("along: 0.2;"), "{out}");
+        assert_eq!(out.matches("along").count(), 1, "{out}");
     }
 }

@@ -8,7 +8,7 @@ use std::process::{Command, Stdio};
 #[test]
 fn html_format_wraps_svg_in_html_doc() {
     let html = lini::compile_str_with(
-        "|box| \"x\"\n",
+        "|box| { \"x\" }\n",
         &Options {
             format: OutputFormat::Html,
             bake_vars: true,
@@ -25,7 +25,7 @@ fn html_format_wraps_svg_in_html_doc() {
 #[test]
 fn baked_output_inlines_every_var_but_keeps_shape_rules() {
     let svg = lini::compile_str_with(
-        "|box| \"x\" { fill: --accent; }\n",
+        "|box| { fill: --accent; \"x\" }\n",
         &Options {
             bake_vars: true,
             ..Default::default()
@@ -46,7 +46,7 @@ fn baked_output_inlines_every_var_but_keeps_shape_rules() {
 
 #[test]
 fn default_output_has_layered_vars_and_unlayered_rules() {
-    let svg = lini::compile_str("|box| \"x\"\n").expect("compile");
+    let svg = lini::compile_str("|box| { \"x\" }\n").expect("compile");
     assert!(svg.contains("@layer lini.defaults"), "{}", svg);
     assert!(svg.contains(".lini .lini-shape-box"), "{}", svg);
 }
@@ -67,7 +67,7 @@ fn no_defaults_flag_is_an_unknown_argument() {
 #[test]
 fn theme_overrides_visual_var_visible_in_baked_output() {
     let svg = lini::compile_str_with(
-        "|box| \"x\" { fill: --accent; }\n",
+        "|box| { fill: --accent; \"x\" }\n",
         &Options {
             theme_css: Some("--lini-accent: hotpink;".to_string()),
             bake_vars: true,
@@ -118,13 +118,13 @@ fn theme_visual_var_does_not_change_layout_baking() {
 #[test]
 fn check_with_succeeds_on_valid_input() {
     let opts = Options::default();
-    assert!(lini::check_with("|box| \"x\"\n", &opts).is_ok());
+    assert!(lini::check_with("|box| { \"x\" }\n", &opts).is_ok());
 }
 
 #[test]
 fn check_with_propagates_resolve_errors() {
     let opts = Options::default();
-    let err = lini::check_with("|nosuch| \"x\"\n", &opts).expect_err("expected error");
+    let err = lini::check_with("|nosuch| { \"x\" }\n", &opts).expect_err("expected error");
     assert!(
         err.to_string().contains("unknown type 'nosuch'"),
         "got: {}",

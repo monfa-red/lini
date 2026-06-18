@@ -640,13 +640,13 @@ mod tests {
     #[test]
     fn label_auto_sizes_to_content_plus_padding() {
         // text ~15.4 + 2×16 padding + stroke → ~48.
-        let n = &lay_out("|box| \"hi\"\n").nodes[0];
+        let n = &lay_out("|box| { \"hi\" }\n").nodes[0];
         assert!(n.bbox.w() > 40.0 && n.bbox.w() < 60.0, "w={}", n.bbox.w());
     }
 
     #[test]
     fn dims_are_independent_per_axis() {
-        let n = &lay_out("|box| \"hi\" { width: 200; }\n").nodes[0];
+        let n = &lay_out("|box| { width: 200; \"hi\" }\n").nodes[0];
         assert!((n.bbox.w() - 201.0).abs() < 0.01, "w={}", n.bbox.w());
         // height auto = one text line (14) + 32 padding + 1 stroke = 47.
         assert!((n.bbox.h() - 47.0).abs() < 0.01, "h={}", n.bbox.h());
@@ -661,7 +661,7 @@ mod tests {
 
     #[test]
     fn text_sizes_to_its_glyphs_without_padding() {
-        let n = &lay_out("|text| \"hi\"\n").nodes[0];
+        let n = &lay_out("\"hi\"\n").nodes[0];
         assert!((n.bbox.w() - 15.4).abs() < 0.5, "w={}", n.bbox.w()); // 2 × 14 × 0.55
         assert!((n.bbox.h() - 14.0).abs() < 0.5, "h={}", n.bbox.h());
     }
@@ -709,7 +709,7 @@ mod tests {
     fn group_caption_reserves_a_band_above_the_content() {
         let h = |src: &str| lay_out(src).nodes[0].bbox.h();
         let plain = h("g |group| {\n  a |box| { width: 80; height: 30; }\n}\n");
-        let capped = h("g |group| \"Cap\" {\n  a |box| { width: 80; height: 30; }\n}\n");
+        let capped = h("g |group| {\n  |caption| { \"Cap\" }\n  a |box| { width: 80; height: 30; }\n}\n");
         assert!(
             capped > plain + 10.0,
             "caption adds a band: plain={plain} capped={capped}"
@@ -718,19 +718,19 @@ mod tests {
 
     #[test]
     fn caption_sits_above_the_content() {
-        let l = lay_out("g |group| \"Cap\" {\n  a |box| { width: 80; height: 30; }\n}\n");
+        let l = lay_out("g |group| {\n  |caption| { \"Cap\" }\n  a |box| { width: 80; height: 30; }\n}\n");
         let g = &l.nodes[0];
         let cap = g
             .children
             .iter()
-            .find(|c| c.shape == ShapeKind::Text)
+            .find(|c| c.type_chain.iter().any(|t| t == "caption"))
             .expect("caption child");
-        let rect = g
+        let a = g
             .children
             .iter()
-            .find(|c| c.shape == ShapeKind::Box)
-            .expect("rect child");
-        assert!(cap.cy < rect.cy, "cap.cy={} rect.cy={}", cap.cy, rect.cy);
+            .find(|c| c.id.as_deref() == Some("a"))
+            .expect("box child");
+        assert!(cap.cy < a.cy, "cap.cy={} a.cy={}", cap.cy, a.cy);
     }
 
     // ── Flex distribution with slack (SPEC §5) ──
@@ -809,8 +809,8 @@ mod tests {
     fn grid_cell_pins_placement() {
         let l = lay_out(
             "layout: grid; columns: repeat(3);\n\
-             a |box| \"a\" { cell: 3 1; }\n\
-             b |box| \"b\"\n",
+             a |box| { cell: 3 1; }\n\
+             b |box|\n",
         );
         // a pins to column 3; b auto-flows to the first free cell (column 1).
         assert!(l.nodes[0].cx > l.nodes[1].cx, "a (col 3) right of b (col 1)");
@@ -820,8 +820,8 @@ mod tests {
     fn grid_cell_fills_its_track_under_stretch() {
         let l = lay_out(
             "layout: grid; columns: 120 120; gap: 0;\n\
-             a |box| \"x\" { justify: stretch; align: stretch; }\n\
-             b |box| \"y\"\n",
+             a |box| { justify: stretch; align: stretch; }\n\
+             b |box|\n",
         );
         assert!((l.nodes[0].bbox.w() - 120.0).abs() < 1.0, "a.w={}", l.nodes[0].bbox.w());
     }
@@ -855,12 +855,12 @@ mod tests {
     #[test]
     fn table_draws_interior_dividers_no_frame() {
         let l = lay_out(
-            "t |table| { columns: 40 40;\n  a |box| \"a\"\n  b |box| \"b\"\n  c |box| \"c\"\n  d |box| \"d\"\n}\n",
+            "t |table| { columns: 40 40;\n  \"a\" \"b\" \"c\" \"d\"\n}\n",
         );
         // 2×2 grid with the table's divider: all → interior separators.
         assert!(!l.nodes[0].dividers.is_empty(), "table has interior dividers");
         // A plain group draws none.
-        assert!(lay_out("g |group| { x |box| \"x\" }\n").nodes[0].dividers.is_empty());
+        assert!(lay_out("g |group| { x |box| }\n").nodes[0].dividers.is_empty());
     }
 
     #[test]

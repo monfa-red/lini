@@ -2,12 +2,13 @@
 
 layout: column; gap: 12; padding: 4 8;
 
-      |box|  "scalar padding" { width: 200; height: 30; }
-      |box|  "v h padding" { width: 200; height: 30; padding: 4 12; }
-      |box|  "t r b l padding" { width: 200; height: 30; padding: 2 8 16 24; }
-      |box|  "radius 8" { width: 200; height: 30; radius: 8; }
-inner |group| "gap demo" {
+|box| { width: 200; height: 30; "scalar padding" }
+|box| { width: 200; height: 30; padding: 4 12; "v h padding" }
+|box| { width: 200; height: 30; padding: 2 8 16 24; "t r b l padding" }
+|box| { width: 200; height: 30; radius: 8; "radius 8" }
+inner |group| {
   layout: column; gap: 4 8; padding: 2 8 16 24;
+  |caption| { "gap demo" }
   |box| { width: 80; height: 20; }
   |box| { width: 80; height: 20; }
   |box| { width: 80; height: 20; }

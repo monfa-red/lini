@@ -343,7 +343,7 @@ mod tests {
 
     #[test]
     fn root_rule_carries_inherited_text_props() {
-        let css = emit_str(&rules_for("x |box| \"hi\"\n"));
+        let css = emit_str(&rules_for("x |box|\n"));
         assert!(
             css.contains(".lini { font-family: var(--lini-font-family); font-size: 14px; color: var(--lini-text-color); }"),
             "{}",
@@ -353,14 +353,14 @@ mod tests {
 
     #[test]
     fn shape_rules_only_for_present_types() {
-        let css = emit_str(&rules_for("x |box| \"hi\"\n"));
+        let css = emit_str(&rules_for("x |box|\n"));
         assert!(css.contains(".lini .lini-shape-box {"), "{}", css);
         assert!(!css.contains("lini-shape-oval"), "{}", css);
     }
 
     #[test]
     fn shape_rules_complete_over_inheritable_paint() {
-        let set = rules_for("x |box| \"hi\"\ny |oval|\nz |line| { points: 0 0, 10 0; }\n");
+        let set = rules_for("x |box|\ny |oval|\nz |line| { points: 0 0, 10 0; }\n");
         for rule in &set.rules {
             if rule.class == "lini-shape-text" {
                 // Text masks stroke — a container's stroke must never bleed
