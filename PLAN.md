@@ -454,16 +454,21 @@ Cells are one per line until the parser accepts multi-node-per-line statements.
 
 **Goal.** Make it *look* right, and settle the eyeball-dependent defaults.
 
-**Key points.**
-- Render the showcase samples to PNG with `resvg` and read them. Check:
-  captions, tables (border + dividers, no doubling), badges, stretch-filled
-  cells, padding (empty = 32×32, table cells), canvas fill.
-- Tune the visual-dependent defaults in the Phase-0 module — notably table-cell
-  padding (`4 8` is a starting guess; the user floated `2 4`) and group/note
-  padding (now the default 16, vs v3's 10/12). Adjust to taste, in one file.
+**Done.** Rendered the sample set to PNG with `resvg` and read each: primitives
+(all 13, including the now-fixed `|path|`), templates (group caption, row/column
+wrappers, the corner badge, sticky note, ruled table — border + interior
+dividers, no doubling), `full_example` (groups, captions, labelled orthogonal
+wires, cylinders), captions + footer, anchors (every edge/corner overlay),
+modifiers (stroke-style / stack / shadow / rotate), and the §20 showcase. All
+correct.
+
+**Defaults settled.** Table-cell padding stays `4 8` (user chose it over the
+floated `2 4`); group/note padding stays at the default `16`. No change needed —
+the look reads right. Empty shapes are `2 × padding` (32 × 32), canvas `fill`
+paints, captions reserve their band.
 
 **Done when.** The samples render correctly and the defaults look right to the
-user.
+user. ✓
 
 ---
 
@@ -481,3 +486,11 @@ user.
 All phases complete; `cargo test` green; samples render correctly (visually
 verified); `README.md` current; `SPEC.md` matches actual behavior (fix drift in
 place); no v3 concepts left in the code.
+
+**✓ Complete.** Phases 0–9 done. `cargo test` is green (324 tests); the whole
+pipeline — lexer → v4 parser → resolve → layout → route → render, plus `fmt`,
+`lint`, `desugar`, `theme`, CLI — runs on the v4 language; all 21 samples render
+correctly; `README.md` is v4; the v3 front-end island is deleted. One item stays
+deferred (needs a parser change, not a v4-language gap): the **flat table form**
+(multiple anonymous string cells per line, column-aligned by `fmt`) — cells are
+written one per line until the parser accepts multi-node-per-line statements.
