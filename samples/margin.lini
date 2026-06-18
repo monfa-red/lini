@@ -4,21 +4,21 @@ layout: row; gap: 40; padding: 20; align: start;
 
 loose |group| {
   layout: column; gap: 24;
-  |caption| { "Default" }
-  a |box| { "Row A" }
-  b |box| { "Row B" }
+    |caption| { "Default" }
+  a |box|     { "Row A" }
+  b |box|     { "Row B" }
 }
 
 tight |group| {
   layout: column; gap: 24;
-  |caption| { margin: -6 0 -14 0; "Tight" }
-  a |box| { "Row A" }
-  b |box| { "Row B" }
+    |caption| { margin: -6 0 -14 0; "Tight" }
+  a |box|     { "Row A" }
+  b |box|     { "Row B" }
 }
 
 packed |group| {
   layout: column; gap: 24;
-  |caption| { "Packed" }
-  a |box| { margin: 0 0 -16 0; "Row A" }
-  b |box| { "Row B" }
+    |caption| { "Packed" }
+  a |box|     { margin: 0 0 -16 0; "Row A" }
+  b |box|     { "Row B" }
 }

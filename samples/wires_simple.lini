@@ -7,9 +7,9 @@
 layout: row; gap: 50;
 -> { clearance: 10; }
 
-ant  |box| { width: 60; height: 60; "Ant" }
-wall |box| { width: 60; height: 140; "Wall" }
-bee  |box| { "Bee" }
+ant  |box|  { width: 60; height: 60; "Ant" }
+wall |box|  { width: 60; height: 140; "Wall" }
+bee  |box|  { "Bee" }
 owl  |oval| { "Owl" }
 
 ant -> bee { "over" }

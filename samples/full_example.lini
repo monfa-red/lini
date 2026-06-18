@@ -8,23 +8,23 @@ browser |box| { "Browser" }
 
 edge |group| {
   layout: row; gap: 24;
-  |caption| { "Edge" }
-  cdn |box| { "CDN" }
-  lb  |box| { "Load balancer" }
+      |caption| { "Edge" }
+  cdn |box|     { "CDN" }
+  lb  |box|     { "Load balancer" }
 }
 
 services |group| {
   layout: row; gap: 24;
-  |caption| { "Services" }
-  api  |box| { "API" }
-  auth |box| { "Auth" }
+       |caption| { "Services" }
+  api  |box|     { "API" }
+  auth |box|     { "Auth" }
 }
 
 data |group| {
   layout: row; gap: 24;
-  |caption| { "Data" }
-  cache |cyl| { "Redis" }
-  db    |cyl| { "Postgres" }
+        |caption| { "Data" }
+  cache |cyl|     { "Redis" }
+  db    |cyl|     { "Postgres" }
 }
 
 browser -> edge.cdn -> edge.lb { "https" }

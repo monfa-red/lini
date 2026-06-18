@@ -6,13 +6,13 @@ box { fill: lightyellow; }
 .loud { stroke: red; stroke-width: 2; }
 .calm { stroke: teal; }
 
-flat |box| { "Plain" }
-loud |box| .loud { "Loud" }
-mix  |box| .calm { fill: lavender; "Mix" }
+flat |box|   { "Plain" }
+loud |box|   .loud { "Loud" }
+mix  |box|   .calm { fill: lavender; "Mix" }
 crew |group| {
   font-size: 10; font-family: serif;
-  |caption| { "Crew" }
-  tiny |box| { "Tiny" }
+       |caption| { "Crew" }
+  tiny |box|     { "Tiny" }
 }
 
 flat -> loud

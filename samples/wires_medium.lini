@@ -14,16 +14,16 @@ cat |oval| { "Cat" }
 
 kitchen |group| {
   layout: column;
-  |caption| { "Kitchen" }
-  bowl  |treat| { "Bowl" }
-  water |treat| { "Water" }
+        |caption| { "Kitchen" }
+  bowl  |treat|   { "Bowl" }
+  water |treat|   { "Water" }
 }
 
 garden |group| {
   layout: column; padding: 16; gap: 24;
-  |caption| { margin: 0 0 -20 0; "Garden" }
-  dog  |treat| { "Dog" }
-  bird |treat| { "Bird" }
+       |caption| { margin: 0 0 -20 0; "Garden" }
+  dog  |treat|   { "Dog" }
+  bird |treat|   { "Bird" }
 }
 
 roof |treat| { "Roof" }

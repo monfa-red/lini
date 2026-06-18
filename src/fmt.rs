@@ -209,6 +209,54 @@ impl Emitter<'_> {
         }
     }
 
+    /// The column count if this block is a grid whose children are *all* bare
+    /// text (a `|table|`) and no comment sits between the cells — then the cells
+    /// align into columns (SPEC §8/§14). Any box cell or interleaved comment
+    /// returns `None`, falling the body back to one child per line.
+    fn table_cols(&self, block: &Block) -> Option<usize> {
+        let cells = &block.children;
+        if cells.is_empty() || !cells.iter().all(|c| matches!(c, Child::Text(_))) {
+            return None;
+        }
+        let start = child_span(&cells[0]).start;
+        let end = child_span(cells.last().unwrap()).end;
+        if self.has_trivia_between(start, end) {
+            return None;
+        }
+        count_columns(&block.decls)
+    }
+
+    /// Emit bare-text cells as aligned rows: each column padded to its widest
+    /// cell, a single space between columns, `columns` cells per row.
+    fn emit_aligned_cells(&mut self, cells: &[Child], cols: usize, depth: usize) {
+        let texts: Vec<String> = cells
+            .iter()
+            .map(|c| match c {
+                Child::Text(t) => quoted(&t.text),
+                Child::Box(_) => String::new(), // table_cols guarantees all-text
+            })
+            .collect();
+        let mut widths = vec![0usize; cols];
+        for (i, s) in texts.iter().enumerate() {
+            widths[i % cols] = widths[i % cols].max(s.len());
+        }
+        for (i, s) in texts.iter().enumerate() {
+            let col = i % cols;
+            if col == 0 {
+                self.indent(depth);
+            } else {
+                self.out.push(' ');
+            }
+            self.out.push_str(s);
+            if col == cols - 1 || i == texts.len() - 1 {
+                self.out.push('\n');
+            } else {
+                pad(self.out, widths[col] - s.len());
+            }
+        }
+        self.cursor = child_span(cells.last().unwrap()).end;
+    }
+
     fn emit_node(&mut self, node: &Node, depth: usize, w: align::NodeWidths) {
         self.indent(depth);
         // Head tokens — `id |type| "labels" .classes` — each separated from the
@@ -326,10 +374,13 @@ impl Emitter<'_> {
             self.cursor = end;
             return;
         }
-        // A box child or internal wire forces the multi-line form; a body of only
-        // declarations and bare text may collapse onto one line when it fits.
+        // A box child or internal wire forces the multi-line form, as does a
+        // multi-row table (it always breaks into aligned rows); otherwise a body
+        // of only declarations and bare text may collapse onto one line.
         let has_box = block.children.iter().any(|c| matches!(c, Child::Box(_)));
-        if !has_box && block.wires.is_empty() {
+        let table = self.table_cols(block);
+        let multi_row = matches!(table, Some(cols) if block.children.len() > cols);
+        if !has_box && block.wires.is_empty() && !multi_row {
             let texts = text_strs(&block.children);
             if self.try_inline(&block.decls, &texts, end) {
                 return;
@@ -338,7 +389,12 @@ impl Emitter<'_> {
         self.out.push_str(" {\n");
         let decls: Vec<&Decl> = block.decls.iter().collect();
         self.emit_grouped_decls(&decls, depth + 1);
-        self.emit_children(&block.children, depth + 1);
+        // A grid of bare-text cells (a `|table|`) aligns into columns; any other
+        // cell kind, or a comment between cells, falls back to one-per-line.
+        match table {
+            Some(cols) => self.emit_aligned_cells(&block.children, cols, depth + 1),
+            None => self.emit_children(&block.children, depth + 1),
+        }
         for wire in &block.wires {
             self.emit_trivia_before(wire.span.start, depth + 1);
             self.emit_wire(wire, depth + 1);
@@ -475,17 +531,7 @@ impl Emitter<'_> {
     }
 
     fn emit_string(&mut self, s: &str) {
-        self.out.push('"');
-        for c in s.chars() {
-            match c {
-                '"' => self.out.push_str("\\\""),
-                '\\' => self.out.push_str("\\\\"),
-                '\n' => self.out.push_str("\\n"),
-                '\t' => self.out.push_str("\\t"),
-                _ => self.out.push(c),
-            }
-        }
-        self.out.push('"');
+        self.out.push_str(&quoted(s));
     }
 
     // ───────── Trivia ─────────
@@ -564,6 +610,46 @@ fn child_span(c: &Child) -> Span {
         Child::Box(n) => n.span,
         Child::Text(t) => t.span,
     }
+}
+
+/// A string as a Lini double-quoted literal, with the four escapes.
+fn quoted(s: &str) -> String {
+    let mut out = String::with_capacity(s.len() + 2);
+    out.push('"');
+    for c in s.chars() {
+        match c {
+            '"' => out.push_str("\\\""),
+            '\\' => out.push_str("\\\\"),
+            '\n' => out.push_str("\\n"),
+            '\t' => out.push_str("\\t"),
+            _ => out.push(c),
+        }
+    }
+    out.push('"');
+    out
+}
+
+/// The grid column count from a `columns:` declaration — a track list where
+/// `repeat(N)` counts as N and every other entry as one. `None` if absent.
+fn count_columns(decls: &[Decl]) -> Option<usize> {
+    let d = decls.iter().find(|d| d.name == "columns")?;
+    let n: usize = d
+        .groups
+        .iter()
+        .flatten()
+        .map(|v| match v {
+            Value::Call(c) if c.name == "repeat" => c
+                .args
+                .first()
+                .and_then(|a| match a {
+                    Value::Number(x) if *x >= 1.0 => Some(*x as usize),
+                    _ => None,
+                })
+                .unwrap_or(1),
+            _ => 1,
+        })
+        .sum();
+    (n > 0).then_some(n)
 }
 
 /// The bare-text labels among a body's children, in order — used to test whether

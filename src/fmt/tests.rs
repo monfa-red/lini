@@ -186,6 +186,17 @@ fn a_blank_line_breaks_an_alignment_group() {
 }
 
 #[test]
+fn table_cells_align_into_columns() {
+    // SPEC §8/§14: a multi-row |table| breaks into rows with each column padded
+    // to its widest cell.
+    assert_eq!(
+        fmt("t|table|{columns:80 80\n\"A\" \"Quantity\"\n\"Apple\" \"3\"}\n"),
+        "t |table| {\n  columns: 80 80;\n  \"A\"     \"Quantity\"\n  \"Apple\" \"3\"\n}\n"
+    );
+    idempotent("t |table| {\n  columns: 80 80;\n  \"A\"     \"Quantity\"\n  \"Apple\" \"3\"\n}\n");
+}
+
+#[test]
 fn idempotence_and_reparse_over_a_rich_file() {
     let src = "\
 layout: grid;  columns: repeat(3);  gap: 40;
