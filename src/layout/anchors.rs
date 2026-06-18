@@ -115,7 +115,10 @@ pub fn read_pos(attrs: &AttrMap, span: Span) -> Result<Option<Pos>, Error> {
             .ok_or_else(|| Error::at(span, "'mount' expects none, in, out, or on"))?,
         None => {
             if attrs.get("side").is_some() {
-                return Err(Error::at(span, "a bare 'side:' needs a 'mount:' — in, out, or on"));
+                return Err(Error::at(
+                    span,
+                    "a bare 'side:' needs a 'mount:' — in, out, or on",
+                ));
             }
             Place::None
         }

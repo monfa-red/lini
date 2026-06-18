@@ -62,9 +62,16 @@ fn theme_quoted_font_family_is_not_double_wrapped() {
 fn theme_font_inherit_stays_a_keyword() {
     // SPEC §11: `--lini-font-family: inherit` lets an embedded diagram pick up
     // the host page's font. It must stay the bare CSS keyword, never quoted.
-    let svg = render_themed("|box| { \"hi\" }\n", ".lini { --lini-font-family: inherit; }");
+    let svg = render_themed(
+        "|box| { \"hi\" }\n",
+        ".lini { --lini-font-family: inherit; }",
+    );
     assert!(svg.contains("--lini-font-family: inherit;"), "{}", svg);
-    assert!(!svg.contains("\"inherit\""), "inherit must be a keyword: {}", svg);
+    assert!(
+        !svg.contains("\"inherit\""),
+        "inherit must be a keyword: {}",
+        svg
+    );
 }
 
 #[test]
@@ -83,7 +90,12 @@ fn multiline_label_emits_one_tspan_per_line() {
     // SPEC §6: `\n` splits a label across lines (spacing size × 1.2). Layout
     // already sizes the bbox for N lines; render lays them out as tspans.
     let svg = render_baked("n |box| { \"one\\ntwo\" }\n");
-    assert_eq!(svg.matches("<tspan").count(), 2, "expected two tspans: {}", svg);
+    assert_eq!(
+        svg.matches("<tspan").count(),
+        2,
+        "expected two tspans: {}",
+        svg
+    );
     assert!(
         svg.contains(">one</tspan>") && svg.contains(">two</tspan>"),
         "{}",
@@ -94,7 +106,11 @@ fn multiline_label_emits_one_tspan_per_line() {
 #[test]
 fn single_line_label_stays_a_bare_text() {
     let svg = render_baked("n |box| { \"solo\" }\n");
-    assert!(!svg.contains("<tspan"), "single line must not wrap in a tspan: {}", svg);
+    assert!(
+        !svg.contains("<tspan"),
+        "single line must not wrap in a tspan: {}",
+        svg
+    );
 }
 
 #[test]
@@ -116,8 +132,16 @@ fn define_paint_rides_its_shape_rule() {
         .lines()
         .find(|l| l.contains(".lini-shape-s {"))
         .expect("shape-s rule present");
-    assert!(rule.contains("stroke: blue"), "define paint on its rule: {}", rule);
-    assert!(!rule.contains("radius"), "geometry must not ride CSS: {}", rule);
+    assert!(
+        rule.contains("stroke: blue"),
+        "define paint on its rule: {}",
+        rule
+    );
+    assert!(
+        !rule.contains("radius"),
+        "geometry must not ride CSS: {}",
+        rule
+    );
 }
 
 #[test]
@@ -260,7 +284,11 @@ fn css_cascade_sample_emits_rules_and_diffs() {
         "element rule merged into the shape rule: {}",
         svg
     );
-    assert!(svg.contains(".lini .lini-wire { fill: none; stroke: #666;"), "{}", svg);
+    assert!(
+        svg.contains(".lini .lini-wire { fill: none; stroke: #666;"),
+        "{}",
+        svg
+    );
     // A styled node carries no inline paint — the class provides it.
     assert!(
         svg.contains(r#"lini-style-loud" data-id="loud" transform"#),

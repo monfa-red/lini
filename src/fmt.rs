@@ -5,14 +5,14 @@
 //! blank-line groupings are preserved; sibling nodes align their id/type
 //! columns. Idempotent: `fmt(fmt(x)) == fmt(x)`.
 
-use crate::syntax::ast::{
-    Block, Child, Decl, Define, Endpoint, File, Node, Rule, SelPart, Selector, StyleItem, Value,
-    Wire, WireBlock,
-};
 use crate::ast::{Side, WireOp};
 use crate::error::Error;
 use crate::lexer;
 use crate::span::Span;
+use crate::syntax::ast::{
+    Block, Child, Decl, Define, Endpoint, File, Node, Rule, SelPart, Selector, StyleItem, Value,
+    Wire, WireBlock,
+};
 use crate::syntax::parser;
 
 mod trivia;
@@ -587,7 +587,12 @@ fn style_item_span(item: &StyleItem) -> Span {
 }
 
 fn wire_op_str(op: WireOp) -> String {
-    format!("{}{}{}", op.start.start_str(), op.line.as_str(), op.end.end_str())
+    format!(
+        "{}{}{}",
+        op.start.start_str(),
+        op.line.as_str(),
+        op.end.end_str()
+    )
 }
 
 fn side_str(s: Side) -> &'static str {

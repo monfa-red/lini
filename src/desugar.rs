@@ -11,7 +11,11 @@ use crate::syntax::ast::{Block, Child, Decl, File, Node, TextNode, Value, Wire, 
 pub fn desugar(file: &File) -> File {
     File {
         stylesheet: file.stylesheet.clone(),
-        instances: file.instances.iter().map(|c| desugar_child(c, file)).collect(),
+        instances: file
+            .instances
+            .iter()
+            .map(|c| desugar_child(c, file))
+            .collect(),
         wires: file.wires.iter().map(desugar_wire).collect(),
     }
 }
@@ -38,16 +42,35 @@ fn desugar_node(node: &Node, file: &File) -> Node {
     let is_icon = type_chain_contains(ty, "icon", file);
     let is_container = type_chain_contains(ty, "group", file);
     let leaf = children.is_empty();
-    if leaf && !is_icon && !is_container && let Some(id) = &node.id {
-        children.push(Child::Text(TextNode { text: id.clone(), span: node.span }));
+    if leaf
+        && !is_icon
+        && !is_container
+        && let Some(id) = &node.id
+    {
+        children.push(Child::Text(TextNode {
+            text: id.clone(),
+            span: node.span,
+        }));
     }
 
-    let decls = node.block.as_ref().map(|b| b.decls.clone()).unwrap_or_default();
-    let wires = node.block.as_ref().map(|b| b.wires.clone()).unwrap_or_default();
+    let decls = node
+        .block
+        .as_ref()
+        .map(|b| b.decls.clone())
+        .unwrap_or_default();
+    let wires = node
+        .block
+        .as_ref()
+        .map(|b| b.wires.clone())
+        .unwrap_or_default();
     let block = if decls.is_empty() && children.is_empty() && wires.is_empty() {
         node.block.clone() // preserve a `{}` vs. no block
     } else {
-        Some(Block { decls, children, wires })
+        Some(Block {
+            decls,
+            children,
+            wires,
+        })
     };
 
     Node {
@@ -110,7 +133,10 @@ mod tests {
 
     #[test]
     fn an_explicit_label_is_left_alone() {
-        assert_eq!(desugar("cat |box| { \"Cat\" }\n"), "cat |box| { \"Cat\" }\n");
+        assert_eq!(
+            desugar("cat |box| { \"Cat\" }\n"),
+            "cat |box| { \"Cat\" }\n"
+        );
     }
 
     #[test]

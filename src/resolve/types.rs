@@ -94,7 +94,10 @@ impl<'a> Types<'a> {
             }
             let mut decls = Vec::with_capacity(d.body.decls.len());
             for decl in &d.body.decls {
-                decls.push((decl.name.clone(), resolve_groups(&decl.groups, decl.span, vars)?));
+                decls.push((
+                    decl.name.clone(),
+                    resolve_groups(&decl.groups, decl.span, vars)?,
+                ));
             }
             user.insert(
                 d.name.clone(),
@@ -187,7 +190,10 @@ impl<'a> Types<'a> {
 fn is_builtin_type(name: &str) -> bool {
     ShapeKind::parse(name).is_some()
         || is_template(name)
-        || matches!(name, "wire" | "rect" | "circle" | "top" | "bottom" | "left" | "right")
+        || matches!(
+            name,
+            "wire" | "rect" | "circle" | "top" | "bottom" | "left" | "right"
+        )
 }
 
 /// A template's built-in attribute bundle (SPEC §8) — the lowest layer of the
@@ -348,14 +354,23 @@ mod tests {
         // the chain, so its value is last and wins the fold.
         let t = resolve_ok("panel::group { radius: 10; }\n", "panel");
         assert_eq!(t.type_chain, vec!["panel", "group"]);
-        let last_radius = t.defaults.iter().rev().find(|(n, _)| n == "radius").unwrap();
+        let last_radius = t
+            .defaults
+            .iter()
+            .rev()
+            .find(|(n, _)| n == "radius")
+            .unwrap();
         assert!(matches!(last_radius.1, ResolvedValue::Number(x) if x == 10.0));
     }
 
     #[test]
     fn unknown_type_errors() {
         let e = resolve_result("", "ghost").unwrap_err();
-        assert!(e.message.contains("unknown type 'ghost'"), "got: {}", e.message);
+        assert!(
+            e.message.contains("unknown type 'ghost'"),
+            "got: {}",
+            e.message
+        );
     }
 
     #[test]

@@ -77,7 +77,10 @@ pub fn lay_out_flex(
 
     let packed = children.iter().map(|c| len(c, main_dim)).sum::<f64>() + gap * (n - 1.0);
     let main_extent = avail_main.map_or(packed, |a| a.max(packed));
-    let max_cross = children.iter().map(|c| len(c, cross_dim)).fold(0.0, f64::max);
+    let max_cross = children
+        .iter()
+        .map(|c| len(c, cross_dim))
+        .fold(0.0, f64::max);
     let cross_extent = avail_cross.map_or(max_cross, |a| a.max(max_cross));
 
     // Cross stretch: each unpinned child's box fills the cross axis.

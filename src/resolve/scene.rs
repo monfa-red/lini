@@ -55,7 +55,13 @@ pub fn resolve_instances(
     let mut nodes = Vec::with_capacity(instances.len());
     for child in instances {
         nodes.push(resolve_child(
-            child, ctx, &mut ancestors, &[], text_ctx, id_seen, lifted,
+            child,
+            ctx,
+            &mut ancestors,
+            &[],
+            text_ctx,
+            id_seen,
+            lifted,
         )?);
     }
     nodes.retain(|n| !is_blank_anon_text(n));
@@ -108,9 +114,7 @@ pub fn resolve_node(
         }
         let full = join_path(path_prefix, id);
         if let Some(prev) = id_seen.get(&full) {
-            return Err(
-                Error::at(node.span, format!("duplicate id '{}'", id)).with_related(*prev)
-            );
+            return Err(Error::at(node.span, format!("duplicate id '{}'", id)).with_related(*prev));
         }
         id_seen.insert(full, node.span);
     }
@@ -162,7 +166,11 @@ pub fn resolve_node(
 
     // Internal wires (define body + block) lift to program level, prefixed by
     // this node's path.
-    for w in rt.body_wires.iter().chain(node.block.iter().flat_map(|b| &b.wires)) {
+    for w in rt
+        .body_wires
+        .iter()
+        .chain(node.block.iter().flat_map(|b| &b.wires))
+    {
         lifted.push(LiftedWire {
             wire: w.clone(),
             prefix: child_prefix.clone(),
@@ -170,15 +178,25 @@ pub fn resolve_node(
     }
 
     // Body order (SPEC §3): a define's intrinsic children, then the block's own.
-    let block_children = node.block.as_ref().map(|b| b.children.as_slice()).unwrap_or(&[]);
-    let body: Vec<&Child> = rt.body_children.iter().chain(block_children.iter()).collect();
+    let block_children = node
+        .block
+        .as_ref()
+        .map(|b| b.children.as_slice())
+        .unwrap_or(&[]);
+    let body: Vec<&Child> = rt
+        .body_children
+        .iter()
+        .chain(block_children.iter())
+        .collect();
 
     // An `|icon|` consumes its text as the glyph name (SPEC §7): its block's first
     // string, else its id. It renders no text child; every other shape renders
     // its strings as `Text` children.
     let is_icon = rt.kind == ShapeKind::Icon;
     let own_label = if is_icon {
-        first_text(&body).map(str::to_string).or_else(|| node.id.clone())
+        first_text(&body)
+            .map(str::to_string)
+            .or_else(|| node.id.clone())
     } else {
         None
     };
@@ -269,7 +287,11 @@ fn is_blank_anon_text(r: &ResolvedInst) -> bool {
 /// Type names (primitives, templates, defines), the four sides, the `wire` rule
 /// target, and the reserved-for-future `rect` / `circle` cannot be node ids (SPEC §18).
 fn is_reserved_id(id: &str, types: &Types) -> bool {
-    types.is_known(id) || matches!(id, "wire" | "rect" | "circle" | "top" | "bottom" | "left" | "right")
+    types.is_known(id)
+        || matches!(
+            id,
+            "wire" | "rect" | "circle" | "top" | "bottom" | "left" | "right"
+        )
 }
 
 /// The reserved-id error, with the always-free capitalized variant as the out.

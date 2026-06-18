@@ -300,7 +300,10 @@ fn read_cell(attrs: &AttrMap, span: Span) -> Result<Option<(usize, usize)>, Erro
         None => Ok(None),
         Some(v) => {
             let (c, r) = as_pair(v, span)?;
-            Ok(Some((positive_int("cell column", c, span)?, positive_int("cell row", r, span)?)))
+            Ok(Some((
+                positive_int("cell column", c, span)?,
+                positive_int("cell row", r, span)?,
+            )))
         }
     }
 }

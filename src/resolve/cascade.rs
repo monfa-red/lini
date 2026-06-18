@@ -201,14 +201,22 @@ mod tests {
         // `table box` — a box with a table ancestor.
         let node = facts(&["box"], &[]);
         let ancestors = [facts(&["table", "group", "box"], &[]), facts(&["row"], &[])];
-        assert!(selector_matches(&[ty("table"), ty("box")], &ancestors, &node));
+        assert!(selector_matches(
+            &[ty("table"), ty("box")],
+            &ancestors,
+            &node
+        ));
     }
 
     #[test]
     fn descendant_selector_fails_without_the_ancestor() {
         let node = facts(&["box"], &[]);
         let ancestors = [facts(&["group", "box"], &[])];
-        assert!(!selector_matches(&[ty("table"), ty("box")], &ancestors, &node));
+        assert!(!selector_matches(
+            &[ty("table"), ty("box")],
+            &ancestors,
+            &node
+        ));
     }
 
     #[test]
@@ -216,7 +224,11 @@ mod tests {
         // `.sidebar box` matches a box even with an intervening container.
         let node = facts(&["box"], &[]);
         let ancestors = [facts(&["group", "box"], &["sidebar"]), facts(&["row"], &[])];
-        assert!(selector_matches(&[cls("sidebar"), ty("box")], &ancestors, &node));
+        assert!(selector_matches(
+            &[cls("sidebar"), ty("box")],
+            &ancestors,
+            &node
+        ));
     }
 
     #[test]
@@ -227,7 +239,11 @@ mod tests {
         let good = [facts(&["a"], &[]), facts(&["b"], &[])];
         assert!(selector_matches(&[ty("a"), ty("c")], &good, &node));
         // `b a` (b then a) cannot match ancestors ordered [a, b].
-        assert!(!selector_matches(&[ty("b"), ty("a"), ty("c")], &good, &node));
+        assert!(!selector_matches(
+            &[ty("b"), ty("a"), ty("c")],
+            &good,
+            &node
+        ));
     }
 
     #[test]
@@ -235,7 +251,11 @@ mod tests {
         let node = facts(&["box"], &[]);
         let ancestors = [facts(&["table"], &[])];
         // `box table` — last part `table` must be the node, but the node is a box.
-        assert!(!selector_matches(&[ty("box"), ty("table")], &ancestors, &node));
+        assert!(!selector_matches(
+            &[ty("box"), ty("table")],
+            &ancestors,
+            &node
+        ));
     }
 
     fn sheet(src: &str) -> Stylesheet {
@@ -271,7 +291,10 @@ mod tests {
         let s = sheet(".hot { stroke: red; }\ntable box { fill: gray; }\n");
         let node = facts(&["box"], &["hot"]);
         let ancestors = [facts(&["table", "group", "box"], &[])];
-        assert_eq!(names(&s.node_layers(&ancestors, &node)), vec!["fill", "stroke"]);
+        assert_eq!(
+            names(&s.node_layers(&ancestors, &node)),
+            vec!["fill", "stroke"]
+        );
     }
 
     #[test]

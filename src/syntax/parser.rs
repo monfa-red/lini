@@ -484,7 +484,9 @@ impl<'a> Parser<'a> {
         // A string after the head is a positional label — gone in the box/text
         // model (SPEC §3); the label belongs in the block.
         if matches!(self.kind(), Some(TokKind::String(_))) {
-            return Err(self.err("a label is a child, not positional — put it in the block: { \"…\" }"));
+            return Err(
+                self.err("a label is a child, not positional — put it in the block: { \"…\" }")
+            );
         }
         if id.is_none() && ty.is_none() && block.is_none() {
             return Err(self.err("a node needs an id, type, or block"));
@@ -867,9 +869,7 @@ mod tests {
 
     #[test]
     fn ordering_rule_after_instance() {
-        assert!(
-            parse_err("x |box|\nbox { radius: 4; }\n").contains("must come before instances")
-        );
+        assert!(parse_err("x |box|\nbox { radius: 4; }\n").contains("must come before instances"));
     }
 
     #[test]

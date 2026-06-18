@@ -151,9 +151,8 @@ fn growable(program: &Program, path: &str) -> bool {
             None => return false,
         }
     }
-    found.is_some_and(|inst| {
-        inst.attrs.get("width").is_none() && inst.attrs.get("height").is_none()
-    })
+    found
+        .is_some_and(|inst| inst.attrs.get("width").is_none() && inst.attrs.get("height").is_none())
 }
 
 fn gap_bump(growth: &GapGrowth, path: &str) -> (f64, f64) {
@@ -717,7 +716,8 @@ mod tests {
     fn group_caption_reserves_a_band_above_the_content() {
         let h = |src: &str| lay_out(src).nodes[0].bbox.h();
         let plain = h("g |group| {\n  a |box| { width: 80; height: 30; }\n}\n");
-        let capped = h("g |group| {\n  |caption| { \"Cap\" }\n  a |box| { width: 80; height: 30; }\n}\n");
+        let capped =
+            h("g |group| {\n  |caption| { \"Cap\" }\n  a |box| { width: 80; height: 30; }\n}\n");
         assert!(
             capped > plain + 10.0,
             "caption adds a band: plain={plain} capped={capped}"
@@ -726,7 +726,9 @@ mod tests {
 
     #[test]
     fn caption_sits_above_the_content() {
-        let l = lay_out("g |group| {\n  |caption| { \"Cap\" }\n  a |box| { width: 80; height: 30; }\n}\n");
+        let l = lay_out(
+            "g |group| {\n  |caption| { \"Cap\" }\n  a |box| { width: 80; height: 30; }\n}\n",
+        );
         let g = &l.nodes[0];
         let cap = g
             .children
@@ -752,7 +754,10 @@ mod tests {
             lay_out(&src).nodes[0].children[0].cx
         };
         let (start, center, end) = (first_cx("start"), first_cx("center"), first_cx("end"));
-        assert!(start < center && center < end, "start={start} center={center} end={end}");
+        assert!(
+            start < center && center < end,
+            "start={start} center={center} end={end}"
+        );
     }
 
     #[test]
@@ -761,7 +766,10 @@ mod tests {
             "g |row| { width: 300; justify: evenly;\n  a |box| { width: 20; height: 20; }\n  b |box| { width: 20; height: 20; }\n  c |box| { width: 20; height: 20; }\n}\n",
         );
         let cx: Vec<f64> = l.nodes[0].children.iter().map(|c| c.cx).collect();
-        assert!(((cx[1] - cx[0]) - (cx[2] - cx[1])).abs() < 0.01, "centers {cx:?}");
+        assert!(
+            ((cx[1] - cx[0]) - (cx[2] - cx[1])).abs() < 0.01,
+            "centers {cx:?}"
+        );
     }
 
     #[test]
@@ -782,7 +790,10 @@ mod tests {
             let l = lay_out(&src);
             l.nodes[0].children[1].cx - l.nodes[0].children[0].cx
         };
-        assert!((span("start") - span("end")).abs() < 0.01, "auto row: justify is a no-op");
+        assert!(
+            (span("start") - span("end")).abs() < 0.01,
+            "auto row: justify is a no-op"
+        );
     }
 
     // ── Grid (SPEC §5) ──
@@ -821,7 +832,10 @@ mod tests {
              b |box|\n",
         );
         // a pins to column 3; b auto-flows to the first free cell (column 1).
-        assert!(l.nodes[0].cx > l.nodes[1].cx, "a (col 3) right of b (col 1)");
+        assert!(
+            l.nodes[0].cx > l.nodes[1].cx,
+            "a (col 3) right of b (col 1)"
+        );
     }
 
     #[test]
@@ -831,7 +845,11 @@ mod tests {
              a |box| { justify: stretch; align: stretch; }\n\
              b |box|\n",
         );
-        assert!((l.nodes[0].bbox.w() - 120.0).abs() < 1.0, "a.w={}", l.nodes[0].bbox.w());
+        assert!(
+            (l.nodes[0].bbox.w() - 120.0).abs() < 1.0,
+            "a.w={}",
+            l.nodes[0].bbox.w()
+        );
     }
 
     #[test]
@@ -847,7 +865,10 @@ mod tests {
              d |box| { width: 30; height: 30; }\n",
         );
         assert!(l.nodes[2].cy > l.nodes[0].cy, "c (row 2) below a (row 1)");
-        assert!((l.nodes[2].cy - l.nodes[3].cy).abs() < 0.01, "c, d share row 2");
+        assert!(
+            (l.nodes[2].cy - l.nodes[3].cy).abs() < 0.01,
+            "c, d share row 2"
+        );
     }
 
     #[test]
@@ -862,13 +883,18 @@ mod tests {
 
     #[test]
     fn table_draws_interior_dividers_no_frame() {
-        let l = lay_out(
-            "t |table| { columns: 40 40;\n  \"a\" \"b\" \"c\" \"d\"\n}\n",
-        );
+        let l = lay_out("t |table| { columns: 40 40;\n  \"a\" \"b\" \"c\" \"d\"\n}\n");
         // 2×2 grid with the table's divider: all → interior separators.
-        assert!(!l.nodes[0].dividers.is_empty(), "table has interior dividers");
+        assert!(
+            !l.nodes[0].dividers.is_empty(),
+            "table has interior dividers"
+        );
         // A plain group draws none.
-        assert!(lay_out("g |group| { x |box| }\n").nodes[0].dividers.is_empty());
+        assert!(
+            lay_out("g |group| { x |box| }\n").nodes[0]
+                .dividers
+                .is_empty()
+        );
     }
 
     #[test]
@@ -894,6 +920,10 @@ mod tests {
         let l = lay_out(
             "g |row| { divider: all;\n  a |box| { width: 30; height: 30; }\n  b |box| { width: 30; height: 30; }\n  c |box| { width: 30; height: 30; }\n}\n",
         );
-        assert_eq!(l.nodes[0].dividers.len(), 2, "two separators between three children");
+        assert_eq!(
+            l.nodes[0].dividers.len(),
+            2,
+            "two separators between three children"
+        );
     }
 }

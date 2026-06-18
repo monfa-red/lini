@@ -179,7 +179,10 @@ fn render_text(out: &mut String, n: &PlacedNode, depth: usize) {
         writeln!(
             out,
             r#"{}<text class="lini-text" x="{}" y="{}">{}</text>"#,
-            indent, x, y, escape_xml(label)
+            indent,
+            x,
+            y,
+            escape_xml(label)
         )
         .unwrap();
         return;
@@ -189,12 +192,31 @@ fn render_text(out: &mut String, n: &PlacedNode, depth: usize) {
     let size = n.attrs.number("font-size").unwrap_or(14.0);
     let spacing = size * 1.2;
     let top = n.cy - spacing * (lines.len() as f64 - 1.0) / 2.0;
-    write!(out, r#"{}<text class="lini-text" x="{}" y="{}">"#, indent, x, y).unwrap();
+    write!(
+        out,
+        r#"{}<text class="lini-text" x="{}" y="{}">"#,
+        indent, x, y
+    )
+    .unwrap();
     for (i, line) in lines.iter().enumerate() {
         if i == 0 {
-            write!(out, r#"<tspan x="{}" y="{}">{}</tspan>"#, x, num(top), escape_xml(line)).unwrap();
+            write!(
+                out,
+                r#"<tspan x="{}" y="{}">{}</tspan>"#,
+                x,
+                num(top),
+                escape_xml(line)
+            )
+            .unwrap();
         } else {
-            write!(out, r#"<tspan x="{}" dy="{}">{}</tspan>"#, x, num(spacing), escape_xml(line)).unwrap();
+            write!(
+                out,
+                r#"<tspan x="{}" dy="{}">{}</tspan>"#,
+                x,
+                num(spacing),
+                escape_xml(line)
+            )
+            .unwrap();
         }
     }
     writeln!(out, "</text>").unwrap();

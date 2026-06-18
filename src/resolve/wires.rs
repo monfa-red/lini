@@ -56,7 +56,10 @@ pub fn resolve_wire(
     // `along:` distributes the labels along the drawn route (SPEC §9): one
     // fraction (0..1) per label, in order; an absent fraction is `Auto` (the
     // router spreads it). It is a placement directive, not a paint attr.
-    let along: Vec<f64> = attrs.get("along").map(collect_fractions).unwrap_or_default();
+    let along: Vec<f64> = attrs
+        .get("along")
+        .map(collect_fractions)
+        .unwrap_or_default();
     attrs.map.remove("along");
 
     // Labels are bare strings or `|plain|` boxes (a styled / offset label).

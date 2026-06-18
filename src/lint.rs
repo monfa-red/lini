@@ -18,8 +18,7 @@ mod tests {
     /// Inline paint in an instance block is idiomatic v4 — no warning.
     #[test]
     fn inline_paint_is_not_linted() {
-        let warns =
-            crate::lint_str("x |box| { fill: red; stroke: blue; }\n").expect("lint");
+        let warns = crate::lint_str("x |box| { fill: red; stroke: blue; }\n").expect("lint");
         assert!(warns.is_empty(), "{warns:?}");
     }
 }

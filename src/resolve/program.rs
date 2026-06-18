@@ -4,15 +4,13 @@
 //! [`lib.rs`]'s compile pipeline enters resolution here.
 
 use super::cascade::Stylesheet;
-use super::ir::{
-    AttrMap, Program, ResolvedScene, ResolvedValue, SheetInputs, VarKind, VarTable,
-};
+use super::defaults;
+use super::ir::{AttrMap, Program, ResolvedScene, ResolvedValue, SheetInputs, VarKind, VarTable};
 use super::merge::collapse;
 use super::scene::{self, PathIndex, SceneCtx};
 use super::types::{self, Types};
 use super::value::resolve_groups;
 use super::wires;
-use super::defaults;
 use crate::error::Error;
 use crate::span::Span;
 use crate::syntax::ast::{Decl, Define, File, Node, Rule, SelPart, StyleItem};
@@ -51,7 +49,10 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
     // selector though it is not an instantiable type.
     for t in sheet.referenced_types() {
         if t != "wire" && !types.is_known(t) {
-            return Err(Error::at(Span::empty(), format!("unknown type '{}' in selector", t)));
+            return Err(Error::at(
+                Span::empty(),
+                format!("unknown type '{}' in selector", t),
+            ));
         }
     }
 
@@ -72,8 +73,13 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
     };
     let mut id_seen = HashMap::new();
     let mut lifted = Vec::new();
-    let mut nodes =
-        scene::resolve_instances(&file.instances, &ctx, &root_text_ctx, &mut id_seen, &mut lifted)?;
+    let mut nodes = scene::resolve_instances(
+        &file.instances,
+        &ctx,
+        &root_text_ctx,
+        &mut id_seen,
+        &mut lifted,
+    )?;
 
     // ── Auto-create: a root wire's single-segment id absent everywhere becomes
     // an empty |box| at the scene root (SPEC §3). ──
@@ -102,7 +108,13 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
         wire_list.extend(wires::resolve_wire(w, &ctx, &index, &[], &wire_defaults)?);
     }
     for lw in &lifted {
-        wire_list.extend(wires::resolve_wire(&lw.wire, &ctx, &index, &lw.prefix, &wire_defaults)?);
+        wire_list.extend(wires::resolve_wire(
+            &lw.wire,
+            &ctx,
+            &index,
+            &lw.prefix,
+            &wire_defaults,
+        )?);
     }
 
     let sheet_inputs = build_sheet_inputs(file, &defines, &vars)?;
@@ -141,7 +153,10 @@ fn parse_theme_value(raw: &str) -> ResolvedValue {
     {
         return ResolvedValue::Hex(hex.to_string());
     }
-    if !s.is_empty() && s.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_') {
+    if !s.is_empty()
+        && s.bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_')
+    {
         return ResolvedValue::Ident(s.to_string());
     }
     ResolvedValue::RawCss(s.to_string())
@@ -227,16 +242,24 @@ fn builtin_rules() -> Vec<Rule> {
 /// restates as CSS class rules (SPEC §13). Single-part selectors map directly;
 /// descendant rules (`table box { }`) bake inline via the cascade and carry no
 /// entry here.
-fn build_sheet_inputs(file: &File, defines: &[&Define], vars: &VarTable) -> Result<SheetInputs, Error> {
+fn build_sheet_inputs(
+    file: &File,
+    defines: &[&Define],
+    vars: &VarTable,
+) -> Result<SheetInputs, Error> {
     let mut class_rules = Vec::new();
     let mut element_rules = Vec::new();
     let mut wire_defaults = AttrMap::new();
     for item in &file.stylesheet {
         if let StyleItem::Rule(r) = item {
             match r.selector.parts.as_slice() {
-                [SelPart::Class(c)] => class_rules.push((c.clone(), decls_attrmap(&r.decls, vars)?)),
+                [SelPart::Class(c)] => {
+                    class_rules.push((c.clone(), decls_attrmap(&r.decls, vars)?))
+                }
                 [SelPart::Type(t)] if t == "wire" => wire_defaults = decls_attrmap(&r.decls, vars)?,
-                [SelPart::Type(t)] => element_rules.push((t.clone(), decls_attrmap(&r.decls, vars)?)),
+                [SelPart::Type(t)] => {
+                    element_rules.push((t.clone(), decls_attrmap(&r.decls, vars)?))
+                }
                 _ => {}
             }
         }
@@ -387,7 +410,12 @@ mod tests {
     #[test]
     fn root_wire_auto_creates_undeclared_endpoints() {
         let p = rv4("cat -> dog\n");
-        let ids: Vec<&str> = p.scene.nodes.iter().filter_map(|n| n.id.as_deref()).collect();
+        let ids: Vec<&str> = p
+            .scene
+            .nodes
+            .iter()
+            .filter_map(|n| n.id.as_deref())
+            .collect();
         assert!(ids.contains(&"cat") && ids.contains(&"dog"));
         assert_eq!(p.wires.len(), 1);
     }
@@ -397,7 +425,9 @@ mod tests {
         // SPEC §9: `-> { }` is the routing layer's element selector (the wire
         // glyph), carrying the reserved `wire` element rule internally.
         let p = rv4("-> { stroke: red; stroke-width: 2; }\na -> b\n");
-        assert!(matches!(p.wires[0].attrs.get("stroke"), Some(ResolvedValue::Ident(s)) if s == "red"));
+        assert!(
+            matches!(p.wires[0].attrs.get("stroke"), Some(ResolvedValue::Ident(s)) if s == "red")
+        );
         assert_eq!(p.wires[0].attrs.number("stroke-width"), Some(2.0));
     }
 
@@ -406,7 +436,9 @@ mod tests {
         let p = rv4("a |box|\nb |box|\na --> b\n");
         let w = &p.wires[0];
         assert_eq!(w.markers.end, MarkerKind::Arrow);
-        assert!(matches!(w.attrs.get("stroke-style"), Some(ResolvedValue::Ident(s)) if s == "dashed"));
+        assert!(
+            matches!(w.attrs.get("stroke-style"), Some(ResolvedValue::Ident(s)) if s == "dashed")
+        );
     }
 
     #[test]
@@ -417,7 +449,8 @@ mod tests {
 
     #[test]
     fn internal_wire_resolves_with_scoped_paths() {
-        let p = rv4("room::group {\n  inlet |box|\n  outlet |box|\n  inlet -> outlet\n}\nr |room|\n");
+        let p =
+            rv4("room::group {\n  inlet |box|\n  outlet |box|\n  inlet -> outlet\n}\nr |room|\n");
         let w = &p.wires[0];
         assert_eq!(w.endpoints[0].path, "r.inlet");
         assert_eq!(w.endpoints[1].path, "r.outlet");

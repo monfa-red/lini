@@ -428,7 +428,9 @@ mod tests {
 
     #[test]
     fn user_shape_rule_carries_its_paint() {
-        let css = emit_str(&rules_for("treat::box { fill: pink; radius: 5; }\nx |treat|\n"));
+        let css = emit_str(&rules_for(
+            "treat::box { fill: pink; radius: 5; }\nx |treat|\n",
+        ));
         assert!(
             css.contains(".lini .lini-shape-treat { fill: pink; }"),
             "geometry (radius) must not ride CSS: {}",

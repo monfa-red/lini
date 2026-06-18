@@ -42,7 +42,10 @@ fn assert_resolve_error(src: &str, expect_msg_substr: &str) {
 
 #[test]
 fn err_duplicate_scene_id() {
-    assert_resolve_error("cat |box| { \"1\" }\ncat |box| { \"2\" }\n", "duplicate id 'cat'");
+    assert_resolve_error(
+        "cat |box| { \"1\" }\ncat |box| { \"2\" }\n",
+        "duplicate id 'cat'",
+    );
 }
 
 #[test]
@@ -99,12 +102,18 @@ fn err_define_cycle() {
 
 #[test]
 fn err_define_name_collides_with_primitive() {
-    assert_resolve_error("rect::oval { }\ncat |box|\n", "'rect' shadows a built-in type");
+    assert_resolve_error(
+        "rect::oval { }\ncat |box|\n",
+        "'rect' shadows a built-in type",
+    );
 }
 
 #[test]
 fn err_define_name_collides_with_template() {
-    assert_resolve_error("note::box { }\ncat |box|\n", "'note' shadows a built-in type");
+    assert_resolve_error(
+        "note::box { }\ncat |box|\n",
+        "'note' shadows a built-in type",
+    );
 }
 
 #[test]
@@ -165,7 +174,11 @@ fn body_wire_suggestion_is_scope_relative() {
         lini::check("garden |group| { shelf |group| { bowl |box| }\npot |box|\nbowl -> pot }\n")
             .expect_err("not found");
     let msg = err.to_string();
-    assert!(msg.contains("'shelf.bowl'"), "scope-relative suggestion: {}", msg);
+    assert!(
+        msg.contains("'shelf.bowl'"),
+        "scope-relative suggestion: {}",
+        msg
+    );
     assert!(
         !msg.contains("garden.shelf.bowl"),
         "must not suggest the un-typeable root path: {}",

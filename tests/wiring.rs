@@ -374,7 +374,9 @@ fn a_full_node_compacts_port_rows_rather_than_turning_wires_away() {
         .take(20)
         .collect();
     for (i, (c, r)) in cells.iter().enumerate() {
-        src.push_str(&format!("s{i:02} |box| {{ width: 30; height: 30; cell: {c} {r}; }}\n"));
+        src.push_str(&format!(
+            "s{i:02} |box| {{ width: 30; height: 30; cell: {c} {r}; }}\n"
+        ));
     }
     for i in 0..cells.len() {
         src.push_str(&format!("s{i:02} -> hub\n"));

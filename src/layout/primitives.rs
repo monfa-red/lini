@@ -61,10 +61,12 @@ pub fn leaf_bbox(inst: &ResolvedInst, vars: &VarTable) -> Result<Bbox, Error> {
                 .unwrap_or(24.0);
             Ok(Bbox::centered(size, size))
         }
-        ShapeKind::Line => Ok(bounding_box(&require_points(inst, "line", 2)?)
-            .inflate(stroke_half(inst, vars))),
-        ShapeKind::Poly => Ok(bounding_box(&require_points(inst, "poly", 3)?)
-            .inflate(stroke_half(inst, vars))),
+        ShapeKind::Line => {
+            Ok(bounding_box(&require_points(inst, "line", 2)?).inflate(stroke_half(inst, vars)))
+        }
+        ShapeKind::Poly => {
+            Ok(bounding_box(&require_points(inst, "poly", 3)?).inflate(stroke_half(inst, vars)))
+        }
         ShapeKind::Image => {
             let (w, h) = image_dims(inst)?;
             Ok(Bbox::centered(w, h))
@@ -106,7 +108,9 @@ pub fn padding(attrs: &AttrMap, vars: &VarTable, span: Span) -> Result<PaddingBo
             left: l,
         })
     } else {
-        Ok(PaddingBox::uniform(layout_var(vars, "padding").unwrap_or(16.0)))
+        Ok(PaddingBox::uniform(
+            layout_var(vars, "padding").unwrap_or(16.0),
+        ))
     }
 }
 

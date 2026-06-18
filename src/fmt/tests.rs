@@ -15,7 +15,10 @@ fn reparses(src: &str) {
 fn idempotent(src: &str) {
     let once = fmt(src);
     let twice = fmt(&once);
-    assert_eq!(once, twice, "not idempotent:\n--- once ---\n{once}\n--- twice ---\n{twice}");
+    assert_eq!(
+        once, twice,
+        "not idempotent:\n--- once ---\n{once}\n--- twice ---\n{twice}"
+    );
 }
 
 #[test]
@@ -51,7 +54,10 @@ fn class_rule() {
 
 #[test]
 fn descendant_rule() {
-    assert_eq!(fmt("table box{padding:4 8}\n"), "table box { padding: 4 8; }\n");
+    assert_eq!(
+        fmt("table box{padding:4 8}\n"),
+        "table box { padding: 4 8; }\n"
+    );
 }
 
 #[test]
@@ -129,7 +135,10 @@ fn dotted_wire_op() {
 
 #[test]
 fn wire_defaults_rule_uses_the_arrow_glyph() {
-    assert_eq!(fmt("-> {clearance:8}\na -> b\n"), "-> { clearance: 8; }\n\na -> b\n");
+    assert_eq!(
+        fmt("-> {clearance:8}\na -> b\n"),
+        "-> { clearance: 8; }\n\na -> b\n"
+    );
 }
 
 #[test]
