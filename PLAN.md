@@ -1,229 +1,127 @@
-# PLAN — the box/text model
+# PLAN — trailing-label sugar + empty grid cells
 
-How to take the codebase from the model it implements today to the **box/text
-model** specified in [`SPEC.md`](SPEC.md). Written to be executed across several
-sessions (with `/compact` between), so each phase stands on its own.
+Two surface refinements to the box/text model (already shipped; see `git log`).
+`SPEC.md` is the contract — it already describes the target. This plan turns the
+code to match. Both are **parser + resolve + fmt** only: the AST, the resolved
+IR, layout, and render are unchanged in shape.
 
-`SPEC.md` is the contract. [`WIRING.md`](WIRING.md) owns wire *geometry* and is
-**unchanged** by this work. Read both, plus [`AGENT.md`](AGENT.md), at the start
-of any session.
+Read `SPEC.md` (§3 box declaration, §5 auto-flow, §9 wire labels, §16 grammar),
+`WIRING.md` (unchanged), and `AGENT.md` at the start of a session.
 
 ---
 
 ## Ground rules
 
-- **Clean break.** Pre-release, zero users. No aliases, no back-compat. Delete
-  retired concepts outright.
-- **Rewrite, don't patch.** If a function is shaped for the old model, rewrite
-  it. Move code between files, split or merge modules, rename freely. Aim for
-  code that reads as if the box/text model were the only one it ever had.
-- **`SPEC.md` wins.** If the spec and your instinct disagree, follow the spec —
-  or, if the spec is genuinely wrong, fix the spec in the same change with a note
-  in the commit. Never let code and spec drift.
-- **Modern, clean Rust.** No `unsafe`. One concept per file; split past ~500 LOC.
-  Don't fight `rustfmt`/`clippy`. Comments only for the non-obvious *why*.
-- **Test as you go** (per AGENT.md): `insta` snapshots for output-shaped code,
-  one sample per feature in `samples/`, and **verify SVG visually** — render to
-  PNG with `resvg` and actually look at it.
-- **This plan is a shape, not a straitjacket.** Reorder, merge, or split phases
-  as the code demands; trust the code and note the deviation.
-
----
-
-## What changes (SPEC §1/§3/§7/§8/§9)
-
-The language moves to **two node kinds**:
-
-1. **Box** — `[id] [|type|] [.class…] [block]`. The line is identity; the block
-   is content + config. Default type `box` (was `rect`). No positional strings.
-2. **Text** — a bare `"…"`. Content only: no id, type, children, or block.
-   Inside a box's block it is that box's text; on its own it is a flow/canvas
-   text node. Consecutive strings are consecutive text nodes.
-
-Plus: **id-as-label** (id is the label unless the block has a string; `{ "" }`
-empties, `{}` is a no-op); **`|plain|`** frameless box and **`|caption| :: plain`**
-(no 1st/2nd footer magic); **wire = 1-D container** with bare-string labels +
-`along:` (so `at:` is node-position-only); **`|table|` = grid + `divider: all` +
-`gap: 0`** with bare-text cells and `fmt` column alignment; text styled/positioned
-only via a containing box. Reserve `rect`, `text`, `circle`, `wire`, and `'`.
-
-Already in place (the wire-operator change, last session) and consistent with the
-new spec: `..` dotted, `-> { }` wire-defaults rule, `fmt` declaration grouping +
-inline-collapse. Build on them.
-
----
+- **Clean break**, pre-release. No aliases. Rewrite, don't patch.
+- **Modern, clean Rust.** No `unsafe`; one concept per file; don't fight
+  `rustfmt`/`clippy`; comments only for the non-obvious *why*.
+- **`SPEC.md` wins.** If code and spec disagree, fix whichever is wrong in the
+  same change; never let them drift.
+- **Test as you go**: `insta` for output, one sample per feature, **verify SVG
+  with `resvg`**. `cargo test` green at each commit.
 
 ## Current state
 
-- The repo implements the **previous model** end-to-end; `cargo test` green
-  (≈328). Pipeline: `lexer → parser (src/syntax) → resolve → layout (+ route) →
-  render`, plus `fmt`, `lint`, `desugar`, `theme`, `serve`, `main`.
-- Text is a `|text|` primitive; a node carries positional `labels` that resolve
-  expands into `|caption|`/`|text|` children; `rect` is the default; wire labels
-  use `at`/`offset`. All of that is what this plan replaces.
+The box/text model is complete (`cargo test` ~332 green). Today: a box/wire label
+is **only** a `Child::Text` inside the block; a block-less box uses id-as-label;
+an empty `""` text is always dropped (`is_blank_anon_text`). The two changes below
+are the only deltas.
 
 ---
 
-## Phase 1 — `rect` → `box`
+## What changes (SPEC §3 / §5 / §9 / §16)
 
-**Goal.** Rename the default/primitive rectangle from `rect` to `box`; reserve
-`rect`.
-
-**Key points.**
-- `ShapeKind::Rect` → `Box`; the `"rect"` shape literal in `resolve/ir.rs`
-  (`from`/`as_str`) → `"box"`; template bases in `resolve/types.rs`
-  (`group`/`badge`/`note`/`row`/`column`) → `box`; the default type in
-  `scene.rs`/`desugar.rs` (`unwrap_or("rect")`) → `box`; `BUILTIN_TYPES` in the
-  parser. The SVG class `lini-shape-rect` → `lini-shape-box` falls out of
-  `as_str()` — only the render tests assert the literal.
-- **Leave the geometry `Rect` struct alone** (`src/layout/wires/rect.rs` and its
-  ~500 uses across `layout/wires/*` are bounding boxes, not the shape). Touch
-  only the shape `ShapeKind::Rect` / `"rect"` string, never the struct.
-- Reserve `rect` (un-instantiable, un-usable id): add it to the `matches!` lists
-  in `scene.rs::is_reserved_id` and `types.rs` alongside `wire`/`circle`.
-- Mechanical sweep of `samples/`, `tests/`, snapshots, `README.md`.
-
-**Done when.** `cargo test` green; `|box|` is the default and primitive; `rect`
-errors as reserved. (Orthogonal, isolated — do it first to clear the way.)
+1. **Trailing-label sugar.** A block-less box or wire may trail its label
+   string(s) to the line's end: `api |box| "API"` ≡ `api |box| { "API" }`;
+   `a -> b "x" "y"` ≡ two labels. A node that opens a `{ }` block keeps its label
+   inside it — **trailing + block is an error**. Pure parser sugar: it desugars
+   to the block form, so nothing downstream changes.
+2. **Empty grid cells.** An empty `""` text is suppressed in **flow** (as today)
+   but **kept in a grid**, where it is a real empty cell that holds its track —
+   so a blank table cell stops collapsing and misaligning the row.
 
 ---
 
-## Phase 2 — The box/text model (front end + resolve + fmt + desugar)
+## Part A — trailing-label sugar (parser + fmt)
 
-**Goal.** The heart: strings are content, no positional labels, id-as-label,
-`|plain|`/`|caption|`, wire `along:`, table validation. The AST changes, so every
-consumer that pattern-matches it (resolve, fmt, desugar) moves together; layout
-and render stay green by keeping **text a `Text` scene node** (rendered as today,
-wrapped — the leaner `<text>` is Phase 4).
+**Parser** (`src/syntax/parser.rs`). No AST change — synthesize the block.
 
-**Key points.**
-- **AST** (`src/syntax/ast.rs`): drop `Node.labels`. A block's children become an
-  ordered list of `Box(Node) | Text(TextNode)` (order matters — text interleaves
-  with boxes); top-level instances likewise. `TextNode { text, span }`. Wire
-  body = declarations + text labels + `|plain|` boxes.
-- **Lexer**: a `'` is an error (`single quotes are not strings; use "…"`).
-- **Parser** (`src/syntax/parser.rs`): default type `box`; a `string` token is a
-  text node (statement / child); **consecutive strings are consecutive text
-  nodes** (a string is self-delimiting — no terminator needed between them); a
-  string may **not** follow the identity tokens on a node line (no positional
-  labels); within a block a string is a **child**, so it comes *after* the
-  declarations (`{ width: 60; "Bowl" }`) — a string before a decl is the same
-  "declarations come first" error as any other child. Drop the `|text|`
-  primitive (remove `text` from `BUILTIN_TYPES`) and reserve `text` as an
-  un-usable id (SPEC §18). `|wire|` still errors. Wire block accepts strings +
-  `along` + `|plain|`.
-- **Resolve** (`src/resolve/`): synthesize the **id-as-label** text when a box's
-  block carries no string; **drop the caption 1st/2nd-label magic** entirely; add
-  the `plain` template (`box { stroke: none; fill: none; padding: 0 }`),
-  `caption :: plain { mount: in; font-size: 13 }`, `row`/`column :: plain`;
-  rebase `group`/`badge`/`note` on `box`; wire labels are bare text placed by
-  `along:` (auto-distribute when unset) — retire `at`/`offset` on wire labels;
-  validate **`divider` ⇒ `gap: 0`**; `|table| :: group { layout: grid; divider:
-  all; gap: 0; padding: 4 8; fill: none; stroke: --stroke }`, cells are bare text
-  (drop the `table rect { stretch }` rule).
-- **fmt** (`src/fmt/`): emit the new forms — no positional strings, bare-text
-  children, `|box|`/`|plain|`/`|caption|`, `along`. (Keep the §6/§7 grouping +
-  inline-collapse already shipped. Table **column alignment** is Phase 5.)
-- **desugar** (`src/desugar.rs`): id→label text; wire-label `along` distribution;
-  no `|text|` expansion.
+- `parse_node`: after the classes loop, **greedily consume trailing strings**
+  (`while String { … }` — it stops at the newline token on its own). Then:
+  - strings **and** a `{` block follow → error `a label is the trailing string
+    or the block, not both` (SPEC §15);
+  - strings, no block → `block = Some(Block { children: <Text per string>, .. })`;
+  - no strings → the existing block-or-nothing path.
+  Drop the current "a label is a child, not positional — put it in the block"
+  error (that rule is reversed now).
+- `parse_wire`: the same — after the classes, trailing strings synthesize a
+  `WireBlock { labels: <Child::Text per string>, decls: [] }`; strings + block is
+  the same error.
+- A statement that *starts* with a string is still a standalone text node
+  (`parse_child`); the greedy trailing-consume only happens after a head, so
+  `"a" "b"` (no head) stays two nodes while `x |box| "a" "b"` is one box with two
+  labels. (The terminator already lets a following string self-delimit — keep it.)
 
-**Done when.** The new syntax compiles end-to-end to correct SVG (text still in a
-`<g>` wrapper — a documented, phase-local deviation from §13); per-module unit
-tests green; the SPEC §20 examples parse and resolve.
+**fmt** (`src/fmt.rs`). The inverse: contract a text-only block to trailing form.
+
+- Add a `terse: bool` field to `Emitter`. `format` sets it `true`; `print_file`
+  (desugar) sets it `false`.
+- When `terse` and a box's block is **only text children** (≥1, no decls, no box
+  children, no internal wires), emit `id |type| .class "a" "b"` — head then the
+  bare strings, no braces. Likewise a wire block that is only text labels (no
+  `along:`/decls, no `|plain|`) → trailing strings. Everything else keeps braces.
+- Idempotent + round-trips: `"x"` parses back to the same `{ "x" }` AST, which
+  re-emits to `"x"`. Keep table-cell alignment (a `|table|` always has `columns:`,
+  so it has a block — it never hits the trailing path).
+- `desugar` needs no logic change: the parser already turned a trailing label
+  into a block, and `print_file` (`terse: false`) prints that block.
+
+**Tests.** Parser: trailing single/multi on box and wire; `x |box| "a" { … }`
+errors; `"a" "b"` (no head) is two nodes; `x |box| "a" "b"` is one box, two texts.
+fmt: `{ "x" }` → `"x"`, multi, wire, and a box with decls **keeps** braces;
+idempotence. desugar: `api |box| "API"` → `{ "API" }`.
 
 ---
 
-## Phase 3 — Layout: tables
+## Part B — empty grid cells (resolve)
 
-**Goal.** Make `|table|` look right under the new model.
+**Resolve** (`src/resolve/scene.rs`). `is_blank_anon_text` drops an empty,
+id-less `Text`. Make the drop **grid-aware**: keep empties when the *container*
+is a grid (`layout: grid`, which a `|table|` resolves to), drop them in flow.
 
-**Key points.**
-- A `|table|`'s `padding` is the **per-cell inset** (text-to-divider): auto
-  tracks size to cell content + inset; fixed tracks centre the text with the
-  inset as breathing room.
-- Bare-text cells auto-flow into tracks (a `Text` scene node is a grid child);
-  `cell:`/`span:` apply to **box** children only.
-- `divider` interior lines sit on the (now `gap: 0`) track boundaries — confirm
-  the divider geometry against flush cells.
+- In `resolve_node`, the `children.retain(|c| !is_blank_anon_text(c))` becomes
+  conditional on the container's layout — a grid keeps empty cells, flow drops
+  them. Thread the same check through `resolve_instances` for a grid root.
+- A box's own empty label still drops (the box isn't a grid, so its empty `Text`
+  child is removed → an unlabelled box), so `cat |box| ""` is unchanged.
 
-**Done when.** Unit tests pin a 3-column table's cell sizes and divider segments;
-a table renders as a clean ruled grid (verified visually).
-
----
-
-## Phase 4 — Render: leaner text
-
-**Goal.** Emit text per SPEC §13.
-
-**Key points.**
-- A text scene node renders as a bare `<text class="lini-text">…</text>` at its
-  placed position — **no wrapping `<g>`**. Font/colour inherit from the enclosing
-  box's `<g>`. A table of N cells becomes N `<text>` elements, not N boxes.
-- Box nodes keep their `<g class="lini-node lini-shape-…">`.
-
-**Done when.** Snapshot tests show bare `<text>`; element count for a table drops
-accordingly; visuals unchanged.
+**Tests.** Resolve: `|table| { columns: 2; "a" "" }` keeps two cells (the empty
+one holds its slot); `g |group| { layout: row; "" }` drops the empty; `cat |box|
+""` is an unlabelled box.
 
 ---
 
-## Phase 5 — fmt: table column alignment
+## Part C — samples, snapshots, visual
 
-**Goal.** Make the flat table form read like a table (SPEC §8/§14).
+- Re-`fmt` all samples: most labels go terse (`name |box| "Ada"`, `|caption|
+  "Kitchen"`) — a readability win. `samples/table.lini` already has a `"Mango" ""
+  "ripe"` row; it must now render a real empty middle cell.
+- Regenerate `insta` snapshots — **review each diff**. Only `table.lini` (and any
+  other empty-cell case) should change geometry; the rest are source-only re-fmt
+  with identical SVG.
+- **Verify with resvg**: `samples/table.lini` shows the empty cell holding its
+  column (3×3 grid, "ripe" in column 3, not shifted left).
 
-**Key points.**
-- `fmt` detects a grid/`|table|`, reads its `columns` count, chunks the bare-text
-  cells into rows, and pads each column to its max width — markdown-style. Other
-  cell kinds (a `|plain|`) break the alignment back to one-per-line.
-- Idempotent and round-trips (strings are self-delimiting, so the aligned form
-  re-parses to the same cells).
-
-**Done when.** `fmt` turns one-cell-per-line into aligned columns and back
-identically; `fmt --check` clean on the table samples.
-
----
-
-## Phase 6 — Samples, tests, snapshots, README
-
-**Goal.** Bring every fixture and doc to the new model and re-green the suite.
-
-**Key points.**
-- Rewrite all `samples/*.lini`: `|box|`, id-as-label, `{ "label" }`, explicit
-  `|caption|`, bare-text tables, wire `along`. Add samples for the new shapes
-  (`|plain|`, the flat table).
-- Rewrite every `.lini` source string + assertion in `tests/*.rs`.
-- Regenerate `insta` snapshots — inspect each diff, don't blind-accept.
-- Update `README.md` examples.
-
-**Done when.** `cargo test` fully green; conformance snapshots reviewed.
-
----
-
-## Phase 7 — Visual verification & default tuning
-
-**Goal.** Make it *look* right, and settle the eyeball-dependent defaults.
-
-**Key points.**
-- Render the showcase samples to PNG with `resvg` and read them: tables (ruled,
-  `gap: 0`, no doubling), captions, `|plain|` labels, badges, the §20 scene.
-- Tune in the one defaults file: table cell padding (`4 8` start), caption font,
-  `|plain|` paint.
-
-**Done when.** The samples render correctly and the defaults look right.
+**Done when.** `cargo test` green; trailing labels parse and fmt round-trips them;
+an empty table cell renders as a held slot (visually verified); `SPEC.md` matches
+behaviour.
 
 ---
 
 ## Per-session checklist
 
-1. Read `SPEC.md` (truth) + `WIRING.md` (routing, unchanged) + `AGENT.md`.
-2. `cargo test` to see the baseline.
-3. Pick the lowest unfinished phase; skim its "Key points."
-4. Work in clean, self-contained commits (one purposeful change each; no
-   "Co-Authored-By" lines; defer pushing to the user unless asked).
-5. Add tests as you go; verify any SVG change visually.
-
-## Definition of done
-
-All phases complete; `cargo test` green; samples render correctly (visually
-verified); `README.md` current; `SPEC.md` matches actual behavior; no trace of
-positional labels, the `|text|` primitive, `rect` as a type, or the caption
-1st/2nd magic left in the code.
+1. Read `SPEC.md` + `WIRING.md` + `AGENT.md`; `cargo test` for the baseline.
+2. Part A (parser + fmt), then Part B (resolve), then Part C (samples/snapshots).
+3. Clean, self-contained commits (one purposeful change; no "Co-Authored-By";
+   defer pushing to the user).
+4. Tests as you go; verify the table empty cell with `resvg`.
