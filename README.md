@@ -71,13 +71,13 @@ fish --> bowl          // dashed
 .loud { stroke: red; stroke-width: 2; }
 db::cyl { fill: lightyellow; }     // a new shape, based on the cylinder primitive
 
-api   |box| { "API" }
-queue |box| { radius: 8; "Queue" }
-store |db|  { "Postgres" }
+api   |box| "API"
+queue |box| { radius: 8; "Queue" }     // a label rides the head; config needs a block
+store |db|  "Postgres"
 
-api   -> queue { "enqueue" }
-queue -> store .loud { "persist" }
-store ..> api  { "ack" }          // dotted, with an arrow
+api   -> queue "enqueue"
+queue -> store .loud "persist"
+store ..> api  "ack"               // dotted, with an arrow
 ```
 
 **Lay things out.** Containers pick a layout mode; children flow, grid, or anchor:
@@ -85,9 +85,9 @@ store ..> api  { "ack" }          // dotted, with an arrow
 ```
 services |group| {
   layout: row;  gap: 24;
-  |caption| { "Services" }
-  api  |box| { "API" }
-  auth |box| { "Auth" }
+  |caption| "Services"
+  api  |box| "API"
+  auth |box| "Auth"
 }
 ```
 
