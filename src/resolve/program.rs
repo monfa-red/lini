@@ -238,26 +238,27 @@ fn builtin_rules() -> Vec<Rule> {
 
 // ─────────────────────────── Render inputs ───────────────────────────
 
-/// Best-effort [`SheetInputs`] for the renderer. The render layer still reads
-/// v3 attribute names (Phase 5), so this keeps it compiling and well-formed;
-/// descendant rules bake inline via the cascade and carry no entry here.
+/// The renderer's [`SheetInputs`]: the stylesheet sorted into the layers it
+/// restates as CSS class rules (SPEC §13). Single-part selectors map directly;
+/// descendant rules (`table rect { }`) bake inline via the cascade and carry no
+/// entry here.
 fn build_sheet_inputs(file: &File, defines: &[&Define], vars: &VarTable) -> Result<SheetInputs, Error> {
-    let mut styles = Vec::new();
-    let mut type_defaults = Vec::new();
+    let mut class_rules = Vec::new();
+    let mut element_rules = Vec::new();
     let mut wire_defaults = AttrMap::new();
     for item in &file.stylesheet {
         if let StyleItem::Rule(r) = item {
             match r.selector.parts.as_slice() {
-                [SelPart::Class(c)] => styles.push((c.clone(), decls_attrmap(&r.decls, vars)?)),
+                [SelPart::Class(c)] => class_rules.push((c.clone(), decls_attrmap(&r.decls, vars)?)),
                 [SelPart::Type(t)] if t == "wire" => wire_defaults = decls_attrmap(&r.decls, vars)?,
-                [SelPart::Type(t)] => type_defaults.push((t.clone(), decls_attrmap(&r.decls, vars)?)),
+                [SelPart::Type(t)] => element_rules.push((t.clone(), decls_attrmap(&r.decls, vars)?)),
                 _ => {}
             }
         }
     }
-    let mut shape_defs = Vec::new();
+    let mut defines_out = Vec::new();
     for d in defines {
-        shape_defs.push((d.name.clone(), decls_attrmap(&d.body.decls, vars)?));
+        defines_out.push((d.name.clone(), decls_attrmap(&d.body.decls, vars)?));
     }
     let templates = types::TEMPLATES
         .iter()
@@ -265,9 +266,9 @@ fn build_sheet_inputs(file: &File, defines: &[&Define], vars: &VarTable) -> Resu
         .filter(|(_, a)| !a.map.is_empty())
         .collect();
     Ok(SheetInputs {
-        styles,
-        type_defaults,
-        shape_defs,
+        class_rules,
+        element_rules,
+        defines: defines_out,
         templates,
         wire_defaults,
     })

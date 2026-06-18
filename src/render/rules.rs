@@ -194,8 +194,8 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
         });
     }
 
-    // Built-in template looks (group's container wash), then user shape defs
-    // in definition order — paint subset only, geometry stays baked.
+    // Built-in template looks (group's container wash), then user define
+    // defaults in source order — paint subset only, geometry stays baked.
     for (name, attrs) in &laid.sheet.templates {
         if present.contains(name.as_str()) {
             rules.push(Rule {
@@ -204,7 +204,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
             });
         }
     }
-    for (name, attrs) in &laid.sheet.shape_defs {
+    for (name, attrs) in &laid.sheet.defines {
         if present.contains(name.as_str()) {
             rules.push(Rule {
                 class: format!("lini-shape-{}", name),
@@ -213,9 +213,9 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
         }
     }
 
-    // `|name|` type defaults merge into the matching rule (creating it for
-    // paint-less templates like `|card|` that gain paint only via defaults).
-    for (name, attrs) in &laid.sheet.type_defaults {
+    // Element rules (`rect { }`) merge into the matching shape rule (creating it
+    // for paint-less templates that gain paint only via the rule).
+    for (name, attrs) in &laid.sheet.element_rules {
         if !present.contains(name.as_str()) {
             continue;
         }
@@ -257,9 +257,9 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
         });
     }
 
-    // `.style` defs in definition order — the defs block shipped as CSS. After
-    // the shape/wire default rules, so a class overrides a default.
-    for (name, attrs) in &laid.sheet.styles {
+    // Class rules in source order — the stylesheet's `.name { }` rules shipped
+    // as CSS. After the shape/wire default rules, so a class overrides a default.
+    for (name, attrs) in &laid.sheet.class_rules {
         if used_styles.contains(name.as_str()) {
             rules.push(Rule {
                 class: format!("lini-style-{}", name),
