@@ -219,6 +219,14 @@ fn finish(program: &Program, attempt: Attempt) -> LaidOut {
         h: bbox.h() + 2.0 * pad,
     };
 
+    // A root `fill:` is the canvas colour (SPEC §13); `none` stays transparent.
+    let canvas_fill = program
+        .scene
+        .attrs
+        .get("fill")
+        .filter(|v| !matches!(v, ResolvedValue::Ident(s) if s == "none"))
+        .cloned();
+
     LaidOut {
         viewbox: vb,
         nodes: attempt.nodes,
@@ -227,6 +235,7 @@ fn finish(program: &Program, attempt: Attempt) -> LaidOut {
         airwires: routing.airwires,
         vars: program.vars.clone(),
         sheet: program.sheet.clone(),
+        canvas_fill,
     }
 }
 

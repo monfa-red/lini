@@ -155,16 +155,18 @@ pub fn resolve_node(
     }
 
     let is_group = rt.type_chain.iter().any(|t| t == "group");
-    let own_label = if text_like {
-        (!node.labels.is_empty()).then(|| node.labels.join("\n"))
-    } else {
-        None
-    };
+    // A `|text|` carries its label as content; an `|icon|` carries it as the
+    // glyph name (SPEC §7). Both consume their own labels — every other shape
+    // stacks them as `|text|` children via label sugar.
+    let consumes_label = text_like || rt.kind == ShapeKind::Icon;
+    let own_label =
+        consumes_label.then(|| (!node.labels.is_empty()).then(|| node.labels.join("\n")))
+            .flatten();
 
     // Body order (SPEC §3): define intrinsic children, then label sugar, then
     // the block's own children.
     let mut child_nodes: Vec<Node> = rt.body_nodes.clone();
-    if !text_like {
+    if !consumes_label {
         child_nodes.extend(label_sugar(&node.labels, is_group, node.span));
     }
     if let Some(block) = &node.block {

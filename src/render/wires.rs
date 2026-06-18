@@ -30,7 +30,7 @@ pub fn render_wire(
         return;
     }
     let stroke = attr_or_var(&w.attrs, "stroke", "stroke", vars, opts);
-    let thickness = w.attrs.number("thickness").unwrap_or(1.0);
+    let thickness = w.attrs.number("stroke-width").unwrap_or(1.0);
 
     // Paint rides the group, exactly like a node: the `.lini-wire` rule states
     // the `|wire|` defaults, each applied `.style` rides a `lini-style-*` class,
@@ -48,7 +48,7 @@ pub fn render_wire(
             decls.push((css, formatted));
         }
     }
-    if w.attrs.get("line").is_some() {
+    if w.attrs.get("stroke-style").is_some() {
         let dash = dasharray_value(&w.attrs, thickness);
         let value = if dash.is_empty() {
             "none".to_string()
@@ -377,7 +377,7 @@ fn pulled_back(inner: (f64, f64), endpoint: (f64, f64), amount: f64) -> Option<(
 }
 
 fn render_wire_text(out: &mut String, t: &RoutedText, vars: &VarTable, opts: &Options) {
-    let size = t.attrs.number("text-size").unwrap_or(11.0);
+    let size = t.attrs.number("font-size").unwrap_or(12.0);
     let fill = if let Some(v) = t.attrs.get("fill") {
         format_value(v, vars, opts)
     } else if let Some(v) = t.attrs.get("color") {
@@ -385,7 +385,7 @@ fn render_wire_text(out: &mut String, t: &RoutedText, vars: &VarTable, opts: &Op
     } else {
         "currentColor".to_string()
     };
-    let font = attr_or_var(&t.attrs, "font", "font", vars, opts);
+    let font = attr_or_var(&t.attrs, "font-family", "font-family", vars, opts);
     // Background-coloured halo painted under the glyphs so the wire reads as
     // passing behind the label without clipping the path.
     let halo = attr_or_var(&t.attrs, "halo", "bg", vars, opts);

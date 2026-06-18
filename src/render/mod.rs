@@ -45,6 +45,21 @@ pub fn render(laid_out: &LaidOut, opts: &Options) -> String {
         out.push_str("  </defs>\n");
     }
 
+    // A root `fill:` paints a backing rect over the whole viewBox (SPEC §13),
+    // behind everything else.
+    if let Some(fill) = &laid_out.canvas_fill {
+        writeln!(
+            out,
+            r#"  <rect class="lini-canvas" x="{}" y="{}" width="{}" height="{}" fill="{}"/>"#,
+            num(vb.x),
+            num(vb.y),
+            num(vb.w),
+            num(vb.h),
+            format_value(fill, &laid_out.vars, opts),
+        )
+        .unwrap();
+    }
+
     out.push_str("  <g class=\"lini-scene\">\n");
     for node in &laid_out.nodes {
         render_node(&mut out, node, 2, &laid_out.vars, &ruleset, &filters, opts);
@@ -128,6 +143,12 @@ fn render_node(
     )
     .unwrap();
 
+    // `title:` emits a `<title>` as the group's first child — an SVG tooltip
+    // and the accessible name (SPEC §13).
+    if let Some(crate::resolve::ResolvedValue::String(title)) = n.attrs.get("title") {
+        writeln!(out, "{}  <title>{}</title>", indent, escape_xml(title)).unwrap();
+    }
+
     primitives::render_geometry(out, n, depth + 1, vars, filters, opts);
     for child in &n.children {
         render_node(out, child, depth + 1, vars, ruleset, filters, opts);
@@ -161,16 +182,16 @@ fn node_style_attr(
         };
         let Some(v) = value else { continue };
         let formatted = match *lini {
-            "text-size" => format!("{}px", format_value(v, vars, opts)),
+            "font-size" => format!("{}px", format_value(v, vars, opts)),
             _ => format_value(v, vars, opts),
         };
         if ruleset.provided(classes, css) != Some(formatted.as_str()) {
             decls.push((css, formatted));
         }
     }
-    if n.attrs.get("line").is_some() {
-        let thickness = n.attrs.number("thickness").unwrap_or(1.0);
-        let dash = values::dasharray_value(&n.attrs, thickness);
+    if n.attrs.get("stroke-style").is_some() {
+        let width = n.attrs.number("stroke-width").unwrap_or(1.0);
+        let dash = values::dasharray_value(&n.attrs, width);
         let value = if dash.is_empty() {
             "none".to_string()
         } else {
@@ -190,4 +211,44 @@ fn style_attr_from(decls: &[(&str, String)]) -> String {
     }
     let body: Vec<String> = decls.iter().map(|(p, v)| format!("{}: {}", p, v)).collect();
     format!(r#" style="{}""#, body.join("; "))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn svg_for(src: &str) -> String {
+        let tokens = crate::lexer::lex(src).expect("lex");
+        let file = crate::syntax::parser::parse(&tokens).expect("parse");
+        let program = crate::resolve::resolve_with_theme(&file, &[]).expect("resolve");
+        let laid = crate::layout::layout(&program).expect("layout");
+        render(&laid, &Options::default())
+    }
+
+    #[test]
+    fn root_fill_paints_a_backing_rect_over_the_viewbox() {
+        let svg = svg_for("fill: #eef;\nx |rect| \"hi\"\n");
+        assert!(
+            svg.contains(r#"class="lini-canvas""#) && svg.contains(r##"fill="#eef""##),
+            "{svg}"
+        );
+    }
+
+    #[test]
+    fn no_backing_rect_without_a_root_fill() {
+        let svg = svg_for("x |rect| \"hi\"\n");
+        assert!(!svg.contains("lini-canvas"), "{svg}");
+    }
+
+    #[test]
+    fn title_emits_a_title_child_on_the_node_g() {
+        let svg = svg_for("x |rect| \"hi\" { title: \"a tooltip\"; }\n");
+        assert!(svg.contains("<title>a tooltip</title>"), "{svg}");
+    }
+
+    #[test]
+    fn no_title_element_without_a_title_prop() {
+        let svg = svg_for("x |rect| \"hi\"\n");
+        assert!(!svg.contains("<title>"), "{svg}");
+    }
 }

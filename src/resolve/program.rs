@@ -365,6 +365,16 @@ mod tests {
     }
 
     #[test]
+    fn icon_label_is_the_glyph_name_not_a_child() {
+        // SPEC §7: an icon's positional label is its glyph name, carried on the
+        // node — never expanded into a stacked |text| child.
+        let p = rv4("i |icon| \"home\"\n");
+        assert_eq!(p.scene.nodes[0].shape, ShapeKind::Icon);
+        assert_eq!(p.scene.nodes[0].label.as_deref(), Some("home"));
+        assert!(p.scene.nodes[0].children.is_empty());
+    }
+
+    #[test]
     fn text_properties_inherit_to_descendants() {
         let p = rv4("g |group| {\n  font-size: 10;\n  t |text| \"hi\"\n}\n");
         let t = &p.scene.nodes[0].children[0];

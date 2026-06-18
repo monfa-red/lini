@@ -1,4 +1,4 @@
-use crate::resolve::{AttrMap, Markers, ShapeKind, SheetInputs, VarTable};
+use crate::resolve::{AttrMap, Markers, ResolvedValue, ShapeKind, SheetInputs, VarTable};
 use crate::span::Span;
 
 pub struct LaidOut {
@@ -18,6 +18,9 @@ pub struct LaidOut {
     /// Defs-block stylesheet inputs (SPEC §14) — the renderer states these
     /// as class rules and diffs node attrs against them.
     pub sheet: SheetInputs,
+    /// The root container's `fill:`, when set (SPEC §13): render paints a
+    /// backing rect over the whole viewBox. `None` ⇒ a transparent canvas.
+    pub canvas_fill: Option<ResolvedValue>,
 }
 
 /// An impossible wire's report made visible: one straight segment between its

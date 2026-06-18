@@ -56,22 +56,10 @@ fn format_call(c: &ResolvedCall, vars: &VarTable, opts: &Options) -> String {
     format!("{}({})", c.name, parts.join(", "))
 }
 
-pub fn attr_str(
-    attrs: &AttrMap,
-    name: &str,
-    fallback: &str,
-    vars: &VarTable,
-    opts: &Options,
-) -> String {
-    match attrs.get(name) {
-        Some(v) => format_value(v, vars, opts),
-        None => fallback.to_string(),
-    }
-}
-
-/// Like `attr_str` but the fallback is the lini CSS variable named
-/// `var_name`. Going through `format_value` means `--bake-vars` correctly
-/// resolves the fallback to a literal rather than leaving a `var()` string.
+/// An attribute formatted for SVG, falling back to the lini CSS variable named
+/// `var_name` when unset. Going through `format_value` means `--bake-vars`
+/// correctly resolves the fallback to a literal rather than leaving a `var()`
+/// string.
 pub fn attr_or_var(
     attrs: &AttrMap,
     name: &str,
@@ -114,14 +102,15 @@ pub fn attr_points(attrs: &AttrMap, name: &str) -> Option<Vec<(f64, f64)>> {
     }
 }
 
-/// The `stroke-dasharray` pattern for `line:dashed|dotted` (sized against
-/// thickness), or empty for solid. Shared by shapes, wires, and the rules
+/// The `stroke-dasharray` pattern for `stroke-style: dashed|dotted` (sized
+/// against `stroke-width`), or empty for solid (and the deferred `wavy`, which
+/// renders solid until §19 lands). Shared by shapes, wires, and the rules
 /// builder.
-pub fn dasharray_value(attrs: &AttrMap, thickness: f64) -> String {
-    match attrs.get("line") {
+pub fn dasharray_value(attrs: &AttrMap, width: f64) -> String {
+    match attrs.get("stroke-style") {
         Some(ResolvedValue::Ident(s)) => match s.as_str() {
-            "dashed" => format!("{},{}", num(thickness * 4.0), num(thickness * 4.0)),
-            "dotted" => format!("{},{}", num(thickness), num(thickness * 3.0)),
+            "dashed" => format!("{},{}", num(width * 4.0), num(width * 4.0)),
+            "dotted" => format!("{},{}", num(width), num(width * 3.0)),
             _ => String::new(),
         },
         _ => String::new(),

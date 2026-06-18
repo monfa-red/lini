@@ -9,7 +9,7 @@
 //! only fight inheritance, which they win — no class rule matches them).
 
 use super::filters::FilterTable;
-use super::values::{attr_or_var, attr_points, attr_str, escape_xml, num};
+use super::values::{attr_or_var, attr_points, escape_xml, num};
 use crate::Options;
 use crate::layout::PlacedNode;
 use crate::resolve::{ResolvedValue, ShapeKind, VarTable};
@@ -34,9 +34,9 @@ pub fn render_geometry(
         None => depth,
     };
 
-    // `double:` draws an offset copy behind the shape (SPEC §8); both copies
-    // sit inside the shadow group, so the doubled silhouette casts one shadow.
-    if let Some((dx, dy)) = double_offset(n) {
+    // `stack:` draws an offset copy behind the shape (SPEC §7); both copies
+    // sit inside the shadow group, so the stacked silhouette casts one shadow.
+    if let Some((dx, dy)) = stack_offset(n) {
         let indent = "  ".repeat(body_depth);
         writeln!(
             out,
@@ -73,9 +73,9 @@ pub fn render_geometry(
     }
 }
 
-/// The `(dx, dy)` of a `double:` offset copy (SPEC §8): scalar `N` ⇒ `(N, -N)`.
-fn double_offset(n: &PlacedNode) -> Option<(f64, f64)> {
-    match n.attrs.get("double")? {
+/// The `(dx, dy)` of a `stack:` offset copy (SPEC §7): scalar `N` ⇒ `(N, -N)`.
+fn stack_offset(n: &PlacedNode) -> Option<(f64, f64)> {
+    match n.attrs.get("stack")? {
         ResolvedValue::Number(v) => Some((*v, -*v)),
         ResolvedValue::Tuple(items) if items.len() == 2 => {
             Some((items[0].as_number()?, items[1].as_number()?))
@@ -86,7 +86,7 @@ fn double_offset(n: &PlacedNode) -> Option<(f64, f64)> {
 
 fn emit_shape(out: &mut String, n: &PlacedNode, depth: usize, vars: &VarTable, opts: &Options) {
     let indent = "  ".repeat(depth);
-    let thickness = n.attrs.number("thickness").unwrap_or(1.0);
+    let thickness = n.attrs.number("stroke-width").unwrap_or(1.0);
 
     match n.shape {
         ShapeKind::Rect => emit_rect(out, n, &indent, thickness),
@@ -280,9 +280,9 @@ fn emit_text(out: &mut String, n: &PlacedNode, indent: &str) {
         .unwrap();
         return;
     }
-    // Multi-line (SPEC §5): one tspan per line, spacing `text-size × 1.2`, the
+    // Multi-line (SPEC §5): one tspan per line, spacing `font-size × 1.2`, the
     // block centred on the origin so `dominant-baseline:central` still holds.
-    let size = n.attrs.number("text-size").unwrap_or(13.0);
+    let size = n.attrs.number("font-size").unwrap_or(14.0);
     let spacing = size * 1.2;
     let top = -spacing * (lines.len() as f64 - 1.0) / 2.0;
     write!(out, r#"{}<text x="0" y="0">"#, indent).unwrap();
@@ -367,9 +367,15 @@ fn emit_path(out: &mut String, n: &PlacedNode, indent: &str) {
 fn emit_icon(out: &mut String, n: &PlacedNode, indent: &str, vars: &VarTable, opts: &Options) {
     // Material Symbols embedding lands in a follow-up; until then a
     // placeholder square keeps layout visible and the icon's name
-    // discoverable through the SVG.
-    let size = n.attrs.number("size").unwrap_or(24.0);
-    let name = attr_str(&n.attrs, "name", "?", vars, opts);
+    // discoverable through the SVG. The glyph name is the node's label
+    // (`|icon| "home"`, SPEC §7); size comes from `width`/`height`/`icon-size`.
+    let size = n
+        .attrs
+        .number("width")
+        .or_else(|| n.attrs.number("height"))
+        .or_else(|| vars.get("icon-size").and_then(|e| e.value.as_number()))
+        .unwrap_or(24.0);
+    let name = n.label.as_deref().unwrap_or("?");
     let stroke = attr_or_var(&n.attrs, "stroke", "stroke", vars, opts);
     let fill = attr_or_var(&n.attrs, "fill", "stroke", vars, opts);
     writeln!(
@@ -389,17 +395,17 @@ fn emit_icon(out: &mut String, n: &PlacedNode, indent: &str, vars: &VarTable, op
         indent,
         num(size * 0.4),
         fill,
-        escape_xml(&name),
+        escape_xml(name),
     )
     .unwrap();
 }
 
 fn emit_image(out: &mut String, n: &PlacedNode, indent: &str) {
-    let href = match n.attrs.get("href") {
+    let href = match n.attrs.get("src") {
         Some(crate::resolve::ResolvedValue::String(s)) => s.clone(),
         _ => return,
     };
-    // Image dimensions come from its bbox (driven by `size=`).
+    // Image dimensions come from its bbox (driven by `width`/`height`).
     let w = n.bbox.w();
     let h = n.bbox.h();
     writeln!(

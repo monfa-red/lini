@@ -12,18 +12,19 @@ use crate::layout::{LaidOut, PlacedNode};
 use crate::resolve::{AttrMap, ResolvedValue, ShapeKind, VarTable};
 use std::collections::BTreeSet;
 
-/// lini attr → CSS property, for every paint attr that maps one-to-one.
-/// `line` is the exception: it compiles to `stroke-dasharray`, whose pattern
-/// scales with `thickness`, so the pair is translated together.
+/// lini attr → CSS property. v4 property names already match CSS, so this is
+/// near-identity; `stroke-style` is the exception, compiling to
+/// `stroke-dasharray` (a pattern that scales with `stroke-width`), so the pair
+/// is translated together, not here.
 pub const PAINT_PROPS: &[(&str, &str)] = &[
     ("fill", "fill"),
     ("stroke", "stroke"),
-    ("thickness", "stroke-width"),
+    ("stroke-width", "stroke-width"),
     ("opacity", "opacity"),
     ("color", "color"),
-    ("font", "font-family"),
-    ("text-size", "font-size"),
-    ("weight", "font-weight"),
+    ("font-family", "font-family"),
+    ("font-size", "font-size"),
+    ("font-weight", "font-weight"),
 ];
 
 pub struct Rule {
@@ -116,16 +117,16 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
 
     let mut rules: Vec<Rule> = Vec::new();
 
-    // Root rule: the inherited text properties, stated once. `text-size` is a
+    // Root rule: the inherited text properties, stated once. `font-size` is a
     // layout constant, so it always formats to a literal.
-    let text_size = layout_number(vars, "text-size", 13.0);
+    let font_size = layout_number(vars, "font-size", 14.0);
     rules.push(Rule {
         class: "lini".into(),
         props: vec![
-            ("font-family".into(), live("font")),
+            ("font-family".into(), live("font-family")),
             (
                 "font-size".into(),
-                format!("{}px", super::values::num(text_size)),
+                format!("{}px", super::values::num(font_size)),
             ),
             ("color".into(), live("text-color")),
         ],
@@ -271,22 +272,22 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
     RuleSet { rules }
 }
 
-/// The paint subset of an attr map, translated to CSS props. `line` compiles
-/// jointly with `thickness` into `stroke-dasharray`.
+/// The paint subset of an attr map, translated to CSS props. `stroke-style`
+/// compiles jointly with `stroke-width` into `stroke-dasharray`.
 pub fn paint_props(attrs: &AttrMap, vars: &VarTable, opts: &Options) -> Vec<(String, String)> {
     let mut out = Vec::new();
     for (lini, css) in PAINT_PROPS {
         if let Some(v) = attrs.get(lini) {
             let formatted = match *lini {
-                "text-size" => format!("{}px", format_value(v, vars, opts)),
+                "font-size" => format!("{}px", format_value(v, vars, opts)),
                 _ => format_value(v, vars, opts),
             };
             out.push((css.to_string(), formatted));
         }
     }
-    if attrs.get("line").is_some() {
-        let thickness = attrs.number("thickness").unwrap_or(1.0);
-        let dash = super::values::dasharray_value(attrs, thickness);
+    if attrs.get("stroke-style").is_some() {
+        let width = attrs.number("stroke-width").unwrap_or(1.0);
+        let dash = super::values::dasharray_value(attrs, width);
         out.push((
             "stroke-dasharray".to_string(),
             if dash.is_empty() {
@@ -344,7 +345,7 @@ mod tests {
     fn root_rule_carries_inherited_text_props() {
         let css = emit_str(&rules_for("x |rect| \"hi\"\n"));
         assert!(
-            css.contains(".lini { font-family: var(--lini-font); font-size: 14px; color: var(--lini-text-color); }"),
+            css.contains(".lini { font-family: var(--lini-font-family); font-size: 14px; color: var(--lini-text-color); }"),
             "{}",
             css
         );
@@ -359,7 +360,7 @@ mod tests {
 
     #[test]
     fn shape_rules_complete_over_inheritable_paint() {
-        let set = rules_for("x |rect| \"hi\"\ny |oval|\nz |line| points:[(0,0),(10,0)]\n");
+        let set = rules_for("x |rect| \"hi\"\ny |oval|\nz |line| { points: 0 0, 10 0; }\n");
         for rule in &set.rules {
             if rule.class == "lini-shape-text" {
                 // Text masks stroke — a container's stroke must never bleed
@@ -383,7 +384,7 @@ mod tests {
     #[test]
     fn style_defs_emit_in_defs_order_used_only() {
         let css = emit_str(&rules_for(
-            "{ .a stroke:red\n  .b stroke:blue\n  .unused stroke:green }\nx |rect| .b .a\n",
+            ".a { stroke: red; }\n.b { stroke: blue; }\n.unused { stroke: green; }\nx |rect| .b .a\n",
         ));
         let a = css.find(".lini .lini-style-a").expect("a rule");
         let b = css.find(".lini .lini-style-b").expect("b rule");
@@ -406,7 +407,7 @@ mod tests {
 
     #[test]
     fn type_defaults_merge_into_shape_rule() {
-        let css = emit_str(&rules_for("{ |rect| fill:lightyellow }\nx |rect|\n"));
+        let css = emit_str(&rules_for("rect { fill: lightyellow; }\nx |rect|\n"));
         assert!(
             css.contains(".lini .lini-shape-rect { fill: lightyellow;"),
             "{}",
@@ -429,9 +430,7 @@ mod tests {
 
     #[test]
     fn user_shape_rule_carries_its_paint() {
-        let css = emit_str(&rules_for(
-            "{ |treat:rect| fill:pink radius:5 }\nx |treat|\n",
-        ));
+        let css = emit_str(&rules_for("treat::rect { fill: pink; radius: 5; }\nx |treat|\n"));
         assert!(
             css.contains(".lini .lini-shape-treat { fill: pink; }"),
             "geometry (radius) must not ride CSS: {}",
