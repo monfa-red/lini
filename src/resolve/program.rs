@@ -46,9 +46,11 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
         .collect();
     let types = Types::build(&defines, &sheet, &vars)?;
 
-    // Selector type parts must name known types (SPEC §17 step 1).
+    // Selector type parts must name known types (SPEC §17 step 1). `wire` is
+    // the routing layer's reserved selector target (SPEC §18) — valid in a
+    // selector though it is not an instantiable type.
     for t in sheet.referenced_types() {
-        if !types.is_known(t) {
+        if t != "wire" && !types.is_known(t) {
             return Err(Error::at(Span::empty(), format!("unknown type '{}' in selector", t)));
         }
     }
@@ -396,6 +398,15 @@ mod tests {
         let ids: Vec<&str> = p.scene.nodes.iter().filter_map(|n| n.id.as_deref()).collect();
         assert!(ids.contains(&"cat") && ids.contains(&"dog"));
         assert_eq!(p.wires.len(), 1);
+    }
+
+    #[test]
+    fn wire_rule_sets_routing_defaults() {
+        // SPEC §9/§18: `wire { }` is the routing layer's element selector — a
+        // valid rule target even though `wire` is not an instantiable type.
+        let p = rv4("wire { stroke: red; stroke-width: 2; }\na -> b\n");
+        assert!(matches!(p.wires[0].attrs.get("stroke"), Some(ResolvedValue::Ident(s)) if s == "red"));
+        assert_eq!(p.wires[0].attrs.number("stroke-width"), Some(2.0));
     }
 
     #[test]
