@@ -276,16 +276,10 @@ pub struct ResolvedText {
     pub attrs: AttrMap,
 }
 
-/// Where a label rides its wire. v4 resolve produces only `Auto` (distribute
-/// along the route, SPEC §9) and `Fraction` (an explicit `at: 0..1`).
-/// `Start`/`Mid`/`End` survive only because the router's label placer still
-/// matches them; they retire in Phase 5 when it drops them.
+/// Where a label rides its wire (SPEC §9): `Auto` distributes it along the
+/// route; `Fraction` pins it at an explicit `at: 0..1`.
 #[derive(Clone, Debug)]
-#[allow(dead_code)]
 pub enum WireAt {
     Auto,
-    Start,
-    Mid,
-    End,
     Fraction(f64),
 }

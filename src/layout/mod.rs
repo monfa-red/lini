@@ -202,7 +202,7 @@ fn finish(program: &Program, attempt: Attempt) -> LaidOut {
         bbox.max_y = bbox.max_y.max(y);
     }
     for t in routing.wires.iter().flat_map(|w| &w.texts) {
-        let size = t.attrs.number("text-size").unwrap_or(11.0);
+        let size = t.attrs.number("font-size").unwrap_or(12.0);
         let (hw, hh) = (
             text::approx_width(&t.content, size) / 2.0,
             text::approx_height(&t.content, size) / 2.0,

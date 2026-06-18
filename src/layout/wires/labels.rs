@@ -1,7 +1,7 @@
-//! Wire labels (WIRING §Model step 7, SPEC §10): a label rides its wire at
-//! `start` / `mid` / `end` / a fraction of its statement's whole drawn
-//! route, shifted by `offset` in the tangent frame (x along the wire,
-//! y to its left). A label is an obstacle to nothing and the wire never
+//! Wire labels (WIRING §Model step 7, SPEC §9): a label rides its wire at an
+//! auto-distributed anchor or an explicit `at:` fraction of its statement's
+//! whole drawn route, shifted by `offset` in the tangent frame (x along the
+//! wire, y to its left). A label is an obstacle to nothing and the wire never
 //! moves for it — but the label may slide along the wire to dodge node
 //! bodies, node labels, and other wire labels.
 
@@ -69,7 +69,7 @@ pub fn place(
         let mut auto_i = 0;
 
         for t in &w.texts {
-            let size = t.attrs.number("text-size").unwrap_or(11.0);
+            let size = t.attrs.number("font-size").unwrap_or(12.0);
             let (bw, bh) = (approx_width(&t.text, size), approx_height(&t.text, size));
             let (ox, oy) = offset_of(t.attrs.get("offset"));
             let s0 = match t.at {
@@ -78,25 +78,12 @@ pub fn place(
                     auto_i += 1;
                     s
                 }
-                WireAt::Start => 0.0,
-                WireAt::Mid => total / 2.0,
-                WireAt::End => total,
                 WireAt::Fraction(f) => f * total,
             };
-            // `place:out` lifts the label off the line by its own half-height —
-            // clear of the stroke, on the upper side (left of a vertical run).
-            let out = matches!(t.attrs.get("place"), Some(ResolvedValue::Ident(s)) if s == "out");
+            // A label rides on the line; lift it off with `offset:` (SPEC §9).
             let spot = |s: f64| {
                 let (p, tan, si) = at_arc(wires, &segs, &lens, s);
-                let mut pos = (p.0 + ox * tan.0 - oy * tan.1, p.1 + ox * tan.1 + oy * tan.0);
-                if out {
-                    let mut d = (-tan.1, tan.0);
-                    if d.1 > 0.0 {
-                        d = (-d.0, -d.1);
-                    }
-                    let mag = bh / 2.0 + MARGIN;
-                    pos = (pos.0 + d.0 * mag, pos.1 + d.1 * mag);
-                }
+                let pos = (p.0 + ox * tan.0 - oy * tan.1, p.1 + ox * tan.1 + oy * tan.0);
                 (pos, tan, si)
             };
             let boxed = |pos: (f64, f64)| {
