@@ -59,9 +59,7 @@ fn formatted_output_resolves_identically() {
 #[test]
 fn fmt_preserves_section_comments_and_blank_lines() {
     let src = "\
-{
-  --gap:24
-}
+--gap: 24;
 
 // Top-level comment.
 // Comment on root statement.
@@ -85,28 +83,29 @@ dog |rect|
 
 #[test]
 fn fmt_canonicalizes_numeric_forms() {
-    // `+3` and `.5` are legal but non-canonical; formatter normalizes.
-    let src = "{ --a:+3\n  --b:.5 }\n";
+    // `+3` and `.5` are legal but non-canonical; the formatter normalizes.
+    let src = "--a: +3;\n--b: .5;\n";
     let formatted = lini::format_source(src).expect("fmt");
     assert!(
-        formatted.contains("--a:3"),
+        formatted.contains("--a: 3;"),
         "expected +3 → 3, got:\n{}",
         formatted
     );
     assert!(
-        formatted.contains("--b:0.5"),
+        formatted.contains("--b: 0.5;"),
         "expected .5 → 0.5, got:\n{}",
         formatted
     );
 }
 
 #[test]
-fn fmt_normalizes_tuple_spacing() {
-    let src = "|rect| size:( 2 ,  4 )\n";
+fn fmt_normalizes_value_group_spacing() {
+    // v4 values are space-separated within a group, comma between groups.
+    let src = "dim |line| {points:0 0,10 10}\n";
     let formatted = lini::format_source(src).expect("fmt");
     assert!(
-        formatted.contains("size:(2, 4)"),
-        "expected canonical tuple spacing, got:\n{}",
+        formatted.contains("points: 0 0, 10 10;"),
+        "expected canonical value-group spacing, got:\n{}",
         formatted
     );
 }

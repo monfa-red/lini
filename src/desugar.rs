@@ -4,7 +4,7 @@
 //! Types, variables, and properties stay as written; comments are not preserved.
 //! A teaching / debugging view, never a rewrite.
 
-use crate::resolve::derives_from_group;
+use crate::resolve::type_chain_contains;
 use crate::span::Span;
 use crate::syntax::ast::{Block, Decl, File, Node, TextChild, Value, Wire, WireBlock};
 
@@ -19,14 +19,17 @@ pub fn desugar(file: &File) -> File {
 }
 
 fn desugar_node(node: &Node, file: &File) -> Node {
-    let ty = node.ty.as_deref();
-    // `|text|` keeps its label as content, `|icon|` as the glyph name (SPEC §7) —
-    // neither expands. Every other type's positional labels become children.
-    let consumes_label = matches!(ty, Some("text") | Some("icon"));
+    let ty = node.ty.as_deref().unwrap_or("rect");
+    // A text-derived type (`|text|`, `|caption|`, …) keeps its label as content
+    // and an `|icon|` keeps it as the glyph name (SPEC §7) — neither expands, so
+    // a second pass is a no-op. Every other type's positional labels become
+    // children.
+    let consumes_label =
+        type_chain_contains(ty, "text", file) || type_chain_contains(ty, "icon", file);
     let expand = !consumes_label && !node.labels.is_empty();
 
     let mut nodes = if expand {
-        let is_group = derives_from_group(ty.unwrap_or("rect"), file);
+        let is_group = type_chain_contains(ty, "group", file);
         label_sugar(&node.labels, is_group, node.span)
     } else {
         Vec::new()

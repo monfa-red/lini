@@ -1,32 +1,28 @@
 //! `lini desugar` — label and wire-label sugar expanded to explicit children,
-//! with types/vars/attrs left as written.
+//! with types/vars/properties left as written.
 
 use lini::desugar_source;
 
 #[test]
 fn group_first_label_becomes_a_top_caption() {
     let out = desugar_source("g |group| \"Hi\" {\n  a |rect| \"A\"\n}\n").unwrap();
-    assert!(
-        out.contains("|text| \"Hi\" place:in side:top text-size:--title-text-size"),
-        "{out}"
-    );
+    // A group's first label is a |caption| (mount: in via the caption template).
+    assert!(out.contains("|caption| \"Hi\""), "{out}");
 }
 
 #[test]
 fn group_second_label_becomes_a_bottom_footer() {
     let out = desugar_source("g |group| \"Top\" \"Bot\" {}\n").unwrap();
-    assert!(out.contains("|text| \"Top\" place:in side:top"), "{out}");
-    assert!(out.contains("|text| \"Bot\" place:in side:bottom"), "{out}");
+    assert!(out.contains("|caption| \"Top\""), "{out}");
+    assert!(out.contains("|caption| \"Bot\""), "{out}");
+    assert!(out.contains("side: bottom;"), "the footer carries side: bottom: {out}");
 }
 
 #[test]
 fn plain_shape_label_is_a_centred_text_child() {
     let out = desugar_source("cat |rect| \"Cat\"\n").unwrap();
     assert!(out.contains("|text| \"Cat\""), "{out}");
-    assert!(
-        !out.contains("place:in"),
-        "a plain label has no place: {out}"
-    );
+    assert!(!out.contains("|caption|"), "a plain rect has no caption: {out}");
 }
 
 #[test]
@@ -39,8 +35,8 @@ fn inline_wire_label_becomes_a_text_child() {
 #[test]
 fn user_shape_extending_group_still_promotes_its_caption() {
     // The group-ness comes from the type chain, not a literal `|group|`.
-    let out = desugar_source("{ |panel:group| }\np |panel| \"Title\" {}\n").unwrap();
-    assert!(out.contains("|text| \"Title\" place:in side:top"), "{out}");
+    let out = desugar_source("panel::group { }\np |panel| \"Title\" {}\n").unwrap();
+    assert!(out.contains("|caption| \"Title\""), "{out}");
 }
 
 #[test]
