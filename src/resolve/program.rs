@@ -76,6 +76,7 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
     let mut nodes = scene::resolve_instances(
         &file.instances,
         &ctx,
+        &root_attrs,
         &root_text_ctx,
         &mut id_seen,
         &mut lifted,

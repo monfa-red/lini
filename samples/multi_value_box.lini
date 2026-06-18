@@ -8,7 +8,7 @@ layout: column; gap: 12; padding: 4 8;
       |box|   { width: 200; height: 30; radius: 8; "radius 8" }
 inner |group| {
   layout: column; gap: 4 8; padding: 2 8 16 24;
-  |caption| { "gap demo" }
+  |caption| "gap demo"
   |box|     { width: 80; height: 20; }
   |box|     { width: 80; height: 20; }
   |box|     { width: 80; height: 20; }

@@ -23,7 +23,7 @@ input_file: samples/table.lini
       <text class="lini-text" x="0" y="0">12</text>
       <text class="lini-text" x="110" y="0">fresh</text>
       <text class="lini-text" x="-110" y="22">Mango</text>
-      <text class="lini-text" x="0" y="22">3</text>
+      <text class="lini-text" x="0" y="22"></text>
       <text class="lini-text" x="110" y="22">ripe</text>
     </g>
   </g>

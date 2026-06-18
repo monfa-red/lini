@@ -4,14 +4,14 @@ layout: column; gap: 24; padding: 20;
 
 frame |group| {
   layout: row; gap: 16;
-  |caption| { "Group" }
+  |caption| "Group"
   |row|     {
-    a |box| { "a" }
-    b |box| { "b" }
+    a |box| "a"
+    b |box| "b"
   }
   |column|  {
-    p |box| { "p" }
-    q |box| { "q" }
+    p |box| "p"
+    q |box| "q"
   }
 }
 
@@ -20,9 +20,9 @@ band |row| {
   svc |box|  {
     width: 140; height: 64;
     "Service"
-    |badge| { "NEW" }
+    |badge| "NEW"
   }
-      |note| { "Sticky note" }
+      |note| "Sticky note"
 }
 
 basket |table| {

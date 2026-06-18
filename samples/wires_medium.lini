@@ -10,23 +10,23 @@ layout: row; gap: 40;
 
 treat::box { radius: 4; }
 
-cat |oval| { "Cat" }
+cat |oval| "Cat"
 
 kitchen |group| {
   layout: column;
-        |caption| { "Kitchen" }
-  bowl  |treat|   { "Bowl" }
-  water |treat|   { "Water" }
+        |caption| "Kitchen"
+  bowl  |treat|   "Bowl"
+  water |treat|   "Water"
 }
 
 garden |group| {
   layout: column; padding: 16; gap: 24;
        |caption| { margin: 0 0 -20 0; "Garden" }
-  dog  |treat|   { "Dog" }
-  bird |treat|   { "Bird" }
+  dog  |treat|   "Dog"
+  bird |treat|   "Bird"
 }
 
-roof |treat| { "Roof" }
+roof |treat| "Roof"
 
 cat -> kitchen.bowl & kitchen.water .loud
 cat -> roof .loud

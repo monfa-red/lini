@@ -6,22 +6,22 @@ layout: row; gap: 40; padding: 20; align: start;
 
 inside |group| {
   layout: column; gap: 16;
-    |caption| { "Inside" }
-  a |box|     { "Row A" }
-  b |box|     { "Row B" }
+    |caption| "Inside"
+  a |box|     "Row A"
+  b |box|     "Row B"
 }
 
 above |group| {
   layout: column; gap: 16;
     |caption| { mount: out; "Above" }
-  a |box|     { "Row A" }
-  b |box|     { "Row B" }
+  a |box|     "Row A"
+  b |box|     "Row B"
 }
 
 both |group| {
   layout: column; gap: 16;
     |caption| { mount: out; "Header" }
-  a |box|     { "Row A" }
-  b |box|     { "Row B" }
+  a |box|     "Row A"
+  b |box|     "Row B"
     |caption| { side: bottom; mount: out; "Footer" }
 }

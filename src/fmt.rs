@@ -35,6 +35,7 @@ pub fn format(src: &str) -> Result<String, Error> {
         cursor: 0,
         out: &mut out,
         align: true,
+        terse: true,
     }
     .emit_file(&file, src.len());
     Ok(out)
@@ -50,6 +51,7 @@ pub(crate) fn print_file(file: &File) -> String {
         cursor: 0,
         out: &mut out,
         align: false,
+        terse: false,
     }
     .emit_file(file, 0);
     out
@@ -63,6 +65,9 @@ struct Emitter<'a> {
     /// `print_file` (synthesized ASTs, where mixing anonymous sugar children
     /// with named nodes would pad oddly).
     align: bool,
+    /// Contract a text-only block to trailing labels (`api |box| "API"`). On for
+    /// `fmt`; off for `print_file` (desugar), which expands sugar to the block.
+    terse: bool,
 }
 
 impl Emitter<'_> {
@@ -289,9 +294,34 @@ impl Emitter<'_> {
             self.out.push_str(class);
             wrote = true;
         }
-        if let Some(block) = &node.block {
+        if let Some(block) = &node.block
+            && !self.try_trailing_labels(
+                &block.children,
+                block.decls.is_empty() && block.wires.is_empty(),
+                node.span.end,
+            )
+        {
             self.emit_block(block, node.span.end, depth);
         }
+    }
+
+    /// In terse mode, a block that is only text (≥1 child, no decls / boxes /
+    /// wires / comment) is written as trailing labels — `… "a" "b"`, no braces.
+    /// Returns whether it did so (and advanced the cursor).
+    fn try_trailing_labels(&mut self, children: &[Child], no_config: bool, end: usize) -> bool {
+        let text_only =
+            !children.is_empty() && children.iter().all(|c| matches!(c, Child::Text(_)));
+        if !self.terse || !no_config || !text_only || self.has_trivia_between(self.cursor, end) {
+            return false;
+        }
+        for c in children {
+            if let Child::Text(t) = c {
+                self.out.push(' ');
+                self.emit_string(&t.text);
+            }
+        }
+        self.cursor = end;
+        true
     }
 
     fn space_if(&mut self, cond: bool) {
@@ -445,7 +475,9 @@ impl Emitter<'_> {
             self.out.push_str(" .");
             self.out.push_str(class);
         }
-        if let Some(block) = &w.block {
+        if let Some(block) = &w.block
+            && !self.try_trailing_labels(&block.labels, block.decls.is_empty(), w.span.end)
+        {
             self.emit_wire_block(block, w.span.end, depth);
         }
     }

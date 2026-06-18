@@ -47,6 +47,7 @@ pub struct SceneCtx<'a> {
 pub fn resolve_instances(
     instances: &[Child],
     ctx: &SceneCtx,
+    root_attrs: &AttrMap,
     text_ctx: &AttrMap,
     id_seen: &mut HashMap<String, Span>,
     lifted: &mut Vec<LiftedWire>,
@@ -64,7 +65,7 @@ pub fn resolve_instances(
             lifted,
         )?);
     }
-    nodes.retain(|n| !is_blank_anon_text(n));
+    drop_blank_text(&mut nodes, root_attrs);
     Ok(nodes)
 }
 
@@ -231,7 +232,7 @@ pub fn resolve_node(
         }
     }
     ancestors.pop();
-    children.retain(|c| !is_blank_anon_text(c));
+    drop_blank_text(&mut children, &attrs);
 
     Ok(ResolvedInst {
         id: node.id.clone(),
@@ -277,9 +278,18 @@ fn first_text<'a>(children: &[&'a Child]) -> Option<&'a str> {
     })
 }
 
-/// A text node with no visible content and no id — from a `""` label. SPEC §3:
-/// `""` suppresses the label, so the node is dropped (a kept empty text would
-/// reserve a centred slot and emit an empty `<text>`).
+/// Drop empty (`""`) text children — they suppress the label and would emit an
+/// empty `<text>` — **unless** the container is a grid, where an empty `""` is a
+/// real cell that holds its track (SPEC §3/§5). A grid is positional, so its
+/// cells keep their slots; flow has no slot for an empty to hold.
+fn drop_blank_text(children: &mut Vec<ResolvedInst>, container: &AttrMap) {
+    let is_grid = matches!(container.get("layout"), Some(ResolvedValue::Ident(s)) if s == "grid");
+    if !is_grid {
+        children.retain(|c| !is_blank_anon_text(c));
+    }
+}
+
+/// A text node with no visible content and no id — from a `""` label.
 fn is_blank_anon_text(r: &ResolvedInst) -> bool {
     r.id.is_none() && r.shape == ShapeKind::Text && r.label.as_deref().is_none_or(str::is_empty)
 }

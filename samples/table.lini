@@ -5,5 +5,5 @@ basket |table| {
   columns: 80 140 80;
   "Fruit" "Quantity" "Notes"
   "Apple" "12"       "fresh"
-  "Mango" "3"        "ripe"
+  "Mango" ""         "ripe"
 }

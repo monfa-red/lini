@@ -9,10 +9,10 @@ layout: row; gap: 50;
 
 ant  |box|  { width: 60; height: 60; "Ant" }
 wall |box|  { width: 60; height: 140; "Wall" }
-bee  |box|  { "Bee" }
-owl  |oval| { "Owl" }
+bee  |box|  "Bee"
+owl  |oval| "Owl"
 
-ant -> bee { "over" }
+ant -> bee "over"
 // detours around Wall
 ant -> ant
 // self-loop: out one side, back an adjacent one
@@ -25,5 +25,5 @@ ant -> wall & owl {
   along: 0.2;
   |plain| { font-size: 9; offset: 0 -7; "fan" }
 }
-bee <-> ant { "chat" }
+bee <-> ant "chat"
 // bidirectional, also detours around Wall

@@ -22,9 +22,10 @@ fn idempotent(src: &str) {
 }
 
 #[test]
-fn node_id_type_and_label_block() {
-    // The label is a text child in the block; a short block collapses inline.
-    assert_eq!(fmt("x|box|{\"hi\"}\n"), "x |box| { \"hi\" }\n");
+fn node_label_trails_in_terse_form() {
+    // A text-only block contracts to a trailing label (SPEC §3); `{ "hi" }` too.
+    assert_eq!(fmt("x|box|{\"hi\"}\n"), "x |box| \"hi\"\n");
+    assert_eq!(fmt("x|box| \"hi\"\n"), "x |box| \"hi\"\n");
 }
 
 #[test]
@@ -117,8 +118,9 @@ fn simple_wire() {
 }
 
 #[test]
-fn wire_label_collapses_inline() {
-    assert_eq!(fmt("a -> b {\"x\"}\n"), "a -> b { \"x\" }\n");
+fn wire_label_trails() {
+    assert_eq!(fmt("a -> b {\"x\"}\n"), "a -> b \"x\"\n");
+    assert_eq!(fmt("a -> b \"x\"\n"), "a -> b \"x\"\n");
 }
 
 #[test]
@@ -181,7 +183,7 @@ fn runs_of_blank_lines_collapse_to_one() {
 fn sibling_id_and_type_columns_align() {
     assert_eq!(
         fmt("g|group|{bowl|treat|{\"Bowl\"}\nwater|box|{\"Water\"}}\n"),
-        "g |group| {\n  bowl  |treat| { \"Bowl\" }\n  water |box|   { \"Water\" }\n}\n"
+        "g |group| {\n  bowl  |treat| \"Bowl\"\n  water |box|   \"Water\"\n}\n"
     );
 }
 

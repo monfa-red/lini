@@ -459,6 +459,20 @@ impl<'a> Parser<'a> {
         }
     }
 
+    /// Consume the trailing label string(s) after a box or wire head (the
+    /// block-less sugar, SPEC §3/§9). The loop ends at the newline that ends the
+    /// statement, so the labels run to the line's end.
+    fn trailing_labels(&mut self) -> Vec<TextNode> {
+        let mut labels = Vec::new();
+        while let Some(TokKind::String(s)) = self.kind() {
+            let text = s.clone();
+            let span = self.span();
+            self.pos += 1;
+            labels.push(TextNode { text, span });
+        }
+        labels
+    }
+
     fn parse_node(&mut self) -> Result<Node, Error> {
         let start = self.span();
         let id = if matches!(self.kind(), Some(TokKind::Ident(_))) {
@@ -476,18 +490,22 @@ impl<'a> Parser<'a> {
             self.pos += 1;
             classes.push(self.expect_ident()?.0);
         }
+        // A block-less node may trail its label(s) to the line's end (SPEC §3);
+        // they synthesize the block. A real block then is an error.
+        let labels = self.trailing_labels();
         let block = if matches!(self.kind(), Some(TokKind::LBrace)) {
+            if !labels.is_empty() {
+                return Err(self.err("a label is the trailing string or the block, not both"));
+            }
             Some(self.parse_block()?)
+        } else if !labels.is_empty() {
+            Some(Block {
+                children: labels.into_iter().map(Child::Text).collect(),
+                ..Block::default()
+            })
         } else {
             None
         };
-        // A string after the head is a positional label — gone in the box/text
-        // model (SPEC §3); the label belongs in the block.
-        if matches!(self.kind(), Some(TokKind::String(_))) {
-            return Err(
-                self.err("a label is a child, not positional — put it in the block: { \"…\" }")
-            );
-        }
         if id.is_none() && ty.is_none() && block.is_none() {
             return Err(self.err("a node needs an id, type, or block"));
         }
@@ -574,11 +592,18 @@ impl<'a> Parser<'a> {
             self.pos += 1;
             classes.push(self.expect_ident()?.0);
         }
-        if matches!(self.kind(), Some(TokKind::String(_))) {
-            return Err(self.err("a wire label goes in the body: { \"…\" }"));
-        }
+        // Trailing labels (SPEC §9), the same sugar as a box; a block then errors.
+        let labels = self.trailing_labels();
         let block = if matches!(self.kind(), Some(TokKind::LBrace)) {
+            if !labels.is_empty() {
+                return Err(self.err("a label is the trailing string or the block, not both"));
+            }
             Some(self.parse_wire_block()?)
+        } else if !labels.is_empty() {
+            Some(WireBlock {
+                labels: labels.into_iter().map(Child::Text).collect(),
+                ..WireBlock::default()
+            })
         } else {
             None
         };
@@ -788,8 +813,25 @@ mod tests {
     }
 
     #[test]
-    fn a_positional_label_is_rejected() {
-        assert!(parse_err("cat |box| \"Cat\"\n").contains("put it in the block"));
+    fn trailing_label_sugar() {
+        // A block-less box trails its label(s), to the line's end (SPEC §3).
+        let f = parse_ok("cat |box| \"Cat\"\nx |box| \"a\" \"b\"\n");
+        let cat = instance(&f, 0).block.as_ref().unwrap();
+        assert!(matches!(&cat.children[0], Child::Text(t) if t.text == "Cat"));
+        assert_eq!(instance(&f, 1).block.as_ref().unwrap().children.len(), 2);
+    }
+
+    #[test]
+    fn trailing_label_and_a_block_is_an_error() {
+        assert!(parse_err("cat |box| \"Cat\" { fill: red; }\n").contains("not both"));
+    }
+
+    #[test]
+    fn wire_trails_its_label() {
+        let f = parse_ok("a -> b \"x\" \"y\"\n");
+        let wb = f.wires[0].block.as_ref().unwrap();
+        assert_eq!(wb.labels.len(), 2);
+        assert!(matches!(&wb.labels[0], Child::Text(t) if t.text == "x"));
     }
 
     #[test]
