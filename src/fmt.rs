@@ -1,22 +1,22 @@
-//! Canonical source formatter. Parses to AST, emits a normalized form.
-//!
-//! Rules (SPEC section 15 `lini fmt`):
-//! - 2-space indent.
-//! - One declaration per line; sibling declarations inside the same block get
-//!   their id / type / label / attr columns aligned.
-//! - Comments and blank-line groupings between siblings are preserved (at most
-//!   one blank line collapsed from any longer run).
-//! - Canonical value formatting (`(1, 2)` not `( 1 ,2 )`, etc.).
-//! - Idempotent: `fmt(fmt(x)) == fmt(x)`.
+//! Canonical source formatter (SPEC §14). Parses to the v4 AST and re-emits a
+//! normalized form: the three phases in order (stylesheet → instances → wires),
+//! `key: value;` declarations in `{ }` blocks, `name::base` defines, 2-space
+//! indent, space-separated value groups (comma between groups). Comments and
+//! blank-line groupings are preserved; sibling nodes align their id/type
+//! columns. Idempotent: `fmt(fmt(x)) == fmt(x)`.
 
-use crate::ast::{
-    AttrItem, BodyItem, DefsBlock, DefsEntry, File, SceneConfig, ShapeDef, ShapeInst, Stmt,
-    StyleDef, TypeDefaults, Value, VarOverride, WireConfig, WireDecl, WireOp,
+use crate::syntax::ast::{
+    Block, Decl, Define, Endpoint, File, Node, Rule, SelPart, Selector, StyleItem, TextChild,
+    Value, Wire, WireBlock,
 };
+use crate::ast::{Side, WireOp};
 use crate::error::Error;
 use crate::lexer;
-use crate::parser;
 use crate::span::Span;
+use crate::syntax::parser;
+
+mod trivia;
+use trivia::{Trivia, TriviaToken, scan_trivia};
 
 const INDENT: &str = "  ";
 
@@ -25,316 +25,238 @@ pub fn format(src: &str) -> Result<String, Error> {
     let file = parser::parse(&tokens)?;
     let trivia = scan_trivia(src);
     let mut out = String::new();
-    let mut emitter = Emitter {
-        src,
+    Emitter {
         trivia: &trivia,
         cursor: 0,
         out: &mut out,
-    };
-    emitter.emit_file(&file);
+    }
+    .emit_file(&file, src.len());
     Ok(out)
 }
 
-/// Print an AST directly in canonical form, with no source to draw comments
-/// from — for a synthesized `File` (e.g. the desugar pass), whose nodes carry
-/// no real spans. Same emitter, empty trivia: clean output, comments dropped.
+/// Emit an AST with no source to draw trivia from — for a synthesized `File`
+/// (the desugar pass), whose nodes carry no real spans. Same emitter, empty
+/// trivia: clean output, comments dropped.
 // Idle while `desugar_source` is stubbed; revived when desugar moves to the v4
 // front end (PLAN Phase 7).
 #[allow(dead_code)]
 pub(crate) fn print_file(file: &File) -> String {
     let mut out = String::new();
-    let mut emitter = Emitter {
-        src: "",
+    Emitter {
         trivia: &[],
         cursor: 0,
         out: &mut out,
-    };
-    emitter.emit_file(file);
-    out
-}
-
-// ─────────────────────────── Trivia (comments + blank lines) ───────────────────────────
-
-#[derive(Debug, Clone)]
-enum Trivia {
-    Comment(String),
-    BlankLine,
-}
-
-#[derive(Debug, Clone)]
-struct TriviaToken {
-    pos: usize,
-    kind: Trivia,
-}
-
-fn scan_trivia(src: &str) -> Vec<TriviaToken> {
-    let mut out = Vec::new();
-    let bytes = src.as_bytes();
-    let mut i = 0;
-    let mut at_line_start = true;
-    let mut blank_run = 0usize;
-
-    while i < bytes.len() {
-        let c = bytes[i];
-        match c {
-            b' ' | b'\t' | b'\r' => i += 1,
-            b'\n' => {
-                if at_line_start {
-                    blank_run += 1;
-                    if blank_run == 2 {
-                        out.push(TriviaToken {
-                            pos: i,
-                            kind: Trivia::BlankLine,
-                        });
-                    }
-                } else {
-                    blank_run = 1;
-                }
-                at_line_start = true;
-                i += 1;
-            }
-            b'/' if bytes.get(i + 1) == Some(&b'/') => {
-                let start = i;
-                i += 2;
-                while i < bytes.len() && bytes[i] != b'\n' {
-                    i += 1;
-                }
-                let text = src[start..i].trim_end().to_string();
-                out.push(TriviaToken {
-                    pos: start,
-                    kind: Trivia::Comment(text),
-                });
-                at_line_start = false;
-                blank_run = 0;
-            }
-            _ => {
-                at_line_start = false;
-                blank_run = 0;
-                if c == b'"' {
-                    i += 1;
-                    while i < bytes.len() {
-                        let cc = bytes[i];
-                        if cc == b'\\' && i + 1 < bytes.len() {
-                            i += 2;
-                            continue;
-                        }
-                        i += 1;
-                        if cc == b'"' {
-                            break;
-                        }
-                    }
-                } else {
-                    i += 1;
-                }
-            }
-        }
     }
+    .emit_file(file, 0);
     out
 }
-
-// ─────────────────────────── Emitter ───────────────────────────
 
 struct Emitter<'a> {
-    src: &'a str,
     trivia: &'a [TriviaToken],
     cursor: usize,
     out: &'a mut String,
 }
 
-impl<'a> Emitter<'a> {
-    fn emit_file(&mut self, file: &File) {
-        if let Some(defs) = &file.defs {
-            self.emit_trivia_before(defs.span.start, 0);
-            self.emit_defs(defs);
-            self.cursor = defs.span.end;
-        }
-        if !file.stmts.is_empty() {
-            // Blank line between defs and first stmt.
-            if file.defs.is_some() && !self.out.ends_with("\n\n") {
-                if self.out.ends_with('\n') {
-                    self.out.push('\n');
-                } else {
-                    self.out.push_str("\n\n");
-                }
+impl Emitter<'_> {
+    fn emit_file(&mut self, file: &File, src_len: usize) {
+        let mut phases_emitted = 0;
+        if !file.stylesheet.is_empty() {
+            for item in &file.stylesheet {
+                self.emit_trivia_before(style_item_span(item).start, 0);
+                self.emit_style_item(item, 0);
+                self.cursor = style_item_span(item).end;
             }
-            let widths = compute_root_widths(&file.stmts, self.trivia);
-            for (i, stmt) in file.stmts.iter().enumerate() {
-                self.emit_trivia_before(stmt_span(stmt).start, 0);
-                self.emit_stmt(stmt, 0, widths[i]);
-                self.cursor = stmt_span(stmt).end;
+            phases_emitted += 1;
+        }
+        if !file.instances.is_empty() {
+            self.section_break(phases_emitted);
+            self.emit_nodes(&file.instances, 0);
+            phases_emitted += 1;
+        }
+        if !file.wires.is_empty() {
+            self.section_break(phases_emitted);
+            for w in &file.wires {
+                self.emit_trivia_before(w.span.start, 0);
+                self.emit_wire(w, 0);
+                self.out.push('\n');
+                self.cursor = w.span.end;
             }
         }
-        self.emit_trivia_before(self.src.len(), 0);
+        self.emit_trivia_before(src_len, 0);
+        if self.out.is_empty() {
+            return;
+        }
         if !self.out.ends_with('\n') {
             self.out.push('\n');
         }
     }
 
-    // ───────── Defs block ─────────
-
-    fn emit_defs(&mut self, defs: &DefsBlock) {
-        self.out.push_str("{\n");
-        for entry in &defs.entries {
-            self.emit_trivia_before(entry.span().start, 1);
-            self.indent(1);
-            self.emit_defs_entry(entry);
+    /// One blank line between two non-empty phases (only once any phase has been
+    /// written), unless the running output already ends in one.
+    fn section_break(&mut self, phases_emitted: usize) {
+        if phases_emitted > 0 && !self.out.is_empty() && !self.out.ends_with("\n\n") {
             self.out.push('\n');
-            self.cursor = entry.span().end;
-        }
-        self.emit_trivia_before(defs.span.end, 1);
-        self.out.push_str("}\n");
-    }
-
-    fn emit_defs_entry(&mut self, entry: &DefsEntry) {
-        match entry {
-            DefsEntry::SceneConfig(s) => self.emit_scene_config(s),
-            DefsEntry::WireConfig(w) => self.emit_wire_config(w),
-            DefsEntry::TypeDefaults(t) => self.emit_type_defaults(t),
-            DefsEntry::VarOverride(v) => self.emit_var_override(v),
-            DefsEntry::StyleDef(s) => self.emit_style_def(s),
-            DefsEntry::ShapeDef(s) => self.emit_shape_def(s),
         }
     }
 
-    fn emit_scene_config(&mut self, s: &SceneConfig) {
-        self.out.push_str("|scene|");
-        self.emit_attr_items(&s.items);
-    }
+    // ───────── Stylesheet ─────────
 
-    fn emit_wire_config(&mut self, w: &WireConfig) {
-        self.out.push_str("|wire|");
-        self.emit_attr_items(&w.items);
-    }
-
-    fn emit_type_defaults(&mut self, t: &TypeDefaults) {
-        self.out.push('|');
-        self.out.push_str(&t.name);
-        self.out.push('|');
-        self.emit_attr_items(&t.items);
-    }
-
-    fn emit_var_override(&mut self, v: &VarOverride) {
-        self.out.push_str("--");
-        self.out.push_str(&v.name);
-        self.out.push(':');
-        self.emit_value(&v.value);
-    }
-
-    fn emit_style_def(&mut self, s: &StyleDef) {
-        self.out.push('.');
-        self.out.push_str(&s.name);
-        self.emit_attr_items(&s.items);
-    }
-
-    fn emit_shape_def(&mut self, s: &ShapeDef) {
-        self.out.push('|');
-        self.out.push_str(&s.name);
-        self.out.push(':');
-        self.out.push_str(&s.base.name);
-        self.out.push('|');
-        self.emit_attr_items(&s.items);
-        self.emit_body(&s.body, s.span.end, 1);
-    }
-
-    // ───────── Top-level stmts ─────────
-
-    fn emit_stmt(&mut self, stmt: &Stmt, depth: usize, w: NodeWidths) {
-        match stmt {
-            Stmt::Node(n) => {
-                self.emit_shape_inst(n, depth, w);
+    fn emit_style_item(&mut self, item: &StyleItem, depth: usize) {
+        match item {
+            StyleItem::RootDecl(d) => {
+                self.indent(depth);
+                self.emit_decl(d, false);
                 self.out.push('\n');
             }
-            Stmt::Wire(wire) => {
-                self.emit_wire(wire, depth);
+            StyleItem::Var(d) => {
+                self.indent(depth);
+                self.emit_decl(d, true);
                 self.out.push('\n');
             }
+            StyleItem::Rule(r) => self.emit_rule(r, depth),
+            StyleItem::Define(d) => self.emit_define(d, depth),
         }
     }
 
-    // ───────── Node (shape inst) ─────────
-
-    fn emit_shape_inst(&mut self, inst: &ShapeInst, depth: usize, w: NodeWidths) {
+    fn emit_rule(&mut self, rule: &Rule, depth: usize) {
         self.indent(depth);
-        let has_label = !inst.labels.is_empty();
-        let has_attrs = !inst.items.is_empty();
-        let has_body = inst.body.is_some();
+        self.emit_selector(&rule.selector);
+        self.emit_decl_block(&rule.decls, rule.span.end, depth);
+        self.out.push('\n');
+    }
 
-        // ID column
-        if w.id > 0 {
-            match &inst.id {
-                Some(id) => {
-                    self.out.push_str(id);
-                    if w.ty > 0 {
-                        pad(self.out, w.id.saturating_sub(id.len()));
-                    }
-                }
-                None => {
-                    if w.ty > 0 {
-                        pad(self.out, w.id);
-                    }
-                }
-            }
-            if w.ty > 0 || inst.id.is_some() {
+    fn emit_define(&mut self, def: &Define, depth: usize) {
+        self.indent(depth);
+        self.out.push_str(&def.name);
+        self.out.push_str("::");
+        self.out.push_str(&def.base);
+        self.emit_block(&def.body, def.span.end, depth);
+        self.out.push('\n');
+    }
+
+    fn emit_selector(&mut self, sel: &Selector) {
+        for (i, part) in sel.parts.iter().enumerate() {
+            if i > 0 {
                 self.out.push(' ');
             }
-        } else if let Some(id) = &inst.id {
-            self.out.push_str(id);
-            self.out.push(' ');
+            match part {
+                SelPart::Type(t) => self.out.push_str(t),
+                SelPart::Class(c) => {
+                    self.out.push('.');
+                    self.out.push_str(c);
+                }
+            }
         }
-
-        // Type column
-        let ty_text = format!("|{}|", inst.ty.name);
-        self.out.push_str(&ty_text);
-        if w.ty > 0 && (has_label || has_attrs || has_body) {
-            pad(self.out, w.ty.saturating_sub(ty_text.len()));
-        }
-
-        for label in &inst.labels {
-            self.out.push(' ');
-            self.emit_string(label);
-        }
-        self.emit_attr_items(&inst.items);
-        self.emit_body(&inst.body, inst.span.end, depth);
     }
 
-    fn emit_body(&mut self, body: &Option<Vec<BodyItem>>, end: usize, depth: usize) {
-        let body = match body {
-            Some(b) => b,
-            None => return,
-        };
-        if body.is_empty() && !self.has_comment_in(self.cursor, end) {
+    // ───────── Instances ─────────
+
+    fn emit_nodes(&mut self, nodes: &[Node], depth: usize) {
+        let widths = align::node_widths(nodes, self.trivia);
+        for (i, n) in nodes.iter().enumerate() {
+            self.emit_trivia_before(n.span.start, depth);
+            self.emit_node(n, depth, widths[i]);
+            self.out.push('\n');
+            self.cursor = n.span.end;
+        }
+    }
+
+    fn emit_node(&mut self, node: &Node, depth: usize, w: align::NodeWidths) {
+        self.indent(depth);
+        // id column
+        match &node.id {
+            Some(id) => {
+                self.out.push_str(id);
+                pad(self.out, w.id.saturating_sub(id.len()));
+            }
+            None => pad(self.out, w.id),
+        }
+        if w.id > 0 {
+            self.out.push(' ');
+        }
+        // type column
+        let ty = node.ty.as_ref().map(|t| format!("|{}|", t));
+        match &ty {
+            Some(t) => {
+                self.out.push_str(t);
+                pad(self.out, w.ty.saturating_sub(t.len()));
+            }
+            None => pad(self.out, w.ty),
+        }
+        let mut need_space = w.ty > 0 || ty.is_some();
+        if w.id == 0 && node.id.is_none() && ty.is_none() {
+            need_space = false;
+        }
+        for label in &node.labels {
+            if need_space {
+                self.out.push(' ');
+            }
+            self.emit_string(label);
+            need_space = true;
+        }
+        for class in &node.classes {
+            if need_space {
+                self.out.push(' ');
+            }
+            self.out.push('.');
+            self.out.push_str(class);
+            need_space = true;
+        }
+        if let Some(block) = &node.block {
+            self.emit_block(block, node.span.end, depth);
+        }
+    }
+
+    fn emit_block(&mut self, block: &Block, end: usize, depth: usize) {
+        let empty = block.decls.is_empty() && block.nodes.is_empty() && block.wires.is_empty();
+        if empty && !self.has_comment_in(self.cursor, end) {
             self.out.push_str(" {}");
             self.cursor = end;
             return;
         }
         self.out.push_str(" {\n");
-        let widths = compute_body_widths(body, self.trivia);
-        for (i, c) in body.iter().enumerate() {
-            self.emit_trivia_before(body_item_span(c).start, depth + 1);
-            self.emit_body_item(c, depth + 1, widths[i]);
-            self.cursor = body_item_span(c).end;
+        for d in &block.decls {
+            self.emit_trivia_before(d.span.start, depth + 1);
+            self.indent(depth + 1);
+            self.emit_decl(d, false);
+            self.out.push('\n');
+            self.cursor = d.span.end;
+        }
+        self.emit_nodes(&block.nodes, depth + 1);
+        for wire in &block.wires {
+            self.emit_trivia_before(wire.span.start, depth + 1);
+            self.emit_wire(wire, depth + 1);
+            self.out.push('\n');
+            self.cursor = wire.span.end;
         }
         self.emit_trivia_before(end, depth + 1);
         self.indent(depth);
         self.out.push('}');
     }
 
-    fn emit_body_item(&mut self, item: &BodyItem, depth: usize, w: NodeWidths) {
-        match item {
-            BodyItem::Inst(i) => {
-                self.emit_shape_inst(i, depth, w);
-                self.out.push('\n');
-            }
-            BodyItem::Wire(w) => {
-                self.emit_wire(w, depth);
-                self.out.push('\n');
-            }
+    /// A rule body: only declarations, same braces.
+    fn emit_decl_block(&mut self, decls: &[Decl], end: usize, depth: usize) {
+        if decls.is_empty() && !self.has_comment_in(self.cursor, end) {
+            self.out.push_str(" {}");
+            self.cursor = end;
+            return;
         }
+        self.out.push_str(" {\n");
+        for d in decls {
+            self.emit_trivia_before(d.span.start, depth + 1);
+            self.indent(depth + 1);
+            self.emit_decl(d, false);
+            self.out.push('\n');
+            self.cursor = d.span.end;
+        }
+        self.emit_trivia_before(end, depth + 1);
+        self.indent(depth);
+        self.out.push('}');
     }
 
-    // ───────── Wire decl ─────────
+    // ───────── Wires ─────────
 
-    fn emit_wire(&mut self, w: &WireDecl, depth: usize) {
+    fn emit_wire(&mut self, w: &Wire, depth: usize) {
         self.indent(depth);
         for (i, group) in w.chain.iter().enumerate() {
             if i > 0 {
@@ -346,50 +268,94 @@ impl<'a> Emitter<'a> {
                 if j > 0 {
                     self.out.push_str(" & ");
                 }
-                self.out.push_str(&ep.path.join("."));
-                if let Some(side) = ep.side {
-                    self.out.push('.');
-                    self.out.push_str(side_str(side));
-                }
+                self.emit_endpoint(ep);
             }
         }
         for label in &w.labels {
             self.out.push(' ');
             self.emit_string(label);
         }
-        self.emit_attr_items(&w.items);
-        if let Some(body) = &w.body {
-            self.out.push_str(" {\n");
-            for t in body {
-                self.emit_trivia_before(t.span.start, depth + 1);
-                self.indent(depth + 1);
-                self.out.push_str("|text| ");
-                self.emit_string(&t.text);
-                self.emit_attr_items(&t.items);
-                self.out.push('\n');
-                self.cursor = t.span.end;
-            }
-            self.emit_trivia_before(w.span.end, depth + 1);
-            self.indent(depth);
-            self.out.push('}');
+        for class in &w.classes {
+            self.out.push_str(" .");
+            self.out.push_str(class);
+        }
+        if let Some(block) = &w.block {
+            self.emit_wire_block(block, w.span.end, depth);
         }
     }
 
-    fn emit_attr_items(&mut self, items: &[AttrItem]) {
-        for item in items {
-            self.out.push(' ');
-            match item {
-                AttrItem::Style(s) => {
-                    self.out.push('.');
-                    self.out.push_str(&s.name);
+    fn emit_endpoint(&mut self, ep: &Endpoint) {
+        self.out.push_str(&ep.path.join("."));
+        if let Some(side) = ep.side {
+            self.out.push('.');
+            self.out.push_str(side_str(side));
+        }
+    }
+
+    fn emit_wire_block(&mut self, block: &WireBlock, end: usize, depth: usize) {
+        let empty = block.decls.is_empty() && block.texts.is_empty();
+        if empty && !self.has_comment_in(self.cursor, end) {
+            self.out.push_str(" {}");
+            self.cursor = end;
+            return;
+        }
+        self.out.push_str(" {\n");
+        for d in &block.decls {
+            self.emit_trivia_before(d.span.start, depth + 1);
+            self.indent(depth + 1);
+            self.emit_decl(d, false);
+            self.out.push('\n');
+            self.cursor = d.span.end;
+        }
+        for t in &block.texts {
+            self.emit_trivia_before(t.span.start, depth + 1);
+            self.indent(depth + 1);
+            self.emit_text_child(t);
+            self.out.push('\n');
+            self.cursor = t.span.end;
+        }
+        self.emit_trivia_before(end, depth + 1);
+        self.indent(depth);
+        self.out.push('}');
+    }
+
+    fn emit_text_child(&mut self, t: &TextChild) {
+        self.out.push_str("|text| ");
+        self.emit_string(&t.text);
+        for class in &t.classes {
+            self.out.push_str(" .");
+            self.out.push_str(class);
+        }
+        if !t.decls.is_empty() {
+            self.out.push_str(" {");
+            for d in &t.decls {
+                self.out.push(' ');
+                self.emit_decl(d, false);
+            }
+            self.out.push_str(" }");
+        }
+    }
+
+    // ───────── Declarations & values ─────────
+
+    fn emit_decl(&mut self, decl: &Decl, is_var: bool) {
+        if is_var {
+            self.out.push_str("--");
+        }
+        self.out.push_str(&decl.name);
+        self.out.push_str(": ");
+        for (i, group) in decl.groups.iter().enumerate() {
+            if i > 0 {
+                self.out.push_str(", ");
+            }
+            for (j, v) in group.iter().enumerate() {
+                if j > 0 {
+                    self.out.push(' ');
                 }
-                AttrItem::Attr(a) => {
-                    self.out.push_str(&a.name);
-                    self.out.push(':');
-                    self.emit_value(&a.value);
-                }
+                self.emit_value(v);
             }
         }
+        self.out.push(';');
     }
 
     fn emit_value(&mut self, v: &Value) {
@@ -401,25 +367,9 @@ impl<'a> Emitter<'a> {
                 self.out.push_str(h);
             }
             Value::Ident(s) => self.out.push_str(s),
-            Value::Tuple(items) => {
-                self.out.push('(');
-                for (i, item) in items.iter().enumerate() {
-                    if i > 0 {
-                        self.out.push_str(", ");
-                    }
-                    self.emit_value(item);
-                }
-                self.out.push(')');
-            }
-            Value::List(items) => {
-                self.out.push('[');
-                for (i, item) in items.iter().enumerate() {
-                    if i > 0 {
-                        self.out.push_str(", ");
-                    }
-                    self.emit_value(item);
-                }
-                self.out.push(']');
+            Value::Var(name) => {
+                self.out.push_str("--");
+                self.out.push_str(name);
             }
             Value::Call(c) => {
                 self.out.push_str(&c.name);
@@ -431,10 +381,6 @@ impl<'a> Emitter<'a> {
                     self.emit_value(arg);
                 }
                 self.out.push(')');
-            }
-            Value::RawCssVar(n) => {
-                self.out.push_str("--");
-                self.out.push_str(n);
             }
         }
     }
@@ -452,6 +398,8 @@ impl<'a> Emitter<'a> {
         }
         self.out.push('"');
     }
+
+    // ───────── Trivia ─────────
 
     fn indent(&mut self, depth: usize) {
         for _ in 0..depth {
@@ -482,7 +430,7 @@ impl<'a> Emitter<'a> {
                     last_was_blank = false;
                 }
                 Trivia::BlankLine => {
-                    if !last_was_blank && !self.out.ends_with("\n\n") {
+                    if !last_was_blank && !self.out.is_empty() && !self.out.ends_with("\n\n") {
                         self.out.push('\n');
                         last_was_blank = true;
                     }
@@ -493,111 +441,27 @@ impl<'a> Emitter<'a> {
     }
 }
 
-// ─────────────────────────── Helpers ───────────────────────────
+// ─────────────────────────── Spans & token helpers ───────────────────────────
 
-fn stmt_span(stmt: &Stmt) -> Span {
-    match stmt {
-        Stmt::Node(n) => n.span,
-        Stmt::Wire(w) => w.span,
-    }
-}
-
-fn body_item_span(item: &BodyItem) -> Span {
+fn style_item_span(item: &StyleItem) -> Span {
     match item {
-        BodyItem::Inst(i) => i.span,
-        BodyItem::Wire(w) => w.span,
+        StyleItem::RootDecl(d) | StyleItem::Var(d) => d.span,
+        StyleItem::Rule(r) => r.span,
+        StyleItem::Define(d) => d.span,
     }
 }
 
 fn wire_op_str(op: WireOp) -> String {
-    format!(
-        "{}{}{}",
-        op.start.start_str(),
-        op.line.as_str(),
-        op.end.end_str(),
-    )
+    format!("{}{}{}", op.start.start_str(), op.line.as_str(), op.end.end_str())
 }
 
-fn side_str(s: crate::ast::Side) -> &'static str {
-    use crate::ast::Side::*;
+fn side_str(s: Side) -> &'static str {
     match s {
-        Top => "top",
-        Bottom => "bottom",
-        Left => "left",
-        Right => "right",
+        Side::Top => "top",
+        Side::Bottom => "bottom",
+        Side::Left => "left",
+        Side::Right => "right",
     }
-}
-
-// ─────────────────────────── Column alignment ───────────────────────────
-
-#[derive(Default, Clone, Copy)]
-struct NodeWidths {
-    id: usize, // 0 if no ids in the group
-    ty: usize, // includes leading & trailing '|'
-}
-
-fn compute_root_widths(stmts: &[Stmt], trivia: &[TriviaToken]) -> Vec<NodeWidths> {
-    let groups = split_groups(stmts, trivia, stmt_span);
-    let mut out = vec![NodeWidths::default(); stmts.len()];
-    for g in groups {
-        let mut w = NodeWidths::default();
-        for &i in &g {
-            if let Stmt::Node(inst) = &stmts[i] {
-                if let Some(id) = &inst.id {
-                    w.id = w.id.max(id.len());
-                }
-                w.ty = w.ty.max(inst.ty.name.len() + 2); // |name|
-            }
-        }
-        for i in g {
-            out[i] = w;
-        }
-    }
-    out
-}
-
-fn compute_body_widths(items: &[BodyItem], trivia: &[TriviaToken]) -> Vec<NodeWidths> {
-    let groups = split_groups(items, trivia, body_item_span);
-    let mut out = vec![NodeWidths::default(); items.len()];
-    for g in groups {
-        let mut w = NodeWidths::default();
-        for &i in &g {
-            if let BodyItem::Inst(inst) = &items[i] {
-                if let Some(id) = &inst.id {
-                    w.id = w.id.max(id.len());
-                }
-                w.ty = w.ty.max(inst.ty.name.len() + 2);
-            }
-        }
-        for i in g {
-            out[i] = w;
-        }
-    }
-    out
-}
-
-fn split_groups<T>(
-    items: &[T],
-    trivia: &[TriviaToken],
-    span_of: impl Fn(&T) -> Span,
-) -> Vec<Vec<usize>> {
-    if items.is_empty() {
-        return Vec::new();
-    }
-    let mut groups: Vec<Vec<usize>> = vec![vec![0]];
-    for i in 1..items.len() {
-        let prev_end = span_of(&items[i - 1]).end;
-        let curr_start = span_of(&items[i]).start;
-        let has_blank = trivia.iter().any(|t| {
-            matches!(t.kind, Trivia::BlankLine) && t.pos >= prev_end && t.pos < curr_start
-        });
-        if has_blank {
-            groups.push(vec![i]);
-        } else {
-            groups.last_mut().unwrap().push(i);
-        }
-    }
-    groups
 }
 
 fn pad(out: &mut String, n: usize) {
@@ -613,3 +477,8 @@ fn format_number(n: f64) -> String {
         format!("{}", n)
     }
 }
+
+mod align;
+
+#[cfg(test)]
+mod tests;
