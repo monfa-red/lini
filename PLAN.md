@@ -302,6 +302,9 @@ dot-path wires). The work:
 - **Canvas fill** (SPEC §13): a root `fill:` paints a `<rect class="lini-canvas">`
   over the viewBox (threaded as `LaidOut.canvas_fill`).
 - **`title:`**: a `<title>` first-child on the node `<g>`.
+- **`layer:`** (SPEC §6): siblings paint in ascending `layer` (default 0), ties
+  by source order — a stable sort in render. Was wholly unimplemented (no `z`
+  read ever existed to rename), so the badge's `layer: 10` now actually lifts it.
 - **SheetInputs reshape**: fields renamed off v3 defs-block vocab —
   `class_rules` / `element_rules` / `defines` / `templates` / `wire_defaults`.
   Descendant rules still bake inline via the cascade (spec-correct; emitting
