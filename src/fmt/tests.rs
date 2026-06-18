@@ -116,6 +116,17 @@ fn wire_fan_and_chain() {
 }
 
 #[test]
+fn dotted_wire_op() {
+    assert_eq!(fmt("a ..> b\n"), "a ..> b\n");
+    assert_eq!(fmt("a .. b\n"), "a .. b\n");
+}
+
+#[test]
+fn wire_defaults_rule_uses_the_arrow_glyph() {
+    assert_eq!(fmt("-> {clearance:8}\na -> b\n"), "-> { clearance: 8; }\n\na -> b\n");
+}
+
+#[test]
 fn wire_with_text_children() {
     assert_eq!(
         fmt("a -> b {|text|\"watches\"{at:0.5}}\n"),

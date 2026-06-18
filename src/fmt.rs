@@ -164,6 +164,14 @@ impl Emitter<'_> {
     }
 
     fn emit_selector(&mut self, sel: &Selector) {
+        // The wire-defaults rule carries the reserved `wire` selector internally
+        // but is written with the wire glyph.
+        if let [SelPart::Type(t)] = sel.parts.as_slice()
+            && t == "wire"
+        {
+            self.out.push_str("->");
+            return;
+        }
         for (i, part) in sel.parts.iter().enumerate() {
             if i > 0 {
                 self.out.push(' ');

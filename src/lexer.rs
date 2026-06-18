@@ -93,6 +93,10 @@ impl<'a> Lexer<'a> {
                 b'.' => {
                     if self.peek(1).is_some_and(|c| c.is_ascii_digit()) {
                         self.lex_number()?;
+                    } else if self.peek(1) == Some(b'.') {
+                        // `..` is the dotted wire line; a single `.` is a path /
+                        // class / side separator.
+                        self.lex_wire_op()?;
                     } else {
                         self.push_punct(TokKind::Dot, 1);
                     }
@@ -366,9 +370,9 @@ impl<'a> Lexer<'a> {
 
     fn consume_line(&self, p: &mut usize) -> Option<LineStyle> {
         let rest = self.bytes.get(*p..)?;
-        // Longest match: `-.-`, `--`, `-`, `~`.
-        if rest.starts_with(b"-.-") {
-            *p += 3;
+        // Longest match: `..`, `--`, `-`, `~`.
+        if rest.starts_with(b"..") {
+            *p += 2;
             return Some(LineStyle::Dotted);
         }
         if rest.starts_with(b"--") {
@@ -402,7 +406,7 @@ enum MarkerSide {
 }
 
 fn is_wire_line_start(c: u8) -> bool {
-    matches!(c, b'-' | b'~')
+    matches!(c, b'-' | b'~' | b'.')
 }
 
 fn is_ident_start(c: u8) -> bool {

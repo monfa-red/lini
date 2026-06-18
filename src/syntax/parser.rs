@@ -9,7 +9,7 @@
 //! defines come first.
 
 use super::ast::*;
-use crate::ast::{Side, WireOp};
+use crate::ast::{LineStyle, Side, WireMarker, WireOp};
 use crate::error::Error;
 use crate::lexer::{TokKind, Token};
 use crate::span::Span;
@@ -20,11 +20,13 @@ pub fn parse(tokens: &[Token]) -> Result<File, Error> {
     Parser::new(tokens).parse_file()
 }
 
-/// Built-in type names — the reserved primitives, templates, and the `wire`
-/// rule target (SPEC §18). User defines extend this set as they are parsed.
+/// Built-in type names — the reserved primitives and templates (SPEC §18). User
+/// defines extend this set as they are parsed. `wire` is deliberately absent:
+/// it is reserved but not a type, so `wire { }` reads as a (reserved-id) node,
+/// not a rule — wire defaults are the `-> { }` rule.
 const BUILTIN_TYPES: &[&str] = &[
     "rect", "oval", "line", "path", "poly", "text", "hex", "slant", "cyl", "diamond", "cloud",
-    "icon", "image", "group", "caption", "badge", "note", "row", "column", "table", "wire",
+    "icon", "image", "group", "caption", "badge", "note", "row", "column", "table",
 ];
 
 /// What a statement at the cursor is.
@@ -166,6 +168,10 @@ impl<'a> Parser<'a> {
         match self.kind() {
             Some(TokKind::RawCssVar(_)) => Ok(Kind::Var),
             Some(TokKind::Dot) => Ok(Kind::Rule), // `.class …` selector
+            // `-> { … }` — the wire-defaults rule (the wire glyph as selector).
+            Some(TokKind::WireOp(_)) if matches!(self.kind_at(1), Some(TokKind::LBrace)) => {
+                Ok(Kind::Rule)
+            }
             Some(TokKind::Pipe) | Some(TokKind::String(_)) => Ok(Kind::Node),
             Some(TokKind::Ident(name)) => Ok(match self.kind_at(1) {
                 Some(TokKind::DColon) => Kind::Define,
@@ -348,6 +354,29 @@ impl<'a> Parser<'a> {
 
     fn parse_rule(&mut self) -> Result<Rule, Error> {
         let start = self.span();
+        // `-> { … }` is the wire-defaults rule: the wire glyph stands in for the
+        // selector. It carries the reserved `wire` element selector internally,
+        // so the cascade and renderer treat it exactly like the old `wire { }`.
+        if let Some(TokKind::WireOp(op)) = self.kind() {
+            let op = *op;
+            if op.line != LineStyle::Solid
+                || op.start != WireMarker::None
+                || op.end != WireMarker::Arrow
+            {
+                return Err(self.err("wire defaults are set with the '-> { … }' rule"));
+            }
+            self.pos += 1;
+            let decls = self.parse_rule_block()?;
+            let span = Span::new(start.start, self.last_span().end);
+            return Ok(Rule {
+                selector: Selector {
+                    parts: vec![SelPart::Type("wire".into())],
+                    span,
+                },
+                decls,
+                span,
+            });
+        }
         let mut parts = Vec::new();
         loop {
             if matches!(self.kind(), Some(TokKind::Ident(_))) {

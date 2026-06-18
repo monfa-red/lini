@@ -402,9 +402,9 @@ mod tests {
 
     #[test]
     fn wire_rule_sets_routing_defaults() {
-        // SPEC §9/§18: `wire { }` is the routing layer's element selector — a
-        // valid rule target even though `wire` is not an instantiable type.
-        let p = rv4("wire { stroke: red; stroke-width: 2; }\na -> b\n");
+        // SPEC §9: `-> { }` is the routing layer's element selector (the wire
+        // glyph), carrying the reserved `wire` element rule internally.
+        let p = rv4("-> { stroke: red; stroke-width: 2; }\na -> b\n");
         assert!(matches!(p.wires[0].attrs.get("stroke"), Some(ResolvedValue::Ident(s)) if s == "red"));
         assert_eq!(p.wires[0].attrs.number("stroke-width"), Some(2.0));
     }
