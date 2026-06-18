@@ -399,16 +399,24 @@ the formatter itself; the `samples/` sweep waits on Phase 8.
 
 **Goal.** Trim the periphery to v4.
 
-**Key points.**
-- **lint**: drop the visual-attr-inline lint entirely (v4 instance blocks make
-  inline paint idiomatic). The "did you mean" property-name hint table is
-  deferred (SPEC §19) — leave the lint pass minimal/empty for now.
-- **CLI** (`main.rs`): flags are unchanged; fix any stale help text referencing
-  the defs block. `desugar`/`fmt`/`serve` subcommands stay.
-- **theme** (`theme.rs`): `--lini-*` extraction is name-agnostic — unchanged
-  beyond the renamed built-ins (e.g. `--lini-font-family`).
+**Done.**
+- **lint** (`lint.rs`): the v3 visual-attr / renamed-attr lint is gone (v4 makes
+  inline paint idiomatic); the pass is empty for now (home for future lints) and
+  parses with the v4 front end. The "did you mean" hint (SPEC §19) stays deferred.
+- **desugar** (`desugar.rs`, **revived**): a v4 AST transform — node labels →
+  `|caption|`/`|text|` children (group-derived types via
+  `resolve::derives_from_group`; `|text|`/`|icon|` keep their label), wire labels
+  → `|text|` body children — re-printed through `fmt::print_file` (now with an
+  `align` flag, off for synthesized ASTs). 7 tests.
+- **CLI** (`main.rs`): dropped stale v3 help (`--theme`'s `defaults {}` block,
+  `--no-warn`'s visual-attr example). Subcommands unchanged.
+- **theme** (`theme.rs`): unchanged — name-agnostic `--lini-*` extraction,
+  verified end-to-end over the v4 built-ins.
+- **v3 island retired**: with fmt/lint/desugar on v4, nothing read the v3 parser
+  or v3-only AST types — deleted `src/parser.rs`, trimmed `src/ast.rs` to the
+  shared lexical enums (`Side`, `WireOp`/`LineStyle`/`WireMarker`).
 
-**Done when.** `cargo test` for these modules is green; CLI help reads right.
+**Done when.** `cargo test` for these modules is green; CLI help reads right. ✓
 
 ---
 
