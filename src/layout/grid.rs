@@ -117,8 +117,6 @@ pub fn lay_out_grid(
         &row_off,
         (total_w, total_h),
         (gap_x, gap_y),
-        cols,
-        rows,
         &grid.owner,
     );
     Ok((Bbox::centered(total_w, total_h), dividers))
@@ -370,10 +368,11 @@ fn divider_segments(
     row_offsets: &[f64],
     (total_w, total_h): (f64, f64),
     (gap_x, gap_y): (f64, f64),
-    cols: usize,
-    rows: usize,
     owner: &[Vec<Option<usize>>],
 ) -> Vec<GridRule> {
+    // The cumulative offsets carry one entry past each axis's track count.
+    let cols = col_offsets.len() - 1;
+    let rows = row_offsets.len() - 1;
     // A boundary's coordinate: the outer edges clamp to the content box; an
     // interior boundary sits in the middle of the gap between its tracks.
     let x = |i: usize| match i {
