@@ -1,14 +1,8 @@
 basket |table| {
   columns: 80 140 80;
-  "Fruit" {
-    font-weight: bold;
-  }
-  "Quantity" {
-    font-weight: bold;
-  }
-  "Notes" {
-    font-weight: bold;
-  }
+  "Fruit" { font-weight: bold; }
+  "Quantity" { font-weight: bold; }
+  "Notes" { font-weight: bold; }
   "Apple"
   "12"
   "fresh"

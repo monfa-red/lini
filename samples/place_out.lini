@@ -13,21 +13,15 @@ inside |group| {
 
 above |group| {
   layout: column; gap: 16;
-    |text| "Above" {
-    mount: out;
-  }
+    |text| "Above" { mount: out; }
   a |rect| "Row A"
   b |rect| "Row B"
 }
 
 both |group| {
   layout: column; gap: 16;
-    |text| "Header" {
-    mount: out;
-  }
+    |text| "Header" { mount: out; }
   a |rect| "Row A"
   b |rect| "Row B"
-    |text| "Footer" {
-    side: bottom; mount: out;
-  }
+    |text| "Footer" { side: bottom; mount: out; }
 }

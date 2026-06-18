@@ -40,29 +40,29 @@ fn variable_declaration() {
 
 #[test]
 fn element_rule() {
-    assert_eq!(fmt("rect{radius:6}\n"), "rect {\n  radius: 6;\n}\n");
+    assert_eq!(fmt("rect{radius:6}\n"), "rect { radius: 6; }\n");
 }
 
 #[test]
 fn class_rule() {
-    assert_eq!(fmt(".hot{stroke-width:2}\n"), ".hot {\n  stroke-width: 2;\n}\n");
+    assert_eq!(fmt(".hot{stroke-width:2}\n"), ".hot { stroke-width: 2; }\n");
 }
 
 #[test]
 fn descendant_rule() {
-    assert_eq!(fmt("table rect{padding:4 8}\n"), "table rect {\n  padding: 4 8;\n}\n");
+    assert_eq!(fmt("table rect{padding:4 8}\n"), "table rect { padding: 4 8; }\n");
 }
 
 #[test]
 fn define() {
-    assert_eq!(fmt("treat::rect{radius:5}\n"), "treat::rect {\n  radius: 5;\n}\n");
+    assert_eq!(fmt("treat::rect{radius:5}\n"), "treat::rect { radius: 5; }\n");
 }
 
 #[test]
 fn multi_group_value_list() {
     assert_eq!(
         fmt("dim|line|{points:0 0,10 10}\n"),
-        "dim |line| {\n  points: 0 0, 10 10;\n}\n"
+        "dim |line| { points: 0 0, 10 10; }\n"
     );
 }
 
@@ -132,7 +132,7 @@ fn endpoint_dot_path_and_side() {
 fn phases_separated_by_a_blank_line() {
     assert_eq!(
         fmt("rect{radius:4}\nx|rect|\na -> b\n"),
-        "rect {\n  radius: 4;\n}\n\nx |rect|\n\na -> b\n"
+        "rect { radius: 4; }\n\nx |rect|\n\na -> b\n"
     );
 }
 

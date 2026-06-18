@@ -20,6 +20,11 @@ use trivia::{Trivia, TriviaToken, scan_trivia};
 
 const INDENT: &str = "  ";
 
+/// A declarations-only block collapses onto one line (`.hot { stroke: red; }`)
+/// when the whole line fits within this budget; past it, or once the block holds
+/// a child node/wire, it breaks across lines. Prettier's print-width, give or take.
+const MAX_LINE: usize = 80;
+
 pub fn format(src: &str) -> Result<String, Error> {
     let tokens = lexer::lex(src)?;
     let file = parser::parse(&tokens)?;
@@ -267,6 +272,34 @@ impl Emitter<'_> {
         self.trivia.iter().any(|t| t.pos >= start && t.pos < end)
     }
 
+    /// Try to collapse a declarations-only block onto the current line —
+    /// ` { a; b; }`. Returns `true` (and keeps it) when there's no comment/blank
+    /// inside and the finished line fits [`MAX_LINE`]; otherwise emits nothing
+    /// and returns `false`, so the caller falls through to the multi-line form.
+    /// `end` is the block's source end (no trivia past the decls, by the check).
+    fn try_inline_block(&mut self, decls: &[&Decl], end: usize) -> bool {
+        if self.has_trivia_between(self.cursor, end) {
+            return false;
+        }
+        let line_start = self.out.rfind('\n').map_or(0, |i| i + 1);
+        let saved = self.out.len();
+        self.out.push_str(" { ");
+        for (i, d) in decls.iter().enumerate() {
+            if i > 0 {
+                self.out.push(' ');
+            }
+            self.emit_decl(d, false);
+        }
+        self.out.push_str(" }");
+        if self.out.len() - line_start <= MAX_LINE {
+            self.cursor = end;
+            true
+        } else {
+            self.out.truncate(saved);
+            false
+        }
+    }
+
     fn emit_block(&mut self, block: &Block, end: usize, depth: usize) {
         let empty = block.decls.is_empty() && block.nodes.is_empty() && block.wires.is_empty();
         if empty && !self.has_comment_in(self.cursor, end) {
@@ -274,8 +307,13 @@ impl Emitter<'_> {
             self.cursor = end;
             return;
         }
-        self.out.push_str(" {\n");
         let decls: Vec<&Decl> = block.decls.iter().collect();
+        // A block with a child node or wire always breaks; a declarations-only
+        // body may collapse onto one line when it fits.
+        if block.nodes.is_empty() && block.wires.is_empty() && self.try_inline_block(&decls, end) {
+            return;
+        }
+        self.out.push_str(" {\n");
         self.emit_grouped_decls(&decls, depth + 1);
         self.emit_nodes(&block.nodes, depth + 1);
         for wire in &block.wires {
@@ -296,8 +334,11 @@ impl Emitter<'_> {
             self.cursor = end;
             return;
         }
-        self.out.push_str(" {\n");
         let refs: Vec<&Decl> = decls.iter().collect();
+        if self.try_inline_block(&refs, end) {
+            return;
+        }
+        self.out.push_str(" {\n");
         self.emit_grouped_decls(&refs, depth + 1);
         self.emit_trivia_before(end, depth + 1);
         self.indent(depth);
@@ -349,8 +390,11 @@ impl Emitter<'_> {
             self.cursor = end;
             return;
         }
-        self.out.push_str(" {\n");
         let decls: Vec<&Decl> = block.decls.iter().collect();
+        if block.texts.is_empty() && self.try_inline_block(&decls, end) {
+            return;
+        }
+        self.out.push_str(" {\n");
         self.emit_grouped_decls(&decls, depth + 1);
         for t in &block.texts {
             self.emit_trivia_before(t.span.start, depth + 1);

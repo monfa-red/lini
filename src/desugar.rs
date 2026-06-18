@@ -140,7 +140,7 @@ mod tests {
     fn group_labels_become_caption_and_footer() {
         assert_eq!(
             desugar("g |group| \"Head\" \"Foot\"\n"),
-            "g |group| {\n  |caption| \"Head\"\n  |caption| \"Foot\" {\n    side: bottom;\n  }\n}\n"
+            "g |group| {\n  |caption| \"Head\"\n  |caption| \"Foot\" { side: bottom; }\n}\n"
         );
     }
 

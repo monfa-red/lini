@@ -15,6 +15,4 @@ panel |group| "Sales" "Q3 2026" {
   b |rect| "Actual"
 }
 
-docs |rect| "Docs" {
-  link: "https://example.com"; width: 120; height: 48;
-}
+docs |rect| "Docs" { link: "https://example.com"; width: 120; height: 48; }

@@ -1,11 +1,7 @@
 // Defines and containers — the shape-composition vocabulary.
 
-treat::rect {
-  radius: 5;
-}
-nest::slant {
-  fill: gray;
-}
+treat::rect { radius: 5; }
+nest::slant { fill: gray; }
 
 |treat| "Treat"
 |nest|  "Nest"
@@ -18,8 +14,6 @@ toolbox |group| {
 
 den |group| {
   layout: column; gap: 8; padding: 12;
-  |caption| "Title" {
-    font-weight: bold;
-  }
+  |caption| "Title" { font-weight: bold; }
   |text|    "Content"
 }

@@ -10,17 +10,13 @@ loose |group| "Default" {
 
 tight |group| {
   layout: column; gap: 24;
-    |text| "Tight" {
-    mount: in; margin: -6 0 -14 0;
-  }
+    |text| "Tight" { mount: in; margin: -6 0 -14 0; }
   a |rect| "Row A"
   b |rect| "Row B"
 }
 
 packed |group| "Packed" {
   layout: column; gap: 24;
-  a |rect| "Row A" {
-    margin: 0 0 -16 0;
-  }
+  a |rect| "Row A" { margin: 0 0 -16 0; }
   b |rect| "Row B"
 }
