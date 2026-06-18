@@ -94,12 +94,28 @@ pub fn render_wire(
     if w.markers.start != MarkerKind::None
         && let Some((tip, dir)) = marker_anchor(w.path[1], w.path[0], false)
     {
-        emit_marker(out, "      ", w.markers.start, overlap_tip(tip, dir), dir, &stroke, thickness);
+        emit_marker(
+            out,
+            "      ",
+            w.markers.start,
+            overlap_tip(tip, dir),
+            dir,
+            &stroke,
+            thickness,
+        );
     }
     if w.markers.end != MarkerKind::None {
         let n = w.path.len();
         if let Some((tip, dir)) = marker_anchor(w.path[n - 2], w.path[n - 1], false) {
-            emit_marker(out, "      ", w.markers.end, overlap_tip(tip, dir), dir, &stroke, thickness);
+            emit_marker(
+                out,
+                "      ",
+                w.markers.end,
+                overlap_tip(tip, dir),
+                dir,
+                &stroke,
+                thickness,
+            );
         }
     }
 
@@ -340,7 +356,10 @@ pub fn fillet_targets(polys: &[&[(f64, f64)]], caps: &[f64]) -> Vec<Vec<f64>> {
 /// A wire marker's tip, nudged [`MARKER_OVERLAP`] past the endpoint into the
 /// shape so the head reads as connected (`dir` points into the shape).
 fn overlap_tip(tip: (f64, f64), dir: (f64, f64)) -> (f64, f64) {
-    (tip.0 + dir.0 * MARKER_OVERLAP, tip.1 + dir.1 * MARKER_OVERLAP)
+    (
+        tip.0 + dir.0 * MARKER_OVERLAP,
+        tip.1 + dir.1 * MARKER_OVERLAP,
+    )
 }
 
 /// Pull each marker-bearing endpoint back along its segment so the line stops where
