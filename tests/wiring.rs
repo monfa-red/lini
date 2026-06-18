@@ -220,7 +220,7 @@ fn crossing_counts_are_pinned() {
 #[test]
 fn audit_removes_a_removable_crossing() {
     let src = "layout: grid; columns: repeat(3); gap: 40;\n\
-               wire { clearance: 8; }\n\
+               -> { clearance: 8; }\n\
                north |rect| \"N\" { cell: 2 1; }\n\
                south |rect| \"S\" { cell: 2 3; }\n\
                west  |rect| \"W\" { cell: 1 2; }\n\
@@ -243,7 +243,7 @@ fn audit_removes_a_removable_crossing() {
 #[test]
 fn a_walled_in_wire_is_reported_impossible() {
     let src = "layout: grid; columns: repeat(3); gap: 10;\n\
-               wire { clearance: 16; }\n\
+               -> { clearance: 16; }\n\
                n1 |rect| { width: 40; height: 40; cell: 1 1; }\n\
                n2 |rect| { width: 40; height: 40; cell: 2 1; }\n\
                n3 |rect| { width: 40; height: 40; cell: 3 1; }\n\
@@ -329,7 +329,7 @@ fn gap_growth_completes_a_starved_scene() {
 #[test]
 fn gap_growth_is_bounded_where_no_gap_can_help() {
     let src = "layout: row; gap: 40;\n\
-                 wire { clearance: 16; }\n\
+                 -> { clearance: 16; }\n\
                grp |group| {\n\
                  layout: row; gap: 24; padding: 24;\n\
                  aa |rect| { width: 40; height: 40; }\n\
@@ -365,7 +365,7 @@ fn gap_growth_is_bounded_where_no_gap_can_help() {
 fn a_full_node_compacts_port_rows_rather_than_turning_wires_away() {
     let mut src = String::from(
         "layout: grid; columns: repeat(5); gap: 60;\n\
-         wire { clearance: 8; }\n\
+         -> { clearance: 8; }\n\
          hub |rect| { width: 40; height: 40; cell: 3 3; }\n",
     );
     let cells: Vec<(usize, usize)> = (1..=5)

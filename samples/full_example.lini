@@ -1,7 +1,7 @@
 // A small web service — a realistic architecture, top to bottom.
 
 layout: column; gap: 40; padding: 24;
-wire { stroke: #666; clearance: 10; }
+-> { stroke: #666; clearance: 10; }
 --accent: #0a84ff;
 
 browser |rect| "Browser"

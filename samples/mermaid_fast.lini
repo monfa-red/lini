@@ -10,3 +10,5 @@ frog ~> pond
 // wavy
 fish --> bowl
 // dashed arrow
+newt ..> log
+// dotted arrow

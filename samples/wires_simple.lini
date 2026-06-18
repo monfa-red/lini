@@ -5,7 +5,7 @@
 //   a self-loop · a bidirectional wire · labels and markers
 
 layout: row; gap: 50;
-wire { clearance: 10; }
+-> { clearance: 10; }
 
 ant  |rect| "Ant" { width: 60; height: 60; }
 wall |rect| "Wall" { width: 60; height: 140; }

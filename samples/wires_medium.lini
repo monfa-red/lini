@@ -2,7 +2,7 @@
 // common wiring pattern at once.
 
 layout: row; gap: 40;
-wire { clearance: 8; }
+-> { clearance: 8; }
 
 .loud { stroke: red; stroke-width: 2; }
 .quiet { stroke: blue; }

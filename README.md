@@ -67,7 +67,7 @@ fish --> bowl          // dashed
 **Add shape, labels, and a touch of style.** Lini reads like CSS: a stylesheet at the top sets defaults, defines reusable classes, and extends shapes — then the instances, then the wires:
 
 ```
-wire { stroke: #444; clearance: 10; }
+-> { stroke: #444; clearance: 10; }
 .loud { stroke: red; stroke-width: 2; }
 db::cyl { fill: lightyellow; }     // a new shape, based on the cylinder primitive
 
@@ -77,7 +77,7 @@ store |db|   "Postgres"
 
 api   -> queue  "enqueue"
 queue -> store  "persist" .loud
-store -.-> api  "ack"          // dotted, with an arrow
+store ..> api   "ack"          // dotted, with an arrow
 ```
 
 **Lay things out.** Containers pick a layout mode; children flow, grid, or anchor:
@@ -118,7 +118,7 @@ The operator *is* the wire's look — `[start][line][end]`, no spaces:
 | Line | | Markers | |
 |---|---|---|---|
 | `-` solid | `--` dashed | `>` arrow | `*` dot |
-| `-.-` dotted | `~` wavy | `<` crow | `<>` diamond |
+| `..` dotted | `~` wavy | `<` crow | `<>` diamond |
 
 So `->` is a solid arrow, `<->` is bidirectional, `--*` is a dashed line ending in a dot, `~>` a wavy arrow. Endpoints support fan-out, fan-in, and cartesian fans with `&`, sides with `a.right -> b.left`, and dot-paths into nested containers (`closet.outlet -> fridge.inlet`). Labels ride their wire and slide to dodge nodes — the wire never moves for them.
 

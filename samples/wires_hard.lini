@@ -2,7 +2,7 @@
 // detours, forced sides, a parent→child wire, and a forced outer pair.
 
 layout: grid; columns: repeat(3); gap: 30;
-wire { clearance: 8; }
+-> { clearance: 8; }
 
 .hot { stroke: red; stroke-width: 2; }
 .cool { stroke: blue; }

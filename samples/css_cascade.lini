@@ -1,7 +1,7 @@
 // CSS cascade: element rules, class rules, inline overrides, per-group text
 // props, wire defaults — paint rides class rules + style= diffs.
 
-wire { stroke: #666; stroke-width: 1; }
+-> { stroke: #666; stroke-width: 1; }
 rect { fill: lightyellow; }
 .loud { stroke: red; stroke-width: 2; }
 .calm { stroke: teal; }
