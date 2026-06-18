@@ -8,7 +8,7 @@ layout: row; gap: 40;
 .quiet { stroke: blue; }
 .happy { stroke: green; }
 
-treat::rect { radius: 4; }
+treat::box { radius: 4; }
 
 cat |oval| "Cat"
 

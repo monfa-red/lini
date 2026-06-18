@@ -6,8 +6,8 @@
 .warn { stroke: orange; }
 .ghost { opacity: 0.3; }
 
-a |rect| "thin" .thin
-b |rect| "bold" .bold
-c |rect| "power" .power
-d |rect| "warn" .warn
-e |rect| "ghost" .ghost
+a |box| "thin" .thin
+b |box| "bold" .bold
+c |box| "power" .power
+d |box| "warn" .warn
+e |box| "ghost" .ghost

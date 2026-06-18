@@ -6,20 +6,20 @@ input_file: samples/type_defaults.lini
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-120.15 -42 240.3 84" width="240.3" height="84" class="lini">
   <style>
     .lini { font-family: sans-serif; font-size: 14px; color: black; }
-    .lini .lini-shape-rect { fill: white; stroke: #444; stroke-width: 1; stroke-dasharray: none; }
+    .lini .lini-shape-box { fill: white; stroke: #444; stroke-width: 1; stroke-dasharray: none; }
     .lini .lini-shape-oval { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-shape-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; font-size: 11px; font-weight: bold; }
     .lini .lini-shape-alert { stroke: red; }
   </style>
   <defs/>
   <g class="lini-scene">
-    <g class="lini-node lini-shape-rect" data-id="cat" transform="translate(-74.575,0)">
+    <g class="lini-node lini-shape-box" data-id="cat" transform="translate(-74.575,0)">
       <rect x="-25.075" y="-21.5" width="50.15" height="43" rx="6" ry="6"/>
       <g class="lini-node lini-shape-text" transform="translate(0,0)">
         <text x="0" y="0">Cat</text>
       </g>
     </g>
-    <g class="lini-node lini-shape-rect" data-id="dog" transform="translate(6.575,0)">
+    <g class="lini-node lini-shape-box" data-id="dog" transform="translate(6.575,0)">
       <rect x="-25.075" y="-21.5" width="50.15" height="43" rx="0" ry="0"/>
       <g class="lini-node lini-shape-text" transform="translate(0,0)">
         <text x="0" y="0">Dog</text>

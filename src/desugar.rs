@@ -19,7 +19,7 @@ pub fn desugar(file: &File) -> File {
 }
 
 fn desugar_node(node: &Node, file: &File) -> Node {
-    let ty = node.ty.as_deref().unwrap_or("rect");
+    let ty = node.ty.as_deref().unwrap_or("box");
     // A text-derived type (`|text|`, `|caption|`, …) keeps its label as content
     // and an `|icon|` keeps it as the glyph name (SPEC §7) — neither expands, so
     // a second pass is a no-op. Every other type's positional labels become
@@ -133,7 +133,7 @@ mod tests {
 
     #[test]
     fn rect_label_becomes_a_text_child() {
-        assert_eq!(desugar("x |rect| \"hi\"\n"), "x |rect| {\n  |text| \"hi\"\n}\n");
+        assert_eq!(desugar("x |box| \"hi\"\n"), "x |box| {\n  |text| \"hi\"\n}\n");
     }
 
     #[test]
@@ -171,10 +171,10 @@ mod tests {
 
     #[test]
     fn properties_and_existing_children_are_kept() {
-        let out = desugar("g |group| \"Cap\" {\n  fill: red;\n  a |rect| \"A\"\n}\n");
+        let out = desugar("g |group| \"Cap\" {\n  fill: red;\n  a |box| \"A\"\n}\n");
         assert!(out.contains("fill: red;"), "{out}");
         assert!(out.contains("|caption| \"Cap\""), "{out}");
-        // the inner rect's own label is expanded too
-        assert!(out.contains("a |rect| {"), "{out}");
+        // the inner box's own label is expanded too
+        assert!(out.contains("a |box| {"), "{out}");
     }
 }

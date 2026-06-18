@@ -5,14 +5,14 @@ layout: row; gap: 32; padding: 20; align: start;
 
 card |group| "Profile" {
   layout: column; gap: 10;
-  name |rect| "Ada Lovelace"
-  role |rect| "Engineer"
+  name |box| "Ada Lovelace"
+  role |box| "Engineer"
 }
 
 panel |group| "Sales" "Q3 2026" {
   layout: column; gap: 10;
-  a |rect| "Plan"
-  b |rect| "Actual"
+  a |box| "Plan"
+  b |box| "Actual"
 }
 
-docs |rect| "Docs" { link: "https://example.com"; width: 120; height: 48; }
+docs |box| "Docs" { link: "https://example.com"; width: 120; height: 48; }

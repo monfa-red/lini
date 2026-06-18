@@ -241,7 +241,7 @@ mod tests {
     }
 
     fn rect_node(id: &str, cx: f64, cy: f64, w: f64, h: f64) -> PlacedNode {
-        node(Some(id), ShapeKind::Rect, cx, cy, w, h, Vec::new())
+        node(Some(id), ShapeKind::Box, cx, cy, w, h, Vec::new())
     }
 
     /// cat at (0,0) 40×20; garden at (100,50) 80×60 containing dog at (10,5) 30×10.
@@ -249,7 +249,7 @@ mod tests {
         let dog = rect_node("dog", 10.0, 5.0, 30.0, 10.0);
         let garden = node(
             Some("garden"),
-            ShapeKind::Rect,
+            ShapeKind::Box,
             100.0,
             50.0,
             80.0,
@@ -330,7 +330,7 @@ mod tests {
         let bird = rect_node("bird", 15.0, 5.0, 20.0, 10.0);
         let garden = node(
             Some("garden"),
-            ShapeKind::Rect,
+            ShapeKind::Box,
             0.0,
             0.0,
             80.0,

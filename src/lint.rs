@@ -19,7 +19,7 @@ mod tests {
     #[test]
     fn inline_paint_is_not_linted() {
         let warns =
-            crate::lint_str("x |rect| { fill: red; stroke: blue; }\n").expect("lint");
+            crate::lint_str("x |box| { fill: red; stroke: blue; }\n").expect("lint");
         assert!(warns.is_empty(), "{warns:?}");
     }
 }

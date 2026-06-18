@@ -48,7 +48,7 @@ pub struct Selector {
 
 #[derive(Debug, Clone)]
 pub enum SelPart {
-    /// A bare type name (`rect`, a user type, …).
+    /// A bare type name (`box`, a user type, …).
     Type(String),
     /// A `.class`.
     Class(String),
@@ -67,7 +67,7 @@ pub struct Define {
 #[derive(Debug, Clone)]
 pub struct Node {
     pub id: Option<String>,
-    /// `|type|`; `None` means the default `rect`, filled at resolve.
+    /// `|type|`; `None` means the default `box`, filled at resolve.
     pub ty: Option<String>,
     pub labels: Vec<String>,
     pub classes: Vec<String>,

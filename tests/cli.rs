@@ -8,7 +8,7 @@ use std::process::{Command, Stdio};
 #[test]
 fn html_format_wraps_svg_in_html_doc() {
     let html = lini::compile_str_with(
-        "|rect| \"x\"\n",
+        "|box| \"x\"\n",
         &Options {
             format: OutputFormat::Html,
             bake_vars: true,
@@ -25,7 +25,7 @@ fn html_format_wraps_svg_in_html_doc() {
 #[test]
 fn baked_output_inlines_every_var_but_keeps_shape_rules() {
     let svg = lini::compile_str_with(
-        "|rect| \"x\" { fill: --accent; }\n",
+        "|box| \"x\" { fill: --accent; }\n",
         &Options {
             bake_vars: true,
             ..Default::default()
@@ -38,7 +38,7 @@ fn baked_output_inlines_every_var_but_keeps_shape_rules() {
         svg
     );
     assert!(
-        svg.contains(".lini-shape-rect"),
+        svg.contains(".lini-shape-box"),
         "baked output keeps the structural rules: {}",
         svg
     );
@@ -46,9 +46,9 @@ fn baked_output_inlines_every_var_but_keeps_shape_rules() {
 
 #[test]
 fn default_output_has_layered_vars_and_unlayered_rules() {
-    let svg = lini::compile_str("|rect| \"x\"\n").expect("compile");
+    let svg = lini::compile_str("|box| \"x\"\n").expect("compile");
     assert!(svg.contains("@layer lini.defaults"), "{}", svg);
-    assert!(svg.contains(".lini .lini-shape-rect"), "{}", svg);
+    assert!(svg.contains(".lini .lini-shape-box"), "{}", svg);
 }
 
 #[test]
@@ -67,7 +67,7 @@ fn no_defaults_flag_is_an_unknown_argument() {
 #[test]
 fn theme_overrides_visual_var_visible_in_baked_output() {
     let svg = lini::compile_str_with(
-        "|rect| \"x\" { fill: --accent; }\n",
+        "|box| \"x\" { fill: --accent; }\n",
         &Options {
             theme_css: Some("--lini-accent: hotpink;".to_string()),
             bake_vars: true,
@@ -80,7 +80,7 @@ fn theme_overrides_visual_var_visible_in_baked_output() {
 
 #[test]
 fn theme_layout_var_bakes_into_layout_math() {
-    let src = "layout: row;\n|rect| { width: 40; height: 40; }\n|rect| { width: 40; height: 40; }\n";
+    let src = "layout: row;\n|box| { width: 40; height: 40; }\n|box| { width: 40; height: 40; }\n";
     let default = lini::compile_str(src).expect("default compile");
     let themed = lini::compile_str_with(
         src,
@@ -102,7 +102,7 @@ fn theme_layout_var_bakes_into_layout_math() {
 
 #[test]
 fn theme_visual_var_does_not_change_layout_baking() {
-    let src = "layout: row;\n|rect| { width: 40; height: 40; }\n|rect| { width: 40; height: 40; }\n";
+    let src = "layout: row;\n|box| { width: 40; height: 40; }\n|box| { width: 40; height: 40; }\n";
     let default = lini::compile_str(src).expect("default compile");
     let themed = lini::compile_str_with(
         src,
@@ -118,7 +118,7 @@ fn theme_visual_var_does_not_change_layout_baking() {
 #[test]
 fn check_with_succeeds_on_valid_input() {
     let opts = Options::default();
-    assert!(lini::check_with("|rect| \"x\"\n", &opts).is_ok());
+    assert!(lini::check_with("|box| \"x\"\n", &opts).is_ok());
 }
 
 #[test]

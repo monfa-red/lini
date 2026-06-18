@@ -37,7 +37,7 @@ impl PaddingBox {
 /// own content.
 pub fn leaf_bbox(inst: &ResolvedInst, vars: &VarTable) -> Result<Bbox, Error> {
     match inst.shape {
-        ShapeKind::Rect
+        ShapeKind::Box
         | ShapeKind::Oval
         | ShapeKind::Hex
         | ShapeKind::Slant

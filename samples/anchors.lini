@@ -3,7 +3,7 @@
 
 padding: 40;
 
-box |rect| {
+frame |box| {
   width: 240; height: 150; fill: #eee;
   |text| "C" { at: 0 0; fill: green; }
   |text| "T<" { side: top; align: start; mount: on; fill: red; }

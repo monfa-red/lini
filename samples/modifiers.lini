@@ -2,8 +2,8 @@
 
 layout: row; gap: 24; padding: 24;
 
-|rect| "dashed" { width: 80; height: 40; stroke-style: dashed; }
-|rect| "dotted" { width: 80; height: 40; stroke-style: dotted; }
-|rect| "stack" { width: 80; height: 40; stack: 4; }
-|rect| "shadow" { width: 80; height: 40; shadow: 2 2 4; }
-|rect| "rotate" { width: 80; height: 40; rotate: 15; }
+|box| "dashed" { width: 80; height: 40; stroke-style: dashed; }
+|box| "dotted" { width: 80; height: 40; stroke-style: dotted; }
+|box| "stack" { width: 80; height: 40; stack: 4; }
+|box| "shadow" { width: 80; height: 40; shadow: 2 2 4; }
+|box| "rotate" { width: 80; height: 40; rotate: 15; }

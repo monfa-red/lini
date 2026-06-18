@@ -6,7 +6,7 @@
 //! `repeat(N, size)`; the track count is the list length. Children flow
 //! left-to-right, wrapping at the column count; `cell: c r` pins one (1-indexed)
 //! and `span: c r` widens it. A cell fills its track only when it carries
-//! `align`/`justify: stretch` (the table's shipped `table rect { … }` rule) and
+//! `align`/`justify: stretch` (the table's shipped `table box { … }` rule) and
 //! has no explicit size on that axis; otherwise it sits at natural size, centred.
 
 use super::ir::{Bbox, GridRule, PlacedNode};

@@ -2,7 +2,7 @@
 
 layout: grid; columns: repeat(4); gap: 20; padding: 20;
 
-|rect|  "rect" { width: 80; height: 40; cell: 1 1; }
+|box|  "box" { width: 80; height: 40; cell: 1 1; }
 |oval|  "oval" { width: 80; height: 40; cell: 2 1; }
 |hex|   "hex" { width: 80; height: 60; cell: 3 1; }
 |slant| "slant" { width: 80; height: 40; skew: 20; cell: 4 1; }

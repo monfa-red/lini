@@ -13,7 +13,7 @@ pub struct Program {
 /// The stylesheet layers the renderer restates as CSS class rules — paint rides
 /// CSS, geometry bakes (SPEC §13). Node attrs arrive fully merged; these are the
 /// per-layer inputs the rules builder emits alongside them. Descendant rules
-/// (`table rect { }`) carry no entry: their paint bakes inline via the cascade.
+/// (`table box { }`) carry no entry: their paint bakes inline via the cascade.
 #[derive(Default, Clone)]
 pub struct SheetInputs {
     /// `.name { }` class rules, in source order — emitted as `lini-style-*`.
@@ -40,8 +40,8 @@ pub struct ResolvedInst {
     pub id: Option<String>,
     pub shape: ShapeKind,
     /// User-shape and template names walked from the inst's declared type back
-    /// to its primitive (e.g. for `cat |treat|` where `treat:rect`, this is
-    /// `["treat"]` — the primitive `rect` is in `shape`).
+    /// to its primitive (e.g. for `cat |treat|` where `treat:box`, this is
+    /// `["treat"]` — the primitive `box` is in `shape`).
     pub type_chain: Vec<String>,
     /// Style class names applied to this inst, in source (left-to-right) order.
     pub applied_styles: Vec<String>,
@@ -59,7 +59,7 @@ pub struct ResolvedInst {
 /// reserves a band, SPEC §7.)
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ShapeKind {
-    Rect,
+    Box,
     Oval,
     Hex,
     Slant,
@@ -77,7 +77,7 @@ pub enum ShapeKind {
 impl ShapeKind {
     pub fn parse(s: &str) -> Option<Self> {
         Some(match s {
-            "rect" => Self::Rect,
+            "box" => Self::Box,
             "oval" => Self::Oval,
             "hex" => Self::Hex,
             "slant" => Self::Slant,
@@ -96,7 +96,7 @@ impl ShapeKind {
 
     pub fn as_str(self) -> &'static str {
         match self {
-            Self::Rect => "rect",
+            Self::Box => "box",
             Self::Oval => "oval",
             Self::Hex => "hex",
             Self::Slant => "slant",

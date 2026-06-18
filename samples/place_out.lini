@@ -7,21 +7,21 @@ layout: row; gap: 40; padding: 20; align: start;
 inside |group| {
   layout: column; gap: 16;
     |caption| "Inside"
-  a |rect|    "Row A"
-  b |rect|    "Row B"
+  a |box|    "Row A"
+  b |box|    "Row B"
 }
 
 above |group| {
   layout: column; gap: 16;
     |text| "Above" { mount: out; }
-  a |rect| "Row A"
-  b |rect| "Row B"
+  a |box| "Row A"
+  b |box| "Row B"
 }
 
 both |group| {
   layout: column; gap: 16;
     |text| "Header" { mount: out; }
-  a |rect| "Row A"
-  b |rect| "Row B"
+  a |box| "Row A"
+  b |box| "Row B"
     |text| "Footer" { side: bottom; mount: out; }
 }

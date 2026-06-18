@@ -1,16 +1,16 @@
 //! Type resolution: turn a `|type|` reference into its primitive kind, its type
 //! chain, and the layered **type-cascade** defaults (SPEC §8, §12.1).
 //!
-//! A type is a primitive (`rect`), a built-in template (`group`, `table`, …), or
+//! A type is a primitive (`box`), a built-in template (`group`, `table`, …), or
 //! a user `name::base` define. Resolving walks base→derived, and at each level
 //! layers, least-specific first:
 //!
 //! 1. the level's intrinsic defaults — a template's built-in bundle, or a
 //!    define's own `{ … }` declarations,
-//! 2. that type's **element rule** (`rect { … }`) from the stylesheet.
+//! 2. that type's **element rule** (`box { … }`) from the stylesheet.
 //!
 //! So a derived type overrides what it builds on, and an explicit `treat { … }`
-//! rule overrides the `treat::rect { … }` define defaults. Cycles and chains
+//! rule overrides the `treat::box { … }` define defaults. Cycles and chains
 //! deeper than 16 are errors; a define may not shadow a built-in type.
 
 use super::cascade::Stylesheet;
@@ -26,12 +26,12 @@ const MAX_INHERITANCE_DEPTH: usize = 16;
 /// Built-in templates and their base type (SPEC §8). Each is a bundle over a
 /// primitive (or, for `table`, over `group`).
 pub(super) const TEMPLATES: &[(&str, &str)] = &[
-    ("group", "rect"),
+    ("group", "box"),
     ("caption", "text"),
-    ("badge", "rect"),
-    ("note", "rect"),
-    ("row", "rect"),
-    ("column", "rect"),
+    ("badge", "box"),
+    ("note", "box"),
+    ("row", "box"),
+    ("column", "box"),
     ("table", "group"),
 ];
 
@@ -40,7 +40,7 @@ pub fn is_template(name: &str) -> bool {
 }
 
 /// The base type a built-in template builds on (`table` → `group`, `group` →
-/// `rect`, …); `None` for a primitive or a non-template.
+/// `box`, …); `None` for a primitive or a non-template.
 pub(crate) fn template_base(name: &str) -> Option<&'static str> {
     TEMPLATES.iter().find(|(n, _)| *n == name).map(|(_, b)| *b)
 }
@@ -182,11 +182,11 @@ impl<'a> Types<'a> {
 }
 
 /// A define may not take the name of a primitive, a template, the `wire` rule
-/// target, a side, or the reserved-for-future `circle` (SPEC §15, §18).
+/// target, a side, or a reserved-for-future name (`rect`, `circle`) — SPEC §15, §18.
 fn is_builtin_type(name: &str) -> bool {
     ShapeKind::parse(name).is_some()
         || is_template(name)
-        || matches!(name, "wire" | "circle" | "top" | "bottom" | "left" | "right")
+        || matches!(name, "wire" | "rect" | "circle" | "top" | "bottom" | "left" | "right")
 }
 
 /// A template's built-in attribute bundle (SPEC §8) — the lowest layer of the
@@ -288,7 +288,7 @@ mod tests {
     }
 
     fn build_err(src: &str) -> String {
-        match resolve_result(src, "rect") {
+        match resolve_result(src, "box") {
             Err(e) => e.message,
             Ok(_) => panic!("expected an error building {src:?}"),
         }
@@ -302,15 +302,15 @@ mod tests {
 
     #[test]
     fn primitive_resolves_to_its_kind_with_no_chain() {
-        let t = resolve_ok("", "rect");
-        assert_eq!(t.kind, ShapeKind::Rect);
+        let t = resolve_ok("", "box");
+        assert_eq!(t.kind, ShapeKind::Box);
         assert!(t.type_chain.is_empty());
     }
 
     #[test]
     fn template_resolves_to_its_base_primitive_with_chain_and_bundle() {
         let t = resolve_ok("", "group");
-        assert_eq!(t.kind, ShapeKind::Rect);
+        assert_eq!(t.kind, ShapeKind::Box);
         assert_eq!(t.type_chain, vec!["group"]);
         assert!(has_number(&t, "radius", 6.0)); // group ships radius:6
     }
@@ -318,7 +318,7 @@ mod tests {
     #[test]
     fn table_chain_is_table_then_group_over_rect() {
         let t = resolve_ok("", "table");
-        assert_eq!(t.kind, ShapeKind::Rect);
+        assert_eq!(t.kind, ShapeKind::Box);
         assert_eq!(t.type_chain, vec!["table", "group"]);
     }
 
@@ -331,15 +331,15 @@ mod tests {
 
     #[test]
     fn user_define_resolves_to_base_and_carries_its_decls() {
-        let t = resolve_ok("treat::rect { radius: 5; }\n", "treat");
-        assert_eq!(t.kind, ShapeKind::Rect);
+        let t = resolve_ok("treat::box { radius: 5; }\n", "treat");
+        assert_eq!(t.kind, ShapeKind::Box);
         assert_eq!(t.type_chain, vec!["treat"]);
         assert!(has_number(&t, "radius", 5.0));
     }
 
     #[test]
     fn element_rule_layers_into_the_type_cascade() {
-        let t = resolve_ok("rect { radius: 4; }\n", "rect");
+        let t = resolve_ok("box { radius: 4; }\n", "box");
         assert!(has_number(&t, "radius", 4.0));
     }
 
@@ -371,7 +371,7 @@ mod tests {
 
     #[test]
     fn inheritance_depth_over_16_errors() {
-        let mut src = String::from("t0::rect { }\n");
+        let mut src = String::from("t0::box { }\n");
         for i in 1..=17 {
             src.push_str(&format!("t{}::t{} {{ }}\n", i, i - 1));
         }

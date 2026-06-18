@@ -1,4 +1,4 @@
-// Mermaid-fast: implicit |rect|s, auto-created endpoints, all line styles.
+// Mermaid-fast: implicit |box|s, auto-created endpoints, all line styles.
 
 layout: row; gap: 40;
 

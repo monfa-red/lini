@@ -89,7 +89,7 @@ fn emit_shape(out: &mut String, n: &PlacedNode, depth: usize, vars: &VarTable, o
     let thickness = n.attrs.number("stroke-width").unwrap_or(1.0);
 
     match n.shape {
-        ShapeKind::Rect => emit_rect(out, n, &indent, thickness),
+        ShapeKind::Box => emit_rect(out, n, &indent, thickness),
         ShapeKind::Slant => emit_slant(out, n, &indent, thickness),
         ShapeKind::Hex => emit_hex(out, n, &indent, thickness),
         ShapeKind::Diamond => emit_diamond(out, n, &indent, thickness),

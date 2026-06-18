@@ -20,7 +20,7 @@ fn idempotent(src: &str) {
 
 #[test]
 fn node_id_type_label() {
-    assert_eq!(fmt("x|rect|\"hi\"\n"), "x |rect| \"hi\"\n");
+    assert_eq!(fmt("x|box|\"hi\"\n"), "x |box| \"hi\"\n");
 }
 
 #[test]
@@ -40,7 +40,7 @@ fn variable_declaration() {
 
 #[test]
 fn element_rule() {
-    assert_eq!(fmt("rect{radius:6}\n"), "rect { radius: 6; }\n");
+    assert_eq!(fmt("box{radius:6}\n"), "box { radius: 6; }\n");
 }
 
 #[test]
@@ -50,12 +50,12 @@ fn class_rule() {
 
 #[test]
 fn descendant_rule() {
-    assert_eq!(fmt("table rect{padding:4 8}\n"), "table rect { padding: 4 8; }\n");
+    assert_eq!(fmt("table box{padding:4 8}\n"), "table box { padding: 4 8; }\n");
 }
 
 #[test]
 fn define() {
-    assert_eq!(fmt("treat::rect{radius:5}\n"), "treat::rect { radius: 5; }\n");
+    assert_eq!(fmt("treat::box{radius:5}\n"), "treat::box { radius: 5; }\n");
 }
 
 #[test]
@@ -78,30 +78,30 @@ fn function_value() {
 fn block_declarations_group_on_one_line() {
     // SPEC §20: leading config decls share a line, off the opening brace.
     assert_eq!(
-        fmt("g |group| { cell: 1 2; layout: column; gap: 16;\n  a |rect|\n}\n"),
-        "g |group| {\n  cell: 1 2; layout: column; gap: 16;\n  a |rect|\n}\n"
+        fmt("g |group| { cell: 1 2; layout: column; gap: 16;\n  a |box|\n}\n"),
+        "g |group| {\n  cell: 1 2; layout: column; gap: 16;\n  a |box|\n}\n"
     );
 }
 
 #[test]
 fn a_comment_breaks_a_declaration_group() {
     assert_eq!(
-        fmt("g |group| {\n  layout: row;\n  // note\n  gap: 10;\n  a |rect|\n}\n"),
-        "g |group| {\n  layout: row;\n  // note\n  gap: 10;\n  a |rect|\n}\n"
+        fmt("g |group| {\n  layout: row;\n  // note\n  gap: 10;\n  a |box|\n}\n"),
+        "g |group| {\n  layout: row;\n  // note\n  gap: 10;\n  a |box|\n}\n"
     );
 }
 
 #[test]
 fn node_with_block_and_children() {
     assert_eq!(
-        fmt("g|group|{layout:column\na|rect|\nb|rect|}\n"),
-        "g |group| {\n  layout: column;\n  a |rect|\n  b |rect|\n}\n"
+        fmt("g|group|{layout:column\na|box|\nb|box|}\n"),
+        "g |group| {\n  layout: column;\n  a |box|\n  b |box|\n}\n"
     );
 }
 
 #[test]
 fn classes_on_a_node() {
-    assert_eq!(fmt("x|rect|.hot.loud\n"), "x |rect| .hot .loud\n");
+    assert_eq!(fmt("x|box|.hot.loud\n"), "x |box| .hot .loud\n");
 }
 
 #[test]
@@ -142,31 +142,31 @@ fn endpoint_dot_path_and_side() {
 #[test]
 fn phases_separated_by_a_blank_line() {
     assert_eq!(
-        fmt("rect{radius:4}\nx|rect|\na -> b\n"),
-        "rect { radius: 4; }\n\nx |rect|\n\na -> b\n"
+        fmt("box{radius:4}\nx|box|\na -> b\n"),
+        "box { radius: 4; }\n\nx |box|\n\na -> b\n"
     );
 }
 
 #[test]
 fn comments_are_preserved() {
-    assert_eq!(fmt("// header\nx|rect|\n"), "// header\nx |rect|\n");
+    assert_eq!(fmt("// header\nx|box|\n"), "// header\nx |box|\n");
 }
 
 #[test]
 fn a_blank_line_grouping_survives() {
-    assert_eq!(fmt("a|rect|\n\nb|rect|\n"), "a |rect|\n\nb |rect|\n");
+    assert_eq!(fmt("a|box|\n\nb|box|\n"), "a |box|\n\nb |box|\n");
 }
 
 #[test]
 fn runs_of_blank_lines_collapse_to_one() {
-    assert_eq!(fmt("a|rect|\n\n\n\nb|rect|\n"), "a |rect|\n\nb |rect|\n");
+    assert_eq!(fmt("a|box|\n\n\n\nb|box|\n"), "a |box|\n\nb |box|\n");
 }
 
 #[test]
 fn sibling_id_and_type_columns_align() {
     assert_eq!(
-        fmt("g|group|{bowl|treat|\"Bowl\"\nwater|rect|\"Water\"}\n"),
-        "g |group| {\n  bowl  |treat| \"Bowl\"\n  water |rect|  \"Water\"\n}\n"
+        fmt("g|group|{bowl|treat|\"Bowl\"\nwater|box|\"Water\"}\n"),
+        "g |group| {\n  bowl  |treat| \"Bowl\"\n  water |box|   \"Water\"\n}\n"
     );
 }
 
@@ -174,8 +174,8 @@ fn sibling_id_and_type_columns_align() {
 fn a_blank_line_breaks_an_alignment_group() {
     // The two nodes are in separate groups, so their columns don't align.
     assert_eq!(
-        fmt("bowl|rect|\n\nwater|rect|\n"),
-        "bowl |rect|\n\nwater |rect|\n"
+        fmt("bowl|box|\n\nwater|box|\n"),
+        "bowl |box|\n\nwater |box|\n"
     );
 }
 
@@ -184,14 +184,14 @@ fn idempotence_and_reparse_over_a_rich_file() {
     let src = "\
 layout: grid;  columns: repeat(3);  gap: 40;
 --accent: #0a84ff;
-rect { radius: 4; }
-treat::rect { radius: 5; }
+box { radius: 4; }
+treat::box { radius: 5; }
 .loud { stroke: red; stroke-width: 2; }
 
 cat |oval| \"Cat\" { cell: 1 1; }
 kitchen |group| \"Kitchen\" {
   bowl |treat| \"Bowl\"
-  water |rect| \"Water\"
+  water |box| \"Water\"
   bowl -> water \"flows\"
 }
 

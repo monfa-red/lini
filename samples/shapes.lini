@@ -1,6 +1,6 @@
 // Defines and containers — the shape-composition vocabulary.
 
-treat::rect { radius: 5; }
+treat::box { radius: 5; }
 nest::slant { fill: gray; }
 
 |treat| "Treat"

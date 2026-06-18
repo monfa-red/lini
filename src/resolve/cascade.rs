@@ -1,8 +1,8 @@
 //! The v4 stylesheet and cascade (SPEC §4, §12).
 //!
 //! A rule is `selector { decls }`. Selectors are CSS-shaped: a single element
-//! (`rect`), a single class (`.hot`), or a whitespace-separated descendant
-//! chain (`table rect`, `.sidebar rect`). The cascade layers, most-specific
+//! (`box`), a single class (`.hot`), or a whitespace-separated descendant
+//! chain (`table box`, `.sidebar box`). The cascade layers, most-specific
 //! last:
 //!
 //! 1. the **type cascade** — element rules + define defaults, base→derived
@@ -182,41 +182,41 @@ mod tests {
 
     #[test]
     fn element_selector_matches_a_type_in_the_chain() {
-        // `treat` resolves to a rect, so a `rect {}` rule still matches it.
-        let node = facts(&["treat", "rect"], &[]);
-        assert!(selector_matches(&[ty("rect")], &[], &node));
+        // `treat` resolves to a box, so a `box {}` rule still matches it.
+        let node = facts(&["treat", "box"], &[]);
+        assert!(selector_matches(&[ty("box")], &[], &node));
         assert!(selector_matches(&[ty("treat")], &[], &node));
         assert!(!selector_matches(&[ty("oval")], &[], &node));
     }
 
     #[test]
     fn class_selector_matches_an_applied_class() {
-        let node = facts(&["rect"], &["hot"]);
+        let node = facts(&["box"], &["hot"]);
         assert!(selector_matches(&[cls("hot")], &[], &node));
         assert!(!selector_matches(&[cls("cold")], &[], &node));
     }
 
     #[test]
     fn descendant_selector_needs_a_matching_ancestor() {
-        // `table rect` — a rect with a table ancestor.
-        let node = facts(&["rect"], &[]);
-        let ancestors = [facts(&["table", "group", "rect"], &[]), facts(&["row"], &[])];
-        assert!(selector_matches(&[ty("table"), ty("rect")], &ancestors, &node));
+        // `table box` — a box with a table ancestor.
+        let node = facts(&["box"], &[]);
+        let ancestors = [facts(&["table", "group", "box"], &[]), facts(&["row"], &[])];
+        assert!(selector_matches(&[ty("table"), ty("box")], &ancestors, &node));
     }
 
     #[test]
     fn descendant_selector_fails_without_the_ancestor() {
-        let node = facts(&["rect"], &[]);
-        let ancestors = [facts(&["group", "rect"], &[])];
-        assert!(!selector_matches(&[ty("table"), ty("rect")], &ancestors, &node));
+        let node = facts(&["box"], &[]);
+        let ancestors = [facts(&["group", "box"], &[])];
+        assert!(!selector_matches(&[ty("table"), ty("box")], &ancestors, &node));
     }
 
     #[test]
     fn descendant_combinator_is_not_adjacency() {
-        // `.sidebar rect` matches a rect even with an intervening container.
-        let node = facts(&["rect"], &[]);
-        let ancestors = [facts(&["group", "rect"], &["sidebar"]), facts(&["row"], &[])];
-        assert!(selector_matches(&[cls("sidebar"), ty("rect")], &ancestors, &node));
+        // `.sidebar box` matches a box even with an intervening container.
+        let node = facts(&["box"], &[]);
+        let ancestors = [facts(&["group", "box"], &["sidebar"]), facts(&["row"], &[])];
+        assert!(selector_matches(&[cls("sidebar"), ty("box")], &ancestors, &node));
     }
 
     #[test]
@@ -232,10 +232,10 @@ mod tests {
 
     #[test]
     fn last_part_must_match_the_node_not_an_ancestor() {
-        let node = facts(&["rect"], &[]);
+        let node = facts(&["box"], &[]);
         let ancestors = [facts(&["table"], &[])];
-        // `rect table` — last part `table` must be the node, but the node is a rect.
-        assert!(!selector_matches(&[ty("rect"), ty("table")], &ancestors, &node));
+        // `box table` — last part `table` must be the node, but the node is a box.
+        assert!(!selector_matches(&[ty("box"), ty("table")], &ancestors, &node));
     }
 
     fn sheet(src: &str) -> Stylesheet {
@@ -259,8 +259,8 @@ mod tests {
 
     #[test]
     fn element_decls_merge_matching_rules_in_source_order() {
-        let s = sheet("rect { fill: red; }\nrect { stroke: blue; }\n");
-        assert_eq!(names(&s.element_decls("rect")), vec!["fill", "stroke"]);
+        let s = sheet("box { fill: red; }\nbox { stroke: blue; }\n");
+        assert_eq!(names(&s.element_decls("box")), vec!["fill", "stroke"]);
         assert!(s.element_decls("oval").is_empty());
     }
 
@@ -268,9 +268,9 @@ mod tests {
     fn node_layers_put_descendant_rules_before_class_rules() {
         // Source order is class-then-descendant; the cascade still applies the
         // descendant first (tier 2), the class last (tier 3).
-        let s = sheet(".hot { stroke: red; }\ntable rect { fill: gray; }\n");
-        let node = facts(&["rect"], &["hot"]);
-        let ancestors = [facts(&["table", "group", "rect"], &[])];
+        let s = sheet(".hot { stroke: red; }\ntable box { fill: gray; }\n");
+        let node = facts(&["box"], &["hot"]);
+        let ancestors = [facts(&["table", "group", "box"], &[])];
         assert_eq!(names(&s.node_layers(&ancestors, &node)), vec!["fill", "stroke"]);
     }
 
@@ -279,7 +279,7 @@ mod tests {
         // Applied `.b .a`, but defined `.a` then `.b`; `.b` is later in source
         // so it wins the tie.
         let s = sheet(".a { fill: red; }\n.b { fill: blue; }\n");
-        let node = facts(&["rect"], &["b", "a"]);
+        let node = facts(&["box"], &["b", "a"]);
         let layers = s.node_layers(&[], &node);
         assert_eq!(layers.len(), 2);
         assert!(matches!(&layers.last().unwrap().1, ResolvedValue::Ident(s) if s == "blue"));
@@ -287,7 +287,7 @@ mod tests {
 
     #[test]
     fn defines_class_covers_every_referenced_class() {
-        let s = sheet(".hot { stroke: red; }\n.sidebar rect { fill: gray; }\n");
+        let s = sheet(".hot { stroke: red; }\n.sidebar box { fill: gray; }\n");
         assert!(s.defines_class("hot"));
         assert!(s.defines_class("sidebar"));
         assert!(!s.defines_class("cold"));

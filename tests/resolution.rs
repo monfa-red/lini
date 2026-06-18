@@ -42,12 +42,12 @@ fn assert_resolve_error(src: &str, expect_msg_substr: &str) {
 
 #[test]
 fn err_duplicate_scene_id() {
-    assert_resolve_error("cat |rect| \"1\"\ncat |rect| \"2\"\n", "duplicate id 'cat'");
+    assert_resolve_error("cat |box| \"1\"\ncat |box| \"2\"\n", "duplicate id 'cat'");
 }
 
 #[test]
 fn err_duplicate_id_reports_previous_location() {
-    let src = "cat |rect| \"1\"\ncat |rect| \"2\"\n";
+    let src = "cat |box| \"1\"\ncat |box| \"2\"\n";
     let err = lini::check(src).expect_err("expected resolve error");
     let shown = err.display_with_source(src, "<test>").to_string();
     assert!(
@@ -61,14 +61,14 @@ fn err_duplicate_id_reports_previous_location() {
 fn err_duplicate_id_nested_in_container() {
     // SPEC §15: a duplicate is an error in any scope — the path index requires
     // unique paths.
-    assert_resolve_error("g |group| { a |rect|\na |rect| }\n", "duplicate id 'a'");
+    assert_resolve_error("g |group| { a |box|\na |box| }\n", "duplicate id 'a'");
 }
 
 #[test]
 fn same_local_id_across_instances_is_ok() {
     // Two instances of a define share the local id `inlet`, but their full paths
     // differ (a.inlet vs b.inlet), so this must not collide.
-    lini::check("room::group { inlet |rect| }\na |room|\nb |room|\n")
+    lini::check("room::group { inlet |box| }\na |room|\nb |room|\n")
         .expect("distinct instance paths must not collide");
 }
 
@@ -89,39 +89,39 @@ fn err_unknown_shape_type() {
 
 #[test]
 fn err_unknown_class() {
-    assert_resolve_error("cat |rect| \"x\" .nope\n", "unknown class '.nope'");
+    assert_resolve_error("cat |box| \"x\" .nope\n", "unknown class '.nope'");
 }
 
 #[test]
 fn err_define_cycle() {
-    assert_resolve_error("looper::looper { }\ncat |rect|\n", "cycle in");
+    assert_resolve_error("looper::looper { }\ncat |box|\n", "cycle in");
 }
 
 #[test]
 fn err_define_name_collides_with_primitive() {
-    assert_resolve_error("rect::oval { }\ncat |rect|\n", "'rect' shadows a built-in type");
+    assert_resolve_error("rect::oval { }\ncat |box|\n", "'rect' shadows a built-in type");
 }
 
 #[test]
 fn err_define_name_collides_with_template() {
-    assert_resolve_error("note::rect { }\ncat |rect|\n", "'note' shadows a built-in type");
+    assert_resolve_error("note::box { }\ncat |box|\n", "'note' shadows a built-in type");
 }
 
 #[test]
 fn err_reserved_scene_id() {
-    assert_resolve_error("rect |rect| \"x\"\n", "'rect' is reserved");
+    assert_resolve_error("rect |box| \"x\"\n", "'rect' is reserved");
 }
 
 #[test]
 fn wire_endpoint_dotpath_navigates_into_groups() {
-    lini::check("garden |group| { frog |rect| }\noutside |rect|\ngarden.frog -> outside\n")
+    lini::check("garden |group| { frog |box| }\noutside |box|\ngarden.frog -> outside\n")
         .expect("dot-path resolves");
 }
 
 #[test]
 fn element_rule_applies_to_every_instance() {
-    // `rect { radius: 5; }` gives every rect a default radius of 5.
-    lini::check("rect { radius: 5; }\ncat |rect| \"Cat\"\n").expect("rect defaults");
+    // `box { radius: 5; }` gives every rect a default radius of 5.
+    lini::check("box { radius: 5; }\ncat |box| \"Cat\"\n").expect("rect defaults");
 }
 
 #[test]
@@ -129,13 +129,13 @@ fn selector_unknown_type_errors() {
     // A lone `frog { }` with an unknown name is a *node*, not a rule (SPEC §16);
     // an unknown type surfaces in a descendant selector, whose parts must name
     // known types.
-    let err = lini::check("table frog { fill: green; }\ncat |rect|\n").expect_err("unknown");
+    let err = lini::check("table frog { fill: green; }\ncat |box|\n").expect_err("unknown");
     assert!(err.to_string().contains("unknown type"), "got: {}", err);
 }
 
 #[test]
 fn duplicate_define_errors() {
-    let err = lini::check("treat::rect { radius: 5; }\ntreat::rect { radius: 9; }\ncat |treat|\n")
+    let err = lini::check("treat::box { radius: 5; }\ntreat::box { radius: 9; }\ncat |treat|\n")
         .expect_err("duplicate");
     assert!(err.to_string().contains("duplicate type"), "got: {}", err);
 }
@@ -143,7 +143,7 @@ fn duplicate_define_errors() {
 #[test]
 fn wire_endpoint_bare_nested_name_errors_with_suggestions() {
     let err = lini::check(
-        "kitchen |group| { mouse |rect| }\ngarden |group| { mouse |rect| }\nmouse -> kitchen\n",
+        "kitchen |group| { mouse |box| }\ngarden |group| { mouse |box| }\nmouse -> kitchen\n",
     )
     .expect_err("not found");
     let msg = err.to_string();
@@ -162,7 +162,7 @@ fn body_wire_suggestion_is_scope_relative() {
     // the user can actually type there (shelf.bowl), not the un-typeable
     // root-absolute one (garden.shelf.bowl).
     let err =
-        lini::check("garden |group| { shelf |group| { bowl |rect| }\npot |rect|\nbowl -> pot }\n")
+        lini::check("garden |group| { shelf |group| { bowl |box| }\npot |box|\nbowl -> pot }\n")
             .expect_err("not found");
     let msg = err.to_string();
     assert!(msg.contains("'shelf.bowl'"), "scope-relative suggestion: {}", msg);
@@ -178,7 +178,7 @@ fn body_wire_suggestion_stays_in_scope() {
     // Sealed body: a sibling container's node is unreachable, so it must not be
     // suggested at all.
     let err = lini::check(
-        "kitchen |group| { mouse |rect| }\ngarden |group| { cat |rect|\nmouse -> cat }\n",
+        "kitchen |group| { mouse |box| }\ngarden |group| { cat |box|\nmouse -> cat }\n",
     )
     .expect_err("not found");
     let msg = err.to_string();

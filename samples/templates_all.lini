@@ -5,18 +5,18 @@ layout: column; gap: 24; padding: 20;
 frame |group| "Group" {
   layout: row; gap: 16;
   |row|    {
-    a |rect| "a"
-    b |rect| "b"
+    a |box| "a"
+    b |box| "b"
   }
   |column| {
-    p |rect| "p"
-    q |rect| "q"
+    p |box| "p"
+    q |box| "q"
   }
 }
 
 band |row| {
   gap: 24;
-  svc |rect| "Service" {
+  svc |box| "Service" {
     width: 140; height: 64;
     |badge| "NEW"
   }

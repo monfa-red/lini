@@ -63,9 +63,9 @@ fn fmt_preserves_section_comments_and_blank_lines() {
 
 // Top-level comment.
 // Comment on root statement.
-cat |rect|
+cat |box|
 
-dog |rect|
+dog |box|
 ";
     let formatted = lini::format_source(src).expect("fmt");
     assert!(
@@ -75,7 +75,7 @@ dog |rect|
     );
     // Blank line between cat and dog should be preserved.
     assert!(
-        formatted.contains("|rect|\n\ndog"),
+        formatted.contains("|box|\n\ndog"),
         "blank line not preserved between siblings:\n{}",
         formatted
     );

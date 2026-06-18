@@ -75,7 +75,7 @@ pub fn resolve_node(
     id_seen: &mut HashMap<String, Span>,
     lifted: &mut Vec<LiftedWire>,
 ) -> Result<ResolvedInst, Error> {
-    let type_name = node.ty.as_deref().unwrap_or("rect");
+    let type_name = node.ty.as_deref().unwrap_or("box");
     let rt = ctx.types.resolve(type_name, node.span)?;
 
     for class in &node.classes {
@@ -263,9 +263,9 @@ fn is_blank_anon_text(r: &ResolvedInst) -> bool {
 }
 
 /// Type names (primitives, templates, defines), the four sides, the `wire` rule
-/// target, and the reserved `circle` cannot be node ids (SPEC §18).
+/// target, and the reserved-for-future `rect` / `circle` cannot be node ids (SPEC §18).
 fn is_reserved_id(id: &str, types: &Types) -> bool {
-    types.is_known(id) || matches!(id, "wire" | "circle" | "top" | "bottom" | "left" | "right")
+    types.is_known(id) || matches!(id, "wire" | "rect" | "circle" | "top" | "bottom" | "left" | "right")
 }
 
 /// The reserved-id error, with the always-free capitalized variant as the out.

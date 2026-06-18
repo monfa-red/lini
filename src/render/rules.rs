@@ -137,7 +137,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
     // `stroke-dasharray` so a container's `line:` can never bleed into
     // children through a gap in the cascade.
     const CLOSED: &[ShapeKind] = &[
-        ShapeKind::Rect,
+        ShapeKind::Box,
         ShapeKind::Oval,
         ShapeKind::Hex,
         ShapeKind::Slant,
@@ -213,7 +213,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
         }
     }
 
-    // Element rules (`rect { }`) merge into the matching shape rule (creating it
+    // Element rules (`box { }`) merge into the matching shape rule (creating it
     // for paint-less templates that gain paint only via the rule).
     for (name, attrs) in &laid.sheet.element_rules {
         if !present.contains(name.as_str()) {
@@ -343,7 +343,7 @@ mod tests {
 
     #[test]
     fn root_rule_carries_inherited_text_props() {
-        let css = emit_str(&rules_for("x |rect| \"hi\"\n"));
+        let css = emit_str(&rules_for("x |box| \"hi\"\n"));
         assert!(
             css.contains(".lini { font-family: var(--lini-font-family); font-size: 14px; color: var(--lini-text-color); }"),
             "{}",
@@ -353,14 +353,14 @@ mod tests {
 
     #[test]
     fn shape_rules_only_for_present_types() {
-        let css = emit_str(&rules_for("x |rect| \"hi\"\n"));
-        assert!(css.contains(".lini .lini-shape-rect {"), "{}", css);
+        let css = emit_str(&rules_for("x |box| \"hi\"\n"));
+        assert!(css.contains(".lini .lini-shape-box {"), "{}", css);
         assert!(!css.contains("lini-shape-oval"), "{}", css);
     }
 
     #[test]
     fn shape_rules_complete_over_inheritable_paint() {
-        let set = rules_for("x |rect| \"hi\"\ny |oval|\nz |line| { points: 0 0, 10 0; }\n");
+        let set = rules_for("x |box| \"hi\"\ny |oval|\nz |line| { points: 0 0, 10 0; }\n");
         for rule in &set.rules {
             if rule.class == "lini-shape-text" {
                 // Text masks stroke — a container's stroke must never bleed
@@ -384,7 +384,7 @@ mod tests {
     #[test]
     fn style_defs_emit_in_defs_order_used_only() {
         let css = emit_str(&rules_for(
-            ".a { stroke: red; }\n.b { stroke: blue; }\n.unused { stroke: green; }\nx |rect| .b .a\n",
+            ".a { stroke: red; }\n.b { stroke: blue; }\n.unused { stroke: green; }\nx |box| .b .a\n",
         ));
         let a = css.find(".lini .lini-style-a").expect("a rule");
         let b = css.find(".lini .lini-style-b").expect("b rule");
@@ -407,9 +407,9 @@ mod tests {
 
     #[test]
     fn type_defaults_merge_into_shape_rule() {
-        let css = emit_str(&rules_for("rect { fill: lightyellow; }\nx |rect|\n"));
+        let css = emit_str(&rules_for("box { fill: lightyellow; }\nx |box|\n"));
         assert!(
-            css.contains(".lini .lini-shape-rect { fill: lightyellow;"),
+            css.contains(".lini .lini-shape-box { fill: lightyellow;"),
             "{}",
             css
         );
@@ -417,8 +417,8 @@ mod tests {
 
     #[test]
     fn group_template_rule_follows_rect_rule() {
-        let css = emit_str(&rules_for("g |group| { x |rect| }\n"));
-        let rect = css.find(".lini .lini-shape-rect").expect("rect rule");
+        let css = emit_str(&rules_for("g |group| { x |box| }\n"));
+        let rect = css.find(".lini .lini-shape-box").expect("rect rule");
         let group = css.find(".lini .lini-shape-group").expect("group rule");
         assert!(rect < group, "{}", css);
         assert!(
@@ -430,7 +430,7 @@ mod tests {
 
     #[test]
     fn user_shape_rule_carries_its_paint() {
-        let css = emit_str(&rules_for("treat::rect { fill: pink; radius: 5; }\nx |treat|\n"));
+        let css = emit_str(&rules_for("treat::box { fill: pink; radius: 5; }\nx |treat|\n"));
         assert!(
             css.contains(".lini .lini-shape-treat { fill: pink; }"),
             "geometry (radius) must not ride CSS: {}",

@@ -4,18 +4,18 @@ layout: column; gap: 40; padding: 24;
 -> { stroke: #666; clearance: 10; }
 --accent: #0a84ff;
 
-browser |rect| "Browser"
+browser |box| "Browser"
 
 edge |group| "Edge" {
   layout: row; gap: 24;
-  cdn |rect| "CDN"
-  lb  |rect| "Load balancer"
+  cdn |box| "CDN"
+  lb  |box| "Load balancer"
 }
 
 services |group| "Services" {
   layout: row; gap: 24;
-  api  |rect| "API"
-  auth |rect| "Auth"
+  api  |box| "API"
+  auth |box| "Auth"
 }
 
 data |group| "Data" {

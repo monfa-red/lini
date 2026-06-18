@@ -2,8 +2,8 @@
 
 room::group {
   layout: column; gap: 10; padding: 12;
-  inlet  |rect| "Inlet"
-  outlet |rect| "Outlet"
+  inlet  |box| "Inlet"
+  outlet |box| "Outlet"
   inlet -> outlet "flows"
 }
 

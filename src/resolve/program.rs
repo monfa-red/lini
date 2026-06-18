@@ -76,7 +76,7 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
         scene::resolve_instances(&file.instances, &ctx, &root_text_ctx, &mut id_seen, &mut lifted)?;
 
     // ── Auto-create: a root wire's single-segment id absent everywhere becomes
-    // an empty |rect| at the scene root (SPEC §3). ──
+    // an empty |box| at the scene root (SPEC §3). ──
     let mut index = PathIndex::build(&nodes);
     let auto = auto_created(&index, file);
     if !auto.is_empty() {
@@ -204,7 +204,7 @@ fn auto_created(index: &PathIndex, file: &File) -> Vec<Node> {
 fn auto_rect(id: &str, span: Span) -> Node {
     Node {
         id: Some(id.to_string()),
-        ty: Some("rect".to_string()),
+        ty: Some("box".to_string()),
         labels: vec![id.to_string()],
         classes: Vec::new(),
         block: None,
@@ -214,7 +214,7 @@ fn auto_rect(id: &str, span: Span) -> Node {
 
 // ─────────────────────────── Built-in rules ───────────────────────────
 
-/// The rules that ship with the language. Today: `table rect { … }` makes table
+/// The rules that ship with the language. Today: `table box { … }` makes table
 /// cells borderless, padded, and track-filling (SPEC §8).
 fn builtin_rules() -> Vec<Rule> {
     let sp = Span::empty();
@@ -225,7 +225,7 @@ fn builtin_rules() -> Vec<Rule> {
     };
     vec![Rule {
         selector: Selector {
-            parts: vec![SelPart::Type("table".into()), SelPart::Type("rect".into())],
+            parts: vec![SelPart::Type("table".into()), SelPart::Type("box".into())],
             span: sp,
         },
         decls: vec![
@@ -242,7 +242,7 @@ fn builtin_rules() -> Vec<Rule> {
 
 /// The renderer's [`SheetInputs`]: the stylesheet sorted into the layers it
 /// restates as CSS class rules (SPEC §13). Single-part selectors map directly;
-/// descendant rules (`table rect { }`) bake inline via the cascade and carry no
+/// descendant rules (`table box { }`) bake inline via the cascade and carry no
 /// entry here.
 fn build_sheet_inputs(file: &File, defines: &[&Define], vars: &VarTable) -> Result<SheetInputs, Error> {
     let mut class_rules = Vec::new();
@@ -316,36 +316,36 @@ mod tests {
 
     #[test]
     fn bare_node_resolves() {
-        let p = rv4("x |rect|\n");
+        let p = rv4("x |box|\n");
         assert_eq!(p.scene.nodes.len(), 1);
         assert_eq!(p.scene.nodes[0].id.as_deref(), Some("x"));
-        assert_eq!(p.scene.nodes[0].shape, ShapeKind::Rect);
+        assert_eq!(p.scene.nodes[0].shape, ShapeKind::Box);
     }
 
     #[test]
     fn element_rule_reaches_the_node() {
-        let p = rv4("rect { radius: 4; }\nx |rect|\n");
+        let p = rv4("box { radius: 4; }\nx |box|\n");
         assert_eq!(num(&p, 0, "radius"), Some(4.0));
     }
 
     #[test]
     fn descendant_rule_matches_a_nested_node() {
-        let p = rv4("table rect { fill: gray; }\nt |table| {\n  \"A\"\n}\n");
-        // The cell `"A"` is a rect inside the table; the descendant rule paints it.
+        let p = rv4("table box { fill: gray; }\nt |table| {\n  \"A\"\n}\n");
+        // The cell `"A"` is a box inside the table; the descendant rule paints it.
         let cell = &p.scene.nodes[0].children[0];
         assert!(matches!(cell.attrs.get("fill"), Some(ResolvedValue::Ident(s)) if s == "gray"));
     }
 
     #[test]
     fn class_rule_applies() {
-        let p = rv4(".hot { stroke: red; }\nx |rect| .hot\n");
+        let p = rv4(".hot { stroke: red; }\nx |box| .hot\n");
         assert_eq!(ident(&p, 0, "stroke"), Some("red"));
         assert_eq!(p.scene.nodes[0].applied_styles, vec!["hot"]);
     }
 
     #[test]
     fn instance_block_beats_element_rule() {
-        let p = rv4("rect { fill: white; }\nx |rect| { fill: red; }\n");
+        let p = rv4("box { fill: white; }\nx |box| { fill: red; }\n");
         assert_eq!(ident(&p, 0, "fill"), Some("red"));
     }
 
@@ -387,7 +387,7 @@ mod tests {
 
     #[test]
     fn define_body_materializes_per_instance() {
-        let p = rv4("room::group {\n  inlet |rect| \"In\"\n}\nr |room|\n");
+        let p = rv4("room::group {\n  inlet |box| \"In\"\n}\nr |room|\n");
         let inlet = &p.scene.nodes[0].children[0];
         assert_eq!(inlet.id.as_deref(), Some("inlet"));
     }
@@ -411,7 +411,7 @@ mod tests {
 
     #[test]
     fn operator_sets_markers_and_line_style() {
-        let p = rv4("a |rect|\nb |rect|\na --> b\n");
+        let p = rv4("a |box|\nb |box|\na --> b\n");
         let w = &p.wires[0];
         assert_eq!(w.markers.end, MarkerKind::Arrow);
         assert!(matches!(w.attrs.get("stroke-style"), Some(ResolvedValue::Ident(s)) if s == "dashed"));
@@ -419,13 +419,13 @@ mod tests {
 
     #[test]
     fn fan_expands_to_one_wire_per_pair() {
-        let p = rv4("a |rect|\nb |rect|\nc |rect|\na & b -> c\n");
+        let p = rv4("a |box|\nb |box|\nc |box|\na & b -> c\n");
         assert_eq!(p.wires.len(), 2);
     }
 
     #[test]
     fn internal_wire_resolves_with_scoped_paths() {
-        let p = rv4("room::group {\n  inlet |rect|\n  outlet |rect|\n  inlet -> outlet\n}\nr |room|\n");
+        let p = rv4("room::group {\n  inlet |box|\n  outlet |box|\n  inlet -> outlet\n}\nr |room|\n");
         let w = &p.wires[0];
         assert_eq!(w.endpoints[0].path, "r.inlet");
         assert_eq!(w.endpoints[1].path, "r.outlet");
@@ -440,23 +440,23 @@ mod tests {
 
     #[test]
     fn unknown_class_errors() {
-        assert!(rv4_err("x |rect| .nope\n").contains("unknown class '.nope'"));
+        assert!(rv4_err("x |box| .nope\n").contains("unknown class '.nope'"));
     }
 
     #[test]
     fn duplicate_id_errors() {
-        assert!(rv4_err("a |rect|\na |oval|\n").contains("duplicate id 'a'"));
+        assert!(rv4_err("a |box|\na |oval|\n").contains("duplicate id 'a'"));
     }
 
     #[test]
     fn reserved_id_errors_with_capitalized_hint() {
         // `top` is a side — reserved as an id.
-        assert!(rv4_err("top |rect|\n").contains("'Top' is free"));
+        assert!(rv4_err("top |box|\n").contains("'Top' is free"));
     }
 
     #[test]
     fn body_wire_endpoint_not_found_suggests() {
-        let e = rv4_err("g |group| {\n  x |rect|\n  g.y -> x\n}\n");
+        let e = rv4_err("g |group| {\n  x |box|\n  g.y -> x\n}\n");
         assert!(e.contains("not found"), "got: {e}");
     }
 }

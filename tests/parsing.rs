@@ -48,23 +48,23 @@ fn err_wire_chain_mixes_operators() {
 
 #[test]
 fn err_unterminated_string() {
-    assert_parse_error("cat |rect| \"oops\n", "unterminated string");
+    assert_parse_error("cat |box| \"oops\n", "unterminated string");
 }
 
 #[test]
 fn err_bad_escape_sequence() {
-    assert_parse_error("cat |rect| \"\\x\"\n", "invalid escape sequence");
+    assert_parse_error("cat |box| \"\\x\"\n", "invalid escape sequence");
 }
 
 #[test]
 fn err_invalid_hex_color() {
-    assert_parse_error("--c: #ff;\ncat |rect|\n", "invalid hex color");
+    assert_parse_error("--c: #ff;\ncat |box|\n", "invalid hex color");
 }
 
 #[test]
 fn err_wire_body_non_text() {
     assert_parse_error(
-        "a |rect|\nb |rect|\na -> b { |rect| \"oops\" }\n",
+        "a |box|\nb |box|\na -> b { |box| \"oops\" }\n",
         "only |text| children",
     );
 }
@@ -72,19 +72,19 @@ fn err_wire_body_non_text() {
 #[test]
 fn lini_var_value_parses_anywhere() {
     // SPEC §11.2: `--name` is a first-class value form.
-    lini::check_parse("--gap: --my-gap;\ncat |rect|\n").expect("--gap parses");
-    lini::check_parse("cat |rect| { fill: --accent; }\n").expect("--accent parses");
+    lini::check_parse("--gap: --my-gap;\ncat |box|\n").expect("--gap parses");
+    lini::check_parse("cat |box| { fill: --accent; }\n").expect("--accent parses");
 }
 
 #[test]
 fn endpoint_dotpath_navigates_into_groups() {
-    lini::check_parse("garden |group| { frog |rect| }\ngarden.frog -> outside\n")
+    lini::check_parse("garden |group| { frog |box| }\ngarden.frog -> outside\n")
         .expect("dot-path endpoint");
 }
 
 #[test]
 fn endpoint_side_suffix_parses() {
-    lini::check_parse("cat |rect|\ndog |rect|\ncat.right -> dog.left\n").expect("side suffix");
+    lini::check_parse("cat |box|\ndog |box|\ncat.right -> dog.left\n").expect("side suffix");
 }
 
 #[test]

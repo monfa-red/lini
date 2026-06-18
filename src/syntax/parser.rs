@@ -25,7 +25,7 @@ pub fn parse(tokens: &[Token]) -> Result<File, Error> {
 /// it is reserved but not a type, so `wire { }` reads as a (reserved-id) node,
 /// not a rule — wire defaults are the `-> { }` rule.
 const BUILTIN_TYPES: &[&str] = &[
-    "rect", "oval", "line", "path", "poly", "text", "hex", "slant", "cyl", "diamond", "cloud",
+    "box", "oval", "line", "path", "poly", "text", "hex", "slant", "cyl", "diamond", "cloud",
     "icon", "image", "group", "caption", "badge", "note", "row", "column", "table",
 ];
 
@@ -726,8 +726,8 @@ mod tests {
     #[test]
     fn three_phases() {
         let f = parse_ok(
-            "layout: grid;\nrect { radius: 6; }\n.hot { stroke-width: 2; }\n\
-             server |rect| \"Server\"\nclient |rect| \"Client\"\nserver -> client \"requests\"\n",
+            "layout: grid;\nbox { radius: 6; }\n.hot { stroke-width: 2; }\n\
+             server |box| \"Server\"\nclient |box| \"Client\"\nserver -> client \"requests\"\n",
         );
         assert_eq!(f.stylesheet.len(), 3); // root decl, element rule, class rule
         assert_eq!(f.instances.len(), 2);
@@ -736,7 +736,7 @@ mod tests {
 
     #[test]
     fn element_rule_vs_node_by_type_set() {
-        let f = parse_ok("rect { radius: 4; }\nserver { fill: red; }\n");
+        let f = parse_ok("box { radius: 4; }\nserver { fill: red; }\n");
         assert!(matches!(f.stylesheet[0], StyleItem::Rule(_)));
         assert_eq!(f.instances.len(), 1);
         assert_eq!(f.instances[0].id.as_deref(), Some("server"));
@@ -744,11 +744,11 @@ mod tests {
 
     #[test]
     fn define_then_use() {
-        let f = parse_ok("treat::rect { radius: 5; }\nx |treat| \"X\"\n");
+        let f = parse_ok("treat::box { radius: 5; }\nx |treat| \"X\"\n");
         match &f.stylesheet[0] {
             StyleItem::Define(d) => {
                 assert_eq!(d.name, "treat");
-                assert_eq!(d.base, "rect");
+                assert_eq!(d.base, "box");
             }
             _ => panic!("expected a define"),
         }
@@ -765,7 +765,7 @@ mod tests {
 
     #[test]
     fn descendant_selector() {
-        let f = parse_ok("table rect { stroke-width: 0; }\n.sidebar rect { fill: gray; }\n");
+        let f = parse_ok("table box { stroke-width: 0; }\n.sidebar box { fill: gray; }\n");
         match &f.stylesheet[0] {
             StyleItem::Rule(r) => assert_eq!(r.selector.parts.len(), 2),
             _ => panic!(),
@@ -779,7 +779,7 @@ mod tests {
     #[test]
     fn node_with_id_type_labels_classes_block() {
         let f = parse_ok(
-            "db |cyl| \"Postgres\" .primary {\n  fill: #eef;\n  badge |rect| \"v16\" { mount: on; }\n}\n",
+            "db |cyl| \"Postgres\" .primary {\n  fill: #eef;\n  badge |box| \"v16\" { mount: on; }\n}\n",
         );
         let n = &f.instances[0];
         assert_eq!(n.id.as_deref(), Some("db"));
@@ -807,7 +807,7 @@ mod tests {
     #[test]
     fn call_and_var_values() {
         let f = parse_ok(
-            "columns: repeat(3);\n--brand: #ff6600;\ncard |rect| { fill: --brand; columns: 80 repeat(2, 40); }\n",
+            "columns: repeat(3);\n--brand: #ff6600;\ncard |box| { fill: --brand; columns: 80 repeat(2, 40); }\n",
         );
         match &f.stylesheet[0] {
             StyleItem::RootDecl(d) => {
@@ -863,13 +863,13 @@ mod tests {
     #[test]
     fn ordering_rule_after_instance() {
         assert!(
-            parse_err("x |rect|\nrect { radius: 4; }\n").contains("must come before instances")
+            parse_err("x |box|\nbox { radius: 4; }\n").contains("must come before instances")
         );
     }
 
     #[test]
     fn ordering_instance_after_wire() {
-        assert!(parse_err("a -> b\nc |rect|\n").contains("must come before wires"));
+        assert!(parse_err("a -> b\nc |box|\n").contains("must come before wires"));
     }
 
     #[test]
@@ -885,7 +885,7 @@ mod tests {
     #[test]
     fn block_decls_before_children() {
         assert!(
-            parse_err("g |group| {\n  a |rect|\n  gap: 4;\n}\n")
+            parse_err("g |group| {\n  a |box|\n  gap: 4;\n}\n")
                 .contains("declarations must come first")
         );
     }
