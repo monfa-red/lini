@@ -95,7 +95,7 @@ pub fn check_parse(src: &str) -> Result<(), Error> {
 /// Parse errors are surfaced as `Err`; missing lints just return an empty Vec.
 pub fn lint_str(src: &str) -> Result<Vec<Diagnostic>, Error> {
     let tokens = lexer::lex(src)?;
-    let file = parser::parse(&tokens)?;
+    let file = syntax::parser::parse(&tokens)?;
     Ok(lint::lint(&file))
 }
 
