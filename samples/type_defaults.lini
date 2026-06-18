@@ -1,18 +1,14 @@
-// SPEC section 4: `|name|` in the defs block sets defaults for every instance of
-// that type. Lowest-specificity layer — anything more specific wins.
+// Element rules set per-type defaults — the lowest-specificity layer. Anything
+// more specific (a class, the instance's own block) wins.
 
-{
-  |scene| layout:row gap:30 padding:20
+layout: row;  gap: 30;  padding: 20;
 
-  // Every rect rounds; every text starts small; every oval gets a thick
-  // outline (the alert shape inherits and tightens it).
-  |rect| radius:6
-  |text| text-size:11 weight:bold
-  |oval| stroke:#444 thickness:2
+rect { radius: 6; }
+text { font-size: 11; font-weight: bold; }
+oval { stroke: #444; stroke-width: 2; }
 
-  |alert:oval| stroke:red size:36
-}
+alert::oval { stroke: red; width: 36; height: 36; }
 
-cat   |rect| "Cat"
-dog   |rect| "Dog" radius:0          // inline overrides the |rect| default
+cat   |rect|  "Cat"
+dog   |rect|  "Dog" { radius: 0; }
 mouse |alert| "Mouse"

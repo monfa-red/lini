@@ -1,23 +1,18 @@
-// A group's positional labels desugar by position (SPEC §5/§9): the 1st is a
-// top caption, the 2nd a bottom footer (both reserved `place:in` bands), the
-// rest plain centred text. Other shapes just centre every label. `link:` wraps
-// a shape in `<a href>` — the old positional second-string href is gone.
+// A group's positional labels desugar by position (SPEC §8): 1st a top caption,
+// 2nd a bottom footer, the rest centred. link: wraps a shape in <a href>.
 
-{
-  |scene| layout:row gap:32 padding:20 v:start
-}
+layout: row;  gap: 32;  padding: 20;  align: start;
 
-// One label → a top caption.
-card |group| "Profile" layout:column gap:10 {
+card |group| "Profile" {
+  layout: column;  gap: 10;
   name |rect| "Ada Lovelace"
   role |rect| "Engineer"
 }
 
-// Two labels → caption + footer.
-panel |group| "Sales" "Q3 2026" layout:column gap:10 {
+panel |group| "Sales" "Q3 2026" {
+  layout: column;  gap: 10;
   a |rect| "Plan"
   b |rect| "Actual"
 }
 
-// A clickable shape.
-docs |rect| "Docs" link:"https://example.com" size:(120, 48)
+docs |rect| "Docs" { link: "https://example.com"; width: 120; height: 48; }

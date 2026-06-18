@@ -1,31 +1,27 @@
-// `place` decides which side of a frame's border a reserved caption lands on
-// (SPEC §7). Both `in` and `out` reserve space — the group's footprint grows
-// so neighbours never collide — but `in` keeps the caption inside the border
-// while `out` lifts it a container `gap` outside, leaving the border hugging
-// the content. A caption is just a `|text|` with `place:` (the old `|title|`).
+// mount: in vs out for a reserved caption (SPEC §6). Both reserve space; `in`
+// keeps the caption inside the border, `out` lifts it a gap outside so the
+// frame hugs the content.
 
-{
-  |scene| layout:row gap:40 padding:20 v:start
-}
+layout: row;  gap: 40;  padding: 20;  align: start;
 
-// Inside the border — what a group's label sugar produces by default.
-inside |group| layout:column gap:16 {
-    |text| "Inside" place:in
+inside |group| {
+  layout: column;  gap: 16;
+  |caption| "Inside"
   a |rect| "Row A"
   b |rect| "Row B"
 }
 
-// Above the border: the caption sits outside, the frame wraps only the rows.
-above |group| layout:column gap:16 {
-    |text| "Above" place:out
+above |group| {
+  layout: column;  gap: 16;
+  |text| "Above" { mount: out; }
   a |rect| "Row A"
   b |rect| "Row B"
 }
 
-// Captions on both edges, outside — a header and a footer clear of the frame.
-both |group| layout:column gap:16 {
-    |text| "Header" place:out
+both |group| {
+  layout: column;  gap: 16;
+  |text| "Header" { mount: out; }
   a |rect| "Row A"
   b |rect| "Row B"
-    |text| "Footer" side:bottom place:out
+  |text| "Footer" { side: bottom; mount: out; }
 }

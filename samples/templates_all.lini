@@ -1,40 +1,37 @@
-// Exercises every built-in template (SPEC section 9):
-// group, badge, note, row, col, table, cell.
+// Every built-in template: group, badge, note, row, column, table.
 
-{
-  |scene| layout:column gap:24 padding:20
-}
+layout: column;  gap: 24;  padding: 20;
 
-// group: a framed, labelled container. row / col: frameless layout wrappers
-// (no border, no padding) — direction baked in.
-frame |group| "Group" layout:row gap:16 {
+frame |group| "Group" {
+  layout: row;  gap: 16;
   |row| {
     a |rect| "a"
     b |rect| "b"
   }
-  |col| {
+  |column| {
     p |rect| "p"
     q |rect| "q"
   }
 }
 
-// badge rides its host's top-right corner; note is a sticky.
-band |row| gap:24 {
-  svc |rect| "Service" size:(140, 64) {
+band |row| {
+  gap: 24;
+  svc |rect| "Service" {
+    width: 140;  height: 64;
     |badge| "NEW"
   }
-      |note| "Sticky note"
+  |note| "Sticky note"
 }
 
-// table: cells on a fixed grid.
-basket |table| layout:(3, 3) col-widths:[80, 80, 80] row-heights:30 {
-  |cell| "Fruit"
-  |cell| "Qty"
-  |cell| "Note"
-  |cell| "Apple"
-  |cell| "12"
-  |cell| "fresh"
-  |cell| "Mango"
-  |cell| "3"
-  |cell| "ripe"
+basket |table| {
+  columns: 80 80 80;
+  "Fruit"
+  "Qty"
+  "Note"
+  "Apple"
+  "12"
+  "fresh"
+  "Mango"
+  "3"
+  "ripe"
 }

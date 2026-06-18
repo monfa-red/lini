@@ -1,21 +1,17 @@
-// Positioning (SPEC §7): `side` picks an edge, `align` slides along it, and
-// `place` decides reserve vs overlay — `in`/`out` reserve a band (that's how a
-// group caption works), while `on` is an overlay that straddles the edge/corner and
-// grows nothing (like `at:(x,y)`). Corners fall out of side + align; no
-// compound names. `offset:(x,y)` nudges.
+// Positioning (SPEC §6): side picks an edge, align slides along it, mount
+// decides reserve vs overlay. `on` is an overlay that straddles the edge/corner.
 
-{
-  |scene| padding:40
-}
+padding: 40;
 
-box |rect| size:(240, 150) fill:#eee {
-  |text| "C" at:(0, 0) fill:green
-  |text| "T<" side:top align:start place:on fill:red
-  |text| "T" side:top place:on fill:red
-  |text| "T>" side:top align:end place:on fill:red
-  |text| "L" side:left place:on fill:red
-  |text| "R" side:right place:on fill:red
-  |text| "BL" side:bottom align:start place:on fill:blue
-  |text| "B" side:bottom place:on fill:blue
-  |text| "BR" side:bottom align:end place:on fill:blue
+box |rect| {
+  width: 240;  height: 150;  fill: #eee;
+  |text| "C"  { at: 0 0; fill: green; }
+  |text| "T<" { side: top; align: start; mount: on; fill: red; }
+  |text| "T"  { side: top; mount: on; fill: red; }
+  |text| "T>" { side: top; align: end; mount: on; fill: red; }
+  |text| "L"  { side: left; mount: on; fill: red; }
+  |text| "R"  { side: right; mount: on; fill: red; }
+  |text| "BL" { side: bottom; align: start; mount: on; fill: blue; }
+  |text| "B"  { side: bottom; mount: on; fill: blue; }
+  |text| "BR" { side: bottom; align: end; mount: on; fill: blue; }
 }

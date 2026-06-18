@@ -1,11 +1,9 @@
-// Visual modifiers on closed shapes: line, double, shadow, rotation.
+// Visual modifiers on closed shapes: stroke-style, stack, shadow, rotate.
 
-{
-  |scene| layout:row gap:24 padding:24
-}
+layout: row;  gap: 24;  padding: 24;
 
-|rect| "dashed"  size:(80, 40) line:dashed
-|rect| "dotted"  size:(80, 40) line:dotted
-|rect| "double"  size:(80, 40) double:4
-|rect| "shadow"  size:(80, 40) shadow:(2, 2, 4)
-|rect| "rotate"  size:(80, 40) rotation:15
+|rect| "dashed" { width: 80; height: 40; stroke-style: dashed; }
+|rect| "dotted" { width: 80; height: 40; stroke-style: dotted; }
+|rect| "stack"  { width: 80; height: 40; stack: 4; }
+|rect| "shadow" { width: 80; height: 40; shadow: 2 2 4; }
+|rect| "rotate" { width: 80; height: 40; rotate: 15; }

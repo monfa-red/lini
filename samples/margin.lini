@@ -1,30 +1,22 @@
-// `margin:` is signed outer spacing on any child — it inflates (or, negative,
-// shrinks) the space the child reserves in its parent, growing or tightening
-// the parent to match. Its headline use is pulling a title closer to its frame
-// and content; it also spreads or packs flow siblings.
+// margin: signed outer spacing on a child — grows or tightens the parent.
 
-{
-  |scene| layout:row gap:40 padding:20 v:start
-}
+layout: row;  gap: 40;  padding: 20;  align: start;
 
-// A title sits a full container `gap` (24) from the content by default.
-loose |group| "Default" layout:column gap:24 {
+loose |group| "Default" {
+  layout: column;  gap: 24;
   a |rect| "Row A"
   b |rect| "Row B"
 }
 
-// Negative top/bottom margin on the title eats that spacing — tighter to the
-// frame above and the content below — and shrinks the group with it. (Write the
-// title explicitly, rather than as the group's sugar label, to attach margin.)
-tight |group| layout:column gap:24 {
-    |text| "Tight" place:in margin:(-6, 0, -14, 0)
+tight |group| {
+  layout: column;  gap: 24;
+  |text| "Tight" { mount: in; margin: -6 0 -14 0; }
   a |rect| "Row A"
   b |rect| "Row B"
 }
 
-// Margin works on plain flow children too: negative margin packs these rows
-// past the gap; positive would spread them.
-packed |group| "Packed" layout:column gap:24 {
-  a |rect| "Row A" margin:(0, 0, -16, 0)
+packed |group| "Packed" {
+  layout: column;  gap: 24;
+  a |rect| "Row A" { margin: 0 0 -16 0; }
   b |rect| "Row B"
 }

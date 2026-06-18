@@ -1,10 +1,13 @@
-{
-  .thin   stroke:#444 thickness:1
-  .bold   weight:bold
-  .power  stroke:red  thickness:2
-  .base   thickness:1 stroke:#444
-  .warn   .base stroke:orange
-  .ghost  opacity:0.3
-}
+// Class rules — reusable visual bundles applied with .name.
 
-|rect| "hello"
+.thin  { stroke: #444; stroke-width: 1; }
+.bold  { font-weight: bold; }
+.power { stroke: red; stroke-width: 2; }
+.warn  { stroke: orange; }
+.ghost { opacity: 0.3; }
+
+a |rect| "thin" .thin
+b |rect| "bold" .bold
+c |rect| "power" .power
+d |rect| "warn" .warn
+e |rect| "ghost" .ghost

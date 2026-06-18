@@ -1,16 +1,16 @@
-// CSS cascade showcase: type defaults, styles, inline overrides, per-group
-// text attrs, |wire| defaults — paint rides class rules and style= diffs.
-{
-  |wire|  stroke:#666 thickness:1
-  |rect|  fill:lightyellow
-  .loud   stroke:red thickness:2
-  .calm   stroke:teal
-}
+// CSS cascade: element rules, class rules, inline overrides, per-group text
+// props, wire defaults — paint rides class rules + style= diffs.
+
+wire { stroke: #666; stroke-width: 1; }
+rect { fill: lightyellow; }
+.loud { stroke: red; stroke-width: 2; }
+.calm { stroke: teal; }
 
 plain |rect| "Plain"
 loud  |rect| "Loud" .loud
-mix   |rect| "Mix" .calm fill:lavender
-crew  |group| "Crew" text-size:10 font:serif {
+mix   |rect| "Mix" .calm { fill: lavender; }
+crew  |group| "Crew" {
+  font-size: 10;  font-family: serif;
   tiny |rect| "Tiny"
 }
 plain -> loud

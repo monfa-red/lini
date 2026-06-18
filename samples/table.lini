@@ -1,5 +1,12 @@
-basket |table| layout:(3, 3) col-widths:[80, 140, 80] row-heights:28 {
-  |cell| "Fruit"  weight:bold; |cell| "Quantity" weight:bold; |cell| "Notes" weight:bold
-  |cell| "Apple"; |cell| "12";                                |cell| "fresh"
-  |cell| "Mango"; |cell| "3";                                 |cell| "ripe"
+basket |table| {
+  columns: 80 140 80;
+  "Fruit" { font-weight: bold; }
+  "Quantity" { font-weight: bold; }
+  "Notes" { font-weight: bold; }
+  "Apple"
+  "12"
+  "fresh"
+  "Mango"
+  "3"
+  "ripe"
 }

@@ -1,60 +1,47 @@
 // The realistic scene — a mid-size diagram with groups, exercising every
-// common wiring pattern at once. Expected: all four laws hold, with a single
-// forced crossing in the contended kitchen↔garden↔roof corridors.
-//
-//   top-level → group-interior · group → different group · group → top-level
-//   triple bundle between groups · duplicate rails · a fan from a top-level
-//   node · a bidirectional pair · wires that must leave a group and pass
-//   another group entirely
+// common wiring pattern at once.
 
-{
-  |scene| layout:row gap:40
-  |wire| clearance:8
+layout: row;  gap: 40;
+wire { clearance: 8; }
 
-  .loud stroke:red thickness:2
-  .quiet stroke:blue
-  .happy stroke:green
+.loud { stroke: red; stroke-width: 2; }
+.quiet { stroke: blue; }
+.happy { stroke: green; }
 
-  |treat:rect| radius:4
-}
+treat::rect { radius: 4; }
 
 cat |oval| "Cat"
 
-kitchen |group| layout:column {
-        |text|  "Kitchen"
+kitchen |group| {
+  layout: column;
+  |text| "Kitchen"
   bowl  |treat| "Bowl"
   water |treat| "Water"
 }
 
-garden |group| layout:column padding:16 gap:24 {
-       |text|  "Garden" place:in margin:(0, 0, -20, 0)
-  // tighten the caption below its gap:24
+garden |group| {
+  layout: column;  padding: 16;  gap: 24;
+  |text| "Garden" { mount: in; margin: 0 0 -20 0; }
   dog  |treat| "Dog"
   bird |treat| "Bird"
 }
 
 roof |treat| "Roof"
 
-// Top-level → group-interior (fan), and a long haul past both groups.
 cat -> kitchen.bowl & kitchen.water .loud
 cat -> roof .loud
 
-// Parallel feeds: a two-rail bundle.
 kitchen.bowl -> garden.dog .loud
 kitchen.bowl -> garden.dog .loud
 
-// Cross-group: a three-rail bundle the kitchen↔garden corridor cannot hold —
-// it must detour as one, never squeeze.
 kitchen.water <- garden.dog .quiet
 kitchen.water <- garden.dog .quiet
 kitchen.water <- garden.dog .quiet
 
-// Group-interior → top-level, past the garden.
 garden.bird -> roof
 garden.bird -> roof
 kitchen.water <-> garden.bird .quiet
 kitchen.water -> roof .happy
 kitchen.water -> roof .happy
 
-// New test
 garden -> kitchen.bowl .loud
