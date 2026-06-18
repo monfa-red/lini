@@ -58,33 +58,22 @@ fn err_bad_escape_sequence() {
 
 #[test]
 fn err_invalid_hex_color() {
-    assert_parse_error("{ --c:#ff }\ncat |rect|\n", "invalid hex color");
+    assert_parse_error("--c: #ff;\ncat |rect|\n", "invalid hex color");
 }
 
 #[test]
 fn err_wire_body_non_text() {
     assert_parse_error(
-        "cat -> dog { |rect| \"oops\" }\n",
-        "wire body may only contain |text| primitives",
+        "a |rect|\nb |rect|\na -> b { |rect| \"oops\" }\n",
+        "only |text| children",
     );
 }
 
 #[test]
 fn lini_var_value_parses_anywhere() {
-    // SPEC section 11.2: `--name` is a first-class value form, not function-scoped.
-    lini::check_parse("{ --gap:--my-gap }\ncat |rect|\n").expect("--gap parses");
-    lini::check_parse("cat |rect| fill:--accent\n").expect("--accent parses");
-}
-
-#[test]
-fn err_binding_whitespace_around_colon() {
-    assert_parse_error("cat |rect| radius: 5\n", "must have no whitespace after");
-    assert_parse_error("cat |rect| radius :5\n", "");
-}
-
-#[test]
-fn err_attr_without_value() {
-    assert_parse_error("cat |rect| radius\n", "requires a value");
+    // SPEC §11.2: `--name` is a first-class value form.
+    lini::check_parse("--gap: --my-gap;\ncat |rect|\n").expect("--gap parses");
+    lini::check_parse("cat |rect| { fill: --accent; }\n").expect("--accent parses");
 }
 
 #[test]

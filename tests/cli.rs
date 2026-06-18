@@ -25,7 +25,7 @@ fn html_format_wraps_svg_in_html_doc() {
 #[test]
 fn baked_output_inlines_every_var_but_keeps_shape_rules() {
     let svg = lini::compile_str_with(
-        "|rect| \"x\" fill:--accent\n",
+        "|rect| \"x\" { fill: --accent; }\n",
         &Options {
             bake_vars: true,
             ..Default::default()
@@ -67,7 +67,7 @@ fn no_defaults_flag_is_an_unknown_argument() {
 #[test]
 fn theme_overrides_visual_var_visible_in_baked_output() {
     let svg = lini::compile_str_with(
-        "|rect| \"x\" fill:--accent\n",
+        "|rect| \"x\" { fill: --accent; }\n",
         &Options {
             theme_css: Some("--lini-accent: hotpink;".to_string()),
             bake_vars: true,
@@ -80,7 +80,7 @@ fn theme_overrides_visual_var_visible_in_baked_output() {
 
 #[test]
 fn theme_layout_var_bakes_into_layout_math() {
-    let src = "{ |scene| layout:row }\n|rect| size:(40, 40)\n|rect| size:(40, 40)\n";
+    let src = "layout: row;\n|rect| { width: 40; height: 40; }\n|rect| { width: 40; height: 40; }\n";
     let default = lini::compile_str(src).expect("default compile");
     let themed = lini::compile_str_with(
         src,
@@ -102,7 +102,7 @@ fn theme_layout_var_bakes_into_layout_math() {
 
 #[test]
 fn theme_visual_var_does_not_change_layout_baking() {
-    let src = "{ |scene| layout:row }\n|rect| size:(40, 40)\n|rect| size:(40, 40)\n";
+    let src = "layout: row;\n|rect| { width: 40; height: 40; }\n|rect| { width: 40; height: 40; }\n";
     let default = lini::compile_str(src).expect("default compile");
     let themed = lini::compile_str_with(
         src,
@@ -126,7 +126,7 @@ fn check_with_propagates_resolve_errors() {
     let opts = Options::default();
     let err = lini::check_with("|nosuch| \"x\"\n", &opts).expect_err("expected error");
     assert!(
-        err.to_string().contains("unknown type '|nosuch|'"),
+        err.to_string().contains("unknown type 'nosuch'"),
         "got: {}",
         err
     );
