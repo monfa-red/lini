@@ -369,18 +369,29 @@ canvas fill and `<title>` appear when set.
 
 **Goal.** Rewrite the canonical formatter for v4 (SPEC §14).
 
-**Key points.**
-- Emit in phase order (stylesheet → instances → wires), `key: value;`
-  declarations in blocks, `name::base` defines, space-separated value lists,
-  2-space indent, comments/blank-lines preserved.
-- **Table-cell column alignment**: align anonymous string cells into visual
-  columns so the flat table form reads as a grid (SPEC §8/§14).
-- Reuse the column-alignment machinery (`NodeWidths`, `split_groups`) where it
-  still fits, but expect a substantial rewrite of `fmt.rs`. `desugar` still
-  expands label/wire sugar to `|text|`/`|caption|` children.
+**Done.** `fmt.rs` is a fresh formatter over `syntax::ast` (the v3 defs-block
+emitter is gone). It emits phase order (stylesheet → instances → wires, one
+blank between non-empty phases), `key: value;` decls in `{ }` blocks,
+`name::base` defines, CSS selectors (element / `.class` / descendant),
+space-separated value groups (comma between groups), `--name` vars, 2-space
+indent. Comments and blank-line groupings are preserved (`fmt/trivia.rs`,
+replayed between AST items by span; runs of blanks collapse to one), and sibling
+nodes align their id/`|type|` columns within a blank-line-free group
+(`fmt/align.rs`). 23 unit tests (per-construct output, idempotence, reparse);
+the CLI preserves SVG semantics and `fmt --check` round-trips.
 
-**Done when.** `fmt(fmt(x)) == fmt(x)` on every sample; `fmt --check` round-trips
-the canonical examples.
+**Deferred** (needs a parser change): the **flat table form** — multiple
+anonymous string cells per line, aligned into visual columns (SPEC §8/§14). The
+v4 parser reads one node statement per line and a bare string run as one
+multi-label node, so `fmt` emits one cell per line for now. Resolving it means
+either a context-sensitive rule (in a grid body, each top-level string is a
+cell) or a `fmt`/parser convention — a **language-design decision** flagged for
+the user. The column-alignment machinery (`fmt/align.rs`) is in place to extend
+to cells once the parser accepts them.
+
+**Done when.** `fmt(fmt(x)) == fmt(x)` on every sample (the sample sweep
+re-greens in Phase 8); `fmt --check` round-trips the canonical examples. ✓ for
+the formatter itself; the `samples/` sweep waits on Phase 8.
 
 ---
 
