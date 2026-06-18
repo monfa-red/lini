@@ -1,7 +1,7 @@
 //! Wire emission — the wire path, optional markers, optional labels — and
 //! airwires, the impossible-wire report made visible.
 
-use super::markers::{emit_marker, line_inset, marker_anchor};
+use super::markers::{MARKER_OVERLAP, emit_marker, line_inset, marker_anchor};
 use super::rules::{PAINT_PROPS, RuleSet};
 use super::values::{attr_or_var, dasharray_value, escape_xml, format_value, num, wrap_font};
 use crate::Options;
@@ -94,12 +94,12 @@ pub fn render_wire(
     if w.markers.start != MarkerKind::None
         && let Some((tip, dir)) = marker_anchor(w.path[1], w.path[0], false)
     {
-        emit_marker(out, "      ", w.markers.start, tip, dir, &stroke, thickness);
+        emit_marker(out, "      ", w.markers.start, overlap_tip(tip, dir), dir, &stroke, thickness);
     }
     if w.markers.end != MarkerKind::None {
         let n = w.path.len();
         if let Some((tip, dir)) = marker_anchor(w.path[n - 2], w.path[n - 1], false) {
-            emit_marker(out, "      ", w.markers.end, tip, dir, &stroke, thickness);
+            emit_marker(out, "      ", w.markers.end, overlap_tip(tip, dir), dir, &stroke, thickness);
         }
     }
 
@@ -337,25 +337,34 @@ pub fn fillet_targets(polys: &[&[(f64, f64)]], caps: &[f64]) -> Vec<Vec<f64>> {
     out
 }
 
+/// A wire marker's tip, nudged [`MARKER_OVERLAP`] past the endpoint into the
+/// shape so the head reads as connected (`dir` points into the shape).
+fn overlap_tip(tip: (f64, f64), dir: (f64, f64)) -> (f64, f64) {
+    (tip.0 + dir.0 * MARKER_OVERLAP, tip.1 + dir.1 * MARKER_OVERLAP)
+}
+
 /// Pull each marker-bearing endpoint back along its segment so the line stops where
-/// that marker's body begins (per-marker, [`line_inset`]).
+/// that marker's body begins (per-marker, [`line_inset`]). The marker rides
+/// [`MARKER_OVERLAP`] into the shape, so its body begins that much nearer the
+/// shape too — the line stops the same amount short of its bare inset.
 fn shorten_for_markers(
     path: &[(f64, f64)],
     markers: &crate::resolve::Markers,
     thickness: f64,
 ) -> Vec<(f64, f64)> {
+    let inset = |kind| (line_inset(kind, thickness) - MARKER_OVERLAP).max(0.0);
     let mut p = path.to_vec();
     if p.len() < 2 {
         return p;
     }
     if markers.end != MarkerKind::None {
         let n = p.len();
-        if let Some(q) = pulled_back(p[n - 2], p[n - 1], line_inset(markers.end, thickness)) {
+        if let Some(q) = pulled_back(p[n - 2], p[n - 1], inset(markers.end)) {
             p[n - 1] = q;
         }
     }
     if markers.start != MarkerKind::None
-        && let Some(q) = pulled_back(p[1], p[0], line_inset(markers.start, thickness))
+        && let Some(q) = pulled_back(p[1], p[0], inset(markers.start))
     {
         p[0] = q;
     }

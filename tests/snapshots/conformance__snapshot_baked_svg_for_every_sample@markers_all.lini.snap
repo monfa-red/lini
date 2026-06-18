@@ -12,21 +12,21 @@ input_file: samples/markers_all.lini
   <g class="lini-scene">
     <g class="lini-node lini-shape-line" transform="translate(0,-52.5)">
       <line x1="-60" y1="0" x2="60" y2="0"/>
-      <polygon class="lini-marker lini-marker-arrow" points="60,0 55,2.5 55,-2.5" fill="#444"/>
+      <polygon class="lini-marker lini-marker-arrow" points="60,0 55,2.5 55,-2.5" fill="#444" stroke="none"/>
     </g>
     <g class="lini-node lini-shape-line" transform="translate(0,-31.5)">
       <line x1="-60" y1="0" x2="60" y2="0"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-60,0 -55,-2.5 -55,2.5" fill="#444"/>
-      <polygon class="lini-marker lini-marker-arrow" points="60,0 55,2.5 55,-2.5" fill="#444"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-60,0 -55,-2.5 -55,2.5" fill="#444" stroke="none"/>
+      <polygon class="lini-marker lini-marker-arrow" points="60,0 55,2.5 55,-2.5" fill="#444" stroke="none"/>
     </g>
     <g class="lini-node lini-shape-line" transform="translate(0,-10.5)">
       <line x1="-60" y1="0" x2="60" y2="0"/>
-      <circle class="lini-marker lini-marker-dot" cx="-58.3333" cy="0" r="1.6667" fill="#444"/>
-      <circle class="lini-marker lini-marker-dot" cx="58.3333" cy="0" r="1.6667" fill="#444"/>
+      <circle class="lini-marker lini-marker-dot" cx="-58.3333" cy="0" r="1.6667" fill="#444" stroke="none"/>
+      <circle class="lini-marker lini-marker-dot" cx="58.3333" cy="0" r="1.6667" fill="#444" stroke="none"/>
     </g>
     <g class="lini-node lini-shape-line" transform="translate(0,10.5)">
       <line x1="-60" y1="0" x2="60" y2="0"/>
-      <polygon class="lini-marker lini-marker-diamond" points="60,0 57.5,2 55,0 57.5,-2" fill="#444"/>
+      <polygon class="lini-marker lini-marker-diamond" points="60,0 57.5,2 55,0 57.5,-2" fill="#444" stroke="none"/>
     </g>
     <g class="lini-node lini-shape-line" transform="translate(0,31.5)">
       <line x1="-60" y1="0" x2="60" y2="0"/>
@@ -34,8 +34,8 @@ input_file: samples/markers_all.lini
     </g>
     <g class="lini-node lini-shape-line" transform="translate(0,52.5)">
       <line x1="-60" y1="0" x2="60" y2="0"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-60,0 -55,-2.5 -55,2.5" fill="#444"/>
-      <circle class="lini-marker lini-marker-dot" cx="58.3333" cy="0" r="1.6667" fill="#444"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-60,0 -55,-2.5 -55,2.5" fill="#444" stroke="none"/>
+      <circle class="lini-marker lini-marker-dot" cx="58.3333" cy="0" r="1.6667" fill="#444" stroke="none"/>
     </g>
   </g>
   <g class="lini-wires"/>

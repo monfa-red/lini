@@ -29,9 +29,14 @@ pub fn emit_inline_markers(
     }
 }
 
-/// The marker tip sits exactly on the line endpoint (the shape edge), with the
-/// direction unit-vector pointing into the shape. The line itself stops short
-/// (see `shorten_for_markers`) so the marker body still covers its end.
+/// The marker tip sits on the line endpoint, with the direction unit-vector
+/// pointing into the shape. The line itself stops short (see
+/// `shorten_for_markers`) so the marker body still covers its end. Filled
+/// markers (arrow / diamond / dot) carry `stroke="none"`: their size is the
+/// `points`/`r` geometry alone, never the wire's `stroke-width` inherited off
+/// the `<g>` — which used to balloon the head and shove its tip into the shape
+/// as the wire thickened. Wires then nudge the tip a fixed [`MARKER_OVERLAP`]
+/// into the shape so the head reads as connected at any thickness.
 pub fn marker_anchor(
     from: (f64, f64),
     to: (f64, f64),
@@ -58,6 +63,12 @@ pub fn marker_size(thickness: f64) -> f64 {
 /// The fixed stub a pointed marker (arrow / crow / diamond) covers: its body runs
 /// `size` (≥ 5) back from the tip, so stopping the line 4 px short leaves no gap.
 pub const STUB_INSET: f64 = 4.0;
+
+/// How far a wire's marker tip is pushed past the endpoint into the shape, so the
+/// head overlaps the border by a hair and reads as connected — constant at every
+/// `stroke-width` (the line-end shortening absorbs the same shift). `|line|`
+/// markers don't use it: a bare line has no shape to meet.
+pub const MARKER_OVERLAP: f64 = 0.5;
 
 /// How far back from the endpoint the drawn line should stop for an end marker so
 /// the marker body covers the line's end with neither a gap nor an overshoot. A dot
@@ -103,7 +114,7 @@ pub fn emit_marker(
             let ry = by - py * size * 0.5;
             writeln!(
                 out,
-                r#"{}<polygon class="lini-marker lini-marker-arrow" points="{},{} {},{} {},{}" fill="{}"/>"#,
+                r#"{}<polygon class="lini-marker lini-marker-arrow" points="{},{} {},{} {},{}" fill="{}" stroke="none"/>"#,
                 indent,
                 num(tip.0), num(tip.1),
                 num(lx), num(ly),
@@ -115,7 +126,7 @@ pub fn emit_marker(
             let (cx, cy) = dot_center(tip, direction, size);
             writeln!(
                 out,
-                r#"{}<circle class="lini-marker lini-marker-dot" cx="{}" cy="{}" r="{}" fill="{}"/>"#,
+                r#"{}<circle class="lini-marker lini-marker-dot" cx="{}" cy="{}" r="{}" fill="{}" stroke="none"/>"#,
                 indent,
                 num(cx),
                 num(cy),
@@ -135,7 +146,7 @@ pub fn emit_marker(
             let ry = my - py * size * 0.4;
             writeln!(
                 out,
-                r#"{}<polygon class="lini-marker lini-marker-diamond" points="{},{} {},{} {},{} {},{}" fill="{}"/>"#,
+                r#"{}<polygon class="lini-marker lini-marker-diamond" points="{},{} {},{} {},{} {},{}" fill="{}" stroke="none"/>"#,
                 indent,
                 num(tip.0), num(tip.1),
                 num(lx), num(ly),

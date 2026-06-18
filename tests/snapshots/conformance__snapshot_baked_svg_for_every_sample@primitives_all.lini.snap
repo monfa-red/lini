@@ -63,7 +63,7 @@ input_file: samples/primitives_all.lini
     </g>
     <g class="lini-node lini-shape-line" transform="translate(50.5,56)">
       <line x1="-30" y1="0" x2="30" y2="0"/>
-      <polygon class="lini-marker lini-marker-arrow" points="30,0 25,2.5 25,-2.5" fill="#444"/>
+      <polygon class="lini-marker lini-marker-arrow" points="30,0 25,2.5 25,-2.5" fill="#444" stroke="none"/>
     </g>
     <g class="lini-node lini-shape-icon" transform="translate(161.5,56)">
       <rect x="-16" y="-16" width="32" height="32" fill="none" stroke="#444" stroke-width="1"/>
