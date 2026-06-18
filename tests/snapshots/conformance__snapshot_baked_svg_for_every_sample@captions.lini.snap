@@ -7,7 +7,7 @@ input_file: samples/captions.lini
   <style>
     .lini { font-family: sans-serif; font-size: 14px; color: black; }
     .lini .lini-shape-box { fill: white; stroke: #444; stroke-width: 1; stroke-dasharray: none; }
-    .lini .lini-shape-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
+    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-shape-plain { fill: none; stroke: none; }
     .lini .lini-shape-group { fill: rgba(0, 0, 0, 0.03); stroke: #bbb; }
     .lini .lini-shape-caption { font-size: 13px; }
@@ -18,56 +18,40 @@ input_file: samples/captions.lini
       <rect x="-78.7" y="-80" width="157.4" height="160" rx="6" ry="6"/>
       <g class="lini-node lini-shape-caption lini-shape-plain lini-shape-box" transform="translate(0,-57)">
         <rect x="-25.025" y="-6.5" width="50.05" height="13" rx="0" ry="0"/>
-        <g class="lini-node lini-shape-text" style="font-size: 13px" transform="translate(0,0)">
-          <text x="0" y="0">Profile</text>
-        </g>
+        <text class="lini-text" x="0" y="0">Profile</text>
       </g>
       <g class="lini-node lini-shape-box" data-id="name" transform="translate(0,-16.5)">
         <rect x="-62.2" y="-23" width="124.4" height="46" rx="0" ry="0"/>
-        <g class="lini-node lini-shape-text" transform="translate(0,0)">
-          <text x="0" y="0">Ada Lovelace</text>
-        </g>
+        <text class="lini-text" x="0" y="0">Ada Lovelace</text>
       </g>
       <g class="lini-node lini-shape-box" data-id="role" transform="translate(0,40.5)">
         <rect x="-46.8" y="-23" width="93.6" height="46" rx="0" ry="0"/>
-        <g class="lini-node lini-shape-text" transform="translate(0,0)">
-          <text x="0" y="0">Engineer</text>
-        </g>
+        <text class="lini-text" x="0" y="0">Engineer</text>
       </g>
     </g>
     <g class="lini-node lini-shape-group lini-shape-box" data-id="panel" transform="translate(18.7,0)">
       <rect x="-55.6" y="-92" width="111.2" height="184" rx="6" ry="6"/>
       <g class="lini-node lini-shape-caption lini-shape-plain lini-shape-box" transform="translate(0,-69)">
         <rect x="-17.875" y="-6.5" width="35.75" height="13" rx="0" ry="0"/>
-        <g class="lini-node lini-shape-text" style="font-size: 13px" transform="translate(0,0)">
-          <text x="0" y="0">Sales</text>
-        </g>
+        <text class="lini-text" x="0" y="0">Sales</text>
       </g>
       <g class="lini-node lini-shape-caption lini-shape-plain lini-shape-box" transform="translate(0,69)">
         <rect x="-25.025" y="-6.5" width="50.05" height="13" rx="0" ry="0"/>
-        <g class="lini-node lini-shape-text" style="font-size: 13px" transform="translate(0,0)">
-          <text x="0" y="0">Q3 2026</text>
-        </g>
+        <text class="lini-text" x="0" y="0">Q3 2026</text>
       </g>
       <g class="lini-node lini-shape-box" data-id="a" transform="translate(0,-28.5)">
         <rect x="-31.4" y="-23" width="62.8" height="46" rx="0" ry="0"/>
-        <g class="lini-node lini-shape-text" transform="translate(0,0)">
-          <text x="0" y="0">Plan</text>
-        </g>
+        <text class="lini-text" x="0" y="0">Plan</text>
       </g>
       <g class="lini-node lini-shape-box" data-id="b" transform="translate(0,28.5)">
         <rect x="-39.1" y="-23" width="78.2" height="46" rx="0" ry="0"/>
-        <g class="lini-node lini-shape-text" transform="translate(0,0)">
-          <text x="0" y="0">Actual</text>
-        </g>
+        <text class="lini-text" x="0" y="0">Actual</text>
       </g>
     </g>
     <a href="https://example.com">
       <g class="lini-node lini-shape-box" data-id="docs" transform="translate(167.3,-68)">
         <rect x="-60" y="-24" width="120" height="48" rx="0" ry="0"/>
-        <g class="lini-node lini-shape-text" transform="translate(0,0)">
-          <text x="0" y="0">Docs</text>
-        </g>
+        <text class="lini-text" x="0" y="0">Docs</text>
       </g>
     </a>
   </g>

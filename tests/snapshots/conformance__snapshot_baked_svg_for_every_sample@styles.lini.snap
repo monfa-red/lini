@@ -7,7 +7,7 @@ input_file: samples/styles.lini
   <style>
     .lini { font-family: sans-serif; font-size: 14px; color: black; }
     .lini .lini-shape-box { fill: white; stroke: #444; stroke-width: 1; stroke-dasharray: none; }
-    .lini .lini-shape-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
+    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-style-thin { stroke: #444; stroke-width: 1; }
     .lini .lini-style-bold { font-weight: bold; }
     .lini .lini-style-power { stroke: red; stroke-width: 2; }
@@ -18,33 +18,23 @@ input_file: samples/styles.lini
   <g class="lini-scene">
     <g class="lini-node lini-shape-box lini-style-thin" data-id="a" transform="translate(0,-134.5)">
       <rect x="-31.4" y="-23" width="62.8" height="46" rx="0" ry="0"/>
-      <g class="lini-node lini-shape-text" transform="translate(0,0)">
-        <text x="0" y="0">thin</text>
-      </g>
+      <text class="lini-text" x="0" y="0">thin</text>
     </g>
     <g class="lini-node lini-shape-box lini-style-bold" data-id="b" transform="translate(0,-67.5)">
       <rect x="-31.4" y="-23" width="62.8" height="46" rx="0" ry="0"/>
-      <g class="lini-node lini-shape-text" style="font-weight: bold" transform="translate(0,0)">
-        <text x="0" y="0">bold</text>
-      </g>
+      <text class="lini-text" x="0" y="0">bold</text>
     </g>
     <g class="lini-node lini-shape-box lini-style-power" data-id="c" transform="translate(0,0)">
       <rect x="-35.25" y="-23" width="70.5" height="46" rx="0" ry="0"/>
-      <g class="lini-node lini-shape-text" transform="translate(0,0)">
-        <text x="0" y="0">power</text>
-      </g>
+      <text class="lini-text" x="0" y="0">power</text>
     </g>
     <g class="lini-node lini-shape-box lini-style-warn" data-id="d" transform="translate(0,67.5)">
       <rect x="-31.4" y="-23" width="62.8" height="46" rx="0" ry="0"/>
-      <g class="lini-node lini-shape-text" transform="translate(0,0)">
-        <text x="0" y="0">warn</text>
-      </g>
+      <text class="lini-text" x="0" y="0">warn</text>
     </g>
     <g class="lini-node lini-shape-box lini-style-ghost" data-id="e" transform="translate(0,134.5)">
       <rect x="-35.25" y="-23" width="70.5" height="46" rx="0" ry="0"/>
-      <g class="lini-node lini-shape-text" transform="translate(0,0)">
-        <text x="0" y="0">ghost</text>
-      </g>
+      <text class="lini-text" x="0" y="0">ghost</text>
     </g>
   </g>
   <g class="lini-wires"/>

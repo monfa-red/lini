@@ -96,7 +96,9 @@ fn emit_shape(out: &mut String, n: &PlacedNode, depth: usize, vars: &VarTable, o
         ShapeKind::Cyl => emit_cyl(out, n, &indent, thickness),
         ShapeKind::Cloud => emit_cloud(out, n, &indent, thickness),
         ShapeKind::Oval => emit_oval(out, n, &indent, thickness),
-        ShapeKind::Text => emit_text(out, n, &indent),
+        // Text is emitted by `render::render_text` as a bare `<text>` (SPEC §13),
+        // never as wrapped geometry — so it never reaches this dispatch.
+        ShapeKind::Text => {}
         ShapeKind::Line => emit_line(out, n, &indent, vars, opts, thickness),
         ShapeKind::Poly => emit_poly(out, n, &indent),
         ShapeKind::Path => emit_path(out, n, &indent),
@@ -263,49 +265,6 @@ fn emit_cloud(out: &mut String, n: &PlacedNode, indent: &str, thickness: f64) {
     }
     d.push_str(" Z");
     writeln!(out, r#"{}<path d="{}"/>"#, indent, d).unwrap();
-}
-
-fn emit_text(out: &mut String, n: &PlacedNode, indent: &str) {
-    // Paint, font, and the anchor pair all ride the wrapping <g> (class rules
-    // + style= diff) and reach the element by inheritance.
-    let label = n.label.as_deref().unwrap_or("");
-    let lines: Vec<&str> = label.split('\n').collect();
-    if lines.len() <= 1 {
-        writeln!(
-            out,
-            r#"{}<text x="0" y="0">{}</text>"#,
-            indent,
-            escape_xml(label)
-        )
-        .unwrap();
-        return;
-    }
-    // Multi-line (SPEC §5): one tspan per line, spacing `font-size × 1.2`, the
-    // block centred on the origin so `dominant-baseline:central` still holds.
-    let size = n.attrs.number("font-size").unwrap_or(14.0);
-    let spacing = size * 1.2;
-    let top = -spacing * (lines.len() as f64 - 1.0) / 2.0;
-    write!(out, r#"{}<text x="0" y="0">"#, indent).unwrap();
-    for (i, line) in lines.iter().enumerate() {
-        if i == 0 {
-            write!(
-                out,
-                r#"<tspan x="0" y="{}">{}</tspan>"#,
-                num(top),
-                escape_xml(line)
-            )
-            .unwrap();
-        } else {
-            write!(
-                out,
-                r#"<tspan x="0" dy="{}">{}</tspan>"#,
-                num(spacing),
-                escape_xml(line)
-            )
-            .unwrap();
-        }
-    }
-    writeln!(out, "</text>").unwrap();
 }
 
 fn emit_line(

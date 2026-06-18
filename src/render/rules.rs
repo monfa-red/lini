@@ -172,13 +172,11 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
         });
     }
     if present.contains("text") {
-        // The anchor pair is honored via CSS by resvg (verified) — inherited
-        // properties, so they flow from the text's <g> into the element.
-        // `stroke: none` masks a container's stroke from bleeding into the
-        // glyphs (text never strokes; the wire-label halo is element-level).
-        // Group captions are `|text|`, so they share this rule via lini-shape-text.
+        // A bare `<text class="lini-text">` (SPEC §13). `fill: currentColor` ties
+        // the glyph colour to the inherited `color`; `stroke: none` keeps a
+        // container's stroke off the glyphs; the anchor pair centres it on (x, y).
         rules.push(Rule {
-            class: "lini-shape-text".into(),
+            class: "lini-text".into(),
             props: vec![
                 ("fill".into(), "currentColor".into()),
                 ("stroke".into(), "none".into()),

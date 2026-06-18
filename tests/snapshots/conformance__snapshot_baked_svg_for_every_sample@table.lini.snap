@@ -7,7 +7,7 @@ input_file: samples/table.lini
   <style>
     .lini { font-family: sans-serif; font-size: 14px; color: black; }
     .lini .lini-shape-box { fill: white; stroke: #444; stroke-width: 1; stroke-dasharray: none; }
-    .lini .lini-shape-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
+    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-shape-group { fill: rgba(0, 0, 0, 0.03); stroke: #bbb; }
     .lini .lini-shape-table { fill: none; stroke: #444; }
   </style>
@@ -16,33 +16,15 @@ input_file: samples/table.lini
     <g class="lini-node lini-shape-table lini-shape-group lini-shape-box" data-id="basket" transform="translate(0,0)">
       <rect x="-158" y="-25" width="316" height="50" rx="6" ry="6"/>
       <path d="M -70 -21 L -70 21 M 70 -21 L 70 21 M -150 -7 L 150 -7 M -150 7 L 150 7" fill="none"/>
-      <g class="lini-node lini-shape-text" transform="translate(-110,-14)">
-        <text x="0" y="0">Fruit</text>
-      </g>
-      <g class="lini-node lini-shape-text" transform="translate(0,-14)">
-        <text x="0" y="0">Quantity</text>
-      </g>
-      <g class="lini-node lini-shape-text" transform="translate(110,-14)">
-        <text x="0" y="0">Notes</text>
-      </g>
-      <g class="lini-node lini-shape-text" transform="translate(-110,0)">
-        <text x="0" y="0">Apple</text>
-      </g>
-      <g class="lini-node lini-shape-text" transform="translate(0,0)">
-        <text x="0" y="0">12</text>
-      </g>
-      <g class="lini-node lini-shape-text" transform="translate(110,0)">
-        <text x="0" y="0">fresh</text>
-      </g>
-      <g class="lini-node lini-shape-text" transform="translate(-110,14)">
-        <text x="0" y="0">Mango</text>
-      </g>
-      <g class="lini-node lini-shape-text" transform="translate(0,14)">
-        <text x="0" y="0">3</text>
-      </g>
-      <g class="lini-node lini-shape-text" transform="translate(110,14)">
-        <text x="0" y="0">ripe</text>
-      </g>
+      <text class="lini-text" x="-110" y="-14">Fruit</text>
+      <text class="lini-text" x="0" y="-14">Quantity</text>
+      <text class="lini-text" x="110" y="-14">Notes</text>
+      <text class="lini-text" x="-110" y="0">Apple</text>
+      <text class="lini-text" x="0" y="0">12</text>
+      <text class="lini-text" x="110" y="0">fresh</text>
+      <text class="lini-text" x="-110" y="14">Mango</text>
+      <text class="lini-text" x="0" y="14">3</text>
+      <text class="lini-text" x="110" y="14">ripe</text>
     </g>
   </g>
   <g class="lini-wires"/>

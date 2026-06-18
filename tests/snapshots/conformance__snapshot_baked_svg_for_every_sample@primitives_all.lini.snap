@@ -16,7 +16,7 @@ input_file: samples/primitives_all.lini
     .lini .lini-shape-poly { fill: white; stroke: #444; stroke-width: 1; stroke-dasharray: none; }
     .lini .lini-shape-path { fill: white; stroke: #444; stroke-width: 1; stroke-dasharray: none; }
     .lini .lini-shape-line { fill: none; stroke: #444; stroke-width: 1; stroke-dasharray: none; }
-    .lini .lini-shape-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
+    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-shape-icon { fill: #444; }
     .lini .lini-shape-plain { fill: none; stroke: none; }
   </style>
@@ -24,55 +24,39 @@ input_file: samples/primitives_all.lini
   <g class="lini-scene">
     <g class="lini-node lini-shape-box" transform="translate(-161.5,-101.5)">
       <rect x="-40" y="-20" width="80" height="40" rx="0" ry="0"/>
-      <g class="lini-node lini-shape-text" transform="translate(0,0)">
-        <text x="0" y="0">box</text>
-      </g>
+      <text class="lini-text" x="0" y="0">box</text>
     </g>
     <g class="lini-node lini-shape-oval" transform="translate(-60.5,-101.5)">
       <ellipse cx="0" cy="0" rx="40" ry="20"/>
-      <g class="lini-node lini-shape-text" transform="translate(0,0)">
-        <text x="0" y="0">oval</text>
-      </g>
+      <text class="lini-text" x="0" y="0">oval</text>
     </g>
     <g class="lini-node lini-shape-hex" transform="translate(50.5,-101.5)">
       <polygon points="-40,0 -20,-30 20,-30 40,0 20,30 -20,30"/>
-      <g class="lini-node lini-shape-text" transform="translate(0,0)">
-        <text x="0" y="0">hex</text>
-      </g>
+      <text class="lini-text" x="0" y="0">hex</text>
     </g>
     <g class="lini-node lini-shape-slant" transform="translate(161.5,-101.5)">
       <polygon points="-32.7206,-20 47.2794,-20 32.7206,20 -47.2794,20"/>
-      <g class="lini-node lini-shape-text" transform="translate(0,0)">
-        <text x="0" y="0">slant</text>
-      </g>
+      <text class="lini-text" x="0" y="0">slant</text>
     </g>
     <g class="lini-node lini-shape-cyl" transform="translate(-161.5,-15.5)">
       <path d="M -35 -28 L -35 28 A 35 7 0 0 0 35 28 L 35 -28 A 35 7 0 0 0 -35 -28 Z"/>
       <ellipse cx="0" cy="-28" rx="35" ry="7"/>
-      <g class="lini-node lini-shape-text" transform="translate(0,2.13)">
-        <text x="0" y="0">cyl</text>
-      </g>
+      <text class="lini-text" x="0" y="2.13">cyl</text>
     </g>
     <g class="lini-node lini-shape-diamond" transform="translate(-60.5,-15.5)">
       <polygon points="0,-30 30,0 0,30 -30,0"/>
-      <g class="lini-node lini-shape-text" transform="translate(0,0)">
-        <text x="0" y="0">diamond</text>
-      </g>
+      <text class="lini-text" x="0" y="0">diamond</text>
     </g>
     <g class="lini-node lini-shape-cloud" transform="translate(50.5,-15.5)">
       <path d="M 15.2965 -30 C 6.3272 -29.9963 -1.9143 -24.7845 -6.1578 -16.4343 C -9.1577 -18.8301 -12.8126 -20.1299 -16.5722 -20.1381 C -26.1421 -20.1381 -33.8997 -11.9394 -33.8997 -1.8254 C -33.8963 -1.6327 -33.8902 -1.4409 -33.8807 -1.2491 C -34.3137 -1.292 -34.7475 -1.3148 -35.1823 -1.3176 C -43.3659 -1.3176 -50 5.6927 -49.9991 14.3417 C -49.9991 22.9897 -43.3659 30 -35.1823 30 L 35.1831 30 C 43.3659 30 49.9991 22.9897 50 14.3417 C 49.9965 7.4108 45.6822 1.3066 39.3947 -0.6636 C 39.5623 -1.851 39.6514 -3.0494 39.6609 -4.2505 C 39.6609 -18.472 28.7522 -30 15.2965 -30 Z"/>
-      <g class="lini-node lini-shape-text" transform="translate(0,6.1)">
-        <text x="0" y="0">cloud</text>
-      </g>
+      <text class="lini-text" x="0" y="6.1">cloud</text>
     </g>
     <g class="lini-node lini-shape-poly" transform="translate(161.5,-15.5)">
       <polygon points="0,-30 30,30 -30,30"/>
     </g>
     <g class="lini-node lini-shape-plain lini-shape-box" transform="translate(-161.5,56)">
       <rect x="-15.4" y="-7" width="30.8" height="14" rx="0" ry="0"/>
-      <g class="lini-node lini-shape-text" transform="translate(0,0)">
-        <text x="0" y="0">text</text>
-      </g>
+      <text class="lini-text" x="0" y="0">text</text>
     </g>
     <g class="lini-node lini-shape-line" transform="translate(-60.5,56)">
       <line x1="-30" y1="0" x2="30" y2="0"/>

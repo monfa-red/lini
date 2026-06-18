@@ -7,7 +7,7 @@ input_file: samples/place_out.lini
   <style>
     .lini { font-family: sans-serif; font-size: 14px; color: black; }
     .lini .lini-shape-box { fill: white; stroke: #444; stroke-width: 1; stroke-dasharray: none; }
-    .lini .lini-shape-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
+    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-shape-plain { fill: none; stroke: none; }
     .lini .lini-shape-group { fill: rgba(0, 0, 0, 0.03); stroke: #bbb; }
     .lini .lini-shape-caption { font-size: 13px; }
@@ -18,69 +18,49 @@ input_file: samples/place_out.lini
       <rect x="-51.75" y="-86" width="103.5" height="172" rx="6" ry="6"/>
       <g class="lini-node lini-shape-caption lini-shape-plain lini-shape-box" transform="translate(0,-63)">
         <rect x="-21.45" y="-6.5" width="42.9" height="13" rx="0" ry="0"/>
-        <g class="lini-node lini-shape-text" style="font-size: 13px" transform="translate(0,0)">
-          <text x="0" y="0">Inside</text>
-        </g>
+        <text class="lini-text" x="0" y="0">Inside</text>
       </g>
       <g class="lini-node lini-shape-box" data-id="a" transform="translate(0,-16.5)">
         <rect x="-35.25" y="-23" width="70.5" height="46" rx="0" ry="0"/>
-        <g class="lini-node lini-shape-text" transform="translate(0,0)">
-          <text x="0" y="0">Row A</text>
-        </g>
+        <text class="lini-text" x="0" y="0">Row A</text>
       </g>
       <g class="lini-node lini-shape-box" data-id="b" transform="translate(0,46.5)">
         <rect x="-35.25" y="-23" width="70.5" height="46" rx="0" ry="0"/>
-        <g class="lini-node lini-shape-text" transform="translate(0,0)">
-          <text x="0" y="0">Row B</text>
-        </g>
+        <text class="lini-text" x="0" y="0">Row B</text>
       </g>
     </g>
     <g class="lini-node lini-shape-group lini-shape-box" data-id="above" transform="translate(0,0)">
       <rect x="-51.75" y="-71" width="103.5" height="142" rx="6" ry="6"/>
       <g class="lini-node lini-shape-caption lini-shape-plain lini-shape-box" transform="translate(0,-94.5)">
         <rect x="-17.875" y="-6.5" width="35.75" height="13" rx="0" ry="0"/>
-        <g class="lini-node lini-shape-text" style="font-size: 13px" transform="translate(0,0)">
-          <text x="0" y="0">Above</text>
-        </g>
+        <text class="lini-text" x="0" y="0">Above</text>
       </g>
       <g class="lini-node lini-shape-box" data-id="a" transform="translate(0,-31.5)">
         <rect x="-35.25" y="-23" width="70.5" height="46" rx="0" ry="0"/>
-        <g class="lini-node lini-shape-text" transform="translate(0,0)">
-          <text x="0" y="0">Row A</text>
-        </g>
+        <text class="lini-text" x="0" y="0">Row A</text>
       </g>
       <g class="lini-node lini-shape-box" data-id="b" transform="translate(0,31.5)">
         <rect x="-35.25" y="-23" width="70.5" height="46" rx="0" ry="0"/>
-        <g class="lini-node lini-shape-text" transform="translate(0,0)">
-          <text x="0" y="0">Row B</text>
-        </g>
+        <text class="lini-text" x="0" y="0">Row B</text>
       </g>
     </g>
     <g class="lini-node lini-shape-group lini-shape-box" data-id="both" transform="translate(144.5,0)">
       <rect x="-51.75" y="-71" width="103.5" height="142" rx="6" ry="6"/>
       <g class="lini-node lini-shape-caption lini-shape-plain lini-shape-box" transform="translate(0,-94.5)">
         <rect x="-21.45" y="-6.5" width="42.9" height="13" rx="0" ry="0"/>
-        <g class="lini-node lini-shape-text" style="font-size: 13px" transform="translate(0,0)">
-          <text x="0" y="0">Header</text>
-        </g>
+        <text class="lini-text" x="0" y="0">Header</text>
       </g>
       <g class="lini-node lini-shape-box" data-id="a" transform="translate(0,-31.5)">
         <rect x="-35.25" y="-23" width="70.5" height="46" rx="0" ry="0"/>
-        <g class="lini-node lini-shape-text" transform="translate(0,0)">
-          <text x="0" y="0">Row A</text>
-        </g>
+        <text class="lini-text" x="0" y="0">Row A</text>
       </g>
       <g class="lini-node lini-shape-box" data-id="b" transform="translate(0,31.5)">
         <rect x="-35.25" y="-23" width="70.5" height="46" rx="0" ry="0"/>
-        <g class="lini-node lini-shape-text" transform="translate(0,0)">
-          <text x="0" y="0">Row B</text>
-        </g>
+        <text class="lini-text" x="0" y="0">Row B</text>
       </g>
       <g class="lini-node lini-shape-caption lini-shape-plain lini-shape-box" transform="translate(0,94.5)">
         <rect x="-21.45" y="-6.5" width="42.9" height="13" rx="0" ry="0"/>
-        <g class="lini-node lini-shape-text" style="font-size: 13px" transform="translate(0,0)">
-          <text x="0" y="0">Footer</text>
-        </g>
+        <text class="lini-text" x="0" y="0">Footer</text>
       </g>
     </g>
   </g>

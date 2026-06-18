@@ -8,28 +8,22 @@ input_file: samples/type_defaults.lini
     .lini { font-family: sans-serif; font-size: 14px; color: black; }
     .lini .lini-shape-box { fill: white; stroke: #444; stroke-width: 1; stroke-dasharray: none; }
     .lini .lini-shape-oval { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-shape-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
+    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-shape-alert { stroke: red; }
   </style>
   <defs/>
   <g class="lini-scene">
     <g class="lini-node lini-shape-box" data-id="cat" transform="translate(-77.05,0)">
       <rect x="-27.55" y="-23" width="55.1" height="46" rx="6" ry="6"/>
-      <g class="lini-node lini-shape-text" transform="translate(0,0)">
-        <text x="0" y="0">Cat</text>
-      </g>
+      <text class="lini-text" x="0" y="0">Cat</text>
     </g>
     <g class="lini-node lini-shape-box" data-id="dog" transform="translate(9.05,0)">
       <rect x="-27.55" y="-23" width="55.1" height="46" rx="0" ry="0"/>
-      <g class="lini-node lini-shape-text" transform="translate(0,0)">
-        <text x="0" y="0">Dog</text>
-      </g>
+      <text class="lini-text" x="0" y="0">Dog</text>
     </g>
     <g class="lini-node lini-shape-alert lini-shape-oval" data-id="mouse" transform="translate(86.1,0)">
       <ellipse cx="0" cy="0" rx="18" ry="18"/>
-      <g class="lini-node lini-shape-text" transform="translate(0,0)">
-        <text x="0" y="0">Mouse</text>
-      </g>
+      <text class="lini-text" x="0" y="0">Mouse</text>
     </g>
   </g>
   <g class="lini-wires"/>

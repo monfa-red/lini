@@ -8,7 +8,7 @@ input_file: samples/shapes.lini
     .lini { font-family: sans-serif; font-size: 14px; color: black; }
     .lini .lini-shape-box { fill: white; stroke: #444; stroke-width: 1; stroke-dasharray: none; }
     .lini .lini-shape-slant { fill: white; stroke: #444; stroke-width: 1; stroke-dasharray: none; }
-    .lini .lini-shape-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
+    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-shape-icon { fill: #444; }
     .lini .lini-shape-plain { fill: none; stroke: none; }
     .lini .lini-shape-group { fill: rgba(0, 0, 0, 0.03); stroke: #bbb; }
@@ -19,15 +19,11 @@ input_file: samples/shapes.lini
   <g class="lini-scene">
     <g class="lini-node lini-shape-treat lini-shape-box" transform="translate(0,-112.5)">
       <rect x="-35.25" y="-23" width="70.5" height="46" rx="5" ry="5"/>
-      <g class="lini-node lini-shape-text" transform="translate(0,0)">
-        <text x="0" y="0">Treat</text>
-      </g>
+      <text class="lini-text" x="0" y="0">Treat</text>
     </g>
     <g class="lini-node lini-shape-nest lini-shape-slant" transform="translate(0,-45.5)">
       <polygon points="-25.2372,-23 37.5628,-23 25.2372,23 -37.5628,23"/>
-      <g class="lini-node lini-shape-text" transform="translate(0,0)">
-        <text x="0" y="0">Nest</text>
-      </g>
+      <text class="lini-text" x="0" y="0">Nest</text>
     </g>
     <g class="lini-node lini-shape-group lini-shape-box" data-id="toolbox" transform="translate(0,26.5)">
       <rect x="-45" y="-28" width="90" height="56" rx="6" ry="6"/>
@@ -44,13 +40,9 @@ input_file: samples/shapes.lini
       <rect x="-38.95" y="-30" width="77.9" height="60" rx="6" ry="6"/>
       <g class="lini-node lini-shape-caption lini-shape-plain lini-shape-box" style="font-weight: bold" transform="translate(0,-11)">
         <rect x="-17.875" y="-6.5" width="35.75" height="13" rx="0" ry="0"/>
-        <g class="lini-node lini-shape-text" style="font-size: 13px; font-weight: bold" transform="translate(0,0)">
-          <text x="0" y="0">Title</text>
-        </g>
+        <text class="lini-text" x="0" y="0">Title</text>
       </g>
-      <g class="lini-node lini-shape-text" transform="translate(0,11)">
-        <text x="0" y="0">Content</text>
-      </g>
+      <text class="lini-text" x="0" y="11">Content</text>
     </g>
   </g>
   <g class="lini-wires"/>

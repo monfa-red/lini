@@ -100,6 +100,12 @@ fn render_node(
     opts: &Options,
 ) {
     use std::fmt::Write;
+    // Text renders as a bare `<text class="lini-text">` at its placed position —
+    // no wrapping `<g>` (SPEC §13). Font and colour inherit from the enclosing box.
+    if n.shape == ShapeKind::Text {
+        render_text(out, n, depth);
+        return;
+    }
     // `link:` wraps the whole node in an `<a href>` so the shape (and its
     // children) is clickable (SPEC §5). The group sits one level deeper inside.
     let link = match n.attrs.get("link") {
@@ -158,6 +164,40 @@ fn render_node(
     if link.is_some() {
         writeln!(out, "{}</a>", "  ".repeat(depth - 1)).unwrap();
     }
+}
+
+/// A text node: a bare `<text class="lini-text">` at its placed centre (SPEC
+/// §13). `text-anchor: middle` + `dominant-baseline: central` (on `.lini-text`)
+/// centre it on (x, y); font and colour inherit from the enclosing box's `<g>`.
+fn render_text(out: &mut String, n: &PlacedNode, depth: usize) {
+    use std::fmt::Write;
+    let indent = "  ".repeat(depth);
+    let label = n.label.as_deref().unwrap_or("");
+    let (x, y) = (num(n.cx), num(n.cy));
+    let lines: Vec<&str> = label.split('\n').collect();
+    if lines.len() <= 1 {
+        writeln!(
+            out,
+            r#"{}<text class="lini-text" x="{}" y="{}">{}</text>"#,
+            indent, x, y, escape_xml(label)
+        )
+        .unwrap();
+        return;
+    }
+    // Multi-line (SPEC §6): one tspan per line, spacing `font-size × 1.2`, the
+    // block centred on (cx, cy) so `dominant-baseline: central` still holds.
+    let size = n.attrs.number("font-size").unwrap_or(14.0);
+    let spacing = size * 1.2;
+    let top = n.cy - spacing * (lines.len() as f64 - 1.0) / 2.0;
+    write!(out, r#"{}<text class="lini-text" x="{}" y="{}">"#, indent, x, y).unwrap();
+    for (i, line) in lines.iter().enumerate() {
+        if i == 0 {
+            write!(out, r#"<tspan x="{}" y="{}">{}</tspan>"#, x, num(top), escape_xml(line)).unwrap();
+        } else {
+            write!(out, r#"<tspan x="{}" dy="{}">{}</tspan>"#, x, num(spacing), escape_xml(line)).unwrap();
+        }
+    }
+    writeln!(out, "</text>").unwrap();
 }
 
 /// The node's paint, as the difference against what the stylesheet already
