@@ -9,7 +9,8 @@
 //! only fight inheritance, which they win — no class rule matches them).
 
 use super::filters::FilterTable;
-use super::values::{attr_or_var, attr_points, escape_xml, num};
+use super::rules::{RuleSet, effective_stroke};
+use super::values::{attr_or_var, attr_points, class_list, escape_xml, num};
 use crate::Options;
 use crate::layout::PlacedNode;
 use crate::resolve::{ResolvedValue, ShapeKind, VarTable};
@@ -20,6 +21,7 @@ pub fn render_geometry(
     n: &PlacedNode,
     depth: usize,
     vars: &VarTable,
+    ruleset: &RuleSet,
     filters: &FilterTable,
     opts: &Options,
 ) {
@@ -46,11 +48,11 @@ pub fn render_geometry(
             num(dy)
         )
         .unwrap();
-        emit_shape(out, n, body_depth + 1, vars, opts);
+        emit_shape(out, n, body_depth + 1, vars, ruleset, opts);
         writeln!(out, "{}</g>", indent).unwrap();
     }
 
-    emit_shape(out, n, body_depth, vars, opts);
+    emit_shape(out, n, body_depth, vars, ruleset, opts);
 
     if shadow.is_some() {
         writeln!(out, "{}</g>", "  ".repeat(depth)).unwrap();
@@ -84,7 +86,14 @@ fn stack_offset(n: &PlacedNode) -> Option<(f64, f64)> {
     }
 }
 
-fn emit_shape(out: &mut String, n: &PlacedNode, depth: usize, vars: &VarTable, opts: &Options) {
+fn emit_shape(
+    out: &mut String,
+    n: &PlacedNode,
+    depth: usize,
+    vars: &VarTable,
+    ruleset: &RuleSet,
+    opts: &Options,
+) {
     let indent = "  ".repeat(depth);
     let thickness = n.attrs.number("stroke-width").unwrap_or(1.0);
 
@@ -99,7 +108,7 @@ fn emit_shape(out: &mut String, n: &PlacedNode, depth: usize, vars: &VarTable, o
         // Text is emitted by `render::render_text` as a bare `<text>` (SPEC §13),
         // never as wrapped geometry — so it never reaches this dispatch.
         ShapeKind::Text => {}
-        ShapeKind::Line => emit_line(out, n, &indent, vars, opts, thickness),
+        ShapeKind::Line => emit_line(out, n, &indent, vars, ruleset, opts, thickness),
         ShapeKind::Poly => emit_poly(out, n, &indent),
         ShapeKind::Path => emit_path(out, n, &indent),
         ShapeKind::Icon => emit_icon(out, n, &indent, vars, opts),
@@ -272,6 +281,7 @@ fn emit_line(
     n: &PlacedNode,
     indent: &str,
     vars: &VarTable,
+    ruleset: &RuleSet,
     opts: &Options,
     thickness: f64,
 ) {
@@ -301,13 +311,16 @@ fn emit_line(
         writeln!(out, r#"{}<polyline points="{}"/>"#, indent, pts.join(" ")).unwrap();
     }
 
-    // Markers go at the first and last points, filled per the line's stroke
-    // (explicit per element — markers must not pick up the dash pattern or
-    // fill:none the line's rules provide).
-    let stroke = attr_or_var(&n.attrs, "stroke", "stroke", vars, opts);
+    // Markers at the first and last points. Their fill follows the line's
+    // stroke from CSS (the `.lini-marker` base or a `.lini-style-* .lini-marker`
+    // descendant rule), so only a direct inline `stroke:` inlines it; the crow
+    // states the cascade-resolved colour regardless.
+    let classes = class_list(n.shape.as_str(), &n.type_chain, &n.applied_styles);
+    let color = effective_stroke(&n.attrs, &classes, ruleset, vars, opts);
+    let inline = n.attrs.get("stroke").is_some();
     let from = points[0];
     let to = points[points.len() - 1];
-    super::markers::emit_inline_markers(out, indent, n, from, to, &stroke, thickness);
+    super::markers::emit_inline_markers(out, indent, n, from, to, &color, inline, thickness);
 }
 
 fn emit_poly(out: &mut String, n: &PlacedNode, indent: &str) {

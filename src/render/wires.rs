@@ -2,12 +2,19 @@
 //! airwires, the impossible-wire report made visible.
 
 use super::markers::{MARKER_OVERLAP, emit_marker, line_inset, marker_anchor};
-use super::rules::{PAINT_PROPS, RuleSet};
-use super::values::{attr_or_var, dasharray_value, escape_xml, format_value, num, wrap_font};
+use super::rules::{PAINT_PROPS, RuleSet, effective_stroke};
+use super::values::{attr_or_var, dasharray_value, escape_xml, format_value, num};
 use crate::Options;
-use crate::layout::{Airwire, RoutedText, RoutedWire};
+use crate::layout::{Airwire, RoutedText, RoutedWire, approx_height, approx_width};
 use crate::resolve::{AttrMap, MarkerKind, VarTable};
 use std::fmt::Write;
+
+/// Breathing room the label cut keeps around the glyph run, in `font-size`
+/// units per side. `H` pads the approximate text width; `V` makes the hole
+/// taller than the tight single-line box ([`approx_height`] is ~1 em, which
+/// clips descenders) so g/y/p stay inside the cut.
+const LABEL_CUT_PAD_H: f64 = 0.15;
+const LABEL_CUT_PAD_V: f64 = 0.15;
 
 /// The wire's corner-radius cap (WIRING §Model step 7) — the same
 /// attr → layout-var → 16 fallback the router uses for clearance.
@@ -20,6 +27,7 @@ pub fn radius_cap(w: &RoutedWire, vars: &VarTable) -> f64 {
 
 pub fn render_wire(
     out: &mut String,
+    idx: usize,
     w: &RoutedWire,
     targets: &[f64],
     vars: &VarTable,
@@ -29,7 +37,6 @@ pub fn render_wire(
     if w.path.len() < 2 {
         return;
     }
-    let stroke = attr_or_var(&w.attrs, "stroke", "stroke", vars, opts);
     let thickness = w.attrs.number("stroke-width").unwrap_or(1.0);
 
     // Paint rides the group, exactly like a node: the `.lini-wire` rule states
@@ -85,12 +92,29 @@ pub fn render_wire(
     )
     .unwrap();
 
+    // A label cuts the wire out beneath it (a mask hole, not a painted halo) so
+    // it reads cleanly over the wire on any background.
+    let mask = label_mask(idx, &w.path, &w.texts, thickness);
+    let mask_attr = match &mask {
+        Some((id, svg)) => {
+            writeln!(out, "      {svg}").unwrap();
+            format!(r#" mask="url(#{id})""#)
+        }
+        None => String::new(),
+    };
+
     // Stop the drawn line where the marker body will sit so the stroke never
     // pokes past it (and never leaves a gap before a dot).
     let drawn = shorten_for_markers(&w.path, &w.markers, thickness);
     let d = rounded_d(&drawn, targets);
-    writeln!(out, r#"      <path d="{d}"/>"#).unwrap();
+    writeln!(out, r#"      <path d="{d}"{mask_attr}/>"#).unwrap();
 
+    // The marker colour: filled heads inherit it from CSS (the `.lini-marker`
+    // base or a `.lini-style-* .lini-marker` descendant rule), so they inline it
+    // only for a direct inline `stroke:`. The crow inlines the cascade-resolved
+    // colour regardless (it is stroked, no fill rule reaches it).
+    let marker_color = effective_stroke(&w.attrs, &wire_classes, ruleset, vars, opts);
+    let marker_inline = w.attrs.get("stroke").is_some();
     if w.markers.start != MarkerKind::None
         && let Some((tip, dir)) = marker_anchor(w.path[1], w.path[0], false)
     {
@@ -100,7 +124,8 @@ pub fn render_wire(
             w.markers.start,
             overlap_tip(tip, dir),
             dir,
-            &stroke,
+            &marker_color,
+            marker_inline,
             thickness,
         );
     }
@@ -113,7 +138,8 @@ pub fn render_wire(
                 w.markers.end,
                 overlap_tip(tip, dir),
                 dir,
-                &stroke,
+                &marker_color,
+                marker_inline,
                 thickness,
             );
         }
@@ -404,31 +430,110 @@ fn pulled_back(inner: (f64, f64), endpoint: (f64, f64), amount: f64) -> Option<(
     ))
 }
 
+/// A luminance mask that cuts the wire path out under each of its labels — the
+/// background-independent replacement for a painted halo. White shows the path
+/// (over its stroked bounds); a black box per label punches a hole. An explicit
+/// `userSpaceOnUse` region is required, else a straight wire's near-flat bbox
+/// would shrink the default region to nothing and hide the whole wire. `None`
+/// when the wire carries no labels.
+fn label_mask(
+    idx: usize,
+    path: &[(f64, f64)],
+    texts: &[RoutedText],
+    thickness: f64,
+) -> Option<(String, String)> {
+    if texts.is_empty() {
+        return None;
+    }
+    let id = format!("lini-label-cut-{idx}");
+    let pad = thickness / 2.0 + 1.0;
+    let (mut x0, mut y0, mut x1, mut y1) = (f64::MAX, f64::MAX, f64::MIN, f64::MIN);
+    for &(x, y) in path {
+        x0 = x0.min(x);
+        y0 = y0.min(y);
+        x1 = x1.max(x);
+        y1 = y1.max(y);
+    }
+    let (rx, ry) = (x0 - pad, y0 - pad);
+    let (rw, rh) = (x1 - x0 + 2.0 * pad, y1 - y0 + 2.0 * pad);
+    let mut m = format!(
+        r#"<mask id="{id}" maskUnits="userSpaceOnUse" x="{}" y="{}" width="{}" height="{}"><rect x="{}" y="{}" width="{}" height="{}" fill="white"/>"#,
+        num(rx),
+        num(ry),
+        num(rw),
+        num(rh),
+        num(rx),
+        num(ry),
+        num(rw),
+        num(rh),
+    );
+    for t in texts {
+        let size = t.attrs.number("font-size").unwrap_or(12.0);
+        let cw = approx_width(&t.content, size) + size * LABEL_CUT_PAD_H * 2.0;
+        let ch = approx_height(&t.content, size) + size * LABEL_CUT_PAD_V * 2.0;
+        let (cx, cy) = t.position;
+        write!(
+            m,
+            r#"<rect x="{}" y="{}" width="{}" height="{}" fill="black"/>"#,
+            num(cx - cw / 2.0),
+            num(cy - ch / 2.0),
+            num(cw),
+            num(ch),
+        )
+        .unwrap();
+    }
+    m.push_str("</mask>");
+    Some((id, m))
+}
+
+/// A wire label. The constant paint (`fill: currentColor`, `stroke: none` so the
+/// glyphs don't inherit the wire `<g>`'s stroke, the anchor pair, the baked wire
+/// font size) rides `.lini-wire-label`; only a label that overrides one of those
+/// inlines the difference via `style=` (which beats the class rule).
 fn render_wire_text(out: &mut String, t: &RoutedText, vars: &VarTable, opts: &Options) {
-    let size = t.attrs.number("font-size").unwrap_or(12.0);
-    let fill = if let Some(v) = t.attrs.get("fill") {
-        format_value(v, vars, opts)
-    } else if let Some(v) = t.attrs.get("color") {
-        format_value(v, vars, opts)
-    } else {
-        "currentColor".to_string()
-    };
-    let font = attr_or_var(&t.attrs, "font-family", "font-family", vars, opts);
-    // Background-coloured halo painted under the glyphs so the wire reads as
-    // passing behind the label without clipping the path.
-    let halo = attr_or_var(&t.attrs, "halo", "bg", vars, opts);
-    let halo_w = (size * 0.4).max(2.0);
     let (x, y) = t.position;
+    let mut style: Vec<String> = Vec::new();
+
+    let wfs = vars
+        .get("wire-font-size")
+        .and_then(|e| e.value.as_number())
+        .unwrap_or(12.0);
+    let size = t.attrs.number("font-size").unwrap_or(wfs);
+    if (size - wfs).abs() > 1e-9 {
+        style.push(format!("font-size: {}px", num(size)));
+    }
+    if let Some(v) = t.attrs.get("fill").or_else(|| t.attrs.get("color")) {
+        style.push(format!("fill: {}", format_value(v, vars, opts)));
+    }
+    if t.attrs.get("font-family").is_some() {
+        let font = attr_or_var(&t.attrs, "font-family", "font-family", vars, opts);
+        if font
+            != attr_or_var(
+                &AttrMap::default(),
+                "font-family",
+                "font-family",
+                vars,
+                opts,
+            )
+        {
+            style.push(format!("font-family: {font}"));
+        }
+    }
+    if let Some(v) = t.attrs.get("font-weight") {
+        style.push(format!("font-weight: {}", format_value(v, vars, opts)));
+    }
+
+    let style_attr = if style.is_empty() {
+        String::new()
+    } else {
+        format!(r#" style="{}""#, style.join("; "))
+    };
     writeln!(
         out,
-        r#"      <text x="{}" y="{}" text-anchor="middle" dominant-baseline="central" font-size="{}" font-family={} fill="{}" paint-order="stroke" stroke="{}" stroke-width="{}" stroke-linejoin="round">{}</text>"#,
+        r#"      <text class="lini-wire-label" x="{}" y="{}"{}>{}</text>"#,
         num(x),
         num(y),
-        num(size),
-        wrap_font(&font),
-        fill,
-        halo,
-        num(halo_w),
+        style_attr,
         escape_xml(&t.content),
     )
     .unwrap();

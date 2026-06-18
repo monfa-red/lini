@@ -14,29 +14,49 @@ pub fn emit_inline_markers(
     n: &PlacedNode,
     from: (f64, f64),
     to: (f64, f64),
-    stroke: &str,
+    color: &str,
+    inline: bool,
     thickness: f64,
 ) {
     if n.markers.start != MarkerKind::None
         && let Some((tip, dir)) = marker_anchor(from, to, true)
     {
-        emit_marker(out, indent, n.markers.start, tip, dir, stroke, thickness);
+        emit_marker(
+            out,
+            indent,
+            n.markers.start,
+            tip,
+            dir,
+            color,
+            inline,
+            thickness,
+        );
     }
     if n.markers.end != MarkerKind::None
         && let Some((tip, dir)) = marker_anchor(from, to, false)
     {
-        emit_marker(out, indent, n.markers.end, tip, dir, stroke, thickness);
+        emit_marker(
+            out,
+            indent,
+            n.markers.end,
+            tip,
+            dir,
+            color,
+            inline,
+            thickness,
+        );
     }
 }
 
 /// The marker tip sits on the line endpoint, with the direction unit-vector
 /// pointing into the shape. The line itself stops short (see
 /// `shorten_for_markers`) so the marker body still covers its end. Filled
-/// markers (arrow / diamond / dot) carry `stroke="none"`: their size is the
-/// `points`/`r` geometry alone, never the wire's `stroke-width` inherited off
-/// the `<g>` — which used to balloon the head and shove its tip into the shape
-/// as the wire thickened. Wires then nudge the tip a fixed [`MARKER_OVERLAP`]
-/// into the shape so the head reads as connected at any thickness.
+/// markers (arrow / diamond / dot) get `stroke: none` from the `.lini-marker`
+/// rule: their size is the `points`/`r` geometry alone, never the wire's
+/// `stroke-width` inherited off the `<g>` — which used to balloon the head and
+/// shove its tip into the shape as the wire thickened. Wires then nudge the tip
+/// a fixed [`MARKER_OVERLAP`] into the shape so the head reads as connected at
+/// any thickness.
 pub fn marker_anchor(
     from: (f64, f64),
     to: (f64, f64),
@@ -90,13 +110,21 @@ pub fn dot_center(tip: (f64, f64), direction: (f64, f64), size: f64) -> (f64, f6
     (tip.0 - direction.0 * r, tip.1 - direction.1 * r)
 }
 
+/// Paint a marker. Filled heads (arrow / diamond / dot) take their `fill` and
+/// `stroke: none` from CSS — the base `.lini-marker` rule, or a
+/// `.lini-style-* .lini-marker` descendant rule when the wire/line carries a
+/// recolouring class. They inline `fill` (via `style=`, to beat those rules)
+/// only for a *direct* inline `stroke:`, which no class rule can target
+/// (`inline`). The crow is stroked, not filled, so it always states its
+/// resolved `color` inline, beating the rule's `stroke: none`.
 pub fn emit_marker(
     out: &mut String,
     indent: &str,
     kind: MarkerKind,
     tip: (f64, f64),
     direction: (f64, f64),
-    stroke: &str,
+    color: &str,
+    inline: bool,
     thickness: f64,
 ) {
     let size = marker_size(thickness);
@@ -104,6 +132,11 @@ pub fn emit_marker(
     let uy = direction.1;
     let px = -uy;
     let py = ux;
+    let fill = if inline {
+        format!(r#" style="fill: {color}""#)
+    } else {
+        String::new()
+    };
     match kind {
         MarkerKind::Arrow => {
             let bx = tip.0 - ux * size;
@@ -114,24 +147,24 @@ pub fn emit_marker(
             let ry = by - py * size * 0.5;
             writeln!(
                 out,
-                r#"{}<polygon class="lini-marker lini-marker-arrow" points="{},{} {},{} {},{}" fill="{}" stroke="none"/>"#,
+                r#"{}<polygon class="lini-marker lini-marker-arrow" points="{},{} {},{} {},{}"{}/>"#,
                 indent,
                 num(tip.0), num(tip.1),
                 num(lx), num(ly),
                 num(rx), num(ry),
-                stroke,
+                fill,
             ).unwrap();
         }
         MarkerKind::Dot => {
             let (cx, cy) = dot_center(tip, direction, size);
             writeln!(
                 out,
-                r#"{}<circle class="lini-marker lini-marker-dot" cx="{}" cy="{}" r="{}" fill="{}" stroke="none"/>"#,
+                r#"{}<circle class="lini-marker lini-marker-dot" cx="{}" cy="{}" r="{}"{}/>"#,
                 indent,
                 num(cx),
                 num(cy),
                 num(size / 3.0),
-                stroke,
+                fill,
             )
             .unwrap();
         }
@@ -146,13 +179,13 @@ pub fn emit_marker(
             let ry = my - py * size * 0.4;
             writeln!(
                 out,
-                r#"{}<polygon class="lini-marker lini-marker-diamond" points="{},{} {},{} {},{} {},{}" fill="{}" stroke="none"/>"#,
+                r#"{}<polygon class="lini-marker lini-marker-diamond" points="{},{} {},{} {},{} {},{}"{}/>"#,
                 indent,
                 num(tip.0), num(tip.1),
                 num(lx), num(ly),
                 num(bx), num(by),
                 num(rx), num(ry),
-                stroke,
+                fill,
             ).unwrap();
         }
         MarkerKind::Crow => {
@@ -164,12 +197,12 @@ pub fn emit_marker(
             let ry = by - py * size * 0.5;
             writeln!(
                 out,
-                r#"{}<path class="lini-marker lini-marker-crow" d="M {} {} L {} {} M {} {} L {} {} M {} {} L {} {}" stroke="{}" stroke-width="{}" stroke-dasharray="none" fill="none"/>"#,
+                r#"{}<path class="lini-marker lini-marker-crow" d="M {} {} L {} {} M {} {} L {} {} M {} {} L {} {}" style="fill: none; stroke: {}; stroke-width: {}; stroke-dasharray: none"/>"#,
                 indent,
                 num(tip.0), num(tip.1), num(bx), num(by),
                 num(tip.0), num(tip.1), num(lx), num(ly),
                 num(tip.0), num(tip.1), num(rx), num(ry),
-                stroke, num(thickness),
+                color, num(thickness),
             ).unwrap();
         }
         MarkerKind::None => {}

@@ -117,16 +117,6 @@ pub fn dasharray_value(attrs: &AttrMap, width: f64) -> String {
     }
 }
 
-/// Wrap a font value for an SVG attribute: string values come back from
-/// `format_value` already quoted; idents and `var()` refs need the quotes.
-pub fn wrap_font(font: &str) -> String {
-    if font.starts_with('"') {
-        font.to_string()
-    } else {
-        format!("\"{font}\"")
-    }
-}
-
 /// Format a number with minimal precision (integers stay integers; floats trim
 /// trailing zeros). Used everywhere for compact, snapshot-stable SVG.
 pub fn num(n: f64) -> String {

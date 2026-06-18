@@ -3,13 +3,16 @@
 //! so non-browser renderers (which skip `@layer`) parse them, and scoped under
 //! `.lini` so an SVG inlined into a host document restyles nothing else.
 //!
-//! Markers carry no rule: their fill follows each wire's stroke per element,
-//! and a `.lini-marker` rule would override those presentation attrs.
+//! Constants that used to inline on every element ride a class instead: wire
+//! labels (`.lini-wire-label`, mirroring `.lini-text`) and markers
+//! (`.lini-marker` — `fill` the wire stroke, `stroke: none`). A marker whose
+//! wire is recoloured states its own `fill`; the stroked crow re-asserts its
+//! paint via `style=` so the rule's `stroke: none` doesn't erase it.
 
 use super::values::format_value;
 use crate::Options;
 use crate::layout::{LaidOut, PlacedNode};
-use crate::resolve::{AttrMap, ResolvedValue, ShapeKind, VarTable};
+use crate::resolve::{AttrMap, MarkerKind, ResolvedValue, ShapeKind, VarTable};
 use std::collections::BTreeSet;
 
 /// lini attr → CSS property. lini property names already match CSS, so this is
@@ -104,8 +107,9 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
 
     let mut present: BTreeSet<&str> = BTreeSet::new();
     let mut used_styles: BTreeSet<&str> = BTreeSet::new();
+    let mut has_markers = false;
     for node in &laid.nodes {
-        collect(node, &mut present, &mut used_styles);
+        collect(node, &mut present, &mut used_styles, &mut has_markers);
     }
     // Wires carry styles too (same class surface as nodes), so a style used
     // only by a wire still emits its rule.
@@ -113,7 +117,10 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
         for style in &wire.applied_styles {
             used_styles.insert(style.as_str());
         }
+        has_markers |=
+            wire.markers.start != MarkerKind::None || wire.markers.end != MarkerKind::None;
     }
+    let has_labels = laid.wires.iter().any(|w| !w.texts.is_empty());
 
     let mut rules: Vec<Rule> = Vec::new();
 
@@ -255,19 +262,79 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
         });
     }
 
+    // Wire labels: the constant `<text>` paint stated once (mirrors `.lini-text`),
+    // plus the baked wire font size. A label that overrides any of these inlines
+    // the difference via `style=`.
+    if has_labels {
+        let wfs = layout_number(vars, "wire-font-size", 12.0);
+        rules.push(Rule {
+            class: "lini-wire-label".into(),
+            props: vec![
+                ("fill".into(), "currentColor".into()),
+                ("stroke".into(), "none".into()),
+                ("text-anchor".into(), "middle".into()),
+                ("dominant-baseline".into(), "central".into()),
+                ("font-size".into(), format!("{}px", super::values::num(wfs))),
+            ],
+        });
+    }
+
+    // Markers: fill follows the wire stroke (the common default stated once),
+    // `stroke: none` for the filled heads. The crow re-asserts paint inline.
+    if has_markers {
+        rules.push(Rule {
+            class: "lini-marker".into(),
+            props: vec![
+                ("fill".into(), live("stroke")),
+                ("stroke".into(), "none".into()),
+            ],
+        });
+    }
+
     // Class rules in source order — the stylesheet's `.name { }` rules shipped
     // as CSS. After the shape/wire default rules, so a class overrides a default.
     for (name, attrs) in &laid.sheet.class_rules {
-        if used_styles.contains(name.as_str()) {
+        if !used_styles.contains(name.as_str()) {
+            continue;
+        }
+        rules.push(Rule {
+            class: format!("lini-style-{}", name),
+            props: paint_props(attrs, vars, opts),
+        });
+        // A filled marker inside an element carrying this class fills with the
+        // class's stroke — one descendant rule (3 classes, so it beats the base
+        // `.lini-marker`), no per-marker inline. The crow is stroked, not
+        // filled, so it resolves its colour inline instead (`emit_marker`).
+        if has_markers && let Some(v) = attrs.get("stroke") {
             rules.push(Rule {
-                class: format!("lini-style-{}", name),
-                props: paint_props(attrs, vars, opts),
+                class: format!("lini-style-{} .lini-marker", name),
+                props: vec![("fill".into(), format_value(v, vars, opts))],
             });
         }
     }
 
     rules.retain(|r| !r.props.is_empty());
     RuleSet { rules }
+}
+
+/// The stroke colour an element actually paints with — its inline `stroke`,
+/// else what its classes get from the sheet (`.lini-style-*`, `.lini-wire`),
+/// else the `--lini-stroke` default. A crow marker fills no descendant rule
+/// (it is stroked, not filled), so it resolves its colour through this.
+pub fn effective_stroke(
+    attrs: &AttrMap,
+    classes: &[String],
+    set: &RuleSet,
+    vars: &VarTable,
+    opts: &Options,
+) -> String {
+    if let Some(v) = attrs.get("stroke") {
+        return format_value(v, vars, opts);
+    }
+    if let Some(v) = set.provided(classes, "stroke") {
+        return v.to_string();
+    }
+    super::values::attr_or_var(&AttrMap::default(), "stroke", "stroke", vars, opts)
 }
 
 /// The paint subset of an attr map, translated to CSS props. `stroke-style`
@@ -308,6 +375,7 @@ fn collect<'a>(
     node: &'a PlacedNode,
     present: &mut BTreeSet<&'a str>,
     used_styles: &mut BTreeSet<&'a str>,
+    has_markers: &mut bool,
 ) {
     present.insert(node.shape.as_str());
     for name in &node.type_chain {
@@ -316,8 +384,9 @@ fn collect<'a>(
     for name in &node.applied_styles {
         used_styles.insert(name.as_str());
     }
+    *has_markers |= node.markers.start != MarkerKind::None || node.markers.end != MarkerKind::None;
     for child in &node.children {
-        collect(child, present, used_styles);
+        collect(child, present, used_styles, has_markers);
     }
 }
 
@@ -400,7 +469,35 @@ mod tests {
             "{}",
             css
         );
-        assert!(!css.contains("lini-marker"), "{}", css);
+    }
+
+    #[test]
+    fn marker_rule_states_fill_and_stroke_none() {
+        // `a -> b` carries an arrow, so the shared marker rule emits once.
+        let css = emit_str(&rules_for("a -> b\n"));
+        assert!(
+            css.contains(".lini .lini-marker { fill: var(--lini-stroke); stroke: none; }"),
+            "{}",
+            css
+        );
+        // No markers, no rule.
+        let plain = emit_str(&rules_for("a - b\n"));
+        assert!(!plain.contains("lini-marker"), "{}", plain);
+    }
+
+    #[test]
+    fn wire_label_rule_states_constants() {
+        let css = emit_str(&rules_for("a -> b \"x\"\n"));
+        assert!(
+            css.contains(
+                ".lini .lini-wire-label { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; font-size: 12px; }"
+            ),
+            "{}",
+            css
+        );
+        // No labels, no rule.
+        let plain = emit_str(&rules_for("a -> b\n"));
+        assert!(!plain.contains("lini-wire-label"), "{}", plain);
     }
 
     #[test]

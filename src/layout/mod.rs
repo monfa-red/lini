@@ -9,6 +9,7 @@ mod values;
 mod wires;
 
 pub use ir::*;
+pub(crate) use text::{approx_height, approx_width};
 pub(crate) use wires::cross;
 pub use wires::{Rule, Severity, Violation, node_rect};
 

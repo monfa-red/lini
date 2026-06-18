@@ -77,8 +77,8 @@ pub fn render(laid_out: &LaidOut, opts: &Options) -> String {
             .map(|w| wires::radius_cap(w, &laid_out.vars))
             .collect();
         let targets = wires::fillet_targets(&polys, &caps);
-        for (wire, targets) in laid_out.wires.iter().zip(&targets) {
-            wires::render_wire(&mut out, wire, targets, &laid_out.vars, &ruleset, opts);
+        for (idx, (wire, targets)) in laid_out.wires.iter().zip(&targets).enumerate() {
+            wires::render_wire(&mut out, idx, wire, targets, &laid_out.vars, &ruleset, opts);
         }
         for air in &laid_out.airwires {
             wires::render_airwire(&mut out, air, &laid_out.vars, opts);
@@ -155,7 +155,7 @@ fn render_node(
         writeln!(out, "{}  <title>{}</title>", indent, escape_xml(title)).unwrap();
     }
 
-    primitives::render_geometry(out, n, depth + 1, vars, filters, opts);
+    primitives::render_geometry(out, n, depth + 1, vars, ruleset, filters, opts);
     for child in in_layer_order(&n.children) {
         render_node(out, child, depth + 1, vars, ruleset, filters, opts);
     }
