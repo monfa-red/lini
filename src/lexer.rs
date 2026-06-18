@@ -12,7 +12,7 @@ pub enum TokKind {
 
     Pipe,   // |
     Colon,  // : (attr binding)
-    DColon, // :: (v4 define operator)
+    DColon, // :: (define operator)
     Dot,    // . (style ref or endpoint side)
     Amp,    // &
     Semi,   // ;

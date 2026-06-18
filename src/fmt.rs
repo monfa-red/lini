@@ -1,4 +1,4 @@
-//! Canonical source formatter (SPEC §14). Parses to the v4 AST and re-emits a
+//! Canonical source formatter (SPEC §14). Parses to the AST and re-emits a
 //! normalized form: the three phases in order (stylesheet → instances → wires),
 //! `key: value;` declarations in `{ }` blocks, `name::base` defines, 2-space
 //! indent, space-separated value groups (comma between groups). Comments and

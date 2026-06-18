@@ -1,4 +1,4 @@
-//! Layout feedback for gap growth (PLAN Phase 8, WIRING §Impossible
+//! Layout feedback for gap growth (WIRING §Impossible
 //! layouts): why did a wire stay impossible, and which corridors are short?
 //!
 //! After every lever has run, each reported-impossible bundle is probed —

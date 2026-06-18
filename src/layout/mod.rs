@@ -27,7 +27,7 @@ pub fn layout(program: &Program) -> Result<LaidOut, Error> {
     layout_mode(program, true)
 }
 
-/// The testing hook (PLAN Phase 8): growth disabled, so the clearance sweep
+/// The testing hook: growth disabled, so the clearance sweep
 /// measures the raw router rather than the escape hatch.
 pub fn layout_raw(program: &Program) -> Result<LaidOut, Error> {
     layout_mode(program, false)

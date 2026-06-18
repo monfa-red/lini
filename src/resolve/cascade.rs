@@ -1,4 +1,4 @@
-//! The v4 stylesheet and cascade (SPEC §4, §12).
+//! The stylesheet and cascade (SPEC §4, §12).
 //!
 //! A rule is `selector { decls }`. Selectors are CSS-shaped: a single element
 //! (`box`), a single class (`.hot`), or a whitespace-separated descendant

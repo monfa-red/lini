@@ -12,7 +12,7 @@ use crate::layout::{LaidOut, PlacedNode};
 use crate::resolve::{AttrMap, ResolvedValue, ShapeKind, VarTable};
 use std::collections::BTreeSet;
 
-/// lini attr → CSS property. v4 property names already match CSS, so this is
+/// lini attr → CSS property. lini property names already match CSS, so this is
 /// near-identity; `stroke-style` is the exception, compiling to
 /// `stroke-dasharray` (a pattern that scales with `stroke-width`), so the pair
 /// is translated together, not here.

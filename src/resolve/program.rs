@@ -1,4 +1,4 @@
-//! The v4 resolve orchestrator: variables → stylesheet → types → scene tree →
+//! The resolve orchestrator: variables → stylesheet → types → scene tree →
 //! auto-create → wires → render inputs, assembled into a [`Program`] (SPEC §17).
 //!
 //! [`lib.rs`]'s compile pipeline enters resolution here.
@@ -16,7 +16,7 @@ use crate::span::Span;
 use crate::syntax::ast::{Decl, Define, File, Node, Rule, SelPart, StyleItem};
 use std::collections::{HashMap, HashSet};
 
-/// Resolve a parsed v4 file into a [`Program`].
+/// Resolve a parsed file into a [`Program`].
 pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error> {
     // ── Variables: built-in defaults ← theme ← `--name` declarations ──
     let mut vars = defaults::built_in_defaults();
@@ -210,14 +210,14 @@ fn auto_created(index: &PathIndex, file: &File) -> Vec<Node> {
                     continue;
                 }
                 seen.insert(id.clone());
-                out.push(auto_rect(id, ep.span));
+                out.push(auto_box(id, ep.span));
             }
         }
     }
     out
 }
 
-fn auto_rect(id: &str, span: Span) -> Node {
+fn auto_box(id: &str, span: Span) -> Node {
     // No block → id-as-label gives it the id as its centred text (SPEC §3).
     Node {
         id: Some(id.to_string()),

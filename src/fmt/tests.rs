@@ -4,7 +4,7 @@ fn fmt(src: &str) -> String {
     format(src).expect("format")
 }
 
-/// fmt output must re-parse cleanly (it is valid v4).
+/// fmt output must re-parse cleanly (it is valid).
 fn reparses(src: &str) {
     let out = fmt(src);
     let toks = crate::lexer::lex(&out).expect("lex fmt output");

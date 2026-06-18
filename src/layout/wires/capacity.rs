@@ -1,9 +1,9 @@
 //! Hard capacity bookkeeping and the shared placement core.
 //!
-//! Route-time closure is judged by **simulating the assignment** (PLAN Phase
-//! 5½): the same rail packing and cluster ordinates `runs::assign` draws
-//! with decide here whether a span fits — so route time and drawing can
-//! never disagree about what fits. [`Occupancy`] holds the committed spans
+//! Route-time closure is judged by **simulating the assignment**: the same rail
+//! packing and cluster ordinates `runs::assign` draws with decide here whether a
+//! span fits — so route time and drawing can never disagree about what fits.
+//! [`Occupancy`] holds the committed spans
 //! per channel, [`Ports`] the per-`(node, side)` slots. Capacity is binary
 //! everywhere: a closed channel or full side means a detour, lanes are never
 //! squeezed (WIRING §Model step 4).
@@ -50,7 +50,7 @@ pub enum Closure {
     /// The run fits.
     Open,
     /// Closed for width alone: this many simulated rails leave the allowed
-    /// band — the lane deficit gap growth can name (PLAN Phase 8).
+    /// band — the lane deficit gap growth can name.
     Short(usize),
     /// Closed for reasons no width fixes: a deny wall, or conflicting
     /// immovable pins.

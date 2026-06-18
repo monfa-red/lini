@@ -1,6 +1,4 @@
-//! v4 parser (PLAN Phase 2) — single-pass recursive descent over the grammar in
-//! SPEC §16. Built alongside the v3 parser; Phase 3 cuts `resolve` over and
-//! removes the v3 front end.
+//! The parser — single-pass recursive descent over the grammar in SPEC §16.
 //!
 //! The three-phase order (stylesheet → instances → wires) plus "a type is
 //! defined before it is used" make one token of lookahead enough: the only
@@ -15,7 +13,7 @@ use crate::lexer::{TokKind, Token};
 use crate::span::Span;
 use std::collections::HashSet;
 
-/// Parse a v4 token stream into a [`File`].
+/// Parse a token stream into a [`File`].
 pub fn parse(tokens: &[Token]) -> Result<File, Error> {
     Parser::new(tokens).parse_file()
 }
@@ -317,9 +315,9 @@ impl<'a> Parser<'a> {
     fn parse_value(&mut self) -> Result<Value, Error> {
         // An ident may begin a call (`rgb(…)`, `repeat(…)`); handle separately.
         if matches!(self.kind(), Some(TokKind::Ident(_))) {
-            let (name, start) = self.expect_ident()?;
+            let (name, _) = self.expect_ident()?;
             return if matches!(self.kind(), Some(TokKind::LParen)) {
-                self.parse_call(name, start)
+                self.parse_call(name)
             } else {
                 Ok(Value::Ident(name))
             };
@@ -335,7 +333,7 @@ impl<'a> Parser<'a> {
         Ok(v)
     }
 
-    fn parse_call(&mut self, name: String, start: Span) -> Result<Value, Error> {
+    fn parse_call(&mut self, name: String) -> Result<Value, Error> {
         self.pos += 1; // '('
         let mut args = Vec::new();
         if !matches!(self.kind(), Some(TokKind::RParen)) {
@@ -347,12 +345,7 @@ impl<'a> Parser<'a> {
         if !self.eat(&TokKind::RParen) {
             return Err(self.err("expected ')'"));
         }
-        let end = self.last_span();
-        Ok(Value::Call(Call {
-            name,
-            args,
-            span: Span::new(start.start, end.end),
-        }))
+        Ok(Value::Call(Call { name, args }))
     }
 
     // ───────────────────────── Rules & defines ─────────────────────────
@@ -376,7 +369,6 @@ impl<'a> Parser<'a> {
             return Ok(Rule {
                 selector: Selector {
                     parts: vec![SelPart::Type("wire".into())],
-                    span,
                 },
                 decls,
                 span,
@@ -402,7 +394,7 @@ impl<'a> Parser<'a> {
         let end = self.last_span();
         let span = Span::new(start.start, end.end);
         Ok(Rule {
-            selector: Selector { parts, span },
+            selector: Selector { parts },
             decls,
             span,
         })

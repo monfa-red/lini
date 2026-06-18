@@ -168,7 +168,7 @@ pub mod testing {
 
     /// Compile `src` to a laid-out scene with `clearance` forced on every wire,
     /// overriding whatever the source set. Gap growth runs as in production —
-    /// starved corridors may widen the layout (PLAN Phase 8).
+    /// starved corridors may widen the layout.
     pub fn route_sample(src: &str, clearance: f64) -> LaidOut {
         layout::layout(&forced(src, clearance)).expect("layout")
     }

@@ -1,12 +1,11 @@
-//! v4 value resolution: map a declaration's value groups into the
+//! Value resolution: map a declaration's value groups into the
 //! layout/render [`ResolvedValue`].
 //!
-//! v4 values are space-separated scalar groups, comma-separated into a list
+//! Values are space-separated scalar groups, comma-separated into a list
 //! (SPEC §2): `at: 100 50` is one group of two, `points: 0 0, 10 10` is two
 //! groups of two. One scalar stays a scalar, a multi-scalar group becomes a
 //! `Tuple`, and several groups become a `List` of those. Layout (`as_pair`,
-//! `expand_box_value`) and render (`format_value`) read exactly that shape, so
-//! the value bridge carries straight over from v3.
+//! `expand_box_value`) and render (`format_value`) read exactly that shape.
 //!
 //! `--name` references resolve to a `LiveVar`; a layout var bakes its numeric
 //! value into the reference so it reads as a number at layout time yet still
@@ -142,7 +141,6 @@ mod tests {
             Value::Call(Call {
                 name: "repeat".into(),
                 args: vec![Value::Number(2.0)],
-                span: Span::empty(),
             }),
         ]]);
         match v {
@@ -174,7 +172,6 @@ mod tests {
         let v = resolve(&[vec![Value::Call(Call {
             name: "rgb".into(),
             args: vec![Value::Number(1.0), Value::Number(2.0), Value::Number(3.0)],
-            span: Span::empty(),
         })]]);
         match v {
             ResolvedValue::Call(c) => {

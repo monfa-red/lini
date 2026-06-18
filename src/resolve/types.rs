@@ -261,7 +261,7 @@ mod tests {
     use super::*;
     use crate::syntax::ast::{Rule, StyleItem};
 
-    /// Build a `Types` from v4 `src` and resolve `name`, threading the parsed
+    /// Build a `Types` from `src` and resolve `name`, threading the parsed
     /// file, stylesheet, and vars as locals so the borrows live long enough.
     fn resolve_result(src: &str, name: &str) -> Result<ResolvedType, Error> {
         let toks = crate::lexer::lex(src).expect("lex");

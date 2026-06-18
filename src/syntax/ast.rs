@@ -1,6 +1,4 @@
-//! v4 syntax tree (PLAN Phase 2). Produced by the v4 [`super::parser`]; consumed
-//! by `resolve` once it is cut over in Phase 3. Until then the v3 front end
-//! (`crate::ast` + `crate::parser`) still drives the pipeline.
+//! The syntax tree: produced by [`super::parser`], consumed by `resolve`.
 //!
 //! A file is three ordered parts (SPEC §1/§3): the **stylesheet** (root
 //! declarations, `--var` declarations, rules, and `name::base` defines), then
@@ -43,7 +41,6 @@ pub struct Rule {
 #[derive(Debug, Clone)]
 pub struct Selector {
     pub parts: Vec<SelPart>,
-    pub span: Span,
 }
 
 #[derive(Debug, Clone)]
@@ -154,5 +151,4 @@ pub enum Value {
 pub struct Call {
     pub name: String,
     pub args: Vec<Value>,
-    pub span: Span,
 }

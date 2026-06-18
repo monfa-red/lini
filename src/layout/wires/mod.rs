@@ -134,7 +134,7 @@ pub struct Routing {
     pub airwires: Vec<Airwire>,
     /// Corridor deficits behind the impossible wires, per container dot-path
     /// (`""` = scene): `(Δgap_y, Δgap_x)` px the container's gap is short.
-    /// Gap growth's feedback (PLAN Phase 8) — empty when nothing is starved
+    /// Gap growth's feedback — empty when nothing is starved
     /// of lanes.
     pub starved: std::collections::BTreeMap<String, (f64, f64)>,
 }

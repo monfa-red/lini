@@ -5,8 +5,8 @@ pub struct LaidOut {
     pub viewbox: ViewBox,
     pub nodes: Vec<PlacedNode>,
     pub wires: Vec<RoutedWire>,
-    /// The router's report: kept crossings (counted output) and, from Phase 5
-    /// on, the wires it could not legally draw.
+    /// The router's report: kept crossings (counted output) and the wires it
+    /// could not legally draw.
     pub wire_report: Vec<super::wires::Violation>,
     /// The impossible wires made visible (WIRING §Impossible layouts) —
     /// carried beside the wires, never as one, so the validator never sees

@@ -1,8 +1,8 @@
 //! Shared lexical primitives — the small enums the lexer produces and both the
 //! parser and the back end consume: edge [`Side`] and the wire-operator triple
-//! ([`WireOp`] / [`LineStyle`] / [`WireMarker`]). The v4 syntax tree itself
-//! lives in [`crate::syntax::ast`]; this module is just the vocabulary they
-//! share, kept here so the lexer doesn't depend on the parser.
+//! ([`WireOp`] / [`LineStyle`] / [`WireMarker`]). The syntax tree itself lives
+//! in [`crate::syntax::ast`]; this module is just the vocabulary they share,
+//! kept here so the lexer doesn't depend on the parser.
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Side {
