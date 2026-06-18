@@ -208,9 +208,10 @@ fn crossing_counts_are_pinned() {
             .filter(|v| v.rule == Rule::Crossing)
             .count()
     };
+    // Behaviour pin, not a coordinate pin — re-pinned to the v4 sample geometry.
     assert_eq!(crossings("samples/wires_simple.lini"), 0);
-    assert_eq!(crossings("samples/wires_medium.lini"), 6);
-    assert_eq!(crossings("samples/wires_hard.lini"), 3);
+    assert_eq!(crossings("samples/wires_medium.lini"), 1);
+    assert_eq!(crossings("samples/wires_hard.lini"), 5);
 }
 
 /// Law 3 (Economy), audit accept: a crossing a longer route can remove is
@@ -218,11 +219,12 @@ fn crossing_counts_are_pinned() {
 /// the engine must detour it instead and draw both.
 #[test]
 fn audit_removes_a_removable_crossing() {
-    let src = "{ |scene| layout:(3,3) gap:40\n  |wire| clearance:8 }\n\
-               north |rect| \"N\" cell:(2,1)\n\
-               south |rect| \"S\" cell:(2,3)\n\
-               west  |rect| \"W\" cell:(1,2)\n\
-               east  |rect| \"E\" cell:(3,2)\n\
+    let src = "layout: grid; columns: repeat(3); gap: 40;\n\
+               wire { clearance: 8; }\n\
+               north |rect| \"N\" { cell: 2 1; }\n\
+               south |rect| \"S\" { cell: 2 3; }\n\
+               west  |rect| \"W\" { cell: 1 2; }\n\
+               east  |rect| \"E\" { cell: 3 2; }\n\
                north -> south\n\
                west -> east\n";
     let crossings = lini::validate_str(src)
@@ -240,16 +242,17 @@ fn audit_removes_a_removable_crossing() {
 /// and the report reaches the CLI's strict gate as a diagnostic.
 #[test]
 fn a_walled_in_wire_is_reported_impossible() {
-    let src = "{ |scene| layout:(3,3) gap:10\n  |wire| clearance:16 }\n\
-               n1 |rect| size:(40,40) cell:(1,1)\n\
-               n2 |rect| size:(40,40) cell:(2,1)\n\
-               n3 |rect| size:(40,40) cell:(3,1)\n\
-               n4 |rect| size:(40,40) cell:(1,2)\n\
-               core |rect| size:(40,40) cell:(2,2)\n\
-               n5 |rect| size:(40,40) cell:(3,2)\n\
-               n6 |rect| size:(40,40) cell:(1,3)\n\
-               n7 |rect| size:(40,40) cell:(2,3)\n\
-               n8 |rect| size:(40,40) cell:(3,3)\n\
+    let src = "layout: grid; columns: repeat(3); gap: 10;\n\
+               wire { clearance: 16; }\n\
+               n1 |rect| { width: 40; height: 40; cell: 1 1; }\n\
+               n2 |rect| { width: 40; height: 40; cell: 2 1; }\n\
+               n3 |rect| { width: 40; height: 40; cell: 3 1; }\n\
+               n4 |rect| { width: 40; height: 40; cell: 1 2; }\n\
+               core |rect| { width: 40; height: 40; cell: 2 2; }\n\
+               n5 |rect| { width: 40; height: 40; cell: 3 2; }\n\
+               n6 |rect| { width: 40; height: 40; cell: 1 3; }\n\
+               n7 |rect| { width: 40; height: 40; cell: 2 3; }\n\
+               n8 |rect| { width: 40; height: 40; cell: 3 3; }\n\
                core -> n2\n";
     let impossible: Vec<_> = lini::validate_str(src)
         .expect("validate")
@@ -292,7 +295,7 @@ fn a_walled_in_wire_is_reported_impossible() {
 #[test]
 fn gap_growth_completes_a_starved_scene() {
     let src = read(std::path::Path::new("samples/wires_medium.lini"))
-        .replace("clearance:8", "clearance:12");
+        .replace("clearance: 8", "clearance: 12");
     let declared = lini::testing::declared_edges(&src);
 
     let raw = lini::testing::route_sample_raw(&src, 12.0);
@@ -325,10 +328,12 @@ fn gap_growth_completes_a_starved_scene() {
 /// for separate bodies; the walled-in fixture above covers that path.)
 #[test]
 fn gap_growth_is_bounded_where_no_gap_can_help() {
-    let src = "{ |scene| layout:row gap:40\n  |wire| clearance:16 }\n\
-               grp |group| layout:row gap:24 padding:24 {\n\
-                 aa |rect| size:(40,40)\n\
-                 bb |rect| size:(40,40)\n\
+    let src = "layout: row; gap: 40;\n\
+                 wire { clearance: 16; }\n\
+               grp |group| {\n\
+                 layout: row; gap: 24; padding: 24;\n\
+                 aa |rect| { width: 40; height: 40; }\n\
+                 bb |rect| { width: 40; height: 40; }\n\
                }\n\
                grp.left -> grp.aa.left\ngrp.left -> grp.aa.left\ngrp.left -> grp.aa.left\n";
     let raw = lini::testing::route_sample_raw(src, 16.0);
@@ -359,8 +364,9 @@ fn gap_growth_is_bounded_where_no_gap_can_help() {
 #[test]
 fn a_full_node_compacts_port_rows_rather_than_turning_wires_away() {
     let mut src = String::from(
-        "{ |scene| layout:(5,5) gap:60\n  |wire| clearance:8 }\n\
-         hub |rect| size:(40,40) cell:(3,3)\n",
+        "layout: grid; columns: repeat(5); gap: 60;\n\
+         wire { clearance: 8; }\n\
+         hub |rect| { width: 40; height: 40; cell: 3 3; }\n",
     );
     let cells: Vec<(usize, usize)> = (1..=5)
         .flat_map(|r| (1..=5).map(move |c| (c, r)))
@@ -368,7 +374,7 @@ fn a_full_node_compacts_port_rows_rather_than_turning_wires_away() {
         .take(20)
         .collect();
     for (i, (c, r)) in cells.iter().enumerate() {
-        src.push_str(&format!("s{i:02} |rect| size:(30,30) cell:({c},{r})\n"));
+        src.push_str(&format!("s{i:02} |rect| {{ width: 30; height: 30; cell: {c} {r}; }}\n"));
     }
     for i in 0..cells.len() {
         src.push_str(&format!("s{i:02} -> hub\n"));
@@ -450,7 +456,7 @@ fn the_kept_crossing_names_its_wire_pair() {
         .into_iter()
         .filter(|v| v.rule == Rule::Crossing)
         .collect();
-    assert_eq!(kept.len(), 3);
+    assert_eq!(kept.len(), 5);
     assert!(
         kept.iter().any(|v| v.wires
             == vec![
