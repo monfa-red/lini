@@ -29,7 +29,7 @@ Most diagram tools make you pick a side: **draw by hand** (precise, but tedious 
 - **Genuinely small syntax.** Five sigils, sensible defaults. `cat -> dog` is a valid diagram. You can learn the whole thing in a coffee break.
 - **Any shape you need.** 13 primitives and 7 templates out of the box — and a raw `path` primitive that accepts any SVG path string. If SVG can draw it, you can place it and wire to it.
 - **Fast, and a single file.** A 1.5 MB native binary with one runtime dependency. No Node, no JVM, no headless browser. Typical diagrams compile in **~2 ms** — process startup included.
-- **Output you can trust.** Compilation is **byte-identical across runs**, so renders diff cleanly in review and never churn in CI. 147 tests back it, including property tests that assert the router's laws on every sample.
+- **Output you can trust.** Compilation is **byte-identical across runs**, so renders diff cleanly in review and never churn in CI. 324 tests back it, including property tests that assert the router's laws on every sample.
 - **Themeable like a web page.** Colors and fonts ship as CSS variables inside an `@layer`, so a host page restyles a diagram without recompiling — or bake everything to a self-contained file for email and raster renderers.
 
 ---
@@ -64,17 +64,15 @@ fish --> bowl          // dashed
 
 <p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/flow.png" alt="Four lines of Lini rendered to four little flows" width="640"></p>
 
-**Add shape, labels, and a touch of style.** A `{ defs }` block at the top sets defaults and defines reusable styles and shapes:
+**Add shape, labels, and a touch of style.** Lini reads like CSS: a stylesheet at the top sets defaults, defines reusable classes, and extends shapes — then the instances, then the wires:
 
 ```
-{
-  |wire| stroke:#444 clearance:10
-  .loud  stroke:red thickness:2
-  |db:cyl| fill:lightyellow      // a new shape, based on the cylinder primitive
-}
+wire { stroke: #444; clearance: 10; }
+.loud { stroke: red; stroke-width: 2; }
+db::cyl { fill: lightyellow; }     // a new shape, based on the cylinder primitive
 
 api   |rect| "API"
-queue |rect| "Queue" radius:8
+queue |rect| "Queue" { radius: 8; }
 store |db|   "Postgres"
 
 api   -> queue  "enqueue"
@@ -85,13 +83,14 @@ store -.-> api  "ack"          // dotted, with an arrow
 **Lay things out.** Containers pick a layout mode; children flow, grid, or anchor:
 
 ```
-services |group| "Services" layout:row gap:24 {
+services |group| "Services" {
+  layout: row;  gap: 24;
   api  |rect| "API"
   auth |rect| "Auth"
 }
 ```
 
-`layout:row` · `layout:column` · `layout:(cols, rows)` for a grid, with `cell:`, `span:`, `at:`, and 9 inner + 8 outer anchors when you want precise placement.
+`layout: row` · `layout: column` · `layout: grid` (sized by `columns` / `rows`), with `cell:`, `span:`, `at:`, and `mount` / `side` / `align` anchors when you want precise placement.
 
 ---
 
@@ -100,13 +99,13 @@ services |group| "Services" layout:row gap:24 {
 <p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/shapes.png" alt="Lini's shape primitives, including a polygon and a raw SVG path" width="640"></p>
 
 ```
-|hex|     "hex"   size:(82, 72)
-|cyl|     "db"    size:(78, 78)
-|poly|    "poly"  points:[(0, -34), (32, 11), (20, 34), (-20, 34), (-32, 11)]
-|path|    "path"  d:"M -34 6 C -34 -34 34 -34 34 6 C 20 34 -20 34 -34 6 Z"
+|hex|  "hex"  { width: 82; height: 72; }
+|cyl|  "db"   { width: 78; height: 78; }
+|poly| "poly" { points: 0 -34, 32 11, 20 34, -20 34, -32 11; }
+|path| "path" { path: "M -34 6 C -34 -34 34 -34 34 6 C 20 34 -20 34 -34 6 Z"; }
 ```
 
-Rect, oval, hex, slant, cylinder, diamond, cloud, polygon, line, text, icon (Material Symbols), image — plus `path` for anything else. Templates (`group`, `badge`, `note`, `title`, `row`, `col`, `table`, `cell`) bundle the common patterns, and you can define your own shapes by extending any base: `|panel:group| stroke:--accent`.
+Rect, oval, hex, slant, cylinder, diamond, cloud, polygon, line, text, icon (Material Symbols), image — plus `path` for anything else. Templates (`group`, `caption`, `badge`, `note`, `row`, `column`, `table`) bundle the common patterns, and you can define your own shapes by extending any base: `panel::group { stroke: --accent; }`.
 
 ---
 
@@ -137,7 +136,7 @@ Visual defaults (colors, fonts, shadow) emit as live `var(--lini-*)` references 
 
 Geometry is always baked into the SVG, so layout never depends on the host. For non-browser renderers (resvg, librsvg) and email, `--bake-vars` inlines every variable into a self-contained file that renders identically anywhere. Every `lini-*` class is a stable styling hook, too.
 
-The default font is `sans-serif`. To make an **embedded** diagram adopt the host page's font instead, set `--lini-font: inherit` — in the diagram (`{ --font:inherit }`), via `--theme`, or from the page's own CSS.
+The default font is `sans-serif`. To make an **embedded** diagram adopt the host page's font instead, set `--lini-font-family: inherit` — in the diagram (`--font-family: inherit;` at the top), via `--theme`, or from the page's own CSS.
 
 ---
 
@@ -204,14 +203,14 @@ Parse is recursive-descent over an LL(1) grammar; resolve applies CSS-like speci
 
 ## Status
 
-**v0.1.** The language (spec v2) is stable, and the whole pipeline is implemented and tested — wires route and render, layout and theming are complete, and the formatter and dev server ship in the same binary.
+**v0.1.** The language (spec v4 — CSS-shaped syntax) is stable, and the whole pipeline is implemented and tested — wires route and render, layout and theming are complete, and the formatter and dev server ship in the same binary.
 
 **Non-goals**, by design: automatic node *placement* (you position; Lini routes), multi-file imports, animation, and manual wire waypoints. The syntax stays forward-compatible for all of these.
 
 ## Development
 
 ```bash
-cargo test                               # 147 tests
+cargo test                               # 324 tests
 cargo run -- samples/hello.lini
 cargo run -- serve samples/full_example.lini
 ```
