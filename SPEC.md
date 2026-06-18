@@ -66,7 +66,7 @@ box { radius: 6; }                              // a rule (stylesheet) — draws
 
 server |box|                                    // an instance (canvas) — id is its label
 client |box|
-server -> client { "requests" }                 // a wire, with a label
+server -> client "requests"                     // a wire, with a label
 ```
 
 ---
@@ -196,9 +196,14 @@ cycles are an error.
 Everything is optional; the type defaults to `box`. The **line is identity** —
 id, type, classes — and the **block is content + configuration**: declarations,
 then child nodes (boxes and text), then internal wires, in that order. **Text is
-a child**, so a label string comes *after* the declarations: `{ width: 60;
-"Bowl" }` is correct, while `{ "Bowl"; width: 60 }` is an error — no declaration
-may follow a child.
+a child**, so inside a block its label comes *after* the declarations: `{ width:
+60; "Bowl" }` is correct, `{ "Bowl"; width: 60 }` an error — no declaration may
+follow a child.
+
+A **block-less node may trail its label** instead of wrapping it — `api |box|
+"API"` is exactly `api |box| { "API" }`, with the strings running to the line's
+end (`a |box| "x" "y"` is two text children). Once a node opens a `{ }` block the
+label lives inside it: `api |box| "API" { fill: red }` is an error.
 
 ```
 db |cyl| .primary {
@@ -212,43 +217,45 @@ db |cyl| .primary {
 |---|---|
 | `cat` | `\|box\|`, label "cat" (the id). |
 | `cat \|treat\|` | type `treat`, label "cat". |
+| `cat \|treat\| "Friendly cat"` | trailing label "Friendly cat" (no block). |
 | `cat \|treat\| {}` | type `treat`, label "cat" (an empty `{}` changes nothing). |
-| `cat \|treat\| { "Friendly cat" }` | type `treat`, label "Friendly cat". |
-| `cat \|box\| { "" }` | box, **no** label. |
+| `cat \|treat\| { "Friendly cat" }` | same label, the explicit block form. |
+| `cat \|box\| ""` | box, **no** label. |
 | `cat .bold .loud { padding: 5; }` | type + classes + own declarations. |
 | `garden \|group\| { … }` | container with a body. |
-| `\|box\|` | anonymous box (can't be wired to). |
+| `\|box\| "Load balancer"` | anonymous labelled box (can't be wired to). |
 
 ### id-as-label
 
-A box's text is its **id** unless its block supplies a string:
+A box's text is its **id** unless it is given a string (trailing or in the block):
 
-| Block | Label |
+| Label | Means |
 |---|---|
-| no block, or a block with **no string** | the id (`cat` → "cat"; `cat |box| { fill: red }` → still "cat") |
-| `{ "X" }` | "X" |
-| `{ "" }` | empty (suppressed) |
+| no string at all | the id (`cat` → "cat"; `cat |box| { fill: red }` → still "cat") |
+| `"X"` or `{ "X" }` | "X" — the trailing and block forms are identical |
+| `""` or `{ "" }` | empty: suppressed in flow, an empty cell in a grid ([§5](#5-layout)) |
 
-So styling never costs you the label — only an explicit string in the block
-overrides it. A box with a multi-word label uses the block: `lb |box| { "Load
-balancer" }`. An *anonymous* labelled box needs no id: `|box| { "Load balancer"
-}`.
+So styling never costs you the label — only an explicit string overrides it. A
+multi-word label needs no block: `lb |box| "Load balancer"`; an *anonymous*
+labelled box needs no id either: `|box| "Load balancer"`.
 
 ### Text content
 
 A string is a **text node**:
 
-- Inside a box's block, it is that box's text — centred when it is the only
-  in-flow child, otherwise a flow child like any other (laid out by the box's
-  `layout`).
-- On its own, it is a free-standing flow / canvas text node.
-- Several strings are several text nodes — `"a" "b" "c"` is three, whether on one
-  line or three (a string is self-delimiting, so no `;` is needed between them).
+- In a box's block (or trailing a block-less box) it is that box's text — centred
+  when it is the only in-flow child, else a flow child like any other (laid out
+  by the box's `layout`).
+- On its own it is a free-standing flow / canvas text node.
+- Several strings are several text nodes — `"a" "b" "c"` is three, on one line or
+  three (a string is self-delimiting, so no `;` is needed between them).
+- An empty `""` is suppressed (adds no text) — except as a **grid cell**, where
+  it is a real empty cell that holds its track ([§5](#5-layout)).
 - Multi-line text uses `\n`; the box sizes to the widest line, spacing is
   `font-size × line-height`.
 
 A string carries **no block** — text is content, not a box. To style or position
-it, wrap it in a box (`|plain| { "X"; … }`) and set the property on the box;
+it, wrap it in a box (`|plain| { color: red; "X" }`) and set the property there;
 text properties then inherit down ([§10](#10-properties)).
 
 ### Implicit nodes
@@ -367,7 +374,9 @@ tracks; `repeat(N, 80)` = N tracks of 80). The count comes from the list length.
 **Auto-flow.** Children without `cell:` flow into the tracks left-to-right,
 wrapping at the column count; a `cell:` pins one explicitly and the rest flow
 around it. Bare-text cells (a table) are pure auto-flow — `cell:` / `span:`
-apply to **box** children only (a text node has no block to carry them).
+apply to **box** children only (a text node has no block to carry them). A grid
+is positional, so an empty `""` cell is **kept** — it holds its track and keeps
+the cells after it aligned (in flow, by contrast, an empty `""` is dropped).
 
 `columns`/`rows`/`cell`/`span` are valid only on a grid (`layout: grid` or
 `|table|`); using them elsewhere is an error.
@@ -518,7 +527,7 @@ equal dimensions (or an empty `|oval|`) make a circle.
 | `\|poly\|` | `points` | ≥3 points, local (center-origin) coords. Closed. |
 | `\|path\|` | `path` | Raw SVG path. **Native top-left coords.** |
 | `\|line\|` | `points` | 2+ points. Markers via `marker*:`. |
-| `\|icon\|` | label (glyph name) | Material Symbols; the glyph name is the label (`\|icon\| { "home" }`). `icon-variant`, size via `width`/`height`. |
+| `\|icon\|` | label (glyph name) | Material Symbols; the glyph name is the label (`\|icon\| "home"`). `icon-variant`, size via `width`/`height`. |
 | `\|image\|` | `src`, `width`, `height` | `<image href="…">`. External URLs only; both dimensions required. |
 
 ### Visual modifiers (closed shapes)
@@ -568,10 +577,10 @@ footer with `side: bottom`:
 
 ```
 panel |group| {
-  |caption| { "Settings" }
+  |caption| "Settings"
   |caption| { side: bottom; "v2.1" }
-  a |box| { "General" }
-  b |box| { "Network" }
+  a |box| "General"
+  b |box| "Network"
 }
 ```
 
@@ -676,8 +685,12 @@ grid's:
 |---|---|
 | `along` | A list of `0..1` fractions along the whole drawn route, one per label (`along: 0.2 0.5 0.8`). Omitted → auto-distribute across the hops, so one label avoids junctions and several spread out. |
 
+Like a box, a **block-less wire may trail its labels** — `a -> b "watches"` is
+`a -> b { "watches" }`, and the strings run to the line's end (`a -> b "x" "y"`).
+Reach for the block only to pin them with `along:` or to style one (below):
+
 ```
-a -> b { "watches" }                       // auto-placed
+a -> b "watches"                           // trailing, auto-placed
 a -> b { along: 0.3 0.7; "near a" "near b" }
 ```
 
@@ -724,14 +737,14 @@ instance — the same sealed-body rule. From outside, the dot-path navigates in:
 ```
 room::group {
   layout: column;  gap: 10;
-  inlet  |box| { "Inlet" }
-  outlet |box| { "Outlet" }
-  inlet -> outlet { "flows" }
+  inlet  |box| "Inlet"
+  outlet |box| "Outlet"
+  inlet -> outlet "flows"
 }
 
-garden  |room| { "Garden" }
-kitchen |room| { "Kitchen" }
-garden.outlet -> kitchen.inlet { "carries" }
+garden  |room| "Garden"
+kitchen |room| "Kitchen"
+garden.outlet -> kitchen.inlet "carries"
 ```
 
 ### Routing
@@ -1033,15 +1046,16 @@ local live-reloading preview (default port 7700).
 
 **`lini fmt`** reformats to canonical style — 2-space indent, `key: value;`
 declarations grouped on one line, a declarations-only block collapsed onto its
-opening line when it fits, one child node per line, table cells padded into
-aligned columns, comments and blank lines preserved. `--check` exits 1 if it would change anything; `--stdout`
+opening line when it fits, a lone label trailing the head (`api |box| "API"`),
+one child node per line, table cells padded into aligned columns, comments and
+blank lines preserved. `--check` exits 1 if it would change anything; `--stdout`
 writes instead of rewriting.
 
-**`lini desugar`** prints the file with its sugar expanded — an id-as-label box
-gains its explicit `{ "id" }` text, and a wire's auto-distributed labels gain
-their explicit `along:` — while types, variables, and properties stay as written.
-A teaching/debugging view; prints to stdout, never rewrites, comments not
-preserved.
+**`lini desugar`** prints the file with its sugar expanded — an id-as-label or
+trailing label gains its explicit `{ "…" }` block, and a wire's auto-distributed
+labels gain their explicit `along:` — while types, variables, and properties stay
+as written. A teaching/debugging view; prints to stdout, never rewrites, comments
+not preserved.
 
 Exit codes: 0 success · 1 parse/resolution error or `--check` reformat needed · 2
 I/O · 3 invalid CLI.
@@ -1077,6 +1091,7 @@ Format: `filename:line:col: error: <message>` (LSP-compatible).
 | Single-quoted string | `single quotes are not strings — use "…"` |
 | Bare `side:` without `mount:` | `'side' needs a 'mount:' (in / out / on)` |
 | Declaration after a child | `declarations must come before children in a block` |
+| Trailing label and a block | `a label is the trailing string or the block, not both` |
 
 ---
 
@@ -1095,12 +1110,12 @@ wire_rule   = "->" block                           # wire defaults — the wire 
 define      = ident "::" ident block               # name :: base
 
 node        = box | text
-box         = [ ident ] [ "|" ident "|" ] { "." ident } [ block ]
-                                                   # ≥1 of id / |type| / block
+box         = [ ident ] [ "|" ident "|" ] { "." ident } [ string { string } | block ]
+                                                   # ≥1 of id / |type| / label / block; trailing labels XOR a block
 text        = string                               # bare content; never a wrapped box
 
 wire        = endpoints wire_op endpoints { wire_op endpoints }
-              { "." ident } [ wire_block ]
+              { "." ident } [ string { string } | wire_block ]
 selector    = sel_part { sel_part }                # whitespace-separated = descendant
 sel_part    = ident | "." ident
 endpoints   = endpoint { "&" endpoint }
@@ -1135,8 +1150,9 @@ lookahead enough. Leading tokens decide every form: `--name :` → variable;
 idents → descendant rule; a leading `->` then `{` → the wire-defaults rule; a
 `string` → a text node; `|type|` → a box; an `ident` followed by a wire-op / `&`
 / glued `.side` → wire. A `string` is self-delimiting, so consecutive strings are
-consecutive text nodes with no separator. The lone `ident { … }` is a **rule**
-when `ident` is a known type (built-in or already-defined) and a **box**
+consecutive text nodes with no separator; strings *trailing a box or wire head*
+are instead that node's labels, to the line's end. The lone `ident { … }` is a
+**rule** when `ident` is a known type (built-in or already-defined) and a **box**
 otherwise — and because types are defined first, the type set is always complete
 at that point. No prescan, no second pass.
 
@@ -1253,31 +1269,31 @@ alert::oval  { stroke: red; width: 36; height: 36; }   // a circle
 
 room::group {
   layout: column;  gap: 8;
-  inlet  |box| { "Inlet" }
-  outlet |box| { "Outlet" }
-  inlet -> outlet { "flows" }
+  inlet  |box| "Inlet"
+  outlet |box| "Outlet"
+  inlet -> outlet "flows"
 }
 
 cat |oval| { cell: 1 1; "Cat — patient hunter" }
 
 kitchen |group| {
   cell: 2 1;  layout: column;  gap: 20;
-  |caption| { "Kitchen" }
+  |caption| "Kitchen"
   counter |group| {
     layout: row;  gap: 10;
-    |caption| { "Counter" }
-    bowl  |treat| { "Bowl of oats" }
-    water |nest|  { "Water" }
+    |caption| "Counter"
+    bowl  |treat| "Bowl of oats"
+    water |nest|  "Water"
   }
 }
 
 garden |group| {
   cell: 3 1;  layout: column;  gap: 20;
-  |caption| { "Garden" }
+  |caption| "Garden"
   den |group| {
     layout: row;  gap: 15;
-    |caption| { "Den" }
-    rabbit |alert| { |badge| { "FAST" } }
+    |caption| "Den"
+    rabbit |alert| { |badge| "FAST" }
     carrot |box|   { stack: 4; width: 80; height: 40; fill: white; "Carrot patch" }
   }
 }
@@ -1288,8 +1304,8 @@ fridge |room| { cell: 2 2; "Fridge" }
 // wires — full paths from the wire's scope (here: the root)
 cat.right -> kitchen.counter.bowl.left -> kitchen.counter.water
 kitchen.counter.water -> garden.den.rabbit -> garden.den.carrot .loud
-cat <-> kitchen { "watches" }
-closet.outlet -> fridge.inlet { "restocks" }
+cat <-> kitchen "watches"
+closet.outlet -> fridge.inlet "restocks"
 ```
 
 ### Table + dimension line
