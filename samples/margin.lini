@@ -1,22 +1,26 @@
 // margin: signed outer spacing on a child — grows or tightens the parent.
 
-layout: row;  gap: 40;  padding: 20;  align: start;
+layout: row; gap: 40; padding: 20; align: start;
 
 loose |group| "Default" {
-  layout: column;  gap: 24;
+  layout: column; gap: 24;
   a |rect| "Row A"
   b |rect| "Row B"
 }
 
 tight |group| {
-  layout: column;  gap: 24;
-  |text| "Tight" { mount: in; margin: -6 0 -14 0; }
+  layout: column; gap: 24;
+    |text| "Tight" {
+    mount: in; margin: -6 0 -14 0;
+  }
   a |rect| "Row A"
   b |rect| "Row B"
 }
 
 packed |group| "Packed" {
-  layout: column;  gap: 24;
-  a |rect| "Row A" { margin: 0 0 -16 0; }
+  layout: column; gap: 24;
+  a |rect| "Row A" {
+    margin: 0 0 -16 0;
+  }
   b |rect| "Row B"
 }

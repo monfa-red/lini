@@ -1,10 +1,10 @@
 // Every built-in template: group, badge, note, row, column, table.
 
-layout: column;  gap: 24;  padding: 20;
+layout: column; gap: 24; padding: 20;
 
 frame |group| "Group" {
-  layout: row;  gap: 16;
-  |row| {
+  layout: row; gap: 16;
+  |row|    {
     a |rect| "a"
     b |rect| "b"
   }
@@ -17,10 +17,10 @@ frame |group| "Group" {
 band |row| {
   gap: 24;
   svc |rect| "Service" {
-    width: 140;  height: 64;
+    width: 140; height: 64;
     |badge| "NEW"
   }
-  |note| "Sticky note"
+      |note| "Sticky note"
 }
 
 basket |table| {

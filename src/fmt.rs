@@ -64,10 +64,31 @@ impl Emitter<'_> {
     fn emit_file(&mut self, file: &File, src_len: usize) {
         let mut phases_emitted = 0;
         if !file.stylesheet.is_empty() {
-            for item in &file.stylesheet {
-                self.emit_trivia_before(style_item_span(item).start, 0);
-                self.emit_style_item(item, 0);
-                self.cursor = style_item_span(item).end;
+            // Root config declarations group on one line like a block's, the same
+            // CSS-shaped style (SPEC §20); rules, defines, and `--var`s each take
+            // their own line.
+            let items = &file.stylesheet;
+            let mut i = 0;
+            while i < items.len() {
+                if matches!(items[i], StyleItem::RootDecl(_)) {
+                    let start = i;
+                    while i < items.len() && matches!(items[i], StyleItem::RootDecl(_)) {
+                        i += 1;
+                    }
+                    let run: Vec<&Decl> = items[start..i]
+                        .iter()
+                        .map(|it| match it {
+                            StyleItem::RootDecl(d) => d,
+                            _ => unreachable!(),
+                        })
+                        .collect();
+                    self.emit_grouped_decls(&run, 0);
+                } else {
+                    self.emit_trivia_before(style_item_span(&items[i]).start, 0);
+                    self.emit_style_item(&items[i], 0);
+                    self.cursor = style_item_span(&items[i]).end;
+                    i += 1;
+                }
             }
             phases_emitted += 1;
         }
@@ -216,6 +237,36 @@ impl Emitter<'_> {
         }
     }
 
+    /// Emit a run of declarations grouped onto as few lines as the source's
+    /// trivia allows (SPEC §20): consecutive decls with nothing between them
+    /// share one line (`cell: 1 2; layout: column; gap: 16;`), and a comment or
+    /// blank line starts a fresh one. They never share the opening brace's line.
+    fn emit_grouped_decls(&mut self, decls: &[&Decl], depth: usize) {
+        let mut mid_line = false;
+        for d in decls {
+            if mid_line && self.has_trivia_between(self.cursor, d.span.start) {
+                self.out.push('\n');
+                mid_line = false;
+            }
+            self.emit_trivia_before(d.span.start, depth);
+            if mid_line {
+                self.out.push(' ');
+            } else {
+                self.indent(depth);
+            }
+            self.emit_decl(d, false);
+            self.cursor = d.span.end;
+            mid_line = true;
+        }
+        if mid_line {
+            self.out.push('\n');
+        }
+    }
+
+    fn has_trivia_between(&self, start: usize, end: usize) -> bool {
+        self.trivia.iter().any(|t| t.pos >= start && t.pos < end)
+    }
+
     fn emit_block(&mut self, block: &Block, end: usize, depth: usize) {
         let empty = block.decls.is_empty() && block.nodes.is_empty() && block.wires.is_empty();
         if empty && !self.has_comment_in(self.cursor, end) {
@@ -224,13 +275,8 @@ impl Emitter<'_> {
             return;
         }
         self.out.push_str(" {\n");
-        for d in &block.decls {
-            self.emit_trivia_before(d.span.start, depth + 1);
-            self.indent(depth + 1);
-            self.emit_decl(d, false);
-            self.out.push('\n');
-            self.cursor = d.span.end;
-        }
+        let decls: Vec<&Decl> = block.decls.iter().collect();
+        self.emit_grouped_decls(&decls, depth + 1);
         self.emit_nodes(&block.nodes, depth + 1);
         for wire in &block.wires {
             self.emit_trivia_before(wire.span.start, depth + 1);
@@ -251,13 +297,8 @@ impl Emitter<'_> {
             return;
         }
         self.out.push_str(" {\n");
-        for d in decls {
-            self.emit_trivia_before(d.span.start, depth + 1);
-            self.indent(depth + 1);
-            self.emit_decl(d, false);
-            self.out.push('\n');
-            self.cursor = d.span.end;
-        }
+        let refs: Vec<&Decl> = decls.iter().collect();
+        self.emit_grouped_decls(&refs, depth + 1);
         self.emit_trivia_before(end, depth + 1);
         self.indent(depth);
         self.out.push('}');
@@ -309,13 +350,8 @@ impl Emitter<'_> {
             return;
         }
         self.out.push_str(" {\n");
-        for d in &block.decls {
-            self.emit_trivia_before(d.span.start, depth + 1);
-            self.indent(depth + 1);
-            self.emit_decl(d, false);
-            self.out.push('\n');
-            self.cursor = d.span.end;
-        }
+        let decls: Vec<&Decl> = block.decls.iter().collect();
+        self.emit_grouped_decls(&decls, depth + 1);
         for t in &block.texts {
             self.emit_trivia_before(t.span.start, depth + 1);
             self.indent(depth + 1);

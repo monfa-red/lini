@@ -1,25 +1,27 @@
 // A small web service — a realistic architecture, top to bottom.
 
-layout: column;  gap: 40;  padding: 24;
-wire { stroke: #666; clearance: 10; }
+layout: column; gap: 40; padding: 24;
+wire {
+  stroke: #666; clearance: 10;
+}
 --accent: #0a84ff;
 
 browser |rect| "Browser"
 
 edge |group| "Edge" {
-  layout: row;  gap: 24;
+  layout: row; gap: 24;
   cdn |rect| "CDN"
   lb  |rect| "Load balancer"
 }
 
 services |group| "Services" {
-  layout: row;  gap: 24;
+  layout: row; gap: 24;
   api  |rect| "API"
   auth |rect| "Auth"
 }
 
 data |group| "Data" {
-  layout: row;  gap: 24;
+  layout: row; gap: 24;
   cache |cyl| "Redis"
   db    |cyl| "Postgres"
 }

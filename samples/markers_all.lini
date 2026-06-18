@@ -1,10 +1,22 @@
 // Every marker type on |line| (SPEC §7).
 
-layout: column;  gap: 20;  padding: 20;
+layout: column; gap: 20; padding: 20;
 
-|line| { points: -60 0, 60 0; marker-end: arrow; }
-|line| { points: -60 0, 60 0; marker: arrow; }
-|line| { points: -60 0, 60 0; marker-start: dot; marker-end: dot; }
-|line| { points: -60 0, 60 0; marker-end: diamond; }
-|line| { points: -60 0, 60 0; marker-end: crow; }
-|line| { points: -60 0, 60 0; marker: arrow; marker-end: dot; }
+|line| {
+  points: -60 0, 60 0; marker-end: arrow;
+}
+|line| {
+  points: -60 0, 60 0; marker: arrow;
+}
+|line| {
+  points: -60 0, 60 0; marker-start: dot; marker-end: dot;
+}
+|line| {
+  points: -60 0, 60 0; marker-end: diamond;
+}
+|line| {
+  points: -60 0, 60 0; marker-end: crow;
+}
+|line| {
+  points: -60 0, 60 0; marker: arrow; marker-end: dot;
+}

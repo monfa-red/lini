@@ -1,18 +1,20 @@
 // A group's positional labels desugar by position (SPEC §8): 1st a top caption,
 // 2nd a bottom footer, the rest centred. link: wraps a shape in <a href>.
 
-layout: row;  gap: 32;  padding: 20;  align: start;
+layout: row; gap: 32; padding: 20; align: start;
 
 card |group| "Profile" {
-  layout: column;  gap: 10;
+  layout: column; gap: 10;
   name |rect| "Ada Lovelace"
   role |rect| "Engineer"
 }
 
 panel |group| "Sales" "Q3 2026" {
-  layout: column;  gap: 10;
+  layout: column; gap: 10;
   a |rect| "Plan"
   b |rect| "Actual"
 }
 
-docs |rect| "Docs" { link: "https://example.com"; width: 120; height: 48; }
+docs |rect| "Docs" {
+  link: "https://example.com"; width: 120; height: 48;
+}

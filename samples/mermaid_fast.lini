@@ -1,8 +1,12 @@
 // Mermaid-fast: implicit |rect|s, auto-created endpoints, all line styles.
 
-layout: row;  gap: 40;
+layout: row; gap: 40;
 
-cat -> dog -> bird           // 3 implicit rects, 2 wires
-fox & owl -> mouse           // fan-in
-frog ~> pond                 // wavy
-fish --> bowl                // dashed arrow
+cat -> dog -> bird
+// 3 implicit rects, 2 wires
+fox & owl -> mouse
+// fan-in
+frog ~> pond
+// wavy
+fish --> bowl
+// dashed arrow

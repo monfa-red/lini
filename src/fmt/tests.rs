@@ -70,7 +70,24 @@ fn multi_group_value_list() {
 fn function_value() {
     assert_eq!(
         fmt("layout:grid\ncolumns:repeat(3)\n"),
-        "layout: grid;\ncolumns: repeat(3);\n"
+        "layout: grid; columns: repeat(3);\n"
+    );
+}
+
+#[test]
+fn block_declarations_group_on_one_line() {
+    // SPEC §20: leading config decls share a line, off the opening brace.
+    assert_eq!(
+        fmt("g |group| { cell: 1 2; layout: column; gap: 16;\n  a |rect|\n}\n"),
+        "g |group| {\n  cell: 1 2; layout: column; gap: 16;\n  a |rect|\n}\n"
+    );
+}
+
+#[test]
+fn a_comment_breaks_a_declaration_group() {
+    assert_eq!(
+        fmt("g |group| {\n  layout: row;\n  // note\n  gap: 10;\n  a |rect|\n}\n"),
+        "g |group| {\n  layout: row;\n  // note\n  gap: 10;\n  a |rect|\n}\n"
     );
 }
 

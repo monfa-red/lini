@@ -4,19 +4,31 @@
 //   clear shot · duplicate rails · a detour around a node · a fan trunk
 //   a self-loop · a bidirectional wire · labels and markers
 
-layout: row;  gap: 50;
-wire { clearance: 10; }
+layout: row; gap: 50;
+wire {
+  clearance: 10;
+}
 
-ant  |rect| "Ant" { width: 60; height: 60; }
-wall |rect| "Wall" { width: 60; height: 140; }
+ant  |rect| "Ant" {
+  width: 60; height: 60;
+}
+wall |rect| "Wall" {
+  width: 60; height: 140;
+}
 bee  |rect| "Bee"
 owl  |oval| "Owl"
 
-ant -> bee "over"      // detours around Wall
-ant -> ant             // self-loop: out one side, back an adjacent one
-bee -> owl             // clear shot
-bee -> owl             // duplicate: adjacent parallel rail
-ant -> wall & owl {    // fan: shared port and stub, trunk, split
+ant -> bee "over"
+// detours around Wall
+ant -> ant
+// self-loop: out one side, back an adjacent one
+bee -> owl
+// clear shot
+bee -> owl
+// duplicate: adjacent parallel rail
+ant -> wall & owl {
+  // fan: shared port and stub, trunk, split
   |text| "fan" { at: 0.2; font-size: 9; offset: 0 -7; }
 }
-bee <-> ant "chat"     // bidirectional, also detours around Wall
+bee <-> ant "chat"
+// bidirectional, also detours around Wall

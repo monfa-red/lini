@@ -4,14 +4,32 @@
 padding: 40;
 
 box |rect| {
-  width: 240;  height: 150;  fill: #eee;
-  |text| "C"  { at: 0 0; fill: green; }
-  |text| "T<" { side: top; align: start; mount: on; fill: red; }
-  |text| "T"  { side: top; mount: on; fill: red; }
-  |text| "T>" { side: top; align: end; mount: on; fill: red; }
-  |text| "L"  { side: left; mount: on; fill: red; }
-  |text| "R"  { side: right; mount: on; fill: red; }
-  |text| "BL" { side: bottom; align: start; mount: on; fill: blue; }
-  |text| "B"  { side: bottom; mount: on; fill: blue; }
-  |text| "BR" { side: bottom; align: end; mount: on; fill: blue; }
+  width: 240; height: 150; fill: #eee;
+  |text| "C" {
+    at: 0 0; fill: green;
+  }
+  |text| "T<" {
+    side: top; align: start; mount: on; fill: red;
+  }
+  |text| "T" {
+    side: top; mount: on; fill: red;
+  }
+  |text| "T>" {
+    side: top; align: end; mount: on; fill: red;
+  }
+  |text| "L" {
+    side: left; mount: on; fill: red;
+  }
+  |text| "R" {
+    side: right; mount: on; fill: red;
+  }
+  |text| "BL" {
+    side: bottom; align: start; mount: on; fill: blue;
+  }
+  |text| "B" {
+    side: bottom; mount: on; fill: blue;
+  }
+  |text| "BR" {
+    side: bottom; align: end; mount: on; fill: blue;
+  }
 }

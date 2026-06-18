@@ -1,27 +1,39 @@
 // The realistic scene — a mid-size diagram with groups, exercising every
 // common wiring pattern at once.
 
-layout: row;  gap: 40;
-wire { clearance: 8; }
+layout: row; gap: 40;
+wire {
+  clearance: 8;
+}
 
-.loud { stroke: red; stroke-width: 2; }
-.quiet { stroke: blue; }
-.happy { stroke: green; }
+.loud {
+  stroke: red; stroke-width: 2;
+}
+.quiet {
+  stroke: blue;
+}
+.happy {
+  stroke: green;
+}
 
-treat::rect { radius: 4; }
+treat::rect {
+  radius: 4;
+}
 
 cat |oval| "Cat"
 
 kitchen |group| {
   layout: column;
-  |text| "Kitchen"
+        |text|  "Kitchen"
   bowl  |treat| "Bowl"
   water |treat| "Water"
 }
 
 garden |group| {
-  layout: column;  padding: 16;  gap: 24;
-  |text| "Garden" { mount: in; margin: 0 0 -20 0; }
+  layout: column; padding: 16; gap: 24;
+       |text|  "Garden" {
+    mount: in; margin: 0 0 -20 0;
+  }
   dog  |treat| "Dog"
   bird |treat| "Bird"
 }

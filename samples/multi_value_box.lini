@@ -1,14 +1,28 @@
 // Padding / gap accept 1-, 2-, or 4-value forms (SPEC §5/§10).
 
-layout: column;  gap: 12;  padding: 4 8;
+layout: column; gap: 12; padding: 4 8;
 
-|rect| "scalar padding"  { width: 200; height: 30; }
-|rect| "v h padding"     { width: 200; height: 30; padding: 4 12; }
-|rect| "t r b l padding" { width: 200; height: 30; padding: 2 8 16 24; }
-|rect| "radius 8"        { width: 200; height: 30; radius: 8; }
+      |rect|  "scalar padding" {
+  width: 200; height: 30;
+}
+      |rect|  "v h padding" {
+  width: 200; height: 30; padding: 4 12;
+}
+      |rect|  "t r b l padding" {
+  width: 200; height: 30; padding: 2 8 16 24;
+}
+      |rect|  "radius 8" {
+  width: 200; height: 30; radius: 8;
+}
 inner |group| "gap demo" {
-  layout: column;  gap: 4 8;  padding: 2 8 16 24;
-  |rect| { width: 80; height: 20; }
-  |rect| { width: 80; height: 20; }
-  |rect| { width: 80; height: 20; }
+  layout: column; gap: 4 8; padding: 2 8 16 24;
+  |rect| {
+    width: 80; height: 20;
+  }
+  |rect| {
+    width: 80; height: 20;
+  }
+  |rect| {
+    width: 80; height: 20;
+  }
 }
