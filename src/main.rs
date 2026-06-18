@@ -38,8 +38,8 @@ struct Cli {
     #[arg(long = "check")]
     check: bool,
 
-    /// CSS file with `--lini-*` overrides. Applied before the `defaults {}`
-    /// block; layout vars from the theme bake into the layout.
+    /// CSS file with `--lini-*` overrides. Applied over the built-in defaults;
+    /// layout vars from the theme bake into the layout.
     #[arg(long = "theme", value_name = "FILE")]
     theme: Option<PathBuf>,
 
@@ -47,7 +47,7 @@ struct Cli {
     #[arg(long = "watch", requires = "output")]
     watch: bool,
 
-    /// Suppress lint warnings (e.g. visual-attr-inline).
+    /// Suppress lint warnings.
     #[arg(long = "no-warn", conflicts_with = "strict")]
     no_warn: bool,
 
