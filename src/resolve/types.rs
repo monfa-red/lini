@@ -39,6 +39,12 @@ pub fn is_template(name: &str) -> bool {
     TEMPLATES.iter().any(|(n, _)| *n == name)
 }
 
+/// The base type a built-in template builds on (`table` → `group`, `group` →
+/// `rect`, …); `None` for a primitive or a non-template.
+pub(crate) fn template_base(name: &str) -> Option<&'static str> {
+    TEMPLATES.iter().find(|(n, _)| *n == name).map(|(_, b)| *b)
+}
+
 /// A user define, resolved: its base, its own default declarations, and its
 /// intrinsic body (child nodes + internal wires, materialised per instance).
 struct DefineEntry {

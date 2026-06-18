@@ -18,3 +18,32 @@ mod wires;
 
 pub use ir::*;
 pub use program::resolve as resolve_with_theme;
+
+use crate::syntax::ast::{File, StyleItem};
+use std::collections::HashMap;
+
+/// Whether `ty` derives from the built-in `group` (SPEC §8). A group's positional
+/// labels desugar to `|caption|` children, every other type's to plain `|text|`,
+/// so `desugar` walks the template / `name::base` define chain to tell them
+/// apart. Bounded by the inheritance-depth ceiling, so a cyclic define can't loop.
+pub fn derives_from_group(ty: &str, file: &File) -> bool {
+    let defines: HashMap<&str, &str> = file
+        .stylesheet
+        .iter()
+        .filter_map(|it| match it {
+            StyleItem::Define(d) => Some((d.name.as_str(), d.base.as_str())),
+            _ => None,
+        })
+        .collect();
+    let mut name = ty.to_string();
+    for _ in 0..=16 {
+        if name == "group" {
+            return true;
+        }
+        match types::template_base(&name).or_else(|| defines.get(name.as_str()).copied()) {
+            Some(base) => name = base.to_string(),
+            None => return false,
+        }
+    }
+    false
+}

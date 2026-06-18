@@ -29,6 +29,7 @@ pub fn format(src: &str) -> Result<String, Error> {
         trivia: &trivia,
         cursor: 0,
         out: &mut out,
+        align: true,
     }
     .emit_file(&file, src.len());
     Ok(out)
@@ -37,15 +38,13 @@ pub fn format(src: &str) -> Result<String, Error> {
 /// Emit an AST with no source to draw trivia from — for a synthesized `File`
 /// (the desugar pass), whose nodes carry no real spans. Same emitter, empty
 /// trivia: clean output, comments dropped.
-// Idle while `desugar_source` is stubbed; revived when desugar moves to the v4
-// front end (PLAN Phase 7).
-#[allow(dead_code)]
 pub(crate) fn print_file(file: &File) -> String {
     let mut out = String::new();
     Emitter {
         trivia: &[],
         cursor: 0,
         out: &mut out,
+        align: false,
     }
     .emit_file(file, 0);
     out
@@ -55,6 +54,10 @@ struct Emitter<'a> {
     trivia: &'a [TriviaToken],
     cursor: usize,
     out: &'a mut String,
+    /// Column-align sibling id/type columns. On for canonical `fmt`; off for
+    /// `print_file` (synthesized ASTs, where mixing anonymous sugar children
+    /// with named nodes would pad oddly).
+    align: bool,
 }
 
 impl Emitter<'_> {
@@ -152,7 +155,11 @@ impl Emitter<'_> {
     // ───────── Instances ─────────
 
     fn emit_nodes(&mut self, nodes: &[Node], depth: usize) {
-        let widths = align::node_widths(nodes, self.trivia);
+        let widths = if self.align {
+            align::node_widths(nodes, self.trivia)
+        } else {
+            vec![align::NodeWidths::default(); nodes.len()]
+        };
         for (i, n) in nodes.iter().enumerate() {
             self.emit_trivia_before(n.span.start, depth);
             self.emit_node(n, depth, widths[i]);
@@ -163,47 +170,49 @@ impl Emitter<'_> {
 
     fn emit_node(&mut self, node: &Node, depth: usize, w: align::NodeWidths) {
         self.indent(depth);
-        // id column
-        match &node.id {
-            Some(id) => {
-                self.out.push_str(id);
-                pad(self.out, w.id.saturating_sub(id.len()));
-            }
-            None => pad(self.out, w.id),
+        // Head tokens — `id |type| "labels" .classes` — each separated from the
+        // last by one space, with the alignment widths padding the id/type
+        // columns out to the group's max. `wrote` tracks whether any token (or a
+        // reserved-but-empty column) precedes, so the separator never leads.
+        let mut wrote = false;
+        if let Some(id) = &node.id {
+            self.out.push_str(id);
+            pad(self.out, w.id.saturating_sub(id.len()));
+            wrote = true;
+        } else if w.id > 0 {
+            pad(self.out, w.id);
+            wrote = true;
         }
-        if w.id > 0 {
-            self.out.push(' ');
-        }
-        // type column
-        let ty = node.ty.as_ref().map(|t| format!("|{}|", t));
-        match &ty {
-            Some(t) => {
-                self.out.push_str(t);
-                pad(self.out, w.ty.saturating_sub(t.len()));
-            }
-            None => pad(self.out, w.ty),
-        }
-        let mut need_space = w.ty > 0 || ty.is_some();
-        if w.id == 0 && node.id.is_none() && ty.is_none() {
-            need_space = false;
+        if let Some(ty) = &node.ty {
+            self.space_if(wrote);
+            let t = format!("|{}|", ty);
+            self.out.push_str(&t);
+            pad(self.out, w.ty.saturating_sub(t.len()));
+            wrote = true;
+        } else if w.ty > 0 {
+            self.space_if(wrote);
+            pad(self.out, w.ty);
+            wrote = true;
         }
         for label in &node.labels {
-            if need_space {
-                self.out.push(' ');
-            }
+            self.space_if(wrote);
             self.emit_string(label);
-            need_space = true;
+            wrote = true;
         }
         for class in &node.classes {
-            if need_space {
-                self.out.push(' ');
-            }
+            self.space_if(wrote);
             self.out.push('.');
             self.out.push_str(class);
-            need_space = true;
+            wrote = true;
         }
         if let Some(block) = &node.block {
             self.emit_block(block, node.span.end, depth);
+        }
+    }
+
+    fn space_if(&mut self, cond: bool) {
+        if cond {
+            self.out.push(' ');
         }
     }
 
