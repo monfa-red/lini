@@ -71,24 +71,17 @@ pub fn lay_out_grid(
         });
     }
 
-    let rows = match &row_tracks {
-        Some(tracks) => {
-            if grid.rows() > tracks.len() {
-                return Err(Error::at(
-                    span,
-                    format!("cell row {} exceeds rows={}", grid.rows(), tracks.len()),
-                ));
-            }
-            tracks.len()
-        }
-        None => grid.rows().max(1),
-    };
+    // A declared `rows` track list is a floor (SPEC §5/§20): it sizes the first
+    // rows, and any overflow flows into implicit auto rows (CSS grid). Columns
+    // are fixed — only a `cell:` past the column count errors (in the loop above).
+    let declared = row_tracks.as_ref().map_or(0, Vec::len);
+    let rows = grid.rows().max(declared).max(1);
     grid.ensure(rows);
 
-    let implicit_rows = vec![Track::Auto; rows];
-    let row_tracks = row_tracks.as_deref().unwrap_or(&implicit_rows);
+    let mut row_tracks = row_tracks.unwrap_or_default();
+    row_tracks.resize(rows, Track::Auto);
     let col_sizes = track_sizes(&col_tracks, &placements, children, Axis::Col);
-    let row_sizes = track_sizes(row_tracks, &placements, children, Axis::Row);
+    let row_sizes = track_sizes(&row_tracks, &placements, children, Axis::Row);
 
     let col_off = cumulative(&col_sizes, gap_x);
     let row_off = cumulative(&row_sizes, gap_y);
@@ -122,8 +115,8 @@ pub fn lay_out_grid(
         read_divider(attrs),
         &col_off,
         &row_off,
-        total_w,
-        total_h,
+        (total_w, total_h),
+        (gap_x, gap_y),
         cols,
         rows,
         &grid.owner,
@@ -366,7 +359,8 @@ pub fn read_divider(attrs: &AttrMap) -> Divider {
 /// The interior separators of a grid, each run merged across the tracks where it
 /// is a real boundary — so a spanning cell has no line crossing its interior.
 /// Node-local coords (the grid is centred on the origin). No frame: the
-/// container's own border supplies the outer edge.
+/// container's own border supplies the outer edge, so the outer boundaries clamp
+/// exactly to the content box and interior lines sit centred in the gap.
 // The boundary scans run one index past the data to close a run at the final
 // edge, so they can't iterate `owner` directly.
 #[allow(clippy::needless_range_loop)]
@@ -374,14 +368,24 @@ fn divider_segments(
     divider: Divider,
     col_offsets: &[f64],
     row_offsets: &[f64],
-    total_w: f64,
-    total_h: f64,
+    (total_w, total_h): (f64, f64),
+    (gap_x, gap_y): (f64, f64),
     cols: usize,
     rows: usize,
     owner: &[Vec<Option<usize>>],
 ) -> Vec<GridRule> {
-    let x = |i: usize| col_offsets[i] - total_w / 2.0;
-    let y = |j: usize| row_offsets[j] - total_h / 2.0;
+    // A boundary's coordinate: the outer edges clamp to the content box; an
+    // interior boundary sits in the middle of the gap between its tracks.
+    let x = |i: usize| match i {
+        0 => -total_w / 2.0,
+        i if i == cols => total_w / 2.0,
+        i => col_offsets[i] - gap_x / 2.0 - total_w / 2.0,
+    };
+    let y = |j: usize| match j {
+        0 => -total_h / 2.0,
+        j if j == rows => total_h / 2.0,
+        j => row_offsets[j] - gap_y / 2.0 - total_h / 2.0,
+    };
     let mut segs: Vec<GridRule> = Vec::new();
     if matches!(divider, Divider::All | Divider::Columns) {
         for c in 1..cols {

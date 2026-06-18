@@ -827,6 +827,22 @@ mod tests {
     }
 
     #[test]
+    fn grid_rows_track_list_is_a_floor_implicit_rows_overflow() {
+        // SPEC §5/§20: a declared `rows` track list sizes the first rows; extra
+        // children flow into implicit auto rows (CSS grid) rather than erroring.
+        // Here 2 cols × 1 declared row track, 4 children → a second, implicit row.
+        let l = lay_out(
+            "layout: grid; columns: 40 40; rows: auto;\n\
+             a |rect| { width: 30; height: 30; }\n\
+             b |rect| { width: 30; height: 30; }\n\
+             c |rect| { width: 30; height: 30; }\n\
+             d |rect| { width: 30; height: 30; }\n",
+        );
+        assert!(l.nodes[2].cy > l.nodes[0].cy, "c (row 2) below a (row 1)");
+        assert!((l.nodes[2].cy - l.nodes[3].cy).abs() < 0.01, "c, d share row 2");
+    }
+
+    #[test]
     fn grid_without_columns_is_an_error() {
         let tokens = crate::lexer::lex("layout: grid;\na |rect|\nb |rect|\n").expect("lex");
         let file = crate::syntax::parser::parse(&tokens).expect("parse");
@@ -845,6 +861,24 @@ mod tests {
         assert!(!l.nodes[0].dividers.is_empty(), "table has interior dividers");
         // A plain group draws none.
         assert!(lay_out("g |group| { x |rect| \"x\" }\n").nodes[0].dividers.is_empty());
+    }
+
+    #[test]
+    fn grid_dividers_stay_within_the_content_box() {
+        // Interior dividers must not overshoot the frame: every endpoint sits
+        // inside the grid's own content box (a gap-sized overshoot at the far
+        // edge once leaked past the group's border).
+        let l = lay_out(
+            "t |table| { columns: 40 40; gap: 20;\n  \"a\"\n  \"b\"\n  \"c\"\n  \"d\"\n}\n",
+        );
+        let t = &l.nodes[0];
+        let (hw, hh) = (t.draw_box().w() / 2.0 + 0.01, t.draw_box().h() / 2.0 + 0.01);
+        for (x1, y1, x2, y2) in &t.dividers {
+            for (x, y) in [(x1, y1), (x2, y2)] {
+                assert!(x.abs() <= hw, "divider x {x} exceeds half-width {hw}");
+                assert!(y.abs() <= hh, "divider y {y} exceeds half-height {hh}");
+            }
+        }
     }
 
     #[test]
