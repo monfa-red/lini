@@ -266,7 +266,7 @@ single class; compound parts (`.card.hot`, `rect.hot`) are not supported.
 3. **Class** (`.hot { }`)
 4. **The instance's own block** (`client |rect| { fill: white; }`) — wins
 
-For a wire: `wire { }` defaults → descendant/class rules → the wire's own
+For a wire: `-> { }` defaults → descendant/class rules → the wire's own
 declarations.
 
 Complex values (`at: x y`, `padding: t r b l`) replace wholesale — the merge is
@@ -476,7 +476,7 @@ equal dimensions (or an empty `|oval|`) make a circle.
 
 | Property | Forms | Effect |
 |---|---|---|
-| `stroke-style` | `solid` / `dashed` / `dotted` | Stroke pattern. Default `solid`. (`wavy` / `double` deferred — [§19](#19-deferred--non-goals).) |
+| `stroke-style` | `solid` / `dashed` / `dotted` | Stroke pattern. Default `solid`. (`wavy` deferred — [§19](#19-deferred--non-goals).) |
 | `stack` | `N` / `dx dy` | Draw an offset duplicate behind the shape. Scalar `N` = `N -N`. |
 | `rotate` | `N` degrees | Rotate around the bbox center. |
 | `shadow` | `N` / `dx dy` / `dx dy blur` / `dx dy blur color` | Drop shadow via SVG `<filter>`. Scalar `N` = offset `N N`, blur `N`; tint defaults to `--lini-shadow`. |
@@ -564,8 +564,8 @@ Wires connect scene-node ids with an operator (`a -> b`); a wire is never writte
 as a `|wire|` instance.
 
 Defaults for every wire — `stroke`, `stroke-width`, `stroke-style`, `clearance`,
-`marker*` — come from a **`wire { }`** rule: the element selector for the routing
-layer. `clearance` additionally inherits from the root.
+`marker*` — come from a **`-> { }`** rule: the wire glyph is the element selector
+for the routing layer. `clearance` additionally inherits from the root.
 
 ### Operators
 
@@ -573,11 +573,13 @@ A wire op is `[start_marker?][line][end_marker?]`, no spaces:
 
 | Part | Tokens |
 |---|---|
-| Line | `-` solid · `--` dashed · `-.-` dotted · `~` wavy |
+| Line | `-` solid · `--` dashed · `..` dotted · `~` wavy |
 | Start markers | `<` arrow · `>` crow · `*` dot · `<>` diamond |
 | End markers | `>` arrow · `<` crow · `*` dot · `<>` diamond |
 
 The same glyph differs by position (`<` is arrow at the start, crow at the end).
+The dotted line is `..` — two dots, distinct from the single dot of an endpoint
+path (`a.b`).
 
 | Op | Markers / Line |
 |---|---|
@@ -585,13 +587,13 @@ The same glyph differs by position (`<` is arrow at the start, crow at the end).
 | `-*` `*-` `*-*` | dot combinations |
 | `-<>` `<>-<>` | diamond |
 | `-<` `>-<` | crow |
-| `-->` `-.->` `~>` | dashed / dotted / wavy |
-| `-` `--` `-.-` `~` | no markers (each line style) |
+| `-->` `..>` `~>` | dashed / dotted / wavy |
+| `-` `--` `..` `~` | no markers (each line style) |
 
 If the operator carries no markers, there are none on both ends. Explicit
 `marker:` / `marker-start:` / `marker-end:` override the operator (source order
 wins). The operator's line part sets the wire's `stroke-style` (`--` ⇒ `dashed`,
-`-.-` ⇒ `dotted`, `~` ⇒ `wavy`); an explicit `stroke-style:` overrides it.
+`..` ⇒ `dotted`, `~` ⇒ `wavy`); an explicit `stroke-style:` overrides it.
 
 ### Syntax
 
@@ -766,7 +768,7 @@ nearest ancestor wins, like CSS. `width`/`height` on a `|text|` are an error
 ### Markers & routing
 
 `marker`, `marker-start`, `marker-end` ([§7](#7-primitives)); `clearance`
-([§9](#9-wires) — set on `wire {}` or the root, inherits to every wire).
+([§9](#9-wires) — set on `-> {}` or the root, inherits to every wire).
 
 ### Media & accessibility
 
@@ -836,7 +838,7 @@ re-theme at runtime. Set them with properties and rules instead (`gap: 30;`,
 
 ### 11.3 Layout constants (baked)
 
-Baked compile-time defaults — override per-node, on `wire { }` / the root, in
+Baked compile-time defaults — override per-node, on `-> { }` / the root, in
 rules, or in an instance block:
 
 ```
@@ -847,7 +849,7 @@ clearance 16    icon-size 24        canvas-pad 20
 
 `font-size` is body text. Wire labels and captions carry their own baked
 defaults (12 and 13); a global `font-size:` at the root sets body text and
-cascades, `wire { font-size: … }` sets wire labels, and `caption { font-size: …
+cascades, `-> { font-size: … }` sets wire labels, and `caption { font-size: …
 }` sets captions.
 
 Padding defaults to 16, with the frameless `|row|` / `|column|`, the root, and
@@ -879,7 +881,7 @@ broken by **later wins** (source order):
 4. **The instance's own block** — `client |rect| { fill: white; }` — the most
    specific, beats everything above.
 
-For a wire: `wire { }` defaults → descendant/class rules → the wire's own
+For a wire: `-> { }` defaults → descendant/class rules → the wire's own
 declarations.
 
 Complex values (`at: x y`, `padding: t r b l`) replace wholesale — the merge is
@@ -1018,12 +1020,13 @@ Format: `filename:line:col: error: <message>` (LSP-compatible).
 
 ```
 file        = stylesheet instances wires           # the three phases, in order
-stylesheet  = { vardecl | decl | rule | define | comment | newline }
+stylesheet  = { vardecl | decl | rule | wire_rule | define | comment | newline }
 instances   = { node | comment | newline }
 wires       = { wire | comment | newline }
 decl        = ident ":" values end
 vardecl     = css_var ":" values end               # --name : value
 rule        = selector block                       # selector parts are bare type/class names
+wire_rule   = "->" block                           # wire defaults — the wire glyph as selector
 define      = ident "::" ident block               # name :: base
 node        = [ ident ] [ "|" ident "|" ] { string } { "." ident } [ block ]
                                                    # ≥1 of id / |type| / label / block
@@ -1045,7 +1048,7 @@ call        = ident "(" [ value { "," value } ] ")"
 css_var     = "--" ident { "-" ident }
 
 wire_op     = [ marker ] line [ marker ]
-line        = "-" | "--" | "-.-" | "~"
+line        = "-" | "--" | ".." | "~"
 marker      = "<" | ">" | "*" | "<>"
 
 ident       = ( letter | "_" ) { letter | digit | "_" | "-" }
@@ -1060,8 +1063,9 @@ end         = newline | ";"
 plus the rule that **a type is defined before it is used** make one token of
 lookahead enough. Leading tokens decide every form: `--name :` → variable;
 `.name` → class rule; `ident ::` → define; `ident :` → declaration; two bare
-idents → descendant rule; `|type|` or a leading string → instance; an `ident`
-followed by a wire-op / `&` / glued `.side` → wire. The lone `ident { … }` is a
+idents → descendant rule; a leading `->` then `{` → the wire-defaults rule;
+`|type|` or a leading string → instance; an `ident` followed by a wire-op / `&`
+/ glued `.side` → wire. The lone `ident { … }` is a
 **rule** when `ident` is a known type (built-in or already-defined) and a
 **node** otherwise — and because types are defined first, the type set is always
 complete at that point. No prescan, no second pass.
@@ -1114,10 +1118,10 @@ are case-sensitive, so a capitalized variant is always free (`Start`, `Rect`).
   `cyl`, `diamond`, `cloud`, `icon`, `image`.
 - **Templates:** `group`, `caption`, `badge`, `note`, `row`, `column`, `table`.
 - **Sides:** `top`, `bottom`, `left`, `right`.
-- **Special:** `wire` — the rule target for wire defaults (`wire { … }`); it is
-  not an instantiable type, so `|wire|` is an error.
-- **Reserved for the future:** `circle` (today a circle is `|oval|` with equal or
-  unset dimensions).
+- **Reserved for the future:** `wire` and `circle`. `wire` is not an
+  instantiable type (`|wire|` is an error) and is not a usable id; wire defaults
+  are set with the `-> { … }` rule, not a `wire` keyword. `circle` is reserved
+  too (today a circle is `|oval|` with equal or unset dimensions).
 
 Value keywords are **contextual**, not reserved as ids — `grid`, `start`,
 `center`, `end`, `stretch`, `evenly`, `none`, `in`, `out`, `on`, `auto`, `true`,
@@ -1131,7 +1135,7 @@ are reserved only before `(`.
 
 **Deferred** — named in the language, not built yet; the syntax is stable:
 
-- `stroke-style: double` / `wavy` rendering on shapes.
+- `stroke-style: wavy` rendering on shapes.
 - `radius` on non-rect shapes (hex / diamond / slant / poly).
 - numeric `font-weight` (`100…900`).
 - `|icon|` Material Symbols glyph embedding (currently a placeholder square).
@@ -1157,7 +1161,7 @@ are reserved only before `(`.
 layout: grid;  columns: repeat(3);  gap: 40;  padding: 20;
 fill: --bg;
 
-wire { stroke: #666; stroke-width: 1; clearance: 6; }
+-> { stroke: #666; stroke-width: 1; clearance: 6; }
 rect { radius: 4; }                          // every rect rounds
 
 --accent: #0a84ff;
