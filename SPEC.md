@@ -66,7 +66,7 @@ box { radius: 6; }                              // a rule (stylesheet) — draws
 
 server |box|                                    // an instance (canvas) — id is its label
 client |box|
-server -> client "requests"                     // a wire, with a label
+server -> client { "requests" }                 // a wire, with a label
 ```
 
 ---
@@ -139,7 +139,7 @@ says otherwise:
 | `key: value` | `:` separates name and value; surrounding space is optional, canonical is one space after (`radius: 5`). |
 | `name::base` | The define operator; surrounding space optional like `:` (canonical tight: `treat::box`). |
 | `\|…\|` | Opening and closing `\|` paired; whitespace allowed inside, not at an ident boundary. |
-| `.name` (class) | **Space required before** when it follows an ident or `\|` (`box .hot`). `box.hot` parses as a wire endpoint dot-path. |
+| `.name` (class) | **Space required before** it when following an ident or `\|` — `\|box\| .hot` applies a class; glued `a.hot` is a wire endpoint dot-path. |
 | `id.side` | **No space**, wire endpoints only (`cat.right`). |
 | `--name` | A variable, in a value or at a statement start to declare one. |
 | wire op | `[marker?] line [marker?]`, glued, no internal space (`->`, `..>`, `<->`). |
@@ -195,13 +195,16 @@ cycles are an error.
 
 Everything is optional; the type defaults to `box`. The **line is identity** —
 id, type, classes — and the **block is content + configuration**: declarations,
-then child nodes (boxes and text), then internal wires, in that order.
+then child nodes (boxes and text), then internal wires, in that order. **Text is
+a child**, so a label string comes *after* the declarations: `{ width: 60;
+"Bowl" }` is correct, while `{ "Bowl"; width: 60 }` is an error — no declaration
+may follow a child.
 
 ```
 db |cyl| .primary {
   fill: #eef;
   "Postgres"
-  |badge| { "v16"; side: top; align: end; }
+  |badge| { side: top; align: end; "v16" }
 }
 ```
 
@@ -566,7 +569,7 @@ footer with `side: bottom`:
 ```
 panel |group| {
   |caption| { "Settings" }
-  |caption| { "v2.1"; side: bottom; }
+  |caption| { side: bottom; "v2.1" }
   a |box| { "General" }
   b |box| { "Network" }
 }
@@ -593,7 +596,7 @@ basket |table| {
 
 `fmt` knows the column count and pads the cells into aligned columns, so the flat
 form reads like the table it is. A cell that must be styled, placed, or wired is
-a **box** child (`|plain| { "X"; … }` or `|box| { … cell: 2 1; }`) — its stroke
+a **box** child (`|plain| { …; "X" }` or `|box| { … cell: 2 1; }`) — its stroke
 will read against the dividers, which is exactly why bare text is the default.
 
 Extend any template: `panel::group { stroke: --accent; }`. Common shapes need no
@@ -684,7 +687,7 @@ nodes and other labels; the wire never moves for it. Wire labels default to
 a **box** (`|plain|`), which carries a block:
 
 ```
-a -> b { |plain| { "watches"; offset: 0 -8; } }
+a -> b { |plain| { offset: 0 -8; "watches" } }
 ```
 
 ### Endpoints & scope
@@ -723,12 +726,12 @@ room::group {
   layout: column;  gap: 10;
   inlet  |box| { "Inlet" }
   outlet |box| { "Outlet" }
-  inlet -> outlet "flows"
+  inlet -> outlet { "flows" }
 }
 
 garden  |room| { "Garden" }
 kitchen |room| { "Kitchen" }
-garden.outlet -> kitchen.inlet "carries"
+garden.outlet -> kitchen.inlet { "carries" }
 ```
 
 ### Routing
@@ -1030,8 +1033,8 @@ local live-reloading preview (default port 7700).
 
 **`lini fmt`** reformats to canonical style — 2-space indent, `key: value;`
 declarations grouped on one line, a declarations-only block collapsed onto its
-opening line when it fits, table cells padded into aligned columns, comments and
-blank lines preserved. `--check` exits 1 if it would change anything; `--stdout`
+opening line when it fits, one child node per line, table cells padded into
+aligned columns, comments and blank lines preserved. `--check` exits 1 if it would change anything; `--stdout`
 writes instead of rewriting.
 
 **`lini desugar`** prints the file with its sugar expanded — an id-as-label box
@@ -1071,6 +1074,9 @@ Format: `filename:line:col: error: <message>` (LSP-compatible).
 | Grid props off a grid | `'cell' is valid only on a grid` |
 | Missing `columns` | `'layout: grid' requires 'columns'` |
 | `skew` out of range | `skew: N must be in (-89, 89)` |
+| Single-quoted string | `single quotes are not strings — use "…"` |
+| Bare `side:` without `mount:` | `'side' needs a 'mount:' (in / out / on)` |
+| Declaration after a child | `declarations must come before children in a block` |
 
 ---
 
@@ -1101,7 +1107,7 @@ endpoints   = endpoint { "&" endpoint }
 endpoint    = ident { "." ident } [ "." side ]
 side        = "top" | "bottom" | "left" | "right"
 
-block       = "{" { decl } { node } { wire } "}"   # body: declarations, then children, then internal wires
+block       = "{" { decl } { node } { wire } "}"   # declarations, then children (text is a child), then internal wires
 wire_block  = "{" { decl | text | box | comment | newline } "}"   # labels (strings) + along:; a |plain| for a styled label
 
 values      = value_group { "," value_group }      # comma only between list items
@@ -1249,10 +1255,10 @@ room::group {
   layout: column;  gap: 8;
   inlet  |box| { "Inlet" }
   outlet |box| { "Outlet" }
-  inlet -> outlet "flows"
+  inlet -> outlet { "flows" }
 }
 
-cat |oval| { "Cat — patient hunter"; cell: 1 1; }
+cat |oval| { cell: 1 1; "Cat — patient hunter" }
 
 kitchen |group| {
   cell: 2 1;  layout: column;  gap: 20;
@@ -1272,18 +1278,18 @@ garden |group| {
     layout: row;  gap: 15;
     |caption| { "Den" }
     rabbit |alert| { |badge| { "FAST" } }
-    carrot |box|   { "Carrot patch"; stack: 4; width: 80; height: 40; fill: white; }
+    carrot |box|   { stack: 4; width: 80; height: 40; fill: white; "Carrot patch" }
   }
 }
 
-closet |room| { "Closet"; cell: 1 2; }
-fridge |room| { "Fridge"; cell: 2 2; }
+closet |room| { cell: 1 2; "Closet" }
+fridge |room| { cell: 2 2; "Fridge" }
 
 // wires — full paths from the wire's scope (here: the root)
 cat.right -> kitchen.counter.bowl.left -> kitchen.counter.water
 kitchen.counter.water -> garden.den.rabbit -> garden.den.carrot .loud
-cat <-> kitchen "watches"
-closet.outlet -> fridge.inlet "restocks"
+cat <-> kitchen { "watches" }
+closet.outlet -> fridge.inlet { "restocks" }
 ```
 
 ### Table + dimension line

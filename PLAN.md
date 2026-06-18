@@ -70,10 +70,17 @@ inline-collapse. Build on them.
 `rect`.
 
 **Key points.**
-- `ShapeKind::Rect` → `Box`; every `"rect"` literal → `"box"` (resolve type
-  table, `defaults.rs`, template bases, `is_reserved_id`); SVG class
-  `lini-shape-rect` → `lini-shape-box`.
-- Reserve `rect` (un-instantiable, un-usable id) alongside `wire`/`circle`.
+- `ShapeKind::Rect` → `Box`; the `"rect"` shape literal in `resolve/ir.rs`
+  (`from`/`as_str`) → `"box"`; template bases in `resolve/types.rs`
+  (`group`/`badge`/`note`/`row`/`column`) → `box`; the default type in
+  `scene.rs`/`desugar.rs` (`unwrap_or("rect")`) → `box`; `BUILTIN_TYPES` in the
+  parser. The SVG class `lini-shape-rect` → `lini-shape-box` falls out of
+  `as_str()` — only the render tests assert the literal.
+- **Leave the geometry `Rect` struct alone** (`src/layout/wires/rect.rs` and its
+  ~500 uses across `layout/wires/*` are bounding boxes, not the shape). Touch
+  only the shape `ShapeKind::Rect` / `"rect"` string, never the struct.
+- Reserve `rect` (un-instantiable, un-usable id): add it to the `matches!` lists
+  in `scene.rs::is_reserved_id` and `types.rs` alongside `wire`/`circle`.
 - Mechanical sweep of `samples/`, `tests/`, snapshots, `README.md`.
 
 **Done when.** `cargo test` green; `|box|` is the default and primitive; `rect`
@@ -99,7 +106,12 @@ wrapped — the leaner `<text>` is Phase 4).
   text node (statement / child); **consecutive strings are consecutive text
   nodes** (a string is self-delimiting — no terminator needed between them); a
   string may **not** follow the identity tokens on a node line (no positional
-  labels). `|wire|` still errors. Wire block accepts strings + `along` + `|plain|`.
+  labels); within a block a string is a **child**, so it comes *after* the
+  declarations (`{ width: 60; "Bowl" }`) — a string before a decl is the same
+  "declarations come first" error as any other child. Drop the `|text|`
+  primitive (remove `text` from `BUILTIN_TYPES`) and reserve `text` as an
+  un-usable id (SPEC §18). `|wire|` still errors. Wire block accepts strings +
+  `along` + `|plain|`.
 - **Resolve** (`src/resolve/`): synthesize the **id-as-label** text when a box's
   block carries no string; **drop the caption 1st/2nd-label magic** entirely; add
   the `plain` template (`box { stroke: none; fill: none; padding: 0 }`),
