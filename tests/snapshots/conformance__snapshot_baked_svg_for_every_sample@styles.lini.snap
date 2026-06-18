@@ -3,18 +3,47 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/styles.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-56.25 -44 112.5 88" width="112.5" height="88" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-56.25 -178 112.5 356" width="112.5" height="356" class="lini">
   <style>
     .lini { font-family: sans-serif; font-size: 14px; color: black; }
     .lini .lini-shape-rect { fill: white; stroke: #444; stroke-width: 1; stroke-dasharray: none; }
     .lini .lini-shape-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
+    .lini .lini-style-thin { stroke: #444; stroke-width: 1; }
+    .lini .lini-style-bold { font-weight: bold; }
+    .lini .lini-style-power { stroke: red; stroke-width: 2; }
+    .lini .lini-style-warn { stroke: orange; }
+    .lini .lini-style-ghost { opacity: 0.3; }
   </style>
   <defs/>
   <g class="lini-scene">
-    <g class="lini-node lini-shape-rect" transform="translate(0,0)">
-      <rect x="-35.75" y="-23.5" width="71.5" height="47" rx="0" ry="0"/>
+    <g class="lini-node lini-shape-rect lini-style-thin" data-id="a" transform="translate(0,-134.5)">
+      <rect x="-31.4" y="-23" width="62.8" height="46" rx="0" ry="0"/>
       <g class="lini-node lini-shape-text" transform="translate(0,0)">
-        <text x="0" y="0">hello</text>
+        <text x="0" y="0">thin</text>
+      </g>
+    </g>
+    <g class="lini-node lini-shape-rect lini-style-bold" data-id="b" transform="translate(0,-67.5)">
+      <rect x="-31.4" y="-23" width="62.8" height="46" rx="0" ry="0"/>
+      <g class="lini-node lini-shape-text" style="font-weight: bold" transform="translate(0,0)">
+        <text x="0" y="0">bold</text>
+      </g>
+    </g>
+    <g class="lini-node lini-shape-rect lini-style-power" data-id="c" transform="translate(0,0)">
+      <rect x="-35.25" y="-23" width="70.5" height="46" rx="0" ry="0"/>
+      <g class="lini-node lini-shape-text" transform="translate(0,0)">
+        <text x="0" y="0">power</text>
+      </g>
+    </g>
+    <g class="lini-node lini-shape-rect lini-style-warn" data-id="d" transform="translate(0,67.5)">
+      <rect x="-31.4" y="-23" width="62.8" height="46" rx="0" ry="0"/>
+      <g class="lini-node lini-shape-text" transform="translate(0,0)">
+        <text x="0" y="0">warn</text>
+      </g>
+    </g>
+    <g class="lini-node lini-shape-rect lini-style-ghost" data-id="e" transform="translate(0,134.5)">
+      <rect x="-35.25" y="-23" width="70.5" height="46" rx="0" ry="0"/>
+      <g class="lini-node lini-shape-text" transform="translate(0,0)">
+        <text x="0" y="0">ghost</text>
       </g>
     </g>
   </g>

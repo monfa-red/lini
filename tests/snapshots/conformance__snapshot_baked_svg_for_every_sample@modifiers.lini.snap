@@ -31,7 +31,7 @@ input_file: samples/modifiers.lini
       </g>
       <rect x="-40" y="-20" width="80" height="40" rx="0" ry="0"/>
       <g class="lini-node lini-shape-text" transform="translate(0,0)">
-        <text x="0" y="0">double</text>
+        <text x="0" y="0">stack</text>
       </g>
     </g>
     <g class="lini-node lini-shape-rect" transform="translate(105,0)">

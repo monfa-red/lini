@@ -3,7 +3,7 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/anchors.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-144.35 -102.5 288.7 205" width="288.7" height="205" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-143.85 -102 287.7 204" width="287.7" height="204" class="lini">
   <style>
     .lini { font-family: sans-serif; font-size: 14px; color: black; }
     .lini .lini-shape-rect { fill: white; stroke: #444; stroke-width: 1; stroke-dasharray: none; }
@@ -16,13 +16,13 @@ input_file: samples/anchors.lini
       <g class="lini-node lini-shape-text" style="fill: green" transform="translate(0,0)">
         <text x="0" y="0">C</text>
       </g>
-      <g class="lini-node lini-shape-text" style="fill: red" transform="translate(-111.8,-75)">
+      <g class="lini-node lini-shape-text" style="fill: red" transform="translate(-112.3,-75)">
         <text x="0" y="0">T&lt;</text>
       </g>
       <g class="lini-node lini-shape-text" style="fill: red" transform="translate(0,-75)">
         <text x="0" y="0">T</text>
       </g>
-      <g class="lini-node lini-shape-text" style="fill: red" transform="translate(111.8,-75)">
+      <g class="lini-node lini-shape-text" style="fill: red" transform="translate(112.3,-75)">
         <text x="0" y="0">T&gt;</text>
       </g>
       <g class="lini-node lini-shape-text" style="fill: red" transform="translate(-120,0)">
@@ -31,13 +31,13 @@ input_file: samples/anchors.lini
       <g class="lini-node lini-shape-text" style="fill: red" transform="translate(120,0)">
         <text x="0" y="0">R</text>
       </g>
-      <g class="lini-node lini-shape-text" style="fill: blue" transform="translate(-111.8,75)">
+      <g class="lini-node lini-shape-text" style="fill: blue" transform="translate(-112.3,75)">
         <text x="0" y="0">BL</text>
       </g>
       <g class="lini-node lini-shape-text" style="fill: blue" transform="translate(0,75)">
         <text x="0" y="0">B</text>
       </g>
-      <g class="lini-node lini-shape-text" style="fill: blue" transform="translate(111.8,75)">
+      <g class="lini-node lini-shape-text" style="fill: blue" transform="translate(112.3,75)">
         <text x="0" y="0">BR</text>
       </g>
     </g>
