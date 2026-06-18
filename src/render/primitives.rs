@@ -357,7 +357,7 @@ fn emit_poly(out: &mut String, n: &PlacedNode, indent: &str) {
 }
 
 fn emit_path(out: &mut String, n: &PlacedNode, indent: &str) {
-    let d = match n.attrs.get("d") {
+    let d = match n.attrs.get("path") {
         Some(crate::resolve::ResolvedValue::String(s)) => s.clone(),
         _ => return,
     };
