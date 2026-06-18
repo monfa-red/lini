@@ -1,474 +1,202 @@
-# PLAN — Implementing Lini v4
+# PLAN — the box/text model
 
-How to take the codebase from the **v3 language** it implements today to the
-**v4 language** specified in [`SPEC.md`](SPEC.md). Written to be executed across
-several sessions (with `/compact` between), so each phase stands on its own.
+How to take the codebase from the model it implements today to the **box/text
+model** specified in [`SPEC.md`](SPEC.md). Written to be executed across several
+sessions (with `/compact` between), so each phase stands on its own.
 
 `SPEC.md` is the contract. [`WIRING.md`](WIRING.md) owns wire *geometry* and is
-**unchanged** by v4. Read both, plus [`AGENT.md`](AGENT.md), at the start of any
-session.
+**unchanged** by this work. Read both, plus [`AGENT.md`](AGENT.md), at the start
+of any session.
 
 ---
 
 ## Ground rules
 
-- **Clean break.** Pre-release, zero users. No aliases, no back-compat, no v3
-  fallbacks. Delete v3 concepts outright.
-- **Rewrite, don't patch.** This is a language change, not a tweak. If a function
-  is shaped for v3, rewrite it. Move code between files, split or merge modules,
-  rename freely. Do **not** layer v4 on top of v3 plumbing — that's the
-  patchwork we're avoiding. Aim for code that reads as if v4 were the only
-  language it ever had.
+- **Clean break.** Pre-release, zero users. No aliases, no back-compat. Delete
+  retired concepts outright.
+- **Rewrite, don't patch.** If a function is shaped for the old model, rewrite
+  it. Move code between files, split or merge modules, rename freely. Aim for
+  code that reads as if the box/text model were the only one it ever had.
 - **`SPEC.md` wins.** If the spec and your instinct disagree, follow the spec —
   or, if the spec is genuinely wrong, fix the spec in the same change with a note
-  in the PR/commit. Never let code and spec drift.
+  in the commit. Never let code and spec drift.
 - **Modern, clean Rust.** No `unsafe`. One concept per file; split past ~500 LOC.
   Don't fight `rustfmt`/`clippy`. Comments only for the non-obvious *why*.
 - **Test as you go** (per AGENT.md): `insta` snapshots for output-shaped code,
   one sample per feature in `samples/`, and **verify SVG visually** — render to
-  PNG with `resvg` and actually look at it; don't make the user spot-check.
+  PNG with `resvg` and actually look at it.
 - **This plan is a shape, not a straitjacket.** Reorder, merge, or split phases
-  as the code demands. We don't know every constraint yet — when the plan and
-  reality disagree, trust the code and note the deviation.
+  as the code demands; trust the code and note the deviation.
+
+---
+
+## What changes (SPEC §1/§3/§7/§8/§9)
+
+The language moves to **two node kinds**:
+
+1. **Box** — `[id] [|type|] [.class…] [block]`. The line is identity; the block
+   is content + config. Default type `box` (was `rect`). No positional strings.
+2. **Text** — a bare `"…"`. Content only: no id, type, children, or block.
+   Inside a box's block it is that box's text; on its own it is a flow/canvas
+   text node. Consecutive strings are consecutive text nodes.
+
+Plus: **id-as-label** (id is the label unless the block has a string; `{ "" }`
+empties, `{}` is a no-op); **`|plain|`** frameless box and **`|caption| :: plain`**
+(no 1st/2nd footer magic); **wire = 1-D container** with bare-string labels +
+`along:` (so `at:` is node-position-only); **`|table|` = grid + `divider: all` +
+`gap: 0`** with bare-text cells and `fmt` column alignment; text styled/positioned
+only via a containing box. Reserve `rect`, `text`, `circle`, `wire`, and `'`.
+
+Already in place (the wire-operator change, last session) and consistent with the
+new spec: `..` dotted, `-> { }` wire-defaults rule, `fmt` declaration grouping +
+inline-collapse. Build on them.
 
 ---
 
 ## Current state
 
-- The repo implements **v3** end-to-end; `cargo test` is **green**.
-- Pipeline: `lexer → parser → resolve → layout (+ route) → render`, plus `fmt`,
-  `lint`, `theme`, `serve`, `main` (CLI). Wire routing lives under
-  `src/layout/wires/` (~6k LOC) and is the part v4 leaves alone.
-- `SPEC.md` already describes v4; this plan closes the gap.
-
-### What stays vs. changes
-
-**Stays** (preserve; don't rewrite for its own sake):
-- **Wire routing geometry** — all of `src/layout/wires/` except *attribute-name
-  reads* (listed in Phase 5). The router is syntax-independent; confirmed.
-- **Scoping**: per-instance id scoping, sealed bodies, dot-path endpoints,
-  auto-create of undeclared root-wire ids. v4 keeps these verbatim (SPEC §9).
-- **Grid auto-flow** (`next_open` in `grid.rs`), the **shadow** filter, and the
-  overall pipeline shape.
-
-**Changes** (the work): the entire syntactic front end (lexer colon rules,
-parser, AST, value model), the defs-block → stylesheet model, the
-cascade + selectors, the sizing model, `align/justify/stretch/divider`, `fmt`,
-and the property-name surface.
+- The repo implements the **previous model** end-to-end; `cargo test` green
+  (≈328). Pipeline: `lexer → parser (src/syntax) → resolve → layout (+ route) →
+  render`, plus `fmt`, `lint`, `desugar`, `theme`, `serve`, `main`.
+- Text is a `|text|` primitive; a node carries positional `labels` that resolve
+  expands into `|caption|`/`|text|` children; `rect` is the default; wire labels
+  use `at`/`offset`. All of that is what this plan replaces.
 
 ---
 
-## Phase 0 — Centralized defaults
+## Phase 1 — `rect` → `box`
 
-**Goal.** One module (`src/resolve/defaults.rs`) that owns the baked defaults, so
-the whole look is tuned in one file (an explicit ask). Today they're split across
-`resolve/vars.rs` (the variable defaults) and `resolve/shapes.rs::template_attrs`.
+**Goal.** Rename the default/primitive rectangle from `rect` to `box`; reserve
+`rect`.
 
 **Key points.**
-- **Behavior-preserving.** Move the *existing* defaults as-is — keep the current
-  (v3) values so `cargo test` stays green. The v4 *values* (padding 16, the
-  font-size unification, the caption type, …) change in place during the phases
-  that introduce them; Phase 0 only establishes the home.
-- Start with the variable defaults (`built_in_defaults`): the visual `--lini-*`
-  set (live) and the baked layout constants (sizes, gaps, paddings, thicknesses).
-  The per-template bundles (`template_attrs`) and per-shape sizes fold in when
-  they're rewritten (Phase 3/4) — no point moving them twice.
-- Layout constants are **not** `--name` variables (SPEC §11) — plain consts set
-  via properties/rules; visual vars stay live `var()`.
+- `ShapeKind::Rect` → `Box`; every `"rect"` literal → `"box"` (resolve type
+  table, `defaults.rs`, template bases, `is_reserved_id`); SVG class
+  `lini-shape-rect` → `lini-shape-box`.
+- Reserve `rect` (un-instantiable, un-usable id) alongside `wire`/`circle`.
+- Mechanical sweep of `samples/`, `tests/`, snapshots, `README.md`.
 
-**Done when.** `resolve/defaults.rs` holds the variable defaults, the rest of
-resolve reads it, and `cargo test` is green.
+**Done when.** `cargo test` green; `|box|` is the default and primitive; `rect`
+errors as reserved. (Orthogonal, isolated — do it first to clear the way.)
 
 ---
 
-## Phase 1 — Lexer
+## Phase 2 — The box/text model (front end + resolve + fmt + desugar)
 
-**Goal.** Tokenize v4. Mostly small deltas from v3.
+**Goal.** The heart: strings are content, no positional labels, id-as-label,
+`|plain|`/`|caption|`, wire `along:`, table validation. The AST changes, so every
+consumer that pattern-matches it (resolve, fmt, desugar) moves together; layout
+and render stay green by keeping **text a `Text` scene node** (rendered as today,
+wrapped — the leaner `<text>` is Phase 4).
 
 **Key points.**
-- **Colon:** drop the v3 "no whitespace around `:`" rule — `key: value` is now
-  canonical (space optional). `::` is the define operator; represent it however
-  is cleanest (two glued colons, or a dedicated token).
-- Dash-case idents, `--name`, strings, numbers, wire-ops, `&`, braces, parens,
-  brackets — unchanged. Wire-op lexing is unchanged.
-- Commas remain a token (now only meaningful inside value lists / call args).
-- **This phase is thin** — `:`/`::` spacing is parser business, not the lexer's.
-  `::` is two adjacent colons → one token; surrounding whitespace is then
-  optional, like `:` (tight within, flexible around — SPEC §2). Drop the v3
-  `current_glued_to_prev` colon checks in the parser. The only lexer change is
-  emitting that `::` token, so fold this phase into Phase 2 rather than adding a
-  token nothing consumes yet.
+- **AST** (`src/syntax/ast.rs`): drop `Node.labels`. A block's children become an
+  ordered list of `Box(Node) | Text(TextNode)` (order matters — text interleaves
+  with boxes); top-level instances likewise. `TextNode { text, span }`. Wire
+  body = declarations + text labels + `|plain|` boxes.
+- **Lexer**: a `'` is an error (`single quotes are not strings; use "…"`).
+- **Parser** (`src/syntax/parser.rs`): default type `box`; a `string` token is a
+  text node (statement / child); **consecutive strings are consecutive text
+  nodes** (a string is self-delimiting — no terminator needed between them); a
+  string may **not** follow the identity tokens on a node line (no positional
+  labels). `|wire|` still errors. Wire block accepts strings + `along` + `|plain|`.
+- **Resolve** (`src/resolve/`): synthesize the **id-as-label** text when a box's
+  block carries no string; **drop the caption 1st/2nd-label magic** entirely; add
+  the `plain` template (`box { stroke: none; fill: none; padding: 0 }`),
+  `caption :: plain { mount: in; font-size: 13 }`, `row`/`column :: plain`;
+  rebase `group`/`badge`/`note` on `box`; wire labels are bare text placed by
+  `along:` (auto-distribute when unset) — retire `at`/`offset` on wire labels;
+  validate **`divider` ⇒ `gap: 0`**; `|table| :: group { layout: grid; divider:
+  all; gap: 0; padding: 4 8; fill: none; stroke: --stroke }`, cells are bare text
+  (drop the `table rect { stretch }` rule).
+- **fmt** (`src/fmt/`): emit the new forms — no positional strings, bare-text
+  children, `|box|`/`|plain|`/`|caption|`, `along`. (Keep the §6/§7 grouping +
+  inline-collapse already shipped. Table **column alignment** is Phase 5.)
+- **desugar** (`src/desugar.rs`): id→label text; wire-label `along` distribution;
+  no `|text|` expansion.
 
-**Done when.** Unit tests tokenize the SPEC's lexical examples (§2) and the
-quickstart.
+**Done when.** The new syntax compiles end-to-end to correct SVG (text still in a
+`<g>` wrapper — a documented, phase-local deviation from §13); per-module unit
+tests green; the SPEC §20 examples parse and resolve.
 
 ---
 
-## Phase 2 — AST + Parser
+## Phase 3 — Layout: tables
 
-**Goal.** A single-pass recursive-descent parser for the v4 grammar (SPEC §16),
-and an AST that models stylesheet / instances / wires.
+**Goal.** Make `|table|` look right under the new model.
 
 **Key points.**
-- **Ordering contract = single pass.** Track a phase (stylesheet → canvas →
-  wires) and a type set (built-ins + defines seen). The only ambiguity is
-  `ident { }`: rule if `ident` is a known type, else a node. Because defines
-  precede use, the type set is complete at decision time — no prescan (SPEC §16
-  prose). Enforce the ordering; out-of-order statements are errors.
-- **Block-only declarations.** A node/wire's properties live in its `{ }` block,
-  never inline on the line (an inline `key: value` would be a root statement).
-  The line carries identity (id, type, labels, classes); the block carries
-  declarations + children (SPEC §3). Bodies are ordered: declarations → child
-  nodes → internal wires.
-- **Value model.** A declaration's value is a comma-separated list of
-  space-separated scalar groups (`points: 0 0, 10 10` = two groups; `at: 100 50`
-  = one group of two; `columns: 80 140 80` = one group). Functions use parens
-  (`rgb(…)`, `repeat(…)`). Reshape the `Value` representation accordingly —
-  v3's `Tuple`/`List` go away.
-- **Selectors & defines.** Element (`rect`), class (`.hot`), descendant
-  (`table rect`, `.sidebar rect`), define (`name::base`). A node requires ≥1 of
-  id / `|type|` / label / block; `|wire|` as an instance is an error.
-- **Built alongside v3 (strangler).** Changing the AST in place breaks the
-  *compilation* of `resolve` / `fmt` / `lint` / `desugar`, so parser tests can't
-  run. Instead the v4 front end lives in `src/syntax/` (`ast.rs` + `parser.rs`;
-  lexer `::` is shared), with the v3 front end left intact and green. Phase 3
-  cuts the pipeline over and retires v3.
+- A `|table|`'s `padding` is the **per-cell inset** (text-to-divider): auto
+  tracks size to cell content + inset; fixed tracks centre the text with the
+  inset as breathing room.
+- Bare-text cells auto-flow into tracks (a `Text` scene node is a grid child);
+  `cell:`/`span:` apply to **box** children only.
+- `divider` interior lines sit on the (now `gap: 0`) track boundaries — confirm
+  the divider geometry against flush cells.
 
-**Done when.** The v4 parser unit-tests every construct in SPEC §3–§9 / §20 and
-the syntactic §15 errors, the crate compiles, and the v3 suite stays green.
-*(Done — `src/syntax/`, 19 tests; the module carries `#![allow(dead_code)]`
-until resolve consumes it in Phase 3.)*
+**Done when.** Unit tests pin a 3-column table's cell sizes and divider segments;
+a table renders as a clean ruled grid (verified visually).
 
 ---
 
-## Phase 3 — Resolve (cascade, selectors, defines, variables)
+## Phase 4 — Render: leaner text
 
-**Goal.** Turn the AST into the resolved scene + wires, applying the v4 cascade.
+**Goal.** Emit text per SPEC §13.
 
 **Key points.**
-- **Cut the pipeline over.** Point `compile_str*` at the v4 parser
-  (`syntax::parse`) and make `resolve` consume `syntax::ast`. The v3 front end
-  (`src/ast.rs`, `src/parser.rs`) is still read by `fmt` / `lint` / `desugar` —
-  keep those compiling (they migrate in their own phases, 6/7); delete v3 only
-  once nothing reads it. v3-syntax samples/tests go red here until Phase 8.
-- **No defs block.** Root bare declarations configure the scene; `wire { }` sets
-  wire defaults; rules form a whole-file stylesheet. Drop `split_defs` /
-  `|scene|` / `|wire|`-singleton machinery.
-- **Cascade & specificity** (SPEC §4/§12): type cascade (element rule + define
-  defaults, walked base→derived) → **descendant rules** → class rules → the
-  instance's own block; ties by source order. Descendant-selector matching
-  against the ancestor chain is **new** — the current model only has flat
-  `.name` styles and `|name|` type-defaults. Build a real (small) matcher.
-- **Defines** (`name::base`): like the v3 shapes table, new syntax; cycles /
-  depth-16 errors stay.
-- **Variables**: `--name` is visual-only and live; layout values come from the
-  Phase-0 defaults, never `--name`. `--theme` still overrides `--lini-*`.
-- **caption**: ship the `caption::text` type; group label sugar emits `|caption|`
-  (1st top, 2nd bottom `side: bottom`, rest plain `|text|`). Reuse the existing
-  label-sugar location.
-- Keep wire resolution (endpoints, scope walk, fan expansion, auto-create) —
-  only its property names change (Phase 5's rename list).
+- A text scene node renders as a bare `<text class="lini-text">…</text>` at its
+  placed position — **no wrapping `<g>`**. Font/colour inherit from the enclosing
+  box's `<g>`. A table of N cells becomes N `<text>` elements, not N boxes.
+- Box nodes keep their `<g class="lini-node lini-shape-…">`.
 
-**Done (this session).** Resolve was rewritten for v4 and the pipeline flipped:
-`compile_str*` / `check*` now parse with `syntax::parser` and resolve through new
-one-concept-per-file modules. The crate **builds with 0 warnings**; `resolve` +
-the v4 parser are **green (66 tests)**.
-
-- `resolve/value.rs` — value groups → `ResolvedValue` (scalar / `Tuple` / `List`;
-  `--name` → `LiveVar`, layout vars baked). *(7)*
-- `resolve/cascade.rs` — `Stylesheet`: rule compile, element/class/descendant
-  selectors, the descendant-combinator matcher, the tier-2/tier-3 query. *(11)*
-- `resolve/types.rs` — define/template/primitive chain, type-cascade defaults,
-  cycle / depth-16 / shadow errors; v4 templates + `template_attrs`. *(11)*
-- `resolve/scene.rs` — node tree: cascade ladder, caption/label sugar →
-  `|caption|`/`|text|`, text inheritance, define materialization, id index,
-  auto-create. `PathIndex` lives here.
-- `resolve/wires.rs` — wire cascade, scoped endpoints + suggestions, fan
-  expansion, operator → markers / `stroke-style`, labels (`at` 0..1 / auto).
-- `resolve/merge.rs` — fold ordered decls → `AttrMap`, extract markers.
-- `resolve/program.rs` — orchestrator (`resolve`), built-in `table rect` rule,
-  root config, `SheetInputs`. *(18 integration tests)*
-- `resolve/defaults.rs` — v4 names/values (`font-size`, `stroke-width`, `mount`,
-  padding 16, `--lini-font-family`, …).
-- **Deleted:** v3 `shapes.rs` / `styles.rs` / `vars.rs` / `desugar.rs` and the v3
-  `resolve` orchestrator.
-
-**Intentionally red until later phases** (the v3→v4 break, pre-release): every
-test/sample written in v3 syntax now fails to parse under the v4 front end —
-`tests/` (conformance, rendering, resolution, wiring, hello, cli, parsing, fmt
-cross-check) and the v3-string unit tests in `layout`/`render` (21 lib + the
-integration suites). They re-green in **Phase 8** once samples/tests are rewritten
-to v4. Layout/render also still read v3 attr names, so even a v4-parsed file lays
-out / renders wrong until **Phases 4–5** — `lini <v4-file>` will not produce a
-correct SVG yet. This is expected and sanctioned.
-
-**Carried to Phase 5** (touching them now would break code that phase owns):
-the `WireAt::Start/Mid/End` trim (the router's `labels.rs` still matches them),
-the `SheetInputs` reshape + descendant-selector CSS, and the router/render
-attr-name reads (`thickness`→`stroke-width`, `text-size`→`font-size`, wire-label
-`place`, …). Resolve already *emits* the v4 names; Phase 5 makes the readers agree.
-
-**v3 island, retired in Phases 6–7:** `ast.rs` / `parser.rs` / `fmt.rs` /
-`lint.rs` still parse v3 syntax for `fmt`/`lint`; `lini desugar` is stubbed
-(returns a "being migrated" error) pending its v4 rewrite.
-
-**Next session starts at Phase 4** (layout): read `SPEC.md` §5–§7 and this file,
-`cargo test --lib resolve` to confirm the green baseline, then make `layout/`
-read the v4 attr names + the new sizing model.
+**Done when.** Snapshot tests show bare `<text>`; element count for a table drops
+accordingly; visuals unchanged.
 
 ---
 
-## Phase 4 — Layout (sizing, flex, grid, dividers)
+## Phase 5 — fmt: table column alignment
 
-**Goal.** Lay out the resolved scene per SPEC §5–§7.
+**Goal.** Make the flat table form read like a table (SPEC §8/§14).
 
 **Key points.**
-- **Sizing model** (SPEC §6, the biggest behavioural change): `width`/`height`
-  default `auto` = content + `padding` (**border-box**: padding inside an
-  explicit size, never added). Empty / overlay-only shape = `2 × padding`. **Drop
-  the per-shape default sizes** (rect 100×40, …) and **fold `text-pad` into
-  `padding`** — one knob. `|icon|` keeps `icon-size`; geometry primitives require
-  their attrs. Rewrite `primitives.rs` sizing (`closed_shape_dims`,
-  `auto_sized_bbox`, `read_size` → `width`/`height`).
-- **Flex `align`/`justify`/`stretch`/`evenly`** (SPEC §5): currently `flex.rs`
-  only does cross-axis `start/center/end`; main-axis distribution, `stretch`,
-  `evenly` are **unimplemented**. Build them — but they are **no-ops without
-  slack** (slack = explicit size or fixed grid tracks). This is the main new
-  layout code.
-- **Grid** (SPEC §5): `columns` required, `rows` optional (implicit auto rows);
-  track lists with mixed `auto` + fixed + `repeat(N)`/`repeat(N,size)`; count =
-  list length (not `layout:(c,r)`). Auto-flow already exists. Cell-fill becomes
-  opt-in via `align`/`justify: stretch` (today it's automatic on explicit
-  tracks) — decouple them.
-- **Dividers** (SPEC §5): interior separators only, painted by the container's
-  `stroke*`. Reuse `grid.rs::rule_segments` for the grid case; the 1-D case
-  (between flex children) is new. The outer frame is the container's **own
-  border** — so a `|table|` draws its border the normal way (its group rect
-  stroke) **plus** interior dividers, replacing the v3 "skip the rect, draw the
-  frame via rule_segments" approach. No more `is_table` special-casing of the
-  frame.
-- **Caption bands** (`mount: in`/`out`): `titles.rs` is reusable largely as-is
-  (rename `place`→`mount` reads).
+- `fmt` detects a grid/`|table|`, reads its `columns` count, chunks the bare-text
+  cells into rows, and pads each column to its max width — markdown-style. Other
+  cell kinds (a `|plain|`) break the alignment back to one-per-line.
+- Idempotent and round-trips (strings are self-delimiting, so the aligned form
+  re-parses to the same cells).
 
-**Done.** Layout is fully v4: the sizing model (`primitives.rs` — border-box
-`width`/`height`, auto = content + `padding` per axis, empty = `2 × padding`,
-stroke counts; text → glyphs), `place`→`mount` (`anchors.rs`, caption bands),
-`rotation`→`rotate`, flex `align`/`justify`/`stretch`/`evenly` (`flex.rs`, slack
-threaded from the container's explicit-size content area), grid `columns`/`rows`
-track lists with `auto`/fixed/`repeat` + `cell`/`span` + stretch-fill (`grid.rs`
-+ `read_layout_mode`), and `divider` (interior-only, grid + 1-D). The `is_table`
-frame special-casing is gone — a `|table|` is a group with `divider: all`, so
-render draws the group border + the interior dividers (no doubling). **23 layout
-tests green, 0 warnings.** Cell-fill is driven by the *cell's own*
-`align`/`justify: stretch` (the shipped `table rect { … }` rule), an explicit
-child dimension pinning that axis. Visual verification waits on Phase 5 (the
-segments/sizes are unit-tested; the SVG is still v3-name-wrong).
-
-**Next: Phase 5 (render)** makes `lini <v4-file>` produce correct SVG — the
-attr-name reads (`thickness`→`stroke-width`, `text-size`→`font-size`,
-`double`→`stack`, `rotation`→`rotate`, `line`→`stroke-style`, icon/image src,
-…), the `WireAt::Start/Mid/End` trim (+ `layout/wires/labels.rs`), the
-`SheetInputs` reshape, and canvas `fill` / `<title>` emission.
-
-**Done when.** Unit tests pin sizes (empty = 2×padding, text = text+padding,
-explicit = exact), align/justify/stretch/evenly with slack, grid track lists +
-implicit rows + repeat, and dividers (1-D and grid, span-aware).
+**Done when.** `fmt` turns one-cell-per-line into aligned columns and back
+identically; `fmt --check` clean on the table samples.
 
 ---
 
-## Phase 5 — Render (names, canvas, title, media)
+## Phase 6 — Samples, tests, snapshots, README
 
-**Goal.** Emit v4 SVG (SPEC §13). The renderer already emits CSS-shaped names, so
-this mostly *aligns input names with output*.
+**Goal.** Bring every fixture and doc to the new model and re-green the suite.
 
-**Done.** `lini <v4-file>` now renders correct SVG (visually verified with
-`resvg`: shapes, a bordered+ruled table, group caption/footer, corner badge,
-`stack`, the §20 showcase — defines, classes, nested groups, grid cell-pinning,
-dot-path wires). The work:
+**Key points.**
+- Rewrite all `samples/*.lini`: `|box|`, id-as-label, `{ "label" }`, explicit
+  `|caption|`, bare-text tables, wire `along`. Add samples for the new shapes
+  (`|plain|`, the flat table).
+- Rewrite every `.lini` source string + assertion in `tests/*.rs`.
+- Regenerate `insta` snapshots — inspect each diff, don't blind-accept.
+- Update `README.md` examples.
 
-- **Render attr reads → v4** (`render/*`): `PAINT_PROPS` is near-identity
-  (`stroke-width`, `font-size`, `font-family`, `font-weight`); `stroke-style` →
-  `stroke-dasharray`; shapes read `stack` (was `double`), `font-size`, icon
-  size from `width`/`height`/`icon-size` + glyph from the node label, image
-  `src`; wires read `stroke-width`/`stroke-style`/`font-size`/`font-family`.
-  Fixed the root rule's stale `--lini-font` / `text-size`-13 (→ `--lini-font-family`,
-  `font-size` 14).
-- **WireAt trim**: dropped `Start/Mid/End` (resolve only emits `Auto`/`Fraction`)
-  from `ir.rs` + the label placer; dropped the label `place:out` branch (lift
-  with `offset:` only). Remaining layout/router reads renamed (`font-size`,
-  `stroke-width`).
-- **Icon glyph** (`resolve/scene.rs`): an `|icon|` carries its positional label
-  as the glyph name, like `|text|`, instead of stacking a child.
-- **Canvas fill** (SPEC §13): a root `fill:` paints a `<rect class="lini-canvas">`
-  over the viewBox (threaded as `LaidOut.canvas_fill`).
-- **`title:`**: a `<title>` first-child on the node `<g>`.
-- **`layer:`** (SPEC §6): siblings paint in ascending `layer` (default 0), ties
-  by source order — a stable sort in render. Was wholly unimplemented (no `z`
-  read ever existed to rename), so the badge's `layer: 10` now actually lifts it.
-- **SheetInputs reshape**: fields renamed off v3 defs-block vocab —
-  `class_rules` / `element_rules` / `defines` / `templates` / `wire_defaults`.
-  Descendant rules still bake inline via the cascade (spec-correct; emitting
-  them as compound-selector CSS stays a deferred nicety).
-
-**Fixed en route** (earlier-phase bugs surfaced by Phase 5 visual verification):
-
-- **Grid implicit rows** (Phase 4): a declared `rows` track list is a *floor*,
-  not a cap — overflow children flow into implicit auto rows (CSS grid; the §20
-  table is `rows: auto 28` with three content rows). Only a `cell:` past the
-  column count errors.
-- **Grid divider geometry** (Phase 4): interior dividers overshot the frame by
-  one gap at the far edge (used `col_off[cols]`, which includes the trailing
-  gap) — a table's border never closed. Boundaries clamp to the content box;
-  interior lines centre in the gap.
-- **`wire { }` selector** (Phase 3): the routing layer's reserved element
-  selector (SPEC §18) was rejected as an unknown type — now exempt.
-
-**Deferred to Phase 6/8** (parser-shaped, out of Phase 5's scope):
-
-- **Flat table form** — `"a" { … } "b" "c"` (multiple node statements on one
-  line) doesn't parse: the v4 parser needs a newline/`;` between statements, and
-  a bare string sequence reads as one multi-label node. SPEC §8/§14/§20 write
-  tables this way and `fmt` must round-trip it, so the parser needs a rule that
-  separates space-run anonymous cells (or `fmt` emits one cell per line). Until
-  then, write table cells one per line.
-
-**Key points (original).**
-- **Carried from Phase 3:** resolve already emits v4 attr names — this phase
-  makes the readers agree. Also: the `WireAt::Start/Mid/End` trim (drop them from
-  `ir.rs` and the router's `labels.rs`), the `SheetInputs` reshape (element /
-  descendant / class rules + define defaults), and descendant rules emitted as
-  compound-selector CSS (today their paint bakes inline via the cascade, which is
-  spec-correct but verbose).
-- **`PAINT_PROPS`** (`render/rules.rs`) becomes near-identity: `stroke-width`,
-  `font-size`, `font-family`, `font-weight` are now the input names too;
-  `stroke-style` → `stroke-dasharray`. Update the table and the node `style=`
-  diff.
-- **Attribute-name reads to rename across the codebase** (clean find-and-fix,
-  but verify each): `thickness`→`stroke-width`, `line`→`stroke-style`,
-  `rotation`→`rotate`, `double`→`stack`, `text-size`→`font-size`,
-  `font`→`font-family`, `weight`→`font-weight`, `size`→`width`/`height`,
-  `href`→`src` (image), icon `name`→ the label, `variant`→`icon-variant`,
-  `z`→`layer`, `place`→`mount`. The **wire** code reads `thickness`,
-  `clearance`, `line`, `text-size`, `place`(labels), `offset`, `stroke`/`fill`/
-  `color`/`font`/`weight`, `halo`(internal, keep) — rename accordingly.
-- **Wire labels**: drop `WireAt::Start/Mid/End` (numeric `at` 0..1 only, plus
-  `Auto`) and drop label `place: out` (use `offset` only) — SPEC §9.
-- **Canvas**: a root `fill:` paints a backing rect over the viewBox (new; v3
-  `background` was unimplemented).
-- **`title:`**: emit a `<title>` first-child on the node `<g>` (new; v3 spec'd it
-  but never emitted). `aria-label` is deferred.
-- **icon/image**: glyph name from the label; image `src`→`href` attr; size from
-  `width`/`height`.
-
-**Done when.** Snapshot tests for representative nodes/wires show the v4 output;
-canvas fill and `<title>` appear when set.
+**Done when.** `cargo test` fully green; conformance snapshots reviewed.
 
 ---
 
-## Phase 6 — `fmt`
-
-**Goal.** Rewrite the canonical formatter for v4 (SPEC §14).
-
-**Done.** `fmt.rs` is a fresh formatter over `syntax::ast` (the v3 defs-block
-emitter is gone). It emits phase order (stylesheet → instances → wires, one
-blank between non-empty phases), `key: value;` decls in `{ }` blocks,
-`name::base` defines, CSS selectors (element / `.class` / descendant),
-space-separated value groups (comma between groups), `--name` vars, 2-space
-indent. Comments and blank-line groupings are preserved (`fmt/trivia.rs`,
-replayed between AST items by span; runs of blanks collapse to one), and sibling
-nodes align their id/`|type|` columns within a blank-line-free group
-(`fmt/align.rs`). 23 unit tests (per-construct output, idempotence, reparse);
-the CLI preserves SVG semantics and `fmt --check` round-trips.
-
-**Deferred** (needs a parser change): the **flat table form** — multiple
-anonymous string cells per line, aligned into visual columns (SPEC §8/§14). The
-v4 parser reads one node statement per line and a bare string run as one
-multi-label node, so `fmt` emits one cell per line for now. Resolving it means
-either a context-sensitive rule (in a grid body, each top-level string is a
-cell) or a `fmt`/parser convention — a **language-design decision** flagged for
-the user. The column-alignment machinery (`fmt/align.rs`) is in place to extend
-to cells once the parser accepts them.
-
-**Done when.** `fmt(fmt(x)) == fmt(x)` on every sample (the sample sweep
-re-greens in Phase 8); `fmt --check` round-trips the canonical examples. ✓ for
-the formatter itself; the `samples/` sweep waits on Phase 8.
-
----
-
-## Phase 7 — lint, CLI, theme
-
-**Goal.** Trim the periphery to v4.
-
-**Done.**
-- **lint** (`lint.rs`): the v3 visual-attr / renamed-attr lint is gone (v4 makes
-  inline paint idiomatic); the pass is empty for now (home for future lints) and
-  parses with the v4 front end. The "did you mean" hint (SPEC §19) stays deferred.
-- **desugar** (`desugar.rs`, **revived**): a v4 AST transform — node labels →
-  `|caption|`/`|text|` children (group-derived types via
-  `resolve::derives_from_group`; `|text|`/`|icon|` keep their label), wire labels
-  → `|text|` body children — re-printed through `fmt::print_file` (now with an
-  `align` flag, off for synthesized ASTs). 7 tests.
-- **CLI** (`main.rs`): dropped stale v3 help (`--theme`'s `defaults {}` block,
-  `--no-warn`'s visual-attr example). Subcommands unchanged.
-- **theme** (`theme.rs`): unchanged — name-agnostic `--lini-*` extraction,
-  verified end-to-end over the v4 built-ins.
-- **v3 island retired**: with fmt/lint/desugar on v4, nothing read the v3 parser
-  or v3-only AST types — deleted `src/parser.rs`, trimmed `src/ast.rs` to the
-  shared lexical enums (`Side`, `WireOp`/`LineStyle`/`WireMarker`).
-
-**Done when.** `cargo test` for these modules is green; CLI help reads right. ✓
-
----
-
-## Phase 8 — Samples, tests, snapshots, README
-
-**Goal.** Bring every fixture and doc to v4 and re-green the suite.
-
-**Done.** `cargo test` is **fully green — 324 tests** (231 lib + 93 integration
-across 11 suites).
-
-- All 21 `samples/*.lini` rewritten to v4; visually spot-checked with `resvg`
-  (primitives, templates, table, full_example). `mermaid_fast` gained
-  `layout: row; gap: 40` so its tiny auto-sized boxes have a routing corridor.
-- Every `.lini` source string in `tests/*.rs` ported to v4; assertions updated to
-  v4 messages/output. Tests for removed v3 features deleted (`|scene|`/`|wire|`
-  singletons, `.style` composition cycles, reserved class names, the no-space
-  colon rule, attr-without-value, the renamed-attr lint).
-- `insta` conformance + hello snapshots regenerated for the v4 samples.
-- `README.md` examples ported to v4.
-- Two real bugs surfaced and fixed here: `|path|` read the v3 `d` attr (→ `path`),
-  and `desugar` re-expanded `|caption|` labels on a second pass (idempotence;
-  fixed by keying the consume-label check on deriving from `text`/`icon` via the
-  generalized `resolve::type_chain_contains`). Wiring crossing counts re-pinned
-  to v4 geometry (medium 6→1, hard 3→5).
-
-**Carried to Phase 9** (parser-shaped, deferred from Phase 6): the **flat table
-form** — multiple anonymous string cells per line, aligned into visual columns.
-Cells are one per line until the parser accepts multi-node-per-line statements.
-
-**Done when.** `cargo test` fully green; conformance snapshots reviewed. ✓
-
----
-
-## Phase 9 — Visual verification & default tuning
+## Phase 7 — Visual verification & default tuning
 
 **Goal.** Make it *look* right, and settle the eyeball-dependent defaults.
 
-**Done.** Rendered the sample set to PNG with `resvg` and read each: primitives
-(all 13, including the now-fixed `|path|`), templates (group caption, row/column
-wrappers, the corner badge, sticky note, ruled table — border + interior
-dividers, no doubling), `full_example` (groups, captions, labelled orthogonal
-wires, cylinders), captions + footer, anchors (every edge/corner overlay),
-modifiers (stroke-style / stack / shadow / rotate), and the §20 showcase. All
-correct.
+**Key points.**
+- Render the showcase samples to PNG with `resvg` and read them: tables (ruled,
+  `gap: 0`, no doubling), captions, `|plain|` labels, badges, the §20 scene.
+- Tune in the one defaults file: table cell padding (`4 8` start), caption font,
+  `|plain|` paint.
 
-**Defaults settled.** Table-cell padding stays `4 8` (user chose it over the
-floated `2 4`); group/note padding stays at the default `16`. No change needed —
-the look reads right. Empty shapes are `2 × padding` (32 × 32), canvas `fill`
-paints, captions reserve their band.
-
-**Done when.** The samples render correctly and the defaults look right to the
-user. ✓
+**Done when.** The samples render correctly and the defaults look right.
 
 ---
 
@@ -484,13 +212,6 @@ user. ✓
 ## Definition of done
 
 All phases complete; `cargo test` green; samples render correctly (visually
-verified); `README.md` current; `SPEC.md` matches actual behavior (fix drift in
-place); no v3 concepts left in the code.
-
-**✓ Complete.** Phases 0–9 done. `cargo test` is green (324 tests); the whole
-pipeline — lexer → v4 parser → resolve → layout → route → render, plus `fmt`,
-`lint`, `desugar`, `theme`, CLI — runs on the v4 language; all 21 samples render
-correctly; `README.md` is v4; the v3 front-end island is deleted. One item stays
-deferred (needs a parser change, not a v4-language gap): the **flat table form**
-(multiple anonymous string cells per line, column-aligned by `fmt`) — cells are
-written one per line until the parser accepts multi-node-per-line statements.
+verified); `README.md` current; `SPEC.md` matches actual behavior; no trace of
+positional labels, the `|text|` primitive, `rect` as a type, or the caption
+1st/2nd magic left in the code.
