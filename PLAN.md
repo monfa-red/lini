@@ -281,7 +281,55 @@ implicit rows + repeat, and dividers (1-D and grid, span-aware).
 **Goal.** Emit v4 SVG (SPEC §13). The renderer already emits CSS-shaped names, so
 this mostly *aligns input names with output*.
 
-**Key points.**
+**Done.** `lini <v4-file>` now renders correct SVG (visually verified with
+`resvg`: shapes, a bordered+ruled table, group caption/footer, corner badge,
+`stack`, the §20 showcase — defines, classes, nested groups, grid cell-pinning,
+dot-path wires). The work:
+
+- **Render attr reads → v4** (`render/*`): `PAINT_PROPS` is near-identity
+  (`stroke-width`, `font-size`, `font-family`, `font-weight`); `stroke-style` →
+  `stroke-dasharray`; shapes read `stack` (was `double`), `font-size`, icon
+  size from `width`/`height`/`icon-size` + glyph from the node label, image
+  `src`; wires read `stroke-width`/`stroke-style`/`font-size`/`font-family`.
+  Fixed the root rule's stale `--lini-font` / `text-size`-13 (→ `--lini-font-family`,
+  `font-size` 14).
+- **WireAt trim**: dropped `Start/Mid/End` (resolve only emits `Auto`/`Fraction`)
+  from `ir.rs` + the label placer; dropped the label `place:out` branch (lift
+  with `offset:` only). Remaining layout/router reads renamed (`font-size`,
+  `stroke-width`).
+- **Icon glyph** (`resolve/scene.rs`): an `|icon|` carries its positional label
+  as the glyph name, like `|text|`, instead of stacking a child.
+- **Canvas fill** (SPEC §13): a root `fill:` paints a `<rect class="lini-canvas">`
+  over the viewBox (threaded as `LaidOut.canvas_fill`).
+- **`title:`**: a `<title>` first-child on the node `<g>`.
+- **SheetInputs reshape**: fields renamed off v3 defs-block vocab —
+  `class_rules` / `element_rules` / `defines` / `templates` / `wire_defaults`.
+  Descendant rules still bake inline via the cascade (spec-correct; emitting
+  them as compound-selector CSS stays a deferred nicety).
+
+**Fixed en route** (earlier-phase bugs surfaced by Phase 5 visual verification):
+
+- **Grid implicit rows** (Phase 4): a declared `rows` track list is a *floor*,
+  not a cap — overflow children flow into implicit auto rows (CSS grid; the §20
+  table is `rows: auto 28` with three content rows). Only a `cell:` past the
+  column count errors.
+- **Grid divider geometry** (Phase 4): interior dividers overshot the frame by
+  one gap at the far edge (used `col_off[cols]`, which includes the trailing
+  gap) — a table's border never closed. Boundaries clamp to the content box;
+  interior lines centre in the gap.
+- **`wire { }` selector** (Phase 3): the routing layer's reserved element
+  selector (SPEC §18) was rejected as an unknown type — now exempt.
+
+**Deferred to Phase 6/8** (parser-shaped, out of Phase 5's scope):
+
+- **Flat table form** — `"a" { … } "b" "c"` (multiple node statements on one
+  line) doesn't parse: the v4 parser needs a newline/`;` between statements, and
+  a bare string sequence reads as one multi-label node. SPEC §8/§14/§20 write
+  tables this way and `fmt` must round-trip it, so the parser needs a rule that
+  separates space-run anonymous cells (or `fmt` emits one cell per line). Until
+  then, write table cells one per line.
+
+**Key points (original).**
 - **Carried from Phase 3:** resolve already emits v4 attr names — this phase
   makes the readers agree. Also: the `WireAt::Start/Mid/End` trim (drop them from
   `ir.rs` and the router's `labels.rs`), the `SheetInputs` reshape (element /

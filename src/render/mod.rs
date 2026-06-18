@@ -61,7 +61,7 @@ pub fn render(laid_out: &LaidOut, opts: &Options) -> String {
     }
 
     out.push_str("  <g class=\"lini-scene\">\n");
-    for node in &laid_out.nodes {
+    for node in in_layer_order(&laid_out.nodes) {
         render_node(&mut out, node, 2, &laid_out.vars, &ruleset, &filters, opts);
     }
     out.push_str("  </g>\n");
@@ -150,7 +150,7 @@ fn render_node(
     }
 
     primitives::render_geometry(out, n, depth + 1, vars, filters, opts);
-    for child in &n.children {
+    for child in in_layer_order(&n.children) {
         render_node(out, child, depth + 1, vars, ruleset, filters, opts);
     }
 
@@ -204,6 +204,17 @@ fn node_style_attr(
     style_attr_from(&decls)
 }
 
+/// Siblings in paint order: ascending `layer:` (default 0), ties by source
+/// order (SPEC §6). A stable sort keeps the source order within each layer.
+fn in_layer_order(nodes: &[PlacedNode]) -> Vec<&PlacedNode> {
+    let mut order: Vec<&PlacedNode> = nodes.iter().collect();
+    order.sort_by(|a, b| {
+        let layer = |n: &PlacedNode| n.attrs.number("layer").unwrap_or(0.0);
+        layer(a).total_cmp(&layer(b))
+    });
+    order
+}
+
 /// ` style="…"` from prop declarations, or empty.
 fn style_attr_from(decls: &[(&str, String)]) -> String {
     if decls.is_empty() {
@@ -238,6 +249,25 @@ mod tests {
     fn no_backing_rect_without_a_root_fill() {
         let svg = svg_for("x |rect| \"hi\"\n");
         assert!(!svg.contains("lini-canvas"), "{svg}");
+    }
+
+    #[test]
+    fn layer_lifts_a_node_above_later_source_order() {
+        // `a` is written first; its higher `layer` paints it last (on top),
+        // so its <g> is emitted after `b`'s (SPEC §6).
+        let svg = svg_for("a |rect| \"a\" { layer: 5; }\nb |rect| \"b\"\n");
+        let ai = svg.find(r#"data-id="a""#).expect("a");
+        let bi = svg.find(r#"data-id="b""#).expect("b");
+        assert!(ai > bi, "a (layer 5) should paint after b: {svg}");
+    }
+
+    #[test]
+    fn equal_layer_keeps_source_order() {
+        let svg = svg_for("a |rect| \"a\"\nb |rect| \"b\"\n");
+        assert!(
+            svg.find(r#"data-id="a""#).unwrap() < svg.find(r#"data-id="b""#).unwrap(),
+            "{svg}"
+        );
     }
 
     #[test]
