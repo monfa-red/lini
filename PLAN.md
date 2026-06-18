@@ -424,19 +424,29 @@ the formatter itself; the `samples/` sweep waits on Phase 8.
 
 **Goal.** Bring every fixture and doc to v4 and re-green the suite.
 
-**Key points.**
-- Rewrite all `samples/*.lini` to v4 (one feature each; add samples for the new
-  features: descendant selectors, divider, caption, align/justify/stretch,
-  grid track lists, canvas fill, title).
-- Rewrite every `.lini` source string in `tests/*.rs` to v4.
-- Regenerate `insta` snapshots (`cargo insta review`) — inspect each diff, don't
-  blind-accept.
-- Update `README.md` (its embedded syntax examples).
-- The big front-end rewrite (Phases 1–3) will red the integration tests until
-  here; keep **phase-local unit tests** green meanwhile so each phase is
-  verifiable, and treat this phase as the integration re-green.
+**Done.** `cargo test` is **fully green — 324 tests** (231 lib + 93 integration
+across 11 suites).
 
-**Done when.** `cargo test` fully green; conformance snapshots reviewed.
+- All 21 `samples/*.lini` rewritten to v4; visually spot-checked with `resvg`
+  (primitives, templates, table, full_example). `mermaid_fast` gained
+  `layout: row; gap: 40` so its tiny auto-sized boxes have a routing corridor.
+- Every `.lini` source string in `tests/*.rs` ported to v4; assertions updated to
+  v4 messages/output. Tests for removed v3 features deleted (`|scene|`/`|wire|`
+  singletons, `.style` composition cycles, reserved class names, the no-space
+  colon rule, attr-without-value, the renamed-attr lint).
+- `insta` conformance + hello snapshots regenerated for the v4 samples.
+- `README.md` examples ported to v4.
+- Two real bugs surfaced and fixed here: `|path|` read the v3 `d` attr (→ `path`),
+  and `desugar` re-expanded `|caption|` labels on a second pass (idempotence;
+  fixed by keying the consume-label check on deriving from `text`/`icon` via the
+  generalized `resolve::type_chain_contains`). Wiring crossing counts re-pinned
+  to v4 geometry (medium 6→1, hard 3→5).
+
+**Carried to Phase 9** (parser-shaped, deferred from Phase 6): the **flat table
+form** — multiple anonymous string cells per line, aligned into visual columns.
+Cells are one per line until the parser accepts multi-node-per-line statements.
+
+**Done when.** `cargo test` fully green; conformance snapshots reviewed. ✓
 
 ---
 
