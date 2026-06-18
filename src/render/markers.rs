@@ -6,6 +6,16 @@ use crate::layout::PlacedNode;
 use crate::resolve::MarkerKind;
 use std::fmt::Write;
 
+/// How a marker is painted: the resolved colour, whether it must be inlined
+/// (a direct `stroke:` that no class rule can target), and the line thickness
+/// that sizes it.
+#[derive(Clone, Copy)]
+pub struct MarkerPaint<'a> {
+    pub color: &'a str,
+    pub inline: bool,
+    pub thickness: f64,
+}
+
 /// Emit markers for inline `|line|` primitives. Resolve has already settled
 /// `n.markers` per source-order rules — we just paint what's there.
 pub fn emit_inline_markers(
@@ -14,37 +24,17 @@ pub fn emit_inline_markers(
     n: &PlacedNode,
     from: (f64, f64),
     to: (f64, f64),
-    color: &str,
-    inline: bool,
-    thickness: f64,
+    paint: &MarkerPaint,
 ) {
     if n.markers.start != MarkerKind::None
         && let Some((tip, dir)) = marker_anchor(from, to, true)
     {
-        emit_marker(
-            out,
-            indent,
-            n.markers.start,
-            tip,
-            dir,
-            color,
-            inline,
-            thickness,
-        );
+        emit_marker(out, indent, n.markers.start, tip, dir, paint);
     }
     if n.markers.end != MarkerKind::None
         && let Some((tip, dir)) = marker_anchor(from, to, false)
     {
-        emit_marker(
-            out,
-            indent,
-            n.markers.end,
-            tip,
-            dir,
-            color,
-            inline,
-            thickness,
-        );
+        emit_marker(out, indent, n.markers.end, tip, dir, paint);
     }
 }
 
@@ -123,10 +113,13 @@ pub fn emit_marker(
     kind: MarkerKind,
     tip: (f64, f64),
     direction: (f64, f64),
-    color: &str,
-    inline: bool,
-    thickness: f64,
+    paint: &MarkerPaint,
 ) {
+    let MarkerPaint {
+        color,
+        inline,
+        thickness,
+    } = *paint;
     let size = marker_size(thickness);
     let ux = direction.0;
     let uy = direction.1;

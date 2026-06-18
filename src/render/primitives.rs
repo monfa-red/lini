@@ -317,10 +317,14 @@ fn emit_line(
     // states the cascade-resolved colour regardless.
     let classes = class_list(n.shape.as_str(), &n.type_chain, &n.applied_styles);
     let color = effective_stroke(&n.attrs, &classes, ruleset, vars, opts);
-    let inline = n.attrs.get("stroke").is_some();
+    let paint = super::markers::MarkerPaint {
+        color: &color,
+        inline: n.attrs.get("stroke").is_some(),
+        thickness,
+    };
     let from = points[0];
     let to = points[points.len() - 1];
-    super::markers::emit_inline_markers(out, indent, n, from, to, &color, inline, thickness);
+    super::markers::emit_inline_markers(out, indent, n, from, to, &paint);
 }
 
 fn emit_poly(out: &mut String, n: &PlacedNode, indent: &str) {

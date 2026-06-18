@@ -1,7 +1,7 @@
 //! Wire emission — the wire path, optional markers, optional labels — and
 //! airwires, the impossible-wire report made visible.
 
-use super::markers::{MARKER_OVERLAP, emit_marker, line_inset, marker_anchor};
+use super::markers::{MARKER_OVERLAP, MarkerPaint, emit_marker, line_inset, marker_anchor};
 use super::rules::{PAINT_PROPS, RuleSet, effective_stroke};
 use super::values::{attr_or_var, dasharray_value, escape_xml, format_value, num};
 use crate::Options;
@@ -114,7 +114,11 @@ pub fn render_wire(
     // only for a direct inline `stroke:`. The crow inlines the cascade-resolved
     // colour regardless (it is stroked, no fill rule reaches it).
     let marker_color = effective_stroke(&w.attrs, &wire_classes, ruleset, vars, opts);
-    let marker_inline = w.attrs.get("stroke").is_some();
+    let paint = MarkerPaint {
+        color: &marker_color,
+        inline: w.attrs.get("stroke").is_some(),
+        thickness,
+    };
     if w.markers.start != MarkerKind::None
         && let Some((tip, dir)) = marker_anchor(w.path[1], w.path[0], false)
     {
@@ -124,9 +128,7 @@ pub fn render_wire(
             w.markers.start,
             overlap_tip(tip, dir),
             dir,
-            &marker_color,
-            marker_inline,
-            thickness,
+            &paint,
         );
     }
     if w.markers.end != MarkerKind::None {
@@ -138,9 +140,7 @@ pub fn render_wire(
                 w.markers.end,
                 overlap_tip(tip, dir),
                 dir,
-                &marker_color,
-                marker_inline,
-                thickness,
+                &paint,
             );
         }
     }
