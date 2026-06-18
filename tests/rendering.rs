@@ -28,15 +28,15 @@ fn render_themed(src: &str, theme_css: &str) -> String {
 
 #[test]
 fn theme_font_stack_emits_verbatim() {
-    // SPEC §12: a `--theme` font value is valid CSS already. A family stack must
+    // SPEC §11: a `--theme` font value is valid CSS already. A family stack must
     // round-trip into the @layer block as-is — not get wrapped into one bogus
     // quoted family (`"Inter, system-ui, sans-serif"`).
     let svg = render_themed(
         "|rect| \"hi\"\n",
-        ".lini { --lini-font: Inter, system-ui, sans-serif; }",
+        ".lini { --lini-font-family: Inter, system-ui, sans-serif; }",
     );
     assert!(
-        svg.contains("--lini-font: Inter, system-ui, sans-serif;"),
+        svg.contains("--lini-font-family: Inter, system-ui, sans-serif;"),
         "font stack should emit verbatim: {}",
         svg
     );
@@ -48,10 +48,10 @@ fn theme_quoted_font_family_is_not_double_wrapped() {
     // malformed `""Helvetica Neue", sans-serif"`.
     let svg = render_themed(
         "|rect| \"hi\"\n",
-        ".lini { --lini-font: \"Helvetica Neue\", sans-serif; }",
+        ".lini { --lini-font-family: \"Helvetica Neue\", sans-serif; }",
     );
     assert!(
-        svg.contains("--lini-font: \"Helvetica Neue\", sans-serif;"),
+        svg.contains("--lini-font-family: \"Helvetica Neue\", sans-serif;"),
         "quoted family must not be double-wrapped: {}",
         svg
     );
@@ -60,15 +60,11 @@ fn theme_quoted_font_family_is_not_double_wrapped() {
 
 #[test]
 fn theme_font_inherit_stays_a_keyword() {
-    // SPEC §12: `--lini-font: inherit` lets an embedded diagram pick up the host
-    // page's font. It must stay the bare CSS keyword, never quoted.
-    let svg = render_themed("|rect| \"hi\"\n", ".lini { --lini-font: inherit; }");
-    assert!(svg.contains("--lini-font: inherit;"), "{}", svg);
-    assert!(
-        !svg.contains("\"inherit\""),
-        "inherit must be a keyword: {}",
-        svg
-    );
+    // SPEC §11: `--lini-font-family: inherit` lets an embedded diagram pick up
+    // the host page's font. It must stay the bare CSS keyword, never quoted.
+    let svg = render_themed("|rect| \"hi\"\n", ".lini { --lini-font-family: inherit; }");
+    assert!(svg.contains("--lini-font-family: inherit;"), "{}", svg);
+    assert!(!svg.contains("\"inherit\""), "inherit must be a keyword: {}", svg);
 }
 
 #[test]
@@ -84,15 +80,10 @@ fn live_mode_emits_var_refs_for_visual_attrs() {
 
 #[test]
 fn multiline_label_emits_one_tspan_per_line() {
-    // SPEC §5: `\n` splits a label across lines (spacing size × 1.2). Layout
-    // already sizes the bbox for N lines; render must lay them out as tspans.
+    // SPEC §6: `\n` splits a label across lines (spacing size × 1.2). Layout
+    // already sizes the bbox for N lines; render lays them out as tspans.
     let svg = render_baked("n |rect| \"one\\ntwo\"\n");
-    assert_eq!(
-        svg.matches("<tspan").count(),
-        2,
-        "expected two tspans: {}",
-        svg
-    );
+    assert_eq!(svg.matches("<tspan").count(), 2, "expected two tspans: {}", svg);
     assert!(
         svg.contains(">one</tspan>") && svg.contains(">two</tspan>"),
         "{}",
@@ -102,18 +93,12 @@ fn multiline_label_emits_one_tspan_per_line() {
 
 #[test]
 fn single_line_label_stays_a_bare_text() {
-    // No churn for the common case: one line emits no tspan.
     let svg = render_baked("n |rect| \"solo\"\n");
-    assert!(
-        !svg.contains("<tspan"),
-        "single line must not wrap in a tspan: {}",
-        svg
-    );
+    assert!(!svg.contains("<tspan"), "single line must not wrap in a tspan: {}", svg);
 }
 
 #[test]
 fn line_missing_points_error_uses_pipe_sigil() {
-    // SPEC §16: the type is named with the pipe sigil (|line|), not :line.
     let err = lini::compile_str("x |line|\n").expect_err("line needs points");
     assert!(
         err.to_string().contains("'|line|' requires 'points'"),
@@ -123,28 +108,25 @@ fn line_missing_points_error_uses_pipe_sigil() {
 }
 
 #[test]
-fn shape_def_styles_merge_in_defs_order() {
-    // SPEC §13: defs-block order decides between styles, listing order is
-    // irrelevant — and that must hold inside a shape def too, exactly as it
-    // does on a node. `.a` (red) precedes `.b` (blue), so `.b` wins.
-    let svg = render_baked("{ .a stroke:red\n.b stroke:blue\n|s:rect| .b .a }\nn |s| \"n\"\n");
+fn define_paint_rides_its_shape_rule() {
+    // SPEC §13: a define's own paint states on its `lini-shape-{name}` rule;
+    // geometry (radius) stays baked, never on the rule.
+    let svg = render_baked("s::rect { stroke: blue; radius: 5; }\nn |s| \"n\"\n");
     let rule = svg
         .lines()
         .find(|l| l.contains(".lini-shape-s {"))
         .expect("shape-s rule present");
-    assert!(
-        rule.contains("stroke: blue"),
-        "defs order must decide: .b (blue) should win over .a (red): {}",
-        rule
-    );
+    assert!(rule.contains("stroke: blue"), "define paint on its rule: {}", rule);
+    assert!(!rule.contains("radius"), "geometry must not ride CSS: {}", rule);
 }
 
 #[test]
 fn inherited_text_prop_reset_to_default_is_emitted() {
-    // A descendant that resets an inherited text prop to the root default,
-    // under an overriding ancestor, must still emit it on its own <g> — else
-    // the dropped declaration leaves it inheriting the ancestor's value.
-    let svg = render_baked("crew |group| text-size:20 { reset |text| \"x\" text-size:13 }\n");
+    // A descendant that resets an inherited text prop, under an overriding
+    // ancestor, must still emit it on its own <g> — else the dropped
+    // declaration leaves it inheriting the ancestor's value.
+    let svg =
+        render_baked("crew |group| { font-size: 20; reset |text| \"x\" { font-size: 13; } }\n");
     let g_line = svg
         .lines()
         .find(|l| l.contains("data-id=\"reset\""))
@@ -159,10 +141,7 @@ fn inherited_text_prop_reset_to_default_is_emitted() {
 #[test]
 fn bake_mode_resolves_var_refs_to_literals() {
     let svg = render_baked("|rect| \"hi\"\n");
-    // Defaults live in the structural rules, baked to literals.
     assert!(svg.contains("fill: white; stroke: #444;"), "{}", svg);
-    // Text fill is `currentColor` (SVG-native cascade); the root rule sets
-    // `color` to the baked `--text-color` (= --fg = black).
     assert!(svg.contains("fill: currentColor"), "{}", svg);
     assert!(svg.contains("color: black"), "{}", svg);
     assert!(svg.contains(".lini .lini-shape-rect {"), "{}", svg);
@@ -174,17 +153,16 @@ fn bake_mode_resolves_var_refs_to_literals() {
 }
 
 #[test]
-fn defaults_override_baked_into_output() {
+fn inline_override_baked_into_style_attr() {
     // An inline paint override differs from the rules and rides style=.
-    let svg = render_baked("{ --accent:#ff00aa }\ncat |rect| \"Cat\" fill:--accent\n");
+    let svg = render_baked("--accent: #ff00aa;\ncat |rect| \"Cat\" { fill: --accent; }\n");
     assert!(svg.contains(r#"style="fill: #ff00aa""#), "{}", svg);
 }
 
 #[test]
 fn auto_classes_include_primitive_and_styles() {
     let svg = render_live(
-        "{ .bold weight:bold\n  .thin stroke:#444 }\n\
-         cat |rect| \"Cat\" .bold .thin\n",
+        ".bold { font-weight: bold; }\n.thin { stroke: #444; }\ncat |rect| \"Cat\" .bold .thin\n",
     );
     assert!(svg.contains("lini-shape-rect"), "{}", svg);
     assert!(svg.contains("lini-style-bold"), "{}", svg);
@@ -193,10 +171,7 @@ fn auto_classes_include_primitive_and_styles() {
 
 #[test]
 fn auto_classes_include_user_shape_chain() {
-    let svg = render_live(
-        "{ |treat:rect| radius:5 }\n\
-         cat |treat| \"Cat\"\n",
-    );
+    let svg = render_live("treat::rect { radius: 5; }\ncat |treat| \"Cat\"\n");
     assert!(svg.contains("lini-shape-treat"), "{}", svg);
     assert!(svg.contains("lini-shape-rect"), "{}", svg);
     assert!(svg.contains(r#"data-id="cat""#), "{}", svg);
@@ -204,45 +179,39 @@ fn auto_classes_include_user_shape_chain() {
 
 #[test]
 fn hex_emits_polygon() {
-    let svg = render_live("|hex| size:(60, 60)\n");
-    assert!(svg.contains("<polygon"), "{}", svg);
+    assert!(render_live("|hex| { width: 60; height: 60; }\n").contains("<polygon"));
 }
 
 #[test]
 fn diamond_emits_polygon() {
-    let svg = render_live("|diamond| size:(60, 60)\n");
-    assert!(svg.contains("<polygon"), "{}", svg);
+    assert!(render_live("|diamond| { width: 60; height: 60; }\n").contains("<polygon"));
 }
 
 #[test]
 fn slant_emits_polygon_with_skew() {
-    let svg = render_live("|slant| size:(80, 40) skew:20\n");
-    assert!(svg.contains("<polygon"), "{}", svg);
+    assert!(render_live("|slant| { width: 80; height: 40; skew: 20; }\n").contains("<polygon"));
 }
 
 #[test]
 fn oval_emits_ellipse() {
-    let svg = render_live("|oval| size:(80, 40)\n");
-    assert!(svg.contains("<ellipse"), "{}", svg);
+    assert!(render_live("|oval| { width: 80; height: 40; }\n").contains("<ellipse"));
 }
 
 #[test]
 fn cyl_emits_ellipse_and_path() {
-    let svg = render_live("|cyl| size:(60, 80)\n");
+    let svg = render_live("|cyl| { width: 60; height: 80; }\n");
     assert!(svg.contains("<ellipse"), "{}", svg);
     assert!(svg.contains("<path"), "{}", svg);
 }
 
 #[test]
 fn cloud_emits_path() {
-    let svg = render_live("|cloud| size:(100, 60)\n");
-    assert!(svg.contains("<path"), "{}", svg);
+    assert!(render_live("|cloud| { width: 100; height: 60; }\n").contains("<path"));
 }
 
 #[test]
 fn poly_emits_polygon_with_user_points() {
-    let svg = render_live("|poly| points:[(0,0),(20,0),(10,20)]\n");
-    assert!(svg.contains("<polygon"), "{}", svg);
+    assert!(render_live("|poly| { points: 0 0, 20 0, 10 20; }\n").contains("<polygon"));
 }
 
 #[test]
@@ -266,14 +235,14 @@ fn full_spec_example_renders_in_both_modes() {
 }
 
 #[test]
-fn line_attr_renders_dasharray() {
-    let svg = render_live("|rect| \"d\" size:(80,40) line:dashed\n");
+fn stroke_style_renders_dasharray() {
+    let svg = render_live("|rect| \"d\" { width: 80; height: 40; stroke-style: dashed; }\n");
     assert!(svg.contains("stroke-dasharray"), "{}", svg);
 }
 
 #[test]
-fn text_size_on_container_reaches_descendant_text() {
-    let svg = render_live("g |group| text-size:10 { |text| \"hi\" }\n");
+fn font_size_on_container_reaches_descendant_text() {
+    let svg = render_live("g |group| { font-size: 10; |text| \"hi\" }\n");
     assert!(svg.contains("font-size: 10px"), "{}", svg);
 }
 
@@ -281,7 +250,6 @@ fn text_size_on_container_reaches_descendant_text() {
 fn css_cascade_sample_emits_rules_and_diffs() {
     let src = std::fs::read_to_string("samples/css_cascade.lini").expect("read");
     let svg = lini::compile_str(&src).expect("compile");
-    // Defs block ships as a stylesheet.
     assert!(
         svg.contains(".lini .lini-style-loud { stroke: red; stroke-width: 2; }"),
         "{}",
@@ -289,14 +257,10 @@ fn css_cascade_sample_emits_rules_and_diffs() {
     );
     assert!(
         svg.contains(".lini .lini-shape-rect { fill: lightyellow;"),
-        "type default merged into the shape rule: {}",
+        "element rule merged into the shape rule: {}",
         svg
     );
-    assert!(
-        svg.contains(".lini .lini-wire { fill: none; stroke: #666;"),
-        "{}",
-        svg
-    );
+    assert!(svg.contains(".lini .lini-wire { fill: none; stroke: #666;"), "{}", svg);
     // A styled node carries no inline paint — the class provides it.
     assert!(
         svg.contains(r#"lini-style-loud" data-id="loud" transform"#),
@@ -305,15 +269,14 @@ fn css_cascade_sample_emits_rules_and_diffs() {
     );
     // Only genuine differences ride style=.
     assert!(svg.contains(r#"style="fill: lavender""#), "{}", svg);
-    // Cascading text attrs sit on the group and inherit natively.
+    // Cascading text props sit on the group and inherit natively.
     assert!(
         svg.contains(r#"style="font-family: serif; font-size: 10px""#),
         "{}",
         svg
     );
-    // A wire carries its defs styles as classes, exactly like a node: `.calm`
-    // rides `lini-style-calm`, and only the `--` operator's dash (not from a
-    // style) is left as an inline diff.
+    // A wire carries its style classes like a node; only the `--` operator's
+    // dash (not from a style) is left as an inline diff.
     let wire_g = svg
         .lines()
         .find(|l| l.contains(r#"data-from="loud""#))
