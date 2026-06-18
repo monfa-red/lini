@@ -5,7 +5,6 @@ mod fmt;
 mod layout;
 mod lexer;
 mod lint;
-mod parser;
 mod render;
 mod resolve;
 mod serve;
