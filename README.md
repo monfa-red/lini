@@ -205,7 +205,7 @@ Parse is recursive-descent over an LL(1) grammar; resolve applies CSS-like speci
 
 ## Status
 
-**v0.2.** The language (the box/text model — see [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md)) is stable, and the whole pipeline is implemented and tested — wires route and render, layout and theming are complete, and the formatter and dev server ship in the same binary.
+**v0.3.** The language (the box/text model — see [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md)) is stable, and the whole pipeline is implemented and tested — wires route and render, layout and theming are complete, and the formatter and dev server ship in the same binary.
 
 **Non-goals**, by design: automatic node *placement* (you position; Lini routes), multi-file imports, animation, and manual wire waypoints.
 
