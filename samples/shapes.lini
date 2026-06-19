@@ -1,19 +1,97 @@
-// Defines and containers — the shape-composition vocabulary.
+// Shape tracker — every drawable primitive (plus a few templates), each
+// captioned, in a grid. Render this to eyeball that all shapes still draw.
 
-treat::box { radius: 5; }
-nest::slant { fill: gray; }
+layout: grid; columns: repeat(4); gap: 24; padding: 28; fill: #ffffff;
 
-|treat| "Treat"
-|nest|  "Nest"
+tile::column { gap: 8; align: center; }
+cap::plain { font-size: 12; font-weight: normal; color: #555; }
 
-toolbox |group| {
-  layout: row; gap: 10;
-  |icon| "save"
-  |icon| "copy"
+// ── Row 1 ─────────────────────────────────────────────
+|tile| {
+  |box| {
+    width: 66; height: 46; fill: #ffd6a5;
+    |badge| "new"
+  }
+  |cap| "box + badge"
+}
+|tile| {
+  |rect| { width: 66; height: 46; fill: #fdffb6; }
+  |cap|  "rect"
+}
+|tile| {
+  |oval| { width: 60; height: 60; fill: #caffbf; }
+  |cap|  "oval"
+}
+|tile| {
+  |hex| { width: 68; height: 58; fill: #9bf6ff; }
+  |cap| "hex"
 }
 
-den |group| {
-  layout: column; gap: 8; padding: 12;
-  |caption| { font-weight: bold; "Title" }
-  "Content"
+// ── Row 2 ─────────────────────────────────────────────
+|tile| {
+  |slant| { width: 66; height: 46; fill: #a0c4ff; }
+  |cap|   "slant"
+}
+|tile| {
+  |cyl| { width: 58; height: 64; fill: #bdb2ff; }
+  |cap| "cyl"
+}
+|tile| {
+  |diamond| { width: 68; height: 58; fill: #ffc6ff; }
+  |cap|     "diamond"
+}
+|tile| {
+  |cloud| { width: 80; height: 54; fill: #ffadad; }
+  |cap|   "cloud"
+}
+
+// ── Row 3 ─────────────────────────────────────────────
+|tile| {
+  |poly| {
+    points: 0 -30, 28 -9, 17 30, -17 30, -28 -9; fill: #80ed99; stroke: #2a9d8f;
+  }
+  |cap|  "poly (points)"
+}
+|tile| {
+  |path| {
+    path: "M -32 28 Q 0 -28 32 28"; fill: none; stroke: #6c5ce7; stroke-width: 3;
+  }
+  |cap|  "path (open)"
+}
+|tile| {
+  |line| {
+    points: -32 0, 32 0; marker-end: arrow; stroke: #e63946; stroke-width: 2;
+  }
+  |cap|  "line"
+}
+|tile| {
+  |icon| { width: 42; height: 42; "home" }
+  |cap|  "icon"
+}
+
+// ── Row 4: templates ──────────────────────────────────
+|tile| {
+  |note| { width: 72; height: 50; "note" }
+  |cap|  "note"
+}
+|tile| {
+  |group| {
+    padding: 10;
+    |box| { width: 40; height: 28; fill: #ffffff; }
+  }
+  |cap|   "group"
+}
+|tile| {
+  |table| {
+    columns: 28 28;
+    "a" "b"
+    "c" "d"
+  }
+  |cap|   "table"
+}
+|tile| {
+  |path| {
+    path: "M -30 0 C -30 -26 30 -26 30 0 C 30 26 -30 26 -30 0 Z"; fill: #ffd6a5;
+  }
+  |cap|  "path (closed)"
 }
