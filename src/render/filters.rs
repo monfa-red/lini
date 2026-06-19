@@ -3,8 +3,8 @@
 //! `<defs>` and referenced from the shape's geometry by id.
 //!
 //! The tint stays a `ResolvedValue` so `--bake-vars` inlines it like any other
-//! paint — a `var(--lini-shadow)` in live mode, a literal in bake mode, the
-//! same honesty the rest of the renderer keeps.
+//! paint — a `var(--lini-shadow-color)` in live mode, a literal in bake mode,
+//! the same honesty the rest of the renderer keeps.
 
 use super::values::{format_value, num};
 use crate::Options;
@@ -19,10 +19,10 @@ struct Shadow {
     color: ResolvedValue,
 }
 
-/// The default tint: `var(--lini-shadow)`.
+/// The default tint: `var(--lini-shadow-color)`.
 fn default_tint() -> ResolvedValue {
     ResolvedValue::LiveVar {
-        name: "shadow".into(),
+        name: "shadow-color".into(),
         raw: false,
         baked: None,
     }
@@ -30,7 +30,7 @@ fn default_tint() -> ResolvedValue {
 
 /// Parse a `shadow:` value (SPEC §8). Forms: `N` → offset (N, N) blur N ·
 /// `(dx, dy)` · `(dx, dy, blur)` · `(dx, dy, blur, color)`. The tint defaults
-/// to `--lini-shadow`. A malformed value yields `None` (drawn unshadowed).
+/// to `--lini-shadow-color`. A malformed value yields `None` (drawn unshadowed).
 fn parse(value: &ResolvedValue) -> Option<Shadow> {
     let n = |v: &ResolvedValue| v.as_number();
     match value {

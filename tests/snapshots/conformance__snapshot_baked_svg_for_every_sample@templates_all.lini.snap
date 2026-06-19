@@ -11,12 +11,13 @@ input_file: samples/templates_all.lini
     .lini .lini-shape-plain { fill: none; stroke: none; }
     .lini .lini-shape-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,4; }
     .lini .lini-shape-caption { color: rgba(0, 0, 0, 0.4); font-size: 12px; font-weight: normal; }
-    .lini .lini-shape-badge { fill: #0a84ff; color: white; font-size: 11px; }
+    .lini .lini-shape-badge { fill: #0a84ff; stroke: none; color: white; font-size: 11px; font-weight: normal; }
     .lini .lini-shape-note { fill: #fff9c4; stroke: none; }
     .lini .lini-shape-table { fill: none; stroke: #444; stroke-dasharray: none; }
   </style>
   <defs>
-    <filter id="lini-shadow-1" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="2" dy="2" stdDeviation="2" flood-color="rgba(0, 0, 0, 0.2)"/></filter>
+    <filter id="lini-shadow-1" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="rgba(0, 0, 0, 0.2)"/></filter>
+    <filter id="lini-shadow-2" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="2" dy="2" stdDeviation="2" flood-color="rgba(0, 0, 0, 0.2)"/></filter>
   </defs>
   <g class="lini-scene">
     <g class="lini-node lini-shape-group lini-shape-box" data-id="frame" transform="translate(0,-93)">
@@ -53,15 +54,15 @@ input_file: samples/templates_all.lini
       <g class="lini-node lini-shape-box" data-id="svc" transform="translate(-82.5,0)">
         <rect x="-70" y="-32" width="140" height="64" rx="6" ry="6"/>
         <text class="lini-text" x="0" y="0">Service</text>
-        <g class="lini-node lini-shape-badge lini-shape-box" transform="translate(51.1,-23.5)">
+        <g class="lini-node lini-shape-badge lini-shape-box" transform="translate(59.1,-29.5)">
           <g filter="url(#lini-shadow-1)">
-            <rect x="-17.9" y="-7.5" width="35.8" height="15" rx="999" ry="999"/>
+            <rect x="-15.9" y="-7.5" width="31.8" height="15" rx="8" ry="8"/>
           </g>
           <text class="lini-text" x="0" y="0">NEW</text>
         </g>
       </g>
       <g class="lini-node lini-shape-note lini-shape-box" transform="translate(83,0)">
-        <g filter="url(#lini-shadow-1)">
+        <g filter="url(#lini-shadow-2)">
           <rect x="-69.5" y="-27.5" width="139" height="55" rx="2" ry="2"/>
         </g>
         <text class="lini-text" x="0" y="0">Sticky note</text>

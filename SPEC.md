@@ -532,7 +532,7 @@ equal dimensions (or an empty `|oval|`) make a circle.
 | `stroke-style` | `solid` / `dashed` / `dotted` | Stroke pattern. Default `solid`. (`wavy` draws on wires — [§9](#9-wires); on closed shapes it is deferred — [§19](#19-deferred--non-goals).) |
 | `stack` | `N` / `dx dy` | Draw an offset duplicate behind the shape. Scalar `N` = `N -N`. |
 | `rotate` | `N` degrees | Rotate around the bbox center. |
-| `shadow` | `N` / `dx dy` / `dx dy blur` / `dx dy blur color` | Drop shadow via SVG `<filter>`. Scalar `N` = offset `N N`, blur `N`; tint defaults to `--lini-shadow`. |
+| `shadow` | `N` / `dx dy` / `dx dy blur` / `dx dy blur color` | Drop shadow via SVG `<filter>`. Scalar `N` = offset `N N`, blur `N`; tint defaults to `--lini-shadow-color`. |
 
 ### Markers (on `|line|` and wires)
 
@@ -562,7 +562,7 @@ common.
 | `\|group\|` | `\|box\|` | `stroke: --group-stroke; stroke-style: dashed; stroke-width: 1; fill: --group-fill; radius: 6` | Dashed frame for a caption + children (padding via the default 20). |
 | `\|caption\|` | `\|plain\|` | `pin: top left; translate: 0 -16; color: --caption-color; font-size: 12; font-weight: normal` | A title, pinned just above the group's top-left corner. |
 | `\|footer\|` | `\|caption\|` | `pin: bottom left; translate: 0 16` | A caption flipped to the bottom edge. |
-| `\|badge\|` | `\|box\|` | `pin: top right; radius: 999; padding: 2 8; shadow: 2; fill: --accent; color: --on-accent; font-size: 11` | Corner pill — tucks into the top-right corner, grows nothing. |
+| `\|badge\|` | `\|box\|` | `pin: top right; translate: 6 -6; radius: 8; padding: 2 6; shadow: 2 3 3; stroke: none; fill: --accent; color: --on-accent; font-size: 11; font-weight: normal` | Corner pill — nudged out over the top-right corner, grows nothing. |
 | `\|note\|` | `\|box\|` | `radius: 2; shadow: 2; stroke: none; fill: --note-bg` | Sticky note (padding via the default 20). |
 | `\|row\|` | `\|plain\|` | `layout: row` | Frameless wrapper — children in a row. |
 | `\|column\|` | `\|plain\|` | `layout: column` | Frameless wrapper — children in a column. |
@@ -877,7 +877,7 @@ constant, so a standalone SVG never depends on host CSS.
 --lini-caption-font-weight normal
 --lini-wire-font-weight    normal
 --lini-text-color    var(--lini-fg)
---lini-shadow        rgba(0, 0, 0, 0.2)
+--lini-shadow-color  rgba(0, 0, 0, 0.2)
 ```
 
 The default font is a **monospace** stack: it reads crisp, and a fixed glyph

@@ -59,7 +59,7 @@ pub fn built_in_defaults() -> VarTable {
             baked: None,
         },
     );
-    set_visual(&mut t, "shadow", rgba(0.0, 0.0, 0.0, 0.2));
+    set_visual(&mut t, "shadow-color", rgba(0.0, 0.0, 0.0, 0.2));
 
     // Layout constants — baked at compile time (SPEC §11.3).
     set_layout_n(&mut t, "font-size", 15.0);

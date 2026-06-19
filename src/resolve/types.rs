@@ -248,17 +248,32 @@ pub(super) fn template_attrs(name: &str) -> Vec<(String, ResolvedValue)> {
             ),
             attr("translate", pair(0.0, 16.0)),
         ],
+        // A corner pill: `pin: top right` seats it flush in the corner, then
+        // `translate: 6 -6` nudges it out over the edge so it reads as an
+        // applied badge, not a child. A modest `radius` keeps it a rounded
+        // rectangle (a huge radius would collapse the short pill to an oval);
+        // normal-weight text and no border keep it clean.
         "badge" => vec![
             attr(
                 "pin",
                 ResolvedValue::Tuple(vec![ident("top"), ident("right")]),
             ),
-            attr("radius", num(999.0)),
-            attr("padding", pair(2.0, 8.0)),
-            attr("shadow", num(2.0)),
+            attr("translate", pair(6.0, -6.0)),
+            attr("radius", num(8.0)),
+            attr("padding", pair(2.0, 6.0)),
+            // Offset (2, 3) + soft blur; the tint defaults to
+            // `--lini-shadow-color`, so a host page re-themes every shadow at
+            // once (geometry bakes into the filter, the colour stays a live
+            // variable — SPEC §13).
+            attr(
+                "shadow",
+                ResolvedValue::Tuple(vec![num(2.0), num(3.0), num(3.0)]),
+            ),
+            attr("stroke", ident("none")),
             attr("fill", live("accent")),
             attr("color", live("on-accent")),
             attr("font-size", num(11.0)),
+            attr("font-weight", ident("normal")),
         ],
         "note" => vec![
             attr("radius", num(2.0)),

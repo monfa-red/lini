@@ -9,10 +9,10 @@ input_file: samples/translate.lini
     .lini .lini-shape-box { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-shape-plain { fill: none; stroke: none; }
-    .lini .lini-shape-badge { fill: #0a84ff; color: white; font-size: 11px; }
+    .lini .lini-shape-badge { fill: #0a84ff; stroke: none; color: white; font-size: 11px; font-weight: normal; }
   </style>
   <defs>
-    <filter id="lini-shadow-1" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="2" dy="2" stdDeviation="2" flood-color="rgba(0, 0, 0, 0.2)"/></filter>
+    <filter id="lini-shadow-1" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="rgba(0, 0, 0, 0.2)"/></filter>
   </defs>
   <g class="lini-scene">
     <g class="lini-node lini-shape-box" data-id="a" transform="translate(-184.5,0)">
@@ -30,9 +30,9 @@ input_file: samples/translate.lini
     <g class="lini-node lini-shape-box" data-id="card" style="fill: #eef" transform="translate(144,0)">
       <rect x="-65" y="-36" width="130" height="72" rx="6" ry="6"/>
       <text class="lini-text" x="0" y="0">Card</text>
-      <g class="lini-node lini-shape-badge lini-shape-box" transform="translate(48.7,-23.5)">
+      <g class="lini-node lini-shape-badge lini-shape-box" transform="translate(50.7,-23.5)">
         <g filter="url(#lini-shadow-1)">
-          <rect x="-11.3" y="-7.5" width="22.6" height="15" rx="999" ry="999"/>
+          <rect x="-9.3" y="-7.5" width="18.6" height="15" rx="8" ry="8"/>
         </g>
         <text class="lini-text" x="0" y="0">9</text>
       </g>
