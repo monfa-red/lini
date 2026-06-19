@@ -100,7 +100,7 @@ the top set the root's own properties (`layout`, `gap`, `padding`, `fill`,
 
 **The order is fixed** — detailed in [§3](#3-statements), and nested the same
 inside any body. It keeps the parser single-pass and reads as "configure, draw,
-connect"; deliberately strict for v1, relaxable later without breaking files.
+connect" — deliberately strict.
 
 **Render order is source order; the cascade is whole-file.** Instances draw in
 the order written (later on top, pinned children above the flow; `layer:`
@@ -578,7 +578,7 @@ panel |group| {
   |caption| "Settings"
   a |box| "General"
   b |box| "Network"
-  |footer| "v2.1"
+  |footer| "synced"
 }
 ```
 
@@ -1244,7 +1244,7 @@ are reserved only before `(`.
   proportional `font-family` override is approximate until then.
 - `aria-label`, and a "did you mean" property-name hint table.
 
-**Non-goals** — out of scope; the syntax stays forward-compatible:
+**Non-goals** — out of scope:
 
 - **Auto-layout** — you position nodes (flex / grid / anchors); Lini does not
   place or route them for you.
