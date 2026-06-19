@@ -6,7 +6,7 @@ composable shapes, CSS-driven theming — compiles to clean SVG.
 **Lini reads like CSS.** `key: value;` declarations in `{ }` blocks, dash-case
 property names, space-separated values, real selectors. Only a handful of
 concepts stay Lini-specific — the ones CSS has no word for (the `|type|` sigil,
-edge anchoring, wire operators).
+pinning, wire operators).
 
 **Two node kinds, like HTML.** A **box** is a box (`|box|`, `|group|`, …); a
 **string** is text *content* inside one. `"…"` is never a wrapped node — it is
@@ -103,8 +103,9 @@ inside any body. It keeps the parser single-pass and reads as "configure, draw,
 connect"; deliberately strict for v1, relaxable later without breaking files.
 
 **Render order is source order; the cascade is whole-file.** Instances draw in
-the order written (later on top; `layer:` overrides), and every rule applies to
-every instance. Wires are the one thing that needs no declaration: naming an id
+the order written (later on top, pinned children above the flow; `layer:`
+overrides), and every rule applies to every instance. Wires are the one thing
+that needs no declaration: naming an id
 declared nowhere auto-creates it (see [§3](#3-statements)).
 
 **Two kinds of variable.**
@@ -155,7 +156,7 @@ strings (reserved, [§18](#18-reserved-words)).
 degrees for angles, 0–1 for opacities/fractions). `10`, `-5`, `0.25`, `+3`.
 
 **Values are space-separated and positional**, like CSS: `padding: 5 2 5 5`,
-`shadow: 2 2 4 #0003`, `at: 100 50`, `columns: 80 140 80`. A **comma** separates
+`shadow: 2 2 4 #0003`, `translate: 10 -4`, `columns: 80 140 80`. A **comma** separates
 list items and appears only where a property takes a list of groups (`points:
 0 0, 10 10`). **Functions** use parentheses: `rgb(…)`, `hsl(…)`, `repeat(…)`.
 
@@ -209,7 +210,7 @@ label lives inside it: `api |box| "API" { fill: red }` is an error.
 db |cyl| .primary {
   fill: #eef;
   "Postgres"
-  |badge| { side: top; align: end; "v16" }
+  |badge| "v16"
 }
 ```
 
@@ -317,8 +318,8 @@ single class; compound parts (`.card.hot`, `box.hot`) are not supported.
 For a wire: `-> { }` defaults → descendant/class rules → the wire's own
 declarations.
 
-Complex values (`at: x y`, `padding: t r b l`) replace wholesale — the merge is
-per-property, not deep.
+Complex values (`translate: x y`, `padding: t r b l`) replace wholesale — the
+merge is per-property, not deep.
 
 ---
 
@@ -334,7 +335,7 @@ A container picks a mode with `layout`:
 
 **Defaults:** every container — the root included — defaults to `layout: column`
 with `gap: 20`. A normal container pads its content by 16; the root pads by 0
-(its margin is the fixed `canvas-pad`, 20 px), as do the frameless `|plain|` /
+(the fixed `canvas-pad`, 20 px, frames the whole scene), as do the frameless `|plain|` /
 `|row|` / `|column|` (see [§8](#8-templates)).
 
 ### Flex — `align` / `justify`
@@ -396,7 +397,7 @@ Dividers are **interior only** — the outer frame is the container's own border
 (its `stroke`), so a frameless grid (`stroke: none`) shows only inner lines and a
 bordered one is never doubled. `divider` is span-aware in grids (a separator
 never crosses a spanning cell's interior, and a shared edge is never drawn twice)
-and skips mounted children.
+and skips pinned children.
 
 A container with `divider` other than `none` **requires `gap: 0`** (an error
 otherwise): a separator wants the cells flush against it, not floating in a gap.
@@ -422,10 +423,9 @@ magic type (see [§8](#8-templates)).
 A shape's **bounding box** is the smallest axis-aligned rectangle containing it,
 stroke included.
 
-1. **Center origin.** Every bbox is centered at the parent's origin by default;
-   `at: x y` puts the center at (x, y).
-2. **Source order = render order;** later draws on top. `layer: N` overrides;
-   ties break by source order.
+1. **Center origin.** Every bbox is centered at the parent's origin by default.
+2. **Source order = render order;** later draws on top, with pinned children
+   above the in-flow ones. `layer: N` overrides; ties break by source order.
 3. **Strokes count** toward the bbox — `width: 100 height: 50 stroke-width: 4`
    → 104×54.
 4. **`|path|`** is the only center-origin exception — `path:` uses native
@@ -433,53 +433,46 @@ stroke included.
 5. **Rotation** applies last as an SVG transform; the rotated bounding rectangle
    propagates upward.
 
-### Positioning a child
+### `pin` — out of the flow
 
-**`mount` is the switch.** It says how a child relates to its parent; any value
-but `none` takes it out of the flow — one model, no compound anchor names:
+Every child is **in flow** by default — laid out by its container's `layout`
+([§5](#5-layout)). **`pin` is the switch that lifts a child out**, anchoring its
+**center** to a named point of the parent:
 
-- **`mount: none`** *(default)* — a normal flow/grid child. `side`/`align`
-  don't apply.
-- **`mount: in | out | on`** — anchor to an edge. **`side: top | bottom | left |
-  right`** picks it (default `top`) and **`align: start | center | end`** slides
-  along it, so a corner needs no special name (`side: top align: end` =
-  top-right; `start`/`end` are the low/high ends — left/top is `start`). The
-  meeting is *size-aware* — the child clears the edge by its own extent at any
-  size:
-  - **`in`** — flush inside, and **reserves a band**: flow content shifts to
-    clear it and the box grows (top/bottom only; left/right fall back to top).
-    The band is separated from the content by the container's own `gap`. This is
-    a group's caption; tighten or loosen it with `margin:`.
-  - **`out`** — flush *outside the border*: the band sits a container `gap`
-    beyond the drawn frame, and the footprint grows to reserve it. The border
-    keeps hugging the content while the caption rides just outside it. Top/bottom
-    only. With no border or padding (the root, `|plain|`/`|row|`/`|column|`) it
-    coincides with `in`.
-  - **`on`** — centred on the edge/corner (a corner anchor straddles it); an
-    **overlay**, no reserve.
+| `pin:` | The parent point the child's center lands on |
+|---|---|
+| `none` *(default)* | — flows; nothing is pinned |
+| `center` | the parent's center |
+| `top` · `bottom` · `left` · `right` | the midpoint of that edge |
+| `top left` · `top right` · `bottom left` · `bottom right` | that corner |
 
-  Default `align: center`; a bare `side:` with no `mount:` is an error.
+The child's center lands *on* the point, so an edge pin straddles the edge and a
+corner pin straddles the corner — `pin: top right` is the badge. Corners fall out
+of the value, so one switch with one named value covers every anchor: no compound
+knobs, no `side`/`align` pair.
 
-**`at: x y`** is the orthogonal escape hatch — bbox center at explicit
-parent-local coords (`at: 0 0` centers). It's an overlay and overrides `mount`.
+A pinned child is an **overlay**. It **does not grow the parent** — a parent of
+only pinned children collapses to `2 × padding` — and it **paints above** the
+in-flow children, so a badge needs no explicit `layer`. The canvas always
+includes it, so an overlay is never clipped. Set `layer:` to reorder overlapping
+pins, or to push one *beneath* the flow.
 
-**Reserve vs overlay is the whole rule.** `mount: in`/`out` *reserve* — the
-parent grows to hold the band, so the child never overlaps. `mount: on` and
-`at: x y` are *overlays*: positioned against the parent but they **don't grow
-it** (a parent of only overlays collapses to `2 × padding`). An overlay still
-draws, and the canvas always includes it (never clipped).
+### `translate` — the universal nudge
 
-**`offset: x y`** nudges from `at:` or `side:` — a pure render-time shift of the
-one child.
+**`translate: x y`** shifts a node by (x, y) *after* it is placed. It works on
+**every** node — flow children, pinned children, the root alike — and is
+layout-neutral: siblings don't move, the parent doesn't grow, and no size
+changes. It is CSS's standalone `translate`, baked into the node's origin (so a
+standalone SVG needs no transform variable); the canvas still includes the
+shifted node.
 
-**`margin:`** is signed *outer* spacing on any child — `N` / `v h` / `t r b l`,
-like `padding` but negatives allowed. It changes the room the child reserves:
-positive spreads it from siblings and grows the parent; negative eats the
-surrounding gap and padding, tightening the parent (and, past zero, overlapping —
-nothing clips). Unlike `offset:`, it reshapes the surrounding layout.
+There is **no numeric coordinate property**. Because the parent's origin is its
+center, `pin: center` + `translate: x y` lands a child's center at parent-local
+(x, y) — explicit coordinates with no shape-size arithmetic: the named anchor
+skips the math, `translate` does the pixel nudge.
 
-Positioning is a box's job — only a box carries `mount` / `at` / `offset` /
-`margin`. To position a piece of text, wrap it in a `|plain|`.
+Positioning is a box's job — only a box carries `pin` and `translate`. To position
+a piece of text, wrap it in a `|plain|`.
 
 ### Auto-sizing
 
@@ -488,9 +481,9 @@ or child nodes) **plus `padding` on each side** — the one padding knob (defaul
 16; there is no separate text padding). Sizing is **border-box**: an explicit
 `width` / `height` is the exact outer dimension with padding *inside* it (never
 added on top), and the two are independent (set one, the other stays `auto`). A
-box with no in-flow content — empty, or holding only `at:` / `mount: on`
-overlays — is therefore **`2 × padding`** on each axis, so the default `padding`
-(16) sets an empty box's minimum size (32 × 32).
+box with no in-flow content — empty, or holding only `pin`ned overlays — is
+therefore **`2 × padding`** on each axis, so the default `padding` (16) sets an
+empty box's minimum size (32 × 32).
 
 Exceptions: a **text** node sizes to its glyphs (no padding); `|icon|` defaults
 to `icon-size` (24); `|line|` / `|poly|` / `|image|` / `|path|` require their
@@ -564,28 +557,30 @@ common.
 |---|---|---|---|
 | `\|plain\|` | `\|box\|` | `stroke: none; fill: none; padding: 0` | A frameless box — shows only its text, but is a real box (id, class, wirable). |
 | `\|group\|` | `\|box\|` | `stroke: --group-stroke; fill: --group-fill; radius: 6` | Frame + caption (padding via the default 16). |
-| `\|caption\|` | `\|plain\|` | `mount: in; font-size: 13` | A group's caption / footer band. |
-| `\|badge\|` | `\|box\|` | `mount: on; side: top; align: end; radius: 999; padding: 2 8; shadow: 2; fill: --accent; color: --on-accent; font-size: 11; layer: 10` | Corner pill (straddles the corner, grows nothing). |
+| `\|caption\|` | `\|plain\|` | `font-size: 13` | Small-text label — a group's title (first flow child) or footer (last). |
+| `\|badge\|` | `\|box\|` | `pin: top right; radius: 999; padding: 2 8; shadow: 2; fill: --accent; color: --on-accent; font-size: 11` | Corner pill — straddles the top-right corner, grows nothing. |
 | `\|note\|` | `\|box\|` | `radius: 2; shadow: 2; stroke: none; fill: --note-bg` | Sticky note (padding via the default 16). |
 | `\|row\|` | `\|plain\|` | `layout: row` | Frameless wrapper — children in a row. |
 | `\|column\|` | `\|plain\|` | `layout: column` | Frameless wrapper — children in a column. |
 | `\|table\|` | `\|group\|` | `layout: grid; divider: all; gap: 0; padding: 4 8; fill: none; stroke: --stroke` | Ruled grid (see below). |
 
-**Captions.** A caption is a `|plain|` mounted inside an edge — explicit, no
-positional magic. Give a group a title with a `|caption|` child; make it a
-footer with `side: bottom`:
+**Captions.** A caption is just a small-text `|plain|` in the flow — no
+positional magic. A container defaults to `layout: column`, so a `|caption|`
+written **first** reads as the title and one written **last** as the footer:
 
 ```
 panel |group| {
   |caption| "Settings"
-  |caption| { side: bottom; "v2.1" }
   a |box| "General"
   b |box| "Network"
+  |caption| "v2.1"
 }
 ```
 
 Style every caption globally with `caption { font-size: 16; font-weight: bold; }`
-— that targets captions without touching body text.
+— that targets captions without touching body text. A caption is an ordinary flow
+child, so for a title *above* content that runs in a row, keep the group a column
+and nest the row.
 
 **Tables.** A `|table|` is sugar — a `group` that is a grid, draws dividers, and
 has `gap: 0`. Cells are **bare text** that auto-flows into the tracks; there is no
@@ -696,11 +691,11 @@ a -> b { along: 0.3 0.7; "near a" "near b" }
 
 A label is an obstacle to nothing, and may slide along the wire to keep clear of
 nodes and other labels; the wire never moves for it. Wire labels default to
-`font-size: 12`. A label that needs its own style or a perpendicular `offset` is
-a **box** (`|plain|`), which carries a block:
+`font-size: 12`. A label that needs its own style or a perpendicular `translate`
+is a **box** (`|plain|`), which carries a block:
 
 ```
-a -> b { |plain| { offset: 0 -8; "watches" } }
+a -> b { |plain| { translate: 0 -8; "watches" } }
 ```
 
 ### Endpoints & scope
@@ -794,13 +789,9 @@ to recolour every descendant's text that doesn't override. Use `color` for
 | Property | Type | Notes |
 |---|---|---|
 | `width`, `height` | number / `auto` | bbox dims, **border-box** (padding inside, not added); default `auto` = content + padding. `\|image\|` needs both. |
-| `at` | `x y` | bbox center at parent-local coords; an overlay, overrides `mount`. |
-| `mount` | `none` / `in` / `out` / `on` | The flow switch ([§6](#6-positioning--anchors)). |
-| `side` | `top` / `bottom` / `left` / `right` | Which edge `mount` meets (default `top`); a bare `side:` with no `mount:` is an error. |
-| `align` | `start`/`center`/`end` (+ `stretch`/`evenly` on a container) | Mounted child: slide along its edge (default `center`). Container: cross-axis alignment ([§5](#5-layout)). |
-| `offset` | `x y` | Nudge from `at:` / `side:`. |
-| `margin` | `N` / `v h` / `t r b l` | Signed outer spacing; negatives tighten ([§6](#6-positioning--anchors)). |
-| `layer` | integer | Render order (ties break on source order). |
+| `pin` | `none` / `center` / `top` / `bottom` / `left` / `right` / `top left` / `top right` / `bottom left` / `bottom right` | Out-of-flow anchor — the child's center lands on the named parent point ([§6](#6-positioning--anchors)). |
+| `translate` | `x y` | Post-placement nudge of the node and its subtree; no reflow, grows nothing ([§6](#6-positioning--anchors)). |
+| `layer` | integer | Paint order; default 0 in flow, 1 when `pin`ned. Ties break on source order. |
 | `points` | `x y, x y, …` | Vertex list (`\|poly\|`, `\|line\|`). |
 | `path` | string | Raw SVG path (`\|path\|`, native top-left coords). |
 
@@ -811,10 +802,9 @@ multi-line text uses `text-align`.)
 
 ### Spacing & layout
 
-`padding`, `margin`, `gap`, `layout`, `align`, `justify`, `columns`, `rows`,
-`cell`, `span`, `divider` — see [Layout](#5-layout) and [Positioning](#6-positioning--anchors).
-Longhands `padding-top`/`-right`/`-bottom`/`-left` (and the `margin-*` set) are
-accepted.
+`padding`, `gap`, `layout`, `align`, `justify`, `columns`, `rows`, `cell`,
+`span`, `divider` — see [Layout](#5-layout) and [Positioning](#6-positioning--anchors).
+Longhands `padding-top`/`-right`/`-bottom`/`-left` are accepted.
 
 ### Text
 
@@ -952,8 +942,9 @@ broken by **later wins** (source order):
 For a wire: `-> { }` defaults → descendant/class rules → the wire's own
 declarations.
 
-Complex values (`at: x y`, `padding: t r b l`) replace wholesale — the merge is
-per-property, not deep. `at:` always beats `cell:`.
+Complex values (`translate: x y`, `padding: t r b l`) replace wholesale — the
+merge is per-property, not deep. A `pin`ned child ignores `cell:` — pinning takes
+it out of the grid.
 
 ---
 
@@ -983,7 +974,8 @@ per-property, not deep. `at:` always beats `cell:`.
 every rule — are stated once as class rules; only the classes actually used are
 emitted. A node whose resolved paint differs from those rules carries the
 difference as an inline `style="…"` (inline beats class, mirroring
-[Specificity](#12-specificity)). Geometry — sizes, positions, radii, points,
+[Specificity](#12-specificity)). Geometry — sizes, positions (`pin` and
+`translate` fold into the baked origin), radii, points,
 paths, transforms — is always baked into attributes. Inherited text properties
 (`font-family`, `font-size`, `font-weight`, `color`) state on `.lini` and cascade
 natively; a node's own text property emits on its `<g>` and inherits to its
@@ -1089,7 +1081,7 @@ Format: `filename:line:col: error: <message>` (LSP-compatible).
 | Missing `columns` | `'layout: grid' requires 'columns'` |
 | `skew` out of range | `skew: N must be in (-89, 89)` |
 | Single-quoted string | `single quotes are not strings — use "…"` |
-| Bare `side:` without `mount:` | `'side' needs a 'mount:' (in / out / on)` |
+| Invalid `pin` value | `'pin' expects none, center, an edge (top/bottom/left/right), or a corner (e.g. 'top right')` |
 | Declaration after a child | `declarations must come before children in a block` |
 | Trailing label and a block | `a label is the trailing string or the block, not both` |
 
@@ -1184,8 +1176,9 @@ so `ident { … }` resolves rule-vs-box with one token of lookahead, no prescan.
 **Layout** (bottom-up): leaf bbox from `width`/`height` or defaults (text → its
 glyphs; box → content + `padding`; + half-`stroke-width` per side); arrange flow
 children per `layout` honouring `align`/`justify`/`stretch`/`evenly` when there
-is slack; place mounted bands (`mount: in`/`out`) and overlays (`mount: on`/`at:`);
-compute dividers; apply `padding`; `rotate` last.
+is slack; pin out-of-flow children to their parent anchor (the parent never grows
+for them); compute dividers; apply `padding`; apply each node's `translate`;
+`rotate` last.
 
 **Route wires.** Per [`WIRING.md`](WIRING.md) — orthogonal, clearance-respecting,
 deterministic. Place markers (sized `max(5, stroke-width × 4)`, tip on the
@@ -1217,7 +1210,7 @@ case-sensitive, so a capitalized variant is always free (`Box`, `Top`).
 Single quotes (`'`) are reserved and are not strings.
 
 Value keywords are **contextual**, not reserved as ids — `grid`, `start`,
-`center`, `end`, `stretch`, `evenly`, `none`, `in`, `out`, `on`, `auto`, `true`,
+`center`, `end`, `stretch`, `evenly`, `none`, `auto`, `true`,
 `false` mean their keyword only after the property that expects them
 (`layout: grid`, `align: stretch`). Function names `rgb`, `rgba`, `hsl`, `repeat`
 are reserved only before `(`.
@@ -1280,7 +1273,7 @@ kitchen |group| {
   cell: 2 1;  layout: column;  gap: 20;
   |caption| "Kitchen"
   counter |group| {
-    layout: row;  gap: 10;
+    layout: column;  gap: 10;
     |caption| "Counter"
     bowl  |treat| "Bowl of oats"
     water |nest|  "Water"
@@ -1291,7 +1284,7 @@ garden |group| {
   cell: 3 1;  layout: column;  gap: 20;
   |caption| "Garden"
   den |group| {
-    layout: row;  gap: 15;
+    layout: column;  gap: 15;
     |caption| "Den"
     rabbit |alert| { |badge| "FAST" }
     carrot |box|   { stack: 4; width: 80; height: 40; fill: white; "Carrot patch" }

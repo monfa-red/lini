@@ -18,7 +18,7 @@ produced — so the same diagram can never route two different ways.
   the wire goes around it, never between its children. A group containing an
   endpoint is transparent to that wire; its *other* children stay solid.
 - **clearance** — one number, default **16**, set once for the diagram
-  (`|wire| clearance:`): the minimum gap between a wire and every node body, and
+  (`-> { clearance: }`): the minimum gap between a wire and every node body, and
   between a wire and every other wire.
 - **Keep-out** — a node's bbox inflated by `clearance` on all sides. Wire bodies
   stay outside every keep-out; only a wire's own **stub** enters its own
@@ -157,9 +157,10 @@ construction rather than by checking.
    so a crossing never lands mid-arc (an arc may land tangent exactly on
    one, keeping the perpendicular point contact). Rounding never brings a
    wire nearer than `clearance` to anything. Wire
-   labels ride their wire (`start` / `mid` / `end` / fraction), are obstacles to
-   nothing, and may slide along the wire to dodge nodes and other labels — the
-   wire itself never moves for a label.
+   labels ride their wire at the fractions of its drawn route given by `along:`
+   (auto-distributed when unset), nudged in the tangent frame by `translate:`;
+   they are obstacles to nothing and may slide along the wire to dodge nodes and
+   other labels — the wire itself never moves for a label.
 
 ---
 
