@@ -1,6 +1,6 @@
 # Lini
 
-**A small language for plain-text diagrams.** You place the boxes — Lini routes the wires — and out comes clean, themeable SVG, in milliseconds.
+**Plain-text diagrams that look designed, not generated.** You place the boxes; Lini routes the wires; everything else — layout, shapes, colour, every detail of the output — stays under your control.
 
 [![crates.io](https://img.shields.io/crates/v/lini.svg)](https://crates.io/crates/lini)
 [![docs.rs](https://img.shields.io/docsrs/lini)](https://docs.rs/lini)
@@ -11,26 +11,27 @@
 cat -> dog -> bird
 ```
 
-That one line is a complete diagram: three boxes, two arrows, sensible spacing. No coordinates, no XML, no mouse.
+One line is a complete diagram: three boxes, two arrows, sensible spacing. Lini scales the same syntax up to a styled, laid-out scene like the one below.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/hero.png" alt="A colourful service map rendered by Lini" width="440">
 </p>
 
-…and the diagram above? Also plain text — around thirty readable lines ([`assets/hero.lini`](https://github.com/monfa-red/lini/blob/main/assets/hero.lini)). You wrote the structure; Lini handled the geometry, the orthogonal wire routing, and the styling.
+Thirty-odd lines of Lini ([`assets/hero.lini`](https://github.com/monfa-red/lini/blob/main/assets/hero.lini)): you write the structure, Lini handles the geometry, the routing, and the SVG.
 
 ---
 
 ## Why Lini
 
-Most diagram tools make you pick a side: **draw by hand** (precise, but tedious and unversionable) or **auto-layout everything** (fast, but you get whatever the algorithm decides). Lini splits the difference:
+Most tools make you choose: **draw by hand** (precise, but tedious and hard to version) or **auto-layout everything** (fast, but you take what the algorithm gives). Lini splits the work: you keep spatial control, it automates only the wires.
 
-- **You arrange, it routes.** Lay nodes out with flex, grid, or anchors — the parts you have an opinion about. Lini routes the connectors between them: orthogonal, clearance-respecting, deterministic. The thing you *don't* want to do by hand.
-- **Genuinely small syntax.** Five sigils, sensible defaults. `cat -> dog` is a valid diagram. You can learn the whole thing in a coffee break.
-- **Any shape you need.** 12 primitives and 10 templates out of the box — and a raw `path` primitive that accepts any SVG path string. If SVG can draw it, you can place it and wire to it.
-- **Fast, and a single file.** A 1.5 MB native binary with one runtime dependency. No Node, no JVM, no headless browser. Typical diagrams compile in **~2 ms** — process startup included.
-- **Output you can trust.** Compilation is **byte-identical across runs**, so renders diff cleanly in review and never churn in CI. 334 tests back it, including property tests that assert the router's laws on every sample.
-- **Themeable like a web page.** Colors and fonts ship as CSS variables inside an `@layer`, so a host page restyles a diagram without recompiling — or bake everything to a self-contained file for email and raster renderers.
+- **You arrange, it routes.** Place nodes with flex, grid, or anchors; Lini routes the connectors between them: orthogonal, clearance-respecting, deterministic.
+- **The full range of SVG.** Sizes, anchors, strokes, shadows, rotation, opacity, raw paths: a designer's control over the look, not a fixed house style. The result can be genuinely pretty, not merely correct.
+- **A genuinely small syntax.** Five sigils and sensible defaults. `cat -> dog` is a valid diagram; the whole language fits in a coffee break.
+- **Any shape you need.** 12 primitives and 10 templates, plus a raw `path` that accepts any SVG path string. If SVG can draw it, you can place it and wire to it.
+- **Fast, and one file.** A 1.5 MB native binary, one runtime dependency. No Node, JVM, or headless browser; typical diagrams compile in about 2 ms, startup included.
+- **Reproducible output.** Compilation is byte-identical across runs, so renders diff cleanly and never churn in CI. 340 tests back it, including property tests on the router's laws.
+- **Themeable like a web page.** Colours and fonts are CSS variables in an `@layer`; a host page restyles a diagram without recompiling, or you bake it into one self-contained file.
 
 ---
 
@@ -51,9 +52,9 @@ Building from a clone instead? `cargo install --path .`
 
 ---
 
-## A 60-second tour
+## A tour of Lini
 
-**Start with nothing.** Undeclared names become boxes; `->` connects them. Mix line styles and fan-outs freely:
+**Names become boxes; `->` connects them.** Line styles and fans mix freely:
 
 ```
 cat -> dog -> bird     // a chain: three boxes, two arrows
@@ -64,12 +65,12 @@ fish --> bowl          // dashed
 
 <p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/flow.png" alt="Lini's wire styles, in colour" width="420"></p>
 
-**Add shape, labels, and a touch of style.** Lini reads like CSS: a stylesheet at the top sets defaults, defines reusable classes, and extends shapes — then the instances, then the wires:
+**A diagram reads like a CSS file.** A stylesheet at the top sets defaults, declares reusable classes, and extends shapes; then come the instances, then the wires:
 
 ```
 -> { stroke: #444; clearance: 10; }
 .loud { stroke: red; stroke-width: 2; }
-db::cyl { fill: lightyellow; }     // a new shape, based on the cylinder primitive
+db::cyl { fill: lightyellow; }     // a new shape from the cylinder primitive
 
 api   |box| "API"
 queue |box| { radius: 8; "Queue" }     // a label rides the head; config needs a block
@@ -77,10 +78,10 @@ store |db|  "Postgres"
 
 api   -> queue "enqueue"
 queue -> store .loud "persist"
-store ..> api  "ack"               // dotted, with an arrow
+store ..> api  "ack"               // dotted arrow
 ```
 
-**Lay things out.** Containers pick a layout mode; children flow, grid, or anchor:
+**Containers lay their children out.** Pick a mode, and children flow, grid, or anchor:
 
 ```
 services |group| {
@@ -91,11 +92,11 @@ services |group| {
 }
 ```
 
-`layout: row` · `layout: column` · `layout: grid` (sized by `columns` / `rows`), with `cell:` / `span:` for grid placement and `pin` / `translate` to lift a child out of the flow.
+`row`, `column`, and `grid` (sized by `columns` / `rows`, placed with `cell:` / `span:`), plus `pin` and `translate` to lift a child out of the flow.
 
 ---
 
-## A whole vocabulary of shapes
+## Shapes
 
 <p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/shapes.png" alt="Eight of Lini's shape primitives" width="640"></p>
 
@@ -106,38 +107,38 @@ services |group| {
 |path| { path: "M -34 6 C -34 -34 34 -34 34 6 C 20 34 -20 34 -34 6 Z"; }
 ```
 
-Box, oval, hex, slant, cylinder, diamond, cloud, polygon, line, icon (Material Symbols), image — plus `path` for anything else. Text isn't a shape: a bare `"…"` is content, and `|plain|` is a frameless box for when a label needs an id or a wire. Templates (`plain`, `rect`, `group`, `caption`, `footer`, `badge`, `note`, `row`, `column`, `table`) bundle the common patterns, and you can define your own shapes by extending any base: `panel::group { stroke: --accent; }`.
+Box, oval, hex, slant, cylinder, diamond, cloud, polygon, line, icon (Material Symbols), and image, plus `path` for anything else. Text is not a shape: a bare `"…"` is content, and `|plain|` is a frameless box for a label that needs an id or a wire. Templates (`plain`, `rect`, `group`, `caption`, `footer`, `badge`, `note`, `row`, `column`, `table`) bundle common patterns, and you can define your own from any base: `panel::group { stroke: --accent; }`.
 
 ---
 
-## Wires that route themselves
+## Wires
 
-Connect any two nodes by id; Lini finds an orthogonal path through the free space, keeps a configurable `clearance` from every node and every other wire, rounds the corners, and lands the arrowhead on the edge. One knob (`clearance`, default 16) governs spacing for the whole diagram.
+Connect two nodes by id and Lini finds an orthogonal path through the free space, keeping a configurable `clearance` from every node and wire, rounding the corners, and landing the arrowhead on the edge. One knob (`clearance`, default 16) sets spacing for the whole diagram.
 
-The operator *is* the wire's look — `[start][line][end]`, no spaces:
+The operator is the wire's look, written `[start][line][end]` with no spaces:
 
 | Line | | Markers | |
 |---|---|---|---|
 | `-` solid | `--` dashed | `>` arrow | `*` dot |
 | `..` dotted | `~` wavy | `<` crow | `<>` diamond |
 
-So `->` is a solid arrow, `<->` is bidirectional, `--*` is a dashed line ending in a dot, `~>` a wavy arrow. Endpoints support fan-out, fan-in, and cartesian fans with `&`, sides with `a.right -> b.left`, and dot-paths into nested containers (`closet.outlet -> fridge.inlet`). Labels ride their wire and slide to dodge nodes — the wire never moves for them.
+So `->` is a solid arrow, `<->` is bidirectional, `--*` a dashed line ending in a dot, `~>` a wavy arrow. Endpoints support fan-out, fan-in, and cartesian fans with `&`, and dot-paths into nested containers (`closet.outlet -> fridge.inlet`). Routing is automatic but steerable: name a side (`a.right -> b.left`) to force where a wire leaves or arrives. Labels ride the wire and slide to clear nodes; the wire never moves for a label.
 
-The full routing contract — crossings, priority, self-loops, starvation — lives in [`WIRING.md`](https://github.com/monfa-red/lini/blob/main/WIRING.md).
+The full routing contract (crossings, priority, self-loops, starvation) lives in [`WIRING.md`](https://github.com/monfa-red/lini/blob/main/WIRING.md).
 
 ---
 
-## Theming without recompiling
+## Theming
 
-Visual defaults (colors, fonts, shadow) emit as live `var(--lini-*)` references wrapped in `@layer lini.defaults`, so **unlayered host CSS wins automatically** — no `!important`, no rebuild:
+Lini's visual defaults (colours, fonts, shadow) emit as live `var(--lini-*)` references inside `@layer lini.defaults`, so **unlayered host CSS wins automatically**, with no `!important` and no rebuild:
 
 ```css
-.lini { --lini-accent: #ff6600; }   /* recolor every diagram on the page */
+.lini { --lini-accent: #ff6600; }   /* recolour every diagram on the page */
 ```
 
-Geometry is always baked into the SVG, so layout never depends on the host. For non-browser renderers (resvg, librsvg) and email, `--bake-vars` inlines every variable into a self-contained file that renders identically anywhere. Every `lini-*` class is a stable styling hook, too.
+Geometry is always baked in, so layout never depends on the host. For non-browser renderers (resvg, librsvg) and email, `--bake-vars` inlines every variable into a self-contained file. Every `lini-*` class is a stable styling hook.
 
-The default font is a **monospace** stack (`ui-monospace, "SF Mono", …, monospace`) — it reads crisp, and a fixed glyph advance keeps text sizing accurate. To make an **embedded** diagram adopt the host page's font instead, set `--lini-font-family: inherit` — in the diagram (`--font-family: inherit;` at the top), via `--theme`, or from the page's own CSS.
+The default font is a monospace stack (`ui-monospace, "SF Mono", …, monospace`): it reads crisp and keeps text sizing accurate. To use the host page's font instead, set `--lini-font-family: inherit` in the diagram, via `--theme`, or from the page's CSS.
 
 ---
 
@@ -158,15 +159,15 @@ lini desugar <input.lini>
 | `--theme FILE` | A CSS file of `--lini-*` overrides. |
 | `--check` | Parse and validate only. |
 | `--watch` | Recompile on every change (with `-o`). |
-| `--no-warn` / `--strict` | Silence lint warnings / promote them to errors. |
+| `--no-warn` / `--strict` | Silence lint warnings, or promote them to errors. |
 
-Errors are LSP-formatted (`file:line:col: error: …`) and suggest fixes — an unknown endpoint says *did you mean `kitchen.counter.bowl`?*. `lini serve` runs a live-reloading preview (default port 7700), and `lini desugar` prints a file with its sugar expanded (id-as-label, trailing labels, auto-distributed wire labels) — a teaching and debugging view.
+Errors are LSP-formatted (`file:line:col: error: …`) and suggest fixes: an unknown endpoint asks *did you mean `kitchen.counter.bowl`?*. `lini serve` runs a live preview (default port 7700); `lini desugar` prints a file with its sugar expanded, for teaching and debugging.
 
 ---
 
-## How fast?
+## Performance
 
-Measured end-to-end on an Apple-silicon laptop, **including process startup** (`--bake-vars`, output discarded):
+Measured end-to-end on a modern laptop, including process startup (`--bake-vars`, output discarded):
 
 | Diagram | Time |
 |---|---|
@@ -174,45 +175,47 @@ Measured end-to-end on an Apple-silicon laptop, **including process startup** (`
 | Realistic service diagram (9 nodes, 5 wires) | ~2.2 ms |
 | Dense scene (100 nodes, 90 routed wires) | ~50 ms |
 
-A single-pass parser, bottom-up layout, and an orthogonal router — no browser to spin up, nothing to warm.
+A single-pass parser, bottom-up layout, and an orthogonal router: no browser to spin up, nothing to warm.
 
 ---
 
-## When to reach for Lini
+## Where Lini fits
 
-| | Lini | Mermaid | Graphviz | PlantUML |
-|---|---|---|---|---|
-| Runtime | native binary | Node / browser | native binary | JVM |
-| Placement | **you control** (flex/grid/anchors) | automatic | automatic | automatic |
-| Wire routing | automatic, orthogonal | automatic | automatic (splines) | automatic |
-| Theming | CSS variables + classes | themes / CSS | limited | skins |
+| | Lini | Auto-layout tools* |
+|---|---|---|
+| Placement | **you control** (flex / grid / anchors) | automatic |
+| Wire routing | automatic, orthogonal — **steerable sides** | automatic |
+| Visual control | **full SVG** (CSS vars + classes) | theme presets |
+| Runtime | single native binary | varies |
 
-Reach for **Mermaid or Graphviz** when you want a tool to lay everything out for you and don't care exactly where things land. Reach for **Lini** when you have a layout in mind — a grid, a top-to-bottom flow, framed groups — and you just don't want to draw the connectors by hand.
+<sub>*the common auto-layout diagram tools (Mermaid, Graphviz, PlantUML, and the like)</sub>
+
+Reach for Lini when you have a layout in mind (a grid, a top-down flow, framed groups) and want it to look the way you intend, without drawing the connectors by hand. Placing everything for you is a non-goal: you arrange, Lini routes.
 
 ---
 
-## How it works
+## Architecture
 
-A clean pipeline, each stage independently testable:
+A linear pipeline, each stage independently testable:
 
 ```
 lex → parse → resolve → layout → route → render
 ```
 
-Parse is recursive-descent over an LL(1) grammar; resolve applies CSS-like specificity (inline beats class beats default) and expands user shapes; layout sizes bottom-up; the router solves wires orthogonally against a clearance contract; render emits semantic SVG. The full language is specified in [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md) — complete enough to build a conforming engine from scratch.
+Parsing is recursive-descent over an LL(1) grammar; resolve applies CSS-like specificity (inline beats class beats default) and expands user shapes; layout sizes bottom-up; the router solves wires orthogonally against a clearance contract; render emits semantic SVG. The full language is specified in [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md).
 
 ---
 
 ## Status
 
-**v0.3.** The language (the box/text model — see [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md)) is stable, and the whole pipeline is implemented and tested — wires route and render, layout and theming are complete, and the formatter and dev server ship in the same binary.
+**v0.3.** The language (the box/text model in [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md)) is stable, and the pipeline is complete and tested: wires route and render, layout and theming work, and the formatter and dev server ship in the same binary.
 
-**Non-goals**, by design: automatic node *placement* (you position; Lini routes), multi-file imports, animation, and manual wire waypoints.
+**Non-goals**, by design: automatic node *placement* (you position, Lini routes), multi-file imports, animation, and manual wire waypoints.
 
 ## Development
 
 ```bash
-cargo test                               # 334 tests
+cargo test                               # 340 tests
 cargo run -- samples/hello.lini
 cargo run -- serve samples/full_example.lini
 ```
