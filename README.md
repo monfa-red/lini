@@ -14,10 +14,10 @@ cat -> dog -> bird
 That one line is a complete diagram: three boxes, two arrows, sensible spacing. No coordinates, no XML, no mouse.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/hero.png" alt="A web-service architecture diagram rendered by Lini" width="420">
+  <img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/hero.png" alt="A colourful service map rendered by Lini" width="440">
 </p>
 
-…and the diagram above? Also plain text — about twenty readable lines ([`samples/full_example.lini`](https://github.com/monfa-red/lini/blob/main/samples/full_example.lini)). You wrote the structure; Lini handled the geometry, the orthogonal wire routing, and the styling.
+…and the diagram above? Also plain text — around thirty readable lines ([`assets/hero.lini`](https://github.com/monfa-red/lini/blob/main/assets/hero.lini)). You wrote the structure; Lini handled the geometry, the orthogonal wire routing, and the styling.
 
 ---
 
@@ -62,7 +62,7 @@ frog ~> pond           // wavy
 fish --> bowl          // dashed
 ```
 
-<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/flow.png" alt="Four lines of Lini rendered to four little flows" width="640"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/flow.png" alt="Lini's wire styles, in colour" width="420"></p>
 
 **Add shape, labels, and a touch of style.** Lini reads like CSS: a stylesheet at the top sets defaults, defines reusable classes, and extends shapes — then the instances, then the wires:
 
@@ -97,7 +97,7 @@ services |group| {
 
 ## A whole vocabulary of shapes
 
-<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/shapes.png" alt="Lini's shape primitives, including a polygon and a raw SVG path" width="640"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/shapes.png" alt="Eight of Lini's shape primitives" width="640"></p>
 
 ```
 |hex|  { width: 82; height: 72; "hex" }

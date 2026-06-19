@@ -1,0 +1,43 @@
+// A colourful service map — the Lini hero. Mixed wire styles, badges, and a
+// thick (3px) main flow. Source for assets/hero.png.
+
+layout: column; gap: 54; padding: 28;
+-> { stroke-width: 2; clearance: 16; }
+
+--accent: #6c5ce7;
+
+.flow  { stroke: #0984e3; stroke-width: 3; }
+.cache { stroke: #00b894; stroke-style: dashed; }
+.async { stroke: #e17055; stroke-style: dotted; }
+
+users |oval| { width: 150; height: 60; fill: #ffeaa7; "Users" }
+
+edge |group| {
+  layout: row; gap: 26;
+  |caption| "Edge"
+  lb  |box| { fill: #dbe4ff; "Load balancer"; |badge| "v2" }
+  cdn |box| { fill: #dbe4ff; "CDN" }
+}
+
+svc |group| {
+  layout: row; gap: 26;
+  |caption| "Services"
+  api    |box| { fill: #d3f9d8; "API" }
+  auth   |box| { fill: #d3f9d8; "Auth" }
+  worker |box| { fill: #ffe8cc; "Worker"; |badge| "NEW" }
+}
+
+data |group| {
+  layout: row; gap: 26;
+  |caption| "Data"
+  pg    |cyl| { fill: #ffdeeb; "Postgres" }
+  redis |cyl| { fill: #ffdeeb; "Redis" }
+  queue |box| { fill: #fff3bf; "Queue" }
+}
+
+users -> edge.lb .flow "https"
+edge.lb -> svc.api
+edge.lb -> svc.auth
+svc.api    -> data.pg .flow
+svc.api    ..> data.redis .cache "cache"
+svc.worker ..> data.queue .async "jobs"

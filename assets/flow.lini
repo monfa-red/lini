@@ -1,0 +1,28 @@
+// Lini's wire styles, in colour — five little flows.
+// Source for assets/flow.png.
+
+layout: grid; columns: repeat(2); gap: 18 96; padding: 24;
+-> { stroke-width: 2; }
+
+.solid   { stroke: #e63946; }
+.dashed  { stroke: #1d9bf0; }
+.dotted  { stroke: #2a9d8f; }
+.diamond { stroke: #9b5de5; }
+.thick   { stroke: #f3722c; stroke-width: 3; }
+
+cat  |box| { fill: #ffd6a5; "cat" }
+dog  |box| { fill: #ffd6a5; "dog" }
+fish |box| { fill: #a0c4ff; "fish" }
+bowl |box| { fill: #a0c4ff; "bowl" }
+newt |box| { fill: #caffbf; "newt" }
+log  |box| { fill: #caffbf; "log" }
+frog |box| { fill: #bdb2ff; "frog" }
+pond |box| { fill: #bdb2ff; "pond" }
+ping |box| { fill: #ffadad; "ping" }
+pong |box| { fill: #ffadad; "pong" }
+
+cat  ->  dog  .solid  "solid"
+fish --> bowl .dashed "dashed"
+newt ..> log  .dotted "dotted"
+frog -<> pond .diamond "diamond"
+ping <-> pong .thick  "two-way"

@@ -1,16 +1,13 @@
-// Lini's shape vocabulary: built-in primitives plus a raw SVG `path`
-// for anything the built-ins don't cover. (Source for assets/shapes.png.)
+// Eight of Lini's shape primitives — two rows of four.
+// Source for assets/shapes.png.
 
-{ |scene| layout:(3, 3) gap:28 padding:22 }
+layout: grid; columns: repeat(4); gap: 26; padding: 26;
 
-|rect|    "rect"     size:(96, 48) radius:8                       cell:(1, 1)
-|oval|    "oval"     size:(96, 48)                                cell:(2, 1)
-|hex|     "hex"      size:(82, 72)                                cell:(3, 1)
-
-|cyl|     "cylinder" size:(78, 78)                                cell:(1, 2)
-|diamond| "diamond"  size:(74, 74)                                cell:(2, 2)
-|cloud|   "cloud"    size:(116, 68)                               cell:(3, 2)
-
-|slant|   "slant"    size:(96, 48) skew:18                        cell:(1, 3)
-|poly|    "poly"     points:[(0, -34), (32, 11), (20, 34), (-20, 34), (-32, 11)]   cell:(2, 3)
-|path|    "path"     d:"M -34 6 C -34 -34 34 -34 34 6 C 20 34 -20 34 -34 6 Z"      cell:(3, 3)
+|box|     { width: 104; height: 60; fill: #ffadad; "box" }
+|oval|    { width: 104; height: 60; fill: #ffd6a5; "oval" }
+|hex|     { width: 98;  height: 78; fill: #fdffb6; "hex" }
+|slant|   { width: 104; height: 60; fill: #caffbf; "slant" }
+|cyl|     { width: 90;  height: 84; fill: #9bf6ff; "cyl" }
+|diamond| { width: 86;  height: 86; fill: #a0c4ff; "diamond" }
+|cloud|   { width: 126; height: 78; fill: #bdb2ff; "cloud" }
+|poly|    { points: 0 -40, 38 14, 23 40, -23 40, -38 14; fill: #ffc6ff; "poly" }
