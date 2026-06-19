@@ -2,6 +2,7 @@ mod anchors;
 mod flex;
 mod grid;
 mod ir;
+mod path_bbox;
 mod primitives;
 mod text;
 mod values;

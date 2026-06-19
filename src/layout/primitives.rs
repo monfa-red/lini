@@ -71,8 +71,17 @@ pub fn leaf_bbox(inst: &ResolvedInst, vars: &VarTable) -> Result<Bbox, Error> {
             let (w, h) = image_dims(inst)?;
             Ok(Bbox::centered(w, h))
         }
-        // Native top-left coords (SPEC §7); a real bbox needs SVG path parsing.
-        ShapeKind::Path => Ok(Bbox::empty()),
+        // Native top-left coords (SPEC §7): size to the parsed path extent.
+        ShapeKind::Path => {
+            let Some(ResolvedValue::String(d)) = inst.attrs.get("path") else {
+                return Err(Error::at(inst.span, "'|path|' requires 'path'"));
+            };
+            let pts = super::path_bbox::extent_points(d);
+            if pts.is_empty() {
+                return Ok(Bbox::empty());
+            }
+            Ok(bounding_box(&pts).inflate(stroke_half(inst, vars)))
+        }
     }
 }
 
