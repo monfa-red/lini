@@ -1,6 +1,6 @@
 # Lini
 
-**Plain-text diagrams that look designed, not generated.** You place the boxes; Lini routes the wires; everything else — layout, shapes, colour, every detail of the output — stays under your control.
+**Pretty diagrams from plain text, with fine-grained control.**
 
 [![crates.io](https://img.shields.io/crates/v/lini.svg)](https://crates.io/crates/lini)
 [![docs.rs](https://img.shields.io/docsrs/lini)](https://docs.rs/lini)
@@ -11,13 +11,13 @@
 cat -> dog -> bird
 ```
 
-One line is a complete diagram: three boxes, two arrows, sensible spacing. Lini scales the same syntax up to a styled, laid-out scene like the one below.
+One line is a complete diagram: three boxes, two arrows, sensible spacing. You place the boxes, Lini routes the wires, and the same syntax scales up to the polished scene below.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/hero.png" alt="A colourful service map rendered by Lini" width="440">
 </p>
 
-Thirty-odd lines of Lini ([`assets/hero.lini`](https://github.com/monfa-red/lini/blob/main/assets/hero.lini)): you write the structure, Lini handles the geometry, the routing, and the SVG.
+Thirty-odd lines of Lini ([`assets/hero.lini`](https://github.com/monfa-red/lini/blob/main/assets/hero.lini)).
 
 ---
 
@@ -186,7 +186,7 @@ A single-pass parser, bottom-up layout, and an orthogonal router: no browser to 
 | Placement | **you control** (flex / grid / anchors) | automatic |
 | Wire routing | automatic, orthogonal — **steerable sides** | automatic |
 | Visual control | **full SVG** (CSS vars + classes) | theme presets |
-| Runtime | single native binary | varies |
+| Runtime | **single native binary**, written in Rust | varies (Node, browser, JVM, …) |
 
 <sub>*the common auto-layout diagram tools (Mermaid, Graphviz, PlantUML, and the like)</sub>
 
