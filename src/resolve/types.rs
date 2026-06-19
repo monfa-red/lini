@@ -227,26 +227,25 @@ pub(super) fn template_attrs(name: &str) -> Vec<(String, ResolvedValue)> {
             attr("radius", num(6.0)),
         ],
         // A title pinned just above the group's top-left corner: `pin: top left`
-        // sits it flush in the corner, `translate: 0 -16` lifts it out over the
-        // border (≈ 1.35 × the 12px caption font; mirrors `caption-font-size`).
+        // sits it flush in the corner, `translate: 0 -18` lifts it out over the
+        // border.
         "caption" => vec![
             attr(
                 "pin",
                 ResolvedValue::Tuple(vec![ident("top"), ident("left")]),
             ),
-            attr("translate", pair(0.0, -16.0)),
+            attr("translate", pair(0.0, -18.0)),
             attr("color", live("caption-color")),
             attr("font-size", num(12.0)),
             attr("font-weight", live("caption-font-weight")),
         ],
-        // A footer is a `caption` flipped to the bottom: same look, opposite
-        // anchor and lift.
+        // A footer is a `caption` flipped to the bottom edge, centred, a touch
+        // smaller, in its own muted colour.
         "footer" => vec![
-            attr(
-                "pin",
-                ResolvedValue::Tuple(vec![ident("bottom"), ident("left")]),
-            ),
-            attr("translate", pair(0.0, 16.0)),
+            attr("pin", ident("bottom")),
+            attr("translate", pair(0.0, 17.0)),
+            attr("font-size", num(11.0)),
+            attr("color", live("footer-color")),
         ],
         // A corner pill: `pin: top right` seats it flush in the corner, then
         // `translate: 6 -6` nudges it out over the edge so it reads as an

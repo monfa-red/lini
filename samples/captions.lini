@@ -6,17 +6,17 @@ layout: row; gap: 32; padding: 20; align: start;
 
 card |group| {
   layout: column; gap: 10;
-  |caption| "Profile"
-  name |box| "Ada Lovelace"
-  role |box| "Engineer"
+       |caption| "Profile"
+  name |box|     "Ada Lovelace"
+  role |box|     "Engineer"
 }
 
 panel |group| {
   layout: column; gap: 10;
-  |caption| "Sales"
-  a |box| "Plan"
-  b |box| "Actual"
-  |caption| { pin: bottom left; translate: 0 16; "Q3 2026" }
+    |caption| "Sales"
+  a |box|     "Plan"
+  b |box|     "Actual"
+    |footer|  "Q3 2026"
 }
 
 docs |box| { link: "https://example.com"; width: 120; height: 48; "Docs" }

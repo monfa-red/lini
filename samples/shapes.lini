@@ -54,13 +54,13 @@ cap::plain { font-size: 12; font-weight: normal; color: #555; }
 }
 |tile| {
   |path| {
-    path: "M -32 28 Q 0 -28 32 28"; fill: none; stroke: #6c5ce7; stroke-width: 3;
+    path: "M -32 28 Q 0 -28 32 28"; stroke: #6c5ce7; stroke-width: 3;
   }
   |cap|  "path (open)"
 }
 |tile| {
   |line| {
-    points: -32 0, 32 0; marker-end: arrow; stroke: #e63946; stroke-width: 2;
+    points: -32 0, 32 0; marker-end: arrow; stroke: #e63946;
   }
   |cap|  "line"
 }
@@ -74,18 +74,19 @@ cap::plain { font-size: 12; font-weight: normal; color: #555; }
   |note| { width: 72; height: 50; "note" }
   |cap|  "note"
 }
-|tile| {
   |group| {
-    padding: 11;
-    |box| { width: 42; height: 28; fill: #ffffff; }
+    padding: 12;
+    |caption|  "Group"
+    |box| { width: 58; height: 36 }
+    |footer|   "Footer"
   }
-  |cap|   "group"
-}
+
 |tile| {
   |table| {
     columns: 25 25 25;
     "a" "b" "c"
     "d" "e" "f"
+    "g" "h" "i"
   }
   |cap|   "table"
 }

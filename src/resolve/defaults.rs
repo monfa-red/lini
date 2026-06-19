@@ -38,7 +38,8 @@ pub fn built_in_defaults() -> VarTable {
     set_visual(&mut t, "note-bg", hex("fff9c4"));
     set_visual(&mut t, "group-stroke", rgba(0.0, 0.0, 0.0, 0.4));
     set_visual(&mut t, "group-fill", rgba(0.0, 0.0, 0.0, 0.03));
-    set_visual(&mut t, "caption-color", rgba(0.0, 0.0, 0.0, 0.4));
+    set_visual(&mut t, "caption-color", rgba(0.0, 0.0, 0.0, 0.5));
+    set_visual(&mut t, "footer-color", rgba(0.0, 0.0, 0.0, 0.5));
     set_visual(
         &mut t,
         "font-family",

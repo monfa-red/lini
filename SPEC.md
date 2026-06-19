@@ -560,8 +560,8 @@ common.
 | `\|plain\|` | `\|box\|` | `stroke: none; fill: none; padding: 0` | A frameless box — shows only its text, but is a real box (id, class, wirable). |
 | `\|rect\|` | `\|box\|` | `radius: 0` | A sharp-cornered box (a plain `\|box\|` rounds to `radius: 6`). |
 | `\|group\|` | `\|box\|` | `stroke: --group-stroke; stroke-style: dashed; stroke-width: 1; fill: --group-fill; radius: 6` | Dashed frame for a caption + children (padding via the default 20). |
-| `\|caption\|` | `\|plain\|` | `pin: top left; translate: 0 -16; color: --caption-color; font-size: 12; font-weight: normal` | A title, pinned just above the group's top-left corner. |
-| `\|footer\|` | `\|caption\|` | `pin: bottom left; translate: 0 16` | A caption flipped to the bottom edge. |
+| `\|caption\|` | `\|plain\|` | `pin: top left; translate: 0 -18; color: --caption-color; font-size: 12; font-weight: normal` | A title, pinned just above the group's top-left corner. |
+| `\|footer\|` | `\|caption\|` | `pin: bottom; translate: 0 17; font-size: 11; color: --footer-color` | A caption flipped to the bottom edge, centred and muted. |
 | `\|badge\|` | `\|box\|` | `pin: top right; translate: 6 -6; radius: 8; padding: 2 6; shadow: 2 3 3; stroke: none; fill: --accent; color: --on-accent; font-size: 11; font-weight: normal` | Corner pill — nudged out over the top-right corner, grows nothing. |
 | `\|note\|` | `\|box\|` | `radius: 2; shadow: 2; stroke: none; fill: --note-bg` | Sticky note (padding via the default 20). |
 | `\|row\|` | `\|plain\|` | `layout: row` | Frameless wrapper — children in a row. |
@@ -871,7 +871,8 @@ constant, so a standalone SVG never depends on host CSS.
 --lini-note-bg       #fff9c4
 --lini-group-stroke  rgba(0, 0, 0, 0.4)
 --lini-group-fill    rgba(0, 0, 0, 0.03)
---lini-caption-color rgba(0, 0, 0, 0.4)
+--lini-caption-color rgba(0, 0, 0, 0.5)
+--lini-footer-color  rgba(0, 0, 0, 0.5)
 --lini-font-family   ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace
 --lini-font-weight         bold
 --lini-caption-font-weight normal
