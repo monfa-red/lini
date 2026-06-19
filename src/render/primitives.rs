@@ -318,7 +318,7 @@ fn emit_line(
     let color = effective_stroke(&n.attrs, &classes, ruleset, vars, opts);
     let paint = super::markers::MarkerPaint {
         color: &color,
-        inline: n.attrs.get("stroke").is_some(),
+        inline: ruleset.marker_fill(&classes) != Some(color.as_str()),
         thickness,
     };
     let from = points[0];

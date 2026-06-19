@@ -2,12 +2,20 @@
 //! airwires, the impossible-wire report made visible.
 
 use super::markers::{MARKER_OVERLAP, MarkerPaint, emit_marker, line_inset, marker_anchor};
+use super::rounding::{Seg, round};
 use super::rules::{PAINT_PROPS, RuleSet, effective_stroke};
 use super::values::{attr_or_var, dasharray_value, escape_xml, format_value, num};
+use super::wavy;
 use crate::Options;
 use crate::layout::{Airwire, RoutedText, RoutedWire, approx_height, approx_width};
-use crate::resolve::{AttrMap, MarkerKind, VarTable};
+use crate::resolve::{AttrMap, MarkerKind, ResolvedValue, VarTable};
 use std::fmt::Write;
+
+/// Whether a wire's `~` operator (or an explicit `stroke-style: wavy`) asks for
+/// a wavy line, drawn as an undulating centreline rather than a dash pattern.
+fn is_wavy(attrs: &AttrMap) -> bool {
+    matches!(attrs.get("stroke-style"), Some(ResolvedValue::Ident(s)) if s == "wavy")
+}
 
 /// Breathing room the label cut keeps around the glyph run, in `font-size`
 /// units per side. `H` pads the approximate text width; `V` makes the hole
@@ -44,6 +52,14 @@ pub fn render_wire(
     // and only genuine differences (the operator's dash, an inline attr) land in
     // `style=`.
     let mut wire_classes = vec!["lini-wire".to_string()];
+    // A dashed/dotted line rides its `lini-wire-{style}` class (the dash pattern
+    // is stated once in the sheet); only an off-default `stroke-width` then makes
+    // the pattern differ enough to inline.
+    if let Some(ResolvedValue::Ident(s)) = w.attrs.get("stroke-style")
+        && (s == "dashed" || s == "dotted")
+    {
+        wire_classes.push(format!("lini-wire-{s}"));
+    }
     wire_classes.extend(w.applied_styles.iter().map(|s| format!("lini-style-{}", s)));
     let mut decls: Vec<(&str, String)> = Vec::new();
     for (lini, css) in PAINT_PROPS {
@@ -92,9 +108,13 @@ pub fn render_wire(
     )
     .unwrap();
 
+    let wavy = is_wavy(&w.attrs);
+
     // A label cuts the wire out beneath it (a mask hole, not a painted halo) so
-    // it reads cleanly over the wire on any background.
-    let mask = label_mask(idx, &w.path, &w.texts, thickness);
+    // it reads cleanly over the wire on any background. A wavy line swings
+    // `AMPLITUDE` past the routed bbox, so the cut region grows to match.
+    let reach = if wavy { wavy::AMPLITUDE } else { 0.0 };
+    let mask = label_mask(idx, &w.path, &w.texts, thickness, reach);
     let mask_attr = match &mask {
         Some((id, svg)) => {
             writeln!(out, "      {svg}").unwrap();
@@ -106,7 +126,10 @@ pub fn render_wire(
     // Stop the drawn line where the marker body will sit so the stroke never
     // pokes past it (and never leaves a gap before a dot).
     let drawn = shorten_for_markers(&w.path, &w.markers, thickness);
-    let d = rounded_d(&drawn, targets);
+    let d = wavy
+        .then(|| wavy::wavy_d(&drawn, targets))
+        .flatten()
+        .unwrap_or_else(|| rounded_d(&drawn, targets));
     writeln!(out, r#"      <path d="{d}"{mask_attr}/>"#).unwrap();
 
     // The marker colour: filled heads inherit it from CSS (the `.lini-marker`
@@ -116,7 +139,7 @@ pub fn render_wire(
     let marker_color = effective_stroke(&w.attrs, &wire_classes, ruleset, vars, opts);
     let paint = MarkerPaint {
         color: &marker_color,
-        inline: w.attrs.get("stroke").is_some(),
+        inline: ruleset.marker_fill(&wire_classes) != Some(marker_color.as_str()),
         thickness,
     };
     if w.markers.start != MarkerKind::None
@@ -214,38 +237,23 @@ pub fn render_airwire(out: &mut String, a: &Airwire, vars: &VarTable, opts: &Opt
 /// of each adjacent *drawn* segment so arcs never eat marker run-ups
 /// (WIRING §Model step 7). The end segments stay straight.
 fn rounded_d(pts: &[(f64, f64)], targets: &[f64]) -> String {
-    let mut d = format!("M {} {}", num(pts[0].0), num(pts[0].1));
-    for i in 1..pts.len() - 1 {
-        let (a, b, c) = (pts[i - 1], pts[i], pts[i + 1]);
-        let (in_dx, in_dy) = (b.0 - a.0, b.1 - a.1);
-        let (out_dx, out_dy) = (c.0 - b.0, c.1 - b.1);
-        let in_len = in_dx.abs() + in_dy.abs();
-        let out_len = out_dx.abs() + out_dy.abs();
-        let cap = targets.get(i - 1).copied().unwrap_or(0.0);
-        let r = cap.min(in_len / 2.0).min(out_len / 2.0);
-        let cross = in_dx * out_dy - in_dy * out_dx;
-        if r < 0.5 || cross == 0.0 {
-            write!(d, " L {} {}", num(b.0), num(b.1)).unwrap();
-            continue;
+    let rounded = round(pts, targets);
+    let mut d = format!("M {} {}", num(rounded.start.0), num(rounded.start.1));
+    for seg in &rounded.segs {
+        match seg {
+            Seg::Line { to } => write!(d, " L {} {}", num(to.0), num(to.1)).unwrap(),
+            Seg::Arc {
+                to, radius, sweep, ..
+            } => write!(
+                d,
+                " A {r} {r} 0 0 {sweep} {} {}",
+                num(to.0),
+                num(to.1),
+                r = num(*radius),
+            )
+            .unwrap(),
         }
-        let enter = (b.0 - in_dx / in_len * r, b.1 - in_dy / in_len * r);
-        let exit = (b.0 + out_dx / out_len * r, b.1 + out_dy / out_len * r);
-        let sweep = if cross > 0.0 { 1 } else { 0 };
-        write!(
-            d,
-            " L {} {} A {} {} 0 0 {} {} {}",
-            num(enter.0),
-            num(enter.1),
-            num(r),
-            num(r),
-            sweep,
-            num(exit.0),
-            num(exit.1),
-        )
-        .unwrap();
     }
-    let last = pts[pts.len() - 1];
-    write!(d, " L {} {}", num(last.0), num(last.1)).unwrap();
     d
 }
 
@@ -441,12 +449,13 @@ fn label_mask(
     path: &[(f64, f64)],
     texts: &[RoutedText],
     thickness: f64,
+    reach: f64,
 ) -> Option<(String, String)> {
     if texts.is_empty() {
         return None;
     }
     let id = format!("lini-label-cut-{idx}");
-    let pad = thickness / 2.0 + 1.0;
+    let pad = thickness / 2.0 + 1.0 + reach;
     let (mut x0, mut y0, mut x1, mut y1) = (f64::MAX, f64::MAX, f64::MIN, f64::MIN);
     for &(x, y) in path {
         x0 = x0.min(x);

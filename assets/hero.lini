@@ -7,8 +7,8 @@ layout: column; gap: 54; padding: 28;
 --accent: #6c5ce7;
 
 .flow  { stroke: #0984e3; stroke-width: 3; }
-.cache { stroke: #00b894; stroke-style: dashed; }
-.async { stroke: #e17055; stroke-style: dotted; }
+.cache { stroke: #00b894; }
+.async { stroke: #e17055; }
 
 users |oval| { width: 150; height: 60; fill: #ffeaa7; "Users" }
 
@@ -39,5 +39,5 @@ users -> edge.lb .flow "https"
 edge.lb -> svc.api
 edge.lb -> svc.auth
 svc.api    -> data.pg .flow
-svc.api    ..> data.redis .cache "cache"
-svc.worker ..> data.queue .async "jobs"
+svc.api    --> data.redis .cache "cache"
+svc.worker ~>  data.queue .async "jobs"

@@ -1,9 +1,11 @@
 mod filters;
 pub(crate) mod markers; // `marker_size` is read by the router to reserve stub room
 mod primitives;
+mod rounding;
 mod rules;
 mod style_block;
 mod values;
+mod wavy;
 mod wires;
 
 use crate::Options;

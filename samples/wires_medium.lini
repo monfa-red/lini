@@ -34,7 +34,7 @@ cat -> roof .loud
 kitchen.bowl -> garden.dog .loud { along: 0.35; "X" }
 kitchen.bowl -> garden.dog .loud
 
-kitchen.water <- garden.dog .quiet
+kitchen.water <.. garden.dog .quiet
 kitchen.water <- garden.dog .quiet
 kitchen.water <- garden.dog .quiet
 
@@ -44,4 +44,4 @@ kitchen.water <-> garden.bird .quiet
 kitchen.water -> roof .happy
 kitchen.water -> roof .happy
 
-garden -> kitchen.bowl .loud
+garden ~> kitchen.bowl .loud

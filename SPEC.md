@@ -529,7 +529,7 @@ equal dimensions (or an empty `|oval|`) make a circle.
 
 | Property | Forms | Effect |
 |---|---|---|
-| `stroke-style` | `solid` / `dashed` / `dotted` | Stroke pattern. Default `solid`. (`wavy` deferred — [§19](#19-deferred--non-goals).) |
+| `stroke-style` | `solid` / `dashed` / `dotted` | Stroke pattern. Default `solid`. (`wavy` draws on wires — [§9](#9-wires); on closed shapes it is deferred — [§19](#19-deferred--non-goals).) |
 | `stack` | `N` / `dx dy` | Draw an offset duplicate behind the shape. Scalar `N` = `N -N`. |
 | `rotate` | `N` degrees | Rotate around the bbox center. |
 | `shadow` | `N` / `dx dy` / `dx dy blur` / `dx dy blur color` | Drop shadow via SVG `<filter>`. Scalar `N` = offset `N N`, blur `N`; tint defaults to `--lini-shadow`. |

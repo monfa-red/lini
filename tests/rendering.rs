@@ -303,20 +303,26 @@ fn css_cascade_sample_emits_rules_and_diffs() {
         "{}",
         svg
     );
-    // A wire carries its style classes like a node; only the `--` operator's
-    // dash (not from a style) is left as an inline diff.
+    // A wire carries its style classes like a node; the `--` operator's dash
+    // rides a `lini-wire-dashed` class (the pattern stated once in the sheet),
+    // never an inline diff repeated on every dashed wire.
+    assert!(
+        svg.contains(".lini .lini-wire-dashed { stroke-dasharray: 4,4; }"),
+        "the operator dash must be stated once as a class rule: {}",
+        svg
+    );
     let wire_g = svg
         .lines()
         .find(|l| l.contains(r#"data-from="loud""#))
         .expect("loud→mix wire present");
     assert!(
-        wire_g.contains(r#"class="lini-wire lini-style-calm""#),
-        "wire must carry its style class: {}",
+        wire_g.contains(r#"class="lini-wire lini-wire-dashed lini-style-calm""#),
+        "wire must carry its dash + style classes: {}",
         wire_g
     );
     assert!(
-        wire_g.contains(r#"style="stroke-dasharray: 4,4""#),
-        "only the operator dash rides inline: {}",
+        !wire_g.contains("stroke-dasharray"),
+        "the dash rides the class, not inline: {}",
         wire_g
     );
     assert!(

@@ -86,6 +86,28 @@ impl RuleSet {
         }
         hit
     }
+
+    /// The `fill` the sheet paints a `.lini-marker` with, for a marker nested in
+    /// an element carrying `classes`: the base `.lini-marker` rule, overridden by
+    /// the last `.lini-style-* .lini-marker` descendant rule whose style the
+    /// element carries. A filled marker inlines its own `fill` only when its
+    /// required colour differs from this — so a class-driven colour rides the
+    /// descendant rule, and only a direct inline `stroke:` (which no rule can
+    /// target) lands in `style=`.
+    pub fn marker_fill(&self, classes: &[String]) -> Option<&str> {
+        let mut hit = None;
+        for rule in &self.rules {
+            let matches = rule.class == "lini-marker"
+                || rule
+                    .class
+                    .strip_suffix(" .lini-marker")
+                    .is_some_and(|prefix| classes.iter().any(|c| c == prefix));
+            if matches && let Some((_, v)) = rule.props.iter().find(|(p, _)| p == "fill") {
+                hit = Some(v.as_str());
+            }
+        }
+        hit
+    }
 }
 
 /// Build the document's structural rules: root inherited-text rule, per-shape
@@ -261,6 +283,35 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
             class: "lini-wire".into(),
             props,
         });
+
+        // Line styles (`--` dashed / `..` dotted from the operator, or an
+        // explicit `stroke-style:`) ride a `lini-wire-{style}` class so the dash
+        // pattern is stated once, not inlined on every wire — exactly as a
+        // shape's stroke rides its class. The pattern bakes the wire default
+        // `stroke-width`; a wire that overrides the width inlines its own
+        // pattern via the cascade diff in `render_wire`.
+        let wire_width = laid
+            .sheet
+            .wire_defaults
+            .number("stroke-width")
+            .unwrap_or(2.0);
+        let mut wire_styles: BTreeSet<&str> = BTreeSet::new();
+        for w in &laid.wires {
+            if let Some(ResolvedValue::Ident(s)) = w.attrs.get("stroke-style")
+                && (s == "dashed" || s == "dotted")
+            {
+                wire_styles.insert(s.as_str());
+            }
+        }
+        for style in wire_styles {
+            rules.push(Rule {
+                class: format!("lini-wire-{style}"),
+                props: vec![(
+                    "stroke-dasharray".into(),
+                    super::values::dash_pattern(style, wire_width),
+                )],
+            });
+        }
     }
 
     // Wire labels: the constant `<text>` paint stated once (mirrors `.lini-text`),
