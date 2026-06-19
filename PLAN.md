@@ -1,127 +1,198 @@
-# PLAN — trailing-label sugar + empty grid cells
+# PLAN — positioning model refactor
 
-Two surface refinements to the box/text model (already shipped; see `git log`).
-`SPEC.md` is the contract — it already describes the target. This plan turns the
-code to match. Both are **parser + resolve + fmt** only: the AST, the resolved
-IR, layout, and render are unchanged in shape.
+Implements the SPEC §6 redesign (the single source of truth). Two knobs replace
+five: **`pin`** (out-of-flow named anchor) and **`translate`** (universal nudge).
+Gone: `margin`, `mount`, `side` (as a positioning prop), `at`, `offset`.
 
-Read `SPEC.md` (§3 box declaration, §5 auto-flow, §9 wire labels, §16 grammar),
-`WIRING.md` (unchanged), and `AGENT.md` at the start of a session.
-
----
-
-## Ground rules
-
-- **Clean break**, pre-release. No aliases. Rewrite, don't patch.
-- **Modern, clean Rust.** No `unsafe`; one concept per file; don't fight
-  `rustfmt`/`clippy`; comments only for the non-obvious *why*.
-- **`SPEC.md` wins.** If code and spec disagree, fix whichever is wrong in the
-  same change; never let them drift.
-- **Test as you go**: `insta` for output, one sample per feature, **verify SVG
-  with `resvg`**. `cargo test` green at each commit.
-
-## Current state
-
-The box/text model is complete (`cargo test` ~332 green). Today: a box/wire label
-is **only** a `Child::Text` inside the block; a block-less box uses id-as-label;
-an empty `""` text is always dropped (`is_blank_anon_text`). The two changes below
-are the only deltas.
+Pipeline: parse → resolve → layout → render. Parsing needs no change (props are
+generic `key: value`); the work is in resolve (templates), layout (placement),
+render (paint order), plus samples, tests, and docs.
 
 ---
 
-## What changes (SPEC §3 / §5 / §9 / §16)
+## 1. The model, restated for the implementer
 
-1. **Trailing-label sugar.** A block-less box or wire may trail its label
-   string(s) to the line's end: `api |box| "API"` ≡ `api |box| { "API" }`;
-   `a -> b "x" "y"` ≡ two labels. A node that opens a `{ }` block keeps its label
-   inside it — **trailing + block is an error**. Pure parser sugar: it desugars
-   to the block form, so nothing downstream changes.
-2. **Empty grid cells.** An empty `""` text is suppressed in **flow** (as today)
-   but **kept in a grid**, where it is a real empty cell that holds its track —
-   so a blank table cell stops collapsing and misaligning the row.
-
----
-
-## Part A — trailing-label sugar (parser + fmt)
-
-**Parser** (`src/syntax/parser.rs`). No AST change — synthesize the block.
-
-- `parse_node`: after the classes loop, **greedily consume trailing strings**
-  (`while String { … }` — it stops at the newline token on its own). Then:
-  - strings **and** a `{` block follow → error `a label is the trailing string
-    or the block, not both` (SPEC §15);
-  - strings, no block → `block = Some(Block { children: <Text per string>, .. })`;
-  - no strings → the existing block-or-nothing path.
-  Drop the current "a label is a child, not positional — put it in the block"
-  error (that rule is reversed now).
-- `parse_wire`: the same — after the classes, trailing strings synthesize a
-  `WireBlock { labels: <Child::Text per string>, decls: [] }`; strings + block is
-  the same error.
-- A statement that *starts* with a string is still a standalone text node
-  (`parse_child`); the greedy trailing-consume only happens after a head, so
-  `"a" "b"` (no head) stays two nodes while `x |box| "a" "b"` is one box with two
-  labels. (The terminator already lets a following string self-delimit — keep it.)
-
-**fmt** (`src/fmt.rs`). The inverse: contract a text-only block to trailing form.
-
-- Add a `terse: bool` field to `Emitter`. `format` sets it `true`; `print_file`
-  (desugar) sets it `false`.
-- When `terse` and a box's block is **only text children** (≥1, no decls, no box
-  children, no internal wires), emit `id |type| .class "a" "b"` — head then the
-  bare strings, no braces. Likewise a wire block that is only text labels (no
-  `along:`/decls, no `|plain|`) → trailing strings. Everything else keeps braces.
-- Idempotent + round-trips: `"x"` parses back to the same `{ "x" }` AST, which
-  re-emits to `"x"`. Keep table-cell alignment (a `|table|` always has `columns:`,
-  so it has a block — it never hits the trailing path).
-- `desugar` needs no logic change: the parser already turned a trailing label
-  into a block, and `print_file` (`terse: false`) prints that block.
-
-**Tests.** Parser: trailing single/multi on box and wire; `x |box| "a" { … }`
-errors; `"a" "b"` (no head) is two nodes; `x |box| "a" "b"` is one box, two texts.
-fmt: `{ "x" }` → `"x"`, multi, wire, and a box with decls **keeps** braces;
-idempotence. desugar: `api |box| "API"` → `{ "API" }`.
+- **`pin`** takes a value naming a parent anchor: `none` (default, in flow),
+  `center`, the four edge midpoints (`top`/`bottom`/`left`/`right`), the four
+  corners (`top left`/`top right`/`bottom left`/`bottom right`). The child's bbox
+  **center** lands on that point. A pinned child is an overlay: it does **not**
+  grow the parent and paints **above** the in-flow children (`layer:` overrides).
+- **`translate: x y`** shifts any node (flow or pinned) by (x, y) after placement
+  — no reflow, no growth. It bakes into the node's origin (`cx`/`cy`), so the
+  canvas and wires follow it but siblings/parent do not. `pin: center` +
+  `translate: x y` == the old `at: x y` (parent origin is its center).
+- Value shapes (from `resolve/value.rs`): `pin: center` → `Ident("center")`;
+  `pin: top right` → `Tuple([Ident("top"), Ident("right")])`; `translate: x y` →
+  `Tuple([Number, Number])`.
 
 ---
 
-## Part B — empty grid cells (resolve)
+## 2. Resolve layer
 
-**Resolve** (`src/resolve/scene.rs`). `is_blank_anon_text` drops an empty,
-id-less `Text`. Make the drop **grid-aware**: keep empties when the *container*
-is a grid (`layout: grid`, which a `|table|` resolves to), drop them in flow.
+**`src/resolve/types.rs` — `template_attrs`** (the actual design change):
+- `caption` → `vec![attr("font-size", num(13.0))]` (drop `mount: in`).
+- `badge` → `pin: top right` + visual props, dropping `mount`/`side`/`align` and
+  the explicit `layer: 10`:
+  `attr("pin", Tuple[ident("top"), ident("right")])`, `radius: 999`,
+  `padding: 2 8`, `shadow: 2`, `fill: --accent`, `color: --on-accent`,
+  `font-size: 11`. (Add an ident-pair helper alongside the existing `pair`.)
+- Keep `caption` as a template — it earns its place as the title/footer preset
+  and keeps `caption { … }` global styling working. Do **not** fold into `plain`.
 
-- In `resolve_node`, the `children.retain(|c| !is_blank_anon_text(c))` becomes
-  conditional on the container's layout — a grid keeps empty cells, flow drops
-  them. Thread the same check through `resolve_instances` for a grid root.
-- A box's own empty label still drops (the box isn't a grid, so its empty `Text`
-  child is removed → an unlabelled box), so `cat |box| ""` is unchanged.
+**`src/resolve/ir.rs`:**
+- Fix the stale comment on `ShapeKind` (lines ~59–60): a caption is a small-text
+  `|plain|` flow child, not a `place`-reserving title primitive.
+- Clarity rename: `WireAt` → `Along`, field `ResolvedText.at` → `.along`
+  (the user-facing `at` is gone; the field is driven by `along:`). Propagate to
+  `resolve/wires.rs` and `layout/wires/labels.rs`.
 
-**Tests.** Resolve: `|table| { columns: 2; "a" "" }` keeps two cells (the empty
-one holds its slot); `g |group| { layout: row; "" }` drops the empty; `cat |box|
-""` is an unlabelled box.
+**`src/resolve/wires.rs`:** only the `WireAt`→`Along` rename; `along:` handling is
+already correct.
 
----
-
-## Part C — samples, snapshots, visual
-
-- Re-`fmt` all samples: most labels go terse (`name |box| "Ada"`, `|caption|
-  "Kitchen"`) — a readability win. `samples/table.lini` already has a `"Mango" ""
-  "ripe"` row; it must now render a real empty middle cell.
-- Regenerate `insta` snapshots — **review each diff**. Only `table.lini` (and any
-  other empty-cell case) should change geometry; the rest are source-only re-fmt
-  with identical SVG.
-- **Verify with resvg**: `samples/table.lini` shows the empty cell holding its
-  column (3×3 grid, "ripe" in column 3, not shifted left).
-
-**Done when.** `cargo test` green; trailing labels parse and fmt round-trips them;
-an empty table cell renders as a held slot (visually verified); `SPEC.md` matches
-behaviour.
+**`src/resolve/program.rs`:**
+- Rewrite test `explicit_caption_is_a_box_mounted_in` → assert the caption carries
+  **no** `mount` and has `font-size: 13` (rename to `caption_is_small_text_plain`).
+- Reword the comment (~line 182) that calls the root's canvas-pad its "margin".
 
 ---
 
-## Per-session checklist
+## 3. Layout layer
 
-1. Read `SPEC.md` + `WIRING.md` + `AGENT.md`; `cargo test` for the baseline.
-2. Part A (parser + fmt), then Part B (resolve), then Part C (samples/snapshots).
-3. Clean, self-contained commits (one purposeful change; no "Co-Authored-By";
-   defer pushing to the user).
-4. Tests as you go; verify the table empty cell with `resvg`.
+**`src/layout/anchors.rs` — gut and rebuild around `Pin`:**
+- Remove `Place`, `Pos`, `Side`, `Align`, `read_pos`, `is_out_band`,
+  `parse_offset`. (`flex.rs` parses `align`/`justify` itself, so `anchors::Align`
+  has no other user; the AST `crate::ast::Side` for wire endpoints is unrelated
+  and stays.)
+- Add:
+  ```rust
+  /// A parent anchor a pinned child centers on, as fractions of the parent bbox
+  /// from its center: center (0,0), top (0,-0.5), top right (0.5,-0.5), …
+  pub struct Pin { pub fx: f64, pub fy: f64 }
+  pub fn read_pin(attrs, span) -> Result<Option<Pin>, Error>   // None | none → None
+  pub fn is_pinned(attrs) -> bool                              // pin present and != none
+  ```
+  `read_pin` maps `Ident("none")`→`Ok(None)`, `center`/edges→`Some`, the four
+  corner `Tuple`s→`Some`, anything else→the SPEC §15 error
+  (`'pin' expects none, center, an edge (top/bottom/left/right), or a corner …`).
+- `Role` becomes `{ Flow, Pinned }`; `child_role` returns `Pinned` iff `read_pin`
+  is `Some`.
+- A `resolve(pin, parent_bbox, child_bbox) -> (cx, cy)` that puts the child's
+  center on `parent.center + (fx·parent.w, fy·parent.h)`, minus the child bbox's
+  own center offset (same recentre `flex::place` uses).
+
+**`src/layout/titles.rs` — delete the file** (no bands). Drop `mod titles;` from
+`layout/mod.rs` and every `titles::` call.
+
+**`src/layout/mod.rs` — `lay_out_container_children`:**
+- Remove the margin inflate (top) and deflate (bottom) loops.
+- Remove `reserve_indices`/`in_indices` and the `titles::reserve_bands` /
+  `place_out_bands` calls; roles are now Flow + Pinned only. `body_bbox` is just
+  `flow_bbox`.
+- Place pinned children against `anchor_parent_bbox` (explicit size or
+  `body_bbox`) via the new `anchors::resolve` — no `offset`.
+- Add a final pass over **all** children: `c.cx/cy += translate(c.attrs)` (after
+  `body_bbox` is fixed, so no reflow / growth). Add a `translate()` reader
+  (pair, absent → none) in `primitives.rs` or `anchors.rs`.
+
+**`src/layout/mod.rs` — `layout_inst` / `attempt`:** remove the `place_out_bands`
+calls and the `frame` plumbing; a node's drawn box is always its `bbox`.
+
+**`src/layout/ir.rs`:**
+- Remove `PlacedNode.frame` and `draw_box()`; update the two callers
+  (`render/primitives.rs::dim_excluding_stroke` and the divider test) to `n.bbox`.
+- Keep `Bbox::expand` (still used by the table cell inset) and `Bbox::shifted`
+  (used by `accumulate_extent`); reword `expand`'s margin-referencing doc.
+
+**`src/layout/primitives.rs`:** delete `margin()`. Keep `padding`/`gap`
+(`gap` keeps its current negative allowance — see Flags).
+
+**`src/layout/flex.rs`:** rename the internal `pinned()` /`pinned` checks (they
+mean "has an explicit width/height") to `dim_set()` to avoid colliding with the
+new `pin` concept. No behavioural change (flex only ever sees flow children).
+
+**`src/layout/wires/labels.rs`:** rename `offset_of` → `translate_of`, read the
+`translate` attr (tangent frame kept), update the `WireAt`→`Along` field use and
+the header comment.
+
+`accumulate_extent` needs no change — translate is already folded into `cx`/`cy`,
+so the viewBox includes it for free.
+
+---
+
+## 4. Render layer
+
+**`src/render/mod.rs` — `in_layer_order`:** sort key becomes the *effective*
+layer — explicit `layer:` if set, else `1.0` for a pinned child and `0.0` for a
+flow child — stable, ties by source order. Reuse `layout::is_pinned` (re-export
+from `layout/mod.rs`).
+
+**`src/render/primitives.rs`:** `dim_excluding_stroke` uses `n.bbox` (frame gone).
+No `translate`/`pin` work here — both are baked into `cx`/`cy` already.
+
+---
+
+## 5. Dead-code checklist (grep must come back empty in `src/`)
+
+`mount`, `\bmargin\b` (positioning), `is_out_band`, `place_out`, `reserve_bands`,
+`Place::`, `Pos::`, `parse_offset`, `read_pos`, `frame`/`draw_box`, `titles`,
+`"offset"`, `"at"` (as a positioning attr). Each removal also strips its doc
+comments and tests.
+
+---
+
+## 6. Samples (`samples/`)
+
+- **delete** `margin.lini`, `place_out.lini` (features removed) and their
+  `tests/snapshots/*` counterparts.
+- **rewrite** `anchors.lini` → the nine `pin` anchors (center / 4 edges / 4
+  corners), wrapping each label in a `|plain|`. Keep the name (it is the anchor
+  showcase) or rename to `pin.lini`.
+- **add** `translate.lini` — a flow child and a `pin: top right` badge each
+  nudged by `translate`, showing it reshapes nothing.
+- **rewrite** `captions.lini` → footer is the **last** child (drop `side: bottom`).
+- **rewrite** `wires_simple.lini` — wire-label `offset` → `translate`.
+- **audit** `full_example.lini`, `templates_all.lini` — any `layout: row` group
+  with a `|caption|` becomes a column (caption is now an in-flow child), and any
+  `mount`/`at`/`margin`/`offset` is converted; badge usages need no change.
+
+## 7. Tests & snapshots
+
+- Update unit tests named/asserting the old model: `layout/mod.rs`
+  (`group_caption_reserves_a_band…`, `caption_sits_above_the_content` → assert a
+  column-flow caption sits above its siblings, no band growth), `resolve/program`
+  (caption), `syntax/parser` (the `mount: on` literal in a parse fixture →
+  `pin: …`), any `anchors`/`offset` assertions.
+- Regenerate conformance snapshots: `cargo insta test` then review/accept; delete
+  orphaned `.snap` files for removed samples.
+- `tests/wiring.rs` / `wiring_sweep.rs` exclude wire-bearing samples already;
+  confirm the rewritten samples still route (run the suite).
+
+## 8. Verification (must all pass)
+
+1. `cargo test` (unit + conformance + wiring).
+2. `cargo clippy --all-targets -- -D warnings`.
+3. `cargo fmt --all -- --check`.
+4. Render `pin.lini`/`anchors.lini`, `translate.lini`, `captions.lini`,
+   `full_example.lini` to PNG with `resvg --bake-vars` and eyeball: corners
+   straddle, center sits centered, translate nudges without reflow, the badge
+   tucks into the top-right, captions read as title/footer.
+
+## 9. Sequencing
+
+One implementation commit is fine, but the natural internal order is:
+resolve (templates + rename) → layout (anchors/titles/mod) → render → samples →
+tests/snapshots. Keep `cargo check` green between sub-steps. README is a separate
+docs pass (it still says “`at:`, `mount`/`side`/`align` anchors”).
+
+---
+
+## Flags / judgment calls
+
+- **`caption` kept** (font-size preset), not folded into `plain` — see §2.
+- **Negative `gap` left as-is.** It is the one remaining overlap-via-spacing path
+  and is outside the explicit change list; making `gap` non-negative (CSS-honest,
+  matching the margin removal) is a clean follow-up if wanted — flagged, not done.
+- **Wire-label `translate` stays in the tangent frame** (x along the wire, y to
+  its left), matching the old `offset` — more useful than world axes for a label.
+- **`pin` corner order** is vertical-then-horizontal (`top right`), matching the
+  SPEC table; the reverse is an error.
