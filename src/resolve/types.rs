@@ -294,6 +294,9 @@ pub(super) fn template_attrs(name: &str) -> Vec<(String, ResolvedValue)> {
             attr("stroke", live("stroke")),
             // Solid ruling, not the dashed frame `group` brings.
             attr("stroke-style", ident("solid")),
+            // Cells read better light, against the thin ruling.
+            attr("font-size", num(14.0)),
+            attr("font-weight", ident("normal")),
         ],
         _ => Vec::new(),
     }

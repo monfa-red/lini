@@ -33,7 +33,7 @@ cap::plain { font-size: 12; font-weight: normal; color: #555; }
   |cap|   "slant"
 }
 |tile| {
-  |cyl| { width: 58; height: 64; fill: #bdb2ff; }
+  |cyl| { width: 58; height: 56; fill: #bdb2ff; }
   |cap| "cyl"
 }
 |tile| {
@@ -41,14 +41,14 @@ cap::plain { font-size: 12; font-weight: normal; color: #555; }
   |cap|     "diamond"
 }
 |tile| {
-  |cloud| { width: 80; height: 54; fill: #ffadad; }
+  |cloud| { width: 80; height: 50; fill: #ffadad; }
   |cap|   "cloud"
 }
 
 // ── Row 3 ─────────────────────────────────────────────
 |tile| {
   |poly| {
-    points: 0 -30, 28 -9, 17 30, -17 30, -28 -9; fill: #80ed99; stroke: #2a9d8f;
+    points: 0 -30, 30 -6, 17 30, -17 30, -30 -6; fill: #80ed99; stroke: #2a9d8f;
   }
   |cap|  "poly (points)"
 }
@@ -76,22 +76,22 @@ cap::plain { font-size: 12; font-weight: normal; color: #555; }
 }
 |tile| {
   |group| {
-    padding: 10;
-    |box| { width: 40; height: 28; fill: #ffffff; }
+    padding: 11;
+    |box| { width: 42; height: 28; fill: #ffffff; }
   }
   |cap|   "group"
 }
 |tile| {
   |table| {
-    columns: 28 28;
-    "a" "b"
-    "c" "d"
+    columns: 25 25 25;
+    "a" "b" "c"
+    "d" "e" "f"
   }
   |cap|   "table"
 }
 |tile| {
   |path| {
-    path: "M -30 0 C -30 -26 30 -26 30 0 C 30 26 -30 26 -30 0 Z"; fill: #ffd6a5;
+    path: "M 0 -28 C 22 -30 31 -12 23 4 C 17 16 30 25 11 30 C -7 34 -27 25 -26 6 C -25 -11 -22 -28 0 -28 Z"; fill: #ffd166; stroke: #e76f51; stroke-width: 2;
   }
   |cap|  "path (closed)"
 }

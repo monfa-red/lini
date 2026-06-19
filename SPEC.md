@@ -566,7 +566,7 @@ common.
 | `\|note\|` | `\|box\|` | `radius: 2; shadow: 2; stroke: none; fill: --note-bg` | Sticky note (padding via the default 20). |
 | `\|row\|` | `\|plain\|` | `layout: row` | Frameless wrapper — children in a row. |
 | `\|column\|` | `\|plain\|` | `layout: column` | Frameless wrapper — children in a column. |
-| `\|table\|` | `\|group\|` | `layout: grid; divider: all; gap: 0; padding: 4 8; fill: none; stroke: --stroke; stroke-style: solid` | Ruled grid (see below). |
+| `\|table\|` | `\|group\|` | `layout: grid; divider: all; gap: 0; padding: 4 8; fill: none; stroke: --stroke; stroke-style: solid; font-size: 14; font-weight: normal` | Ruled grid (see below). |
 
 **Captions.** A `|caption|` is a small `|plain|` **pinned** just above the
 group's top-left corner; a `|footer|` is the same flipped to the bottom. Both are
