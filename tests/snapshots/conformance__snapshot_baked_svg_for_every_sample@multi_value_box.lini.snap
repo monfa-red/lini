@@ -3,47 +3,47 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/multi_value_box.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-120.5 -160 241 320" width="241" height="320" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-121 -154.5 242 309" width="242" height="309" class="lini">
   <style>
-    .lini { font-family: sans-serif; font-size: 14px; color: black; }
-    .lini .lini-shape-box { fill: white; stroke: #444; stroke-width: 1; stroke-dasharray: none; }
+    .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: bold; color: black; }
+    .lini .lini-shape-box { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-shape-plain { fill: none; stroke: none; }
-    .lini .lini-shape-group { fill: rgba(0, 0, 0, 0.03); stroke: #bbb; }
-    .lini .lini-shape-caption { font-size: 13px; }
+    .lini .lini-shape-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,4; }
+    .lini .lini-shape-caption { color: rgba(0, 0, 0, 0.4); font-size: 12px; font-weight: normal; }
   </style>
   <defs/>
   <g class="lini-scene">
-    <g class="lini-node lini-shape-box" transform="translate(0,-124.5)">
-      <rect x="-100" y="-15" width="200" height="30" rx="0" ry="0"/>
+    <g class="lini-node lini-shape-box" transform="translate(0,-118.5)">
+      <rect x="-100" y="-15" width="200" height="30" rx="6" ry="6"/>
       <text class="lini-text" x="0" y="0">scalar padding</text>
     </g>
-    <g class="lini-node lini-shape-box" transform="translate(0,-81.5)">
-      <rect x="-100" y="-15" width="200" height="30" rx="0" ry="0"/>
+    <g class="lini-node lini-shape-box" transform="translate(0,-74.5)">
+      <rect x="-100" y="-15" width="200" height="30" rx="6" ry="6"/>
       <text class="lini-text" x="0" y="0">v h padding</text>
     </g>
-    <g class="lini-node lini-shape-box" transform="translate(0,-38.5)">
-      <rect x="-100" y="-15" width="200" height="30" rx="0" ry="0"/>
+    <g class="lini-node lini-shape-box" transform="translate(0,-30.5)">
+      <rect x="-100" y="-15" width="200" height="30" rx="6" ry="6"/>
       <text class="lini-text" x="0" y="0">t r b l padding</text>
     </g>
-    <g class="lini-node lini-shape-box" transform="translate(0,4.5)">
+    <g class="lini-node lini-shape-box" transform="translate(0,13.5)">
       <rect x="-100" y="-15" width="200" height="30" rx="8" ry="8"/>
       <text class="lini-text" x="0" y="0">radius 8</text>
     </g>
-    <g class="lini-node lini-shape-group lini-shape-box" data-id="inner" transform="translate(0,86)">
-      <rect x="-56.5" y="-53.5" width="113" height="107" rx="6" ry="6"/>
-      <g class="lini-node lini-shape-caption lini-shape-plain lini-shape-box" transform="translate(0,-37.5)">
-        <rect x="-28.6" y="-6.5" width="57.2" height="13" rx="0" ry="0"/>
+    <g class="lini-node lini-shape-group lini-shape-box" data-id="inner" transform="translate(0,88)">
+      <rect x="-57" y="-46" width="114" height="92" rx="6" ry="6"/>
+      <g class="lini-node lini-shape-box" transform="translate(0,-26)">
+        <rect x="-40" y="-10" width="80" height="20" rx="6" ry="6"/>
+      </g>
+      <g class="lini-node lini-shape-box" transform="translate(0,0)">
+        <rect x="-40" y="-10" width="80" height="20" rx="6" ry="6"/>
+      </g>
+      <g class="lini-node lini-shape-box" transform="translate(0,26)">
+        <rect x="-40" y="-10" width="80" height="20" rx="6" ry="6"/>
+      </g>
+      <g class="lini-node lini-shape-caption lini-shape-plain lini-shape-box" transform="translate(-35.2,-48)">
+        <rect x="-28.8" y="-6" width="57.6" height="12" rx="6" ry="6"/>
         <text class="lini-text" x="0" y="0">gap demo</text>
-      </g>
-      <g class="lini-node lini-shape-box" transform="translate(0,-16)">
-        <rect x="-40" y="-10" width="80" height="20" rx="0" ry="0"/>
-      </g>
-      <g class="lini-node lini-shape-box" transform="translate(0,9)">
-        <rect x="-40" y="-10" width="80" height="20" rx="0" ry="0"/>
-      </g>
-      <g class="lini-node lini-shape-box" transform="translate(0,34)">
-        <rect x="-40" y="-10" width="80" height="20" rx="0" ry="0"/>
       </g>
     </g>
   </g>

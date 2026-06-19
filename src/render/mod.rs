@@ -252,7 +252,7 @@ fn node_style_attr(
         }
     }
     if n.attrs.get("stroke-style").is_some() {
-        let width = n.attrs.number("stroke-width").unwrap_or(1.0);
+        let width = n.attrs.number("stroke-width").unwrap_or(2.0);
         let dash = values::dasharray_value(&n.attrs, width);
         let value = if dash.is_empty() {
             "none".to_string()

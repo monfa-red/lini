@@ -2,13 +2,13 @@
 // common wiring pattern at once.
 
 layout: row; gap: 40;
--> { clearance: 8; }
+-> { clearance: 12; }
 
-.loud { stroke: red; stroke-width: 2; }
+.loud { stroke: red }
 .quiet { stroke: blue; }
 .happy { stroke: green; }
 
-treat::box { radius: 4; }
+treat::box { radius: 6; }
 
 cat |oval| "Cat"
 
@@ -20,7 +20,7 @@ kitchen |group| {
 }
 
 garden |group| {
-  layout: column; padding: 16; gap: 24;
+  layout: column;
        |caption| "Garden"
   dog  |treat|   "Dog"
   bird |treat|   "Bird"
@@ -31,7 +31,7 @@ roof |treat| "Roof"
 cat -> kitchen.bowl & kitchen.water .loud
 cat -> roof .loud
 
-kitchen.bowl -> garden.dog .loud
+kitchen.bowl -> garden.dog .loud { along: 0.35; "X" }
 kitchen.bowl -> garden.dog .loud
 
 kitchen.water <- garden.dog .quiet

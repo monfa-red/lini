@@ -208,10 +208,11 @@ fn crossing_counts_are_pinned() {
             .filter(|v| v.rule == Rule::Crossing)
             .count()
     };
-    // Behaviour pin, not a coordinate pin — re-pinned to the pin/translate geometry.
+    // Behaviour pin, not a coordinate pin — re-pinned to the locked v0.3 geometry
+    // (monospace, 2px strokes, pinned captions).
     assert_eq!(crossings("samples/wires_simple.lini"), 0);
-    assert_eq!(crossings("samples/wires_medium.lini"), 2);
-    assert_eq!(crossings("samples/wires_hard.lini"), 6);
+    assert_eq!(crossings("samples/wires_medium.lini"), 6);
+    assert_eq!(crossings("samples/wires_hard.lini"), 5);
 }
 
 /// Law 3 (Economy), audit accept: a crossing a longer route can remove is
@@ -458,7 +459,7 @@ fn the_kept_crossing_names_its_wire_pair() {
         .into_iter()
         .filter(|v| v.rule == Rule::Crossing)
         .collect();
-    assert_eq!(kept.len(), 6);
+    assert_eq!(kept.len(), 5);
     assert!(
         kept.iter().any(|v| v.wires
             == vec![
@@ -510,10 +511,10 @@ fn wire_labels_ride_their_wires_and_dodge_nodes() {
             "hub",
             "west.ww1",
             "west.ww2",
-            "north.nrow.nn1",
-            "north.nrow.nn2",
-            "south.srow.ss1",
-            "south.srow.ss2",
+            "north.nn1",
+            "north.nn2",
+            "south.ss1",
+            "south.ss2",
             "east.ee1",
             "east.ee2",
         ],

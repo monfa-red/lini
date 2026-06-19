@@ -2,62 +2,57 @@
 // detours, forced sides, a parent→child wire, and a forced outer pair.
 
 layout: grid; columns: repeat(3); gap: 30;
--> { clearance: 8; }
+-> { clearance: 12; }
 
-.hot { stroke: red; stroke-width: 2; }
+.hot { stroke: red; stroke-width: 3; }
 .cool { stroke: blue; }
-.attention { stroke: orange; stroke-width: 2; }
+.attention { stroke: orange }
 
-unit::box { radius: 4; padding: 12; }
-
-alpha |unit|  { cell: 1 1; "Alpha" }
+alpha |box|  { cell: 1 1; "Alpha" }
 north |group| {
-  cell: 2 1; layout: column; gap: 12;
+  cell: 2 1; layout: column; gap: 16;
       |caption| "North"
-  nrow |row| { gap: 20;
-    nn1 |unit| "N1"
-    nn2 |unit| "N2"
-  }
+  nn1 |box|    "N1"
+  nn2 |box|    "N2"
 }
-beta  |unit|  { cell: 3 1; "Beta" }
+beta  |box|  { cell: 3 1; "Beta" }
 
 west |group| {
   cell: 1 2; layout: column; gap: 16;
       |caption| "West"
-  ww1 |unit|    "W1"
-  ww2 |unit|    "W2"
+  ww1 |box|    "W1"
+  ww2 |box|    "W2"
 }
-hub  |unit|  { cell: 2 2; "Hub" }
+hub  |box|  { cell: 2 2; "Hub" }
 east |group| {
   cell: 3 2; layout: column; padding: 16; gap: 16;
       |caption| "East"
-  ee1 |unit|    "E1"
-  ee2 |unit|    "E2"
+  ee1 |box|    "E1"
+  ee2 |box|    "E2"
 }
 
-gamma |unit|  { cell: 1 3; "Gamma" }
+gamma |box|  { cell: 1 3; "Gamma" }
 south |group| {
-  cell: 2 3; layout: column; gap: 12;
+  cell: 2 3; layout: column; gap: 16;
       |caption| "South"
-  srow |row| { gap: 20;
-    ss1 |unit| "S1"
-    ss2 |unit| "S2"
-  }
+  ss1 |box|    "S1"
+  ss2 |box|    "S2"
 }
-delta |unit|  { cell: 3 3; "Delta" }
+delta |box|  { cell: 3 3; "Delta" }
 
-hub -> north.nrow.nn1 & west.ww1 & east.ee1 & south.srow.ss1
+hub -> north.nn1 & east.ee1
+hub -> south.ss1 & west.ww1
 
-north.nrow.nn2 -> east.ee1 .cool
-north.nrow.nn2 -> east.ee1 .cool
-north.nrow.nn2 -> east.ee1 .cool
-west.ww2 -> south.srow.ss1
-west.ww2 -> south.srow.ss1
+north.nn2 -> east.ee1 .cool
+north.nn2 -> east.ee1 .cool
+north.nn2 -> east.ee1 .cool
+west.ww2 -> south.ss1
+west.ww2 -> south.ss1
 
 alpha -> delta "One" "Two" "Three"
 beta -> gamma "diag"
 
-gamma -> south.srow.ss1 -> delta "relay"
+gamma -> south.ss1 -> delta "relay"
 
 east -> east.ee2
 

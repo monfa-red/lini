@@ -13,7 +13,7 @@ use std::fmt::Write;
 /// units per side. `H` pads the approximate text width; `V` makes the hole
 /// taller than the tight single-line box ([`approx_height`] is ~1 em, which
 /// clips descenders) so g/y/p stay inside the cut.
-const LABEL_CUT_PAD_H: f64 = 0.15;
+const LABEL_CUT_PAD_H: f64 = 0.3;
 const LABEL_CUT_PAD_V: f64 = 0.15;
 
 /// The wire's corner-radius cap (WIRING §Model step 7) — the same
@@ -37,7 +37,7 @@ pub fn render_wire(
     if w.path.len() < 2 {
         return;
     }
-    let thickness = w.attrs.number("stroke-width").unwrap_or(1.0);
+    let thickness = w.attrs.number("stroke-width").unwrap_or(2.0);
 
     // Paint rides the group, exactly like a node: the `.lini-wire` rule states
     // the `|wire|` defaults, each applied `.style` rides a `lini-style-*` class,
@@ -456,8 +456,11 @@ fn label_mask(
     }
     let (rx, ry) = (x0 - pad, y0 - pad);
     let (rw, rh) = (x1 - x0 + 2.0 * pad, y1 - y0 + 2.0 * pad);
+    // The mask rects carry their fill/stroke via CSS (`.lini-cut-bg` /
+    // `.lini-cut`), not inline — so the wire's own `stroke` can't bleed into the
+    // luminance mask, and the SVG stays free of per-label paint (SPEC §13).
     let mut m = format!(
-        r#"<mask id="{id}" maskUnits="userSpaceOnUse" x="{}" y="{}" width="{}" height="{}"><rect x="{}" y="{}" width="{}" height="{}" fill="white"/>"#,
+        r#"<mask id="{id}" maskUnits="userSpaceOnUse" x="{}" y="{}" width="{}" height="{}"><rect class="lini-cut-bg" x="{}" y="{}" width="{}" height="{}"/>"#,
         num(rx),
         num(ry),
         num(rw),
@@ -474,7 +477,7 @@ fn label_mask(
         let (cx, cy) = t.position;
         write!(
             m,
-            r#"<rect x="{}" y="{}" width="{}" height="{}" fill="black"/>"#,
+            r#"<rect class="lini-cut" x="{}" y="{}" width="{}" height="{}"/>"#,
             num(cx - cw / 2.0),
             num(cy - ch / 2.0),
             num(cw),

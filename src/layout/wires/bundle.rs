@@ -82,7 +82,7 @@ pub fn requests(program: &Program, index: &SceneIndex) -> Result<Vec<EdgeReq>, E
             .find(|r: &&EdgeReq| r.stmt == stmt)
             .map_or(0, |r| r.expansion + 1);
         let clearance = wire_clearance(&w.attrs, &program.vars);
-        let thickness = w.attrs.number("stroke-width").unwrap_or(1.0);
+        let thickness = w.attrs.number("stroke-width").unwrap_or(2.0);
         let eps = &w.endpoints;
         let segs = eps.len() - 1;
         for i in 0..segs {

@@ -3,30 +3,30 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/shapes.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-65.5 -156 131 312" width="131" height="312" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-69.5 -159.5 139 319" width="139" height="319" class="lini">
   <style>
-    .lini { font-family: sans-serif; font-size: 14px; color: black; }
-    .lini .lini-shape-box { fill: white; stroke: #444; stroke-width: 1; stroke-dasharray: none; }
-    .lini .lini-shape-slant { fill: white; stroke: #444; stroke-width: 1; stroke-dasharray: none; }
+    .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: bold; color: black; }
+    .lini .lini-shape-box { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-shape-slant { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-shape-icon { fill: #444; }
     .lini .lini-shape-plain { fill: none; stroke: none; }
-    .lini .lini-shape-group { fill: rgba(0, 0, 0, 0.03); stroke: #bbb; }
-    .lini .lini-shape-caption { font-size: 13px; }
+    .lini .lini-shape-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,4; }
+    .lini .lini-shape-caption { color: rgba(0, 0, 0, 0.4); font-size: 12px; font-weight: normal; }
     .lini .lini-shape-nest { fill: gray; }
   </style>
   <defs/>
   <g class="lini-scene">
-    <g class="lini-node lini-shape-treat lini-shape-box" transform="translate(0,-112.5)">
-      <rect x="-35.25" y="-23" width="70.5" height="46" rx="5" ry="5"/>
+    <g class="lini-node lini-shape-treat lini-shape-box" transform="translate(0,-111)">
+      <rect x="-42.5" y="-27.5" width="85" height="55" rx="5" ry="5"/>
       <text class="lini-text" x="0" y="0">Treat</text>
     </g>
-    <g class="lini-node lini-shape-nest lini-shape-slant" transform="translate(0,-45.5)">
-      <polygon points="-25.2372,-23 37.5628,-23 25.2372,23 -37.5628,23"/>
+    <g class="lini-node lini-shape-nest lini-shape-slant" transform="translate(0,-34)">
+      <polygon points="-30.6314,-27.5 45.3686,-27.5 30.6314,27.5 -45.3686,27.5"/>
       <text class="lini-text" x="0" y="0">Nest</text>
     </g>
-    <g class="lini-node lini-shape-group lini-shape-box" data-id="toolbox" transform="translate(0,26.5)">
-      <rect x="-45" y="-28" width="90" height="56" rx="6" ry="6"/>
+    <g class="lini-node lini-shape-group lini-shape-box" data-id="toolbox" transform="translate(0,47)">
+      <rect x="-49" y="-32" width="98" height="64" rx="6" ry="6"/>
       <g class="lini-node lini-shape-icon" transform="translate(-17,0)">
         <rect x="-12" y="-12" width="24" height="24" fill="none" stroke="#444" stroke-width="1"/>
         <text x="0" y="0" text-anchor="middle" dominant-baseline="central" font-size="9.6" fill="#444">save</text>
@@ -36,13 +36,13 @@ input_file: samples/shapes.lini
         <text x="0" y="0" text-anchor="middle" dominant-baseline="central" font-size="9.6" fill="#444">copy</text>
       </g>
     </g>
-    <g class="lini-node lini-shape-group lini-shape-box" data-id="den" transform="translate(0,105.5)">
-      <rect x="-38.95" y="-30" width="77.9" height="60" rx="6" ry="6"/>
-      <g class="lini-node lini-shape-caption lini-shape-plain lini-shape-box" style="font-weight: bold" transform="translate(0,-11)">
-        <rect x="-17.875" y="-6.5" width="35.75" height="13" rx="0" ry="0"/>
+    <g class="lini-node lini-shape-group lini-shape-box" data-id="den" transform="translate(0,119.5)">
+      <rect x="-43.5" y="-19.5" width="87" height="39" rx="6" ry="6"/>
+      <text class="lini-text" x="0" y="0">Content</text>
+      <g class="lini-node lini-shape-caption lini-shape-plain lini-shape-box" style="font-weight: bold" transform="translate(-24.5,-28.5)">
+        <rect x="-18" y="-6" width="36" height="12" rx="6" ry="6"/>
         <text class="lini-text" x="0" y="0">Title</text>
       </g>
-      <text class="lini-text" x="0" y="11">Content</text>
     </g>
   </g>
   <g class="lini-wires"/>

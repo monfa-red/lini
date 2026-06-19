@@ -1,5 +1,6 @@
-// A group's title is the first |caption| child, a footer the last (SPEC §8) —
-// ordinary flow children, no positioning. link: wraps a shape in <a href>.
+// A group's title is a |caption| (SPEC §8) — it defaults to pin: top, so it
+// rides the top edge whatever the group's layout. A footer is pin: bottom.
+// link: wraps a shape in <a href>.
 
 layout: row; gap: 32; padding: 20; align: start;
 
@@ -15,7 +16,7 @@ panel |group| {
   |caption| "Sales"
   a |box| "Plan"
   b |box| "Actual"
-  |caption| "Q3 2026"
+  |caption| { pin: bottom left; translate: 0 16; "Q3 2026" }
 }
 
 docs |box| { link: "https://example.com"; width: 120; height: 48; "Docs" }

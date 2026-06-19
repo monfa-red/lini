@@ -3,54 +3,54 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/captions.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-247.8 -112.5 495.6 225" width="495.6" height="225" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-277 -118 554 236" width="554" height="236" class="lini">
   <style>
-    .lini { font-family: sans-serif; font-size: 14px; color: black; }
-    .lini .lini-shape-box { fill: white; stroke: #444; stroke-width: 1; stroke-dasharray: none; }
+    .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: bold; color: black; }
+    .lini .lini-shape-box { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-shape-plain { fill: none; stroke: none; }
-    .lini .lini-shape-group { fill: rgba(0, 0, 0, 0.03); stroke: #bbb; }
-    .lini .lini-shape-caption { font-size: 13px; }
+    .lini .lini-shape-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,4; }
+    .lini .lini-shape-caption { color: rgba(0, 0, 0, 0.4); font-size: 12px; font-weight: normal; }
   </style>
   <defs/>
   <g class="lini-scene">
-    <g class="lini-node lini-shape-group lini-shape-box" data-id="card" transform="translate(-148.6,-12)">
-      <rect x="-78.7" y="-80" width="157.4" height="160" rx="6" ry="6"/>
-      <g class="lini-node lini-shape-caption lini-shape-plain lini-shape-box" transform="translate(0,-57)">
-        <rect x="-25.025" y="-6.5" width="50.05" height="13" rx="0" ry="0"/>
-        <text class="lini-text" x="0" y="0">Profile</text>
-      </g>
-      <g class="lini-node lini-shape-box" data-id="name" transform="translate(0,-16.5)">
-        <rect x="-62.2" y="-23" width="124.4" height="46" rx="0" ry="0"/>
+    <g class="lini-node lini-shape-group lini-shape-box" data-id="card" transform="translate(-161.5,0)">
+      <rect x="-95" y="-82" width="190" height="164" rx="6" ry="6"/>
+      <g class="lini-node lini-shape-box" data-id="name" transform="translate(0,-33.5)">
+        <rect x="-74" y="-27.5" width="148" height="55" rx="6" ry="6"/>
         <text class="lini-text" x="0" y="0">Ada Lovelace</text>
       </g>
-      <g class="lini-node lini-shape-box" data-id="role" transform="translate(0,40.5)">
-        <rect x="-46.8" y="-23" width="93.6" height="46" rx="0" ry="0"/>
+      <g class="lini-node lini-shape-box" data-id="role" transform="translate(0,33.5)">
+        <rect x="-56" y="-27.5" width="112" height="55" rx="6" ry="6"/>
         <text class="lini-text" x="0" y="0">Engineer</text>
       </g>
-    </g>
-    <g class="lini-node lini-shape-group lini-shape-box" data-id="panel" transform="translate(18.7,0)">
-      <rect x="-55.6" y="-92" width="111.2" height="184" rx="6" ry="6"/>
-      <g class="lini-node lini-shape-caption lini-shape-plain lini-shape-box" transform="translate(0,-69)">
-        <rect x="-17.875" y="-6.5" width="35.75" height="13" rx="0" ry="0"/>
-        <text class="lini-text" x="0" y="0">Sales</text>
+      <g class="lini-node lini-shape-caption lini-shape-plain lini-shape-box" transform="translate(-68.8,-91)">
+        <rect x="-25.2" y="-6" width="50.4" height="12" rx="6" ry="6"/>
+        <text class="lini-text" x="0" y="0">Profile</text>
       </g>
-      <g class="lini-node lini-shape-box" data-id="a" transform="translate(0,-28.5)">
-        <rect x="-31.4" y="-23" width="62.8" height="46" rx="0" ry="0"/>
+    </g>
+    <g class="lini-node lini-shape-group lini-shape-box" data-id="panel" transform="translate(34.5,0)">
+      <rect x="-68" y="-82" width="136" height="164" rx="6" ry="6"/>
+      <g class="lini-node lini-shape-box" data-id="a" transform="translate(0,-33.5)">
+        <rect x="-38" y="-27.5" width="76" height="55" rx="6" ry="6"/>
         <text class="lini-text" x="0" y="0">Plan</text>
       </g>
-      <g class="lini-node lini-shape-box" data-id="b" transform="translate(0,28.5)">
-        <rect x="-39.1" y="-23" width="78.2" height="46" rx="0" ry="0"/>
+      <g class="lini-node lini-shape-box" data-id="b" transform="translate(0,33.5)">
+        <rect x="-47" y="-27.5" width="94" height="55" rx="6" ry="6"/>
         <text class="lini-text" x="0" y="0">Actual</text>
       </g>
-      <g class="lini-node lini-shape-caption lini-shape-plain lini-shape-box" transform="translate(0,69)">
-        <rect x="-25.025" y="-6.5" width="50.05" height="13" rx="0" ry="0"/>
+      <g class="lini-node lini-shape-caption lini-shape-plain lini-shape-box" transform="translate(-49,-91)">
+        <rect x="-18" y="-6" width="36" height="12" rx="6" ry="6"/>
+        <text class="lini-text" x="0" y="0">Sales</text>
+      </g>
+      <g class="lini-node lini-shape-caption lini-shape-plain lini-shape-box" transform="translate(-41.8,91)">
+        <rect x="-25.2" y="-6" width="50.4" height="12" rx="6" ry="6"/>
         <text class="lini-text" x="0" y="0">Q3 2026</text>
       </g>
     </g>
     <a href="https://example.com">
-      <g class="lini-node lini-shape-box" data-id="docs" transform="translate(167.3,-68)">
-        <rect x="-60" y="-24" width="120" height="48" rx="0" ry="0"/>
+      <g class="lini-node lini-shape-box" data-id="docs" transform="translate(196,-57.5)">
+        <rect x="-60" y="-24" width="120" height="48" rx="6" ry="6"/>
         <text class="lini-text" x="0" y="0">Docs</text>
       </g>
     </a>

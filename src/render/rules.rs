@@ -135,6 +135,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
                 "font-size".into(),
                 format!("{}px", super::values::num(font_size)),
             ),
+            ("font-weight".into(), live("font-weight")),
             ("color".into(), live("text-color")),
         ],
     });
@@ -161,7 +162,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
                 props: vec![
                     ("fill".into(), live("fill")),
                     ("stroke".into(), live("stroke")),
-                    ("stroke-width".into(), "1".into()),
+                    ("stroke-width".into(), "2".into()),
                     ("stroke-dasharray".into(), "none".into()),
                 ],
             });
@@ -173,7 +174,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
             props: vec![
                 ("fill".into(), "none".into()),
                 ("stroke".into(), live("stroke")),
-                ("stroke-width".into(), "1".into()),
+                ("stroke-width".into(), "2".into()),
                 ("stroke-dasharray".into(), "none".into()),
             ],
         });
@@ -250,7 +251,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
             wire_paint.push(("stroke".into(), live("stroke")));
         }
         if !wire_paint.iter().any(|(p, _)| p == "stroke-width") {
-            wire_paint.push(("stroke-width".into(), "1".into()));
+            wire_paint.push(("stroke-width".into(), "2".into()));
         }
         if !wire_paint.iter().any(|(p, _)| p == "stroke-dasharray") {
             wire_paint.push(("stroke-dasharray".into(), "none".into()));
@@ -266,7 +267,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
     // plus the baked wire font size. A label that overrides any of these inlines
     // the difference via `style=`.
     if has_labels {
-        let wfs = layout_number(vars, "wire-font-size", 12.0);
+        let wfs = layout_number(vars, "wire-font-size", 11.0);
         rules.push(Rule {
             class: "lini-wire-label".into(),
             props: vec![
@@ -275,6 +276,25 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
                 ("text-anchor".into(), "middle".into()),
                 ("dominant-baseline".into(), "central".into()),
                 ("font-size".into(), format!("{}px", super::values::num(wfs))),
+                ("font-weight".into(), live("wire-font-weight")),
+            ],
+        });
+        // The label cut's mask rects state their fill/stroke as CSS, not inline —
+        // so the wire's own `stroke` can't bleed into the luminance mask, and the
+        // SVG stays free of per-label paint attrs (SPEC §13). White shows the
+        // wire, a black box per label punches the hole.
+        rules.push(Rule {
+            class: "lini-cut-bg".into(),
+            props: vec![
+                ("fill".into(), "white".into()),
+                ("stroke".into(), "none".into()),
+            ],
+        });
+        rules.push(Rule {
+            class: "lini-cut".into(),
+            props: vec![
+                ("fill".into(), "black".into()),
+                ("stroke".into(), "none".into()),
             ],
         });
     }
@@ -351,7 +371,7 @@ pub fn paint_props(attrs: &AttrMap, vars: &VarTable, opts: &Options) -> Vec<(Str
         }
     }
     if attrs.get("stroke-style").is_some() {
-        let width = attrs.number("stroke-width").unwrap_or(1.0);
+        let width = attrs.number("stroke-width").unwrap_or(2.0);
         let dash = super::values::dasharray_value(attrs, width);
         out.push((
             "stroke-dasharray".to_string(),
@@ -412,7 +432,7 @@ mod tests {
     fn root_rule_carries_inherited_text_props() {
         let css = emit_str(&rules_for("x |box|\n"));
         assert!(
-            css.contains(".lini { font-family: var(--lini-font-family); font-size: 14px; color: var(--lini-text-color); }"),
+            css.contains(".lini { font-family: var(--lini-font-family); font-size: 15px; font-weight: var(--lini-font-weight); color: var(--lini-text-color); }"),
             "{}",
             css
         );
@@ -464,7 +484,7 @@ mod tests {
         let css = emit_str(&rules_for("a -> b\n"));
         assert!(
             css.contains(
-                ".lini .lini-wire { fill: none; stroke: var(--lini-stroke); stroke-width: 1; stroke-dasharray: none; }"
+                ".lini .lini-wire { fill: none; stroke: var(--lini-stroke); stroke-width: 2; stroke-dasharray: none; }"
             ),
             "{}",
             css
@@ -490,7 +510,7 @@ mod tests {
         let css = emit_str(&rules_for("a -> b \"x\"\n"));
         assert!(
             css.contains(
-                ".lini .lini-wire-label { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; font-size: 12px; }"
+                ".lini .lini-wire-label { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; font-size: 11px; font-weight: var(--lini-wire-font-weight); }"
             ),
             "{}",
             css
@@ -517,7 +537,7 @@ mod tests {
         let group = css.find(".lini .lini-shape-group").expect("group rule");
         assert!(rect < group, "{}", css);
         assert!(
-            css.contains("lini-shape-group { fill: var(--lini-group-fill); stroke: var(--lini-group-stroke); }"),
+            css.contains("lini-shape-group { fill: var(--lini-group-fill); stroke: var(--lini-group-stroke); stroke-width: 1; stroke-dasharray:"),
             "{}",
             css
         );

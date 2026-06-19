@@ -475,14 +475,21 @@ fn lay_out_container_children(
     // are overlays that never grow it (SPEC §6).
     let body_bbox = flow_bbox;
 
-    // Resolution bbox for pins. An explicitly sized container anchors pins to
-    // those edges; otherwise they fall back to the body extent.
-    let anchor_parent_bbox = container_anchor_bbox(container_attrs).unwrap_or(body_bbox);
+    // Resolution box for pins: the parent's drawn shape — its border, padding
+    // included — the same box `closed_bbox` sizes. An explicit size gives it
+    // directly; otherwise it is the flow content plus padding (a table consumes
+    // its padding as a cell inset, so its drawn box is the content alone).
+    let anchor_parent_bbox = container_anchor_bbox(container_attrs).unwrap_or_else(|| {
+        if grid::is_inset_grid(container_attrs) {
+            body_bbox
+        } else {
+            body_bbox.expand(pad.top, pad.right, pad.bottom, pad.left)
+        }
+    });
 
-    // Pin out-of-flow children onto their parent anchor, centring the child's
-    // bbox on the point (a corner pin straddles the corner). The parent does
-    // not grow for them — an all-pinned container with no explicit size
-    // collapses — and the canvas still includes them (see `finish`), so an
+    // Pin out-of-flow children flush onto their parent anchor (SPEC §6). The
+    // parent does not grow for them — an all-pinned container with no explicit
+    // size collapses — and the canvas still includes them (see `finish`), so an
     // overlay is never clipped.
     for &i in &pinned_indices {
         let pin = anchors::read_pin(&children[i].attrs, children[i].span)?
@@ -556,17 +563,17 @@ mod tests {
 
     #[test]
     fn empty_closed_shape_is_two_paddings() {
-        // padding 16 each side → 32 drawn; + stroke 1 → 33 bbox.
+        // padding 20 each side → 40 drawn; + stroke 2 → 42 bbox.
         let n = &lay_out("|box|\n").nodes[0];
-        assert!((n.bbox.w() - 33.0).abs() < 0.01, "w={}", n.bbox.w());
-        assert!((n.bbox.h() - 33.0).abs() < 0.01, "h={}", n.bbox.h());
+        assert!((n.bbox.w() - 42.0).abs() < 0.01, "w={}", n.bbox.w());
+        assert!((n.bbox.h() - 42.0).abs() < 0.01, "h={}", n.bbox.h());
     }
 
     #[test]
     fn explicit_dims_are_border_box() {
         let n = &lay_out("|box| { width: 100; height: 50; }\n").nodes[0];
-        assert!((n.bbox.w() - 101.0).abs() < 0.01, "w={}", n.bbox.w());
-        assert!((n.bbox.h() - 51.0).abs() < 0.01, "h={}", n.bbox.h());
+        assert!((n.bbox.w() - 102.0).abs() < 0.01, "w={}", n.bbox.w());
+        assert!((n.bbox.h() - 52.0).abs() < 0.01, "h={}", n.bbox.h());
     }
 
     #[test]
@@ -579,31 +586,31 @@ mod tests {
 
     #[test]
     fn label_auto_sizes_to_content_plus_padding() {
-        // text ~15.4 + 2×16 padding + stroke → ~48.
+        // text ~18 + 2×20 padding + 2 stroke → ~60.
         let n = &lay_out("|box| { \"hi\" }\n").nodes[0];
-        assert!(n.bbox.w() > 40.0 && n.bbox.w() < 60.0, "w={}", n.bbox.w());
+        assert!(n.bbox.w() > 55.0 && n.bbox.w() < 65.0, "w={}", n.bbox.w());
     }
 
     #[test]
     fn dims_are_independent_per_axis() {
         let n = &lay_out("|box| { width: 200; \"hi\" }\n").nodes[0];
-        assert!((n.bbox.w() - 201.0).abs() < 0.01, "w={}", n.bbox.w());
-        // height auto = one text line (14) + 32 padding + 1 stroke = 47.
-        assert!((n.bbox.h() - 47.0).abs() < 0.01, "h={}", n.bbox.h());
+        assert!((n.bbox.w() - 202.0).abs() < 0.01, "w={}", n.bbox.w());
+        // height auto = one text line (15) + 40 padding + 2 stroke = 57.
+        assert!((n.bbox.h() - 57.0).abs() < 0.01, "h={}", n.bbox.h());
     }
 
     #[test]
     fn oval_uses_width_height() {
         let n = &lay_out("|oval| { width: 100; height: 50; }\n").nodes[0];
-        assert!((n.bbox.w() - 101.0).abs() < 0.01, "w={}", n.bbox.w());
-        assert!((n.bbox.h() - 51.0).abs() < 0.01, "h={}", n.bbox.h());
+        assert!((n.bbox.w() - 102.0).abs() < 0.01, "w={}", n.bbox.w());
+        assert!((n.bbox.h() - 52.0).abs() < 0.01, "h={}", n.bbox.h());
     }
 
     #[test]
     fn text_sizes_to_its_glyphs_without_padding() {
         let n = &lay_out("\"hi\"\n").nodes[0];
-        assert!((n.bbox.w() - 15.4).abs() < 0.5, "w={}", n.bbox.w()); // 2 × 14 × 0.55
-        assert!((n.bbox.h() - 14.0).abs() < 0.5, "h={}", n.bbox.h());
+        assert!((n.bbox.w() - 18.0).abs() < 0.5, "w={}", n.bbox.w()); // 2 × 15 × 0.6
+        assert!((n.bbox.h() - 15.0).abs() < 0.5, "h={}", n.bbox.h());
     }
 
     // ── Basic flow (full align/justify/stretch/evenly land in the flex chunk) ──
@@ -616,9 +623,9 @@ mod tests {
              |box| { width: 60; height: 40; }\n",
         );
         assert_eq!(l.nodes.len(), 2);
-        // half (50.5) + gap (10) + half (30.5) = 91.
+        // half (51) + gap (10) + half (31) = 92.
         let dx = l.nodes[1].cx - l.nodes[0].cx;
-        assert!((dx - 91.0).abs() < 0.5, "dx={}", dx);
+        assert!((dx - 92.0).abs() < 0.5, "dx={}", dx);
         assert!((l.nodes[0].cy - l.nodes[1].cy).abs() < 0.01);
     }
 
@@ -629,33 +636,33 @@ mod tests {
              |box| { width: 100; height: 40; }\n\
              |box| { width: 100; height: 60; }\n",
         );
-        // half (20.5) + gap (20) + half (30.5) = 71.
+        // half (21) + gap (20) + half (31) = 72.
         let dy = l.nodes[1].cy - l.nodes[0].cy;
-        assert!((dy - 71.0).abs() < 0.5, "dy={}", dy);
+        assert!((dy - 72.0).abs() < 0.5, "dy={}", dy);
         assert!((l.nodes[0].cx - l.nodes[1].cx).abs() < 0.01);
     }
 
     #[test]
     fn viewbox_wraps_content_with_canvas_pad() {
-        // bbox 101×41, + 20 canvas-pad each side → 141×81.
+        // bbox 102×42, + 20 canvas-pad each side → 142×82.
         let l = lay_out("|box| { width: 100; height: 40; }\n");
-        assert!((l.viewbox.w - 141.0).abs() < 0.01, "w={}", l.viewbox.w);
-        assert!((l.viewbox.h - 81.0).abs() < 0.01, "h={}", l.viewbox.h);
+        assert!((l.viewbox.w - 142.0).abs() < 0.01, "w={}", l.viewbox.w);
+        assert!((l.viewbox.h - 82.0).abs() < 0.01, "h={}", l.viewbox.h);
     }
 
     // ── Captions: ordinary flow children (SPEC §8) ──
 
     #[test]
-    fn caption_as_first_child_adds_a_row_of_height() {
-        // A caption is just a flow child now — it stacks above the content in
-        // the group's column, adding its own height plus a gap.
+    fn caption_overlay_does_not_grow_the_group() {
+        // A caption pins to the top edge (an overlay), so it reserves no flow
+        // row — the group sizes to its content alone, with or without it.
         let h = |src: &str| lay_out(src).nodes[0].bbox.h();
         let plain = h("g |group| {\n  a |box| { width: 80; height: 30; }\n}\n");
         let capped =
             h("g |group| {\n  |caption| { \"Cap\" }\n  a |box| { width: 80; height: 30; }\n}\n");
         assert!(
-            capped > plain + 10.0,
-            "caption adds a row: plain={plain} capped={capped}"
+            (capped - plain).abs() < 0.01,
+            "caption is an overlay, no extra height: plain={plain} capped={capped}"
         );
     }
 

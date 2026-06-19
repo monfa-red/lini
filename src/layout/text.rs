@@ -3,9 +3,12 @@
 //! A coarse linear approximation per char. SPEC §7 calls for embedded font
 //! metrics for reproducibility — that lands once a default font is picked.
 
-/// Average char width as a fraction of font size. Picked to roughly match
-/// proportional sans-serif fonts (Inter, system-ui, Arial).
-const AVG_CHAR_WIDTH_RATIO: f64 = 0.55;
+/// Average char width as a fraction of font size. The default font is
+/// **monospace**, where every glyph shares one advance (~0.6 em across Menlo /
+/// Consolas / Courier), so this linear estimate is essentially exact — no font
+/// metrics needed. A proportional `font-family` override makes it approximate
+/// again (SPEC §19).
+const AVG_CHAR_WIDTH_RATIO: f64 = 0.6;
 
 /// Approximate the width of a single-line label at the given font size, in px.
 /// Multi-line labels (containing `\n`) take the widest line.
@@ -43,15 +46,15 @@ mod tests {
     #[test]
     fn single_line_width_scales_with_chars_and_size() {
         let w = approx_width("hello", 13.0);
-        // 5 chars × 13 × 0.55 = 35.75
-        assert!((w - 35.75).abs() < 0.01, "got {}", w);
+        // 5 chars × 13 × 0.6 = 39
+        assert!((w - 39.0).abs() < 0.01, "got {}", w);
     }
 
     #[test]
     fn multi_line_picks_widest() {
         let w = approx_width("hi\nhello", 10.0);
-        // "hello" wins: 5 × 10 × 0.55 = 27.5
-        assert!((w - 27.5).abs() < 0.01, "got {}", w);
+        // "hello" wins: 5 × 10 × 0.6 = 30
+        assert!((w - 30.0).abs() < 0.01, "got {}", w);
     }
 
     #[test]

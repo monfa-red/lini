@@ -373,14 +373,18 @@ mod tests {
     }
 
     #[test]
-    fn caption_is_a_small_text_plain_child() {
-        // SPEC §8: a caption is a `|plain|`-based box with a smaller font and no
-        // positioning — an ordinary flow child (first = title, last = footer).
+    fn caption_is_a_small_text_plain_title() {
+        // SPEC §8: a caption is a `|plain|`-based title, pinned to the top edge
+        // with a smaller font (`mount` is gone entirely).
         let p = rv4("g |group| {\n  |caption| { \"Title\" }\n}\n");
         let cap = &p.scene.nodes[0].children[0];
         assert!(cap.type_chain.iter().any(|t| t == "caption"));
-        assert!(cap.attrs.get("pin").is_none() && cap.attrs.get("mount").is_none());
-        assert!(matches!(cap.attrs.get("font-size"), Some(ResolvedValue::Number(n)) if *n == 13.0));
+        assert!(matches!(
+            cap.attrs.get("pin"),
+            Some(ResolvedValue::Tuple(_))
+        ));
+        assert!(cap.attrs.get("mount").is_none());
+        assert!(matches!(cap.attrs.get("font-size"), Some(ResolvedValue::Number(n)) if *n == 12.0));
         assert_eq!(cap.children[0].label.as_deref(), Some("Title"));
     }
 

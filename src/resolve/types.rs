@@ -27,8 +27,10 @@ const MAX_INHERITANCE_DEPTH: usize = 16;
 /// primitive (or, for `table`, over `group`).
 pub(super) const TEMPLATES: &[(&str, &str)] = &[
     ("plain", "box"),
+    ("rect", "box"),
     ("group", "box"),
     ("caption", "plain"),
+    ("footer", "caption"),
     ("badge", "box"),
     ("note", "box"),
     ("row", "plain"),
@@ -192,7 +194,7 @@ fn is_builtin_type(name: &str) -> bool {
         || is_template(name)
         || matches!(
             name,
-            "wire" | "rect" | "circle" | "top" | "bottom" | "left" | "right"
+            "wire" | "circle" | "top" | "bottom" | "left" | "right"
         )
 }
 
@@ -216,12 +218,36 @@ pub(super) fn template_attrs(name: &str) -> Vec<(String, ResolvedValue)> {
             attr("fill", ident("none")),
             attr("padding", num(0.0)),
         ],
+        "rect" => vec![attr("radius", num(0.0))],
         "group" => vec![
             attr("stroke", live("group-stroke")),
+            attr("stroke-style", ident("dashed")),
+            attr("stroke-width", num(1.0)),
             attr("fill", live("group-fill")),
             attr("radius", num(6.0)),
         ],
-        "caption" => vec![attr("font-size", num(13.0))],
+        // A title pinned just above the group's top-left corner: `pin: top left`
+        // sits it flush in the corner, `translate: 0 -16` lifts it out over the
+        // border (≈ 1.35 × the 12px caption font; mirrors `caption-font-size`).
+        "caption" => vec![
+            attr(
+                "pin",
+                ResolvedValue::Tuple(vec![ident("top"), ident("left")]),
+            ),
+            attr("translate", pair(0.0, -16.0)),
+            attr("color", live("caption-color")),
+            attr("font-size", num(12.0)),
+            attr("font-weight", live("caption-font-weight")),
+        ],
+        // A footer is a `caption` flipped to the bottom: same look, opposite
+        // anchor and lift.
+        "footer" => vec![
+            attr(
+                "pin",
+                ResolvedValue::Tuple(vec![ident("bottom"), ident("left")]),
+            ),
+            attr("translate", pair(0.0, 16.0)),
+        ],
         "badge" => vec![
             attr(
                 "pin",
@@ -251,6 +277,8 @@ pub(super) fn template_attrs(name: &str) -> Vec<(String, ResolvedValue)> {
             attr("padding", pair(4.0, 8.0)),
             attr("fill", ident("none")),
             attr("stroke", live("stroke")),
+            // Solid ruling, not the dashed frame `group` brings.
+            attr("stroke-style", ident("solid")),
         ],
         _ => Vec::new(),
     }

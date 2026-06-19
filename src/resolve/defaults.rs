@@ -36,9 +36,20 @@ pub fn built_in_defaults() -> VarTable {
     set_visual(&mut t, "warn", ident("orange"));
     set_visual(&mut t, "airwire", ident("crimson"));
     set_visual(&mut t, "note-bg", hex("fff9c4"));
-    set_visual(&mut t, "group-stroke", hex("bbb"));
+    set_visual(&mut t, "group-stroke", rgba(0.0, 0.0, 0.0, 0.4));
     set_visual(&mut t, "group-fill", rgba(0.0, 0.0, 0.0, 0.03));
-    set_visual(&mut t, "font-family", ident("sans-serif"));
+    set_visual(&mut t, "caption-color", rgba(0.0, 0.0, 0.0, 0.4));
+    set_visual(
+        &mut t,
+        "font-family",
+        ResolvedValue::RawCss(
+            "ui-monospace, \"SF Mono\", \"Cascadia Code\", \"JetBrains Mono\", Menlo, Consolas, \"Liberation Mono\", monospace"
+                .into(),
+        ),
+    );
+    set_visual(&mut t, "font-weight", ident("bold"));
+    set_visual(&mut t, "caption-font-weight", ident("normal"));
+    set_visual(&mut t, "wire-font-weight", ident("normal"));
     set_visual(
         &mut t,
         "text-color",
@@ -51,13 +62,13 @@ pub fn built_in_defaults() -> VarTable {
     set_visual(&mut t, "shadow", rgba(0.0, 0.0, 0.0, 0.2));
 
     // Layout constants — baked at compile time (SPEC §11.3).
-    set_layout_n(&mut t, "font-size", 14.0);
-    set_layout_n(&mut t, "wire-font-size", 12.0);
-    set_layout_n(&mut t, "caption-font-size", 13.0);
-    set_layout_n(&mut t, "stroke-width", 1.0);
-    set_layout_n(&mut t, "radius", 0.0);
+    set_layout_n(&mut t, "font-size", 15.0);
+    set_layout_n(&mut t, "wire-font-size", 11.0);
+    set_layout_n(&mut t, "caption-font-size", 12.0);
+    set_layout_n(&mut t, "stroke-width", 2.0);
+    set_layout_n(&mut t, "radius", 6.0);
     set_layout_n(&mut t, "gap", 20.0);
-    set_layout_n(&mut t, "padding", 16.0);
+    set_layout_n(&mut t, "padding", 20.0);
     set_layout_n(&mut t, "clearance", 16.0);
     set_layout_n(&mut t, "icon-size", 24.0);
     set_layout_n(&mut t, "canvas-pad", 20.0);

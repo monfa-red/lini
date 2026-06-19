@@ -1,7 +1,7 @@
 //! Wire labels (WIRING §Model step 7, SPEC §9): a label rides its wire at an
 //! auto-distributed anchor or an explicit `along:` fraction of its statement's
-//! whole drawn route, shifted by `translate` in the tangent frame (x along the
-//! wire, y to its left). A label is an obstacle to nothing and the wire never
+//! whole drawn route, shifted by `translate: x y` in world coords (the same
+//! nudge as on any node). A label is an obstacle to nothing and the wire never
 //! moves for it — but the label may slide along the wire to dodge node
 //! bodies, node labels, and other wire labels.
 
@@ -71,7 +71,7 @@ pub fn place(
         for t in &w.texts {
             let size = t.attrs.number("font-size").unwrap_or(12.0);
             let (bw, bh) = (approx_width(&t.text, size), approx_height(&t.text, size));
-            let (ox, oy) = translate_of(t.attrs.get("translate"));
+            let (tx, ty) = translate_of(t.attrs.get("translate"));
             let s0 = match t.along {
                 Along::Auto => {
                     let s = auto_anchors[auto_i];
@@ -80,11 +80,11 @@ pub fn place(
                 }
                 Along::Fraction(f) => f * total,
             };
-            // A label rides on the line; lift it off with `translate:` (SPEC §9).
+            // A label rides on the line; lift it off with `translate: x y` — a
+            // world-frame nudge, the same as on any node (SPEC §6/§9).
             let spot = |s: f64| {
                 let (p, tan, si) = at_arc(wires, &segs, &lens, s);
-                let pos = (p.0 + ox * tan.0 - oy * tan.1, p.1 + ox * tan.1 + oy * tan.0);
-                (pos, tan, si)
+                ((p.0 + tx, p.1 + ty), tan, si)
             };
             let boxed = |pos: (f64, f64)| {
                 Rect::new(
@@ -200,7 +200,7 @@ fn at_arc(
     (p, (1.0, 0.0), 0)
 }
 
-/// `translate:(x, y)` in the tangent frame; anything else is no shift.
+/// `translate:(x, y)` — a world-frame shift; anything else is no shift.
 fn translate_of(v: Option<&ResolvedValue>) -> (f64, f64) {
     if let Some(ResolvedValue::Tuple(xs)) = v
         && let [Some(x), Some(y)] = [

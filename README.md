@@ -27,7 +27,7 @@ Most diagram tools make you pick a side: **draw by hand** (precise, but tedious 
 
 - **You arrange, it routes.** Lay nodes out with flex, grid, or anchors — the parts you have an opinion about. Lini routes the connectors between them: orthogonal, clearance-respecting, deterministic. The thing you *don't* want to do by hand.
 - **Genuinely small syntax.** Five sigils, sensible defaults. `cat -> dog` is a valid diagram. You can learn the whole thing in a coffee break.
-- **Any shape you need.** 12 primitives and 8 templates out of the box — and a raw `path` primitive that accepts any SVG path string. If SVG can draw it, you can place it and wire to it.
+- **Any shape you need.** 12 primitives and 10 templates out of the box — and a raw `path` primitive that accepts any SVG path string. If SVG can draw it, you can place it and wire to it.
 - **Fast, and a single file.** A 1.5 MB native binary with one runtime dependency. No Node, no JVM, no headless browser. Typical diagrams compile in **~2 ms** — process startup included.
 - **Output you can trust.** Compilation is **byte-identical across runs**, so renders diff cleanly in review and never churn in CI. 334 tests back it, including property tests that assert the router's laws on every sample.
 - **Themeable like a web page.** Colors and fonts ship as CSS variables inside an `@layer`, so a host page restyles a diagram without recompiling — or bake everything to a self-contained file for email and raster renderers.
@@ -106,7 +106,7 @@ services |group| {
 |path| { path: "M -34 6 C -34 -34 34 -34 34 6 C 20 34 -20 34 -34 6 Z"; }
 ```
 
-Box, oval, hex, slant, cylinder, diamond, cloud, polygon, line, icon (Material Symbols), image — plus `path` for anything else. Text isn't a shape: a bare `"…"` is content, and `|plain|` is a frameless box for when a label needs an id or a wire. Templates (`plain`, `group`, `caption`, `badge`, `note`, `row`, `column`, `table`) bundle the common patterns, and you can define your own shapes by extending any base: `panel::group { stroke: --accent; }`.
+Box, oval, hex, slant, cylinder, diamond, cloud, polygon, line, icon (Material Symbols), image — plus `path` for anything else. Text isn't a shape: a bare `"…"` is content, and `|plain|` is a frameless box for when a label needs an id or a wire. Templates (`plain`, `rect`, `group`, `caption`, `footer`, `badge`, `note`, `row`, `column`, `table`) bundle the common patterns, and you can define your own shapes by extending any base: `panel::group { stroke: --accent; }`.
 
 ---
 
@@ -137,7 +137,7 @@ Visual defaults (colors, fonts, shadow) emit as live `var(--lini-*)` references 
 
 Geometry is always baked into the SVG, so layout never depends on the host. For non-browser renderers (resvg, librsvg) and email, `--bake-vars` inlines every variable into a self-contained file that renders identically anywhere. Every `lini-*` class is a stable styling hook, too.
 
-The default font is `sans-serif`. To make an **embedded** diagram adopt the host page's font instead, set `--lini-font-family: inherit` — in the diagram (`--font-family: inherit;` at the top), via `--theme`, or from the page's own CSS.
+The default font is a **monospace** stack (`ui-monospace, "SF Mono", …, monospace`) — it reads crisp, and a fixed glyph advance keeps text sizing accurate. To make an **embedded** diagram adopt the host page's font instead, set `--lini-font-family: inherit` — in the diagram (`--font-family: inherit;` at the top), via `--theme`, or from the page's own CSS.
 
 ---
 

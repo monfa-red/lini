@@ -3,14 +3,15 @@
 layout: column; gap: 24; padding: 20;
 
 frame |group| {
+  layout: row; gap: 16;
   |caption| "Group"
-  |row| { gap: 16;
+  |row| {
     a |box| "a"
     b |box| "b"
-    |column| {
-      p |box| "p"
-      q |box| "q"
-    }
+  }
+  |column| {
+    p |box| "p"
+    q |box| "q"
   }
 }
 

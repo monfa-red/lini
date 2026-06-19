@@ -109,30 +109,36 @@ pub fn padding(attrs: &AttrMap, vars: &VarTable, span: Span) -> Result<PaddingBo
         })
     } else {
         Ok(PaddingBox::uniform(
-            layout_var(vars, "padding").unwrap_or(16.0),
+            layout_var(vars, "padding").unwrap_or(20.0),
         ))
     }
 }
 
 /// `gap` → `(between_rows, between_cols)`. Scalar = both equal; `row col` (CSS
-/// order) per axis. Negative allowed.
+/// order) per axis. Non-negative.
 pub fn gap(attrs: &AttrMap, vars: &VarTable, span: Span) -> Result<(f64, f64), Error> {
-    if let Some(v) = attrs.get("gap") {
-        let nums = super::values::as_number_tuple(v, span)?;
-        Ok(match nums.len() {
-            1 => (nums[0], nums[0]),
-            2 => (nums[0], nums[1]),
-            n => {
-                return Err(Error::at(
-                    span,
-                    format!("'gap' expects 1 or 2 values, got {}", n),
-                ));
-            }
-        })
-    } else {
+    let Some(v) = attrs.get("gap") else {
         let g = layout_var(vars, "gap").unwrap_or(20.0);
-        Ok((g, g))
+        return Ok((g, g));
+    };
+    let nums = super::values::as_number_tuple(v, span)?;
+    let (gy, gx) = match nums.len() {
+        1 => (nums[0], nums[0]),
+        2 => (nums[0], nums[1]),
+        n => {
+            return Err(Error::at(
+                span,
+                format!("'gap' expects 1 or 2 values, got {}", n),
+            ));
+        }
+    };
+    // Gap is non-negative, like CSS — overlap is `pin`'s job, not a spacing
+    // value's. (To allow negative gaps again, drop this check; the flex/grid
+    // math already handles them.)
+    if gy < 0.0 || gx < 0.0 {
+        return Err(Error::at(span, "'gap' must be ≥ 0"));
     }
+    Ok((gy, gx))
 }
 
 // ───────────────────────── Internal helpers ─────────────────────────
@@ -141,14 +147,14 @@ fn font_size(inst: &ResolvedInst, vars: &VarTable) -> f64 {
     inst.attrs
         .number("font-size")
         .or_else(|| layout_var(vars, "font-size"))
-        .unwrap_or(14.0)
+        .unwrap_or(15.0)
 }
 
 fn stroke_half(inst: &ResolvedInst, vars: &VarTable) -> f64 {
     inst.attrs
         .number("stroke-width")
         .or_else(|| layout_var(vars, "stroke-width"))
-        .unwrap_or(1.0)
+        .unwrap_or(2.0)
         / 2.0
 }
 

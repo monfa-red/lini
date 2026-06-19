@@ -31,15 +31,21 @@ pub enum Role {
 }
 
 impl Pin {
-    /// The child's bbox-center target in the parent's local frame: the anchor
-    /// point minus the child bbox's own centre offset, so an asymmetric child
-    /// still lands centred on the point.
+    /// The child's local origin (`cx`, `cy`) that lands its **matching** anchor
+    /// point on the parent's — so the child sits flush, corner on corner and
+    /// edge on edge, never straddling. `pin: center` is centre-to-centre;
+    /// `pin: top left` puts the child's top-left corner on the parent's.
     pub fn target(self, parent: Bbox, child: Bbox) -> (f64, f64) {
         let px = (parent.min_x + parent.max_x) / 2.0 + self.fx * parent.w();
         let py = (parent.min_y + parent.max_y) / 2.0 + self.fy * parent.h();
         let cbx = (child.min_x + child.max_x) / 2.0;
         let cby = (child.min_y + child.max_y) / 2.0;
-        (px - cbx, py - cby)
+        // Offset the child's own matching point (same fractions of its bbox)
+        // back to the parent point — flush, not centred on it.
+        (
+            px - cbx - self.fx * child.w(),
+            py - cby - self.fy * child.h(),
+        )
     }
 }
 

@@ -95,7 +95,9 @@ fn emit_shape(
     opts: &Options,
 ) {
     let indent = "  ".repeat(depth);
-    let thickness = n.attrs.number("stroke-width").unwrap_or(1.0);
+    // Default matches the `stroke-width` layout var (SPEC §11.3) so the drawn
+    // shape stays inside the bbox the layout reserved.
+    let thickness = n.attrs.number("stroke-width").unwrap_or(2.0);
 
     match n.shape {
         ShapeKind::Box => emit_rect(out, n, &indent, thickness),
@@ -124,7 +126,7 @@ fn dim_excluding_stroke(n: &PlacedNode, thickness: f64) -> (f64, f64) {
 
 fn emit_rect(out: &mut String, n: &PlacedNode, indent: &str, thickness: f64) {
     let (w, h) = dim_excluding_stroke(n, thickness);
-    let radius = n.attrs.number("radius").unwrap_or(0.0);
+    let radius = n.attrs.number("radius").unwrap_or(6.0);
     writeln!(
         out,
         r#"{}<rect x="{}" y="{}" width="{}" height="{}" rx="{}" ry="{}"/>"#,

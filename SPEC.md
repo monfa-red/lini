@@ -334,7 +334,7 @@ A container picks a mode with `layout`:
 | `layout: grid` | 2D grid — sized by `columns` / `rows`. |
 
 **Defaults:** every container — the root included — defaults to `layout: column`
-with `gap: 20`. A normal container pads its content by 16; the root pads by 0
+with `gap: 20`. A normal container pads its content by 20; the root pads by 0
 (the fixed `canvas-pad`, 20 px, frames the whole scene), as do the frameless `|plain|` /
 `|row|` / `|column|` (see [§8](#8-templates)).
 
@@ -409,7 +409,7 @@ magic type (see [§8](#8-templates)).
 | Property | Applies to | Notes |
 |---|---|---|
 | `layout` | all | `row`, `column`, `grid`. |
-| `gap` | all | Space between children. `N` = both axes; `row col` (CSS order) per axis. Negative allowed; `0` required with `divider`. |
+| `gap` | all | Space between children. `N` = both axes; `row col` (CSS order) per axis. Must be `≥ 0`; `0` required with `divider`. |
 | `padding` | all | Inner padding. `N`, `v h`, or `t r b l`. On a `\|table\|`, the inset around each cell's text. |
 | `align` / `justify` | all | Cross / main axis (above). |
 | `columns` / `rows` | grid | Track lists (above). |
@@ -436,20 +436,21 @@ stroke included.
 ### `pin` — out of the flow
 
 Every child is **in flow** by default — laid out by its container's `layout`
-([§5](#5-layout)). **`pin` is the switch that lifts a child out**, anchoring its
-**center** to a named point of the parent:
+([§5](#5-layout)). **`pin` is the switch that lifts a child out**, aligning the
+child's **matching point** flush with a named point of the parent:
 
-| `pin:` | The parent point the child's center lands on |
+| `pin:` | The child sits… |
 |---|---|
-| `none` *(default)* | — flows; nothing is pinned |
-| `center` | the parent's center |
-| `top` · `bottom` · `left` · `right` | the midpoint of that edge |
-| `top left` · `top right` · `bottom left` · `bottom right` | that corner |
+| `none` *(default)* | — in flow; nothing is pinned |
+| `center` | centre on the parent's centre |
+| `top` · `bottom` · `left` · `right` | flush against that parent edge |
+| `top left` · `top right` · `bottom left` · `bottom right` | with its corner on that parent corner |
 
-The child's center lands *on* the point, so an edge pin straddles the edge and a
-corner pin straddles the corner — `pin: top right` is the badge. Corners fall out
-of the value, so one switch with one named value covers every anchor: no compound
-knobs, no `side`/`align` pair.
+The child's *own* matching point lands on the parent's, so it sits **flush**:
+`pin: top left` puts the child's top-left corner on the parent's, `pin: top` sits
+it flush under the top edge, `pin: center` is centre-to-centre. The anchor is the
+parent's **drawn box** — its border and padding included. Corners fall out of the
+value, so one switch covers every anchor: no compound knobs, no `side`/`align`.
 
 A pinned child is an **overlay**. It **does not grow the parent** — a parent of
 only pinned children collapses to `2 × padding` — and it **paints above** the
@@ -482,17 +483,18 @@ or child nodes) **plus `padding` on each side** — the one padding knob (defaul
 `width` / `height` is the exact outer dimension with padding *inside* it (never
 added on top), and the two are independent (set one, the other stays `auto`). A
 box with no in-flow content — empty, or holding only `pin`ned overlays — is
-therefore **`2 × padding`** on each axis, so the default `padding` (16) sets an
-empty box's minimum size (32 × 32).
+therefore **`2 × padding`** on each axis, so the default `padding` (20) sets an
+empty box's minimum size (40 × 40).
 
 Exceptions: a **text** node sizes to its glyphs (no padding); `|icon|` defaults
 to `icon-size` (24); `|line|` / `|poly|` / `|image|` / `|path|` require their
 geometry (`points` / `src` / `path`) and error without it. `|plain|` carries
 `padding: 0`, so a plain box sizes to its text exactly.
 
-Text width uses an approximate metric (≈ 0.55 em per character) until embedded
-font metrics land (see [§19](#19-deferred--non-goals)); setting `font-family`
-restyles without re-measuring.
+Text width uses one advance per character (≈ 0.6 em). The default font is
+monospace, so this is essentially exact; a proportional `font-family` override
+makes it approximate until embedded font metrics land (see
+[§19](#19-deferred--non-goals)).
 
 ---
 
@@ -510,7 +512,7 @@ equal dimensions (or an empty `|oval|`) make a circle.
 
 | Primitive | Required | Notes |
 |---|---|---|
-| `\|box\|` | size (auto) | The default. Rounded via `radius:`. |
+| `\|box\|` | size (auto) | The default; rounded (`radius: 6`). `\|rect\|` for sharp corners. |
 | `\|oval\|` | size (auto) | Bbox ellipse; equal width/height = circle. |
 | `\|hex\|` | size (auto) | Regular hex, flat top/bottom. |
 | `\|slant\|` | size (auto) | Parallelogram; top edge shifted `tan(skew) × h`. `skew` in degrees, (-89, 89). |
@@ -556,31 +558,33 @@ common.
 | Template | Base | Defaults | For |
 |---|---|---|---|
 | `\|plain\|` | `\|box\|` | `stroke: none; fill: none; padding: 0` | A frameless box — shows only its text, but is a real box (id, class, wirable). |
-| `\|group\|` | `\|box\|` | `stroke: --group-stroke; fill: --group-fill; radius: 6` | Frame + caption (padding via the default 16). |
-| `\|caption\|` | `\|plain\|` | `font-size: 13` | Small-text label — a group's title (first flow child) or footer (last). |
-| `\|badge\|` | `\|box\|` | `pin: top right; radius: 999; padding: 2 8; shadow: 2; fill: --accent; color: --on-accent; font-size: 11` | Corner pill — straddles the top-right corner, grows nothing. |
-| `\|note\|` | `\|box\|` | `radius: 2; shadow: 2; stroke: none; fill: --note-bg` | Sticky note (padding via the default 16). |
+| `\|rect\|` | `\|box\|` | `radius: 0` | A sharp-cornered box (a plain `\|box\|` rounds to `radius: 6`). |
+| `\|group\|` | `\|box\|` | `stroke: --group-stroke; stroke-style: dashed; stroke-width: 1; fill: --group-fill; radius: 6` | Dashed frame for a caption + children (padding via the default 20). |
+| `\|caption\|` | `\|plain\|` | `pin: top left; translate: 0 -16; color: --caption-color; font-size: 12; font-weight: normal` | A title, pinned just above the group's top-left corner. |
+| `\|footer\|` | `\|caption\|` | `pin: bottom left; translate: 0 16` | A caption flipped to the bottom edge. |
+| `\|badge\|` | `\|box\|` | `pin: top right; radius: 999; padding: 2 8; shadow: 2; fill: --accent; color: --on-accent; font-size: 11` | Corner pill — tucks into the top-right corner, grows nothing. |
+| `\|note\|` | `\|box\|` | `radius: 2; shadow: 2; stroke: none; fill: --note-bg` | Sticky note (padding via the default 20). |
 | `\|row\|` | `\|plain\|` | `layout: row` | Frameless wrapper — children in a row. |
 | `\|column\|` | `\|plain\|` | `layout: column` | Frameless wrapper — children in a column. |
-| `\|table\|` | `\|group\|` | `layout: grid; divider: all; gap: 0; padding: 4 8; fill: none; stroke: --stroke` | Ruled grid (see below). |
+| `\|table\|` | `\|group\|` | `layout: grid; divider: all; gap: 0; padding: 4 8; fill: none; stroke: --stroke; stroke-style: solid` | Ruled grid (see below). |
 
-**Captions.** A caption is just a small-text `|plain|` in the flow — no
-positional magic. A container defaults to `layout: column`, so a `|caption|`
-written **first** reads as the title and one written **last** as the footer:
+**Captions.** A `|caption|` is a small `|plain|` **pinned** just above the
+group's top-left corner; a `|footer|` is the same flipped to the bottom. Both are
+out-of-flow overlays, so they never push the content and their place is fixed by
+the template, not by where they sit among the children:
 
 ```
 panel |group| {
   |caption| "Settings"
   a |box| "General"
   b |box| "Network"
-  |caption| "v2.1"
+  |footer| "v2.1"
 }
 ```
 
 Style every caption globally with `caption { font-size: 16; font-weight: bold; }`
-— that targets captions without touching body text. A caption is an ordinary flow
-child, so for a title *above* content that runs in a row, keep the group a column
-and nest the row.
+— that targets captions without touching body text. Because a caption is pinned
+(not in flow), a group laid out as a `row` carries its title just the same.
 
 **Tables.** A `|table|` is sugar — a `group` that is a grid, draws dividers, and
 has `gap: 0`. Cells are **bare text** that auto-flows into the tracks; there is no
@@ -691,8 +695,8 @@ a -> b { along: 0.3 0.7; "near a" "near b" }
 
 A label is an obstacle to nothing, and may slide along the wire to keep clear of
 nodes and other labels; the wire never moves for it. Wire labels default to
-`font-size: 12`. A label that needs its own style or a perpendicular `translate`
-is a **box** (`|plain|`), which carries a block:
+`font-size: 11`. A label that needs its own style or a `translate` nudge (world
+`x y`, the same as on any node) is a **box** (`|plain|`), which carries a block:
 
 ```
 a -> b { |plain| { translate: 0 -8; "watches" } }
@@ -766,7 +770,7 @@ values.
 | `fill` | color | `--fill` (closed shapes); `currentColor` on text; `--stroke` for icons; **the canvas** on the root (default transparent) |
 | `color` | color | inherits — sets text/icon glyph colour for descendants; on text, an alias for `fill` |
 | `opacity` | 0..1 | 1 |
-| `radius` | number | 0 (`\|box\|` only) |
+| `radius` | number | 6 (`\|box\|` only; `\|rect\|` is `0`) |
 | `rotate` | degrees | 0 |
 | `skew` | degrees | 15 (`\|slant\|` only) |
 | `shadow` | `N` / `dx dy` / `dx dy blur` / `dx dy blur color` | off |
@@ -781,7 +785,7 @@ to recolour every descendant's text that doesn't override. Use `color` for
 | Property | Type | Default |
 |---|---|---|
 | `stroke` | color | `--stroke` (the outline/line/wire colour) |
-| `stroke-width` | number | 1 |
+| `stroke-width` | number | 2 (`\|group\|` is `1`) |
 | `stroke-style` | `solid` / `dashed` / `dotted` | `solid` |
 
 ### Geometry & placement
@@ -811,8 +815,8 @@ Longhands `padding-top`/`-right`/`-bottom`/`-left` are accepted.
 | Property | Default | Notes |
 |---|---|---|
 | `font-family` | `--font-family` | ident, string, or `--var`. |
-| `font-size` | 14 (body), 13 (caption), 12 (wire label) | px; a baked layout constant. |
-| `font-weight` | `normal` | `normal` / `bold`. |
+| `font-size` | 15 (body), 12 (caption), 11 (wire label) | px; a baked layout constant. |
+| `font-weight` | `--font-weight` (body `bold`; captions / wire labels `normal`) | `normal` / `bold`. |
 | `font-style` | `normal` | `normal` / `italic` / `oblique`. |
 | `text-align` | `center` | `start` / `center` / `end` — multi-line justification (`left`/`right` = start/end). |
 | `line-height` | 1.2 | baseline-to-baseline multiple; a single line's box stays snug. |
@@ -865,12 +869,21 @@ constant, so a standalone SVG never depends on host CSS.
 --lini-warn          orange
 --lini-airwire       crimson
 --lini-note-bg       #fff9c4
---lini-group-stroke  #bbb
+--lini-group-stroke  rgba(0, 0, 0, 0.4)
 --lini-group-fill    rgba(0, 0, 0, 0.03)
---lini-font-family   sans-serif
+--lini-caption-color rgba(0, 0, 0, 0.4)
+--lini-font-family   ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace
+--lini-font-weight         bold
+--lini-caption-font-weight normal
+--lini-wire-font-weight    normal
 --lini-text-color    var(--lini-fg)
 --lini-shadow        rgba(0, 0, 0, 0.2)
 ```
+
+The default font is a **monospace** stack: it reads crisp, and a fixed glyph
+advance keeps text-width estimation accurate without embedded font metrics
+([§19](#19-deferred--non-goals)). Body text is **bold**, captions and wire labels
+**normal**.
 
 These emit as live `var(--lini-*)` references, and the compiler ships an `@layer
 lini.defaults` block alongside the SVG — so unlayered host CSS wins
@@ -900,17 +913,17 @@ Baked compile-time defaults — override per-node, on `-> { }` / the root, in
 rules, or in an instance block:
 
 ```
-font-size 14    wire-font-size 12   caption-font-size 13
-stroke-width 1  radius 0            gap 20                 padding 16
+font-size 15    wire-font-size 11   caption-font-size 12
+stroke-width 2  radius 6            gap 20                 padding 20
 clearance 16    icon-size 24        canvas-pad 20
 ```
 
 `font-size` is body text. Wire labels and captions carry their own baked
-defaults (12 and 13); a global `font-size:` at the root sets body text and
+defaults (11 and 12); a global `font-size:` at the root sets body text and
 cascades, `-> { font-size: … }` sets wire labels, and `caption { font-size: … }`
-sets captions.
+sets captions. `radius` rounds a `|box|` by default; `|rect|` resets it to 0.
 
-Padding defaults to 16, with `|plain|` / `|row|` / `|column|` and the root at 0,
+Padding defaults to 20, with `|plain|` / `|row|` / `|column|` and the root at 0,
 and a `|table|` at `4 8` (its cell inset). It doubles as the minimum size of an
 empty box (`2 × padding`; see [Auto-sizing](#6-positioning--anchors)). **Every
 baked default — these constants and the template bundles — lives in one place**,
@@ -955,10 +968,10 @@ it out of the grid.
      viewBox="X Y W H" width="W" height="H" class="lini">
   <style>
     @layer lini.defaults { :root, .lini { /* --lini-* variables */ } }
-    .lini { font-family: var(--lini-font-family); font-size: 14px; color: var(--lini-text-color); }
-    .lini .lini-shape-box { fill: var(--lini-fill); stroke: var(--lini-stroke); stroke-width: 1; }
-    .lini .lini-style-hot { stroke-width: 2; }   /* one rule per class def */
-    .lini .lini-wire { stroke: var(--lini-stroke); stroke-width: 1; fill: none; }
+    .lini { font-family: var(--lini-font-family); font-size: 15px; font-weight: var(--lini-font-weight); color: var(--lini-text-color); }
+    .lini .lini-shape-box { fill: var(--lini-fill); stroke: var(--lini-stroke); stroke-width: 2; }
+    .lini .lini-style-hot { stroke-width: 3; }   /* one rule per class def */
+    .lini .lini-wire { stroke: var(--lini-stroke); stroke-width: 2; fill: none; }
   </style>
   <defs><!-- filters, clipPaths, icon symbols --></defs>
   <rect class="lini-canvas" .../>   <!-- only when the root has a fill: -->
@@ -1079,6 +1092,7 @@ Format: `filename:line:col: error: <message>` (LSP-compatible).
 | Grid out of range | `cell: 5 _ exceeds columns=3` |
 | Grid props off a grid | `'cell' is valid only on a grid` |
 | Missing `columns` | `'layout: grid' requires 'columns'` |
+| Negative `gap` | `'gap' must be ≥ 0` |
 | `skew` out of range | `skew: N must be in (-89, 89)` |
 | Single-quoted string | `single quotes are not strings — use "…"` |
 | Invalid `pin` value | `'pin' expects none, center, an edge (top/bottom/left/right), or a corner (e.g. 'top right')` |
@@ -1198,14 +1212,14 @@ case-sensitive, so a capitalized variant is always free (`Box`, `Top`).
 
 - **Primitives:** `box`, `oval`, `line`, `path`, `poly`, `hex`, `slant`, `cyl`,
   `diamond`, `cloud`, `icon`, `image`.
-- **Templates:** `plain`, `group`, `caption`, `badge`, `note`, `row`, `column`,
-  `table`.
+- **Templates:** `plain`, `rect`, `group`, `caption`, `footer`, `badge`, `note`,
+  `row`, `column`, `table`.
 - **Sides:** `top`, `bottom`, `left`, `right`.
-- **Reserved for the future:** `wire`, `rect`, `text`, `circle`. None is an
-  instantiable type or a usable id. `wire` — wire defaults are set with `-> { }`,
-  not a `wire` keyword (`|wire|` is an error). `rect` / `text` are former names
-  kept reserved (the box is `|box|`, text is a bare `"…"`). `circle` — today a
-  circle is `|oval|` with equal or unset dimensions.
+- **Reserved for the future:** `wire`, `text`, `circle`. None is an instantiable
+  type or a usable id. `wire` — wire defaults are set with `-> { }`, not a `wire`
+  keyword (`|wire|` is an error). `text` is a former name kept reserved (text is
+  a bare `"…"`). `circle` — today a circle is `|oval|` with equal or unset
+  dimensions.
 
 Single quotes (`'`) are reserved and are not strings.
 
@@ -1225,7 +1239,9 @@ are reserved only before `(`.
 - `radius` on non-box shapes (hex / diamond / slant / poly).
 - numeric `font-weight` (`100…900`).
 - `|icon|` Material Symbols glyph embedding (currently a placeholder square).
-- embedded font metrics (text sizing is approximate until then).
+- `text-transform` (`uppercase` / `lowercase` / `capitalize`).
+- embedded font metrics — the monospace default keeps the estimate close; a
+  proportional `font-family` override is approximate until then.
 - `aria-label`, and a "did you mean" property-name hint table.
 
 **Non-goals** — out of scope; the syntax stays forward-compatible:
@@ -1247,8 +1263,8 @@ are reserved only before `(`.
 layout: grid;  columns: repeat(3);  gap: 40;  padding: 20;
 fill: --bg;
 
--> { stroke: #666; stroke-width: 1; clearance: 6; }
-box { radius: 4; }                           // every box rounds
+-> { stroke: #666; clearance: 12; }
+box { radius: 4; }                           // round a touch less than the default 6
 
 --accent: #0a84ff;
 
