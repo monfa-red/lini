@@ -266,15 +266,24 @@ fn node_style_attr(
     style_attr_from(&decls)
 }
 
-/// Siblings in paint order: ascending `layer:` (default 0), ties by source
-/// order (SPEC §6). A stable sort keeps the source order within each layer.
+/// Siblings in paint order: ascending effective layer, ties by source order
+/// (SPEC §6). The effective layer is the explicit `layer:`, else 1 for a pinned
+/// child (overlays paint above the flow) and 0 for a flow child. A stable sort
+/// keeps source order within each layer.
 fn in_layer_order(nodes: &[PlacedNode]) -> Vec<&PlacedNode> {
     let mut order: Vec<&PlacedNode> = nodes.iter().collect();
-    order.sort_by(|a, b| {
-        let layer = |n: &PlacedNode| n.attrs.number("layer").unwrap_or(0.0);
-        layer(a).total_cmp(&layer(b))
-    });
+    order.sort_by(|a, b| eff_layer(a).total_cmp(&eff_layer(b)));
     order
+}
+
+fn eff_layer(n: &PlacedNode) -> f64 {
+    n.attrs
+        .number("layer")
+        .unwrap_or(if crate::layout::is_pinned(&n.attrs) {
+            1.0
+        } else {
+            0.0
+        })
 }
 
 /// ` style="…"` from prop declarations, or empty.

@@ -35,10 +35,6 @@ input_file: samples/captions.lini
         <rect x="-17.875" y="-6.5" width="35.75" height="13" rx="0" ry="0"/>
         <text class="lini-text" x="0" y="0">Sales</text>
       </g>
-      <g class="lini-node lini-shape-caption lini-shape-plain lini-shape-box" transform="translate(0,69)">
-        <rect x="-25.025" y="-6.5" width="50.05" height="13" rx="0" ry="0"/>
-        <text class="lini-text" x="0" y="0">Q3 2026</text>
-      </g>
       <g class="lini-node lini-shape-box" data-id="a" transform="translate(0,-28.5)">
         <rect x="-31.4" y="-23" width="62.8" height="46" rx="0" ry="0"/>
         <text class="lini-text" x="0" y="0">Plan</text>
@@ -46,6 +42,10 @@ input_file: samples/captions.lini
       <g class="lini-node lini-shape-box" data-id="b" transform="translate(0,28.5)">
         <rect x="-39.1" y="-23" width="78.2" height="46" rx="0" ry="0"/>
         <text class="lini-text" x="0" y="0">Actual</text>
+      </g>
+      <g class="lini-node lini-shape-caption lini-shape-plain lini-shape-box" transform="translate(0,69)">
+        <rect x="-25.025" y="-6.5" width="50.05" height="13" rx="0" ry="0"/>
+        <text class="lini-text" x="0" y="0">Q3 2026</text>
       </g>
     </g>
     <a href="https://example.com">

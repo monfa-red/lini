@@ -83,19 +83,20 @@ pub fn lay_out_flex(
         .fold(0.0, f64::max);
     let cross_extent = avail_cross.map_or(max_cross, |a| a.max(max_cross));
 
-    // Cross stretch: each unpinned child's box fills the cross axis.
+    // Cross stretch: each child whose cross dimension is unset fills the axis.
     if cross == Cross::Stretch {
         for c in children.iter_mut() {
-            if !pinned(c, cross_dim) {
+            if !dim_set(c, cross_dim) {
                 set_dim(c, cross_dim, cross_extent);
             }
         }
     }
-    // Main stretch: grow each unpinned child's box by an equal share of slack.
+    // Main stretch: grow each child whose main dimension is unset by an equal
+    // share of the slack.
     if main == Main::Stretch {
         let slack = (main_extent - packed).max(0.0);
         let grow: Vec<usize> = (0..children.len())
-            .filter(|&i| !pinned(&children[i], main_dim))
+            .filter(|&i| !dim_set(&children[i], main_dim))
             .collect();
         if slack > 0.0 && !grow.is_empty() {
             let add = slack / grow.len() as f64;
@@ -143,7 +144,7 @@ fn len(c: &PlacedNode, dim: Dim) -> f64 {
 }
 
 /// Resize a child's box along one dimension, centred — the stretch fill. An
-/// explicit size pins the axis (checked by the caller via [`pinned`]), so the
+/// explicit size fixes the axis (checked by the caller via [`dim_set`]), so the
 /// recentre never discards an author's dimension.
 fn set_dim(c: &mut PlacedNode, dim: Dim, v: f64) {
     c.bbox = match dim {
@@ -152,7 +153,7 @@ fn set_dim(c: &mut PlacedNode, dim: Dim, v: f64) {
     };
 }
 
-fn pinned(c: &PlacedNode, dim: Dim) -> bool {
+fn dim_set(c: &PlacedNode, dim: Dim) -> bool {
     match dim {
         Dim::W => c.attrs.get("width").is_some(),
         Dim::H => c.attrs.get("height").is_some(),

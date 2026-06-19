@@ -55,8 +55,8 @@ pub struct ResolvedInst {
 }
 
 /// One of the built-in primitives. All user shapes resolve to one of these.
-/// (There is no title primitive — a caption is just `|text|` whose `place`
-/// reserves a band, SPEC §7.)
+/// (There is no title primitive — a caption is just a small-text `|plain|` flow
+/// child, first in a column for a title or last for a footer, SPEC §8.)
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ShapeKind {
     Box,
@@ -272,14 +272,14 @@ pub struct ResolvedEndpoint {
 #[derive(Clone)]
 pub struct ResolvedText {
     pub text: String,
-    pub at: WireAt,
+    pub along: Along,
     pub attrs: AttrMap,
 }
 
 /// Where a label rides its wire (SPEC §9): `Auto` distributes it along the
-/// route; `Fraction` pins it at an explicit `at: 0..1`.
+/// route; `Fraction` pins it at an explicit `along:` fraction (0..1).
 #[derive(Clone, Debug)]
-pub enum WireAt {
+pub enum Along {
     Auto,
     Fraction(f64),
 }

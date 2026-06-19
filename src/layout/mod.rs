@@ -4,10 +4,10 @@ mod grid;
 mod ir;
 mod primitives;
 mod text;
-mod titles;
 mod values;
 mod wires;
 
+pub(crate) use anchors::is_pinned;
 pub use ir::*;
 pub(crate) use text::{approx_height, approx_width};
 pub(crate) use wires::cross;
@@ -89,13 +89,6 @@ fn attempt(program: &Program, growth: &GapGrowth) -> Result<Attempt, Error> {
         Span::empty(),
         gap_bump(growth, ""),
     )?;
-
-    // The scene has no border or padding, so a scene-level `place:out` band has
-    // no frame to sit outside of — it coincides with `place:in`, reserved just
-    // beyond the content extent. Place it before routing so wires see it.
-    let (scene_gap_y, _) = primitives::gap(&program.scene.attrs, &program.vars, Span::empty())?;
-    let (bbox, _) =
-        titles::place_out_bands(&mut top_nodes, bbox, scene_gap_y + gap_bump(growth, "").0)?;
 
     // Route wires once the nodes are placed.
     let routing = wires::route_wires(program, &top_nodes)?;
@@ -272,9 +265,6 @@ fn layout_inst(
 
     // Determine this node's bbox + arrange children inside.
     let mut dividers: Vec<GridRule> = Vec::new();
-    // The drawn frame, set only when a `place:out` band grows the footprint
-    // past it; otherwise the footprint is the drawn box (`frame` stays None).
-    let mut frame: Option<Bbox> = None;
     let bbox = if children.is_empty() {
         // Leaf primitive.
         primitives::leaf_bbox(inst, vars)?
@@ -317,16 +307,7 @@ fn layout_inst(
             }
         }
 
-        // `place:out` bands sit a container `gap` outside the drawn frame `b`.
-        // The footprint grows to reserve them — so siblings clear the caption —
-        // while the shape keeps drawing at `b`.
-        let (gap_y, _) = primitives::gap(&inst.attrs, vars, inst.span)?;
-        let (footprint, has_out) =
-            titles::place_out_bands(&mut children, b, gap_y + gap_bump(growth, path).0)?;
-        if has_out {
-            frame = Some(b);
-        }
-        footprint
+        b
     };
 
     let rotation = inst.attrs.number("rotate").unwrap_or(0.0);
@@ -342,7 +323,6 @@ fn layout_inst(
         cx: 0.0,
         cy: 0.0,
         bbox,
-        frame,
         rotation,
         children,
         dividers,
@@ -413,31 +393,14 @@ fn lay_out_container_children(
         &grown
     };
 
-    // `margin:` is signed outer spacing on a child. Inflate each child's bbox
-    // into its layout footprint up front; every layout routine below then
-    // spaces and sizes against the footprint (so margin grows/shrinks the
-    // parent and the gaps), and we deflate back to the drawn box at the end.
-    // Negative margins simply make the footprint smaller than the box — they
-    // tighten, and may overlap, which is the intent.
-    let margins: Vec<(f64, f64, f64, f64)> = children
-        .iter()
-        .map(|c| primitives::margin(&c.attrs, c.span))
-        .collect::<Result<_, _>>()?;
-    for (c, &(t, r, b, l)) in children.iter_mut().zip(&margins) {
-        c.bbox = c.bbox.expand(t, r, b, l);
-    }
-
-    // Sort children into three roles (SPEC §7). `side:` with `place:in`/`out`
-    // reserves an edge band (the parent grows); `at:(x,y)` or `place:on` is an
-    // absolute overlay (the parent does not grow); everything else flows.
+    // Split children by role (SPEC §6): a `pin`ned child is an out-of-flow
+    // overlay (the parent does not grow for it); everything else flows.
     let mut flow_indices: Vec<usize> = Vec::new();
-    let mut abs_indices: Vec<usize> = Vec::new();
-    let mut reserve_indices: Vec<usize> = Vec::new();
+    let mut pinned_indices: Vec<usize> = Vec::new();
     for (i, c) in children.iter().enumerate() {
         match anchors::child_role(&c.attrs, c.span)? {
             anchors::Role::Flow => flow_indices.push(i),
-            anchors::Role::Reserve => reserve_indices.push(i),
-            anchors::Role::Absolute => abs_indices.push(i),
+            anchors::Role::Pinned => pinned_indices.push(i),
         }
     }
 
@@ -508,66 +471,35 @@ fn lay_out_container_children(
         grid_rules = one_d_dividers(children, &flow_indices, mode, flow_bbox);
     }
 
-    // Reserve children carve a band on the top/bottom edge. `place:in` bands
-    // sit inside the frame, so the box grows around them here — before padding,
-    // so the border wraps them. `place:out` bands sit outside the drawn frame
-    // and are placed by the caller (`titles::place_out_bands`) once padding has
-    // fixed the border. The result here — content + inside bands — is the body
-    // the anchors and the parent bbox resolve against.
-    let in_indices: Vec<usize> = reserve_indices
-        .iter()
-        .copied()
-        .filter(|&i| !anchors::is_out_band(&children[i].attrs))
-        .collect();
-    let body_bbox = if in_indices.is_empty() {
-        flow_bbox
-    } else {
-        // A title is separated from the content by the container's vertical gap
-        // — the same gap that spaces flow siblings (SPEC §7).
-        let (gap_y, _) = primitives::gap(container_attrs, vars, span)?;
-        titles::reserve_bands(
-            children,
-            &flow_indices,
-            &in_indices,
-            flow_bbox,
-            &mut grid_rules,
-            gap_y,
-        )
-    };
+    // The body the parent sizes to is the flow content alone — pinned children
+    // are overlays that never grow it (SPEC §6).
+    let body_bbox = flow_bbox;
 
-    // Resolution bbox for edge anchors. If the container has explicit
-    // dimensions (e.g. `size:(200, 120)`), anchors snap to those edges;
-    // otherwise we fall back to the body extent.
+    // Resolution bbox for pins. An explicitly sized container anchors pins to
+    // those edges; otherwise they fall back to the body extent.
     let anchor_parent_bbox = container_anchor_bbox(container_attrs).unwrap_or(body_bbox);
 
-    // Absolutely positioned children.
-    for i in &abs_indices {
-        let pos = anchors::read_pos(&children[*i].attrs, children[*i].span)?
-            .expect("abs child carries at: or side:");
-        let offset = match children[*i].attrs.get("offset") {
-            Some(v) => anchors::parse_offset(v, children[*i].span)?,
-            None => (0.0, 0.0),
-        };
-        let (target_cx, target_cy) = anchors::resolve(pos, anchor_parent_bbox, children[*i].bbox);
-        // `at:(x,y)` puts the bbox CENTER at (x,y) per SPEC §7 rule 1.
-        let cb = children[*i].bbox;
-        let local_off_x = (cb.min_x + cb.max_x) / 2.0;
-        let local_off_y = (cb.min_y + cb.max_y) / 2.0;
-        children[*i].cx = target_cx + offset.0 - local_off_x;
-        children[*i].cy = target_cy + offset.1 - local_off_y;
+    // Pin out-of-flow children onto their parent anchor, centring the child's
+    // bbox on the point (a corner pin straddles the corner). The parent does
+    // not grow for them — an all-pinned container with no explicit size
+    // collapses — and the canvas still includes them (see `finish`), so an
+    // overlay is never clipped.
+    for &i in &pinned_indices {
+        let pin = anchors::read_pin(&children[i].attrs, children[i].span)?
+            .expect("pinned child carries pin:");
+        let (cx, cy) = pin.target(anchor_parent_bbox, children[i].bbox);
+        children[i].cx = cx;
+        children[i].cy = cy;
     }
 
-    // Absolute overlays (`at:`, `place:on`) are positioned above, but they do
-    // NOT grow the parent (SPEC §7): the parent sizes to its flow + reserved
-    // bands only. An absolutes-only container with no explicit `size:` collapses
-    // — that's the deal. The canvas viewBox still includes them (see `finish`),
-    // so an overlay is never clipped.
-
-    // Deflate footprints back to drawn boxes. Each routine placed the footprint
-    // centre at its target, so the box — sitting margin-inset within the
-    // footprint — is already in the right spot; only its bbox shrinks back.
-    for (c, &(t, r, b, l)) in children.iter_mut().zip(&margins) {
-        c.bbox = c.bbox.expand(-t, -r, -b, -l);
+    // `translate:` nudges every node after placement (SPEC §6) — applied last,
+    // once the body bbox is fixed, so it shifts the child (and its subtree, via
+    // `cx`/`cy`) without reflowing siblings or growing the parent.
+    for c in children.iter_mut() {
+        if let Some((dx, dy)) = anchors::translate(&c.attrs, c.span)? {
+            c.cx += dx;
+            c.cy += dy;
+        }
     }
 
     Ok((body_bbox, grid_rules))
@@ -711,17 +643,19 @@ mod tests {
         assert!((l.viewbox.h - 81.0).abs() < 0.01, "h={}", l.viewbox.h);
     }
 
-    // ── Caption bands (mount: in, SPEC §6/§8) ──
+    // ── Captions: ordinary flow children (SPEC §8) ──
 
     #[test]
-    fn group_caption_reserves_a_band_above_the_content() {
+    fn caption_as_first_child_adds_a_row_of_height() {
+        // A caption is just a flow child now — it stacks above the content in
+        // the group's column, adding its own height plus a gap.
         let h = |src: &str| lay_out(src).nodes[0].bbox.h();
         let plain = h("g |group| {\n  a |box| { width: 80; height: 30; }\n}\n");
         let capped =
             h("g |group| {\n  |caption| { \"Cap\" }\n  a |box| { width: 80; height: 30; }\n}\n");
         assert!(
             capped > plain + 10.0,
-            "caption adds a band: plain={plain} capped={capped}"
+            "caption adds a row: plain={plain} capped={capped}"
         );
     }
 
@@ -907,7 +841,7 @@ mod tests {
             "t |table| { columns: 40 40; gap: 20;\n  \"a\"\n  \"b\"\n  \"c\"\n  \"d\"\n}\n",
         );
         let t = &l.nodes[0];
-        let (hw, hh) = (t.draw_box().w() / 2.0 + 0.01, t.draw_box().h() / 2.0 + 0.01);
+        let (hw, hh) = (t.bbox.w() / 2.0 + 0.01, t.bbox.h() / 2.0 + 0.01);
         for (x1, y1, x2, y2) in &t.dividers {
             for (x, y) in [(x1, y1), (x2, y2)] {
                 assert!(x.abs() <= hw, "divider x {x} exceeds half-width {hw}");

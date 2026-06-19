@@ -1,12 +1,10 @@
-//! Relative + absolute positioning for children inside a parent's bbox.
+//! Out-of-flow positioning for children inside a parent's bbox (SPEC §6).
 //!
-//! A child leaves the flow when it carries either `at:(x, y)` — explicit
-//! parent-local coords — or `side:` — an edge anchor. For an edge anchor:
-//! `side` picks the edge, `align` slides along it (start / center / end),
-//! `place` puts the child inside or outside that edge — **size-aware**: the
-//! child clears the edge by its own extent, so it lands flush at any size —
-//! and `offset:(x, y)` nudges. Corners fall out of `side` + `align`
-//! (`side:top align:end` = top-right); there are no compound anchor names.
+//! `pin` lifts a child out of the flow and centers its bbox on a named point of
+//! the parent — `center`, an edge midpoint, or a corner. `translate` then nudges
+//! any node (flow or pinned) after placement, reshaping nothing. There are no
+//! compound anchor names and no numeric coordinate property: a corner falls out
+//! of the two-word value, and exact coords are `pin: center` + `translate: x y`.
 
 use super::ir::Bbox;
 use super::values::as_pair;
@@ -14,209 +12,100 @@ use crate::error::Error;
 use crate::resolve::{AttrMap, ResolvedValue};
 use crate::span::Span;
 
+/// A parent anchor a pinned child centers on, as signed fractions of the parent
+/// bbox measured from its center: `center` = (0, 0), `top` = (0, -0.5),
+/// `top right` = (0.5, -0.5), and so on.
 #[derive(Clone, Copy)]
-pub enum Side {
-    Top,
-    Bottom,
-    Left,
-    Right,
-}
-
-#[derive(Clone, Copy)]
-pub enum Align {
-    Start,
-    Center,
-    End,
-}
-
-#[derive(Clone, Copy, PartialEq)]
-pub enum Place {
-    /// In the parent's normal flow/grid layout — the default for any child.
-    /// `side`/`align` don't apply.
-    None,
-    /// Flush inside the edge — reserves a band (content shifts to clear it).
-    In,
-    /// Flush outside the edge — reserves a band outside (the parent gap).
-    Out,
-    /// Centred on the edge/corner — no reserve, an absolute overlay (like
-    /// `at:(x,y)`); it doesn't grow the parent.
-    On,
-}
-
-/// How a non-flow child is positioned in its parent's local frame.
-#[derive(Clone, Copy)]
-pub enum Pos {
-    /// `at:(x, y)` — bbox center at explicit parent-local coords.
-    Coord(f64, f64),
-    /// `side:` — anchored to an edge, slid by `align`, inside/outside by `place`.
-    Edge {
-        side: Side,
-        align: Align,
-        place: Place,
-    },
-}
-
-impl Side {
-    pub fn parse(s: &str) -> Option<Self> {
-        Some(match s {
-            "top" => Self::Top,
-            "bottom" => Self::Bottom,
-            "left" => Self::Left,
-            "right" => Self::Right,
-            _ => return None,
-        })
-    }
-}
-
-impl Align {
-    /// `start`/`center`/`end`, with `left`/`right` accepted as the horizontal
-    /// synonyms (`left` = start, `right` = end) since `align` is also the text
-    /// attr. Defaults to `center`.
-    pub fn parse(s: &str) -> Option<Self> {
-        Some(match s {
-            "start" | "left" => Self::Start,
-            "center" => Self::Center,
-            "end" | "right" => Self::End,
-            _ => return None,
-        })
-    }
-}
-
-impl Place {
-    fn parse(s: &str) -> Option<Self> {
-        Some(match s {
-            "none" => Self::None,
-            "in" => Self::In,
-            "out" => Self::Out,
-            "on" => Self::On,
-            _ => return None,
-        })
-    }
-
-    /// `in`/`out` reserve a band; `on` is an absolute overlay (no reserve).
-    pub fn reserves(self) -> bool {
-        matches!(self, Self::In | Self::Out)
-    }
-}
-
-/// A child's positioning, or `None` if it is a flow child (`at:` absent and
-/// `place:none`, the default). `at:` takes coords only. Otherwise `place` is the
-/// switch: `in`/`out`/`on` anchor the child to an edge (`side` default top,
-/// `align` default center); `none` flows. A bare `side:` with no `place:` is an
-/// error — naming an edge without saying how to meet it is meaningless.
-pub fn read_pos(attrs: &AttrMap, span: Span) -> Result<Option<Pos>, Error> {
-    if let Some(v) = attrs.get("at") {
-        let (x, y) = as_pair(v, span)?;
-        return Ok(Some(Pos::Coord(x, y)));
-    }
-    let place = match attrs.get("mount") {
-        Some(v) => ident(v)
-            .and_then(Place::parse)
-            .ok_or_else(|| Error::at(span, "'mount' expects none, in, out, or on"))?,
-        None => {
-            if attrs.get("side").is_some() {
-                return Err(Error::at(
-                    span,
-                    "a bare 'side:' needs a 'mount:' — in, out, or on",
-                ));
-            }
-            Place::None
-        }
-    };
-    if place == Place::None {
-        return Ok(None);
-    }
-    let side = match attrs.get("side") {
-        Some(v) => ident(v)
-            .and_then(Side::parse)
-            .ok_or_else(|| Error::at(span, "'side' expects top, bottom, left, or right"))?,
-        None => Side::Top,
-    };
-    let align = match attrs.get("align") {
-        Some(v) => ident(v)
-            .and_then(Align::parse)
-            .ok_or_else(|| Error::at(span, "'align' expects start, center, or end"))?,
-        None => Align::Center,
-    };
-    Ok(Some(Pos::Edge { side, align, place }))
-}
-
-pub fn parse_offset(value: &ResolvedValue, span: Span) -> Result<(f64, f64), Error> {
-    as_pair(value, span)
+pub struct Pin {
+    pub fx: f64,
+    pub fy: f64,
 }
 
 /// A child's layout role, by how it is positioned.
 #[derive(Clone, Copy, PartialEq)]
 pub enum Role {
-    /// No `at:`/`side:` — laid out by the container's `layout`.
+    /// No `pin` (or `pin: none`) — laid out by the container's `layout`.
     Flow,
-    /// `side:` with `place:in`/`out` — reserves a band; the parent grows.
-    Reserve,
-    /// `at:(x,y)`, or `side:` with `place:on` — an absolute overlay; the parent
-    /// does not grow for it.
-    Absolute,
+    /// `pin:` set — an out-of-flow overlay; the parent does not grow for it.
+    Pinned,
 }
 
-/// Whether a child anchors with `place:out` — a band reserved *outside* the
-/// drawn frame (vs `place:in`, which reserves inside it). Only meaningful on a
-/// reserve child (one that carries `side:`).
-pub fn is_out_band(attrs: &AttrMap) -> bool {
-    matches!(attrs.get("mount").and_then(ident), Some("out"))
+impl Pin {
+    /// The child's bbox-center target in the parent's local frame: the anchor
+    /// point minus the child bbox's own centre offset, so an asymmetric child
+    /// still lands centred on the point.
+    pub fn target(self, parent: Bbox, child: Bbox) -> (f64, f64) {
+        let px = (parent.min_x + parent.max_x) / 2.0 + self.fx * parent.w();
+        let py = (parent.min_y + parent.max_y) / 2.0 + self.fy * parent.h();
+        let cbx = (child.min_x + child.max_x) / 2.0;
+        let cby = (child.min_y + child.max_y) / 2.0;
+        (px - cbx, py - cby)
+    }
+}
+
+/// Read a child's `pin` (SPEC §6). `None` for an absent `pin` or `pin: none` (a
+/// flow child); `Some(Pin)` for a named anchor; an error otherwise.
+pub fn read_pin(attrs: &AttrMap, span: Span) -> Result<Option<Pin>, Error> {
+    let Some(v) = attrs.get("pin") else {
+        return Ok(None);
+    };
+    let bad = || {
+        Error::at(
+            span,
+            "'pin' expects none, center, an edge (top/bottom/left/right), or a corner (e.g. 'top right')",
+        )
+    };
+    match v {
+        ResolvedValue::Ident(s) => Ok(match s.as_str() {
+            "none" => None,
+            "center" => Some(Pin { fx: 0.0, fy: 0.0 }),
+            "top" => Some(Pin { fx: 0.0, fy: -0.5 }),
+            "bottom" => Some(Pin { fx: 0.0, fy: 0.5 }),
+            "left" => Some(Pin { fx: -0.5, fy: 0.0 }),
+            "right" => Some(Pin { fx: 0.5, fy: 0.0 }),
+            _ => return Err(bad()),
+        }),
+        // A corner: a vertical edge then a horizontal one (`top right`).
+        ResolvedValue::Tuple(parts) if parts.len() == 2 => {
+            let fy = match ident(&parts[0]) {
+                Some("top") => -0.5,
+                Some("bottom") => 0.5,
+                _ => return Err(bad()),
+            };
+            let fx = match ident(&parts[1]) {
+                Some("left") => -0.5,
+                Some("right") => 0.5,
+                _ => return Err(bad()),
+            };
+            Ok(Some(Pin { fx, fy }))
+        }
+        _ => Err(bad()),
+    }
+}
+
+/// Whether a child is pinned — `pin` present and not `none`. A cheap check for
+/// paint order; [`read_pin`] is the validating reader.
+pub fn is_pinned(attrs: &AttrMap) -> bool {
+    match attrs.get("pin") {
+        Some(ResolvedValue::Ident(s)) => s != "none",
+        Some(_) => true,
+        None => false,
+    }
 }
 
 /// Classify a child from its positioning attrs.
 pub fn child_role(attrs: &AttrMap, span: Span) -> Result<Role, Error> {
-    Ok(match read_pos(attrs, span)? {
+    Ok(match read_pin(attrs, span)? {
         None => Role::Flow,
-        Some(Pos::Coord(..)) => Role::Absolute,
-        Some(Pos::Edge { place, .. }) if place.reserves() => Role::Reserve,
-        Some(Pos::Edge { .. }) => Role::Absolute,
+        Some(_) => Role::Pinned,
     })
 }
 
-/// Resolve a `Pos` into the child's target bbox-center in the parent's local
-/// frame. `place` is size-aware: the child's facing edge lands flush on the
-/// parent edge, inside or outside, by shifting half the child's extent.
-pub fn resolve(pos: Pos, parent: Bbox, child: Bbox) -> (f64, f64) {
-    let (cw, ch) = (child.w(), child.h());
-    match pos {
-        Pos::Coord(x, y) => (x, y),
-        Pos::Edge { side, align, place } => {
-            // Position along the anchored edge, from the child's extent on that axis.
-            let along = |min: f64, max: f64, size: f64, align: Align| match align {
-                Align::Start => min + size / 2.0,
-                Align::Center => (min + max) / 2.0,
-                Align::End => max - size / 2.0,
-            };
-            // Distance across the edge: inside pulls the child in by its half
-            // extent, outside pushes it out (flush either way), `on` centres it
-            // on the edge — so a corner anchor straddles the corner.
-            let across = |edge: f64, half: f64, place: Place, outward: f64| match place {
-                Place::In => edge - outward * half,
-                Place::Out => edge + outward * half,
-                // `On`, and the unreachable `None` (an Edge is never built from
-                // it), sit centred on the edge.
-                Place::On | Place::None => edge,
-            };
-            match side {
-                Side::Top => (
-                    along(parent.min_x, parent.max_x, cw, align),
-                    across(parent.min_y, ch / 2.0, place, -1.0),
-                ),
-                Side::Bottom => (
-                    along(parent.min_x, parent.max_x, cw, align),
-                    across(parent.max_y, ch / 2.0, place, 1.0),
-                ),
-                Side::Left => (
-                    across(parent.min_x, cw / 2.0, place, -1.0),
-                    along(parent.min_y, parent.max_y, ch, align),
-                ),
-                Side::Right => (
-                    across(parent.max_x, cw / 2.0, place, 1.0),
-                    along(parent.min_y, parent.max_y, ch, align),
-                ),
-            }
-        }
+/// `translate: x y` — a post-placement shift of the node, or `None` if unset.
+pub fn translate(attrs: &AttrMap, span: Span) -> Result<Option<(f64, f64)>, Error> {
+    match attrs.get("translate") {
+        Some(v) => Ok(Some(as_pair(v, span)?)),
+        None => Ok(None),
     }
 }
 

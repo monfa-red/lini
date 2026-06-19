@@ -193,10 +193,10 @@ fn seg_rect_distance(a: (f64, f64), b: (f64, f64), r: (f64, f64, f64, f64)) -> f
 
 /// Law 3 pins: the three wiring scenes carry a known number of forced
 /// crossings — simple stays clean, the others force a handful. The compass
-/// groups carry captions, so each reserves a band; with the dense gap that
-/// leaves little corridor room and the scene is heavily contended. Behaviour
-/// pin, not a coordinate pin — if the audit ever finds fewer, lower the pin,
-/// never the engine. (The scene's gap is the density dial, but the count is
+/// groups carry captions and stacked units, so the dense gap leaves little
+/// corridor room and the scene is heavily contended. Behaviour pin, not a
+/// coordinate pin — if the audit ever finds fewer, lower the pin, never the
+/// engine. (The scene's gap is the density dial, but the count is
 /// non-monotonic in it — these are tuned to their current geometry.)
 #[test]
 fn crossing_counts_are_pinned() {
@@ -208,9 +208,9 @@ fn crossing_counts_are_pinned() {
             .filter(|v| v.rule == Rule::Crossing)
             .count()
     };
-    // Behaviour pin, not a coordinate pin — re-pinned to the v4 sample geometry.
+    // Behaviour pin, not a coordinate pin — re-pinned to the pin/translate geometry.
     assert_eq!(crossings("samples/wires_simple.lini"), 0);
-    assert_eq!(crossings("samples/wires_medium.lini"), 1);
+    assert_eq!(crossings("samples/wires_medium.lini"), 2);
     assert_eq!(crossings("samples/wires_hard.lini"), 6);
 }
 
@@ -510,10 +510,10 @@ fn wire_labels_ride_their_wires_and_dodge_nodes() {
             "hub",
             "west.ww1",
             "west.ww2",
-            "north.nn1",
-            "north.nn2",
-            "south.ss1",
-            "south.ss2",
+            "north.nrow.nn1",
+            "north.nrow.nn2",
+            "south.srow.ss1",
+            "south.srow.ss2",
             "east.ee1",
             "east.ee2",
         ],

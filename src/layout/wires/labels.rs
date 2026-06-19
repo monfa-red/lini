@@ -1,6 +1,6 @@
 //! Wire labels (WIRING §Model step 7, SPEC §9): a label rides its wire at an
-//! auto-distributed anchor or an explicit `at:` fraction of its statement's
-//! whole drawn route, shifted by `offset` in the tangent frame (x along the
+//! auto-distributed anchor or an explicit `along:` fraction of its statement's
+//! whole drawn route, shifted by `translate` in the tangent frame (x along the
 //! wire, y to its left). A label is an obstacle to nothing and the wire never
 //! moves for it — but the label may slide along the wire to dodge node
 //! bodies, node labels, and other wire labels.
@@ -10,7 +10,7 @@ use super::rect::Rect;
 use super::scene::SceneIndex;
 use crate::layout::ir::{RoutedText, RoutedWire};
 use crate::layout::text::{approx_height, approx_width};
-use crate::resolve::{Program, ResolvedText, ResolvedValue, WireAt};
+use crate::resolve::{Along, Program, ResolvedText, ResolvedValue};
 use crate::span::Span;
 
 /// Breathing room a label keeps from the things it dodges.
@@ -71,16 +71,16 @@ pub fn place(
         for t in &w.texts {
             let size = t.attrs.number("font-size").unwrap_or(12.0);
             let (bw, bh) = (approx_width(&t.text, size), approx_height(&t.text, size));
-            let (ox, oy) = offset_of(t.attrs.get("offset"));
-            let s0 = match t.at {
-                WireAt::Auto => {
+            let (ox, oy) = translate_of(t.attrs.get("translate"));
+            let s0 = match t.along {
+                Along::Auto => {
                     let s = auto_anchors[auto_i];
                     auto_i += 1;
                     s
                 }
-                WireAt::Fraction(f) => f * total,
+                Along::Fraction(f) => f * total,
             };
-            // A label rides on the line; lift it off with `offset:` (SPEC §9).
+            // A label rides on the line; lift it off with `translate:` (SPEC §9).
             let spot = |s: f64| {
                 let (p, tan, si) = at_arc(wires, &segs, &lens, s);
                 let pos = (p.0 + ox * tan.0 - oy * tan.1, p.1 + ox * tan.1 + oy * tan.0);
@@ -132,7 +132,7 @@ pub fn place(
 fn distribute_auto(texts: &[ResolvedText], lens: &[f64], total: f64) -> Vec<f64> {
     let m = texts
         .iter()
-        .filter(|t| matches!(t.at, WireAt::Auto))
+        .filter(|t| matches!(t.along, Along::Auto))
         .count();
     let n = lens.len();
     if m == 0 {
@@ -200,8 +200,8 @@ fn at_arc(
     (p, (1.0, 0.0), 0)
 }
 
-/// `offset:(x, y)` in the tangent frame; anything else is no offset.
-fn offset_of(v: Option<&ResolvedValue>) -> (f64, f64) {
+/// `translate:(x, y)` in the tangent frame; anything else is no shift.
+fn translate_of(v: Option<&ResolvedValue>) -> (f64, f64) {
     if let Some(ResolvedValue::Tuple(xs)) = v
         && let [Some(x), Some(y)] = [
             xs.first().and_then(|v| v.as_number()),

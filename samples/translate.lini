@@ -1,0 +1,17 @@
+// translate (SPEC §6): a post-placement nudge that works on every node — flow
+// or pinned — and reshapes nothing. The flow child slides without moving its
+// siblings; the pinned badge tucks into its corner. pin: center + translate is
+// exact coordinate placement (the parent origin is its centre).
+
+layout: row; gap: 30; padding: 20; align: center;
+
+a |box| "A"
+b |box| { translate: 0 18; "nudged" }
+c |box| "C"
+
+card |box| {
+  width: 130; height: 72; fill: #eef;
+  "Card"
+  |badge| { translate: -4 4; "9" }
+  |plain| { pin: center; translate: 0 22; color: #888; "id 42" }
+}

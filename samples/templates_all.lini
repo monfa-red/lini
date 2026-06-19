@@ -1,17 +1,16 @@
-// Every built-in template: group, badge, note, row, column, table.
+// Every built-in template: group, caption, badge, note, row, column, table.
 
 layout: column; gap: 24; padding: 20;
 
 frame |group| {
-  layout: row; gap: 16;
   |caption| "Group"
-  |row|     {
+  |row| { gap: 16;
     a |box| "a"
     b |box| "b"
-  }
-  |column|  {
-    p |box| "p"
-    q |box| "q"
+    |column| {
+      p |box| "p"
+      q |box| "q"
+    }
   }
 }
 

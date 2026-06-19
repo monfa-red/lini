@@ -114,15 +114,6 @@ pub fn padding(attrs: &AttrMap, vars: &VarTable, span: Span) -> Result<PaddingBo
     }
 }
 
-/// A child's `margin:` as `(top, right, bottom, left)` — signed outer spacing,
-/// `N` / `v h` / `t r b l`, negatives allowed (they tighten). Absent → zero.
-pub fn margin(attrs: &AttrMap, span: Span) -> Result<(f64, f64, f64, f64), Error> {
-    match attrs.get("margin") {
-        Some(v) => expand_box_value(v, span),
-        None => Ok((0.0, 0.0, 0.0, 0.0)),
-    }
-}
-
 /// `gap` → `(between_rows, between_cols)`. Scalar = both equal; `row col` (CSS
 /// order) per axis. Negative allowed.
 pub fn gap(attrs: &AttrMap, vars: &VarTable, span: Span) -> Result<(f64, f64), Error> {

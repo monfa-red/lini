@@ -98,12 +98,6 @@ pub struct PlacedNode {
     /// Bbox in local coords (relative to this node's own origin) — the layout
     /// **footprint**: what siblings space against and the canvas includes.
     pub bbox: Bbox,
-    /// The box the shape's geometry is drawn at, when it differs from the
-    /// footprint. `None` ⇒ draw at `bbox`. A `place:out` band grows the
-    /// footprint outward while the shape still draws at this smaller frame, so
-    /// a bordered group's border wraps its content while a caption sits outside
-    /// it (SPEC §7).
-    pub frame: Option<Bbox>,
     pub rotation: f64,
     pub children: Vec<PlacedNode>,
     /// Interior divider segments the container draws (SPEC §5), painted by its
@@ -111,14 +105,6 @@ pub struct PlacedNode {
     /// never double it. Empty unless `divider:` is set.
     pub dividers: Vec<GridRule>,
     pub span: Span,
-}
-
-impl PlacedNode {
-    /// The box the shape's geometry draws at — the `frame` when a `place:out`
-    /// band has grown the footprint past it, else the footprint `bbox`.
-    pub fn draw_box(&self) -> Bbox {
-        self.frame.unwrap_or(self.bbox)
-    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -167,9 +153,9 @@ impl Bbox {
     }
 
     /// Expand each side independently (signed): top/left grow the min edges
-    /// outward, right/bottom grow the max edges. Negative values shrink — the
-    /// inverse is `expand(-t, -r, -b, -l)`. Used for `margin:`, which inflates a
-    /// child's layout footprint then deflates back to its drawn box.
+    /// outward, right/bottom grow the max edges. Negative values shrink. Used
+    /// for a table's per-cell padding inset, which inflates each cell so the
+    /// auto tracks size to content + inset.
     pub fn expand(self, top: f64, right: f64, bottom: f64, left: f64) -> Self {
         Self {
             min_x: self.min_x - left,

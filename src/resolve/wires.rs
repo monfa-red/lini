@@ -5,8 +5,8 @@
 
 use super::cascade::NodeFacts;
 use super::ir::{
-    AttrMap, MarkerKind, ResolvedEndpoint, ResolvedText, ResolvedValue, ResolvedWire, VarEntry,
-    VarKind, VarTable, WireAt,
+    Along, AttrMap, MarkerKind, ResolvedEndpoint, ResolvedText, ResolvedValue, ResolvedWire,
+    VarEntry, VarKind, VarTable,
 };
 use super::merge::{collapse, resolve_markers};
 use super::scene::{PathIndex, SceneCtx};
@@ -62,15 +62,15 @@ pub fn resolve_wire(
         .unwrap_or_default();
     attrs.map.remove("along");
 
-    // Labels are bare strings or `|plain|` boxes (a styled / offset label).
+    // Labels are bare strings or `|plain|` boxes (a styled / translated label).
     let mut texts: Vec<ResolvedText> = Vec::new();
     if let Some(block) = &w.block {
         for (i, label) in block.labels.iter().enumerate() {
-            let at = along.get(i).copied().map_or(WireAt::Auto, WireAt::Fraction);
+            let pos = along.get(i).copied().map_or(Along::Auto, Along::Fraction);
             let (text, map) = resolve_wire_label(label, ctx)?;
             texts.push(ResolvedText {
                 text,
-                at,
+                along: pos,
                 attrs: wire_text_attrs(map, ctx.vars),
             });
         }
@@ -141,7 +141,7 @@ fn collect_fractions(v: &ResolvedValue) -> Vec<f64> {
 
 /// A wire label's text and per-label attrs (SPEC §9): a bare string carries no
 /// styling; a `|plain|` box contributes its first string as the text and its
-/// declarations (`offset`, `font-*`, `color`) as the attrs.
+/// declarations (`translate`, `font-*`, `color`) as the attrs.
 fn resolve_wire_label(label: &Child, ctx: &SceneCtx) -> Result<(String, AttrMap), Error> {
     match label {
         Child::Text(t) => Ok((t.text.clone(), AttrMap::new())),

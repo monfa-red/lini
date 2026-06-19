@@ -221,18 +221,18 @@ pub(super) fn template_attrs(name: &str) -> Vec<(String, ResolvedValue)> {
             attr("fill", live("group-fill")),
             attr("radius", num(6.0)),
         ],
-        "caption" => vec![attr("mount", ident("in")), attr("font-size", num(13.0))],
+        "caption" => vec![attr("font-size", num(13.0))],
         "badge" => vec![
-            attr("mount", ident("on")),
-            attr("side", ident("top")),
-            attr("align", ident("end")),
+            attr(
+                "pin",
+                ResolvedValue::Tuple(vec![ident("top"), ident("right")]),
+            ),
             attr("radius", num(999.0)),
             attr("padding", pair(2.0, 8.0)),
             attr("shadow", num(2.0)),
             attr("fill", live("accent")),
             attr("color", live("on-accent")),
             attr("font-size", num(11.0)),
-            attr("layer", num(10.0)),
         ],
         "note" => vec![
             attr("radius", num(2.0)),

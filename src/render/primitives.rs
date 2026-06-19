@@ -117,11 +117,8 @@ fn emit_shape(
 }
 
 fn dim_excluding_stroke(n: &PlacedNode, thickness: f64) -> (f64, f64) {
-    // Draw at the frame, not the footprint: a `place:out` band grows the
-    // footprint past the border the shape should hug (SPEC §7).
-    let b = n.draw_box();
-    let w = (b.w() - thickness).max(0.0);
-    let h = (b.h() - thickness).max(0.0);
+    let w = (n.bbox.w() - thickness).max(0.0);
+    let h = (n.bbox.h() - thickness).max(0.0);
     (w, h)
 }
 

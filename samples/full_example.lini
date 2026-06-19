@@ -7,28 +7,31 @@ layout: column; gap: 40; padding: 24;
 browser |box| "Browser"
 
 edge |group| {
-  layout: row; gap: 24;
-      |caption| "Edge"
-  cdn |box|     "CDN"
-  lb  |box|     "Load balancer"
+  |caption| "Edge"
+  net |row| { gap: 24;
+    cdn |box| "CDN"
+    lb  |box| "Load balancer"
+  }
 }
 
 services |group| {
-  layout: row; gap: 24;
-       |caption| "Services"
-  api  |box|     "API"
-  auth |box|     "Auth"
+  |caption| "Services"
+  svc |row| { gap: 24;
+    api  |box| "API"
+    auth |box| "Auth"
+  }
 }
 
 data |group| {
-  layout: row; gap: 24;
-        |caption| "Data"
-  cache |cyl|     "Redis"
-  db    |cyl|     "Postgres"
+  |caption| "Data"
+  store |row| { gap: 24;
+    cache |cyl| "Redis"
+    db    |cyl| "Postgres"
+  }
 }
 
-browser -> edge.cdn -> edge.lb "https"
-edge.lb -> services.api & services.auth
-services.api -> data.cache "cache"
-services.api -> data.db
-services.auth -> data.db
+browser -> edge.net.cdn -> edge.net.lb "https"
+edge.net.lb -> services.svc.api & services.svc.auth
+services.svc.api -> data.store.cache "cache"
+services.svc.api -> data.store.db
+services.svc.auth -> data.store.db

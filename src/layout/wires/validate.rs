@@ -585,7 +585,6 @@ mod tests {
             cx,
             cy,
             bbox: Bbox::centered(40.0, 40.0),
-            frame: None,
             rotation: 0.0,
             children: Vec::new(),
             dividers: Vec::new(),

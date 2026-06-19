@@ -29,7 +29,7 @@ Most diagram tools make you pick a side: **draw by hand** (precise, but tedious 
 - **Genuinely small syntax.** Five sigils, sensible defaults. `cat -> dog` is a valid diagram. You can learn the whole thing in a coffee break.
 - **Any shape you need.** 12 primitives and 8 templates out of the box — and a raw `path` primitive that accepts any SVG path string. If SVG can draw it, you can place it and wire to it.
 - **Fast, and a single file.** A 1.5 MB native binary with one runtime dependency. No Node, no JVM, no headless browser. Typical diagrams compile in **~2 ms** — process startup included.
-- **Output you can trust.** Compilation is **byte-identical across runs**, so renders diff cleanly in review and never churn in CI. 336 tests back it, including property tests that assert the router's laws on every sample.
+- **Output you can trust.** Compilation is **byte-identical across runs**, so renders diff cleanly in review and never churn in CI. 334 tests back it, including property tests that assert the router's laws on every sample.
 - **Themeable like a web page.** Colors and fonts ship as CSS variables inside an `@layer`, so a host page restyles a diagram without recompiling — or bake everything to a self-contained file for email and raster renderers.
 
 ---
@@ -91,7 +91,7 @@ services |group| {
 }
 ```
 
-`layout: row` · `layout: column` · `layout: grid` (sized by `columns` / `rows`), with `cell:`, `span:`, `at:`, and `mount` / `side` / `align` anchors when you want precise placement.
+`layout: row` · `layout: column` · `layout: grid` (sized by `columns` / `rows`), with `cell:` / `span:` for grid placement and `pin` / `translate` to lift a child out of the flow.
 
 ---
 
@@ -212,7 +212,7 @@ Parse is recursive-descent over an LL(1) grammar; resolve applies CSS-like speci
 ## Development
 
 ```bash
-cargo test                               # 336 tests
+cargo test                               # 334 tests
 cargo run -- samples/hello.lini
 cargo run -- serve samples/full_example.lini
 ```

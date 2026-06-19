@@ -791,7 +791,7 @@ mod tests {
     #[test]
     fn node_with_id_type_classes_block_and_text() {
         let f = parse_ok(
-            "db |cyl| .primary {\n  fill: #eef;\n  \"Postgres\"\n  badge |box| { mount: on; \"v16\" }\n}\n",
+            "db |cyl| .primary {\n  fill: #eef;\n  \"Postgres\"\n  tag |box| { pin: top right; \"v16\" }\n}\n",
         );
         let n = instance(&f, 0);
         assert_eq!(n.id.as_deref(), Some("db"));
@@ -799,9 +799,9 @@ mod tests {
         assert_eq!(n.classes, vec!["primary"]);
         let b = n.block.as_ref().unwrap();
         assert_eq!(b.decls.len(), 1);
-        assert_eq!(b.children.len(), 2); // text "Postgres", then the badge box
+        assert_eq!(b.children.len(), 2); // text "Postgres", then the tag box
         assert!(matches!(&b.children[0], Child::Text(t) if t.text == "Postgres"));
-        assert!(matches!(&b.children[1], Child::Box(n) if n.id.as_deref() == Some("badge")));
+        assert!(matches!(&b.children[1], Child::Box(n) if n.id.as_deref() == Some("tag")));
     }
 
     #[test]
@@ -828,14 +828,14 @@ mod tests {
 
     #[test]
     fn value_groups_space_and_comma() {
-        let f = parse_ok("|line| { points: 0 0, 10 10, 20 0; at: 100 50; }\n");
+        let f = parse_ok("|line| { points: 0 0, 10 10, 20 0; translate: 100 50; }\n");
         let b = instance(&f, 0).block.as_ref().unwrap();
         let points = b.decls.iter().find(|d| d.name == "points").unwrap();
         assert_eq!(points.groups.len(), 3);
         assert_eq!(points.groups[0].len(), 2);
-        let at = b.decls.iter().find(|d| d.name == "at").unwrap();
-        assert_eq!(at.groups.len(), 1);
-        assert_eq!(at.groups[0].len(), 2);
+        let translate = b.decls.iter().find(|d| d.name == "translate").unwrap();
+        assert_eq!(translate.groups.len(), 1);
+        assert_eq!(translate.groups[0].len(), 2);
     }
 
     #[test]

@@ -1,0 +1,46 @@
+---
+source: tests/conformance.rs
+expression: svg
+input_file: samples/translate.lini
+---
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-210.8 -60 428.625 121.5" width="428.625" height="121.5" class="lini">
+  <style>
+    .lini { font-family: sans-serif; font-size: 14px; color: black; }
+    .lini .lini-shape-box { fill: white; stroke: #444; stroke-width: 1; stroke-dasharray: none; }
+    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
+    .lini .lini-shape-plain { fill: none; stroke: none; }
+    .lini .lini-shape-badge { fill: #0a84ff; color: white; font-size: 11px; }
+  </style>
+  <defs>
+    <filter id="lini-shadow-1" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="2" dy="2" stdDeviation="2" flood-color="rgba(0, 0, 0, 0.2)"/></filter>
+  </defs>
+  <g class="lini-scene">
+    <g class="lini-node lini-shape-box" data-id="a" transform="translate(-170.45,0)">
+      <rect x="-19.85" y="-23" width="39.7" height="46" rx="0" ry="0"/>
+      <text class="lini-text" x="0" y="0">A</text>
+    </g>
+    <g class="lini-node lini-shape-box" data-id="b" transform="translate(-80.5,18)">
+      <rect x="-39.1" y="-23" width="78.2" height="46" rx="0" ry="0"/>
+      <text class="lini-text" x="0" y="0">nudged</text>
+    </g>
+    <g class="lini-node lini-shape-box" data-id="c" transform="translate(9.45,0)">
+      <rect x="-19.85" y="-23" width="39.7" height="46" rx="0" ry="0"/>
+      <text class="lini-text" x="0" y="0">C</text>
+    </g>
+    <g class="lini-node lini-shape-box" data-id="card" style="fill: #eef" transform="translate(125.3,0)">
+      <rect x="-65" y="-36" width="130" height="72" rx="0" ry="0"/>
+      <text class="lini-text" x="0" y="0">Card</text>
+      <g class="lini-node lini-shape-badge lini-shape-box" transform="translate(61,-32)">
+        <g filter="url(#lini-shadow-1)">
+          <rect x="-11.025" y="-7.5" width="22.05" height="15" rx="999" ry="999"/>
+        </g>
+        <text class="lini-text" x="0" y="0">9</text>
+      </g>
+      <g class="lini-node lini-shape-plain lini-shape-box" style="color: #888" transform="translate(0,22)">
+        <rect x="-19.25" y="-7" width="38.5" height="14" rx="0" ry="0"/>
+        <text class="lini-text" x="0" y="0">id 42</text>
+      </g>
+    </g>
+  </g>
+  <g class="lini-wires"/>
+</svg>

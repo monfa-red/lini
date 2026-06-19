@@ -179,7 +179,7 @@ fn apply_var_decls(vars: &mut VarTable, file: &File) -> Result<(), Error> {
 // ─────────────────────────── Root config ───────────────────────────
 
 /// Root container attributes: the defaults (`layout: column`, `padding: 0` —
-/// the root's margin is the fixed canvas-pad, not padding) overlaid by the
+/// the root is framed by the fixed canvas-pad, not by padding) overlaid by the
 /// file's bare top-level declarations.
 fn root_attrs(file: &File, vars: &VarTable) -> Result<AttrMap, Error> {
     let mut ordered: Vec<(String, ResolvedValue)> = vec![
@@ -373,13 +373,14 @@ mod tests {
     }
 
     #[test]
-    fn explicit_caption_is_a_box_mounted_in() {
-        // SPEC §8: a caption is a `|plain|`-based box mounted inside an edge, with
-        // its title as a text child — no positional magic.
+    fn caption_is_a_small_text_plain_child() {
+        // SPEC §8: a caption is a `|plain|`-based box with a smaller font and no
+        // positioning — an ordinary flow child (first = title, last = footer).
         let p = rv4("g |group| {\n  |caption| { \"Title\" }\n}\n");
         let cap = &p.scene.nodes[0].children[0];
         assert!(cap.type_chain.iter().any(|t| t == "caption"));
-        assert!(matches!(cap.attrs.get("mount"), Some(ResolvedValue::Ident(s)) if s == "in"));
+        assert!(cap.attrs.get("pin").is_none() && cap.attrs.get("mount").is_none());
+        assert!(matches!(cap.attrs.get("font-size"), Some(ResolvedValue::Number(n)) if *n == 13.0));
         assert_eq!(cap.children[0].label.as_deref(), Some("Title"));
     }
 
