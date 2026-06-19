@@ -19,7 +19,7 @@ cap::plain { font-size: 12; font-weight: normal; color: #555; }
   |cap|  "rect"
 }
 |tile| {
-  |oval| { width: 60; height: 60; fill: #caffbf; }
+  |oval| { width: 68; height: 56; fill: #caffbf; }
   |cap|  "oval"
 }
 |tile| {
@@ -37,11 +37,11 @@ cap::plain { font-size: 12; font-weight: normal; color: #555; }
   |cap| "cyl"
 }
 |tile| {
-  |diamond| { width: 68; height: 58; fill: #ffc6ff; }
+  |diamond| { width: 70; height: 60; fill: #ffc6ff; }
   |cap|     "diamond"
 }
 |tile| {
-  |cloud| { width: 80; height: 50; fill: #ffadad; }
+  |cloud| { width: 82; height: 50; fill: #ffadad; }
   |cap|   "cloud"
 }
 
@@ -77,7 +77,7 @@ cap::plain { font-size: 12; font-weight: normal; color: #555; }
   |group| {
     padding: 12;
     |caption|  "Group"
-    |box| { width: 58; height: 36 }
+    |box| { width: 56; height: 36 }
     |footer|   "Footer"
   }
 

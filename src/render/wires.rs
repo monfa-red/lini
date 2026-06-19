@@ -1,7 +1,7 @@
 //! Wire emission — the wire path, optional markers, optional labels — and
 //! airwires, the impossible-wire report made visible.
 
-use super::markers::{MARKER_OVERLAP, MarkerPaint, emit_marker, line_inset, marker_anchor};
+use super::markers::{MARKER_OVERLAP, MarkerPaint, emit_marker, marker_anchor, shorten_for_markers};
 use super::rounding::{Seg, round};
 use super::rules::{PAINT_PROPS, RuleSet, effective_stroke};
 use super::values::{attr_or_var, dasharray_value, escape_xml, format_value, num};
@@ -125,7 +125,7 @@ pub fn render_wire(
 
     // Stop the drawn line where the marker body will sit so the stroke never
     // pokes past it (and never leaves a gap before a dot).
-    let drawn = shorten_for_markers(&w.path, &w.markers, thickness);
+    let drawn = shorten_for_markers(&w.path, &w.markers, thickness, MARKER_OVERLAP);
     let d = wavy
         .then(|| wavy::wavy_d(&drawn, targets))
         .flatten()
@@ -394,48 +394,6 @@ fn overlap_tip(tip: (f64, f64), dir: (f64, f64)) -> (f64, f64) {
         tip.0 + dir.0 * MARKER_OVERLAP,
         tip.1 + dir.1 * MARKER_OVERLAP,
     )
-}
-
-/// Pull each marker-bearing endpoint back along its segment so the line stops where
-/// that marker's body begins (per-marker, [`line_inset`]). The marker rides
-/// [`MARKER_OVERLAP`] into the shape, so its body begins that much nearer the
-/// shape too — the line stops the same amount short of its bare inset.
-fn shorten_for_markers(
-    path: &[(f64, f64)],
-    markers: &crate::resolve::Markers,
-    thickness: f64,
-) -> Vec<(f64, f64)> {
-    let inset = |kind| (line_inset(kind, thickness) - MARKER_OVERLAP).max(0.0);
-    let mut p = path.to_vec();
-    if p.len() < 2 {
-        return p;
-    }
-    if markers.end != MarkerKind::None {
-        let n = p.len();
-        if let Some(q) = pulled_back(p[n - 2], p[n - 1], inset(markers.end)) {
-            p[n - 1] = q;
-        }
-    }
-    if markers.start != MarkerKind::None
-        && let Some(q) = pulled_back(p[1], p[0], inset(markers.start))
-    {
-        p[0] = q;
-    }
-    p
-}
-
-/// Move `endpoint` toward `inner` by `amount`. `None` if the segment is too
-/// short to absorb the shift.
-fn pulled_back(inner: (f64, f64), endpoint: (f64, f64), amount: f64) -> Option<(f64, f64)> {
-    let (dx, dy) = (endpoint.0 - inner.0, endpoint.1 - inner.1);
-    let len = (dx * dx + dy * dy).sqrt();
-    if len <= amount + 0.5 {
-        return None;
-    }
-    Some((
-        endpoint.0 - dx / len * amount,
-        endpoint.1 - dy / len * amount,
-    ))
 }
 
 /// A luminance mask that cuts the wire path out under each of its labels — the

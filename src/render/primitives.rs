@@ -289,9 +289,13 @@ fn emit_line(
         return;
     }
 
+    // Stop the drawn line short of its markers so the stroke doesn't poke through
+    // the arrowhead; the markers still ride the true endpoints (below).
+    let drawn = super::markers::shorten_for_markers(&points, &n.markers, thickness, 0.0);
+
     // 2 points → SVG <line>; 3+ → SVG <polyline>.
-    if points.len() == 2 {
-        let (from, to) = (points[0], points[1]);
+    if drawn.len() == 2 {
+        let (from, to) = (drawn[0], drawn[1]);
         writeln!(
             out,
             r#"{}<line x1="{}" y1="{}" x2="{}" y2="{}"/>"#,
@@ -303,7 +307,7 @@ fn emit_line(
         )
         .unwrap();
     } else {
-        let pts: Vec<String> = points
+        let pts: Vec<String> = drawn
             .iter()
             .map(|(x, y)| format!("{},{}", num(*x), num(*y)))
             .collect();

@@ -3,7 +3,7 @@
 
 use super::values::num;
 use crate::layout::PlacedNode;
-use crate::resolve::MarkerKind;
+use crate::resolve::{MarkerKind, Markers};
 use std::fmt::Write;
 
 /// How a marker is painted: the resolved colour, whether it must be inlined
@@ -70,26 +70,65 @@ pub fn marker_size(thickness: f64) -> f64 {
     5.0_f64.max(thickness * 4.0)
 }
 
-/// The fixed stub a pointed marker (arrow / crow / diamond) covers: its body runs
-/// `size` (≥ 5) back from the tip, so stopping the line 4 px short leaves no gap.
-pub const STUB_INSET: f64 = 4.0;
-
 /// How far a wire's marker tip is pushed past the endpoint into the shape, so the
 /// head overlaps the border by a hair and reads as connected — constant at every
 /// `stroke-width` (the line-end shortening absorbs the same shift). `|line|`
 /// markers don't use it: a bare line has no shape to meet.
 pub const MARKER_OVERLAP: f64 = 0.5;
 
-/// How far back from the endpoint the drawn line should stop for an end marker so
-/// the marker body covers the line's end with neither a gap nor an overshoot. A dot
-/// is small and sits tangent to the shape edge, so the line stops at its back edge
-/// (`2·radius`); pointed markers cover the fixed [`STUB_INSET`] stub.
+/// How far back from the endpoint the drawn line stops for an end marker so the
+/// marker body covers the line's end with neither a gap nor an overshoot, scaled
+/// off `stroke-width` so a thicker line pulls back proportionally. A dot sits
+/// tangent to the endpoint, so the line stops at its back edge (`2·radius`); a
+/// pointed marker (arrow / crow / diamond) covers a `2 × stroke-width` stub,
+/// always shorter than its `size` body so the line's end stays hidden under it.
 pub fn line_inset(kind: MarkerKind, thickness: f64) -> f64 {
     match kind {
         MarkerKind::None => 0.0,
         MarkerKind::Dot => marker_size(thickness) * 2.0 / 3.0,
-        _ => STUB_INSET,
+        _ => thickness * 2.0,
     }
+}
+
+/// Pull a polyline's marker-bearing ends back so the drawn line stops where the
+/// marker body begins, not at its tip — otherwise the stroke poked through the
+/// arrowhead. `overlap` is how far the tip is nudged past the endpoint
+/// ([`MARKER_OVERLAP`] for a wire meeting a shape, `0` for a bare `|line|` whose
+/// tip sits on the endpoint). Markers still draw at the original endpoints.
+pub fn shorten_for_markers(
+    path: &[(f64, f64)],
+    markers: &Markers,
+    thickness: f64,
+    overlap: f64,
+) -> Vec<(f64, f64)> {
+    let inset = |kind| (line_inset(kind, thickness) - overlap).max(0.0);
+    let mut p = path.to_vec();
+    if p.len() < 2 {
+        return p;
+    }
+    if markers.end != MarkerKind::None {
+        let n = p.len();
+        if let Some(q) = pulled_back(p[n - 2], p[n - 1], inset(markers.end)) {
+            p[n - 1] = q;
+        }
+    }
+    if markers.start != MarkerKind::None
+        && let Some(q) = pulled_back(p[1], p[0], inset(markers.start))
+    {
+        p[0] = q;
+    }
+    p
+}
+
+/// Move `endpoint` toward `inner` by `amount`; `None` if the segment is too short
+/// to absorb the shift.
+fn pulled_back(inner: (f64, f64), endpoint: (f64, f64), amount: f64) -> Option<(f64, f64)> {
+    let (dx, dy) = (endpoint.0 - inner.0, endpoint.1 - inner.1);
+    let len = (dx * dx + dy * dy).sqrt();
+    if len <= amount + 0.5 {
+        return None;
+    }
+    Some((endpoint.0 - dx / len * amount, endpoint.1 - dy / len * amount))
 }
 
 /// A dot marker's centre: pulled back from the tip (on the shape edge) by its
@@ -188,13 +227,16 @@ pub fn emit_marker(
             let ly = by + py * size * 0.5;
             let rx = bx - px * size * 0.5;
             let ry = by - py * size * 0.5;
+            // The two outer prongs are one path through the tip, so a miter join
+            // gives a real point (three butt-capped segments used to blunt it);
+            // round caps tidy the three splayed feet. The centre prong's tip end
+            // tucks inside the join.
             writeln!(
                 out,
-                r#"{}<path class="lini-marker lini-marker-crow" d="M {} {} L {} {} M {} {} L {} {} M {} {} L {} {}" style="fill: none; stroke: {}; stroke-width: {}; stroke-dasharray: none"/>"#,
+                r#"{}<path class="lini-marker lini-marker-crow" d="M {} {} L {} {} L {} {} M {} {} L {} {}" style="fill: none; stroke: {}; stroke-width: {}; stroke-linecap: round; stroke-dasharray: none"/>"#,
                 indent,
-                num(tip.0), num(tip.1), num(bx), num(by),
-                num(tip.0), num(tip.1), num(lx), num(ly),
-                num(tip.0), num(tip.1), num(rx), num(ry),
+                num(lx), num(ly), num(tip.0), num(tip.1), num(rx), num(ry),
+                num(bx), num(by), num(tip.0), num(tip.1),
                 color, num(thickness),
             ).unwrap();
         }
@@ -227,7 +269,7 @@ mod tests {
         let size = marker_size(1.0);
         // The dot spans [tip-2r, tip]; the line must stop at its back edge = 2r.
         assert!((line_inset(MarkerKind::Dot, 1.0) - 2.0 * size / 3.0).abs() < 1e-9);
-        assert_eq!(line_inset(MarkerKind::Arrow, 1.0), STUB_INSET);
+        assert_eq!(line_inset(MarkerKind::Arrow, 1.0), 2.0);
         assert_eq!(line_inset(MarkerKind::None, 1.0), 0.0);
     }
 }
