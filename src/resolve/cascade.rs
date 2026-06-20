@@ -279,7 +279,7 @@ mod tests {
 
     #[test]
     fn element_decls_merge_matching_rules_in_source_order() {
-        let s = sheet("box { fill: red; }\nbox { stroke: blue; }\n");
+        let s = sheet("{ |box| { fill: red; }\n|box| { stroke: blue; } }\n");
         assert_eq!(names(&s.element_decls("box")), vec!["fill", "stroke"]);
         assert!(s.element_decls("oval").is_empty());
     }
@@ -288,7 +288,7 @@ mod tests {
     fn node_layers_put_descendant_rules_before_class_rules() {
         // Source order is class-then-descendant; the cascade still applies the
         // descendant first (tier 2), the class last (tier 3).
-        let s = sheet(".hot { stroke: red; }\ntable box { fill: gray; }\n");
+        let s = sheet("{ .hot { stroke: red; }\n|table box| { fill: gray; } }\n");
         let node = facts(&["box"], &["hot"]);
         let ancestors = [facts(&["table", "group", "box"], &[])];
         assert_eq!(
@@ -301,7 +301,7 @@ mod tests {
     fn class_layers_follow_definition_order_not_application_order() {
         // Applied `.b .a`, but defined `.a` then `.b`; `.b` is later in source
         // so it wins the tie.
-        let s = sheet(".a { fill: red; }\n.b { fill: blue; }\n");
+        let s = sheet("{ .a { fill: red; }\n.b { fill: blue; } }\n");
         let node = facts(&["box"], &["b", "a"]);
         let layers = s.node_layers(&[], &node);
         assert_eq!(layers.len(), 2);
@@ -310,7 +310,7 @@ mod tests {
 
     #[test]
     fn defines_class_covers_every_referenced_class() {
-        let s = sheet(".hot { stroke: red; }\n.sidebar box { fill: gray; }\n");
+        let s = sheet("{ .hot { stroke: red; }\n|.sidebar box| { fill: gray; } }\n");
         assert!(s.defines_class("hot"));
         assert!(s.defines_class("sidebar"));
         assert!(!s.defines_class("cold"));

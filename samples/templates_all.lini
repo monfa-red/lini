@@ -1,33 +1,31 @@
 // Every built-in template: group, caption, badge, note, row, column, table.
 
-layout: column; gap: 24; padding: 20;
+{
+  layout: column; gap: 24; padding: 20;
+}
 
-frame |group| {
-  layout: row; gap: 16;
+frame |group| { layout: row; gap: 16; } [
   |caption| "Group"
-  |row| {
+  |row|     [
     a |box| "a"
     b |box| "b"
-  }
-  |column| {
+  ]
+  |column|  [
     p |box| "p"
     q |box| "q"
-  }
-}
+  ]
+]
 
-band |row| {
-  gap: 24;
-  svc |box|  {
-    width: 140; height: 64;
+band |row| { gap: 24; } [
+  svc |box|  { width: 140; height: 64; } [
     "Service"
     |badge| "NEW"
-  }
+  ]
       |note| "Sticky note"
-}
+]
 
-basket |table| {
-  columns: 80 80 80;
+basket |table| { columns: 80 80 80; } [
   "Fruit" "Qty" "Note"
   "Apple" "12"  "fresh"
   "Mango" "3"   "ripe"
-}
+]

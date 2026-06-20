@@ -1,6 +1,8 @@
 // Every marker type on |line| (SPEC §7).
 
-layout: column; gap: 20; padding: 20;
+{
+  layout: column; gap: 20; padding: 20;
+}
 
 |line| { points: -60 0, 60 0; marker-end: arrow; }
 |line| { points: -60 0, 60 0; marker: arrow; }

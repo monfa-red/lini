@@ -220,8 +220,9 @@ fn crossing_counts_are_pinned() {
 /// the engine must detour it instead and draw both.
 #[test]
 fn audit_removes_a_removable_crossing() {
-    let src = "layout: grid; columns: repeat(3); gap: 40;\n\
+    let src = "{ layout: grid; columns: repeat(3); gap: 40;\n\
                -> { clearance: 8; }\n\
+               }\n\
                north |box| { cell: 2 1; }\n\
                south |box| { cell: 2 3; }\n\
                west  |box| { cell: 1 2; }\n\
@@ -243,8 +244,9 @@ fn audit_removes_a_removable_crossing() {
 /// and the report reaches the CLI's strict gate as a diagnostic.
 #[test]
 fn a_walled_in_wire_is_reported_impossible() {
-    let src = "layout: grid; columns: repeat(3); gap: 10;\n\
+    let src = "{ layout: grid; columns: repeat(3); gap: 10;\n\
                -> { clearance: 16; }\n\
+               }\n\
                n1 |box| { width: 40; height: 40; cell: 1 1; }\n\
                n2 |box| { width: 40; height: 40; cell: 2 1; }\n\
                n3 |box| { width: 40; height: 40; cell: 3 1; }\n\
@@ -329,13 +331,15 @@ fn gap_growth_completes_a_starved_scene() {
 /// for separate bodies; the walled-in fixture above covers that path.)
 #[test]
 fn gap_growth_is_bounded_where_no_gap_can_help() {
-    let src = "layout: row; gap: 40;\n\
+    let src = "{ layout: row; gap: 40;\n\
                  -> { clearance: 16; }\n\
+               }\n\
                grp |group| {\n\
                  layout: row; gap: 24; padding: 24;\n\
+               } [\n\
                  aa |box| { width: 40; height: 40; }\n\
                  bb |box| { width: 40; height: 40; }\n\
-               }\n\
+               ]\n\
                grp.left -> grp.aa.left\ngrp.left -> grp.aa.left\ngrp.left -> grp.aa.left\n";
     let raw = lini::testing::route_sample_raw(src, 16.0);
     let grown = lini::testing::route_sample(src, 16.0);
@@ -365,8 +369,9 @@ fn gap_growth_is_bounded_where_no_gap_can_help() {
 #[test]
 fn a_full_node_compacts_port_rows_rather_than_turning_wires_away() {
     let mut src = String::from(
-        "layout: grid; columns: repeat(5); gap: 60;\n\
+        "{ layout: grid; columns: repeat(5); gap: 60;\n\
          -> { clearance: 8; }\n\
+         }\n\
          hub |box| { width: 40; height: 40; cell: 3 3; }\n",
     );
     let cells: Vec<(usize, usize)> = (1..=5)

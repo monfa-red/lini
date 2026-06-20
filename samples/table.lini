@@ -1,9 +1,8 @@
 // A |table| is a grid that draws dividers and has gap: 0; cells are bare text
 // that auto-flows into the tracks (SPEC §8).
 
-basket |table| {
-  columns: 80 140 80;
+basket |table| { columns: 80 140 80; } [
   "Fruit" "Quantity" "Notes"
   "Apple" "12"       "fresh"
   "Mango" ""         "ripe"
-}
+]

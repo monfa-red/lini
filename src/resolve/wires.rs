@@ -13,7 +13,7 @@ use super::scene::{PathIndex, SceneCtx};
 use super::value::resolve_groups;
 use crate::ast::LineStyle;
 use crate::error::Error;
-use crate::syntax::ast::{Child, Endpoint, EndpointGroup, Wire};
+use crate::syntax::ast::{Endpoint, EndpointGroup, Wire};
 
 /// Resolve one wire statement into one resolved wire per cartesian pair.
 /// `path_prefix` scopes a lifted internal wire to its host instance;
@@ -38,10 +38,8 @@ pub fn resolve_wire(
     };
     let mut ordered: Vec<(String, ResolvedValue)> = wire_defaults.to_vec();
     ordered.extend(ctx.sheet.node_layers(&[], &wire_facts));
-    if let Some(block) = &w.block {
-        for d in &block.decls {
-            ordered.push((d.name.clone(), resolve_groups(&d.groups, d.span, ctx.vars)?));
-        }
+    for d in &w.style {
+        ordered.push((d.name.clone(), resolve_groups(&d.groups, d.span, ctx.vars)?));
     }
 
     let markers = resolve_markers(
@@ -62,18 +60,15 @@ pub fn resolve_wire(
         .unwrap_or_default();
     attrs.map.remove("along");
 
-    // Labels are bare strings or `|plain|` boxes (a styled / translated label).
+    // Labels are bare strings, placed by `along:` and styled together (SPEC §9).
     let mut texts: Vec<ResolvedText> = Vec::new();
-    if let Some(block) = &w.block {
-        for (i, label) in block.labels.iter().enumerate() {
-            let pos = along.get(i).copied().map_or(Along::Auto, Along::Fraction);
-            let (text, map) = resolve_wire_label(label, ctx)?;
-            texts.push(ResolvedText {
-                text,
-                along: pos,
-                attrs: wire_text_attrs(map, ctx.vars),
-            });
-        }
+    for (i, label) in w.labels.iter().enumerate() {
+        let pos = along.get(i).copied().map_or(Along::Auto, Along::Fraction);
+        texts.push(ResolvedText {
+            text: label.text.clone(),
+            along: pos,
+            attrs: wire_text_attrs(AttrMap::new(), ctx.vars),
+        });
     }
 
     // Cartesian fan expansion: one resolved wire per endpoint sequence.
@@ -136,33 +131,6 @@ fn collect_fractions(v: &ResolvedValue) -> Vec<f64> {
             xs.iter().filter_map(ResolvedValue::as_number).collect()
         }
         _ => Vec::new(),
-    }
-}
-
-/// A wire label's text and per-label attrs (SPEC §9): a bare string carries no
-/// styling; a `|plain|` box contributes its first string as the text and its
-/// declarations (`translate`, `font-*`, `color`) as the attrs.
-fn resolve_wire_label(label: &Child, ctx: &SceneCtx) -> Result<(String, AttrMap), Error> {
-    match label {
-        Child::Text(t) => Ok((t.text.clone(), AttrMap::new())),
-        Child::Box(n) => {
-            let block = n.block.as_ref();
-            let text = block
-                .and_then(|b| {
-                    b.children.iter().find_map(|c| match c {
-                        Child::Text(t) => Some(t.text.clone()),
-                        Child::Box(_) => None,
-                    })
-                })
-                .unwrap_or_default();
-            let mut map = AttrMap::new();
-            if let Some(b) = block {
-                for d in &b.decls {
-                    map.insert(d.name.clone(), resolve_groups(&d.groups, d.span, ctx.vars)?);
-                }
-            }
-            Ok((text, map))
-        }
     }
 }
 

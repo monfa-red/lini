@@ -32,7 +32,7 @@ fn theme_font_stack_emits_verbatim() {
     // round-trip into the @layer block as-is — not get wrapped into one bogus
     // quoted family (`"Inter, system-ui, sans-serif"`).
     let svg = render_themed(
-        "|box| { \"hi\" }\n",
+        "|box| \"hi\"\n",
         ".lini { --lini-font-family: Inter, system-ui, sans-serif; }",
     );
     assert!(
@@ -47,7 +47,7 @@ fn theme_quoted_font_family_is_not_double_wrapped() {
     // A family with spaces arrives already quoted; re-quoting yields the
     // malformed `""Helvetica Neue", sans-serif"`.
     let svg = render_themed(
-        "|box| { \"hi\" }\n",
+        "|box| \"hi\"\n",
         ".lini { --lini-font-family: \"Helvetica Neue\", sans-serif; }",
     );
     assert!(
@@ -62,10 +62,7 @@ fn theme_quoted_font_family_is_not_double_wrapped() {
 fn theme_font_inherit_stays_a_keyword() {
     // SPEC §11: `--lini-font-family: inherit` lets an embedded diagram pick up
     // the host page's font. It must stay the bare CSS keyword, never quoted.
-    let svg = render_themed(
-        "|box| { \"hi\" }\n",
-        ".lini { --lini-font-family: inherit; }",
-    );
+    let svg = render_themed("|box| \"hi\"\n", ".lini { --lini-font-family: inherit; }");
     assert!(svg.contains("--lini-font-family: inherit;"), "{}", svg);
     assert!(
         !svg.contains("\"inherit\""),
@@ -76,7 +73,7 @@ fn theme_font_inherit_stays_a_keyword() {
 
 #[test]
 fn live_mode_emits_var_refs_for_visual_attrs() {
-    let svg = render_live("|box| { \"hi\" }\n");
+    let svg = render_live("|box| \"hi\"\n");
     assert!(svg.contains("var(--lini-fill)"), "{}", svg);
     assert!(svg.contains("var(--lini-stroke)"), "{}", svg);
     assert!(
@@ -89,7 +86,7 @@ fn live_mode_emits_var_refs_for_visual_attrs() {
 fn multiline_label_emits_one_tspan_per_line() {
     // SPEC §6: `\n` splits a label across lines (spacing size × 1.2). Layout
     // already sizes the bbox for N lines; render lays them out as tspans.
-    let svg = render_baked("n |box| { \"one\\ntwo\" }\n");
+    let svg = render_baked("n |box| \"one\\ntwo\"\n");
     assert_eq!(
         svg.matches("<tspan").count(),
         2,
@@ -105,7 +102,7 @@ fn multiline_label_emits_one_tspan_per_line() {
 
 #[test]
 fn single_line_label_stays_a_bare_text() {
-    let svg = render_baked("n |box| { \"solo\" }\n");
+    let svg = render_baked("n |box| \"solo\"\n");
     assert!(
         !svg.contains("<tspan"),
         "single line must not wrap in a tspan: {}",
@@ -127,7 +124,7 @@ fn line_missing_points_error_uses_pipe_sigil() {
 fn define_paint_rides_its_shape_rule() {
     // SPEC §13: a define's own paint states on its `lini-shape-{name}` rule;
     // geometry (radius) stays baked, never on the rule.
-    let svg = render_baked("s::box { stroke: blue; radius: 5; }\nn |s| { \"n\" }\n");
+    let svg = render_baked("{\n  |s::box| { stroke: blue; radius: 5; }\n}\nn |s| \"n\"\n");
     let rule = svg
         .lines()
         .find(|l| l.contains(".lini-shape-s {"))
@@ -150,7 +147,7 @@ fn inherited_text_prop_reset_to_default_is_emitted() {
     // ancestor, must still emit it on its own <g> — else the dropped
     // declaration leaves it inheriting the ancestor's value.
     let svg =
-        render_baked("crew |group| { font-size: 20; reset |plain| { font-size: 13; \"x\" } }\n");
+        render_baked("crew |group| { font-size: 20 } [ reset |plain| { font-size: 13 } \"x\" ]\n");
     let g_line = svg
         .lines()
         .find(|l| l.contains("data-id=\"reset\""))
@@ -164,7 +161,7 @@ fn inherited_text_prop_reset_to_default_is_emitted() {
 
 #[test]
 fn bake_mode_resolves_var_refs_to_literals() {
-    let svg = render_baked("|box| { \"hi\" }\n");
+    let svg = render_baked("|box| \"hi\"\n");
     assert!(svg.contains("fill: white; stroke: #444;"), "{}", svg);
     assert!(svg.contains("fill: currentColor"), "{}", svg);
     assert!(svg.contains("color: black"), "{}", svg);
@@ -179,14 +176,14 @@ fn bake_mode_resolves_var_refs_to_literals() {
 #[test]
 fn inline_override_baked_into_style_attr() {
     // An inline paint override differs from the rules and rides style=.
-    let svg = render_baked("--accent: #ff00aa;\ncat |box| { fill: --accent; \"Cat\" }\n");
+    let svg = render_baked("{\n  --accent: #ff00aa;\n}\ncat |box| { fill: --accent } \"Cat\"\n");
     assert!(svg.contains(r#"style="fill: #ff00aa""#), "{}", svg);
 }
 
 #[test]
 fn auto_classes_include_primitive_and_styles() {
     let svg = render_live(
-        ".bold { font-weight: bold; }\n.thin { stroke: #444; }\ncat |box| .bold .thin { \"Cat\" }\n",
+        "{\n  .bold { font-weight: bold; }\n  .thin { stroke: #444; }\n}\ncat |box.bold.thin| \"Cat\"\n",
     );
     assert!(svg.contains("lini-shape-box"), "{}", svg);
     assert!(svg.contains("lini-style-bold"), "{}", svg);
@@ -195,7 +192,7 @@ fn auto_classes_include_primitive_and_styles() {
 
 #[test]
 fn auto_classes_include_user_shape_chain() {
-    let svg = render_live("treat::box { radius: 5; }\ncat |treat| { \"Cat\" }\n");
+    let svg = render_live("{\n  |treat::box| { radius: 5; }\n}\ncat |treat| \"Cat\"\n");
     assert!(svg.contains("lini-shape-treat"), "{}", svg);
     assert!(svg.contains("lini-shape-box"), "{}", svg);
     assert!(svg.contains(r#"data-id="cat""#), "{}", svg);
@@ -260,13 +257,13 @@ fn full_spec_example_renders_in_both_modes() {
 
 #[test]
 fn stroke_style_renders_dasharray() {
-    let svg = render_live("|box| { width: 80; height: 40; stroke-style: dashed; \"d\" }\n");
+    let svg = render_live("|box| { width: 80; height: 40; stroke-style: dashed } \"d\"\n");
     assert!(svg.contains("stroke-dasharray"), "{}", svg);
 }
 
 #[test]
 fn font_size_on_container_reaches_descendant_text() {
-    let svg = render_live("g |group| { font-size: 10; \"hi\" }\n");
+    let svg = render_live("g |group| { font-size: 10 } \"hi\"\n");
     assert!(svg.contains("font-size: 10px"), "{}", svg);
 }
 

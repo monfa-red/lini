@@ -1,44 +1,41 @@
 // The hard scene — a contended 3×3 layout: a fanned hub, bundled rails,
 // detours, forced sides, a parent→child wire, and a forced outer pair.
 
-layout: grid; columns: repeat(3); gap: 30;
--> { clearance: 12; }
+{
+  layout: grid; columns: repeat(3); gap: 30;
+  -> { clearance: 12; }
+  .hot { stroke: red; stroke-width: 3; }
+  .cool { stroke: blue; }
+  .attention { stroke: orange; }
+}
 
-.hot { stroke: red; stroke-width: 3; }
-.cool { stroke: blue; }
-.attention { stroke: orange }
-
-alpha |box|  { cell: 1 1; "Alpha" }
-north |group| {
-  cell: 2 1; layout: column; gap: 16;
+alpha |box|   { cell: 1 1; } "Alpha"
+north |group| { cell: 2 1; layout: column; gap: 16; } [
       |caption| "North"
-  nn1 |box|    "N1"
-  nn2 |box|    "N2"
-}
-beta  |box|  { cell: 3 1; "Beta" }
+  nn1 |box|     "N1"
+  nn2 |box|     "N2"
+]
+beta  |box|   { cell: 3 1; } "Beta"
 
-west |group| {
-  cell: 1 2; layout: column; gap: 16;
+west |group| { cell: 1 2; layout: column; gap: 16; } [
       |caption| "West"
-  ww1 |box|    "W1"
-  ww2 |box|    "W2"
-}
-hub  |box|  { cell: 2 2; "Hub" }
-east |group| {
-  cell: 3 2; layout: column; padding: 16; gap: 16;
+  ww1 |box|     "W1"
+  ww2 |box|     "W2"
+]
+hub  |box|   { cell: 2 2; } "Hub"
+east |group| { cell: 3 2; layout: column; padding: 16; gap: 16; } [
       |caption| "East"
-  ee1 |box|    "E1"
-  ee2 |box|    "E2"
-}
+  ee1 |box|     "E1"
+  ee2 |box|     "E2"
+]
 
-gamma |box|  { cell: 1 3; "Gamma" }
-south |group| {
-  cell: 2 3; layout: column; gap: 16;
+gamma |box|   { cell: 1 3; } "Gamma"
+south |group| { cell: 2 3; layout: column; gap: 16; } [
       |caption| "South"
-  ss1 |box|    "S1"
-  ss2 |box|    "S2"
-}
-delta |box|  { cell: 3 3; "Delta" }
+  ss1 |box|     "S1"
+  ss2 |box|     "S2"
+]
+delta |box|   { cell: 3 3; } "Delta"
 
 hub -> north.nn1 & east.ee1
 hub -> south.ss1 & west.ww1

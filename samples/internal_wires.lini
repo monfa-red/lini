@@ -1,10 +1,11 @@
 // Internal wires in a define — each instance materialises its own (SPEC §9).
 
-room::group {
-  layout: column; gap: 10; padding: 12;
-  inlet  |box| "Inlet"
-  outlet |box| "Outlet"
-  inlet -> outlet "flows"
+{
+  |room::group| { layout: column; gap: 10; padding: 12; } [
+    inlet  |box| "Inlet"
+    outlet |box| "Outlet"
+    inlet -> outlet "flows"
+  ]
 }
 
 garden  |room| "Garden"

@@ -1,17 +1,16 @@
 //! Canonical source formatter (SPEC §14). Parses to the AST and re-emits a
-//! normalized form: the three phases in order (stylesheet → instances → wires),
-//! `key: value;` declarations in `{ }` blocks, `name::base` defines, 2-space
-//! indent, space-separated value groups (comma between groups). Comments and
-//! blank-line groupings are preserved; sibling nodes align their id/type
-//! columns. Idempotent: `fmt(fmt(x)) == fmt(x)`.
+//! normalized form: the three phases in order (the stylesheet `{ }`, then the
+//! instances, then the wires), `{ }` style blocks and `[ ]` child lists, bar-wrapped
+//! type selectors and `|name::base|` defines, 2-space indent, space-separated value
+//! groups. Comments and blank-line groupings are preserved; sibling nodes align
+//! their id/type columns. Idempotent: `fmt(fmt(x)) == fmt(x)`.
 
 use crate::ast::{Side, WireOp};
 use crate::error::Error;
 use crate::lexer;
 use crate::span::Span;
 use crate::syntax::ast::{
-    Block, Child, Decl, Define, Endpoint, File, Node, Rule, SelPart, Selector, StyleItem, Value,
-    Wire, WireBlock,
+    Child, Decl, Define, Endpoint, File, Node, Rule, SelPart, Selector, StyleItem, Value, Wire,
 };
 use crate::syntax::parser;
 
@@ -20,9 +19,9 @@ use trivia::{Trivia, TriviaToken, scan_trivia};
 
 const INDENT: &str = "  ";
 
-/// A declarations-only block collapses onto one line (`.hot { stroke: red; }`)
-/// when the whole line fits within this budget; past it, or once the block holds
-/// a child node/wire, it breaks across lines. Prettier's print-width, give or take.
+/// A block collapses onto one line (`|box| { radius: 6; }`) when the whole line
+/// fits within this budget; past it, or once it holds a child node/wire, it
+/// breaks across lines. Prettier's print-width, give or take.
 const MAX_LINE: usize = 80;
 
 pub fn format(src: &str) -> Result<String, Error> {
@@ -43,7 +42,7 @@ pub fn format(src: &str) -> Result<String, Error> {
 
 /// Emit an AST with no source to draw trivia from — for a synthesized `File`
 /// (the desugar pass), whose nodes carry no real spans. Same emitter, empty
-/// trivia: clean output, comments dropped.
+/// trivia: clean output, comments dropped, sugar expanded (`terse: false`).
 pub(crate) fn print_file(file: &File) -> String {
     let mut out = String::new();
     Emitter {
@@ -65,50 +64,25 @@ struct Emitter<'a> {
     /// `print_file` (synthesized ASTs, where mixing anonymous sugar children
     /// with named nodes would pad oddly).
     align: bool,
-    /// Contract a text-only block to trailing labels (`api |box| "API"`). On for
-    /// `fmt`; off for `print_file` (desugar), which expands sugar to the block.
+    /// Contract a text-only `[ ]` to trailing labels (`api |box| "API"`). On for
+    /// `fmt`; off for `print_file` (desugar), which keeps the explicit `[ ]`.
     terse: bool,
 }
 
 impl Emitter<'_> {
     fn emit_file(&mut self, file: &File, src_len: usize) {
-        let mut phases_emitted = 0;
+        let mut phases = 0;
         if !file.stylesheet.is_empty() {
-            // Root config declarations group on one line like a block's, the same
-            // CSS-shaped style (SPEC §20); rules, defines, and `--var`s each take
-            // their own line.
-            let items = &file.stylesheet;
-            let mut i = 0;
-            while i < items.len() {
-                if matches!(items[i], StyleItem::RootDecl(_)) {
-                    let start = i;
-                    while i < items.len() && matches!(items[i], StyleItem::RootDecl(_)) {
-                        i += 1;
-                    }
-                    let run: Vec<&Decl> = items[start..i]
-                        .iter()
-                        .map(|it| match it {
-                            StyleItem::RootDecl(d) => d,
-                            _ => unreachable!(),
-                        })
-                        .collect();
-                    self.emit_grouped_decls(&run, 0);
-                } else {
-                    self.emit_trivia_before(style_item_span(&items[i]).start, 0);
-                    self.emit_style_item(&items[i], 0);
-                    self.cursor = style_item_span(&items[i]).end;
-                    i += 1;
-                }
-            }
-            phases_emitted += 1;
+            self.emit_stylesheet(file);
+            phases += 1;
         }
         if !file.instances.is_empty() {
-            self.section_break(phases_emitted);
+            self.section_break(phases);
             self.emit_children(&file.instances, 0);
-            phases_emitted += 1;
+            phases += 1;
         }
         if !file.wires.is_empty() {
-            self.section_break(phases_emitted);
+            self.section_break(phases);
             for w in &file.wires {
                 self.emit_trivia_before(w.span.start, 0);
                 self.emit_wire(w, 0);
@@ -125,8 +99,8 @@ impl Emitter<'_> {
         }
     }
 
-    /// One blank line between two non-empty phases (only once any phase has been
-    /// written), unless the running output already ends in one.
+    /// One blank line between two non-empty phases, unless the output already
+    /// ends in one.
     fn section_break(&mut self, phases_emitted: usize) {
         if phases_emitted > 0 && !self.out.is_empty() && !self.out.ends_with("\n\n") {
             self.out.push('\n');
@@ -134,6 +108,41 @@ impl Emitter<'_> {
     }
 
     // ───────── Stylesheet ─────────
+
+    fn emit_stylesheet(&mut self, file: &File) {
+        let span = file.stylesheet_span;
+        self.emit_trivia_before(span.start, 0);
+        self.out.push_str("{\n");
+        self.cursor = span.start.saturating_add(1);
+
+        let items = &file.stylesheet;
+        let mut i = 0;
+        while i < items.len() {
+            if matches!(items[i], StyleItem::RootDecl(_)) {
+                // Root config declarations group on one line, the CSS-shaped style.
+                let start = i;
+                while i < items.len() && matches!(items[i], StyleItem::RootDecl(_)) {
+                    i += 1;
+                }
+                let run: Vec<&Decl> = items[start..i]
+                    .iter()
+                    .map(|it| match it {
+                        StyleItem::RootDecl(d) => d,
+                        _ => unreachable!(),
+                    })
+                    .collect();
+                self.emit_grouped_decls(&run, 1);
+            } else {
+                self.emit_trivia_before(style_item_span(&items[i]).start, 1);
+                self.emit_style_item(&items[i], 1);
+                self.cursor = style_item_span(&items[i]).end;
+                i += 1;
+            }
+        }
+        self.emit_trivia_before(span.end.saturating_sub(1), 1);
+        self.out.push_str("}\n");
+        self.cursor = span.end;
+    }
 
     fn emit_style_item(&mut self, item: &StyleItem, depth: usize) {
         match item {
@@ -155,28 +164,44 @@ impl Emitter<'_> {
     fn emit_rule(&mut self, rule: &Rule, depth: usize) {
         self.indent(depth);
         self.emit_selector(&rule.selector);
-        self.emit_decl_block(&rule.decls, rule.span.end, depth);
+        // A rule body is declarations only — always written, even when empty.
+        self.emit_style_block(&rule.decls, rule.span.end, depth, true);
         self.out.push('\n');
     }
 
     fn emit_define(&mut self, def: &Define, depth: usize) {
         self.indent(depth);
+        self.out.push('|');
         self.out.push_str(&def.name);
         self.out.push_str("::");
         self.out.push_str(&def.base);
-        self.emit_block(&def.body, def.span.end, depth);
+        self.out.push('|');
+        let style_end = def
+            .children
+            .first()
+            .map(|c| child_span(c).start)
+            .unwrap_or(def.span.end);
+        self.emit_style_block(&def.style, style_end, depth, true);
+        self.emit_body(&def.children, &def.wires, def.span.end, depth);
         self.out.push('\n');
     }
 
     fn emit_selector(&mut self, sel: &Selector) {
         // The wire-defaults rule carries the reserved `wire` selector internally
-        // but is written with the wire glyph.
-        if let [SelPart::Type(t)] = sel.parts.as_slice()
-            && t == "wire"
-        {
-            self.out.push_str("->");
-            return;
+        // but is written with the wire glyph; a lone class stays bare.
+        match sel.parts.as_slice() {
+            [SelPart::Type(t)] if t == "wire" => {
+                self.out.push_str("->");
+                return;
+            }
+            [SelPart::Class(c)] => {
+                self.out.push('.');
+                self.out.push_str(c);
+                return;
+            }
+            _ => {}
         }
+        self.out.push('|');
         for (i, part) in sel.parts.iter().enumerate() {
             if i > 0 {
                 self.out.push(' ');
@@ -189,6 +214,7 @@ impl Emitter<'_> {
                 }
             }
         }
+        self.out.push('|');
     }
 
     // ───────── Instances ─────────
@@ -214,13 +240,124 @@ impl Emitter<'_> {
         }
     }
 
-    /// The column count if this block is a grid whose children are *all* bare
-    /// text (a `|table|`) and no comment sits between the cells — then the cells
-    /// align into columns (SPEC §8/§14). Any box cell or interleaved comment
-    /// returns `None`, falling the body back to one child per line.
-    fn table_cols(&self, block: &Block) -> Option<usize> {
-        let cells = &block.children;
-        if cells.is_empty() || !cells.iter().all(|c| matches!(c, Child::Text(_))) {
+    fn emit_node(&mut self, node: &Node, depth: usize, w: align::NodeWidths) {
+        self.indent(depth);
+        // Head: `id |type.classes|`, with alignment widths padding the columns.
+        let mut wrote = false;
+        if let Some(id) = &node.id {
+            self.out.push_str(id);
+            pad(self.out, w.id.saturating_sub(id.len()));
+            wrote = true;
+        } else if w.id > 0 {
+            pad(self.out, w.id);
+            wrote = true;
+        }
+        let bars = type_bars(&node.ty, &node.classes);
+        if !bars.is_empty() {
+            self.space_if(wrote);
+            self.out.push_str(&bars);
+            pad(self.out, w.ty.saturating_sub(bars.len()));
+        } else if w.ty > 0 {
+            self.space_if(wrote);
+            pad(self.out, w.ty);
+        }
+
+        let content_start = node
+            .children
+            .first()
+            .map(|c| child_span(c).start)
+            .unwrap_or(node.span.end);
+        if !node.style.is_empty() {
+            self.emit_style_block(&node.style, content_start, depth, true);
+        }
+        self.emit_content(node, depth);
+    }
+
+    /// A node's content: a `|table|`'s aligned cells, a terse trailing label, an
+    /// inline text `[ ]` (desugar), or the multi-line `[ ]` body.
+    fn emit_content(&mut self, node: &Node, depth: usize) {
+        if node.children.is_empty() && node.wires.is_empty() {
+            return;
+        }
+        let end = node.span.end;
+        if let Some(cols) = self.table_cols(node) {
+            self.out.push_str(" [\n");
+            self.emit_aligned_cells(&node.children, cols, depth + 1);
+            self.emit_trivia_before(end.saturating_sub(1), depth + 1);
+            self.indent(depth);
+            self.out.push(']');
+            return;
+        }
+        let text_only =
+            node.wires.is_empty() && node.children.iter().all(|c| matches!(c, Child::Text(_)));
+        if text_only && !self.has_trivia_between(self.cursor, end) {
+            if self.terse {
+                for c in &node.children {
+                    if let Child::Text(t) = c {
+                        self.out.push(' ');
+                        self.emit_string(&t.text);
+                    }
+                }
+                self.cursor = end;
+                return;
+            }
+            if self.try_inline_text(&node.children, end) {
+                return;
+            }
+        }
+        self.emit_body(&node.children, &node.wires, end, depth);
+    }
+
+    /// `[ "a" "b" ]` on one line, when it fits (desugar's explicit text form).
+    fn try_inline_text(&mut self, children: &[Child], end: usize) -> bool {
+        let line_start = self.out.rfind('\n').map_or(0, |i| i + 1);
+        let saved = self.out.len();
+        self.out.push_str(" [ ");
+        for (i, c) in children.iter().enumerate() {
+            if i > 0 {
+                self.out.push(' ');
+            }
+            if let Child::Text(t) = c {
+                self.emit_string(&t.text);
+            }
+        }
+        self.out.push_str(" ]");
+        if self.out.len() - line_start <= MAX_LINE {
+            self.cursor = end;
+            true
+        } else {
+            self.out.truncate(saved);
+            false
+        }
+    }
+
+    /// The multi-line `[ children … wires … ]` body.
+    fn emit_body(&mut self, children: &[Child], wires: &[Wire], end: usize, depth: usize) {
+        if children.is_empty() && wires.is_empty() && !self.has_comment_in(self.cursor, end) {
+            return;
+        }
+        self.out.push_str(" [\n");
+        self.emit_children(children, depth + 1);
+        for w in wires {
+            self.emit_trivia_before(w.span.start, depth + 1);
+            self.emit_wire(w, depth + 1);
+            self.out.push('\n');
+            self.cursor = w.span.end;
+        }
+        self.emit_trivia_before(end.saturating_sub(1), depth + 1);
+        self.indent(depth);
+        self.out.push(']');
+    }
+
+    /// The column count if this node is a grid whose children are *all* bare text
+    /// (a `|table|`) with no interleaved comment — then the cells align into
+    /// columns (SPEC §8/§14). Otherwise `None`, falling back to one child per line.
+    fn table_cols(&self, node: &Node) -> Option<usize> {
+        let cells = &node.children;
+        if cells.is_empty()
+            || !node.wires.is_empty()
+            || !cells.iter().all(|c| matches!(c, Child::Text(_)))
+        {
             return None;
         }
         let start = child_span(&cells[0]).start;
@@ -228,7 +365,7 @@ impl Emitter<'_> {
         if self.has_trivia_between(start, end) {
             return None;
         }
-        count_columns(&block.decls)
+        count_columns(&node.style)
     }
 
     /// Emit bare-text cells as aligned rows: each column padded to its widest
@@ -238,7 +375,7 @@ impl Emitter<'_> {
             .iter()
             .map(|c| match c {
                 Child::Text(t) => quoted(&t.text),
-                Child::Box(_) => String::new(), // table_cols guarantees all-text
+                Child::Box(_) => String::new(),
             })
             .collect();
         let mut widths = vec![0usize; cols];
@@ -262,68 +399,6 @@ impl Emitter<'_> {
         self.cursor = child_span(cells.last().unwrap()).end;
     }
 
-    fn emit_node(&mut self, node: &Node, depth: usize, w: align::NodeWidths) {
-        self.indent(depth);
-        // Head tokens — `id |type| "labels" .classes` — each separated from the
-        // last by one space, with the alignment widths padding the id/type
-        // columns out to the group's max. `wrote` tracks whether any token (or a
-        // reserved-but-empty column) precedes, so the separator never leads.
-        let mut wrote = false;
-        if let Some(id) = &node.id {
-            self.out.push_str(id);
-            pad(self.out, w.id.saturating_sub(id.len()));
-            wrote = true;
-        } else if w.id > 0 {
-            pad(self.out, w.id);
-            wrote = true;
-        }
-        if let Some(ty) = &node.ty {
-            self.space_if(wrote);
-            let t = format!("|{}|", ty);
-            self.out.push_str(&t);
-            pad(self.out, w.ty.saturating_sub(t.len()));
-            wrote = true;
-        } else if w.ty > 0 {
-            self.space_if(wrote);
-            pad(self.out, w.ty);
-            wrote = true;
-        }
-        for class in &node.classes {
-            self.space_if(wrote);
-            self.out.push('.');
-            self.out.push_str(class);
-            wrote = true;
-        }
-        if let Some(block) = &node.block
-            && !self.try_trailing_labels(
-                &block.children,
-                block.decls.is_empty() && block.wires.is_empty(),
-                node.span.end,
-            )
-        {
-            self.emit_block(block, node.span.end, depth);
-        }
-    }
-
-    /// In terse mode, a block that is only text (≥1 child, no decls / boxes /
-    /// wires / comment) is written as trailing labels — `… "a" "b"`, no braces.
-    /// Returns whether it did so (and advanced the cursor).
-    fn try_trailing_labels(&mut self, children: &[Child], no_config: bool, end: usize) -> bool {
-        let text_only =
-            !children.is_empty() && children.iter().all(|c| matches!(c, Child::Text(_)));
-        if !self.terse || !no_config || !text_only || self.has_trivia_between(self.cursor, end) {
-            return false;
-        }
-        for c in children {
-            if let Child::Text(t) = c {
-                self.out.push(' ');
-                self.emit_string(&t.text);
-            }
-        }
-        self.cursor = end;
-        true
-    }
-
     fn space_if(&mut self, cond: bool) {
         if cond {
             self.out.push(' ');
@@ -332,8 +407,7 @@ impl Emitter<'_> {
 
     /// Emit a run of declarations grouped onto as few lines as the source's
     /// trivia allows (SPEC §20): consecutive decls with nothing between them
-    /// share one line (`cell: 1 2; layout: column; gap: 16;`), and a comment or
-    /// blank line starts a fresh one. They never share the opening brace's line.
+    /// share one line, and a comment or blank line starts a fresh one.
     fn emit_grouped_decls(&mut self, decls: &[&Decl], depth: usize) {
         let mut mid_line = false;
         for d in decls {
@@ -360,32 +434,43 @@ impl Emitter<'_> {
         self.trivia.iter().any(|t| t.pos >= start && t.pos < end)
     }
 
-    /// Try to collapse a body of declarations + bare-text labels onto the current
-    /// line — ` { cell: 1 1; "Cat" }`. Restores and returns `false` if there's a
-    /// comment/blank inside or the finished line exceeds [`MAX_LINE`], so the
-    /// caller falls through to the multi-line form. A box child or internal wire
-    /// is the caller's cue never to try.
-    fn try_inline(&mut self, decls: &[Decl], texts: &[&str], end: usize) -> bool {
+    /// A `{ }` style block: declarations only. Collapses to ` { a; b }` when it
+    /// fits and has no interleaved comment, else breaks across lines. When empty,
+    /// `keep_empty` decides ` {}` (rules / defines) vs nothing (a node's style).
+    fn emit_style_block(&mut self, decls: &[Decl], end: usize, depth: usize, keep_empty: bool) {
+        if decls.is_empty() {
+            if keep_empty && !self.has_comment_in(self.cursor, end) {
+                self.out.push_str(" {}");
+                self.cursor = end;
+            }
+            return;
+        }
+        if self.try_inline_decls(decls, end) {
+            return;
+        }
+        self.out.push_str(" {\n");
+        let refs: Vec<&Decl> = decls.iter().collect();
+        self.emit_grouped_decls(&refs, depth + 1);
+        self.emit_trivia_before(end.saturating_sub(1), depth + 1);
+        self.indent(depth);
+        self.out.push('}');
+    }
+
+    /// Try to collapse a declaration block onto the current line — ` { a; b }`.
+    /// Restores and returns `false` if there is a comment inside or the line
+    /// exceeds [`MAX_LINE`].
+    fn try_inline_decls(&mut self, decls: &[Decl], end: usize) -> bool {
         if self.has_trivia_between(self.cursor, end) {
             return false;
         }
         let line_start = self.out.rfind('\n').map_or(0, |i| i + 1);
         let saved = self.out.len();
         self.out.push_str(" { ");
-        let mut first = true;
-        for d in decls {
-            if !first {
+        for (i, d) in decls.iter().enumerate() {
+            if i > 0 {
                 self.out.push(' ');
             }
             self.emit_decl(d, false);
-            first = false;
-        }
-        for t in texts {
-            if !first {
-                self.out.push(' ');
-            }
-            self.emit_string(t);
-            first = false;
         }
         self.out.push_str(" }");
         if self.out.len() - line_start <= MAX_LINE {
@@ -395,63 +480,6 @@ impl Emitter<'_> {
             self.out.truncate(saved);
             false
         }
-    }
-
-    fn emit_block(&mut self, block: &Block, end: usize, depth: usize) {
-        let empty = block.decls.is_empty() && block.children.is_empty() && block.wires.is_empty();
-        if empty && !self.has_comment_in(self.cursor, end) {
-            self.out.push_str(" {}");
-            self.cursor = end;
-            return;
-        }
-        // A box child or internal wire forces the multi-line form, as does a
-        // multi-row table (it always breaks into aligned rows); otherwise a body
-        // of only declarations and bare text may collapse onto one line.
-        let has_box = block.children.iter().any(|c| matches!(c, Child::Box(_)));
-        let table = self.table_cols(block);
-        let multi_row = matches!(table, Some(cols) if block.children.len() > cols);
-        if !has_box && block.wires.is_empty() && !multi_row {
-            let texts = text_strs(&block.children);
-            if self.try_inline(&block.decls, &texts, end) {
-                return;
-            }
-        }
-        self.out.push_str(" {\n");
-        let decls: Vec<&Decl> = block.decls.iter().collect();
-        self.emit_grouped_decls(&decls, depth + 1);
-        // A grid of bare-text cells (a `|table|`) aligns into columns; any other
-        // cell kind, or a comment between cells, falls back to one-per-line.
-        match table {
-            Some(cols) => self.emit_aligned_cells(&block.children, cols, depth + 1),
-            None => self.emit_children(&block.children, depth + 1),
-        }
-        for wire in &block.wires {
-            self.emit_trivia_before(wire.span.start, depth + 1);
-            self.emit_wire(wire, depth + 1);
-            self.out.push('\n');
-            self.cursor = wire.span.end;
-        }
-        self.emit_trivia_before(end, depth + 1);
-        self.indent(depth);
-        self.out.push('}');
-    }
-
-    /// A rule body: only declarations, same braces.
-    fn emit_decl_block(&mut self, decls: &[Decl], end: usize, depth: usize) {
-        if decls.is_empty() && !self.has_comment_in(self.cursor, end) {
-            self.out.push_str(" {}");
-            self.cursor = end;
-            return;
-        }
-        if self.try_inline(decls, &[], end) {
-            return;
-        }
-        self.out.push_str(" {\n");
-        let refs: Vec<&Decl> = decls.iter().collect();
-        self.emit_grouped_decls(&refs, depth + 1);
-        self.emit_trivia_before(end, depth + 1);
-        self.indent(depth);
-        self.out.push('}');
     }
 
     // ───────── Wires ─────────
@@ -475,10 +503,14 @@ impl Emitter<'_> {
             self.out.push_str(" .");
             self.out.push_str(class);
         }
-        if let Some(block) = &w.block
-            && !self.try_trailing_labels(&block.labels, block.decls.is_empty(), w.span.end)
-        {
-            self.emit_wire_block(block, w.span.end, depth);
+        if !w.style.is_empty() {
+            let style_end = w.labels.first().map(|l| l.span.start).unwrap_or(w.span.end);
+            self.emit_style_block(&w.style, style_end, depth, false);
+        }
+        // A wire is not a container: its labels always trail (SPEC §9).
+        for label in &w.labels {
+            self.out.push(' ');
+            self.emit_string(&label.text);
         }
     }
 
@@ -488,29 +520,6 @@ impl Emitter<'_> {
             self.out.push('.');
             self.out.push_str(side_str(side));
         }
-    }
-
-    fn emit_wire_block(&mut self, block: &WireBlock, end: usize, depth: usize) {
-        let empty = block.decls.is_empty() && block.labels.is_empty();
-        if empty && !self.has_comment_in(self.cursor, end) {
-            self.out.push_str(" {}");
-            self.cursor = end;
-            return;
-        }
-        let has_box = block.labels.iter().any(|c| matches!(c, Child::Box(_)));
-        if !has_box {
-            let texts = text_strs(&block.labels);
-            if self.try_inline(&block.decls, &texts, end) {
-                return;
-            }
-        }
-        self.out.push_str(" {\n");
-        let decls: Vec<&Decl> = block.decls.iter().collect();
-        self.emit_grouped_decls(&decls, depth + 1);
-        self.emit_children(&block.labels, depth + 1);
-        self.emit_trivia_before(end, depth + 1);
-        self.indent(depth);
-        self.out.push('}');
     }
 
     // ───────── Declarations & values ─────────
@@ -618,6 +627,24 @@ fn style_item_span(item: &StyleItem) -> Span {
     }
 }
 
+/// The head bars `|type.class.class|` (or `|.class|`, default box), or empty when
+/// the node has neither a type nor a class.
+fn type_bars(ty: &Option<String>, classes: &[String]) -> String {
+    if ty.is_none() && classes.is_empty() {
+        return String::new();
+    }
+    let mut s = String::from("|");
+    if let Some(t) = ty {
+        s.push_str(t);
+    }
+    for c in classes {
+        s.push('.');
+        s.push_str(c);
+    }
+    s.push('|');
+    s
+}
+
 fn wire_op_str(op: WireOp) -> String {
     format!(
         "{}{}{}",
@@ -687,18 +714,6 @@ fn count_columns(decls: &[Decl]) -> Option<usize> {
         })
         .sum();
     (n > 0).then_some(n)
-}
-
-/// The bare-text labels among a body's children, in order — used to test whether
-/// the body fits inline (boxes are checked separately by the caller).
-fn text_strs(children: &[Child]) -> Vec<&str> {
-    children
-        .iter()
-        .filter_map(|c| match c {
-            Child::Text(t) => Some(t.text.as_str()),
-            Child::Box(_) => None,
-        })
-        .collect()
 }
 
 fn format_number(n: f64) -> String {

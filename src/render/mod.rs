@@ -311,7 +311,7 @@ mod tests {
 
     #[test]
     fn root_fill_paints_a_backing_rect_over_the_viewbox() {
-        let svg = svg_for("fill: #eef;\nx |box|\n");
+        let svg = svg_for("{ fill: #eef; }\nx |box|\n");
         assert!(
             svg.contains(r#"class="lini-canvas""#) && svg.contains(r##"fill="#eef""##),
             "{svg}"

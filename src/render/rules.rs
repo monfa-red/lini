@@ -550,7 +550,7 @@ mod tests {
     #[test]
     fn style_defs_emit_in_defs_order_used_only() {
         let css = emit_str(&rules_for(
-            ".a { stroke: red; }\n.b { stroke: blue; }\n.unused { stroke: green; }\nx |box| .b .a\n",
+            "{ .a { stroke: red; }\n.b { stroke: blue; }\n.unused { stroke: green; } }\nx |box.b.a|\n",
         ));
         let a = css.find(".lini .lini-style-a").expect("a rule");
         let b = css.find(".lini .lini-style-b").expect("b rule");
@@ -601,7 +601,7 @@ mod tests {
 
     #[test]
     fn type_defaults_merge_into_shape_rule() {
-        let css = emit_str(&rules_for("box { fill: lightyellow; }\nx |box|\n"));
+        let css = emit_str(&rules_for("{ |box| { fill: lightyellow; } }\nx |box|\n"));
         assert!(
             css.contains(".lini .lini-shape-box { fill: lightyellow;"),
             "{}",
@@ -611,7 +611,7 @@ mod tests {
 
     #[test]
     fn group_template_rule_follows_rect_rule() {
-        let css = emit_str(&rules_for("g |group| { x |box| }\n"));
+        let css = emit_str(&rules_for("g |group| [ x |box| ]\n"));
         let rect = css.find(".lini .lini-shape-box").expect("rect rule");
         let group = css.find(".lini .lini-shape-group").expect("group rule");
         assert!(rect < group, "{}", css);
@@ -625,7 +625,7 @@ mod tests {
     #[test]
     fn user_shape_rule_carries_its_paint() {
         let css = emit_str(&rules_for(
-            "treat::box { fill: pink; radius: 5; }\nx |treat|\n",
+            "{ |treat::box| { fill: pink; radius: 5; } }\nx |treat|\n",
         ));
         assert!(
             css.contains(".lini .lini-shape-treat { fill: pink; }"),

@@ -218,12 +218,14 @@ fn auto_created(index: &PathIndex, file: &File) -> Vec<Node> {
 }
 
 fn auto_box(id: &str, span: Span) -> Node {
-    // No block → id-as-label gives it the id as its centred text (SPEC §3).
+    // No content → id-as-label gives it the id as its centred text (SPEC §3).
     Node {
         id: Some(id.to_string()),
         ty: Some("box".to_string()),
         classes: Vec::new(),
-        block: None,
+        style: Vec::new(),
+        children: Vec::new(),
+        wires: Vec::new(),
         span,
     }
 }
@@ -267,7 +269,7 @@ fn build_sheet_inputs(
     }
     let mut defines_out = Vec::new();
     for d in defines {
-        defines_out.push((d.name.clone(), decls_attrmap(&d.body.decls, vars)?));
+        defines_out.push((d.name.clone(), decls_attrmap(&d.style, vars)?));
     }
     let templates = types::TEMPLATES
         .iter()
@@ -331,13 +333,13 @@ mod tests {
 
     #[test]
     fn element_rule_reaches_the_node() {
-        let p = rv4("box { radius: 4; }\nx |box|\n");
+        let p = rv4("{ |box| { radius: 4; } }\nx |box|\n");
         assert_eq!(num(&p, 0, "radius"), Some(4.0));
     }
 
     #[test]
     fn descendant_rule_matches_a_nested_node() {
-        let p = rv4("group box { fill: gray; }\ng |group| {\n  a |box|\n}\n");
+        let p = rv4("{ |group box| { fill: gray; } }\ng |group| [\n  a |box|\n]\n");
         // `a` is a box inside the group; the descendant rule paints it.
         let a = &p.scene.nodes[0].children[0];
         assert!(matches!(a.attrs.get("fill"), Some(ResolvedValue::Ident(s)) if s == "gray"));
@@ -345,14 +347,14 @@ mod tests {
 
     #[test]
     fn class_rule_applies() {
-        let p = rv4(".hot { stroke: red; }\nx |box| .hot\n");
+        let p = rv4("{ .hot { stroke: red; } }\nx |box.hot|\n");
         assert_eq!(ident(&p, 0, "stroke"), Some("red"));
         assert_eq!(p.scene.nodes[0].applied_styles, vec!["hot"]);
     }
 
     #[test]
     fn instance_block_beats_element_rule() {
-        let p = rv4("box { fill: white; }\nx |box| { fill: red; }\n");
+        let p = rv4("{ |box| { fill: white; } }\nx |box| { fill: red; }\n");
         assert_eq!(ident(&p, 0, "fill"), Some("red"));
     }
 
@@ -367,8 +369,8 @@ mod tests {
 
     #[test]
     fn an_empty_label_suppresses_the_id() {
-        // SPEC §3: `{ "" }` is content, so it overrides id-as-label with nothing.
-        let p = rv4("cat |box| { \"\" }\n");
+        // SPEC §3: `""` is content, so it overrides id-as-label with nothing.
+        let p = rv4("cat |box| \"\"\n");
         assert!(p.scene.nodes[0].children.is_empty());
     }
 
@@ -376,7 +378,7 @@ mod tests {
     fn caption_is_a_small_text_plain_title() {
         // SPEC §8: a caption is a `|plain|`-based title, pinned to the top edge
         // with a smaller font (`mount` is gone entirely).
-        let p = rv4("g |group| {\n  |caption| { \"Title\" }\n}\n");
+        let p = rv4("g |group| [\n  |caption| \"Title\"\n]\n");
         let cap = &p.scene.nodes[0].children[0];
         assert!(cap.type_chain.iter().any(|t| t == "caption"));
         assert!(matches!(
@@ -392,7 +394,7 @@ mod tests {
     fn icon_label_is_the_glyph_name_not_a_child() {
         // SPEC §7: an icon's text is its glyph name, carried on the node — never a
         // rendered text child.
-        let p = rv4("i |icon| { \"home\" }\n");
+        let p = rv4("i |icon| \"home\"\n");
         assert_eq!(p.scene.nodes[0].shape, ShapeKind::Icon);
         assert_eq!(p.scene.nodes[0].label.as_deref(), Some("home"));
         assert!(p.scene.nodes[0].children.is_empty());
@@ -400,7 +402,7 @@ mod tests {
 
     #[test]
     fn text_properties_inherit_to_descendants() {
-        let p = rv4("g |group| {\n  font-size: 10;\n  \"hi\"\n}\n");
+        let p = rv4("g |group| { font-size: 10 } [\n  \"hi\"\n]\n");
         let t = &p.scene.nodes[0].children[0];
         assert_eq!(t.shape, ShapeKind::Text);
         assert_eq!(t.attrs.number("font-size"), Some(10.0));
@@ -408,7 +410,7 @@ mod tests {
 
     #[test]
     fn define_body_materializes_per_instance() {
-        let p = rv4("room::group {\n  inlet |box|\n}\nr |room|\n");
+        let p = rv4("{ |room::group| [\n  inlet |box|\n] }\nr |room|\n");
         let inlet = &p.scene.nodes[0].children[0];
         assert_eq!(inlet.id.as_deref(), Some("inlet"));
     }
@@ -430,7 +432,7 @@ mod tests {
     fn wire_rule_sets_routing_defaults() {
         // SPEC §9: `-> { }` is the routing layer's element selector (the wire
         // glyph), carrying the reserved `wire` element rule internally.
-        let p = rv4("-> { stroke: red; stroke-width: 2; }\na -> b\n");
+        let p = rv4("{ -> { stroke: red; stroke-width: 2; } }\na -> b\n");
         assert!(
             matches!(p.wires[0].attrs.get("stroke"), Some(ResolvedValue::Ident(s)) if s == "red")
         );
@@ -455,8 +457,9 @@ mod tests {
 
     #[test]
     fn internal_wire_resolves_with_scoped_paths() {
-        let p =
-            rv4("room::group {\n  inlet |box|\n  outlet |box|\n  inlet -> outlet\n}\nr |room|\n");
+        let p = rv4(
+            "{ |room::group| [\n  inlet |box|\n  outlet |box|\n  inlet -> outlet\n] }\nr |room|\n",
+        );
         let w = &p.wires[0];
         assert_eq!(w.endpoints[0].path, "r.inlet");
         assert_eq!(w.endpoints[1].path, "r.outlet");
@@ -471,7 +474,7 @@ mod tests {
 
     #[test]
     fn unknown_class_errors() {
-        assert!(rv4_err("x |box| .nope\n").contains("unknown class '.nope'"));
+        assert!(rv4_err("x |box.nope|\n").contains("unknown class '.nope'"));
     }
 
     #[test]
@@ -487,7 +490,7 @@ mod tests {
 
     #[test]
     fn body_wire_endpoint_not_found_suggests() {
-        let e = rv4_err("g |group| {\n  x |box|\n  g.y -> x\n}\n");
+        let e = rv4_err("g |group| [\n  x |box|\n  g.y -> x\n]\n");
         assert!(e.contains("not found"), "got: {e}");
     }
 }

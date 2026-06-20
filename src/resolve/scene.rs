@@ -110,7 +110,7 @@ pub fn resolve_node(
     }
 
     if let Some(id) = &node.id {
-        if is_reserved_id(id, ctx.types) {
+        if is_reserved_id(id) {
             return Err(reserved_error(node.span, id));
         }
         let full = join_path(path_prefix, id);
@@ -133,10 +133,8 @@ pub fn resolve_node(
     // descendant + class layers, then the instance's own block.
     let mut ordered: Vec<(String, ResolvedValue)> = rt.defaults.clone();
     ordered.extend(ctx.sheet.node_layers(ancestors, &facts));
-    if let Some(block) = &node.block {
-        for d in &block.decls {
-            ordered.push((d.name.clone(), resolve_groups(&d.groups, d.span, ctx.vars)?));
-        }
+    for d in &node.style {
+        ordered.push((d.name.clone(), resolve_groups(&d.groups, d.span, ctx.vars)?));
     }
 
     let markers = resolve_markers(&ordered, MarkerKind::None, MarkerKind::None, node.span)?;
@@ -165,29 +163,20 @@ pub fn resolve_node(
         child_prefix.push(id.clone());
     }
 
-    // Internal wires (define body + block) lift to program level, prefixed by
-    // this node's path.
-    for w in rt
-        .body_wires
-        .iter()
-        .chain(node.block.iter().flat_map(|b| &b.wires))
-    {
+    // Internal wires (define body + the node's own `[ ]`) lift to program level,
+    // prefixed by this node's path.
+    for w in rt.body_wires.iter().chain(&node.wires) {
         lifted.push(LiftedWire {
             wire: w.clone(),
             prefix: child_prefix.clone(),
         });
     }
 
-    // Body order (SPEC §3): a define's intrinsic children, then the block's own.
-    let block_children = node
-        .block
-        .as_ref()
-        .map(|b| b.children.as_slice())
-        .unwrap_or(&[]);
+    // Body order (SPEC §3): a define's intrinsic children, then the node's own.
     let body: Vec<&Child> = rt
         .body_children
         .iter()
-        .chain(block_children.iter())
+        .chain(node.children.iter())
         .collect();
 
     // An `|icon|` consumes its text as the glyph name (SPEC §7): its block's first
@@ -294,14 +283,11 @@ fn is_blank_anon_text(r: &ResolvedInst) -> bool {
     r.id.is_none() && r.shape == ShapeKind::Text && r.label.as_deref().is_none_or(str::is_empty)
 }
 
-/// Type names (primitives, templates, defines), the four sides, the `wire` rule
-/// target, and the reserved-for-future `rect` / `circle` cannot be node ids (SPEC §18).
-fn is_reserved_id(id: &str, types: &Types) -> bool {
-    types.is_known(id)
-        || matches!(
-            id,
-            "wire" | "rect" | "circle" | "top" | "bottom" | "left" | "right"
-        )
+/// Only the four sides are reserved as node ids — they are peeled from endpoint
+/// paths (`a.left`), so a node named `left` could never be addressed (SPEC §18).
+/// Type names are free: a type only ever appears in bars.
+fn is_reserved_id(id: &str) -> bool {
+    matches!(id, "top" | "bottom" | "left" | "right")
 }
 
 /// The reserved-id error, with the always-free capitalized variant as the out.
@@ -313,7 +299,7 @@ pub(super) fn reserved_error(span: Span, name: &str) -> Error {
     Error::at(
         span,
         format!(
-            "'{}' is reserved (ids are case-sensitive — '{}' is free)",
+            "'{}' is reserved (an endpoint side; ids are case-sensitive — '{}' is free)",
             name, cap
         ),
     )

@@ -14,8 +14,17 @@ use crate::syntax::ast::Child;
 pub struct NodeWidths {
     /// Widest id in the group, 0 if none carry one.
     pub id: usize,
-    /// Widest `|type|` (bars included) in the group, 0 if none carry one.
+    /// Widest `|type.classes|` head (bars included) in the group, 0 if none carry one.
     pub ty: usize,
+}
+
+/// The rendered width of a node's `|type.classes|` head, or 0 when it has neither
+/// a type nor a class.
+fn bars_len(n: &crate::syntax::ast::Node) -> usize {
+    if n.ty.is_none() && n.classes.is_empty() {
+        return 0;
+    }
+    2 + n.ty.as_ref().map_or(0, String::len) + n.classes.iter().map(|c| 1 + c.len()).sum::<usize>()
 }
 
 /// Per-child alignment widths: boxes sharing a blank-line-free group share the
@@ -29,9 +38,7 @@ pub fn child_widths(children: &[Child], trivia: &[TriviaToken]) -> Vec<NodeWidth
                 if let Some(id) = &n.id {
                     w.id = w.id.max(id.len());
                 }
-                if let Some(ty) = &n.ty {
-                    w.ty = w.ty.max(ty.len() + 2); // |type|
-                }
+                w.ty = w.ty.max(bars_len(n));
             }
         }
         for i in group {

@@ -1,40 +1,38 @@
 // The realistic scene — a mid-size diagram with groups, exercising every
 // common wiring pattern at once.
 
-layout: row; gap: 40;
--> { clearance: 12; }
-
-.loud { stroke: red }
-.quiet { stroke: blue; }
-.happy { stroke: green; }
-
-treat::box { radius: 6; }
+{
+  layout: row; gap: 40;
+  -> { clearance: 12; }
+  .loud { stroke: red; }
+  .quiet { stroke: blue; }
+  .happy { stroke: green; }
+  |treat::box| { radius: 6; }
+}
 
 cat |oval| "Cat"
 
-kitchen |group| {
-  layout: column;
+kitchen |group| { layout: column; } [
         |caption| "Kitchen"
   bowl  |treat|   "Bowl"
   water |treat|   "Water"
-}
+]
 
-garden |group| {
-  layout: column;
+garden |group| { layout: column; } [
        |caption| "Garden"
   dog  |treat|   "Dog"
   bird |treat|   "Bird"
-}
+]
 
-roof |treat| {
+roof |treat| [
   "Roof"
   |badge| "new"
-}
+]
 
 cat -> kitchen.bowl & kitchen.water .loud
 cat -> roof .loud
 
-kitchen.bowl -> garden.dog .loud { along: 0.35; "X" }
+kitchen.bowl -> garden.dog .loud { along: 0.35; } "X"
 kitchen.bowl -> garden.dog .loud
 
 kitchen.water <.. garden.dog .quiet

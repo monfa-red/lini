@@ -2,17 +2,18 @@
 // point — center, an edge midpoint, or a corner. A corner pin straddles the
 // corner. To place text, wrap it in a |plain| and pin the box.
 
-padding: 40;
-
-frame |box| {
-  width: 240; height: 150; fill: #eee;
-  |plain| { pin: center;       color: green; "C" }
-  |plain| { pin: top left;     color: red;   "TL" }
-  |plain| { pin: top;          color: red;   "T" }
-  |plain| { pin: top right;    color: red;   "TR" }
-  |plain| { pin: left;         color: red;   "L" }
-  |plain| { pin: right;        color: red;   "R" }
-  |plain| { pin: bottom left;  color: blue;  "BL" }
-  |plain| { pin: bottom;       color: blue;  "B" }
-  |plain| { pin: bottom right; color: blue;  "BR" }
+{
+  padding: 40;
 }
+
+frame |box| { width: 240; height: 150; fill: #eee; } [
+  |plain| { pin: center; color: green; } "C"
+  |plain| { pin: top left; color: red; } "TL"
+  |plain| { pin: top; color: red; } "T"
+  |plain| { pin: top right; color: red; } "TR"
+  |plain| { pin: left; color: red; } "L"
+  |plain| { pin: right; color: red; } "R"
+  |plain| { pin: bottom left; color: blue; } "BL"
+  |plain| { pin: bottom; color: blue; } "B"
+  |plain| { pin: bottom right; color: blue; } "BR"
+]

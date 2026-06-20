@@ -59,7 +59,7 @@ fn formatted_output_resolves_identically() {
 #[test]
 fn fmt_preserves_section_comments_and_blank_lines() {
     let src = "\
---gap: 24;
+{ --gap: 24; }
 
 // Top-level comment.
 // Comment on root statement.
@@ -84,7 +84,7 @@ dog |box|
 #[test]
 fn fmt_canonicalizes_numeric_forms() {
     // `+3` and `.5` are legal but non-canonical; the formatter normalizes.
-    let src = "--a: +3;\n--b: .5;\n";
+    let src = "{ --a: +3; --b: .5; }\n";
     let formatted = lini::format_source(src).expect("fmt");
     assert!(
         formatted.contains("--a: 3;"),

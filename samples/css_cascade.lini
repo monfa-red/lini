@@ -1,19 +1,20 @@
 // CSS cascade: element rules, class rules, inline overrides, per-group text
 // props, wire defaults — paint rides class rules + style= diffs.
 
--> { stroke: #666; stroke-width: 1; }
-box { fill: lightyellow; }
-.loud { stroke: red; stroke-width: 2; }
-.calm { stroke: teal; }
+{
+  -> { stroke: #666; stroke-width: 1; }
+  |box| { fill: lightyellow; }
+  .loud { stroke: red; stroke-width: 2; }
+  .calm { stroke: teal; }
+}
 
-flat |box|   "Plain"
-loud |box|   .loud "Loud"
-mix  |box|   .calm { fill: lavender; "Mix" }
-crew |group| {
-  font-size: 10; font-family: serif;
+flat |box|      "Plain"
+loud |box.loud| "Loud"
+mix  |box.calm| { fill: lavender; } "Mix"
+crew |group|    { font-size: 10; font-family: serif; } [
        |caption| "Crew"
   tiny |box|     "Tiny"
-}
+]
 
 flat -> loud
 loud --> mix .calm

@@ -94,8 +94,8 @@ impl<'a> Types<'a> {
             if user.contains_key(&d.name) {
                 return Err(Error::at(d.span, format!("duplicate type '{}'", d.name)));
             }
-            let mut decls = Vec::with_capacity(d.body.decls.len());
-            for decl in &d.body.decls {
+            let mut decls = Vec::with_capacity(d.style.len());
+            for decl in &d.style {
                 decls.push((
                     decl.name.clone(),
                     resolve_groups(&decl.groups, decl.span, vars)?,
@@ -106,8 +106,8 @@ impl<'a> Types<'a> {
                 DefineEntry {
                     base: d.base.clone(),
                     decls,
-                    body_children: d.body.children.clone(),
-                    body_wires: d.body.wires.clone(),
+                    body_children: d.children.clone(),
+                    body_wires: d.wires.clone(),
                     span: d.span,
                 },
             );
@@ -187,15 +187,11 @@ impl<'a> Types<'a> {
     }
 }
 
-/// A define may not take the name of a primitive, a template, the `wire` rule
-/// target, a side, or a reserved-for-future name (`rect`, `circle`) — SPEC §15, §18.
+/// A define may not take the name of a primitive, a template, or the `wire` rule
+/// target — SPEC §15, §18. (Type names are otherwise free; only sides stay
+/// reserved as ids, which a define name is not.)
 fn is_builtin_type(name: &str) -> bool {
-    ShapeKind::parse(name).is_some()
-        || is_template(name)
-        || matches!(
-            name,
-            "wire" | "circle" | "top" | "bottom" | "left" | "right"
-        )
+    ShapeKind::parse(name).is_some() || is_template(name) || name == "wire"
 }
 
 /// A template's built-in attribute bundle (SPEC §8) — the lowest layer of the
@@ -381,7 +377,7 @@ mod tests {
 
     #[test]
     fn user_define_resolves_to_base_and_carries_its_decls() {
-        let t = resolve_ok("treat::box { radius: 5; }\n", "treat");
+        let t = resolve_ok("{ |treat::box| { radius: 5; } }\n", "treat");
         assert_eq!(t.kind, ShapeKind::Box);
         assert_eq!(t.type_chain, vec!["treat"]);
         assert!(has_number(&t, "radius", 5.0));
@@ -389,7 +385,7 @@ mod tests {
 
     #[test]
     fn element_rule_layers_into_the_type_cascade() {
-        let t = resolve_ok("box { radius: 4; }\n", "box");
+        let t = resolve_ok("{ |box| { radius: 4; } }\n", "box");
         assert!(has_number(&t, "radius", 4.0));
     }
 
@@ -397,7 +393,7 @@ mod tests {
     fn derived_define_overrides_base_by_order() {
         // panel sets radius:10; group's bundle has radius:6 — panel is later in
         // the chain, so its value is last and wins the fold.
-        let t = resolve_ok("panel::group { radius: 10; }\n", "panel");
+        let t = resolve_ok("{ |panel::group| { radius: 10; } }\n", "panel");
         assert_eq!(t.type_chain, vec!["panel", "group"]);
         let last_radius = t
             .defaults
@@ -420,20 +416,21 @@ mod tests {
 
     #[test]
     fn define_shadowing_a_builtin_errors() {
-        assert!(build_err("rect::oval { }\n").contains("shadows a built-in"));
+        assert!(build_err("{ |rect::oval| { } }\n").contains("shadows a built-in"));
     }
 
     #[test]
     fn inheritance_cycle_errors() {
-        assert!(build_err("a::b { }\nb::a { }\n").contains("cycle"));
+        assert!(build_err("{ |a::b| { }\n|b::a| { } }\n").contains("cycle"));
     }
 
     #[test]
     fn inheritance_depth_over_16_errors() {
-        let mut src = String::from("t0::box { }\n");
+        let mut src = String::from("{\n  |t0::box| { }\n");
         for i in 1..=17 {
-            src.push_str(&format!("t{}::t{} {{ }}\n", i, i - 1));
+            src.push_str(&format!("  |t{}::t{}| {{ }}\n", i, i - 1));
         }
+        src.push_str("}\n");
         assert!(build_err(&src).contains("max inheritance depth"));
     }
 }

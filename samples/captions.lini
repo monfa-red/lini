@@ -2,21 +2,21 @@
 // rides the top edge whatever the group's layout. A footer is pin: bottom.
 // link: wraps a shape in <a href>.
 
-layout: row; gap: 32; padding: 20; align: start;
+{
+  layout: row; gap: 32; padding: 20; align: start;
+}
 
-card |group| {
-  layout: column; gap: 10;
+card |group| { layout: column; gap: 10; } [
        |caption| "Profile"
   name |box|     "Ada Lovelace"
   role |box|     "Engineer"
-}
+]
 
-panel |group| {
-  layout: column; gap: 10;
+panel |group| { layout: column; gap: 10; } [
     |caption| "Sales"
   a |box|     "Plan"
   b |box|     "Actual"
     |footer|  "Q3 2026"
-}
+]
 
-docs |box| { link: "https://example.com"; width: 120; height: 48; "Docs" }
+docs |box| { link: "https://example.com"; width: 120; height: 48; } "Docs"

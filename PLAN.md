@@ -89,7 +89,14 @@ Note `Wire` loses `WireBlock`; labels are `Vec<TextNode>` (a wire never holds a 
 
 ---
 
-## Step 1 — The compiler speaks the new language
+## Step 1 — The compiler speaks the new language  ✅ DONE
+
+> Done: lexer (`[`/`]` no longer suppress newlines), the target AST (`Block`/`WireBlock`
+> deleted; `Node`/`Define`/`Wire` carry `style`/`children`/`wires`/`labels`), parser rewrite
+> (zone-driven `classify`, `types` set + define-ordering gone, freed type-name ids), resolve
+> field updates (incl. only-sides reserved, per-label wire styling removed), desugar, samples,
+> and ALL tests. `cargo test` + `fmt --check` + `clippy` green; conformance SVG byte-identical
+> (proves the change is purely surface); `full_example` visually verified.
 
 **Goal:** new syntax parses into the target AST and `lini compile` emits correct SVG.
 `resolve`/`layout`/`render` logic unchanged — only field access. End the session green.
@@ -150,7 +157,13 @@ for every sample (regenerated snapshots); spot-render 2 samples to PNG and look.
 
 ---
 
-## Step 2 — `fmt` & `desugar` to canonical, + visual conformance
+## Step 2 — `fmt` & `desugar` to canonical, + visual conformance  ✅ DONE (folded into Step 1)
+
+> `fmt` emits the new `{ } [ ]` shape (inline style blocks, trailing labels, table-cell + sibling
+> alignment, `|name::base|`, bar selectors) and is idempotent; `desugar` expands to explicit
+> `[ "…" ]` / `along:`; every `samples/*.lini` is canonical (`fmt --check` a no-op) and resolves
+> to identical SVG; representative samples visually checked. The only deferred polish is inline
+> `[ … ]` for a single box child (currently always multi-line) — cosmetic, revisit if wanted.
 
 **Goal:** `lini fmt` emits the canonical new style and is idempotent; `lini desugar`
 is correct; samples are in canonical form; the pictures are verified.
@@ -178,7 +191,7 @@ visual spot-checks correct. **Commit.**
 
 ---
 
-## Step 3 — Ecosystem: docs, editor highlighter, final review
+## Step 3 — Ecosystem: docs, editor highlighter, final review  ⬜ TODO (next session)
 
 **Goal:** everything a user sees matches the new syntax; one final adversarial pass.
 

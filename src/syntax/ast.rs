@@ -1,8 +1,10 @@
 //! The syntax tree: produced by [`super::parser`], consumed by `resolve`.
 //!
-//! A file is three ordered parts (SPEC §1/§3): the **stylesheet** (root
-//! declarations, `--var` declarations, rules, and `name::base` defines), then
-//! the **instances** (nodes), then the **wires**.
+//! A file is three ordered parts (SPEC §1/§3): the **stylesheet** — one leading
+//! `{ }` block of root declarations, `--var` declarations, rules, and
+//! `|name::base|` defines — then the **instances** (the canvas), then the
+//! **wires**. Two brackets carry structure: `{ }` is style (declarations), `[ ]`
+//! is content (a container's children, then its internal wires).
 
 use crate::ast::{Side, WireOp};
 use crate::span::Span;
@@ -10,22 +12,27 @@ use crate::span::Span;
 #[derive(Debug, Clone)]
 pub struct File {
     pub stylesheet: Vec<StyleItem>,
+    /// The `{ … }` that wraps the stylesheet, for the formatter's trivia; empty
+    /// when there is no stylesheet.
+    pub stylesheet_span: Span,
     pub instances: Vec<Child>,
     pub wires: Vec<Wire>,
 }
 
-/// A top-level stylesheet entry. Order among these is free; they all precede the
-/// instances.
+/// An entry in the stylesheet `{ }` block. Order among these is free; they all
+/// precede the instances.
 #[derive(Debug, Clone)]
 pub enum StyleItem {
-    /// `key: value;` at the file top — configures the root container.
+    /// `key: value;` — configures the root container.
     RootDecl(Decl),
     /// `--name: value;` — a themeable variable declaration. `Decl::name` holds
     /// the name without the `--` prefix.
     Var(Decl),
-    /// `selector { decls }` — element / class / descendant rule.
+    /// `|selector| { decls }` / `.class { decls }` — element / class / descendant
+    /// rule. The `-> { }` wire defaults are a `Rule` whose selector is the
+    /// reserved `wire` element ([`super::parser`]).
     Rule(Rule),
-    /// `name::base { body }` — a new type from a base, with its defaults.
+    /// `|name::base| { style } [ children ]` — a new type from a base.
     Define(Define),
 }
 
@@ -51,34 +58,32 @@ pub enum SelPart {
     Class(String),
 }
 
+/// `|name::base| { style } [ children ]` — a new type from a base. `style` is the
+/// type's defaults; `children` / `wires` are intrinsic, materialized per instance.
 #[derive(Debug, Clone)]
 pub struct Define {
     pub name: String,
     pub base: String,
-    pub body: Block,
+    pub style: Vec<Decl>,
+    pub children: Vec<Child>,
+    pub wires: Vec<Wire>,
     pub span: Span,
 }
 
-/// A box — a drawn node (SPEC §3). At least one of id / type / block is present.
-/// Its text is a `Child::Text` in the block, or its id (id-as-label) when the
-/// block supplies none.
+/// A box — a drawn node (SPEC §3). Leads with an id or a `|type|`. Its `style` is
+/// the `{ }` block; its `children` and internal `wires` are the `[ ]` block. Its
+/// text is a `Child::Text` among the children, or its id (id-as-label) when there
+/// is none.
 #[derive(Debug, Clone)]
 pub struct Node {
     pub id: Option<String>,
     /// `|type|`; `None` means the default `box`, filled at resolve.
     pub ty: Option<String>,
     pub classes: Vec<String>,
-    pub block: Option<Block>,
-    pub span: Span,
-}
-
-/// A box or define body: declarations, then children (boxes and text, in source
-/// order), then internal wires (SPEC §3 — the fixed in-block order).
-#[derive(Debug, Clone, Default)]
-pub struct Block {
-    pub decls: Vec<Decl>,
+    pub style: Vec<Decl>,
     pub children: Vec<Child>,
     pub wires: Vec<Wire>,
+    pub span: Span,
 }
 
 /// A body child, in source order: a box or a bare text node (SPEC §3).
@@ -89,28 +94,23 @@ pub enum Child {
 }
 
 /// Bare text content `"…"` (SPEC §3) — a label, a cell, a wire label. No id,
-/// type, classes, or block; never a wrapped node.
+/// type, classes, style, or children; never a wrapped node.
 #[derive(Debug, Clone)]
 pub struct TextNode {
     pub text: String,
     pub span: Span,
 }
 
+/// A wire (SPEC §9) — a relationship, not a container. `style` is its `{ }`
+/// (`along:` and paint); `labels` are the trailing strings. A wire has no `[ ]`.
 #[derive(Debug, Clone)]
 pub struct Wire {
     pub chain: Vec<EndpointGroup>,
     pub op: WireOp,
     pub classes: Vec<String>,
-    pub block: Option<WireBlock>,
+    pub style: Vec<Decl>,
+    pub labels: Vec<TextNode>,
     pub span: Span,
-}
-
-/// A wire body (SPEC §9): declarations (including `along:`) and labels — bare
-/// text, or a `|plain|` box for a styled / offset label.
-#[derive(Debug, Clone, Default)]
-pub struct WireBlock {
-    pub decls: Vec<Decl>,
-    pub labels: Vec<Child>,
 }
 
 #[derive(Debug, Clone)]

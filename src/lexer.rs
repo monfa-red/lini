@@ -74,14 +74,11 @@ impl<'a> Lexer<'a> {
                     self.paren_depth = self.paren_depth.saturating_sub(1);
                     self.push_punct(TokKind::RParen, 1);
                 }
-                b'[' => {
-                    self.paren_depth += 1;
-                    self.push_punct(TokKind::LBracket, 1);
-                }
-                b']' => {
-                    self.paren_depth = self.paren_depth.saturating_sub(1);
-                    self.push_punct(TokKind::RBracket, 1);
-                }
+                // Child lists keep newlines significant (children are newline /
+                // `;` separated, like a `{ }` block) — so brackets, unlike parens,
+                // do not suppress them.
+                b'[' => self.push_punct(TokKind::LBracket, 1),
+                b']' => self.push_punct(TokKind::RBracket, 1),
                 b'|' => self.push_punct(TokKind::Pipe, 1),
                 b':' if self.peek(1) == Some(b':') => self.push_punct(TokKind::DColon, 2),
                 b':' => self.push_punct(TokKind::Colon, 1),

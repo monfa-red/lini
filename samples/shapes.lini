@@ -1,98 +1,92 @@
 // Shape tracker — every drawable primitive (plus a few templates), each
 // captioned, in a grid. Render this to eyeball that all shapes still draw.
 
-layout: grid; columns: repeat(4); gap: 24; padding: 28; fill: #ffffff;
-
-tile::column { gap: 8; align: center; }
-cap::plain { font-size: 12; font-weight: normal; color: #555; }
+{
+  layout: grid; columns: repeat(4); gap: 24; padding: 28; fill: #ffffff;
+  |tile::column| { gap: 8; align: center; }
+  |cap::plain| { font-size: 12; font-weight: normal; color: #555; }
+}
 
 // ── Row 1 ─────────────────────────────────────────────
-|tile| {
-  |box| {
-    width: 66; height: 46; fill: #ffd6a5;
+|tile| [
+  |box| { width: 66; height: 46; fill: #ffd6a5; } [
     |badge| "new"
-  }
+  ]
   |cap| "box + badge"
-}
-|tile| {
+]
+|tile| [
   |rect| { width: 66; height: 46; fill: #fdffb6; }
   |cap|  "rect"
-}
-|tile| {
+]
+|tile| [
   |oval| { width: 68; height: 56; fill: #caffbf; }
   |cap|  "oval"
-}
-|tile| {
+]
+|tile| [
   |hex| { width: 68; height: 58; fill: #9bf6ff; }
   |cap| "hex"
-}
+]
 
 // ── Row 2 ─────────────────────────────────────────────
-|tile| {
+|tile| [
   |slant| { width: 66; height: 46; fill: #a0c4ff; }
   |cap|   "slant"
-}
-|tile| {
+]
+|tile| [
   |cyl| { width: 58; height: 56; fill: #bdb2ff; }
   |cap| "cyl"
-}
-|tile| {
+]
+|tile| [
   |diamond| { width: 70; height: 60; fill: #ffc6ff; }
   |cap|     "diamond"
-}
-|tile| {
+]
+|tile| [
   |cloud| { width: 82; height: 50; fill: #ffadad; }
   |cap|   "cloud"
-}
+]
 
 // ── Row 3 ─────────────────────────────────────────────
-|tile| {
+|tile| [
   |poly| {
     points: 0 -30, 30 -6, 17 30, -17 30, -30 -6; fill: #80ed99; stroke: #2a9d8f;
   }
   |cap|  "poly (points)"
-}
-|tile| {
-  |path| {
-    path: "M -32 28 Q 0 -28 32 28"; stroke: #6c5ce7; stroke-width: 3;
-  }
+]
+|tile| [
+  |path| { path: "M -32 28 Q 0 -28 32 28"; stroke: #6c5ce7; stroke-width: 3; }
   |cap|  "path (open)"
-}
-|tile| {
-  |line| {
-    points: -32 0, 32 0; marker-end: arrow; stroke: #e63946;
-  }
+]
+|tile| [
+  |line| { points: -32 0, 32 0; marker-end: arrow; stroke: #e63946; }
   |cap|  "line"
-}
-|tile| {
-  |icon| { width: 42; height: 42; "home" }
+]
+|tile| [
+  |icon| { width: 42; height: 42; } "home"
   |cap|  "icon"
-}
+]
 
 // ── Row 4: templates ──────────────────────────────────
-|tile| {
-  |note| { width: 72; height: 50; "note" }
+|tile|  [
+  |note| { width: 72; height: 50; } "note"
   |cap|  "note"
-}
-  |group| {
-    padding: 12;
-    |caption|  "Group"
-    |box| { width: 56; height: 36 }
-    |footer|   "Footer"
-  }
+]
+|group| { padding: 12; } [
+  |caption| "Group"
+  |box|     { width: 56; height: 36; }
+  |footer|  "Footer"
+]
 
-|tile| {
-  |table| {
-    columns: 25 25 25;
+|tile| [
+  |table| { columns: 25 25 25; } [
     "a" "b" "c"
     "d" "e" "f"
     "g" "h" "i"
-  }
+  ]
   |cap|   "table"
-}
-|tile| {
+]
+|tile| [
   |path| {
     path: "M 0 -28 C 22 -30 31 -12 23 4 C 17 16 30 25 11 30 C -7 34 -27 25 -26 6 C -25 -11 -22 -28 0 -28 Z"; fill: #ffd166; stroke: #e76f51; stroke-width: 2;
   }
   |cap|  "path (closed)"
-}
+]

@@ -1,13 +1,15 @@
 // Class rules — reusable visual bundles applied with .name.
 
-.thin { stroke: #444; stroke-width: 1; }
-.bold { font-weight: bold; }
-.power { stroke: red; stroke-width: 2; }
-.warn { stroke: orange; }
-.ghost { opacity: 0.3; }
+{
+  .thin { stroke: #444; stroke-width: 1; }
+  .bold { font-weight: bold; }
+  .power { stroke: red; stroke-width: 2; }
+  .warn { stroke: orange; }
+  .ghost { opacity: 0.3; }
+}
 
-a |box| .thin "thin"
-b |box| .bold "bold"
-c |box| .power "power"
-d |box| .warn "warn"
-e |box| .ghost "ghost"
+a |box.thin|  "thin"
+b |box.bold|  "bold"
+c |box.power| "power"
+d |box.warn|  "warn"
+e |box.ghost| "ghost"
