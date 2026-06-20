@@ -3,7 +3,7 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/type_defaults.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-138 -48.5 279.5 97" width="279.5" height="97" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-162.5 -48.5 325 97" width="325" height="97" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: bold; color: black; }
     .lini .lini-shape-box { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
@@ -13,16 +13,16 @@ input_file: samples/type_defaults.lini
   </style>
   <defs/>
   <g class="lini-scene">
-    <g class="lini-node lini-shape-box" data-id="cat" transform="translate(-83.5,0)">
+    <g class="lini-node lini-shape-box" data-id="cat" transform="translate(-108,0)">
       <rect x="-33.5" y="-27.5" width="67" height="55" rx="6" ry="6"/>
       <text class="lini-text" x="0" y="0">Cat</text>
     </g>
-    <g class="lini-node lini-shape-box" data-id="dog" transform="translate(15.5,0)">
+    <g class="lini-node lini-shape-box" data-id="dog" transform="translate(-9,0)">
       <rect x="-33.5" y="-27.5" width="67" height="55" rx="0" ry="0"/>
       <text class="lini-text" x="0" y="0">Dog</text>
     </g>
     <g class="lini-node lini-shape-alert lini-shape-oval" data-id="mouse" transform="translate(99,0)">
-      <ellipse cx="0" cy="0" rx="18" ry="18"/>
+      <ellipse cx="0" cy="0" rx="42.5" ry="27.5"/>
       <text class="lini-text" x="0" y="0">Mouse</text>
     </g>
   </g>

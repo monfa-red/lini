@@ -2,9 +2,10 @@
 //!
 //! A closed shape sizes **border-box**: `width`/`height` each default `auto` =
 //! content + `padding` on that axis; an empty one is `2 × padding`; an explicit
-//! dimension is the exact drawn size with padding inside it. Strokes count
-//! toward the bbox (half each side). `|text|` sizes to its glyphs (no padding),
-//! `|icon|` to `icon-size`, and the geometry primitives to their `points`/`src`.
+//! dimension is a **floor** — it grows to content + padding rather than clip or
+//! spill. Strokes count toward the bbox (half each side). `|text|` sizes to its
+//! glyphs (no padding), `|icon|` to `icon-size`, and the geometry primitives to
+//! their `points`/`src`.
 
 use super::ir::Bbox;
 use super::text;
@@ -85,9 +86,10 @@ pub fn leaf_bbox(inst: &ResolvedInst, vars: &VarTable) -> Result<Bbox, Error> {
     }
 }
 
-/// A closed shape's bbox: each axis is its explicit `width`/`height` (border-box
-/// — padding inside it) or `content + padding` on that axis, then inflated by
-/// half the stroke so the outline counts toward the bbox (SPEC §6).
+/// A closed shape's bbox: each axis is `content + padding`, with an explicit
+/// `width`/`height` as a **floor** — border-box (padding inside), and the box
+/// grows past the declared size rather than clip or spill its content (SPEC §6).
+/// Inflated by half the stroke so the outline counts toward the bbox.
 pub fn closed_bbox(inst: &ResolvedInst, content: Bbox, vars: &VarTable) -> Result<Bbox, Error> {
     // A table consumes its `padding` as a per-cell inset inside the grid (SPEC
     // §8), so its outer box adds none.
@@ -96,15 +98,30 @@ pub fn closed_bbox(inst: &ResolvedInst, content: Bbox, vars: &VarTable) -> Resul
     } else {
         padding(&inst.attrs, vars, inst.span)?
     };
-    let w = inst
-        .attrs
-        .number("width")
-        .unwrap_or(content.w() + pad.left + pad.right);
-    let h = inst
-        .attrs
-        .number("height")
-        .unwrap_or(content.h() + pad.top + pad.bottom);
+    let w = floor_dim(
+        inst.attrs.number("width"),
+        content.w(),
+        pad.left + pad.right,
+    );
+    let h = floor_dim(
+        inst.attrs.number("height"),
+        content.h(),
+        pad.top + pad.bottom,
+    );
     Ok(Bbox::centered(w, h).inflate(stroke_half(inst, vars)))
+}
+
+/// One axis of a closed shape, **border-box**: `content + padding`, with an
+/// explicit dimension as a **floor** over it — the box grows to fit content
+/// rather than clip or spill. An **empty** box (no content on this axis) keeps
+/// its declared size, since there is nothing to protect; an *auto* empty box is
+/// `2 × padding` (SPEC §6).
+fn floor_dim(declared: Option<f64>, content: f64, pad: f64) -> f64 {
+    match declared {
+        None => content + pad,
+        Some(d) if content > 0.0 => d.max(content + pad),
+        Some(d) => d,
+    }
 }
 
 pub fn padding(attrs: &AttrMap, vars: &VarTable, span: Span) -> Result<PaddingBox, Error> {

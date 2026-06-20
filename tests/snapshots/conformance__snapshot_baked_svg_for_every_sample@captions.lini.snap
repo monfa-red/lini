@@ -50,8 +50,8 @@ input_file: samples/captions.lini
       </g>
     </g>
     <a href="https://example.com">
-      <g class="lini-node lini-shape-box" data-id="docs" transform="translate(196,-57.5)">
-        <rect x="-60" y="-24" width="120" height="48" rx="6" ry="6"/>
+      <g class="lini-node lini-shape-box" data-id="docs" transform="translate(196,-54)">
+        <rect x="-60" y="-27.5" width="120" height="55" rx="6" ry="6"/>
         <text class="lini-text" x="0" y="0">Docs</text>
       </g>
     </a>

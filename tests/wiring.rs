@@ -368,11 +368,13 @@ fn gap_growth_is_bounded_where_no_gap_can_help() {
 /// everything drawn.
 #[test]
 fn a_full_node_compacts_port_rows_rather_than_turning_wires_away() {
+    // Empty labels (`""`): these are routing nodes, sized by width/height — an
+    // id-as-label would float them larger via the content floor (SPEC §6).
     let mut src = String::from(
         "{ layout: grid; columns: repeat(5); gap: 60;\n\
          -> { clearance: 8; }\n\
          }\n\
-         hub |box| { width: 40; height: 40; cell: 3 3; }\n",
+         hub |box| { width: 40; height: 40; cell: 3 3; } \"\"\n",
     );
     let cells: Vec<(usize, usize)> = (1..=5)
         .flat_map(|r| (1..=5).map(move |c| (c, r)))
@@ -381,7 +383,7 @@ fn a_full_node_compacts_port_rows_rather_than_turning_wires_away() {
         .collect();
     for (i, (c, r)) in cells.iter().enumerate() {
         src.push_str(&format!(
-            "s{i:02} |box| {{ width: 30; height: 30; cell: {c} {r}; }}\n"
+            "s{i:02} |box| {{ width: 30; height: 30; cell: {c} {r}; }} \"\"\n"
         ));
     }
     for i in 0..cells.len() {

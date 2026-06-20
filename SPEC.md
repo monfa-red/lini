@@ -514,12 +514,20 @@ a piece of text, wrap it in a `|plain|`.
 ### Auto-sizing
 
 `width` and `height` default to **`auto`** — the bbox sizes to its content (text
-or child nodes) **plus `padding` on each side** (default 16; there is no separate
-text padding). Sizing is **border-box**: an explicit `width` / `height` is the
-exact outer dimension with padding *inside* it (never added on top), and the two
-are independent. A box with no in-flow content — empty, or holding only `pin`ned
-overlays — is therefore **`2 × padding`** on each axis, so the default `padding`
-(20) sets an empty box's minimum size (40 × 40).
+or child nodes) **plus `padding` on each side** (default 20; there is no separate
+text padding). Sizing is **border-box**: padding sits *inside* the box, never
+added on top, and the two axes are independent. An explicit `width` / `height` is
+a **floor** — the box is exactly that size when its content fits, and grows past
+it (to `content + padding`) when the content is larger, so a box never clips or
+spills its content. A box with no in-flow content — empty, or holding only
+`pin`ned overlays — has nothing to grow for: an explicit size stands exactly as
+written, and an **auto** one falls to **`2 × padding`** on each axis (the default
+`padding` 20 gives a 40 × 40 minimum).
+
+**Padding also places the content.** The content area is the box inset by
+`padding`, and the content sits within it; symmetric padding centres it, while an
+asymmetric `padding: t r b l` offsets it — `padding: 4 4 20 4` lifts the content
+toward the top, away from the larger bottom inset, exactly like CSS.
 
 Exceptions: a **text** node sizes to its glyphs (no padding); `|icon|` defaults to
 `icon-size` (24); `|line|` / `|poly|` / `|image|` / `|path|` require their geometry
@@ -834,7 +842,7 @@ to recolour every descendant's text that doesn't override. Use `color` for
 
 | Property | Type | Notes |
 |---|---|---|
-| `width`, `height` | number / `auto` | bbox dims, **border-box** (padding inside, not added); default `auto` = content + padding. `\|image\|` needs both. |
+| `width`, `height` | number / `auto` | bbox dims, **border-box** (padding inside); a **floor** — at least this size, growing to `content + padding` when content is larger. Default `auto` = content + padding. `\|image\|` needs both. |
 | `pin` | `none` / `center` / edges / corners | Out-of-flow anchor — the child's matching point lands on the named parent point ([§6](#6-positioning--anchors)). |
 | `translate` | `x y` | Post-placement nudge of the node and its subtree; no reflow, grows nothing ([§6](#6-positioning--anchors)). |
 | `layer` | integer | Paint order; default 0 in flow, 1 when `pin`ned. Ties break on source order. |

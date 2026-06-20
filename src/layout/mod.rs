@@ -463,28 +463,55 @@ fn lay_out_container_children(
         Bbox::empty()
     };
 
-    // 1-D dividers between flow children (a grid produced its own above),
-    // painted by the container's own stroke (SPEC §5).
+    // Asymmetric padding offsets the flow within the box (SPEC §6): the content
+    // area is the box inset by `padding`, so the flow centre sits at
+    // ((left−right)/2, (top−bottom)/2) from the box centre. A table's padding is
+    // a per-cell inset, not box padding, so it adds no offset.
+    let (off_x, off_y) = if grid::is_inset_grid(container_attrs) {
+        (0.0, 0.0)
+    } else {
+        ((pad.left - pad.right) / 2.0, (pad.top - pad.bottom) / 2.0)
+    };
+    if (off_x, off_y) != (0.0, 0.0) {
+        for &i in &flow_indices {
+            children[i].cx += off_x;
+            children[i].cy += off_y;
+        }
+    }
+
+    // 1-D dividers between flow children (a grid produced its own above), painted
+    // by the container's own stroke (SPEC §5). They track the offset flow; the
+    // body bbox below stays centred, since `closed_bbox` and pins anchor to it.
     if matches!(mode, LayoutMode::Row | LayoutMode::Column)
         && grid::read_divider(container_attrs) != grid::Divider::None
         && flow_indices.len() > 1
     {
-        grid_rules = one_d_dividers(children, &flow_indices, mode, flow_bbox);
+        grid_rules = one_d_dividers(
+            children,
+            &flow_indices,
+            mode,
+            flow_bbox.shifted(off_x, off_y),
+        );
     }
 
     // The body the parent sizes to is the flow content alone — pinned children
     // are overlays that never grow it (SPEC §6).
     let body_bbox = flow_bbox;
 
-    // Resolution box for pins: the parent's drawn shape — its border, padding
-    // included — the same box `closed_bbox` sizes. An explicit size gives it
-    // directly; otherwise it is the flow content plus padding (a table consumes
-    // its padding as a cell inset, so its drawn box is the content alone).
+    // Resolution box for pins: the parent's drawn shape — its padding included —
+    // the same box `closed_bbox` sizes, and like it **centred** on the origin. An
+    // explicit size gives it directly; otherwise it is the flow content plus
+    // padding (a table consumes its padding as a cell inset, so its drawn box is
+    // the content alone). Centring matters under asymmetric padding: an off-centre
+    // box would drag a pinned caption/badge off the corner it anchors to.
     let anchor_parent_bbox = container_anchor_bbox(container_attrs).unwrap_or_else(|| {
         if grid::is_inset_grid(container_attrs) {
             body_bbox
         } else {
-            body_bbox.expand(pad.top, pad.right, pad.bottom, pad.left)
+            Bbox::centered(
+                body_bbox.w() + pad.left + pad.right,
+                body_bbox.h() + pad.top + pad.bottom,
+            )
         }
     });
 
@@ -598,6 +625,39 @@ mod tests {
         assert!((n.bbox.w() - 202.0).abs() < 0.01, "w={}", n.bbox.w());
         // height auto = one text line (15) + 40 padding + 2 stroke = 57.
         assert!((n.bbox.h() - 57.0).abs() < 0.01, "h={}", n.bbox.h());
+    }
+
+    #[test]
+    fn explicit_size_is_a_floor_not_a_clip() {
+        // Content wider than the declared width grows the box instead of spilling.
+        let grown = &lay_out("|box| { width: 40 } \"a long label\"\n").nodes[0];
+        assert!(
+            grown.bbox.w() > 60.0,
+            "floor grows to content: w={}",
+            grown.bbox.w()
+        );
+        // A width the content fits within is honoured exactly (border-box + stroke).
+        let kept = &lay_out("|box| { width: 300 } \"hi\"\n").nodes[0];
+        assert!((kept.bbox.w() - 302.0).abs() < 0.01, "w={}", kept.bbox.w());
+    }
+
+    #[test]
+    fn asymmetric_padding_offsets_the_content() {
+        // padding t r b l = 0 0 0 20 → 20 on the left, 0 on the right, so the
+        // content shifts right by (20 − 0)/2 = 10.
+        let off = &lay_out("|box| { padding: 0 0 0 20 } \"x\"\n").nodes[0];
+        assert!(
+            (off.children[0].cx - 10.0).abs() < 0.01,
+            "cx={}",
+            off.children[0].cx
+        );
+        // Symmetric padding keeps it centred.
+        let mid = &lay_out("|box| { padding: 8 } \"x\"\n").nodes[0];
+        assert!(
+            mid.children[0].cx.abs() < 0.01,
+            "centred: cx={}",
+            mid.children[0].cx
+        );
     }
 
     #[test]

@@ -164,14 +164,14 @@ input_file: samples/shapes.lini
       </g>
     </g>
     <g class="lini-node lini-shape-tile lini-shape-column lini-shape-plain lini-shape-box" transform="translate(-165.4,164)">
-      <rect x="-37" y="-37" width="74" height="74" rx="6" ry="6"/>
+      <rect x="-39" y="-39.5" width="78" height="79" rx="6" ry="6"/>
       <g class="lini-node lini-shape-note lini-shape-box" transform="translate(0,-11)">
         <g filter="url(#lini-shadow-2)">
-          <rect x="-36" y="-25" width="72" height="50" rx="2" ry="2"/>
+          <rect x="-38" y="-27.5" width="76" height="55" rx="2" ry="2"/>
         </g>
         <text class="lini-text" x="0" y="0">note</text>
       </g>
-      <g class="lini-node lini-shape-cap lini-shape-plain lini-shape-box" transform="translate(0,30)">
+      <g class="lini-node lini-shape-cap lini-shape-plain lini-shape-box" transform="translate(0,32.5)">
         <rect x="-14.4" y="-6" width="28.8" height="12" rx="6" ry="6"/>
         <text class="lini-text" x="0" y="0">note</text>
       </g>
