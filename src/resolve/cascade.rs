@@ -182,7 +182,7 @@ mod tests {
 
     #[test]
     fn element_selector_matches_a_type_in_the_chain() {
-        // `treat` resolves to a box, so a `box {}` rule still matches it.
+        // `treat` resolves to a box, so a `|box| {}` rule still matches it.
         let node = facts(&["treat", "box"], &[]);
         assert!(selector_matches(&[ty("box")], &[], &node));
         assert!(selector_matches(&[ty("treat")], &[], &node));

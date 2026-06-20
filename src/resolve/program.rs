@@ -180,7 +180,7 @@ fn apply_var_decls(vars: &mut VarTable, file: &File) -> Result<(), Error> {
 
 /// Root container attributes: the defaults (`layout: column`, `padding: 0` —
 /// the root is framed by the fixed canvas-pad, not by padding) overlaid by the
-/// file's bare top-level declarations.
+/// stylesheet's root declarations.
 fn root_attrs(file: &File, vars: &VarTable) -> Result<AttrMap, Error> {
     let mut ordered: Vec<(String, ResolvedValue)> = vec![
         ("layout".into(), ResolvedValue::Ident("column".into())),
@@ -224,6 +224,7 @@ fn auto_box(id: &str, span: Span) -> Node {
         ty: Some("box".to_string()),
         classes: Vec::new(),
         style: Vec::new(),
+        style_span: None,
         children: Vec::new(),
         wires: Vec::new(),
         span,
@@ -243,7 +244,7 @@ fn builtin_rules() -> Vec<Rule> {
 
 /// The renderer's [`SheetInputs`]: the stylesheet sorted into the layers it
 /// restates as CSS class rules (SPEC §13). Single-part selectors map directly;
-/// descendant rules (`table box { }`) bake inline via the cascade and carry no
+/// descendant rules (`|table box| { }`) bake inline via the cascade and carry no
 /// entry here.
 fn build_sheet_inputs(
     file: &File,

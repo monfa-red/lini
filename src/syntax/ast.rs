@@ -65,6 +65,9 @@ pub struct Define {
     pub name: String,
     pub base: String,
     pub style: Vec<Decl>,
+    /// The `{ … }` style block's span, for the formatter's trivia; `None` when
+    /// the define has no style block.
+    pub style_span: Option<Span>,
     pub children: Vec<Child>,
     pub wires: Vec<Wire>,
     pub span: Span,
@@ -81,6 +84,9 @@ pub struct Node {
     pub ty: Option<String>,
     pub classes: Vec<String>,
     pub style: Vec<Decl>,
+    /// The `{ … }` style block's span, for the formatter's trivia; `None` when
+    /// the node has no style block.
+    pub style_span: Option<Span>,
     pub children: Vec<Child>,
     pub wires: Vec<Wire>,
     pub span: Span,
@@ -109,6 +115,9 @@ pub struct Wire {
     pub op: WireOp,
     pub classes: Vec<String>,
     pub style: Vec<Decl>,
+    /// The `{ … }` style block's span, for the formatter's trivia; `None` when
+    /// the wire has no style block.
+    pub style_span: Option<Span>,
     pub labels: Vec<TextNode>,
     pub span: Span,
 }

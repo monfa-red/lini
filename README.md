@@ -27,10 +27,10 @@ Most tools make you choose: **draw by hand** (precise, but tedious and hard to v
 
 - **You arrange, it routes.** Place nodes with flex, grid, or anchors; Lini routes the connectors between them: orthogonal, clearance-respecting, deterministic.
 - **The full range of SVG.** Sizes, anchors, strokes, shadows, rotation, opacity, raw paths: a designer's control over the look, not a fixed house style. The result can be genuinely pretty, not merely correct.
-- **A genuinely small syntax.** Five sigils and sensible defaults. `cat -> dog` is a valid diagram; the whole language fits in a coffee break.
+- **A genuinely small syntax.** Two brackets — `{ }` for style, `[ ]` for children — plus a few sigils and sensible defaults. `cat -> dog` is a valid diagram; the whole language fits in a coffee break.
 - **Any shape you need.** 12 primitives and 10 templates, plus a raw `path` that accepts any SVG path string. If SVG can draw it, you can place it and wire to it.
 - **Fast, and one file.** A 1.5 MB native binary, one runtime dependency. No Node, JVM, or headless browser; typical diagrams compile in about 2 ms, startup included.
-- **Reproducible output.** Compilation is byte-identical across runs, so renders diff cleanly and never churn in CI. 340 tests back it, including property tests on the router's laws.
+- **Reproducible output.** Compilation is byte-identical across runs, so renders diff cleanly and never churn in CI. 352 tests back it, including property tests on the router's laws.
 - **Themeable like a web page.** Colours and fonts are CSS variables in an `@layer`; a host page restyles a diagram without recompiling, or you bake it into one self-contained file.
 
 ---
@@ -65,31 +65,32 @@ fish --> bowl          // dashed
 
 <p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/flow.png" alt="Lini's wire styles, in colour" width="420"></p>
 
-**A diagram reads like a CSS file.** A stylesheet at the top sets defaults, declares reusable classes, and extends shapes; then come the instances, then the wires:
+**A diagram reads like a CSS file.** A `{ }` stylesheet at the top sets defaults, declares reusable classes, and extends shapes; then come the instances, then the wires:
 
 ```
--> { stroke: #444; clearance: 10; }
-.loud { stroke: red; stroke-width: 2; }
-db::cyl { fill: lightyellow; }     // a new shape from the cylinder primitive
+{                                   // the stylesheet — pure setup, draws nothing
+  -> { stroke: #444; clearance: 10; }
+  .loud { stroke: red; stroke-width: 2; }
+  |db::cyl| { fill: lightyellow; }    // a new shape from the cylinder primitive
+}
 
 api   |box| "API"
-queue |box| { radius: 8; "Queue" }     // a label rides the head; config needs a block
+queue |box| { radius: 8 } "Queue"   // style lives in { }, the label trails
 store |db|  "Postgres"
 
 api   -> queue "enqueue"
-queue -> store .loud "persist"
-store ..> api  "ack"               // dotted arrow
+queue -> store .loud "persist"      // a wire wears its class trailing
+store ..> api  "ack"                // dotted arrow
 ```
 
-**Containers lay their children out.** Pick a mode, and children flow, grid, or anchor:
+**Containers lay their children out.** Style sits in `{ }`, children in `[ ]`; pick a mode and they flow, grid, or anchor:
 
 ```
-services |group| {
-  layout: row;  gap: 24;
+services |group| { layout: row; gap: 24 } [
   |caption| "Services"
   api  |box| "API"
   auth |box| "Auth"
-}
+]
 ```
 
 `row`, `column`, and `grid` (sized by `columns` / `rows`, placed with `cell:` / `span:`), plus `pin` and `translate` to lift a child out of the flow.
@@ -101,13 +102,13 @@ services |group| {
 <p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/shapes.png" alt="Eight of Lini's shape primitives" width="640"></p>
 
 ```
-|hex|  { width: 82; height: 72; "hex" }
-|cyl|  { width: 78; height: 78; "db" }
+|hex|  { width: 82; height: 72 } "hex"
+|cyl|  { width: 78; height: 78 } "db"
 |poly| { points: 0 -34, 32 11, 20 34, -20 34, -32 11; }
 |path| { path: "M -34 6 C -34 -34 34 -34 34 6 C 20 34 -20 34 -34 6 Z"; }
 ```
 
-Box, oval, hex, slant, cylinder, diamond, cloud, polygon, line, icon (Material Symbols), and image, plus `path` for anything else. Text is not a shape: a bare `"…"` is content, and `|plain|` is a frameless box for a label that needs an id or a wire. Templates (`plain`, `rect`, `group`, `caption`, `footer`, `badge`, `note`, `row`, `column`, `table`) bundle common patterns, and you can define your own from any base: `panel::group { stroke: --accent; }`.
+Box, oval, hex, slant, cylinder, diamond, cloud, polygon, line, icon (Material Symbols), and image, plus `path` for anything else. Text is not a shape: a bare `"…"` is content, and `|plain|` is a frameless box for a label that needs an id or a wire. Templates (`plain`, `rect`, `group`, `caption`, `footer`, `badge`, `note`, `row`, `column`, `table`) bundle common patterns, and you can define your own from any base: `|panel::group| { stroke: --accent; }`.
 
 ---
 
@@ -215,7 +216,7 @@ Parsing is recursive-descent over an LL(1) grammar; resolve applies CSS-like spe
 ## Development
 
 ```bash
-cargo test                               # 340 tests
+cargo test                               # 352 tests
 cargo run -- samples/hello.lini
 cargo run -- serve samples/full_example.lini
 ```

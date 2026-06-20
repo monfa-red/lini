@@ -214,6 +214,26 @@ fn table_cells_align_into_columns() {
 }
 
 #[test]
+fn a_comment_between_style_and_children_lands_in_the_children() {
+    // The style block ends at its own `}`; trivia after it belongs to the `[ ]`.
+    assert_eq!(
+        fmt("p |box| { fill: red } [\n  // kids\n  a |oval|\n]\n"),
+        "p |box| { fill: red; } [\n  // kids\n  a |oval|\n]\n"
+    );
+}
+
+#[test]
+fn aligned_nodes_without_content_have_no_trailing_space() {
+    // The type-column pad aligns what follows; with nothing after, it is omitted.
+    let out = fmt("aaa |box|\nb |rectangle|\n");
+    assert_eq!(out, "aaa |box|\nb   |rectangle|\n");
+    assert!(
+        !out.lines().any(|l| l.ends_with(' ')),
+        "trailing space in:\n{out}"
+    );
+}
+
+#[test]
 fn idempotence_and_reparse_over_a_rich_file() {
     let src = "\
 {

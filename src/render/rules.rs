@@ -250,7 +250,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
         }
     }
 
-    // Element rules (`box { }`) merge into the matching shape rule (creating it
+    // Element rules (`|box| { }`) merge into the matching shape rule (creating it
     // for paint-less templates that gain paint only via the rule).
     for (name, attrs) in &laid.sheet.element_rules {
         if !present.contains(name.as_str()) {

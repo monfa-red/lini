@@ -2,15 +2,15 @@
 //! chain, and the layered **type-cascade** defaults (SPEC §8, §12.1).
 //!
 //! A type is a primitive (`box`), a built-in template (`group`, `table`, …), or
-//! a user `name::base` define. Resolving walks base→derived, and at each level
+//! a user `|name::base|` define. Resolving walks base→derived, and at each level
 //! layers, least-specific first:
 //!
 //! 1. the level's intrinsic defaults — a template's built-in bundle, or a
 //!    define's own `{ … }` declarations,
-//! 2. that type's **element rule** (`box { … }`) from the stylesheet.
+//! 2. that type's **element rule** (`|box| { … }`) from the stylesheet.
 //!
-//! So a derived type overrides what it builds on, and an explicit `treat { … }`
-//! rule overrides the `treat::box { … }` define defaults. Cycles and chains
+//! So a derived type overrides what it builds on, and an explicit `|treat| { … }`
+//! rule overrides the `|treat::box| { … }` define defaults. Cycles and chains
 //! deeper than 16 are errors; a define may not shadow a built-in type.
 
 use super::cascade::Stylesheet;

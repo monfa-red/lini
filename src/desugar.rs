@@ -58,6 +58,7 @@ fn desugar_node(node: &Node, file: &File) -> Node {
         ty: node.ty.clone(),
         classes: node.classes.clone(),
         style: node.style.clone(),
+        style_span: node.style_span,
         children,
         wires: node.wires.iter().map(desugar_wire).collect(),
         span: node.span,
@@ -92,6 +93,7 @@ fn desugar_wire(w: &Wire) -> Wire {
         op: w.op,
         classes: w.classes.clone(),
         style,
+        style_span: w.style_span,
         labels: w.labels.clone(),
         span: w.span,
     }

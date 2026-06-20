@@ -176,12 +176,10 @@ impl Emitter<'_> {
         self.out.push_str("::");
         self.out.push_str(&def.base);
         self.out.push('|');
-        let style_end = def
-            .children
-            .first()
-            .map(|c| child_span(c).start)
-            .unwrap_or(def.span.end);
-        self.emit_style_block(&def.style, style_end, depth, true);
+        if !def.style.is_empty() {
+            let end = def.style_span.map_or(def.span.end, |s| s.end);
+            self.emit_style_block(&def.style, end, depth, false);
+        }
         self.emit_body(&def.children, &def.wires, def.span.end, depth);
         self.out.push('\n');
     }
@@ -252,23 +250,25 @@ impl Emitter<'_> {
             pad(self.out, w.id);
             wrote = true;
         }
+        // The alignment pad lines up the column that *follows* the head, so it is
+        // emitted only when something does — otherwise it leaves trailing space.
+        let has_content =
+            !node.style.is_empty() || !node.children.is_empty() || !node.wires.is_empty();
         let bars = type_bars(&node.ty, &node.classes);
         if !bars.is_empty() {
             self.space_if(wrote);
             self.out.push_str(&bars);
-            pad(self.out, w.ty.saturating_sub(bars.len()));
-        } else if w.ty > 0 {
+            if has_content {
+                pad(self.out, w.ty.saturating_sub(bars.len()));
+            }
+        } else if w.ty > 0 && has_content {
             self.space_if(wrote);
             pad(self.out, w.ty);
         }
 
-        let content_start = node
-            .children
-            .first()
-            .map(|c| child_span(c).start)
-            .unwrap_or(node.span.end);
         if !node.style.is_empty() {
-            self.emit_style_block(&node.style, content_start, depth, true);
+            let end = node.style_span.map_or(node.span.end, |s| s.end);
+            self.emit_style_block(&node.style, end, depth, false);
         }
         self.emit_content(node, depth);
     }
@@ -504,8 +504,8 @@ impl Emitter<'_> {
             self.out.push_str(class);
         }
         if !w.style.is_empty() {
-            let style_end = w.labels.first().map(|l| l.span.start).unwrap_or(w.span.end);
-            self.emit_style_block(&w.style, style_end, depth, false);
+            let end = w.style_span.map_or(w.span.end, |s| s.end);
+            self.emit_style_block(&w.style, end, depth, false);
         }
         // A wire is not a container: its labels always trail (SPEC §9).
         for label in &w.labels {

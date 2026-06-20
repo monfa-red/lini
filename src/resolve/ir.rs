@@ -13,14 +13,14 @@ pub struct Program {
 /// The stylesheet layers the renderer restates as CSS class rules — paint rides
 /// CSS, geometry bakes (SPEC §13). Node attrs arrive fully merged; these are the
 /// per-layer inputs the rules builder emits alongside them. Descendant rules
-/// (`table box { }`) carry no entry: their paint bakes inline via the cascade.
+/// (`|table box| { }`) carry no entry: their paint bakes inline via the cascade.
 #[derive(Default, Clone)]
 pub struct SheetInputs {
     /// `.name { }` class rules, in source order — emitted as `lini-style-*`.
     pub class_rules: Vec<(String, AttrMap)>,
     /// `name { }` element rules, in source order — merged into `lini-shape-*`.
     pub element_rules: Vec<(String, AttrMap)>,
-    /// `name::base { }` define defaults (own attrs only), in source order.
+    /// `|name::base| { }` define defaults (own attrs only), in source order.
     pub defines: Vec<(String, AttrMap)>,
     /// Built-in template attrs (e.g. `group`'s container look).
     pub templates: Vec<(String, AttrMap)>,

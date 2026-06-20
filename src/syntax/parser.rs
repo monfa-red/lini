@@ -360,7 +360,7 @@ impl<'a> Parser<'a> {
                 return Err(self.err("wire defaults are set with the '-> { … }' rule"));
             }
             self.pos += 1;
-            let decls = self.parse_style()?;
+            let (decls, _) = self.parse_style()?;
             return Ok(Rule {
                 selector: Selector {
                     parts: vec![SelPart::Type("wire".into())],
@@ -373,7 +373,7 @@ impl<'a> Parser<'a> {
         // `.class { … }` — a bare class definition.
         if self.eat(&TokKind::Dot) {
             let (name, _) = self.expect_ident()?;
-            let decls = self.parse_style()?;
+            let (decls, _) = self.parse_style()?;
             return Ok(Rule {
                 selector: Selector {
                     parts: vec![SelPart::Class(name)],
@@ -411,7 +411,7 @@ impl<'a> Parser<'a> {
         if parts.is_empty() {
             return Err(self.err("a rule needs a selector"));
         }
-        let decls = self.parse_style()?;
+        let (decls, _) = self.parse_style()?;
         Ok(Rule {
             selector: Selector { parts },
             decls,
@@ -427,12 +427,13 @@ impl<'a> Parser<'a> {
         self.expect(&TokKind::DColon, "'::'")?;
         let (base, _) = self.expect_ident()?;
         self.expect(&TokKind::Pipe, "'|'")?;
-        let style = self.opt_style()?;
+        let (style, style_span) = self.opt_style()?;
         let (children, wires) = self.opt_children()?;
         Ok(Define {
             name,
             base,
             style,
+            style_span,
             children,
             wires,
             span: Span::new(start.start, self.last_span().end),
@@ -466,7 +467,7 @@ impl<'a> Parser<'a> {
         } else {
             (None, Vec::new())
         };
-        let style = self.opt_style()?;
+        let (style, style_span) = self.opt_style()?;
 
         // Content is the `[ ]` children block, or the trailing-label sugar — never
         // both. A stray `.class` here is the floating-class mistake (SPEC §4).
@@ -492,6 +493,7 @@ impl<'a> Parser<'a> {
             ty,
             classes,
             style,
+            style_span,
             children,
             wires,
             span: Span::new(start.start, self.last_span().end),
@@ -524,17 +526,19 @@ impl<'a> Parser<'a> {
         Ok((ty, classes))
     }
 
-    /// Consume an optional `{ }` style block; an absent one is an empty decl list.
-    fn opt_style(&mut self) -> Result<Vec<Decl>, Error> {
+    /// Consume an optional `{ }` style block; absent → no decls, no span.
+    fn opt_style(&mut self) -> Result<(Vec<Decl>, Option<Span>), Error> {
         if matches!(self.kind(), Some(TokKind::LBrace)) {
-            self.parse_style()
+            let (decls, span) = self.parse_style()?;
+            Ok((decls, Some(span)))
         } else {
-            Ok(Vec::new())
+            Ok((Vec::new(), None))
         }
     }
 
-    /// `{ decls }` — declarations only.
-    fn parse_style(&mut self) -> Result<Vec<Decl>, Error> {
+    /// `{ decls }` — declarations only. The span covers `{ … }`, for the formatter.
+    fn parse_style(&mut self) -> Result<(Vec<Decl>, Span), Error> {
+        let start = self.span();
         self.expect(&TokKind::LBrace, "'{'")?;
         self.skip_newlines();
         let mut decls = Vec::new();
@@ -549,7 +553,7 @@ impl<'a> Parser<'a> {
             self.terminator()?;
         }
         self.expect(&TokKind::RBrace, "'}'")?;
-        Ok(decls)
+        Ok((decls, Span::new(start.start, self.last_span().end)))
     }
 
     /// Consume an optional `[ children ]` block; absent → empty.
@@ -621,7 +625,7 @@ impl<'a> Parser<'a> {
         while self.eat(&TokKind::Dot) {
             classes.push(self.expect_ident()?.0);
         }
-        let style = self.opt_style()?;
+        let (style, style_span) = self.opt_style()?;
         if matches!(self.kind(), Some(TokKind::LBracket)) {
             return Err(
                 self.err("a wire is not a container — it carries trailing labels, not a '[ ]'")
@@ -633,6 +637,7 @@ impl<'a> Parser<'a> {
             op,
             classes,
             style,
+            style_span,
             labels,
             span: Span::new(start.start, self.last_span().end),
         })

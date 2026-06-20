@@ -23,7 +23,7 @@ use crate::syntax::ast::{File, StyleItem};
 use std::collections::HashMap;
 
 /// Whether `target` appears in `ty`'s base chain — `ty` itself, the templates
-/// it builds on, or the `name::base` defines, down to the primitive. `desugar`
+/// it builds on, or the `|name::base|` defines, down to the primitive. `desugar`
 /// uses this to classify a type without a full resolve: `group` (its labels
 /// become `|caption|` children) and `text` / `icon` (which carry their own
 /// label, so it is never re-expanded). Bounded by the inheritance-depth ceiling,
