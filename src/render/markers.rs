@@ -232,17 +232,17 @@ pub fn emit_marker(
             ).unwrap();
         }
         MarkerKind::Crow => {
-            // The feet share the arrow head's base (tip − size, ±size/2), so the
-            // crow reads at the arrow's size; the vertex pulls in by the miter
-            // overshoot `e` so its drawn point sits on the tip, level with the
-            // other markers, without lengthening the head.
+            // The feet sit back at the arrow head's base (tip − size) but a touch
+            // narrower (±0.375·size) so the foot splay reads cleanly; the vertex
+            // pulls in by the miter overshoot `e` so its drawn point sits on the
+            // tip, level with the other markers, without lengthening the head.
             let e = thickness * CROW_MITER;
             let (vx, vy) = (tip.0 - ux * e, tip.1 - uy * e);
             let (bx, by) = (tip.0 - ux * size, tip.1 - uy * size);
-            let lx = bx + px * size * 0.5;
-            let ly = by + py * size * 0.5;
-            let rx = bx - px * size * 0.5;
-            let ry = by - py * size * 0.5;
+            let lx = bx + px * size * 0.375;
+            let ly = by + py * size * 0.375;
+            let rx = bx - px * size * 0.375;
+            let ry = by - py * size * 0.375;
             // Outer prongs are one path through the vertex (a real mitred point);
             // the centre prong tucks inside it. Paint rides `.lini-marker-crow`.
             writeln!(

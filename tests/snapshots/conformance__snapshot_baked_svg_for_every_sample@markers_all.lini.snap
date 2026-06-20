@@ -32,7 +32,7 @@ input_file: samples/markers_all.lini
     </g>
     <g class="lini-node lini-shape-line" transform="translate(0,33)">
       <line x1="-60" y1="0" x2="56" y2="0"/>
-      <path class="lini-marker lini-marker-crow" d="M 52 4 L 57.7639 0 L 52 -4 M 52 0 L 57.7639 0"/>
+      <path class="lini-marker lini-marker-crow" d="M 52 3 L 57.7639 0 L 52 -3 M 52 0 L 57.7639 0"/>
     </g>
     <g class="lini-node lini-shape-line" transform="translate(0,55)">
       <line x1="-56" y1="0" x2="56" y2="0"/>
