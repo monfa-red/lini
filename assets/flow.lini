@@ -12,12 +12,12 @@
   .thick { stroke: #f3722c; stroke-width: 3; }
 }
 
-cat |box| { fill: #ffd6a5; } "cat"
-dog |box| { fill: #ffd6a5; } "dog"
+cat  |box| { fill: #ffd6a5; } "cat"
+dog  |box| { fill: #ffd6a5; } "dog"
 fish |box| { fill: #a0c4ff; } "fish"
 bowl |box| { fill: #a0c4ff; } "bowl"
 newt |box| { fill: #caffbf; } "newt"
-log |box| { fill: #caffbf; } "log"
+log  |box| { fill: #caffbf; } "log"
 frog |box| { fill: #bdb2ff; } "frog"
 pond |box| { fill: #bdb2ff; } "pond"
 ping |box| { fill: #ffadad; } "ping"

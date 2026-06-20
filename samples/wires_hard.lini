@@ -15,14 +15,14 @@ north |group| { cell: 2 1; layout: column; gap: 16; } [
   nn1 |box|     "N1"
   nn2 |box|     "N2"
 ]
-beta |box| { cell: 3 1; } "Beta"
+beta  |box| { cell: 3 1; } "Beta"
 
 west |group| { cell: 1 2; layout: column; gap: 16; } [
       |caption| "West"
   ww1 |box|     "W1"
   ww2 |box|     "W2"
 ]
-hub |box| { cell: 2 2; } "Hub"
+hub  |box| { cell: 2 2; } "Hub"
 east |group| { cell: 3 2; layout: column; padding: 16; gap: 16; } [
       |caption| "East"
   ee1 |box|     "E1"

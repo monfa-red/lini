@@ -21,7 +21,7 @@ band |row| { gap: 24; } [
     "Service"
     |badge| "NEW"
   ]
-  |note| "Sticky note"
+      |note| "Sticky note"
 ]
 
 basket |table| { columns: 80 80 80; } [

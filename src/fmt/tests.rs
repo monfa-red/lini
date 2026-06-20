@@ -97,14 +97,29 @@ fn node_class_follows_the_bars() {
 }
 
 #[test]
-fn a_class_or_block_opts_a_group_out_of_alignment() {
-    // Alignment is for plain shape+label rows; a .class or { } block makes the
-    // whole group ragged (single-spaced), like a non-text cell drops a table grid.
+fn ids_align_so_bars_line_up_even_with_classes_or_blocks() {
+    // A class/block group still aligns the id column (bars line up); only the
+    // type column — the labels — stays ragged, so nothing pads past a class.
     assert_eq!(
-        fmt("g|group|[\na|box| \"A\"\nbbb|box| .loud \"B\"\n]\n"),
-        "g |group| [\n  a |box| \"A\"\n  bbb |box| .loud \"B\"\n]\n"
+        fmt("flat|box| .loud \"P\"\nmix|box| .calm { fill: red } \"M\"\n"),
+        "flat |box| .loud \"P\"\nmix  |box| .calm { fill: red; } \"M\"\n"
     );
-    // A block sibling likewise: the bare-label node is not padded to its width.
+}
+
+#[test]
+fn a_root_box_without_an_id_is_not_indented() {
+    // Leading id-pad at the root reads as floating, so suppress it; an id-bearing
+    // sibling still aligns to its own width.
+    assert_eq!(
+        fmt("flat|box| \"P\"\n|box| \"anon\"\n"),
+        "flat |box| \"P\"\n|box| \"anon\"\n"
+    );
+}
+
+#[test]
+fn a_block_keeps_the_label_column_ragged() {
+    // A label is never padded past a block sibling (the type column stays ragged
+    // in a non-plain group); ids still align.
     assert_eq!(
         fmt("g|group|[\n|oval| { width: 70 } \"o\"\n|cap| \"label\"\n]\n"),
         "g |group| [\n  |oval| { width: 70; } \"o\"\n  |cap| \"label\"\n]\n"

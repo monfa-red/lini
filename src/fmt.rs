@@ -2,8 +2,9 @@
 //! normalized form: the three phases in order (the stylesheet `{ }`, then the
 //! instances, then the wires), `{ }` style blocks and `[ ]` child lists, bar-wrapped
 //! type selectors and `|name::base|` defines, 2-space indent, space-separated value
-//! groups. Comments and blank-line groupings are preserved; a group of plain
-//! sibling nodes aligns its id and type columns. Idempotent: `fmt(fmt(x)) == fmt(x)`.
+//! groups. Comments and blank-line groupings are preserved; sibling nodes align
+//! their id column (the bars line up), and a plain group aligns its type column
+//! too (the labels). Idempotent: `fmt(fmt(x)) == fmt(x)`.
 
 use crate::ast::{Side, WireOp};
 use crate::error::Error;
@@ -240,18 +241,22 @@ impl Emitter<'_> {
 
     fn emit_node(&mut self, node: &Node, depth: usize, w: align::NodeWidths) {
         self.indent(depth);
-        // The id and `|type|` columns align within an all-plain group; `w` is
-        // zero otherwise, so the line stays ragged. A `.class` chain and a `{ }`
-        // block never align — they trail with a single space (SPEC §14).
+        // The id column aligns so the bars line up; the `|type|` column aligns
+        // only in an all-plain group (`w.ty` is 0 otherwise). A `.class` chain
+        // and a `{ }` block never align — they trail with a single space (SPEC §14).
         let bars = type_bars(&node.ty);
         let classes = class_str(&node.classes);
         let has_block = !node.style.is_empty();
         let has_body = !node.children.is_empty() || !node.wires.is_empty();
         let id = node.id.as_deref().unwrap_or("");
+        // A no-id box at the root is not indented to the id column — leading
+        // space there reads as floating, not alignment; inside a block the base
+        // indent makes the pad a real column, so keep it.
+        let id_w = if id.is_empty() && depth == 0 { 0 } else { w.id };
 
         let after_id = !bars.is_empty() || !classes.is_empty() || has_block || has_body;
         let after_ty = !classes.is_empty() || has_block || has_body;
-        let mut wrote = self.emit_col(id, w.id, after_id, false);
+        let mut wrote = self.emit_col(id, id_w, after_id, false);
         wrote = self.emit_col(&bars, w.ty, after_ty, wrote);
         if !classes.is_empty() {
             self.space_if(wrote);

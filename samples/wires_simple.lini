@@ -9,10 +9,10 @@
   -> { clearance: 10; }
 }
 
-ant |box| { width: 60; height: 60; } "Ant"
+ant  |box| { width: 60; height: 60; } "Ant"
 wall |box| { width: 60; height: 140; } "Wall"
-bee |box| "Bee"
-owl |oval| "Owl"
+bee  |box| "Bee"
+owl  |oval| "Owl"
 
 ant -> bee "over"
 // detours around Wall
