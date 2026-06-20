@@ -158,9 +158,9 @@ construction rather than by checking.
    one, keeping the perpendicular point contact). Rounding never brings a
    wire nearer than `clearance` to anything. Wire
    labels ride their wire at the fractions of its drawn route given by `along:`
-   (auto-distributed when unset), nudged by `translate:` (world `x y`); they are
-   obstacles to nothing and may slide along the wire to dodge nodes and other
-   labels — the wire itself never moves for a label.
+   (auto-distributed when unset); they are obstacles to nothing and may slide
+   along the wire to dodge nodes and other labels — the wire itself never moves
+   for a label.
 
 ---
 
