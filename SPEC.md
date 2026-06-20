@@ -6,7 +6,7 @@ composable shapes, CSS-driven theming — compiles to clean SVG.
 **Two brackets carry the whole language.** `{ … }` is **style** — `key: value;`
 declarations, dash-case, space-separated values, exactly like CSS. `[ … ]` is
 **content** — a container's children, in source order. A node is
-`id |type| { style } [ children ]`; every part is optional. Nothing styles
+`id |type| .class { style } [ children ]`; every part is optional. Nothing styles
 outside a `{ }`; nothing is drawn outside the canvas.
 
 **Two node kinds, like HTML.** A **box** is a box (`|box|`, `|group|`, …); a
@@ -46,7 +46,7 @@ That's a complete diagram: three boxes, two arrows. Lini fills in the rest.
 | `"…"` | Text content — a label, a cell, a note. |
 | `{ … }` | A **style block** — `key: value;` declarations. |
 | `[ … ]` | A **child list** — a container's contents. |
-| `.name` | A class — define it (`.hot { … }`), wear it (`\|box.hot\|`). |
+| `.name` | A class — define it (`.hot { … }`), wear it (`\|box\| .hot`). |
 | `--name` | A themeable variable (`fill: --accent`). |
 | `a -> b` | A wire. |
 
@@ -96,17 +96,19 @@ stylesheet block; drawing lives on the canvas.** You never re-read a
 - `[ … ]` — **content**: a container's children (boxes and text), then its
   internal wires, in source order.
 
-A drawn node is `id |type| { style } [ children ]`. Each part is optional, but a
-node needs at least one of them; bare `cat` is a default `|box|` labelled "cat".
+A drawn node is `id |type| .class { style } [ children ]`. Each part is optional,
+but a node needs at least an id, a type, or a class; bare `cat` is a default
+`|box|` labelled "cat".
 
 **Two sigils, one meaning each.**
 
 - `|…|` — a **type**. Always in bars, whether you instantiate it (`cat |oval|`),
-  match it (`|oval| { … }`), or extend it (`|cat::oval| { … }`). Inside the bars
-  is a CSS-shaped selector — a type, a type with glued classes (`|box.hot|`), or
-  a descendant chain (`|table box|`); see [§4](#4-selectors--the-cascade).
-- `.name` — a **class**. Defined bare (`.hot { … }`), worn inside a node's bars
-  (`|box.hot|`), trailing a wire (`a -> b .hot`).
+  match it (`|oval| { … }`), or extend it (`|cat::oval| { … }`). On an instance the
+  bars hold the type alone; as a rule they hold a CSS selector over types and
+  classes (`|table box|`, `|.sidebar box|`); see [§4](#4-selectors--the-cascade).
+- `.name` — a **class**. Defined bare (`.hot { … }`), worn after the type
+  (`|box| .hot`) or after a wire's endpoints (`a -> b .hot`) — a `.class` chain,
+  never inside the bars.
 
 **Boxes and text.** A *box* has an id, a type, classes, a style block, and
 children. A *string* is bare text content — no id, type, classes, block, or
@@ -157,8 +159,8 @@ says otherwise:
 | Form | Whitespace rule |
 |---|---|
 | `key: value` | `:` separates name and value; surrounding space optional, canonical is one space after (`radius: 5`). |
-| `\|…\|` | A type in bars. Inside: a glued `.` is a class on a type (`box.hot`), a space is the descendant combinator (`table box`), `::` is the define operator (`cat::oval`). Bars are paired; surrounding space at the boundary is not allowed. |
-| `.name` (class) | At the stylesheet top it is a class **definition** (`.hot { … }`). After a wire it is the wire's class — **space required** before it (`a -> b .loud`). Inside bars it has no leading space (`\|box.hot\|`). |
+| `\|…\|` | A type in bars. On an instance the bars hold a type alone (`oval`); in a rule selector a space is the descendant combinator (`table box`) and a part may be a class (`.sidebar box`); `::` is the define operator (`cat::oval`). Bars are paired; surrounding space at the boundary is not allowed. |
+| `.name` (class) | At the stylesheet top it is a class **definition** (`.hot { … }`). On an instance or wire it is a **worn class**, following the type or endpoints — **spaced** off an id/endpoint so it isn't a path (`cat .hot`, `a -> b .loud`), the rest of the chain **glued** (`.hot.loud`). |
 | `id.side` / `id.child` | **No space** — a wire endpoint path (`cat.right`, `kitchen.bowl`). |
 | `--name` | A variable, in a value or at a statement start to declare one. |
 | wire op | `[marker?] line [marker?]`, glued, no internal space (`->`, `..>`, `<->`). |
@@ -228,17 +230,17 @@ cycles are an error.
 ### Box declaration
 
 ```
-[id] [|type|] [ { style } ] [ "label"… | [ children ] ]
+[id] [|type|] [.class…] [ { style } ] [ "label"… | [ children ] ]
 ```
 
-The **line is identity** — id and `|type|` (with its classes). The **`{ }` is
+The **line is identity** — id, `|type|`, and the `.class`es. The **`{ }` is
 style**, the **`[ ]` is content** — children (boxes and text), then internal
-wires. A node leads with an id or a `|type|` (or both); the style and content
-are optional.
+wires. A node leads with an id, a `|type|`, or a `.class` (any combination); the
+style and content are optional.
 
-A box's **type and classes live in the bars**: `|oval|`, `|box.hot|` (a box with
-class `hot`), `|.hot|` (a default box with class `hot`). A bare `cat` is a
-default `|box|`.
+A box's **type lives in the bars**, its **classes follow them**: `|oval|`,
+`|box| .hot` (a box with class `hot`), `.hot` (a default box with class `hot`),
+`|box| .hot.loud` (two classes). A bare `cat` is a default `|box|`.
 
 A block-less node may **trail its label** instead of an `[ ]` — `api |box| "API"`
 is `api |box| [ "API" ]`, the strings running to the line's end (`a |box| "x" "y"`
@@ -247,7 +249,7 @@ is two text children). The style block is independent of the label:
 trailing label **or** the `[ ]`, never both.
 
 ```
-db |cyl.primary| { fill: #eef } [
+db |cyl| .primary { fill: #eef } [
   "Postgres"
   |badge| "v16"
 ]
@@ -260,7 +262,7 @@ db |cyl.primary| { fill: #eef } [
 | `cat \|treat\| "Friendly cat"` | trailing label "Friendly cat". |
 | `cat \|treat\| { fill: red }` | type + a style block, label still "cat". |
 | `cat \|box\| ""` | box, **no** label. |
-| `cat \|box.bold.loud\| { padding: 5 }` | type + classes + own style. |
+| `cat \|box\| .bold.loud { padding: 5 }` | type + classes + own style. |
 | `garden \|group\| { … } [ … ]` | container with style and a body. |
 | `\|box\| "Load balancer"` | anonymous labelled box (can't be wired to). |
 
@@ -333,15 +335,17 @@ A **descendant selector** is two or more space-separated parts inside the bars;
 it matches a node whose ancestor chain contains each part in order (not
 necessarily adjacent), exactly like a CSS descendant combinator. Each part is a
 single type or a single class — **compounds are not selectors**: a glued
-`|box.hot|` means "a box wearing class `hot`," which is how an *instance* wears a
-class, not a rule. To style boxes-with-a-class, style the class (`.hot { … }`).
+`|box.hot|` is rejected, because an instance wears its class *after* the bars
+(`|box| .hot`), never inside them. To style boxes-with-a-class, style the class
+(`.hot { … }`).
 
 A **define** introduces a new type from a base: `|treat::box| { … }`. Its
 declarations are the type's defaults; an optional `[ ]` gives it intrinsic
 children (materialized per instance — see [§9](#9-wires)).
 
-A **class** is defined by `.name { … }` and **worn** by writing it inside a
-node's bars (`|box.hot|`) or trailing a wire (`a -> b .hot`).
+A **class** is defined by `.name { … }` and **worn** by writing it after the
+type (`|box| .hot`) or after a wire's endpoints (`a -> b .hot`) — the same
+`.class` slot on both, never inside the bars.
 
 **Specificity** — the most specific source wins; ties break by **source order**
 (the CSS cascade):
@@ -691,7 +695,7 @@ wins). The operator's line part sets the wire's `stroke-style` (`--` ⇒ `dashed
 ### Syntax
 
 ```
-endpoints op endpoints [op endpoints …] [.class] [{ declarations }] "label" …
+endpoints op endpoints [op endpoints …] [.class…] [{ declarations }] "label" …
 ```
 
 `endpoints` is one or more endpoints joined by `&`:
@@ -707,11 +711,10 @@ a -> b -> c & d      // chain + fan
 
 Mixing operators in one chain is a parse error.
 
-A wire's **class trails** the endpoints — a wire has no bars to wear it in, so the
-class stands alone (`a -> b .loud`). This is the one floating class in the
-language, and it is the rule, not an exception: a class glues to a type inside
-`|…|` when there is one, and trails when there isn't. On a chain or fan, the
-trailing class and the `{ }` apply to every wire the statement expands to.
+A wire's **class follows** its endpoints (`a -> b .loud`), exactly as a node's
+follows its type (`|box| .loud`) — one `.class` slot, after the identity, on
+both; a class never lives inside the bars. On a chain or fan, the class and the
+`{ }` apply to every wire the statement expands to.
 
 ### Labels
 
@@ -987,7 +990,7 @@ broken by **later wins** (source order):
    more-derived type overrides what it builds on.
 2. **Descendant rules** — `|table box| { }`, `|.sidebar box| { }`, matched against
    the ancestor chain.
-3. **Class rules** — `.hot { }`, worn via `|box.hot|` on the node.
+3. **Class rules** — `.hot { }`, worn via `|box| .hot` on the node.
 4. **The instance's own block** — `client |box| { fill: white }` — the most
    specific, beats everything above.
 
@@ -1128,7 +1131,8 @@ Format: `filename:line:col: error: <message>` (LSP-compatible).
 | Declaration outside a block | `a declaration belongs in a '{ }' block` |
 | Bare type name | `a type only appears in bars — write '\|box\| { }' to style every box` |
 | Glued compound in a rule | `a selector part can't glue a type and a class — space them (descendant) or style '.hot'` |
-| Spaced class in a node's bars | `a class glues to its type in the bars — write '\|box.hot\|', no space` |
+| Class inside instance bars | `a class follows the bars — write '\|box\| .hot', not '\|box.hot\|'` |
+| Spaced class chain | `classes glue into a chain — write '.hot.loud', no space` |
 | Style block holds non-decl | `a '{ }' style block holds only declarations` |
 | `[ ]` holds a declaration | `declarations go in '{ }', not '[ ]'` |
 | Children after internal wires | `a child must come before the body's wires` |
@@ -1166,11 +1170,10 @@ define      = "|" ident "::" ident "|" body         # name :: base, optional chi
 wire_rule   = "->" style                            # wire defaults — the wire glyph as selector
 
 node        = box | text
-box         = ( ident [ typeref ] | typeref ) [ style ] [ labels | children ]
-                                                    # leads with an id, a |type|, or both
-typeref     = "|" type_use "|"                       # |oval| , |box.hot| , |.hot|
-type_use    = ident { glued_class } | glued_class { glued_class }
-glued_class = "." ident                             # glued to the type — a worn class
+box         = ( ident [ typeref ] [ classes ] | typeref [ classes ] | classes )
+              [ style ] [ labels | children ]        # needs an id, a |type|, or a class
+typeref     = "|" ident "|"                          # a type alone — |oval|, a user type
+classes     = "." ident { "." ident }               # a worn class chain — .hot, .hot.loud
 text        = string                                # bare content; never a wrapped box
 
 style       = "{" { decl } "}"                       # declarations only
@@ -1179,7 +1182,7 @@ body        = [ style ] [ children ]                 # define / container body
 labels      = string { string }                      # trailing text → text children
 
 wire        = endpoints wire_op endpoints { wire_op endpoints }
-              { "." ident } [ style ] { string }      # trailing class(es), style, labels
+              [ classes ] [ style ] { string }        # worn class(es), style, labels
 selector    = sel_part { sel_part }                  # whitespace-separated = descendant
 sel_part    = ident | "." ident                      # a single type or a single class
 endpoints   = endpoint { "&" endpoint }
@@ -1213,19 +1216,21 @@ the old grammar needed, because no statement's kind depends on a type set:
 - A leading `{` opens the stylesheet; inside it, `--name :` → variable, `ident :`
   → root declaration, `|…|` → a rule (or, with an inner `::`, a define), `.name` →
   a class, `->` `{` → wire defaults.
-- On the canvas a statement is a `node` (an `ident` or `|type|` head, or a `"…"`
-  text) or — when an `ident` is followed by a wire-op / `&` / glued `.side` — a
-  `wire`.
+- On the canvas a statement is a `node` (an `ident`, `|type|`, or `.class` head, or
+  a `"…"` text) or — when an `ident` is followed by a wire-op, `&`, or a glued `.`
+  (an endpoint path) — a `wire`.
 - `{` is always style, `[` is always children, `|…|` is always a type. A string is
   self-delimiting, so consecutive strings are consecutive text nodes; strings
   trailing a node or wire head are that node's labels, to the line's end.
 
-**Inside the bars, adjacency matters:** a `.class` with no preceding space glues
-to the type as one selector part (`box.hot` — an instance's worn class); a space
-starts a new part (`table box` — descendant). A glued compound is legal only on an
-instance; as a rule selector it is rejected at resolve ([§15](#15-errors)). Because
-`ident` excludes the reserved sides ([§18](#18-reserved-words)), an endpoint's
-trailing `.left` reads as a side, not a child.
+**Adjacency tells a `.class` from a path:** a space before the `.` makes it a worn
+class (`a .hot` — node `a` with class `hot`), no space makes it an endpoint path
+(`a.b`). The first class is space-separated from the type or endpoints; the rest of
+the chain glues (`.hot.loud`). A glued `|box.hot|` in the bars is rejected — a
+class follows the bars ([§15](#15-errors)). Inside a *rule* selector a space is the
+descendant combinator (`table box`) and a part may be a class (`.sidebar box`), but
+a type and class never glue. Because `ident` excludes the reserved sides
+([§18](#18-reserved-words)), an endpoint's trailing `.left` reads as a side.
 
 No prescan, no second pass, no "define before use" needed for *parsing* (it is
 still required for the resolve-time cascade — [§17](#17-implementer-algorithm)).
