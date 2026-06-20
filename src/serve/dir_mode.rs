@@ -65,6 +65,10 @@ fn serve_compile(stream: &mut TcpStream, body: &[u8], opts: &Options) -> std::io
     let src = String::from_utf8_lossy(body);
     let name = "playground.lini";
     let lints = crate::lint_str(&src).unwrap_or_default();
+    // Best-effort extras, present whenever the source parses: render also
+    // formats the buffer, and the desugar pane shows the expanded form.
+    let formatted = opt_json(crate::format_source(&src).ok());
+    let desugared = opt_json(crate::desugar_source(&src).ok());
 
     let json = match crate::compile_str_checked(&src, opts) {
         Ok((svg, route_diags)) => {
@@ -74,14 +78,18 @@ fn serve_compile(stream: &mut TcpStream, body: &[u8], opts: &Options) -> std::io
                 .map(|d| d.display_with_source(&src, name).to_string())
                 .collect();
             format!(
-                "{{\"ok\":true,\"svg\":\"{}\",\"diagnostics\":{}}}",
+                "{{\"ok\":true,\"svg\":\"{}\",\"diagnostics\":{},\"formatted\":{},\"desugared\":{}}}",
                 http::json_escape(&svg),
-                json_string_array(&diags)
+                json_string_array(&diags),
+                formatted,
+                desugared
             )
         }
         Err(e) => format!(
-            "{{\"ok\":false,\"error\":\"{}\",\"diagnostics\":[]}}",
-            http::json_escape(&e.display_with_source(&src, name).to_string())
+            "{{\"ok\":false,\"error\":\"{}\",\"diagnostics\":[],\"formatted\":{},\"desugared\":{}}}",
+            http::json_escape(&e.display_with_source(&src, name).to_string()),
+            formatted,
+            desugared
         ),
     };
     http::write_response(
@@ -133,6 +141,14 @@ fn json_string_array(items: &[String]) -> String {
         .map(|s| format!("\"{}\"", http::json_escape(s)))
         .collect();
     format!("[{}]", inner.join(","))
+}
+
+/// A JSON string literal, or `null` when the value is absent.
+fn opt_json(s: Option<String>) -> String {
+    match s {
+        Some(v) => format!("\"{}\"", http::json_escape(&v)),
+        None => "null".to_string(),
+    }
 }
 
 /// Every `.lini` file under `root`, as `/`-separated paths relative to it,

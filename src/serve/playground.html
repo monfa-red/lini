@@ -20,7 +20,6 @@
       :root {
         --mono:
           ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
-        --split: 50%;
       }
       /* Dracula */
       :root[data-theme="dark"] {
@@ -92,57 +91,8 @@
           sans-serif;
       }
 
-      /* Tabs — mobile only */
-      .tabs {
-        display: none;
-        flex: 0 0 auto;
-        background: var(--panel-2);
-        border-bottom: 1px solid var(--border);
-      }
-      .tab {
-        flex: 1;
-        padding: 12px;
-        background: none;
-        border: none;
-        color: var(--muted);
-        font: inherit;
-        font-weight: 600;
-        cursor: pointer;
-      }
-      .tab.active {
-        color: var(--text);
-        box-shadow: inset 0 -2px 0 var(--accent);
-      }
-
-      .panes {
-        flex: 1 1 auto;
-        display: flex;
-        min-height: 0;
-      }
-      .pane {
-        display: flex;
-        flex-direction: column;
-        min-width: 0;
-        min-height: 0;
-      }
-      .pane.edit {
-        flex: 0 0 var(--split);
-        border-right: 1px solid var(--border);
-      }
-      .pane.preview {
-        flex: 1 1 0;
-      }
-      .divider {
-        flex: 0 0 6px;
-        background: var(--border);
-        cursor: col-resize;
-        touch-action: none;
-      }
-      .divider:hover {
-        background: var(--accent);
-      }
-
-      .toolbar {
+      /* Top bar — always visible, full width, above the tabs on mobile. */
+      .topbar {
         flex: 0 0 auto;
         display: flex;
         align-items: center;
@@ -192,10 +142,9 @@
         opacity: 0.55;
         cursor: default;
       }
-      .btn-primary {
-        background: var(--accent);
-        color: var(--accent-ink);
+      .btn.active {
         border-color: var(--accent);
+        color: var(--accent);
       }
       .btn-icon {
         padding: 6px 10px;
@@ -203,8 +152,52 @@
         line-height: 1;
       }
 
+      /* Tabs — mobile only */
+      .tabs {
+        display: none;
+        flex: 0 0 auto;
+        background: var(--panel-2);
+        border-bottom: 1px solid var(--border);
+      }
+      .tab {
+        flex: 1;
+        padding: 12px;
+        background: none;
+        border: none;
+        color: var(--muted);
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .tab.active {
+        color: var(--text);
+        box-shadow: inset 0 -2px 0 var(--accent);
+      }
+
+      .panes {
+        flex: 1 1 auto;
+        display: flex;
+        min-height: 0;
+      }
+      .pane {
+        flex: 1 1 0;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        min-height: 0;
+      }
+      .divider {
+        flex: 0 0 6px;
+        background: var(--border);
+        cursor: col-resize;
+        touch-action: none;
+      }
+      .divider:hover {
+        background: var(--accent);
+      }
+
       /* The editor is a transparent textarea over a highlighted <pre>.
-               Both layers share identical metrics so glyphs line up exactly. */
+         Both layers share identical metrics so glyphs line up exactly. */
       .editor-wrap {
         position: relative;
         flex: 1 1 auto;
@@ -213,9 +206,8 @@
         background: var(--panel);
       }
       #highlight,
-      #editor {
-        position: absolute;
-        inset: 0;
+      #editor,
+      .codeview {
         margin: 0;
         border: 0;
         padding: 16px 18px;
@@ -223,6 +215,11 @@
         tab-size: 2;
         white-space: pre;
         box-sizing: border-box;
+      }
+      #highlight,
+      #editor {
+        position: absolute;
+        inset: 0;
       }
       #highlight {
         pointer-events: none;
@@ -236,14 +233,25 @@
         color: transparent;
         caret-color: var(--accent);
         overflow: auto;
-        /* Hide the scrollbar so its width can't desync the overlay —
-                   a visible textarea scrollbar steals client height/width that
-                   the highlight layer doesn't have, drifting them apart. */
+        /* Hide the scrollbar so its width can't desync the overlay — a visible
+           textarea scrollbar steals client height/width the highlight layer
+           doesn't have, drifting them apart. */
         scrollbar-width: none;
       }
       #editor::-webkit-scrollbar {
         display: none;
       }
+
+      /* Desugar pane — read-only highlighted view of the expanded source. */
+      .pane.desugar {
+        background: var(--panel);
+      }
+      .codeview {
+        flex: 1 1 auto;
+        overflow: auto;
+        color: var(--text);
+      }
+
       .tok-comment {
         color: var(--tok-comment);
         font-style: italic;
@@ -320,79 +328,102 @@
         color: var(--err);
       }
 
-      @media (max-width: 768px) {
-        .tabs {
-          display: flex;
-        }
-        .pane {
+      /* Desktop: per-pane toggles. A pane shows when its `show-*` class is set;
+         a divider shows only between two visible panes — so the last pane left
+         on can never be toggled off into emptiness. */
+      @media (min-width: 769px) {
+        body:not(.show-code) .pane.code,
+        body:not(.show-desugar) .pane.desugar,
+        body:not(.show-preview) .pane.preview {
           display: none;
-        }
-        .pane.edit {
-          border-right: none;
-        }
-        .pane.edit,
-        .pane.preview {
-          flex: 1 1 auto;
         }
         .divider {
           display: none;
         }
-        body[data-tab="edit"] .pane.edit,
+        body.show-code.show-desugar .divider.d1,
+        body.show-code.show-preview .divider.d1,
+        body.show-desugar.show-preview .divider.d2 {
+          display: block;
+        }
+      }
+
+      /* Mobile: three tabs pick the single visible pane; toggles are gone. */
+      @media (max-width: 768px) {
+        .tabs {
+          display: flex;
+        }
+        .pane,
+        .divider {
+          display: none;
+        }
+        body[data-tab="code"] .pane.code,
+        body[data-tab="desugar"] .pane.desugar,
         body[data-tab="preview"] .pane.preview {
           display: flex;
         }
-        /* Tighter toolbar so it fits one row on a phone. */
-        #render {
+        #render,
+        #toggle-code,
+        #toggle-desugar,
+        #toggle-preview {
           display: none;
         }
-        .toolbar {
+        .topbar {
           gap: 6px;
         }
         .btn {
           padding: 6px 9px;
         }
         #highlight,
-        #editor {
+        #editor,
+        .codeview {
           font-size: 12px;
         }
       }
     </style>
   </head>
-  <body data-tab="edit">
+  <body class="show-code show-preview" data-tab="code">
+    <div class="topbar">
+      <span class="brand">Lini</span>
+      <select id="file" title="open a sample"></select>
+      <span class="dirty" id="dirty" title="unsaved changes">●</span>
+      <span class="spacer"></span>
+      <button class="btn btn-icon" id="render" title="render (Ctrl/Cmd-S)">
+        ▶
+      </button>
+      <button class="btn" id="restore" disabled title="revert to the loaded version">
+        Rest
+      </button>
+      <button class="btn" id="save" disabled title="write to disk">Save</button>
+      <button class="btn btn-icon" id="toggle-code" title="toggle code pane">
+        &lt;/&gt;
+      </button>
+      <button
+        class="btn btn-icon"
+        id="toggle-desugar"
+        title="toggle desugar pane"
+      >
+        { }
+      </button>
+      <button
+        class="btn btn-icon"
+        id="toggle-preview"
+        title="toggle preview pane"
+      >
+        ▦
+      </button>
+      <button class="btn btn-icon" id="theme" title="toggle light / dark">
+        ◐
+      </button>
+    </div>
+
     <div class="tabs">
-      <button class="tab active" data-tab="edit">Edit</button>
+      <button class="tab active" data-tab="code">Code</button>
+      <button class="tab" data-tab="desugar">Desugar</button>
       <button class="tab" data-tab="preview">Preview</button>
     </div>
 
     <div class="panes">
-      <section class="pane edit">
-        <div class="toolbar">
-          <span class="brand">Lini</span>
-          <select id="file" title="open a sample"></select>
-          <span class="dirty" id="dirty" title="unsaved changes">●</span>
-          <span class="spacer"></span>
-          <button
-            class="btn btn-primary"
-            id="render"
-            title="render (Ctrl/Cmd-S)"
-          >
-            Render
-          </button>
-          <button
-            class="btn"
-            id="restore"
-            disabled
-            title="revert to the loaded version"
-          >
-            Rest
-          </button>
-          <button class="btn" id="save" disabled title="write to disk">
-            Save
-          </button>
-          <button class="btn btn-icon" id="theme" title="toggle light / dark">
-            ◐
-          </button>
-        </div>
+      <section class="pane code">
         <div class="editor-wrap">
           <pre id="highlight" aria-hidden="true"></pre>
           <textarea
@@ -406,7 +437,13 @@
         </div>
       </section>
 
-      <div class="divider" id="divider" title="drag to resize"></div>
+      <div class="divider d1" title="drag to resize"></div>
+
+      <section class="pane desugar">
+        <pre id="desugar" class="codeview" aria-hidden="true"></pre>
+      </section>
+
+      <div class="divider d2" title="drag to resize"></div>
 
       <section class="pane preview">
         <div id="preview"></div>
@@ -419,6 +456,7 @@
       const $ = (s) => document.querySelector(s);
       const editor = $("#editor");
       const preview = $("#preview");
+      const desugarView = $("#desugar");
       const diag = $("#diag");
       const fileSelect = $("#file");
       const saveBtn = $("#save");
@@ -433,8 +471,8 @@
 
       // ---- transport seam ------------------------------------------
       // The only code that touches the server. A future WASM build swaps
-      // these three for an in-browser compile + a baked file manifest;
-      // nothing else on the page changes.
+      // these for an in-browser compile + a baked file manifest; nothing
+      // else on the page changes.
       async function listFiles() {
         const t = (await (await fetch("/api/files")).text()).trim();
         return t ? t.split("\n") : [];
@@ -445,11 +483,8 @@
         ).text();
       }
       async function compile(source) {
-        const r = await fetch("/compile", {
-          method: "POST",
-          body: source,
-        });
-        return await r.json(); // { ok, svg?, error?, diagnostics }
+        const r = await fetch("/compile", { method: "POST", body: source });
+        return await r.json(); // { ok, svg?, error?, diagnostics, formatted?, desugared? }
       }
       async function saveFile(path, source) {
         const r = await fetch("/save?path=" + encodeURIComponent(path), {
@@ -679,7 +714,8 @@
         diag.textContent = [msg, ...list].join("\n");
       }
 
-      // Compile + show the diagram. Explicit only — never on keystroke.
+      // Render is explicit (never on keystroke). It also formats the buffer
+      // and refreshes the desugar view, all from one /compile round-trip.
       async function render() {
         let res;
         try {
@@ -688,6 +724,17 @@
           showError("fetch failed: " + e.message);
           return;
         }
+        if (typeof res.formatted === "string" && res.formatted !== editor.value) {
+          const top = editor.scrollTop;
+          editor.value = res.formatted;
+          renderHighlight();
+          editor.scrollTop = top;
+          setDirty(editor.value !== savedText);
+        }
+        desugarView.innerHTML =
+          typeof res.desugared === "string"
+            ? tokenize(res.desugared) + "\n"
+            : "";
         if (res.ok) {
           preview.innerHTML = res.svg;
           showWarnings(res.diagnostics || []);
@@ -723,6 +770,25 @@
           );
       }
 
+      // Per-pane toggles (desktop). Each shows/hides its pane; the last visible
+      // pane can't be turned off — its button disables.
+      const PANES = ["code", "desugar", "preview"];
+      const paneOn = { code: true, desugar: false, preview: true };
+      const paneBtn = {
+        code: $("#toggle-code"),
+        desugar: $("#toggle-desugar"),
+        preview: $("#toggle-preview"),
+      };
+      function applyPanes() {
+        const onCount = PANES.filter((p) => paneOn[p]).length;
+        PANES.forEach((p) => {
+          document.body.classList.toggle("show-" + p, paneOn[p]);
+          paneBtn[p].classList.toggle("active", paneOn[p]);
+          paneBtn[p].disabled = paneOn[p] && onCount === 1;
+        });
+        localStorage.setItem("lini-panes", JSON.stringify(paneOn));
+      }
+
       editor.addEventListener("input", () => {
         renderHighlight();
         setDirty(editor.value !== savedText);
@@ -753,6 +819,13 @@
           showError("save failed: " + (res.error || ""));
         }
       });
+      PANES.forEach((p) =>
+        paneBtn[p].addEventListener("click", () => {
+          if (paneOn[p] && PANES.filter((q) => paneOn[q]).length === 1) return;
+          paneOn[p] = !paneOn[p];
+          applyPanes();
+        }),
+      );
       $("#theme").addEventListener("click", () => {
         const next =
           document.documentElement.dataset.theme === "dark" ? "light" : "dark";
@@ -760,8 +833,8 @@
         localStorage.setItem("lini-theme", next);
       });
 
-      // Ctrl/Cmd-S (and -Enter) render immediately — they never write to
-      // disk. Saving is the Save button alone, so it can't be a reflex.
+      // Ctrl/Cmd-S (and -Enter) render — they never write to disk. Saving is
+      // the Save button alone, so it can't be a reflex.
       document.addEventListener("keydown", (e) => {
         if ((e.metaKey || e.ctrlKey) && (e.key === "s" || e.key === "Enter")) {
           e.preventDefault();
@@ -769,39 +842,57 @@
           showTab("preview");
         }
       });
-      // On mobile there's no Render button — switching to the Preview
-      // tab renders. (Desktop shows both panes, so it keeps the button.)
+      // On mobile there's no Render button — switching to a render tab renders.
       document.querySelectorAll(".tab").forEach((t) =>
         t.addEventListener("click", () => {
           showTab(t.dataset.tab);
-          if (t.dataset.tab === "preview") render();
+          if (t.dataset.tab !== "code") render();
         }),
       );
 
-      // Draggable split between editor and preview (desktop).
+      // Draggable splits: a divider resizes the pane to its left (desktop).
       (function () {
         const panes = $(".panes");
-        const divider = $("#divider");
-        divider.addEventListener("pointerdown", (e) => {
-          e.preventDefault();
-          divider.setPointerCapture(e.pointerId);
-          const move = (ev) => {
-            const r = panes.getBoundingClientRect();
-            let pct = ((ev.clientX - r.left) / r.width) * 100;
-            pct = Math.max(20, Math.min(80, pct));
-            document.documentElement.style.setProperty("--split", pct + "%");
-          };
-          const up = () => {
-            divider.releasePointerCapture(e.pointerId);
-            divider.removeEventListener("pointermove", move);
-            divider.removeEventListener("pointerup", up);
-          };
-          divider.addEventListener("pointermove", move);
-          divider.addEventListener("pointerup", up);
+        document.querySelectorAll(".divider").forEach((divider) => {
+          divider.addEventListener("pointerdown", (e) => {
+            const pane = divider.previousElementSibling;
+            if (!pane || !pane.classList.contains("pane")) return;
+            e.preventDefault();
+            divider.setPointerCapture(e.pointerId);
+            const move = (ev) => {
+              const cr = panes.getBoundingClientRect();
+              const pr = pane.getBoundingClientRect();
+              let w = ev.clientX - pr.left;
+              w = Math.max(160, Math.min(cr.width - 200, w));
+              pane.style.flex = "0 0 " + w + "px";
+            };
+            const up = () => {
+              divider.releasePointerCapture(e.pointerId);
+              divider.removeEventListener("pointermove", move);
+              divider.removeEventListener("pointerup", up);
+            };
+            divider.addEventListener("pointermove", move);
+            divider.addEventListener("pointerup", up);
+          });
         });
       })();
+      // Drag widths are desktop-only; drop them when the layout goes to tabs so
+      // a fixed px width can't constrain the single visible pane.
+      const mqMobile = matchMedia("(max-width: 768px)");
+      mqMobile.addEventListener("change", () => {
+        if (mqMobile.matches)
+          document.querySelectorAll(".pane").forEach((p) => (p.style.flex = ""));
+      });
 
       (async function init() {
+        try {
+          const s = JSON.parse(localStorage.getItem("lini-panes") || "{}");
+          PANES.forEach((p) => {
+            if (typeof s[p] === "boolean") paneOn[p] = s[p];
+          });
+        } catch {}
+        if (!PANES.some((p) => paneOn[p])) paneOn.preview = true;
+        applyPanes();
         files = await listFiles();
         if (!files.length) {
           fileSelect.innerHTML = "<option>no .lini files</option>";
