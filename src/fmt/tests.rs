@@ -89,8 +89,20 @@ fn function_value() {
 }
 
 #[test]
-fn classes_glue_into_the_bars() {
-    assert_eq!(fmt("x|box.hot.loud|\n"), "x |box.hot.loud|\n");
+fn node_class_follows_the_bars() {
+    assert_eq!(fmt("x|box| .hot.loud\n"), "x |box| .hot.loud\n");
+    // A bare class on a default box; a spaced chain normalizes to glued.
+    assert_eq!(fmt("x .hot\n"), "x .hot\n");
+    assert_eq!(fmt("x |box| .hot .loud\n"), "x |box| .hot.loud\n");
+}
+
+#[test]
+fn sibling_class_columns_align() {
+    // The id, |type|, and .class columns each align; the label starts level.
+    assert_eq!(
+        fmt("a|box| .x \"A\"\nbb|oval| .yy \"B\"\n"),
+        "a  |box|  .x  \"A\"\nbb |oval| .yy \"B\"\n"
+    );
 }
 
 #[test]
@@ -155,6 +167,8 @@ fn wire_class_and_labels_with_along() {
         "a -> b { along: 0.3 0.7; } \"near a\" \"near b\"\n"
     );
     assert_eq!(fmt("a -> b .loud\n"), "a -> b .loud\n");
+    // A spaced wire-class chain normalizes to glued, like a node's.
+    assert_eq!(fmt("a -> b .c1 .c2\n"), "a -> b .c1.c2\n");
 }
 
 #[test]

@@ -3,7 +3,7 @@
 //! instances, then the wires), `{ }` style blocks and `[ ]` child lists, bar-wrapped
 //! type selectors and `|name::base|` defines, 2-space indent, space-separated value
 //! groups. Comments and blank-line groupings are preserved; sibling nodes align
-//! their id/type columns. Idempotent: `fmt(fmt(x)) == fmt(x)`.
+//! their id, type, and class columns. Idempotent: `fmt(fmt(x)) == fmt(x)`.
 
 use crate::ast::{Side, WireOp};
 use crate::error::Error;
@@ -240,37 +240,43 @@ impl Emitter<'_> {
 
     fn emit_node(&mut self, node: &Node, depth: usize, w: align::NodeWidths) {
         self.indent(depth);
-        // Head: `id |type.classes|`, with alignment widths padding the columns.
-        let mut wrote = false;
-        if let Some(id) = &node.id {
-            self.out.push_str(id);
-            pad(self.out, w.id.saturating_sub(id.len()));
-            wrote = true;
-        } else if w.id > 0 {
-            pad(self.out, w.id);
-            wrote = true;
-        }
-        // The alignment pad lines up the column that *follows* the head, so it is
-        // emitted only when something does — otherwise it leaves trailing space.
+        // Head columns, left to right: id, `|type|` bars, `.class` chain. Each
+        // pads to its group column only when a later column or content follows,
+        // so an empty trailing column never leaves whitespace (SPEC §14).
+        let bars = type_bars(&node.ty);
+        let classes = class_str(&node.classes);
         let has_content =
             !node.style.is_empty() || !node.children.is_empty() || !node.wires.is_empty();
-        let bars = type_bars(&node.ty, &node.classes);
-        if !bars.is_empty() {
-            self.space_if(wrote);
-            self.out.push_str(&bars);
-            if has_content {
-                pad(self.out, w.ty.saturating_sub(bars.len()));
-            }
-        } else if w.ty > 0 && has_content {
-            self.space_if(wrote);
-            pad(self.out, w.ty);
-        }
+        let id = node.id.as_deref().unwrap_or("");
+
+        let after_id = !bars.is_empty() || !classes.is_empty() || has_content;
+        let after_ty = !classes.is_empty() || has_content;
+        let mut wrote = self.emit_col(id, w.id, after_id, false);
+        wrote = self.emit_col(&bars, w.ty, after_ty, wrote);
+        self.emit_col(&classes, w.cls, has_content, wrote);
 
         if !node.style.is_empty() {
             let end = node.style_span.map_or(node.span.end, |s| s.end);
             self.emit_style_block(&node.style, end, depth, false);
         }
         self.emit_content(node, depth);
+    }
+
+    /// Emit one head column: a separating space when the line already carries a
+    /// segment, the segment text, then alignment padding to `width` when a later
+    /// column or content `follows` (else ragged, to avoid trailing space). An
+    /// empty segment with nothing reserved emits nothing. Returns whether the
+    /// line now carries any head segment.
+    fn emit_col(&mut self, seg: &str, width: usize, follows: bool, preceded: bool) -> bool {
+        if seg.is_empty() && (width == 0 || !follows) {
+            return preceded;
+        }
+        self.space_if(preceded);
+        self.out.push_str(seg);
+        if follows {
+            pad(self.out, width.saturating_sub(seg.len()));
+        }
+        true
     }
 
     /// A node's content: a `|table|`'s aligned cells, a terse trailing label, an
@@ -499,9 +505,9 @@ impl Emitter<'_> {
                 self.emit_endpoint(ep);
             }
         }
-        for class in &w.classes {
-            self.out.push_str(" .");
-            self.out.push_str(class);
+        if !w.classes.is_empty() {
+            self.out.push(' ');
+            self.out.push_str(&class_str(&w.classes));
         }
         if !w.style.is_empty() {
             let end = w.style_span.map_or(w.span.end, |s| s.end);
@@ -627,21 +633,21 @@ fn style_item_span(item: &StyleItem) -> Span {
     }
 }
 
-/// The head bars `|type.class.class|` (or `|.class|`, default box), or empty when
-/// the node has neither a type nor a class.
-fn type_bars(ty: &Option<String>, classes: &[String]) -> String {
-    if ty.is_none() && classes.is_empty() {
-        return String::new();
+/// The `|type|` bars, or empty when the node has no type.
+fn type_bars(ty: &Option<String>) -> String {
+    match ty {
+        Some(t) => format!("|{t}|"),
+        None => String::new(),
     }
-    let mut s = String::from("|");
-    if let Some(t) = ty {
-        s.push_str(t);
-    }
+}
+
+/// The `.class` chain (`.a.b`), or empty when the node wears none.
+fn class_str(classes: &[String]) -> String {
+    let mut s = String::new();
     for c in classes {
         s.push('.');
         s.push_str(c);
     }
-    s.push('|');
     s
 }
 

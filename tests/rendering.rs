@@ -183,7 +183,7 @@ fn inline_override_baked_into_style_attr() {
 #[test]
 fn auto_classes_include_primitive_and_styles() {
     let svg = render_live(
-        "{\n  .bold { font-weight: bold; }\n  .thin { stroke: #444; }\n}\ncat |box.bold.thin| \"Cat\"\n",
+        "{\n  .bold { font-weight: bold; }\n  .thin { stroke: #444; }\n}\ncat |box| .bold.thin \"Cat\"\n",
     );
     assert!(svg.contains("lini-shape-box"), "{}", svg);
     assert!(svg.contains("lini-style-bold"), "{}", svg);

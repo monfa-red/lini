@@ -550,7 +550,7 @@ mod tests {
     #[test]
     fn style_defs_emit_in_defs_order_used_only() {
         let css = emit_str(&rules_for(
-            "{ .a { stroke: red; }\n.b { stroke: blue; }\n.unused { stroke: green; } }\nx |box.b.a|\n",
+            "{ .a { stroke: red; }\n.b { stroke: blue; }\n.unused { stroke: green; } }\nx |box| .b.a\n",
         ));
         let a = css.find(".lini .lini-style-a").expect("a rule");
         let b = css.find(".lini .lini-style-b").expect("b rule");

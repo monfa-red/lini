@@ -76,7 +76,7 @@
       ]
     },
     "type-bars": {
-      "comment": "Everything between bars is type-talk: a type, a glued .class, a descendant chain, or a name::base define. A type only ever appears here.",
+      "comment": "Bars hold a type (|box|), a name::base define, or — in a rule — a descendant selector over types and classes (|table box|, |.sidebar box|). An instance's worn class lives after the bars (see #class).",
       "begin": "\\|",
       "beginCaptures": {
         "0": { "name": "punctuation.definition.type.begin.lini entity.name.tag.lini" }
@@ -96,7 +96,7 @@
           }
         },
         {
-          "comment": "a class worn inside the bars",
+          "comment": "a class part in a rule's descendant selector (|.sidebar box|)",
           "match": "(\\.)([A-Za-z_][\\w-]*)",
           "captures": {
             "1": { "name": "punctuation.definition.entity.lini" },
@@ -124,12 +124,9 @@
       "name": "keyword.operator.wire.lini"
     },
     "class": {
-      "comment": "A class outside the bars: a definition (.hot { }) or worn by a wire (a -> b .loud). Worn-by-a-node classes live inside the bars (see #type-bars).",
-      "match": "(?<![\\w-])(\\.)([A-Za-z_][\\w-]*)",
-      "captures": {
-        "1": { "name": "punctuation.definition.entity.lini" },
-        "2": { "name": "entity.other.attribute-name.class.lini" }
-      }
+      "comment": "A class outside the bars: a definition (.hot { }), or worn by a node or wire after its type/endpoints (|box| .hot, a -> b .loud), chained .hot.loud. A '.' after a word char is an endpoint path (a.b), not a class.",
+      "match": "(?<![\\w-])(?:\\.[A-Za-z_][\\w-]*)+",
+      "name": "entity.other.attribute-name.class.lini"
     },
     "side": {
       "match": "(?<![\\w-])(top|bottom|left|right)(?![\\w-])",

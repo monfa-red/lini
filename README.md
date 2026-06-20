@@ -75,12 +75,12 @@ fish --> bowl          // dashed
 }
 
 api   |box| "API"
-queue |box| { radius: 8 } "Queue"   // style lives in { }, the label trails
+queue |box| .loud { radius: 8 } "Queue"   // a node wears its class after the type
 store |db|  "Postgres"
 
 api   -> queue "enqueue"
-queue -> store .loud "persist"      // a wire wears its class trailing
-store ..> api  "ack"                // dotted arrow
+queue -> store .loud "persist"            // …and a wire wears it the same way
+store ..> api  "ack"                       // dotted arrow
 ```
 
 **Containers lay their children out.** Style sits in `{ }`, children in `[ ]`; pick a mode and they flow, grid, or anchor:

@@ -89,7 +89,7 @@ fn err_unknown_shape_type() {
 
 #[test]
 fn err_unknown_class() {
-    assert_resolve_error("cat |box.nope| \"x\"\n", "unknown class '.nope'");
+    assert_resolve_error("cat |box| .nope \"x\"\n", "unknown class '.nope'");
 }
 
 #[test]

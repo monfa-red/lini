@@ -103,8 +103,8 @@ impl<'a> Parser<'a> {
         Error::at(self.span(), msg.into())
     }
 
-    fn glued_class_err(&self) -> Error {
-        self.err("a class glues to its type in the bars — write '|box.hot|', no space")
+    fn class_in_bars_err(&self) -> Error {
+        self.err("a class follows the bars — write '|box| .hot', not '|box.hot|'")
     }
 
     fn expect_ident(&mut self) -> Result<(String, Span), Error> {
@@ -169,7 +169,9 @@ impl<'a> Parser<'a> {
     /// error — a stray declaration or `--var`. Assumes newlines skipped.
     fn classify_body(&self) -> Kind {
         match self.kind() {
-            Some(TokKind::Pipe) | Some(TokKind::String(_)) => Kind::Node,
+            // A leading `.` is an anonymous class-only box (`.hot`); `|type|` and
+            // `"…"` head the other node forms.
+            Some(TokKind::Pipe) | Some(TokKind::String(_)) | Some(TokKind::Dot) => Kind::Node,
             Some(TokKind::RawCssVar(_)) => Kind::Var,
             Some(TokKind::Ident(_)) => match self.kind_at(1) {
                 Some(TokKind::Colon) => Kind::Decl,
@@ -466,15 +468,17 @@ impl<'a> Parser<'a> {
         } else {
             None
         };
-        let (ty, classes) = if matches!(self.kind(), Some(TokKind::Pipe)) {
-            self.parse_typeref()?
+        let ty = if matches!(self.kind(), Some(TokKind::Pipe)) {
+            Some(self.parse_type()?)
         } else {
-            (None, Vec::new())
+            None
         };
+        // The class slot follows the bars (SPEC §3): `|box| .hot.loud`, or a bare
+        // `.hot` on a default box.
+        let classes = self.parse_classes()?;
         let (style, style_span) = self.opt_style()?;
 
-        // Content is the `[ ]` children block, or the trailing-label sugar — never
-        // both. A stray `.class` here is the floating-class mistake (SPEC §4).
+        // Content is the `[ ]` children block, or the trailing-label sugar — never both.
         let (children, wires) = if matches!(self.kind(), Some(TokKind::LBracket)) {
             self.opt_children()?
         } else {
@@ -486,11 +490,13 @@ impl<'a> Parser<'a> {
             }
             (labels.into_iter().map(Child::Text).collect(), Vec::new())
         };
+        // The class slot precedes the style and content; a `.` after them is misplaced.
         if matches!(self.kind(), Some(TokKind::Dot)) {
-            return Err(self.err("a node wears its class in the bars — write '|box.hot|'"));
+            return Err(self
+                .err("a class comes before the '{ }' and label — write '|box| .hot { … } \"x\"'"));
         }
-        if id.is_none() && ty.is_none() {
-            return Err(self.err("a node needs an id or a type"));
+        if id.is_none() && ty.is_none() && classes.is_empty() {
+            return Err(self.err("a node needs an id, a type, or a class"));
         }
         Ok(Node {
             id,
@@ -504,40 +510,37 @@ impl<'a> Parser<'a> {
         })
     }
 
-    /// `|type|`, `|type.class.class|`, or `|.class…|` (default `box`). Inside the
-    /// bars is the node's type and worn classes (SPEC §1/§4).
-    fn parse_typeref(&mut self) -> Result<(Option<String>, Vec<String>), Error> {
+    /// `|type|` — a type alone (SPEC §3). A worn class follows the bars, in the
+    /// class slot ([`Self::parse_classes`]); a `.` inside the bars is the old form.
+    fn parse_type(&mut self) -> Result<String, Error> {
         self.expect(&TokKind::Pipe, "'|'")?;
-        let mut ty = None;
-        if matches!(self.kind(), Some(TokKind::Ident(_))) {
-            let (name, _) = self.expect_ident()?;
-            if matches!(self.kind(), Some(TokKind::DColon)) {
-                return Err(self.err("a define belongs in the stylesheet"));
-            }
-            if name == "wire" {
-                return Err(self.err("wires are drawn by operators, not the '|wire|' type"));
-            }
-            ty = Some(name);
+        let name = match self.kind() {
+            Some(TokKind::Ident(_)) => self.expect_ident()?.0,
+            Some(TokKind::Dot) => return Err(self.class_in_bars_err()),
+            _ => return Err(self.err("empty '||' — name a type")),
+        };
+        if matches!(self.kind(), Some(TokKind::DColon)) {
+            return Err(self.err("a define belongs in the stylesheet"));
         }
-        // A worn class glues to its type — no space on either side of the `.`
-        // (SPEC §2/§4). A spaced `.` would read as a descendant part, which an
-        // instance can't have.
+        if name == "wire" {
+            return Err(self.err("wires are drawn by operators, not the '|wire|' type"));
+        }
+        if matches!(self.kind(), Some(TokKind::Dot)) {
+            return Err(self.class_in_bars_err());
+        }
+        self.expect(&TokKind::Pipe, "'|'")?;
+        Ok(name)
+    }
+
+    /// The class slot — `.name` worn by a node after its type or by a wire after
+    /// its endpoints (SPEC §3/§9). A `.` glued to an id or endpoint is a path and
+    /// never reaches here; what does is the worn-class chain, written `.hot.loud`.
+    fn parse_classes(&mut self) -> Result<Vec<String>, Error> {
         let mut classes = Vec::new();
-        while matches!(self.kind(), Some(TokKind::Dot)) {
-            if !self.glued_at(0) {
-                return Err(self.glued_class_err());
-            }
-            self.pos += 1; // '.'
-            if !self.glued_at(0) {
-                return Err(self.glued_class_err());
-            }
+        while self.eat(&TokKind::Dot) {
             classes.push(self.expect_ident()?.0);
         }
-        self.expect(&TokKind::Pipe, "'|'")?;
-        if ty.is_none() && classes.is_empty() {
-            return Err(self.err("empty '||' — name a type or a class"));
-        }
-        Ok((ty, classes))
+        Ok(classes)
     }
 
     /// Consume an optional `{ }` style block; absent → no decls, no span.
@@ -634,11 +637,8 @@ impl<'a> Parser<'a> {
             self.pos += 1;
             chain.push(self.parse_endpoint_group()?);
         }
-        // Trailing class(es): a wire has no bars, so its class stands alone.
-        let mut classes = Vec::new();
-        while self.eat(&TokKind::Dot) {
-            classes.push(self.expect_ident()?.0);
-        }
+        // Worn class(es): the same `.class` slot a node uses, after the endpoints.
+        let classes = self.parse_classes()?;
         let (style, style_span) = self.opt_style()?;
         if matches!(self.kind(), Some(TokKind::LBracket)) {
             return Err(
@@ -824,7 +824,7 @@ mod tests {
     #[test]
     fn node_with_id_type_classes_style_and_children() {
         let f = parse_ok(
-            "db |cyl.primary| { fill: #eef } [\n  \"Postgres\"\n  tag |badge| { pin: top right } \"v16\"\n]\n",
+            "db |cyl| .primary { fill: #eef } [\n  \"Postgres\"\n  tag |badge| { pin: top right } \"v16\"\n]\n",
         );
         let n = instance(&f, 0);
         assert_eq!(n.id.as_deref(), Some("db"));
@@ -837,9 +837,29 @@ mod tests {
     }
 
     #[test]
-    fn class_in_bars_with_default_box() {
-        let f = parse_ok("x |.hot|\n");
+    fn class_slot_follows_the_bars() {
+        // The class chain follows `|type|`, glued together.
+        let f = parse_ok("x |box| .hot.loud\n");
         let n = instance(&f, 0);
+        assert_eq!(n.ty.as_deref(), Some("box"));
+        assert_eq!(n.classes, vec!["hot", "loud"]);
+    }
+
+    #[test]
+    fn class_on_a_default_box() {
+        // No bars: the class follows the id, the type defaults to box.
+        let f = parse_ok("x .hot\n");
+        let n = instance(&f, 0);
+        assert_eq!(n.ty, None);
+        assert_eq!(n.classes, vec!["hot"]);
+    }
+
+    #[test]
+    fn anonymous_class_only_box() {
+        // A bare `.hot` is an anonymous default box wearing the class.
+        let f = parse_ok(".hot\n");
+        let n = instance(&f, 0);
+        assert_eq!(n.id, None);
         assert_eq!(n.ty, None);
         assert_eq!(n.classes, vec!["hot"]);
     }
@@ -968,15 +988,17 @@ mod tests {
     }
 
     #[test]
-    fn floating_node_class_errors() {
-        assert!(parse_err("cat |box| .hot\n").contains("in the bars"));
+    fn a_class_in_the_bars_errors() {
+        // The worn class moved out of the bars; the bars are type-only.
+        for src in ["x |box.hot|\n", "x |box .hot|\n", "x |.hot|\n"] {
+            assert!(parse_err(src).contains("follows the bars"), "{src}");
+        }
+        parse_ok("x |box| .hot\n"); // the class follows the bars now
     }
 
     #[test]
-    fn a_spaced_class_in_bars_errors() {
-        assert!(parse_err("x |box .hot|\n").contains("glues to its type"));
-        assert!(parse_err("x |box. hot|\n").contains("glues to its type"));
-        parse_ok("x |box.hot|\n"); // glued is the only accepted form
+    fn a_class_after_the_content_errors() {
+        assert!(parse_err("cat |box| \"x\" .hot\n").contains("comes before"));
     }
 
     #[test]

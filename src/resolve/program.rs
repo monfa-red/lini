@@ -348,7 +348,7 @@ mod tests {
 
     #[test]
     fn class_rule_applies() {
-        let p = rv4("{ .hot { stroke: red; } }\nx |box.hot|\n");
+        let p = rv4("{ .hot { stroke: red; } }\nx |box| .hot\n");
         assert_eq!(ident(&p, 0, "stroke"), Some("red"));
         assert_eq!(p.scene.nodes[0].applied_styles, vec!["hot"]);
     }
@@ -475,7 +475,7 @@ mod tests {
 
     #[test]
     fn unknown_class_errors() {
-        assert!(rv4_err("x |box.nope|\n").contains("unknown class '.nope'"));
+        assert!(rv4_err("x |box| .nope\n").contains("unknown class '.nope'"));
     }
 
     #[test]

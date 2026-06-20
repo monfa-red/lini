@@ -1,30 +1,34 @@
 //! Column alignment for sibling boxes (SPEC §14): within a run of children with
-//! no blank line between them, the id and `|type|` columns of the *boxes* line
-//! up so their blocks start at the same offset. Bare-text children don't carry
-//! id/type, so they take no alignment. A blank line starts a fresh group.
+//! no blank line between them, the id, `|type|`, and `.class` columns of the
+//! *boxes* line up so their blocks start at the same offset. Bare-text children
+//! carry none of these, so they take no alignment. A blank line starts a fresh
+//! group.
 //!
 //! Aligning a table's bare-text *cells* into visual columns (the flat table
 //! form) is the formatter's table pass (SPEC §8), separate from this.
 
 use super::trivia::{Trivia, TriviaToken};
 use crate::span::Span;
-use crate::syntax::ast::Child;
+use crate::syntax::ast::{Child, Node};
 
 #[derive(Default, Clone, Copy)]
 pub struct NodeWidths {
     /// Widest id in the group, 0 if none carry one.
     pub id: usize,
-    /// Widest `|type.classes|` head (bars included) in the group, 0 if none carry one.
+    /// Widest `|type|` bars in the group, 0 if none carry a type.
     pub ty: usize,
+    /// Widest `.class` chain in the group, 0 if none carry one.
+    pub cls: usize,
 }
 
-/// The rendered width of a node's `|type.classes|` head, or 0 when it has neither
-/// a type nor a class.
-fn bars_len(n: &crate::syntax::ast::Node) -> usize {
-    if n.ty.is_none() && n.classes.is_empty() {
-        return 0;
-    }
-    2 + n.ty.as_ref().map_or(0, String::len) + n.classes.iter().map(|c| 1 + c.len()).sum::<usize>()
+/// The rendered width of a node's `|type|` bars, or 0 when it has no type.
+fn type_len(n: &Node) -> usize {
+    n.ty.as_ref().map_or(0, |t| 2 + t.len())
+}
+
+/// The rendered width of a node's `.class` chain (`.a.b`), or 0 when it has none.
+fn class_len(n: &Node) -> usize {
+    n.classes.iter().map(|c| 1 + c.len()).sum()
 }
 
 /// Per-child alignment widths: boxes sharing a blank-line-free group share the
@@ -38,7 +42,8 @@ pub fn child_widths(children: &[Child], trivia: &[TriviaToken]) -> Vec<NodeWidth
                 if let Some(id) = &n.id {
                     w.id = w.id.max(id.len());
                 }
-                w.ty = w.ty.max(bars_len(n));
+                w.ty = w.ty.max(type_len(n));
+                w.cls = w.cls.max(class_len(n));
             }
         }
         for i in group {
