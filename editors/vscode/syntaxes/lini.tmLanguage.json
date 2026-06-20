@@ -1,0 +1,160 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Lini",
+  "scopeName": "source.lini",
+  "patterns": [
+    { "include": "#comment" },
+    { "include": "#string" },
+    { "include": "#define" },
+    { "include": "#var-declaration" },
+    { "include": "#property-declaration" },
+    { "include": "#type-instance" },
+    { "include": "#css-var" },
+    { "include": "#wire-op" },
+    { "include": "#class" },
+    { "include": "#builtin-type" },
+    { "include": "#side" },
+    { "include": "#hex-color" },
+    { "include": "#number" },
+    { "include": "#punctuation" }
+  ],
+  "repository": {
+    "comment": {
+      "match": "(//).*$",
+      "name": "comment.line.double-slash.lini",
+      "captures": {
+        "1": { "name": "punctuation.definition.comment.lini" }
+      }
+    },
+    "string": {
+      "name": "string.quoted.double.lini",
+      "begin": "\"",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.lini" }
+      },
+      "end": "\"",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.lini" }
+      },
+      "patterns": [
+        {
+          "match": "\\\\[\"\\\\nt]",
+          "name": "constant.character.escape.lini"
+        }
+      ]
+    },
+    "define": {
+      "match": "([A-Za-z_][\\w-]*)\\s*(::)\\s*([A-Za-z_][\\w-]*)",
+      "captures": {
+        "1": { "name": "entity.name.type.lini" },
+        "2": { "name": "keyword.operator.define.lini" },
+        "3": { "name": "entity.other.inherited-class.lini" }
+      }
+    },
+    "var-declaration": {
+      "begin": "(--[A-Za-z_][\\w-]*)\\s*(:)(?!:)",
+      "beginCaptures": {
+        "1": { "name": "variable.other.lini" },
+        "2": { "name": "punctuation.separator.key-value.lini" }
+      },
+      "end": "(?=[;}])|$",
+      "patterns": [{ "include": "#value-body" }]
+    },
+    "property-declaration": {
+      "begin": "([A-Za-z_][\\w-]*)\\s*(:)(?!:)",
+      "beginCaptures": {
+        "1": { "name": "support.type.property-name.lini" },
+        "2": { "name": "punctuation.separator.key-value.lini" }
+      },
+      "end": "(?=[;}])|$",
+      "patterns": [{ "include": "#value-body" }]
+    },
+    "value-body": {
+      "patterns": [
+        { "include": "#comment" },
+        { "include": "#string" },
+        { "include": "#css-var" },
+        { "include": "#hex-color" },
+        { "include": "#function-call" },
+        { "include": "#number" },
+        { "include": "#color-name" },
+        { "include": "#value-keyword" },
+        {
+          "match": "[(),]",
+          "name": "punctuation.separator.value.lini"
+        }
+      ]
+    },
+    "type-instance": {
+      "begin": "\\|",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.type.begin.lini entity.name.tag.lini" }
+      },
+      "end": "\\|",
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.type.end.lini entity.name.tag.lini" }
+      },
+      "patterns": [
+        {
+          "match": "(?<![\\w-])(box|oval|line|path|poly|hex|slant|cyl|diamond|cloud|icon|image|plain|rect|group|caption|footer|badge|note|row|column|table|wire|text|circle)(?![\\w-])",
+          "name": "entity.name.tag.lini"
+        },
+        {
+          "match": "[A-Za-z_][\\w-]*",
+          "name": "entity.name.tag.instance.lini"
+        }
+      ]
+    },
+    "css-var": {
+      "match": "--[A-Za-z_][\\w-]*",
+      "name": "variable.other.lini"
+    },
+    "wire-op": {
+      "match": "(?:<>|[<>*])?(?:--|\\.\\.|~|-)(?:<>|[<>*])?",
+      "name": "keyword.operator.wire.lini"
+    },
+    "class": {
+      "match": "(?<![\\w-])(\\.)([A-Za-z_][\\w-]*)",
+      "captures": {
+        "1": { "name": "punctuation.definition.entity.lini" },
+        "2": { "name": "entity.other.attribute-name.class.lini" }
+      }
+    },
+    "builtin-type": {
+      "match": "(?<![\\w-])(box|oval|line|path|poly|hex|slant|cyl|diamond|cloud|icon|image|plain|rect|group|caption|footer|badge|note|row|column|table|wire|text|circle)(?![\\w-])",
+      "name": "entity.name.tag.lini"
+    },
+    "side": {
+      "match": "(?<![\\w-])(top|bottom|left|right)(?![\\w-])",
+      "name": "support.constant.side.lini"
+    },
+    "hex-color": {
+      "match": "#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3})(?![0-9a-fA-F])",
+      "name": "constant.other.color.lini"
+    },
+    "number": {
+      "match": "(?<![\\w-])[-+]?(?:\\d+\\.\\d+|\\d+|\\.\\d+)",
+      "name": "constant.numeric.lini"
+    },
+    "function-call": {
+      "match": "(?<![\\w-])(rgb|rgba|hsl|repeat)(?=\\s*\\()",
+      "name": "support.function.lini"
+    },
+    "value-keyword": {
+      "match": "(?<![\\w-])(grid|row|column|start|center|end|stretch|evenly|none|auto|true|false|solid|dashed|dotted|wavy|arrow|dot|diamond|crow|outlined|filled|rounded|sharp|top|bottom|left|right|all|rows|columns)(?![\\w-])",
+      "name": "support.constant.lini"
+    },
+    "color-name": {
+      "match": "(?<![\\w-])(white|black|red|green|blue|gray|grey|crimson|orange|yellow|gold|silver|navy|teal|purple|pink|brown|cyan|magenta|lime|maroon|olive|cornflowerblue|currentColor|transparent)(?![\\w-])",
+      "name": "support.constant.color.lini"
+    },
+    "punctuation": {
+      "patterns": [
+        { "match": "[{}]", "name": "punctuation.section.block.lini" },
+        { "match": ";", "name": "punctuation.terminator.lini" },
+        { "match": ",", "name": "punctuation.separator.lini" },
+        { "match": "&", "name": "keyword.operator.fanout.lini" }
+      ]
+    }
+  }
+}

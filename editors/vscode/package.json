@@ -1,0 +1,26 @@
+{
+  "name": "lini",
+  "displayName": "Lini",
+  "description": "Syntax highlighting for the Lini diagram language",
+  "version": "0.1.0",
+  "publisher": "lini",
+  "engines": { "vscode": "^1.70.0" },
+  "categories": ["Programming Languages"],
+  "contributes": {
+    "languages": [
+      {
+        "id": "lini",
+        "aliases": ["Lini", "lini"],
+        "extensions": [".lini"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "lini",
+        "scopeName": "source.lini",
+        "path": "./syntaxes/lini.tmLanguage.json"
+      }
+    ]
+  }
+}
