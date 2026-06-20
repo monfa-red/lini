@@ -1,734 +1,818 @@
 <!doctype html>
 <html lang="en">
-    <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>Lini — playground</title>
-        <script>
-            // Set the theme before first paint to avoid a flash.
-            (function () {
-                var t = localStorage.getItem("lini-theme");
-                if (t !== "dark" && t !== "light") {
-                    t = matchMedia("(prefers-color-scheme: dark)").matches
-                        ? "dark"
-                        : "light";
-                }
-                document.documentElement.dataset.theme = t;
-            })();
-        </script>
-        <style>
-            :root {
-                --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo,
-                    Consolas, monospace;
-                --split: 50%;
-            }
-            /* Dracula */
-            :root[data-theme="dark"] {
-                color-scheme: dark;
-                --bg: #21222c;
-                --panel: #282a36;
-                --panel-2: #21222c;
-                --control: #343746;
-                --border: #44475a;
-                --text: #f8f8f2;
-                --muted: #6272a4;
-                --accent: #bd93f9;
-                --accent-ink: #21222c;
-                --warn: #ffb86c;
-                --err: #ff5555;
-                --paper: #282a36;
-                --shadow: rgba(0, 0, 0, 0.5);
-                --tok-comment: #6272a4;
-                --tok-string: #f1fa8c;
-                --tok-value: #bd93f9;
-                --tok-type: #8be9fd;
-                --tok-prop: #ff79c6;
-                --tok-var: #ffb86c;
-                --tok-op: #ff79c6;
-                --tok-class: #50fa7b;
-                --tok-punct: #7b7f9e;
-            }
-            :root[data-theme="light"] {
-                color-scheme: light;
-                --bg: #e8e8ee;
-                --panel: #ffffff;
-                --panel-2: #f1f1f5;
-                --control: #ffffff;
-                --border: #d3d3dd;
-                --text: #24292f;
-                --muted: #8a8f98;
-                --accent: #8250df;
-                --accent-ink: #ffffff;
-                --warn: #9a6700;
-                --err: #cf222e;
-                --paper: #ffffff;
-                --shadow: rgba(0, 0, 0, 0.18);
-                --tok-comment: #8a8f98;
-                --tok-string: #0a7d2c;
-                --tok-value: #8250df;
-                --tok-type: #1078a8;
-                --tok-prop: #c2185b;
-                --tok-var: #b3530b;
-                --tok-op: #c2185b;
-                --tok-class: #1a7f37;
-                --tok-punct: #6e7781;
-            }
-            * {
-                box-sizing: border-box;
-            }
-            html,
-            body {
-                margin: 0;
-                height: 100%;
-            }
-            body {
-                display: flex;
-                flex-direction: column;
-                background: var(--bg);
-                color: var(--text);
-                font:
-                    13px/1.5 system-ui,
-                    -apple-system,
-                    sans-serif;
-            }
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lini — playground</title>
+    <script>
+      // Set the theme before first paint to avoid a flash.
+      (function () {
+        var t = localStorage.getItem("lini-theme");
+        if (t !== "dark" && t !== "light") {
+          t = matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light";
+        }
+        document.documentElement.dataset.theme = t;
+      })();
+    </script>
+    <style>
+      :root {
+        --mono:
+          ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+        --split: 50%;
+      }
+      /* Dracula */
+      :root[data-theme="dark"] {
+        color-scheme: dark;
+        --bg: #21222c;
+        --panel: #282a36;
+        --panel-2: #21222c;
+        --control: #343746;
+        --border: #44475a;
+        --text: #f8f8f2;
+        --muted: #6272a4;
+        --accent: #bd93f9;
+        --accent-ink: #21222c;
+        --warn: #ffb86c;
+        --err: #ff5555;
+        --paper: #282a36;
+        --shadow: rgba(0, 0, 0, 0.5);
+        --tok-comment: #6272a4;
+        --tok-string: #f1fa8c;
+        --tok-value: #bd93f9;
+        --tok-type: #8be9fd;
+        --tok-prop: #ff79c6;
+        --tok-var: #ffb86c;
+        --tok-op: #ff79c6;
+        --tok-class: #50fa7b;
+        --tok-punct: #7b7f9e;
+      }
+      :root[data-theme="light"] {
+        color-scheme: light;
+        --bg: #e8e8ee;
+        --panel: #ffffff;
+        --panel-2: #f1f1f5;
+        --control: #ffffff;
+        --border: #d3d3dd;
+        --text: #24292f;
+        --muted: #8a8f98;
+        --accent: #8250df;
+        --accent-ink: #ffffff;
+        --warn: #9a6700;
+        --err: #cf222e;
+        --paper: #ffffff;
+        --shadow: rgba(0, 0, 0, 0.18);
+        --tok-comment: #8a8f98;
+        --tok-string: #0a7d2c;
+        --tok-value: #8250df;
+        --tok-type: #1078a8;
+        --tok-prop: #c2185b;
+        --tok-var: #b3530b;
+        --tok-op: #c2185b;
+        --tok-class: #1a7f37;
+        --tok-punct: #6e7781;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+      }
+      body {
+        display: flex;
+        flex-direction: column;
+        background: var(--bg);
+        color: var(--text);
+        font:
+          13px/1.5 system-ui,
+          -apple-system,
+          sans-serif;
+      }
 
-            /* Tabs — mobile only */
-            .tabs {
-                display: none;
-                flex: 0 0 auto;
-                background: var(--panel-2);
-                border-bottom: 1px solid var(--border);
-            }
-            .tab {
-                flex: 1;
-                padding: 12px;
-                background: none;
-                border: none;
-                color: var(--muted);
-                font: inherit;
-                font-weight: 600;
-                cursor: pointer;
-            }
-            .tab.active {
-                color: var(--text);
-                box-shadow: inset 0 -2px 0 var(--accent);
-            }
+      /* Tabs — mobile only */
+      .tabs {
+        display: none;
+        flex: 0 0 auto;
+        background: var(--panel-2);
+        border-bottom: 1px solid var(--border);
+      }
+      .tab {
+        flex: 1;
+        padding: 12px;
+        background: none;
+        border: none;
+        color: var(--muted);
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .tab.active {
+        color: var(--text);
+        box-shadow: inset 0 -2px 0 var(--accent);
+      }
 
-            .panes {
-                flex: 1 1 auto;
-                display: flex;
-                min-height: 0;
-            }
-            .pane {
-                display: flex;
-                flex-direction: column;
-                min-width: 0;
-                min-height: 0;
-            }
-            .pane.edit {
-                flex: 0 0 var(--split);
-                border-right: 1px solid var(--border);
-            }
-            .pane.preview {
-                flex: 1 1 0;
-            }
-            .divider {
-                flex: 0 0 6px;
-                background: var(--border);
-                cursor: col-resize;
-                touch-action: none;
-            }
-            .divider:hover {
-                background: var(--accent);
-            }
+      .panes {
+        flex: 1 1 auto;
+        display: flex;
+        min-height: 0;
+      }
+      .pane {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        min-height: 0;
+      }
+      .pane.edit {
+        flex: 0 0 var(--split);
+        border-right: 1px solid var(--border);
+      }
+      .pane.preview {
+        flex: 1 1 0;
+      }
+      .divider {
+        flex: 0 0 6px;
+        background: var(--border);
+        cursor: col-resize;
+        touch-action: none;
+      }
+      .divider:hover {
+        background: var(--accent);
+      }
 
-            .toolbar {
-                flex: 0 0 auto;
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                padding: 8px 10px;
-                background: var(--panel-2);
-                border-bottom: 1px solid var(--border);
-            }
-            .brand {
-                color: var(--accent);
-                font-weight: 700;
-                letter-spacing: 0.5px;
-            }
-            select {
-                background: var(--control);
-                color: var(--text);
-                border: 1px solid var(--border);
-                border-radius: 6px;
-                padding: 6px 8px;
-                font: 12px var(--mono);
-                max-width: 40vw;
-            }
-            .dirty {
-                color: var(--accent);
-                visibility: hidden;
-                font-size: 11px;
-            }
-            .spacer {
-                flex: 1;
-            }
-            .btn {
-                padding: 6px 14px;
-                border: 1px solid var(--border);
-                border-radius: 6px;
-                background: transparent;
-                color: var(--text);
-                font: inherit;
-                font-weight: 600;
-                cursor: pointer;
-            }
-            .btn:hover:not(:disabled) {
-                border-color: var(--accent);
-            }
-            .btn:disabled {
-                color: var(--muted);
-                opacity: 0.55;
-                cursor: default;
-            }
-            .btn-primary {
-                background: var(--accent);
-                color: var(--accent-ink);
-                border-color: var(--accent);
-            }
-            .btn-icon {
-                padding: 6px 10px;
-                font-size: 15px;
-                line-height: 1;
-            }
+      .toolbar {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        background: var(--panel-2);
+        border-bottom: 1px solid var(--border);
+      }
+      .brand {
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.5px;
+      }
+      select {
+        background: var(--control);
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 6px 8px;
+        font: 12px var(--mono);
+        max-width: 40vw;
+      }
+      .dirty {
+        color: var(--accent);
+        visibility: hidden;
+        font-size: 11px;
+      }
+      .spacer {
+        flex: 1;
+      }
+      .btn {
+        padding: 6px 14px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: transparent;
+        color: var(--text);
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .btn:hover:not(:disabled) {
+        border-color: var(--accent);
+      }
+      .btn:disabled {
+        color: var(--muted);
+        opacity: 0.55;
+        cursor: default;
+      }
+      .btn-primary {
+        background: var(--accent);
+        color: var(--accent-ink);
+        border-color: var(--accent);
+      }
+      .btn-icon {
+        padding: 6px 10px;
+        font-size: 15px;
+        line-height: 1;
+      }
 
-            /* The editor is a transparent textarea over a highlighted <pre>.
+      /* The editor is a transparent textarea over a highlighted <pre>.
                Both layers share identical metrics so glyphs line up exactly. */
-            .editor-wrap {
-                position: relative;
-                flex: 1 1 auto;
-                min-height: 0;
-                overflow: hidden;
-                background: var(--panel);
-            }
-            #highlight,
-            #editor {
-                position: absolute;
-                inset: 0;
-                margin: 0;
-                border: 0;
-                padding: 16px 18px;
-                font: 13px/1.6 var(--mono);
-                tab-size: 2;
-                white-space: pre;
-                box-sizing: border-box;
-            }
-            #highlight {
-                pointer-events: none;
-                overflow: hidden;
-                color: var(--text);
-            }
-            #editor {
-                resize: none;
-                outline: none;
-                background: transparent;
-                color: transparent;
-                caret-color: var(--accent);
-                overflow: auto;
-                /* Hide the scrollbar so its width can't desync the overlay —
+      .editor-wrap {
+        position: relative;
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: hidden;
+        background: var(--panel);
+      }
+      #highlight,
+      #editor {
+        position: absolute;
+        inset: 0;
+        margin: 0;
+        border: 0;
+        padding: 16px 18px;
+        font: 13px/1.6 var(--mono);
+        tab-size: 2;
+        white-space: pre;
+        box-sizing: border-box;
+      }
+      #highlight {
+        pointer-events: none;
+        overflow: hidden;
+        color: var(--text);
+      }
+      #editor {
+        resize: none;
+        outline: none;
+        background: transparent;
+        color: transparent;
+        caret-color: var(--accent);
+        overflow: auto;
+        /* Hide the scrollbar so its width can't desync the overlay —
                    a visible textarea scrollbar steals client height/width that
                    the highlight layer doesn't have, drifting them apart. */
-                scrollbar-width: none;
-            }
-            #editor::-webkit-scrollbar {
-                display: none;
-            }
-            .tok-comment {
-                color: var(--tok-comment);
-                font-style: italic;
-            }
-            .tok-string {
-                color: var(--tok-string);
-            }
-            .tok-number,
-            .tok-const,
-            .tok-keyword {
-                color: var(--tok-value);
-            }
-            .tok-type {
-                color: var(--tok-type);
-                font-style: italic;
-            }
-            .tok-prop {
-                color: var(--tok-prop);
-            }
-            .tok-var {
-                color: var(--tok-var);
-            }
-            .tok-op {
-                color: var(--tok-op);
-            }
-            .tok-class {
-                color: var(--tok-class);
-                font-style: italic;
-            }
-            .tok-punct {
-                color: var(--tok-punct);
-            }
+        scrollbar-width: none;
+      }
+      #editor::-webkit-scrollbar {
+        display: none;
+      }
+      .tok-comment {
+        color: var(--tok-comment);
+        font-style: italic;
+      }
+      .tok-string {
+        color: var(--tok-string);
+      }
+      .tok-number,
+      .tok-const,
+      .tok-keyword {
+        color: var(--tok-value);
+      }
+      .tok-type {
+        color: var(--tok-type);
+        font-style: italic;
+      }
+      .tok-prop {
+        color: var(--tok-prop);
+      }
+      .tok-var {
+        color: var(--tok-var);
+      }
+      .tok-op {
+        color: var(--tok-op);
+      }
+      .tok-class {
+        color: var(--tok-class);
+        font-style: italic;
+      }
+      .tok-punct {
+        color: var(--tok-punct);
+      }
 
-            .pane.preview {
-                background: var(--bg);
-            }
-            #preview {
-                flex: 1 1 auto;
-                overflow: auto;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                padding: 2px;
-            }
-            #preview svg {
-                display: block;
-                max-width: 100%;
-                height: auto;
-                background: var(--paper);
-                border-radius: 10px;
-                box-shadow: 0 6px 24px var(--shadow);
-                overflow: hidden;
-            }
+      .pane.preview {
+        background: var(--bg);
+      }
+      #preview {
+        flex: 1 1 auto;
+        overflow: auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2px;
+      }
+      #preview svg {
+        display: block;
+        max-width: 100%;
+        height: auto;
+        background: var(--paper);
+        border-radius: 10px;
+        box-shadow: 0 6px 24px var(--shadow);
+        overflow: hidden;
+      }
 
-            #diag {
-                flex: 0 0 auto;
-                margin: 0;
-                max-height: 30vh;
-                overflow: auto;
-                padding: 10px 14px;
-                background: var(--panel-2);
-                border-top: 1px solid var(--border);
-                font: 12px/1.5 var(--mono);
-                white-space: pre-wrap;
-                color: var(--muted);
-            }
-            #diag:empty {
-                display: none;
-            }
-            #diag.warn {
-                color: var(--warn);
-            }
-            #diag.err {
-                color: var(--err);
-            }
+      #diag {
+        flex: 0 0 auto;
+        margin: 0;
+        max-height: 30vh;
+        overflow: auto;
+        padding: 10px 14px;
+        background: var(--panel-2);
+        border-top: 1px solid var(--border);
+        font: 12px/1.5 var(--mono);
+        white-space: pre-wrap;
+        color: var(--muted);
+      }
+      #diag:empty {
+        display: none;
+      }
+      #diag.warn {
+        color: var(--warn);
+      }
+      #diag.err {
+        color: var(--err);
+      }
 
-            @media (max-width: 768px) {
-                .tabs {
-                    display: flex;
-                }
-                .pane {
-                    display: none;
-                }
-                .pane.edit {
-                    border-right: none;
-                }
-                .pane.edit,
-                .pane.preview {
-                    flex: 1 1 auto;
-                }
-                .divider {
-                    display: none;
-                }
-                body[data-tab="edit"] .pane.edit,
-                body[data-tab="preview"] .pane.preview {
-                    display: flex;
-                }
-                /* Tighter toolbar so it fits one row on a phone. */
-                #render {
-                    display: none;
-                }
-                .toolbar {
-                    gap: 6px;
-                }
-                select {
-                    max-width: 30vw;
-                    padding: 5px 6px;
-                }
-                .btn {
-                    padding: 6px 9px;
-                }
-            }
-        </style>
-    </head>
-    <body data-tab="edit">
-        <div class="tabs">
-            <button class="tab active" data-tab="edit">Edit</button>
-            <button class="tab" data-tab="preview">Preview</button>
+      @media (max-width: 768px) {
+        .tabs {
+          display: flex;
+        }
+        .pane {
+          display: none;
+        }
+        .pane.edit {
+          border-right: none;
+        }
+        .pane.edit,
+        .pane.preview {
+          flex: 1 1 auto;
+        }
+        .divider {
+          display: none;
+        }
+        body[data-tab="edit"] .pane.edit,
+        body[data-tab="preview"] .pane.preview {
+          display: flex;
+        }
+        /* Tighter toolbar so it fits one row on a phone. */
+        #render {
+          display: none;
+        }
+        .toolbar {
+          gap: 6px;
+        }
+        select {
+          max-width: 40vw;
+          padding: 5px 6px;
+        }
+        .btn {
+          padding: 6px 9px;
+        }
+      }
+    </style>
+  </head>
+  <body data-tab="edit">
+    <div class="tabs">
+      <button class="tab active" data-tab="edit">Edit</button>
+      <button class="tab" data-tab="preview">Preview</button>
+    </div>
+
+    <div class="panes">
+      <section class="pane edit">
+        <div class="toolbar">
+          <span class="brand">Lini</span>
+          <select id="file" title="open a sample"></select>
+          <span class="dirty" id="dirty" title="unsaved changes">●</span>
+          <span class="spacer"></span>
+          <button
+            class="btn btn-primary"
+            id="render"
+            title="render (Ctrl/Cmd-S)"
+          >
+            Render
+          </button>
+          <button
+            class="btn"
+            id="restore"
+            disabled
+            title="revert to the loaded version"
+          >
+            Rest
+          </button>
+          <button class="btn" id="save" disabled title="write to disk">
+            Save
+          </button>
+          <button class="btn btn-icon" id="theme" title="toggle light / dark">
+            ◐
+          </button>
         </div>
-
-        <div class="panes">
-            <section class="pane edit">
-                <div class="toolbar">
-                    <span class="brand">Lini</span>
-                    <select id="file" title="open a sample"></select>
-                    <span class="dirty" id="dirty" title="unsaved changes">●</span>
-                    <span class="spacer"></span>
-                    <button class="btn btn-primary" id="render" title="render (Ctrl/Cmd-S)">
-                        Render
-                    </button>
-                    <button class="btn" id="restore" disabled title="revert to the loaded version">
-                        Rest
-                    </button>
-                    <button class="btn" id="save" disabled title="write to disk">
-                        Save
-                    </button>
-                    <button class="btn btn-icon" id="theme" title="toggle light / dark">
-                        ◐
-                    </button>
-                </div>
-                <div class="editor-wrap">
-                    <pre id="highlight" aria-hidden="true"></pre>
-                    <textarea
-                        id="editor"
-                        spellcheck="false"
-                        autocomplete="off"
-                        autocapitalize="off"
-                        autocorrect="off"
-                        wrap="off"
-                    ></textarea>
-                </div>
-            </section>
-
-            <div class="divider" id="divider" title="drag to resize"></div>
-
-            <section class="pane preview">
-                <div id="preview"></div>
-            </section>
+        <div class="editor-wrap">
+          <pre id="highlight" aria-hidden="true"></pre>
+          <textarea
+            id="editor"
+            spellcheck="false"
+            autocomplete="off"
+            autocapitalize="off"
+            autocorrect="off"
+            wrap="off"
+          ></textarea>
         </div>
+      </section>
 
-        <pre id="diag"></pre>
+      <div class="divider" id="divider" title="drag to resize"></div>
 
-        <script>
-            const $ = (s) => document.querySelector(s);
-            const editor = $("#editor");
-            const preview = $("#preview");
-            const diag = $("#diag");
-            const fileSelect = $("#file");
-            const saveBtn = $("#save");
-            const restoreBtn = $("#restore");
-            const dirtyDot = $("#dirty");
-            const highlight = $("#highlight");
+      <section class="pane preview">
+        <div id="preview"></div>
+      </section>
+    </div>
 
-            let savedText = "";
-            let currentPath = null;
-            let dirty = false;
-            let files = [];
+    <pre id="diag"></pre>
 
-            // ---- transport seam ------------------------------------------
-            // The only code that touches the server. A future WASM build swaps
-            // these three for an in-browser compile + a baked file manifest;
-            // nothing else on the page changes.
-            async function listFiles() {
-                const t = (await (await fetch("/api/files")).text()).trim();
-                return t ? t.split("\n") : [];
+    <script>
+      const $ = (s) => document.querySelector(s);
+      const editor = $("#editor");
+      const preview = $("#preview");
+      const diag = $("#diag");
+      const fileSelect = $("#file");
+      const saveBtn = $("#save");
+      const restoreBtn = $("#restore");
+      const dirtyDot = $("#dirty");
+      const highlight = $("#highlight");
+
+      let savedText = "";
+      let currentPath = null;
+      let dirty = false;
+      let files = [];
+
+      // ---- transport seam ------------------------------------------
+      // The only code that touches the server. A future WASM build swaps
+      // these three for an in-browser compile + a baked file manifest;
+      // nothing else on the page changes.
+      async function listFiles() {
+        const t = (await (await fetch("/api/files")).text()).trim();
+        return t ? t.split("\n") : [];
+      }
+      async function loadFile(path) {
+        return await (
+          await fetch("/api/file?path=" + encodeURIComponent(path))
+        ).text();
+      }
+      async function compile(source) {
+        const r = await fetch("/compile", {
+          method: "POST",
+          body: source,
+        });
+        return await r.json(); // { ok, svg?, error?, diagnostics }
+      }
+      async function saveFile(path, source) {
+        const r = await fetch("/save?path=" + encodeURIComponent(path), {
+          method: "POST",
+          body: source,
+        });
+        return await r.json();
+      }
+      // --------------------------------------------------------------
+
+      const esc = (s) =>
+        s.replace(
+          /[&<>"]/g,
+          (c) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+            })[c],
+        );
+
+      // ---- syntax highlighting -------------------------------------
+      // A small tokenizer mirroring the VSCode grammar
+      // (editors/vscode/syntaxes/lini.tmLanguage.json). It preserves every
+      // character (escaped) so the highlighted <pre> lines up glyph-for-
+      // glyph with the textarea above it.
+      function tokenize(src) {
+        let out = "";
+        let i = 0;
+        const n = src.length;
+        let inValue = false; // between a `name:` and the end of its value
+        const at = (re) => {
+          re.lastIndex = i;
+          const m = re.exec(src);
+          return m && m.index === i ? m[0] : null;
+        };
+        const emit = (cls, s) => {
+          out += cls ? `<span class="tok-${cls}">${esc(s)}</span>` : esc(s);
+          i += s.length;
+        };
+        const prevWord = () => i > 0 && /[\w-]/.test(src[i - 1]);
+
+        const WS = /[ \t\r]+/y;
+        const COMMENT = /\/\/[^\n]*/y;
+        const STRING = /"(?:\\.|[^"\\\n])*"?/y;
+        const VAR_NAME = /--[A-Za-z_][\w-]*(?=[ \t]*:(?!:))/y;
+        const PROP_NAME = /[A-Za-z_][\w-]*(?=[ \t]*:(?!:))/y;
+        const CSS_VAR = /--[A-Za-z_][\w-]*/y;
+        const WIRE_OP = /(?:<>|[<>*])?(?:--|\.\.|~|-)(?:<>|[<>*])?/y;
+        const CLASS = /(?:\.[A-Za-z_][\w-]*)+/y;
+        const SIDE = /(?:top|bottom|left|right)(?![\w-])/y;
+        const HEX =
+          /#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{4}|[0-9a-fA-F]{3})(?![0-9a-fA-F])/y;
+        const NUMBER = /[-+]?(?:\d+\.\d+|\d+|\.\d+)/y;
+        const FUNC = /(?:rgb|rgba|hsl|repeat)(?=\s*\()/y;
+        const KEYWORD =
+          /(?:grid|row|column|start|center|end|stretch|evenly|none|auto|true|false|solid|dashed|dotted|wavy|arrow|dot|diamond|crow|outlined|filled|rounded|sharp|top|bottom|left|right|all|rows|columns)(?![\w-])/y;
+        const COLOR =
+          /(?:white|black|red|green|blue|gray|grey|crimson|orange|yellow|gold|silver|navy|teal|purple|pink|brown|cyan|magenta|lime|maroon|olive|cornflowerblue|currentColor|transparent)(?![\w-])/y;
+        const IDENT = /[A-Za-z_][\w-]*/y;
+
+        while (i < n) {
+          const c = src[i];
+          if (c === "\n") {
+            out += "\n";
+            i++;
+            inValue = false;
+            continue;
+          }
+          let t;
+          if ((t = at(WS))) {
+            emit(null, t);
+            continue;
+          }
+          if ((t = at(COMMENT))) {
+            emit("comment", t);
+            continue;
+          }
+          if ((t = at(STRING))) {
+            emit("string", t);
+            continue;
+          }
+
+          if (inValue) {
+            if ((t = at(CSS_VAR))) {
+              emit("var", t);
+              continue;
             }
-            async function loadFile(path) {
-                return await (
-                    await fetch("/api/file?path=" + encodeURIComponent(path))
-                ).text();
+            if ((t = at(FUNC))) {
+              emit("type", t);
+              continue;
             }
-            async function compile(source) {
-                const r = await fetch("/compile", {
-                    method: "POST",
-                    body: source,
-                });
-                return await r.json(); // { ok, svg?, error?, diagnostics }
+            if ((t = at(HEX))) {
+              emit("const", t);
+              continue;
             }
-            async function saveFile(path, source) {
-                const r = await fetch("/save?path=" + encodeURIComponent(path), {
-                    method: "POST",
-                    body: source,
-                });
-                return await r.json();
+            if ((t = at(NUMBER))) {
+              emit("number", t);
+              continue;
             }
-            // --------------------------------------------------------------
-
-            const esc = (s) =>
-                s.replace(
-                    /[&<>"]/g,
-                    (c) =>
-                        ({
-                            "&": "&amp;",
-                            "<": "&lt;",
-                            ">": "&gt;",
-                            '"': "&quot;",
-                        })[c],
-                );
-
-            // ---- syntax highlighting -------------------------------------
-            // A small tokenizer mirroring the VSCode grammar
-            // (editors/vscode/syntaxes/lini.tmLanguage.json). It preserves every
-            // character (escaped) so the highlighted <pre> lines up glyph-for-
-            // glyph with the textarea above it.
-            function tokenize(src) {
-                let out = "";
-                let i = 0;
-                const n = src.length;
-                let inValue = false; // between a `name:` and the end of its value
-                const at = (re) => {
-                    re.lastIndex = i;
-                    const m = re.exec(src);
-                    return m && m.index === i ? m[0] : null;
-                };
-                const emit = (cls, s) => {
-                    out += cls ? `<span class="tok-${cls}">${esc(s)}</span>` : esc(s);
-                    i += s.length;
-                };
-                const prevWord = () => i > 0 && /[\w-]/.test(src[i - 1]);
-
-                const WS = /[ \t\r]+/y;
-                const COMMENT = /\/\/[^\n]*/y;
-                const STRING = /"(?:\\.|[^"\\\n])*"?/y;
-                const VAR_NAME = /--[A-Za-z_][\w-]*(?=[ \t]*:(?!:))/y;
-                const PROP_NAME = /[A-Za-z_][\w-]*(?=[ \t]*:(?!:))/y;
-                const CSS_VAR = /--[A-Za-z_][\w-]*/y;
-                const WIRE_OP = /(?:<>|[<>*])?(?:--|\.\.|~|-)(?:<>|[<>*])?/y;
-                const CLASS = /(?:\.[A-Za-z_][\w-]*)+/y;
-                const SIDE = /(?:top|bottom|left|right)(?![\w-])/y;
-                const HEX = /#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{4}|[0-9a-fA-F]{3})(?![0-9a-fA-F])/y;
-                const NUMBER = /[-+]?(?:\d+\.\d+|\d+|\.\d+)/y;
-                const FUNC = /(?:rgb|rgba|hsl|repeat)(?=\s*\()/y;
-                const KEYWORD =
-                    /(?:grid|row|column|start|center|end|stretch|evenly|none|auto|true|false|solid|dashed|dotted|wavy|arrow|dot|diamond|crow|outlined|filled|rounded|sharp|top|bottom|left|right|all|rows|columns)(?![\w-])/y;
-                const COLOR =
-                    /(?:white|black|red|green|blue|gray|grey|crimson|orange|yellow|gold|silver|navy|teal|purple|pink|brown|cyan|magenta|lime|maroon|olive|cornflowerblue|currentColor|transparent)(?![\w-])/y;
-                const IDENT = /[A-Za-z_][\w-]*/y;
-
-                while (i < n) {
-                    const c = src[i];
-                    if (c === "\n") {
-                        out += "\n";
-                        i++;
-                        inValue = false;
-                        continue;
-                    }
-                    let t;
-                    if ((t = at(WS))) { emit(null, t); continue; }
-                    if ((t = at(COMMENT))) { emit("comment", t); continue; }
-                    if ((t = at(STRING))) { emit("string", t); continue; }
-
-                    if (inValue) {
-                        if ((t = at(CSS_VAR))) { emit("var", t); continue; }
-                        if ((t = at(FUNC))) { emit("type", t); continue; }
-                        if ((t = at(HEX))) { emit("const", t); continue; }
-                        if ((t = at(NUMBER))) { emit("number", t); continue; }
-                        if ((t = at(KEYWORD))) { emit("keyword", t); continue; }
-                        if ((t = at(COLOR))) { emit("const", t); continue; }
-                        if (c === ";" || c === "}" || c === "]") {
-                            emit("punct", c);
-                            inValue = false;
-                            continue;
-                        }
-                        if (c === "(" || c === ")" || c === ",") { emit("punct", c); continue; }
-                        if ((t = at(IDENT))) { emit(null, t); continue; }
-                        emit(null, c);
-                        continue;
-                    }
-
-                    // structural mode (identity, selectors, wires)
-                    if (c === "|") {
-                        emit("punct", "|");
-                        while (i < n && src[i] !== "|" && src[i] !== "\n") {
-                            let b;
-                            if ((b = at(WS))) { emit(null, b); continue; }
-                            if (src[i] === ":" && src[i + 1] === ":") { emit("op", "::"); continue; }
-                            if ((b = at(CLASS))) { emit("class", b); continue; }
-                            if ((b = at(IDENT))) { emit("type", b); continue; }
-                            emit(null, src[i]);
-                        }
-                        if (src[i] === "|") emit("punct", "|");
-                        continue;
-                    }
-                    if ((t = at(VAR_NAME))) { emit("var", t); continue; }
-                    if ((t = at(PROP_NAME))) { emit("prop", t); continue; }
-                    if ((t = at(CSS_VAR))) { emit("var", t); continue; }
-                    if ((t = at(WIRE_OP))) { emit("op", t); continue; }
-                    if (!prevWord() && (t = at(CLASS))) { emit("class", t); continue; }
-                    if (!prevWord() && (t = at(SIDE))) { emit("const", t); continue; }
-                    if ((t = at(HEX))) { emit("const", t); continue; }
-                    if ((t = at(NUMBER))) { emit("number", t); continue; }
-                    if (c === ":") { emit("punct", c); inValue = true; continue; }
-                    if (c === "&") { emit("op", c); continue; }
-                    if ("{}[];,()".includes(c)) { emit("punct", c); continue; }
-                    if ((t = at(IDENT))) { emit(null, t); continue; }
-                    emit(null, c);
-                }
-                return out;
+            if ((t = at(KEYWORD))) {
+              emit("keyword", t);
+              continue;
             }
-            function renderHighlight() {
-                highlight.innerHTML = tokenize(editor.value) + "\n";
-                highlight.scrollTop = editor.scrollTop;
-                highlight.scrollLeft = editor.scrollLeft;
+            if ((t = at(COLOR))) {
+              emit("const", t);
+              continue;
             }
-            // --------------------------------------------------------------
-
-            function setDirty(d) {
-                dirty = d;
-                dirtyDot.style.visibility = d ? "visible" : "hidden";
-                saveBtn.disabled = !d;
-                restoreBtn.disabled = !d;
+            if (c === ";" || c === "}" || c === "]") {
+              emit("punct", c);
+              inValue = false;
+              continue;
             }
-
-            function showWarnings(list) {
-                diag.className = list.length ? "warn" : "";
-                diag.textContent = list.join("\n");
+            if (c === "(" || c === ")" || c === ",") {
+              emit("punct", c);
+              continue;
             }
-            function showError(msg, list = []) {
-                preview.innerHTML = "";
-                diag.className = "err";
-                diag.textContent = [msg, ...list].join("\n");
+            if ((t = at(IDENT))) {
+              emit(null, t);
+              continue;
             }
+            emit(null, c);
+            continue;
+          }
 
-            // Compile + show the diagram. Explicit only — never on keystroke.
-            async function render() {
-                let res;
-                try {
-                    res = await compile(editor.value);
-                } catch (e) {
-                    showError("fetch failed: " + e.message);
-                    return;
-                }
-                if (res.ok) {
-                    preview.innerHTML = res.svg;
-                    showWarnings(res.diagnostics || []);
-                } else {
-                    showError(res.error || "compile error", res.diagnostics || []);
-                }
+          // structural mode (identity, selectors, wires)
+          if (c === "|") {
+            emit("punct", "|");
+            while (i < n && src[i] !== "|" && src[i] !== "\n") {
+              let b;
+              if ((b = at(WS))) {
+                emit(null, b);
+                continue;
+              }
+              if (src[i] === ":" && src[i + 1] === ":") {
+                emit("op", "::");
+                continue;
+              }
+              if ((b = at(CLASS))) {
+                emit("class", b);
+                continue;
+              }
+              if ((b = at(IDENT))) {
+                emit("type", b);
+                continue;
+              }
+              emit(null, src[i]);
             }
+            if (src[i] === "|") emit("punct", "|");
+            continue;
+          }
+          if ((t = at(VAR_NAME))) {
+            emit("var", t);
+            continue;
+          }
+          if ((t = at(PROP_NAME))) {
+            emit("prop", t);
+            continue;
+          }
+          if ((t = at(CSS_VAR))) {
+            emit("var", t);
+            continue;
+          }
+          if ((t = at(WIRE_OP))) {
+            emit("op", t);
+            continue;
+          }
+          if (!prevWord() && (t = at(CLASS))) {
+            emit("class", t);
+            continue;
+          }
+          if (!prevWord() && (t = at(SIDE))) {
+            emit("const", t);
+            continue;
+          }
+          if ((t = at(HEX))) {
+            emit("const", t);
+            continue;
+          }
+          if ((t = at(NUMBER))) {
+            emit("number", t);
+            continue;
+          }
+          if (c === ":") {
+            emit("punct", c);
+            inValue = true;
+            continue;
+          }
+          if (c === "&") {
+            emit("op", c);
+            continue;
+          }
+          if ("{}[];,()".includes(c)) {
+            emit("punct", c);
+            continue;
+          }
+          if ((t = at(IDENT))) {
+            emit(null, t);
+            continue;
+          }
+          emit(null, c);
+        }
+        return out;
+      }
+      function renderHighlight() {
+        highlight.innerHTML = tokenize(editor.value) + "\n";
+        highlight.scrollTop = editor.scrollTop;
+        highlight.scrollLeft = editor.scrollLeft;
+      }
+      // --------------------------------------------------------------
 
-            async function open(path) {
-                const text = await loadFile(path);
-                editor.value = text;
-                renderHighlight();
-                savedText = text;
-                currentPath = path;
-                fileSelect.value = path;
-                if (location.hash.slice(1) !== path) location.hash = path;
-                setDirty(false);
-                render();
-            }
-            // The URL hash remembers the open file across reloads, and tracks
-            // back/forward and manual hash edits.
-            window.addEventListener("hashchange", () => {
-                const p = decodeURIComponent(location.hash.slice(1));
-                if (p && p !== currentPath && files.includes(p)) open(p);
-            });
+      function setDirty(d) {
+        dirty = d;
+        dirtyDot.style.visibility = d ? "visible" : "hidden";
+        saveBtn.disabled = !d;
+        restoreBtn.disabled = !d;
+      }
 
-            function showTab(which) {
-                document.body.dataset.tab = which;
-                document
-                    .querySelectorAll(".tab")
-                    .forEach((t) =>
-                        t.classList.toggle("active", t.dataset.tab === which),
-                    );
-            }
+      function showWarnings(list) {
+        diag.className = list.length ? "warn" : "";
+        diag.textContent = list.join("\n");
+      }
+      function showError(msg, list = []) {
+        preview.innerHTML = "";
+        diag.className = "err";
+        diag.textContent = [msg, ...list].join("\n");
+      }
 
-            editor.addEventListener("input", () => {
-                renderHighlight();
-                setDirty(editor.value !== savedText);
-            });
-            editor.addEventListener("scroll", () => {
-                highlight.scrollTop = editor.scrollTop;
-                highlight.scrollLeft = editor.scrollLeft;
-            });
-            fileSelect.addEventListener("change", () => open(fileSelect.value));
+      // Compile + show the diagram. Explicit only — never on keystroke.
+      async function render() {
+        let res;
+        try {
+          res = await compile(editor.value);
+        } catch (e) {
+          showError("fetch failed: " + e.message);
+          return;
+        }
+        if (res.ok) {
+          preview.innerHTML = res.svg;
+          showWarnings(res.diagnostics || []);
+        } else {
+          showError(res.error || "compile error", res.diagnostics || []);
+        }
+      }
 
-            $("#render").addEventListener("click", () => {
-                render();
-                showTab("preview");
-            });
-            restoreBtn.addEventListener("click", () => {
-                editor.value = savedText;
-                renderHighlight();
-                setDirty(false);
-                render();
-            });
-            saveBtn.addEventListener("click", async () => {
-                if (!currentPath) return;
-                const res = await saveFile(currentPath, editor.value);
-                if (res.ok) {
-                    savedText = editor.value;
-                    setDirty(false);
-                } else {
-                    showError("save failed: " + (res.error || ""));
-                }
-            });
-            $("#theme").addEventListener("click", () => {
-                const next =
-                    document.documentElement.dataset.theme === "dark"
-                        ? "light"
-                        : "dark";
-                document.documentElement.dataset.theme = next;
-                localStorage.setItem("lini-theme", next);
-            });
+      async function open(path) {
+        const text = await loadFile(path);
+        editor.value = text;
+        renderHighlight();
+        savedText = text;
+        currentPath = path;
+        fileSelect.value = path;
+        if (location.hash.slice(1) !== path) location.hash = path;
+        setDirty(false);
+        render();
+      }
+      // The URL hash remembers the open file across reloads, and tracks
+      // back/forward and manual hash edits.
+      window.addEventListener("hashchange", () => {
+        const p = decodeURIComponent(location.hash.slice(1));
+        if (p && p !== currentPath && files.includes(p)) open(p);
+      });
 
-            // Ctrl/Cmd-S (and -Enter) render immediately — they never write to
-            // disk. Saving is the Save button alone, so it can't be a reflex.
-            document.addEventListener("keydown", (e) => {
-                if (
-                    (e.metaKey || e.ctrlKey) &&
-                    (e.key === "s" || e.key === "Enter")
-                ) {
-                    e.preventDefault();
-                    render();
-                    showTab("preview");
-                }
-            });
-            // On mobile there's no Render button — switching to the Preview
-            // tab renders. (Desktop shows both panes, so it keeps the button.)
-            document.querySelectorAll(".tab").forEach((t) =>
-                t.addEventListener("click", () => {
-                    showTab(t.dataset.tab);
-                    if (t.dataset.tab === "preview") render();
-                }),
-            );
+      function showTab(which) {
+        document.body.dataset.tab = which;
+        document
+          .querySelectorAll(".tab")
+          .forEach((t) =>
+            t.classList.toggle("active", t.dataset.tab === which),
+          );
+      }
 
-            // Draggable split between editor and preview (desktop).
-            (function () {
-                const panes = $(".panes");
-                const divider = $("#divider");
-                divider.addEventListener("pointerdown", (e) => {
-                    e.preventDefault();
-                    divider.setPointerCapture(e.pointerId);
-                    const move = (ev) => {
-                        const r = panes.getBoundingClientRect();
-                        let pct = ((ev.clientX - r.left) / r.width) * 100;
-                        pct = Math.max(20, Math.min(80, pct));
-                        document.documentElement.style.setProperty(
-                            "--split",
-                            pct + "%",
-                        );
-                    };
-                    const up = () => {
-                        divider.releasePointerCapture(e.pointerId);
-                        divider.removeEventListener("pointermove", move);
-                        divider.removeEventListener("pointerup", up);
-                    };
-                    divider.addEventListener("pointermove", move);
-                    divider.addEventListener("pointerup", up);
-                });
-            })();
+      editor.addEventListener("input", () => {
+        renderHighlight();
+        setDirty(editor.value !== savedText);
+      });
+      editor.addEventListener("scroll", () => {
+        highlight.scrollTop = editor.scrollTop;
+        highlight.scrollLeft = editor.scrollLeft;
+      });
+      fileSelect.addEventListener("change", () => open(fileSelect.value));
 
-            (async function init() {
-                files = await listFiles();
-                if (!files.length) {
-                    fileSelect.innerHTML = "<option>no .lini files</option>";
-                    showError("No .lini files in this directory.");
-                    return;
-                }
-                fileSelect.innerHTML = files
-                    .map((f) => `<option value="${esc(f)}">${esc(f)}</option>`)
-                    .join("");
-                const fromHash = decodeURIComponent(location.hash.slice(1));
-                open(files.includes(fromHash) ? fromHash : files[0]);
-            })();
-        </script>
-    </body>
+      $("#render").addEventListener("click", () => {
+        render();
+        showTab("preview");
+      });
+      restoreBtn.addEventListener("click", () => {
+        editor.value = savedText;
+        renderHighlight();
+        setDirty(false);
+        render();
+      });
+      saveBtn.addEventListener("click", async () => {
+        if (!currentPath) return;
+        const res = await saveFile(currentPath, editor.value);
+        if (res.ok) {
+          savedText = editor.value;
+          setDirty(false);
+        } else {
+          showError("save failed: " + (res.error || ""));
+        }
+      });
+      $("#theme").addEventListener("click", () => {
+        const next =
+          document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+        document.documentElement.dataset.theme = next;
+        localStorage.setItem("lini-theme", next);
+      });
+
+      // Ctrl/Cmd-S (and -Enter) render immediately — they never write to
+      // disk. Saving is the Save button alone, so it can't be a reflex.
+      document.addEventListener("keydown", (e) => {
+        if ((e.metaKey || e.ctrlKey) && (e.key === "s" || e.key === "Enter")) {
+          e.preventDefault();
+          render();
+          showTab("preview");
+        }
+      });
+      // On mobile there's no Render button — switching to the Preview
+      // tab renders. (Desktop shows both panes, so it keeps the button.)
+      document.querySelectorAll(".tab").forEach((t) =>
+        t.addEventListener("click", () => {
+          showTab(t.dataset.tab);
+          if (t.dataset.tab === "preview") render();
+        }),
+      );
+
+      // Draggable split between editor and preview (desktop).
+      (function () {
+        const panes = $(".panes");
+        const divider = $("#divider");
+        divider.addEventListener("pointerdown", (e) => {
+          e.preventDefault();
+          divider.setPointerCapture(e.pointerId);
+          const move = (ev) => {
+            const r = panes.getBoundingClientRect();
+            let pct = ((ev.clientX - r.left) / r.width) * 100;
+            pct = Math.max(20, Math.min(80, pct));
+            document.documentElement.style.setProperty("--split", pct + "%");
+          };
+          const up = () => {
+            divider.releasePointerCapture(e.pointerId);
+            divider.removeEventListener("pointermove", move);
+            divider.removeEventListener("pointerup", up);
+          };
+          divider.addEventListener("pointermove", move);
+          divider.addEventListener("pointerup", up);
+        });
+      })();
+
+      (async function init() {
+        files = await listFiles();
+        if (!files.length) {
+          fileSelect.innerHTML = "<option>no .lini files</option>";
+          showError("No .lini files in this directory.");
+          return;
+        }
+        fileSelect.innerHTML = files
+          .map((f) => `<option value="${esc(f)}">${esc(f)}</option>`)
+          .join("");
+        const fromHash = decodeURIComponent(location.hash.slice(1));
+        open(files.includes(fromHash) ? fromHash : files[0]);
+      })();
+    </script>
+  </body>
 </html>
