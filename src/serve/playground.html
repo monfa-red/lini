@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>lini — playground</title>
+        <title>Lini — playground</title>
         <script>
             // Set the theme before first paint to avoid a flash.
             (function () {
@@ -36,7 +36,7 @@
                 --accent-ink: #21222c;
                 --warn: #ffb86c;
                 --err: #ff5555;
-                --paper: #ffffff;
+                --paper: #282a36;
                 --shadow: rgba(0, 0, 0, 0.5);
                 --tok-comment: #6272a4;
                 --tok-string: #f1fa8c;
@@ -235,6 +235,13 @@
                 color: transparent;
                 caret-color: var(--accent);
                 overflow: auto;
+                /* Hide the scrollbar so its width can't desync the overlay —
+                   a visible textarea scrollbar steals client height/width that
+                   the highlight layer doesn't have, drifting them apart. */
+                scrollbar-width: none;
+            }
+            #editor::-webkit-scrollbar {
+                display: none;
             }
             .tok-comment {
                 color: var(--tok-comment);
@@ -333,6 +340,20 @@
                 body[data-tab="preview"] .pane.preview {
                     display: flex;
                 }
+                /* Tighter toolbar so it fits one row on a phone. */
+                #render {
+                    display: none;
+                }
+                .toolbar {
+                    gap: 6px;
+                }
+                select {
+                    max-width: 30vw;
+                    padding: 5px 6px;
+                }
+                .btn {
+                    padding: 6px 9px;
+                }
             }
         </style>
     </head>
@@ -345,7 +366,7 @@
         <div class="panes">
             <section class="pane edit">
                 <div class="toolbar">
-                    <span class="brand">lini</span>
+                    <span class="brand">Lini</span>
                     <select id="file" title="open a sample"></select>
                     <span class="dirty" id="dirty" title="unsaved changes">●</span>
                     <span class="spacer"></span>
@@ -353,7 +374,7 @@
                         Render
                     </button>
                     <button class="btn" id="restore" disabled title="revert to the loaded version">
-                        Restore
+                        Rest
                     </button>
                     <button class="btn" id="save" disabled title="write to disk">
                         Save
@@ -398,6 +419,7 @@
             let savedText = "";
             let currentPath = null;
             let dirty = false;
+            let files = [];
 
             // ---- transport seam ------------------------------------------
             // The only code that touches the server. A future WASM build swaps
@@ -581,20 +603,23 @@
                 }
             }
 
-            async function open(path, force = false) {
-                if (!force && dirty && !confirm("Discard unsaved changes?")) {
-                    fileSelect.value = currentPath;
-                    return;
-                }
+            async function open(path) {
                 const text = await loadFile(path);
                 editor.value = text;
                 renderHighlight();
                 savedText = text;
                 currentPath = path;
                 fileSelect.value = path;
+                if (location.hash.slice(1) !== path) location.hash = path;
                 setDirty(false);
                 render();
             }
+            // The URL hash remembers the open file across reloads, and tracks
+            // back/forward and manual hash edits.
+            window.addEventListener("hashchange", () => {
+                const p = decodeURIComponent(location.hash.slice(1));
+                if (p && p !== currentPath && files.includes(p)) open(p);
+            });
 
             function showTab(which) {
                 document.body.dataset.tab = which;
@@ -656,11 +681,14 @@
                     showTab("preview");
                 }
             });
-            document
-                .querySelectorAll(".tab")
-                .forEach((t) =>
-                    t.addEventListener("click", () => showTab(t.dataset.tab)),
-                );
+            // On mobile there's no Render button — switching to the Preview
+            // tab renders. (Desktop shows both panes, so it keeps the button.)
+            document.querySelectorAll(".tab").forEach((t) =>
+                t.addEventListener("click", () => {
+                    showTab(t.dataset.tab);
+                    if (t.dataset.tab === "preview") render();
+                }),
+            );
 
             // Draggable split between editor and preview (desktop).
             (function () {
@@ -689,7 +717,7 @@
             })();
 
             (async function init() {
-                const files = await listFiles();
+                files = await listFiles();
                 if (!files.length) {
                     fileSelect.innerHTML = "<option>no .lini files</option>";
                     showError("No .lini files in this directory.");
@@ -698,7 +726,8 @@
                 fileSelect.innerHTML = files
                     .map((f) => `<option value="${esc(f)}">${esc(f)}</option>`)
                     .join("");
-                open(files[0], true);
+                const fromHash = decodeURIComponent(location.hash.slice(1));
+                open(files.includes(fromHash) ? fromHash : files[0]);
             })();
         </script>
     </body>

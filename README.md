@@ -162,7 +162,21 @@ lini desugar <input.lini>
 | `--watch` | Recompile on every change (with `-o`). |
 | `--no-warn` / `--strict` | Silence lint warnings, or promote them to errors. |
 
-Errors are LSP-formatted (`file:line:col: error: …`) and suggest fixes: an unknown endpoint asks *did you mean `kitchen.counter.bowl`?*. `lini serve` runs a live preview (default port 7700) — point it at a file to live-reload it, or at a directory for a browser **playground** to pick, edit, and render its diagrams; `lini desugar` prints a file with its sugar expanded, for teaching and debugging.
+Errors are LSP-formatted (`file:line:col: error: …`) and suggest fixes: an unknown endpoint asks *did you mean `kitchen.counter.bowl`?*. `lini serve` runs a live preview at `localhost:7700` — a single file, or a folder as a [playground](#playground); `lini desugar` prints a file with its sugar expanded, for teaching and debugging.
+
+---
+
+## Playground
+
+`lini serve` is also a browser playground. Point it at a folder and it lists the `.lini` files inside; pick one from the dropdown to open it in a small editor — source on the left, the diagram rendering live on the right.
+
+```bash
+lini serve samples/        # browse, edit, and render the bundled examples
+lini serve                 # …or the current directory
+lini serve diagram.lini    # a single file — live-reloads on every save
+```
+
+Syntax highlighting, a draggable split, and light/dark themes (it follows your system by default). `Ctrl`/`Cmd`-`S` renders the current buffer; **Save** writes it back to the file.
 
 ---
 
