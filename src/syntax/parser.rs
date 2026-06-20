@@ -103,6 +103,10 @@ impl<'a> Parser<'a> {
         Error::at(self.span(), msg.into())
     }
 
+    fn glued_class_err(&self) -> Error {
+        self.err("a class glues to its type in the bars — write '|box.hot|', no space")
+    }
+
     fn expect_ident(&mut self) -> Result<(String, Span), Error> {
         let name = match self.kind() {
             Some(TokKind::Ident(s)) => s.clone(),
@@ -515,8 +519,18 @@ impl<'a> Parser<'a> {
             }
             ty = Some(name);
         }
+        // A worn class glues to its type — no space on either side of the `.`
+        // (SPEC §2/§4). A spaced `.` would read as a descendant part, which an
+        // instance can't have.
         let mut classes = Vec::new();
-        while self.eat(&TokKind::Dot) {
+        while matches!(self.kind(), Some(TokKind::Dot)) {
+            if !self.glued_at(0) {
+                return Err(self.glued_class_err());
+            }
+            self.pos += 1; // '.'
+            if !self.glued_at(0) {
+                return Err(self.glued_class_err());
+            }
             classes.push(self.expect_ident()?.0);
         }
         self.expect(&TokKind::Pipe, "'|'")?;
@@ -956,6 +970,13 @@ mod tests {
     #[test]
     fn floating_node_class_errors() {
         assert!(parse_err("cat |box| .hot\n").contains("in the bars"));
+    }
+
+    #[test]
+    fn a_spaced_class_in_bars_errors() {
+        assert!(parse_err("x |box .hot|\n").contains("glues to its type"));
+        assert!(parse_err("x |box. hot|\n").contains("glues to its type"));
+        parse_ok("x |box.hot|\n"); // glued is the only accepted form
     }
 
     #[test]

@@ -1126,6 +1126,7 @@ Format: `filename:line:col: error: <message>` (LSP-compatible).
 | Declaration outside a block | `a declaration belongs in a '{ }' block` |
 | Bare type name | `a type only appears in bars — write '\|box\| { }' to style every box` |
 | Glued compound in a rule | `a selector part can't glue a type and a class — space them (descendant) or style '.hot'` |
+| Spaced class in a node's bars | `a class glues to its type in the bars — write '\|box.hot\|', no space` |
 | Style block holds non-decl | `a '{ }' style block holds only declarations` |
 | `[ ]` holds a declaration | `declarations go in '{ }', not '[ ]'` |
 | Children after internal wires | `a child must come before the body's wires` |

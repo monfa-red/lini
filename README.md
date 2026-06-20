@@ -30,7 +30,7 @@ Most tools make you choose: **draw by hand** (precise, but tedious and hard to v
 - **A genuinely small syntax.** Two brackets — `{ }` for style, `[ ]` for children — plus a few sigils and sensible defaults. `cat -> dog` is a valid diagram; the whole language fits in a coffee break.
 - **Any shape you need.** 12 primitives and 10 templates, plus a raw `path` that accepts any SVG path string. If SVG can draw it, you can place it and wire to it.
 - **Fast, and one file.** A 1.5 MB native binary, one runtime dependency. No Node, JVM, or headless browser; typical diagrams compile in about 2 ms, startup included.
-- **Reproducible output.** Compilation is byte-identical across runs, so renders diff cleanly and never churn in CI. 352 tests back it, including property tests on the router's laws.
+- **Reproducible output.** Compilation is byte-identical across runs, so renders diff cleanly and never churn in CI. 355 tests back it, including property tests on the router's laws.
 - **Themeable like a web page.** Colours and fonts are CSS variables in an `@layer`; a host page restyles a diagram without recompiling, or you bake it into one self-contained file.
 
 ---
@@ -209,14 +209,14 @@ Parsing is recursive-descent over an LL(1) grammar; resolve applies CSS-like spe
 
 ## Status
 
-**v0.3.** The language (the box/text model in [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md)) is stable, and the pipeline is complete and tested: wires route and render, layout and theming work, and the formatter and dev server ship in the same binary.
+**v0.4.** The language (the box/text model in [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md)) is stable, and the pipeline is complete and tested: wires route and render, layout and theming work, and the formatter and dev server ship in the same binary.
 
 **Non-goals**, by design: automatic node *placement* (you position, Lini routes), multi-file imports, animation, and manual wire waypoints.
 
 ## Development
 
 ```bash
-cargo test                               # 352 tests
+cargo test                               # 355 tests
 cargo run -- samples/hello.lini
 cargo run -- serve samples/full_example.lini
 ```
