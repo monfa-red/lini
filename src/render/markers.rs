@@ -70,22 +70,29 @@ pub fn marker_size(thickness: f64) -> f64 {
     5.0_f64.max(thickness * 4.0)
 }
 
+/// Dot radius as a fraction of the marker `size` — a touch fuller so the circle
+/// reads level with the arrow and diamond rather than undersized.
+const DOT_RADIUS: f64 = 0.375;
+
+/// How far a mitred crow's-foot point overshoots its vertex, in `stroke-width`s
+/// — its 0.5 splay makes a ~53° point, so the vertex pulls back by this and the
+/// drawn tip lands on the endpoint, level with the other tips. `1 / (2·sin(atan 0.5))`.
+const CROW_MITER: f64 = 1.118034;
+
 /// How far a wire's marker tip is pushed past the endpoint into the shape, so the
 /// head overlaps the border by a hair and reads as connected — constant at every
 /// `stroke-width` (the line-end shortening absorbs the same shift). `|line|`
 /// markers don't use it: a bare line has no shape to meet.
 pub const MARKER_OVERLAP: f64 = 0.5;
 
-/// How far back from the endpoint the drawn line stops for an end marker so the
-/// marker body covers the line's end with neither a gap nor an overshoot, scaled
-/// off `stroke-width` so a thicker line pulls back proportionally. A dot sits
-/// tangent to the endpoint, so the line stops at its back edge (`2·radius`); a
-/// pointed marker (arrow / crow / diamond) covers a `2 × stroke-width` stub,
-/// always shorter than its `size` body so the line's end stays hidden under it.
+/// How far back from the endpoint the drawn line stops for an end marker, scaled
+/// off `stroke-width` so a thicker line pulls back proportionally. The same `2 ×
+/// stroke-width` stub for every marker — always shorter than the head's body, so
+/// the line's end tucks under it with no gap (a dot stopped at its own back edge
+/// instead left a hairline gap where the circle curved away).
 pub fn line_inset(kind: MarkerKind, thickness: f64) -> f64 {
     match kind {
         MarkerKind::None => 0.0,
-        MarkerKind::Dot => marker_size(thickness) * 2.0 / 3.0,
         _ => thickness * 2.0,
     }
 }
@@ -128,14 +135,17 @@ fn pulled_back(inner: (f64, f64), endpoint: (f64, f64), amount: f64) -> Option<(
     if len <= amount + 0.5 {
         return None;
     }
-    Some((endpoint.0 - dx / len * amount, endpoint.1 - dy / len * amount))
+    Some((
+        endpoint.0 - dx / len * amount,
+        endpoint.1 - dy / len * amount,
+    ))
 }
 
 /// A dot marker's centre: pulled back from the tip (on the shape edge) by its
 /// radius along the wire, so the circle sits fully on the wire side — tangent to
 /// the edge, never poking into the shape.
 pub fn dot_center(tip: (f64, f64), direction: (f64, f64), size: f64) -> (f64, f64) {
-    let r = size / 3.0;
+    let r = size * DOT_RADIUS;
     (tip.0 - direction.0 * r, tip.1 - direction.1 * r)
 }
 
@@ -144,8 +154,9 @@ pub fn dot_center(tip: (f64, f64), direction: (f64, f64), size: f64) -> (f64, f6
 /// `.lini-style-* .lini-marker` descendant rule when the wire/line carries a
 /// recolouring class. They inline `fill` (via `style=`, to beat those rules)
 /// only for a *direct* inline `stroke:`, which no class rule can target
-/// (`inline`). The crow is stroked, not filled, so it always states its
-/// resolved `color` inline, beating the rule's `stroke: none`.
+/// (`inline`). The crow is stroked, not filled: it paints entirely via the
+/// `.lini-marker-crow` rule (`stroke: inherit` off the enclosing `<g>`), so it
+/// needs no inline paint.
 pub fn emit_marker(
     out: &mut String,
     indent: &str,
@@ -195,7 +206,7 @@ pub fn emit_marker(
                 indent,
                 num(cx),
                 num(cy),
-                num(size / 3.0),
+                num(size * DOT_RADIUS),
                 fill,
             )
             .unwrap();
@@ -205,10 +216,10 @@ pub fn emit_marker(
             let by = tip.1 - uy * size;
             let mx = (tip.0 + bx) / 2.0;
             let my = (tip.1 + by) / 2.0;
-            let lx = mx + px * size * 0.4;
-            let ly = my + py * size * 0.4;
-            let rx = mx - px * size * 0.4;
-            let ry = my - py * size * 0.4;
+            let lx = mx + px * size * 0.425;
+            let ly = my + py * size * 0.425;
+            let rx = mx - px * size * 0.425;
+            let ry = my - py * size * 0.425;
             writeln!(
                 out,
                 r#"{}<polygon class="lini-marker lini-marker-diamond" points="{},{} {},{} {},{} {},{}"{}/>"#,
@@ -221,23 +232,25 @@ pub fn emit_marker(
             ).unwrap();
         }
         MarkerKind::Crow => {
-            let bx = tip.0 - ux * size;
-            let by = tip.1 - uy * size;
+            // The feet share the arrow head's base (tip − size, ±size/2), so the
+            // crow reads at the arrow's size; the vertex pulls in by the miter
+            // overshoot `e` so its drawn point sits on the tip, level with the
+            // other markers, without lengthening the head.
+            let e = thickness * CROW_MITER;
+            let (vx, vy) = (tip.0 - ux * e, tip.1 - uy * e);
+            let (bx, by) = (tip.0 - ux * size, tip.1 - uy * size);
             let lx = bx + px * size * 0.5;
             let ly = by + py * size * 0.5;
             let rx = bx - px * size * 0.5;
             let ry = by - py * size * 0.5;
-            // The two outer prongs are one path through the tip, so a miter join
-            // gives a real point (three butt-capped segments used to blunt it);
-            // round caps tidy the three splayed feet. The centre prong's tip end
-            // tucks inside the join.
+            // Outer prongs are one path through the vertex (a real mitred point);
+            // the centre prong tucks inside it. Paint rides `.lini-marker-crow`.
             writeln!(
                 out,
-                r#"{}<path class="lini-marker lini-marker-crow" d="M {} {} L {} {} L {} {} M {} {} L {} {}" style="fill: none; stroke: {}; stroke-width: {}; stroke-linecap: round; stroke-dasharray: none"/>"#,
+                r#"{}<path class="lini-marker lini-marker-crow" d="M {} {} L {} {} L {} {} M {} {} L {} {}"/>"#,
                 indent,
-                num(lx), num(ly), num(tip.0), num(tip.1), num(rx), num(ry),
-                num(bx), num(by), num(tip.0), num(tip.1),
-                color, num(thickness),
+                num(lx), num(ly), num(vx), num(vy), num(rx), num(ry),
+                num(bx), num(by), num(vx), num(vy),
             ).unwrap();
         }
         MarkerKind::None => {}
@@ -254,7 +267,7 @@ mod tests {
         // centre is pulled back by its radius, so its leading edge lands exactly on
         // the tip (no overshoot) and the whole circle is on the wire side.
         let size = marker_size(1.0);
-        let r = size / 3.0;
+        let r = size * DOT_RADIUS;
         let (cx, cy) = dot_center((100.0, 50.0), (1.0, 0.0), size);
         assert!((cx - (100.0 - r)).abs() < 1e-9, "centre pulled back by r");
         assert!((cy - 50.0).abs() < 1e-9);
@@ -265,10 +278,10 @@ mod tests {
     }
 
     #[test]
-    fn line_stops_at_the_dot_back_edge_but_a_stub_for_pointed_markers() {
-        let size = marker_size(1.0);
-        // The dot spans [tip-2r, tip]; the line must stop at its back edge = 2r.
-        assert!((line_inset(MarkerKind::Dot, 1.0) - 2.0 * size / 3.0).abs() < 1e-9);
+    fn line_stops_a_uniform_stub_short_of_every_marker() {
+        // Every head pulls the line back the same `2 × stroke-width` so its end
+        // tucks under the head — the dot included, so no hairline gap forms.
+        assert_eq!(line_inset(MarkerKind::Dot, 1.0), 2.0);
         assert_eq!(line_inset(MarkerKind::Arrow, 1.0), 2.0);
         assert_eq!(line_inset(MarkerKind::None, 1.0), 0.0);
     }

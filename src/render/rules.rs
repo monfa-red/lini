@@ -6,8 +6,9 @@
 //! Constants that used to inline on every element ride a class instead: wire
 //! labels (`.lini-wire-label`, mirroring `.lini-text`) and markers
 //! (`.lini-marker` — `fill` the wire stroke, `stroke: none`). A marker whose
-//! wire is recoloured states its own `fill`; the stroked crow re-asserts its
-//! paint via `style=` so the rule's `stroke: none` doesn't erase it.
+//! wire is recoloured states its own `fill`; the stroked crow flips to
+//! `fill: none; stroke: inherit` via `.lini-marker-crow`, pulling the line's
+//! paint off the enclosing `<g>`.
 
 use super::values::format_value;
 use crate::Options;
@@ -130,8 +131,15 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
     let mut present: BTreeSet<&str> = BTreeSet::new();
     let mut used_styles: BTreeSet<&str> = BTreeSet::new();
     let mut has_markers = false;
+    let mut has_crow = false;
     for node in &laid.nodes {
-        collect(node, &mut present, &mut used_styles, &mut has_markers);
+        collect(
+            node,
+            &mut present,
+            &mut used_styles,
+            &mut has_markers,
+            &mut has_crow,
+        );
     }
     // Wires carry styles too (same class surface as nodes), so a style used
     // only by a wire still emits its rule.
@@ -141,6 +149,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
         }
         has_markers |=
             wire.markers.start != MarkerKind::None || wire.markers.end != MarkerKind::None;
+        has_crow |= wire.markers.start == MarkerKind::Crow || wire.markers.end == MarkerKind::Crow;
     }
     let has_labels = laid.wires.iter().any(|w| !w.texts.is_empty());
 
@@ -351,7 +360,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
     }
 
     // Markers: fill follows the wire stroke (the common default stated once),
-    // `stroke: none` for the filled heads. The crow re-asserts paint inline.
+    // `stroke: none` for the filled heads. The crow flips this below.
     if has_markers {
         rules.push(Rule {
             class: "lini-marker".into(),
@@ -382,6 +391,23 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
                 props: vec![("fill".into(), format_value(v, vars, opts))],
             });
         }
+    }
+
+    // The crow's-foot is stroked, not filled — the opposite of the other heads.
+    // A compound selector (specificity ties the `.lini-style-* .lini-marker` fill
+    // descendants and wins by coming last) flips the base `.lini-marker` paint;
+    // `stroke: inherit` pulls the line's colour and width off the enclosing `<g>`,
+    // so the crow's paint never needs inlining.
+    if has_crow {
+        rules.push(Rule {
+            class: "lini-marker.lini-marker-crow".into(),
+            props: vec![
+                ("fill".into(), "none".into()),
+                ("stroke".into(), "inherit".into()),
+                ("stroke-linecap".into(), "round".into()),
+                ("stroke-dasharray".into(), "none".into()),
+            ],
+        });
     }
 
     rules.retain(|r| !r.props.is_empty());
@@ -447,6 +473,7 @@ fn collect<'a>(
     present: &mut BTreeSet<&'a str>,
     used_styles: &mut BTreeSet<&'a str>,
     has_markers: &mut bool,
+    has_crow: &mut bool,
 ) {
     present.insert(node.shape.as_str());
     for name in &node.type_chain {
@@ -456,8 +483,9 @@ fn collect<'a>(
         used_styles.insert(name.as_str());
     }
     *has_markers |= node.markers.start != MarkerKind::None || node.markers.end != MarkerKind::None;
+    *has_crow |= node.markers.start == MarkerKind::Crow || node.markers.end == MarkerKind::Crow;
     for child in &node.children {
-        collect(child, present, used_styles, has_markers);
+        collect(child, present, used_styles, has_markers, has_crow);
     }
 }
 

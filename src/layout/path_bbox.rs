@@ -256,11 +256,17 @@ struct Scanner<'a> {
 
 impl<'a> Scanner<'a> {
     fn new(s: &'a str) -> Self {
-        Self { b: s.as_bytes(), i: 0 }
+        Self {
+            b: s.as_bytes(),
+            i: 0,
+        }
     }
 
     fn skip(&mut self) {
-        while matches!(self.b.get(self.i), Some(b' ' | b'\t' | b'\n' | b'\r' | b',')) {
+        while matches!(
+            self.b.get(self.i),
+            Some(b' ' | b'\t' | b'\n' | b'\r' | b',')
+        ) {
             self.i += 1;
         }
     }
@@ -315,7 +321,10 @@ impl<'a> Scanner<'a> {
             self.i = start;
             return None;
         }
-        std::str::from_utf8(&self.b[start..self.i]).ok()?.parse().ok()
+        std::str::from_utf8(&self.b[start..self.i])
+            .ok()?
+            .parse()
+            .ok()
     }
 
     fn coord(&mut self, rel: bool, cx: f64, cy: f64) -> Option<P> {

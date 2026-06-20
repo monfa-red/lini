@@ -1,7 +1,9 @@
 //! Wire emission — the wire path, optional markers, optional labels — and
 //! airwires, the impossible-wire report made visible.
 
-use super::markers::{MARKER_OVERLAP, MarkerPaint, emit_marker, marker_anchor, shorten_for_markers};
+use super::markers::{
+    MARKER_OVERLAP, MarkerPaint, emit_marker, marker_anchor, shorten_for_markers,
+};
 use super::rounding::{Seg, round};
 use super::rules::{PAINT_PROPS, RuleSet, effective_stroke};
 use super::values::{attr_or_var, dasharray_value, escape_xml, format_value, num};

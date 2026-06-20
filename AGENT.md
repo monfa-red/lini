@@ -25,6 +25,7 @@ How to work in this repo.
 ## Git
 - Descriptive messages (what changed and why); one purposeful change per commit.
 - **Never include "Co-Authored-By" lines.**
+- **Before every push run `cargo fmt`** — CI runs `cargo fmt --all -- --check` and fails on any diff (also run `cargo test` and `cargo clippy`).
 - Defer pushing to `main` to the user.
 
 ## Re-orient (fresh session)
