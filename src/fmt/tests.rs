@@ -97,11 +97,17 @@ fn node_class_follows_the_bars() {
 }
 
 #[test]
-fn sibling_class_columns_align() {
-    // The id, |type|, and .class columns each align; the label starts level.
+fn a_class_or_block_opts_a_group_out_of_alignment() {
+    // Alignment is for plain shape+label rows; a .class or { } block makes the
+    // whole group ragged (single-spaced), like a non-text cell drops a table grid.
     assert_eq!(
-        fmt("a|box| .x \"A\"\nbb|oval| .yy \"B\"\n"),
-        "a  |box|  .x  \"A\"\nbb |oval| .yy \"B\"\n"
+        fmt("g|group|[\na|box| \"A\"\nbbb|box| .loud \"B\"\n]\n"),
+        "g |group| [\n  a |box| \"A\"\n  bbb |box| .loud \"B\"\n]\n"
+    );
+    // A block sibling likewise: the bare-label node is not padded to its width.
+    assert_eq!(
+        fmt("g|group|[\n|oval| { width: 70 } \"o\"\n|cap| \"label\"\n]\n"),
+        "g |group| [\n  |oval| { width: 70; } \"o\"\n  |cap| \"label\"\n]\n"
     );
 }
 

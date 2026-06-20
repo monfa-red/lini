@@ -2,8 +2,8 @@
 //! normalized form: the three phases in order (the stylesheet `{ }`, then the
 //! instances, then the wires), `{ }` style blocks and `[ ]` child lists, bar-wrapped
 //! type selectors and `|name::base|` defines, 2-space indent, space-separated value
-//! groups. Comments and blank-line groupings are preserved; sibling nodes align
-//! their id, type, and class columns. Idempotent: `fmt(fmt(x)) == fmt(x)`.
+//! groups. Comments and blank-line groupings are preserved; a group of plain
+//! sibling nodes aligns its id and type columns. Idempotent: `fmt(fmt(x)) == fmt(x)`.
 
 use crate::ast::{Side, WireOp};
 use crate::error::Error;
@@ -240,33 +240,36 @@ impl Emitter<'_> {
 
     fn emit_node(&mut self, node: &Node, depth: usize, w: align::NodeWidths) {
         self.indent(depth);
-        // Head columns, left to right: id, `|type|` bars, `.class` chain. Each
-        // pads to its group column only when a later column or content follows,
-        // so an empty trailing column never leaves whitespace (SPEC §14).
+        // The id and `|type|` columns align within an all-plain group; `w` is
+        // zero otherwise, so the line stays ragged. A `.class` chain and a `{ }`
+        // block never align — they trail with a single space (SPEC §14).
         let bars = type_bars(&node.ty);
         let classes = class_str(&node.classes);
-        let has_content =
-            !node.style.is_empty() || !node.children.is_empty() || !node.wires.is_empty();
+        let has_block = !node.style.is_empty();
+        let has_body = !node.children.is_empty() || !node.wires.is_empty();
         let id = node.id.as_deref().unwrap_or("");
 
-        let after_id = !bars.is_empty() || !classes.is_empty() || has_content;
-        let after_ty = !classes.is_empty() || has_content;
+        let after_id = !bars.is_empty() || !classes.is_empty() || has_block || has_body;
+        let after_ty = !classes.is_empty() || has_block || has_body;
         let mut wrote = self.emit_col(id, w.id, after_id, false);
         wrote = self.emit_col(&bars, w.ty, after_ty, wrote);
-        self.emit_col(&classes, w.cls, has_content, wrote);
+        if !classes.is_empty() {
+            self.space_if(wrote);
+            self.out.push_str(&classes);
+        }
 
-        if !node.style.is_empty() {
+        if has_block {
             let end = node.style_span.map_or(node.span.end, |s| s.end);
             self.emit_style_block(&node.style, end, depth, false);
         }
         self.emit_content(node, depth);
     }
 
-    /// Emit one head column: a separating space when the line already carries a
-    /// segment, the segment text, then alignment padding to `width` when a later
-    /// column or content `follows` (else ragged, to avoid trailing space). An
-    /// empty segment with nothing reserved emits nothing. Returns whether the
-    /// line now carries any head segment.
+    /// Emit one head column (id or `|type|`): a separating space when the line
+    /// already carries a segment, the segment text, then alignment padding to
+    /// `width` when a later column or content `follows` (else ragged, to avoid
+    /// trailing space). An empty segment with nothing reserved emits nothing.
+    /// Returns whether the line now carries any head segment.
     fn emit_col(&mut self, seg: &str, width: usize, follows: bool, preceded: bool) -> bool {
         if seg.is_empty() && (width == 0 || !follows) {
             return preceded;

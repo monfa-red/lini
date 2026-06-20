@@ -15,29 +15,29 @@
 users |oval| { width: 150; height: 60; fill: #ffeaa7; } "Users"
 
 edge |group| { layout: row; gap: 26; } [
-      |caption| "Edge"
-  lb  |box|     { fill: #dbe4ff; } [
+  |caption| "Edge"
+  lb |box| { fill: #dbe4ff; } [
     "Load balancer"
     |badge| "v2"
   ]
-  cdn |box|     { fill: #dbe4ff; } "CDN"
+  cdn |box| { fill: #dbe4ff; } "CDN"
 ]
 
 svc |group| { layout: row; gap: 26; } [
-         |caption| "Services"
-  api    |box|     { fill: #d3f9d8; } "API"
-  auth   |box|     { fill: #d3f9d8; } "Auth"
-  worker |box|     { fill: #ffe8cc; } [
+  |caption| "Services"
+  api |box| { fill: #d3f9d8; } "API"
+  auth |box| { fill: #d3f9d8; } "Auth"
+  worker |box| { fill: #ffe8cc; } [
     "Worker"
     |badge| "NEW"
   ]
 ]
 
 data |group| { layout: row; gap: 26; } [
-        |caption| "Data"
-  pg    |cyl|     { fill: #ffdeeb; } "Postgres"
-  redis |cyl|     { fill: #ffdeeb; } "Redis"
-  queue |box|     { fill: #fff3bf; } "Queue"
+  |caption| "Data"
+  pg |cyl| { fill: #ffdeeb; } "Postgres"
+  redis |cyl| { fill: #ffdeeb; } "Redis"
+  queue |box| { fill: #fff3bf; } "Queue"
 ]
 
 users -> edge.lb .flow "https"

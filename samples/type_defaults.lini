@@ -8,6 +8,6 @@
   |alert::oval| { stroke: red; width: 36; height: 36; }
 }
 
-cat   |box|   "Cat"
-dog   |box|   { radius: 0; } "Dog"
+cat |box| "Cat"
+dog |box| { radius: 0; } "Dog"
 mouse |alert| "Mouse"

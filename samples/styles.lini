@@ -8,8 +8,8 @@
   .ghost { opacity: 0.3; }
 }
 
-a |box| .thin  "thin"
-b |box| .bold  "bold"
+a |box| .thin "thin"
+b |box| .bold "bold"
 c |box| .power "power"
-d |box| .warn  "warn"
+d |box| .warn "warn"
 e |box| .ghost "ghost"

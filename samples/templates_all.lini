@@ -17,11 +17,11 @@ frame |group| { layout: row; gap: 16; } [
 ]
 
 band |row| { gap: 24; } [
-  svc |box|  { width: 140; height: 64; } [
+  svc |box| { width: 140; height: 64; } [
     "Service"
     |badge| "NEW"
   ]
-      |note| "Sticky note"
+  |note| "Sticky note"
 ]
 
 basket |table| { columns: 80 80 80; } [
