@@ -148,7 +148,7 @@ The default font is a monospace stack (`ui-monospace, "SF Mono", …, monospace`
 ```
 lini [options] <input.lini>
 lini fmt     [--check] [--stdout] <input.lini>
-lini serve   [--port N] [--bake-vars] <input.lini>
+lini serve   [--port N] [--bake-vars] [PATH]
 lini desugar <input.lini>
 ```
 
@@ -162,7 +162,7 @@ lini desugar <input.lini>
 | `--watch` | Recompile on every change (with `-o`). |
 | `--no-warn` / `--strict` | Silence lint warnings, or promote them to errors. |
 
-Errors are LSP-formatted (`file:line:col: error: …`) and suggest fixes: an unknown endpoint asks *did you mean `kitchen.counter.bowl`?*. `lini serve` runs a live preview (default port 7700); `lini desugar` prints a file with its sugar expanded, for teaching and debugging.
+Errors are LSP-formatted (`file:line:col: error: …`) and suggest fixes: an unknown endpoint asks *did you mean `kitchen.counter.bowl`?*. `lini serve` runs a live preview (default port 7700) — point it at a file to live-reload it, or at a directory for a browser **playground** to pick, edit, and render its diagrams; `lini desugar` prints a file with its sugar expanded, for teaching and debugging.
 
 ---
 

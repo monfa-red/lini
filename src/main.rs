@@ -247,10 +247,13 @@ fn run_serve(args: &[String]) -> ExitCode {
             }
             "--bake-vars" => bake_vars = true,
             "-h" | "--help" => {
-                println!("lini serve <input.lini> [--port N] [--bake-vars]");
+                println!("lini serve [PATH] [--port N] [--bake-vars]");
                 println!();
-                println!("  Serves a live-reloading preview at http://127.0.0.1:<port>/.");
-                println!("  The page auto-refreshes whenever the input file is saved.");
+                println!("  Serves a live preview at http://127.0.0.1:<port>/.");
+                println!();
+                println!("  PATH a .lini file   Preview that one file; reloads on every save.");
+                println!("  PATH a directory    Open the playground over its .lini files.");
+                println!("  PATH omitted        Playground over the current directory.");
                 println!();
                 println!("  --port N    Port to bind (default 7700).");
                 println!(
@@ -272,25 +275,31 @@ fn run_serve(args: &[String]) -> ExitCode {
         }
         i += 1;
     }
-    let input = match input {
-        Some(p) => PathBuf::from(p),
+    let target = match input {
+        Some(p) => {
+            let path = PathBuf::from(&p);
+            if !path.exists() {
+                eprintln!("error: {}: no such file or directory", path.display());
+                return ExitCode::from(2);
+            }
+            if path.is_dir() {
+                lini::ServeTarget::Dir(path)
+            } else {
+                lini::ServeTarget::File(path)
+            }
+        }
         None => {
-            eprintln!("error: `lini serve` requires an input file");
-            return ExitCode::from(3);
+            lini::ServeTarget::Dir(std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")))
         }
     };
-    if !input.exists() {
-        eprintln!("error: {}: file not found", input.display());
-        return ExitCode::from(2);
-    }
     let opts = lini::Options {
         bake_vars,
         ..Default::default()
     };
-    match lini::serve(input, port, opts) {
+    match lini::serve(target, port, opts) {
         Ok(()) => ExitCode::SUCCESS,
         Err(e) => {
-            eprintln!("error: {}", e);
+            eprintln!("error: {e}");
             ExitCode::from(2)
         }
     }

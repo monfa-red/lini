@@ -26,7 +26,7 @@ pub fn desugar_source(src: &str) -> Result<String, Error> {
     Ok(fmt::print_file(&desugar::desugar(&file)))
 }
 pub use layout::{Rule, Severity, Violation};
-pub use serve::serve;
+pub use serve::{ServeTarget, serve};
 pub use theme::extract_lini_vars;
 
 /// Top-level compile options threaded through every phase. Build with

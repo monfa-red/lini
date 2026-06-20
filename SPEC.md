@@ -1070,7 +1070,7 @@ time, so runtime restyling (a fatter `stroke-width`) restyles without re-layout.
 lini [options] <input.lini>
 lini fmt [--check] [--stdout] <input.lini>
 lini desugar <input.lini>
-lini serve [--port N] [--bake-vars] <input.lini>
+lini serve [--port N] [--bake-vars] [PATH]
 ```
 
 | Flag | Meaning |
@@ -1085,7 +1085,9 @@ lini serve [--port N] [--bake-vars] <input.lini>
 | `-h`, `-V` | Help / version. |
 
 `lini -` reads stdin (filename `<stdin>` in errors). **`lini serve`** runs a local
-live-reloading preview (default port 7700).
+live preview (default port 7700): a `.lini` file live-reloads that one file; a
+directory (or no path → the current directory) opens the **playground** — pick,
+edit, and render any `.lini` file beneath it in the browser.
 
 **`lini fmt`** reformats to canonical style — 2-space indent, `key: value;`
 declarations grouped on one line, a style-only node collapsed onto its head line
