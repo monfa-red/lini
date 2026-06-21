@@ -1,0 +1,28 @@
+---
+source: tests/conformance.rs
+expression: svg
+input_file: samples/text_transform.lini
+---
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-158 -119.5 316 239" width="316" height="239" class="lini">
+  <style>
+    .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: bold; color: black; text-transform: capitalize; }
+    .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
+  </style>
+  <defs/>
+  <g class="lini-scene">
+    <g class="lini-node lini-box" transform="translate(0,-71)">
+      <rect x="-137" y="-27.5" width="274" height="55" rx="6" ry="6"/>
+      <text class="lini-text" x="0" y="0">each word here capitalized</text>
+    </g>
+    <g class="lini-node lini-box" style="text-transform: uppercase" transform="translate(0,0)">
+      <rect x="-65" y="-27.5" width="130" height="55" rx="6" ry="6"/>
+      <text class="lini-text" x="0" y="0">shout this</text>
+    </g>
+    <g class="lini-node lini-box" style="text-transform: lowercase" transform="translate(0,71)">
+      <rect x="-60.5" y="-27.5" width="121" height="55" rx="6" ry="6"/>
+      <text class="lini-text" x="0" y="0">QUIET NOW</text>
+    </g>
+  </g>
+  <g class="lini-wires"/>
+</svg>

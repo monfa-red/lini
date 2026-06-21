@@ -192,10 +192,19 @@ fn build_sheet_inputs(
         }
     }
     let root_font_size = root_attrs.number("font-size").unwrap_or(15.0);
+    // Live-CSS text styling the global block sets — rides the `.lini` rule so it
+    // applies scene-wide (SPEC §10). No default: present only when authored.
+    let mut root_text = AttrMap::new();
+    for name in ["font-style", "text-transform"] {
+        if let Some(v) = root_attrs.get(name) {
+            root_text.insert(name, v.clone());
+        }
+    }
     Ok(SheetInputs {
         class_rules,
         wire_defaults,
         root_font_size,
+        root_text,
     })
 }
 

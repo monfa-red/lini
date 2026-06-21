@@ -30,6 +30,7 @@ pub const PAINT_PROPS: &[(&str, &str)] = &[
     ("font-size", "font-size"),
     ("font-weight", "font-weight"),
     ("font-style", "font-style"),
+    ("text-transform", "text-transform"),
 ];
 
 pub struct Rule {
@@ -158,17 +159,26 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
     // Root rule: the inherited text properties, stated once. `font-size` is the
     // baked global-block baseline (a layout constant, always a literal).
     let font_size = laid.sheet.root_font_size;
+    let mut root_props = vec![
+        ("font-family".into(), live("font-family")),
+        (
+            "font-size".into(),
+            format!("{}px", super::values::num(font_size)),
+        ),
+        ("font-weight".into(), live("font-weight")),
+        ("color".into(), live("text-color")),
+    ];
+    // Live-CSS text styling with no var/default (`font-style`, `text-transform`):
+    // emitted here only when the global block set it, so it applies scene-wide
+    // exactly like a global `font-size:` (SPEC §10).
+    for prop in ["font-style", "text-transform"] {
+        if let Some(v) = laid.sheet.root_text.get(prop) {
+            root_props.push((prop.to_string(), format_value(v, vars, opts)));
+        }
+    }
     rules.push(Rule {
         class: "lini".into(),
-        props: vec![
-            ("font-family".into(), live("font-family")),
-            (
-                "font-size".into(),
-                format!("{}px", super::values::num(font_size)),
-            ),
-            ("font-weight".into(), live("font-weight")),
-            ("color".into(), live("text-color")),
-        ],
+        props: root_props,
     });
 
     // Per-shape paint, sourced from the generated `.lini-*` class defs — desugar

@@ -153,6 +153,34 @@ fn font_style_emits_as_live_css_with_no_default() {
     );
 }
 
+fn lini_root_rule(svg: &str) -> String {
+    svg.lines()
+        .find(|l| l.trim_start().starts_with(".lini {"))
+        .expect(".lini root rule")
+        .to_string()
+}
+
+#[test]
+fn global_font_style_states_on_the_lini_rule() {
+    // SPEC §10: a global font-style applies scene-wide via the `.lini` rule,
+    // exactly like a global font-size.
+    let rule = lini_root_rule(&render_baked("{ font-style: italic }\n|box| \"hi\"\n"));
+    assert!(rule.contains("font-style: italic"), "{}", rule);
+}
+
+#[test]
+fn text_transform_is_live_css_on_an_element_and_globally() {
+    // On an element it rides the `<g>`; in the global block it states on `.lini`.
+    let el = render_baked("|box| { text-transform: uppercase } \"hi\"\n");
+    assert!(el.contains("text-transform: uppercase"), "{}", el);
+    let rule = lini_root_rule(&render_baked(
+        "{ text-transform: capitalize }\n|box| \"hi\"\n",
+    ));
+    assert!(rule.contains("text-transform: capitalize"), "{}", rule);
+    // No default — absent until set.
+    assert!(!render_baked("|box| \"x\"\n").contains("text-transform"));
+}
+
 #[test]
 fn line_missing_points_error_uses_pipe_sigil() {
     let err = lini::compile_str("x |line|\n").expect_err("line needs points");
