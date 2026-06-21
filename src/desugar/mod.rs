@@ -106,10 +106,15 @@ pub fn desugar(file: &File) -> Result<File, Error> {
     for d in user_vars {
         stylesheet.push(StyleItem::Var(d));
     }
-    stylesheet.push(StyleItem::Rule(wire_rule(merge_decls(
-        wire_defaults(),
-        &wire_user,
-    ))));
+    // The `-> { }` wire defaults are the wire layer's config; emit them only when
+    // the scene actually has a wire, so a wireless diagram carries no wire block.
+    let has_wire = !file.wires.is_empty() || instances.iter().any(child_has_wire);
+    if has_wire {
+        stylesheet.push(StyleItem::Rule(wire_rule(merge_decls(
+            wire_defaults(),
+            &wire_user,
+        ))));
+    }
     for r in class_defs(&present, &element_rules, &extra_order) {
         stylesheet.push(StyleItem::Rule(r));
     }
@@ -253,6 +258,16 @@ fn mark_present(child: &Child, present: &mut BTreeSet<String>) {
         for ch in &n.children {
             mark_present(ch, present);
         }
+    }
+}
+
+/// Whether this child (or any descendant) carries an internal wire — define-body
+/// wires are already materialized onto the node by lowering, so this sees every
+/// drawn wire below the root.
+fn child_has_wire(child: &Child) -> bool {
+    match child {
+        Child::Box(n) => !n.wires.is_empty() || n.children.iter().any(child_has_wire),
+        Child::Text(_) => false,
     }
 }
 

@@ -71,6 +71,23 @@ fn scene_and_wire_defaults_land_in_the_global_block() {
 }
 
 #[test]
+fn the_wire_block_appears_only_when_a_wire_exists() {
+    // A wireless diagram carries no `-> { }` block — nothing would consume it.
+    let wireless = desugar_source("\"hello\"\n").unwrap();
+    assert!(
+        !wireless.contains("->"),
+        "no wire → no wire block: {wireless}"
+    );
+    assert!(
+        !wireless.contains("clearance"),
+        "no wire defaults: {wireless}"
+    );
+    // The moment a wire appears, the defaults return.
+    let wired = desugar_source("a -> b\n").unwrap();
+    assert!(wired.contains("clearance: 16;"), "wired keeps it: {wired}");
+}
+
+#[test]
 fn an_icon_keeps_its_glyph_on_the_line() {
     let out = desugar_source("home |icon|\n").unwrap();
     assert!(out.contains("home |icon| .lini-icon"), "{out}");

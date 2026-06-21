@@ -1262,7 +1262,8 @@ class chain (derived→base→primitive); a type's defaults and any `|type| { }`
 rule fold into a generated `.lini-<type> { … }` class; a `|table box| { }`
 descendant rule rewrites to `|.lini-table .lini-box| { }`; define bodies inline per
 instance; the scene defaults (`layout`, `padding`, `gap`, `font-size`, `canvas-pad`)
-and the `-> { }` wire defaults fill the global block; id-as-label, trailing labels,
+and the `-> { }` wire defaults — present only when the scene has a wire — fill the
+global block; id-as-label, trailing labels,
 auto-`along:`, and root-wire auto-create become explicit. The pass is idempotent;
 type-system errors (cycle, depth > 16, a define shadowing a built-in) surface here.
 
