@@ -73,11 +73,7 @@ pub fn render(laid_out: &LaidOut, opts: &Options) -> String {
     } else {
         out.push_str("  <g class=\"lini-wires\">\n");
         let polys: Vec<&[(f64, f64)]> = laid_out.wires.iter().map(|w| &w.path[..]).collect();
-        let caps: Vec<f64> = laid_out
-            .wires
-            .iter()
-            .map(|w| wires::radius_cap(w, &laid_out.vars))
-            .collect();
+        let caps: Vec<f64> = laid_out.wires.iter().map(wires::radius_cap).collect();
         let targets = wires::fillet_targets(&polys, &caps);
         // The wire-label default font size (the `.lini-wire-label` rule's value) —
         // a label inlines its own size only when it differs from this.

@@ -26,13 +26,10 @@ fn is_wavy(attrs: &AttrMap) -> bool {
 const LABEL_CUT_PAD_H: f64 = 0.3;
 const LABEL_CUT_PAD_V: f64 = 0.15;
 
-/// The wire's corner-radius cap (WIRING §Model step 7) — the same
-/// attr → layout-var → 16 fallback the router uses for clearance.
-pub fn radius_cap(w: &RoutedWire, vars: &VarTable) -> f64 {
-    w.attrs
-        .number("clearance")
-        .or_else(|| vars.get("clearance").and_then(|v| v.as_number()))
-        .unwrap_or(0.0)
+/// The wire's corner-radius cap (WIRING §Model step 7): the wire's resolved
+/// `clearance` (carrying the `-> { }` default desugar injects), else 0.
+pub fn radius_cap(w: &RoutedWire) -> f64 {
+    w.attrs.number("clearance").unwrap_or(0.0)
 }
 
 #[allow(clippy::too_many_arguments)]

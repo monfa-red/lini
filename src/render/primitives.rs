@@ -347,12 +347,11 @@ fn emit_icon(out: &mut String, n: &PlacedNode, indent: &str, vars: &VarTable, op
     // Material Symbols embedding lands in a follow-up; until then a
     // placeholder square keeps layout visible and the icon's name
     // discoverable through the SVG. The glyph name is the node's label
-    // (`|icon| "home"`, SPEC §7); size comes from `width`/`height`/`icon-size`.
+    // (`|icon| "home"`, SPEC §7); size comes from `width`/`height`.
     let size = n
         .attrs
         .number("width")
         .or_else(|| n.attrs.number("height"))
-        .or_else(|| vars.get("icon-size").and_then(|v| v.as_number()))
         .unwrap_or(0.0);
     let name = n.label.as_deref().unwrap_or("?");
     let stroke = attr_or_var(&n.attrs, "stroke", "stroke", vars, opts);
