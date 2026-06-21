@@ -189,22 +189,27 @@ fn render_text(out: &mut String, n: &PlacedNode, depth: usize) {
     let label = n.label.as_deref().unwrap_or("");
     let (x, y) = (num(n.cx), num(n.cy));
     let lines: Vec<&str> = label.split('\n').collect();
+    // `letter-spacing` bakes into a per-glyph `dx` list — geometry, never CSS
+    // (SPEC §10); `text-anchor: middle` still centres the spaced run.
+    let ls = n.attrs.number("letter-spacing").unwrap_or(0.0);
     if lines.len() <= 1 {
         writeln!(
             out,
-            r#"{}<text class="lini-text" x="{}" y="{}">{}</text>"#,
+            r#"{}<text class="lini-text" x="{}" y="{}"{}>{}</text>"#,
             indent,
             x,
             y,
+            dx_attr(label, ls),
             escape_xml(label)
         )
         .unwrap();
         return;
     }
-    // Multi-line (SPEC §6): one tspan per line, spacing `font-size × 1.2`, the
-    // block centred on (cx, cy) so `dominant-baseline: central` still holds.
+    // Multi-line (SPEC §6): one tspan per line, leading `font-size × 1.2` plus
+    // `line-spacing`, the block centred on (cx, cy) so `dominant-baseline:
+    // central` still holds.
     let size = n.attrs.number("font-size").unwrap_or(0.0);
-    let spacing = size * 1.2;
+    let spacing = size * 1.2 + n.attrs.number("line-spacing").unwrap_or(0.0);
     let top = n.cy - spacing * (lines.len() as f64 - 1.0) / 2.0;
     write!(
         out,
@@ -216,24 +221,43 @@ fn render_text(out: &mut String, n: &PlacedNode, depth: usize) {
         if i == 0 {
             write!(
                 out,
-                r#"<tspan x="{}" y="{}">{}</tspan>"#,
+                r#"<tspan x="{}" y="{}"{}>{}</tspan>"#,
                 x,
                 num(top),
+                dx_attr(line, ls),
                 escape_xml(line)
             )
             .unwrap();
         } else {
             write!(
                 out,
-                r#"<tspan x="{}" dy="{}">{}</tspan>"#,
+                r#"<tspan x="{}" dy="{}"{}>{}</tspan>"#,
                 x,
                 num(spacing),
+                dx_attr(line, ls),
                 escape_xml(line)
             )
             .unwrap();
         }
     }
     writeln!(out, "</text>").unwrap();
+}
+
+/// The ` dx="0 s s …"` glyph-advance list that bakes `letter-spacing` into the
+/// positions: 0 before the first glyph, `s` before each later one. Empty when
+/// there is no spacing or fewer than two glyphs (nothing to space).
+fn dx_attr(line: &str, letter_spacing: f64) -> String {
+    let count = line.chars().count();
+    if letter_spacing == 0.0 || count < 2 {
+        return String::new();
+    }
+    let mut s = String::from(r#" dx="0"#);
+    for _ in 1..count {
+        s.push(' ');
+        s.push_str(&num(letter_spacing));
+    }
+    s.push('"');
+    s
 }
 
 /// The node's paint, as the difference against what the stylesheet already

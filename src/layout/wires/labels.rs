@@ -70,7 +70,12 @@ pub fn place(
 
         for t in &w.texts {
             let size = t.attrs.number("font-size").unwrap_or(0.0);
-            let (bw, bh) = (approx_width(&t.text, size), approx_height(&t.text, size));
+            let ls = t.attrs.number("letter-spacing").unwrap_or(0.0);
+            let lsp = t.attrs.number("line-spacing").unwrap_or(0.0);
+            let (bw, bh) = (
+                approx_width(&t.text, size, ls),
+                approx_height(&t.text, size, lsp),
+            );
             let (tx, ty) = translate_of(t.attrs.get("translate"));
             let s0 = match t.along {
                 Along::Auto => {

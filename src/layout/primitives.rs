@@ -37,9 +37,11 @@ pub fn leaf_bbox(inst: &ResolvedInst) -> Result<Bbox, Error> {
         ShapeKind::Text => {
             let size = font_size(inst);
             let label = inst.label.as_deref().unwrap_or("");
+            let ls = inst.attrs.number("letter-spacing").unwrap_or(0.0);
+            let lsp = inst.attrs.number("line-spacing").unwrap_or(0.0);
             Ok(Bbox::centered(
-                text::approx_width(label, size),
-                text::approx_height(label, size),
+                text::approx_width(label, size, ls),
+                text::approx_height(label, size, lsp),
             ))
         }
         ShapeKind::Icon => {

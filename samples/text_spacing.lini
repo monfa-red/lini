@@ -1,0 +1,15 @@
+// letter-spacing / line-spacing (SPEC §10): baked spacing that grows the text
+// box — px between characters and between `\n` lines. Not CSS; compiled into the
+// glyph `dx` list and the tspan leading. Default 0, so text is unaffected until set.
+
+{
+  layout: column; gap: 24;
+}
+
+|box| { letter-spacing: 8; } "SPACED"
+|box| { letter-spacing: -1; } "tightened"
+|box| { line-spacing: 16; } "first\nsecond\nthird"
+|group| { letter-spacing: 4; line-spacing: 10; } [
+  |caption| "inherited"
+  "both at\nonce"
+]

@@ -1,0 +1,39 @@
+---
+source: tests/conformance.rs
+expression: svg
+input_file: samples/text_spacing.lini
+---
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-88 -220.5 176 441" width="176" height="441" class="lini">
+  <style>
+    .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: bold; color: black; }
+    .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
+    .lini .lini-plain { fill: none; stroke: none; }
+    .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,4; }
+    .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
+  </style>
+  <defs/>
+  <g class="lini-scene">
+    <g class="lini-node lini-box" transform="translate(0,-172)">
+      <rect x="-67" y="-27.5" width="134" height="55" rx="6" ry="6"/>
+      <text class="lini-text" x="0" y="0" dx="0 8 8 8 8 8">SPACED</text>
+    </g>
+    <g class="lini-node lini-box" transform="translate(0,-91)">
+      <rect x="-56.5" y="-27.5" width="113" height="55" rx="6" ry="6"/>
+      <text class="lini-text" x="0" y="0" dx="0 -1 -1 -1 -1 -1 -1 -1 -1">tightened</text>
+    </g>
+    <g class="lini-node lini-box" transform="translate(0,25.5)">
+      <rect x="-47" y="-63" width="94" height="126" rx="6" ry="6"/>
+      <text class="lini-text" x="0" y="0"><tspan x="0" y="-34">first</tspan><tspan x="0" dy="34">second</tspan><tspan x="0" dy="34">third</tspan></text>
+    </g>
+    <g class="lini-node lini-group lini-box" transform="translate(0,157)">
+      <rect x="-63.5" y="-43" width="127" height="86" rx="6" ry="6"/>
+      <text class="lini-text" x="0" y="0"><tspan x="0" y="-14" dx="0 4 4 4 4 4 4">both at</tspan><tspan x="0" dy="28" dx="0 4 4 4">once</tspan></text>
+      <g class="lini-node lini-caption lini-plain lini-box" transform="translate(-14.1,-54)">
+        <rect x="-48.4" y="-6" width="96.8" height="12" rx="6" ry="6"/>
+        <text class="lini-text" x="0" y="0" dx="0 4 4 4 4 4 4 4 4">inherited</text>
+      </g>
+    </g>
+  </g>
+  <g class="lini-wires"/>
+</svg>

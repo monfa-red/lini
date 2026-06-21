@@ -111,6 +111,32 @@ fn single_line_label_stays_a_bare_text() {
 }
 
 #[test]
+fn letter_spacing_bakes_a_dx_list_never_css() {
+    // SPEC §10: letter-spacing compiles into a per-glyph `dx` list (geometry),
+    // never a CSS property. "abc" → two 5px gaps.
+    let svg = render_baked("|box| { letter-spacing: 5 } \"abc\"\n");
+    assert!(svg.contains(r#"dx="0 5 5""#), "{}", svg);
+    assert!(
+        !svg.contains("letter-spacing"),
+        "no CSS letter-spacing: {}",
+        svg
+    );
+}
+
+#[test]
+fn line_spacing_widens_the_tspan_leading_never_css() {
+    // SPEC §10: line-spacing adds to the leading between `\n` lines (font-size 15
+    // → 18, +10 = 28), via the tspan `dy` — never a CSS property.
+    let svg = render_baked("|box| { line-spacing: 10 } \"one\\ntwo\"\n");
+    assert!(svg.contains(r#"dy="28""#), "{}", svg);
+    assert!(
+        !svg.contains("line-spacing"),
+        "no CSS line-spacing: {}",
+        svg
+    );
+}
+
+#[test]
 fn line_missing_points_error_uses_pipe_sigil() {
     let err = lini::compile_str("x |line|\n").expect_err("line needs points");
     assert!(

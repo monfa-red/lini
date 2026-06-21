@@ -293,8 +293,8 @@ A string is a **text node**:
   self-delimiting, so no `;` is needed between them).
 - An empty `""` is suppressed (adds no text) — except as a **grid cell**, where
   it holds its track ([§5](#5-layout)).
-- Multi-line text uses `\n`; the box sizes to the widest line, with a fixed
-  `font-size × 1.2` leading between lines.
+- Multi-line text uses `\n`; the box sizes to the widest line, with a
+  `font-size × 1.2` leading between lines (plus any `line-spacing`).
 
 A string carries **no block and no children** — text is content, not a box. To
 style or position it, wrap it in a box (`|plain| { color: red } "X"`) and set the
@@ -530,7 +530,8 @@ written, and an **auto** one falls to **`2 × padding`** on each axis (the defau
 asymmetric `padding: t r b l` offsets it — `padding: 4 4 20 4` lifts the content
 toward the top, away from the larger bottom inset, exactly like CSS.
 
-Exceptions: a **text** node sizes to its glyphs (no padding); `|icon|` defaults to
+Exceptions: a **text** node sizes to its glyphs (no padding), widened by
+`letter-spacing` and given `line-spacing` between `\n` lines; `|icon|` defaults to
 `icon-size` (24); `|line|` / `|poly|` / `|image|` / `|path|` require their geometry
 (`points` / `src` / `path`) and error without it. `|plain|` carries `padding: 0`,
 so a plain box sizes to its text exactly.
@@ -867,11 +868,18 @@ Longhands `padding-top`/`-right`/`-bottom`/`-left` are accepted.
 | `font-size` | 15 (body), 12 (caption), 11 (wire label) | px; a baked layout constant. |
 | `font-weight` | `--font-weight` (body `bold`; captions / wire labels `normal`) | `normal` / `bold`. |
 | `font-style` | `normal` | `normal` / `italic` / `oblique`. |
+| `letter-spacing` | 0 | px between characters — positive widens, negative tightens. |
+| `line-spacing` | 0 | px added between the lines of a `\n` text block. |
 
 These all **inherit** — nearest ancestor wins, like CSS. Because a string is not a
 box, you never set a text property *on* the text; you set it on a containing box
 (or the root) and it cascades down. Style globally with `font-size: …` in the
 stylesheet, or scope it by setting the property on a container.
+
+`letter-spacing` and `line-spacing` are **baked spacing**, not CSS: they change
+**layout** — the text box grows to fit the wider glyphs or taller block — and the
+spacing compiles into the glyph and line positions (like `padding`), never emitted
+as a style. Both default to 0, so text is unaffected until set.
 
 ### Markers & routing
 
