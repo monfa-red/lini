@@ -1,20 +1,18 @@
-//! The stylesheet and cascade (SPEC §4, §12).
+//! The stylesheet and cascade (SPEC §4, §12), class-only after desugar.
 //!
-//! A rule is `selector { decls }`. Selectors are CSS-shaped: a single element
-//! (`box`), a single class (`.hot`), or a whitespace-separated descendant
-//! chain (`table box`, `.sidebar box`). The cascade layers, most-specific
-//! last:
+//! A rule is `selector { decls }`. After desugar every type/template/define is a
+//! generated `.lini-*` class, so selectors carry only classes: a single class
+//! (`.hot`, `.lini-box`) or a descendant chain (`.lini-table .lini-box`,
+//! `.sidebar .lini-box`). The cascade layers, most-specific last:
 //!
-//! 1. the **type cascade** — element rules + define defaults, base→derived
-//!    (built in [`super::types`], which reads element rules from here),
+//! 1. the **type tier** — a node's worn `.lini-*` classes, folded base→derived
+//!    (the caller looks each up via [`Stylesheet::class_decls`]),
 //! 2. **descendant rules** matched against the node's ancestor chain,
-//! 3. **class rules** for the node's applied classes, in definition order,
+//! 3. **user class rules** for the node's non-`lini-` classes, in definition order,
 //! 4. the **instance's own block**.
 //!
-//! Ties within a layer break by source order; later layers win. This module
-//! owns rule compilation and matching; the merge into an `AttrMap` is the
-//! caller's (it interleaves the type cascade and the block, which live
-//! elsewhere).
+//! Ties within a layer break by source order; later layers win. This module owns
+//! rule compilation and matching; folding into an `AttrMap` is the caller's.
 
 use super::ir::{ResolvedValue, VarTable};
 use super::value::resolve_groups;
@@ -64,33 +62,19 @@ impl Stylesheet {
     }
 
     /// Whether `name` is a class any rule references — a node may apply only
-    /// these (SPEC §15 `unknown class`).
+    /// these (SPEC §15 `unknown class`). Generated `.lini-*` classes are always
+    /// known and never validated this way; this gates only user classes.
     pub fn defines_class(&self, name: &str) -> bool {
         self.classes.contains(name)
     }
 
-    /// Every type name a selector references, for the orchestrator's
-    /// known-type validation (SPEC §17 step 1).
-    pub fn referenced_types(&self) -> Vec<&str> {
+    /// The single-class rule declarations for `class` — the tier-1 lookup for a
+    /// worn `.lini-*` type class, merged across rules in source order.
+    pub fn class_decls(&self, class: &str) -> Vec<(String, ResolvedValue)> {
         let mut out = Vec::new();
         for rule in &self.rules {
-            for part in &rule.selector {
-                if let SelPart::Type(t) = part {
-                    out.push(t.as_str());
-                }
-            }
-        }
-        out
-    }
-
-    /// The element rule (`type { … }`, single type part) declarations for one
-    /// type, in source order and merged across rules — the type cascade's
-    /// per-type layer (SPEC §12.1). `wire { … }` reaches its defaults this way.
-    pub fn element_decls(&self, type_name: &str) -> Vec<(String, ResolvedValue)> {
-        let mut out = Vec::new();
-        for rule in &self.rules {
-            if let [SelPart::Type(t)] = rule.selector.as_slice()
-                && t == type_name
+            if let [SelPart::Class(c)] = rule.selector.as_slice()
+                && c == class
             {
                 out.extend(rule.decls.iter().cloned());
             }
@@ -98,10 +82,11 @@ impl Stylesheet {
         out
     }
 
-    /// The descendant (tier 2) then class (tier 3) declaration layers matching a
-    /// node, flattened in cascade order — descendant rules first, then single
-    /// class rules, each set in source order (SPEC §12). Single element rules
-    /// are excluded: they belong to the type cascade.
+    /// The descendant (tier 2) then user-class (tier 3) declaration layers matching
+    /// a node, flattened in cascade order — descendant rules first, then single
+    /// **non-`lini-`** class rules, each in source order (SPEC §12). A worn `.lini-*`
+    /// class is the type tier (1) and is excluded here; descendant rules over
+    /// `.lini-*` classes still match via the ancestor/node facts.
     pub fn node_layers(
         &self,
         ancestors: &[NodeFacts],
@@ -114,9 +99,10 @@ impl Stylesheet {
                 out.extend(rule.decls.iter().cloned());
             }
         }
-        // Tier 3: single class rules the node carries, definition order.
+        // Tier 3: single user-class rules the node carries, definition order.
         for rule in &self.rules {
             if let [SelPart::Class(c)] = rule.selector.as_slice()
+                && !c.starts_with("lini-")
                 && node.classes.iter().any(|x| x == c)
             {
                 out.extend(rule.decls.iter().cloned());
@@ -126,10 +112,9 @@ impl Stylesheet {
     }
 }
 
-/// The identity a selector matches against: every type name in the node's
-/// chain (its declared type back to the primitive) plus its applied classes.
+/// The identity a selector matches against: the node's worn classes (the `.lini-*`
+/// type chain and its user classes).
 pub struct NodeFacts {
-    pub types: Vec<String>,
     pub classes: Vec<String>,
 }
 
@@ -144,7 +129,6 @@ pub fn selector_matches(parts: &[SelPart], ancestors: &[NodeFacts], node: &NodeF
     if !part_matches(last, node) {
         return false;
     }
-    // The prefix matches an ordered subsequence of the ancestor chain.
     let mut next = 0;
     for part in prefix {
         match ancestors[next..].iter().position(|a| part_matches(part, a)) {
@@ -157,8 +141,9 @@ pub fn selector_matches(parts: &[SelPart], ancestors: &[NodeFacts], node: &NodeF
 
 fn part_matches(part: &SelPart, facts: &NodeFacts) -> bool {
     match part {
-        SelPart::Type(t) => facts.types.iter().any(|x| x == t),
         SelPart::Class(c) => facts.classes.iter().any(|x| x == c),
+        // Post-desugar selectors are class-only; a bare type part never matches.
+        SelPart::Type(_) => false,
     }
 }
 
@@ -166,43 +151,33 @@ fn part_matches(part: &SelPart, facts: &NodeFacts) -> bool {
 mod tests {
     use super::*;
 
-    fn facts(types: &[&str], classes: &[&str]) -> NodeFacts {
+    fn facts(classes: &[&str]) -> NodeFacts {
         NodeFacts {
-            types: types.iter().map(|s| s.to_string()).collect(),
             classes: classes.iter().map(|s| s.to_string()).collect(),
         }
-    }
-
-    fn ty(name: &str) -> SelPart {
-        SelPart::Type(name.into())
     }
     fn cls(name: &str) -> SelPart {
         SelPart::Class(name.into())
     }
 
     #[test]
-    fn element_selector_matches_a_type_in_the_chain() {
-        // `treat` resolves to a box, so a `|box| {}` rule still matches it.
-        let node = facts(&["treat", "box"], &[]);
-        assert!(selector_matches(&[ty("box")], &[], &node));
-        assert!(selector_matches(&[ty("treat")], &[], &node));
-        assert!(!selector_matches(&[ty("oval")], &[], &node));
-    }
-
-    #[test]
-    fn class_selector_matches_an_applied_class() {
-        let node = facts(&["box"], &["hot"]);
+    fn class_selector_matches_a_worn_class() {
+        let node = facts(&["lini-box", "hot"]);
+        assert!(selector_matches(&[cls("lini-box")], &[], &node));
         assert!(selector_matches(&[cls("hot")], &[], &node));
         assert!(!selector_matches(&[cls("cold")], &[], &node));
     }
 
     #[test]
     fn descendant_selector_needs_a_matching_ancestor() {
-        // `table box` — a box with a table ancestor.
-        let node = facts(&["box"], &[]);
-        let ancestors = [facts(&["table", "group", "box"], &[]), facts(&["row"], &[])];
+        // `.lini-table .lini-box` — a box with a table ancestor.
+        let node = facts(&["lini-box"]);
+        let ancestors = [
+            facts(&["lini-table", "lini-group", "lini-box"]),
+            facts(&["lini-row"]),
+        ];
         assert!(selector_matches(
-            &[ty("table"), ty("box")],
+            &[cls("lini-table"), cls("lini-box")],
             &ancestors,
             &node
         ));
@@ -210,10 +185,10 @@ mod tests {
 
     #[test]
     fn descendant_selector_fails_without_the_ancestor() {
-        let node = facts(&["box"], &[]);
-        let ancestors = [facts(&["group", "box"], &[])];
+        let node = facts(&["lini-box"]);
+        let ancestors = [facts(&["lini-group", "lini-box"])];
         assert!(!selector_matches(
-            &[ty("table"), ty("box")],
+            &[cls("lini-table"), cls("lini-box")],
             &ancestors,
             &node
         ));
@@ -221,38 +196,14 @@ mod tests {
 
     #[test]
     fn descendant_combinator_is_not_adjacency() {
-        // `.sidebar box` matches a box even with an intervening container.
-        let node = facts(&["box"], &[]);
-        let ancestors = [facts(&["group", "box"], &["sidebar"]), facts(&["row"], &[])];
+        // `.sidebar .lini-box` matches even with an intervening container.
+        let node = facts(&["lini-box"]);
+        let ancestors = [
+            facts(&["lini-group", "lini-box", "sidebar"]),
+            facts(&["lini-row"]),
+        ];
         assert!(selector_matches(
-            &[cls("sidebar"), ty("box")],
-            &ancestors,
-            &node
-        ));
-    }
-
-    #[test]
-    fn descendant_prefix_order_is_enforced() {
-        // `a c` requires an `a` ancestor *before* the node — order along the
-        // chain matters; the parts match as an ordered subsequence.
-        let node = facts(&["c"], &[]);
-        let good = [facts(&["a"], &[]), facts(&["b"], &[])];
-        assert!(selector_matches(&[ty("a"), ty("c")], &good, &node));
-        // `b a` (b then a) cannot match ancestors ordered [a, b].
-        assert!(!selector_matches(
-            &[ty("b"), ty("a"), ty("c")],
-            &good,
-            &node
-        ));
-    }
-
-    #[test]
-    fn last_part_must_match_the_node_not_an_ancestor() {
-        let node = facts(&["box"], &[]);
-        let ancestors = [facts(&["table"], &[])];
-        // `box table` — last part `table` must be the node, but the node is a box.
-        assert!(!selector_matches(
-            &[ty("box"), ty("table")],
+            &[cls("sidebar"), cls("lini-box")],
             &ancestors,
             &node
         ));
@@ -262,7 +213,8 @@ mod tests {
         use crate::syntax::ast::{Rule, StyleItem};
         let toks = crate::lexer::lex(src).expect("lex");
         let file = crate::syntax::parser::parse(&toks).expect("parse");
-        let rules: Vec<&Rule> = file
+        let lowered = crate::desugar::desugar(&file).expect("desugar");
+        let rules: Vec<&Rule> = lowered
             .stylesheet
             .iter()
             .filter_map(|it| match it {
@@ -278,19 +230,22 @@ mod tests {
     }
 
     #[test]
-    fn element_decls_merge_matching_rules_in_source_order() {
-        let s = sheet("{ |box| { fill: red; }\n|box| { stroke: blue; } }\n");
-        assert_eq!(names(&s.element_decls("box")), vec!["fill", "stroke"]);
-        assert!(s.element_decls("oval").is_empty());
+    fn class_decls_returns_the_generated_type_class() {
+        // The lowered `.lini-box` carries the box bundle; tier 1 reads it here.
+        let s = sheet("x |box|\n");
+        assert!(names(&s.class_decls("lini-box")).contains(&"radius"));
+        assert!(s.class_decls("lini-oval").is_empty());
     }
 
     #[test]
-    fn node_layers_put_descendant_rules_before_class_rules() {
-        // Source order is class-then-descendant; the cascade still applies the
-        // descendant first (tier 2), the class last (tier 3).
-        let s = sheet("{ .hot { stroke: red; }\n|table box| { fill: gray; } }\n");
-        let node = facts(&["box"], &["hot"]);
-        let ancestors = [facts(&["table", "group", "box"], &[])];
+    fn node_layers_put_descendant_rules_before_class_rules_and_skip_lini() {
+        let s = sheet(
+            "{ .hot { stroke: red; }\n|group box| { fill: gray; } }\ng |group| .hot [\n  a |box| .hot\n]\n",
+        );
+        let node = facts(&["lini-box", "hot"]);
+        let ancestors = [facts(&["lini-group", "lini-box", "hot"])];
+        // descendant `fill` (tier 2) before the user-class `stroke` (tier 3); the
+        // worn `.lini-box` is tier 1 and never appears here.
         assert_eq!(
             names(&s.node_layers(&ancestors, &node)),
             vec!["fill", "stroke"]
@@ -298,21 +253,9 @@ mod tests {
     }
 
     #[test]
-    fn class_layers_follow_definition_order_not_application_order() {
-        // Applied `.b .a`, but defined `.a` then `.b`; `.b` is later in source
-        // so it wins the tie.
-        let s = sheet("{ .a { fill: red; }\n.b { fill: blue; } }\n");
-        let node = facts(&["box"], &["b", "a"]);
-        let layers = s.node_layers(&[], &node);
-        assert_eq!(layers.len(), 2);
-        assert!(matches!(&layers.last().unwrap().1, ResolvedValue::Ident(s) if s == "blue"));
-    }
-
-    #[test]
-    fn defines_class_covers_every_referenced_class() {
-        let s = sheet("{ .hot { stroke: red; }\n|.sidebar box| { fill: gray; } }\n");
+    fn defines_class_covers_every_referenced_user_class() {
+        let s = sheet("{ .hot { stroke: red; } }\nx |box| .hot\n");
         assert!(s.defines_class("hot"));
-        assert!(s.defines_class("sidebar"));
         assert!(!s.defines_class("cold"));
     }
 }

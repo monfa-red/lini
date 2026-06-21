@@ -1,60 +1,39 @@
-//! The resolve orchestrator: variables → stylesheet → types → scene tree →
-//! auto-create → wires → render inputs, assembled into a [`Program`] (SPEC §17).
+//! The resolve orchestrator: variables → stylesheet → scene tree → wires →
+//! render inputs, assembled into a [`Program`] (SPEC §17). Types, templates,
+//! defines, labels, and auto-create are lowered upstream by `desugar`, so resolve
+//! only ever sees primitives and `.lini-*` classes.
 //!
-//! [`lib.rs`]'s compile pipeline enters resolution here.
+//! [`lib.rs`]'s compile pipeline enters resolution here (after `desugar`).
 
 use super::cascade::Stylesheet;
 use super::defaults;
 use super::ir::{AttrMap, Program, ResolvedScene, ResolvedValue, SheetInputs, VarKind, VarTable};
 use super::merge::collapse;
 use super::scene::{self, PathIndex, SceneCtx};
-use super::types::{self, Types};
 use super::value::resolve_groups;
 use super::wires;
 use crate::error::Error;
-use crate::span::Span;
-use crate::syntax::ast::{Decl, Define, File, Node, Rule, SelPart, StyleItem};
-use std::collections::{HashMap, HashSet};
+use crate::syntax::ast::{Decl, File, Rule, SelPart, StyleItem};
+use std::collections::HashMap;
 
 /// Resolve a parsed file into a [`Program`].
 pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error> {
-    // ── Variables: built-in defaults ← theme ← `--name` declarations ──
+    // ── Variables: built-in visual-var defaults ← theme ← `--name` decls ──
     let mut vars = defaults::built_in_defaults();
     apply_theme(&mut vars, theme);
     apply_var_decls(&mut vars, file)?;
 
-    // ── Stylesheet: built-in rules then the file's rules ──
-    let builtins = builtin_rules();
-    let mut rule_refs: Vec<&Rule> = builtins.iter().collect();
-    for item in &file.stylesheet {
-        if let StyleItem::Rule(r) = item {
-            rule_refs.push(r);
-        }
-    }
-    let sheet = Stylesheet::build(&rule_refs, &vars)?;
-
-    // ── Types: user defines over templates/primitives ──
-    let defines: Vec<&Define> = file
+    // ── Stylesheet: the desugared file's rules (generated `.lini-*` type classes,
+    //    the `-> { }` wire defaults, descendant + user-class rules) ──
+    let rules: Vec<&Rule> = file
         .stylesheet
         .iter()
         .filter_map(|it| match it {
-            StyleItem::Define(d) => Some(d),
+            StyleItem::Rule(r) => Some(r),
             _ => None,
         })
         .collect();
-    let types = Types::build(&defines, &sheet, &vars)?;
-
-    // Selector type parts must name known types (SPEC §17 step 1). `wire` is
-    // the routing layer's reserved selector target (SPEC §18) — valid in a
-    // selector though it is not an instantiable type.
-    for t in sheet.referenced_types() {
-        if t != "wire" && !types.is_known(t) {
-            return Err(Error::at(
-                Span::empty(),
-                format!("unknown type '{}' in selector", t),
-            ));
-        }
-    }
+    let sheet = Stylesheet::build(&rules, &vars)?;
 
     // ── Root configuration + the text props it cascades ──
     let root_attrs = root_attrs(file, &vars)?;
@@ -65,15 +44,15 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
         }
     }
 
-    // ── Scene tree ──
+    // ── Scene tree (types/templates/defines, labels, and auto-create were all
+    //    lowered by desugar — resolve only sees primitives + classes) ──
     let ctx = SceneCtx {
-        types: &types,
         sheet: &sheet,
         vars: &vars,
     };
     let mut id_seen = HashMap::new();
     let mut lifted = Vec::new();
-    let mut nodes = scene::resolve_instances(
+    let nodes = scene::resolve_instances(
         &file.instances,
         &ctx,
         &root_attrs,
@@ -81,29 +60,10 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
         &mut id_seen,
         &mut lifted,
     )?;
-
-    // ── Auto-create: a root wire's single-segment id absent everywhere becomes
-    // an empty |box| at the scene root (SPEC §3). ──
-    let mut index = PathIndex::build(&nodes);
-    let auto = auto_created(&index, file);
-    if !auto.is_empty() {
-        let mut ancestors = Vec::new();
-        for node in &auto {
-            nodes.push(scene::resolve_node(
-                node,
-                &ctx,
-                &mut ancestors,
-                &[],
-                &root_text_ctx,
-                &mut id_seen,
-                &mut Vec::new(),
-            )?);
-        }
-        index = PathIndex::build(&nodes);
-    }
+    let index = PathIndex::build(&nodes);
 
     // ── Wires: root statements then lifted internal wires ──
-    let wire_defaults = sheet.element_decls("wire");
+    let wire_defaults = wire_rule_decls(file, &vars)?;
     let mut wire_list = Vec::new();
     for w in &file.wires {
         wire_list.extend(wires::resolve_wire(w, &ctx, &index, &[], &wire_defaults)?);
@@ -118,7 +78,7 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
         )?);
     }
 
-    let sheet_inputs = build_sheet_inputs(file, &defines, &vars)?;
+    let sheet_inputs = build_sheet_inputs(file, &vars, &root_attrs)?;
 
     Ok(Program {
         vars,
@@ -178,14 +138,11 @@ fn apply_var_decls(vars: &mut VarTable, file: &File) -> Result<(), Error> {
 
 // ─────────────────────────── Root config ───────────────────────────
 
-/// Root container attributes: the defaults (`layout: column`, `padding: 0` —
-/// the root is framed by the fixed canvas-pad, not by padding) overlaid by the
-/// stylesheet's root declarations.
+/// Root container attributes — read straight from the global block. Desugar
+/// injects the scene defaults (`layout: column`, `padding: 0`, `gap`, the
+/// inherited-text baseline, `canvas-pad`), so there is nothing to seed here.
 fn root_attrs(file: &File, vars: &VarTable) -> Result<AttrMap, Error> {
-    let mut ordered: Vec<(String, ResolvedValue)> = vec![
-        ("layout".into(), ResolvedValue::Ident("column".into())),
-        ("padding".into(), ResolvedValue::Number(0.0)),
-    ];
+    let mut ordered: Vec<(String, ResolvedValue)> = Vec::new();
     for item in &file.stylesheet {
         if let StyleItem::RootDecl(d) = item {
             ordered.push((d.name.clone(), resolve_groups(&d.groups, d.span, vars)?));
@@ -194,65 +151,36 @@ fn root_attrs(file: &File, vars: &VarTable) -> Result<AttrMap, Error> {
     Ok(collapse(&ordered))
 }
 
-// ─────────────────────────── Auto-create ───────────────────────────
-
-fn auto_created(index: &PathIndex, file: &File) -> Vec<Node> {
-    let mut seen: HashSet<String> = HashSet::new();
-    let mut out = Vec::new();
-    for w in &file.wires {
-        for group in &w.chain {
-            for ep in &group.endpoints {
-                if ep.path.len() != 1 {
-                    continue; // multi-segment paths navigate, never create
-                }
-                let id = &ep.path[0];
-                if index.has_final_segment(id) || seen.contains(id) {
-                    continue;
-                }
-                seen.insert(id.clone());
-                out.push(auto_box(id, ep.span));
-            }
-        }
-    }
-    out
-}
-
-fn auto_box(id: &str, span: Span) -> Node {
-    // No content → id-as-label gives it the id as its centred text (SPEC §3).
-    Node {
-        id: Some(id.to_string()),
-        ty: Some("box".to_string()),
-        classes: Vec::new(),
-        style: Vec::new(),
-        style_span: None,
-        children: Vec::new(),
-        wires: Vec::new(),
-        span,
-    }
-}
-
-// ─────────────────────────── Built-in rules ───────────────────────────
-
-/// The rules that ship with the language. None today: `|table|` cells are bare
-/// text that auto-flows and centres in its track (SPEC §8), so there is no
-/// `table box` cell rule — table paint lives in the `table` template bundle.
-fn builtin_rules() -> Vec<Rule> {
-    Vec::new()
-}
-
 // ─────────────────────────── Render inputs ───────────────────────────
 
-/// The renderer's [`SheetInputs`]: the stylesheet sorted into the layers it
-/// restates as CSS class rules (SPEC §13). Single-part selectors map directly;
-/// descendant rules (`|table box| { }`) bake inline via the cascade and carry no
-/// entry here.
+/// The `-> { }` wire defaults as ordered decls (lowest specificity for the wire
+/// cascade) — the wire glyph is the reserved `wire` element selector.
+fn wire_rule_decls(file: &File, vars: &VarTable) -> Result<Vec<(String, ResolvedValue)>, Error> {
+    for item in &file.stylesheet {
+        if let StyleItem::Rule(r) = item
+            && let [SelPart::Type(t)] = r.selector.parts.as_slice()
+            && t == "wire"
+        {
+            let mut out = Vec::with_capacity(r.decls.len());
+            for d in &r.decls {
+                out.push((d.name.clone(), resolve_groups(&d.groups, d.span, vars)?));
+            }
+            return Ok(out);
+        }
+    }
+    Ok(Vec::new())
+}
+
+/// The renderer's [`SheetInputs`]: every single-class rule's attrs (the generated
+/// `.lini-*` type classes and the user `.style` classes, in source order), the
+/// wire defaults, and the root inherited-text font size. Descendant rules
+/// (`|.lini-table .lini-box| { }`) bake inline via the cascade and carry no entry.
 fn build_sheet_inputs(
     file: &File,
-    defines: &[&Define],
     vars: &VarTable,
+    root_attrs: &AttrMap,
 ) -> Result<SheetInputs, Error> {
     let mut class_rules = Vec::new();
-    let mut element_rules = Vec::new();
     let mut wire_defaults = AttrMap::new();
     for item in &file.stylesheet {
         if let StyleItem::Rule(r) = item {
@@ -261,28 +189,15 @@ fn build_sheet_inputs(
                     class_rules.push((c.clone(), decls_attrmap(&r.decls, vars)?))
                 }
                 [SelPart::Type(t)] if t == "wire" => wire_defaults = decls_attrmap(&r.decls, vars)?,
-                [SelPart::Type(t)] => {
-                    element_rules.push((t.clone(), decls_attrmap(&r.decls, vars)?))
-                }
                 _ => {}
             }
         }
     }
-    let mut defines_out = Vec::new();
-    for d in defines {
-        defines_out.push((d.name.clone(), decls_attrmap(&d.style, vars)?));
-    }
-    let templates = types::TEMPLATES
-        .iter()
-        .map(|(n, _)| (n.to_string(), collapse(&types::template_attrs(n))))
-        .filter(|(_, a)| !a.map.is_empty())
-        .collect();
+    let root_font_size = root_attrs.number("font-size").unwrap_or(15.0);
     Ok(SheetInputs {
         class_rules,
-        element_rules,
-        defines: defines_out,
-        templates,
         wire_defaults,
+        root_font_size,
     })
 }
 
@@ -302,13 +217,16 @@ mod tests {
     fn rv4(src: &str) -> Program {
         let toks = crate::lexer::lex(src).expect("lex");
         let file = crate::syntax::parser::parse(&toks).expect("parse");
-        resolve(&file, &[]).expect("resolve")
+        let lowered = crate::desugar::desugar(&file).expect("desugar");
+        resolve(&lowered, &[]).expect("resolve")
     }
 
     fn rv4_err(src: &str) -> String {
         let toks = crate::lexer::lex(src).expect("lex");
         let file = crate::syntax::parser::parse(&toks).expect("parse");
-        match resolve(&file, &[]) {
+        // The error may surface in desugar (unknown type, cycle) or in resolve.
+        let result = crate::desugar::desugar(&file).and_then(|f| resolve(&f, &[]));
+        match result {
             Err(e) => e.message,
             Ok(_) => panic!("expected an error resolving {src:?}"),
         }

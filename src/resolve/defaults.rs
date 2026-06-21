@@ -62,23 +62,11 @@ pub fn built_in_defaults() -> VarTable {
     );
     set_visual(&mut t, "shadow-color", rgba(0.0, 0.0, 0.0, 0.2));
 
-    // Layout constants — baked at compile time (SPEC §11.3).
-    set_layout_n(&mut t, "font-size", 15.0);
-    set_layout_n(&mut t, "wire-font-size", 11.0);
-    set_layout_n(&mut t, "caption-font-size", 12.0);
-    set_layout_n(&mut t, "stroke-width", 2.0);
-    set_layout_n(&mut t, "radius", 6.0);
-    set_layout_n(&mut t, "gap", 20.0);
-    set_layout_n(&mut t, "padding", 20.0);
-    set_layout_n(&mut t, "clearance", 16.0);
-    set_layout_n(&mut t, "icon-size", 24.0);
-    set_layout_n(&mut t, "canvas-pad", 20.0);
+    // Layout constants (radius, padding, font-size, clearance, …) are no longer
+    // here: desugar materializes every one into the `.lini-*` class defs, the
+    // global block, or the `-> { }` wire defaults (the "dumb core").
 
     t
-}
-
-fn set_layout_n(t: &mut VarTable, name: &str, n: f64) {
-    t.set(name, VarKind::Layout, ResolvedValue::Number(n));
 }
 
 fn set_visual(t: &mut VarTable, name: &str, v: ResolvedValue) {

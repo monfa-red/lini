@@ -7,7 +7,6 @@
 use super::cascade::{NodeFacts, Stylesheet};
 use super::ir::{AttrMap, MarkerKind, Markers, ResolvedInst, ResolvedValue, ShapeKind, VarTable};
 use super::merge::{collapse, resolve_markers};
-use super::types::Types;
 use super::value::resolve_groups;
 use crate::error::Error;
 use crate::span::Span;
@@ -37,7 +36,6 @@ pub struct LiftedWire {
 
 /// Everything node resolution reads but does not mutate.
 pub struct SceneCtx<'a> {
-    pub types: &'a Types<'a>,
     pub sheet: &'a Stylesheet,
     pub vars: &'a VarTable,
 }
@@ -101,11 +99,26 @@ pub fn resolve_node(
     lifted: &mut Vec<LiftedWire>,
 ) -> Result<ResolvedInst, Error> {
     let type_name = node.ty.as_deref().unwrap_or("box");
-    let rt = ctx.types.resolve(type_name, node.span)?;
+    // Post-desugar the type is always a primitive; anything else means the input
+    // bypassed desugar (the "dumb core" guard).
+    let shape = ShapeKind::parse(type_name)
+        .ok_or_else(|| Error::at(node.span, format!("unknown shape '{}'", type_name)))?;
 
-    for class in &node.classes {
-        if !ctx.sheet.defines_class(class) {
-            return Err(Error::at(node.span, format!("unknown class '.{}'", class)));
+    // Split the worn classes: `.lini-*` are the type tier (the primitive plus the
+    // render type_chain), user classes are tier 3 (and must be defined).
+    let primitive_class = format!("lini-{}", shape.as_str());
+    let mut type_chain = Vec::new();
+    let mut applied_styles = Vec::new();
+    for c in &node.classes {
+        if let Some(name) = c.strip_prefix("lini-") {
+            if *c != primitive_class {
+                type_chain.push(name.to_string());
+            }
+        } else {
+            if !ctx.sheet.defines_class(c) {
+                return Err(Error::at(node.span, format!("unknown class '.{}'", c)));
+            }
+            applied_styles.push(c.clone());
         }
     }
 
@@ -120,18 +133,20 @@ pub fn resolve_node(
         id_seen.insert(full, node.span);
     }
 
-    // Matcher identity: every type name in the chain plus the primitive, and the
-    // applied classes.
-    let mut facts_types = rt.type_chain.clone();
-    facts_types.push(rt.kind.as_str().to_string());
     let facts = NodeFacts {
-        types: facts_types,
         classes: node.classes.clone(),
     };
 
-    // The cascade ladder, least-specific first (SPEC §12): type defaults, then
-    // descendant + class layers, then the instance's own block.
-    let mut ordered: Vec<(String, ResolvedValue)> = rt.defaults.clone();
+    // The cascade ladder, least-specific first (SPEC §12): the worn `.lini-*`
+    // classes as the type tier (folded base→derived — worn order is
+    // derived→base→primitive, so iterate reversed), then descendant + user-class
+    // layers, then the instance's own block.
+    let mut ordered: Vec<(String, ResolvedValue)> = Vec::new();
+    for c in node.classes.iter().rev() {
+        if c.starts_with("lini-") {
+            ordered.extend(ctx.sheet.class_decls(c));
+        }
+    }
     ordered.extend(ctx.sheet.node_layers(ancestors, &facts));
     for d in &node.style {
         ordered.push((d.name.clone(), resolve_groups(&d.groups, d.span, ctx.vars)?));
@@ -140,7 +155,7 @@ pub fn resolve_node(
     let markers = resolve_markers(&ordered, MarkerKind::None, MarkerKind::None, node.span)?;
     let attrs = collapse(&ordered);
 
-    if rt.kind == ShapeKind::Slant
+    if shape == ShapeKind::Slant
         && let Some(skew) = attrs.number("skew")
         && (skew <= -89.0 || skew >= 89.0)
     {
@@ -163,28 +178,21 @@ pub fn resolve_node(
         child_prefix.push(id.clone());
     }
 
-    // Internal wires (define body + the node's own `[ ]`) lift to program level,
-    // prefixed by this node's path.
-    for w in rt.body_wires.iter().chain(&node.wires) {
+    // Internal wires lift to program level (define bodies are inlined by desugar,
+    // so the node's own `[ ]` holds them already).
+    for w in &node.wires {
         lifted.push(LiftedWire {
             wire: w.clone(),
             prefix: child_prefix.clone(),
         });
     }
 
-    // Body order (SPEC §3): a define's intrinsic children, then the node's own.
-    let body: Vec<&Child> = rt
-        .body_children
-        .iter()
-        .chain(node.children.iter())
-        .collect();
-
-    // An `|icon|` consumes its text as the glyph name (SPEC §7): its block's first
-    // string, else its id. It renders no text child; every other shape renders
-    // its strings as `Text` children.
-    let is_icon = rt.kind == ShapeKind::Icon;
+    // An `|icon|` consumes its text as the glyph name (SPEC §7): its first string,
+    // else its id. It renders no text child. id-as-label and define bodies were
+    // expanded by desugar, so children are taken verbatim.
+    let is_icon = shape == ShapeKind::Icon;
     let own_label = if is_icon {
-        first_text(&body)
+        first_text(&node.children)
             .map(str::to_string)
             .or_else(|| node.id.clone())
     } else {
@@ -194,7 +202,7 @@ pub fn resolve_node(
     ancestors.push(facts);
     let mut children = Vec::new();
     if !is_icon {
-        for child in &body {
+        for child in &node.children {
             children.push(resolve_child(
                 child,
                 ctx,
@@ -205,29 +213,15 @@ pub fn resolve_node(
                 lifted,
             )?);
         }
-        // id-as-label: a leaf box with no content of its own shows its id,
-        // centred (SPEC §3). A `{ "" }` counts as content (an empty text), so it
-        // suppresses the label. Geometry-only shapes (line / poly / path / image)
-        // hold no centred text, so their id is not a label.
-        let text_capable = !matches!(
-            rt.kind,
-            ShapeKind::Line | ShapeKind::Poly | ShapeKind::Path | ShapeKind::Image
-        );
-        if text_capable
-            && children.is_empty()
-            && let Some(id) = &node.id
-        {
-            children.push(text_inst(id, &child_text_ctx, node.span));
-        }
     }
     ancestors.pop();
     drop_blank_text(&mut children, &attrs);
 
     Ok(ResolvedInst {
         id: node.id.clone(),
-        shape: rt.kind,
-        type_chain: rt.type_chain,
-        applied_styles: node.classes.clone(),
+        shape,
+        type_chain,
+        applied_styles,
         label: own_label,
         attrs,
         markers,
@@ -259,8 +253,8 @@ fn text_inst(text: &str, text_ctx: &AttrMap, span: Span) -> ResolvedInst {
     }
 }
 
-/// The first bare string among a body's children — an `|icon|`'s glyph name.
-fn first_text<'a>(children: &[&'a Child]) -> Option<&'a str> {
+/// The first bare string among a node's children — an `|icon|`'s glyph name.
+fn first_text(children: &[Child]) -> Option<&str> {
     children.iter().find_map(|c| match c {
         Child::Text(t) => Some(t.text.as_str()),
         Child::Box(_) => None,
@@ -339,12 +333,6 @@ impl PathIndex {
     pub fn resolve(&self, query: &[String]) -> Option<String> {
         let joined = query.join(".");
         self.contains(&joined).then_some(joined)
-    }
-
-    /// Whether any node anywhere carries this final id — the auto-create gate
-    /// (only ids absent everywhere materialize).
-    pub fn has_final_segment(&self, seg: &str) -> bool {
-        self.paths.iter().any(|p| final_segment(p) == seg)
     }
 
     /// Same-named paths to propose in a did-you-mean error, stripped to the form

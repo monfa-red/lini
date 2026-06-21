@@ -79,7 +79,10 @@ fn theme_overrides_visual_var_visible_in_baked_output() {
 }
 
 #[test]
-fn theme_layout_var_bakes_into_layout_math() {
+fn theme_cannot_set_a_layout_value() {
+    // Layout values (gap, padding, radius, …) bake from the global block and the
+    // `.lini-*` classes, not `--lini-*` vars (SPEC §11.2, the "dumb core"): a
+    // `--lini-gap` theme is inert. Gap is set with `gap:` in the stylesheet.
     let src = "{\n  layout: row;\n}\n|box| { width: 40; height: 40; }\n|box| { width: 40; height: 40; }\n";
     let default = lini::compile_str(src).expect("default compile");
     let themed = lini::compile_str_with(
@@ -90,13 +93,10 @@ fn theme_layout_var_bakes_into_layout_math() {
         },
     )
     .expect("themed compile");
-    let default_w = extract_viewbox_w(&default);
-    let themed_w = extract_viewbox_w(&themed);
-    assert!(
-        (themed_w - default_w - 40.0).abs() < 0.5,
-        "expected +40px viewbox width with gap=60 theme; default={} themed={}",
-        default_w,
-        themed_w,
+    assert_eq!(
+        extract_viewbox_w(&default),
+        extract_viewbox_w(&themed),
+        "a --lini-gap theme must not change layout — gap is not a themeable var",
     );
 }
 

@@ -138,11 +138,12 @@ fn routing_diagnostics_of(violations: Vec<Violation>) -> Vec<Diagnostic> {
 fn resolve_pipeline(src: &str, opts: &Options) -> Result<resolve::Program, Error> {
     let tokens = lexer::lex(src)?;
     let file = syntax::parser::parse(&tokens)?;
+    let lowered = desugar::desugar(&file)?;
     let theme = match &opts.theme_css {
         Some(css) => theme::extract_lini_vars(css),
         None => Vec::new(),
     };
-    resolve::resolve_with_theme(&file, &theme)
+    resolve::resolve_with_theme(&lowered, &theme)
 }
 
 fn wrap_html(svg: &str) -> String {

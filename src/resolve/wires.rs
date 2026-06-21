@@ -33,7 +33,6 @@ pub fn resolve_wire(
 
     // Cascade: wire defaults → class rules → own block (SPEC §4).
     let wire_facts = NodeFacts {
-        types: vec!["wire".to_string()],
         classes: w.classes.clone(),
     };
     let mut ordered: Vec<(String, ResolvedValue)> = wire_defaults.to_vec();

@@ -14,7 +14,7 @@ use super::values::format_value;
 use crate::Options;
 use crate::layout::{LaidOut, PlacedNode};
 use crate::resolve::{AttrMap, MarkerKind, ResolvedValue, ShapeKind, VarTable};
-use std::collections::BTreeSet;
+use std::collections::{BTreeSet, HashMap};
 
 /// lini attr → CSS property. lini property names already match CSS, so this is
 /// near-identity; `stroke-style` is the exception, compiling to
@@ -155,9 +155,9 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
 
     let mut rules: Vec<Rule> = Vec::new();
 
-    // Root rule: the inherited text properties, stated once. `font-size` is a
-    // layout constant, so it always formats to a literal.
-    let font_size = layout_number(vars, "font-size", 14.0);
+    // Root rule: the inherited text properties, stated once. `font-size` is the
+    // baked global-block baseline (a layout constant, always a literal).
+    let font_size = laid.sheet.root_font_size;
     rules.push(Rule {
         class: "lini".into(),
         props: vec![
@@ -171,10 +171,23 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
         ],
     });
 
-    // Primitive paint defaults, fixed order — these state what the renderer's
-    // per-element fallbacks used to inline. Every closed rule masks
-    // `stroke-dasharray` so a container's `line:` can never bleed into
-    // children through a gap in the cascade.
+    // Per-shape paint, sourced from the generated `.lini-*` class defs — desugar
+    // folded the bundles + element rules into them. Geometry stays baked; only
+    // the paint subset rides CSS. Closed primitives and `line` mask
+    // `stroke-dasharray` so a container's `line:` can't bleed into children.
+    let class_map: HashMap<&str, &AttrMap> = laid
+        .sheet
+        .class_rules
+        .iter()
+        .map(|(n, a)| (n.as_str(), a))
+        .collect();
+    let shape_paint = |class: &str| -> Vec<(String, String)> {
+        class_map
+            .get(class)
+            .map(|a| paint_props(a, vars, opts))
+            .unwrap_or_default()
+    };
+
     const CLOSED: &[ShapeKind] = &[
         ShapeKind::Box,
         ShapeKind::Oval,
@@ -188,26 +201,18 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
     ];
     for kind in CLOSED {
         if present.contains(kind.as_str()) {
-            rules.push(Rule {
-                class: format!("lini-{}", kind.as_str()),
-                props: vec![
-                    ("fill".into(), live("fill")),
-                    ("stroke".into(), live("stroke")),
-                    ("stroke-width".into(), "2".into()),
-                    ("stroke-dasharray".into(), "none".into()),
-                ],
-            });
+            let class = format!("lini-{}", kind.as_str());
+            let mut props = shape_paint(&class);
+            ensure_dash_none(&mut props);
+            rules.push(Rule { class, props });
         }
     }
     if present.contains("line") {
+        let mut props = shape_paint("lini-line");
+        ensure_dash_none(&mut props);
         rules.push(Rule {
             class: "lini-line".into(),
-            props: vec![
-                ("fill".into(), "none".into()),
-                ("stroke".into(), live("stroke")),
-                ("stroke-width".into(), "2".into()),
-                ("stroke-dasharray".into(), "none".into()),
-            ],
+            props,
         });
     }
     if present.contains("text") {
@@ -227,47 +232,21 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
     if present.contains("icon") {
         rules.push(Rule {
             class: "lini-icon".into(),
-            props: vec![("fill".into(), live("stroke"))],
+            props: shape_paint("lini-icon"),
         });
     }
 
-    // Built-in template looks (group's container wash), then user define
-    // defaults in source order — paint subset only, geometry stays baked.
-    for (name, attrs) in &laid.sheet.templates {
-        if present.contains(name.as_str()) {
+    // Template + define looks (group's wash, a define's paint), in class-def order
+    // (templates then defines). Element rules are already folded into these.
+    for (name, attrs) in &laid.sheet.class_rules {
+        if let Some(tn) = name.strip_prefix("lini-")
+            && ShapeKind::parse(tn).is_none()
+            && present.contains(tn)
+        {
             rules.push(Rule {
-                class: format!("lini-{}", name),
+                class: name.clone(),
                 props: paint_props(attrs, vars, opts),
             });
-        }
-    }
-    for (name, attrs) in &laid.sheet.defines {
-        if present.contains(name.as_str()) {
-            rules.push(Rule {
-                class: format!("lini-{}", name),
-                props: paint_props(attrs, vars, opts),
-            });
-        }
-    }
-
-    // Element rules (`|box| { }`) merge into the matching shape rule (creating it
-    // for paint-less templates that gain paint only via the rule).
-    for (name, attrs) in &laid.sheet.element_rules {
-        if !present.contains(name.as_str()) {
-            continue;
-        }
-        let class = format!("lini-{}", name);
-        let props = paint_props(attrs, vars, opts);
-        if let Some(rule) = rules.iter_mut().find(|r| r.class == class) {
-            for (prop, value) in props {
-                if let Some(slot) = rule.props.iter_mut().find(|(p, _)| *p == prop) {
-                    slot.1 = value;
-                } else {
-                    rule.props.push((prop, value));
-                }
-            }
-        } else {
-            rules.push(Rule { class, props });
         }
     }
 
@@ -275,19 +254,34 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
     // rules — it is the wire's default layer (like a shape rule for a node), so
     // a wire's `.style` class overrides it in the cascade (SPEC §13).
     if !laid.wires.is_empty() || !laid.airwires.is_empty() {
+        // The wire path's paint, in a fixed order (fill, stroke, width, dash) so a
+        // `-> { }` that overrides only some props still emits a stable rule. Font
+        // props from the defaults style labels, not the `<path>`, so they're dropped.
         let defaults = &laid.sheet.wire_defaults;
-        let mut props = vec![("fill".into(), "none".into())];
-        let mut wire_paint = paint_props(defaults, vars, opts);
-        if !wire_paint.iter().any(|(p, _)| p == "stroke") {
-            wire_paint.push(("stroke".into(), live("stroke")));
+        let dp = paint_props(defaults, vars, opts);
+        let from_defaults = |p: &str| dp.iter().find(|(k, _)| k == p).map(|(_, v)| v.clone());
+        let mut props = vec![
+            ("fill".into(), "none".into()),
+            (
+                "stroke".into(),
+                from_defaults("stroke").unwrap_or_else(|| live("stroke")),
+            ),
+            (
+                "stroke-width".into(),
+                from_defaults("stroke-width").unwrap_or_else(|| "2".into()),
+            ),
+            (
+                "stroke-dasharray".into(),
+                from_defaults("stroke-dasharray").unwrap_or_else(|| "none".into()),
+            ),
+        ];
+        for (k, v) in &dp {
+            if !k.starts_with("font")
+                && !matches!(k.as_str(), "stroke" | "stroke-width" | "stroke-dasharray")
+            {
+                props.push((k.clone(), v.clone()));
+            }
         }
-        if !wire_paint.iter().any(|(p, _)| p == "stroke-width") {
-            wire_paint.push(("stroke-width".into(), "2".into()));
-        }
-        if !wire_paint.iter().any(|(p, _)| p == "stroke-dasharray") {
-            wire_paint.push(("stroke-dasharray".into(), "none".into()));
-        }
-        props.extend(wire_paint);
         rules.push(Rule {
             class: "lini-wire".into(),
             props,
@@ -374,7 +368,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
     // Class rules in source order — the stylesheet's `.name { }` rules shipped
     // as CSS. After the shape/wire default rules, so a class overrides a default.
     for (name, attrs) in &laid.sheet.class_rules {
-        if !used_styles.contains(name.as_str()) {
+        if name.starts_with("lini-") || !used_styles.contains(name.as_str()) {
             continue;
         }
         rules.push(Rule {
@@ -468,6 +462,14 @@ fn layout_number(vars: &VarTable, name: &str, fallback: f64) -> f64 {
         .unwrap_or(fallback)
 }
 
+/// Ensure a closed-shape rule masks `stroke-dasharray` (so a container's `line:`
+/// can't bleed into children through a gap in the cascade).
+fn ensure_dash_none(props: &mut Vec<(String, String)>) {
+    if !props.iter().any(|(p, _)| p == "stroke-dasharray") {
+        props.push(("stroke-dasharray".into(), "none".into()));
+    }
+}
+
 fn collect<'a>(
     node: &'a PlacedNode,
     present: &mut BTreeSet<&'a str>,
@@ -496,7 +498,8 @@ mod tests {
     fn rules_for(src: &str) -> RuleSet {
         let tokens = crate::lexer::lex(src).expect("lex");
         let file = crate::syntax::parser::parse(&tokens).expect("parse");
-        let program = crate::resolve::resolve_with_theme(&file, &[]).expect("resolve");
+        let lowered = crate::desugar::desugar(&file).expect("desugar");
+        let program = crate::resolve::resolve_with_theme(&lowered, &[]).expect("resolve");
         let laid = crate::layout::layout(&program).expect("layout");
         build(&laid, &Options::default())
     }

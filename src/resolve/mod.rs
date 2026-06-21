@@ -12,7 +12,6 @@ mod ir;
 mod merge;
 mod program;
 mod scene;
-mod types;
 mod value;
 mod wires;
 

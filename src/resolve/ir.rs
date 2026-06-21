@@ -10,22 +10,22 @@ pub struct Program {
     pub sheet: SheetInputs,
 }
 
-/// The stylesheet layers the renderer restates as CSS class rules — paint rides
-/// CSS, geometry bakes (SPEC §13). Node attrs arrive fully merged; these are the
-/// per-layer inputs the rules builder emits alongside them. Descendant rules
-/// (`|table box| { }`) carry no entry: their paint bakes inline via the cascade.
+/// The render inputs the rules builder restates as CSS class rules — paint rides
+/// CSS, geometry bakes (SPEC §13). After desugar every type/template/define lives
+/// as a single-class rule, so this is just those rules' resolved attrs (the
+/// generated `.lini-*` type classes and the user `.style` classes, in stylesheet
+/// order), the wire defaults, and the root inherited-text baseline. Descendant
+/// rules (`|.lini-table .lini-box| { }`) carry no entry: their paint bakes inline.
 #[derive(Default, Clone)]
 pub struct SheetInputs {
-    /// `.name { }` class rules, in source order — emitted as `lini-style-*`.
+    /// Single-class rules in source order: `lini-<type>` (generated type classes,
+    /// emitted verbatim) and user classes (emitted `lini-style-<name>`).
     pub class_rules: Vec<(String, AttrMap)>,
-    /// `name { }` element rules, in source order — merged into `lini-*`.
-    pub element_rules: Vec<(String, AttrMap)>,
-    /// `|name::base| { }` define defaults (own attrs only), in source order.
-    pub defines: Vec<(String, AttrMap)>,
-    /// Built-in template attrs (e.g. `group`'s container look).
-    pub templates: Vec<(String, AttrMap)>,
-    /// `wire { }` defaults.
+    /// The `-> { }` wire defaults.
     pub wire_defaults: AttrMap,
+    /// The root container's `font-size` — the inherited-text baseline for `.lini`
+    /// (a baked layout constant carried in the global block, not a CSS var).
+    pub root_font_size: f64,
 }
 
 /// Scene block: container attrs + body of instances.
