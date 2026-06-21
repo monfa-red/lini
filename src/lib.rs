@@ -15,15 +15,16 @@ mod theme;
 pub use error::{Diagnostic, Error, Level};
 pub use fmt::format as format_source;
 
-/// Expand a source file's sugar into the explicit children it stands for and
-/// print canonical `.lini` — what `lini desugar` shows (SPEC §14): positional
-/// labels and inline wire labels become the `|caption|` / `|text|` children
-/// they stand for; types, variables, and properties stay as written; comments
-/// are dropped.
+/// Lower a source file's sugar to primitives + `.lini-*` classes and print canonical
+/// `.lini` — what `lini desugar` shows: every typed instance becomes a `|primitive|`
+/// wearing its `.lini-*` chain, defines and templates collapse into generated
+/// `.lini-*` class defs, scene/wire defaults fill the global block, and labels /
+/// `along:` become explicit. Comments are dropped. The lowered form re-renders
+/// identically and is a fixed point of desugar.
 pub fn desugar_source(src: &str) -> Result<String, Error> {
     let tokens = lexer::lex(src)?;
     let file = syntax::parser::parse(&tokens)?;
-    Ok(fmt::print_file(&desugar::desugar(&file)))
+    Ok(fmt::print_file(&desugar::desugar(&file)?))
 }
 pub use layout::{Rule, Severity, Violation};
 pub use serve::{ServeTarget, serve};

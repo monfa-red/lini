@@ -2,9 +2,6 @@
 //! base→derived name chains (primitive excluded — it is the `kind`); desugar turns
 //! each chain name into a `.lini-<name>` class. Cycles, depth > 16, and shadowing a
 //! built-in are errors.
-//!
-//! Allowed dead-code until the full lowering consumes these (added in a later step).
-#![allow(dead_code)]
 
 use crate::error::Error;
 use crate::resolve::ShapeKind;
@@ -94,16 +91,6 @@ impl Types {
         self.walk(name, span, &mut Vec::new(), 0)
     }
 
-    /// Whether `name` resolves through `target` — its primitive kind, or any
-    /// template/define in its chain (for the label rules: an icon consumes its
-    /// text as a glyph, a group holds children).
-    pub fn resolves_through(&self, name: &str, target: &str) -> bool {
-        match self.resolve(name, Span::empty()) {
-            Ok(info) => info.kind.as_str() == target || info.chain.iter().any(|n| n == target),
-            Err(_) => false,
-        }
-    }
-
     /// Walk a type to its primitive base, accumulating the chain base→derived.
     /// `visiting` carries the chain for cycle detection; `depth` bounds it.
     fn walk(
@@ -186,15 +173,6 @@ mod tests {
             chain("{ |panel::group| { } }\n", "panel"),
             vec!["group", "panel"]
         );
-    }
-
-    #[test]
-    fn resolves_through_finds_a_base_in_the_chain() {
-        let file = parse("{ |panel::group| { } }\n");
-        let t = Types::build(&file).expect("build");
-        assert!(t.resolves_through("panel", "group"));
-        assert!(t.resolves_through("icon", "icon")); // primitive kind match
-        assert!(!t.resolves_through("panel", "icon"));
     }
 
     #[test]

@@ -2,9 +2,6 @@
 //! place Lini's look is tuned; desugar lowers these into `.lini-*` class defs, the
 //! global block, and the `-> { }` wire defaults. Visual `--lini-*` colours stay
 //! live `--var` references (render emits their defaults as `@layer` CSS).
-//!
-//! Allowed dead-code until the full lowering consumes these (added in a later step).
-#![allow(dead_code)]
 
 use crate::resolve::ShapeKind;
 use crate::span::Span;

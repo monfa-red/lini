@@ -2,9 +2,6 @@
 //! nowhere becomes an empty `|box|` at the scene root (SPEC §3). This gathers the
 //! declared ids and the to-create ids; the caller lowers each created box through
 //! the same path as a written one (so it gains its `.lini-box` class and id label).
-//!
-//! Allowed dead-code until the full lowering consumes these (added in a later step).
-#![allow(dead_code)]
 
 use crate::span::Span;
 use crate::syntax::ast::{Child, Node, Wire};

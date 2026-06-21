@@ -4,16 +4,13 @@
 //! is byte-identical; the tier-1 cascade folds them in reverse (primitive first,
 //! derived last wins). Each present type name gets one
 //! `.lini-<name> { bundle + element-rule decls }` stylesheet rule.
-//!
-//! Allowed dead-code until the full lowering consumes these (added in a later step).
-#![allow(dead_code)]
 
 use super::bundles::{primitive_bundle, template_bundle};
 use super::types::{TEMPLATES, TypeInfo};
 use crate::resolve::ShapeKind;
 use crate::span::Span;
 use crate::syntax::ast::{Decl, Rule, SelPart, Selector};
-use std::collections::{BTreeSet, HashMap};
+use std::collections::{BTreeSet, HashMap, HashSet};
 
 /// The `.lini-<name>` class for a type/primitive name.
 pub fn lini_class(name: &str) -> String {
@@ -35,25 +32,26 @@ pub fn worn_classes(info: &TypeInfo) -> Vec<String> {
     out
 }
 
-/// One class def per present type name, ordered primitives → templates → defines
-/// (base before derived), each = its bundle then its element-rule decls (so an
-/// element rule overrides the bundle in the cascade fold). A name with no decls
-/// (e.g. `image`) is skipped — it is still worn for the render class, just carries
-/// no rule. `present` holds bare type names (e.g. "box", "group", a define name).
+/// One class def per present type name, ordered primitives → templates → extras
+/// (defines / lowered define-classes, base before derived), each = its bundle
+/// merged with its element-rule decls. A name with no decls (e.g. `image`) is
+/// skipped — it is still worn for the render class, just carries no rule.
+/// `present` holds bare type names (e.g. "box", "group", a define name);
+/// `extra_order` is the source order of non-primitive/template type names.
 pub fn class_defs(
     present: &BTreeSet<String>,
     element_rules: &HashMap<String, Vec<Decl>>,
-    define_order: &[String],
+    extra_order: &[String],
 ) -> Vec<Rule> {
     let mut rules = Vec::new();
-    let mut emit = |name: &str, base: Vec<Decl>| {
+    let mut emit = |name: &str, bundle: Vec<Decl>| {
         if !present.contains(name) {
             return;
         }
-        let mut decls = base;
-        if let Some(extra) = element_rules.get(name) {
-            decls.extend(extra.iter().cloned());
-        }
+        let decls = match element_rules.get(name) {
+            Some(extra) => merge_decls(bundle, extra),
+            None => bundle,
+        };
         if decls.is_empty() {
             return;
         }
@@ -65,10 +63,27 @@ pub fn class_defs(
     for (name, _) in TEMPLATES {
         emit(name, template_bundle(name));
     }
-    for name in define_order {
-        emit(name, Vec::new());
+    let mut seen = HashSet::new();
+    for name in extra_order {
+        if seen.insert(name.as_str()) {
+            emit(name, Vec::new());
+        }
     }
     rules
+}
+
+/// Merge `extra` decls into `base`: an extra whose property name already exists
+/// overrides it **in place** (so the class stays a single clean rule, and
+/// re-merging is a fixed point — desugar idempotency); a new property appends.
+pub(super) fn merge_decls(mut base: Vec<Decl>, extra: &[Decl]) -> Vec<Decl> {
+    for d in extra {
+        if let Some(slot) = base.iter_mut().find(|x| x.name == d.name) {
+            *slot = d.clone();
+        } else {
+            base.push(d.clone());
+        }
+    }
+    base
 }
 
 fn class_rule(name: &str, decls: Vec<Decl>) -> Rule {

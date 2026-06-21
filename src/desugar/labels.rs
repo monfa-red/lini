@@ -1,63 +1,9 @@
-//! Label / `along:` lowering helpers, shared by the full desugar pass. The
-//! id-as-label rule (a leaf box with no content shows its id) and a wire's
+//! Label / `along:` lowering helpers, used by the full desugar pass ([`super`]).
+//! The id-as-label rule (a leaf box with no content shows its id) and a wire's
 //! auto-distributed `along:` fractions are each a small, reusable transform
 //! (SPEC §3, §14).
-//!
-//! For now this also hosts the thin `desugar` entry point (id-as-label + `along:`
-//! only — types stay as written); the full lowering replaces it in a later step.
 
-use crate::resolve::type_chain_contains;
-use crate::syntax::ast::{Child, Decl, File, Node, TextNode, Value, Wire};
-
-/// Expand the surface sugar across the whole file. The stylesheet is untouched.
-pub fn desugar(file: &File) -> File {
-    File {
-        stylesheet: file.stylesheet.clone(),
-        stylesheet_span: file.stylesheet_span,
-        instances: file
-            .instances
-            .iter()
-            .map(|c| desugar_child(c, file))
-            .collect(),
-        wires: file.wires.iter().map(auto_along).collect(),
-    }
-}
-
-fn desugar_child(child: &Child, file: &File) -> Child {
-    match child {
-        Child::Box(n) => Child::Box(desugar_node(n, file)),
-        Child::Text(t) => Child::Text(t.clone()),
-    }
-}
-
-fn desugar_node(node: &Node, file: &File) -> Node {
-    let ty = node.ty.as_deref().unwrap_or("box");
-    let mut children: Vec<Child> = node
-        .children
-        .iter()
-        .map(|c| desugar_child(c, file))
-        .collect();
-
-    // id-as-label (SPEC §3): a leaf box with no content of its own shows its id.
-    let is_icon = type_chain_contains(ty, "icon", file);
-    let is_container = type_chain_contains(ty, "group", file);
-    if children.is_empty()
-        && let Some(label) = label_child_for(node, is_icon, is_container)
-    {
-        children.push(label);
-    }
-
-    Node {
-        id: node.id.clone(),
-        ty: node.ty.clone(),
-        classes: node.classes.clone(),
-        style: node.style.clone(),
-        style_span: node.style_span,
-        children,
-        wires: node.wires.iter().map(auto_along).collect(),
-        span: node.span,
-    }
-}
+use crate::syntax::ast::{Child, Decl, Node, TextNode, Value, Wire};
 
 /// The id-as-label text child for a leaf box (SPEC §3): a box that is neither an
 /// `|icon|` (which consumes its text as a glyph name) nor a container (which holds
@@ -106,50 +52,5 @@ pub(super) fn auto_along(w: &Wire) -> Wire {
         style_span: w.style_span,
         labels: w.labels.clone(),
         span: w.span,
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    fn desugar(src: &str) -> String {
-        crate::desugar_source(src).expect("desugar")
-    }
-
-    #[test]
-    fn id_becomes_an_explicit_label() {
-        assert_eq!(desugar("cat |box|\n"), "cat |box| [ \"cat\" ]\n");
-    }
-
-    #[test]
-    fn an_explicit_label_is_left_alone() {
-        assert_eq!(desugar("cat |box| \"Cat\"\n"), "cat |box| [ \"Cat\" ]\n");
-    }
-
-    #[test]
-    fn icon_glyph_is_not_expanded() {
-        assert_eq!(desugar("home |icon|\n"), "home |icon|\n");
-    }
-
-    #[test]
-    fn a_container_keeps_its_children() {
-        // A group holds its children; its id is not a label.
-        let out = desugar("g |group| [\n  a |box|\n]\n");
-        assert!(!out.contains("\"g\""), "{out}");
-        assert!(out.contains("a |box|"), "{out}");
-    }
-
-    #[test]
-    fn wire_labels_gain_an_explicit_along() {
-        assert_eq!(
-            desugar("a -> b \"near a\" \"near b\"\n"),
-            "a -> b { along: 0.33 0.67; } \"near a\" \"near b\"\n"
-        );
-    }
-
-    #[test]
-    fn an_explicit_along_is_left_alone() {
-        let out = desugar("a -> b { along: 0.2 } \"x\"\n");
-        assert!(out.contains("along: 0.2;"), "{out}");
-        assert_eq!(out.matches("along").count(), 1, "{out}");
     }
 }
