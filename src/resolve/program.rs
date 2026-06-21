@@ -195,7 +195,12 @@ fn build_sheet_inputs(
     // Live-CSS text styling the global block sets — rides the `.lini` rule so it
     // applies scene-wide (SPEC §10). No default: present only when authored.
     let mut root_text = AttrMap::new();
-    for name in ["font-style", "text-transform"] {
+    for name in [
+        "font-style",
+        "text-transform",
+        "text-decoration",
+        "text-shadow",
+    ] {
         if let Some(v) = root_attrs.get(name) {
             root_text.insert(name, v.clone());
         }

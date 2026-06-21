@@ -869,6 +869,7 @@ Longhands `padding-top`/`-right`/`-bottom`/`-left` are accepted.
 | `font-weight` | `--font-weight` (body `bold`; captions / wire labels `normal`) | `normal` / `bold`. |
 | `font-style` | `normal` | `normal` / `italic` / `oblique` — live CSS. |
 | `text-transform` | `none` | `uppercase` / `lowercase` / `capitalize` — live CSS (browser-applied; some SVG renderers ignore it). |
+| `text-decoration` | `none` | `underline` / `overline` / `line-through` — live CSS. |
 | `letter-spacing` | 0 | px between characters — positive widens, negative tightens. |
 | `line-spacing` | 0 | px added between the lines of a `\n` text block. |
 
@@ -882,10 +883,10 @@ stylesheet, or scope it by setting the property on a container.
 spacing compiles into the glyph and line positions (like `padding`), never emitted
 as a style. Both default to 0, so text is unaffected until set.
 
-`font-style` and `text-transform` are the reverse — **live CSS** with no baked
-default: they don't touch layout, ride the class / `<g>` / `.lini` rule, and a
-host page can override them. Set either in the global block to style the whole
-scene (it states on `.lini`), exactly like a global `font-size:`.
+`font-style`, `text-transform`, and `text-decoration` are the reverse — **live
+CSS** with no baked default: they don't touch layout, ride the class / `<g>` /
+`.lini` rule, and a host page can override them. Set any in the global block to
+style the whole scene (it states on `.lini`), exactly like a global `font-size:`.
 
 ### Markers & routing
 
@@ -1053,9 +1054,9 @@ difference as an inline `style="…"` (inline beats class, mirroring
 [Specificity](#12-specificity)). Geometry — sizes, positions (`pin` and
 `translate` fold into the baked origin), radii, points, paths, transforms — is
 always baked into attributes. Inherited text properties (`font-family`,
-`font-size`, `font-weight`, `color`, and any global `font-style` / `text-transform`)
-state on `.lini` and cascade natively; a node's own text property emits on its
-`<g>` and inherits to its subtree.
+`font-size`, `font-weight`, `color`, and any global `font-style` / `text-transform`
+/ `text-decoration`) state on `.lini` and cascade natively; a node's own text
+property emits on its `<g>` and inherits to its subtree.
 
 **Box:**
 

@@ -27,8 +27,9 @@ pub struct SheetInputs {
     /// (a baked layout constant carried in the global block, not a CSS var).
     pub root_font_size: f64,
     /// Inherited-text props set on the global block that ride the `.lini` rule as
-    /// live CSS — `font-style`, `text-transform`. No var/default, so each emits
-    /// only when the author sets it, applying scene-wide (SPEC §10).
+    /// live CSS — `font-style`, `text-transform`, `text-decoration`, `text-shadow`.
+    /// No var/default, so each emits only when the author sets it, applying
+    /// scene-wide (SPEC §10).
     pub root_text: AttrMap,
 }
 

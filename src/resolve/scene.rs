@@ -21,6 +21,8 @@ pub(super) const INHERITED_TEXT: &[&str] = &[
     "font-weight",
     "font-style",
     "text-transform",
+    "text-decoration",
+    "text-shadow",
     "letter-spacing",
     "line-spacing",
     "color",

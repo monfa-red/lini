@@ -281,10 +281,7 @@ fn node_style_attr(
             _ => n.attrs.get(lini),
         };
         let Some(v) = value else { continue };
-        let formatted = match *lini {
-            "font-size" => format!("{}px", format_value(v, vars, opts)),
-            _ => format_value(v, vars, opts),
-        };
+        let formatted = values::css_value(lini, v, vars, opts);
         if ruleset.provided(classes, css) != Some(formatted.as_str()) {
             decls.push((css, formatted));
         }

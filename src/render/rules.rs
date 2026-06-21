@@ -31,6 +31,8 @@ pub const PAINT_PROPS: &[(&str, &str)] = &[
     ("font-weight", "font-weight"),
     ("font-style", "font-style"),
     ("text-transform", "text-transform"),
+    ("text-decoration", "text-decoration"),
+    ("text-shadow", "text-shadow"),
 ];
 
 pub struct Rule {
@@ -168,13 +170,11 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
         ("font-weight".into(), live("font-weight")),
         ("color".into(), live("text-color")),
     ];
-    // Live-CSS text styling with no var/default (`font-style`, `text-transform`):
-    // emitted here only when the global block set it, so it applies scene-wide
-    // exactly like a global `font-size:` (SPEC §10).
-    for prop in ["font-style", "text-transform"] {
-        if let Some(v) = laid.sheet.root_text.get(prop) {
-            root_props.push((prop.to_string(), format_value(v, vars, opts)));
-        }
+    // Live-CSS text styling with no var/default (font-style, text-transform,
+    // text-decoration, text-shadow): `root_text` holds exactly the ones the global
+    // block set, stated here so they apply scene-wide like a global `font-size:`.
+    for (prop, v) in &laid.sheet.root_text.map {
+        root_props.push((prop.clone(), super::values::css_value(prop, v, vars, opts)));
     }
     rules.push(Rule {
         class: "lini".into(),
@@ -444,11 +444,10 @@ pub fn paint_props(attrs: &AttrMap, vars: &VarTable, opts: &Options) -> Vec<(Str
     let mut out = Vec::new();
     for (lini, css) in PAINT_PROPS {
         if let Some(v) = attrs.get(lini) {
-            let formatted = match *lini {
-                "font-size" => format!("{}px", format_value(v, vars, opts)),
-                _ => format_value(v, vars, opts),
-            };
-            out.push((css.to_string(), formatted));
+            out.push((
+                css.to_string(),
+                super::values::css_value(lini, v, vars, opts),
+            ));
         }
     }
     if attrs.get("stroke-style").is_some() {

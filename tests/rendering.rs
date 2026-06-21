@@ -182,6 +182,29 @@ fn text_transform_is_live_css_on_an_element_and_globally() {
 }
 
 #[test]
+fn text_decoration_is_live_css_on_an_element_and_globally() {
+    // Same live-CSS treatment as text-transform: element rides the `<g>`, global
+    // states on `.lini`, no default.
+    let el = render_baked("|box| { text-decoration: underline } \"hi\"\n");
+    assert!(el.contains("text-decoration: underline"), "{}", el);
+    let rule = lini_root_rule(&render_baked(
+        "{ text-decoration: line-through }\n|box| \"hi\"\n",
+    ));
+    assert!(rule.contains("text-decoration: line-through"), "{}", rule);
+    assert!(!render_baked("|box| \"x\"\n").contains("text-decoration"));
+}
+
+#[test]
+fn text_shadow_compiles_unitless_lengths_to_px() {
+    // SPEC §10: text-shadow is live CSS; lini's unitless offsets/blur gain `px`,
+    // colours pass through. Works on an element and globally.
+    let el = render_baked("|box| { text-shadow: 1 1 2 gray } \"hi\"\n");
+    assert!(el.contains("text-shadow: 1px 1px 2px gray"), "{}", el);
+    let rule = lini_root_rule(&render_baked("{ text-shadow: 2 2 black }\n|box| \"hi\"\n"));
+    assert!(rule.contains("text-shadow: 2px 2px black"), "{}", rule);
+}
+
+#[test]
 fn line_missing_points_error_uses_pipe_sigil() {
     let err = lini::compile_str("x |line|\n").expect_err("line needs points");
     assert!(

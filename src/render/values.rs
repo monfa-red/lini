@@ -52,6 +52,37 @@ fn format_call(c: &ResolvedCall, vars: &VarTable, opts: &Options) -> String {
     format!("{}({})", c.name, parts.join(", "))
 }
 
+/// Format a paint/text property value for CSS output. lini numbers are unitless
+/// (SPEC §2), so `font-size` and the length parts of `text-shadow` get `px`
+/// added; every other property formats plainly.
+pub fn css_value(prop: &str, value: &ResolvedValue, vars: &VarTable, opts: &Options) -> String {
+    match prop {
+        "font-size" => format!("{}px", format_value(value, vars, opts)),
+        "text-shadow" => px_lengths(value, vars, opts),
+        _ => format_value(value, vars, opts),
+    }
+}
+
+/// `text-shadow` formatting: every numeric offset/blur gains `px`; a tuple joins
+/// with spaces, a comma-list with commas (multiple shadows). Colours and idents
+/// pass through (a `--var` colour stays themeable).
+fn px_lengths(value: &ResolvedValue, vars: &VarTable, opts: &Options) -> String {
+    match value {
+        ResolvedValue::Number(n) => format!("{}px", num(*n)),
+        ResolvedValue::Tuple(items) => items
+            .iter()
+            .map(|i| px_lengths(i, vars, opts))
+            .collect::<Vec<_>>()
+            .join(" "),
+        ResolvedValue::List(items) => items
+            .iter()
+            .map(|i| px_lengths(i, vars, opts))
+            .collect::<Vec<_>>()
+            .join(", "),
+        other => format_value(other, vars, opts),
+    }
+}
+
 /// An attribute formatted for SVG, falling back to the lini CSS variable named
 /// `var_name` when unset. Going through `format_value` means `--bake-vars`
 /// correctly resolves the fallback to a literal rather than leaving a `var()`
