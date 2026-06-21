@@ -1,8 +1,10 @@
-//! `lini desugar` (SPEC §14): expand the surface sugar — a box's id-as-label
-//! into an explicit `[ "id" ]` text child, a wire's auto-distributed labels into
-//! an explicit `along:` — into the form it stands for, then re-print. Types,
-//! variables, and properties stay as written; comments are not preserved. A
-//! teaching / debugging view, never a rewrite.
+//! Label / `along:` lowering helpers, shared by the full desugar pass. The
+//! id-as-label rule (a leaf box with no content shows its id) and a wire's
+//! auto-distributed `along:` fractions are each a small, reusable transform
+//! (SPEC §3, §14).
+//!
+//! For now this also hosts the thin `desugar` entry point (id-as-label + `along:`
+//! only — types stay as written); the full lowering replaces it in a later step.
 
 use crate::resolve::type_chain_contains;
 use crate::syntax::ast::{Child, Decl, File, Node, TextNode, Value, Wire};
@@ -17,7 +19,7 @@ pub fn desugar(file: &File) -> File {
             .iter()
             .map(|c| desugar_child(c, file))
             .collect(),
-        wires: file.wires.iter().map(desugar_wire).collect(),
+        wires: file.wires.iter().map(auto_along).collect(),
     }
 }
 
@@ -30,7 +32,6 @@ fn desugar_child(child: &Child, file: &File) -> Child {
 
 fn desugar_node(node: &Node, file: &File) -> Node {
     let ty = node.ty.as_deref().unwrap_or("box");
-
     let mut children: Vec<Child> = node
         .children
         .iter()
@@ -38,19 +39,12 @@ fn desugar_node(node: &Node, file: &File) -> Node {
         .collect();
 
     // id-as-label (SPEC §3): a leaf box with no content of its own shows its id.
-    // An `|icon|` consumes its text as the glyph name, and a container (group /
-    // table / group-based define) holds its children — neither expands.
     let is_icon = type_chain_contains(ty, "icon", file);
     let is_container = type_chain_contains(ty, "group", file);
     if children.is_empty()
-        && !is_icon
-        && !is_container
-        && let Some(id) = &node.id
+        && let Some(label) = label_child_for(node, is_icon, is_container)
     {
-        children.push(Child::Text(TextNode {
-            text: id.clone(),
-            span: node.span,
-        }));
+        children.push(label);
     }
 
     Node {
@@ -60,14 +54,30 @@ fn desugar_node(node: &Node, file: &File) -> Node {
         style: node.style.clone(),
         style_span: node.style_span,
         children,
-        wires: node.wires.iter().map(desugar_wire).collect(),
+        wires: node.wires.iter().map(auto_along).collect(),
         span: node.span,
     }
 }
 
-/// Make a wire's auto-distributed labels explicit: add an `along:` list of even
+/// The id-as-label text child for a leaf box (SPEC §3): a box that is neither an
+/// `|icon|` (which consumes its text as a glyph name) nor a container (which holds
+/// its children) shows its id. `None` when the node has no id or is icon/container;
+/// the caller adds it only when the node has no other content.
+pub(super) fn label_child_for(node: &Node, is_icon: bool, is_container: bool) -> Option<Child> {
+    if is_icon || is_container {
+        return None;
+    }
+    node.id.as_ref().map(|id| {
+        Child::Text(TextNode {
+            text: id.clone(),
+            span: node.span,
+        })
+    })
+}
+
+/// Make a wire's auto-distributed labels explicit: prepend an `along:` list of even
 /// fractions when labels are present and no `along:` was written (SPEC §14).
-fn desugar_wire(w: &Wire) -> Wire {
+pub(super) fn auto_along(w: &Wire) -> Wire {
     let n = w.labels.len();
     let has_along = w.style.iter().any(|d| d.name == "along");
     if n == 0 || has_along {
