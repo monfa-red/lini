@@ -8,6 +8,7 @@
 //! owns the entry point (id-as-label + auto-`along:` only — types stay as written).
 
 mod bundles;
+mod classes;
 mod labels;
 mod types;
 

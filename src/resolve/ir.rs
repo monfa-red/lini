@@ -75,6 +75,24 @@ pub enum ShapeKind {
 }
 
 impl ShapeKind {
+    /// Every primitive, in `as_str` order — the canonical enumeration desugar
+    /// walks to emit a `.lini-<kind>` class def per present primitive.
+    pub const ALL: [ShapeKind; 13] = [
+        Self::Box,
+        Self::Oval,
+        Self::Hex,
+        Self::Slant,
+        Self::Cyl,
+        Self::Diamond,
+        Self::Cloud,
+        Self::Poly,
+        Self::Path,
+        Self::Text,
+        Self::Line,
+        Self::Icon,
+        Self::Image,
+    ];
+
     pub fn parse(s: &str) -> Option<Self> {
         Some(match s {
             "box" => Self::Box,
