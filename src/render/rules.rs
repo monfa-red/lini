@@ -29,6 +29,7 @@ pub const PAINT_PROPS: &[(&str, &str)] = &[
     ("font-family", "font-family"),
     ("font-size", "font-size"),
     ("font-weight", "font-weight"),
+    ("font-style", "font-style"),
 ];
 
 pub struct Rule {

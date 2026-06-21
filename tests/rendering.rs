@@ -137,6 +137,23 @@ fn line_spacing_widens_the_tspan_leading_never_css() {
 }
 
 #[test]
+fn font_style_emits_as_live_css_with_no_default() {
+    // SPEC §10: font-style is a live CSS property — it emits where set (on the
+    // box `<g>`, inherited to its text) and has no global default.
+    let svg = render_baked("g |group| { font-style: italic } \"hi\"\n");
+    assert!(
+        svg.contains("font-style: italic"),
+        "emits where set: {}",
+        svg
+    );
+    // No baked default — a plain box never carries it.
+    assert!(
+        !render_baked("|box| \"x\"\n").contains("font-style"),
+        "no global font-style default"
+    );
+}
+
+#[test]
 fn line_missing_points_error_uses_pipe_sigil() {
     let err = lini::compile_str("x |line|\n").expect_err("line needs points");
     assert!(
