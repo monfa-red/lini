@@ -1,0 +1,22 @@
+// Typography (SPEC §10): the inherited text properties. Set any on a box, a
+// class, or — like font-size — globally in the stylesheet to style the scene.
+//
+// font-family and color: to set these scene-wide, prefer the CSS variables
+// --lini-font-family / --lini-text-color (or --theme) over a global property —
+// variables stay live, so a host page can re-theme them at runtime. A global
+// property bakes its value into the .lini rule instead.
+
+{
+  layout: column; gap: 12;
+  font-weight: normal;          // a global override (the default is bold)
+}
+
+|box| { font-weight: bold } "bold weight"
+|box| { font-style: italic } "italic style"
+|box| { font-family: serif } "serif family"
+|box| { color: hsl(280, 60%, 45%) } "hsl colour"
+|box| { text-transform: uppercase } "uppercased"
+|box| { text-decoration: underline } "underlined"
+|box| { text-shadow: 1 1 2 gray } "shadowed"
+|box| { letter-spacing: 4 } "s p a c e d"
+|box| { line-spacing: 12 } "two\nlines"

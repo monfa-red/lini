@@ -147,6 +147,8 @@ pub struct Decl {
 #[derive(Debug, Clone)]
 pub enum Value {
     Number(f64),
+    /// A number with a `%` suffix — a percentage (color components, SPEC §2).
+    Percent(f64),
     String(String),
     Hex(String),
     Ident(String),

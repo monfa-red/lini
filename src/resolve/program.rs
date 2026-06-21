@@ -192,10 +192,14 @@ fn build_sheet_inputs(
         }
     }
     let root_font_size = root_attrs.number("font-size").unwrap_or(15.0);
-    // Live-CSS text styling the global block sets — rides the `.lini` rule so it
-    // applies scene-wide (SPEC §10). No default: present only when authored.
+    // Inherited-text props the global block set, for the `.lini` rule (SPEC §10).
+    // `font-family` / `font-weight` / `color` override their themeable var when set
+    // globally; the rest are live CSS with no default, present only when authored.
     let mut root_text = AttrMap::new();
     for name in [
+        "font-family",
+        "font-weight",
+        "color",
         "font-style",
         "text-transform",
         "text-decoration",

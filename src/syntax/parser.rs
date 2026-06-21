@@ -324,6 +324,7 @@ impl<'a> Parser<'a> {
         }
         let v = match self.kind() {
             Some(TokKind::Number(n)) => Value::Number(*n),
+            Some(TokKind::Percent(n)) => Value::Percent(*n),
             Some(TokKind::String(s)) => Value::String(s.clone()),
             Some(TokKind::Hex(h)) => Value::Hex(h.clone()),
             Some(TokKind::RawCssVar(s)) => Value::Var(s.clone()),

@@ -158,23 +158,37 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
 
     let mut rules: Vec<Rule> = Vec::new();
 
-    // Root rule: the inherited text properties, stated once. `font-size` is the
-    // baked global-block baseline (a layout constant, always a literal).
+    // Root rule: the inherited-text baseline, stated once. `font-family` /
+    // `font-weight` / `color` default to their themeable var, but a global override
+    // (in `root_text`) wins; `font-size` is the baked literal.
     let font_size = laid.sheet.root_font_size;
+    let rt = &laid.sheet.root_text;
+    let global = |attr: &str, var: &str| match rt.get(attr) {
+        Some(v) => super::values::css_value(attr, v, vars, opts),
+        None => live(var),
+    };
     let mut root_props = vec![
-        ("font-family".into(), live("font-family")),
+        ("font-family".into(), global("font-family", "font-family")),
         (
             "font-size".into(),
             format!("{}px", super::values::num(font_size)),
         ),
-        ("font-weight".into(), live("font-weight")),
-        ("color".into(), live("text-color")),
+        ("font-weight".into(), global("font-weight", "font-weight")),
+        ("color".into(), global("color", "text-color")),
     ];
-    // Live-CSS text styling with no var/default (font-style, text-transform,
-    // text-decoration, text-shadow): `root_text` holds exactly the ones the global
-    // block set, stated here so they apply scene-wide like a global `font-size:`.
-    for (prop, v) in &laid.sheet.root_text.map {
-        root_props.push((prop.clone(), super::values::css_value(prop, v, vars, opts)));
+    // The rest ride `.lini` only when globally set — live CSS with no default.
+    for attr in [
+        "font-style",
+        "text-transform",
+        "text-decoration",
+        "text-shadow",
+    ] {
+        if let Some(v) = rt.get(attr) {
+            root_props.push((
+                attr.to_string(),
+                super::values::css_value(attr, v, vars, opts),
+            ));
+        }
     }
     rules.push(Rule {
         class: "lini".into(),

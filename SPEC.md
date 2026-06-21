@@ -174,7 +174,8 @@ double-quoted string is always **text content**. Single quotes are **not**
 strings (reserved, [§18](#18-reserved-words)).
 
 **Numbers** — integer or decimal, optional sign, no units (px for lengths,
-degrees for angles, 0–1 for opacities/fractions). `10`, `-5`, `0.25`, `+3`.
+degrees for angles, 0–1 for opacities/fractions). `10`, `-5`, `0.25`, `+3`. A
+trailing `%` makes a **percentage** (`50%`), valid only in colour components.
 
 **Values are space-separated and positional**, like CSS: `padding: 5 2 5 5`,
 `shadow: 2 2 4 #0003`, `translate: 10 -4`, `columns: 80 140 80`. A **comma**
@@ -182,9 +183,10 @@ separates list items and appears only where a property takes a list of groups
 (`points: 0 0, 10 10`). **Functions** use parentheses: `rgb(…)`, `hsl(…)`,
 `repeat(…)`.
 
-**Colors** — `#fff`, `#ffaa00`, `#ffaa00cc` (alpha), CSS names (`red`,
-`cornflowerblue`), `rgb(…)`, `rgba(…)`, `hsl(…)`, a `--name` variable reference,
-or `none`. Out-of-range channels are an error.
+**Colors** — `#fff`, `#f80c`, `#ffaa00`, `#ffaa00cc` (3/4/6/8 hex digits; the 4-
+and 8-digit forms carry alpha), CSS names (`red`, `cornflowerblue`), `rgb(…)`,
+`rgba(…)`, `hsl(…)`, `hsla(…)` (percentages allowed — `hsl(200, 50%, 50%)`), a
+`--name` variable reference, or `none`. Out-of-range channels are an error.
 
 ---
 
@@ -876,7 +878,10 @@ Longhands `padding-top`/`-right`/`-bottom`/`-left` are accepted.
 These all **inherit** — nearest ancestor wins, like CSS. Because a string is not a
 box, you never set a text property *on* the text; you set it on a containing box
 (or the root) and it cascades down. Style globally with `font-size: …` in the
-stylesheet, or scope it by setting the property on a container.
+stylesheet, or scope it on a container. A global `font-family:` / `color:` works
+too, but for an **embeddable** diagram prefer the `--lini-font-family` /
+`--lini-text-color` variables (or `--theme`) — they stay live for a host page to
+re-theme, where a global property bakes its value into the `.lini` rule.
 
 `letter-spacing` and `line-spacing` are **baked spacing**, not CSS: they change
 **layout** — the text box grows to fit the wider glyphs or taller block — and the
@@ -1217,7 +1222,7 @@ side        = "top" | "bottom" | "left" | "right"
 
 values      = value_group { "," value_group }        # comma only between list items
 value_group = value { value }                        # space-separated scalars
-value       = number | string | hex | ident | css_var | call
+value       = number | percent | string | hex | ident | css_var | call
 call        = ident "(" [ value { "," value } ] ")"
 css_var     = "--" ident { "-" ident }
 
@@ -1227,6 +1232,7 @@ marker      = "<" | ">" | "*" | "<>"
 
 ident       = ( letter | "_" ) { letter | digit | "_" | "-" }   # excludes reserved sides & 'wire'
 number      = [ "+" | "-" ] ( digit+ [ "." digit+ ] | "." digit+ )
+percent     = number "%"                             # colour components only
 hex         = "#" hexdigit { hexdigit }              # 3, 4, 6, or 8 hex digits
 hexdigit    = digit | "a"…"f" | "A"…"F"
 string      = '"' { char | escape } '"'

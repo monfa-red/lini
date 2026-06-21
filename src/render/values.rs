@@ -12,6 +12,7 @@ use crate::resolve::{AttrMap, ResolvedCall, ResolvedValue, VarTable};
 pub fn format_value(value: &ResolvedValue, vars: &VarTable, opts: &Options) -> String {
     match value {
         ResolvedValue::Number(n) => num(*n),
+        ResolvedValue::Percent(n) => format!("{}%", num(*n)),
         ResolvedValue::String(s) => format!("\"{}\"", s),
         ResolvedValue::Hex(h) => format!("#{}", h),
         ResolvedValue::Ident(s) => s.clone(),

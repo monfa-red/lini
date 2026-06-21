@@ -78,6 +78,7 @@ pub fn expand_box_value(value: &ResolvedValue, span: Span) -> Result<(f64, f64, 
 fn describe(v: &ResolvedValue) -> &'static str {
     match v {
         ResolvedValue::Number(_) => "number",
+        ResolvedValue::Percent(_) => "percentage",
         ResolvedValue::String(_) => "string",
         ResolvedValue::Hex(_) => "hex color",
         ResolvedValue::Ident(_) => "identifier",

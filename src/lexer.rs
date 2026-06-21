@@ -7,6 +7,7 @@ pub enum TokKind {
     Ident(String),
     String(String),
     Number(f64),
+    Percent(f64),      // a number with a '%' suffix (color components, SPEC §2)
     Hex(String),       // hex digits without leading '#'
     RawCssVar(String), // CSS var name without leading '--'
 
@@ -224,7 +225,7 @@ impl<'a> Lexer<'a> {
             self.i += 1;
         }
         let len = self.i - digits_start;
-        if !matches!(len, 3 | 6 | 8) {
+        if !matches!(len, 3 | 4 | 6 | 8) {
             return Err(Error::at(
                 Span::new(start, self.i),
                 format!("invalid hex color '{}'", &self.src[start..self.i]),
@@ -290,8 +291,15 @@ impl<'a> Lexer<'a> {
                 format!("invalid number literal '{}'", text),
             )
         })?;
+        // A trailing `%` makes it a percentage (color components, SPEC §2).
+        let kind = if self.i < self.bytes.len() && self.bytes[self.i] == b'%' {
+            self.i += 1;
+            TokKind::Percent(value)
+        } else {
+            TokKind::Number(value)
+        };
         self.tokens.push(Token {
-            kind: TokKind::Number(value),
+            kind,
             span: Span::new(start, self.i),
         });
         Ok(())

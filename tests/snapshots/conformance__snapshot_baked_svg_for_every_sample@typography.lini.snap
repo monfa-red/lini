@@ -1,0 +1,52 @@
+---
+source: tests/conformance.rs
+expression: svg
+input_file: samples/typography.lini
+---
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-110.5 -341 221 682" width="221" height="682" class="lini">
+  <style>
+    .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
+    .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
+  </style>
+  <defs/>
+  <g class="lini-scene">
+    <g class="lini-node lini-box" style="font-weight: bold" transform="translate(0,-292.5)">
+      <rect x="-69.5" y="-27.5" width="139" height="55" rx="6" ry="6"/>
+      <text class="lini-text" x="0" y="0">bold weight</text>
+    </g>
+    <g class="lini-node lini-box" style="font-style: italic" transform="translate(0,-223.5)">
+      <rect x="-74" y="-27.5" width="148" height="55" rx="6" ry="6"/>
+      <text class="lini-text" x="0" y="0">italic style</text>
+    </g>
+    <g class="lini-node lini-box" style="font-family: serif" transform="translate(0,-154.5)">
+      <rect x="-74" y="-27.5" width="148" height="55" rx="6" ry="6"/>
+      <text class="lini-text" x="0" y="0">serif family</text>
+    </g>
+    <g class="lini-node lini-box" style="color: hsl(280, 60%, 45%)" transform="translate(0,-85.5)">
+      <rect x="-65" y="-27.5" width="130" height="55" rx="6" ry="6"/>
+      <text class="lini-text" x="0" y="0">hsl colour</text>
+    </g>
+    <g class="lini-node lini-box" style="text-transform: uppercase" transform="translate(0,-16.5)">
+      <rect x="-65" y="-27.5" width="130" height="55" rx="6" ry="6"/>
+      <text class="lini-text" x="0" y="0">uppercased</text>
+    </g>
+    <g class="lini-node lini-box" style="text-decoration: underline" transform="translate(0,52.5)">
+      <rect x="-65" y="-27.5" width="130" height="55" rx="6" ry="6"/>
+      <text class="lini-text" x="0" y="0">underlined</text>
+    </g>
+    <g class="lini-node lini-box" style="text-shadow: 1px 1px 2px gray" transform="translate(0,121.5)">
+      <rect x="-56" y="-27.5" width="112" height="55" rx="6" ry="6"/>
+      <text class="lini-text" x="0" y="0">shadowed</text>
+    </g>
+    <g class="lini-node lini-box" transform="translate(0,190.5)">
+      <rect x="-89.5" y="-27.5" width="179" height="55" rx="6" ry="6"/>
+      <text class="lini-text" x="0" y="0" dx="0 4 4 4 4 4 4 4 4 4 4">s p a c e d</text>
+    </g>
+    <g class="lini-node lini-box" transform="translate(0,276)">
+      <rect x="-42.5" y="-44" width="85" height="88" rx="6" ry="6"/>
+      <text class="lini-text" x="0" y="0"><tspan x="0" y="-15">two</tspan><tspan x="0" dy="30">lines</tspan></text>
+    </g>
+  </g>
+  <g class="lini-wires"/>
+</svg>

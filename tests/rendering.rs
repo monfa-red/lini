@@ -205,6 +205,43 @@ fn text_shadow_compiles_unitless_lengths_to_px() {
 }
 
 #[test]
+fn global_font_family_weight_color_override_their_var() {
+    // SPEC §10: a global font-family / font-weight / color states on `.lini`,
+    // overriding its themeable var; unset, the live var stays.
+    let set = lini_root_rule(&render_baked(
+        "{ font-weight: normal; color: navy; font-family: serif }\n|box| \"hi\"\n",
+    ));
+    assert!(
+        set.contains("font-weight: normal")
+            && set.contains("color: navy")
+            && set.contains("font-family: serif"),
+        "{}",
+        set
+    );
+    let dflt = lini_root_rule(&render_live("|box| \"hi\"\n"));
+    assert!(
+        dflt.contains("color: var(--lini-text-color)")
+            && dflt.contains("font-weight: var(--lini-font-weight)"),
+        "{}",
+        dflt
+    );
+}
+
+#[test]
+fn colors_support_rgba_hsl_hsla_and_alpha_hex() {
+    // SPEC §2: rgb/rgba/hsl/hsla (percentages) and 3/4/6/8-digit hex all round-trip.
+    for c in [
+        "rgba(1, 2, 3, 0.5)",
+        "hsl(200, 50%, 50%)",
+        "hsla(0, 70%, 50%, 0.5)",
+        "#0a8f",
+    ] {
+        let svg = render_baked(&format!("b |box| {{ fill: {c} }} \"x\"\n"));
+        assert!(svg.contains(&format!("fill: {c}")), "{c}: {svg}");
+    }
+}
+
+#[test]
 fn line_missing_points_error_uses_pipe_sigil() {
     let err = lini::compile_str("x |line|\n").expect_err("line needs points");
     assert!(

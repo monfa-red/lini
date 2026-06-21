@@ -51,6 +51,7 @@ fn resolve_group(group: &[Value], span: Span, vars: &VarTable) -> Result<Resolve
 fn resolve_scalar(v: &Value, span: Span, vars: &VarTable) -> Result<ResolvedValue, Error> {
     Ok(match v {
         Value::Number(n) => ResolvedValue::Number(*n),
+        Value::Percent(n) => ResolvedValue::Percent(*n),
         Value::String(s) => ResolvedValue::String(s.clone()),
         Value::Hex(h) => ResolvedValue::Hex(h.clone()),
         Value::Ident(s) => ResolvedValue::Ident(s.clone()),

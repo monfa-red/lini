@@ -561,6 +561,10 @@ impl Emitter<'_> {
     fn emit_value(&mut self, v: &Value) {
         match v {
             Value::Number(n) => self.out.push_str(&format_number(*n)),
+            Value::Percent(n) => {
+                self.out.push_str(&format_number(*n));
+                self.out.push('%');
+            }
             Value::String(s) => self.emit_string(s),
             Value::Hex(h) => {
                 self.out.push('#');

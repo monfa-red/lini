@@ -26,10 +26,10 @@ pub struct SheetInputs {
     /// The root container's `font-size` — the inherited-text baseline for `.lini`
     /// (a baked layout constant carried in the global block, not a CSS var).
     pub root_font_size: f64,
-    /// Inherited-text props set on the global block that ride the `.lini` rule as
-    /// live CSS — `font-style`, `text-transform`, `text-decoration`, `text-shadow`.
-    /// No var/default, so each emits only when the author sets it, applying
-    /// scene-wide (SPEC §10).
+    /// Inherited-text props the global block set, for the `.lini` rule (SPEC §10):
+    /// `font-family` / `font-weight` / `color` override their themeable var, the
+    /// rest (`font-style`, `text-transform`, `text-decoration`, `text-shadow`) are
+    /// live CSS with no default. Present only when authored.
     pub root_text: AttrMap,
 }
 
@@ -164,6 +164,8 @@ impl AttrMap {
 #[derive(Clone, Debug)]
 pub enum ResolvedValue {
     Number(f64),
+    /// A percentage — `50%`, only valid inside a colour (SPEC §2).
+    Percent(f64),
     String(String),
     Hex(String),
     Ident(String),
