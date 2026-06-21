@@ -31,7 +31,7 @@ Most tools make you choose: **draw by hand** (precise, but tedious and hard to v
 - **Any shape you need.** 12 primitives and 10 templates, plus a raw `path` that accepts any SVG path string. If SVG can draw it, you can place it and wire to it.
 - **Fast, and one file.** A 1.5 MB native binary, one runtime dependency. No Node, JVM, or headless browser; typical diagrams compile in about 2 ms, startup included.
 - **Reproducible output.** Compilation is byte-identical across runs, so renders diff cleanly and never churn in CI. 355 tests back it, including property tests on the router's laws.
-- **Themeable like a web page.** Colours and fonts are CSS variables in an `@layer`; a host page restyles a diagram without recompiling, or you bake it into one self-contained file.
+- **Dark mode, automatically.** Every colour is a `light-dark()` CSS variable, so one SVG carries both palettes and follows the viewer's light/dark OS setting on its own — or a `data-theme` toggle. Re-theme from the host page with no recompile, pick a built-in (light, dark, high-contrast, blueprint, terminal, pastel), or bake any palette into a standalone file.
 
 ---
 
@@ -131,25 +131,30 @@ The full routing contract (crossings, priority, self-loops, starvation) lives in
 
 ## Theming
 
-Every colour is a `light-dark()` pair, so **one SVG carries both a light and a dark palette** and switches automatically with the viewer's OS — or on a `data-theme="dark"` / `"light"` set on the SVG or any ancestor. No script, no `@media`, no duplicated values:
+**Dark mode comes for free.** Every colour is a `light-dark()` pair, so a single exported SVG carries *both* a light and a dark palette and switches on its own:
+
+- **Automatic** — it follows the viewer's operating-system setting (`prefers-color-scheme`), with no script and no `@media`.
+- **Controllable** — a `data-theme="dark"` / `"light"` attribute on the SVG, or any ancestor in your page, forces a mode and overrides the OS.
+
+The two palettes share one `light-dark()` declaration per colour — no duplication — and every default sits in `@layer lini.defaults`, so **unlayered host CSS wins automatically**. Restyle a diagram from the page with no `!important` and no rebuild:
 
 ```css
 .lini { --lini-accent: #ff6600; }   /* recolour every diagram on the page */
 ```
 
-The defaults live in `@layer lini.defaults`, so **unlayered host CSS wins automatically** — no `!important`, no rebuild. Geometry is always baked in, so layout never depends on the host.
+Geometry is always baked in, so a theme only ever changes colours — layout never depends on the host.
 
-Pick a palette for export with `--theme`:
+**Six built-in themes**, chosen at export time:
 
 ```bash
 lini diagram.lini --theme dark -o dark.svg        # force a single dark palette
-lini diagram.lini --theme blueprint --bake-vars   # a built-in look, inlined for resvg/email
-lini theme dark > my-theme.css                    # a built-in printed as CSS — edit it
+lini diagram.lini --theme blueprint --bake-vars   # a built-in look, inlined for resvg / email
+lini theme dark > my-theme.css                    # print a theme as CSS — copy and edit
 ```
 
-Built-in themes: `light`, `dark`, `high-contrast`, `blueprint`, `terminal`, `pastel` (`lini theme` lists them). `--bake-vars` freezes one palette into literals for non-browser renderers (resvg, librsvg) and email. Every `lini-*` class is a stable styling hook.
+`light`, `dark`, `high-contrast`, `blueprint`, `terminal`, and `pastel` — `lini theme` lists them, and `lini theme NAME` prints one as a ready-to-edit `--lini-*` file. `--bake-vars` flattens the chosen palette to literals for non-browser renderers (resvg, librsvg) and email. Every `lini-*` class is a stable styling hook.
 
-The default font is a monospace stack (`ui-monospace, "SF Mono", …, monospace`): it reads crisp and keeps text sizing accurate. To use the host page's font instead, set `--lini-font-family: inherit` in the diagram, via `--theme`, or from the page's CSS.
+The default font is a monospace stack (`ui-monospace, "SF Mono", …, monospace`): it reads crisp and keeps text sizing accurate. Swap it with `--lini-font-family` in the diagram, a theme, or the page's CSS.
 
 ---
 
