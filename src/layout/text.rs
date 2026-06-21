@@ -13,13 +13,18 @@
 const AVG_CHAR_WIDTH_RATIO: f64 = 0.6;
 
 /// Approximate the width of a label at the given font size, in px. Multi-line
-/// labels (containing `\n`) take the widest line. `letter-spacing` adds between
-/// each adjacent glyph pair, so `n` glyphs gain `(n − 1) × letter_spacing`.
+/// labels (containing `\n`) take the widest line. Each adjacent glyph pair steps
+/// by `advance + letter_spacing`; once that turns negative the glyphs overlap and
+/// reverse, so the **drawn extent** is `advance + (n − 1) × |step|` — never below
+/// one glyph, and growing again past the flip (it is `|step|`, not the signed
+/// step, that the rendered box spans).
 pub fn approx_width(text: &str, font_size: f64, letter_spacing: f64) -> f64 {
+    let advance = font_size * AVG_CHAR_WIDTH_RATIO;
+    let step = (advance + letter_spacing).abs();
     text.split('\n')
-        .map(|line| {
-            let n = line.chars().count() as f64;
-            n * font_size * AVG_CHAR_WIDTH_RATIO + (n - 1.0).max(0.0) * letter_spacing
+        .map(|line| match line.chars().count() {
+            0 => 0.0,
+            n => advance + (n as f64 - 1.0) * step,
         })
         .fold(0.0_f64, f64::max)
 }
@@ -34,15 +39,18 @@ const LINE_LEADING: f64 = 1.2;
 const SINGLE_LINE_EM: f64 = 1.0;
 
 /// Height of a (possibly multi-line) text block. A lone line gets the tight box;
-/// multi-line keeps the full per-line leading so nothing clips (SPEC §6), and
-/// `line-spacing` adds px between each adjacent line pair.
+/// multi-line keeps the full per-line leading so nothing clips (SPEC §6). Lines
+/// step by `leading + line_spacing`; like `letter-spacing`, once that turns
+/// negative the lines overlap and reverse, so the drawn block spans `leading +
+/// (n − 1) × |step|` — never below one line.
 pub fn approx_height(text: &str, font_size: f64, line_spacing: f64) -> f64 {
-    let line_count = text.split('\n').count().max(1) as f64;
-    if line_count > 1.0 {
-        line_count * LINE_LEADING * font_size + (line_count - 1.0) * line_spacing
-    } else {
-        SINGLE_LINE_EM * font_size
+    let line_count = text.split('\n').count().max(1);
+    if line_count == 1 {
+        return SINGLE_LINE_EM * font_size;
     }
+    let leading = LINE_LEADING * font_size;
+    let step = (leading + line_spacing).abs();
+    leading + (line_count as f64 - 1.0) * step
 }
 
 #[cfg(test)]
@@ -85,5 +93,25 @@ mod tests {
         // 2 lines → 1 gap; +6 → 24 + 6 = 30. A single line has no gap.
         assert!((approx_height("a\nb", 10.0, 6.0) - 30.0).abs() < 0.01);
         assert!((approx_height("a", 10.0, 6.0) - approx_height("a", 10.0, 0.0)).abs() < 0.01);
+    }
+
+    #[test]
+    fn negative_letter_spacing_collapses_then_grows_back() {
+        // advance = 15 × 0.6 = 9. At -9 the glyphs stack: the box bottoms out at
+        // one glyph (never negative), then grows again as the text reverses.
+        let advance = 9.0;
+        assert!((approx_width("hello", 15.0, -9.0) - advance).abs() < 0.01);
+        // -18: |9 − 18| = 9 step → 9 + 4 × 9 = 45.
+        assert!((approx_width("hello", 15.0, -18.0) - 45.0).abs() < 0.01);
+        assert!(approx_width("hello", 15.0, -1000.0) >= advance);
+    }
+
+    #[test]
+    fn negative_line_spacing_collapses_then_grows_back() {
+        // leading = 10 × 1.2 = 12. At -12 the three lines stack to one line's
+        // height; past it the block reverses and grows again, never negative.
+        let leading = 12.0;
+        assert!((approx_height("a\nb\nc", 10.0, -12.0) - leading).abs() < 0.01);
+        assert!(approx_height("a\nb\nc", 10.0, -1000.0) >= leading);
     }
 }
