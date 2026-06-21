@@ -1,10 +1,15 @@
-//! Theme file parser (`--theme FILE`).
+//! Themes: the `--theme` argument and the built-in palettes (SPEC §11/§14).
 //!
-//! Extracts `--lini-*: value;` declarations from a CSS file; resolve layers
-//! them over the built-in defaults.
-//!
-//! Intentionally a line scanner, not a CSS parser — we only care about a flat
-//! set of custom-property declarations. Anything else in the file is ignored.
+//! A theme is a set of `--lini-*` values. Built-ins are typed palettes here;
+//! `--theme FILE` reads the same shape from CSS ([`extract_lini_vars`]). Both flow
+//! through the one apply path in [`super::resolve`], so a built-in and a user file
+//! are the same mechanism. `builtin_css` / `pair_css` render a palette back to CSS
+//! for `lini theme` — the boilerplate a user copies.
+
+use crate::Options;
+use crate::render::values::format_value;
+use crate::resolve::{ResolvedCall, ResolvedValue, VarTable, built_in_defaults};
+use std::collections::BTreeSet;
 
 /// Extract `(name_without_lini_prefix, raw_value_string)` pairs from CSS-like
 /// text. Names without the `--lini-` prefix are skipped — those are not
@@ -53,6 +58,238 @@ fn strip_block_comments(src: &str) -> String {
     }
     out.push_str(rest);
     out
+}
+
+// ─────────────────────────── Built-in themes ───────────────────────────
+
+/// Built-in theme names + one-line descriptions, for `lini theme`.
+pub fn list_themes() -> &'static [(&'static str, &'static str)] {
+    &[
+        (
+            "default",
+            "light + dark, follows the OS (the no-flag output)",
+        ),
+        ("light", "the light palette alone"),
+        ("dark", "the dark palette alone"),
+        ("high-contrast", "maximal contrast, light + dark (a11y)"),
+        ("blueprint", "white/cyan ink on deep blue"),
+        ("terminal", "phosphor green on near-black"),
+        ("pastel", "soft pastels on warm white"),
+    ]
+}
+
+/// The CSS for a built-in theme — the `--lini-*` declarations a user can copy
+/// (SPEC §14). `None` for an unknown name.
+pub fn builtin_css(name: &str) -> Option<String> {
+    Some(to_css(&palette(name)?))
+}
+
+/// Compose two built-ins into one adaptive theme's CSS: `light`'s palette as the
+/// light arm, `dark`'s as the dark arm. `None` if either name is unknown.
+pub fn pair_css(light: &str, dark: &str) -> Option<String> {
+    let mut l = palette(light)?;
+    let mut d = palette(dark)?;
+    collapse(&mut l, 0);
+    collapse(&mut d, 1);
+    let opts = Options::default();
+    let mut out = VarTable::new();
+    let mut keys: BTreeSet<&String> = l.entries.keys().collect();
+    keys.extend(d.entries.keys());
+    for k in keys {
+        let val = match (l.get(k), d.get(k)) {
+            (Some(a), Some(b)) => {
+                // Identical in both arms → a single value, no light-dark().
+                if format_value(a, &l, &opts) == format_value(b, &d, &opts) {
+                    a.clone()
+                } else {
+                    ld(a.clone(), b.clone())
+                }
+            }
+            (Some(v), None) | (None, Some(v)) => v.clone(),
+            (None, None) => continue,
+        };
+        out.set(k.clone(), val);
+    }
+    Some(to_css(&out))
+}
+
+/// The fully-resolved palette for a built-in name (`None` if unknown). Single
+/// themes collapse the base light-dark() pairs to one arm, then layer their look.
+fn palette(name: &str) -> Option<VarTable> {
+    let mut v = built_in_defaults();
+    match name {
+        "default" | "auto" => {}
+        "light" => collapse(&mut v, 0),
+        "dark" => collapse(&mut v, 1),
+        "high-contrast" => apply(&mut v, &high_contrast()),
+        "blueprint" => {
+            collapse(&mut v, 0);
+            apply(&mut v, &blueprint());
+        }
+        "terminal" => {
+            collapse(&mut v, 0);
+            apply(&mut v, &terminal());
+        }
+        "pastel" => {
+            collapse(&mut v, 0);
+            apply(&mut v, &pastel());
+        }
+        _ => return None,
+    }
+    Some(v)
+}
+
+fn apply(v: &mut VarTable, overrides: &[(&str, ResolvedValue)]) {
+    for (n, val) in overrides {
+        v.set(*n, val.clone());
+    }
+}
+
+/// Replace every `light-dark(l, d)` with its `arm` (0 = light, 1 = dark).
+fn collapse(v: &mut VarTable, arm: usize) {
+    for val in v.entries.values_mut() {
+        if let ResolvedValue::Call(c) = val
+            && c.name == "light-dark"
+            && c.args.len() == 2
+        {
+            *val = c.args[arm].clone();
+        }
+    }
+}
+
+/// Render a palette to the canonical theme CSS (SPEC §14). `color-scheme` rides
+/// the rule when adaptive; `font-family` is commented so the engine default
+/// (monospace, exact text sizing) holds unless a user uncomments it.
+fn to_css(vars: &VarTable) -> String {
+    let opts = Options::default();
+    let mut names: Vec<&String> = vars.entries.keys().collect();
+    names.sort();
+    let adaptive = vars.entries.values().any(is_light_dark);
+    let mut out = String::new();
+    out.push_str("/* lini theme — copy & edit. Colours; sizes are baked, not themeable. */\n");
+    out.push_str(":root, .lini {\n");
+    if adaptive {
+        out.push_str("  color-scheme: light dark;\n");
+    }
+    for n in names {
+        let v = vars.entries.get(n).unwrap();
+        let css = format_value(v, vars, &opts);
+        if n == "font-family" {
+            // Optional: a host font; commented so monospace (exact sizing) holds.
+            out.push_str(&format!("  /* --lini-font-family: {}; */\n", css));
+        } else {
+            out.push_str(&format!("  --lini-{}: {};\n", n, css));
+        }
+    }
+    out.push_str("}\n");
+    out
+}
+
+fn is_light_dark(v: &ResolvedValue) -> bool {
+    matches!(v, ResolvedValue::Call(c) if c.name == "light-dark")
+}
+
+// ── Palette value constructors ──
+fn idn(s: &str) -> ResolvedValue {
+    ResolvedValue::Ident(s.into())
+}
+fn hx(s: &str) -> ResolvedValue {
+    ResolvedValue::Hex(s.into())
+}
+fn rgba(r: f64, g: f64, b: f64, a: f64) -> ResolvedValue {
+    ResolvedValue::Call(ResolvedCall {
+        name: "rgba".into(),
+        args: vec![
+            ResolvedValue::Number(r),
+            ResolvedValue::Number(g),
+            ResolvedValue::Number(b),
+            ResolvedValue::Number(a),
+        ],
+    })
+}
+fn ld(l: ResolvedValue, d: ResolvedValue) -> ResolvedValue {
+    ResolvedValue::Call(ResolvedCall {
+        name: "light-dark".into(),
+        args: vec![l, d],
+    })
+}
+
+/// Maximal-contrast palette, light + dark (a11y). Colour only — line weights bake.
+fn high_contrast() -> Vec<(&'static str, ResolvedValue)> {
+    vec![
+        ("bg", ld(idn("white"), idn("black"))),
+        ("fg", ld(idn("black"), idn("white"))),
+        ("fill", ld(idn("white"), idn("black"))),
+        ("stroke", ld(idn("black"), idn("white"))),
+        ("accent", ld(hx("0033cc"), hx("66aaff"))),
+        ("accent-text", idn("white")),
+        ("muted", ld(hx("333333"), hx("cccccc"))),
+        ("group-stroke", ld(idn("black"), idn("white"))),
+        (
+            "group-fill",
+            ld(rgba(0.0, 0.0, 0.0, 0.0), rgba(0.0, 0.0, 0.0, 0.0)),
+        ),
+        ("caption-color", ld(idn("black"), idn("white"))),
+        ("footer-color", ld(idn("black"), idn("white"))),
+        ("note-bg", ld(hx("ffffcc"), hx("333300"))),
+    ]
+}
+
+/// White/cyan ink on deep blue — a single aesthetic.
+fn blueprint() -> Vec<(&'static str, ResolvedValue)> {
+    vec![
+        ("bg", hx("0d2b57")),
+        ("fg", hx("dceaff")),
+        ("fill", hx("123a6e")),
+        ("stroke", hx("7fb0e8")),
+        ("accent", hx("4fd0ff")),
+        ("accent-text", hx("0d2b57")),
+        ("muted", hx("8aa6cc")),
+        ("group-stroke", rgba(255.0, 255.0, 255.0, 0.35)),
+        ("group-fill", rgba(255.0, 255.0, 255.0, 0.04)),
+        ("caption-color", rgba(220.0, 234.0, 255.0, 0.7)),
+        ("footer-color", rgba(220.0, 234.0, 255.0, 0.7)),
+        ("note-bg", hx("16386b")),
+        ("shadow-color", rgba(0.0, 0.0, 0.0, 0.4)),
+    ]
+}
+
+/// Phosphor green on near-black — a single aesthetic.
+fn terminal() -> Vec<(&'static str, ResolvedValue)> {
+    vec![
+        ("bg", hx("0a0e0a")),
+        ("fg", hx("33ff66")),
+        ("fill", hx("0d160d")),
+        ("stroke", hx("33cc55")),
+        ("accent", hx("8aff00")),
+        ("accent-text", hx("0a0e0a")),
+        ("muted", hx("2a8a44")),
+        ("group-stroke", rgba(51.0, 255.0, 102.0, 0.35)),
+        ("group-fill", rgba(51.0, 255.0, 102.0, 0.05)),
+        ("caption-color", rgba(51.0, 255.0, 102.0, 0.7)),
+        ("footer-color", rgba(51.0, 255.0, 102.0, 0.7)),
+        ("note-bg", hx("13240f")),
+        ("shadow-color", rgba(0.0, 0.0, 0.0, 0.6)),
+    ]
+}
+
+/// Soft pastels on warm white — a single aesthetic.
+fn pastel() -> Vec<(&'static str, ResolvedValue)> {
+    vec![
+        ("bg", hx("fdf7fb")),
+        ("fg", hx("5b4b66")),
+        ("fill", hx("ffffff")),
+        ("stroke", hx("d9a7d0")),
+        ("accent", hx("c58af0")),
+        ("accent-text", hx("ffffff")),
+        ("muted", hx("a892b4")),
+        ("group-stroke", rgba(180.0, 130.0, 200.0, 0.4)),
+        ("group-fill", rgba(200.0, 150.0, 220.0, 0.06)),
+        ("caption-color", rgba(120.0, 90.0, 140.0, 0.7)),
+        ("footer-color", rgba(120.0, 90.0, 140.0, 0.7)),
+        ("note-bg", hx("fff0f6")),
+        ("shadow-color", rgba(150.0, 100.0, 160.0, 0.2)),
+    ]
 }
 
 #[cfg(test)]
@@ -112,5 +349,40 @@ mod tests {
         let css = "/* thème de l'équipe — «bleu» */ --lini-font: \"Σans\";";
         let vars = extract_lini_vars(css);
         assert_eq!(vars, vec![("font".into(), "\"Σans\"".into())]);
+    }
+
+    #[test]
+    fn default_theme_is_adaptive_dark_is_not() {
+        // The default carries light-dark() pairs; `dark` collapses to one arm.
+        assert!(builtin_css("default").unwrap().contains("light-dark("));
+        assert!(
+            builtin_css("default")
+                .unwrap()
+                .contains("color-scheme: light dark")
+        );
+        let dark = builtin_css("dark").unwrap();
+        assert!(!dark.contains("light-dark("));
+        assert!(dark.contains("--lini-bg: #1b1b1f;"));
+    }
+
+    #[test]
+    fn font_family_is_commented_in_theme_css() {
+        assert!(
+            builtin_css("light")
+                .unwrap()
+                .contains("/* --lini-font-family:")
+        );
+    }
+
+    #[test]
+    fn unknown_theme_is_none() {
+        assert!(builtin_css("nope").is_none());
+    }
+
+    #[test]
+    fn pair_composes_arms() {
+        // `light/dark` reconstructs the adaptive default.
+        let css = pair_css("light", "dark").unwrap();
+        assert!(css.contains("light-dark(white, #1b1b1f)"));
     }
 }

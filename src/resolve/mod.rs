@@ -15,5 +15,6 @@ mod scene;
 mod value;
 mod wires;
 
+pub use defaults::built_in_defaults;
 pub use ir::*;
 pub use program::resolve as resolve_with_theme;

@@ -7,7 +7,9 @@
 
 use super::cascade::Stylesheet;
 use super::defaults;
-use super::ir::{AttrMap, Program, ResolvedScene, ResolvedValue, SheetInputs, VarTable};
+use super::ir::{
+    AttrMap, Program, ResolvedCall, ResolvedScene, ResolvedValue, SheetInputs, VarTable,
+};
 use super::merge::collapse;
 use super::scene::{self, PathIndex, SceneCtx};
 use super::value::resolve_groups;
@@ -99,10 +101,42 @@ fn apply_theme(vars: &mut VarTable, theme: &[(String, String)]) {
     }
 }
 
-/// Parse a `--theme` value: a number, a `#hex`, a bare ident, else raw CSS
-/// (a font stack stays verbatim, never quote-wrapped).
+/// Parse a `--theme` value: a `light-dark()` / `rgba()` / `var()` call, a number,
+/// a `#hex`, a bare ident, else raw CSS (a font stack stays verbatim).
 fn parse_theme_value(raw: &str) -> ResolvedValue {
     let s = raw.trim();
+    // Function form: NAME( ARGS ) — light-dark(), rgb/rgba/hsl/hsla(), var().
+    if let Some(open) = s.find('(')
+        && s.ends_with(')')
+        && is_func_name(&s[..open])
+    {
+        let name = &s[..open];
+        let inner = &s[open + 1..s.len() - 1];
+        if name == "var" {
+            let v = inner.trim();
+            if let Some(rest) = v.strip_prefix("--lini-") {
+                return ResolvedValue::LiveVar {
+                    name: rest.to_string(),
+                    raw: false,
+                };
+            }
+            if let Some(rest) = v.strip_prefix("--") {
+                return ResolvedValue::LiveVar {
+                    name: rest.to_string(),
+                    raw: true,
+                };
+            }
+            return ResolvedValue::RawCss(s.to_string());
+        }
+        let args = split_top_commas(inner)
+            .iter()
+            .map(|a| parse_theme_value(a))
+            .collect();
+        return ResolvedValue::Call(ResolvedCall {
+            name: name.to_string(),
+            args,
+        });
+    }
     if let Ok(n) = s.parse::<f64>() {
         return ResolvedValue::Number(n);
     }
@@ -119,6 +153,34 @@ fn parse_theme_value(raw: &str) -> ResolvedValue {
         return ResolvedValue::Ident(s.to_string());
     }
     ResolvedValue::RawCss(s.to_string())
+}
+
+/// A CSS function name: letters/digits/`-`, starting with a letter (so a value
+/// like `translate(…)` is a call, but a `#hex` or font stack is not).
+fn is_func_name(s: &str) -> bool {
+    s.bytes().next().is_some_and(|b| b.is_ascii_alphabetic())
+        && s.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-')
+}
+
+/// Split on top-level commas (ignoring commas inside nested parens), for the
+/// arguments of a `light-dark()` / `rgba()` value.
+fn split_top_commas(s: &str) -> Vec<&str> {
+    let mut out = Vec::new();
+    let mut depth = 0i32;
+    let mut start = 0;
+    for (i, ch) in s.char_indices() {
+        match ch {
+            '(' => depth += 1,
+            ')' => depth -= 1,
+            ',' if depth == 0 => {
+                out.push(&s[start..i]);
+                start = i + 1;
+            }
+            _ => {}
+        }
+    }
+    out.push(&s[start..]);
+    out
 }
 
 /// Apply `--name: value` declarations in source order (each sees the prior).

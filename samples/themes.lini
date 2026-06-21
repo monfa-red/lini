@@ -1,0 +1,22 @@
+// Theming — this diagram carries both light and dark and switches with the OS
+// (or a `data-theme` toggle on a parent). Pick a fixed palette with --theme:
+//   lini samples/themes.lini --theme dark --bake-vars -o dark.svg
+//   lini samples/themes.lini --theme blueprint --bake-vars -o blue.svg
+//   lini theme dark > my-theme.css      // a starting point for your own
+{
+  layout: column;  gap: 18;
+}
+
+service |group| {
+  layout: column;  gap: 12;
+} [
+  |caption| "Service"
+  web |box| [
+    "Web"
+    |badge| "v2"
+  ]
+  api |box| "API"
+  db  |cyl| "Postgres"
+
+  web -> api -> db "query"
+]

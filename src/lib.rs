@@ -28,7 +28,7 @@ pub fn desugar_source(src: &str) -> Result<String, Error> {
 }
 pub use layout::{Rule, Severity, Violation};
 pub use serve::{ServeTarget, serve};
-pub use theme::extract_lini_vars;
+pub use theme::{builtin_css, extract_lini_vars, list_themes, pair_css};
 
 /// Top-level compile options threaded through every phase. Build with
 /// `Options::default()` and override fields with the struct-update syntax —

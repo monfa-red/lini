@@ -1,0 +1,66 @@
+---
+source: tests/conformance.rs
+expression: svg
+input_file: samples/themes.lini
+---
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-97.5 -155.5 229 293.5" width="229" height="293.5" class="lini">
+  <style>
+    .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: bold; color: black; }
+    .lini .lini-canvas { fill: white; }
+    .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-cyl { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
+    .lini .lini-plain { fill: none; stroke: none; }
+    .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,4; }
+    .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
+    .lini .lini-badge { fill: #0a84ff; stroke: none; color: white; font-size: 11px; font-weight: normal; }
+    .lini .lini-wire { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-wire-label { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; font-size: 11px; font-weight: normal; }
+    .lini .lini-cut-bg { fill: white; stroke: none; }
+    .lini .lini-cut { fill: black; stroke: none; }
+    .lini .lini-marker { fill: #444; stroke: none; }
+  </style>
+  <defs>
+    <filter id="lini-shadow-1" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="rgba(0, 0, 0, 0.2)"/></filter>
+  </defs>
+  <rect class="lini-canvas" x="-97.5" y="-155.5" width="229" height="293.5"/>
+  <g class="lini-scene">
+    <g class="lini-node lini-group lini-box" data-id="service" transform="translate(0,0)">
+      <rect x="-77" y="-117.5" width="154" height="235" rx="6" ry="6"/>
+      <g class="lini-node lini-box" data-id="web" transform="translate(0,-69)">
+        <rect x="-33.5" y="-27.5" width="67" height="55" rx="6" ry="6"/>
+        <text class="lini-text" x="0" y="0">Web</text>
+        <g class="lini-node lini-badge lini-box" transform="translate(25.9,-25)">
+          <g filter="url(#lini-shadow-1)">
+            <rect x="-12.6" y="-7.5" width="25.2" height="15" rx="8" ry="8"/>
+          </g>
+          <text class="lini-text" x="0" y="0">v2</text>
+        </g>
+      </g>
+      <g class="lini-node lini-box" data-id="api" transform="translate(0,0)">
+        <rect x="-33.5" y="-27.5" width="67" height="55" rx="6" ry="6"/>
+        <text class="lini-text" x="0" y="0">API</text>
+      </g>
+      <g class="lini-node lini-cyl" data-id="db" transform="translate(0,69)">
+        <path d="M -56 -22 L -56 22 A 56 5.5 0 0 0 56 22 L 56 -22 A 56 5.5 0 0 0 -56 -22 Z"/>
+        <ellipse cx="0" cy="-22" rx="56" ry="5.5"/>
+        <text class="lini-text" x="0" y="1.71">Postgres</text>
+      </g>
+      <g class="lini-node lini-caption lini-plain lini-box" transform="translate(-50.8,-128.5)">
+        <rect x="-25.2" y="-6" width="50.4" height="12" rx="6" ry="6"/>
+        <text class="lini-text" x="0" y="0">Service</text>
+      </g>
+    </g>
+  </g>
+  <g class="lini-wires">
+    <g class="lini-wire" style="font-size: 11" data-from="service.web" data-to="service.db">
+      <path d="M 34.5 -69 L 46.125 -69 A 11.625 11.625 0 0 1 57.75 -57.375 L 57.75 -19.625 A 11.625 11.625 0 0 1 46.125 -8 L 34.5 -8"/>
+    </g>
+    <g class="lini-wire" style="font-size: 11" data-from="service.web" data-to="service.db">
+      <mask id="lini-label-cut-1" maskUnits="userSpaceOnUse" x="32.5" y="6" width="81" height="65"><rect class="lini-cut-bg" x="32.5" y="6" width="81" height="65"/><rect class="lini-cut" x="57.2" y="0.85" width="39.6" height="14.3"/></mask>
+      <path d="M 34.5 8 L 95.5 8 A 16 16 0 0 1 111.5 24 L 111.5 53 A 16 16 0 0 1 95.5 69 L 60.5 69" mask="url(#lini-label-cut-1)"/>
+      <polygon class="lini-marker lini-marker-arrow" points="56.5,69 64.5,65 64.5,73"/>
+      <text class="lini-wire-label" x="77" y="8">query</text>
+    </g>
+  </g>
+</svg>

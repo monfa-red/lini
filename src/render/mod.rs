@@ -4,7 +4,7 @@ mod primitives;
 mod rounding;
 mod rules;
 mod style_block;
-mod values;
+pub(crate) mod values;
 mod wavy;
 mod wires;
 

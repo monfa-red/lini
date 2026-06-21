@@ -38,10 +38,10 @@ struct Cli {
     #[arg(long = "check")]
     check: bool,
 
-    /// CSS file with `--lini-*` overrides. Applied over the built-in visual-var
-    /// defaults (colours, fonts); layout values are not themeable (SPEC §11.2).
-    #[arg(long = "theme", value_name = "FILE")]
-    theme: Option<PathBuf>,
+    /// A theme: a built-in name (`dark`, `blueprint`, …), a CSS file of `--lini-*`
+    /// overrides, or a light/dark pair (`light/dark`). See `lini theme`.
+    #[arg(long = "theme", value_name = "NAME|FILE|A/B")]
+    theme: Option<String>,
 
     /// Recompile on every change to the input file. Requires `-o`.
     #[arg(long = "watch", requires = "output")]
@@ -66,6 +66,9 @@ fn main() -> ExitCode {
     }
     if args.len() >= 2 && args[1] == "desugar" {
         return run_desugar(&args[2..]);
+    }
+    if args.len() >= 2 && args[1] == "theme" {
+        return run_theme(&args[2..]);
     }
 
     let cli = match Cli::try_parse() {
@@ -92,22 +95,22 @@ fn main() -> ExitCode {
     // Accept it for spec compliance.
     let _ = cli.standalone;
 
+    // Resolve `--theme` (a built-in name, a light/dark pair, or a file) to the
+    // `--lini-*` CSS the resolver layers over the defaults.
+    let theme_css = match &cli.theme {
+        Some(arg) => match theme_css_for(arg) {
+            Ok(css) => Some(css),
+            Err(code) => return code,
+        },
+        None => None,
+    };
+
     if cli.watch {
         let out_path = cli.output.clone().expect("clap enforces -o with --watch");
         if cli.input == "-" {
             eprintln!("error: --watch cannot read from stdin");
             return ExitCode::from(3);
         }
-        let theme_css = match &cli.theme {
-            Some(path) => match std::fs::read_to_string(path) {
-                Ok(s) => Some(s),
-                Err(e) => {
-                    eprintln!("error: {}: {}", path.display(), e);
-                    return ExitCode::from(2);
-                }
-            },
-            None => None,
-        };
         let opts = lini::Options {
             bake_vars: cli.bake_vars,
             format,
@@ -132,17 +135,6 @@ fn main() -> ExitCode {
                 return ExitCode::from(2);
             }
         },
-    };
-
-    let theme_css = match &cli.theme {
-        Some(path) => match std::fs::read_to_string(path) {
-            Ok(s) => Some(s),
-            Err(e) => {
-                eprintln!("error: {}: {}", path.display(), e);
-                return ExitCode::from(2);
-            }
-        },
-        None => None,
     };
 
     let opts = lini::Options {
@@ -484,5 +476,88 @@ fn recompile(input: &Path, output: &Path, opts: &lini::Options, check_only: bool
             Err(e) => eprintln!("error: write {}: {}", output.display(), e),
         },
         Err(e) => eprintln!("{}", e.display_with_source(&source, &filename)),
+    }
+}
+
+/// Resolve a `--theme` argument to its `--lini-*` CSS: a built-in name, then a
+/// `light/dark` pair of built-ins, else a file path.
+fn theme_css_for(arg: &str) -> Result<String, ExitCode> {
+    if let Some(css) = lini::builtin_css(arg) {
+        return Ok(css);
+    }
+    if let Some((l, r)) = arg.split_once('/')
+        && let Some(css) = lini::pair_css(l.trim(), r.trim())
+    {
+        return Ok(css);
+    }
+    match std::fs::read_to_string(arg) {
+        Ok(s) => Ok(s),
+        Err(e) => {
+            eprintln!(
+                "error: theme '{}': not a built-in (try: {}), and reading it as a file failed: {}",
+                arg,
+                theme_names(),
+                e
+            );
+            Err(ExitCode::from(2))
+        }
+    }
+}
+
+fn theme_names() -> String {
+    lini::list_themes()
+        .iter()
+        .map(|(n, _)| *n)
+        .collect::<Vec<_>>()
+        .join(", ")
+}
+
+/// `lini theme [NAME]` — list the built-in themes, or print one as `--lini-*`
+/// CSS for a user to copy (SPEC §14).
+fn run_theme(args: &[String]) -> ExitCode {
+    let mut name: Option<&str> = None;
+    for a in args {
+        match a.as_str() {
+            "-h" | "--help" => {
+                println!("lini theme [NAME]");
+                println!();
+                println!("  No NAME   List the built-in themes.");
+                println!("  NAME      Print that theme as a --lini-* CSS file (copy as a start).");
+                return ExitCode::SUCCESS;
+            }
+            flag if flag.starts_with('-') => {
+                eprintln!("error: unknown flag for `lini theme`: {}", flag);
+                return ExitCode::from(3);
+            }
+            other => {
+                if name.is_some() {
+                    eprintln!("error: `lini theme` takes one theme name");
+                    return ExitCode::from(3);
+                }
+                name = Some(other);
+            }
+        }
+    }
+    match name {
+        None => {
+            for (n, desc) in lini::list_themes() {
+                println!("{:15} {}", n, desc);
+            }
+            ExitCode::SUCCESS
+        }
+        Some(n) => match lini::builtin_css(n) {
+            Some(css) => {
+                print!("{}", css);
+                ExitCode::SUCCESS
+            }
+            None => {
+                eprintln!(
+                    "error: unknown theme '{}' (try one of: {})",
+                    n,
+                    theme_names()
+                );
+                ExitCode::from(3)
+            }
+        },
     }
 }

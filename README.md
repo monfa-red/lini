@@ -131,13 +131,23 @@ The full routing contract (crossings, priority, self-loops, starvation) lives in
 
 ## Theming
 
-Lini's visual defaults (colours, fonts, shadow) emit as live `var(--lini-*)` references inside `@layer lini.defaults`, so **unlayered host CSS wins automatically**, with no `!important` and no rebuild:
+Every colour is a `light-dark()` pair, so **one SVG carries both a light and a dark palette** and switches automatically with the viewer's OS — or on a `data-theme="dark"` / `"light"` set on the SVG or any ancestor. No script, no `@media`, no duplicated values:
 
 ```css
 .lini { --lini-accent: #ff6600; }   /* recolour every diagram on the page */
 ```
 
-Geometry is always baked in, so layout never depends on the host. For non-browser renderers (resvg, librsvg) and email, `--bake-vars` inlines every variable into a self-contained file. Every `lini-*` class is a stable styling hook.
+The defaults live in `@layer lini.defaults`, so **unlayered host CSS wins automatically** — no `!important`, no rebuild. Geometry is always baked in, so layout never depends on the host.
+
+Pick a palette for export with `--theme`:
+
+```bash
+lini diagram.lini --theme dark -o dark.svg        # force a single dark palette
+lini diagram.lini --theme blueprint --bake-vars   # a built-in look, inlined for resvg/email
+lini theme dark > my-theme.css                    # a built-in printed as CSS — edit it
+```
+
+Built-in themes: `light`, `dark`, `high-contrast`, `blueprint`, `terminal`, `pastel` (`lini theme` lists them). `--bake-vars` freezes one palette into literals for non-browser renderers (resvg, librsvg) and email. Every `lini-*` class is a stable styling hook.
 
 The default font is a monospace stack (`ui-monospace, "SF Mono", …, monospace`): it reads crisp and keeps text sizing accurate. To use the host page's font instead, set `--lini-font-family: inherit` in the diagram, via `--theme`, or from the page's CSS.
 
@@ -150,6 +160,7 @@ lini [options] <input.lini>
 lini fmt     [--check] [--stdout] <input.lini>
 lini serve   [--port N] [--bake-vars] [PATH]
 lini desugar <input.lini>
+lini theme   [NAME]
 ```
 
 | Flag | Meaning |
@@ -157,7 +168,7 @@ lini desugar <input.lini>
 | `-o, --output FILE` | Output path (default: stdout). |
 | `--format svg\|html` | Raw SVG (default), or wrapped in a minimal HTML page. |
 | `--bake-vars` | Inline `var()` references — for resvg, librsvg, raster, email. |
-| `--theme FILE` | A CSS file of `--lini-*` overrides. |
+| `--theme NAME\|FILE` | A built-in theme (`dark`, `blueprint`, …), a CSS file, or a `light/dark` pair. |
 | `--check` | Parse and validate only. |
 | `--watch` | Recompile on every change (with `-o`). |
 | `--no-warn` / `--strict` | Silence lint warnings, or promote them to errors. |
