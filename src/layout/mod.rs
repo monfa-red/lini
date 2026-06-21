@@ -15,7 +15,7 @@ pub(crate) use wires::cross;
 pub use wires::{Rule, Severity, Violation, node_rect};
 
 use crate::error::Error;
-use crate::resolve::{Program, ResolvedInst, ResolvedValue, ShapeKind, VarTable};
+use crate::resolve::{Program, ResolvedInst, ResolvedValue, ShapeKind};
 use crate::span::Span;
 
 use flex::Axis;
@@ -72,12 +72,7 @@ fn attempt(program: &Program, growth: &GapGrowth) -> Result<Attempt, Error> {
     // Lay out top-level scene children.
     let mut top_nodes = Vec::with_capacity(program.scene.nodes.len());
     for inst in &program.scene.nodes {
-        top_nodes.push(layout_inst(
-            inst,
-            &program.vars,
-            growth,
-            &child_path("", inst),
-        )?);
+        top_nodes.push(layout_inst(inst, growth, &child_path("", inst))?);
     }
 
     // Apply scene-level layout to top-level children (scene itself is a
@@ -86,7 +81,6 @@ fn attempt(program: &Program, growth: &GapGrowth) -> Result<Attempt, Error> {
     let (bbox, _) = lay_out_container_children(
         &mut top_nodes,
         &program.scene.attrs,
-        &program.vars,
         Span::empty(),
         gap_bump(growth, ""),
     )?;
@@ -242,7 +236,6 @@ pub fn validate_routing(laid: &LaidOut) -> Vec<Violation> {
         &laid.nodes,
         &laid.wires,
         &laid.wire_report,
-        &laid.vars,
     ));
     out
 }
@@ -252,29 +245,23 @@ pub fn validate_routing(laid: &LaidOut) -> Vec<Violation> {
 /// Bottom-up: lay out children first, then size this node around them. For
 /// leaf primitives (no children), the shape's dimensions drive the bbox.
 /// `path` is the inst's dot-path — the key gap growth bumps it under.
-fn layout_inst(
-    inst: &ResolvedInst,
-    vars: &VarTable,
-    growth: &GapGrowth,
-    path: &str,
-) -> Result<PlacedNode, Error> {
+fn layout_inst(inst: &ResolvedInst, growth: &GapGrowth, path: &str) -> Result<PlacedNode, Error> {
     // Recurse into children first.
     let mut children: Vec<PlacedNode> = Vec::with_capacity(inst.children.len());
     for c in &inst.children {
-        children.push(layout_inst(c, vars, growth, &child_path(path, c))?);
+        children.push(layout_inst(c, growth, &child_path(path, c))?);
     }
 
     // Determine this node's bbox + arrange children inside.
     let mut dividers: Vec<GridRule> = Vec::new();
     let bbox = if children.is_empty() {
         // Leaf primitive.
-        primitives::leaf_bbox(inst, vars)?
+        primitives::leaf_bbox(inst)?
     } else {
         // Container or closed shape with content.
         let (content_bbox, rules) = lay_out_container_children(
             &mut children,
             &inst.attrs,
-            vars,
             inst.span,
             gap_bump(growth, path),
         )?;
@@ -286,7 +273,7 @@ fn layout_inst(
 
         // The closed shape sizes border-box: explicit width/height, else
         // content + padding per axis (SPEC §6).
-        let b = primitives::closed_bbox(inst, content_bbox, vars)?;
+        let b = primitives::closed_bbox(inst, content_bbox)?;
         let text_only = children.iter().all(|c| c.shape == ShapeKind::Text);
 
         // Some closed shapes carry decoration at the top — a cloud's lobes, a
@@ -370,7 +357,6 @@ fn one_d_dividers(
 fn lay_out_container_children(
     children: &mut [PlacedNode],
     container_attrs: &crate::resolve::AttrMap,
-    vars: &VarTable,
     span: Span,
     grow: (f64, f64),
 ) -> Result<(Bbox, Vec<GridRule>), Error> {
@@ -381,7 +367,7 @@ fn lay_out_container_children(
     let container_attrs = if grow == (0.0, 0.0) {
         container_attrs
     } else {
-        let (gy, gx) = primitives::gap(container_attrs, vars, span)?;
+        let (gy, gx) = primitives::gap(container_attrs, span)?;
         let mut attrs = container_attrs.clone();
         attrs.insert(
             "gap",
@@ -409,7 +395,7 @@ fn lay_out_container_children(
     let mode = read_layout_mode(container_attrs, span)?;
     // Slack for align/justify/stretch comes only from an explicit container
     // size: the content area is the declared dimension minus padding (SPEC §5).
-    let pad = primitives::padding(container_attrs, vars, span)?;
+    let pad = primitives::padding(container_attrs, span)?;
     let avail = (
         container_attrs
             .number("width")
@@ -424,19 +410,13 @@ fn lay_out_container_children(
         let mut flow_children: Vec<PlacedNode> =
             flow_indices.iter().map(|i| children[*i].clone()).collect();
         let bbox = match mode {
-            LayoutMode::Row => flex::lay_out_flex(
-                Axis::Row,
-                &mut flow_children,
-                container_attrs,
-                vars,
-                span,
-                avail,
-            )?,
+            LayoutMode::Row => {
+                flex::lay_out_flex(Axis::Row, &mut flow_children, container_attrs, span, avail)?
+            }
             LayoutMode::Column => flex::lay_out_flex(
                 Axis::Column,
                 &mut flow_children,
                 container_attrs,
-                vars,
                 span,
                 avail,
             )?,
@@ -449,8 +429,7 @@ fn lay_out_container_children(
                         c.bbox = c.bbox.expand(pad.top, pad.right, pad.bottom, pad.left);
                     }
                 }
-                let (bbox, rules) =
-                    grid::lay_out_grid(&mut flow_children, container_attrs, vars, span)?;
+                let (bbox, rules) = grid::lay_out_grid(&mut flow_children, container_attrs, span)?;
                 grid_rules = rules;
                 bbox
             }

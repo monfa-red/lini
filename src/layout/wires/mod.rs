@@ -28,7 +28,7 @@ mod validate;
 use crate::ast::Side;
 use crate::error::Error;
 use crate::layout::ir::{Airwire, PlacedNode, RoutedWire};
-use crate::resolve::{Program, VarTable};
+use crate::resolve::Program;
 use crate::span::Span;
 
 use bundle::{Bundle, EdgeReq, End, Fans};
@@ -696,7 +696,6 @@ pub fn validate_routing(
     nodes: &[PlacedNode],
     wires: &[RoutedWire],
     report: &[Violation],
-    vars: &VarTable,
 ) -> Vec<Violation> {
-    validate::check(nodes, wires, report, vars)
+    validate::check(nodes, wires, report)
 }

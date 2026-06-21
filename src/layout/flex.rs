@@ -10,7 +10,7 @@
 use super::ir::{Bbox, PlacedNode};
 use super::primitives;
 use crate::error::Error;
-use crate::resolve::{AttrMap, ResolvedValue, VarTable};
+use crate::resolve::{AttrMap, ResolvedValue};
 use crate::span::Span;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -51,14 +51,13 @@ pub fn lay_out_flex(
     axis: Axis,
     children: &mut [PlacedNode],
     attrs: &AttrMap,
-    vars: &VarTable,
     span: Span,
     avail: (Option<f64>, Option<f64>),
 ) -> Result<Bbox, Error> {
     if children.is_empty() {
         return Ok(Bbox::empty());
     }
-    let (gap_y, gap_x) = primitives::gap(attrs, vars, span)?;
+    let (gap_y, gap_x) = primitives::gap(attrs, span)?;
     let gap = match axis {
         Axis::Row => gap_x,
         Axis::Column => gap_y,

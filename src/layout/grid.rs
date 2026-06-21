@@ -13,7 +13,7 @@ use super::ir::{Bbox, GridRule, PlacedNode};
 use super::primitives;
 use super::values::as_pair;
 use crate::error::Error;
-use crate::resolve::{AttrMap, ResolvedValue, VarTable};
+use crate::resolve::{AttrMap, ResolvedValue};
 use crate::span::Span;
 
 #[derive(Clone, Copy)]
@@ -28,10 +28,9 @@ enum Track {
 pub fn lay_out_grid(
     children: &mut [PlacedNode],
     attrs: &AttrMap,
-    vars: &VarTable,
     span: Span,
 ) -> Result<(Bbox, Vec<GridRule>), Error> {
-    let (gap_y, gap_x) = primitives::gap(attrs, vars, span)?;
+    let (gap_y, gap_x) = primitives::gap(attrs, span)?;
 
     let col_tracks = match attrs.get("columns") {
         Some(v) => parse_tracks(v, span)?,

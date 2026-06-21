@@ -11,9 +11,8 @@ use super::rect::Rect;
 use super::scene::SceneIndex;
 use crate::ast::Side;
 use crate::error::Error;
-use crate::layout::values::layout_var;
 use crate::render::markers::marker_size;
-use crate::resolve::{AttrMap, MarkerKind, Markers, Program, VarTable};
+use crate::resolve::{AttrMap, MarkerKind, Markers, Program};
 use crate::span::Span;
 
 pub struct EdgeReq {
@@ -81,7 +80,7 @@ pub fn requests(program: &Program, index: &SceneIndex) -> Result<Vec<EdgeReq>, E
             .rev()
             .find(|r: &&EdgeReq| r.stmt == stmt)
             .map_or(0, |r| r.expansion + 1);
-        let clearance = wire_clearance(&w.attrs, &program.vars);
+        let clearance = wire_clearance(&w.attrs);
         let thickness = w.attrs.number("stroke-width").unwrap_or(0.0);
         let eps = &w.endpoints;
         let segs = eps.len() - 1;
@@ -241,13 +240,10 @@ pub fn fan_groups(reqs: &[EdgeReq]) -> Fans {
     Fans { groups: kept, of }
 }
 
-/// The one clearance number (WIRING §Vocabulary): the wire's merged attrs
-/// (already carrying the `|wire|` default), else the layout constant, else 16.
-pub fn wire_clearance(attrs: &AttrMap, vars: &VarTable) -> f64 {
-    attrs
-        .number("clearance")
-        .or_else(|| layout_var(vars, "clearance"))
-        .unwrap_or(0.0)
+/// The one clearance number (WIRING §Vocabulary): the wire's merged attrs,
+/// already carrying the `-> { }` wire default that desugar injects.
+pub fn wire_clearance(attrs: &AttrMap) -> f64 {
+    attrs.number("clearance").unwrap_or(0.0)
 }
 
 #[cfg(test)]

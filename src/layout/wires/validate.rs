@@ -13,24 +13,18 @@ use super::rect::Rect;
 use super::scene::SceneIndex;
 use super::{Rule, Severity, Violation};
 use crate::layout::ir::{PlacedNode, RoutedWire};
-use crate::resolve::VarTable;
 use crate::span::Span;
 use std::collections::BTreeMap;
 
 const EPS: f64 = 1e-6;
 
-pub fn check(
-    nodes: &[PlacedNode],
-    wires: &[RoutedWire],
-    report: &[Violation],
-    vars: &VarTable,
-) -> Vec<Violation> {
+pub fn check(nodes: &[PlacedNode], wires: &[RoutedWire], report: &[Violation]) -> Vec<Violation> {
     if wires.is_empty() {
         return Vec::new();
     }
     let c = wires
         .iter()
-        .map(|w| wire_clearance(&w.attrs, vars))
+        .map(|w| wire_clearance(&w.attrs))
         .fold(0.0_f64, f64::max);
     let index = SceneIndex::build(nodes);
     let mut out = Vec::new();
@@ -623,7 +617,7 @@ mod tests {
     #[test]
     fn a_clean_straight_wire_is_silent() {
         let w = wire("a", "b", vec![(20.0, 0.0), (180.0, 0.0)]);
-        let out = check(&pair(), &[w], &[], &VarTable::new());
+        let out = check(&pair(), &[w], &[]);
         assert_eq!(out.len(), 0, "{out:?}");
     }
 
@@ -647,7 +641,7 @@ mod tests {
                 (180.0, 0.0),
             ],
         );
-        let out = check(&nodes, &[w], &[], &VarTable::new());
+        let out = check(&nodes, &[w], &[]);
         assert!(rules(&out).contains(&Rule::Clearance), "{out:?}");
     }
 
@@ -668,7 +662,7 @@ mod tests {
                 (220.0, 0.0),
             ],
         );
-        let out = check(&pair(), &[w], &[], &VarTable::new());
+        let out = check(&pair(), &[w], &[]);
         assert!(rules(&out).contains(&Rule::Clearance), "{out:?}");
     }
 
@@ -683,7 +677,7 @@ mod tests {
         );
         let diagonal = wire("a", "b", vec![(20.0, 0.0), (170.0, -10.0), (180.0, 0.0)]);
         for w in [corner, near_corner, oblique, diagonal] {
-            let out = check(&pair(), &[w], &[], &VarTable::new());
+            let out = check(&pair(), &[w], &[]);
             assert!(rules(&out).contains(&Rule::Contact), "{out:?}");
         }
     }
@@ -702,7 +696,7 @@ mod tests {
             "b",
             vec![(20.0, 100.0), (100.0, 100.0), (100.0, 4.0), (180.0, 4.0)],
         );
-        let out = check(&nodes, &[w1, w2], &[], &VarTable::new());
+        let out = check(&nodes, &[w1, w2], &[]);
         assert!(
             out.iter()
                 .any(|v| v.rule == Rule::Contact && v.detail.contains("ports")),
@@ -742,7 +736,7 @@ mod tests {
                 (180.0, 100.0),
             ],
         );
-        let out = check(&nodes, &[w1, w2], &[], &VarTable::new());
+        let out = check(&nodes, &[w1, w2], &[]);
         assert!(rules(&out).contains(&Rule::Separation), "{out:?}");
     }
 
@@ -765,7 +759,7 @@ mod tests {
         };
 
         // Drawn but unnamed: the checker flags the crossing.
-        let out = check(&nodes, &[w1.clone(), w2.clone()], &[], &VarTable::new());
+        let out = check(&nodes, &[w1.clone(), w2.clone()], &[]);
         assert!(
             out.iter()
                 .any(|v| v.rule == Rule::Crossing && v.severity == Severity::Warning),
@@ -778,13 +772,12 @@ mod tests {
             &nodes,
             &[w1.clone(), w2.clone()],
             std::slice::from_ref(&named),
-            &VarTable::new(),
         );
         assert_eq!(out.len(), 0, "{out:?}");
 
         // Named but not drawn: the phantom is flagged.
         let phantom = entry(vec!["a -> b".to_owned(), "x -> y".to_owned()]);
-        let out = check(&nodes, &[w1, w2], &[named, phantom], &VarTable::new());
+        let out = check(&nodes, &[w1, w2], &[named, phantom]);
         assert!(
             out.iter()
                 .any(|v| v.detail.contains("named in the report but")),
@@ -810,7 +803,7 @@ mod tests {
                 (180.0, 0.0),
             ],
         );
-        let out = check(&pair(), &[w], &[], &VarTable::new());
+        let out = check(&pair(), &[w], &[]);
         assert!(
             out.iter().any(|v| v.detail.contains("crosses itself")),
             "{out:?}"
@@ -827,12 +820,12 @@ mod tests {
         let mut w1 = wire("a", "b", vec![(20.0, 0.0), (180.0, 0.0)]);
         let mut w2 = wire("a", "c", vec![(20.0, 0.0), (100.0, 0.0), (100.0, 140.0)]);
         // Untagged, the trunk overlap and split T-joint breach separation…
-        let out = check(&nodes, &[w1.clone(), w2.clone()], &[], &VarTable::new());
+        let out = check(&nodes, &[w1.clone(), w2.clone()], &[]);
         assert!(rules(&out).contains(&Rule::Separation), "{out:?}");
         // …as fan siblings they are one drawn line.
         w1.fan_from = Some(0);
         w2.fan_from = Some(0);
-        let out = check(&nodes, &[w1, w2], &[], &VarTable::new());
+        let out = check(&nodes, &[w1, w2], &[]);
         assert_eq!(out.len(), 0, "{out:?}");
     }
 }

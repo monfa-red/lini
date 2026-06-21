@@ -9,9 +9,9 @@
 
 use super::ir::Bbox;
 use super::text;
-use super::values::{as_pair, expand_box_value, layout_var};
+use super::values::{as_pair, expand_box_value};
 use crate::error::Error;
-use crate::resolve::{AttrMap, ResolvedInst, ResolvedValue, ShapeKind, VarTable};
+use crate::resolve::{AttrMap, ResolvedInst, ResolvedValue, ShapeKind};
 use crate::span::Span;
 
 #[derive(Default, Clone, Copy)]
@@ -22,21 +22,10 @@ pub struct PaddingBox {
     pub left: f64,
 }
 
-impl PaddingBox {
-    pub fn uniform(n: f64) -> Self {
-        Self {
-            top: n,
-            right: n,
-            bottom: n,
-            left: n,
-        }
-    }
-}
-
 /// Bbox for a leaf primitive (no flow children). A closed shape is empty here —
 /// `2 × padding` (or its explicit dims); text / icon / geometry size to their
 /// own content.
-pub fn leaf_bbox(inst: &ResolvedInst, vars: &VarTable) -> Result<Bbox, Error> {
+pub fn leaf_bbox(inst: &ResolvedInst) -> Result<Bbox, Error> {
     match inst.shape {
         ShapeKind::Box
         | ShapeKind::Oval
@@ -44,9 +33,9 @@ pub fn leaf_bbox(inst: &ResolvedInst, vars: &VarTable) -> Result<Bbox, Error> {
         | ShapeKind::Slant
         | ShapeKind::Cyl
         | ShapeKind::Diamond
-        | ShapeKind::Cloud => closed_bbox(inst, Bbox::empty(), vars),
+        | ShapeKind::Cloud => closed_bbox(inst, Bbox::empty()),
         ShapeKind::Text => {
-            let size = font_size(inst, vars);
+            let size = font_size(inst);
             let label = inst.label.as_deref().unwrap_or("");
             Ok(Bbox::centered(
                 text::approx_width(label, size),
@@ -58,15 +47,14 @@ pub fn leaf_bbox(inst: &ResolvedInst, vars: &VarTable) -> Result<Bbox, Error> {
                 .attrs
                 .number("width")
                 .or_else(|| inst.attrs.number("height"))
-                .or_else(|| layout_var(vars, "icon-size"))
                 .unwrap_or(0.0);
             Ok(Bbox::centered(size, size))
         }
         ShapeKind::Line => {
-            Ok(bounding_box(&require_points(inst, "line", 2)?).inflate(stroke_half(inst, vars)))
+            Ok(bounding_box(&require_points(inst, "line", 2)?).inflate(stroke_half(inst)))
         }
         ShapeKind::Poly => {
-            Ok(bounding_box(&require_points(inst, "poly", 3)?).inflate(stroke_half(inst, vars)))
+            Ok(bounding_box(&require_points(inst, "poly", 3)?).inflate(stroke_half(inst)))
         }
         ShapeKind::Image => {
             let (w, h) = image_dims(inst)?;
@@ -81,7 +69,7 @@ pub fn leaf_bbox(inst: &ResolvedInst, vars: &VarTable) -> Result<Bbox, Error> {
             if pts.is_empty() {
                 return Ok(Bbox::empty());
             }
-            Ok(bounding_box(&pts).inflate(stroke_half(inst, vars)))
+            Ok(bounding_box(&pts).inflate(stroke_half(inst)))
         }
     }
 }
@@ -90,13 +78,13 @@ pub fn leaf_bbox(inst: &ResolvedInst, vars: &VarTable) -> Result<Bbox, Error> {
 /// `width`/`height` as a **floor** — border-box (padding inside), and the box
 /// grows past the declared size rather than clip or spill its content (SPEC §6).
 /// Inflated by half the stroke so the outline counts toward the bbox.
-pub fn closed_bbox(inst: &ResolvedInst, content: Bbox, vars: &VarTable) -> Result<Bbox, Error> {
+pub fn closed_bbox(inst: &ResolvedInst, content: Bbox) -> Result<Bbox, Error> {
     // A table consumes its `padding` as a per-cell inset inside the grid (SPEC
     // §8), so its outer box adds none.
     let pad = if super::grid::is_inset_grid(&inst.attrs) {
         PaddingBox::default()
     } else {
-        padding(&inst.attrs, vars, inst.span)?
+        padding(&inst.attrs, inst.span)?
     };
     let w = floor_dim(
         inst.attrs.number("width"),
@@ -108,7 +96,7 @@ pub fn closed_bbox(inst: &ResolvedInst, content: Bbox, vars: &VarTable) -> Resul
         content.h(),
         pad.top + pad.bottom,
     );
-    Ok(Bbox::centered(w, h).inflate(stroke_half(inst, vars)))
+    Ok(Bbox::centered(w, h).inflate(stroke_half(inst)))
 }
 
 /// One axis of a closed shape, **border-box**: `content + padding`, with an
@@ -124,7 +112,7 @@ fn floor_dim(declared: Option<f64>, content: f64, pad: f64) -> f64 {
     }
 }
 
-pub fn padding(attrs: &AttrMap, vars: &VarTable, span: Span) -> Result<PaddingBox, Error> {
+pub fn padding(attrs: &AttrMap, span: Span) -> Result<PaddingBox, Error> {
     if let Some(v) = attrs.get("padding") {
         let (t, r, b, l) = expand_box_value(v, span)?;
         Ok(PaddingBox {
@@ -134,18 +122,15 @@ pub fn padding(attrs: &AttrMap, vars: &VarTable, span: Span) -> Result<PaddingBo
             left: l,
         })
     } else {
-        Ok(PaddingBox::uniform(
-            layout_var(vars, "padding").unwrap_or(0.0),
-        ))
+        Ok(PaddingBox::default())
     }
 }
 
 /// `gap` → `(between_rows, between_cols)`. Scalar = both equal; `row col` (CSS
 /// order) per axis. Non-negative.
-pub fn gap(attrs: &AttrMap, vars: &VarTable, span: Span) -> Result<(f64, f64), Error> {
+pub fn gap(attrs: &AttrMap, span: Span) -> Result<(f64, f64), Error> {
     let Some(v) = attrs.get("gap") else {
-        let g = layout_var(vars, "gap").unwrap_or(0.0);
-        return Ok((g, g));
+        return Ok((0.0, 0.0));
     };
     let nums = super::values::as_number_tuple(v, span)?;
     let (gy, gx) = match nums.len() {
@@ -169,19 +154,12 @@ pub fn gap(attrs: &AttrMap, vars: &VarTable, span: Span) -> Result<(f64, f64), E
 
 // ───────────────────────── Internal helpers ─────────────────────────
 
-fn font_size(inst: &ResolvedInst, vars: &VarTable) -> f64 {
-    inst.attrs
-        .number("font-size")
-        .or_else(|| layout_var(vars, "font-size"))
-        .unwrap_or(0.0)
+fn font_size(inst: &ResolvedInst) -> f64 {
+    inst.attrs.number("font-size").unwrap_or(0.0)
 }
 
-fn stroke_half(inst: &ResolvedInst, vars: &VarTable) -> f64 {
-    inst.attrs
-        .number("stroke-width")
-        .or_else(|| layout_var(vars, "stroke-width"))
-        .unwrap_or(0.0)
-        / 2.0
+fn stroke_half(inst: &ResolvedInst) -> f64 {
+    inst.attrs.number("stroke-width").unwrap_or(0.0) / 2.0
 }
 
 fn require_points(inst: &ResolvedInst, name: &str, min: usize) -> Result<Vec<(f64, f64)>, Error> {

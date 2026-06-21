@@ -1,9 +1,9 @@
 //! Extract layout-time numeric values from `ResolvedValue`s. Follows
-//! `LiveVar.baked` for Layout vars; errors on Visual vars used where a number
-//! is required.
+//! `LiveVar.baked` indirection; errors on a visual var used where a number is
+//! required.
 
 use crate::error::Error;
-use crate::resolve::{ResolvedValue, VarTable};
+use crate::resolve::ResolvedValue;
 use crate::span::Span;
 
 pub fn as_number(value: &ResolvedValue, span: Span) -> Result<f64, Error> {
@@ -75,11 +75,6 @@ pub fn expand_box_value(value: &ResolvedValue, span: Span) -> Result<(f64, f64, 
             format!("expected 1, 2, or 4 values, got {}", n),
         )),
     }
-}
-
-/// Look up a layout default from the var table.
-pub fn layout_var(vars: &VarTable, name: &str) -> Option<f64> {
-    vars.get(name)?.value.as_number()
 }
 
 fn describe(v: &ResolvedValue) -> &'static str {
