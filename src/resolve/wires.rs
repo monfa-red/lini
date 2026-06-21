@@ -6,7 +6,6 @@
 use super::cascade::NodeFacts;
 use super::ir::{
     Along, AttrMap, MarkerKind, ResolvedEndpoint, ResolvedText, ResolvedValue, ResolvedWire,
-    VarEntry, VarKind, VarTable,
 };
 use super::merge::{collapse, resolve_markers};
 use super::scene::{PathIndex, SceneCtx};
@@ -66,7 +65,7 @@ pub fn resolve_wire(
         texts.push(ResolvedText {
             text: label.text.clone(),
             along: pos,
-            attrs: wire_text_attrs(AttrMap::new(), ctx.vars),
+            attrs: wire_text_attrs(AttrMap::new(), &attrs),
         });
     }
 
@@ -135,28 +134,15 @@ fn collect_fractions(v: &ResolvedValue) -> Vec<f64> {
 
 /// Default a wire label's `font-size` to the baked `--wire-font-size` (12) when
 /// unset, so labels read a touch smaller than body text.
-fn wire_text_attrs(mut map: AttrMap, vars: &VarTable) -> AttrMap {
-    if map.get("font-size").is_none() {
-        map.insert("font-size", baked_layout_var(vars, "wire-font-size"));
+/// A wire label inherits the wire's `font-size` (the `-> { font-size: 11 }`
+/// default, or an override) so its measured size and rendered size agree.
+fn wire_text_attrs(mut map: AttrMap, wire_attrs: &AttrMap) -> AttrMap {
+    if map.get("font-size").is_none()
+        && let Some(fs) = wire_attrs.get("font-size")
+    {
+        map.insert("font-size", fs.clone());
     }
     map
-}
-
-/// A `--name` reference carrying a layout var's baked value — reads as a number
-/// at layout time, prints `var(--lini-name)` in live mode.
-fn baked_layout_var(vars: &VarTable, name: &str) -> ResolvedValue {
-    let baked = match vars.get(name) {
-        Some(VarEntry {
-            kind: VarKind::Layout,
-            value,
-        }) => Some(Box::new(value.clone())),
-        _ => None,
-    };
-    ResolvedValue::LiveVar {
-        name: name.to_string(),
-        raw: false,
-        baked,
-    }
 }
 
 /// Flatten a chain's endpoint groups into every cartesian sequence — one per

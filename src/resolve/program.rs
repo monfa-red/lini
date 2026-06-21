@@ -251,6 +251,26 @@ mod tests {
     }
 
     #[test]
+    fn dumb_core_has_no_hidden_defaults() {
+        // Resolve `x |box|` WITHOUT desugaring (input that bypassed the lowering):
+        // a primitive with no `.lini-box` class carries no radius/padding/gap. The
+        // defaults live only in the `.lini-*` classes desugar injects.
+        let toks = crate::lexer::lex("x |box|\n").expect("lex");
+        let file = crate::syntax::parser::parse(&toks).expect("parse");
+        let p = resolve(&file, &[]).expect("resolve");
+        let attrs = &p.scene.nodes[0].attrs;
+        assert!(
+            attrs.get("radius").is_none(),
+            "no default radius in the core"
+        );
+        assert!(
+            attrs.get("padding").is_none(),
+            "no default padding in the core"
+        );
+        assert!(attrs.get("gap").is_none(), "no default gap in the core");
+    }
+
+    #[test]
     fn element_rule_reaches_the_node() {
         let p = rv4("{ |box| { radius: 4; } }\nx |box|\n");
         assert_eq!(num(&p, 0, "radius"), Some(4.0));

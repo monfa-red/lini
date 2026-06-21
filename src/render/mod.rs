@@ -79,8 +79,24 @@ pub fn render(laid_out: &LaidOut, opts: &Options) -> String {
             .map(|w| wires::radius_cap(w, &laid_out.vars))
             .collect();
         let targets = wires::fillet_targets(&polys, &caps);
+        // The wire-label default font size (the `.lini-wire-label` rule's value) —
+        // a label inlines its own size only when it differs from this.
+        let label_size = laid_out
+            .sheet
+            .wire_defaults
+            .number("font-size")
+            .unwrap_or(11.0);
         for (idx, (wire, targets)) in laid_out.wires.iter().zip(&targets).enumerate() {
-            wires::render_wire(&mut out, idx, wire, targets, &laid_out.vars, &ruleset, opts);
+            wires::render_wire(
+                &mut out,
+                idx,
+                wire,
+                targets,
+                label_size,
+                &laid_out.vars,
+                &ruleset,
+                opts,
+            );
         }
         for air in &laid_out.airwires {
             wires::render_airwire(&mut out, air, &laid_out.vars, opts);
@@ -191,7 +207,7 @@ fn render_text(out: &mut String, n: &PlacedNode, depth: usize) {
     }
     // Multi-line (SPEC §6): one tspan per line, spacing `font-size × 1.2`, the
     // block centred on (cx, cy) so `dominant-baseline: central` still holds.
-    let size = n.attrs.number("font-size").unwrap_or(14.0);
+    let size = n.attrs.number("font-size").unwrap_or(0.0);
     let spacing = size * 1.2;
     let top = n.cy - spacing * (lines.len() as f64 - 1.0) / 2.0;
     write!(
@@ -254,7 +270,7 @@ fn node_style_attr(
         }
     }
     if n.attrs.get("stroke-style").is_some() {
-        let width = n.attrs.number("stroke-width").unwrap_or(2.0);
+        let width = n.attrs.number("stroke-width").unwrap_or(0.0);
         let dash = values::dasharray_value(&n.attrs, width);
         let value = if dash.is_empty() {
             "none".to_string()

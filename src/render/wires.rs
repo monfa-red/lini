@@ -32,14 +32,16 @@ pub fn radius_cap(w: &RoutedWire, vars: &VarTable) -> f64 {
     w.attrs
         .number("clearance")
         .or_else(|| vars.get("clearance").and_then(|e| e.value.as_number()))
-        .unwrap_or(16.0)
+        .unwrap_or(0.0)
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn render_wire(
     out: &mut String,
     idx: usize,
     w: &RoutedWire,
     targets: &[f64],
+    label_size: f64,
     vars: &VarTable,
     ruleset: &RuleSet,
     opts: &Options,
@@ -47,7 +49,7 @@ pub fn render_wire(
     if w.path.len() < 2 {
         return;
     }
-    let thickness = w.attrs.number("stroke-width").unwrap_or(2.0);
+    let thickness = w.attrs.number("stroke-width").unwrap_or(0.0);
 
     // Paint rides the group, exactly like a node: the `.lini-wire` rule states
     // the `|wire|` defaults, each applied `.style` rides a `lini-style-*` class,
@@ -171,7 +173,7 @@ pub fn render_wire(
     }
 
     for t in &w.texts {
-        render_wire_text(out, t, vars, opts);
+        render_wire_text(out, t, label_size, vars, opts);
     }
 
     out.push_str("    </g>\n");
@@ -440,7 +442,7 @@ fn label_mask(
         num(rh),
     );
     for t in texts {
-        let size = t.attrs.number("font-size").unwrap_or(12.0);
+        let size = t.attrs.number("font-size").unwrap_or(0.0);
         let cw = approx_width(&t.content, size) + size * LABEL_CUT_PAD_H * 2.0;
         let ch = approx_height(&t.content, size) + size * LABEL_CUT_PAD_V * 2.0;
         let (cx, cy) = t.position;
@@ -462,14 +464,12 @@ fn label_mask(
 /// glyphs don't inherit the wire `<g>`'s stroke, the anchor pair, the baked wire
 /// font size) rides `.lini-wire-label`; only a label that overrides one of those
 /// inlines the difference via `style=` (which beats the class rule).
-fn render_wire_text(out: &mut String, t: &RoutedText, vars: &VarTable, opts: &Options) {
+fn render_wire_text(out: &mut String, t: &RoutedText, wfs: f64, vars: &VarTable, opts: &Options) {
     let (x, y) = t.position;
     let mut style: Vec<String> = Vec::new();
 
-    let wfs = vars
-        .get("wire-font-size")
-        .and_then(|e| e.value.as_number())
-        .unwrap_or(12.0);
+    // `wfs` is the wire-label default (the `.lini-wire-label` rule's size); inline
+    // the label's own size only when it differs.
     let size = t.attrs.number("font-size").unwrap_or(wfs);
     if (size - wfs).abs() > 1e-9 {
         style.push(format!("font-size: {}px", num(size)));

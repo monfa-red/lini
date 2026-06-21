@@ -178,7 +178,7 @@ fn accumulate_extent(n: &PlacedNode, ox: f64, oy: f64, bbox: &mut Bbox) {
 fn finish(program: &Program, attempt: Attempt) -> LaidOut {
     // Viewbox = scene bbox + wire paths, labels, airwires + canvas-pad on
     // every side.
-    let pad = values::layout_var(&program.vars, "canvas-pad").unwrap_or(20.0);
+    let pad = program.scene.attrs.number("canvas-pad").unwrap_or(0.0);
     // Absolute overlays don't grow their parent's bbox, so the scene bbox can
     // miss one that overflows; the canvas must still include every drawn node,
     // so take the true visual extent of the whole tree.
@@ -196,7 +196,7 @@ fn finish(program: &Program, attempt: Attempt) -> LaidOut {
         bbox.max_y = bbox.max_y.max(y);
     }
     for t in routing.wires.iter().flat_map(|w| &w.texts) {
-        let size = t.attrs.number("font-size").unwrap_or(12.0);
+        let size = t.attrs.number("font-size").unwrap_or(0.0);
         let (hw, hh) = (
             text::approx_width(&t.content, size) / 2.0,
             text::approx_height(&t.content, size) / 2.0,

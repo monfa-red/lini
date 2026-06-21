@@ -59,7 +59,7 @@ pub fn leaf_bbox(inst: &ResolvedInst, vars: &VarTable) -> Result<Bbox, Error> {
                 .number("width")
                 .or_else(|| inst.attrs.number("height"))
                 .or_else(|| layout_var(vars, "icon-size"))
-                .unwrap_or(24.0);
+                .unwrap_or(0.0);
             Ok(Bbox::centered(size, size))
         }
         ShapeKind::Line => {
@@ -135,7 +135,7 @@ pub fn padding(attrs: &AttrMap, vars: &VarTable, span: Span) -> Result<PaddingBo
         })
     } else {
         Ok(PaddingBox::uniform(
-            layout_var(vars, "padding").unwrap_or(20.0),
+            layout_var(vars, "padding").unwrap_or(0.0),
         ))
     }
 }
@@ -144,7 +144,7 @@ pub fn padding(attrs: &AttrMap, vars: &VarTable, span: Span) -> Result<PaddingBo
 /// order) per axis. Non-negative.
 pub fn gap(attrs: &AttrMap, vars: &VarTable, span: Span) -> Result<(f64, f64), Error> {
     let Some(v) = attrs.get("gap") else {
-        let g = layout_var(vars, "gap").unwrap_or(20.0);
+        let g = layout_var(vars, "gap").unwrap_or(0.0);
         return Ok((g, g));
     };
     let nums = super::values::as_number_tuple(v, span)?;
@@ -173,14 +173,14 @@ fn font_size(inst: &ResolvedInst, vars: &VarTable) -> f64 {
     inst.attrs
         .number("font-size")
         .or_else(|| layout_var(vars, "font-size"))
-        .unwrap_or(15.0)
+        .unwrap_or(0.0)
 }
 
 fn stroke_half(inst: &ResolvedInst, vars: &VarTable) -> f64 {
     inst.attrs
         .number("stroke-width")
         .or_else(|| layout_var(vars, "stroke-width"))
-        .unwrap_or(2.0)
+        .unwrap_or(0.0)
         / 2.0
 }
 

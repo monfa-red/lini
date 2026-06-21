@@ -97,7 +97,7 @@ fn emit_shape(
     let indent = "  ".repeat(depth);
     // Default matches the `stroke-width` layout var (SPEC §11.3) so the drawn
     // shape stays inside the bbox the layout reserved.
-    let thickness = n.attrs.number("stroke-width").unwrap_or(2.0);
+    let thickness = n.attrs.number("stroke-width").unwrap_or(0.0);
 
     match n.shape {
         ShapeKind::Box => emit_rect(out, n, &indent, thickness),
@@ -126,7 +126,7 @@ fn dim_excluding_stroke(n: &PlacedNode, thickness: f64) -> (f64, f64) {
 
 fn emit_rect(out: &mut String, n: &PlacedNode, indent: &str, thickness: f64) {
     let (w, h) = dim_excluding_stroke(n, thickness);
-    let radius = n.attrs.number("radius").unwrap_or(6.0);
+    let radius = n.attrs.number("radius").unwrap_or(0.0);
     writeln!(
         out,
         r#"{}<rect x="{}" y="{}" width="{}" height="{}" rx="{}" ry="{}"/>"#,
@@ -180,7 +180,7 @@ fn emit_diamond(out: &mut String, n: &PlacedNode, indent: &str, thickness: f64) 
 
 fn emit_slant(out: &mut String, n: &PlacedNode, indent: &str, thickness: f64) {
     let (w, h) = dim_excluding_stroke(n, thickness);
-    let skew_deg = n.attrs.number("skew").unwrap_or(15.0);
+    let skew_deg = n.attrs.number("skew").unwrap_or(0.0);
     let shift = (skew_deg.to_radians()).tan() * h / 2.0;
     let pts = [
         (-w / 2.0 + shift, -h / 2.0),
@@ -353,7 +353,7 @@ fn emit_icon(out: &mut String, n: &PlacedNode, indent: &str, vars: &VarTable, op
         .number("width")
         .or_else(|| n.attrs.number("height"))
         .or_else(|| vars.get("icon-size").and_then(|e| e.value.as_number()))
-        .unwrap_or(24.0);
+        .unwrap_or(0.0);
     let name = n.label.as_deref().unwrap_or("?");
     let stroke = attr_or_var(&n.attrs, "stroke", "stroke", vars, opts);
     let fill = attr_or_var(&n.attrs, "fill", "stroke", vars, opts);

@@ -69,7 +69,7 @@ pub fn place(
         let mut auto_i = 0;
 
         for t in &w.texts {
-            let size = t.attrs.number("font-size").unwrap_or(12.0);
+            let size = t.attrs.number("font-size").unwrap_or(0.0);
             let (bw, bh) = (approx_width(&t.text, size), approx_height(&t.text, size));
             let (tx, ty) = translate_of(t.attrs.get("translate"));
             let s0 = match t.along {

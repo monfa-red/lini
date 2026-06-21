@@ -297,7 +297,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
             .sheet
             .wire_defaults
             .number("stroke-width")
-            .unwrap_or(2.0);
+            .unwrap_or(0.0);
         let mut wire_styles: BTreeSet<&str> = BTreeSet::new();
         for w in &laid.wires {
             if let Some(ResolvedValue::Ident(s)) = w.attrs.get("stroke-style")
@@ -321,7 +321,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
     // plus the baked wire font size. A label that overrides any of these inlines
     // the difference via `style=`.
     if has_labels {
-        let wfs = layout_number(vars, "wire-font-size", 11.0);
+        let wfs = laid.sheet.wire_defaults.number("font-size").unwrap_or(11.0);
         rules.push(Rule {
             class: "lini-wire-label".into(),
             props: vec![
@@ -442,7 +442,7 @@ pub fn paint_props(attrs: &AttrMap, vars: &VarTable, opts: &Options) -> Vec<(Str
         }
     }
     if attrs.get("stroke-style").is_some() {
-        let width = attrs.number("stroke-width").unwrap_or(2.0);
+        let width = attrs.number("stroke-width").unwrap_or(0.0);
         let dash = super::values::dasharray_value(attrs, width);
         out.push((
             "stroke-dasharray".to_string(),
@@ -454,12 +454,6 @@ pub fn paint_props(attrs: &AttrMap, vars: &VarTable, opts: &Options) -> Vec<(Str
         ));
     }
     out
-}
-
-fn layout_number(vars: &VarTable, name: &str, fallback: f64) -> f64 {
-    vars.get(name)
-        .and_then(|e| e.value.as_number())
-        .unwrap_or(fallback)
 }
 
 /// Ensure a closed-shape rule masks `stroke-dasharray` (so a container's `line:`
