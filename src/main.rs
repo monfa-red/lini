@@ -38,8 +38,8 @@ struct Cli {
     #[arg(long = "check")]
     check: bool,
 
-    /// CSS file with `--lini-*` overrides. Applied over the built-in defaults;
-    /// layout vars from the theme bake into the layout.
+    /// CSS file with `--lini-*` overrides. Applied over the built-in visual-var
+    /// defaults (colours, fonts); layout values are not themeable (SPEC §11.2).
     #[arg(long = "theme", value_name = "FILE")]
     theme: Option<PathBuf>,
 
@@ -395,9 +395,15 @@ fn run_desugar(args: &[String]) -> ExitCode {
             "-h" | "--help" => {
                 println!("lini desugar <input.lini>");
                 println!();
-                println!("  Expand label and wire-label sugar into the explicit children it");
-                println!("  stands for, and print to stdout. Types, vars, and attrs are kept");
-                println!("  as written; comments are dropped. Use '-' to read stdin.");
+                println!("  Lower the file to primitives + .lini-* classes and print to stdout:");
+                println!("  templates/defines become a base shape wearing a .lini-* class chain,");
+                println!("  each type's defaults become a generated .lini-<type> class, scene and");
+                println!(
+                    "  wire defaults fill the global block, and labels/along become explicit."
+                );
+                println!(
+                    "  The engine's true input; re-renders identically. Use '-' to read stdin."
+                );
                 return ExitCode::SUCCESS;
             }
             flag if flag.starts_with('-') && flag != "-" => {

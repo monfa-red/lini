@@ -1107,11 +1107,14 @@ when it fits (`api |box| { fill: red }`), a lone label trailing the head
 aligned columns, comments and blank lines preserved. `--check` exits 1 if it would
 change anything; `--stdout` writes instead of rewriting.
 
-**`lini desugar`** prints the file with its sugar expanded — an id-as-label or
-trailing label gains its explicit `[ "…" ]`, and a wire's auto-distributed labels
-gain their explicit `along:` — while types, variables, and properties stay as
-written. A teaching/debugging view; prints to stdout, never rewrites, comments not
-preserved.
+**`lini desugar`** prints the file fully **lowered to primitives** — every
+template/define instance becomes its base `|box|` (etc.) wearing a `.lini-*` class
+chain, each type's defaults become a generated `.lini-<type> { … }` class, the
+scene and `-> { }` wire defaults fill the global block, define bodies inline per
+instance, and id-as-label / auto-`along:` become explicit. It is the engine's true
+input — the rest of the pipeline only ever sees primitives, and the lowered form
+re-renders byte-identically. A teaching/debugging view; prints to stdout, never
+rewrites, comments not preserved.
 
 Exit codes: 0 success · 1 parse/resolution error or `--check` reformat needed · 2
 I/O · 3 invalid CLI.
@@ -1253,16 +1256,25 @@ A reference pipeline; implementations may differ if the observable output matche
 bracket vocabulary (`{ }` style, `[ ]` children, `|…|` type) resolves every
 statement with one token of lookahead — no type-set prescan.
 
+**Desugar.** Lower all surface sugar to primitives + classes — the engine's true
+input. Each template/define instance becomes its base primitive wearing a `.lini-*`
+class chain (derived→base→primitive); a type's defaults and any `|type| { }` element
+rule fold into a generated `.lini-<type> { … }` class; a `|table box| { }`
+descendant rule rewrites to `|.lini-table .lini-box| { }`; define bodies inline per
+instance; the scene defaults (`layout`, `padding`, `gap`, `font-size`, `canvas-pad`)
+and the `-> { }` wire defaults fill the global block; id-as-label, trailing labels,
+auto-`along:`, and root-wire auto-create become explicit. The pass is idempotent;
+type-system errors (cycle, depth > 16, a define shadowing a built-in) surface here.
+
 **Resolve** (top-to-bottom):
 
 1. *Variables & rules:* merge visual-var defaults ← `--theme` ← `--name: value`;
-   register element/descendant/class rules, the `-> { }` wire defaults, and defines
-   (detect cycles / depth > 16); validate selectors reference known types.
-2. *Scene tree:* resolve each box's type and worn classes; layer properties per
-   [Specificity](#12-specificity) (type cascade → descendant rules → class rules →
-   instance block); expand defines, scoping internal ids; synthesize the id-as-label
-   text for a box whose content has no string; build the path index; auto-create
-   root boxes for single-segment root-wire endpoints absent from it.
+   compile the stylesheet's class rules and the `-> { }` wire defaults.
+2. *Scene tree:* each box is a primitive wearing `.lini-*` (type) and user classes;
+   layer properties per [Specificity](#12-specificity) — the worn `.lini-*` classes
+   as the type tier (folded base→derived), then descendant rules, user-class rules,
+   and the instance block; lift internal wires; build the path index. (Types,
+   labels, define bodies, and auto-create were all lowered by **Desugar**.)
 3. *Wires:* resolve endpoints by scoped path walk with suggestion errors; merge
    wire properties; cartesian-expand fan groups into one resolved wire per pair;
    the operator's line sets `stroke-style` unless overridden.
@@ -1292,8 +1304,14 @@ of word stay reserved:
 
 - **Sides:** `top`, `bottom`, `left`, `right` — peeled from endpoint paths
   (`a.left`), so they cannot be node ids. Ids are case-sensitive, so `Left` is free.
-- **`wire`:** not an instantiable type — wire defaults are set with `-> { }`, and
-  `|wire|` is an error.
+- **`wire`** and the structural class names **`node`, `text`, `marker`, `canvas`,
+  `scene`, `cut`:** not instantiable types — wire defaults are set with `-> { }`,
+  and a define may not take one of these (its generated `.lini-<name>` would collide
+  with a built-in SVG class). `|wire|` is an error.
+
+The **`.lini-*` class prefix** is reserved: desugar generates the type classes
+(`.lini-box`, `.lini-group`, `.lini-<define>`), so a user class may not begin
+`lini-`. User classes are emitted `.lini-style-<name>`.
 
 Single quotes (`'`) are reserved and are not strings.
 

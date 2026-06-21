@@ -1,0 +1,11 @@
+{
+  layout: row; gap: 30;
+  |chip::box| { radius: 12; fill: #eef; }
+}
+
+api |group| [
+  |caption| "API"
+  health |chip| "OK"
+  |badge| "v2"
+]
+db |cyl|
