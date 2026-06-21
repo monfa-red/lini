@@ -1,13 +1,13 @@
-//! Built-in defaults — the one place to tune Lini's look (SPEC §11). The lowest
-//! specificity layer: the visual `--lini-*` variables (live at runtime) and the
-//! baked layout constants (sizes, gaps, paddings, thicknesses). Theme and
-//! `--name` application live in [`super::program`]; value resolution in
-//! [`super::value`]. This module is the data.
+//! Built-in visual variables — the live `--lini-*` palette (colours, fonts, the
+//! shadow tint) that themes Lini's look (SPEC §11.1), the lowest specificity layer.
+//! Theme and `--name` application live in [`super::program`], value resolution in
+//! [`super::value`]. Layout constants are no longer here: desugar materializes every
+//! one into the `.lini-*` classes and the global block. This module is the data.
 
 use super::ir::{ResolvedCall, ResolvedValue, VarKind, VarTable};
 
-/// The built-in defaults (SPEC §11). Visual `--lini-*` vars stay live; layout
-/// constants bake. Names are stored without the `--lini-` prefix.
+/// The built-in visual `--lini-*` variables (SPEC §11.1), stored without the
+/// `--lini-` prefix. They stay live at runtime; layout values are not vars.
 pub fn built_in_defaults() -> VarTable {
     let mut t = VarTable::new();
     let ident = |s: &str| ResolvedValue::Ident(s.into());
