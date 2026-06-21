@@ -7,7 +7,7 @@
 
 use super::cascade::Stylesheet;
 use super::defaults;
-use super::ir::{AttrMap, Program, ResolvedScene, ResolvedValue, SheetInputs, VarKind, VarTable};
+use super::ir::{AttrMap, Program, ResolvedScene, ResolvedValue, SheetInputs, VarTable};
 use super::merge::collapse;
 use super::scene::{self, PathIndex, SceneCtx};
 use super::value::resolve_groups;
@@ -95,9 +95,7 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
 
 fn apply_theme(vars: &mut VarTable, theme: &[(String, String)]) {
     for (name, raw) in theme {
-        let value = parse_theme_value(raw);
-        let kind = vars.get(name).map_or(VarKind::Visual, |e| e.kind);
-        vars.set(name.clone(), kind, value);
+        vars.set(name.clone(), parse_theme_value(raw));
     }
 }
 
@@ -123,14 +121,14 @@ fn parse_theme_value(raw: &str) -> ResolvedValue {
     ResolvedValue::RawCss(s.to_string())
 }
 
-/// Apply `--name: value` declarations in source order (each sees the prior). A
-/// built-in keeps its kind; a new name is Visual.
+/// Apply `--name: value` declarations in source order (each sees the prior).
+/// All vars are visual (SPEC §11.2); a built-in `--lini-*` name keeps its
+/// meaning, a new name is the author's.
 fn apply_var_decls(vars: &mut VarTable, file: &File) -> Result<(), Error> {
     for item in &file.stylesheet {
         if let StyleItem::Var(d) = item {
             let value = resolve_groups(&d.groups, d.span, vars)?;
-            let kind = vars.get(&d.name).map_or(VarKind::Visual, |e| e.kind);
-            vars.set(d.name.clone(), kind, value);
+            vars.set(d.name.clone(), value);
         }
     }
     Ok(())

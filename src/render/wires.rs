@@ -31,7 +31,7 @@ const LABEL_CUT_PAD_V: f64 = 0.15;
 pub fn radius_cap(w: &RoutedWire, vars: &VarTable) -> f64 {
     w.attrs
         .number("clearance")
-        .or_else(|| vars.get("clearance").and_then(|e| e.value.as_number()))
+        .or_else(|| vars.get("clearance").and_then(|v| v.as_number()))
         .unwrap_or(0.0)
 }
 

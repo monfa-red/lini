@@ -352,7 +352,7 @@ fn emit_icon(out: &mut String, n: &PlacedNode, indent: &str, vars: &VarTable, op
         .attrs
         .number("width")
         .or_else(|| n.attrs.number("height"))
-        .or_else(|| vars.get("icon-size").and_then(|e| e.value.as_number()))
+        .or_else(|| vars.get("icon-size").and_then(|v| v.as_number()))
         .unwrap_or(0.0);
     let name = n.label.as_deref().unwrap_or("?");
     let stroke = attr_or_var(&n.attrs, "stroke", "stroke", vars, opts);

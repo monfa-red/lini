@@ -2,7 +2,7 @@
 //! every render submodule.
 
 use crate::Options;
-use crate::resolve::{AttrMap, ResolvedCall, ResolvedValue, VarKind, VarTable};
+use crate::resolve::{AttrMap, ResolvedCall, ResolvedValue, VarTable};
 
 /// Format a value for use inline in SVG/CSS (e.g. an attribute value).
 ///
@@ -25,20 +25,16 @@ pub fn format_value(value: &ResolvedValue, vars: &VarTable, opts: &Options) -> S
             parts.join(", ")
         }
         ResolvedValue::Call(c) => format_call(c, vars, opts),
-        ResolvedValue::LiveVar { name, raw, baked } => {
-            // Layout vars are language defaults, not CSS-themable: always
-            // bake them to a literal so renderers without `var()` support
-            // (and standalone SVG files) draw correctly. Visual vars stay
-            // live in non-bake mode.
-            let is_layout = !*raw && vars.get(name).is_some_and(|e| e.kind == VarKind::Layout);
-            if opts.bake_vars || is_layout {
+        ResolvedValue::LiveVar { name, raw } => {
+            // `--bake-vars` inlines each var to a literal so renderers without
+            // `var()` support (and standalone SVG files) draw correctly;
+            // otherwise the reference stays live.
+            if opts.bake_vars {
                 if *raw {
                     // Raw CSS vars cannot be baked — we don't know their value.
                     format!("var(--{})", name)
-                } else if let Some(entry) = vars.get(name) {
-                    format_value(&entry.value, vars, opts)
-                } else if let Some(b) = baked {
-                    format_value(b, vars, opts)
+                } else if let Some(value) = vars.get(name) {
+                    format_value(value, vars, opts)
                 } else {
                     format!("var(--lini-{})", name)
                 }
@@ -73,7 +69,6 @@ pub fn attr_or_var(
             &ResolvedValue::LiveVar {
                 name: var_name.to_string(),
                 raw: false,
-                baked: None,
             },
             vars,
             opts,

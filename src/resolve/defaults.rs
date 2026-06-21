@@ -4,7 +4,7 @@
 //! [`super::value`]. Layout constants are no longer here: desugar materializes every
 //! one into the `.lini-*` classes and the global block. This module is the data.
 
-use super::ir::{ResolvedCall, ResolvedValue, VarKind, VarTable};
+use super::ir::{ResolvedCall, ResolvedValue, VarTable};
 
 /// The built-in visual `--lini-*` variables (SPEC §11.1), stored without the
 /// `--lini-` prefix. They stay live at runtime; layout values are not vars.
@@ -57,7 +57,6 @@ pub fn built_in_defaults() -> VarTable {
         ResolvedValue::LiveVar {
             name: "fg".into(),
             raw: false,
-            baked: None,
         },
     );
     set_visual(&mut t, "shadow-color", rgba(0.0, 0.0, 0.0, 0.2));
@@ -70,5 +69,5 @@ pub fn built_in_defaults() -> VarTable {
 }
 
 fn set_visual(t: &mut VarTable, name: &str, v: ResolvedValue) {
-    t.set(name, VarKind::Visual, v);
+    t.set(name, v);
 }

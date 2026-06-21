@@ -121,7 +121,6 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
             &ResolvedValue::LiveVar {
                 name: name.to_string(),
                 raw: false,
-                baked: None,
             },
             vars,
             opts,

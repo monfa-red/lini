@@ -1,6 +1,6 @@
-//! Extract layout-time numeric values from `ResolvedValue`s. Follows
-//! `LiveVar.baked` indirection; errors on a visual var used where a number is
-//! required.
+//! Extract layout-time numeric values from `ResolvedValue`s. A `--name`
+//! reference is a visual var (SPEC §11.2), never a layout number, so it errors
+//! where a number is required.
 
 use crate::error::Error;
 use crate::resolve::ResolvedValue;
@@ -9,7 +9,6 @@ use crate::span::Span;
 pub fn as_number(value: &ResolvedValue, span: Span) -> Result<f64, Error> {
     match value {
         ResolvedValue::Number(n) => Ok(*n),
-        ResolvedValue::LiveVar { baked: Some(b), .. } => as_number(b, span),
         ResolvedValue::LiveVar { name, .. } => Err(Error::at(
             span,
             format!(
@@ -34,7 +33,6 @@ pub fn as_number_tuple(value: &ResolvedValue, span: Span) -> Result<Vec<f64>, Er
             }
             Ok(out)
         }
-        ResolvedValue::LiveVar { baked: Some(b), .. } => as_number_tuple(b, span),
         ResolvedValue::LiveVar { name, .. } => Err(Error::at(
             span,
             format!(

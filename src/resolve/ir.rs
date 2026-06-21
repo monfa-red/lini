@@ -172,16 +172,15 @@ pub enum ResolvedValue {
     LiveVar {
         name: String,
         raw: bool,
-        baked: Option<Box<ResolvedValue>>,
     },
 }
 
 impl ResolvedValue {
-    /// The numeric value, following a layout var's baked indirection.
+    /// The numeric value, if this is a plain number. A `--name` reference is a
+    /// visual var (SPEC §11.2), never a layout number, so it has none.
     pub fn as_number(&self) -> Option<f64> {
         match self {
             ResolvedValue::Number(n) => Some(*n),
-            ResolvedValue::LiveVar { baked: Some(b), .. } => b.as_number(),
             _ => None,
         }
     }
@@ -193,23 +192,11 @@ pub struct ResolvedCall {
     pub args: Vec<ResolvedValue>,
 }
 
-/// CSS variable defaults table. Entries are keyed by name without the
-/// `--lini-` prefix.
+/// The visual `--lini-*` variable table (SPEC §11.2 — vars are visual-only).
+/// Entries are keyed by name without the `--lini-` prefix.
 #[derive(Clone, Debug, Default)]
 pub struct VarTable {
-    pub entries: HashMap<String, VarEntry>,
-}
-
-#[derive(Clone, Debug)]
-pub struct VarEntry {
-    pub kind: VarKind,
-    pub value: ResolvedValue,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum VarKind {
-    Layout,
-    Visual,
+    pub entries: HashMap<String, ResolvedValue>,
 }
 
 impl VarTable {
@@ -219,12 +206,12 @@ impl VarTable {
         }
     }
 
-    pub fn get(&self, name: &str) -> Option<&VarEntry> {
+    pub fn get(&self, name: &str) -> Option<&ResolvedValue> {
         self.entries.get(name)
     }
 
-    pub fn set(&mut self, name: impl Into<String>, kind: VarKind, value: ResolvedValue) {
-        self.entries.insert(name.into(), VarEntry { kind, value });
+    pub fn set(&mut self, name: impl Into<String>, value: ResolvedValue) {
+        self.entries.insert(name.into(), value);
     }
 }
 

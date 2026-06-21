@@ -6,7 +6,7 @@
 use super::rules::RuleSet;
 use super::values::format_value;
 use crate::Options;
-use crate::resolve::{VarKind, VarTable};
+use crate::resolve::VarTable;
 use std::fmt::Write;
 
 pub fn emit(out: &mut String, vars: &VarTable, rules: &RuleSet, opts: &Options) {
@@ -15,17 +15,12 @@ pub fn emit(out: &mut String, vars: &VarTable, rules: &RuleSet, opts: &Options) 
     // `--bake-vars` inlines every value (the rules below carry literals), so the
     // themeable `@layer` block is only emitted when vars stay live.
     if !opts.bake_vars {
-        let mut names: Vec<&String> = vars
-            .entries
-            .iter()
-            .filter(|(_, e)| e.kind == VarKind::Visual)
-            .map(|(n, _)| n)
-            .collect();
+        let mut names: Vec<&String> = vars.entries.keys().collect();
         names.sort();
         if !names.is_empty() {
             out.push_str("    @layer lini.defaults { :root, .lini {");
             for (i, name) in names.iter().enumerate() {
-                let entry = vars.entries.get(*name).unwrap();
+                let value = vars.entries.get(*name).unwrap();
                 if i > 0 {
                     out.push(' ');
                 }
@@ -33,7 +28,7 @@ pub fn emit(out: &mut String, vars: &VarTable, rules: &RuleSet, opts: &Options) 
                     out,
                     " --lini-{}: {};",
                     name,
-                    format_value(&entry.value, vars, opts)
+                    format_value(value, vars, opts)
                 )
                 .unwrap();
             }

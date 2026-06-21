@@ -7,11 +7,10 @@
 //! `Tuple`, and several groups become a `List` of those. Layout (`as_pair`,
 //! `expand_box_value`) and render (`format_value`) read exactly that shape.
 //!
-//! `--name` references resolve to a `LiveVar`; a layout var bakes its numeric
-//! value into the reference so it reads as a number at layout time yet still
-//! prints `var(--lini-name)` in live mode.
+//! A `--name` reference resolves to a `LiveVar` that prints `var(--lini-name)`;
+//! these are visual vars only (SPEC §11.2), never layout numbers.
 
-use super::ir::{ResolvedCall, ResolvedValue, VarEntry, VarKind, VarTable};
+use super::ir::{ResolvedCall, ResolvedValue, VarTable};
 use crate::error::Error;
 use crate::span::Span;
 use crate::syntax::ast::{Call, Value};
@@ -55,26 +54,13 @@ fn resolve_scalar(v: &Value, span: Span, vars: &VarTable) -> Result<ResolvedValu
         Value::String(s) => ResolvedValue::String(s.clone()),
         Value::Hex(h) => ResolvedValue::Hex(h.clone()),
         Value::Ident(s) => ResolvedValue::Ident(s.clone()),
-        Value::Var(name) => resolve_var_ref(name, vars),
+        // `--name` → a live `var(--lini-name)`; visual-only (SPEC §11.2).
+        Value::Var(name) => ResolvedValue::LiveVar {
+            name: name.clone(),
+            raw: false,
+        },
         Value::Call(c) => resolve_call(c, span, vars)?,
     })
-}
-
-/// `--name` → a `LiveVar`. A layout var bakes its value into the reference so it
-/// reads as a number at layout time (SPEC §11.2); a visual var stays live.
-fn resolve_var_ref(name: &str, vars: &VarTable) -> ResolvedValue {
-    let baked = match vars.get(name) {
-        Some(VarEntry {
-            kind: VarKind::Layout,
-            value,
-        }) => Some(Box::new(value.clone())),
-        _ => None,
-    };
-    ResolvedValue::LiveVar {
-        name: name.to_string(),
-        raw: false,
-        baked,
-    }
 }
 
 fn resolve_call(c: &Call, span: Span, vars: &VarTable) -> Result<ResolvedValue, Error> {
@@ -157,14 +143,6 @@ mod tests {
     fn var_reference_resolves_to_a_live_var() {
         let v = resolve(&[vec![Value::Var("accent".into())]]);
         assert!(matches!(v, ResolvedValue::LiveVar { name, .. } if name == "accent"));
-    }
-
-    #[test]
-    fn layout_var_reference_bakes_its_number() {
-        let mut vars = VarTable::new();
-        vars.set("gap", VarKind::Layout, ResolvedValue::Number(30.0));
-        let v = resolve_groups(&[vec![Value::Var("gap".into())]], Span::empty(), &vars).unwrap();
-        assert_eq!(v.as_number(), Some(30.0));
     }
 
     #[test]

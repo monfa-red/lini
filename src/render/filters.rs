@@ -24,7 +24,6 @@ fn default_tint() -> ResolvedValue {
     ResolvedValue::LiveVar {
         name: "shadow-color".into(),
         raw: false,
-        baked: None,
     }
 }
 
