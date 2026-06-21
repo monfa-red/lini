@@ -10,6 +10,7 @@
 mod bundles;
 mod classes;
 mod labels;
+mod scene;
 mod types;
 
 pub use labels::desugar;
