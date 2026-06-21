@@ -9,5 +9,6 @@
 
 mod bundles;
 mod labels;
+mod types;
 
 pub use labels::desugar;
