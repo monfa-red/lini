@@ -1019,7 +1019,7 @@ it out of the grid.
   <style>
     @layer lini.defaults { :root, .lini { /* --lini-* variables */ } }
     .lini { font-family: var(--lini-font-family); font-size: 15px; font-weight: var(--lini-font-weight); color: var(--lini-text-color); }
-    .lini .lini-shape-box { fill: var(--lini-fill); stroke: var(--lini-stroke); stroke-width: 2; }
+    .lini .lini-box { fill: var(--lini-fill); stroke: var(--lini-stroke); stroke-width: 2; }
     .lini .lini-style-hot { stroke-width: 3; }   /* one rule per class def */
     .lini .lini-wire { stroke: var(--lini-stroke); stroke-width: 2; fill: none; }
   </style>
@@ -1046,14 +1046,14 @@ node's own text property emits on its `<g>` and inherits to its subtree.
 **Box:**
 
 ```svg
-<g class="lini-node lini-shape-{type} lini-shape-{base} lini-style-{class}"
+<g class="lini-node lini-{type} lini-{base} lini-style-{class}"
    data-id="ID" transform="translate(X,Y)">
   <title>…</title>            <!-- when `title:` is set -->
   <!-- geometry, then children -->
 </g>
 ```
 
-Auto-classes: `lini-node` (every box); `lini-shape-{name}` (the type and every
+Auto-classes: `lini-node` (every box); `lini-{name}` (the type and every
 type it inherits); `lini-style-{name}` (per worn class). With rotation, the
 transform becomes `translate(X,Y) rotate(N)`.
 

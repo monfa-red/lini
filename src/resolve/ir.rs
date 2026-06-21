@@ -18,7 +18,7 @@ pub struct Program {
 pub struct SheetInputs {
     /// `.name { }` class rules, in source order — emitted as `lini-style-*`.
     pub class_rules: Vec<(String, AttrMap)>,
-    /// `name { }` element rules, in source order — merged into `lini-shape-*`.
+    /// `name { }` element rules, in source order — merged into `lini-*`.
     pub element_rules: Vec<(String, AttrMap)>,
     /// `|name::base| { }` define defaults (own attrs only), in source order.
     pub defines: Vec<(String, AttrMap)>,

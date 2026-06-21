@@ -191,7 +191,12 @@ impl<'a> Types<'a> {
 /// target — SPEC §15, §18. (Type names are otherwise free; only sides stay
 /// reserved as ids, which a define name is not.)
 fn is_builtin_type(name: &str) -> bool {
-    ShapeKind::parse(name).is_some() || is_template(name) || name == "wire"
+    ShapeKind::parse(name).is_some()
+        || is_template(name)
+        || matches!(
+            name,
+            "wire" | "node" | "text" | "marker" | "canvas" | "scene" | "cut"
+        )
 }
 
 /// A template's built-in attribute bundle (SPEC §8) — the lowest layer of the
@@ -417,6 +422,19 @@ mod tests {
     #[test]
     fn define_shadowing_a_builtin_errors() {
         assert!(build_err("{ |rect::oval| { } }\n").contains("shadows a built-in"));
+    }
+
+    #[test]
+    fn define_shadowing_a_structural_name_errors() {
+        // The structural SVG classes (lini-node, lini-text, …) must not collide
+        // with a `|name::box|` define once the `shape` infix is dropped.
+        for name in ["node", "text", "marker", "canvas", "scene", "cut"] {
+            let src = format!("{{ |{name}::box| {{ }} }}\n");
+            assert!(
+                build_err(&src).contains("shadows a built-in"),
+                "'{name}' must be reserved"
+            );
+        }
     }
 
     #[test]

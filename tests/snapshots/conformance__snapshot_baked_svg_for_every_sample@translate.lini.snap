@@ -6,37 +6,37 @@ input_file: samples/translate.lini
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-230 -57 460 123.5" width="460" height="123.5" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: bold; color: black; }
-    .lini .lini-shape-box { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
-    .lini .lini-shape-plain { fill: none; stroke: none; }
-    .lini .lini-shape-badge { fill: #0a84ff; stroke: none; color: white; font-size: 11px; font-weight: normal; }
+    .lini .lini-plain { fill: none; stroke: none; }
+    .lini .lini-badge { fill: #0a84ff; stroke: none; color: white; font-size: 11px; font-weight: normal; }
   </style>
   <defs>
     <filter id="lini-shadow-1" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="rgba(0, 0, 0, 0.2)"/></filter>
   </defs>
   <g class="lini-scene">
-    <g class="lini-node lini-shape-box" data-id="a" transform="translate(-184.5,0)">
+    <g class="lini-node lini-box" data-id="a" transform="translate(-184.5,0)">
       <rect x="-24.5" y="-27.5" width="49" height="55" rx="6" ry="6"/>
       <text class="lini-text" x="0" y="0">A</text>
     </g>
-    <g class="lini-node lini-shape-box" data-id="b" transform="translate(-81,18)">
+    <g class="lini-node lini-box" data-id="b" transform="translate(-81,18)">
       <rect x="-47" y="-27.5" width="94" height="55" rx="6" ry="6"/>
       <text class="lini-text" x="0" y="0">nudged</text>
     </g>
-    <g class="lini-node lini-shape-box" data-id="c" transform="translate(22.5,0)">
+    <g class="lini-node lini-box" data-id="c" transform="translate(22.5,0)">
       <rect x="-24.5" y="-27.5" width="49" height="55" rx="6" ry="6"/>
       <text class="lini-text" x="0" y="0">C</text>
     </g>
-    <g class="lini-node lini-shape-box" data-id="card" style="fill: #eef" transform="translate(144,0)">
+    <g class="lini-node lini-box" data-id="card" style="fill: #eef" transform="translate(144,0)">
       <rect x="-65" y="-36" width="130" height="72" rx="6" ry="6"/>
       <text class="lini-text" x="0" y="0">Card</text>
-      <g class="lini-node lini-shape-badge lini-shape-box" transform="translate(50.7,-23.5)">
+      <g class="lini-node lini-badge lini-box" transform="translate(50.7,-23.5)">
         <g filter="url(#lini-shadow-1)">
           <rect x="-9.3" y="-7.5" width="18.6" height="15" rx="8" ry="8"/>
         </g>
         <text class="lini-text" x="0" y="0">9</text>
       </g>
-      <g class="lini-node lini-shape-plain lini-shape-box" style="color: #888" transform="translate(0,22)">
+      <g class="lini-node lini-plain lini-box" style="color: #888" transform="translate(0,22)">
         <rect x="-22.5" y="-7.5" width="45" height="15" rx="6" ry="6"/>
         <text class="lini-text" x="0" y="0">id 42</text>
       </g>

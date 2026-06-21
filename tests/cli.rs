@@ -38,7 +38,7 @@ fn baked_output_inlines_every_var_but_keeps_shape_rules() {
         svg
     );
     assert!(
-        svg.contains(".lini-shape-box"),
+        svg.contains(".lini-box"),
         "baked output keeps the structural rules: {}",
         svg
     );
@@ -48,7 +48,7 @@ fn baked_output_inlines_every_var_but_keeps_shape_rules() {
 fn default_output_has_layered_vars_and_unlayered_rules() {
     let svg = lini::compile_str("|box| \"x\"\n").expect("compile");
     assert!(svg.contains("@layer lini.defaults"), "{}", svg);
-    assert!(svg.contains(".lini .lini-shape-box"), "{}", svg);
+    assert!(svg.contains(".lini .lini-box"), "{}", svg);
 }
 
 #[test]

@@ -189,7 +189,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
     for kind in CLOSED {
         if present.contains(kind.as_str()) {
             rules.push(Rule {
-                class: format!("lini-shape-{}", kind.as_str()),
+                class: format!("lini-{}", kind.as_str()),
                 props: vec![
                     ("fill".into(), live("fill")),
                     ("stroke".into(), live("stroke")),
@@ -201,7 +201,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
     }
     if present.contains("line") {
         rules.push(Rule {
-            class: "lini-shape-line".into(),
+            class: "lini-line".into(),
             props: vec![
                 ("fill".into(), "none".into()),
                 ("stroke".into(), live("stroke")),
@@ -226,7 +226,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
     }
     if present.contains("icon") {
         rules.push(Rule {
-            class: "lini-shape-icon".into(),
+            class: "lini-icon".into(),
             props: vec![("fill".into(), live("stroke"))],
         });
     }
@@ -236,7 +236,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
     for (name, attrs) in &laid.sheet.templates {
         if present.contains(name.as_str()) {
             rules.push(Rule {
-                class: format!("lini-shape-{}", name),
+                class: format!("lini-{}", name),
                 props: paint_props(attrs, vars, opts),
             });
         }
@@ -244,7 +244,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
     for (name, attrs) in &laid.sheet.defines {
         if present.contains(name.as_str()) {
             rules.push(Rule {
-                class: format!("lini-shape-{}", name),
+                class: format!("lini-{}", name),
                 props: paint_props(attrs, vars, opts),
             });
         }
@@ -256,7 +256,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
         if !present.contains(name.as_str()) {
             continue;
         }
-        let class = format!("lini-shape-{}", name);
+        let class = format!("lini-{}", name);
         let props = paint_props(attrs, vars, opts);
         if let Some(rule) = rules.iter_mut().find(|r| r.class == class) {
             for (prop, value) in props {
@@ -520,15 +520,15 @@ mod tests {
     #[test]
     fn shape_rules_only_for_present_types() {
         let css = emit_str(&rules_for("x |box|\n"));
-        assert!(css.contains(".lini .lini-shape-box {"), "{}", css);
-        assert!(!css.contains("lini-shape-oval"), "{}", css);
+        assert!(css.contains(".lini .lini-box {"), "{}", css);
+        assert!(!css.contains("lini-oval"), "{}", css);
     }
 
     #[test]
     fn shape_rules_complete_over_inheritable_paint() {
         let set = rules_for("x |box|\ny |oval|\nz |line| { points: 0 0, 10 0; }\n");
         for rule in &set.rules {
-            if rule.class == "lini-shape-text" {
+            if rule.class == "lini-text" {
                 // Text masks stroke — a container's stroke must never bleed
                 // into glyph outlines.
                 assert!(
@@ -537,7 +537,7 @@ mod tests {
                 );
                 continue;
             }
-            if rule.class.starts_with("lini-shape-") && rule.class != "lini-shape-icon" {
+            if rule.class.starts_with("lini-") && rule.class != "lini-icon" {
                 assert!(
                     rule.props.iter().any(|(p, _)| p == "stroke-dasharray"),
                     "rule {} lacks the dasharray mask",
@@ -603,7 +603,7 @@ mod tests {
     fn type_defaults_merge_into_shape_rule() {
         let css = emit_str(&rules_for("{ |box| { fill: lightyellow; } }\nx |box|\n"));
         assert!(
-            css.contains(".lini .lini-shape-box { fill: lightyellow;"),
+            css.contains(".lini .lini-box { fill: lightyellow;"),
             "{}",
             css
         );
@@ -612,11 +612,11 @@ mod tests {
     #[test]
     fn group_template_rule_follows_rect_rule() {
         let css = emit_str(&rules_for("g |group| [ x |box| ]\n"));
-        let rect = css.find(".lini .lini-shape-box").expect("rect rule");
-        let group = css.find(".lini .lini-shape-group").expect("group rule");
+        let rect = css.find(".lini .lini-box").expect("rect rule");
+        let group = css.find(".lini .lini-group").expect("group rule");
         assert!(rect < group, "{}", css);
         assert!(
-            css.contains("lini-shape-group { fill: var(--lini-group-fill); stroke: var(--lini-group-stroke); stroke-width: 1; stroke-dasharray:"),
+            css.contains("lini-group { fill: var(--lini-group-fill); stroke: var(--lini-group-stroke); stroke-width: 1; stroke-dasharray:"),
             "{}",
             css
         );
@@ -628,7 +628,7 @@ mod tests {
             "{ |treat::box| { fill: pink; radius: 5; } }\nx |treat|\n",
         ));
         assert!(
-            css.contains(".lini .lini-shape-treat { fill: pink; }"),
+            css.contains(".lini .lini-treat { fill: pink; }"),
             "geometry (radius) must not ride CSS: {}",
             css
         );

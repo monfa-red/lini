@@ -122,12 +122,12 @@ fn line_missing_points_error_uses_pipe_sigil() {
 
 #[test]
 fn define_paint_rides_its_shape_rule() {
-    // SPEC §13: a define's own paint states on its `lini-shape-{name}` rule;
+    // SPEC §13: a define's own paint states on its `lini-{name}` rule;
     // geometry (radius) stays baked, never on the rule.
     let svg = render_baked("{\n  |s::box| { stroke: blue; radius: 5; }\n}\nn |s| \"n\"\n");
     let rule = svg
         .lines()
-        .find(|l| l.contains(".lini-shape-s {"))
+        .find(|l| l.contains(".lini-s {"))
         .expect("shape-s rule present");
     assert!(
         rule.contains("stroke: blue"),
@@ -165,7 +165,7 @@ fn bake_mode_resolves_var_refs_to_literals() {
     assert!(svg.contains("fill: white; stroke: #444;"), "{}", svg);
     assert!(svg.contains("fill: currentColor"), "{}", svg);
     assert!(svg.contains("color: black"), "{}", svg);
-    assert!(svg.contains(".lini .lini-shape-box {"), "{}", svg);
+    assert!(svg.contains(".lini .lini-box {"), "{}", svg);
     assert!(
         !svg.contains("@layer lini.defaults"),
         "bake mode should omit the var defaults block"
@@ -185,7 +185,7 @@ fn auto_classes_include_primitive_and_styles() {
     let svg = render_live(
         "{\n  .bold { font-weight: bold; }\n  .thin { stroke: #444; }\n}\ncat |box| .bold.thin \"Cat\"\n",
     );
-    assert!(svg.contains("lini-shape-box"), "{}", svg);
+    assert!(svg.contains("lini-box"), "{}", svg);
     assert!(svg.contains("lini-style-bold"), "{}", svg);
     assert!(svg.contains("lini-style-thin"), "{}", svg);
 }
@@ -193,8 +193,8 @@ fn auto_classes_include_primitive_and_styles() {
 #[test]
 fn auto_classes_include_user_shape_chain() {
     let svg = render_live("{\n  |treat::box| { radius: 5; }\n}\ncat |treat| \"Cat\"\n");
-    assert!(svg.contains("lini-shape-treat"), "{}", svg);
-    assert!(svg.contains("lini-shape-box"), "{}", svg);
+    assert!(svg.contains("lini-treat"), "{}", svg);
+    assert!(svg.contains("lini-box"), "{}", svg);
     assert!(svg.contains(r#"data-id="cat""#), "{}", svg);
 }
 
@@ -277,7 +277,7 @@ fn css_cascade_sample_emits_rules_and_diffs() {
         svg
     );
     assert!(
-        svg.contains(".lini .lini-shape-box { fill: lightyellow;"),
+        svg.contains(".lini .lini-box { fill: lightyellow;"),
         "element rule merged into the shape rule: {}",
         svg
     );

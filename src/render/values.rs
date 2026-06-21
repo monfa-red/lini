@@ -163,9 +163,9 @@ pub fn class_list(
 ) -> Vec<String> {
     let mut classes = vec!["lini-node".to_string()];
     for name in type_chain {
-        classes.push(format!("lini-shape-{}", name));
+        classes.push(format!("lini-{}", name));
     }
-    classes.push(format!("lini-shape-{}", primitive_kind));
+    classes.push(format!("lini-{}", primitive_kind));
     for name in applied_styles {
         classes.push(format!("lini-style-{}", name));
     }

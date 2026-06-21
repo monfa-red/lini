@@ -6,7 +6,7 @@ input_file: samples/styles.lini
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-63.5 -202 127 404" width="127" height="404" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: bold; color: black; }
-    .lini .lini-shape-box { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-style-thin { stroke: #444; stroke-width: 1; }
     .lini .lini-style-bold { font-weight: bold; }
@@ -16,23 +16,23 @@ input_file: samples/styles.lini
   </style>
   <defs/>
   <g class="lini-scene">
-    <g class="lini-node lini-shape-box lini-style-thin" data-id="a" transform="translate(0,-154)">
+    <g class="lini-node lini-box lini-style-thin" data-id="a" transform="translate(0,-154)">
       <rect x="-38" y="-27.5" width="76" height="55" rx="6" ry="6"/>
       <text class="lini-text" x="0" y="0">thin</text>
     </g>
-    <g class="lini-node lini-shape-box lini-style-bold" data-id="b" transform="translate(0,-77.5)">
+    <g class="lini-node lini-box lini-style-bold" data-id="b" transform="translate(0,-77.5)">
       <rect x="-38" y="-27.5" width="76" height="55" rx="6" ry="6"/>
       <text class="lini-text" x="0" y="0">bold</text>
     </g>
-    <g class="lini-node lini-shape-box lini-style-power" data-id="c" transform="translate(0,-0.5)">
+    <g class="lini-node lini-box lini-style-power" data-id="c" transform="translate(0,-0.5)">
       <rect x="-42.5" y="-27.5" width="85" height="55" rx="6" ry="6"/>
       <text class="lini-text" x="0" y="0">power</text>
     </g>
-    <g class="lini-node lini-shape-box lini-style-warn" data-id="d" transform="translate(0,76.5)">
+    <g class="lini-node lini-box lini-style-warn" data-id="d" transform="translate(0,76.5)">
       <rect x="-38" y="-27.5" width="76" height="55" rx="6" ry="6"/>
       <text class="lini-text" x="0" y="0">warn</text>
     </g>
-    <g class="lini-node lini-shape-box lini-style-ghost" data-id="e" transform="translate(0,153.5)">
+    <g class="lini-node lini-box lini-style-ghost" data-id="e" transform="translate(0,153.5)">
       <rect x="-42.5" y="-27.5" width="85" height="55" rx="6" ry="6"/>
       <text class="lini-text" x="0" y="0">ghost</text>
     </g>

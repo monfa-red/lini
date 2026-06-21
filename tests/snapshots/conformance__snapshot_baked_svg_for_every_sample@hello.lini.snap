@@ -6,12 +6,12 @@ input_file: samples/hello.lini
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-63.5 -48.5 127 97" width="127" height="97" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: bold; color: black; }
-    .lini .lini-shape-box { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
   </style>
   <defs/>
   <g class="lini-scene">
-    <g class="lini-node lini-shape-box" transform="translate(0,0)">
+    <g class="lini-node lini-box" transform="translate(0,0)">
       <rect x="-42.5" y="-27.5" width="85" height="55" rx="6" ry="6"/>
       <text class="lini-text" x="0" y="0">hello</text>
     </g>
