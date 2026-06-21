@@ -142,12 +142,11 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
 pub fn root_defaults() -> Vec<Decl> {
     vec![
         id("layout", "column"),
-        n("padding", 0.0),
+        n("padding", 20.0),
         n("gap", 20.0),
         n("font-size", 15.0),
         n("line-height", 1.2),
         id("text-align", "center"),
-        n("canvas-pad", 20.0),
     ]
 }
 
@@ -207,7 +206,7 @@ mod tests {
 
     #[test]
     fn root_and_wire_defaults_are_present() {
-        assert_eq!(num(&root_defaults(), "canvas-pad"), Some(20.0));
+        assert_eq!(num(&root_defaults(), "padding"), Some(20.0));
         assert_eq!(num(&root_defaults(), "font-size"), Some(15.0));
         assert_eq!(num(&wire_defaults(), "clearance"), Some(16.0));
         assert_eq!(num(&wire_defaults(), "font-size"), Some(11.0));

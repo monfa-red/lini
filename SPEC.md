@@ -374,9 +374,10 @@ A container picks a mode with `layout`:
 | `layout: grid` | 2D grid — sized by `columns` / `rows`. |
 
 **Defaults:** every container — the root included — defaults to `layout: column`
-with `gap: 20`. A normal container pads its content by 20; the root pads by 0
-(the fixed `canvas-pad`, 20 px, frames the whole scene), as do the frameless
-`|plain|` / `|row|` / `|column|` (see [§8](#8-templates)).
+with `gap: 20`. A normal container pads its content by 20; so does the root, and
+its padding is the margin that frames the whole rendered scene — wires and
+labels included — out to the SVG edge. The frameless `|plain|` / `|row|` /
+`|column|` pad by 0 (see [§8](#8-templates)).
 
 ### Flex — `align` / `justify`
 
@@ -965,7 +966,7 @@ or in an instance block:
 ```
 font-size 15    wire-font-size 11   caption-font-size 12
 stroke-width 2  radius 6            gap 20                 padding 20
-clearance 16    icon-size 24        canvas-pad 20
+clearance 16    icon-size 24
 ```
 
 `font-size` is body text. Wire labels and captions carry their own baked defaults
@@ -973,8 +974,9 @@ clearance 16    icon-size 24        canvas-pad 20
 `-> { font-size: … }` sets wire labels, and `|caption| { font-size: … }` sets
 captions. `radius` rounds a `|box|` by default; `|rect|` resets it to 0.
 
-Padding defaults to 20, with `|plain|` / `|row|` / `|column|` and the root at 0,
-and a `|table|` at `4 8` (its cell inset). It doubles as the minimum size of an
+Padding defaults to 20 — including the root, whose padding frames the whole
+scene (the SVG margin) — with `|plain|` / `|row|` / `|column|` at 0 and a
+`|table|` at `4 8` (its cell inset). It doubles as the minimum size of an
 empty box (`2 × padding`; see [Auto-sizing](#6-positioning--anchors)). **Every
 baked default — these constants and the template bundles — lives in one place**,
 so the whole look is tuned from a single file.
@@ -1030,8 +1032,8 @@ it out of the grid.
 </svg>
 ```
 
-`viewBox` auto-sizes to content + a 20 px canvas pad. A root `fill:` paints a
-`lini-canvas` backing rect over the viewBox.
+`viewBox` auto-sizes to content + the scene's `padding` (20 px by default) on
+every side. A root `fill:` paints a `lini-canvas` backing rect over the viewBox.
 
 **Paint compiles to CSS; geometry bakes.** Shape and wire paint defaults — and
 every rule — are stated once as class rules; only the classes actually used are
@@ -1261,9 +1263,9 @@ input. Each template/define instance becomes its base primitive wearing a `.lini
 class chain (derived→base→primitive); a type's defaults and any `|type| { }` element
 rule fold into a generated `.lini-<type> { … }` class; a `|table box| { }`
 descendant rule rewrites to `|.lini-table .lini-box| { }`; define bodies inline per
-instance; the scene defaults (`layout`, `padding`, `gap`, `font-size`, `canvas-pad`)
-and the `-> { }` wire defaults — present only when the scene has a wire — fill the
-global block; id-as-label, trailing labels,
+instance; the scene defaults (`layout`, `padding`, `gap`, `font-size`) and the
+`-> { }` wire defaults — present only when the scene has a wire — fill the global
+block; id-as-label, trailing labels,
 auto-`along:`, and root-wire auto-create become explicit. The pass is idempotent;
 type-system errors (cycle, depth > 16, a define shadowing a built-in) surface here.
 

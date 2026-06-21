@@ -3,7 +3,7 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/multi_value_box.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-104.5 -177.5 209 355" width="209" height="355" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-96.5 -165.5 193 331" width="193" height="331" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: bold; color: black; }
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }

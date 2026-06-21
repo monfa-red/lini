@@ -137,8 +137,8 @@ fn apply_var_decls(vars: &mut VarTable, file: &File) -> Result<(), Error> {
 // ─────────────────────────── Root config ───────────────────────────
 
 /// Root container attributes — read straight from the global block. Desugar
-/// injects the scene defaults (`layout: column`, `padding: 0`, `gap`, the
-/// inherited-text baseline, `canvas-pad`), so there is nothing to seed here.
+/// injects the scene defaults (`layout: column`, `padding: 20` — the scene's
+/// frame — `gap`, the inherited-text baseline), so there is nothing to seed here.
 fn root_attrs(file: &File, vars: &VarTable) -> Result<AttrMap, Error> {
     let mut ordered: Vec<(String, ResolvedValue)> = Vec::new();
     for item in &file.stylesheet {

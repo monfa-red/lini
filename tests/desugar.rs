@@ -61,7 +61,7 @@ fn define_body_inlines_and_the_define_vanishes() {
 #[test]
 fn scene_and_wire_defaults_land_in_the_global_block() {
     let out = desugar_source("a -> b \"w\"\n").unwrap();
-    assert!(out.contains("canvas-pad: 20;"), "scene defaults: {out}");
+    assert!(out.contains("padding: 20;"), "scene defaults: {out}");
     assert!(out.contains("clearance: 16;"), "wire defaults: {out}");
     assert!(
         out.contains("a |box| .lini-box [ \"a\" ]"),

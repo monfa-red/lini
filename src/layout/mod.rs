@@ -58,7 +58,7 @@ fn layout_mode(program: &Program, growth_on: bool) -> Result<LaidOut, Error> {
             }
         }
     }
-    Ok(finish(program, best))
+    finish(program, best)
 }
 
 /// One placed-and-routed scene under a given growth map.
@@ -169,10 +169,11 @@ fn accumulate_extent(n: &PlacedNode, ox: f64, oy: f64, bbox: &mut Bbox) {
     }
 }
 
-fn finish(program: &Program, attempt: Attempt) -> LaidOut {
-    // Viewbox = scene bbox + wire paths, labels, airwires + canvas-pad on
-    // every side.
-    let pad = program.scene.attrs.number("canvas-pad").unwrap_or(0.0);
+fn finish(program: &Program, attempt: Attempt) -> Result<LaidOut, Error> {
+    // Viewbox = the whole drawn extent (scene bbox + wire paths, labels, airwires,
+    // overlays) framed by the scene's `padding` on every side — the margin between
+    // the diagram and the SVG edge.
+    let pad = primitives::padding(&program.scene.attrs, Span::empty())?;
     // Absolute overlays don't grow their parent's bbox, so the scene bbox can
     // miss one that overflows; the canvas must still include every drawn node,
     // so take the true visual extent of the whole tree.
@@ -201,10 +202,10 @@ fn finish(program: &Program, attempt: Attempt) -> LaidOut {
         bbox.max_y = bbox.max_y.max(t.position.1 + hh);
     }
     let vb = ViewBox {
-        x: bbox.min_x - pad,
-        y: bbox.min_y - pad,
-        w: bbox.w() + 2.0 * pad,
-        h: bbox.h() + 2.0 * pad,
+        x: bbox.min_x - pad.left,
+        y: bbox.min_y - pad.top,
+        w: bbox.w() + pad.left + pad.right,
+        h: bbox.h() + pad.top + pad.bottom,
     };
 
     // A root `fill:` is the canvas colour (SPEC §13); `none` stays transparent.
@@ -215,7 +216,7 @@ fn finish(program: &Program, attempt: Attempt) -> LaidOut {
         .filter(|v| !matches!(v, ResolvedValue::Ident(s) if s == "none"))
         .cloned();
 
-    LaidOut {
+    Ok(LaidOut {
         viewbox: vb,
         nodes: attempt.nodes,
         wires: routing.wires,
@@ -224,7 +225,7 @@ fn finish(program: &Program, attempt: Attempt) -> LaidOut {
         vars: program.vars.clone(),
         sheet: program.sheet.clone(),
         canvas_fill,
-    }
+    })
 }
 
 /// Validate a laid-out scene's wires against the routing contract (WIRING.md):
@@ -684,8 +685,8 @@ mod tests {
     }
 
     #[test]
-    fn viewbox_wraps_content_with_canvas_pad() {
-        // bbox 102×42, + 20 canvas-pad each side → 142×82.
+    fn viewbox_wraps_content_with_scene_padding() {
+        // bbox 102×42, + the scene's 20 padding each side → 142×82.
         let l = lay_out("|box| { width: 100; height: 40; }\n");
         assert!((l.viewbox.w - 142.0).abs() < 0.01, "w={}", l.viewbox.w);
         assert!((l.viewbox.h - 82.0).abs() < 0.01, "h={}", l.viewbox.h);

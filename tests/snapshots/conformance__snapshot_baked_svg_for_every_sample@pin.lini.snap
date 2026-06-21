@@ -3,7 +3,7 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/pin.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-141 -96 282 192" width="282" height="192" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-161 -116 322 232" width="322" height="232" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: bold; color: black; }
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
