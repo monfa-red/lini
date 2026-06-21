@@ -6,6 +6,7 @@ input_file: samples/multi_value_box.lini
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-96.5 -165.5 193 331" width="193" height="331" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: bold; color: black; }
+    .lini .lini-canvas { fill: white; }
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-plain { fill: none; stroke: none; }
@@ -13,6 +14,7 @@ input_file: samples/multi_value_box.lini
     .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
   </style>
   <defs/>
+  <rect class="lini-canvas" x="-96.5" y="-165.5" width="193" height="331"/>
   <g class="lini-scene">
     <g class="lini-node lini-box" transform="translate(0,-129)">
       <rect x="-83" y="-27.5" width="166" height="55" rx="6" ry="6"/>

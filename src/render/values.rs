@@ -25,7 +25,15 @@ pub fn format_value(value: &ResolvedValue, vars: &VarTable, opts: &Options) -> S
             let parts: Vec<String> = items.iter().map(|v| format_value(v, vars, opts)).collect();
             parts.join(", ")
         }
-        ResolvedValue::Call(c) => format_call(c, vars, opts),
+        ResolvedValue::Call(c) => {
+            // Baked output carries no `light-dark()`; freeze its light arm so a
+            // standalone file renders correctly (SPEC §11.4).
+            if opts.bake_vars && c.name == "light-dark" && !c.args.is_empty() {
+                format_value(&c.args[0], vars, opts)
+            } else {
+                format_call(c, vars, opts)
+            }
+        }
         ResolvedValue::LiveVar { name, raw } => {
             // `--bake-vars` inlines each var to a literal so renderers without
             // `var()` support (and standalone SVG files) draw correctly;

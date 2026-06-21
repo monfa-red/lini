@@ -6,6 +6,7 @@ input_file: samples/desugar.lini
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-115.5 -86.5 231 155.5" width="231" height="155.5" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: bold; color: black; }
+    .lini .lini-canvas { fill: white; }
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-cyl { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
@@ -18,6 +19,7 @@ input_file: samples/desugar.lini
   <defs>
     <filter id="lini-shadow-1" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="rgba(0, 0, 0, 0.2)"/></filter>
   </defs>
+  <rect class="lini-canvas" x="-115.5" y="-86.5" width="231" height="155.5"/>
   <g class="lini-scene">
     <g class="lini-node lini-group lini-box" data-id="api" transform="translate(-45,0)">
       <rect x="-50" y="-48.5" width="100" height="97" rx="6" ry="6"/>

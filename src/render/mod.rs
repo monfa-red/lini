@@ -47,20 +47,26 @@ pub fn render(laid_out: &LaidOut, opts: &Options) -> String {
         out.push_str("  </defs>\n");
     }
 
-    // A root `fill:` paints a backing rect over the whole viewBox (SPEC §13),
-    // behind everything else.
-    if let Some(fill) = &laid_out.canvas_fill {
-        writeln!(
-            out,
-            r#"  <rect class="lini-canvas" x="{}" y="{}" width="{}" height="{}" fill="{}"/>"#,
-            num(vb.x),
-            num(vb.y),
-            num(vb.w),
-            num(vb.h),
-            format_value(fill, &laid_out.vars, opts),
-        )
-        .unwrap();
-    }
+    // The backing rect paints the scene background over the whole viewBox (SPEC
+    // §13); its fill comes from the `.lini-canvas` rule (`--lini-bg`), unless the
+    // root set an explicit `fill:`, which overrides it inline.
+    let canvas_style = match &laid_out.canvas_fill {
+        Some(fill) => format!(
+            r#" style="fill: {}""#,
+            format_value(fill, &laid_out.vars, opts)
+        ),
+        None => String::new(),
+    };
+    writeln!(
+        out,
+        r#"  <rect class="lini-canvas" x="{}" y="{}" width="{}" height="{}"{}/>"#,
+        num(vb.x),
+        num(vb.y),
+        num(vb.w),
+        num(vb.h),
+        canvas_style,
+    )
+    .unwrap();
 
     out.push_str("  <g class=\"lini-scene\">\n");
     for node in in_layer_order(&laid_out.nodes) {
@@ -344,18 +350,23 @@ mod tests {
     }
 
     #[test]
-    fn root_fill_paints_a_backing_rect_over_the_viewbox() {
+    fn root_fill_overrides_the_canvas_inline() {
         let svg = svg_for("{ fill: #eef; }\nx |box|\n");
         assert!(
-            svg.contains(r#"class="lini-canvas""#) && svg.contains(r##"fill="#eef""##),
+            svg.contains(r#"class="lini-canvas""#) && svg.contains(r##"style="fill: #eef""##),
             "{svg}"
         );
     }
 
     #[test]
-    fn no_backing_rect_without_a_root_fill() {
+    fn canvas_rect_defaults_to_the_bg_var() {
+        // The backing rect is always present, painted by the `.lini-canvas` rule.
         let svg = svg_for("x |box|\n");
-        assert!(!svg.contains("lini-canvas"), "{svg}");
+        assert!(svg.contains(r#"<rect class="lini-canvas""#), "{svg}");
+        assert!(
+            svg.contains(".lini .lini-canvas { fill: var(--lini-bg); }"),
+            "{svg}"
+        );
     }
 
     #[test]

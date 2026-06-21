@@ -6,11 +6,13 @@ input_file: samples/markers_all.lini
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-81 -76 162 152" width="162" height="152" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: bold; color: black; }
+    .lini .lini-canvas { fill: white; }
     .lini .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-marker { fill: #444; stroke: none; }
     .lini .lini-marker.lini-marker-crow { fill: none; stroke: inherit; stroke-linecap: round; stroke-dasharray: none; }
   </style>
   <defs/>
+  <rect class="lini-canvas" x="-81" y="-76" width="162" height="152"/>
   <g class="lini-scene">
     <g class="lini-node lini-line" transform="translate(0,-55)">
       <line x1="-60" y1="0" x2="56" y2="0"/>

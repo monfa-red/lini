@@ -111,7 +111,7 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             ),
             id("stroke", "none"),
             var("fill", "accent"),
-            var("color", "on-accent"),
+            var("color", "accent-text"),
             n("font-size", 11.0),
             id("font-weight", "normal"),
         ],

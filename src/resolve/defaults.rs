@@ -23,23 +23,55 @@ pub fn built_in_defaults() -> VarTable {
             ],
         })
     };
+    // A `light-dark(LIGHT, DARK)` colour: the UA paints the arm matching the
+    // element's `color-scheme`, so one SVG carries both palettes (SPEC §11.1).
+    let light_dark = |l: ResolvedValue, d: ResolvedValue| {
+        ResolvedValue::Call(ResolvedCall {
+            name: "light-dark".into(),
+            args: vec![l, d],
+        })
+    };
 
-    // Visual vars — live at runtime (SPEC §11.1).
-    set_visual(&mut t, "bg", ident("white"));
-    set_visual(&mut t, "fg", ident("black"));
-    set_visual(&mut t, "fill", ident("white"));
-    set_visual(&mut t, "stroke", hex("444"));
-    set_visual(&mut t, "accent", hex("0a84ff"));
-    set_visual(&mut t, "on-accent", ident("white"));
-    set_visual(&mut t, "muted", hex("888"));
-    set_visual(&mut t, "danger", ident("crimson"));
-    set_visual(&mut t, "warn", ident("orange"));
-    set_visual(&mut t, "airwire", ident("crimson"));
-    set_visual(&mut t, "note-bg", hex("fff9c4"));
-    set_visual(&mut t, "group-stroke", rgba(0.0, 0.0, 0.0, 0.4));
-    set_visual(&mut t, "group-fill", rgba(0.0, 0.0, 0.0, 0.03));
-    set_visual(&mut t, "caption-color", rgba(0.0, 0.0, 0.0, 0.5));
-    set_visual(&mut t, "footer-color", rgba(0.0, 0.0, 0.0, 0.5));
+    // Visual vars — live at runtime, each colour a light-dark() pair (SPEC §11.1).
+    set_visual(&mut t, "bg", light_dark(ident("white"), hex("1b1b1f")));
+    set_visual(&mut t, "fg", light_dark(ident("black"), hex("e8e8ea")));
+    set_visual(&mut t, "fill", light_dark(ident("white"), hex("26262b")));
+    set_visual(&mut t, "stroke", light_dark(hex("444"), hex("9aa0a6")));
+    set_visual(&mut t, "accent", light_dark(hex("0a84ff"), hex("4aa3ff")));
+    set_visual(&mut t, "accent-text", ident("white"));
+    set_visual(&mut t, "muted", light_dark(hex("888"), hex("9aa0a6")));
+    set_visual(
+        &mut t,
+        "danger",
+        light_dark(ident("crimson"), hex("ff6b6b")),
+    );
+    set_visual(&mut t, "warn", light_dark(ident("orange"), hex("ffb454")));
+    set_visual(
+        &mut t,
+        "airwire",
+        light_dark(ident("crimson"), hex("ff6b6b")),
+    );
+    set_visual(&mut t, "note-bg", light_dark(hex("fff9c4"), hex("4a4733")));
+    set_visual(
+        &mut t,
+        "group-stroke",
+        light_dark(rgba(0.0, 0.0, 0.0, 0.4), rgba(255.0, 255.0, 255.0, 0.4)),
+    );
+    set_visual(
+        &mut t,
+        "group-fill",
+        light_dark(rgba(0.0, 0.0, 0.0, 0.03), rgba(255.0, 255.0, 255.0, 0.05)),
+    );
+    set_visual(
+        &mut t,
+        "caption-color",
+        light_dark(rgba(0.0, 0.0, 0.0, 0.5), rgba(255.0, 255.0, 255.0, 0.55)),
+    );
+    set_visual(
+        &mut t,
+        "footer-color",
+        light_dark(rgba(0.0, 0.0, 0.0, 0.5), rgba(255.0, 255.0, 255.0, 0.55)),
+    );
     set_visual(
         &mut t,
         "font-family",
@@ -59,7 +91,11 @@ pub fn built_in_defaults() -> VarTable {
             raw: false,
         },
     );
-    set_visual(&mut t, "shadow-color", rgba(0.0, 0.0, 0.0, 0.2));
+    set_visual(
+        &mut t,
+        "shadow-color",
+        light_dark(rgba(0.0, 0.0, 0.0, 0.2), rgba(0.0, 0.0, 0.0, 0.5)),
+    );
 
     // Layout constants (radius, padding, font-size, clearance, …) are no longer
     // here: desugar materializes every one into the `.lini-*` class defs, the

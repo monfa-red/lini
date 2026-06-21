@@ -131,9 +131,10 @@ that needs no declaration: naming an id declared nowhere auto-creates it
 
 **Two kinds of variable.**
 
-- *Visual* values that don't affect layout — colours, the font family, the
-  shadow tint — are exposed as live CSS variables (`--lini-fill`,
-  `--lini-accent`, …) so a host page can re-theme them at runtime.
+- *Visual* values that don't affect layout — colours and the font family — are
+  exposed as live CSS variables (`--lini-fill`, `--lini-accent`, …) so a host page
+  can re-theme them, and each colour carries a built-in dark variant that follows
+  the viewer's OS or a `data-theme` toggle ([§11.1](#111-visual-variables-live-themeable)).
 - *Layout* values — sizes, gaps, paddings, widths, **and font size** — bake into
   the SVG as literals. Text is measured at compile time, so its size can never
   be a runtime `var()`; a standalone SVG always looks right.
@@ -608,7 +609,7 @@ common.
 | `\|group\|` | `\|box\|` | `stroke: --group-stroke; stroke-style: dashed; stroke-width: 1; fill: --group-fill; radius: 6` | Dashed frame for a caption + children (padding via the default 20). |
 | `\|caption\|` | `\|plain\|` | `pin: top left; translate: 0 -18; color: --caption-color; font-size: 12; font-weight: normal` | A title, pinned just above the group's top-left corner. |
 | `\|footer\|` | `\|caption\|` | `pin: bottom; translate: 0 17; font-size: 11; color: --footer-color` | A caption flipped to the bottom edge, centred and muted. |
-| `\|badge\|` | `\|box\|` | `pin: top right; translate: 6 -6; radius: 8; padding: 2 6; shadow: 2 3 3; stroke: none; fill: --accent; color: --on-accent; font-size: 11; font-weight: normal` | Corner pill — nudged out over the top-right corner, grows nothing. |
+| `\|badge\|` | `\|box\|` | `pin: top right; translate: 6 -6; radius: 8; padding: 2 6; shadow: 2 3 3; stroke: none; fill: --accent; color: --accent-text; font-size: 11; font-weight: normal` | Corner pill — nudged out over the top-right corner, grows nothing. |
 | `\|note\|` | `\|box\|` | `radius: 2; shadow: 2; stroke: none; fill: --note-bg` | Sticky note (padding via the default 20). |
 | `\|row\|` | `\|plain\|` | `layout: row` | Frameless wrapper — children in a row. |
 | `\|column\|` | `\|plain\|` | `layout: column` | Frameless wrapper — children in a column. |
@@ -821,7 +822,7 @@ values.
 
 | Property | Type | Default |
 |---|---|---|
-| `fill` | color | `--fill` (closed shapes); `currentColor` on text; `--stroke` for icons; **the canvas** on the root (default transparent) |
+| `fill` | color | `--fill` (closed shapes); `currentColor` on text; `--stroke` for icons; `--bg` on the root (the scene background) |
 | `color` | color | inherits — sets text/icon glyph colour for descendants; on text, an alias for `fill` |
 | `opacity` | 0..1 | 1 |
 | `radius` | number | 6 (`\|box\|` only; `\|rect\|` is `0`) |
@@ -917,44 +918,52 @@ Visual variables stay live `var()`; layout values bake. See
 
 ## 11. Variables & Defaults
 
-CSS variables are for **visual theming only** — colours, the font family, the
-shadow tint. Everything that affects layout — including font *size* — is a baked
-constant, so a standalone SVG never depends on host CSS.
+CSS variables theme the **visual** layer — colours and the font family. Everything
+that affects layout — sizes, gaps, padding, and font *size* — is a baked constant,
+so a standalone SVG never depends on host CSS.
 
 ### 11.1 Visual variables (live, themeable)
 
+Each colour is a `light-dark(LIGHT, DARK)` value, so one SVG carries both palettes:
+
 ```
---lini-bg            white
---lini-fg            black
---lini-fill          white
---lini-stroke        #444
---lini-accent        #0a84ff
---lini-on-accent     white
---lini-muted         #888
---lini-danger        crimson
---lini-warn          orange
---lini-airwire       crimson
---lini-note-bg       #fff9c4
---lini-group-stroke  rgba(0, 0, 0, 0.4)
---lini-group-fill    rgba(0, 0, 0, 0.03)
---lini-caption-color rgba(0, 0, 0, 0.5)
---lini-footer-color  rgba(0, 0, 0, 0.5)
+--lini-bg            light-dark(white, #1b1b1f)      the scene background
+--lini-fg            light-dark(black, #e8e8ea)
+--lini-fill          light-dark(white, #26262b)
+--lini-stroke        light-dark(#444, #9aa0a6)
+--lini-accent        light-dark(#0a84ff, #4aa3ff)
+--lini-accent-text   white                           text on an accent fill (e.g. a badge)
+--lini-muted         light-dark(#888, #9aa0a6)
+--lini-danger        light-dark(crimson, #ff6b6b)
+--lini-warn          light-dark(orange, #ffb454)
+--lini-airwire       light-dark(crimson, #ff6b6b)
+--lini-note-bg       light-dark(#fff9c4, #4a4733)
+--lini-group-stroke  light-dark(rgba(0,0,0,.4), rgba(255,255,255,.4))
+--lini-group-fill    light-dark(rgba(0,0,0,.03), rgba(255,255,255,.05))
+--lini-caption-color light-dark(rgba(0,0,0,.5), rgba(255,255,255,.55))
+--lini-footer-color  light-dark(rgba(0,0,0,.5), rgba(255,255,255,.55))
 --lini-font-family   ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace
 --lini-font-weight         bold
 --lini-caption-font-weight normal
 --lini-wire-font-weight    normal
 --lini-text-color    var(--lini-fg)
---lini-shadow-color  rgba(0, 0, 0, 0.2)
+--lini-shadow-color  light-dark(rgba(0,0,0,.2), rgba(0,0,0,.5))
 ```
 
-The default font is a **monospace** stack: it reads crisp, and a fixed glyph
-advance keeps text-width estimation accurate without embedded font metrics
-([§19](#19-deferred--non-goals)). Body text is **bold**, captions and wire labels
-**normal**.
+`--lini-bg` paints the scene background (the canvas rect), so the diagram is
+self-contained in either mode. The default font is a **monospace** stack: it reads
+crisp, and a fixed glyph advance keeps text-width estimation accurate without
+embedded font metrics ([§19](#19-deferred--non-goals)). Body text is **bold**,
+captions and wire labels **normal**. A themed proportional `font-family` is allowed
+but makes text width approximate until embedded metrics land.
 
-These emit as live `var(--lini-*)` references, and the compiler ships an `@layer
-lini.defaults` block alongside the SVG — so unlayered host CSS wins automatically,
-no `!important`.
+**Dark/light is automatic.** The compiler emits `color-scheme: light dark` on
+`.lini`, so `light-dark()` follows the viewer's OS (`prefers-color-scheme`) — no
+script, no `@media`. A `data-theme="dark"` / `"light"` on the SVG or any ancestor
+forces a mode (it flips `color-scheme`, and its higher specificity beats the OS).
+All defaults sit in `@layer lini.defaults`, so unlayered host CSS still wins with no
+`!important`. `--bake-vars` freezes the light arm into literals for renderers
+without `light-dark()` ([§11.4](#114---bake-vars)).
 
 ### 11.2 `--name` references
 
@@ -1036,21 +1045,27 @@ it out of the grid.
 <svg xmlns="http://www.w3.org/2000/svg"
      viewBox="X Y W H" width="W" height="H" class="lini">
   <style>
-    @layer lini.defaults { :root, .lini { /* --lini-* variables */ } }
+    @layer lini.defaults {
+      :root, .lini { color-scheme: light dark; /* --lini-*: light-dark(…, …) */ }
+      .lini[data-theme="dark"],  [data-theme="dark"]  .lini { color-scheme: dark; }
+      .lini[data-theme="light"], [data-theme="light"] .lini { color-scheme: light; }
+    }
     .lini { font-family: var(--lini-font-family); font-size: 15px; font-weight: var(--lini-font-weight); color: var(--lini-text-color); }
+    .lini .lini-canvas { fill: var(--lini-bg); }
     .lini .lini-box { fill: var(--lini-fill); stroke: var(--lini-stroke); stroke-width: 2; }
     .lini .lini-style-hot { stroke-width: 3; }   /* one rule per class def */
     .lini .lini-wire { stroke: var(--lini-stroke); stroke-width: 2; fill: none; }
   </style>
   <defs><!-- filters, clipPaths, icon symbols --></defs>
-  <rect class="lini-canvas" .../>   <!-- only when the root has a fill: -->
+  <rect class="lini-canvas" .../>   <!-- the scene background (--lini-bg) -->
   <g class="lini-scene"> <!-- scene tree --> </g>
   <g class="lini-wires"> <!-- wires --> </g>
 </svg>
 ```
 
 `viewBox` auto-sizes to content + the scene's `padding` (20 px by default) on
-every side. A root `fill:` paints a `lini-canvas` backing rect over the viewBox.
+every side. The `lini-canvas` backing rect paints the scene background
+(`--lini-bg`) over the viewBox; a root `fill:` overrides it (`none` = transparent).
 
 **Paint compiles to CSS; geometry bakes.** Shape and wire paint defaults — and
 every rule — are stated once as class rules; only the classes actually used are
@@ -1102,6 +1117,7 @@ lini [options] <input.lini>
 lini fmt [--check] [--stdout] <input.lini>
 lini desugar <input.lini>
 lini serve [--port N] [--bake-vars] [PATH]
+lini theme [NAME]
 ```
 
 | Flag | Meaning |
@@ -1109,7 +1125,7 @@ lini serve [--port N] [--bake-vars] [PATH]
 | `-o FILE` | Output path (default stdout). |
 | `--format svg\|html` | `svg` (default) or HTML wrapper. |
 | `--check` | Parse + resolve only — layout/render errors still surface on a full compile. |
-| `--theme FILE` | CSS file of `--lini-*` overrides. |
+| `--theme NAME\|FILE\|A/B` | A built-in theme (`dark`, `blueprint`, …), a CSS file of `--lini-*` overrides, or a light/dark pair (`light/dark`). |
 | `--no-warn` / `--strict` | Silence warnings / treat them as errors. |
 | `--bake-vars` | Inline `var()`s as literals (for non-browser renderers). |
 | `--watch` | Recompile on every input change (requires `-o`). |
@@ -1118,7 +1134,9 @@ lini serve [--port N] [--bake-vars] [PATH]
 `lini -` reads stdin (filename `<stdin>` in errors). **`lini serve`** runs a local
 live preview (default port 7700): a `.lini` file live-reloads that one file; a
 directory (or no path → the current directory) opens the **playground** — pick,
-edit, and render any `.lini` file beneath it in the browser.
+edit, and render any `.lini` file beneath it in the browser. **`lini theme`** lists
+the built-in themes; **`lini theme NAME`** prints one as a `--lini-*` CSS file — a
+ready starting point for your own (`light-dark()` colours, the font commented out).
 
 **`lini fmt`** reformats to canonical style — 2-space indent, `key: value;`
 declarations grouped on one line, a style-only node collapsed onto its head line

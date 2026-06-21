@@ -6,6 +6,7 @@ input_file: samples/shapes.lini
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-242.2 -237.5 484.4 477.5" width="484.4" height="477.5" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: bold; color: black; }
+    .lini .lini-canvas { fill: white; }
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-oval { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-hex { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
@@ -32,7 +33,7 @@ input_file: samples/shapes.lini
     <filter id="lini-shadow-1" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="rgba(0, 0, 0, 0.2)"/></filter>
     <filter id="lini-shadow-2" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="2" dy="2" stdDeviation="2" flood-color="rgba(0, 0, 0, 0.2)"/></filter>
   </defs>
-  <rect class="lini-canvas" x="-242.2" y="-237.5" width="484.4" height="477.5" fill="#ffffff"/>
+  <rect class="lini-canvas" x="-242.2" y="-237.5" width="484.4" height="477.5" style="fill: #ffffff"/>
   <g class="lini-scene">
     <g class="lini-node lini-tile lini-column lini-plain lini-box" transform="translate(-165.4,-167.5)">
       <rect x="-40.6" y="-35" width="81.2" height="70" rx="6" ry="6"/>

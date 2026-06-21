@@ -6,6 +6,7 @@ input_file: samples/styles.lini
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-63.5 -202 127 404" width="127" height="404" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: bold; color: black; }
+    .lini .lini-canvas { fill: white; }
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-style-thin { stroke: #444; stroke-width: 1; }
@@ -15,6 +16,7 @@ input_file: samples/styles.lini
     .lini .lini-style-ghost { opacity: 0.3; }
   </style>
   <defs/>
+  <rect class="lini-canvas" x="-63.5" y="-202" width="127" height="404"/>
   <g class="lini-scene">
     <g class="lini-node lini-box lini-style-thin" data-id="a" transform="translate(0,-154)">
       <rect x="-38" y="-27.5" width="76" height="55" rx="6" ry="6"/>

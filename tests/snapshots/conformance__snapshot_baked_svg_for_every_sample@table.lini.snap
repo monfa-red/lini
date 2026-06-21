@@ -6,12 +6,14 @@ input_file: samples/table.lini
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-170.5 -53.5 341 107" width="341" height="107" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: bold; color: black; }
+    .lini .lini-canvas { fill: white; }
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,4; }
     .lini .lini-table { fill: none; stroke: #444; font-size: 14px; font-weight: normal; stroke-dasharray: none; }
   </style>
   <defs/>
+  <rect class="lini-canvas" x="-170.5" y="-53.5" width="341" height="107"/>
   <g class="lini-scene">
     <g class="lini-node lini-table lini-group lini-box" data-id="basket" transform="translate(0,0)">
       <rect x="-150" y="-33" width="300" height="66" rx="6" ry="6"/>

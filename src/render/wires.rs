@@ -186,7 +186,9 @@ pub fn render_wire(
 pub fn render_airwire(out: &mut String, a: &Airwire, vars: &VarTable, opts: &Options) {
     let none = AttrMap::default();
     let stroke = attr_or_var(&none, "stroke", "airwire", vars, opts);
-    let bg = attr_or_var(&none, "fill", "bg", vars, opts);
+    // The warning glyph knocks out against the box fill so it reads on any
+    // background (was `--lini-bg`, now the scene background — SPEC §11.1).
+    let glyph_fill = attr_or_var(&none, "fill", "fill", vars, opts);
     writeln!(
         out,
         r#"    <g class="lini-airwire" data-from="{}" data-to="{}">"#,
@@ -206,7 +208,7 @@ pub fn render_airwire(out: &mut String, a: &Airwire, vars: &VarTable, opts: &Opt
     let (mx, my) = ((a.from.0 + a.to.0) / 2.0, (a.from.1 + a.to.1) / 2.0);
     writeln!(
         out,
-        r#"      <path d="M {} {} L {} {} L {} {} Z" fill="{bg}" stroke="{stroke}" stroke-width="1.5" stroke-linejoin="round"/>"#,
+        r#"      <path d="M {} {} L {} {} L {} {} Z" fill="{glyph_fill}" stroke="{stroke}" stroke-width="1.5" stroke-linejoin="round"/>"#,
         num(mx),
         num(my - 6.5),
         num(mx + 7.0),

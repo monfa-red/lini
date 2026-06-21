@@ -6,11 +6,13 @@ input_file: samples/pin.lini
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-161 -116 322 232" width="322" height="232" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: bold; color: black; }
+    .lini .lini-canvas { fill: white; }
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-plain { fill: none; stroke: none; }
   </style>
   <defs/>
+  <rect class="lini-canvas" x="-161" y="-116" width="322" height="232"/>
   <g class="lini-scene">
     <g class="lini-node lini-box" data-id="frame" style="fill: #eee" transform="translate(0,0)">
       <rect x="-120" y="-75" width="240" height="150" rx="6" ry="6"/>

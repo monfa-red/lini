@@ -6,10 +6,12 @@ input_file: samples/typography.lini
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-110.5 -341 221 682" width="221" height="682" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
+    .lini .lini-canvas { fill: white; }
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
   </style>
   <defs/>
+  <rect class="lini-canvas" x="-110.5" y="-341" width="221" height="682"/>
   <g class="lini-scene">
     <g class="lini-node lini-box" style="font-weight: bold" transform="translate(0,-292.5)">
       <rect x="-69.5" y="-27.5" width="139" height="55" rx="6" ry="6"/>

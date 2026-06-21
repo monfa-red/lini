@@ -195,6 +195,14 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
         props: root_props,
     });
 
+    // The scene background plate: `.lini-canvas` fills with `--lini-bg`, stated as
+    // a CSS rule (not a presentation attr, where `var()` is invalid) so it switches
+    // live and bakes to a literal for resvg/email (SPEC §13).
+    rules.push(Rule {
+        class: "lini-canvas".into(),
+        props: vec![("fill".into(), live("bg"))],
+    });
+
     // Per-shape paint, sourced from the generated `.lini-*` class defs — desugar
     // folded the bundles + element rules into them. Geometry stays baked; only
     // the paint subset rides CSS. Closed primitives and `line` mask
@@ -557,7 +565,10 @@ mod tests {
                 );
                 continue;
             }
-            if rule.class.starts_with("lini-") && rule.class != "lini-icon" {
+            if rule.class.starts_with("lini-")
+                && rule.class != "lini-icon"
+                && rule.class != "lini-canvas"
+            {
                 assert!(
                     rule.props.iter().any(|(p, _)| p == "stroke-dasharray"),
                     "rule {} lacks the dasharray mask",

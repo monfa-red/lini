@@ -210,13 +210,9 @@ fn finish(program: &Program, attempt: Attempt) -> Result<LaidOut, Error> {
         h: bbox.h() + pad.top + pad.bottom,
     };
 
-    // A root `fill:` is the canvas colour (SPEC §13); `none` stays transparent.
-    let canvas_fill = program
-        .scene
-        .attrs
-        .get("fill")
-        .filter(|v| !matches!(v, ResolvedValue::Ident(s) if s == "none"))
-        .cloned();
+    // A root `fill:` overrides the canvas colour inline (SPEC §13); the default
+    // comes from the `.lini-canvas` rule (`--lini-bg`). `none` → transparent.
+    let canvas_fill = program.scene.attrs.get("fill").cloned();
 
     Ok(LaidOut {
         viewbox: vb,

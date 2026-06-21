@@ -6,6 +6,7 @@ input_file: samples/captions.lini
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-277 -120 554 239" width="554" height="239" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: bold; color: black; }
+    .lini .lini-canvas { fill: white; }
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-plain { fill: none; stroke: none; }
@@ -14,6 +15,7 @@ input_file: samples/captions.lini
     .lini .lini-footer { color: rgba(0, 0, 0, 0.5); font-size: 11px; }
   </style>
   <defs/>
+  <rect class="lini-canvas" x="-277" y="-120" width="554" height="239"/>
   <g class="lini-scene">
     <g class="lini-node lini-group lini-box" data-id="card" transform="translate(-161.5,0)">
       <rect x="-95" y="-82" width="190" height="164" rx="6" ry="6"/>
