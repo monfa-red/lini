@@ -293,8 +293,8 @@ A string is a **text node**:
   self-delimiting, so no `;` is needed between them).
 - An empty `""` is suppressed (adds no text) — except as a **grid cell**, where
   it holds its track ([§5](#5-layout)).
-- Multi-line text uses `\n`; the box sizes to the widest line, spacing is
-  `font-size × line-height`.
+- Multi-line text uses `\n`; the box sizes to the widest line, with a fixed
+  `font-size × 1.2` leading between lines.
 
 A string carries **no block and no children** — text is content, not a box. To
 style or position it, wrap it in a box (`|plain| { color: red } "X"`) and set the
@@ -867,9 +867,6 @@ Longhands `padding-top`/`-right`/`-bottom`/`-left` are accepted.
 | `font-size` | 15 (body), 12 (caption), 11 (wire label) | px; a baked layout constant. |
 | `font-weight` | `--font-weight` (body `bold`; captions / wire labels `normal`) | `normal` / `bold`. |
 | `font-style` | `normal` | `normal` / `italic` / `oblique`. |
-| `text-align` | `center` | `start` / `center` / `end` — multi-line justification (`left`/`right` = start/end). |
-| `line-height` | 1.2 | baseline-to-baseline multiple; a single line's box stays snug. |
-| `letter-spacing` | 0 | feeds width measurement. |
 
 These all **inherit** — nearest ancestor wins, like CSS. Because a string is not a
 box, you never set a text property *on* the text; you set it on a containing box

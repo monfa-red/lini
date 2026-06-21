@@ -20,9 +20,6 @@ pub(super) const INHERITED_TEXT: &[&str] = &[
     "font-size",
     "font-weight",
     "font-style",
-    "text-align",
-    "line-height",
-    "letter-spacing",
     "color",
 ];
 

@@ -145,8 +145,6 @@ pub fn root_defaults() -> Vec<Decl> {
         n("padding", 20.0),
         n("gap", 20.0),
         n("font-size", 15.0),
-        n("line-height", 1.2),
-        id("text-align", "center"),
     ]
 }
 
