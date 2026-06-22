@@ -1,26 +1,58 @@
 # TODO
 
-## Better diagnostics / error reporting
+## Diagnostics / error reporting
 
-Today many misuses are **silently ignored** rather than reported — the value
-just does nothing, so the author has no idea why. Build a context-aware
-diagnostic pass that says *what* is wrong and *where*, with a hint.
+Many misuses are **silently ignored** instead of reported — the value just does
+nothing. Build one context-aware pass, keyed by node kind (box / text / wire /
+wire-label) → its valid properties; anything else warns (errors under
+`--strict`), LSP-formatted (`file:line:col`).
 
-Cases to cover (grow this list):
+- **Property on the wrong node** — `translate`/`pin`/`padding`/`width` on a wire
+  do nothing; error and suggest a `|plain|` label.
+- **Unknown property**, with a "did you mean" hint (`paddding:` → `padding`).
+- **Out-of-range / wrong-shape value** — `translate: 0 -10 0`, `pin: middle` —
+  point at the offending token.
+- Fold in the existing grid-prop checks (`cell` / `span` / `columns`).
 
-- **Property used where it can't apply.** A wire is not a box, so `translate`,
-  `pin`, `padding`, `width`, etc. on a wire (or directly on a bare wire label)
-  do nothing — error instead. Example:
-  `a -> b { translate: 0 -8; "x" }` → *`'translate' is not valid on a wire — put
-  it on a `|plain|` label: `{ |plain| { translate: 0 -8; "x" } }``*
-- **Grid props off a grid** already error (`cell`/`span`/`columns`); fold into
-  the same pass.
-- **Unknown property name**, with a "did you mean" hint table (SPEC §19 lists
-  this as deferred) — e.g. `paddding:` → *did you mean `padding`?*
-- **Value out of range / wrong shape** — e.g. `translate: 0 -10 0` (3 values),
-  `pin: middle` (not an anchor) — point at the offending token.
+## Colour palette + gradients (idea — explore later)
 
-Design notes:
-- One pass, keyed by node kind (box / text / wire / wire-label) → the set of
-  properties valid on it; anything else warns (or errors under `--strict`).
-- Keep messages LSP-formatted (`file:line:col: error: …`) like the rest.
+Make lini *pretty by default*: a curated colour system where the easy path is
+the pretty path and making things ugly takes more syntax. One mechanism, layered
+on the existing `light-dark()` theme vars — so everything themes and flips
+dark/light for free, and bakes to literals for resvg/email.
+
+**Palette** — built-in `--lini-*` colours, each a `light-dark()` pair, native
+`--name` (themeable, host-overridable):
+
+- *Roles*: `--accent` + `--accent-2` (brand pair), plus today's
+  `--fg` / `--bg` / `--fill` / `--stroke` / `--muted` / `--danger` / `--warn`.
+- *Hues*: ~14 hand-tuned hues (`--red --orange --amber --yellow --green --teal
+  --cyan --blue --indigo --violet --purple --pink --rose --gray`) — one tuned
+  base each, with an optional `-100…-900` ramp reachable when wanted.
+- Emit only the vars actually used (tree-shake the `@layer` block) so a big
+  palette never bloats a small diagram.
+
+**Gradients** — a `gradient()` paint value compiling to a deduped `<defs>`
+`<linearGradient>` (a `GradientTable`, twin of the shadow `FilterTable`); the
+node's paint becomes `url(#…)`. Stops are `var(--lini-*)`, so gradients theme and
+flip dark/light. `objectBoundingBox` units fill any shape; works on **fill and
+stroke**.
+
+- `gradient` → the brand pair · `gradient(pink, purple)` → an auto-angled blend
+  (pretty for any two hues) · `gradient(sunset)` → a curated preset ·
+  `linear-gradient(135, …)` → full control (a custom angle is the "more syntax"
+  gate; `gradient()` itself is angle-less and always lands on a flattering 135°).
+- ~10 curated presets built from hue vars (sunset, ocean, candy, mint, aurora,
+  ember, grape, dusk, sky, slate) for the fancy multi-stop look.
+- Simple linear is plenty; radial comes ~free. Mesh isn't native SVG, so
+  "multi-colour" = multi-stop. Gradient-on-text is a later step.
+
+The taste lives in the system, not the user: curated hues + presets + an
+auto-angle so *any* two colours look good.
+
+## Animation (idea — later, very light)
+
+Small, native CSS/SVG effects so the browser does the work and it degrades to a
+static frame when baked: moving dashes/dots on wires (cf. d2), a gentle wobble, a
+colour/shadow pulse, maybe animating a gradient. Live-only; currently a SPEC §19
+non-goal to revisit.
