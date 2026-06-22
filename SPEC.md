@@ -1270,6 +1270,9 @@ Format: `filename:line:col: error: <message>` (LSP-compatible).
 | Stylesheet after canvas | `the stylesheet '{ }' must come first, before any instance` |
 | Divider needs flush cells | `'divider' requires 'gap: 0'` |
 | Invalid / out-of-range color | `invalid color 'XYZ'` / `rgb(300,0,0): component out of range` |
+| Invalid `oklch()` | `oklch expects (L, C, H) or (L, C, H, A) — L and A in 0..1, C ≥ 0, H in degrees` |
+| Gradient with < 2 stops | `gradient() needs at least two colour stops` |
+| `linear-gradient` without an angle | `linear-gradient needs an angle first, then ≥ 2 colour stops` |
 | Reserved identifier | `'left' is reserved (an endpoint side)` / `'wire' is reserved` |
 | Empty statement | `a node needs an id or a type` |
 | `\|wire\|` as instance | `wires are drawn by operators, not the '\|wire\|' type` |

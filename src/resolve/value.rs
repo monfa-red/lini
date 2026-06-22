@@ -74,10 +74,42 @@ fn resolve_call(c: &Call, span: Span, vars: &VarTable) -> Result<ResolvedValue, 
     if c.name == "oklch" {
         return resolve_oklch(&args, span);
     }
+    // Gradients (SPEC §11.3) stay a Call for the renderer to intern as a `url(#…)`
+    // def; validate the shape here so a malformed one errors with a span rather than
+    // emitting invalid CSS.
+    if matches!(
+        c.name.as_str(),
+        "gradient" | "linear-gradient" | "radial-gradient"
+    ) {
+        validate_gradient(&c.name, &args, span)?;
+    }
     Ok(ResolvedValue::Call(ResolvedCall {
         name: c.name.clone(),
         args,
     }))
+}
+
+/// A gradient needs ≥ 2 colour stops; `linear-gradient` additionally takes a
+/// leading numeric angle (SPEC §11.3). Shape only — the renderer interns it.
+fn validate_gradient(name: &str, args: &[ResolvedValue], span: Span) -> Result<(), Error> {
+    let stops = if name == "linear-gradient" {
+        if !matches!(args.first(), Some(ResolvedValue::Number(_))) {
+            return Err(Error::at(
+                span,
+                "linear-gradient needs an angle first, then ≥ 2 colour stops — e.g. linear-gradient(135, --teal, --sky)",
+            ));
+        }
+        &args[1..]
+    } else {
+        args
+    };
+    if stops.len() < 2 {
+        return Err(Error::at(
+            span,
+            format!("{name}() needs at least two colour stops"),
+        ));
+    }
+    Ok(())
 }
 
 /// Evaluate `oklch(L, C, H)` / `oklch(L, C, H, A)` to a `#rrggbb[aa]` literal. L and
@@ -257,6 +289,43 @@ mod tests {
                 Value::Number(0.1),
                 Value::Number(180.0)
             ])
+            .is_err()
+        );
+    }
+
+    fn grad(name: &str, args: Vec<Value>) -> Result<ResolvedValue, Error> {
+        resolve_groups(
+            &[vec![Value::Call(Call {
+                name: name.into(),
+                args,
+            })]],
+            Span::empty(),
+            &novars(),
+        )
+    }
+
+    #[test]
+    fn valid_gradient_stays_a_call() {
+        let v = grad(
+            "gradient",
+            vec![Value::Var("teal".into()), Value::Var("sky".into())],
+        )
+        .unwrap();
+        assert!(matches!(v, ResolvedValue::Call(c) if c.name == "gradient"));
+    }
+
+    #[test]
+    fn gradient_with_one_stop_errors() {
+        assert!(grad("gradient", vec![Value::Var("teal".into())]).is_err());
+    }
+
+    #[test]
+    fn linear_gradient_without_angle_errors() {
+        assert!(
+            grad(
+                "linear-gradient",
+                vec![Value::Var("teal".into()), Value::Var("sky".into())],
+            )
             .is_err()
         );
     }

@@ -151,18 +151,23 @@ defs, flip and bake correctly, tests/clippy/fmt clean.
 
 ---
 
-## Phase 3 — Polish & integration
+## Phase 3 — Polish & integration  (mostly DONE)
 
-- **Role→hue aliasing** (the SPEC-neutral “derive from base” cleanup): if the hues
-  look right, point `danger→red`, `warn→orange`/`amber`, `success→green`, `info→blue`,
-  `accent→`(brand hue) at the palette so there’s one colour source. Snapshot-guard the
-  current look; skip if it regresses.
-- **Diagnostics**: unknown gradient function, <2 stops, non-numeric angle → friendly
-  errors (fold into SPEC §15 + the TODO “context-aware property pass”).
-- **`fmt`**: gradient values round-trip idempotently.
-- **README**: lead with the palette + gradients (pretty-first).
-- **`lini theme`**: group/comment the palette block so the copy-paste reference reads.
-- Conformance/oracle coverage for palette + gradient output.
+- ✅ **Diagnostics**: `<2` stops and a missing `linear-gradient` angle now error with a
+  span at resolve (`resolve_gradient`/`validate_gradient` in `src/resolve/value.rs`),
+  added to SPEC §15. (oklch errors landed with the oklch work.)
+- ✅ **README**: a “Colour” section leads with the palette + gradients; test count
+  refreshed to 407.
+- ✅ **`fmt`** round-trips: `gradient.lini` passes the idempotence + semantic suites.
+- ✅ **Conformance**: `palette.lini` + `gradient.lini` are snapshot-covered.
+- ⏸ **Role→hue aliasing** — **needs a call, not done.** The roles are deliberately
+  punchier than the pastel palette (accent = vivid blue, danger = crimson, warn =
+  bright orange); the base tier is softer and the ink tier darker, so a clean 1:1
+  alias would *regress* them, and it changes existing output. Recommend keeping roles
+  independent (the gray ramp already gives neutral resolution). Revisit only if you
+  want the consistency more than the punch.
+- ⏸ **`lini theme` grouping** (optional polish): the palette prints alphabetically
+  today — readable, but section comments (roles / hues) would read nicer. Low value.
 
 ---
 

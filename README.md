@@ -30,7 +30,8 @@ Most tools make you choose: **draw by hand** (precise, but tedious and hard to v
 - **A genuinely small syntax.** Two brackets — `{ }` for style, `[ ]` for children — plus a few sigils and sensible defaults. `cat -> dog` is a valid diagram; the whole language fits in a coffee break.
 - **Any shape you need.** 12 primitives and 10 templates, plus a raw `path` that accepts any SVG path string. If SVG can draw it, you can place it and wire to it.
 - **Fast, and one file.** A 1.5 MB native binary, one runtime dependency. No Node, JVM, or headless browser; typical diagrams compile in about 2 ms, startup included.
-- **Reproducible output.** Compilation is byte-identical across runs, so renders diff cleanly and never churn in CI. 355 tests back it, including property tests on the router's laws.
+- **Reproducible output.** Compilation is byte-identical across runs, so renders diff cleanly and never churn in CI. 407 tests back it, including property tests on the router's laws.
+- **Pretty by default.** A curated 11-hue palette in soft pastels — four OKLCH-tuned tiers each — plus angle-less gradients, all themeable and dark/light-aware. The easy path is the flattering one; no hex required.
 - **Dark mode, automatically.** Every colour is a `light-dark()` CSS variable, so one SVG carries both palettes and follows the viewer's light/dark OS setting on its own — or a `data-theme` toggle. Re-theme from the host page with no recompile, pick a built-in (light, dark, high-contrast, blueprint, terminal, pastel), or bake any palette into a standalone file.
 
 ---
@@ -126,6 +127,23 @@ The operator is the wire's look, written `[start][line][end]` with no spaces:
 So `->` is a solid arrow, `<->` is bidirectional, `--*` a dashed line ending in a dot, `~>` a wavy arrow. Endpoints support fan-out, fan-in, and cartesian fans with `&`, and dot-paths into nested containers (`closet.outlet -> fridge.inlet`). Routing is automatic but steerable: name a side (`a.right -> b.left`) to force where a wire leaves or arrives. Labels ride the wire and slide to clear nodes; the wire never moves for a label.
 
 The full routing contract (crossings, priority, self-loops, starvation) lives in [`WIRING.md`](https://github.com/monfa-red/lini/blob/main/WIRING.md).
+
+---
+
+## Colour
+
+**Pretty by default.** A curated palette of 11 named hues — `red rose orange amber lime green teal sky blue purple gray` — each in four job-named tiers, so the easy path is the flattering one:
+
+```
+{ |card::box| { fill: --teal-wash; stroke: --teal-ink } }   // a soft card, one line
+note |note| { fill: --amber-soft }
+hero |box|  { fill: gradient(--rose, --amber, --sky) }      // a three-colour blend
+```
+
+- **Four tiers per hue** — `wash` (palest, for backgrounds), `soft`, the bare name (the everyday pastel), and `ink` (deep, for strokes and text). The names hold across the dark flip: `--teal-ink` is the high-contrast tone in *both* modes, where a `light`/`dark` name would invert.
+- **OKLCH under the hood**, so the ramp is perceptually even and the eleven read as a family. Pick any colour the same way — `fill: oklch(0.7, 0.14, 200)` — and conventional names still land (`--yellow` → amber, `--pink` → rose).
+- **Gradients** — `gradient(--rose, --sky)` blends two hues at a flattering angle (any two look good); add stops for a multi-colour wash, `linear-gradient(135, …)` for a custom angle, or `radial-gradient(…)`. Works on **fill and stroke**.
+- **Everything flips and bakes.** Hues and gradient stops are `light-dark()` variables, so a colour follows dark/light like the rest and freezes to a literal under `--bake-vars`. Only the colours a diagram uses are emitted, so a big palette never bloats a small file.
 
 ---
 
