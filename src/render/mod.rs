@@ -1,9 +1,11 @@
 mod filters;
+mod gradients;
 pub(crate) mod markers; // `marker_size` is read by the router to reserve stub room
 mod primitives;
 mod rounding;
 mod rules;
 mod style_block;
+mod used_vars;
 pub(crate) mod values;
 mod wavy;
 mod wires;
@@ -12,6 +14,7 @@ use crate::Options;
 use crate::layout::{LaidOut, PlacedNode};
 use crate::resolve::{ShapeKind, VarTable};
 use filters::FilterTable;
+pub(crate) use gradients::lower as lower_gradients;
 use rules::RuleSet;
 use values::{escape_xml, format_value, num};
 
@@ -36,14 +39,16 @@ pub fn render(laid_out: &LaidOut, opts: &Options) -> String {
     // root `.lini` rule seeds the inherited text properties (font, size,
     // color) for the whole tree. Per-node differences ride `style=`.
     let ruleset = rules::build(laid_out, opts);
-    style_block::emit(&mut out, &laid_out.vars, &ruleset, opts);
+    let used = used_vars::referenced(laid_out, &ruleset);
+    style_block::emit(&mut out, &laid_out.vars, &ruleset, &used, opts);
 
     let filters = FilterTable::collect(&laid_out.nodes, &laid_out.vars, opts);
-    if filters.is_empty() {
+    if filters.is_empty() && laid_out.gradients.is_empty() {
         out.push_str("  <defs/>\n");
     } else {
         out.push_str("  <defs>\n");
         filters.emit_defs(&mut out, &laid_out.vars, opts);
+        gradients::emit_defs(laid_out, &mut out, opts);
         out.push_str("  </defs>\n");
     }
 
@@ -345,7 +350,8 @@ mod tests {
         let file = crate::syntax::parser::parse(&tokens).expect("parse");
         let lowered = crate::desugar::desugar(&file).expect("desugar");
         let program = crate::resolve::resolve_with_theme(&lowered, &[]).expect("resolve");
-        let laid = crate::layout::layout(&program).expect("layout");
+        let mut laid = crate::layout::layout(&program).expect("layout");
+        gradients::lower(&mut laid);
         render(&laid, &Options::default())
     }
 

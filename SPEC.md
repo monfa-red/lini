@@ -25,7 +25,7 @@ alone. Wire **routing** has its own contract — see [`WIRING.md`](WIRING.md).
 5 [Layout](#5-layout) · 6 [Positioning & Anchors](#6-positioning--anchors) ·
 7 [Shapes](#7-shapes) · 8 [Templates](#8-templates) · 9 [Wires](#9-wires)
 
-**Reference** — 10 [Properties](#10-properties) · 11 [Variables & Defaults](#11-variables--defaults) ·
+**Reference** — 10 [Properties](#10-properties) · 11 [Colour, Variables & Defaults](#11-colour-variables--defaults) ·
 12 [Specificity](#12-specificity) · 13 [SVG Output](#13-svg-output) · 14 [CLI](#14-cli) ·
 15 [Errors](#15-errors) · 16 [Grammar](#16-grammar-ebnf) · 17 [Implementer Algorithm](#17-implementer-algorithm) ·
 18 [Reserved Words](#18-reserved-words) · 19 [Deferred & Non-Goals](#19-deferred--non-goals) · 20 [Examples](#20-examples)
@@ -139,7 +139,7 @@ that needs no declaration: naming an id declared nowhere auto-creates it
   the SVG as literals. Text is measured at compile time, so its size can never
   be a runtime `var()`; a standalone SVG always looks right.
 
-See [Variables & Defaults](#11-variables--defaults).
+See [Colour, Variables & Defaults](#11-colour-variables--defaults).
 
 ---
 
@@ -186,8 +186,14 @@ separates list items and appears only where a property takes a list of groups
 
 **Colors** — `#fff`, `#f80c`, `#ffaa00`, `#ffaa00cc` (3/4/6/8 hex digits; the 4-
 and 8-digit forms carry alpha), CSS names (`red`, `cornflowerblue`), `rgb(…)`,
-`rgba(…)`, `hsl(…)`, `hsla(…)` (percentages allowed — `hsl(200, 50%, 50%)`), a
-`--name` variable reference, or `none`. Out-of-range channels are an error.
+`rgba(…)`, `hsl(…)`, `hsla(…)` (percentages allowed — `hsl(200, 50%, 50%)`), `oklch(L, C, H[, A])` (the palette's
+own space — L/A in 0–1, C the chroma, H in degrees; folded to a hex at compile time,
+so it renders in every target), a `--name` variable reference, or `none`.
+Out-of-range channels are an error.
+Beyond a flat colour, a **paint** (`fill` / `stroke`) may be a **gradient** —
+`gradient(…)`, `linear-gradient(…)`, or `radial-gradient(…)` ([§11.3](#113-gradients));
+the built-in hue palette ([§11.2](#112-the-colour-palette)) is reached through
+ordinary `--name` references.
 
 ---
 
@@ -833,7 +839,8 @@ values.
 
 `color` cascades through the SVG via native `currentColor`: set it on a container
 to recolour every descendant's text that doesn't override. Use `color` for
-*labels*, `fill` for *bodies*.
+*labels*, `fill` for *bodies*. Both `fill` and `stroke` accept a **gradient** as
+well as a flat colour ([§11.3](#113-gradients)).
 
 ### Stroke
 
@@ -912,11 +919,11 @@ style the whole scene (it states on `.lini`), exactly like a global `font-size:`
 
 `--name: value;` declares a themeable variable; `--name` in a value references one.
 Visual variables stay live `var()`; layout values bake. See
-[Variables & Defaults](#11-variables--defaults).
+[Colour, Variables & Defaults](#11-colour-variables--defaults).
 
 ---
 
-## 11. Variables & Defaults
+## 11. Colour, Variables & Defaults
 
 CSS variables theme the **visual** layer — colours and the font family. Everything
 that affects layout — sizes, gaps, padding, and font *size* — is a baked constant,
@@ -924,7 +931,7 @@ so a standalone SVG never depends on host CSS.
 
 ### 11.1 Visual variables (live, themeable)
 
-Each colour is a `light-dark(LIGHT, DARK)` value, so one SVG carries both palettes:
+Each colour is a `light-dark(LIGHT, DARK)` value, so one SVG carries both modes:
 
 ```
 --lini-bg            light-dark(white, #1b1b1f)      the scene background
@@ -963,9 +970,81 @@ script, no `@media`. A `data-theme="dark"` / `"light"` on the SVG or any ancesto
 forces a mode (it flips `color-scheme`, and its higher specificity beats the OS).
 All defaults sit in `@layer lini.defaults`, so unlayered host CSS still wins with no
 `!important`. `--bake-vars` freezes the light arm into literals for renderers
-without `light-dark()` ([§11.4](#114---bake-vars)).
+without `light-dark()` ([§11.6](#116---bake-vars)).
 
-### 11.2 `--name` references
+### 11.2 The colour palette
+
+Beyond the role variables, Lini ships a **named-hue palette** — pretty by default,
+themeable, and dark/light-aware like everything else. Eleven hues, each a
+`light-dark()` pair:
+
+```
+red  rose  orange  amber  lime  green  teal  sky  blue  purple  gray
+```
+
+Every hue carries **four tiers**, named for the job they do — not their lightness,
+which would invert in dark mode:
+
+| Tier | Example | Job |
+|---|---|---|
+| wash | `--teal-wash` | palest — card and section backgrounds (a faint tint; a deep, muted surface in dark mode) |
+| soft | `--teal-soft` | a gentle, lighter pastel fill |
+| base | `--teal` | the everyday pastel — **the bare name is the easy path** |
+| ink | `--teal-ink` | deep and saturated — strokes, text, emphasis (a bright tint in dark mode) |
+
+`fill: --teal` lands a friendly pastel; the job-names hold across the dark flip, so
+`--teal-wash` is always the faint surface and `--teal-ink` always the high-contrast
+detail — a promise a `light` / `dark` or numeric name could not keep.
+
+```
+{ |card::box| { fill: --teal-wash; stroke: --teal-ink } }   // a pretty card, one line
+note |note| { fill: --amber-soft }
+```
+
+The tiers are generated from one **OKLCH** seed per hue, so the ramp is
+perceptually even and the eleven read as a family. The same space is open to you —
+`fill: oklch(0.7, 0.14, 200)` picks any colour directly ([§2](#2-lexical-syntax)).
+Names are conventional — every
+one is an ordinary colour word, so `--blue`, `--red`, `--green` are all there — with
+aliases for muscle memory: `--yellow → --amber`, `--pink → --rose`,
+`--indigo → --purple`, `--cyan → --teal`. `red` stays clear for **danger**; `rose`
+is the warm pink you decorate with (its `wash` / `soft` tiers are your pinks),
+`green` is tuned to an emerald, and `lime` is the lemony one.
+
+The palette is **tree-shaken** ([§13](#13-svg-output)): only the `--lini-*`
+variables a diagram references are emitted, so forty hues cost a three-box diagram
+nothing.
+
+### 11.3 Gradients
+
+`fill` and `stroke` accept a **gradient** in place of a flat colour. Stops are
+ordinary colours — palette `--name`s flip dark/light and bake, a raw `#hex` is a
+fixed literal.
+
+| Form | Result |
+|---|---|
+| `gradient(--rose, --sky)` | two stops, auto-angled 135° — any two hues blend cleanly |
+| `gradient(--rose, --amber, --sky)` | three or more evenly-spaced stops |
+| `linear-gradient(135, --rose, --sky)` | an explicit angle in degrees — the control gate |
+| `radial-gradient(--rose, --sky)` | a radial blend from the centre out |
+
+```
+hero |box|   { fill: gradient(--blue, --purple) }       // a single-family sheen
+tag  |badge| { fill: gradient(--rose, --amber, --sky) } // a three-colour pop
+```
+
+The angle is the only "more syntax": `gradient(…)` is angle-less and always lands on
+a flattering 135°, so the easy form can't look wrong. OKLCH stops keep the midpoint
+clean rather than muddy.
+
+Each distinct gradient is emitted once as a `<linearGradient>` / `<radialGradient>`
+in `<defs>` and referenced by `url(#…)` — deduplicated and shared like the
+drop-shadow `<filter>`s ([§13](#13-svg-output)). `objectBoundingBox` units fit one
+definition to any shape at any size. The stops being palette vars, a gradient
+themes, flips, and bakes like any other paint; gradient-on-text is deferred
+([§19](#19-deferred--non-goals)).
+
+### 11.4 `--name` references
 
 `--name` is the **visual-variable namespace, and only that**. `--name: value;`
 declares one (a built-in `--lini-*` name keeps its meaning; a new name is yours),
@@ -984,7 +1063,7 @@ Layout values — sizes, gaps, padding, `font-size`, `clearance` — are **not**
 `--name` variables: they aren't themeable. Set them with properties and rules
 instead (`gap: 30;`, `|box| { radius: 4 }`, `font-size: 16;` in the stylesheet).
 
-### 11.3 Layout constants (baked)
+### 11.5 Layout constants (baked)
 
 Baked compile-time defaults — override per-node, on `-> { }` / the root, in rules,
 or in an instance block:
@@ -1007,7 +1086,7 @@ empty box (`2 × padding`; see [Auto-sizing](#6-positioning--anchors)). **Every
 baked default — these constants and the template bundles — lives in one place**,
 so the whole look is tuned from a single file.
 
-### 11.4 `--bake-vars`
+### 11.6 `--bake-vars`
 
 Class rules and inline `style=` work everywhere, but CSS *variables* don't — resvg
 and librsvg fail `var()` in every position (browsers, even `<img>`-embedded, are
@@ -1069,7 +1148,9 @@ every side. The `lini-canvas` backing rect paints the scene background
 
 **Paint compiles to CSS; geometry bakes.** Shape and wire paint defaults — and
 every rule — are stated once as class rules; only the classes actually used are
-emitted. A node whose resolved paint differs from those rules carries the
+emitted — and likewise only the `--lini-*` variables actually referenced, so the
+built-in palette ([§11.2](#112-the-colour-palette)) adds nothing unless a diagram
+uses it. A node whose resolved paint differs from those rules carries the
 difference as an inline `style="…"` (inline beats class, mirroring
 [Specificity](#12-specificity)). Geometry — sizes, positions (`pin` and
 `translate` fold into the baked origin), radii, points, paths, transforms — is
@@ -1367,6 +1448,8 @@ Function names `rgb`, `rgba`, `hsl`, `repeat` are reserved only before `(`.
 **Deferred** — named in the language, not built yet; the syntax is stable:
 
 - `stroke-style: wavy` rendering on shapes.
+- **gradient fills on text** — `fill: gradient(…)` on a label (gradients fill
+  shapes today, [§11.3](#113-gradients)).
 - `radius` on non-box shapes (hex / diamond / slant / poly).
 - numeric `font-weight` (`100…900`).
 - `|icon|` Material Symbols glyph embedding (currently a placeholder square).

@@ -223,6 +223,7 @@ fn finish(program: &Program, attempt: Attempt) -> Result<LaidOut, Error> {
         vars: program.vars.clone(),
         sheet: program.sheet.clone(),
         canvas_fill,
+        gradients: Vec::new(),
     })
 }
 

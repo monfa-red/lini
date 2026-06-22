@@ -7,21 +7,36 @@ use super::rules::RuleSet;
 use super::values::format_value;
 use crate::Options;
 use crate::resolve::{ResolvedValue, VarTable};
+use std::collections::BTreeSet;
 use std::fmt::Write;
 
-pub fn emit(out: &mut String, vars: &VarTable, rules: &RuleSet, opts: &Options) {
+pub fn emit(
+    out: &mut String,
+    vars: &VarTable,
+    rules: &RuleSet,
+    used: &BTreeSet<String>,
+    opts: &Options,
+) {
     out.push_str("  <style>\n");
 
     // `--bake-vars` inlines every value (the rules below carry literals), so the
     // themeable `@layer` block is only emitted when vars stay live.
     if !opts.bake_vars {
-        let mut names: Vec<&String> = vars.entries.keys().collect();
+        // Tree-shake: emit only the vars the document references (SPEC §11.2/§13),
+        // so the built-in palette never bloats a diagram that doesn't use it.
+        let mut names: Vec<&String> = vars
+            .entries
+            .keys()
+            .filter(|k| used.contains(k.as_str()))
+            .collect();
         names.sort();
         if !names.is_empty() {
-            // Adaptive when any colour is a light-dark() pair: emit `color-scheme`
-            // so `light-dark()` follows the OS, plus the `data-theme` toggles that
-            // force a mode by flipping it (SPEC §11.1).
-            let adaptive = vars.entries.values().any(is_light_dark);
+            // Adaptive when any emitted colour is a light-dark() pair: emit
+            // `color-scheme` so `light-dark()` follows the OS, plus the `data-theme`
+            // toggles that force a mode by flipping it (SPEC §11.1).
+            let adaptive = names
+                .iter()
+                .any(|n| is_light_dark(vars.entries.get(*n).unwrap()));
             out.push_str("    @layer lini.defaults {\n      :root, .lini {");
             if adaptive {
                 out.push_str(" color-scheme: light dark;");

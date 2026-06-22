@@ -69,10 +69,58 @@ fn resolve_call(c: &Call, span: Span, vars: &VarTable) -> Result<ResolvedValue, 
     for a in &c.args {
         args.push(resolve_scalar(a, span, vars)?);
     }
+    // `oklch()` is the palette's own colour space (SPEC §2/§11.2): fold it to a hex
+    // at compile time so it renders in browsers, resvg, and email alike.
+    if c.name == "oklch" {
+        return resolve_oklch(&args, span);
+    }
     Ok(ResolvedValue::Call(ResolvedCall {
         name: c.name.clone(),
         args,
     }))
+}
+
+/// Evaluate `oklch(L, C, H)` / `oklch(L, C, H, A)` to a `#rrggbb[aa]` literal. L and
+/// A are 0..1 (a `%` is accepted too), C is the chroma, H is in degrees.
+fn resolve_oklch(args: &[ResolvedValue], span: Span) -> Result<ResolvedValue, Error> {
+    let frac = |v: &ResolvedValue| match v {
+        ResolvedValue::Number(n) => Some(*n),
+        ResolvedValue::Percent(p) => Some(p / 100.0),
+        _ => None,
+    };
+    let num = |v: &ResolvedValue| match v {
+        ResolvedValue::Number(n) => Some(*n),
+        _ => None,
+    };
+    let bad = || {
+        Error::at(
+            span,
+            "oklch expects (L, C, H) or (L, C, H, A) — L and A in 0..1, C ≥ 0, H in degrees",
+        )
+    };
+    let (l, c, h, a) = match args {
+        [l, c, h] => (
+            frac(l).ok_or_else(bad)?,
+            num(c).ok_or_else(bad)?,
+            num(h).ok_or_else(bad)?,
+            None,
+        ),
+        [l, c, h, a] => (
+            frac(l).ok_or_else(bad)?,
+            num(c).ok_or_else(bad)?,
+            num(h).ok_or_else(bad)?,
+            Some(frac(a).ok_or_else(bad)?),
+        ),
+        _ => return Err(bad()),
+    };
+    if !(0.0..=1.0).contains(&l) || c < 0.0 || a.is_some_and(|a| !(0.0..=1.0).contains(&a)) {
+        return Err(bad());
+    }
+    let mut hex = crate::palette::oklch::oklch_to_hex(l, c, h);
+    if let Some(a) = a {
+        hex.push_str(&format!("{:02x}", (a * 255.0).round() as u8));
+    }
+    Ok(ResolvedValue::Hex(hex))
 }
 
 #[cfg(test)]
@@ -159,5 +207,57 @@ mod tests {
             }
             other => panic!("expected call, got {:?}", other),
         }
+    }
+
+    fn oklch(args: Vec<Value>) -> Result<ResolvedValue, Error> {
+        resolve_groups(
+            &[vec![Value::Call(Call {
+                name: "oklch".into(),
+                args,
+            })]],
+            Span::empty(),
+            &novars(),
+        )
+    }
+
+    #[test]
+    fn oklch_folds_to_a_hex() {
+        // oklch(1, 0, 0) is white.
+        let v = oklch(vec![
+            Value::Number(1.0),
+            Value::Number(0.0),
+            Value::Number(0.0),
+        ])
+        .unwrap();
+        assert!(matches!(v, ResolvedValue::Hex(h) if h == "ffffff"));
+    }
+
+    #[test]
+    fn oklch_with_alpha_folds_to_hex8() {
+        let v = oklch(vec![
+            Value::Number(0.0),
+            Value::Number(0.0),
+            Value::Number(0.0),
+            Value::Number(1.0),
+        ])
+        .unwrap();
+        assert!(matches!(v, ResolvedValue::Hex(h) if h == "000000ff"));
+    }
+
+    #[test]
+    fn oklch_bad_arity_errors() {
+        assert!(oklch(vec![Value::Number(0.5), Value::Number(0.1)]).is_err());
+    }
+
+    #[test]
+    fn oklch_out_of_range_lightness_errors() {
+        assert!(
+            oklch(vec![
+                Value::Number(1.5),
+                Value::Number(0.1),
+                Value::Number(180.0)
+            ])
+            .is_err()
+        );
     }
 }

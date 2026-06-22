@@ -101,6 +101,12 @@ pub fn built_in_defaults() -> VarTable {
     // here: desugar materializes every one into the `.lini-*` class defs, the
     // global block, or the `-> { }` wire defaults (the "dumb core").
 
+    // The named-hue palette (SPEC §11.2): 11 hues × 4 tiers + aliases, OKLCH-derived.
+    // Tree-shaken at render (only referenced vars emit), so this never bloats output.
+    for (name, value) in crate::palette::palette_vars() {
+        t.set(name, value);
+    }
+
     t
 }
 

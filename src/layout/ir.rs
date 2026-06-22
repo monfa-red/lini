@@ -21,6 +21,26 @@ pub struct LaidOut {
     /// The root container's `fill:`, when set (SPEC §13): render paints a
     /// backing rect over the whole viewBox. `None` ⇒ a transparent canvas.
     pub canvas_fill: Option<ResolvedValue>,
+    /// Distinct gradients (SPEC §11.3), collected post-layout: paint use-sites are
+    /// rewritten to `url(#lini-gradient-N)` and the definitions emitted into
+    /// `<defs>`. Empty unless the scene paints with a gradient.
+    pub gradients: Vec<GradientDef>,
+}
+
+/// A distinct gradient paint (SPEC §11.3): a kind plus its colour stops, evenly
+/// spaced. Twin of the drop-shadow filter — collected, deduplicated, and emitted
+/// once into `<defs>`; the stops stay `ResolvedValue`s so they flip and bake.
+#[derive(Clone)]
+pub struct GradientDef {
+    pub kind: GradientKind,
+    pub stops: Vec<ResolvedValue>,
+}
+
+#[derive(Clone, Copy)]
+pub enum GradientKind {
+    /// Linear, at the given CSS-style angle in degrees (`gradient()` defaults 135).
+    Linear(f64),
+    Radial,
 }
 
 /// An impossible wire's report made visible: one straight segment between its
