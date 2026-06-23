@@ -94,22 +94,22 @@ const TIERS: &[Tier] = &[
     Tier {
         suffix: "-wash",
         light: (0.95, 0.022),
-        dark: (0.290, 0.040),
+        dark: (0.315, 0.048),
     },
     Tier {
         suffix: "-soft",
         light: (0.86, 0.072),
-        dark: (0.360, 0.058),
+        dark: (0.450, 0.082),
     },
     Tier {
         suffix: "",
         light: (0.72, 0.127),
-        dark: (0.620, 0.115),
+        dark: (0.610, 0.130),
     },
     Tier {
         suffix: "-ink",
         light: (0.520, 0.150),
-        dark: (0.800, 0.120),
+        dark: (0.825, 0.100),
     },
 ];
 
