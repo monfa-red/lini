@@ -323,6 +323,19 @@ pub fn separation(
     slides: &mut Slides,
     give_up: usize,
 ) -> Vec<usize> {
+    separation_with_protect(router, raw, drawn, clearance, slides, give_up, &[])
+}
+
+#[allow(clippy::too_many_arguments)]
+fn separation_with_protect(
+    router: &Router,
+    raw: &mut Vec<Option<Chain>>,
+    drawn: &mut Vec<Option<Chain>>,
+    clearance: f64,
+    slides: &mut Slides,
+    give_up: usize,
+    protected: &[usize],
+) -> Vec<usize> {
     let mut undrawn = Vec::new();
     loop {
         if drawn.iter().filter(|c| c.is_none()).count() > give_up {
@@ -422,12 +435,8 @@ pub fn separation(
             // Paired moves: one wire steps aside (even laterally), a second
             // retries from there — kept iff the pair strictly improves on
             // the original state. Speculative repairs (finite `give_up`)
-            // skip this stage: a candidate that needs a second wire moved
-            // to become lawful gets that chance at the right level — the
-            // completeness pass's own swap stage re-inserts whatever a
-            // repair undrew — and paying a full paired sweep inside every
-            // speculative candidate multiplies route searches for
-            // second-order rescues.
+            // skip this stage: the completeness pass follows displaced
+            // incumbents at the insertion level.
             'pairs: for (m1, cas) in &firsts {
                 for ca in cas {
                     for &pair2 in &breaches(&ca.1, clearance) {
@@ -455,7 +464,22 @@ pub fn separation(
                 *drawn = cand_drawn;
             }
             None => {
-                let later = cur.first().map_or_else(|| bodies[0].0, |&(_, l)| l);
+                let later = cur.first().map_or_else(
+                    || {
+                        bodies
+                            .iter()
+                            .map(|&(ci, _)| ci)
+                            .find(|ci| !protected.contains(ci))
+                            .unwrap_or(bodies[0].0)
+                    },
+                    |&(a, b)| {
+                        if protected.contains(&b) && !protected.contains(&a) {
+                            a
+                        } else {
+                            b
+                        }
+                    },
+                );
                 raw[later] = None;
                 *drawn = solve(&router.worlds, raw, clearance, slides);
                 undrawn.push(later);
@@ -827,6 +851,11 @@ fn insertions(
     slides: &Slides,
 ) -> Vec<Insertion> {
     let m0 = router.bundles[bi].members[0];
+    let members = router.bundles[bi].members.clone();
+    let forced = members.iter().any(|&m| {
+        let req = &router.reqs[m];
+        router.fans.of[m].is_empty() && req.side_a.is_some() && req.side_b.is_some()
+    });
     let beat = drawn.iter().filter(|c| c.is_none()).count();
     let mut out = Vec::new();
     for cleared in [false, true] {
@@ -841,17 +870,34 @@ fn insertions(
             slides,
             cleared,
         );
-        for (mut cand, mut cand_drawn) in moves {
+        for (cand, cand_drawn) in moves {
+            let (mut normal, mut normal_drawn) = (cand.clone(), cand_drawn.clone());
             let mut cand_slides = slides.clone();
-            let lost = separation(
+            let lost = separation_with_protect(
                 router,
-                &mut cand,
-                &mut cand_drawn,
+                &mut normal,
+                &mut normal_drawn,
                 clearance,
                 &mut cand_slides,
                 beat,
+                &[],
             );
-            out.push((cand, cand_drawn, cand_slides, lost));
+            let lost_inserted = lost.iter().any(|m| members.contains(m));
+            out.push((normal, normal_drawn, cand_slides, lost));
+            if forced && lost_inserted {
+                let (mut protected, mut protected_drawn) = (cand, cand_drawn);
+                let mut protected_slides = slides.clone();
+                let protected_lost = separation_with_protect(
+                    router,
+                    &mut protected,
+                    &mut protected_drawn,
+                    clearance,
+                    &mut protected_slides,
+                    beat,
+                    &members,
+                );
+                out.push((protected, protected_drawn, protected_slides, protected_lost));
+            }
         }
     }
     out

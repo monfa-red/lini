@@ -456,6 +456,21 @@ fn a_full_node_compacts_port_rows_rather_than_turning_wires_away() {
     assert_eq!(a, b, "compaction must stay deterministic");
 }
 
+#[test]
+fn a_spanning_chip_side_keeps_accepting_clear_ports() {
+    let src = read(std::path::Path::new("samples/pcb.lini")).replacen(
+        "pwr.right -> mcu\npwr.right -> mcu.left",
+        "pwr.right -> mcu\npwr.right -> mcu\npwr.right -> mcu.left",
+        1,
+    );
+    let laid = lini::testing::route_sample(&src, 10.0);
+    assert_eq!(
+        laid.wires.len(),
+        lini::testing::declared_edges(&src),
+        "the large MCU side has enough clear ports and corridor lanes"
+    );
+}
+
 /// Law 3, audit reject: the forced interleave's crossing is kept and named —
 /// the `.hot` pair rides the report alongside the other forced crossings.
 #[test]
