@@ -2,9 +2,10 @@
 //! to one `<filter>`; identical specs share a filter, emitted once into
 //! `<defs>` and referenced from the shape's geometry by id.
 //!
-//! The tint stays a `ResolvedValue` so `--bake-vars` inlines it like any other
-//! paint — a `var(--lini-shadow-color)` in live mode, a literal in bake mode,
-//! the same honesty the rest of the renderer keeps.
+//! The tint is always emitted as a resolved **literal**: `flood-color` is a
+//! filter presentation attribute, which can't evaluate `var()` / `light-dark()`
+//! (they fall back to opaque black — a black shadow), so a live var here would
+//! break. The active theme still colours it; it just can't stay a live var.
 
 use super::values::{format_value, num};
 use crate::Options;
@@ -64,15 +65,27 @@ fn parse(value: &ResolvedValue) -> Option<Shadow> {
     }
 }
 
+/// The tint as a resolved literal — `flood-color` is a presentation attribute,
+/// so `var()` / `light-dark()` can't live there (they'd fall back to opaque
+/// black). Forcing bake-mode formatting follows the var and picks the active
+/// arm, the same colour the theme resolves to.
+fn flood_literal(color: &ResolvedValue, vars: &VarTable, opts: &Options) -> String {
+    let literal = Options {
+        bake_vars: true,
+        ..opts.clone()
+    };
+    format_value(color, vars, &literal)
+}
+
 /// A stable key for deduping — two shapes with the same offset/blur/tint share
-/// one filter. Built from the formatted parts, so it tracks `--bake-vars`.
+/// one filter. Built from the literal flood-colour, so it matches what's emitted.
 fn key(s: &Shadow, vars: &VarTable, opts: &Options) -> String {
     format!(
         "{},{},{},{}",
         num(s.dx),
         num(s.dy),
         num(s.blur),
-        format_value(&s.color, vars, opts)
+        flood_literal(&s.color, vars, opts)
     )
 }
 
@@ -113,7 +126,7 @@ impl FilterTable {
                 num(s.dx),
                 num(s.dy),
                 num(s.blur),
-                format_value(&s.color, vars, opts),
+                flood_literal(&s.color, vars, opts),
             )
             .unwrap();
         }

@@ -1,36 +1,83 @@
 // The built-in named-hue palette (SPEC §11.2): 11 hues × 4 tiers, plus a few
 // "pretty card" combinations (wash fill + ink stroke/text) showing the easy path.
 {
-  layout: column;  gap: 22;  padding: 26;  font-size: 13;
+  layout: column; gap: 22; padding: 26; font-size: 13;
 
-  |sw::box|   { width: 78; height: 34; stroke: #00000014; }
-  |h::plain|  { font-weight: normal; color: --muted; }
-  |card::box| { stroke-width: 1.5; font-weight: normal; }
+  |sw::box| { width: 78; height: 34; stroke: none; }
+  |h::plain| { font-weight: normal; color: --muted; }
+  |card::box| { stroke-width: 1.5; font-weight: normal; width: 90; }
 }
 
-|plain| { font-size: 18 } "Lini palette — 11 hues × 4 tiers"
+|plain| { font-size: 18; } "Lini palette — 11 hues × 4 tiers"
 
 board |group| {
-  layout: grid;  columns: 60 82 82 82 82;  gap: 6;  fill: none;  stroke: none;
+  layout: grid; columns: 60 82 82 82 82; gap: 6; fill: none; stroke: none;
 } [
-  |h| "";       |h| "wash";                |h| "soft";                |h| "base";           |h| "ink"
-  |h| "red";    |sw| { fill: --red-wash };    |sw| { fill: --red-soft };    |sw| { fill: --red };    |sw| { fill: --red-ink }
-  |h| "rose";   |sw| { fill: --rose-wash };   |sw| { fill: --rose-soft };   |sw| { fill: --rose };   |sw| { fill: --rose-ink }
-  |h| "orange"; |sw| { fill: --orange-wash }; |sw| { fill: --orange-soft }; |sw| { fill: --orange }; |sw| { fill: --orange-ink }
-  |h| "amber";  |sw| { fill: --amber-wash };  |sw| { fill: --amber-soft };  |sw| { fill: --amber };  |sw| { fill: --amber-ink }
-  |h| "lime";   |sw| { fill: --lime-wash };   |sw| { fill: --lime-soft };   |sw| { fill: --lime };   |sw| { fill: --lime-ink }
-  |h| "green";  |sw| { fill: --green-wash };  |sw| { fill: --green-soft };  |sw| { fill: --green };  |sw| { fill: --green-ink }
-  |h| "teal";   |sw| { fill: --teal-wash };   |sw| { fill: --teal-soft };   |sw| { fill: --teal };   |sw| { fill: --teal-ink }
-  |h| "sky";    |sw| { fill: --sky-wash };    |sw| { fill: --sky-soft };    |sw| { fill: --sky };    |sw| { fill: --sky-ink }
-  |h| "blue";   |sw| { fill: --blue-wash };   |sw| { fill: --blue-soft };   |sw| { fill: --blue };   |sw| { fill: --blue-ink }
-  |h| "purple"; |sw| { fill: --purple-wash }; |sw| { fill: --purple-soft }; |sw| { fill: --purple }; |sw| { fill: --purple-ink }
-  |h| "gray";   |sw| { fill: --gray-wash };   |sw| { fill: --gray-soft };   |sw| { fill: --gray };   |sw| { fill: --gray-ink }
+  |h| ""
+  |h| "wash"
+  |h| "soft"
+  |h| "base"
+  |h| "ink"
+  |h| "red"
+  |sw| { fill: --red-wash; }
+  |sw| { fill: --red-soft; }
+  |sw| { fill: --red; }
+  |sw| { fill: --red-ink; }
+  |h| "rose"
+  |sw| { fill: --rose-wash; }
+  |sw| { fill: --rose-soft; }
+  |sw| { fill: --rose; }
+  |sw| { fill: --rose-ink; }
+  |h| "orange"
+  |sw| { fill: --orange-wash; }
+  |sw| { fill: --orange-soft; }
+  |sw| { fill: --orange; }
+  |sw| { fill: --orange-ink; }
+  |h| "amber"
+  |sw| { fill: --amber-wash; }
+  |sw| { fill: --amber-soft; }
+  |sw| { fill: --amber; }
+  |sw| { fill: --amber-ink; }
+  |h| "lime"
+  |sw| { fill: --lime-wash; }
+  |sw| { fill: --lime-soft; }
+  |sw| { fill: --lime; }
+  |sw| { fill: --lime-ink; }
+  |h| "green"
+  |sw| { fill: --green-wash; }
+  |sw| { fill: --green-soft; }
+  |sw| { fill: --green; }
+  |sw| { fill: --green-ink; }
+  |h| "teal"
+  |sw| { fill: --teal-wash; }
+  |sw| { fill: --teal-soft; }
+  |sw| { fill: --teal; }
+  |sw| { fill: --teal-ink; }
+  |h| "sky"
+  |sw| { fill: --sky-wash; }
+  |sw| { fill: --sky-soft; }
+  |sw| { fill: --sky; }
+  |sw| { fill: --sky-ink; }
+  |h| "blue"
+  |sw| { fill: --blue-wash; }
+  |sw| { fill: --blue-soft; }
+  |sw| { fill: --blue; }
+  |sw| { fill: --blue-ink; }
+  |h| "purple"
+  |sw| { fill: --purple-wash; }
+  |sw| { fill: --purple-soft; }
+  |sw| { fill: --purple; }
+  |sw| { fill: --purple-ink; }
+  |h| "gray"
+  |sw| { fill: --gray-wash; }
+  |sw| { fill: --gray-soft; }
+  |sw| { fill: --gray; }
+  |sw| { fill: --gray-ink; }
 ]
 
-cards |row| { gap: 14 } [
-  |card| { fill: --teal-wash;   stroke: --teal-ink;   color: --teal-ink }   "teal card"
-  |card| { fill: --rose-wash;   stroke: --rose-ink;   color: --rose-ink }   "rose card"
-  |card| { fill: --amber-wash;  stroke: --amber-ink;  color: --amber-ink }  "amber card"
-  |card| { fill: --green-wash;  stroke: --green-ink;  color: --green-ink }  "green card"
-  |card| { fill: --purple-wash; stroke: --purple-ink; color: --purple-ink } "purple card"
+cards |row| { gap: 14; } [
+  |card| { fill: --purple-wash; stroke: --purple; color: --purple; } "Wash"
+  |card| { fill: --purple-soft; stroke: --purple-ink; color: --purple-ink; } "Soft"
+  |card| { fill: --purple; stroke: --fg; color: --fg; } "Base"
+  |card| { fill: --purple-ink; stroke: --purple-ink; color: --bg; } "Ink"
 ]

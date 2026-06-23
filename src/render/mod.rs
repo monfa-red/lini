@@ -405,4 +405,21 @@ mod tests {
         let svg = svg_for("x |box|\n");
         assert!(!svg.contains("<title>"), "{svg}");
     }
+
+    #[test]
+    fn shadow_flood_color_is_a_literal_in_live_mode() {
+        // `flood-color` is a filter presentation attribute: var()/light-dark()
+        // there fall back to opaque black, so the tint must be a resolved literal
+        // even with live vars (the canvas-fill bug, on the shadow).
+        let svg = svg_for("x |box| { shadow: 4 }\n");
+        let flood = svg
+            .split("flood-color=\"")
+            .nth(1)
+            .and_then(|s| s.split('"').next())
+            .expect("a shadow flood-color");
+        assert!(
+            !flood.starts_with("var(") && !flood.contains("light-dark"),
+            "shadow tint must be a literal, got {flood:?}"
+        );
+    }
 }

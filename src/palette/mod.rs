@@ -93,17 +93,17 @@ struct Tier {
 const TIERS: &[Tier] = &[
     Tier {
         suffix: "-wash",
-        light: (0.965, 0.022),
+        light: (0.95, 0.022),
         dark: (0.290, 0.040),
     },
     Tier {
         suffix: "-soft",
-        light: (0.905, 0.058),
+        light: (0.86, 0.072),
         dark: (0.360, 0.058),
     },
     Tier {
         suffix: "",
-        light: (0.780, 0.105),
+        light: (0.72, 0.122),
         dark: (0.620, 0.110),
     },
     Tier {

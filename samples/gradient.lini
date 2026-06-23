@@ -1,24 +1,28 @@
 // Gradients (SPEC §11.3): two-stop auto-angle, multi-stop, explicit angle, radial,
 // and gradient-on-stroke. Stops are palette vars, so each one flips dark/light.
 {
-  layout: column;  gap: 16;  padding: 26;  font-size: 13;
+  layout: column; gap: 16; padding: 26; font-size: 13;
 
-  |card::box| { width: 210; height: 76; stroke: none; color: white; font-weight: normal; }
+  |card::box| {
+    width: 240; height: 70; stroke: none; color: white; font-weight: normal;
+  }
 }
 
-|plain| { font-size: 18 } "Gradients"
+|plain| { font-size: 18; } "Gradients"
 
-r1 |row| { gap: 16 } [
-  |card| { fill: gradient(--teal, --blue) }          "gradient(--teal, --blue)"
-  |card| { fill: gradient(--rose, --amber, --sky) }  "three stops, auto-angled"
+r1 |row| { gap: 16; } [
+  |card| { fill: gradient(--teal, --blue); } "gradient(--teal, --blue)"
+  |card| { fill: gradient(--rose, --amber, --sky); } "three stops, auto-angled"
 ]
 
-r2 |row| { gap: 16 } [
-  |card| { fill: linear-gradient(90, --blue, --purple) } "linear-gradient(90, …)"
-  |card| { fill: radial-gradient(--purple, --rose) }     "radial-gradient(…)"
+r2 |row| { gap: 16; } [
+  |card| { fill: linear-gradient(90, --blue, --purple); } "linear-gradient(90, …)"
+  |card| { fill: radial-gradient(--purple, --rose); } "radial-gradient(…)"
 ]
 
-r3 |row| { gap: 16 } [
-  |card| { fill: --gray-wash; color: --gray-ink; stroke: gradient(--teal, --purple); stroke-width: 6 } "gradient on stroke"
-  |card| { fill: gradient(oklch(0.72, 0.16, 25), oklch(0.72, 0.16, 285)) } "oklch stops"
+r3 |row| { gap: 16; } [
+  |card| {
+    fill: --gray-wash; color: --gray-ink; stroke: gradient(--teal, --purple); stroke-width: 3;
+  } "gradient on stroke"
+  |card| { fill: gradient(oklch(0.72, 0.16, 25), oklch(0.72, 0.16, 285)); } "oklch stops"
 ]
