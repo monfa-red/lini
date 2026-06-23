@@ -20,11 +20,11 @@ users |oval| {
 
 edge |group| { layout: row; gap: 28; } [
       |caption| "Edge"
-  lb  |edge|    [
+  lb  |edge| [
     "Load balancer"
     |badge| "v2"
   ]
-  cdn |edge|    "CDN"
+  cdn |edge| { stack: 5; } "CDN"
 ]
 
 svc |group| { layout: row; gap: 28; } [
