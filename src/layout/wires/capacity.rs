@@ -124,8 +124,9 @@ impl Occupancy {
         deny: &[Rect],
     ) -> Closure {
         let c = self.clearance;
-        let empty = Vec::new();
-        let spans = self.map.get(&(world, axis.index(), chan)).unwrap_or(&empty);
+        let Some(spans) = self.map.get(&(world, axis.index(), chan)) else {
+            return empty_closure(channel, axis, lo, hi, k, relaxed, margin, deny, c);
+        };
         let mut hull = (lo, hi);
         let mut joined = vec![false; spans.len()];
         loop {
@@ -288,6 +289,65 @@ impl Occupancy {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
+fn empty_closure(
+    channel: &Channel,
+    axis: Axis,
+    lo: f64,
+    hi: f64,
+    k: usize,
+    relaxed: bool,
+    margin: bool,
+    deny: &[Rect],
+    clearance: f64,
+) -> Closure {
+    if k == 0 {
+        return Closure::Open;
+    }
+    let (u0, u1) = channel.usable(lo, hi, clearance);
+    let (mut b0, mut b1) = if relaxed { channel.walls() } else { (u0, u1) };
+    if margin {
+        if channel.outer[0] {
+            b0 = f64::NEG_INFINITY;
+        }
+        if channel.outer[1] {
+            b1 = f64::INFINITY;
+        }
+    }
+    let mid = cluster_midline(channel, u0, u1, k, clearance, margin);
+    let ord = |i: usize| mid + (i as f64 - (k as f64 - 1.0) / 2.0) * clearance;
+    let beyond = |o: f64, wall: usize| match wall {
+        0 => o < b0 - EPS,
+        _ => o > b1 + EPS,
+    };
+    let mut inner_out = 0;
+    let mut any_out = false;
+    for i in 0..k {
+        let o = ord(i);
+        let low = beyond(o, 0);
+        let high = beyond(o, 1);
+        inner_out += usize::from((low && !channel.outer[0]) || (high && !channel.outer[1]));
+        any_out |= low || high;
+    }
+    if inner_out > 0 {
+        return Closure::Short(inner_out);
+    }
+    if any_out {
+        return Closure::Hard;
+    }
+    let denied = (0..k).any(|i| {
+        let o = ord(i);
+        deny.iter().any(|d| {
+            let ((d0, d1), (t0, t1)) = match axis {
+                Axis::H => ((d.y0, d.y1), (d.x0, d.x1)),
+                Axis::V => ((d.x0, d.x1), (d.y0, d.y1)),
+            };
+            lo < t1 && hi > t0 && o > d0 && o < d1
+        })
+    });
+    if denied { Closure::Hard } else { Closure::Open }
+}
+
 /// First-fit rail packing — the channel router's left-edge discipline.
 /// Members are `(lo, hi, pin)` in placement order; each takes the first
 /// rail that (a) sits at or above every rail holding an earlier member
@@ -344,7 +404,7 @@ pub(super) fn pack(
 /// Port slots per `(node, side)` — Law 2's side capacity, shared by outer
 /// ends, inner (containment) ends, and self-loop legs alike.
 pub struct Ports {
-    used: BTreeMap<(String, u8), usize>,
+    used: BTreeMap<String, [usize; 4]>,
     clearance: f64,
 }
 
@@ -382,17 +442,13 @@ impl Ports {
     pub fn free(&self, path: &str, side: Side, rect: Rect) -> usize {
         let used = self
             .used
-            .get(&(path.to_owned(), side.index()))
-            .copied()
-            .unwrap_or(0);
+            .get(path)
+            .map_or(0, |sides| sides[side.index() as usize]);
         self.capacity(rect, side).saturating_sub(used)
     }
 
     pub fn commit(&mut self, path: &str, side: Side, n: usize) {
-        *self
-            .used
-            .entry((path.to_owned(), side.index()))
-            .or_insert(0) += n;
+        self.used.entry(path.to_owned()).or_default()[side.index() as usize] += n;
     }
 }
 

@@ -209,12 +209,6 @@ pub fn shortest(
         }
     };
 
-    let mut adj: Vec<Vec<(usize, Axis, usize)>> = vec![Vec::new(); graph.cells.len()];
-    for e in &graph.edges {
-        adj[e.a].push((e.b, e.axis, e.channel));
-        adj[e.b].push((e.a, e.axis, e.channel));
-    }
-
     // (cost, origin start, predecessor state) per state, settled by Dijkstra.
     let mut best: Vec<Option<(Cost, usize, Option<usize>)>> = vec![None; graph.cells.len() * 2];
 
@@ -273,7 +267,7 @@ pub fn shortest(
             continue; // stale
         }
         let (cell, axis) = (item.state / 2, [Axis::H, Axis::V][item.state % 2]);
-        for &(next, ax, chan) in &adj[cell] {
+        for &(next, ax, chan) in &graph.adj[cell] {
             let (qa, qb) = (along(cell, ax), along(next, ax));
             if closed(ax, chan, qa.min(qb), qa.max(qb)) {
                 continue;

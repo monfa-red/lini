@@ -123,6 +123,7 @@ pub struct ChannelGraph {
     pub v: Vec<Channel>,
     pub cells: Vec<Cell>,
     pub edges: Vec<Edge>,
+    pub adj: Vec<Vec<(usize, Axis, usize)>>,
 }
 
 impl ChannelGraph {
@@ -199,7 +200,19 @@ impl ChannelGraph {
             }
         }
 
-        ChannelGraph { h, v, cells, edges }
+        let mut adj = vec![Vec::new(); cells.len()];
+        for e in &edges {
+            adj[e.a].push((e.b, e.axis, e.channel));
+            adj[e.b].push((e.a, e.axis, e.channel));
+        }
+
+        ChannelGraph {
+            h,
+            v,
+            cells,
+            edges,
+            adj,
+        }
     }
 }
 

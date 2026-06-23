@@ -541,7 +541,7 @@ pub fn complete(
             let mut cands = match memo.get(&key) {
                 Some((v, c)) if *v == version => c.clone(),
                 _ => {
-                    let c = insertions(router, raw, drawn, bi, clearance, slides);
+                    let c = insertions(router, raw, drawn, bi, clearance, slides, Some(total));
                     memo.insert(key, (version, c.clone()));
                     c
                 }
@@ -570,8 +570,15 @@ pub fn complete(
             for (cand, cand_drawn, cand_slides, lost) in firsts.iter().flatten() {
                 for &l in lost {
                     let bj = bundle_of(router, l);
-                    let mut seconds =
-                        insertions(router, cand, cand_drawn, bj, clearance, cand_slides);
+                    let mut seconds = insertions(
+                        router,
+                        cand,
+                        cand_drawn,
+                        bj,
+                        clearance,
+                        cand_slides,
+                        Some(total),
+                    );
                     if let Some(i) = seconds.iter().position(&better) {
                         let (second, second_drawn, second_slides, lost2) = seconds.swap_remove(i);
                         adopt_fan_sides(router, &second);
@@ -705,7 +712,15 @@ fn compact_insertion(
         }
         for &l in &lost {
             let bj = bundle_of(router, l);
-            let mut seconds = insertions(router, &cand, &cand_drawn, bj, clearance, &cand_slides);
+            let mut seconds = insertions(
+                router,
+                &cand,
+                &cand_drawn,
+                bj,
+                clearance,
+                &cand_slides,
+                Some(total),
+            );
             let better = |c: &Insertion| completeness_score(router, &c.1, clearance) < total;
             if let Some(i) = seconds.iter().position(better) {
                 let (second, second_drawn, second_slides, lost2) = seconds.swap_remove(i);
@@ -849,6 +864,7 @@ fn insertions(
     bi: usize,
     clearance: f64,
     slides: &Slides,
+    stop_at: Option<(usize, usize, usize)>,
 ) -> Vec<Insertion> {
     let m0 = router.bundles[bi].members[0];
     let members = router.bundles[bi].members.clone();
@@ -871,7 +887,7 @@ fn insertions(
             cleared,
         );
         for (cand, cand_drawn) in moves {
-            let (mut normal, mut normal_drawn) = (cand.clone(), cand_drawn.clone());
+            let (mut normal, mut normal_drawn) = (cand, cand_drawn);
             let mut cand_slides = slides.clone();
             let lost = separation_with_protect(
                 router,
@@ -880,23 +896,13 @@ fn insertions(
                 clearance,
                 &mut cand_slides,
                 beat,
-                &[],
+                if forced { &members } else { &[] },
             );
-            let lost_inserted = lost.iter().any(|m| members.contains(m));
             out.push((normal, normal_drawn, cand_slides, lost));
-            if forced && lost_inserted {
-                let (mut protected, mut protected_drawn) = (cand, cand_drawn);
-                let mut protected_slides = slides.clone();
-                let protected_lost = separation_with_protect(
-                    router,
-                    &mut protected,
-                    &mut protected_drawn,
-                    clearance,
-                    &mut protected_slides,
-                    beat,
-                    &members,
-                );
-                out.push((protected, protected_drawn, protected_slides, protected_lost));
+            if stop_at.is_some_and(|total| {
+                completeness_score(router, &out.last().unwrap().1, clearance) < total
+            }) {
+                return out;
             }
         }
     }
@@ -1308,34 +1314,24 @@ fn entangled_bundles(router: &Router, crossings: &[Crossing]) -> Vec<usize> {
 fn counter(
     obstacles: &[Vec<(f64, f64)>],
 ) -> impl Fn(super::rect::Rect, super::graph::Axis) -> u32 + '_ {
-    |band, axis| {
-        obstacles
-            .iter()
-            .flat_map(|p| p.windows(2))
-            .filter(|s| intrudes(s, band, axis))
-            .count() as u32
+    let mut vertical = Vec::new();
+    let mut horizontal = Vec::new();
+    for s in obstacles.iter().flat_map(|p| p.windows(2)) {
+        if s[0].0 == s[1].0 && s[0].1 != s[1].1 {
+            vertical.push((s[0].0, s[0].1.min(s[1].1), s[0].1.max(s[1].1)));
+        } else if s[0].1 == s[1].1 && s[0].0 != s[1].0 {
+            horizontal.push((s[0].1, s[0].0.min(s[1].0), s[0].0.max(s[1].0)));
+        }
     }
-}
-
-/// Whether a drawn segment intrudes transversally into a corridor band swept
-/// along `axis`: perpendicular to the travel, its line inside the band's
-/// travel extent, its span reaching into the band's cross-section. Any such
-/// wire may have to be crossed whatever lane the band's traveller gets;
-/// parallel neighbours never count — sharing a corridor is free.
-fn intrudes(s: &[(f64, f64)], band: super::rect::Rect, axis: super::graph::Axis) -> bool {
-    use super::graph::Axis;
-    let vertical = s[0].0 == s[1].0 && s[0].1 != s[1].1;
-    let horizontal = s[0].1 == s[1].1 && s[0].0 != s[1].0;
-    match axis {
-        Axis::H if vertical => {
-            let (y0, y1) = (s[0].1.min(s[1].1), s[0].1.max(s[1].1));
-            s[0].0 >= band.x0 && s[0].0 <= band.x1 && y0 <= band.y1 && y1 >= band.y0
-        }
-        Axis::V if horizontal => {
-            let (x0, x1) = (s[0].0.min(s[1].0), s[0].0.max(s[1].0));
-            s[0].1 >= band.y0 && s[0].1 <= band.y1 && x0 <= band.x1 && x1 >= band.x0
-        }
-        _ => false,
+    move |band, axis| match axis {
+        super::graph::Axis::H => vertical
+            .iter()
+            .filter(|&&(x, y0, y1)| x >= band.x0 && x <= band.x1 && y0 <= band.y1 && y1 >= band.y0)
+            .count() as u32,
+        super::graph::Axis::V => horizontal
+            .iter()
+            .filter(|&&(y, x0, x1)| y >= band.y0 && y <= band.y1 && x0 <= band.x1 && x1 >= band.x0)
+            .count() as u32,
     }
 }
 

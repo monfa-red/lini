@@ -48,11 +48,14 @@ imu  |chip| { cell: 5 5; fill: --amber; color: --amber-ink; } "IMU"
 usb.bottom -> mcu.top
 usb.bottom -> mcu.top
 usb.bottom -> mcu.top
+usb.bottom -> mcu.top
 mcu.top -> rf.bottom
 mcu.top -> rf.bottom
 
 // power rails + flash bus (left)
-pwr.right -> mcu
+pwr.right -> mcu.left
+pwr.right -> mcu.left
+pwr.right -> mcu.left
 pwr.right -> mcu.left
 flash.right -> mcu.left
 flash.right -> mcu.left
