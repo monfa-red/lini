@@ -14,6 +14,7 @@ How to work in this repo.
 - **One mechanism per problem.** Extend whatever owns a failure mode; never add a second that re-fights it. Robust fixes over patches.
 - **Modular: one concept per file.** Split a module past ~500 LOC.
 - Standard idioms over clever code; don't fight `rustfmt` / `clippy`.
+- **Trust a correct model.** Don't special-case a principled formula's output to nudge one case to taste — fix the model, or accept the result.
 - Nothing beyond the task — no extra features, validation, or comments (comments only for the non-obvious *why*).
 - Cosmetics last: pure-looks polish goes in a final pass.
 
