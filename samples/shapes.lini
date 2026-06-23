@@ -1,82 +1,91 @@
 // Every drawable primitive plus a few templates, each captioned, in palette
 // colours — a soft pastel fill with a matching ink outline. Source for assets/shapes.png.
 {
-  layout: grid;  columns: repeat(4);  gap: 26;  padding: 30;
-  |tile::column| { gap: 9;  align: center; }
-  |cap::plain|   { font-size: 12;  font-weight: normal;  color: --muted; }
+  layout: grid; columns: repeat(4); gap: 26; padding: 30;
+  |tile::column| { gap: 9; align: center; }
+  |cap::plain| { font-size: 12; font-weight: normal; color: --muted; }
 }
 
 |tile| [
-  |box| { width: 66; height: 46; fill: --red-soft; stroke: --red-ink } [ |badge| "new" ]
+  |box| { width: 66; height: 46; fill: --red-soft; stroke: --red-ink; } [
+    |badge| "new"
+  ]
   |cap| "box + badge"
 ]
 |tile| [
-  |rect| { width: 66; height: 46; fill: --orange-soft; stroke: --orange-ink }
+  |rect| { width: 66; height: 46; fill: --orange-soft; stroke: --orange-ink; }
   |cap| "rect"
 ]
 |tile| [
-  |oval| { width: 68; height: 54; fill: --amber-soft; stroke: --amber-ink }
+  |oval| { width: 68; height: 54; fill: --amber-soft; stroke: --amber-ink; }
   |cap| "oval"
 ]
 |tile| [
-  |hex| { width: 68; height: 58; fill: --lime-soft; stroke: --lime-ink }
+  |hex| { width: 68; height: 58; fill: --lime-soft; stroke: --lime-ink; }
   |cap| "hex"
 ]
 
 |tile| [
-  |slant| { width: 66; height: 46; fill: --green-soft; stroke: --green-ink }
+  |slant| { width: 66; height: 46; fill: --green-soft; stroke: --green-ink; }
   |cap| "slant"
 ]
 |tile| [
-  |cyl| { width: 58; height: 56; fill: --teal-soft; stroke: --teal-ink }
+  |cyl| { width: 58; height: 56; fill: --teal-soft; stroke: --teal-ink; }
   |cap| "cyl"
 ]
 |tile| [
-  |diamond| { width: 70; height: 60; fill: --sky-soft; stroke: --sky-ink }
+  |diamond| { width: 70; height: 60; fill: --sky-soft; stroke: --sky-ink; }
   |cap| "diamond"
 ]
 |tile| [
-  |cloud| { width: 84; height: 52; fill: --blue-soft; stroke: --blue-ink }
+  |cloud| { width: 84; height: 52; fill: --blue-soft; stroke: --blue-ink; }
   |cap| "cloud"
 ]
 
 |tile| [
-  |poly| { points: 0 -30, 30 -6, 17 30, -17 30, -30 -6; fill: --purple-soft; stroke: --purple-ink }
+  |poly| {
+    points: 0 -30, 30 -6, 17 28, -17 28, -30 -6; fill: --purple-soft; stroke: --purple-ink;
+  }
   |cap| "poly"
 ]
 |tile| [
-  |path| { path: "M -32 26 Q 0 -28 32 26"; stroke: --rose-ink; stroke-width: 3 }
+  |path| {
+    path: "M -32 26 Q 0 -28 32 26"; stroke: --rose-ink; stroke-width: 4;
+  }
   |cap| "path"
 ]
 |tile| [
-  |line| { points: -32 0, 32 0; marker-end: arrow; stroke: --red-ink; stroke-width: 2 }
+  |line| {
+    points: -32 0, 32 0; marker-end: arrow; stroke: --red; stroke-width: 3;
+  }
   |cap| "line"
 ]
 |tile| [
-  |icon| { width: 42; height: 42; color: --teal-ink } "home"
+  |icon| { width: 42; height: 42; color: --teal-ink; } "home"
   |cap| "icon"
 ]
 
 |tile| [
-  |note| { width: 74; height: 50 } "note"
+  |note| { width: 74; height: 50; } "note"
   |cap| "note"
 ]
 |tile| [
-  |group| { padding: 12 } [
+  |group| { padding: 12; } [
     |caption| "Group"
-    |box| { width: 56; height: 34; fill: --gray-wash; stroke: --gray-ink }
+    |box| { width: 56; height: 34; fill: --gray-wash; stroke: --gray-ink; }
     |footer| "footer"
   ]
-  |cap| "group"
 ]
 |tile| [
-  |table| { columns: 24 24 24 } [
+  |table| { columns: 24 24 24; } [
     "a" "b" "c"
     "d" "e" "f"
   ]
   |cap| "table"
 ]
 |tile| [
-  |path| { path: "M 0 -28 C 22 -30 31 -12 23 4 C 17 16 30 25 11 30 C -7 34 -27 25 -26 6 C -25 -11 -22 -28 0 -28 Z"; fill: --rose-soft; stroke: --rose-ink; stroke-width: 2 }
+  |path| {
+    path: "M 0 -28 C 22 -30 31 -12 23 4 C 17 16 30 25 11 30 C -7 34 -27 25 -26 6 C -25 -11 -22 -28 0 -28 Z"; fill: --rose-soft; stroke: --rose-ink; stroke-width: 2;
+  }
   |cap| "blob path"
 ]
