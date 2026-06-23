@@ -26,13 +26,13 @@ Thirty-odd lines of Lini ([`samples/hero.lini`](https://github.com/monfa-red/lin
 Most tools make you choose: **draw by hand** (precise, but tedious and hard to version) or **auto-layout everything** (fast, but you take what the algorithm gives). Lini splits the work: you keep spatial control, it automates only the wires.
 
 - **You arrange, it routes.** Place nodes with flex, grid, or anchors; Lini routes the connectors between them: orthogonal, clearance-respecting, deterministic.
-- **The full range of SVG.** Sizes, anchors, strokes, shadows, rotation, opacity, raw paths: a designer's control over the look, not a fixed house style. The result can be genuinely pretty, not merely correct.
-- **A genuinely small syntax.** Two brackets — `{ }` for style, `[ ]` for children — plus a few sigils and sensible defaults. `cat -> dog` is a valid diagram; the whole language fits in a coffee break.
+- **The full range of SVG.** Sizes, anchors, strokes, shadows, rotation, opacity, raw paths: full control over the look, not a fixed house style, so a diagram can actually look good.
+- **A small syntax.** Two brackets — `{ }` for style, `[ ]` for children — plus a few sigils and sensible defaults. `cat -> dog` is already a valid diagram; the whole language is small enough to learn in one sitting.
 - **Any shape you need.** 12 primitives and 10 templates, plus a raw `path` that accepts any SVG path string. If SVG can draw it, you can place it and wire to it.
 - **Fast, and one file.** A 1.5 MB native binary, one runtime dependency. No Node, JVM, or headless browser; typical diagrams compile in about 2 ms, startup included.
-- **Reproducible output.** Compilation is byte-identical across runs, so renders diff cleanly and never churn in CI. 407 tests back it, including property tests on the router's laws.
-- **Pretty by default.** A curated 11-hue palette in soft pastels — four OKLCH-tuned tiers each — plus angle-less gradients, all themeable and dark/light-aware. The easy path is the flattering one; no hex required.
-- **Dark mode, automatically.** Every colour is a `light-dark()` CSS variable, so one SVG carries both palettes and follows the viewer's light/dark OS setting on its own — or a `data-theme` toggle. Re-theme from the host page with no recompile, pick a built-in (light, dark, high-contrast, blueprint, terminal, pastel), or bake any palette into a standalone file.
+- **Reproducible output.** Compilation is byte-identical across runs, so renders diff cleanly and never churn in CI. 408 tests back it, including property tests on the router's laws.
+- **Pretty by default.** A curated 11-hue palette in soft pastels — four OKLCH-tuned tiers each — plus angle-less gradients, all themeable and dark/light-aware. No hex codes required.
+- **Dark mode, automatically.** Every colour is a `light-dark()` CSS variable, so one SVG carries both palettes and follows the viewer's light/dark OS setting on its own — or a `data-theme` toggle. Re-theme from the page with no recompile, choose a built-in (light, dark, high-contrast, blueprint, terminal, pastel), or bake any palette into a standalone file.
 
 ---
 
@@ -64,7 +64,7 @@ frog ~> pond           // wavy
 fish --> bowl          // dashed
 ```
 
-<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/flow.png" alt="Lini's wire styles, in colour" width="420"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/flow.png" alt="Lini's wire styles, in colour" width="300"></p>
 
 **A diagram reads like a CSS file.** A `{ }` stylesheet at the top sets defaults, declares reusable classes, and extends shapes; then come the instances, then the wires:
 
@@ -100,7 +100,7 @@ services |group| { layout: row; gap: 24 } [
 
 ## Shapes
 
-<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/shapes.png" alt="Lini's shape primitives and templates" width="640"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/shapes.png" alt="Lini's shape primitives and templates" width="500"></p>
 
 ```
 |hex|  { width: 82; height: 72 } "hex"
@@ -155,7 +155,7 @@ hero |box|  { fill: gradient(--rose, --amber, --sky) }      // a three-colour bl
 
 ## Theming
 
-**Dark mode comes for free.** Every colour is a `light-dark()` pair, so a single exported SVG carries *both* a light and a dark palette and switches on its own:
+**One SVG, both palettes.** Every colour is a `light-dark()` pair, so an exported SVG carries a light and a dark palette and switches on its own:
 
 - **Automatic** — it follows the viewer's operating-system setting (`prefers-color-scheme`), with no script and no `@media`.
 - **Controllable** — a `data-theme="dark"` / `"light"` attribute on the SVG, or any ancestor in your page, forces a mode and overrides the OS.
@@ -230,7 +230,7 @@ Measured end-to-end on a modern laptop, including process startup (`--bake-vars`
 | Realistic service diagram (9 nodes, 5 wires) | ~2.2 ms |
 | Dense scene (100 nodes, 90 routed wires) | ~50 ms |
 
-A single-pass parser, bottom-up layout, and an orthogonal router: no browser to spin up, nothing to warm.
+A single-pass parser, bottom-up layout, and an orthogonal router. No browser to spin up.
 
 ---
 
@@ -263,9 +263,9 @@ Parsing is recursive-descent over an LL(1) grammar; resolve applies CSS-like spe
 
 ## Status
 
-**v0.4.** The language (the box/text model in [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md)) is stable, and the pipeline is complete and tested: wires route and render, layout and theming work, and the formatter and dev server ship in the same binary.
+**v0.7.** The language (the box/text model in [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md)) is stable, and the pipeline is complete and tested: wires route and render, layout and theming work, and the formatter and dev server ship in the same binary.
 
-**Non-goals**, by design: automatic node *placement* (you position, Lini routes), multi-file imports, animation, and manual wire waypoints.
+**Non-goals**, by design: automatic node *placement*, multi-file imports, animation, and manual wire waypoints.
 
 ## Development
 
