@@ -3,17 +3,17 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/flow.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-150 -202.5 300 405" width="300" height="405" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-157 -202.5 314 405" width="314" height="405" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
-    .lini .lini-red { fill: #fde9e6; stroke: #af3d34; color: #af3d34; }
+    .lini .lini-red { fill: #fde9ec; stroke: #ac3a5c; color: #ac3a5c; }
     .lini .lini-sky { fill: #dff2f9; stroke: #0079a6; color: #0079a6; }
     .lini .lini-teal { fill: #dff4f1; stroke: #008279; color: #008279; }
     .lini .lini-purple { fill: #ecedfe; stroke: #6356be; color: #6356be; }
-    .lini .lini-orange { fill: #fbebe1; stroke: #a74a00; color: #a74a00; }
+    .lini .lini-orange { fill: #f7eddd; stroke: #985900; color: #985900; }
     .lini .lini-wire { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-wire-dashed { stroke-dasharray: 8,8; }
     .lini .lini-wire-dotted { stroke-dasharray: 2,4; }
@@ -21,91 +21,91 @@ input_file: samples/flow.lini
     .lini .lini-cut-bg { fill: white; stroke: none; }
     .lini .lini-cut { fill: black; stroke: none; }
     .lini .lini-marker { fill: #444; stroke: none; }
-    .lini .lini-style-solid { stroke: #e98477; }
-    .lini .lini-style-solid .lini-marker { fill: #e98477; }
-    .lini .lini-style-dashed { stroke: #21b6dd; }
-    .lini .lini-style-dashed .lini-marker { fill: #21b6dd; }
-    .lini .lini-style-dotted { stroke: #00beb3; }
-    .lini .lini-style-dotted .lini-marker { fill: #00beb3; }
-    .lini .lini-style-wavy { stroke: #9c97f4; }
-    .lini .lini-style-wavy .lini-marker { fill: #9c97f4; }
-    .lini .lini-style-thick { stroke: #e18e51; stroke-width: 3; }
-    .lini .lini-style-thick .lini-marker { fill: #e18e51; }
+    .lini .lini-style-solid { stroke: #ac3a5c; }
+    .lini .lini-style-solid .lini-marker { fill: #ac3a5c; }
+    .lini .lini-style-dashed { stroke: #0079a6; }
+    .lini .lini-style-dashed .lini-marker { fill: #0079a6; }
+    .lini .lini-style-dotted { stroke: #008279; }
+    .lini .lini-style-dotted .lini-marker { fill: #008279; }
+    .lini .lini-style-wavy { stroke: #6356be; }
+    .lini .lini-style-wavy .lini-marker { fill: #6356be; }
+    .lini .lini-style-thick { stroke: #985900; stroke-width: 3; }
+    .lini .lini-style-thick .lini-marker { fill: #985900; }
   </style>
   <defs/>
-  <rect class="lini-canvas" x="-150" y="-202.5" width="300" height="405"/>
+  <rect class="lini-canvas" x="-157" y="-202.5" width="314" height="405"/>
   <g class="lini-scene">
-    <g class="lini-node lini-red lini-box" data-id="cat" transform="translate(-87,-150)">
-      <rect x="-33.5" y="-27.5" width="67" height="55" rx="6" ry="6"/>
+    <g class="lini-node lini-red lini-box" data-id="cat" transform="translate(-94,-150)">
+      <rect x="-37.5" y="-27.5" width="75" height="55" rx="6" ry="6"/>
       <text class="lini-text" x="0" y="0">cat</text>
     </g>
-    <g class="lini-node lini-red lini-box" data-id="dog" transform="translate(87,-150)">
-      <rect x="-33.5" y="-27.5" width="67" height="55" rx="6" ry="6"/>
+    <g class="lini-node lini-red lini-box" data-id="dog" transform="translate(94,-150)">
+      <rect x="-37.5" y="-27.5" width="75" height="55" rx="6" ry="6"/>
       <text class="lini-text" x="0" y="0">dog</text>
     </g>
-    <g class="lini-node lini-sky lini-box" data-id="fish" transform="translate(-87,-75)">
+    <g class="lini-node lini-sky lini-box" data-id="fish" transform="translate(-94,-75)">
       <rect x="-38" y="-27.5" width="76" height="55" rx="6" ry="6"/>
       <text class="lini-text" x="0" y="0">fish</text>
     </g>
-    <g class="lini-node lini-sky lini-box" data-id="bowl" transform="translate(87,-75)">
+    <g class="lini-node lini-sky lini-box" data-id="bowl" transform="translate(94,-75)">
       <rect x="-38" y="-27.5" width="76" height="55" rx="6" ry="6"/>
       <text class="lini-text" x="0" y="0">bowl</text>
     </g>
-    <g class="lini-node lini-teal lini-box" data-id="newt" transform="translate(-87,0)">
+    <g class="lini-node lini-teal lini-box" data-id="newt" transform="translate(-94,0)">
       <rect x="-38" y="-27.5" width="76" height="55" rx="6" ry="6"/>
       <text class="lini-text" x="0" y="0">newt</text>
     </g>
-    <g class="lini-node lini-teal lini-box" data-id="log" transform="translate(87,0)">
-      <rect x="-33.5" y="-27.5" width="67" height="55" rx="6" ry="6"/>
+    <g class="lini-node lini-teal lini-box" data-id="log" transform="translate(94,0)">
+      <rect x="-37.5" y="-27.5" width="75" height="55" rx="6" ry="6"/>
       <text class="lini-text" x="0" y="0">log</text>
     </g>
-    <g class="lini-node lini-purple lini-box" data-id="frog" transform="translate(-87,75)">
+    <g class="lini-node lini-purple lini-box" data-id="frog" transform="translate(-94,75)">
       <rect x="-38" y="-27.5" width="76" height="55" rx="6" ry="6"/>
       <text class="lini-text" x="0" y="0">frog</text>
     </g>
-    <g class="lini-node lini-purple lini-box" data-id="pond" transform="translate(87,75)">
+    <g class="lini-node lini-purple lini-box" data-id="pond" transform="translate(94,75)">
       <rect x="-38" y="-27.5" width="76" height="55" rx="6" ry="6"/>
       <text class="lini-text" x="0" y="0">pond</text>
     </g>
-    <g class="lini-node lini-orange lini-box" data-id="ping" transform="translate(-87,150)">
+    <g class="lini-node lini-orange lini-box" data-id="ping" transform="translate(-94,150)">
       <rect x="-38" y="-27.5" width="76" height="55" rx="6" ry="6"/>
       <text class="lini-text" x="0" y="0">ping</text>
     </g>
-    <g class="lini-node lini-orange lini-box" data-id="pong" transform="translate(87,150)">
+    <g class="lini-node lini-orange lini-box" data-id="pong" transform="translate(94,150)">
       <rect x="-38" y="-27.5" width="76" height="55" rx="6" ry="6"/>
       <text class="lini-text" x="0" y="0">pong</text>
     </g>
   </g>
   <g class="lini-wires">
     <g class="lini-wire lini-style-solid" style="font-size: 11" data-from="cat" data-to="dog">
-      <mask id="lini-label-cut-0" maskUnits="userSpaceOnUse" x="-54.5" y="-152" width="109" height="4"><rect class="lini-cut-bg" x="-54.5" y="-152" width="109" height="4"/><rect class="lini-cut" x="-19.8" y="-157.15" width="39.6" height="14.3"/></mask>
-      <path d="M -52.5 -150 L 49 -150" mask="url(#lini-label-cut-0)"/>
-      <polygon class="lini-marker lini-marker-arrow" points="53,-150 45,-146 45,-154"/>
+      <mask id="lini-label-cut-0" maskUnits="userSpaceOnUse" x="-57.5" y="-152" width="115" height="4"><rect class="lini-cut-bg" x="-57.5" y="-152" width="115" height="4"/><rect class="lini-cut" x="-19.8" y="-157.15" width="39.6" height="14.3"/></mask>
+      <path d="M -55.5 -150 L 52 -150" mask="url(#lini-label-cut-0)"/>
+      <polygon class="lini-marker lini-marker-arrow" points="56,-150 48,-146 48,-154"/>
       <text class="lini-wire-label" x="0" y="-150">solid</text>
     </g>
     <g class="lini-wire lini-wire-dashed lini-style-dashed" style="font-size: 11" data-from="fish" data-to="bowl">
-      <mask id="lini-label-cut-1" maskUnits="userSpaceOnUse" x="-50" y="-77" width="100" height="4"><rect class="lini-cut-bg" x="-50" y="-77" width="100" height="4"/><rect class="lini-cut" x="-23.1" y="-82.15" width="46.2" height="14.3"/></mask>
-      <path d="M -48 -75 L 44.5 -75" mask="url(#lini-label-cut-1)"/>
-      <polygon class="lini-marker lini-marker-arrow" points="48.5,-75 40.5,-71 40.5,-79"/>
+      <mask id="lini-label-cut-1" maskUnits="userSpaceOnUse" x="-57" y="-77" width="114" height="4"><rect class="lini-cut-bg" x="-57" y="-77" width="114" height="4"/><rect class="lini-cut" x="-23.1" y="-82.15" width="46.2" height="14.3"/></mask>
+      <path d="M -55 -75 L 51.5 -75" mask="url(#lini-label-cut-1)"/>
+      <polygon class="lini-marker lini-marker-arrow" points="55.5,-75 47.5,-71 47.5,-79"/>
       <text class="lini-wire-label" x="0" y="-75">dashed</text>
     </g>
     <g class="lini-wire lini-wire-dotted lini-style-dotted" style="font-size: 11" data-from="newt" data-to="log">
-      <mask id="lini-label-cut-2" maskUnits="userSpaceOnUse" x="-50" y="-2" width="104.5" height="4"><rect class="lini-cut-bg" x="-50" y="-2" width="104.5" height="4"/><rect class="lini-cut" x="-20.85" y="-7.15" width="46.2" height="14.3"/></mask>
-      <path d="M -48 0 L 49 0" mask="url(#lini-label-cut-2)"/>
-      <polygon class="lini-marker lini-marker-arrow" points="53,0 45,4 45,-4"/>
-      <text class="lini-wire-label" x="2.25" y="0">dotted</text>
+      <mask id="lini-label-cut-2" maskUnits="userSpaceOnUse" x="-57" y="-2" width="114.5" height="4"><rect class="lini-cut-bg" x="-57" y="-2" width="114.5" height="4"/><rect class="lini-cut" x="-22.85" y="-7.15" width="46.2" height="14.3"/></mask>
+      <path d="M -55 0 L 52 0" mask="url(#lini-label-cut-2)"/>
+      <polygon class="lini-marker lini-marker-arrow" points="56,0 48,4 48,-4"/>
+      <text class="lini-wire-label" x="0.25" y="0">dotted</text>
     </g>
     <g class="lini-wire lini-style-wavy" style="font-size: 11" data-from="frog" data-to="pond">
-      <mask id="lini-label-cut-3" maskUnits="userSpaceOnUse" x="-51.4" y="71.6" width="102.8" height="6.8"><rect class="lini-cut-bg" x="-51.4" y="71.6" width="102.8" height="6.8"/><rect class="lini-cut" x="-16.5" y="67.85" width="33" height="14.3"/></mask>
-      <path d="M -48 75 C -46.9788 75 -45.9791 75.3544 -45.0161 75.6943 C -44.0548 76.0337 -42.8546 75.6262 -42.0323 75.0236 C -41.1434 74.3723 -40.1502 73.6209 -39.0484 73.6004 C -37.9566 73.5802 -36.9454 74.3074 -36.0645 74.9527 C -35.1729 75.6059 -34.1854 76.3646 -33.0806 76.3988 C -31.9925 76.4324 -30.9752 75.714 -30.0968 75.0709 C -29.2023 74.4161 -28.2204 73.6504 -27.1129 73.6024 C -26.0286 73.5555 -25.0051 74.2648 -24.129 74.9055 C -23.2316 75.5618 -22.2552 76.3342 -21.1452 76.396 C -20.0648 76.4561 -19.035 75.7563 -18.1613 75.1181 C -17.2609 74.4604 -16.2899 73.6817 -15.1774 73.606 C -14.1012 73.5329 -13.0651 74.2228 -12.1935 74.8584 C -11.29 75.5173 -10.3243 76.302 -9.2097 76.3916 C -8.1378 76.4777 -7.0952 75.798 -6.2258 75.1651 C -5.3192 74.5052 -4.3586 73.7146 -3.2419 73.6112 C -2.1744 73.5124 -1.1255 74.1814 -0.2581 74.8114 C 0.6518 75.4723 1.6074 76.2683 2.7258 76.3856 C 3.7888 76.4971 4.8442 75.8391 5.7097 75.212 C 6.6228 74.5504 7.5736 73.7492 8.6935 73.618 C 9.7519 73.494 10.8138 74.1406 11.6774 74.7647 C 12.5939 75.4269 13.5399 76.233 14.6613 76.378 C 15.7148 76.5143 16.7832 75.8796 17.6452 75.2586 C 18.565 74.5959 19.5065 73.7852 20.629 73.6263 C 21.6777 73.4779 22.7526 74.1004 23.6129 74.7182 C 24.5362 75.3812 25.4733 76.1963 26.5968 76.3689 C 27.6405 76.5292 28.7218 75.9194 29.5806 75.3049 C 30.5075 74.6419 31.4403 73.8225 32.5645 73.6362 C 33.6032 73.4641 34.691 74.061 35.5484 74.672 C 36.4787 75.335 37.4061 76.1661 38.5323 76.3581 C 39.5871 76.5379 40.5366 75.6047 41.5161 75.174 C 42.4282 74.773 43.5037 75 44.5 75" mask="url(#lini-label-cut-3)"/>
-      <polygon class="lini-marker lini-marker-arrow" points="48.5,75 40.5,79 40.5,71"/>
+      <mask id="lini-label-cut-3" maskUnits="userSpaceOnUse" x="-58.4" y="71.6" width="116.8" height="6.8"><rect class="lini-cut-bg" x="-58.4" y="71.6" width="116.8" height="6.8"/><rect class="lini-cut" x="-16.5" y="67.85" width="33" height="14.3"/></mask>
+      <path d="M -55 75 C -53.9878 75 -52.9948 75.3444 -52.0417 75.6853 C -51.0927 76.0247 -49.8969 75.6558 -49.0833 75.061 C -48.1958 74.4122 -47.2231 73.6556 -46.125 73.603 C -45.0524 73.5516 -44.0339 74.2447 -43.1667 74.878 C -42.2721 75.5312 -41.3125 76.3036 -40.2083 76.3917 C -39.1464 76.4764 -38.1117 75.809 -37.25 75.1827 C -36.3474 74.5267 -35.4006 73.74 -34.2917 73.6163 C -33.2413 73.4992 -32.1902 74.1383 -31.3333 74.7569 C -30.4223 75.4146 -29.4874 76.214 -28.375 76.3731 C -27.3369 76.5216 -26.2694 75.9133 -25.4167 75.303 C -24.4968 74.6447 -23.5728 73.8343 -22.4583 73.6401 C -21.4331 73.4615 -20.3493 74.0363 -19.5 74.6377 C -18.5709 75.2955 -17.6568 76.1153 -16.5417 76.3441 C -15.5297 76.5516 -14.43 76.0129 -13.5833 75.421 C -12.6448 74.7648 -11.7396 73.9369 -10.625 73.6743 C -9.6266 73.4391 -8.5114 73.9393 -7.6667 74.5212 C -6.7184 75.1744 -5.8212 76.0091 -4.7083 76.3048 C -3.7236 76.5664 -2.5936 76.1071 -1.75 75.5358 C -0.7918 74.8868 0.0984 74.0462 1.2083 73.7186 C 2.1795 73.4319 3.3233 73.848 4.1667 74.4083 C 5.135 75.0517 6.0191 75.8971 7.125 76.2556 C 8.0827 76.5661 9.2393 76.1953 10.0833 75.6464 C 11.0619 75.0101 11.9408 74.1607 13.0417 73.7726 C 13.9863 73.4395 15.1544 73.7632 16 74.3 C 16.989 74.9278 17.8634 75.7805 18.9583 76.1969 C 19.8904 76.5513 21.0685 76.2766 21.9167 75.7522 C 22.916 75.1344 23.7869 74.2791 24.875 73.8359 C 25.7951 73.4612 26.9817 73.6856 27.8333 74.197 C 28.8431 74.8033 29.711 75.6606 30.7917 76.129 C 31.7004 76.5229 32.8938 76.3502 33.75 75.8523 C 34.77 75.2591 35.6359 74.4002 36.7083 73.9082 C 37.6065 73.4961 38.805 73.6163 39.6667 74.1001 C 40.6969 74.6786 41.5612 75.5384 42.625 76.0526 C 43.5134 76.482 44.7199 76.4229 45.5833 75.9453 C 46.5431 75.4144 47.4449 74.4998 48.5417 74.5049 C 49.5415 74.5095 50.5002 75 51.5 75" mask="url(#lini-label-cut-3)"/>
+      <polygon class="lini-marker lini-marker-arrow" points="55.5,75 47.5,79 47.5,71"/>
       <text class="lini-wire-label" x="0" y="75">wavy</text>
     </g>
     <g class="lini-wire lini-style-thick" style="font-size: 11" data-from="ping" data-to="pong">
-      <mask id="lini-label-cut-4" maskUnits="userSpaceOnUse" x="-50.5" y="147.5" width="101" height="5"><rect class="lini-cut-bg" x="-50.5" y="147.5" width="101" height="5"/><rect class="lini-cut" x="-26.4" y="142.85" width="52.8" height="14.3"/></mask>
-      <path d="M -42.5 150 L 42.5 150" mask="url(#lini-label-cut-4)"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-48.5,150 -36.5,144 -36.5,156"/>
-      <polygon class="lini-marker lini-marker-arrow" points="48.5,150 36.5,156 36.5,144"/>
+      <mask id="lini-label-cut-4" maskUnits="userSpaceOnUse" x="-57.5" y="147.5" width="115" height="5"><rect class="lini-cut-bg" x="-57.5" y="147.5" width="115" height="5"/><rect class="lini-cut" x="-26.4" y="142.85" width="52.8" height="14.3"/></mask>
+      <path d="M -49.5 150 L 49.5 150" mask="url(#lini-label-cut-4)"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-55.5,150 -43.5,144 -43.5,156"/>
+      <polygon class="lini-marker lini-marker-arrow" points="55.5,150 43.5,156 43.5,144"/>
       <text class="lini-wire-label" x="0" y="150">two-way</text>
     </g>
   </g>
