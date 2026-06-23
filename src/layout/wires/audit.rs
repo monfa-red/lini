@@ -541,7 +541,7 @@ pub fn complete(
             let mut cands = match memo.get(&key) {
                 Some((v, c)) if *v == version => c.clone(),
                 _ => {
-                    let c = insertions(router, raw, drawn, bi, clearance, slides, Some(total));
+                    let c = insertions(router, raw, drawn, bi, clearance, slides, total);
                     memo.insert(key, (version, c.clone()));
                     c
                 }
@@ -570,15 +570,8 @@ pub fn complete(
             for (cand, cand_drawn, cand_slides, lost) in firsts.iter().flatten() {
                 for &l in lost {
                     let bj = bundle_of(router, l);
-                    let mut seconds = insertions(
-                        router,
-                        cand,
-                        cand_drawn,
-                        bj,
-                        clearance,
-                        cand_slides,
-                        Some(total),
-                    );
+                    let mut seconds =
+                        insertions(router, cand, cand_drawn, bj, clearance, cand_slides, total);
                     if let Some(i) = seconds.iter().position(&better) {
                         let (second, second_drawn, second_slides, lost2) = seconds.swap_remove(i);
                         adopt_fan_sides(router, &second);
@@ -719,7 +712,7 @@ fn compact_insertion(
                 bj,
                 clearance,
                 &cand_slides,
-                Some(total),
+                total,
             );
             let better = |c: &Insertion| completeness_score(router, &c.1, clearance) < total;
             if let Some(i) = seconds.iter().position(better) {
@@ -864,7 +857,7 @@ fn insertions(
     bi: usize,
     clearance: f64,
     slides: &Slides,
-    stop_at: Option<(usize, usize, usize)>,
+    target: (usize, usize, usize),
 ) -> Vec<Insertion> {
     let m0 = router.bundles[bi].members[0];
     let members = router.bundles[bi].members.clone();
@@ -898,10 +891,9 @@ fn insertions(
                 beat,
                 if forced { &members } else { &[] },
             );
+            let score = completeness_score(router, &normal_drawn, clearance);
             out.push((normal, normal_drawn, cand_slides, lost));
-            if stop_at.is_some_and(|total| {
-                completeness_score(router, &out.last().unwrap().1, clearance) < total
-            }) {
+            if score < target {
                 return out;
             }
         }
@@ -1310,10 +1302,9 @@ fn entangled_bundles(router: &Router, crossings: &[Crossing]) -> Vec<usize> {
     counts.into_iter().map(|(bi, _)| bi).collect()
 }
 
-/// The crossing-cost callback over an obstacle set (see [`intrudes`]).
-fn counter(
-    obstacles: &[Vec<(f64, f64)>],
-) -> impl Fn(super::rect::Rect, super::graph::Axis) -> u32 + '_ {
+/// The crossing-cost callback over an obstacle set. Segments are flattened
+/// once so each route edge checks only the perpendicular segment class.
+fn counter(obstacles: &[Vec<(f64, f64)>]) -> impl Fn(super::rect::Rect, super::graph::Axis) -> u32 {
     let mut vertical = Vec::new();
     let mut horizontal = Vec::new();
     for s in obstacles.iter().flat_map(|p| p.windows(2)) {
