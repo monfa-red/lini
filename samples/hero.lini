@@ -1,0 +1,51 @@
+// The Lini hero — a colourful service map. Palette colours, a gradient entry
+// point, mixed wire styles. Source for assets/hero.png.
+{
+  layout: column;  gap: 52;  padding: 30;
+  font-weight: normal;
+  -> { stroke: --gray-ink;  stroke-width: 2;  clearance: 16; }
+
+  // tier looks — soft pastel fill, ink text + stroke
+  |edge::box|  { fill: --sky-wash;   stroke: --sky-ink;   color: --sky-ink;   radius: 7 }
+  |svc::box|   { fill: --teal-wash;  stroke: --teal-ink;  color: --teal-ink;  radius: 7 }
+  |store::cyl| { fill: --rose-wash;  stroke: --rose-ink;  color: --rose-ink }
+
+  .flow  { stroke: --purple-ink;  stroke-width: 3.5 }
+  .cache { stroke: --teal-ink }
+  .async { stroke: --orange-ink }
+}
+
+users |oval| { width: 156; height: 62; fill: gradient(--sky, --purple); stroke: none; color: white; font-weight: bold } "Users"
+
+edge |group| { layout: row;  gap: 28 } [
+  |caption| "Edge"
+  lb  |edge| [
+    "Load balancer"
+    |badge| "v2"
+  ]
+  cdn |edge| "CDN"
+]
+
+svc |group| { layout: row;  gap: 28 } [
+  |caption| "Services"
+  api    |svc| "API"
+  auth   |svc| "Auth"
+  worker |svc| [
+    "Worker"
+    |badge| "NEW"
+  ]
+]
+
+data |group| { layout: row;  gap: 28 } [
+  |caption| "Data"
+  pg    |store| "Postgres"
+  redis |store| "Redis"
+  queue |svc| { fill: --amber-wash; stroke: --amber-ink; color: --amber-ink } "Queue"
+]
+
+users -> edge.lb .flow "https"
+edge.lb -> svc.api
+edge.lb -> svc.auth
+svc.api -> data.pg .flow
+svc.api --> data.redis .cache "cache"
+svc.worker ~> data.queue .async "jobs"
