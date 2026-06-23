@@ -17,7 +17,7 @@ One line is a complete diagram: three boxes, two arrows, sensible spacing. You p
   <img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/hero.png" alt="A colourful service map rendered by Lini" width="440">
 </p>
 
-Thirty-odd lines of Lini ([`assets/hero.lini`](https://github.com/monfa-red/lini/blob/main/assets/hero.lini)).
+Thirty-odd lines of Lini ([`samples/hero.lini`](https://github.com/monfa-red/lini/blob/main/samples/hero.lini)).
 
 ---
 
@@ -100,7 +100,7 @@ services |group| { layout: row; gap: 24 } [
 
 ## Shapes
 
-<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/shapes.png" alt="Eight of Lini's shape primitives" width="640"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/shapes.png" alt="Lini's shape primitives and templates" width="640"></p>
 
 ```
 |hex|  { width: 82; height: 72 } "hex"
@@ -133,6 +133,12 @@ The full routing contract (crossings, priority, self-loops, starvation) lives in
 ## Colour
 
 **Pretty by default.** A curated palette of 11 named hues — `red rose orange amber lime green teal sky blue purple gray` — each in four job-named tiers, so the easy path is the flattering one:
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/palette.png" alt="Lini's 11-hue palette in four tiers, light mode" width="320">
+  <img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/palette-dark.png" alt="The same palette under dark mode" width="320">
+</p>
+<p align="center"><em>11 hues × 4 tiers — and the same colours under dark mode, where every tier keeps its job (<code>ink</code> stays the high-contrast tone, <code>wash</code> the surface).</em></p>
 
 ```
 { |card::box| { fill: --teal-wash; stroke: --teal-ink } }   // a soft card, one line
@@ -264,12 +270,12 @@ Parsing is recursive-descent over an LL(1) grammar; resolve applies CSS-like spe
 ## Development
 
 ```bash
-cargo test                               # 355 tests
+cargo test                               # full suite: unit, snapshot, wiring
 cargo run -- samples/hello.lini
-cargo run -- serve samples/full_example.lini
+cargo run -- serve samples/hero.lini
 ```
 
-`samples/` holds one `.lini` per language feature; `tests/conformance.rs` snapshots their SVG with `insta`, and `tests/wiring.rs` asserts the router's laws on every scene.
+`samples/` holds a `.lini` per feature area; `tests/conformance.rs` snapshots their SVG with `insta`, and `tests/wiring.rs` asserts the router's laws on every scene.
 
 ## License
 
