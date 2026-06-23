@@ -1,39 +1,47 @@
 // A cute, unreal little PCB: a central MCU, peripherals, dark passives, and lots
 // of parallel copper traces. Not functional — a pretty demo of parallel routing.
 {
-  fill: gradient(--green-ink, --teal-ink);            // the board
-  layout: grid;  columns: repeat(5, 80);  rows: repeat(5, 60);
-  gap: 30;  padding: 34;  font-size: 12;  font-weight: normal;
+  fill: gradient(--green-ink, --teal-ink);
+  // the board
+  layout: grid; columns: repeat(5, 80); rows: repeat(5, 60); gap: 30; padding: 34; font-size: 12; font-weight: normal;
 
-  |chip::box|    { width: 60; height: 60; stroke: none; radius: 5; color: white; padding: 0 }
-  |pad::box|     { width: 150; height: 56; stroke: none; fill: --amber-soft; color: --amber-ink }
-  |passive::box| { width: 54; height: 42; stroke: none; fill: #222428; color: #c9ced6; radius: 2; padding: 0 }
+  |chip::box| {
+    width: 60; height: 60; stroke: none; radius: 5; color: white; padding: 0;
+  }
+  |pad::box| {
+    width: 150; height: 56; stroke: none; fill: --amber-soft; color: --amber-ink;
+  }
+  |passive::box| {
+    width: 54; height: 42; stroke: none; fill: #222428; color: #c9ced6; radius: 2; padding: 0;
+  }
 
-  -> { stroke: --amber; stroke-width: 2; clearance: 7; }
+  -> { stroke: --amber; stroke-width: 2; clearance: 10; }
 }
 
 // the hero: a big gradient MCU spanning the centre
-mcu |chip| { cell: 2 2; span: 3 3; width: 188; height: 188; fill: gradient(--blue, --purple); font-size: 24 } "MCU"
+mcu |chip| {
+  cell: 2 2; span: 3 3; width: 180; height: 180; fill: gradient(--blue, --purple); font-size: 24;
+} "MCU"
 
 // peripherals + passives around the ring
-c1    |passive| { cell: 1 1 } "C"
-usb   |pad|     { cell: 2 1; span: 2 1 } "USB-C"
-r1    |passive| { cell: 4 1 } "R"
-rf    |chip|    { cell: 5 1; fill: --purple } "RF"
+c1  |passive| { cell: 1 1; } "C"
+usb |pad| { cell: 2 1; span: 2 1; } "USB-C"
+r1  |passive| { cell: 4 1; } "R"
+rf  |chip| { cell: 5 1; fill: --purple; } "RF"
 
-flash |chip|    { cell: 1 2; fill: --indigo } "FLASH"
-pwr   |chip|    { cell: 1 3; fill: --rose }   "PWR"
-c2    |passive| { cell: 1 4 } "C"
+flash |chip| { cell: 1 2; fill: --indigo; } "FLASH"
+pwr   |chip| { cell: 1 3; fill: --rose; } "PWR"
+c2    |passive| { cell: 1 4; } "C"
 
-osc   |passive| { cell: 5 2 } "OSC"
-motor |chip|    { cell: 5 3; fill: --sky } "MOTOR"
-r2    |passive| { cell: 5 4 } "R"
+osc   |passive| { cell: 5 2; } "OSC"
+motor |chip| { cell: 5 3; fill: --sky; } "MOTOR"
+r2    |passive| { cell: 5 4; } "R"
 
-c3    |passive| { cell: 1 5 } "C"
-adc   |chip|    { cell: 2 5; fill: --green } "ADC"
-sens  |chip|    { cell: 3 5; fill: --teal }  "SENS"
-r3    |passive| { cell: 4 5 } "R"
-imu   |chip|    { cell: 5 5; fill: --amber; color: --amber-ink } "IMU"
+c3   |passive| { cell: 1 5; } "C"
+adc  |chip| { cell: 2 5; fill: --green; } "ADC"
+sens |chip| { cell: 3 5; fill: --teal; } "SENS"
+r3   |passive| { cell: 4 5; } "R"
+imu  |chip| { cell: 5 5; fill: --amber; color: --amber-ink; } "IMU"
 
 // ── copper traces ──
 // USB data bus (top)
@@ -44,14 +52,14 @@ mcu.top -> rf.bottom
 mcu.top -> rf.bottom
 
 // power rails + flash bus (left)
-pwr.right -> mcu.left
-pwr.right -> mcu.left
+pwr.right -> mcu
 pwr.right -> mcu.left
 flash.right -> mcu.left
 flash.right -> mcu.left
 flash.right -> mcu.left
 
 // motor control bus (right)
+mcu.right -> motor.left
 mcu.right -> motor.left
 mcu.right -> motor.left
 mcu.right -> motor.left
@@ -69,4 +77,4 @@ pwr.bottom -> c2.top
 motor.bottom -> r2.top
 imu.top -> r2.bottom
 adc.left -> c3.right
-sens.bottom -> r3.top
+sens -> r3.top
