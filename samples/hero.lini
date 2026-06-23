@@ -2,16 +2,20 @@
 // point, mixed wire styles. Source for assets/hero.png.
 {
   layout: column; gap: 52; padding: 30; font-weight: normal;
-  -> { stroke: --gray-ink; stroke-width: 2; clearance: 16; }
+  -> { stroke: --gray; stroke-width: 2; clearance: 16; }
 
   // tier looks — soft pastel fill, ink text + stroke
   |edge::box| { fill: --sky-wash; stroke: --sky-ink; color: --sky-ink; }
   |svc::box| { fill: --teal-wash; stroke: --teal-ink; color: --teal-ink; }
+  |auth::hex| {
+    fill: --purple-wash; stroke: --purple-ink; color: --purple-ink; padding: 20 16;
+  }
   |store::cyl| { fill: --rose-wash; stroke: --rose-ink; color: --rose-ink; }
 
-  .flow { stroke: --purple; stroke-width: 3.5; }
+  .flow { stroke: --blue; }
   .cache { stroke: --teal; }
   .async { stroke: --orange; }
+  .auth { stroke: --purple; }
 }
 
 users |oval| {
@@ -30,7 +34,7 @@ edge |group| { layout: row; gap: 28; } [
 svc |group| { layout: row; gap: 28; } [
          |caption| "Services"
   api    |svc|     "API"
-  auth   |svc|     "Auth"
+  auth   |auth|    "Auth"
   worker |svc|     [
     "Worker"
     |badge| "NEW"
@@ -46,7 +50,7 @@ data |group| { layout: row; gap: 28; } [
 
 users -> edge.lb .flow "https"
 edge.lb -> svc.api
-edge.lb -> svc.auth
+edge.lb -> svc.auth .auth
 svc.api -> data.pg .flow
 svc.api --> data.redis .cache "cache"
 svc.worker ~> data.queue .async "jobs"
