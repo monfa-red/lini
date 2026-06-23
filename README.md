@@ -32,7 +32,7 @@ Most tools make you choose: **draw by hand** (precise, but tedious and hard to v
 - **Fast, and one file.** A 1.5 MB native binary, one runtime dependency. No Node, JVM, or headless browser; typical diagrams compile in about 2 ms, startup included.
 - **Reproducible output.** Compilation is byte-identical across runs, so renders diff cleanly and never churn in CI. 408 tests back it, including property tests on the router's laws.
 - **Pretty by default.** A curated 11-hue palette in soft pastels — four OKLCH-tuned tiers each — plus angle-less gradients, all themeable and dark/light-aware. No hex codes required.
-- **Dark mode, automatically.** Every colour is a `light-dark()` CSS variable, so one SVG carries both palettes and follows the viewer's light/dark OS setting on its own — or a `data-theme` toggle. Re-theme from the page with no recompile, choose a built-in (light, dark, high-contrast, blueprint, terminal, pastel), or bake any palette into a standalone file.
+- **Dark mode, automatically.** Every colour is a `light-dark()` CSS variable, so one SVG carries both palettes and follows the viewer's light/dark OS setting on its own — or a `data-theme` toggle. Re-theme from the page with no recompile, choose a built-in (light, dark, high-contrast), or bake any palette into a standalone file.
 
 ---
 
@@ -155,28 +155,25 @@ hero |box|  { fill: gradient(--rose, --amber, --sky) }      // a three-colour bl
 
 ## Theming
 
-**One SVG, both palettes.** Every colour is a `light-dark()` pair, so an exported SVG carries a light and a dark palette and switches on its own:
+**One SVG, both palettes.** Every colour is a `light-dark()` pair, so an exported SVG carries both and switches on its own — it follows the viewer's OS (`prefers-color-scheme`) with no script or `@media`, and a `data-theme="dark"`/`"light"` attribute on the SVG or any ancestor overrides it.
 
-- **Automatic** — it follows the viewer's operating-system setting (`prefers-color-scheme`), with no script and no `@media`.
-- **Controllable** — a `data-theme="dark"` / `"light"` attribute on the SVG, or any ancestor in your page, forces a mode and overrides the OS.
-
-The two palettes share one `light-dark()` declaration per colour — no duplication — and every default sits in `@layer lini.defaults`, so **unlayered host CSS wins automatically**. Restyle a diagram from the page with no `!important` and no rebuild:
+Defaults sit in `@layer lini.defaults`, so unlayered host CSS wins — no `!important`, no rebuild:
 
 ```css
 .lini { --lini-accent: #ff6600; }   /* recolour every diagram on the page */
 ```
 
-Geometry is always baked in, so a theme only ever changes colours — layout never depends on the host.
+Geometry is always baked in, so a theme only ever changes colour — layout never depends on the host.
 
-**Six built-in themes**, chosen at export time:
+**Three built-in themes** — `light`, `dark`, and `high-contrast` — pin a single palette at export time:
 
 ```bash
-lini diagram.lini --theme dark -o dark.svg        # force a single dark palette
-lini diagram.lini --theme blueprint --bake-vars   # a built-in look, inlined for resvg / email
-lini theme dark > my-theme.css                    # print a theme as CSS — copy and edit
+lini diagram.lini --theme dark -o dark.svg            # pin the dark palette
+lini diagram.lini --theme high-contrast --bake-vars   # a fixed look, inlined for resvg / email
+lini theme dark > my-theme.css                        # print a theme as CSS to copy & edit
 ```
 
-`light`, `dark`, `high-contrast`, `blueprint`, `terminal`, and `pastel` — `lini theme` lists them, and `lini theme NAME` prints one as a ready-to-edit `--lini-*` file. `--bake-vars` flattens the chosen palette to literals for non-browser renderers (resvg, librsvg) and email. Every `lini-*` class is a stable styling hook.
+`lini theme NAME` prints any as a ready-to-edit `--lini-*` file; `--bake-vars` flattens it to literals for non-browser renderers (resvg, librsvg) and email. Every `lini-*` class is a stable styling hook.
 
 The default font is a monospace stack (`ui-monospace, "SF Mono", …, monospace`): it reads crisp and keeps text sizing accurate. Swap it with `--lini-font-family` in the diagram, a theme, or the page's CSS.
 
@@ -197,7 +194,7 @@ lini theme   [NAME]
 | `-o, --output FILE` | Output path (default: stdout). |
 | `--format svg\|html` | Raw SVG (default), or wrapped in a minimal HTML page. |
 | `--bake-vars` | Inline `var()` references — for resvg, librsvg, raster, email. |
-| `--theme NAME\|FILE` | A built-in theme (`dark`, `blueprint`, …), a CSS file, or a `light/dark` pair. |
+| `--theme NAME\|FILE` | A built-in theme (`dark`, `high-contrast`, …), a CSS file, or a `light/dark` pair. |
 | `--check` | Parse and validate only. |
 | `--watch` | Recompile on every change (with `-o`). |
 | `--no-warn` / `--strict` | Silence lint warnings, or promote them to errors. |

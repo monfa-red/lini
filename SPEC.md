@@ -1206,7 +1206,7 @@ lini theme [NAME]
 | `-o FILE` | Output path (default stdout). |
 | `--format svg\|html` | `svg` (default) or HTML wrapper. |
 | `--check` | Parse + resolve only — layout/render errors still surface on a full compile. |
-| `--theme NAME\|FILE\|A/B` | A built-in theme (`dark`, `blueprint`, …), a CSS file of `--lini-*` overrides, or a light/dark pair (`light/dark`). |
+| `--theme NAME\|FILE\|A/B` | A built-in theme (`dark`, `high-contrast`, …), a CSS file of `--lini-*` overrides, or a light/dark pair (`light/dark`). |
 | `--no-warn` / `--strict` | Silence warnings / treat them as errors. |
 | `--bake-vars` | Inline `var()`s as literals (for non-browser renderers). |
 | `--watch` | Recompile on every input change (requires `-o`). |

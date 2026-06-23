@@ -38,7 +38,7 @@ struct Cli {
     #[arg(long = "check")]
     check: bool,
 
-    /// A theme: a built-in name (`dark`, `blueprint`, …), a CSS file of `--lini-*`
+    /// A theme: a built-in name (`dark`, `high-contrast`, …), a CSS file of `--lini-*`
     /// overrides, or a light/dark pair (`light/dark`). See `lini theme`.
     #[arg(long = "theme", value_name = "NAME|FILE|A/B")]
     theme: Option<String>,

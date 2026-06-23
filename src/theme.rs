@@ -72,9 +72,6 @@ pub fn list_themes() -> &'static [(&'static str, &'static str)] {
         ("light", "the light palette alone"),
         ("dark", "the dark palette alone"),
         ("high-contrast", "maximal contrast, light + dark (a11y)"),
-        ("blueprint", "white/cyan ink on deep blue"),
-        ("terminal", "phosphor green on near-black"),
-        ("pastel", "soft pastels on warm white"),
     ]
 }
 
@@ -122,18 +119,6 @@ fn palette(name: &str) -> Option<VarTable> {
         "light" => collapse(&mut v, 0),
         "dark" => collapse(&mut v, 1),
         "high-contrast" => apply(&mut v, &high_contrast()),
-        "blueprint" => {
-            collapse(&mut v, 0);
-            apply(&mut v, &blueprint());
-        }
-        "terminal" => {
-            collapse(&mut v, 0);
-            apply(&mut v, &terminal());
-        }
-        "pastel" => {
-            collapse(&mut v, 0);
-            apply(&mut v, &pastel());
-        }
         _ => return None,
     }
     Some(v)
@@ -232,63 +217,6 @@ fn high_contrast() -> Vec<(&'static str, ResolvedValue)> {
         ("caption-color", ld(idn("black"), idn("white"))),
         ("footer-color", ld(idn("black"), idn("white"))),
         ("note-bg", ld(hx("ffffcc"), hx("333300"))),
-    ]
-}
-
-/// White/cyan ink on deep blue — a single aesthetic.
-fn blueprint() -> Vec<(&'static str, ResolvedValue)> {
-    vec![
-        ("bg", hx("0d2b57")),
-        ("fg", hx("dceaff")),
-        ("fill", hx("123a6e")),
-        ("stroke", hx("7fb0e8")),
-        ("accent", hx("4fd0ff")),
-        ("accent-text", hx("0d2b57")),
-        ("muted", hx("8aa6cc")),
-        ("group-stroke", rgba(255.0, 255.0, 255.0, 0.35)),
-        ("group-fill", rgba(255.0, 255.0, 255.0, 0.04)),
-        ("caption-color", rgba(220.0, 234.0, 255.0, 0.7)),
-        ("footer-color", rgba(220.0, 234.0, 255.0, 0.7)),
-        ("note-bg", hx("16386b")),
-        ("shadow-color", rgba(0.0, 0.0, 0.0, 0.4)),
-    ]
-}
-
-/// Phosphor green on near-black — a single aesthetic.
-fn terminal() -> Vec<(&'static str, ResolvedValue)> {
-    vec![
-        ("bg", hx("0a0e0a")),
-        ("fg", hx("33ff66")),
-        ("fill", hx("0d160d")),
-        ("stroke", hx("33cc55")),
-        ("accent", hx("8aff00")),
-        ("accent-text", hx("0a0e0a")),
-        ("muted", hx("2a8a44")),
-        ("group-stroke", rgba(51.0, 255.0, 102.0, 0.35)),
-        ("group-fill", rgba(51.0, 255.0, 102.0, 0.05)),
-        ("caption-color", rgba(51.0, 255.0, 102.0, 0.7)),
-        ("footer-color", rgba(51.0, 255.0, 102.0, 0.7)),
-        ("note-bg", hx("13240f")),
-        ("shadow-color", rgba(0.0, 0.0, 0.0, 0.6)),
-    ]
-}
-
-/// Soft pastels on warm white — a single aesthetic.
-fn pastel() -> Vec<(&'static str, ResolvedValue)> {
-    vec![
-        ("bg", hx("fdf7fb")),
-        ("fg", hx("5b4b66")),
-        ("fill", hx("ffffff")),
-        ("stroke", hx("d9a7d0")),
-        ("accent", hx("c58af0")),
-        ("accent-text", hx("ffffff")),
-        ("muted", hx("a892b4")),
-        ("group-stroke", rgba(180.0, 130.0, 200.0, 0.4)),
-        ("group-fill", rgba(200.0, 150.0, 220.0, 0.06)),
-        ("caption-color", rgba(120.0, 90.0, 140.0, 0.7)),
-        ("footer-color", rgba(120.0, 90.0, 140.0, 0.7)),
-        ("note-bg", hx("fff0f6")),
-        ("shadow-color", rgba(150.0, 100.0, 160.0, 0.2)),
     ]
 }
 

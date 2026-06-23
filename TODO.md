@@ -56,3 +56,12 @@ Small, native CSS/SVG effects so the browser does the work and it degrades to a
 static frame when baked: moving dashes/dots on wires (cf. d2), a gentle wobble, a
 colour/shadow pulse, maybe animating a gradient. Live-only; currently a SPEC §19
 non-goal to revisit.
+
+## OKLCH colour output (idea)
+
+The palette is generated from OKLCH but emitted as hex for renderer compatibility
+(resvg / librsvg / email don't parse `oklch()`). Add an opt-in — a
+`--color-space oklch` flag or similar — that emits the `--lini-*` palette and
+gradient stops as `oklch(L C H)` for users who target modern browsers only. Hex
+stays the default; oklch is the wide-gamut, perceptual path for those who can use
+it. `oklch()` *input* already works (`fill: oklch(0.7, 0.14, 200)`).
