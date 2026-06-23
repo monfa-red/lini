@@ -1,19 +1,14 @@
-// A cute, unreal little PCB: a central MCU, peripherals, dark passives, and lots
-// of parallel copper traces. Not functional — a pretty demo of parallel routing.
 {
-  // the board
   layout: grid; columns: repeat(4, 80); rows: repeat(5, 60); gap: 30; padding: 30;
-
-  |chip::box| { width: 60; height: 60; padding: 0; }
-  |pad::box| { width: 150; height: 56; }
-  -> { stroke: --amber; stroke-width: 2; clearance: 10; }
+  |box| { width: 60; height: 60; padding: 0; }
+  -> { clearance: 10; stroke: --blue-ink; }
 }
 
-mcu   |chip| { cell: 2 2; span: 3 3; width: 180; height: 180; } "MCU"
-usb   |pad| { cell: 2 1; span: 2 1; } "USB-C"
-flash |chip| { cell: 1 2; } "FLASH"
-pwr   |chip| { cell: 1 3; } "PWR"
-adc   |chip| { cell: 2 5; } "ADC"
+mcu   |box| { cell: 2 2; span: 3 3; width: 180; height: 180; } "MCU"
+usb   |box| { cell: 2 1; span: 2 1; width: 150; height: 56; } "USB-C"
+flash |box| { cell: 1 2; } "FLASH"
+pwr   |box| { cell: 1 3; } "PWR"
+adc   |box| { cell: 2 5; } "ADC"
 
 pwr.right -> mcu.left
 pwr.right -> mcu.left
