@@ -24,16 +24,16 @@ input_file: samples/hero.lini
     .lini .lini-cut-bg { fill: white; stroke: none; }
     .lini .lini-cut { fill: black; stroke: none; }
     .lini .lini-marker { fill: #444; stroke: none; }
-    .lini .lini-style-flow { stroke: #6356be; stroke-width: 3.5; }
-    .lini .lini-style-flow .lini-marker { fill: #6356be; }
-    .lini .lini-style-cache { stroke: #008279; }
-    .lini .lini-style-cache .lini-marker { fill: #008279; }
-    .lini .lini-style-async { stroke: #a74a00; }
-    .lini .lini-style-async .lini-marker { fill: #a74a00; }
+    .lini .lini-style-flow { stroke: #9c97f4; stroke-width: 3.5; }
+    .lini .lini-style-flow .lini-marker { fill: #9c97f4; }
+    .lini .lini-style-cache { stroke: #00beb3; }
+    .lini .lini-style-cache .lini-marker { fill: #00beb3; }
+    .lini .lini-style-async { stroke: #e18e51; }
+    .lini .lini-style-async .lini-marker { fill: #e18e51; }
   </style>
   <defs>
     <filter id="lini-shadow-1" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="rgba(0, 0, 0, 0.2)"/></filter>
-    <linearGradient id="lini-gradient-1" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#2fb5db"/><stop offset="100%" stop-color="#9d98f1"/></linearGradient>
+    <linearGradient id="lini-gradient-1" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#21b6dd"/><stop offset="100%" stop-color="#9c97f4"/></linearGradient>
   </defs>
   <rect class="lini-canvas" x="-260.5" y="-287" width="534.2" height="574"/>
   <g class="lini-scene">
