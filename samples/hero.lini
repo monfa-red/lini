@@ -5,12 +5,8 @@
   -> { stroke: --gray-ink; stroke-width: 2; clearance: 16; }
 
   // tier looks — soft pastel fill, ink text + stroke
-  |edge::box| {
-    fill: --sky-wash; stroke: --sky-ink; color: --sky-ink; radius: 7;
-  }
-  |svc::box| {
-    fill: --teal-wash; stroke: --teal-ink; color: --teal-ink; radius: 7;
-  }
+  |edge::box| { fill: --sky-wash; stroke: --sky-ink; color: --sky-ink; }
+  |svc::box| { fill: --teal-wash; stroke: --teal-ink; color: --teal-ink; }
   |store::cyl| { fill: --rose-wash; stroke: --rose-ink; color: --rose-ink; }
 
   .flow { stroke: --purple; stroke-width: 3.5; }

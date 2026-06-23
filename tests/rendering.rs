@@ -367,8 +367,8 @@ fn poly_emits_polygon_with_user_points() {
 }
 
 #[test]
-fn full_spec_example_renders_in_both_modes() {
-    let src = std::fs::read_to_string("samples/full_example.lini").expect("read");
+fn hero_renders_in_both_modes() {
+    let src = std::fs::read_to_string("samples/hero.lini").expect("read");
     let live = lini::compile_str(&src).expect("live compile");
     let baked = lini::compile_str_with(
         &src,
@@ -399,9 +399,29 @@ fn font_size_on_container_reaches_descendant_text() {
 }
 
 #[test]
-fn css_cascade_sample_emits_rules_and_diffs() {
-    let src = std::fs::read_to_string("samples/css_cascade.lini").expect("read");
-    let svg = lini::compile_str(&src).expect("compile");
+fn css_cascade_emits_rules_and_diffs() {
+    // Self-contained: element rules, class rules, inline diffs, wire defaults, the
+    // operator-dash class, and cascading text props. (The pretty user-facing
+    // cascade demo lives in samples/styles.lini.)
+    let src = r#"{
+  -> { stroke: #666; stroke-width: 1; }
+  |box| { fill: lightyellow; }
+  .loud { stroke: red; stroke-width: 2; }
+  .calm { stroke: teal; }
+}
+
+flat |box| "Plain"
+loud |box| .loud "Loud"
+mix  |box| .calm { fill: lavender; } "Mix"
+crew |group| { font-size: 10; font-family: serif; } [
+       |caption| "Crew"
+  tiny |box|     "Tiny"
+]
+
+flat -> loud
+loud --> mix .calm
+"#;
+    let svg = lini::compile_str(src).expect("compile");
     assert!(
         svg.contains(".lini .lini-style-loud { stroke: red; stroke-width: 2; }"),
         "{}",

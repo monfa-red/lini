@@ -1,0 +1,123 @@
+---
+source: tests/conformance.rs
+expression: svg
+input_file: samples/templates.lini
+---
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-359 -178.5 718 357" width="718" height="357" class="lini">
+  <style>
+    .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
+    .lini .lini-canvas { fill: white; }
+    .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
+    .lini .lini-plain { fill: none; stroke: none; }
+    .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,4; }
+    .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
+    .lini .lini-footer { color: rgba(0, 0, 0, 0.5); font-size: 11px; }
+    .lini .lini-badge { fill: #0a84ff; stroke: none; color: white; font-size: 11px; font-weight: normal; }
+    .lini .lini-note { fill: #fff9c4; stroke: none; }
+    .lini .lini-table { fill: none; stroke: #444; font-size: 14px; font-weight: normal; stroke-dasharray: none; }
+    .lini .lini-panel { fill: #eeeeee; stroke: #d1d1d1; }
+    .lini .lini-tile { fill: #9cdcf3; stroke: #0079a6; color: #0079a6; }
+  </style>
+  <defs>
+    <filter id="lini-shadow-1" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="rgba(0, 0, 0, 0.2)"/></filter>
+    <filter id="lini-shadow-2" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="2" dy="2" stdDeviation="2" flood-color="rgba(0, 0, 0, 0.2)"/></filter>
+  </defs>
+  <rect class="lini-canvas" x="-359" y="-178.5" width="718" height="357"/>
+  <g class="lini-scene">
+    <g class="lini-node lini-plain lini-box" style="font-size: 18px; font-weight: bold" transform="translate(0,-142.5)">
+      <rect x="-48.6" y="-9" width="97.2" height="18" rx="6" ry="6"/>
+      <text class="lini-text" x="0" y="0">Templates</text>
+    </g>
+    <g class="lini-node lini-row lini-plain lini-box" data-id="upper" transform="translate(0,-27)">
+      <rect x="-211.5" y="-82.5" width="423" height="165" rx="6" ry="6"/>
+      <g class="lini-node lini-panel lini-group lini-box" data-id="profile" transform="translate(-122,-6)">
+        <rect x="-89" y="-76" width="178" height="152" rx="8" ry="8"/>
+        <g class="lini-node lini-tile lini-box" data-id="name" transform="translate(0,-33.5)">
+          <rect x="-74" y="-27.5" width="148" height="55" rx="6" ry="6"/>
+          <text class="lini-text" x="0" y="0">Ada Lovelace</text>
+        </g>
+        <g class="lini-node lini-tile lini-box" data-id="role" style="fill: #99e1da; stroke: #008279; color: #008279" transform="translate(0,33.5)">
+          <rect x="-56" y="-27.5" width="112" height="55" rx="6" ry="6"/>
+          <text class="lini-text" x="0" y="0">Engineer</text>
+        </g>
+        <g class="lini-node lini-caption lini-plain lini-box" transform="translate(-62.8,-87)">
+          <rect x="-25.2" y="-6" width="50.4" height="12" rx="6" ry="6"/>
+          <text class="lini-text" x="0" y="0">Profile</text>
+        </g>
+        <g class="lini-node lini-footer lini-caption lini-plain lini-box" transform="translate(0,86.5)">
+          <rect x="-33" y="-5.5" width="66" height="11" rx="6" ry="6"/>
+          <text class="lini-text" x="0" y="0">since 1843</text>
+        </g>
+      </g>
+      <g class="lini-node lini-panel lini-group lini-box" data-id="nested" transform="translate(100.5,0)">
+        <rect x="-110.5" y="-82" width="221" height="164" rx="8" ry="8"/>
+        <g class="lini-node lini-row lini-plain lini-box" transform="translate(-34.5,0)">
+          <rect x="-61" y="-28.5" width="122" height="57" rx="6" ry="6"/>
+          <g class="lini-node lini-tile lini-box" data-id="r1" style="fill: #eccc97; stroke: #985900; color: #985900" transform="translate(-35.5,0)">
+            <rect x="-24.5" y="-27.5" width="49" height="55" rx="6" ry="6"/>
+            <text class="lini-text" x="0" y="0">a</text>
+          </g>
+          <g class="lini-node lini-tile lini-box" data-id="r2" style="fill: #eccc97; stroke: #985900; color: #985900" transform="translate(35.5,0)">
+            <rect x="-24.5" y="-27.5" width="49" height="55" rx="6" ry="6"/>
+            <text class="lini-text" x="0" y="0">b</text>
+          </g>
+        </g>
+        <g class="lini-node lini-column lini-plain lini-box" transform="translate(70,0)">
+          <rect x="-25.5" y="-67" width="51" height="134" rx="6" ry="6"/>
+          <g class="lini-node lini-tile lini-box" data-id="c1" style="fill: #fbbeca; stroke: #ac3a5c; color: #ac3a5c" transform="translate(0,-38.5)">
+            <rect x="-24.5" y="-27.5" width="49" height="55" rx="6" ry="6"/>
+            <text class="lini-text" x="0" y="0">p</text>
+          </g>
+          <g class="lini-node lini-tile lini-box" data-id="c2" style="fill: #fbbeca; stroke: #ac3a5c; color: #ac3a5c" transform="translate(0,38.5)">
+            <rect x="-24.5" y="-27.5" width="49" height="55" rx="6" ry="6"/>
+            <text class="lini-text" x="0" y="0">q</text>
+          </g>
+        </g>
+        <g class="lini-node lini-caption lini-plain lini-box" transform="translate(-66.3,-93)">
+          <rect x="-43.2" y="-6" width="86.4" height="12" rx="6" ry="6"/>
+          <text class="lini-text" x="0" y="0">row + column</text>
+        </g>
+      </g>
+    </g>
+    <g class="lini-node lini-row lini-plain lini-box" data-id="lower" transform="translate(0,115.5)">
+      <rect x="-332" y="-36" width="664" height="72" rx="6" ry="6"/>
+      <g class="lini-node lini-tile lini-box" data-id="svc" style="fill: #99e1da; stroke: #008279; color: #008279" transform="translate(-256,0)">
+        <rect x="-75" y="-35" width="150" height="70" rx="6" ry="6"/>
+        <text class="lini-text" x="0" y="0">Service</text>
+        <g class="lini-node lini-badge lini-box" transform="translate(64.1,-32.5)">
+          <g filter="url(#lini-shadow-1)">
+            <rect x="-15.9" y="-7.5" width="31.8" height="15" rx="8" ry="8"/>
+          </g>
+          <text class="lini-text" x="0" y="0">NEW</text>
+        </g>
+      </g>
+      <g class="lini-node lini-note lini-box" transform="translate(-87.5,-7.5)">
+        <g filter="url(#lini-shadow-2)">
+          <rect x="-69.5" y="-27.5" width="139" height="55" rx="2" ry="2"/>
+        </g>
+        <text class="lini-text" x="0" y="0">Sticky note</text>
+      </g>
+      <g class="lini-node lini-table lini-group lini-box" data-id="basket" style="stroke: #696969" transform="translate(108.5,-2.5)">
+        <rect x="-103" y="-33" width="206" height="66" rx="6" ry="6"/>
+        <path d="M -23 -33 L -23 33 M 33 -33 L 33 33 M -103 -11 L 103 -11 M -103 11 L 103 11" fill="none"/>
+        <text class="lini-text" x="-63" y="-22">Fruit</text>
+        <text class="lini-text" x="5" y="-22">Qty</text>
+        <text class="lini-text" x="68" y="-22">Note</text>
+        <text class="lini-text" x="-63" y="0">Apple</text>
+        <text class="lini-text" x="5" y="0">12</text>
+        <text class="lini-text" x="68" y="0">fresh</text>
+        <text class="lini-text" x="-63" y="22">Mango</text>
+        <text class="lini-text" x="5" y="22">3</text>
+        <text class="lini-text" x="68" y="22">ripe</text>
+      </g>
+      <a href="https://example.com">
+        <g class="lini-node lini-tile lini-box" data-id="docs" style="fill: #cbcbff; stroke: #6356be; color: #6356be" transform="translate(283,0)">
+          <rect x="-48" y="-35" width="96" height="70" rx="6" ry="6"/>
+          <text class="lini-text" x="0" y="0">Docs</text>
+        </g>
+      </a>
+    </g>
+  </g>
+  <g class="lini-wires"/>
+</svg>

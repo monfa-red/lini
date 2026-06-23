@@ -14,7 +14,7 @@ input_file: samples/desugar.lini
     .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,4; }
     .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
     .lini .lini-badge { fill: #0a84ff; stroke: none; color: white; font-size: 11px; font-weight: normal; }
-    .lini .lini-chip { fill: #eef; }
+    .lini .lini-chip { fill: #dff2f9; stroke: #0079a6; color: #0079a6; }
   </style>
   <defs>
     <filter id="lini-shadow-1" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="rgba(0, 0, 0, 0.2)"/></filter>

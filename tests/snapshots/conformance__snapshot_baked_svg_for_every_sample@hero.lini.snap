@@ -44,7 +44,7 @@ input_file: samples/hero.lini
     <g class="lini-node lini-group lini-box" data-id="edge" transform="translate(0,-92)">
       <rect x="-148" y="-48.5" width="296" height="97" rx="6" ry="6"/>
       <g class="lini-node lini-edge lini-box" data-id="lb" transform="translate(-48.5,0)">
-        <rect x="-78.5" y="-27.5" width="157" height="55" rx="7" ry="7"/>
+        <rect x="-78.5" y="-27.5" width="157" height="55" rx="6" ry="6"/>
         <text class="lini-text" x="0" y="0">Load balancer</text>
         <g class="lini-node lini-badge lini-box" transform="translate(70.9,-25)">
           <g filter="url(#lini-shadow-1)">
@@ -54,7 +54,7 @@ input_file: samples/hero.lini
         </g>
       </g>
       <g class="lini-node lini-edge lini-box" data-id="cdn" transform="translate(93.5,0)">
-        <rect x="-33.5" y="-27.5" width="67" height="55" rx="7" ry="7"/>
+        <rect x="-33.5" y="-27.5" width="67" height="55" rx="6" ry="6"/>
         <text class="lini-text" x="0" y="0">CDN</text>
       </g>
       <g class="lini-node lini-caption lini-plain lini-box" transform="translate(-132.6,-59.5)">
@@ -65,15 +65,15 @@ input_file: samples/hero.lini
     <g class="lini-node lini-group lini-box" data-id="svc" transform="translate(0,58)">
       <rect x="-169.5" y="-48.5" width="339" height="97" rx="6" ry="6"/>
       <g class="lini-node lini-svc lini-box" data-id="api" transform="translate(-115,0)">
-        <rect x="-33.5" y="-27.5" width="67" height="55" rx="7" ry="7"/>
+        <rect x="-33.5" y="-27.5" width="67" height="55" rx="6" ry="6"/>
         <text class="lini-text" x="0" y="0">API</text>
       </g>
       <g class="lini-node lini-svc lini-box" data-id="auth" transform="translate(-13.5,0)">
-        <rect x="-38" y="-27.5" width="76" height="55" rx="7" ry="7"/>
+        <rect x="-38" y="-27.5" width="76" height="55" rx="6" ry="6"/>
         <text class="lini-text" x="0" y="0">Auth</text>
       </g>
       <g class="lini-node lini-svc lini-box" data-id="worker" transform="translate(101.5,0)">
-        <rect x="-47" y="-27.5" width="94" height="55" rx="7" ry="7"/>
+        <rect x="-47" y="-27.5" width="94" height="55" rx="6" ry="6"/>
         <text class="lini-text" x="0" y="0">Worker</text>
         <g class="lini-node lini-badge lini-box" transform="translate(36.1,-25)">
           <g filter="url(#lini-shadow-1)">
@@ -100,7 +100,7 @@ input_file: samples/hero.lini
         <text class="lini-text" x="0" y="1.71">Redis</text>
       </g>
       <g class="lini-node lini-svc lini-box" data-id="queue" style="fill: #f7eddd; stroke: #985900; color: #985900" transform="translate(128.5,0)">
-        <rect x="-42.5" y="-27.5" width="85" height="55" rx="7" ry="7"/>
+        <rect x="-42.5" y="-27.5" width="85" height="55" rx="6" ry="6"/>
         <text class="lini-text" x="0" y="0">Queue</text>
       </g>
       <g class="lini-node lini-caption lini-plain lini-box" transform="translate(-176.6,-59.5)">

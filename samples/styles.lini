@@ -1,15 +1,58 @@
-// Class rules — reusable visual bundles applied with .name.
-
+// Styling — the cascade (element rules < classes < inline), reusable class
+// bundles, visual modifiers, and inherited typography. Palette colours.
 {
-  .thin { stroke: #444; stroke-width: 1; }
-  .bold { font-weight: bold; }
-  .power { stroke: red; stroke-width: 2; }
-  .warn { stroke: orange; }
-  .ghost { opacity: 0.3; }
+  layout: column; gap: 20; padding: 26; font-weight: normal;
+
+  // element rules: the lowest-specificity layer, one per shape type
+  |box|  { radius: 6; fill: --sky-wash; stroke: --sky-ink; color: --sky-ink; }
+  |oval| { stroke: --teal-ink; stroke-width: 2; fill: --teal-wash; color: --teal-ink; }
+  |alert::oval| { stroke: --red; fill: --red-wash; color: --red-ink; width: 84; height: 46; }
+
+  // class bundles, applied with .name
+  .thin  { stroke-width: 1; }
+  .bold  { font-weight: bold; }
+  .power { stroke: --red; stroke-width: 2.5; }
+  .warn  { stroke: --orange; stroke-width: 2; }
+  .ghost { opacity: 0.35; }
 }
 
-a |box| .thin "thin"
-b |box| .bold "bold"
-c |box| .power "power"
-d |box| .warn "warn"
-e |box| .ghost "ghost"
+|plain| { font-size: 18; font-weight: bold; } "Styles"
+
+// element rule, then + a class, then + an inline block — each wins over the last
+cascade |group| { layout: row; gap: 14; align: center; } [
+  |caption| "cascade"
+  |box| "element"
+  |box| .warn "+ class"
+  |box| .warn { fill: --amber-wash; stroke: --amber-ink; color: --amber-ink; } "+ inline"
+  |alert| "alert"
+]
+
+classes |group| { layout: row; gap: 14; } [
+  |caption| "classes"
+  |box| .thin "thin"
+  |box| .bold "bold"
+  |box| .power "power"
+  |box| .warn "warn"
+  |box| .ghost "ghost"
+]
+
+modifiers |group| { layout: row; gap: 16; align: center; } [
+  |caption| "modifiers"
+  |box| { stroke-style: dashed; } "dashed"
+  |box| { stroke-style: dotted; } "dotted"
+  |box| { stack: 4; } "stack"
+  |box| { shadow: 2 3 5; } "shadow"
+  |box| { rotate: -8; } "rotate"
+]
+
+text |group| { layout: row; gap: 14; align: center; } [
+  |caption| "typography"
+  |box| { font-style: italic; } "italic"
+  |box| { font-family: serif; } "serif"
+  |box| { color: hsl(280, 55%, 50%); } "hsl"
+  |box| { text-transform: uppercase; } "upper"
+  |box| { text-decoration: underline; } "under"
+  |box| { text-shadow: 1 1 2 --gray-ink; } "shadow"
+  |box| { letter-spacing: 3; } "spaced"
+  |box| { line-spacing: 12; } "two\nlines"
+]

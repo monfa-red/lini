@@ -13,9 +13,6 @@ use lini::{Options, OutputFormat};
 /// `tests/wiring.rs` (laws, crossing counts, determinism), never by snapshots —
 /// a snapshot would pin one router's coordinates and churn on every phase.
 const WIRE_SAMPLES: &[&str] = &[
-    "css_cascade.lini",
-    "full_example.lini",
-    "internal_wires.lini",
     "mermaid_fast.lini",
     "wires_simple.lini",
     "wires_medium.lini",
