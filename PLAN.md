@@ -8,7 +8,7 @@ colours by rendering to PNG with `resvg` and looking** — prettiness is the bar
 
 ## The bet
 
-The easy path is the pretty path: a curated 11-hue × 4-tier palette (OKLCH-derived,
+The easy path is the pretty path: a curated 11-hue × 5-tier palette (OKLCH-derived,
 `light-dark()`, themeable) plus angle-less gradients that can't look wrong. Taste
 lives in the system.
 
@@ -46,7 +46,7 @@ else builds on the vars this phase defines.
 Shipped: `src/palette/{oklch.rs, mod.rs}` (OKLCH→sRGB + the seed/tier tables, tuned
 and PNG-verified light **and** dark), appended in `src/resolve/defaults.rs`;
 `src/render/used_vars.rs` tree-shakes the `@layer` block via `style_block.rs`;
-`samples/palette.lini` shows all 11 × 4 + cards. `cargo fmt`/`clippy`/`test` clean.
+`samples/palette.lini` shows all 11 × 5 + cards. `cargo fmt`/`clippy`/`test` clean.
 Re-tune by editing `HUES` / `TIERS` in `src/palette/mod.rs`.
 
 ### 1a. OKLCH → sRGB  (`src/palette/oklch.rs`, new)
@@ -90,7 +90,7 @@ Re-tune by editing `HUES` / `TIERS` in `src/palette/mod.rs`.
   emits no `@layer` block at all (unchanged).
 
 ### 1e. Samples, snapshots, eyeball
-- `samples/palette.lini`: a grid of the 11 hues × 4 tiers; a few “pretty card” nodes.
+- `samples/palette.lini`: a grid of the 11 hues × 5 tiers; a few “pretty card” nodes.
 - `insta` snapshot of the emitted var block + a small compiled diagram.
 - Render light **and** dark (`data-theme`) to PNG with `resvg`, look, and **tune the
   L/C targets until it's genuinely pretty** — this is the real acceptance test.

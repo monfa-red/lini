@@ -31,7 +31,7 @@ Most tools make you choose: **draw by hand** (precise, but tedious and hard to v
 - **Any shape you need.** 12 primitives and 10 templates, plus a raw `path` that accepts any SVG path string. If SVG can draw it, you can place it and wire to it.
 - **Fast, and one file.** A 1.5 MB native binary, one runtime dependency. No Node, JVM, or headless browser; typical diagrams compile in about 2 ms, startup included.
 - **Reproducible output.** Compilation is byte-identical across runs, so renders diff cleanly and never churn in CI. 408 tests back it, including property tests on the router's laws.
-- **Pretty by default.** A curated 11-hue palette in soft pastels — four OKLCH-tuned tiers each — plus angle-less gradients, all themeable and dark/light-aware. No hex codes required.
+- **Pretty by default.** A curated 11-hue palette in soft pastels — five OKLCH-tuned tiers each — plus angle-less gradients, all themeable and dark/light-aware. No hex codes required.
 - **Dark mode, automatically.** Every colour is a `light-dark()` CSS variable, so one SVG carries both palettes and follows the viewer's light/dark OS setting on its own — or a `data-theme` toggle. Re-theme from the page with no recompile, choose a built-in (light, dark, high-contrast), or bake any palette into a standalone file.
 
 ---
@@ -132,13 +132,13 @@ The full routing contract (crossings, priority, self-loops, starvation) lives in
 
 ## Colour
 
-**Pretty by default.** A curated palette of 11 named hues — `red rose orange amber lime green teal sky blue purple gray` — each in four job-named tiers, so the easy path is the flattering one:
+**Pretty by default.** A curated palette of 11 named hues — `red rose orange amber lime green teal sky blue purple gray` — each in five job-named tiers, so the easy path is the flattering one:
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/palette.png" alt="Lini's 11-hue palette in four tiers, light mode" width="320">
+  <img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/palette.png" alt="Lini's 11-hue palette in five tiers, light mode" width="320">
   <img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/palette-dark.png" alt="The same palette under dark mode" width="320">
 </p>
-<p align="center"><em>11 hues × 4 tiers — and the same colours under dark mode, where every tier keeps its job (<code>ink</code> stays the high-contrast tone, <code>wash</code> the surface).</em></p>
+<p align="center"><em>11 hues × 5 tiers — and the same colours under dark mode, where every tier keeps its job (<code>ink</code> stays the high-contrast tone, <code>wash</code> the surface).</em></p>
 
 ```
 { |card::box| { fill: --teal-wash; stroke: --teal-ink } }   // a soft card, one line
@@ -146,7 +146,7 @@ note |note| { fill: --amber-soft }
 hero |box|  { fill: gradient(--rose, --amber, --sky) }      // a three-colour blend
 ```
 
-- **Four tiers per hue** — `wash` (palest, for backgrounds), `soft`, the bare name (the everyday pastel), and `ink` (deep, for strokes and text). The names hold across the dark flip: `--teal-ink` is the high-contrast tone in *both* modes, where a `light`/`dark` name would invert.
+- **Five tiers per hue** — `wash` (palest, for backgrounds), `soft`, the bare name (the everyday pastel), `deep` (the strong tone, for borders and strokes), and `ink` (for text and emphasis). The names hold across the dark flip: `--teal-ink` is the high-contrast tone in *both* modes, where a `light`/`dark` name would invert.
 - **OKLCH under the hood**, so the ramp is perceptually even and the eleven read as a family. Pick any colour the same way — `fill: oklch(0.7, 0.14, 200)` — and conventional names still land (`--yellow` → amber, `--pink` → rose).
 - **Gradients** — `gradient(--rose, --sky)` blends two hues at a flattering angle (any two look good); add stops for a multi-colour wash, `linear-gradient(135, …)` for a custom angle, or `radial-gradient(…)`. Works on **fill and stroke**.
 - **Everything flips and bakes.** Hues and gradient stops are `light-dark()` variables, so a colour follows dark/light like the rest and freezes to a literal under `--bake-vars`. Only the colours a diagram uses are emitted, so a big palette never bloats a small file.
