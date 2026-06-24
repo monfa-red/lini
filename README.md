@@ -262,8 +262,6 @@ Parsing is recursive-descent over an LL(1) grammar; resolve applies CSS-like spe
 
 **v0.7.** The language (the box/text model in [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md)) is stable, and the pipeline is complete and tested: wires route and render, layout and theming work, and the formatter and dev server ship in the same binary.
 
-**Non-goals**, by design: multi-file imports, animation, and manual wire waypoints.
-
 ## Development
 
 ```bash

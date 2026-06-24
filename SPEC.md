@@ -28,7 +28,7 @@ alone. Wire **routing** has its own contract — see [`WIRING.md`](WIRING.md).
 **Reference** — 10 [Properties](#10-properties) · 11 [Colour, Variables & Defaults](#11-colour-variables--defaults) ·
 12 [Specificity](#12-specificity) · 13 [SVG Output](#13-svg-output) · 14 [CLI](#14-cli) ·
 15 [Errors](#15-errors) · 16 [Grammar](#16-grammar-ebnf) · 17 [Implementer Algorithm](#17-implementer-algorithm) ·
-18 [Reserved Words](#18-reserved-words) · 19 [Deferred & Non-Goals](#19-deferred--non-goals) · 20 [Examples](#20-examples)
+18 [Reserved Words](#18-reserved-words) · 19 [Deferred](#19-deferred) · 20 [Examples](#20-examples)
 
 ---
 
@@ -547,7 +547,7 @@ so a plain box sizes to its text exactly.
 
 Text width uses one advance per character (≈ 0.6 em). The default font is
 monospace, so this is essentially exact; a proportional `font-family` override
-makes it approximate until embedded font metrics land ([§19](#19-deferred--non-goals)).
+makes it approximate until embedded font metrics land ([§19](#19-deferred)).
 
 ---
 
@@ -582,7 +582,7 @@ box; equal dimensions (or an empty `|oval|`) make a circle.
 
 | Property | Forms | Effect |
 |---|---|---|
-| `stroke-style` | `solid` / `dashed` / `dotted` | Stroke pattern. Default `solid`. (`wavy` draws on wires — [§9](#9-wires); on closed shapes it is deferred — [§19](#19-deferred--non-goals).) |
+| `stroke-style` | `solid` / `dashed` / `dotted` | Stroke pattern. Default `solid`. (`wavy` draws on wires — [§9](#9-wires); on closed shapes it is deferred — [§19](#19-deferred).) |
 | `stack` | `N` / `dx dy` | Draw an offset duplicate behind the shape. Scalar `N` = `N -N`. |
 | `rotate` | `N` degrees | Rotate around the bbox center. |
 | `shadow` | `N` / `dx dy` / `dx dy blur` / `dx dy blur color` | Drop shadow via SVG `<filter>`. Scalar `N` = offset `N N`, blur `N`; tint defaults to `--lini-shadow-color`. |
@@ -960,7 +960,7 @@ Each colour is a `light-dark(LIGHT, DARK)` value, so one SVG carries both modes:
 `--lini-bg` paints the scene background (the canvas rect), so the diagram is
 self-contained in either mode. The default font is a **monospace** stack: it reads
 crisp, and a fixed glyph advance keeps text-width estimation accurate without
-embedded font metrics ([§19](#19-deferred--non-goals)). Body text is **bold**,
+embedded font metrics ([§19](#19-deferred)). Body text is **bold**,
 captions and wire labels **normal**. A themed proportional `font-family` is allowed
 but makes text width approximate until embedded metrics land.
 
@@ -1042,7 +1042,7 @@ in `<defs>` and referenced by `url(#…)` — deduplicated and shared like the
 drop-shadow `<filter>`s ([§13](#13-svg-output)). `objectBoundingBox` units fit one
 definition to any shape at any size. The stops being palette vars, a gradient
 themes, flips, and bakes like any other paint; gradient-on-text is deferred
-([§19](#19-deferred--non-goals)).
+([§19](#19-deferred)).
 
 ### 11.4 `--name` references
 
@@ -1446,7 +1446,7 @@ Function names `rgb`, `rgba`, `hsl`, `repeat` are reserved only before `(`.
 
 ---
 
-## 19. Deferred & Non-Goals
+## 19. Deferred
 
 **Deferred** — named in the language, not built yet; the syntax is stable:
 
@@ -1459,18 +1459,6 @@ Function names `rgb`, `rgba`, `hsl`, `repeat` are reserved only before `(`.
 - embedded font metrics — the monospace default keeps the estimate close; a
   proportional `font-family` override is approximate until then.
 - `aria-label`, and a "did you mean" property-name hint table.
-
-**Non-goals** — out of scope:
-
-- **Per-label wire styling** — a wire's labels are bare text placed by `along:` and
-  styled together; a wire never carries a shape.
-- **Compound selectors** in rules (`|box.hot| { }`) — style the class or the type.
-- **Multi-file imports.**
-- **Animation**, and interactivity beyond `link:` (`<a href>`).
-- **Manual wire waypoints.**
-- **Cross-instance addressing** into a define's internals — internal wires and
-  dot-path reads work, but an external wire cannot reach in and restructure another
-  instance's private nodes.
 
 ---
 
