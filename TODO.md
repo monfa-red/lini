@@ -65,3 +65,65 @@ The palette is generated from OKLCH but emitted as hex for renderer compatibilit
 gradient stops as `oklch(L C H)` for users who target modern browsers only. Hex
 stays the default; oklch is the wide-gamut, perceptual path for those who can use
 it. `oklch()` *input* already works (`fill: oklch(0.7, 0.14, 200)`).
+
+## Sequence diagrams (idea — `layout: sequence`)
+
+A mode where wire *order* reads as time instead of spatial routing: named nodes
+become participants across the top (each with a lifeline), and messages lay out
+top-to-bottom in source order. The one part worth pinning down early is the entry
+point — `layout: sequence;`. Everything below is just a sketch; better shapes are
+worth exploring first. Guiding rule: **every feature reuses the existing syntax** —
+this is the same node + wire grammar, just read on a time axis.
+
+A sketch (open to better shapes):
+
+```
+{ layout: sequence }
+
+user    |actor| "User"
+browser |box|   "Browser"
+server  |box|   "Server"
+
+user    ->  browser "click login"   // -> call · --> return · ~> async · a->a self
+browser ->  server  "POST /login"
+loop |until valid| [                 // frames: loop · alt/else · opt
+  server  --> browser "401"
+  browser ->  server  "retry"
+]
+server  --> browser "200 OK"
+browser ->  user    "dashboard"
+note over server "validates token"
+```
+
+Renders to (the `loop` frame is drawn once, not unrolled):
+
+```
+ User        Browser       Server
+  │             │             │
+  │ click login │             │
+  │────────────>│             │
+  │             │ POST /login │
+  │             │────────────>│
+  │      ┌──────┼─────────────┼──┐
+  │      │ loop: until valid  │  │
+  │      │      │     401     │  │
+  │      │      │<╌╌╌╌╌╌╌╌╌╌╌╌│  │
+  │      │      │   retry     │  │
+  │      │      │────────────>│  │
+  │      └──────┼─────────────┼──┘
+  │             │   200 OK    │
+  │             │<╌╌╌╌╌╌╌╌╌╌╌╌│
+  │  dashboard  │             │
+  │<────────────│             │
+```
+
+Messages reuse the wire operators (`->` call, `-->` return, `~>` async, `a -> a`
+self). Frames are static boxes around a span (not control flow — no repetition).
+Notes (`note over a, b "…"`) sit over their lifelines; activation bars are "busy"
+rects on a lifeline; `|actor|` is a stick-figure participant.
+
+Open questions: frame syntax could reuse the `[ ]` children convention
+(`loop |until valid| [ … ]`) or take another form (cf. Mermaid's `loop … end`);
+participants explicit vs inferred from first use; a message as a wire vs its own
+node kind. Build later as a full feature — it would inherit the palette/theming
+for free.
