@@ -65,7 +65,10 @@
 
 ---
 
-## Phase 1 — Vendor data + regenerator ✅ DONE (commit pending)
+> **Status: all phases complete.** Phase 1 landed as its own commit; Phases 2–4
+> (implementation) and Phase 5 (sample + docs) follow as the next stages.
+
+## Phase 1 — Vendor data + regenerator ✅ DONE
 
 - [x] `[features]` (default `icons`) + `[workspace]` (`xtask`, default-members `["."]`) in `Cargo.toml`.
 - [x] `.cargo/config.toml` alias `xtask = "run --package xtask --"`.
@@ -77,7 +80,7 @@
 
 ---
 
-## Phase 2 — The icon table module
+## Phase 2 — The icon table module ✅ DONE
 
 **Goal:** `icon::lookup(name)` → the icon's `(Role, &'static str fragment)`s, O(log n), zero-alloc; `icon::names()`; `icon::ENABLED`. Call sites stay cfg-free.
 
@@ -201,7 +204,7 @@ mod tests {
 
 ---
 
-## Phase 3 — `symbol` property, defaults, validation
+## Phase 3 — `symbol` property, defaults, validation ✅ DONE
 
 **Goal:** `|icon| { symbol: heart }` resolves; label freed for text; missing/unknown symbols error well; defaults give a grey-bodied duotone at size 32.
 
@@ -274,7 +277,7 @@ fn unknown_icon_msg(sym: &str) -> String {
 
 ---
 
-## Phase 4 — Render the real icon
+## Phase 4 — Render the real icon ✅ DONE
 
 **Goal:** replace the placeholder square with scaled Phosphor geometry — role-grouped paint, counter-scaled baked `stroke-width`, round caps, optional centred text. Inlining = tree-shaking.
 
@@ -340,7 +343,7 @@ fn emit_role_group(out: &mut String, indent: &str, frags: &[(crate::icon::Role, 
 
 ---
 
-## Phase 5 — Sample, snapshots, docs
+## Phase 5 — Sample, snapshots, docs ✅ DONE
 
 **Files:** `samples/icons.lini`; `tests/conformance.rs` snapshots; `README.md`; `TODO.md`.
 

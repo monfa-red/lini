@@ -109,7 +109,7 @@ services |group| { layout: row; gap: 24 } [
 |path| { path: "M -34 6 C -34 -34 34 -34 34 6 C 20 34 -20 34 -34 6 Z"; }
 ```
 
-Block (the bare frameless rectangle), oval, hex, slant, cylinder, diamond, cloud, polygon, line, icon (Material Symbols), and image, plus `path` for anything else. Text is not a shape: a bare `"…"` is content — styleable in place (`"x" { color: red }`) — and `|block|` is the frameless box for a label that needs an id or a link. Templates (`box`, `rect`, `group`, `caption`, `footer`, `badge`, `note`, `row`, `column`, `table`) bundle common patterns over `|block|`, and you can define your own from any base: `|panel::group| { stroke: --accent; }`.
+Block (the bare frameless rectangle), oval, hex, slant, cylinder, diamond, cloud, polygon, line, icon (a Phosphor symbol — `|icon| { symbol: heart }`, painted like a shape), and image, plus `path` for anything else. Text is not a shape: a bare `"…"` is content — styleable in place (`"x" { color: red }`) — and `|block|` is the frameless box for a label that needs an id or a link. Templates (`box`, `rect`, `group`, `caption`, `footer`, `badge`, `note`, `row`, `column`, `table`) bundle common patterns over `|block|`, and you can define your own from any base: `|panel::group| { stroke: --accent; }`.
 
 ---
 
