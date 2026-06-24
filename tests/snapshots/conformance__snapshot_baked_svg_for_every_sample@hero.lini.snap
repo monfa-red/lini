@@ -16,28 +16,28 @@ input_file: samples/hero.lini
     .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,4; }
     .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
     .lini .lini-badge { fill: #0a84ff; color: white; font-size: 11px; font-weight: normal; }
-    .lini .lini-edge { fill: #c0f5ff; stroke: #0085b3; color: #005580; }
-    .lini .lini-svc { fill: #bef9f3; stroke: #008e85; color: #005e57; }
-    .lini .lini-auth { fill: #e6e6ff; stroke: #6e62cc; color: #443297; }
-    .lini .lini-store { fill: #ffdbe8; stroke: #b8476e; color: #821041; }
+    .lini .lini-edge { fill: #cff6ff; stroke: #0085b1; color: #00547e; }
+    .lini .lini-svc { fill: #cdf9f4; stroke: #008e84; color: #005d56; }
+    .lini .lini-auth { fill: #eaebff; stroke: #6e63c9; color: #443394; }
+    .lini .lini-store { fill: #ffe3ec; stroke: #b6496e; color: #811442; }
     .lini .lini-link { fill: none; stroke: #747474; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-link-dashed { stroke-dasharray: 8,8; }
     .lini .lini-link-label { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; font-size: 11px; font-weight: normal; }
     .lini .lini-cut-bg { fill: white; stroke: none; }
     .lini .lini-cut { fill: black; stroke: none; }
     .lini .lini-marker { fill: #444; stroke: none; }
-    .lini .lini-style-flow { stroke: #2774ce; }
-    .lini .lini-style-flow .lini-marker { fill: #2774ce; }
-    .lini .lini-style-cache { stroke: #008e85; }
-    .lini .lini-style-cache .lini-marker { fill: #008e85; }
-    .lini .lini-style-async { stroke: #9f6900; }
-    .lini .lini-style-async .lini-marker { fill: #9f6900; }
-    .lini .lini-style-auth { stroke: #6e62cc; }
-    .lini .lini-style-auth .lini-marker { fill: #6e62cc; }
+    .lini .lini-style-flow { stroke: #2b74cb; }
+    .lini .lini-style-flow .lini-marker { fill: #2b74cb; }
+    .lini .lini-style-cache { stroke: #008e84; }
+    .lini .lini-style-cache .lini-marker { fill: #008e84; }
+    .lini .lini-style-async { stroke: #9e6900; }
+    .lini .lini-style-async .lini-marker { fill: #9e6900; }
+    .lini .lini-style-auth { stroke: #6e63c9; }
+    .lini .lini-style-auth .lini-marker { fill: #6e63c9; }
   </style>
   <defs>
     <filter id="lini-shadow-1" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="rgba(0, 0, 0, 0.2)"/></filter>
-    <linearGradient id="lini-gradient-1" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#00b1e0"/><stop offset="100%" stop-color="#968efb"/></linearGradient>
+    <linearGradient id="lini-gradient-1" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#00b1de"/><stop offset="100%" stop-color="#968ef8"/></linearGradient>
   </defs>
   <rect class="lini-canvas" x="-260.5" y="-287" width="534.2" height="574"/>
   <g class="lini-scene">
@@ -46,9 +46,9 @@ input_file: samples/hero.lini
       <text class="lini-text" x="0" y="0">Users</text>
     </g>
     <g class="lini-node lini-group lini-block" data-id="edge" transform="translate(0,-92)">
-      <rect x="-148" y="-48.5" width="296" height="97" rx="6" ry="6"/>
+      <rect x="-148" y="-48.5" width="296" height="97" rx="8" ry="8"/>
       <g class="lini-node lini-edge lini-box lini-block" data-id="lb" transform="translate(-48.5,0)">
-        <rect x="-78.5" y="-27.5" width="157" height="55" rx="6" ry="6"/>
+        <rect x="-78.5" y="-27.5" width="157" height="55" rx="8" ry="8"/>
         <text class="lini-text" x="0" y="0">Load balancer</text>
         <g class="lini-node lini-badge lini-block" transform="translate(70.9,-25)">
           <g filter="url(#lini-shadow-1)">
@@ -59,9 +59,9 @@ input_file: samples/hero.lini
       </g>
       <g class="lini-node lini-edge lini-box lini-block" data-id="cdn" transform="translate(93.5,0)">
         <g transform="translate(5,-5)">
-          <rect x="-33.5" y="-27.5" width="67" height="55" rx="6" ry="6"/>
+          <rect x="-33.5" y="-27.5" width="67" height="55" rx="8" ry="8"/>
         </g>
-        <rect x="-33.5" y="-27.5" width="67" height="55" rx="6" ry="6"/>
+        <rect x="-33.5" y="-27.5" width="67" height="55" rx="8" ry="8"/>
         <text class="lini-text" x="0" y="0">CDN</text>
       </g>
       <g class="lini-node lini-caption lini-block" transform="translate(-132.6,-59.5)">
@@ -70,9 +70,9 @@ input_file: samples/hero.lini
       </g>
     </g>
     <g class="lini-node lini-group lini-block" data-id="svc" transform="translate(0,58)">
-      <rect x="-165.5" y="-48.5" width="331" height="97" rx="6" ry="6"/>
+      <rect x="-165.5" y="-48.5" width="331" height="97" rx="8" ry="8"/>
       <g class="lini-node lini-svc lini-box lini-block" data-id="api" transform="translate(-111,0)">
-        <rect x="-33.5" y="-27.5" width="67" height="55" rx="6" ry="6"/>
+        <rect x="-33.5" y="-27.5" width="67" height="55" rx="8" ry="8"/>
         <text class="lini-text" x="0" y="0">API</text>
       </g>
       <g class="lini-node lini-auth lini-hex" data-id="auth" transform="translate(-13.5,0)">
@@ -80,7 +80,7 @@ input_file: samples/hero.lini
         <text class="lini-text" x="0" y="0">Auth</text>
       </g>
       <g class="lini-node lini-svc lini-box lini-block" data-id="worker" transform="translate(97.5,0)">
-        <rect x="-47" y="-27.5" width="94" height="55" rx="6" ry="6"/>
+        <rect x="-47" y="-27.5" width="94" height="55" rx="8" ry="8"/>
         <text class="lini-text" x="0" y="0">Worker</text>
         <g class="lini-node lini-badge lini-block" transform="translate(36.1,-25)">
           <g filter="url(#lini-shadow-1)">
@@ -95,7 +95,7 @@ input_file: samples/hero.lini
       </g>
     </g>
     <g class="lini-node lini-group lini-block" data-id="data" transform="translate(0,208)">
-      <rect x="-192" y="-48.5" width="384" height="97" rx="6" ry="6"/>
+      <rect x="-192" y="-48.5" width="384" height="97" rx="8" ry="8"/>
       <g class="lini-node lini-store lini-cyl" data-id="pg" transform="translate(-115,0)">
         <path d="M -56 -22 L -56 22 A 56 5.5 0 0 0 56 22 L 56 -22 A 56 5.5 0 0 0 -56 -22 Z"/>
         <ellipse cx="0" cy="-22" rx="56" ry="5.5"/>
@@ -106,8 +106,8 @@ input_file: samples/hero.lini
         <ellipse cx="0" cy="-22" rx="42.5" ry="5.5"/>
         <text class="lini-text" x="0" y="1.71">Redis</text>
       </g>
-      <g class="lini-node lini-svc lini-box lini-block" data-id="queue" style="fill: #ffe9ba; stroke: #9f6900; color: #6e3a00" transform="translate(128.5,0)">
-        <rect x="-42.5" y="-27.5" width="85" height="55" rx="6" ry="6"/>
+      <g class="lini-node lini-svc lini-box lini-block" data-id="queue" style="fill: #feedca; stroke: #9e6900; color: #6d3b00" transform="translate(128.5,0)">
+        <rect x="-42.5" y="-27.5" width="85" height="55" rx="8" ry="8"/>
         <text class="lini-text" x="0" y="0">Queue</text>
       </g>
       <g class="lini-node lini-caption lini-block" transform="translate(-176.6,-59.5)">

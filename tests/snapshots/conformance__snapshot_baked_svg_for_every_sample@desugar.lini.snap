@@ -14,7 +14,7 @@ input_file: samples/desugar.lini
     .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,4; }
     .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
     .lini .lini-badge { fill: #0a84ff; color: white; font-size: 11px; font-weight: normal; }
-    .lini .lini-chip { fill: #c0f5ff; stroke: #005580; color: #005580; }
+    .lini .lini-chip { fill: #cff6ff; stroke: #00547e; color: #00547e; }
   </style>
   <defs>
     <filter id="lini-shadow-1" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="rgba(0, 0, 0, 0.2)"/></filter>
@@ -22,7 +22,7 @@ input_file: samples/desugar.lini
   <rect class="lini-canvas" x="-115.5" y="-86.5" width="231" height="155.5"/>
   <g class="lini-scene">
     <g class="lini-node lini-group lini-block" data-id="api" transform="translate(-45,0)">
-      <rect x="-50" y="-48.5" width="100" height="97" rx="6" ry="6"/>
+      <rect x="-50" y="-48.5" width="100" height="97" rx="8" ry="8"/>
       <g class="lini-node lini-chip lini-box lini-block" data-id="health" transform="translate(0,0)">
         <rect x="-29" y="-27.5" width="58" height="55" rx="12" ry="12"/>
         <text class="lini-text" x="0" y="0">OK</text>

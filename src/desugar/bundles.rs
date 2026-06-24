@@ -86,7 +86,7 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             var("stroke", "stroke"),
             n("stroke-width", 2.0),
             n("padding", 20.0),
-            n("radius", 6.0),
+            n("radius", 8.0),
         ],
         "rect" => vec![n("radius", 0.0)],
         "group" => vec![
@@ -94,7 +94,7 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             id("stroke-style", "dashed"),
             n("stroke-width", 1.0),
             var("fill", "group-fill"),
-            n("radius", 6.0),
+            n("radius", 8.0),
             n("padding", 20.0),
         ],
         "caption" => vec![
@@ -202,7 +202,7 @@ mod tests {
         assert!(!has(&block, "radius"));
         // The |box| template lifts the framed-card paint back on top.
         let boxt = template_bundle("box");
-        assert_eq!(num(&boxt, "radius"), Some(6.0));
+        assert_eq!(num(&boxt, "radius"), Some(8.0));
         assert_eq!(num(&boxt, "padding"), Some(20.0));
         assert_eq!(num(&boxt, "stroke-width"), Some(2.0));
         assert!(has(&boxt, "fill") && has(&boxt, "stroke"));

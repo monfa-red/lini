@@ -10,11 +10,11 @@ input_file: samples/flow.lini
     .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
-    .lini .lini-red { fill: #ffdbe8; stroke: #821041; color: #821041; }
-    .lini .lini-sky { fill: #c0f5ff; stroke: #005580; color: #005580; }
-    .lini .lini-teal { fill: #bef9f3; stroke: #005e57; color: #005e57; }
-    .lini .lini-purple { fill: #e6e6ff; stroke: #443297; color: #443297; }
-    .lini .lini-orange { fill: #ffe9ba; stroke: #6e3a00; color: #6e3a00; }
+    .lini .lini-red { fill: #ffe3ec; stroke: #811442; color: #811442; }
+    .lini .lini-sky { fill: #cff6ff; stroke: #00547e; color: #00547e; }
+    .lini .lini-teal { fill: #cdf9f4; stroke: #005d56; color: #005d56; }
+    .lini .lini-purple { fill: #eaebff; stroke: #443394; color: #443394; }
+    .lini .lini-orange { fill: #feedca; stroke: #6d3b00; color: #6d3b00; }
     .lini .lini-link { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-link-dashed { stroke-dasharray: 8,8; }
     .lini .lini-link-dotted { stroke-dasharray: 2,4; }
@@ -22,58 +22,58 @@ input_file: samples/flow.lini
     .lini .lini-cut-bg { fill: white; stroke: none; }
     .lini .lini-cut { fill: black; stroke: none; }
     .lini .lini-marker { fill: #444; stroke: none; }
-    .lini .lini-style-solid { stroke: #821041; }
-    .lini .lini-style-solid .lini-marker { fill: #821041; }
-    .lini .lini-style-dashed { stroke: #005580; }
-    .lini .lini-style-dashed .lini-marker { fill: #005580; }
-    .lini .lini-style-dotted { stroke: #005e57; }
-    .lini .lini-style-dotted .lini-marker { fill: #005e57; }
-    .lini .lini-style-wavy { stroke: #443297; }
-    .lini .lini-style-wavy .lini-marker { fill: #443297; }
-    .lini .lini-style-thick { stroke: #6e3a00; stroke-width: 3; }
-    .lini .lini-style-thick .lini-marker { fill: #6e3a00; }
+    .lini .lini-style-solid { stroke: #811442; }
+    .lini .lini-style-solid .lini-marker { fill: #811442; }
+    .lini .lini-style-dashed { stroke: #00547e; }
+    .lini .lini-style-dashed .lini-marker { fill: #00547e; }
+    .lini .lini-style-dotted { stroke: #005d56; }
+    .lini .lini-style-dotted .lini-marker { fill: #005d56; }
+    .lini .lini-style-wavy { stroke: #443394; }
+    .lini .lini-style-wavy .lini-marker { fill: #443394; }
+    .lini .lini-style-thick { stroke: #6d3b00; stroke-width: 3; }
+    .lini .lini-style-thick .lini-marker { fill: #6d3b00; }
   </style>
   <defs/>
   <rect class="lini-canvas" x="-157" y="-202.5" width="314" height="405"/>
   <g class="lini-scene">
     <g class="lini-node lini-red lini-box lini-block" data-id="cat" transform="translate(-94,-150)">
-      <rect x="-37.5" y="-27.5" width="75" height="55" rx="6" ry="6"/>
+      <rect x="-37.5" y="-27.5" width="75" height="55" rx="8" ry="8"/>
       <text class="lini-text" x="0" y="0">cat</text>
     </g>
     <g class="lini-node lini-red lini-box lini-block" data-id="dog" transform="translate(94,-150)">
-      <rect x="-37.5" y="-27.5" width="75" height="55" rx="6" ry="6"/>
+      <rect x="-37.5" y="-27.5" width="75" height="55" rx="8" ry="8"/>
       <text class="lini-text" x="0" y="0">dog</text>
     </g>
     <g class="lini-node lini-sky lini-box lini-block" data-id="fish" transform="translate(-94,-75)">
-      <rect x="-38" y="-27.5" width="76" height="55" rx="6" ry="6"/>
+      <rect x="-38" y="-27.5" width="76" height="55" rx="8" ry="8"/>
       <text class="lini-text" x="0" y="0">fish</text>
     </g>
     <g class="lini-node lini-sky lini-box lini-block" data-id="bowl" transform="translate(94,-75)">
-      <rect x="-38" y="-27.5" width="76" height="55" rx="6" ry="6"/>
+      <rect x="-38" y="-27.5" width="76" height="55" rx="8" ry="8"/>
       <text class="lini-text" x="0" y="0">bowl</text>
     </g>
     <g class="lini-node lini-teal lini-box lini-block" data-id="newt" transform="translate(-94,0)">
-      <rect x="-38" y="-27.5" width="76" height="55" rx="6" ry="6"/>
+      <rect x="-38" y="-27.5" width="76" height="55" rx="8" ry="8"/>
       <text class="lini-text" x="0" y="0">newt</text>
     </g>
     <g class="lini-node lini-teal lini-box lini-block" data-id="log" transform="translate(94,0)">
-      <rect x="-37.5" y="-27.5" width="75" height="55" rx="6" ry="6"/>
+      <rect x="-37.5" y="-27.5" width="75" height="55" rx="8" ry="8"/>
       <text class="lini-text" x="0" y="0">log</text>
     </g>
     <g class="lini-node lini-purple lini-box lini-block" data-id="frog" transform="translate(-94,75)">
-      <rect x="-38" y="-27.5" width="76" height="55" rx="6" ry="6"/>
+      <rect x="-38" y="-27.5" width="76" height="55" rx="8" ry="8"/>
       <text class="lini-text" x="0" y="0">frog</text>
     </g>
     <g class="lini-node lini-purple lini-box lini-block" data-id="pond" transform="translate(94,75)">
-      <rect x="-38" y="-27.5" width="76" height="55" rx="6" ry="6"/>
+      <rect x="-38" y="-27.5" width="76" height="55" rx="8" ry="8"/>
       <text class="lini-text" x="0" y="0">pond</text>
     </g>
     <g class="lini-node lini-orange lini-box lini-block" data-id="ping" transform="translate(-94,150)">
-      <rect x="-38" y="-27.5" width="76" height="55" rx="6" ry="6"/>
+      <rect x="-38" y="-27.5" width="76" height="55" rx="8" ry="8"/>
       <text class="lini-text" x="0" y="0">ping</text>
     </g>
     <g class="lini-node lini-orange lini-box lini-block" data-id="pong" transform="translate(94,150)">
-      <rect x="-38" y="-27.5" width="76" height="55" rx="6" ry="6"/>
+      <rect x="-38" y="-27.5" width="76" height="55" rx="8" ry="8"/>
       <text class="lini-text" x="0" y="0">pong</text>
     </g>
   </g>

@@ -98,28 +98,28 @@ struct Tier {
 const TIERS: &[Tier] = &[
     Tier {
         suffix: "-wash",
-        light: (0.94, 0.06),
-        dark: (0.29, 0.06),
+        light: (0.95, 0.045),
+        dark: (0.285, 0.045),
     },
     Tier {
         suffix: "-soft",
-        light: (0.84, 0.10),
-        dark: (0.38, 0.10),
+        light: (0.85, 0.10),
+        dark: (0.37, 0.10),
     },
     Tier {
         suffix: "",
-        light: (0.7, 0.15),
-        dark: (0.535, 0.15),
+        light: (0.7, 0.145),
+        dark: (0.53, 0.145),
     },
     Tier {
         suffix: "-deep",
-        light: (0.56, 0.15),
-        dark: (0.745, 0.15),
+        light: (0.56, 0.145),
+        dark: (0.745, 0.145),
     },
     Tier {
         suffix: "-ink",
-        light: (0.40, 0.15),
-        dark: (0.94, 0.15),
+        light: (0.40, 0.145),
+        dark: (0.93, 0.145),
     },
 ];
 

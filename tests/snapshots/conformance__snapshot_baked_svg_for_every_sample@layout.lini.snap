@@ -21,42 +21,42 @@ input_file: samples/layout.lini
   <rect class="lini-canvas" x="-399" y="-166" width="798" height="314.5"/>
   <g class="lini-scene">
     <g class="lini-node lini-group lini-block" data-id="anchors" transform="translate(-246.5,-26)">
-      <rect x="-126" y="-96" width="252" height="192" rx="6" ry="6"/>
-      <g class="lini-node lini-box lini-block" data-id="pins" style="fill: #c0f5ff; stroke: #005580" transform="translate(0,0)">
+      <rect x="-126" y="-96" width="252" height="192" rx="8" ry="8"/>
+      <g class="lini-node lini-box lini-block" data-id="pins" style="fill: #cff6ff; stroke: #00547e" transform="translate(0,0)">
         <rect x="-105" y="-75" width="210" height="150" rx="8" ry="8"/>
-        <g class="lini-node lini-dot lini-block" style="color: #005e57" transform="translate(0,0)">
+        <g class="lini-node lini-dot lini-block" style="color: #005d56" transform="translate(0,0)">
           <rect x="-21.6" y="-6" width="43.2" height="12" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="0">center</text>
         </g>
-        <g class="lini-node lini-dot lini-block" style="color: #821041" transform="translate(-96.8,-68)">
+        <g class="lini-node lini-dot lini-block" style="color: #811442" transform="translate(-96.8,-68)">
           <rect x="-7.2" y="-6" width="14.4" height="12" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="0">TL</text>
         </g>
-        <g class="lini-node lini-dot lini-block" style="color: #821041" transform="translate(0,-68)">
+        <g class="lini-node lini-dot lini-block" style="color: #811442" transform="translate(0,-68)">
           <rect x="-3.6" y="-6" width="7.2" height="12" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="0">T</text>
         </g>
-        <g class="lini-node lini-dot lini-block" style="color: #821041" transform="translate(96.8,-68)">
+        <g class="lini-node lini-dot lini-block" style="color: #811442" transform="translate(96.8,-68)">
           <rect x="-7.2" y="-6" width="14.4" height="12" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="0">TR</text>
         </g>
-        <g class="lini-node lini-dot lini-block" style="color: #821041" transform="translate(-100.4,0)">
+        <g class="lini-node lini-dot lini-block" style="color: #811442" transform="translate(-100.4,0)">
           <rect x="-3.6" y="-6" width="7.2" height="12" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="0">L</text>
         </g>
-        <g class="lini-node lini-dot lini-block" style="color: #821041" transform="translate(100.4,0)">
+        <g class="lini-node lini-dot lini-block" style="color: #811442" transform="translate(100.4,0)">
           <rect x="-3.6" y="-6" width="7.2" height="12" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="0">R</text>
         </g>
-        <g class="lini-node lini-dot lini-block" style="color: #005580" transform="translate(-96.8,68)">
+        <g class="lini-node lini-dot lini-block" style="color: #00547e" transform="translate(-96.8,68)">
           <rect x="-7.2" y="-6" width="14.4" height="12" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="0">BL</text>
         </g>
-        <g class="lini-node lini-dot lini-block" style="color: #005580" transform="translate(0,68)">
+        <g class="lini-node lini-dot lini-block" style="color: #00547e" transform="translate(0,68)">
           <rect x="-3.6" y="-6" width="7.2" height="12" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="0">B</text>
         </g>
-        <g class="lini-node lini-dot lini-block" style="color: #005580" transform="translate(96.8,68)">
+        <g class="lini-node lini-dot lini-block" style="color: #00547e" transform="translate(96.8,68)">
           <rect x="-7.2" y="-6" width="14.4" height="12" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="0">BR</text>
         </g>
@@ -67,24 +67,24 @@ input_file: samples/layout.lini
       </g>
     </g>
     <g class="lini-node lini-group lini-block" data-id="moves" transform="translate(44.5,-27.5)">
-      <rect x="-134" y="-94.5" width="268" height="189" rx="6" ry="6"/>
+      <rect x="-134" y="-94.5" width="268" height="189" rx="8" ry="8"/>
       <g class="lini-node lini-row lini-block" transform="translate(0,-45)">
         <rect x="-113" y="-28.5" width="226" height="57" rx="0" ry="0"/>
-        <g class="lini-node lini-box lini-block" data-id="a" style="fill: #ebc575; stroke: #6e3a00; color: #6e3a00" transform="translate(-87.5,0)">
-          <rect x="-24.5" y="-27.5" width="49" height="55" rx="6" ry="6"/>
+        <g class="lini-node lini-box lini-block" data-id="a" style="fill: #eec978; stroke: #6d3b00; color: #6d3b00" transform="translate(-87.5,0)">
+          <rect x="-24.5" y="-27.5" width="49" height="55" rx="8" ry="8"/>
           <text class="lini-text" x="0" y="0">A</text>
         </g>
-        <g class="lini-node lini-box lini-block" data-id="b" style="fill: #ebc575; stroke: #6e3a00; color: #6e3a00" transform="translate(0,16)">
-          <rect x="-47" y="-27.5" width="94" height="55" rx="6" ry="6"/>
+        <g class="lini-node lini-box lini-block" data-id="b" style="fill: #eec978; stroke: #6d3b00; color: #6d3b00" transform="translate(0,16)">
+          <rect x="-47" y="-27.5" width="94" height="55" rx="8" ry="8"/>
           <text class="lini-text" x="0" y="0">nudged</text>
         </g>
-        <g class="lini-node lini-box lini-block" data-id="c" style="fill: #ebc575; stroke: #6e3a00; color: #6e3a00" transform="translate(87.5,0)">
-          <rect x="-24.5" y="-27.5" width="49" height="55" rx="6" ry="6"/>
+        <g class="lini-node lini-box lini-block" data-id="c" style="fill: #eec978; stroke: #6d3b00; color: #6d3b00" transform="translate(87.5,0)">
+          <rect x="-24.5" y="-27.5" width="49" height="55" rx="8" ry="8"/>
           <text class="lini-text" x="0" y="0">C</text>
         </g>
       </g>
-      <g class="lini-node lini-box lini-block" data-id="card" style="fill: #e6e6ff; stroke: #443297; color: #443297" transform="translate(0,36.5)">
-        <rect x="-70" y="-37" width="140" height="74" rx="6" ry="6"/>
+      <g class="lini-node lini-box lini-block" data-id="card" style="fill: #eaebff; stroke: #443394; color: #443394" transform="translate(0,36.5)">
+        <rect x="-70" y="-37" width="140" height="74" rx="8" ry="8"/>
         <text class="lini-text" x="0" y="0">Card</text>
         <g class="lini-node lini-badge lini-block" transform="translate(55.7,-24.5)">
           <g filter="url(#lini-shadow-1)">
@@ -103,20 +103,20 @@ input_file: samples/layout.lini
       </g>
     </g>
     <g class="lini-node lini-group lini-block" data-id="spacing" transform="translate(291,0)">
-      <rect x="-81.5" y="-122" width="163" height="244" rx="6" ry="6"/>
-      <g class="lini-node lini-box lini-block" style="fill: #91dfb2; stroke: #005d24; color: #005d24" transform="translate(0,-73.5)">
-        <rect x="-47" y="-27.5" width="94" height="55" rx="6" ry="6"/>
+      <rect x="-81.5" y="-122" width="163" height="244" rx="8" ry="8"/>
+      <g class="lini-node lini-box lini-block" style="fill: #94e2b5; stroke: #005d26; color: #005d26" transform="translate(0,-73.5)">
+        <rect x="-47" y="-27.5" width="94" height="55" rx="8" ry="8"/>
         <text class="lini-text" x="0" y="0">scalar</text>
       </g>
-      <g class="lini-node lini-box lini-block" style="fill: #91dfb2; stroke: #005d24; color: #005d24" transform="translate(0,-22.5)">
-        <rect x="-27.5" y="-11.5" width="55" height="23" rx="6" ry="6"/>
+      <g class="lini-node lini-box lini-block" style="fill: #94e2b5; stroke: #005d26; color: #005d26" transform="translate(0,-22.5)">
+        <rect x="-27.5" y="-11.5" width="55" height="23" rx="8" ry="8"/>
         <text class="lini-text" x="0" y="0">v h</text>
       </g>
-      <g class="lini-node lini-box lini-block" style="fill: #91dfb2; stroke: #005d24; color: #005d24" transform="translate(0,17.5)">
-        <rect x="-47.5" y="-16.5" width="95" height="33" rx="6" ry="6"/>
+      <g class="lini-node lini-box lini-block" style="fill: #94e2b5; stroke: #005d26; color: #005d26" transform="translate(0,17.5)">
+        <rect x="-47.5" y="-16.5" width="95" height="33" rx="8" ry="8"/>
         <text class="lini-text" x="8" y="-7">t r b l</text>
       </g>
-      <g class="lini-node lini-box lini-block" style="fill: #91dfb2; stroke: #005d24; color: #005d24" transform="translate(0,73.5)">
+      <g class="lini-node lini-box lini-block" style="fill: #94e2b5; stroke: #005d26; color: #005d26" transform="translate(0,73.5)">
         <rect x="-60.5" y="-27.5" width="121" height="55" rx="12" ry="12"/>
         <text class="lini-text" x="0" y="0">radius 12</text>
       </g>

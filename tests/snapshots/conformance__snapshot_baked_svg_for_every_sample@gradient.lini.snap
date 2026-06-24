@@ -13,11 +13,11 @@ input_file: samples/gradient.lini
     .lini .lini-card { stroke: none; color: white; font-weight: normal; }
   </style>
   <defs>
-    <linearGradient id="lini-gradient-1" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#00bbb0"/><stop offset="100%" stop-color="#54a0fe"/></linearGradient>
-    <linearGradient id="lini-gradient-2" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#e87297"/><stop offset="50%" stop-color="#cc9400"/><stop offset="100%" stop-color="#00b1e0"/></linearGradient>
-    <linearGradient id="lini-gradient-3" gradientTransform="rotate(0 0.5 0.5)"><stop offset="0%" stop-color="#54a0fe"/><stop offset="100%" stop-color="#968efb"/></linearGradient>
-    <radialGradient id="lini-gradient-4"><stop offset="0%" stop-color="#968efb"/><stop offset="100%" stop-color="#e87297"/></radialGradient>
-    <linearGradient id="lini-gradient-5" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#00bbb0"/><stop offset="100%" stop-color="#968efb"/></linearGradient>
+    <linearGradient id="lini-gradient-1" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#00baaf"/><stop offset="100%" stop-color="#57a0fb"/></linearGradient>
+    <linearGradient id="lini-gradient-2" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#e67497"/><stop offset="50%" stop-color="#cb9400"/><stop offset="100%" stop-color="#00b1de"/></linearGradient>
+    <linearGradient id="lini-gradient-3" gradientTransform="rotate(0 0.5 0.5)"><stop offset="0%" stop-color="#57a0fb"/><stop offset="100%" stop-color="#968ef8"/></linearGradient>
+    <radialGradient id="lini-gradient-4"><stop offset="0%" stop-color="#968ef8"/><stop offset="100%" stop-color="#e67497"/></radialGradient>
+    <linearGradient id="lini-gradient-5" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#00baaf"/><stop offset="100%" stop-color="#968ef8"/></linearGradient>
     <linearGradient id="lini-gradient-6" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#f97770"/><stop offset="100%" stop-color="#9c93ff"/></linearGradient>
   </defs>
   <rect class="lini-canvas" x="-277.5" y="-171.5" width="555" height="343"/>
@@ -29,33 +29,33 @@ input_file: samples/gradient.lini
     <g class="lini-node lini-row lini-block" data-id="r1" transform="translate(0,-72.5)">
       <rect x="-250" y="-36" width="500" height="72" rx="0" ry="0"/>
       <g class="lini-node lini-card lini-box lini-block" style="fill: url(#lini-gradient-1)" transform="translate(-129,0)">
-        <rect x="-120" y="-35" width="240" height="70" rx="6" ry="6"/>
+        <rect x="-120" y="-35" width="240" height="70" rx="8" ry="8"/>
         <text class="lini-text" x="0" y="0">gradient(--teal, --blue)</text>
       </g>
       <g class="lini-node lini-card lini-box lini-block" style="fill: url(#lini-gradient-2)" transform="translate(129,0)">
-        <rect x="-120" y="-35" width="240" height="70" rx="6" ry="6"/>
+        <rect x="-120" y="-35" width="240" height="70" rx="8" ry="8"/>
         <text class="lini-text" x="0" y="0">three stops, auto-angled</text>
       </g>
     </g>
     <g class="lini-node lini-row lini-block" data-id="r2" transform="translate(0,17.5)">
       <rect x="-250" y="-36" width="500" height="72" rx="0" ry="0"/>
       <g class="lini-node lini-card lini-box lini-block" style="fill: url(#lini-gradient-3)" transform="translate(-129,0)">
-        <rect x="-120" y="-35" width="240" height="70" rx="6" ry="6"/>
+        <rect x="-120" y="-35" width="240" height="70" rx="8" ry="8"/>
         <text class="lini-text" x="0" y="0">linear-gradient(90, …)</text>
       </g>
       <g class="lini-node lini-card lini-box lini-block" style="fill: url(#lini-gradient-4)" transform="translate(129,0)">
-        <rect x="-120" y="-35" width="240" height="70" rx="6" ry="6"/>
+        <rect x="-120" y="-35" width="240" height="70" rx="8" ry="8"/>
         <text class="lini-text" x="0" y="0">radial-gradient(…)</text>
       </g>
     </g>
     <g class="lini-node lini-row lini-block" data-id="r3" transform="translate(0,108)">
       <rect x="-250.5" y="-36.5" width="501" height="73" rx="0" ry="0"/>
-      <g class="lini-node lini-card lini-box lini-block" style="fill: #ebebeb; stroke: url(#lini-gradient-5); stroke-width: 3; color: #484848" transform="translate(-129,0)">
-        <rect x="-120" y="-35" width="240" height="70" rx="6" ry="6"/>
+      <g class="lini-node lini-card lini-box lini-block" style="fill: #eeeeee; stroke: url(#lini-gradient-5); stroke-width: 3; color: #484848" transform="translate(-129,0)">
+        <rect x="-120" y="-35" width="240" height="70" rx="8" ry="8"/>
         <text class="lini-text" x="0" y="0">gradient on stroke</text>
       </g>
       <g class="lini-node lini-card lini-box lini-block" style="fill: url(#lini-gradient-6)" transform="translate(129.5,0)">
-        <rect x="-120" y="-35" width="240" height="70" rx="6" ry="6"/>
+        <rect x="-120" y="-35" width="240" height="70" rx="8" ry="8"/>
         <text class="lini-text" x="0" y="0">oklch stops</text>
       </g>
     </g>

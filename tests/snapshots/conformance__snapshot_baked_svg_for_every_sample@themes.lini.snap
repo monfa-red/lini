@@ -26,9 +26,9 @@ input_file: samples/themes.lini
   <rect class="lini-canvas" x="-97.5" y="-155.5" width="229" height="293.5"/>
   <g class="lini-scene">
     <g class="lini-node lini-group lini-block" data-id="service" transform="translate(0,0)">
-      <rect x="-77" y="-117.5" width="154" height="235" rx="6" ry="6"/>
+      <rect x="-77" y="-117.5" width="154" height="235" rx="8" ry="8"/>
       <g class="lini-node lini-box lini-block" data-id="web" transform="translate(0,-69)">
-        <rect x="-33.5" y="-27.5" width="67" height="55" rx="6" ry="6"/>
+        <rect x="-33.5" y="-27.5" width="67" height="55" rx="8" ry="8"/>
         <text class="lini-text" x="0" y="0">Web</text>
         <g class="lini-node lini-badge lini-block" transform="translate(25.9,-25)">
           <g filter="url(#lini-shadow-1)">
@@ -38,7 +38,7 @@ input_file: samples/themes.lini
         </g>
       </g>
       <g class="lini-node lini-box lini-block" data-id="api" transform="translate(0,0)">
-        <rect x="-33.5" y="-27.5" width="67" height="55" rx="6" ry="6"/>
+        <rect x="-33.5" y="-27.5" width="67" height="55" rx="8" ry="8"/>
         <text class="lini-text" x="0" y="0">API</text>
       </g>
       <g class="lini-node lini-cyl" data-id="db" transform="translate(0,69)">

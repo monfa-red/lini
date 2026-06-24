@@ -23,17 +23,17 @@ input_file: samples/text.lini
     <g class="lini-node lini-row lini-block" data-id="styles" transform="translate(0,-60)">
       <rect x="-185" y="-7.5" width="370" height="15" rx="0" ry="0"/>
       <text class="lini-text" x="-153.5" y="0">default</text>
-      <text class="lini-text" x="-70" y="0" style="fill: #861116">coloured</text>
+      <text class="lini-text" x="-70" y="0" style="fill: #851618">coloured</text>
       <text class="lini-text" x="0" y="0" style="font-weight: bold">bold</text>
       <text class="lini-text" x="61" y="0" style="font-style: italic">italic</text>
       <text class="lini-text" x="144.5" y="0" style="text-decoration: underline">underline</text>
     </g>
     <g class="lini-node lini-box lini-block" data-id="a" transform="translate(0,3)">
-      <rect x="-42.5" y="-27.5" width="85" height="55" rx="6" ry="6"/>
+      <rect x="-42.5" y="-27.5" width="85" height="55" rx="8" ry="8"/>
       <text class="lini-text" x="0" y="0">Alpha</text>
     </g>
     <g class="lini-node lini-box lini-block" data-id="b" transform="translate(0,86)">
-      <rect x="-38" y="-27.5" width="76" height="55" rx="6" ry="6"/>
+      <rect x="-38" y="-27.5" width="76" height="55" rx="8" ry="8"/>
       <text class="lini-text" x="0" y="0">Beta</text>
     </g>
   </g>
@@ -42,7 +42,7 @@ input_file: samples/text.lini
       <mask id="lini-label-cut-0" maskUnits="userSpaceOnUse" x="37" y="1" width="95.75" height="87"><rect class="lini-cut-bg" x="37" y="1" width="95.75" height="87"/><rect class="lini-cut" x="77.95" y="29.6" width="105.6" height="14.3"/></mask>
       <path d="M 43.5 3 L 114.75 3 A 16 16 0 0 1 130.75 19 L 130.75 70 A 16 16 0 0 1 114.75 86 L 42.5 86" mask="url(#lini-label-cut-0)"/>
       <polygon class="lini-marker lini-marker-arrow" points="38.5,86 46.5,82 46.5,90" style="fill: #9e9e9e"/>
-      <text class="lini-link-label" x="130.75" y="26.75" style="fill: #005e57; font-weight: bold" transform="rotate(-6 130.75 26.75)">nudged &amp; turned</text>
+      <text class="lini-link-label" x="130.75" y="26.75" style="fill: #005d56; font-weight: bold" transform="rotate(-6 130.75 26.75)">nudged &amp; turned</text>
     </g>
   </g>
 </svg>
