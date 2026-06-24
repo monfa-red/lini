@@ -1,20 +1,19 @@
 // The Lini hero — a colourful service map. Palette colours, a gradient entry
 // point, mixed link styles. Source for assets/hero.png.
 {
-  layout: column; gap: 52; padding: 30; font-weight: normal; link: --gray; link-width: 2; clearance: 16;
+  layout: column; gap: 52; padding: 30; font-weight: normal; link: --gray-deep; link-width: 2; clearance: 16;
 
-  // tier looks — soft pastel fill, ink text + stroke
-  |edge::box| { fill: --sky-wash; stroke: --sky-ink; color: --sky-ink; }
-  |svc::box| { fill: --teal-wash; stroke: --teal-ink; color: --teal-ink; }
+  |edge::box| { fill: --sky-wash; stroke: --sky-deep; color: --sky-ink; }
+  |svc::box| { fill: --teal-wash; stroke: --teal-deep; color: --teal-ink; }
   |auth::hex| {
-    fill: --purple-wash; stroke: --purple-ink; color: --purple-ink; padding: 20 16;
+    fill: --purple-wash; stroke: --purple-deep; color: --purple-ink; padding: 20 16;
   }
-  |store::cyl| { fill: --rose-wash; stroke: --rose-ink; color: --rose-ink; }
+  |store::cyl| { fill: --rose-wash; stroke: --rose-deep; color: --rose-ink; }
 
-  .flow { stroke: --blue; }
-  .cache { stroke: --teal; }
-  .async { stroke: --orange; }
-  .auth { stroke: --purple; }
+  .flow { stroke: --blue-deep; }
+  .cache { stroke: --teal-deep; }
+  .async { stroke: --amber-deep; }
+  .auth { stroke: --purple-deep; }
 }
 
 users |oval| {
@@ -44,7 +43,7 @@ data |group| { layout: row; gap: 28; } [
         |caption| "Data"
   pg    |store| "Postgres"
   redis |store| "Redis"
-  queue |svc| { fill: --amber-wash; stroke: --amber-ink; color: --amber-ink; } "Queue"
+  queue |svc| { fill: --amber-wash; stroke: --amber-deep; color: --amber-ink; } "Queue"
 ]
 
 users -> edge.lb .flow "https"
