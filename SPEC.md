@@ -551,8 +551,8 @@ asymmetric `padding: t r b l` offsets it — `padding: 4 4 20 4` lifts the conte
 toward the top, away from the larger bottom inset, exactly like CSS.
 
 Exceptions: a **text** node sizes to its glyphs (no padding), widened by
-`letter-spacing` and given `line-spacing` between `\n` lines; `|icon|` defaults to
-`icon-size` (24); `|line|` / `|poly|` / `|image|` / `|path|` require their geometry
+`letter-spacing` and given `line-spacing` between `\n` lines; `|icon|` sizes to
+`icon-size` (32) and needs a `symbol` (the icon name); `|line|` / `|poly|` / `|image|` / `|path|` require their geometry
 (`points` / `src` / `path`) and error without it. `|block|` carries `padding: 0`,
 so a bare block sizes to its content exactly.
 
@@ -586,7 +586,7 @@ box; equal dimensions (or an empty `|oval|`) make a circle.
 | `\|poly\|` | `points` | ≥3 points, local (center-origin) coords. Closed. |
 | `\|path\|` | `path` | Raw SVG path. **Native top-left coords.** |
 | `\|line\|` | `points` | 2+ points. Markers via `marker*:`. |
-| `\|icon\|` | label (glyph name) | Material Symbols; the glyph name is the label (`\|icon\| "home"`). `icon-variant`, size via `width`/`height`. |
+| `\|icon\|` | `symbol` | A **Phosphor** icon — `symbol:` names it; paints two-tone like a box (`fill` body, `stroke` line, counter-scaled `stroke-width`). Sizes to `icon-size` (32). See [Icons](#icons). |
 | `\|image\|` | `src`, `width`, `height` | `<image href="…">`. External URLs only; both dimensions required. |
 
 ### Visual modifiers (closed shapes)
@@ -612,6 +612,38 @@ stroke / link colour. `|line|` is bare by default — write
 `|line| { marker-end: arrow }` for a one-shot arrow. For links the operator
 picks markers (see [§9](#9-links)). Source order wins: `marker: arrow;
 marker-end: dot` → start arrow, end dot.
+
+### Icons
+
+`|icon|` draws a **[Phosphor](https://phosphoricons.com/)** icon (MIT) as inline
+SVG paths — themeable, reproducible, and renderer-agnostic (no icon font). The
+`symbol` property names it; everything else paints like a box:
+
+```
+bell |icon| { symbol: bell }                                 // default duotone
+warn |icon| { symbol: warning-circle; stroke: --amber-ink }
+like |icon| { symbol: heart; fill: --rose-wash; stroke: --rose-ink }
+tag  |icon| { symbol: bell } "3"                              // label rides as text
+```
+
+Phosphor icons are **two-tone** (a soft fill behind a line), so an icon wears
+Lini's paint roles like any shape: **`fill`** paints the body, **`stroke`** the
+line, **`stroke-width`** its weight. The defaults make the duotone read out of the
+box — `fill` a soft grey (`--icon-fill`), `stroke` the ink (`--stroke`, matching
+borders and wires), `stroke-width` 2. A single-tone line icon is `fill: none`; a
+hued duotone is `fill: --teal-wash; stroke: --teal-ink`, exactly like a card.
+`color:` recolours an icon like text.
+
+`stroke-width` is **counter-scaled**: an icon is authored on a 256-unit grid and
+fit to its box, and the stroke is divided by that scale (baked at compile time), so
+its line weight holds as the icon resizes and matches the diagram's other strokes.
+
+Sizing follows `icon-size` (32), square; `width` / `height` adjust and fit
+uniformly (no distortion). A missing `symbol` errors like `|poly|` without
+`points`; an unknown one suggests the nearest name. Only the icons a diagram uses
+are embedded. The full set ships behind a default-on `icons` build feature
+([§19](#19-deferred)) and lives in the repo as one compact data file — path data
+only, no SVG wrapper — extracted from Phosphor's duotone weight.
 
 ---
 
@@ -880,8 +912,8 @@ values.
 
 | Property | Type | Default |
 |---|---|---|
-| `fill` | color | `--fill` (closed shapes); `currentColor` on text; `--stroke` for icons; `--bg` on the root (the scene background) |
-| `color` | color | inherits — sets text/icon glyph colour for descendants; on text, an alias for `fill` |
+| `fill` | color | `--fill` (closed shapes); `currentColor` on text; `--icon-fill` (a soft grey) for icons; `--bg` on the root (the scene background) |
+| `color` | color | inherits — sets text and icon colour for descendants; on text, an alias for `fill` |
 | `opacity` | 0..1 | 1 |
 | `radius` | number | 0 (`\|block\|`); `\|box\|` rounds to 6 |
 | `rotate` | degrees | 0 |
@@ -927,6 +959,7 @@ container, they reach every link in that scope; a link's own block overrides.
 | `layer` | integer | Paint order; default 0 in flow, 1 when `pin`ned. Ties break on source order. |
 | `points` | `x y, x y, …` | Vertex list (`\|poly\|`, `\|line\|`). |
 | `path` | string | Raw SVG path (`\|path\|`, native top-left coords). |
+| `symbol` | ident | Icon name (`\|icon\|`) — a Phosphor symbol, e.g. `heart`, `warning-circle`. |
 
 `pin`, `width`/`height`, `points`, and `path` are **box** properties — a bare text
 node carries none of them; `translate` and `rotate` are the exceptions and work on
@@ -976,7 +1009,6 @@ style the whole scene (it states on `.lini`), exactly like a global `font-size:`
 |---|---|
 | `src` | image source (`\|image\|`). |
 | `href` | wraps this node or link in `<a href>` — clickable. |
-| `icon-variant` | `outlined` / `filled` / `rounded` / `sharp`. |
 | `title` | emits a `<title>` child (tooltip + screen-reader name). |
 
 ### Variables
@@ -1011,6 +1043,7 @@ Each colour is a `light-dark(LIGHT, DARK)` value, so one SVG carries both modes:
 --lini-note-bg       light-dark(#fff9c4, #4a4733)
 --lini-group-stroke  light-dark(rgba(0,0,0,.4), rgba(255,255,255,.4))
 --lini-group-fill    light-dark(rgba(0,0,0,.03), rgba(255,255,255,.05))
+--lini-icon-fill     light-dark(rgba(0,0,0,.16), rgba(255,255,255,.18))  the soft body behind a duotone icon
 --lini-caption-color light-dark(rgba(0,0,0,.5), rgba(255,255,255,.55))
 --lini-footer-color  light-dark(rgba(0,0,0,.5), rgba(255,255,255,.55))
 --lini-font-family   ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace
@@ -1136,7 +1169,7 @@ instance / link block:
 ```
 font-size 15    link-font-size 11   caption-font-size 12
 stroke-width 2  radius 6            gap 20                 padding 20
-clearance 16    icon-size 24        link-width 2
+clearance 16    icon-size 32        link-width 2
 ```
 
 `font-size` is body text. Link labels and captions carry their own baked defaults
@@ -1201,7 +1234,7 @@ it out of the grid.
     .lini .lini-style-hot { stroke-width: 3; }   /* one rule per class def */
     .lini .lini-link { stroke: var(--lini-stroke); stroke-width: 2; fill: none; }
   </style>
-  <defs><!-- filters, gradients, clipPaths, icon symbols --></defs>
+  <defs><!-- filters, gradients, clipPaths --></defs>
   <rect class="lini-canvas" .../>   <!-- the scene background (--lini-bg) -->
   <g class="lini-scene"> <!-- scene tree --> </g>
   <g class="lini-links"> <!-- links --> </g>
@@ -1534,7 +1567,8 @@ only before `(`.
   shapes today, [§11.3](#113-gradients)).
 - `radius` on non-rect shapes (hex / diamond / slant / poly).
 - numeric `font-weight` (`100…900`).
-- `|icon|` Material Symbols glyph embedding (currently a placeholder square).
+- a solid (`fill`-weight) icon variant — the built-in icon set is **Phosphor**
+  duotone, drawn as paths ([§7](#7-shapes)), behind the default-on `icons` feature.
 - embedded font metrics — the monospace default keeps the estimate close; a
   proportional `font-family` override is approximate until then.
 - `aria-label`, and a "did you mean" property-name hint table.
