@@ -5,16 +5,18 @@ composable shapes, CSS-driven theming — compiles to clean SVG.
 
 **Two brackets carry the whole language.** `{ … }` is **style** — `key: value;`
 declarations, dash-case, space-separated values, exactly like CSS. `[ … ]` is
-**content** — a container's children, in source order. A node is
+**content** — a node's children, in source order. A node is
 `id |type| .class { style } [ children ]`; every part is optional. Nothing styles
 outside a `{ }`; nothing is drawn outside the canvas.
 
-**Two node kinds, like HTML.** A **box** is a box (`|box|`, `|group|`, …); a
-**string** is text *content* inside one. `"…"` is never a wrapped node — it is
-the text, exactly as text sits inside an element on a web page.
+**Two node kinds, like HTML.** A **box** is a drawn shape (`|block|`, `|box|`,
+`|oval|`, `|group|`, …) and may hold children; a **string** is text *content*
+inside or beside one. `"…"` is the text, exactly as text sits inside an element on
+a web page — now stylable in place (`"x" { color: red }`), but still a leaf, never
+a box.
 
 This document is complete: an implementer can build a conforming engine from it
-alone. Wire **routing** has its own contract — see [`WIRING.md`](WIRING.md).
+alone. **Link** routing has its own contract — see [`LINKING.md`](LINKING.md).
 
 ---
 
@@ -23,7 +25,7 @@ alone. Wire **routing** has its own contract — see [`WIRING.md`](WIRING.md).
 **Language** — 1 [Mental Model](#1-mental-model) · 2 [Lexical Syntax](#2-lexical-syntax) ·
 3 [Statements](#3-statements) · 4 [Selectors & the Cascade](#4-selectors--the-cascade) ·
 5 [Layout](#5-layout) · 6 [Positioning & Anchors](#6-positioning--anchors) ·
-7 [Shapes](#7-shapes) · 8 [Templates](#8-templates) · 9 [Wires](#9-wires)
+7 [Shapes](#7-shapes) · 8 [Templates](#8-templates) · 9 [Links](#9-links)
 
 **Reference** — 10 [Properties](#10-properties) · 11 [Colour, Variables & Defaults](#11-colour-variables--defaults) ·
 12 [Specificity](#12-specificity) · 13 [SVG Output](#13-svg-output) · 14 [CLI](#14-cli) ·
@@ -38,27 +40,27 @@ alone. Wire **routing** has its own contract — see [`WIRING.md`](WIRING.md).
 cat -> dog -> bird
 ```
 
-That's a complete diagram: three boxes, two arrows. Lini fills in the rest.
+That's a complete diagram: three boxes, two links. Lini fills in the rest.
 
 | Form | Means |
 |---|---|
 | `\|type\|` | A type — drawn as an **instance**, matched as a **rule**, extended as a **define**. Always in bars. |
 | `"…"` | Text content — a label, a cell, a note. |
 | `{ … }` | A **style block** — `key: value;` declarations. |
-| `[ … ]` | A **child list** — a container's contents. |
+| `[ … ]` | A **child list** — a node's contents. |
 | `.name` | A class — define it (`.hot { … }`), wear it (`\|box\| .hot`). |
 | `--name` | A themeable variable (`fill: --accent`). |
-| `a -> b` | A wire. |
+| `a -> b` | A link. |
 
 Three defaults make small diagrams trivial:
 
-- Omit the type → `|box|`.
+- Omit the type → `|box|` (a rounded, framed card).
 - Omit the text → the box's id is its label (`""` to suppress it).
-- Name an undeclared id in a wire → it's auto-created as a `|box|`.
+- Name an undeclared id in a link → it's auto-created as a `|box|`.
 
-**A file has three parts, in order: the stylesheet, the canvas, then the wires.**
+**A file has three parts, in order: the stylesheet, the canvas, then the links.**
 The stylesheet is one `{ }` block at the top — setup that draws nothing. After
-it come the instances, then the wires:
+it come the instances, then the links:
 
 ```
 {                                               // the stylesheet — setup only
@@ -69,7 +71,7 @@ it come the instances, then the wires:
 
 server |box|                                    // the canvas — id is the label
 client |box|
-server -> client "requests"                     // a wire, with a label
+server -> client "requests"                     // a link, with a label
 ```
 
 ---
@@ -77,15 +79,15 @@ server -> client "requests"                     // a wire, with a label
 ## 1. Mental Model
 
 A Lini file is the body of an implicit **root** container, in three parts —
-**stylesheet → canvas → wires** — and every statement belongs to exactly one:
+**stylesheet → canvas → links** — and every statement belongs to exactly one:
 
 | Part | Holds | Drawn? |
 |---|---|---|
-| **stylesheet** | one `{ }` block: scene config, rules, classes, defines, wire defaults | no — it styles |
+| **stylesheet** | one `{ }` block: scene config (incl. link & routing defaults), rules, classes, defines | no — it styles |
 | **canvas** | instances — boxes (`\|type\|` / an id) and text (`"…"`) | yes |
-| **wires** | `a -> b` connections | yes |
+| **links** | `a -> b` connections | yes |
 
-The old "is this drawn or styled?" question is gone: **styling lives in the
+The "is this drawn or styled?" question never arises: **styling lives in the
 stylesheet block; drawing lives on the canvas.** You never re-read a
 `name { … }` to learn which it was.
 
@@ -93,8 +95,8 @@ stylesheet block; drawing lives on the canvas.** You never re-read a
 
 - `{ … }` — **style**: `key: value;` declarations. The *only* place styling
   lives. A node's own `{ }`, a rule's body, the scene config — all declarations.
-- `[ … ]` — **content**: a container's children (boxes and text), then its
-  internal wires, in source order.
+- `[ … ]` — **content**: a node's children (boxes and text), then its
+  internal links, in source order.
 
 A drawn node is `id |type| .class { style } [ children ]`. Each part is optional,
 but a node needs at least an id, a type, or a class; bare `cat` is a default
@@ -107,25 +109,28 @@ but a node needs at least an id, a type, or a class; bare `cat` is a default
   bars hold the type alone; as a rule they hold a CSS selector over types and
   classes (`|table box|`, `|.sidebar box|`); see [§4](#4-selectors--the-cascade).
 - `.name` — a **class**. Defined bare (`.hot { … }`), worn after the type
-  (`|box| .hot`) or after a wire's endpoints (`a -> b .hot`) — a `.class` chain,
+  (`|box| .hot`) or after a link's endpoints (`a -> b .hot`) — a `.class` chain,
   never inside the bars.
 
 **Boxes and text.** A *box* has an id, a type, classes, a style block, and
-children. A *string* is bare text content — no id, type, classes, block, or
-children. A string in a box's `[ ]` (or trailing it) is that box's text (centred
-when it is the only child); a string on its own is a free-standing text node. To
-style or position text, put it in a box (a `|plain|` is the minimal one) —
-exactly like styling a web page's text by styling its element.
+children. A *string* is text content — no id, type, classes, or children, but it
+**may carry a style block** (`"x" { color: red; translate: 0 -6 }`). A string in a
+box's `[ ]` (or trailing it) is that box's text (centred when it is the only
+child); a string on its own is a free-standing text node. Text is a leaf: to give
+it children, a border, padding, a `pin`, or a wirable id, put it in a box (a
+`|block|` is the minimal one) — exactly like wrapping a web page's text in an
+element.
 
 **The file is the root container.** The stylesheet `{ }` is the root's own setup
 block; the canvas instances are its children (written bare — the file *is* its
-`[ ]`); the wires are its internal wires. Scene properties (`layout`, `gap`,
-`padding`, `fill`, `font-size`, …) sit in that block; inheritable ones (`font-*`,
-`color`) cascade to every node.
+`[ ]`); the links are its internal links. Scene properties (`layout`, `gap`,
+`padding`, `fill`, `font-size`, `link`, `routing`, …) sit in that block;
+inheritable ones (`font-*`, `color`, `link`, `clearance`, `routing`) cascade to
+every node and link.
 
 **Render order is source order; the cascade is whole-file.** Instances draw in
 the order written (later on top, pinned children above the flow; `layer:`
-overrides), and every rule applies to every instance. Wires are the one thing
+overrides), and every rule applies to every instance. Links are the one thing
 that needs no declaration: naming an id declared nowhere auto-creates it
 ([§3](#3-statements)).
 
@@ -161,10 +166,10 @@ says otherwise:
 |---|---|
 | `key: value` | `:` separates name and value; surrounding space optional, canonical is one space after (`radius: 5`). |
 | `\|…\|` | A type in bars. On an instance the bars hold a type alone (`oval`); in a rule selector a space is the descendant combinator (`table box`) and a part may be a class (`.sidebar box`); `::` is the define operator (`cat::oval`). Bars are paired; surrounding space at the boundary is not allowed. |
-| `.name` (class) | At the stylesheet top it is a class **definition** (`.hot { … }`). On an instance or wire it is a **worn class**, following the type or endpoints — **spaced** off an id/endpoint so it isn't a path (`cat .hot`, `a -> b .loud`), the rest of the chain **glued** (`.hot.loud`). |
-| `id.side` / `id.child` | **No space** — a wire endpoint path (`cat.right`, `kitchen.bowl`). |
+| `.name` (class) | At the stylesheet top it is a class **definition** (`.hot { … }`). On an instance or link it is a **worn class**, following the type or endpoints — **spaced** off an id/endpoint so it isn't a path (`cat .hot`, `a -> b .loud`), the rest of the chain **glued** (`.hot.loud`). |
+| `id.side` / `id.child` | **No space** — a link endpoint path (`cat.right`, `kitchen.bowl`). |
 | `--name` | A variable, in a value or at a statement start to declare one. |
-| wire op | `[marker?] line [marker?]`, glued, no internal space (`->`, `..>`, `<->`). |
+| link op | `[marker?] line [marker?]`, glued, no internal space (`->`, `..>`, `<->`). |
 | `[ … ]` | A child list. Paired; whitespace inside is insignificant. |
 
 `:` (single) always begins a declaration value; `::` (inside bars) always begins
@@ -190,7 +195,7 @@ and 8-digit forms carry alpha), CSS names (`red`, `cornflowerblue`), `rgb(…)`,
 own space — L/A in 0–1, C the chroma, H in degrees; folded to a hex at compile time,
 so it renders in every target), a `--name` variable reference, or `none`.
 Out-of-range channels are an error.
-Beyond a flat colour, a **paint** (`fill` / `stroke`) may be a **gradient** —
+Beyond a flat colour, a **paint** (`fill` / `stroke` / `link`) may be a **gradient** —
 `gradient(…)`, `linear-gradient(…)`, or `radial-gradient(…)` ([§11.3](#113-gradients));
 the built-in hue palette ([§11.2](#112-the-colour-palette)) is reached through
 ordinary `--name` references.
@@ -199,9 +204,9 @@ ordinary `--name` references.
 
 ## 3. Statements
 
-A file is **stylesheet → canvas → wires** ([§1](#1-mental-model)), and a
+A file is **stylesheet → canvas → links** ([§1](#1-mental-model)), and a
 container's body nests the same idea: a `{ }` style block, then a `[ ]` of
-children and internal wires.
+children and internal links.
 
 ### The stylesheet
 
@@ -212,28 +217,27 @@ root's setup block, so it additionally holds the file-global definitions:
 | Item | Form | Means |
 |---|---|---|
 | Scene config | `layout: grid;` | a declaration on the root |
+| Link / routing defaults | `link: #666;` `routing: orthogonal;` | declarations that cascade to every link ([§9](#9-links)) |
 | Variable | `--brand: #f60;` | a themeable variable |
 | Rule | `\|box\| { … }` | style every box (a CSS element selector, in bars) |
 | Descendant rule | `\|table box\| { … }` | style every box inside a table |
 | Class | `.hot { … }` | define class `hot` |
 | Define | `\|treat::box\| { … }` | a new type `treat`, base `box`, with its defaults |
-| Wire defaults | `-> { … }` | defaults for every wire (the wire glyph as selector) |
 
 ```
 {
-  layout: column;  gap: 16;  fill: --bg;
+  layout: column;  gap: 16;  fill: --bg;  link: #666;
   --brand: #ff6600;
   |box| { radius: 6; }
   .hot { stroke-width: 2; }
   |treat::box| { radius: 5; }
-  -> { stroke: #666; }
 }
 ```
 
 A bare type name is never a statement on its own — a type only ever appears in
 bars. `|treat::box|` reads "treat **is a** box"; the `::` sets a define apart
 from a plain reference (`|box|`) at a glance. Defines chain (`|panel::treat|`)
-and may carry intrinsic children ([§9](#9-wires)). Max inheritance depth 16;
+and may carry intrinsic children ([§9](#9-links)). Max inheritance depth 16;
 cycles are an error.
 
 ### Box declaration
@@ -244,7 +248,7 @@ cycles are an error.
 
 The **line is identity** — id, `|type|`, and the `.class`es. The **`{ }` is
 style**, the **`[ ]` is content** — children (boxes and text), then internal
-wires. A node leads with an id, a `|type|`, or a `.class` (any combination); the
+links. A node leads with an id, a `|type|`, or a `.class` (any combination); the
 style and content are optional.
 
 A box's **type lives in the bars**, its **classes follow them**: `|oval|`,
@@ -273,7 +277,7 @@ db |cyl| .primary { fill: #eef } [
 | `cat \|box\| ""` | box, **no** label. |
 | `cat \|box\| .bold.loud { padding: 5 }` | type + classes + own style. |
 | `garden \|group\| { … } [ … ]` | container with style and a body. |
-| `\|box\| "Load balancer"` | anonymous labelled box (can't be wired to). |
+| `\|box\| "Load balancer"` | anonymous labelled box (can't be linked to). |
 
 ### id-as-label
 
@@ -291,7 +295,7 @@ labelled box needs no id either: `|box| "Load balancer"`.
 
 ### Text content
 
-A string is a **text node**:
+A string is a **text node** — always a `<text>` leaf, never wrapped:
 
 - In a box's `[ ]` (or trailing a block-less box) it is that box's text — centred
   when it is the only in-flow child, else a flow child laid out by the box's
@@ -305,18 +309,23 @@ A string is a **text node**:
 - Multi-line text uses `\n`; the box sizes to the widest line, with a
   `font-size × 1.2` leading between lines (plus any `line-spacing`).
 
-A string carries **no block and no children** — text is content, not a box. To
-style or position it, wrap it in a box (`|plain| { color: red } "X"`) and set the
-property there; text properties then inherit down ([§10](#10-properties)).
+A string carries **no children** — text is a leaf, not a box — but it **may carry
+a style block** of text properties: `"X" { color: red; font-weight: bold;
+translate: 0 -6; rotate: 12 }`. Only text-valid properties apply (colour, every
+`font-*`, `opacity`, `letter-spacing`, `line-spacing`, `text-transform`,
+`text-decoration`, `translate`, `rotate`, `layer`, `href`, `title`); a box
+property (`pin`, `padding`, `width`, a border, children) needs a real box —
+wrap the text in a `|block|`. Set on the string the style applies to it directly;
+set on a containing box it cascades down ([§10](#10-properties)).
 
 ### Implicit nodes
 
-A root wire's single-segment endpoint naming an id declared nowhere in the file
+A root link's single-segment endpoint naming an id declared nowhere in the file
 auto-creates an empty `|box|` at the scene root with the id as its label — so
 `cat -> dog -> bird` is a complete three-box diagram. Declaring the id anywhere —
-before or after the wire — prevents auto-creation. If the id exists only deeper
-in the tree, nothing is created: the wire must use the full path, and the error
-suggests it. Body wires never auto-create.
+before or after the link — prevents auto-creation. If the id exists only deeper
+in the tree, nothing is created: the link must use the full path, and the error
+suggests it. Body links never auto-create.
 
 ### Declarations
 
@@ -337,7 +346,6 @@ CSS-shaped, wrapped in bars whenever they name a type:
 .hot { … }               // every node with class .hot (class selector — bare)
 |table box| { … }        // every box inside a table (descendant)
 |.sidebar box| { … }     // every box inside a .sidebar
--> { … }                 // wire defaults (the wire glyph is the selector)
 ```
 
 A **descendant selector** is two or more space-separated parts inside the bars;
@@ -350,10 +358,10 @@ single type or a single class — **compounds are not selectors**: a glued
 
 A **define** introduces a new type from a base: `|treat::box| { … }`. Its
 declarations are the type's defaults; an optional `[ ]` gives it intrinsic
-children (materialized per instance — see [§9](#9-wires)).
+children (materialized per instance — see [§9](#9-links)).
 
 A **class** is defined by `.name { … }` and **worn** by writing it after the
-type (`|box| .hot`) or after a wire's endpoints (`a -> b .hot`) — the same
+type (`|box| .hot`) or after a link's endpoints (`a -> b .hot`) — the same
 `.class` slot on both, never inside the bars.
 
 **Specificity** — the most specific source wins; ties break by **source order**
@@ -364,8 +372,8 @@ type (`|box| .hot`) or after a wire's endpoints (`a -> b .hot`) — the same
 3. **Class** (`.hot { }`)
 4. **The instance's own block** (`client |box| { fill: white }`) — wins
 
-For a wire: `-> { }` defaults → descendant/class rules → the wire's own
-declarations.
+For a link: cascaded `link*` / `clearance` / `routing` from its scope →
+descendant/class rules → the link's own declarations.
 
 Complex values (`translate: x y`, `padding: t r b l`) replace wholesale — the
 merge is per-property, not deep.
@@ -383,9 +391,9 @@ A container picks a mode with `layout`:
 | `layout: grid` | 2D grid — sized by `columns` / `rows`. |
 
 **Defaults:** every container — the root included — defaults to `layout: column`
-with `gap: 20`. A normal container pads its content by 20; so does the root, and
-its padding is the margin that frames the whole rendered scene — wires and
-labels included — out to the SVG edge. The frameless `|plain|` / `|row|` /
+with `gap: 20`. The default `|box|` pads its content by 20; so does the root, and
+its padding is the margin that frames the whole rendered scene — links and
+labels included — out to the SVG edge. The frameless `|block|` / `|row|` /
 `|column|` pad by 0 (see [§8](#8-templates)).
 
 ### Flex — `align` / `justify`
@@ -465,6 +473,7 @@ otherwise): a separator wants the cells flush against it. This is what lets
 | `columns` / `rows` | grid | Track lists (above). |
 | `divider` | all | Separators (above). |
 | `fill` | all | Body colour; on the root it is the **canvas** colour. |
+| `routing` | all | Routing strategy for links in this scope ([§9](#9-links)). |
 
 ---
 
@@ -509,17 +518,19 @@ to push one *beneath* the flow.
 ### `translate` — the universal nudge
 
 **`translate: x y`** shifts a node by (x, y) *after* it is placed. It works on
-**every** node — flow children, pinned children, the root alike — and is
-layout-neutral: siblings don't move, the parent doesn't grow, no size changes. It
-is CSS's standalone `translate`, baked into the node's origin (so a standalone SVG
-needs no transform variable); the canvas still includes the shifted node.
+**every** node — flow children, pinned children, text nodes, the root alike — and
+is layout-neutral: siblings don't move, the parent doesn't grow, no size changes.
+It is CSS's standalone `translate`, baked into the node's origin (so a standalone
+SVG needs no transform variable); the canvas still includes the shifted node.
 
 There is **no numeric coordinate property**. Because the parent's origin is its
 center, `pin: center` + `translate: x y` lands a child's center at parent-local
 (x, y) — explicit coordinates with no shape-size arithmetic.
 
-Positioning is a box's job — only a box carries `pin` and `translate`. To position
-a piece of text, wrap it in a `|plain|`.
+`translate` and `rotate` are the two positioning knobs that work on **any** node,
+text included — so a link label or a stray string can be nudged or turned in
+place. `pin` (which needs a parent anchor and takes a child out of the flow) is a
+**box** job; to pin text, wrap it in a `|block|`.
 
 ### Auto-sizing
 
@@ -542,8 +553,8 @@ toward the top, away from the larger bottom inset, exactly like CSS.
 Exceptions: a **text** node sizes to its glyphs (no padding), widened by
 `letter-spacing` and given `line-spacing` between `\n` lines; `|icon|` defaults to
 `icon-size` (24); `|line|` / `|poly|` / `|image|` / `|path|` require their geometry
-(`points` / `src` / `path`) and error without it. `|plain|` carries `padding: 0`,
-so a plain box sizes to its text exactly.
+(`points` / `src` / `path`) and error without it. `|block|` carries `padding: 0`,
+so a bare block sizes to its content exactly.
 
 Text width uses one advance per character (≈ 0.6 em). The default font is
 monospace, so this is essentially exact; a proportional `font-family` override
@@ -555,8 +566,8 @@ makes it approximate until embedded font metrics land ([§19](#19-deferred)).
 
 12 shape primitives. All accept position and visual properties; closed shapes also
 accept `stack`, `rotate`, `shadow`. Text is **not** a shape — it is bare content
-([§3](#3-statements)); the frameless `|plain|` box ([§8](#8-templates)) is what you
-reach for when text needs an id, a class, or a wire.
+([§3](#3-statements)); the frameless `|block|` box ([§8](#8-templates)) is what
+you reach for when text needs an id, a class, a link, or box layout.
 
 **Dimensions** use `width` / `height`, each defaulting to `auto` (content +
 padding, **border-box** — see [§6](#6-positioning--anchors)). They are always
@@ -565,7 +576,7 @@ box; equal dimensions (or an empty `|oval|`) make a circle.
 
 | Primitive | Required | Notes |
 |---|---|---|
-| `\|box\|` | size (auto) | The default; rounded (`radius: 6`). `\|rect\|` for sharp corners. |
+| `\|block\|` | size (auto) | The base rectangle — frameless (no fill/stroke, `radius: 0`, `padding: 0`), like a `div`. `\|box\|` frames + rounds it, `\|rect\|` frames it sharp ([§8](#8-templates)). |
 | `\|oval\|` | size (auto) | Bbox ellipse; equal width/height = circle. |
 | `\|hex\|` | size (auto) | Regular hex, flat top/bottom. |
 | `\|slant\|` | size (auto) | Parallelogram; top edge shifted `tan(skew) × h`. `skew` in degrees, (-89, 89). |
@@ -582,23 +593,24 @@ box; equal dimensions (or an empty `|oval|`) make a circle.
 
 | Property | Forms | Effect |
 |---|---|---|
-| `stroke-style` | `solid` / `dashed` / `dotted` | Stroke pattern. Default `solid`. (`wavy` draws on wires — [§9](#9-wires); on closed shapes it is deferred — [§19](#19-deferred).) |
+| `stroke-style` | `solid` / `dashed` / `dotted` | Stroke pattern. Default `solid`. (`wavy` draws on links — [§9](#9-links); on closed shapes it is deferred — [§19](#19-deferred).) |
 | `stack` | `N` / `dx dy` | Draw an offset duplicate behind the shape. Scalar `N` = `N -N`. |
 | `rotate` | `N` degrees | Rotate around the bbox center. |
 | `shadow` | `N` / `dx dy` / `dx dy blur` / `dx dy blur color` | Drop shadow via SVG `<filter>`. Scalar `N` = offset `N N`, blur `N`; tint defaults to `--lini-shadow-color`. |
 
-### Markers (on `|line|` and wires)
+### Markers (on `|line|` and links)
 
 | Property | Effect |
 |---|---|
 | `marker: X` | Both ends. |
-| `marker-start: X` | Start end (wire source). |
-| `marker-end: X` | End end (wire target). |
+| `marker-start: X` | Start end (link source). |
+| `marker-end: X` | End end (link target). |
 
 Values: `none`, `arrow`, `dot`, `diamond`, `crow`. Markers scale with
-`stroke-width`, floor 5 px; color follows the stroke. `|line|` is bare by default —
-write `|line| { marker-end: arrow }` for a one-shot arrow. For wires the operator
-picks markers (see [§9](#9-wires)). Source order wins: `marker: arrow;
+`stroke-width` (on a link, with `link-width`), floor 5 px; colour follows the
+stroke / link colour. `|line|` is bare by default — write
+`|line| { marker-end: arrow }` for a one-shot arrow. For links the operator
+picks markers (see [§9](#9-links)). Source order wins: `marker: arrow;
 marker-end: dot` → start arrow, end dot.
 
 ---
@@ -606,22 +618,28 @@ marker-end: dot` → start arrow, end dot.
 ## 8. Templates
 
 Built-in types — each a bundle over a shape base, named because the pattern is
-common.
+common. **Every rectangular template is a bundle over `|block|`**; the non-rect
+shapes ([§7](#7-shapes)) are their own primitives.
 
 | Template | Base | Defaults | For |
 |---|---|---|---|
-| `\|plain\|` | `\|box\|` | `stroke: none; fill: none; padding: 0` | A frameless box — shows only its text, but is a real box (id, class, wirable). |
-| `\|rect\|` | `\|box\|` | `radius: 0` | A sharp-cornered box (a plain `\|box\|` rounds to `radius: 6`). |
-| `\|group\|` | `\|box\|` | `stroke: --group-stroke; stroke-style: dashed; stroke-width: 1; fill: --group-fill; radius: 6` | Dashed frame for a caption + children (padding via the default 20). |
-| `\|caption\|` | `\|plain\|` | `pin: top left; translate: 0 -18; color: --caption-color; font-size: 12; font-weight: normal` | A title, pinned just above the group's top-left corner. |
+| `\|box\|` | `\|block\|` | `fill: --fill; stroke: --stroke; stroke-width: 2; radius: 6; padding: 20` | The **default** node — a rounded, framed card. |
+| `\|rect\|` | `\|box\|` | `radius: 0` | A sharp-cornered box. |
+| `\|group\|` | `\|block\|` | `stroke: --group-stroke; stroke-style: dashed; stroke-width: 1; fill: --group-fill; radius: 6; padding: 20` | Dashed frame for a caption + children. |
+| `\|caption\|` | `\|block\|` | `pin: top left; translate: 0 -18; color: --caption-color; font-size: 12; font-weight: normal` | A title, pinned just above the group's top-left corner. |
 | `\|footer\|` | `\|caption\|` | `pin: bottom; translate: 0 17; font-size: 11; color: --footer-color` | A caption flipped to the bottom edge, centred and muted. |
-| `\|badge\|` | `\|box\|` | `pin: top right; translate: 6 -6; radius: 8; padding: 2 6; shadow: 2 3 3; stroke: none; fill: --accent; color: --accent-text; font-size: 11; font-weight: normal` | Corner pill — nudged out over the top-right corner, grows nothing. |
-| `\|note\|` | `\|box\|` | `radius: 2; shadow: 2; stroke: none; fill: --note-bg` | Sticky note (padding via the default 20). |
-| `\|row\|` | `\|plain\|` | `layout: row` | Frameless wrapper — children in a row. |
-| `\|column\|` | `\|plain\|` | `layout: column` | Frameless wrapper — children in a column. |
+| `\|badge\|` | `\|block\|` | `pin: top right; translate: 6 -6; radius: 8; padding: 2 6; shadow: 2 3 3; fill: --accent; color: --accent-text; font-size: 11; font-weight: normal` | Corner pill — nudged out over the top-right corner, grows nothing. |
+| `\|note\|` | `\|block\|` | `radius: 2; shadow: 2; fill: --note-bg; padding: 20` | Sticky note. |
+| `\|row\|` | `\|block\|` | `layout: row` | Frameless wrapper — children in a row. |
+| `\|column\|` | `\|block\|` | `layout: column` | Frameless wrapper — children in a column. |
 | `\|table\|` | `\|group\|` | `layout: grid; divider: all; gap: 0; padding: 4 8; fill: none; stroke: --stroke; stroke-style: solid; font-size: 14; font-weight: normal` | Ruled grid (see below). |
 
-**Captions.** A `|caption|` is a small `|plain|` **pinned** just above the group's
+The bare `|block|` is the base everything rectangular builds on: no fill, no
+stroke, `radius: 0`, `padding: 0` — a frameless box that shows only its content,
+but is a real box (id, class, children, wirable, positionable). It is what you
+reach for to wrap text that needs box behaviour.
+
+**Captions.** A `|caption|` is a small `|block|` **pinned** just above the group's
 top-left corner; a `|footer|` is the same flipped to the bottom. Both are
 out-of-flow overlays, so they never push the content, and their place is fixed by
 the template, not by where they sit among the children:
@@ -641,10 +659,10 @@ Style every caption globally with `|caption| { font-size: 16; font-weight: bold 
 
 **Tables.** A `|table|` is sugar — a `group` that is a grid, draws dividers, and
 has `gap: 0`. Cells are **bare text** that auto-flows into the tracks; there is no
-`|cell|` type and no per-cell styling — spacing comes from the track sizes
-(`columns` / `rows`) and the table's `padding`. The outer frame is the group
-border and the inner lines are `divider: all`, both painted by the table's
-`stroke*`; no edge is ever doubled.
+`|cell|` type and no per-cell styling beyond the text's own style block — spacing
+comes from the track sizes (`columns` / `rows`) and the table's `padding`. The
+outer frame is the group border and the inner lines are `divider: all`, both
+painted by the table's `stroke*`; no edge is ever doubled.
 
 ```
 basket |table| {
@@ -657,9 +675,9 @@ basket |table| {
 ```
 
 `fmt` knows the column count and pads the cells into aligned columns, so the flat
-form reads like the table it is. A cell that must be styled, placed, or wired is a
-**box** child (`|plain| { … } "X"` or `|box| { cell: 2 1; … }`) — its stroke will
-read against the dividers, which is exactly why bare text is the default.
+form reads like the table it is. A cell that must be placed or linked is a
+**box** child (`|block| { … } "X"` or `|box| { cell: 2 1; … }`); a cell that just
+needs a colour or weight can take its own style block (`"Apple" { color: --red-ink }`).
 
 Extend any template: `|panel::group| { stroke: --accent }`. Common shapes need no
 template:
@@ -672,20 +690,21 @@ template:
 
 ---
 
-## 9. Wires
+## 9. Links
 
-A wire connects scene-node ids with an operator (`a -> b`). **A wire is a
-relationship, not a container** — so it has no `[ ]`: its labels are trailing
-text, its style and `along:` live in a `{ }`, and its class trails. It is never
-written as a `|wire|` instance.
+A link connects scene-node ids with an operator (`a -> b`). Like every shape it
+has a `{ }` **style** and a `[ ]` of **content** — its content is its **labels**
+(text), placed along the route by `along:`. It is never written as a `|link|`
+instance; the operator draws it.
 
-Defaults for every wire — `stroke`, `stroke-width`, `stroke-style`, `clearance`,
-`marker*` — come from a **`-> { }`** rule: the wire glyph is the element selector
-for the routing layer. `clearance` additionally inherits from the root.
+Defaults for every link — `link` (colour), `link-width`, `link-style`,
+`clearance`, `marker*`, `routing` — **cascade** from the link's scope: set them on
+the root or any container's `{ }` and they reach every link in that scope, exactly
+as `color` reaches text. A link's own `{ }` overrides.
 
 ### Operators
 
-A wire op is `[start_marker?][line][end_marker?]`, no spaces:
+A link op is `[start_marker?][line][end_marker?]`, no spaces:
 
 | Part | Tokens |
 |---|---|
@@ -708,56 +727,82 @@ path (`a.b`).
 
 If the operator carries no markers, there are none on both ends. Explicit
 `marker:` / `marker-start:` / `marker-end:` override the operator (source order
-wins). The operator's line part sets the wire's `stroke-style` (`--` ⇒ `dashed`,
-`..` ⇒ `dotted`, `~` ⇒ `wavy`); an explicit `stroke-style:` overrides it.
+wins). The operator's line part sets the link's `link-style` (`--` ⇒ `dashed`,
+`..` ⇒ `dotted`, `~` ⇒ `wavy`); an explicit `link-style:` overrides it.
 
 ### Syntax
 
 ```
-endpoints op endpoints [op endpoints …] [.class…] [{ declarations }] "label" …
+endpoints op endpoints [op endpoints …] [.class…] [{ declarations }] [ "label"… | [ children ] ]
 ```
 
 `endpoints` is one or more endpoints joined by `&`:
 
 ```
-a -> b               // 1 wire
-a -> b -> c          // chain: 2 wires
+a -> b               // 1 link
+a -> b -> c          // chain: 2 links
 a -> b & c           // fan-out: a→b, a→c
 a & b -> c           // fan-in
-a & b -> c & d       // cartesian: 4 wires
+a & b -> c & d       // cartesian: 4 links
 a -> b -> c & d      // chain + fan
 ```
 
 Mixing operators in one chain is a parse error.
 
-A wire's **class follows** its endpoints (`a -> b .loud`), exactly as a node's
+A link's **class follows** its endpoints (`a -> b .loud`), exactly as a node's
 follows its type (`|box| .loud`) — one `.class` slot, after the identity, on
 both; a class never lives inside the bars. On a chain or fan, the class and the
-`{ }` apply to every wire the statement expands to.
+`{ }` apply to every link the statement expands to.
+
+### Styling
+
+`link` / `link-width` / `link-style` are the **link paint family**, parallel to
+`stroke` / `stroke-width` / `stroke-style` for shapes and `color` for text:
+
+| Property | Type | Default | Notes |
+|---|---|---|---|
+| `link` | colour | `--stroke` | The line colour. A link never uses `stroke`. |
+| `link-width` | number | 2 | Line thickness; markers scale with it. |
+| `link-style` | `solid` / `dashed` / `dotted` / `wavy` | from the operator | The dash pattern; usually set by the op (`-->` ⇒ dashed), overridable here. |
+
+All three cascade from the link's scope and override on the link's own `{ }`:
+
+```
+{ stroke: #444; link: #888; link-width: 1.5; clearance: 12; routing: orthogonal }
+a -> b { link: red; link-style: dashed }     // one link overrides
+```
+
+`clearance` (default 16) and `routing` (default `orthogonal`) cascade the same
+way; `marker*` come from the operator and override per link.
 
 ### Labels
 
-A wire's content is **bare-string labels**, trailing the head (`a -> b "watches"`,
-`a -> b "x" "y"`), distributed along the route by `along:` — the wire's track
-rule, exactly as `columns:` is a grid's:
+A link's content is **text** — trailing the head (`a -> b "watches"`,
+`a -> b "x" "y"`) as sugar, or the canonical `[ ]` form (`a -> b [ "watches" ]`),
+distributed along the route by `along:` — the link's track rule, exactly as
+`columns:` is a grid's:
 
 | Property | Notes |
 |---|---|
 | `along` | A list of `0..1` fractions along the whole drawn route, one per label (`along: 0.2 0.5 0.8`). Omitted → auto-distribute across the hops, so one label avoids junctions and several spread out. |
 
-`along:` and any wire style live in the `{ }`; the labels trail it:
+`along:` and any link style live in the `{ }`; the labels are the content:
 
 ```
-a -> b "watches"                            // trailing, auto-placed
-a -> b { along: 0.3 0.7 } "near a" "near b"
-a -> b .loud { stroke: red } "watches"      // class + style + label
+a -> b "watches"                                // trailing-label sugar, auto-placed
+a -> b [ "watches" ]                            // canonical — labels in [ ], like every shape
+a -> b { along: 0.3 0.7 } [ "near a" "near b" ]
+a -> b .loud { link: red } [ "watches" { translate: 0 -6 } ]   // class + style + a styled label
 ```
 
-A label is an obstacle to nothing, and may slide along the wire to keep clear of
-nodes and other labels; the wire never moves for it. Wire labels default to
-`font-size: 11` and are tinted by the wire's `color`. **There is no per-label
-styling** — labels are bare text placed by `along:` and styled together; a label
-is never a box, and a wire never carries shapes.
+Each label is an ordinary **styleable text leaf** ([§3](#3-statements)): give it
+its own `{ }` to nudge or turn it — `[ "watches" { translate: 0 -6; rotate: 12 } ]`.
+A label is an obstacle to nothing, and may slide along the link to keep clear of
+nodes and other labels; the link never moves for it. Link labels default to
+`font-size: 11`, `font-weight: normal`, and are tinted by the link's `color` —
+each link carries those baked text defaults, cascading to its labels; set
+`font-size` / `color` on the link to restyle them all at once, or on a label to
+restyle one.
 
 ### Endpoints & scope
 
@@ -766,28 +811,28 @@ endpoint = ident { "." ident } [ "." side ]
 side     = top | bottom | left | right
 ```
 
-Every wire resolves in a **scope** — the scene root for top-level wires, the
-container's body for wires written inside one. An endpoint is a path walked from
+Every link resolves in a **scope** — the scene root for top-level links, the
+container's body for links written inside one. An endpoint is a path walked from
 that scope: the first segment names a node in the scope, each further segment a
 child of the previous, a final segment matching a side name forces that side.
 **There is no search**: a name not reachable this way is an error, and the error
 suggests full paths of same-named nodes —
-`wire endpoint 'bowl' not found at scene root; did you mean 'kitchen.counter.bowl'?`
+`link endpoint 'bowl' not found at scene root; did you mean 'kitchen.counter.bowl'?`
 
-| Endpoint (root wire) | Resolves to |
+| Endpoint (root link) | Resolves to |
 |---|---|
 | `cat` | root node `cat` |
 | `kitchen.counter.bowl` | exactly that path |
 | `kitchen.counter.bowl.left` | the same node, left side forced |
 
-Bodies are **sealed**: a body wire connects nodes of its own subtree only.
-Cross-container wires are written at the lowest level where both ends are visible —
+Bodies are **sealed**: a body link connects nodes of its own subtree only.
+Cross-container links are written at the lowest level where both ends are visible —
 usually the root. Without a side the router picks edges by geometry; with a side,
 that edge is forced.
 
-### Internal wires in a body
+### Internal links in a body
 
-A container's (or define's) `[ ]` may wire its own children — internal wires come
+A container's (or define's) `[ ]` may link its own children — internal links come
 after the children, in source order. In a define, ids are local and materialize
 per instance — the same sealed-body rule. From outside, the dot-path navigates in:
 
@@ -809,13 +854,20 @@ garden.outlet -> kitchen.inlet "carries"
 
 ### Routing
 
-Wires route **orthogonally** — horizontal and vertical runs through the free space
-between nodes, corners rounded. The router picks entry/exit sides unless an
-explicit `.side` forces one. `clearance` (default 16) is the minimum gap every wire
-keeps from nodes and from other wires.
+Links route **orthogonally** by default — horizontal and vertical runs through the
+free space between nodes, corners rounded. The router picks entry/exit sides unless
+an explicit `.side` forces one. `clearance` (default 16) is the minimum gap every
+link keeps from nodes and from other links.
+
+`routing` selects the strategy for a scope and cascades like `clearance`:
+`orthogonal` (the default and the only mode built today) routes by the contract
+below; `straight` and `curved` are named but deferred ([§19](#19-deferred)). It
+pairs with `layout` — `layout` places the nodes, `routing` routes the links
+between them — so a group can route its internals one way while the root routes
+another.
 
 The full routing contract — clearance, spacing, crossings, fan-out, self-loops —
-lives in [`WIRING.md`](WIRING.md), the source of truth for routing.
+lives in [`LINKING.md`](LINKING.md), the source of truth for routing.
 
 ---
 
@@ -831,7 +883,7 @@ values.
 | `fill` | color | `--fill` (closed shapes); `currentColor` on text; `--stroke` for icons; `--bg` on the root (the scene background) |
 | `color` | color | inherits — sets text/icon glyph colour for descendants; on text, an alias for `fill` |
 | `opacity` | 0..1 | 1 |
-| `radius` | number | 6 (`\|box\|` only; `\|rect\|` is `0`) |
+| `radius` | number | 0 (`\|block\|`); `\|box\|` rounds to 6 |
 | `rotate` | degrees | 0 |
 | `skew` | degrees | 15 (`\|slant\|` only) |
 | `shadow` | `N` / `dx dy` / `dx dy blur` / `dx dy blur color` | off |
@@ -839,35 +891,51 @@ values.
 
 `color` cascades through the SVG via native `currentColor`: set it on a container
 to recolour every descendant's text that doesn't override. Use `color` for
-*labels*, `fill` for *bodies*. Both `fill` and `stroke` accept a **gradient** as
-well as a flat colour ([§11.3](#113-gradients)).
+*labels*, `fill` for *bodies*. `fill`, `stroke`, and `link` all accept a
+**gradient** as well as a flat colour ([§11.3](#113-gradients)).
 
 ### Stroke
 
 | Property | Type | Default |
 |---|---|---|
-| `stroke` | color | `--stroke` (the outline/line/wire colour) |
+| `stroke` | color | `--stroke` (a shape's outline / a `\|line\|`'s colour) |
 | `stroke-width` | number | 2 (`\|group\|` is `1`) |
 | `stroke-style` | `solid` / `dashed` / `dotted` | `solid` |
+
+### Links
+
+| Property | Type | Default | Notes |
+|---|---|---|---|
+| `link` | color | `--stroke` | A link's line colour ([§9](#9-links)). Cascades to links in scope. |
+| `link-width` | number | 2 | A link's thickness. |
+| `link-style` | `solid` / `dashed` / `dotted` / `wavy` | from the operator | A link's dash pattern. |
+| `clearance` | number | 16 | Min gap a link keeps from nodes and links. Cascades. |
+| `routing` | `orthogonal` (+ deferred) | `orthogonal` | Routing strategy for links in scope. Cascades. |
+| `along` | fraction list | auto | Label positions along the route. |
+| `marker` / `marker-start` / `marker-end` | marker | from the operator | Endpoint glyphs ([§7](#7-shapes)). |
+
+`link*`, `clearance`, and `routing` are **inheritable**: set on the root or a
+container, they reach every link in that scope; a link's own block overrides.
 
 ### Geometry & placement
 
 | Property | Type | Notes |
 |---|---|---|
 | `width`, `height` | number / `auto` | bbox dims, **border-box** (padding inside); a **floor** — at least this size, growing to `content + padding` when content is larger. Default `auto` = content + padding. `\|image\|` needs both. |
-| `pin` | `none` / `center` / edges / corners | Out-of-flow anchor — the child's matching point lands on the named parent point ([§6](#6-positioning--anchors)). |
-| `translate` | `x y` | Post-placement nudge of the node and its subtree; no reflow, grows nothing ([§6](#6-positioning--anchors)). |
+| `pin` | `none` / `center` / edges / corners | Out-of-flow anchor — the child's matching point lands on the named parent point ([§6](#6-positioning--anchors)). A **box** property. |
+| `translate` | `x y` | Post-placement nudge of the node and its subtree; no reflow, grows nothing ([§6](#6-positioning--anchors)). Works on **any** node, text included. |
 | `layer` | integer | Paint order; default 0 in flow, 1 when `pin`ned. Ties break on source order. |
 | `points` | `x y, x y, …` | Vertex list (`\|poly\|`, `\|line\|`). |
 | `path` | string | Raw SVG path (`\|path\|`, native top-left coords). |
 
-Geometry and placement are **box** properties — a bare text node carries none of
-them; wrap it in a `|plain|`.
+`pin`, `width`/`height`, `points`, and `path` are **box** properties — a bare text
+node carries none of them; `translate` and `rotate` are the exceptions and work on
+text too. To pin or size a piece of text, wrap it in a `|block|`.
 
 ### Spacing & layout
 
 `padding`, `gap`, `layout`, `align`, `justify`, `columns`, `rows`, `cell`, `span`,
-`divider` — see [Layout](#5-layout) and [Positioning](#6-positioning--anchors).
+`divider`, `routing` — see [Layout](#5-layout) and [Positioning](#6-positioning--anchors).
 Longhands `padding-top`/`-right`/`-bottom`/`-left` are accepted.
 
 ### Text
@@ -875,21 +943,22 @@ Longhands `padding-top`/`-right`/`-bottom`/`-left` are accepted.
 | Property | Default | Notes |
 |---|---|---|
 | `font-family` | `--font-family` | ident, string, or `--var`. |
-| `font-size` | 15 (body), 12 (caption), 11 (wire label) | px; a baked layout constant. |
-| `font-weight` | `--font-weight` (body `bold`; captions / wire labels `normal`) | `normal` / `bold`. |
+| `font-size` | 15 (body), 12 (caption), 11 (link label) | px; a baked layout constant. |
+| `font-weight` | `--font-weight` (body `bold`; captions / link labels `normal`) | `normal` / `bold`. |
 | `font-style` | `normal` | `normal` / `italic` / `oblique` — live CSS. |
 | `text-transform` | `none` | `uppercase` / `lowercase` / `capitalize` — live CSS (browser-applied; some SVG renderers ignore it). |
 | `text-decoration` | `none` | `underline` / `overline` / `line-through` — live CSS. |
 | `letter-spacing` | 0 | px between characters — positive widens, negative tightens. |
 | `line-spacing` | 0 | px added between the lines of a `\n` text block. |
 
-These all **inherit** — nearest ancestor wins, like CSS. Because a string is not a
-box, you never set a text property *on* the text; you set it on a containing box
-(or the root) and it cascades down. Style globally with `font-size: …` in the
-stylesheet, or scope it on a container. A global `font-family:` / `color:` works
-too, but for an **embeddable** diagram prefer the `--lini-font-family` /
-`--lini-text-color` variables (or `--theme`) — they stay live for a host page to
-re-theme, where a global property bakes its value into the `.lini` rule.
+These all **inherit** — nearest ancestor wins, like CSS. Set them on a containing
+box (or the root) and they cascade down, or set them directly on a string's own
+style block (`"x" { font-weight: bold }`) for that one text node. Style globally
+with `font-size: …` in the stylesheet, or scope it on a container. A global
+`font-family:` / `color:` works too, but for an **embeddable** diagram prefer the
+`--lini-font-family` / `--lini-text-color` variables (or `--theme`) — they stay
+live for a host page to re-theme, where a global property bakes its value into the
+`.lini` rule.
 
 `letter-spacing` and `line-spacing` are **baked spacing**, not CSS: they change
 **layout** — the text box grows to fit the wider glyphs or taller block — and the
@@ -901,17 +970,12 @@ CSS** with no baked default: they don't touch layout, ride the class / `<g>` /
 `.lini` rule, and a host page can override them. Set any in the global block to
 style the whole scene (it states on `.lini`), exactly like a global `font-size:`.
 
-### Markers & routing
-
-`marker`, `marker-start`, `marker-end` ([§7](#7-shapes)); `along` and `clearance`
-([§9](#9-wires) — `clearance` set on `-> {}` or the root, inherits to every wire).
-
 ### Media & accessibility
 
 | Property | Notes |
 |---|---|
 | `src` | image source (`\|image\|`). |
-| `link` | wraps this node or wire in `<a href>` — clickable. |
+| `href` | wraps this node or link in `<a href>` — clickable. |
 | `icon-variant` | `outlined` / `filled` / `rounded` / `sharp`. |
 | `title` | emits a `<title>` child (tooltip + screen-reader name). |
 
@@ -943,7 +1007,7 @@ Each colour is a `light-dark(LIGHT, DARK)` value, so one SVG carries both modes:
 --lini-muted         light-dark(#888, #9aa0a6)
 --lini-danger        light-dark(crimson, #ff6b6b)
 --lini-warn          light-dark(orange, #ffb454)
---lini-airwire       light-dark(crimson, #ff6b6b)
+--lini-stray         light-dark(crimson, #ff6b6b)    the stray-link fallback (LINKING.md, §Impossible layouts)
 --lini-note-bg       light-dark(#fff9c4, #4a4733)
 --lini-group-stroke  light-dark(rgba(0,0,0,.4), rgba(255,255,255,.4))
 --lini-group-fill    light-dark(rgba(0,0,0,.03), rgba(255,255,255,.05))
@@ -952,7 +1016,7 @@ Each colour is a `light-dark(LIGHT, DARK)` value, so one SVG carries both modes:
 --lini-font-family   ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace
 --lini-font-weight         bold
 --lini-caption-font-weight normal
---lini-wire-font-weight    normal
+--lini-link-font-weight    normal
 --lini-text-color    var(--lini-fg)
 --lini-shadow-color  light-dark(rgba(0,0,0,.2), rgba(0,0,0,.5))
 ```
@@ -961,7 +1025,7 @@ Each colour is a `light-dark(LIGHT, DARK)` value, so one SVG carries both modes:
 self-contained in either mode. The default font is a **monospace** stack: it reads
 crisp, and a fixed glyph advance keeps text-width estimation accurate without
 embedded font metrics ([§19](#19-deferred)). Body text is **bold**,
-captions and wire labels **normal**. A themed proportional `font-family` is allowed
+captions and link labels **normal**. A themed proportional `font-family` is allowed
 but makes text width approximate until embedded metrics land.
 
 **Dark/light is automatic.** The compiler emits `color-scheme: light dark` on
@@ -1017,8 +1081,8 @@ nothing.
 
 ### 11.3 Gradients
 
-`fill` and `stroke` accept a **gradient** in place of a flat colour. Stops are
-ordinary colours — palette `--name`s flip dark/light and bake, a raw `#hex` is a
+`fill`, `stroke`, and `link` accept a **gradient** in place of a flat colour. Stops
+are ordinary colours — palette `--name`s flip dark/light and bake, a raw `#hex` is a
 fixed literal.
 
 | Form | Result |
@@ -1065,22 +1129,23 @@ instead (`gap: 30;`, `|box| { radius: 4 }`, `font-size: 16;` in the stylesheet).
 
 ### 11.5 Layout constants (baked)
 
-Baked compile-time defaults — override per-node, on `-> { }` / the root, in rules,
-or in an instance block:
+Baked compile-time defaults — override per-node, on the root, in rules, or in an
+instance / link block:
 
 ```
-font-size 15    wire-font-size 11   caption-font-size 12
+font-size 15    link-font-size 11   caption-font-size 12
 stroke-width 2  radius 6            gap 20                 padding 20
-clearance 16    icon-size 24
+clearance 16    icon-size 24        link-width 2
 ```
 
-`font-size` is body text. Wire labels and captions carry their own baked defaults
+`font-size` is body text. Link labels and captions carry their own baked defaults
 (11 and 12); a global `font-size:` in the stylesheet sets body text and cascades,
-`-> { font-size: … }` sets wire labels, and `|caption| { font-size: … }` sets
-captions. `radius` rounds a `|box|` by default; `|rect|` resets it to 0.
+each link carries the `link-font-size` default for its labels (set `font-size:` on
+a link to change them), and `|caption| { font-size: … }` sets captions. `radius`
+rounds a `|box|` by default; `|block|` / `|rect|` are `0`.
 
 Padding defaults to 20 — including the root, whose padding frames the whole
-scene (the SVG margin) — with `|plain|` / `|row|` / `|column|` at 0 and a
+scene (the SVG margin) — with `|block|` / `|row|` / `|column|` at 0 and a
 `|table|` at `4 8` (its cell inset). It doubles as the minimum size of an
 empty box (`2 × padding`; see [Auto-sizing](#6-positioning--anchors)). **Every
 baked default — these constants and the template bundles — lives in one place**,
@@ -1109,8 +1174,8 @@ broken by **later wins** (source order):
 4. **The instance's own block** — `client |box| { fill: white }` — the most
    specific, beats everything above.
 
-For a wire: `-> { }` defaults → descendant/class rules → the wire's own
-declarations.
+For a link: cascaded `link*` / `clearance` / `routing` from its scope →
+descendant/class rules → the link's own declarations.
 
 Complex values (`translate: x y`, `padding: t r b l`) replace wholesale — the
 merge is per-property, not deep. A `pin`ned child ignores `cell:` — pinning takes
@@ -1133,12 +1198,12 @@ it out of the grid.
     .lini .lini-canvas { fill: var(--lini-bg); }
     .lini .lini-box { fill: var(--lini-fill); stroke: var(--lini-stroke); stroke-width: 2; }
     .lini .lini-style-hot { stroke-width: 3; }   /* one rule per class def */
-    .lini .lini-wire { stroke: var(--lini-stroke); stroke-width: 2; fill: none; }
+    .lini .lini-link { stroke: var(--lini-stroke); stroke-width: 2; fill: none; }
   </style>
-  <defs><!-- filters, clipPaths, icon symbols --></defs>
+  <defs><!-- filters, gradients, clipPaths, icon symbols --></defs>
   <rect class="lini-canvas" .../>   <!-- the scene background (--lini-bg) -->
   <g class="lini-scene"> <!-- scene tree --> </g>
-  <g class="lini-wires"> <!-- wires --> </g>
+  <g class="lini-links"> <!-- links --> </g>
 </svg>
 ```
 
@@ -1146,7 +1211,7 @@ it out of the grid.
 every side. The `lini-canvas` backing rect paints the scene background
 (`--lini-bg`) over the viewBox; a root `fill:` overrides it (`none` = transparent).
 
-**Paint compiles to CSS; geometry bakes.** Shape and wire paint defaults — and
+**Paint compiles to CSS; geometry bakes.** Shape and link paint defaults — and
 every rule — are stated once as class rules; only the classes actually used are
 emitted — and likewise only the `--lini-*` variables actually referenced, so the
 built-in palette ([§11.2](#112-the-colour-palette)) adds nothing unless a diagram
@@ -1157,7 +1222,8 @@ difference as an inline `style="…"` (inline beats class, mirroring
 always baked into attributes. Inherited text properties (`font-family`,
 `font-size`, `font-weight`, `color`, and any global `font-style` / `text-transform`
 / `text-decoration`) state on `.lini` and cascade natively; a node's own text
-property emits on its `<g>` and inherits to its subtree.
+property emits on its `<g>` (or directly on the `<text>`) and inherits to its
+subtree.
 
 **Box:**
 
@@ -1170,19 +1236,22 @@ property emits on its `<g>` and inherits to its subtree.
 ```
 
 Auto-classes: `lini-node` (every box); `lini-{name}` (the type and every
-type it inherits); `lini-style-{name}` (per worn class). With rotation, the
-transform becomes `translate(X,Y) rotate(N)`.
+type it inherits, down to `lini-block`); `lini-style-{name}` (per worn class).
+With rotation, the transform becomes `translate(X,Y) rotate(N)`.
 
 **Text** emits a bare `<text class="lini-text">…</text>` at its placed position —
 no wrapping `<g>`, so a table of N cells is N `<text>` elements, not N boxes. Its
-font and colour come by inheritance from the enclosing `<g>`.
+font and colour come by inheritance from the enclosing `<g>`; a string's own style
+block emits as a `style="…"` (and `translate` / `rotate` as a `transform`) on the
+`<text>` itself.
 
-**Wire:**
+**Link:**
 
 ```svg
-<g class="lini-wire lini-style-{class}" data-from="A" data-to="B">
+<g class="lini-link lini-style-{class}" data-from="A" data-to="B">
   <path d="…" fill="none" stroke="…"/>
   <polygon class="lini-marker lini-marker-arrow" …/>
+  <text class="lini-text" …>label</text>   <!-- placed by along: -->
 </g>
 ```
 
@@ -1227,13 +1296,13 @@ aligned columns, comments and blank lines preserved. `--check` exits 1 if it wou
 change anything; `--stdout` writes instead of rewriting.
 
 **`lini desugar`** prints the file fully **lowered to primitives** — every
-template/define instance becomes its base `|box|` (etc.) wearing a `.lini-*` class
+template/define instance becomes its base `|block|` (etc.) wearing a `.lini-*` class
 chain, each type's defaults become a generated `.lini-<type> { … }` class, the
-scene and `-> { }` wire defaults fill the global block, define bodies inline per
-instance, and id-as-label / auto-`along:` become explicit. It is the engine's true
-input — the rest of the pipeline only ever sees primitives, and the lowered form
-re-renders byte-identically. A teaching/debugging view; prints to stdout, never
-rewrites, comments not preserved.
+scene and cascaded link defaults fill the global block, define bodies inline per
+instance, and id-as-label / trailing-label / auto-`along:` become explicit. It is
+the engine's true input — the rest of the pipeline only ever sees primitives, and
+the lowered form re-renders byte-identically. A teaching/debugging view; prints to
+stdout, never rewrites, comments not preserved.
 
 Exit codes: 0 success · 1 parse/resolution error or `--check` reformat needed · 2
 I/O · 3 invalid CLI.
@@ -1247,17 +1316,16 @@ Format: `filename:line:col: error: <message>` (LSP-compatible).
 | Condition | Message |
 |---|---|
 | Duplicate id | `duplicate id 'X' (previously at L:C)` |
-| Unknown endpoint | `wire endpoint 'X' not found at <scope>` + `; did you mean 'A', 'B'?` |
-| Chain mixes operators | `wire chain mixes operators 'X' and 'Y'` |
-| Chain < 2 nodes | `wire requires at least two endpoints` |
+| Unknown endpoint | `link endpoint 'X' not found at <scope>` + `; did you mean 'A', 'B'?` |
+| Chain mixes operators | `link chain mixes operators 'X' and 'Y'` |
+| Chain < 2 nodes | `link requires at least two endpoints` |
 | Unknown type / class | `unknown type 'X'` / `unknown class '.X'` |
 | Inheritance cycle / depth | `cycle in 'X' → … → 'X'` / `'X' exceeds max inheritance depth (16)` |
 | Define shadows builtin | `'X' shadows a built-in type` |
 | Missing required property | `'\|line\|' requires 'points'` |
 | Unknown property | `unknown property 'foo' on '\|box\|'` (warning) |
-| Text carries a block / children | `text content takes no '{ }' or '[ ]' — wrap it in '\|plain\|' to style it` |
-| Wire carries `[ ]` | `a wire is not a container — it carries trailing labels, not a '[ ]'` |
-| Wire body non-declaration | `a wire's '{ }' holds only declarations (along:, stroke, …)` |
+| Text carries children | `text content takes no '[ ]' — wrap it in '\|block\|' to give it children` |
+| Box property on text | `'pin' needs a box — wrap the text in '\|block\|'` |
 | Declaration outside a block | `a declaration belongs in a '{ }' block` |
 | Bare type name | `a type only appears in bars — write '\|box\| { }' to style every box` |
 | Glued compound in a rule | `a selector part can't glue a type and a class — space them (descendant) or style '.hot'` |
@@ -1265,7 +1333,7 @@ Format: `filename:line:col: error: <message>` (LSP-compatible).
 | Spaced class chain | `classes glue into a chain — write '.hot.loud', no space` |
 | Style block holds non-decl | `a '{ }' style block holds only declarations` |
 | `[ ]` holds a declaration | `declarations go in '{ }', not '[ ]'` |
-| Children after internal wires | `a child must come before the body's wires` |
+| Children after internal links | `a child must come before the body's links` |
 | Label and `[ ]` both | `a node's content is the trailing label or the '[ ]', not both` |
 | Stylesheet after canvas | `the stylesheet '{ }' must come first, before any instance` |
 | Divider needs flush cells | `'divider' requires 'gap: 0'` |
@@ -1273,9 +1341,9 @@ Format: `filename:line:col: error: <message>` (LSP-compatible).
 | Invalid `oklch()` | `oklch expects (L, C, H) or (L, C, H, A) — L and A in 0..1, C ≥ 0, H in degrees` |
 | Gradient with < 2 stops | `gradient() needs at least two colour stops` |
 | `linear-gradient` without an angle | `linear-gradient needs an angle first, then ≥ 2 colour stops` |
-| Reserved identifier | `'left' is reserved (an endpoint side)` / `'wire' is reserved` |
+| Reserved identifier | `'left' is reserved (an endpoint side)` |
 | Empty statement | `a node needs an id or a type` |
-| `\|wire\|` as instance | `wires are drawn by operators, not the '\|wire\|' type` |
+| `\|link\|` / `\|node\|` as instance | `links are drawn by operators, not the '\|link\|' type` / `'node' is the umbrella concept — write '\|block\|' for the bare box` |
 | Grid out of range | `cell: 5 _ exceeds columns=3` |
 | Grid props off a grid | `'cell' is valid only on a grid` |
 | Missing `columns` | `'layout: grid' requires 'columns'` |
@@ -1289,33 +1357,33 @@ Format: `filename:line:col: error: <message>` (LSP-compatible).
 ## 16. Grammar (EBNF)
 
 ```
-file        = [ stylesheet ] canvas wires           # the three phases, in order
+file        = [ stylesheet ] canvas links           # the three phases, in order
 stylesheet  = "{" { setup_item } "}"                # the root's setup block; omit when empty
-setup_item  = decl | vardecl | rule | class_def | define | wire_rule | comment | newline
+setup_item  = decl | vardecl | rule | class_def | define | comment | newline
 canvas      = { node | comment | newline }          # instances, drawn in source order
-wires       = { wire | comment | newline }
+links       = { link | comment | newline }
 
 decl        = ident ":" values end
 vardecl     = css_var ":" values end                # --name : value
 rule        = "|" selector "|" style                # |box| { } , |table box| { }
 class_def   = "." ident style                       # .hot { } — a class definition
 define      = "|" ident "::" ident "|" body         # name :: base, optional children
-wire_rule   = "->" style                            # wire defaults — the wire glyph as selector
 
 node        = box | text
 box         = ( ident [ typeref ] [ classes ] | typeref [ classes ] | classes )
               [ style ] [ labels | children ]        # needs an id, a |type|, or a class
 typeref     = "|" ident "|"                          # a type alone — |oval|, a user type
 classes     = "." ident { "." ident }               # a worn class chain — .hot, .hot.loud
-text        = string                                # bare content; never a wrapped box
+text        = string [ style ]                       # bare content; a styleable leaf, never a box
 
 style       = "{" { decl } "}"                       # declarations only
-children    = "[" { node } { wire } "]"              # children, then internal wires
+children    = "[" { node } { link } "]"              # children, then internal links
 body        = [ style ] [ children ]                 # define / container body
-labels      = string { string }                      # trailing text → text children
+labels      = label { label }                        # trailing text → text children
+label       = string [ style ]                       # a styleable text leaf
 
-wire        = endpoints wire_op endpoints { wire_op endpoints }
-              [ classes ] [ style ] { string }        # worn class(es), style, labels
+link        = endpoints link_op endpoints { link_op endpoints }
+              [ classes ] [ style ] [ labels | children ]   # worn class(es), style, labels
 selector    = sel_part { sel_part }                  # whitespace-separated = descendant
 sel_part    = ident | "." ident                      # a single type or a single class
 endpoints   = endpoint { "&" endpoint }
@@ -1328,11 +1396,11 @@ value       = number | percent | string | hex | ident | css_var | call
 call        = ident "(" [ value { "," value } ] ")"
 css_var     = "--" ident { "-" ident }
 
-wire_op     = [ marker ] line [ marker ]
+link_op     = [ marker ] line [ marker ]
 line        = "-" | "--" | ".." | "~"
 marker      = "<" | ">" | "*" | "<>"
 
-ident       = ( letter | "_" ) { letter | digit | "_" | "-" }   # excludes reserved sides & 'wire'
+ident       = ( letter | "_" ) { letter | digit | "_" | "-" }   # excludes reserved sides
 number      = [ "+" | "-" ] ( digit+ [ "." digit+ ] | "." digit+ )
 percent     = number "%"                             # colour components only
 hex         = "#" hexdigit { hexdigit }              # 3, 4, 6, or 8 hex digits
@@ -1343,19 +1411,20 @@ comment     = "//" { not-newline } newline
 end         = newline | ";"
 ```
 
-**Single-pass LL(1).** The phase order (stylesheet → canvas → wires) plus the
+**Single-pass LL(1).** The phase order (stylesheet → canvas → links) plus the
 bracket-and-bars vocabulary make one token of lookahead enough — and *more* than
 the old grammar needed, because no statement's kind depends on a type set:
 
 - A leading `{` opens the stylesheet; inside it, `--name :` → variable, `ident :`
   → root declaration, `|…|` → a rule (or, with an inner `::`, a define), `.name` →
-  a class, `->` `{` → wire defaults.
+  a class.
 - On the canvas a statement is a `node` (an `ident`, `|type|`, or `.class` head, or
-  a `"…"` text) or — when an `ident` is followed by a wire-op, `&`, or a glued `.`
-  (an endpoint path) — a `wire`.
+  a `"…"` text) or — when an `ident` is followed by a link-op, `&`, or a glued `.`
+  (an endpoint path) — a `link`.
 - `{` is always style, `[` is always children, `|…|` is always a type. A string is
   self-delimiting, so consecutive strings are consecutive text nodes; strings
-  trailing a node or wire head are that node's labels, to the line's end.
+  trailing a node or link head are that node's labels, to the line's end. A `{`
+  immediately after a string is that string's own style block.
 
 **Adjacency tells a `.class` from a path:** a space before the `.` makes it a worn
 class (`a .hot` — node `a` with class `hot`), no space makes it an endpoint path
@@ -1381,27 +1450,30 @@ statement with one token of lookahead — no type-set prescan.
 
 **Desugar.** Lower all surface sugar to primitives + classes — the engine's true
 input. Each template/define instance becomes its base primitive wearing a `.lini-*`
-class chain (derived→base→primitive); a type's defaults and any `|type| { }` element
-rule fold into a generated `.lini-<type> { … }` class; a `|table box| { }`
-descendant rule rewrites to `|.lini-table .lini-box| { }`; define bodies inline per
-instance; the scene defaults (`layout`, `padding`, `gap`, `font-size`) and the
-`-> { }` wire defaults — present only when the scene has a wire — fill the global
-block; id-as-label, trailing labels,
-auto-`along:`, and root-wire auto-create become explicit. The pass is idempotent;
-type-system errors (cycle, depth > 16, a define shadowing a built-in) surface here.
+class chain (derived→base→primitive, down to `block` for every rectangular type); a
+type's defaults and any `|type| { }` element rule fold into a generated
+`.lini-<type> { … }` class; a `|table box| { }` descendant rule rewrites to
+`|.lini-table .lini-box| { }`; define bodies inline per instance; the scene
+defaults (`layout`, `padding`, `gap`, `font-size`) and the cascaded link defaults
+(`link`, `link-width`, `clearance`, `routing`) settle on the root; id-as-label,
+trailing labels, auto-`along:`, and root-link auto-create become explicit. The pass
+is idempotent; type-system errors (cycle, depth > 16, a define shadowing a built-in)
+surface here.
 
 **Resolve** (top-to-bottom):
 
 1. *Variables & rules:* merge visual-var defaults ← `--theme` ← `--name: value`;
-   compile the stylesheet's class rules and the `-> { }` wire defaults.
+   compile the stylesheet's class rules.
 2. *Scene tree:* each box is a primitive wearing `.lini-*` (type) and user classes;
    layer properties per [Specificity](#12-specificity) — the worn `.lini-*` classes
    as the type tier (folded base→derived), then descendant rules, user-class rules,
-   and the instance block; lift internal wires; build the path index. (Types,
+   and the instance block; lift internal links; build the path index. (Types,
    labels, define bodies, and auto-create were all lowered by **Desugar**.)
-3. *Wires:* resolve endpoints by scoped path walk with suggestion errors; merge
-   wire properties; cartesian-expand fan groups into one resolved wire per pair;
-   the operator's line sets `stroke-style` unless overridden.
+3. *Links:* resolve endpoints by scoped path walk with suggestion errors; merge
+   link properties — cascaded `link*` / `clearance` / `routing` from the scope
+   chain, then class rules, then the link's own block; cartesian-expand fan groups
+   into one resolved link per pair; the operator's line sets `link-style` unless
+   overridden.
 
 **Layout** (bottom-up): leaf bbox from `width`/`height` or defaults (text → its
 glyphs; box → content + `padding`; + half-`stroke-width` per side); arrange flow
@@ -1410,9 +1482,9 @@ slack; pin out-of-flow children to their parent anchor (the parent never grows f
 them); compute dividers; apply `padding`; apply each node's `translate`; `rotate`
 last.
 
-**Route wires.** Per [`WIRING.md`](WIRING.md) — orthogonal, clearance-respecting,
-deterministic. Place markers (sized `max(5, stroke-width × 4)`, tip on the
-endpoint) and wire labels at their `along:` fractions (auto-distributed when
+**Route links.** Per [`LINKING.md`](LINKING.md) — orthogonal, clearance-respecting,
+deterministic. Place markers (sized `max(5, link-width × 4)`, tip on the
+endpoint) and link labels at their `along:` fractions (auto-distributed when
 unset).
 
 **Render.** Depth-first emit SVG per [SVG Output](#13-svg-output): a box is a
@@ -1423,26 +1495,28 @@ unset).
 ## 18. Reserved Words
 
 Because a type only ever appears in bars (`|box|`) and an id is always bare, **type
-names are free as ids** — `box -> oval` is two ordinary nodes. Two small classes
+names are free as ids** — `block -> oval` is two ordinary nodes. Two small classes
 of word stay reserved:
 
 - **Sides:** `top`, `bottom`, `left`, `right` — peeled from endpoint paths
   (`a.left`), so they cannot be node ids. Ids are case-sensitive, so `Left` is free.
-- **`wire`** and the structural class names **`node`, `text`, `marker`, `canvas`,
-  `scene`, `cut`:** not instantiable types — wire defaults are set with `-> { }`,
+- **`node`, `link`,** and the structural class names **`text`, `marker`, `canvas`,
+  `scene`, `cut`:** not instantiable types — `node` is the umbrella concept (write
+  `|block|` for the bare box), links are drawn by operators (`|link|` is an error),
   and a define may not take one of these (its generated `.lini-<name>` would collide
-  with a built-in SVG class). `|wire|` is an error.
+  with a built-in SVG class).
 
 The **`.lini-*` class prefix** is reserved: desugar generates the type classes
-(`.lini-box`, `.lini-group`, `.lini-<define>`), so a user class may not begin
+(`.lini-block`, `.lini-box`, `.lini-<define>`), so a user class may not begin
 `lini-`. User classes are emitted `.lini-style-<name>`.
 
 Single quotes (`'`) are reserved and are not strings.
 
 Value keywords are **contextual**, not reserved as ids — `grid`, `row`, `column`,
-`start`, `center`, `end`, `stretch`, `evenly`, `none`, `auto` mean their keyword
-only after the property that expects them (`layout: grid`, `align: stretch`).
-Function names `rgb`, `rgba`, `hsl`, `repeat` are reserved only before `(`.
+`start`, `center`, `end`, `stretch`, `evenly`, `none`, `auto`, `orthogonal` mean
+their keyword only after the property that expects them (`layout: grid`,
+`routing: orthogonal`). Function names `rgb`, `rgba`, `hsl`, `repeat` are reserved
+only before `(`.
 
 ---
 
@@ -1450,10 +1524,12 @@ Function names `rgb`, `rgba`, `hsl`, `repeat` are reserved only before `(`.
 
 **Deferred** — named in the language, not built yet; the syntax is stable:
 
+- `routing: straight` / `routing: curved` — non-orthogonal link strategies
+  ([§9](#9-links); `orthogonal` is the only mode built today).
 - `stroke-style: wavy` rendering on shapes.
 - **gradient fills on text** — `fill: gradient(…)` on a label (gradients fill
   shapes today, [§11.3](#113-gradients)).
-- `radius` on non-box shapes (hex / diamond / slant / poly).
+- `radius` on non-rect shapes (hex / diamond / slant / poly).
 - numeric `font-weight` (`100…900`).
 - `|icon|` Material Symbols glyph embedding (currently a placeholder square).
 - embedded font metrics — the monospace default keeps the estimate close; a
@@ -1467,16 +1543,15 @@ Function names `rgb`, `rgba`, `hsl`, `repeat` are reserved only before `(`.
 ```
 {
   layout: grid;  columns: repeat(3);  gap: 40;  padding: 20;
-  fill: --bg;
+  fill: --bg;  link: #666;  clearance: 12;     // link + routing defaults, cascaded
 
-  -> { stroke: #666; clearance: 12; }
   |box| { radius: 4; }                         // round a touch less than the default 6
 
   --accent: #0a84ff;
 
   .thin { stroke: #444; }
   .bold { font-weight: bold; }
-  .loud { stroke: red; stroke-width: 2; }
+  .loud { link: red; link-width: 2; }
 
   |treat::box|  { radius: 5; }
   |nest::slant| { fill: gray; }
@@ -1522,7 +1597,7 @@ garden |group| {
 closet |room| { cell: 1 2 } "Closet"
 fridge |room| { cell: 2 2 } "Fridge"
 
-// wires — full paths from the wire's scope (here: the root)
+// links — full paths from the link's scope (here: the root)
 cat.right -> kitchen.counter.bowl.left -> kitchen.counter.water
 kitchen.counter.water -> garden.den.rabbit -> garden.den.carrot .loud
 cat <-> kitchen "watches"
@@ -1549,7 +1624,7 @@ dim |line| {
 ### Mermaid-fast
 
 ```
-cat -> dog -> bird     // 3 implicit boxes, 2 wires
+cat -> dog -> bird     // 3 implicit boxes, 2 links
 fox & owl -> mouse     // fan-in
 frog ~> pond           // wavy arrow
 fish --> bowl          // dashed arrow
