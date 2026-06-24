@@ -1,8 +1,7 @@
 // Lini's link styles, in colour — five little flows. Palette colours.
 // Source for assets/flow.png.
 {
-  layout: grid; columns: repeat(2); gap: 18 110; padding: 24; font-weight: normal;
-  link-width: 2;
+  layout: grid; columns: repeat(2); gap: 18 110; padding: 24; font-weight: normal; link-width: 2;
 
   .solid { stroke: --rose-ink; }
   .dashed { stroke: --sky-ink; }

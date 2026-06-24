@@ -4,15 +4,19 @@
   layout: column; gap: 20; padding: 26; font-weight: normal;
 
   // element rules: the lowest-specificity layer, one per shape type
-  |box|  { radius: 6; fill: --sky-wash; stroke: --sky-ink; color: --sky-ink; }
-  |oval| { stroke: --teal-ink; stroke-width: 2; fill: --teal-wash; color: --teal-ink; }
-  |alert::oval| { stroke: --red; fill: --red-wash; color: --red-ink; width: 84; height: 46; }
+  |box| { radius: 6; fill: --sky-wash; stroke: --sky-ink; color: --sky-ink; }
+  |oval| {
+    stroke: --teal-ink; stroke-width: 2; fill: --teal-wash; color: --teal-ink;
+  }
+  |alert::oval| {
+    stroke: --red; fill: --red-wash; color: --red-ink; width: 84; height: 46;
+  }
 
   // class bundles, applied with .name
-  .thin  { stroke-width: 1; }
-  .bold  { font-weight: bold; }
+  .thin { stroke-width: 1; }
+  .bold { font-weight: bold; }
   .power { stroke: --red; stroke-width: 2.5; }
-  .warn  { stroke: --orange; stroke-width: 2; }
+  .warn { stroke: --orange; stroke-width: 2; }
   .ghost { opacity: 0.35; }
 }
 

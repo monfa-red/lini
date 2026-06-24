@@ -4,10 +4,11 @@
   layout: column; gap: 22; padding: 26; font-weight: normal;
 
   |panel::group| {
-    layout: column; gap: 10; padding: 14;
-    fill: --gray-wash; stroke: --gray-soft; radius: 8;
+    layout: column; gap: 10; padding: 14; fill: --gray-wash; stroke: --gray-soft; radius: 8;
   }
-  |tile::box| { fill: --sky-soft; stroke: --sky-ink; color: --sky-ink; radius: 6; }
+  |tile::box| {
+    fill: --sky-soft; stroke: --sky-ink; color: --sky-ink; radius: 6;
+  }
 }
 
 |block| { font-size: 18; font-weight: bold; } "Templates"
@@ -15,19 +16,19 @@
 upper |row| { gap: 22; align: start; } [
   // group with a caption (top edge) and a footer (bottom edge)
   profile |panel| [
-    |caption| "Profile"
+         |caption| "Profile"
     name |tile| "Ada Lovelace"
     role |tile| { fill: --teal-soft; stroke: --teal-ink; color: --teal-ink; } "Engineer"
-    |footer| "since 1843"
+         |footer| "since 1843"
   ]
   // row + column nested inside a group
-  nested |panel| { layout: row; gap: 16; } [
+  nested  |panel| { layout: row; gap: 16; } [
     |caption| "row + column"
-    |row| [
+    |row|     [
       r1 |tile| { fill: --amber-soft; stroke: --amber-ink; color: --amber-ink; } "a"
       r2 |tile| { fill: --amber-soft; stroke: --amber-ink; color: --amber-ink; } "b"
     ]
-    |column| [
+    |column|  [
       c1 |tile| { fill: --rose-soft; stroke: --rose-ink; color: --rose-ink; } "p"
       c2 |tile| { fill: --rose-soft; stroke: --rose-ink; color: --rose-ink; } "q"
     ]
@@ -36,17 +37,21 @@ upper |row| { gap: 22; align: start; } [
 
 lower |row| { gap: 22; align: start; } [
   // a box whose content is text + a badge
-  svc |tile| { width: 150; height: 70; fill: --teal-soft; stroke: --teal-ink; color: --teal-ink; } [
+  svc    |tile| {
+    width: 150; height: 70; fill: --teal-soft; stroke: --teal-ink; color: --teal-ink;
+  } [
     "Service"
     |badge| "NEW"
   ]
-  |note| "Sticky note"
+         |note| "Sticky note"
   // a table draws dividers and flows bare text into its tracks
   basket |table| { columns: 80 56 70; stroke: --gray-ink; } [
     "Fruit" "Qty" "Note"
-    "Apple" "12" "fresh"
-    "Mango" "3" "ripe"
+    "Apple" "12"  "fresh"
+    "Mango" "3"   "ripe"
   ]
   // link wraps a shape in <a href>
-  docs |tile| { href: "https://example.com"; width: 96; height: 70; fill: --purple-soft; stroke: --purple-ink; color: --purple-ink; } "Docs"
+  docs   |tile| {
+    href: "https://example.com"; width: 96; height: 70; fill: --purple-soft; stroke: --purple-ink; color: --purple-ink;
+  } "Docs"
 ]

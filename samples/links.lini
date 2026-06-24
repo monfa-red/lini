@@ -4,8 +4,7 @@
   layout: column; gap: 26; padding: 24; font-weight: normal;
 
   |room::group| {
-    layout: column; gap: 10; padding: 12;
-    fill: --teal-wash; stroke: --teal-ink;
+    layout: column; gap: 10; padding: 12; fill: --teal-wash; stroke: --teal-ink;
   } [
     inlet  |box| { fill: --teal-soft; stroke: --teal-ink; color: --teal-ink; } "in"
     outlet |box| { fill: --teal-soft; stroke: --teal-ink; color: --teal-ink; } "out"
@@ -17,16 +16,25 @@
 
 ends |group| { layout: column; gap: 14; } [
   |caption| "markers"
-  |line| { points: -80 0, 80 0; marker-end: arrow; stroke: --sky-ink; stroke-width: 2; }
-  |line| { points: -80 0, 80 0; marker-start: dot; marker-end: dot; stroke: --green-ink; stroke-width: 2; }
-  |line| { points: -80 0, 80 0; marker-end: diamond; stroke: --purple-ink; stroke-width: 2; }
-  |line| { points: -80 0, 80 0; marker-end: crow; stroke: --orange-ink; stroke-width: 2; }
+  |line| {
+    points: -80 0, 80 0; marker-end: arrow; stroke: --sky-ink; stroke-width: 2;
+  }
+  |line| {
+    points: -80 0, 80 0; marker-start: dot; marker-end: dot; stroke: --green-ink; stroke-width: 2;
+  }
+  |line| {
+    points: -80 0, 80 0; marker-end: diamond; stroke: --purple-ink; stroke-width: 2;
+  }
+  |line| {
+    points: -80 0, 80 0; marker-end: crow; stroke: --orange-ink; stroke-width: 2;
+  }
 ]
 
 // each |room| materialises its own inlet -> outlet link from the define body
 rooms |row| { gap: 64; } [
-  |caption| "internal links"
-  garden  |room| "Garden"
-  kitchen |room| "Kitchen"
+          |caption| "internal links"
+  garden  |room|    "Garden"
+  kitchen |room|    "Kitchen"
 ]
+
 rooms.garden.outlet -> rooms.kitchen.inlet "carries"

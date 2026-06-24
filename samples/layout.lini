@@ -7,8 +7,10 @@
 
 // pin: lift a child out of flow and centre it on a named point of the parent
 anchors |group| { layout: column; gap: 8; } [
-  |caption| "pin"
-  pins |box| { width: 210; height: 150; fill: --sky-wash; stroke: --sky-ink; radius: 8; } [
+       |caption| "pin"
+  pins |box| {
+    width: 210; height: 150; fill: --sky-wash; stroke: --sky-ink; radius: 8;
+  } [
     |dot| { pin: center; color: --teal-ink; } "center"
     |dot| { pin: top left; color: --rose-ink; } "TL"
     |dot| { pin: top; color: --rose-ink; } "T"
@@ -23,13 +25,17 @@ anchors |group| { layout: column; gap: 8; } [
 
 // translate: a flow nudge, a tucked-in badge, and exact centre placement
 moves |group| { layout: column; gap: 14; } [
-  |caption| "translate"
-  |row| { gap: 14; align: center; } [
+       |caption| "translate"
+       |row| { gap: 14; align: center; } [
     a |box| { fill: --amber-soft; stroke: --amber-ink; color: --amber-ink; } "A"
-    b |box| { fill: --amber-soft; stroke: --amber-ink; color: --amber-ink; translate: 0 16; } "nudged"
+    b |box| {
+      fill: --amber-soft; stroke: --amber-ink; color: --amber-ink; translate: 0 16;
+    } "nudged"
     c |box| { fill: --amber-soft; stroke: --amber-ink; color: --amber-ink; } "C"
   ]
-  card |box| { width: 140; height: 74; fill: --purple-wash; stroke: --purple-ink; color: --purple-ink; } [
+  card |box| {
+    width: 140; height: 74; fill: --purple-wash; stroke: --purple-ink; color: --purple-ink;
+  } [
     "Card"
     |badge| { translate: -4 4; } "9"
     |block| { pin: center; translate: 0 24; color: --muted; } "id 42"
@@ -40,7 +46,13 @@ moves |group| { layout: column; gap: 14; } [
 spacing |group| { layout: column; gap: 10; } [
   |caption| "padding"
   |box| { fill: --green-soft; stroke: --green-ink; color: --green-ink; } "scalar"
-  |box| { padding: 4 14; fill: --green-soft; stroke: --green-ink; color: --green-ink; } "v h"
-  |box| { padding: 2 8 16 24; fill: --green-soft; stroke: --green-ink; color: --green-ink; } "t r b l"
-  |box| { radius: 12; fill: --green-soft; stroke: --green-ink; color: --green-ink; } "radius 12"
+  |box| {
+    padding: 4 14; fill: --green-soft; stroke: --green-ink; color: --green-ink;
+  } "v h"
+  |box| {
+    padding: 2 8 16 24; fill: --green-soft; stroke: --green-ink; color: --green-ink;
+  } "t r b l"
+  |box| {
+    radius: 12; fill: --green-soft; stroke: --green-ink; color: --green-ink;
+  } "radius 12"
 ]

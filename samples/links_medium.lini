@@ -2,8 +2,7 @@
 // common linking pattern at once.
 
 {
-  layout: row; gap: 40;
-  clearance: 12;
+  layout: row; gap: 40; clearance: 12;
   .loud { stroke: red; }
   .quiet { stroke: blue; }
   .happy { stroke: green; }

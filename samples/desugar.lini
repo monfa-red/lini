@@ -1,11 +1,13 @@
 {
   layout: row; gap: 30;
-  |chip::box| { radius: 12; fill: --sky-wash; stroke: --sky-ink; color: --sky-ink; }
+  |chip::box| {
+    radius: 12; fill: --sky-wash; stroke: --sky-ink; color: --sky-ink;
+  }
 }
 
 api |group| [
-  |caption| "API"
-  health |chip| "OK"
-  |badge| "v2"
+         |caption| "API"
+  health |chip|    "OK"
+         |badge|   "v2"
 ]
-db |cyl|
+db  |cyl|

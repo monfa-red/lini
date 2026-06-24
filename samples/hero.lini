@@ -1,8 +1,7 @@
 // The Lini hero — a colourful service map. Palette colours, a gradient entry
 // point, mixed link styles. Source for assets/hero.png.
 {
-  layout: column; gap: 52; padding: 30; font-weight: normal;
-  link: --gray; link-width: 2; clearance: 16;
+  layout: column; gap: 52; padding: 30; font-weight: normal; link: --gray; link-width: 2; clearance: 16;
 
   // tier looks — soft pastel fill, ink text + stroke
   |edge::box| { fill: --sky-wash; stroke: --sky-ink; color: --sky-ink; }
