@@ -9,11 +9,11 @@ input_file: samples/flow.lini
     .lini .lini-canvas { fill: white; }
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
-    .lini .lini-red { fill: #fde9ec; stroke: #ac3a5c; color: #ac3a5c; }
-    .lini .lini-sky { fill: #dff2f9; stroke: #0079a6; color: #0079a6; }
-    .lini .lini-teal { fill: #dff4f1; stroke: #008279; color: #008279; }
-    .lini .lini-purple { fill: #ecedfe; stroke: #6356be; color: #6356be; }
-    .lini .lini-orange { fill: #f7eddd; stroke: #985900; color: #985900; }
+    .lini .lini-red { fill: #ffe7ed; stroke: #851f47; color: #851f47; }
+    .lini .lini-sky { fill: #daf4fd; stroke: #005a83; color: #005a83; }
+    .lini .lini-teal { fill: #d9f5f2; stroke: #00635b; color: #00635b; }
+    .lini .lini-purple { fill: #ececff; stroke: #483a98; color: #483a98; }
+    .lini .lini-orange { fill: #f9edd7; stroke: #724100; color: #724100; }
     .lini .lini-wire { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-wire-dashed { stroke-dasharray: 8,8; }
     .lini .lini-wire-dotted { stroke-dasharray: 2,4; }
@@ -21,16 +21,16 @@ input_file: samples/flow.lini
     .lini .lini-cut-bg { fill: white; stroke: none; }
     .lini .lini-cut { fill: black; stroke: none; }
     .lini .lini-marker { fill: #444; stroke: none; }
-    .lini .lini-style-solid { stroke: #ac3a5c; }
-    .lini .lini-style-solid .lini-marker { fill: #ac3a5c; }
-    .lini .lini-style-dashed { stroke: #0079a6; }
-    .lini .lini-style-dashed .lini-marker { fill: #0079a6; }
-    .lini .lini-style-dotted { stroke: #008279; }
-    .lini .lini-style-dotted .lini-marker { fill: #008279; }
-    .lini .lini-style-wavy { stroke: #6356be; }
-    .lini .lini-style-wavy .lini-marker { fill: #6356be; }
-    .lini .lini-style-thick { stroke: #985900; stroke-width: 3; }
-    .lini .lini-style-thick .lini-marker { fill: #985900; }
+    .lini .lini-style-solid { stroke: #851f47; }
+    .lini .lini-style-solid .lini-marker { fill: #851f47; }
+    .lini .lini-style-dashed { stroke: #005a83; }
+    .lini .lini-style-dashed .lini-marker { fill: #005a83; }
+    .lini .lini-style-dotted { stroke: #00635b; }
+    .lini .lini-style-dotted .lini-marker { fill: #00635b; }
+    .lini .lini-style-wavy { stroke: #483a98; }
+    .lini .lini-style-wavy .lini-marker { fill: #483a98; }
+    .lini .lini-style-thick { stroke: #724100; stroke-width: 3; }
+    .lini .lini-style-thick .lini-marker { fill: #724100; }
   </style>
   <defs/>
   <rect class="lini-canvas" x="-157" y="-202.5" width="314" height="405"/>

@@ -13,11 +13,11 @@ input_file: samples/gradient.lini
     .lini .lini-card { stroke: none; color: white; font-weight: normal; }
   </style>
   <defs>
-    <linearGradient id="lini-gradient-1" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#00beb3"/><stop offset="100%" stop-color="#68a7f6"/></linearGradient>
-    <linearGradient id="lini-gradient-2" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#e78198"/><stop offset="50%" stop-color="#d19a28"/><stop offset="100%" stop-color="#21b6dd"/></linearGradient>
-    <linearGradient id="lini-gradient-3" gradientTransform="rotate(0 0.5 0.5)"><stop offset="0%" stop-color="#68a7f6"/><stop offset="100%" stop-color="#9c97f4"/></linearGradient>
-    <radialGradient id="lini-gradient-4"><stop offset="0%" stop-color="#9c97f4"/><stop offset="100%" stop-color="#e78198"/></radialGradient>
-    <linearGradient id="lini-gradient-5" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#00beb3"/><stop offset="100%" stop-color="#9c97f4"/></linearGradient>
+    <linearGradient id="lini-gradient-1" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#00b8ad"/><stop offset="100%" stop-color="#61a1f1"/></linearGradient>
+    <linearGradient id="lini-gradient-2" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#e07a98"/><stop offset="50%" stop-color="#c69610"/><stop offset="100%" stop-color="#00afd8"/></linearGradient>
+    <linearGradient id="lini-gradient-3" gradientTransform="rotate(0 0.5 0.5)"><stop offset="0%" stop-color="#61a1f1"/><stop offset="100%" stop-color="#9691ef"/></linearGradient>
+    <radialGradient id="lini-gradient-4"><stop offset="0%" stop-color="#9691ef"/><stop offset="100%" stop-color="#e07a98"/></radialGradient>
+    <linearGradient id="lini-gradient-5" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#00b8ad"/><stop offset="100%" stop-color="#9691ef"/></linearGradient>
     <linearGradient id="lini-gradient-6" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#f97770"/><stop offset="100%" stop-color="#9c93ff"/></linearGradient>
   </defs>
   <rect class="lini-canvas" x="-277.5" y="-171.5" width="555" height="343"/>
@@ -50,7 +50,7 @@ input_file: samples/gradient.lini
     </g>
     <g class="lini-node lini-row lini-plain lini-box" data-id="r3" transform="translate(0,108)">
       <rect x="-250.5" y="-36.5" width="501" height="73" rx="6" ry="6"/>
-      <g class="lini-node lini-card lini-box" style="fill: #eeeeee; stroke: url(#lini-gradient-5); stroke-width: 3; color: #696969" transform="translate(-129,0)">
+      <g class="lini-node lini-card lini-box" style="fill: #eeeeee; stroke: url(#lini-gradient-5); stroke-width: 3; color: #4d4d4d" transform="translate(-129,0)">
         <rect x="-120" y="-35" width="240" height="70" rx="6" ry="6"/>
         <text class="lini-text" x="0" y="0">gradient on stroke</text>
       </g>

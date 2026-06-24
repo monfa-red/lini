@@ -167,38 +167,6 @@ Loose suggestions, none settled:
 
 Probably best kept small (inline data, categorical x, auto y, palette). Build later.
 
-## Five colour tiers (idea — add `deep`)
-
-Move from four tiers to five by inserting a border/strong tone between `base` and
-`ink`, so `ink` stops doing double duty (border + text) and just means text:
-
-```
-wash · soft · base · deep · ink
- └──────┘     ▲     └──────┘
-  light      pivot    dark
-```
-
-`base` is the bare hue (the pivot); `soft`/`deep` are its light/dark neighbours;
-`wash`/`ink` the extremes. The name `deep` is settled.
-
-Light-mode tuning — rough starting points; **the visual feel matters more than the
-numbers**, tune by eye:
-
-| tier | now  | idea  | |
-|------|------|-------|--|
-| wash | 0.95 | 0.95  | |
-| soft | 0.86 | 0.86  | |
-| base | 0.72 | ~0.65 | down a bit, still well above 50% |
-| deep | —    | ~0.52 | a slightly lighter `ink` |
-| ink  | 0.52 | ~0.42 | darker than today |
-
-Dark mode mirrors the jobs (wash = deepest surface, ink = brightest), `deep` slotting
-between `base` and `ink` — tuned the same way, by eye.
-
-Ripple when built: regenerate the TIERS table, every swatch image, the conformance
-snapshots, and the palette docs. A real change, but contained. (Numeric `--teal-1..9`
-remains a separate, OKLCH-generated power-user option if ever wanted.)
-
 ## Image export — PNG / WebP (idea)
 
 `lini x.lini -o x.png` / `-o x.webp` straight from the CLI (format from the

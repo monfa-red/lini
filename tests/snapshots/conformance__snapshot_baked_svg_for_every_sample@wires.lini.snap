@@ -13,7 +13,7 @@ input_file: samples/wires.lini
     .lini .lini-plain { fill: none; stroke: none; }
     .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,4; }
     .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
-    .lini .lini-room { fill: #dff4f1; stroke: #008279; }
+    .lini .lini-room { fill: #d9f5f2; stroke: #00635b; }
     .lini .lini-wire { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-wire-label { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; font-size: 11px; font-weight: normal; }
     .lini .lini-cut-bg { fill: white; stroke: none; }
@@ -30,20 +30,20 @@ input_file: samples/wires.lini
     </g>
     <g class="lini-node lini-group lini-box" data-id="ends" transform="translate(0,-78)">
       <rect x="-101" y="-45" width="202" height="90" rx="6" ry="6"/>
-      <g class="lini-node lini-line" style="stroke: #0079a6" transform="translate(0,-24)">
+      <g class="lini-node lini-line" style="stroke: #005a83" transform="translate(0,-24)">
         <line x1="-80" y1="0" x2="76" y2="0"/>
-        <polygon class="lini-marker lini-marker-arrow" points="80,0 72,4 72,-4" style="fill: #0079a6"/>
+        <polygon class="lini-marker lini-marker-arrow" points="80,0 72,4 72,-4" style="fill: #005a83"/>
       </g>
-      <g class="lini-node lini-line" style="stroke: #008145" transform="translate(0,-8)">
+      <g class="lini-node lini-line" style="stroke: #00622d" transform="translate(0,-8)">
         <line x1="-76" y1="0" x2="76" y2="0"/>
-        <circle class="lini-marker lini-marker-dot" cx="-77" cy="0" r="3" style="fill: #008145"/>
-        <circle class="lini-marker lini-marker-dot" cx="77" cy="0" r="3" style="fill: #008145"/>
+        <circle class="lini-marker lini-marker-dot" cx="-77" cy="0" r="3" style="fill: #00622d"/>
+        <circle class="lini-marker lini-marker-dot" cx="77" cy="0" r="3" style="fill: #00622d"/>
       </g>
-      <g class="lini-node lini-line" style="stroke: #6356be" transform="translate(0,8)">
+      <g class="lini-node lini-line" style="stroke: #483a98" transform="translate(0,8)">
         <line x1="-80" y1="0" x2="76" y2="0"/>
-        <polygon class="lini-marker lini-marker-diamond" points="80,0 76,3.4 72,0 76,-3.4" style="fill: #6356be"/>
+        <polygon class="lini-marker lini-marker-diamond" points="80,0 76,3.4 72,0 76,-3.4" style="fill: #483a98"/>
       </g>
-      <g class="lini-node lini-line" style="stroke: #a74a00" transform="translate(0,24)">
+      <g class="lini-node lini-line" style="stroke: #833000" transform="translate(0,24)">
         <line x1="-80" y1="0" x2="76" y2="0"/>
         <path class="lini-marker lini-marker-crow" d="M 72 3 L 77.7639 0 L 72 -3 M 72 0 L 77.7639 0"/>
       </g>
@@ -56,11 +56,11 @@ input_file: samples/wires.lini
       <rect x="-126" y="-87" width="252" height="174" rx="6" ry="6"/>
       <g class="lini-node lini-room lini-group lini-box" data-id="garden" transform="translate(-79,0)">
         <rect x="-46.5" y="-86.5" width="93" height="173" rx="6" ry="6"/>
-        <g class="lini-node lini-box" data-id="inlet" style="fill: #99e1da; stroke: #008279; color: #008279" transform="translate(0,-46)">
+        <g class="lini-node lini-box" data-id="inlet" style="fill: #8edfd7; stroke: #00635b; color: #00635b" transform="translate(0,-46)">
           <rect x="-29" y="-27.5" width="58" height="55" rx="6" ry="6"/>
           <text class="lini-text" x="0" y="0">in</text>
         </g>
-        <g class="lini-node lini-box" data-id="outlet" style="fill: #99e1da; stroke: #008279; color: #008279" transform="translate(0,21)">
+        <g class="lini-node lini-box" data-id="outlet" style="fill: #8edfd7; stroke: #00635b; color: #00635b" transform="translate(0,21)">
           <rect x="-33.5" y="-27.5" width="67" height="55" rx="6" ry="6"/>
           <text class="lini-text" x="0" y="0">out</text>
         </g>
@@ -68,11 +68,11 @@ input_file: samples/wires.lini
       </g>
       <g class="lini-node lini-room lini-group lini-box" data-id="kitchen" transform="translate(79,0)">
         <rect x="-46.5" y="-86.5" width="93" height="173" rx="6" ry="6"/>
-        <g class="lini-node lini-box" data-id="inlet" style="fill: #99e1da; stroke: #008279; color: #008279" transform="translate(0,-46)">
+        <g class="lini-node lini-box" data-id="inlet" style="fill: #8edfd7; stroke: #00635b; color: #00635b" transform="translate(0,-46)">
           <rect x="-29" y="-27.5" width="58" height="55" rx="6" ry="6"/>
           <text class="lini-text" x="0" y="0">in</text>
         </g>
-        <g class="lini-node lini-box" data-id="outlet" style="fill: #99e1da; stroke: #008279; color: #008279" transform="translate(0,21)">
+        <g class="lini-node lini-box" data-id="outlet" style="fill: #8edfd7; stroke: #00635b; color: #00635b" transform="translate(0,21)">
           <rect x="-33.5" y="-27.5" width="67" height="55" rx="6" ry="6"/>
           <text class="lini-text" x="0" y="0">out</text>
         </g>
