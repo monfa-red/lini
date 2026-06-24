@@ -229,3 +229,38 @@ Open, not settled:
   the SVG via resvg for a first cut.
 
 Nice-to-have, not urgent. Build later.
+
+## Auto-layout (idea — `layout: auto`)
+
+Opt-in modes where the *layout* places the nodes and connectors stay dumb (a straight
+line or one curve), instead of the router doing the hard work. It inverts the default
+— here Lini places, you don't — and lives alongside `sequence` / `chart` as another
+per-container layout. Names and shape all open to explore.
+
+Sketch (tentative):
+
+- one `layout: auto` (or `layout: dag`), with a second rule picking the flavour, the
+  way charts might take a `direction`: `direction: radial | flow | column` —
+  - `radial` → the mindmap fan
+  - `flow` → layered DAG / flowchart (Sugiyama)
+  - `column` → tidy tree / org chart
+- under it, `[ ]` nesting reads as **structure** (tree/graph edges), not box
+  containment — a node's own child-layout (box → column) is superseded by the
+  auto-layout, you just pick the node's *shape*.
+- (a Sugiyama-ish DAG is roughly possible with a grid today, just manual and fiddly;
+  auto-layout would do the placement for you.)
+
+Two things here are **not** speculative — already true / already in the model, and the
+real foundation (could just as well be noted outside auto-layout):
+
+- **Composability.** Every shape is a container, layout is per-container, and wires
+  cross containers by dot-path. So a `flow` DAG with a `|chart|` node, next to a
+  `radial` mindmap, wired together — one SVG. Heterogeneous diagrams composed and
+  interconnected; nothing else does this.
+- **Context-aware routing.** Wires already route *inside* a group (root is just a
+  container — wiring doesn't have to live at the top). The new bit is choosing the
+  routing *strategy* from where the wire sits: orthogonal in a flow/manual container,
+  a dumb straight/curve inside an auto-layout. So a mindmap can hold a child with
+  orthogonally-wired internals, or vice versa — the sky's the limit.
+
+Build later.
