@@ -198,3 +198,34 @@ between `base` and `ink` — tuned the same way, by eye.
 Ripple when built: regenerate the TIERS table, every swatch image, the conformance
 snapshots, and the palette docs. A real change, but contained. (Numeric `--teal-1..9`
 remains a separate, OKLCH-generated power-user option if ever wanted.)
+
+## Image export — PNG / WebP (idea)
+
+`lini x.lini -o x.png` / `-o x.webp` straight from the CLI (format from the
+extension), so people don't have to pipe through an external resvg. Probably behind
+a cargo `raster` feature so the default binary stays lean — opt in for raster.
+
+Path (all pure Rust, no C):
+
+- rasterize the (baked) SVG with **`resvg`** → a `tiny-skia` Pixmap. Same renderer we
+  already point users at, so output matches it.
+- **PNG** is free — `Pixmap::encode_png()` is built in.
+- **WebP** via **`image-webp`**, lossless — the right mode for flat diagrams (lossy
+  smears edges/text, and lossy is also the variant that needs C/libwebp).
+
+Open, not settled:
+
+- **binary size** — measure, don't guess (`cargo bloat`, or build with/without the
+  feature and diff). The weight is `tiny-skia` + the font/shaping crates, not resvg
+  itself (its 76 KiB crate page is just source). Could be small — decide from the number.
+- **fonts** — resvg needs a font to draw text: bundle the monospace (a few hundred KB,
+  byte-reproducible) or use system fonts (no size, not reproducible). Reproducible
+  output leans bundle.
+- **one mode only** — a raster can't carry `light-dark()`, so it bakes to a single
+  theme (light default; `--theme dark` for dark). Auto dark/light is lost in a PNG.
+- **resolution** — needs a `--scale 2` / `--width N` knob (today's `resvg --zoom`).
+- **leaner alt** — draw straight to a tiny-skia Pixmap from the scene model (skip
+  resvg/usvg): lighter, fully reproducible, but reimplements the render backend. Reuse
+  the SVG via resvg for a first cut.
+
+Nice-to-have, not urgent. Build later.
