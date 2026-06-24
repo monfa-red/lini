@@ -278,7 +278,7 @@ fn inherited_text_prop_reset_to_default_is_emitted() {
     // ancestor, must still emit it on its own <g> — else the dropped
     // declaration leaves it inheriting the ancestor's value.
     let svg =
-        render_baked("crew |group| { font-size: 20 } [ reset |plain| { font-size: 13 } \"x\" ]\n");
+        render_baked("crew |group| { font-size: 20 } [ reset |block| { font-size: 13 } \"x\" ]\n");
     let g_line = svg
         .lines()
         .find(|l| l.contains("data-id=\"reset\""))

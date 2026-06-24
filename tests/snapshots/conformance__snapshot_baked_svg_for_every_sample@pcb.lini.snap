@@ -7,8 +7,9 @@ input_file: samples/pcb.lini
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 12px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
-    .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
+    .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
     .lini .lini-chip { stroke: none; color: white; }
     .lini .lini-pad { fill: #eccc97; stroke: none; color: #985900; }
     .lini .lini-passive { fill: #222428; stroke: none; color: #c9ced6; }
@@ -21,67 +22,67 @@ input_file: samples/pcb.lini
   </defs>
   <rect class="lini-canvas" x="-374" y="-325" width="748" height="650" style="fill: url(#lini-gradient-2)"/>
   <g class="lini-scene">
-    <g class="lini-node lini-chip lini-box" data-id="mcu" style="fill: url(#lini-gradient-1); font-size: 24px" transform="translate(0,0)">
+    <g class="lini-node lini-chip lini-box lini-block" data-id="mcu" style="fill: url(#lini-gradient-1); font-size: 24px" transform="translate(0,0)">
       <rect x="-90" y="-90" width="180" height="180" rx="5" ry="5"/>
       <text class="lini-text" x="0" y="0">MCU</text>
     </g>
-    <g class="lini-node lini-passive lini-box" data-id="c1" transform="translate(-300,-260)">
+    <g class="lini-node lini-passive lini-box lini-block" data-id="c1" transform="translate(-300,-260)">
       <rect x="-27" y="-21" width="54" height="42" rx="2" ry="2"/>
       <text class="lini-text" x="0" y="0">C</text>
     </g>
-    <g class="lini-node lini-pad lini-box" data-id="usb" transform="translate(-75,-260)">
+    <g class="lini-node lini-pad lini-box lini-block" data-id="usb" transform="translate(-75,-260)">
       <rect x="-75" y="-28" width="150" height="56" rx="6" ry="6"/>
       <text class="lini-text" x="0" y="0">USB-C</text>
     </g>
-    <g class="lini-node lini-passive lini-box" data-id="r1" transform="translate(150,-260)">
+    <g class="lini-node lini-passive lini-box lini-block" data-id="r1" transform="translate(150,-260)">
       <rect x="-27" y="-21" width="54" height="42" rx="2" ry="2"/>
       <text class="lini-text" x="0" y="0">R</text>
     </g>
-    <g class="lini-node lini-chip lini-box" data-id="rf" style="fill: #9c97f4" transform="translate(300,-260)">
+    <g class="lini-node lini-chip lini-box lini-block" data-id="rf" style="fill: #9c97f4" transform="translate(300,-260)">
       <rect x="-30" y="-30" width="60" height="60" rx="5" ry="5"/>
       <text class="lini-text" x="0" y="0">RF</text>
     </g>
-    <g class="lini-node lini-chip lini-box" data-id="flash" style="fill: #9c97f4" transform="translate(-300,-130)">
+    <g class="lini-node lini-chip lini-box lini-block" data-id="flash" style="fill: #9c97f4" transform="translate(-300,-130)">
       <rect x="-30" y="-30" width="60" height="60" rx="5" ry="5"/>
       <text class="lini-text" x="0" y="0">FLASH</text>
     </g>
-    <g class="lini-node lini-chip lini-box" data-id="pwr" style="fill: #e78198" transform="translate(-300,0)">
+    <g class="lini-node lini-chip lini-box lini-block" data-id="pwr" style="fill: #e78198" transform="translate(-300,0)">
       <rect x="-30" y="-30" width="60" height="60" rx="5" ry="5"/>
       <text class="lini-text" x="0" y="0">PWR</text>
     </g>
-    <g class="lini-node lini-passive lini-box" data-id="c2" transform="translate(-300,130)">
+    <g class="lini-node lini-passive lini-box lini-block" data-id="c2" transform="translate(-300,130)">
       <rect x="-27" y="-21" width="54" height="42" rx="2" ry="2"/>
       <text class="lini-text" x="0" y="0">C</text>
     </g>
-    <g class="lini-node lini-passive lini-box" data-id="osc" transform="translate(300,-130)">
+    <g class="lini-node lini-passive lini-box lini-block" data-id="osc" transform="translate(300,-130)">
       <rect x="-27" y="-21" width="54" height="42" rx="2" ry="2"/>
       <text class="lini-text" x="0" y="0">OSC</text>
     </g>
-    <g class="lini-node lini-chip lini-box" data-id="motor" style="fill: #21b6dd" transform="translate(300,0)">
+    <g class="lini-node lini-chip lini-box lini-block" data-id="motor" style="fill: #21b6dd" transform="translate(300,0)">
       <rect x="-30" y="-30" width="60" height="60" rx="5" ry="5"/>
       <text class="lini-text" x="0" y="0">MOTOR</text>
     </g>
-    <g class="lini-node lini-passive lini-box" data-id="r2" transform="translate(300,130)">
+    <g class="lini-node lini-passive lini-box lini-block" data-id="r2" transform="translate(300,130)">
       <rect x="-27" y="-21" width="54" height="42" rx="2" ry="2"/>
       <text class="lini-text" x="0" y="0">R</text>
     </g>
-    <g class="lini-node lini-passive lini-box" data-id="c3" transform="translate(-300,260)">
+    <g class="lini-node lini-passive lini-box lini-block" data-id="c3" transform="translate(-300,260)">
       <rect x="-27" y="-21" width="54" height="42" rx="2" ry="2"/>
       <text class="lini-text" x="0" y="0">C</text>
     </g>
-    <g class="lini-node lini-chip lini-box" data-id="adc" style="fill: #54bc86" transform="translate(-150,260)">
+    <g class="lini-node lini-chip lini-box lini-block" data-id="adc" style="fill: #54bc86" transform="translate(-150,260)">
       <rect x="-30" y="-30" width="60" height="60" rx="5" ry="5"/>
       <text class="lini-text" x="0" y="0">ADC</text>
     </g>
-    <g class="lini-node lini-chip lini-box" data-id="sens" style="fill: #00beb3" transform="translate(0,260)">
+    <g class="lini-node lini-chip lini-box lini-block" data-id="sens" style="fill: #00beb3" transform="translate(0,260)">
       <rect x="-30" y="-30" width="60" height="60" rx="5" ry="5"/>
       <text class="lini-text" x="0" y="0">SENS</text>
     </g>
-    <g class="lini-node lini-passive lini-box" data-id="r3" transform="translate(150,260)">
+    <g class="lini-node lini-passive lini-box lini-block" data-id="r3" transform="translate(150,260)">
       <rect x="-27" y="-21" width="54" height="42" rx="2" ry="2"/>
       <text class="lini-text" x="0" y="0">R</text>
     </g>
-    <g class="lini-node lini-chip lini-box" data-id="imu" style="fill: #d19a28; color: #985900" transform="translate(300,260)">
+    <g class="lini-node lini-chip lini-box lini-block" data-id="imu" style="fill: #d19a28; color: #985900" transform="translate(300,260)">
       <rect x="-30" y="-30" width="60" height="60" rx="5" ry="5"/>
       <text class="lini-text" x="0" y="0">IMU</text>
     </g>

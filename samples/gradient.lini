@@ -8,7 +8,7 @@
   }
 }
 
-|plain| { font-size: 18; } "Gradients"
+|block| { font-size: 18; } "Gradients"
 
 r1 |row| { gap: 16; } [
   |card| { fill: gradient(--teal, --blue); } "gradient(--teal, --blue)"

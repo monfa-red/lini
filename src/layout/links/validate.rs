@@ -570,7 +570,7 @@ mod tests {
     fn body(id: &str, cx: f64, cy: f64) -> PlacedNode {
         PlacedNode {
             id: Some(id.to_owned()),
-            shape: ShapeKind::Box,
+            shape: ShapeKind::Block,
             type_chain: Vec::new(),
             applied_styles: Vec::new(),
             label: None,

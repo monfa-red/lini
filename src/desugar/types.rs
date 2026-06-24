@@ -14,15 +14,15 @@ const MAX_INHERITANCE_DEPTH: usize = 16;
 /// Built-in templates and their base type (SPEC §8). Each is a bundle over a
 /// primitive (or, for `table`, over `group`).
 pub const TEMPLATES: &[(&str, &str)] = &[
-    ("plain", "box"),
+    ("box", "block"),
     ("rect", "box"),
-    ("group", "box"),
-    ("caption", "plain"),
+    ("group", "block"),
+    ("caption", "block"),
     ("footer", "caption"),
-    ("badge", "box"),
-    ("note", "box"),
-    ("row", "plain"),
-    ("column", "plain"),
+    ("badge", "block"),
+    ("note", "block"),
+    ("row", "block"),
+    ("column", "block"),
     ("table", "group"),
 ];
 
@@ -159,7 +159,9 @@ mod tests {
 
     #[test]
     fn primitive_has_empty_chain() {
-        assert!(chain("", "box").is_empty());
+        assert!(chain("", "block").is_empty());
+        // box is now a template over the bare block primitive.
+        assert_eq!(chain("", "box"), vec!["box"]);
     }
 
     #[test]

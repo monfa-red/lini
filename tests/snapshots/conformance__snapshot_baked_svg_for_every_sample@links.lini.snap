@@ -7,10 +7,10 @@ input_file: samples/links.lini
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
-    .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
-    .lini .lini-plain { fill: none; stroke: none; }
+    .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
     .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,4; }
     .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
     .lini .lini-room { fill: #dff4f1; stroke: #008279; }
@@ -24,11 +24,11 @@ input_file: samples/links.lini
   <defs/>
   <rect class="lini-canvas" x="-154.6" y="-193.5" width="335.9" height="387"/>
   <g class="lini-scene">
-    <g class="lini-node lini-plain lini-box" style="font-size: 18px; font-weight: bold" transform="translate(0,-159.5)">
-      <rect x="-129.6" y="-9" width="259.2" height="18" rx="6" ry="6"/>
+    <g class="lini-node lini-block" style="font-size: 18px; font-weight: bold" transform="translate(0,-159.5)">
+      <rect x="-129.6" y="-9" width="259.2" height="18" rx="0" ry="0"/>
       <text class="lini-text" x="0" y="0">Markers &amp; internal links</text>
     </g>
-    <g class="lini-node lini-group lini-box" data-id="ends" transform="translate(0,-78)">
+    <g class="lini-node lini-group lini-block" data-id="ends" transform="translate(0,-78)">
       <rect x="-101" y="-45" width="202" height="90" rx="6" ry="6"/>
       <g class="lini-node lini-line" style="stroke: #0079a6" transform="translate(0,-24)">
         <line x1="-80" y1="0" x2="76" y2="0"/>
@@ -47,39 +47,39 @@ input_file: samples/links.lini
         <line x1="-80" y1="0" x2="76" y2="0"/>
         <path class="lini-marker lini-marker-crow" d="M 72 3 L 77.7639 0 L 72 -3 M 72 0 L 77.7639 0"/>
       </g>
-      <g class="lini-node lini-caption lini-plain lini-box" transform="translate(-74.8,-56)">
-        <rect x="-25.2" y="-6" width="50.4" height="12" rx="6" ry="6"/>
+      <g class="lini-node lini-caption lini-block" transform="translate(-74.8,-56)">
+        <rect x="-25.2" y="-6" width="50.4" height="12" rx="0" ry="0"/>
         <text class="lini-text" x="0" y="0">markers</text>
       </g>
     </g>
-    <g class="lini-node lini-row lini-plain lini-box" data-id="rooms" transform="translate(0,81.5)">
-      <rect x="-126" y="-87" width="252" height="174" rx="6" ry="6"/>
-      <g class="lini-node lini-room lini-group lini-box" data-id="garden" transform="translate(-79,0)">
+    <g class="lini-node lini-row lini-block" data-id="rooms" transform="translate(0,81.5)">
+      <rect x="-126" y="-87" width="252" height="174" rx="0" ry="0"/>
+      <g class="lini-node lini-room lini-group lini-block" data-id="garden" transform="translate(-79,0)">
         <rect x="-46.5" y="-86.5" width="93" height="173" rx="6" ry="6"/>
-        <g class="lini-node lini-box" data-id="inlet" style="fill: #99e1da; stroke: #008279; color: #008279" transform="translate(0,-46)">
+        <g class="lini-node lini-box lini-block" data-id="inlet" style="fill: #99e1da; stroke: #008279; color: #008279" transform="translate(0,-46)">
           <rect x="-29" y="-27.5" width="58" height="55" rx="6" ry="6"/>
           <text class="lini-text" x="0" y="0">in</text>
         </g>
-        <g class="lini-node lini-box" data-id="outlet" style="fill: #99e1da; stroke: #008279; color: #008279" transform="translate(0,21)">
+        <g class="lini-node lini-box lini-block" data-id="outlet" style="fill: #99e1da; stroke: #008279; color: #008279" transform="translate(0,21)">
           <rect x="-33.5" y="-27.5" width="67" height="55" rx="6" ry="6"/>
           <text class="lini-text" x="0" y="0">out</text>
         </g>
         <text class="lini-text" x="0" y="67">Garden</text>
       </g>
-      <g class="lini-node lini-room lini-group lini-box" data-id="kitchen" transform="translate(79,0)">
+      <g class="lini-node lini-room lini-group lini-block" data-id="kitchen" transform="translate(79,0)">
         <rect x="-46.5" y="-86.5" width="93" height="173" rx="6" ry="6"/>
-        <g class="lini-node lini-box" data-id="inlet" style="fill: #99e1da; stroke: #008279; color: #008279" transform="translate(0,-46)">
+        <g class="lini-node lini-box lini-block" data-id="inlet" style="fill: #99e1da; stroke: #008279; color: #008279" transform="translate(0,-46)">
           <rect x="-29" y="-27.5" width="58" height="55" rx="6" ry="6"/>
           <text class="lini-text" x="0" y="0">in</text>
         </g>
-        <g class="lini-node lini-box" data-id="outlet" style="fill: #99e1da; stroke: #008279; color: #008279" transform="translate(0,21)">
+        <g class="lini-node lini-box lini-block" data-id="outlet" style="fill: #99e1da; stroke: #008279; color: #008279" transform="translate(0,21)">
           <rect x="-33.5" y="-27.5" width="67" height="55" rx="6" ry="6"/>
           <text class="lini-text" x="0" y="0">out</text>
         </g>
         <text class="lini-text" x="0" y="67">Kitchen</text>
       </g>
-      <g class="lini-node lini-caption lini-plain lini-box" transform="translate(-74.6,-98)">
-        <rect x="-50.4" y="-6" width="100.8" height="12" rx="6" ry="6"/>
+      <g class="lini-node lini-caption lini-block" transform="translate(-74.6,-98)">
+        <rect x="-50.4" y="-6" width="100.8" height="12" rx="0" ry="0"/>
         <text class="lini-text" x="0" y="0">internal links</text>
       </g>
     </g>

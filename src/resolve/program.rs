@@ -325,15 +325,15 @@ mod tests {
         let p = rv4("x |box|\n");
         assert_eq!(p.scene.nodes.len(), 1);
         assert_eq!(p.scene.nodes[0].id.as_deref(), Some("x"));
-        assert_eq!(p.scene.nodes[0].shape, ShapeKind::Box);
+        assert_eq!(p.scene.nodes[0].shape, ShapeKind::Block);
     }
 
     #[test]
     fn dumb_core_has_no_hidden_defaults() {
-        // Resolve `x |box|` WITHOUT desugaring (input that bypassed the lowering):
-        // a primitive with no `.lini-box` class carries no radius/padding/gap. The
+        // Resolve `x |block|` WITHOUT desugaring (input that bypassed the lowering):
+        // a bare primitive with no `.lini-*` class carries no radius/padding/gap. The
         // defaults live only in the `.lini-*` classes desugar injects.
-        let toks = crate::lexer::lex("x |box|\n").expect("lex");
+        let toks = crate::lexer::lex("x |block|\n").expect("lex");
         let file = crate::syntax::parser::parse(&toks).expect("parse");
         let p = resolve(&file, &[]).expect("resolve");
         let attrs = &p.scene.nodes[0].attrs;

@@ -10,7 +10,7 @@
   |tile::box| { fill: --sky-soft; stroke: --sky-ink; color: --sky-ink; radius: 6; }
 }
 
-|plain| { font-size: 18; font-weight: bold; } "Templates"
+|block| { font-size: 18; font-weight: bold; } "Templates"
 
 upper |row| { gap: 22; align: start; } [
   // group with a caption (top edge) and a footer (bottom edge)

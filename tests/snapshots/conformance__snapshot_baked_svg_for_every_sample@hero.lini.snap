@@ -7,15 +7,15 @@ input_file: samples/hero.lini
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
-    .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-oval { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-hex { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-cyl { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
-    .lini .lini-plain { fill: none; stroke: none; }
+    .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
     .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,4; }
     .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
-    .lini .lini-badge { fill: #0a84ff; stroke: none; color: white; font-size: 11px; font-weight: normal; }
+    .lini .lini-badge { fill: #0a84ff; color: white; font-size: 11px; font-weight: normal; }
     .lini .lini-edge { fill: #dff2f9; stroke: #0079a6; color: #0079a6; }
     .lini .lini-svc { fill: #dff4f1; stroke: #008279; color: #008279; }
     .lini .lini-auth { fill: #ecedfe; stroke: #6356be; color: #6356be; }
@@ -45,33 +45,33 @@ input_file: samples/hero.lini
       <ellipse cx="0" cy="0" rx="78" ry="31"/>
       <text class="lini-text" x="0" y="0">Users</text>
     </g>
-    <g class="lini-node lini-group lini-box" data-id="edge" transform="translate(0,-92)">
+    <g class="lini-node lini-group lini-block" data-id="edge" transform="translate(0,-92)">
       <rect x="-148" y="-48.5" width="296" height="97" rx="6" ry="6"/>
-      <g class="lini-node lini-edge lini-box" data-id="lb" transform="translate(-48.5,0)">
+      <g class="lini-node lini-edge lini-box lini-block" data-id="lb" transform="translate(-48.5,0)">
         <rect x="-78.5" y="-27.5" width="157" height="55" rx="6" ry="6"/>
         <text class="lini-text" x="0" y="0">Load balancer</text>
-        <g class="lini-node lini-badge lini-box" transform="translate(70.9,-25)">
+        <g class="lini-node lini-badge lini-block" transform="translate(70.9,-25)">
           <g filter="url(#lini-shadow-1)">
             <rect x="-12.6" y="-7.5" width="25.2" height="15" rx="8" ry="8"/>
           </g>
           <text class="lini-text" x="0" y="0">v2</text>
         </g>
       </g>
-      <g class="lini-node lini-edge lini-box" data-id="cdn" transform="translate(93.5,0)">
+      <g class="lini-node lini-edge lini-box lini-block" data-id="cdn" transform="translate(93.5,0)">
         <g transform="translate(5,-5)">
           <rect x="-33.5" y="-27.5" width="67" height="55" rx="6" ry="6"/>
         </g>
         <rect x="-33.5" y="-27.5" width="67" height="55" rx="6" ry="6"/>
         <text class="lini-text" x="0" y="0">CDN</text>
       </g>
-      <g class="lini-node lini-caption lini-plain lini-box" transform="translate(-132.6,-59.5)">
-        <rect x="-14.4" y="-6" width="28.8" height="12" rx="6" ry="6"/>
+      <g class="lini-node lini-caption lini-block" transform="translate(-132.6,-59.5)">
+        <rect x="-14.4" y="-6" width="28.8" height="12" rx="0" ry="0"/>
         <text class="lini-text" x="0" y="0">Edge</text>
       </g>
     </g>
-    <g class="lini-node lini-group lini-box" data-id="svc" transform="translate(0,58)">
+    <g class="lini-node lini-group lini-block" data-id="svc" transform="translate(0,58)">
       <rect x="-165.5" y="-48.5" width="331" height="97" rx="6" ry="6"/>
-      <g class="lini-node lini-svc lini-box" data-id="api" transform="translate(-111,0)">
+      <g class="lini-node lini-svc lini-box lini-block" data-id="api" transform="translate(-111,0)">
         <rect x="-33.5" y="-27.5" width="67" height="55" rx="6" ry="6"/>
         <text class="lini-text" x="0" y="0">API</text>
       </g>
@@ -79,22 +79,22 @@ input_file: samples/hero.lini
         <polygon points="-34,0 -17,-27.5 17,-27.5 34,0 17,27.5 -17,27.5"/>
         <text class="lini-text" x="0" y="0">Auth</text>
       </g>
-      <g class="lini-node lini-svc lini-box" data-id="worker" transform="translate(97.5,0)">
+      <g class="lini-node lini-svc lini-box lini-block" data-id="worker" transform="translate(97.5,0)">
         <rect x="-47" y="-27.5" width="94" height="55" rx="6" ry="6"/>
         <text class="lini-text" x="0" y="0">Worker</text>
-        <g class="lini-node lini-badge lini-box" transform="translate(36.1,-25)">
+        <g class="lini-node lini-badge lini-block" transform="translate(36.1,-25)">
           <g filter="url(#lini-shadow-1)">
             <rect x="-15.9" y="-7.5" width="31.8" height="15" rx="8" ry="8"/>
           </g>
           <text class="lini-text" x="0" y="0">NEW</text>
         </g>
       </g>
-      <g class="lini-node lini-caption lini-plain lini-box" transform="translate(-135.7,-59.5)">
-        <rect x="-28.8" y="-6" width="57.6" height="12" rx="6" ry="6"/>
+      <g class="lini-node lini-caption lini-block" transform="translate(-135.7,-59.5)">
+        <rect x="-28.8" y="-6" width="57.6" height="12" rx="0" ry="0"/>
         <text class="lini-text" x="0" y="0">Services</text>
       </g>
     </g>
-    <g class="lini-node lini-group lini-box" data-id="data" transform="translate(0,208)">
+    <g class="lini-node lini-group lini-block" data-id="data" transform="translate(0,208)">
       <rect x="-192" y="-48.5" width="384" height="97" rx="6" ry="6"/>
       <g class="lini-node lini-store lini-cyl" data-id="pg" transform="translate(-115,0)">
         <path d="M -56 -22 L -56 22 A 56 5.5 0 0 0 56 22 L 56 -22 A 56 5.5 0 0 0 -56 -22 Z"/>
@@ -106,12 +106,12 @@ input_file: samples/hero.lini
         <ellipse cx="0" cy="-22" rx="42.5" ry="5.5"/>
         <text class="lini-text" x="0" y="1.71">Redis</text>
       </g>
-      <g class="lini-node lini-svc lini-box" data-id="queue" style="fill: #f7eddd; stroke: #985900; color: #985900" transform="translate(128.5,0)">
+      <g class="lini-node lini-svc lini-box lini-block" data-id="queue" style="fill: #f7eddd; stroke: #985900; color: #985900" transform="translate(128.5,0)">
         <rect x="-42.5" y="-27.5" width="85" height="55" rx="6" ry="6"/>
         <text class="lini-text" x="0" y="0">Queue</text>
       </g>
-      <g class="lini-node lini-caption lini-plain lini-box" transform="translate(-176.6,-59.5)">
-        <rect x="-14.4" y="-6" width="28.8" height="12" rx="6" ry="6"/>
+      <g class="lini-node lini-caption lini-block" transform="translate(-176.6,-59.5)">
+        <rect x="-14.4" y="-6" width="28.8" height="12" rx="0" ry="0"/>
         <text class="lini-text" x="0" y="0">Data</text>
       </g>
     </g>

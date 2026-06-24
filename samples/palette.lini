@@ -4,11 +4,11 @@
   layout: column; gap: 22; padding: 26; font-size: 13;
 
   |sw::box| { width: 78; height: 34; stroke: none; }
-  |h::plain| { font-weight: normal; color: --muted; }
+  |h::block| { font-weight: normal; color: --muted; }
   |card::box| { stroke-width: 1.5; font-weight: normal; width: 90; }
 }
 
-|plain| { font-size: 18; } "Lini palette — 11 hues × 4 tiers"
+|block| { font-size: 18; } "Lini palette — 11 hues × 4 tiers"
 
 board |group| {
   layout: grid; columns: 60 82 82 82 82; gap: 6; fill: none; stroke: none;

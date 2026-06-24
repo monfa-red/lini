@@ -41,11 +41,18 @@ pub fn primitive_bundle(kind: ShapeKind) -> Vec<Decl> {
         ]
     };
     match kind {
-        Box => {
-            let mut b = sized();
-            b.push(n("radius", 6.0));
-            b
-        }
+        // The bare rectangle (SPEC §7): frameless, no padding — like a `div`.
+        // It keeps the default `stroke-width` (invisible while `stroke: none`, so
+        // bbox geometry is unchanged from the old `|plain|`, and a styled `|block|`
+        // gets a sensible 2px border); the `|box|` template lifts paint/radius/
+        // padding back on top.
+        Block => vec![
+            id("fill", "none"),
+            id("stroke", "none"),
+            n("stroke-width", 2.0),
+            n("padding", 0.0),
+            n("gap", 20.0),
+        ],
         Oval | Hex | Cyl | Diamond | Cloud => sized(),
         Slant => {
             let mut b = sized();
@@ -72,7 +79,14 @@ pub fn primitive_bundle(kind: ShapeKind) -> Vec<Decl> {
 /// A built-in template's delta over its base (SPEC §8). Empty for a non-template.
 pub fn template_bundle(name: &str) -> Vec<Decl> {
     match name {
-        "plain" => vec![id("stroke", "none"), id("fill", "none"), n("padding", 0.0)],
+        // The default node: a rounded, framed card over the bare `|block|` base.
+        "box" => vec![
+            var("fill", "fill"),
+            var("stroke", "stroke"),
+            n("stroke-width", 2.0),
+            n("padding", 20.0),
+            n("radius", 6.0),
+        ],
         "rect" => vec![n("radius", 0.0)],
         "group" => vec![
             var("stroke", "group-stroke"),
@@ -80,6 +94,7 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             n("stroke-width", 1.0),
             var("fill", "group-fill"),
             n("radius", 6.0),
+            n("padding", 20.0),
         ],
         "caption" => vec![
             decl(
@@ -109,7 +124,6 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
                 "shadow",
                 vec![Value::Number(2.0), Value::Number(3.0), Value::Number(3.0)],
             ),
-            id("stroke", "none"),
             var("fill", "accent"),
             var("color", "accent-text"),
             n("font-size", 11.0),
@@ -118,8 +132,8 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
         "note" => vec![
             n("radius", 2.0),
             n("shadow", 2.0),
-            id("stroke", "none"),
             var("fill", "note-bg"),
+            n("padding", 20.0),
         ],
         "row" => vec![id("layout", "row")],
         "column" => vec![id("layout", "column")],
@@ -177,13 +191,18 @@ mod tests {
     }
 
     #[test]
-    fn box_bundle_carries_its_geometry_and_paint() {
-        let b = primitive_bundle(ShapeKind::Box);
-        assert_eq!(num(&b, "radius"), Some(6.0));
-        assert_eq!(num(&b, "padding"), Some(20.0));
-        assert_eq!(num(&b, "gap"), Some(20.0));
-        assert_eq!(num(&b, "stroke-width"), Some(2.0));
-        assert!(has(&b, "fill") && has(&b, "stroke"));
+    fn block_is_bare_and_box_template_carries_the_paint() {
+        // The bare primitive: frameless, no padding, just the container gap.
+        let block = primitive_bundle(ShapeKind::Block);
+        assert_eq!(num(&block, "padding"), Some(0.0));
+        assert_eq!(num(&block, "gap"), Some(20.0));
+        assert!(!has(&block, "radius"));
+        // The |box| template lifts the framed-card paint back on top.
+        let boxt = template_bundle("box");
+        assert_eq!(num(&boxt, "radius"), Some(6.0));
+        assert_eq!(num(&boxt, "padding"), Some(20.0));
+        assert_eq!(num(&boxt, "stroke-width"), Some(2.0));
+        assert!(has(&boxt, "fill") && has(&boxt, "stroke"));
     }
 
     #[test]

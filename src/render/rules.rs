@@ -221,7 +221,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
     };
 
     const CLOSED: &[ShapeKind] = &[
-        ShapeKind::Box,
+        ShapeKind::Block,
         ShapeKind::Oval,
         ShapeKind::Hex,
         ShapeKind::Slant,
@@ -556,19 +556,20 @@ mod tests {
     fn shape_rules_complete_over_inheritable_paint() {
         let set = rules_for("x |box|\ny |oval|\nz |line| { points: 0 0, 10 0; }\n");
         for rule in &set.rules {
-            if rule.class == "lini-text" {
+            let Some(suffix) = rule.class.strip_prefix("lini-") else {
+                continue;
+            };
+            if suffix == "text" {
                 // Text masks stroke — a container's stroke must never bleed
                 // into glyph outlines.
                 assert!(
                     rule.props.iter().any(|(p, v)| p == "stroke" && v == "none"),
                     "text rule lacks the stroke mask"
                 );
-                continue;
-            }
-            if rule.class.starts_with("lini-")
-                && rule.class != "lini-icon"
-                && rule.class != "lini-canvas"
-            {
+            } else if ShapeKind::parse(suffix).is_some() && suffix != "icon" {
+                // Every primitive node-shape rule masks `stroke-dasharray` so a
+                // container's dashed `line:`/stroke can't bleed in. A template
+                // (e.g. `box`) inherits the mask from its base primitive (`block`).
                 assert!(
                     rule.props.iter().any(|(p, _)| p == "stroke-dasharray"),
                     "rule {} lacks the dasharray mask",

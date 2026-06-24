@@ -118,12 +118,12 @@ mod tests {
     #[test]
     fn worn_chain_is_render_order_derived_to_base_then_primitive() {
         let info = TypeInfo {
-            kind: ShapeKind::Box,
+            kind: ShapeKind::Block,
             chain: vec!["group".into(), "table".into()],
         };
         assert_eq!(
             worn_classes(&info),
-            vec!["lini-table", "lini-group", "lini-box"]
+            vec!["lini-table", "lini-group", "lini-block"]
         );
     }
 

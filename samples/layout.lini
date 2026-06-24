@@ -2,7 +2,7 @@
 // post-placement nudge), and the 1/2/4-value padding & gap forms. Palette colours.
 {
   layout: row; gap: 30; padding: 26; align: start; font-weight: normal;
-  |dot::plain| { font-size: 12; }
+  |dot::block| { font-size: 12; }
 }
 
 // pin: lift a child out of flow and centre it on a named point of the parent
@@ -32,7 +32,7 @@ moves |group| { layout: column; gap: 14; } [
   card |box| { width: 140; height: 74; fill: --purple-wash; stroke: --purple-ink; color: --purple-ink; } [
     "Card"
     |badge| { translate: -4 4; } "9"
-    |plain| { pin: center; translate: 0 24; color: --muted; } "id 42"
+    |block| { pin: center; translate: 0 24; color: --muted; } "id 42"
   ]
 ]
 

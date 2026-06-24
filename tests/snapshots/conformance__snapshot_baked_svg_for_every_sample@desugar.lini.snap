@@ -7,13 +7,13 @@ input_file: samples/desugar.lini
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: bold; color: black; }
     .lini .lini-canvas { fill: white; }
-    .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-cyl { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
-    .lini .lini-plain { fill: none; stroke: none; }
+    .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
     .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,4; }
     .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
-    .lini .lini-badge { fill: #0a84ff; stroke: none; color: white; font-size: 11px; font-weight: normal; }
+    .lini .lini-badge { fill: #0a84ff; color: white; font-size: 11px; font-weight: normal; }
     .lini .lini-chip { fill: #dff2f9; stroke: #0079a6; color: #0079a6; }
   </style>
   <defs>
@@ -21,17 +21,17 @@ input_file: samples/desugar.lini
   </defs>
   <rect class="lini-canvas" x="-115.5" y="-86.5" width="231" height="155.5"/>
   <g class="lini-scene">
-    <g class="lini-node lini-group lini-box" data-id="api" transform="translate(-45,0)">
+    <g class="lini-node lini-group lini-block" data-id="api" transform="translate(-45,0)">
       <rect x="-50" y="-48.5" width="100" height="97" rx="6" ry="6"/>
-      <g class="lini-node lini-chip lini-box" data-id="health" transform="translate(0,0)">
+      <g class="lini-node lini-chip lini-box lini-block" data-id="health" transform="translate(0,0)">
         <rect x="-29" y="-27.5" width="58" height="55" rx="12" ry="12"/>
         <text class="lini-text" x="0" y="0">OK</text>
       </g>
-      <g class="lini-node lini-caption lini-plain lini-box" transform="translate(-38.2,-59.5)">
-        <rect x="-10.8" y="-6" width="21.6" height="12" rx="6" ry="6"/>
+      <g class="lini-node lini-caption lini-block" transform="translate(-38.2,-59.5)">
+        <rect x="-10.8" y="-6" width="21.6" height="12" rx="0" ry="0"/>
         <text class="lini-text" x="0" y="0">API</text>
       </g>
-      <g class="lini-node lini-badge lini-box" transform="translate(42.4,-46)">
+      <g class="lini-node lini-badge lini-block" transform="translate(42.4,-46)">
         <g filter="url(#lini-shadow-1)">
           <rect x="-12.6" y="-7.5" width="25.2" height="15" rx="8" ry="8"/>
         </g>

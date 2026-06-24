@@ -7,8 +7,9 @@ input_file: samples/flow.lini
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
-    .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
+    .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
     .lini .lini-red { fill: #fde9ec; stroke: #ac3a5c; color: #ac3a5c; }
     .lini .lini-sky { fill: #dff2f9; stroke: #0079a6; color: #0079a6; }
     .lini .lini-teal { fill: #dff4f1; stroke: #008279; color: #008279; }
@@ -35,43 +36,43 @@ input_file: samples/flow.lini
   <defs/>
   <rect class="lini-canvas" x="-157" y="-202.5" width="314" height="405"/>
   <g class="lini-scene">
-    <g class="lini-node lini-red lini-box" data-id="cat" transform="translate(-94,-150)">
+    <g class="lini-node lini-red lini-box lini-block" data-id="cat" transform="translate(-94,-150)">
       <rect x="-37.5" y="-27.5" width="75" height="55" rx="6" ry="6"/>
       <text class="lini-text" x="0" y="0">cat</text>
     </g>
-    <g class="lini-node lini-red lini-box" data-id="dog" transform="translate(94,-150)">
+    <g class="lini-node lini-red lini-box lini-block" data-id="dog" transform="translate(94,-150)">
       <rect x="-37.5" y="-27.5" width="75" height="55" rx="6" ry="6"/>
       <text class="lini-text" x="0" y="0">dog</text>
     </g>
-    <g class="lini-node lini-sky lini-box" data-id="fish" transform="translate(-94,-75)">
+    <g class="lini-node lini-sky lini-box lini-block" data-id="fish" transform="translate(-94,-75)">
       <rect x="-38" y="-27.5" width="76" height="55" rx="6" ry="6"/>
       <text class="lini-text" x="0" y="0">fish</text>
     </g>
-    <g class="lini-node lini-sky lini-box" data-id="bowl" transform="translate(94,-75)">
+    <g class="lini-node lini-sky lini-box lini-block" data-id="bowl" transform="translate(94,-75)">
       <rect x="-38" y="-27.5" width="76" height="55" rx="6" ry="6"/>
       <text class="lini-text" x="0" y="0">bowl</text>
     </g>
-    <g class="lini-node lini-teal lini-box" data-id="newt" transform="translate(-94,0)">
+    <g class="lini-node lini-teal lini-box lini-block" data-id="newt" transform="translate(-94,0)">
       <rect x="-38" y="-27.5" width="76" height="55" rx="6" ry="6"/>
       <text class="lini-text" x="0" y="0">newt</text>
     </g>
-    <g class="lini-node lini-teal lini-box" data-id="log" transform="translate(94,0)">
+    <g class="lini-node lini-teal lini-box lini-block" data-id="log" transform="translate(94,0)">
       <rect x="-37.5" y="-27.5" width="75" height="55" rx="6" ry="6"/>
       <text class="lini-text" x="0" y="0">log</text>
     </g>
-    <g class="lini-node lini-purple lini-box" data-id="frog" transform="translate(-94,75)">
+    <g class="lini-node lini-purple lini-box lini-block" data-id="frog" transform="translate(-94,75)">
       <rect x="-38" y="-27.5" width="76" height="55" rx="6" ry="6"/>
       <text class="lini-text" x="0" y="0">frog</text>
     </g>
-    <g class="lini-node lini-purple lini-box" data-id="pond" transform="translate(94,75)">
+    <g class="lini-node lini-purple lini-box lini-block" data-id="pond" transform="translate(94,75)">
       <rect x="-38" y="-27.5" width="76" height="55" rx="6" ry="6"/>
       <text class="lini-text" x="0" y="0">pond</text>
     </g>
-    <g class="lini-node lini-orange lini-box" data-id="ping" transform="translate(-94,150)">
+    <g class="lini-node lini-orange lini-box lini-block" data-id="ping" transform="translate(-94,150)">
       <rect x="-38" y="-27.5" width="76" height="55" rx="6" ry="6"/>
       <text class="lini-text" x="0" y="0">ping</text>
     </g>
-    <g class="lini-node lini-orange lini-box" data-id="pong" transform="translate(94,150)">
+    <g class="lini-node lini-orange lini-box lini-block" data-id="pong" transform="translate(94,150)">
       <rect x="-38" y="-27.5" width="76" height="55" rx="6" ry="6"/>
       <text class="lini-text" x="0" y="0">pong</text>
     </g>

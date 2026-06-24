@@ -60,11 +60,11 @@ pub struct ResolvedInst {
 }
 
 /// One of the built-in primitives. All user shapes resolve to one of these.
-/// (There is no title primitive — a caption is just a small-text `|plain|` flow
+/// (There is no title primitive — a caption is just a small-text `|block|` flow
 /// child, first in a column for a title or last for a footer, SPEC §8.)
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ShapeKind {
-    Box,
+    Block,
     Oval,
     Hex,
     Slant,
@@ -83,7 +83,7 @@ impl ShapeKind {
     /// Every primitive, in `as_str` order — the canonical enumeration desugar
     /// walks to emit a `.lini-<kind>` class def per present primitive.
     pub const ALL: [ShapeKind; 13] = [
-        Self::Box,
+        Self::Block,
         Self::Oval,
         Self::Hex,
         Self::Slant,
@@ -100,7 +100,7 @@ impl ShapeKind {
 
     pub fn parse(s: &str) -> Option<Self> {
         Some(match s {
-            "box" => Self::Box,
+            "block" => Self::Block,
             "oval" => Self::Oval,
             "hex" => Self::Hex,
             "slant" => Self::Slant,
@@ -118,7 +118,7 @@ impl ShapeKind {
 
     pub fn as_str(self) -> &'static str {
         match self {
-            Self::Box => "box",
+            Self::Block => "block",
             Self::Oval => "oval",
             Self::Hex => "hex",
             Self::Slant => "slant",

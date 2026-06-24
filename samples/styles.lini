@@ -16,7 +16,7 @@
   .ghost { opacity: 0.35; }
 }
 
-|plain| { font-size: 18; font-weight: bold; } "Styles"
+|block| { font-size: 18; font-weight: bold; } "Styles"
 
 // element rule, then + a class, then + an inline block — each wins over the last
 cascade |group| { layout: row; gap: 14; align: center; } [

@@ -13,7 +13,7 @@
   ]
 }
 
-|plain| { font-size: 18; font-weight: bold; } "Markers & internal links"
+|block| { font-size: 18; font-weight: bold; } "Markers & internal links"
 
 ends |group| { layout: column; gap: 14; } [
   |caption| "markers"

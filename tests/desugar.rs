@@ -8,7 +8,10 @@ use lini::desugar_source;
 #[test]
 fn a_plain_box_wears_its_lini_class_and_explicit_label() {
     let out = desugar_source("cat |box|\n").unwrap();
-    assert!(out.contains("cat |box| .lini-box [ \"cat\" ]"), "{out}");
+    assert!(
+        out.contains("cat |block| .lini-box.lini-block [ \"cat\" ]"),
+        "{out}"
+    );
     assert!(
         out.contains(".lini-box {"),
         "the box bundle is a generated class: {out}"
@@ -16,10 +19,10 @@ fn a_plain_box_wears_its_lini_class_and_explicit_label() {
 }
 
 #[test]
-fn a_group_lowers_to_box_plus_chain_and_a_generated_class() {
+fn a_group_lowers_to_block_plus_chain_and_a_generated_class() {
     let out = desugar_source("g |group| [\n  a |box|\n]\n").unwrap();
     // derived → base → primitive (matches the pre-desugar SVG class order).
-    assert!(out.contains("|box| .lini-group.lini-box"), "{out}");
+    assert!(out.contains("|block| .lini-group.lini-block"), "{out}");
     assert!(
         out.contains(".lini-group {") && out.contains("stroke-style: dashed;"),
         "{out}"
@@ -52,7 +55,7 @@ fn define_body_inlines_and_the_define_vanishes() {
     let out = desugar_source(src).unwrap();
     assert!(out.contains(".lini-room { gap: 10; }"), "{out}");
     assert!(
-        out.contains("inlet |box| .lini-box [ \"inlet\" ]"),
+        out.contains("inlet |block| .lini-box.lini-block [ \"inlet\" ]"),
         "define body inlined per instance: {out}"
     );
     assert!(!out.contains("::"), "no defines remain: {out}");
@@ -64,7 +67,7 @@ fn scene_and_link_defaults_land_in_the_global_block() {
     assert!(out.contains("padding: 20;"), "scene defaults: {out}");
     assert!(out.contains("clearance: 16;"), "link defaults: {out}");
     assert!(
-        out.contains("a |box| .lini-box [ \"a\" ]"),
+        out.contains("a |block| .lini-box.lini-block [ \"a\" ]"),
         "auto-create: {out}"
     );
     assert!(out.contains("along: 0.5;"), "auto-along: {out}");

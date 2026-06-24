@@ -27,7 +27,7 @@ pub struct PaddingBox {
 /// own content.
 pub fn leaf_bbox(inst: &ResolvedInst) -> Result<Bbox, Error> {
     match inst.shape {
-        ShapeKind::Box
+        ShapeKind::Block
         | ShapeKind::Oval
         | ShapeKind::Hex
         | ShapeKind::Slant
