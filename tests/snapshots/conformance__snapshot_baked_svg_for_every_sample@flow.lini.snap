@@ -10,11 +10,11 @@ input_file: samples/flow.lini
     .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
-    .lini .lini-red { fill: #ffe7ed; stroke: #851f47; color: #851f47; }
-    .lini .lini-sky { fill: #daf4fd; stroke: #005a83; color: #005a83; }
-    .lini .lini-teal { fill: #d9f5f2; stroke: #00635b; color: #00635b; }
-    .lini .lini-purple { fill: #ececff; stroke: #483a98; color: #483a98; }
-    .lini .lini-orange { fill: #f9edd7; stroke: #724100; color: #724100; }
+    .lini .lini-red { fill: #ffdbe8; stroke: #821041; color: #821041; }
+    .lini .lini-sky { fill: #c0f5ff; stroke: #005580; color: #005580; }
+    .lini .lini-teal { fill: #bef9f3; stroke: #005e57; color: #005e57; }
+    .lini .lini-purple { fill: #e6e6ff; stroke: #443297; color: #443297; }
+    .lini .lini-orange { fill: #ffe9ba; stroke: #6e3a00; color: #6e3a00; }
     .lini .lini-link { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-link-dashed { stroke-dasharray: 8,8; }
     .lini .lini-link-dotted { stroke-dasharray: 2,4; }
@@ -22,16 +22,16 @@ input_file: samples/flow.lini
     .lini .lini-cut-bg { fill: white; stroke: none; }
     .lini .lini-cut { fill: black; stroke: none; }
     .lini .lini-marker { fill: #444; stroke: none; }
-    .lini .lini-style-solid { stroke: #851f47; }
-    .lini .lini-style-solid .lini-marker { fill: #851f47; }
-    .lini .lini-style-dashed { stroke: #005a83; }
-    .lini .lini-style-dashed .lini-marker { fill: #005a83; }
-    .lini .lini-style-dotted { stroke: #00635b; }
-    .lini .lini-style-dotted .lini-marker { fill: #00635b; }
-    .lini .lini-style-wavy { stroke: #483a98; }
-    .lini .lini-style-wavy .lini-marker { fill: #483a98; }
-    .lini .lini-style-thick { stroke: #724100; stroke-width: 3; }
-    .lini .lini-style-thick .lini-marker { fill: #724100; }
+    .lini .lini-style-solid { stroke: #821041; }
+    .lini .lini-style-solid .lini-marker { fill: #821041; }
+    .lini .lini-style-dashed { stroke: #005580; }
+    .lini .lini-style-dashed .lini-marker { fill: #005580; }
+    .lini .lini-style-dotted { stroke: #005e57; }
+    .lini .lini-style-dotted .lini-marker { fill: #005e57; }
+    .lini .lini-style-wavy { stroke: #443297; }
+    .lini .lini-style-wavy .lini-marker { fill: #443297; }
+    .lini .lini-style-thick { stroke: #6e3a00; stroke-width: 3; }
+    .lini .lini-style-thick .lini-marker { fill: #6e3a00; }
   </style>
   <defs/>
   <rect class="lini-canvas" x="-157" y="-202.5" width="314" height="405"/>

@@ -16,28 +16,28 @@ input_file: samples/hero.lini
     .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,4; }
     .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
     .lini .lini-badge { fill: #0a84ff; color: white; font-size: 11px; font-weight: normal; }
-    .lini .lini-edge { fill: #daf4fd; stroke: #005a83; color: #005a83; }
-    .lini .lini-svc { fill: #d9f5f2; stroke: #00635b; color: #00635b; }
-    .lini .lini-auth { fill: #ececff; stroke: #483a98; color: #483a98; }
-    .lini .lini-store { fill: #ffe7ed; stroke: #851f47; color: #851f47; }
+    .lini .lini-edge { fill: #c0f5ff; stroke: #005580; color: #005580; }
+    .lini .lini-svc { fill: #bef9f3; stroke: #005e57; color: #005e57; }
+    .lini .lini-auth { fill: #e6e6ff; stroke: #443297; color: #443297; }
+    .lini .lini-store { fill: #ffdbe8; stroke: #821041; color: #821041; }
     .lini .lini-link { fill: none; stroke: #9e9e9e; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-link-dashed { stroke-dasharray: 8,8; }
     .lini .lini-link-label { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; font-size: 11px; font-weight: normal; }
     .lini .lini-cut-bg { fill: white; stroke: none; }
     .lini .lini-cut { fill: black; stroke: none; }
     .lini .lini-marker { fill: #444; stroke: none; }
-    .lini .lini-style-flow { stroke: #61a1f1; }
-    .lini .lini-style-flow .lini-marker { fill: #61a1f1; }
-    .lini .lini-style-cache { stroke: #00b8ad; }
-    .lini .lini-style-cache .lini-marker { fill: #00b8ad; }
-    .lini .lini-style-async { stroke: #db8747; }
-    .lini .lini-style-async .lini-marker { fill: #db8747; }
-    .lini .lini-style-auth { stroke: #9691ef; }
-    .lini .lini-style-auth .lini-marker { fill: #9691ef; }
+    .lini .lini-style-flow { stroke: #54a0fe; }
+    .lini .lini-style-flow .lini-marker { fill: #54a0fe; }
+    .lini .lini-style-cache { stroke: #00bbb0; }
+    .lini .lini-style-cache .lini-marker { fill: #00bbb0; }
+    .lini .lini-style-async { stroke: #e38231; }
+    .lini .lini-style-async .lini-marker { fill: #e38231; }
+    .lini .lini-style-auth { stroke: #968efb; }
+    .lini .lini-style-auth .lini-marker { fill: #968efb; }
   </style>
   <defs>
     <filter id="lini-shadow-1" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="rgba(0, 0, 0, 0.2)"/></filter>
-    <linearGradient id="lini-gradient-1" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#00afd8"/><stop offset="100%" stop-color="#9691ef"/></linearGradient>
+    <linearGradient id="lini-gradient-1" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#00b1e0"/><stop offset="100%" stop-color="#968efb"/></linearGradient>
   </defs>
   <rect class="lini-canvas" x="-260.5" y="-287" width="534.2" height="574"/>
   <g class="lini-scene">
@@ -106,7 +106,7 @@ input_file: samples/hero.lini
         <ellipse cx="0" cy="-22" rx="42.5" ry="5.5"/>
         <text class="lini-text" x="0" y="1.71">Redis</text>
       </g>
-      <g class="lini-node lini-svc lini-box lini-block" data-id="queue" style="fill: #f9edd7; stroke: #724100; color: #724100" transform="translate(128.5,0)">
+      <g class="lini-node lini-svc lini-box lini-block" data-id="queue" style="fill: #ffe9ba; stroke: #6e3a00; color: #6e3a00" transform="translate(128.5,0)">
         <rect x="-42.5" y="-27.5" width="85" height="55" rx="6" ry="6"/>
         <text class="lini-text" x="0" y="0">Queue</text>
       </g>

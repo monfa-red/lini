@@ -26,7 +26,7 @@ struct Hue {
 const HUES: &[Hue] = &[
     Hue {
         name: "red",
-        hue: 28.0,
+        hue: 26.0,
         chroma: 1.00,
     },
     Hue {
@@ -98,28 +98,28 @@ struct Tier {
 const TIERS: &[Tier] = &[
     Tier {
         suffix: "-wash",
-        light: (0.95, 0.03),
-        dark: (0.28, 0.045),
+        light: (0.94, 0.06),
+        dark: (0.29, 0.06),
     },
     Tier {
         suffix: "-soft",
-        light: (0.85, 0.08),
-        dark: (0.40, 0.08),
+        light: (0.84, 0.10),
+        dark: (0.38, 0.10),
     },
     Tier {
         suffix: "",
-        light: (0.70, 0.13),
-        dark: (0.57, 0.114),
+        light: (0.7, 0.15),
+        dark: (0.535, 0.15),
     },
     Tier {
         suffix: "-deep",
-        light: (0.56, 0.16),
-        dark: (0.75, 0.124),
+        light: (0.56, 0.15),
+        dark: (0.745, 0.15),
     },
     Tier {
         suffix: "-ink",
-        light: (0.42, 0.14),
-        dark: (0.92, 0.134),
+        light: (0.40, 0.15),
+        dark: (0.94, 0.15),
     },
 ];
 
