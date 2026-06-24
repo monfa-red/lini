@@ -111,6 +111,9 @@ pub struct PlacedNode {
     pub applied_styles: Vec<String>,
     pub label: Option<String>,
     pub attrs: AttrMap,
+    /// A `Text` node's own `{ }` style (SPEC §3) — rendered as `style=` /
+    /// `transform` on the `<text>`. Empty for boxes and unstyled text.
+    pub own_style: AttrMap,
     pub markers: Markers,
     /// Local origin position in parent coords.
     pub cx: f64,

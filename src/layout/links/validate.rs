@@ -575,6 +575,7 @@ mod tests {
             applied_styles: Vec::new(),
             label: None,
             attrs: AttrMap::default(),
+            own_style: AttrMap::default(),
             markers: Markers::default(),
             cx,
             cy,

@@ -307,6 +307,7 @@ fn layout_inst(inst: &ResolvedInst, growth: &GapGrowth, path: &str) -> Result<Pl
         applied_styles: inst.applied_styles.clone(),
         label: inst.label.clone(),
         attrs: inst.attrs.clone(),
+        own_style: inst.own_style.clone(),
         markers: inst.markers.clone(),
         cx: 0.0,
         cy: 0.0,

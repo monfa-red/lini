@@ -313,9 +313,9 @@ A string carries **no children** — text is a leaf, not a box — but it **may 
 a style block** of text properties: `"X" { color: red; font-weight: bold;
 translate: 0 -6; rotate: 12 }`. Only text-valid properties apply (colour, every
 `font-*`, `opacity`, `letter-spacing`, `line-spacing`, `text-transform`,
-`text-decoration`, `translate`, `rotate`, `layer`, `href`, `title`); a box
-property (`pin`, `padding`, `width`, a border, children) needs a real box —
-wrap the text in a `|block|`. Set on the string the style applies to it directly;
+`text-decoration`, `translate`, `rotate`, `layer`); any other property —
+`pin`, `padding`, `width`, a border, children, even `href` / `title` — needs a
+real box, so wrap the text in a `|block|`. Set on the string the style applies to it directly;
 set on a containing box it cascades down ([§10](#10-properties)).
 
 ### Implicit nodes

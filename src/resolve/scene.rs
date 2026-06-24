@@ -10,7 +10,7 @@ use super::merge::{collapse, resolve_markers};
 use super::value::resolve_groups;
 use crate::error::Error;
 use crate::span::Span;
-use crate::syntax::ast::{Child, Link, Node};
+use crate::syntax::ast::{Child, Link, Node, TextNode};
 use std::collections::HashMap;
 
 /// Text properties that cascade to descendant text (SPEC §10): nearest ancestor
@@ -83,7 +83,7 @@ fn resolve_child(
 ) -> Result<ResolvedInst, Error> {
     match child {
         Child::Box(n) => resolve_node(n, ctx, ancestors, path_prefix, text_ctx, id_seen, lifted),
-        Child::Text(t) => Ok(text_inst(&t.text, text_ctx, t.span)),
+        Child::Text(t) => text_inst(t, ctx, text_ctx),
     }
 }
 
@@ -226,33 +226,76 @@ pub fn resolve_node(
         applied_styles,
         label: own_label,
         attrs,
+        own_style: AttrMap::new(),
         markers,
         children,
         span: node.span,
     })
 }
 
-/// A resolved text node (SPEC §3/§10): bare content carrying the text properties
-/// inherited from its container. `Text` is internal — never a user `|type|`,
-/// only the shape of a string node (a label, a cell, canvas text).
-fn text_inst(text: &str, text_ctx: &AttrMap, span: Span) -> ResolvedInst {
+/// A resolved text node (SPEC §3/§10): content carrying the text properties
+/// inherited from its container, overlaid with its own `{ }` style (text-valid
+/// props only). `Text` is internal — never a user `|type|`, only the shape of a
+/// string node (a label, a cell, canvas text). The own style renders as a
+/// `style=` on the `<text>`; `attrs` is the effective context for measurement.
+fn text_inst(t: &TextNode, ctx: &SceneCtx, text_ctx: &AttrMap) -> Result<ResolvedInst, Error> {
     let mut attrs = AttrMap::new();
     for name in INHERITED_TEXT {
         if let Some(v) = text_ctx.get(name) {
             attrs.insert(*name, v.clone());
         }
     }
-    ResolvedInst {
+    // The text's own `{ }`: text-valid props only — a box property errors and
+    // points at `|block|` (SPEC §3, §15).
+    let mut own_style = AttrMap::new();
+    for d in &t.style {
+        if !is_text_prop(&d.name) {
+            return Err(Error::at(
+                d.span,
+                format!("'{}' needs a box — wrap the text in '|block|'", d.name),
+            ));
+        }
+        let v = resolve_groups(&d.groups, d.span, ctx.vars)?;
+        attrs.insert(d.name.as_str(), v.clone());
+        own_style.insert(d.name.as_str(), v);
+    }
+    Ok(ResolvedInst {
         id: None,
         shape: ShapeKind::Text,
         type_chain: Vec::new(),
         applied_styles: Vec::new(),
-        label: Some(text.to_string()),
+        label: Some(t.text.clone()),
         attrs,
+        own_style,
         markers: Markers::default(),
         children: Vec::new(),
-        span,
-    }
+        span: t.span,
+    })
+}
+
+/// Properties valid on a bare text node (SPEC §3/§10): paint, every `font-*`, the
+/// baked spacings, the live-CSS text props, and the two transforms. Anything else
+/// (`pin`, `padding`, `width`, a border, `layout`, …) needs a box. Shared with the
+/// link-label path ([`super::links`]).
+pub(super) fn is_text_prop(name: &str) -> bool {
+    matches!(
+        name,
+        "color"
+            | "fill"
+            | "opacity"
+            | "font-family"
+            | "font-size"
+            | "font-weight"
+            | "font-style"
+            | "text-transform"
+            | "text-decoration"
+            | "text-shadow"
+            | "letter-spacing"
+            | "line-spacing"
+            | "translate"
+            | "rotate"
+            | "layer"
+    )
 }
 
 /// The first bare string among a node's children — an `|icon|`'s glyph name.

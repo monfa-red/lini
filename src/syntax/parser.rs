@@ -432,14 +432,30 @@ impl<'a> Parser<'a> {
     /// A drawn child (SPEC §3): a bare string is a text node; anything else is a
     /// box.
     fn parse_child(&mut self) -> Result<Child, Error> {
-        if let Some(TokKind::String(s)) = self.kind() {
-            let text = s.clone();
-            let span = self.span();
-            self.pos += 1;
-            Ok(Child::Text(TextNode { text, span }))
+        if matches!(self.kind(), Some(TokKind::String(_))) {
+            Ok(Child::Text(self.parse_text_node()?))
         } else {
             Ok(Child::Box(self.parse_node()?))
         }
+    }
+
+    /// A text node `"…"` with an optional `{ … }` style block (SPEC §3) — a `{`
+    /// glued-or-spaced right after the string is its own text style; otherwise it
+    /// is bare. (Strings are self-delimiting, so a following `"` is the next node.)
+    fn parse_text_node(&mut self) -> Result<TextNode, Error> {
+        let text = match self.kind() {
+            Some(TokKind::String(s)) => s.clone(),
+            _ => return Err(self.err("expected a string")),
+        };
+        let start = self.span();
+        self.pos += 1;
+        let (style, style_span) = self.opt_style()?;
+        Ok(TextNode {
+            text,
+            style,
+            style_span,
+            span: Span::new(start.start, self.last_span().end),
+        })
     }
 
     fn parse_node(&mut self) -> Result<Node, Error> {
@@ -463,7 +479,7 @@ impl<'a> Parser<'a> {
         let (children, links) = if matches!(self.kind(), Some(TokKind::LBracket)) {
             self.opt_children()?
         } else {
-            let labels = self.trailing_labels();
+            let labels = self.trailing_labels()?;
             if matches!(self.kind(), Some(TokKind::LBracket)) {
                 return Err(
                     self.err("a node's content is the trailing label or the '[ ]', not both")
@@ -587,17 +603,31 @@ impl<'a> Parser<'a> {
         Ok((children, links))
     }
 
-    /// Consume the trailing label string(s) after a box or link head (SPEC §3/§9).
-    /// The loop ends at the line's end, so the labels run to it.
-    fn trailing_labels(&mut self) -> Vec<TextNode> {
+    /// Consume the trailing label string(s) after a box or link head (SPEC §3/§9),
+    /// each a styleable text node. The loop ends at the line's end.
+    fn trailing_labels(&mut self) -> Result<Vec<TextNode>, Error> {
         let mut labels = Vec::new();
-        while let Some(TokKind::String(s)) = self.kind() {
-            let text = s.clone();
-            let span = self.span();
-            self.pos += 1;
-            labels.push(TextNode { text, span });
+        while matches!(self.kind(), Some(TokKind::String(_))) {
+            labels.push(self.parse_text_node()?);
         }
-        labels
+        Ok(labels)
+    }
+
+    /// A link's `[ "label"… ]` content block (SPEC §9) — labels are styleable
+    /// text leaves, newline-separated; the canonical form of the trailing sugar.
+    fn parse_label_block(&mut self) -> Result<Vec<TextNode>, Error> {
+        self.expect(&TokKind::LBracket, "'['")?;
+        self.skip_newlines();
+        let mut labels = Vec::new();
+        while matches!(self.kind(), Some(TokKind::String(_))) {
+            labels.push(self.parse_text_node()?);
+            self.skip_newlines();
+        }
+        if !matches!(self.kind(), Some(TokKind::RBracket)) {
+            return Err(self.err("a link's '[ ]' holds only labels (text)"));
+        }
+        self.pos += 1; // ']'
+        Ok(labels)
     }
 
     // ───────────────────────── Links ─────────────────────────
@@ -621,12 +651,13 @@ impl<'a> Parser<'a> {
         // Worn class(es): the same `.class` slot a node uses, after the endpoints.
         let classes = self.parse_classes()?;
         let (style, style_span) = self.opt_style()?;
-        if matches!(self.kind(), Some(TokKind::LBracket)) {
-            return Err(
-                self.err("a link is not a container — it carries trailing labels, not a '[ ]'")
-            );
-        }
-        let labels = self.trailing_labels();
+        // Content is the `[ ]` of labels (canonical) or the trailing-label sugar
+        // (SPEC §9) — like a box's content, never both.
+        let labels = if matches!(self.kind(), Some(TokKind::LBracket)) {
+            self.parse_label_block()?
+        } else {
+            self.trailing_labels()?
+        };
         Ok(Link {
             chain,
             op,
@@ -959,8 +990,26 @@ mod tests {
     }
 
     #[test]
-    fn link_with_a_bracket_errors() {
-        assert!(parse_err("a -> b [ \"x\" ]\n").contains("not a container"));
+    fn link_takes_a_bracket_of_labels() {
+        // `[ ]` is the canonical label form (SPEC §9); trailing strings are sugar.
+        let f = parse_ok("a -> b [ \"x\" \"y\" ]\n");
+        assert_eq!(f.links.len(), 1);
+        assert_eq!(f.links[0].labels.len(), 2);
+        assert_eq!(f.links[0].labels[0].text, "x");
+    }
+
+    #[test]
+    fn text_node_takes_a_style_block() {
+        // `"x" { … }` — a styleable text leaf (SPEC §3); a bare string has none.
+        let f = parse_ok("\"hi\" { color: red; translate: 0 -6 }\n\"plain\"\n");
+        match &f.instances[0] {
+            Child::Text(t) => assert_eq!(t.style.len(), 2),
+            _ => panic!("expected a styled text node"),
+        }
+        match &f.instances[1] {
+            Child::Text(t) => assert!(t.style.is_empty()),
+            _ => panic!("expected a bare text node"),
+        }
     }
 
     #[test]

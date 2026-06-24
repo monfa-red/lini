@@ -16,6 +16,8 @@ pub(super) fn label_child_for(node: &Node, is_icon: bool, is_container: bool) ->
     node.id.as_ref().map(|id| {
         Child::Text(TextNode {
             text: id.clone(),
+            style: Vec::new(),
+            style_span: None,
             span: node.span,
         })
     })

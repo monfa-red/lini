@@ -99,16 +99,23 @@ pub enum Child {
     Text(TextNode),
 }
 
-/// Bare text content `"…"` (SPEC §3) — a label, a cell, a link label. No id,
-/// type, classes, style, or children; never a wrapped node.
+/// Text content `"…"` (SPEC §3) — a label, a cell, a link label. A leaf: no id,
+/// type, classes, or children, but it **may carry a style block** of text-only
+/// properties (`"x" { color: red; translate: 0 -6 }`).
 #[derive(Debug, Clone)]
 pub struct TextNode {
     pub text: String,
+    /// `"x" { … }` — the text node's own style (text-valid props only); empty
+    /// when bare.
+    pub style: Vec<Decl>,
+    /// The `{ … }` style block's span, for the formatter's trivia; `None` when
+    /// the text has no style block.
+    pub style_span: Option<Span>,
     pub span: Span,
 }
 
-/// A link (SPEC §9) — a relationship, not a container. `style` is its `{ }`
-/// (`along:` and paint); `labels` are the trailing strings. A link has no `[ ]`.
+/// A link (SPEC §9). `style` is its `{ }` (`along:`, `link*`); `labels` are its
+/// text content — trailing strings, or a `[ ]` of styleable text leaves.
 #[derive(Debug, Clone)]
 pub struct Link {
     pub chain: Vec<EndpointGroup>,

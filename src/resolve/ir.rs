@@ -54,6 +54,11 @@ pub struct ResolvedInst {
     /// label sugar on non-text shapes produces a `Text` child instead.
     pub label: Option<String>,
     pub attrs: AttrMap,
+    /// A `Text` node's own `{ }` style (SPEC §3) — the text-valid props it set,
+    /// emitted as a `style=` / `transform` on the `<text>`. Empty for boxes (their
+    /// per-node diff is computed at render) and for unstyled text. `attrs` stays
+    /// the effective text context (inherited ∪ own) for layout measurement.
+    pub own_style: AttrMap,
     pub markers: Markers,
     pub children: Vec<ResolvedInst>,
     pub span: Span,

@@ -63,14 +63,28 @@ pub fn resolve_link(
         .unwrap_or_default();
     attrs.map.remove("along");
 
-    // Labels are bare strings, placed by `along:` and styled together (SPEC §9).
+    // Labels ride `along:`, each a styleable text leaf (SPEC §9): the link's text
+    // baseline (font-size) overlaid with the label's own `{ }` (text-valid props).
     let mut texts: Vec<ResolvedText> = Vec::new();
     for (i, label) in w.labels.iter().enumerate() {
         let pos = along.get(i).copied().map_or(Along::Auto, Along::Fraction);
+        let mut lattrs = link_text_attrs(AttrMap::new(), &attrs);
+        for d in &label.style {
+            if !super::scene::is_text_prop(&d.name) {
+                return Err(Error::at(
+                    d.span,
+                    format!("'{}' needs a box — a link label is text", d.name),
+                ));
+            }
+            lattrs.insert(
+                d.name.as_str(),
+                resolve_groups(&d.groups, d.span, ctx.vars)?,
+            );
+        }
         texts.push(ResolvedText {
             text: label.text.clone(),
             along: pos,
-            attrs: link_text_attrs(AttrMap::new(), &attrs),
+            attrs: lattrs,
         });
     }
 

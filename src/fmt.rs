@@ -11,7 +11,8 @@ use crate::error::Error;
 use crate::lexer;
 use crate::span::Span;
 use crate::syntax::ast::{
-    Child, Decl, Define, Endpoint, File, Link, Node, Rule, SelPart, Selector, StyleItem, Value,
+    Child, Decl, Define, Endpoint, File, Link, Node, Rule, SelPart, Selector, StyleItem, TextNode,
+    Value,
 };
 use crate::syntax::parser;
 
@@ -186,19 +187,11 @@ impl Emitter<'_> {
     }
 
     fn emit_selector(&mut self, sel: &Selector) {
-        // The link-defaults rule carries the reserved `link` selector internally
-        // but is written with the link glyph; a lone class stays bare.
-        match sel.parts.as_slice() {
-            [SelPart::Type(t)] if t == "link" => {
-                self.out.push_str("->");
-                return;
-            }
-            [SelPart::Class(c)] => {
-                self.out.push('.');
-                self.out.push_str(c);
-                return;
-            }
-            _ => {}
+        // A lone class stays bare; a bar-wrapped selector keeps its bars.
+        if let [SelPart::Class(c)] = sel.parts.as_slice() {
+            self.out.push('.');
+            self.out.push_str(c);
+            return;
         }
         self.out.push('|');
         for (i, part) in sel.parts.iter().enumerate() {
@@ -231,7 +224,7 @@ impl Emitter<'_> {
                 Child::Box(n) => self.emit_node(n, depth, widths[i]),
                 Child::Text(t) => {
                     self.indent(depth);
-                    self.emit_string(&t.text);
+                    self.emit_text_node(t, depth);
                 }
             }
             self.out.push('\n');
@@ -309,7 +302,7 @@ impl Emitter<'_> {
                 for c in &node.children {
                     if let Child::Text(t) = c {
                         self.out.push(' ');
-                        self.emit_string(&t.text);
+                        self.emit_text_node(t, depth);
                     }
                 }
                 self.cursor = end;
@@ -332,7 +325,7 @@ impl Emitter<'_> {
                 self.out.push(' ');
             }
             if let Child::Text(t) = c {
-                self.emit_string(&t.text);
+                self.emit_text_node(t, 0);
             }
         }
         self.out.push_str(" ]");
@@ -521,10 +514,20 @@ impl Emitter<'_> {
             let end = w.style_span.map_or(w.span.end, |s| s.end);
             self.emit_style_block(&w.style, end, depth, false);
         }
-        // A link is not a container: its labels always trail (SPEC §9).
+        // Labels trail the head (the trailing sugar, SPEC §9), each a styleable
+        // text leaf.
         for label in &w.labels {
             self.out.push(' ');
-            self.emit_string(&label.text);
+            self.emit_text_node(label, depth);
+        }
+    }
+
+    /// A text leaf `"…"` with its optional `{ }` style block (SPEC §3).
+    fn emit_text_node(&mut self, t: &TextNode, depth: usize) {
+        self.emit_string(&t.text);
+        if !t.style.is_empty() {
+            let end = t.style_span.map_or(t.span.end, |s| s.end);
+            self.emit_style_block(&t.style, end, depth, false);
         }
     }
 

@@ -12,7 +12,7 @@ mod wavy;
 
 use crate::Options;
 use crate::layout::{LaidOut, PlacedNode};
-use crate::resolve::{ShapeKind, VarTable};
+use crate::resolve::{AttrMap, ShapeKind, VarTable};
 use filters::FilterTable;
 pub(crate) use gradients::lower as lower_gradients;
 use rules::RuleSet;
@@ -128,7 +128,7 @@ fn render_node(
     // Text renders as a bare `<text class="lini-text">` at its placed position —
     // no wrapping `<g>` (SPEC §13). Font and colour inherit from the enclosing box.
     if n.shape == ShapeKind::Text {
-        render_text(out, n, depth);
+        render_text(out, n, depth, vars, opts);
         return;
     }
     // `href:` wraps the whole node in an `<a href>` so the shape (and its
@@ -194,7 +194,7 @@ fn render_node(
 /// A text node: a bare `<text class="lini-text">` at its placed centre (SPEC
 /// §13). `text-anchor: middle` + `dominant-baseline: central` (on `.lini-text`)
 /// centre it on (x, y); font and colour inherit from the enclosing box's `<g>`.
-fn render_text(out: &mut String, n: &PlacedNode, depth: usize) {
+fn render_text(out: &mut String, n: &PlacedNode, depth: usize, vars: &VarTable, opts: &Options) {
     use std::fmt::Write;
     let indent = "  ".repeat(depth);
     let label = n.label.as_deref().unwrap_or("");
@@ -203,14 +203,24 @@ fn render_text(out: &mut String, n: &PlacedNode, depth: usize) {
     // `letter-spacing` bakes into a per-glyph `dx` list — geometry, never CSS
     // (SPEC §10); `text-anchor: middle` still centres the spaced run.
     let ls = n.attrs.number("letter-spacing").unwrap_or(0.0);
+    // A styled text node (SPEC §3) rides its own `{ }` paint/font as `style=` and
+    // its `rotate` as a `transform`; `translate` is already folded into (cx, cy).
+    let style = text_style_attr(&n.own_style, vars, opts);
+    let xform = if n.rotation != 0.0 {
+        format!(r#" transform="rotate({} {} {})""#, num(n.rotation), x, y)
+    } else {
+        String::new()
+    };
     if lines.len() <= 1 {
         writeln!(
             out,
-            r#"{}<text class="lini-text" x="{}" y="{}"{}>{}</text>"#,
+            r#"{}<text class="lini-text" x="{}" y="{}"{}{}{}>{}</text>"#,
             indent,
             x,
             y,
             dx_attr(label, ls),
+            style,
+            xform,
             escape_xml(label)
         )
         .unwrap();
@@ -224,8 +234,8 @@ fn render_text(out: &mut String, n: &PlacedNode, depth: usize) {
     let top = n.cy - spacing * (lines.len() as f64 - 1.0) / 2.0;
     write!(
         out,
-        r#"{}<text class="lini-text" x="{}" y="{}">"#,
-        indent, x, y
+        r#"{}<text class="lini-text" x="{}" y="{}"{}{}>"#,
+        indent, x, y, style, xform
     )
     .unwrap();
     for (i, line) in lines.iter().enumerate() {
@@ -252,6 +262,37 @@ fn render_text(out: &mut String, n: &PlacedNode, depth: usize) {
         }
     }
     writeln!(out, "</text>").unwrap();
+}
+
+/// The `style=` for a text node's own `{ }` (SPEC §3): paint and font props ride
+/// CSS. `letter-spacing` / `line-spacing` / `translate` / `rotate` / `layer` are
+/// geometry or transforms, handled elsewhere, so they never appear here.
+fn text_style_attr(own: &AttrMap, vars: &VarTable, opts: &Options) -> String {
+    let mut decls: Vec<String> = Vec::new();
+    if let Some(v) = own.get("fill").or_else(|| own.get("color")) {
+        decls.push(format!("fill: {}", format_value(v, vars, opts)));
+    }
+    for prop in [
+        "font-family",
+        "font-weight",
+        "font-style",
+        "text-transform",
+        "text-decoration",
+        "text-shadow",
+        "opacity",
+    ] {
+        if let Some(v) = own.get(prop) {
+            decls.push(format!("{}: {}", prop, format_value(v, vars, opts)));
+        }
+    }
+    if let Some(v) = own.get("font-size") {
+        decls.push(format!("font-size: {}px", format_value(v, vars, opts)));
+    }
+    if decls.is_empty() {
+        String::new()
+    } else {
+        format!(r#" style="{}""#, decls.join("; "))
+    }
 }
 
 /// The ` dx="0 s s …"` glyph-advance list that bakes `letter-spacing` into the
