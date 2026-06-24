@@ -295,8 +295,13 @@ impl Emitter<'_> {
             self.out.push(']');
             return;
         }
-        let text_only =
-            node.links.is_empty() && node.children.iter().all(|c| matches!(c, Child::Text(_)));
+        // Bare text children trail as a terse label (`api |box| "API"`); a styled
+        // one (`"x" { … }`) reads better one-per-line in `[ ]`, so it is not terse.
+        let text_only = node.links.is_empty()
+            && node
+                .children
+                .iter()
+                .all(|c| matches!(c, Child::Text(t) if t.style.is_empty()));
         if text_only && !self.has_trivia_between(self.cursor, end) {
             if self.terse {
                 for c in &node.children {

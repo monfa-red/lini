@@ -21,7 +21,7 @@ pub struct SheetInputs {
     /// Single-class rules in source order: `lini-<type>` (generated type classes,
     /// emitted verbatim) and user classes (emitted `lini-style-<name>`).
     pub class_rules: Vec<(String, AttrMap)>,
-    /// The `-> { }` link defaults.
+    /// The link layer's defaults (the `.lini-link` rule).
     pub link_defaults: AttrMap,
     /// The root container's `font-size` — the inherited-text baseline for `.lini`
     /// (a baked layout constant carried in the global block, not a CSS var).

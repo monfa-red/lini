@@ -29,8 +29,8 @@ pub enum StyleItem {
     /// the name without the `--` prefix.
     Var(Decl),
     /// `|selector| { decls }` / `.class { decls }` — element / class / descendant
-    /// rule. The `-> { }` link defaults are a `Rule` whose selector is the
-    /// reserved `link` element ([`super::parser`]).
+    /// rule. (Link defaults are cascading `link*` / `clearance` / `routing`
+    /// properties now, not a rule — SPEC §9.)
     Rule(Rule),
     /// `|name::base| { style } [ children ]` — a new type from a base.
     Define(Define),

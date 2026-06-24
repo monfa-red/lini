@@ -1,0 +1,24 @@
+// Styleable text (SPEC §3) and styled link labels (SPEC §9): a bare "…" is a
+// <text> leaf that can carry its own text style in place — never wrapped — and a
+// link's [ ] labels are the same styleable leaves, nudgeable with translate/rotate.
+
+{
+  layout: column; gap: 26; padding: 26; link: --gray;
+}
+
+"Styleable text, in place" { font-size: 20; font-weight: bold; }
+
+styles |row| { gap: 16; } [
+  "default"
+  "coloured" { color: --red-ink; }
+  "bold" { font-weight: bold; }
+  "italic" { font-style: italic; }
+  "underline" { text-decoration: underline; }
+]
+
+a |box| "Alpha"
+b |box| "Beta"
+
+a -> b "nudged & turned" {
+  translate: 0 -10; rotate: -6; color: --teal-ink; font-weight: bold;
+}

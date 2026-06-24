@@ -241,7 +241,7 @@ pub fn fan_groups(reqs: &[EdgeReq]) -> Fans {
 }
 
 /// The one clearance number (LINKING §Vocabulary): the link's merged attrs,
-/// already carrying the `-> { }` link default that desugar injects.
+/// already carrying the cascaded link default.
 pub fn link_clearance(attrs: &AttrMap) -> f64 {
     attrs.number("clearance").unwrap_or(0.0)
 }

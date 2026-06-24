@@ -27,7 +27,7 @@ const LABEL_CUT_PAD_H: f64 = 0.3;
 const LABEL_CUT_PAD_V: f64 = 0.15;
 
 /// The link's corner-radius cap (LINKING §Model step 7): the link's resolved
-/// `clearance` (carrying the `-> { }` default desugar injects), else 0.
+/// `clearance` (its cascaded default), else 0.
 pub fn radius_cap(w: &RoutedLink) -> f64 {
     w.attrs.number("clearance").unwrap_or(0.0)
 }

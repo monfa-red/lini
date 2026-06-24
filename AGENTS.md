@@ -30,4 +30,4 @@ How to work in this repo.
 - Defer pushing to `main` to the user.
 
 ## Re-orient (fresh session)
-Read `SPEC.md` (the language) and `WIRING.md` (the routing contract), then skim `git log` and run `cargo test`.
+Read `SPEC.md` (the language) and `LINKING.md` (the routing contract), then skim `git log` and run `cargo test`.

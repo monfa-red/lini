@@ -95,7 +95,7 @@ pub fn built_in_defaults() -> VarTable {
 
     // Layout constants (radius, padding, font-size, clearance, …) are no longer
     // here: desugar materializes every one into the `.lini-*` class defs, the
-    // global block, or the `-> { }` link defaults (the "dumb core").
+    // global block, or the cascaded link defaults (the "dumb core").
 
     // The named-hue palette (SPEC §11.2): 11 hues × 4 tiers + aliases, OKLCH-derived.
     // Tree-shaken at render (only referenced vars emit), so this never bloats output.

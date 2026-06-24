@@ -432,7 +432,7 @@ mod tests {
 
     #[test]
     fn caption_is_a_small_text_plain_title() {
-        // SPEC §8: a caption is a `|plain|`-based title, pinned to the top edge
+        // SPEC §8: a caption is a `|block|`-based title, pinned to the top edge
         // with a smaller font (`mount` is gone entirely).
         let p = rv4("g |group| [\n  |caption| \"Title\"\n]\n");
         let cap = &p.scene.nodes[0].children[0];

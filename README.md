@@ -11,7 +11,7 @@
 cat -> dog -> bird
 ```
 
-One line is a complete diagram: three boxes, two arrows, sensible spacing. You place the boxes, Lini routes the wires, and the same syntax scales up to the polished scene below.
+One line is a complete diagram: three boxes, two arrows, sensible spacing. You place the boxes, Lini routes the links, and the same syntax scales up to the polished scene below.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/hero.png" alt="A colourful service map rendered by Lini" width="440">
@@ -23,12 +23,12 @@ Thirty-odd lines of Lini ([`samples/hero.lini`](https://github.com/monfa-red/lin
 
 ## Why Lini
 
-Most tools make you choose: **draw by hand** (precise, but tedious and hard to version) or **auto-layout everything** (fast, but you take what the algorithm gives). Lini splits the work: you keep spatial control, it automates only the wires.
+Most tools make you choose: **draw by hand** (precise, but tedious and hard to version) or **auto-layout everything** (fast, but you take what the algorithm gives). Lini splits the work: you keep spatial control, it automates only the links.
 
 - **You arrange, it routes.** Place nodes with flex, grid, or anchors; Lini routes the connectors between them: orthogonal, clearance-respecting, deterministic.
 - **The full range of SVG.** Sizes, anchors, strokes, shadows, rotation, opacity, raw paths: full control over the look, not a fixed house style, so a diagram can actually look good.
 - **A small syntax.** Two brackets — `{ }` for style, `[ ]` for children — plus a few sigils and sensible defaults. `cat -> dog` is already a valid diagram; the whole language is small enough to learn in one sitting.
-- **Any shape you need.** 12 primitives and 10 templates, plus a raw `path` that accepts any SVG path string. If SVG can draw it, you can place it and wire to it.
+- **Any shape you need.** 12 primitives and 10 templates, plus a raw `path` that accepts any SVG path string. If SVG can draw it, you can place it and link to it.
 - **Fast, and one file.** A 1.5 MB native binary, one runtime dependency. No Node, JVM, or headless browser; typical diagrams compile in about 2 ms, startup included.
 - **Reproducible output.** Compilation is byte-identical across runs, so renders diff cleanly and never churn in CI. 408 tests back it, including property tests on the router's laws.
 - **Pretty by default.** A curated 11-hue palette in soft pastels — five OKLCH-tuned tiers each — plus angle-less gradients, all themeable and dark/light-aware. No hex codes required.
@@ -64,13 +64,13 @@ frog ~> pond           // wavy
 fish --> bowl          // dashed
 ```
 
-<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/flow.png" alt="Lini's wire styles, in colour" width="300"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/flow.png" alt="Lini's link styles, in colour" width="300"></p>
 
-**A diagram reads like a CSS file.** A `{ }` stylesheet at the top sets defaults, declares reusable classes, and extends shapes; then come the instances, then the wires:
+**A diagram reads like a CSS file.** A `{ }` stylesheet at the top sets defaults, declares reusable classes, and extends shapes; then come the instances, then the links:
 
 ```
 {                                   // the stylesheet — pure setup, draws nothing
-  -> { stroke: #444; clearance: 10; }
+  link: #444; clearance: 10;          // link defaults cascade to every link
   .loud { stroke: red; stroke-width: 2; }
   |db::cyl| { fill: lightyellow; }    // a new shape from the cylinder primitive
 }
@@ -80,7 +80,7 @@ queue |box| .loud { radius: 8 } "Queue"   // a node wears its class after the ty
 store |db|  "Postgres"
 
 api   -> queue "enqueue"
-queue -> store .loud "persist"            // …and a wire wears it the same way
+queue -> store .loud "persist"            // …and a link wears it the same way
 store ..> api  "ack"                       // dotted arrow
 ```
 
@@ -109,24 +109,24 @@ services |group| { layout: row; gap: 24 } [
 |path| { path: "M -34 6 C -34 -34 34 -34 34 6 C 20 34 -20 34 -34 6 Z"; }
 ```
 
-Box, oval, hex, slant, cylinder, diamond, cloud, polygon, line, icon (Material Symbols), and image, plus `path` for anything else. Text is not a shape: a bare `"…"` is content, and `|plain|` is a frameless box for a label that needs an id or a wire. Templates (`plain`, `rect`, `group`, `caption`, `footer`, `badge`, `note`, `row`, `column`, `table`) bundle common patterns, and you can define your own from any base: `|panel::group| { stroke: --accent; }`.
+Block (the bare frameless rectangle), oval, hex, slant, cylinder, diamond, cloud, polygon, line, icon (Material Symbols), and image, plus `path` for anything else. Text is not a shape: a bare `"…"` is content — styleable in place (`"x" { color: red }`) — and `|block|` is the frameless box for a label that needs an id or a link. Templates (`box`, `rect`, `group`, `caption`, `footer`, `badge`, `note`, `row`, `column`, `table`) bundle common patterns over `|block|`, and you can define your own from any base: `|panel::group| { stroke: --accent; }`.
 
 ---
 
-## Wires
+## Links
 
-Connect two nodes by id and Lini finds an orthogonal path through the free space, keeping a configurable `clearance` from every node and wire, rounding the corners, and landing the arrowhead on the edge. One knob (`clearance`, default 16) sets spacing for the whole diagram.
+Connect two nodes by id and Lini finds an orthogonal path through the free space, keeping a configurable `clearance` from every node and link, rounding the corners, and landing the arrowhead on the edge. One knob (`clearance`, default 16) sets spacing for the whole diagram.
 
-The operator is the wire's look, written `[start][line][end]` with no spaces:
+The operator is the link's look, written `[start][line][end]` with no spaces:
 
 | Line | | Markers | |
 |---|---|---|---|
 | `-` solid | `--` dashed | `>` arrow | `*` dot |
 | `..` dotted | `~` wavy | `<` crow | `<>` diamond |
 
-So `->` is a solid arrow, `<->` is bidirectional, `--*` a dashed line ending in a dot, `~>` a wavy arrow. Endpoints support fan-out, fan-in, and cartesian fans with `&`, and dot-paths into nested containers (`closet.outlet -> fridge.inlet`). Routing is automatic but steerable: name a side (`a.right -> b.left`) to force where a wire leaves or arrives. Labels ride the wire and slide to clear nodes; the wire never moves for a label.
+So `->` is a solid arrow, `<->` is bidirectional, `--*` a dashed line ending in a dot, `~>` a wavy arrow. Endpoints support fan-out, fan-in, and cartesian fans with `&`, and dot-paths into nested containers (`closet.outlet -> fridge.inlet`). Routing is automatic but steerable: name a side (`a.right -> b.left`) to force where a link leaves or arrives. Labels ride the link and slide to clear nodes; the link never moves for a label.
 
-The full routing contract (crossings, priority, self-loops, starvation) lives in [`WIRING.md`](https://github.com/monfa-red/lini/blob/main/WIRING.md).
+The full routing contract (crossings, priority, self-loops, starvation) lives in [`LINKING.md`](https://github.com/monfa-red/lini/blob/main/LINKING.md).
 
 ---
 
@@ -224,8 +224,8 @@ Measured end-to-end on a modern laptop, including process startup (`--bake-vars`
 | Diagram | Time |
 |---|---|
 | One node | ~1.6 ms |
-| Realistic service diagram (9 nodes, 5 wires) | ~2.2 ms |
-| Dense scene (100 nodes, 90 routed wires) | ~50 ms |
+| Realistic service diagram (9 nodes, 5 links) | ~2.2 ms |
+| Dense scene (100 nodes, 90 routed links) | ~50 ms |
 
 A single-pass parser, bottom-up layout, and an orthogonal router. No browser to spin up.
 
@@ -236,7 +236,7 @@ A single-pass parser, bottom-up layout, and an orthogonal router. No browser to 
 | | Lini | Auto-layout tools* |
 |---|---|---|
 | Placement | **you control** (flex / grid / anchors) | automatic |
-| Wire routing | automatic, orthogonal — **steerable sides** | automatic |
+| Link routing | automatic, orthogonal — **steerable sides** | automatic |
 | Visual control | **full SVG** (CSS vars + classes) | theme presets |
 | Runtime | **single native binary**, written in Rust | varies (Node, browser, JVM, …) |
 
@@ -254,23 +254,23 @@ A linear pipeline, each stage independently testable:
 lex → parse → resolve → layout → route → render
 ```
 
-Parsing is recursive-descent over an LL(1) grammar; resolve applies CSS-like specificity (inline beats class beats default) and expands user shapes; layout sizes bottom-up; the router solves wires orthogonally against a clearance contract; render emits semantic SVG. The full language is specified in [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md).
+Parsing is recursive-descent over an LL(1) grammar; resolve applies CSS-like specificity (inline beats class beats default) and expands user shapes; layout sizes bottom-up; the router solves links orthogonally against a clearance contract; render emits semantic SVG. The full language is specified in [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md).
 
 ---
 
 ## Status
 
-**v0.7.** The language (the box/text model in [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md)) is stable, and the pipeline is complete and tested: wires route and render, layout and theming work, and the formatter and dev server ship in the same binary.
+**v0.7.** The language (the box/text model in [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md)) is stable, and the pipeline is complete and tested: links route and render, layout and theming work, and the formatter and dev server ship in the same binary.
 
 ## Development
 
 ```bash
-cargo test                               # full suite: unit, snapshot, wiring
+cargo test                               # full suite: unit, snapshot, linking
 cargo run -- samples/hello.lini
 cargo run -- serve samples/hero.lini
 ```
 
-`samples/` holds a `.lini` per feature area; `tests/conformance.rs` snapshots their SVG with `insta`, and `tests/wiring.rs` asserts the router's laws on every scene.
+`samples/` holds a `.lini` per feature area; `tests/conformance.rs` snapshots their SVG with `insta`, and `tests/linking.rs` asserts the router's laws on every scene.
 
 ## License
 

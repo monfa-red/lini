@@ -287,7 +287,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
     // a link's `.style` class overrides it in the cascade (SPEC §13).
     if !laid.links.is_empty() || !laid.strays.is_empty() {
         // The link path's paint, in a fixed order (fill, stroke, width, dash) so a
-        // `-> { }` that overrides only some props still emits a stable rule. Font
+        // root `link:` that overrides only some props still emits a stable rule. Font
         // props from the defaults style labels, not the `<path>`, so they're dropped.
         let defaults = &laid.sheet.link_defaults;
         let dp = paint_props(defaults, vars, opts);

@@ -189,7 +189,7 @@ fn collect_fractions(v: &ResolvedValue) -> Vec<f64> {
 
 /// Default a link label's `font-size` to the baked `--link-font-size` (12) when
 /// unset, so labels read a touch smaller than body text.
-/// A link label inherits the link's `font-size` (the `-> { font-size: 11 }`
+/// A link label inherits the link's `font-size` (the baked `11`
 /// default, or an override) so its measured size and rendered size agree.
 fn link_text_attrs(mut map: AttrMap, link_attrs: &AttrMap) -> AttrMap {
     if map.get("font-size").is_none()
