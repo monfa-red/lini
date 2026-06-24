@@ -23,6 +23,12 @@ path = "src/lib.rs"
 [dependencies]
 clap = { version = "4.6", features = ["derive"] }
 
+[features]
+default = ["icons"]
+# Embed the Phosphor icon set (assets/phosphor-duotone.txt). On by default;
+# `--no-default-features` drops it for a lean binary (then `|icon|` errors).
+icons = []
+
 [dev-dependencies]
 insta = { version = "1.47", features = ["glob"] }
 
@@ -30,3 +36,9 @@ insta = { version = "1.47", features = ["glob"] }
 lto = "thin"
 codegen-units = 1
 strip = "symbols"
+
+# `xtask` holds repo tooling (icon extraction, future font embedding). It is not
+# part of the published crate; default-members keeps `cargo build/test` on lini.
+[workspace]
+members = ["xtask"]
+default-members = ["."]
