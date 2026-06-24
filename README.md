@@ -14,7 +14,7 @@ cat -> dog -> bird
 One line is a complete diagram: three boxes, two arrows, sensible spacing. You place the boxes, Lini routes the links, and the same syntax scales up to the polished scene below.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/hero.png" alt="A colourful service map rendered by Lini" width="440">
+  <img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/hero.png" alt="A colourful service map rendered by Lini" width="450">
 </p>
 
 Thirty-odd lines of Lini ([`samples/hero.lini`](https://github.com/monfa-red/lini/blob/main/samples/hero.lini)).
@@ -100,7 +100,7 @@ services |group| { layout: row; gap: 24 } [
 
 ## Shapes
 
-<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/shapes.png" alt="Lini's shape primitives and templates" width="500"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/shapes.png" alt="Lini's shape primitives and templates" width="480"></p>
 
 ```
 |hex|  { width: 82; height: 72 } "hex"

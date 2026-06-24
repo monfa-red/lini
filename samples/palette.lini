@@ -1,17 +1,19 @@
 // The built-in named-hue palette (SPEC §11.2): 11 hues × 5 tiers, plus a few
 // "pretty card" combinations (wash fill + ink stroke/text) showing the easy path.
 {
-  layout: column; gap: 22; padding: 26; font-size: 13;
+  layout: column; gap: 18; padding: 30 16; font-size: 13;
 
-  |sw::box| { width: 78; height: 34; stroke: none; }
+  |sw::box| { width: 80; height: 34; stroke: none; }
   |h::block| { font-weight: normal; color: --muted; }
-  |card::box| { stroke-width: 1.5; font-weight: normal; width: 90; }
+  |card::box| {
+    stroke-width: 1.5; font-weight: normal; width: 88; padding: 15 0;
+  }
 }
 
 |block| { font-size: 18; } "Lini palette — 11 hues × 5 tiers"
 
 board |group| {
-  layout: grid; columns: 60 82 82 82 82 82; gap: 6; fill: none; stroke: none;
+  layout: grid; columns: 56 82 82 82 82 82; gap: 5; fill: none; stroke: none;
 } [
   |h| ""
   |h| "wash"
@@ -87,10 +89,10 @@ board |group| {
   |sw| { fill: --gray-ink; }
 ]
 
-cards |row| { gap: 14; } [
+cards |row| { gap: 10; } [
   |card| { fill: --purple-wash; stroke: --purple; color: --purple; } "Wash"
-  |card| { fill: --purple-soft; stroke: --purple-ink; color: --purple-ink; } "Soft"
-  |card| { fill: --purple; stroke: --fg; color: --fg; } "Base"
-  |card| { fill: --purple-deep; stroke: --purple-ink; color: --bg; } "Deep"
+  |card| { fill: --purple-soft; stroke: --purple-deep; color: --purple-deep; } "Soft"
+  |card| { fill: --purple; stroke: --purple-ink; color: --purple-ink; } "Base"
+  |card| { fill: --purple-deep; stroke: --purple-deep; color: --bg; } "Deep"
   |card| { fill: --purple-ink; stroke: --purple-ink; color: --bg; } "Ink"
 ]

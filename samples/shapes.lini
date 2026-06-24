@@ -7,50 +7,50 @@
 }
 
 |tile| [
-  |box| { width: 66; height: 46; fill: --red-soft; stroke: --red-ink; } [
+  |box| { width: 66; height: 46; fill: --red-wash; stroke: --red-deep; } [
     |badge| "new"
   ]
   |cap| "box + badge"
 ]
 |tile| [
-  |rect| { width: 66; height: 46; fill: --orange-soft; stroke: --orange-ink; }
+  |rect| { width: 66; height: 46; fill: --orange-wash; stroke: --orange-deep; }
   |cap| "rect"
 ]
 |tile| [
-  |oval| { width: 68; height: 54; fill: --amber-soft; stroke: --amber-ink; }
+  |oval| { width: 68; height: 54; fill: --amber-wash; stroke: --amber-deep; }
   |cap| "oval"
 ]
 |tile| [
-  |hex| { width: 68; height: 58; fill: --lime-soft; stroke: --lime-ink; }
+  |hex| { width: 68; height: 58; fill: --lime-wash; stroke: --lime-deep; }
   |cap| "hex"
 ]
 
 |tile| [
-  |slant| { width: 66; height: 46; fill: --green-soft; stroke: --green-ink; }
+  |slant| { width: 66; height: 46; fill: --green-wash; stroke: --green-deep; }
   |cap| "slant"
 ]
 |tile| [
-  |cyl| { width: 58; height: 56; fill: --teal-soft; stroke: --teal-ink; }
+  |cyl| { width: 58; height: 56; fill: --teal-wash; stroke: --teal-deep; }
   |cap| "cyl"
 ]
 |tile| [
-  |diamond| { width: 70; height: 60; fill: --sky-soft; stroke: --sky-ink; }
+  |diamond| { width: 70; height: 60; fill: --sky-wash; stroke: --sky-deep; }
   |cap| "diamond"
 ]
 |tile| [
-  |cloud| { width: 84; height: 52; fill: --blue-soft; stroke: --blue-ink; }
+  |cloud| { width: 84; height: 52; fill: --blue-wash; stroke: --blue-deep; }
   |cap| "cloud"
 ]
 
 |tile| [
   |poly| {
-    points: 0 -30, 30 -6, 17 28, -17 28, -30 -6; fill: --purple-soft; stroke: --purple-ink;
+    points: 0 -30, 30 -6, 17 28, -17 28, -30 -6; fill: --purple-wash; stroke: --purple-deep;
   }
   |cap| "poly"
 ]
 |tile| [
   |path| {
-    path: "M -32 26 Q 0 -28 32 26"; stroke: --rose-ink; stroke-width: 4;
+    path: "M -32 26 Q 0 -28 32 26"; stroke: --rose-deep; stroke-width: 4;
   }
   |cap| "path"
 ]
@@ -85,7 +85,7 @@
 ]
 |tile| [
   |path| {
-    path: "M 0 -28 C 22 -30 31 -12 23 4 C 17 16 30 25 11 30 C -7 34 -27 25 -26 6 C -25 -11 -22 -28 0 -28 Z"; fill: --rose-soft; stroke: --rose-ink; stroke-width: 2;
+    path: "M 0 -28 C 22 -30 31 -12 23 4 C 17 16 30 25 11 30 C -7 34 -27 25 -26 6 C -25 -11 -22 -28 0 -28 Z"; fill: --rose-wash; stroke: --rose-ink; stroke-width: 2;
   }
   |cap| "blob path"
 ]
