@@ -58,6 +58,13 @@ pub fn built_in_defaults() -> VarTable {
         "group-fill",
         light_dark(rgba(0.0, 0.0, 0.0, 0.03), rgba(255.0, 255.0, 255.0, 0.05)),
     );
+    // A soft but visible grey so a duotone icon reads as two-tone by default
+    // (heavier than the near-invisible group-fill).
+    set_visual(
+        &mut t,
+        "icon-fill",
+        light_dark(rgba(0.0, 0.0, 0.0, 0.16), rgba(255.0, 255.0, 255.0, 0.18)),
+    );
     set_visual(
         &mut t,
         "caption-color",

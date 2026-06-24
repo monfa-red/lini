@@ -22,6 +22,10 @@ fn compile_is_transparent_to_desugar_for_every_sample() {
             continue;
         }
         let src = std::fs::read_to_string(&path).unwrap();
+        // Icons need the `icons` feature; skip icon-using samples when it's off.
+        if !cfg!(feature = "icons") && src.contains("|icon|") {
+            continue;
+        }
         let lowered = lini::desugar_source(&src).expect("desugar");
         assert_eq!(
             svg(&src),

@@ -632,7 +632,6 @@ line, **`stroke-width`** its weight. The defaults make the duotone read out of t
 box — `fill` a soft grey (`--icon-fill`), `stroke` the ink (`--stroke`, matching
 borders and wires), `stroke-width` 2. A single-tone line icon is `fill: none`; a
 hued duotone is `fill: --teal-wash; stroke: --teal-ink`, exactly like a card.
-`color:` recolours an icon like text.
 
 `stroke-width` is **counter-scaled**: an icon is authored on a 256-unit grid and
 fit to its box, and the stroke is divided by that scale (baked at compile time), so
@@ -913,7 +912,7 @@ values.
 | Property | Type | Default |
 |---|---|---|
 | `fill` | color | `--fill` (closed shapes); `currentColor` on text; `--icon-fill` (a soft grey) for icons; `--bg` on the root (the scene background) |
-| `color` | color | inherits — sets text and icon colour for descendants; on text, an alias for `fill` |
+| `color` | color | inherits — sets text colour for descendants; on text, an alias for `fill` |
 | `opacity` | 0..1 | 1 |
 | `radius` | number | 0 (`\|block\|`); `\|box\|` rounds to 6 |
 | `rotate` | degrees | 0 |

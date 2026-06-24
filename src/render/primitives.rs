@@ -344,38 +344,93 @@ fn emit_path(out: &mut String, n: &PlacedNode, indent: &str) {
 }
 
 fn emit_icon(out: &mut String, n: &PlacedNode, indent: &str, vars: &VarTable, opts: &Options) {
-    // Material Symbols embedding lands in a follow-up; until then a
-    // placeholder square keeps layout visible and the icon's name
-    // discoverable through the SVG. The glyph name is the node's label
-    // (`|icon| "home"`, SPEC §7); size comes from `width`/`height`.
-    let size = n
-        .attrs
-        .number("width")
-        .or_else(|| n.attrs.number("height"))
-        .unwrap_or(0.0);
-    let name = n.label.as_deref().unwrap_or("?");
-    let stroke = attr_or_var(&n.attrs, "stroke", "stroke", vars, opts);
-    let fill = attr_or_var(&n.attrs, "fill", "stroke", vars, opts);
+    // The `symbol` (validated at resolve) names a Phosphor glyph: a list of
+    // geometry fragments, each tagged with a paint role. They are authored on a
+    // 256-unit grid and scaled into the node box; the stroke is counter-scaled so
+    // its weight stays constant at any size and matches other strokes (SPEC §7).
+    let Some(ResolvedValue::Ident(name) | ResolvedValue::String(name)) = n.attrs.get("symbol")
+    else {
+        return;
+    };
+    let Some(frags) = crate::icon::lookup(name) else {
+        return;
+    };
+    let frags: Vec<(crate::icon::Role, &str)> = frags.collect();
+
+    let size = n.bbox.w().min(n.bbox.h());
+    let scale = size / 256.0;
+    let body = attr_or_var(&n.attrs, "fill", "icon-fill", vars, opts);
+    let ink = attr_or_var(&n.attrs, "stroke", "stroke", vars, opts);
+    let stroke_width = n.attrs.number("stroke-width").unwrap_or(2.0) / scale;
+
+    use crate::icon::Role;
     writeln!(
         out,
-        r#"{}<rect x="{}" y="{}" width="{}" height="{}" fill="none" stroke="{}" stroke-width="1"/>"#,
-        indent,
-        num(-size / 2.0),
-        num(-size / 2.0),
-        num(size),
-        num(size),
-        stroke,
+        r#"{indent}<g transform="scale({}) translate(-128 -128)">"#,
+        num(scale)
     )
     .unwrap();
-    writeln!(
+    // Faint body behind, then the outline, then any solid ink on top. A
+    // `fill: none` drops the body, leaving a clean single-tone line icon.
+    if body != "none" {
+        emit_role_group(
+            out,
+            indent,
+            &frags,
+            |r| matches!(r, Role::Fill | Role::Both),
+            &format!(r#"fill="{body}" stroke="none""#),
+        );
+    }
+    emit_role_group(
         out,
-        r#"{}<text x="0" y="0" text-anchor="middle" dominant-baseline="central" font-size="{}" fill="{}">{}</text>"#,
         indent,
-        num(size * 0.4),
-        fill,
-        escape_xml(name),
-    )
-    .unwrap();
+        &frags,
+        |r| matches!(r, Role::Line | Role::Both),
+        &format!(
+            r#"fill="none" stroke="{ink}" stroke-width="{}" stroke-linecap="round" stroke-linejoin="round""#,
+            num(stroke_width)
+        ),
+    );
+    emit_role_group(
+        out,
+        indent,
+        &frags,
+        |r| r == Role::Solid,
+        &format!(r#"fill="{ink}" stroke="none""#),
+    );
+    writeln!(out, "{indent}</g>").unwrap();
+
+    // An optional bare string rides as centred text over the glyph (SPEC §7).
+    if let Some(label) = n.label.as_deref().filter(|s| !s.is_empty()) {
+        let color = attr_or_var(&n.attrs, "color", "text-color", vars, opts);
+        writeln!(
+            out,
+            r#"{indent}<text x="0" y="0" text-anchor="middle" dominant-baseline="central" font-size="{}" fill="{}">{}</text>"#,
+            num(size * 0.4),
+            color,
+            escape_xml(label),
+        )
+        .unwrap();
+    }
+}
+
+/// Emit the fragments whose role matches `want`, wrapped in one inheriting paint
+/// `<g>`; nothing when none match (so an all-`fill: none` icon emits no body).
+fn emit_role_group(
+    out: &mut String,
+    indent: &str,
+    frags: &[(crate::icon::Role, &str)],
+    want: impl Fn(crate::icon::Role) -> bool,
+    paint: &str,
+) {
+    if !frags.iter().any(|&(r, _)| want(r)) {
+        return;
+    }
+    writeln!(out, "{indent}  <g {paint}>").unwrap();
+    for &(_, frag) in frags.iter().filter(|&&(r, _)| want(r)) {
+        writeln!(out, "{indent}    {frag}").unwrap();
+    }
+    writeln!(out, "{indent}  </g>").unwrap();
 }
 
 fn emit_image(out: &mut String, n: &PlacedNode, indent: &str) {

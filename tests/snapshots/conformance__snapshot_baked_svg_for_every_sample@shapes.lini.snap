@@ -18,7 +18,7 @@ input_file: samples/shapes.lini
     .lini .lini-path { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
-    .lini .lini-icon { fill: #444; }
+    .lini .lini-icon { fill: rgba(0, 0, 0, 0.16); stroke: #444; stroke-width: 2; }
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
     .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,4; }
     .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
@@ -155,9 +155,15 @@ input_file: samples/shapes.lini
     </g>
     <g class="lini-node lini-tile lini-column lini-block" transform="translate(160.6,55.9564)">
       <rect x="-21" y="-32.5" width="42" height="65" rx="0" ry="0"/>
-      <g class="lini-node lini-icon" style="color: #005d56" transform="translate(0,-11.5)">
-        <rect x="-21" y="-21" width="42" height="42" fill="none" stroke="#444" stroke-width="1"/>
-        <text x="0" y="0" text-anchor="middle" dominant-baseline="central" font-size="16.8" fill="#444">home</text>
+      <g class="lini-node lini-icon" style="fill: #cdf9f4; stroke: #008e84" transform="translate(0,-11.5)">
+        <g transform="scale(0.1641) translate(-128 -128)">
+          <g fill="#cdf9f4" stroke="none">
+            <path d="M104,216V152h48v64h64V120a8,8,0,0,0-2.34-5.66l-80-80a8,8,0,0,0-11.32,0l-80,80A8,8,0,0,0,40,120v96Z"/>
+          </g>
+          <g fill="none" stroke="#008e84" stroke-width="12.1905" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M104,216V152h48v64h64V120a8,8,0,0,0-2.34-5.66l-80-80a8,8,0,0,0-11.32,0l-80,80A8,8,0,0,0,40,120v96Z"/>
+          </g>
+        </g>
       </g>
       <g class="lini-node lini-cap lini-block" transform="translate(0,25.5)">
         <rect x="-14.4" y="-6" width="28.8" height="12" rx="0" ry="0"/>

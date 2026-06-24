@@ -479,3 +479,52 @@ loud --> mix .calm
         link_g
     );
 }
+
+// ───────────────────────────── icons (SPEC §7) ─────────────────────────────
+
+#[cfg(feature = "icons")]
+#[test]
+fn icon_renders_phosphor_paths_counter_scaled() {
+    // A default 32px icon scales the 256 grid by 0.125 and counter-scales the
+    // stroke (2 × 256 / 32 = 16) so its weight matches other 2px strokes.
+    let svg = render_live("x |icon| { symbol: heart }\n");
+    assert!(
+        svg.contains(r#"transform="scale(0.125) translate(-128 -128)""#),
+        "{svg}"
+    );
+    assert!(svg.contains(r#"stroke-width="16""#), "{svg}");
+    assert!(svg.contains(r#"stroke-linecap="round""#), "{svg}");
+    assert!(svg.contains(r#"<path d="M"#), "{svg}");
+}
+
+#[cfg(feature = "icons")]
+#[test]
+fn icon_two_tone_paints_body_fill_and_line_stroke() {
+    // fill = body, stroke = line — exactly like a box.
+    let svg = render_live("x |icon| { symbol: heart; fill: --teal-wash; stroke: --teal-ink }\n");
+    assert!(
+        svg.contains(r#"fill="var(--lini-teal-wash)" stroke="none""#),
+        "{svg}"
+    );
+    assert!(svg.contains(r#"stroke="var(--lini-teal-ink)""#), "{svg}");
+}
+
+#[cfg(feature = "icons")]
+#[test]
+fn icon_single_tone_drops_the_body_group() {
+    // `fill: none` leaves a clean line icon — the line group only, no body fill.
+    let svg = render_live("x |icon| { symbol: heart; fill: none }\n");
+    assert!(
+        svg.contains(r#"fill="none" stroke="var(--lini-stroke)""#),
+        "{svg}"
+    );
+    assert!(!svg.contains(r#"stroke="none">"#), "no body group: {svg}");
+}
+
+#[cfg(feature = "icons")]
+#[test]
+fn icon_solid_role_keeps_a_foreground_dot() {
+    // atom's nucleus is a solid fill (ink), kept distinct from the faint body.
+    let svg = render_live("x |icon| { symbol: atom }\n");
+    assert!(svg.contains(r#"<circle cx="128" cy="128" r="12""#), "{svg}");
+}

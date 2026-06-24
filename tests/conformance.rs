@@ -35,6 +35,11 @@ fn snapshot_baked_svg_for_every_sample() {
         }
         let src = std::fs::read_to_string(path)
             .unwrap_or_else(|e| panic!("read {}: {}", path.display(), e));
+        // Icons need the `icons` feature; skip icon-using samples when it's off
+        // (their non-icon siblings render identically with or without it).
+        if !cfg!(feature = "icons") && src.contains("|icon|") {
+            return;
+        }
         let svg = lini::compile_str_with(&src, &opts)
             .unwrap_or_else(|e| panic!("{}: compile failed: {}", path.display(), e));
         insta::assert_snapshot!(svg);

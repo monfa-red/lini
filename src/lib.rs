@@ -2,6 +2,7 @@ mod ast;
 mod desugar;
 mod error;
 mod fmt;
+mod icon;
 mod layout;
 mod lexer;
 mod lint;

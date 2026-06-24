@@ -45,6 +45,10 @@ fn formatted_output_resolves_identically() {
             continue;
         }
         let src = std::fs::read_to_string(&path).expect("read sample");
+        // Icons need the `icons` feature; skip icon-using samples when it's off.
+        if !cfg!(feature = "icons") && src.contains("|icon|") {
+            continue;
+        }
         let formatted = lini::format_source(&src).expect("format");
 
         let svg_orig = lini::compile_str_with(&src, &opts).expect("compile original");

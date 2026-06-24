@@ -98,12 +98,13 @@ fn desugar_emits_no_link_defaults_block() {
 }
 
 #[test]
-fn an_icon_keeps_its_glyph_on_the_line() {
-    let out = desugar_source("home |icon|\n").unwrap();
+fn an_icon_has_no_id_label_child() {
+    // An |icon| is named by `symbol`; its id never becomes a text child.
+    let out = desugar_source("home |icon| { symbol: house }\n").unwrap();
     assert!(out.contains("home |icon| .lini-icon"), "{out}");
     assert!(
         !out.contains("[ \"home\" ]"),
-        "an icon's glyph stays its id, never a text child: {out}"
+        "an icon's id never becomes a text child: {out}"
     );
 }
 

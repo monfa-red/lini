@@ -13,6 +13,13 @@ fn sample_paths() -> Vec<PathBuf> {
         .expect("read samples/")
         .filter_map(|e| e.ok().map(|e| e.path()))
         .filter(|p| p.extension().is_some_and(|x| x == "lini"))
+        // Icons need the `icons` feature; drop icon-using samples when it's off.
+        .filter(|p| {
+            cfg!(feature = "icons")
+                || !std::fs::read_to_string(p)
+                    .unwrap_or_default()
+                    .contains("|icon|")
+        })
         .collect();
     paths.sort();
     paths

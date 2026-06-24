@@ -71,7 +71,15 @@ pub fn primitive_bundle(kind: ShapeKind) -> Vec<Decl> {
             var("stroke", "stroke"),
             n("stroke-width", 2.0),
         ],
-        Icon => vec![var("fill", "stroke"), n("width", 24.0), n("height", 24.0)],
+        // Phosphor icon: painted like a box (fill body, stroke line) at a
+        // counter-scaled stroke-width; defaults to a soft-grey duotone at 32px.
+        Icon => vec![
+            var("fill", "icon-fill"),
+            var("stroke", "stroke"),
+            n("stroke-width", 2.0),
+            n("width", 32.0),
+            n("height", 32.0),
+        ],
         // Text is structural (render's `lini-text` rule); Image requires src/dims.
         Text | Image => Vec::new(),
     }
@@ -212,8 +220,8 @@ mod tests {
     fn slant_carries_skew_icon_carries_size() {
         assert_eq!(num(&primitive_bundle(ShapeKind::Slant), "skew"), Some(15.0));
         let icon = primitive_bundle(ShapeKind::Icon);
-        assert_eq!(num(&icon, "width"), Some(24.0));
-        assert_eq!(num(&icon, "height"), Some(24.0));
+        assert_eq!(num(&icon, "width"), Some(32.0));
+        assert_eq!(num(&icon, "height"), Some(32.0));
     }
 
     #[test]

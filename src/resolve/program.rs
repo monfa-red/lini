@@ -446,13 +446,15 @@ mod tests {
         assert_eq!(cap.children[0].label.as_deref(), Some("Title"));
     }
 
+    #[cfg(feature = "icons")]
     #[test]
-    fn icon_label_is_the_glyph_name_not_a_child() {
-        // SPEC §7: an icon's text is its glyph name, carried on the node — never a
-        // rendered text child.
-        let p = rv4("i |icon| \"home\"\n");
+    fn icon_named_by_symbol_with_optional_text() {
+        // SPEC §7: `symbol` names the icon; a bare string rides as centred text,
+        // carried on the node — never a separate rendered child.
+        let p = rv4("i |icon| { symbol: house } \"3\"\n");
         assert_eq!(p.scene.nodes[0].shape, ShapeKind::Icon);
-        assert_eq!(p.scene.nodes[0].label.as_deref(), Some("home"));
+        assert_eq!(ident(&p, 0, "symbol"), Some("house"));
+        assert_eq!(p.scene.nodes[0].label.as_deref(), Some("3"));
         assert!(p.scene.nodes[0].children.is_empty());
     }
 

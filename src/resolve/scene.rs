@@ -189,14 +189,15 @@ pub fn resolve_node(
         });
     }
 
-    // An `|icon|` consumes its text as the glyph name (SPEC §7): its first string,
-    // else its id. It renders no text child. id-as-label and define bodies were
-    // expanded by desugar, so children are taken verbatim.
+    // An `|icon|` is named by its `symbol` (SPEC §7), not its label; any bare
+    // string it carries rides along as centred text (`own_label`, drawn by the
+    // renderer). It stays a leaf, so its children are not resolved as a subtree.
     let is_icon = shape == ShapeKind::Icon;
+    if is_icon {
+        validate_icon(&attrs, node.span)?;
+    }
     let own_label = if is_icon {
-        first_text(&node.children)
-            .map(str::to_string)
-            .or_else(|| node.id.clone())
+        first_text(&node.children).map(str::to_string)
     } else {
         None
     };
@@ -298,12 +299,54 @@ pub(super) fn is_text_prop(name: &str) -> bool {
     )
 }
 
-/// The first bare string among a node's children — an `|icon|`'s glyph name.
+/// The first bare string among a node's children — an `|icon|`'s optional
+/// centred text.
 fn first_text(children: &[Child]) -> Option<&str> {
     children.iter().find_map(|c| match c {
         Child::Text(t) => Some(t.text.as_str()),
         Child::Box(_) => None,
     })
+}
+
+/// An `|icon|` must name a known `symbol` (SPEC §7). Errors point at the node,
+/// suggest the nearest name, or — when the set was not compiled in — hint at the
+/// `icons` feature.
+fn validate_icon(attrs: &AttrMap, span: Span) -> Result<(), Error> {
+    let symbol = match attrs.get("symbol") {
+        Some(ResolvedValue::Ident(s) | ResolvedValue::String(s)) => s.as_str(),
+        Some(_) => {
+            return Err(Error::at(
+                span,
+                "'symbol' must be an icon name, e.g. { symbol: heart }",
+            ));
+        }
+        None => {
+            return Err(Error::at(
+                span,
+                "'|icon|' needs a 'symbol' (e.g. { symbol: heart })",
+            ));
+        }
+    };
+    if crate::icon::lookup(symbol).is_some() {
+        return Ok(());
+    }
+    if !crate::icon::ENABLED {
+        return Err(Error::at(
+            span,
+            "icon support is not built in — rebuild with the `icons` feature",
+        ));
+    }
+    let msg = match crate::icon::suggest(symbol).as_slice() {
+        [] => format!("unknown icon '{symbol}'"),
+        names => {
+            let quoted: Vec<String> = names.iter().map(|n| format!("'{n}'")).collect();
+            format!(
+                "unknown icon '{symbol}'; did you mean {}?",
+                quoted.join(", ")
+            )
+        }
+    };
+    Err(Error::at(span, msg))
 }
 
 /// Drop empty (`""`) text children — they suppress the label and would emit an

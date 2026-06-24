@@ -13,6 +13,10 @@ fn all_samples_resolve() {
             continue;
         }
         let src = std::fs::read_to_string(&path).expect("read sample");
+        // Icons need the `icons` feature; skip icon-using samples when it's off.
+        if !cfg!(feature = "icons") && src.contains("|icon|") {
+            continue;
+        }
         if let Err(e) = lini::check(&src) {
             let name = path.file_name().unwrap().to_string_lossy().into_owned();
             failures.push(format!("{}: {}", name, e));
