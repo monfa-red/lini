@@ -264,3 +264,32 @@ real foundation (could just as well be noted outside auto-layout):
   orthogonally-wired internals, or vice versa — the sky's the limit.
 
 Build later.
+
+## Icons — duotone, palette-themed (idea — `|icon|`)
+
+Make `|icon|` real (today it's a placeholder square). Embed icons as **inline SVG
+paths, not a font** — works in resvg / baked / raster, themeable, reproducible.
+(Supersedes the "Material Symbols font" line in §19.)
+
+Go **duotone**, because Lini's shapes are already two-tone (a soft fill + an ink
+stroke), so duotone icons sit in the same family:
+
+- **fill** tone → `--<hue>-wash` (the faint layer)
+- **stroke / line** tone → `--<hue>-deep` (the strong layer)
+  (wash + deep assume the 5-tier idea; with today's tiers it's wash + ink.)
+- second tone off → a plain single-tone icon — duotone is a superset, you lose nothing.
+- **stroke-width ties to Lini's `stroke-width`** — fixed as the icon resizes, so an
+  icon's line weight matches the wires and borders (counter-scale `width * grid /
+  size`, baked at compile time, not a runtime `calc`).
+- default colour: open — `--gray`? `--accent`? decide later.
+
+Set: **Phosphor** (MIT, the one with *designed* duotone, path-based). MIT duotone
+path sets are rare, so it's the natural pick — open to a better one. Size isn't a
+worry (bundle the full set; duotone gives single-tone for free), with a `LICENSES/`
+attribution.
+
+Related: with a real icon set, symbol-shapes like `cloud` can become icon aliases —
+keep the parametric *container* primitives (box / oval / hex / cyl / …), let icons
+cover the fixed symbols.
+
+Build later.
