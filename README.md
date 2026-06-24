@@ -242,7 +242,7 @@ A single-pass parser, bottom-up layout, and an orthogonal router. No browser to 
 
 <sub>*the common auto-layout diagram tools (Mermaid, Graphviz, PlantUML, and the like)</sub>
 
-Reach for Lini when you have a layout in mind (a grid, a top-down flow, framed groups) and want it to look the way you intend, without drawing the connectors by hand. Placing everything for you is a non-goal: you arrange, Lini routes.
+Reach for Lini when you have a layout in mind (a grid, a top-down flow, framed groups) and want it to look the way you intend, without drawing the connectors by hand. By default, you arrange and Lini routes.
 
 ---
 
@@ -262,7 +262,7 @@ Parsing is recursive-descent over an LL(1) grammar; resolve applies CSS-like spe
 
 **v0.7.** The language (the box/text model in [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md)) is stable, and the pipeline is complete and tested: wires route and render, layout and theming work, and the formatter and dev server ship in the same binary.
 
-**Non-goals**, by design: automatic node *placement*, multi-file imports, animation, and manual wire waypoints.
+**Non-goals**, by design: multi-file imports, animation, and manual wire waypoints.
 
 ## Development
 

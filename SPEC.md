@@ -1462,8 +1462,6 @@ Function names `rgb`, `rgba`, `hsl`, `repeat` are reserved only before `(`.
 
 **Non-goals** — out of scope:
 
-- **Auto-layout** — you position nodes (flex / grid / anchors); Lini does not place
-  or route them for you.
 - **Per-label wire styling** — a wire's labels are bare text placed by `along:` and
   styled together; a wire never carries a shape.
 - **Compound selectors** in rules (`|box.hot| { }`) — style the class or the type.
