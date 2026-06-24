@@ -519,11 +519,25 @@ impl Emitter<'_> {
             let end = w.style_span.map_or(w.span.end, |s| s.end);
             self.emit_style_block(&w.style, end, depth, false);
         }
-        // Labels trail the head (the trailing sugar, SPEC §9), each a styleable
-        // text leaf.
-        for label in &w.labels {
-            self.out.push(' ');
-            self.emit_text_node(label, depth);
+        // A link's content is its labels (SPEC §9), each a styleable text leaf:
+        // pretty `fmt` trails the sugar (`a -> b "x"`), `desugar` writes the
+        // explicit `[ ]` form — the same terse/canonical split a node's labels use.
+        if !w.labels.is_empty() {
+            if self.terse {
+                for label in &w.labels {
+                    self.out.push(' ');
+                    self.emit_text_node(label, depth);
+                }
+            } else {
+                self.out.push_str(" [ ");
+                for (i, label) in w.labels.iter().enumerate() {
+                    if i > 0 {
+                        self.out.push(' ');
+                    }
+                    self.emit_text_node(label, depth);
+                }
+                self.out.push_str(" ]");
+            }
         }
     }
 

@@ -73,6 +73,15 @@ fn scene_defaults_and_auto_create_land_in_the_global_block() {
 }
 
 #[test]
+fn link_labels_lower_to_an_explicit_bracket() {
+    // SPEC §9/§14: a link's trailing-label sugar lowers to the explicit [ ] form
+    // (the dumb core's input), exactly as a node's id-as-label does. The trailing
+    // shape is pretty-fmt sugar only — the core never sees it.
+    let out = desugar_source("a -> b \"flows\"\n").unwrap();
+    assert!(out.contains("[ \"flows\" ]"), "link label in [ ]: {out}");
+}
+
+#[test]
 fn desugar_emits_no_link_defaults_block() {
     // Link defaults are a resolve-time cascade now (SPEC §9), not a `-> { }`
     // rule — desugar never emits one, and its output stays re-parseable.
