@@ -1,7 +1,8 @@
 //! Every built-in default, expressed as parser-shaped [`Decl`]s. This is the one
-//! place Lini's look is tuned; desugar lowers these into `.lini-*` class defs, the
-//! global block, and the `-> { }` link defaults. Visual `--lini-*` colours stay
-//! live `--var` references (render emits their defaults as `@layer` CSS).
+//! place Lini's look is tuned; desugar lowers these into `.lini-*` class defs and
+//! the global block, and `resolve` reads [`link_defaults`] as the baked link base.
+//! Visual `--lini-*` colours stay live `--var` references (render emits their
+//! defaults as `@layer` CSS).
 
 use crate::resolve::ShapeKind;
 use crate::span::Span;
@@ -162,7 +163,9 @@ pub fn root_defaults() -> Vec<Decl> {
     ]
 }
 
-/// Link defaults — prepended to the `-> { }` rule (user decls override).
+/// The baked link base (SPEC §11.5): a link's lowest-specificity layer, resolved
+/// per link below the scope's `link*` / `clearance` / `routing` cascade, the
+/// class rules, and the link's own block.
 pub fn link_defaults() -> Vec<Decl> {
     vec![
         n("stroke-width", 2.0),

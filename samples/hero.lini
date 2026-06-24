@@ -2,7 +2,7 @@
 // point, mixed link styles. Source for assets/hero.png.
 {
   layout: column; gap: 52; padding: 30; font-weight: normal;
-  -> { stroke: --gray; stroke-width: 2; clearance: 16; }
+  link: --gray; link-width: 2; clearance: 16;
 
   // tier looks — soft pastel fill, ink text + stroke
   |edge::box| { fill: --sky-wash; stroke: --sky-ink; color: --sky-ink; }

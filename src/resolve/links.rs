@@ -39,6 +39,9 @@ pub fn resolve_link(
     for d in &w.style {
         ordered.push((d.name.clone(), resolve_groups(&d.groups, d.span, ctx.vars)?));
     }
+    // A link's paint family is `link` / `link-width` / `link-style` (SPEC §9);
+    // map them onto the path's `stroke*` so the cascade and renderer are uniform.
+    let ordered = map_link_props(ordered);
 
     let markers = resolve_markers(
         &ordered,
@@ -48,6 +51,8 @@ pub fn resolve_link(
     )?;
     let mut attrs = collapse(&ordered);
     inject_line_style(&mut attrs, w.op.line);
+    validate_routing(&attrs, w.span)?;
+    attrs.map.remove("routing");
 
     // `along:` distributes the labels along the drawn route (SPEC §9): one
     // fraction (0..1) per label, in order; an absent fraction is `Auto` (the
@@ -118,6 +123,42 @@ fn inject_line_style(attrs: &mut AttrMap, line: LineStyle) {
     };
     if attrs.get("stroke-style").is_none() {
         attrs.insert("stroke-style", ResolvedValue::Ident(style.into()));
+    }
+}
+
+/// Map a link's surface paint family — `link` / `link-width` / `link-style` /
+/// `link-font-size` (SPEC §9) — onto the SVG path's `stroke*` / `font-size`, so
+/// the cascade, the renderer, and the `.lini-link` rule all speak one vocabulary.
+/// Every other property (clearance, along, marker*, …) passes through unchanged.
+pub(super) fn map_link_props(
+    ordered: Vec<(String, ResolvedValue)>,
+) -> Vec<(String, ResolvedValue)> {
+    ordered
+        .into_iter()
+        .map(|(k, v)| (map_link_name(&k).to_string(), v))
+        .collect()
+}
+
+fn map_link_name(name: &str) -> &str {
+    match name {
+        "link" => "stroke",
+        "link-width" => "stroke-width",
+        "link-style" => "stroke-style",
+        "link-font-size" => "font-size",
+        other => other,
+    }
+}
+
+/// Only `routing: orthogonal` is built; `straight` / `curved` are named but
+/// deferred (SPEC §19).
+fn validate_routing(attrs: &AttrMap, span: crate::span::Span) -> Result<(), Error> {
+    match attrs.get("routing") {
+        None => Ok(()),
+        Some(ResolvedValue::Ident(r)) if r == "orthogonal" => Ok(()),
+        Some(_) => Err(Error::at(
+            span,
+            "routing: only 'orthogonal' is built; 'straight' / 'curved' are deferred (SPEC §19)",
+        )),
     }
 }
 

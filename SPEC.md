@@ -1328,6 +1328,8 @@ Format: `filename:line:col: error: <message>` (LSP-compatible).
 | Box property on text | `'pin' needs a box — wrap the text in '\|block\|'` |
 | Declaration outside a block | `a declaration belongs in a '{ }' block` |
 | Bare type name | `a type only appears in bars — write '\|box\| { }' to style every box` |
+| `->` in the stylesheet | `'->' draws a link on the canvas — set link defaults with 'link:' / 'link-width:' in a '{ }' block` |
+| Deferred routing | `routing: only 'orthogonal' is built; 'straight' / 'curved' are deferred (§19)` |
 | Glued compound in a rule | `a selector part can't glue a type and a class — space them (descendant) or style '.hot'` |
 | Class inside instance bars | `a class follows the bars — write '\|box\| .hot', not '\|box.hot\|'` |
 | Spaced class chain | `classes glue into a chain — write '.hot.loud', no space` |

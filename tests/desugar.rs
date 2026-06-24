@@ -62,10 +62,9 @@ fn define_body_inlines_and_the_define_vanishes() {
 }
 
 #[test]
-fn scene_and_link_defaults_land_in_the_global_block() {
+fn scene_defaults_and_auto_create_land_in_the_global_block() {
     let out = desugar_source("a -> b \"w\"\n").unwrap();
     assert!(out.contains("padding: 20;"), "scene defaults: {out}");
-    assert!(out.contains("clearance: 16;"), "link defaults: {out}");
     assert!(
         out.contains("a |block| .lini-box.lini-block [ \"a\" ]"),
         "auto-create: {out}"
@@ -74,20 +73,19 @@ fn scene_and_link_defaults_land_in_the_global_block() {
 }
 
 #[test]
-fn the_link_block_appears_only_when_a_link_exists() {
-    // A linkless diagram carries no `-> { }` block — nothing would consume it.
-    let linkless = desugar_source("\"hello\"\n").unwrap();
+fn desugar_emits_no_link_defaults_block() {
+    // Link defaults are a resolve-time cascade now (SPEC §9), not a `-> { }`
+    // rule — desugar never emits one, and its output stays re-parseable.
+    let linked = desugar_source("a -> b\n").unwrap();
+    assert!(!linked.contains("-> {"), "no link-defaults block: {linked}");
     assert!(
-        !linkless.contains("->"),
-        "no link → no link block: {linkless}"
+        !linked.contains("clearance"),
+        "no clearance in desugar: {linked}"
     );
     assert!(
-        !linkless.contains("clearance"),
-        "no link defaults: {linkless}"
+        linked.contains("a -> b"),
+        "the link statement remains: {linked}"
     );
-    // The moment a link appears, the defaults return.
-    let linkd = desugar_source("a -> b\n").unwrap();
-    assert!(linkd.contains("clearance: 16;"), "linkd keeps it: {linkd}");
 }
 
 #[test]

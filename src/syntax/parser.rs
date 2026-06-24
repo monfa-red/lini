@@ -7,7 +7,7 @@
 //! `[ ]` of children and internal links).
 
 use super::ast::*;
-use crate::ast::{LineStyle, LinkMarker, LinkOp, Side};
+use crate::ast::{LinkOp, Side};
 use crate::error::Error;
 use crate::lexer::{TokKind, Token};
 use crate::span::Span;
@@ -137,13 +137,15 @@ impl<'a> Parser<'a> {
 
     // ───────────────────────── Classification ─────────────────────────
 
-    /// A stylesheet item: a declaration, a `--var`, a rule (incl. `.class` and
-    /// `-> {}`), or a define (`|name::base|`). Assumes newlines skipped.
+    /// A stylesheet item: a declaration, a `--var`, a rule (incl. `.class`), or a
+    /// define (`|name::base|`). Assumes newlines skipped.
     fn classify_setup(&self) -> Result<Kind, Error> {
         match self.kind() {
             Some(TokKind::RawCssVar(_)) => Ok(Kind::Var),
             Some(TokKind::Dot) => Ok(Kind::Rule), // .class { … }
-            Some(TokKind::LinkOp(_)) => Ok(Kind::Rule), // -> { … } link defaults
+            Some(TokKind::LinkOp(_)) => Err(self.err(
+                "'->' draws a link on the canvas — set link defaults with 'link:' / 'link-width:' in a '{ }' block",
+            )),
             Some(TokKind::Pipe) => Ok(
                 // `|name::base|` is a define; any other `|…|` is a rule selector.
                 if matches!(self.kind_at(1), Some(TokKind::Ident(_)))
@@ -351,31 +353,9 @@ impl<'a> Parser<'a> {
 
     // ───────────────────────── Rules & defines ─────────────────────────
 
-    /// `|selector| { decls }`, `.class { decls }`, or `-> { decls }`.
+    /// `|selector| { decls }` or `.class { decls }`.
     fn parse_rule(&mut self) -> Result<Rule, Error> {
         let start = self.span();
-
-        // `-> { … }` — the routing layer's element selector (the link glyph). It
-        // carries the reserved `link` selector internally, so the cascade and
-        // renderer treat it like the old `link { }`.
-        if let Some(TokKind::LinkOp(op)) = self.kind() {
-            let op = *op;
-            if op.line != LineStyle::Solid
-                || op.start != LinkMarker::None
-                || op.end != LinkMarker::Arrow
-            {
-                return Err(self.err("link defaults are set with the '-> { … }' rule"));
-            }
-            self.pos += 1;
-            let (decls, _) = self.parse_style()?;
-            return Ok(Rule {
-                selector: Selector {
-                    parts: vec![SelPart::Type("link".into())],
-                },
-                decls,
-                span: Span::new(start.start, self.last_span().end),
-            });
-        }
 
         // `.class { … }` — a bare class definition.
         if self.eat(&TokKind::Dot) {
@@ -918,14 +898,9 @@ mod tests {
     }
 
     #[test]
-    fn link_defaults_rule() {
-        let f = parse_ok("{\n  -> { stroke: #666; }\n}\na -> b\n");
-        match &f.stylesheet[0] {
-            StyleItem::Rule(r) => {
-                assert!(matches!(r.selector.parts[0], SelPart::Type(ref t) if t == "link"))
-            }
-            _ => panic!(),
-        }
+    fn link_defaults_block_is_rejected() {
+        // `-> { }` is gone — link defaults are `link:` / `link-width:` properties.
+        assert!(parse_err("{\n  -> { stroke: #666; }\n}\na -> b\n").contains("draws a link"));
     }
 
     #[test]

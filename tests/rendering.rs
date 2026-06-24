@@ -404,7 +404,7 @@ fn css_cascade_emits_rules_and_diffs() {
     // operator-dash class, and cascading text props. (The pretty user-facing
     // cascade demo lives in samples/styles.lini.)
     let src = r#"{
-  -> { stroke: #666; stroke-width: 1; }
+  link: #666; link-width: 1;
   |box| { fill: lightyellow; }
   .loud { stroke: red; stroke-width: 2; }
   .calm { stroke: teal; }

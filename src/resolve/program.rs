@@ -8,7 +8,8 @@
 use super::cascade::Stylesheet;
 use super::defaults;
 use super::ir::{
-    AttrMap, Program, ResolvedCall, ResolvedScene, ResolvedValue, SheetInputs, VarTable,
+    AttrMap, Program, ResolvedCall, ResolvedInst, ResolvedScene, ResolvedValue, SheetInputs,
+    VarTable,
 };
 use super::links;
 use super::merge::collapse;
@@ -26,7 +27,7 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
     apply_var_decls(&mut vars, file)?;
 
     // ── Stylesheet: the desugared file's rules (generated `.lini-*` type classes,
-    //    the `-> { }` link defaults, descendant + user-class rules) ──
+    //    descendant + user-class rules) ──
     let rules: Vec<&Rule> = file
         .stylesheet
         .iter()
@@ -64,23 +65,23 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
     )?;
     let index = PathIndex::build(&nodes);
 
-    // ── Links: root statements then lifted internal links ──
-    let link_defaults = link_rule_decls(file, &vars)?;
+    // ── Links: root statements then lifted internal links. Each link's lowest
+    //    layer is the baked base plus the `link*` / `clearance` / `routing`
+    //    cascaded from its scope's container chain (SPEC §9). ──
+    let baked = baked_link_defaults(&vars)?;
     let mut link_list = Vec::new();
     for w in &file.links {
-        link_list.extend(links::resolve_link(w, &ctx, &index, &[], &link_defaults)?);
+        let base = link_cascade(&baked, &nodes, &root_attrs, &[]);
+        link_list.extend(links::resolve_link(w, &ctx, &index, &[], &base)?);
     }
     for lw in &lifted {
+        let base = link_cascade(&baked, &nodes, &root_attrs, &lw.prefix);
         link_list.extend(links::resolve_link(
-            &lw.link,
-            &ctx,
-            &index,
-            &lw.prefix,
-            &link_defaults,
+            &lw.link, &ctx, &index, &lw.prefix, &base,
         )?);
     }
 
-    let sheet_inputs = build_sheet_inputs(file, &vars, &root_attrs)?;
+    let sheet_inputs = build_sheet_inputs(file, &vars, &root_attrs, &baked)?;
 
     Ok(Program {
         vars,
@@ -213,22 +214,56 @@ fn root_attrs(file: &File, vars: &VarTable) -> Result<AttrMap, Error> {
 
 // ─────────────────────────── Render inputs ───────────────────────────
 
-/// The `-> { }` link defaults as ordered decls (lowest specificity for the link
-/// cascade) — the link glyph is the reserved `link` element selector.
-fn link_rule_decls(file: &File, vars: &VarTable) -> Result<Vec<(String, ResolvedValue)>, Error> {
-    for item in &file.stylesheet {
-        if let StyleItem::Rule(r) = item
-            && let [SelPart::Type(t)] = r.selector.parts.as_slice()
-            && t == "link"
-        {
-            let mut out = Vec::with_capacity(r.decls.len());
-            for d in &r.decls {
-                out.push((d.name.clone(), resolve_groups(&d.groups, d.span, vars)?));
+/// The baked link base (SPEC §11.5) — a link's lowest-specificity layer, below
+/// the scope cascade, class rules, and its own block. The values live in the one
+/// tuning home (`desugar::bundles`).
+fn baked_link_defaults(vars: &VarTable) -> Result<Vec<(String, ResolvedValue)>, Error> {
+    let mut out = Vec::new();
+    for d in crate::desugar::bundles::link_defaults() {
+        out.push((d.name.clone(), resolve_groups(&d.groups, d.span, vars)?));
+    }
+    Ok(out)
+}
+
+/// The `link*` / `clearance` / `routing` properties that cascade to a link from
+/// its scope's container chain (SPEC §9), nearest ancestor winning.
+const LINK_PROPS: &[&str] = &[
+    "link",
+    "link-width",
+    "link-style",
+    "clearance",
+    "routing",
+    "link-font-size",
+];
+
+/// A link's base cascade: the baked defaults, then each [`LINK_PROPS`] value
+/// taken from the nearest container on the path root → `scope` that sets it.
+/// Returned in `link*` surface terms; [`links::resolve_link`] maps them to
+/// `stroke*`. A root-scope link passes `nodes: &[]` / `scope: &[]`.
+fn link_cascade(
+    baked: &[(String, ResolvedValue)],
+    nodes: &[ResolvedInst],
+    root_attrs: &AttrMap,
+    scope: &[String],
+) -> Vec<(String, ResolvedValue)> {
+    let mut chain: Vec<&AttrMap> = vec![root_attrs];
+    let mut cur = nodes;
+    for seg in scope {
+        match cur.iter().find(|n| n.id.as_deref() == Some(seg)) {
+            Some(n) => {
+                chain.push(&n.attrs);
+                cur = &n.children;
             }
-            return Ok(out);
+            None => break,
         }
     }
-    Ok(Vec::new())
+    let mut out = baked.to_vec();
+    for prop in LINK_PROPS {
+        if let Some(v) = chain.iter().rev().find_map(|a| a.get(prop)) {
+            out.push((prop.to_string(), v.clone()));
+        }
+    }
+    out
 }
 
 /// The renderer's [`SheetInputs`]: every single-class rule's attrs (the generated
@@ -239,20 +274,24 @@ fn build_sheet_inputs(
     file: &File,
     vars: &VarTable,
     root_attrs: &AttrMap,
+    baked: &[(String, ResolvedValue)],
 ) -> Result<SheetInputs, Error> {
     let mut class_rules = Vec::new();
-    let mut link_defaults = AttrMap::new();
     for item in &file.stylesheet {
-        if let StyleItem::Rule(r) = item {
-            match r.selector.parts.as_slice() {
-                [SelPart::Class(c)] => {
-                    class_rules.push((c.clone(), decls_attrmap(&r.decls, vars)?))
-                }
-                [SelPart::Type(t)] if t == "link" => link_defaults = decls_attrmap(&r.decls, vars)?,
-                _ => {}
-            }
+        if let StyleItem::Rule(r) = item
+            && let [SelPart::Class(c)] = r.selector.parts.as_slice()
+        {
+            class_rules.push((c.clone(), decls_attrmap(&r.decls, vars)?));
         }
     }
+    // The `.lini-link` rule's defaults: the root-level link cascade, mapped to
+    // `stroke*` terms for the SVG path (SPEC §9, §13).
+    let link_defaults = collapse(&links::map_link_props(link_cascade(
+        baked,
+        &[],
+        root_attrs,
+        &[],
+    )));
     let root_font_size = root_attrs.number("font-size").unwrap_or(15.0);
     // Inherited-text props the global block set, for the `.lini` rule (SPEC §10).
     // `font-family` / `font-weight` / `color` override their themeable var when set
@@ -446,14 +485,36 @@ mod tests {
     }
 
     #[test]
-    fn link_rule_sets_routing_defaults() {
-        // SPEC §9: `-> { }` is the routing layer's element selector (the link
-        // glyph), carrying the reserved `link` element rule internally.
-        let p = rv4("{ -> { stroke: red; stroke-width: 2; } }\na -> b\n");
+    fn root_link_defaults_cascade_to_links() {
+        // SPEC §9: `link` / `link-width` on the root cascade to every link,
+        // mapping onto the path's `stroke` / `stroke-width`.
+        let p = rv4("{ link: red; link-width: 3; }\na -> b\n");
         assert!(
             matches!(p.links[0].attrs.get("stroke"), Some(ResolvedValue::Ident(s)) if s == "red")
         );
-        assert_eq!(p.links[0].attrs.number("stroke-width"), Some(2.0));
+        assert_eq!(p.links[0].attrs.number("stroke-width"), Some(3.0));
+    }
+
+    #[test]
+    fn link_props_cascade_from_a_container_scope() {
+        // SPEC §9: a group's `link` overrides the root's for links in its body; a
+        // root-scope link keeps the root value. Root links resolve before lifted
+        // (body) links, so [0] is `a -> g` and [1] is the internal `x -> y`.
+        let p = rv4(
+            "{ link: --gray; }\na |box|\ng |group| { link: --red-ink } [\n  x |box|\n  y |box|\n  x -> y\n]\na -> g\n",
+        );
+        let stroke_var = |i: usize| match p.links[i].attrs.get("stroke") {
+            Some(ResolvedValue::LiveVar { name, .. }) => name.clone(),
+            other => panic!("expected a var stroke, got {other:?}"),
+        };
+        assert_eq!(stroke_var(0), "gray");
+        assert_eq!(stroke_var(1), "red-ink");
+    }
+
+    #[test]
+    fn deferred_routing_is_rejected() {
+        assert!(rv4_err("{ routing: curved }\na -> b\n").contains("only 'orthogonal'"));
+        rv4("{ routing: orthogonal }\na -> b\n"); // the built mode is accepted
     }
 
     #[test]

@@ -1,7 +1,7 @@
 {
   layout: grid; columns: repeat(4, 80); rows: repeat(5, 60); gap: 30; padding: 30;
   |box| { width: 60; height: 60; padding: 0; }
-  -> { clearance: 10; stroke: --blue-ink; }
+  clearance: 10; link: --blue-ink;
 }
 
 mcu   |box| { cell: 2 2; span: 3 3; width: 180; height: 180; } "MCU"

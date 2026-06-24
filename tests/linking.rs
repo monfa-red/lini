@@ -221,7 +221,7 @@ fn crossing_counts_are_pinned() {
 #[test]
 fn audit_removes_a_removable_crossing() {
     let src = "{ layout: grid; columns: repeat(3); gap: 40;\n\
-               -> { clearance: 8; }\n\
+               clearance: 8;\n\
                }\n\
                north |box| { cell: 2 1; }\n\
                south |box| { cell: 2 3; }\n\
@@ -245,7 +245,7 @@ fn audit_removes_a_removable_crossing() {
 #[test]
 fn a_walled_in_link_is_reported_impossible() {
     let src = "{ layout: grid; columns: repeat(3); gap: 10;\n\
-               -> { clearance: 16; }\n\
+               clearance: 16;\n\
                }\n\
                n1 |box| { width: 40; height: 40; cell: 1 1; }\n\
                n2 |box| { width: 40; height: 40; cell: 2 1; }\n\
@@ -329,7 +329,7 @@ fn gap_growth_completes_a_starved_scene() {
 #[test]
 fn gap_growth_is_bounded_where_no_gap_can_help() {
     let src = "{ layout: row; gap: 40;\n\
-                 -> { clearance: 16; }\n\
+                 clearance: 16;\n\
                }\n\
                grp |group| {\n\
                  layout: row; gap: 24; padding: 24;\n\
@@ -369,7 +369,7 @@ fn a_full_node_compacts_port_rows_rather_than_turning_links_away() {
     // id-as-label would float them larger via the content floor (SPEC §6).
     let mut src = String::from(
         "{ layout: grid; columns: repeat(5); gap: 60;\n\
-         -> { clearance: 8; }\n\
+         clearance: 8;\n\
          }\n\
          hub |box| { width: 40; height: 40; cell: 3 3; } \"\"\n",
     );

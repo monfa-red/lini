@@ -6,7 +6,7 @@
 
 {
   layout: row; gap: 50;
-  -> { clearance: 10; }
+  clearance: 10;
 }
 
 ant  |box| { width: 60; height: 60; } "Ant"

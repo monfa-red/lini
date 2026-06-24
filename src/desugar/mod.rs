@@ -9,7 +9,7 @@
 //! generated class defs. The pass is **idempotent**: every injection is an
 //! override-in-place merge, and an already-lowered node is passed through.
 
-mod bundles;
+pub(crate) mod bundles;
 mod classes;
 mod labels;
 mod scene;
@@ -19,7 +19,7 @@ use crate::error::Error;
 use crate::resolve::ShapeKind;
 use crate::span::Span;
 use crate::syntax::ast::{Child, Decl, File, Link, Node, Rule, SelPart, Selector, StyleItem};
-use bundles::{link_defaults, root_defaults};
+use bundles::root_defaults;
 use classes::{class_defs, is_lini_class, lini_class, merge_decls, worn_classes};
 use std::collections::{BTreeSet, HashMap};
 use types::{Types, is_template};
@@ -31,14 +31,14 @@ pub fn desugar(file: &File) -> Result<File, Error> {
     let types = Types::build(file)?;
 
     // ── Stylesheet walk: element-rule decls per type, define bodies, the extra
-    //    class order, user vars / root decls / rules, and link-default overrides. ──
+    //    class order, and user vars / root decls / rules. Link defaults are a
+    //    resolve-time cascade now (SPEC §9), not a desugared rule. ──
     let mut element_rules: HashMap<String, Vec<Decl>> = HashMap::new();
     let mut bodies: Bodies = HashMap::new();
     let mut extra_order: Vec<String> = Vec::new();
     let mut user_root: Vec<Decl> = Vec::new();
     let mut user_vars: Vec<Decl> = Vec::new();
     let mut user_rules: Vec<Rule> = Vec::new();
-    let mut link_user: Vec<Decl> = Vec::new();
 
     for item in &file.stylesheet {
         match item {
@@ -53,7 +53,6 @@ pub fn desugar(file: &File) -> Result<File, Error> {
                 push_unique(&mut extra_order, &d.name);
             }
             StyleItem::Rule(r) => match r.selector.parts.as_slice() {
-                [SelPart::Type(t)] if t == "link" => link_user.extend(r.decls.iter().cloned()),
                 [SelPart::Type(t)] => element_rules
                     .entry(t.clone())
                     .or_default()
@@ -97,23 +96,14 @@ pub fn desugar(file: &File) -> Result<File, Error> {
     }
 
     // ── Assemble the new stylesheet (a canonical order, so re-desugar is stable):
-    //    scene config, vars, link defaults, the generated `.lini-*` defs, then the
-    //    user descendant/class rules. ──
+    //    scene config, vars, the generated `.lini-*` defs, then the user
+    //    descendant/class rules. ──
     let mut stylesheet: Vec<StyleItem> = Vec::new();
     for d in merge_decls(root_defaults(), &user_root) {
         stylesheet.push(StyleItem::RootDecl(d));
     }
     for d in user_vars {
         stylesheet.push(StyleItem::Var(d));
-    }
-    // The `-> { }` link defaults are the link layer's config; emit them only when
-    // the scene actually has a link, so a linkless diagram carries no link block.
-    let has_link = !file.links.is_empty() || instances.iter().any(child_has_link);
-    if has_link {
-        stylesheet.push(StyleItem::Rule(link_rule(merge_decls(
-            link_defaults(),
-            &link_user,
-        ))));
     }
     for r in class_defs(&present, &element_rules, &extra_order) {
         stylesheet.push(StyleItem::Rule(r));
@@ -258,27 +248,6 @@ fn mark_present(child: &Child, present: &mut BTreeSet<String>) {
         for ch in &n.children {
             mark_present(ch, present);
         }
-    }
-}
-
-/// Whether this child (or any descendant) carries an internal link — define-body
-/// links are already materialized onto the node by lowering, so this sees every
-/// drawn link below the root.
-fn child_has_link(child: &Child) -> bool {
-    match child {
-        Child::Box(n) => !n.links.is_empty() || n.children.iter().any(child_has_link),
-        Child::Text(_) => false,
-    }
-}
-
-/// The `-> { }` link-defaults rule (the link glyph is the reserved `link` element).
-fn link_rule(decls: Vec<Decl>) -> Rule {
-    Rule {
-        selector: Selector {
-            parts: vec![SelPart::Type("link".to_string())],
-        },
-        decls,
-        span: Span::empty(),
     }
 }
 

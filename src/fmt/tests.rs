@@ -174,14 +174,6 @@ fn dotted_link_op() {
 }
 
 #[test]
-fn link_defaults_rule_uses_the_arrow_glyph() {
-    assert_eq!(
-        fmt("{-> {clearance:8}}\na -> b\n"),
-        "{\n  -> { clearance: 8; }\n}\n\na -> b\n"
-    );
-}
-
-#[test]
 fn link_class_and_labels_with_along() {
     assert_eq!(
         fmt("a -> b {along:0.3 0.7}\"near a\" \"near b\"\n"),
