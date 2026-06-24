@@ -14,42 +14,6 @@ wire-label) → its valid properties; anything else warns (errors under
   point at the offending token.
 - Fold in the existing grid-prop checks (`cell` / `span` / `columns`).
 
-## Colour palette + gradients (idea — explore later)
-
-Make lini *pretty by default*: a curated colour system where the easy path is
-the pretty path and making things ugly takes more syntax. One mechanism, layered
-on the existing `light-dark()` theme vars — so everything themes and flips
-dark/light for free, and bakes to literals for resvg/email.
-
-**Palette** — built-in `--lini-*` colours, each a `light-dark()` pair, native
-`--name` (themeable, host-overridable):
-
-- *Roles*: `--accent` + `--accent-2` (brand pair), plus today's
-  `--fg` / `--bg` / `--fill` / `--stroke` / `--muted` / `--danger` / `--warn`.
-- *Hues*: ~14 hand-tuned hues (`--red --orange --amber --yellow --green --teal
-  --cyan --blue --indigo --violet --purple --pink --rose --gray`) — one tuned
-  base each, with an optional `-100…-900` ramp reachable when wanted.
-- Emit only the vars actually used (tree-shake the `@layer` block) so a big
-  palette never bloats a small diagram.
-
-**Gradients** — a `gradient()` paint value compiling to a deduped `<defs>`
-`<linearGradient>` (a `GradientTable`, twin of the shadow `FilterTable`); the
-node's paint becomes `url(#…)`. Stops are `var(--lini-*)`, so gradients theme and
-flip dark/light. `objectBoundingBox` units fill any shape; works on **fill and
-stroke**.
-
-- `gradient` → the brand pair · `gradient(pink, purple)` → an auto-angled blend
-  (pretty for any two hues) · `gradient(sunset)` → a curated preset ·
-  `linear-gradient(135, …)` → full control (a custom angle is the "more syntax"
-  gate; `gradient()` itself is angle-less and always lands on a flattering 135°).
-- ~10 curated presets built from hue vars (sunset, ocean, candy, mint, aurora,
-  ember, grape, dusk, sky, slate) for the fancy multi-stop look.
-- Simple linear is plenty; radial comes ~free. Mesh isn't native SVG, so
-  "multi-colour" = multi-stop. Gradient-on-text is a later step.
-
-The taste lives in the system, not the user: curated hues + presets + an
-auto-angle so *any* two colours look good.
-
 ## Animation (idea — later, very light)
 
 Small, native CSS/SVG effects so the browser does the work and it degrades to a
