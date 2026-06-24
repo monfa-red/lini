@@ -1,4 +1,4 @@
-//! The built-in named-hue palette (SPEC §11.2): 11 hues × 4 job-named tiers,
+//! The built-in named-hue palette (SPEC §11.2): 11 hues × 5 job-named tiers,
 //! generated from OKLCH seeds so the ramp is perceptually even and the hues read as
 //! a family. Each tier is a `light-dark(#light, #dark)` literal — themeable like any
 //! `--lini-*` var, flipping with the mode, baking for resvg. Aliases catch the
@@ -31,22 +31,22 @@ const HUES: &[Hue] = &[
     },
     Hue {
         name: "rose",
-        hue: 6.0,
+        hue: 2.0,
         chroma: 1.00,
     },
     Hue {
         name: "orange",
-        hue: 55.0,
+        hue: 56.0,
         chroma: 1.00,
     },
     Hue {
         name: "amber",
-        hue: 80.0,
+        hue: 85.0,
         chroma: 1.08,
     },
     Hue {
         name: "lime",
-        hue: 120.0,
+        hue: 124.0,
         chroma: 1.02,
     },
     Hue {
@@ -82,8 +82,13 @@ const HUES: &[Hue] = &[
 ];
 
 /// One tier: its name suffix (empty = the bare hero) and OKLCH `(L, C)` targets for
-/// each mode. Light mode descends in lightness wash → ink; dark mode keeps each
-/// tier's *job* — `ink` bright (text/lines), `wash` a deep, muted surface.
+/// each mode. Five tiers, light → dark: `wash soft base deep ink`, with `base` the
+/// bare hue and `deep` the strong border/stroke tone that splits the old double-duty
+/// `ink` into border (`deep`) + text (`ink`). Light mode descends in lightness
+/// wash → ink. Dark mode is the **visual reverse, not a numeric one**: each tier's
+/// job flips (`wash` the deepest surface, `ink` the brightest text/line), but the
+/// ramp is retuned into a darker band so the bright end stops well short of white,
+/// and chroma follows the job (muted surfaces, the bare hue near the chroma peak).
 struct Tier {
     suffix: &'static str,
     light: (f64, f64),
@@ -93,23 +98,28 @@ struct Tier {
 const TIERS: &[Tier] = &[
     Tier {
         suffix: "-wash",
-        light: (0.95, 0.022),
-        dark: (0.315, 0.048),
+        light: (0.95, 0.03),
+        dark: (0.28, 0.045),
     },
     Tier {
         suffix: "-soft",
-        light: (0.86, 0.072),
-        dark: (0.450, 0.082),
+        light: (0.85, 0.08),
+        dark: (0.40, 0.08),
     },
     Tier {
         suffix: "",
-        light: (0.72, 0.127),
-        dark: (0.610, 0.130),
+        light: (0.70, 0.13),
+        dark: (0.57, 0.114),
+    },
+    Tier {
+        suffix: "-deep",
+        light: (0.56, 0.16),
+        dark: (0.75, 0.124),
     },
     Tier {
         suffix: "-ink",
-        light: (0.520, 0.150),
-        dark: (0.825, 0.100),
+        light: (0.42, 0.14),
+        dark: (0.92, 0.134),
     },
 ];
 
@@ -123,7 +133,7 @@ const ALIASES: &[(&str, &str)] = &[
     ("cyan", "teal"),
 ];
 
-/// Every palette variable as `(name_without_lini_prefix, value)`: each hue's four
+/// Every palette variable as `(name_without_lini_prefix, value)`: each hue's five
 /// tiers as `light-dark()` literals, then the aliases. Appended to the built-in
 /// defaults (SPEC §11.1) by [`crate::resolve::built_in_defaults`].
 pub fn palette_vars() -> Vec<(String, ResolvedValue)> {
@@ -167,10 +177,10 @@ mod tests {
     }
 
     #[test]
-    fn every_hue_has_four_tiers_plus_aliases() {
+    fn every_hue_has_five_tiers_plus_aliases() {
         let v = vars();
         assert_eq!(v.len(), HUES.len() * TIERS.len() + ALIASES.len());
-        for suffix in ["-wash", "-soft", "", "-ink"] {
+        for suffix in ["-wash", "-soft", "", "-deep", "-ink"] {
             assert!(
                 v.iter().any(|(n, _)| *n == format!("teal{suffix}")),
                 "missing teal{suffix}"

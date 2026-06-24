@@ -16,28 +16,28 @@ input_file: samples/hero.lini
     .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,4; }
     .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
     .lini .lini-badge { fill: #0a84ff; color: white; font-size: 11px; font-weight: normal; }
-    .lini .lini-edge { fill: #dff2f9; stroke: #0079a6; color: #0079a6; }
-    .lini .lini-svc { fill: #dff4f1; stroke: #008279; color: #008279; }
-    .lini .lini-auth { fill: #ecedfe; stroke: #6356be; color: #6356be; }
-    .lini .lini-store { fill: #fde9ec; stroke: #ac3a5c; color: #ac3a5c; }
-    .lini .lini-link { fill: none; stroke: #a4a4a4; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-edge { fill: #daf4fd; stroke: #005a83; color: #005a83; }
+    .lini .lini-svc { fill: #d9f5f2; stroke: #00635b; color: #00635b; }
+    .lini .lini-auth { fill: #ececff; stroke: #483a98; color: #483a98; }
+    .lini .lini-store { fill: #ffe7ed; stroke: #851f47; color: #851f47; }
+    .lini .lini-link { fill: none; stroke: #9e9e9e; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-link-dashed { stroke-dasharray: 8,8; }
     .lini .lini-link-label { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; font-size: 11px; font-weight: normal; }
     .lini .lini-cut-bg { fill: white; stroke: none; }
     .lini .lini-cut { fill: black; stroke: none; }
     .lini .lini-marker { fill: #444; stroke: none; }
-    .lini .lini-style-flow { stroke: #68a7f6; }
-    .lini .lini-style-flow .lini-marker { fill: #68a7f6; }
-    .lini .lini-style-cache { stroke: #00beb3; }
-    .lini .lini-style-cache .lini-marker { fill: #00beb3; }
-    .lini .lini-style-async { stroke: #e18e51; }
-    .lini .lini-style-async .lini-marker { fill: #e18e51; }
-    .lini .lini-style-auth { stroke: #9c97f4; }
-    .lini .lini-style-auth .lini-marker { fill: #9c97f4; }
+    .lini .lini-style-flow { stroke: #61a1f1; }
+    .lini .lini-style-flow .lini-marker { fill: #61a1f1; }
+    .lini .lini-style-cache { stroke: #00b8ad; }
+    .lini .lini-style-cache .lini-marker { fill: #00b8ad; }
+    .lini .lini-style-async { stroke: #db8747; }
+    .lini .lini-style-async .lini-marker { fill: #db8747; }
+    .lini .lini-style-auth { stroke: #9691ef; }
+    .lini .lini-style-auth .lini-marker { fill: #9691ef; }
   </style>
   <defs>
     <filter id="lini-shadow-1" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="rgba(0, 0, 0, 0.2)"/></filter>
-    <linearGradient id="lini-gradient-1" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#21b6dd"/><stop offset="100%" stop-color="#9c97f4"/></linearGradient>
+    <linearGradient id="lini-gradient-1" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#00afd8"/><stop offset="100%" stop-color="#9691ef"/></linearGradient>
   </defs>
   <rect class="lini-canvas" x="-260.5" y="-287" width="534.2" height="574"/>
   <g class="lini-scene">
@@ -106,7 +106,7 @@ input_file: samples/hero.lini
         <ellipse cx="0" cy="-22" rx="42.5" ry="5.5"/>
         <text class="lini-text" x="0" y="1.71">Redis</text>
       </g>
-      <g class="lini-node lini-svc lini-box lini-block" data-id="queue" style="fill: #f7eddd; stroke: #985900; color: #985900" transform="translate(128.5,0)">
+      <g class="lini-node lini-svc lini-box lini-block" data-id="queue" style="fill: #f9edd7; stroke: #724100; color: #724100" transform="translate(128.5,0)">
         <rect x="-42.5" y="-27.5" width="85" height="55" rx="6" ry="6"/>
         <text class="lini-text" x="0" y="0">Queue</text>
       </g>
@@ -125,7 +125,7 @@ input_file: samples/hero.lini
     </g>
     <g class="lini-link" style="font-size: 11" data-from="edge.lb" data-to="svc.api">
       <path d="M -128 -92 L -179.25 -92 A 16 16 0 0 0 -195.25 -76 L -195.25 34 A 16 16 0 0 0 -179.25 50 L -149 50"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-145,50 -153,54 -153,46" style="fill: #a4a4a4"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-145,50 -153,54 -153,46" style="fill: #9e9e9e"/>
     </g>
     <g class="lini-link lini-style-auth" style="font-size: 11" data-from="edge.lb" data-to="svc.auth">
       <path d="M -13.5 -63.5 L -13.5 26"/>

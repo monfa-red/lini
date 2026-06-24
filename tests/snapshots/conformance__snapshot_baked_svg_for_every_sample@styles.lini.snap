@@ -8,16 +8,16 @@ input_file: samples/styles.lini
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
     .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-oval { fill: #dff4f1; stroke: #008279; stroke-width: 2; color: #008279; stroke-dasharray: none; }
+    .lini .lini-oval { fill: #d9f5f2; stroke: #00635b; stroke-width: 2; color: #00635b; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
-    .lini .lini-box { fill: #dff2f9; stroke: #0079a6; stroke-width: 2; color: #0079a6; }
+    .lini .lini-box { fill: #daf4fd; stroke: #005a83; stroke-width: 2; color: #005a83; }
     .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,4; }
     .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
-    .lini .lini-alert { fill: #fde9e6; stroke: #e98477; color: #af3d34; }
+    .lini .lini-alert { fill: #ffe7e3; stroke: #e47d70; color: #89221c; }
     .lini .lini-style-thin { stroke-width: 1; }
     .lini .lini-style-bold { font-weight: bold; }
-    .lini .lini-style-power { stroke: #e98477; stroke-width: 2.5; }
-    .lini .lini-style-warn { stroke: #e18e51; stroke-width: 2; }
+    .lini .lini-style-power { stroke: #e47d70; stroke-width: 2.5; }
+    .lini .lini-style-warn { stroke: #db8747; stroke-width: 2; }
     .lini .lini-style-ghost { opacity: 0.35; }
   </style>
   <defs>
@@ -39,7 +39,7 @@ input_file: samples/styles.lini
         <rect x="-51.5" y="-27.5" width="103" height="55" rx="6" ry="6"/>
         <text class="lini-text" x="0" y="0">+ class</text>
       </g>
-      <g class="lini-node lini-box lini-block lini-style-warn" style="fill: #f7eddd; stroke: #985900; color: #985900" transform="translate(68.5,0)">
+      <g class="lini-node lini-box lini-block lini-style-warn" style="fill: #f9edd7; stroke: #724100; color: #724100" transform="translate(68.5,0)">
         <rect x="-56" y="-27.5" width="112" height="55" rx="6" ry="6"/>
         <text class="lini-text" x="0" y="0">+ inline</text>
       </g>
@@ -133,7 +133,7 @@ input_file: samples/styles.lini
         <rect x="-42.5" y="-27.5" width="85" height="55" rx="6" ry="6"/>
         <text class="lini-text" x="0" y="0">under</text>
       </g>
-      <g class="lini-node lini-box lini-block" style="text-shadow: 1px 1px 2px #696969" transform="translate(135,0)">
+      <g class="lini-node lini-box lini-block" style="text-shadow: 1px 1px 2px #4d4d4d" transform="translate(135,0)">
         <rect x="-47" y="-27.5" width="94" height="55" rx="6" ry="6"/>
         <text class="lini-text" x="0" y="0">shadow</text>
       </g>

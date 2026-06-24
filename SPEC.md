@@ -1046,7 +1046,7 @@ themeable, and dark/light-aware like everything else. Eleven hues, each a
 red  rose  orange  amber  lime  green  teal  sky  blue  purple  gray
 ```
 
-Every hue carries **four tiers**, named for the job they do — not their lightness,
+Every hue carries **five tiers**, named for the job they do — not their lightness,
 which would invert in dark mode:
 
 | Tier | Example | Job |
@@ -1054,7 +1054,8 @@ which would invert in dark mode:
 | wash | `--teal-wash` | palest — card and section backgrounds (a faint tint; a deep, muted surface in dark mode) |
 | soft | `--teal-soft` | a gentle, lighter pastel fill |
 | base | `--teal` | the everyday pastel — **the bare name is the easy path** |
-| ink | `--teal-ink` | deep and saturated — strokes, text, emphasis (a bright tint in dark mode) |
+| deep | `--teal-deep` | the strong tone — borders and strokes |
+| ink | `--teal-ink` | deepest and most saturated — text and emphasis (the high-contrast tone in dark mode) |
 
 `fill: --teal` lands a friendly pastel; the job-names hold across the dark flip, so
 `--teal-wash` is always the faint surface and `--teal-ink` always the high-contrast
@@ -1076,8 +1077,8 @@ is the warm pink you decorate with (its `wash` / `soft` tiers are your pinks),
 `green` is tuned to an emerald, and `lime` is the lemony one.
 
 The palette is **tree-shaken** ([§13](#13-svg-output)): only the `--lini-*`
-variables a diagram references are emitted, so forty hues cost a three-box diagram
-nothing.
+variables a diagram references are emitted, so the full palette costs a three-box
+diagram nothing.
 
 ### 11.3 Gradients
 
