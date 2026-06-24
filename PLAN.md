@@ -1,188 +1,208 @@
-# PLAN — Colour palette + gradients
+# PLAN — node / block / link refactor
 
-Implements [SPEC §11.2 (palette)](SPEC.md) and [§11.3 (gradients)]. The SPEC is the
-contract; this file is the build order. Pre-v1, so **no backward compatibility** —
-refactor or rewrite freely, leave no patchwork. Modern Rust, no `unsafe`, one
-concept per file, `insta` snapshots, one `samples/` file per feature, and **verify
-colours by rendering to PNG with `resvg` and looking** — prettiness is the bar.
+The contract is [`SPEC.md`](SPEC.md) + [`LINKING.md`](LINKING.md) (committed in
+`551c5bf`). This file is the build order for the **code** to match them. Pre-v1,
+so **no backward compatibility** — rename and rewrite freely, leave no patchwork.
+
+> **For agentic workers:** steps use `- [ ]` checkboxes. Each step is one
+> green, committable milestone — finish a step's checklist, run its **Gate**,
+> commit, then move on.
 
 ## The bet
 
-The easy path is the pretty path: a curated 11-hue × 4-tier palette (OKLCH-derived,
-`light-dark()`, themeable) plus angle-less gradients that can't look wrong. Taste
-lives in the system.
+One sweeping rename, then three focused reshapes. Behavior is preserved except
+where the SPEC deliberately changed it; the test suite (snapshots + the wiring
+sweep) is the safety net at every step.
 
-## What already exists (lean on it)
+## Ground rules (from AGENTS.md)
 
-- **No grammar change.** `gradient(--a, --b)`, `linear-gradient(135, --a, --b)`, and
-  `--teal` already lex/parse: a gradient arrives as `ResolvedValue::Call { name, args }`
-  and `--teal` as `ResolvedValue::LiveVar`. Confirmed against `src/syntax`, `src/lexer.rs`,
-  `src/resolve/value.rs`. The whole feature is **render-layer + data**.
-- **`src/render/filters.rs::FilterTable`** is the exact pattern for gradients:
-  collect → dedup by formatted key → `emit_defs` into `<defs>` → reference by id.
-  Mirror it.
-- **`src/resolve/defaults.rs::built_in_defaults()`** builds the `--lini-*` `VarTable`
-  (roles, each a `light-dark()` `Call`). The palette is added here.
-- **`src/render/values.rs::format_value()`** turns a `ResolvedValue` into CSS:
-  `LiveVar → var(--lini-name)` (or baked literal), `light-dark` baked to its light
-  arm, `RawCss` passes through verbatim. The url-rewrite (Phase 2) exploits `RawCss`.
-- **`src/render/style_block.rs::emit()`** emits the `@layer lini.defaults` block —
-  **today it dumps every var**. Phase 1 makes it tree-shake.
-- **`src/theme.rs`** renders palettes back to CSS for `lini theme` and composes
-  built-ins; it starts from `built_in_defaults()`, so the palette flows through for
-  free (audit its snapshots).
-- Paint props that may carry a colour/gradient: `PAINT_PROPS` in `src/render/rules.rs`
-  (`fill`, `stroke`, …). Paint reaches SVG two ways — the structural class rules
-  (`rules.rs`) and the per-node inline diff (`render/mod.rs::node_style_attr`) — so
-  any gradient rewrite and any var-usage scan **must cover both**.
+- **No `unsafe`.** One concept per file; split past ~500 LOC.
+- `insta` snapshot tests own the output. After an intended output change, review
+  with `cargo insta review` (never blind-accept) and confirm each diff is only
+  the change you meant.
+- **Verify SVG visually** for any step that changes pixels: render a sample to
+  PNG with `resvg` into the scratchpad and *look* — don't ship a visual on faith.
+- **Gate before every commit:** `cargo fmt --all`, then `cargo clippy --all-targets`
+  and `cargo test` both clean (CI runs `cargo fmt --all -- --check`).
+- Defer pushing `main`/the branch to the user. We are on branch
+  `node-link-refactor`.
+
+## Map (the refactor surface)
+
+`git grep -il wire` spans ~60 files; `git grep -il airwire` 12; `git grep -il plain`
+~20. The ShapeKind model lives in `src/resolve/ir.rs`; templates + bundles in
+`src/desugar/{types,bundles}.rs`. These greps are the checklist for Steps 1–2.
+
+**Steps 1–2 leave `-> {}` working** (renamed to the link layer) — it is removed in
+Step 3. That intermediate divergence from the SPEC is expected and temporary.
 
 ---
 
-## Phase 1 — Palette foundation + tree-shaking  ✅ DONE
+## Step 1 — Rename `wire` → `link` (mechanical, behavior-preserving)
 
-The colour science, the prettiness tuning, and the tree-shake refactor. Everything
-else builds on the vars this phase defines.
+One atomic rename across the whole tree: identifiers, modules, files, SVG class
+names, error strings, the themable var. **No semantics change** — only names.
+Output shifts only in class/var spelling (`lini-wire`→`lini-link`,
+`lini-wires`→`lini-links`, `--lini-airwire`→`--lini-stray`), so every snapshot
+re-baselines to an otherwise-identical SVG.
 
-Shipped: `src/palette/{oklch.rs, mod.rs}` (OKLCH→sRGB + the seed/tier tables, tuned
-and PNG-verified light **and** dark), appended in `src/resolve/defaults.rs`;
-`src/render/used_vars.rs` tree-shakes the `@layer` block via `style_block.rs`;
-`samples/palette.lini` shows all 11 × 4 + cards. `cargo fmt`/`clippy`/`test` clean.
-Re-tune by editing `HUES` / `TIERS` in `src/palette/mod.rs`.
+**Identifier mapping** (apply everywhere; `LineStyle` stays — it is neutral):
 
-### 1a. OKLCH → sRGB  (`src/palette/oklch.rs`, new)
-- Pure-`f64` OKLab→linear-sRGB→gamma→`#rrggbb`, with gamut clamping (reduce chroma
-  toward grey until in-gamut, or clip — pick the one that stays prettiest).
-- `pub fn oklch_to_hex(l: f64, c: f64, h_deg: f64) -> String`.
-- Tests: a handful of known OKLCH↔sRGB reference triples within ±1 / 255.
+| from | to |
+|---|---|
+| `WireOp` / `WireMarker` | `LinkOp` / `LinkMarker` |
+| `TokKind::WireOp`, `lex_wire_op`, `is_wire_line_start` | `…Link…` |
+| `Wire`, `parse_wire`, `*_wire_op`, `wire_op_str` | `Link`, `parse_link`, `*_link_op`, `link_op_str` |
+| `File.wires`, `Node.wires`, `Define.wires`, `Program.wires` | `…links` |
+| `ResolvedWire`, `child_has_wire`, `wire_rule` | `ResolvedLink`, `child_has_link`, `link_rule` |
+| reserved selector element `"wire"` | `"link"` |
+| `airwire` (all forms), `--lini-airwire`, `.lini-airwire` | `stray`, `--lini-stray`, `.lini-stray` |
+| SVG `lini-wire`, `lini-wires` | `lini-link`, `lini-links` |
+| error text `wire endpoint/chain/…`, `\|wire\|` | `link …`, `\|link\|` |
 
-### 1b. Seeds + ramp  (`src/palette/mod.rs`, `src/palette/seeds.rs`, new)
-- `HUES`: the 11 seeds — `red rose orange amber lime green teal sky blue purple gray`
-  — each a base hue angle (+ per-hue chroma scale; grey ≈ 0 chroma).
-- Per-tier **L/C targets for each mode** (`wash soft base ink` × light/dark). Job-stable
-  across the flip: in light mode L descends wash→ink; in dark mode the *ink* arm is
-  light (high-contrast detail) and *wash* is a deep muted surface (SPEC §11.2 table).
-- `pub fn palette_vars() -> Vec<(String, ResolvedValue)>` → for every hue: `--{hue}`,
-  `--{hue}-wash`, `--{hue}-soft`, `--{hue}-ink`, each a `light-dark(#light, #dark)`
-  `Call`. Keep targets in one tunable table — re-tuning the whole palette = editing it.
-- **Aliases** as `LiveVar` pointers: `yellow→amber`, `pink→rose`, `indigo→purple`,
-  `cyan→teal` (so `--lini-yellow: var(--lini-amber)`; tree-shake follows the pointer).
+**File / dir renames** (use `git mv` to keep history):
 
-### 1c. Register  (`src/resolve/defaults.rs`)
-- `built_in_defaults()` appends `palette::palette_vars()` after the roles. Roles stay
-  independent in v1 (role→hue aliasing is Phase 3, decided after we eyeball the hues).
+- [ ] `git mv src/layout/wires src/layout/links` (+ update `mod` paths in `src/layout/mod.rs`)
+- [ ] `git mv src/render/wires.rs src/render/links.rs`
+- [ ] `git mv src/resolve/wires.rs src/resolve/links.rs`
+- [ ] `git mv tests/wiring.rs tests/linking.rs` · `git mv tests/wiring_sweep.rs tests/linking_sweep.rs`
+- [ ] `git mv samples/wires.lini samples/links.lini` (and `wires_simple/medium/hard` → `links_*`); leave `pcb*.lini` as-is (a routing stress fixture, not user-facing).
 
-### 1d. Tree-shake the var block  (`src/render/used_vars.rs` new; `style_block.rs`)
-- **Invariant:** emit a `--lini-*` var iff the document actually references it
-  (directly or transitively); never drop a referenced var, never keep an unused one.
-- Collect referenced names from everything that reaches output, computed *before*
-  `style_block::emit`:
-  - the built `RuleSet` prop strings (scan `var(--lini-NAME)`) — this pins the core
-    roles the structural rules always state (`fill`, `stroke`, `bg`, `text-color`, …);
-  - every `ResolvedValue` in node attrs, wire attrs, `SheetInputs.class_rules`,
-    `wire_defaults`, `root_text`, the canvas fill, and (Phase 2) gradient stops —
-    gather `LiveVar` names recursively;
-  - then **transitive closure** over the `VarTable` (a kept var whose value references
-    another, e.g. `text-color → fg`, or an alias → its target, pulls that in too).
-- `style_block::emit` takes the set and emits only those (still sorted, still
-  `color-scheme` when any kept colour is `light-dark`).
-- Tests: `x |box|` keeps only core roles (no `teal`/`rose`); `x |box| { fill: --teal }`
-  keeps `teal` (+ core), not `rose`; an alias use keeps its target; `--bake-vars`
-  emits no `@layer` block at all (unchanged).
+**Edits** (the grep list is the checklist — work module by module):
 
-### 1e. Samples, snapshots, eyeball
-- `samples/palette.lini`: a grid of the 11 hues × 4 tiers; a few “pretty card” nodes.
-- `insta` snapshot of the emitted var block + a small compiled diagram.
-- Render light **and** dark (`data-theme`) to PNG with `resvg`, look, and **tune the
-  L/C targets until it's genuinely pretty** — this is the real acceptance test.
-- Audit `src/theme.rs` snapshots: `lini theme default` now includes the palette.
+- [ ] Shared vocab + front end: `src/ast.rs`, `src/lexer.rs`, `src/syntax/ast.rs`, `src/syntax/parser.rs`.
+- [ ] Desugar: `src/desugar/{mod,bundles,scene,labels,types}.rs` (rename `wire_defaults`/`wire_rule`/the `"wire"` selector; `is_builtin_type` swaps `"wire"`→`"link"`).
+- [ ] Resolve: `src/resolve/{links,program,scene,ir,mod,merge}.rs`.
+- [ ] Layout: `src/layout/{mod,ir}.rs` + every file under `src/layout/links/`.
+- [ ] Render: `src/render/{mod,links,rules,markers,used_vars,values,wavy,rounding,gradients}.rs` (paint defaults, the structural `lini-link` rule, `lini-links` layer, stray var/class).
+- [ ] App + defaults: `src/lib.rs`, `src/main.rs`, `src/resolve/defaults.rs` (the `--lini-stray` palette var), `src/theme.rs`, `src/fmt.rs` + `src/fmt/*`, `src/serve/playground.html`.
+- [ ] Tests + samples: `tests/*.rs`, the renamed sample files.
 
-**Phase 1 done when:** palette renders pretty in both modes (PNG-verified), the var
-block is tree-shaken, `cargo test`/`clippy`/`fmt` clean.
+**Gate:**
+
+- [ ] `cargo build` clean.
+- [ ] `git grep -in '\bwire' src tests | grep -vi 'wired\? (prose)'` returns nothing — no `wire` identifier survives (allow only deliberate English, of which there should be none after this step).
+- [ ] `cargo insta review` — every diff is purely `wire→link` / `airwire→stray` class/var renames over identical geometry.
+- [ ] `cargo fmt --all` · `cargo clippy --all-targets` · `cargo test` green.
+- [ ] PNG-verify one sample (`samples/links.lini`) — pixels identical to pre-rename.
+
+**Commit:** `refactor: rename wire → link across the codebase`
 
 ---
 
-## Phase 2 — Gradients  ✅ DONE
+## Step 2 — `block` primitive + template rebase
 
-`gradient()` / `linear-gradient()` / `radial-gradient()` on `fill` and `stroke`.
+Make the bare rectangle the base primitive and demote `box` to a template, per
+SPEC §7/§8. This changes which `.lini-*` classes carry paint, but a default box
+must render **pixel-identical**.
 
-Shipped: `src/render/gradients.rs` (parse + structural dedup + `lower` rewrites
-use-sites to `url(#…)` + `emit_defs`); `GradientDef`/`GradientKind` data on `LaidOut`
-(`src/layout/ir.rs`); `lower_gradients` runs post-layout from `lib.rs`; defs join the
-`<defs>` beside the filters; stops ride `style="stop-color: var(…)"` live (browser
-flip) and a `stop-color` literal when baked (resvg). Tree-shake walks `laid.gradients`
-stops. `samples/gradient.lini` PNG-verified light **and** dark (2-stop, 3-stop, angle,
-radial, on-stroke, oklch stops). All gates green.
+- [ ] `src/resolve/ir.rs`: rename `ShapeKind::Box` → `ShapeKind::Block`; `ShapeKind::parse` maps `"block"` → `Block` and **no longer** maps `"box"`. Update every `ShapeKind::Box` match arm in `src/layout/{primitives,ir,mod}.rs`, `src/layout/links/{scene,validate}.rs`, `src/render/mod.rs`, `src/desugar/{classes,mod}.rs` to `Block`.
+- [ ] `src/desugar/types.rs` — `TEMPLATES` becomes (note `box` joins as a template, `plain` is removed):
 
-**Also shipped (your ask): `oklch()` colour input** — SPEC §2, folded to a hex at
-resolve time (`src/resolve/value.rs::resolve_oklch`), so it renders in every target
-and works as a gradient stop. Errors cleanly on bad arity / out-of-range.
+```rust
+pub const TEMPLATES: &[(&str, &str)] = &[
+    ("box", "block"),
+    ("rect", "box"),
+    ("group", "block"),
+    ("caption", "block"),
+    ("footer", "caption"),
+    ("badge", "block"),
+    ("note", "block"),
+    ("row", "block"),
+    ("column", "block"),
+    ("table", "group"),
+];
+```
 
-### 2a. Model + table  (`src/render/gradients.rs`, new — twin of `filters.rs`)
-- Parse a gradient `Call` → `Gradient { kind: Linear { angle_deg } | Radial, stops: Vec<ResolvedValue> }`.
-  Names: `gradient` (linear, 135°), `linear-gradient` (first arg = angle), `radial-gradient`.
-  `gradient(a, b, c, …)` = N evenly-spaced stops. Require ≥2 stops.
-- `GradientTable::collect(...)` over nodes + wires + `class_rules` + `wire_defaults`
-  + canvas fill; dedup by a formatted key (kind + angle + stop list, honouring
-  `--bake-vars` like `filters.rs::key`); assign `lini-gradient-{n}`.
-- `emit_defs`: `<linearGradient gradientTransform="rotate({deg} .5 .5)">` (default
-  `objectBoundingBox` units fit any shape) / `<radialGradient>`, with `<stop
-  offset="i/(N-1)" stop-color="{format_value(stop)}"/>`. Stops stay vars (flip) or
-  bake — same honesty as the shadow tint.
+- [ ] `src/desugar/bundles.rs`:
+  - `primitive_bundle(Block)` is bare — `fill: none; stroke: none; padding: 0; gap: 20` (a frameless div; `radius` defaults to 0 with no decl). The old `sized()` paint moves to the `box` template.
+  - `template_bundle("box")` = `fill: --fill; stroke: --stroke; stroke-width: 2; radius: 6; padding: 20` (the paint lifted off the old `Box` primitive).
+  - Re-base `group` / `note` / `badge` / `caption` onto `block`: add the `padding: 20` that `group`/`note` used to inherit from `box`; drop now-redundant `stroke: none` from `badge`/`note` (block has none).
+  - Delete the `"plain"` arm.
+- [ ] `src/desugar/mod.rs` — confirm the omitted-type default stays `"box"` (now a template) in `lower_node`; `is_container` still keys on `"group"`.
+- [ ] `samples/*.lini`: replace every `|plain|` with `|block|` (`grep -l plain samples`). Default boxes are untouched.
 
-### 2b. Use-site rewrite  (after layout, before emit — `render/mod.rs`)
-- One pass rewrites every gradient `Call` in every output-bound `AttrMap` (nodes,
-  wires, `class_rules`, `wire_defaults`, canvas) to `ResolvedValue::RawCss("url(#lini-gradient-n)")`,
-  building the table as it goes. `format_value` then passes `url(#…)` through
-  unchanged everywhere — inline diff **and** class rules — with zero new branches.
-- `render()` emits gradient defs into the existing `<defs>` alongside the filters
-  (handle the “defs present” / empty branch together).
+**Gate:**
 
-### 2c. Tree-shake interaction
-- The Phase 1 collector must walk gradient **stops** so their palette vars survive.
-  (Rewrite to `url()` happens after collection, or the collector reads the table’s
-  stop lists — keep the ordering correct.)
+- [ ] `cargo build` · `cargo clippy` · `cargo fmt --all` clean.
+- [ ] `cargo insta review`: a default `|box|` is now `class="lini-node lini-box lini-block"` with paint on `.lini-box`; geometry/paint values unchanged. `|block|` (ex-`|plain|`) renders frameless as before.
+- [ ] **PNG-verify** `samples/templates.lini` + `samples/shapes.lini` light **and** dark — box framed, group dashed, note/badge/caption unchanged.
+- [ ] `cargo test` green.
 
-### 2d. Samples, snapshots, eyeball
-- `samples/gradient.lini`: two-stop, three-stop, explicit angle, radial; on fill and
-  stroke. `insta` snapshot. PNG-verify angles, multi-stop, dark flip, and `--bake-vars`.
-
-**Phase 2 done when:** gradients render (PNG-verified) on fill+stroke, dedup to shared
-defs, flip and bake correctly, tests/clippy/fmt clean.
+**Commit:** `feat: rebase the shape model on a bare |block| primitive`
 
 ---
 
-## Phase 3 — Polish & integration  (mostly DONE)
+## Step 3 — Link styling cascade + `routing` + `href` (drop `-> {}`)
 
-- ✅ **Diagnostics**: `<2` stops and a missing `linear-gradient` angle now error with a
-  span at resolve (`resolve_gradient`/`validate_gradient` in `src/resolve/value.rs`),
-  added to SPEC §15. (oklch errors landed with the oklch work.)
-- ✅ **README**: a “Colour” section leads with the palette + gradients; test count
-  refreshed to 407.
-- ✅ **`fmt`** round-trips: `gradient.lini` passes the idempotence + semantic suites.
-- ✅ **Conformance**: `palette.lini` + `gradient.lini` are snapshot-covered.
-- ⏸ **Role→hue aliasing** — **needs a call, not done.** The roles are deliberately
-  punchier than the pastel palette (accent = vivid blue, danger = crimson, warn =
-  bright orange); the base tier is softer and the ink tier darker, so a clean 1:1
-  alias would *regress* them, and it changes existing output. Recommend keeping roles
-  independent (the gray ramp already gives neutral resolution). Revisit only if you
-  want the consistency more than the punch.
-- ⏸ **`lini theme` grouping** (optional polish): the palette prints alphabetically
-  today — readable, but section comments (roles / hues) would read nicer. Low value.
+Replace the `-> {}` rule with cascading `link` / `link-width` / `link-style`, add
+the `routing` property, and move the hyperlink prop to `href` (freeing `link`).
+
+- [ ] **`href`:** in `src/render/mod.rs` and `src/render/links.rs`, read the attr key `"href"` (was `"link"`) for the `<a href>` wrap; add `href` to the property allowlist wherever `link` (hyperlink) was accepted.
+- [ ] **Drop `-> {}`:** `src/syntax/parser.rs` — remove the link-op branch from `classify_setup` and the `-> {}` arm from `parse_rule` (a `->` in the stylesheet is now an error). `src/desugar/mod.rs` + `bundles.rs` — delete the `link_rule` injection and the reserved `"link"` selector; rename `link_defaults()` to the cascade defaults below.
+- [ ] **Link paint family:** add `link` / `link-width` / `link-style` as resolved properties. In `src/resolve/links.rs`, resolve each link by walking its scope's ancestor chain for `link*` / `clearance` / `routing` (extend the mechanism `clearance` already uses), then class rules, then the link's own block. `src/render/links.rs` paints the path stroke from `link` / `link-width` and the dash from `link-style` (operator-set, overridable).
+- [ ] **Defaults:** in `src/desugar/bundles.rs`, fold the link defaults (`link-width: 2`, `clearance: 16`, `link-font-size: 11`) into `root_defaults()` so they cascade from the root; `link` colour defaults to `--stroke` in render.
+- [ ] **`routing`:** accept `routing: orthogonal` (the built mode); `straight` / `curved` error as deferred (SPEC §19) — add the message to `src/resolve/*` validation and SPEC §15 if missing.
+- [ ] **Samples:** migrate `-> { stroke: …; clearance: … }` → root `link: …; clearance: …`; link `.class { stroke: red }` → `{ link: red }`.
+
+**Gate:**
+
+- [ ] `cargo build` · `cargo clippy` · `cargo fmt --all` clean.
+- [ ] A `-> {}` block now errors with a clear message (add/observe a parse test).
+- [ ] `cargo insta review`: link colours/widths now resolve from `link*`; SVG geometry unchanged.
+- [ ] **PNG-verify** `samples/links.lini` + `samples/flow.lini` — links look identical to Step 2.
+- [ ] `cargo test` + the wiring sweep (`tests/linking_sweep.rs`) green.
+
+**Commit:** `feat: cascade link/link-width/link-style + routing, drop -> {} and href the hyperlink`
 
 ---
 
-## Decisions (locked)
+## Step 4 — Stylable text + link `[ ]` + tooling sweep
+
+The two additive syntax changes, then bring the tooling and docs in line.
+
+- [ ] **Stylable text:** `src/syntax/ast.rs` — add `style: Vec<Decl>` to `TextNode`. `src/syntax/parser.rs` — after a string (canvas, `[ ]`, or trailing label) consume an optional `{ }` into it. `src/resolve/*` — merge a text node's own style (text-valid props only); a box-only prop on text errors (`'pin' needs a box…`). `src/layout/text.rs` — honour `translate` / `rotate` on a text node. `src/render/mod.rs` — emit a text node's style as `style="…"` and `translate`/`rotate` as `transform` on the `<text>`.
+- [ ] **Link `[ ]`:** `src/syntax/ast.rs` — `Link` carries labels as `[ ]` children. `src/syntax/parser.rs::parse_link` — after the head + optional `{ }`, accept `[ children ]` **or** trailing labels (sugar). `src/desugar/labels.rs` — lower trailing labels into the `[ ]` form. Delete the "a wire is not a container" error. Labels already flow to layout/render — source them from the `[ ]`.
+- [ ] **fmt:** `src/fmt.rs` + `src/fmt/*` — format `"x" { … }`, a link's `[ … ]` labels, and the `link` / `link-width` properties; keep idempotence (the fmt test suite).
+- [ ] **VSCode grammar:** `editors/vscode/syntaxes/lini.tmLanguage.json` — link ops, `block`, `link`/`link-width`/`link-style`/`routing`/`href`; remove `plain`/`wire`.
+- [ ] **Docs/serve:** `README.md` (rewrite wire→link, box→block, examples), `src/serve/{single,playground}.html` (any wire/plain copy).
+- [ ] Add one sample exercising the new surface (e.g. `samples/text.lini`: styled standalone text + a link with a styled `[ ]` label).
+
+**Gate:**
+
+- [ ] `cargo build` · `cargo clippy` · `cargo fmt --all` clean.
+- [ ] New parse/desugar tests: `"x" { color: red }` → styled `<text>`; `a -> b "x"` desugars to `a -> b [ "x" ]`; a box-only prop on text errors.
+- [ ] `cargo insta review` (new sample + fmt round-trips).
+- [ ] **PNG-verify** the new sample — styled text colour/rotate/translate land; link label styles apply.
+- [ ] `lini fmt --check` is idempotent on every sample; `cargo test` fully green.
+
+**Commit:** `feat: stylable text + link [ ] labels; update fmt, grammar, docs`
+
+---
+
+## Risks & notes
+
+- **Snapshot churn is the point, not noise.** Review every diff; the danger is a
+  *geometry* change sneaking in under a rename. Steps 1 and 3 must show
+  geometry-identical SVGs.
+- **`ShapeKind::Text`** already exists and stays — it is the leaf text kind; Step 4
+  adds its style block, it does not become a `block`.
+- **Property allowlist / lint.** If `src/lint.rs` enumerates valid props per node
+  kind, extend it for `link*`, `routing`, `href`, and text's style set as those
+  land (Steps 3–4); this also seeds the TODO diagnostics pass.
+- **`href` collision** is the reason it moves off `link` — do the `href` rename
+  before introducing the `link` paint prop within Step 3.
+
+## Decisions (locked — from the brainstorm)
 
 | Decision | Choice |
 |---|---|
-| Palette model | combo — semantic roles **+** 11 named hues |
-| Hues | red rose orange amber lime green teal sky blue purple gray |
-| Tiers | `wash` / `soft` / `(bare)` / `ink` — job-named, flip-stable, 4 per hue |
-| Derivation | OKLCH seeds → baked `light-dark()` literals, one tunable target table |
-| Aliases | yellow→amber, pink→rose, indigo→purple, cyan→teal |
-| Gradient stops | explicit `--name`s (themeable) or raw colours; **no** bare-hue magic |
-| Gradient angle | auto-135° default; `linear-gradient(deg, …)` for control |
-| Presets (`gradient(sunset)`) | **dropped** — invented names are the memory tax |
-| Bare `gradient` keyword | **dropped** for v1 — gradients take explicit colours |
-| Roles → hues | deferred to Phase 3 (avoid regressing the tuned look) |
-| Output size | tree-shake the var block — non-negotiable given palette size |
+| Connector noun | `link` (+ `link-width` / `link-style`); `node` = umbrella concept, not writable |
+| Base primitive | `|block|` (bare, div-like); `|box|` the default template over it; `|plain|` removed |
+| Routing | `routing: orthogonal` default, cascades like `clearance`; `straight`/`curved` deferred |
+| Link defaults | cascade from scope (`-> {}` removed) |
+| Link labels | a `[ ]` of styleable text leaves; trailing label is sugar |
+| Text | always a `<text>` leaf, stylable in place; never wrapped |
+| Hyperlink prop | `href` (was `link`) |
+| Impossible link | `stray link` (`--lini-stray`) |
+| Order | rename → block rebase → link styling/routing/href → text + `[ ]` + tooling |
