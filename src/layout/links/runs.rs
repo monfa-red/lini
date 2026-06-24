@@ -1,6 +1,6 @@
-//! Per-channel run assignment — the global stage (WIRING §Model step 5).
+//! Per-channel run assignment — the global stage (LINKING §Model step 5).
 //!
-//! A routed wire is a **chain** of channel runs. This module owns port
+//! A routed link is a **chain** of channel runs. This module owns port
 //! placement and the ordinate assignment that mixes port-pinned approach
 //! runs with through-runs at `clearance` pitch, over all chains at once.
 //! Pairwise ordering lives in [`super::order`]; capacity bookkeeping and the
@@ -84,7 +84,7 @@ pub struct EndInfo {
     pub fan: Option<usize>,
 }
 
-/// A routed wire: its world, its runs in start→goal order, and its two ends.
+/// A routed link: its world, its runs in start→goal order, and its two ends.
 #[derive(Clone)]
 pub struct Chain {
     pub world: usize,
@@ -100,7 +100,7 @@ pub struct Chain {
 
 /// Port-group slides per `(node, side)`: Law 2 lets a whole group slide
 /// along its side, spacing and order intact, when the centred rows would
-/// break Law 1 (WIRING §Ports). Owned by the routing pass; the separation
+/// break Law 1 (LINKING §Ports). Owned by the routing pass; the separation
 /// audit proposes entries, ground truth accepts them.
 pub type Slides = BTreeMap<(String, u8), f64>;
 
@@ -126,7 +126,7 @@ pub fn assign(worlds: &[World], chains: &mut [Option<Chain>], clearance: f64, sl
     }
 }
 
-/// Law 2's lone-port freedom (WIRING §Ports): a chain whose runs all share
+/// Law 2's lone-port freedom (LINKING §Ports): a chain whose runs all share
 /// one axis is a **straight shot** — one drawn line, its lateral position
 /// owned by its two ports. When the port ordinates differ, the goal end
 /// re-pins to the start's ordinate (or the start to the goal's): an end may
@@ -249,7 +249,7 @@ struct Swap {
     partner: usize,
 }
 
-/// The realisation's own ground-truth gate (WIRING §Model step 5: "the
+/// The realisation's own ground-truth gate (LINKING §Model step 5: "the
 /// halves flank the partner"). Ordinates settle only after the split, and
 /// the assignment may land both halves on one side of the partner's run —
 /// a swap that cannot cross it: two turns and an extra lane that buy no
@@ -379,10 +379,10 @@ fn channel_map(chains: &[Option<Chain>]) -> BTreeMap<ChanKey, Vec<(usize, usize)
     channels
 }
 
-/// Realise inversions (WIRING §Model step 5): when two overlapping runs'
-/// ends demand opposite orders, the later wire swaps sides mid-channel — its
+/// Realise inversions (LINKING §Model step 5): when two overlapping runs'
+/// ends demand opposite orders, the later link swaps sides mid-channel — its
 /// run splits at the overlap midpoint, and the perpendicular jog between the
-/// halves crosses the partner square-on, both wires locally straight. The
+/// halves crosses the partner square-on, both links locally straight. The
 /// jog is a **real run** in the split cell's perpendicular channel, so lane
 /// spacing, soft-wall margins, and occupancy govern it like any other run.
 /// Only pairs the current assignment **actually draws crossing** are
@@ -450,7 +450,7 @@ type Inversion = ((usize, usize), (usize, usize), f64, usize);
 
 /// The first inverted overlapping pair among `crossing` chain pairs not yet
 /// realised, in channel order: the chain pair, the run to split (the later
-/// wire's), the overlap midpoint, and the cell containing it.
+/// link's), the overlap midpoint, and the cell containing it.
 fn find_inversion(
     worlds: &[World],
     chains: &[Option<Chain>],
@@ -498,7 +498,7 @@ fn find_inversion(
 /// Port placement: group every chain end (and fan groups as one unit) per
 /// `(node, side)`, order units with the end comparator, spread ordinates at
 /// `clearance` pitch centred on the side — shifted by the side's accepted
-/// slide, if any. A side past its capacity **compacts** (WIRING Law 2): all
+/// slide, if any. A side past its capacity **compacts** (LINKING Law 2): all
 /// of its units re-space evenly at the widest pitch the side allows,
 /// `usable / (units − 1)`, corner margins intact at full clearance — pitch
 /// zero, ports coinciding, when the side is too short for distinct points.
@@ -589,7 +589,7 @@ fn assign_channel(
 
     // Overlap clusters over the ordered list (union spans). Spans nearer
     // than `clearance` count as overlapping: runs that share an ordinate sit
-    // tip-to-tip on one line, so their gap is wire–wire distance — and a run
+    // tip-to-tip on one line, so their gap is link–link distance — and a run
     // pinned elsewhere must not start inside a stranger's clearance band.
     let mut clusters: Vec<(f64, f64, Vec<usize>)> = Vec::new();
     for (i, &run) in runs.iter().enumerate() {
@@ -678,8 +678,8 @@ type OwnedLayout = (Vec<usize>, Vec<Option<f64>>, Vec<f64>);
 /// Pinless rails in one cluster ladder have a topologically free order:
 /// the comparator's pick is planar either way, and `pack`'s lane sharing
 /// is decided by span clearance alone — yet both choices matter across
-/// channels, where staircase wires can interleave their steps nearer than
-/// clearance while another arrangement nests them cleanly (WIRING §Model
+/// channels, where staircase links can interleave their steps nearer than
+/// clearance while another arrangement nests them cleanly (LINKING §Model
 /// step 5 — nested, never braided). When the packed layout draws the
 /// cluster into conflict, try every order of its free rails, on the
 /// packed sharing and on variants giving one shared-rail member its own
@@ -927,12 +927,12 @@ mod tests {
     }
 
     #[test]
-    fn a_lone_port_meets_its_straight_wire() {
+    fn a_lone_port_meets_its_straight_link() {
         // Two stacked boxes whose centres miss by 6: the straight shot
         // between them must ride one ordinate (the start's), not jog
-        // mid-corridor to bridge the centres (WIRING §Ports, lone-port
+        // mid-corridor to bridge the centres (LINKING §Ports, lone-port
         // freedom).
-        use crate::layout::wires::{geometry, graph::ChannelGraph, path};
+        use crate::layout::links::{geometry, graph::ChannelGraph, path};
 
         let bounds = Rect::new(0.0, 0.0, 300.0, 200.0);
         let a = Rect::new(100.0, 20.0, 160.0, 40.0);
@@ -973,9 +973,9 @@ mod tests {
         // The west-column interleave: a (top) → c (lower middle) and
         // b (upper middle) → d (bottom), all ends forced left — the runs
         // share the margin channel and their end orders conflict (Jordan),
-        // so the later wire must swap sides at the overlap midpoint.
+        // so the later link must swap sides at the overlap midpoint.
         use crate::ast::Side;
-        use crate::layout::wires::{geometry, graph::ChannelGraph, path};
+        use crate::layout::links::{geometry, graph::ChannelGraph, path};
 
         let bounds = Rect::new(0.0, 0.0, 200.0, 400.0);
         let names = ["a", "b", "c", "d"];
@@ -1016,11 +1016,11 @@ mod tests {
         assign(&worlds, &mut chains, 8.0, &Default::default());
 
         let (early, late) = (chains[0].as_ref().unwrap(), chains[1].as_ref().unwrap());
-        assert_eq!(early.runs.len(), 3, "the earlier wire stays whole");
+        assert_eq!(early.runs.len(), 3, "the earlier link stays whole");
         assert_eq!(
             late.runs.len(),
             5,
-            "the later wire splits around a real jog"
+            "the later link splits around a real jog"
         );
         let (head, jog, tail) = (&late.runs[1], &late.runs[2], &late.runs[3]);
         assert_eq!(head.axis, Axis::V);

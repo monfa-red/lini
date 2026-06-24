@@ -48,5 +48,5 @@ lower |row| { gap: 22; align: start; } [
     "Mango" "3" "ripe"
   ]
   // link wraps a shape in <a href>
-  docs |tile| { link: "https://example.com"; width: 96; height: 70; fill: --purple-soft; stroke: --purple-ink; color: --purple-ink; } "Docs"
+  docs |tile| { href: "https://example.com"; width: 96; height: 70; fill: --purple-soft; stroke: --purple-ink; color: --purple-ink; } "Docs"
 ]

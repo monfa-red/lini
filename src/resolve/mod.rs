@@ -3,17 +3,17 @@
 //! The work splits by concept: [`value`] maps declaration values into
 //! `ResolvedValue`s, [`cascade`] is the stylesheet plus selector matching,
 //! [`types`] the define/template/primitive chain, [`scene`] the node tree, and
-//! [`wires`] the wire pass. [`program`] orchestrates them over the [`defaults`]
+//! [`links`] the link pass. [`program`] orchestrates them over the [`defaults`]
 //! table; [`merge`] folds resolved declarations and extracts markers.
 
 mod cascade;
 mod defaults;
 mod ir;
+mod links;
 mod merge;
 mod program;
 mod scene;
 mod value;
-mod wires;
 
 pub use defaults::built_in_defaults;
 pub use ir::*;

@@ -1,6 +1,6 @@
-//! The wiring CI gate (see `WIRING.md`, `PLAN.md`).
+//! The linking CI gate (see `LINKING.md`, `PLAN.md`).
 //!
-//! Wiring is gated **semantically** — the four laws, the crossing report, edge
+//! Linking is gated **semantically** — the four laws, the crossing report, edge
 //! completeness, determinism — never on SVG snapshots: a snapshot pins one
 //! router's coordinates, the validator pins the contract. Tests marked
 //! `#[ignore]` are phase gates; each phase un-ignores the ones it makes true.
@@ -53,14 +53,14 @@ fn compile_is_byte_identical_across_runs() {
     }
 }
 
-/// Completeness: every declared edge is drawn, or reported impossible — wires
+/// Completeness: every declared edge is drawn, or reported impossible — links
 /// never silently vanish.
 #[test]
 fn every_declared_edge_is_drawn_or_reported() {
     for path in sample_paths() {
         let src = read(&path);
         let laid = lini::testing::route_sample(&src, 8.0);
-        let drawn = laid.wires.len();
+        let drawn = laid.links.len();
         let impossible = lini::testing::laws(&laid)
             .iter()
             .filter(|v| v.rule == Rule::Impossible)
@@ -75,16 +75,16 @@ fn every_declared_edge_is_drawn_or_reported() {
 }
 
 /// Completeness under pressure (Phase 6): at the native clearance the three
-/// wiring scenes draw every declared edge — nothing starved by first-come
+/// linking scenes draw every declared edge — nothing starved by first-come
 /// routing, nothing undrawn by a repair.
 #[test]
 fn the_scenes_draw_every_edge_at_native_clearance() {
-    for name in ["wires_simple", "wires_medium", "wires_hard"] {
+    for name in ["links_simple", "links_medium", "links_hard"] {
         let path = format!("samples/{name}.lini");
         let src = read(std::path::Path::new(&path));
         let laid = lini::testing::route_sample(&src, 8.0);
         assert_eq!(
-            laid.wires.len(),
+            laid.links.len(),
             lini::testing::declared_edges(&src),
             "{name}: every declared edge must draw at the native clearance"
         );
@@ -92,13 +92,13 @@ fn the_scenes_draw_every_edge_at_native_clearance() {
 }
 
 /// Law-shaped Phase-2 properties, measured directly on the routed polylines.
-/// Vacuous until wires draw; the completeness gate above keeps them honest.
+/// Vacuous until links draw; the completeness gate above keeps them honest.
 #[test]
-fn wires_are_orthogonal_polylines() {
+fn links_are_orthogonal_polylines() {
     for path in sample_paths() {
         let laid = lini::testing::route_sample(&read(&path), 8.0);
-        for w in &laid.wires {
-            assert!(w.path.len() >= 2, "{}: degenerate wire", path.display());
+        for w in &laid.links {
+            assert!(w.path.len() >= 2, "{}: degenerate link", path.display());
             for s in w.path.windows(2) {
                 let ((x0, y0), (x1, y1)) = (s[0], s[1]);
                 assert!(
@@ -116,10 +116,10 @@ fn wires_are_orthogonal_polylines() {
 /// Law 2: each end sits on a side of its endpoint's rect (corners excluded)
 /// and the adjoining segment leaves perpendicular to that side.
 #[test]
-fn wire_ends_land_perpendicular_on_their_sides() {
+fn link_ends_land_perpendicular_on_their_sides() {
     for path in sample_paths() {
         let laid = lini::testing::route_sample(&read(&path), 8.0);
-        for w in &laid.wires {
+        for w in &laid.links {
             let n = w.path.len();
             check_end(&laid, w.path[0], w.path[1], &w.seg_from, &path);
             check_end(&laid, w.path[n - 1], w.path[n - 2], &w.seg_to, &path);
@@ -164,15 +164,15 @@ fn check_end(
 /// ≥ clearance along its whole length.
 #[test]
 fn detour_keeps_clearance_from_the_blocking_node() {
-    let src = read(std::path::Path::new("samples/wires_simple.lini"));
+    let src = read(std::path::Path::new("samples/links_simple.lini"));
     let laid = lini::testing::route_sample(&src, 10.0);
     let wall = lini::testing::node_rect(&laid, "wall").expect("wall rect");
-    let wire = laid
-        .wires
+    let link = laid
+        .links
         .iter()
         .find(|w| w.seg_from == "ant" && w.seg_to == "bee")
         .expect("ant→bee drawn");
-    for s in wire.path.windows(2) {
+    for s in link.path.windows(2) {
         let d = seg_rect_distance(s[0], s[1], wall);
         assert!(
             d >= 10.0 - 1e-6,
@@ -191,7 +191,7 @@ fn seg_rect_distance(a: (f64, f64), b: (f64, f64), r: (f64, f64, f64, f64)) -> f
     (dx * dx + dy * dy).sqrt()
 }
 
-/// Law 3 pins: the three wiring scenes carry a known number of forced
+/// Law 3 pins: the three linking scenes carry a known number of forced
 /// crossings — simple stays clean, the others force a handful. The compass
 /// groups carry captions and stacked units, so the dense gap leaves little
 /// corridor room and the scene is heavily contended. Behaviour pin, not a
@@ -210,9 +210,9 @@ fn crossing_counts_are_pinned() {
     };
     // Behaviour pin, not a coordinate pin — re-pinned to the locked v0.3 geometry
     // (monospace, 2px strokes, pinned captions).
-    assert_eq!(crossings("samples/wires_simple.lini"), 0);
-    assert_eq!(crossings("samples/wires_medium.lini"), 6);
-    assert_eq!(crossings("samples/wires_hard.lini"), 5);
+    assert_eq!(crossings("samples/links_simple.lini"), 0);
+    assert_eq!(crossings("samples/links_medium.lini"), 6);
+    assert_eq!(crossings("samples/links_hard.lini"), 5);
 }
 
 /// Law 3 (Economy), audit accept: a crossing a longer route can remove is
@@ -236,14 +236,14 @@ fn audit_removes_a_removable_crossing() {
         .count();
     assert_eq!(crossings, 0, "the detour must remove the crossing");
     let laid = lini::testing::route_sample(src, 8.0);
-    assert_eq!(laid.wires.len(), 2, "both wires must still be drawn");
+    assert_eq!(laid.links.len(), 2, "both links must still be drawn");
 }
 
 /// Impossible layouts: a node walled in on every side (its neighbours'
-/// keep-outs seal every face) is reported with its wire, never drawn dirty —
+/// keep-outs seal every face) is reported with its link, never drawn dirty —
 /// and the report reaches the CLI's strict gate as a diagnostic.
 #[test]
-fn a_walled_in_wire_is_reported_impossible() {
+fn a_walled_in_link_is_reported_impossible() {
     let src = "{ layout: grid; columns: repeat(3); gap: 10;\n\
                -> { clearance: 16; }\n\
                }\n\
@@ -263,25 +263,22 @@ fn a_walled_in_wire_is_reported_impossible() {
         .filter(|v| v.rule == Rule::Impossible)
         .collect();
     assert_eq!(impossible.len(), 1, "{impossible:?}");
-    assert_eq!(impossible[0].wires, vec!["core -> n2".to_owned()]);
+    assert_eq!(impossible[0].links, vec!["core -> n2".to_owned()]);
 
     let laid = lini::testing::route_sample(src, 16.0);
     assert!(
-        laid.wires.is_empty(),
-        "the impossible wire must not be drawn"
+        laid.links.is_empty(),
+        "the impossible link must not be drawn"
     );
 
-    // The report made visible (WIRING §Impossible layouts): the impossible
-    // wire renders as an airwire — beside the wires, never as one, so the
+    // The report made visible (LINKING §Impossible layouts): the impossible
+    // link renders as an stray — beside the links, never as one, so the
     // validator (which already ran clean above) never sees it.
-    assert_eq!(laid.airwires.len(), 1, "the report must be drawn");
-    let aw = &laid.airwires[0];
+    assert_eq!(laid.strays.len(), 1, "the report must be drawn");
+    let aw = &laid.strays[0];
     assert_eq!((aw.data_from.as_str(), aw.data_to.as_str()), ("core", "n2"));
     let svg = lini::compile_str(src).expect("compile");
-    assert!(
-        svg.contains("lini-airwire"),
-        "the airwire must reach the SVG"
-    );
+    assert!(svg.contains("lini-stray"), "the stray must reach the SVG");
 
     let (_, diags) = lini::compile_str_checked(src, &lini::Options::default()).expect("compile");
     assert!(
@@ -290,26 +287,26 @@ fn a_walled_in_wire_is_reported_impossible() {
     );
 }
 
-/// Gap growth (Phase 8): when wires are impossible for lack of corridor
+/// Gap growth (Phase 8): when links are impossible for lack of corridor
 /// lanes, the named containers' gaps grow by exactly the deficit and the
-/// scene reroutes — at most two rounds, deterministically. `wires_medium`
+/// scene reroutes — at most two rounds, deterministically. `links_medium`
 /// at clearance 12 is the canonical starved scene: the raw router loses two
-/// wires to corridor deficits, one growth round completes it.
+/// links to corridor deficits, one growth round completes it.
 #[test]
 fn gap_growth_completes_a_starved_scene() {
-    let src = read(std::path::Path::new("samples/wires_medium.lini"))
+    let src = read(std::path::Path::new("samples/links_medium.lini"))
         .replace("clearance: 8", "clearance: 12");
     let declared = lini::testing::declared_edges(&src);
 
     let raw = lini::testing::route_sample_raw(&src, 12.0);
     assert!(
-        raw.wires.len() < declared,
+        raw.links.len() < declared,
         "the scene must starve the raw router for this gate to mean anything"
     );
 
     let grown = lini::testing::route_sample(&src, 12.0);
-    assert_eq!(grown.wires.len(), declared, "growth must complete it");
-    assert!(grown.airwires.is_empty());
+    assert_eq!(grown.links.len(), declared, "growth must complete it");
+    assert!(grown.strays.is_empty());
     let breaches: Vec<_> = lini::testing::laws(&grown)
         .into_iter()
         .filter(|v| v.severity != Severity::Info)
@@ -323,11 +320,11 @@ fn gap_growth_completes_a_starved_scene() {
     assert_eq!(a, b, "growth must stay deterministic");
 }
 
-/// Gap growth is bounded and honest: a deficit no gap controls — wires
+/// Gap growth is bounded and honest: a deficit no gap controls — links
 /// forced into a padding-bounded corridor of a container whose gap the
 /// deficit names anyway — grows nothing useful, stops after its two rounds,
-/// and keeps the original layout with the starved wires reported. (The
-/// pair is containment, so the report stays textual — airwires draw only
+/// and keeps the original layout with the starved links reported. (The
+/// pair is containment, so the report stays textual — strays draw only
 /// for separate bodies; the walled-in fixture above covers that path.)
 #[test]
 fn gap_growth_is_bounded_where_no_gap_can_help() {
@@ -343,10 +340,10 @@ fn gap_growth_is_bounded_where_no_gap_can_help() {
                grp.left -> grp.aa.left\ngrp.left -> grp.aa.left\ngrp.left -> grp.aa.left\n";
     let raw = lini::testing::route_sample_raw(src, 16.0);
     let grown = lini::testing::route_sample(src, 16.0);
-    assert_eq!(raw.wires.len(), 1, "the ring corridor holds one lane");
+    assert_eq!(raw.links.len(), 1, "the ring corridor holds one lane");
     assert_eq!(
-        grown.wires.len(),
-        raw.wires.len(),
+        grown.links.len(),
+        raw.links.len(),
         "growth must not pretend to help"
     );
     assert_eq!(
@@ -358,16 +355,16 @@ fn gap_growth_is_bounded_where_no_gap_can_help() {
         .into_iter()
         .filter(|v| v.rule == Rule::Impossible)
         .count();
-    assert_eq!(impossible, 2, "the starved wires stay reported");
+    assert_eq!(impossible, 2, "the starved links stay reported");
 }
 
-/// Law 2's compaction clause (Phase 8½): a small shape never turns wires
-/// away. Twenty wires converge on a hub whose four sides hold 16 ports at
+/// Law 2's compaction clause (Phase 8½): a small shape never turns links
+/// away. Twenty links converge on a hub whose four sides hold 16 ports at
 /// clearance pitch; the overflowed sides re-pitch all their ports evenly
 /// below clearance — like the pins of an IC — and every law still holds on
 /// everything drawn.
 #[test]
-fn a_full_node_compacts_port_rows_rather_than_turning_wires_away() {
+fn a_full_node_compacts_port_rows_rather_than_turning_links_away() {
     // Empty labels (`""`): these are routing nodes, sized by width/height — an
     // id-as-label would float them larger via the content floor (SPEC §6).
     let mut src = String::from(
@@ -391,22 +388,19 @@ fn a_full_node_compacts_port_rows_rather_than_turning_wires_away() {
     }
 
     let laid = lini::testing::route_sample(&src, 8.0);
-    assert_eq!(laid.wires.len(), 20, "every declared edge must draw");
-    assert!(
-        laid.airwires.is_empty(),
-        "nothing may fall back to an airwire"
-    );
+    assert_eq!(laid.links.len(), 20, "every declared edge must draw");
+    assert!(laid.strays.is_empty(), "nothing may fall back to an stray");
     let breaches: Vec<_> = lini::testing::laws(&laid)
         .into_iter()
         .filter(|v| v.severity != Severity::Info)
         .collect();
     assert!(breaches.is_empty(), "{breaches:?}");
 
-    // Compaction is even, never a weld: every wire keeps its own port, and
+    // Compaction is even, never a weld: every link keeps its own port, and
     // each side's pitch is uniform — at clearance while the side has slots,
     // at the side's widest sub-clearance pitch once it overflows.
     let mut ports: Vec<(u64, u64)> = laid
-        .wires
+        .links
         .iter()
         .map(|w| {
             let p = *w.path.last().expect("hub end");
@@ -415,11 +409,11 @@ fn a_full_node_compacts_port_rows_rather_than_turning_wires_away() {
         .collect();
     ports.sort_unstable();
     ports.dedup();
-    assert_eq!(ports.len(), 20, "every wire keeps a distinct port");
+    assert_eq!(ports.len(), 20, "every link keeps a distinct port");
 
     let (x0, y0, x1, _y1) = lini::testing::node_rect(&laid, "hub").expect("hub rect");
     let mut rows: std::collections::BTreeMap<u8, Vec<f64>> = Default::default();
-    for w in &laid.wires {
+    for w in &laid.links {
         let (px, py) = *w.path.last().unwrap();
         let (side, ord) = if (px - x0).abs() < 1e-6 {
             (3, py)
@@ -465,7 +459,7 @@ fn a_spanning_chip_side_keeps_accepting_clear_ports() {
     );
     let laid = lini::testing::route_sample(&src, 10.0);
     assert_eq!(
-        laid.wires.len(),
+        laid.links.len(),
         lini::testing::declared_edges(&src),
         "the large MCU side has enough clear ports and corridor lanes"
     );
@@ -474,8 +468,8 @@ fn a_spanning_chip_side_keeps_accepting_clear_ports() {
 /// Law 3, audit reject: the forced interleave's crossing is kept and named —
 /// the `.hot` pair rides the report alongside the other forced crossings.
 #[test]
-fn the_kept_crossing_names_its_wire_pair() {
-    let src = read(std::path::Path::new("samples/wires_hard.lini"));
+fn the_kept_crossing_names_its_link_pair() {
+    let src = read(std::path::Path::new("samples/links_hard.lini"));
     let kept: Vec<_> = lini::validate_str(&src)
         .expect("validate")
         .into_iter()
@@ -483,7 +477,7 @@ fn the_kept_crossing_names_its_wire_pair() {
         .collect();
     assert_eq!(kept.len(), 5);
     assert!(
-        kept.iter().any(|v| v.wires
+        kept.iter().any(|v| v.links
             == vec![
                 "alpha -> west.ww2".to_owned(),
                 "west.ww1 -> gamma".to_owned()
@@ -492,14 +486,14 @@ fn the_kept_crossing_names_its_wire_pair() {
     );
 }
 
-/// Phase 9: wire labels ride their wire (WIRING §Model step 7). Every
+/// Phase 9: link labels ride their link (LINKING §Model step 7). Every
 /// declared label is placed once on its statement's drawn route — a chain's
 /// label on exactly one of its segments — and a label's box overlaps no
-/// leaf node body (it may slide along the wire, never off it).
+/// leaf node body (it may slide along the link, never off it).
 #[test]
-fn wire_labels_ride_their_wires_and_dodge_nodes() {
+fn link_labels_ride_their_links_and_dodge_nodes() {
     let leaf_clear = |laid: &lini::testing::LaidOut, leaves: &[&str], expect: usize| {
-        let texts: Vec<_> = laid.wires.iter().flat_map(|w| w.texts.iter()).collect();
+        let texts: Vec<_> = laid.links.iter().flat_map(|w| w.texts.iter()).collect();
         assert_eq!(texts.len(), expect, "every declared label must be placed");
         for t in &texts {
             let size = t.attrs.number("size").unwrap_or(11.0);
@@ -517,11 +511,11 @@ fn wire_labels_ride_their_wires_and_dodge_nodes() {
         }
     };
 
-    let simple = read(std::path::Path::new("samples/wires_simple.lini"));
+    let simple = read(std::path::Path::new("samples/links_simple.lini"));
     let laid = lini::testing::route_sample(&simple, 10.0);
     leaf_clear(&laid, &["ant", "wall", "bee", "owl"], 3);
 
-    let hard = read(std::path::Path::new("samples/wires_hard.lini"));
+    let hard = read(std::path::Path::new("samples/links_hard.lini"));
     let laid = lini::testing::route_sample(&hard, 8.0);
     leaf_clear(
         &laid,
@@ -544,7 +538,7 @@ fn wire_labels_ride_their_wires_and_dodge_nodes() {
     );
     // The chain label sits on exactly one of the chain's two segments.
     let relay: Vec<_> = laid
-        .wires
+        .links
         .iter()
         .filter(|w| w.data_from == "gamma" && w.data_to == "delta")
         .collect();

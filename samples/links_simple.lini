@@ -1,8 +1,8 @@
-// The development scene — every basic wiring feature once, small enough to
+// The development scene — every basic linking feature once, small enough to
 // debug by eye. Expected: all four laws hold, ZERO crossings.
 //
 //   clear shot · duplicate rails · a detour around a node · a fan trunk
-//   a self-loop · a bidirectional wire · labels and markers
+//   a self-loop · a bidirectional link · labels and markers
 
 {
   layout: row; gap: 50;

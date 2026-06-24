@@ -533,7 +533,7 @@
         const VAR_NAME = /--[A-Za-z_][\w-]*(?=[ \t]*:(?!:))/y;
         const PROP_NAME = /[A-Za-z_][\w-]*(?=[ \t]*:(?!:))/y;
         const CSS_VAR = /--[A-Za-z_][\w-]*/y;
-        const WIRE_OP = /(?:<>|[<>*])?(?:--|\.\.|~|-)(?:<>|[<>*])?/y;
+        const LINK_OP = /(?:<>|[<>*])?(?:--|\.\.|~|-)(?:<>|[<>*])?/y;
         const CLASS = /(?:\.[A-Za-z_][\w-]*)+/y;
         const SIDE = /(?:top|bottom|left|right)(?![\w-])/y;
         const HEX =
@@ -610,7 +610,7 @@
             continue;
           }
 
-          // structural mode (identity, selectors, wires)
+          // structural mode (identity, selectors, links)
           if (c === "|") {
             emit("punct", "|");
             while (i < n && src[i] !== "|" && src[i] !== "\n") {
@@ -648,7 +648,7 @@
             emit("var", t);
             continue;
           }
-          if ((t = at(WIRE_OP))) {
+          if ((t = at(LINK_OP))) {
             emit("op", t);
             continue;
           }

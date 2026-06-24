@@ -1,6 +1,6 @@
 //! Folding a cascade's ordered `(name, value)` declarations into an [`AttrMap`],
-//! and extracting wire/line markers from that ordered list (source order wins,
-//! SPEC §7). Shared by node ([`super::scene`]) and wire ([`super::wires`])
+//! and extracting link/line markers from that ordered list (source order wins,
+//! SPEC §7). Shared by node ([`super::scene`]) and link ([`super::links`])
 //! resolution.
 
 use super::ir::{AttrMap, MarkerKind, Markers, ResolvedValue};

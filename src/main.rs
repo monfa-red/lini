@@ -163,12 +163,12 @@ fn main() -> ExitCode {
         warnings_were_emitted |= !diags.is_empty();
     }
 
-    // Compile and collect the routing relaxations in one layout pass — the wire
+    // Compile and collect the routing relaxations in one layout pass — the link
     // router is expensive, so we don't route once for the SVG and again for warnings.
     match lini::compile_str_checked(&source, &opts) {
         Ok((svg, route_diags)) => {
             if !cli.no_warn {
-                // Impossible wires and law breaches — WIRING requires these
+                // Impossible links and law breaches — LINKING requires these
                 // never be silent.
                 for d in &route_diags {
                     eprintln!("{}", d.display_with_source(&source, &filename));
@@ -391,7 +391,7 @@ fn run_desugar(args: &[String]) -> ExitCode {
                 println!("  templates/defines become a base shape wearing a .lini-* class chain,");
                 println!("  each type's defaults become a generated .lini-<type> class, scene and");
                 println!(
-                    "  wire defaults fill the global block, and labels/along become explicit."
+                    "  link defaults fill the global block, and labels/along become explicit."
                 );
                 println!(
                     "  The engine's true input; re-renders identically. Use '-' to read stdin."

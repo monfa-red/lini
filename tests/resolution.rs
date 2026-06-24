@@ -115,13 +115,13 @@ fn err_define_name_collides_with_template() {
 
 #[test]
 fn err_reserved_scene_id() {
-    // Type names are free as ids now; only endpoint sides and `wire` stay
+    // Type names are free as ids now; only endpoint sides and `link` stay
     // reserved — `left` is a side, so it cannot be a node id.
     assert_resolve_error("left |box| \"x\"\n", "'left' is reserved");
 }
 
 #[test]
-fn wire_endpoint_dotpath_navigates_into_groups() {
+fn link_endpoint_dotpath_navigates_into_groups() {
     lini::check("garden |group| [ frog |box| ]\noutside |box|\ngarden.frog -> outside\n")
         .expect("dot-path resolves");
 }
@@ -151,7 +151,7 @@ fn duplicate_define_errors() {
 }
 
 #[test]
-fn wire_endpoint_bare_nested_name_errors_with_suggestions() {
+fn link_endpoint_bare_nested_name_errors_with_suggestions() {
     let err = lini::check(
         "kitchen |group| [ mouse |box| ]\ngarden |group| [ mouse |box| ]\nmouse -> kitchen\n",
     )
@@ -167,8 +167,8 @@ fn wire_endpoint_bare_nested_name_errors_with_suggestions() {
 }
 
 #[test]
-fn body_wire_suggestion_is_scope_relative() {
-    // A body wire resolves from its container; the suggestion must be the path
+fn body_link_suggestion_is_scope_relative() {
+    // A body link resolves from its container; the suggestion must be the path
     // the user can actually type there (shelf.bowl), not the un-typeable
     // root-absolute one (garden.shelf.bowl).
     let err =
@@ -188,7 +188,7 @@ fn body_wire_suggestion_is_scope_relative() {
 }
 
 #[test]
-fn body_wire_suggestion_stays_in_scope() {
+fn body_link_suggestion_stays_in_scope() {
     // Sealed body: a sibling container's node is unreachable, so it must not be
     // suggested at all.
     let err = lini::check(

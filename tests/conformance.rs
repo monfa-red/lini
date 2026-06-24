@@ -9,14 +9,14 @@
 
 use lini::{Options, OutputFormat};
 
-/// Wire-bearing samples are excluded: wiring is gated semantically by
-/// `tests/wiring.rs` (laws, crossing counts, determinism), never by snapshots —
+/// Link-bearing samples are excluded: linking is gated semantically by
+/// `tests/linking.rs` (laws, crossing counts, determinism), never by snapshots —
 /// a snapshot would pin one router's coordinates and churn on every phase.
-const WIRE_SAMPLES: &[&str] = &[
+const LINK_SAMPLES: &[&str] = &[
     "mermaid_fast.lini",
-    "wires_simple.lini",
-    "wires_medium.lini",
-    "wires_hard.lini",
+    "links_simple.lini",
+    "links_medium.lini",
+    "links_hard.lini",
 ];
 
 #[test]
@@ -30,7 +30,7 @@ fn snapshot_baked_svg_for_every_sample() {
     let samples_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("samples");
     insta::glob!(samples_dir, "*.lini", |path| {
         let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-        if WIRE_SAMPLES.contains(&name) {
+        if LINK_SAMPLES.contains(&name) {
             return;
         }
         let src = std::fs::read_to_string(path)

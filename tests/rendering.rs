@@ -382,8 +382,8 @@ fn hero_renders_in_both_modes() {
     assert!(!baked.contains("@layer lini.defaults"));
     assert!(live.starts_with("<svg"));
     assert!(baked.starts_with("<svg"));
-    assert!(live.contains("lini-wire"));
-    assert!(baked.contains("lini-wire"));
+    assert!(live.contains("lini-link"));
+    assert!(baked.contains("lini-link"));
 }
 
 #[test]
@@ -400,7 +400,7 @@ fn font_size_on_container_reaches_descendant_text() {
 
 #[test]
 fn css_cascade_emits_rules_and_diffs() {
-    // Self-contained: element rules, class rules, inline diffs, wire defaults, the
+    // Self-contained: element rules, class rules, inline diffs, link defaults, the
     // operator-dash class, and cascading text props. (The pretty user-facing
     // cascade demo lives in samples/styles.lini.)
     let src = r#"{
@@ -433,7 +433,7 @@ loud --> mix .calm
         svg
     );
     assert!(
-        svg.contains(".lini .lini-wire { fill: none; stroke: #666;"),
+        svg.contains(".lini .lini-link { fill: none; stroke: #666;"),
         "{}",
         svg
     );
@@ -451,31 +451,31 @@ loud --> mix .calm
         "{}",
         svg
     );
-    // A wire carries its style classes like a node; the `--` operator's dash
-    // rides a `lini-wire-dashed` class (the pattern stated once in the sheet),
-    // never an inline diff repeated on every dashed wire.
+    // A link carries its style classes like a node; the `--` operator's dash
+    // rides a `lini-link-dashed` class (the pattern stated once in the sheet),
+    // never an inline diff repeated on every dashed link.
     assert!(
-        svg.contains(".lini .lini-wire-dashed { stroke-dasharray: 4,4; }"),
+        svg.contains(".lini .lini-link-dashed { stroke-dasharray: 4,4; }"),
         "the operator dash must be stated once as a class rule: {}",
         svg
     );
-    let wire_g = svg
+    let link_g = svg
         .lines()
         .find(|l| l.contains(r#"data-from="loud""#))
-        .expect("loud→mix wire present");
+        .expect("loud→mix link present");
     assert!(
-        wire_g.contains(r#"class="lini-wire lini-wire-dashed lini-style-calm""#),
-        "wire must carry its dash + style classes: {}",
-        wire_g
+        link_g.contains(r#"class="lini-link lini-link-dashed lini-style-calm""#),
+        "link must carry its dash + style classes: {}",
+        link_g
     );
     assert!(
-        !wire_g.contains("stroke-dasharray"),
+        !link_g.contains("stroke-dasharray"),
         "the dash rides the class, not inline: {}",
-        wire_g
+        link_g
     );
     assert!(
-        !wire_g.contains("stroke: teal"),
+        !link_g.contains("stroke: teal"),
         ".calm stroke must ride the class rule, not inline: {}",
-        wire_g
+        link_g
     );
 }

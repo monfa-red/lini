@@ -1,5 +1,5 @@
 // The Lini hero — a colourful service map. Palette colours, a gradient entry
-// point, mixed wire styles. Source for assets/hero.png.
+// point, mixed link styles. Source for assets/hero.png.
 {
   layout: column; gap: 52; padding: 30; font-weight: normal;
   -> { stroke: --gray; stroke-width: 2; clearance: 16; }

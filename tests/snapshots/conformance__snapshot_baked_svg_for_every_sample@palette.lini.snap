@@ -240,5 +240,5 @@ input_file: samples/palette.lini
       </g>
     </g>
   </g>
-  <g class="lini-wires"/>
+  <g class="lini-links"/>
 </svg>

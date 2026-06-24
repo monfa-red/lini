@@ -1,5 +1,5 @@
-// Wire markers (arrow, dot, diamond, crow on |line|) and template-internal wires
-// — a |define| whose body wires its own children, so every instance routes itself.
+// Link markers (arrow, dot, diamond, crow on |line|) and template-internal links
+// — a |define| whose body links its own children, so every instance routes itself.
 {
   layout: column; gap: 26; padding: 24; font-weight: normal;
 
@@ -13,7 +13,7 @@
   ]
 }
 
-|plain| { font-size: 18; font-weight: bold; } "Markers & internal wires"
+|plain| { font-size: 18; font-weight: bold; } "Markers & internal links"
 
 ends |group| { layout: column; gap: 14; } [
   |caption| "markers"
@@ -23,9 +23,9 @@ ends |group| { layout: column; gap: 14; } [
   |line| { points: -80 0, 80 0; marker-end: crow; stroke: --orange-ink; stroke-width: 2; }
 ]
 
-// each |room| materialises its own inlet -> outlet wire from the define body
+// each |room| materialises its own inlet -> outlet link from the define body
 rooms |row| { gap: 64; } [
-  |caption| "internal wires"
+  |caption| "internal links"
   garden  |room| "Garden"
   kitchen |room| "Kitchen"
 ]

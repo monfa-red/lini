@@ -1,10 +1,10 @@
-//! Auto-create: a root wire's single-segment endpoint naming an id declared
+//! Auto-create: a root link's single-segment endpoint naming an id declared
 //! nowhere becomes an empty `|box|` at the scene root (SPEC §3). This gathers the
 //! declared ids and the to-create ids; the caller lowers each created box through
 //! the same path as a written one (so it gains its `.lini-box` class and id label).
 
 use crate::span::Span;
-use crate::syntax::ast::{Child, Node, Wire};
+use crate::syntax::ast::{Child, Link, Node};
 use std::collections::HashSet;
 
 /// Every node id anywhere in `instances` — the auto-create gate: an id present as
@@ -29,13 +29,13 @@ fn collect_ids(child: &Child, out: &mut HashSet<String>) {
     }
 }
 
-/// The ids to auto-create: each single-segment root-wire endpoint absent from
+/// The ids to auto-create: each single-segment root-link endpoint absent from
 /// `declared`, in first-seen order, deduped. Multi-segment paths navigate and
 /// never create.
-pub fn auto_created_ids(wires: &[Wire], declared: &HashSet<String>) -> Vec<(String, Span)> {
+pub fn auto_created_ids(links: &[Link], declared: &HashSet<String>) -> Vec<(String, Span)> {
     let mut seen = HashSet::new();
     let mut out = Vec::new();
-    for w in wires {
+    for w in links {
         for group in &w.chain {
             for ep in &group.endpoints {
                 if ep.path.len() != 1 {
@@ -62,7 +62,7 @@ pub fn auto_box(id: &str, span: Span) -> Node {
         style: Vec::new(),
         style_span: None,
         children: Vec::new(),
-        wires: Vec::new(),
+        links: Vec::new(),
         span,
     }
 }
@@ -77,14 +77,14 @@ mod tests {
     fn auto_ids(src: &str) -> Vec<String> {
         let f = parse(src);
         let declared = declared_ids(&f.instances);
-        auto_created_ids(&f.wires, &declared)
+        auto_created_ids(&f.links, &declared)
             .into_iter()
             .map(|(s, _)| s)
             .collect()
     }
 
     #[test]
-    fn undeclared_root_wire_ids_are_auto_created() {
+    fn undeclared_root_link_ids_are_auto_created() {
         assert_eq!(auto_ids("cat -> dog\n"), vec!["cat", "dog"]);
     }
 

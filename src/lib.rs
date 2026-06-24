@@ -19,7 +19,7 @@ pub use fmt::format as format_source;
 /// Lower a source file's sugar to primitives + `.lini-*` classes and print canonical
 /// `.lini` — what `lini desugar` shows: every typed instance becomes a `|primitive|`
 /// wearing its `.lini-*` chain, defines and templates collapse into generated
-/// `.lini-*` class defs, scene/wire defaults fill the global block, and labels /
+/// `.lini-*` class defs, scene/link defaults fill the global block, and labels /
 /// `along:` become explicit. Comments are dropped. The lowered form re-renders
 /// identically and is a fixed point of desugar.
 pub fn desugar_source(src: &str) -> Result<String, Error> {
@@ -68,7 +68,7 @@ pub fn compile_str_with(src: &str, opts: &Options) -> Result<String, Error> {
 
 /// Compile to SVG **and** collect the routing diagnostics in a single layout
 /// pass. The CLI's default path needs both (the SVG to emit, the diagnostics
-/// to warn); routing through here runs the wire router once instead of twice.
+/// to warn); routing through here runs the link router once instead of twice.
 pub fn compile_str_checked(src: &str, opts: &Options) -> Result<(String, Vec<Diagnostic>), Error> {
     let program = resolve_pipeline(src, opts)?;
     let mut laid_out = layout::layout(&program)?;
@@ -113,7 +113,7 @@ pub fn check_with(src: &str, opts: &Options) -> Result<(), Error> {
 }
 
 /// Lex, parse, resolve, lay out, route, then validate the routing against the
-/// contract in WIRING.md. Returns the violations found (empty = clean). Parse
+/// contract in LINKING.md. Returns the violations found (empty = clean). Parse
 /// and resolve errors surface as `Err`.
 pub fn validate_str(src: &str) -> Result<Vec<Violation>, Error> {
     let program = resolve_pipeline(src, &Options::default())?;
@@ -123,7 +123,7 @@ pub fn validate_str(src: &str) -> Result<Vec<Violation>, Error> {
 
 /// Surface routing violations as user-facing diagnostics. Crossings are normal,
 /// counted output (`Info`) and stay silent here; everything else — an impossible
-/// wire, or a law breach (which would mean an engine bug) — is flagged, never
+/// link, or a law breach (which would mean an engine bug) — is flagged, never
 /// silent. The CLI prints these as warnings; `--strict` makes them fail the build.
 fn routing_diagnostics_of(violations: Vec<Violation>) -> Vec<Diagnostic> {
     violations
@@ -132,7 +132,7 @@ fn routing_diagnostics_of(violations: Vec<Violation>) -> Vec<Diagnostic> {
         .map(|v| {
             Diagnostic::warn(
                 v.span,
-                format!("{} ({}): {}", v.rule.id(), v.wires.join(", "), v.detail),
+                format!("{} ({}): {}", v.rule.id(), v.links.join(", "), v.detail),
             )
         })
         .collect()
@@ -156,7 +156,7 @@ fn wrap_html(svg: &str) -> String {
     )
 }
 
-/// Test-only hooks for the wire-routing parameter sweep (see `tests/wiring_sweep.rs`).
+/// Test-only hooks for the link-routing parameter sweep (see `tests/linking_sweep.rs`).
 /// Not part of the public API.
 #[doc(hidden)]
 pub mod testing {
@@ -171,7 +171,7 @@ pub mod testing {
         layout::node_rect(&laid.nodes, path)
     }
 
-    /// Compile `src` to a laid-out scene with `clearance` forced on every wire,
+    /// Compile `src` to a laid-out scene with `clearance` forced on every link,
     /// overriding whatever the source set. Gap growth runs as in production —
     /// starved corridors may widen the layout.
     pub fn route_sample(src: &str, clearance: f64) -> LaidOut {
@@ -180,7 +180,7 @@ pub mod testing {
 
     /// [`route_sample`] with gap growth disabled: the raw router's result, the
     /// one the clearance sweep measures. `clearance` does not move nodes here,
-    /// so the node geometry — and hence which wires are routable — is
+    /// so the node geometry — and hence which links are routable — is
     /// identical across values.
     pub fn route_sample_raw(src: &str, clearance: f64) -> LaidOut {
         layout::layout_raw(&forced(src, clearance)).expect("layout")
@@ -188,7 +188,7 @@ pub mod testing {
 
     fn forced(src: &str, clearance: f64) -> crate::resolve::Program {
         let mut prog = super::resolve_pipeline(src, &Options::default()).expect("resolve");
-        for w in &mut prog.wires {
+        for w in &mut prog.links {
             w.attrs
                 .insert("clearance", ResolvedValue::Number(clearance));
         }
@@ -196,10 +196,10 @@ pub mod testing {
     }
 
     /// The number of routable edges the source declares (fans/chains already expanded
-    /// at resolve into one `ResolvedWire` per edge-chain).
+    /// at resolve into one `ResolvedLink` per edge-chain).
     pub fn declared_edges(src: &str) -> usize {
         let prog = super::resolve_pipeline(src, &Options::default()).expect("resolve");
-        prog.wires
+        prog.links
             .iter()
             .map(|w| w.endpoints.len().saturating_sub(1))
             .sum()

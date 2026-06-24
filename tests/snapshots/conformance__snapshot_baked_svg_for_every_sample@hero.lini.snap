@@ -20,9 +20,9 @@ input_file: samples/hero.lini
     .lini .lini-svc { fill: #dff4f1; stroke: #008279; color: #008279; }
     .lini .lini-auth { fill: #ecedfe; stroke: #6356be; color: #6356be; }
     .lini .lini-store { fill: #fde9ec; stroke: #ac3a5c; color: #ac3a5c; }
-    .lini .lini-wire { fill: none; stroke: #a4a4a4; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-wire-dashed { stroke-dasharray: 8,8; }
-    .lini .lini-wire-label { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; font-size: 11px; font-weight: normal; }
+    .lini .lini-link { fill: none; stroke: #a4a4a4; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-link-dashed { stroke-dasharray: 8,8; }
+    .lini .lini-link-label { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; font-size: 11px; font-weight: normal; }
     .lini .lini-cut-bg { fill: white; stroke: none; }
     .lini .lini-cut { fill: black; stroke: none; }
     .lini .lini-marker { fill: #444; stroke: none; }
@@ -116,36 +116,36 @@ input_file: samples/hero.lini
       </g>
     </g>
   </g>
-  <g class="lini-wires">
-    <g class="lini-wire lini-style-flow" style="font-size: 11" data-from="users" data-to="edge.lb">
+  <g class="lini-links">
+    <g class="lini-link lini-style-flow" style="font-size: 11" data-from="users" data-to="edge.lb">
       <mask id="lini-label-cut-0" maskUnits="userSpaceOnUse" x="-2" y="-195" width="4" height="76.5"><rect class="lini-cut-bg" x="-2" y="-195" width="4" height="76.5"/><rect class="lini-cut" x="-19.8" y="-163.9" width="39.6" height="14.3"/></mask>
       <path d="M 0 -193 L 0 -124" mask="url(#lini-label-cut-0)"/>
       <polygon class="lini-marker lini-marker-arrow" points="0,-120 -4,-128 4,-128"/>
-      <text class="lini-wire-label" x="0" y="-156.75">https</text>
+      <text class="lini-link-label" x="0" y="-156.75">https</text>
     </g>
-    <g class="lini-wire" style="font-size: 11" data-from="edge.lb" data-to="svc.api">
+    <g class="lini-link" style="font-size: 11" data-from="edge.lb" data-to="svc.api">
       <path d="M -128 -92 L -179.25 -92 A 16 16 0 0 0 -195.25 -76 L -195.25 34 A 16 16 0 0 0 -179.25 50 L -149 50"/>
       <polygon class="lini-marker lini-marker-arrow" points="-145,50 -153,54 -153,46" style="fill: #a4a4a4"/>
     </g>
-    <g class="lini-wire lini-style-auth" style="font-size: 11" data-from="edge.lb" data-to="svc.auth">
+    <g class="lini-link lini-style-auth" style="font-size: 11" data-from="edge.lb" data-to="svc.auth">
       <path d="M -13.5 -63.5 L -13.5 26"/>
       <polygon class="lini-marker lini-marker-arrow" points="-13.5,30 -17.5,22 -9.5,22"/>
     </g>
-    <g class="lini-wire lini-style-flow" style="font-size: 11" data-from="svc.api" data-to="data.pg">
+    <g class="lini-link lini-style-flow" style="font-size: 11" data-from="svc.api" data-to="data.pg">
       <path d="M -145.5 66 L -214.5 66 A 16 16 0 0 0 -230.5 82 L -230.5 192 A 16 16 0 0 0 -214.5 208 L -175.5 208"/>
       <polygon class="lini-marker lini-marker-arrow" points="-171.5,208 -179.5,212 -179.5,204"/>
     </g>
-    <g class="lini-wire lini-wire-dashed lini-style-cache" style="font-size: 11" data-from="svc.api" data-to="data.redis">
+    <g class="lini-link lini-link-dashed lini-style-cache" style="font-size: 11" data-from="svc.api" data-to="data.redis">
       <mask id="lini-label-cut-4" maskUnits="userSpaceOnUse" x="-113" y="84.5" width="128.5" height="97"><rect class="lini-cut-bg" x="-113" y="84.5" width="128.5" height="97"/><rect class="lini-cut" x="-68.55" y="125.85" width="39.6" height="14.3"/></mask>
       <path d="M -111 86.5 L -111 117 A 16 16 0 0 0 -95 133 L -2.5 133 A 16 16 0 0 1 13.5 149 L 13.5 176" mask="url(#lini-label-cut-4)"/>
       <polygon class="lini-marker lini-marker-arrow" points="13.5,180 9.5,172 17.5,172"/>
-      <text class="lini-wire-label" x="-48.75" y="133">cache</text>
+      <text class="lini-link-label" x="-48.75" y="133">cache</text>
     </g>
-    <g class="lini-wire lini-style-async" style="font-size: 11" data-from="svc.worker" data-to="data.queue">
+    <g class="lini-link lini-style-async" style="font-size: 11" data-from="svc.worker" data-to="data.queue">
       <mask id="lini-label-cut-5" maskUnits="userSpaceOnUse" x="142.1" y="54.6" width="91.8" height="156.8"><rect class="lini-cut-bg" x="142.1" y="54.6" width="91.8" height="156.8"/><rect class="lini-cut" x="214" y="112.6" width="33" height="14.3"/></mask>
       <path d="M 145.5 58 C 146.5278 58 147.5324 58.3619 148.5027 58.7009 C 149.4732 59.0401 150.6762 58.6039 151.5054 57.9961 C 152.3956 57.3435 153.4043 56.5966 154.5081 56.6 C 155.6135 56.6034 156.6192 57.3543 157.5108 58.0079 C 158.4005 58.6601 159.4102 59.4057 160.5135 59.4 C 161.6195 59.3943 162.6241 58.642 163.5161 57.9882 C 164.4055 57.3363 165.4162 56.5921 166.5188 56.6001 C 167.6254 56.6081 168.629 57.3616 169.5215 58.0158 C 170.4104 58.6673 171.4222 59.4101 172.5242 59.3999 C 173.6313 59.3896 174.634 58.6348 175.5269 57.9803 C 176.4154 57.3291 177.4281 56.5877 178.5296 56.6002 C 179.6372 56.6128 180.6389 57.3689 181.5323 58.0237 C 182.4203 58.6745 183.4341 59.4145 184.535 59.3998 C 185.6431 59.3849 186.6438 58.6275 187.5377 57.9724 C 188.4253 57.3219 189.4401 56.5833 190.5404 56.6003 C 191.649 56.6175 192.6487 57.3761 193.5431 58.0316 C 194.4302 58.6817 195.446 59.4189 196.5458 59.3996 C 197.6549 59.3801 198.6536 58.6202 199.5484 57.9645 C 200.4352 57.3147 201.452 56.5789 202.5511 56.6005 C 203.6608 56.6223 204.6586 57.3834 205.5538 58.0395 C 206.4401 58.6889 207.458 59.4232 208.5565 59.3994 C 209.6667 59.3753 210.6635 58.6129 211.5592 57.9566 C 212.4605 57.2963 213.5119 56.527 214.6265 56.6051 C 215.7532 56.684 216.801 57.485 217.5351 58.3434 C 218.2105 59.1332 218.8961 60.0282 219.8573 60.4233 C 220.863 60.8367 222.0323 60.5032 223.1192 60.4688 C 224.2666 60.4325 225.6561 60.5291 226.4449 61.3632 C 227.2247 62.1877 227.4262 63.4995 227.3904 64.6338 C 227.3574 65.6757 227.2323 66.8069 227.6818 67.7475 C 228.1488 68.725 229.213 69.2838 230.0362 69.988 C 230.9042 70.7306 231.8329 71.754 231.8491 72.8961 C 231.8651 74.0213 231.1017 75.0545 230.4369 75.9623 C 229.7897 76.8461 229.0642 77.8702 229.1015 78.965 C 229.1394 80.0781 229.9091 81.0691 230.5671 81.9677 C 231.2139 82.8511 231.9378 83.8763 231.8983 84.9704 C 231.8581 86.084 231.0872 87.074 230.429 87.9731 C 229.7826 88.8561 229.0601 89.8823 229.1019 90.9758 C 229.1445 92.0898 229.9164 93.0789 230.5749 93.9785 C 231.221 94.861 231.9419 95.8883 231.8979 96.9812 C 231.853 98.0957 231.0799 99.0838 230.4211 99.9839 C 229.7755 100.866 229.0561 101.8943 229.1023 102.9865 C 229.1495 104.1015 229.9238 105.0887 230.5828 105.9892 C 231.228 106.871 231.9459 107.9004 231.8974 108.9919 C 231.8479 110.1073 231.0725 111.0935 230.4133 111.9946 C 229.7684 112.876 229.0521 113.9064 229.1028 114.9973 C 229.1546 116.1131 229.9312 117.0984 230.5907 118 C 231.2351 118.881 231.9498 119.9125 231.8969 121.0027 C 231.8428 122.119 231.0651 123.1033 230.4054 124.0054 C 229.7614 124.886 229.0482 125.9185 229.1033 127.0081 C 229.1598 128.1248 229.9386 129.1082 230.5986 130.0108 C 231.2422 130.8909 231.9537 131.9246 231.8964 133.0135 C 231.8376 134.1306 231.0577 135.1131 230.3975 136.0161 C 229.7543 136.8959 229.0444 137.9306 229.1039 139.0188 C 229.165 140.1364 229.946 141.118 230.6064 142.0215 C 231.2492 142.9009 231.9575 143.9367 231.8958 145.0242 C 231.8323 146.1422 231.0503 147.1228 230.3896 148.0269 C 229.7473 148.9059 229.0406 149.9428 229.1045 151.0296 C 229.1703 152.148 229.9534 153.1277 230.6143 154.0323 C 231.2562 154.9109 231.9613 155.9488 231.8952 157.035 C 231.8271 158.1538 231.0429 159.1326 230.3818 160.0377 C 229.7403 160.9159 229.0369 161.9549 229.1052 163.0404 C 229.1756 164.1595 229.9608 165.1374 230.6222 166.0431 C 231.2632 166.921 231.965 167.961 231.8945 169.0458 C 231.8217 170.1653 231.0354 171.1423 230.3739 172.0484 C 229.7333 172.926 229.0332 173.9671 229.1059 175.0511 C 229.181 176.1711 229.9683 177.1472 230.63 178.0538 C 231.2702 178.931 231.9686 179.9732 231.8938 181.0565 C 231.8163 182.1768 231.028 183.152 230.3661 184.0592 C 229.7263 184.936 229.0296 185.9793 229.1066 187.0619 C 229.1864 188.1826 229.9757 189.1569 230.6379 190.0646 C 231.285 190.9516 231.9729 192.0403 231.8422 193.1305 C 231.7035 194.2875 230.7183 195.2329 229.8344 195.9922 C 229.0393 196.6752 228.0268 197.2916 227.6766 198.2796 C 227.3174 199.2929 227.5094 200.4274 227.5409 201.502 C 227.5736 202.6156 227.2673 203.9263 226.4211 204.651 C 225.5314 205.413 224.1543 205.4149 222.9834 205.3806 C 221.9322 205.3499 220.761 205.0947 219.8356 205.5943 C 218.893 206.1032 218.2533 207.046 217.5549 207.8583 C 216.8317 208.6995 215.7079 209.4271 214.5992 209.3882 C 213.4551 209.3481 212.4577 208.5165 211.5323 207.8425 C 210.6577 207.2054 209.6079 206.5191 208.5296 206.6091 C 207.4068 206.7029 206.4378 207.4982 205.5269 208.1614 C 204.6526 208.798 203.6018 209.4826 202.5242 209.3904 C 201.4011 209.2944 200.4329 208.4981 199.5215 207.8347 C 198.6476 207.1985 197.5957 206.5157 196.5188 206.61 C 195.3953 206.7084 194.4281 207.5057 193.5161 208.1693 C 192.6426 208.8049 191.5895 209.486 190.5135 209.3895 C 189.3896 209.2887 188.4232 208.4906 187.5108 207.8268 C 186.6375 207.1916 185.5834 206.5124 184.5081 206.611 C 183.3839 206.7141 182.4184 207.5132 181.5054 208.1771 C 180.6839 208.7744 179.4477 209.0676 178.5027 208.6952 C 177.5469 208.3185 176.5274 208 175.5 208" mask="url(#lini-label-cut-5)"/>
       <polygon class="lini-marker lini-marker-arrow" points="171.5,208 179.5,204 179.5,212"/>
-      <text class="lini-wire-label" x="230.5" y="119.75">jobs</text>
+      <text class="lini-link-label" x="230.5" y="119.75">jobs</text>
     </g>
   </g>
 </svg>

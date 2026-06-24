@@ -1,6 +1,6 @@
 //! Shared lexical primitives — the small enums the lexer produces and both the
-//! parser and the back end consume: edge [`Side`] and the wire-operator triple
-//! ([`WireOp`] / [`LineStyle`] / [`WireMarker`]). The syntax tree itself lives
+//! parser and the back end consume: edge [`Side`] and the link-operator triple
+//! ([`LinkOp`] / [`LineStyle`] / [`LinkMarker`]). The syntax tree itself lives
 //! in [`crate::syntax::ast`]; this module is just the vocabulary they share,
 //! kept here so the lexer doesn't depend on the parser.
 
@@ -37,14 +37,14 @@ impl Side {
     }
 }
 
-// ─────────────────────────── Wire ops ───────────────────────────
+// ─────────────────────────── Link ops ───────────────────────────
 
-/// A composed wire operator: `[start_marker?][line][end_marker?]`.
+/// A composed link operator: `[start_marker?][line][end_marker?]`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct WireOp {
+pub struct LinkOp {
     pub line: LineStyle,
-    pub start: WireMarker,
-    pub end: WireMarker,
+    pub start: LinkMarker,
+    pub end: LinkMarker,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -67,7 +67,7 @@ impl LineStyle {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub enum WireMarker {
+pub enum LinkMarker {
     #[default]
     None,
     Arrow,   // < at start, > at end
@@ -76,8 +76,8 @@ pub enum WireMarker {
     Diamond, // <> on either side
 }
 
-impl WireMarker {
-    /// Glyph for this marker when rendered at the start side of a wire op.
+impl LinkMarker {
+    /// Glyph for this marker when rendered at the start side of a link op.
     pub fn start_str(self) -> &'static str {
         match self {
             Self::None => "",
@@ -87,7 +87,7 @@ impl WireMarker {
             Self::Diamond => "<>",
         }
     }
-    /// Glyph for this marker when rendered at the end side of a wire op.
+    /// Glyph for this marker when rendered at the end side of a link op.
     pub fn end_str(self) -> &'static str {
         match self {
             Self::None => "",

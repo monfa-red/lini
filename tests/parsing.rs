@@ -42,8 +42,8 @@ fn assert_parse_error(src: &str, expect_msg_substr: &str) {
 }
 
 #[test]
-fn err_wire_chain_mixes_operators() {
-    assert_parse_error("cat -> dog --> bird\n", "wire chain mixes operators");
+fn err_link_chain_mixes_operators() {
+    assert_parse_error("cat -> dog --> bird\n", "link chain mixes operators");
 }
 
 #[test]
@@ -62,8 +62,8 @@ fn err_invalid_hex_color() {
 }
 
 #[test]
-fn err_wire_body_holds_only_labels() {
-    // A wire's `{ }` holds only declarations (along:, stroke, …); a nested wire
+fn err_link_body_holds_only_labels() {
+    // A link's `{ }` holds only declarations (along:, stroke, …); a nested link
     // is not a declaration, so the block rejects it.
     assert_parse_error(
         "a |box|\nb |box|\na -> b { c -> d }\n",

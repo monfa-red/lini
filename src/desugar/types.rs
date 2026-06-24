@@ -35,7 +35,7 @@ pub fn template_base(name: &str) -> Option<&'static str> {
     TEMPLATES.iter().find(|(n, _)| *n == name).map(|(_, b)| *b)
 }
 
-/// A define may not take the name of a primitive, a template, the `wire` rule
+/// A define may not take the name of a primitive, a template, the `link` rule
 /// target, or a structural SVG class (SPEC §18) — once the `shape` infix is gone,
 /// a `|node::box|` define's `.lini-node` would collide with the universal marker.
 fn is_builtin_type(name: &str) -> bool {
@@ -43,7 +43,7 @@ fn is_builtin_type(name: &str) -> bool {
         || is_template(name)
         || matches!(
             name,
-            "wire" | "node" | "text" | "marker" | "canvas" | "scene" | "cut"
+            "link" | "node" | "text" | "marker" | "canvas" | "scene" | "cut"
         )
 }
 

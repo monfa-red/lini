@@ -119,5 +119,5 @@ input_file: samples/templates.lini
       </a>
     </g>
   </g>
-  <g class="lini-wires"/>
+  <g class="lini-links"/>
 </svg>

@@ -1,9 +1,9 @@
 //! Label / `along:` lowering helpers, used by the full desugar pass ([`super`]).
-//! The id-as-label rule (a leaf box with no content shows its id) and a wire's
+//! The id-as-label rule (a leaf box with no content shows its id) and a link's
 //! auto-distributed `along:` fractions are each a small, reusable transform
 //! (SPEC §3, §14).
 
-use crate::syntax::ast::{Child, Decl, Node, TextNode, Value, Wire};
+use crate::syntax::ast::{Child, Decl, Link, Node, TextNode, Value};
 
 /// The id-as-label text child for a leaf box (SPEC §3): a box that is neither an
 /// `|icon|` (which consumes its text as a glyph name) nor a container (which holds
@@ -21,9 +21,9 @@ pub(super) fn label_child_for(node: &Node, is_icon: bool, is_container: bool) ->
     })
 }
 
-/// Make a wire's auto-distributed labels explicit: prepend an `along:` list of even
+/// Make a link's auto-distributed labels explicit: prepend an `along:` list of even
 /// fractions when labels are present and no `along:` was written (SPEC §14).
-pub(super) fn auto_along(w: &Wire) -> Wire {
+pub(super) fn auto_along(w: &Link) -> Link {
     let n = w.labels.len();
     let has_along = w.style.iter().any(|d| d.name == "along");
     if n == 0 || has_along {
@@ -44,7 +44,7 @@ pub(super) fn auto_along(w: &Wire) -> Wire {
             span: w.span,
         },
     );
-    Wire {
+    Link {
         chain: w.chain.clone(),
         op: w.op,
         classes: w.classes.clone(),

@@ -9,7 +9,7 @@
     { "include": "#property-declaration" },
     { "include": "#type-bars" },
     { "include": "#css-var" },
-    { "include": "#wire-op" },
+    { "include": "#link-op" },
     { "include": "#class" },
     { "include": "#side" },
     { "include": "#hex-color" },
@@ -119,12 +119,12 @@
       "match": "--[A-Za-z_][\\w-]*",
       "name": "variable.other.lini"
     },
-    "wire-op": {
+    "link-op": {
       "match": "(?:<>|[<>*])?(?:--|\\.\\.|~|-)(?:<>|[<>*])?",
-      "name": "keyword.operator.wire.lini"
+      "name": "keyword.operator.link.lini"
     },
     "class": {
-      "comment": "A class outside the bars: a definition (.hot { }), or worn by a node or wire after its type/endpoints (|box| .hot, a -> b .loud), chained .hot.loud. A '.' after a word char is an endpoint path (a.b), not a class.",
+      "comment": "A class outside the bars: a definition (.hot { }), or worn by a node or link after its type/endpoints (|box| .hot, a -> b .loud), chained .hot.loud. A '.' after a word char is an endpoint path (a.b), not a class.",
       "match": "(?<![\\w-])(?:\\.[A-Za-z_][\\w-]*)+",
       "name": "entity.other.attribute-name.class.lini"
     },

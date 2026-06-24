@@ -46,11 +46,7 @@ pub fn built_in_defaults() -> VarTable {
         light_dark(ident("crimson"), hex("ff6b6b")),
     );
     set_visual(&mut t, "warn", light_dark(ident("orange"), hex("ffb454")));
-    set_visual(
-        &mut t,
-        "airwire",
-        light_dark(ident("crimson"), hex("ff6b6b")),
-    );
+    set_visual(&mut t, "stray", light_dark(ident("crimson"), hex("ff6b6b")));
     set_visual(&mut t, "note-bg", light_dark(hex("fff9c4"), hex("4a4733")));
     set_visual(
         &mut t,
@@ -82,7 +78,7 @@ pub fn built_in_defaults() -> VarTable {
     );
     set_visual(&mut t, "font-weight", ident("bold"));
     set_visual(&mut t, "caption-font-weight", ident("normal"));
-    set_visual(&mut t, "wire-font-weight", ident("normal"));
+    set_visual(&mut t, "link-font-weight", ident("normal"));
     set_visual(
         &mut t,
         "text-color",
@@ -99,7 +95,7 @@ pub fn built_in_defaults() -> VarTable {
 
     // Layout constants (radius, padding, font-size, clearance, …) are no longer
     // here: desugar materializes every one into the `.lini-*` class defs, the
-    // global block, or the `-> { }` wire defaults (the "dumb core").
+    // global block, or the `-> { }` link defaults (the "dumb core").
 
     // The named-hue palette (SPEC §11.2): 11 hues × 4 tiers + aliases, OKLCH-derived.
     // Tree-shaken at render (only referenced vars emit), so this never bloats output.

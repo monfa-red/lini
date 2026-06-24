@@ -3,11 +3,11 @@
 //! The bracket-and-bars vocabulary makes one token of lookahead enough, with no
 //! type-set prescan: `{` opens style, `[` opens children, `|…|` is a type. The
 //! file is three phases — an optional leading `{ }` stylesheet, then the canvas
-//! instances, then the wires — and a body nests the same idea (a `{ }`, then a
-//! `[ ]` of children and internal wires).
+//! instances, then the links — and a body nests the same idea (a `{ }`, then a
+//! `[ ]` of children and internal links).
 
 use super::ast::*;
-use crate::ast::{LineStyle, Side, WireMarker, WireOp};
+use crate::ast::{LineStyle, LinkMarker, LinkOp, Side};
 use crate::error::Error;
 use crate::lexer::{TokKind, Token};
 use crate::span::Span;
@@ -21,7 +21,7 @@ pub fn parse(tokens: &[Token]) -> Result<File, Error> {
 #[derive(Clone, Copy, PartialEq)]
 enum Kind {
     Node,
-    Wire,
+    Link,
     Decl,
     Var,
     Rule,
@@ -143,7 +143,7 @@ impl<'a> Parser<'a> {
         match self.kind() {
             Some(TokKind::RawCssVar(_)) => Ok(Kind::Var),
             Some(TokKind::Dot) => Ok(Kind::Rule), // .class { … }
-            Some(TokKind::WireOp(_)) => Ok(Kind::Rule), // -> { … } wire defaults
+            Some(TokKind::LinkOp(_)) => Ok(Kind::Rule), // -> { … } link defaults
             Some(TokKind::Pipe) => Ok(
                 // `|name::base|` is a define; any other `|…|` is a rule selector.
                 if matches!(self.kind_at(1), Some(TokKind::Ident(_)))
@@ -165,7 +165,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    /// A canvas / body statement: a node, a wire, or — flagged for a context
+    /// A canvas / body statement: a node, a link, or — flagged for a context
     /// error — a stray declaration or `--var`. Assumes newlines skipped.
     fn classify_body(&self) -> Kind {
         match self.kind() {
@@ -175,8 +175,8 @@ impl<'a> Parser<'a> {
             Some(TokKind::RawCssVar(_)) => Kind::Var,
             Some(TokKind::Ident(_)) => match self.kind_at(1) {
                 Some(TokKind::Colon) => Kind::Decl,
-                Some(TokKind::WireOp(_)) | Some(TokKind::Amp) => Kind::Wire,
-                Some(TokKind::Dot) if self.glued_at(1) => Kind::Wire, // a.b endpoint path
+                Some(TokKind::LinkOp(_)) | Some(TokKind::Amp) => Kind::Link,
+                Some(TokKind::Dot) if self.glued_at(1) => Kind::Link, // a.b endpoint path
                 _ => Kind::Node,
             },
             _ => Kind::Unknown,
@@ -190,7 +190,7 @@ impl<'a> Parser<'a> {
             stylesheet: Vec::new(),
             stylesheet_span: Span::default(),
             instances: Vec::new(),
-            wires: Vec::new(),
+            links: Vec::new(),
         };
         self.skip_newlines();
         if matches!(self.kind(), Some(TokKind::LBrace)) {
@@ -199,18 +199,18 @@ impl<'a> Parser<'a> {
             file.stylesheet_span = Span::new(start.start, self.last_span().end);
             self.skip_newlines();
         }
-        let mut in_wires = false;
+        let mut in_links = false;
         while self.kind().is_some() {
             match self.classify_body() {
                 Kind::Node => {
-                    if in_wires {
-                        return Err(self.err("instances must come before wires"));
+                    if in_links {
+                        return Err(self.err("instances must come before links"));
                     }
                     file.instances.push(self.parse_child()?);
                 }
-                Kind::Wire => {
-                    in_wires = true;
-                    file.wires.push(self.parse_wire()?);
+                Kind::Link => {
+                    in_links = true;
+                    file.links.push(self.parse_link()?);
                 }
                 Kind::Decl => return Err(self.err("a declaration belongs in a '{ }' block")),
                 Kind::Var => {
@@ -355,22 +355,22 @@ impl<'a> Parser<'a> {
     fn parse_rule(&mut self) -> Result<Rule, Error> {
         let start = self.span();
 
-        // `-> { … }` — the routing layer's element selector (the wire glyph). It
-        // carries the reserved `wire` selector internally, so the cascade and
-        // renderer treat it like the old `wire { }`.
-        if let Some(TokKind::WireOp(op)) = self.kind() {
+        // `-> { … }` — the routing layer's element selector (the link glyph). It
+        // carries the reserved `link` selector internally, so the cascade and
+        // renderer treat it like the old `link { }`.
+        if let Some(TokKind::LinkOp(op)) = self.kind() {
             let op = *op;
             if op.line != LineStyle::Solid
-                || op.start != WireMarker::None
-                || op.end != WireMarker::Arrow
+                || op.start != LinkMarker::None
+                || op.end != LinkMarker::Arrow
             {
-                return Err(self.err("wire defaults are set with the '-> { … }' rule"));
+                return Err(self.err("link defaults are set with the '-> { … }' rule"));
             }
             self.pos += 1;
             let (decls, _) = self.parse_style()?;
             return Ok(Rule {
                 selector: Selector {
-                    parts: vec![SelPart::Type("wire".into())],
+                    parts: vec![SelPart::Type("link".into())],
                 },
                 decls,
                 span: Span::new(start.start, self.last_span().end),
@@ -435,14 +435,14 @@ impl<'a> Parser<'a> {
         let (base, _) = self.expect_ident()?;
         self.expect(&TokKind::Pipe, "'|'")?;
         let (style, style_span) = self.opt_style()?;
-        let (children, wires) = self.opt_children()?;
+        let (children, links) = self.opt_children()?;
         Ok(Define {
             name,
             base,
             style,
             style_span,
             children,
-            wires,
+            links,
             span: Span::new(start.start, self.last_span().end),
         })
     }
@@ -480,7 +480,7 @@ impl<'a> Parser<'a> {
         let (style, style_span) = self.opt_style()?;
 
         // Content is the `[ ]` children block, or the trailing-label sugar — never both.
-        let (children, wires) = if matches!(self.kind(), Some(TokKind::LBracket)) {
+        let (children, links) = if matches!(self.kind(), Some(TokKind::LBracket)) {
             self.opt_children()?
         } else {
             let labels = self.trailing_labels();
@@ -506,7 +506,7 @@ impl<'a> Parser<'a> {
             style,
             style_span,
             children,
-            wires,
+            links,
             span: Span::new(start.start, self.last_span().end),
         })
     }
@@ -523,8 +523,8 @@ impl<'a> Parser<'a> {
         if matches!(self.kind(), Some(TokKind::DColon)) {
             return Err(self.err("a define belongs in the stylesheet"));
         }
-        if name == "wire" {
-            return Err(self.err("wires are drawn by operators, not the '|wire|' type"));
+        if name == "link" {
+            return Err(self.err("links are drawn by operators, not the '|link|' type"));
         }
         if matches!(self.kind(), Some(TokKind::Dot)) {
             return Err(self.class_in_bars_err());
@@ -533,7 +533,7 @@ impl<'a> Parser<'a> {
         Ok(name)
     }
 
-    /// The class slot — `.name` worn by a node after its type or by a wire after
+    /// The class slot — `.name` worn by a node after its type or by a link after
     /// its endpoints (SPEC §3/§9). A `.` glued to an id or endpoint is a path and
     /// never reaches here; what does is the worn-class chain, written `.hot.loud`.
     fn parse_classes(&mut self) -> Result<Vec<String>, Error> {
@@ -575,7 +575,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Consume an optional `[ children ]` block; absent → empty.
-    fn opt_children(&mut self) -> Result<(Vec<Child>, Vec<Wire>), Error> {
+    fn opt_children(&mut self) -> Result<(Vec<Child>, Vec<Link>), Error> {
         if matches!(self.kind(), Some(TokKind::LBracket)) {
             self.parse_children()
         } else {
@@ -583,31 +583,31 @@ impl<'a> Parser<'a> {
         }
     }
 
-    /// `[ children, then internal wires ]` (SPEC §3).
-    fn parse_children(&mut self) -> Result<(Vec<Child>, Vec<Wire>), Error> {
+    /// `[ children, then internal links ]` (SPEC §3).
+    fn parse_children(&mut self) -> Result<(Vec<Child>, Vec<Link>), Error> {
         self.expect(&TokKind::LBracket, "'['")?;
         self.skip_newlines();
         let mut children = Vec::new();
-        let mut wires = Vec::new();
+        let mut links = Vec::new();
         while !matches!(self.kind(), Some(TokKind::RBracket) | None) {
             match self.classify_body() {
                 Kind::Node => {
-                    if !wires.is_empty() {
-                        return Err(self.err("a child must come before the body's wires"));
+                    if !links.is_empty() {
+                        return Err(self.err("a child must come before the body's links"));
                     }
                     children.push(self.parse_child()?);
                 }
-                Kind::Wire => wires.push(self.parse_wire()?),
+                Kind::Link => links.push(self.parse_link()?),
                 Kind::Decl => return Err(self.err("declarations go in '{ }', not '[ ]'")),
                 _ => return Err(self.err("a child needs an id, a type, or text")),
             }
             self.terminator()?;
         }
         self.expect(&TokKind::RBracket, "']'")?;
-        Ok((children, wires))
+        Ok((children, links))
     }
 
-    /// Consume the trailing label string(s) after a box or wire head (SPEC §3/§9).
+    /// Consume the trailing label string(s) after a box or link head (SPEC §3/§9).
     /// The loop ends at the line's end, so the labels run to it.
     fn trailing_labels(&mut self) -> Vec<TextNode> {
         let mut labels = Vec::new();
@@ -620,19 +620,19 @@ impl<'a> Parser<'a> {
         labels
     }
 
-    // ───────────────────────── Wires ─────────────────────────
+    // ───────────────────────── Links ─────────────────────────
 
-    fn parse_wire(&mut self) -> Result<Wire, Error> {
+    fn parse_link(&mut self) -> Result<Link, Error> {
         let start = self.span();
         let mut chain = vec![self.parse_endpoint_group()?];
-        let op = self.expect_wire_op()?;
+        let op = self.expect_link_op()?;
         chain.push(self.parse_endpoint_group()?);
-        while let Some(next) = self.peek_wire_op() {
+        while let Some(next) = self.peek_link_op() {
             if next != op {
                 return Err(self.err(format!(
-                    "wire chain mixes operators '{}' and '{}'",
-                    wire_op_str(op),
-                    wire_op_str(next)
+                    "link chain mixes operators '{}' and '{}'",
+                    link_op_str(op),
+                    link_op_str(next)
                 )));
             }
             self.pos += 1;
@@ -643,11 +643,11 @@ impl<'a> Parser<'a> {
         let (style, style_span) = self.opt_style()?;
         if matches!(self.kind(), Some(TokKind::LBracket)) {
             return Err(
-                self.err("a wire is not a container — it carries trailing labels, not a '[ ]'")
+                self.err("a link is not a container — it carries trailing labels, not a '[ ]'")
             );
         }
         let labels = self.trailing_labels();
-        Ok(Wire {
+        Ok(Link {
             chain,
             op,
             classes,
@@ -697,27 +697,27 @@ impl<'a> Parser<'a> {
         })
     }
 
-    /// The wire op at the cursor as an owned copy, so a `while let` over it
+    /// The link op at the cursor as an owned copy, so a `while let` over it
     /// doesn't hold a borrow of `self` across the loop body.
-    fn peek_wire_op(&self) -> Option<WireOp> {
+    fn peek_link_op(&self) -> Option<LinkOp> {
         match self.kind() {
-            Some(TokKind::WireOp(op)) => Some(*op),
+            Some(TokKind::LinkOp(op)) => Some(*op),
             _ => None,
         }
     }
 
-    fn expect_wire_op(&mut self) -> Result<WireOp, Error> {
-        match self.peek_wire_op() {
+    fn expect_link_op(&mut self) -> Result<LinkOp, Error> {
+        match self.peek_link_op() {
             Some(op) => {
                 self.pos += 1;
                 Ok(op)
             }
-            None => Err(self.err("expected a wire operator")),
+            None => Err(self.err("expected a link operator")),
         }
     }
 }
 
-fn wire_op_str(op: WireOp) -> String {
+fn link_op_str(op: LinkOp) -> String {
     format!(
         "{}{}{}",
         op.start.start_str(),
@@ -755,8 +755,8 @@ mod tests {
     fn quickstart_three_box_chain() {
         let f = parse_ok("cat -> dog -> bird\n");
         assert!(f.stylesheet.is_empty() && f.instances.is_empty());
-        assert_eq!(f.wires.len(), 1);
-        assert_eq!(f.wires[0].chain.len(), 3);
+        assert_eq!(f.links.len(), 1);
+        assert_eq!(f.links[0].chain.len(), 3);
     }
 
     #[test]
@@ -767,7 +767,7 @@ mod tests {
         );
         assert_eq!(f.stylesheet.len(), 3); // root decl, element rule, class rule
         assert_eq!(f.instances.len(), 2);
-        assert_eq!(f.wires.len(), 1);
+        assert_eq!(f.links.len(), 1);
     }
 
     #[test]
@@ -815,7 +815,7 @@ mod tests {
         match &f.stylesheet[0] {
             StyleItem::Define(d) => {
                 assert_eq!(d.children.len(), 2);
-                assert_eq!(d.wires.len(), 1);
+                assert_eq!(d.links.len(), 1);
                 assert_eq!(d.style.len(), 1);
             }
             _ => panic!("expected a define"),
@@ -881,9 +881,9 @@ mod tests {
     }
 
     #[test]
-    fn wire_with_class_style_and_labels() {
+    fn link_with_class_style_and_labels() {
         let f = parse_ok("a -> b .loud { along: 0.3 0.7; stroke: red } \"near a\" \"near b\"\n");
-        let w = &f.wires[0];
+        let w = &f.links[0];
         assert_eq!(w.classes, vec!["loud"]);
         assert_eq!(w.style.len(), 2);
         assert_eq!(w.labels.len(), 2);
@@ -891,9 +891,9 @@ mod tests {
     }
 
     #[test]
-    fn wire_trails_its_label() {
+    fn link_trails_its_label() {
         let f = parse_ok("a -> b \"x\" \"y\"\n");
-        let w = &f.wires[0];
+        let w = &f.links[0];
         assert_eq!(w.labels.len(), 2);
         assert_eq!(w.labels[0].text, "x");
     }
@@ -901,7 +901,7 @@ mod tests {
     #[test]
     fn forced_side_endpoint() {
         let f = parse_ok("cat.right -> kitchen.bowl.left\n");
-        let w = &f.wires[0];
+        let w = &f.links[0];
         assert_eq!(w.chain[0].endpoints[0].path, vec!["cat"]);
         assert_eq!(w.chain[0].endpoints[0].side, Some(Side::Right));
         assert_eq!(w.chain[1].endpoints[0].path, vec!["kitchen", "bowl"]);
@@ -909,20 +909,20 @@ mod tests {
     }
 
     #[test]
-    fn fan_and_class_on_wire() {
+    fn fan_and_class_on_link() {
         let f = parse_ok("a & b -> c & d .loud\n");
-        let w = &f.wires[0];
+        let w = &f.links[0];
         assert_eq!(w.chain[0].endpoints.len(), 2);
         assert_eq!(w.chain[1].endpoints.len(), 2);
         assert_eq!(w.classes, vec!["loud"]);
     }
 
     #[test]
-    fn wire_defaults_rule() {
+    fn link_defaults_rule() {
         let f = parse_ok("{\n  -> { stroke: #666; }\n}\na -> b\n");
         match &f.stylesheet[0] {
             StyleItem::Rule(r) => {
-                assert!(matches!(r.selector.parts[0], SelPart::Type(ref t) if t == "wire"))
+                assert!(matches!(r.selector.parts[0], SelPart::Type(ref t) if t == "link"))
             }
             _ => panic!(),
         }
@@ -969,13 +969,13 @@ mod tests {
     }
 
     #[test]
-    fn instance_after_wire_errors() {
-        assert!(parse_err("a -> b\nc |box|\n").contains("must come before wires"));
+    fn instance_after_link_errors() {
+        assert!(parse_err("a -> b\nc |box|\n").contains("must come before links"));
     }
 
     #[test]
-    fn wire_as_instance_errors() {
-        assert!(parse_err("x |wire|\n").contains("drawn by operators"));
+    fn link_as_instance_errors() {
+        assert!(parse_err("x |link|\n").contains("drawn by operators"));
     }
 
     #[test]
@@ -984,7 +984,7 @@ mod tests {
     }
 
     #[test]
-    fn wire_with_a_bracket_errors() {
+    fn link_with_a_bracket_errors() {
         assert!(parse_err("a -> b [ \"x\" ]\n").contains("not a container"));
     }
 
@@ -1018,10 +1018,10 @@ mod tests {
     }
 
     #[test]
-    fn child_after_wire_errors() {
+    fn child_after_link_errors() {
         assert!(
             parse_err("g |group| [\n  a |box|\n  a -> a\n  b |box|\n]\n")
-                .contains("before the body's wires")
+                .contains("before the body's links")
         );
     }
 

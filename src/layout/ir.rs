@@ -4,14 +4,14 @@ use crate::span::Span;
 pub struct LaidOut {
     pub viewbox: ViewBox,
     pub nodes: Vec<PlacedNode>,
-    pub wires: Vec<RoutedWire>,
-    /// The router's report: kept crossings (counted output) and the wires it
+    pub links: Vec<RoutedLink>,
+    /// The router's report: kept crossings (counted output) and the links it
     /// could not legally draw.
-    pub wire_report: Vec<super::wires::Violation>,
-    /// The impossible wires made visible (WIRING §Impossible layouts) —
-    /// carried beside the wires, never as one, so the validator never sees
+    pub link_report: Vec<super::links::Violation>,
+    /// The impossible links made visible (LINKING §Impossible layouts) —
+    /// carried beside the links, never as one, so the validator never sees
     /// them.
-    pub airwires: Vec<Airwire>,
+    pub strays: Vec<Stray>,
     /// Resolved CSS variables — carried through to render so the `<style>`
     /// block and `--bake-vars` mode can both read them.
     pub vars: VarTable,
@@ -43,25 +43,25 @@ pub enum GradientKind {
     Radial,
 }
 
-/// An impossible wire's report made visible: one straight segment between its
+/// An impossible link's report made visible: one straight segment between its
 /// two bodies, centre to centre and trimmed to their boundaries, at whatever
 /// angle the geometry gives. It obeys no law, takes no port slot, and blocks
-/// nothing — rendered in the themable `--lini-airwire` style.
+/// nothing — rendered in the themable `--lini-stray` style.
 #[derive(Clone)]
-pub struct Airwire {
+pub struct Stray {
     pub from: (f64, f64),
     pub to: (f64, f64),
     pub data_from: String,
     pub data_to: String,
 }
 
-/// One routed wire: its orthogonal path polyline plus what render needs.
+/// One routed link: its orthogonal path polyline plus what render needs.
 #[derive(Clone)]
-pub struct RoutedWire {
+pub struct RoutedLink {
     pub path: Vec<(f64, f64)>,
     pub markers: Markers,
     pub attrs: AttrMap,
-    /// `.style` names applied to the wire — rendered as `lini-style-*` classes,
+    /// `.style` names applied to the link — rendered as `lini-style-*` classes,
     /// the same surface a node's styles get (SPEC §14). Routing never reads it.
     pub applied_styles: Vec<String>,
     pub texts: Vec<RoutedText>,
@@ -73,12 +73,12 @@ pub struct RoutedWire {
     /// validator's attachment check).
     pub seg_from: String,
     pub seg_to: String,
-    /// Span of the wire declaration this segment came from; segments sharing it
+    /// Span of the link declaration this segment came from; segments sharing it
     /// are siblings of one statement (a chain or a fan).
     pub decl_span: Span,
-    /// Fan-trunk group ids, one per end (source, target). Two wires sharing an
+    /// Fan-trunk group ids, one per end (source, target). Two links sharing an
     /// id are fan siblings: their shared trunk is drawn as one line, so the
-    /// validator exempts it from wire–wire separation.
+    /// validator exempts it from link–link separation.
     pub fan_from: Option<u32>,
     pub fan_to: Option<u32>,
 }

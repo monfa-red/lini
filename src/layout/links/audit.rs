@@ -1,10 +1,10 @@
-//! Crossing collection and the bounded reroute audit (WIRING §Model step 6).
+//! Crossing collection and the bounded reroute audit (LINKING §Model step 6).
 //!
 //! Crossings are collected geometrically from the drawn chains: every
 //! transversal H×V intersection strictly inside both segments — an
 //! inversion's swap jog and a perpendicular piercing alike. Fan trunks
 //! overlap and ports T-join; neither crosses, so strictness excludes them.
-//! Each crossing is audited in declaration order of the later wire: its
+//! Each crossing is audited in declaration order of the later link: its
 //! bundle reroutes with the cell containing the crossing closed, and the
 //! reroute is kept iff the diagram's total crossing count strictly drops.
 //! Rounds repeat only while the total decreases — termination by
@@ -25,7 +25,7 @@ pub struct Crossing {
     pub at: (f64, f64),
 }
 
-/// Polylines with their bounding boxes — most wire pairs are far apart, so
+/// Polylines with their bounding boxes — most link pairs are far apart, so
 /// every pairwise sweep prefilters on boxes before walking segments.
 type BoxedPoly = (Vec<(f64, f64)>, (f64, f64, f64, f64));
 
@@ -54,8 +54,8 @@ fn boxes_apart(a: (f64, f64, f64, f64), b: (f64, f64, f64, f64), gap: f64) -> bo
     b.0 - a.2 >= gap || a.0 - b.2 >= gap || b.1 - a.3 >= gap || a.1 - b.3 >= gap
 }
 
-/// Every transversal crossing between drawn wires, ordered by the later
-/// wire's declaration rank — the order the audit visits them in.
+/// Every transversal crossing between drawn links, ordered by the later
+/// link's declaration rank — the order the audit visits them in.
 pub fn collect(chains: &[Option<Chain>]) -> Vec<Crossing> {
     let polys = boxed_polys(chains);
     let mut out = Vec::new();
@@ -108,7 +108,7 @@ pub(crate) fn cross(a: &[(f64, f64)], b: &[(f64, f64)]) -> Option<(f64, f64)> {
 ///
 /// Each round, every bundle involved in a crossing proposes reroute
 /// candidates (most-crossed bundle first): its path search re-runs with the
-/// **transversal count against every drawn wire** leading the cost — a wire
+/// **transversal count against every drawn link** leading the cost — a link
 /// always detours rather than crosses, and parallel corridor sharing stays
 /// free. The round applies the single candidate that lowers the diagram's
 /// actual crossing count the most without raising its law-1 breach count.
@@ -191,7 +191,7 @@ type Candidate = (usize, Vec<Option<Chain>>, Vec<Option<Chain>>);
 type Move = (Vec<Option<Chain>>, Vec<Option<Chain>>);
 
 /// Law 1 in full over drawn chains, plus the crossing count: the ground
-/// truth every audit move is judged by — wire–wire conflicts, wire–body
+/// truth every audit move is judged by — link–link conflicts, link–body
 /// intrusions, then crossings, lexicographic.
 pub fn law_score(router: &Router, chains: &[Option<Chain>], clearance: f64) -> (usize, usize) {
     (
@@ -255,9 +255,9 @@ fn seg_rect_dist(s: &[(f64, f64)], r: &super::rect::Rect) -> f64 {
     (dx * dx + dy * dy).sqrt()
 }
 
-/// Wire pairs of the drawn chains nearer than `clearance` anywhere along
+/// Link pairs of the drawn chains nearer than `clearance` anywhere along
 /// their polylines, excluding the sanctioned contacts — transversal
-/// crossings and fan siblings. Ordered like [`collect`]: later wire first.
+/// crossings and fan siblings. Ordered like [`collect`]: later link first.
 pub fn breaches(chains: &[Option<Chain>], clearance: f64) -> Vec<(usize, usize)> {
     let polys = boxed_polys(chains);
     let rows = compacted_bands(chains, clearance);
@@ -297,20 +297,20 @@ pub fn breaches(chains: &[Option<Chain>], clearance: f64) -> Vec<(usize, usize)>
 /// Law-1 repair, the crossing audit's sibling: port spread settles ordinates
 /// only after routing, so two pinned approaches can land nearer than
 /// clearance with no closure able to foresee it. While any pair of drawn
-/// wires conflicts, the round pools every repair — retrying one of the pair
-/// (or a wire sharing a port side with one) with the conflict sites walled
+/// links conflicts, the round pools every repair — retrying one of the pair
+/// (or a link sharing a port side with one) with the conflict sites walled
 /// off (stubs and runs alike), rerouting body-graziers off the body, and
-/// sliding a port group along its side off the conflicted row (WIRING
+/// sliding a port group along its side off the conflicted row (LINKING
 /// §Ports) — and applies the **best** strict improvement of
 /// `(breaches, crossings)`, the crossing audit's own discipline: a
 /// first-found accept can take a crossing-heavy reroute when a gentle slide
-/// repairs the same conflict. At a plateau a second wire moves from a first
+/// repairs the same conflict. At a plateau a second link moves from a first
 /// one's candidate state. A conflict nothing resolves undraws its later
-/// wire — reported, never drawn dirty — so the audit terminates with zero
+/// link — reported, never drawn dirty — so the audit terminates with zero
 /// breaches by construction. Returns the chains it had to undraw.
 ///
 /// `give_up` bounds the undraw ladder for speculative work: a caller
-/// repairing an insertion candidate stops once more wires are undrawn than
+/// repairing an insertion candidate stops once more links are undrawn than
 /// the state the candidate must beat — completeness leads the acceptance
 /// score and undraws are monotone, so the candidate is provably rejected
 /// and finishing the repair is wasted work. The standalone pass runs
@@ -365,7 +365,7 @@ fn separation_with_protect(
                 firsts.push((mover, cands));
             }
         }
-        // A wire grazing a node body reroutes with that body's
+        // A link grazing a node body reroutes with that body's
         // surroundings walled off.
         for &(ci, site) in &bodies {
             let deny = vec![site.inflate(clearance - 1e-6)];
@@ -388,7 +388,7 @@ fn separation_with_protect(
         }
         // Port-group slides: the conflict may sit at the port row
         // itself, where no reroute can move a pinned approach. A side
-        // is eligible only when the partner wire passes within
+        // is eligible only when the partner link passes within
         // clearance of the port — the exact situation Law 2's slide
         // clause names and the independent checker can verify. Nearest
         // offsets first; ground truth judges.
@@ -432,7 +432,7 @@ fn separation_with_protect(
         }
         let mut accepted: Option<(Move, Option<Slides>)> = best.map(|(_, mv, sl)| (mv, sl));
         if accepted.is_none() && give_up == usize::MAX {
-            // Paired moves: one wire steps aside (even laterally), a second
+            // Paired moves: one link steps aside (even laterally), a second
             // retries from there — kept iff the pair strictly improves on
             // the original state. Speculative repairs (finite `give_up`)
             // skip this stage: the completeness pass follows displaced
@@ -489,10 +489,10 @@ fn separation_with_protect(
 }
 
 /// One repaired insertion candidate: the raw chains, their solved drawing,
-/// the slides the repair settled on, and the wires it undrew in exchange.
+/// the slides the repair settled on, and the links it undrew in exchange.
 type Insertion = (Vec<Option<Chain>>, Vec<Option<Chain>>, Slides, Vec<usize>);
 
-/// The completeness pass — starvation rip-up (WIRING §Impossible layouts).
+/// The completeness pass — starvation rip-up (LINKING §Impossible layouts).
 /// Routing is first-come in declaration order, and a hard closure never
 /// asks an incumbent to move: a late bundle can starve while plenty of
 /// legal geometry remains. Every bundle with an undrawn member proposes
@@ -501,7 +501,7 @@ type Insertion = (Vec<Option<Chain>>, Vec<Option<Chain>>, Slides, Vec<usize>);
 /// displaced bundle finds a new home from there. Ground truth judges
 /// every move — kept iff `(undrawn, conflicts, crossings)` strictly drops
 /// lexicographically, completeness first — so the pass terminates by
-/// descent and never trades a law for a wire. Returns the wires accepted
+/// descent and never trades a law for a link. Returns the links accepted
 /// repairs undrew in exchange.
 pub fn complete(
     router: &mut Router,
@@ -586,7 +586,7 @@ pub fn complete(
                 }
             }
         }
-        // Degradation under pressure (WIRING §Duplicates): a bundle no
+        // Degradation under pressure (LINKING §Duplicates): a bundle no
         // insertion places whole — or one whose displacement kept blocking
         // every swap — splits, and the next pass tries the pieces alone.
         // Splits strictly grow the bundle count, so the loop stays bounded.
@@ -603,8 +603,8 @@ pub fn complete(
             }
         }
         // Port compaction — the very last routing lever before the
-        // impossible report (WIRING §Ports, Law 2's compaction clause):
-        // every rip-up, swap, and split spent, a wire starved of port
+        // impossible report (LINKING §Ports, Law 2's compaction clause):
+        // every rip-up, swap, and split spent, a link starved of port
         // slots lands on a full side, and the side re-pitches all its
         // ports evenly below clearance, like the pins of an IC.
         for &bi in &starved {
@@ -631,7 +631,7 @@ pub fn complete(
     }
 }
 
-/// The port-compaction lever for one starved bundle (WIRING Law 2's
+/// The port-compaction lever for one starved bundle (LINKING Law 2's
 /// compaction clause): route with full sides reopened
 /// ([`Router::route_bundle`]'s compact mode) and hand the result to the
 /// separation audit like any insertion. Stateless by design — the side's
@@ -755,7 +755,7 @@ fn compact_insertion(
     false
 }
 
-/// Law 1's third surrender (WIRING — the row band of a compacted side):
+/// Law 1's third surrender (LINKING — the row band of a compacted side):
 /// per `(node, side)`, the outermost port ordinates of every row holding
 /// two distinct ports nearer than clearance. Sub-clearance pitch exists
 /// only where `place_ports` compacted the side, so the pitch itself is the
@@ -811,8 +811,8 @@ fn shared_bands(
 /// Whether two segments' closest approach lies inside a row band: their
 /// witness interval on the band's axis — the facing endpoints when their
 /// extents are disjoint, the overlap when they run alongside — must sit
-/// between the row's outermost ports. Wires hugging beyond the band still
-/// breach (WIRING Law 1, third surrender).
+/// between the row's outermost ports. Links hugging beyond the band still
+/// breach (LINKING Law 1, third surrender).
 pub(super) fn band_contact(
     (vertical, lo, hi): (bool, f64, f64),
     sa: &[(f64, f64)],
@@ -942,9 +942,9 @@ fn contact_holds(chains: &[Option<Chain>], clearance: f64) -> bool {
     })
 }
 
-/// The wires worth moving to clear a conflicting pair: the pair itself
-/// (later first), then every wire sharing a port side with either — port
-/// spread couples a side's slots, so a third wire leaving the side can be
+/// The links worth moving to clear a conflicting pair: the pair itself
+/// (later first), then every link sharing a port side with either — port
+/// spread couples a side's slots, so a third link leaving the side can be
 /// what frees the row.
 fn movers(drawn: &[Option<Chain>], (a, b): (usize, usize)) -> Vec<usize> {
     let mut out = vec![b, a];
@@ -972,8 +972,8 @@ fn movers(drawn: &[Option<Chain>], (a, b): (usize, usize)) -> Vec<usize> {
     out
 }
 
-/// [`nudged`] for a conflicting wire pair: the pair's mutual conflict
-/// region is the wall, and the pair's other wire seeds the partner set.
+/// [`nudged`] for a conflicting link pair: the pair's mutual conflict
+/// region is the wall, and the pair's other link seeds the partner set.
 fn nudge(
     router: &Router,
     raw: &[Option<Chain>],
@@ -994,7 +994,7 @@ fn nudge(
     )
 }
 
-/// Reroute candidates for one conflicting wire: the given conflict region
+/// Reroute candidates for one conflicting link: the given conflict region
 /// is walled off, then refined with the partners each candidate still
 /// conflicts with — the partner set only grows, so the loop is bounded.
 /// Port spread can pull a re-landed approach back into the very conflict
@@ -1039,7 +1039,7 @@ fn nudged(
     let ports = ports_without(raw, members, clearance);
     // A mover already landed on an over-asked side cannot re-enter it under
     // strict gating — without compact admission every repair of a
-    // compacted-row wire could only undraw it.
+    // compacted-row link could only undraw it.
     let stuck = members
         .iter()
         .filter_map(|&m| raw[m].as_ref())
@@ -1168,7 +1168,7 @@ pub(super) fn seg_dist(sa: &[(f64, f64)], sb: &[(f64, f64)]) -> f64 {
     (dx * dx + dy * dy).sqrt()
 }
 
-/// The kept wire's segments that sit nearer than `clearance` to the mover,
+/// The kept link's segments that sit nearer than `clearance` to the mover,
 /// inflated by `clearance` — the regions the mover's reroute must clear.
 fn conflict_sites(
     drawn: &[Option<Chain>],
@@ -1214,10 +1214,10 @@ fn retry(
     let occ = occupancy_without(raw, members, clearance);
     let ports = ports_without(raw, members, clearance);
     let mut out: Vec<Candidate> = Vec::new();
-    // Route against one obstacle set; returns the wires the candidate still
+    // Route against one obstacle set; returns the links the candidate still
     // crosses (`None` when no route exists at all).
-    let mut evaluate = |obstacle_wires: &[usize]| -> Option<Vec<usize>> {
-        let polys: Vec<Vec<(f64, f64)>> = obstacle_wires
+    let mut evaluate = |obstacle_links: &[usize]| -> Option<Vec<usize>> {
+        let polys: Vec<Vec<(f64, f64)>> = obstacle_links
             .iter()
             .filter_map(|&w| drawn[w].as_ref().map(geometry::polyline))
             .collect();
@@ -1253,7 +1253,7 @@ fn retry(
         Some(still)
     };
 
-    // The most cautious candidate first — every other wire an obstacle:
+    // The most cautious candidate first — every other link an obstacle:
     // refinement converges on a small set and can miss the wide detour this
     // one proposes.
     let all: Vec<usize> = (0..drawn.len())
@@ -1261,36 +1261,36 @@ fn retry(
         .collect();
     evaluate(&all);
 
-    let mut obstacle_wires: Vec<usize> = Vec::new();
+    let mut obstacle_links: Vec<usize> = Vec::new();
     loop {
-        let Some(still) = evaluate(&obstacle_wires) else {
+        let Some(still) = evaluate(&obstacle_links) else {
             return out;
         };
-        let before = obstacle_wires.len();
-        obstacle_wires.extend(still);
-        obstacle_wires.sort_unstable();
-        obstacle_wires.dedup();
-        if obstacle_wires.len() == before {
+        let before = obstacle_links.len();
+        obstacle_links.extend(still);
+        obstacle_links.sort_unstable();
+        obstacle_links.dedup();
+        if obstacle_links.len() == before {
             return out;
         }
     }
 }
 
 /// Every bundle involved in one of `crossings`, most-crossed first (the most
-/// entangled wire has the most to gain from one detour), ties by declaration
+/// entangled link has the most to gain from one detour), ties by declaration
 /// (bundle index). Self-loops are pinned shapes and never reroute.
 fn entangled_bundles(router: &Router, crossings: &[Crossing]) -> Vec<usize> {
     let mut counts: Vec<(usize, usize)> = Vec::new();
     for x in crossings {
-        for wire in [x.pair.1, x.pair.0] {
-            let req = &router.reqs[wire];
+        for link in [x.pair.1, x.pair.0] {
+            let req = &router.reqs[link];
             if req.a_path == req.b_path {
                 continue;
             }
             let bi = router
                 .bundles
                 .iter()
-                .position(|b| b.members.contains(&wire))
+                .position(|b| b.members.contains(&link))
                 .expect("every chain belongs to a bundle");
             match counts.iter_mut().find(|(b, _)| *b == bi) {
                 Some((_, n)) => *n += 1,

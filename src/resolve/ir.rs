@@ -6,7 +6,7 @@ use std::collections::{BTreeMap, HashMap};
 pub struct Program {
     pub vars: VarTable,
     pub scene: ResolvedScene,
-    pub wires: Vec<ResolvedWire>,
+    pub links: Vec<ResolvedLink>,
     pub sheet: SheetInputs,
 }
 
@@ -14,15 +14,15 @@ pub struct Program {
 /// CSS, geometry bakes (SPEC §13). After desugar every type/template/define lives
 /// as a single-class rule, so this is just those rules' resolved attrs (the
 /// generated `.lini-*` type classes and the user `.style` classes, in stylesheet
-/// order), the wire defaults, and the root inherited-text baseline. Descendant
+/// order), the link defaults, and the root inherited-text baseline. Descendant
 /// rules (`|.lini-table .lini-box| { }`) carry no entry: their paint bakes inline.
 #[derive(Default, Clone)]
 pub struct SheetInputs {
     /// Single-class rules in source order: `lini-<type>` (generated type classes,
     /// emitted verbatim) and user classes (emitted `lini-style-<name>`).
     pub class_rules: Vec<(String, AttrMap)>,
-    /// The `-> { }` wire defaults.
-    pub wire_defaults: AttrMap,
+    /// The `-> { }` link defaults.
+    pub link_defaults: AttrMap,
     /// The root container's `font-size` — the inherited-text baseline for `.lini`
     /// (a baked layout constant carried in the global block, not a CSS var).
     pub root_font_size: f64,
@@ -250,26 +250,26 @@ impl MarkerKind {
         })
     }
 
-    pub fn from_marker(m: crate::ast::WireMarker) -> Self {
+    pub fn from_marker(m: crate::ast::LinkMarker) -> Self {
         match m {
-            crate::ast::WireMarker::None => Self::None,
-            crate::ast::WireMarker::Arrow => Self::Arrow,
-            crate::ast::WireMarker::Crow => Self::Crow,
-            crate::ast::WireMarker::Dot => Self::Dot,
-            crate::ast::WireMarker::Diamond => Self::Diamond,
+            crate::ast::LinkMarker::None => Self::None,
+            crate::ast::LinkMarker::Arrow => Self::Arrow,
+            crate::ast::LinkMarker::Crow => Self::Crow,
+            crate::ast::LinkMarker::Dot => Self::Dot,
+            crate::ast::LinkMarker::Diamond => Self::Diamond,
         }
     }
 }
 
-pub struct ResolvedWire {
+pub struct ResolvedLink {
     pub endpoints: Vec<ResolvedEndpoint>,
     pub attrs: AttrMap,
-    /// Names of the `.style`s applied to this wire, in source order — emitted as
+    /// Names of the `.style`s applied to this link, in source order — emitted as
     /// `lini-style-{name}` classes, exactly like a node's (SPEC §14).
     pub applied_styles: Vec<String>,
     pub markers: Markers,
-    /// Wire labels (label sugar + body `|text|`s), placed onto the drawn
-    /// route by the router's label pass (WIRING §Model step 7).
+    /// Link labels (label sugar + body `|text|`s), placed onto the drawn
+    /// route by the router's label pass (LINKING §Model step 7).
     pub texts: Vec<ResolvedText>,
     pub span: Span,
 }
@@ -288,7 +288,7 @@ pub struct ResolvedText {
     pub attrs: AttrMap,
 }
 
-/// Where a label rides its wire (SPEC §9): `Auto` distributes it along the
+/// Where a label rides its link (SPEC §9): `Auto` distributes it along the
 /// route; `Fraction` pins it at an explicit `along:` fraction (0..1).
 #[derive(Clone, Debug)]
 pub enum Along {

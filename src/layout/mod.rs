@@ -2,17 +2,17 @@ mod anchors;
 mod flex;
 mod grid;
 mod ir;
+mod links;
 mod path_bbox;
 mod primitives;
 mod text;
 mod values;
-mod wires;
 
 pub(crate) use anchors::is_pinned;
 pub use ir::*;
+pub(crate) use links::cross;
+pub use links::{Rule, Severity, Violation, node_rect};
 pub(crate) use text::{approx_height, approx_width};
-pub(crate) use wires::cross;
-pub use wires::{Rule, Severity, Violation, node_rect};
 
 use crate::error::Error;
 use crate::resolve::{Program, ResolvedInst, ResolvedValue, ShapeKind};
@@ -35,10 +35,10 @@ pub fn layout_raw(program: &Program) -> Result<LaidOut, Error> {
     layout_mode(program, false)
 }
 
-/// Lay out and route; when wires are impossible for lack of corridor lanes
-/// (WIRING §Impossible layouts), grow the named containers' gaps by exactly
+/// Lay out and route; when links are impossible for lack of corridor lanes
+/// (LINKING §Impossible layouts), grow the named containers' gaps by exactly
 /// the deficit and rerun — at most 2 rounds, keeping the best result (most
-/// drawn, then fewest crossings). Airwires cover whatever still fails.
+/// drawn, then fewest crossings). Strays cover whatever still fails.
 fn layout_mode(program: &Program, growth_on: bool) -> Result<LaidOut, Error> {
     let mut growth = GapGrowth::new();
     let mut best = attempt(program, &growth)?;
@@ -65,7 +65,7 @@ fn layout_mode(program: &Program, growth_on: bool) -> Result<LaidOut, Error> {
 struct Attempt {
     nodes: Vec<PlacedNode>,
     bbox: Bbox,
-    routing: wires::Routing,
+    routing: links::Routing,
 }
 
 fn attempt(program: &Program, growth: &GapGrowth) -> Result<Attempt, Error> {
@@ -85,8 +85,8 @@ fn attempt(program: &Program, growth: &GapGrowth) -> Result<Attempt, Error> {
         gap_bump(growth, ""),
     )?;
 
-    // Route wires once the nodes are placed.
-    let routing = wires::route_wires(program, &top_nodes)?;
+    // Route links once the nodes are placed.
+    let routing = links::route_links(program, &top_nodes)?;
     Ok(Attempt {
         nodes: top_nodes,
         bbox,
@@ -94,7 +94,7 @@ fn attempt(program: &Program, growth: &GapGrowth) -> Result<Attempt, Error> {
     })
 }
 
-/// Strictly better routing outcome: more wires drawn, then fewer crossings.
+/// Strictly better routing outcome: more links drawn, then fewer crossings.
 fn better(a: &Attempt, b: &Attempt) -> bool {
     let key = |t: &Attempt| {
         let crossings = t
@@ -103,7 +103,7 @@ fn better(a: &Attempt, b: &Attempt) -> bool {
             .iter()
             .filter(|v| v.rule == Rule::Crossing)
             .count();
-        (t.routing.wires.len(), std::cmp::Reverse(crossings))
+        (t.routing.links.len(), std::cmp::Reverse(crossings))
     };
     key(a) > key(b)
 }
@@ -149,7 +149,7 @@ fn gap_bump(growth: &GapGrowth, path: &str) -> (f64, f64) {
 }
 
 /// A child's dot-path under `parent`. Anonymous children get a `#` segment —
-/// never a wire endpoint's ancestor, so never a growth target.
+/// never a link endpoint's ancestor, so never a growth target.
 fn child_path(parent: &str, inst: &ResolvedInst) -> String {
     let id = inst.id.as_deref().unwrap_or("#");
     if parent.is_empty() {
@@ -170,7 +170,7 @@ fn accumulate_extent(n: &PlacedNode, ox: f64, oy: f64, bbox: &mut Bbox) {
 }
 
 fn finish(program: &Program, attempt: Attempt) -> Result<LaidOut, Error> {
-    // Viewbox = the whole drawn extent (scene bbox + wire paths, labels, airwires,
+    // Viewbox = the whole drawn extent (scene bbox + link paths, labels, strays,
     // overlays) framed by the scene's `padding` on every side — the margin between
     // the diagram and the SVG edge.
     let pad = primitives::padding(&program.scene.attrs, Span::empty())?;
@@ -182,15 +182,15 @@ fn finish(program: &Program, attempt: Attempt) -> Result<LaidOut, Error> {
         accumulate_extent(n, 0.0, 0.0, &mut bbox);
     }
     let routing = attempt.routing;
-    let wire_points = routing.wires.iter().flat_map(|w| &w.path);
-    let air_points = routing.airwires.iter().flat_map(|a| [&a.from, &a.to]);
-    for &(x, y) in wire_points.chain(air_points) {
+    let link_points = routing.links.iter().flat_map(|w| &w.path);
+    let air_points = routing.strays.iter().flat_map(|a| [&a.from, &a.to]);
+    for &(x, y) in link_points.chain(air_points) {
         bbox.min_x = bbox.min_x.min(x);
         bbox.min_y = bbox.min_y.min(y);
         bbox.max_x = bbox.max_x.max(x);
         bbox.max_y = bbox.max_y.max(y);
     }
-    for t in routing.wires.iter().flat_map(|w| &w.texts) {
+    for t in routing.links.iter().flat_map(|w| &w.texts) {
         let size = t.attrs.number("font-size").unwrap_or(0.0);
         let ls = t.attrs.number("letter-spacing").unwrap_or(0.0);
         let lsp = t.attrs.number("line-spacing").unwrap_or(0.0);
@@ -217,9 +217,9 @@ fn finish(program: &Program, attempt: Attempt) -> Result<LaidOut, Error> {
     Ok(LaidOut {
         viewbox: vb,
         nodes: attempt.nodes,
-        wires: routing.wires,
-        wire_report: routing.report,
-        airwires: routing.airwires,
+        links: routing.links,
+        link_report: routing.report,
+        strays: routing.strays,
         vars: program.vars.clone(),
         sheet: program.sheet.clone(),
         canvas_fill,
@@ -227,15 +227,15 @@ fn finish(program: &Program, attempt: Attempt) -> Result<LaidOut, Error> {
     })
 }
 
-/// Validate a laid-out scene's wires against the routing contract (WIRING.md):
-/// the router's own report (kept crossings, impossible wires), then the
+/// Validate a laid-out scene's links against the routing contract (LINKING.md):
+/// the router's own report (kept crossings, impossible links), then the
 /// independent four-law check. Used by `lini::validate_str`.
 pub fn validate_routing(laid: &LaidOut) -> Vec<Violation> {
-    let mut out = laid.wire_report.clone();
-    out.extend(wires::validate_routing(
+    let mut out = laid.link_report.clone();
+    out.extend(links::validate_routing(
         &laid.nodes,
-        &laid.wires,
-        &laid.wire_report,
+        &laid.links,
+        &laid.link_report,
     ));
     out
 }

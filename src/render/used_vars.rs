@@ -4,7 +4,7 @@
 //!
 //! Sources, gathered before the block is emitted:
 //! 1. the structural class rules, which always state the core roles as `var(--lini-…)`;
-//! 2. every output-bound `ResolvedValue` — node / wire / sheet / canvas attrs;
+//! 2. every output-bound `ResolvedValue` — node / link / sheet / canvas attrs;
 //! 3. the transitive closure over the var table — a kept var whose value names another
 //!    (`text-color → fg`, an alias → its hue) pulls that one in too.
 //!
@@ -30,19 +30,19 @@ pub fn referenced(laid: &LaidOut, ruleset: &RuleSet) -> BTreeSet<String> {
     for n in &laid.nodes {
         walk_node(n, &mut names);
     }
-    for w in &laid.wires {
+    for w in &laid.links {
         walk_attrs(&w.attrs, &mut names);
         for t in &w.texts {
             walk_attrs(&t.attrs, &mut names);
         }
     }
-    if !laid.airwires.is_empty() {
-        names.insert("airwire".to_string());
+    if !laid.strays.is_empty() {
+        names.insert("stray".to_string());
     }
     for (_, attrs) in &laid.sheet.class_rules {
         walk_attrs(attrs, &mut names);
     }
-    walk_attrs(&laid.sheet.wire_defaults, &mut names);
+    walk_attrs(&laid.sheet.link_defaults, &mut names);
     walk_attrs(&laid.sheet.root_text, &mut names);
     if let Some(fill) = &laid.canvas_fill {
         collect_live(fill, &mut names);

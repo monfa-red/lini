@@ -1,7 +1,7 @@
 //! Route → chain → orthogonal polyline.
 //!
 //! A cell route becomes alternating channel **runs**; a run that ends at a
-//! port is pinned to the port's ordinate (WIRING §Model step 5 — the stub
+//! port is pinned to the port's ordinate (LINKING §Model step 5 — the stub
 //! continues straight into the channel), through-runs are assigned by
 //! [`super::runs`]. Corners are the meet of adjacent runs' ordinates. A
 //! self-loop is a fixed chain along its keep-out boundary, its legs pinned to
@@ -201,7 +201,7 @@ pub fn chain(
     }
 }
 
-/// The wire polyline: port, the meets of adjacent runs, port. Runs strictly
+/// The link polyline: port, the meets of adjacent runs, port. Runs strictly
 /// alternate axes — an inversion's swap jog is a run like any other.
 pub fn polyline(chain: &Chain) -> Vec<(f64, f64)> {
     let mut pts = vec![chain.ends[0].port];
@@ -235,11 +235,11 @@ fn simplify(pts: Vec<(f64, f64)>) -> Vec<(f64, f64)> {
     out
 }
 
-/// The airwire segment for an impossible wire (WIRING §Impossible layouts):
+/// The stray segment for an impossible link (LINKING §Impossible layouts):
 /// centre to centre, each end trimmed to its own body's boundary. `None` when
 /// the trim leaves nothing — coincident or overlapping bodies (self-loops,
 /// containment), where no between-bodies segment exists.
-pub fn airwire_segment(a: Rect, b: Rect) -> Option<((f64, f64), (f64, f64))> {
+pub fn stray_segment(a: Rect, b: Rect) -> Option<((f64, f64), (f64, f64))> {
     let centre = |r: Rect| ((r.x0 + r.x1) / 2.0, (r.y0 + r.y1) / 2.0);
     let (ca, cb) = (centre(a), centre(b));
     let d = (cb.0 - ca.0, cb.1 - ca.1);
@@ -423,8 +423,8 @@ pub fn self_loop_chain(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::layout::wires::path::{FREE, entries, shortest};
-    use crate::layout::wires::runs::{World, assign};
+    use crate::layout::links::path::{FREE, entries, shortest};
+    use crate::layout::links::runs::{World, assign};
 
     const BOUNDS: Rect = Rect {
         x0: 0.0,
@@ -468,7 +468,7 @@ mod tests {
     }
 
     #[test]
-    fn aligned_facing_nodes_yield_a_straight_wire() {
+    fn aligned_facing_nodes_yield_a_straight_link() {
         let a = Rect::new(20.0, 40.0, 40.0, 60.0);
         let b = Rect::new(160.0, 40.0, 180.0, 60.0);
         let p = route_between(a, b, &[]);
@@ -576,26 +576,26 @@ mod tests {
     }
 
     #[test]
-    fn airwire_trims_to_both_boundaries() {
+    fn stray_trims_to_both_boundaries() {
         // Facing horizontally: the segment runs face to face on the centreline.
         let a = Rect::new(0.0, 0.0, 40.0, 40.0);
         let b = Rect::new(100.0, 0.0, 140.0, 40.0);
-        assert_eq!(airwire_segment(a, b), Some(((40.0, 20.0), (100.0, 20.0))));
+        assert_eq!(stray_segment(a, b), Some(((40.0, 20.0), (100.0, 20.0))));
         // Diagonal neighbours: a slanted segment, trimmed where the
         // centre-to-centre ray leaves each body.
         let c = Rect::new(100.0, 100.0, 140.0, 140.0);
-        let (p, q) = airwire_segment(a, c).expect("segment");
+        let (p, q) = stray_segment(a, c).expect("segment");
         assert_eq!(p, (40.0, 40.0));
         assert_eq!(q, (100.0, 100.0));
     }
 
     #[test]
-    fn airwire_skips_degenerate_pairs() {
+    fn stray_skips_degenerate_pairs() {
         let a = Rect::new(0.0, 0.0, 40.0, 40.0);
-        assert_eq!(airwire_segment(a, a), None);
+        assert_eq!(stray_segment(a, a), None);
         // One body inside the other: no between-bodies segment exists.
         let inner = Rect::new(10.0, 10.0, 20.0, 20.0);
-        assert_eq!(airwire_segment(a, inner), None);
+        assert_eq!(stray_segment(a, inner), None);
     }
 
     #[test]

@@ -1,17 +1,17 @@
 //! Canonical source formatter (SPEC §14). Parses to the AST and re-emits a
 //! normalized form: the three phases in order (the stylesheet `{ }`, then the
-//! instances, then the wires), `{ }` style blocks and `[ ]` child lists, bar-wrapped
+//! instances, then the links), `{ }` style blocks and `[ ]` child lists, bar-wrapped
 //! type selectors and `|name::base|` defines, 2-space indent, space-separated value
 //! groups. Comments and blank-line groupings are preserved; sibling nodes align
 //! their id column (the bars line up), and a plain group aligns its type column
 //! too (the labels). Idempotent: `fmt(fmt(x)) == fmt(x)`.
 
-use crate::ast::{Side, WireOp};
+use crate::ast::{LinkOp, Side};
 use crate::error::Error;
 use crate::lexer;
 use crate::span::Span;
 use crate::syntax::ast::{
-    Child, Decl, Define, Endpoint, File, Node, Rule, SelPart, Selector, StyleItem, Value, Wire,
+    Child, Decl, Define, Endpoint, File, Link, Node, Rule, SelPart, Selector, StyleItem, Value,
 };
 use crate::syntax::parser;
 
@@ -21,7 +21,7 @@ use trivia::{Trivia, TriviaToken, scan_trivia};
 const INDENT: &str = "  ";
 
 /// A block collapses onto one line (`|box| { radius: 6; }`) when the whole line
-/// fits within this budget; past it, or once it holds a child node/wire, it
+/// fits within this budget; past it, or once it holds a child node/link, it
 /// breaks across lines. Prettier's print-width, give or take.
 const MAX_LINE: usize = 80;
 
@@ -82,11 +82,11 @@ impl Emitter<'_> {
             self.emit_children(&file.instances, 0);
             phases += 1;
         }
-        if !file.wires.is_empty() {
+        if !file.links.is_empty() {
             self.section_break(phases);
-            for w in &file.wires {
+            for w in &file.links {
                 self.emit_trivia_before(w.span.start, 0);
-                self.emit_wire(w, 0);
+                self.emit_link(w, 0);
                 self.out.push('\n');
                 self.cursor = w.span.end;
             }
@@ -181,15 +181,15 @@ impl Emitter<'_> {
             let end = def.style_span.map_or(def.span.end, |s| s.end);
             self.emit_style_block(&def.style, end, depth, false);
         }
-        self.emit_body(&def.children, &def.wires, def.span.end, depth);
+        self.emit_body(&def.children, &def.links, def.span.end, depth);
         self.out.push('\n');
     }
 
     fn emit_selector(&mut self, sel: &Selector) {
-        // The wire-defaults rule carries the reserved `wire` selector internally
-        // but is written with the wire glyph; a lone class stays bare.
+        // The link-defaults rule carries the reserved `link` selector internally
+        // but is written with the link glyph; a lone class stays bare.
         match sel.parts.as_slice() {
-            [SelPart::Type(t)] if t == "wire" => {
+            [SelPart::Type(t)] if t == "link" => {
                 self.out.push_str("->");
                 return;
             }
@@ -247,7 +247,7 @@ impl Emitter<'_> {
         let bars = type_bars(&node.ty);
         let classes = class_str(&node.classes);
         let has_block = !node.style.is_empty();
-        let has_body = !node.children.is_empty() || !node.wires.is_empty();
+        let has_body = !node.children.is_empty() || !node.links.is_empty();
         let id = node.id.as_deref().unwrap_or("");
         // A no-id box at the root is not indented to the id column — leading
         // space there reads as floating, not alignment; inside a block the base
@@ -290,7 +290,7 @@ impl Emitter<'_> {
     /// A node's content: a `|table|`'s aligned cells, a terse trailing label, an
     /// inline text `[ ]` (desugar), or the multi-line `[ ]` body.
     fn emit_content(&mut self, node: &Node, depth: usize) {
-        if node.children.is_empty() && node.wires.is_empty() {
+        if node.children.is_empty() && node.links.is_empty() {
             return;
         }
         let end = node.span.end;
@@ -303,7 +303,7 @@ impl Emitter<'_> {
             return;
         }
         let text_only =
-            node.wires.is_empty() && node.children.iter().all(|c| matches!(c, Child::Text(_)));
+            node.links.is_empty() && node.children.iter().all(|c| matches!(c, Child::Text(_)));
         if text_only && !self.has_trivia_between(self.cursor, end) {
             if self.terse {
                 for c in &node.children {
@@ -319,7 +319,7 @@ impl Emitter<'_> {
                 return;
             }
         }
-        self.emit_body(&node.children, &node.wires, end, depth);
+        self.emit_body(&node.children, &node.links, end, depth);
     }
 
     /// `[ "a" "b" ]` on one line, when it fits (desugar's explicit text form).
@@ -345,16 +345,16 @@ impl Emitter<'_> {
         }
     }
 
-    /// The multi-line `[ children … wires … ]` body.
-    fn emit_body(&mut self, children: &[Child], wires: &[Wire], end: usize, depth: usize) {
-        if children.is_empty() && wires.is_empty() && !self.has_comment_in(self.cursor, end) {
+    /// The multi-line `[ children … links … ]` body.
+    fn emit_body(&mut self, children: &[Child], links: &[Link], end: usize, depth: usize) {
+        if children.is_empty() && links.is_empty() && !self.has_comment_in(self.cursor, end) {
             return;
         }
         self.out.push_str(" [\n");
         self.emit_children(children, depth + 1);
-        for w in wires {
+        for w in links {
             self.emit_trivia_before(w.span.start, depth + 1);
-            self.emit_wire(w, depth + 1);
+            self.emit_link(w, depth + 1);
             self.out.push('\n');
             self.cursor = w.span.end;
         }
@@ -369,7 +369,7 @@ impl Emitter<'_> {
     fn table_cols(&self, node: &Node) -> Option<usize> {
         let cells = &node.children;
         if cells.is_empty()
-            || !node.wires.is_empty()
+            || !node.links.is_empty()
             || !cells.iter().all(|c| matches!(c, Child::Text(_)))
         {
             return None;
@@ -496,14 +496,14 @@ impl Emitter<'_> {
         }
     }
 
-    // ───────── Wires ─────────
+    // ───────── Links ─────────
 
-    fn emit_wire(&mut self, w: &Wire, depth: usize) {
+    fn emit_link(&mut self, w: &Link, depth: usize) {
         self.indent(depth);
         for (i, group) in w.chain.iter().enumerate() {
             if i > 0 {
                 self.out.push(' ');
-                self.out.push_str(&wire_op_str(w.op));
+                self.out.push_str(&link_op_str(w.op));
                 self.out.push(' ');
             }
             for (j, ep) in group.endpoints.iter().enumerate() {
@@ -521,7 +521,7 @@ impl Emitter<'_> {
             let end = w.style_span.map_or(w.span.end, |s| s.end);
             self.emit_style_block(&w.style, end, depth, false);
         }
-        // A wire is not a container: its labels always trail (SPEC §9).
+        // A link is not a container: its labels always trail (SPEC §9).
         for label in &w.labels {
             self.out.push(' ');
             self.emit_string(&label.text);
@@ -663,7 +663,7 @@ fn class_str(classes: &[String]) -> String {
     s
 }
 
-fn wire_op_str(op: WireOp) -> String {
+fn link_op_str(op: LinkOp) -> String {
     format!(
         "{}{}{}",
         op.start.start_str(),

@@ -1,8 +1,8 @@
-//! Rounded-wire geometry: a routed polyline plus its per-corner fillet radii
-//! becomes a sequence of straight runs and arcs. Both the plain wire path
-//! ([`super::wires`]) and the wavy wire ([`super::wavy`]) build on this one
+//! Rounded-link geometry: a routed polyline plus its per-corner fillet radii
+//! becomes a sequence of straight runs and arcs. Both the plain link path
+//! ([`super::links`]) and the wavy link ([`super::wavy`]) build on this one
 //! decomposition, so a corner's fillet is computed in exactly one place
-//! (WIRING §Model step 7).
+//! (LINKING §Model step 7).
 
 pub type Point = (f64, f64);
 
@@ -66,7 +66,7 @@ pub fn round(pts: &[Point], targets: &[f64]) -> RoundedPath {
         });
     }
     segs.push(Seg::Line {
-        to: *pts.last().expect("a wire polyline has at least two points"),
+        to: *pts.last().expect("a link polyline has at least two points"),
     });
     RoundedPath {
         start: pts[0],

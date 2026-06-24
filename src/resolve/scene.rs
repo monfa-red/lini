@@ -2,7 +2,7 @@
 //! [`ResolvedInst`]: its type cascade resolved, descendant/class/block layers
 //! applied, caption/label sugar expanded into `|caption|`/`|text|` children,
 //! text properties inherited, define bodies materialised (with scoped ids), and
-//! internal wires lifted out for the wire pass.
+//! internal links lifted out for the link pass.
 
 use super::cascade::{NodeFacts, Stylesheet};
 use super::ir::{AttrMap, MarkerKind, Markers, ResolvedInst, ResolvedValue, ShapeKind, VarTable};
@@ -10,7 +10,7 @@ use super::merge::{collapse, resolve_markers};
 use super::value::resolve_groups;
 use crate::error::Error;
 use crate::span::Span;
-use crate::syntax::ast::{Child, Node, Wire};
+use crate::syntax::ast::{Child, Link, Node};
 use std::collections::HashMap;
 
 /// Text properties that cascade to descendant text (SPEC §10): nearest ancestor
@@ -28,11 +28,11 @@ pub(super) const INHERITED_TEXT: &[&str] = &[
     "color",
 ];
 
-/// An internal wire lifted from a body or define, with its host's dot-path
+/// An internal link lifted from a body or define, with its host's dot-path
 /// prefix — resolved at program level once the whole tree (and its path index)
 /// exists.
-pub struct LiftedWire {
-    pub wire: Wire,
+pub struct LiftedLink {
+    pub link: Link,
     pub prefix: Vec<String>,
 }
 
@@ -43,14 +43,14 @@ pub struct SceneCtx<'a> {
 }
 
 /// Resolve the top-level instances into scene nodes, collecting lifted internal
-/// wires. `text_ctx` seeds the inheritable text properties from the root config.
+/// links. `text_ctx` seeds the inheritable text properties from the root config.
 pub fn resolve_instances(
     instances: &[Child],
     ctx: &SceneCtx,
     root_attrs: &AttrMap,
     text_ctx: &AttrMap,
     id_seen: &mut HashMap<String, Span>,
-    lifted: &mut Vec<LiftedWire>,
+    lifted: &mut Vec<LiftedLink>,
 ) -> Result<Vec<ResolvedInst>, Error> {
     let mut ancestors = Vec::new();
     let mut nodes = Vec::with_capacity(instances.len());
@@ -79,7 +79,7 @@ fn resolve_child(
     path_prefix: &[String],
     text_ctx: &AttrMap,
     id_seen: &mut HashMap<String, Span>,
-    lifted: &mut Vec<LiftedWire>,
+    lifted: &mut Vec<LiftedLink>,
 ) -> Result<ResolvedInst, Error> {
     match child {
         Child::Box(n) => resolve_node(n, ctx, ancestors, path_prefix, text_ctx, id_seen, lifted),
@@ -98,7 +98,7 @@ pub fn resolve_node(
     path_prefix: &[String],
     text_ctx: &AttrMap,
     id_seen: &mut HashMap<String, Span>,
-    lifted: &mut Vec<LiftedWire>,
+    lifted: &mut Vec<LiftedLink>,
 ) -> Result<ResolvedInst, Error> {
     let type_name = node.ty.as_deref().unwrap_or("box");
     // Post-desugar the type is always a primitive; anything else means the input
@@ -180,11 +180,11 @@ pub fn resolve_node(
         child_prefix.push(id.clone());
     }
 
-    // Internal wires lift to program level (define bodies are inlined by desugar,
+    // Internal links lift to program level (define bodies are inlined by desugar,
     // so the node's own `[ ]` holds them already).
-    for w in &node.wires {
-        lifted.push(LiftedWire {
-            wire: w.clone(),
+    for w in &node.links {
+        lifted.push(LiftedLink {
+            link: w.clone(),
             prefix: child_prefix.clone(),
         });
     }
@@ -330,7 +330,7 @@ impl PathIndex {
         self.paths.iter().any(|p| p == path)
     }
 
-    /// An endpoint is an exact path from the wire's scope (the caller prepends
+    /// An endpoint is an exact path from the link's scope (the caller prepends
     /// the scope prefix). There is no search.
     pub fn resolve(&self, query: &[String]) -> Option<String> {
         let joined = query.join(".");

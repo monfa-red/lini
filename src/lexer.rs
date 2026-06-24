@@ -1,4 +1,4 @@
-use crate::ast::{LineStyle, WireMarker, WireOp};
+use crate::ast::{LineStyle, LinkMarker, LinkOp};
 use crate::error::Error;
 use crate::span::Span;
 
@@ -25,7 +25,7 @@ pub enum TokKind {
     LBracket,
     RBracket,
 
-    WireOp(WireOp),
+    LinkOp(LinkOp),
 
     Newline,
 }
@@ -99,9 +99,9 @@ impl<'a> Lexer<'a> {
                     if self.peek(1).is_some_and(|c| c.is_ascii_digit()) {
                         self.lex_number()?;
                     } else if self.peek(1) == Some(b'.') {
-                        // `..` is the dotted wire line; a single `.` is a path /
+                        // `..` is the dotted link line; a single `.` is a path /
                         // class / side separator.
-                        self.lex_wire_op()?;
+                        self.lex_link_op()?;
                     } else {
                         self.push_punct(TokKind::Dot, 1);
                     }
@@ -118,10 +118,10 @@ impl<'a> Lexer<'a> {
                     self.lex_number()?;
                 }
                 b'+' => self.lex_number()?,
-                // Wire-op starts: any of these characters can begin a wire op.
-                b'-' | b'~' | b'<' | b'>' => self.lex_wire_op()?,
-                // `*` is a wire-op start marker only when followed by a line char.
-                b'*' if self.peek(1).is_some_and(is_wire_line_start) => self.lex_wire_op()?,
+                // Link-op starts: any of these characters can begin a link op.
+                b'-' | b'~' | b'<' | b'>' => self.lex_link_op()?,
+                // `*` is a link-op start marker only when followed by a line char.
+                b'*' if self.peek(1).is_some_and(is_link_line_start) => self.lex_link_op()?,
                 d if d.is_ascii_digit() => self.lex_number()?,
                 c if is_ident_start(c) => self.lex_ident(),
                 _ => {
@@ -317,16 +317,16 @@ impl<'a> Lexer<'a> {
         });
     }
 
-    // ─────────────────────── Wire ops ───────────────────────
+    // ─────────────────────── Link ops ───────────────────────
     //
-    // A wire op is `[start_marker?][line][end_marker?]`, all glued together
+    // A link op is `[start_marker?][line][end_marker?]`, all glued together
     // with no whitespace. Start markers (`<`,`>`,`*`,`<>`) translate to
-    // different `WireMarker` kinds than end markers — `<` at start is Arrow,
+    // different `LinkMarker` kinds than end markers — `<` at start is Arrow,
     // `<` at end is Crow, and vice versa. Position discriminates.
     //
     // The line component is required; if no line is consumed, lexing fails.
 
-    fn lex_wire_op(&mut self) -> Result<(), Error> {
+    fn lex_link_op(&mut self) -> Result<(), Error> {
         let start_i = self.i;
         let mut p = self.i;
 
@@ -337,7 +337,7 @@ impl<'a> Lexer<'a> {
                 return Err(Error::at(
                     Span::new(start_i, p.max(start_i + 1)),
                     format!(
-                        "expected wire-op line after '{}'",
+                        "expected link-op line after '{}'",
                         &self.src[start_i..p.max(start_i + 1)]
                     ),
                 ));
@@ -348,33 +348,33 @@ impl<'a> Lexer<'a> {
         // Reject the no-op case: a lone `--` followed by ident-start should have
         // been caught earlier as a RawCssVar. But a stray `--name` reached here
         // is an error (unreachable in practice).
-        let op = WireOp { line, start, end };
+        let op = LinkOp { line, start, end };
         let span = Span::new(start_i, p);
         self.tokens.push(Token {
-            kind: TokKind::WireOp(op),
+            kind: TokKind::LinkOp(op),
             span,
         });
         self.i = p;
         Ok(())
     }
 
-    fn consume_marker(&self, p: &mut usize, side: MarkerSide) -> WireMarker {
+    fn consume_marker(&self, p: &mut usize, side: MarkerSide) -> LinkMarker {
         // Try `<>` first (longest match).
         if self.bytes.get(*p) == Some(&b'<') && self.bytes.get(*p + 1) == Some(&b'>') {
             *p += 2;
-            return WireMarker::Diamond;
+            return LinkMarker::Diamond;
         }
         let c = match self.bytes.get(*p) {
             Some(&c) => c,
-            None => return WireMarker::None,
+            None => return LinkMarker::None,
         };
         let marker = match (c, side) {
-            (b'<', MarkerSide::Start) => WireMarker::Arrow,
-            (b'<', MarkerSide::End) => WireMarker::Crow,
-            (b'>', MarkerSide::Start) => WireMarker::Crow,
-            (b'>', MarkerSide::End) => WireMarker::Arrow,
-            (b'*', _) => WireMarker::Dot,
-            _ => return WireMarker::None,
+            (b'<', MarkerSide::Start) => LinkMarker::Arrow,
+            (b'<', MarkerSide::End) => LinkMarker::Crow,
+            (b'>', MarkerSide::Start) => LinkMarker::Crow,
+            (b'>', MarkerSide::End) => LinkMarker::Arrow,
+            (b'*', _) => LinkMarker::Dot,
+            _ => return LinkMarker::None,
         };
         *p += 1;
         marker
@@ -417,7 +417,7 @@ enum MarkerSide {
     End,
 }
 
-fn is_wire_line_start(c: u8) -> bool {
+fn is_link_line_start(c: u8) -> bool {
     matches!(c, b'-' | b'~' | b'.')
 }
 

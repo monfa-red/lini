@@ -1,5 +1,5 @@
 // The hard scene — a contended 3×3 layout: a fanned hub, bundled rails,
-// detours, forced sides, a parent→child wire, and a forced outer pair.
+// detours, forced sides, a parent→child link, and a forced outer pair.
 
 {
   layout: grid; columns: repeat(3); gap: 30;

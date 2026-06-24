@@ -3,10 +3,10 @@
 //! so non-browser renderers (which skip `@layer`) parse them, and scoped under
 //! `.lini` so an SVG inlined into a host document restyles nothing else.
 //!
-//! Constants that used to inline on every element ride a class instead: wire
-//! labels (`.lini-wire-label`, mirroring `.lini-text`) and markers
-//! (`.lini-marker` — `fill` the wire stroke, `stroke: none`). A marker whose
-//! wire is recoloured states its own `fill`; the stroked crow flips to
+//! Constants that used to inline on every element ride a class instead: link
+//! labels (`.lini-link-label`, mirroring `.lini-text`) and markers
+//! (`.lini-marker` — `fill` the link stroke, `stroke: none`). A marker whose
+//! link is recoloured states its own `fill`; the stroked crow flips to
 //! `fill: none; stroke: inherit` via `.lini-marker-crow`, pulling the line's
 //! paint off the enclosing `<g>`.
 
@@ -117,7 +117,7 @@ impl RuleSet {
 
 /// Build the document's structural rules: root inherited-text rule, per-shape
 /// paint defaults (only shapes present), built-in template looks, user shape
-/// defs, `.style` defs (definition order), and the wire/marker defaults.
+/// defs, `.style` defs (definition order), and the link/marker defaults.
 pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
     let vars = &laid.vars;
     let live = |name: &str| {
@@ -144,17 +144,17 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
             &mut has_crow,
         );
     }
-    // Wires carry styles too (same class surface as nodes), so a style used
-    // only by a wire still emits its rule.
-    for wire in &laid.wires {
-        for style in &wire.applied_styles {
+    // Links carry styles too (same class surface as nodes), so a style used
+    // only by a link still emits its rule.
+    for link in &laid.links {
+        for style in &link.applied_styles {
             used_styles.insert(style.as_str());
         }
         has_markers |=
-            wire.markers.start != MarkerKind::None || wire.markers.end != MarkerKind::None;
-        has_crow |= wire.markers.start == MarkerKind::Crow || wire.markers.end == MarkerKind::Crow;
+            link.markers.start != MarkerKind::None || link.markers.end != MarkerKind::None;
+        has_crow |= link.markers.start == MarkerKind::Crow || link.markers.end == MarkerKind::Crow;
     }
-    let has_labels = laid.wires.iter().any(|w| !w.texts.is_empty());
+    let has_labels = laid.links.iter().any(|w| !w.texts.is_empty());
 
     let mut rules: Vec<Rule> = Vec::new();
 
@@ -282,14 +282,14 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
         }
     }
 
-    // Wires: the `|wire|` defaults stated once. Emitted *before* the style
-    // rules — it is the wire's default layer (like a shape rule for a node), so
-    // a wire's `.style` class overrides it in the cascade (SPEC §13).
-    if !laid.wires.is_empty() || !laid.airwires.is_empty() {
-        // The wire path's paint, in a fixed order (fill, stroke, width, dash) so a
+    // Links: the `|link|` defaults stated once. Emitted *before* the style
+    // rules — it is the link's default layer (like a shape rule for a node), so
+    // a link's `.style` class overrides it in the cascade (SPEC §13).
+    if !laid.links.is_empty() || !laid.strays.is_empty() {
+        // The link path's paint, in a fixed order (fill, stroke, width, dash) so a
         // `-> { }` that overrides only some props still emits a stable rule. Font
         // props from the defaults style labels, not the `<path>`, so they're dropped.
-        let defaults = &laid.sheet.wire_defaults;
+        let defaults = &laid.sheet.link_defaults;
         let dp = paint_props(defaults, vars, opts);
         let from_defaults = |p: &str| dp.iter().find(|(k, _)| k == p).map(|(_, v)| v.clone());
         let mut props = vec![
@@ -315,60 +315,60 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
             }
         }
         rules.push(Rule {
-            class: "lini-wire".into(),
+            class: "lini-link".into(),
             props,
         });
 
         // Line styles (`--` dashed / `..` dotted from the operator, or an
-        // explicit `stroke-style:`) ride a `lini-wire-{style}` class so the dash
-        // pattern is stated once, not inlined on every wire — exactly as a
-        // shape's stroke rides its class. The pattern bakes the wire default
-        // `stroke-width`; a wire that overrides the width inlines its own
-        // pattern via the cascade diff in `render_wire`.
-        let wire_width = laid
+        // explicit `stroke-style:`) ride a `lini-link-{style}` class so the dash
+        // pattern is stated once, not inlined on every link — exactly as a
+        // shape's stroke rides its class. The pattern bakes the link default
+        // `stroke-width`; a link that overrides the width inlines its own
+        // pattern via the cascade diff in `render_link`.
+        let link_width = laid
             .sheet
-            .wire_defaults
+            .link_defaults
             .number("stroke-width")
             .unwrap_or(0.0);
-        let mut wire_styles: BTreeSet<&str> = BTreeSet::new();
-        for w in &laid.wires {
+        let mut link_styles: BTreeSet<&str> = BTreeSet::new();
+        for w in &laid.links {
             if let Some(ResolvedValue::Ident(s)) = w.attrs.get("stroke-style")
                 && (s == "dashed" || s == "dotted")
             {
-                wire_styles.insert(s.as_str());
+                link_styles.insert(s.as_str());
             }
         }
-        for style in wire_styles {
+        for style in link_styles {
             rules.push(Rule {
-                class: format!("lini-wire-{style}"),
+                class: format!("lini-link-{style}"),
                 props: vec![(
                     "stroke-dasharray".into(),
-                    super::values::dash_pattern(style, wire_width),
+                    super::values::dash_pattern(style, link_width),
                 )],
             });
         }
     }
 
-    // Wire labels: the constant `<text>` paint stated once (mirrors `.lini-text`),
-    // plus the baked wire font size. A label that overrides any of these inlines
+    // Link labels: the constant `<text>` paint stated once (mirrors `.lini-text`),
+    // plus the baked link font size. A label that overrides any of these inlines
     // the difference via `style=`.
     if has_labels {
-        let wfs = laid.sheet.wire_defaults.number("font-size").unwrap_or(11.0);
+        let wfs = laid.sheet.link_defaults.number("font-size").unwrap_or(11.0);
         rules.push(Rule {
-            class: "lini-wire-label".into(),
+            class: "lini-link-label".into(),
             props: vec![
                 ("fill".into(), "currentColor".into()),
                 ("stroke".into(), "none".into()),
                 ("text-anchor".into(), "middle".into()),
                 ("dominant-baseline".into(), "central".into()),
                 ("font-size".into(), format!("{}px", super::values::num(wfs))),
-                ("font-weight".into(), live("wire-font-weight")),
+                ("font-weight".into(), live("link-font-weight")),
             ],
         });
         // The label cut's mask rects state their fill/stroke as CSS, not inline —
-        // so the wire's own `stroke` can't bleed into the luminance mask, and the
+        // so the link's own `stroke` can't bleed into the luminance mask, and the
         // SVG stays free of per-label paint attrs (SPEC §13). White shows the
-        // wire, a black box per label punches the hole.
+        // link, a black box per label punches the hole.
         rules.push(Rule {
             class: "lini-cut-bg".into(),
             props: vec![
@@ -385,7 +385,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
         });
     }
 
-    // Markers: fill follows the wire stroke (the common default stated once),
+    // Markers: fill follows the link stroke (the common default stated once),
     // `stroke: none` for the filled heads. The crow flips this below.
     if has_markers {
         rules.push(Rule {
@@ -398,7 +398,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
     }
 
     // Class rules in source order — the stylesheet's `.name { }` rules shipped
-    // as CSS. After the shape/wire default rules, so a class overrides a default.
+    // as CSS. After the shape/link default rules, so a class overrides a default.
     for (name, attrs) in &laid.sheet.class_rules {
         if name.starts_with("lini-") || !used_styles.contains(name.as_str()) {
             continue;
@@ -441,7 +441,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
 }
 
 /// The stroke colour an element actually paints with — its inline `stroke`,
-/// else what its classes get from the sheet (`.lini-style-*`, `.lini-wire`),
+/// else what its classes get from the sheet (`.lini-style-*`, `.lini-link`),
 /// else the `--lini-stroke` default. A crow marker fills no descendant rule
 /// (it is stroked, not filled), so it resolves its colour through this.
 pub fn effective_stroke(
@@ -590,11 +590,11 @@ mod tests {
     }
 
     #[test]
-    fn wire_rule_states_defaults() {
+    fn link_rule_states_defaults() {
         let css = emit_str(&rules_for("a -> b\n"));
         assert!(
             css.contains(
-                ".lini .lini-wire { fill: none; stroke: var(--lini-stroke); stroke-width: 2; stroke-dasharray: none; }"
+                ".lini .lini-link { fill: none; stroke: var(--lini-stroke); stroke-width: 2; stroke-dasharray: none; }"
             ),
             "{}",
             css
@@ -616,18 +616,18 @@ mod tests {
     }
 
     #[test]
-    fn wire_label_rule_states_constants() {
+    fn link_label_rule_states_constants() {
         let css = emit_str(&rules_for("a -> b \"x\"\n"));
         assert!(
             css.contains(
-                ".lini .lini-wire-label { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; font-size: 11px; font-weight: var(--lini-wire-font-weight); }"
+                ".lini .lini-link-label { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; font-size: 11px; font-weight: var(--lini-link-font-weight); }"
             ),
             "{}",
             css
         );
         // No labels, no rule.
         let plain = emit_str(&rules_for("a -> b\n"));
-        assert!(!plain.contains("lini-wire-label"), "{}", plain);
+        assert!(!plain.contains("lini-link-label"), "{}", plain);
     }
 
     #[test]

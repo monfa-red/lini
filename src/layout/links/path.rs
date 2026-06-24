@@ -3,9 +3,9 @@
 //! Multi-source, multi-target Dijkstra with the lexicographic cost
 //! `(crossings, length, turns)` — never a weighted blend. Crossings are
 //! supplied by the caller as a segment-counting callback: zero in the
-//! initial pass (WIRING §Model step 4 routes by `(length, turns)`), the
-//! transversal count against every drawn wire in the audit's retries
-//! (§Model step 6 — a wire always detours rather than crosses). Lengths are
+//! initial pass (LINKING §Model step 4 routes by `(length, turns)`), the
+//! transversal count against every drawn link in the audit's retries
+//! (§Model step 6 — a link always detours rather than crosses). Lengths are
 //! L1 distances through cell centres (exact ordinates land in the runs
 //! stage); every tie breaks on discrete ids. Entries are **punch stubs**: a
 //! straight perpendicular run from the side's port through any transparent
@@ -19,7 +19,7 @@ use super::rect::Rect;
 use crate::ast::Side;
 
 /// One way into the graph: a side's port on the node boundary and the stub
-/// tip where the wire reaches the world's free space.
+/// tip where the link reaches the world's free space.
 #[derive(Clone, Copy, Debug)]
 pub struct Entry {
     pub side: Side,
@@ -144,9 +144,9 @@ impl Cost {
     }
 }
 
-/// The crossing callback: how many drawn wires intrude transversally into a
+/// The crossing callback: how many drawn links intrude transversally into a
 /// corridor band swept along `axis`. The band is the whole channel cross-
-/// section, not one lane — ordinates are assigned later, so any wire cutting
+/// section, not one lane — ordinates are assigned later, so any link cutting
 /// into the band may have to be crossed.
 pub type CrossCount<'a> = &'a dyn Fn(Rect, Axis) -> u32;
 
@@ -350,7 +350,7 @@ pub fn shortest(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::layout::wires::graph::ChannelGraph;
+    use crate::layout::links::graph::ChannelGraph;
 
     const BOUNDS: Rect = Rect {
         x0: 0.0,

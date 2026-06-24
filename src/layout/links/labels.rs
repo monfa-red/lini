@@ -1,14 +1,14 @@
-//! Wire labels (WIRING §Model step 7, SPEC §9): a label rides its wire at an
+//! Link labels (LINKING §Model step 7, SPEC §9): a label rides its link at an
 //! auto-distributed anchor or an explicit `along:` fraction of its statement's
 //! whole drawn route, shifted by `translate: x y` in world coords (the same
-//! nudge as on any node). A label is an obstacle to nothing and the wire never
-//! moves for it — but the label may slide along the wire to dodge node
-//! bodies, node labels, and other wire labels.
+//! nudge as on any node). A label is an obstacle to nothing and the link never
+//! moves for it — but the label may slide along the link to dodge node
+//! bodies, node labels, and other link labels.
 
 use super::bundle::EdgeReq;
 use super::rect::Rect;
 use super::scene::SceneIndex;
-use crate::layout::ir::{RoutedText, RoutedWire};
+use crate::layout::ir::{RoutedLink, RoutedText};
 use crate::layout::text::{approx_height, approx_width};
 use crate::resolve::{Along, Program, ResolvedText, ResolvedValue};
 use crate::span::Span;
@@ -19,13 +19,13 @@ const MARGIN: f64 = 2.0;
 const STEP: f64 = 4.0;
 const STEPS: usize = 40;
 
-/// Place every wire statement's texts onto its drawn segments.
-/// `req_of[k]` is the request behind `wires[k]`; statements are re-walked
+/// Place every link statement's texts onto its drawn segments.
+/// `req_of[k]` is the request behind `links[k]`; statements are re-walked
 /// exactly as [`super::bundle::requests`] numbered them, so a chain's
 /// segments concatenate in declaration order and the label's anchor is a
 /// fraction of the whole drawn route.
 pub fn place(
-    wires: &mut [RoutedWire],
+    links: &mut [RoutedLink],
     req_of: &[usize],
     reqs: &[EdgeReq],
     program: &Program,
@@ -35,7 +35,7 @@ pub fn place(
     let mut placed: Vec<Rect> = Vec::new();
     let mut stmt_ids: Vec<Span> = Vec::new();
     let mut expansions: Vec<usize> = Vec::new();
-    for w in &program.wires {
+    for w in &program.links {
         let stmt = match stmt_ids.iter().position(|s| *s == w.span) {
             Some(i) => i,
             None => {
@@ -49,14 +49,14 @@ pub fn place(
         if w.texts.is_empty() {
             continue;
         }
-        let mut segs: Vec<usize> = (0..wires.len())
+        let mut segs: Vec<usize> = (0..links.len())
             .filter(|&k| {
                 let r = &reqs[req_of[k]];
                 r.stmt == stmt && r.expansion == expansion
             })
             .collect();
         segs.sort_by_key(|&k| reqs[req_of[k]].seg);
-        let lens: Vec<f64> = segs.iter().map(|&k| arc_len(&wires[k].path)).collect();
+        let lens: Vec<f64> = segs.iter().map(|&k| arc_len(&links[k].path)).collect();
         let total: f64 = lens.iter().sum();
         if total <= 0.0 {
             continue;
@@ -88,7 +88,7 @@ pub fn place(
             // A label rides on the line; lift it off with `translate: x y` — a
             // world-frame nudge, the same as on any node (SPEC §6/§9).
             let spot = |s: f64| {
-                let (p, tan, si) = at_arc(wires, &segs, &lens, s);
+                let (p, tan, si) = at_arc(links, &segs, &lens, s);
                 ((p.0 + tx, p.1 + ty), tan, si)
             };
             let boxed = |pos: (f64, f64)| {
@@ -120,7 +120,7 @@ pub fn place(
             }
             let (pos, tangent, si) = chosen.unwrap_or_else(|| spot(s0));
             placed.push(boxed(pos));
-            wires[segs[si]].texts.push(RoutedText {
+            links[segs[si]].texts.push(RoutedText {
                 content: t.text.clone(),
                 position: pos,
                 tangent,
@@ -172,7 +172,7 @@ fn arc_len(poly: &[(f64, f64)]) -> f64 {
 /// concatenated segments, and which segment it landed in. Gaps between a
 /// chain's segments (separate ports) contribute no length.
 fn at_arc(
-    wires: &[RoutedWire],
+    links: &[RoutedLink],
     segs: &[usize],
     lens: &[f64],
     s: f64,
@@ -183,7 +183,7 @@ fn at_arc(
             rem -= lens[si];
             continue;
         }
-        let poly = &wires[k].path;
+        let poly = &links[k].path;
         let n = poly.len().saturating_sub(1);
         for (j, seg) in poly.windows(2).enumerate() {
             let (dx, dy) = (seg[1].0 - seg[0].0, seg[1].1 - seg[0].1);
@@ -201,7 +201,7 @@ fn at_arc(
     }
     // Unreachable for total > 0; a degenerate route anchors at its start.
     let k = segs[0];
-    let p = wires[k].path[0];
+    let p = links[k].path[0];
     (p, (1.0, 0.0), 0)
 }
 

@@ -1,10 +1,10 @@
-//! Layout feedback for gap growth (WIRING §Impossible
-//! layouts): why did a wire stay impossible, and which corridors are short?
+//! Layout feedback for gap growth (LINKING §Impossible
+//! layouts): why did a link stay impossible, and which corridors are short?
 //!
 //! After every lever has run, each reported-impossible bundle is probed —
 //! one more route search with sharing unlocked, observed rather than acted
 //! on. The probe classifies the failure: an end no stub can reach is
-//! **walled** (an airwire — no width grows a sealed face open), and a
+//! **walled** (a stray — no width grows a sealed face open), and a
 //! search that hit channels short of lanes names a **corridor deficit** —
 //! the one case the layout may repair, by growing the named containers'
 //! gaps by exactly the missing lanes' worth. Port starvation never

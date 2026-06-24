@@ -1,4 +1,4 @@
-//! Scene model — dot-path → absolute rect, and per-wire solidity.
+//! Scene model — dot-path → absolute rect, and per-link solidity.
 //!
 //! `PlacedNode.cx/cy` are parent-relative and `bbox` is node-local, so absolute
 //! rects accumulate offsets down the tree. Every node is indexed: id'd shapes
@@ -101,9 +101,9 @@ impl SceneIndex {
             && inner.as_bytes()[outer.len()] == b'.'
     }
 
-    /// The routing world of a wire `a → b`: the innermost container whose
+    /// The routing world of a link `a → b`: the innermost container whose
     /// interior holds both ends (`""` = the scene root). An endpoint that is
-    /// itself the container maps to its own interior (containment wires).
+    /// itself the container maps to its own interior (containment links).
     pub fn world_of(a: &str, b: &str) -> String {
         if Self::contains(a, b) {
             return a.to_owned();
@@ -134,9 +134,9 @@ impl SceneIndex {
     }
 
     /// Every visually solid rect — labels, and bodies without body
-    /// children. A container's rect covers its open interior, where wires
+    /// children. A container's rect covers its open interior, where links
     /// (and their labels) legitimately live, so containers are excluded
-    /// while their own title labels still count. The obstacle set a wire
+    /// while their own title labels still count. The obstacle set a link
     /// label dodges.
     pub fn obstacle_rects(&self) -> Vec<Rect> {
         self.nodes
@@ -165,7 +165,7 @@ impl SceneIndex {
         ids.iter().map(|&i| self.nodes[i].rect).collect()
     }
 
-    /// The solid rects a wire between `endpoints` must avoid. Endpoints and
+    /// The solid rects a link between `endpoints` must avoid. Endpoints and
     /// their ancestors are passable (ancestors expose their interiors — labels
     /// included); every other body is solid and collapses to one rect, its
     /// subtree swallowed. A label inside an endpoint's own body is exempt.
@@ -322,8 +322,8 @@ mod tests {
 
     #[test]
     fn labels_block_inside_transparent_ancestors_but_not_inside_endpoints() {
-        // garden{ label, dog, bird } — wiring dog→bird must avoid the label;
-        // wiring garden→garden must not see its own inner label.
+        // garden{ label, dog, bird } — linking dog→bird must avoid the label;
+        // linking garden→garden must not see its own inner label.
         let label = node(None, ShapeKind::Text, 0.0, -25.0, 40.0, 10.0, Vec::new());
         let dog = rect_node("dog", -15.0, 5.0, 20.0, 10.0);
         let bird = rect_node("bird", 15.0, 5.0, 20.0, 10.0);

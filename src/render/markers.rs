@@ -1,5 +1,5 @@
 //! Marker geometry (arrow / dot / diamond / crow). Shared between inline
-//! `|line|` primitives and wire rendering.
+//! `|line|` primitives and link rendering.
 
 use super::values::num;
 use crate::layout::PlacedNode;
@@ -42,9 +42,9 @@ pub fn emit_inline_markers(
 /// pointing into the shape. The line itself stops short (see
 /// `shorten_for_markers`) so the marker body still covers its end. Filled
 /// markers (arrow / diamond / dot) get `stroke: none` from the `.lini-marker`
-/// rule: their size is the `points`/`r` geometry alone, never the wire's
+/// rule: their size is the `points`/`r` geometry alone, never the link's
 /// `stroke-width` inherited off the `<g>` — which used to balloon the head and
-/// shove its tip into the shape as the wire thickened. Wires then nudge the tip
+/// shove its tip into the shape as the link thickened. Links then nudge the tip
 /// a fixed [`MARKER_OVERLAP`] into the shape so the head reads as connected at
 /// any thickness.
 pub fn marker_anchor(
@@ -65,7 +65,7 @@ pub fn marker_anchor(
 
 /// Marker scales gently with line thickness, with a small floor so thin lines
 /// still get a visible head — 5 gives a 1 px line a clear arrow, and a 4× slope
-/// keeps thicker wires' heads in proportion without chunking.
+/// keeps thicker links' heads in proportion without chunking.
 pub fn marker_size(thickness: f64) -> f64 {
     5.0_f64.max(thickness * 4.0)
 }
@@ -79,7 +79,7 @@ const DOT_RADIUS: f64 = 0.375;
 /// drawn tip lands on the endpoint, level with the other tips. `1 / (2·sin(atan 0.5))`.
 const CROW_MITER: f64 = 1.118034;
 
-/// How far a wire's marker tip is pushed past the endpoint into the shape, so the
+/// How far a link's marker tip is pushed past the endpoint into the shape, so the
 /// head overlaps the border by a hair and reads as connected — constant at every
 /// `stroke-width` (the line-end shortening absorbs the same shift). `|line|`
 /// markers don't use it: a bare line has no shape to meet.
@@ -100,7 +100,7 @@ pub fn line_inset(kind: MarkerKind, thickness: f64) -> f64 {
 /// Pull a polyline's marker-bearing ends back so the drawn line stops where the
 /// marker body begins, not at its tip — otherwise the stroke poked through the
 /// arrowhead. `overlap` is how far the tip is nudged past the endpoint
-/// ([`MARKER_OVERLAP`] for a wire meeting a shape, `0` for a bare `|line|` whose
+/// ([`MARKER_OVERLAP`] for a link meeting a shape, `0` for a bare `|line|` whose
 /// tip sits on the endpoint). Markers still draw at the original endpoints.
 pub fn shorten_for_markers(
     path: &[(f64, f64)],
@@ -142,7 +142,7 @@ fn pulled_back(inner: (f64, f64), endpoint: (f64, f64), amount: f64) -> Option<(
 }
 
 /// A dot marker's centre: pulled back from the tip (on the shape edge) by its
-/// radius along the wire, so the circle sits fully on the wire side — tangent to
+/// radius along the link, so the circle sits fully on the link side — tangent to
 /// the edge, never poking into the shape.
 pub fn dot_center(tip: (f64, f64), direction: (f64, f64), size: f64) -> (f64, f64) {
     let r = size * DOT_RADIUS;
@@ -151,7 +151,7 @@ pub fn dot_center(tip: (f64, f64), direction: (f64, f64), size: f64) -> (f64, f6
 
 /// Paint a marker. Filled heads (arrow / diamond / dot) take their `fill` and
 /// `stroke: none` from CSS — the base `.lini-marker` rule, or a
-/// `.lini-style-* .lini-marker` descendant rule when the wire/line carries a
+/// `.lini-style-* .lini-marker` descendant rule when the link/line carries a
 /// recolouring class. They inline `fill` (via `style=`, to beat those rules)
 /// only for a *direct* inline `stroke:`, which no class rule can target
 /// (`inline`). The crow is stroked, not filled: it paints entirely via the
@@ -262,10 +262,10 @@ mod tests {
     use super::*;
 
     #[test]
-    fn dot_sits_tangent_to_the_edge_on_the_wire_side() {
+    fn dot_sits_tangent_to_the_edge_on_the_link_side() {
         // tip on the shape edge, direction pointing into the shape (+x here). The dot
         // centre is pulled back by its radius, so its leading edge lands exactly on
-        // the tip (no overshoot) and the whole circle is on the wire side.
+        // the tip (no overshoot) and the whole circle is on the link side.
         let size = marker_size(1.0);
         let r = size * DOT_RADIUS;
         let (cx, cy) = dot_center((100.0, 50.0), (1.0, 0.0), size);

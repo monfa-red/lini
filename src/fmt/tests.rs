@@ -152,29 +152,29 @@ fn a_comment_breaks_a_declaration_group_and_forces_a_block() {
 }
 
 #[test]
-fn simple_wire() {
+fn simple_link() {
     assert_eq!(fmt("a -> b\n"), "a -> b\n");
 }
 
 #[test]
-fn wire_label_trails() {
+fn link_label_trails() {
     assert_eq!(fmt("a -> b \"x\"\n"), "a -> b \"x\"\n");
 }
 
 #[test]
-fn wire_fan_and_chain() {
+fn link_fan_and_chain() {
     assert_eq!(fmt("a & b -> c\n"), "a & b -> c\n");
     assert_eq!(fmt("a -> b -> c\n"), "a -> b -> c\n");
 }
 
 #[test]
-fn dotted_wire_op() {
+fn dotted_link_op() {
     assert_eq!(fmt("a ..> b\n"), "a ..> b\n");
     assert_eq!(fmt("a .. b\n"), "a .. b\n");
 }
 
 #[test]
-fn wire_defaults_rule_uses_the_arrow_glyph() {
+fn link_defaults_rule_uses_the_arrow_glyph() {
     assert_eq!(
         fmt("{-> {clearance:8}}\na -> b\n"),
         "{\n  -> { clearance: 8; }\n}\n\na -> b\n"
@@ -182,13 +182,13 @@ fn wire_defaults_rule_uses_the_arrow_glyph() {
 }
 
 #[test]
-fn wire_class_and_labels_with_along() {
+fn link_class_and_labels_with_along() {
     assert_eq!(
         fmt("a -> b {along:0.3 0.7}\"near a\" \"near b\"\n"),
         "a -> b { along: 0.3 0.7; } \"near a\" \"near b\"\n"
     );
     assert_eq!(fmt("a -> b .loud\n"), "a -> b .loud\n");
-    // A spaced wire-class chain normalizes to glued, like a node's.
+    // A spaced link-class chain normalizes to glued, like a node's.
     assert_eq!(fmt("a -> b .c1 .c2\n"), "a -> b .c1.c2\n");
 }
 

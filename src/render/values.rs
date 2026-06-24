@@ -139,8 +139,8 @@ pub fn attr_points(attrs: &AttrMap, name: &str) -> Option<Vec<(f64, f64)>> {
 
 /// The `stroke-dasharray` pattern for `stroke-style: dashed|dotted` (sized
 /// against `stroke-width`), or empty for solid. `wavy` also returns empty — its
-/// stroke is solid, the wave living in the wire geometry ([`super::wavy`]); on a
-/// shape it stays solid (deferred, SPEC §19). Shared by shapes, wires, and the
+/// stroke is solid, the wave living in the link geometry ([`super::wavy`]); on a
+/// shape it stays solid (deferred, SPEC §19). Shared by shapes, links, and the
 /// rules builder.
 pub fn dasharray_value(attrs: &AttrMap, width: f64) -> String {
     match attrs.get("stroke-style") {
@@ -152,7 +152,7 @@ pub fn dasharray_value(attrs: &AttrMap, width: f64) -> String {
 /// The `stroke-dasharray` for a named line style at `width`, empty for any style
 /// without a dash (`solid`, `wavy`). Sized against `stroke-width` so the pattern
 /// stays proportional as a line thickens. Shared by the inline diff and the
-/// `lini-wire-*` class rules so both speak the same pattern.
+/// `lini-link-*` class rules so both speak the same pattern.
 pub fn dash_pattern(style: &str, width: f64) -> String {
     match style {
         "dashed" => format!("{},{}", num(width * 4.0), num(width * 4.0)),

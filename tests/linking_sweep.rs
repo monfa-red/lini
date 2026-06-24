@@ -1,5 +1,5 @@
 //! The clearance sweep (PLAN §Test strategy): `clearance` is the one routing
-//! knob, and turning it must never break a law or lose a wire silently — at
+//! knob, and turning it must never break a law or lose a link silently — at
 //! every swept value the laws hold on everything drawn and every declared
 //! edge is drawn or reported impossible. A denser clearance may legitimately
 //! shrink the drawable set; it may never produce illegal geometry. The sweep
@@ -22,8 +22,8 @@ fn sample_paths() -> Vec<PathBuf> {
 }
 
 /// Completeness across the sweep (Phase 6): turning the clearance knob must
-/// never starve a wire while legal geometry remains. The raw router (no gap
-/// growth) owns all of `wires_simple` and `wires_medium` through clearance
+/// never starve a link while legal geometry remains. The raw router (no gap
+/// growth) owns all of `links_simple` and `links_medium` through clearance
 /// 10; past that, medium's corridors genuinely lack lanes — completing the
 /// rest of the sweep is gap growth's job and gated by Phase 8, not here.
 #[test]
@@ -32,28 +32,28 @@ fn completeness_holds_where_the_raw_router_owns_it() {
         let src = std::fs::read_to_string(format!("samples/{name}.lini")).expect("read sample");
         let laid = lini::testing::route_sample_raw(&src, c);
         assert_eq!(
-            laid.wires.len(),
+            laid.links.len(),
             lini::testing::declared_edges(&src),
             "{name} at clearance {c}: every declared edge must draw"
         );
     };
     for c in CLEARANCES {
-        complete("wires_simple", c);
+        complete("links_simple", c);
     }
     for c in [6.0, 8.0, 10.0] {
-        complete("wires_medium", c);
+        complete("links_medium", c);
     }
 }
 
 /// Gap growth's gate (Phase 8, re-derived for Phase 8½): where the raw
 /// router honestly runs out of corridor lanes, growth makes room — every
-/// wiring scene draws every declared edge at every sweep clearance.
-/// (`wires_medium` at clearance 16 was pinned at 13/14 + one airwire until
+/// linking scene draws every declared edge at every sweep clearance.
+/// (`links_medium` at clearance 16 was pinned at 13/14 + one stray until
 /// Phase 9: the separation audit's best-of-round repair selection found the
 /// lawful mesh the first-accept greedy walked past.)
 #[test]
 fn growth_completes_the_scenes_across_the_sweep() {
-    for name in ["wires_simple", "wires_medium", "wires_hard"] {
+    for name in ["links_simple", "links_medium", "links_hard"] {
         let src = std::fs::read_to_string(format!("samples/{name}.lini")).expect("read sample");
         let declared = lini::testing::declared_edges(&src);
         for c in CLEARANCES {
@@ -64,11 +64,11 @@ fn growth_completes_the_scenes_across_the_sweep() {
                 .collect();
             assert!(breaches.is_empty(), "{name} at clearance {c}: {breaches:?}");
             assert_eq!(
-                laid.wires.len(),
+                laid.links.len(),
                 declared,
                 "{name} at clearance {c}: growth must complete the scene"
             );
-            assert!(laid.airwires.is_empty(), "{name} at clearance {c}");
+            assert!(laid.strays.is_empty(), "{name} at clearance {c}");
         }
     }
 }
@@ -92,7 +92,7 @@ fn every_sample_holds_the_laws_at_every_clearance() {
             );
             let impossible = report.iter().filter(|v| v.rule == Rule::Impossible).count();
             assert_eq!(
-                laid.wires.len() + impossible,
+                laid.links.len() + impossible,
                 declared,
                 "{} at clearance {c}: every edge must be drawn or reported",
                 path.display()

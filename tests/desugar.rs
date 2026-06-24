@@ -1,6 +1,6 @@
 //! `lini desugar` lowers ALL sugar to primitives + `.lini-*` classes: typed
 //! instances become primitives wearing their `.lini-*` chain, templates/defines
-//! collapse into generated class defs, scene/wire defaults fill the global block,
+//! collapse into generated class defs, scene/link defaults fill the global block,
 //! and labels / `along:` become explicit. The lowered form is a fixed point.
 
 use lini::desugar_source;
@@ -59,10 +59,10 @@ fn define_body_inlines_and_the_define_vanishes() {
 }
 
 #[test]
-fn scene_and_wire_defaults_land_in_the_global_block() {
+fn scene_and_link_defaults_land_in_the_global_block() {
     let out = desugar_source("a -> b \"w\"\n").unwrap();
     assert!(out.contains("padding: 20;"), "scene defaults: {out}");
-    assert!(out.contains("clearance: 16;"), "wire defaults: {out}");
+    assert!(out.contains("clearance: 16;"), "link defaults: {out}");
     assert!(
         out.contains("a |box| .lini-box [ \"a\" ]"),
         "auto-create: {out}"
@@ -71,20 +71,20 @@ fn scene_and_wire_defaults_land_in_the_global_block() {
 }
 
 #[test]
-fn the_wire_block_appears_only_when_a_wire_exists() {
-    // A wireless diagram carries no `-> { }` block — nothing would consume it.
-    let wireless = desugar_source("\"hello\"\n").unwrap();
+fn the_link_block_appears_only_when_a_link_exists() {
+    // A linkless diagram carries no `-> { }` block — nothing would consume it.
+    let linkless = desugar_source("\"hello\"\n").unwrap();
     assert!(
-        !wireless.contains("->"),
-        "no wire → no wire block: {wireless}"
+        !linkless.contains("->"),
+        "no link → no link block: {linkless}"
     );
     assert!(
-        !wireless.contains("clearance"),
-        "no wire defaults: {wireless}"
+        !linkless.contains("clearance"),
+        "no link defaults: {linkless}"
     );
-    // The moment a wire appears, the defaults return.
-    let wired = desugar_source("a -> b\n").unwrap();
-    assert!(wired.contains("clearance: 16;"), "wired keeps it: {wired}");
+    // The moment a link appears, the defaults return.
+    let linkd = desugar_source("a -> b\n").unwrap();
+    assert!(linkd.contains("clearance: 16;"), "linkd keeps it: {linkd}");
 }
 
 #[test]

@@ -5,7 +5,7 @@
 }
 
 cat -> dog -> bird
-// 3 implicit rects, 2 wires
+// 3 implicit rects, 2 links
 fox & owl -> mouse
 // fan-in
 frog ~> pond

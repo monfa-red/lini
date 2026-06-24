@@ -6,7 +6,7 @@
 //! [`Occupancy`] holds the committed spans
 //! per channel, [`Ports`] the per-`(node, side)` slots. Capacity is binary
 //! everywhere: a closed channel or full side means a detour, lanes are never
-//! squeezed (WIRING §Model step 4).
+//! squeezed (LINKING §Model step 4).
 
 use super::graph::{Axis, Channel};
 use super::rect::Rect;
@@ -21,7 +21,7 @@ pub(super) type ChanKey = (usize, u8, usize);
 /// ordinate of port approaches and self-loop legs (provisional until ports
 /// are placed; `None` for through-runs), and for port approaches the
 /// `(node, side)` unit they land on — pins of one unit may stand nearer
-/// than clearance when the side compacts (WIRING Law 2).
+/// than clearance when the side compacts (LINKING Law 2).
 #[derive(Clone, Copy, Debug, PartialEq)]
 struct SpanRec {
     lo: f64,
@@ -104,7 +104,7 @@ impl Occupancy {
     /// nearer than `clearance` (immovable pins), or a candidate rail lands
     /// inside a `deny` region it travels through (the separation audit
     /// walling a reroute away from a conflict). `relaxed` widens the range
-    /// from the usable band to the walls — the rescue pass for wires that
+    /// from the usable band to the walls — the rescue pass for links that
     /// would otherwise be impossible, gated on ground truth by the caller.
     /// Records tagged `exempt` are the asking bundle's own fan trunk and
     /// never block it.
@@ -206,7 +206,7 @@ impl Occupancy {
             return Closure::Hard;
         }
         // Pins of one port unit may stand nearer than clearance — that is a
-        // compacted side's row (WIRING Law 2), not a conflict.
+        // compacted side's row (LINKING Law 2), not a conflict.
         let pinched = members
             .iter()
             .enumerate()
@@ -417,7 +417,7 @@ pub(super) fn side_len(rect: Rect, side: Side) -> f64 {
 }
 
 /// Law 2's side capacity: `floor((len − 2·clearance) / clearance) + 1`,
-/// minimum 1 (WIRING step 4).
+/// minimum 1 (LINKING step 4).
 pub fn side_capacity(rect: Rect, side: Side, clearance: f64) -> usize {
     let free = side_len(rect, side) - 2.0 * clearance;
     if free < 0.0 {

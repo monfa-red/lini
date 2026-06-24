@@ -1,4 +1,4 @@
-//! The independent four-law checker (WIRING §The Four Laws) — judgeable on
+//! The independent four-law checker (LINKING §The Four Laws) — judgeable on
 //! the output alone: routed polylines, placed nodes, and the engine's report.
 //!
 //! No router knowledge: clearance and separation are segment-distance
@@ -8,38 +8,38 @@
 //! checker exists to catch it in CI, never to patch the routing.
 
 use super::audit;
-use super::bundle::wire_clearance;
+use super::bundle::link_clearance;
 use super::rect::Rect;
 use super::scene::SceneIndex;
 use super::{Rule, Severity, Violation};
-use crate::layout::ir::{PlacedNode, RoutedWire};
+use crate::layout::ir::{PlacedNode, RoutedLink};
 use crate::span::Span;
 use std::collections::BTreeMap;
 
 const EPS: f64 = 1e-6;
 
-pub fn check(nodes: &[PlacedNode], wires: &[RoutedWire], report: &[Violation]) -> Vec<Violation> {
-    if wires.is_empty() {
+pub fn check(nodes: &[PlacedNode], links: &[RoutedLink], report: &[Violation]) -> Vec<Violation> {
+    if links.is_empty() {
         return Vec::new();
     }
-    let c = wires
+    let c = links
         .iter()
-        .map(|w| wire_clearance(&w.attrs))
+        .map(|w| link_clearance(&w.attrs))
         .fold(0.0_f64, f64::max);
     let index = SceneIndex::build(nodes);
     let mut out = Vec::new();
-    contact(&index, wires, c, &mut out);
-    clearance(&index, wires, c, &mut out);
-    separation(&index, wires, c, report, &mut out);
-    self_crossing(wires, &mut out);
+    contact(&index, links, c, &mut out);
+    clearance(&index, links, c, &mut out);
+    separation(&index, links, c, report, &mut out);
+    self_crossing(links, &mut out);
     out
 }
 
-/// Law 3's blind spot made checkable: a wire crossing **itself** is a
+/// Law 3's blind spot made checkable: a link crossing **itself** is a
 /// crossing the report cannot even name — always an engine bug, never
 /// counted output.
-fn self_crossing(wires: &[RoutedWire], out: &mut Vec<Violation>) {
-    for w in wires {
+fn self_crossing(links: &[RoutedLink], out: &mut Vec<Violation>) {
+    for w in links {
         let segs: Vec<_> = w.path.windows(2).collect();
         for (i, sa) in segs.iter().enumerate() {
             for sb in segs.iter().skip(i + 1) {
@@ -47,7 +47,7 @@ fn self_crossing(wires: &[RoutedWire], out: &mut Vec<Violation>) {
                     out.push(breach(
                         Rule::Crossing,
                         w,
-                        format!("wire crosses itself at {at:?}"),
+                        format!("link crosses itself at {at:?}"),
                     ));
                 }
             }
@@ -55,15 +55,15 @@ fn self_crossing(wires: &[RoutedWire], out: &mut Vec<Violation>) {
     }
 }
 
-fn name(w: &RoutedWire) -> String {
+fn name(w: &RoutedLink) -> String {
     format!("{} -> {}", w.seg_from, w.seg_to)
 }
 
-fn breach(rule: Rule, w: &RoutedWire, detail: String) -> Violation {
+fn breach(rule: Rule, w: &RoutedLink, detail: String) -> Violation {
     Violation {
         rule,
         severity: Severity::Warning,
-        wires: vec![name(w)],
+        links: vec![name(w)],
         detail,
         span: w.decl_span,
     }
@@ -96,9 +96,9 @@ fn rect_box(r: Rect) -> (f64, f64, f64, f64) {
 /// than the side holds at clearance — and must be uniform at exactly the
 /// widest pitch the side allows. Orthogonality rides along: an oblique
 /// segment voids every law.
-fn contact(index: &SceneIndex, wires: &[RoutedWire], c: f64, out: &mut Vec<Violation>) {
+fn contact(index: &SceneIndex, links: &[RoutedLink], c: f64, out: &mut Vec<Violation>) {
     let mut sides: BTreeMap<(String, u8), Vec<(f64, usize)>> = BTreeMap::new();
-    for (wi, w) in wires.iter().enumerate() {
+    for (wi, w) in links.iter().enumerate() {
         if w.path.len() < 2 {
             out.push(breach(Rule::Contact, w, "degenerate path".to_owned()));
             continue;
@@ -151,7 +151,7 @@ fn contact(index: &SceneIndex, wires: &[RoutedWire], c: f64, out: &mut Vec<Viola
         let mut flag = |wi: usize, detail: String| {
             out.push(breach(
                 Rule::Contact,
-                &wires[wi],
+                &links[wi],
                 format!("{detail} on '{path}'"),
             ));
         };
@@ -170,11 +170,11 @@ fn contact(index: &SceneIndex, wires: &[RoutedWire], c: f64, out: &mut Vec<Viola
             flag(ports[0].1, "ports unevenly spaced".to_owned());
         }
         // Law 2's centred median binds sides holding two or more ports; a
-        // lone port is free along its side (it aligns with its wire).
+        // lone port is free along its side (it aligns with its link).
         let median = (ports[0].0 + ports[ports.len() - 1].0) / 2.0;
         if ports.len() > 1
             && (median - centre).abs() > EPS
-            && !slide_excused(wires, &ports, &members, rect, side, centre - median, c)
+            && !slide_excused(links, &ports, &members, rect, side, centre - median, c)
         {
             flag(
                 ports[0].1,
@@ -186,10 +186,10 @@ fn contact(index: &SceneIndex, wires: &[RoutedWire], c: f64, out: &mut Vec<Viola
 
 /// Law 2's slide clause: a port group may sit off its side's centre only
 /// when the centred rows are unavailable — some port, slid back by `shift`,
-/// would come nearer than clearance to a wire outside the group. Checkable
+/// would come nearer than clearance to a link outside the group. Checkable
 /// on the output alone.
 fn slide_excused(
-    wires: &[RoutedWire],
+    links: &[RoutedLink],
     ports: &[(f64, usize)],
     members: &[usize],
     rect: Rect,
@@ -204,7 +204,7 @@ fn slide_excused(
             2 => (o + shift, rect.y1),
             _ => (rect.x0, o + shift),
         };
-        wires.iter().enumerate().any(|(wj, w)| {
+        links.iter().enumerate().any(|(wj, w)| {
             !members.contains(&wj)
                 && w.path
                     .windows(2)
@@ -245,7 +245,7 @@ fn side_capacity(rect: Rect, side: u8, c: f64) -> usize {
 
 /// The compacted rows, established independently of the router from Law
 /// 2's excuse: every `(node, side)` carrying more distinct ports than its
-/// capacity — with the wires that land there and the band its outermost
+/// capacity — with the links that land there and the band its outermost
 /// ports bound.
 struct Row {
     vertical: bool,
@@ -254,9 +254,9 @@ struct Row {
     members: Vec<usize>,
 }
 
-fn compacted_rows(index: &SceneIndex, wires: &[RoutedWire], c: f64) -> Vec<Row> {
+fn compacted_rows(index: &SceneIndex, links: &[RoutedLink], c: f64) -> Vec<Row> {
     let mut rows: BTreeMap<(String, u8), Vec<(usize, f64)>> = BTreeMap::new();
-    for (wi, w) in wires.iter().enumerate() {
+    for (wi, w) in links.iter().enumerate() {
         if w.path.len() < 2 {
             continue;
         }
@@ -339,11 +339,11 @@ fn landing(rect: Rect, port: (f64, f64), inward: (f64, f64), c: f64) -> Result<u
 }
 
 /// Law 1 — Clearance from bodies: ≥ clearance from every solid rect, and
-/// from the wire's own endpoints on every segment but the adjoining stub.
-/// A containment wire runs inside its outer endpoint by design (WIRING
+/// from the link's own endpoints on every segment but the adjoining stub.
+/// A containment link runs inside its outer endpoint by design (LINKING
 /// §Special shapes), so that body is skipped.
-fn clearance(index: &SceneIndex, wires: &[RoutedWire], c: f64, out: &mut Vec<Violation>) {
-    for w in wires {
+fn clearance(index: &SceneIndex, links: &[RoutedLink], c: f64, out: &mut Vec<Violation>) {
+    for w in links {
         if w.path.len() < 2 {
             continue;
         }
@@ -396,24 +396,24 @@ fn clearance(index: &SceneIndex, wires: &[RoutedWire], c: f64, out: &mut Vec<Vio
     }
 }
 
-/// Law 1 (wire–wire) and Law 3's audit promise: every segment pair of two
-/// wires keeps clearance, except the sanctioned contacts — transversal
+/// Law 1 (link–link) and Law 3's audit promise: every segment pair of two
+/// links keeps clearance, except the sanctioned contacts — transversal
 /// crossings (reconciled against the report), fan-sibling trunks (drawn as
 /// one line), and the port rows of compacted sides (Law 1's third
-/// surrender): among one such side's wires, the final approach legs and
+/// surrender): among one such side's links, the final approach legs and
 /// each leg's feeding corner may under-clear one another.
 fn separation(
     index: &SceneIndex,
-    wires: &[RoutedWire],
+    links: &[RoutedLink],
     c: f64,
     report: &[Violation],
     out: &mut Vec<Violation>,
 ) {
-    let rows = compacted_rows(index, wires, c);
+    let rows = compacted_rows(index, links, c);
     let mut drawn: BTreeMap<(String, String), Vec<(f64, f64)>> = BTreeMap::new();
-    for i in 0..wires.len() {
-        for j in i + 1..wires.len() {
-            let (a, b) = (&wires[i], &wires[j]);
+    for i in 0..links.len() {
+        for j in i + 1..links.len() {
+            let (a, b) = (&links[i], &links[j]);
             let fan_pair = [a.fan_from, a.fan_to]
                 .iter()
                 .flatten()
@@ -446,14 +446,14 @@ fn separation(
                 out.push(Violation {
                     rule: Rule::Separation,
                     severity: Severity::Warning,
-                    wires: vec![name(a), name(b)],
+                    links: vec![name(a), name(b)],
                     detail,
                     span: b.decl_span,
                 });
             }
         }
     }
-    reconcile(wires, &drawn, report, out);
+    reconcile(links, &drawn, report, out);
 }
 
 /// Fan-sibling contact that is the shared trunk rather than a braid: an
@@ -465,8 +465,8 @@ fn separation(
 fn trunk_contact(
     sa: &[(f64, f64)],
     sb: &[(f64, f64)],
-    a: &RoutedWire,
-    b: &RoutedWire,
+    a: &RoutedLink,
+    b: &RoutedLink,
     d: f64,
 ) -> bool {
     let on = |s: &[(f64, f64)], path: &[(f64, f64)]| path.windows(2).any(|t| lies_on(t, s));
@@ -500,7 +500,7 @@ fn break_out(sa: &[(f64, f64)], sb: &[(f64, f64)]) -> bool {
     }
 }
 
-fn pair_key(a: &RoutedWire, b: &RoutedWire) -> (String, String) {
+fn pair_key(a: &RoutedLink, b: &RoutedLink) -> (String, String) {
     let (x, y) = (name(a), name(b));
     if x <= y { (x, y) } else { (y, x) }
 }
@@ -508,14 +508,14 @@ fn pair_key(a: &RoutedWire, b: &RoutedWire) -> (String, String) {
 /// Law 3: "a crossing the report doesn't name is a bug" — and a named
 /// crossing that is not drawn is the same bug mirrored.
 fn reconcile(
-    wires: &[RoutedWire],
+    links: &[RoutedLink],
     drawn: &BTreeMap<(String, String), Vec<(f64, f64)>>,
     report: &[Violation],
     out: &mut Vec<Violation>,
 ) {
     let mut reported: BTreeMap<(String, String), (usize, Span)> = BTreeMap::new();
     for v in report.iter().filter(|v| v.rule == Rule::Crossing) {
-        let [a, b] = v.wires.as_slice() else {
+        let [a, b] = v.links.as_slice() else {
             continue;
         };
         let key = if a <= b {
@@ -526,7 +526,7 @@ fn reconcile(
         reported.entry(key).or_insert((0, v.span)).0 += 1;
     }
     let span_of = |key: &(String, String)| {
-        wires
+        links
             .iter()
             .find(|w| name(w) == key.0 || name(w) == key.1)
             .map_or(Span::empty(), |w| w.decl_span)
@@ -537,7 +537,7 @@ fn reconcile(
             out.push(Violation {
                 rule: Rule::Crossing,
                 severity: Severity::Warning,
-                wires: vec![key.0.clone(), key.1.clone()],
+                links: vec![key.0.clone(), key.1.clone()],
                 detail: format!(
                     "{} crossing(s) drawn but {named} named in the report (first at {:?})",
                     points.len(),
@@ -553,7 +553,7 @@ fn reconcile(
             out.push(Violation {
                 rule: Rule::Crossing,
                 severity: Severity::Warning,
-                wires: vec![key.0.clone(), key.1.clone()],
+                links: vec![key.0.clone(), key.1.clone()],
                 detail: format!("{named} crossing(s) named in the report but {count} drawn"),
                 span: *span,
             });
@@ -586,10 +586,10 @@ mod tests {
         }
     }
 
-    fn wire(from: &str, to: &str, path: Vec<(f64, f64)>) -> RoutedWire {
+    fn link(from: &str, to: &str, path: Vec<(f64, f64)>) -> RoutedLink {
         let mut attrs = AttrMap::default();
         attrs.insert("clearance", ResolvedValue::Number(8.0));
-        RoutedWire {
+        RoutedLink {
             path,
             markers: Markers::default(),
             attrs,
@@ -615,8 +615,8 @@ mod tests {
     }
 
     #[test]
-    fn a_clean_straight_wire_is_silent() {
-        let w = wire("a", "b", vec![(20.0, 0.0), (180.0, 0.0)]);
+    fn a_clean_straight_link_is_silent() {
+        let w = link("a", "b", vec![(20.0, 0.0), (180.0, 0.0)]);
         let out = check(&pair(), &[w], &[]);
         assert_eq!(out.len(), 0, "{out:?}");
     }
@@ -629,7 +629,7 @@ mod tests {
             body("b", 200.0, 0.0),
             body("wall", 100.0, 0.0),
         ];
-        let w = wire(
+        let w = link(
             "a",
             "b",
             vec![
@@ -646,9 +646,9 @@ mod tests {
     }
 
     #[test]
-    fn clearance_fires_inside_the_wires_own_keepout() {
+    fn clearance_fires_inside_the_links_own_keepout() {
         // A middle segment sweeps back 4 over its own source body.
-        let w = wire(
+        let w = link(
             "a",
             "b",
             vec![
@@ -668,14 +668,14 @@ mod tests {
 
     #[test]
     fn contact_fires_on_corner_oblique_and_diagonal_landings() {
-        let corner = wire("a", "b", vec![(20.0, -20.0), (180.0, -20.0)]);
-        let near_corner = wire("a", "b", vec![(20.0, -15.0), (180.0, -15.0)]);
-        let oblique = wire(
+        let corner = link("a", "b", vec![(20.0, -20.0), (180.0, -20.0)]);
+        let near_corner = link("a", "b", vec![(20.0, -15.0), (180.0, -15.0)]);
+        let oblique = link(
             "a",
             "b",
             vec![(20.0, 0.0), (20.0, -40.0), (180.0, -40.0), (180.0, 0.0)],
         );
-        let diagonal = wire("a", "b", vec![(20.0, 0.0), (170.0, -10.0), (180.0, 0.0)]);
+        let diagonal = link("a", "b", vec![(20.0, 0.0), (170.0, -10.0), (180.0, 0.0)]);
         for w in [corner, near_corner, oblique, diagonal] {
             let out = check(&pair(), &[w], &[]);
             assert!(rules(&out).contains(&Rule::Contact), "{out:?}");
@@ -690,8 +690,8 @@ mod tests {
             body("c", 0.0, 100.0),
         ];
         // Two ports on b's left side 4 apart (need ≥ 8), median off centre.
-        let w1 = wire("a", "b", vec![(20.0, 0.0), (180.0, 0.0)]);
-        let w2 = wire(
+        let w1 = link("a", "b", vec![(20.0, 0.0), (180.0, 0.0)]);
+        let w2 = link(
             "c",
             "b",
             vec![(20.0, 100.0), (100.0, 100.0), (100.0, 4.0), (180.0, 4.0)],
@@ -712,7 +712,7 @@ mod tests {
             body("c", 0.0, 100.0),
             body("d", 200.0, 100.0),
         ];
-        let w1 = wire(
+        let w1 = link(
             "a",
             "b",
             vec![
@@ -724,7 +724,7 @@ mod tests {
                 (180.0, 0.0),
             ],
         );
-        let w2 = wire(
+        let w2 = link(
             "c",
             "d",
             vec![
@@ -748,12 +748,12 @@ mod tests {
             body("c", 100.0, -100.0),
             body("d", 100.0, 100.0),
         ];
-        let w1 = wire("a", "b", vec![(20.0, 0.0), (180.0, 0.0)]);
-        let w2 = wire("c", "d", vec![(100.0, -80.0), (100.0, 80.0)]);
-        let entry = |wires: Vec<String>| Violation {
+        let w1 = link("a", "b", vec![(20.0, 0.0), (180.0, 0.0)]);
+        let w2 = link("c", "d", vec![(100.0, -80.0), (100.0, 80.0)]);
+        let entry = |links: Vec<String>| Violation {
             rule: Rule::Crossing,
             severity: Severity::Info,
-            wires,
+            links,
             detail: String::new(),
             span: Span::empty(),
         };
@@ -786,10 +786,10 @@ mod tests {
     }
 
     #[test]
-    fn a_wire_crossing_itself_is_flagged() {
+    fn a_link_crossing_itself_is_flagged() {
         // A hook past the port row whose final approach sweeps back through
-        // the wire's own run — the failed-inversion bubble shape.
-        let w = wire(
+        // the link's own run — the failed-inversion bubble shape.
+        let w = link(
             "a",
             "b",
             vec![
@@ -817,8 +817,8 @@ mod tests {
             body("b", 200.0, 0.0),
             body("c", 100.0, 160.0),
         ];
-        let mut w1 = wire("a", "b", vec![(20.0, 0.0), (180.0, 0.0)]);
-        let mut w2 = wire("a", "c", vec![(20.0, 0.0), (100.0, 0.0), (100.0, 140.0)]);
+        let mut w1 = link("a", "b", vec![(20.0, 0.0), (180.0, 0.0)]);
+        let mut w2 = link("a", "c", vec![(20.0, 0.0), (100.0, 0.0), (100.0, 140.0)]);
         // Untagged, the trunk overlap and split T-joint breach separation…
         let out = check(&nodes, &[w1.clone(), w2.clone()], &[]);
         assert!(rules(&out).contains(&Rule::Separation), "{out:?}");

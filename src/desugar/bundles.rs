@@ -1,6 +1,6 @@
 //! Every built-in default, expressed as parser-shaped [`Decl`]s. This is the one
 //! place Lini's look is tuned; desugar lowers these into `.lini-*` class defs, the
-//! global block, and the `-> { }` wire defaults. Visual `--lini-*` colours stay
+//! global block, and the `-> { }` link defaults. Visual `--lini-*` colours stay
 //! live `--var` references (render emits their defaults as `@layer` CSS).
 
 use crate::resolve::ShapeKind;
@@ -148,8 +148,8 @@ pub fn root_defaults() -> Vec<Decl> {
     ]
 }
 
-/// Wire defaults — prepended to the `-> { }` rule (user decls override).
-pub fn wire_defaults() -> Vec<Decl> {
+/// Link defaults — prepended to the `-> { }` rule (user decls override).
+pub fn link_defaults() -> Vec<Decl> {
     vec![
         n("stroke-width", 2.0),
         n("clearance", 16.0),
@@ -203,10 +203,10 @@ mod tests {
     }
 
     #[test]
-    fn root_and_wire_defaults_are_present() {
+    fn root_and_link_defaults_are_present() {
         assert_eq!(num(&root_defaults(), "padding"), Some(20.0));
         assert_eq!(num(&root_defaults(), "font-size"), Some(15.0));
-        assert_eq!(num(&wire_defaults(), "clearance"), Some(16.0));
-        assert_eq!(num(&wire_defaults(), "font-size"), Some(11.0));
+        assert_eq!(num(&link_defaults(), "clearance"), Some(16.0));
+        assert_eq!(num(&link_defaults(), "font-size"), Some(11.0));
     }
 }

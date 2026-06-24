@@ -1,4 +1,4 @@
-//! The resolve orchestrator: variables → stylesheet → scene tree → wires →
+//! The resolve orchestrator: variables → stylesheet → scene tree → links →
 //! render inputs, assembled into a [`Program`] (SPEC §17). Types, templates,
 //! defines, labels, and auto-create are lowered upstream by `desugar`, so resolve
 //! only ever sees primitives and `.lini-*` classes.
@@ -10,10 +10,10 @@ use super::defaults;
 use super::ir::{
     AttrMap, Program, ResolvedCall, ResolvedScene, ResolvedValue, SheetInputs, VarTable,
 };
+use super::links;
 use super::merge::collapse;
 use super::scene::{self, PathIndex, SceneCtx};
 use super::value::resolve_groups;
-use super::wires;
 use crate::error::Error;
 use crate::syntax::ast::{Decl, File, Rule, SelPart, StyleItem};
 use std::collections::HashMap;
@@ -26,7 +26,7 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
     apply_var_decls(&mut vars, file)?;
 
     // ── Stylesheet: the desugared file's rules (generated `.lini-*` type classes,
-    //    the `-> { }` wire defaults, descendant + user-class rules) ──
+    //    the `-> { }` link defaults, descendant + user-class rules) ──
     let rules: Vec<&Rule> = file
         .stylesheet
         .iter()
@@ -64,19 +64,19 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
     )?;
     let index = PathIndex::build(&nodes);
 
-    // ── Wires: root statements then lifted internal wires ──
-    let wire_defaults = wire_rule_decls(file, &vars)?;
-    let mut wire_list = Vec::new();
-    for w in &file.wires {
-        wire_list.extend(wires::resolve_wire(w, &ctx, &index, &[], &wire_defaults)?);
+    // ── Links: root statements then lifted internal links ──
+    let link_defaults = link_rule_decls(file, &vars)?;
+    let mut link_list = Vec::new();
+    for w in &file.links {
+        link_list.extend(links::resolve_link(w, &ctx, &index, &[], &link_defaults)?);
     }
     for lw in &lifted {
-        wire_list.extend(wires::resolve_wire(
-            &lw.wire,
+        link_list.extend(links::resolve_link(
+            &lw.link,
             &ctx,
             &index,
             &lw.prefix,
-            &wire_defaults,
+            &link_defaults,
         )?);
     }
 
@@ -88,7 +88,7 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
             attrs: root_attrs,
             nodes,
         },
-        wires: wire_list,
+        links: link_list,
         sheet: sheet_inputs,
     })
 }
@@ -213,13 +213,13 @@ fn root_attrs(file: &File, vars: &VarTable) -> Result<AttrMap, Error> {
 
 // ─────────────────────────── Render inputs ───────────────────────────
 
-/// The `-> { }` wire defaults as ordered decls (lowest specificity for the wire
-/// cascade) — the wire glyph is the reserved `wire` element selector.
-fn wire_rule_decls(file: &File, vars: &VarTable) -> Result<Vec<(String, ResolvedValue)>, Error> {
+/// The `-> { }` link defaults as ordered decls (lowest specificity for the link
+/// cascade) — the link glyph is the reserved `link` element selector.
+fn link_rule_decls(file: &File, vars: &VarTable) -> Result<Vec<(String, ResolvedValue)>, Error> {
     for item in &file.stylesheet {
         if let StyleItem::Rule(r) = item
             && let [SelPart::Type(t)] = r.selector.parts.as_slice()
-            && t == "wire"
+            && t == "link"
         {
             let mut out = Vec::with_capacity(r.decls.len());
             for d in &r.decls {
@@ -233,7 +233,7 @@ fn wire_rule_decls(file: &File, vars: &VarTable) -> Result<Vec<(String, Resolved
 
 /// The renderer's [`SheetInputs`]: every single-class rule's attrs (the generated
 /// `.lini-*` type classes and the user `.style` classes, in source order), the
-/// wire defaults, and the root inherited-text font size. Descendant rules
+/// link defaults, and the root inherited-text font size. Descendant rules
 /// (`|.lini-table .lini-box| { }`) bake inline via the cascade and carry no entry.
 fn build_sheet_inputs(
     file: &File,
@@ -241,14 +241,14 @@ fn build_sheet_inputs(
     root_attrs: &AttrMap,
 ) -> Result<SheetInputs, Error> {
     let mut class_rules = Vec::new();
-    let mut wire_defaults = AttrMap::new();
+    let mut link_defaults = AttrMap::new();
     for item in &file.stylesheet {
         if let StyleItem::Rule(r) = item {
             match r.selector.parts.as_slice() {
                 [SelPart::Class(c)] => {
                     class_rules.push((c.clone(), decls_attrmap(&r.decls, vars)?))
                 }
-                [SelPart::Type(t)] if t == "wire" => wire_defaults = decls_attrmap(&r.decls, vars)?,
+                [SelPart::Type(t)] if t == "link" => link_defaults = decls_attrmap(&r.decls, vars)?,
                 _ => {}
             }
         }
@@ -273,7 +273,7 @@ fn build_sheet_inputs(
     }
     Ok(SheetInputs {
         class_rules,
-        wire_defaults,
+        link_defaults,
         root_font_size,
         root_text,
     })
@@ -433,7 +433,7 @@ mod tests {
     }
 
     #[test]
-    fn root_wire_auto_creates_undeclared_endpoints() {
+    fn root_link_auto_creates_undeclared_endpoints() {
         let p = rv4("cat -> dog\n");
         let ids: Vec<&str> = p
             .scene
@@ -442,24 +442,24 @@ mod tests {
             .filter_map(|n| n.id.as_deref())
             .collect();
         assert!(ids.contains(&"cat") && ids.contains(&"dog"));
-        assert_eq!(p.wires.len(), 1);
+        assert_eq!(p.links.len(), 1);
     }
 
     #[test]
-    fn wire_rule_sets_routing_defaults() {
-        // SPEC §9: `-> { }` is the routing layer's element selector (the wire
-        // glyph), carrying the reserved `wire` element rule internally.
+    fn link_rule_sets_routing_defaults() {
+        // SPEC §9: `-> { }` is the routing layer's element selector (the link
+        // glyph), carrying the reserved `link` element rule internally.
         let p = rv4("{ -> { stroke: red; stroke-width: 2; } }\na -> b\n");
         assert!(
-            matches!(p.wires[0].attrs.get("stroke"), Some(ResolvedValue::Ident(s)) if s == "red")
+            matches!(p.links[0].attrs.get("stroke"), Some(ResolvedValue::Ident(s)) if s == "red")
         );
-        assert_eq!(p.wires[0].attrs.number("stroke-width"), Some(2.0));
+        assert_eq!(p.links[0].attrs.number("stroke-width"), Some(2.0));
     }
 
     #[test]
     fn operator_sets_markers_and_line_style() {
         let p = rv4("a |box|\nb |box|\na --> b\n");
-        let w = &p.wires[0];
+        let w = &p.links[0];
         assert_eq!(w.markers.end, MarkerKind::Arrow);
         assert!(
             matches!(w.attrs.get("stroke-style"), Some(ResolvedValue::Ident(s)) if s == "dashed")
@@ -467,17 +467,17 @@ mod tests {
     }
 
     #[test]
-    fn fan_expands_to_one_wire_per_pair() {
+    fn fan_expands_to_one_link_per_pair() {
         let p = rv4("a |box|\nb |box|\nc |box|\na & b -> c\n");
-        assert_eq!(p.wires.len(), 2);
+        assert_eq!(p.links.len(), 2);
     }
 
     #[test]
-    fn internal_wire_resolves_with_scoped_paths() {
+    fn internal_link_resolves_with_scoped_paths() {
         let p = rv4(
             "{ |room::group| [\n  inlet |box|\n  outlet |box|\n  inlet -> outlet\n] }\nr |room|\n",
         );
-        let w = &p.wires[0];
+        let w = &p.links[0];
         assert_eq!(w.endpoints[0].path, "r.inlet");
         assert_eq!(w.endpoints[1].path, "r.outlet");
     }
@@ -506,7 +506,7 @@ mod tests {
     }
 
     #[test]
-    fn body_wire_endpoint_not_found_suggests() {
+    fn body_link_endpoint_not_found_suggests() {
         let e = rv4_err("g |group| [\n  x |box|\n  g.y -> x\n]\n");
         assert!(e.contains("not found"), "got: {e}");
     }

@@ -1,10 +1,10 @@
-//! Wavy wire rendering (`~>`): the routed centreline, resampled by arc length
+//! Wavy link rendering (`~>`): the routed centreline, resampled by arc length
 //! and displaced by a tapered sine, emitted as a smooth cubic-Bézier path.
 //!
-//! The wave lives in the **geometry**, not the stroke — so a `~>` wire reads as
+//! The wave lives in the **geometry**, not the stroke — so a `~>` link reads as
 //! wavy at any `stroke-width` and survives a host-CSS recolour, exactly like the
 //! solid/dashed/dotted styles it joins. It reuses the same corner fillets as the
-//! plain path ([`super::rounding`]), so a wavy wire turns corners the same way
+//! plain path ([`super::rounding`]), so a wavy link turns corners the same way
 //! its neighbours do; the sine then rides that centreline.
 
 use super::rounding::{Point, RoundedPath, Seg, round};
@@ -23,7 +23,7 @@ pub const AMPLITUDE: f64 = 1.4;
 /// finite-difference tangent stays smooth.
 const FLATTEN_STEP: f64 = 1.5;
 
-/// A wavy `d` for the wire centreline `pts` (already shortened for markers),
+/// A wavy `d` for the link centreline `pts` (already shortened for markers),
 /// rounded with the same per-corner `targets` as the plain path. `None` when the
 /// route is shorter than one wavelength — the caller then draws it straight,
 /// since a fraction of a wave would just look like a kink.
@@ -35,7 +35,7 @@ pub fn wavy_d(pts: &[Point], targets: &[f64]) -> Option<String> {
     }
 
     // The amplitude ramps 0 → 1 → 0 over half a wavelength at each end, so the
-    // wire leaves each port flat — meeting its marker and the node edge head-on
+    // link leaves each port flat — meeting its marker and the node edge head-on
     // — yet a short run still shows real wave between the ramps.
     let taper = (WAVELENGTH / 2.0).min(total / 2.0);
     let k = TAU / WAVELENGTH;
@@ -204,7 +204,7 @@ mod tests {
     #[test]
     fn wave_stays_on_the_line_at_both_ends() {
         // A straight run: the taper pins the first and last on-curve points to
-        // the centreline (y = 0) so the wire meets its ports flat.
+        // the centreline (y = 0) so the link meets its ports flat.
         let d = wavy_d(&[(0.0, 0.0), (120.0, 0.0)], &[]).expect("waves");
         let pts = anchors(&d);
         assert!(pts.len() > 4, "expected several Bézier hops: {d}");

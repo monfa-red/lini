@@ -3,10 +3,10 @@
 //! Two independent sweeps (PLAN.md §Architecture): **V-channels** are maximal
 //! free rectangles for vertical travel (x-strips between keep-out edges, equal
 //! free y-intervals merged across strips); **H-channels** are the transpose.
-//! Both partition the same free space, so every wire run lives in exactly one
+//! Both partition the same free space, so every link run lives in exactly one
 //! channel of its orientation. A **cell** is an H∩V overlap; cells are the
 //! graph's vertices, and two cells connect iff they abut in a shared channel.
-//! Pure geometry: no wire knowledge, identical output for identical input.
+//! Pure geometry: no link knowledge, identical output for identical input.
 
 use super::rect::Rect;
 

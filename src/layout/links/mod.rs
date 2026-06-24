@@ -1,11 +1,11 @@
-//! Wire routing — the orthogonal corridor router (`WIRING.md`, `PLAN.md`).
+//! Link routing — the orthogonal corridor router (`LINKING.md`, `PLAN.md`).
 //!
 //! Stages: requests → bundles → per-bundle path search with hard capacity
 //! closure → per-channel run assignment (ports, ordinates, inversion swaps)
 //! → crossing audit → polylines. Every edge routes in one **world** — the
 //! channel graph of its endpoints' innermost common container — and reaches
 //! it through straight punch stubs. The routing's report carries the kept
-//! crossings and the wires no legal route exists for; [`validate`] re-judges
+//! crossings and the links no legal route exists for; [`validate`] re-judges
 //! the drawn result against the four laws with no router knowledge.
 
 mod audit;
@@ -27,7 +27,7 @@ mod validate;
 
 use crate::ast::Side;
 use crate::error::Error;
-use crate::layout::ir::{Airwire, PlacedNode, RoutedWire};
+use crate::layout::ir::{PlacedNode, RoutedLink, Stray};
 use crate::resolve::Program;
 use crate::span::Span;
 
@@ -41,15 +41,15 @@ use scene::SceneIndex;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Rule {
-    /// Law 1 — a wire holds ≥ clearance from every node body.
+    /// Law 1 — a link holds ≥ clearance from every node body.
     Clearance,
-    /// Law 1 — a wire holds ≥ clearance from every other wire.
+    /// Law 1 — a link holds ≥ clearance from every other link.
     Separation,
     /// Law 2 — every end lands perpendicular on a side, clear of corners.
     Contact,
     /// Law 3 — a kept, square-on crossing: counted output, not a defect.
     Crossing,
-    /// A wire with no legal route at this layout: reported, never drawn.
+    /// A link with no legal route at this layout: reported, never drawn.
     Impossible,
 }
 
@@ -65,10 +65,10 @@ pub enum Severity {
 pub struct Violation {
     pub rule: Rule,
     /// `Info` for the router's own counted output (kept crossings); `Warning`
-    /// for everything the diagnostic layer must surface — impossible wires
+    /// for everything the diagnostic layer must surface — impossible links
     /// and any law breach the independent checker finds.
     pub severity: Severity,
-    pub wires: Vec<String>,
+    pub links: Vec<String>,
     pub detail: String,
     /// The declaration this violation points back to.
     pub span: Span,
@@ -98,7 +98,7 @@ fn parent_path(p: &str) -> String {
 
 /// The worlds an edge may route in, innermost first: the endpoints' common
 /// container, then every transparent ancestor up to the scene root — a tight
-/// interior never walls a wire its ancestors would let out. Containment wires
+/// interior never walls a link its ancestors would let out. Containment links
 /// stay inside their container.
 fn world_ladder(a: &str, b: &str) -> Vec<String> {
     if SceneIndex::contains(a, b) || SceneIndex::contains(b, a) {
@@ -124,15 +124,15 @@ fn side_centre(rect: Rect, side: Side) -> (f64, f64) {
     }
 }
 
-/// The routing result: the drawn wires and the engine's report — the kept
-/// crossings (counted output) and the wires it could not legally draw, each
-/// of those drawn as an airwire (the report made visible).
+/// The routing result: the drawn links and the engine's report — the kept
+/// crossings (counted output) and the links it could not legally draw, each
+/// of those drawn as a stray (the report made visible).
 #[derive(Default)]
 pub struct Routing {
-    pub wires: Vec<RoutedWire>,
+    pub links: Vec<RoutedLink>,
     pub report: Vec<Violation>,
-    pub airwires: Vec<Airwire>,
-    /// Corridor deficits behind the impossible wires, per container dot-path
+    pub strays: Vec<Stray>,
+    /// Corridor deficits behind the impossible links, per container dot-path
     /// (`""` = scene): `(Δgap_y, Δgap_x)` px the container's gap is short.
     /// Gap growth's feedback — empty when nothing is starved
     /// of lanes.
@@ -145,13 +145,13 @@ pub struct Routing {
 const NO_ROUTE: &str = "no legal route: every side entry or channel is closed at this layout";
 const NO_CLEAN_ROUTE: &str = "no conflict-free route at this layout";
 
-/// WIRING §Impossible layouts: a wire with no legal route is reported with
+/// LINKING §Impossible layouts: a link with no legal route is reported with
 /// its source span, never drawn dirty. `--strict` escalates the warning.
 fn impossible(req: &bundle::EdgeReq, detail: &str) -> Violation {
     Violation {
         rule: Rule::Impossible,
         severity: Severity::Warning,
-        wires: vec![format!("{} -> {}", req.a_path, req.b_path)],
+        links: vec![format!("{} -> {}", req.a_path, req.b_path)],
         detail: detail.to_owned(),
         span: req.span,
     }
@@ -189,7 +189,7 @@ impl Router {
             .expect("world built")
     }
 
-    /// Whether a routeless bundle may degrade (WIRING §Duplicates): more
+    /// Whether a routeless bundle may degrade (LINKING §Duplicates): more
     /// than one member, none of them fanned — a fan's siblings share one
     /// port and stub, which a split would tear apart.
     fn splittable(&self, bi: usize) -> bool {
@@ -201,7 +201,7 @@ impl Router {
     /// port state — the world ladder innermost first, all four side stubs,
     /// hard capacity closure, cost `(crossings, length, turns)`. The initial
     /// pass counts no crossings ([`path::FREE`]); the audit counts them
-    /// against every drawn wire. `deny` regions are off limits to stubs and
+    /// against every drawn link. `deny` regions are off limits to stubs and
     /// runs alike and `avoid` drops one side per end (the separation audit
     /// routing away from a conflict its sides are pinned into); `relaxed`
     /// widens closure from the usable band to the walls (the rescue pass,
@@ -242,7 +242,7 @@ impl Router {
         let full_dupe = fan_a.is_some() && fan_b.is_some();
         let k_eff = if full_dupe { 1 } else { k };
 
-        // Innermost world first; a transparent ancestor lets the wire route
+        // Innermost world first; a transparent ancestor lets the link route
         // one world up when the inner one has no legal route.
         for wpath in world_ladder(&rep.a_path, &rep.b_path) {
             let w = self.world_id(&wpath);
@@ -443,7 +443,7 @@ fn commit_picked(
     }
 }
 
-pub fn route_wires(program: &Program, nodes: &[PlacedNode]) -> Result<Routing, Error> {
+pub fn route_links(program: &Program, nodes: &[PlacedNode]) -> Result<Routing, Error> {
     let index = SceneIndex::build(nodes);
     let reqs = bundle::requests(program, &index)?;
     if reqs.is_empty() {
@@ -524,7 +524,7 @@ pub fn route_wires(program: &Program, nodes: &[PlacedNode]) -> Result<Routing, E
             }
             // No route holds the whole bundle at any rung of the world
             // ladder: degrade — halves, then singles — and retry the head
-            // piece. Splitting beats vanishing (WIRING §Duplicates).
+            // piece. Splitting beats vanishing (LINKING §Duplicates).
             None if router.splittable(bi) => {
                 bundle::split(&mut router.bundles, bi);
                 continue;
@@ -554,7 +554,7 @@ pub fn route_wires(program: &Program, nodes: &[PlacedNode]) -> Result<Routing, E
         let r = &router.reqs[i];
         format!("{} -> {}", r.a_path, r.b_path)
     };
-    let mut airwires = Vec::new();
+    let mut strays = Vec::new();
     let mut undrawn: Vec<usize> = Vec::new();
     for (m, reason) in reasons.iter().enumerate() {
         let Some(detail) = reason.filter(|_| drawn[m].is_none()) else {
@@ -563,8 +563,8 @@ pub fn route_wires(program: &Program, nodes: &[PlacedNode]) -> Result<Routing, E
         undrawn.push(m);
         let req = &router.reqs[m];
         report.push(impossible(req, detail));
-        if let Some((from, to)) = geometry::airwire_segment(req.a_rect, req.b_rect) {
-            airwires.push(Airwire {
+        if let Some((from, to)) = geometry::stray_segment(req.a_rect, req.b_rect) {
+            strays.push(Stray {
                 from,
                 to,
                 data_from: req.data_from.clone(),
@@ -576,19 +576,19 @@ pub fn route_wires(program: &Program, nodes: &[PlacedNode]) -> Result<Routing, E
     report.extend(kept.iter().map(|x| Violation {
         rule: Rule::Crossing,
         severity: Severity::Info,
-        wires: vec![name(x.pair.0), name(x.pair.1)],
+        links: vec![name(x.pair.0), name(x.pair.1)],
         detail: format!("forced crossing at ({}, {})", x.at.0, x.at.1),
         span: router.reqs[x.pair.1].span,
     }));
 
-    let mut wires = Vec::new();
+    let mut links = Vec::new();
     let mut req_of = Vec::new();
     for (i, req) in router.reqs.iter().enumerate() {
         let Some(chain) = &drawn[i] else {
             continue;
         };
         req_of.push(i);
-        wires.push(RoutedWire {
+        links.push(RoutedLink {
             path: geometry::polyline(chain),
             markers: req.markers.clone(),
             attrs: req.attrs.clone(),
@@ -603,17 +603,17 @@ pub fn route_wires(program: &Program, nodes: &[PlacedNode]) -> Result<Routing, E
             fan_to: router.fans.group_at(i, End::B).map(|g| g as u32),
         });
     }
-    labels::place(&mut wires, &req_of, &router.reqs, program, &router.index);
+    labels::place(&mut links, &req_of, &router.reqs, program, &router.index);
     Ok(Routing {
-        wires,
+        links,
         report,
-        airwires,
+        strays,
         starved,
     })
 }
 
 /// Route one self-loop bundle: a pinned shape around the keep-out corner
-/// (WIRING §Special shapes), committed straight to ports and occupancy —
+/// (LINKING §Special shapes), committed straight to ports and occupancy —
 /// or reported impossible with its structural reason.
 fn route_self_loop(
     router: &Router,
@@ -666,7 +666,7 @@ fn route_self_loop(
 
 /// Self-loop side resolution: defaults right → top; a forced side wins and its
 /// free partner takes the default that stays adjacent; one shared side is
-/// invalid (WIRING §Special shapes).
+/// invalid (LINKING §Special shapes).
 fn self_loop_sides(a: Option<Side>, b: Option<Side>) -> Option<(Side, Side)> {
     let (sa, sb) = match (a, b) {
         (None, None) => (Side::Right, Side::Top),
@@ -694,8 +694,8 @@ fn self_loop_sides(a: Option<Side>, b: Option<Side>) -> Option<(Side, Side)> {
 /// The independent four-law check over a drawn scene (see [`validate`]).
 pub fn validate_routing(
     nodes: &[PlacedNode],
-    wires: &[RoutedWire],
+    links: &[RoutedLink],
     report: &[Violation],
 ) -> Vec<Violation> {
-    validate::check(nodes, wires, report)
+    validate::check(nodes, links, report)
 }

@@ -1,5 +1,5 @@
-//! Wire emission — the wire path, optional markers, optional labels — and
-//! airwires, the impossible-wire report made visible.
+//! Link emission — the link path, optional markers, optional labels — and
+//! strays, the impossible-link report made visible.
 
 use super::markers::{
     MARKER_OVERLAP, MarkerPaint, emit_marker, marker_anchor, shorten_for_markers,
@@ -9,11 +9,11 @@ use super::rules::{PAINT_PROPS, RuleSet, effective_stroke};
 use super::values::{attr_or_var, dasharray_value, escape_xml, format_value, num};
 use super::wavy;
 use crate::Options;
-use crate::layout::{Airwire, RoutedText, RoutedWire, approx_height, approx_width};
+use crate::layout::{RoutedLink, RoutedText, Stray, approx_height, approx_width};
 use crate::resolve::{AttrMap, MarkerKind, ResolvedValue, VarTable};
 use std::fmt::Write;
 
-/// Whether a wire's `~` operator (or an explicit `stroke-style: wavy`) asks for
+/// Whether a link's `~` operator (or an explicit `stroke-style: wavy`) asks for
 /// a wavy line, drawn as an undulating centreline rather than a dash pattern.
 fn is_wavy(attrs: &AttrMap) -> bool {
     matches!(attrs.get("stroke-style"), Some(ResolvedValue::Ident(s)) if s == "wavy")
@@ -26,17 +26,17 @@ fn is_wavy(attrs: &AttrMap) -> bool {
 const LABEL_CUT_PAD_H: f64 = 0.3;
 const LABEL_CUT_PAD_V: f64 = 0.15;
 
-/// The wire's corner-radius cap (WIRING §Model step 7): the wire's resolved
+/// The link's corner-radius cap (LINKING §Model step 7): the link's resolved
 /// `clearance` (carrying the `-> { }` default desugar injects), else 0.
-pub fn radius_cap(w: &RoutedWire) -> f64 {
+pub fn radius_cap(w: &RoutedLink) -> f64 {
     w.attrs.number("clearance").unwrap_or(0.0)
 }
 
 #[allow(clippy::too_many_arguments)]
-pub fn render_wire(
+pub fn render_link(
     out: &mut String,
     idx: usize,
-    w: &RoutedWire,
+    w: &RoutedLink,
     targets: &[f64],
     label_size: f64,
     vars: &VarTable,
@@ -48,27 +48,27 @@ pub fn render_wire(
     }
     let thickness = w.attrs.number("stroke-width").unwrap_or(0.0);
 
-    // Paint rides the group, exactly like a node: the `.lini-wire` rule states
-    // the `|wire|` defaults, each applied `.style` rides a `lini-style-*` class,
+    // Paint rides the group, exactly like a node: the `.lini-link` rule states
+    // the `|link|` defaults, each applied `.style` rides a `lini-style-*` class,
     // and only genuine differences (the operator's dash, an inline attr) land in
     // `style=`.
-    let mut wire_classes = vec!["lini-wire".to_string()];
-    // A dashed/dotted line rides its `lini-wire-{style}` class (the dash pattern
+    let mut link_classes = vec!["lini-link".to_string()];
+    // A dashed/dotted line rides its `lini-link-{style}` class (the dash pattern
     // is stated once in the sheet); only an off-default `stroke-width` then makes
     // the pattern differ enough to inline.
     if let Some(ResolvedValue::Ident(s)) = w.attrs.get("stroke-style")
         && (s == "dashed" || s == "dotted")
     {
-        wire_classes.push(format!("lini-wire-{s}"));
+        link_classes.push(format!("lini-link-{s}"));
     }
-    wire_classes.extend(w.applied_styles.iter().map(|s| format!("lini-style-{}", s)));
+    link_classes.extend(w.applied_styles.iter().map(|s| format!("lini-style-{}", s)));
     let mut decls: Vec<(&str, String)> = Vec::new();
     for (lini, css) in PAINT_PROPS {
         let Some(v) = w.attrs.get(lini) else {
             continue;
         };
         let formatted = format_value(v, vars, opts);
-        if ruleset.provided(&wire_classes, css) != Some(formatted.as_str()) {
+        if ruleset.provided(&link_classes, css) != Some(formatted.as_str()) {
             decls.push((css, formatted));
         }
     }
@@ -79,7 +79,7 @@ pub fn render_wire(
         } else {
             dash
         };
-        if ruleset.provided(&wire_classes, "stroke-dasharray") != Some(value.as_str()) {
+        if ruleset.provided(&link_classes, "stroke-dasharray") != Some(value.as_str()) {
             decls.push(("stroke-dasharray", value));
         }
     }
@@ -90,19 +90,19 @@ pub fn render_wire(
         format!(r#" style="{}""#, body.join("; "))
     };
 
-    // `link:` makes the wire clickable, mirroring a node's `<a href>` wrap.
-    let link = match w.attrs.get("link") {
+    // `href:` makes the link clickable, mirroring a node's `<a href>` wrap.
+    let href = match w.attrs.get("href") {
         Some(crate::resolve::ResolvedValue::String(s)) => Some(s.clone()),
         _ => None,
     };
-    if let Some(href) = &link {
-        writeln!(out, r#"    <a href="{}">"#, escape_xml(href)).unwrap();
+    if let Some(url) = &href {
+        writeln!(out, r#"    <a href="{}">"#, escape_xml(url)).unwrap();
     }
 
     writeln!(
         out,
         r#"    <g class="{}"{} data-from="{}" data-to="{}">"#,
-        wire_classes.join(" "),
+        link_classes.join(" "),
         style_attr,
         escape_xml(&w.data_from),
         escape_xml(&w.data_to),
@@ -111,8 +111,8 @@ pub fn render_wire(
 
     let wavy = is_wavy(&w.attrs);
 
-    // A label cuts the wire out beneath it (a mask hole, not a painted halo) so
-    // it reads cleanly over the wire on any background. A wavy line swings
+    // A label cuts the link out beneath it (a mask hole, not a painted halo) so
+    // it reads cleanly over the link on any background. A wavy line swings
     // `AMPLITUDE` past the routed bbox, so the cut region grows to match.
     let reach = if wavy { wavy::AMPLITUDE } else { 0.0 };
     let mask = label_mask(idx, &w.path, &w.texts, thickness, reach);
@@ -137,10 +137,10 @@ pub fn render_wire(
     // base or a `.lini-style-* .lini-marker` descendant rule), so they inline it
     // only for a direct inline `stroke:`. The crow inlines the cascade-resolved
     // colour regardless (it is stroked, no fill rule reaches it).
-    let marker_color = effective_stroke(&w.attrs, &wire_classes, ruleset, vars, opts);
+    let marker_color = effective_stroke(&w.attrs, &link_classes, ruleset, vars, opts);
     let paint = MarkerPaint {
         color: &marker_color,
-        inline: ruleset.marker_fill(&wire_classes) != Some(marker_color.as_str()),
+        inline: ruleset.marker_fill(&link_classes) != Some(marker_color.as_str()),
         thickness,
     };
     if w.markers.start != MarkerKind::None
@@ -170,28 +170,28 @@ pub fn render_wire(
     }
 
     for t in &w.texts {
-        render_wire_text(out, t, label_size, vars, opts);
+        render_link_text(out, t, label_size, vars, opts);
     }
 
     out.push_str("    </g>\n");
-    if link.is_some() {
+    if href.is_some() {
         out.push_str("    </a>\n");
     }
 }
 
-/// An airwire (WIRING §Impossible layouts): a dashed straight segment in the
-/// `--lini-airwire` style with a warning glyph at its midpoint. Lawful wires
+/// A stray (LINKING §Impossible layouts): a dashed straight segment in the
+/// `--lini-stray` style with a warning glyph at its midpoint. Lawful links
 /// are orthogonal, so the slant is structurally unmistakable; the dashing and
 /// glyph cover the aligned-bodies case.
-pub fn render_airwire(out: &mut String, a: &Airwire, vars: &VarTable, opts: &Options) {
+pub fn render_stray(out: &mut String, a: &Stray, vars: &VarTable, opts: &Options) {
     let none = AttrMap::default();
-    let stroke = attr_or_var(&none, "stroke", "airwire", vars, opts);
+    let stroke = attr_or_var(&none, "stroke", "stray", vars, opts);
     // The warning glyph knocks out against the box fill so it reads on any
     // background (was `--lini-bg`, now the scene background — SPEC §11.1).
     let glyph_fill = attr_or_var(&none, "fill", "fill", vars, opts);
     writeln!(
         out,
-        r#"    <g class="lini-airwire" data-from="{}" data-to="{}">"#,
+        r#"    <g class="lini-stray" data-from="{}" data-to="{}">"#,
         escape_xml(&a.data_from),
         escape_xml(&a.data_to),
     )
@@ -238,7 +238,7 @@ pub fn render_airwire(out: &mut String, a: &Airwire, vars: &VarTable, opts: &Opt
 /// The path `d` with every interior corner rounded into a quarter arc —
 /// radius from the fillet pass ([`fillet_targets`]), still capped by half
 /// of each adjacent *drawn* segment so arcs never eat marker run-ups
-/// (WIRING §Model step 7). The end segments stay straight.
+/// (LINKING §Model step 7). The end segments stay straight.
 fn rounded_d(pts: &[(f64, f64)], targets: &[f64]) -> String {
     let rounded = round(pts, targets);
     let mut d = format!("M {} {}", num(rounded.start.0), num(rounded.start.1));
@@ -266,8 +266,8 @@ fn rounded_d(pts: &[(f64, f64)], targets: &[f64]) -> String {
 /// orthogonal to the quadrant diagonal), and its **projection** along the
 /// diagonal (innermost — nearest the shared centre side — first).
 struct Corner {
-    wire: usize,
-    /// Interior vertex index − 1: position in the wire's target vector.
+    link: usize,
+    /// Interior vertex index − 1: position in the link's target vector.
     slot: usize,
     quad: (i8, i8),
     diag: f64,
@@ -275,12 +275,12 @@ struct Corner {
     /// Structural ceiling: min(half legs, nearest crossing on the legs).
     /// Nested radii may exceed the clearance cap, never this.
     ceil: f64,
-    /// The wire's clearance cap — the base radius for lone and innermost
+    /// The link's clearance cap — the base radius for lone and innermost
     /// corners.
     cap: f64,
 }
 
-/// Per-wire, per-interior-corner fillet radius targets (WIRING §Model
+/// Per-link, per-interior-corner fillet radius targets (LINKING §Model
 /// step 7): corners nested on one diagonal — same turn quadrant, vertices
 /// offset equally in x and y — round **concentrically**: the innermost
 /// keeps the base cap and each corner outward grows by exactly its offset,
@@ -289,7 +289,7 @@ struct Corner {
 /// never lands mid-arc (an arc may land tangent exactly on one — the
 /// perpendicular point contact is preserved). A capped radius only ever
 /// *flares* a nested pair apart (the centres part toward the outside), so
-/// rounding never brings two wires nearer than their polylines' pitch.
+/// rounding never brings two links nearer than their polylines' pitch.
 pub fn fillet_targets(polys: &[&[(f64, f64)]], caps: &[f64]) -> Vec<Vec<f64>> {
     const EPS: f64 = 1e-6;
     let mut out: Vec<Vec<f64>> = polys
@@ -329,7 +329,7 @@ pub fn fillet_targets(polys: &[&[(f64, f64)]], caps: &[f64]) -> Vec<Vec<f64>> {
                 }
             }
             corners.push(Corner {
-                wire: wi,
+                link: wi,
                 slot: k - 1,
                 quad,
                 diag: if quad.0 as f64 * quad.1 as f64 > 0.0 {
@@ -352,7 +352,7 @@ pub fn fillet_targets(polys: &[&[(f64, f64)]], caps: &[f64]) -> Vec<Vec<f64>> {
         a.quad
             .cmp(&b.quad)
             .then(a.diag.total_cmp(&b.diag))
-            .then(a.wire.cmp(&b.wire))
+            .then(a.link.cmp(&b.link))
             .then(a.slot.cmp(&b.slot))
     });
     let mut i = 0;
@@ -368,7 +368,7 @@ pub fn fillet_targets(polys: &[&[(f64, f64)]], caps: &[f64]) -> Vec<Vec<f64>> {
         cluster.sort_by(|a, b| {
             b.proj
                 .total_cmp(&a.proj)
-                .then(a.wire.cmp(&b.wire))
+                .then(a.link.cmp(&b.link))
                 .then(a.slot.cmp(&b.slot))
         });
         let mut prev: Option<(&Corner, f64)> = None;
@@ -382,7 +382,7 @@ pub fn fillet_targets(polys: &[&[(f64, f64)]], caps: &[f64]) -> Vec<Vec<f64>> {
                 }
                 _ => c.cap.min(c.ceil),
             };
-            out[c.wire][c.slot] = r;
+            out[c.link][c.slot] = r;
             prev = Some((c, r));
         }
         i = j;
@@ -390,7 +390,7 @@ pub fn fillet_targets(polys: &[&[(f64, f64)]], caps: &[f64]) -> Vec<Vec<f64>> {
     out
 }
 
-/// A wire marker's tip, nudged [`MARKER_OVERLAP`] past the endpoint into the
+/// A link marker's tip, nudged [`MARKER_OVERLAP`] past the endpoint into the
 /// shape so the head reads as connected (`dir` points into the shape).
 fn overlap_tip(tip: (f64, f64), dir: (f64, f64)) -> (f64, f64) {
     (
@@ -399,12 +399,12 @@ fn overlap_tip(tip: (f64, f64), dir: (f64, f64)) -> (f64, f64) {
     )
 }
 
-/// A luminance mask that cuts the wire path out under each of its labels — the
+/// A luminance mask that cuts the link path out under each of its labels — the
 /// background-independent replacement for a painted halo. White shows the path
 /// (over its stroked bounds); a black box per label punches a hole. An explicit
-/// `userSpaceOnUse` region is required, else a straight wire's near-flat bbox
-/// would shrink the default region to nothing and hide the whole wire. `None`
-/// when the wire carries no labels.
+/// `userSpaceOnUse` region is required, else a straight link's near-flat bbox
+/// would shrink the default region to nothing and hide the whole link. `None`
+/// when the link carries no labels.
 fn label_mask(
     idx: usize,
     path: &[(f64, f64)],
@@ -427,7 +427,7 @@ fn label_mask(
     let (rx, ry) = (x0 - pad, y0 - pad);
     let (rw, rh) = (x1 - x0 + 2.0 * pad, y1 - y0 + 2.0 * pad);
     // The mask rects carry their fill/stroke via CSS (`.lini-cut-bg` /
-    // `.lini-cut`), not inline — so the wire's own `stroke` can't bleed into the
+    // `.lini-cut`), not inline — so the link's own `stroke` can't bleed into the
     // luminance mask, and the SVG stays free of per-label paint (SPEC §13).
     let mut m = format!(
         r#"<mask id="{id}" maskUnits="userSpaceOnUse" x="{}" y="{}" width="{}" height="{}"><rect class="lini-cut-bg" x="{}" y="{}" width="{}" height="{}"/>"#,
@@ -461,15 +461,15 @@ fn label_mask(
     Some((id, m))
 }
 
-/// A wire label. The constant paint (`fill: currentColor`, `stroke: none` so the
-/// glyphs don't inherit the wire `<g>`'s stroke, the anchor pair, the baked wire
-/// font size) rides `.lini-wire-label`; only a label that overrides one of those
+/// A link label. The constant paint (`fill: currentColor`, `stroke: none` so the
+/// glyphs don't inherit the link `<g>`'s stroke, the anchor pair, the baked link
+/// font size) rides `.lini-link-label`; only a label that overrides one of those
 /// inlines the difference via `style=` (which beats the class rule).
-fn render_wire_text(out: &mut String, t: &RoutedText, wfs: f64, vars: &VarTable, opts: &Options) {
+fn render_link_text(out: &mut String, t: &RoutedText, wfs: f64, vars: &VarTable, opts: &Options) {
     let (x, y) = t.position;
     let mut style: Vec<String> = Vec::new();
 
-    // `wfs` is the wire-label default (the `.lini-wire-label` rule's size); inline
+    // `wfs` is the link-label default (the `.lini-link-label` rule's size); inline
     // the label's own size only when it differs.
     let size = t.attrs.number("font-size").unwrap_or(wfs);
     if (size - wfs).abs() > 1e-9 {
@@ -503,7 +503,7 @@ fn render_wire_text(out: &mut String, t: &RoutedText, wfs: f64, vars: &VarTable,
     };
     writeln!(
         out,
-        r#"      <text class="lini-wire-label" x="{}" y="{}"{}>{}</text>"#,
+        r#"      <text class="lini-link-label" x="{}" y="{}"{}>{}</text>"#,
         num(x),
         num(y),
         style_attr,
@@ -523,7 +523,7 @@ mod tests {
 
     #[test]
     fn nested_corners_round_concentrically() {
-        // Three wires turning together at lane pitch 8: vertices step
+        // Three links turning together at lane pitch 8: vertices step
         // outward along the (+1,−1) diagonal (centre quadrant (−1,+1)).
         let (a, b, c) = (
             ell((0.0, 0.0), 100.0),
@@ -536,7 +536,7 @@ mod tests {
 
     #[test]
     fn opposite_travel_still_nests() {
-        // The outer wire traverses the same corner the other way
+        // The outer link traverses the same corner the other way
         // (−y then −x): same arc quadrant, same shared centre.
         let a = ell((0.0, 0.0), 100.0);
         let b = vec![(8.0, 92.0), (8.0, -8.0), (-92.0, -8.0)];
@@ -553,7 +553,7 @@ mod tests {
 
     #[test]
     fn a_crossing_on_a_leg_caps_the_radius() {
-        // A vertical wire crosses the corner's incoming leg 5 before the
+        // A vertical link crosses the corner's incoming leg 5 before the
         // vertex: the arc must land tangent at the crossing, never past it.
         let a = ell((0.0, 0.0), 100.0);
         let b = vec![(-5.0, -50.0), (-5.0, 50.0)];
@@ -563,7 +563,7 @@ mod tests {
 
     #[test]
     fn float_dust_on_the_diagonal_never_reorders_a_nest() {
-        // The wires_hard hub fan: three corners whose diagonal coordinates
+        // The links_hard hub fan: three corners whose diagonal coordinates
         // differ only in the last float bits, declared outermost-first. The
         // nest must still walk innermost-out (8, 16, 24) — sorting by the
         // raw diagonal value once interleaved the walk and drove radii
@@ -581,7 +581,7 @@ mod tests {
 
     #[test]
     fn short_legs_cap_a_nested_radius_without_unnesting_the_rest() {
-        // The middle wire's outgoing leg holds only r = 10: it caps there,
+        // The middle link's outgoing leg holds only r = 10: it caps there,
         // and the outer corner keeps stepping from the capped value.
         let (a, b, c) = (
             ell((0.0, 0.0), 100.0),

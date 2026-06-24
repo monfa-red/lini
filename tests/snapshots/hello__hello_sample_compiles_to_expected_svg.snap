@@ -22,5 +22,5 @@ expression: svg
       <text class="lini-text" x="0" y="0">hello</text>
     </g>
   </g>
-  <g class="lini-wires"/>
+  <g class="lini-links"/>
 </svg>

@@ -1,7 +1,7 @@
-//! Wire statements → per-edge route requests, bundles, and fan groups.
+//! Link statements → per-edge route requests, bundles, and fan groups.
 //!
 //! Resolve has already expanded fans, chains, and `&`-groups into
-//! `ResolvedWire`s with endpoint lists; each consecutive pair becomes one
+//! `ResolvedLink`s with endpoint lists; each consecutive pair becomes one
 //! request here, ordered by declaration then expansion — the order every later
 //! tie breaks on. Edges with the same unordered `(path, forced side)` pair form
 //! one **bundle** of multiplicity *k* (adjacent rails); edges of one statement
@@ -28,7 +28,7 @@ pub struct EdgeReq {
     pub stub_b: f64,
     pub markers: Markers,
     pub attrs: AttrMap,
-    /// `.style` names on the wire — carried through to the rendered group's
+    /// `.style` names on the link — carried through to the rendered group's
     /// `lini-style-*` classes (paint never read here; routing ignores it).
     pub applied_styles: Vec<String>,
     pub span: Span,
@@ -67,7 +67,7 @@ impl EdgeReq {
 pub fn requests(program: &Program, index: &SceneIndex) -> Result<Vec<EdgeReq>, Error> {
     let mut out = Vec::new();
     let mut stmt_ids: Vec<Span> = Vec::new();
-    for w in &program.wires {
+    for w in &program.links {
         let stmt = match stmt_ids.iter().position(|s| *s == w.span) {
             Some(i) => i,
             None => {
@@ -80,7 +80,7 @@ pub fn requests(program: &Program, index: &SceneIndex) -> Result<Vec<EdgeReq>, E
             .rev()
             .find(|r: &&EdgeReq| r.stmt == stmt)
             .map_or(0, |r| r.expansion + 1);
-        let clearance = wire_clearance(&w.attrs);
+        let clearance = link_clearance(&w.attrs);
         let thickness = w.attrs.number("stroke-width").unwrap_or(0.0);
         let eps = &w.endpoints;
         let segs = eps.len() - 1;
@@ -88,7 +88,7 @@ pub fn requests(program: &Program, index: &SceneIndex) -> Result<Vec<EdgeReq>, E
             let (a, b) = (&eps[i], &eps[i + 1]);
             let rect_of = |e: &crate::resolve::ResolvedEndpoint| {
                 index.rect(&e.path).ok_or_else(|| {
-                    Error::at(e.span, format!("wire endpoint '{}' not placed", e.path))
+                    Error::at(e.span, format!("link endpoint '{}' not placed", e.path))
                 })
             };
             let start = if i == 0 {
@@ -170,7 +170,7 @@ pub fn bundles(reqs: &[EdgeReq]) -> Vec<Bundle> {
     out.into_iter().map(|(_, b)| b).collect()
 }
 
-/// Degrade bundle `bi` one step (WIRING §Duplicates): the first ⌈k/2⌉
+/// Degrade bundle `bi` one step (LINKING §Duplicates): the first ⌈k/2⌉
 /// members keep the slot, the rest become the next bundle in line, so the
 /// pieces still route in declaration order. The caller retries the head —
 /// adjacent rails are the preferred form, splitting beats vanishing.
@@ -240,9 +240,9 @@ pub fn fan_groups(reqs: &[EdgeReq]) -> Fans {
     Fans { groups: kept, of }
 }
 
-/// The one clearance number (WIRING §Vocabulary): the wire's merged attrs,
-/// already carrying the `-> { }` wire default that desugar injects.
-pub fn wire_clearance(attrs: &AttrMap) -> f64 {
+/// The one clearance number (LINKING §Vocabulary): the link's merged attrs,
+/// already carrying the `-> { }` link default that desugar injects.
+pub fn link_clearance(attrs: &AttrMap) -> f64 {
     attrs.number("clearance").unwrap_or(0.0)
 }
 

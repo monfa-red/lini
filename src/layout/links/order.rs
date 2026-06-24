@@ -1,8 +1,8 @@
-//! The run-order comparator (WIRING §Model step 5, PLAN §Run ordering).
+//! The run-order comparator (LINKING §Model step 5, PLAN §Run ordering).
 //!
-//! Two wires sharing a channel are ordered by where their paths diverge: walk
+//! Two links sharing a channel are ordered by where their paths diverge: walk
 //! both outward from the shared run; the first divergence — a turn off the
-//! channel, or a pinned terminal — decides. A wire turning toward the
+//! channel, or a pinned terminal — decides. A link turning toward the
 //! positive ordinate sweeps that side, so it must sit on it (`n > 0` ⇒
 //! larger); equal turns recurse into the next channel with the nesting sign.
 //! Every remaining tie breaks on declaration order, so the order is total.
@@ -201,7 +201,7 @@ pub fn cmp_runs(chains: &[Option<Chain>], a: (usize, usize), b: (usize, usize)) 
 
 /// Whether two runs sharing a channel are **inverted** — both outward walks
 /// are geometric and demand opposite orders, so the pair must cross exactly
-/// once (WIRING §Model step 5).
+/// once (LINKING §Model step 5).
 pub fn inverted(chains: &[Option<Chain>], a: (usize, usize), b: (usize, usize)) -> bool {
     if a == b {
         return false;
@@ -212,7 +212,7 @@ pub fn inverted(chains: &[Option<Chain>], a: (usize, usize), b: (usize, usize)) 
 }
 
 /// Order of two chain ends along their shared side (Law 2: port order equals
-/// lane order, so wires never braid at the mouth). Walks outward from the
+/// lane order, so links never braid at the mouth). Walks outward from the
 /// side; the first run is the approach when it runs along the stub axis, or
 /// counts as an immediate turn (self-loops) when it does not.
 pub fn cmp_ends(chains: &[Option<Chain>], a: (usize, usize), b: (usize, usize)) -> Ordering {
@@ -262,11 +262,11 @@ pub fn cmp_ends(chains: &[Option<Chain>], a: (usize, usize), b: (usize, usize)) 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::layout::wires::geometry;
-    use crate::layout::wires::graph::ChannelGraph;
-    use crate::layout::wires::path;
-    use crate::layout::wires::rect::Rect;
-    use crate::layout::wires::runs::EndInfo;
+    use crate::layout::links::geometry;
+    use crate::layout::links::graph::ChannelGraph;
+    use crate::layout::links::path;
+    use crate::layout::links::rect::Rect;
+    use crate::layout::links::runs::EndInfo;
     use std::cmp::Ordering;
 
     /// Deterministic LCG — no RNG dependency, identical every run.
@@ -338,8 +338,8 @@ mod tests {
             let c = c.as_ref().unwrap();
             for (ri, r) in c.runs.iter().enumerate() {
                 let axis = match r.axis {
-                    crate::layout::wires::graph::Axis::H => 0u8,
-                    crate::layout::wires::graph::Axis::V => 1u8,
+                    crate::layout::links::graph::Axis::H => 0u8,
+                    crate::layout::links::graph::Axis::V => 1u8,
                 };
                 groups.entry((axis, r.chan)).or_default().push((ci, ri));
             }

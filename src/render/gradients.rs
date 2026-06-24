@@ -51,14 +51,14 @@ pub(crate) fn lower(laid: &mut LaidOut) {
     for node in &mut laid.nodes {
         lower_node(node, &mut laid.gradients, &mut keys);
     }
-    for wire in &mut laid.wires {
-        lower_attrs(&mut wire.attrs, &mut laid.gradients, &mut keys);
+    for link in &mut laid.links {
+        lower_attrs(&mut link.attrs, &mut laid.gradients, &mut keys);
     }
     for (_, attrs) in &mut laid.sheet.class_rules {
         lower_attrs(attrs, &mut laid.gradients, &mut keys);
     }
     lower_attrs(
-        &mut laid.sheet.wire_defaults,
+        &mut laid.sheet.link_defaults,
         &mut laid.gradients,
         &mut keys,
     );

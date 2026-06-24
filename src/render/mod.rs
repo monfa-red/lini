@@ -1,5 +1,6 @@
 mod filters;
 mod gradients;
+mod links;
 pub(crate) mod markers; // `marker_size` is read by the router to reserve stub room
 mod primitives;
 mod rounding;
@@ -8,7 +9,6 @@ mod style_block;
 mod used_vars;
 pub(crate) mod values;
 mod wavy;
-mod wires;
 
 use crate::Options;
 use crate::layout::{LaidOut, PlacedNode};
@@ -79,25 +79,25 @@ pub fn render(laid_out: &LaidOut, opts: &Options) -> String {
     }
     out.push_str("  </g>\n");
 
-    if laid_out.wires.is_empty() && laid_out.airwires.is_empty() {
-        out.push_str("  <g class=\"lini-wires\"/>\n");
+    if laid_out.links.is_empty() && laid_out.strays.is_empty() {
+        out.push_str("  <g class=\"lini-links\"/>\n");
     } else {
-        out.push_str("  <g class=\"lini-wires\">\n");
-        let polys: Vec<&[(f64, f64)]> = laid_out.wires.iter().map(|w| &w.path[..]).collect();
-        let caps: Vec<f64> = laid_out.wires.iter().map(wires::radius_cap).collect();
-        let targets = wires::fillet_targets(&polys, &caps);
-        // The wire-label default font size (the `.lini-wire-label` rule's value) —
+        out.push_str("  <g class=\"lini-links\">\n");
+        let polys: Vec<&[(f64, f64)]> = laid_out.links.iter().map(|w| &w.path[..]).collect();
+        let caps: Vec<f64> = laid_out.links.iter().map(links::radius_cap).collect();
+        let targets = links::fillet_targets(&polys, &caps);
+        // The link-label default font size (the `.lini-link-label` rule's value) —
         // a label inlines its own size only when it differs from this.
         let label_size = laid_out
             .sheet
-            .wire_defaults
+            .link_defaults
             .number("font-size")
             .unwrap_or(11.0);
-        for (idx, (wire, targets)) in laid_out.wires.iter().zip(&targets).enumerate() {
-            wires::render_wire(
+        for (idx, (link, targets)) in laid_out.links.iter().zip(&targets).enumerate() {
+            links::render_link(
                 &mut out,
                 idx,
-                wire,
+                link,
                 targets,
                 label_size,
                 &laid_out.vars,
@@ -105,8 +105,8 @@ pub fn render(laid_out: &LaidOut, opts: &Options) -> String {
                 opts,
             );
         }
-        for air in &laid_out.airwires {
-            wires::render_airwire(&mut out, air, &laid_out.vars, opts);
+        for air in &laid_out.strays {
+            links::render_stray(&mut out, air, &laid_out.vars, opts);
         }
         out.push_str("  </g>\n");
     }
@@ -131,18 +131,18 @@ fn render_node(
         render_text(out, n, depth);
         return;
     }
-    // `link:` wraps the whole node in an `<a href>` so the shape (and its
-    // children) is clickable (SPEC §5). The group sits one level deeper inside.
-    let link = match n.attrs.get("link") {
+    // `href:` wraps the whole node in an `<a href>` so the shape (and its
+    // children) is clickable (SPEC §10). The group sits one level deeper inside.
+    let href = match n.attrs.get("href") {
         Some(crate::resolve::ResolvedValue::String(s)) => Some(s.clone()),
         _ => None,
     };
-    let depth = if let Some(href) = &link {
+    let depth = if let Some(url) = &href {
         writeln!(
             out,
             r#"{}<a href="{}">"#,
             "  ".repeat(depth),
-            escape_xml(href)
+            escape_xml(url)
         )
         .unwrap();
         depth + 1
@@ -186,7 +186,7 @@ fn render_node(
     }
 
     writeln!(out, "{}</g>", indent).unwrap();
-    if link.is_some() {
+    if href.is_some() {
         writeln!(out, "{}</a>", "  ".repeat(depth - 1)).unwrap();
     }
 }
