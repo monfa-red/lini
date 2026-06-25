@@ -3,34 +3,83 @@
 // size. `|sign|` is a larger preset; `fit` controls how the symbol fills its box.
 // Source for assets/icons.png.
 {
-  layout: column; gap: 24; padding: 30; align: start;
-  |r::row| { gap: 22; align: end; }
+  layout: column; gap: 16; padding: 30; align: start;
+  |row| { gap: 22; align: end; }
   |tile::column| { gap: 9; align: center; }
-  |lbl::block| { font-size: 13; font-weight: bold; color: --muted; }
-  |cap::block| { font-size: 11; font-weight: normal; color: --muted; }
+  |lbl::block| { font-size: 13; font-weight: bold; padding: 16 6 0 6; }
+  |cap::block| { font-size: 11; font-weight: normal; color: --gray-deep; }
+
+  // Two-tone colour classes — a soft `wash` body under an `ink` line. Wear one on
+  // any node (`|icon| .rose`, `|box| .teal`, …) to paint it without repeating the
+  // pair.
+  .rose   { fill: --rose-wash;   stroke: --rose-ink; }
+  .amber  { fill: --amber-wash;  stroke: --amber-ink; }
+  .lime   { fill: --lime-wash;   stroke: --lime-ink; }
+  .teal   { fill: --teal-wash;   stroke: --teal-ink; }
+  .sky    { fill: --sky-wash;    stroke: --sky-ink; }
+  .purple { fill: --purple-wash; stroke: --purple-ink; }
 }
 
 |lbl| "Icons"
-|r| [
-  |tile| [ |icon| { symbol: house };                                         |cap| "default" ]
-  |tile| [ |icon| { symbol: heart; fill: --rose-wash; stroke: --rose-ink; }; |cap| "two-tone" ]
-  |tile| [ |icon| { symbol: cloud; fill: none; stroke: --sky-deep; };        |cap| "line" ]
-  |tile| [ |icon| { symbol: user; fill: --teal-wash; stroke: --teal-ink; };  |cap| "user" ]
-  |tile| [ |icon| { symbol: bell; fill: --amber-wash; stroke: --amber-deep; } "3"; |cap| "+ label" ]
+|row| [
+  |tile| [
+    |icon| { symbol: house; }
+    |cap| "default"
+  ]
+  |tile| [
+    |icon| .rose { symbol: heart; }
+    |cap| "two-tone"
+  ]
+  |tile| [
+    |icon| { symbol: cloud; fill: none; stroke: --sky-deep; }
+    |cap| "line"
+  ]
+  |tile| [
+    |icon| .teal { symbol: user; }
+    |cap| "user"
+  ]
+  |tile| [
+    |icon| .amber { symbol: bell; color: --amber-ink; font-size: 13; } "3"
+    |cap| "+ label"
+  ]
 ]
 
 |lbl| "Signs (64px)"
-|r| [
-  |tile| [ |sign| { symbol: shield };    |cap| "shield" ]
-  |tile| [ |sign| { symbol: gear };      |cap| "gear" ]
-  |tile| [ |sign| { symbol: rocket };    |cap| "rocket" ]
-  |tile| [ |sign| { symbol: lightbulb }; |cap| "lightbulb" ]
+|row| [
+  |tile| [
+    |sign| .sky { symbol: shield; }
+    |cap| "shield"
+  ]
+  |tile| [
+    |sign| .purple { symbol: gear; }
+    |cap| "gear"
+  ]
+  |tile| [
+    |sign| .rose { symbol: rocket; }
+    |cap| "rocket"
+  ]
+  |tile| [
+    |sign| .lime { symbol: lightbulb; }
+    |cap| "lightbulb"
+  ]
 ]
 
 |lbl| "Sign · fit"
-|r| [
-  |tile| [ |sign| { symbol: shield };                |cap| "auto" ]
-  |tile| [ |sign| { symbol: shield; fit: contain };  |cap| "contain" ]
-  |tile| [ |sign| { symbol: shield; fit: cover };    |cap| "cover" ]
-  |tile| [ |sign| { symbol: shield; fit: stretch };  |cap| "stretch" ]
+|row| [
+  |tile| [
+    |sign| { symbol: shield; fit: auto; }
+    |cap| "auto"
+  ]
+  |tile| [
+    |sign| { symbol: shield; fit: contain; }
+    |cap| "contain"
+  ]
+  |tile| [
+    |sign| { symbol: shield; fit: cover; }
+    |cap| "cover"
+  ]
+  |tile| [
+    |sign| { symbol: shield; fit: stretch; }
+    |cap| "stretch"
+  ]
 ]

@@ -647,8 +647,8 @@ label rides at the normal `font-size`. For a larger stand-alone icon, reach for
 keeps Phosphor's authored framing — each glyph sits in the 256-grid with its own
 built-in margin, so different glyphs fill the box by different amounts and a row of
 mixed icons reads at an even weight. `fit: contain` scales the glyph's *own* bounds
-up until they meet the box (filling it — what a stand-alone `|sign|` usually
-wants); `cover` scales until the box is covered (the glyph may overflow); `stretch`
+up until they meet the box (filling it — and `|sign|` defaults to it); `cover`
+scales until the box is covered (the glyph may overflow); `stretch`
 fits both axes (may distort). The counter-scaled `stroke-width` follows the
 resulting scale, so the line weight stays constant whichever `fit` you choose
 ([§10](#10-properties)).
@@ -678,7 +678,7 @@ primitives ([§7](#7-nodes)) stand on their own.
 | `\|note\|` | `\|block\|` | `radius: 2; shadow: 2; fill: --note-bg; padding: 20` | Sticky note. |
 | `\|row\|` | `\|block\|` | `layout: row` | Frameless wrapper — children in a row. |
 | `\|column\|` | `\|block\|` | `layout: column` | Frameless wrapper — children in a column. |
-| `\|sign\|` | `\|icon\|` | `width: 64; height: 64; padding: 4` | A larger icon as a stand-alone node, with room for a short label. |
+| `\|sign\|` | `\|icon\|` | `width: 64; height: 64; padding: 4; fit: contain` | A larger icon as a stand-alone node, with room for a short label; `fit: contain` fills the box (unlike a bare `\|icon\|`). |
 | `\|table\|` | `\|group\|` | `layout: grid; divider: all; gap: 0; padding: 4 8; fill: none; stroke: --stroke; stroke-style: solid; font-size: 14; font-weight: normal` | Ruled grid (see below). |
 
 The bare `|block|` is the base everything rectangular builds on: no fill, no

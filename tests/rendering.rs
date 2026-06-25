@@ -543,8 +543,9 @@ fn icon_label_is_lini_text_never_stroked() {
 #[cfg(feature = "icons")]
 #[test]
 fn sign_is_a_larger_icon() {
-    // |sign| is the icon primitive at 64px (scale 64/256 = 0.25).
-    let svg = render_live("x |sign| { symbol: cloud }\n");
+    // |sign| is the icon primitive at 64px; with `fit: auto` that's the plain
+    // 64/256 = 0.25 framing.
+    let svg = render_live("x |sign| { symbol: cloud; fit: auto }\n");
     assert!(
         svg.contains(r#"class="lini-node lini-sign lini-icon""#),
         "{svg}"
@@ -553,6 +554,16 @@ fn sign_is_a_larger_icon() {
         svg.contains(r#"transform="scale(0.25) translate(-128 -128)""#),
         "{svg}"
     );
+}
+
+#[cfg(feature = "icons")]
+#[test]
+fn sign_defaults_to_fit_contain() {
+    // Unlike a bare |icon| (fit: auto), a stand-alone |sign| fills its box — the
+    // shield scales to its own bounds (0.3478), not the 0.25 grid framing.
+    let svg = render_live("x |sign| { symbol: shield }\n");
+    assert!(svg.contains(r#"scale(0.3478)"#), "{svg}");
+    assert!(!svg.contains("scale(0.25)"), "{svg}");
 }
 
 #[cfg(feature = "icons")]
@@ -601,9 +612,9 @@ fn icon_masks_an_inherited_dash() {
 #[cfg(feature = "icons")]
 #[test]
 fn icon_fit_auto_keeps_the_grid_framing() {
-    // The default `fit` maps the whole 256 grid to the box — Phosphor's authored
-    // margin — so a 64px sign is the unchanged scale(0.25) translate(-128 -128).
-    let svg = render_live("x |sign| { symbol: shield }\n");
+    // `fit: auto` maps the whole 256 grid to the box — Phosphor's authored margin —
+    // so a 64px sign is the plain scale(0.25) translate(-128 -128).
+    let svg = render_live("x |sign| { symbol: shield; fit: auto }\n");
     assert!(
         svg.contains(r#"transform="scale(0.25) translate(-128 -128)""#),
         "{svg}"
@@ -652,7 +663,7 @@ fn icon_fit_stretch_is_non_uniform() {
 fn icon_fit_holds_the_stroke_weight() {
     // The counter-scaled stroke follows the fit scale, so the on-screen weight is
     // constant: auto bakes 2 / 0.25 = 8, contain 2 / 0.3478 = 5.75 — both draw 2px.
-    let auto = render_live("x |sign| { symbol: shield }\n");
+    let auto = render_live("x |sign| { symbol: shield; fit: auto }\n");
     let contain = render_live("x |sign| { symbol: shield; fit: contain }\n");
     assert!(auto.contains(r#"stroke-width="8""#), "{auto}");
     assert!(contain.contains(r#"stroke-width="5.75""#), "{contain}");
