@@ -570,12 +570,18 @@ fn icon_label_inherits_font_size_no_inline() {
 
 #[cfg(feature = "icons")]
 #[test]
-fn a_long_label_grows_the_box_not_the_symbol() {
-    // The box widens to fit the label (no collisions), but the symbol stays at
-    // the 32px floor — scale is unchanged (32/256 = 0.125).
-    let svg = render_live("x |icon| { symbol: cloud } \"Storage Service\"\n");
+fn a_long_label_grows_the_icon_uniformly() {
+    // The icon is a square that grows with its label, so the symbol scales up too
+    // (not just the box). A short label keeps the 32px default (scale 0.125); a
+    // long one grows past it.
+    let short = render_live("x |icon| { symbol: cloud } \"hi\"\n");
+    let long = render_live("x |icon| { symbol: cloud } \"Storage Service\"\n");
     assert!(
-        svg.contains(r#"transform="scale(0.125) translate(-128 -128)""#),
-        "symbol stays 32px: {svg}"
+        short.contains(r#"transform="scale(0.125) translate(-128 -128)""#),
+        "a short label keeps 32px: {short}"
+    );
+    assert!(
+        !long.contains(r#"scale(0.125)"#),
+        "a long label grows the symbol past 32px: {long}"
     );
 }

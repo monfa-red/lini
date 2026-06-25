@@ -44,11 +44,11 @@ pub fn leaf_bbox(inst: &ResolvedInst) -> Result<Bbox, Error> {
             ))
         }
         NodeKind::Icon => {
-            // An icon sizes like a box around its optional label — each axis is
-            // the declared `width`/`height` (default 32) as a floor over the text
-            // + padding — but with **no** stroke inflate (the symbol's stroke sits
-            // inside its 256 grid). Empty stays the declared size; a long label
-            // grows the box, never the symbol (SPEC §7).
+            // An icon is a **square** that grows uniformly with its optional label
+            // (and `padding`), so the symbol scales up *with* the text and keeps
+            // its proportion. The side is the larger of the declared size (default
+            // 32) and the label + padding on either axis — no stroke inflate (the
+            // symbol's stroke sits inside its 256 grid, SPEC §7).
             let pad = padding(&inst.attrs, inst.span)?;
             let (tw, th) = match inst.label.as_deref().filter(|s| !s.is_empty()) {
                 Some(label) => {
@@ -62,9 +62,15 @@ pub fn leaf_bbox(inst: &ResolvedInst) -> Result<Bbox, Error> {
                 }
                 None => (0.0, 0.0),
             };
-            let w = floor_dim(inst.attrs.number("width"), tw, pad.left + pad.right);
-            let h = floor_dim(inst.attrs.number("height"), th, pad.top + pad.bottom);
-            Ok(Bbox::centered(w, h))
+            let declared = inst
+                .attrs
+                .number("width")
+                .unwrap_or(0.0)
+                .max(inst.attrs.number("height").unwrap_or(0.0));
+            let side = declared
+                .max(tw + pad.left + pad.right)
+                .max(th + pad.top + pad.bottom);
+            Ok(Bbox::centered(side, side))
         }
         NodeKind::Line => {
             Ok(bounding_box(&require_points(inst, "line", 2)?).inflate(stroke_half(inst)))

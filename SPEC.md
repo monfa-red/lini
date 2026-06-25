@@ -551,8 +551,8 @@ asymmetric `padding: t r b l` offsets it — `padding: 4 4 20 4` lifts the conte
 toward the top, away from the larger bottom inset, exactly like CSS.
 
 Exceptions: a **text** node sizes to its glyphs (no padding), widened by
-`letter-spacing` and given `line-spacing` between `\n` lines; `|icon|` sizes like a
-box around its label (a `32` floor) and needs a `symbol`; `|line|` / `|poly|` / `|image|` / `|path|` require their geometry
+`letter-spacing` and given `line-spacing` between `\n` lines; `|icon|` is a square
+that grows with its label (a `32` floor) and needs a `symbol`; `|line|` / `|poly|` / `|image|` / `|path|` require their geometry
 (`points` / `src` / `path`) and error without it. `|block|` carries `padding: 0`,
 so a bare block sizes to its content exactly.
 
@@ -585,7 +585,7 @@ box; equal dimensions (or an empty `|oval|`) make a circle.
 | `\|poly\|` | `points` | ≥3 points, local (center-origin) coords. Closed. |
 | `\|path\|` | `path` | Raw SVG path. **Native top-left coords.** |
 | `\|line\|` | `points` | 2+ points. Markers via `marker*:`. |
-| `\|icon\|` | `symbol` | A **Phosphor** icon — `symbol:` names it; paints two-tone like a box (`fill` body, `stroke` line, counter-scaled `stroke-width`). Sizes like a box (`32` floor); `\|sign\|` is the larger preset. See [Icons](#icons). |
+| `\|icon\|` | `symbol` | A **Phosphor** icon — `symbol:` names it; paints two-tone like a box (`fill` body, `stroke` line, counter-scaled `stroke-width`). A square that grows with its label (`32` floor); `\|sign\|` is the larger preset. See [Icons](#icons). |
 | `\|image\|` | `src`, `width`, `height` | `<image href="…">`. External URLs only; both dimensions required. |
 
 ### Visual modifiers (closed primitives)
@@ -636,12 +636,12 @@ hued duotone is `fill: --teal-wash; stroke: --teal-ink`, exactly like a card.
 fit to its box, and the stroke is divided by that scale (baked at compile time), so
 its line weight holds as the icon resizes and matches the diagram's other strokes.
 
-An icon **sizes like a box** around its optional label: each axis is a `32` floor
-(`icon-size`) over the text + `padding`, so an empty icon is 32×32 and a long
-label grows the box — but the symbol always scales **uniformly** (to the box's
-shorter side) and stays centred, so it never distorts, and the label rides at the
-normal `font-size`, never scaled with the icon. For a larger stand-alone icon with
-room for a short label, reach for `|sign|` ([§8](#8-templates)). A missing `symbol`
+An icon is a **square** that grows uniformly with its optional label (and
+`padding`): the side is a `32` floor (`icon-size`) over the label + padding on
+either axis, so an empty icon is 32×32 and a longer label scales the **whole icon
+up** — symbol and all — keeping its proportion (the symbol never distorts). The
+label rides at the normal `font-size`. For a larger stand-alone icon, reach for
+`|sign|` ([§8](#8-templates)). A missing `symbol`
 errors like `|poly|` without `points`; an unknown one suggests the nearest name. Only the icons a diagram uses
 are embedded. The full set ships behind a default-on `icons` build feature
 ([§19](#19-deferred)) and lives in the repo as one compact data file — path data
