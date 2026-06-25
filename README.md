@@ -116,15 +116,15 @@ Block (the bare frameless rectangle), oval, hex, slant, cylinder, diamond, polyg
 
 ## Icons
 
-Built-in **[Phosphor](https://phosphoricons.com/)** icons, drawn as inline SVG paths — no icon font, no external files. `|icon| { symbol: heart }` paints like any node: `fill` is the body, `stroke` the line, `stroke-width` counter-scaled so the weight stays even at any size. `|sign|` is a larger preset and an ordinary node — give it an id and wire it like a box.
+Built-in **[Phosphor](https://phosphoricons.com/)** icons, drawn as inline SVG paths — no icon font, no external files. `|icon| { symbol: heart }` paints like any node: `fill` is the body, `stroke` the line, `stroke-width` counter-scaled so the weight stays even at any size. `|sign|` is a larger preset and an ordinary node — it carries a label, wears a colour class, and wires up like a box.
 
 <p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/icons.png" alt="Lini's built-in Phosphor icons and signs" width="520"></p>
 
 ```
-|icon| { symbol: bell } "3"                                 // a label rides as centred text
-|icon| .teal { symbol: user }                               // two-tone, via a colour class
-|icon| { symbol: cloud; fill: none; stroke: --sky-deep }    // single-tone line
-auth |sign| { symbol: shield-check }                        // larger, and linkable
+|icon| .teal { symbol: user }                            // two-tone, via a colour class
+|icon| { symbol: cloud; fill: none; stroke: --sky-deep } // single-tone line
+|icon| .amber { symbol: bell } "3"                       // a label rides as centred text
+svc |sign| .purple { symbol: gear } "Service"            // larger, labelled, and linkable
 ```
 
 Only the symbols a diagram uses are embedded, so the full set never bloats a small file.
