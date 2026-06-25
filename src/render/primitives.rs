@@ -313,17 +313,44 @@ fn emit_icon(out: &mut String, n: &PlacedNode, indent: &str, vars: &VarTable, op
     };
     let frags: Vec<(crate::icon::Role, &str)> = frags.collect();
 
-    let size = n.bbox.w().min(n.bbox.h());
-    let scale = size / 256.0;
+    // `fit` picks the content rectangle to map into the box (SPEC §10): the whole
+    // 256-grid for `auto` (Phosphor's authored margin), else the glyph's own
+    // extent. `contain`/`auto` fit inside (min scale), `cover` covers (max),
+    // `stretch` fills both axes independently.
+    use super::icon_fit::Fit;
+    let (bw, bh) = (n.bbox.w(), n.bbox.h());
+    let (cx, cy, cw, ch) = match Fit::of(&n.attrs) {
+        Fit::Auto => (128.0, 128.0, 256.0, 256.0),
+        _ => super::icon_fit::glyph_box(&frags).unwrap_or((128.0, 128.0, 256.0, 256.0)),
+    };
+    let (sx, sy) = match Fit::of(&n.attrs) {
+        Fit::Cover => {
+            let s = (bw / cw).max(bh / ch);
+            (s, s)
+        }
+        Fit::Stretch => (bw / cw, bh / ch),
+        _ => {
+            let s = (bw / cw).min(bh / ch);
+            (s, s)
+        }
+    };
     let body = attr_or_var(&n.attrs, "fill", "icon-fill", vars, opts);
     let ink = attr_or_var(&n.attrs, "stroke", "stroke", vars, opts);
-    let stroke_width = n.attrs.number("stroke-width").unwrap_or(2.0) / scale;
+    // Counter-scale the stroke by the geometric-mean scale so a 2px line stays 2px
+    // at any size or fit (uniform fits have `sx == sy`, so it is just the scale).
+    let stroke_width = n.attrs.number("stroke-width").unwrap_or(2.0) / (sx * sy).sqrt();
 
     use crate::icon::Role;
+    let scale = if (sx - sy).abs() < 1e-9 {
+        num(sx)
+    } else {
+        format!("{} {}", num(sx), num(sy))
+    };
     writeln!(
         out,
-        r#"{indent}<g transform="scale({}) translate(-128 -128)">"#,
-        num(scale)
+        r#"{indent}<g transform="scale({scale}) translate({} {})">"#,
+        num(-cx),
+        num(-cy),
     )
     .unwrap();
     // Faint body behind, then the outline, then any solid ink on top. A
@@ -394,18 +421,26 @@ fn emit_image(out: &mut String, n: &PlacedNode, indent: &str) {
         Some(crate::resolve::ResolvedValue::String(s)) => s.clone(),
         _ => return,
     };
-    // Image dimensions come from its bbox (driven by `width`/`height`).
+    // Image dimensions come from its bbox (driven by `width`/`height`). `fit` maps
+    // to `preserveAspectRatio` (SPEC §10); `auto`/`contain` is the SVG default
+    // (`xMidYMid meet`), so only `cover`/`stretch` need stating.
     let w = n.bbox.w();
     let h = n.bbox.h();
+    let par = match super::icon_fit::Fit::of(&n.attrs) {
+        super::icon_fit::Fit::Cover => r#" preserveAspectRatio="xMidYMid slice""#,
+        super::icon_fit::Fit::Stretch => r#" preserveAspectRatio="none""#,
+        _ => "",
+    };
     writeln!(
         out,
-        r#"{}<image href="{}" x="{}" y="{}" width="{}" height="{}"/>"#,
+        r#"{}<image href="{}" x="{}" y="{}" width="{}" height="{}"{}/>"#,
         indent,
         escape_xml(&href),
         num(-w / 2.0),
         num(-h / 2.0),
         num(w),
         num(h),
+        par,
     )
     .unwrap();
 }

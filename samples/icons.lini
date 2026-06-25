@@ -1,44 +1,36 @@
-// Phosphor icons. `|icon| { symbol: … }` paints like a shape — `fill` is the body,
+// Phosphor icons. `|icon| { symbol: … }` paints like a node — `fill` is the body,
 // `stroke` the line, `stroke-width` (default 2) counter-scaled to stay even at any
-// size. Source for assets/icons.png.
+// size. `|sign|` is a larger preset; `fit` controls how the symbol fills its box.
+// Source for assets/icons.png.
 {
-  layout: grid; columns: repeat(4); gap: 26; padding: 30;
-  |t::column| { gap: 9; align: center; }
-  |cap::block| { font-size: 12; font-weight: normal; color: --muted; }
-  // Derive a pre-styled icon once, then wear it like any type.
-  |warn::icon| { symbol: warning-circle; fill: --amber-wash; stroke: --amber-ink; }
+  layout: column; gap: 24; padding: 30; align: start;
+  |r::row| { gap: 22; align: end; }
+  |tile::column| { gap: 9; align: center; }
+  |lbl::block| { font-size: 13; font-weight: bold; color: --muted; }
+  |cap::block| { font-size: 11; font-weight: normal; color: --muted; }
 }
 
-|t| [
-  |icon| { symbol: house }
-  |cap| "default"
-]
-|t| [
-  |icon| { symbol: cloud; fill: none; stroke: --sky-deep; }
-  |cap| "line"
-]
-|t| [
-  |icon| { symbol: heart; fill: --rose-wash; stroke: --rose-ink; }
-  |cap| "two-tone"
-]
-|t| [
-  |warn|
-  |cap| "::derived"
+|lbl| "Icons"
+|r| [
+  |tile| [ |icon| { symbol: house };                                         |cap| "default" ]
+  |tile| [ |icon| { symbol: heart; fill: --rose-wash; stroke: --rose-ink; }; |cap| "two-tone" ]
+  |tile| [ |icon| { symbol: cloud; fill: none; stroke: --sky-deep; };        |cap| "line" ]
+  |tile| [ |icon| { symbol: user; fill: --teal-wash; stroke: --teal-ink; };  |cap| "user" ]
+  |tile| [ |icon| { symbol: bell; fill: --amber-wash; stroke: --amber-deep; } "3"; |cap| "+ label" ]
 ]
 
-|t| [
-  |icon| { symbol: user; fill: --teal-wash; stroke: --teal-ink; }
-  |cap| "user"
+|lbl| "Signs (64px)"
+|r| [
+  |tile| [ |sign| { symbol: shield };    |cap| "shield" ]
+  |tile| [ |sign| { symbol: gear };      |cap| "gear" ]
+  |tile| [ |sign| { symbol: rocket };    |cap| "rocket" ]
+  |tile| [ |sign| { symbol: lightbulb }; |cap| "lightbulb" ]
 ]
-|t| [
-  |icon| { symbol: atom; stroke: --purple-ink; }
-  |cap| "atom"
-]
-|t| [
-  |sign| { symbol: gear }
-  |cap| "sign (64)"
-]
-|t| [
-  |icon| { symbol: bell; fill: --amber-wash; stroke: --amber-deep; } "3"
-  |cap| "+ label"
+
+|lbl| "Sign · fit"
+|r| [
+  |tile| [ |sign| { symbol: shield };                |cap| "auto" ]
+  |tile| [ |sign| { symbol: shield; fit: contain };  |cap| "contain" ]
+  |tile| [ |sign| { symbol: shield; fit: cover };    |cap| "cover" ]
+  |tile| [ |sign| { symbol: shield; fit: stretch };  |cap| "stretch" ]
 ]

@@ -586,7 +586,7 @@ box; equal dimensions (or an empty `|oval|`) make a circle.
 | `\|path\|` | `path` | Raw SVG path. **Native top-left coords.** |
 | `\|line\|` | `points` | 2+ points. Markers via `marker*:`. |
 | `\|icon\|` | `symbol` | A **Phosphor** icon — `symbol:` names it; paints two-tone like a box (`fill` body, `stroke` line, counter-scaled `stroke-width`). A square that grows with its label (`32` floor); `\|sign\|` is the larger preset. See [Icons](#icons). |
-| `\|image\|` | `src`, `width`, `height` | `<image href="…">`. External URLs only; both dimensions required. |
+| `\|image\|` | `src`, `width`, `height` | `<image href="…">`. External URLs only; both dimensions required. `fit` sets letterbox / cover / stretch (default contain). |
 
 ### Visual modifiers (closed primitives)
 
@@ -641,7 +641,19 @@ An icon is a **square** that grows uniformly with its optional label (and
 either axis, so an empty icon is 32×32 and a longer label scales the **whole icon
 up** — symbol and all — keeping its proportion (the symbol never distorts). The
 label rides at the normal `font-size`. For a larger stand-alone icon, reach for
-`|sign|` ([§8](#8-templates)). A missing `symbol`
+`|sign|` ([§8](#8-templates)).
+
+**`fit`** controls how the symbol fills that box. By default (`fit: auto`) an icon
+keeps Phosphor's authored framing — each glyph sits in the 256-grid with its own
+built-in margin, so different glyphs fill the box by different amounts and a row of
+mixed icons reads at an even weight. `fit: contain` scales the glyph's *own* bounds
+up until they meet the box (filling it — what a stand-alone `|sign|` usually
+wants); `cover` scales until the box is covered (the glyph may overflow); `stretch`
+fits both axes (may distort). The counter-scaled `stroke-width` follows the
+resulting scale, so the line weight stays constant whichever `fit` you choose
+([§10](#10-properties)).
+
+A missing `symbol`
 errors like `|poly|` without `points`; an unknown one suggests the nearest name. Only the icons a diagram uses
 are embedded. The full set ships behind a default-on `icons` build feature
 ([§19](#19-deferred)) and lives in the repo as one compact data file — path data
@@ -963,6 +975,7 @@ container, they reach every link in that scope; a link's own block overrides.
 | `points` | `x y, x y, …` | Vertex list (`\|poly\|`, `\|line\|`). |
 | `path` | string | Raw SVG path (`\|path\|`, native top-left coords). |
 | `symbol` | ident | Icon name (`\|icon\|`) — a Phosphor symbol, e.g. `heart`, `warning-circle`. |
+| `fit` | `auto` / `contain` / `cover` / `stretch` | How an `\|icon\|` symbol or `\|image\|` maps into its box — the box size is unchanged. `auto` (default) keeps the natural framing (Phosphor's 256-grid margin for an icon, letterbox for an image); `contain` scales the content uniformly to fit inside, `cover` to cover the box (may overflow / crop), `stretch` fills both axes (may distort). For an icon, `contain`/`cover`/`stretch` measure the glyph's own bounds; [Icons](#icons). |
 
 `pin`, `width`/`height`, `points`, and `path` are **box** properties — a bare text
 node carries none of them; `translate` and `rotate` are the exceptions and work on

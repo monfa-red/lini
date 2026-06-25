@@ -195,6 +195,8 @@ pub fn resolve_node(
     let is_icon = kind == NodeKind::Icon;
     if is_icon {
         validate_icon(&attrs, node.span)?;
+    } else if kind == NodeKind::Image {
+        validate_fit(&attrs, node.span)?;
     }
     let own_label = if is_icon {
         first_text(&node.children).map(str::to_string)
@@ -312,6 +314,7 @@ fn first_text(children: &[Child]) -> Option<&str> {
 /// suggest the nearest name, or — when the set was not compiled in — hint at the
 /// `icons` feature.
 fn validate_icon(attrs: &AttrMap, span: Span) -> Result<(), Error> {
+    validate_fit(attrs, span)?;
     let symbol = match attrs.get("symbol") {
         Some(ResolvedValue::Ident(s) | ResolvedValue::String(s)) => s.as_str(),
         Some(_) => {
@@ -347,6 +350,23 @@ fn validate_icon(attrs: &AttrMap, span: Span) -> Result<(), Error> {
         }
     };
     Err(Error::at(span, msg))
+}
+
+/// `fit` (SPEC §10) accepts only the four object-fit keywords — used by `|icon|`
+/// and `|image|` to map content into the box.
+fn validate_fit(attrs: &AttrMap, span: Span) -> Result<(), Error> {
+    match attrs.get("fit") {
+        None => Ok(()),
+        Some(ResolvedValue::Ident(s))
+            if matches!(s.as_str(), "auto" | "contain" | "cover" | "stretch") =>
+        {
+            Ok(())
+        }
+        Some(_) => Err(Error::at(
+            span,
+            "'fit' must be auto, contain, cover, or stretch",
+        )),
+    }
 }
 
 /// Drop empty (`""`) text children — they suppress the label and would emit an

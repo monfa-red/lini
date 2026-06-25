@@ -3,7 +3,7 @@ mod flex;
 mod grid;
 mod ir;
 mod links;
-mod path_bbox;
+pub(crate) mod path_bbox; // glyph-extent computation also serves `render::icon_fit`
 mod primitives;
 mod text;
 mod values;

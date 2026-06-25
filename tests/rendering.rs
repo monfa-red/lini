@@ -597,3 +597,94 @@ fn icon_masks_an_inherited_dash() {
         .expect(".lini-icon rule");
     assert!(rule.contains("stroke-dasharray: none"), "{rule}");
 }
+
+#[cfg(feature = "icons")]
+#[test]
+fn icon_fit_auto_keeps_the_grid_framing() {
+    // The default `fit` maps the whole 256 grid to the box — Phosphor's authored
+    // margin — so a 64px sign is the unchanged scale(0.25) translate(-128 -128).
+    let svg = render_live("x |sign| { symbol: shield }\n");
+    assert!(
+        svg.contains(r#"transform="scale(0.25) translate(-128 -128)""#),
+        "{svg}"
+    );
+}
+
+#[cfg(feature = "icons")]
+#[test]
+fn icon_fit_contain_fills_and_recentres_on_the_glyph() {
+    // `contain` measures the shield's own bounds (≈176×184, centred at y=140) and
+    // scales it uniformly to fit the 64px box (64/184 = 0.3478) — larger than
+    // auto's 0.25, and centred on the glyph, not the grid.
+    let svg = render_live("x |sign| { symbol: shield; fit: contain }\n");
+    assert!(
+        svg.contains(r#"transform="scale(0.3478) translate(-128 -140)""#),
+        "{svg}"
+    );
+    assert!(!svg.contains("scale(0.25)"), "contain enlarges: {svg}");
+}
+
+#[cfg(feature = "icons")]
+#[test]
+fn icon_fit_cover_uses_the_larger_scale() {
+    // `cover` scales until the box is covered — the max ratio (64/176 = 0.3636) —
+    // so it exceeds `contain` and the glyph overflows on the long axis.
+    let svg = render_live("x |sign| { symbol: shield; fit: cover }\n");
+    assert!(
+        svg.contains(r#"transform="scale(0.3636) translate(-128 -140)""#),
+        "{svg}"
+    );
+}
+
+#[cfg(feature = "icons")]
+#[test]
+fn icon_fit_stretch_is_non_uniform() {
+    // `stretch` fits each axis independently → a two-value scale.
+    let svg = render_live("x |sign| { symbol: shield; fit: stretch }\n");
+    assert!(
+        svg.contains(r#"transform="scale(0.3636 0.3478) translate(-128 -140)""#),
+        "{svg}"
+    );
+}
+
+#[cfg(feature = "icons")]
+#[test]
+fn icon_fit_holds_the_stroke_weight() {
+    // The counter-scaled stroke follows the fit scale, so the on-screen weight is
+    // constant: auto bakes 2 / 0.25 = 8, contain 2 / 0.3478 = 5.75 — both draw 2px.
+    let auto = render_live("x |sign| { symbol: shield }\n");
+    let contain = render_live("x |sign| { symbol: shield; fit: contain }\n");
+    assert!(auto.contains(r#"stroke-width="8""#), "{auto}");
+    assert!(contain.contains(r#"stroke-width="5.75""#), "{contain}");
+}
+
+#[cfg(feature = "icons")]
+#[test]
+fn bad_fit_value_errors() {
+    let err = lini::compile_str("x |icon| { symbol: heart; fit: squish }\n")
+        .expect_err("invalid fit value");
+    assert!(err.message.contains("fit"), "{}", err.message);
+}
+
+#[test]
+fn image_fit_cover_sets_slice() {
+    let svg = render_live("x |image| { src: \"a.png\"; width: 80; height: 40; fit: cover }\n");
+    assert!(
+        svg.contains(r#"preserveAspectRatio="xMidYMid slice""#),
+        "{svg}"
+    );
+}
+
+#[test]
+fn image_fit_stretch_sets_none() {
+    let svg = render_live("x |image| { src: \"a.png\"; width: 80; height: 40; fit: stretch }\n");
+    assert!(svg.contains(r#"preserveAspectRatio="none""#), "{svg}");
+}
+
+#[test]
+fn image_fit_auto_omits_preserve_aspect_ratio() {
+    // auto / contain is the SVG default (xMidYMid meet) — nothing extra emitted.
+    let svg = render_live("x |image| { src: \"a.png\"; width: 80; height: 40 }\n");
+    assert!(svg.contains("<image "), "{svg}");
+    assert!(!svg.contains("preserveAspectRatio"), "{svg}");
+}
