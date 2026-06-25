@@ -13,11 +13,11 @@ input_file: samples/gradient.lini
     .lini .lini-card { stroke: none; color: white; font-weight: normal; }
   </style>
   <defs>
-    <linearGradient id="lini-gradient-1" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#00baaf"/><stop offset="100%" stop-color="#57a0fb"/></linearGradient>
-    <linearGradient id="lini-gradient-2" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#e67497"/><stop offset="50%" stop-color="#cb9400"/><stop offset="100%" stop-color="#00b1de"/></linearGradient>
-    <linearGradient id="lini-gradient-3" gradientTransform="rotate(0 0.5 0.5)"><stop offset="0%" stop-color="#57a0fb"/><stop offset="100%" stop-color="#968ef8"/></linearGradient>
-    <radialGradient id="lini-gradient-4"><stop offset="0%" stop-color="#968ef8"/><stop offset="100%" stop-color="#e67497"/></radialGradient>
-    <linearGradient id="lini-gradient-5" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#00baaf"/><stop offset="100%" stop-color="#968ef8"/></linearGradient>
+    <linearGradient id="lini-gradient-1" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#00bcb1"/><stop offset="100%" stop-color="#4e9fff"/></linearGradient>
+    <linearGradient id="lini-gradient-2" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#ec6e97"/><stop offset="50%" stop-color="#cf9300"/><stop offset="100%" stop-color="#00b2e5"/></linearGradient>
+    <linearGradient id="lini-gradient-3" gradientTransform="rotate(0 0.5 0.5)"><stop offset="0%" stop-color="#4e9fff"/><stop offset="100%" stop-color="#968cff"/></linearGradient>
+    <radialGradient id="lini-gradient-4"><stop offset="0%" stop-color="#968cff"/><stop offset="100%" stop-color="#ec6e97"/></radialGradient>
+    <linearGradient id="lini-gradient-5" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#00bcb1"/><stop offset="100%" stop-color="#968cff"/></linearGradient>
     <linearGradient id="lini-gradient-6" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#f97770"/><stop offset="100%" stop-color="#9c93ff"/></linearGradient>
   </defs>
   <rect class="lini-canvas" x="-277.5" y="-171.5" width="555" height="343"/>

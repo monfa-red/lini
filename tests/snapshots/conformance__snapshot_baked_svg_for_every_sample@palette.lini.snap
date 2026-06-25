@@ -57,10 +57,10 @@ input_file: samples/palette.lini
       <g class="lini-node lini-sw lini-box lini-block" style="fill: #ffb5ac" transform="translate(-56.5,-195)">
         <rect x="-40" y="-17" width="80" height="34" rx="8" ry="8"/>
       </g>
-      <g class="lini-node lini-sw lini-box lini-block" style="fill: #eb776e" transform="translate(30.5,-195)">
+      <g class="lini-node lini-sw lini-box lini-block" style="fill: #f27168" transform="translate(30.5,-195)">
         <rect x="-40" y="-17" width="80" height="34" rx="8" ry="8"/>
       </g>
-      <g class="lini-node lini-sw lini-box lini-block" style="fill: #ba4b45" transform="translate(117.5,-195)">
+      <g class="lini-node lini-sw lini-box lini-block" style="fill: #bc4943" transform="translate(117.5,-195)">
         <rect x="-40" y="-17" width="80" height="34" rx="8" ry="8"/>
       </g>
       <g class="lini-node lini-sw lini-box lini-block" style="fill: #851618" transform="translate(204.5,-195)">
@@ -76,10 +76,10 @@ input_file: samples/palette.lini
       <g class="lini-node lini-sw lini-box lini-block" style="fill: #ffb2c9" transform="translate(-56.5,-154)">
         <rect x="-40" y="-17" width="80" height="34" rx="8" ry="8"/>
       </g>
-      <g class="lini-node lini-sw lini-box lini-block" style="fill: #e67497" transform="translate(30.5,-154)">
+      <g class="lini-node lini-sw lini-box lini-block" style="fill: #ec6e97" transform="translate(30.5,-154)">
         <rect x="-40" y="-17" width="80" height="34" rx="8" ry="8"/>
       </g>
-      <g class="lini-node lini-sw lini-box lini-block" style="fill: #b6496e" transform="translate(117.5,-154)">
+      <g class="lini-node lini-sw lini-box lini-block" style="fill: #b8476e" transform="translate(117.5,-154)">
         <rect x="-40" y="-17" width="80" height="34" rx="8" ry="8"/>
       </g>
       <g class="lini-node lini-sw lini-box lini-block" style="fill: #811442" transform="translate(204.5,-154)">
@@ -95,10 +95,10 @@ input_file: samples/palette.lini
       <g class="lini-node lini-sw lini-box lini-block" style="fill: #ffbd8d" transform="translate(-56.5,-113)">
         <rect x="-40" y="-17" width="80" height="34" rx="8" ry="8"/>
       </g>
-      <g class="lini-node lini-sw lini-box lini-block" style="fill: #e18337" transform="translate(30.5,-113)">
+      <g class="lini-node lini-sw lini-box lini-block" style="fill: #e78022" transform="translate(30.5,-113)">
         <rect x="-40" y="-17" width="80" height="34" rx="8" ry="8"/>
       </g>
-      <g class="lini-node lini-sw lini-box lini-block" style="fill: #b25800" transform="translate(117.5,-113)">
+      <g class="lini-node lini-sw lini-box lini-block" style="fill: #b45700" transform="translate(117.5,-113)">
         <rect x="-40" y="-17" width="80" height="34" rx="8" ry="8"/>
       </g>
       <g class="lini-node lini-sw lini-box lini-block" style="fill: #7e2800" transform="translate(204.5,-113)">
@@ -114,10 +114,10 @@ input_file: samples/palette.lini
       <g class="lini-node lini-sw lini-box lini-block" style="fill: #eec978" transform="translate(-56.5,-72)">
         <rect x="-40" y="-17" width="80" height="34" rx="8" ry="8"/>
       </g>
-      <g class="lini-node lini-sw lini-box lini-block" style="fill: #cb9400" transform="translate(30.5,-72)">
+      <g class="lini-node lini-sw lini-box lini-block" style="fill: #cf9300" transform="translate(30.5,-72)">
         <rect x="-40" y="-17" width="80" height="34" rx="8" ry="8"/>
       </g>
-      <g class="lini-node lini-sw lini-box lini-block" style="fill: #9e6900" transform="translate(117.5,-72)">
+      <g class="lini-node lini-sw lini-box lini-block" style="fill: #9f6900" transform="translate(117.5,-72)">
         <rect x="-40" y="-17" width="80" height="34" rx="8" ry="8"/>
       </g>
       <g class="lini-node lini-sw lini-box lini-block" style="fill: #6d3b00" transform="translate(204.5,-72)">
@@ -133,10 +133,10 @@ input_file: samples/palette.lini
       <g class="lini-node lini-sw lini-box lini-block" style="fill: #c0da8f" transform="translate(-56.5,-31)">
         <rect x="-40" y="-17" width="80" height="34" rx="8" ry="8"/>
       </g>
-      <g class="lini-node lini-sw lini-box lini-block" style="fill: #8bad38" transform="translate(30.5,-31)">
+      <g class="lini-node lini-sw lini-box lini-block" style="fill: #8aae21" transform="translate(30.5,-31)">
         <rect x="-40" y="-17" width="80" height="34" rx="8" ry="8"/>
       </g>
-      <g class="lini-node lini-sw lini-box lini-block" style="fill: #638200" transform="translate(117.5,-31)">
+      <g class="lini-node lini-sw lini-box lini-block" style="fill: #628200" transform="translate(117.5,-31)">
         <rect x="-40" y="-17" width="80" height="34" rx="8" ry="8"/>
       </g>
       <g class="lini-node lini-sw lini-box lini-block" style="fill: #385300" transform="translate(204.5,-31)">
@@ -152,10 +152,10 @@ input_file: samples/palette.lini
       <g class="lini-node lini-sw lini-box lini-block" style="fill: #94e2b5" transform="translate(-56.5,10)">
         <rect x="-40" y="-17" width="80" height="34" rx="8" ry="8"/>
       </g>
-      <g class="lini-node lini-sw lini-box lini-block" style="fill: #36b97b" transform="translate(30.5,10)">
+      <g class="lini-node lini-sw lini-box lini-block" style="fill: #15bb77" transform="translate(30.5,10)">
         <rect x="-40" y="-17" width="80" height="34" rx="8" ry="8"/>
       </g>
-      <g class="lini-node lini-sw lini-box lini-block" style="fill: #008d52" transform="translate(117.5,10)">
+      <g class="lini-node lini-sw lini-box lini-block" style="fill: #008d51" transform="translate(117.5,10)">
         <rect x="-40" y="-17" width="80" height="34" rx="8" ry="8"/>
       </g>
       <g class="lini-node lini-sw lini-box lini-block" style="fill: #005d26" transform="translate(204.5,10)">
@@ -171,10 +171,10 @@ input_file: samples/palette.lini
       <g class="lini-node lini-sw lini-box lini-block" style="fill: #79e3da" transform="translate(-56.5,51)">
         <rect x="-40" y="-17" width="80" height="34" rx="8" ry="8"/>
       </g>
-      <g class="lini-node lini-sw lini-box lini-block" style="fill: #00baaf" transform="translate(30.5,51)">
+      <g class="lini-node lini-sw lini-box lini-block" style="fill: #00bcb1" transform="translate(30.5,51)">
         <rect x="-40" y="-17" width="80" height="34" rx="8" ry="8"/>
       </g>
-      <g class="lini-node lini-sw lini-box lini-block" style="fill: #008e84" transform="translate(117.5,51)">
+      <g class="lini-node lini-sw lini-box lini-block" style="fill: #008e85" transform="translate(117.5,51)">
         <rect x="-40" y="-17" width="80" height="34" rx="8" ry="8"/>
       </g>
       <g class="lini-node lini-sw lini-box lini-block" style="fill: #005d56" transform="translate(204.5,51)">
@@ -190,10 +190,10 @@ input_file: samples/palette.lini
       <g class="lini-node lini-sw lini-box lini-block" style="fill: #7eddfd" transform="translate(-56.5,92)">
         <rect x="-40" y="-17" width="80" height="34" rx="8" ry="8"/>
       </g>
-      <g class="lini-node lini-sw lini-box lini-block" style="fill: #00b1de" transform="translate(30.5,92)">
+      <g class="lini-node lini-sw lini-box lini-block" style="fill: #00b2e5" transform="translate(30.5,92)">
         <rect x="-40" y="-17" width="80" height="34" rx="8" ry="8"/>
       </g>
-      <g class="lini-node lini-sw lini-box lini-block" style="fill: #0085b1" transform="translate(117.5,92)">
+      <g class="lini-node lini-sw lini-box lini-block" style="fill: #0085b3" transform="translate(117.5,92)">
         <rect x="-40" y="-17" width="80" height="34" rx="8" ry="8"/>
       </g>
       <g class="lini-node lini-sw lini-box lini-block" style="fill: #00547e" transform="translate(204.5,92)">
@@ -209,10 +209,10 @@ input_file: samples/palette.lini
       <g class="lini-node lini-sw lini-box lini-block" style="fill: #9fd1ff" transform="translate(-56.5,133)">
         <rect x="-40" y="-17" width="80" height="34" rx="8" ry="8"/>
       </g>
-      <g class="lini-node lini-sw lini-box lini-block" style="fill: #57a0fb" transform="translate(30.5,133)">
+      <g class="lini-node lini-sw lini-box lini-block" style="fill: #4e9fff" transform="translate(30.5,133)">
         <rect x="-40" y="-17" width="80" height="34" rx="8" ry="8"/>
       </g>
-      <g class="lini-node lini-sw lini-box lini-block" style="fill: #2b74cb" transform="translate(117.5,133)">
+      <g class="lini-node lini-sw lini-box lini-block" style="fill: #2774ce" transform="translate(117.5,133)">
         <rect x="-40" y="-17" width="80" height="34" rx="8" ry="8"/>
       </g>
       <g class="lini-node lini-sw lini-box lini-block" style="fill: #004496" transform="translate(204.5,133)">
@@ -228,10 +228,10 @@ input_file: samples/palette.lini
       <g class="lini-node lini-sw lini-box lini-block" style="fill: #c6c4ff" transform="translate(-56.5,174)">
         <rect x="-40" y="-17" width="80" height="34" rx="8" ry="8"/>
       </g>
-      <g class="lini-node lini-sw lini-box lini-block" style="fill: #968ef8" transform="translate(30.5,174)">
+      <g class="lini-node lini-sw lini-box lini-block" style="fill: #968cff" transform="translate(30.5,174)">
         <rect x="-40" y="-17" width="80" height="34" rx="8" ry="8"/>
       </g>
-      <g class="lini-node lini-sw lini-box lini-block" style="fill: #6e63c9" transform="translate(117.5,174)">
+      <g class="lini-node lini-sw lini-box lini-block" style="fill: #6e62cc" transform="translate(117.5,174)">
         <rect x="-40" y="-17" width="80" height="34" rx="8" ry="8"/>
       </g>
       <g class="lini-node lini-sw lini-box lini-block" style="fill: #443394" transform="translate(204.5,174)">
@@ -259,19 +259,19 @@ input_file: samples/palette.lini
     </g>
     <g class="lini-node lini-row lini-block" data-id="cards" transform="translate(0,281.5)">
       <rect x="-243.75" y="-22.25" width="487.5" height="44.5" rx="0" ry="0"/>
-      <g class="lini-node lini-card lini-box lini-block" style="fill: #eaebff; stroke: #968ef8; color: #968ef8" transform="translate(-199,0)">
+      <g class="lini-node lini-card lini-box lini-block" style="fill: #eaebff; stroke: #968cff; color: #968cff" transform="translate(-199,0)">
         <rect x="-44" y="-21.5" width="88" height="43" rx="8" ry="8"/>
         <text class="lini-text" x="0" y="0">Wash</text>
       </g>
-      <g class="lini-node lini-card lini-box lini-block" style="fill: #c6c4ff; stroke: #6e63c9; color: #6e63c9" transform="translate(-99.5,0)">
+      <g class="lini-node lini-card lini-box lini-block" style="fill: #c6c4ff; stroke: #6e62cc; color: #6e62cc" transform="translate(-99.5,0)">
         <rect x="-44" y="-21.5" width="88" height="43" rx="8" ry="8"/>
         <text class="lini-text" x="0" y="0">Soft</text>
       </g>
-      <g class="lini-node lini-card lini-box lini-block" style="fill: #968ef8; stroke: #443394; color: #443394" transform="translate(0,0)">
+      <g class="lini-node lini-card lini-box lini-block" style="fill: #968cff; stroke: #443394; color: #443394" transform="translate(0,0)">
         <rect x="-44" y="-21.5" width="88" height="43" rx="8" ry="8"/>
         <text class="lini-text" x="0" y="0">Base</text>
       </g>
-      <g class="lini-node lini-card lini-box lini-block" style="fill: #6e63c9; stroke: #6e63c9; color: white" transform="translate(99.5,0)">
+      <g class="lini-node lini-card lini-box lini-block" style="fill: #6e62cc; stroke: #6e62cc; color: white" transform="translate(99.5,0)">
         <rect x="-44" y="-21.5" width="88" height="43" rx="8" ry="8"/>
         <text class="lini-text" x="0" y="0">Deep</text>
       </g>

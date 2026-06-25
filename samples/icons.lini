@@ -1,27 +1,30 @@
 // Phosphor icons. `|icon| { symbol: … }` paints like a node — `fill` is the body,
 // `stroke` the line, `stroke-width` (default 2) counter-scaled to stay even at any
-// size. `|sign|` is a larger preset; `fit` controls how the symbol fills its box.
-// Source for assets/icons.png.
+// size. `|sign|` is a larger preset and an ordinary wireable node. Source for
+// assets/icons.png.
 {
-  layout: column; gap: 16; padding: 30; align: start;
-  |row| { gap: 22; align: end; }
-  |tile::column| { gap: 9; align: center; }
-  |lbl::block| { font-size: 13; font-weight: bold; padding: 16 6 0 6; }
+  layout: column; gap: 16; padding: 8 28 24 28; align: center; link: --gray-ink; link-width: 2; clearance: 14;
+
+  |row| { align: end; }
+  |tile::column| { gap: 9; align: center; font-size: 13; }
+  |lbl::block| {
+    font-size: 13; font-weight: bold; color: --gray-ink; padding: 16 0 0 0;
+  }
   |cap::block| { font-size: 11; font-weight: normal; color: --gray-deep; }
+  |sign| { font-size: 12; font-weight: normal; }
 
   // Two-tone colour classes — a soft `wash` body under an `ink` line. Wear one on
-  // any node (`|icon| .rose`, `|box| .teal`, …) to paint it without repeating the
-  // pair.
-  .rose   { fill: --rose-wash;   stroke: --rose-ink; }
-  .amber  { fill: --amber-wash;  stroke: --amber-ink; }
-  .lime   { fill: --lime-wash;   stroke: --lime-ink; }
-  .teal   { fill: --teal-wash;   stroke: --teal-ink; }
-  .sky    { fill: --sky-wash;    stroke: --sky-ink; }
-  .purple { fill: --purple-wash; stroke: --purple-ink; }
+  // any node (`|icon| .rose`, `|box| .teal`, …) to paint the pair at once.
+  .rose { fill: --rose-wash; stroke: --rose-ink; color: --rose-ink; }
+  .amber { fill: --amber-wash; stroke: --amber-ink; color: --amber-ink; }
+  .teal { fill: --teal-wash; stroke: --teal-ink; color: --teal-ink; }
+  .sky { fill: --sky-wash; stroke: --sky-ink; color: --sky-ink; }
+  .purple { fill: --purple-wash; stroke: --purple-ink; color: --purple-ink; }
+  .lime { fill: --lime-wash; stroke: --lime-ink; color: --lime-ink; }
 }
 
 |lbl| "Icons"
-|row| [
+|group| { gap: 40; layout: row; fill: none; } [
   |tile| [
     |icon| { symbol: house; }
     |cap| "default"
@@ -39,47 +42,47 @@
     |cap| "user"
   ]
   |tile| [
-    |icon| .amber { symbol: bell; color: --amber-ink; font-size: 13; } "3"
+    |icon| .amber { symbol: bell; } [
+      "3" { translate: 0 -2; }
+    ]
     |cap| "+ label"
   ]
-]
-
-|lbl| "Signs (64px)"
-|row| [
   |tile| [
-    |sign| .sky { symbol: shield; }
-    |cap| "shield"
-  ]
-  |tile| [
-    |sign| .purple { symbol: gear; }
-    |cap| "gear"
-  ]
-  |tile| [
-    |sign| .rose { symbol: rocket; }
-    |cap| "rocket"
-  ]
-  |tile| [
-    |sign| .lime { symbol: lightbulb; }
-    |cap| "lightbulb"
+    |icon| .purple { symbol: star; }
+    |cap| "star"
   ]
 ]
 
-|lbl| "Sign · fit"
-|row| [
-  |tile| [
-    |sign| { symbol: shield; fit: auto; }
-    |cap| "auto"
+|lbl| "Signs, fit: auto"
+a |row| { gap: 44; } [
+  web   |sign| .sky { symbol: ghost; fit: auto; }
+  auth  |sign| .purple { symbol: rocket; fit: auto; }
+  svc   |sign| .teal { symbol: gear; fit: auto; }
+  cpu   |sign| .amber { symbol: cpu; fit: auto; }
+  store |sign| .rose { symbol: database; fit: auto; }
+
+  web -> auth
+  auth -> svc
+  svc -> cpu
+  cpu -> store
+]
+
+|lbl| "Signs + Text"
+b |row| { gap: 44; } [
+  web   |sign| .teal { symbol: folder-simple; } [
+    "Folder" { translate: 0 2; }
   ]
-  |tile| [
-    |sign| { symbol: shield; fit: contain; }
-    |cap| "contain"
+  auth  |sign| .lime { symbol: presentation; } [
+    "Canvas" { translate: 0 -3; }
   ]
-  |tile| [
-    |sign| { symbol: shield; fit: cover; }
-    |cap| "cover"
+  svc   |sign| .purple { symbol: seal; } "Alert"
+  cpu   |sign| .rose { symbol: video-camera; } [
+    "video" { translate: -6 0; }
   ]
-  |tile| [
-    |sign| { symbol: shield; fit: stretch; }
-    |cap| "stretch"
-  ]
+  store |sign| .amber { symbol: wall; }
+
+  web ..< auth
+  auth --> svc
+  svc --> cpu
+  cpu ~> store
 ]

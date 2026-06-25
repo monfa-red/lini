@@ -13,11 +13,11 @@ input_file: samples/styles.lini
     .lini .lini-box { fill: #cff6ff; stroke: #00547e; stroke-width: 2; color: #00547e; }
     .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
     .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
-    .lini .lini-alert { fill: #ffe4df; stroke: #eb776e; color: #851618; }
+    .lini .lini-alert { fill: #ffe4df; stroke: #f27168; color: #851618; }
     .lini .lini-style-thin { stroke-width: 1; }
     .lini .lini-style-bold { font-weight: bold; }
-    .lini .lini-style-power { stroke: #eb776e; stroke-width: 2.5; }
-    .lini .lini-style-warn { stroke: #e18337; stroke-width: 2; }
+    .lini .lini-style-power { stroke: #f27168; stroke-width: 2.5; }
+    .lini .lini-style-warn { stroke: #e78022; stroke-width: 2; }
     .lini .lini-style-ghost { opacity: 0.35; }
   </style>
   <defs>

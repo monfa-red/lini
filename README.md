@@ -11,7 +11,7 @@
 cat -> dog -> bird
 ```
 
-One line is a complete diagram: three boxes, two arrows, sensible spacing. You place the boxes, Lini routes the links, and the same syntax scales up to the polished scene below.
+One line is a complete diagram: three boxes, two arrows, sensible spacing. You place the boxes; Lini routes the links. The same syntax scales to the polished scene below.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/hero.png" alt="A colourful service map rendered by Lini" width="450">
@@ -23,16 +23,16 @@ Thirty-odd lines of Lini ([`samples/hero.lini`](https://github.com/monfa-red/lin
 
 ## Why Lini
 
-Most tools make you choose: **draw by hand** (precise, but tedious and hard to version) or **auto-layout everything** (fast, but you take what the algorithm gives). Lini splits the work: you keep spatial control, it automates only the links.
+Lini automates the tedious part of a diagram — routing the connectors — and leaves placement to you. Arrange nodes with flex, grid, or anchors, and Lini draws clean orthogonal paths between them.
 
-- **You arrange, it routes.** Place nodes with flex, grid, or anchors; Lini routes the connectors between them: orthogonal, clearance-respecting, deterministic.
-- **The full range of SVG.** Sizes, anchors, strokes, shadows, rotation, opacity, raw paths: full control over the look, not a fixed house style, so a diagram can actually look good.
-- **A small syntax.** Two brackets — `{ }` for style, `[ ]` for children — plus a few sigils and sensible defaults. `cat -> dog` is already a valid diagram; the whole language is small enough to learn in one sitting.
-- **Any node you need.** 11 primitives and 11 templates, plus a raw `path` that accepts any SVG path string. If SVG can draw it, you can place it and link to it.
-- **Fast, and one file.** A 1.5 MB native binary, one runtime dependency. No Node, JVM, or headless browser; typical diagrams compile in about 2 ms, startup included.
-- **Reproducible output.** Compilation is byte-identical across runs, so renders diff cleanly and never churn in CI. 408 tests back it, including property tests on the router's laws.
-- **Pretty by default.** A curated 11-hue palette in soft pastels — five OKLCH-tuned tiers each — plus angle-less gradients, all themeable and dark/light-aware. No hex codes required.
-- **Dark mode, automatically.** Every colour is a `light-dark()` CSS variable, so one SVG carries both palettes and follows the viewer's light/dark OS setting on its own — or a `data-theme` toggle. Re-theme from the page with no recompile, choose a built-in (light, dark, high-contrast), or bake any palette into a standalone file.
+- **Automatic link routing.** Name two nodes and Lini finds an orthogonal path between them, keeping clearance from everything else and rounding the corners. Force a side when you need to steer one.
+- **Real control over the look.** Sizes, anchors, strokes, shadows, rotation, opacity, gradients, and raw SVG paths are all yours — the diagram renders the way you set it.
+- **A small language.** Two brackets — `{ }` for style, `[ ]` for children — and a handful of sigils. `cat -> dog` is already a diagram; the rest you learn in one sitting.
+- **A node for anything.** 11 primitives and 11 templates, built-in Phosphor icons, and a raw `path` that takes any SVG path string.
+- **One fast binary.** ~1.5 MB, a single runtime dependency, no Node or headless browser. A typical diagram compiles in about 2 ms, startup included.
+- **Deterministic output.** Every run is byte-identical, so SVGs diff cleanly and never churn in CI. 441 tests cover it, including property tests on the router's laws.
+- **A curated palette.** 11 named hues in five OKLCH-tuned tiers, plus angle-less gradients — themeable, with no hex codes to pick.
+- **Automatic dark mode.** Every colour is a `light-dark()` variable, so one SVG carries both palettes and follows the viewer's OS theme or a `data-theme` toggle.
 
 ---
 
@@ -71,16 +71,17 @@ fish --> bowl          // dashed
 ```
 {                                   // the stylesheet — pure setup, draws nothing
   link: #444; clearance: 10;          // link defaults cascade to every link
-  .loud { stroke: red; stroke-width: 2; }
+  .hot  { fill: #fee; stroke: crimson; }    // a node class
+  .loud { link: red; link-width: 2; }       // a link class
   |db::cyl| { fill: lightyellow; }    // a new type from the cylinder primitive
 }
 
 api   |box| "API"
-queue |box| .loud { radius: 8 } "Queue"   // a node wears its class after the type
+queue |box| .hot { radius: 8 } "Queue"    // a node wears its class after the type
 store |db|  "Postgres"
 
 api   -> queue "enqueue"
-queue -> store .loud "persist"            // …and a link wears it the same way
+queue -> store .loud "persist"            // a link wears one after its endpoints
 store ..> api  "ack"                       // dotted arrow
 ```
 
@@ -110,6 +111,23 @@ services |group| { layout: row; gap: 24 } [
 ```
 
 Block (the bare frameless rectangle), oval, hex, slant, cylinder, diamond, polygon, line, icon (a Phosphor symbol — `|icon| { symbol: heart }`, painted like a node), and image, plus `path` for anything else. Text is not a primitive: a bare `"…"` is content — styleable in place (`"x" { color: red }`) — and `|block|` is the frameless box for a label that needs an id or a link. Templates (`box`, `rect`, `group`, `caption`, `footer`, `badge`, `note`, `row`, `column`, `table`, `sign`) bundle common patterns over a base type, and you can define your own from any base: `|panel::group| { stroke: --accent; }`.
+
+---
+
+## Icons
+
+Built-in **[Phosphor](https://phosphoricons.com/)** icons, drawn as inline SVG paths — no icon font, no external files. `|icon| { symbol: heart }` paints like any node: `fill` is the body, `stroke` the line, `stroke-width` counter-scaled so the weight stays even at any size. `|sign|` is a larger preset and an ordinary node — give it an id and wire it like a box.
+
+<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/icons.png" alt="Lini's built-in Phosphor icons and signs" width="520"></p>
+
+```
+|icon| { symbol: bell } "3"                                 // a label rides as centred text
+|icon| .teal { symbol: user }                               // two-tone, via a colour class
+|icon| { symbol: cloud; fill: none; stroke: --sky-deep }    // single-tone line
+auth |sign| { symbol: shield-check }                        // larger, and linkable
+```
+
+Only the symbols a diagram uses are embedded, so the full set never bloats a small file.
 
 ---
 
@@ -242,7 +260,7 @@ A single-pass parser, bottom-up layout, and an orthogonal router. No browser to 
 
 <sub>*the common auto-layout diagram tools (Mermaid, Graphviz, PlantUML, and the like)</sub>
 
-Reach for Lini when you have a layout in mind (a grid, a top-down flow, framed groups) and want it to look the way you intend, without drawing the connectors by hand. By default, you arrange and Lini routes.
+Reach for Lini when you already have a layout in mind — a grid, a top-down flow, framed groups — and want it to look that way without drawing the connectors by hand.
 
 ---
 
@@ -260,7 +278,7 @@ Parsing is recursive-descent over an LL(1) grammar; resolve applies CSS-like spe
 
 ## Status
 
-**v0.7.** The language (the box/text model in [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md)) is stable, and the pipeline is complete and tested: links route and render, layout and theming work, and the formatter and dev server ship in the same binary.
+**v0.9.** The language (the box/text model in [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md)) is stable, and the pipeline is complete and tested: links route and render, layout and theming work, and the formatter and dev server ship in the same binary.
 
 ## Development
 

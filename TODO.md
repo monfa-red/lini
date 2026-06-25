@@ -196,16 +196,3 @@ real foundation (could just as well be noted outside auto-layout):
   orthogonally-wired internals, or vice versa — the sky's the limit.
 
 Build later.
-
-## Icons — shipped; follow-ups (`|icon|`)
-
-`|icon| { symbol: … }` is built — **Phosphor** duotone, painted like a node (SPEC
-§7), behind the default-on `icons` feature; geometry vendored in
-`assets/phosphor-duotone.txt` (regenerate with `cargo xtask extract-icons`). Still
-open:
-
-- a **solid (`fill`-weight) variant** for filled glyphs (today's set is the duotone
-  line art; a true solid silhouette needs Phosphor's `fill` weight).
-- **symbol-aliases** — let `cloud` / `database` resolve to icons directly,
-  keeping the parametric container primitives (box / oval / hex / cyl / …).
-- **user-supplied icons** via `|image|` — link a local or remote SVG/PNG.

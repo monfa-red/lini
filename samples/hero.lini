@@ -1,12 +1,15 @@
 // The Lini hero — a colourful service map. Palette colours, a gradient entry
 // point, mixed link styles. Source for assets/hero.png.
 {
-  layout: column; gap: 52; padding: 30; font-weight: normal; link: --gray-deep; link-width: 2; clearance: 16;
+  layout: column; gap: 52; padding: 26; font-weight: normal; link: --gray-deep; link-width: 2; clearance: 16;
 
   |edge::box| { fill: --sky-wash; stroke: --sky-deep; color: --sky-ink; }
   |svc::box| { fill: --teal-wash; stroke: --teal-deep; color: --teal-ink; }
+  |api::sign| {
+    symbol: octagon; fill: --green-wash; stroke: --green-deep; color: --green-ink;
+  }
   |auth::sign| {
-    symbol: "shield"; fill: --purple-wash; stroke: --purple-deep; color: --purple-ink; translate: 0 4;
+    symbol: shield; fill: --purple-wash; stroke: --purple-deep; color: --purple-ink; translate: 0 2;
   }
   |store::cyl| { fill: --rose-wash; stroke: --rose-deep; color: --rose-ink; }
 
@@ -31,7 +34,7 @@ edge |group| { layout: row; gap: 28; } [
 
 svc |group| { layout: row; gap: 28; } [
          |caption| "Services"
-  api    |svc|     "API"
+  api    |api|     "API"
   auth   |auth|    [
     "Auth" { translate: 0 -4; }
   ]
@@ -54,3 +57,4 @@ edge.lb -> svc.auth .auth
 svc.api -> data.pg .flow
 svc.api --> data.redis .cache "cache"
 svc.worker ~> data.queue .async "jobs"
+
