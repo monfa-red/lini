@@ -154,7 +154,7 @@ input_file: samples/icons.lini
             <path d="M96,192a32,32,0,0,0,64,0"/>
           </g>
         </g>
-        <text class="lini-text" x="0" y="0" font-size="15">3</text>
+        <text class="lini-text" x="0" y="0">3</text>
       </g>
       <g class="lini-node lini-cap lini-block" transform="translate(0,20.5)">
         <rect x="-25.2" y="-6" width="50.4" height="12" rx="0" ry="0"/>

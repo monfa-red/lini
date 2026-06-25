@@ -357,15 +357,13 @@ fn emit_icon(out: &mut String, n: &PlacedNode, indent: &str, vars: &VarTable, op
     writeln!(out, "{indent}</g>").unwrap();
 
     // An optional bare string rides as centred text over the glyph (SPEC §7). It
-    // is a `lini-text` (inherits the text colour and the `stroke: none` mask) at
-    // the normal font-size — the box grew to fit it (layout), so it never scales
-    // with the icon.
+    // is a plain `lini-text` — it inherits the text colour, `font-size`, and the
+    // `stroke: none` mask exactly like any label (no inline font-size); the box
+    // grew to fit it (layout), so it never scales with the icon.
     if let Some(label) = n.label.as_deref().filter(|s| !s.is_empty()) {
-        let label_size = n.attrs.number("font-size").unwrap_or(15.0);
         writeln!(
             out,
-            r#"{indent}<text class="lini-text" x="0" y="0" font-size="{}">{}</text>"#,
-            num(label_size),
+            r#"{indent}<text class="lini-text" x="0" y="0">{}</text>"#,
             escape_xml(label),
         )
         .unwrap();

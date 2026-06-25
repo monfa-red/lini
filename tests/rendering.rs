@@ -557,12 +557,15 @@ fn sign_is_a_larger_icon() {
 
 #[cfg(feature = "icons")]
 #[test]
-fn icon_label_uses_the_normal_font_size_not_scaled() {
-    // The label no longer scales with the icon: 15px at 32px and at 96px.
-    let small = render_live("x |icon| { symbol: bell } \"3\"\n");
-    let big = render_live("x |icon| { symbol: bell; width: 96; height: 96 } \"3\"\n");
-    assert!(small.contains(r#"font-size="15""#), "{small}");
-    assert!(big.contains(r#"font-size="15""#), "{big}");
+fn icon_label_inherits_font_size_no_inline() {
+    // The label is a plain lini-text with no inline font-size — it inherits 15px
+    // from the .lini rule, like any text, at any icon size (never scaled).
+    let svg = render_live("x |icon| { symbol: bell; width: 96; height: 96 } \"3\"\n");
+    assert!(
+        svg.contains(r#"<text class="lini-text" x="0" y="0">3</text>"#),
+        "{svg}"
+    );
+    assert!(svg.contains("font-size: 15px"), "{svg}");
 }
 
 #[cfg(feature = "icons")]
