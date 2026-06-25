@@ -15,7 +15,7 @@ pub use links::{Rule, Severity, Violation, node_rect};
 pub(crate) use text::{approx_height, approx_width};
 
 use crate::error::Error;
-use crate::resolve::{Program, ResolvedInst, ResolvedValue, ShapeKind};
+use crate::resolve::{NodeKind, Program, ResolvedInst, ResolvedValue};
 use crate::span::Span;
 
 use flex::Axis;
@@ -258,7 +258,7 @@ fn layout_inst(inst: &ResolvedInst, growth: &GapGrowth, path: &str) -> Result<Pl
         // Leaf primitive.
         primitives::leaf_bbox(inst)?
     } else {
-        // Container or closed shape with content.
+        // Container or closed primitive with content.
         let (content_bbox, rules) = lay_out_container_children(
             &mut children,
             &inst.attrs,
@@ -271,19 +271,19 @@ fn layout_inst(inst: &ResolvedInst, growth: &GapGrowth, path: &str) -> Result<Pl
         // border is the group rect, its inner lines these dividers.
         dividers = rules;
 
-        // The closed shape sizes border-box: explicit width/height, else
+        // The closed primitive sizes border-box: explicit width/height, else
         // content + padding per axis (SPEC §6).
         let b = primitives::closed_bbox(inst, content_bbox)?;
-        let text_only = children.iter().all(|c| c.shape == ShapeKind::Text);
+        let text_only = children.iter().all(|c| c.kind == NodeKind::Text);
 
         // Some closed shapes carry decoration at the top — a cloud's lobes, a
         // cylinder's rim — so the optical body-center sits below the bbox center
         // and a centered label reads too high. Drop a text-only label into the
-        // body by a shape-specific fraction of the height (the outlines are
+        // body by a per-primitive fraction of the height (the outlines are
         // scale-invariant, so a fraction holds at any size).
         const CYL_LABEL_DROP: f64 = 0.03;
-        let label_drop = match inst.shape {
-            ShapeKind::Cyl => CYL_LABEL_DROP,
+        let label_drop = match inst.kind {
+            NodeKind::Cyl => CYL_LABEL_DROP,
             _ => 0.0,
         };
         if label_drop > 0.0 && text_only {
@@ -300,7 +300,7 @@ fn layout_inst(inst: &ResolvedInst, growth: &GapGrowth, path: &str) -> Result<Pl
 
     Ok(PlacedNode {
         id: inst.id.clone(),
-        shape: inst.shape,
+        kind: inst.kind,
         type_chain: inst.type_chain.clone(),
         applied_styles: inst.applied_styles.clone(),
         label: inst.label.clone(),
@@ -569,7 +569,7 @@ mod tests {
     // ── Sizing (SPEC §6) ──
 
     #[test]
-    fn empty_closed_shape_is_two_paddings() {
+    fn empty_closed_primitive_is_two_paddings() {
         // padding 20 each side → 40 drawn; + stroke 2 → 42 bbox.
         let n = &lay_out("|box|\n").nodes[0];
         assert!((n.bbox.w() - 42.0).abs() < 0.01, "w={}", n.bbox.w());

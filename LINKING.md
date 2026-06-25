@@ -201,7 +201,7 @@ construction rather than by checking.
 
 ---
 
-## Special shapes
+## Special nodes
 
 - **Fan** (`a -> b & c`, one shared end): siblings share one port and one stub on
   the shared end; the shared port is the one the first sibling's path picks.

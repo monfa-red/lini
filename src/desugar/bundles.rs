@@ -4,7 +4,7 @@
 //! Visual `--lini-*` colours stay live `--var` references (render emits their
 //! defaults as `@layer` CSS).
 
-use crate::resolve::ShapeKind;
+use crate::resolve::NodeKind;
 use crate::span::Span;
 use crate::syntax::ast::{Decl, Value};
 
@@ -29,9 +29,9 @@ fn pair(name: &str, a: f64, b: f64) -> Decl {
 }
 
 /// A primitive's complete default set (paint + geometry).
-pub fn primitive_bundle(kind: ShapeKind) -> Vec<Decl> {
-    use ShapeKind::*;
-    // Closed, content-sized shapes share paint + box-model defaults.
+pub fn primitive_bundle(kind: NodeKind) -> Vec<Decl> {
+    use NodeKind::*;
+    // Closed, content-sized primitives share paint + box-model defaults.
     let sized = || {
         vec![
             var("fill", "fill"),
@@ -188,7 +188,7 @@ pub fn link_defaults() -> Vec<Decl> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::resolve::ShapeKind;
+    use crate::resolve::NodeKind;
     use crate::syntax::ast::Value;
 
     fn has(decls: &[Decl], name: &str) -> bool {
@@ -207,7 +207,7 @@ mod tests {
     #[test]
     fn block_is_bare_and_box_template_carries_the_paint() {
         // The bare primitive: frameless, no padding, just the container gap.
-        let block = primitive_bundle(ShapeKind::Block);
+        let block = primitive_bundle(NodeKind::Block);
         assert_eq!(num(&block, "padding"), Some(0.0));
         assert_eq!(num(&block, "gap"), Some(20.0));
         assert!(!has(&block, "radius"));
@@ -221,8 +221,8 @@ mod tests {
 
     #[test]
     fn slant_carries_skew_icon_carries_size() {
-        assert_eq!(num(&primitive_bundle(ShapeKind::Slant), "skew"), Some(15.0));
-        let icon = primitive_bundle(ShapeKind::Icon);
+        assert_eq!(num(&primitive_bundle(NodeKind::Slant), "skew"), Some(15.0));
+        let icon = primitive_bundle(NodeKind::Icon);
         assert_eq!(num(&icon, "width"), Some(32.0));
         assert_eq!(num(&icon, "height"), Some(32.0));
     }

@@ -13,7 +13,7 @@
 use super::values::format_value;
 use crate::Options;
 use crate::layout::{LaidOut, PlacedNode};
-use crate::resolve::{AttrMap, MarkerKind, ResolvedValue, ShapeKind, VarTable};
+use crate::resolve::{AttrMap, MarkerKind, NodeKind, ResolvedValue, VarTable};
 use std::collections::{BTreeSet, HashMap};
 
 /// lini attr → CSS property. lini property names already match CSS, so this is
@@ -203,7 +203,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
         props: vec![("fill".into(), live("bg"))],
     });
 
-    // Per-shape paint, sourced from the generated `.lini-*` class defs — desugar
+    // Per-node paint, sourced from the generated `.lini-*` class defs — desugar
     // folded the bundles + element rules into them. Geometry stays baked; only
     // the paint subset rides CSS. Closed primitives and `line` mask
     // `stroke-dasharray` so a container's `line:` can't bleed into children.
@@ -220,15 +220,15 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
             .unwrap_or_default()
     };
 
-    const CLOSED: &[ShapeKind] = &[
-        ShapeKind::Block,
-        ShapeKind::Oval,
-        ShapeKind::Hex,
-        ShapeKind::Slant,
-        ShapeKind::Cyl,
-        ShapeKind::Diamond,
-        ShapeKind::Poly,
-        ShapeKind::Path,
+    const CLOSED: &[NodeKind] = &[
+        NodeKind::Block,
+        NodeKind::Oval,
+        NodeKind::Hex,
+        NodeKind::Slant,
+        NodeKind::Cyl,
+        NodeKind::Diamond,
+        NodeKind::Poly,
+        NodeKind::Path,
     ];
     for kind in CLOSED {
         if present.contains(kind.as_str()) {
@@ -271,7 +271,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
     // (templates then defines). Element rules are already folded into these.
     for (name, attrs) in &laid.sheet.class_rules {
         if let Some(tn) = name.strip_prefix("lini-")
-            && ShapeKind::parse(tn).is_none()
+            && NodeKind::parse(tn).is_none()
             && present.contains(tn)
         {
             rules.push(Rule {
@@ -282,7 +282,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
     }
 
     // Links: the `|link|` defaults stated once. Emitted *before* the style
-    // rules — it is the link's default layer (like a shape rule for a node), so
+    // rules — it is the link's default layer (like a primitive rule for a node), so
     // a link's `.style` class overrides it in the cascade (SPEC §13).
     if !laid.links.is_empty() || !laid.strays.is_empty() {
         // The link path's paint, in a fixed order (fill, stroke, width, dash) so a
@@ -501,10 +501,10 @@ fn collect<'a>(
     has_markers: &mut bool,
     has_crow: &mut bool,
 ) {
-    present.insert(node.shape.as_str());
+    present.insert(node.kind.as_str());
     // An icon's optional label renders as a `lini-text`, so register the text
     // rule even though the label is not a separate Text node.
-    if node.shape == ShapeKind::Icon && node.label.is_some() {
+    if node.kind == NodeKind::Icon && node.label.is_some() {
         present.insert("text");
     }
     for name in &node.type_chain {
@@ -570,7 +570,7 @@ mod tests {
                     rule.props.iter().any(|(p, v)| p == "stroke" && v == "none"),
                     "text rule lacks the stroke mask"
                 );
-            } else if ShapeKind::parse(suffix).is_some() && suffix != "icon" {
+            } else if NodeKind::parse(suffix).is_some() && suffix != "icon" {
                 // Every primitive node-shape rule masks `stroke-dasharray` so a
                 // container's dashed `line:`/stroke can't bleed in. A template
                 // (e.g. `box`) inherits the mask from its base primitive (`block`).

@@ -12,7 +12,7 @@ mod wavy;
 
 use crate::Options;
 use crate::layout::{LaidOut, PlacedNode};
-use crate::resolve::{AttrMap, ShapeKind, VarTable};
+use crate::resolve::{AttrMap, NodeKind, VarTable};
 use filters::FilterTable;
 pub(crate) use gradients::lower as lower_gradients;
 use rules::RuleSet;
@@ -127,7 +127,7 @@ fn render_node(
     use std::fmt::Write;
     // Text renders as a bare `<text class="lini-text">` at its placed position —
     // no wrapping `<g>` (SPEC §13). Font and colour inherit from the enclosing box.
-    if n.shape == ShapeKind::Text {
+    if n.kind == NodeKind::Text {
         render_text(out, n, depth, vars, opts);
         return;
     }
@@ -150,7 +150,7 @@ fn render_node(
         depth
     };
     let indent = "  ".repeat(depth);
-    let class_list = values::class_list(n.shape.as_str(), &n.type_chain, &n.applied_styles);
+    let class_list = values::class_list(n.kind.as_str(), &n.type_chain, &n.applied_styles);
     let classes = class_list.join(" ");
     let transform = if n.rotation != 0.0 {
         format!(
@@ -324,12 +324,12 @@ fn node_style_attr(
 ) -> String {
     let mut decls: Vec<(&str, String)> = Vec::new();
     for (lini, css) in rules::PAINT_PROPS {
-        let value = match (*lini, n.shape) {
+        let value = match (*lini, n.kind) {
             // On |text|, `color` is an alias for `fill` (CSS-style); the
             // shape rule's `currentColor` keeps SVG inheritance working when
             // neither is set.
-            ("fill", ShapeKind::Text) => n.attrs.get("fill").or_else(|| n.attrs.get("color")),
-            ("color", ShapeKind::Text) => None,
+            ("fill", NodeKind::Text) => n.attrs.get("fill").or_else(|| n.attrs.get("color")),
+            ("color", NodeKind::Text) => None,
             _ => n.attrs.get(lini),
         };
         let Some(v) = value else { continue };

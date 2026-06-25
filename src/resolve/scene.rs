@@ -5,7 +5,7 @@
 //! internal links lifted out for the link pass.
 
 use super::cascade::{NodeFacts, Stylesheet};
-use super::ir::{AttrMap, MarkerKind, Markers, ResolvedInst, ResolvedValue, ShapeKind, VarTable};
+use super::ir::{AttrMap, MarkerKind, Markers, NodeKind, ResolvedInst, ResolvedValue, VarTable};
 use super::merge::{collapse, resolve_markers};
 use super::value::resolve_groups;
 use crate::error::Error;
@@ -103,12 +103,12 @@ pub fn resolve_node(
     let type_name = node.ty.as_deref().unwrap_or("box");
     // Post-desugar the type is always a primitive; anything else means the input
     // bypassed desugar (the "dumb core" guard).
-    let shape = ShapeKind::parse(type_name)
-        .ok_or_else(|| Error::at(node.span, format!("unknown shape '{}'", type_name)))?;
+    let kind = NodeKind::parse(type_name)
+        .ok_or_else(|| Error::at(node.span, format!("unknown type '{}'", type_name)))?;
 
     // Split the worn classes: `.lini-*` are the type tier (the primitive plus the
     // render type_chain), user classes are tier 3 (and must be defined).
-    let primitive_class = format!("lini-{}", shape.as_str());
+    let primitive_class = format!("lini-{}", kind.as_str());
     let mut type_chain = Vec::new();
     let mut applied_styles = Vec::new();
     for c in &node.classes {
@@ -157,7 +157,7 @@ pub fn resolve_node(
     let markers = resolve_markers(&ordered, MarkerKind::None, MarkerKind::None, node.span)?;
     let attrs = collapse(&ordered);
 
-    if shape == ShapeKind::Slant
+    if kind == NodeKind::Slant
         && let Some(skew) = attrs.number("skew")
         && (skew <= -89.0 || skew >= 89.0)
     {
@@ -192,7 +192,7 @@ pub fn resolve_node(
     // An `|icon|` is named by its `symbol` (SPEC §7), not its label; any bare
     // string it carries rides along as centred text (`own_label`, drawn by the
     // renderer). It stays a leaf, so its children are not resolved as a subtree.
-    let is_icon = shape == ShapeKind::Icon;
+    let is_icon = kind == NodeKind::Icon;
     if is_icon {
         validate_icon(&attrs, node.span)?;
     }
@@ -222,7 +222,7 @@ pub fn resolve_node(
 
     Ok(ResolvedInst {
         id: node.id.clone(),
-        shape,
+        kind,
         type_chain,
         applied_styles,
         label: own_label,
@@ -236,7 +236,7 @@ pub fn resolve_node(
 
 /// A resolved text node (SPEC §3/§10): content carrying the text properties
 /// inherited from its container, overlaid with its own `{ }` style (text-valid
-/// props only). `Text` is internal — never a user `|type|`, only the shape of a
+/// props only). `Text` is internal — never a user `|type|`, only the kind of a
 /// string node (a label, a cell, canvas text). The own style renders as a
 /// `style=` on the `<text>`; `attrs` is the effective context for measurement.
 fn text_inst(t: &TextNode, ctx: &SceneCtx, text_ctx: &AttrMap) -> Result<ResolvedInst, Error> {
@@ -262,7 +262,7 @@ fn text_inst(t: &TextNode, ctx: &SceneCtx, text_ctx: &AttrMap) -> Result<Resolve
     }
     Ok(ResolvedInst {
         id: None,
-        shape: ShapeKind::Text,
+        kind: NodeKind::Text,
         type_chain: Vec::new(),
         applied_styles: Vec::new(),
         label: Some(t.text.clone()),
@@ -362,7 +362,7 @@ fn drop_blank_text(children: &mut Vec<ResolvedInst>, container: &AttrMap) {
 
 /// A text node with no visible content and no id — from a `""` label.
 fn is_blank_anon_text(r: &ResolvedInst) -> bool {
-    r.id.is_none() && r.shape == ShapeKind::Text && r.label.as_deref().is_none_or(str::is_empty)
+    r.id.is_none() && r.kind == NodeKind::Text && r.label.as_deref().is_none_or(str::is_empty)
 }
 
 /// Only the four sides are reserved as node ids — they are peeled from endpoint

@@ -388,7 +388,7 @@ fn run_desugar(args: &[String]) -> ExitCode {
                 println!("lini desugar <input.lini>");
                 println!();
                 println!("  Lower the file to primitives + .lini-* classes and print to stdout:");
-                println!("  templates/defines become a base shape wearing a .lini-* class chain,");
+                println!("  templates/defines become a base node wearing a .lini-* class chain,");
                 println!("  each type's defaults become a generated .lini-<type> class, scene and");
                 println!(
                     "  link defaults fill the global block, and labels/along become explicit."

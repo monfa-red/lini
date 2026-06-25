@@ -43,14 +43,14 @@ pub struct ResolvedScene {
 /// named scene node (`cat |treat| …`); anonymous primitives have `id == None`.
 pub struct ResolvedInst {
     pub id: Option<String>,
-    pub shape: ShapeKind,
-    /// User-shape and template names walked from the inst's declared type back
+    pub kind: NodeKind,
+    /// User-defined type and template names walked from the inst's declared type back
     /// to its primitive (e.g. for `cat |treat|` where `treat:box`, this is
-    /// `["treat"]` — the primitive `box` is in `shape`).
+    /// `["treat"]` — the primitive `box` is in `kind`).
     pub type_chain: Vec<String>,
     /// Style class names applied to this inst, in source (left-to-right) order.
     pub applied_styles: Vec<String>,
-    /// For `Text` shape: the text content. For other shapes: always `None` —
+    /// For `Text`: the text content. For other kinds: always `None` —
     /// label sugar on non-text shapes produces a `Text` child instead.
     pub label: Option<String>,
     pub attrs: AttrMap,
@@ -68,7 +68,7 @@ pub struct ResolvedInst {
 /// (There is no title primitive — a caption is just a small-text `|block|` flow
 /// child, first in a column for a title or last for a footer, SPEC §8.)
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum ShapeKind {
+pub enum NodeKind {
     Block,
     Oval,
     Hex,
@@ -83,10 +83,10 @@ pub enum ShapeKind {
     Image,
 }
 
-impl ShapeKind {
+impl NodeKind {
     /// Every primitive, in `as_str` order — the canonical enumeration desugar
     /// walks to emit a `.lini-<kind>` class def per present primitive.
-    pub const ALL: [ShapeKind; 12] = [
+    pub const ALL: [NodeKind; 12] = [
         Self::Block,
         Self::Oval,
         Self::Hex,

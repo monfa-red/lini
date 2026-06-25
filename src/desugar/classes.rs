@@ -7,7 +7,7 @@
 
 use super::bundles::{primitive_bundle, template_bundle};
 use super::types::{TEMPLATES, TypeInfo};
-use crate::resolve::ShapeKind;
+use crate::resolve::NodeKind;
 use crate::span::Span;
 use crate::syntax::ast::{Decl, Rule, SelPart, Selector};
 use std::collections::{BTreeSet, HashMap, HashSet};
@@ -57,7 +57,7 @@ pub fn class_defs(
         }
         rules.push(class_rule(name, decls));
     };
-    for kind in ShapeKind::ALL {
+    for kind in NodeKind::ALL {
         emit(kind.as_str(), primitive_bundle(kind));
     }
     for (name, _) in TEMPLATES {
@@ -118,7 +118,7 @@ mod tests {
     #[test]
     fn worn_chain_is_render_order_derived_to_base_then_primitive() {
         let info = TypeInfo {
-            kind: ShapeKind::Block,
+            kind: NodeKind::Block,
             chain: vec!["group".into(), "table".into()],
         };
         assert_eq!(

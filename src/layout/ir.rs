@@ -1,4 +1,4 @@
-use crate::resolve::{AttrMap, Markers, ResolvedValue, ShapeKind, SheetInputs, VarTable};
+use crate::resolve::{AttrMap, Markers, NodeKind, ResolvedValue, SheetInputs, VarTable};
 use crate::span::Span;
 
 pub struct LaidOut {
@@ -106,7 +106,7 @@ pub type GridRule = (f64, f64, f64, f64);
 #[derive(Clone)]
 pub struct PlacedNode {
     pub id: Option<String>,
-    pub shape: ShapeKind,
+    pub kind: NodeKind,
     pub type_chain: Vec<String>,
     pub applied_styles: Vec<String>,
     pub label: Option<String>,

@@ -565,12 +565,12 @@ fn reconcile(
 mod tests {
     use super::*;
     use crate::layout::ir::Bbox;
-    use crate::resolve::{AttrMap, Markers, ResolvedValue, ShapeKind};
+    use crate::resolve::{AttrMap, Markers, NodeKind, ResolvedValue};
 
     fn body(id: &str, cx: f64, cy: f64) -> PlacedNode {
         PlacedNode {
             id: Some(id.to_owned()),
-            shape: ShapeKind::Block,
+            kind: NodeKind::Block,
             type_chain: Vec::new(),
             applied_styles: Vec::new(),
             label: None,

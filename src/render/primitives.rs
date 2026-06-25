@@ -1,4 +1,4 @@
-//! Per-primitive SVG geometry. One emitter per `ShapeKind`; most produce a
+//! Per-primitive SVG geometry. One emitter per `NodeKind`; most produce a
 //! single SVG element, `cyl` and `cloud` build a small composition.
 //!
 //! Geometry only: paint (fill, stroke, widths, dash) lives on the node's
@@ -13,7 +13,7 @@ use super::rules::{RuleSet, effective_stroke};
 use super::values::{attr_or_var, attr_points, class_list, escape_xml, num};
 use crate::Options;
 use crate::layout::PlacedNode;
-use crate::resolve::{ResolvedValue, ShapeKind, VarTable};
+use crate::resolve::{NodeKind, ResolvedValue, VarTable};
 use std::fmt::Write;
 
 pub fn render_geometry(
@@ -99,21 +99,21 @@ fn emit_shape(
     // shape stays inside the bbox the layout reserved.
     let thickness = n.attrs.number("stroke-width").unwrap_or(0.0);
 
-    match n.shape {
-        ShapeKind::Block => emit_rect(out, n, &indent, thickness),
-        ShapeKind::Slant => emit_slant(out, n, &indent, thickness),
-        ShapeKind::Hex => emit_hex(out, n, &indent, thickness),
-        ShapeKind::Diamond => emit_diamond(out, n, &indent, thickness),
-        ShapeKind::Cyl => emit_cyl(out, n, &indent, thickness),
-        ShapeKind::Oval => emit_oval(out, n, &indent, thickness),
+    match n.kind {
+        NodeKind::Block => emit_rect(out, n, &indent, thickness),
+        NodeKind::Slant => emit_slant(out, n, &indent, thickness),
+        NodeKind::Hex => emit_hex(out, n, &indent, thickness),
+        NodeKind::Diamond => emit_diamond(out, n, &indent, thickness),
+        NodeKind::Cyl => emit_cyl(out, n, &indent, thickness),
+        NodeKind::Oval => emit_oval(out, n, &indent, thickness),
         // Text is emitted by `render::render_text` as a bare `<text>` (SPEC §13),
         // never as wrapped geometry — so it never reaches this dispatch.
-        ShapeKind::Text => {}
-        ShapeKind::Line => emit_line(out, n, &indent, vars, ruleset, opts, thickness),
-        ShapeKind::Poly => emit_poly(out, n, &indent),
-        ShapeKind::Path => emit_path(out, n, &indent),
-        ShapeKind::Icon => emit_icon(out, n, &indent, vars, opts),
-        ShapeKind::Image => emit_image(out, n, &indent),
+        NodeKind::Text => {}
+        NodeKind::Line => emit_line(out, n, &indent, vars, ruleset, opts, thickness),
+        NodeKind::Poly => emit_poly(out, n, &indent),
+        NodeKind::Path => emit_path(out, n, &indent),
+        NodeKind::Icon => emit_icon(out, n, &indent, vars, opts),
+        NodeKind::Image => emit_image(out, n, &indent),
     }
 }
 
@@ -274,7 +274,7 @@ fn emit_line(
     // stroke from CSS (the `.lini-marker` base or a `.lini-style-* .lini-marker`
     // descendant rule), so only a direct inline `stroke:` inlines it; the crow
     // states the cascade-resolved colour regardless.
-    let classes = class_list(n.shape.as_str(), &n.type_chain, &n.applied_styles);
+    let classes = class_list(n.kind.as_str(), &n.type_chain, &n.applied_styles);
     let color = effective_stroke(&n.attrs, &classes, ruleset, vars, opts);
     let paint = super::markers::MarkerPaint {
         color: &color,

@@ -1,7 +1,7 @@
 # Lini — Language Specification
 
 A small, human-readable language for plain-text diagrams. Flex/grid layout,
-composable shapes, CSS-driven theming — compiles to clean SVG.
+composable nodes, CSS-driven theming — compiles to clean SVG.
 
 **Two brackets carry the whole language.** `{ … }` is **style** — `key: value;`
 declarations, dash-case, space-separated values, exactly like CSS. `[ … ]` is
@@ -9,7 +9,7 @@ declarations, dash-case, space-separated values, exactly like CSS. `[ … ]` is
 `id |type| .class { style } [ children ]`; every part is optional. Nothing styles
 outside a `{ }`; nothing is drawn outside the canvas.
 
-**Two node kinds, like HTML.** A **box** is a drawn shape (`|block|`, `|box|`,
+**Two node kinds, like HTML.** A **box** is a drawn node (`|block|`, `|box|`,
 `|oval|`, `|group|`, …) and may hold children; a **string** is text *content*
 inside or beside one. `"…"` is the text, exactly as text sits inside an element on
 a web page — now stylable in place (`"x" { color: red }`), but still a leaf, never
@@ -25,7 +25,7 @@ alone. **Link** routing has its own contract — see [`LINKING.md`](LINKING.md).
 **Language** — 1 [Mental Model](#1-mental-model) · 2 [Lexical Syntax](#2-lexical-syntax) ·
 3 [Statements](#3-statements) · 4 [Selectors & the Cascade](#4-selectors--the-cascade) ·
 5 [Layout](#5-layout) · 6 [Positioning & Anchors](#6-positioning--anchors) ·
-7 [Shapes](#7-shapes) · 8 [Templates](#8-templates) · 9 [Links](#9-links)
+7 [Nodes](#7-nodes) · 8 [Templates](#8-templates) · 9 [Links](#9-links)
 
 **Reference** — 10 [Properties](#10-properties) · 11 [Colour, Variables & Defaults](#11-colour-variables--defaults) ·
 12 [Specificity](#12-specificity) · 13 [SVG Output](#13-svg-output) · 14 [CLI](#14-cli) ·
@@ -479,7 +479,7 @@ otherwise): a separator wants the cells flush against it. This is what lets
 
 ## 6. Positioning & Anchors
 
-A shape's **bounding box** is the smallest axis-aligned rectangle containing it,
+A node's **bounding box** is the smallest axis-aligned rectangle containing it,
 stroke included.
 
 1. **Center origin.** Every bbox is centered at the parent's origin by default.
@@ -525,7 +525,7 @@ SVG needs no transform variable); the canvas still includes the shifted node.
 
 There is **no numeric coordinate property**. Because the parent's origin is its
 center, `pin: center` + `translate: x y` lands a child's center at parent-local
-(x, y) — explicit coordinates with no shape-size arithmetic.
+(x, y) — explicit coordinates with no node-size arithmetic.
 
 `translate` and `rotate` are the two positioning knobs that work on **any** node,
 text included — so a link label or a stray string can be nudged or turned in
@@ -562,10 +562,10 @@ makes it approximate until embedded font metrics land ([§19](#19-deferred)).
 
 ---
 
-## 7. Shapes
+## 7. Nodes
 
-11 shape primitives. All accept position and visual properties; closed shapes also
-accept `stack`, `rotate`, `shadow`. Text is **not** a shape — it is bare content
+11 primitives. All accept position and visual properties; closed primitives also
+accept `stack`, `rotate`, `shadow`. Text is **not** a primitive — it is bare content
 ([§3](#3-statements)); the frameless `|block|` box ([§8](#8-templates)) is what
 you reach for when text needs an id, a class, a link, or box layout.
 
@@ -588,12 +588,12 @@ box; equal dimensions (or an empty `|oval|`) make a circle.
 | `\|icon\|` | `symbol` | A **Phosphor** icon — `symbol:` names it; paints two-tone like a box (`fill` body, `stroke` line, counter-scaled `stroke-width`). Sizes like a box (`32` floor); `\|sign\|` is the larger preset. See [Icons](#icons). |
 | `\|image\|` | `src`, `width`, `height` | `<image href="…">`. External URLs only; both dimensions required. |
 
-### Visual modifiers (closed shapes)
+### Visual modifiers (closed primitives)
 
 | Property | Forms | Effect |
 |---|---|---|
-| `stroke-style` | `solid` / `dashed` / `dotted` | Stroke pattern. Default `solid`. (`wavy` draws on links — [§9](#9-links); on closed shapes it is deferred — [§19](#19-deferred).) |
-| `stack` | `N` / `dx dy` | Draw an offset duplicate behind the shape. Scalar `N` = `N -N`. |
+| `stroke-style` | `solid` / `dashed` / `dotted` | Stroke pattern. Default `solid`. (`wavy` draws on links — [§9](#9-links); on closed primitives it is deferred — [§19](#19-deferred).) |
+| `stack` | `N` / `dx dy` | Draw an offset duplicate behind the node. Scalar `N` = `N -N`. |
 | `rotate` | `N` degrees | Rotate around the bbox center. |
 | `shadow` | `N` / `dx dy` / `dx dy blur` / `dx dy blur color` | Drop shadow via SVG `<filter>`. Scalar `N` = offset `N N`, blur `N`; tint defaults to `--lini-shadow-color`. |
 
@@ -626,7 +626,7 @@ tag  |icon| { symbol: bell } "3"                              // label rides as 
 ```
 
 Phosphor icons are **two-tone** (a soft fill behind a line), so an icon wears
-Lini's paint roles like any shape: **`fill`** paints the body, **`stroke`** the
+Lini's paint roles like any node: **`fill`** paints the body, **`stroke`** the
 line, **`stroke-width`** its weight. The defaults make the duotone read out of the
 box — `fill` a soft grey (`--icon-fill`), `stroke` the ink (`--stroke`, matching
 borders and wires), `stroke-width` 2. A single-tone line icon is `fill: none`; a
@@ -651,9 +651,9 @@ only, no SVG wrapper — extracted from Phosphor's duotone weight.
 
 ## 8. Templates
 
-Built-in types — each a bundle over a shape base, named because the pattern is
+Built-in types — each a bundle over a primitive base, named because the pattern is
 common. **Every rectangular template is a bundle over `|block|`**; the non-rect
-shapes ([§7](#7-shapes)) are their own primitives.
+primitives ([§7](#7-nodes)) stand on their own.
 
 | Template | Base | Defaults | For |
 |---|---|---|---|
@@ -714,7 +714,7 @@ form reads like the table it is. A cell that must be placed or linked is a
 **box** child (`|block| { … } "X"` or `|box| { cell: 2 1; … }`); a cell that just
 needs a colour or weight can take its own style block (`"Apple" { color: --red-ink }`).
 
-Extend any template: `|panel::group| { stroke: --accent }`. Common shapes need no
+Extend any template: `|panel::group| { stroke: --accent }`. Common nodes need no
 template:
 
 | For | Write |
@@ -727,7 +727,7 @@ template:
 
 ## 9. Links
 
-A link connects scene-node ids with an operator (`a -> b`). Like every shape it
+A link connects scene-node ids with an operator (`a -> b`). Like every node it
 has a `{ }` **style** and a `[ ]` of **content** — its content is its **labels**
 (text), placed along the route by `along:`. It is never written as a `|link|`
 instance; the operator draws it.
@@ -792,7 +792,7 @@ both; a class never lives inside the bars. On a chain or fan, the class and the
 ### Styling
 
 `link` / `link-width` / `link-style` are the **link paint family**, parallel to
-`stroke` / `stroke-width` / `stroke-style` for shapes and `color` for text:
+`stroke` / `stroke-width` / `stroke-style` for nodes and `color` for text:
 
 | Property | Type | Default | Notes |
 |---|---|---|---|
@@ -825,7 +825,7 @@ distributed along the route by `along:` — the link's track rule, exactly as
 
 ```
 a -> b "watches"                                // trailing-label sugar, auto-placed
-a -> b [ "watches" ]                            // canonical — labels in [ ], like every shape
+a -> b [ "watches" ]                            // canonical — labels in [ ], like every node
 a -> b { along: 0.3 0.7 } [ "near a" "near b" ]
 a -> b .loud { link: red } [ "watches" { translate: 0 -6 } ]   // class + style + a styled label
 ```
@@ -915,14 +915,14 @@ values.
 
 | Property | Type | Default |
 |---|---|---|
-| `fill` | color | `--fill` (closed shapes); `currentColor` on text; `--icon-fill` (a soft grey) for icons; `--bg` on the root (the scene background) |
+| `fill` | color | `--fill` (closed primitives); `currentColor` on text; `--icon-fill` (a soft grey) for icons; `--bg` on the root (the scene background) |
 | `color` | color | inherits — sets text colour for descendants; on text, an alias for `fill` |
 | `opacity` | 0..1 | 1 |
 | `radius` | number | 0 (`\|block\|`); `\|box\|` rounds to 6 |
 | `rotate` | degrees | 0 |
 | `skew` | degrees | 15 (`\|slant\|` only) |
 | `shadow` | `N` / `dx dy` / `dx dy blur` / `dx dy blur color` | off |
-| `stack` | `N` / `dx dy` | off (closed shapes only) |
+| `stack` | `N` / `dx dy` | off (closed primitives only) |
 
 `color` cascades through the SVG via native `currentColor`: set it on a container
 to recolour every descendant's text that doesn't override. Use `color` for
@@ -933,7 +933,7 @@ to recolour every descendant's text that doesn't override. Use `color` for
 
 | Property | Type | Default |
 |---|---|---|
-| `stroke` | color | `--stroke` (a shape's outline / a `\|line\|`'s colour) |
+| `stroke` | color | `--stroke` (a node's outline / a `\|line\|`'s colour) |
 | `stroke-width` | number | 2 (`\|group\|` is `1`) |
 | `stroke-style` | `solid` / `dashed` / `dotted` | `solid` |
 
@@ -947,7 +947,7 @@ to recolour every descendant's text that doesn't override. Use `color` for
 | `clearance` | number | 16 | Min gap a link keeps from nodes and links. Cascades. |
 | `routing` | `orthogonal` (+ deferred) | `orthogonal` | Routing strategy for links in scope. Cascades. |
 | `along` | fraction list | auto | Label positions along the route. |
-| `marker` / `marker-start` / `marker-end` | marker | from the operator | Endpoint glyphs ([§7](#7-shapes)). |
+| `marker` / `marker-start` / `marker-end` | marker | from the operator | Endpoint glyphs ([§7](#7-nodes)). |
 
 `link*`, `clearance`, and `routing` are **inheritable**: set on the root or a
 container, they reach every link in that scope; a link's own block overrides.
@@ -1141,7 +1141,7 @@ clean rather than muddy.
 Each distinct gradient is emitted once as a `<linearGradient>` / `<radialGradient>`
 in `<defs>` and referenced by `url(#…)` — deduplicated and shared like the
 drop-shadow `<filter>`s ([§13](#13-svg-output)). `objectBoundingBox` units fit one
-definition to any shape at any size. The stops being palette vars, a gradient
+definition to any node at any size. The stops being palette vars, a gradient
 themes, flips, and bakes like any other paint; gradient-on-text is deferred
 ([§19](#19-deferred)).
 
@@ -1248,7 +1248,7 @@ it out of the grid.
 every side. The `lini-canvas` backing rect paints the scene background
 (`--lini-bg`) over the viewBox; a root `fill:` overrides it (`none` = transparent).
 
-**Paint compiles to CSS; geometry bakes.** Shape and link paint defaults — and
+**Paint compiles to CSS; geometry bakes.** Node and link paint defaults — and
 every rule — are stated once as class rules; only the classes actually used are
 emitted — and likewise only the `--lini-*` variables actually referenced, so the
 built-in palette ([§11.2](#112-the-colour-palette)) adds nothing unless a diagram
@@ -1565,13 +1565,13 @@ only before `(`.
 
 - `routing: straight` / `routing: curved` — non-orthogonal link strategies
   ([§9](#9-links); `orthogonal` is the only mode built today).
-- `stroke-style: wavy` rendering on shapes.
+- `stroke-style: wavy` rendering on nodes.
 - **gradient fills on text** — `fill: gradient(…)` on a label (gradients fill
-  shapes today, [§11.3](#113-gradients)).
-- `radius` on non-rect shapes (hex / diamond / slant / poly).
+  nodes today, [§11.3](#113-gradients)).
+- `radius` on non-rect primitives (hex / diamond / slant / poly).
 - numeric `font-weight` (`100…900`).
 - a solid (`fill`-weight) icon variant — the built-in icon set is **Phosphor**
-  duotone, drawn as paths ([§7](#7-shapes)), behind the default-on `icons` feature.
+  duotone, drawn as paths ([§7](#7-nodes)), behind the default-on `icons` feature.
 - embedded font metrics — the monospace default keeps the estimate close; a
   proportional `font-family` override is approximate until then.
 - `aria-label`, and a "did you mean" property-name hint table.

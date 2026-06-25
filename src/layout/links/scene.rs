@@ -209,12 +209,12 @@ impl SceneIndex {
 mod tests {
     use super::*;
     use crate::layout::ir::{Bbox, PlacedNode};
-    use crate::resolve::{AttrMap, Markers, ShapeKind};
+    use crate::resolve::{AttrMap, Markers, NodeKind};
     use crate::span::Span;
 
     fn node(
         id: Option<&str>,
-        shape: ShapeKind,
+        kind: NodeKind,
         cx: f64,
         cy: f64,
         w: f64,
@@ -223,7 +223,7 @@ mod tests {
     ) -> PlacedNode {
         PlacedNode {
             id: id.map(String::from),
-            shape,
+            kind,
             type_chain: Vec::new(),
             applied_styles: Vec::new(),
             label: None,
@@ -241,7 +241,7 @@ mod tests {
     }
 
     fn rect_node(id: &str, cx: f64, cy: f64, w: f64, h: f64) -> PlacedNode {
-        node(Some(id), ShapeKind::Block, cx, cy, w, h, Vec::new())
+        node(Some(id), NodeKind::Block, cx, cy, w, h, Vec::new())
     }
 
     /// cat at (0,0) 40×20; garden at (100,50) 80×60 containing dog at (10,5) 30×10.
@@ -249,7 +249,7 @@ mod tests {
         let dog = rect_node("dog", 10.0, 5.0, 30.0, 10.0);
         let garden = node(
             Some("garden"),
-            ShapeKind::Block,
+            NodeKind::Block,
             100.0,
             50.0,
             80.0,
@@ -325,12 +325,12 @@ mod tests {
     fn labels_block_inside_transparent_ancestors_but_not_inside_endpoints() {
         // garden{ label, dog, bird } — linking dog→bird must avoid the label;
         // linking garden→garden must not see its own inner label.
-        let label = node(None, ShapeKind::Text, 0.0, -25.0, 40.0, 10.0, Vec::new());
+        let label = node(None, NodeKind::Text, 0.0, -25.0, 40.0, 10.0, Vec::new());
         let dog = rect_node("dog", -15.0, 5.0, 20.0, 10.0);
         let bird = rect_node("bird", 15.0, 5.0, 20.0, 10.0);
         let garden = node(
             Some("garden"),
-            ShapeKind::Block,
+            NodeKind::Block,
             0.0,
             0.0,
             80.0,
@@ -357,7 +357,7 @@ mod tests {
     fn idd_text_is_a_body_not_a_label() {
         let title = node(
             Some("title"),
-            ShapeKind::Text,
+            NodeKind::Text,
             0.0,
             0.0,
             30.0,

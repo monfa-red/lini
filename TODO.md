@@ -178,14 +178,14 @@ Sketch (tentative):
   - `column` → tidy tree / org chart
 - under it, `[ ]` nesting reads as **structure** (tree/graph edges), not box
   containment — a node's own child-layout (box → column) is superseded by the
-  auto-layout, you just pick the node's *shape*.
+  auto-layout, you just pick the node's *kind*.
 - (a Sugiyama-ish DAG is roughly possible with a grid today, just manual and fiddly;
   auto-layout would do the placement for you.)
 
 Two things here are **not** speculative — already true / already in the model, and the
 real foundation (could just as well be noted outside auto-layout):
 
-- **Composability.** Every shape is a container, layout is per-container, and wires
+- **Composability.** Every node is a container, layout is per-container, and wires
   cross containers by dot-path. So a `flow` DAG with a `|chart|` node, next to a
   `radial` mindmap, wired together — one SVG. Heterogeneous diagrams composed and
   interconnected; nothing else does this.
@@ -199,13 +199,13 @@ Build later.
 
 ## Icons — shipped; follow-ups (`|icon|`)
 
-`|icon| { symbol: … }` is built — **Phosphor** duotone, painted like a shape (SPEC
+`|icon| { symbol: … }` is built — **Phosphor** duotone, painted like a node (SPEC
 §7), behind the default-on `icons` feature; geometry vendored in
 `assets/phosphor-duotone.txt` (regenerate with `cargo xtask extract-icons`). Still
 open:
 
 - a **solid (`fill`-weight) variant** for filled glyphs (today's set is the duotone
   line art; a true solid silhouette needs Phosphor's `fill` weight).
-- **symbol-shapes as aliases** — let `cloud` / `database` resolve to icons directly,
+- **symbol-aliases** — let `cloud` / `database` resolve to icons directly,
   keeping the parametric container primitives (box / oval / hex / cyl / …).
 - **user-supplied icons** via `|image|` — link a local or remote SVG/PNG.

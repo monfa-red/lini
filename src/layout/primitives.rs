@@ -1,6 +1,6 @@
-//! Per-shape bbox computation (SPEC §6–§7).
+//! Per-primitive bbox computation (SPEC §6–§7).
 //!
-//! A closed shape sizes **border-box**: `width`/`height` each default `auto` =
+//! A closed primitive sizes **border-box**: `width`/`height` each default `auto` =
 //! content + `padding` on that axis; an empty one is `2 × padding`; an explicit
 //! dimension is a **floor** — it grows to content + padding rather than clip or
 //! spill. Strokes count toward the bbox (half each side). `|text|` sizes to its
@@ -11,7 +11,7 @@ use super::ir::Bbox;
 use super::text;
 use super::values::{as_pair, expand_box_value};
 use crate::error::Error;
-use crate::resolve::{AttrMap, ResolvedInst, ResolvedValue, ShapeKind};
+use crate::resolve::{AttrMap, NodeKind, ResolvedInst, ResolvedValue};
 use crate::span::Span;
 
 #[derive(Default, Clone, Copy)]
@@ -22,18 +22,18 @@ pub struct PaddingBox {
     pub left: f64,
 }
 
-/// Bbox for a leaf primitive (no flow children). A closed shape is empty here —
+/// Bbox for a leaf primitive (no flow children). A closed primitive is empty here —
 /// `2 × padding` (or its explicit dims); text / icon / geometry size to their
 /// own content.
 pub fn leaf_bbox(inst: &ResolvedInst) -> Result<Bbox, Error> {
-    match inst.shape {
-        ShapeKind::Block
-        | ShapeKind::Oval
-        | ShapeKind::Hex
-        | ShapeKind::Slant
-        | ShapeKind::Cyl
-        | ShapeKind::Diamond => closed_bbox(inst, Bbox::empty()),
-        ShapeKind::Text => {
+    match inst.kind {
+        NodeKind::Block
+        | NodeKind::Oval
+        | NodeKind::Hex
+        | NodeKind::Slant
+        | NodeKind::Cyl
+        | NodeKind::Diamond => closed_bbox(inst, Bbox::empty()),
+        NodeKind::Text => {
             let size = font_size(inst);
             let label = inst.label.as_deref().unwrap_or("");
             let ls = inst.attrs.number("letter-spacing").unwrap_or(0.0);
@@ -43,7 +43,7 @@ pub fn leaf_bbox(inst: &ResolvedInst) -> Result<Bbox, Error> {
                 text::approx_height(label, size, lsp),
             ))
         }
-        ShapeKind::Icon => {
+        NodeKind::Icon => {
             // An icon sizes like a box around its optional label — each axis is
             // the declared `width`/`height` (default 32) as a floor over the text
             // + padding — but with **no** stroke inflate (the symbol's stroke sits
@@ -66,18 +66,18 @@ pub fn leaf_bbox(inst: &ResolvedInst) -> Result<Bbox, Error> {
             let h = floor_dim(inst.attrs.number("height"), th, pad.top + pad.bottom);
             Ok(Bbox::centered(w, h))
         }
-        ShapeKind::Line => {
+        NodeKind::Line => {
             Ok(bounding_box(&require_points(inst, "line", 2)?).inflate(stroke_half(inst)))
         }
-        ShapeKind::Poly => {
+        NodeKind::Poly => {
             Ok(bounding_box(&require_points(inst, "poly", 3)?).inflate(stroke_half(inst)))
         }
-        ShapeKind::Image => {
+        NodeKind::Image => {
             let (w, h) = image_dims(inst)?;
             Ok(Bbox::centered(w, h))
         }
         // Native top-left coords (SPEC §7): size to the parsed path extent.
-        ShapeKind::Path => {
+        NodeKind::Path => {
             let Some(ResolvedValue::String(d)) = inst.attrs.get("path") else {
                 return Err(Error::at(inst.span, "'|path|' requires 'path'"));
             };
@@ -90,7 +90,7 @@ pub fn leaf_bbox(inst: &ResolvedInst) -> Result<Bbox, Error> {
     }
 }
 
-/// A closed shape's bbox: each axis is `content + padding`, with an explicit
+/// A closed primitive's bbox: each axis is `content + padding`, with an explicit
 /// `width`/`height` as a **floor** — border-box (padding inside), and the box
 /// grows past the declared size rather than clip or spill its content (SPEC §6).
 /// Inflated by half the stroke so the outline counts toward the bbox.
@@ -115,7 +115,7 @@ pub fn closed_bbox(inst: &ResolvedInst, content: Bbox) -> Result<Bbox, Error> {
     Ok(Bbox::centered(w, h).inflate(stroke_half(inst)))
 }
 
-/// One axis of a closed shape, **border-box**: `content + padding`, with an
+/// One axis of a closed primitive, **border-box**: `content + padding`, with an
 /// explicit dimension as a **floor** over it — the box grows to fit content
 /// rather than clip or spill. An **empty** box (no content on this axis) keeps
 /// its declared size, since there is nothing to protect; an *auto* empty box is

@@ -16,7 +16,7 @@ mod scene;
 mod types;
 
 use crate::error::Error;
-use crate::resolve::ShapeKind;
+use crate::resolve::NodeKind;
 use crate::span::Span;
 use crate::syntax::ast::{Child, Decl, File, Link, Node, Rule, SelPart, Selector, StyleItem};
 use bundles::root_defaults;
@@ -65,7 +65,7 @@ pub fn desugar(file: &File) -> Result<File, Error> {
                         .entry(x.clone())
                         .or_default()
                         .extend(r.decls.iter().cloned());
-                    if ShapeKind::parse(&x).is_none() && !is_template(&x) {
+                    if NodeKind::parse(&x).is_none() && !is_template(&x) {
                         push_unique(&mut extra_order, &x);
                     }
                 }
@@ -136,7 +136,7 @@ fn lower_node(node: &Node, types: &Types, bodies: &Bodies) -> Result<Node, Error
     // class is already lowered — keep its classes and type verbatim (re-prepending
     // worn classes would duplicate them, and a lowered define's `.lini-<name>` is
     // unrecoverable from the now-primitive type).
-    let already = ShapeKind::parse(ty).is_some()
+    let already = NodeKind::parse(ty).is_some()
         && node.classes.iter().any(|c| *c == lini_class(kind.as_str()));
 
     let classes = if already {
@@ -172,9 +172,9 @@ fn lower_node(node: &Node, types: &Types, bodies: &Bodies) -> Result<Node, Error
     // no centred text; an icon consumes its text; a container holds its children.
     let text_capable = !matches!(
         kind,
-        ShapeKind::Line | ShapeKind::Poly | ShapeKind::Path | ShapeKind::Image
+        NodeKind::Line | NodeKind::Poly | NodeKind::Path | NodeKind::Image
     );
-    let is_icon = kind == ShapeKind::Icon;
+    let is_icon = kind == NodeKind::Icon;
     let is_container = info.chain.iter().any(|n| n == "group");
     if children.is_empty()
         && text_capable

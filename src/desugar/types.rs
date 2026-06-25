@@ -4,7 +4,7 @@
 //! built-in are errors.
 
 use crate::error::Error;
-use crate::resolve::ShapeKind;
+use crate::resolve::NodeKind;
 use crate::span::Span;
 use crate::syntax::ast::{Define, File, StyleItem};
 use std::collections::HashMap;
@@ -40,7 +40,7 @@ pub fn template_base(name: &str) -> Option<&'static str> {
 /// target, or a structural SVG class (SPEC §18) — once the `shape` infix is gone,
 /// a `|node::box|` define's `.lini-node` would collide with the universal marker.
 fn is_builtin_type(name: &str) -> bool {
-    ShapeKind::parse(name).is_some()
+    NodeKind::parse(name).is_some()
         || is_template(name)
         || matches!(
             name,
@@ -51,7 +51,7 @@ fn is_builtin_type(name: &str) -> bool {
 /// A resolved type: its primitive kind and the template/define names walked
 /// base→derived (the primitive is excluded — it is `kind`).
 pub struct TypeInfo {
-    pub kind: ShapeKind,
+    pub kind: NodeKind,
     pub chain: Vec<String>,
 }
 
@@ -85,7 +85,7 @@ impl Types {
     }
 
     pub fn is_known(&self, name: &str) -> bool {
-        ShapeKind::parse(name).is_some() || is_template(name) || self.defines.contains_key(name)
+        NodeKind::parse(name).is_some() || is_template(name) || self.defines.contains_key(name)
     }
 
     pub fn resolve(&self, name: &str, span: Span) -> Result<TypeInfo, Error> {
@@ -113,7 +113,7 @@ impl Types {
                 format!("cycle in '{} -> {}'", visiting.join(" -> "), name),
             ));
         }
-        if let Some(kind) = ShapeKind::parse(name) {
+        if let Some(kind) = NodeKind::parse(name) {
             return Ok(TypeInfo {
                 kind,
                 chain: Vec::new(),

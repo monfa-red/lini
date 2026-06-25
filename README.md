@@ -28,7 +28,7 @@ Most tools make you choose: **draw by hand** (precise, but tedious and hard to v
 - **You arrange, it routes.** Place nodes with flex, grid, or anchors; Lini routes the connectors between them: orthogonal, clearance-respecting, deterministic.
 - **The full range of SVG.** Sizes, anchors, strokes, shadows, rotation, opacity, raw paths: full control over the look, not a fixed house style, so a diagram can actually look good.
 - **A small syntax.** Two brackets — `{ }` for style, `[ ]` for children — plus a few sigils and sensible defaults. `cat -> dog` is already a valid diagram; the whole language is small enough to learn in one sitting.
-- **Any shape you need.** 11 primitives and 11 templates, plus a raw `path` that accepts any SVG path string. If SVG can draw it, you can place it and link to it.
+- **Any node you need.** 11 primitives and 11 templates, plus a raw `path` that accepts any SVG path string. If SVG can draw it, you can place it and link to it.
 - **Fast, and one file.** A 1.5 MB native binary, one runtime dependency. No Node, JVM, or headless browser; typical diagrams compile in about 2 ms, startup included.
 - **Reproducible output.** Compilation is byte-identical across runs, so renders diff cleanly and never churn in CI. 408 tests back it, including property tests on the router's laws.
 - **Pretty by default.** A curated 11-hue palette in soft pastels — five OKLCH-tuned tiers each — plus angle-less gradients, all themeable and dark/light-aware. No hex codes required.
@@ -66,13 +66,13 @@ fish --> bowl          // dashed
 
 <p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/flow.png" alt="Lini's link styles, in colour" width="300"></p>
 
-**A diagram reads like a CSS file.** A `{ }` stylesheet at the top sets defaults, declares reusable classes, and extends shapes; then come the instances, then the links:
+**A diagram reads like a CSS file.** A `{ }` stylesheet at the top sets defaults, declares reusable classes, and extends nodes; then come the instances, then the links:
 
 ```
 {                                   // the stylesheet — pure setup, draws nothing
   link: #444; clearance: 10;          // link defaults cascade to every link
   .loud { stroke: red; stroke-width: 2; }
-  |db::cyl| { fill: lightyellow; }    // a new shape from the cylinder primitive
+  |db::cyl| { fill: lightyellow; }    // a new type from the cylinder primitive
 }
 
 api   |box| "API"
@@ -98,9 +98,9 @@ services |group| { layout: row; gap: 24 } [
 
 ---
 
-## Shapes
+## Nodes
 
-<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/shapes.png" alt="Lini's shape primitives and templates" width="480"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/shapes.png" alt="Lini's primitives and templates" width="480"></p>
 
 ```
 |hex|  { width: 82; height: 72 } "hex"
@@ -109,7 +109,7 @@ services |group| { layout: row; gap: 24 } [
 |path| { path: "M -34 6 C -34 -34 34 -34 34 6 C 20 34 -20 34 -34 6 Z"; }
 ```
 
-Block (the bare frameless rectangle), oval, hex, slant, cylinder, diamond, polygon, line, icon (a Phosphor symbol — `|icon| { symbol: heart }`, painted like a shape), and image, plus `path` for anything else. Text is not a shape: a bare `"…"` is content — styleable in place (`"x" { color: red }`) — and `|block|` is the frameless box for a label that needs an id or a link. Templates (`box`, `rect`, `group`, `caption`, `footer`, `badge`, `note`, `row`, `column`, `table`) bundle common patterns over `|block|`, and you can define your own from any base: `|panel::group| { stroke: --accent; }`.
+Block (the bare frameless rectangle), oval, hex, slant, cylinder, diamond, polygon, line, icon (a Phosphor symbol — `|icon| { symbol: heart }`, painted like a node), and image, plus `path` for anything else. Text is not a primitive: a bare `"…"` is content — styleable in place (`"x" { color: red }`) — and `|block|` is the frameless box for a label that needs an id or a link. Templates (`box`, `rect`, `group`, `caption`, `footer`, `badge`, `note`, `row`, `column`, `table`, `sign`) bundle common patterns over a base type, and you can define your own from any base: `|panel::group| { stroke: --accent; }`.
 
 ---
 
@@ -254,7 +254,7 @@ A linear pipeline, each stage independently testable:
 lex → parse → resolve → layout → route → render
 ```
 
-Parsing is recursive-descent over an LL(1) grammar; resolve applies CSS-like specificity (inline beats class beats default) and expands user shapes; layout sizes bottom-up; the router solves links orthogonally against a clearance contract; render emits semantic SVG. The full language is specified in [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md).
+Parsing is recursive-descent over an LL(1) grammar; resolve applies CSS-like specificity (inline beats class beats default) and expands user types; layout sizes bottom-up; the router solves links orthogonally against a clearance contract; render emits semantic SVG. The full language is specified in [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md).
 
 ---
 

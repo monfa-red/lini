@@ -329,7 +329,7 @@ fn decls_attrmap(decls: &[Decl], vars: &VarTable) -> Result<AttrMap, Error> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::resolve::{MarkerKind, ShapeKind};
+    use crate::resolve::{MarkerKind, NodeKind};
 
     fn rv4(src: &str) -> Program {
         let toks = crate::lexer::lex(src).expect("lex");
@@ -364,7 +364,7 @@ mod tests {
         let p = rv4("x |box|\n");
         assert_eq!(p.scene.nodes.len(), 1);
         assert_eq!(p.scene.nodes[0].id.as_deref(), Some("x"));
-        assert_eq!(p.scene.nodes[0].shape, ShapeKind::Block);
+        assert_eq!(p.scene.nodes[0].kind, NodeKind::Block);
     }
 
     #[test]
@@ -419,7 +419,7 @@ mod tests {
         // SPEC §3: a leaf box with no block text shows its id as a text child.
         let p = rv4("cat |box|\n");
         let label = &p.scene.nodes[0].children[0];
-        assert_eq!(label.shape, ShapeKind::Text);
+        assert_eq!(label.kind, NodeKind::Text);
         assert_eq!(label.label.as_deref(), Some("cat"));
     }
 
@@ -452,7 +452,7 @@ mod tests {
         // SPEC §7: `symbol` names the icon; a bare string rides as centred text,
         // carried on the node — never a separate rendered child.
         let p = rv4("i |icon| { symbol: house } \"3\"\n");
-        assert_eq!(p.scene.nodes[0].shape, ShapeKind::Icon);
+        assert_eq!(p.scene.nodes[0].kind, NodeKind::Icon);
         assert_eq!(ident(&p, 0, "symbol"), Some("house"));
         assert_eq!(p.scene.nodes[0].label.as_deref(), Some("3"));
         assert!(p.scene.nodes[0].children.is_empty());
@@ -462,7 +462,7 @@ mod tests {
     fn text_properties_inherit_to_descendants() {
         let p = rv4("g |group| { font-size: 10 } [\n  \"hi\"\n]\n");
         let t = &p.scene.nodes[0].children[0];
-        assert_eq!(t.shape, ShapeKind::Text);
+        assert_eq!(t.kind, NodeKind::Text);
         assert_eq!(t.attrs.number("font-size"), Some(10.0));
     }
 
