@@ -5,8 +5,8 @@ use super::markers::{
     MARKER_OVERLAP, MarkerPaint, emit_marker, marker_anchor, shorten_for_markers,
 };
 use super::rounding::{Seg, round};
-use super::rules::{PAINT_PROPS, RuleSet, effective_stroke};
-use super::values::{attr_or_var, dasharray_value, escape_xml, format_value, num};
+use super::rules::{RuleSet, effective_stroke};
+use super::values::{attr_or_var, escape_xml, format_value, num};
 use super::wavy;
 use crate::Options;
 use crate::layout::{RoutedLink, RoutedText, Stray, approx_height, approx_width};
@@ -62,33 +62,16 @@ pub fn render_link(
         link_classes.push(format!("lini-link-{s}"));
     }
     link_classes.extend(w.applied_styles.iter().map(|s| format!("lini-style-{}", s)));
-    let mut decls: Vec<(&str, String)> = Vec::new();
-    for (lini, css) in PAINT_PROPS {
-        let Some(v) = w.attrs.get(lini) else {
-            continue;
-        };
-        let formatted = format_value(v, vars, opts);
-        if ruleset.provided(&link_classes, css) != Some(formatted.as_str()) {
-            decls.push((css, formatted));
-        }
-    }
-    if w.attrs.get("stroke-style").is_some() {
-        let dash = dasharray_value(&w.attrs, thickness);
-        let value = if dash.is_empty() {
-            "none".to_string()
-        } else {
-            dash
-        };
-        if ruleset.provided(&link_classes, "stroke-dasharray") != Some(value.as_str()) {
-            decls.push(("stroke-dasharray", value));
-        }
-    }
-    let style_attr = if decls.is_empty() {
-        String::new()
-    } else {
-        let body: Vec<String> = decls.iter().map(|(p, v)| format!("{}: {}", p, v)).collect();
-        format!(r#" style="{}""#, body.join("; "))
-    };
+    // A link's `<g>` paint is the same class-diff a node's is (SPEC §13) — one
+    // shared computation; a link never aliases `color` and formats with plain
+    // `format_value`.
+    let decls = ruleset.inline_paint_diff(
+        &link_classes,
+        &w.attrs,
+        |lini| w.attrs.get(lini),
+        |_lini, v| format_value(v, vars, opts),
+    );
+    let style_attr = super::style_attr_from(&decls);
 
     // `href:` makes the link clickable, mirroring a node's `<a href>` wrap.
     let href = match w.attrs.get("href") {

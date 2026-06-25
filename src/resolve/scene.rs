@@ -189,35 +189,29 @@ pub fn resolve_node(
         });
     }
 
-    // An `|icon|` is named by its `symbol` (SPEC §7), not its label; any bare
-    // string it carries rides along as centred text (`own_label`, drawn by the
-    // renderer). It stays a leaf, so its children are not resolved as a subtree.
+    // An `|icon|` is named by its `symbol` (SPEC §7), not its id, so it gains no
+    // id-as-label (desugar skips it); a bare string it carries is an ordinary
+    // centred-text child — the same leaf through the same renderer, so `translate`
+    // and styling reach it exactly as on any node's text.
     let is_icon = kind == NodeKind::Icon;
     if is_icon {
         validate_icon(&attrs, node.span)?;
     } else if kind == NodeKind::Image {
         validate_fit(&attrs, node.span)?;
     }
-    let own_label = if is_icon {
-        first_text(&node.children).map(str::to_string)
-    } else {
-        None
-    };
 
     ancestors.push(facts);
     let mut children = Vec::new();
-    if !is_icon {
-        for child in &node.children {
-            children.push(resolve_child(
-                child,
-                ctx,
-                ancestors,
-                &child_prefix,
-                &child_text_ctx,
-                id_seen,
-                lifted,
-            )?);
-        }
+    for child in &node.children {
+        children.push(resolve_child(
+            child,
+            ctx,
+            ancestors,
+            &child_prefix,
+            &child_text_ctx,
+            id_seen,
+            lifted,
+        )?);
     }
     ancestors.pop();
     drop_blank_text(&mut children, &attrs);
@@ -227,7 +221,7 @@ pub fn resolve_node(
         kind,
         type_chain,
         applied_styles,
-        label: own_label,
+        label: None,
         attrs,
         own_style: AttrMap::new(),
         markers,
@@ -299,15 +293,6 @@ pub(super) fn is_text_prop(name: &str) -> bool {
             | "rotate"
             | "layer"
     )
-}
-
-/// The first bare string among a node's children — an `|icon|`'s optional
-/// centred text.
-fn first_text(children: &[Child]) -> Option<&str> {
-    children.iter().find_map(|c| match c {
-        Child::Text(t) => Some(t.text.as_str()),
-        Child::Box(_) => None,
-    })
 }
 
 /// An `|icon|` must name a known `symbol` (SPEC §7). Errors point at the node,

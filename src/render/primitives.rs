@@ -382,19 +382,10 @@ fn emit_icon(out: &mut String, n: &PlacedNode, indent: &str, vars: &VarTable, op
         &format!(r#"fill="{ink}" stroke="none""#),
     );
     writeln!(out, "{indent}</g>").unwrap();
-
-    // An optional bare string rides as centred text over the glyph (SPEC §7). It
-    // is a plain `lini-text` — it inherits the text colour, `font-size`, and the
-    // `stroke: none` mask exactly like any label (no inline font-size); the box
-    // grew to fit it (layout), so it never scales with the icon.
-    if let Some(label) = n.label.as_deref().filter(|s| !s.is_empty()) {
-        writeln!(
-            out,
-            r#"{indent}<text class="lini-text" x="0" y="0">{}</text>"#,
-            escape_xml(label),
-        )
-        .unwrap();
-    }
+    // The optional label is an ordinary centred-text child (SPEC §7), drawn by the
+    // shared text emitter via the normal child recursion — so it inherits the
+    // colour / `font-size`, never scales with the glyph, and honours `translate` /
+    // `rotate` / styling exactly like any node's text.
 }
 
 /// Emit the fragments whose role matches `want`, wrapped in one inheriting paint

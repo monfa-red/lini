@@ -6,8 +6,8 @@
 use crate::syntax::ast::{Child, Decl, Link, Node, TextNode, Value};
 
 /// The id-as-label text child for a leaf box (SPEC §3): a box that is neither an
-/// `|icon|` (which consumes its text as a glyph name) nor a container (which holds
-/// its children) shows its id. `None` when the node has no id or is icon/container;
+/// `|icon|` (named by its `symbol`, not its id) nor a container (which holds its
+/// children) shows its id. `None` when the node has no id or is icon/container;
 /// the caller adds it only when the node has no other content.
 pub(super) fn label_child_for(node: &Node, is_icon: bool, is_container: bool) -> Option<Child> {
     if is_icon || is_container {

@@ -449,13 +449,16 @@ mod tests {
     #[cfg(feature = "icons")]
     #[test]
     fn icon_named_by_symbol_with_optional_text() {
-        // SPEC §7: `symbol` names the icon; a bare string rides as centred text,
-        // carried on the node — never a separate rendered child.
+        // SPEC §7: `symbol` names the icon; a bare string is an ordinary
+        // centred-text **child** (so `translate` / styling reach it like any
+        // node's text), not folded onto the node.
         let p = rv4("i |icon| { symbol: house } \"3\"\n");
         assert_eq!(p.scene.nodes[0].kind, NodeKind::Icon);
         assert_eq!(ident(&p, 0, "symbol"), Some("house"));
-        assert_eq!(p.scene.nodes[0].label.as_deref(), Some("3"));
-        assert!(p.scene.nodes[0].children.is_empty());
+        assert_eq!(p.scene.nodes[0].label, None);
+        let child = &p.scene.nodes[0].children[0];
+        assert_eq!(child.kind, NodeKind::Text);
+        assert_eq!(child.label.as_deref(), Some("3"));
     }
 
     #[test]

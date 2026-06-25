@@ -254,34 +254,18 @@ fn node_style_attr(
     vars: &VarTable,
     opts: &Options,
 ) -> String {
-    let mut decls: Vec<(&str, String)> = Vec::new();
-    for (lini, css) in rules::PAINT_PROPS {
-        let value = match (*lini, n.kind) {
-            // On |text|, `color` is an alias for `fill` (CSS-style); the
-            // shape rule's `currentColor` keeps SVG inheritance working when
-            // neither is set.
+    let decls = ruleset.inline_paint_diff(
+        classes,
+        &n.attrs,
+        // On |text|, `color` is an alias for `fill` (CSS-style); the shape rule's
+        // `currentColor` keeps SVG inheritance working when neither is set.
+        |lini| match (lini, n.kind) {
             ("fill", NodeKind::Text) => n.attrs.get("fill").or_else(|| n.attrs.get("color")),
             ("color", NodeKind::Text) => None,
             _ => n.attrs.get(lini),
-        };
-        let Some(v) = value else { continue };
-        let formatted = values::css_value(lini, v, vars, opts);
-        if ruleset.provided(classes, css) != Some(formatted.as_str()) {
-            decls.push((css, formatted));
-        }
-    }
-    if n.attrs.get("stroke-style").is_some() {
-        let width = n.attrs.number("stroke-width").unwrap_or(0.0);
-        let dash = values::dasharray_value(&n.attrs, width);
-        let value = if dash.is_empty() {
-            "none".to_string()
-        } else {
-            dash
-        };
-        if ruleset.provided(classes, "stroke-dasharray") != Some(value.as_str()) {
-            decls.push(("stroke-dasharray", value));
-        }
-    }
+        },
+        |lini, v| values::css_value(lini, v, vars, opts),
+    );
     style_attr_from(&decls)
 }
 
@@ -306,7 +290,7 @@ fn eff_layer(n: &PlacedNode) -> f64 {
 }
 
 /// ` style="…"` from prop declarations, or empty.
-fn style_attr_from(decls: &[(&str, String)]) -> String {
+pub(super) fn style_attr_from(decls: &[(&str, String)]) -> String {
     if decls.is_empty() {
         return String::new();
     }

@@ -43,35 +43,9 @@ pub fn leaf_bbox(inst: &ResolvedInst) -> Result<Bbox, Error> {
                 text::approx_height(label, size, lsp),
             ))
         }
-        NodeKind::Icon => {
-            // An icon is a **square** that grows uniformly with its optional label
-            // (and `padding`), so the symbol scales up *with* the text and keeps
-            // its proportion. The side is the larger of the declared size (default
-            // 32) and the label + padding on either axis — no stroke inflate (the
-            // symbol's stroke sits inside its 256 grid, SPEC §7).
-            let pad = padding(&inst.attrs, inst.span)?;
-            let (tw, th) = match inst.label.as_deref().filter(|s| !s.is_empty()) {
-                Some(label) => {
-                    let fs = inst.attrs.number("font-size").unwrap_or(15.0);
-                    let ls = inst.attrs.number("letter-spacing").unwrap_or(0.0);
-                    let lsp = inst.attrs.number("line-spacing").unwrap_or(0.0);
-                    (
-                        text::approx_width(label, fs, ls),
-                        text::approx_height(label, fs, lsp),
-                    )
-                }
-                None => (0.0, 0.0),
-            };
-            let declared = inst
-                .attrs
-                .number("width")
-                .unwrap_or(0.0)
-                .max(inst.attrs.number("height").unwrap_or(0.0));
-            let side = declared
-                .max(tw + pad.left + pad.right)
-                .max(th + pad.top + pad.bottom);
-            Ok(Bbox::centered(side, side))
-        }
+        // A label-less icon: an empty content box (the labelled case sizes the
+        // same square from its laid-out label child — see `icon_square_bbox`).
+        NodeKind::Icon => icon_square_bbox(inst, Bbox::empty()),
         NodeKind::Line => {
             Ok(bounding_box(&require_points(inst, "line", 2)?).inflate(stroke_half(inst)))
         }
@@ -119,6 +93,25 @@ pub fn closed_bbox(inst: &ResolvedInst, content: Bbox) -> Result<Bbox, Error> {
         pad.top + pad.bottom,
     );
     Ok(Bbox::centered(w, h).inflate(stroke_half(inst)))
+}
+
+/// An `|icon|`'s bbox: a **square** that grows uniformly with its label content
+/// and `padding`, so the symbol scales up *with* the text and keeps its
+/// proportion (SPEC §7). The side is the larger of the declared size (the bundle's
+/// `icon-size` 32) and the content + padding on either axis — no stroke inflate
+/// (the symbol's stroke sits inside its 256 grid). `content` is the empty box for
+/// a bare icon, or its laid-out label child's extent.
+pub fn icon_square_bbox(inst: &ResolvedInst, content: Bbox) -> Result<Bbox, Error> {
+    let pad = padding(&inst.attrs, inst.span)?;
+    let declared = inst
+        .attrs
+        .number("width")
+        .unwrap_or(0.0)
+        .max(inst.attrs.number("height").unwrap_or(0.0));
+    let side = declared
+        .max(content.w() + pad.left + pad.right)
+        .max(content.h() + pad.top + pad.bottom);
+    Ok(Bbox::centered(side, side))
 }
 
 /// One axis of a closed primitive, **border-box**: `content + padding`, with an

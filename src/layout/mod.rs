@@ -271,9 +271,14 @@ fn layout_inst(inst: &ResolvedInst, growth: &GapGrowth, path: &str) -> Result<Pl
         // border is the group rect, its inner lines these dividers.
         dividers = rules;
 
-        // The closed primitive sizes border-box: explicit width/height, else
-        // content + padding per axis (SPEC §6).
-        let b = primitives::closed_bbox(inst, content_bbox)?;
+        // An icon sizes to a square that grows with its label child (SPEC §7);
+        // every other closed primitive sizes border-box — explicit width/height,
+        // else content + padding per axis (SPEC §6).
+        let b = if inst.kind == NodeKind::Icon {
+            primitives::icon_square_bbox(inst, content_bbox)?
+        } else {
+            primitives::closed_bbox(inst, content_bbox)?
+        };
         let text_only = children.iter().all(|c| c.kind == NodeKind::Text);
 
         // Some closed shapes carry decoration at the top — a cloud's lobes, a

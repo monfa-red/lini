@@ -92,6 +92,44 @@ impl RuleSet {
         hit
     }
 
+    /// The inline paint `style=` declarations for one element — a node `<g>` or a
+    /// link `<g>` — as the **difference** from what its classes already provide:
+    /// each `PAINT_PROPS` entry, then the joint `stroke-style → stroke-dasharray`
+    /// pair, kept only when it differs from the class rule (so inline beats the
+    /// rule, SPEC §13). The one place that diff lives, shared by both renderers:
+    /// `value_of` resolves a prop to its value (a node aliases text `color`→`fill`),
+    /// `fmt` formats it (a node's `css_value` adds `px` to `font-size`; a link's
+    /// `format_value` does not).
+    pub fn inline_paint_diff<'a>(
+        &self,
+        classes: &[String],
+        attrs: &AttrMap,
+        value_of: impl Fn(&str) -> Option<&'a ResolvedValue>,
+        fmt: impl Fn(&str, &ResolvedValue) -> String,
+    ) -> Vec<(&'static str, String)> {
+        let mut decls = Vec::new();
+        for (lini, css) in PAINT_PROPS {
+            let Some(v) = value_of(lini) else { continue };
+            let formatted = fmt(lini, v);
+            if self.provided(classes, css) != Some(formatted.as_str()) {
+                decls.push((*css, formatted));
+            }
+        }
+        if attrs.get("stroke-style").is_some() {
+            let width = attrs.number("stroke-width").unwrap_or(0.0);
+            let dash = super::values::dasharray_value(attrs, width);
+            let value = if dash.is_empty() {
+                "none".to_string()
+            } else {
+                dash
+            };
+            if self.provided(classes, "stroke-dasharray") != Some(value.as_str()) {
+                decls.push(("stroke-dasharray", value));
+            }
+        }
+        decls
+    }
+
     /// The `fill` the sheet paints a `.lini-marker` with, for a marker nested in
     /// an element carrying `classes`: the base `.lini-marker` rule, overridden by
     /// the last `.lini-style-* .lini-marker` descendant rule whose style the
