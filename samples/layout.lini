@@ -1,7 +1,7 @@
 // Positioning & spacing — pin (the 9 named anchor points), translate (a
 // post-placement nudge), and the 1/2/4-value padding & gap forms. Palette colours.
 {
-  layout: row; gap: 30; padding: 26; align: start; font-weight: normal;
+  layout: row; gap: 24; padding: 24; align: start; font-weight: normal;
   |dot::block| { font-size: 12; }
 }
 
@@ -29,7 +29,7 @@ moves |group| { layout: column; gap: 14; } [
        |row| { gap: 14; align: center; } [
     a |box| { fill: --amber-soft; stroke: --amber-ink; color: --amber-ink; } "A"
     b |box| {
-      fill: --amber-soft; stroke: --amber-ink; color: --amber-ink; translate: 0 16;
+      fill: --amber-soft; stroke: --amber-ink; color: --amber-ink; translate: 0 12;
     } "nudged"
     c |box| { fill: --amber-soft; stroke: --amber-ink; color: --amber-ink; } "C"
   ]

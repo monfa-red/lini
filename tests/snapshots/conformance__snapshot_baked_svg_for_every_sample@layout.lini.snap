@@ -3,7 +3,7 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/layout.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-399 -166 798 314.5" width="798" height="314.5" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-391 -164 782 310.5" width="782" height="310.5" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
@@ -18,9 +18,9 @@ input_file: samples/layout.lini
   <defs>
     <filter id="lini-shadow-1" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="rgba(0, 0, 0, 0.2)"/></filter>
   </defs>
-  <rect class="lini-canvas" x="-399" y="-166" width="798" height="314.5"/>
+  <rect class="lini-canvas" x="-391" y="-164" width="782" height="310.5"/>
   <g class="lini-scene">
-    <g class="lini-node lini-group lini-block" data-id="anchors" transform="translate(-246.5,-26)">
+    <g class="lini-node lini-group lini-block" data-id="anchors" transform="translate(-240.5,-26)">
       <rect x="-126" y="-96" width="252" height="192" rx="8" ry="8"/>
       <g class="lini-node lini-box lini-block" data-id="pins" style="fill: #cff6ff; stroke: #00547e" transform="translate(0,0)">
         <rect x="-105" y="-75" width="210" height="150" rx="8" ry="8"/>
@@ -74,7 +74,7 @@ input_file: samples/layout.lini
           <rect x="-24.5" y="-27.5" width="49" height="55" rx="8" ry="8"/>
           <text class="lini-text" x="0" y="0">A</text>
         </g>
-        <g class="lini-node lini-box lini-block" data-id="b" style="fill: #eec978; stroke: #6d3b00; color: #6d3b00" transform="translate(0,16)">
+        <g class="lini-node lini-box lini-block" data-id="b" style="fill: #eec978; stroke: #6d3b00; color: #6d3b00" transform="translate(0,12)">
           <rect x="-47" y="-27.5" width="94" height="55" rx="8" ry="8"/>
           <text class="lini-text" x="0" y="0">nudged</text>
         </g>
@@ -102,7 +102,7 @@ input_file: samples/layout.lini
         <text class="lini-text" x="0" y="0">translate</text>
       </g>
     </g>
-    <g class="lini-node lini-group lini-block" data-id="spacing" transform="translate(291,0)">
+    <g class="lini-node lini-group lini-block" data-id="spacing" transform="translate(285,0)">
       <rect x="-81.5" y="-122" width="163" height="244" rx="8" ry="8"/>
       <g class="lini-node lini-box lini-block" style="fill: #94e2b5; stroke: #005d26; color: #005d26" transform="translate(0,-73.5)">
         <rect x="-47" y="-27.5" width="94" height="55" rx="8" ry="8"/>

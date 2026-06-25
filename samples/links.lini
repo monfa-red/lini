@@ -1,7 +1,7 @@
 // Link markers (arrow, dot, diamond, crow on |line|) and template-internal links
 // — a |define| whose body links its own children, so every instance routes itself.
 {
-  layout: column; gap: 26; padding: 24; font-weight: normal;
+  layout: column; gap: 40; padding: 24; font-weight: normal;
 
   |room::group| {
     layout: column; gap: 10; padding: 12; fill: --teal-wash; stroke: --teal-ink;
@@ -17,16 +17,16 @@
 ends |group| { layout: column; gap: 14; } [
   |caption| "markers"
   |line| {
-    points: -80 0, 80 0; marker-end: arrow; stroke: --sky-ink; stroke-width: 2;
+    points: -80 0, 80 0; marker-end: arrow; stroke: --sky-deep; stroke-width: 2;
   }
   |line| {
-    points: -80 0, 80 0; marker-start: dot; marker-end: dot; stroke: --green-ink; stroke-width: 2;
+    points: -80 0, 80 0; marker-start: dot; marker-end: dot; stroke: --green-deep; stroke-width: 2;
   }
   |line| {
-    points: -80 0, 80 0; marker-end: diamond; stroke: --purple-ink; stroke-width: 2;
+    points: -80 0, 80 0; marker-end: diamond; stroke: --purple-deep; stroke-width: 2;
   }
   |line| {
-    points: -80 0, 80 0; marker-end: crow; stroke: --orange-ink; stroke-width: 2;
+    points: -80 0, 80 0; marker-end: crow; stroke: --orange-deep; stroke-width: 2;
   }
 ]
 
