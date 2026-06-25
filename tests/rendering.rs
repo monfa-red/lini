@@ -357,11 +357,6 @@ fn cyl_emits_ellipse_and_path() {
 }
 
 #[test]
-fn cloud_emits_path() {
-    assert!(render_live("|cloud| { width: 100; height: 60; }\n").contains("<path"));
-}
-
-#[test]
 fn poly_emits_polygon_with_user_points() {
     assert!(render_live("|poly| { points: 0 0, 20 0, 10 20; }\n").contains("<polygon"));
 }

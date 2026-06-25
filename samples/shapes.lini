@@ -37,10 +37,6 @@
   |diamond| { width: 70; height: 60; fill: --sky-wash; stroke: --sky-deep; }
   |cap| "diamond"
 ]
-|tile| [
-  |cloud| { width: 84; height: 52; fill: --blue-wash; stroke: --blue-deep; }
-  |cap| "cloud"
-]
 
 |tile| [
   |poly| {

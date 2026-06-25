@@ -564,7 +564,7 @@ makes it approximate until embedded font metrics land ([§19](#19-deferred)).
 
 ## 7. Shapes
 
-12 shape primitives. All accept position and visual properties; closed shapes also
+11 shape primitives. All accept position and visual properties; closed shapes also
 accept `stack`, `rotate`, `shadow`. Text is **not** a shape — it is bare content
 ([§3](#3-statements)); the frameless `|block|` box ([§8](#8-templates)) is what
 you reach for when text needs an id, a class, a link, or box layout.
@@ -582,7 +582,6 @@ box; equal dimensions (or an empty `|oval|`) make a circle.
 | `\|slant\|` | size (auto) | Parallelogram; top edge shifted `tan(skew) × h`. `skew` in degrees, (-89, 89). |
 | `\|cyl\|` | size (auto) | Cylinder; end ellipses ≈ h/10. |
 | `\|diamond\|` | size (auto) | Rhombus inscribed in the bbox. |
-| `\|cloud\|` | size (auto) | Cloud path scaled to fit. |
 | `\|poly\|` | `points` | ≥3 points, local (center-origin) coords. Closed. |
 | `\|path\|` | `path` | Raw SVG path. **Native top-left coords.** |
 | `\|line\|` | `points` | 2+ points. Markers via `marker*:`. |

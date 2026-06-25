@@ -54,7 +54,7 @@ pub fn primitive_bundle(kind: ShapeKind) -> Vec<Decl> {
             n("padding", 0.0),
             n("gap", 20.0),
         ],
-        Oval | Hex | Cyl | Diamond | Cloud => sized(),
+        Oval | Hex | Cyl | Diamond => sized(),
         Slant => {
             let mut b = sized();
             b.push(n("skew", 15.0));

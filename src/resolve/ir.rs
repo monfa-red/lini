@@ -75,7 +75,6 @@ pub enum ShapeKind {
     Slant,
     Cyl,
     Diamond,
-    Cloud,
     Poly,
     Path,
     Text,
@@ -87,14 +86,13 @@ pub enum ShapeKind {
 impl ShapeKind {
     /// Every primitive, in `as_str` order — the canonical enumeration desugar
     /// walks to emit a `.lini-<kind>` class def per present primitive.
-    pub const ALL: [ShapeKind; 13] = [
+    pub const ALL: [ShapeKind; 12] = [
         Self::Block,
         Self::Oval,
         Self::Hex,
         Self::Slant,
         Self::Cyl,
         Self::Diamond,
-        Self::Cloud,
         Self::Poly,
         Self::Path,
         Self::Text,
@@ -111,7 +109,6 @@ impl ShapeKind {
             "slant" => Self::Slant,
             "cyl" => Self::Cyl,
             "diamond" => Self::Diamond,
-            "cloud" => Self::Cloud,
             "poly" => Self::Poly,
             "path" => Self::Path,
             "line" => Self::Line,
@@ -129,7 +126,6 @@ impl ShapeKind {
             Self::Slant => "slant",
             Self::Cyl => "cyl",
             Self::Diamond => "diamond",
-            Self::Cloud => "cloud",
             Self::Poly => "poly",
             Self::Path => "path",
             Self::Text => "text",

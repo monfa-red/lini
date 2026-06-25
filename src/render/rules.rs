@@ -227,7 +227,6 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
         ShapeKind::Slant,
         ShapeKind::Cyl,
         ShapeKind::Diamond,
-        ShapeKind::Cloud,
         ShapeKind::Poly,
         ShapeKind::Path,
     ];

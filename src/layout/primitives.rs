@@ -32,8 +32,7 @@ pub fn leaf_bbox(inst: &ResolvedInst) -> Result<Bbox, Error> {
         | ShapeKind::Hex
         | ShapeKind::Slant
         | ShapeKind::Cyl
-        | ShapeKind::Diamond
-        | ShapeKind::Cloud => closed_bbox(inst, Bbox::empty()),
+        | ShapeKind::Diamond => closed_bbox(inst, Bbox::empty()),
         ShapeKind::Text => {
             let size = font_size(inst);
             let label = inst.label.as_deref().unwrap_or("");

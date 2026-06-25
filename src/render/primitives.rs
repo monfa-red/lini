@@ -105,7 +105,6 @@ fn emit_shape(
         ShapeKind::Hex => emit_hex(out, n, &indent, thickness),
         ShapeKind::Diamond => emit_diamond(out, n, &indent, thickness),
         ShapeKind::Cyl => emit_cyl(out, n, &indent, thickness),
-        ShapeKind::Cloud => emit_cloud(out, n, &indent, thickness),
         ShapeKind::Oval => emit_oval(out, n, &indent, thickness),
         // Text is emitted by `render::render_text` as a bare `<text>` (SPEC §13),
         // never as wrapped geometry — so it never reaches this dispatch.
@@ -230,49 +229,6 @@ fn emit_cyl(out: &mut String, n: &PlacedNode, indent: &str, thickness: f64) {
         num(ry),
     )
     .unwrap();
-}
-
-fn emit_cloud(out: &mut String, n: &PlacedNode, indent: &str, thickness: f64) {
-    // Minimal cloud outline (after Inkscape "cloudSimple"): a small left lobe, a
-    // larger right lobe, and a flat bottom with rounded corners. Reference
-    // coordinates (their own bbox 42.77..158.47 × 114.33..180.02) are normalized
-    // to the node bbox by point — never a non-uniform transform — so the stroke
-    // stays an even width at any size.
-    let (w, h) = dim_excluding_stroke(n, thickness);
-    let p = |x: f64, y: f64| {
-        let nx = (x - 42.768) / 115.706;
-        let ny = (y - 114.328) / 65.689;
-        fmt_pt((nx * w - w / 2.0, ny * h - h / 2.0))
-    };
-    // 11 cubic segments as (c1x, c1y, c2x, c2y, endx, endy). The flat bottom is a
-    // straight line inserted between the 7th and 8th segment.
-    const SEGS: [[f64; 6]; 11] = [
-        [107.942, 114.332, 98.406, 120.038, 93.496, 129.180],
-        [90.025, 126.557, 85.796, 125.134, 81.446, 125.125],
-        [70.373, 125.125, 61.397, 134.101, 61.397, 145.174],
-        [61.401, 145.385, 61.408, 145.595, 61.419, 145.805],
-        [60.918, 145.758, 60.416, 145.733, 59.913, 145.730],
-        [50.444, 145.730, 42.768, 153.405, 42.769, 162.874],
-        [42.769, 172.342, 50.444, 180.017, 59.913, 180.017],
-        [150.798, 180.017, 158.473, 172.342, 158.474, 162.874],
-        [158.470, 155.286, 153.478, 148.603, 146.203, 146.446],
-        [146.397, 145.146, 146.500, 143.834, 146.511, 142.519],
-        [146.511, 126.949, 133.889, 114.328, 118.320, 114.328],
-    ];
-    let mut d = format!("M {}", p(118.320, 114.328));
-    for (i, s) in SEGS.iter().enumerate() {
-        if i == 7 {
-            d.push_str(&format!(" L {}", p(141.330, 180.017)));
-        }
-        d.push_str(&format!(
-            " C {} {} {}",
-            p(s[0], s[1]),
-            p(s[2], s[3]),
-            p(s[4], s[5])
-        ));
-    }
-    d.push_str(" Z");
-    writeln!(out, r#"{}<path d="{}"/>"#, indent, d).unwrap();
 }
 
 fn emit_line(
@@ -468,8 +424,4 @@ fn emit_polygon(out: &mut String, indent: &str, points: &[(f64, f64)]) {
         pts_str.join(" ")
     )
     .unwrap();
-}
-
-fn fmt_pt((x, y): (f64, f64)) -> String {
-    format!("{} {}", num(x), num(y))
 }
