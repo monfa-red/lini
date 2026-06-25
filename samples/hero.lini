@@ -10,10 +10,10 @@
   }
   |store::cyl| { fill: --rose-wash; stroke: --rose-deep; color: --rose-ink; }
 
-  .flow { stroke: --blue-deep; }
-  .cache { stroke: --teal-deep; }
-  .async { stroke: --amber-deep; }
-  .auth { stroke: --purple-deep; }
+  .flow { link: --blue-deep; }
+  .cache { link: --teal-deep; }
+  .async { link: --amber-deep; }
+  .auth { link: --purple-deep; }
 }
 
 users |oval| {

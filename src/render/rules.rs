@@ -406,6 +406,10 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
         if name.starts_with("lini-") || !used_styles.contains(name.as_str()) {
             continue;
         }
+        // A class may wear the link paint family (`link*`); map it to `stroke*` so
+        // its `.lini-style-*` rule states a link's colour once — like a node's
+        // stroke — and links wearing it inherit with no per-link inline (SPEC §13).
+        let attrs = &map_link_paint(attrs);
         rules.push(Rule {
             class: format!("lini-style-{}", name),
             props: paint_props(attrs, vars, opts),
@@ -461,6 +465,24 @@ pub fn effective_stroke(
         return v.to_string();
     }
     super::values::attr_or_var(&AttrMap::default(), "stroke", "stroke", vars, opts)
+}
+
+/// Rename a class's link paint family (`link` / `link-width` / `link-style`,
+/// SPEC §9) to `stroke*`, so a `.lini-style-*` rule speaks one paint vocabulary
+/// whether the class dresses a node or a link (the same map [`super::super::resolve`]
+/// applies per link). Node paint and every other property pass through unchanged.
+fn map_link_paint(attrs: &AttrMap) -> AttrMap {
+    let mut out = AttrMap::new();
+    for (k, v) in &attrs.map {
+        let k = match k.as_str() {
+            "link" => "stroke",
+            "link-width" => "stroke-width",
+            "link-style" => "stroke-style",
+            other => other,
+        };
+        out.insert(k, v.clone());
+    }
+    out
 }
 
 /// The paint subset of an attr map, translated to CSS props. `stroke-style`

@@ -403,6 +403,7 @@ fn css_cascade_emits_rules_and_diffs() {
   |box| { fill: lightyellow; }
   .loud { stroke: red; stroke-width: 2; }
   .calm { stroke: teal; }
+  .wire { link: teal; }
 }
 
 flat |box| "Plain"
@@ -414,7 +415,7 @@ crew |group| { font-size: 10; font-family: serif; } [
 ]
 
 flat -> loud
-loud --> mix .calm
+loud --> mix .wire
 "#;
     let svg = lini::compile_str(src).expect("compile");
     assert!(
@@ -454,12 +455,20 @@ loud --> mix .calm
         "the operator dash must be stated once as a class rule: {}",
         svg
     );
+    // A link's `.wire` class paints with the `link` family; its colour states
+    // once as a `.lini-style-wire { stroke: … }` rule (mapped from `link:`), like
+    // a node's stroke class — never inline on the link (SPEC §9/§13).
+    assert!(
+        svg.contains(".lini .lini-style-wire { stroke: teal; }"),
+        "a link class's `link:` maps to a stroke rule: {}",
+        svg
+    );
     let link_g = svg
         .lines()
         .find(|l| l.contains(r#"data-from="loud""#))
         .expect("loud→mix link present");
     assert!(
-        link_g.contains(r#"class="lini-link lini-link-dashed lini-style-calm""#),
+        link_g.contains(r#"class="lini-link lini-link-dashed lini-style-wire""#),
         "link must carry its dash + style classes: {}",
         link_g
     );
@@ -470,7 +479,7 @@ loud --> mix .calm
     );
     assert!(
         !link_g.contains("stroke: teal"),
-        ".calm stroke must ride the class rule, not inline: {}",
+        ".wire colour must ride the class rule, not inline: {}",
         link_g
     );
 }

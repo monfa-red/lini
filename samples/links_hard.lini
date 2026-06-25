@@ -3,9 +3,9 @@
 
 {
   layout: grid; columns: repeat(3); gap: 30; clearance: 12;
-  .hot { stroke: --red; stroke-width: 3; }
-  .cool { stroke: --blue; }
-  .attention { stroke: --orange; }
+  .hot { link: --red; link-width: 3; }
+  .cool { link: --blue; }
+  .attention { link: --orange; }
 }
 
 alpha |box| { cell: 1 1; } "Alpha"

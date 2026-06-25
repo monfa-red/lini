@@ -818,14 +818,22 @@ both; a class never lives inside the bars. On a chain or fan, the class and the
 
 | Property | Type | Default | Notes |
 |---|---|---|---|
-| `link` | colour | `--stroke` | The line colour. A link never uses `stroke`. |
+| `link` | colour | `--stroke` | The line colour. |
 | `link-width` | number | 2 | Line thickness; markers scale with it. |
 | `link-style` | `solid` / `dashed` / `dotted` / `wavy` | from the operator | The dash pattern; usually set by the op (`-->` ⇒ dashed), overridable here. |
+
+A link is a **link, not a stroked shape**: it is painted by this family alone, so
+`stroke` / `stroke-width` / `stroke-style` on a link — in its own `{ }` or a class
+it wears — is an **error** that names the `link*` replacement. A class meant for
+links therefore uses `link*` (`.flow { link: --blue }`), a class meant for nodes
+uses `stroke*`; a node-stroke class worn by a link is the error above. (The two
+families share an implementation — a link's `link*` lowers to the path's `stroke*`
+— but that is invisible: the surface vocabulary never mixes.)
 
 All three cascade from the link's scope and override on the link's own `{ }`:
 
 ```
-{ stroke: #444; link: #888; link-width: 1.5; clearance: 12; routing: orthogonal }
+{ link: #888; link-width: 1.5; clearance: 12; routing: orthogonal }
 a -> b { link: red; link-style: dashed }     // one link overrides
 ```
 
@@ -961,6 +969,9 @@ to recolour every descendant's text that doesn't override. Use `color` for
 | `stroke` | color | `--stroke` (a node's outline / a `\|line\|`'s colour) |
 | `stroke-width` | number | 2 (`\|group\|` is `1`) |
 | `stroke-style` | `solid` / `dashed` / `dotted` | `solid` |
+
+`stroke*` paints a **shape's** outline; a **link** uses the parallel `link*` family
+below (`stroke*` on a link is an error — [§9](#9-links)).
 
 ### Links
 
@@ -1392,6 +1403,7 @@ Format: `filename:line:col: error: <message>` (LSP-compatible).
 | Declaration outside a block | `a declaration belongs in a '{ }' block` |
 | Bare type name | `a type only appears in bars — write '\|box\| { }' to style every box` |
 | `->` in the stylesheet | `'->' draws a link on the canvas — set link defaults with 'link:' / 'link-width:' in a '{ }' block` |
+| `stroke*` on a link | `'stroke-width' paints a shape's outline, not a link — a link uses the 'link' family, so write 'link-width' (SPEC §9)` |
 | Deferred routing | `routing: only 'orthogonal' is built; 'straight' / 'curved' are deferred (§19)` |
 | Glued compound in a rule | `a selector part can't glue a type and a class — space them (descendant) or style '.hot'` |
 | Class inside instance bars | `a class follows the bars — write '\|box\| .hot', not '\|box.hot\|'` |

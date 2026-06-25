@@ -207,3 +207,33 @@ fn body_link_suggestion_stays_in_scope() {
         msg
     );
 }
+
+#[test]
+fn stroke_props_on_a_link_are_rejected() {
+    // A link is painted by the `link` family, never `stroke*` (SPEC §9) — it is a
+    // link, not a stroked shape. The error names the `link*` replacement.
+    let cases = [
+        ("a -> b { stroke: red }\n", "link"),
+        ("a -> b { stroke-width: 3 }\n", "link-width"),
+        ("a -> b { stroke-style: dashed }\n", "link-style"),
+    ];
+    for (link, equiv) in cases {
+        let src = format!("a |box|\nb |box|\n{link}");
+        let msg = lini::check(&src).expect_err("stroke on a link").to_string();
+        assert!(msg.contains("paints a shape's outline"), "{src} → {msg}");
+        assert!(
+            msg.contains(equiv),
+            "should suggest '{equiv}': {src} → {msg}"
+        );
+    }
+    // A stroke property reaching a link through a worn class is rejected too.
+    let msg = lini::check("{ .x { stroke: red } }\na |box|\nb |box|\na -> b .x\n")
+        .expect_err("stroke via class on a link")
+        .to_string();
+    assert!(msg.contains("paints a shape's outline"), "{msg}");
+    // The link family is valid on a link; a stroke class on a box still is too.
+    lini::check(
+        "{ .x { stroke: red } }\na |box| .x\nb |box|\na -> b { link: red; link-width: 3 }\n",
+    )
+    .expect("link family on a link, stroke class on a box");
+}

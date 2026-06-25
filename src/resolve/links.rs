@@ -34,8 +34,16 @@ pub fn resolve_link(
     let link_facts = NodeFacts {
         classes: w.classes.clone(),
     };
+    // A link is painted by the `link` family, never `stroke*` (SPEC §9) — it is a
+    // link, not a stroked shape — so a `stroke*` property a user puts on it (its
+    // own block or a worn class) is an error, pointing at the `link*` equivalent.
+    // The baked defaults carry `stroke-width` as the *internal* link-width, so
+    // they are exempt — only what the user wrote is checked.
+    let class_layers = ctx.sheet.node_layers(&[], &link_facts);
+    reject_stroke_props(&w.style, &class_layers, w.span)?;
+
     let mut ordered: Vec<(String, ResolvedValue)> = link_defaults.to_vec();
-    ordered.extend(ctx.sheet.node_layers(&[], &link_facts));
+    ordered.extend(class_layers);
     for d in &w.style {
         ordered.push((d.name.clone(), resolve_groups(&d.groups, d.span, ctx.vars)?));
     }
@@ -138,6 +146,50 @@ fn inject_line_style(attrs: &mut AttrMap, line: LineStyle) {
     if attrs.get("stroke-style").is_none() {
         attrs.insert("stroke-style", ResolvedValue::Ident(style.into()));
     }
+}
+
+/// The shape-outline paint that a link rejects (SPEC §9) — it owns the parallel
+/// `link*` family instead, so the two never both apply to a line.
+const STROKE_PROPS: [&str; 3] = ["stroke", "stroke-width", "stroke-style"];
+
+/// The `link*` property that replaces a `stroke*` one on a link.
+fn link_equiv(name: &str) -> &str {
+    match name {
+        "stroke" => "link",
+        "stroke-width" => "link-width",
+        "stroke-style" => "link-style",
+        other => other,
+    }
+}
+
+fn stroke_on_link(name: &str) -> String {
+    format!(
+        "'{}' paints a shape's outline, not a link — a link uses the 'link' family, so write '{}' (SPEC §9)",
+        name,
+        link_equiv(name)
+    )
+}
+
+/// Reject a `stroke*` property on a link (SPEC §9): the link's own block reports
+/// at the offending declaration; one a **worn class** contributes reports at the
+/// link statement (the class is fine on a box — just not worn by a link).
+fn reject_stroke_props(
+    own: &[crate::syntax::ast::Decl],
+    class_layers: &[(String, ResolvedValue)],
+    link_span: crate::span::Span,
+) -> Result<(), Error> {
+    for d in own {
+        if STROKE_PROPS.contains(&d.name.as_str()) {
+            return Err(Error::at(d.span, stroke_on_link(&d.name)));
+        }
+    }
+    if let Some((name, _)) = class_layers
+        .iter()
+        .find(|(k, _)| STROKE_PROPS.contains(&k.as_str()))
+    {
+        return Err(Error::at(link_span, stroke_on_link(name)));
+    }
+    Ok(())
 }
 
 /// Map a link's surface paint family — `link` / `link-width` / `link-style` /
