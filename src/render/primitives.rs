@@ -400,14 +400,14 @@ fn emit_icon(out: &mut String, n: &PlacedNode, indent: &str, vars: &VarTable, op
     );
     writeln!(out, "{indent}</g>").unwrap();
 
-    // An optional bare string rides as centred text over the glyph (SPEC §7).
+    // An optional bare string rides as centred text over the glyph (SPEC §7). It
+    // is a `lini-text`, so it inherits the text colour and the `stroke: none`
+    // mask — a label never takes the icon's (or a container's) stroke.
     if let Some(label) = n.label.as_deref().filter(|s| !s.is_empty()) {
-        let color = attr_or_var(&n.attrs, "color", "text-color", vars, opts);
         writeln!(
             out,
-            r#"{indent}<text x="0" y="0" text-anchor="middle" dominant-baseline="central" font-size="{}" fill="{}">{}</text>"#,
+            r#"{indent}<text class="lini-text" x="0" y="0" font-size="{}">{}</text>"#,
             num(size * 0.4),
-            color,
             escape_xml(label),
         )
         .unwrap();

@@ -528,3 +528,19 @@ fn icon_solid_role_keeps_a_foreground_dot() {
     let svg = render_live("x |icon| { symbol: atom }\n");
     assert!(svg.contains(r#"<circle cx="128" cy="128" r="12""#), "{svg}");
 }
+
+#[cfg(feature = "icons")]
+#[test]
+fn icon_label_is_lini_text_never_stroked() {
+    // The label rides as a `lini-text` (which masks stroke), so the icon's stroke
+    // never leaks onto it.
+    let svg = render_live("x |icon| { symbol: bell } \"3\"\n");
+    assert!(
+        svg.contains(r#"<text class="lini-text" x="0" y="0""#),
+        "{svg}"
+    );
+    assert!(
+        svg.contains(".lini-text { fill: currentColor; stroke: none;"),
+        "{svg}"
+    );
+}

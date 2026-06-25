@@ -503,6 +503,11 @@ fn collect<'a>(
     has_crow: &mut bool,
 ) {
     present.insert(node.shape.as_str());
+    // An icon's optional label renders as a `lini-text`, so register the text
+    // rule even though the label is not a separate Text node.
+    if node.shape == ShapeKind::Icon && node.label.is_some() {
+        present.insert("text");
+    }
     for name in &node.type_chain {
         present.insert(name.as_str());
     }
