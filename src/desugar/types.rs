@@ -24,6 +24,7 @@ pub const TEMPLATES: &[(&str, &str)] = &[
     ("row", "block"),
     ("column", "block"),
     ("table", "group"),
+    ("sign", "icon"),
 ];
 
 pub fn is_template(name: &str) -> bool {

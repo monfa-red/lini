@@ -35,8 +35,8 @@
   |cap| "atom"
 ]
 |t| [
-  |icon| { symbol: gear; width: 48; height: 48; }
-  |cap| "48 px"
+  |sign| { symbol: gear }
+  |cap| "sign (64)"
 ]
 |t| [
   |icon| { symbol: bell; fill: --amber-wash; stroke: --amber-deep; } "3"

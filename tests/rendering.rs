@@ -544,3 +544,40 @@ fn icon_label_is_lini_text_never_stroked() {
         "{svg}"
     );
 }
+
+#[cfg(feature = "icons")]
+#[test]
+fn sign_is_a_larger_icon() {
+    // |sign| is the icon primitive at 64px (scale 64/256 = 0.25).
+    let svg = render_live("x |sign| { symbol: cloud }\n");
+    assert!(
+        svg.contains(r#"class="lini-node lini-sign lini-icon""#),
+        "{svg}"
+    );
+    assert!(
+        svg.contains(r#"transform="scale(0.25) translate(-128 -128)""#),
+        "{svg}"
+    );
+}
+
+#[cfg(feature = "icons")]
+#[test]
+fn icon_label_uses_the_normal_font_size_not_scaled() {
+    // The label no longer scales with the icon: 15px at 32px and at 96px.
+    let small = render_live("x |icon| { symbol: bell } \"3\"\n");
+    let big = render_live("x |icon| { symbol: bell; width: 96; height: 96 } \"3\"\n");
+    assert!(small.contains(r#"font-size="15""#), "{small}");
+    assert!(big.contains(r#"font-size="15""#), "{big}");
+}
+
+#[cfg(feature = "icons")]
+#[test]
+fn a_long_label_grows_the_box_not_the_symbol() {
+    // The box widens to fit the label (no collisions), but the symbol stays at
+    // the 32px floor — scale is unchanged (32/256 = 0.125).
+    let svg = render_live("x |icon| { symbol: cloud } \"Storage Service\"\n");
+    assert!(
+        svg.contains(r#"transform="scale(0.125) translate(-128 -128)""#),
+        "symbol stays 32px: {svg}"
+    );
+}

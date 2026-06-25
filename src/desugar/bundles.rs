@@ -146,6 +146,9 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
         ],
         "row" => vec![id("layout", "row")],
         "column" => vec![id("layout", "column")],
+        // A larger icon meant to stand alone as a node, with room for a short
+        // label: the icon primitive at 64px with a little padding (SPEC §8).
+        "sign" => vec![n("width", 64.0), n("height", 64.0), n("padding", 4.0)],
         "table" => vec![
             id("layout", "grid"),
             id("divider", "all"),
