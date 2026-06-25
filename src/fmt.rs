@@ -520,10 +520,12 @@ impl Emitter<'_> {
             self.emit_style_block(&w.style, end, depth, false);
         }
         // A link's content is its labels (SPEC §9), each a styleable text leaf:
-        // pretty `fmt` trails the sugar (`a -> b "x"`), `desugar` writes the
-        // explicit `[ ]` form — the same terse/canonical split a node's labels use.
+        // pretty `fmt` trails the bare sugar (`a -> b "x"`), but a **styled** label
+        // can't be trailed (the sugar takes no `{ }` — SPEC §3) so it rides the
+        // explicit `[ ]` content form, exactly as a node's styled label does.
         if !w.labels.is_empty() {
-            if self.terse {
+            let bare = w.labels.iter().all(|t| t.style.is_empty());
+            if self.terse && bare {
                 for label in &w.labels {
                     self.out.push(' ');
                     self.emit_text_node(label, depth);

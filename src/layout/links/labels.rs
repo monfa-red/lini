@@ -205,15 +205,10 @@ fn at_arc(
     (p, (1.0, 0.0), 0)
 }
 
-/// `translate:(x, y)` — a world-frame shift; anything else is no shift.
+/// `translate:(x, y)` — a world-frame shift, read through the same `as_pair`
+/// primitive a node's `translate` uses (`layout::anchors`); anything else is no
+/// shift.
 fn translate_of(v: Option<&ResolvedValue>) -> (f64, f64) {
-    if let Some(ResolvedValue::Tuple(xs)) = v
-        && let [Some(x), Some(y)] = [
-            xs.first().and_then(|v| v.as_number()),
-            xs.get(1).and_then(|v| v.as_number()),
-        ]
-    {
-        return (x, y);
-    }
-    (0.0, 0.0)
+    v.and_then(|v| crate::layout::values::as_pair(v, Span::empty()).ok())
+        .unwrap_or((0.0, 0.0))
 }

@@ -19,6 +19,4 @@ styles |row| { gap: 16; } [
 a |box| "Alpha"
 b |box| "Beta"
 
-a -> b "nudged & turned" {
-  translate: 0 -10; rotate: -6; color: --teal-ink; font-weight: bold;
-}
+a -> b [ "nudged & turned" { translate: 0 -10; rotate: -6; color: --teal-ink; } ]

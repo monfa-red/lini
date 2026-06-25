@@ -7,6 +7,7 @@ mod primitives;
 mod rounding;
 mod rules;
 mod style_block;
+mod text;
 mod used_vars;
 pub(crate) mod values;
 mod wavy;
@@ -193,76 +194,23 @@ fn render_node(
 }
 
 /// A text node: a bare `<text class="lini-text">` at its placed centre (SPEC
-/// §13). `text-anchor: middle` + `dominant-baseline: central` (on `.lini-text`)
-/// centre it on (x, y); font and colour inherit from the enclosing box's `<g>`.
+/// §13), via the shared text emitter ([`text::emit`]) that also draws link
+/// labels. `text-anchor: middle` + `dominant-baseline: central` (on `.lini-text`)
+/// centre it on (cx, cy); font and colour inherit from the enclosing box's `<g>`.
+/// Its own `{ }` paint/font rides `style=`; `translate` is folded into (cx, cy).
 fn render_text(out: &mut String, n: &PlacedNode, depth: usize, vars: &VarTable, opts: &Options) {
-    use std::fmt::Write;
     let indent = "  ".repeat(depth);
     let label = n.label.as_deref().unwrap_or("");
-    let (x, y) = (num(n.cx), num(n.cy));
-    let lines: Vec<&str> = label.split('\n').collect();
-    // `letter-spacing` bakes into a per-glyph `dx` list — geometry, never CSS
-    // (SPEC §10); `text-anchor: middle` still centres the spaced run.
-    let ls = n.attrs.number("letter-spacing").unwrap_or(0.0);
-    // A styled text node (SPEC §3) rides its own `{ }` paint/font as `style=` and
-    // its `rotate` as a `transform`; `translate` is already folded into (cx, cy).
     let style = text_style_attr(&n.own_style, vars, opts);
-    let xform = if n.rotation != 0.0 {
-        format!(r#" transform="rotate({} {} {})""#, num(n.rotation), x, y)
-    } else {
-        String::new()
-    };
-    if lines.len() <= 1 {
-        writeln!(
-            out,
-            r#"{}<text class="lini-text" x="{}" y="{}"{}{}{}>{}</text>"#,
-            indent,
-            x,
-            y,
-            dx_attr(label, ls),
-            style,
-            xform,
-            escape_xml(label)
-        )
-        .unwrap();
-        return;
-    }
-    // Multi-line (SPEC §6): one tspan per line, leading `font-size × 1.2` plus
-    // `line-spacing`, the block centred on (cx, cy) so `dominant-baseline:
-    // central` still holds.
-    let size = n.attrs.number("font-size").unwrap_or(0.0);
-    let spacing = size * 1.2 + n.attrs.number("line-spacing").unwrap_or(0.0);
-    let top = n.cy - spacing * (lines.len() as f64 - 1.0) / 2.0;
-    write!(
+    text::emit(
         out,
-        r#"{}<text class="lini-text" x="{}" y="{}"{}{}>"#,
-        indent, x, y, style, xform
-    )
-    .unwrap();
-    for (i, line) in lines.iter().enumerate() {
-        if i == 0 {
-            write!(
-                out,
-                r#"<tspan x="{}" y="{}"{}>{}</tspan>"#,
-                x,
-                num(top),
-                dx_attr(line, ls),
-                escape_xml(line)
-            )
-            .unwrap();
-        } else {
-            write!(
-                out,
-                r#"<tspan x="{}" dy="{}"{}>{}</tspan>"#,
-                x,
-                num(spacing),
-                dx_attr(line, ls),
-                escape_xml(line)
-            )
-            .unwrap();
-        }
-    }
-    writeln!(out, "</text>").unwrap();
+        &indent,
+        "lini-text",
+        label,
+        (n.cx, n.cy),
+        &n.attrs,
+        &style,
+    );
 }
 
 /// The `style=` for a text node's own `{ }` (SPEC §3): paint and font props ride
@@ -294,23 +242,6 @@ fn text_style_attr(own: &AttrMap, vars: &VarTable, opts: &Options) -> String {
     } else {
         format!(r#" style="{}""#, decls.join("; "))
     }
-}
-
-/// The ` dx="0 s s …"` glyph-advance list that bakes `letter-spacing` into the
-/// positions: 0 before the first glyph, `s` before each later one. Empty when
-/// there is no spacing or fewer than two glyphs (nothing to space).
-fn dx_attr(line: &str, letter_spacing: f64) -> String {
-    let count = line.chars().count();
-    if letter_spacing == 0.0 || count < 2 {
-        return String::new();
-    }
-    let mut s = String::from(r#" dx="0"#);
-    for _ in 1..count {
-        s.push(' ');
-        s.push_str(&num(letter_spacing));
-    }
-    s.push('"');
-    s
 }
 
 /// The node's paint, as the difference against what the stylesheet already

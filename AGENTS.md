@@ -12,6 +12,7 @@ How to work in this repo.
 ## Code style
 - **No `unsafe`.** Find another path, or surface the question.
 - **One mechanism per problem.** Extend whatever owns a failure mode; never add a second that re-fights it. Robust fixes over patches.
+- **No parallel implementations.** When two places do the same job — a node's text leaf and a link's label, the node and link sides of a sugar rule — they call **one** shared function; never copy logic (whole or in part) between them. Divergent copies drift: a fix lands in one path and the other silently rots (translate worked on one text, broke on the other). Factor the shared part out and reuse it; keep only the genuinely-different slice per caller.
 - **Modular: one concept per file.** Split a module past ~500 LOC.
 - Standard idioms over clever code; don't fight `rustfmt` / `clippy`.
 - **Trust a correct model.** Don't special-case a principled formula's output to nudge one case to taste — fix the model, or accept the result.

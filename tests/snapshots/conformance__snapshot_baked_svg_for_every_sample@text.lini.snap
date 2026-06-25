@@ -42,7 +42,7 @@ input_file: samples/text.lini
       <mask id="lini-label-cut-0" maskUnits="userSpaceOnUse" x="37" y="1" width="95.75" height="87"><rect class="lini-cut-bg" x="37" y="1" width="95.75" height="87"/><rect class="lini-cut" x="77.95" y="29.6" width="105.6" height="14.3"/></mask>
       <path d="M 43.5 3 L 114.75 3 A 16 16 0 0 1 130.75 19 L 130.75 70 A 16 16 0 0 1 114.75 86 L 42.5 86" mask="url(#lini-label-cut-0)"/>
       <polygon class="lini-marker lini-marker-arrow" points="38.5,86 46.5,82 46.5,90" style="fill: #9e9e9e"/>
-      <text class="lini-link-label" x="130.75" y="26.75" style="fill: #005d56; font-weight: bold" transform="rotate(-6 130.75 26.75)">nudged &amp; turned</text>
+      <text class="lini-link-label" x="130.75" y="36.75" style="fill: #005d56" transform="rotate(-6 130.75 36.75)">nudged &amp; turned</text>
     </g>
   </g>
 </svg>

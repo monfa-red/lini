@@ -699,3 +699,40 @@ fn image_fit_auto_omits_preserve_aspect_ratio() {
     assert!(svg.contains("<image "), "{svg}");
     assert!(!svg.contains("preserveAspectRatio"), "{svg}");
 }
+
+// ── Text leaves: a node's text and a link's label share one renderer ──
+
+#[test]
+fn link_label_translate_is_applied_once() {
+    // Regression: `translate` used to be folded in at routing *and* re-applied at
+    // render, doubling the nudge on a link label vs a node's text (SPEC §6/§9).
+    // The shared text emitter applies it once. Both ends sit at y=0, so a clean
+    // -10 nudge must land the label at exactly y="-10".
+    let svg = render_baked(
+        "{ layout: row; gap: 120 }\na |box|\nb |box|\na -> b [ \"L\" { translate: 0 -10 } ]\n",
+    );
+    let tag = svg
+        .lines()
+        .find(|l| l.contains(r#"<text class="lini-link-label""#))
+        .expect("a link label");
+    assert!(tag.contains(r#"y="-10""#), "translate once → y=-10: {tag}");
+    assert!(!tag.contains(r#"y="-20""#), "not doubled: {tag}");
+}
+
+#[test]
+fn link_label_supports_multiline_and_letter_spacing() {
+    // A link label is an ordinary styleable text leaf (SPEC §3/§9), so the same
+    // multi-line `\n` tspans and baked `letter-spacing` dx a node's text gets must
+    // reach it too — the two render through one path.
+    let svg = render_baked("a |box|\nb |box|\na -> b [ \"AB\\nCD\" { letter-spacing: 5 } ]\n");
+    let label = svg
+        .split(r#"<text class="lini-link-label""#)
+        .nth(1)
+        .and_then(|s| s.split("</text>").next())
+        .expect("a link label");
+    assert!(label.contains("<tspan"), "multi-line tspans: {label}");
+    assert!(
+        label.contains(r#"dx="0 5""#),
+        "baked letter-spacing: {label}"
+    );
+}

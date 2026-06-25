@@ -466,7 +466,6 @@ fn label_mask(
 /// font size) rides `.lini-link-label`; only a label that overrides one of those
 /// inlines the difference via `style=` (which beats the class rule).
 fn render_link_text(out: &mut String, t: &RoutedText, wfs: f64, vars: &VarTable, opts: &Options) {
-    let (x, y) = t.position;
     let mut style: Vec<String> = Vec::new();
 
     // `wfs` is the link-label default (the `.lini-link-label` rule's size); inline
@@ -506,31 +505,18 @@ fn render_link_text(out: &mut String, t: &RoutedText, wfs: f64, vars: &VarTable,
     } else {
         format!(r#" style="{}""#, style.join("; "))
     };
-    // A styled label's own `translate` nudges it off its `along:` point; `rotate`
-    // turns it (SPEC §3/§9) — the link itself never moves for a label.
-    let (x, y) = match t.attrs.get("translate") {
-        Some(ResolvedValue::Tuple(xs) | ResolvedValue::List(xs)) if xs.len() == 2 => (
-            x + xs[0].as_number().unwrap_or(0.0),
-            y + xs[1].as_number().unwrap_or(0.0),
-        ),
-        _ => (x, y),
-    };
-    let xform = match t.attrs.number("rotate") {
-        Some(r) if r != 0.0 => {
-            format!(r#" transform="rotate({} {} {})""#, num(r), num(x), num(y))
-        }
-        _ => String::new(),
-    };
-    writeln!(
+    // The label rides its `along:` point already shifted by `translate` (folded in
+    // at routing — `links::labels`), so the shared emitter handles only `rotate`,
+    // multi-line, and `letter-spacing` — one code path with a node's text leaf.
+    super::text::emit(
         out,
-        r#"      <text class="lini-link-label" x="{}" y="{}"{}{}>{}</text>"#,
-        num(x),
-        num(y),
-        style_attr,
-        xform,
-        escape_xml(&t.content),
-    )
-    .unwrap();
+        "      ",
+        "lini-link-label",
+        &t.content,
+        t.position,
+        &t.attrs,
+        &style_attr,
+    );
 }
 
 #[cfg(test)]

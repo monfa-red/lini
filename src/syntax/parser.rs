@@ -603,12 +603,28 @@ impl<'a> Parser<'a> {
         Ok((children, links))
     }
 
-    /// Consume the trailing label string(s) after a box or link head (SPEC §3/§9),
-    /// each a styleable text node. The loop ends at the line's end.
+    /// Consume the trailing label string(s) after a box or link head (SPEC §3/§9).
+    /// A trailing label is **sugar** for `[ "…" ]` and carries no style of its
+    /// own: a `{ }` here would read ambiguously against the head's own block
+    /// (`|box| { … } "x"` styles the box), so to style a label you write the
+    /// explicit content form `[ "…" { … } ]`. The loop ends at the line's end.
     fn trailing_labels(&mut self) -> Result<Vec<TextNode>, Error> {
         let mut labels = Vec::new();
-        while matches!(self.kind(), Some(TokKind::String(_))) {
-            labels.push(self.parse_text_node()?);
+        while let Some(TokKind::String(s)) = self.kind() {
+            let text = s.clone();
+            let span = self.span();
+            self.pos += 1;
+            if matches!(self.kind(), Some(TokKind::LBrace)) {
+                return Err(self.err(
+                    "a trailing label takes no '{ }' — put the text in a '[ ]' to style it: [ \"…\" { … } ]",
+                ));
+            }
+            labels.push(TextNode {
+                text,
+                style: Vec::new(),
+                style_span: None,
+                span,
+            });
         }
         Ok(labels)
     }
@@ -1024,6 +1040,30 @@ mod tests {
     #[test]
     fn a_class_after_the_content_errors() {
         assert!(parse_err("cat |box| \"x\" .hot\n").contains("comes before"));
+    }
+
+    #[test]
+    fn a_styled_trailing_label_errors() {
+        // The sugar form can't carry a style block — on a node or a link (SPEC
+        // §3/§9); styling a label needs the explicit '[ ]' content form.
+        for src in [
+            "cat |box| \"Cat\" { translate: 0 -4 }\n",
+            "x |box| \"a\" \"b\" { color: red }\n",
+            "a -> b \"x\" { translate: 0 -4 }\n",
+        ] {
+            assert!(parse_err(src).contains("put the text in a '[ ]'"), "{src}");
+        }
+    }
+
+    #[test]
+    fn a_bracketed_label_is_styleable() {
+        // The desugared content form styles the text — node and link alike.
+        let f = parse_ok("cat |box| [ \"Cat\" { translate: 0 -4 } ]\n");
+        assert!(matches!(&instance(&f, 0).children[0], Child::Text(t) if t.style.len() == 1));
+        let g = parse_ok("a -> b [ \"x\" { translate: 0 -4 } ]\n");
+        assert_eq!(g.links[0].labels[0].style.len(), 1);
+        // A bare trailing label is still fine — it just takes no '{ }'.
+        parse_ok("cat |box| \"Cat\"\na -> b \"x\"\n");
     }
 
     #[test]

@@ -261,6 +261,12 @@ is two text children). The style block is independent of the label:
 `api |box| { fill: red } "API"` sets the fill *and* the label. Content is the
 trailing label **or** the `[ ]`, never both.
 
+A **trailing label is sugar and takes no style block of its own.** The `{ }` slot
+after the head is the *node's* (`api |box| { fill: red } "API"`); a second one
+after the label — `api |box| "API" { … }` — has no unambiguous owner and is an
+**error**. To style a label, desugar it into the `[ ]` content form, where each
+string is a leaf in its own right: `api |box| [ "API" { color: red } ]`.
+
 ```
 db |cyl| .primary { fill: #eef } [
   "Postgres"
@@ -309,14 +315,18 @@ A string is a **text node** — always a `<text>` leaf, never wrapped:
 - Multi-line text uses `\n`; the box sizes to the widest line, with a
   `font-size × 1.2` leading between lines (plus any `line-spacing`).
 
-A string carries **no children** — text is a leaf, not a box — but it **may carry
-a style block** of text properties: `"X" { color: red; font-weight: bold;
+A string carries **no children** — text is a leaf, not a box — but where it is
+**content** (free-standing on the canvas, or a child in a `[ ]`) it **may carry a
+style block** of text properties: `"X" { color: red; font-weight: bold;
 translate: 0 -6; rotate: 12 }`. Only text-valid properties apply (colour, every
 `font-*`, `opacity`, `letter-spacing`, `line-spacing`, `text-transform`,
 `text-decoration`, `translate`, `rotate`, `layer`); any other property —
 `pin`, `padding`, `width`, a border, children, even `href` / `title` — needs a
 real box, so wrap the text in a `|block|`. Set on the string the style applies to it directly;
-set on a containing box it cascades down ([§10](#10-properties)).
+set on a containing box it cascades down ([§10](#10-properties)). A string in the
+**trailing-label** position (the block-less sugar) is the one place it is *not*
+content but a shorthand for it, so it takes no style block — desugar to `[ "X" { … } ]`
+to style it (above).
 
 ### Implicit nodes
 
@@ -844,6 +854,9 @@ a -> b .loud { link: red } [ "watches" { translate: 0 -6 } ]   // class + style 
 
 Each label is an ordinary **styleable text leaf** ([§3](#3-statements)): give it
 its own `{ }` to nudge or turn it — `[ "watches" { translate: 0 -6; rotate: 12 } ]`.
+Styling rides the **`[ ]` form** — the trailing-label sugar (`a -> b "watches"`)
+takes no style block, exactly as a node's does not ([§3](#3-statements)); the
+`{ }` after a link's head is the *link's*, so `a -> b "watches" { … }` is an error.
 A label is an obstacle to nothing, and may slide along the link to keep clear of
 nodes and other labels; the link never moves for it. Link labels default to
 `font-size: 11`, `font-weight: normal`, and are tinted by the link's `color` —
@@ -1387,6 +1400,7 @@ Format: `filename:line:col: error: <message>` (LSP-compatible).
 | `[ ]` holds a declaration | `declarations go in '{ }', not '[ ]'` |
 | Children after internal links | `a child must come before the body's links` |
 | Label and `[ ]` both | `a node's content is the trailing label or the '[ ]', not both` |
+| Styled trailing label | `a trailing label takes no '{ }' — put the text in a '[ ]' to style it: [ "…" { … } ]` |
 | Stylesheet after canvas | `the stylesheet '{ }' must come first, before any instance` |
 | Divider needs flush cells | `'divider' requires 'gap: 0'` |
 | Invalid / out-of-range color | `invalid color 'XYZ'` / `rgb(300,0,0): component out of range` |
@@ -1431,11 +1445,11 @@ text        = string [ style ]                       # bare content; a styleable
 style       = "{" { decl } "}"                       # declarations only
 children    = "[" { node } { link } "]"              # children, then internal links
 body        = [ style ] [ children ]                 # define / container body
-labels      = label { label }                        # trailing text → text children
-label       = string [ style ]                       # a styleable text leaf
+labels      = string { string }                      # trailing labels → text children — sugar, unstyled
+label_block = "[" { text } "]"                        # canonical labels — styleable text leaves
 
 link        = endpoints link_op endpoints { link_op endpoints }
-              [ classes ] [ style ] [ labels | children ]   # worn class(es), style, labels
+              [ classes ] [ style ] [ labels | label_block ]  # trailing sugar, or styleable [ ] labels
 selector    = sel_part { sel_part }                  # whitespace-separated = descendant
 sel_part    = ident | "." ident                      # a single type or a single class
 endpoints   = endpoint { "&" endpoint }
@@ -1476,7 +1490,9 @@ the old grammar needed, because no statement's kind depends on a type set:
 - `{` is always style, `[` is always children, `|…|` is always a type. A string is
   self-delimiting, so consecutive strings are consecutive text nodes; strings
   trailing a node or link head are that node's labels, to the line's end. A `{`
-  immediately after a string is that string's own style block.
+  after a **content** string (free-standing, or inside a `[ ]`) is that string's
+  own style block; after a **trailing label** it is an error — the sugar takes no
+  style, so a styled label rides the `[ ]` form ([§3](#3-statements)).
 
 **Adjacency tells a `.class` from a path:** a space before the `.` makes it a worn
 class (`a .hot` — node `a` with class `hot`), no space makes it an endpoint path
