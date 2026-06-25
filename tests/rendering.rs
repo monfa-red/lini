@@ -585,3 +585,15 @@ fn a_long_label_grows_the_icon_uniformly() {
         "a long label grows the symbol past 32px: {long}"
     );
 }
+
+#[cfg(feature = "icons")]
+#[test]
+fn icon_masks_an_inherited_dash() {
+    // A dashed container's stroke-dasharray must not bleed onto the icon's lines.
+    let svg = render_live("x |icon| { symbol: heart }\n");
+    let rule = svg
+        .lines()
+        .find(|l| l.contains(".lini-icon {"))
+        .expect(".lini-icon rule");
+    assert!(rule.contains("stroke-dasharray: none"), "{rule}");
+}

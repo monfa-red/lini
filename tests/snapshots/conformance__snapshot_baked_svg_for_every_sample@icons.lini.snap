@@ -9,7 +9,7 @@ input_file: samples/icons.lini
     .lini .lini-canvas { fill: white; }
     .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
-    .lini .lini-icon { fill: rgba(0, 0, 0, 0.16); stroke: #444; stroke-width: 2; }
+    .lini .lini-icon { fill: rgba(0, 0, 0, 0.16); stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-cap { color: #888; font-size: 12px; font-weight: normal; }
     .lini .lini-warn { fill: #feedca; stroke: #6d3b00; }
   </style>

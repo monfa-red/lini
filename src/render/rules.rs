@@ -261,9 +261,13 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
         });
     }
     if present.contains("icon") {
+        let mut props = shape_paint("lini-icon");
+        // Mask `stroke-dasharray` so a dashed container's stroke can't bleed onto
+        // the icon's lines (its strokes are element-level, but dash inherits).
+        ensure_dash_none(&mut props);
         rules.push(Rule {
             class: "lini-icon".into(),
-            props: shape_paint("lini-icon"),
+            props,
         });
     }
 
@@ -570,8 +574,8 @@ mod tests {
                     rule.props.iter().any(|(p, v)| p == "stroke" && v == "none"),
                     "text rule lacks the stroke mask"
                 );
-            } else if NodeKind::parse(suffix).is_some() && suffix != "icon" {
-                // Every primitive node-shape rule masks `stroke-dasharray` so a
+            } else if NodeKind::parse(suffix).is_some() {
+                // Every primitive node rule masks `stroke-dasharray` so a
                 // container's dashed `line:`/stroke can't bleed in. A template
                 // (e.g. `box`) inherits the mask from its base primitive (`block`).
                 assert!(
