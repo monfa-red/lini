@@ -16,7 +16,7 @@ input_file: samples/flow.lini
     .lini .lini-purple { fill: #eaebff; stroke: #443394; color: #443394; }
     .lini .lini-orange { fill: #feedca; stroke: #6d3b00; color: #6d3b00; }
     .lini .lini-link { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-link-dashed { stroke-dasharray: 8,8; }
+    .lini .lini-link-dashed { stroke-dasharray: 6,4.5; }
     .lini .lini-link-dotted { stroke-dasharray: 2,4; }
     .lini .lini-link-label { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; font-size: 11px; font-weight: normal; }
     .lini .lini-cut-bg { fill: white; stroke: none; }

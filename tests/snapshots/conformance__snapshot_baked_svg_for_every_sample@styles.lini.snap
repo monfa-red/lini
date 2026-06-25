@@ -11,7 +11,7 @@ input_file: samples/styles.lini
     .lini .lini-oval { fill: #cdf9f4; stroke: #005d56; stroke-width: 2; color: #005d56; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-box { fill: #cff6ff; stroke: #00547e; stroke-width: 2; color: #00547e; }
-    .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,4; }
+    .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
     .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
     .lini .lini-alert { fill: #ffe4df; stroke: #eb776e; color: #851618; }
     .lini .lini-style-thin { stroke-width: 1; }
@@ -81,7 +81,7 @@ input_file: samples/styles.lini
     </g>
     <g class="lini-node lini-group lini-block" data-id="modifiers" transform="translate(0,62.75)">
       <rect x="-287.5" y="-48.5" width="575" height="97" rx="8" ry="8"/>
-      <g class="lini-node lini-box lini-block" style="stroke-dasharray: 8,8" transform="translate(-219.5,0)">
+      <g class="lini-node lini-box lini-block" style="stroke-dasharray: 6,4.5" transform="translate(-219.5,0)">
         <rect x="-47" y="-27.5" width="94" height="55" rx="6" ry="6"/>
         <text class="lini-text" x="0" y="0">dashed</text>
       </g>

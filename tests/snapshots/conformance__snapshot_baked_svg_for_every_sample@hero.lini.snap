@@ -13,7 +13,7 @@ input_file: samples/hero.lini
     .lini .lini-cyl { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
-    .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,4; }
+    .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
     .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
     .lini .lini-badge { fill: #0a84ff; color: white; font-size: 11px; font-weight: normal; }
     .lini .lini-edge { fill: #cff6ff; stroke: #0085b1; color: #00547e; }
@@ -21,7 +21,7 @@ input_file: samples/hero.lini
     .lini .lini-auth { fill: #eaebff; stroke: #6e63c9; color: #443394; }
     .lini .lini-store { fill: #ffe3ec; stroke: #b6496e; color: #811442; }
     .lini .lini-link { fill: none; stroke: #747474; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-link-dashed { stroke-dasharray: 8,8; }
+    .lini .lini-link-dashed { stroke-dasharray: 6,4.5; }
     .lini .lini-link-label { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; font-size: 11px; font-weight: normal; }
     .lini .lini-cut-bg { fill: white; stroke: none; }
     .lini .lini-cut { fill: black; stroke: none; }

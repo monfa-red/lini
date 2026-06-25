@@ -155,7 +155,14 @@ pub fn dasharray_value(attrs: &AttrMap, width: f64) -> String {
 /// `lini-link-*` class rules so both speak the same pattern.
 pub fn dash_pattern(style: &str, width: f64) -> String {
     match style {
-        "dashed" => format!("{},{}", num(width * 4.0), num(width * 4.0)),
+        // Dash and gap grow with the stroke, but **gently**: a flat `4×width`
+        // made thick strokes gappy (16,16 at width 4 reads as dots adrift). Scale
+        // a `width + 1` unit instead — dash 2 units, gap 1.5 (a 4:3 dash:gap) — so
+        // the pattern runs 4,3 at 1px and 10,7.5 at 4px, staying tight as it thickens.
+        "dashed" => {
+            let unit = width + 1.0;
+            format!("{},{}", num(unit * 2.0), num(unit * 1.5))
+        }
         "dotted" => format!("{},{}", num(width), num(width * 2.0)),
         _ => String::new(),
     }
