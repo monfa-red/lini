@@ -56,8 +56,8 @@ That's a complete diagram: three boxes, two links. Lini fills in the rest.
 Three defaults make small diagrams trivial:
 
 - Omit the type → `|box|` (a rounded, framed card); `|#cat|` is a default box.
-- Omit the label → the box is empty; a link to an undeclared name adds a labelled stub (`cat -> dog` adds `|box#cat| "cat"`).
-- Name an undeclared id in a link → it's auto-created as a `|box|`.
+- Omit the label → the box is empty.
+- Name an undeclared id in a link → it's auto-created as a labelled `|box|` (`cat -> dog` adds `|box#cat| "cat"`).
 
 **A file has three parts, in order: the stylesheet, the canvas, then the links.**
 The stylesheet is one `{ }` block at the top — setup that draws nothing. After it
@@ -361,12 +361,14 @@ to style it (above).
 
 ### Implicit nodes
 
-A root link's single-segment endpoint naming an id declared nowhere in the file
-auto-creates the node `|box#cat| "cat"` at the scene root — a box named `cat`, labelled "cat" — so
-`cat -> dog -> bird` is a complete three-box diagram. Declaring the id anywhere —
-before or after the link — prevents auto-creation. If the id exists only deeper in
-the tree, nothing is created: the link must use the full path, and the error
-suggests it. Body links never auto-create.
+A link endpoint that is a **single bare id** not present in the link's **scope**
+auto-creates the node `|box#cat| "cat"` in that scope — a box named `cat`, labelled
+"cat" — so `cat -> dog -> bird` is a complete three-box diagram. The same holds inside
+a container body: a body link auto-creates its missing endpoints among that body's own
+children. Declaring the id in the scope — before or after the link — uses it instead
+of creating one. A **path** endpoint (`kitchen.bowl`) is never auto-created: it must
+resolve to an existing node, or it is an error. If a same-named node exists elsewhere
+in the tree, the box is still created here and a warning names the other match.
 
 ### Declarations
 
@@ -603,7 +605,7 @@ away from the larger bottom inset, exactly like CSS.
 
 Exceptions: a **text** node sizes to its glyphs (no padding), widened by
 `letter-spacing` and given `line-spacing` between `\n` lines; `|icon|` is a square
-that grows with its label (a `32` floor) and needs a `symbol`; `|line|` / `|poly|` /
+that grows with its `[ ]` text (a `32` floor) and needs a `symbol`; `|line|` / `|poly|` /
 `|image|` / `|path|` require their geometry (`points` / `src` / `path`) and error
 without it. `|block|` carries `padding: 0`, so a bare block sizes to its content
 exactly.
@@ -637,7 +639,7 @@ dimensions (or an empty `|oval|`) make a circle.
 | `\|poly\|` | `points` | ≥3 points, local (center-origin) coords. Closed. |
 | `\|path\|` | `path` | Raw SVG path. **Native top-left coords.** |
 | `\|line\|` | `points` | 2+ points. Markers via `marker*:`. |
-| `\|icon\|` | `symbol` | A **Phosphor** icon — `symbol:` (or the label) names it; paints two-tone like a box (`fill` body, `stroke` line, counter-scaled `stroke-width`). A square that grows with its label (`32` floor); `\|sign\|` is the larger preset. See [Icons](#icons). |
+| `\|icon\|` | `symbol` | A **Phosphor** icon — `symbol:` (or the label) names it; paints two-tone like a box (`fill` body, `stroke` line, counter-scaled `stroke-width`). A square that grows with its `[ ]` text (`32` floor); `\|sign\|` is the larger preset. See [Icons](#icons). |
 | `\|image\|` | `src`, `width`, `height` | `<image href="…">`. External URLs only; both dimensions required. `fit` maps it into the box — `auto` (default, letterbox), `contain`, `cover`, or `stretch`. |
 
 ### Visual modifiers (closed primitives)
@@ -667,7 +669,7 @@ arrow. For links the operator picks markers (see [§9](#9-links)). Source order 
 
 `|icon|` draws a **[Phosphor](https://phosphoricons.com/)** icon (MIT) as inline SVG
 paths — themeable, reproducible, and renderer-agnostic (no icon font). The `symbol`
-property names it — or, as the smart label, the string does (`|icon| "heart"` is
+property names it — or, as the [smart label](#the-label), the string does (`|icon| "heart"` is
 `|icon| { symbol: heart }`); everything else paints like a box:
 
 ```
@@ -742,8 +744,8 @@ text that needs box behaviour.
 **Captions.** A `|caption|` is a small `|block|` **pinned** just above the group's
 top-left corner; a `|footer|` is the same flipped to the bottom. Both are out-of-flow
 overlays, so they never push the content, and their place is fixed by the template,
-not by where they sit among the children. A group's **label is its caption**, so the
-two forms are equal:
+not by where they sit among the children. A group's **label is its caption** ([§3](#the-label)),
+so the two forms are equal:
 
 ```
 |group#panel| "Settings" [          // label → caption
@@ -930,9 +932,11 @@ side     = top | bottom | left | right
 A path walks with `.` into children; a final `:side` forces a side. Every link
 resolves in a **scope** — the scene root for top-level links, the container's body for
 links written inside one. The first segment names a node in the scope, each further
-segment a child of the previous. **There is no search**: a name not reachable this way
-is an error, and the error suggests full paths of same-named nodes —
-`link endpoint 'bowl' not found at scene root; did you mean 'kitchen.counter.bowl'?`
+segment a child of the previous. **There is no search.** A single bare id not in the
+scope auto-creates a box there ([Implicit nodes](#implicit-nodes)); a **multi-segment
+path** that does not resolve is an error, and the error suggests full paths of
+same-named nodes —
+`link endpoint 'kitchen.bowl' not found at scene root; did you mean 'kitchen.counter.bowl'?`
 
 | Endpoint (root link) | Resolves to |
 |---|---|
@@ -1413,7 +1417,7 @@ instead of rewriting.
 template/define instance becomes its base `|block|` (etc.) wearing a `.lini-*` class
 chain, each type's defaults become a generated `.lini-<type> { … }` class, the scene and
 cascaded link defaults fill the global block, define bodies inline per instance, and
-the per-type smart label, auto-`along:`, and root-link auto-create (an undeclared endpoint `x` becomes `|box#x| "x"`) become explicit. It is the
+the per-type smart label, auto-`along:`, and link auto-create (an undeclared endpoint `x` becomes `|box#x| "x"`) become explicit. It is the
 engine's true input — the rest of the pipeline only ever sees primitives, and the
 lowered form re-renders byte-identically. A teaching/debugging view; prints to stdout,
 never rewrites, comments not preserved.
@@ -1430,7 +1434,8 @@ Format: `filename:line:col: error: <message>` (LSP-compatible).
 | Condition | Message |
 |---|---|
 | Duplicate id | `duplicate id 'X' (previously at L:C)` |
-| Unknown endpoint | `link endpoint 'X' not found at <scope>` + `; did you mean 'A', 'B'?` |
+| Unknown endpoint (path) | `link endpoint 'X' not found at <scope>` + `; did you mean 'A', 'B'?` |
+| Auto-create shadows a node | `endpoint 'X' auto-created at <scope> — a node 'X' also exists at 'A.B.X'` (warning) |
 | Chain mixes operators | `link chain mixes operators 'X' and 'Y'` |
 | Chain < 2 nodes | `link requires at least two endpoints` |
 | Unknown type / class | `unknown type 'X'` / `unknown class '.X'` |
@@ -1439,12 +1444,14 @@ Format: `filename:line:col: error: <message>` (LSP-compatible).
 | Missing required property | `'\|line\|' requires 'points'` |
 | Unknown property | `unknown property 'foo' on '\|box\|'` (warning) |
 | Empty bars | `'\| \|' needs a type or an '#id'` |
+| Invalid id | `'#123' is not a valid id — an id starts with a letter or '_'` |
 | Class inside the bars | `a class follows the bars — write '\|box\| .hot', not '\|box.hot\|'` |
 | Symbol set twice | `an icon's symbol is its label or 'symbol:', not both` |
 | Text carries children | `text content takes no '[ ]' — wrap it in '\|block\|' to give it children` |
 | Box property on text | `'pin' needs a box — wrap the text in '\|block\|'` |
 | Declaration outside a block | `a declaration belongs in a '{ }' block` |
 | Bare node on the canvas | `a node leads with bars — write '\|box#X\|' (a bare name is a link endpoint)` |
+| Bare type in the stylesheet | `a type only appears in bars — write '\|box\| { }' to style every box` |
 | `->` in the stylesheet | `'->' draws a link on the canvas — set link defaults with 'link:' / 'link-width:' in a '{ }' block` |
 | `stroke*` on a link | `'stroke-width' paints a shape's outline, not a link — a link uses the 'link' family, so write 'link-width' (SPEC §9)` |
 | Deferred routing | `routing: only 'orthogonal' is built; 'straight' / 'curved' are deferred (§19)` |
@@ -1455,6 +1462,8 @@ Format: `filename:line:col: error: <message>` (LSP-compatible).
 | Children after internal links | `a child must come before the body's links` |
 | Styled head label | `a head label takes no '{ }' — put the text in a '[ ]' to style it: [ "…" { … } ]` |
 | Two head labels | `one inline label — put two or more in a '[ ]'` |
+| Label after a class | `a label comes before classes — write '\|box\| "X" .hot'` |
+| Link labels split | `keep a link's labels together — write 'a -> b [ "x" "y" ]'` (warning) |
 | Stylesheet after canvas | `the stylesheet '{ }' must come first, before any instance` |
 | Divider needs flush cells | `'divider' requires 'gap: 0'` |
 | Invalid / out-of-range color | `invalid color 'XYZ'` / `rgb(300,0,0): component out of range` |
@@ -1570,7 +1579,7 @@ class; a `|table| |box| { }` descendant rule rewrites to `.lini-table .lini-box 
 define bodies inline per instance; the scene defaults (`layout`, `padding`, `gap`,
 `font-size`) and the cascaded link defaults (`link`, `link-width`, `clearance`,
 `routing`) settle on the root; the per-type smart label (text / caption /
-symbol / link label), auto-`along:`, and root-link auto-create (an undeclared
+symbol / link label), auto-`along:`, and link auto-create (an undeclared
 endpoint `x` → `|box#x| "x"`) become explicit. The pass
 is idempotent; type-system errors (cycle, depth > 16, a define shadowing a built-in)
 surface here.
