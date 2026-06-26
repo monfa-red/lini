@@ -18,16 +18,17 @@
 - This is a **breaking** pre-release change — do not preserve back-compat or add migration shims. Old forms become errors with helpful messages (SPEC §15).
 - The branch `spec-v0.10` already exists with `SPEC.md` + `LINKING.md` refactored. Work on it.
 
-**The eight syntax changes (the law — SPEC is authoritative):**
+**The nine syntax changes (the law — SPEC is authoritative):**
 
 1. Identity in bars: `|type#id|`, `|box|`, `|#id|` (≥ one of type/id). No `id |type|`. A bare leading name on the canvas is invalid (link endpoint only). (§1, §3)
 2. `#id` declares/selects an id (`|box#cat|`, `#cat { }`), referenced **bare** in links (`cat -> b`). `#hex` is a colour only in a value. (§2, §4)
 3. Side via `:` on an endpoint: `a:left -> b:top`. Path into children stays `.` (`kitchen.bowl`). `top/bottom/left/right` are no longer reserved. (§9, §18)
-4. Smart label: one `"label"` right after the head, before class/style; lowered per type — box/shapes → centred text, group/table → caption, icon/sign → symbol, link → route label. **No default label** — a bare node is empty; id-as-label survives only in a link's auto-created stub (`|box#a| "a"`). `""` is just an empty string (empty cell / nothing). Coexists with `[ ]` (prepended). Takes no style; styled labels go in `[ ]`. One inline label; 2+ in `[ ]`. (§3, §9)
+4. Smart label: one `"label"` right after the head, before class/style; lowered per type — box/shapes → centred text, group/table → caption, icon/sign → symbol, link → route label. **No default label** — a bare node is empty. A link to an undeclared name is a desugar that adds labelled stub boxes (`a -> b` → `|box#a| "a"` + `|box#b| "b"`). `""` is just an empty string. Coexists with `[ ]` (prepended). Takes no style; styled labels go in `[ ]`. One inline label; 2+ in `[ ]`. (§3, §9)
 5. Class floats after head (and label), spaced — identical node/link, never in bars. (§3, §4, §9)
 6. Selectors are juxtaposed units, space = descendant: `|box|`, `.hot`, `#hero`, `|table| |box|`, `.sidebar |box|`. No `|table box|` one-bars form. (§4)
 7. Link lines: `->` `-->` `--->` `~>`. No `..`/`..>`. (§9)
 8. Tail identical node/link: `head "label"? .class…? { style }? [ content ]?`. (§9)
+9. Strings are trimmed of leading/trailing whitespace (`" ABC "` → "ABC"). (§2)
 
 ---
 
@@ -75,6 +76,7 @@ Add tests asserting:
 - `a:left` lexes as `Ident("a") Colon Ident("left")` (no new side token; `:` is `Colon`).
 - `--brand` still lexes as `RawCssVar("brand")` (var beats dashed line when followed by ident-start).
 - `..` lexes as `Dot Dot` (no longer a link op).
+- `" ABC "` lexes to `String("ABC")` (value trimmed); `"a b"` keeps the inner space.
 
 ```bash
 cargo test --lib lexer 2>&1 | tail -20   # or the module path you place them in
@@ -93,6 +95,10 @@ In the `b'.'` arm of `run()`: remove the `peek(1) == Some(b'.')` → `lex_link_o
 
 In `is_link_line_start`: drop `b'.'`, keep `b'-' | b'~'` (so `*` is a dot-marker only before `-`/`~`).
 
+- [ ] **Step 3b: Trim string values**
+
+In `lex_string`, after the value is built (escapes resolved), store it **trimmed** — `TokKind::String(value.trim().to_string())` — the span still covers the quotes for errors. This trims every string (labels and text leaves): `" ABC "` → `String("ABC")`; inner spaces are kept (SPEC §2).
+
 - [ ] **Step 4: Run the lexer tests**
 
 ```bash
@@ -104,7 +110,7 @@ Expected: PASS. (Parser/AST code referencing `TokKind::Hex` will now fail to com
 
 ```bash
 git add src/lexer.rs
-git commit -m "lex: #→Hash(String) token; ---/--/-/~ link lines; drop .. dotted"
+git commit -m "lex: #→Hash(String) token; ---/--/-/~ link lines; drop .. dotted; trim strings"
 ```
 
 ---
@@ -213,14 +219,14 @@ git commit -m "parse: |type#id| identity, smart-label head, juxtaposed selectors
 - Produces: the lowered primitive tree where the smart label has become concrete content and selectors are `.lini-*` class chains. One shared `lower_label(node_or_link, kind)` used by both node and link paths.
 
 - [ ] **Step 1: Failing desugar tests** — assert the lowering, one per type:
-  - `|box#cat|` (no label) → **no** text child (empty box — a declared node never id-as-labels).
+  - `|box#cat|` (no label) → **no** text child (empty box).
   - `|box#cat| ""` → no text child (`""` is an empty string, same as no label).
-  - `a -> b` (a, b undeclared) → auto-creates `|box#a| "a"` + `|box#b| "b"` (the *only* id-as-label is the stub).
+  - `a -> b` (a, b undeclared) → auto-creates `|box#a| "a"` + `|box#b| "b"` (the desugar adds the labels).
   - `|box#lb| "Load balancer"` → text child "Load balancer".
   - `|group#k| "Kitchen" [ child ]` → a `|caption|` child "Kitchen" **prepended**, then `child`.
   - `|icon| "heart"` → `symbol: heart` set; no text child. `|icon| "heart" { symbol: x }` → **error** "symbol is its label or 'symbol:', not both". `|icon| "x" [ "3" ]` → symbol x + text child "3".
   - `a -> b "watches"` → label list `["watches"]`; `a -> b "w" [ "x" ]` → `["w","x"]`; auto-`along:` unchanged.
-  - No declared type id-as-labels (box, group, icon all show only what's given); only the auto-created stub does.
+  - Every type shows only the label it's given; the `a -> b` desugar adds the labels to auto-created boxes.
 
 ```bash
 cargo test --test desugar 2>&1 | tail -25
@@ -228,8 +234,8 @@ cargo test --test desugar 2>&1 | tail -25
 Expected: FAIL.
 
 - [ ] **Step 2: Rewrite `labels.rs`** — replace `label_child_for` with `lower_label`: given the node's resolved base/type kind, place `label`:
-  - box-like (block/box/rect/oval/hex/slant/cyl/diamond/poly/path/line/note and their derivations) → a centred `TextNode` child from the label, **prepended** to `children`. `label == None` → **nothing** (no id-as-label); `""` → nothing. The sole id-as-label lives in the auto-create lowering (root-link stubs → `|box#id| "id"`, SPEC §17), not here.
-  - group/table-like → inject a `|caption|` child carrying the label text, prepended; no id-as-label.
+  - box-like (block/box/rect/oval/hex/slant/cyl/diamond/poly/path/line/note and their derivations) → a centred `TextNode` child from the label, **prepended** to `children`. `label == None` → **nothing**; `""` → nothing. (`lower_label` places only an explicit label; an auto-created link stub's "x" label is added by the implicit-node desugar — SPEC §17.)
+  - group/table-like → inject a `|caption|` child carrying the label text, prepended.
   - icon/sign → set `symbol` from the label (error if `{ symbol }` already set); never a text child; id is not a symbol.
   - link → push label text onto the label list (head label first), feeding existing auto-`along:`.
   Keep `auto_along` as-is. This is the single shared lowering (Global Constraint: node text-leaf and link label call one function).

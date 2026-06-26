@@ -56,7 +56,7 @@ That's a complete diagram: three boxes, two links. Lini fills in the rest.
 Three defaults make small diagrams trivial:
 
 - Omit the type → `|box|` (a rounded, framed card); `|#cat|` is a default box.
-- Omit the label → the box is empty; only a link's auto-created stub takes its id (`cat -> dog` → "cat"/"dog").
+- Omit the label → the box is empty; a link to an undeclared name adds a labelled stub (`cat -> dog` adds `|box#cat| "cat"`).
 - Name an undeclared id in a link → it's auto-created as a `|box|`.
 
 **A file has three parts, in order: the stylesheet, the canvas, then the links.**
@@ -70,8 +70,8 @@ come the instances, then the links:
   .hot { stroke-width: 2; }                     // a class
 }
 
-|box#server|                                    // the canvas — id is the label
-|box#client|
+|box#server| "Server"                           // the canvas, two instances
+|box#client| "Client"
 server -> client "requests"                     // a link, with a label
 ```
 
@@ -184,7 +184,8 @@ bars opens a define base. Position separates them; none depends on whitespace.
 
 **Strings** — double-quoted UTF-8: `"…"`. Escapes: `\"`, `\\`, `\n`, `\t`. A
 double-quoted string is always text; leading and trailing whitespace in its value is
-**trimmed** (`" ABC "` is "ABC"), so source spacing never leaks into the render.
+**trimmed** (`" ABC "` is "ABC", and a spaces-only `" "` becomes `""`), so source
+spacing never leaks into the render.
 Single quotes are **not** strings (reserved, [§18](#18-reserved-words)).
 
 **Numbers** — integer or decimal, optional sign, no units (px for lengths, degrees
@@ -271,11 +272,11 @@ classes), `|#cat|` (a default box with id `cat`).
 
 | Form | Effect |
 |---|---|
-| `\|box#cat\|` | a box, id `cat`, **no** label (empty). |
-| `\|treat#cat\|` | type `treat`, id `cat`, no label. |
-| `\|treat#cat\| "Friendly cat"` | label "Friendly cat". |
-| `\|treat#cat\| { fill: red }` | type + a style block, still no label. |
-| `\|box#cat\| ""` | identical to `\|box#cat\|` — `""` is just an empty string. |
+| `\|box#cat\|` | a box, id `cat` (empty — no label). |
+| `\|treat#cat\|` | type `treat`, id `cat`. |
+| `\|treat#cat\| "Friendly cat"` | + label "Friendly cat". |
+| `\|treat#cat\| { fill: red }` | + a style block. |
+| `\|box#cat\| ""` | same as `\|box#cat\|` — `""` is just an empty string. |
 | `\|box#cat\| .bold.loud { padding: 5 }` | type + id + classes + own style. |
 | `\|group#garden\| { … } [ … ]` | container with style and a body. |
 | `\|box\| "Load balancer"` | anonymous labelled box (can't be linked to). |
@@ -308,9 +309,8 @@ thing for the shape it sits on:
 
 Because a group's label is its caption, `|group#kitchen| "Kitchen" [ … ]` needs no
 hand-written `|caption|`; because an icon's label is its symbol, `|icon| "bell"`
-needs no `{ symbol: … }`. With no label, every type shows nothing of its own — an
-empty box, a captionless group, a symbol-less icon (which then needs `{ symbol: … }`):
-one rule, no per-type exception.
+needs no `{ symbol: … }`. Give no label and a type places nothing — one rule, no
+per-type exception.
 
 **The label takes no style of its own.** The `{ }` after the head is the *node's*
 block, so a styled or nudged label rides the `[ ]` content form instead, where each
@@ -321,8 +321,9 @@ string is a leaf in its own right ([Text content](#text-content)):
 |box#api| [ "API" { translate: 0 -6 } ]   // a styled label, via content
 ```
 
-**The label and `[ ]` coexist.** The label is the node's one inline content item,
-lowered by its type and prepended to the `[ ]`; the `[ ]` holds the rest:
+**The label and `[ ]` coexist.** The label is the node's one inline item, lowered by
+its type — a text or caption child prepended to the `[ ]`, or (for `|icon|`/`|sign|`)
+the `symbol` — and the `[ ]` holds the rest:
 
 ```
 |group#kitchen| "Kitchen" [ |box#bowl| "Bowl" ]   // caption + a child
