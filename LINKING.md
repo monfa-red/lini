@@ -166,7 +166,7 @@ construction rather than by checking.
 
 ## Ports — which side
 
-- A **forced side wins**: `a.r -> b` leaves `a` on the right. If no legal route
+- A **forced side wins**: `a:right -> b` leaves `a` on the right. If no legal route
   exists from that side, the link is impossible and reported — a forced side is
   never bent to fit.
 - Otherwise **the path chooses the side**: step 4 enters the graph through all
