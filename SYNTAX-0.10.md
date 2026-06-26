@@ -23,7 +23,7 @@
 1. Identity in bars: `|type#id|`, `|box|`, `|#id|` (≥ one of type/id). No `id |type|`. A bare leading name on the canvas is invalid (link endpoint only). (§1, §3)
 2. `#id` declares/selects an id (`|box#cat|`, `#cat { }`), referenced **bare** in links (`cat -> b`). `#hex` is a colour only in a value. (§2, §4)
 3. Side via `:` on an endpoint: `a:left -> b:top`. Path into children stays `.` (`kitchen.bowl`). `top/bottom/left/right` are no longer reserved. (§9, §18)
-4. Smart label: one `"label"` right after the head, before class/style; lowered per type — box/shapes → centred text, group/table → caption, icon/sign → symbol, link → route label. **No default label** — a bare node is empty. A link to an undeclared name is a desugar that adds labelled stub boxes (`a -> b` → `|box#a| "a"` + `|box#b| "b"`). `""` is just an empty string. Coexists with `[ ]` (prepended). Takes no style; styled labels go in `[ ]`. One inline label; 2+ in `[ ]`. (§3, §9)
+4. Smart label: one `"label"` right after the head, before class/style; lowered per type — box/shapes → centred text, group/table → caption, icon/sign → symbol, link → route label. **No default label** — a bare node is empty. A link to a name not present in its scope (root **or any body**) is a desugar that adds labelled stub boxes (`a -> b` → `|box#a| "a"` + `|box#b| "b"`). `""` is just an empty string. Coexists with `[ ]` (prepended). Takes no style; styled labels go in `[ ]`. One inline label; 2+ in `[ ]`. (§3, §9)
 5. Class floats after head (and label), spaced — identical node/link, never in bars. (§3, §4, §9)
 6. Selectors are juxtaposed units, space = descendant: `|box|`, `.hot`, `#hero`, `|table| |box|`, `.sidebar |box|`. No `|table box|` one-bars form. (§4)
 7. Link lines: `->` `-->` `--->` `~>`. No `..`/`..>`. (§9)
@@ -39,7 +39,7 @@
 - [ ] **Step 1: Confirm branch and capture the current test state**
 
 ```bash
-cd /Users/abbas/workspace/esprista/lini
+cd /Users/abbas/workspace/lini
 git branch --show-current        # expect: spec-v0.10
 git status                       # expect: SPEC.md, LINKING.md modified (the refactor)
 cargo test 2>&1 | tail -30       # baseline — record pass/fail counts
@@ -222,10 +222,12 @@ git commit -m "parse: |type#id| identity, smart-label head, juxtaposed selectors
   - `|box#cat|` (no label) → **no** text child (empty box).
   - `|box#cat| ""` → no text child (`""` is an empty string, same as no label).
   - `a -> b` (a, b undeclared) → auto-creates `|box#a| "a"` + `|box#b| "b"` (the desugar adds the labels).
+  - **Body scope:** `|group#g| [ x -> y ]` (x, y undeclared in the body) → `x`/`y` created as the group's own children "x"/"y" — auto-create runs in **any** scope, not just root (SPEC §3).
+  - **Shadow warning:** a bare id auto-created while a same-named node exists deeper → still drawn, plus a warning (SPEC §3/§15).
   - `|box#lb| "Load balancer"` → text child "Load balancer".
   - `|group#k| "Kitchen" [ child ]` → a `|caption|` child "Kitchen" **prepended**, then `child`.
   - `|icon| "heart"` → `symbol: heart` set; no text child. `|icon| "heart" { symbol: x }` → **error** "symbol is its label or 'symbol:', not both". `|icon| "x" [ "3" ]` → symbol x + text child "3".
-  - `a -> b "watches"` → label list `["watches"]`; `a -> b "w" [ "x" ]` → `["w","x"]`; auto-`along:` unchanged.
+  - `a -> b "watches"` → label list `["watches"]`; `a -> b "w" [ "x" ]` → `["w","x"]` **plus a "link labels split" warning** (SPEC §15); auto-`along:` unchanged.
   - Every type shows only the label it's given; the `a -> b` desugar adds the labels to auto-created boxes.
 
 ```bash
@@ -301,7 +303,7 @@ git commit -m "resolve: id-rule specificity tier + juxtaposed descendant matchin
 
 **Interfaces:** strings must match SPEC §15 exactly (they are part of the contract).
 
-- [ ] **Step 1: Failing tests** for the new/changed messages: empty bars, bare node on canvas, class in bars, symbol-twice, two head labels, styled head label, unknown side, glued selector unit. Remove the dead "Reserved identifier (side)" message and the old "Label and `[ ]` both" message (both now allowed/changed).
+- [ ] **Step 1: Failing tests** for the new/changed messages: empty bars, bare node on canvas, **bare type in the stylesheet**, class in bars, symbol-twice, two head labels, **label after a class**, styled head label, **invalid id (digit-leading)**, unknown side, glued selector unit, and the **"link labels split" / "auto-create shadows a node" warnings**. Remove the dead "Reserved identifier (side)" message and the old "Label and `[ ]` both" message (both now allowed/changed).
 
 ```bash
 cargo test 2>&1 | grep -iE 'error message|lint' | tail -20
@@ -379,7 +381,7 @@ Expected: no errors (except `pcb_fail.lini`, which is a deliberate stray-link/er
 - [ ] **Step 3: Visual verification (required, AGENTS.md)** — render representative samples to PNG and read them:
 
 ```bash
-mkdir -p /private/tmp/claude-501/-Users-abbas-workspace-esprista-lini/0f2a5d56-3e6c-4b8d-990e-b77168b6428f/scratchpad/png
+mkdir -p /tmp/lini-verify/png   # a scratchpad for the rendered PNGs
 for f in hello flow links_medium hero layout shapes icons text; do
   cargo run -q -- "samples/$f.lini" -o "/tmp/.../$f.svg" && resvg "/tmp/.../$f.svg" "/private/tmp/.../scratchpad/png/$f.png"
 done
