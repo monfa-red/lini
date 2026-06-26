@@ -56,7 +56,7 @@ That's a complete diagram: three boxes, two links. Lini fills in the rest.
 Three defaults make small diagrams trivial:
 
 - Omit the type → `|box|` (a rounded, framed card); `|#cat|` is a default box.
-- Omit the label → the id is it (`|box#cat|` → "cat"); `""` suppresses it.
+- Omit the label → the box is empty; only a link's auto-created stub takes its id (`cat -> dog` → "cat"/"dog").
 - Name an undeclared id in a link → it's auto-created as a `|box|`.
 
 **A file has three parts, in order: the stylesheet, the canvas, then the links.**
@@ -183,8 +183,9 @@ says otherwise:
 bars opens a define base. Position separates them; none depends on whitespace.
 
 **Strings** — double-quoted UTF-8: `"…"`. Escapes: `\"`, `\\`, `\n`, `\t`. A
-double-quoted string is always text. Single quotes are **not** strings (reserved,
-[§18](#18-reserved-words)).
+double-quoted string is always text; leading and trailing whitespace in its value is
+**trimmed** (`" ABC "` is "ABC"), so source spacing never leaks into the render.
+Single quotes are **not** strings (reserved, [§18](#18-reserved-words)).
 
 **Numbers** — integer or decimal, optional sign, no units (px for lengths, degrees
 for angles, 0–1 for opacities/fractions). `10`, `-5`, `0.25`, `+3`. A trailing `%`
@@ -270,29 +271,30 @@ classes), `|#cat|` (a default box with id `cat`).
 
 | Form | Effect |
 |---|---|
-| `\|box#cat\|` | a box, id `cat`, label "cat" (the id). |
-| `\|treat#cat\|` | type `treat`, id `cat`, label "cat". |
+| `\|box#cat\|` | a box, id `cat`, **no** label (empty). |
+| `\|treat#cat\|` | type `treat`, id `cat`, no label. |
 | `\|treat#cat\| "Friendly cat"` | label "Friendly cat". |
-| `\|treat#cat\| { fill: red }` | type + a style block, label still "cat". |
-| `\|box#cat\| ""` | box, **no** label. |
+| `\|treat#cat\| { fill: red }` | type + a style block, still no label. |
+| `\|box#cat\| ""` | identical to `\|box#cat\|` — `""` is just an empty string. |
 | `\|box#cat\| .bold.loud { padding: 5 }` | type + id + classes + own style. |
 | `\|group#garden\| { … } [ … ]` | container with style and a body. |
 | `\|box\| "Load balancer"` | anonymous labelled box (can't be linked to). |
 | `\|#cat\|` | a default `\|box\|`, id `cat`. |
 
-### The label (id-as-label)
+### The label
 
-A node's text is its **id** unless it is given a string:
+A node has **no label unless you give it one** — a bare `|box#cat|` is an empty box
+(the `#cat` is a handle, like HTML's `id=`, not text):
 
 | Label | Means |
 |---|---|
-| no string at all | the id (`\|box#cat\|` → "cat"; `\|box#cat\| { fill: red }` → still "cat") |
+| no string at all | nothing — an empty box |
 | `"X"` | the label "X" |
-| `""` | empty: suppressed in flow, an empty cell in a grid ([§5](#5-layout)) |
+| `""` | an empty string — nothing in flow, an empty cell in a grid ([§5](#5-layout)) |
 
-So styling never costs you the label — only an explicit string overrides it. A
-multi-word label needs no `[ ]`: `|box#lb| "Load balancer"`; an *anonymous*
-labelled box needs no id: `|box| "Load balancer"`.
+A link to an *undeclared* name still draws a labelled box: `cat -> dog -> bird`
+desugars to three boxes labelled "cat"/"dog"/"bird" ([Implicit nodes](#implicit-nodes)). A multi-word label needs no `[ ]`: `|box#lb| "Load balancer"`; an
+*anonymous* labelled box needs no id: `|box| "Load balancer"`.
 
 **The label is smart — each type places it.** The same `"X"` does the most useful
 thing for the shape it sits on:
@@ -306,9 +308,9 @@ thing for the shape it sits on:
 
 Because a group's label is its caption, `|group#kitchen| "Kitchen" [ … ]` needs no
 hand-written `|caption|`; because an icon's label is its symbol, `|icon| "bell"`
-needs no `{ symbol: … }`. id-as-label applies only where the label is text (the
-shapes): a group shows a caption only when given one, and an icon needs a symbol
-(from its label or `{ symbol: … }`) — its id is never a symbol.
+needs no `{ symbol: … }`. With no label, every type shows nothing of its own — an
+empty box, a captionless group, a symbol-less icon (which then needs `{ symbol: … }`):
+one rule, no per-type exception.
 
 **The label takes no style of its own.** The `{ }` after the head is the *node's*
 block, so a styled or nudged label rides the `[ ]` content form instead, where each
@@ -359,7 +361,7 @@ to style it (above).
 ### Implicit nodes
 
 A root link's single-segment endpoint naming an id declared nowhere in the file
-auto-creates an empty `|box|` at the scene root with the id as its label — so
+auto-creates the node `|box#cat| "cat"` at the scene root — a box named `cat`, labelled "cat" — so
 `cat -> dog -> bird` is a complete three-box diagram. Declaring the id anywhere —
 before or after the link — prevents auto-creation. If the id exists only deeper in
 the tree, nothing is created: the link must use the full path, and the error
@@ -1410,7 +1412,7 @@ instead of rewriting.
 template/define instance becomes its base `|block|` (etc.) wearing a `.lini-*` class
 chain, each type's defaults become a generated `.lini-<type> { … }` class, the scene and
 cascaded link defaults fill the global block, define bodies inline per instance, and
-id-as-label / smart labels / auto-`along:` / auto-create become explicit. It is the
+the per-type smart label, auto-`along:`, and root-link auto-create (an undeclared endpoint `x` becomes `|box#x| "x"`) become explicit. It is the
 engine's true input — the rest of the pipeline only ever sees primitives, and the
 lowered form re-renders byte-identically. A teaching/debugging view; prints to stdout,
 never rewrites, comments not preserved.
@@ -1566,8 +1568,9 @@ defaults and any `|type| { }` element rule fold into a generated `.lini-<type> {
 class; a `|table| |box| { }` descendant rule rewrites to `.lini-table .lini-box { }`;
 define bodies inline per instance; the scene defaults (`layout`, `padding`, `gap`,
 `font-size`) and the cascaded link defaults (`link`, `link-width`, `clearance`,
-`routing`) settle on the root; id-as-label, the per-type smart label (text / caption /
-symbol / link label), auto-`along:`, and root-link auto-create become explicit. The pass
+`routing`) settle on the root; the per-type smart label (text / caption /
+symbol / link label), auto-`along:`, and root-link auto-create (an undeclared
+endpoint `x` → `|box#x| "x"`) become explicit. The pass
 is idempotent; type-system errors (cycle, depth > 16, a define shadowing a built-in)
 surface here.
 
@@ -1695,7 +1698,7 @@ orthogonal`). Function names `rgb`, `rgba`, `hsl`, `repeat` are reserved only be
   |group#den| "Den" {
     layout: column;  gap: 15;
   } [
-    |alert#rabbit| [ |badge| "FAST" ]
+    |alert#rabbit| "Rabbit" [ |badge| "FAST" ]
     |box#carrot| "Carrot patch" { stack: 4; width: 80; height: 40; fill: white }
   ]
 ]

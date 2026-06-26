@@ -23,7 +23,7 @@
 1. Identity in bars: `|type#id|`, `|box|`, `|#id|` (≥ one of type/id). No `id |type|`. A bare leading name on the canvas is invalid (link endpoint only). (§1, §3)
 2. `#id` declares/selects an id (`|box#cat|`, `#cat { }`), referenced **bare** in links (`cat -> b`). `#hex` is a colour only in a value. (§2, §4)
 3. Side via `:` on an endpoint: `a:left -> b:top`. Path into children stays `.` (`kitchen.bowl`). `top/bottom/left/right` are no longer reserved. (§9, §18)
-4. Smart label: one `"label"` right after the head, before class/style; lowered per type — box/shapes → centred text, group/table → caption, icon/sign → symbol, link → route label. Defaults to id (box-like). `""` suppresses. Coexists with `[ ]` (prepended). Takes no style; styled labels go in `[ ]`. One inline label; 2+ in `[ ]`. (§3, §9)
+4. Smart label: one `"label"` right after the head, before class/style; lowered per type — box/shapes → centred text, group/table → caption, icon/sign → symbol, link → route label. **No default label** — a bare node is empty; id-as-label survives only in a link's auto-created stub (`|box#a| "a"`). `""` is just an empty string (empty cell / nothing). Coexists with `[ ]` (prepended). Takes no style; styled labels go in `[ ]`. One inline label; 2+ in `[ ]`. (§3, §9)
 5. Class floats after head (and label), spaced — identical node/link, never in bars. (§3, §4, §9)
 6. Selectors are juxtaposed units, space = descendant: `|box|`, `.hot`, `#hero`, `|table| |box|`, `.sidebar |box|`. No `|table box|` one-bars form. (§4)
 7. Link lines: `->` `-->` `--->` `~>`. No `..`/`..>`. (§9)
@@ -202,7 +202,7 @@ git commit -m "parse: |type#id| identity, smart-label head, juxtaposed selectors
 
 ---
 
-## Task 4: Desugar — smart label per type, juxtaposed-selector lowering, id-as-label
+## Task 4: Desugar — smart label per type, juxtaposed-selector lowering, auto-create stub label
 
 **Files:**
 - Modify: `src/desugar/labels.rs`, `src/desugar/classes.rs`, `src/desugar/mod.rs` (and `scene.rs`/`types.rs` as needed)
@@ -213,13 +213,14 @@ git commit -m "parse: |type#id| identity, smart-label head, juxtaposed selectors
 - Produces: the lowered primitive tree where the smart label has become concrete content and selectors are `.lini-*` class chains. One shared `lower_label(node_or_link, kind)` used by both node and link paths.
 
 - [ ] **Step 1: Failing desugar tests** — assert the lowering, one per type:
-  - `|box#cat|` (no label) → a centred text child "cat" (id-as-label).
-  - `|box#cat| ""` → no text child (suppressed).
+  - `|box#cat|` (no label) → **no** text child (empty box — a declared node never id-as-labels).
+  - `|box#cat| ""` → no text child (`""` is an empty string, same as no label).
+  - `a -> b` (a, b undeclared) → auto-creates `|box#a| "a"` + `|box#b| "b"` (the *only* id-as-label is the stub).
   - `|box#lb| "Load balancer"` → text child "Load balancer".
   - `|group#k| "Kitchen" [ child ]` → a `|caption|` child "Kitchen" **prepended**, then `child`.
   - `|icon| "heart"` → `symbol: heart` set; no text child. `|icon| "heart" { symbol: x }` → **error** "symbol is its label or 'symbol:', not both". `|icon| "x" [ "3" ]` → symbol x + text child "3".
   - `a -> b "watches"` → label list `["watches"]`; `a -> b "w" [ "x" ]` → `["w","x"]`; auto-`along:` unchanged.
-  - Group/container types get **no** id-as-label (only an explicit label → caption).
+  - No declared type id-as-labels (box, group, icon all show only what's given); only the auto-created stub does.
 
 ```bash
 cargo test --test desugar 2>&1 | tail -25
@@ -227,7 +228,7 @@ cargo test --test desugar 2>&1 | tail -25
 Expected: FAIL.
 
 - [ ] **Step 2: Rewrite `labels.rs`** — replace `label_child_for` with `lower_label`: given the node's resolved base/type kind, place `label`:
-  - box-like (block/box/rect/oval/hex/slant/cyl/diamond/poly/path/line/note and their derivations) → a centred `TextNode` child, **prepended** to `children`. When `label` is `None`, use the id (id-as-label) for box-like; `""` → nothing.
+  - box-like (block/box/rect/oval/hex/slant/cyl/diamond/poly/path/line/note and their derivations) → a centred `TextNode` child from the label, **prepended** to `children`. `label == None` → **nothing** (no id-as-label); `""` → nothing. The sole id-as-label lives in the auto-create lowering (root-link stubs → `|box#id| "id"`, SPEC §17), not here.
   - group/table-like → inject a `|caption|` child carrying the label text, prepended; no id-as-label.
   - icon/sign → set `symbol` from the label (error if `{ symbol }` already set); never a text child; id is not a symbol.
   - link → push label text onto the label list (head label first), feeding existing auto-`along:`.
