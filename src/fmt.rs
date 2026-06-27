@@ -11,7 +11,7 @@ use crate::error::Error;
 use crate::lexer;
 use crate::span::Span;
 use crate::syntax::ast::{
-    Child, Decl, Define, Endpoint, File, Link, Node, Rule, SelPart, Selector, StyleItem, TextNode,
+    Child, Decl, Define, Endpoint, File, Link, Node, Rule, SelUnit, Selector, StyleItem, TextNode,
     Value,
 };
 use crate::syntax::parser;
@@ -35,7 +35,6 @@ pub fn format(src: &str) -> Result<String, Error> {
         trivia: &trivia,
         cursor: 0,
         out: &mut out,
-        align: true,
         terse: true,
     }
     .emit_file(&file, src.len());
@@ -51,7 +50,6 @@ pub(crate) fn print_file(file: &File) -> String {
         trivia: &[],
         cursor: 0,
         out: &mut out,
-        align: false,
         terse: false,
     }
     .emit_file(file, 0);
@@ -62,12 +60,8 @@ struct Emitter<'a> {
     trivia: &'a [TriviaToken],
     cursor: usize,
     out: &'a mut String,
-    /// Column-align sibling id/type columns. On for canonical `fmt`; off for
-    /// `print_file` (synthesized ASTs, where mixing anonymous sugar children
-    /// with named nodes would pad oddly).
-    align: bool,
-    /// Contract a text-only `[ ]` to trailing labels (`api |box| "API"`). On for
-    /// `fmt`; off for `print_file` (desugar), which keeps the explicit `[ ]`.
+    /// Contract a lone bare-text child to the head label (`|box#api| "API"`). On
+    /// for `fmt`; off for `print_file` (desugar), which keeps the explicit `[ ]`.
     terse: bool,
 }
 
@@ -187,41 +181,42 @@ impl Emitter<'_> {
     }
 
     fn emit_selector(&mut self, sel: &Selector) {
-        // A lone class stays bare; a bar-wrapped selector keeps its bars.
-        if let [SelPart::Class(c)] = sel.parts.as_slice() {
-            self.out.push('.');
-            self.out.push_str(c);
-            return;
-        }
-        self.out.push('|');
-        for (i, part) in sel.parts.iter().enumerate() {
+        // Juxtaposed units, single-spaced (SPEC §4): a type `|box|` / `|table#main|`
+        // keeps its bars, a class `.hot` and an id `#hero` keep their sigil.
+        for (i, unit) in sel.units.iter().enumerate() {
             if i > 0 {
                 self.out.push(' ');
             }
-            match part {
-                SelPart::Type(t) => self.out.push_str(t),
-                SelPart::Class(c) => {
+            match unit {
+                SelUnit::Type { name, id } => {
+                    self.out.push('|');
+                    self.out.push_str(name);
+                    if let Some(id) = id {
+                        self.out.push('#');
+                        self.out.push_str(id);
+                    }
+                    self.out.push('|');
+                }
+                SelUnit::Class(c) => {
                     self.out.push('.');
                     self.out.push_str(c);
                 }
+                SelUnit::Id(i) => {
+                    self.out.push('#');
+                    self.out.push_str(i);
+                }
             }
         }
-        self.out.push('|');
     }
 
     // ───────── Instances ─────────
 
     fn emit_children(&mut self, children: &[Child], depth: usize) {
-        let widths = if self.align {
-            align::child_widths(children, self.trivia)
-        } else {
-            vec![align::NodeWidths::default(); children.len()]
-        };
-        for (i, c) in children.iter().enumerate() {
+        for c in children {
             let span = child_span(c);
             self.emit_trivia_before(span.start, depth);
             match c {
-                Child::Box(n) => self.emit_node(n, depth, widths[i]),
+                Child::Box(n) => self.emit_node(n, depth),
                 Child::Text(t) => {
                     self.indent(depth);
                     self.emit_text_node(t, depth);
@@ -232,92 +227,73 @@ impl Emitter<'_> {
         }
     }
 
-    fn emit_node(&mut self, node: &Node, depth: usize, w: align::NodeWidths) {
+    /// A node head: `|type#id|`, then the head label, then classes, then a `{ }`
+    /// block, then the `[ ]` content (SPEC §3/§14).
+    fn emit_node(&mut self, node: &Node, depth: usize) {
         self.indent(depth);
-        // The id column aligns so the bars line up; the `|type|` column aligns
-        // only in an all-plain group (`w.ty` is 0 otherwise). A `.class` chain
-        // and a `{ }` block never align — they trail with a single space (SPEC §14).
-        let bars = type_bars(&node.ty);
-        let classes = class_str(&node.classes);
-        let has_block = !node.style.is_empty();
-        let has_body = !node.children.is_empty() || !node.links.is_empty();
-        let id = node.id.as_deref().unwrap_or("");
-        // A no-id box at the root is not indented to the id column — leading
-        // space there reads as floating, not alignment; inside a block the base
-        // indent makes the pad a real column, so keep it.
-        let id_w = if id.is_empty() && depth == 0 { 0 } else { w.id };
-
-        let after_id = !bars.is_empty() || !classes.is_empty() || has_block || has_body;
-        let after_ty = !classes.is_empty() || has_block || has_body;
-        let mut wrote = self.emit_col(id, id_w, after_id, false);
-        wrote = self.emit_col(&bars, w.ty, after_ty, wrote);
-        if !classes.is_empty() {
-            self.space_if(wrote);
-            self.out.push_str(&classes);
+        self.out.push_str(&identity_bars(node));
+        let (head, body) = self.split_head_label(node);
+        if let Some(label) = head {
+            // The head label takes no style of its own (SPEC §3).
+            self.out.push(' ');
+            self.emit_string(&label.text);
         }
-
-        if has_block {
+        if !node.classes.is_empty() {
+            self.out.push(' ');
+            self.out.push_str(&class_str(&node.classes));
+        }
+        if !node.style.is_empty() {
             let end = node.style_span.map_or(node.span.end, |s| s.end);
             self.emit_style_block(&node.style, end, depth, false);
         }
-        self.emit_content(node, depth);
+        self.emit_content(node, body, depth);
     }
 
-    /// Emit one head column (id or `|type|`): a separating space when the line
-    /// already carries a segment, the segment text, then alignment padding to
-    /// `width` when a later column or content `follows` (else ragged, to avoid
-    /// trailing space). An empty segment with nothing reserved emits nothing.
-    /// Returns whether the line now carries any head segment.
-    fn emit_col(&mut self, seg: &str, width: usize, follows: bool, preceded: bool) -> bool {
-        if seg.is_empty() && (width == 0 || !follows) {
-            return preceded;
+    /// The head label and the remaining body children. `Node.label` is the head
+    /// label; otherwise, in terse mode, a lone bare-text child contracts to it
+    /// (`|box| [ "X" ]` → `|box| "X"`), leaving an empty body.
+    fn split_head_label<'n>(&self, node: &'n Node) -> (Option<&'n TextNode>, &'n [Child]) {
+        if let Some(label) = &node.label {
+            return (Some(label), &node.children);
         }
-        self.space_if(preceded);
-        self.out.push_str(seg);
-        if follows {
-            pad(self.out, width.saturating_sub(seg.len()));
+        if self.terse
+            && node.links.is_empty()
+            && let [Child::Text(t)] = node.children.as_slice()
+            && t.style.is_empty()
+        {
+            return (Some(t), &[]);
         }
-        true
+        (None, &node.children)
     }
 
-    /// A node's content: a `|table|`'s aligned cells, a terse trailing label, an
-    /// inline text `[ ]` (desugar), or the multi-line `[ ]` body.
-    fn emit_content(&mut self, node: &Node, depth: usize) {
-        if node.children.is_empty() && node.links.is_empty() {
+    /// A node's `[ ]` content: a `|table|`'s aligned cells, an inline text `[ ]`,
+    /// or the multi-line `[ ]` body. `body` is the children after the head label.
+    fn emit_content(&mut self, node: &Node, body: &[Child], depth: usize) {
+        if body.is_empty() && node.links.is_empty() {
             return;
         }
         let end = node.span.end;
-        if let Some(cols) = self.table_cols(node) {
-            self.out.push_str(" [\n");
-            self.emit_aligned_cells(&node.children, cols, depth + 1);
-            self.emit_trivia_before(end.saturating_sub(1), depth + 1);
-            self.indent(depth);
-            self.out.push(']');
-            return;
-        }
-        // Bare text children trail as a terse label (`api |box| "API"`); a styled
-        // one (`"x" { … }`) reads better one-per-line in `[ ]`, so it is not terse.
-        let text_only = node.links.is_empty()
-            && node
-                .children
-                .iter()
-                .all(|c| matches!(c, Child::Text(t) if t.style.is_empty()));
-        if text_only && !self.has_trivia_between(self.cursor, end) {
-            if self.terse {
-                for c in &node.children {
-                    if let Child::Text(t) = c {
-                        self.out.push(' ');
-                        self.emit_text_node(t, depth);
-                    }
-                }
-                self.cursor = end;
+        if node.links.is_empty() {
+            if let Some(cols) = self.table_cols(body, &node.style) {
+                self.out.push_str(" [\n");
+                self.emit_aligned_cells(body, cols, depth + 1);
+                self.emit_trivia_before(end.saturating_sub(1), depth + 1);
+                self.indent(depth);
+                self.out.push(']');
                 return;
             }
-            if self.try_inline_text(&node.children, end) {
+            let text_only = !body.is_empty()
+                && body
+                    .iter()
+                    .all(|c| matches!(c, Child::Text(t) if t.style.is_empty()));
+            if text_only
+                && !self.has_trivia_between(self.cursor, end)
+                && self.try_inline_text(body, end)
+            {
                 return;
             }
         }
-        self.emit_body(&node.children, &node.links, end, depth);
+        self.emit_body(body, &node.links, end, depth);
     }
 
     /// `[ "a" "b" ]` on one line, when it fits (desugar's explicit text form).
@@ -361,15 +337,12 @@ impl Emitter<'_> {
         self.out.push(']');
     }
 
-    /// The column count if this node is a grid whose children are *all* bare text
-    /// (a `|table|`) with no interleaved comment — then the cells align into
-    /// columns (SPEC §8/§14). Otherwise `None`, falling back to one child per line.
-    fn table_cols(&self, node: &Node) -> Option<usize> {
-        let cells = &node.children;
-        if cells.is_empty()
-            || !node.links.is_empty()
-            || !cells.iter().all(|c| matches!(c, Child::Text(_)))
-        {
+    /// The column count if these body cells are *all* bare text (a `|table|`) with
+    /// no interleaved comment — then they align into columns (SPEC §8/§14).
+    /// Otherwise `None`, falling back to one child per line. The caller has already
+    /// excluded a node with internal links.
+    fn table_cols(&self, cells: &[Child], style: &[Decl]) -> Option<usize> {
+        if cells.is_empty() || !cells.iter().all(|c| matches!(c, Child::Text(_))) {
             return None;
         }
         let start = child_span(&cells[0]).start;
@@ -377,7 +350,7 @@ impl Emitter<'_> {
         if self.has_trivia_between(start, end) {
             return None;
         }
-        count_columns(&node.style)
+        count_columns(style)
     }
 
     /// Emit bare-text cells as aligned rows: each column padded to its widest
@@ -409,12 +382,6 @@ impl Emitter<'_> {
             }
         }
         self.cursor = child_span(cells.last().unwrap()).end;
-    }
-
-    fn space_if(&mut self, cond: bool) {
-        if cond {
-            self.out.push(' ');
-        }
     }
 
     /// Emit a run of declarations grouped onto as few lines as the source's
@@ -519,27 +486,23 @@ impl Emitter<'_> {
             let end = w.style_span.map_or(w.span.end, |s| s.end);
             self.emit_style_block(&w.style, end, depth, false);
         }
-        // A link's content is its labels (SPEC §9), each a styleable text leaf:
-        // pretty `fmt` trails the bare sugar (`a -> b "x"`), but a **styled** label
-        // can't be trailed (the sugar takes no `{ }` — SPEC §3) so it rides the
-        // explicit `[ ]` content form, exactly as a node's styled label does.
-        if !w.labels.is_empty() {
-            let bare = w.labels.iter().all(|t| t.style.is_empty());
-            if self.terse && bare {
-                for label in &w.labels {
+        // Labels (SPEC §9), each a styleable text leaf: a lone bare label trails
+        // the head (`a -> b "x"`); two or more, or a styled one, ride the `[ ]`
+        // (the head label leading) — exactly as a node's label does.
+        let all: Vec<&TextNode> = w.label.iter().chain(w.labels.iter()).collect();
+        let styled = all.iter().any(|t| !t.style.is_empty());
+        if self.terse && all.len() == 1 && !styled {
+            self.out.push(' ');
+            self.emit_text_node(all[0], depth);
+        } else if !all.is_empty() {
+            self.out.push_str(" [ ");
+            for (i, label) in all.iter().enumerate() {
+                if i > 0 {
                     self.out.push(' ');
-                    self.emit_text_node(label, depth);
                 }
-            } else {
-                self.out.push_str(" [ ");
-                for (i, label) in w.labels.iter().enumerate() {
-                    if i > 0 {
-                        self.out.push(' ');
-                    }
-                    self.emit_text_node(label, depth);
-                }
-                self.out.push_str(" ]");
+                self.emit_text_node(label, depth);
             }
+            self.out.push_str(" ]");
         }
     }
 
@@ -555,7 +518,7 @@ impl Emitter<'_> {
     fn emit_endpoint(&mut self, ep: &Endpoint) {
         self.out.push_str(&ep.path.join("."));
         if let Some(side) = ep.side {
-            self.out.push('.');
+            self.out.push(':');
             self.out.push_str(side_str(side));
         }
     }
@@ -669,12 +632,18 @@ fn style_item_span(item: &StyleItem) -> Span {
     }
 }
 
-/// The `|type|` bars, or empty when the node has no type.
-fn type_bars(ty: &Option<String>) -> String {
-    match ty {
-        Some(t) => format!("|{t}|"),
-        None => String::new(),
+/// The identity bars `|type#id|` (`|#id|` when the type defaults to box).
+fn identity_bars(node: &Node) -> String {
+    let mut s = String::from("|");
+    if let Some(t) = &node.ty {
+        s.push_str(t);
     }
+    if let Some(id) = &node.id {
+        s.push('#');
+        s.push_str(id);
+    }
+    s.push('|');
+    s
 }
 
 /// The `.class` chain (`.a.b`), or empty when the node wears none.
@@ -765,8 +734,6 @@ fn format_number(n: f64) -> String {
         format!("{}", n)
     }
 }
-
-mod align;
 
 #[cfg(test)]
 mod tests;
