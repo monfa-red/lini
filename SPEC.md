@@ -89,8 +89,7 @@ A Lini file is the body of an implicit **root** container, in three parts —
 | **links** | `a -> b` connections | yes |
 
 The "is this drawn or styled?" question never arises: **styling lives in the
-stylesheet block; drawing lives on the canvas.** You never re-read a name to learn
-which it was.
+stylesheet block; drawing lives on the canvas.**
 
 **One character tells a statement's kind.** A leading `|` opens a node, a `"`
 opens text, a bare name opens a link, and inside the stylesheet a `.`/`#`/`|…|`
@@ -178,9 +177,6 @@ says otherwise:
 | `--name` | A variable, in a value or at a statement start to declare one. |
 | link op | `[marker?] line [marker?]`, glued, no internal space (`->`, `--->`, `<->`). |
 | `[ … ]` | A content list. Paired; whitespace inside is insignificant. |
-
-`:` after an endpoint forces a side; `:` inside a `{ }` opens a value; `::` inside
-bars opens a define base. Position separates them; none depends on whitespace.
 
 **Strings** — double-quoted UTF-8: `"…"`. Escapes: `\"`, `\\`, `\n`, `\t`. A
 double-quoted string is always text; leading and trailing whitespace in its value is
@@ -427,20 +423,10 @@ in the stylesheet is a descendant *rule* (.hot inside a box); on the canvas it i
 an *instance* (a box wearing .hot). One reads as a selector, the other draws —
 because rules live in the stylesheet and instances on the canvas.
 
-**Specificity** — the most specific source wins; ties break by **source order**
-(the CSS cascade):
-
-1. **Type rule** (`|box| { }`) and a type's own define defaults
-2. **Descendant rule** (`|table| |box| { }`, `.sidebar |box| { }`)
-3. **Class** (`.hot { }`)
-4. **Id rule** (`#hero { }`)
-5. **The instance's own block** (`|box#client| { fill: white }`) — wins
-
-For a link: cascaded `link*` / `clearance` / `routing` from its scope →
-descendant/class/id rules → the link's own declarations.
-
-Complex values (`translate: x y`, `padding: t r b l`) replace wholesale — the merge
-is per-property, not deep.
+**Specificity** — most specific wins, ties break by **source order** (the CSS
+cascade): type rule < descendant rule < class < id rule < the instance's own block.
+[§12](#12-specificity) gives the full tiering — the type cascade, links, and how
+complex values merge.
 
 ---
 
@@ -720,10 +706,8 @@ distort). The counter-scaled `stroke-width` follows the resulting scale, so the 
 weight stays constant whichever `fit` you choose ([§10](#10-properties)).
 
 A missing `symbol` errors like `|poly|` without `points`; an unknown one suggests the
-nearest name. Only the icons a diagram uses are embedded. The full set ships behind a
-default-on `icons` build feature ([§19](#19-deferred)) and lives in the repo as one
-compact data file — path data only, no SVG wrapper — extracted from Phosphor's
-duotone weight.
+nearest name. Only the icons a diagram uses are embedded (a default-on `icons` feature,
+[§19](#19-deferred)).
 
 ---
 
@@ -889,10 +873,7 @@ every link the statement expands to.
 A link is a **link, not a stroked shape**: it is painted by this family alone, so
 `stroke` / `stroke-width` / `stroke-style` on a link — in its own `{ }` or a class it
 wears — is an **error** that names the `link*` replacement. A class meant for links
-therefore uses `link*` (`.flow { link: --blue }`), a class meant for nodes uses
-`stroke*`; a node-stroke class worn by a link is the error above. (The two families
-share an implementation — a link's `link*` lowers to the path's `stroke*` — but that
-is invisible: the surface vocabulary never mixes.)
+uses `link*` (`.flow { link: --blue }`), one meant for nodes uses `stroke*`.
 
 All three cascade from the link's scope and override on the link's own `{ }`:
 
