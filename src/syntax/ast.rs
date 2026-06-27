@@ -43,19 +43,24 @@ pub struct Rule {
     pub span: Span,
 }
 
-/// One or more parts; more than one is a descendant combinator, matched against
-/// a node's ancestor chain (ancestor → … → target), like CSS.
+/// One or more units; more than one is a descendant combinator (the space),
+/// matched against a node's ancestor chain (ancestor → … → target), like CSS.
 #[derive(Debug, Clone)]
 pub struct Selector {
-    pub parts: Vec<SelPart>,
+    pub units: Vec<SelUnit>,
 }
 
+/// A juxtaposed selector unit (SPEC §4): a type (with an optional `#id`), a
+/// `.class`, or an `#id`. Each keeps its sigil, so a selector reads as a run of
+/// marked units and a bare word is never one.
 #[derive(Debug, Clone)]
-pub enum SelPart {
-    /// A bare type name (`box`, a user type, …).
-    Type(String),
-    /// A `.class`.
+pub enum SelUnit {
+    /// `|box|` or `|table#main|` — a type, optionally pinned to one id.
+    Type { name: String, id: Option<String> },
+    /// `.class`.
     Class(String),
+    /// `#hero` — an id selector.
+    Id(String),
 }
 
 /// `|name::base| { style } [ children ]` — a new type from a base. `style` is the
@@ -79,9 +84,13 @@ pub struct Define {
 /// is none.
 #[derive(Debug, Clone)]
 pub struct Node {
+    /// From the bars (`|type#id|`).
     pub id: Option<String>,
-    /// `|type|`; `None` means the default `box`, filled at resolve.
+    /// `|type|` from the bars; `None` means the default `box`, filled at resolve.
     pub ty: Option<String>,
+    /// The smart-label head string (`|box| "X"`), lowered per type at desugar
+    /// (text / caption / symbol); `None` when absent — a bare node is empty.
+    pub label: Option<TextNode>,
     pub classes: Vec<String>,
     pub style: Vec<Decl>,
     /// The `{ … }` style block's span, for the formatter's trivia; `None` when
@@ -125,6 +134,10 @@ pub struct Link {
     /// The `{ … }` style block's span, for the formatter's trivia; `None` when
     /// the link has no style block.
     pub style_span: Option<Span>,
+    /// The smart-label head string (`a -> b "watches"`), unstyled; desugar
+    /// concatenates it ahead of `labels` for `along:`. `None` when absent.
+    pub label: Option<TextNode>,
+    /// The `[ ]` label leaves (styleable).
     pub labels: Vec<TextNode>,
     pub span: Span,
 }
