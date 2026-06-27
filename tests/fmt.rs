@@ -67,9 +67,9 @@ fn fmt_preserves_section_comments_and_blank_lines() {
 
 // Top-level comment.
 // Comment on root statement.
-cat |box|
+|box#cat|
 
-dog |box|
+|box#dog|
 ";
     let formatted = lini::format_source(src).expect("fmt");
     assert!(
@@ -79,7 +79,7 @@ dog |box|
     );
     // Blank line between cat and dog should be preserved.
     assert!(
-        formatted.contains("|box|\n\ndog"),
+        formatted.contains("|box#cat|\n\n|box#dog|"),
         "blank line not preserved between siblings:\n{}",
         formatted
     );
@@ -105,7 +105,7 @@ fn fmt_canonicalizes_numeric_forms() {
 #[test]
 fn fmt_normalizes_value_group_spacing() {
     // v4 values are space-separated within a group, comma between groups.
-    let src = "dim |line| {points:0 0,10 10}\n";
+    let src = "|line#dim| {points:0 0,10 10}\n";
     let formatted = lini::format_source(src).expect("fmt");
     assert!(
         formatted.contains("points: 0 0, 10 10;"),

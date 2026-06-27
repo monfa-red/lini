@@ -230,10 +230,10 @@ fn audit_removes_a_removable_crossing() {
     let src = "{ layout: grid; columns: repeat(3); gap: 40;\n\
                clearance: 8;\n\
                }\n\
-               north |box| { cell: 2 1; }\n\
-               south |box| { cell: 2 3; }\n\
-               west  |box| { cell: 1 2; }\n\
-               east  |box| { cell: 3 2; }\n\
+               |box#north| { cell: 2 1; }\n\
+               |box#south| { cell: 2 3; }\n\
+               |box#west| { cell: 1 2; }\n\
+               |box#east| { cell: 3 2; }\n\
                north -> south\n\
                west -> east\n";
     let crossings = lini::validate_str(src)
@@ -254,15 +254,15 @@ fn a_walled_in_link_is_reported_impossible() {
     let src = "{ layout: grid; columns: repeat(3); gap: 10;\n\
                clearance: 16;\n\
                }\n\
-               n1 |box| { width: 40; height: 40; cell: 1 1; }\n\
-               n2 |box| { width: 40; height: 40; cell: 2 1; }\n\
-               n3 |box| { width: 40; height: 40; cell: 3 1; }\n\
-               n4 |box| { width: 40; height: 40; cell: 1 2; }\n\
-               core |box| { width: 40; height: 40; cell: 2 2; }\n\
-               n5 |box| { width: 40; height: 40; cell: 3 2; }\n\
-               n6 |box| { width: 40; height: 40; cell: 1 3; }\n\
-               n7 |box| { width: 40; height: 40; cell: 2 3; }\n\
-               n8 |box| { width: 40; height: 40; cell: 3 3; }\n\
+               |box#n1| { width: 40; height: 40; cell: 1 1; }\n\
+               |box#n2| { width: 40; height: 40; cell: 2 1; }\n\
+               |box#n3| { width: 40; height: 40; cell: 3 1; }\n\
+               |box#n4| { width: 40; height: 40; cell: 1 2; }\n\
+               |box#core| { width: 40; height: 40; cell: 2 2; }\n\
+               |box#n5| { width: 40; height: 40; cell: 3 2; }\n\
+               |box#n6| { width: 40; height: 40; cell: 1 3; }\n\
+               |box#n7| { width: 40; height: 40; cell: 2 3; }\n\
+               |box#n8| { width: 40; height: 40; cell: 3 3; }\n\
                core -> n2\n";
     let impossible: Vec<_> = lini::validate_str(src)
         .expect("validate")
@@ -338,13 +338,13 @@ fn gap_growth_is_bounded_where_no_gap_can_help() {
     let src = "{ layout: row; gap: 40;\n\
                  clearance: 16;\n\
                }\n\
-               grp |group| {\n\
+               |group#grp| {\n\
                  layout: row; gap: 24; padding: 24;\n\
                } [\n\
-                 aa |box| { width: 40; height: 40; }\n\
-                 bb |box| { width: 40; height: 40; }\n\
+                 |box#aa| { width: 40; height: 40; }\n\
+                 |box#bb| { width: 40; height: 40; }\n\
                ]\n\
-               grp.left -> grp.aa.left\ngrp.left -> grp.aa.left\ngrp.left -> grp.aa.left\n";
+               grp:left -> grp.aa:left\ngrp:left -> grp.aa:left\ngrp:left -> grp.aa:left\n";
     let raw = lini::testing::route_sample_raw(src, 16.0);
     let grown = lini::testing::route_sample(src, 16.0);
     assert_eq!(raw.links.len(), 1, "the ring corridor holds one lane");
@@ -378,7 +378,7 @@ fn a_full_node_compacts_port_rows_rather_than_turning_links_away() {
         "{ layout: grid; columns: repeat(5); gap: 60;\n\
          clearance: 8;\n\
          }\n\
-         hub |box| { width: 40; height: 40; cell: 3 3; } \"\"\n",
+         |box#hub| \"\" { width: 40; height: 40; cell: 3 3; }\n",
     );
     let cells: Vec<(usize, usize)> = (1..=5)
         .flat_map(|r| (1..=5).map(move |c| (c, r)))
@@ -387,7 +387,7 @@ fn a_full_node_compacts_port_rows_rather_than_turning_links_away() {
         .collect();
     for (i, (c, r)) in cells.iter().enumerate() {
         src.push_str(&format!(
-            "s{i:02} |box| {{ width: 30; height: 30; cell: {c} {r}; }} \"\"\n"
+            "|box#s{i:02}| \"\" {{ width: 30; height: 30; cell: {c} {r}; }}\n"
         ));
     }
     for i in 0..cells.len() {

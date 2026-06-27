@@ -48,17 +48,17 @@ fn err_link_chain_mixes_operators() {
 
 #[test]
 fn err_unterminated_string() {
-    assert_parse_error("cat |box| \"oops\n", "unterminated string");
+    assert_parse_error("|box#cat| \"oops\n", "unterminated string");
 }
 
 #[test]
 fn err_bad_escape_sequence() {
-    assert_parse_error("cat |box| \"\\x\"\n", "invalid escape sequence");
+    assert_parse_error("|box#cat| \"\\x\"\n", "invalid escape sequence");
 }
 
 #[test]
 fn err_invalid_hex_color() {
-    assert_parse_error("{ --c: #ff; }\ncat |box|\n", "invalid hex color");
+    assert_parse_error("{ --c: #ff; }\n|box#cat|\n", "invalid hex color");
 }
 
 #[test]
@@ -66,7 +66,7 @@ fn err_link_body_holds_only_labels() {
     // A link's `{ }` holds only declarations (along:, stroke, …); a nested link
     // is not a declaration, so the block rejects it.
     assert_parse_error(
-        "a |box|\nb |box|\na -> b { c -> d }\n",
+        "|box#a|\n|box#b|\na -> b { c -> d }\n",
         "style block holds only declarations",
     );
 }
@@ -74,19 +74,19 @@ fn err_link_body_holds_only_labels() {
 #[test]
 fn lini_var_value_parses_anywhere() {
     // SPEC §11.2: `--name` is a first-class value form.
-    lini::check_parse("{ --gap: --my-gap; }\ncat |box|\n").expect("--gap parses");
-    lini::check_parse("cat |box| { fill: --accent; }\n").expect("--accent parses");
+    lini::check_parse("{ --gap: --my-gap; }\n|box#cat|\n").expect("--gap parses");
+    lini::check_parse("|box#cat| { fill: --accent; }\n").expect("--accent parses");
 }
 
 #[test]
 fn endpoint_dotpath_navigates_into_groups() {
-    lini::check_parse("garden |group| [ frog |box| ]\ngarden.frog -> outside\n")
+    lini::check_parse("|group#garden| [ |box#frog| ]\ngarden.frog -> outside\n")
         .expect("dot-path endpoint");
 }
 
 #[test]
 fn endpoint_side_suffix_parses() {
-    lini::check_parse("cat |box|\ndog |box|\ncat.right -> dog.left\n").expect("side suffix");
+    lini::check_parse("|box#cat|\n|box#dog|\ncat:right -> dog:left\n").expect("side suffix");
 }
 
 #[test]

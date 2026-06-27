@@ -25,7 +25,7 @@ fn html_format_wraps_svg_in_html_doc() {
 #[test]
 fn baked_output_inlines_every_var_but_keeps_shape_rules() {
     let svg = lini::compile_str_with(
-        "|box| { fill: --accent } \"x\"\n",
+        "|box| \"x\" { fill: --accent }\n",
         &Options {
             bake_vars: true,
             ..Default::default()
@@ -67,7 +67,7 @@ fn no_defaults_flag_is_an_unknown_argument() {
 #[test]
 fn theme_overrides_visual_var_visible_in_baked_output() {
     let svg = lini::compile_str_with(
-        "|box| { fill: --accent } \"x\"\n",
+        "|box| \"x\" { fill: --accent }\n",
         &Options {
             theme_css: Some("--lini-accent: hotpink;".to_string()),
             bake_vars: true,

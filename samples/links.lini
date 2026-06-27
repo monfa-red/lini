@@ -31,7 +31,7 @@
 ]
 
 // each |room| materialises its own inlet -> outlet link from the define body
-|row#rooms| { gap: 64; } [
+|row#rooms| { gap: 64; padding: 26 0 0 0; } [
   |caption| "internal links"
   |room#garden|  "Garden"
   |room#kitchen| "Kitchen"
