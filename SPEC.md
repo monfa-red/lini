@@ -1627,7 +1627,6 @@ hexdigit    = digit | "a"…"f" | "A"…"F"
 string      = '"' { char | escape } '"'
 escape      = "\" ( '"' | "\" | "n" | "t" )
 comment     = "//" { not-newline } newline
-end         = newline | ";"
 ```
 
 **Single-pass LL(1).** The phase order (stylesheet → canvas → links) plus the
