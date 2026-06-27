@@ -36,6 +36,7 @@ enum Kind {
     Var,
     Rule,
     Define,
+    Func,
     Unknown,
 }
 
@@ -163,13 +164,13 @@ impl<'a> Parser<'a> {
                     Kind::Rule
                 },
             ),
-            Some(TokKind::Ident(_)) => {
-                match self.kind_at(1) {
-                    Some(TokKind::Colon) => Ok(Kind::Decl),
-                    _ => Err(self
-                        .err("a type only appears in bars — write '|box| { }' to style every box")),
-                }
-            }
+            Some(TokKind::Ident(_)) => match self.kind_at(1) {
+                Some(TokKind::Colon) => Ok(Kind::Decl),
+                // `name(params) `…`` is a function definition (SPEC §11.7).
+                Some(TokKind::LParen) => Ok(Kind::Func),
+                _ => Err(self
+                    .err("a type only appears in bars — write '|box| { }' to style every box")),
+            },
             _ => Err(self.err("the stylesheet holds declarations, rules, and defines")),
         }
     }
@@ -264,6 +265,7 @@ impl<'a> Parser<'a> {
                 Kind::Decl => StyleItem::RootDecl(self.parse_decl()?),
                 Kind::Rule => StyleItem::Rule(self.parse_rule()?),
                 Kind::Define => StyleItem::Define(self.parse_define()?),
+                Kind::Func => StyleItem::Func(self.parse_funcdef()?),
                 _ => unreachable!(),
             };
             items.push(item);
@@ -308,26 +310,24 @@ impl<'a> Parser<'a> {
         })
     }
 
-    /// Comma-separated value groups; each group is a space-separated sequence.
+    /// Comma-separated value groups; each group is a space-separated sequence. A
+    /// declaration's value runs to `;` (or a closing `}` / `]`), so it may span
+    /// lines — a newline inside a value is whitespace, not a terminator (SPEC §2/§3).
     fn parse_values(&mut self) -> Result<(Vec<Vec<Value>>, Span), Error> {
         let start = self.span();
         let mut groups: Vec<Vec<Value>> = Vec::new();
         let mut current: Vec<Value> = Vec::new();
         loop {
-            if matches!(
-                self.kind(),
-                Some(TokKind::Newline)
-                    | Some(TokKind::Semi)
-                    | Some(TokKind::RBrace)
-                    | Some(TokKind::RBracket)
-                    | None
-            ) {
-                break;
-            } else if matches!(self.kind(), Some(TokKind::Comma)) {
-                self.pos += 1;
-                groups.push(std::mem::take(&mut current));
-            } else {
-                current.push(self.parse_value()?);
+            match self.kind() {
+                Some(TokKind::Semi) | Some(TokKind::RBrace) | Some(TokKind::RBracket) | None => {
+                    break;
+                }
+                Some(TokKind::Newline) => self.pos += 1,
+                Some(TokKind::Comma) => {
+                    self.pos += 1;
+                    groups.push(std::mem::take(&mut current));
+                }
+                _ => current.push(self.parse_value()?),
             }
         }
         groups.push(current);
@@ -361,6 +361,7 @@ impl<'a> Parser<'a> {
                 Value::Hex(h)
             }
             Some(TokKind::RawCssVar(s)) => Value::Var(s.clone()),
+            Some(TokKind::Expr(s)) => Value::Expr(s.clone()),
             _ => return Err(self.err("expected a value")),
         };
         self.pos += 1;
@@ -510,6 +511,37 @@ impl<'a> Parser<'a> {
             style_span,
             children,
             links,
+            span: Span::new(start.start, self.last_span().end),
+        })
+    }
+
+    /// `name(params) `body`;` — a compute function (SPEC §11.7): a name, a
+    /// parameter list, and a backtick body, juxtaposed (no colon). The trailing
+    /// `;` is consumed by the caller's terminator, like a declaration.
+    fn parse_funcdef(&mut self) -> Result<FuncDef, Error> {
+        let (name, start) = self.expect_ident()?;
+        self.expect(&TokKind::LParen, "'('")?;
+        let mut params = Vec::new();
+        if !matches!(self.kind(), Some(TokKind::RParen)) {
+            params.push(self.expect_ident()?.0);
+            while self.eat(&TokKind::Comma) {
+                params.push(self.expect_ident()?.0);
+            }
+        }
+        self.expect(&TokKind::RParen, "')'")?;
+        let body = match self.kind() {
+            Some(TokKind::Expr(s)) => s.clone(),
+            _ => {
+                return Err(self.err(
+                    "a function body is a backtick expression — e.g. scale(n) `100 * 1.2^n`",
+                ));
+            }
+        };
+        self.pos += 1;
+        Ok(FuncDef {
+            name,
+            params,
+            body,
             span: Span::new(start.start, self.last_span().end),
         })
     }
@@ -1252,5 +1284,37 @@ mod tests {
     #[test]
     fn empty_declaration_errors() {
         assert!(parse_err("|box#a| { gap: }\n").contains("needs a value"));
+    }
+
+    // ── Expressions & functions (SPEC §11.7) ──
+
+    #[test]
+    fn funcdef_and_expr_values() {
+        let f = parse_ok(
+            "{ scale(n) `100 * 1.2 ^ n`; }\n|box#a| { width: scale(3); padding: `8 * 2` }\n",
+        );
+        match &f.stylesheet[0] {
+            StyleItem::Func(fd) => {
+                assert_eq!(fd.name, "scale");
+                assert_eq!(fd.params, vec!["n"]);
+                assert!(fd.body.contains("1.2"));
+            }
+            _ => panic!("expected a funcdef"),
+        }
+        let n = instance(&f, 0);
+        assert!(matches!(&n.style[0].groups[0][0], Value::Call(c) if c.name == "scale"));
+        assert!(matches!(&n.style[1].groups[0][0], Value::Expr(s) if s.contains('8')));
+    }
+
+    #[test]
+    fn a_declaration_value_spans_lines_until_semicolon() {
+        // Newlines inside a value are whitespace; the value runs to `;` (SPEC §2/§3).
+        let f = parse_ok("|line#x| { points: 0 0,\n  10 10,\n  20 0; }\n");
+        let points = instance(&f, 0)
+            .style
+            .iter()
+            .find(|d| d.name == "points")
+            .unwrap();
+        assert_eq!(points.groups.len(), 3);
     }
 }

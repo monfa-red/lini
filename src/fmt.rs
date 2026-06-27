@@ -154,6 +154,15 @@ impl Emitter<'_> {
             }
             StyleItem::Rule(r) => self.emit_rule(r, depth),
             StyleItem::Define(d) => self.emit_define(d, depth),
+            StyleItem::Func(f) => {
+                self.indent(depth);
+                self.out.push_str(&f.name);
+                self.out.push('(');
+                self.out.push_str(&f.params.join(", "));
+                self.out.push_str(") `");
+                self.out.push_str(&f.body);
+                self.out.push_str("`;\n");
+            }
         }
     }
 
@@ -559,6 +568,11 @@ impl Emitter<'_> {
                 }
                 self.out.push(')');
             }
+            Value::Expr(s) => {
+                self.out.push('`');
+                self.out.push_str(s);
+                self.out.push('`');
+            }
         }
     }
 
@@ -615,6 +629,7 @@ fn style_item_span(item: &StyleItem) -> Span {
         StyleItem::RootDecl(d) | StyleItem::Var(d) => d.span,
         StyleItem::Rule(r) => r.span,
         StyleItem::Define(d) => d.span,
+        StyleItem::Func(f) => f.span,
     }
 }
 

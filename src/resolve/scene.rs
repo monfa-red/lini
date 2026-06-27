@@ -9,8 +9,9 @@ use super::ir::{AttrMap, MarkerKind, Markers, NodeKind, ResolvedInst, ResolvedVa
 use super::merge::{collapse, resolve_markers};
 use super::value::resolve_groups;
 use crate::error::Error;
+use crate::expr::{Env, Expr, FuncTable, Value as ExprValue};
 use crate::span::Span;
-use crate::syntax::ast::{Child, Link, Node, TextNode};
+use crate::syntax::ast::{Call, Child, Decl, Link, Node, TextNode, Value};
 use std::collections::HashMap;
 
 /// Text properties that cascade to descendant text (SPEC §10): nearest ancestor
@@ -40,6 +41,7 @@ pub struct LiftedLink {
 pub struct SceneCtx<'a> {
     pub sheet: &'a Stylesheet,
     pub vars: &'a VarTable,
+    pub funcs: &'a crate::expr::FuncTable,
 }
 
 /// Resolve the top-level instances into scene nodes, collecting lifted internal
@@ -152,7 +154,18 @@ pub fn resolve_node(
     }
     ordered.extend(ctx.sheet.node_layers(ancestors, &facts));
     for d in &node.style {
-        ordered.push((d.name.clone(), resolve_groups(&d.groups, d.span, ctx.vars)?));
+        // A `points:` parametric expression in `u` is sampled into a vertex list
+        // here (SPEC §11.7); any other value folds normally.
+        if d.name == "points"
+            && let Some(sampled) = sample_points(d, &node.style, ctx.funcs)?
+        {
+            ordered.push(("points".to_string(), sampled));
+            continue;
+        }
+        ordered.push((
+            d.name.clone(),
+            resolve_groups(&d.groups, d.span, ctx.vars, ctx.funcs)?,
+        ));
     }
 
     let markers = resolve_markers(&ordered, MarkerKind::None, MarkerKind::None, node.span)?;
@@ -231,6 +244,93 @@ pub fn resolve_node(
     })
 }
 
+/// Sample a parametric `points:` into a vertex list (SPEC §11.7): a backtick
+/// `` `(…u…)` `` or a named curve `wave(20, 3)` whose `u` sweeps 0→1 over
+/// `samples:` steps, each step evaluating to a point. Returns `None` for a literal
+/// points list or a constant expression — the normal fold handles those.
+fn sample_points(
+    d: &Decl,
+    style: &[Decl],
+    funcs: &FuncTable,
+) -> Result<Option<ResolvedValue>, Error> {
+    // The value must be a single scalar: a backtick body or a call.
+    let src = match d.groups.as_slice() {
+        [group] => match group.as_slice() {
+            [Value::Expr(s)] => s.clone(),
+            [Value::Call(c)] => call_src(c),
+            _ => return Ok(None),
+        },
+        _ => return Ok(None),
+    };
+    let expr = Expr::parse(&src).map_err(|e| Error::at(d.span, e.0))?;
+    // Parametric iff it sweeps `u` or calls a (possibly `u`-bearing) user function;
+    // a constant expression folds via the normal path instead.
+    let parametric = expr
+        .referenced_names()
+        .iter()
+        .any(|n| n == "u" || funcs.contains(n));
+    if !parametric {
+        return Ok(None);
+    }
+    let n = sample_count(style).max(2);
+    let mut pts = Vec::with_capacity(n);
+    for i in 0..n {
+        let u = i as f64 / (n - 1) as f64;
+        let mut env = Env::new();
+        env.insert("u".to_string(), ExprValue::Number(u));
+        match expr.eval(&env, funcs).map_err(|e| Error::at(d.span, e.0))? {
+            ExprValue::Point(x, y) => pts.push(ResolvedValue::Tuple(vec![
+                ResolvedValue::Number(x),
+                ResolvedValue::Number(y),
+            ])),
+            ExprValue::Number(_) => {
+                return Err(Error::at(
+                    d.span,
+                    "a parametric 'points:' expression must return a point '(x, y)'",
+                ));
+            }
+        }
+    }
+    Ok(Some(ResolvedValue::List(pts)))
+}
+
+/// A call as expression source (`wave(20, 3)`), so a named curve folds through the
+/// same engine as a backtick body. Numeric / expr / call args only (geometry).
+fn call_src(c: &Call) -> String {
+    let args: Vec<String> = c.args.iter().map(value_src).collect();
+    format!("{}({})", c.name, args.join(", "))
+}
+
+fn value_src(v: &Value) -> String {
+    match v {
+        Value::Number(n) => n.to_string(),
+        Value::Expr(s) => format!("({s})"),
+        Value::Call(c) => call_src(c),
+        // A non-numeric argument is invalid in geometry; emit it so the parse /
+        // eval reports a clear error rather than silently dropping it.
+        Value::Percent(n) => format!("{n}%"),
+        Value::String(s) => format!("\"{s}\""),
+        Value::Hex(h) => format!("#{h}"),
+        Value::Ident(s) => s.clone(),
+        Value::Var(s) => format!("--{s}"),
+    }
+}
+
+/// The `samples:` count from a node's own block (default 2 — a straight segment).
+fn sample_count(style: &[Decl]) -> usize {
+    style
+        .iter()
+        .find(|d| d.name == "samples")
+        .and_then(|d| match d.groups.as_slice() {
+            [group] => match group.as_slice() {
+                [Value::Number(n)] if *n >= 2.0 => Some(*n as usize),
+                _ => None,
+            },
+            _ => None,
+        })
+        .unwrap_or(2)
+}
+
 /// A resolved text node (SPEC §3/§10): content carrying the text properties
 /// inherited from its container, overlaid with its own `{ }` style (text-valid
 /// props only). `Text` is internal — never a user `|type|`, only the kind of a
@@ -253,7 +353,7 @@ fn text_inst(t: &TextNode, ctx: &SceneCtx, text_ctx: &AttrMap) -> Result<Resolve
                 format!("'{}' needs a box — wrap the text in '|block|'", d.name),
             ));
         }
-        let v = resolve_groups(&d.groups, d.span, ctx.vars)?;
+        let v = resolve_groups(&d.groups, d.span, ctx.vars, ctx.funcs)?;
         attrs.insert(d.name.as_str(), v.clone());
         own_style.insert(d.name.as_str(), v);
     }

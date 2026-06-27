@@ -14,6 +14,10 @@ pub enum TokKind {
     /// the two apart, so it emits one raw token (SPEC §2).
     Hash(String),
     RawCssVar(String), // CSS var name without leading '--'
+    /// A backtick `` `…` `` expression body, captured raw (multi-line); the
+    /// expression sub-language ([`crate::expr`]) parses it, so the main lexer never
+    /// sees its operators (SPEC §11.7).
+    Expr(String),
 
     Pipe,   // |
     Colon,  // : (attr binding)
@@ -98,6 +102,7 @@ impl<'a> Lexer<'a> {
                         "single quotes are not strings — use \"…\"",
                     ));
                 }
+                b'`' => self.lex_expr()?,
                 b'#' => self.lex_hash()?,
                 b'.' => {
                     if self.peek(1).is_some_and(|c| c.is_ascii_digit()) {
@@ -221,6 +226,30 @@ impl<'a> Lexer<'a> {
             Span::new(start, self.i),
             "unterminated string literal",
         ))
+    }
+
+    /// A backtick `` `…` `` region, captured raw (multi-line) — the expression
+    /// engine parses the body, so the main lexer never sees operators (SPEC §11.7).
+    fn lex_expr(&mut self) -> Result<(), Error> {
+        let start = self.i;
+        self.i += 1; // opening backtick
+        let body_start = self.i;
+        while self.i < self.bytes.len() && self.bytes[self.i] != b'`' {
+            self.i += 1;
+        }
+        if self.i >= self.bytes.len() {
+            return Err(Error::at(
+                Span::new(start, self.i),
+                "unterminated `…` expression",
+            ));
+        }
+        let body = self.src[body_start..self.i].to_string();
+        self.i += 1; // closing backtick
+        self.tokens.push(Token {
+            kind: TokKind::Expr(body),
+            span: Span::new(start, self.i),
+        });
+        Ok(())
     }
 
     fn lex_hash(&mut self) -> Result<(), Error> {

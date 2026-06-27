@@ -1,6 +1,7 @@
 mod ast;
 mod desugar;
 mod error;
+mod expr;
 mod fmt;
 mod icon;
 mod layout;

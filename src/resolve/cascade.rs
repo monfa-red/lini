@@ -17,6 +17,7 @@
 use super::ir::{ResolvedValue, VarTable};
 use super::value::resolve_groups;
 use crate::error::Error;
+use crate::expr::FuncTable;
 use crate::syntax::ast::{Rule, SelUnit};
 use std::collections::HashSet;
 
@@ -37,7 +38,7 @@ impl Stylesheet {
     /// Compile the file's rules: resolve each rule's declarations against the
     /// variable table and record its selector. Source order is preserved as the
     /// vector order — every cascade tie breaks on it.
-    pub fn build(rules: &[&Rule], vars: &VarTable) -> Result<Self, Error> {
+    pub fn build(rules: &[&Rule], vars: &VarTable, funcs: &FuncTable) -> Result<Self, Error> {
         let mut compiled = Vec::with_capacity(rules.len());
         let mut classes = HashSet::new();
         for rule in rules {
@@ -48,7 +49,10 @@ impl Stylesheet {
             }
             let mut decls = Vec::with_capacity(rule.decls.len());
             for d in &rule.decls {
-                decls.push((d.name.clone(), resolve_groups(&d.groups, d.span, vars)?));
+                decls.push((
+                    d.name.clone(),
+                    resolve_groups(&d.groups, d.span, vars, funcs)?,
+                ));
             }
             compiled.push(CompiledRule {
                 selector: rule.selector.units.clone(),
@@ -283,7 +287,7 @@ mod tests {
                 _ => None,
             })
             .collect();
-        Stylesheet::build(&rules, &VarTable::new()).expect("build")
+        Stylesheet::build(&rules, &VarTable::new(), &FuncTable::new()).expect("build")
     }
 
     fn names(decls: &[(String, ResolvedValue)]) -> Vec<&str> {

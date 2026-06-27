@@ -34,6 +34,18 @@ pub enum StyleItem {
     Rule(Rule),
     /// `|name::base| { style } [ children ]` — a new type from a base.
     Define(Define),
+    /// `name(params) `body`;` — a compute function (SPEC §11.7).
+    Func(FuncDef),
+}
+
+/// `name(params) `body`;` — a stylesheet function (SPEC §11.7). The body is the
+/// raw backtick text, parsed by [`crate::expr`] at resolve.
+#[derive(Debug, Clone)]
+pub struct FuncDef {
+    pub name: String,
+    pub params: Vec<String>,
+    pub body: String,
+    pub span: Span,
 }
 
 #[derive(Debug, Clone)]
@@ -176,6 +188,9 @@ pub enum Value {
     Var(String),
     /// `rgb(…)`, `hsl(…)`, `repeat(…)`.
     Call(Call),
+    /// A backtick `` `…` `` compile-time expression body (SPEC §11.7), folded to a
+    /// number or a point at resolve.
+    Expr(String),
 }
 
 #[derive(Debug, Clone)]

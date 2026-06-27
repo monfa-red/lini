@@ -47,7 +47,10 @@ pub fn resolve_link(
     let mut ordered: Vec<(String, ResolvedValue)> = link_defaults.to_vec();
     ordered.extend(class_layers);
     for d in &w.style {
-        ordered.push((d.name.clone(), resolve_groups(&d.groups, d.span, ctx.vars)?));
+        ordered.push((
+            d.name.clone(),
+            resolve_groups(&d.groups, d.span, ctx.vars, ctx.funcs)?,
+        ));
     }
     // A link's paint family is `link` / `link-width` / `link-style` (SPEC §9);
     // map them onto the path's `stroke*` so the cascade and renderer are uniform.
@@ -88,7 +91,7 @@ pub fn resolve_link(
             }
             lattrs.insert(
                 d.name.as_str(),
-                resolve_groups(&d.groups, d.span, ctx.vars)?,
+                resolve_groups(&d.groups, d.span, ctx.vars, ctx.funcs)?,
             );
         }
         texts.push(ResolvedText {

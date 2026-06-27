@@ -16,15 +16,20 @@ use super::merge::collapse;
 use super::scene::{self, PathIndex, SceneCtx};
 use super::value::resolve_groups;
 use crate::error::Error;
+use crate::expr::{Expr, FuncTable};
 use crate::syntax::ast::{Decl, File, Rule, SelUnit, StyleItem};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 /// Resolve a parsed file into a [`Program`].
 pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error> {
     // ── Variables: built-in visual-var defaults ← theme ← `--name` decls ──
     let mut vars = defaults::built_in_defaults();
     apply_theme(&mut vars, theme);
-    apply_var_decls(&mut vars, file)?;
+
+    // ── Functions: parse each `name(params) `body`` and reject cycles (SPEC §11.7);
+    //    every numeric value folds against this table. ──
+    let funcs = build_funcs(file)?;
+    apply_var_decls(&mut vars, file, &funcs)?;
 
     // ── Stylesheet: the desugared file's rules (generated `.lini-*` type classes,
     //    descendant + user-class rules) ──
@@ -36,10 +41,10 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
             _ => None,
         })
         .collect();
-    let sheet = Stylesheet::build(&rules, &vars)?;
+    let sheet = Stylesheet::build(&rules, &vars, &funcs)?;
 
     // ── Root configuration + the text props it cascades ──
-    let root_attrs = root_attrs(file, &vars)?;
+    let root_attrs = root_attrs(file, &vars, &funcs)?;
     let mut root_text_ctx = AttrMap::new();
     for name in scene::INHERITED_TEXT {
         if let Some(v) = root_attrs.get(name) {
@@ -52,6 +57,7 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
     let ctx = SceneCtx {
         sheet: &sheet,
         vars: &vars,
+        funcs: &funcs,
     };
     let mut id_seen = HashMap::new();
     let mut lifted = Vec::new();
@@ -68,7 +74,7 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
     // ── Links: root statements then lifted internal links. Each link's lowest
     //    layer is the baked base plus the `link*` / `clearance` / `routing`
     //    cascaded from its scope's container chain (SPEC §9). ──
-    let baked = baked_link_defaults(&vars)?;
+    let baked = baked_link_defaults(&vars, &funcs)?;
     let mut link_list = Vec::new();
     for w in &file.links {
         let base = link_cascade(&baked, &nodes, &root_attrs, &[]);
@@ -81,7 +87,7 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
         )?);
     }
 
-    let sheet_inputs = build_sheet_inputs(file, &vars, &root_attrs, &baked)?;
+    let sheet_inputs = build_sheet_inputs(file, &vars, &funcs, &root_attrs, &baked)?;
 
     Ok(Program {
         vars,
@@ -187,13 +193,70 @@ fn split_top_commas(s: &str) -> Vec<&str> {
 /// Apply `--name: value` declarations in source order (each sees the prior).
 /// All vars are visual (SPEC §11.2); a built-in `--lini-*` name keeps its
 /// meaning, a new name is the author's.
-fn apply_var_decls(vars: &mut VarTable, file: &File) -> Result<(), Error> {
+fn apply_var_decls(vars: &mut VarTable, file: &File, funcs: &FuncTable) -> Result<(), Error> {
     for item in &file.stylesheet {
         if let StyleItem::Var(d) = item {
-            let value = resolve_groups(&d.groups, d.span, vars)?;
+            let value = resolve_groups(&d.groups, d.span, vars, funcs)?;
             vars.set(d.name.clone(), value);
         }
     }
+    Ok(())
+}
+
+/// Parse the stylesheet's `funcdef`s into a [`FuncTable`] and reject reference
+/// cycles (SPEC §11.7). Arity and unknown-name errors surface at fold time.
+fn build_funcs(file: &File) -> Result<FuncTable, Error> {
+    let mut parsed = Vec::new();
+    for item in &file.stylesheet {
+        if let StyleItem::Func(f) = item {
+            let body = Expr::parse(&f.body).map_err(|e| Error::at(f.span, e.0))?;
+            parsed.push((f, body));
+        }
+    }
+    let names: HashSet<&str> = parsed.iter().map(|(f, _)| f.name.as_str()).collect();
+    // Edges to other user functions only (math builtins / params are not nodes).
+    let graph: HashMap<&str, Vec<String>> = parsed
+        .iter()
+        .map(|(f, body)| {
+            let refs = body
+                .referenced_names()
+                .into_iter()
+                .filter(|n| names.contains(n.as_str()))
+                .collect();
+            (f.name.as_str(), refs)
+        })
+        .collect();
+    for (f, _) in &parsed {
+        detect_cycle(&f.name, &graph, &mut Vec::new())?;
+    }
+
+    let mut funcs = FuncTable::new();
+    for (f, body) in parsed {
+        funcs.insert(f.name.clone(), f.params.clone(), body);
+    }
+    Ok(funcs)
+}
+
+/// Depth-first cycle check over the function reference graph.
+fn detect_cycle(
+    name: &str,
+    graph: &HashMap<&str, Vec<String>>,
+    stack: &mut Vec<String>,
+) -> Result<(), Error> {
+    if stack.iter().any(|n| n == name) {
+        stack.push(name.to_string());
+        return Err(Error::at(
+            crate::span::Span::empty(),
+            format!("cycle in '{}'", stack.join(" → ")),
+        ));
+    }
+    stack.push(name.to_string());
+    if let Some(refs) = graph.get(name) {
+        for r in refs {
+            detect_cycle(r, graph, stack)?;
+        }
+    }
+    stack.pop();
     Ok(())
 }
 
@@ -202,11 +265,14 @@ fn apply_var_decls(vars: &mut VarTable, file: &File) -> Result<(), Error> {
 /// Root container attributes — read straight from the global block. Desugar
 /// injects the scene defaults (`layout: column`, `padding: 20` — the scene's
 /// frame — `gap`, the inherited-text baseline), so there is nothing to seed here.
-fn root_attrs(file: &File, vars: &VarTable) -> Result<AttrMap, Error> {
+fn root_attrs(file: &File, vars: &VarTable, funcs: &FuncTable) -> Result<AttrMap, Error> {
     let mut ordered: Vec<(String, ResolvedValue)> = Vec::new();
     for item in &file.stylesheet {
         if let StyleItem::RootDecl(d) = item {
-            ordered.push((d.name.clone(), resolve_groups(&d.groups, d.span, vars)?));
+            ordered.push((
+                d.name.clone(),
+                resolve_groups(&d.groups, d.span, vars, funcs)?,
+            ));
         }
     }
     Ok(collapse(&ordered))
@@ -217,10 +283,16 @@ fn root_attrs(file: &File, vars: &VarTable) -> Result<AttrMap, Error> {
 /// The baked link base (SPEC §11.5) — a link's lowest-specificity layer, below
 /// the scope cascade, class rules, and its own block. The values live in the one
 /// tuning home (`desugar::bundles`).
-fn baked_link_defaults(vars: &VarTable) -> Result<Vec<(String, ResolvedValue)>, Error> {
+fn baked_link_defaults(
+    vars: &VarTable,
+    funcs: &FuncTable,
+) -> Result<Vec<(String, ResolvedValue)>, Error> {
     let mut out = Vec::new();
     for d in crate::desugar::bundles::link_defaults() {
-        out.push((d.name.clone(), resolve_groups(&d.groups, d.span, vars)?));
+        out.push((
+            d.name.clone(),
+            resolve_groups(&d.groups, d.span, vars, funcs)?,
+        ));
     }
     Ok(out)
 }
@@ -273,6 +345,7 @@ fn link_cascade(
 fn build_sheet_inputs(
     file: &File,
     vars: &VarTable,
+    funcs: &FuncTable,
     root_attrs: &AttrMap,
     baked: &[(String, ResolvedValue)],
 ) -> Result<SheetInputs, Error> {
@@ -281,7 +354,7 @@ fn build_sheet_inputs(
         if let StyleItem::Rule(r) = item
             && let [SelUnit::Class(c)] = r.selector.units.as_slice()
         {
-            class_rules.push((c.clone(), decls_attrmap(&r.decls, vars)?));
+            class_rules.push((c.clone(), decls_attrmap(&r.decls, vars, funcs)?));
         }
     }
     // The `.lini-link` rule's defaults: the root-level link cascade, mapped to
@@ -318,10 +391,13 @@ fn build_sheet_inputs(
     })
 }
 
-fn decls_attrmap(decls: &[Decl], vars: &VarTable) -> Result<AttrMap, Error> {
+fn decls_attrmap(decls: &[Decl], vars: &VarTable, funcs: &FuncTable) -> Result<AttrMap, Error> {
     let mut ordered = Vec::with_capacity(decls.len());
     for d in decls {
-        ordered.push((d.name.clone(), resolve_groups(&d.groups, d.span, vars)?));
+        ordered.push((
+            d.name.clone(),
+            resolve_groups(&d.groups, d.span, vars, funcs)?,
+        ));
     }
     Ok(collapse(&ordered))
 }

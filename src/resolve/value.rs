@@ -12,8 +12,66 @@
 
 use super::ir::{ResolvedCall, ResolvedValue, VarTable};
 use crate::error::Error;
+use crate::expr::{self, Env, Expr, FuncTable, Value as ExprValue};
 use crate::span::Span;
 use crate::syntax::ast::{Call, Value};
+
+/// The colour / track builders (SPEC §11.3, §5): these make a typed value and stay
+/// a `Call` for the renderer / layout. Every other call is compute (a math builtin
+/// or a user function) and folds to a number via the expression engine.
+fn is_builder(name: &str) -> bool {
+    matches!(
+        name,
+        "oklch"
+            | "gradient"
+            | "linear-gradient"
+            | "radial-gradient"
+            | "rgb"
+            | "rgba"
+            | "hsl"
+            | "hsla"
+            | "repeat"
+    )
+}
+
+fn from_expr(v: ExprValue) -> ResolvedValue {
+    match v {
+        ExprValue::Number(n) => ResolvedValue::Number(n),
+        ExprValue::Point(x, y) => {
+            ResolvedValue::Tuple(vec![ResolvedValue::Number(x), ResolvedValue::Number(y)])
+        }
+    }
+}
+
+/// Fold a backtick body to a value, in a plain (non-geometry) context.
+fn fold_expr(body: &str, span: Span, funcs: &FuncTable) -> Result<ExprValue, Error> {
+    let expr = Expr::parse(body).map_err(|e| Error::at(span, e.0))?;
+    expr.eval(&Env::new(), funcs)
+        .map_err(|e| Error::at(span, e.0))
+}
+
+/// Evaluate a compute call (`scale(3)`, `min(a, b)`) to a number / point: each arg
+/// folds to an expression value, then the engine applies the math builtin or user
+/// function (SPEC §11.7).
+fn fold_call(c: &Call, span: Span, funcs: &FuncTable) -> Result<ExprValue, Error> {
+    let mut args = Vec::with_capacity(c.args.len());
+    for a in &c.args {
+        args.push(fold_arg(a, span, funcs)?);
+    }
+    expr::call(funcs, &c.name, &args).map_err(|e| Error::at(span, e.0))
+}
+
+fn fold_arg(v: &Value, span: Span, funcs: &FuncTable) -> Result<ExprValue, Error> {
+    match v {
+        Value::Number(n) => Ok(ExprValue::Number(*n)),
+        Value::Expr(s) => fold_expr(s, span, funcs),
+        Value::Call(c) if !is_builder(&c.name) => fold_call(c, span, funcs),
+        _ => Err(Error::at(
+            span,
+            "a computed argument must be a number, a `…` expression, or another compute call",
+        )),
+    }
+}
 
 /// Resolve a declaration's comma-separated value groups into one value: one
 /// group collapses to a scalar or `Tuple`, several groups form a `List`.
@@ -21,34 +79,45 @@ pub fn resolve_groups(
     groups: &[Vec<Value>],
     span: Span,
     vars: &VarTable,
+    funcs: &FuncTable,
 ) -> Result<ResolvedValue, Error> {
     if let [only] = groups {
-        return resolve_group(only, span, vars);
+        return resolve_group(only, span, vars, funcs);
     }
     let mut items = Vec::with_capacity(groups.len());
     for g in groups {
-        items.push(resolve_group(g, span, vars)?);
+        items.push(resolve_group(g, span, vars, funcs)?);
     }
     Ok(ResolvedValue::List(items))
 }
 
 /// One space-separated group: a lone scalar stays a scalar, several become a
 /// `Tuple`.
-fn resolve_group(group: &[Value], span: Span, vars: &VarTable) -> Result<ResolvedValue, Error> {
+fn resolve_group(
+    group: &[Value],
+    span: Span,
+    vars: &VarTable,
+    funcs: &FuncTable,
+) -> Result<ResolvedValue, Error> {
     match group {
         [] => Err(Error::at(span, "empty value group")),
-        [only] => resolve_scalar(only, span, vars),
+        [only] => resolve_scalar(only, span, vars, funcs),
         many => {
             let mut items = Vec::with_capacity(many.len());
             for v in many {
-                items.push(resolve_scalar(v, span, vars)?);
+                items.push(resolve_scalar(v, span, vars, funcs)?);
             }
             Ok(ResolvedValue::Tuple(items))
         }
     }
 }
 
-fn resolve_scalar(v: &Value, span: Span, vars: &VarTable) -> Result<ResolvedValue, Error> {
+fn resolve_scalar(
+    v: &Value,
+    span: Span,
+    vars: &VarTable,
+    funcs: &FuncTable,
+) -> Result<ResolvedValue, Error> {
     Ok(match v {
         Value::Number(n) => ResolvedValue::Number(*n),
         Value::Percent(n) => ResolvedValue::Percent(*n),
@@ -60,14 +129,23 @@ fn resolve_scalar(v: &Value, span: Span, vars: &VarTable) -> Result<ResolvedValu
             name: name.clone(),
             raw: false,
         },
-        Value::Call(c) => resolve_call(c, span, vars)?,
+        // A colour / track builder stays a typed Call; any other call is compute.
+        Value::Call(c) if is_builder(&c.name) => resolve_call(c, span, vars, funcs)?,
+        Value::Call(c) => from_expr(fold_call(c, span, funcs)?),
+        // A backtick expression folds to a number / point (SPEC §11.7).
+        Value::Expr(s) => from_expr(fold_expr(s, span, funcs)?),
     })
 }
 
-fn resolve_call(c: &Call, span: Span, vars: &VarTable) -> Result<ResolvedValue, Error> {
+fn resolve_call(
+    c: &Call,
+    span: Span,
+    vars: &VarTable,
+    funcs: &FuncTable,
+) -> Result<ResolvedValue, Error> {
     let mut args = Vec::with_capacity(c.args.len());
     for a in &c.args {
-        args.push(resolve_scalar(a, span, vars)?);
+        args.push(resolve_scalar(a, span, vars, funcs)?);
     }
     // `oklch()` is the palette's own colour space (SPEC §2/§11.2): fold it to a hex
     // at compile time so it renders in browsers, resvg, and email alike.
@@ -164,7 +242,65 @@ mod tests {
     }
 
     fn resolve(groups: &[Vec<Value>]) -> ResolvedValue {
-        resolve_groups(groups, Span::empty(), &novars()).expect("resolve")
+        resolve_groups(groups, Span::empty(), &novars(), &FuncTable::new()).expect("resolve")
+    }
+
+    fn resolve_with(groups: &[Vec<Value>], funcs: &FuncTable) -> ResolvedValue {
+        resolve_groups(groups, Span::empty(), &novars(), funcs).expect("resolve")
+    }
+
+    #[test]
+    fn backtick_expression_folds_to_a_number() {
+        let v = resolve(&[vec![Value::Expr("8 * 2".into())]]);
+        assert!(matches!(v, ResolvedValue::Number(n) if n == 16.0));
+    }
+
+    #[test]
+    fn a_user_function_call_folds() {
+        let mut funcs = FuncTable::new();
+        funcs.insert(
+            "scale".into(),
+            vec!["n".into()],
+            Expr::parse("100 * 1.2 ^ n").unwrap(),
+        );
+        let v = resolve_with(
+            &[vec![Value::Call(Call {
+                name: "scale".into(),
+                args: vec![Value::Number(0.0)],
+            })]],
+            &funcs,
+        );
+        assert!(matches!(v, ResolvedValue::Number(n) if n == 100.0));
+    }
+
+    #[test]
+    fn a_computed_argument_in_a_builder_folds() {
+        // `repeat(3, `80 * 2`)` — repeat stays a Call, its computed arg folds to 160.
+        let v = resolve(&[vec![Value::Call(Call {
+            name: "repeat".into(),
+            args: vec![Value::Number(3.0), Value::Expr("80 * 2".into())],
+        })]]);
+        match v {
+            ResolvedValue::Call(c) => {
+                assert_eq!(c.name, "repeat");
+                assert!(matches!(c.args[1], ResolvedValue::Number(n) if n == 160.0));
+            }
+            other => panic!("expected a repeat call, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn an_unknown_function_errors() {
+        let r = resolve_groups(
+            &[vec![Value::Call(Call {
+                name: "nope".into(),
+                args: vec![],
+            })]],
+            Span::empty(),
+            &novars(),
+            &FuncTable::new(),
+        );
+        assert!(r.is_err());
     }
 
     #[test]
@@ -249,6 +385,7 @@ mod tests {
             })]],
             Span::empty(),
             &novars(),
+            &FuncTable::new(),
         )
     }
 
@@ -301,6 +438,7 @@ mod tests {
             })]],
             Span::empty(),
             &novars(),
+            &FuncTable::new(),
         )
     }
 

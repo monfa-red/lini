@@ -105,7 +105,7 @@ fn multi_group_value_list() {
 #[test]
 fn function_value() {
     assert_eq!(
-        fmt("{layout:grid\ncolumns:repeat(3)}\n"),
+        fmt("{layout:grid;\ncolumns:repeat(3)}\n"),
         "{\n  layout: grid; columns: repeat(3);\n}\n"
     );
 }

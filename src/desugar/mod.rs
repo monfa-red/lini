@@ -39,10 +39,14 @@ pub fn desugar(file: &File) -> Result<File, Error> {
     let mut user_root: Vec<Decl> = Vec::new();
     let mut user_vars: Vec<Decl> = Vec::new();
     let mut user_rules: Vec<Rule> = Vec::new();
+    let mut user_funcs: Vec<crate::syntax::ast::FuncDef> = Vec::new();
 
     for item in &file.stylesheet {
         match item {
             StyleItem::RootDecl(d) => user_root.push(d.clone()),
+            // Functions are compile-time (SPEC §11.7); pass them through so resolve
+            // can fold values against them.
+            StyleItem::Func(f) => user_funcs.push(f.clone()),
             StyleItem::Var(d) => user_vars.push(d.clone()),
             StyleItem::Define(d) => {
                 element_rules
@@ -106,6 +110,9 @@ pub fn desugar(file: &File) -> Result<File, Error> {
     }
     for d in user_vars {
         stylesheet.push(StyleItem::Var(d));
+    }
+    for f in user_funcs {
+        stylesheet.push(StyleItem::Func(f));
     }
     for r in class_defs(&present, &element_rules, &extra_order) {
         stylesheet.push(StyleItem::Rule(r));
