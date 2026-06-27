@@ -7,8 +7,12 @@ pub enum TokKind {
     Ident(String),
     String(String),
     Number(f64),
-    Percent(f64),      // a number with a '%' suffix (color components, SPEC §2)
-    Hex(String),       // hex digits without leading '#'
+    Percent(f64), // a number with a '%' suffix (color components, SPEC §2)
+    /// `#` + the raw run of ident chars after it, undecided: the parser reads it
+    /// as a colour in a value (`#f80`, validated as hex) or an id in bars / at a
+    /// rule head (`#cat`, validated as an ident). A context-free lexer can't tell
+    /// the two apart, so it emits one raw token (SPEC §2).
+    Hash(String),
     RawCssVar(String), // CSS var name without leading '--'
 
     Pipe,   // |
@@ -94,15 +98,13 @@ impl<'a> Lexer<'a> {
                         "single quotes are not strings — use \"…\"",
                     ));
                 }
-                b'#' => self.lex_hex()?,
+                b'#' => self.lex_hash()?,
                 b'.' => {
                     if self.peek(1).is_some_and(|c| c.is_ascii_digit()) {
                         self.lex_number()?;
-                    } else if self.peek(1) == Some(b'.') {
-                        // `..` is the dotted link line; a single `.` is a path /
-                        // class / side separator.
-                        self.lex_link_op()?;
                     } else {
+                        // `.` is a path / class / side separator; `..` is two of
+                        // them, no longer a link line.
                         self.push_punct(TokKind::Dot, 1);
                     }
                 }
@@ -179,8 +181,12 @@ impl<'a> Lexer<'a> {
             let b = self.bytes[self.i];
             if b == b'"' {
                 self.i += 1;
+                // Leading / trailing whitespace is trimmed from every string
+                // value (inner spacing kept) so source spacing never leaks into
+                // the render — `" ABC "` is "ABC" (SPEC §2). The span still covers
+                // the quotes for errors.
                 self.tokens.push(Token {
-                    kind: TokKind::String(value),
+                    kind: TokKind::String(value.trim().to_string()),
                     span: Span::new(start, self.i),
                 });
                 return Ok(());
@@ -217,23 +223,18 @@ impl<'a> Lexer<'a> {
         ))
     }
 
-    fn lex_hex(&mut self) -> Result<(), Error> {
+    fn lex_hash(&mut self) -> Result<(), Error> {
         let start = self.i;
         self.i += 1; // '#'
-        let digits_start = self.i;
-        while self.i < self.bytes.len() && self.bytes[self.i].is_ascii_hexdigit() {
+        let run_start = self.i;
+        while self.i < self.bytes.len() && is_ident_continue(self.bytes[self.i]) {
             self.i += 1;
         }
-        let len = self.i - digits_start;
-        if !matches!(len, 3 | 4 | 6 | 8) {
-            return Err(Error::at(
-                Span::new(start, self.i),
-                format!("invalid hex color '{}'", &self.src[start..self.i]),
-            ));
-        }
-        let digits = self.src[digits_start..self.i].to_string();
+        // Raw, undecided: the parser validates the run as hex digits (a colour in
+        // a value) or an ident (an id in bars / at a rule head) by context.
+        let run = self.src[run_start..self.i].to_string();
         self.tokens.push(Token {
-            kind: TokKind::Hex(digits),
+            kind: TokKind::Hash(run),
             span: Span::new(start, self.i),
         });
         Ok(())
@@ -382,9 +383,10 @@ impl<'a> Lexer<'a> {
 
     fn consume_line(&self, p: &mut usize) -> Option<LineStyle> {
         let rest = self.bytes.get(*p..)?;
-        // Longest match: `..`, `--`, `-`, `~`.
-        if rest.starts_with(b"..") {
-            *p += 2;
+        // The line grows more broken as it lengthens: `-` solid, `--` dashed,
+        // `---` dotted, `~` wavy. Longest match first; `..` is no longer a line.
+        if rest.starts_with(b"---") {
+            *p += 3;
             return Some(LineStyle::Dotted);
         }
         if rest.starts_with(b"--") {
@@ -418,7 +420,7 @@ enum MarkerSide {
 }
 
 fn is_link_line_start(c: u8) -> bool {
-    matches!(c, b'-' | b'~' | b'.')
+    matches!(c, b'-' | b'~')
 }
 
 fn is_ident_start(c: u8) -> bool {
@@ -427,4 +429,82 @@ fn is_ident_start(c: u8) -> bool {
 
 fn is_ident_continue(c: u8) -> bool {
     c.is_ascii_alphanumeric() || c == b'_' || c == b'-'
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::ast::{LineStyle, LinkMarker};
+
+    fn kinds(src: &str) -> Vec<TokKind> {
+        lex(src)
+            .expect("lex ok")
+            .into_iter()
+            .map(|t| t.kind)
+            .filter(|k| !matches!(k, TokKind::Newline))
+            .collect()
+    }
+
+    fn line_of(src: &str) -> LineStyle {
+        match &kinds(src)[..] {
+            [TokKind::LinkOp(op)] => op.line,
+            other => panic!("expected one link op, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn hash_lexes_raw_run_for_colours_and_ids() {
+        assert_eq!(kinds("#fff"), vec![TokKind::Hash("fff".into())]);
+        assert_eq!(kinds("#ffaa00cc"), vec![TokKind::Hash("ffaa00cc".into())]);
+        assert_eq!(kinds("#cat"), vec![TokKind::Hash("cat".into())]);
+        assert_eq!(
+            kinds("#load-balancer"),
+            vec![TokKind::Hash("load-balancer".into())]
+        );
+    }
+
+    #[test]
+    fn link_lines_grow_more_broken() {
+        assert_eq!(line_of("->"), LineStyle::Solid);
+        assert_eq!(line_of("-->"), LineStyle::Dashed);
+        assert_eq!(line_of("--->"), LineStyle::Dotted);
+        assert_eq!(line_of("~>"), LineStyle::Wavy);
+    }
+
+    #[test]
+    fn arrow_marker_sits_at_the_end() {
+        let TokKind::LinkOp(op) = &kinds("->")[0] else {
+            panic!("expected a link op");
+        };
+        assert_eq!(op.start, LinkMarker::None);
+        assert_eq!(op.end, LinkMarker::Arrow);
+    }
+
+    #[test]
+    fn endpoint_side_is_ident_colon_ident() {
+        assert_eq!(
+            kinds("a:left"),
+            vec![
+                TokKind::Ident("a".into()),
+                TokKind::Colon,
+                TokKind::Ident("left".into()),
+            ]
+        );
+    }
+
+    #[test]
+    fn css_var_beats_the_dashed_line() {
+        assert_eq!(kinds("--brand"), vec![TokKind::RawCssVar("brand".into())]);
+    }
+
+    #[test]
+    fn double_dot_is_two_dots_not_a_line() {
+        assert_eq!(kinds(".."), vec![TokKind::Dot, TokKind::Dot]);
+    }
+
+    #[test]
+    fn string_values_are_trimmed() {
+        assert_eq!(kinds("\" ABC \""), vec![TokKind::String("ABC".into())]);
+        assert_eq!(kinds("\"a b\""), vec![TokKind::String("a b".into())]);
+    }
 }

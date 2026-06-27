@@ -51,7 +51,7 @@ pub struct LinkOp {
 pub enum LineStyle {
     Solid,  // -
     Dashed, // --
-    Dotted, // ..
+    Dotted, // ---
     Wavy,   // ~
 }
 
@@ -60,7 +60,7 @@ impl LineStyle {
         match self {
             Self::Solid => "-",
             Self::Dashed => "--",
-            Self::Dotted => "..",
+            Self::Dotted => "---",
             Self::Wavy => "~",
         }
     }
