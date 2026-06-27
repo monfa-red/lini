@@ -9,7 +9,7 @@ use super::bundles::{primitive_bundle, template_bundle};
 use super::types::{TEMPLATES, TypeInfo};
 use crate::resolve::NodeKind;
 use crate::span::Span;
-use crate::syntax::ast::{Decl, Rule, SelPart, Selector};
+use crate::syntax::ast::{Decl, Rule, SelUnit, Selector};
 use std::collections::{BTreeSet, HashMap, HashSet};
 
 /// The `.lini-<name>` class for a type/primitive name.
@@ -89,7 +89,7 @@ pub(super) fn merge_decls(mut base: Vec<Decl>, extra: &[Decl]) -> Vec<Decl> {
 fn class_rule(name: &str, decls: Vec<Decl>) -> Rule {
     Rule {
         selector: Selector {
-            parts: vec![SelPart::Class(lini_class(name))],
+            units: vec![SelUnit::Class(lini_class(name))],
         },
         decls,
         span: Span::empty(),
@@ -109,8 +109,8 @@ mod tests {
         }
     }
     fn sel_class(sel: &Selector) -> &str {
-        match sel.parts.as_slice() {
-            [SelPart::Class(c)] => c,
+        match sel.units.as_slice() {
+            [SelUnit::Class(c)] => c,
             _ => "",
         }
     }

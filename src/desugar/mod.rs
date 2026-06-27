@@ -18,7 +18,7 @@ mod types;
 use crate::error::Error;
 use crate::resolve::NodeKind;
 use crate::span::Span;
-use crate::syntax::ast::{Child, Decl, File, Link, Node, Rule, SelPart, Selector, StyleItem};
+use crate::syntax::ast::{Child, Decl, File, Link, Node, Rule, SelUnit, Selector, StyleItem};
 use bundles::root_defaults;
 use classes::{class_defs, is_lini_class, lini_class, merge_decls, worn_classes};
 use std::collections::{BTreeSet, HashMap};
@@ -52,14 +52,16 @@ pub fn desugar(file: &File) -> Result<File, Error> {
                 bodies.insert(d.name.clone(), (d.children.clone(), d.links.clone()));
                 push_unique(&mut extra_order, &d.name);
             }
-            StyleItem::Rule(r) => match r.selector.parts.as_slice() {
-                [SelPart::Type(t)] => element_rules
-                    .entry(t.clone())
+            StyleItem::Rule(r) => match r.selector.units.as_slice() {
+                // `|box| { }` — a bare element rule folds into the type's class def.
+                // `|table#main| { }` (id-pinned) is an id rule, kept as a user rule.
+                [SelUnit::Type { name, id: None }] => element_rules
+                    .entry(name.clone())
                     .or_default()
                     .extend(r.decls.iter().cloned()),
                 // A pre-lowered type class (`.lini-X`, on re-desugar): fold it back
                 // as an element rule so the regenerated class is byte-identical.
-                [SelPart::Class(c)] if is_lini_class(c) => {
+                [SelUnit::Class(c)] if is_lini_class(c) => {
                     let x = c.strip_prefix("lini-").unwrap().to_string();
                     element_rules
                         .entry(x.clone())
@@ -116,7 +118,7 @@ pub fn desugar(file: &File) -> Result<File, Error> {
         stylesheet,
         stylesheet_span: Span::empty(),
         instances,
-        links: file.links.iter().map(labels::auto_along).collect(),
+        links: file.links.iter().map(labels::lower_link).collect(),
     })
 }
 
@@ -168,41 +170,69 @@ fn lower_node(node: &Node, types: &Types, bodies: &Bodies) -> Result<Node, Error
         children.push(lower_child(c, types, bodies)?);
     }
 
-    // id-as-label for a text-capable leaf box (SPEC §3). Geometry-only shapes hold
-    // no centred text; an icon consumes its text; a container holds its children.
+    // The smart label, lowered per type (SPEC §3/§7) — the single shared lowering
+    // for a node's text (a link's labels go through the same `TextNode`). A box-like
+    // type → centred text prepended; a group/table → a `|caption|` child; an
+    // icon/sign → the `symbol`. An empty `""` lowers to nothing. Geometry-only
+    // shapes (line/poly/path/image) hold no text.
     let text_capable = !matches!(
         kind,
         NodeKind::Line | NodeKind::Poly | NodeKind::Path | NodeKind::Image
     );
     let is_icon = kind == NodeKind::Icon;
     let is_container = info.chain.iter().any(|n| n == "group");
-    if children.is_empty()
-        && text_capable
-        && let Some(label) = labels::label_child_for(node, is_icon, is_container)
-    {
-        children.push(label);
+    let mut style = node.style.clone();
+    if let Some(label) = node.label.as_ref().filter(|l| !l.text.is_empty()) {
+        if is_icon {
+            if style.iter().any(|d| d.name == "symbol") {
+                return Err(Error::at(
+                    node.span,
+                    "an icon's symbol is its label or 'symbol:', not both",
+                ));
+            }
+            style.push(labels::symbol_decl(&label.text, node.span));
+        } else if is_container {
+            let caption = lower_node(&labels::caption_node(label), types, bodies)?;
+            children.insert(0, Child::Box(caption));
+        } else if text_capable {
+            children.insert(0, Child::Text(label.clone()));
+        }
     }
 
-    // Links: define-body links (base→derived) then the node's own, each auto-along'd.
+    // Links: define-body links (base→derived) then the node's own, each lowered
+    // (head label folded into the label list, auto-`along:` filled).
     let mut links = Vec::new();
     if !already {
         for name in &info.chain {
             if let Some((_, body)) = bodies.get(name) {
                 for w in body {
-                    links.push(labels::auto_along(w));
+                    links.push(labels::lower_link(w));
                 }
             }
         }
     }
     for w in &node.links {
-        links.push(labels::auto_along(w));
+        links.push(labels::lower_link(w));
+    }
+
+    // Auto-create undeclared body-link endpoints among this body's own children
+    // (SPEC §3 — auto-create runs in any scope, not just the root).
+    if !already {
+        let declared = scene::declared_ids(&children);
+        for (auto_id, auto_span) in scene::auto_created_ids(&node.links, &declared) {
+            let created = lower_node(&scene::auto_box(&auto_id, auto_span), types, bodies)?;
+            children.push(Child::Box(created));
+        }
     }
 
     Ok(Node {
         id: node.id.clone(),
         ty: new_ty,
+        // The label is now lowered into `children` / `style`, so the output carries
+        // none — keeping the pass idempotent.
+        label: None,
         classes,
-        style: node.style.clone(),
+        style,
         style_span: node.style_span,
         children,
         links,
@@ -210,27 +240,32 @@ fn lower_node(node: &Node, types: &Types, bodies: &Bodies) -> Result<Node, Error
     })
 }
 
-/// Rewrite a non-element rule's selector to the class namespace: each `|type|`
-/// part becomes `.lini-<type>` (validated as a known type), each `.class` part is
-/// kept. Element rules (`|box| { }`) are handled separately, not here.
+/// Rewrite a non-element rule's selector into the class / id namespace: a `|type|`
+/// unit becomes a `.lini-<type>` class match (validated as a known type), keeping
+/// any `#id`; `.class` and `#id` units are kept. Element rules (`|box| { }`) fold
+/// into the type's class def separately, not here.
 fn rewrite_selector(rule: &Rule, types: &Types) -> Result<Rule, Error> {
-    let mut parts = Vec::with_capacity(rule.selector.parts.len());
-    for part in &rule.selector.parts {
-        match part {
-            SelPart::Type(t) => {
-                if !types.is_known(t) {
+    let mut units = Vec::with_capacity(rule.selector.units.len());
+    for unit in &rule.selector.units {
+        match unit {
+            SelUnit::Type { name, id } => {
+                if !types.is_known(name) {
                     return Err(Error::at(
                         rule.span,
-                        format!("unknown type '{}' in selector", t),
+                        format!("unknown type '{}' in selector", name),
                     ));
                 }
-                parts.push(SelPart::Class(lini_class(t)));
+                units.push(SelUnit::Type {
+                    name: lini_class(name),
+                    id: id.clone(),
+                });
             }
-            SelPart::Class(c) => parts.push(SelPart::Class(c.clone())),
+            SelUnit::Class(c) => units.push(SelUnit::Class(c.clone())),
+            SelUnit::Id(i) => units.push(SelUnit::Id(i.clone())),
         }
     }
     Ok(Rule {
-        selector: Selector { parts },
+        selector: Selector { units },
         decls: rule.decls.clone(),
         span: rule.span,
     })

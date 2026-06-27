@@ -4,7 +4,7 @@
 //! the same path as a written one (so it gains its `.lini-box` class and id label).
 
 use crate::span::Span;
-use crate::syntax::ast::{Child, Link, Node};
+use crate::syntax::ast::{Child, Link, Node, TextNode};
 use std::collections::HashSet;
 
 /// Every node id anywhere in `instances` — the auto-create gate: an id present as
@@ -52,12 +52,19 @@ pub fn auto_created_ids(links: &[Link], declared: &HashSet<String>) -> Vec<(Stri
     out
 }
 
-/// A bare `|box|` for an auto-created endpoint; the caller lowers it (so it gains
-/// its `.lini-box` class and id-as-label) exactly like a written box.
+/// A labelled `|box#id| "id"` for an auto-created endpoint (SPEC §3); the caller
+/// lowers it (so it gains its `.lini-box` class and its centred text label)
+/// exactly like a written box.
 pub fn auto_box(id: &str, span: Span) -> Node {
     Node {
         id: Some(id.to_string()),
         ty: Some("box".to_string()),
+        label: Some(TextNode {
+            text: id.to_string(),
+            style: Vec::new(),
+            style_span: None,
+            span,
+        }),
         classes: Vec::new(),
         style: Vec::new(),
         style_span: None,
@@ -90,13 +97,13 @@ mod tests {
 
     #[test]
     fn a_declared_id_is_not_auto_created() {
-        assert_eq!(auto_ids("cat |box|\ncat -> dog\n"), vec!["dog"]);
+        assert_eq!(auto_ids("|box#cat|\ncat -> dog\n"), vec!["dog"]);
     }
 
     #[test]
     fn a_multi_segment_path_never_creates() {
         // `g.x` navigates into the group; only the single-segment, undeclared `y`
         // is created.
-        assert_eq!(auto_ids("g |group| [ x |box| ]\ng.x -> y\n"), vec!["y"]);
+        assert_eq!(auto_ids("|group#g| [ |box#x| ]\ng.x -> y\n"), vec!["y"]);
     }
 }
