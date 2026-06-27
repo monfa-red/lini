@@ -551,7 +551,12 @@ impl<'a> Parser<'a> {
     fn parse_node(&mut self) -> Result<Node, Error> {
         let start = self.span();
         let (ty, id) = self.parse_identity(BarsCtx::Instance)?;
-        let Tail { label, classes, style, style_span } = self.parse_tail()?;
+        let Tail {
+            label,
+            classes,
+            style,
+            style_span,
+        } = self.parse_tail()?;
         let (children, links) = self.opt_children()?;
         Ok(Node {
             id,
@@ -726,7 +731,12 @@ impl<'a> Parser<'a> {
         // The same tail a node uses: a head label, worn classes, the link's own
         // style. The head label and the `[ ]` labels coexist — desugar
         // concatenates them for `along:` (SPEC §9).
-        let Tail { label, classes, style, style_span } = self.parse_tail()?;
+        let Tail {
+            label,
+            classes,
+            style,
+            style_span,
+        } = self.parse_tail()?;
         let labels = if matches!(self.kind(), Some(TokKind::LBracket)) {
             self.parse_label_block()?
         } else {
