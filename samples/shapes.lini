@@ -57,7 +57,9 @@
   |cap| "line"
 ]
 |tile| [
-  |icon| { symbol: house; width: 42; height: 42; fill: --teal-wash; stroke: --teal-deep; }
+  |icon| {
+    symbol: house; width: 42; height: 42; fill: --teal-wash; stroke: --teal-deep;
+  }
   |cap| "icon"
 ]
 

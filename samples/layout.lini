@@ -45,7 +45,9 @@
 // padding & gap take 1-, 2-, or 4-value forms
 |group#spacing| { layout: column; gap: 10; } [
   |caption| "padding"
-  |box| "scalar" { fill: --green-soft; stroke: --green-ink; color: --green-ink; }
+  |box| "scalar" {
+    fill: --green-soft; stroke: --green-ink; color: --green-ink;
+  }
   |box| "v h" {
     padding: 4 14; fill: --green-soft; stroke: --green-ink; color: --green-ink;
   }

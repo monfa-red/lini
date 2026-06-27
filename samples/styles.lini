@@ -27,7 +27,9 @@
   |caption| "cascade"
   |box| "element"
   |box| "+ class" .warn
-  |box| "+ inline" .warn { fill: --amber-wash; stroke: --amber-ink; color: --amber-ink; }
+  |box| "+ inline" .warn {
+    fill: --amber-wash; stroke: --amber-ink; color: --amber-ink;
+  }
   |alert| "alert"
 ]
 

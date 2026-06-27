@@ -55,10 +55,10 @@
 
 |lbl| "Signs, fit: auto"
 |row#a| { gap: 44; } [
-  |sign#web|   .sky { symbol: ghost; fit: auto; }
-  |sign#auth|  .purple { symbol: rocket; fit: auto; }
-  |sign#svc|   .teal { symbol: gear; fit: auto; }
-  |sign#cpu|   .amber { symbol: cpu; fit: auto; }
+  |sign#web| .sky { symbol: ghost; fit: auto; }
+  |sign#auth| .purple { symbol: rocket; fit: auto; }
+  |sign#svc| .teal { symbol: gear; fit: auto; }
+  |sign#cpu| .amber { symbol: cpu; fit: auto; }
   |sign#store| .rose { symbol: database; fit: auto; }
 
   web -> auth
@@ -69,14 +69,14 @@
 
 |lbl| "Signs + Text"
 |row#b| { gap: 44; } [
-  |sign#web|   .teal { symbol: folder-simple; } [
+  |sign#web| .teal { symbol: folder-simple; } [
     "Folder" { translate: 0 2; }
   ]
-  |sign#auth|  .lime { symbol: presentation; } [
+  |sign#auth| .lime { symbol: presentation; } [
     "Canvas" { translate: 0 -3; }
   ]
-  |sign#svc|   .purple { symbol: seal; } [ "Alert" ]
-  |sign#cpu|   .rose { symbol: video-camera; } [
+  |sign#svc| .purple { symbol: seal; } [ "Alert" ]
+  |sign#cpu| .rose { symbol: video-camera; } [
     "video" { translate: -6 0; }
   ]
   |sign#store| .amber { symbol: wall; }

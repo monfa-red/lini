@@ -18,19 +18,29 @@
   |panel#profile| [
     |caption| "Profile"
     |tile#name| "Ada Lovelace"
-    |tile#role| "Engineer" { fill: --teal-soft; stroke: --teal-ink; color: --teal-ink; }
+    |tile#role| "Engineer" {
+      fill: --teal-soft; stroke: --teal-ink; color: --teal-ink;
+    }
     |footer| "since 1843"
   ]
   // row + column nested inside a group
   |panel#nested| { layout: row; gap: 16; } [
     |caption| "row + column"
     |row| [
-      |tile#r1| "a" { fill: --amber-soft; stroke: --amber-ink; color: --amber-ink; }
-      |tile#r2| "b" { fill: --amber-soft; stroke: --amber-ink; color: --amber-ink; }
+      |tile#r1| "a" {
+        fill: --amber-soft; stroke: --amber-ink; color: --amber-ink;
+      }
+      |tile#r2| "b" {
+        fill: --amber-soft; stroke: --amber-ink; color: --amber-ink;
+      }
     ]
     |column| [
-      |tile#c1| "p" { fill: --rose-soft; stroke: --rose-ink; color: --rose-ink; }
-      |tile#c2| "q" { fill: --rose-soft; stroke: --rose-ink; color: --rose-ink; }
+      |tile#c1| "p" {
+        fill: --rose-soft; stroke: --rose-ink; color: --rose-ink;
+      }
+      |tile#c2| "q" {
+        fill: --rose-soft; stroke: --rose-ink; color: --rose-ink;
+      }
     ]
   ]
 ]

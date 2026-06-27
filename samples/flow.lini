@@ -19,12 +19,12 @@
   |orange::box| { fill: --amber-wash; stroke: --amber-ink; color: --amber-ink; }
 }
 
-|red#cat|     "cat"
-|red#dog|     "dog"
-|sky#fish|    "fish"
-|sky#bowl|    "bowl"
-|teal#newt|   "newt"
-|teal#log|    "log"
+|red#cat| "cat"
+|red#dog| "dog"
+|sky#fish| "fish"
+|sky#bowl| "bowl"
+|teal#newt| "newt"
+|teal#log| "log"
 |purple#frog| "frog"
 |purple#pond| "pond"
 |orange#ping| "ping"

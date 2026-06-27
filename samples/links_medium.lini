@@ -13,13 +13,13 @@
 
 |group#kitchen| { layout: column; } [
   |caption| "Kitchen"
-  |treat#bowl|  "Bowl"
+  |treat#bowl| "Bowl"
   |treat#water| "Water"
 ]
 
 |group#garden| { layout: column; } [
   |caption| "Garden"
-  |treat#dog|  "Dog"
+  |treat#dog| "Dog"
   |treat#bird| "Bird"
 ]
 

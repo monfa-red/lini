@@ -8,9 +8,9 @@
   layout: row; gap: 50; clearance: 10;
 }
 
-|box#ant|  "Ant" { width: 60; height: 60; }
+|box#ant| "Ant" { width: 60; height: 60; }
 |box#wall| "Wall" { width: 60; height: 140; }
-|box#bee|  "Bee"
+|box#bee| "Bee"
 |oval#owl| "Owl"
 
 ant -> bee "over"

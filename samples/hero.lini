@@ -46,9 +46,11 @@
 
 |group#data| { layout: row; gap: 28; } [
   |caption| "Data"
-  |store#pg|    "Postgres"
+  |store#pg| "Postgres"
   |store#redis| "Redis"
-  |svc#queue| "Queue" { fill: --amber-wash; stroke: --amber-deep; color: --amber-ink; }
+  |svc#queue| "Queue" {
+    fill: --amber-wash; stroke: --amber-deep; color: --amber-ink;
+  }
 ]
 
 users -> edge.lb "https" .flow

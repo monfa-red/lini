@@ -8,6 +8,6 @@
 |group#api| [
   |caption| "API"
   |chip#health| "OK"
-  |badge|   "v2"
+  |badge| "v2"
 ]
 |cyl#db| "db"

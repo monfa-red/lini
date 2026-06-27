@@ -6,8 +6,12 @@
   |room::group| {
     layout: column; gap: 10; padding: 12; fill: --teal-wash; stroke: --teal-ink;
   } [
-    |box#inlet|  "in" { fill: --teal-soft; stroke: --teal-ink; color: --teal-ink; }
-    |box#outlet| "out" { fill: --teal-soft; stroke: --teal-ink; color: --teal-ink; }
+    |box#inlet| "in" {
+      fill: --teal-soft; stroke: --teal-ink; color: --teal-ink;
+    }
+    |box#outlet| "out" {
+      fill: --teal-soft; stroke: --teal-ink; color: --teal-ink;
+    }
     inlet -> outlet "flows"
   ]
 }
@@ -33,7 +37,7 @@
 // each |room| materialises its own inlet -> outlet link from the define body
 |row#rooms| { gap: 64; padding: 26 0 0 0; } [
   |caption| "internal links"
-  |room#garden|  "Garden"
+  |room#garden| "Garden"
   |room#kitchen| "Kitchen"
 ]
 

@@ -91,7 +91,9 @@
 
 |row#cards| { gap: 10; } [
   |card| "Wash" { fill: --purple-wash; stroke: --purple; color: --purple; }
-  |card| "Soft" { fill: --purple-soft; stroke: --purple-deep; color: --purple-deep; }
+  |card| "Soft" {
+    fill: --purple-soft; stroke: --purple-deep; color: --purple-deep;
+  }
   |card| "Base" { fill: --purple; stroke: --purple-ink; color: --purple-ink; }
   |card| "Deep" { fill: --purple-deep; stroke: --purple-deep; color: --bg; }
   |card| "Ink" { fill: --purple-ink; stroke: --purple-ink; color: --bg; }
