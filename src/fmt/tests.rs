@@ -23,9 +23,10 @@ fn idempotent(src: &str) {
 
 #[test]
 fn node_head_label() {
-    // A lone text `[ ]` contracts to the head label (SPEC §3); a head label stays.
-    assert_eq!(fmt("|box#x|[\"hi\"]\n"), "|box#x| \"hi\"\n");
+    // A head label is preserved; a `[ ]` text child is left as written (fmt resolves
+    // no types, and the head label's meaning is type-dependent — SPEC §3).
     assert_eq!(fmt("|box#x| \"hi\"\n"), "|box#x| \"hi\"\n");
+    assert_eq!(fmt("|box#x|[ \"hi\" ]\n"), "|box#x| [ \"hi\" ]\n");
 }
 
 #[test]
@@ -183,6 +184,8 @@ fn link_class_and_labels_with_along() {
     assert_eq!(fmt("a -> b .loud\n"), "a -> b .loud\n");
     // A spaced link-class chain normalizes to glued, like a node's.
     assert_eq!(fmt("a -> b .c1 .c2\n"), "a -> b .c1.c2\n");
+    // A head label precedes the class (the tail order, re-parseable).
+    assert_eq!(fmt("a -> b \"flows\" .loud\n"), "a -> b \"flows\" .loud\n");
 }
 
 #[test]

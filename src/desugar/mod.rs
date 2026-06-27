@@ -240,25 +240,34 @@ fn lower_node(node: &Node, types: &Types, bodies: &Bodies) -> Result<Node, Error
     })
 }
 
-/// Rewrite a non-element rule's selector into the class / id namespace: a `|type|`
-/// unit becomes a `.lini-<type>` class match (validated as a known type), keeping
-/// any `#id`; `.class` and `#id` units are kept. Element rules (`|box| { }`) fold
-/// into the type's class def separately, not here.
+/// Rewrite a non-element rule's selector into the class / id namespace: a bare
+/// `|type|` unit becomes a `.lini-<type>` **class** (so it prints as `.lini-type`
+/// and re-desugars unchanged); a `|type#id|` keeps a single unit that matches both
+/// the type class and the id; `.class` / `#id` units are kept. Already-lowered
+/// `.lini-*` names pass through (re-desugar idempotency). Element rules
+/// (`|box| { }`, no id) fold into the type's class def separately, not here.
 fn rewrite_selector(rule: &Rule, types: &Types) -> Result<Rule, Error> {
     let mut units = Vec::with_capacity(rule.selector.units.len());
     for unit in &rule.selector.units {
         match unit {
             SelUnit::Type { name, id } => {
-                if !types.is_known(name) {
+                let class = if is_lini_class(name) {
+                    name.clone()
+                } else if types.is_known(name) {
+                    lini_class(name)
+                } else {
                     return Err(Error::at(
                         rule.span,
                         format!("unknown type '{}' in selector", name),
                     ));
+                };
+                match id {
+                    Some(_) => units.push(SelUnit::Type {
+                        name: class,
+                        id: id.clone(),
+                    }),
+                    None => units.push(SelUnit::Class(class)),
                 }
-                units.push(SelUnit::Type {
-                    name: lini_class(name),
-                    id: id.clone(),
-                });
             }
             SelUnit::Class(c) => units.push(SelUnit::Class(c.clone())),
             SelUnit::Id(i) => units.push(SelUnit::Id(i.clone())),

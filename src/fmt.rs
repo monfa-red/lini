@@ -232,8 +232,9 @@ impl Emitter<'_> {
     fn emit_node(&mut self, node: &Node, depth: usize) {
         self.indent(depth);
         self.out.push_str(&identity_bars(node));
-        let (head, body) = self.split_head_label(node);
-        if let Some(label) = head {
+        // The head label is exactly the source's, never contracted from a `[ ]`
+        // text child — its meaning is type-dependent and fmt resolves no types.
+        if let Some(label) = &node.label {
             // The head label takes no style of its own (SPEC §3).
             self.out.push(' ');
             self.emit_string(&label.text);
@@ -246,24 +247,7 @@ impl Emitter<'_> {
             let end = node.style_span.map_or(node.span.end, |s| s.end);
             self.emit_style_block(&node.style, end, depth, false);
         }
-        self.emit_content(node, body, depth);
-    }
-
-    /// The head label and the remaining body children. `Node.label` is the head
-    /// label; otherwise, in terse mode, a lone bare-text child contracts to it
-    /// (`|box| [ "X" ]` → `|box| "X"`), leaving an empty body.
-    fn split_head_label<'n>(&self, node: &'n Node) -> (Option<&'n TextNode>, &'n [Child]) {
-        if let Some(label) = &node.label {
-            return (Some(label), &node.children);
-        }
-        if self.terse
-            && node.links.is_empty()
-            && let [Child::Text(t)] = node.children.as_slice()
-            && t.style.is_empty()
-        {
-            return (Some(t), &[]);
-        }
-        (None, &node.children)
+        self.emit_content(node, &node.children, depth);
     }
 
     /// A node's `[ ]` content: a `|table|`'s aligned cells, an inline text `[ ]`,
@@ -478,6 +462,16 @@ impl Emitter<'_> {
                 self.emit_endpoint(ep);
             }
         }
+        // The tail mirrors a node's order (SPEC §9): head label, then classes,
+        // then style, then the `[ ]` labels. A lone bare label trails the head
+        // (`a -> b "x"`); two or more, or a styled one, ride the `[ ]`.
+        let all: Vec<&TextNode> = w.label.iter().chain(w.labels.iter()).collect();
+        let styled = all.iter().any(|t| !t.style.is_empty());
+        let head_label = (self.terse && all.len() == 1 && !styled).then(|| all[0]);
+        if let Some(label) = head_label {
+            self.out.push(' ');
+            self.emit_text_node(label, depth);
+        }
         if !w.classes.is_empty() {
             self.out.push(' ');
             self.out.push_str(&class_str(&w.classes));
@@ -486,15 +480,7 @@ impl Emitter<'_> {
             let end = w.style_span.map_or(w.span.end, |s| s.end);
             self.emit_style_block(&w.style, end, depth, false);
         }
-        // Labels (SPEC §9), each a styleable text leaf: a lone bare label trails
-        // the head (`a -> b "x"`); two or more, or a styled one, ride the `[ ]`
-        // (the head label leading) — exactly as a node's label does.
-        let all: Vec<&TextNode> = w.label.iter().chain(w.labels.iter()).collect();
-        let styled = all.iter().any(|t| !t.style.is_empty());
-        if self.terse && all.len() == 1 && !styled {
-            self.out.push(' ');
-            self.emit_text_node(all[0], depth);
-        } else if !all.is_empty() {
+        if head_label.is_none() && !all.is_empty() {
             self.out.push_str(" [ ");
             for (i, label) in all.iter().enumerate() {
                 if i > 0 {
