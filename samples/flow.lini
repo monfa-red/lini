@@ -19,19 +19,19 @@
   |orange::box| { fill: --amber-wash; stroke: --amber-ink; color: --amber-ink; }
 }
 
-cat  |red|    "cat"
-dog  |red|    "dog"
-fish |sky|    "fish"
-bowl |sky|    "bowl"
-newt |teal|   "newt"
-log  |teal|   "log"
-frog |purple| "frog"
-pond |purple| "pond"
-ping |orange| "ping"
-pong |orange| "pong"
+|red#cat|     "cat"
+|red#dog|     "dog"
+|sky#fish|    "fish"
+|sky#bowl|    "bowl"
+|teal#newt|   "newt"
+|teal#log|    "log"
+|purple#frog| "frog"
+|purple#pond| "pond"
+|orange#ping| "ping"
+|orange#pong| "pong"
 
-cat -> dog .solid "solid"
-fish --> bowl .dashed "dashed"
-newt ..> log .dotted "dotted"
-frog ~> pond .wavy "wavy"
-ping <-> pong .thick "two-way"
+cat -> dog "solid" .solid
+fish --> bowl "dashed" .dashed
+newt ---> log "dotted" .dotted
+frog ~> pond "wavy" .wavy
+ping <-> pong "two-way" .thick

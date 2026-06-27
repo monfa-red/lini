@@ -5,9 +5,9 @@
   }
 }
 
-api |group| [
-         |caption| "API"
-  health |chip|    "OK"
-         |badge|   "v2"
+|group#api| [
+  |caption| "API"
+  |chip#health| "OK"
+  |badge|   "v2"
 ]
-db  |cyl|
+|cyl#db| "db"

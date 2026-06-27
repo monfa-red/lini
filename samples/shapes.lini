@@ -62,7 +62,7 @@
 ]
 
 |tile| [
-  |note| { width: 74; height: 50; } "note"
+  |note| "note" { width: 74; height: 50; }
   |cap| "note"
 ]
 |tile| [

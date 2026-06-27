@@ -4,17 +4,17 @@
   clearance: 10; link: --blue-ink;
 }
 
-mcu   |box| { cell: 2 2; span: 3 3; width: 180; height: 180; } "MCU"
-usb   |box| { cell: 2 1; span: 2 1; width: 150; height: 56; } "USB-C"
-flash |box| { cell: 1 2; } "FLASH"
-pwr   |box| { cell: 1 3; } "PWR"
-adc   |box| { cell: 2 5; } "ADC"
+|box#mcu| "MCU" { cell: 2 2; span: 3 3; width: 180; height: 180; }
+|box#usb| "USB-C" { cell: 2 1; span: 2 1; width: 150; height: 56; }
+|box#flash| "FLASH" { cell: 1 2; }
+|box#pwr| "PWR" { cell: 1 3; }
+|box#adc| "ADC" { cell: 2 5; }
 
-pwr.right -> mcu.left
-pwr.right -> mcu.left
-pwr.right -> mcu.left
-pwr.right -> mcu.left
-flash.right -> mcu.left
-flash.right -> mcu.left
-flash.right -> mcu.left
-flash.right -> mcu.left
+pwr:right -> mcu:left
+pwr:right -> mcu:left
+pwr:right -> mcu:left
+pwr:right -> mcu:left
+flash:right -> mcu:left
+flash:right -> mcu:left
+flash:right -> mcu:left
+flash:right -> mcu:left

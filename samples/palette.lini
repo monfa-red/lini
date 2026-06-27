@@ -10,9 +10,9 @@
   }
 }
 
-|block| { font-size: 18; } "Lini palette — 11 hues × 5 tiers"
+|block| "Lini palette — 11 hues × 5 tiers" { font-size: 18; }
 
-board |group| {
+|group#board| {
   layout: grid; columns: 56 82 82 82 82 82; gap: 5; fill: none; stroke: none;
 } [
   |h| ""
@@ -89,10 +89,10 @@ board |group| {
   |sw| { fill: --gray-ink; }
 ]
 
-cards |row| { gap: 10; } [
-  |card| { fill: --purple-wash; stroke: --purple; color: --purple; } "Wash"
-  |card| { fill: --purple-soft; stroke: --purple-deep; color: --purple-deep; } "Soft"
-  |card| { fill: --purple; stroke: --purple-ink; color: --purple-ink; } "Base"
-  |card| { fill: --purple-deep; stroke: --purple-deep; color: --bg; } "Deep"
-  |card| { fill: --purple-ink; stroke: --purple-ink; color: --bg; } "Ink"
+|row#cards| { gap: 10; } [
+  |card| "Wash" { fill: --purple-wash; stroke: --purple; color: --purple; }
+  |card| "Soft" { fill: --purple-soft; stroke: --purple-deep; color: --purple-deep; }
+  |card| "Base" { fill: --purple; stroke: --purple-ink; color: --purple-ink; }
+  |card| "Deep" { fill: --purple-deep; stroke: --purple-deep; color: --bg; }
+  |card| "Ink" { fill: --purple-ink; stroke: --purple-ink; color: --bg; }
 ]

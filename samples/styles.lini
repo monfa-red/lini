@@ -20,43 +20,43 @@
   .ghost { opacity: 0.35; }
 }
 
-|block| { font-size: 18; font-weight: bold; } "Styles"
+|block| "Styles" { font-size: 18; font-weight: bold; }
 
 // element rule, then + a class, then + an inline block — each wins over the last
-cascade |group| { layout: row; gap: 14; align: center; } [
+|group#cascade| { layout: row; gap: 14; align: center; } [
   |caption| "cascade"
   |box| "element"
-  |box| .warn "+ class"
-  |box| .warn { fill: --amber-wash; stroke: --amber-ink; color: --amber-ink; } "+ inline"
+  |box| "+ class" .warn
+  |box| "+ inline" .warn { fill: --amber-wash; stroke: --amber-ink; color: --amber-ink; }
   |alert| "alert"
 ]
 
-classes |group| { layout: row; gap: 14; } [
+|group#classes| { layout: row; gap: 14; } [
   |caption| "classes"
-  |box| .thin "thin"
-  |box| .bold "bold"
-  |box| .power "power"
-  |box| .warn "warn"
-  |box| .ghost "ghost"
+  |box| "thin" .thin
+  |box| "bold" .bold
+  |box| "power" .power
+  |box| "warn" .warn
+  |box| "ghost" .ghost
 ]
 
-modifiers |group| { layout: row; gap: 16; align: center; } [
+|group#modifiers| { layout: row; gap: 16; align: center; } [
   |caption| "modifiers"
-  |box| { stroke-style: dashed; } "dashed"
-  |box| { stroke-style: dotted; } "dotted"
-  |box| { stack: 4; } "stack"
-  |box| { shadow: 2 3 5; } "shadow"
-  |box| { rotate: -8; } "rotate"
+  |box| "dashed" { stroke-style: dashed; }
+  |box| "dotted" { stroke-style: dotted; }
+  |box| "stack" { stack: 4; }
+  |box| "shadow" { shadow: 2 3 5; }
+  |box| "rotate" { rotate: -8; }
 ]
 
-text |group| { layout: row; gap: 14; align: center; } [
+|group#text| { layout: row; gap: 14; align: center; } [
   |caption| "typography"
-  |box| { font-style: italic; } "italic"
-  |box| { font-family: serif; } "serif"
-  |box| { color: hsl(280, 55%, 50%); } "hsl"
-  |box| { text-transform: uppercase; } "upper"
-  |box| { text-decoration: underline; } "under"
-  |box| { text-shadow: 1 1 2 --gray-ink; } "shadow"
-  |box| { letter-spacing: 3; } "spaced"
-  |box| { line-spacing: 12; } "two\nlines"
+  |box| "italic" { font-style: italic; }
+  |box| "serif" { font-family: serif; }
+  |box| "hsl" { color: hsl(280, 55%, 50%); }
+  |box| "upper" { text-transform: uppercase; }
+  |box| "under" { text-decoration: underline; }
+  |box| "shadow" { text-shadow: 1 1 2 --gray-ink; }
+  |box| "spaced" { letter-spacing: 3; }
+  |box| "two\nlines" { line-spacing: 12; }
 ]

@@ -19,42 +19,41 @@
   .auth { link: --purple-deep; }
 }
 
-users |oval| {
+|oval#users| "Users" {
   width: 156; height: 62; fill: gradient(--sky, --purple); stroke: none; color: white; font-weight: bold;
-} "Users"
+}
 
-edge |group| { layout: row; gap: 28; } [
-      |caption| "Edge"
-  lb  |edge| [
+|group#edge| { layout: row; gap: 28; } [
+  |caption| "Edge"
+  |edge#lb| [
     "Load balancer"
     |badge| "v2"
   ]
-  cdn |edge| { stack: 5; } "CDN"
+  |edge#cdn| "CDN" { stack: 5; }
 ]
 
-svc |group| { layout: row; gap: 28; } [
-         |caption| "Services"
-  api    |api|     "API"
-  auth   |auth|    [
+|group#svc| { layout: row; gap: 28; } [
+  |caption| "Services"
+  |api#api| [ "API" ]
+  |auth#auth| [
     "Auth" { translate: 0 -4; }
   ]
-  worker |svc|     [
+  |svc#worker| [
     "Worker"
     |badge| "NEW"
   ]
 ]
 
-data |group| { layout: row; gap: 28; } [
-        |caption| "Data"
-  pg    |store| "Postgres"
-  redis |store| "Redis"
-  queue |svc| { fill: --amber-wash; stroke: --amber-deep; color: --amber-ink; } "Queue"
+|group#data| { layout: row; gap: 28; } [
+  |caption| "Data"
+  |store#pg|    "Postgres"
+  |store#redis| "Redis"
+  |svc#queue| "Queue" { fill: --amber-wash; stroke: --amber-deep; color: --amber-ink; }
 ]
 
-users -> edge.lb .flow "https"
+users -> edge.lb "https" .flow
 edge.lb -> svc.api
 edge.lb -> svc.auth .auth
 svc.api -> data.pg .flow
-svc.api --> data.redis .cache "cache"
-svc.worker ~> data.queue .async "jobs"
-
+svc.api --> data.redis "cache" .cache
+svc.worker ~> data.queue "jobs" .async

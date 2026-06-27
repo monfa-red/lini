@@ -8,10 +8,10 @@
   layout: row; gap: 50; clearance: 10;
 }
 
-ant  |box| { width: 60; height: 60; } "Ant"
-wall |box| { width: 60; height: 140; } "Wall"
-bee  |box| "Bee"
-owl  |oval| "Owl"
+|box#ant|  "Ant" { width: 60; height: 60; }
+|box#wall| "Wall" { width: 60; height: 140; }
+|box#bee|  "Bee"
+|oval#owl| "Owl"
 
 ant -> bee "over"
 // detours around Wall
@@ -22,6 +22,6 @@ bee -> owl
 bee -> owl
 // duplicate: adjacent parallel rail
 // fan: shared port and stub, trunk, split
-ant -> wall & owl { along: 0.2; } "fan"
+ant -> wall & owl "fan" { along: 0.2; }
 bee <-> ant "chat"
 // bidirectional, also detours around Wall

@@ -8,21 +8,21 @@
   }
 }
 
-|block| { font-size: 18; } "Gradients"
+|block| "Gradients" { font-size: 18; }
 
-r1 |row| { gap: 16; } [
-  |card| { fill: gradient(--teal, --blue); } "gradient(--teal, --blue)"
-  |card| { fill: gradient(--rose, --amber, --sky); } "three stops, auto-angled"
+|row#r1| { gap: 16; } [
+  |card| "gradient(--teal, --blue)" { fill: gradient(--teal, --blue); }
+  |card| "three stops, auto-angled" { fill: gradient(--rose, --amber, --sky); }
 ]
 
-r2 |row| { gap: 16; } [
-  |card| { fill: linear-gradient(90, --blue, --purple); } "linear-gradient(90, …)"
-  |card| { fill: radial-gradient(--purple, --rose); } "radial-gradient(…)"
+|row#r2| { gap: 16; } [
+  |card| "linear-gradient(90, …)" { fill: linear-gradient(90, --blue, --purple); }
+  |card| "radial-gradient(…)" { fill: radial-gradient(--purple, --rose); }
 ]
 
-r3 |row| { gap: 16; } [
-  |card| {
+|row#r3| { gap: 16; } [
+  |card| "gradient on stroke" {
     fill: --gray-wash; color: --gray-ink; stroke: gradient(--teal, --purple); stroke-width: 3;
-  } "gradient on stroke"
-  |card| { fill: gradient(oklch(0.72, 0.16, 25), oklch(0.72, 0.16, 285)); } "oklch stops"
+  }
+  |card| "oklch stops" { fill: gradient(oklch(0.72, 0.16, 25), oklch(0.72, 0.16, 285)); }
 ]

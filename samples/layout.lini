@@ -6,53 +6,53 @@
 }
 
 // pin: lift a child out of flow and centre it on a named point of the parent
-anchors |group| { layout: column; gap: 8; } [
-       |caption| "pin"
-  pins |box| {
+|group#anchors| { layout: column; gap: 8; } [
+  |caption| "pin"
+  |box#pins| {
     width: 210; height: 150; fill: --sky-wash; stroke: --sky-ink; radius: 8;
   } [
-    |dot| { pin: center; color: --teal-ink; } "center"
-    |dot| { pin: top left; color: --rose-ink; } "TL"
-    |dot| { pin: top; color: --rose-ink; } "T"
-    |dot| { pin: top right; color: --rose-ink; } "TR"
-    |dot| { pin: left; color: --rose-ink; } "L"
-    |dot| { pin: right; color: --rose-ink; } "R"
-    |dot| { pin: bottom left; color: --sky-ink; } "BL"
-    |dot| { pin: bottom; color: --sky-ink; } "B"
-    |dot| { pin: bottom right; color: --sky-ink; } "BR"
+    |dot| "center" { pin: center; color: --teal-ink; }
+    |dot| "TL" { pin: top left; color: --rose-ink; }
+    |dot| "T" { pin: top; color: --rose-ink; }
+    |dot| "TR" { pin: top right; color: --rose-ink; }
+    |dot| "L" { pin: left; color: --rose-ink; }
+    |dot| "R" { pin: right; color: --rose-ink; }
+    |dot| "BL" { pin: bottom left; color: --sky-ink; }
+    |dot| "B" { pin: bottom; color: --sky-ink; }
+    |dot| "BR" { pin: bottom right; color: --sky-ink; }
   ]
 ]
 
 // translate: a flow nudge, a tucked-in badge, and exact centre placement
-moves |group| { layout: column; gap: 14; } [
-       |caption| "translate"
-       |row| { gap: 14; align: center; } [
-    a |box| { fill: --amber-soft; stroke: --amber-ink; color: --amber-ink; } "A"
-    b |box| {
+|group#moves| { layout: column; gap: 14; } [
+  |caption| "translate"
+  |row| { gap: 14; align: center; } [
+    |box#a| "A" { fill: --amber-soft; stroke: --amber-ink; color: --amber-ink; }
+    |box#b| "nudged" {
       fill: --amber-soft; stroke: --amber-ink; color: --amber-ink; translate: 0 12;
-    } "nudged"
-    c |box| { fill: --amber-soft; stroke: --amber-ink; color: --amber-ink; } "C"
+    }
+    |box#c| "C" { fill: --amber-soft; stroke: --amber-ink; color: --amber-ink; }
   ]
-  card |box| {
+  |box#card| {
     width: 140; height: 74; fill: --purple-wash; stroke: --purple-ink; color: --purple-ink;
   } [
     "Card"
-    |badge| { translate: -4 4; } "9"
-    |block| { pin: center; translate: 0 24; color: --muted; } "id 42"
+    |badge| "9" { translate: -4 4; }
+    |block| "id 42" { pin: center; translate: 0 24; color: --muted; }
   ]
 ]
 
 // padding & gap take 1-, 2-, or 4-value forms
-spacing |group| { layout: column; gap: 10; } [
+|group#spacing| { layout: column; gap: 10; } [
   |caption| "padding"
-  |box| { fill: --green-soft; stroke: --green-ink; color: --green-ink; } "scalar"
-  |box| {
+  |box| "scalar" { fill: --green-soft; stroke: --green-ink; color: --green-ink; }
+  |box| "v h" {
     padding: 4 14; fill: --green-soft; stroke: --green-ink; color: --green-ink;
-  } "v h"
-  |box| {
+  }
+  |box| "t r b l" {
     padding: 2 8 16 24; fill: --green-soft; stroke: --green-ink; color: --green-ink;
-  } "t r b l"
-  |box| {
+  }
+  |box| "radius 12" {
     radius: 12; fill: --green-soft; stroke: --green-ink; color: --green-ink;
-  } "radius 12"
+  }
 ]

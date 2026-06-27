@@ -9,21 +9,21 @@
   |treat::box| { radius: 6; }
 }
 
-cat |oval| "Cat"
+|oval#cat| "Cat"
 
-kitchen |group| { layout: column; } [
-        |caption| "Kitchen"
-  bowl  |treat|   "Bowl"
-  water |treat|   "Water"
+|group#kitchen| { layout: column; } [
+  |caption| "Kitchen"
+  |treat#bowl|  "Bowl"
+  |treat#water| "Water"
 ]
 
-garden |group| { layout: column; } [
-       |caption| "Garden"
-  dog  |treat|   "Dog"
-  bird |treat|   "Bird"
+|group#garden| { layout: column; } [
+  |caption| "Garden"
+  |treat#dog|  "Dog"
+  |treat#bird| "Bird"
 ]
 
-roof |treat| [
+|treat#roof| [
   "Roof"
   |badge| "new"
 ]
@@ -31,10 +31,10 @@ roof |treat| [
 cat -> kitchen.bowl & kitchen.water .loud
 cat -> roof .loud
 
-kitchen.bowl -> garden.dog .loud { along: 0.35; } "X"
+kitchen.bowl -> garden.dog "X" .loud { along: 0.35; }
 kitchen.bowl -> garden.dog .loud
 
-kitchen.water <.. garden.dog .quiet
+kitchen.water <--- garden.dog .quiet
 kitchen.water <- garden.dog .quiet
 kitchen.water <- garden.dog .quiet
 

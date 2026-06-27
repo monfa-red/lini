@@ -8,7 +8,7 @@
 
 "Styleable text, in place" { font-size: 20; font-weight: bold; }
 
-styles |row| { gap: 16; } [
+|row#styles| { gap: 16; } [
   "default"
   "coloured" { color: --red-ink; }
   "bold" { font-weight: bold; }
@@ -16,7 +16,7 @@ styles |row| { gap: 16; } [
   "underline" { text-decoration: underline; }
 ]
 
-a |box| "Alpha"
-b |box| "Beta"
+|box#a| "Alpha"
+|box#b| "Beta"
 
 a -> b [ "nudged & turned" { translate: 0 -10; rotate: -6; color: --teal-ink; } ]

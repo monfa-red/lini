@@ -6,15 +6,15 @@
   |room::group| {
     layout: column; gap: 10; padding: 12; fill: --teal-wash; stroke: --teal-ink;
   } [
-    inlet  |box| { fill: --teal-soft; stroke: --teal-ink; color: --teal-ink; } "in"
-    outlet |box| { fill: --teal-soft; stroke: --teal-ink; color: --teal-ink; } "out"
+    |box#inlet|  "in" { fill: --teal-soft; stroke: --teal-ink; color: --teal-ink; }
+    |box#outlet| "out" { fill: --teal-soft; stroke: --teal-ink; color: --teal-ink; }
     inlet -> outlet "flows"
   ]
 }
 
-|block| { font-size: 18; font-weight: bold; } "Markers & internal links"
+|block| "Markers & internal links" { font-size: 18; font-weight: bold; }
 
-ends |group| { layout: column; gap: 14; } [
+|group#ends| { layout: column; gap: 14; } [
   |caption| "markers"
   |line| {
     points: -80 0, 80 0; marker-end: arrow; stroke: --sky-deep; stroke-width: 2;
@@ -31,10 +31,10 @@ ends |group| { layout: column; gap: 14; } [
 ]
 
 // each |room| materialises its own inlet -> outlet link from the define body
-rooms |row| { gap: 64; } [
-          |caption| "internal links"
-  garden  |room|    "Garden"
-  kitchen |room|    "Kitchen"
+|row#rooms| { gap: 64; } [
+  |caption| "internal links"
+  |room#garden|  "Garden"
+  |room#kitchen| "Kitchen"
 ]
 
 rooms.garden.outlet -> rooms.kitchen.inlet "carries"
