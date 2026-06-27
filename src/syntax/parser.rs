@@ -362,6 +362,9 @@ impl<'a> Parser<'a> {
             }
             Some(TokKind::RawCssVar(s)) => Value::Var(s.clone()),
             Some(TokKind::Expr(s)) => Value::Expr(s.clone()),
+            // A `:` in value position is the start of the next declaration — the
+            // previous one ran on because it lacks a terminating `;` (SPEC §3/§15).
+            Some(TokKind::Colon) => return Err(self.err("a declaration ends with ';'")),
             _ => return Err(self.err("expected a value")),
         };
         self.pos += 1;
@@ -1284,6 +1287,11 @@ mod tests {
     #[test]
     fn empty_declaration_errors() {
         assert!(parse_err("|box#a| { gap: }\n").contains("needs a value"));
+    }
+
+    #[test]
+    fn a_missing_declaration_semicolon_errors() {
+        assert!(parse_err("|box#a| { radius: 6 stroke: 2 }\n").contains("ends with ';'"));
     }
 
     // ── Expressions & functions (SPEC §11.7) ──
