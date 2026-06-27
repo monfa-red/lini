@@ -605,7 +605,7 @@ mod tests {
 
     #[test]
     fn dims_are_independent_per_axis() {
-        let n = &lay_out("|box| { width: 200 } \"hi\"\n").nodes[0];
+        let n = &lay_out("|box| \"hi\" { width: 200 }\n").nodes[0];
         assert!((n.bbox.w() - 202.0).abs() < 0.01, "w={}", n.bbox.w());
         // height auto = one text line (15) + 40 padding + 2 stroke = 57.
         assert!((n.bbox.h() - 57.0).abs() < 0.01, "h={}", n.bbox.h());
@@ -614,14 +614,14 @@ mod tests {
     #[test]
     fn explicit_size_is_a_floor_not_a_clip() {
         // Content wider than the declared width grows the box instead of spilling.
-        let grown = &lay_out("|box| { width: 40 } \"a long label\"\n").nodes[0];
+        let grown = &lay_out("|box| \"a long label\" { width: 40 }\n").nodes[0];
         assert!(
             grown.bbox.w() > 60.0,
             "floor grows to content: w={}",
             grown.bbox.w()
         );
         // A width the content fits within is honoured exactly (border-box + stroke).
-        let kept = &lay_out("|box| { width: 300 } \"hi\"\n").nodes[0];
+        let kept = &lay_out("|box| \"hi\" { width: 300 }\n").nodes[0];
         assert!((kept.bbox.w() - 302.0).abs() < 0.01, "w={}", kept.bbox.w());
     }
 
@@ -629,14 +629,14 @@ mod tests {
     fn asymmetric_padding_offsets_the_content() {
         // padding t r b l = 0 0 0 20 → 20 on the left, 0 on the right, so the
         // content shifts right by (20 − 0)/2 = 10.
-        let off = &lay_out("|box| { padding: 0 0 0 20 } \"x\"\n").nodes[0];
+        let off = &lay_out("|box| \"x\" { padding: 0 0 0 20 }\n").nodes[0];
         assert!(
             (off.children[0].cx - 10.0).abs() < 0.01,
             "cx={}",
             off.children[0].cx
         );
         // Symmetric padding keeps it centred.
-        let mid = &lay_out("|box| { padding: 8 } \"x\"\n").nodes[0];
+        let mid = &lay_out("|box| \"x\" { padding: 8 }\n").nodes[0];
         assert!(
             mid.children[0].cx.abs() < 0.01,
             "centred: cx={}",
@@ -702,9 +702,9 @@ mod tests {
         // A caption pins to the top edge (an overlay), so it reserves no flow
         // row — the group sizes to its content alone, with or without it.
         let h = |src: &str| lay_out(src).nodes[0].bbox.h();
-        let plain = h("g |group| [\n  a |box| { width: 80; height: 30; }\n]\n");
+        let plain = h("|group#g| [\n  |box#a| { width: 80; height: 30; }\n]\n");
         let capped =
-            h("g |group| [\n  |caption| \"Cap\"\n  a |box| { width: 80; height: 30; }\n]\n");
+            h("|group#g| [\n  |caption| \"Cap\"\n  |box#a| { width: 80; height: 30; }\n]\n");
         assert!(
             (capped - plain).abs() < 0.01,
             "caption is an overlay, no extra height: plain={plain} capped={capped}"
@@ -714,7 +714,7 @@ mod tests {
     #[test]
     fn caption_sits_above_the_content() {
         let l =
-            lay_out("g |group| [\n  |caption| \"Cap\"\n  a |box| { width: 80; height: 30; }\n]\n");
+            lay_out("|group#g| [\n  |caption| \"Cap\"\n  |box#a| { width: 80; height: 30; }\n]\n");
         let g = &l.nodes[0];
         let cap = g
             .children
@@ -735,7 +735,7 @@ mod tests {
     fn justify_orders_children_start_center_end() {
         let first_cx = |j: &str| {
             let src = format!(
-                "g |row| {{ width: 300; justify: {j} }} [\n  a |box| {{ width: 40; height: 20; }}\n  b |box| {{ width: 40; height: 20; }}\n]\n"
+                "|row#g| {{ width: 300; justify: {j} }} [\n  |box#a| {{ width: 40; height: 20; }}\n  |box#b| {{ width: 40; height: 20; }}\n]\n"
             );
             lay_out(&src).nodes[0].children[0].cx
         };
@@ -749,7 +749,7 @@ mod tests {
     #[test]
     fn justify_evenly_spaces_children_equally() {
         let l = lay_out(
-            "g |row| { width: 300; justify: evenly } [\n  a |box| { width: 20; height: 20; }\n  b |box| { width: 20; height: 20; }\n  c |box| { width: 20; height: 20; }\n]\n",
+            "|row#g| { width: 300; justify: evenly } [\n  |box#a| { width: 20; height: 20; }\n  |box#b| { width: 20; height: 20; }\n  |box#c| { width: 20; height: 20; }\n]\n",
         );
         let cx: Vec<f64> = l.nodes[0].children.iter().map(|c| c.cx).collect();
         assert!(
@@ -761,7 +761,7 @@ mod tests {
     #[test]
     fn align_stretch_fills_the_cross_axis() {
         // An unsized child grows to the row's content height (row pads 0).
-        let l = lay_out("g |row| { height: 80; align: stretch } [\n  a |box| { width: 40; }\n]\n");
+        let l = lay_out("|row#g| { height: 80; align: stretch } [\n  |box#a| { width: 40; }\n]\n");
         let a = &l.nodes[0].children[0];
         assert!((a.bbox.h() - 80.0).abs() < 1.0, "a.h={}", a.bbox.h());
     }
@@ -771,7 +771,7 @@ mod tests {
         // An auto-width row ignores justify — children stay packed at the gap.
         let span = |j: &str| {
             let src = format!(
-                "g |row| {{ justify: {j} }} [\n  a |box| {{ width: 40; height: 20; }}\n  b |box| {{ width: 40; height: 20; }}\n]\n"
+                "|row#g| {{ justify: {j} }} [\n  |box#a| {{ width: 40; height: 20; }}\n  |box#b| {{ width: 40; height: 20; }}\n]\n"
             );
             let l = lay_out(&src);
             l.nodes[0].children[1].cx - l.nodes[0].children[0].cx
@@ -788,9 +788,9 @@ mod tests {
     fn grid_fixed_columns_place_children_in_order() {
         let l = lay_out(
             "{ layout: grid; columns: 80 80 80; gap: 0; }\n\
-             a |box| { width: 40; height: 40; }\n\
-             b |box| { width: 40; height: 40; }\n\
-             c |box| { width: 40; height: 40; }\n",
+             |box#a| { width: 40; height: 40; }\n\
+             |box#b| { width: 40; height: 40; }\n\
+             |box#c| { width: 40; height: 40; }\n",
         );
         let cx: Vec<f64> = l.nodes.iter().map(|n| n.cx).collect();
         assert!((cx[1] - cx[0] - 80.0).abs() < 0.5, "dx={}", cx[1] - cx[0]);
@@ -802,9 +802,9 @@ mod tests {
     fn grid_repeat_makes_auto_columns_and_wraps() {
         let l = lay_out(
             "{ layout: grid; columns: repeat(2); }\n\
-             a |box| { width: 30; height: 30; }\n\
-             b |box| { width: 30; height: 30; }\n\
-             c |box| { width: 30; height: 30; }\n",
+             |box#a| { width: 30; height: 30; }\n\
+             |box#b| { width: 30; height: 30; }\n\
+             |box#c| { width: 30; height: 30; }\n",
         );
         // 2 columns, 3 children → c wraps to the second row.
         assert!(l.nodes[2].cy > l.nodes[0].cy, "c below a");
@@ -814,8 +814,8 @@ mod tests {
     fn grid_cell_pins_placement() {
         let l = lay_out(
             "{ layout: grid; columns: repeat(3); }\n\
-             a |box| { cell: 3 1; }\n\
-             b |box|\n",
+             |box#a| { cell: 3 1; }\n\
+             |box#b|\n",
         );
         // a pins to column 3; b auto-flows to the first free cell (column 1).
         assert!(
@@ -828,8 +828,8 @@ mod tests {
     fn grid_cell_fills_its_track_under_stretch() {
         let l = lay_out(
             "{ layout: grid; columns: 120 120; gap: 0; }\n\
-             a |box| { justify: stretch; align: stretch; }\n\
-             b |box|\n",
+             |box#a| { justify: stretch; align: stretch; }\n\
+             |box#b|\n",
         );
         assert!(
             (l.nodes[0].bbox.w() - 120.0).abs() < 1.0,
@@ -845,10 +845,10 @@ mod tests {
         // Here 2 cols × 1 declared row track, 4 children → a second, implicit row.
         let l = lay_out(
             "{ layout: grid; columns: 40 40; rows: auto; }\n\
-             a |box| { width: 30; height: 30; }\n\
-             b |box| { width: 30; height: 30; }\n\
-             c |box| { width: 30; height: 30; }\n\
-             d |box| { width: 30; height: 30; }\n",
+             |box#a| { width: 30; height: 30; }\n\
+             |box#b| { width: 30; height: 30; }\n\
+             |box#c| { width: 30; height: 30; }\n\
+             |box#d| { width: 30; height: 30; }\n",
         );
         assert!(l.nodes[2].cy > l.nodes[0].cy, "c (row 2) below a (row 1)");
         assert!(
@@ -859,7 +859,7 @@ mod tests {
 
     #[test]
     fn grid_without_columns_is_an_error() {
-        let tokens = crate::lexer::lex("{ layout: grid; }\na |box|\nb |box|\n").expect("lex");
+        let tokens = crate::lexer::lex("{ layout: grid; }\n|box#a|\n|box#b|\n").expect("lex");
         let file = crate::syntax::parser::parse(&tokens).expect("parse");
         let lowered = crate::desugar::desugar(&file).expect("desugar");
         let program = crate::resolve::resolve_with_theme(&lowered, &[]).expect("resolve");
@@ -870,7 +870,7 @@ mod tests {
 
     #[test]
     fn table_draws_interior_dividers_no_frame() {
-        let l = lay_out("t |table| { columns: 40 40 } [\n  \"a\" \"b\" \"c\" \"d\"\n]\n");
+        let l = lay_out("|table#t| { columns: 40 40 } [\n  \"a\" \"b\" \"c\" \"d\"\n]\n");
         // 2×2 grid with the table's divider: all → interior separators.
         assert!(
             !l.nodes[0].dividers.is_empty(),
@@ -878,7 +878,7 @@ mod tests {
         );
         // A plain group draws none.
         assert!(
-            lay_out("g |group| [ x |box| ]\n").nodes[0]
+            lay_out("|group#g| [ |box#x| ]\n").nodes[0]
                 .dividers
                 .is_empty()
         );
@@ -890,7 +890,7 @@ mod tests {
         // inside the grid's own content box (a gap-sized overshoot at the far
         // edge once leaked past the group's border).
         let l = lay_out(
-            "t |table| { columns: 40 40; gap: 20 } [\n  \"a\"\n  \"b\"\n  \"c\"\n  \"d\"\n]\n",
+            "|table#t| { columns: 40 40; gap: 20 } [\n  \"a\"\n  \"b\"\n  \"c\"\n  \"d\"\n]\n",
         );
         let t = &l.nodes[0];
         let (hw, hh) = (t.bbox.w() / 2.0 + 0.01, t.bbox.h() / 2.0 + 0.01);
@@ -905,7 +905,7 @@ mod tests {
     #[test]
     fn one_d_divider_falls_between_flow_children() {
         let l = lay_out(
-            "g |row| { divider: all } [\n  a |box| { width: 30; height: 30; }\n  b |box| { width: 30; height: 30; }\n  c |box| { width: 30; height: 30; }\n]\n",
+            "|row#g| { divider: all } [\n  |box#a| { width: 30; height: 30; }\n  |box#b| { width: 30; height: 30; }\n  |box#c| { width: 30; height: 30; }\n]\n",
         );
         assert_eq!(
             l.nodes[0].dividers.len(),

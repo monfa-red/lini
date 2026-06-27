@@ -605,7 +605,7 @@ mod tests {
 
     #[test]
     fn root_rule_carries_inherited_text_props() {
-        let css = emit_str(&rules_for("x |box|\n"));
+        let css = emit_str(&rules_for("|box#x|\n"));
         assert!(
             css.contains(".lini { font-family: var(--lini-font-family); font-size: 15px; font-weight: var(--lini-font-weight); color: var(--lini-text-color); }"),
             "{}",
@@ -615,14 +615,14 @@ mod tests {
 
     #[test]
     fn shape_rules_only_for_present_types() {
-        let css = emit_str(&rules_for("x |box|\n"));
+        let css = emit_str(&rules_for("|box#x|\n"));
         assert!(css.contains(".lini .lini-box {"), "{}", css);
         assert!(!css.contains("lini-oval"), "{}", css);
     }
 
     #[test]
     fn shape_rules_complete_over_inheritable_paint() {
-        let set = rules_for("x |box|\ny |oval|\nz |line| { points: 0 0, 10 0; }\n");
+        let set = rules_for("|box#x|\n|oval#y|\n|line#z| { points: 0 0, 10 0; }\n");
         for rule in &set.rules {
             let Some(suffix) = rule.class.strip_prefix("lini-") else {
                 continue;
@@ -650,7 +650,7 @@ mod tests {
     #[test]
     fn style_defs_emit_in_defs_order_used_only() {
         let css = emit_str(&rules_for(
-            "{ .a { stroke: red; }\n.b { stroke: blue; }\n.unused { stroke: green; } }\nx |box| .b.a\n",
+            "{ .a { stroke: red; }\n.b { stroke: blue; }\n.unused { stroke: green; } }\n|box#x| .b.a\n",
         ));
         let a = css.find(".lini .lini-style-a").expect("a rule");
         let b = css.find(".lini .lini-style-b").expect("b rule");
@@ -701,7 +701,7 @@ mod tests {
 
     #[test]
     fn type_defaults_merge_into_shape_rule() {
-        let css = emit_str(&rules_for("{ |box| { fill: lightyellow; } }\nx |box|\n"));
+        let css = emit_str(&rules_for("{ |box| { fill: lightyellow; } }\n|box#x|\n"));
         assert!(
             css.contains(".lini .lini-box { fill: lightyellow;"),
             "{}",
@@ -711,7 +711,7 @@ mod tests {
 
     #[test]
     fn group_template_rule_follows_rect_rule() {
-        let css = emit_str(&rules_for("g |group| [ x |box| ]\n"));
+        let css = emit_str(&rules_for("|group#g| [ |box#x| ]\n"));
         let rect = css.find(".lini .lini-box").expect("rect rule");
         let group = css.find(".lini .lini-group").expect("group rule");
         assert!(rect < group, "{}", css);
@@ -725,7 +725,7 @@ mod tests {
     #[test]
     fn user_shape_rule_carries_its_paint() {
         let css = emit_str(&rules_for(
-            "{ |treat::box| { fill: pink; radius: 5; } }\nx |treat|\n",
+            "{ |treat::box| { fill: pink; radius: 5; } }\n|treat#x|\n",
         ));
         assert!(
             css.contains(".lini .lini-treat { fill: pink; }"),

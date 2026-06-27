@@ -314,7 +314,7 @@ mod tests {
 
     #[test]
     fn root_fill_overrides_the_canvas_inline() {
-        let svg = svg_for("{ fill: #eef; }\nx |box|\n");
+        let svg = svg_for("{ fill: #eef; }\n|box#x|\n");
         assert!(
             svg.contains(r#"class="lini-canvas""#) && svg.contains(r##"style="fill: #eef""##),
             "{svg}"
@@ -324,7 +324,7 @@ mod tests {
     #[test]
     fn canvas_rect_defaults_to_the_bg_var() {
         // The backing rect is always present, painted by the `.lini-canvas` rule.
-        let svg = svg_for("x |box|\n");
+        let svg = svg_for("|box#x|\n");
         assert!(svg.contains(r#"<rect class="lini-canvas""#), "{svg}");
         assert!(
             svg.contains(".lini .lini-canvas { fill: var(--lini-bg); }"),
@@ -336,7 +336,7 @@ mod tests {
     fn layer_lifts_a_node_above_later_source_order() {
         // `a` is written first; its higher `layer` paints it last (on top),
         // so its <g> is emitted after `b`'s (SPEC §6).
-        let svg = svg_for("a |box| { layer: 5; }\nb |box|\n");
+        let svg = svg_for("|box#a| { layer: 5; }\n|box#b|\n");
         let ai = svg.find(r#"data-id="a""#).expect("a");
         let bi = svg.find(r#"data-id="b""#).expect("b");
         assert!(ai > bi, "a (layer 5) should paint after b: {svg}");
@@ -344,7 +344,7 @@ mod tests {
 
     #[test]
     fn equal_layer_keeps_source_order() {
-        let svg = svg_for("a |box|\nb |box|\n");
+        let svg = svg_for("|box#a|\n|box#b|\n");
         assert!(
             svg.find(r#"data-id="a""#).unwrap() < svg.find(r#"data-id="b""#).unwrap(),
             "{svg}"
@@ -353,13 +353,13 @@ mod tests {
 
     #[test]
     fn title_emits_a_title_child_on_the_node_g() {
-        let svg = svg_for("x |box| { title: \"a tooltip\"; }\n");
+        let svg = svg_for("|box#x| { title: \"a tooltip\"; }\n");
         assert!(svg.contains("<title>a tooltip</title>"), "{svg}");
     }
 
     #[test]
     fn no_title_element_without_a_title_prop() {
-        let svg = svg_for("x |box|\n");
+        let svg = svg_for("|box#x|\n");
         assert!(!svg.contains("<title>"), "{svg}");
     }
 
@@ -368,7 +368,7 @@ mod tests {
         // `flood-color` is a filter presentation attribute: var()/light-dark()
         // there fall back to opaque black, so the tint must be a resolved literal
         // even with live vars (the canvas-fill bug, on the shadow).
-        let svg = svg_for("x |box| { shadow: 4 }\n");
+        let svg = svg_for("|box#x| { shadow: 4 }\n");
         let flood = svg
             .split("flood-color=\"")
             .nth(1)

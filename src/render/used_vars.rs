@@ -137,7 +137,7 @@ mod tests {
 
     #[test]
     fn plain_diagram_keeps_core_roles_not_the_palette() {
-        let names = used("x |box|\n");
+        let names = used("|box#x|\n");
         // Structural rules always paint with these.
         assert!(names.contains("fill"), "{names:?}");
         assert!(names.contains("stroke"), "{names:?}");
@@ -149,7 +149,7 @@ mod tests {
 
     #[test]
     fn a_used_hue_is_kept_others_are_not() {
-        let names = used("x |box| { fill: --teal }\n");
+        let names = used("|box#x| { fill: --teal }\n");
         assert!(names.contains("teal"), "{names:?}");
         assert!(!names.contains("rose"), "{names:?}");
     }
@@ -157,7 +157,7 @@ mod tests {
     #[test]
     fn text_color_pulls_in_fg_transitively() {
         // `.lini` states `color: var(--lini-text-color)`, whose value is `var(--lini-fg)`.
-        let names = used("x |box|\n");
+        let names = used("|box#x|\n");
         assert!(names.contains("text-color"), "{names:?}");
         assert!(names.contains("fg"), "{names:?}");
     }
