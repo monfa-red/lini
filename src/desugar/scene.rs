@@ -7,26 +7,18 @@ use crate::span::Span;
 use crate::syntax::ast::{Child, Link, Node, TextNode};
 use std::collections::HashSet;
 
-/// Every node id anywhere in `instances` — the auto-create gate: an id present as
-/// any node's id, at any depth, is never auto-created. Run on the *lowered*
-/// instances, so define-body children (inlined by then) count as declared.
-pub fn declared_ids(instances: &[Child]) -> HashSet<String> {
-    let mut out = HashSet::new();
-    for c in instances {
-        collect_ids(c, &mut out);
-    }
-    out
-}
-
-fn collect_ids(child: &Child, out: &mut HashSet<String>) {
-    if let Child::Box(n) = child {
-        if let Some(id) = &n.id {
-            out.insert(id.clone());
-        }
-        for c in &n.children {
-            collect_ids(c, out);
-        }
-    }
+/// The ids declared **directly** in a scope (its own children) — the auto-create
+/// gate (SPEC §3, §9): a single bare endpoint not among them is created in that
+/// scope. Scope-local, not recursive — a deeper same-named node does not suppress
+/// the create; it instead raises a shadow warning (see [`crate::lint`]).
+pub fn declared_ids(children: &[Child]) -> HashSet<String> {
+    children
+        .iter()
+        .filter_map(|c| match c {
+            Child::Box(n) => n.id.clone(),
+            Child::Text(_) => None,
+        })
+        .collect()
 }
 
 /// The ids to auto-create: each single-segment root-link endpoint absent from

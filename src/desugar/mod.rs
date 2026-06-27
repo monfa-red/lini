@@ -12,7 +12,7 @@
 pub(crate) mod bundles;
 mod classes;
 mod labels;
-mod scene;
+pub(crate) mod scene;
 mod types;
 
 use crate::error::Error;

@@ -156,9 +156,11 @@ fn duplicate_define_errors() {
 }
 
 #[test]
-fn link_endpoint_bare_nested_name_errors_with_suggestions() {
+fn link_endpoint_path_errors_with_suggestions() {
+    // A multi-segment path never auto-creates (SPEC §9); when it misses, the error
+    // suggests same-named full paths. (A bare name would auto-create instead.)
     let err = lini::check(
-        "|group#kitchen| [ |box#mouse| ]\n|group#garden| [ |box#mouse| ]\nmouse -> kitchen\n",
+        "|group#kitchen| [ |box#mouse| ]\n|group#garden| [ |box#mouse| ]\nden.mouse -> kitchen\n",
     )
     .expect_err("not found");
     let msg = err.to_string();
@@ -176,9 +178,10 @@ fn body_link_suggestion_is_scope_relative() {
     // A body link resolves from its container; the suggestion must be the path
     // the user can actually type there (shelf.bowl), not the un-typeable
     // root-absolute one (garden.shelf.bowl).
-    let err =
-        lini::check("|group#garden| [ |group#shelf| [ |box#bowl| ]\n|box#pot|\nbowl -> pot ]\n")
-            .expect_err("not found");
+    let err = lini::check(
+        "|group#garden| [ |group#shelf| [ |box#bowl| ]\n|box#pot|\nden.bowl -> pot ]\n",
+    )
+    .expect_err("not found");
     let msg = err.to_string();
     assert!(
         msg.contains("'shelf.bowl'"),
