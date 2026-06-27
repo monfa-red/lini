@@ -124,10 +124,10 @@ pub fn resolve_node(
         }
     }
 
+    // Sides (`top`/`bottom`/`left`/`right`) are free as ids — a `:side` is peeled
+    // by position now, not from the path (SPEC §18) — so the only id error here is
+    // a duplicate.
     if let Some(id) = &node.id {
-        if is_reserved_id(id) {
-            return Err(reserved_error(node.span, id));
-        }
         let full = join_path(path_prefix, id);
         if let Some(prev) = id_seen.get(&full) {
             return Err(Error::at(node.span, format!("duplicate id '{}'", id)).with_related(*prev));
@@ -137,6 +137,7 @@ pub fn resolve_node(
 
     let facts = NodeFacts {
         classes: node.classes.clone(),
+        id: node.id.clone(),
     };
 
     // The cascade ladder, least-specific first (SPEC §12): the worn `.lini-*`
@@ -368,28 +369,6 @@ fn drop_blank_text(children: &mut Vec<ResolvedInst>, container: &AttrMap) {
 /// A text node with no visible content and no id — from a `""` label.
 fn is_blank_anon_text(r: &ResolvedInst) -> bool {
     r.id.is_none() && r.kind == NodeKind::Text && r.label.as_deref().is_none_or(str::is_empty)
-}
-
-/// Only the four sides are reserved as node ids — they are peeled from endpoint
-/// paths (`a.left`), so a node named `left` could never be addressed (SPEC §18).
-/// Type names are free: a type only ever appears in bars.
-fn is_reserved_id(id: &str) -> bool {
-    matches!(id, "top" | "bottom" | "left" | "right")
-}
-
-/// The reserved-id error, with the always-free capitalized variant as the out.
-pub(super) fn reserved_error(span: Span, name: &str) -> Error {
-    let mut cap = name.to_string();
-    if let Some(first) = cap.get_mut(0..1) {
-        first.make_ascii_uppercase();
-    }
-    Error::at(
-        span,
-        format!(
-            "'{}' is reserved (an endpoint side; ids are case-sensitive — '{}' is free)",
-            name, cap
-        ),
-    )
 }
 
 fn join_path(prefix: &[String], id: &str) -> String {

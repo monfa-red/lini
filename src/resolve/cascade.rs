@@ -17,13 +17,13 @@
 use super::ir::{ResolvedValue, VarTable};
 use super::value::resolve_groups;
 use crate::error::Error;
-use crate::syntax::ast::{Rule, SelPart};
+use crate::syntax::ast::{Rule, SelUnit};
 use std::collections::HashSet;
 
-/// A rule compiled to its selector parts and resolved declarations, retaining
+/// A rule compiled to its selector units and resolved declarations, retaining
 /// source order (its index in [`Stylesheet::rules`]).
 struct CompiledRule {
-    selector: Vec<SelPart>,
+    selector: Vec<SelUnit>,
     decls: Vec<(String, ResolvedValue)>,
 }
 
@@ -41,8 +41,8 @@ impl Stylesheet {
         let mut compiled = Vec::with_capacity(rules.len());
         let mut classes = HashSet::new();
         for rule in rules {
-            for part in &rule.selector.parts {
-                if let SelPart::Class(c) = part {
+            for unit in &rule.selector.units {
+                if let SelUnit::Class(c) = unit {
                     classes.insert(c.clone());
                 }
             }
@@ -51,7 +51,7 @@ impl Stylesheet {
                 decls.push((d.name.clone(), resolve_groups(&d.groups, d.span, vars)?));
             }
             compiled.push(CompiledRule {
-                selector: rule.selector.parts.clone(),
+                selector: rule.selector.units.clone(),
                 decls,
             });
         }
@@ -73,7 +73,7 @@ impl Stylesheet {
     pub fn class_decls(&self, class: &str) -> Vec<(String, ResolvedValue)> {
         let mut out = Vec::new();
         for rule in &self.rules {
-            if let [SelPart::Class(c)] = rule.selector.as_slice()
+            if let [SelUnit::Class(c)] = rule.selector.as_slice()
                 && c == class
             {
                 out.extend(rule.decls.iter().cloned());
@@ -82,29 +82,35 @@ impl Stylesheet {
         out
     }
 
-    /// The descendant (tier 2) then user-class (tier 3) declaration layers matching
-    /// a node, flattened in cascade order — descendant rules first, then single
-    /// **non-`lini-`** class rules, each in source order (SPEC §12). A worn `.lini-*`
-    /// class is the type tier (1) and is excluded here; descendant rules over
-    /// `.lini-*` classes still match via the ancestor/node facts.
+    /// The descendant (tier 2), user-class (tier 3), then id (tier 4) declaration
+    /// layers matching a node, flattened in cascade order — most-specific last
+    /// (SPEC §12). A worn `.lini-*` class is the type tier (1), looked up via
+    /// [`Self::class_decls`], and excluded here; the instance's own block (tier 5)
+    /// is appended by the caller.
     pub fn node_layers(
         &self,
         ancestors: &[NodeFacts],
         node: &NodeFacts,
     ) -> Vec<(String, ResolvedValue)> {
         let mut out = Vec::new();
-        // Tier 2: descendant rules (2+ parts), source order.
+        // Tier 2: descendant rules (2+ units), source order.
         for rule in &self.rules {
             if rule.selector.len() > 1 && selector_matches(&rule.selector, ancestors, node) {
                 out.extend(rule.decls.iter().cloned());
             }
         }
-        // Tier 3: single user-class rules the node carries, definition order.
+        // Tier 3: single user-class rules the node wears, definition order.
         for rule in &self.rules {
-            if let [SelPart::Class(c)] = rule.selector.as_slice()
+            if let [SelUnit::Class(c)] = rule.selector.as_slice()
                 && !c.starts_with("lini-")
                 && node.classes.iter().any(|x| x == c)
             {
+                out.extend(rule.decls.iter().cloned());
+            }
+        }
+        // Tier 4: single id rules (`#hero`, `|table#main|`), source order.
+        for rule in &self.rules {
+            if selector_is_id(&rule.selector) && selector_matches(&rule.selector, ancestors, node) {
                 out.extend(rule.decls.iter().cloned());
             }
         }
@@ -112,26 +118,33 @@ impl Stylesheet {
     }
 }
 
+/// A single-unit selector targeting one id — `#hero` or an id-pinned type
+/// `|table#main|` — the cascade's id tier (SPEC §12).
+fn selector_is_id(sel: &[SelUnit]) -> bool {
+    matches!(sel, [SelUnit::Id(_)] | [SelUnit::Type { id: Some(_), .. }])
+}
+
 /// The identity a selector matches against: the node's worn classes (the `.lini-*`
-/// type chain and its user classes).
+/// type chain and its user classes) and its id.
 pub struct NodeFacts {
     pub classes: Vec<String>,
+    pub id: Option<String>,
 }
 
 /// Does `parts` match `node`, given its `ancestors` (root → parent)? The last
 /// part must match the node itself; the earlier parts must match a subsequence
 /// of the ancestor chain, in order but not necessarily adjacent — exactly the
 /// CSS descendant combinator.
-pub fn selector_matches(parts: &[SelPart], ancestors: &[NodeFacts], node: &NodeFacts) -> bool {
-    let Some((last, prefix)) = parts.split_last() else {
+pub fn selector_matches(units: &[SelUnit], ancestors: &[NodeFacts], node: &NodeFacts) -> bool {
+    let Some((last, prefix)) = units.split_last() else {
         return false;
     };
-    if !part_matches(last, node) {
+    if !unit_matches(last, node) {
         return false;
     }
     let mut next = 0;
-    for part in prefix {
-        match ancestors[next..].iter().position(|a| part_matches(part, a)) {
+    for unit in prefix {
+        match ancestors[next..].iter().position(|a| unit_matches(unit, a)) {
             Some(offset) => next += offset + 1,
             None => return false,
         }
@@ -139,11 +152,17 @@ pub fn selector_matches(parts: &[SelPart], ancestors: &[NodeFacts], node: &NodeF
     true
 }
 
-fn part_matches(part: &SelPart, facts: &NodeFacts) -> bool {
-    match part {
-        SelPart::Class(c) => facts.classes.iter().any(|x| x == c),
-        // Post-desugar selectors are class-only; a bare type part never matches.
-        SelPart::Type(_) => false,
+/// Does one selector unit hold on a node? A type unit (post-desugar `name` is the
+/// `.lini-*` class) needs the class and, when id-pinned, the id; a class needs the
+/// worn class; an id needs the node's id.
+fn unit_matches(unit: &SelUnit, facts: &NodeFacts) -> bool {
+    match unit {
+        SelUnit::Class(c) => facts.classes.iter().any(|x| x == c),
+        SelUnit::Id(i) => facts.id.as_deref() == Some(i.as_str()),
+        SelUnit::Type { name, id } => {
+            facts.classes.iter().any(|x| x == name)
+                && id.as_deref().is_none_or(|i| facts.id.as_deref() == Some(i))
+        }
     }
 }
 
@@ -154,10 +173,17 @@ mod tests {
     fn facts(classes: &[&str]) -> NodeFacts {
         NodeFacts {
             classes: classes.iter().map(|s| s.to_string()).collect(),
+            id: None,
         }
     }
-    fn cls(name: &str) -> SelPart {
-        SelPart::Class(name.into())
+    fn facts_id(classes: &[&str], id: &str) -> NodeFacts {
+        NodeFacts {
+            classes: classes.iter().map(|s| s.to_string()).collect(),
+            id: Some(id.to_string()),
+        }
+    }
+    fn cls(name: &str) -> SelUnit {
+        SelUnit::Class(name.into())
     }
 
     #[test]
@@ -209,6 +235,41 @@ mod tests {
         ));
     }
 
+    #[test]
+    fn id_selector_matches_the_node_id() {
+        let node = facts_id(&["lini-box"], "hero");
+        assert!(selector_matches(&[SelUnit::Id("hero".into())], &[], &node));
+        assert!(!selector_matches(
+            &[SelUnit::Id("other".into())],
+            &[],
+            &node
+        ));
+    }
+
+    #[test]
+    fn id_pinned_type_needs_both_class_and_id() {
+        // `|table#main|` — a table with id main; lowered name is the lini class.
+        let unit = SelUnit::Type {
+            name: "lini-table".into(),
+            id: Some("main".into()),
+        };
+        assert!(selector_matches(
+            std::slice::from_ref(&unit),
+            &[],
+            &facts_id(&["lini-table"], "main")
+        ));
+        assert!(!selector_matches(
+            std::slice::from_ref(&unit),
+            &[],
+            &facts_id(&["lini-table"], "other")
+        ));
+        assert!(!selector_matches(
+            std::slice::from_ref(&unit),
+            &[],
+            &facts_id(&["lini-box"], "main")
+        ));
+    }
+
     fn sheet(src: &str) -> Stylesheet {
         use crate::syntax::ast::{Rule, StyleItem};
         let toks = crate::lexer::lex(src).expect("lex");
@@ -232,29 +293,30 @@ mod tests {
     #[test]
     fn class_decls_returns_the_generated_type_class() {
         // The lowered `.lini-box` carries the box bundle; tier 1 reads it here.
-        let s = sheet("x |box|\n");
+        let s = sheet("|box#x|\n");
         assert!(names(&s.class_decls("lini-box")).contains(&"radius"));
         assert!(s.class_decls("lini-oval").is_empty());
     }
 
     #[test]
-    fn node_layers_put_descendant_rules_before_class_rules_and_skip_lini() {
+    fn node_layers_order_descendant_then_class_then_id() {
         let s = sheet(
-            "{ .hot { stroke: red; }\n|group box| { fill: gray; } }\ng |group| .hot [\n  a |box| .hot\n]\n",
+            "{ .hot { stroke: red; }\n|group| |box| { fill: gray; }\n#a { opacity: 0.5; } }\n\
+             |group#g| .hot [\n  |box#a| .hot\n]\n",
         );
-        let node = facts(&["lini-box", "hot"]);
+        let node = facts_id(&["lini-box", "hot"], "a");
         let ancestors = [facts(&["lini-group", "lini-box", "hot"])];
-        // descendant `fill` (tier 2) before the user-class `stroke` (tier 3); the
-        // worn `.lini-box` is tier 1 and never appears here.
+        // descendant `fill` (tier 2), user-class `stroke` (tier 3), then the id
+        // `opacity` (tier 4); the worn `.lini-box` is tier 1 and never appears here.
         assert_eq!(
             names(&s.node_layers(&ancestors, &node)),
-            vec!["fill", "stroke"]
+            vec!["fill", "stroke", "opacity"]
         );
     }
 
     #[test]
     fn defines_class_covers_every_referenced_user_class() {
-        let s = sheet("{ .hot { stroke: red; } }\nx |box| .hot\n");
+        let s = sheet("{ .hot { stroke: red; } }\n|box#x| .hot\n");
         assert!(s.defines_class("hot"));
         assert!(!s.defines_class("cold"));
     }

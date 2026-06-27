@@ -16,7 +16,7 @@ use super::merge::collapse;
 use super::scene::{self, PathIndex, SceneCtx};
 use super::value::resolve_groups;
 use crate::error::Error;
-use crate::syntax::ast::{Decl, File, Rule, SelPart, StyleItem};
+use crate::syntax::ast::{Decl, File, Rule, SelUnit, StyleItem};
 use std::collections::HashMap;
 
 /// Resolve a parsed file into a [`Program`].
@@ -279,7 +279,7 @@ fn build_sheet_inputs(
     let mut class_rules = Vec::new();
     for item in &file.stylesheet {
         if let StyleItem::Rule(r) = item
-            && let [SelPart::Class(c)] = r.selector.parts.as_slice()
+            && let [SelUnit::Class(c)] = r.selector.units.as_slice()
         {
             class_rules.push((c.clone(), decls_attrmap(&r.decls, vars)?));
         }
@@ -361,7 +361,7 @@ mod tests {
 
     #[test]
     fn bare_node_resolves() {
-        let p = rv4("x |box|\n");
+        let p = rv4("|box#x|\n");
         assert_eq!(p.scene.nodes.len(), 1);
         assert_eq!(p.scene.nodes[0].id.as_deref(), Some("x"));
         assert_eq!(p.scene.nodes[0].kind, NodeKind::Block);
@@ -369,10 +369,10 @@ mod tests {
 
     #[test]
     fn dumb_core_has_no_hidden_defaults() {
-        // Resolve `x |block|` WITHOUT desugaring (input that bypassed the lowering):
+        // Resolve `|block#x|` WITHOUT desugaring (input that bypassed the lowering):
         // a bare primitive with no `.lini-*` class carries no radius/padding/gap. The
         // defaults live only in the `.lini-*` classes desugar injects.
-        let toks = crate::lexer::lex("x |block|\n").expect("lex");
+        let toks = crate::lexer::lex("|block#x|\n").expect("lex");
         let file = crate::syntax::parser::parse(&toks).expect("parse");
         let p = resolve(&file, &[]).expect("resolve");
         let attrs = &p.scene.nodes[0].attrs;
@@ -389,44 +389,59 @@ mod tests {
 
     #[test]
     fn element_rule_reaches_the_node() {
-        let p = rv4("{ |box| { radius: 4; } }\nx |box|\n");
+        let p = rv4("{ |box| { radius: 4; } }\n|box#x|\n");
         assert_eq!(num(&p, 0, "radius"), Some(4.0));
     }
 
     #[test]
     fn descendant_rule_matches_a_nested_node() {
-        let p = rv4("{ |group box| { fill: gray; } }\ng |group| [\n  a |box|\n]\n");
+        let p = rv4("{ |group| |box| { fill: gray; } }\n|group#g| [\n  |box#a|\n]\n");
         // `a` is a box inside the group; the descendant rule paints it.
         let a = &p.scene.nodes[0].children[0];
         assert!(matches!(a.attrs.get("fill"), Some(ResolvedValue::Ident(s)) if s == "gray"));
     }
 
     #[test]
+    fn id_rule_targets_one_node() {
+        // SPEC §12: `#hero { }` paints only the node with that id, and the instance
+        // block still beats it.
+        let p = rv4("{ #hero { fill: gold; } }\n|box#hero|\n|box#other|\n");
+        assert_eq!(ident(&p, 0, "fill"), Some("gold"));
+        assert_eq!(ident(&p, 1, "fill"), None);
+    }
+
+    #[test]
+    fn instance_block_beats_id_rule() {
+        let p = rv4("{ #hero { fill: gold; } }\n|box#hero| { fill: red }\n");
+        assert_eq!(ident(&p, 0, "fill"), Some("red"));
+    }
+
+    #[test]
     fn class_rule_applies() {
-        let p = rv4("{ .hot { stroke: red; } }\nx |box| .hot\n");
+        let p = rv4("{ .hot { stroke: red; } }\n|box#x| .hot\n");
         assert_eq!(ident(&p, 0, "stroke"), Some("red"));
         assert_eq!(p.scene.nodes[0].applied_styles, vec!["hot"]);
     }
 
     #[test]
     fn instance_block_beats_element_rule() {
-        let p = rv4("{ |box| { fill: white; } }\nx |box| { fill: red; }\n");
+        let p = rv4("{ |box| { fill: white; } }\n|box#x| { fill: red; }\n");
         assert_eq!(ident(&p, 0, "fill"), Some("red"));
     }
 
     #[test]
-    fn id_becomes_a_centred_label() {
-        // SPEC §3: a leaf box with no block text shows its id as a text child.
-        let p = rv4("cat |box|\n");
+    fn label_becomes_a_centred_text_child() {
+        // SPEC §3: a box's smart label lowers to a centred text child.
+        let p = rv4("|box#cat| \"cat\"\n");
         let label = &p.scene.nodes[0].children[0];
         assert_eq!(label.kind, NodeKind::Text);
         assert_eq!(label.label.as_deref(), Some("cat"));
     }
 
     #[test]
-    fn an_empty_label_suppresses_the_id() {
-        // SPEC §3: `""` is content, so it overrides id-as-label with nothing.
-        let p = rv4("cat |box| \"\"\n");
+    fn an_empty_label_draws_nothing() {
+        // SPEC §3: `""` is an empty string — nothing in flow.
+        let p = rv4("|box#cat| \"\"\n");
         assert!(p.scene.nodes[0].children.is_empty());
     }
 
@@ -434,7 +449,7 @@ mod tests {
     fn caption_is_a_small_text_plain_title() {
         // SPEC §8: a caption is a `|block|`-based title, pinned to the top edge
         // with a smaller font (`mount` is gone entirely).
-        let p = rv4("g |group| [\n  |caption| \"Title\"\n]\n");
+        let p = rv4("|group#g| [\n  |caption| \"Title\"\n]\n");
         let cap = &p.scene.nodes[0].children[0];
         assert!(cap.type_chain.iter().any(|t| t == "caption"));
         assert!(matches!(
@@ -446,13 +461,22 @@ mod tests {
         assert_eq!(cap.children[0].label.as_deref(), Some("Title"));
     }
 
+    #[test]
+    fn group_label_lowers_to_a_caption() {
+        // SPEC §3/§8: a group's smart label is its caption.
+        let p = rv4("|group#k| \"Kitchen\"\n");
+        let cap = &p.scene.nodes[0].children[0];
+        assert!(cap.type_chain.iter().any(|t| t == "caption"));
+        assert_eq!(cap.children[0].label.as_deref(), Some("Kitchen"));
+    }
+
     #[cfg(feature = "icons")]
     #[test]
     fn icon_named_by_symbol_with_optional_text() {
-        // SPEC §7: `symbol` names the icon; a bare string is an ordinary
-        // centred-text **child** (so `translate` / styling reach it like any
-        // node's text), not folded onto the node.
-        let p = rv4("i |icon| { symbol: house } \"3\"\n");
+        // SPEC §7: `symbol` names the icon; a bare string in `[ ]` is an ordinary
+        // centred-text **child** (so `translate` / styling reach it like any node's
+        // text), not folded onto the node.
+        let p = rv4("|icon#i| { symbol: house } [ \"3\" ]\n");
         assert_eq!(p.scene.nodes[0].kind, NodeKind::Icon);
         assert_eq!(ident(&p, 0, "symbol"), Some("house"));
         assert_eq!(p.scene.nodes[0].label, None);
@@ -461,9 +485,26 @@ mod tests {
         assert_eq!(child.label.as_deref(), Some("3"));
     }
 
+    #[cfg(feature = "icons")]
+    #[test]
+    fn icon_label_sets_the_symbol() {
+        // SPEC §7: the smart label of an icon is its symbol.
+        let p = rv4("|icon#i| \"house\"\n");
+        assert_eq!(ident(&p, 0, "symbol"), Some("house"));
+    }
+
+    #[cfg(feature = "icons")]
+    #[test]
+    fn icon_symbol_set_twice_errors() {
+        assert!(
+            rv4_err("|icon#i| \"house\" { symbol: heart }\n")
+                .contains("symbol is its label or 'symbol:', not both")
+        );
+    }
+
     #[test]
     fn text_properties_inherit_to_descendants() {
-        let p = rv4("g |group| { font-size: 10 } [\n  \"hi\"\n]\n");
+        let p = rv4("|group#g| { font-size: 10 } [\n  \"hi\"\n]\n");
         let t = &p.scene.nodes[0].children[0];
         assert_eq!(t.kind, NodeKind::Text);
         assert_eq!(t.attrs.number("font-size"), Some(10.0));
@@ -471,7 +512,7 @@ mod tests {
 
     #[test]
     fn define_body_materializes_per_instance() {
-        let p = rv4("{ |room::group| [\n  inlet |box|\n] }\nr |room|\n");
+        let p = rv4("{ |room::group| [\n  |box#inlet|\n] }\n|room#r|\n");
         let inlet = &p.scene.nodes[0].children[0];
         assert_eq!(inlet.id.as_deref(), Some("inlet"));
     }
@@ -506,7 +547,7 @@ mod tests {
         // root-scope link keeps the root value. Root links resolve before lifted
         // (body) links, so [0] is `a -> g` and [1] is the internal `x -> y`.
         let p = rv4(
-            "{ link: --gray; }\na |box|\ng |group| { link: --red-ink } [\n  x |box|\n  y |box|\n  x -> y\n]\na -> g\n",
+            "{ link: --gray; }\n|box#a|\n|group#g| { link: --red-ink } [\n  |box#x|\n  |box#y|\n  x -> y\n]\na -> g\n",
         );
         let stroke_var = |i: usize| match p.links[i].attrs.get("stroke") {
             Some(ResolvedValue::LiveVar { name, .. }) => name.clone(),
@@ -524,7 +565,7 @@ mod tests {
 
     #[test]
     fn operator_sets_markers_and_line_style() {
-        let p = rv4("a |box|\nb |box|\na --> b\n");
+        let p = rv4("|box#a|\n|box#b|\na --> b\n");
         let w = &p.links[0];
         assert_eq!(w.markers.end, MarkerKind::Arrow);
         assert!(
@@ -534,14 +575,14 @@ mod tests {
 
     #[test]
     fn fan_expands_to_one_link_per_pair() {
-        let p = rv4("a |box|\nb |box|\nc |box|\na & b -> c\n");
+        let p = rv4("|box#a|\n|box#b|\n|box#c|\na & b -> c\n");
         assert_eq!(p.links.len(), 2);
     }
 
     #[test]
     fn internal_link_resolves_with_scoped_paths() {
         let p = rv4(
-            "{ |room::group| [\n  inlet |box|\n  outlet |box|\n  inlet -> outlet\n] }\nr |room|\n",
+            "{ |room::group| [\n  |box#inlet|\n  |box#outlet|\n  inlet -> outlet\n] }\n|room#r|\n",
         );
         let w = &p.links[0];
         assert_eq!(w.endpoints[0].path, "r.inlet");
@@ -552,28 +593,30 @@ mod tests {
 
     #[test]
     fn unknown_type_errors() {
-        assert!(rv4_err("x |ghost|\n").contains("unknown type 'ghost'"));
+        assert!(rv4_err("|ghost#x|\n").contains("unknown type 'ghost'"));
     }
 
     #[test]
     fn unknown_class_errors() {
-        assert!(rv4_err("x |box| .nope\n").contains("unknown class '.nope'"));
+        assert!(rv4_err("|box#x| .nope\n").contains("unknown class '.nope'"));
     }
 
     #[test]
     fn duplicate_id_errors() {
-        assert!(rv4_err("a |box|\na |oval|\n").contains("duplicate id 'a'"));
+        assert!(rv4_err("|box#a|\n|oval#a|\n").contains("duplicate id 'a'"));
     }
 
     #[test]
-    fn reserved_id_errors_with_capitalized_hint() {
-        // `top` is a side — reserved as an id.
-        assert!(rv4_err("top |box|\n").contains("'Top' is free"));
+    fn side_names_are_free_ids() {
+        // SPEC §18: sides are keywords only after an endpoint `:`, so a node may be
+        // named `|box#top|` — no longer a reserved-id error.
+        let p = rv4("|box#top|\n");
+        assert_eq!(p.scene.nodes[0].id.as_deref(), Some("top"));
     }
 
     #[test]
     fn body_link_endpoint_not_found_suggests() {
-        let e = rv4_err("g |group| [\n  x |box|\n  g.y -> x\n]\n");
+        let e = rv4_err("|group#g| [\n  |box#x|\n  g.y -> x\n]\n");
         assert!(e.contains("not found"), "got: {e}");
     }
 }

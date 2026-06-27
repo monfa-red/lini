@@ -30,9 +30,11 @@ pub fn resolve_link(
         }
     }
 
-    // Cascade: link defaults → class rules → own block (SPEC §4).
+    // Cascade: link defaults → class rules → own block (SPEC §4). A link has no
+    // id, so id-tier rules never target it.
     let link_facts = NodeFacts {
         classes: w.classes.clone(),
+        id: None,
     };
     // A link is painted by the `link` family, never `stroke*` (SPEC §9) — it is a
     // link, not a stroked shape — so a `stroke*` property a user puts on it (its
