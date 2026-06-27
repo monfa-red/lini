@@ -453,10 +453,11 @@ git commit -m "editors+docs: v0.10 syntax in tmLanguage, README, playground"
 
 ## Task 11: ';' termination, expressions & functions (SPEC §2, §3, §11.7)
 
-A general facility added with v0.10 — independent of charts. A `--name` may hold a
-**number** (which bakes), a backtick `` `…` `` is a compile-time math expression, and a
+A general facility added with v0.10 — independent of charts. A backtick `` `…` `` is a compile-time math expression, and a
 stylesheet **function** `name(params) `…`` returns a number or a point. Used in any
-numeric value and in `points:` geometry.
+numeric value and in `points:` geometry. **No numeric variables, no `let`:**
+`--name` stays visual-only (`VarTable` / `LiveVar` unchanged), a reusable number is a
+zero-arg function, a backtick-local is `name = expr;`.
 
 **Files:** `src/lexer.rs`, `src/expr.rs` (new), `src/syntax/{ast,parser}.rs`,
 `src/resolve/*`, `src/layout/values.rs` + `primitives.rs` (geometry), `src/fmt*`,
@@ -472,25 +473,34 @@ numeric value and in `points:` geometry.
 
 - [ ] **Step 2: `src/expr.rs` — the standalone expression engine**
   - Its own lexer over the captured body: numbers (incl. scientific `1e6` / `1.32e-6`),
-    `+ - * / ^`, unary `-`, `( )`, `,`, comparisons, `?:`, `;`, `let`, idents.
-  - Pratt parser → AST; tree-walk eval to `f64`, or a `(f64, f64)` **point** for
-    geometry. `let name = e;` binds (whole-expression scope); the final expression is
-    the value. Math library `exp ln log sqrt abs sin cos tan min max clamp floor round
-    pow`; constants `pi`, `e`; the sample parameter `u`. Bare names resolve to numeric
-    `--vars` (without `--`) and to defined functions; a `--name` inside a body is the
-    §15 error.
+    `+ - * / ^`, unary `-`, `( )`, `,`, `=` (bind) vs `==` / `!=` / `<` / `<=` / `>` /
+    `>=` (compare), the ternary `? :`, `;`, idents. **No `let` keyword.**
+  - Pratt parser → AST; tree-walk eval over an **environment** (params + ambient vars) to
+    an `f64`, or a `(f64, f64)` **point** for geometry. A body is `{ name = expr ; }*
+    expr` — leading `name = expr;` statements bind locals (whole-body scope), the final
+    expression is the value. Math library `exp ln log sqrt abs sin cos tan min max clamp
+    floor round pow`; constants `pi`, `e`; the sample parameter `u` (the env keeps it
+    reusable — charts later inject `x`). A bare name resolves to a local, a parameter, a
+    constant, or a defined function; an unknown one is the §15 error. Numbers and points
+    only — no strings.
 
-- [ ] **Step 3: Parser — funcdef, expression values, numeric vars**
-  - `decl` / `vardecl` end with `;` (the value runs to `;`).
-  - `funcdef = ident "(" [params] ")" expr ";"` as a `setup_item` (requires `()`),
-    stored in a function table.
-  - `value` gains `expr` (the backtick token). A `css_var` value may be a number or an
-    expr (a numeric variable).
+- [ ] **Step 3: Parser — funcdef + expression / call values**
+  - `decl` / `vardecl` end with `;` (the value runs to `;`); `vardecl` (`--name: value`)
+    is unchanged — still a visual var.
+  - `funcdef = ident "(" [params] ")" expr ";"` as a `setup_item` (juxtaposed name +
+    params + backtick body, no `:`; `()` allowed for a zero-arg constant), stored in the
+    function table (name → params, body).
+  - `value` already has `call`; add `expr` (the backtick token). A `--name` value stays a
+    `LiveVar` — there is no numeric variable.
 
-- [ ] **Step 4: Resolve — fold to literals + function table**
-  - Numeric `--var` references bake to their literal; visual ones stay `var()`.
-  - Evaluate expression values via `expr.rs` against the function + variable tables; fold
-    to literal numbers. Errors: unknown name, wrong arity, `--` inside a backtick,
+- [ ] **Step 4: Resolve — function table + fold to literals**
+  - Build the function table from the `funcdef`s (arity + cycle checks).
+  - In `resolve_call`, dispatch by name: the colour / track builders (`oklch`,
+    `gradient*`, `rgb`, `rgba`, `hsl`, `hsla`, `repeat`) keep their current handling (a
+    typed value); a **math builtin or a user function** evaluates via `expr.rs` to a
+    `Number` / point.
+  - A backtick `expr` value evaluates via `expr.rs` against the function table; `--name`
+    references are untouched (still `LiveVar`). Errors: unknown name, wrong arity,
     missing `;`.
 
 - [ ] **Step 5: Geometry from a function**
@@ -499,9 +509,10 @@ numeric value and in `points:` geometry.
     literal `points: 0 0, 10 10` is unchanged.
 
 - [ ] **Step 6: fmt + lint + samples**
-  - `fmt`: `;` between declarations (optional before `}`); leave backtick bodies intact.
-  - Add the §15 messages (missing `;`, unknown name, arity, `--` in a backtick).
-  - One sample exercising a computed value, a function, and a parametric `points:`.
+  - `fmt`: `;` between declarations (optional before `}`); print a funcdef as
+    `name(params)` + its backtick body; leave backtick bodies intact.
+  - Add the §15 messages (missing `;`, unknown name in an expression, function arity).
+  - One sample exercising a function, a computed value, and a parametric `points:`.
 
 - [ ] **Step 7: Tests + visual verification** — `insta` for the lowered / baked output;
   render the parametric-`points:` sample to PNG and read it.

@@ -188,10 +188,10 @@ double-quoted string is always text; leading and trailing whitespace in its valu
 spacing never leaks into the render.
 Single quotes are **not** strings (reserved, [§18](#18-reserved-words)).
 
-**Expressions** — a backtick region (between two `` ` `` marks) is a **compile-time
-math expression**: arithmetic Lini folds to a literal number (or a point) when the
-diagram compiles. Like a string it is self-delimiting and may span lines, but its
-contents are math — operators and the math library — not text
+**Expressions** — a backtick region `` `…` `` is a **compile-time math expression**:
+operators and the math library, folded to a literal number (or a point) at compile
+time. It is the **only place operators appear** — outside it `-` is a link line and
+`<` / `>` are markers. Self-delimiting like a string, and may span lines
 ([§11.7](#117-expressions--functions)).
 
 **Numbers** — integer or decimal, optional sign, no units (px for lengths, degrees
@@ -201,8 +201,9 @@ makes a **percentage** (`50%`), valid only in colour components.
 **Values are space-separated and positional**, like CSS: `padding: 5 2 5 5`,
 `shadow: 2 2 4 #0003`, `translate: 10 -4`, `columns: 80 140 80`. A **comma**
 separates list items and appears only where a property takes a list of groups
-(`points: 0 0, 10 10`). **Functions** use parentheses: `rgb(…)`, `hsl(…)`,
-`repeat(…)`.
+(`points: 0 0, 10 10`). **Functions** use parentheses and sit in value position —
+`rgb(…)`, `hsl(…)`, `repeat(…)`, the math library, and any you define
+([§11.7](#117-expressions--functions)); a call needs no backtick (only an operator does).
 
 **Colors** — `#fff`, `#f80c`, `#ffaa00`, `#ffaa00cc` (3/4/6/8 hex digits; the 4-
 and 8-digit forms carry alpha), CSS names (`red`, `cornflowerblue`), `rgb(…)`,
@@ -233,7 +234,8 @@ root's setup block, so it additionally holds the file-global definitions:
 |---|---|---|
 | Scene config | `layout: grid;` | a declaration on the root |
 | Link / routing defaults | `link: #666;` `routing: orthogonal;` | declarations that cascade to every link ([§9](#9-links)) |
-| Variable | `--brand: #f60;` | a themeable variable |
+| Variable | `--brand: #f60;` | a themeable visual variable (colour / font) |
+| Function | `scale(n) …` | a reusable compute function — a backtick body ([§11.7](#117-expressions--functions)) |
 | Rule | `\|box\| { … }` | style every box (an element selector) |
 | Descendant rule | `\|table\| \|box\| { … }` | style every box inside a table |
 | Class | `.hot { … }` | define class `hot` |
@@ -244,6 +246,7 @@ root's setup block, so it additionally holds the file-global definitions:
 {
   layout: column;  gap: 16;  fill: --bg;  link: #666;
   --brand: #ff6600;
+  scale(n) `100 * 1.2^n`;
   |box| { radius: 6; }
   .hot { stroke-width: 2; }
   |treat::box| { radius: 5; }
@@ -1109,10 +1112,11 @@ and a host page can override them. Set any in the global block to style the whol
 | `href` | wraps this node or link in `<a href>` — clickable. |
 | `title` | emits a `<title>` child (tooltip + screen-reader name). |
 
-### Variables
+### Variables & expressions
 
-`--name: value;` declares a themeable variable; `--name` in a value references one.
-Visual variables stay live `var()`; layout values bake. See
+`--name: value;` declares a themeable **visual** variable (a colour or font),
+referenced as `--name` and staying live `var()`. Layout values bake — a literal, a
+backtick expression, or a function call ([§11.7](#117-expressions--functions)). See
 [Colour, Variables & Defaults](#11-colour-variables--defaults).
 
 ---
@@ -1239,11 +1243,9 @@ like any other paint; gradient-on-text is deferred ([§19](#19-deferred)).
 
 ### 11.4 `--name` references
 
-`--name` is the **variable namespace**. `--name: value;` declares one (a built-in
-`--lini-*` name keeps its meaning; a new name is yours), and `--name` in a value
-references it. A **visual** value — a colour or font — stays live, emitting
-`var(--lini-name)`; a **numeric** value **bakes** to its literal (layout is computed at
-compile time, so a size can't be a runtime `var()`):
+`--name` is the **visual-variable namespace, and only that.** `--name: value;`
+declares one (a built-in `--lini-*` name keeps its meaning; a new name is yours), and
+`--name` in a value references it, emitting live `var(--lini-name)`:
 
 ```
 {
@@ -1254,10 +1256,10 @@ compile time, so a size can't be a runtime `var()`):
 
 Alias a host var from CSS: `.lini { --lini-accent: var(--my-brand-blue); }`.
 
-So `--unit: 8` is a reusable size and `gap: --unit` bakes to `8`. The built-in layout
-defaults (gaps, padding, `font-size`) are still set with ordinary properties and rules
-(`gap: 30;`, `|box| { radius: 4 }`). Arithmetic on a variable goes in a backtick
-([§11.7](#117-expressions--functions)).
+Layout values — sizes, gaps, padding, `font-size`, `clearance` — are **not** `--name`
+variables: they bake (a runtime `var()` can't be measured at compile time). Set them
+with a literal, a rule (`gap: 30;`, `|box| { radius: 4 }`), or a backtick expression /
+function ([§11.7](#117-expressions--functions)).
 
 ### 11.5 Layout constants (baked)
 
@@ -1292,78 +1294,73 @@ runtime theming, but a self-contained SVG that renders anywhere.
 
 ### 11.7 Expressions & functions
 
-A **backtick expression** holds a **computed** value — arithmetic Lini folds to a
-literal when the diagram compiles. It is the math half of the value world, alongside
-the `--name` variables ([§11.4](#114---name-references)): a `--name` names a value, a
-backtick computes with it.
-
-An expression is usable as any numeric value. A bare number, variable, or function call
-needs no backtick; the backtick is required wherever an **operator** appears (operators
-lex only inside it):
+A **backtick expression** `` `…` `` holds compile-time math — folded to a literal (a
+number, or a point `(x, y)` for geometry) when the diagram compiles. It is the **only
+place operators appear**: outside a backtick `-` is a link, `<` / `>` are markers,
+`/` a comment, so the fence is what lets `*` mean "times". A value stays backtick-free
+until an operator does:
 
 ```
-{ --unit: 8; }
+{ scale(n) `100 * 1.2^n`; }   // a function (below)
 
-|box#card| {
-  gap: --unit;          // a variable in value position
-  padding: `unit * 2`;  // a variable inside math → 16
+|box| {
+  gap: 8;             // a literal
+  width: scale(3);    // a call — no operator, no backtick
+  padding: `8 * 2`;   // an operator → backtick (= 16)
 }
 ```
 
-**Inside a backtick, a variable is its bare name** — `unit`, not `--unit` — so the math
-reads cleanly and never collides with a minus. (Outside a backtick it is the ordinary
-`--unit`.) A `--name` may itself hold an expression:
+Inside a backtick the language is small and total:
+
+- **Operators** `+ - * / ^` (`^` power, right-associative), unary `-`, grouping `( )`,
+  comparisons `< <= > >= == !=`, the ternary `cond ? a : b`.
+- **Functions** — the math library `exp ln log sqrt abs sin cos tan min max clamp floor
+  round pow`, and any you define (below); each returns a number or a point, called
+  `name(args)`. (Colour / track builders like `rgb` / `repeat` make typed values, so
+  they live in value position, never inside math.)
+- **Constants** `pi`, `e`; **scientific notation** `1e6`, `1.32e-6`; the sample
+  parameter `u` (geometry, below).
+- **Locals** — `name = expr;` binds for the rest of the expression; the **final
+  expression is the value** (no keyword, no `return`). `=` binds, `==` compares. Values
+  are numbers and points — no strings, no loops.
 
 ```
-{ --base: 8; --gap: `base * 3`; }   // --gap bakes to 24
+`r = 40; n = 6; 2 * pi * r / n`   // r, n are locals; the last line is the value
 ```
 
-Inside an expression the language is small and total:
-
-- **Operators** `+ - * / ^` (`^` is power, right-associative), unary `-`, grouping
-  with `( )`, comparisons `< <= > >= == !=`, and the ternary `cond ? a : b`.
-- **Functions** `exp ln log sqrt abs sin cos tan min max clamp floor round`, plus
-  `pow(b, e)`.
-- **Constants** `pi`, `e`; **scientific notation** `1e6`, `1.32e-6`.
-- **Bindings** — `let name = expr;` binds for the rest of the expression, and the
-  **final expression is the value** (no `return`), as in Rust.
-
-```
-`let r = 40; let n = 6; 2 * pi * r / n`
-```
-
-**Functions** take arguments, so they are not variables — define them in the stylesheet
-with a parameter list and a backtick body, **no colon** (which sets a definition apart
-from a property: `scale: …` is a property, `scale(n) …` is a function):
+**Functions** are defined in the stylesheet — a name, a parameter list, and a backtick
+body, **juxtaposed** with no colon (which keeps a definition apart from a property:
+`scale: …` is a property, `scale(n) …` a function). A zero-parameter function is a
+named constant:
 
 ```
 {
-  scale(n)        `100 * 1.2^n`;
-  wave(amp, freq) `(u * 300, amp * sin(2*pi*freq*u))`;  // a parametric point
+  scale(n)   `100 * 1.2^n`;
+  unit()     `8`;                          // a named constant
+  wave(a, f) `(u*300, a*sin(2*pi*f*u))`;   // a parametric point
 }
 ```
 
-Each returns a **number**, or a **point** `(x, y)` for geometry. Call them bare, or
-inside an expression:
+Call a function anywhere a value goes — bare like `rgb(…)` / `repeat(…)`, or inside a
+backtick; only an operator forces the fence, never the call, and a computed argument is
+itself a backtick:
 
 ```
-|box| { width: scale(3); padding: `scale(2) + 4` }
+|box| { width: scale(3); padding: `scale(2) + 4`; columns: repeat(3, `80 * 2`) }
 ```
 
-**Geometry from a function.** `points:` (on `|line|` / `|poly|`) may be a **parametric
-expression in `u`** — `u` sweeps `0 → 1`, and the engine samples it at `samples:`
-points into a vertex list. This draws curves, waves, and spirals procedurally:
+**Geometry.** `points:` (on `|line|` / `|poly|`) may be a **parametric expression in
+`u`** — `u` sweeps `0 → 1`, sampled at `samples:` points into a vertex list, drawing
+curves, waves, and spirals procedurally:
 
 ```
 |line| { points: `(u*300, 20*sin(2*pi*3*u))`; samples: 60 }   // a sine wave
 |line| { points: wave(20, 3); samples: 60 }                   // the same, named
 ```
 
-`u` is the implicit sample parameter (the engine sweeps it); a function's *declared*
-parameters are its other inputs. Everything an expression touches **bakes** — a
-computed size, a sampled curve — so a standalone SVG never depends on host CSS.
-Unknown names, wrong arity, and out-of-range results are compile-time errors
-([§15](#15-errors)).
+Everything an expression touches **bakes** — a computed size, a sampled curve — so a
+standalone SVG never depends on host CSS. Unknown names, wrong arity, and out-of-range
+results are compile-time errors ([§15](#15-errors)).
 
 ---
 
@@ -1569,7 +1566,6 @@ Format: `filename:line:col: error: <message>` (LSP-compatible).
 | Missing declaration ';' | `a declaration ends with ';'` |
 | Unknown name in an expression | `unknown name 'foo' in an expression` |
 | Function arity | `'scale' takes 1 argument, got 2` |
-| `--name` inside a backtick | `inside a backtick, reference a variable by its bare name — 'unit', not '--unit'` |
 
 ---
 
@@ -1681,8 +1677,10 @@ surface here.
 
 **Resolve** (top-to-bottom):
 
-1. *Variables & rules:* merge visual-var defaults ← `--theme` ← `--name: value`;
-   compile the stylesheet's class / id / element / descendant rules.
+1. *Variables, functions & rules:* merge visual-var defaults ← `--theme` ←
+   `--name: value`; build the function table; compile the stylesheet's class / id /
+   element / descendant rules. Backtick expressions and function calls fold to literal
+   numbers / points ([§11.7](#117-expressions--functions)).
 2. *Scene tree:* each box is a primitive wearing `.lini-*` (type) and user classes;
    layer properties per [Specificity](#12-specificity) — the worn `.lini-*` classes as
    the type tier (folded base→derived), then descendant rules, class rules, the id rule,

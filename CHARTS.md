@@ -216,15 +216,15 @@ Data has three sources, not one.
 **The formula ceiling.** `booster-timeline` is a **numeric integration** (`q +=
 (prevI + iBoost)/2 * dt`) — a recurrence, not a function of `x`. **No closed-form `fn:`
 can express it.** It ships as precomputed `data:` points. Don't pretend `fn:` covers
-integration; chained *closed-form* derivations (`toggle`) are fine via `let` (§7).
+integration; chained *closed-form* derivations (`toggle`) are fine via `=` locals (§7).
 
 ---
 
 ## 7. Formulas
 
 A chart formula is a **backtick expression** — Lini's compile-time math
-([SPEC §11.7](SPEC.md)). That section owns the language (operators, `exp`/`sin`/…, `let`,
-ternary, named functions); charts add two things:
+([SPEC §11.7](SPEC.md)). That section owns the language (operators, `exp`/`sin`/…,
+`name = expr` locals, ternary, functions); charts add two things:
 
 - **`x` and `u`** — the formula's variable. `x` is the **x-axis value** (the domain
   position); `u` is a **per-band local** coordinate, `0 → 1` across a band (§8). A
@@ -244,7 +244,7 @@ series with a parameter:
 { ramp(s) `min(100, 25 + 1.572*(x/s) + 0.0142*(x/s)^2)`; }
 …
 |area| "Steel"    { fn: ramp(1) }
-|line| "Aluminum" { fn: ramp(1/0.7) }
+|line| "Aluminum" { fn: `ramp(1/0.7)` }
 ```
 
 ---
@@ -562,7 +562,7 @@ with labels; unit ticks.
 **Stresses:** dual axis; ternary piecewise in one backtick (no bands); area on one axis,
 dashed line on the other.
 
-### 15.9 `toggle` — four axes, log, reversed x, `let`
+### 15.9 `toggle` — four axes, log, reversed x, locals
 
 ```
 |chart#toggle| { legend: none } [
@@ -577,9 +577,9 @@ dashed line on the other.
   |area| "Clamp Force (kN)" { axis: clamp; interpolate: smooth; color: --sky; fill: --sky;
     fn: `min(300, 366 * max(0, 0.82 - 1.32e-6*x^3.909))` }
   |area| "Screw Force (kN)" { axis: screw; interpolate: smooth; color: --rose; fill: --rose;
-    fn: `let ma = 193800 / x^2.909;
-         let platen = 1.32e-6 * x^3.909;
-         let clamp = min(300, 366 * max(0, 0.82 - platen));
+    fn: `ma = 193800 / x^2.909;
+         platen = 1.32e-6 * x^3.909;
+         clamp = min(300, 366 * max(0, 0.82 - platen));
          clamp > 0 ? min(12.6, clamp / (ma*0.95)) : 0` }
   |line| "Platen Travel to Lockup (mm)" { axis: lockup; interpolate: smooth; style: dashed; color: --teal; fn: `1.32e-6 * x^3.909` }
 
@@ -589,7 +589,7 @@ dashed line on the other.
 ]
 ```
 **Stresses:** four value axes (three sharing the right, source-ordered); log; reversed x
-(`range: 50 1`); `let` bindings in one backtick; multiple smooth areas; axis-bound marks.
+(`range: 50 1`); `=` locals in one backtick; multiple smooth areas; axis-bound marks.
 The vindication of `|axis#id|` naming.
 
 ### 15.10 `tier-power` — stacked-as-increments
@@ -624,7 +624,7 @@ no-JS (§11).
   |axis#temp| "Supply Temperature (°C)"  { side: left; range: 20 108 }
 
   |area| "Steel cavity (~13 kg)"   { interpolate: smooth; fill: --teal; fn: ramp(1) }
-  |line| "Aluminum cavity (~4 kg)" { interpolate: smooth; style: dashed; color: --sky; fn: ramp(1/0.7) }
+  |line| "Aluminum cavity (~4 kg)" { interpolate: smooth; style: dashed; color: --sky; fn: `ramp(1/0.7)` }
 
   |mark| "100 °C max supply setpoint" { at: 100; axis: temp; color: --red }
   |mark| "60 °C — 19 min"  { at: 19 60;  color: --stroke }
