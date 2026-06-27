@@ -161,7 +161,7 @@ declaration: naming an id declared nowhere auto-creates it ([§3](#3-statements)
 | Encoding | UTF-8 (BOM ignored) |
 | Line endings | LF or CRLF (normalized on read) |
 | Comments | `// …` to end of line. No block comments. |
-| Statement end | newline or `;` |
+| Statement end | A node/link/text statement ends at a newline or `;`. A **declaration** ends at `;` — its value runs to that `;` (or a closing `}`), so a value may span lines. |
 | Identifier | `[a-zA-Z_][a-zA-Z0-9_-]*` — case-sensitive, ASCII, dash-case |
 
 Whitespace is insignificant except as a token separator and where a rule below
@@ -187,6 +187,12 @@ double-quoted string is always text; leading and trailing whitespace in its valu
 **trimmed** (`" ABC "` is "ABC", and a spaces-only `" "` becomes `""`), so source
 spacing never leaks into the render.
 Single quotes are **not** strings (reserved, [§18](#18-reserved-words)).
+
+**Expressions** — a backtick region (between two `` ` `` marks) is a **compile-time
+math expression**: arithmetic Lini folds to a literal number (or a point) when the
+diagram compiles. Like a string it is self-delimiting and may span lines, but its
+contents are math — operators and the math library — not text
+([§11.7](#117-expressions--functions)).
 
 **Numbers** — integer or decimal, optional sign, no units (px for lengths, degrees
 for angles, 0–1 for opacities/fractions). `10`, `-5`, `0.25`, `+3`. A trailing `%`
@@ -374,8 +380,10 @@ in the tree, the box is still created here and a warning names the other match.
 
 A declaration `key: value;` lives only in a `{ }` style block — the stylesheet
 (configuring the root) or a node's own block. Property names are dash-case; values
-are space-separated and positional. A bare `key: value` outside a `{ }` is an
-error. See [Properties](#10-properties).
+are space-separated and positional. A declaration **ends with `;`** — its value runs
+to that `;` (or the block's closing `}`), so a value may span several lines (a long
+expression, a per-segment list); the `;` is optional only immediately before `}`. A
+bare `key: value` outside a `{ }` is an error. See [Properties](#10-properties).
 
 ---
 
@@ -1045,7 +1053,8 @@ container, they reach every link in that scope; a link's own block overrides.
 | `pin` | `none` / `center` / edges / corners | Out-of-flow anchor — the child's matching point lands on the named parent point ([§6](#6-positioning--anchors)). A **box** property. |
 | `translate` | `x y` | Post-placement nudge of the node and its subtree; no reflow, grows nothing ([§6](#6-positioning--anchors)). Works on **any** node, text included. |
 | `layer` | integer | Paint order; default 0 in flow, 1 when `pin`ned. Ties break on source order. |
-| `points` | `x y, x y, …` | Vertex list (`\|poly\|`, `\|line\|`). |
+| `points` | `x y, x y, …` / expr | Vertex list (`\|poly\|`, `\|line\|`), or a parametric expression in `u` sampled at `samples` ([§11.7](#117-expressions--functions)). |
+| `samples` | integer | Sample count when `points` is a parametric expression. |
 | `path` | string | Raw SVG path (`\|path\|`, native top-left coords). |
 | `symbol` | ident | Icon name (`\|icon\|`) — a Phosphor symbol, e.g. `heart`, `warning-circle`. The smart label sets it too (`\|icon\| "heart"`). |
 | `fit` | `auto` / `contain` / `cover` / `stretch` | How an `\|icon\|` symbol or `\|image\|` maps into its box — the box size is unchanged. `auto` (default) keeps the natural framing (Phosphor's 256-grid margin for an icon, letterbox for an image); `contain` scales the content uniformly to fit inside, `cover` to cover the box (may overflow / crop), `stretch` fills both axes (may distort). For an icon, `contain`/`cover`/`stretch` measure the glyph's own bounds; [Icons](#icons). |
@@ -1230,9 +1239,11 @@ like any other paint; gradient-on-text is deferred ([§19](#19-deferred)).
 
 ### 11.4 `--name` references
 
-`--name` is the **visual-variable namespace, and only that**. `--name: value;` declares
-one (a built-in `--lini-*` name keeps its meaning; a new name is yours), and `--name`
-in a value references it, emitting `var(--lini-name)`:
+`--name` is the **variable namespace**. `--name: value;` declares one (a built-in
+`--lini-*` name keeps its meaning; a new name is yours), and `--name` in a value
+references it. A **visual** value — a colour or font — stays live, emitting
+`var(--lini-name)`; a **numeric** value **bakes** to its literal (layout is computed at
+compile time, so a size can't be a runtime `var()`):
 
 ```
 {
@@ -1243,9 +1254,10 @@ in a value references it, emitting `var(--lini-name)`:
 
 Alias a host var from CSS: `.lini { --lini-accent: var(--my-brand-blue); }`.
 
-Layout values — sizes, gaps, padding, `font-size`, `clearance` — are **not** `--name`
-variables: they aren't themeable. Set them with properties and rules instead
-(`gap: 30;`, `|box| { radius: 4 }`, `font-size: 16;` in the stylesheet).
+So `--unit: 8` is a reusable size and `gap: --unit` bakes to `8`. The built-in layout
+defaults (gaps, padding, `font-size`) are still set with ordinary properties and rules
+(`gap: 30;`, `|box| { radius: 4 }`). Arithmetic on a variable goes in a backtick
+([§11.7](#117-expressions--functions)).
 
 ### 11.5 Layout constants (baked)
 
@@ -1277,6 +1289,81 @@ Class rules and inline `style=` work everywhere, but CSS *variables* don't — r
 librsvg fail `var()` in every position (browsers, even `<img>`-embedded, are fine).
 `--bake-vars` keeps the rules but inlines every `var(--lini-name)` as its literal: no
 runtime theming, but a self-contained SVG that renders anywhere.
+
+### 11.7 Expressions & functions
+
+A **backtick expression** holds a **computed** value — arithmetic Lini folds to a
+literal when the diagram compiles. It is the math half of the value world, alongside
+the `--name` variables ([§11.4](#114---name-references)): a `--name` names a value, a
+backtick computes with it.
+
+An expression is usable as any numeric value. A bare number, variable, or function call
+needs no backtick; the backtick is required wherever an **operator** appears (operators
+lex only inside it):
+
+```
+{ --unit: 8; }
+
+|box#card| {
+  gap: --unit;          // a variable in value position
+  padding: `unit * 2`;  // a variable inside math → 16
+}
+```
+
+**Inside a backtick, a variable is its bare name** — `unit`, not `--unit` — so the math
+reads cleanly and never collides with a minus. (Outside a backtick it is the ordinary
+`--unit`.) A `--name` may itself hold an expression:
+
+```
+{ --base: 8; --gap: `base * 3`; }   // --gap bakes to 24
+```
+
+Inside an expression the language is small and total:
+
+- **Operators** `+ - * / ^` (`^` is power, right-associative), unary `-`, grouping
+  with `( )`, comparisons `< <= > >= == !=`, and the ternary `cond ? a : b`.
+- **Functions** `exp ln log sqrt abs sin cos tan min max clamp floor round`, plus
+  `pow(b, e)`.
+- **Constants** `pi`, `e`; **scientific notation** `1e6`, `1.32e-6`.
+- **Bindings** — `let name = expr;` binds for the rest of the expression, and the
+  **final expression is the value** (no `return`), as in Rust.
+
+```
+`let r = 40; let n = 6; 2 * pi * r / n`
+```
+
+**Functions** take arguments, so they are not variables — define them in the stylesheet
+with a parameter list and a backtick body, **no colon** (which sets a definition apart
+from a property: `scale: …` is a property, `scale(n) …` is a function):
+
+```
+{
+  scale(n)        `100 * 1.2^n`;
+  wave(amp, freq) `(u * 300, amp * sin(2*pi*freq*u))`;  // a parametric point
+}
+```
+
+Each returns a **number**, or a **point** `(x, y)` for geometry. Call them bare, or
+inside an expression:
+
+```
+|box| { width: scale(3); padding: `scale(2) + 4` }
+```
+
+**Geometry from a function.** `points:` (on `|line|` / `|poly|`) may be a **parametric
+expression in `u`** — `u` sweeps `0 → 1`, and the engine samples it at `samples:`
+points into a vertex list. This draws curves, waves, and spirals procedurally:
+
+```
+|line| { points: `(u*300, 20*sin(2*pi*3*u))`; samples: 60 }   // a sine wave
+|line| { points: wave(20, 3); samples: 60 }                   // the same, named
+```
+
+`u` is the implicit sample parameter (the engine sweeps it); a function's *declared*
+parameters are its other inputs. Everything an expression touches **bakes** — a
+computed size, a sampled curve — so a standalone SVG never depends on host CSS.
+Unknown names, wrong arity, and out-of-range results are compile-time errors
+([§15](#15-errors)).
 
 ---
 
@@ -1479,6 +1566,10 @@ Format: `filename:line:col: error: <message>` (LSP-compatible).
 | `skew` out of range | `skew: N must be in (-89, 89)` |
 | Single-quoted string | `single quotes are not strings — use "…"` |
 | Invalid `pin` value | `'pin' expects none, center, an edge (top/bottom/left/right), or a corner (e.g. 'top right')` |
+| Missing declaration ';' | `a declaration ends with ';'` |
+| Unknown name in an expression | `unknown name 'foo' in an expression` |
+| Function arity | `'scale' takes 1 argument, got 2` |
+| `--name` inside a backtick | `inside a backtick, reference a variable by its bare name — 'unit', not '--unit'` |
 
 ---
 
@@ -1487,12 +1578,13 @@ Format: `filename:line:col: error: <message>` (LSP-compatible).
 ```
 file        = [ stylesheet ] canvas links           # the three phases, in order
 stylesheet  = "{" { setup_item } "}"                # the root's setup block; omit when empty
-setup_item  = decl | vardecl | rule | define | comment | newline
+setup_item  = decl | vardecl | funcdef | rule | define | comment | newline
 canvas      = { node | text | comment | newline }   # instances, drawn in source order
 links       = { link | comment | newline }
 
-decl        = ident ":" values end
-vardecl     = css_var ":" values end                # --name : value
+decl        = ident ":" values ";"                  # ';' optional before '}'
+vardecl     = css_var ":" values ";"                # --name : value ;
+funcdef     = ident "(" [ ident { "," ident } ] ")" expr ";"       # scale(n) `…` ;
 rule        = selector style                        # |box| { } , |table| |box| { } , .hot { } , #hero { }
 define      = "|" ident "::" ident "|" body         # name :: base, optional children
 
@@ -1518,9 +1610,10 @@ label_block = "[" { text } "]"                       # canonical labels — styl
 
 values      = value_group { "," value_group }        # comma only between list items
 value_group = value { value }                        # space-separated scalars
-value       = number | percent | string | hex | ident | css_var | call
+value       = number | percent | string | hex | ident | css_var | call | expr
 call        = ident "(" [ value { "," value } ] ")"
 css_var     = "--" ident { "-" ident }
+expr        = "`" { char } "`"                       # a compile-time math expression (§11.7)
 
 link_op     = [ marker ] line [ marker ]
 line        = "-" | "--" | "---" | "~"
@@ -1549,6 +1642,9 @@ every statement already tells its kind:
 - `|…|` is always identity, `{` always style, `[` always content. A string heads the
   one inline label (or, with no preceding identity, a free-standing text node); two or
   more labels ride the `[ ]`.
+- A **declaration** ends with `;` (its value runs to the `;`, so it may span lines); a
+  **statement** (node, link, text) ends at a newline or `;`. In the stylesheet, a name
+  followed by `(`…`)` and a backtick body is a **function definition** ([§11.7](#117-expressions--functions)), not a declaration.
 
 **Adjacency tells a `.class` from a path; a `:` tells a side.** A space before the `.`
 makes it a worn class (`a .hot` — node `a` with class `hot`), no space makes it an
@@ -1639,6 +1735,11 @@ Value keywords are **contextual**, not reserved as ids — `grid`, `row`, `colum
 keyword only after the property that expects them (`layout: grid`, `routing:
 orthogonal`). Function names `rgb`, `rgba`, `hsl`, `repeat` are reserved only before
 `(`.
+
+Inside an expression (a backtick region, [§11.7](#117-expressions--functions)), `pi`,
+`e`, and the sample parameter `u` are keywords, and the math-function names (`sin`,
+`exp`, `min`, …) are reserved before `(` — all contextual to the expression, free as
+ids elsewhere.
 
 ---
 

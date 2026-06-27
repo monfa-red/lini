@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Bring the engine in line with the rewritten `SPEC.md` — identity in the bars (`|type#id|`), smart labels, side via `:`, floating class, juxtaposed selectors, and `->`/`-->`/`--->`/`~>` link lines.
+**Goal:** Bring the engine in line with the rewritten `SPEC.md` — identity in the bars (`|type#id|`), smart labels, side via `:`, floating class, juxtaposed selectors, and `->`/`-->`/`--->`/`~>` link lines — plus `;`-terminated declarations and the expression / function facility (§11.7).
 
 **Architecture:** The change is **front-loaded onto the parse pipeline**. Lex → parse → desugar → resolve produce a syntax-agnostic IR; **layout, routing, and render consume that IR and need no changes** (a forced side is still a `Side` enum, a class is still a `.lini-style-*` class — only how they're *written* changed). So the blast radius is: `lexer` → `syntax/ast` → `syntax/parser` → `desugar` → `resolve` (cascade tiers + selector match) → `fmt` → `lint`, then `samples`, `tests`, `editors`, `docs`.
 
@@ -451,7 +451,64 @@ git commit -m "editors+docs: v0.10 syntax in tmLanguage, README, playground"
 
 ---
 
-## Task 11: Final sweep
+## Task 11: ';' termination, expressions & functions (SPEC §2, §3, §11.7)
+
+A general facility added with v0.10 — independent of charts. A `--name` may hold a
+**number** (which bakes), a backtick `` `…` `` is a compile-time math expression, and a
+stylesheet **function** `name(params) `…`` returns a number or a point. Used in any
+numeric value and in `points:` geometry.
+
+**Files:** `src/lexer.rs`, `src/expr.rs` (new), `src/syntax/{ast,parser}.rs`,
+`src/resolve/*`, `src/layout/values.rs` + `primitives.rs` (geometry), `src/fmt*`,
+`src/lint.rs`, `tests/`, `samples/`.
+
+- [ ] **Step 1: Lexer — ';' for declarations + the backtick token**
+  - A declaration's value ends at `;` (or `}` / `]`), **not** a newline: drop `Newline`
+    from the value-terminator set in `parse_values` (newlines within a value become
+    whitespace). Statement termination (nodes / links) is unchanged.
+  - Add `TokKind::Expr(String)` — a backtick `` `…` `` captured raw (multi-line, like a
+    string but for math); `expr.rs` parses the body, so the main lexer never sees its
+    operators.
+
+- [ ] **Step 2: `src/expr.rs` — the standalone expression engine**
+  - Its own lexer over the captured body: numbers (incl. scientific `1e6` / `1.32e-6`),
+    `+ - * / ^`, unary `-`, `( )`, `,`, comparisons, `?:`, `;`, `let`, idents.
+  - Pratt parser → AST; tree-walk eval to `f64`, or a `(f64, f64)` **point** for
+    geometry. `let name = e;` binds (whole-expression scope); the final expression is
+    the value. Math library `exp ln log sqrt abs sin cos tan min max clamp floor round
+    pow`; constants `pi`, `e`; the sample parameter `u`. Bare names resolve to numeric
+    `--vars` (without `--`) and to defined functions; a `--name` inside a body is the
+    §15 error.
+
+- [ ] **Step 3: Parser — funcdef, expression values, numeric vars**
+  - `decl` / `vardecl` end with `;` (the value runs to `;`).
+  - `funcdef = ident "(" [params] ")" expr ";"` as a `setup_item` (requires `()`),
+    stored in a function table.
+  - `value` gains `expr` (the backtick token). A `css_var` value may be a number or an
+    expr (a numeric variable).
+
+- [ ] **Step 4: Resolve — fold to literals + function table**
+  - Numeric `--var` references bake to their literal; visual ones stay `var()`.
+  - Evaluate expression values via `expr.rs` against the function + variable tables; fold
+    to literal numbers. Errors: unknown name, wrong arity, `--` inside a backtick,
+    missing `;`.
+
+- [ ] **Step 5: Geometry from a function**
+  - `points:` accepts a parametric expr in `u` (returning a point), sampled at `samples:`
+    into a vertex list — in `layout` (the same sampler a chart line will reuse). A
+    literal `points: 0 0, 10 10` is unchanged.
+
+- [ ] **Step 6: fmt + lint + samples**
+  - `fmt`: `;` between declarations (optional before `}`); leave backtick bodies intact.
+  - Add the §15 messages (missing `;`, unknown name, arity, `--` in a backtick).
+  - One sample exercising a computed value, a function, and a parametric `points:`.
+
+- [ ] **Step 7: Tests + visual verification** — `insta` for the lowered / baked output;
+  render the parametric-`points:` sample to PNG and read it.
+
+---
+
+## Task 12: Final sweep
 
 - [ ] **Step 1: Grep for stragglers** across the whole repo (not just SPEC):
 
@@ -473,7 +530,7 @@ cargo fmt --all && cargo test && cargo clippy --all-targets
 
 ## Self-Review (run before execution)
 
-- **Spec coverage:** §1–§4 → Tasks 2–5; §7 icons / smart label → Task 4; §9 links (`:side`, ops, head label) → Tasks 1/3/4; §15 errors → Task 6; §14 fmt → Task 7; §16 grammar → Tasks 1–3; §13 SVG output → unchanged (verified by Task 9 snapshots). §5/§6 layout & positioning, §10–§13, §17–§20 are behavior the IR already produces — covered by snapshot/visual verification (Tasks 8–9), not new code.
+- **Spec coverage:** §1–§4 → Tasks 2–5; §7 icons / smart label → Task 4; §9 links (`:side`, ops, head label) → Tasks 1/3/4; §15 errors → Tasks 6 & 11; §14 fmt → Tasks 7 & 11; §16 grammar → Tasks 1–3 & 11; §2/§3 (`;` termination) + §11.7 (expressions / functions / geometry) → Task 11; §13 SVG output → unchanged (verified by Task 9 snapshots). §5/§6 layout & positioning, §10–§13, §17–§20 are behavior the IR already produces — covered by snapshot/visual verification (Tasks 8–9), not new code.
 - **IR boundary:** layout/route/render untouched — Task 2 Step 4 proves it (compile errors confined to front-end). If errors appear in `layout/`/`render/`, a syntax detail leaked into the IR; stop and reconcile with the spec before continuing.
 - **One mechanism:** the shared tail-parser (Task 3 Step 3) and shared `lower_label` (Task 4 Step 2) are explicit, per AGENTS.md "no parallel implementations."
 - **Type consistency:** `SelUnit` (Task 2) is consumed by parser (Task 3), desugar (Task 4), resolve (Task 5) under the same name. `Node.label` / `Link.label` produced in Task 2, parsed in Task 3, lowered in Task 4.
