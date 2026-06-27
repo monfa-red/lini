@@ -13,6 +13,7 @@
     { "include": "#class" },
     { "include": "#side" },
     { "include": "#hex-color" },
+    { "include": "#id-selector" },
     { "include": "#number" },
     { "include": "#punctuation" }
   ],
@@ -76,7 +77,7 @@
       ]
     },
     "type-bars": {
-      "comment": "Bars hold a type (|box|), a name::base define, or — in a rule — a descendant selector over types and classes (|table box|, |.sidebar box|). An instance's worn class lives after the bars (see #class).",
+      "comment": "Bars hold identity (SPEC §3): a type (|box|), a type with an id (|box#cat|), an id alone (|#cat|), or a name::base define. A worn class lives after the bars (see #class); a descendant selector is space-separated bars (|table| |box|), each its own pair.",
       "begin": "\\|",
       "beginCaptures": {
         "0": { "name": "punctuation.definition.type.begin.lini entity.name.tag.lini" }
@@ -96,11 +97,11 @@
           }
         },
         {
-          "comment": "a class part in a rule's descendant selector (|.sidebar box|)",
-          "match": "(\\.)([A-Za-z_][\\w-]*)",
+          "comment": "an #id pinned in the bars (|box#cat|, |#cat|)",
+          "match": "(#)([A-Za-z_][\\w-]*)",
           "captures": {
             "1": { "name": "punctuation.definition.entity.lini" },
-            "2": { "name": "entity.other.attribute-name.class.lini" }
+            "2": { "name": "entity.name.tag.id.lini" }
           }
         },
         {
@@ -120,7 +121,8 @@
       "name": "variable.other.lini"
     },
     "link-op": {
-      "match": "(?:<>|[<>*])?(?:--|\\.\\.|~|-)(?:<>|[<>*])?",
+      "comment": "[start_marker?] line [end_marker?]; line is - / -- / --- / ~ (longest first).",
+      "match": "(?:<>|[<>*])?(?:---|--|~|-)(?:<>|[<>*])?",
       "name": "keyword.operator.link.lini"
     },
     "class": {
@@ -129,8 +131,17 @@
       "name": "entity.other.attribute-name.class.lini"
     },
     "side": {
-      "match": "(?<![\\w-])(top|bottom|left|right)(?![\\w-])",
-      "name": "support.constant.side.lini"
+      "comment": "A forced side on a link endpoint (a:left); sides are free as ids elsewhere (SPEC §18).",
+      "match": "(:)(top|bottom|left|right)(?![\\w-])",
+      "captures": {
+        "1": { "name": "punctuation.separator.side.lini" },
+        "2": { "name": "support.constant.side.lini" }
+      }
+    },
+    "id-selector": {
+      "comment": "An #id at a rule head (#hero { }); a #hex run is a colour (handled first).",
+      "match": "#[A-Za-z_][\\w-]*",
+      "name": "entity.name.tag.id.lini"
     },
     "hex-color": {
       "match": "#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3})(?![0-9a-fA-F])",

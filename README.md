@@ -76,22 +76,21 @@ fish --> bowl          // dashed
   |db::cyl| { fill: lightyellow; }    // a new type from the cylinder primitive
 }
 
-api   |box| "API"
-queue |box| .hot { radius: 8 } "Queue"    // a node wears its class after the type
-store |db|  "Postgres"
+|box#api|   "API"
+|box#queue| "Queue" .hot { radius: 8 }    // a node wears its class after the label
+|db#store|  "Postgres"
 
 api   -> queue "enqueue"
 queue -> store .loud "persist"            // a link wears one after its endpoints
-store ..> api  "ack"                       // dotted arrow
+store ---> api "ack"                       // dotted arrow
 ```
 
 **Containers lay their children out.** Style sits in `{ }`, children in `[ ]`; pick a mode and they flow, grid, or anchor:
 
 ```
-services |group| { layout: row; gap: 24 } [
-  |caption| "Services"
-  api  |box| "API"
-  auth |box| "Auth"
+|group#services| "Services" { layout: row; gap: 24 } [
+  |box#api|  "API"
+  |box#auth| "Auth"
 ]
 ```
 
@@ -104,8 +103,8 @@ services |group| { layout: row; gap: 24 } [
 <p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/shapes.png" alt="Lini's primitives and templates" width="480"></p>
 
 ```
-|hex|  { width: 82; height: 72 } "hex"
-|cyl|  { width: 78; height: 78 } "db"
+|hex|  "hex" { width: 82; height: 72 }
+|cyl|  "db"  { width: 78; height: 78 }
 |poly| { points: 0 -34, 32 11, 20 34, -20 34, -32 11; }
 |path| { path: "M -34 6 C -34 -34 34 -34 34 6 C 20 34 -20 34 -34 6 Z"; }
 ```
@@ -123,8 +122,8 @@ Built-in **[Phosphor](https://phosphoricons.com/)** icons, drawn as inline SVG p
 ```
 |icon| .teal { symbol: user }                            // two-tone, via a colour class
 |icon| { symbol: cloud; fill: none; stroke: --sky-deep } // single-tone line
-|icon| .amber { symbol: bell } "3"                       // a label rides as centred text
-svc |sign| .purple { symbol: gear } "Service"            // larger, labelled, and linkable
+|icon| "bell" .amber [ "3" ]                             // symbol via the label, "3" a badge
+|sign#svc| "gear" .purple [ "Service" ]                  // larger, labelled, and linkable
 ```
 
 Only the symbols a diagram uses are embedded, so the full set never bloats a small file.
@@ -140,9 +139,9 @@ The operator is the link's look, written `[start][line][end]` with no spaces:
 | Line | | Markers | |
 |---|---|---|---|
 | `-` solid | `--` dashed | `>` arrow | `*` dot |
-| `..` dotted | `~` wavy | `<` crow | `<>` diamond |
+| `---` dotted | `~` wavy | `<` crow | `<>` diamond |
 
-So `->` is a solid arrow, `<->` is bidirectional, `--*` a dashed line ending in a dot, `~>` a wavy arrow. Endpoints support fan-out, fan-in, and cartesian fans with `&`, and dot-paths into nested containers (`closet.outlet -> fridge.inlet`). Routing is automatic but steerable: name a side (`a.right -> b.left`) to force where a link leaves or arrives. Labels ride the link and slide to clear nodes; the link never moves for a label.
+So `->` is a solid arrow, `<->` is bidirectional, `--*` a dashed line ending in a dot, `~>` a wavy arrow. Endpoints support fan-out, fan-in, and cartesian fans with `&`, and dot-paths into nested containers (`closet.outlet -> fridge.inlet`). Routing is automatic but steerable: name a side (`a:right -> b:left`) to force where a link leaves or arrives. Labels ride the link and slide to clear nodes; the link never moves for a label.
 
 The full routing contract (crossings, priority, self-loops, starvation) lives in [`LINKING.md`](https://github.com/monfa-red/lini/blob/main/LINKING.md).
 
@@ -160,8 +159,8 @@ The full routing contract (crossings, priority, self-loops, starvation) lives in
 
 ```
 { |card::box| { fill: --teal-wash; stroke: --teal-ink } }   // a soft card, one line
-note |note| { fill: --amber-soft }
-hero |box|  { fill: gradient(--rose, --amber, --sky) }      // a three-colour blend
+|note#note| { fill: --amber-soft }
+|box#hero|  { fill: gradient(--rose, --amber, --sky) }      // a three-colour blend
 ```
 
 - **Five tiers per hue** — `wash` (palest, for backgrounds), `soft`, the bare name (the everyday pastel), `deep` (the strong tone, for borders and strokes), and `ink` (for text and emphasis). The names hold across the dark flip: `--teal-ink` is the high-contrast tone in *both* modes, where a `light`/`dark` name would invert.
@@ -278,7 +277,7 @@ Parsing is recursive-descent over an LL(1) grammar; resolve applies CSS-like spe
 
 ## Status
 
-**v0.9.** The language (the box/text model in [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md)) is stable, and the pipeline is complete and tested: links route and render, layout and theming work, and the formatter and dev server ship in the same binary.
+**v0.10.** The language (the box/text model in [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md)) is stable, and the pipeline is complete and tested: links route and render, layout and theming work, and the formatter and dev server ship in the same binary.
 
 ## Development
 

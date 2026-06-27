@@ -533,7 +533,7 @@
         const VAR_NAME = /--[A-Za-z_][\w-]*(?=[ \t]*:(?!:))/y;
         const PROP_NAME = /[A-Za-z_][\w-]*(?=[ \t]*:(?!:))/y;
         const CSS_VAR = /--[A-Za-z_][\w-]*/y;
-        const LINK_OP = /(?:<>|[<>*])?(?:--|\.\.|~|-)(?:<>|[<>*])?/y;
+        const LINK_OP = /(?:<>|[<>*])?(?:---|--|~|-)(?:<>|[<>*])?/y;
         const CLASS = /(?:\.[A-Za-z_][\w-]*)+/y;
         const SIDE = /(?:top|bottom|left|right)(?![\w-])/y;
         const HEX =
@@ -621,6 +621,12 @@
               }
               if (src[i] === ":" && src[i + 1] === ":") {
                 emit("op", "::");
+                continue;
+              }
+              if (src[i] === "#") {
+                emit("punct", "#");
+                let id;
+                if ((id = at(IDENT))) emit("type", id);
                 continue;
               }
               if ((b = at(CLASS))) {
