@@ -1,9 +1,8 @@
-# Charts — a brainstorm (v3, on v0.10 syntax)
+# Charts — a brainstorm (v0.1)
 
-A **thinking document**, not a plan. Rebuilt from the ground up on the new v0.10
-syntax — it supersedes the v2 draft. v0.10's **smart label** turns out to be the
-right backbone for charts, so this is part critique of v2, part syntax upgrade.
-Scribble on it; push back.
+A **thinking document**, not a plan — a first exploration of how charts could work in
+Lini. The **smart label** turns out to be the right backbone. Scribble on it; push
+back.
 
 Twelve real configs drive every example: `chart-cycle-composition`,
 `chart-shot-power`, and the nine engineering charts (`barrel-thermal`,
@@ -11,7 +10,7 @@ Twelve real configs drive every example: `chart-cycle-composition`,
 `pressure-envelope`, `tcu-warmup`, `tier-power`, `toggle`). If a proposal can't
 reproduce them, it's wrong. All eleven are worked in §15.
 
-Reading order: **§1 (what v0.10 changed)** is the upgrade in one screen; skim **§0
+Reading order: **§1 (the smart label)** is the backbone in one screen; skim **§0
 glossary**; then the design. **§15 (the real charts)**, **§16 gotchas**, and **§17
 open questions** are where your judgement matters most.
 
@@ -19,13 +18,13 @@ open questions** are where your judgement matters most.
 
 ## Contents
 
-0 [Glossary](#0-glossary) · 1 [What v0.10 changed for charts](#1-what-v010-changed-for-charts) ·
+0 [Glossary](#0-glossary) · 1 [The smart label](#1-the-smart-label) ·
 2 [The big bet](#2-the-big-bet) · 3 [Cheat-sheet](#3-cheat-sheet) · 4 [Chart & axes](#4-chart--axes) ·
 5 [Series](#5-series) · 6 [Three kinds of data](#6-three-kinds-of-data) · 7 [The formula language](#7-the-formula-language) ·
 8 [Bands & segments](#8-bands--segments) · 9 [Annotations](#9-annotations) · 10 [Areas & fills](#10-areas--fills) ·
 11 [Tooltips](#11-tooltips) · 12 [Legend](#12-legend) · 13 [layout / direction](#13-the-layout--direction-refactor) ·
-14 [Performance](#14-performance) · 15 [**The 11 real charts**](#15-the-11-real-charts-in-v010) · 16 [Gotchas](#16-gotchas) ·
-17 [Open questions](#17-open-questions) · 18 [Future: pie & mindmap](#18-future-modes) · 19 [What changed from v2](#19-what-changed-from-v2)
+14 [Performance](#14-performance) · 15 [**The 11 real charts**](#15-the-11-real-charts) · 16 [Gotchas](#16-gotchas) ·
+17 [Open questions](#17-open-questions) · 18 [Future: pie & mindmap](#18-future-modes)
 
 ---
 
@@ -47,21 +46,16 @@ open questions** are where your judgement matters most.
 | **Segment / segmentation** | A piece of a series' domain with its **own formula**; lets a curve **jump** at a boundary. |
 | **Annotation** | A non-data mark: a reference **line**, a **point** dot, a **band**, a free **label**. |
 | **Dual / multi axis** | Two+ value axes with different ranges sharing one plot; a series picks which it reads. |
-| **Smart label** | v0.10's rule: the one `"label"` after a node's head is lowered **per type** — text, caption, symbol… (§1). |
+| **Smart label** | the rule that the one `"label"` after a node's head is lowered **per type** — text, caption, symbol… (§1). |
 | **Lower** | Compiler-speak: rewrite a high-level thing into primitives. A chart **lowers** to Lini rects, paths, text. |
 
 ---
 
-## 1. What v0.10 changed for charts
+## 1. The smart label
 
-The new syntax wasn't designed for charts, but two of its changes are exactly what
-charts needed.
-
-### 1.1 The smart label is the backbone
-
-In v0.10, the **one `"label"` right after a node's head is lowered per type**. That's
-already true for diagrams (`|icon| "heart"` → symbol, `|group| "Kitchen"` → caption,
-`|box| "Server"` → centred text). **It generalises perfectly to chart node types:**
+The one `"label"` after a node's head is lowered **per type** — `|icon| "heart"` → a
+symbol, `|group| "Kitchen"` → a caption, `|box| "Server"` → centred text. That single
+rule carries every chart's text:
 
 | Chart node | Its smart label becomes |
 |---|---|
@@ -73,46 +67,30 @@ already true for diagrams (`|icon| "heart"` → symbol, `|group| "Kitchen"` → 
 | `\|dot\|` | the marked point's **annotation** |
 | `\|slice\|` (pie) | the slice's **label** |
 
-One rule, every chart text. No `label:` properties, no trailing strings.
-
-### 1.2 The label lands *left*, not trailing
-
-This was v2's biggest wart. v2 had to write the legend after a long `{ }`:
+One rule, every chart text — no `label:` properties, no trailing strings. And because
+the label sits **right after the head**, a chart reads **name-first**:
 
 ```
-// v2 (trailing — the label gets lost)
-|bars| { data: 9 15 24 18 30; fill: --stroke; radius: 4 } "1.8 kW"
-
-// v0.10 (smart label, right after the head — prominent)
 |bars| "1.8 kW" { data: 9 15 24 18 30; fill: --stroke; radius: 4 }
 ```
 
-Every series, axis, and annotation now reads **name-first**. Scanning a chart's
-source, your eye hits "Motor draw", "Power (kW)", "1.8 kW breaker" immediately —
-exactly the legibility you wanted.
+Your eye hits "1.8 kW", "Motor draw", "Power (kW)" immediately.
 
-### 1.3 Identity in the bars cleans up binding
-
-`|axis#power|` puts the binding id where it belongs (in the bars), leaving the head
-string free for the title. Dual/multi axis stops being cryptic:
+The id lives in the bars, so binding is clean and dual / multi axis stays legible:
 
 ```
 |axis#power| "Power (kW)"        { side: left;  range: 0 4.6 }
 |axis#vcap|  "Booster V_cap (V)" { side: right; range: 32 49; color: --sky }
 ```
 
-A series binds with `axis: vcap` (a bare id reference in a value, the same way a link
-names a node). The `toggle` chart's **four** axes (§15.9) read cleanly where
-`y/y1/y2/y3` would be misery.
-
-**Net:** v0.10 fixed the surface problems v2 was apologising for. The rest of this
-doc is the model underneath, which v0.10 doesn't change — but expresses far better.
+A series binds with `axis: vcap` — a bare id reference, the same way a link names a
+node. The `toggle` chart's **four** axes (§15.9) read cleanly this way.
 
 ---
 
 ## 2. The big bet
 
-Unchanged from v2, and still the foundation:
+The foundation:
 
 > **A `|chart|` is a container that, at layout time, samples its formulas and
 > generates ordinary Lini primitives — `|line|`, `|rect|`, `|path|`, `|oval|`,
@@ -233,9 +211,9 @@ No label → no legend entry (an anonymous single series needs none).
 `|bars|`, `|line|`, `|area|`, `|scatter|`. Each **lowers** to primitives (`|bars|`
 → rects, `|line|` → a `|line|` primitive fed sampled points, `|area|` → a `|path|`,
 `|scatter|` → `|oval|` dots). `|line|` doubles as the polyline primitive — inside a
-chart it takes `data:`/`fn:`; outside it takes `points:`. (You okayed the reuse, and
-noted the near-useless standalone `|line|` could become `|arrow|`, which frees the
-name entirely.)
+chart it takes `data:`/`fn:`; outside it takes `points:`. (A chart line *is* a line,
+so the reuse is natural; the near-useless standalone `|line|` primitive could even
+become `|arrow|`, freeing the name.)
 
 ### 5.2 Bars: one model, three modes
 
@@ -259,7 +237,7 @@ colours.
 
 ## 6. Three kinds of data
 
-Data has three sources, not one (v2's over-assumption).
+Data has three sources, not one.
 
 | Source | Syntax | Used by |
 |---|---|---|
@@ -342,8 +320,8 @@ This is the "do we need variables?" answer: **no file-level vars, no loops — j
 
 ## 8. Bands & segments
 
-The hard part (image 1), now cleaner under v0.10 because **bands are ordinary nodes
-with smart labels**.
+The hard part (image 1), kept clean because **bands are ordinary nodes with smart
+labels**.
 
 ### 8.1 What image 1 contains
 
@@ -352,10 +330,9 @@ loops: a background **band**, a **phase-axis** tick (the coloured names along th
 bottom), and the **segmentation** of every series (one formula per phase, in local
 `u`, free to jump at boundaries — motor draw leaps 4.5 → 0.38).
 
-### 8.2 Bands as nodes (the v0.10 upgrade)
+### 8.2 Bands as nodes
 
-v2 needed a bespoke `bands [ Close 0 1.4 {…} ]` mini-syntax. v0.10 doesn't — a band
-is a node whose smart label is its name:
+A band is a node whose smart label is its name:
 
 ```
 |band| "Close"    { span: 0 1.4;    fill: --accent }
@@ -457,7 +434,7 @@ should auto-promote to an area is a small call — I lean: `|area|` is explicit.
 
 ## 11. Tooltips
 
-Settled, and unchanged by v0.10.
+A settled choice.
 
 - **No JS.** Hover = CSS `:hover` revealing a hidden `<g>` card; works in inline /
   directly-opened SVG, **bakes to a clean static chart** in resvg / email / `<img>`.
@@ -510,7 +487,7 @@ interactivity — capped by §11's turning-point dots.
 
 ---
 
-## 15. The 11 real charts, in v0.10
+## 15. The 11 real charts
 
 Each notes what it **stresses**. (Long data arrays elided with `…`; structure is
 faithful to the config.)
@@ -781,7 +758,7 @@ dedupe); smooth; setpoint + dots.
 6. **Auto-domain needs a pre-pass** — `range: auto` samples every series first; bars
    force 0 into the range; **stacked** sums per category (top = sum), not max.
 7. **Sampling vs straightness** — linear `fn:` needs 2 samples, `sin` ~24. `samples:
-   24` is safe; adaptive (by curvature) is v2-later.
+   24` is safe; adaptive (by curvature) is a later refinement.
 8. **The formula ceiling** — integration/recurrence ships as precomputed points (§6.1).
 9. **Per-segment styling** — `booster` dashes one segment; a segmented `fn:` series can
    carry per-segment style, a points series can't easily. Decide how far to take it.
@@ -851,31 +828,10 @@ tree structure; `direction:` picks the flavour (the §13 payoff):
 
 ---
 
-## 19. What changed from v2
+## 19. In one sentence
 
-The critique, made concrete — v0.10 fixed the surface, and a few ideas got cleaner:
-
-| v2 | v3 (v0.10) | Why |
-|---|---|---|
-| Series label **trailed** the `{ }` (`\|bars\| { … } "1.8 kW"`) | **Smart label after the head** (`\|bars\| "1.8 kW" { … }`) | Label leads — your core ask. |
-| `power \|axis\| { … } "Power (kW)"` | `\|axis#power\| "Power (kW)" { … }` | id in bars, title as the smart label. |
-| Bespoke `bands [ Close 0 1.4 {…} ]` block | `\|band\| "Close" { span: 0 1.4 }` **nodes** | Bands are ordinary nodes; the partition derives from them. |
-| `fn:` vs `[ ]` body was an open conflict | **`fn: calc(…)` list, settled** | `calc()` confines the math + fixes the lexer; `[ ]` stays for content. |
-| Annotations described loosely | **All nodes with smart labels** (`\|rule\| "…"`, `\|dot\| "…"`) | One placement rule, one label rule. |
-| `label:` property floated for axis titles | **Gone** — the smart label is the title | One mechanism. |
-| Open Qs: label placement, fn capture, line reuse | **Resolved** | v0.10 + your calls closed them. |
-
-What did **not** change: the big bet (lower to primitives), the data trichotomy, the
-formula ceiling, no-JS tooltips, performance, the bands→segmentation coupling (still
-the one judgement call), and pie/mindmap as future modes.
-
----
-
-## 20. In one sentence
-
-On v0.10, all eleven of your real charts become **8–40 lines of name-first, readable
-Lini** that theme, dark/light, and bake like any other diagram — because under the
-hood they're rectangles, paths, and text, and every label does the right thing for
-its type.
+All eleven of your real charts become **8–40 lines of name-first, readable Lini** that
+theme, dark/light, and bake like any other diagram — because under the hood they're
+rectangles, paths, and text, and every label does the right thing for its type.
 
 Now tear into it.
