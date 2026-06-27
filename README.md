@@ -29,6 +29,7 @@ Lini automates the tedious part of a diagram — routing the connectors — and 
 - **Real control over the look.** Sizes, anchors, strokes, shadows, rotation, opacity, gradients, and raw SVG paths are all yours — the diagram renders the way you set it.
 - **A small language.** Two brackets — `{ }` for style, `[ ]` for children — and a handful of sigils. `cat -> dog` is already a diagram; the rest you learn in one sitting.
 - **A node for anything.** 11 primitives and 11 templates, built-in Phosphor icons, and a raw `path` that takes any SVG path string.
+- **Compute when you want it.** Backtick expressions are compile-time math, and a stylesheet function returns a number or a point — `width: scale(3)` sizes a node, a parametric `points:` draws a sine wave or spiral. All baked to literals, no runtime.
 - **One fast binary.** ~1.5 MB, a single runtime dependency, no Node or headless browser. A typical diagram compiles in about 2 ms, startup included.
 - **Deterministic output.** Every run is byte-identical, so SVGs diff cleanly and never churn in CI. 441 tests cover it, including property tests on the router's laws.
 - **A curated palette.** 11 named hues in five OKLCH-tuned tiers, plus angle-less gradients — themeable, with no hex codes to pick.
