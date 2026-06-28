@@ -31,15 +31,19 @@ fn ident(s: &str) -> ResolvedValue {
     ResolvedValue::Ident(s.to_string())
 }
 
-/// A filled rectangle (a bar or a legend swatch) centred at (cx, cy). Stroke off
-/// and width 0 so the drawn rect matches the bbox exactly.
-pub fn rect(cx: f64, cy: f64, w: f64, h: f64, fill: ResolvedValue) -> PlacedNode {
+/// A filled rectangle (a bar, a band shade, a legend swatch) centred at (cx, cy).
+/// Stroke off and width 0 so the drawn rect matches the bbox exactly; `opacity` lets a
+/// band wash or an overlay bar read through (omitted at 1, so opaque rects don't churn).
+pub fn rect(cx: f64, cy: f64, w: f64, h: f64, fill: ResolvedValue, opacity: f64) -> PlacedNode {
     let mut n = node(NodeKind::Block, Bbox::centered(w, h));
     n.cx = cx;
     n.cy = cy;
     n.attrs.insert("fill", fill);
     n.attrs.insert("stroke", ident("none"));
     n.attrs.insert("stroke-width", ResolvedValue::Number(0.0));
+    if (opacity - 1.0).abs() > 1e-9 {
+        n.attrs.insert("opacity", ResolvedValue::Number(opacity));
+    }
     n
 }
 

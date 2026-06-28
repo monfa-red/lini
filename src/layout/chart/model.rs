@@ -6,7 +6,7 @@ use super::palette;
 use super::scale::{self, Scale};
 use crate::error::Error;
 use crate::expr::{self, Expr, FuncTable, Value as ExprValue};
-use crate::resolve::{AttrMap, NodeKind, ResolvedInst, ResolvedValue};
+use crate::resolve::{AttrMap, MarkerKind, NodeKind, ResolvedInst, ResolvedValue};
 use crate::span::Span;
 
 pub enum Side {
@@ -46,6 +46,55 @@ pub enum Curve {
     /// A monotone cubic — curved, through every point, never overshooting.
     Smooth,
     Step,
+}
+
+/// How multiple `|bars|` series combine ([CHARTS.md] §3): side-by-side, piled, or
+/// translucently on top.
+pub enum BarMode {
+    Grouped,
+    Stacked,
+    Overlay,
+}
+
+/// The axis a band / annotation is measured against ([CHARTS.md] §8): the x (domain)
+/// axis, or a value axis by index into [`Chart::values`].
+pub enum AxisRef {
+    X,
+    Value(usize),
+}
+
+/// A `|mark|`'s placement ([CHARTS.md] §8): a reference line at one value, or a point
+/// at `(x, value)`.
+pub enum MarkAt {
+    Line(f64),
+    Point(f64, f64),
+}
+
+/// A `|band|` ([CHARTS.md] §7): a shaded zone over `span` on its bound axis, a tick
+/// (its label), and — for an x-bound band — a boundary in the shared segmentation
+/// partition. `fill: none` (or no fill) makes it a divider, not a shade.
+pub struct Band {
+    pub axis: AxisRef,
+    pub span: (f64, f64),
+    pub label: Option<String>,
+    /// The shade tint; `None` draws dividers at the span edges instead.
+    pub fill: Option<ResolvedValue>,
+    /// The colour of the tick label (and, for an unfilled band, its dividers): the
+    /// `fill` tint ([CHARTS.md] §9), or muted when there is none.
+    pub tick: ResolvedValue,
+}
+
+/// A `|mark|` annotation ([CHARTS.md] §8): a reference line or a labelled point,
+/// placed by value on a named axis (so it survives a `direction` flip).
+pub struct Mark {
+    pub axis: AxisRef,
+    pub at: MarkAt,
+    pub label: Option<String>,
+    /// Whether a point draws its dot (`marker: none` → false → label only).
+    pub dot: bool,
+    /// The accent for the line / dot / label: an explicit `stroke` / `fill`, else muted.
+    pub color: ResolvedValue,
+    pub stroke_style: Option<ResolvedValue>,
 }
 
 pub struct Series {
@@ -89,6 +138,9 @@ pub struct Chart {
     pub x: XAxis,
     pub values: Vec<ValueAxis>,
     pub series: Vec<Series>,
+    pub bands: Vec<Band>,
+    pub marks: Vec<Mark>,
+    pub bars: BarMode,
 }
 
 /// One end of a `range:` window: a fixed number, or `auto` (fit from data).
@@ -97,8 +149,15 @@ enum End {
     Auto,
 }
 
-/// The children of a chart, split by role: series, axes, and the harvested title.
-type Split<'a> = (Vec<&'a ResolvedInst>, Vec<&'a ResolvedInst>, Option<String>);
+/// The children of a chart, split by role: series, axes, bands, marks, and the
+/// harvested title.
+type Split<'a> = (
+    Vec<&'a ResolvedInst>,
+    Vec<&'a ResolvedInst>,
+    Vec<&'a ResolvedInst>,
+    Vec<&'a ResolvedInst>,
+    Option<String>,
+);
 
 /// Raw value-axis metadata, parsed before the data domains that build its scale.
 struct AxisSpec<'a> {
@@ -116,7 +175,8 @@ struct AxisSpec<'a> {
 pub fn build(inst: &ResolvedInst, funcs: &FuncTable) -> Result<Chart, Error> {
     let span = inst.span;
     let samples = sample_count(&inst.attrs);
-    let (series_insts, axis_insts, title) = partition(inst)?;
+    let bars = read_bars(&inst.attrs)?;
+    let (series_insts, axis_insts, band_insts, mark_insts, title) = partition(inst)?;
     if series_insts.is_empty() {
         return Err(Error::at(span, "a chart needs at least one series"));
     }
@@ -161,15 +221,33 @@ pub fn build(inst: &ResolvedInst, funcs: &FuncTable) -> Result<Chart, Error> {
         series.push(read_series(si, i, &value_specs, &categories, span)?);
     }
 
+    // Bands and marks bind to an axis by id (the x axis or a value axis), so resolve
+    // them while both id sources are in scope.
+    let x_id = x_inst.and_then(|a| a.id.as_deref());
+    let bands: Vec<Band> = band_insts
+        .iter()
+        .map(|b| read_band(b, x_id, &value_specs))
+        .collect::<Result<_, _>>()?;
+    let marks: Vec<Mark> = mark_insts
+        .iter()
+        .map(|m| read_mark(m, x_id, &value_specs))
+        .collect::<Result<_, _>>()?;
+    // The segmentation partition: x-bound bands' spans, in source order.
+    let segments: Vec<(f64, f64)> = bands
+        .iter()
+        .filter(|b| matches!(b.axis, AxisRef::X))
+        .map(|b| b.span)
+        .collect();
+
     // The x scale: a band for categorical data (categories or indices), or a numeric
-    // domain when the data is points / a formula / an explicit bottom axis range.
-    let x = build_x_axis(x_inst, &categories, &series, span)?;
+    // domain when the data is points / a formula / a bottom axis range / bands.
+    let x = build_x_axis(x_inst, &categories, &series, &segments, span)?;
 
     // Sample any deferred `fn:` over the now-fixed x-domain → concrete points
     // ([CHARTS.md] §4); after this, every series carries data feeding the value axes.
     for (si, s) in series_insts.iter().zip(series.iter_mut()) {
         if let Data::Formula(exprs) = &s.data {
-            s.data = sample_formula(exprs, &x.scale, samples, funcs, si.span)?;
+            s.data = sample_formula(exprs, &x.scale, samples, funcs, si.span, &segments)?;
         }
     }
 
@@ -191,21 +269,26 @@ pub fn build(inst: &ResolvedInst, funcs: &FuncTable) -> Result<Chart, Error> {
         }
     }
 
-    let values = build_value_axes(value_specs, &series)?;
+    let values = build_value_axes(value_specs, &series, &bars)?;
 
     Ok(Chart {
         title,
         x,
         values,
         series,
+        bands,
+        marks,
+        bars,
     })
 }
 
-/// Split children into series, axes, and the harvested title; reject non-chart
-/// children and the constructs that arrive in later steps ([CHARTS.md] §18).
+/// Split children into series, axes, bands, marks, and the harvested title; reject
+/// non-chart children and the constructs that arrive in later steps ([CHARTS.md] §18).
 fn partition(inst: &ResolvedInst) -> Result<Split<'_>, Error> {
     let mut series = Vec::new();
     let mut axes = Vec::new();
+    let mut bands = Vec::new();
+    let mut marks = Vec::new();
     let mut title = None;
     for child in &inst.children {
         if child.kind == NodeKind::Text {
@@ -221,6 +304,8 @@ fn partition(inst: &ResolvedInst) -> Result<Split<'_>, Error> {
         match tag(child) {
             Some("bars") | Some("dots") | Some("line") | Some("area") => series.push(child),
             Some("axis") => axes.push(child),
+            Some("band") => bands.push(child),
+            Some("mark") => marks.push(child),
             Some("slice") => {
                 return Err(Error::at(
                     child.span,
@@ -241,7 +326,7 @@ fn partition(inst: &ResolvedInst) -> Result<Split<'_>, Error> {
             }
         }
     }
-    Ok((series, axes, title))
+    Ok((series, axes, bands, marks, title))
 }
 
 /// The chart type tag a child carries — its `type_chain` entry, or `line` for the
@@ -313,7 +398,7 @@ fn read_series(
         label: label_of(inst),
         color,
         axis,
-        marker: marker_on(&inst.attrs),
+        marker: has_marker(inst),
         curve: read_curve(&inst.attrs)?,
         stroke_style: inst.attrs.get("stroke-style").cloned(),
         thickness: inst.attrs.number("stroke-width").unwrap_or(2.0),
@@ -331,34 +416,57 @@ fn sample_count(attrs: &AttrMap) -> usize {
         .unwrap_or(24)
 }
 
-/// Sample a whole-domain `fn:` over the x-domain → points ([CHARTS.md] §4): bind `x`
-/// at `samples` steps and evaluate. A per-band list (several exprs) needs bands and
-/// arrives in a later step; a band x scale has no numeric domain to sample over.
+/// Sample a `fn:` over the x-domain → points ([CHARTS.md] §4). A single expr is the
+/// whole-domain form: bind `x` at `samples` steps over the numeric domain. A per-band
+/// list samples each expr in band-local `u` (0→1) across its segment's x-span, the
+/// segments connecting end-to-start ([CHARTS.md] §7) — one continuous polyline whose
+/// boundary risers are drawn. A list length ≠ the band count is an error ([§18]).
 fn sample_formula(
     exprs: &[Expr],
     x: &Scale,
     samples: usize,
     funcs: &FuncTable,
     span: Span,
+    segments: &[(f64, f64)],
 ) -> Result<Data, Error> {
-    if exprs.len() != 1 {
+    let n = samples.max(2);
+    if exprs.len() == 1 {
+        let (min, max) = match x {
+            Scale::Linear { min, max, .. } | Scale::Log { min, max, .. } => (*min, *max),
+            Scale::Band { .. } => {
+                return Err(Error::at(span, "a 'fn:' series needs a numeric x axis"));
+            }
+        };
+        let xs: Vec<f64> = (0..n)
+            .map(|i| min + (max - min) * i as f64 / (n - 1) as f64)
+            .collect();
+        let ys = expr::sample(&exprs[0], "x", &xs, funcs).map_err(|e| Error::at(span, e.0))?;
+        return Ok(Data::Points(points_from(&xs, ys, span)?));
+    }
+    if exprs.len() != segments.len() {
         return Err(Error::at(
             span,
-            "a per-band 'fn:' list needs bands — added in a later charts step",
+            format!(
+                "'fn' has {} formulas but the chart has {} bands",
+                exprs.len(),
+                segments.len()
+            ),
         ));
     }
-    let (min, max) = match x {
-        Scale::Linear { min, max, .. } | Scale::Log { min, max, .. } => (*min, *max),
-        Scale::Band { .. } => {
-            return Err(Error::at(span, "a 'fn:' series needs a numeric x axis"));
-        }
-    };
-    let n = samples.max(2);
-    let xs: Vec<f64> = (0..n)
-        .map(|i| min + (max - min) * i as f64 / (n - 1) as f64)
-        .collect();
-    let ys = expr::sample(&exprs[0], "x", &xs, funcs).map_err(|e| Error::at(span, e.0))?;
-    let mut pts = Vec::with_capacity(n);
+    let us: Vec<f64> = (0..n).map(|i| i as f64 / (n - 1) as f64).collect();
+    let mut pts = Vec::new();
+    for (expr, &(a, b)) in exprs.iter().zip(segments) {
+        let ys = expr::sample(expr, "u", &us, funcs).map_err(|e| Error::at(span, e.0))?;
+        let xs: Vec<f64> = us.iter().map(|u| a + (b - a) * u).collect();
+        pts.extend(points_from(&xs, ys, span)?);
+    }
+    Ok(Data::Points(pts))
+}
+
+/// Zip sampled xs with their evaluated ys into points; a point-valued result is an
+/// error (a series `fn:` must return a number, [CHARTS.md] §4).
+fn points_from(xs: &[f64], ys: Vec<ExprValue>, span: Span) -> Result<Vec<(f64, f64)>, Error> {
+    let mut pts = Vec::with_capacity(xs.len());
     for (&xv, yv) in xs.iter().zip(ys) {
         match yv {
             ExprValue::Number(y) => pts.push((xv, y)),
@@ -367,7 +475,7 @@ fn sample_formula(
             }
         }
     }
-    Ok(Data::Points(pts))
+    Ok(pts)
 }
 
 /// Categorical `data:` → values; comma-grouped `data:` → `x y` points. Bars are
@@ -401,28 +509,144 @@ fn read_data(inst: &ResolvedInst, kind: &SeriesKind) -> Result<Data, Error> {
 /// Bind a series to a value axis by its `axis:` id, defaulting to the first value
 /// axis. An unknown id reports the chart's own axis ids ([CHARTS.md] §18).
 fn bind_axis(inst: &ResolvedInst, specs: &[AxisSpec]) -> Result<usize, Error> {
-    let Some(ResolvedValue::Ident(id)) = inst.attrs.get("axis") else {
+    let Some(id) = axis_id(inst) else {
         return Ok(0);
     };
-    if let Some(pos) = specs.iter().position(|a| a.id == Some(id.as_str())) {
+    if let Some(pos) = specs.iter().position(|a| a.id == Some(id)) {
         return Ok(pos);
     }
-    let known: Vec<String> = specs
-        .iter()
-        .filter_map(|a| a.id.map(|s| format!("'{s}'")))
-        .collect();
-    let hint = if known.is_empty() {
+    let known: Vec<&str> = specs.iter().filter_map(|a| a.id).collect();
+    Err(no_axis(id, &known, inst.span))
+}
+
+/// A node's `axis:` binding id, if any.
+fn axis_id(inst: &ResolvedInst) -> Option<&str> {
+    match inst.attrs.get("axis") {
+        Some(ResolvedValue::Ident(s)) => Some(s.as_str()),
+        _ => None,
+    }
+}
+
+/// The "axis 'X' not found; did you mean 'Y'?" error ([CHARTS.md] §18), shared by
+/// series, band, and mark binding. Axes are chart-local (not in the global index),
+/// so the suggestion ranges over the chart's own `|axis|` ids.
+fn no_axis(id: &str, known: &[&str], span: Span) -> Error {
+    let listed: Vec<String> = known.iter().map(|s| format!("'{s}'")).collect();
+    let hint = if listed.is_empty() {
         String::new()
     } else {
-        format!("; did you mean {}?", known.join(", "))
+        format!("; did you mean {}?", listed.join(", "))
     };
-    Err(Error::at(inst.span, format!("axis '{id}' not found{hint}")))
+    Error::at(span, format!("axis '{id}' not found{hint}"))
+}
+
+/// Resolve a band / mark `axis:` id to the x axis or a value axis ([CHARTS.md] §8).
+fn lookup_axis(
+    id: &str,
+    x_id: Option<&str>,
+    specs: &[AxisSpec],
+    span: Span,
+) -> Result<AxisRef, Error> {
+    if x_id == Some(id) {
+        return Ok(AxisRef::X);
+    }
+    if let Some(pos) = specs.iter().position(|a| a.id == Some(id)) {
+        return Ok(AxisRef::Value(pos));
+    }
+    let mut known: Vec<&str> = Vec::new();
+    known.extend(x_id);
+    known.extend(specs.iter().filter_map(|a| a.id));
+    Err(no_axis(id, &known, span))
+}
+
+/// Parse a `|band|` ([CHARTS.md] §7): its bound axis (default the x/domain axis), its
+/// `span`, label, and fill (a real fill shades; `none` / unset makes it a divider).
+fn read_band(inst: &ResolvedInst, x_id: Option<&str>, specs: &[AxisSpec]) -> Result<Band, Error> {
+    let axis = match axis_id(inst) {
+        Some(id) => lookup_axis(id, x_id, specs, inst.span)?,
+        None => AxisRef::X,
+    };
+    let fill = real_color(inst.attrs.get("fill"));
+    let tick = fill.clone().unwrap_or_else(muted);
+    Ok(Band {
+        axis,
+        span: read_span(inst)?,
+        label: label_of(inst),
+        fill,
+        tick,
+    })
+}
+
+/// Parse a `|mark|` ([CHARTS.md] §8): a required bound axis, its `at` placement, the
+/// label, whether a point shows its dot, and the accent (`stroke` / `fill`, else muted).
+fn read_mark(inst: &ResolvedInst, x_id: Option<&str>, specs: &[AxisSpec]) -> Result<Mark, Error> {
+    let axis = match axis_id(inst) {
+        Some(id) => lookup_axis(id, x_id, specs, inst.span)?,
+        None => return Err(Error::at(inst.span, "a '|mark|' needs 'axis:' to place it")),
+    };
+    let color = real_color(inst.attrs.get("stroke"))
+        .or_else(|| real_color(inst.attrs.get("fill")))
+        .unwrap_or_else(muted);
+    Ok(Mark {
+        axis,
+        at: read_at(inst)?,
+        label: label_of(inst),
+        dot: has_marker(inst),
+        color,
+        stroke_style: inst.attrs.get("stroke-style").cloned(),
+    })
+}
+
+/// A `|band|`'s `span: a b` — its data range on the bound axis ([CHARTS.md] §7).
+fn read_span(inst: &ResolvedInst) -> Result<(f64, f64), Error> {
+    match inst.attrs.get("span") {
+        Some(ResolvedValue::Tuple(items)) if items.len() == 2 => {
+            Ok((number(&items[0], inst.span)?, number(&items[1], inst.span)?))
+        }
+        _ => Err(Error::at(inst.span, "a '|band|' needs 'span: a b'")),
+    }
+}
+
+/// A `|mark|`'s `at:` — one value (a reference line) or two (a point) ([CHARTS.md] §8).
+fn read_at(inst: &ResolvedInst) -> Result<MarkAt, Error> {
+    match inst.attrs.get("at") {
+        Some(ResolvedValue::Number(v)) => Ok(MarkAt::Line(*v)),
+        Some(ResolvedValue::Tuple(items)) if items.len() == 2 => Ok(MarkAt::Point(
+            number(&items[0], inst.span)?,
+            number(&items[1], inst.span)?,
+        )),
+        _ => Err(Error::at(
+            inst.span,
+            "'at' takes one value (a line) or two (a point)",
+        )),
+    }
+}
+
+/// The chart's `bars:` mode ([CHARTS.md] §3) — how multiple `|bars|` series combine.
+fn read_bars(attrs: &AttrMap) -> Result<BarMode, Error> {
+    match attrs.get("bars") {
+        None => Ok(BarMode::Grouped),
+        Some(ResolvedValue::Ident(s)) => match s.as_str() {
+            "grouped" => Ok(BarMode::Grouped),
+            "stacked" => Ok(BarMode::Stacked),
+            "overlay" => Ok(BarMode::Overlay),
+            _ => Err(Error::at(
+                Span::empty(),
+                "'bars' is grouped, stacked, or overlay",
+            )),
+        },
+        _ => Err(Error::at(
+            Span::empty(),
+            "'bars' is grouped, stacked, or overlay",
+        )),
+    }
 }
 
 fn build_x_axis(
     x_inst: Option<&ResolvedInst>,
     categories: &Option<Vec<String>>,
     series: &[Series],
+    segments: &[(f64, f64)],
     span: Span,
 ) -> Result<XAxis, Error> {
     let (title, unit, grid) = match x_inst {
@@ -467,14 +691,21 @@ fn build_x_axis(
         });
     }
     // Numeric x: domain from a bottom axis `range:`, else the union of point x's (a
-    // formula contributes none — it samples over whatever domain this fixes).
-    let xs: Vec<f64> = series
+    // formula contributes none — it samples over whatever domain this fixes). With no
+    // point data, x-bound bands define the domain (the segmentation case, [§7]).
+    let mut xs: Vec<f64> = series
         .iter()
         .flat_map(|s| match &s.data {
             Data::Points(p) => p.iter().map(|(x, _)| *x).collect::<Vec<_>>(),
             _ => Vec::new(),
         })
         .collect();
+    if xs.is_empty() {
+        for &(a, b) in segments {
+            xs.push(a);
+            xs.push(b);
+        }
+    }
     let range = x_inst.map(read_range).transpose()?.flatten();
     let scale = numeric_scale(&xs, range, x_inst)?;
     Ok(XAxis {
@@ -486,23 +717,52 @@ fn build_x_axis(
     })
 }
 
-fn build_value_axes(specs: Vec<AxisSpec>, series: &[Series]) -> Result<Vec<ValueAxis>, Error> {
+fn build_value_axes(
+    specs: Vec<AxisSpec>,
+    series: &[Series],
+    bars: &BarMode,
+) -> Result<Vec<ValueAxis>, Error> {
     let mut out = Vec::with_capacity(specs.len());
     for (i, spec) in specs.iter().enumerate() {
-        // Values + whether any bound series is bars (which forces zero into the
-        // domain). `Categorical` contributes its values; `Points` their y.
+        // The value range bound to this axis. Non-bar series contribute their values
+        // (`Points` their y; formulas were sampled to `Points` before this runs). Bar
+        // series contribute their values too — except stacked bars, whose envelope is
+        // the per-category sum (the top of the pile, [CHARTS.md] §3).
         let mut vals: Vec<f64> = Vec::new();
-        let mut has_bars = false;
-        for s in series.iter().filter(|s| s.axis == i) {
-            has_bars |= matches!(s.kind, SeriesKind::Bars);
+        let bar_data: Vec<&[f64]> = series
+            .iter()
+            .filter(|s| s.axis == i && matches!(s.kind, SeriesKind::Bars))
+            .filter_map(|s| match &s.data {
+                Data::Categorical(v) => Some(v.as_slice()),
+                _ => None,
+            })
+            .collect();
+        for s in series
+            .iter()
+            .filter(|s| s.axis == i && !matches!(s.kind, SeriesKind::Bars))
+        {
             match &s.data {
                 Data::Categorical(v) => vals.extend(v),
                 Data::Points(p) => vals.extend(p.iter().map(|(_, y)| *y)),
-                // Formulas were sampled to `Points` in `build` before this runs.
                 Data::Formula(_) => {}
             }
         }
-        let scale = value_scale(&vals, has_bars, spec)?;
+        if matches!(bars, BarMode::Stacked) {
+            let n = bar_data.iter().map(|v| v.len()).max().unwrap_or(0);
+            for c in 0..n {
+                vals.push(
+                    bar_data
+                        .iter()
+                        .map(|v| v.get(c).copied().unwrap_or(0.0))
+                        .sum(),
+                );
+            }
+        } else {
+            for v in &bar_data {
+                vals.extend(*v);
+            }
+        }
+        let scale = value_scale(&vals, !bar_data.is_empty(), spec)?;
         out.push(ValueAxis {
             side: matches!(spec.side, Side::Right)
                 .then_some(Side::Right)
@@ -743,9 +1003,13 @@ fn read_curve(attrs: &AttrMap) -> Result<Curve, Error> {
     }
 }
 
-/// A line draws a vertex marker when `marker:` is set to anything but `none`.
-fn marker_on(attrs: &AttrMap) -> bool {
-    matches!(attrs.get("marker"), Some(ResolvedValue::Ident(s)) if s != "none")
+/// Whether a node carries a drawn marker ([CHARTS.md] §3/§8): a line's vertex dot, or
+/// a mark point's dot. The `marker:` shorthand is extracted to the resolved [`Markers`]
+/// (and dropped from the attr map), and `marker: none` resolves to the default
+/// `MarkerKind::None`; a `|mark|`'s template default `marker: dot` separates that
+/// explicit `none` from a plain point, which shows a dot.
+fn has_marker(inst: &ResolvedInst) -> bool {
+    inst.markers.start != MarkerKind::None || inst.markers.end != MarkerKind::None
 }
 
 fn read_categories(attrs: &AttrMap, span: Span) -> Result<Option<Vec<String>>, Error> {
@@ -825,6 +1089,11 @@ fn live(name: &str) -> ResolvedValue {
         name: name.to_string(),
         raw: false,
     }
+}
+
+/// The muted role tint — a band tick / mark accent's default when unpainted.
+fn muted() -> ResolvedValue {
+    live("muted")
 }
 
 fn clone_grid(g: &Grid) -> Grid {

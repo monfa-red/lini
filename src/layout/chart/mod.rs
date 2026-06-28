@@ -8,6 +8,7 @@
 //! gridlines, titles, and a legend. Formulas, bands, annotations, radial, and pie
 //! follow in later steps (see `PLAN.md`).
 
+mod annot;
 mod axis;
 mod bars;
 mod marks;
@@ -47,13 +48,19 @@ pub(super) fn layout_chart(
     let chart = model::build(inst, funcs)?;
     let plot = plot_rect(&chart, w, h);
 
-    // Semantic draw order ([CHARTS.md] §15): gridlines, bars, lines/dots, labels,
-    // title, legend — pushed in order, so a later child paints over an earlier one.
+    // Semantic draw order ([CHARTS.md] §15): bands, gridlines, areas, bars, lines,
+    // dots, annotations, then labels — pushed in order, so a later child paints over
+    // an earlier one (a line sits above its bars without hand-ordering source).
     let mut kids = Vec::new();
+    annot::band_shades(&plot, &chart, &mut kids);
     axis::gridlines(&plot, &chart, &mut kids);
+    marks::areas(&plot, &chart, &mut kids);
     bars::lay_out(&plot, &chart, &mut kids);
-    marks::lay_out(&plot, &chart, &mut kids);
+    marks::lines(&plot, &chart, &mut kids);
+    marks::dots(&plot, &chart, &mut kids);
+    annot::marks(&plot, &chart, &mut kids);
     axis::labels(&plot, &chart, &mut kids);
+    annot::band_ticks(&plot, &chart, &mut kids);
     if let Some(t) = &chart.title {
         kids.push(prim::text(
             t,
@@ -113,11 +120,12 @@ fn plot_rect(chart: &Chart, w: f64, h: f64) -> Plot {
     } else {
         0.0
     };
+    let band_row = annot::x_band_row(chart);
     Plot {
         x0: -w / 2.0 + left,
         x1: w / 2.0 - right,
         y0: -h / 2.0 + 8.0 + title_h + value_title_h,
-        y1: h / 2.0 - 6.0 - LABEL_SIZE * 1.4 - x_title_h - legend_h,
+        y1: h / 2.0 - 6.0 - LABEL_SIZE * 1.4 - band_row - x_title_h - legend_h,
     }
 }
 
@@ -166,7 +174,7 @@ fn lay_out_legend(entries: &[(String, ResolvedValue)], cy: f64, out: &mut Vec<Pl
     let total = per + ITEM_GAP * widths.len().saturating_sub(1) as f64;
     let mut x = -total / 2.0;
     for ((label, color), &tw) in entries.iter().zip(&widths) {
-        out.push(prim::rect(x + SW / 2.0, cy, SW, SW, color.clone()));
+        out.push(prim::rect(x + SW / 2.0, cy, SW, SW, color.clone(), 1.0));
         out.push(prim::text(
             label,
             x + SW + GAP + tw / 2.0,
@@ -334,10 +342,121 @@ mod tests {
     }
 
     #[test]
-    fn a_per_band_fn_list_needs_bands() {
+    fn a_fn_list_without_bands_reports_the_mismatch() {
         let e = layout_err(
             "|chart| [\n  |axis| { side: bottom; range: 0 1 }\n  |axis| { side: left }\n  |line| { fn: `1` `2` }\n]\n",
         );
-        assert!(e.contains("per-band"), "{e}");
+        assert!(e.contains("2 formulas"), "{e}");
+        assert!(e.contains("0 bands"), "{e}");
+    }
+
+    #[test]
+    fn a_filled_band_shades_the_plot_and_labels_it() {
+        let s = svg(
+            "|chart| { categories: \"a\" \"b\" } [\n  |bars| { data: 5 8 }\n  |band| \"zone\" { span: 0 1; fill: --amber }\n]\n",
+        );
+        // Amber is unused by the palette walk, so it is unambiguously the band.
+        assert!(s.contains("var(--lini-amber)"), "band shade tint: {s}");
+        assert!(s.contains("opacity"), "the shade is translucent: {s}");
+        assert!(s.contains(">zone</text>"), "band tick label: {s}");
+    }
+
+    #[test]
+    fn an_unfilled_band_draws_a_divider_not_a_shade() {
+        let s = svg(
+            "|chart| { categories: \"a\" \"b\" \"c\" } [\n  |bars| { data: 5 8 6 }\n  |band| \"L\" { span: 0 1 }\n  |band| \"R\" { span: 1 3 }\n]\n",
+        );
+        assert!(
+            s.contains(">L</text>") && s.contains(">R</text>"),
+            "band ticks: {s}"
+        );
+        assert!(
+            !s.contains("opacity"),
+            "no shade is drawn for an unfilled band: {s}"
+        );
+    }
+
+    #[test]
+    fn a_segmented_fn_draws_one_polyline_across_the_bands() {
+        let s = svg(
+            "|chart| [\n  |axis| { side: bottom }\n  |axis| { side: left }\n  |band| { span: 0 1 }\n  |band| { span: 1 2 }\n  |line| { fn: `u` `1-u` }\n]\n",
+        );
+        assert!(s.contains("<polyline"), "segmented curve polyline: {s}");
+    }
+
+    #[test]
+    fn a_fn_list_length_must_match_the_band_count() {
+        let e = layout_err(
+            "|chart| [\n  |axis| { side: bottom }\n  |axis| { side: left }\n  |band| { span: 0 1 }\n  |line| { fn: `1` `2` `3` }\n]\n",
+        );
+        assert!(e.contains("3 formulas"), "{e}");
+        assert!(e.contains("1 bands"), "{e}");
+    }
+
+    #[test]
+    fn a_mark_draws_a_reference_line_with_its_label() {
+        let s = svg(
+            "|chart| { categories: \"a\" \"b\" } [\n  |axis#v| { side: left }\n  |bars| { data: 5 8 }\n  |mark| \"max\" { at: 6; axis: v; stroke: --red }\n]\n",
+        );
+        assert!(
+            s.contains("var(--lini-red)"),
+            "the reference line is the mark's stroke: {s}"
+        );
+        assert!(s.contains(">max</text>"), "the mark label: {s}");
+    }
+
+    #[test]
+    fn a_mark_point_draws_a_dot_and_a_label() {
+        let s = svg(
+            "|chart| { categories: \"a\" \"b\" } [\n  |axis#v| { side: left }\n  |bars| { data: 5 8 }\n  |mark| \"pt\" { at: 1 6; axis: v }\n]\n",
+        );
+        assert!(s.contains("<ellipse"), "the point's dot: {s}");
+        assert!(s.contains(">pt</text>"), "the point's label: {s}");
+    }
+
+    #[test]
+    fn marker_none_suppresses_the_point_dot() {
+        let s = svg(
+            "|chart| { categories: \"a\" \"b\" } [\n  |axis#v| { side: left }\n  |bars| { data: 5 8 }\n  |mark| \"lbl\" { at: 1 6; axis: v; marker: none }\n]\n",
+        );
+        assert!(s.contains(">lbl</text>"), "the label still draws: {s}");
+        assert!(!s.contains("<ellipse"), "no dot when 'marker: none': {s}");
+    }
+
+    #[test]
+    fn a_mark_needs_an_axis() {
+        let e = layout_err(
+            "|chart| { categories: \"a\" } [\n  |bars| { data: 5 }\n  |mark| \"x\" { at: 3 }\n]\n",
+        );
+        assert!(e.contains("needs 'axis:'"), "{e}");
+    }
+
+    #[test]
+    fn a_mark_at_takes_one_or_two_values() {
+        let e = layout_err(
+            "|chart| { categories: \"a\" } [\n  |axis#v| { side: left }\n  |bars| { data: 5 }\n  |mark| \"x\" { at: 1 2 3; axis: v }\n]\n",
+        );
+        assert!(e.contains("one value"), "{e}");
+    }
+
+    #[test]
+    fn stacked_bars_fit_the_per_category_sum() {
+        let s = svg(
+            "|chart| { categories: \"a\" \"b\"; bars: stacked } [\n  |bars| { data: 3 4 }\n  |bars| { data: 5 6 }\n]\n",
+        );
+        // Category b sums to 10, so the value axis reaches a 10 tick (grouped tops out
+        // at 6). The 10 proves the stacked envelope drove the domain.
+        assert!(
+            s.contains(">10</text>"),
+            "value axis fits the stack sum: {s}"
+        );
+    }
+
+    #[test]
+    fn overlay_bars_are_translucent() {
+        let s = svg(
+            "|chart| { categories: \"a\" \"b\"; bars: overlay } [\n  |bars| { data: 3 4 }\n  |bars| { data: 7 6 }\n]\n",
+        );
+        assert!(s.contains("opacity"), "overlay bars carry an opacity: {s}");
     }
 }

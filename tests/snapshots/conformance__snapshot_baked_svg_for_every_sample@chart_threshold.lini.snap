@@ -1,0 +1,63 @@
+---
+source: tests/conformance.rs
+expression: svg
+input_file: samples/chart_threshold.lini
+---
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-200 -130 400 260" width="400" height="260" class="lini">
+  <style>
+    .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: bold; color: black; }
+    .lini .lini-canvas { fill: white; }
+    .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-line { stroke-dasharray: none; }
+    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
+  </style>
+  <defs/>
+  <rect class="lini-canvas" x="-200" y="-130" width="400" height="260"/>
+  <g class="lini-scene">
+    <g class="lini-node lini-chart lini-block" transform="translate(0,0)">
+      <rect x="-179" y="-109" width="358" height="218" rx="0" ry="0"/>
+      <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <line x1="-150.2" y1="88.6" x2="168" y2="88.6"/>
+      </g>
+      <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <line x1="-150.2" y1="31.1333" x2="168" y2="31.1333"/>
+      </g>
+      <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <line x1="-150.2" y1="-26.3333" x2="168" y2="-26.3333"/>
+      </g>
+      <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <line x1="-150.2" y1="-83.8" x2="168" y2="-83.8"/>
+      </g>
+      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(-110.425,85.152)">
+        <title>p50 · v2: 12</title>
+        <rect x="-25.7742" y="-3.448" width="51.5484" height="6.896" rx="0" ry="0"/>
+      </g>
+      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(-30.875,77.1067)">
+        <title>p90 · v2: 40</title>
+        <rect x="-25.7742" y="-11.4933" width="51.5484" height="22.9867" rx="0" ry="0"/>
+      </g>
+      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(48.675,65.6133)">
+        <title>p99 · v2: 80</title>
+        <rect x="-25.7742" y="-22.9867" width="51.5484" height="45.9733" rx="0" ry="0"/>
+      </g>
+      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(128.225,2.4)">
+        <title>p999 · v2: 300</title>
+        <rect x="-25.7742" y="-86.2" width="51.5484" height="172.4" rx="0" ry="0"/>
+      </g>
+      <g class="lini-node lini-line" style="fill: none; stroke: #f27168; stroke-width: 1.5; stroke-dasharray: 5,3.75" transform="translate(0,0)">
+        <line x1="-150.2" y1="-55.0667" x2="168" y2="-55.0667"/>
+      </g>
+      <text class="lini-text" x="-124.1" y="-61.6667" style="fill: #f27168; font-size: 11px">SLO 250</text>
+      <text class="lini-text" x="-159.5" y="88.6" style="fill: #888; font-size: 11px">0</text>
+      <text class="lini-text" x="-166.1" y="31.1333" style="fill: #888; font-size: 11px">100</text>
+      <text class="lini-text" x="-166.1" y="-26.3333" style="fill: #888; font-size: 11px">200</text>
+      <text class="lini-text" x="-166.1" y="-83.8" style="fill: #888; font-size: 11px">300</text>
+      <text class="lini-text" x="-110.425" y="100.3" style="fill: #888; font-size: 11px">p50</text>
+      <text class="lini-text" x="-30.875" y="100.3" style="fill: #888; font-size: 11px">p90</text>
+      <text class="lini-text" x="48.675" y="100.3" style="fill: #888; font-size: 11px">p99</text>
+      <text class="lini-text" x="128.225" y="100.3" style="fill: #888; font-size: 11px">p999</text>
+      <text class="lini-text" x="0" y="-92.9" style="font-weight: bold; font-size: 13px">API latency (ms)</text>
+    </g>
+  </g>
+  <g class="lini-links"/>
+</svg>

@@ -1,0 +1,5 @@
+|chart| "API latency (ms)" { categories: "p50" "p90" "p99" "p999" } [
+  |axis#ms| { side: left }
+  |bars| "v2" { data: 12 40 80 300 }
+  |mark| "SLO 250" { at: 250; axis: ms; stroke: --red; stroke-style: dashed }
+]

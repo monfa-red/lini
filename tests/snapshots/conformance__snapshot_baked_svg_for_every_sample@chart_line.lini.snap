@@ -8,6 +8,7 @@ input_file: samples/chart_line.lini
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: bold; color: black; }
     .lini .lini-canvas { fill: white; }
     .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-oval { stroke-dasharray: none; }
     .lini .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
   </style>
@@ -36,6 +37,18 @@ input_file: samples/chart_line.lini
       </g>
       <g class="lini-node lini-line" style="stroke: #b8476e" transform="translate(0,0)">
         <polyline points="-110.425,67.2848 -30.875,58.616 48.675,33.848 128.225,-77.608"/>
+      </g>
+      <g class="lini-node lini-oval" style="fill: #b8476e; stroke: none; stroke-width: 0" transform="translate(-110.425,67.2848)">
+        <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
+      </g>
+      <g class="lini-node lini-oval" style="fill: #b8476e; stroke: none; stroke-width: 0" transform="translate(-30.875,58.616)">
+        <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
+      </g>
+      <g class="lini-node lini-oval" style="fill: #b8476e; stroke: none; stroke-width: 0" transform="translate(48.675,33.848)">
+        <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
+      </g>
+      <g class="lini-node lini-oval" style="fill: #b8476e; stroke: none; stroke-width: 0" transform="translate(128.225,-77.608)">
+        <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
       </g>
       <g class="lini-node lini-line" style="stroke: #b45700; stroke-dasharray: 6,4.5" transform="translate(0,0)">
         <polyline points="-110.425,68.2136 -30.875,62.3312 48.675,47.78 128.225,-21.88"/>

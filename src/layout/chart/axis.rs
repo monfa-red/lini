@@ -56,7 +56,7 @@ pub fn labels(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
     }
     x_labels(plot, chart, out);
     if let Some(t) = &chart.x.title {
-        let y = plot.y1 + LABEL_SIZE * 1.4 + TITLE_SIZE;
+        let y = plot.y1 + LABEL_SIZE * 1.4 + super::annot::x_band_row(chart) + TITLE_SIZE;
         out.push(prim::text(
             t,
             (plot.x0 + plot.x1) / 2.0,

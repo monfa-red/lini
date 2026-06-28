@@ -11,13 +11,29 @@ use crate::layout::PlacedNode;
 /// One datum's data-space coordinate paired with its pixel coordinate.
 type Plotted = ((f64, f64), (f64, f64));
 
-pub fn lay_out(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
+/// All `|area|` series — drawn behind bars and lines ([CHARTS.md] §15).
+pub fn areas(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
     for ser in &chart.series {
-        match ser.kind {
-            SeriesKind::Line => line(plot, chart, ser, out),
-            SeriesKind::Area => area(plot, chart, ser, out),
-            SeriesKind::Dots => dots(plot, chart, ser, out),
-            SeriesKind::Bars => {}
+        if matches!(ser.kind, SeriesKind::Area) {
+            draw_area(plot, chart, ser, out);
+        }
+    }
+}
+
+/// All `|line|` series — drawn over areas and bars ([CHARTS.md] §15).
+pub fn lines(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
+    for ser in &chart.series {
+        if matches!(ser.kind, SeriesKind::Line) {
+            draw_line(plot, chart, ser, out);
+        }
+    }
+}
+
+/// All `|dots|` series — drawn on top ([CHARTS.md] §15).
+pub fn dots(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
+    for ser in &chart.series {
+        if matches!(ser.kind, SeriesKind::Dots) {
+            draw_dots(plot, chart, ser, out);
         }
     }
 }
@@ -41,7 +57,7 @@ fn samples(plot: &Plot, chart: &Chart, ser: &Series) -> Vec<Plotted> {
     }
 }
 
-fn line(plot: &Plot, chart: &Chart, ser: &Series, out: &mut Vec<PlacedNode>) {
+fn draw_line(plot: &Plot, chart: &Chart, ser: &Series, out: &mut Vec<PlacedNode>) {
     let pts = samples(plot, chart, ser);
     if pts.len() < 2 {
         return;
@@ -60,7 +76,7 @@ fn line(plot: &Plot, chart: &Chart, ser: &Series, out: &mut Vec<PlacedNode>) {
 
 /// An `|area|`: a filled polygon from the (curved, plot-clamped) top edge down to the
 /// baseline, plus the top edge as a line ([CHARTS.md] §3).
-fn area(plot: &Plot, chart: &Chart, ser: &Series, out: &mut Vec<PlacedNode>) {
+fn draw_area(plot: &Plot, chart: &Chart, ser: &Series, out: &mut Vec<PlacedNode>) {
     let pts = samples(plot, chart, ser);
     if pts.len() < 2 {
         return;
@@ -99,7 +115,7 @@ fn vertex_markers(chart: &Chart, ser: &Series, pts: &[Plotted], out: &mut Vec<Pl
     }
 }
 
-fn dots(plot: &Plot, chart: &Chart, ser: &Series, out: &mut Vec<PlacedNode>) {
+fn draw_dots(plot: &Plot, chart: &Chart, ser: &Series, out: &mut Vec<PlacedNode>) {
     let (w, h) = ser.dot;
     for ((xd, yd), (xp, yp)) in samples(plot, chart, ser) {
         if !in_domain(chart, ser, xd, yd) {

@@ -1,0 +1,8 @@
+|chart| "Motor draw (A)" [
+  |axis| "phase" { side: bottom }
+  |axis| { side: left }
+  |band| "Close" { span: 0 1.4; fill: --sky }
+  |band| "Inject" { span: 1.4 3.1; fill: --rose }
+  |band| "Hold" { span: 3.1 5.1; fill: --amber }
+  |line| "draw" { stroke: --rose-deep; fn: `0.12 + 1.2*exp(-((u-0.8)/0.12)^2)` `1.5 + 3.0*u^1.1` 0.5 }
+]
