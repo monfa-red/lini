@@ -189,6 +189,7 @@ fn lower_node(node: &Node, types: &Types, bodies: &Bodies) -> Result<Node, Error
     let is_icon = kind == NodeKind::Icon;
     let is_container = info.chain.iter().any(|n| n == "group");
     let mut style = node.style.clone();
+    let mut kept_label = None;
     if let Some(label) = node.label.as_ref().filter(|l| !l.text.is_empty()) {
         if is_icon {
             if style.iter().any(|d| d.name == "symbol") {
@@ -203,6 +204,11 @@ fn lower_node(node: &Node, types: &Types, bodies: &Bodies) -> Result<Node, Error
             children.insert(0, Child::Box(caption));
         } else if text_capable {
             children.insert(0, Child::Text(label.clone()));
+        } else {
+            // Geometry primitives (line/poly/path/image) draw no text, but a label
+            // still *names* the node — keep it so a chart can read a `|line|` series'
+            // legend name. Inert for a standalone primitive (render ignores it).
+            kept_label = Some(label.clone());
         }
     }
 
@@ -235,9 +241,10 @@ fn lower_node(node: &Node, types: &Types, bodies: &Bodies) -> Result<Node, Error
     Ok(Node {
         id: node.id.clone(),
         ty: new_ty,
-        // The label is now lowered into `children` / `style`, so the output carries
-        // none — keeping the pass idempotent.
-        label: None,
+        // A box / container / icon label is lowered into `children` / `style` (so the
+        // output carries none); a geometry primitive's label is kept verbatim. Both
+        // are idempotent — re-desugaring lowers nothing further.
+        label: kept_label,
         classes,
         style,
         style_span: node.style_span,

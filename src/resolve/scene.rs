@@ -242,7 +242,10 @@ pub fn resolve_node(
         kind,
         type_chain,
         applied_styles,
-        label: None,
+        // Desugar lowered box / container / icon labels into children / `symbol`, so
+        // this is `None` for them; a geometry primitive keeps its label (a chart
+        // reads a `|line|` series' legend name from it). Render ignores it on a shape.
+        label: node.label.as_ref().map(|t| t.text.clone()),
         attrs,
         own_style: AttrMap::new(),
         markers,

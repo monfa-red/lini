@@ -1,0 +1,46 @@
+---
+source: tests/conformance.rs
+expression: svg
+input_file: samples/chart_step.lini
+---
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-200 -130 400 260" width="400" height="260" class="lini">
+  <style>
+    .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: bold; color: black; }
+    .lini .lini-canvas { fill: white; }
+    .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
+  </style>
+  <defs/>
+  <rect class="lini-canvas" x="-200" y="-130" width="400" height="260"/>
+  <g class="lini-scene">
+    <g class="lini-node lini-chart lini-block" transform="translate(0,0)">
+      <rect x="-179" y="-109" width="358" height="218" rx="0" ry="0"/>
+      <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <line x1="-156.8" y1="88.6" x2="168" y2="88.6"/>
+      </g>
+      <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <line x1="-156.8" y1="31.1333" x2="168" y2="31.1333"/>
+      </g>
+      <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <line x1="-156.8" y1="-26.3333" x2="168" y2="-26.3333"/>
+      </g>
+      <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <line x1="-156.8" y1="-83.8" x2="168" y2="-83.8"/>
+      </g>
+      <g class="lini-node lini-line" style="stroke: #b8476e" transform="translate(0,0)">
+        <polyline points="-116.2,31.1333 -35,31.1333 -35,31.1333 46.2,31.1333 46.2,-49.32 127.4,-49.32 127.4,-49.32"/>
+      </g>
+      <text class="lini-text" x="-166.1" y="88.6" style="fill: #888; font-size: 11px">0</text>
+      <text class="lini-text" x="-166.1" y="31.1333" style="fill: #888; font-size: 11px">5</text>
+      <text class="lini-text" x="-169.4" y="-26.3333" style="fill: #888; font-size: 11px">10</text>
+      <text class="lini-text" x="-169.4" y="-83.8" style="fill: #888; font-size: 11px">15</text>
+      <text class="lini-text" x="-116.2" y="100.3" style="fill: #888; font-size: 11px">0</text>
+      <text class="lini-text" x="-35" y="100.3" style="fill: #888; font-size: 11px">10</text>
+      <text class="lini-text" x="46.2" y="100.3" style="fill: #888; font-size: 11px">20</text>
+      <text class="lini-text" x="127.4" y="100.3" style="fill: #888; font-size: 11px">30</text>
+      <text class="lini-text" x="0" y="-92.9" style="font-weight: bold; font-size: 13px">Tier price ($)</text>
+    </g>
+  </g>
+  <g class="lini-links"/>
+</svg>

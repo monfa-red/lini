@@ -43,8 +43,20 @@ pub fn rect(cx: f64, cy: f64, w: f64, h: f64, fill: ResolvedValue) -> PlacedNode
     n
 }
 
-/// A polyline (a gridline or, later, a line series) through `points`, with the given
-/// stroke colour and width.
+/// A filled ellipse (a dot, a line-vertex marker) centred at (cx, cy). Stroke off
+/// and width 0 so the drawn ellipse matches the bbox exactly.
+pub fn oval(cx: f64, cy: f64, w: f64, h: f64, fill: ResolvedValue) -> PlacedNode {
+    let mut n = node(NodeKind::Oval, Bbox::centered(w, h));
+    n.cx = cx;
+    n.cy = cy;
+    n.attrs.insert("fill", fill);
+    n.attrs.insert("stroke", ident("none"));
+    n.attrs.insert("stroke-width", ResolvedValue::Number(0.0));
+    n
+}
+
+/// A polyline (a gridline or a line series) through `points`, with the given stroke
+/// colour and width.
 pub fn line(points: Vec<(f64, f64)>, stroke: ResolvedValue, width: f64) -> PlacedNode {
     let bbox = points.iter().fold(
         Bbox {
@@ -118,6 +130,18 @@ pub fn text_right(
     color: Option<ResolvedValue>,
 ) -> PlacedNode {
     let cx = right_x - text_width(content, size) / 2.0;
+    text(content, cx, cy, size, color, false)
+}
+
+/// Text whose **left edge** sits at `left_x` (for a right-side value axis).
+pub fn text_left(
+    content: &str,
+    left_x: f64,
+    cy: f64,
+    size: f64,
+    color: Option<ResolvedValue>,
+) -> PlacedNode {
+    let cx = left_x + text_width(content, size) / 2.0;
     text(content, cx, cy, size, color, false)
 }
 

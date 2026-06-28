@@ -1,0 +1,65 @@
+---
+source: tests/conformance.rs
+expression: svg
+input_file: samples/chart_line.lini
+---
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-200 -130 400 260" width="400" height="260" class="lini">
+  <style>
+    .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: bold; color: black; }
+    .lini .lini-canvas { fill: white; }
+    .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
+  </style>
+  <defs/>
+  <rect class="lini-canvas" x="-200" y="-130" width="400" height="260"/>
+  <g class="lini-scene">
+    <g class="lini-node lini-chart lini-block" transform="translate(0,0)">
+      <rect x="-179" y="-109" width="358" height="218" rx="0" ry="0"/>
+      <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <line x1="-150.2" y1="71" x2="168" y2="71"/>
+      </g>
+      <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <line x1="-150.2" y1="40.04" x2="168" y2="40.04"/>
+      </g>
+      <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <line x1="-150.2" y1="9.08" x2="168" y2="9.08"/>
+      </g>
+      <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <line x1="-150.2" y1="-21.88" x2="168" y2="-21.88"/>
+      </g>
+      <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <line x1="-150.2" y1="-52.84" x2="168" y2="-52.84"/>
+      </g>
+      <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <line x1="-150.2" y1="-83.8" x2="168" y2="-83.8"/>
+      </g>
+      <g class="lini-node lini-line" style="stroke: #b8476e" transform="translate(0,0)">
+        <polyline points="-110.425,67.2848 -30.875,58.616 48.675,33.848 128.225,-77.608"/>
+      </g>
+      <g class="lini-node lini-line" style="stroke: #b45700; stroke-dasharray: 6,4.5" transform="translate(0,0)">
+        <polyline points="-110.425,68.2136 -30.875,62.3312 48.675,47.78 128.225,-21.88"/>
+      </g>
+      <text class="lini-text" x="-159.5" y="71" style="fill: #888; font-size: 11px">0</text>
+      <text class="lini-text" x="-166.1" y="40.04" style="fill: #888; font-size: 11px">100</text>
+      <text class="lini-text" x="-166.1" y="9.08" style="fill: #888; font-size: 11px">200</text>
+      <text class="lini-text" x="-166.1" y="-21.88" style="fill: #888; font-size: 11px">300</text>
+      <text class="lini-text" x="-166.1" y="-52.84" style="fill: #888; font-size: 11px">400</text>
+      <text class="lini-text" x="-166.1" y="-83.8" style="fill: #888; font-size: 11px">500</text>
+      <text class="lini-text" x="-110.425" y="82.7" style="fill: #888; font-size: 11px">p50</text>
+      <text class="lini-text" x="-30.875" y="82.7" style="fill: #888; font-size: 11px">p90</text>
+      <text class="lini-text" x="48.675" y="82.7" style="fill: #888; font-size: 11px">p99</text>
+      <text class="lini-text" x="128.225" y="82.7" style="fill: #888; font-size: 11px">p999</text>
+      <text class="lini-text" x="0" y="-92.9" style="font-weight: bold; font-size: 13px">Latency (ms)</text>
+      <g class="lini-node lini-block" style="fill: #b8476e; stroke-width: 0" transform="translate(-31.7,100.1)">
+        <rect x="-5.5" y="-5.5" width="11" height="11" rx="0" ry="0"/>
+      </g>
+      <text class="lini-text" x="-14.6" y="100.1" style="font-size: 11px">v1</text>
+      <g class="lini-node lini-block" style="fill: #b45700; stroke-width: 0" transform="translate(13.5,100.1)">
+        <rect x="-5.5" y="-5.5" width="11" height="11" rx="0" ry="0"/>
+      </g>
+      <text class="lini-text" x="30.6" y="100.1" style="font-size: 11px">v2</text>
+    </g>
+  </g>
+  <g class="lini-links"/>
+</svg>

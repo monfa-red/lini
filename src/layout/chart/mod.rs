@@ -3,12 +3,15 @@
 //! cascade, palette, theming, and `--bake-vars` are all reused unchanged; the chart
 //! adds only the scale-and-place algorithm here.
 //!
-//! Step 1 covers categorical vertical `|bars|` with an auto value axis, gridlines,
-//! x labels, a title, and a legend. Lines, dots, explicit axes, formulas, bands,
-//! annotations, radial, and pie follow in later steps (see `PLAN.md`).
+//! The cartesian toolkit (steps 1–2): `|bars|` / `|line|` / `|dots|` over a
+//! categorical band or a numeric x, with explicit `|axis|` children, nice scales,
+//! gridlines, titles, and a legend. Formulas, bands, annotations, radial, and pie
+//! follow in later steps (see `PLAN.md`).
 
 mod axis;
 mod bars;
+mod marks;
+mod model;
 mod palette;
 mod prim;
 mod project;
@@ -17,12 +20,11 @@ mod scale;
 use crate::error::Error;
 use crate::layout::{Bbox, PlacedNode};
 use crate::resolve::{AttrMap, NodeKind, ResolvedInst, ResolvedValue};
-use crate::span::Span;
-use bars::Series;
+use model::{Chart, Side};
 use project::Plot;
-use scale::{Scale, fmt_tick};
 
 const TITLE_SIZE: f64 = 13.0;
+const AXIS_TITLE_SIZE: f64 = 11.0;
 const LABEL_SIZE: f64 = 11.0;
 
 /// Is this node a chart container ([CHARTS.md] §2)? Detected by its `layout:` attr —
@@ -33,72 +35,23 @@ pub(super) fn is_chart(attrs: &AttrMap) -> bool {
 }
 
 /// Lay a chart out into one `PlacedNode`: the chart box, carrying the lowered
-/// gridlines / bars / labels / title / legend as its pre-positioned children.
+/// gridlines / series / labels / title / legend as its pre-positioned children.
 pub(super) fn layout_chart(inst: &ResolvedInst) -> Result<PlacedNode, Error> {
     let span = inst.span;
     let w = inst.attrs.number("width").unwrap_or(360.0);
     let h = inst.attrs.number("height").unwrap_or(220.0);
 
-    let (series_insts, title) = collect(inst)?;
-    let categories = read_categories(&inst.attrs, span)?;
-    let series = read_series(&series_insts, &categories, span)?;
-    if series.is_empty() {
-        return Err(Error::at(span, "a chart needs at least one series"));
-    }
-    let n = categories
-        .as_ref()
-        .map(Vec::len)
-        .unwrap_or_else(|| series.iter().map(|s| s.values.len()).max().unwrap_or(0));
-    if n == 0 {
-        return Err(Error::at(
-            span,
-            "a chart series needs at least one data value",
-        ));
-    }
+    let chart = model::build(inst)?;
+    let plot = plot_rect(&chart, w, h);
 
-    let vmax = series
-        .iter()
-        .flat_map(|s| s.values.iter().copied())
-        .fold(0.0_f64, f64::max);
-    let scale = Scale::nice(vmax);
-
-    // Plot rect = the chart box inset by the gutters its labels / title / legend
-    // need, all measured at compile time (SPEC §6).
-    let cats = categories.clone().unwrap_or_default();
-    let legend = legend_entries(&series);
-    let title_h = if title.is_some() {
-        TITLE_SIZE * 1.4
-    } else {
-        0.0
-    };
-    let x_label_h = LABEL_SIZE * 1.4;
-    let legend_h = if legend.len() >= 2 {
-        LABEL_SIZE * 1.6
-    } else {
-        0.0
-    };
-    let left = scale
-        .ticks
-        .iter()
-        .map(|t| prim::text_width(&fmt_tick(*t), LABEL_SIZE))
-        .fold(0.0_f64, f64::max)
-        + 10.0;
-    let plot = Plot {
-        x0: -w / 2.0 + left,
-        x1: w / 2.0 - 12.0,
-        y0: -h / 2.0 + 8.0 + title_h,
-        y1: h / 2.0 - 6.0 - x_label_h - legend_h,
-        n,
-        vmax: scale.max,
-    };
-
-    // Semantic draw order ([CHARTS.md] §15): gridlines, bars, labels, title, legend —
-    // pushed in order, so a later child paints over an earlier one.
+    // Semantic draw order ([CHARTS.md] §15): gridlines, bars, lines/dots, labels,
+    // title, legend — pushed in order, so a later child paints over an earlier one.
     let mut kids = Vec::new();
-    axis::value_axis(&plot, &scale, &mut kids);
-    bars::lay_out(&plot, &series, &cats, &mut kids);
-    axis::x_labels(&plot, &cats, &mut kids);
-    if let Some(t) = &title {
+    axis::gridlines(&plot, &chart, &mut kids);
+    bars::lay_out(&plot, &chart, &mut kids);
+    marks::lay_out(&plot, &chart, &mut kids);
+    axis::labels(&plot, &chart, &mut kids);
+    if let Some(t) = &chart.title {
         kids.push(prim::text(
             t,
             0.0,
@@ -108,8 +61,9 @@ pub(super) fn layout_chart(inst: &ResolvedInst) -> Result<PlacedNode, Error> {
             true,
         ));
     }
+    let legend = legend_entries(&chart);
     if legend.len() >= 2 {
-        lay_out_legend(&legend, plot.y1 + x_label_h + legend_h * 0.5, &mut kids);
+        lay_out_legend(&legend, h / 2.0 - LABEL_SIZE * 0.9, &mut kids);
     }
 
     Ok(PlacedNode {
@@ -131,178 +85,66 @@ pub(super) fn layout_chart(inst: &ResolvedInst) -> Result<PlacedNode, Error> {
     })
 }
 
-/// Split the chart's resolved children into series instances and the (optional)
-/// title harvested from the chart's own smart-label text child ([CHARTS.md] §9).
-fn collect(inst: &ResolvedInst) -> Result<(Vec<&ResolvedInst>, Option<String>), Error> {
-    let mut series = Vec::new();
-    let mut title = None;
-    for child in &inst.children {
-        if child.kind == NodeKind::Text {
-            if title.is_none() {
-                title = child
-                    .label
-                    .as_deref()
-                    .filter(|t| !t.is_empty())
-                    .map(str::to_string);
-            }
-            continue;
-        }
-        match series_tag(child) {
-            Some("bars") => series.push(child),
-            Some(other) => {
-                return Err(Error::at(
-                    child.span,
-                    format!("'|{other}|' arrives in a later charts step"),
-                ));
-            }
-            None => {
-                return Err(Error::at(
-                    child.span,
-                    "a chart's children are series (e.g. '|bars|')",
-                ));
-            }
-        }
-    }
-    Ok((series, title))
-}
-
-/// The chart type tag a child carries — its `type_chain` entry, or `line` for the
-/// reused `|line|` primitive — for series dispatch.
-fn series_tag(inst: &ResolvedInst) -> Option<&str> {
-    const TAGS: &[&str] = &[
-        "line", "area", "bars", "dots", "bubble", "slice", "axis", "band", "mark",
-    ];
-    if inst.kind == NodeKind::Line {
-        return Some("line");
-    }
-    inst.type_chain
-        .iter()
-        .rev()
-        .find_map(|t| TAGS.iter().copied().find(|&tag| tag == t))
-}
-
-/// The `categories:` strings (each a quoted-string value), or `None` for index ticks.
-fn read_categories(attrs: &AttrMap, span: Span) -> Result<Option<Vec<String>>, Error> {
-    let Some(v) = attrs.get("categories") else {
-        return Ok(None);
+/// The plot rect = the chart box inset by the gutters its labels / titles / legend
+/// need, all measured at compile time (SPEC §6).
+fn plot_rect(chart: &Chart, w: f64, h: f64) -> Plot {
+    let left = nonzero(side_gutter(chart, false), 12.0);
+    let right = nonzero(side_gutter(chart, true), 12.0);
+    let title_h = if chart.title.is_some() {
+        TITLE_SIZE * 1.4
+    } else {
+        0.0
     };
-    let mut out = Vec::new();
-    collect_strings(v, &mut out, span)?;
-    Ok(Some(out))
-}
-
-fn collect_strings(v: &ResolvedValue, out: &mut Vec<String>, span: Span) -> Result<(), Error> {
-    match v {
-        ResolvedValue::String(s) => out.push(s.clone()),
-        ResolvedValue::Tuple(items) | ResolvedValue::List(items) => {
-            for it in items {
-                collect_strings(it, out, span)?;
-            }
-        }
-        _ => return Err(Error::at(span, "'categories' is a list of quoted strings")),
-    }
-    Ok(())
-}
-
-/// Read each series' values + colour ([CHARTS.md] §3/§4/§10). Step 1 handles `data:`
-/// (categorical); a `fn:` series resolves to a held `Deferred` whose sampling needs
-/// an x-axis (a later step). Colour is an explicit `fill:` else the palette walk.
-fn read_series(
-    insts: &[&ResolvedInst],
-    categories: &Option<Vec<String>>,
-    _span: Span,
-) -> Result<Vec<Series>, Error> {
-    let mut out = Vec::with_capacity(insts.len());
-    for (i, inst) in insts.iter().enumerate() {
-        let has_data = inst.attrs.get("data").is_some();
-        let has_fn = matches!(inst.attrs.get("fn"), Some(ResolvedValue::Deferred(_)));
-        let values = match (has_data, has_fn) {
-            (true, true) => {
-                return Err(Error::at(
-                    inst.span,
-                    "a series takes 'data' or 'fn', not both",
-                ));
-            }
-            (false, false) => return Err(Error::at(inst.span, "a series needs 'data' or 'fn'")),
-            (false, true) => {
-                return Err(Error::at(
-                    inst.span,
-                    "a computed 'fn:' series needs an axis — added in a later charts step",
-                ));
-            }
-            (true, false) => read_data(inst)?,
-        };
-        if let Some(cats) = categories
-            && values.len() != cats.len()
-        {
-            return Err(Error::at(
-                inst.span,
-                format!(
-                    "series data has {} values but the chart has {} categories",
-                    values.len(),
-                    cats.len()
-                ),
-            ));
-        }
-        let color = explicit(&inst.attrs, "fill").unwrap_or_else(|| ResolvedValue::LiveVar {
-            name: palette::hue(i).to_string(),
-            raw: false,
-        });
-        out.push(Series {
-            values,
-            label: label_of(inst),
-            color,
-        });
-    }
-    Ok(out)
-}
-
-/// Categorical `data:` → a value list. `|bars|` is categorical only, so `x y` points
-/// (a `List`) are rejected.
-fn read_data(inst: &ResolvedInst) -> Result<Vec<f64>, Error> {
-    match inst.attrs.get("data") {
-        Some(ResolvedValue::Number(n)) => Ok(vec![*n]),
-        Some(ResolvedValue::Tuple(items)) => {
-            let mut v = Vec::with_capacity(items.len());
-            for it in items {
-                match it {
-                    ResolvedValue::Number(n) => v.push(*n),
-                    _ => return Err(Error::at(inst.span, "'data' values must be numbers")),
-                }
-            }
-            Ok(v)
-        }
-        Some(ResolvedValue::List(_)) => Err(Error::at(
-            inst.span,
-            "'|bars|' takes categorical data ('data: 9 15 24'), not 'x y' points",
-        )),
-        _ => Err(Error::at(inst.span, "'data' must be a list of numbers")),
+    let value_title_h = if chart.values.iter().any(|a| a.title.is_some()) {
+        AXIS_TITLE_SIZE * 1.4
+    } else {
+        0.0
+    };
+    let x_title_h = if chart.x.title.is_some() {
+        AXIS_TITLE_SIZE * 1.4
+    } else {
+        0.0
+    };
+    let legend_h = if legend_entries(chart).len() >= 2 {
+        LABEL_SIZE * 1.6
+    } else {
+        0.0
+    };
+    Plot {
+        x0: -w / 2.0 + left,
+        x1: w / 2.0 - right,
+        y0: -h / 2.0 + 8.0 + title_h + value_title_h,
+        y1: h / 2.0 - 6.0 - LABEL_SIZE * 1.4 - x_title_h - legend_h,
     }
 }
 
-/// A series' legend label — its harvested smart-label text child ([CHARTS.md] §9).
-fn label_of(inst: &ResolvedInst) -> Option<String> {
-    inst.children
+/// The label-width gutter for the value axes on one side (`right` = right edge), or
+/// 0 if no value axis sits there.
+fn side_gutter(chart: &Chart, right: bool) -> f64 {
+    let mut maxw = 0.0_f64;
+    let mut any = false;
+    for axis in chart
+        .values
         .iter()
-        .find(|c| c.kind == NodeKind::Text)
-        .and_then(|c| c.label.as_deref())
-        .filter(|t| !t.is_empty())
-        .map(str::to_string)
+        .filter(|a| matches!(a.side, Side::Right) == right)
+    {
+        any = true;
+        for &t in axis.scale.ticks() {
+            maxw = maxw.max(prim::text_width(&scale::label(t, &axis.unit), LABEL_SIZE));
+        }
+    }
+    if any { maxw + 10.0 } else { 0.0 }
 }
 
-/// An *explicit* paint value — present and not the inherited `|block|` default
-/// `none`, so it overrides the palette walk ([CHARTS.md] §10).
-fn explicit(attrs: &AttrMap, name: &str) -> Option<ResolvedValue> {
-    match attrs.get(name) {
-        Some(ResolvedValue::Ident(s)) if s == "none" => None,
-        other => other.cloned(),
-    }
+fn nonzero(v: f64, fallback: f64) -> f64 {
+    if v > 0.0 { v } else { fallback }
 }
 
 /// The legend entries — one per series that carries a label (no label → no entry,
 /// [CHARTS.md] §9).
-fn legend_entries(series: &[Series]) -> Vec<(String, ResolvedValue)> {
-    series
+fn legend_entries(chart: &Chart) -> Vec<(String, ResolvedValue)> {
+    chart
+        .series
         .iter()
         .filter_map(|s| s.label.clone().map(|l| (l, s.color.clone())))
         .collect()
@@ -359,19 +201,27 @@ mod tests {
             "|chart| \"T\" { categories: \"a\" \"b\" } [\n  |bars| \"S1\" { data: 3 6 }\n  |bars| \"S2\" { data: 4 2 }\n]\n",
         );
         assert!(s.contains("lini-chart"), "chart container class: {s}");
-        // The palette walk colours series 0 rose, series 1 orange — red skipped.
+        // Palette walk: series 0 rose, series 1 orange — red skipped.
         assert!(s.contains("var(--lini-rose)"), "series 0 hue: {s}");
         assert!(s.contains("var(--lini-orange)"), "series 1 hue: {s}");
         assert!(!s.contains("var(--lini-red)"), "red is reserved: {s}");
-        // Gridlines paint with the faint grid role var.
         assert!(s.contains("var(--lini-grid)"), "gridlines: {s}");
-        // The `<title>` tooltip floor on a bar, the title, and a tick label.
         assert!(s.contains("<title>a · S1: 3</title>"), "bar title: {s}");
         assert!(s.contains(">T</text>"), "chart title text: {s}");
-        assert!(
-            s.contains(">25</text>") || s.contains(">6</text>"),
-            "value tick: {s}"
+    }
+
+    #[test]
+    fn a_line_series_draws_a_polyline() {
+        let s = svg("|chart| { categories: \"a\" \"b\" \"c\" } [\n  |line| { data: 3 6 4 }\n]\n");
+        assert!(s.contains("<polyline"), "polyline: {s}");
+    }
+
+    #[test]
+    fn a_dots_series_over_points_draws_ellipses() {
+        let s = svg(
+            "|chart| [\n  |axis| { side: bottom }\n  |axis| { side: left }\n  |dots| { data: 1 5, 2 3, 3 8 }\n]\n",
         );
+        assert!(s.contains("<ellipse"), "dots render as ellipses: {s}");
     }
 
     #[test]
@@ -379,6 +229,28 @@ mod tests {
         let s = svg("|chart| { categories: \"a\" } [\n  |bars| { data: 5; fill: --teal }\n]\n");
         assert!(s.contains("var(--lini-teal)"), "explicit fill kept: {s}");
         assert!(!s.contains("var(--lini-rose)"), "palette not walked: {s}");
+    }
+
+    #[test]
+    fn a_dual_axis_chart_binds_series_by_id() {
+        let s = svg(
+            "|chart| { categories: \"a\" \"b\" } [\n  |axis#n| { side: left }\n  |axis#p| { side: right }\n  |bars| { data: 10 20; axis: n }\n  |line| { data: 4 9; axis: p }\n]\n",
+        );
+        assert!(s.contains("<line "), "the 2-point line: {s}");
+        // Each axis's domain comes from its bound series: bars 10/20 → a left axis to
+        // 20, line 4/9 → a right axis to 10 (whose 1-2 ticks include 8; the left's
+        // 0-5-10-15-20 do not). Distinct domains prove the by-id binding.
+        assert!(s.contains(">20</text>"), "left axis from bars: {s}");
+        assert!(s.contains(">8</text>"), "right axis from line: {s}");
+    }
+
+    #[test]
+    fn an_unknown_axis_id_errors_with_a_suggestion() {
+        let e = layout_err(
+            "|chart| { categories: \"a\" } [\n  |axis#v| { side: left }\n  |line| { data: 1; axis: nope }\n]\n",
+        );
+        assert!(e.contains("axis 'nope' not found"), "{e}");
+        assert!(e.contains("'v'"), "suggests the known id: {e}");
     }
 
     #[test]
@@ -396,12 +268,6 @@ mod tests {
     fn data_and_fn_together_error() {
         let e = layout_err("|chart| { categories: \"a\" } [\n  |bars| { data: 1; fn: `2` }\n]\n");
         assert!(e.contains("not both"), "{e}");
-    }
-
-    #[test]
-    fn a_series_needs_data_or_fn() {
-        let e = layout_err("|chart| { categories: \"a\" } [\n  |bars| { }\n]\n");
-        assert!(e.contains("needs 'data' or 'fn'"), "{e}");
     }
 
     #[test]
