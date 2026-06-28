@@ -1,11 +1,13 @@
-//! Bar geometry ([CHARTS.md] §3): one rect per datum. Multiple `|bars|` series combine
-//! by the chart's `bars:` mode — `grouped` side-by-side (the default), `stacked` piled
-//! (each sits on the running total), or `overlay` translucently on top. Every mode
-//! emits its rects through one `emit_bar`, and each bar carries its `<title>` (§14).
+//! Bar geometry ([CHARTS.md] §3, §11–§12): one mark per datum, combined by the chart's
+//! `bars:` mode. [`visit_bars`] is the one place the modes branch — grouped splits the
+//! category slot, stacked piles on the running total, overlay draws translucently on
+//! top — and each direction consumes it: a `column` grows the value up (a rect), a
+//! `row` grows it right (a rect), a `radial` chart grows it outward (a wedge). Every bar
+//! carries its `<title>` (§14).
 
 use super::model::{BarMode, Chart, Data, Series, SeriesKind};
 use super::prim;
-use super::project::Plot;
+use super::project::{Dir, Plot};
 use super::scale::{Scale, fmt_tick};
 use crate::layout::PlacedNode;
 use std::f64::consts::TAU;
@@ -15,7 +17,7 @@ const GROUP: f64 = 0.72;
 /// An `overlay` bar's translucency, so a bar behind it reads through.
 const OVERLAY: f64 = 0.6;
 
-/// Emit the bars for every bar series, combined per the chart's `bars:` mode.
+/// Emit the bars for every bar series, in the chart's direction.
 pub fn lay_out(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
     let bars: Vec<&Series> = chart
         .series
@@ -28,59 +30,135 @@ pub fn lay_out(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
     let Scale::Band { n } = chart.x.scale else {
         return; // bars are categorical; a numeric x carries no slots
     };
-    if plot.is_radial() {
-        radial_bars(plot, chart, &bars, n, out);
-        return;
+    match plot.dir {
+        Dir::Column => column_bars(plot, chart, &bars, n, out),
+        Dir::Row => row_bars(plot, chart, &bars, n, out),
+        Dir::Radial => radial_bars(plot, chart, &bars, n, out),
     }
-    for i in 0..n {
-        let (sx0, sx1) = plot.slot_px(&chart.x.scale, i);
-        let slot_w = sx1 - sx0;
-        let group_w = slot_w * GROUP;
-        let cx = (sx0 + sx1) / 2.0;
-        let cat = chart.x.labels.get(i);
-        match chart.bars {
-            // Side-by-side: split the group into one column per series.
-            BarMode::Grouped => {
-                let bar_w = group_w / bars.len() as f64;
-                for (k, ser) in bars.iter().copied().enumerate() {
-                    let Some(value) = datum(ser, i) else { continue };
-                    let bx = sx0 + (slot_w - group_w) / 2.0 + (k as f64 + 0.5) * bar_w;
-                    emit_bar(
-                        plot, chart, ser, bx, bar_w, 0.0, value, value, cat, 1.0, out,
-                    );
-                }
-            }
-            // Piled: each bar starts at the running total of the bars below it.
-            BarMode::Stacked => {
-                let mut cum = 0.0;
-                for ser in bars.iter().copied() {
-                    let Some(value) = datum(ser, i) else { continue };
-                    emit_bar(
-                        plot,
-                        chart,
-                        ser,
-                        cx,
-                        group_w,
-                        cum,
-                        cum + value,
-                        value,
-                        cat,
-                        1.0,
-                        out,
-                    );
-                    cum += value;
-                }
-            }
-            // Overlaid: one full-width column per series, translucent, in order.
-            BarMode::Overlay => {
-                for ser in bars.iter().copied() {
-                    let Some(value) = datum(ser, i) else { continue };
-                    emit_bar(
-                        plot, chart, ser, cx, group_w, 0.0, value, value, cat, OVERLAY, out,
-                    );
+}
+
+/// Visit each bar of category `i` per the `bars:` mode, calling `emit` with the bar's
+/// sub-slot (`k` of `s`, for splitting a grouped slot), its value span `[lo, hi]`
+/// (stacked piles via the running total), the datum `value`, and the opacity. The one
+/// place the modes branch; the geometry per direction is the callers' job.
+fn visit_bars(
+    bars: &[&Series],
+    i: usize,
+    mode: &BarMode,
+    mut emit: impl FnMut(&Series, usize, usize, f64, f64, f64, f64),
+) {
+    match mode {
+        BarMode::Grouped => {
+            let s = bars.len();
+            for (k, ser) in bars.iter().copied().enumerate() {
+                if let Some(v) = datum(ser, i) {
+                    emit(ser, k, s, 0.0, v, v, 1.0);
                 }
             }
         }
+        BarMode::Stacked => {
+            let mut cum = 0.0;
+            for ser in bars.iter().copied() {
+                if let Some(v) = datum(ser, i) {
+                    emit(ser, 0, 1, cum, cum + v, v, 1.0);
+                    cum += v;
+                }
+            }
+        }
+        BarMode::Overlay => {
+            for ser in bars.iter().copied() {
+                if let Some(v) = datum(ser, i) {
+                    emit(ser, 0, 1, 0.0, v, v, OVERLAY);
+                }
+            }
+        }
+    }
+}
+
+/// Column bars: the slot runs along x, the value grows up (a rect).
+fn column_bars(plot: &Plot, chart: &Chart, bars: &[&Series], n: usize, out: &mut Vec<PlacedNode>) {
+    for i in 0..n {
+        let (sx0, sx1) = plot.slot_px(&chart.x.scale, i);
+        let group_w = (sx1 - sx0) * GROUP;
+        let group0 = sx0 + (sx1 - sx0 - group_w) / 2.0;
+        let cat = chart.x.labels.get(i);
+        visit_bars(bars, i, &chart.bars, |ser, k, s, lo, hi, value, op| {
+            let bar_w = group_w / s as f64;
+            let bx = group0 + (k as f64 + 0.5) * bar_w;
+            let scale = &chart.values[ser.axis].scale;
+            let y0 = plot.y_at(scale, scale.clamp(lo));
+            let y1 = plot.y_at(scale, scale.clamp(hi));
+            emit_rect(
+                bx,
+                (y0 + y1) / 2.0,
+                bar_w * 0.9,
+                (y0 - y1).abs(),
+                ser,
+                value,
+                cat,
+                op,
+                out,
+            );
+        });
+    }
+}
+
+/// Row bars: the slot runs down y, the value grows right (a rect) — the column flip.
+fn row_bars(plot: &Plot, chart: &Chart, bars: &[&Series], n: usize, out: &mut Vec<PlacedNode>) {
+    for i in 0..n {
+        let sy0 = plot.y0 + (i as f64 / n as f64) * plot.h();
+        let slot_h = plot.h() / n as f64;
+        let group_h = slot_h * GROUP;
+        let group0 = sy0 + (slot_h - group_h) / 2.0;
+        let cat = chart.x.labels.get(i);
+        visit_bars(bars, i, &chart.bars, |ser, k, s, lo, hi, value, op| {
+            let bar_h = group_h / s as f64;
+            let by = group0 + (k as f64 + 0.5) * bar_h;
+            let scale = &chart.values[ser.axis].scale;
+            let x0 = plot.x0 + scale.frac(scale.clamp(lo)) * plot.w();
+            let x1 = plot.x0 + scale.frac(scale.clamp(hi)) * plot.w();
+            emit_rect(
+                (x0 + x1) / 2.0,
+                by,
+                (x1 - x0).abs(),
+                bar_h * 0.9,
+                ser,
+                value,
+                cat,
+                op,
+                out,
+            );
+        });
+    }
+}
+
+/// Radial bars are wedges ([CHARTS.md] §12): each category owns the angular slot around
+/// its spoke, grouped splits it angularly, stacked piles outward in radius.
+fn radial_bars(plot: &Plot, chart: &Chart, bars: &[&Series], n: usize, out: &mut Vec<PlacedNode>) {
+    let xs = &chart.x.scale;
+    let slot = TAU / n as f64;
+    let pad = slot * 0.14;
+    for i in 0..n {
+        let center = plot.spoke_angle(xs, i as f64);
+        let (a_lo0, a_hi0) = (center - slot / 2.0 + pad, center + slot / 2.0 - pad);
+        let cat = chart.x.labels.get(i);
+        visit_bars(bars, i, &chart.bars, |ser, k, s, lo, hi, value, op| {
+            let step = (a_hi0 - a_lo0) / s as f64;
+            let a_lo = a_lo0 + step * k as f64;
+            emit_wedge(
+                plot,
+                chart,
+                ser,
+                lo,
+                hi,
+                a_lo,
+                a_lo + step,
+                value,
+                cat,
+                op,
+                out,
+            );
+        });
     }
 }
 
@@ -92,106 +170,29 @@ fn datum(ser: &Series, i: usize) -> Option<f64> {
     }
 }
 
-/// One bar: the rect from value `lo` to `hi` on the series' axis, at horizontal centre
-/// `bx`, carrying the datum `value`'s `<title>`. A zero-height bar is skipped.
+/// A rectangular bar centred at (cx, cy) with the datum's `<title>`. Skips a flat bar.
 #[allow(clippy::too_many_arguments)]
-fn emit_bar(
-    plot: &Plot,
-    chart: &Chart,
+fn emit_rect(
+    cx: f64,
+    cy: f64,
+    w: f64,
+    h: f64,
     ser: &Series,
-    bx: f64,
-    bar_w: f64,
-    lo: f64,
-    hi: f64,
     value: f64,
     category: Option<&String>,
     opacity: f64,
     out: &mut Vec<PlacedNode>,
 ) {
-    let scale = &chart.values[ser.axis].scale;
-    let y0 = plot.y_at(scale, scale.clamp(lo));
-    let y1 = plot.y_at(scale, scale.clamp(hi));
-    let height = (y0 - y1).abs();
-    if height <= 0.0 {
+    if w.min(h) <= 0.0 {
         return;
     }
-    let mut bar = prim::rect(
-        bx,
-        (y0 + y1) / 2.0,
-        bar_w * 0.9,
-        height,
-        ser.color.clone(),
-        opacity,
-    );
+    let mut bar = prim::rect(cx, cy, w, h, ser.color.clone(), opacity);
     prim::set_title(&mut bar, title(category, ser.label.as_deref(), value));
     out.push(bar);
 }
 
-/// Radial bars are wedges ([CHARTS.md] §12): each category owns the angular slot around
-/// its spoke, combined by the same `bars:` mode as cartesian — grouped splits the slot
-/// angularly, stacked piles outward in radius, overlay draws translucent full-slot
-/// wedges. The value→radius mapping and the palette/`<title>` are reused.
-fn radial_bars(plot: &Plot, chart: &Chart, bars: &[&Series], n: usize, out: &mut Vec<PlacedNode>) {
-    let xs = &chart.x.scale;
-    let slot = TAU / n as f64;
-    let pad = slot * 0.14; // ~14% gap each side of a slot, as in cartesian
-    for i in 0..n {
-        let center = plot.spoke_angle(xs, i as f64);
-        let (a_lo0, a_hi0) = (center - slot / 2.0 + pad, center + slot / 2.0 - pad);
-        let cat = chart.x.labels.get(i);
-        match chart.bars {
-            BarMode::Grouped => {
-                let step = (a_hi0 - a_lo0) / bars.len() as f64;
-                for (k, ser) in bars.iter().copied().enumerate() {
-                    let Some(value) = datum(ser, i) else { continue };
-                    let a_lo = a_lo0 + step * k as f64;
-                    emit_wedge(
-                        plot,
-                        chart,
-                        ser,
-                        0.0,
-                        value,
-                        a_lo,
-                        a_lo + step,
-                        cat,
-                        1.0,
-                        out,
-                    );
-                }
-            }
-            BarMode::Stacked => {
-                let mut cum = 0.0;
-                for ser in bars.iter().copied() {
-                    let Some(value) = datum(ser, i) else { continue };
-                    emit_wedge(
-                        plot,
-                        chart,
-                        ser,
-                        cum,
-                        cum + value,
-                        a_lo0,
-                        a_hi0,
-                        cat,
-                        1.0,
-                        out,
-                    );
-                    cum += value;
-                }
-            }
-            BarMode::Overlay => {
-                for ser in bars.iter().copied() {
-                    let Some(value) = datum(ser, i) else { continue };
-                    emit_wedge(
-                        plot, chart, ser, 0.0, value, a_lo0, a_hi0, cat, OVERLAY, out,
-                    );
-                }
-            }
-        }
-    }
-}
-
-/// One radial bar: an annular sector from value `lo` to `hi` (mapped to radius on the
-/// series' axis) spanning `[a_lo, a_hi]`, carrying the datum's `<title>`.
+/// A radial bar: an annular sector from value `lo` to `hi` (mapped to radius on the
+/// series' axis) spanning `[a_lo, a_hi]`, with the datum's `<title>`.
 #[allow(clippy::too_many_arguments)]
 fn emit_wedge(
     plot: &Plot,
@@ -201,6 +202,7 @@ fn emit_wedge(
     hi: f64,
     a_lo: f64,
     a_hi: f64,
+    value: f64,
     category: Option<&String>,
     opacity: f64,
     out: &mut Vec<PlacedNode>,
@@ -217,7 +219,7 @@ fn emit_wedge(
         ser.color.clone(),
         opacity,
     );
-    prim::set_title(&mut wedge, title(category, ser.label.as_deref(), hi - lo));
+    prim::set_title(&mut wedge, title(category, ser.label.as_deref(), value));
     out.push(wedge);
 }
 

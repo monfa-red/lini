@@ -4,7 +4,7 @@
 
 use super::model::{Chart, Grid, Side, ValueAxis};
 use super::prim;
-use super::project::Plot;
+use super::project::{Dir, Plot};
 use super::scale::{self, Scale};
 use crate::layout::PlacedNode;
 use crate::resolve::ResolvedValue;
@@ -25,6 +25,9 @@ fn muted() -> ResolvedValue {
 
 /// All gridlines, drawn first so the data sits over them.
 pub fn gridlines(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
+    if plot.dir == Dir::Row {
+        return row_gridlines(plot, chart, out);
+    }
     for axis in &chart.values {
         if let Some(color) = value_grid(axis) {
             for &t in axis.scale.ticks() {
@@ -51,6 +54,9 @@ pub fn gridlines(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
 
 /// Tick labels and axis titles for every axis.
 pub fn labels(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
+    if plot.dir == Dir::Row {
+        return row_labels(plot, chart, out);
+    }
     for axis in &chart.values {
         value_labels(plot, axis, out);
     }
@@ -123,6 +129,69 @@ fn x_labels(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
                     false,
                 ));
             }
+        }
+    }
+}
+
+/// Row gridlines ([CHARTS.md] §11): the value axis runs along the bottom, so its
+/// gridlines are vertical (at each value tick, spanning the plot height).
+fn row_gridlines(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
+    for axis in &chart.values {
+        if let Some(color) = value_grid(axis) {
+            for &t in axis.scale.ticks() {
+                let x = plot.x0 + axis.scale.frac(t) * plot.w();
+                out.push(prim::line(
+                    vec![(x, plot.y0), (x, plot.y1)],
+                    color.clone(),
+                    1.0,
+                ));
+            }
+        }
+    }
+}
+
+/// Row labels ([CHARTS.md] §11): value ticks and the value-axis title along the bottom,
+/// the domain (category) labels down the left at each slot centre.
+fn row_labels(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
+    for axis in &chart.values {
+        for &t in axis.scale.ticks() {
+            let x = plot.x0 + axis.scale.frac(t) * plot.w();
+            out.push(prim::text(
+                &scale::label(t, &axis.unit),
+                x,
+                plot.y1 + 4.0 + LABEL_SIZE * 0.7,
+                LABEL_SIZE,
+                Some(muted()),
+                false,
+            ));
+        }
+        if let Some(title) = &axis.title {
+            out.push(prim::text(
+                title,
+                (plot.x0 + plot.x1) / 2.0,
+                plot.y1 + LABEL_SIZE * 1.4 + TITLE_SIZE,
+                TITLE_SIZE,
+                Some(muted()),
+                false,
+            ));
+        }
+    }
+    if let Scale::Band { n } = &chart.x.scale {
+        for i in 0..*n {
+            let y = plot.y0 + (i as f64 + 0.5) / *n as f64 * plot.h();
+            let label = chart
+                .x
+                .labels
+                .get(i)
+                .cloned()
+                .unwrap_or_else(|| (i + 1).to_string());
+            out.push(prim::text_right(
+                &label,
+                plot.x0 - 6.0,
+                y,
+                LABEL_SIZE,
+                Some(muted()),
+            ));
         }
     }
 }

@@ -3,10 +3,11 @@
 //! cascade, palette, theming, and `--bake-vars` are all reused unchanged; the chart
 //! adds only the scale-and-place algorithm here.
 //!
-//! The cartesian toolkit (steps 1–2): `|bars|` / `|line|` / `|dots|` over a
-//! categorical band or a numeric x, with explicit `|axis|` children, nice scales,
-//! gridlines, titles, and a legend. Formulas, bands, annotations, radial, and pie
-//! follow in later steps (see `PLAN.md`).
+//! `|bars|` / `|line|` / `|dots|` / `|area|` over a categorical band or a numeric x,
+//! with explicit `|axis|` children, nice/log scales, formulas, bands, annotations, a
+//! legend, and a title. Every series lowers through one `Plot::project`, so the
+//! `direction: column | row | radial` flip (a radar reusing the cartesian builders) is
+//! a projector change, not a rewrite. Pie / bubble follow in a later step (`PLAN.md`).
 
 mod annot;
 mod axis;
@@ -62,22 +63,27 @@ pub(super) fn layout_chart(
     // radial chart reuses the exact `areas`/`lines`/`dots`/`bars` passes; only the
     // gridlines, labels, and annotations differ by direction.
     let mut kids = Vec::new();
-    if plot.is_radial() {
-        radial::gridlines(&plot, &chart, &mut kids);
-    } else {
-        annot::band_shades(&plot, &chart, &mut kids);
-        axis::gridlines(&plot, &chart, &mut kids);
+    match plot.dir {
+        Dir::Radial => radial::gridlines(&plot, &chart, &mut kids),
+        Dir::Column => {
+            annot::band_shades(&plot, &chart, &mut kids);
+            axis::gridlines(&plot, &chart, &mut kids);
+        }
+        Dir::Row => axis::gridlines(&plot, &chart, &mut kids),
     }
     marks::areas(&plot, &chart, &mut kids);
     bars::lay_out(&plot, &chart, &mut kids);
     marks::lines(&plot, &chart, &mut kids);
     marks::dots(&plot, &chart, &mut kids);
-    if plot.is_radial() {
-        radial::labels(&plot, &chart, &mut kids);
-    } else {
-        annot::marks(&plot, &chart, &mut kids);
-        axis::labels(&plot, &chart, &mut kids);
-        annot::band_ticks(&plot, &chart, &mut kids);
+    match plot.dir {
+        Dir::Radial => radial::labels(&plot, &chart, &mut kids),
+        // Bands / annotations are column-oriented today; in a row they are deferred.
+        Dir::Row => axis::labels(&plot, &chart, &mut kids),
+        Dir::Column => {
+            annot::marks(&plot, &chart, &mut kids);
+            axis::labels(&plot, &chart, &mut kids);
+            annot::band_ticks(&plot, &chart, &mut kids);
+        }
     }
     if let Some(t) = &chart.title {
         kids.push(prim::text(
@@ -119,6 +125,9 @@ fn plot_rect(chart: &Chart, w: f64, h: f64) -> Plot {
     if chart.dir == Dir::Radial {
         return radial_plot(chart, w, h);
     }
+    if chart.dir == Dir::Row {
+        return row_plot(chart, w, h);
+    }
     let left = nonzero(side_gutter(chart, false), 12.0);
     let right = nonzero(side_gutter(chart, true), 12.0);
     let title_h = if chart.title.is_some() {
@@ -149,6 +158,47 @@ fn plot_rect(chart: &Chart, w: f64, h: f64) -> Plot {
         y1: h / 2.0 - 6.0 - LABEL_SIZE * 1.4 - band_row - x_title_h - legend_h,
         dir: chart.dir,
     }
+}
+
+/// A row chart's plot rect: the cartesian flip ([CHARTS.md] §11). The domain
+/// (category) labels sit on the left and the value labels along the bottom, so the
+/// gutters swap — a left gutter sized to the widest category, a bottom gutter for the
+/// value labels and axis title.
+fn row_plot(chart: &Chart, w: f64, h: f64) -> Plot {
+    let title_h = if chart.title.is_some() {
+        TITLE_SIZE * 1.4
+    } else {
+        0.0
+    };
+    let value_title_h = if chart.values.iter().any(|a| a.title.is_some()) {
+        AXIS_TITLE_SIZE * 1.4
+    } else {
+        0.0
+    };
+    let legend_h = if legend_entries(chart).len() >= 2 {
+        LABEL_SIZE * 1.6
+    } else {
+        0.0
+    };
+    let left = nonzero(domain_gutter(chart), 12.0);
+    Plot {
+        x0: -w / 2.0 + left,
+        x1: w / 2.0 - 12.0,
+        y0: -h / 2.0 + 8.0 + title_h,
+        y1: h / 2.0 - 6.0 - LABEL_SIZE * 1.4 - value_title_h - legend_h,
+        dir: Dir::Row,
+    }
+}
+
+/// The left-gutter width for a row chart's domain (category) labels.
+fn domain_gutter(chart: &Chart) -> f64 {
+    let maxw = chart
+        .x
+        .labels
+        .iter()
+        .map(|l| prim::text_width(l, LABEL_SIZE))
+        .fold(0.0_f64, f64::max);
+    if maxw > 0.0 { maxw + 8.0 } else { 0.0 }
 }
 
 /// A radial chart's plot rect: a centred square (the spoke-circle's bounding box),
@@ -533,5 +583,34 @@ mod tests {
             "|chart| { direction: radial; categories: \"a\" \"b\" } [\n  |axis| { side: left; range: 0 5 }\n  |line| { data: 3 4 }\n]\n",
         );
         assert!(e.contains("radial"), "{e}");
+    }
+
+    #[test]
+    fn a_row_chart_lays_categories_left_and_values_below() {
+        let s = svg(
+            "|chart| { direction: row; categories: \"a\" \"b\" } [\n  |axis| \"v\" { side: bottom }\n  |bars| { data: 5 10 }\n]\n",
+        );
+        assert!(s.contains("<rect"), "horizontal bars: {s}");
+        assert!(s.contains(">a</text>"), "a category label (left): {s}");
+        assert!(s.contains(">10</text>"), "a value tick (below): {s}");
+    }
+
+    #[test]
+    fn a_row_line_projects_through_the_same_builder() {
+        let s = svg(
+            "|chart| { direction: row; categories: \"a\" \"b\" \"c\" } [\n  |line| { data: 3 6 4 }\n]\n",
+        );
+        assert!(
+            s.contains("<polyline"),
+            "the row line reuses the cartesian builder: {s}"
+        );
+    }
+
+    #[test]
+    fn an_unknown_direction_errors() {
+        let e = layout_err(
+            "|chart| { direction: sideways; categories: \"a\" } [\n  |bars| { data: 5 }\n]\n",
+        );
+        assert!(e.contains("column, row, or radial"), "{e}");
     }
 }

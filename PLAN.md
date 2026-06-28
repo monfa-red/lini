@@ -11,7 +11,14 @@ This is a roadmap, not a line-by-line script: each step says its purpose, the fi
 touches, **what it reuses**, **what is genuinely new**, the refactors it performs, what
 it defers, and how it is verified. Decide the fine detail while implementing.
 
-**Status (branch `charts`):** steps 1 ✓, 2 ✓, 3 ✓, 4 ✓ done. Step 5 next.
+**Status (branch `charts`):** steps 1 ✓, 2 ✓, 3 ✓, 4 ✓, 5 ✓ done. Step 6 (pie / bubble) next.
+Step 5 added the projection seam `Plot::project(x, value)` with `Dir::{Column, Row,
+Radial}` (column byte-identical — no cartesian churn); `direction: radial` (radar /
+filled radar / radial-bar wedges / web in `radial.rs`) and `direction: row` (the
+cartesian flip) both reuse the exact `areas`/`lines`/`dots`/`bars` builders — only the
+projector, gridlines, and labels differ. `bars.rs` factored to one `visit_bars` mode
+dispatch shared by all three directions. Row annotations (bands / `|mark|`) are deferred
+(column-oriented today); radial uses one radius axis (a `side:` there is the §18 error).
 Refactors done along the way: (a) a labelled **geometry primitive** (`|line|`) used to
 have its label silently dropped at desugar, so a `|line|` series had no legend name —
 desugar now keeps it and resolve carries it to `ResolvedInst.label` (inert for a

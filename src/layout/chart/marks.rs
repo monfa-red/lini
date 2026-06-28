@@ -4,7 +4,7 @@
 
 use super::model::{Chart, Curve, Data, Series, SeriesKind};
 use super::prim;
-use super::project::Plot;
+use super::project::{Dir, Plot};
 use super::scale::{Scale, fmt_tick};
 use crate::layout::PlacedNode;
 
@@ -103,17 +103,32 @@ fn draw_area(plot: &Plot, chart: &Chart, ser: &Series, out: &mut Vec<PlacedNode>
         vertex_markers(chart, ser, &pts, out);
         return;
     }
-    let top = curve_points(&px, &ser.curve);
+    // A column curves the top edge and fills down to a horizontal baseline; a row
+    // fills across to a vertical baseline (the value-zero line, now on the left).
+    let top = if plot.dir == Dir::Row {
+        px.clone()
+    } else {
+        curve_points(&px, &ser.curve)
+    };
     let scale = &chart.values[ser.axis].scale;
     let base = ser.baseline.unwrap_or(0.0);
-    let base_y = plot.y_at(scale, scale.clamp(base));
     let mut poly: Vec<(f64, f64)> = top
         .iter()
         .map(|&(x, y)| (x.clamp(plot.x0, plot.x1), y.clamp(plot.y0, plot.y1)))
         .collect();
-    if let (Some(&(fx, _)), Some(&(lx, _))) = (poly.first(), poly.last()) {
-        poly.push((lx, base_y));
-        poly.push((fx, base_y));
+    if let (Some(&(fx, fy)), Some(&(lx, ly))) = (poly.first(), poly.last()) {
+        match plot.dir {
+            Dir::Row => {
+                let bx = plot.x0 + scale.frac(scale.clamp(base)) * plot.w();
+                poly.push((bx, ly));
+                poly.push((bx, fy));
+            }
+            _ => {
+                let by = plot.y_at(scale, scale.clamp(base));
+                poly.push((lx, by));
+                poly.push((fx, by));
+            }
+        }
         out.push(prim::poly(poly, ser.color.clone(), 0.82));
     }
     for run in plot.clip(&top) {
