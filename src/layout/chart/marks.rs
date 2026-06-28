@@ -38,7 +38,8 @@ pub fn dots(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
     }
 }
 
-/// (data-space coords, pixel coords) for every datum of a series.
+/// (data-space coords, pixel coords) for every datum of a series. The pixel point comes
+/// from the shared `Plot::project`, so a radar reuses these builders unchanged ([§11]).
 fn samples(plot: &Plot, chart: &Chart, ser: &Series) -> Vec<Plotted> {
     let xs = &chart.x.scale;
     let vs = &chart.values[ser.axis].scale;
@@ -46,11 +47,11 @@ fn samples(plot: &Plot, chart: &Chart, ser: &Series) -> Vec<Plotted> {
         Data::Categorical(v) => v
             .iter()
             .enumerate()
-            .map(|(i, &y)| ((i as f64, y), (plot.x_at(xs, i as f64), plot.y_at(vs, y))))
+            .map(|(i, &y)| ((i as f64, y), plot.project(xs, i as f64, vs, y)))
             .collect(),
         Data::Points(p) => p
             .iter()
-            .map(|&(x, y)| ((x, y), (plot.x_at(xs, x), plot.y_at(vs, y))))
+            .map(|&(x, y)| ((x, y), plot.project(xs, x, vs, y)))
             .collect(),
         // Sampled to `Points` in `model::build` before layout.
         Data::Formula(_) => Vec::new(),
@@ -63,8 +64,7 @@ fn draw_line(plot: &Plot, chart: &Chart, ser: &Series, out: &mut Vec<PlacedNode>
         return;
     }
     let px: Vec<(f64, f64)> = pts.iter().map(|(_, p)| *p).collect();
-    let curved = curve_points(&px, &ser.curve);
-    for run in plot.clip(&curved) {
+    for run in line_runs(plot, &px, &ser.curve) {
         let mut ln = prim::line(run, ser.color.clone(), ser.thickness);
         if let Some(s) = &ser.stroke_style {
             ln.attrs.insert("stroke-style", s.clone());
@@ -72,6 +72,18 @@ fn draw_line(plot: &Plot, chart: &Chart, ser: &Series, out: &mut Vec<PlacedNode>
         out.push(ln);
     }
     vertex_markers(chart, ser, &pts, out);
+}
+
+/// The polyline run(s) for a series' pixel points: a radar (radial) closes the loop
+/// back to the first point and is uncropped (it sits within the rim); a cartesian line
+/// is interpolated by `curve:` and cropped to the plot ([CHARTS.md] §6/§12).
+fn line_runs(plot: &Plot, px: &[(f64, f64)], curve: &Curve) -> Vec<Vec<(f64, f64)>> {
+    if plot.is_radial() {
+        let mut loop_ = px.to_vec();
+        loop_.push(px[0]);
+        return vec![loop_];
+    }
+    plot.clip(&curve_points(px, curve))
 }
 
 /// An `|area|`: a filled polygon from the (curved, plot-clamped) top edge down to the
@@ -82,6 +94,15 @@ fn draw_area(plot: &Plot, chart: &Chart, ser: &Series, out: &mut Vec<PlacedNode>
         return;
     }
     let px: Vec<(f64, f64)> = pts.iter().map(|(_, p)| *p).collect();
+    // A filled radar fills the closed spoke polygon — there is no baseline ([§12]).
+    if plot.is_radial() {
+        out.push(prim::poly(px.clone(), ser.color.clone(), 0.82));
+        for run in line_runs(plot, &px, &ser.curve) {
+            out.push(prim::line(run, ser.color.clone(), ser.thickness.max(2.0)));
+        }
+        vertex_markers(chart, ser, &pts, out);
+        return;
+    }
     let top = curve_points(&px, &ser.curve);
     let scale = &chart.values[ser.axis].scale;
     let base = ser.baseline.unwrap_or(0.0);

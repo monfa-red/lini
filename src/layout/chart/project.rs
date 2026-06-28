@@ -1,19 +1,33 @@
 //! The chart's data→pixel projection ([CHARTS.md] §11). This is the **seam** every
-//! series and axis builder lowers through, so adding `direction: row` and the polar
-//! (radial) projection later is a new variant here — not a rewrite of the callers.
-//! Step 2 is the cartesian **column** case: the domain (x) axis runs left→right, the
-//! value axis grows up (SVG y is down, so larger values sit at smaller y).
+//! series and axis builder lowers through, so `direction: row` and the polar (radial)
+//! projection are variants here — not a rewrite of the callers. The joint
+//! [`Plot::project`] maps a (domain, value) datum to a pixel point in any direction;
+//! `column` (the default) runs the domain left→right and the value up (SVG y is down, so
+//! larger values sit at smaller y), `row` swaps them, `radial` bends the domain into a
+//! ring of spokes and the value into a radius.
 
 use super::scale::Scale;
+use std::f64::consts::TAU;
 
 type P = (f64, f64);
 
-/// The laid-out plot rectangle (chart-local pixels, origin at the chart centre).
+/// The chart's orientation ([CHARTS.md] §11). `column`/`row` are cartesian (the value
+/// grows up / right); `radial` is polar (the value grows outward from the centre).
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum Dir {
+    Column,
+    Row,
+    Radial,
+}
+
+/// The laid-out plot rectangle (chart-local pixels, origin at the chart centre). For a
+/// radial chart it is the square bounding box of the spoke circle.
 pub struct Plot {
     pub x0: f64,
     pub y0: f64,
     pub x1: f64,
     pub y1: f64,
+    pub dir: Dir,
 }
 
 impl Plot {
@@ -23,6 +37,53 @@ impl Plot {
 
     pub fn h(&self) -> f64 {
         self.y1 - self.y0
+    }
+
+    /// A datum at domain coordinate `x` (on the x scale) and value `v` (on a value
+    /// scale) → its pixel point, in this chart's direction ([CHARTS.md] §11). This is
+    /// the one projection every series lowers through, so a radar reuses the exact
+    /// `|line|` / `|area|` / `|dots|` builders — only the projector differs.
+    pub fn project(&self, x: &Scale, xv: f64, value: &Scale, v: f64) -> P {
+        match self.dir {
+            Dir::Column => (self.x_at(x, xv), self.y_at(value, v)),
+            // Row: the value runs left→right, the domain top→bottom down the left.
+            Dir::Row => (
+                self.x0 + value.frac(v) * self.w(),
+                self.y0 + x.frac(xv) * self.h(),
+            ),
+            // Radial: the domain is a spoke angle (from the top, clockwise), the value a
+            // radius from the centre.
+            Dir::Radial => {
+                let (cx, cy) = self.center();
+                let theta = self.spoke_angle(x, xv);
+                let r = value.frac(v) * self.radius();
+                (cx + r * theta.sin(), cy - r * theta.cos())
+            }
+        }
+    }
+
+    pub fn is_radial(&self) -> bool {
+        self.dir == Dir::Radial
+    }
+
+    /// The plot centre — the pole of a radial chart.
+    pub fn center(&self) -> P {
+        ((self.x0 + self.x1) / 2.0, (self.y0 + self.y1) / 2.0)
+    }
+
+    /// The rim radius of a radial chart (its square rect's half-side).
+    pub fn radius(&self) -> f64 {
+        self.w().min(self.h()) / 2.0
+    }
+
+    /// The angle of spoke / domain coordinate `xv` ([CHARTS.md] §12): `0` straight up,
+    /// increasing clockwise, one full turn over the `n` band slots.
+    pub fn spoke_angle(&self, x: &Scale, xv: f64) -> f64 {
+        let n = match x {
+            Scale::Band { n } => *n as f64,
+            _ => 1.0,
+        };
+        TAU * xv / n.max(1.0)
     }
 
     /// The x pixel of domain coordinate `v` on `x` (a band index, or a numeric x).

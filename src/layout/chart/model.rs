@@ -3,6 +3,7 @@
 //! validation (§18) lives here; the geometry is the renderers' job.
 
 use super::palette;
+use super::project::Dir;
 use super::scale::{self, Scale};
 use crate::error::Error;
 use crate::expr::{self, Expr, FuncTable, Value as ExprValue};
@@ -141,6 +142,7 @@ pub struct Chart {
     pub bands: Vec<Band>,
     pub marks: Vec<Mark>,
     pub bars: BarMode,
+    pub dir: Dir,
 }
 
 /// One end of a `range:` window: a fixed number, or `auto` (fit from data).
@@ -174,6 +176,7 @@ struct AxisSpec<'a> {
 
 pub fn build(inst: &ResolvedInst, funcs: &FuncTable) -> Result<Chart, Error> {
     let span = inst.span;
+    let dir = read_direction(&inst.attrs)?;
     let samples = sample_count(&inst.attrs);
     let bars = read_bars(&inst.attrs)?;
     let (series_insts, axis_insts, band_insts, mark_insts, title) = partition(inst)?;
@@ -183,16 +186,37 @@ pub fn build(inst: &ResolvedInst, funcs: &FuncTable) -> Result<Chart, Error> {
 
     let categories = read_categories(&inst.attrs, span)?;
 
-    // Split declared axes into the one domain (x) axis and the value axes.
+    // Split declared axes into the one domain (x) axis and the value axes, by which
+    // screen edge plays the domain in this direction ([CHARTS.md] §11): the bottom/top
+    // in a column, the left/right in a row. A radial chart has no sides — one radius
+    // (value) axis, the domain being the spokes ([§12]).
     let mut x_inst: Option<&ResolvedInst> = None;
     let mut value_specs: Vec<AxisSpec> = Vec::new();
+    let default_value_side = if dir == Dir::Row {
+        Side::Bottom
+    } else {
+        Side::Left
+    };
     for ax in &axis_insts {
-        match read_side(ax)? {
-            Some(s @ (Side::Bottom | Side::Top)) => {
-                x_inst = Some(ax);
-                let _ = s;
+        let side = read_side(ax)?;
+        match dir {
+            Dir::Radial => {
+                if side.is_some() {
+                    return Err(Error::at(
+                        ax.span,
+                        "'side' has no meaning in a radial chart — it has one radius axis",
+                    ));
+                }
+                value_specs.push(axis_spec(ax, Side::Left)?);
             }
-            side => value_specs.push(axis_spec(ax, side.unwrap_or(Side::Left))?),
+            Dir::Row => match side {
+                Some(Side::Left | Side::Right) => x_inst = Some(ax),
+                _ => value_specs.push(axis_spec(ax, side.unwrap_or(Side::Bottom))?),
+            },
+            Dir::Column => match side {
+                Some(Side::Bottom | Side::Top) => x_inst = Some(ax),
+                _ => value_specs.push(axis_spec(ax, side.unwrap_or(Side::Left))?),
+            },
         }
     }
     if categories.is_some() && x_inst.is_some_and(|a| a.attrs.get("labels").is_some()) {
@@ -204,7 +228,7 @@ pub fn build(inst: &ResolvedInst, funcs: &FuncTable) -> Result<Chart, Error> {
     if value_specs.is_empty() {
         value_specs.push(AxisSpec {
             id: None,
-            side: Side::Left,
+            side: default_value_side,
             title: None,
             unit: None,
             grid: Grid::Default,
@@ -279,7 +303,28 @@ pub fn build(inst: &ResolvedInst, funcs: &FuncTable) -> Result<Chart, Error> {
         bands,
         marks,
         bars,
+        dir,
     })
+}
+
+/// The chart's `direction` ([CHARTS.md] §11) — its orientation / projection.
+fn read_direction(attrs: &AttrMap) -> Result<Dir, Error> {
+    match attrs.get("direction") {
+        None => Ok(Dir::Column),
+        Some(ResolvedValue::Ident(s)) => match s.as_str() {
+            "column" => Ok(Dir::Column),
+            "row" => Ok(Dir::Row),
+            "radial" => Ok(Dir::Radial),
+            _ => Err(Error::at(
+                Span::empty(),
+                "'direction' is column, row, or radial",
+            )),
+        },
+        _ => Err(Error::at(
+            Span::empty(),
+            "'direction' is column, row, or radial",
+        )),
+    }
 }
 
 /// Split children into series, axes, bands, marks, and the harvested title; reject

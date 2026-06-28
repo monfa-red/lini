@@ -1,0 +1,81 @@
+---
+source: tests/conformance.rs
+expression: svg
+input_file: samples/chart_radar.lini
+---
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-160 -160 320 320" width="320" height="320" class="lini">
+  <style>
+    .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: bold; color: black; }
+    .lini .lini-canvas { fill: white; }
+    .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-poly { stroke-dasharray: none; }
+    .lini .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
+  </style>
+  <defs/>
+  <rect class="lini-canvas" x="-160" y="-160" width="320" height="320"/>
+  <g class="lini-scene">
+    <g class="lini-node lini-chart lini-block" transform="translate(0,0)">
+      <rect x="-139" y="-139" width="278" height="278" rx="0" ry="0"/>
+      <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <polyline points="0,-19.72 19.0402,-5.8865 11.7675,16.4965 -11.7675,16.4965 -19.0402,-5.8865 0,-19.72"/>
+      </g>
+      <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <polyline points="0,-39.74 38.0803,-12.073 23.5349,32.693 -23.5349,32.693 -38.0803,-12.073 0,-39.74"/>
+      </g>
+      <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <polyline points="0,-59.76 57.1205,-18.2596 35.3024,48.8896 -35.3024,48.8896 -57.1205,-18.2596 0,-59.76"/>
+      </g>
+      <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <polyline points="0,-79.78 76.1606,-24.4461 47.0698,65.0861 -47.0698,65.0861 -76.1606,-24.4461 0,-79.78"/>
+      </g>
+      <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <polyline points="0,-99.8 95.2008,-30.6326 58.8373,81.2826 -58.8373,81.2826 -95.2008,-30.6326 0,-99.8"/>
+      </g>
+      <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <line x1="0" y1="0.3" x2="0" y2="-99.8"/>
+      </g>
+      <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <line x1="0" y1="0.3" x2="95.2008" y2="-30.6326"/>
+      </g>
+      <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <line x1="0" y1="0.3" x2="58.8373" y2="81.2826"/>
+      </g>
+      <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <line x1="0" y1="0.3" x2="-58.8373" y2="81.2826"/>
+      </g>
+      <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <line x1="0" y1="0.3" x2="-95.2008" y2="-30.6326"/>
+      </g>
+      <g class="lini-node lini-poly" style="fill: #00bcb1; stroke: none; stroke-width: 0; opacity: 0.82" transform="translate(0,0)">
+        <polygon points="0,-59.76 57.1205,-18.2596 58.8373,81.2826 -47.0698,65.0861 -38.0803,-12.073"/>
+      </g>
+      <g class="lini-node lini-line" style="stroke: #00bcb1" transform="translate(0,0)">
+        <polyline points="0,-59.76 57.1205,-18.2596 58.8373,81.2826 -47.0698,65.0861 -38.0803,-12.073 0,-59.76"/>
+      </g>
+      <g class="lini-node lini-line" style="stroke: #b8476e" transform="translate(0,0)">
+        <polyline points="0,-99.8 76.1606,-24.4461 23.5349,32.693 -35.3024,48.8896 -95.2008,-30.6326 0,-99.8"/>
+      </g>
+      <text class="lini-text" x="0" y="-109.7" style="fill: #888; font-size: 11px">Speed</text>
+      <text class="lini-text" x="104.6162" y="-33.6919" style="fill: #888; font-size: 11px">Range</text>
+      <text class="lini-text" x="64.6564" y="89.2919" style="fill: #888; font-size: 11px">Armor</text>
+      <text class="lini-text" x="-64.6564" y="89.2919" style="fill: #888; font-size: 11px">Cost</text>
+      <text class="lini-text" x="-104.6162" y="-33.6919" style="fill: #888; font-size: 11px">Stealth</text>
+      <text class="lini-text" x="6.3" y="-19.72" style="fill: #888; font-size: 11px">1</text>
+      <text class="lini-text" x="6.3" y="-39.74" style="fill: #888; font-size: 11px">2</text>
+      <text class="lini-text" x="6.3" y="-59.76" style="fill: #888; font-size: 11px">3</text>
+      <text class="lini-text" x="6.3" y="-79.78" style="fill: #888; font-size: 11px">4</text>
+      <text class="lini-text" x="6.3" y="-99.8" style="fill: #888; font-size: 11px">5</text>
+      <text class="lini-text" x="0" y="-122.9" style="font-weight: bold; font-size: 13px">Ship profiles</text>
+      <g class="lini-node lini-block" style="fill: #b8476e; stroke-width: 0" transform="translate(-58.1,130.1)">
+        <rect x="-5.5" y="-5.5" width="11" height="11" rx="0" ry="0"/>
+      </g>
+      <text class="lini-text" x="-31.1" y="130.1" style="font-size: 11px">Scout</text>
+      <g class="lini-node lini-block" style="fill: #00bcb1; stroke-width: 0" transform="translate(6.9,130.1)">
+        <rect x="-5.5" y="-5.5" width="11" height="11" rx="0" ry="0"/>
+      </g>
+      <text class="lini-text" x="40.5" y="130.1" style="font-size: 11px">Cruiser</text>
+    </g>
+  </g>
+  <g class="lini-links"/>
+</svg>

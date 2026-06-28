@@ -8,6 +8,7 @@ use super::prim;
 use super::project::Plot;
 use super::scale::{Scale, fmt_tick};
 use crate::layout::PlacedNode;
+use std::f64::consts::TAU;
 
 /// The bar group's share of a category slot (~14% padding each side).
 const GROUP: f64 = 0.72;
@@ -27,6 +28,10 @@ pub fn lay_out(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
     let Scale::Band { n } = chart.x.scale else {
         return; // bars are categorical; a numeric x carries no slots
     };
+    if plot.is_radial() {
+        radial_bars(plot, chart, &bars, n, out);
+        return;
+    }
     for i in 0..n {
         let (sx0, sx1) = plot.slot_px(&chart.x.scale, i);
         let slot_w = sx1 - sx0;
@@ -120,6 +125,116 @@ fn emit_bar(
     );
     prim::set_title(&mut bar, title(category, ser.label.as_deref(), value));
     out.push(bar);
+}
+
+/// Radial bars are wedges ([CHARTS.md] §12): each category owns the angular slot around
+/// its spoke, combined by the same `bars:` mode as cartesian — grouped splits the slot
+/// angularly, stacked piles outward in radius, overlay draws translucent full-slot
+/// wedges. The value→radius mapping and the palette/`<title>` are reused.
+fn radial_bars(plot: &Plot, chart: &Chart, bars: &[&Series], n: usize, out: &mut Vec<PlacedNode>) {
+    let xs = &chart.x.scale;
+    let slot = TAU / n as f64;
+    let pad = slot * 0.14; // ~14% gap each side of a slot, as in cartesian
+    for i in 0..n {
+        let center = plot.spoke_angle(xs, i as f64);
+        let (a_lo0, a_hi0) = (center - slot / 2.0 + pad, center + slot / 2.0 - pad);
+        let cat = chart.x.labels.get(i);
+        match chart.bars {
+            BarMode::Grouped => {
+                let step = (a_hi0 - a_lo0) / bars.len() as f64;
+                for (k, ser) in bars.iter().copied().enumerate() {
+                    let Some(value) = datum(ser, i) else { continue };
+                    let a_lo = a_lo0 + step * k as f64;
+                    emit_wedge(
+                        plot,
+                        chart,
+                        ser,
+                        0.0,
+                        value,
+                        a_lo,
+                        a_lo + step,
+                        cat,
+                        1.0,
+                        out,
+                    );
+                }
+            }
+            BarMode::Stacked => {
+                let mut cum = 0.0;
+                for ser in bars.iter().copied() {
+                    let Some(value) = datum(ser, i) else { continue };
+                    emit_wedge(
+                        plot,
+                        chart,
+                        ser,
+                        cum,
+                        cum + value,
+                        a_lo0,
+                        a_hi0,
+                        cat,
+                        1.0,
+                        out,
+                    );
+                    cum += value;
+                }
+            }
+            BarMode::Overlay => {
+                for ser in bars.iter().copied() {
+                    let Some(value) = datum(ser, i) else { continue };
+                    emit_wedge(
+                        plot, chart, ser, 0.0, value, a_lo0, a_hi0, cat, OVERLAY, out,
+                    );
+                }
+            }
+        }
+    }
+}
+
+/// One radial bar: an annular sector from value `lo` to `hi` (mapped to radius on the
+/// series' axis) spanning `[a_lo, a_hi]`, carrying the datum's `<title>`.
+#[allow(clippy::too_many_arguments)]
+fn emit_wedge(
+    plot: &Plot,
+    chart: &Chart,
+    ser: &Series,
+    lo: f64,
+    hi: f64,
+    a_lo: f64,
+    a_hi: f64,
+    category: Option<&String>,
+    opacity: f64,
+    out: &mut Vec<PlacedNode>,
+) {
+    let vs = &chart.values[ser.axis].scale;
+    let (cx, cy) = plot.center();
+    let r0 = vs.frac(lo) * plot.radius();
+    let r1 = vs.frac(hi) * plot.radius();
+    if (r1 - r0).abs() < 0.5 {
+        return;
+    }
+    let mut wedge = prim::poly(
+        sector(cx, cy, r0, r1, a_lo, a_hi),
+        ser.color.clone(),
+        opacity,
+    );
+    prim::set_title(&mut wedge, title(category, ser.label.as_deref(), hi - lo));
+    out.push(wedge);
+}
+
+/// An annular-sector polygon from radius `r0` to `r1` over `[a_lo, a_hi]` (angle 0 up,
+/// clockwise). The arcs are line-segment–approximated; `r0 ≈ 0` collapses to the pole.
+fn sector(cx: f64, cy: f64, r0: f64, r1: f64, a_lo: f64, a_hi: f64) -> Vec<(f64, f64)> {
+    const K: usize = 10;
+    let pt = |r: f64, a: f64| (cx + r * a.sin(), cy - r * a.cos());
+    let mut pts: Vec<(f64, f64)> = (0..=K)
+        .map(|k| pt(r1, a_lo + (a_hi - a_lo) * k as f64 / K as f64))
+        .collect();
+    if r0 <= 0.5 {
+        pts.push((cx, cy));
+    } else {
+        pts.extend((0..=K).map(|k| pt(r0, a_hi - (a_hi - a_lo) * k as f64 / K as f64)));
+    }
+    pts
 }
 
 /// The `<title>` text for a bar: category and/or series name, then the value.

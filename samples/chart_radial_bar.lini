@@ -1,0 +1,4 @@
+|chart| "Goal completion %" { direction: radial; categories: "Mon" "Tue" "Wed" "Thu" "Fri" "Sat" "Sun" } [
+  |axis| { range: 0 100 }
+  |bars| "steps" { data: 80 65 90 70 95 40 55 }
+]

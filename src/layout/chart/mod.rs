@@ -16,13 +16,14 @@ mod model;
 mod palette;
 mod prim;
 mod project;
+mod radial;
 mod scale;
 
 use crate::error::Error;
 use crate::layout::{Bbox, PlacedNode};
 use crate::resolve::{AttrMap, NodeKind, ResolvedInst, ResolvedValue};
 use model::{Chart, Side};
-use project::Plot;
+use project::{Dir, Plot};
 
 const TITLE_SIZE: f64 = 13.0;
 const AXIS_TITLE_SIZE: f64 = 11.0;
@@ -42,25 +43,42 @@ pub(super) fn layout_chart(
     funcs: &crate::expr::FuncTable,
 ) -> Result<PlacedNode, Error> {
     let span = inst.span;
-    let w = inst.attrs.number("width").unwrap_or(360.0);
-    let h = inst.attrs.number("height").unwrap_or(220.0);
-
     let chart = model::build(inst, funcs)?;
+    // A radial (or pie) chart is square; a cartesian one is wide ([CHARTS.md] §2).
+    let square = chart.dir == Dir::Radial;
+    let w = inst
+        .attrs
+        .number("width")
+        .unwrap_or(if square { 280.0 } else { 360.0 });
+    let h = inst
+        .attrs
+        .number("height")
+        .unwrap_or(if square { 280.0 } else { 220.0 });
     let plot = plot_rect(&chart, w, h);
 
-    // Semantic draw order ([CHARTS.md] §15): bands, gridlines, areas, bars, lines,
-    // dots, annotations, then labels — pushed in order, so a later child paints over
-    // an earlier one (a line sits above its bars without hand-ordering source).
+    // Semantic draw order ([CHARTS.md] §15): gridlines/web behind, then areas, bars,
+    // lines, dots, then annotations and labels — pushed in order, so a later child
+    // paints over an earlier one. The series builders project through `Plot`, so a
+    // radial chart reuses the exact `areas`/`lines`/`dots`/`bars` passes; only the
+    // gridlines, labels, and annotations differ by direction.
     let mut kids = Vec::new();
-    annot::band_shades(&plot, &chart, &mut kids);
-    axis::gridlines(&plot, &chart, &mut kids);
+    if plot.is_radial() {
+        radial::gridlines(&plot, &chart, &mut kids);
+    } else {
+        annot::band_shades(&plot, &chart, &mut kids);
+        axis::gridlines(&plot, &chart, &mut kids);
+    }
     marks::areas(&plot, &chart, &mut kids);
     bars::lay_out(&plot, &chart, &mut kids);
     marks::lines(&plot, &chart, &mut kids);
     marks::dots(&plot, &chart, &mut kids);
-    annot::marks(&plot, &chart, &mut kids);
-    axis::labels(&plot, &chart, &mut kids);
-    annot::band_ticks(&plot, &chart, &mut kids);
+    if plot.is_radial() {
+        radial::labels(&plot, &chart, &mut kids);
+    } else {
+        annot::marks(&plot, &chart, &mut kids);
+        axis::labels(&plot, &chart, &mut kids);
+        annot::band_ticks(&plot, &chart, &mut kids);
+    }
     if let Some(t) = &chart.title {
         kids.push(prim::text(
             t,
@@ -98,6 +116,9 @@ pub(super) fn layout_chart(
 /// The plot rect = the chart box inset by the gutters its labels / titles / legend
 /// need, all measured at compile time (SPEC §6).
 fn plot_rect(chart: &Chart, w: f64, h: f64) -> Plot {
+    if chart.dir == Dir::Radial {
+        return radial_plot(chart, w, h);
+    }
     let left = nonzero(side_gutter(chart, false), 12.0);
     let right = nonzero(side_gutter(chart, true), 12.0);
     let title_h = if chart.title.is_some() {
@@ -126,6 +147,35 @@ fn plot_rect(chart: &Chart, w: f64, h: f64) -> Plot {
         x1: w / 2.0 - right,
         y0: -h / 2.0 + 8.0 + title_h + value_title_h,
         y1: h / 2.0 - 6.0 - LABEL_SIZE * 1.4 - band_row - x_title_h - legend_h,
+        dir: chart.dir,
+    }
+}
+
+/// A radial chart's plot rect: a centred square (the spoke-circle's bounding box),
+/// inset from the chart box by the title (top), legend (bottom), and a margin all
+/// round for the spoke labels that sit just outside the rim ([CHARTS.md] §12).
+fn radial_plot(chart: &Chart, w: f64, h: f64) -> Plot {
+    let title_h = if chart.title.is_some() {
+        TITLE_SIZE * 1.4
+    } else {
+        0.0
+    };
+    let legend_h = if legend_entries(chart).len() >= 2 {
+        LABEL_SIZE * 1.6
+    } else {
+        0.0
+    };
+    let margin = LABEL_SIZE * 2.0;
+    let top = title_h + margin;
+    let avail_h = h - top - legend_h - margin;
+    let side = avail_h.min(w - 2.0 * margin).max(0.0);
+    let cy = -h / 2.0 + top + avail_h / 2.0;
+    Plot {
+        x0: -side / 2.0,
+        x1: side / 2.0,
+        y0: cy - side / 2.0,
+        y1: cy + side / 2.0,
+        dir: Dir::Radial,
     }
 }
 
@@ -458,5 +508,30 @@ mod tests {
             "|chart| { categories: \"a\" \"b\"; bars: overlay } [\n  |bars| { data: 3 4 }\n  |bars| { data: 7 6 }\n]\n",
         );
         assert!(s.contains("opacity"), "overlay bars carry an opacity: {s}");
+    }
+
+    #[test]
+    fn a_radial_line_draws_a_closed_radar_with_spoke_labels() {
+        let s = svg(
+            "|chart| { direction: radial; categories: \"a\" \"b\" \"c\" } [\n  |axis| { range: 0 5 }\n  |line| { data: 5 3 4 }\n]\n",
+        );
+        assert!(s.contains("<polyline"), "the radar loop: {s}");
+        assert!(s.contains(">a</text>"), "a spoke (category) label: {s}");
+    }
+
+    #[test]
+    fn radial_bars_draw_wedge_polygons() {
+        let s = svg(
+            "|chart| { direction: radial; categories: \"a\" \"b\" \"c\" } [\n  |axis| { range: 0 10 }\n  |bars| { data: 8 5 9 }\n]\n",
+        );
+        assert!(s.contains("<polygon"), "wedge polygons: {s}");
+    }
+
+    #[test]
+    fn a_side_on_a_radial_axis_errors() {
+        let e = layout_err(
+            "|chart| { direction: radial; categories: \"a\" \"b\" } [\n  |axis| { side: left; range: 0 5 }\n  |line| { data: 3 4 }\n]\n",
+        );
+        assert!(e.contains("radial"), "{e}");
     }
 }
