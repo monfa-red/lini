@@ -11,13 +11,15 @@ This is a roadmap, not a line-by-line script: each step says its purpose, the fi
 touches, **what it reuses**, **what is genuinely new**, the refactors it performs, what
 it defers, and how it is verified. Decide the fine detail while implementing.
 
-**Status (branch `charts`):** steps 1 ✓ and 2 ✓ done. Step 3 next.
-One refactor surfaced during step 2 and is now done: a labelled **geometry primitive**
-(`|line|`) used to have its label silently dropped at desugar, so a `|line|` series had
-no legend name — desugar now keeps a geometry primitive's label and resolve carries it to
-`ResolvedInst.label` (inert for a standalone shape; the chart reads a line series' legend
-from it). The palette walk also picks the §10 role tier (line→`deep`, dots→`ink`,
-bar→base).
+**Status (branch `charts`):** steps 1 ✓, 2 ✓, 3 ✓ done. Step 4 next.
+Refactors done along the way: (a) a labelled **geometry primitive** (`|line|`) used to
+have its label silently dropped at desugar, so a `|line|` series had no legend name —
+desugar now keeps it and resolve carries it to `ResolvedInst.label` (inert for a
+standalone shape); (b) the deferred-`fn:` foundation landed in step 3 with its consumer —
+`FuncTable` on `Program`, threaded into `layout_inst`, and `expr::sample` factored out of
+`scene::sample_points` so the parametric-`points:` and chart-`fn:` paths share one
+ambient-eval seam. The palette walk picks the §10 role tier (line→`deep`, dots→`ink`,
+bar/area→base).
 
 ---
 

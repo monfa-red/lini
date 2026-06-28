@@ -36,8 +36,8 @@ pub fn lay_out(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
             };
             let Some(&value) = v.get(i) else { continue };
             let scale = &chart.values[ser.axis].scale;
-            let base = plot.y_at(scale, clamp(0.0, scale));
-            let top = plot.y_at(scale, clamp(value, scale));
+            let base = plot.y_at(scale, scale.clamp(0.0));
+            let top = plot.y_at(scale, scale.clamp(value));
             let height = (base - top).abs();
             if height <= 0.0 {
                 continue;
@@ -56,14 +56,6 @@ pub fn lay_out(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
             );
             out.push(bar);
         }
-    }
-}
-
-/// Clamp a value into the scale's numeric domain (crop to the plot, [CHARTS.md] §6).
-fn clamp(v: f64, scale: &Scale) -> f64 {
-    match scale {
-        Scale::Linear { min, max, .. } => v.clamp(min.min(*max), min.max(*max)),
-        Scale::Band { .. } => v,
     }
 }
 

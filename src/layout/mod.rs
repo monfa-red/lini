@@ -73,7 +73,12 @@ fn attempt(program: &Program, growth: &GapGrowth) -> Result<Attempt, Error> {
     // Lay out top-level scene children.
     let mut top_nodes = Vec::with_capacity(program.scene.nodes.len());
     for inst in &program.scene.nodes {
-        top_nodes.push(layout_inst(inst, growth, &child_path("", inst))?);
+        top_nodes.push(layout_inst(
+            inst,
+            growth,
+            &child_path("", inst),
+            &program.funcs,
+        )?);
     }
 
     // Apply scene-level layout to top-level children (scene itself is a
@@ -246,20 +251,25 @@ pub fn validate_routing(laid: &LaidOut) -> Vec<Violation> {
 /// Bottom-up: lay out children first, then size this node around them. For
 /// leaf primitives (no children), the shape's dimensions drive the bbox.
 /// `path` is the inst's dot-path — the key gap growth bumps it under.
-fn layout_inst(inst: &ResolvedInst, growth: &GapGrowth, path: &str) -> Result<PlacedNode, Error> {
+fn layout_inst(
+    inst: &ResolvedInst,
+    growth: &GapGrowth,
+    path: &str,
+    funcs: &crate::expr::FuncTable,
+) -> Result<PlacedNode, Error> {
     // A chart ([CHARTS.md]) owns its whole subtree: it reads its children's data,
-    // fixes a shared scale, and emits primitive PlacedNodes itself. Intercept it
-    // here — before the child recursion (which would run `leaf_bbox` on a series with
-    // no `points:`) and before the row/column/grid path (`read_layout_mode` rejects
-    // `layout: chart`).
+    // fixes a shared scale, samples any `fn:`, and emits primitive PlacedNodes itself.
+    // Intercept it here — before the child recursion (which would run `leaf_bbox` on a
+    // series with no `points:`) and before the row/column/grid path (`read_layout_mode`
+    // rejects `layout: chart`).
     if chart::is_chart(&inst.attrs) {
-        return chart::layout_chart(inst);
+        return chart::layout_chart(inst, funcs);
     }
 
     // Recurse into children first.
     let mut children: Vec<PlacedNode> = Vec::with_capacity(inst.children.len());
     for c in &inst.children {
-        children.push(layout_inst(c, growth, &child_path(path, c))?);
+        children.push(layout_inst(c, growth, &child_path(path, c), funcs)?);
     }
 
     // Determine this node's bbox + arrange children inside.

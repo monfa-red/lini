@@ -1,0 +1,4 @@
+|chart| "Signups" { categories: "Jan" "Feb" "Mar" "Apr" "May" } [
+  |area| "free" { data: 30 45 60 55 80 }
+  |area| "paid" { data: 10 18 22 30 38 }
+]

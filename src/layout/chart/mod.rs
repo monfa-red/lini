@@ -36,12 +36,15 @@ pub(super) fn is_chart(attrs: &AttrMap) -> bool {
 
 /// Lay a chart out into one `PlacedNode`: the chart box, carrying the lowered
 /// gridlines / series / labels / title / legend as its pre-positioned children.
-pub(super) fn layout_chart(inst: &ResolvedInst) -> Result<PlacedNode, Error> {
+pub(super) fn layout_chart(
+    inst: &ResolvedInst,
+    funcs: &crate::expr::FuncTable,
+) -> Result<PlacedNode, Error> {
     let span = inst.span;
     let w = inst.attrs.number("width").unwrap_or(360.0);
     let h = inst.attrs.number("height").unwrap_or(220.0);
 
-    let chart = model::build(inst)?;
+    let chart = model::build(inst, funcs)?;
     let plot = plot_rect(&chart, w, h);
 
     // Semantic draw order ([CHARTS.md] §15): gridlines, bars, lines/dots, labels,
@@ -274,5 +277,67 @@ mod tests {
     fn a_non_series_child_is_rejected() {
         let e = layout_err("|chart| [\n  |box| \"x\"\n]\n");
         assert!(e.contains("series"), "{e}");
+    }
+
+    #[test]
+    fn a_fn_series_samples_a_curve_over_the_x_domain() {
+        let s = svg(
+            "|chart| [\n  |axis| { side: bottom; range: 0 10 }\n  |axis| { side: left }\n  |line| { fn: `x*x`; samples: 12 }\n]\n",
+        );
+        assert!(s.contains("<polyline"), "sampled fn polyline: {s}");
+        // x² over 0..10 peaks at 100 → the value axis auto-fits to 100.
+        assert!(
+            s.contains(">100</text>"),
+            "value axis fits the sampled data: {s}"
+        );
+    }
+
+    #[test]
+    fn an_area_series_fills_a_polygon() {
+        let s = svg("|chart| { categories: \"a\" \"b\" \"c\" } [\n  |area| { data: 3 6 4 }\n]\n");
+        assert!(s.contains("<polygon"), "area fill: {s}");
+    }
+
+    #[test]
+    fn a_log_axis_draws_decade_ticks() {
+        let s = svg(
+            "|chart| { categories: \"a\" \"b\" } [\n  |axis| { side: left; scale: log }\n  |bars| { data: 10 1000 }\n]\n",
+        );
+        assert!(s.contains(">100</text>"), "decade tick: {s}");
+        assert!(s.contains(">1000</text>"), "decade tick: {s}");
+    }
+
+    #[test]
+    fn a_log_axis_over_a_non_positive_domain_errors() {
+        let e = layout_err(
+            "|chart| { categories: \"a\" } [\n  |axis| { side: left; scale: log; range: -1 10 }\n  |bars| { data: 5 }\n]\n",
+        );
+        assert!(e.contains("domain above 0"), "{e}");
+    }
+
+    #[test]
+    fn a_smooth_curve_resamples_densely() {
+        let s = svg(
+            "|chart| { categories: \"a\" \"b\" \"c\" \"d\" } [\n  |line| { data: 1 8 2 6; curve: smooth }\n]\n",
+        );
+        // The monotone cubic is resampled into a many-point polyline, not 4 segments.
+        let pts = s
+            .split("<polyline points=\"")
+            .nth(1)
+            .and_then(|t| t.split('"').next())
+            .unwrap_or("");
+        assert!(
+            pts.split(' ').count() > 20,
+            "smooth resamples densely, got {} points",
+            pts.split(' ').count()
+        );
+    }
+
+    #[test]
+    fn a_per_band_fn_list_needs_bands() {
+        let e = layout_err(
+            "|chart| [\n  |axis| { side: bottom; range: 0 1 }\n  |axis| { side: left }\n  |line| { fn: `1` `2` }\n]\n",
+        );
+        assert!(e.contains("per-band"), "{e}");
     }
 }

@@ -1,5 +1,5 @@
 use crate::ast::Side;
-use crate::expr::Expr;
+use crate::expr::{Expr, FuncTable};
 use crate::span::Span;
 use std::collections::{BTreeMap, HashMap};
 
@@ -9,6 +9,10 @@ pub struct Program {
     pub scene: ResolvedScene,
     pub links: Vec<ResolvedLink>,
     pub sheet: SheetInputs,
+    /// Stylesheet functions (SPEC §11.7), carried to the layout phase so a chart can
+    /// sample a deferred `fn:` once its x-domain is fixed ([CHARTS.md] §4). Built at
+    /// resolve; only the chart layout reads it.
+    pub funcs: FuncTable,
 }
 
 /// The render inputs the rules builder restates as CSS class rules — paint rides

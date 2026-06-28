@@ -9,7 +9,7 @@ use super::ir::{AttrMap, MarkerKind, Markers, NodeKind, ResolvedInst, ResolvedVa
 use super::merge::{collapse, resolve_markers};
 use super::value::{resolve_groups, resolve_property};
 use crate::error::Error;
-use crate::expr::{Env, Expr, FuncTable, Value as ExprValue};
+use crate::expr::{self, Expr, FuncTable, Value as ExprValue};
 use crate::span::Span;
 use crate::syntax::ast::{Call, Child, Decl, Link, Node, TextNode, Value};
 use std::collections::HashMap;
@@ -312,12 +312,12 @@ fn sample_points(
         return Ok(None);
     }
     let n = sample_count(style).max(2);
+    // `u` sweeps 0 → 1 across the samples — the same ambient-sampling seam a chart's
+    // `fn:` uses for `x` ([CHARTS.md] §4), shared via `expr::sample`.
+    let us: Vec<f64> = (0..n).map(|i| i as f64 / (n - 1) as f64).collect();
     let mut pts = Vec::with_capacity(n);
-    for i in 0..n {
-        let u = i as f64 / (n - 1) as f64;
-        let mut env = Env::new();
-        env.insert("u".to_string(), ExprValue::Number(u));
-        match expr.eval(&env, funcs).map_err(|e| Error::at(d.span, e.0))? {
+    for v in expr::sample(&expr, "u", &us, funcs).map_err(|e| Error::at(d.span, e.0))? {
+        match v {
             ExprValue::Point(x, y) => pts.push(ResolvedValue::Tuple(vec![
                 ResolvedValue::Number(x),
                 ResolvedValue::Number(y),

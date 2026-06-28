@@ -97,6 +97,9 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
         },
         links: link_list,
         sheet: sheet_inputs,
+        // Carried to the layout phase for deferred `fn:` sampling ([CHARTS.md] §4);
+        // every borrow of it above (scene ctx, sheet inputs) has ended by here.
+        funcs,
     })
 }
 

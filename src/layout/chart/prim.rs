@@ -43,22 +43,12 @@ pub fn rect(cx: f64, cy: f64, w: f64, h: f64, fill: ResolvedValue) -> PlacedNode
     n
 }
 
-/// A filled ellipse (a dot, a line-vertex marker) centred at (cx, cy). Stroke off
-/// and width 0 so the drawn ellipse matches the bbox exactly.
-pub fn oval(cx: f64, cy: f64, w: f64, h: f64, fill: ResolvedValue) -> PlacedNode {
-    let mut n = node(NodeKind::Oval, Bbox::centered(w, h));
-    n.cx = cx;
-    n.cy = cy;
-    n.attrs.insert("fill", fill);
-    n.attrs.insert("stroke", ident("none"));
-    n.attrs.insert("stroke-width", ResolvedValue::Number(0.0));
-    n
-}
-
-/// A polyline (a gridline or a line series) through `points`, with the given stroke
-/// colour and width.
-pub fn line(points: Vec<(f64, f64)>, stroke: ResolvedValue, width: f64) -> PlacedNode {
-    let bbox = points.iter().fold(
+/// The bounding box of a point list (empty for no points).
+fn bounds(points: &[(f64, f64)]) -> Bbox {
+    if points.is_empty() {
+        return Bbox::empty();
+    }
+    points.iter().fold(
         Bbox {
             min_x: f64::INFINITY,
             min_y: f64::INFINITY,
@@ -71,12 +61,44 @@ pub fn line(points: Vec<(f64, f64)>, stroke: ResolvedValue, width: f64) -> Place
             max_x: b.max_x.max(x),
             max_y: b.max_y.max(y),
         },
-    );
-    let bbox = if points.is_empty() {
-        Bbox::empty()
-    } else {
-        bbox
-    };
+    )
+}
+
+/// A filled ellipse (a dot, a line-vertex marker) centred at (cx, cy). Stroke off
+/// and width 0 so the drawn ellipse matches the bbox exactly.
+pub fn oval(cx: f64, cy: f64, w: f64, h: f64, fill: ResolvedValue) -> PlacedNode {
+    let mut n = node(NodeKind::Oval, Bbox::centered(w, h));
+    n.cx = cx;
+    n.cy = cy;
+    n.attrs.insert("fill", fill);
+    n.attrs.insert("stroke", ident("none"));
+    n.attrs.insert("stroke-width", ResolvedValue::Number(0.0));
+    n
+}
+
+/// A filled polygon (an area's body) through `points`. Stroke off; `opacity` lets
+/// overlapping areas read through.
+pub fn poly(points: Vec<(f64, f64)>, fill: ResolvedValue, opacity: f64) -> PlacedNode {
+    let bbox = bounds(&points);
+    let pts = points
+        .into_iter()
+        .map(|(x, y)| {
+            ResolvedValue::Tuple(vec![ResolvedValue::Number(x), ResolvedValue::Number(y)])
+        })
+        .collect();
+    let mut n = node(NodeKind::Poly, bbox);
+    n.attrs.insert("points", ResolvedValue::List(pts));
+    n.attrs.insert("fill", fill);
+    n.attrs.insert("stroke", ident("none"));
+    n.attrs.insert("stroke-width", ResolvedValue::Number(0.0));
+    n.attrs.insert("opacity", ResolvedValue::Number(opacity));
+    n
+}
+
+/// A polyline (a gridline or a line series) through `points`, with the given stroke
+/// colour and width.
+pub fn line(points: Vec<(f64, f64)>, stroke: ResolvedValue, width: f64) -> PlacedNode {
+    let bbox = bounds(&points);
     let pts = points
         .into_iter()
         .map(|(x, y)| {

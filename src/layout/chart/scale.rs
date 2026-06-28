@@ -13,6 +13,8 @@ pub enum Scale {
         rev: bool,
         ticks: Vec<f64>,
     },
+    /// A logarithmic domain `[min, max]` (both > 0); decade ticks labelled 1-2-5.
+    Log { min: f64, max: f64, ticks: Vec<f64> },
 }
 
 impl Scale {
@@ -26,6 +28,15 @@ impl Scale {
             max,
             rev,
             ticks,
+        }
+    }
+
+    /// A log scale over `[min, max]` (both > 0), with decade ticks at 1-2-5 × 10ⁿ.
+    pub fn log(min: f64, max: f64) -> Scale {
+        Scale::Log {
+            min,
+            max,
+            ticks: decade_ticks(min, max),
         }
     }
 
@@ -43,6 +54,14 @@ impl Scale {
                 };
                 if *rev { 1.0 - f } else { f }
             }
+            Scale::Log { min, max, .. } => {
+                let span = max.log10() - min.log10();
+                if span.abs() < f64::EPSILON || v <= 0.0 {
+                    0.0
+                } else {
+                    (v.log10() - min.log10()) / span
+                }
+            }
         }
     }
 
@@ -58,8 +77,19 @@ impl Scale {
     /// This scale's tick values (empty for a band — its labels are categories).
     pub fn ticks(&self) -> &[f64] {
         match self {
-            Scale::Linear { ticks, .. } => ticks,
+            Scale::Linear { ticks, .. } | Scale::Log { ticks, .. } => ticks,
             Scale::Band { .. } => &[],
+        }
+    }
+
+    /// Clamp a value into the numeric domain (crop to the plot, [CHARTS.md] §6); a
+    /// band passes its index through.
+    pub fn clamp(&self, v: f64) -> f64 {
+        match self {
+            Scale::Linear { min, max, .. } | Scale::Log { min, max, .. } => {
+                v.clamp(min.min(*max), min.max(*max))
+            }
+            Scale::Band { .. } => v,
         }
     }
 
@@ -68,7 +98,7 @@ impl Scale {
     pub fn contains(&self, v: f64) -> bool {
         match self {
             Scale::Band { n } => v >= 0.0 && v < *n as f64,
-            Scale::Linear { min, max, .. } => {
+            Scale::Linear { min, max, .. } | Scale::Log { min, max, .. } => {
                 let (lo, hi) = (min.min(*max), min.max(*max));
                 v >= lo - 1e-9 && v <= hi + 1e-9
             }
@@ -125,6 +155,30 @@ pub fn ticks_by_step(min: f64, max: f64, step: f64) -> Vec<f64> {
     }
     if out.is_empty() {
         out.push(lo);
+    }
+    out
+}
+
+/// Decade ticks for a log axis ([CHARTS.md] §6): 1-2-5 × 10ⁿ within `[min, max]`.
+fn decade_ticks(min: f64, max: f64) -> Vec<f64> {
+    if min <= 0.0 || max <= min {
+        return vec![min.max(1e-9), max.max(1.0)];
+    }
+    let mut out = Vec::new();
+    let lo = min.log10().floor() as i32;
+    let hi = max.log10().ceil() as i32;
+    for e in lo..=hi {
+        let decade = 10f64.powi(e);
+        for m in [1.0, 2.0, 5.0] {
+            let t = m * decade;
+            if t >= min - 1e-9 && t <= max + 1e-9 {
+                out.push(t);
+            }
+        }
+    }
+    if out.is_empty() {
+        out.push(min);
+        out.push(max);
     }
     out
 }

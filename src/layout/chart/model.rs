@@ -5,6 +5,7 @@
 use super::palette;
 use super::scale::{self, Scale};
 use crate::error::Error;
+use crate::expr::{self, Expr, FuncTable, Value as ExprValue};
 use crate::resolve::{AttrMap, NodeKind, ResolvedInst, ResolvedValue};
 use crate::span::Span;
 
@@ -27,6 +28,7 @@ pub enum SeriesKind {
     Bars,
     Line,
     Dots,
+    Area,
 }
 
 pub enum Data {
@@ -34,10 +36,15 @@ pub enum Data {
     Categorical(Vec<f64>),
     /// `x y` pairs (scatter / irregular).
     Points(Vec<(f64, f64)>),
+    /// A `fn:` formula, held unevaluated until the x-domain is fixed, then sampled to
+    /// `Points` ([CHARTS.md] §4). One expr is a whole-domain `fn:`.
+    Formula(Vec<Expr>),
 }
 
 pub enum Curve {
     Linear,
+    /// A monotone cubic — curved, through every point, never overshooting.
+    Smooth,
     Step,
 }
 
@@ -55,6 +62,9 @@ pub struct Series {
     pub thickness: f64,
     /// A dot's diameter `width` × `height` (default a small circle).
     pub dot: (f64, f64),
+    /// An `|area|`'s fill target ([CHARTS.md] §16) — the axis zero / range floor by
+    /// default.
+    pub baseline: Option<f64>,
 }
 
 pub struct ValueAxis {
@@ -100,10 +110,12 @@ struct AxisSpec<'a> {
     range: Option<(End, End)>,
     step: Option<f64>,
     ticks: Option<Vec<f64>>,
+    log: bool,
 }
 
-pub fn build(inst: &ResolvedInst) -> Result<Chart, Error> {
+pub fn build(inst: &ResolvedInst, funcs: &FuncTable) -> Result<Chart, Error> {
     let span = inst.span;
+    let samples = sample_count(&inst.attrs);
     let (series_insts, axis_insts, title) = partition(inst)?;
     if series_insts.is_empty() {
         return Err(Error::at(span, "a chart needs at least one series"));
@@ -139,6 +151,7 @@ pub fn build(inst: &ResolvedInst) -> Result<Chart, Error> {
             range: None,
             step: None,
             ticks: None,
+            log: false,
         });
     }
 
@@ -149,8 +162,17 @@ pub fn build(inst: &ResolvedInst) -> Result<Chart, Error> {
     }
 
     // The x scale: a band for categorical data (categories or indices), or a numeric
-    // domain when the data is points / an explicit bottom axis sets a range.
+    // domain when the data is points / a formula / an explicit bottom axis range.
     let x = build_x_axis(x_inst, &categories, &series, span)?;
+
+    // Sample any deferred `fn:` over the now-fixed x-domain → concrete points
+    // ([CHARTS.md] §4); after this, every series carries data feeding the value axes.
+    for (si, s) in series_insts.iter().zip(series.iter_mut()) {
+        if let Data::Formula(exprs) = &s.data {
+            s.data = sample_formula(exprs, &x.scale, samples, funcs, si.span)?;
+        }
+    }
+
     // Re-bind categorical series length to the band, validating against categories.
     if let Some(cats) = &categories {
         for (si, s) in series_insts.iter().zip(&series) {
@@ -197,7 +219,7 @@ fn partition(inst: &ResolvedInst) -> Result<Split<'_>, Error> {
             continue;
         }
         match tag(child) {
-            Some("bars") | Some("dots") | Some("line") => series.push(child),
+            Some("bars") | Some("dots") | Some("line") | Some("area") => series.push(child),
             Some("axis") => axes.push(child),
             Some("slice") => {
                 return Err(Error::at(
@@ -247,6 +269,7 @@ fn read_series(
     let kind = match tag(inst) {
         Some("bars") => SeriesKind::Bars,
         Some("dots") => SeriesKind::Dots,
+        Some("area") => SeriesKind::Area,
         _ => SeriesKind::Line,
     };
     let has_data = inst.attrs.get("data").is_some();
@@ -259,18 +282,16 @@ fn read_series(
             ));
         }
         (false, false) => return Err(Error::at(inst.span, "a series needs 'data' or 'fn'")),
-        (false, true) => {
-            return Err(Error::at(
-                inst.span,
-                "a computed 'fn:' series needs an axis — added in a later charts step",
-            ));
-        }
+        (false, true) => match inst.attrs.get("fn") {
+            Some(ResolvedValue::Deferred(exprs)) => Data::Formula(exprs.clone()),
+            _ => return Err(Error::at(inst.span, "a series needs 'data' or 'fn'")),
+        },
         (true, false) => read_data(inst, &kind)?,
     };
-    if categories.is_some() && matches!(data, Data::Points(_)) {
+    if categories.is_some() && !matches!(data, Data::Categorical(_)) {
         return Err(Error::at(
             inst.span,
-            "'x y' point data needs a numeric x axis, not 'categories'",
+            "point / formula data needs a numeric x axis, not 'categories'",
         ));
     }
     let axis = bind_axis(inst, value_specs)?;
@@ -280,7 +301,7 @@ fn read_series(
         let suffix = match kind {
             SeriesKind::Line => "-deep",
             SeriesKind::Dots => "-ink",
-            SeriesKind::Bars => "",
+            SeriesKind::Bars | SeriesKind::Area => "",
         };
         live(&format!("{}{}", palette::hue(index), suffix))
     });
@@ -297,7 +318,56 @@ fn read_series(
         stroke_style: inst.attrs.get("stroke-style").cloned(),
         thickness: inst.attrs.number("stroke-width").unwrap_or(2.0),
         dot: (dot_w, dot_h),
+        baseline: inst.attrs.number("baseline"),
     })
+}
+
+/// The chart's `fn:` sample count ([CHARTS.md] §2/§4), default 24.
+fn sample_count(attrs: &AttrMap) -> usize {
+    attrs
+        .number("samples")
+        .filter(|n| *n >= 2.0)
+        .map(|n| n as usize)
+        .unwrap_or(24)
+}
+
+/// Sample a whole-domain `fn:` over the x-domain → points ([CHARTS.md] §4): bind `x`
+/// at `samples` steps and evaluate. A per-band list (several exprs) needs bands and
+/// arrives in a later step; a band x scale has no numeric domain to sample over.
+fn sample_formula(
+    exprs: &[Expr],
+    x: &Scale,
+    samples: usize,
+    funcs: &FuncTable,
+    span: Span,
+) -> Result<Data, Error> {
+    if exprs.len() != 1 {
+        return Err(Error::at(
+            span,
+            "a per-band 'fn:' list needs bands — added in a later charts step",
+        ));
+    }
+    let (min, max) = match x {
+        Scale::Linear { min, max, .. } | Scale::Log { min, max, .. } => (*min, *max),
+        Scale::Band { .. } => {
+            return Err(Error::at(span, "a 'fn:' series needs a numeric x axis"));
+        }
+    };
+    let n = samples.max(2);
+    let xs: Vec<f64> = (0..n)
+        .map(|i| min + (max - min) * i as f64 / (n - 1) as f64)
+        .collect();
+    let ys = expr::sample(&exprs[0], "x", &xs, funcs).map_err(|e| Error::at(span, e.0))?;
+    let mut pts = Vec::with_capacity(n);
+    for (&xv, yv) in xs.iter().zip(ys) {
+        match yv {
+            ExprValue::Number(y) => pts.push((xv, y)),
+            ExprValue::Point(..) => {
+                return Err(Error::at(span, "a 'fn:' expression must return a number"));
+            }
+        }
+    }
+    Ok(Data::Points(pts))
 }
 
 /// Categorical `data:` → values; comma-grouped `data:` → `x y` points. Bars are
@@ -360,8 +430,10 @@ fn build_x_axis(
         None => (None, None, Grid::Default),
     };
     // Categorical when categories are set or every series is categorical; numeric
-    // when the data is points (a scatter) or a bottom axis fixes a range.
-    let any_points = series.iter().any(|s| matches!(s.data, Data::Points(_)));
+    // when the data is points / a formula, or a bottom axis fixes a range.
+    let any_numeric = series
+        .iter()
+        .any(|s| matches!(s.data, Data::Points(_) | Data::Formula(_)));
     if let Some(cats) = categories {
         return Ok(XAxis {
             scale: Scale::band(cats.len()),
@@ -371,12 +443,12 @@ fn build_x_axis(
             grid,
         });
     }
-    if !any_points {
+    if !any_numeric {
         let n = series
             .iter()
             .map(|s| match &s.data {
                 Data::Categorical(v) => v.len(),
-                Data::Points(_) => 0,
+                _ => 0,
             })
             .max()
             .unwrap_or(0);
@@ -394,16 +466,17 @@ fn build_x_axis(
             grid,
         });
     }
-    // Numeric x: domain from a bottom axis `range:`, else the union of point x's.
+    // Numeric x: domain from a bottom axis `range:`, else the union of point x's (a
+    // formula contributes none — it samples over whatever domain this fixes).
     let xs: Vec<f64> = series
         .iter()
         .flat_map(|s| match &s.data {
             Data::Points(p) => p.iter().map(|(x, _)| *x).collect::<Vec<_>>(),
-            Data::Categorical(_) => Vec::new(),
+            _ => Vec::new(),
         })
         .collect();
     let range = x_inst.map(read_range).transpose()?.flatten();
-    let scale = numeric_scale(&xs, range, x_inst, false)?;
+    let scale = numeric_scale(&xs, range, x_inst)?;
     Ok(XAxis {
         scale,
         labels: Vec::new(),
@@ -425,6 +498,8 @@ fn build_value_axes(specs: Vec<AxisSpec>, series: &[Series]) -> Result<Vec<Value
             match &s.data {
                 Data::Categorical(v) => vals.extend(v),
                 Data::Points(p) => vals.extend(p.iter().map(|(_, y)| *y)),
+                // Formulas were sampled to `Points` in `build` before this runs.
+                Data::Formula(_) => {}
             }
         }
         let scale = value_scale(&vals, has_bars, spec)?;
@@ -452,6 +527,11 @@ fn value_scale(vals: &[f64], has_bars: bool, spec: &AxisSpec) -> Result<Scale, E
     } else {
         (data_min, data_max)
     };
+    if spec.log {
+        let lo = spec.range.as_ref().map_or(dmin, |(a, _)| end(a, dmin));
+        let hi = spec.range.as_ref().map_or(dmax, |(_, b)| end(b, dmax));
+        return log_scale(lo, hi, spec.range.is_some(), Span::empty());
+    }
     let (min, max, rev) = match &spec.range {
         Some((a, b)) => {
             let lo = end(a, dmin);
@@ -475,12 +555,12 @@ fn value_scale(vals: &[f64], has_bars: bool, spec: &AxisSpec) -> Result<Scale, E
     Ok(Scale::linear(min, max, rev, ticks))
 }
 
-/// A numeric x scale (a scatter's x, or a `range:`-fixed bottom axis).
+/// A numeric x scale (a scatter's x, a formula's domain, or a `range:`-fixed bottom
+/// axis). Empty data (a formula-only chart with no range) defaults to `[0, 1]`.
 fn numeric_scale(
     xs: &[f64],
     range: Option<(End, End)>,
     spec_src: Option<&ResolvedInst>,
-    _value: bool,
 ) -> Result<Scale, Error> {
     let data_min = xs.iter().copied().fold(f64::INFINITY, f64::min);
     let data_max = xs.iter().copied().fold(f64::NEG_INFINITY, f64::max);
@@ -489,13 +569,19 @@ fn numeric_scale(
     } else {
         (data_min, data_max)
     };
+    if spec_src.is_some_and(|a| read_log(a).unwrap_or(false)) {
+        let lo = range.as_ref().map_or(dmin, |(a, _)| end(a, dmin));
+        let hi = range.as_ref().map_or(dmax, |(_, b)| end(b, dmax));
+        let span = spec_src.map_or(Span::empty(), |a| a.span);
+        return log_scale(lo, hi, range.is_some(), span);
+    }
     let (min, max, rev) = match range {
         Some((a, b)) => {
             let lo = end(&a, dmin);
             let hi = end(&b, dmax);
             (lo.min(hi), lo.max(hi), lo > hi)
         }
-        None => (dmin.min(0.0).max(dmin), dmax, false),
+        None => (dmin, dmax, false),
     };
     let step = spec_src.and_then(|a| a.attrs.number("step"));
     let explicit_ticks = spec_src.and_then(|a| number_list(a.attrs.get("ticks")));
@@ -509,6 +595,25 @@ fn numeric_scale(
     Ok(Scale::linear(min, max, rev, ticks))
 }
 
+/// A log scale over a positive domain ([CHARTS.md] §6): the data domain is rounded
+/// out to whole decades unless an explicit `range:` fixes it. A non-positive domain
+/// is an error.
+fn log_scale(lo: f64, hi: f64, has_range: bool, span: Span) -> Result<Scale, Error> {
+    if lo <= 0.0 || hi <= 0.0 {
+        return Err(Error::at(
+            span,
+            "a 'scale: log' axis needs a domain above 0",
+        ));
+    }
+    let (a, b) = (lo.min(hi), lo.max(hi));
+    let (min, max) = if has_range {
+        (a, b)
+    } else {
+        (10f64.powf(a.log10().floor()), 10f64.powf(b.log10().ceil()))
+    };
+    Ok(Scale::log(min, max))
+}
+
 fn axis_ticks(min: f64, max: f64, spec: &AxisSpec) -> Vec<f64> {
     if let Some(t) = &spec.ticks {
         t.clone()
@@ -520,14 +625,6 @@ fn axis_ticks(min: f64, max: f64, spec: &AxisSpec) -> Vec<f64> {
 }
 
 fn axis_spec(inst: &ResolvedInst, side: Side) -> Result<AxisSpec<'_>, Error> {
-    if let Some(ResolvedValue::Ident(s)) = inst.attrs.get("scale")
-        && s == "log"
-    {
-        return Err(Error::at(
-            inst.span,
-            "'scale: log' arrives in a later charts step",
-        ));
-    }
     Ok(AxisSpec {
         id: inst.id.as_deref(),
         side,
@@ -537,7 +634,19 @@ fn axis_spec(inst: &ResolvedInst, side: Side) -> Result<AxisSpec<'_>, Error> {
         range: read_range(inst)?,
         step: inst.attrs.number("step"),
         ticks: number_list(inst.attrs.get("ticks")),
+        log: read_log(inst)?,
     })
+}
+
+/// Whether an axis is `scale: log` ([CHARTS.md] §6); `scale:` accepts only
+/// `linear` / `log`.
+fn read_log(inst: &ResolvedInst) -> Result<bool, Error> {
+    match inst.attrs.get("scale") {
+        None => Ok(false),
+        Some(ResolvedValue::Ident(s)) if s == "linear" => Ok(false),
+        Some(ResolvedValue::Ident(s)) if s == "log" => Ok(true),
+        _ => Err(Error::at(inst.span, "'scale' is linear or log")),
+    }
 }
 
 // ───────────────────────────── attribute readers ─────────────────────────────
@@ -620,11 +729,8 @@ fn read_curve(attrs: &AttrMap) -> Result<Curve, Error> {
         None => Ok(Curve::Linear),
         Some(ResolvedValue::Ident(s)) => match s.as_str() {
             "linear" => Ok(Curve::Linear),
+            "smooth" => Ok(Curve::Smooth),
             "step" => Ok(Curve::Step),
-            "smooth" => Err(Error::at(
-                Span::empty(),
-                "'curve: smooth' arrives in a later charts step",
-            )),
             _ => Err(Error::at(
                 Span::empty(),
                 "'curve' is linear, smooth, or step",

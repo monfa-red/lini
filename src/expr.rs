@@ -469,6 +469,24 @@ pub fn call(funcs: &FuncTable, name: &str, args: &[Value]) -> Result<Value, Expr
     eval_call(name, args, &Env::new(), funcs)
 }
 
+/// Sample `expr` with the ambient `name` bound to each of `values` in turn. The one
+/// seam for ambient sampling: parametric `points:` binds `u` (0→1, SPEC §11.7), a
+/// chart `fn:` binds `x` over its domain ([CHARTS.md] §4).
+pub fn sample(
+    expr: &Expr,
+    name: &str,
+    values: &[f64],
+    funcs: &FuncTable,
+) -> Result<Vec<Value>, ExprError> {
+    let mut out = Vec::with_capacity(values.len());
+    for &v in values {
+        let mut env = Env::new();
+        env.insert(name.to_string(), Value::Number(v));
+        out.push(expr.eval(&env, funcs)?);
+    }
+    Ok(out)
+}
+
 fn collect_names(node: &Node, out: &mut Vec<String>) {
     match node {
         Node::Num(_) => {}

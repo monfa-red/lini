@@ -110,7 +110,8 @@ fn x_labels(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
                 ));
             }
         }
-        Scale::Linear { .. } => {
+        // Numeric x (linear or log): a label at each tick value.
+        _ => {
             for &t in chart.x.scale.ticks() {
                 let label = scale::label(t, &chart.x.unit);
                 out.push(prim::text(

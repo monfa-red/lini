@@ -1,0 +1,62 @@
+---
+source: tests/conformance.rs
+expression: svg
+input_file: samples/chart_smooth.lini
+---
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-200 -130 400 260" width="400" height="260" class="lini">
+  <style>
+    .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: bold; color: black; }
+    .lini .lini-canvas { fill: white; }
+    .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
+  </style>
+  <defs/>
+  <rect class="lini-canvas" x="-200" y="-130" width="400" height="260"/>
+  <g class="lini-scene">
+    <g class="lini-node lini-chart lini-block" transform="translate(0,0)">
+      <rect x="-179" y="-109" width="358" height="218" rx="0" ry="0"/>
+      <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <line x1="-156.8" y1="88.6" x2="168" y2="88.6"/>
+      </g>
+      <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <line x1="-156.8" y1="54.12" x2="168" y2="54.12"/>
+      </g>
+      <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <line x1="-156.8" y1="19.64" x2="168" y2="19.64"/>
+      </g>
+      <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <line x1="-156.8" y1="-14.84" x2="168" y2="-14.84"/>
+      </g>
+      <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <line x1="-156.8" y1="-49.32" x2="168" y2="-49.32"/>
+      </g>
+      <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <line x1="-156.8" y1="-83.8" x2="168" y2="-83.8"/>
+      </g>
+      <g class="lini-node lini-line" style="stroke: #b8476e" transform="translate(0,0)">
+        <polyline points="-129.7333,33.432 -126.35,31.7459 -122.9667,30.1254 -119.5833,28.5555 -116.2,27.0209 -112.8167,25.5065 -109.4333,23.9971 -106.05,22.4777 -102.6667,20.933 -99.2833,19.3479 -95.9,17.7072 -92.5167,15.9959 -89.1333,14.1986 -85.75,12.3004 -82.3667,10.286 -78.9833,8.1402 -75.6,5.848 -72.2167,3.3487 -68.8333,0.6154"/>
+      </g>
+      <g class="lini-node lini-line" style="stroke: #b8476e" transform="translate(0,0)">
+        <line x1="-68.8333" y1="0.6154" x2="-65.45" y2="-2.3166"/>
+      </g>
+      <g class="lini-node lini-line" style="stroke: #b8476e" transform="translate(0,0)">
+        <polyline points="-65.45,-2.3166 -62.0667,-5.4119 -58.6833,-8.6351 -55.3,-11.951 -51.9167,-15.324 -48.5333,-18.719 -45.15,-22.1005 -41.7667,-25.4332 -38.3833,-28.6817 -35,-31.8106 -31.6167,-34.7847 -28.2333,-37.5685 -24.85,-40.1267 -21.4667,-42.424 -18.0833,-44.5504 -14.7,-46.6128 -11.3167,-48.6011 -7.9333,-50.5052 -4.55,-52.3151 -1.1667,-54.0206 2.2167,-55.6116 5.6,-57.078 8.9833,-58.4097 12.3667,-59.5967 15.75,-60.6287 19.1333,-61.4957 22.5167,-62.1877 25.9,-62.6945 29.2833,-63.0059 32.6667,-63.112 36.05,-62.8637 39.4333,-62.149 42.8167,-61.0134 46.2,-59.5024 49.5833,-57.6614 52.9667,-55.5358 56.35,-53.1712 59.7333,-50.613 63.1167,-47.9066 66.5,-45.0975 69.8833,-42.2312 73.2667,-39.3531 76.65,-36.5087 80.0333,-33.7434 83.4167,-31.1027 86.8,-28.632 90.1833,-26.2354 93.5667,-23.79 96.95,-21.3008 100.3333,-18.7729 103.7167,-16.2113 107.1,-13.6211 110.4833,-11.0073 113.8667,-8.375 117.25,-5.7292 120.6333,-3.075 124.0167,-0.4175 127.4,2.2384 130.7833,4.8875 134.1667,7.5249 137.55,10.1454 140.9333,12.744"/>
+      </g>
+      <text class="lini-text" x="-166.1" y="88.6" style="fill: #888; font-size: 11px">0</text>
+      <text class="lini-text" x="-166.1" y="54.12" style="fill: #888; font-size: 11px">5</text>
+      <text class="lini-text" x="-169.4" y="19.64" style="fill: #888; font-size: 11px">10</text>
+      <text class="lini-text" x="-169.4" y="-14.84" style="fill: #888; font-size: 11px">15</text>
+      <text class="lini-text" x="-169.4" y="-49.32" style="fill: #888; font-size: 11px">20</text>
+      <text class="lini-text" x="-169.4" y="-83.8" style="fill: #888; font-size: 11px">25</text>
+      <text class="lini-text" x="-129.7333" y="100.3" style="fill: #888; font-size: 11px">6h</text>
+      <text class="lini-text" x="-75.6" y="100.3" style="fill: #888; font-size: 11px">9h</text>
+      <text class="lini-text" x="-21.4667" y="100.3" style="fill: #888; font-size: 11px">12h</text>
+      <text class="lini-text" x="32.6667" y="100.3" style="fill: #888; font-size: 11px">15h</text>
+      <text class="lini-text" x="86.8" y="100.3" style="fill: #888; font-size: 11px">18h</text>
+      <text class="lini-text" x="140.9333" y="100.3" style="fill: #888; font-size: 11px">21h</text>
+      <text class="lini-text" x="0" y="-92.9" style="font-weight: bold; font-size: 13px">Temperature (°C)</text>
+    </g>
+  </g>
+  <g class="lini-links"/>
+</svg>
