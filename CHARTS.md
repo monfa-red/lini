@@ -464,11 +464,16 @@ since the shared scale needs every child's data first:
 
 The output is an ordinary primitive subtree, so route/render, theming, the palette,
 gradients, shadows, `--bake-vars`, `fmt`, and byte-for-byte determinism
-([SPEC §14, §17](SPEC.md)) all apply with no chart-specific code. `lini desugar`
-([SPEC §14](SPEC.md)) prints the lowered tree, making a chart teachable and diffable.
-Charts add **no lexer or parser grammar** ([§17](#17-grammar)) — they are nodes,
-declarations, and children per [SPEC §16](SPEC.md); the new surface is type names
-([§3](#3-series)), properties ([§16](#16-properties)), and the two layout algorithms.
+([SPEC §14, §17](SPEC.md)) all apply with no chart-specific code. Because the
+data→pixel lowering needs the shared scale, it runs in the **layout** phase, not
+desugar — so `lini desugar` ([SPEC §14](SPEC.md)) shows a chart's *type* desugaring (a
+`|chart|` is a `|block|` wearing `.lini-chart`; each series a classed `|block|` carrying
+its `data:` / `fn:`), while the geometric primitive subtree — the bars, paths, ticks — is
+produced at layout, a render-time artefact like a link's routed geometry. That subtree
+still themes, bakes, and renders like any primitive. Charts add **no lexer or parser
+grammar** ([§17](#17-grammar)) — they are nodes, declarations, and children per
+[SPEC §16](SPEC.md); the new surface is type names ([§3](#3-series)), properties
+([§16](#16-properties)), and the two layout algorithms.
 
 ---
 
