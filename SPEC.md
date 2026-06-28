@@ -496,7 +496,8 @@ node has no block to carry them). A grid is positional, so an empty `""` cell is
 empty `""` is dropped).
 
 `columns`/`rows`/`cell`/`span` are valid only on a grid (`layout: grid` or
-`|table|`); using them elsewhere is an error.
+`|table|`) — `span` is also a chart band's extent ([`CHARTS.md`](CHARTS.md)); using
+them elsewhere is an error.
 
 ### Dividers
 

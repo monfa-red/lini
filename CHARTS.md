@@ -64,7 +64,7 @@ as `|table|` is `grid + divider: all + gap: 0` ([SPEC §8](SPEC.md)):
 
 | Layout | Template | Encodes | Children |
 |---|---|---|---|
-| `layout: chart` | `\|chart\|` | an x/value plane (cartesian or radial) | series, `\|axis\|`, `\|band\|`, `\|mark\|` |
+| `layout: chart` | `\|chart\|` | an x/value plane (cartesian or radial) | series, `\|axis\|`, `\|band\|`, `\|mark\|`, `\|bubble\|` |
 | `layout: pie` | `\|pie\|` | part-to-whole, value → angle | `\|slice\|` |
 
 `width` / `height` set the whole chart (plot **plus** axis gutters and legend); the
@@ -106,12 +106,14 @@ only inside its layout (a series elsewhere is an error, like `cell:` off a grid 
 | `\|area\|` | chart | a line filled to a baseline | `\|poly\|` / `\|path\|` + `\|line\|` | `fill`, `stroke`, `baseline` |
 | `\|bars\|` | chart | one bar per datum (a wedge when `radial`) | one `\|rect\|` / `\|poly\|` each | `fill`, `stroke`, `radius` |
 | `\|dots\|` | chart | one marker per datum | one `\|oval\|` / marker each | `fill`, `stroke`, `marker` |
+| `\|bubble\|` | chart | one bubble at a point, sized by `value:` | one `\|oval\|` | `fill`, `stroke` |
 | `\|slice\|` | pie | one wedge | one `\|path\|` | `fill`, `stroke` |
 
 **Singular vs. plural is the cardinality.** `|line|` and `|area|` are **one** shape, so
 singular; `|bars|` and `|dots|` are a **set** of marks (one per datum), so plural —
 the name states whether the series is one path or many marks. A `|slice|` is one wedge
-(singular); a pie is several `|slice|` nodes, as a cartesian chart is several series.
+and a `|bubble|` one bubble (singular, per node); a pie is several `|slice|` nodes and a
+bubble chart several `|bubble|` nodes, as a cartesian chart is several series.
 
 Inside a chart, `|line|` reads `data:` / `fn:` (data space); the standalone `|line|`
 primitive ([SPEC §7](SPEC.md)) reads `points:` (pixels). The section decides which,
@@ -136,6 +138,15 @@ line and are ignored). `|dots|` is markers with no connecting line; its dot diam
 (side-by-side per category, the default), `stacked` (piled; the top is the sum), or
 `overlay` (on top, translucent). `radius` rounds a bar's corners. (Stacked areas are
 [deferred](#20-deferred); areas overlay.)
+
+**A `|bubble|` is one mark per node** — for individually named, coloured, and sized
+bubbles, like a `|slice|`: `|bubble| "Name" { at: x y; value: N; fill: … }` places a
+bubble at data point (x, y), sized by `value:`. The chart reads every bubble's `value:`
+and scales them **by area** (area ∝ value) so the largest fits; the smart label sits
+**centred in the bubble when it fits, else on hover**. `at:` and `value:` are the very
+properties a `|mark|` and a `|slice|` use ([§8](#8-annotations), [§13](#13-pie--donut)).
+Reach for `|bubble|` when each bubble is a distinct labelled entity; for many uniform
+points, a `|dots|` series is terser.
 
 ---
 
@@ -243,11 +254,11 @@ declaration: a background **shade**, a **tick** (its smart label), and the **seg
 boundaries** every series shares.
 
 ```
-|band| "Inject" { extent: 1.4 3.1; axis: time; fill: --rose }
+|band| "Inject" { span: 1.4 3.1; axis: time; fill: --rose }
 ```
 
-`extent: a b` is the band's data range on its bound `axis:` (a distinct property from a
-grid cell's `span:`, [SPEC §5](SPEC.md)); `fill: none` makes it a divider + label with
+`span: a b` is the band's data range on its bound `axis:` (the same `span:` a grid cell
+uses, now valid on a chart band too — [SPEC §5](SPEC.md)); `fill: none` makes it a divider + label with
 no shading (a zone marker). The chart collects its `|band|` children, in source order,
 as the partition.
 
@@ -255,9 +266,9 @@ as the partition.
 bare constant) per band, evaluated in local `u`:
 
 ```
-|band| "Close"  { extent: 0 1.4;   fill: --accent }
-|band| "Inject" { extent: 1.4 3.1; fill: --rose }
-|band| "Hold"   { extent: 3.1 5.1; fill: --amber }
+|band| "Close"  { span: 0 1.4;   fill: --accent }
+|band| "Inject" { span: 1.4 3.1; fill: --rose }
+|band| "Hold"   { span: 3.1 5.1; fill: --amber }
 …
 |line| "Motor draw" {
   stroke: --rose-deep;
@@ -286,7 +297,7 @@ against (for a point, its value axis); it is required.
 | `\|mark\|` | `\|mark\| "100 °C max" { at: 100; axis: temp; stroke-style: dashed }` | a reference **line** at value 100, across the plot perpendicular to `temp` |
 | `\|mark\|` | `\|mark\| "60 °C — 19 min" { at: 19 60; axis: temp }` | a **point** (dot + label): `x = 19`, value `60` on `temp` |
 | `\|mark\|` | `\|mark\| "safe region" { at: 170 4; axis: temp; marker: none }` | a **label** only (no dot) |
-| `\|band\|` | `\|band\| { extent: a b; axis: … }` | a shaded region — the one-off cousin of a partition band ([§7](#7-bands--segmentation)) |
+| `\|band\|` | `\|band\| { span: a b; axis: … }` | a shaded region — the one-off cousin of a partition band ([§7](#7-bands--segmentation)) |
 
 A `|mark|`'s placement decides its shape: `at: V` (one value) is a reference **line** at
 value `V` on its bound axis, drawn across the plot perpendicular to that axis (so a
@@ -348,7 +359,7 @@ generalising `layout: row`/`column` to an engine + orientation — is planned fo
 
 **The flip never breaks a chart, because nothing is authored in screen coordinates.**
 You write `categories:`, series `data:` (values), and annotations bound to a **named**
-axis (`axis: rev`) with `at:` / `extent:` in *data* values — all logical. `direction`
+axis (`axis: rev`) with `at:` / `span:` in *data* values — all logical. `direction`
 only changes how that logical plane is projected: `column → row` swaps the default
 placement (the value axis to the bottom, the x axis to the left); a
 `|mark| { at: 40; axis: rev }` stays "at rev = 40 on the rev axis", merely re-projected.
@@ -481,7 +492,7 @@ meaning.
 | `baseline` | `\|area\|` | number | fill target — default the axis zero, or the range floor when zero is out of range. |
 | `curve` | `\|line\|` `\|area\|` | `linear` · `smooth` · `step` | interpolation ([§3](#3-series)). |
 | `axis` | series, `\|mark\|`, `\|band\|` | an `\|axis\|` id | the axis to read / measure against. |
-| `value` | `\|slice\|` | number ≥ 0 | slice magnitude ([§13](#13-pie--donut)). |
+| `value` | `\|slice\|` `\|bubble\|` | number ≥ 0 | slice angle / bubble size ([§13](#13-pie--donut)). |
 | `side` | `\|axis\|` | `bottom` · `left` · `right` · `top` | cartesian axis edge. |
 | `range` | `\|axis\|` | `a b` (ends number or `auto`) | window + crop + reverse ([§6](#6-scales--domain)). |
 | `scale` | `\|axis\|` | `linear` · `log` | scale kind. |
@@ -489,8 +500,8 @@ meaning.
 | `unit` | `\|axis\|` | quoted string | tick-label suffix. |
 | `labels` | `\|axis\|` | quoted-string list | explicit tick text. |
 | `gridlines` | `\|axis\|` | `none` · colour | this axis's gridlines. |
-| `at` | `\|mark\|` | `V` / `X Y` | line value / point ([§8](#8-annotations)). |
-| `extent` | `\|band\|` | `a b` | band range on its axis. |
+| `at` | `\|mark\|` `\|bubble\|` | `V` / `X Y` | line value / point ([§8](#8-annotations)). |
+| `span` | `\|band\|` | `a b` | band range on its axis (the grid `span:`, [SPEC §5](SPEC.md)). |
 
 ---
 
@@ -498,11 +509,11 @@ meaning.
 
 Charts add **no grammar** to [SPEC §16](SPEC.md). A chart is a `node` with
 `layout: chart` (or the `|chart|` / `|pie|` template); series, axes, bands, marks, and
-slices are child `node`s; `data:` / `fn:` / `range:` / `at:` / `extent:` are ordinary
+slices are child `node`s; `data:` / `fn:` / `range:` / `at:` / `span:` are ordinary
 `decl`s whose values are the existing `value` forms (a list of points is comma-grouped;
 a per-band `fn:` is a space-group of backticks and numbers). The additions are the
-built-in **type names** — `chart`, `pie`, `line`, `area`, `bars`, `dots`, `slice`,
-`axis`, `band`, `mark` (`line` already exists as a primitive, [SPEC §7](SPEC.md), and is
+built-in **type names** — `chart`, `pie`, `line`, `area`, `bars`, `dots`, `bubble`,
+`slice`, `axis`, `band`, `mark` (`line` already exists as a primitive, [SPEC §7](SPEC.md), and is
 reused) — protected from shadowing like any built-in ([SPEC §15](SPEC.md)) yet free as
 ids ([SPEC §18](SPEC.md)), and the properties of [§16](#16-properties).
 
@@ -528,6 +539,7 @@ compile-time, with a span.
 | `categories:` with an axis `labels:` | `set 'categories' or an axis 'labels', not both` |
 | `\|mark\|` without `axis:` | `a '\|mark\|' needs 'axis:' to place it` |
 | `\|mark\|` `at:` wrong arity | `'at' takes one value (a line) or two (a point)` |
+| `\|bubble\|` missing `at:` / `value:` | `a '\|bubble\|' needs 'at:' (x y) and 'value:'` |
 | Unknown `axis:` id | `axis 'X' not found` + `; did you mean 'Y'?` |
 | `range:` not two ends | `'range' takes two ends: 'a b', 'a auto', or 'auto b'` |
 | `range:` equal ends | `'range' needs distinct ends` |
@@ -559,7 +571,7 @@ compile-time, with a span.
   |area| "Pressure" { axis: bar;  fn: `x <= 93 ? 1000 : 1000 - 319*((x-93)/40)`; fill: --teal }
   |line| "Flow"     { axis: flow; fn: `x*42/133`; stroke: --rose-deep; stroke-style: dashed }
 
-  |band| { extent: 93 133; axis: x; fill: --red }
+  |band| { span: 93 133; axis: x; fill: --red }
   |mark| "1000 bar @ 93" { at: 93; axis: x; color: --muted }
 ]
 ```
@@ -570,6 +582,17 @@ compile-time, with a span.
   |axis| { range: 0 5 }
   |line| "Scout"   { data: 5 4 2 3 5 }
   |area| "Cruiser" { data: 3 3 5 4 2; fill: --teal }
+]
+```
+
+**Bubbles (one node each — position, size, colour, name):**
+```
+|chart| "Markets" [
+  |axis| "growth %" { side: bottom }
+  |axis| "share %"  { side: left }
+  |bubble| "EU"   { at: 12 40; value: 8;  fill: --teal }
+  |bubble| "US"   { at: 25 55; value: 20; fill: --rose }
+  |bubble| "APAC" { at: 38 30; value: 14; fill: --sky }
 ]
 ```
 
@@ -587,7 +610,6 @@ compile-time, with a span.
 Named, not yet built; the syntax above is stable without them.
 
 - **Gauge** — a partial pie / arc for a single value against a total.
-- **Bubble** — a `|dots|` whose size encodes a third value.
 - **Stacked areas** — `bars: stacked` extended to `|area|` series.
 - **Polar-area circular gridlines** and a configurable radial **start angle /
   direction** (the polygon web and top-clockwise are the defaults — [§12](#12-radial-charts-radar--radial-bar)).
