@@ -242,3 +242,38 @@ fn stroke_props_on_a_link_are_rejected() {
     )
     .expect("link family on a link, stroke class on a box");
 }
+
+// SPEC §2: a string-valued property (`title` / `href` / `src` / `path`) takes a
+// quoted string — a bare word there is an identifier, so it is an error.
+#[test]
+fn unquoted_text_value_is_rejected() {
+    for src in [
+        "|box#x| { title: hello }\n",
+        "|image#x| { src: photo; width: 40; height: 40 }\n",
+        "|path#p| { path: data }\n",
+    ] {
+        assert_resolve_error(src, "takes a quoted string");
+    }
+}
+
+#[test]
+fn unquoted_text_value_in_a_rule_is_rejected() {
+    // The rule cascade resolves the same way — `.link { href: page }` is caught too.
+    assert_resolve_error(
+        "{ .link { href: page } }\n|box#x| .link\n",
+        "takes a quoted string",
+    );
+}
+
+#[test]
+fn quoted_text_value_resolves() {
+    lini::check("|box#x| { title: \"hello\" }\n").expect("a quoted title resolves");
+}
+
+#[test]
+fn a_name_value_stays_a_bare_ident() {
+    // A *name* (`font-family`, a colour, a `symbol`) is not text: bare is fine,
+    // quoted only when it has spaces (SPEC §2). The rule must not over-restrict it.
+    lini::check("|box#x| { font-family: monospace; fill: red }\n")
+        .expect("a bare name value resolves");
+}

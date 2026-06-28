@@ -15,7 +15,7 @@
 //! rule compilation and matching; folding into an `AttrMap` is the caller's.
 
 use super::ir::{ResolvedValue, VarTable};
-use super::value::resolve_groups;
+use super::value::resolve_property;
 use crate::error::Error;
 use crate::expr::FuncTable;
 use crate::syntax::ast::{Rule, SelUnit};
@@ -51,7 +51,7 @@ impl Stylesheet {
             for d in &rule.decls {
                 decls.push((
                     d.name.clone(),
-                    resolve_groups(&d.groups, d.span, vars, funcs)?,
+                    resolve_property(&d.name, &d.groups, d.span, vars, funcs)?,
                 ));
             }
             compiled.push(CompiledRule {

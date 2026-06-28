@@ -184,6 +184,14 @@ double-quoted string is always text; leading and trailing whitespace in its valu
 spacing never leaks into the render.
 Single quotes are **not** strings (reserved, [§18](#18-reserved-words)).
 
+**A bare word is an identifier, never a string.** In a value, an unquoted word is
+always an identifier — a keyword, a colour or `symbol` name, a `font-family`, or an id
+reference — so literal **text** is always quoted: a string-valued property (`title`,
+`href`, `src`, `path`) takes a `"…"` even with no spaces. The one hybrid is a name that
+may contain spaces — `font-family` — bare or quoted, quoted only when needed
+(`font-family: "SF Mono"`), as in CSS. Numbers and `` `…` `` expressions are bare too;
+only text is quoted.
+
 **Expressions** — a backtick region `` `…` `` is a **compile-time math expression**:
 operators and the math library, folded to a literal number (or a point) at compile
 time. It is the **only place operators appear** — outside it `-` is a link line and
@@ -1089,9 +1097,9 @@ and a host page can override them. Set any in the global block to style the whol
 
 | Property | Notes |
 |---|---|
-| `src` | image source (`\|image\|`). |
-| `href` | wraps this node or link in `<a href>` — clickable. |
-| `title` | emits a `<title>` child (tooltip + screen-reader name). |
+| `src` | image source (`\|image\|`) — a quoted URL. |
+| `href` | wraps this node or link in `<a href>` — a quoted URL; clickable. |
+| `title` | quoted text — emits a `<title>` child (tooltip + screen-reader name). |
 
 ### Variables & expressions
 
@@ -1543,6 +1551,7 @@ Format: `filename:line:col: error: <message>` (LSP-compatible).
 | Negative `gap` | `'gap' must be ≥ 0` |
 | `skew` out of range | `skew: N must be in (-89, 89)` |
 | Single-quoted string | `single quotes are not strings — use "…"` |
+| Unquoted text value | `'title' takes a quoted string — write title: "…"` |
 | Invalid `pin` value | `'pin' expects none, center, an edge (top/bottom/left/right), or a corner (e.g. 'top right')` |
 | Missing declaration ';' | `a declaration ends with ';'` |
 | Unknown name in an expression | `unknown name 'foo' in an expression` |

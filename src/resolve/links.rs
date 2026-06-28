@@ -9,7 +9,7 @@ use super::ir::{
 };
 use super::merge::{collapse, resolve_markers};
 use super::scene::{PathIndex, SceneCtx};
-use super::value::resolve_groups;
+use super::value::{resolve_groups, resolve_property};
 use crate::ast::LineStyle;
 use crate::error::Error;
 use crate::syntax::ast::{Endpoint, EndpointGroup, Link};
@@ -49,7 +49,7 @@ pub fn resolve_link(
     for d in &w.style {
         ordered.push((
             d.name.clone(),
-            resolve_groups(&d.groups, d.span, ctx.vars, ctx.funcs)?,
+            resolve_property(&d.name, &d.groups, d.span, ctx.vars, ctx.funcs)?,
         ));
     }
     // A link's paint family is `link` / `link-width` / `link-style` (SPEC §9);

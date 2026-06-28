@@ -14,7 +14,7 @@ use super::ir::{
 use super::links;
 use super::merge::collapse;
 use super::scene::{self, PathIndex, SceneCtx};
-use super::value::resolve_groups;
+use super::value::{resolve_groups, resolve_property};
 use crate::error::Error;
 use crate::expr::{Expr, FuncTable};
 use crate::syntax::ast::{Decl, File, Rule, SelUnit, StyleItem};
@@ -271,7 +271,7 @@ fn root_attrs(file: &File, vars: &VarTable, funcs: &FuncTable) -> Result<AttrMap
         if let StyleItem::RootDecl(d) = item {
             ordered.push((
                 d.name.clone(),
-                resolve_groups(&d.groups, d.span, vars, funcs)?,
+                resolve_property(&d.name, &d.groups, d.span, vars, funcs)?,
             ));
         }
     }
@@ -396,7 +396,7 @@ fn decls_attrmap(decls: &[Decl], vars: &VarTable, funcs: &FuncTable) -> Result<A
     for d in decls {
         ordered.push((
             d.name.clone(),
-            resolve_groups(&d.groups, d.span, vars, funcs)?,
+            resolve_property(&d.name, &d.groups, d.span, vars, funcs)?,
         ));
     }
     Ok(collapse(&ordered))

@@ -7,7 +7,7 @@
 use super::cascade::{NodeFacts, Stylesheet};
 use super::ir::{AttrMap, MarkerKind, Markers, NodeKind, ResolvedInst, ResolvedValue, VarTable};
 use super::merge::{collapse, resolve_markers};
-use super::value::resolve_groups;
+use super::value::{resolve_groups, resolve_property};
 use crate::error::Error;
 use crate::expr::{Env, Expr, FuncTable, Value as ExprValue};
 use crate::span::Span;
@@ -164,7 +164,7 @@ pub fn resolve_node(
         }
         ordered.push((
             d.name.clone(),
-            resolve_groups(&d.groups, d.span, ctx.vars, ctx.funcs)?,
+            resolve_property(&d.name, &d.groups, d.span, ctx.vars, ctx.funcs)?,
         ));
     }
 

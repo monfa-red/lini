@@ -91,6 +91,46 @@ pub fn resolve_groups(
     Ok(ResolvedValue::List(items))
 }
 
+/// Resolve a **property** declaration's value (SPEC §2): like [`resolve_groups`],
+/// but a string-valued property (`title`, `href`, `src`, `path`) must be a quoted
+/// string — a bare word there is an identifier, so it is an error. Variable
+/// declarations and internal defaults call [`resolve_groups`] directly.
+pub fn resolve_property(
+    name: &str,
+    groups: &[Vec<Value>],
+    span: Span,
+    vars: &VarTable,
+    funcs: &FuncTable,
+) -> Result<ResolvedValue, Error> {
+    let value = resolve_groups(groups, span, vars, funcs)?;
+    if is_string_valued(name) && has_bare_ident(&value) {
+        return Err(Error::at(
+            span,
+            format!("'{name}' takes a quoted string — write {name}: \"…\""),
+        ));
+    }
+    Ok(value)
+}
+
+/// Properties whose value is literal **text** — free text, a URL, an SVG path — and
+/// so must be written quoted (SPEC §2). A *name* value (`symbol`, `font-family`, a
+/// colour name) is a bare identifier instead, so it is not listed here.
+fn is_string_valued(name: &str) -> bool {
+    matches!(name, "title" | "href" | "src" | "path")
+}
+
+/// Whether a resolved value is, or contains, a bare identifier (an unquoted word) —
+/// the test for a string-valued property given a non-string.
+fn has_bare_ident(value: &ResolvedValue) -> bool {
+    match value {
+        ResolvedValue::Ident(_) => true,
+        ResolvedValue::Tuple(items) | ResolvedValue::List(items) => {
+            items.iter().any(has_bare_ident)
+        }
+        _ => false,
+    }
+}
+
 /// One space-separated group: a lone scalar stays a scalar, several become a
 /// `Tuple`.
 fn resolve_group(
