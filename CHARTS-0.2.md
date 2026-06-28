@@ -135,7 +135,7 @@ Minimal first, then everything:
   bars: grouped;              // grouped | stacked | overlay
   direction: column;         // column = vertical bars; row = horizontal (§15)
   grid: val;                 // gridlines follow the `val` axis (avoids dual-axis moiré)
-  categories: Q1 Q2 Q3 Q4
+  categories: "Q1" "Q2" "Q3" "Q4"
 } [
   |axis#cat| "Quarter"      { side: bottom }
   |axis#val| "Revenue ($k)" { side: left; range: 0 auto }
