@@ -92,45 +92,6 @@ participants explicit vs inferred from first use; a message as a wire vs its own
 node kind. Build later as a full feature — it would inherit the palette/theming
 for free.
 
-## Charts (idea — `layout: chart` / `layout: pie`)
-
-Rough and unfinished — a starting point, not a decision; needs real brainstorming.
-Same guiding rule as elsewhere: reuse the existing grammar — a chart is a container,
-its series are `[ ]` children (like `table`).
-
-Probably two layouts, since two coordinate systems (but open):
-
-- **`layout: chart`** — Cartesian, one shared auto-scaled x/y. Children choose how
-  they paint the same plane: `|bars|`, `|line|`, `|area|`, `|scatter|`. Overlay /
-  combo = more (or mixed) children.
-- **`layout: pie`** — polar (value → angle); children are `|slice|`.
-
-Tentative sketch:
-
-```
-{ layout: chart; x: Q1 Q2 Q3 Q4 } [
-  revenue |bars| { data: 3 7 5 8; fill: --teal }
-  costs   |bars| { data: 2 4 3 5; fill: --rose }    // 2 series → grouped, or `stack`
-  target  |line| { data: 4 6 6 7; stroke: --amber }  // combo via mixed children
-]
-
-{ layout: pie } [
-  ads |slice| { value: 40 }
-  seo |slice| { value: 30 }                          // slices walk the palette
-]
-```
-
-Loose suggestions, none settled:
-
-- series ids could double as the **legend**, for free.
-- `direction: row | column` maybe, to flip bars horizontal/vertical? (unsure — only
-  bars flip; lines/areas don't.)
-- a `stack` / `group` toggle on the parent for multi-series bars.
-- the one real new mechanism: a chart reads *all* children's data first to set a
-  shared scale (unlike row/column/grid) — a dedicated layout, like `table`'s grid.
-
-Probably best kept small (inline data, categorical x, auto y, palette). Build later.
-
 ## Image export — PNG / WebP (idea)
 
 `lini x.lini -o x.png` / `-o x.webp` straight from the CLI (format from the
