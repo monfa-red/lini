@@ -1,244 +1,177 @@
-# Charts — a brainstorm (v0.1)
+# Charts — Specification
 
-A **thinking document**, not a plan — a first exploration of how charts could work in
-Lini. The **smart label** turns out to be the right backbone. Scribble on it; push
-back.
+An extension of [`SPEC.md`](SPEC.md): the source of truth for **charts**, written in
+the same register and to the same standard. A chart is **a layout** — `layout: chart`
+and `layout: pie` — so everything the core language defines (the cascade, paint roles,
+the `"string"` rule, the expression engine, lower-to-primitives, theming, baking,
+determinism) applies unchanged and is referenced, not restated. This document is
+provisional only in placement: once charts are proven it folds into `SPEC.md` as two
+more layout modes. Until then it is the law for charts.
 
-Twelve real configs drive every example: `chart-cycle-composition`, `chart-shot-power`,
-and the nine engineering charts (`barrel-thermal`, `booster-timeline`, `cycle-times`,
-`motor-overload`, `plasticizing-duty`, `pressure-envelope`, `tcu-warmup`, `tier-power`,
-`toggle`). If a proposal can't reproduce them, it's wrong. All eleven are worked in §15.
-
-Reading order: **§1 (the smart label)** is the backbone in one screen; skim **§0
-glossary**; then the design. **§15 (the real charts)**, **§16 gotchas**, and **§17 open
-questions** are where your judgement matters most.
-
----
-
-## Contents
-
-0 [Glossary](#0-glossary) · 1 [The smart label](#1-the-smart-label) ·
-2 [The big bet](#2-the-big-bet) · 3 [Cheat-sheet](#3-cheat-sheet) · 4 [Chart & axes](#4-chart--axes) ·
-5 [Series](#5-series) · 6 [Three kinds of data](#6-three-kinds-of-data) · 7 [Formulas](#7-formulas) ·
-8 [Bands & segments](#8-bands--segments) · 9 [Annotations](#9-annotations) · 10 [Areas & fills](#10-areas--fills) ·
-11 [Tooltips](#11-tooltips) · 12 [Legend](#12-legend) · 13 [layout / direction](#13-the-layout--direction-refactor) ·
-14 [Performance](#14-performance) · 15 [**The 11 real charts**](#15-the-11-real-charts) · 16 [Gotchas](#16-gotchas) ·
-17 [Open questions](#17-open-questions) · 18 [Future: pie & mindmap](#18-future-modes)
+**One bet carries the whole design.** A chart is a container that, at layout time,
+fixes a shared data→pixel scale from its children, samples any formulas, and emits
+ordinary Lini primitives and templates — `|line|`, `|poly|`, `|path|`, `|oval|`,
+`|rect|`, `|block|`, and text. The renderer learns nothing new; charts theme,
+dark/light, and bake like any diagram.
 
 ---
 
-## 0. Glossary
+## Table of Contents
 
-| Term | Plain meaning |
+1 [Mental model](#1-mental-model) · 2 [The chart container](#2-the-chart-container) ·
+3 [Series](#3-series) · 4 [Data & formulas](#4-data--formulas) · 5 [Axes](#5-axes) ·
+6 [Scales & domain](#6-scales--domain) · 7 [Bands & segmentation](#7-bands--segmentation) ·
+8 [Annotations](#8-annotations) · 9 [Legend & title](#9-legend--title) · 10 [Colour](#10-colour) ·
+11 [Direction & the flip](#11-direction--the-flip) · 12 [Radial charts](#12-radial-charts-radar--radial-bar) ·
+13 [Pie & donut](#13-pie--donut) · 14 [Tooltips](#14-tooltips) · 15 [Lowering & render](#15-lowering--render) ·
+16 [Properties](#16-properties) · 17 [Grammar](#17-grammar) · 18 [Errors](#18-errors) ·
+19 [Examples](#19-examples) · 20 [Deferred](#20-deferred)
+
+---
+
+## 1. Mental model
+
+A chart is a container ([SPEC §5](SPEC.md)) whose **layout** is `chart` or `pie`. Its
+children are **series** (and, for `layout: chart`, **axes**, **bands**, and
+**annotations**) — drawn in *data* coordinates, not pixels. The chart's one new job
+over `row`/`column`/`grid` is to read **all** children first, fix a **shared scale**
+(data domain → plot pixels), then lower each child to primitives at baked pixel
+coordinates. This is the chart analogue of a grid sizing tracks from its children.
+
+Three properties of the model, each inherited from the core language:
+
+- **The smart label carries every text** ([SPEC §3](SPEC.md)). The one `"label"` after
+  a node's head lowers per type ([§9](#9-legend--title)): a chart's label is its
+  **title**, a series' its **legend** entry, an axis's its **axis title**, a band's a
+  **tick**, an annotation's its **label**.
+- **Paint, text, and markers are the core properties** ([SPEC §10](SPEC.md)). A line's
+  colour is `stroke`, an area/bar/slice body is `fill`, a dashed line is
+  `stroke-style: dashed`, thickness is `stroke-width`; there are no chart-only paint
+  shorthands. User text is quoted, bare words are identifiers ([SPEC §2](SPEC.md)).
+- **Children paint the shared plane.** Reference lines, thresholds, shaded bands, and
+  callouts are ordinary children placed in data coordinates ([§8](#8-annotations)) —
+  not a separate annotation subsystem.
+
+A chart errors only at compile time, with a span, like the rest of Lini
+([§18](#18-errors)). Data outside an axis `range:` is clipped to the plot area.
+
+---
+
+## 2. The chart container
+
+Two layouts, each a container template over `|block|` with the layout preset — exactly
+as `|table|` is `grid + divider: all + gap: 0` ([SPEC §8](SPEC.md)):
+
+| Layout | Template | Encodes | Children |
+|---|---|---|---|
+| `layout: chart` | `\|chart\|` | an x/value plane (cartesian or radial) | series, `\|axis\|`, `\|band\|`, `\|mark\|` |
+| `layout: pie` | `\|pie\|` | part-to-whole, value → angle | `\|slice\|` |
+
+`width` / `height` set the whole chart (plot **plus** axis gutters and legend); the
+plot area is the remainder after labels are measured ([SPEC §6](SPEC.md) — text is
+measured at compile time). Unset, a chart defaults to **360 × 220**; a `pie` or
+`radial` chart is **square** (default **280**) — a chart cannot size to its content
+(the content depends on the scale, which depends on the size), so these are baked
+layout constants ([SPEC §11.5](SPEC.md)). `fill` is the chart background, `stroke` its
+frame, and the cascade styles a chart like any box.
+
+**Chart-level properties** (on the `|chart|` / `|pie|` node):
+
+| Property | Layout | Value | Default |
+|---|---|---|---|
+| `direction` | chart | `column` · `row` · `radial` | `column` |
+| `bars` | chart | `grouped` · `stacked` · `overlay` | `grouped` |
+| `categories` | chart | quoted-string list — the x-axis (or spoke) labels | indices `1…N` |
+| `samples` | chart | integer — `fn:` sample count | `24` |
+| `hole` | pie | `0` ≤ n < `1` — inner-radius fraction (a donut) | `0` |
+| `legend` | both | `top` · `right` · `bottom` · `none` | auto (shown when ≥ 2 entries) |
+| `tooltip` | both | `rich` · `title` · `none` | `rich` |
+
+`categories` is the common-case shorthand for the **x (domain) axis's** tick labels;
+an `|axis|` child's `labels:` ([§5](#5-axes)) is the general form. The two name the same
+thing — setting both is an error ([§18](#18-errors)).
+
+---
+
+## 3. Series
+
+A series is a child node; its smart label is its **legend** entry (no label → no
+entry). Each series **lowers to primitives** ([§15](#15-lowering--render)) and is valid
+only inside its layout (a series elsewhere is an error, like `cell:` off a grid —
+[SPEC §5](SPEC.md)).
+
+| Series | Layout | Draws | Lowers to | Paint |
+|---|---|---|---|---|
+| `\|line\|` | chart | a polyline through the data (a **closed** loop when `radial`) | `\|line\|` / `\|path\|` | `stroke`, `stroke-width`, `stroke-style` |
+| `\|area\|` | chart | a line filled to a baseline | `\|poly\|` / `\|path\|` + `\|line\|` | `fill`, `stroke`, `baseline` |
+| `\|bars\|` | chart | one bar per datum (a wedge when `radial`) | one `\|rect\|` / `\|poly\|` each | `fill`, `stroke`, `radius` |
+| `\|dots\|` | chart | one marker per datum | one `\|oval\|` / marker each | `fill`, `stroke`, `marker` |
+| `\|slice\|` | pie | one wedge | one `\|path\|` | `fill`, `stroke` |
+
+**Singular vs. plural is the cardinality.** `|line|` and `|area|` are **one** shape, so
+singular; `|bars|` and `|dots|` are a **set** of marks (one per datum), so plural —
+the name states whether the series is one path or many marks. A `|slice|` is one wedge
+(singular); a pie is several `|slice|` nodes, as a cartesian chart is several series.
+
+Inside a chart, `|line|` reads `data:` / `fn:` (data space); the standalone `|line|`
+primitive ([SPEC §7](SPEC.md)) reads `points:` (pixels). The section decides which,
+exactly as it decides a stylesheet rule from a worn class ([SPEC §4](SPEC.md)) — a
+chart line *is* a line, so the name is reused, not duplicated.
+
+**A line carries markers at every datum**, reusing the core `marker:` family
+([SPEC §7](SPEC.md)) generalised from line *ends* to every vertex: `|line| { marker: dot }`
+shows a dot at each point (`marker-start` / `marker-end` have no meaning on a chart
+line and are ignored). `|dots|` is markers with no connecting line; its dot diameter is
+`width` (`height` too for an ellipse) — there is **no** `size:` property.
+
+**`curve:`** sets a line's / area's interpolation:
+
+| `curve:` | Connects points by |
 |---|---|
-| **Plot area** | The inner rectangle where data is drawn — the box minus axis labels, titles, legend. |
-| **Scale** | A function mapping a **data value** → a **pixel position**. Each axis owns one — **linear** or **logarithmic**. |
-| **Domain / Range** | Domain = the *data* extent (`0…20 s`). Range = the *pixel* extent. We write `range:` for the data window. |
-| **Axis** | The visible ruler for a scale: line, **ticks**, **tick labels**, **title**, optional **gridlines**. |
-| **Series** | One dataset drawn one way — bars, a line, an area. |
-| **Categorical / continuous axis** | Labels (`15 cm³ PS`) vs numbers (time, mm). Bars live categorical; lines continuous. |
-| **Stacked / grouped / overlay** | Three ways bar series share a slot: piled / side-by-side / on-top semi-transparent. |
-| **Interpolation** | How a line connects points: **linear**, **smooth** (spline), **step**. |
-| **Area** | A line filled down to a **baseline** (axis zero, or a chosen value). |
-| **Band** | A shaded (or outlined) region spanning a sub-interval of an axis. |
-| **Segment / segmentation** | A piece of a series' domain with its **own formula**; lets a curve **jump** at a boundary. |
-| **Annotation** | A non-data mark: a **mark** (line or point), a **band**, a free **label**. |
-| **Dual / multi axis** | Two+ value axes with different ranges sharing one plot; a series picks which it reads. |
-| **Smart label** | The rule that the one `"label"` after a node's head is lowered per type — text, caption, symbol… (§1). |
-| **Lower** | Compiler-speak: rewrite a high-level thing into primitives. A chart **lowers** to Lini rects, paths, text. |
+| `linear` *(default)* | straight segments |
+| `smooth` | a **monotone** cubic — curved, passes through every point, **never overshoots** (no invented peak or sub-zero dip). Parameter-free; there is no tension knob. |
+| `step` | a staircase — hold, then step at each datum |
+
+**`bars:`** on the chart sets how multiple **`|bars|`** series combine: `grouped`
+(side-by-side per category, the default), `stacked` (piled; the top is the sum), or
+`overlay` (on top, translucent). `radius` rounds a bar's corners. (Stacked areas are
+[deferred](#20-deferred); areas overlay.)
 
 ---
 
-## 1. The smart label
+## 4. Data & formulas
 
-The one `"label"` after a node's head is lowered **per type** — `|icon| "heart"` → a
-symbol, `|group| "Kitchen"` → a caption, `|box| "Server"` → a text child. That single
-rule carries every chart's text:
+A series' values come from `data:` (explicit) or `fn:` (computed) — never both
+([§18](#18-errors)). Both use the core value grammar ([SPEC §16](SPEC.md)) — space
+within a group, comma between groups — so charts add **no value form**. A comma is the
+discriminator:
 
-| Chart node | Its smart label becomes |
-|---|---|
-| `\|chart#id\|` | the chart's caption (like a group) |
-| `\|axis#id\|` | the axis **title** |
-| `\|bars\| \|line\| \|area\| \|scatter\|` | the series name → its **legend** entry |
-| `\|band\|` | the band name → a **phase-axis** tick |
-| `\|mark\|` | the annotation's **label** |
-| `\|slice\|` (pie) | the slice's **label** |
-
-One rule, every chart text — no `label:` properties, no trailing strings. And because
-the label sits **right after the head**, a chart reads **name-first**:
-
-```
-|bars| "1.8 kW" { data: 9 15 24 18 30; fill: --stroke; radius: 4 }
-```
-
-Your eye hits "1.8 kW", "Motor draw", "Power (kW)" immediately.
-
-The id lives in the bars, so binding is clean and dual / multi axis stays legible:
-
-```
-|axis#power| "Power (kW)"        { side: left;  range: 0 4.6 }
-|axis#vcap|  "Booster V_cap (V)" { side: right; range: 32 49; color: --sky }
-```
-
-A series binds with `axis: vcap` — a bare id reference, the same way a link names a
-node. The `toggle` chart's **four** axes (§15.9) read cleanly this way.
-
----
-
-## 2. The big bet
-
-The foundation:
-
-> **A `|chart|` is a container that, at layout time, samples its formulas and generates
-> ordinary Lini primitives — `|line|`, `|rect|`, `|path|`, `|oval|`, text — positioned
-> in pixel space. The existing renderer draws them. The chart engine is a *node
-> generator*, not a new SVG backend.**
-
-Why: the renderer, theming, palette, dark/light, `--bake-vars`, and `fmt` are all
-reused; formulas sample in Rust at **compile time** (the browser gets finished paths —
-answers performance, §14); and the engine stays **modular like the link router** — a
-clean `src/layout/chart/` with one entry point and an isolated, snapshot-testable
-sampler that reuses the SPEC §11.7 expression engine.
-
-```
-src/layout/chart/
-  mod.rs          orchestrator
-  scale.rs        domain→range, nice + log ticks
-  axis.rs         axis line + ticks + labels (+ gridlines for grid: axis)
-  series_bar.rs   grouped / stacked / overlay → rects
-  series_line.rs  line / area / scatter → path + dots
-  bands.rs        phase partition → background bands + phase-axis + segment spans
-  annot.rs        mark / band / label placed in data space (§9)
-  tooltip.rs      hover hit-targets + cards (§11)
-```
-
-A chart `desugar`s to that primitive tree — the existing teaching view, for free.
-
----
-
-## 3. Cheat-sheet
-
-```
-|chart#revenue| {
-  bars: grouped;                // grouped | stacked | overlay
-  direction: column;            // column = vertical bars; row = horizontal
-  grid: val;                    // gridlines follow the `val` axis
-  categories: Q1 Q2 Q3 Q4
-} [
-  |axis#cat| "Quarter"      { side: bottom }
-  |axis#val| "Revenue ($k)" { side: left; range: 0 auto }
-
-  |bars| "2024" { data: 3 7 5 8; fill: --teal }
-  |bars| "2025" { data: 4 6 6 9; fill: --rose }
-]
-```
-
-| Form | Role |
-|---|---|
-| `\|chart#id\|` | container = `\|block\|` + `layout: chart` + defaults (like `\|table\|`); smart label = caption. |
-| `\|axis#id\| "Title"` | a scale + ruler. `side:`, `range:`, `scale:`, `unit:`. |
-| `\|bars\| \|line\| \|area\| \|scatter\| "Name"` | series; smart label = legend; each **lowers** to primitives. |
-| `\|band\| "Name"` | a region / the §8 phase partition. |
-| `\|mark\| "Label"` | a reference line (`at: V`) or marked point (`at: X Y`) — §9. |
-| `data:` | explicit values — categorical, or `x y` point pairs. |
-| `fn:` | a backtick formula, or a list of them (one per band) — §7. |
-| `axis: id` | bind a series / annotation to an axis. |
-| `at:` / `span:` | place an annotation at a data value / over a range. |
-| `grid: id` | which axis' gridlines the chart draws. |
-
----
-
-## 4. Chart & axes
-
-`|chart#id|` is a container template (`|block|` + `layout: chart` + chart defaults), like
-`|table|`. Its smart label is a **caption**. Chart-level properties: `bars:`,
-`direction:`, `grid:`, `categories:`, `samples:`, `legend:`.
-
-Axes are `|axis#id|` nodes — the id binds, the smart label is the **title**:
-
-| Property | Does |
-|---|---|
-| `side:` | `bottom` / `left` / `right` / `top`. Several axes can share a side — they stack outward in **source order** (deterministic). |
-| `range: a b` | data window + crop. `b < a` **reverses** (`toggle`'s x runs `50 → 1`). `auto` / `a auto` auto-fit. |
-| `scale: linear \| log` | linear (default) or logarithmic (`motor-overload`, `toggle`). Log auto-emits decade ticks. |
-| `step:` / `ticks:` | tick spacing or explicit ticks. Omitted → nice ticks. |
-| `unit: "%"` / `" °C"` | suffix appended to tick labels (and tooltips). |
-| `color:` | tints the axis line, ticks, labels, title. |
-
-A series reads one with `axis: time`. **Gridlines live on the chart** (`grid: <axis-id>`)
-so dual axes don't moiré — default: the primary value axis; `grid: none` off.
-
-**Implicit axes.** A chart with no `|axis|` gets a categorical bottom + auto-fit left, so
-simple charts stay one-liners (§15.3). You declare an axis only to say something — a
-title, range, side, log, colour. `toggle` declares five; a basic bar chart declares none.
-
----
-
-## 5. Series
-
-A series is a node; its smart label is its **legend entry**:
-
-```
-|line| "Motor draw" { fn: `0.5 - 0.12*u`; color: --rose }
-|bars| "2025"       { data: 4 6 6 9; fill: --rose }
-```
-
-No label → no legend entry (an anonymous single series needs none).
-
-**Kinds:** `|bars|`, `|line|`, `|area|`, `|scatter|`. Each **lowers** to primitives
-(`|bars|` → rects, `|line|` → a `|line|` primitive fed sampled points, `|area|` → a
-`|path|`, `|scatter|` → `|oval|` dots). `|line|` doubles as the polyline primitive —
-inside a chart it takes `data:`/`fn:`, outside it takes `points:`. (A chart line *is* a
-line, so the reuse is natural; the near-useless standalone `|line|` primitive could even
-become `|arrow|`, freeing the name.)
-
-**Bars: one model, three modes** — `bars: grouped | stacked | overlay` (a chart-level
-knob). Plus `radius:` rounds bar corners, and `direction: row` makes bars horizontal.
-`direction` is the property §13 shares across modes.
-
-**Colour:** explicit `fill:`/`color:` wins; else series **walk the palette** in
-declaration order (`--teal`, `--rose`, `--amber`, …) deterministically.
-
----
-
-## 6. Three kinds of data
-
-Data has three sources, not one.
-
-| Source | Syntax | Used by |
+| Source | Syntax | Meaning |
 |---|---|---|
-| **Categorical** | `data: 9 15 24 18 30` (one per category) | every bar chart |
-| **Explicit points** | `data: 0 225, 60 225, 118 221, …` (`x y` pairs) | `barrel-thermal` (measured temps) |
-| **Formula** | a `fn:` backtick formula, e.g. 8/(x/100-1)^2, sampled at compile time | most line charts |
+| categorical | `data: 9 15 24 18 30` | **one group** → one value per category (`categories:` / indices) |
+| points | `data: 0 225, 60 225, 118 221` | **comma groups** → `x y` pairs (numeric x; scatter / irregular) |
+| formula | `fn: ` `` `min(8/(x/100-1)^2, 2000)` `` | a backtick expression in `x`, sampled at `samples:` |
 
-`data:` reuses Lini's value grammar (space-separated scalars; comma between point pairs).
+So a comma-less `data:` is always a value list; a single point cannot be written
+comma-less (`data: 9 15` is two categorical values, not one pair). A `|line|` / `|area|`
+needs ≥ 2 vertices. With categorical data, the value count must match the `categories:`
+count ([§18](#18-errors)).
 
-**The formula ceiling.** `booster-timeline` is a **numeric integration** (`q +=
-(prevI + iBoost)/2 * dt`) — a recurrence, not a function of `x`. **No closed-form `fn:`
-can express it.** It ships as precomputed `data:` points. Don't pretend `fn:` covers
-integration; chained *closed-form* derivations (`toggle`) are fine via `=` locals (§7).
+**Formulas are the core expression engine** ([SPEC §11.7](SPEC.md)): operators, the
+math library, `name = expr;` locals, the ternary, and stylesheet functions. Charts bind
+two ambient names into it — the same seam that injects `u` for parametric `points:`:
 
----
+- **`x`** — the x-axis data value (the domain position); a whole-domain `fn:` uses it.
+- **`u`** — a band-local clock, `0 → 1` across one band ([§7](#7-bands--segmentation)).
 
-## 7. Formulas
+A `fn:` is therefore **not folded at resolve** (its `x` is unbound there) but held and
+**sampled at chart layout**, once the x-domain is fixed, with `x` (and `u`) bound at
+each step. It reuses the same sample-an-ambient seam a parametric `points:` uses for
+`u` ([SPEC §11.7](SPEC.md)), only deferred to the layout phase because `x`'s domain
+comes from sibling data. The sampled result bakes to literals like any geometry.
+`samples:` is the step count (default 24).
 
-A chart formula is a **backtick expression** — Lini's compile-time math
-([SPEC §11.7](SPEC.md)). That section owns the language (operators, `exp`/`sin`/…,
-`name = expr` locals, ternary, functions); charts add two things:
-
-- **`x` and `u`** — the formula's variable. `x` is the **x-axis value** (the domain
-  position); `u` is a **per-band local** coordinate, `0 → 1` across a band (§8). A
-  whole-domain formula uses `x`; a per-band one uses `u`.
-- **`fn:` is a list** — one backtick formula per band, space-separated, with bare
-  numbers allowed (a constant segment). A single formula (no bands) is one backtick.
-
-```
-fn: `min(8 / (x/100 - 1)^2, 2000)`       // one formula, in x
-fn: `0.5 - 0.12*u`  `1.4 - 0.7*u`  0.2   // three segments; the last is a constant
-```
-
-**Reuse via a named function** (SPEC §11.7) — define once in the stylesheet, call per
-series with a parameter:
+Locals chain derivations in one backtick; a stylesheet function keeps twins DRY:
 
 ```
 { ramp(s) `min(100, 25 + 1.572*(x/s) + 0.0142*(x/s)^2)`; }
@@ -247,479 +180,422 @@ series with a parameter:
 |line| "Aluminum" { fn: `ramp(1/0.7)` }
 ```
 
+**The formula ceiling.** `fn:` expresses a function of `x`, not a recurrence: a numeric
+integration (a running sum) has no closed form and ships as precomputed `data:` points.
+`fn:` covers functions; it does not pretend to cover integration.
+
 ---
 
-## 8. Bands & segments
+## 5. Axes
 
-The hard part (image 1), kept clean because **bands are ordinary nodes with smart
-labels**. `chart-shot-power` has seven phases; each drives three things — a background
-**band**, a **phase-axis** tick (the coloured names along the bottom), and the
-**segmentation** of every series (one formula per phase, in local `u`, free to jump at a
-boundary — motor draw leaps 4.5 → 0.38).
+An axis is an `|axis|` child of a `layout: chart` (an `#id` is optional, used to
+**bind** — a series or annotation reads an axis with `axis:`); its smart label is the
+**axis title**. A chart with no `|axis|` gets an x (domain) axis and an auto-fit value
+axis, so simple charts declare none — an axis is written only to *say* something.
 
-**Bands as nodes.** A band is a node whose smart label is its name:
+| Property | Value | Notes |
+|---|---|---|
+| `side` | `bottom` · `left` · `right` · `top` | cartesian only; several axes on one side stack outward in **source order**. |
+| `range` | `a b` (each end a number or `auto`) | the data window — and crop, and reverse ([§6](#6-scales--domain)). |
+| `scale` | `linear` · `log` | `log` emits decade ticks labelled 1-2-5; its domain must be above 0. |
+| `step` / `ticks` | number / list | tick spacing, or explicit ticks; omitted → nice ticks ([§6](#6-scales--domain)). |
+| `unit` | `"%"` | a quoted suffix appended to tick labels (and tooltips). |
+| `labels` | quoted-string list | explicit tick text — the general form of `categories:` ([§2](#2-the-chart-container)). |
+| `gridlines` | `none` · *colour* | this axis's gridlines: `none`, or a colour (a colour turns them on). |
+| `stroke` / `color` / `font-size` | core | `stroke` tints the axis line + ticks, `color` the labels + title ([SPEC §10](SPEC.md)). |
+
+An **x (domain) axis** is categorical when `categories:` / `labels:` give it labels (or
+by default, indices `1…N`) and numeric when the data is points or a `fn:`. A **value
+axis** carries series magnitudes; `axis: <id>` on a series binds it (default: the first
+value axis of the series' orientation). Multiple value axes share a plot for dual-unit
+charts; only the **primary** value axis (the first declared) and the x axis draw
+gridlines by default — so a normal grid appears, and a second value axis adds none
+(avoiding moiré). Override per axis with `gridlines:`; the x axis's (vertical) and a
+value axis's (horizontal) gridlines are perpendicular and never conflict. The default
+tint is `--lini-grid` — a faint role variable charts add to the palette
+([SPEC §11.1](SPEC.md)), themeable and dark/light-aware like the rest.
+
+---
+
+## 6. Scales & domain
+
+Each axis owns one scale: data **domain** → pixel **range**. By default the domain is
+the union of the bound series' data, rounded to nice tick steps; a value axis carrying
+`|bars|` includes zero.
+
+**`range: a b`** does three jobs at once: it sets the visible **window** (`a`…`b`),
+**crops** data outside it to the plot area, and **reverses** the axis when `a > b`
+(`range: 50 1` runs high→low — both the scale and the tick order flip). Either end may
+be `auto` to auto-fit it (`range: 0 auto`, `range: auto 100`); the two ends must be
+distinct (a zero-width domain is an error — [§18](#18-errors)).
+
+Ticks are "nice" by default (1-2-5 × 10ⁿ); `step:` sets a spacing, `ticks:` an explicit
+list, `scale: log` switches to decade ticks. A `log` axis's domain — explicit or auto —
+must be above 0 ([§18](#18-errors)). Tick **labels** come from `categories:` / `labels:`
+(an x axis) or the formatted tick value + `unit:` (a value axis).
+
+---
+
+## 7. Bands & segmentation
+
+A `|band|` is a child that partitions an axis and drives three things from one
+declaration: a background **shade**, a **tick** (its smart label), and the **segment
+boundaries** every series shares.
 
 ```
-|band| "Close"  { span: 0 1.4;   fill: --accent }
-|band| "Inject" { span: 1.4 3.1; fill: --rose }
+|band| "Inject" { extent: 1.4 3.1; axis: time; fill: --rose }
+```
+
+`extent: a b` is the band's data range on its bound `axis:` (a distinct property from a
+grid cell's `span:`, [SPEC §5](SPEC.md)); `fill: none` makes it a divider + label with
+no shading (a zone marker). The chart collects its `|band|` children, in source order,
+as the partition.
+
+**A series opts into segmentation** with a per-band `fn:` **list** — one backtick (or a
+bare constant) per band, evaluated in local `u`:
+
+```
+|band| "Close"  { extent: 0 1.4;   fill: --accent }
+|band| "Inject" { extent: 1.4 3.1; fill: --rose }
+|band| "Hold"   { extent: 3.1 5.1; fill: --amber }
 …
-```
-
-The chart collects its `|band|` children (in source order) as the **x-partition**. From
-that one declaration come the background shading, the phase-axis ticks (each band's smart
-label, tinted its `fill`), and the segment boundaries.
-
-**A series opts in** with a per-band `fn:` list — one backtick per band, in local `u`:
-
-```
 |line| "Motor draw" {
-  color: --rose; opacity: 0.8;
+  stroke: --rose-deep;
   fn: `0.12 + 1.2*exp(-((u-0.8)/0.12)^2)`   // Close
-      `1.5 + 3.0*u^1.1`                     // Inject
-      `0.5 - 0.12*u`                        // Hold
-      `1.4 - 0.7*u`                         // Recovery
-      `0.26 + 0.1*sin(pi*u)`                // Open
-      0.12                                  // Charge   (a constant segment)
-      0.2                                   // Settle
+      `1.5 + 3.0*u^1.1`                      // Inject
+      0.5                                    // Hold (a constant segment)
 }
 ```
 
-A series with a **single** `fn:` (one backtick, no list) samples the whole domain in
-`x`, ignoring bands. So segmentation is **opt-in** — only a multi-formula `fn:` cares
-about the partition.
-
-- **Jumps default on** — consecutive segments connect end-to-start, drawing the riser.
-- **Constants → steps for free** — "Heaters" `fn: 0.6 0 1.2 …` + connect = clean stairs.
-- **`u` is a phase-local clock** (`0 → 1` across that band); `x` is the wall clock.
-
-**The one fragility** — the `fn:` list length must equal the band count, by position.
-Two mitigations: a **loud count-mismatch error**, and `fmt` annotating each formula with
-its band name (the `// Close` comments above). Bands also **generalise** — set
-`fill: none` and a band is a divider + label, no shading (`barrel-thermal`'s zones).
+A **single** `fn:` (one backtick) samples the whole domain in `x` and ignores bands —
+segmentation is opt-in. Consecutive segments connect end-to-start (the riser is drawn),
+so a jump between segments is explicit and a list of constants draws clean steps. A
+per-band `fn:` list whose length differs from the band count is an error
+([§18](#18-errors)) — never a silent truncation.
 
 ---
 
-## 9. Annotations
+## 8. Annotations
 
-Annotations are **nodes placed in data space**, each with a smart label — no annotation
-subsystem, just a placement property (`at:` / `span:` + `axis:`).
+Annotations are children placed in **data** coordinates; the model gives them for free.
+There are two, both reusing core paint. `axis:` names the axis an annotation is measured
+against (for a point, its value axis); it is required.
 
-| Annotation | Form | Note |
+| Node | Form | Draws |
 |---|---|---|
-| **Mark** | `\|mark\| "label" { at: …; axis: … }` | `at: V` (one value) → a reference **line** at that level; `at: X Y` (two) → a **point** dot. Smart label rides either. |
-| **Region** | `\|band\| { span: a b; axis: … }` | a shaded box over a range — the one-off cousin of §8's partition bands. |
-| **Free label** | `\|block\| "…" { at: X Y }` | a text child at a data point. |
+| `\|mark\|` | `\|mark\| "100 °C max" { at: 100; axis: temp; stroke-style: dashed }` | a reference **line** at value 100, across the plot perpendicular to `temp` |
+| `\|mark\|` | `\|mark\| "60 °C — 19 min" { at: 19 60; axis: temp }` | a **point** (dot + label): `x = 19`, value `60` on `temp` |
+| `\|mark\|` | `\|mark\| "safe region" { at: 170 4; axis: temp; marker: none }` | a **label** only (no dot) |
+| `\|band\|` | `\|band\| { extent: a b; axis: … }` | a shaded region — the one-off cousin of a partition band ([§7](#7-bands--segmentation)) |
 
-`|mark|` merges what would otherwise be two types — the placement picks the shape, the
-way `pin: top` vs `pin: top left` does. A line's orientation comes from its bound axis (a
-value axis → horizontal, the x-axis → vertical).
+A `|mark|`'s placement decides its shape: `at: V` (one value) is a reference **line** at
+value `V` on its bound axis, drawn across the plot perpendicular to that axis (so a
+value-axis mark is a level line, an x-axis mark a vertical); `at: X Y` (two values) is a
+**point** — `X` on the x axis, `Y` on the bound value `axis:`. `marker: none` suppresses
+a point's dot, leaving the label — so there is no separate free-label node. Because
+placement is by *value* on a *named* axis, an annotation survives a `direction` flip
+([§11](#11-direction--the-flip)) unchanged.
 
 ---
 
-## 10. Areas & fills
+## 9. Legend & title
 
-An **area** is a line with a baseline:
+One smart-label rule ([SPEC §3](SPEC.md)), placed by where the label sits:
+
+| Label on | Becomes |
+|---|---|
+| the `\|chart\|` / `\|pie\|` | the **title** (a caption above the plot) |
+| a series / `\|slice\|` | a **legend** entry, with a swatch in its colour |
+| an `\|axis\|` | the **axis title** |
+| a `\|band\|` | a **tick** along the band's axis, tinted its `fill` |
+| a `\|mark\|` | the annotation's **label** |
+
+A legend appears automatically once there are ≥ 2 entries; `legend: top | right |
+bottom | none` positions or suppresses it ([§2](#2-the-chart-container)).
+
+---
+
+## 10. Colour
+
+Explicit `stroke:` / `fill:` wins. Otherwise series **walk the palette**
+([SPEC §11.2](SPEC.md)) in declaration order, skipping `red` (reserved for danger), in
+this fixed sequence — repeating if exhausted, so the result is deterministic
+([§15](#15-lowering--render)):
 
 ```
-|area| "Max indefinite duty" { fn: `1e6/(x*x)`; fill: --teal }              // to axis zero
-|area| "Engineering"         { data: …; baseline: 48; fill: --accent }     // to a value
+--rose  --orange  --amber  --lime  --green  --teal  --sky  --blue  --purple  --gray
 ```
 
-`|area|` = `|line|` + a fill down to **`baseline:`** (default the axis zero; `baseline:
-48` fills to a level, as `booster-timeline` does). Translucency via the `fill`'s alpha or
-`opacity`. A plain `|line|` never fills.
+Each series takes its hue at the tier the role wants: a line the `deep` stroke, an
+area/bar the base fill with a `deep` edge, dots the `ink`. The legend swatch and tooltip
+accent follow the series' dominant paint (its `fill` if it has one, else its `stroke`).
+In `layout: pie` the walk is **per slice** (each part is a distinct colour), the one
+place colour walks per datum rather than per series.
 
 ---
 
-## 11. Tooltips
+## 11. Direction & the flip
 
-- **No JS.** Hover = CSS `:hover` revealing a hidden `<g>` card; works in inline /
-  directly-opened SVG, **bakes to a clean static chart** in resvg / email / `<img>`.
-- **Dots, not per-sample targets** — a curve samples ~20 pts/segment for drawing but
-  emits hover **dots** only at segment boundaries + turning points (~10–20/series).
-  Visible, or invisible-with-hit-radius (the configs' `pointRadius:0, pointHitRadius:6`).
-- **The card** is a generated `|block|` — themeable, no special renderer; its rows reuse
-  the series smart labels.
-- **One limit:** a tooltip showing a *different* number than it plots (`tier-power` plots
-  % but shows Watts) needs side-channel data; no-JS shows the plotted value.
+`direction` is a chart property (new in this spec; a core `layout`/`direction` split —
+generalising `layout: row`/`column` to an engine + orientation — is planned for
+`SPEC.md` and would subsume it). It sets the chart's orientation:
 
----
-
-## 12. Legend
-
-Series smart labels **are** the legend — automatic. Bands → the phase-axis (not the
-legend); annotations → neither. `legend: none` hides it (`motor-overload`,
-`plasticizing`, `toggle`); a position knob (`legend: top|right|…`) later.
-
----
-
-## 13. The `layout` / `direction` refactor
-
-Worth doing *with* charts. Split **engine** from **orientation**:
-
-| Property | Picks | Values |
+| `direction` | Plane | Bars grow |
 |---|---|---|
-| `layout:` | the **engine** | `flow` · `grid` · `chart` · `pie` · `auto` |
-| `direction:` | the **orientation** | `row` · `column` · `radial` (+ engine-specific) |
+| `column` *(default)* | cartesian | up |
+| `row` | cartesian | right |
+| `radial` | polar ([§12](#12-radial-charts-radar--radial-bar)) | outward from centre |
 
-`layout: row` becomes `layout: flow; direction: row`; keep `row`/`column` (and
-`|row|`/`|column|`) as **shorthands** so existing diagrams survive. The win:
-`direction: row` means one thing across flexbox, bars, and a future tree —
-`layout: chart; direction: row` is horizontal bars, `layout: auto; direction: radial` is
-a mindmap.
-
----
-
-## 14. Performance
-
-Image 1 fully drawn ≈ **100–160 SVG nodes**. resvg draws that in single-digit ms. Canvas
-only wins for **thousands of points or 60fps animation** — the opposite of a static
-diagram chart. Formulas sample at **compile time**, so runtime is "draw paths." The only
-bloat vector is per-sample interactivity — capped by §11's turning-point dots.
+**The flip never breaks a chart, because nothing is authored in screen coordinates.**
+You write `categories:`, series `data:` (values), and annotations bound to a **named**
+axis (`axis: rev`) with `at:` / `extent:` in *data* values — all logical. `direction`
+only changes how that logical plane is projected: `column → row` swaps the default
+placement (the value axis to the bottom, the x axis to the left); a
+`|mark| { at: 40; axis: rev }` stays "at rev = 40 on the rev axis", merely re-projected.
+Every series follows the same projection, so a mixed bar+line chart stays coherent when
+flipped. An explicit axis `side:` is a screen edge and is honoured as written, so set it
+for the orientation you are in; there is no `x:`/`y:` in chart syntax to go stale.
 
 ---
 
-## 15. The 11 real charts
+## 12. Radial charts (radar & radial bar)
 
-Each notes what it **stresses**. (Long data arrays elided with `…`; structure faithful.)
+`layout: chart; direction: radial` projects the same cartesian model into polar
+coordinates: the **x (domain) axis** bends into a ring (categories become evenly-spaced
+**spokes**, starting at the top, clockwise) and the **value** axis becomes the
+**radius** (centre = range minimum, rim = range maximum). The series types are unchanged
+— this is the cartesian chart, drawn radially:
 
-### 15.1 `cycle-composition` — stacked horizontal bar (image 2)
+| Series in `radial` | Is the chart called |
+|---|---|
+| `\|line\|` (closed loop) | a **radar** (spider/web) |
+| `\|area\|` | a **filled radar** |
+| `\|bars\|` (wedges) | a **radial bar** (polar area) |
+| `\|dots\|` | points on the spokes |
 
-```
-|chart#cycle| {
-  bars: stacked;
-  direction: row;
-  categories: "15 cm³ PS" "50 cm³ ABS" "50 cm³ PC"
-} [
-  |axis#val| "Cycle Time (s) — aluminum mold" { side: bottom }
-
-  |bars| "Close"    { data: 1.4  1.4   1.4;  fill: --accent }
-  |bars| "Inject"   { data: 0.4  1.2   1.7;  fill: --rose }
-  |bars| "Hold"     { data: 1.5  2.0   2.0;  fill: --rose-ink }
-  |bars| "Recovery" { data: 2.2  7.3   7.3;  fill: --amber }
-  |bars| "Open"     { data: 1.1  1.1   1.1;  fill: --purple }
-  |bars| "Charge"   { data: 0    0     1.4;  fill: --sky }
-  |bars| "Settle"   { data: 0.4  10.9  15.3; fill: --gray }
-]
-```
-**Stresses:** stacked + horizontal; segment names lead each line; zero segments draw
-nothing. ~11 lines vs ~30.
-
-### 15.2 `shot-power` — dual-axis segmented lines (image 1)
-
-```
-|chart#shot| { samples: 20; grid: power } [
-  |axis#power| "Power (kW)"        { side: left;  range: 0 4.6 }
-  |axis#vcap|  "Booster V_cap (V)" { side: right; range: 32 49; color: --sky }
-  |axis#time|  "Time (s)"          { side: bottom; range: 0 20 }
-
-  |band| "Close"    { span: 0 1.4;    fill: --accent }
-  |band| "Inject"   { span: 1.4 3.1;  fill: --rose }
-  |band| "Hold"     { span: 3.1 5.1;  fill: --rose-ink }
-  |band| "Recovery" { span: 5.1 12.4; fill: --amber }
-  |band| "Open"     { span: 12.4 13.5; fill: --purple }
-  |band| "Charge"   { span: 13.5 14.9; fill: --sky }
-  |band| "Settle"   { span: 14.9 20;  fill: --gray }
-
-  |line| "Motor draw" {
-    color: --rose; opacity: 0.8;
-    fn: `0.12 + 1.2*exp(-((u-0.8)/0.12)^2)`  `1.5 + 3.0*u^1.1`  `0.5 - 0.12*u`
-        `1.4 - 0.7*u`  `0.26 + 0.1*sin(pi*u)`  0.12  0.2
-  }
-  |line| "Heaters" { color: --amber; opacity: 0.8; fn: 0.6 0 1.2 0.6 1.2 0 1.2 }
-  |line| "Wall draw" {
-    color: --stroke; width: 3;
-    fn: `0.78 + 1.22*exp(-((u-0.8)/0.12)^2)`  `2.03 - 0.33*u^1.4`  `1.66 - 0.12*u`
-        `1.72 - 0.55*u`  1.6  `0.03 + 2.0*exp(-1.4*u)`  1.3
-  }
-  |line| "Booster V_cap" {
-    color: --sky; axis: vcap; style: dashed;
-    fn: 48  `48 - 8*u^1.4`  40  40  40  `48 - 8*exp(-1.4*u)`  `48 - 8*exp(-(1.4 + 2.75*u))`
-  }
-
-  |mark| "1.8 kW breaker"       { at: 1.8; axis: power; color: --stroke }
-  |mark| "heater gating clears" { at: 46;  axis: vcap;  color: --sky }
-  |block| "full cycle 30.2 s →" { at: 17.5 3.2; color: --muted }
-]
-```
-**Stresses:** the keystone (bands → phase-axis → segmentation); dual axis; per-segment
-`u` formulas; jumps & steps; marks + free label. ~40 lines vs ~120 — and the labels lead.
-
-### 15.3 `cycle-times` — grouped bars (image 4)
-
-```
-|chart#cycle| {
-  categories: "15 cm³ ABS" "30 cm³ ABS" "50 cm³ ABS" "50 cm³ PS" "50 cm³ PC"
-} [
-  |axis#val| "Cycle Time (s) — aluminum mold" { side: left }
-
-  |bars| "1.8 kW" { data: 9 15 24 18 30; fill: --stroke; radius: 4 }
-  |bars| "2.3 kW" { data: 7 13 20 14 27; fill: --amber;  radius: 4 }
-  |bars| "3.6 kW" { data: 7 10 14 13 19; fill: --sky;    radius: 4 }
-]
-```
-**Stresses:** grouped bars; rounded corners; legend-first. ~8 lines vs ~40.
-
-### 15.4 `barrel-thermal` — multi-line, explicit points, zones (image 3)
-
-```
-|chart#barrel| { grid: temp } [
-  |axis#pos|  "Position from nozzle (mm)" { side: bottom; range: 0 450 }
-  |axis#temp| "Temperature (°C)"          { side: left;   range: 0 325 }
-
-  |line| "PP"  { color: --sky;   data: 0 225, 60 225, 118 221, 180 214, 235 207,
-                 300 201, 362 196, 375 88, 388 64, 447 58, 485 55 }
-  |line| "ABS" { color: --amber; data: 0 250, 60 250, 118 244, 180 233, 235 222,
-                 300 211, 362 201, 375 94, 388 69, 447 61, 485 57 }
-  |line| "PC"  { color: --red;   data: 0 300, 60 300, 118 293, 180 282, 235 270,
-                 300 261, 362 253, 375 106, 388 76, 447 67, 485 62 }
-
-  |band| "Zone 3"       { span: 0 118;   fill: none }
-  |band| "Zone 2"       { span: 118 235; fill: none }
-  |band| "Zone 1"       { span: 235 362; fill: none }
-  |band| "Cooling ring" { span: 362 388; fill: none }
-  |band| "Feed throat"  { span: 388 450; fill: none }
-
-  |mark| "pellets soften ≈ 130 °C" { at: 130; axis: temp; style: dashed; color: --muted }
-]
-```
-**Stresses:** explicit `x y` points (multi-line value, ends at `}`); fill-less bands
-(dividers + top ticks); a horizontal threshold.
-
-### 15.5 `booster-timeline` — the formula ceiling + rich annotations
-
-```
-|chart#booster| { grid: vcap } [
-  |axis#t|    "Time (s)"        { side: bottom; range: 0 7 }
-  |axis#vcap| "Cap Voltage (V)" { side: left; range: 34 49; step: 2 }
-
-  // numeric integration (q += …) — NOT closed-form (§6): ships as points
-  |area| "Engineering — 50 cm³ at 1,000 bar" { color: --stroke; width: 3; baseline: 48; fill: --accent; data: 0 48, … }
-  |line| "Commodity — 50 cm³ at 681 bar"     { color: --sky; data: 0 48, … }
-
-  |band| { span: 34 36; axis: vcap; fill: --red }
-  |mark| "36 V — driver tier floor"     { at: 36; axis: vcap; color: --red }
-  |mark| "46 V — heater-gate threshold" { at: 46; axis: vcap; color: --muted }
-  |mark| { at: 1.71; axis: t; style: dotted; color: --gray }
-  |block| "inject ends" { at: 1.71 48.4; color: --muted }
-  |mark| "V_min 38.9 V" { at: 1.71 38.9; axis: vcap; color: --stroke }
-  |block| "deferred recharge\nRC · τ = 1 s" { at: 2.7 43; color: --muted }
-]
-```
-**Stresses:** the integration ceiling (points); area-to-a-value (`baseline: 48`); region
-+ line + point + multi-line label annotations — `|mark|` doing both lines (`at: V`) and
-points (`at: X Y`).
-
-### 15.6 `motor-overload` — log axis + smooth area
-
-```
-|chart#motor| { legend: none } [
-  |axis#torque| "Torque (% of rated)" { side: bottom; range: 100 300; step: 50; unit: " %" }
-  |axis#time|   "Max Burst Time (s)"  { side: left; scale: log; range: 1 1000 }
-
-  |area| "Max burst time" { fn: `min(8 / (x/100 - 1)^2, 2000)`; interpolate: smooth; fill: --teal }
-
-  |block| "300 % → 2 s"           { at: 270 5; color: --red }
-  |block| "safe operating region" { at: 170 4; color: --stroke }
-]
-```
-**Stresses:** log y (decade ticks); smooth interpolation; single `fn:` in `x`;
-area-to-baseline; unit ticks; `legend: none`.
-
-### 15.7 `plasticizing-duty` — formula + region + many point marks
-
-```
-|chart#duty| { legend: none } [
-  |axis#torque| "Plasticizing Torque (% of rated)" { side: bottom; range: 100 302; step: 50; unit: " %" }
-  |axis#pct|    "Max Indefinite Duty Cycle (%)"    { side: left; range: 0 105; unit: " %" }
-
-  |area| "Max indefinite duty" { fn: `1e6 / (x*x)`; fill: --teal }
-
-  |band| { span: 200 302; axis: torque; fill: --red }
-  |mark| "200 % firmware cap" { at: 200; axis: torque; color: --red }
-  |mark| "155 % sustained\n→ 42 % duty" { at: 155 41.6; color: --stroke }
-  |mark| "200 % max\n→ 25 % duty"        { at: 200 25;   color: --stroke }
-  |mark| "300 % bench\nblocked"          { at: 300 11.1; color: --red }
-]
-```
-**Stresses:** scientific notation (`1e6`); region; vertical mark; multiple point marks
-with labels; unit ticks.
-
-### 15.8 `pressure-envelope` — dual axis + ternary piecewise
-
-```
-|chart#press| { grid: bar } [
-  |axis#speed| "Injection Speed (mm/s)" { side: bottom; range: 0 133 }
-  |axis#bar|   "Peak Pressure (bar)"    { side: left;  range: 0 1100; color: --stroke }
-  |axis#flow|  "Flow (cm³/s)"           { side: right; range: 0 50;   color: --rose }
-
-  |area| "Peak Pressure (bar)" { axis: bar;  fn: `x <= 93 ? 1000 : 1000 - 319*((x-93)/40)`; fill: --teal }
-  |line| "Flow (cm³/s)"        { axis: flow; fn: `x*42/133`; color: --rose; style: dashed }
-
-  |mark| "1,000 bar @ 93 mm/s" { at: 93; axis: speed; color: --stroke }
-]
-```
-**Stresses:** dual axis; ternary piecewise in one backtick (no bands); area on one axis,
-dashed line on the other.
-
-### 15.9 `toggle` — four axes, log, reversed x, locals
-
-```
-|chart#toggle| { legend: none } [
-  |axis#travel| "Remaining Screw Travel to Lockup (mm)" { side: bottom; range: 50 1 }   // reversed
-
-  |axis#lockup| "Distance to Geometric Lockup (mm)" { side: left;  range: 0 10;            color: --teal }
-  |axis#screw|  "Screw Force (kN)"                  { side: right; range: 0 14; step: 2;   color: --rose }
-  |axis#clamp|  "Clamp Force (kN)"                  { side: right; range: 0 320; step: 40; color: --sky }
-  |axis#ma|     "Mechanical Advantage"             { side: right; scale: log; range: 1 100000; color: --amber }
-
-  |area| "Mechanical Advantage" { axis: ma; interpolate: smooth; color: --amber; fill: --amber; fn: `193800 / x^2.909` }
-  |area| "Clamp Force (kN)" { axis: clamp; interpolate: smooth; color: --sky; fill: --sky;
-    fn: `min(300, 366 * max(0, 0.82 - 1.32e-6*x^3.909))` }
-  |area| "Screw Force (kN)" { axis: screw; interpolate: smooth; color: --rose; fill: --rose;
-    fn: `ma = 193800 / x^2.909;
-         platen = 1.32e-6 * x^3.909;
-         clamp = min(300, 366 * max(0, 0.82 - platen));
-         clamp > 0 ? min(12.6, clamp / (ma*0.95)) : 0` }
-  |line| "Platen Travel to Lockup (mm)" { axis: lockup; interpolate: smooth; style: dashed; color: --teal; fn: `1.32e-6 * x^3.909` }
-
-  |mark| "Mold touch"                 { at: 30.3; axis: travel; color: --stroke }
-  |mark| "Motor 12.6 kN (30:60 belt)" { at: 12.6; axis: screw;  color: --red }
-  |block| "300 kN" { at: 4 310; axis: clamp; color: --sky }
-]
-```
-**Stresses:** four value axes (three sharing the right, source-ordered); log; reversed x
-(`range: 50 1`); `=` locals in one backtick; multiple smooth areas; axis-bound marks.
-The vindication of `|axis#id|` naming.
-
-### 15.10 `tier-power` — stacked-as-increments
-
-```
-|chart#tier| {
-  bars: stacked;
-  direction: row;
-  categories: "1.8 kW" "2.3 kW" "3.6 kW"
-} [
-  |axis#draw| "Wall Draw (% of breaker rating)" { side: bottom; range: 0 120; unit: " %" }
-
-  |bars| "Cycle-average draw" { data: 78.9 67.0 58.7; fill: --teal }
-  |bars| "Peak draw"          { data: 33.3 30.8 17.4; fill: --gray }   // the gap (peak − avg)
-
-  |mark| "breaker continuous rating" { at: 100; axis: draw; color: --rose }
-]
-```
-**Stresses:** incremental stacking (peak series is the gap, so the total lands on the
-true peak, crossing 100% on tier 1); the Watts-behind-% tooltip can't be reproduced
-no-JS (§11).
-
-### 15.11 `tcu-warmup` — a named function for the twin
-
-```
-{
-  ramp(s) `min(100, 25 + 1.572*(x/s) + 0.0142*(x/s)^2)`;
-}
-
-|chart#tcu| { grid: temp } [
-  |axis#t|    "Time (min)"               { side: bottom; range: 0 42 }
-  |axis#temp| "Supply Temperature (°C)"  { side: left; range: 20 108 }
-
-  |area| "Steel cavity (~13 kg)"   { interpolate: smooth; fill: --teal; fn: ramp(1) }
-  |line| "Aluminum cavity (~4 kg)" { interpolate: smooth; style: dashed; color: --sky; fn: `ramp(1/0.7)` }
-
-  |mark| "100 °C max supply setpoint" { at: 100; axis: temp; color: --red }
-  |mark| "60 °C — 19 min"  { at: 19 60;  color: --stroke }
-  |mark| "100 °C — 36 min" { at: 36 100; color: --stroke }
-  |mark| { at: 25.2 100; color: --sky }
-]
-```
-**Stresses:** clamp via `min()`; the scaled twin via **one named function** (`ramp(1)` /
-`ramp(1/0.7)` — no copy-paste); smooth; setpoint + point marks.
+A radial chart has **one value (radius) axis** — `|axis| { range: 0 5 }`; writing
+`side:` on it is an error ([§18](#18-errors)) — shared by every spoke, and one x axis
+(the spokes, from `categories:`). The radius axis's gridlines are concentric
+**polygons** through the spokes (the radar "web"); the spokes themselves are the x
+gridlines. A radar `|line|` connects a series' value on every spoke and **closes** back
+to the first; an `|area|` fills that polygon; `|bars|` fill their angular slot to a value
+radius. `bars:` (`grouped` / `stacked`) and the palette walk behave as in cartesian.
+Concentric **circular** gridlines (the polar-area look) and a configurable start
+angle / direction are [deferred](#20-deferred); the polygon web is the default.
 
 ---
 
-## 16. Gotchas
+## 13. Pie & donut
 
-1. **Tick-label margin is circular** — measure tick labels first (`text::approx_width`),
-   reserve the margin, then place.
-2. **Nice ticks** + **log ticks** (decades 1–9, label 1-2-5) are two routines.
-3. **Dual-axis grids collide** → only the chart's `grid:` axis draws gridlines.
-4. **Zero-size bars** (`Charge 0 0 1.4`) — emit no rect, don't shift the stack.
-5. **Horizontal bars swap axes** — `direction: row` makes the category axis vertical;
-   every "which axis is categorical" check reads `direction`.
-6. **Auto-domain needs a pre-pass** — `range: auto` samples every series first; bars
-   force 0 into the range; **stacked** sums per category (top = sum), not max.
-7. **Sampling vs straightness** — a linear `fn:` needs 2 samples, `sin` ~24. `samples:
-   24` is safe; adaptive (by curvature) is a later refinement.
-8. **The formula ceiling** — integration/recurrence ships as precomputed points (§6).
-9. **Per-segment styling** — `booster` dashes one segment; a segmented `fn:` series can
-   carry per-segment style, a points series can't easily. Decide how far to take it.
-10. **Reversed axis** — `range: 50 1` reverses; scale math + tick order must honour it.
-11. **`fn:` count vs bands** — a per-band `fn:` list must match the band count; loud
-    error, not silent truncation (§8).
-12. **Mark point + label offset** — a point `|mark|`'s label needs an auto-offset so it
-    doesn't sit on the curve.
-13. **Tooltip side-channel** — no-JS shows the plotted value only (§11).
-14. **Draw order** — bands → grid → area → bars → line → dots → annotations → axis →
-    labels → tooltip. Emit in order (or set `layer:` on generated nodes).
-15. **Clipping** — data past `range:` clips to the plot area (image 1 crops at 20 s).
-16. **`fmt` & formulas** — leave backtick text intact; align the `fn:` list and annotate
-    each formula with its band name (§8).
-
----
-
-## 17. Open questions
-
-My lean in **bold**.
-
-1. **Bands drive segmentation** (§8) — with a loud count error + fmt band-name comments —
-   **yes**; vs per-series breakpoints (no magic, more repetition).
-2. **`range:` crops** (one honest window) vs split `range:` / `clip:`.
-3. **`at:` + `axis:`** vs `at-x:` / `at-y:` for marks (§9).
-4. **`|area|` explicit** vs `|line| { fill: }` auto-promoting — **explicit**.
-5. **The `layout`/`direction` refactor** (§13) — **do it now, with shorthands.**
-6. **Free label = `|block|`** vs a dedicated `|label|` type (§9). I lean `|block|`.
-7. **`samples:` default** 24, adaptive later — fine?
-8. **`|line|` series reuse** + rename the primitive to `|arrow|` (§5)? I think yes.
-
----
-
-## 18. Future modes
-
-Both lean on the smart label.
-
-**Pie (`layout: pie`)** — slices walk the palette; smart label = slice label/legend:
+`layout: pie` encodes value as **angle** — each slice's angle is its value over the
+total — a different scale from radial's value-as-radius, hence its own layout. It has no
+axes; its children are `|slice|` nodes:
 
 ```
-|chart#spend| { layout: pie } [
+|pie| "Spend" { hole: 0.5 } [
   |slice| "Ads"    { value: 40 }
   |slice| "SEO"    { value: 30 }
   |slice| "Direct" { value: 30 }
 ]
 ```
 
-New vocabulary: `|slice|` + `value:`. Legend, palette-walk, labels all shared with §5.
-
-**Mindmap / auto-flow (`layout: auto`)** — the engine places nodes; `[ ]` nesting is tree
-structure; `direction:` picks the flavour (the §13 payoff):
-
-```
-|chart#ideas| { layout: auto; direction: radial } [
-  |box#root| "Project" [
-    |box#a| "Design"
-    |box#b| "Build" [ |box#b1| "API"  |box#b2| "UI" ]
-    |box#c| "Ship"
-  ]
-]
-```
-
-`radial` = mindmap fan, `row` = L-to-R tree, `column` = org chart — the same `direction`
-word as bars and flexbox. If `|slice|`'s `value:` and mindmap's `direction: radial` slot
-in with no new machinery, the vocabulary generalised right.
+A `|slice|` is a single-value series ([§3](#3-series)): its `value:` is its magnitude
+(`≥ 0`), its smart label its legend entry, and it walks the palette like any series — so
+slices are distinctly coloured by default. Slices fill the circle in source order,
+clockwise from the top, each angle = `value / Σ value × 360°`; a total of zero is an
+error ([§18](#18-errors)). **`hole:`** (a `0` ≤ n < `1` fraction of the radius, on the
+`|pie|`) cuts an inner hole — `hole: 0` is a pie, `hole: 0.5` a donut. On-slice
+value / percent labels, a centred total in the hole, and exploded slices are
+[deferred](#20-deferred); the legend (from slice labels) carries naming for now.
 
 ---
 
-## 19. In one sentence
+## 14. Tooltips
 
-All eleven of your real charts become **8–40 lines of name-first, readable Lini** that
-theme, dark/light, and bake like any other diagram — because under the hood they're
-rectangles, paths, and text, and every label does the right thing for its type.
+Hover is the only interactivity, with no script ([SPEC §13](SPEC.md) governs output):
+
+- **Baked-safe floor** — every hit target carries a native `<title>`
+  ([SPEC §10](SPEC.md) `title:`), so a value shows on hover in any renderer and survives
+  `--bake-vars`.
+- **Live card** — `tooltip: rich` (default) also emits a CSS `:hover` rule revealing a
+  hidden `<g class="lini-chart-tip">`. The card is generated from primitives, **minimal
+  by default** (the series name and value, small padding), positioned beside the point
+  so it never blankets the plot; `.lini-chart-tip` is a reserved styling hook. It is
+  live-only — a baked SVG keeps the `<title>` and drops the `:hover` card.
+- **Hit targets are sparse** — a sampled curve draws at `samples:` density but emits
+  hover dots only at data points / turning points (~10–20 per series), so node count
+  stays bounded. An invisible-but-hoverable point is a `|dots|` with a transparent fill
+  carrying its `<title>`.
+
+`tooltip: title` keeps only the native title; `tooltip: none` emits neither.
+
+---
+
+## 15. Lowering & render
+
+`layout: chart` / `layout: pie` resolve in the layout phase ([SPEC §17](SPEC.md)),
+since the shared scale needs every child's data first:
+
+1. **Collect** series; resolve `data:` to data-space points (a `fn:`, held unfolded
+   from resolve, is sampled here once the x-domain is known — [§4](#4-data--formulas)).
+2. **Domain** per axis from the union of bound series (nice-rounded unless `range:` set;
+   bars force zero); build each scale.
+3. **Plot rect** = the chart box inset by axis-label and legend gutters (text measured
+   at compile time).
+4. **Lower** every series, axis, band, annotation, and the legend to primitives in baked
+   pixel coordinates: line→`|line|`/`|path|`, area→`|poly|`/`|path|`+`|line|`,
+   bars→`|rect|`s (or `|poly|` wedges, radial), dots→`|oval|`s/markers, slice→`|path|`,
+   ticks/labels→text, gridlines→`|line|`s, the tooltip card→a `|block|`.
+5. **Emit** in a **semantic draw order** — bands → gridlines → areas → bars → lines →
+   dots → annotations → axes → labels → tooltip — so a line sits above its bars without
+   hand-ordering. This is the one place a chart overrides source-order rendering
+   ([SPEC §6](SPEC.md)); `layer:` on a generated node still overrides it.
+
+The output is an ordinary primitive subtree, so route/render, theming, the palette,
+gradients, shadows, `--bake-vars`, `fmt`, and byte-for-byte determinism
+([SPEC §14, §17](SPEC.md)) all apply with no chart-specific code. `lini desugar`
+([SPEC §14](SPEC.md)) prints the lowered tree, making a chart teachable and diffable.
+Charts add **no lexer or parser grammar** ([§17](#17-grammar)) — they are nodes,
+declarations, and children per [SPEC §16](SPEC.md); the new surface is type names
+([§3](#3-series)), properties ([§16](#16-properties)), and the two layout algorithms.
+
+---
+
+## 16. Properties
+
+New properties, with the layout / node each applies to. All paint, text, geometry, and
+`marker:` properties are the core ones ([SPEC §10](SPEC.md)), used with their core
+meaning.
+
+| Property | On | Value | Notes |
+|---|---|---|---|
+| `direction` | `\|chart\|` | `column` · `row` · `radial` | orientation ([§11](#11-direction--the-flip)). |
+| `bars` | `\|chart\|` | `grouped` · `stacked` · `overlay` | multi-`\|bars\|` mode. |
+| `categories` | `\|chart\|` | quoted-string list | x-axis / spoke labels. |
+| `samples` | `\|chart\|` | integer | `fn:` sample count (default 24). |
+| `hole` | `\|pie\|` | `0` ≤ n < `1` | donut inner radius. |
+| `legend` | `\|chart\|` `\|pie\|` | `top` · `right` · `bottom` · `none` | legend placement. |
+| `tooltip` | `\|chart\|` `\|pie\|` | `rich` · `title` · `none` | hover behaviour. |
+| `data` | series | value list / `x y` pairs | explicit data ([§4](#4-data--formulas)). |
+| `fn` | series | backtick, or a per-band list | computed data ([§4](#4-data--formulas), [§7](#7-bands--segmentation)). |
+| `baseline` | `\|area\|` | number | fill target — default the axis zero, or the range floor when zero is out of range. |
+| `curve` | `\|line\|` `\|area\|` | `linear` · `smooth` · `step` | interpolation ([§3](#3-series)). |
+| `axis` | series, `\|mark\|`, `\|band\|` | an `\|axis\|` id | the axis to read / measure against. |
+| `value` | `\|slice\|` | number ≥ 0 | slice magnitude ([§13](#13-pie--donut)). |
+| `side` | `\|axis\|` | `bottom` · `left` · `right` · `top` | cartesian axis edge. |
+| `range` | `\|axis\|` | `a b` (ends number or `auto`) | window + crop + reverse ([§6](#6-scales--domain)). |
+| `scale` | `\|axis\|` | `linear` · `log` | scale kind. |
+| `step` / `ticks` | `\|axis\|` | number / list | tick spacing / explicit ticks. |
+| `unit` | `\|axis\|` | quoted string | tick-label suffix. |
+| `labels` | `\|axis\|` | quoted-string list | explicit tick text. |
+| `gridlines` | `\|axis\|` | `none` · colour | this axis's gridlines. |
+| `at` | `\|mark\|` | `V` / `X Y` | line value / point ([§8](#8-annotations)). |
+| `extent` | `\|band\|` | `a b` | band range on its axis. |
+
+---
+
+## 17. Grammar
+
+Charts add **no grammar** to [SPEC §16](SPEC.md). A chart is a `node` with
+`layout: chart` (or the `|chart|` / `|pie|` template); series, axes, bands, marks, and
+slices are child `node`s; `data:` / `fn:` / `range:` / `at:` / `extent:` are ordinary
+`decl`s whose values are the existing `value` forms (a list of points is comma-grouped;
+a per-band `fn:` is a space-group of backticks and numbers). The additions are the
+built-in **type names** — `chart`, `pie`, `line`, `area`, `bars`, `dots`, `slice`,
+`axis`, `band`, `mark` (`line` already exists as a primitive, [SPEC §7](SPEC.md), and is
+reused) — protected from shadowing like any built-in ([SPEC §15](SPEC.md)) yet free as
+ids ([SPEC §18](SPEC.md)), and the properties of [§16](#16-properties).
+
+---
+
+## 18. Errors
+
+Format and discipline per [SPEC §15](SPEC.md): `filename:line:col: error: <message>`,
+compile-time, with a span.
+
+| Condition | Message |
+|---|---|
+| Series outside a chart | `'\|bars\|' is a chart series — it belongs in a 'layout: chart'` |
+| `\|slice\|` outside a pie | `'\|slice\|' belongs in a 'layout: pie'` |
+| Axis / band / mark outside a chart | `'\|axis\|' belongs in a 'layout: chart'` |
+| Pie given an axis or series | `a pie's children are '\|slice\|' only` |
+| Empty chart | `a chart needs at least one series` |
+| Empty pie | `a pie needs at least one '\|slice\|'` |
+| Series with both `data:` and `fn:` | `a series takes 'data' or 'fn', not both` |
+| Series with neither | `a series needs 'data' or 'fn'` |
+| `fn:` list ≠ band count | `'fn' has N formulas but the chart has M bands` |
+| Data ≠ categories count | `series data has N values but the chart has M categories` |
+| `categories:` with an axis `labels:` | `set 'categories' or an axis 'labels', not both` |
+| `\|mark\|` without `axis:` | `a '\|mark\|' needs 'axis:' to place it` |
+| `\|mark\|` `at:` wrong arity | `'at' takes one value (a line) or two (a point)` |
+| Unknown `axis:` id | `axis 'X' not found` + `; did you mean 'Y'?` |
+| `range:` not two ends | `'range' takes two ends: 'a b', 'a auto', or 'auto b'` |
+| `range:` equal ends | `'range' needs distinct ends` |
+| `scale: log` over a non-positive domain | `a 'scale: log' axis needs a domain above 0` |
+| `side:` in `direction: radial` | `'side' has no meaning in a radial chart — it has one radius axis` |
+| `hole:` out of range | `'hole' is a fraction 0..1` |
+| Negative slice value | `a '\|slice\|' value must be ≥ 0` |
+| Pie total of zero | `a pie's slice values sum to zero` |
+
+---
+
+## 19. Examples
+
+**Grouped bars, categorical, legend-first:**
+```
+|chart| "Cycle time (s)" { categories: "15 cm³" "30 cm³" "50 cm³" } [
+  |bars| "1.8 kW" { data: 9 15 24; fill: --sky }
+  |bars| "2.3 kW" { data: 7 13 20; fill: --amber }
+]
+```
+
+**Dual-axis, a formula, a band, a threshold:**
+```
+|chart| "Injection profile" [
+  |axis#bar|  "Pressure (bar)" { side: left;  range: 0 1100 }
+  |axis#flow| "Flow (cm³/s)"   { side: right; range: 0 50; gridlines: none }
+  |axis#x|    "Speed (mm/s)"   { side: bottom; range: 0 133 }
+
+  |area| "Pressure" { axis: bar;  fn: `x <= 93 ? 1000 : 1000 - 319*((x-93)/40)`; fill: --teal }
+  |line| "Flow"     { axis: flow; fn: `x*42/133`; stroke: --rose-deep; stroke-style: dashed }
+
+  |band| { extent: 93 133; axis: x; fill: --red }
+  |mark| "1000 bar @ 93" { at: 93; axis: x; color: --muted }
+]
+```
+
+**Radar (closed lines on radial spokes):**
+```
+|chart| "Profiles" { direction: radial; categories: "Speed" "Range" "Armor" "Cost" "Stealth" } [
+  |axis| { range: 0 5 }
+  |line| "Scout"   { data: 5 4 2 3 5 }
+  |area| "Cruiser" { data: 3 3 5 4 2; fill: --teal }
+]
+```
+
+**Donut:**
+```
+|pie| "Spend" { hole: 0.5 } [
+  |slice| "Ads" { value: 40 }  |slice| "SEO" { value: 30 }  |slice| "Direct" { value: 30 }
+]
+```
+
+---
+
+## 20. Deferred
+
+Named, not yet built; the syntax above is stable without them.
+
+- **Gauge** — a partial pie / arc for a single value against a total.
+- **Bubble** — a `|dots|` whose size encodes a third value.
+- **Stacked areas** — `bars: stacked` extended to `|area|` series.
+- **Polar-area circular gridlines** and a configurable radial **start angle /
+  direction** (the polygon web and top-clockwise are the defaults — [§12](#12-radial-charts-radar--radial-bar)).
+- **Per-slice explode**, **on-slice value / percent labels**, and a **centred total**
+  in a donut hole ([§13](#13-pie--donut)).
+- **Per-segment styling** — a per-band style list mirroring a segmented `fn:`
+  ([§7](#7-bands--segmentation)).
+- **Time scale** — date domains with calendar-aware nice ticks.
+- **Multi-ring pie / sunburst** — nested `|slice|` levels.
+- **Per-datum styling** — a parallel paint list over `data:` (highlight one bar);
+  today, overlay a `|mark|`.
