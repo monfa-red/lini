@@ -65,6 +65,13 @@ pub fn built_in_defaults() -> VarTable {
         "icon-fill",
         light_dark(rgba(0.0, 0.0, 0.0, 0.16), rgba(255.0, 255.0, 255.0, 0.18)),
     );
+    // A faint line for chart gridlines ([CHARTS.md] §5) — themeable and dark/light
+    // aware like every role var, tree-shaken in only when a chart references it.
+    set_visual(
+        &mut t,
+        "grid",
+        light_dark(rgba(0.0, 0.0, 0.0, 0.10), rgba(255.0, 255.0, 255.0, 0.14)),
+    );
     set_visual(
         &mut t,
         "caption-color",

@@ -154,6 +154,13 @@ pub fn resolve_node(
     }
     ordered.extend(ctx.sheet.node_layers(ancestors, &facts));
     for d in &node.style {
+        // A `fn:` series formula is held unevaluated: its `x` / `u` are unbound here
+        // and are bound only at chart layout, once the x-domain is fixed ([CHARTS.md]
+        // §4) — the same defer `points:` would need if its domain came from siblings.
+        if d.name == "fn" {
+            ordered.push(("fn".to_string(), defer_fn(d)?));
+            continue;
+        }
         // A `points:` parametric expression in `u` is sampled into a vertex list
         // here (SPEC §11.7); any other value folds normally.
         if d.name == "points"
@@ -242,6 +249,35 @@ pub fn resolve_node(
         children,
         span: node.span,
     })
+}
+
+/// Hold a `fn:` series formula unevaluated ([CHARTS.md] §4): each value in the
+/// single space-group is a backtick expression — or a bare constant — parsed now
+/// (so a syntax error surfaces here, with this span) but **not** evaluated, since
+/// its `x` / `u` bind only at chart layout. A whole-domain `fn:` is one expression;
+/// a per-band list ([CHARTS.md] §7) is several.
+fn defer_fn(d: &Decl) -> Result<ResolvedValue, Error> {
+    let [group] = d.groups.as_slice() else {
+        return Err(Error::at(
+            d.span,
+            "'fn' takes a backtick expression or a space-separated per-band list, not a comma list",
+        ));
+    };
+    let mut exprs = Vec::with_capacity(group.len());
+    for v in group {
+        let src = match v {
+            Value::Expr(s) => s.clone(),
+            Value::Number(n) => n.to_string(),
+            _ => {
+                return Err(Error::at(
+                    d.span,
+                    "'fn' takes backtick expressions (or bare constants)",
+                ));
+            }
+        };
+        exprs.push(Expr::parse(&src).map_err(|e| Error::at(d.span, e.0))?);
+    }
+    Ok(ResolvedValue::Deferred(exprs))
 }
 
 /// Sample a parametric `points:` into a vertex list (SPEC §11.7): a backtick

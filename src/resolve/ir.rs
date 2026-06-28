@@ -1,4 +1,5 @@
 use crate::ast::Side;
+use crate::expr::Expr;
 use crate::span::Span;
 use std::collections::{BTreeMap, HashMap};
 
@@ -181,6 +182,12 @@ pub enum ResolvedValue {
         name: String,
         raw: bool,
     },
+    /// A `fn:` series formula, held **unevaluated** (its `x` / `u` are unbound at
+    /// resolve, [CHARTS.md] §4): one `Expr` for a whole-domain `fn:`, or several for a
+    /// per-band list. Sampled to baked numbers at chart layout and never rendered, so
+    /// the two exhaustive `ResolvedValue` matches (`render::values::format_value`,
+    /// `layout::values::describe`) treat it as unreachable / opaque.
+    Deferred(Vec<Expr>),
 }
 
 impl ResolvedValue {

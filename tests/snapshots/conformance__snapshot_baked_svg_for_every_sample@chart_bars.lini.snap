@@ -1,0 +1,82 @@
+---
+source: tests/conformance.rs
+expression: svg
+input_file: samples/chart_bars.lini
+---
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-200 -130 400 260" width="400" height="260" class="lini">
+  <style>
+    .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: bold; color: black; }
+    .lini .lini-canvas { fill: white; }
+    .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-line { stroke-dasharray: none; }
+    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
+  </style>
+  <defs/>
+  <rect class="lini-canvas" x="-200" y="-130" width="400" height="260"/>
+  <g class="lini-scene">
+    <g class="lini-node lini-chart lini-block" transform="translate(0,0)">
+      <rect x="-179" y="-109" width="358" height="218" rx="0" ry="0"/>
+      <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <line x1="-156.8" y1="71" x2="168" y2="71"/>
+      </g>
+      <text class="lini-text" x="-166.1" y="71" style="fill: #888; font-size: 11px">0</text>
+      <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <line x1="-156.8" y1="40.04" x2="168" y2="40.04"/>
+      </g>
+      <text class="lini-text" x="-166.1" y="40.04" style="fill: #888; font-size: 11px">5</text>
+      <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <line x1="-156.8" y1="9.08" x2="168" y2="9.08"/>
+      </g>
+      <text class="lini-text" x="-169.4" y="9.08" style="fill: #888; font-size: 11px">10</text>
+      <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <line x1="-156.8" y1="-21.88" x2="168" y2="-21.88"/>
+      </g>
+      <text class="lini-text" x="-169.4" y="-21.88" style="fill: #888; font-size: 11px">15</text>
+      <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <line x1="-156.8" y1="-52.84" x2="168" y2="-52.84"/>
+      </g>
+      <text class="lini-text" x="-169.4" y="-52.84" style="fill: #888; font-size: 11px">20</text>
+      <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <line x1="-156.8" y1="-83.8" x2="168" y2="-83.8"/>
+      </g>
+      <text class="lini-text" x="-169.4" y="-83.8" style="fill: #888; font-size: 11px">25</text>
+      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(-122.1547,43.136)">
+        <title>15 cm³ · 1.8 kW: 9</title>
+        <rect x="-17.5392" y="-27.864" width="35.0784" height="55.728" rx="0" ry="0"/>
+      </g>
+      <g class="lini-node lini-block" style="fill: #e78022; stroke-width: 0" transform="translate(-83.1787,49.328)">
+        <title>15 cm³ · 2.3 kW: 7</title>
+        <rect x="-17.5392" y="-21.672" width="35.0784" height="43.344" rx="0" ry="0"/>
+      </g>
+      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(-13.888,24.56)">
+        <title>30 cm³ · 1.8 kW: 15</title>
+        <rect x="-17.5392" y="-46.44" width="35.0784" height="92.88" rx="0" ry="0"/>
+      </g>
+      <g class="lini-node lini-block" style="fill: #e78022; stroke-width: 0" transform="translate(25.088,30.752)">
+        <title>30 cm³ · 2.3 kW: 13</title>
+        <rect x="-17.5392" y="-40.248" width="35.0784" height="80.496" rx="0" ry="0"/>
+      </g>
+      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(94.3787,-3.304)">
+        <title>50 cm³ · 1.8 kW: 24</title>
+        <rect x="-17.5392" y="-74.304" width="35.0784" height="148.608" rx="0" ry="0"/>
+      </g>
+      <g class="lini-node lini-block" style="fill: #e78022; stroke-width: 0" transform="translate(133.3547,9.08)">
+        <title>50 cm³ · 2.3 kW: 20</title>
+        <rect x="-17.5392" y="-61.92" width="35.0784" height="123.84" rx="0" ry="0"/>
+      </g>
+      <text class="lini-text" x="-102.6667" y="82.7" style="fill: #888; font-size: 11px">15 cm³</text>
+      <text class="lini-text" x="5.6" y="82.7" style="fill: #888; font-size: 11px">30 cm³</text>
+      <text class="lini-text" x="113.8667" y="82.7" style="fill: #888; font-size: 11px">50 cm³</text>
+      <text class="lini-text" x="0" y="-92.9" style="font-weight: bold; font-size: 13px">Cycle time (s)</text>
+      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(-58.1,95.2)">
+        <rect x="-5.5" y="-5.5" width="11" height="11" rx="0" ry="0"/>
+      </g>
+      <text class="lini-text" x="-27.8" y="95.2" style="font-size: 11px">1.8 kW</text>
+      <g class="lini-node lini-block" style="fill: #e78022; stroke-width: 0" transform="translate(13.5,95.2)">
+        <rect x="-5.5" y="-5.5" width="11" height="11" rx="0" ry="0"/>
+      </g>
+      <text class="lini-text" x="43.8" y="95.2" style="font-size: 11px">2.3 kW</text>
+    </g>
+  </g>
+  <g class="lini-links"/>
+</svg>

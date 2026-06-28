@@ -1,4 +1,5 @@
 mod anchors;
+mod chart;
 mod flex;
 mod grid;
 mod ir;
@@ -246,6 +247,15 @@ pub fn validate_routing(laid: &LaidOut) -> Vec<Violation> {
 /// leaf primitives (no children), the shape's dimensions drive the bbox.
 /// `path` is the inst's dot-path — the key gap growth bumps it under.
 fn layout_inst(inst: &ResolvedInst, growth: &GapGrowth, path: &str) -> Result<PlacedNode, Error> {
+    // A chart ([CHARTS.md]) owns its whole subtree: it reads its children's data,
+    // fixes a shared scale, and emits primitive PlacedNodes itself. Intercept it
+    // here — before the child recursion (which would run `leaf_bbox` on a series with
+    // no `points:`) and before the row/column/grid path (`read_layout_mode` rejects
+    // `layout: chart`).
+    if chart::is_chart(&inst.attrs) {
+        return chart::layout_chart(inst);
+    }
+
     // Recurse into children first.
     let mut children: Vec<PlacedNode> = Vec::with_capacity(inst.children.len());
     for c in &inst.children {

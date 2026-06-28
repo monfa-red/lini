@@ -1,0 +1,4 @@
+|chart| "Cycle time (s)" { categories: "15 cm³" "30 cm³" "50 cm³" } [
+  |bars| "1.8 kW" { data: 9 15 24 }
+  |bars| "2.3 kW" { data: 7 13 20 }
+]

@@ -116,7 +116,15 @@ pub fn resolve_property(
 /// so must be written quoted (SPEC §2). A *name* value (`symbol`, `font-family`, a
 /// colour name) is a bare identifier instead, so it is not listed here.
 fn is_string_valued(name: &str) -> bool {
-    matches!(name, "title" | "href" | "src" | "path")
+    matches!(
+        name,
+        // Core text-valued props (SPEC §2)…
+        "title" | "href" | "src" | "path"
+        // …and the chart props that carry user text ([CHARTS.md] §2/§5): tick / spoke
+        // labels and the unit suffix. Keyword chart props (direction, scale, side, …)
+        // stay bare identifiers.
+        | "categories" | "labels" | "unit"
+    )
 }
 
 /// Whether a resolved value is, or contains, a bare identifier (an unquoted word) —

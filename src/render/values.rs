@@ -34,6 +34,11 @@ pub fn format_value(value: &ResolvedValue, vars: &VarTable, opts: &Options) -> S
                 format_call(c, vars, opts)
             }
         }
+        // A `fn:` formula is sampled to baked numbers at chart layout, so it never
+        // reaches render ([CHARTS.md] §4).
+        ResolvedValue::Deferred(_) => {
+            unreachable!("a deferred fn: is sampled at chart layout, never rendered")
+        }
         ResolvedValue::LiveVar { name, raw } => {
             // `--bake-vars` inlines each var to a literal so renderers without
             // `var()` support (and standalone SVG files) draw correctly;

@@ -146,6 +146,11 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
         ],
         "row" => vec![id("layout", "row")],
         "column" => vec![id("layout", "column")],
+        // Chart containers ([CHARTS.md] §2): the layout preset is the whole bundle,
+        // exactly as `table` is `grid + divider`. The chart layout reads everything
+        // else (sizes, scales, paint) from the node and its children at layout time.
+        "chart" => vec![id("layout", "chart")],
+        "pie" => vec![id("layout", "pie")],
         // A larger icon meant to stand alone as a node, with room for a short
         // label: the icon primitive at 64px with a little padding. Defaults to
         // `fit: contain` so the glyph fills that box rather than floating small

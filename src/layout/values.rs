@@ -87,5 +87,6 @@ fn describe(v: &ResolvedValue) -> &'static str {
         ResolvedValue::List(_) => "list",
         ResolvedValue::Call(_) => "function call",
         ResolvedValue::LiveVar { .. } => "var() reference",
+        ResolvedValue::Deferred(_) => "deferred fn: expression",
     }
 }

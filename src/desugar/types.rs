@@ -25,6 +25,19 @@ pub const TEMPLATES: &[(&str, &str)] = &[
     ("column", "block"),
     ("table", "group"),
     ("sign", "icon"),
+    // Charts ([CHARTS.md]): the two container layouts and the series / structural
+    // types, each a bundle over |block|. `line` is absent — a chart line reuses the
+    // |line| primitive (the chart layout branches on its `data:`/`fn:` vs `points:`).
+    ("chart", "block"),
+    ("pie", "block"),
+    ("area", "block"),
+    ("bars", "block"),
+    ("dots", "block"),
+    ("bubble", "block"),
+    ("slice", "block"),
+    ("axis", "block"),
+    ("band", "block"),
+    ("mark", "block"),
 ];
 
 pub fn is_template(name: &str) -> bool {
