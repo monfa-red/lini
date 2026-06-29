@@ -87,7 +87,7 @@ Notes (`note over a, b "…"`) sit over their lifelines; activation bars are "bu
 rects on a lifeline; `|actor|` is a stick-figure participant.
 
 Open questions: frame syntax could reuse the `[ ]` children convention
-(`loop |until valid| [ … ]`) or take another form (cf. Mermaid's `loop … end`);
+(`loop |until valid| [ … ]`) or take another form (e.g. a `loop … end` block);
 participants explicit vs inferred from first use; a message as a wire vs its own
 node kind. Build later as a full feature — it would inherit the palette/theming
 for free.

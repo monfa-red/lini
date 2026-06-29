@@ -13,7 +13,6 @@ use lini::{Options, OutputFormat};
 /// `tests/linking.rs` (laws, crossing counts, determinism), never by snapshots —
 /// a snapshot would pin one router's coordinates and churn on every phase.
 const LINK_SAMPLES: &[&str] = &[
-    "mermaid_fast.lini",
     "links_simple.lini",
     "links_medium.lini",
     "links_hard.lini",
