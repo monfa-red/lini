@@ -86,16 +86,16 @@ input_file: samples/chart_labels.lini
       <text class="lini-text" x="199.3032" y="107.2" style="fill: #888; font-weight: normal; font-size: 11px">80</text>
       <text class="lini-text" x="5.6" y="121.9" style="fill: #888; font-weight: normal; font-size: 11px">Avg output tokens (k)</text>
       <text class="lini-text" x="0" y="-132.9" style="font-weight: bold; font-size: 13px">Agentic coding performance</text>
-      <g class="lini-node lini-block" style="fill: #0085b3; stroke-width: 0" transform="translate(-107.1,140.1)">
-        <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
+      <g class="lini-node lini-block" style="fill: #0085b3; stroke: #0085b3; stroke-width: 1" transform="translate(-107.1,140.1)">
+        <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
       </g>
       <text class="lini-text" x="-73.5" y="140.1" style="font-weight: bold; font-size: 11px">GLM-5.2</text>
-      <g class="lini-node lini-block" style="fill: #008d51; stroke-width: 0" transform="translate(-28.9,140.1)">
-        <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
+      <g class="lini-node lini-block" style="fill: #008d51; stroke: #008d51; stroke-width: 1" transform="translate(-28.9,140.1)">
+        <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
       </g>
       <text class="lini-text" x="4.7" y="140.1" style="font-weight: bold; font-size: 11px">GLM-5.1</text>
-      <g class="lini-node lini-block" style="fill: #747474; stroke-width: 0" transform="translate(49.3,140.1)">
-        <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
+      <g class="lini-node lini-block" style="fill: #747474; stroke: #747474; stroke-width: 1" transform="translate(49.3,140.1)">
+        <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
       </g>
       <text class="lini-text" x="86.2" y="140.1" style="font-weight: bold; font-size: 11px">Opus 4.8</text>
       <text class="lini-text lini-chart-label" x="-123.5355" y="6.4429" style="fill: #888; font-weight: normal; font-size: 10px">Non-Thinking</text>

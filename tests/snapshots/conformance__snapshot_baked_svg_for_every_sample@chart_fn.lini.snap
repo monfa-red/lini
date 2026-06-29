@@ -60,8 +60,8 @@ input_file: samples/chart_fn.lini
       <text class="lini-text" x="57.4526" y="67.2" style="fill: #888; font-weight: normal; font-size: 11px">100</text>
       <text class="lini-text" x="-9.9" y="81.9" style="fill: #888; font-weight: normal; font-size: 11px">Speed (mm/s)</text>
       <text class="lini-text" x="0" y="-92.9" style="font-weight: bold; font-size: 13px">Injection profile</text>
-      <g class="lini-node lini-block" style="fill: #00bcb1; stroke-width: 0" transform="translate(-58.1,100.1)">
-        <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
+      <g class="lini-node lini-block" style="fill: #00bcb1; stroke: #008e85; stroke-width: 1" transform="translate(-58.1,100.1)">
+        <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
       </g>
       <text class="lini-text" x="-21.2" y="100.1" style="font-weight: bold; font-size: 11px">Pressure</text>
       <g class="lini-node lini-block" style="fill: #008e85; stroke-width: 0" transform="translate(26.7,100.1)">

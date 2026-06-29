@@ -16,37 +16,37 @@ input_file: samples/chart_pie.lini
   <g class="lini-scene">
     <g class="lini-node lini-pie lini-block" transform="translate(0,0)">
       <rect x="-139.25" y="-139.25" width="278.5" height="278.5" rx="0" ry="0"/>
-      <g class="lini-node lini-poly" style="fill: #ec6e97; stroke: none; stroke-width: 0; opacity: 1" transform="translate(0,0)">
+      <g class="lini-node lini-poly" style="fill: #ffb2c9; stroke: #b8476e; stroke-width: 1.5; opacity: 1" transform="translate(0,0)">
         <title>Search: 45 (45%)</title>
         <polygon points="0,-106.4 10.7418,-105.8759 21.3816,-104.3087 31.8184,-101.7132 41.9529,-98.1141 51.6889,-93.5456 60.9339,-88.051 69.6002,-81.6825 77.6054,-74.5007 84.8735,-66.5738 91.3355,-57.977 96.9299,-48.792 101.6036,-39.106 105.3123,-29.0111 108.0207,-18.6031 109.7031,-7.9809 110.3435,2.7546 109.9359,13.5015 108.484,24.1576 106.0017,34.6219 102.5126,44.7947 98.0498,54.5797 92.6557,63.8837 86.3815,72.6185 79.2868,80.701 71.4391,88.0546 62.9128,94.6093 53.7889,100.3029 44.1542,105.0813 34.1,108.8991 0,3.95"/>
       </g>
-      <g class="lini-node lini-poly" style="fill: #00bcb1; stroke: none; stroke-width: 0; opacity: 1" transform="translate(0,0)">
+      <g class="lini-node lini-poly" style="fill: #79e3da; stroke: #008e85; stroke-width: 1.5; opacity: 1" transform="translate(0,0)">
         <title>Direct: 25 (25%)</title>
         <polygon points="34.1,108.8991 23.649,111.7361 12.9703,113.5351 2.1666,114.2787 -8.658,113.9598 -19.3991,112.5815 -29.9535,110.1569 -40.2193,106.7096 -50.0979,102.2726 -59.4939,96.8887 -68.317,90.6097 -76.4822,83.4962 -83.9108,75.6166 -90.5313,67.0468 -96.2799,57.8694 -101.1013,48.1726 -104.9491,38.05 0,3.95"/>
       </g>
-      <g class="lini-node lini-poly" style="fill: #e78022; stroke: none; stroke-width: 0; opacity: 1" transform="translate(0,0)">
+      <g class="lini-node lini-poly" style="fill: #ffbd8d; stroke: #b45700; stroke-width: 1.5; opacity: 1" transform="translate(0,0)">
         <title>Social: 18 (18%)</title>
         <polygon points="-104.9491,38.05 -107.6924,28.0221 -109.4799,17.7805 -110.2955,7.4162 -110.1322,-2.9789 -108.9914,-13.3125 -106.8832,-23.4929 -103.8262,-33.4297 -99.8477,-43.0347 -94.9829,-52.2227 -89.275,-60.9121 -82.7748,-69.0258 -75.5398,-76.4917 0,3.95"/>
       </g>
-      <g class="lini-node lini-poly" style="fill: #00b2e5; stroke: none; stroke-width: 0; opacity: 1" transform="translate(0,0)">
+      <g class="lini-node lini-poly" style="fill: #7eddfd; stroke: #0085b3; stroke-width: 1.5; opacity: 1" transform="translate(0,0)">
         <title>Referral: 12 (12%)</title>
         <polygon points="-75.5398,-76.4917 -67.6343,-83.2436 -59.1285,-89.2216 -50.0979,-94.3726 -40.6225,-98.6508 -30.7867,-102.0184 -20.6775,-104.4454 -10.3849,-105.9103 -0,-106.4 0,3.95"/>
       </g>
       <text class="lini-text" x="0" y="-122.9" style="font-weight: bold; font-size: 13px">Traffic sources</text>
-      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(-136.3,130.1)">
-        <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
+      <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e; stroke-width: 1" transform="translate(-136.3,130.1)">
+        <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
       </g>
       <text class="lini-text" x="-106" y="130.1" style="font-weight: bold; font-size: 11px">Search</text>
-      <g class="lini-node lini-block" style="fill: #00bcb1; stroke-width: 0" transform="translate(-64.7,130.1)">
-        <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
+      <g class="lini-node lini-block" style="fill: #79e3da; stroke: #008e85; stroke-width: 1" transform="translate(-64.7,130.1)">
+        <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
       </g>
       <text class="lini-text" x="-34.4" y="130.1" style="font-weight: bold; font-size: 11px">Direct</text>
-      <g class="lini-node lini-block" style="fill: #e78022; stroke-width: 0" transform="translate(6.9,130.1)">
-        <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
+      <g class="lini-node lini-block" style="fill: #ffbd8d; stroke: #b45700; stroke-width: 1" transform="translate(6.9,130.1)">
+        <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
       </g>
       <text class="lini-text" x="37.2" y="130.1" style="font-weight: bold; font-size: 11px">Social</text>
-      <g class="lini-node lini-block" style="fill: #00b2e5; stroke-width: 0" transform="translate(78.5,130.1)">
-        <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
+      <g class="lini-node lini-block" style="fill: #7eddfd; stroke: #0085b3; stroke-width: 1" transform="translate(78.5,130.1)">
+        <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
       </g>
       <text class="lini-text" x="115.4" y="130.1" style="font-weight: bold; font-size: 11px">Referral</text>
     </g>

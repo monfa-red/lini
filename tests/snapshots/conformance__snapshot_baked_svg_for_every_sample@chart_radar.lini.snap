@@ -71,8 +71,8 @@ input_file: samples/chart_radar.lini
         <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
       </g>
       <text class="lini-text" x="-31.1" y="130.1" style="font-weight: bold; font-size: 11px">Scout</text>
-      <g class="lini-node lini-block" style="fill: #00bcb1; stroke-width: 0" transform="translate(6.9,130.1)">
-        <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
+      <g class="lini-node lini-block" style="fill: #00bcb1; stroke: #008e85; stroke-width: 1" transform="translate(6.9,130.1)">
+        <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
       </g>
       <text class="lini-text" x="40.5" y="130.1" style="font-weight: bold; font-size: 11px">Cruiser</text>
     </g>

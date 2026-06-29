@@ -3,31 +3,15 @@
 //! shared clip, and a line honours `curve: linear | step` and `stroke-style`.
 
 use super::model::{Chart, Curve, Data, Series, SeriesKind};
+use super::palette::deepen;
 use super::prim;
 use super::project::{Dir, Plot};
 use super::scale::{Scale, fmt_tick};
 use crate::layout::PlacedNode;
-use crate::resolve::{MarkerKind, ResolvedValue};
+use crate::resolve::MarkerKind;
 
 /// One datum's data-space coordinate paired with its pixel coordinate.
 pub(super) type Plotted = ((f64, f64), (f64, f64));
-
-/// The `-deep` tier of a palette hue, for an area's default edge ([CHARTS.md] §10):
-/// `--teal` → `--teal-deep`, `--green-soft` → `--green-deep`. A non-palette colour
-/// (a hex, a gradient) is its own edge.
-fn deepen(color: &ResolvedValue) -> ResolvedValue {
-    if let ResolvedValue::LiveVar { name, raw } = color {
-        let base = match name.rsplit_once('-') {
-            Some((b, "wash" | "soft" | "deep" | "ink")) => b,
-            _ => name.as_str(),
-        };
-        return ResolvedValue::LiveVar {
-            name: format!("{base}-deep"),
-            raw: *raw,
-        };
-    }
-    color.clone()
-}
 
 /// All `|area|` series — drawn behind bars and lines ([CHARTS.md] §15).
 pub fn areas(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {

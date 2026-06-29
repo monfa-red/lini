@@ -154,10 +154,14 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
         // user tunes it (`gap: 0` ≈ touching).
         "chart" => vec![id("layout", "chart"), n("gap", 10.0)],
         "pie" => vec![id("layout", "pie"), n("gap", 10.0)],
-        // A bar's corners are softly rounded by default ([CHARTS.md] §3), set on the
-        // class so the user overrides it (`radius: 0` for square); the chart reads the
-        // resolved `radius` and rounds each bar's rect.
-        "bars" => vec![n("radius", 2.0)],
+        // A bar's corners are softly rounded by default ([CHARTS.md] §3); `stroke: auto`
+        // is the outlined-look sentinel ([§10]) — the chart draws a deep edge of the soft
+        // fill, while an explicit `stroke: none` (overriding `auto`) removes it. Both ride
+        // the class so the user overrides them (`radius: 0` square, `stroke: none` flat).
+        "bars" => vec![n("radius", 2.0), id("stroke", "auto")],
+        // A pie slice shares the outlined look ([CHARTS.md] §10/§13): `stroke: auto` gives
+        // it a deep edge of its soft fill unless `stroke: none` opts out.
+        "slice" => vec![id("stroke", "auto")],
         // A `|mark|` annotation point shows a dot by default ([CHARTS.md] §8); the
         // marker cascade then distinguishes that default (and `marker: dot`) from an
         // explicit `marker: none`, which resolve would otherwise collapse together.

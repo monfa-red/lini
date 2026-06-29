@@ -29,21 +29,21 @@ input_file: samples/chart_dual_axis.lini
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
         <line x1="-143.6" y1="-61" x2="150.2" y2="-61"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(-106.875,34.8473)">
+      <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e" transform="translate(-106.875,34.8473)">
         <title>mon · requests: 820</title>
-        <rect x="-23.7978" y="-36.0527" width="47.5956" height="72.1053" rx="2" ry="2"/>
+        <rect x="-23.0478" y="-35.3027" width="46.0956" height="70.6053" rx="2" ry="2"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(-33.425,29.9231)">
+      <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e" transform="translate(-33.425,29.9231)">
         <title>tue · requests: 932</title>
-        <rect x="-23.7978" y="-40.9769" width="47.5956" height="81.9539" rx="2" ry="2"/>
+        <rect x="-23.0478" y="-40.2269" width="46.0956" height="80.4539" rx="2" ry="2"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(40.025,31.286)">
+      <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e" transform="translate(40.025,31.286)">
         <title>wed · requests: 901</title>
-        <rect x="-23.7978" y="-39.614" width="47.5956" height="79.2279" rx="2" ry="2"/>
+        <rect x="-23.0478" y="-38.864" width="46.0956" height="77.7279" rx="2" ry="2"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(113.475,22.9763)">
+      <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e" transform="translate(113.475,22.9763)">
         <title>thu · requests: 1090</title>
-        <rect x="-23.7978" y="-47.9237" width="47.5956" height="95.8473" rx="2" ry="2"/>
+        <rect x="-23.0478" y="-47.1737" width="46.0956" height="94.3473" rx="2" ry="2"/>
       </g>
       <g class="lini-node lini-line" style="stroke: #008e85" transform="translate(0,0)">
         <polyline points="-106.875,43.201 -33.425,60.348 40.025,51.115 113.475,65.624"/>
@@ -81,8 +81,8 @@ input_file: samples/chart_dual_axis.lini
       <text class="lini-text" x="40.025" y="82.6" style="fill: #888; font-weight: normal; font-size: 11px">wed</text>
       <text class="lini-text" x="113.475" y="82.6" style="fill: #888; font-weight: normal; font-size: 11px">thu</text>
       <text class="lini-text" x="0" y="-92.9" style="font-weight: bold; font-size: 13px">Throughput vs error</text>
-      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(-68,100.1)">
-        <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
+      <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e; stroke-width: 1" transform="translate(-68,100.1)">
+        <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
       </g>
       <text class="lini-text" x="-31.1" y="100.1" style="font-weight: bold; font-size: 11px">requests</text>
       <g class="lini-node lini-block" style="fill: #008e85; stroke-width: 0" transform="translate(16.8,100.1)">

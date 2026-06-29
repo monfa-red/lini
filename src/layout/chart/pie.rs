@@ -68,11 +68,15 @@ pub fn layout_pie(inst: &ResolvedInst) -> Result<PlacedNode, Error> {
     Ok(chart_box(inst, w, h, kids))
 }
 
-/// The legend entries — one per slice that carries a label ([CHARTS.md] §9).
-fn legend_entries(slices: &[Slice]) -> Vec<(String, ResolvedValue)> {
+/// The legend entries — one per slice that carries a label ([CHARTS.md] §9). The swatch
+/// mirrors the slice's fill and its (default-deep or explicit) edge.
+fn legend_entries(slices: &[Slice]) -> Vec<super::LegendEntry> {
     slices
         .iter()
-        .filter_map(|s| s.label.clone().map(|l| (l, s.color.clone())))
+        .filter_map(|s| {
+            let edge = s.outline.as_ref().map(|(c, _)| c.clone());
+            s.label.clone().map(|l| (l, s.color.clone(), edge))
+        })
         .collect()
 }
 

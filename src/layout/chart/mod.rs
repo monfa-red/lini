@@ -32,7 +32,7 @@ pub(super) use pie::{is_pie, layout_pie};
 use crate::error::Error;
 use crate::layout::{Bbox, PlacedNode};
 use crate::resolve::{AttrMap, NodeKind, ResolvedInst, ResolvedValue};
-use model::{Chart, Side};
+use model::{Chart, Series, SeriesKind, Side};
 use project::{Dir, Plot};
 
 pub(super) const TITLE_SIZE: f64 = 13.0;
@@ -277,35 +277,54 @@ pub(super) fn legend_reserve(entries: usize, gap: f64) -> f64 {
     }
 }
 
+/// A legend entry ([CHARTS.md] §9): its label, the swatch **fill**, and an optional
+/// swatch **edge** — so the swatch mirrors a series' paint (an outlined bar / slice gets
+/// an outlined swatch, a flat one a flat swatch).
+pub(super) type LegendEntry = (String, ResolvedValue, Option<ResolvedValue>);
+
 /// The legend entries — one per series that carries a label (no label → no entry,
-/// [CHARTS.md] §9).
-fn legend_entries(chart: &Chart) -> Vec<(String, ResolvedValue)> {
+/// [CHARTS.md] §9). The swatch wears the series' fill and edge ([`swatch_edge`]).
+fn legend_entries(chart: &Chart) -> Vec<LegendEntry> {
     chart
         .series
         .iter()
-        .filter_map(|s| s.label.clone().map(|l| (l, s.color.clone())))
+        .filter_map(|s| {
+            s.label
+                .clone()
+                .map(|l| (l, s.color.clone(), swatch_edge(s)))
+        })
         .collect()
 }
 
+/// The edge a series' legend swatch should wear, mirroring what it draws ([CHARTS.md] §9):
+/// a bar / slice its (default-deep or explicit) outline, an area its always-drawn deep
+/// edge, a line / dots usually nothing.
+fn swatch_edge(s: &Series) -> Option<ResolvedValue> {
+    let explicit = s.outline.as_ref().map(|(c, _)| c.clone());
+    match s.kind {
+        SeriesKind::Area => Some(explicit.unwrap_or_else(|| palette::deepen(&s.color))),
+        _ => explicit,
+    }
+}
+
 /// A centred row of swatch + label entries at vertical `cy`. Shared by chart and pie.
-pub(super) fn lay_out_legend(
-    entries: &[(String, ResolvedValue)],
-    cy: f64,
-    out: &mut Vec<PlacedNode>,
-) {
+pub(super) fn lay_out_legend(entries: &[LegendEntry], cy: f64, out: &mut Vec<PlacedNode>) {
     const SW: f64 = 11.0; // swatch side
     const GAP: f64 = 5.0; // swatch → label
     const ITEM_GAP: f64 = 16.0; // entry → entry
     let widths: Vec<f64> = entries
         .iter()
-        .map(|(l, _)| prim::text_width(l, LABEL_SIZE))
+        .map(|(l, _, _)| prim::text_width(l, LABEL_SIZE))
         .collect();
     let per: f64 = widths.iter().map(|w| SW + GAP + w).sum();
     let total = per + ITEM_GAP * widths.len().saturating_sub(1) as f64;
     let mut x = -total / 2.0;
-    for ((label, color), &tw) in entries.iter().zip(&widths) {
-        let mut swatch = prim::rect(x + SW / 2.0, cy, SW, SW, color.clone(), 1.0);
+    for ((label, fill, edge), &tw) in entries.iter().zip(&widths) {
+        let mut swatch = prim::rect(x + SW / 2.0, cy, SW, SW, fill.clone(), 1.0);
         prim::round(&mut swatch, 2.0); // soft swatch corners ([CHARTS.md] §9)
+        if let Some(edge) = edge {
+            prim::outline(&mut swatch, edge.clone(), 1.0); // mirror the series' edge
+        }
         out.push(swatch);
         // The legend stays bold (the chart's chrome), like the title ([CHARTS.md] §9).
         out.push(prim::text(
@@ -345,9 +364,10 @@ mod tests {
             "|chart| \"T\" { categories: \"a\" \"b\" } [\n  |bars| \"S1\" { data: 3 6 }\n  |bars| \"S2\" { data: 4 2 }\n]\n",
         );
         assert!(s.contains("lini-chart"), "chart container class: {s}");
-        // Palette walk: series 0 rose, series 1 teal — red skipped.
-        assert!(s.contains("var(--lini-rose)"), "series 0 hue: {s}");
-        assert!(s.contains("var(--lini-teal)"), "series 1 hue: {s}");
+        // Palette walk: series 0 rose, series 1 teal — red skipped. Bars fill with the
+        // soft tier (the outlined look, [CHARTS.md] §10).
+        assert!(s.contains("var(--lini-rose-soft)"), "series 0 hue: {s}");
+        assert!(s.contains("var(--lini-teal-soft)"), "series 1 hue: {s}");
         assert!(!s.contains("var(--lini-red)"), "red is reserved: {s}");
         assert!(s.contains("var(--lini-grid)"), "gridlines: {s}");
         assert!(s.contains("<title>a · S1: 3</title>"), "bar title: {s}");
@@ -393,12 +413,12 @@ mod tests {
     #[test]
     fn a_bar_stroke_draws_an_outline_without_recoloring_the_fill() {
         // A `stroke:` on a fill shape is a separate outline ([CHARTS.md] §10) — it must
-        // not become the fill. With no `fill:`, the body stays the palette base (rose)
-        // and the stroke is the outline (sky); the old bug made the body sky.
+        // not become the fill. With no `fill:`, the body stays the palette soft tier
+        // (rose) and the stroke is the outline (sky); the old bug made the body sky.
         let s = svg("|chart| { categories: \"a\" } [\n  |bars| { data: 5; stroke: --sky }\n]\n");
         assert!(
-            s.contains("var(--lini-rose)"),
-            "the fill stays the palette base: {s}"
+            s.contains("var(--lini-rose-soft)"),
+            "the fill stays the palette soft tier: {s}"
         );
         assert!(
             s.contains("var(--lini-sky)"),
@@ -407,16 +427,32 @@ mod tests {
     }
 
     #[test]
+    fn bars_default_to_an_outlined_look() {
+        // A default bar fills with the soft tier and gains a deep edge ([CHARTS.md] §10).
+        let s = svg("|chart| { categories: \"a\" } [\n  |bars| { data: 5 }\n]\n");
+        assert!(s.contains("var(--lini-rose-soft)"), "soft fill: {s}");
+        assert!(s.contains("var(--lini-rose-deep)"), "deep edge: {s}");
+    }
+
+    #[test]
+    fn a_bar_stroke_none_opts_out_of_the_edge() {
+        // `stroke: none` overrides the class `auto` sentinel — a flat bar, no edge.
+        let s = svg("|chart| { categories: \"a\" } [\n  |bars| { data: 5; stroke: none }\n]\n");
+        assert!(s.contains("var(--lini-rose-soft)"), "soft fill stays: {s}");
+        assert!(!s.contains("var(--lini-rose-deep)"), "no deep edge: {s}");
+    }
+
+    #[test]
     fn a_slice_stroke_outlines_without_recoloring_the_fill() {
         // The pie bug ([CHARTS.md] §10): `stroke:` on a slice recoloured its fill and
-        // drew no outline. Now slice 0's fill walks the palette (rose) and the stroke is
-        // a separate outline (sky).
+        // drew no outline. Now slice 0's fill walks the palette soft tier (rose) and the
+        // stroke is a separate outline (sky).
         let s = svg(
             "|pie| [\n  |slice| \"a\" { value: 1; stroke: --sky }\n  |slice| \"b\" { value: 1 }\n]\n",
         );
         assert!(
-            s.contains("var(--lini-rose)"),
-            "slice 0 fill stays the palette walk: {s}"
+            s.contains("var(--lini-rose-soft)"),
+            "slice 0 fill stays the palette soft walk: {s}"
         );
         assert!(
             s.contains("var(--lini-sky)"),
@@ -715,12 +751,12 @@ mod tests {
             svg("|pie| \"T\" [\n  |slice| \"a\" { value: 3 }\n  |slice| \"b\" { value: 1 }\n]\n");
         assert!(s.contains("<polygon"), "slice wedges: {s}");
         assert!(
-            s.contains("var(--lini-rose)"),
-            "slice 0 walks the palette: {s}"
+            s.contains("var(--lini-rose-soft)"),
+            "slice 0 walks the palette (soft): {s}"
         );
         assert!(
-            s.contains("var(--lini-teal)"),
-            "slice 1 walks the palette: {s}"
+            s.contains("var(--lini-teal-soft)"),
+            "slice 1 walks the palette (soft): {s}"
         );
         assert!(s.contains(">a</text>"), "a legend label: {s}");
     }

@@ -64,21 +64,21 @@ input_file: samples/chart_log.lini
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
         <line x1="-130.4" y1="-61" x2="168" y2="-61"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(-93.1,78.1434)">
+      <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e" transform="translate(-93.1,78.1434)">
         <title>free: 5</title>
-        <rect x="-24.1704" y="-10.4566" width="48.3408" height="20.9132" rx="2" ry="2"/>
+        <rect x="-23.4204" y="-9.7066" width="46.8408" height="19.4132" rx="2" ry="2"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(-18.5,60.1298)">
+      <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e" transform="translate(-18.5,60.1298)">
         <title>pro: 80</title>
-        <rect x="-24.1704" y="-28.4702" width="48.3408" height="56.9405" rx="2" ry="2"/>
+        <rect x="-23.4204" y="-27.7202" width="46.8408" height="55.4405" rx="2" ry="2"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(56.1,42.5354)">
+      <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e" transform="translate(56.1,42.5354)">
         <title>team: 1200</title>
-        <rect x="-24.1704" y="-46.0646" width="48.3408" height="92.1291" rx="2" ry="2"/>
+        <rect x="-23.4204" y="-45.3146" width="46.8408" height="90.6291" rx="2" ry="2"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(130.7,18.9879)">
+      <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e" transform="translate(130.7,18.9879)">
         <title>ent: 45000</title>
-        <rect x="-24.1704" y="-69.6121" width="48.3408" height="139.2241" rx="2" ry="2"/>
+        <rect x="-23.4204" y="-68.8621" width="46.8408" height="137.7241" rx="2" ry="2"/>
       </g>
       <text class="lini-text" x="-139.7" y="88.6" style="fill: #888; font-weight: normal; font-size: 11px">1</text>
       <text class="lini-text" x="-139.7" y="79.5932" style="fill: #888; font-weight: normal; font-size: 11px">2</text>

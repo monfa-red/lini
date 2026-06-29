@@ -76,12 +76,12 @@ input_file: samples/chart_outline.lini
         <text class="lini-text" x="48.7" y="95.6" style="fill: #888; font-weight: normal; font-size: 11px">Q3</text>
         <text class="lini-text" x="134.9" y="95.6" style="fill: #888; font-weight: normal; font-size: 11px">Q4</text>
         <text class="lini-text" x="0" y="-107.9" style="font-weight: bold; font-size: 13px">Outlined &amp; rounded</text>
-        <g class="lini-node lini-block" style="fill: #7eddfd; stroke-width: 0" transform="translate(-51.5,115.1)">
-          <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
+        <g class="lini-node lini-block" style="fill: #7eddfd; stroke: #0085b3; stroke-width: 1" transform="translate(-51.5,115.1)">
+          <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
         </g>
         <text class="lini-text" x="-27.8" y="115.1" style="font-weight: bold; font-size: 11px">Plan</text>
-        <g class="lini-node lini-block" style="fill: #eec978; stroke-width: 0" transform="translate(6.9,115.1)">
-          <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
+        <g class="lini-node lini-block" style="fill: #eec978; stroke: #9f6900; stroke-width: 1" transform="translate(6.9,115.1)">
+          <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
         </g>
         <text class="lini-text" x="37.2" y="115.1" style="font-weight: bold; font-size: 11px">Actual</text>
       </g>
@@ -100,16 +100,16 @@ input_file: samples/chart_outline.lini
           <polygon points="-88.7811,32.7967 -91.1018,24.3137 -92.6139,15.6499 -93.3039,6.8822 -93.1658,-1.9115 -92.2007,-10.6532 -90.4172,-19.2652 -87.8312,-27.6712 -84.4656,-35.7965 -80.3503,-43.569 -75.5217,-50.9198 -70.0229,-57.7835 -63.9025,-64.0992 -57.2149,-69.811 -50.0194,-74.868 -42.38,-79.2255 -34.3644,-82.8446 -26.0438,-85.6934 -17.492,-87.7465 -8.785,-88.9857 -0,-89.4 0,3.95"/>
         </g>
         <text class="lini-text" x="0" y="-107.9" style="font-weight: bold; font-size: 13px">Share of spend</text>
-        <g class="lini-node lini-block" style="fill: #ffb2c9; stroke-width: 0" transform="translate(-74.1,115.1)">
-          <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
+        <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e; stroke-width: 1" transform="translate(-74.1,115.1)">
+          <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
         </g>
         <text class="lini-text" x="-53.7" y="115.1" style="font-weight: bold; font-size: 11px">Ads</text>
-        <g class="lini-node lini-block" style="fill: #79e3da; stroke-width: 0" transform="translate(-22.3,115.1)">
-          <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
+        <g class="lini-node lini-block" style="fill: #79e3da; stroke: #008e85; stroke-width: 1" transform="translate(-22.3,115.1)">
+          <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
         </g>
         <text class="lini-text" x="-1.9" y="115.1" style="font-weight: bold; font-size: 11px">SEO</text>
-        <g class="lini-node lini-block" style="fill: #7eddfd; stroke-width: 0" transform="translate(29.5,115.1)">
-          <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
+        <g class="lini-node lini-block" style="fill: #7eddfd; stroke: #0085b3; stroke-width: 1" transform="translate(29.5,115.1)">
+          <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
         </g>
         <text class="lini-text" x="59.8" y="115.1" style="font-weight: bold; font-size: 11px">Direct</text>
       </g>

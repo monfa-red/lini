@@ -338,7 +338,7 @@ One smart-label rule ([SPEC §3](SPEC.md)), placed by where the label sits:
 | Label on | Becomes |
 |---|---|
 | the `\|chart\|` / `\|pie\|` | the **title** (a caption above the plot) |
-| a series / `\|slice\|` | a **legend** entry, with a swatch in its colour |
+| a series / `\|slice\|` | a **legend** entry, with a swatch **mirroring its paint** — fill and edge, so an outlined bar / slice gets an outlined swatch ([§10](#10-colour)) |
 | an `\|axis\|` | the **axis title** |
 | a `\|band\|` | a **tick** along the band's axis, tinted its `fill` |
 | a `\|mark\|` | the annotation's **label** |
@@ -366,11 +366,14 @@ this fixed sequence — repeating if exhausted, so the result is deterministic
 --rose  --orange  --amber  --lime  --green  --teal  --sky  --blue  --purple  --gray
 ```
 
-Each series takes its hue at the tier the role wants: a line the `deep` stroke, an
-area/bar the base fill with a `deep` edge, dots the `ink`. The legend swatch and tooltip
-accent follow the series' dominant paint (its `fill` if it has one, else its `stroke`).
-In `layout: pie` the walk is **per slice** (each part is a distinct colour), the one
-place colour walks per datum rather than per series.
+Each series takes its hue at the tier the role wants — **the outlined look**: a `|bars|` /
+`|area|` / `|slice|` fills with the **`soft`** tier and gains a **`deep`** edge below it
+(`stroke: none` removes the edge — a flat fill); a line takes the `deep` stroke, dots the
+`ink`. An explicit `fill:` keeps its own colour and still gains a deep edge of it; an
+explicit `stroke:` is that edge. The legend swatch **mirrors** the series' paint — its
+fill and its edge — and the tooltip accent follows the dominant paint (its `fill` if it
+has one, else its `stroke`). In `layout: pie` the walk is **per slice** (each part a
+distinct colour), the one place colour walks per datum rather than per series.
 
 ---
 

@@ -464,12 +464,14 @@ pub fn build_pie(inst: &ResolvedInst) -> Result<Pie, Error> {
         if value < 0.0 {
             return Err(Error::at(s.span, "a '|slice|' value must be ≥ 0"));
         }
-        let color = fill_color(&s.attrs).unwrap_or_else(|| live(palette::hue(i)));
+        let color =
+            fill_color(&s.attrs).unwrap_or_else(|| live(&format!("{}-soft", palette::hue(i))));
+        let edge = fill_outline(&s.attrs, &color);
         slices.push(Slice {
             value,
             label: label_of(s),
             color,
-            outline: outline(&s.attrs),
+            outline: edge,
         });
     }
     if slices.iter().map(|s| s.value).sum::<f64>() <= 0.0 {
@@ -626,10 +628,12 @@ fn read_series(
         SeriesKind::Dots => fill.or(stroke),
     }
     .unwrap_or_else(|| {
+        // The outlined look ([CHARTS.md] §10): a bar / area fills with the **soft** tier
+        // and gains a **deep** edge below; a line takes the deep stroke, dots the ink.
         let suffix = match kind {
             SeriesKind::Line => "-deep",
             SeriesKind::Dots => "-ink",
-            SeriesKind::Bars | SeriesKind::Area => "",
+            SeriesKind::Bars | SeriesKind::Area => "-soft",
         };
         live(&format!("{}{}", palette::hue(index), suffix))
     });
@@ -646,6 +650,12 @@ fn read_series(
     let tags = read_tags(inst, &data)?;
     let tooltip = super::tooltip::read_or(&inst.attrs, chart_tip)?;
     let tag_color = real_color(inst.attrs.get("color")).unwrap_or_else(muted);
+    // `|bars|` default to a deep edge of their soft fill (the outlined look, [§10]); an
+    // `|area|` reads its explicit `stroke` here and otherwise deepens its fill at draw.
+    let edge = match kind {
+        SeriesKind::Bars => fill_outline(&inst.attrs, &color),
+        _ => outline(&inst.attrs),
+    };
     Ok(Series {
         kind,
         data,
@@ -658,7 +668,7 @@ fn read_series(
         tag_color,
         curve: read_curve(&inst.attrs)?,
         stroke_style: inst.attrs.get("stroke-style").cloned(),
-        outline: outline(&inst.attrs),
+        outline: edge,
         thickness: inst.attrs.number("stroke-width").unwrap_or(2.0),
         radius: inst.attrs.number("radius").unwrap_or(0.0),
         dot: (dot_w, dot_h),
@@ -1409,11 +1419,28 @@ fn fill_color(attrs: &AttrMap) -> Option<ResolvedValue> {
 }
 
 /// A fill shape's explicit `stroke:` outline ([CHARTS.md] §10): its colour paired with
-/// `stroke-width` (default 2), or `None` for no outline. The one reader shared by series
-/// (bars / area), slices, and bubbles — so a `stroke:` is always a separate outline and
-/// never leaks into the fill.
+/// `stroke-width` (default 1.5), or `None` for no outline. Used by `|area|` and `|bubble|`
+/// (explicit-only); `|bars|` / `|slice|` use [`fill_outline`] for the default deep edge.
 fn outline(attrs: &AttrMap) -> Option<(ResolvedValue, f64)> {
-    real_color(attrs.get("stroke")).map(|c| (c, attrs.number("stroke-width").unwrap_or(2.0)))
+    real_color(attrs.get("stroke")).map(|c| (c, attrs.number("stroke-width").unwrap_or(1.5)))
+}
+
+/// A fill *series'* outline — the outlined look ([CHARTS.md] §10). An explicit `stroke:`
+/// colour wins; the class default `stroke: auto` (or a bare role var / unset) draws a
+/// **deep** edge of the `fill`; `stroke: none` removes it. The `auto` sentinel on the
+/// `.lini-bars` / `.lini-slice` class is what separates an unset stroke (→ a default edge)
+/// from an explicit `none` (→ no edge). Shared by `|bars|` (here) and `|slice|`
+/// ([`build_pie`]), so the default edge derives in one place.
+fn fill_outline(attrs: &AttrMap, fill: &ResolvedValue) -> Option<(ResolvedValue, f64)> {
+    let width = attrs.number("stroke-width").unwrap_or(1.5);
+    match attrs.get("stroke") {
+        Some(ResolvedValue::Ident(s)) if s == "none" => None,
+        Some(ResolvedValue::Ident(s)) if s == "auto" => Some((palette::deepen(fill), width)),
+        other => match real_color(other) {
+            Some(c) => Some((c, width)),
+            None => Some((palette::deepen(fill), width)),
+        },
+    }
 }
 
 fn real_color(v: Option<&ResolvedValue>) -> Option<ResolvedValue> {
