@@ -1,6 +1,0 @@
-|chart| "Throughput vs error" { categories: "mon" "tue" "wed" "thu"; } [
-  |axis#req| "requests" { side: left; }
-  |axis#err| "error" { side: right; range: 0 10; unit: "%"; }
-  |bars| "requests" { data: 820 932 901 1090; axis: req; }
-  |line| "error %" { data: 2.1 0.8 1.5 0.4; axis: err; marker: dot; }
-]

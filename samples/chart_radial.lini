@@ -1,0 +1,17 @@
+// Radial charts (direction: radial): a radar (closed lines/areas on spokes) and
+// a radial bar (wedges from the centre).
+|grid| { columns: repeat(2); gap: 24; } [
+  |chart| "Ship profiles" {
+    direction: radial; categories: "Speed" "Range" "Armor" "Cost" "Stealth";
+  } [
+    |axis| { range: 0 5; }
+    |line| "Scout" { data: 5 4 2 3 5; }
+    |area| "Cruiser" { data: 3 3 5 4 2; fill: --teal; }
+  ]
+  |chart| "Goal completion %" {
+    direction: radial; categories: "Mon" "Tue" "Wed" "Thu" "Fri" "Sat" "Sun";
+  } [
+    |axis| { range: 0 100; }
+    |bars| "steps" { data: 80 65 90 70 95 40 55; }
+  ]
+]

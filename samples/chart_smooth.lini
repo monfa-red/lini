@@ -1,3 +1,0 @@
-|chart| "Temperature (°C)" { categories: "6h" "9h" "12h" "15h" "18h" "21h"; } [
-  |line| "outdoor" { data: 8 12 19 22 17 11; curve: smooth; marker: dot; }
-]

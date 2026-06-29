@@ -1,4 +1,21 @@
-|chart| "Cycle time (s)" { categories: "15 cm³" "30 cm³" "50 cm³"; } [
-  |bars| "1.8 kW" { data: 9 15 24; }
-  |bars| "2.3 kW" { data: 7 13 20; }
+// Bar charts: grouped, stacked, and horizontal (direction: row).
+|grid| { columns: repeat(2); gap: 24; } [
+  |chart| "Cycle time (s)" { categories: "15 cm³" "30 cm³" "50 cm³"; } [
+    |bars| "1.8 kW" { data: 9 15 24; }
+    |bars| "2.3 kW" { data: 7 13 20; }
+  ]
+  |chart| "Revenue by region ($k)" {
+    categories: "Q1" "Q2" "Q3" "Q4"; bars: stacked;
+  } [
+    |bars| "NA" { data: 40 45 50 60; }
+    |bars| "EU" { data: 30 35 33 40; }
+    |bars| "APAC" { data: 20 25 30 38; }
+  ]
+  |chart| "Quarterly hires by team" {
+    direction: row; categories: "Engineering" "Sales" "Support" "Ops";
+  } [
+    |axis| "people" { side: bottom; }
+    |bars| "Q1" { data: 12 8 5 3; }
+    |bars| "Q2" { data: 15 10 6 4; }
+  ]
 ]

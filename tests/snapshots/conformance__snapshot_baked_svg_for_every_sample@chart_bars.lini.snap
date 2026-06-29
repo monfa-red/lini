@@ -3,7 +3,7 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/chart_bars.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-200 -130 400 260" width="400" height="260" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-392.75 -252.75 785.5 505.5" width="785.5" height="505.5" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
@@ -12,70 +12,222 @@ input_file: samples/chart_bars.lini
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
   </style>
   <defs/>
-  <rect class="lini-canvas" x="-200" y="-130" width="400" height="260"/>
+  <rect class="lini-canvas" x="-392.75" y="-252.75" width="785.5" height="505.5"/>
   <g class="lini-scene">
-    <g class="lini-node lini-chart lini-block" transform="translate(0,0)">
-      <rect x="-179.25" y="-109.25" width="358.5" height="218.5" rx="0" ry="0"/>
-      <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-156.8" y1="70.9" x2="168" y2="70.9"/>
+    <g class="lini-node lini-grid lini-block" transform="translate(0,0)">
+      <rect x="-372" y="-232" width="744" height="464" rx="0" ry="0"/>
+      <g class="lini-node lini-chart lini-block" transform="translate(-192,-122)">
+        <rect x="-179.25" y="-109.25" width="358.5" height="218.5" rx="0" ry="0"/>
+        <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+          <line x1="-156.8" y1="70.9" x2="168" y2="70.9"/>
+        </g>
+        <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+          <line x1="-156.8" y1="41.44" x2="168" y2="41.44"/>
+        </g>
+        <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+          <line x1="-156.8" y1="11.98" x2="168" y2="11.98"/>
+        </g>
+        <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+          <line x1="-156.8" y1="-17.48" x2="168" y2="-17.48"/>
+        </g>
+        <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+          <line x1="-156.8" y1="-46.94" x2="168" y2="-46.94"/>
+        </g>
+        <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+          <line x1="-156.8" y1="-76.4" x2="168" y2="-76.4"/>
+        </g>
+        <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e" transform="translate(-122.1547,44.386)">
+          <title>15 cm³ · 1.8 kW: 9</title>
+          <rect x="-16.7892" y="-25.764" width="33.5784" height="51.528" rx="2" ry="2"/>
+        </g>
+        <g class="lini-node lini-block" style="fill: #79e3da; stroke: #008e85" transform="translate(-83.1787,50.278)">
+          <title>15 cm³ · 2.3 kW: 7</title>
+          <rect x="-16.7892" y="-19.872" width="33.5784" height="39.744" rx="2" ry="2"/>
+        </g>
+        <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e" transform="translate(-13.888,26.71)">
+          <title>30 cm³ · 1.8 kW: 15</title>
+          <rect x="-16.7892" y="-43.44" width="33.5784" height="86.88" rx="2" ry="2"/>
+        </g>
+        <g class="lini-node lini-block" style="fill: #79e3da; stroke: #008e85" transform="translate(25.088,32.602)">
+          <title>30 cm³ · 2.3 kW: 13</title>
+          <rect x="-16.7892" y="-37.548" width="33.5784" height="75.096" rx="2" ry="2"/>
+        </g>
+        <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e" transform="translate(94.3787,0.196)">
+          <title>50 cm³ · 1.8 kW: 24</title>
+          <rect x="-16.7892" y="-69.954" width="33.5784" height="139.908" rx="2" ry="2"/>
+        </g>
+        <g class="lini-node lini-block" style="fill: #79e3da; stroke: #008e85" transform="translate(133.3547,11.98)">
+          <title>50 cm³ · 2.3 kW: 20</title>
+          <rect x="-16.7892" y="-58.17" width="33.5784" height="116.34" rx="2" ry="2"/>
+        </g>
+        <text class="lini-text" x="-166.1" y="70.9" style="fill: #888; font-weight: normal; font-size: 11px">0</text>
+        <text class="lini-text" x="-166.1" y="41.44" style="fill: #888; font-weight: normal; font-size: 11px">5</text>
+        <text class="lini-text" x="-169.4" y="11.98" style="fill: #888; font-weight: normal; font-size: 11px">10</text>
+        <text class="lini-text" x="-169.4" y="-17.48" style="fill: #888; font-weight: normal; font-size: 11px">15</text>
+        <text class="lini-text" x="-169.4" y="-46.94" style="fill: #888; font-weight: normal; font-size: 11px">20</text>
+        <text class="lini-text" x="-169.4" y="-76.4" style="fill: #888; font-weight: normal; font-size: 11px">25</text>
+        <text class="lini-text" x="-102.6667" y="82.6" style="fill: #888; font-weight: normal; font-size: 11px">15 cm³</text>
+        <text class="lini-text" x="5.6" y="82.6" style="fill: #888; font-weight: normal; font-size: 11px">30 cm³</text>
+        <text class="lini-text" x="113.8667" y="82.6" style="fill: #888; font-weight: normal; font-size: 11px">50 cm³</text>
+        <text class="lini-text" x="0" y="-92.9" style="font-weight: bold; font-size: 13px">Cycle time (s)</text>
+        <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e; stroke-width: 1" transform="translate(-58.1,100.1)">
+          <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
+        </g>
+        <text class="lini-text" x="-27.8" y="100.1" style="font-weight: bold; font-size: 11px">1.8 kW</text>
+        <g class="lini-node lini-block" style="fill: #79e3da; stroke: #008e85; stroke-width: 1" transform="translate(13.5,100.1)">
+          <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
+        </g>
+        <text class="lini-text" x="43.8" y="100.1" style="font-weight: bold; font-size: 11px">2.3 kW</text>
       </g>
-      <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-156.8" y1="41.44" x2="168" y2="41.44"/>
+      <g class="lini-node lini-chart lini-block" transform="translate(192,-122)">
+        <rect x="-179.25" y="-109.25" width="358.5" height="218.5" rx="0" ry="0"/>
+        <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+          <line x1="-150.2" y1="70.9" x2="168" y2="70.9"/>
+        </g>
+        <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+          <line x1="-150.2" y1="21.8" x2="168" y2="21.8"/>
+        </g>
+        <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+          <line x1="-150.2" y1="-27.3" x2="168" y2="-27.3"/>
+        </g>
+        <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+          <line x1="-150.2" y1="-76.4" x2="168" y2="-76.4"/>
+        </g>
+        <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e" transform="translate(-110.425,51.26)">
+          <title>Q1 · NA: 40</title>
+          <rect x="-25.0242" y="-18.89" width="50.0484" height="37.78" rx="2" ry="2"/>
+        </g>
+        <g class="lini-node lini-block" style="fill: #79e3da; stroke: #008e85" transform="translate(-110.425,16.89)">
+          <title>Q1 · EU: 30</title>
+          <rect x="-25.0242" y="-13.98" width="50.0484" height="27.96" rx="2" ry="2"/>
+        </g>
+        <g class="lini-node lini-block" style="fill: #ffbd8d; stroke: #b45700" transform="translate(-110.425,-7.66)">
+          <title>Q1 · APAC: 20</title>
+          <rect x="-25.0242" y="-9.07" width="50.0484" height="18.14" rx="2" ry="2"/>
+        </g>
+        <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e" transform="translate(-30.875,48.805)">
+          <title>Q2 · NA: 45</title>
+          <rect x="-25.0242" y="-21.345" width="50.0484" height="42.69" rx="2" ry="2"/>
+        </g>
+        <g class="lini-node lini-block" style="fill: #79e3da; stroke: #008e85" transform="translate(-30.875,9.525)">
+          <title>Q2 · EU: 35</title>
+          <rect x="-25.0242" y="-16.435" width="50.0484" height="32.87" rx="2" ry="2"/>
+        </g>
+        <g class="lini-node lini-block" style="fill: #ffbd8d; stroke: #b45700" transform="translate(-30.875,-19.935)">
+          <title>Q2 · APAC: 25</title>
+          <rect x="-25.0242" y="-11.525" width="50.0484" height="23.05" rx="2" ry="2"/>
+        </g>
+        <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e" transform="translate(48.675,46.35)">
+          <title>Q3 · NA: 50</title>
+          <rect x="-25.0242" y="-23.8" width="50.0484" height="47.6" rx="2" ry="2"/>
+        </g>
+        <g class="lini-node lini-block" style="fill: #79e3da; stroke: #008e85" transform="translate(48.675,5.597)">
+          <title>Q3 · EU: 33</title>
+          <rect x="-25.0242" y="-15.453" width="50.0484" height="30.906" rx="2" ry="2"/>
+        </g>
+        <g class="lini-node lini-block" style="fill: #ffbd8d; stroke: #b45700" transform="translate(48.675,-25.336)">
+          <title>Q3 · APAC: 30</title>
+          <rect x="-25.0242" y="-13.98" width="50.0484" height="27.96" rx="2" ry="2"/>
+        </g>
+        <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e" transform="translate(128.225,41.44)">
+          <title>Q4 · NA: 60</title>
+          <rect x="-25.0242" y="-28.71" width="50.0484" height="57.42" rx="2" ry="2"/>
+        </g>
+        <g class="lini-node lini-block" style="fill: #79e3da; stroke: #008e85" transform="translate(128.225,-7.66)">
+          <title>Q4 · EU: 40</title>
+          <rect x="-25.0242" y="-18.89" width="50.0484" height="37.78" rx="2" ry="2"/>
+        </g>
+        <g class="lini-node lini-block" style="fill: #ffbd8d; stroke: #b45700" transform="translate(128.225,-45.958)">
+          <title>Q4 · APAC: 38</title>
+          <rect x="-25.0242" y="-17.908" width="50.0484" height="35.816" rx="2" ry="2"/>
+        </g>
+        <text class="lini-text" x="-159.5" y="70.9" style="fill: #888; font-weight: normal; font-size: 11px">0</text>
+        <text class="lini-text" x="-162.8" y="21.8" style="fill: #888; font-weight: normal; font-size: 11px">50</text>
+        <text class="lini-text" x="-166.1" y="-27.3" style="fill: #888; font-weight: normal; font-size: 11px">100</text>
+        <text class="lini-text" x="-166.1" y="-76.4" style="fill: #888; font-weight: normal; font-size: 11px">150</text>
+        <text class="lini-text" x="-110.425" y="82.6" style="fill: #888; font-weight: normal; font-size: 11px">Q1</text>
+        <text class="lini-text" x="-30.875" y="82.6" style="fill: #888; font-weight: normal; font-size: 11px">Q2</text>
+        <text class="lini-text" x="48.675" y="82.6" style="fill: #888; font-weight: normal; font-size: 11px">Q3</text>
+        <text class="lini-text" x="128.225" y="82.6" style="fill: #888; font-weight: normal; font-size: 11px">Q4</text>
+        <text class="lini-text" x="0" y="-92.9" style="font-weight: bold; font-size: 13px">Revenue by region ($k)</text>
+        <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e; stroke-width: 1" transform="translate(-60.9,100.1)">
+          <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
+        </g>
+        <text class="lini-text" x="-43.8" y="100.1" style="font-weight: bold; font-size: 11px">NA</text>
+        <g class="lini-node lini-block" style="fill: #79e3da; stroke: #008e85; stroke-width: 1" transform="translate(-15.7,100.1)">
+          <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
+        </g>
+        <text class="lini-text" x="1.4" y="100.1" style="font-weight: bold; font-size: 11px">EU</text>
+        <g class="lini-node lini-block" style="fill: #ffbd8d; stroke: #b45700; stroke-width: 1" transform="translate(29.5,100.1)">
+          <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
+        </g>
+        <text class="lini-text" x="53.2" y="100.1" style="font-weight: bold; font-size: 11px">APAC</text>
       </g>
-      <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-156.8" y1="11.98" x2="168" y2="11.98"/>
+      <g class="lini-node lini-chart lini-block" transform="translate(-192,122)">
+        <rect x="-179.25" y="-109.25" width="358.5" height="218.5" rx="0" ry="0"/>
+        <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+          <line x1="-99.4" y1="-76.4" x2="-99.4" y2="55.5"/>
+        </g>
+        <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+          <line x1="-10.2667" y1="-76.4" x2="-10.2667" y2="55.5"/>
+        </g>
+        <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+          <line x1="78.8667" y1="-76.4" x2="78.8667" y2="55.5"/>
+        </g>
+        <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+          <line x1="168" y1="-76.4" x2="168" y2="55.5"/>
+        </g>
+        <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e" transform="translate(7.56,-65.848)">
+          <title>Engineering · Q1: 12</title>
+          <rect x="-106.21" y="-4.5919" width="212.42" height="9.1839" rx="2" ry="2"/>
+        </g>
+        <g class="lini-node lini-block" style="fill: #79e3da; stroke: #008e85" transform="translate(34.3,-53.977)">
+          <title>Engineering · Q2: 15</title>
+          <rect x="-132.95" y="-4.5919" width="265.9" height="9.1839" rx="2" ry="2"/>
+        </g>
+        <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e" transform="translate(-28.0933,-32.873)">
+          <title>Sales · Q1: 8</title>
+          <rect x="-70.5567" y="-4.5919" width="141.1133" height="9.1839" rx="2" ry="2"/>
+        </g>
+        <g class="lini-node lini-block" style="fill: #79e3da; stroke: #008e85" transform="translate(-10.2667,-21.002)">
+          <title>Sales · Q2: 10</title>
+          <rect x="-88.3833" y="-4.5919" width="176.7667" height="9.1839" rx="2" ry="2"/>
+        </g>
+        <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e" transform="translate(-54.8333,0.102)">
+          <title>Support · Q1: 5</title>
+          <rect x="-43.8167" y="-4.5919" width="87.6333" height="9.1839" rx="2" ry="2"/>
+        </g>
+        <g class="lini-node lini-block" style="fill: #79e3da; stroke: #008e85" transform="translate(-45.92,11.973)">
+          <title>Support · Q2: 6</title>
+          <rect x="-52.73" y="-4.5919" width="105.46" height="9.1839" rx="2" ry="2"/>
+        </g>
+        <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e" transform="translate(-72.66,33.077)">
+          <title>Ops · Q1: 3</title>
+          <rect x="-25.99" y="-4.5919" width="51.98" height="9.1839" rx="2" ry="2"/>
+        </g>
+        <g class="lini-node lini-block" style="fill: #79e3da; stroke: #008e85" transform="translate(-63.7467,44.948)">
+          <title>Ops · Q2: 4</title>
+          <rect x="-34.9033" y="-4.5919" width="69.8067" height="9.1839" rx="2" ry="2"/>
+        </g>
+        <text class="lini-text" x="-99.4" y="67.2" style="fill: #888; font-weight: normal; font-size: 11px">0</text>
+        <text class="lini-text" x="-10.2667" y="67.2" style="fill: #888; font-weight: normal; font-size: 11px">5</text>
+        <text class="lini-text" x="78.8667" y="67.2" style="fill: #888; font-weight: normal; font-size: 11px">10</text>
+        <text class="lini-text" x="168" y="67.2" style="fill: #888; font-weight: normal; font-size: 11px">15</text>
+        <text class="lini-text" x="34.3" y="81.9" style="fill: #888; font-weight: normal; font-size: 11px">people</text>
+        <text class="lini-text" x="-141.7" y="-59.9125" style="fill: #888; font-weight: normal; font-size: 11px">Engineering</text>
+        <text class="lini-text" x="-121.9" y="-26.9375" style="fill: #888; font-weight: normal; font-size: 11px">Sales</text>
+        <text class="lini-text" x="-128.5" y="6.0375" style="fill: #888; font-weight: normal; font-size: 11px">Support</text>
+        <text class="lini-text" x="-115.3" y="39.0125" style="fill: #888; font-weight: normal; font-size: 11px">Ops</text>
+        <text class="lini-text" x="0" y="-92.9" style="font-weight: bold; font-size: 13px">Quarterly hires by team</text>
+        <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e; stroke-width: 1" transform="translate(-31.7,100.1)">
+          <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
+        </g>
+        <text class="lini-text" x="-14.6" y="100.1" style="font-weight: bold; font-size: 11px">Q1</text>
+        <g class="lini-node lini-block" style="fill: #79e3da; stroke: #008e85; stroke-width: 1" transform="translate(13.5,100.1)">
+          <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
+        </g>
+        <text class="lini-text" x="30.6" y="100.1" style="font-weight: bold; font-size: 11px">Q2</text>
       </g>
-      <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-156.8" y1="-17.48" x2="168" y2="-17.48"/>
-      </g>
-      <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-156.8" y1="-46.94" x2="168" y2="-46.94"/>
-      </g>
-      <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-156.8" y1="-76.4" x2="168" y2="-76.4"/>
-      </g>
-      <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e" transform="translate(-122.1547,44.386)">
-        <title>15 cm³ · 1.8 kW: 9</title>
-        <rect x="-16.7892" y="-25.764" width="33.5784" height="51.528" rx="2" ry="2"/>
-      </g>
-      <g class="lini-node lini-block" style="fill: #79e3da; stroke: #008e85" transform="translate(-83.1787,50.278)">
-        <title>15 cm³ · 2.3 kW: 7</title>
-        <rect x="-16.7892" y="-19.872" width="33.5784" height="39.744" rx="2" ry="2"/>
-      </g>
-      <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e" transform="translate(-13.888,26.71)">
-        <title>30 cm³ · 1.8 kW: 15</title>
-        <rect x="-16.7892" y="-43.44" width="33.5784" height="86.88" rx="2" ry="2"/>
-      </g>
-      <g class="lini-node lini-block" style="fill: #79e3da; stroke: #008e85" transform="translate(25.088,32.602)">
-        <title>30 cm³ · 2.3 kW: 13</title>
-        <rect x="-16.7892" y="-37.548" width="33.5784" height="75.096" rx="2" ry="2"/>
-      </g>
-      <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e" transform="translate(94.3787,0.196)">
-        <title>50 cm³ · 1.8 kW: 24</title>
-        <rect x="-16.7892" y="-69.954" width="33.5784" height="139.908" rx="2" ry="2"/>
-      </g>
-      <g class="lini-node lini-block" style="fill: #79e3da; stroke: #008e85" transform="translate(133.3547,11.98)">
-        <title>50 cm³ · 2.3 kW: 20</title>
-        <rect x="-16.7892" y="-58.17" width="33.5784" height="116.34" rx="2" ry="2"/>
-      </g>
-      <text class="lini-text" x="-166.1" y="70.9" style="fill: #888; font-weight: normal; font-size: 11px">0</text>
-      <text class="lini-text" x="-166.1" y="41.44" style="fill: #888; font-weight: normal; font-size: 11px">5</text>
-      <text class="lini-text" x="-169.4" y="11.98" style="fill: #888; font-weight: normal; font-size: 11px">10</text>
-      <text class="lini-text" x="-169.4" y="-17.48" style="fill: #888; font-weight: normal; font-size: 11px">15</text>
-      <text class="lini-text" x="-169.4" y="-46.94" style="fill: #888; font-weight: normal; font-size: 11px">20</text>
-      <text class="lini-text" x="-169.4" y="-76.4" style="fill: #888; font-weight: normal; font-size: 11px">25</text>
-      <text class="lini-text" x="-102.6667" y="82.6" style="fill: #888; font-weight: normal; font-size: 11px">15 cm³</text>
-      <text class="lini-text" x="5.6" y="82.6" style="fill: #888; font-weight: normal; font-size: 11px">30 cm³</text>
-      <text class="lini-text" x="113.8667" y="82.6" style="fill: #888; font-weight: normal; font-size: 11px">50 cm³</text>
-      <text class="lini-text" x="0" y="-92.9" style="font-weight: bold; font-size: 13px">Cycle time (s)</text>
-      <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e; stroke-width: 1" transform="translate(-58.1,100.1)">
-        <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
-      </g>
-      <text class="lini-text" x="-27.8" y="100.1" style="font-weight: bold; font-size: 11px">1.8 kW</text>
-      <g class="lini-node lini-block" style="fill: #79e3da; stroke: #008e85; stroke-width: 1" transform="translate(13.5,100.1)">
-        <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
-      </g>
-      <text class="lini-text" x="43.8" y="100.1" style="font-weight: bold; font-size: 11px">2.3 kW</text>
     </g>
   </g>
   <g class="lini-links"/>
