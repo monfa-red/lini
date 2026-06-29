@@ -34,19 +34,23 @@ pub fn lay_out(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
         let d = ((b.value / vmax).sqrt() * rmax * 2.0).max(2.0); // area ∝ value
         let mut bubble = prim::oval(cx, cy, d, d, b.color.clone());
         prim::set_title(&mut bubble, bubble_title(b));
-        out.push(bubble);
+        // The centred label rides *inside* the bubble's `<g>` (at its centre, so relative
+        // to the group's translate), not as a sibling on top: hovering the label then
+        // still counts as hovering the bubble, so its `:hover` tooltip stays put — and the
+        // label keeps default pointer events, so it remains selectable ([CHARTS.md] §14).
         if let Some(label) = &b.label
             && prim::text_width(label, LABEL_SIZE) <= d
         {
-            out.push(prim::text(
+            bubble.children.push(prim::text(
                 label,
-                cx,
-                cy,
+                0.0,
+                0.0,
                 LABEL_SIZE,
                 Some(on_fill()),
                 false,
             ));
         }
+        out.push(bubble);
     }
 }
 

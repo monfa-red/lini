@@ -44,18 +44,18 @@ input_file: samples/chart_bubbles.lini
       <g class="lini-node lini-oval" style="fill: #00bcb1; stroke: none; stroke-width: 0" transform="translate(-129.7333,-21.2)">
         <title>EU: 8</title>
         <ellipse cx="0" cy="0" rx="12.5378" ry="12.5378"/>
+        <text class="lini-text" x="0" y="0" style="fill: white; font-size: 11px">EU</text>
       </g>
-      <text class="lini-text" x="-129.7333" y="-21.2" style="fill: white; font-size: 11px">EU</text>
       <g class="lini-node lini-oval" style="fill: #ec6e97; stroke: none; stroke-width: 0" transform="translate(5.6,-56.6)">
         <title>US: 20</title>
         <ellipse cx="0" cy="0" rx="19.824" ry="19.824"/>
+        <text class="lini-text" x="0" y="0" style="fill: white; font-size: 11px">US</text>
       </g>
-      <text class="lini-text" x="5.6" y="-56.6" style="fill: white; font-size: 11px">US</text>
       <g class="lini-node lini-oval" style="fill: #00b2e5; stroke: none; stroke-width: 0" transform="translate(140.9333,2.4)">
         <title>APAC: 14</title>
         <ellipse cx="0" cy="0" rx="16.5859" ry="16.5859"/>
+        <text class="lini-text" x="0" y="0" style="fill: white; font-size: 11px">APAC</text>
       </g>
-      <text class="lini-text" x="140.9333" y="2.4" style="fill: white; font-size: 11px">APAC</text>
       <g class="lini-node lini-oval" style="fill: #cf9300; stroke: none; stroke-width: 0" transform="translate(57.6513,37.8)">
         <title>LatAm: 6</title>
         <ellipse cx="0" cy="0" rx="10.8581" ry="10.8581"/>
