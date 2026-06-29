@@ -8,13 +8,15 @@
 //! annotations, a legend, and a title. Every series lowers through one `Plot::project`,
 //! so the `direction: column | row | radial` flip (a radar reusing the cartesian
 //! builders) is a projector change, not a rewrite. `layout: pie` is the sibling layout
-//! (`pie.rs`). Hover is a native `<title>` floor plus an optional rich `:hover` card
-//! (`tooltip.rs`, live-only) — `tooltip: rich | title | none`.
+//! (`pie.rs`). Labels present per `tooltip: none | hover | auto | always` (`tooltip.rs`):
+//! a native `<title>` floor + a live `:hover` card, and — for `auto` / `always` — inline
+//! `tags:` placed by one greedy pass (`labels.rs`).
 
 mod annot;
 mod axis;
 mod bars;
 mod bubble;
+mod labels;
 mod marks;
 mod model;
 mod palette;
@@ -107,7 +109,12 @@ pub(super) fn layout_chart(
         lay_out_legend(&legend, h / 2.0 - LABEL_SIZE * 0.9, &mut kids);
     }
 
-    let kids = tooltip::apply(kids, tooltip::read(&inst.attrs)?, w, h);
+    // Inline data labels ([CHARTS.md] §14): the series' `tags:`, placed by one greedy pass
+    // after the series / axes / title so they sit above them and below the hover cards.
+    let reqs = labels::collect(&plot, &chart);
+    kids.extend(labels::place(&reqs, &plot));
+
+    let kids = tooltip::apply(kids, chart.tooltip, w, h);
     Ok(chart_box(inst, w, h, kids))
 }
 
@@ -762,9 +769,10 @@ mod tests {
     }
 
     #[test]
-    fn rich_tooltips_add_a_hover_card_over_the_title_floor() {
+    fn auto_tooltips_add_a_hover_card_over_the_title_floor() {
+        // The default mode is `auto`: the <title> floor plus the live hover card.
         let s = svg("|chart| { categories: \"a\" } [\n  |bars| { data: 5 }\n]\n");
-        assert!(s.contains("lini-chart-tip"), "the rich hover card: {s}");
+        assert!(s.contains("lini-chart-tip"), "the hover card: {s}");
         assert!(
             s.contains("<title>a: 5</title>"),
             "the title floor stays: {s}"
@@ -777,16 +785,75 @@ mod tests {
     }
 
     #[test]
-    fn tooltip_title_keeps_the_floor_without_a_card() {
-        let s = svg("|chart| { categories: \"a\"; tooltip: title } [\n  |bars| { data: 5 }\n]\n");
-        assert!(s.contains("<title>a: 5</title>"), "the title floor: {s}");
-        assert!(!s.contains("lini-chart-tip"), "no card: {s}");
-    }
-
-    #[test]
     fn tooltip_none_drops_the_floor() {
         let s = svg("|chart| { categories: \"a\"; tooltip: none } [\n  |bars| { data: 5 }\n]\n");
         assert!(!s.contains("<title>"), "no title floor: {s}");
         assert!(!s.contains("lini-chart-tip"), "no card: {s}");
+    }
+
+    #[test]
+    fn tags_draw_inline_labels_under_auto() {
+        // A series' `tags:` show on the plot (default auto) as `.lini-chart-label` text,
+        // over the hover card the value still rides.
+        let s = svg(
+            "|chart| { categories: \"a\" \"b\" } [\n  |line| { data: 3 6; tags: \"lo\" \"hi\" }\n]\n",
+        );
+        assert!(s.contains("lini-chart-label"), "inline label class: {s}");
+        assert!(
+            s.contains(">lo</text>") && s.contains(">hi</text>"),
+            "tag text: {s}"
+        );
+        assert!(
+            s.contains("pointer-events: none"),
+            "inline labels pass hover through: {s}"
+        );
+    }
+
+    #[test]
+    fn tooltip_hover_keeps_tags_off_the_plot() {
+        // `tooltip: hover` keeps the card (bars are hit targets) but draws no inline label,
+        // even with tags.
+        let s = svg(
+            "|chart| { categories: \"a\" \"b\"; tooltip: hover } [\n  |bars| { data: 3 6; tags: \"lo\" \"hi\" }\n]\n",
+        );
+        assert!(!s.contains("lini-chart-label"), "no inline label: {s}");
+        assert!(s.contains("lini-chart-tip"), "the hover card stays: {s}");
+    }
+
+    #[test]
+    fn a_series_tooltip_overrides_the_chart_default() {
+        // The chart says hover (no inline); the series opts back into always.
+        let s = svg(
+            "|chart| { categories: \"a\" \"b\"; tooltip: hover } [\n  |line| { data: 3 6; tags: \"lo\" \"hi\"; tooltip: always }\n]\n",
+        );
+        assert!(
+            s.contains("lini-chart-label"),
+            "series override shows inline: {s}"
+        );
+    }
+
+    #[test]
+    fn an_arrow_marker_on_a_series_errors() {
+        let e = layout_err(
+            "|chart| { categories: \"a\" \"b\" } [\n  |line| { data: 3 6; marker: arrow }\n]\n",
+        );
+        assert!(e.contains("no centred form"), "{e}");
+        assert!(e.contains("dot, circle, or diamond"), "{e}");
+    }
+
+    #[test]
+    fn tags_count_must_match_the_data() {
+        let e = layout_err(
+            "|chart| { categories: \"a\" \"b\" } [\n  |line| { data: 3 6; tags: \"only\" }\n]\n",
+        );
+        assert!(e.contains("1 labels but the series has 2"), "{e}");
+    }
+
+    #[test]
+    fn tags_on_a_fn_series_error() {
+        let e = layout_err(
+            "|chart| [\n  |axis| { side: bottom; range: 0 10 }\n  |axis| { side: left }\n  |line| { fn: `x`; tags: \"a\" \"b\" }\n]\n",
+        );
+        assert!(e.contains("needs explicit 'data'"), "{e}");
     }
 }

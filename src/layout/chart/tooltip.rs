@@ -12,32 +12,57 @@ use crate::layout::{Bbox, PlacedNode};
 use crate::resolve::{AttrMap, ResolvedValue};
 use crate::span::Span;
 
+/// A datum's label presentation ([CHARTS.md] §14): nothing, hover only, inline-where-it-
+/// fits (else hover), or inline always. `Auto` / `Always` draw an inline label; every
+/// non-`None` mode keeps the hover `<title>` + card.
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Tooltip {
     None,
-    Title,
-    Rich,
+    Hover,
+    Auto,
+    Always,
+}
+
+impl Tooltip {
+    /// Whether this mode draws an inline label on the plot ([CHARTS.md] §14).
+    pub fn inline(self) -> bool {
+        matches!(self, Tooltip::Auto | Tooltip::Always)
+    }
+
+    /// Whether an inline label is forced even where it collides (`always`), versus
+    /// dropped to its hover card when it cannot sit (`auto`).
+    pub fn forced(self) -> bool {
+        matches!(self, Tooltip::Always)
+    }
 }
 
 const SIZE: f64 = 11.0;
 const PAD: f64 = 5.0;
 const GAP: f64 = 7.0;
 
-/// The chart's `tooltip:` mode ([CHARTS.md] §16), default `rich`.
+/// The chart's `tooltip:` mode ([CHARTS.md] §14/§16), default `auto`.
 pub fn read(attrs: &AttrMap) -> Result<Tooltip, Error> {
+    read_or(attrs, Tooltip::Auto)
+}
+
+/// A node's `tooltip:` mode, falling back to `default` (the chart's, for a series that
+/// sets none) — the cascade in one read ([CHARTS.md] §14).
+pub fn read_or(attrs: &AttrMap, default: Tooltip) -> Result<Tooltip, Error> {
     match attrs.get("tooltip") {
-        None => Ok(Tooltip::Rich),
+        None => Ok(default),
         Some(ResolvedValue::Ident(s)) => match s.as_str() {
-            "rich" => Ok(Tooltip::Rich),
-            "title" => Ok(Tooltip::Title),
             "none" => Ok(Tooltip::None),
+            "hover" => Ok(Tooltip::Hover),
+            "auto" => Ok(Tooltip::Auto),
+            "always" => Ok(Tooltip::Always),
             _ => Err(Error::at(
                 Span::empty(),
-                "'tooltip' is rich, title, or none",
+                "'tooltip' is none, hover, auto, or always",
             )),
         },
         _ => Err(Error::at(
             Span::empty(),
-            "'tooltip' is rich, title, or none",
+            "'tooltip' is none, hover, auto, or always",
         )),
     }
 }
@@ -52,31 +77,27 @@ pub fn read(attrs: &AttrMap) -> Result<Tooltip, Error> {
 /// label still triggers it). The index class is render-stripped when baking, so baked
 /// output is unchanged.
 pub fn apply(kids: Vec<PlacedNode>, mode: Tooltip, w: f64, h: f64) -> Vec<PlacedNode> {
-    match mode {
-        Tooltip::Title => kids,
-        Tooltip::None => {
-            let mut kids = kids;
-            for n in &mut kids {
-                n.attrs.remove("title");
-            }
-            kids
+    let mut kids = kids;
+    if mode == Tooltip::None {
+        // The chart suppresses every label: drop the `<title>` floor the marks carry.
+        for n in &mut kids {
+            n.attrs.remove("title");
         }
-        Tooltip::Rich => {
-            let mut kids = kids;
-            let mut cards = Vec::new();
-            for node in kids.iter_mut() {
-                let Some(text) = title_string(node) else {
-                    continue;
-                };
-                let i = cards.len();
-                let (ax, ay) = anchor(node);
-                cards.push(make_card(&text, ax, ay, i, w, h));
-                node.type_chain.push(format!("hit-{i}"));
-            }
-            kids.extend(cards);
-            kids
-        }
+        return kids;
     }
+    // hover / auto / always all keep the floor and add a live hover card per titled mark.
+    let mut cards = Vec::new();
+    for node in kids.iter_mut() {
+        let Some(text) = title_string(node) else {
+            continue;
+        };
+        let i = cards.len();
+        let (ax, ay) = anchor(node);
+        cards.push(make_card(&text, ax, ay, i, w, h));
+        node.type_chain.push(format!("hit-{i}"));
+    }
+    kids.extend(cards);
+    kids
 }
 
 /// A titled mark's `<title>` text, cloned so the node can then be tagged.

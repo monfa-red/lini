@@ -10,7 +10,7 @@ use crate::layout::PlacedNode;
 use crate::resolve::{MarkerKind, ResolvedValue};
 
 /// One datum's data-space coordinate paired with its pixel coordinate.
-type Plotted = ((f64, f64), (f64, f64));
+pub(super) type Plotted = ((f64, f64), (f64, f64));
 
 /// The `-deep` tier of a palette hue, for an area's default edge ([CHARTS.md] §10):
 /// `--teal` → `--teal-deep`, `--green-soft` → `--green-deep`. A non-palette colour
@@ -58,7 +58,9 @@ pub fn dots(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
 
 /// (data-space coords, pixel coords) for every datum of a series. The pixel point comes
 /// from the shared `Plot::project`, so a radar reuses these builders unchanged ([§11]).
-fn samples(plot: &Plot, chart: &Chart, ser: &Series) -> Vec<Plotted> {
+/// Shared with the inline-label collector ([`super::labels`]), so a tag sits on the
+/// exact point its marker does.
+pub(super) fn samples(plot: &Plot, chart: &Chart, ser: &Series) -> Vec<Plotted> {
     let xs = &chart.x.scale;
     let vs = &chart.values[ser.axis].scale;
     match &ser.data {
@@ -204,7 +206,7 @@ fn draw_dots(plot: &Plot, chart: &Chart, ser: &Series, out: &mut Vec<PlacedNode>
 }
 
 /// Whether a datum's data coords lie inside both axes' domains (crop, §6).
-fn in_domain(chart: &Chart, ser: &Series, x: f64, y: f64) -> bool {
+pub(super) fn in_domain(chart: &Chart, ser: &Series, x: f64, y: f64) -> bool {
     chart.x.scale.contains(x) && chart.values[ser.axis].scale.contains(y)
 }
 

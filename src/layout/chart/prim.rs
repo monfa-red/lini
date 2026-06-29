@@ -245,6 +245,11 @@ pub fn text_width(content: &str, size: f64) -> f64 {
     approx_width(content, size, 0.0)
 }
 
+/// The drawn height of a label, for collision-testing inline labels ([CHARTS.md] §14).
+pub fn text_height(content: &str, size: f64) -> f64 {
+    approx_height(content, size, 0.0)
+}
+
 /// Attach a native `<title>` — the baked-safe tooltip floor ([CHARTS.md] §14),
 /// emitted by `render_node` on any node carrying a `title:`.
 pub fn set_title(n: &mut PlacedNode, title: String) {

@@ -120,10 +120,10 @@ fn is_string_valued(name: &str) -> bool {
         name,
         // Core text-valued props (SPEC §2)…
         "title" | "href" | "src" | "path"
-        // …and the chart props that carry user text ([CHARTS.md] §2/§5): tick / spoke
-        // labels and the unit suffix. Keyword chart props (direction, scale, side, …)
-        // stay bare identifiers.
-        | "categories" | "labels" | "unit"
+        // …and the chart props that carry user text ([CHARTS.md] §2/§4/§5): tick / spoke
+        // labels, the unit suffix, and a series' per-datum `tags`. Keyword chart props
+        // (direction, scale, side, tooltip, …) stay bare identifiers.
+        | "categories" | "labels" | "unit" | "tags"
     )
 }
 

@@ -438,6 +438,15 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
         });
     }
 
+    // Inline chart labels ([CHARTS.md] §14) take no pointer events, so hovering a labelled
+    // point still reveals the point's card through the label sitting over it.
+    if present.contains("chart-label") {
+        rules.push(Rule {
+            class: "lini-chart-label".into(),
+            props: vec![("pointer-events".into(), "none".into())],
+        });
+    }
+
     // Class rules in source order — the stylesheet's `.name { }` rules shipped
     // as CSS. After the shape/link default rules, so a class overrides a default.
     for (name, attrs) in &laid.sheet.class_rules {

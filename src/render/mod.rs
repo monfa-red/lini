@@ -252,15 +252,14 @@ fn render_text(out: &mut String, n: &PlacedNode, depth: usize, vars: &VarTable, 
     let indent = "  ".repeat(depth);
     let label = n.label.as_deref().unwrap_or("");
     let style = text_style_attr(&n.own_style, vars, opts);
-    text::emit(
-        out,
-        &indent,
-        "lini-text",
-        label,
-        (n.cx, n.cy),
-        &n.attrs,
-        &style,
-    );
+    // A text node's `type_chain` carries any extra class (e.g. a chart's `.lini-chart-label`
+    // inline labels, [CHARTS.md] §14); plain text has none, so this stays `lini-text`.
+    let mut class = String::from("lini-text");
+    for t in &n.type_chain {
+        class.push_str(" lini-");
+        class.push_str(t);
+    }
+    text::emit(out, &indent, &class, label, (n.cx, n.cy), &n.attrs, &style);
 }
 
 /// The `style=` for a text node's own `{ }` (SPEC §3): paint and font props ride

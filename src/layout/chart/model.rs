@@ -5,6 +5,7 @@
 use super::palette;
 use super::project::Dir;
 use super::scale::{self, Scale};
+use super::tooltip::Tooltip;
 use crate::error::Error;
 use crate::expr::{self, Expr, FuncTable, Value as ExprValue};
 use crate::resolve::{AttrMap, MarkerKind, NodeKind, ResolvedInst, ResolvedValue};
@@ -125,6 +126,15 @@ pub struct Series {
     /// `circle` / `diamond` are the centred shapes. A `|dots|` is never `None` (it *is*
     /// markers). Validated against `arrow` / `crow` at parse ([§18]).
     pub marker: MarkerKind,
+    /// Per-datum label text ([CHARTS.md] §4), parallel to the data — one tag per value /
+    /// point, or empty. Drawn inline / on hover per [`tooltip`](Self::tooltip).
+    pub tags: Vec<String>,
+    /// How this series' labels present ([CHARTS.md] §14) — the cascaded `tooltip:` (its
+    /// own, else the chart's). Governs whether the `tags` draw inline.
+    pub tooltip: Tooltip,
+    /// The tint for this series' inline tag labels ([CHARTS.md] §14): an explicit
+    /// `color:`, else the muted role.
+    pub tag_color: ResolvedValue,
     pub curve: Curve,
     pub stroke_style: Option<ResolvedValue>,
     /// An explicit `stroke:` outline ([CHARTS.md] §10): its colour and `stroke-width`.
@@ -174,6 +184,9 @@ pub struct Chart {
     /// The clear space between the plot and the title / legend outside it ([CHARTS.md]
     /// §9), from the resolved `gap:` (default 10 via the `.lini-chart` class).
     pub gap: f64,
+    /// The chart-level label presentation ([CHARTS.md] §14), default `auto` — the hover
+    /// card driver and each series' `tooltip:` fallback.
+    pub tooltip: Tooltip,
 }
 
 /// One wedge of a `layout: pie` ([CHARTS.md] §13): its magnitude, legend label, and
@@ -233,6 +246,7 @@ pub fn build(inst: &ResolvedInst, funcs: &FuncTable) -> Result<Chart, Error> {
     let dir = read_direction(&inst.attrs)?;
     let samples = sample_count(&inst.attrs);
     let bars = read_bars(&inst.attrs)?;
+    let chart_tip = super::tooltip::read(&inst.attrs)?;
     let (series_insts, axis_insts, band_insts, mark_insts, bubble_insts, title) = partition(inst)?;
     if series_insts.is_empty() && bubble_insts.is_empty() {
         return Err(Error::at(span, "a chart needs at least one series"));
@@ -296,7 +310,14 @@ pub fn build(inst: &ResolvedInst, funcs: &FuncTable) -> Result<Chart, Error> {
     // Read each series' data + style, binding it to a value axis by index.
     let mut series = Vec::with_capacity(series_insts.len());
     for (i, si) in series_insts.iter().enumerate() {
-        series.push(read_series(si, i, &value_specs, &categories, span)?);
+        series.push(read_series(
+            si,
+            i,
+            &value_specs,
+            &categories,
+            chart_tip,
+            span,
+        )?);
     }
 
     // Bands and marks bind to an axis by id (the x axis or a value axis), so resolve
@@ -365,6 +386,7 @@ pub fn build(inst: &ResolvedInst, funcs: &FuncTable) -> Result<Chart, Error> {
         bars,
         dir,
         gap: read_gap(&inst.attrs),
+        tooltip: chart_tip,
     })
 }
 
@@ -547,6 +569,7 @@ fn read_series(
     index: usize,
     value_specs: &[AxisSpec],
     categories: &Option<Vec<String>>,
+    chart_tip: Tooltip,
     _chart_span: Span,
 ) -> Result<Series, Error> {
     let kind = match tag(inst) {
@@ -608,6 +631,9 @@ fn read_series(
     } else {
         marker
     };
+    let tags = read_tags(inst, &data)?;
+    let tooltip = super::tooltip::read_or(&inst.attrs, chart_tip)?;
+    let tag_color = real_color(inst.attrs.get("color")).unwrap_or_else(muted);
     Ok(Series {
         kind,
         data,
@@ -615,6 +641,9 @@ fn read_series(
         color,
         axis,
         marker,
+        tags,
+        tooltip,
+        tag_color,
         curve: read_curve(&inst.attrs)?,
         stroke_style: inst.attrs.get("stroke-style").cloned(),
         outline: outline(&inst.attrs),
@@ -722,6 +751,39 @@ fn read_data(inst: &ResolvedInst, kind: &SeriesKind) -> Result<Data, Error> {
         }
         _ => Err(Error::at(inst.span, "'data' must be a list of numbers")),
     }
+}
+
+/// Parse a series' `tags:` ([CHARTS.md] §4): a quoted-string list, one per datum,
+/// validated against the data count. A `fn:` series has no authored points to label, so
+/// `tags:` on one is an error ([§18]). Reuses [`collect_strings`] (the `categories:`
+/// reader), so a tag list parses exactly like the chart's category list.
+fn read_tags(inst: &ResolvedInst, data: &Data) -> Result<Vec<String>, Error> {
+    let Some(v) = inst.attrs.get("tags") else {
+        return Ok(Vec::new());
+    };
+    let mut tags = Vec::new();
+    collect_strings(v, &mut tags, inst.span)?;
+    let n = match data {
+        Data::Categorical(values) => values.len(),
+        Data::Points(p) => p.len(),
+        Data::Formula(_) => {
+            return Err(Error::at(
+                inst.span,
+                "'tags' needs explicit 'data' — a sampled 'fn' has no points to label",
+            ));
+        }
+    };
+    if tags.len() != n {
+        return Err(Error::at(
+            inst.span,
+            format!(
+                "'tags' has {} labels but the series has {} data points",
+                tags.len(),
+                n
+            ),
+        ));
+    }
+    Ok(tags)
 }
 
 /// Bind a series to a value axis by its `axis:` id, defaulting to the first value
