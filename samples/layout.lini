@@ -1,12 +1,12 @@
 // Positioning & spacing — pin (the 9 named anchor points), translate (a
 // post-placement nudge), and the 1/2/4-value padding & gap forms. Palette colours.
 {
-  layout: row; gap: 24; padding: 24; align: start; font-weight: normal;
+  direction: row; gap: 24; padding: 24; align: start;
   |dot::block| { font-size: 12; }
 }
 
 // pin: lift a child out of flow and centre it on a named point of the parent
-|group#anchors| { layout: column; gap: 8; } [
+|group#anchors| { gap: 8; } [
   |caption| "pin"
   |box#pins| {
     width: 210; height: 150; fill: --sky-wash; stroke: --sky-ink; radius: 8;
@@ -24,7 +24,7 @@
 ]
 
 // translate: a flow nudge, a tucked-in badge, and exact centre placement
-|group#moves| { layout: column; gap: 14; } [
+|group#moves| { gap: 14; } [
   |caption| "translate"
   |row| { gap: 14; align: center; } [
     |box#a| "A" { fill: --amber-soft; stroke: --amber-ink; color: --amber-ink; }
@@ -43,7 +43,7 @@
 ]
 
 // padding & gap take 1-, 2-, or 4-value forms
-|group#spacing| { layout: column; gap: 10; } [
+|group#spacing| { gap: 10; } [
   |caption| "padding"
   |box| "scalar" {
     fill: --green-soft; stroke: --green-ink; color: --green-ink;

@@ -10,7 +10,7 @@ input_file: samples/gradient.lini
     .lini .lini-block { fill: none; stroke: none; stroke-width: 1.5; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 1.5; }
-    .lini .lini-card { stroke: none; color: white; font-weight: normal; }
+    .lini .lini-card { stroke: none; color: white; }
   </style>
   <defs>
     <linearGradient id="lini-gradient-1" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#00bcb1"/><stop offset="100%" stop-color="#4e9fff"/></linearGradient>

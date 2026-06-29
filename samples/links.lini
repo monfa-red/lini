@@ -1,10 +1,10 @@
 // Link markers (arrow, dot, diamond, crow on |line|) and template-internal links
 // — a |define| whose body links its own children, so every instance routes itself.
 {
-  layout: column; gap: 40; padding: 24; font-weight: normal;
+  gap: 40; padding: 24;
 
   |room::group| {
-    layout: column; gap: 10; padding: 12; fill: --teal-wash; stroke: --teal-ink;
+    gap: 10; padding: 12; fill: --teal-wash; stroke: --teal-ink;
   } [
     |box#inlet| "in" {
       fill: --teal-soft; stroke: --teal-ink; color: --teal-ink;
@@ -18,7 +18,7 @@
 
 |block| "Markers & internal links" { font-size: 18; font-weight: bold; }
 
-|group#ends| { layout: column; gap: 14; } [
+|group#ends| { gap: 14; } [
   |caption| "markers"
   |line| {
     points: -80 0, 80 0; marker-end: arrow; stroke: --sky-deep; stroke-width: 2;

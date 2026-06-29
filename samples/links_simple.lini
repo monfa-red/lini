@@ -5,7 +5,7 @@
 //   a self-loop · a bidirectional link · labels and markers
 
 {
-  layout: row; gap: 50; clearance: 10;
+  direction: row; gap: 50; clearance: 10;
 }
 
 |box#ant| "Ant" { width: 60; height: 60; }

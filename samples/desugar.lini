@@ -1,5 +1,5 @@
 {
-  layout: row; gap: 30;
+  direction: row; gap: 30;
   |chip::box| {
     radius: 12; fill: --sky-wash; stroke: --sky-ink; color: --sky-ink;
   }

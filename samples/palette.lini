@@ -1,12 +1,12 @@
 // The built-in named-hue palette (SPEC §11.2): 11 hues × 5 tiers, plus a few
 // "pretty card" combinations (wash fill + ink stroke/text) showing the easy path.
 {
-  layout: column; gap: 18; padding: 30 16; font-size: 13;
+  gap: 18; padding: 30 16; font-size: 13;
 
   |sw::box| { width: 80; height: 34; stroke: none; }
-  |h::block| { font-weight: normal; color: --muted; }
+  |h::block| { color: --muted; }
   |card::box| {
-    stroke-width: 1.5; font-weight: normal; width: 88; padding: 15 0;
+    stroke-width: 1.5; width: 88; padding: 15 0;
   }
 }
 

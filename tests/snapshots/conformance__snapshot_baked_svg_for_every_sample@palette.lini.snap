@@ -12,8 +12,8 @@ input_file: samples/palette.lini
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 1.5; }
     .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
     .lini .lini-sw { stroke: none; }
-    .lini .lini-h { color: #888; font-weight: normal; }
-    .lini .lini-card { stroke-width: 1.5; font-weight: normal; }
+    .lini .lini-h { color: #888; }
+    .lini .lini-card { stroke-width: 1.5; }
   </style>
   <defs/>
   <rect class="lini-canvas" x="-282" y="-331.25" width="564" height="662.5"/>

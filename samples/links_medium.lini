@@ -2,7 +2,7 @@
 // common linking pattern at once.
 
 {
-  layout: row; gap: 40; clearance: 12;
+  direction: row; gap: 40; clearance: 12;
   .loud { link: --red; }
   .quiet { link: --blue; }
   .happy { link: --green; }
@@ -11,13 +11,13 @@
 
 |oval#cat| "Cat"
 
-|group#kitchen| { layout: column; } [
+|group#kitchen| [
   |caption| "Kitchen"
   |treat#bowl| "Bowl"
   |treat#water| "Water"
 ]
 
-|group#garden| { layout: column; } [
+|group#garden| [
   |caption| "Garden"
   |treat#dog| "Dog"
   |treat#bird| "Bird"

@@ -3,15 +3,15 @@
 // size. `|sign|` is a larger preset and an ordinary wireable node. Source for
 // assets/icons.png.
 {
-  layout: column; gap: 16; padding: 8 28 24 28; align: center; link: --gray-ink; link-width: 2; clearance: 14;
+  gap: 16; padding: 8 28 24 28; align: center; link: --gray-ink; link-width: 2; clearance: 14;
 
   |row| { align: end; }
   |tile::column| { gap: 9; align: center; font-size: 13; }
   |lbl::block| {
     font-size: 13; font-weight: bold; color: --gray-ink; padding: 16 0 0 0;
   }
-  |cap::block| { font-size: 11; font-weight: normal; color: --gray-deep; }
-  |sign| { font-size: 12; font-weight: normal; }
+  |cap::block| { font-size: 11; color: --gray-deep; }
+  |sign| { font-size: 12; }
 
   // Two-tone colour classes — a soft `wash` body under an `ink` line. Wear one on
   // any node (`|icon| .rose`, `|box| .teal`, …) to paint the pair at once.
@@ -24,7 +24,7 @@
 }
 
 |lbl| "Icons"
-|group| { gap: 40; layout: row; fill: none; } [
+|group| { gap: 40; direction: row; fill: none; } [
   |tile| [
     |icon| { symbol: house; }
     |cap| "default"

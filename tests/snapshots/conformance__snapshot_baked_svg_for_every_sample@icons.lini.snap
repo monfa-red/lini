@@ -11,10 +11,10 @@ input_file: samples/icons.lini
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-icon { fill: rgba(0, 0, 0, 0.16); stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
-    .lini .lini-sign { stroke-width: 1.5; font-size: 12px; font-weight: normal; }
+    .lini .lini-sign { stroke-width: 1.5; font-size: 12px; }
     .lini .lini-tile { font-size: 13px; }
     .lini .lini-lbl { color: #484848; font-size: 13px; font-weight: bold; }
-    .lini .lini-cap { color: #747474; font-size: 11px; font-weight: normal; }
+    .lini .lini-cap { color: #747474; font-size: 11px; }
     .lini .lini-link { fill: none; stroke: #484848; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-link-dashed { stroke-dasharray: 6,4.5; }
     .lini .lini-link-dotted { stroke-dasharray: 2,4; }

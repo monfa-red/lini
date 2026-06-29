@@ -4,10 +4,10 @@
 //   lini samples/themes.lini --theme high-contrast --bake-vars -o hc.svg
 //   lini theme dark > my-theme.css      // a starting point for your own
 {
-  layout: column; gap: 18;
+  gap: 18;
 }
 
-|group#service| { layout: column; gap: 12; } [
+|group#service| { gap: 12; } [
   |caption| "Service"
   |box#web| [
     "Web"

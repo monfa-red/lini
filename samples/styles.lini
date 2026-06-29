@@ -1,7 +1,7 @@
 // Styling — the cascade (element rules < classes < inline), reusable class
 // bundles, visual modifiers, and inherited typography. Palette colours.
 {
-  layout: column; gap: 20; padding: 26; font-weight: normal;
+  gap: 20; padding: 26;
 
   // element rules: the lowest-specificity layer, one per shape type
   |box| { radius: 6; fill: --sky-wash; stroke: --sky-ink; color: --sky-ink; }
@@ -23,7 +23,7 @@
 |block| "Styles" { font-size: 18; font-weight: bold; }
 
 // element rule, then + a class, then + an inline block — each wins over the last
-|group#cascade| { layout: row; gap: 14; align: center; } [
+|group#cascade| { direction: row; gap: 14; align: center; } [
   |caption| "cascade"
   |box| "element"
   |box| "+ class" .warn
@@ -33,7 +33,7 @@
   |alert| "alert"
 ]
 
-|group#classes| { layout: row; gap: 14; } [
+|group#classes| { direction: row; gap: 14; } [
   |caption| "classes"
   |box| "thin" .thin
   |box| "bold" .bold
@@ -42,7 +42,7 @@
   |box| "ghost" .ghost
 ]
 
-|group#modifiers| { layout: row; gap: 16; align: center; } [
+|group#modifiers| { direction: row; gap: 16; align: center; } [
   |caption| "modifiers"
   |box| "dashed" { stroke-style: dashed; }
   |box| "dotted" { stroke-style: dotted; }
@@ -51,7 +51,7 @@
   |box| "rotate" { rotate: -8; }
 ]
 
-|group#text| { layout: row; gap: 14; align: center; } [
+|group#text| { direction: row; gap: 14; align: center; } [
   |caption| "typography"
   |box| "italic" { font-style: italic; }
   |box| "serif" { font-family: serif; }

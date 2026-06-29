@@ -1,10 +1,10 @@
 // Every built-in template — group, caption, footer, badge, row, column,
 // table, link — on one captioned board, in palette colours.
 {
-  layout: column; gap: 22; padding: 26; font-weight: normal;
+  gap: 22; padding: 26;
 
   |panel::group| {
-    layout: column; gap: 10; padding: 14; fill: --gray-wash; stroke: --gray-soft; radius: 8;
+    gap: 10; padding: 14; fill: --gray-wash; stroke: --gray-soft; radius: 8;
   }
   |tile::box| {
     fill: --sky-soft; stroke: --sky-ink; color: --sky-ink; radius: 6;
@@ -24,7 +24,7 @@
     |footer| "since 1843"
   ]
   // row + column nested inside a group
-  |panel#nested| { layout: row; gap: 16; } [
+  |panel#nested| { direction: row; gap: 16; } [
     |caption| "row + column"
     |row| [
       |tile#r1| "a" {

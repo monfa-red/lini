@@ -9,27 +9,27 @@
 }
 
 |box#alpha| "Alpha" { cell: 1 1; }
-|group#north| { cell: 2 1; layout: column; gap: 16; } [
+|group#north| { cell: 2 1; gap: 16; } [
   |caption| "North"
   |box#nn1| "N1"
   |box#nn2| "N2"
 ]
 |box#beta| "Beta" { cell: 3 1; }
 
-|group#west| { cell: 1 2; layout: column; gap: 16; } [
+|group#west| { cell: 1 2; gap: 16; } [
   |caption| "West"
   |box#ww1| "W1"
   |box#ww2| "W2"
 ]
 |box#hub| "Hub" { cell: 2 2; }
-|group#east| { cell: 3 2; layout: column; padding: 16; gap: 16; } [
+|group#east| { cell: 3 2; padding: 16; gap: 16; } [
   |caption| "East"
   |box#ee1| "E1"
   |box#ee2| "E2"
 ]
 
 |box#gamma| "Gamma" { cell: 1 3; }
-|group#south| { cell: 2 3; layout: column; gap: 16; } [
+|group#south| { cell: 2 3; gap: 16; } [
   |caption| "South"
   |box#ss1| "S1"
   |box#ss2| "S2"

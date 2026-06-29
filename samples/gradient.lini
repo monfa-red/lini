@@ -1,10 +1,10 @@
 // Gradients (SPEC §11.3): two-stop auto-angle, multi-stop, explicit angle, radial,
 // and gradient-on-stroke. Stops are palette vars, so each one flips dark/light.
 {
-  layout: column; gap: 16; padding: 26; font-size: 13;
+  gap: 16; padding: 26; font-size: 13;
 
   |card::box| {
-    width: 240; height: 70; stroke: none; color: white; font-weight: normal;
+    width: 240; height: 70; stroke: none; color: white;
   }
 }
 

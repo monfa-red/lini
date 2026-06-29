@@ -3,7 +3,7 @@
 {
   fill: gradient(--green-ink, --teal-ink);
   // the board
-  layout: grid; columns: repeat(5, 80); rows: repeat(5, 60); gap: 30; padding: 34; font-size: 12; font-weight: normal;
+  layout: grid; columns: repeat(5, 80); rows: repeat(5, 60); gap: 30; padding: 34; font-size: 12;
 
   |chip::box| {
     width: 60; height: 60; stroke: none; radius: 5; color: white; padding: 0;

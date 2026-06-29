@@ -1,7 +1,7 @@
 // The Lini hero — a colourful service map. Palette colours, a gradient entry
 // point, mixed link styles. Source for assets/hero.png.
 {
-  layout: column; gap: 40; padding: 25; font-weight: normal; link: --gray-deep; link-width: 2; clearance: 16;
+  gap: 40; padding: 25; link: --gray-deep; link-width: 2; clearance: 16;
 
   |edge::box| { fill: --sky-wash; stroke: --sky-ink; color: --sky-ink; }
   |svc::box| { fill: --teal-wash; stroke: --teal-ink; color: --teal-ink; }
@@ -23,7 +23,7 @@
   width: 156; height: 62; fill: gradient(--sky, --purple); stroke: none; color: white; font-weight: bold;
 }
 
-|group#edge| { layout: row; gap: 20; } [
+|group#edge| { direction: row; gap: 20; } [
   |caption| "Edge"
   |edge#lb| [
     "Load balancer"
@@ -36,7 +36,7 @@
   ]
 ]
 
-|group#svc| { layout: row; gap: 28; } [
+|group#svc| { direction: row; gap: 28; } [
   |caption| "Services"
   |api#api| [ "API" ]
   |auth#auth| [
@@ -48,7 +48,7 @@
   ]
 ]
 
-|group#data| { layout: row; gap: 28; } [
+|group#data| { direction: row; gap: 28; } [
   |caption| "Data"
   |store#pg| "Postgres"
   |store#redis| "Redis"

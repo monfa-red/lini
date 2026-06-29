@@ -3,7 +3,7 @@
 {
   layout: grid; columns: repeat(4); gap: 26; padding: 30;
   |tile::column| { gap: 9; align: center; }
-  |cap::block| { font-size: 12; font-weight: normal; color: --muted; }
+  |cap::block| { font-size: 12; color: --muted; }
 }
 
 |tile| [
