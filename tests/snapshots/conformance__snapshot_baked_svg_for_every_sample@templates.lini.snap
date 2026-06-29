@@ -3,7 +3,7 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/templates.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-358 -176.75 716 353.5" width="716" height="353.5" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-276.75 -176.75 553.5 353.5" width="553.5" height="353.5" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
@@ -14,16 +14,14 @@ input_file: samples/templates.lini
     .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
     .lini .lini-footer { color: rgba(0, 0, 0, 0.5); font-size: 11px; }
     .lini .lini-badge { fill: #0a84ff; color: white; font-size: 11px; font-weight: normal; }
-    .lini .lini-note { fill: #fff9c4; }
     .lini .lini-table { fill: none; stroke: #444; font-size: 14px; font-weight: normal; stroke-dasharray: none; }
     .lini .lini-panel { fill: #eeeeee; stroke: #cecece; }
     .lini .lini-tile { fill: #7eddfd; stroke: #00547e; color: #00547e; }
   </style>
   <defs>
     <filter id="lini-shadow-1" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="rgba(0, 0, 0, 0.2)"/></filter>
-    <filter id="lini-shadow-2" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="2" dy="2" stdDeviation="2" flood-color="rgba(0, 0, 0, 0.2)"/></filter>
   </defs>
-  <rect class="lini-canvas" x="-358" y="-176.75" width="716" height="353.5"/>
+  <rect class="lini-canvas" x="-276.75" y="-176.75" width="553.5" height="353.5"/>
   <g class="lini-scene">
     <g class="lini-node lini-block" style="font-size: 18px; font-weight: bold" transform="translate(0,-141)">
       <rect x="-48.6" y="-9" width="97.2" height="18" rx="0" ry="0"/>
@@ -81,8 +79,8 @@ input_file: samples/templates.lini
       </g>
     </g>
     <g class="lini-node lini-row lini-block" data-id="lower" transform="translate(0,114.25)">
-      <rect x="-331.25" y="-35.75" width="662.5" height="71.5" rx="0" ry="0"/>
-      <g class="lini-node lini-tile lini-box lini-block" data-id="svc" style="fill: #79e3da; stroke: #005d56; color: #005d56" transform="translate(-255.5,0)">
+      <rect x="-250" y="-35.75" width="500" height="71.5" rx="0" ry="0"/>
+      <g class="lini-node lini-tile lini-box lini-block" data-id="svc" style="fill: #79e3da; stroke: #005d56; color: #005d56" transform="translate(-174.25,0)">
         <rect x="-75" y="-35" width="150" height="70" rx="6" ry="6"/>
         <text class="lini-text" x="0" y="0">Service</text>
         <g class="lini-node lini-badge lini-block" transform="translate(64.35,-32.75)">
@@ -92,13 +90,7 @@ input_file: samples/templates.lini
           <text class="lini-text" x="0" y="0">NEW</text>
         </g>
       </g>
-      <g class="lini-node lini-note lini-block" transform="translate(-87.5,-7.5)">
-        <g filter="url(#lini-shadow-2)">
-          <rect x="-69.5" y="-27.5" width="139" height="55" rx="2" ry="2"/>
-        </g>
-        <text class="lini-text" x="0" y="0">Sticky note</text>
-      </g>
-      <g class="lini-node lini-table lini-group lini-block" data-id="basket" style="stroke: #484848" transform="translate(108.25,-2.25)">
+      <g class="lini-node lini-table lini-group lini-block" data-id="basket" style="stroke: #484848" transform="translate(27,-2.25)">
         <rect x="-103" y="-33" width="206" height="66" rx="8" ry="8"/>
         <path d="M -23 -33 L -23 33 M 33 -33 L 33 33 M -103 -11 L 103 -11 M -103 11 L 103 11" fill="none"/>
         <text class="lini-text" x="-63" y="-22">Fruit</text>
@@ -112,7 +104,7 @@ input_file: samples/templates.lini
         <text class="lini-text" x="68" y="22">ripe</text>
       </g>
       <a href="https://example.com">
-        <g class="lini-node lini-tile lini-box lini-block" data-id="docs" style="fill: #c6c4ff; stroke: #443394; color: #443394" transform="translate(282.5,0)">
+        <g class="lini-node lini-tile lini-box lini-block" data-id="docs" style="fill: #c6c4ff; stroke: #443394; color: #443394" transform="translate(201.25,0)">
           <rect x="-48" y="-35" width="96" height="70" rx="6" ry="6"/>
           <text class="lini-text" x="0" y="0">Docs</text>
         </g>

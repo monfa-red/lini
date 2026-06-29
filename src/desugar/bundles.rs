@@ -138,12 +138,6 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             n("font-size", 11.0),
             id("font-weight", "normal"),
         ],
-        "note" => vec![
-            n("radius", 2.0),
-            n("shadow", 2.0),
-            var("fill", "note-bg"),
-            n("padding", 20.0),
-        ],
         "row" => vec![id("layout", "row")],
         "column" => vec![id("layout", "column")],
         // Chart containers ([CHARTS.md] §2): the layout preset is the whole bundle,

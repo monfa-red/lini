@@ -315,7 +315,7 @@ thing for the shape it sits on:
 
 | `"X"` on | becomes |
 |---|---|
-| `\|box\|` and the shapes (`\|oval\|`, `\|hex\|`, `\|cyl\|`, `\|note\|`, …) | its centred text |
+| `\|box\|` and the shapes (`\|oval\|`, `\|hex\|`, `\|cyl\|`, `\|diamond\|`, …) | its centred text |
 | `\|group\|` / `\|table\|` | its **caption** ([§8](#8-templates)) |
 | `\|icon\|` / `\|sign\|` | its **symbol** — `\|icon\| "heart"` is `\|icon\| { symbol: heart }` |
 | a **link** | a label along the route ([§9](#9-links)) |
@@ -736,7 +736,6 @@ primitives ([§7](#7-nodes)) stand on their own.
 | `\|caption\|` | `\|block\|` | `pin: top left; translate: 0 -18; color: --caption-color; font-size: 12; font-weight: normal` | A title, pinned just above the group's top-left corner. |
 | `\|footer\|` | `\|caption\|` | `pin: bottom; translate: 0 17; font-size: 11; color: --footer-color` | A caption flipped to the bottom edge, centred and muted. |
 | `\|badge\|` | `\|block\|` | `pin: top right; translate: 6 -6; radius: 8; padding: 2 6; shadow: 2 3 3; fill: --accent; color: --accent-text; font-size: 11; font-weight: normal` | Corner pill — nudged out over the top-right corner, grows nothing. |
-| `\|note\|` | `\|block\|` | `radius: 2; shadow: 2; fill: --note-bg; padding: 20` | Sticky note. |
 | `\|row\|` | `\|block\|` | `layout: row` | Frameless wrapper — children in a row. |
 | `\|column\|` | `\|block\|` | `layout: column` | Frameless wrapper — children in a column. |
 | `\|sign\|` | `\|icon\|` | `width: 64; height: 64; padding: 4; stroke-width: 1.5; fit: contain` | A larger icon as a stand-alone node, with room for a short label; `fit: contain` fills the box (unlike a bare `\|icon\|`), and its line weight drops to the node default `1.5` (a bare `\|icon\|` keeps `2`). |
@@ -1134,7 +1133,6 @@ Each colour is a `light-dark(LIGHT, DARK)` value, so one SVG carries both modes:
 --lini-danger        light-dark(crimson, #ff6b6b)
 --lini-warn          light-dark(orange, #ffb454)
 --lini-stray         light-dark(crimson, #ff6b6b)    the stray-link fallback (LINKING.md, §Impossible layouts)
---lini-note-bg       light-dark(#fff9c4, #4a4733)
 --lini-group-stroke  light-dark(rgba(0,0,0,.4), rgba(255,255,255,.4))
 --lini-group-fill    light-dark(rgba(0,0,0,.03), rgba(255,255,255,.05))
 --lini-icon-fill     light-dark(rgba(0,0,0,.16), rgba(255,255,255,.18))  the soft body behind a duotone icon
@@ -1190,7 +1188,7 @@ detail — a promise a `light` / `dark` or numeric name could not keep.
 
 ```
 { |card::box| { fill: --teal-wash; stroke: --teal-ink } }   // a pretty card, one line
-|note#n| { fill: --amber-soft }
+|box#n| { fill: --amber-soft }
 ```
 
 The tiers are generated from one **OKLCH** seed per hue, so the ramp is perceptually

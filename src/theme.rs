@@ -216,7 +216,6 @@ fn high_contrast() -> Vec<(&'static str, ResolvedValue)> {
         ),
         ("caption-color", ld(idn("black"), idn("white"))),
         ("footer-color", ld(idn("black"), idn("white"))),
-        ("note-bg", ld(hx("ffffcc"), hx("333300"))),
     ]
 }
 

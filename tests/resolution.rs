@@ -112,8 +112,8 @@ fn err_define_name_collides_with_primitive() {
 #[test]
 fn err_define_name_collides_with_template() {
     assert_resolve_error(
-        "{\n  |note::box| { }\n}\n|box#cat|\n",
-        "'note' shadows a built-in type",
+        "{\n  |badge::box| { }\n}\n|box#cat|\n",
+        "'badge' shadows a built-in type",
     );
 }
 

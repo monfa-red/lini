@@ -47,7 +47,6 @@ pub fn built_in_defaults() -> VarTable {
     );
     set_visual(&mut t, "warn", light_dark(ident("orange"), hex("ffb454")));
     set_visual(&mut t, "stray", light_dark(ident("crimson"), hex("ff6b6b")));
-    set_visual(&mut t, "note-bg", light_dark(hex("fff9c4"), hex("4a4733")));
     set_visual(
         &mut t,
         "group-stroke",

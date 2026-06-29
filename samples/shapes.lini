@@ -64,10 +64,6 @@
 ]
 
 |tile| [
-  |note| "note" { width: 74; height: 50; }
-  |cap| "note"
-]
-|tile| [
   |group| { padding: 12; } [
     |caption| "Group"
     |box| { width: 56; height: 34; fill: --gray-wash; stroke: --gray-ink; }

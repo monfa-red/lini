@@ -96,7 +96,7 @@ store ---> api "ack"                       // dotted arrow
 |path| { path: "M -34 6 C -34 -34 34 -34 34 6 C 20 34 -20 34 -34 6 Z"; }
 ```
 
-Block (the bare frameless rectangle), oval, hex, slant, cylinder, diamond, polygon, line, icon (a Phosphor symbol — `|icon| { symbol: heart }`, painted like a node), and image, plus `path` for anything else. Text is not a primitive: a bare `"…"` is content — styleable in place (`"x" { color: red }`) — and `|block|` is the frameless box for a label that needs an id or a link. Templates (`box`, `rect`, `group`, `caption`, `footer`, `badge`, `note`, `row`, `column`, `table`, `sign`) bundle common patterns over a base type, and you can define your own from any base: `|panel::group| { stroke: --accent; }`.
+Block (the bare frameless rectangle), oval, hex, slant, cylinder, diamond, polygon, line, icon (a Phosphor symbol — `|icon| { symbol: heart }`, painted like a node), and image, plus `path` for anything else. Text is not a primitive: a bare `"…"` is content — styleable in place (`"x" { color: red }`) — and `|block|` is the frameless box for a label that needs an id or a link. Templates (`box`, `rect`, `group`, `caption`, `footer`, `badge`, `row`, `column`, `table`, `sign`) bundle common patterns over a base type, and you can define your own from any base: `|panel::group| { stroke: --accent; }`.
 
 ---
 
@@ -163,7 +163,7 @@ The full routing contract (crossings, priority, self-loops, starvation) lives in
 
 ```
 { |card::box| { fill: --teal-wash; stroke: --teal-ink } }   // a soft card, one line
-|note#note| { fill: --amber-soft }
+|box#n|     { fill: --amber-soft }
 |box#hero|  { fill: gradient(--rose, --amber, --sky) }      // a three-colour blend
 ```
 
