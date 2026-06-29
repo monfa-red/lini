@@ -1,22 +1,25 @@
-|block| { layout: grid; columns: repeat(2); gap: 24; padding: 6; } [
+|block| { layout: grid; columns: repeat(2); gap: 25; padding: 5; } [
   |chart| "Revenue by quarter ($M)" {
-    width: 340; height: 240; categories: "Q1" "Q2" "Q3" "Q4";
+    width: 350; height: 240; categories: "Q1" "Q2" "Q3" "Q4";
   } [
-    |bars| "2023" { data: 12 19 15 25; fill: --orange; }
-    |bars| "2024" { data: 18 24 22 31; fill: --sky; }
+    |bars| "2023" { data: 12 19 15 25; fill: --orange-soft; }
+    |bars| "2024" { data: 18 24 22 31; fill: --sky-soft; }
   ]
   |chart| "Active users (k)" {
-    width: 340; height: 240; categories: "Jan" "Feb" "Mar" "Apr" "May" "Jun";
+    width: 350; height: 240; categories: "Jan" "Feb" "Mar" "Apr" "May" "Jun";
   } [
+    |axis#ms| { side: left; }
+    |mark| "Goal" { at: 48; axis: ms; stroke: --red; stroke-style: dashed; }
+
     |line| "web" {
-      data: 12 18 22 28 35 44; curve: smooth; marker: dot; stroke: --teal;
+      data: 16 18 22 28 35 42; curve: smooth; marker: dot; stroke: --teal; tags: "" "UI change" "" "" "Redesign" "";
     }
     |line| "app" {
       data: 8 14 20 30 42 58; curve: smooth; marker: dot; stroke: --purple;
     }
   ]
   |chart| "Profiles" {
-    width: 340; height: 240; direction: radial; categories: "Speed" "Range" "Armor" "Cost" "Stealth" "humor";
+    width: 350; height: 240; direction: radial; categories: "Speed" "Range" "Armor" "Cost" "Stealth" "humor";
   } [
     |axis| { range: 0 6; }
     |area| "Cruiser" { data: 3 4 5 5 4 4; fill: --green-soft; }
@@ -25,7 +28,7 @@
 
   ]
   |chart| "Reactor temperature (°C)" { width: 340; height: 240; } [
-    |axis#t| "min" { side: bottom; range: 0 6; }
+    |axis#t| { side: bottom; range: 0 6; }
     |axis| { side: left; }
     |band| "Warm-up" { span: 0 1.5; axis: t; fill: --sky; }
     |band| "Hold" { span: 1.5 4; axis: t; fill: --amber; }
@@ -33,5 +36,21 @@
     |area| "core" {
       data: 0 20, 1 120, 2 300, 3 320, 4 260, 5 80; fill: --rose;
     }
+  ]
+  |pie| "Spend by channel" { width: 350; height: 240; hole: 0.55; } [
+    |slice| "Ads" { value: 40; }
+    |slice| "SEO" { value: 25; }
+    |slice| "Email" { value: 20; }
+    |slice| "Direct" { value: 15; }
+  ]
+  |chart| "Markets (share vs. growth)" { width: 350; height: 240; } [
+    |axis| "growth %" { side: bottom; }
+    |axis| "share %" { side: left; }
+    |bubble| "EU" { at: 12 40; value: 8; }
+    |bubble| "US" { at: 25 55; value: 20; }
+    |bubble| "APAC" { at: 38 30; value: 14; }
+    |bubble| "LatAm" { at: 30 15; value: 6; }
+    |bubble| "MEA" { at: 16 22; value: 5; }
+    |bubble| "China" { at: 45 48; value: 17; }
   ]
 ]
