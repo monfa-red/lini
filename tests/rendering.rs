@@ -719,7 +719,7 @@ fn link_label_translate_is_applied_once() {
     // The shared text emitter applies it once. Both ends sit at y=0, so a clean
     // -10 nudge must land the label at exactly y="-10".
     let svg = render_baked(
-        "{ layout: row; gap: 120 }\n|box#a|\n|box#b|\na -> b [ \"L\" { translate: 0 -10 } ]\n",
+        "{ direction: row; gap: 120 }\n|box#a|\n|box#b|\na -> b [ \"L\" { translate: 0 -10 } ]\n",
     );
     let tag = svg
         .lines()

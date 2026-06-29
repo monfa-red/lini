@@ -130,8 +130,8 @@ fn head_label_before_classes_and_style() {
 #[test]
 fn node_with_style_and_children() {
     assert_eq!(
-        fmt("|group#g|{layout:column}[\n|box#a|\n|box#b|\n]\n"),
-        "|group#g| { layout: column; } [\n  |box#a|\n  |box#b|\n]\n"
+        fmt("|group#g|{direction:column}[\n|box#a|\n|box#b|\n]\n"),
+        "|group#g| { direction: column; } [\n  |box#a|\n  |box#b|\n]\n"
     );
 }
 
@@ -139,16 +139,16 @@ fn node_with_style_and_children() {
 fn block_declarations_group_on_one_line() {
     // SPEC §20: config decls share a line in the style block, off the head.
     assert_eq!(
-        fmt("|group#g| { cell: 1 2; layout: column; gap: 16 } [\n|box#a|\n]\n"),
-        "|group#g| { cell: 1 2; layout: column; gap: 16; } [\n  |box#a|\n]\n"
+        fmt("|group#g| { cell: 1 2; direction: column; gap: 16 } [\n|box#a|\n]\n"),
+        "|group#g| { cell: 1 2; direction: column; gap: 16; } [\n  |box#a|\n]\n"
     );
 }
 
 #[test]
 fn a_comment_breaks_a_declaration_group_and_forces_a_block() {
     assert_eq!(
-        fmt("|group#g| {\n  layout: row;\n  // note\n  gap: 10;\n} [\n  |box#a|\n]\n"),
-        "|group#g| {\n  layout: row;\n  // note\n  gap: 10;\n} [\n  |box#a|\n]\n"
+        fmt("|group#g| {\n  direction: row;\n  // note\n  gap: 10;\n} [\n  |box#a|\n]\n"),
+        "|group#g| {\n  direction: row;\n  // note\n  gap: 10;\n} [\n  |box#a|\n]\n"
     );
 }
 
@@ -249,7 +249,7 @@ layout: grid;  columns: repeat(3);  gap: 40;
 }
 
 |oval#cat| \"Cat\" { cell: 1 1 }
-|group#kitchen| { layout: column } [
+|group#kitchen| { direction: column } [
 |caption| \"Kitchen\"
 |treat#bowl| \"Bowl\"
 |box#water| \"Water\"

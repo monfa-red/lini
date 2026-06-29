@@ -335,11 +335,11 @@ fn gap_growth_completes_a_starved_scene() {
 /// for separate bodies; the walled-in fixture above covers that path.)
 #[test]
 fn gap_growth_is_bounded_where_no_gap_can_help() {
-    let src = "{ layout: row; gap: 40;\n\
+    let src = "{ direction: row; gap: 40;\n\
                  clearance: 16;\n\
                }\n\
                |group#grp| {\n\
-                 layout: row; gap: 24; padding: 24;\n\
+                 direction: row; gap: 24; padding: 24;\n\
                } [\n\
                  |box#aa| { width: 40; height: 40; }\n\
                  |box#bb| { width: 40; height: 40; }\n\

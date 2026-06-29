@@ -266,7 +266,7 @@ fn detect_cycle(
 // ─────────────────────────── Root config ───────────────────────────
 
 /// Root container attributes — read straight from the global block. Desugar
-/// injects the scene defaults (`layout: column`, `padding: 20` — the scene's
+/// injects the scene defaults (`layout: flow`, `padding: 20` — the scene's
 /// frame — `gap`, the inherited-text baseline), so there is nothing to seed here.
 fn root_attrs(file: &File, vars: &VarTable, funcs: &FuncTable) -> Result<AttrMap, Error> {
     let mut ordered: Vec<(String, ResolvedValue)> = Vec::new();

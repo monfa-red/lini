@@ -83,7 +83,7 @@ fn theme_cannot_set_a_layout_value() {
     // Layout values (gap, padding, radius, …) bake from the global block and the
     // `.lini-*` classes, not `--lini-*` vars (SPEC §11.2, the "dumb core"): a
     // `--lini-gap` theme is inert. Gap is set with `gap:` in the stylesheet.
-    let src = "{\n  layout: row;\n}\n|box| { width: 40; height: 40; }\n|box| { width: 40; height: 40; }\n";
+    let src = "{\n  direction: row;\n}\n|box| { width: 40; height: 40; }\n|box| { width: 40; height: 40; }\n";
     let default = lini::compile_str(src).expect("default compile");
     let themed = lini::compile_str_with(
         src,
@@ -102,7 +102,7 @@ fn theme_cannot_set_a_layout_value() {
 
 #[test]
 fn theme_visual_var_does_not_change_layout_baking() {
-    let src = "{\n  layout: row;\n}\n|box| { width: 40; height: 40; }\n|box| { width: 40; height: 40; }\n";
+    let src = "{\n  direction: row;\n}\n|box| { width: 40; height: 40; }\n|box| { width: 40; height: 40; }\n";
     let default = lini::compile_str(src).expect("default compile");
     let themed = lini::compile_str_with(
         src,
