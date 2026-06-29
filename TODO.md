@@ -44,9 +44,9 @@ A sketch (open to better shapes):
 ```
 { layout: sequence }
 
-user    |actor| "User"
-browser |box|   "Browser"
-server  |box|   "Server"
+    |actor#user|  "User"
+    |box#browser| "Browser"
+    |box#server|  "Server"
 
 user    ->  browser "click login"   // -> call · --> return · ~> async · a->a self
 browser ->  server  "POST /login"
