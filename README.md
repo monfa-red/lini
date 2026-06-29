@@ -113,7 +113,7 @@ Give a node `layout: chart` and it becomes a plot, drawn from data instead of pi
 ]
 ```
 
-`|bars|`, `|line|`, `|area|`, `|dots|`, and `|bubble|` share one x/value plane; `|slice|` makes a pie or donut. `direction: radial` bends the plane into a radar and `direction: row` lays it on its side, with no change to the data. A series reads either `data:` (plain numbers, or `x y` points) or `fn:` — a formula sampled over the domain, using the language's own compile-time math. Axes auto-fit or take a `range:`, run linear or `log`, and you declare an `|axis|` only when you want to say something; shade a zone with `|band|`, drop a threshold or callout with `|mark|`, and every mark gets a hover tooltip for free. The whole chart language is in [`CHARTS.md`](https://github.com/monfa-red/lini/blob/main/CHARTS.md).
+`|bars|`, `|line|`, `|area|`, `|dots|`, and `|bubble|` share one x/value plane; `|slice|` makes a pie or donut. `direction: radial` bends the plane into a radar and `direction: row` lays it on its side, with no change to the data. A series reads either `data:` (plain numbers, or `x y` points) or `fn:` — a formula sampled over the domain, using the language's own compile-time math. Axes auto-fit or take a `range:`, run linear or `log`, and you declare an `|axis|` only when you want to say something; shade a zone with `|band|`, drop a threshold or callout with `|mark|`. Label individual points with `tags:` and they place themselves without colliding — on the plot where they fit, on hover where they don't (`tooltip: none | hover | auto | always`); size a point for hovering with `marker: circle`. The whole chart language is in [`CHARTS.md`](https://github.com/monfa-red/lini/blob/main/CHARTS.md).
 
 ---
 
