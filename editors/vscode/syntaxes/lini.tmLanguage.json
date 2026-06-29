@@ -106,7 +106,7 @@
         },
         {
           "comment": "a built-in primitive or template",
-          "match": "(?<![\\w-])(box|oval|line|path|poly|hex|slant|cyl|diamond|cloud|icon|image|block|rect|group|caption|footer|badge|note|row|column|table)(?![\\w-])",
+          "match": "(?<![\\w-])(box|oval|line|path|poly|hex|slant|cyl|diamond|cloud|icon|image|block|rect|group|caption|footer|badge|note|row|column|grid|table)(?![\\w-])",
           "name": "entity.name.tag.lini"
         },
         {
@@ -156,7 +156,7 @@
       "name": "support.function.lini"
     },
     "value-keyword": {
-      "match": "(?<![\\w-])(grid|row|column|start|center|end|stretch|evenly|none|auto|true|false|solid|dashed|dotted|wavy|arrow|dot|diamond|crow|outlined|filled|rounded|sharp|top|bottom|left|right|all|rows|columns)(?![\\w-])",
+      "match": "(?<![\\w-])(flow|grid|row|column|start|center|end|stretch|evenly|none|auto|true|false|solid|dashed|dotted|wavy|arrow|dot|diamond|crow|outlined|filled|rounded|sharp|top|bottom|left|right|all|rows|columns)(?![\\w-])",
       "name": "support.constant.lini"
     },
     "color-name": {
