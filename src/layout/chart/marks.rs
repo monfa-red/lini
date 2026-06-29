@@ -7,9 +7,27 @@ use super::prim;
 use super::project::{Dir, Plot};
 use super::scale::{Scale, fmt_tick};
 use crate::layout::PlacedNode;
+use crate::resolve::ResolvedValue;
 
 /// One datum's data-space coordinate paired with its pixel coordinate.
 type Plotted = ((f64, f64), (f64, f64));
+
+/// The `-deep` tier of a palette hue, for an area's default edge ([CHARTS.md] §10):
+/// `--teal` → `--teal-deep`, `--green-soft` → `--green-deep`. A non-palette colour
+/// (a hex, a gradient) is its own edge.
+fn deepen(color: &ResolvedValue) -> ResolvedValue {
+    if let ResolvedValue::LiveVar { name, raw } = color {
+        let base = match name.rsplit_once('-') {
+            Some((b, "wash" | "soft" | "deep" | "ink")) => b,
+            _ => name.as_str(),
+        };
+        return ResolvedValue::LiveVar {
+            name: format!("{base}-deep"),
+            raw: *raw,
+        };
+    }
+    color.clone()
+}
 
 /// All `|area|` series — drawn behind bars and lines ([CHARTS.md] §15).
 pub fn areas(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
@@ -94,11 +112,14 @@ fn draw_area(plot: &Plot, chart: &Chart, ser: &Series, out: &mut Vec<PlacedNode>
         return;
     }
     let px: Vec<(f64, f64)> = pts.iter().map(|(_, p)| *p).collect();
+    // The edge stroke ([CHARTS.md] §10): an explicit `stroke`, else a deep tier of the
+    // fill so the area reads as a filled shape with a defined outline, not a flat blob.
+    let edge = ser.edge.clone().unwrap_or_else(|| deepen(&ser.color));
     // A filled radar fills the closed spoke polygon — there is no baseline ([§12]).
     if plot.is_radial() {
         out.push(prim::poly(px.clone(), ser.color.clone(), 0.82));
         for run in line_runs(plot, &px, &ser.curve) {
-            out.push(prim::line(run, ser.color.clone(), ser.thickness.max(2.0)));
+            out.push(prim::line(run, edge.clone(), ser.thickness));
         }
         vertex_markers(chart, ser, &pts, out);
         return;
@@ -132,7 +153,7 @@ fn draw_area(plot: &Plot, chart: &Chart, ser: &Series, out: &mut Vec<PlacedNode>
         out.push(prim::poly(poly, ser.color.clone(), 0.82));
     }
     for run in plot.clip(&top) {
-        out.push(prim::line(run, ser.color.clone(), ser.thickness.max(2.0)));
+        out.push(prim::line(run, edge.clone(), ser.thickness));
     }
     vertex_markers(chart, ser, &pts, out);
 }

@@ -1,24 +1,30 @@
-|block| { layout: grid; columns: repeat(2); gap: 24; padding: 16; } [
+|block| { layout: grid; columns: repeat(2); gap: 24; padding: 6; } [
   |chart| "Revenue by quarter ($M)" {
-    width: 360; height: 240; categories: "Q1" "Q2" "Q3" "Q4";
+    width: 340; height: 240; categories: "Q1" "Q2" "Q3" "Q4";
   } [
-    |bars| "2023" { data: 12 19 15 25; }
-    |bars| "2024" { data: 18 24 22 31; }
+    |bars| "2023" { data: 12 19 15 25; fill: --orange; }
+    |bars| "2024" { data: 18 24 22 31; fill: --sky; }
   ]
   |chart| "Active users (k)" {
-    width: 360; height: 240; categories: "Jan" "Feb" "Mar" "Apr" "May" "Jun";
+    width: 340; height: 240; categories: "Jan" "Feb" "Mar" "Apr" "May" "Jun";
   } [
-    |line| "web" { data: 12 18 22 28 35 44; curve: smooth; marker: dot; }
-    |line| "app" { data: 8 14 20 30 42 58; curve: smooth; marker: dot; }
+    |line| "web" {
+      data: 12 18 22 28 35 44; curve: smooth; marker: dot; stroke: --teal;
+    }
+    |line| "app" {
+      data: 8 14 20 30 42 58; curve: smooth; marker: dot; stroke: --purple;
+    }
   ]
   |chart| "Profiles" {
-    width: 360; height: 240; direction: radial; categories: "Speed" "Range" "Armor" "Cost" "Stealth";
+    width: 340; height: 240; direction: radial; categories: "Speed" "Range" "Armor" "Cost" "Stealth" "humor";
   } [
-    |axis| { range: 0 5; }
-    |line| "Scout" { data: 5 4 2 3 5; }
-    |area| "Cruiser" { data: 3 3 5 4 2; fill: --teal; }
+    |axis| { range: 0 6; }
+    |area| "Cruiser" { data: 3 4 5 5 4 4; fill: --green-soft; }
+    |line| "Scout" { data: 5 4 3 4 5 5; stroke: --rose; }
+    |line| "Truck" { data: 4 5 3 3 4 5; stroke: --blue; }
+
   ]
-  |chart| "Reactor temperature (°C)" { width: 360; height: 240; } [
+  |chart| "Reactor temperature (°C)" { width: 340; height: 240; } [
     |axis#t| "min" { side: bottom; range: 0 6; }
     |axis| { side: left; }
     |band| "Warm-up" { span: 0 1.5; axis: t; fill: --sky; }

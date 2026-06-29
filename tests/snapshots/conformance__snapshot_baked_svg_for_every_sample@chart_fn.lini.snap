@@ -21,40 +21,40 @@ input_file: samples/chart_fn.lini
         <line x1="-143.6" y1="55.6" x2="123.8" y2="55.6"/>
       </g>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-143.6" y1="-0.7636" x2="123.8" y2="-0.7636"/>
+        <line x1="-143.6" y1="2.7818" x2="123.8" y2="2.7818"/>
       </g>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-143.6" y1="-57.1273" x2="123.8" y2="-57.1273"/>
+        <line x1="-143.6" y1="-50.0364" x2="123.8" y2="-50.0364"/>
       </g>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-143.6" y1="-68.4" x2="-143.6" y2="55.6"/>
+        <line x1="-143.6" y1="-60.6" x2="-143.6" y2="55.6"/>
       </g>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-43.0737" y1="-68.4" x2="-43.0737" y2="55.6"/>
+        <line x1="-43.0737" y1="-60.6" x2="-43.0737" y2="55.6"/>
       </g>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="57.4526" y1="-68.4" x2="57.4526" y2="55.6"/>
+        <line x1="57.4526" y1="-60.6" x2="57.4526" y2="55.6"/>
       </g>
       <g class="lini-node lini-poly" style="fill: #00bcb1; stroke: none; stroke-width: 0; opacity: 0.82" transform="translate(0,0)">
-        <polygon points="-143.6,-57.1273 -131.9739,-57.1273 -120.3478,-57.1273 -108.7217,-57.1273 -97.0957,-57.1273 -85.4696,-57.1273 -73.8435,-57.1273 -62.2174,-57.1273 -50.5913,-57.1273 -38.9652,-57.1273 -27.3391,-57.1273 -15.713,-57.1273 -4.087,-57.1273 7.5391,-57.1273 19.1652,-57.1273 30.7913,-57.1273 42.4174,-57.1273 54.0435,-52.3587 65.6696,-47.1601 77.2957,-41.9615 88.9217,-36.763 100.5478,-31.5644 112.1739,-26.3658 123.8,-21.1673 123.8,55.6 -143.6,55.6"/>
+        <polygon points="-143.6,-50.0364 -131.9739,-50.0364 -120.3478,-50.0364 -108.7217,-50.0364 -97.0957,-50.0364 -85.4696,-50.0364 -73.8435,-50.0364 -62.2174,-50.0364 -50.5913,-50.0364 -38.9652,-50.0364 -27.3391,-50.0364 -15.713,-50.0364 -4.087,-50.0364 7.5391,-50.0364 19.1652,-50.0364 30.7913,-50.0364 42.4174,-50.0364 54.0435,-45.5677 65.6696,-40.6962 77.2957,-35.8246 88.9217,-30.953 100.5478,-26.0815 112.1739,-21.2099 123.8,-16.3384 123.8,55.6 -143.6,55.6"/>
       </g>
-      <g class="lini-node lini-line" style="stroke: #00bcb1" transform="translate(0,0)">
-        <polyline points="-143.6,-57.1273 -131.9739,-57.1273 -120.3478,-57.1273 -108.7217,-57.1273 -97.0957,-57.1273 -85.4696,-57.1273 -73.8435,-57.1273 -62.2174,-57.1273 -50.5913,-57.1273 -38.9652,-57.1273 -27.3391,-57.1273 -15.713,-57.1273 -4.087,-57.1273 7.5391,-57.1273 19.1652,-57.1273 30.7913,-57.1273 42.4174,-57.1273 54.0435,-52.3587 65.6696,-47.1601 77.2957,-41.9615 88.9217,-36.763 100.5478,-31.5644 112.1739,-26.3658 123.8,-21.1673"/>
+      <g class="lini-node lini-line" style="stroke: #008e85" transform="translate(0,0)">
+        <polyline points="-143.6,-50.0364 -131.9739,-50.0364 -120.3478,-50.0364 -108.7217,-50.0364 -97.0957,-50.0364 -85.4696,-50.0364 -73.8435,-50.0364 -62.2174,-50.0364 -50.5913,-50.0364 -38.9652,-50.0364 -27.3391,-50.0364 -15.713,-50.0364 -4.087,-50.0364 7.5391,-50.0364 19.1652,-50.0364 30.7913,-50.0364 42.4174,-50.0364 54.0435,-45.5677 65.6696,-40.6962 77.2957,-35.8246 88.9217,-30.953 100.5478,-26.0815 112.1739,-21.2099 123.8,-16.3384"/>
       </g>
       <g class="lini-node lini-line" style="stroke: #008e85; stroke-dasharray: 6,4.5" transform="translate(0,0)">
-        <polyline points="-143.6,55.6 -131.9739,51.0713 -120.3478,46.5426 -108.7217,42.0139 -97.0957,37.4852 -85.4696,32.9565 -73.8435,28.4278 -62.2174,23.8991 -50.5913,19.3704 -38.9652,14.8417 -27.3391,10.313 -15.713,5.7843 -4.087,1.2557 7.5391,-3.273 19.1652,-7.8017 30.7913,-12.3304 42.4174,-16.8591 54.0435,-21.3878 65.6696,-25.9165 77.2957,-30.4452 88.9217,-34.9739 100.5478,-39.5026 112.1739,-44.0313 123.8,-48.56"/>
+        <polyline points="-143.6,55.6 -131.9739,51.3562 -120.3478,47.1123 -108.7217,42.8685 -97.0957,38.6247 -85.4696,34.3809 -73.8435,30.137 -62.2174,25.8932 -50.5913,21.6494 -38.9652,17.4056 -27.3391,13.1617 -15.713,8.9179 -4.087,4.6741 7.5391,0.4303 19.1652,-3.8136 30.7913,-8.0574 42.4174,-12.3012 54.0435,-16.545 65.6696,-20.7889 77.2957,-25.0327 88.9217,-29.2765 100.5478,-33.5203 112.1739,-37.7642 123.8,-42.008"/>
       </g>
       <text class="lini-text" x="-152.9" y="55.6" style="fill: #888; font-size: 11px">0</text>
-      <text class="lini-text" x="-159.5" y="-0.7636" style="fill: #888; font-size: 11px">500</text>
-      <text class="lini-text" x="-162.8" y="-57.1273" style="fill: #888; font-size: 11px">1000</text>
-      <text class="lini-text" x="-97.4" y="-74.4" style="fill: #888; font-size: 11px">Pressure (bar)</text>
+      <text class="lini-text" x="-159.5" y="2.7818" style="fill: #888; font-size: 11px">500</text>
+      <text class="lini-text" x="-162.8" y="-50.0364" style="fill: #888; font-size: 11px">1000</text>
+      <text class="lini-text" x="-97.4" y="-66.6" style="fill: #888; font-size: 11px">Pressure (bar)</text>
       <text class="lini-text" x="149.6" y="55.6" style="fill: #888; font-size: 11px">0cm³/s</text>
-      <text class="lini-text" x="152.9" y="30.8" style="fill: #888; font-size: 11px">10cm³/s</text>
-      <text class="lini-text" x="152.9" y="6" style="fill: #888; font-size: 11px">20cm³/s</text>
-      <text class="lini-text" x="152.9" y="-18.8" style="fill: #888; font-size: 11px">30cm³/s</text>
-      <text class="lini-text" x="152.9" y="-43.6" style="fill: #888; font-size: 11px">40cm³/s</text>
-      <text class="lini-text" x="152.9" y="-68.4" style="fill: #888; font-size: 11px">50cm³/s</text>
-      <text class="lini-text" x="110.6" y="-74.4" style="fill: #888; font-size: 11px">Flow</text>
+      <text class="lini-text" x="152.9" y="32.36" style="fill: #888; font-size: 11px">10cm³/s</text>
+      <text class="lini-text" x="152.9" y="9.12" style="fill: #888; font-size: 11px">20cm³/s</text>
+      <text class="lini-text" x="152.9" y="-14.12" style="fill: #888; font-size: 11px">30cm³/s</text>
+      <text class="lini-text" x="152.9" y="-37.36" style="fill: #888; font-size: 11px">40cm³/s</text>
+      <text class="lini-text" x="152.9" y="-60.6" style="fill: #888; font-size: 11px">50cm³/s</text>
+      <text class="lini-text" x="110.6" y="-66.6" style="fill: #888; font-size: 11px">Flow</text>
       <text class="lini-text" x="-143.6" y="67.3" style="fill: #888; font-size: 11px">0</text>
       <text class="lini-text" x="-43.0737" y="67.3" style="fill: #888; font-size: 11px">50</text>
       <text class="lini-text" x="57.4526" y="67.3" style="fill: #888; font-size: 11px">100</text>

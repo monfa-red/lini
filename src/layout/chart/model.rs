@@ -119,6 +119,9 @@ pub struct Series {
     pub marker: bool,
     pub curve: Curve,
     pub stroke_style: Option<ResolvedValue>,
+    /// An `|area|`'s explicit edge `stroke` ([CHARTS.md] §3/§10); `None` → a deep tier of
+    /// the fill. Unused by other series (their `color` is already the stroke).
+    pub edge: Option<ResolvedValue>,
     /// A line's `stroke-width` (default 2).
     pub thickness: f64,
     /// A dot's diameter `width` × `height` (default a small circle).
@@ -563,6 +566,7 @@ fn read_series(
         marker: has_marker(inst),
         curve: read_curve(&inst.attrs)?,
         stroke_style: inst.attrs.get("stroke-style").cloned(),
+        edge: real_color(inst.attrs.get("stroke")),
         thickness: inst.attrs.number("stroke-width").unwrap_or(2.0),
         dot: (dot_w, dot_h),
         baseline: inst.attrs.number("baseline"),

@@ -21,48 +21,48 @@ input_file: samples/chart_scatter.lini
         <line x1="-156.8" y1="73.2" x2="168" y2="73.2"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-156.8" y1="26" x2="168" y2="26"/>
+        <line x1="-156.8" y1="28.6" x2="168" y2="28.6"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-156.8" y1="-21.2" x2="168" y2="-21.2"/>
+        <line x1="-156.8" y1="-16" x2="168" y2="-16"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-156.8" y1="-68.4" x2="168" y2="-68.4"/>
+        <line x1="-156.8" y1="-60.6" x2="168" y2="-60.6"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-135.1467" y1="-68.4" x2="-135.1467" y2="73.2"/>
+        <line x1="-135.1467" y1="-60.6" x2="-135.1467" y2="73.2"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-26.88" y1="-68.4" x2="-26.88" y2="73.2"/>
+        <line x1="-26.88" y1="-60.6" x2="-26.88" y2="73.2"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="81.3867" y1="-68.4" x2="81.3867" y2="73.2"/>
+        <line x1="81.3867" y1="-60.6" x2="81.3867" y2="73.2"/>
       </g>
-      <g class="lini-node lini-oval" style="fill: #811442; stroke: none; stroke-width: 0" transform="translate(-113.4933,-21.2)">
+      <g class="lini-node lini-oval" style="fill: #811442; stroke: none; stroke-width: 0" transform="translate(-113.4933,-16)">
         <title>12, 40</title>
         <ellipse cx="0" cy="0" rx="3.5" ry="3.5"/>
       </g>
-      <g class="lini-node lini-oval" style="fill: #811442; stroke: none; stroke-width: 0" transform="translate(27.2533,-56.6)">
+      <g class="lini-node lini-oval" style="fill: #811442; stroke: none; stroke-width: 0" transform="translate(27.2533,-49.45)">
         <title>25, 55</title>
         <ellipse cx="0" cy="0" rx="3.5" ry="3.5"/>
       </g>
-      <g class="lini-node lini-oval" style="fill: #811442; stroke: none; stroke-width: 0" transform="translate(168,2.4)">
+      <g class="lini-node lini-oval" style="fill: #811442; stroke: none; stroke-width: 0" transform="translate(168,6.3)">
         <title>38, 30</title>
         <ellipse cx="0" cy="0" rx="3.5" ry="3.5"/>
       </g>
-      <g class="lini-node lini-oval" style="fill: #811442; stroke: none; stroke-width: 0" transform="translate(-156.8,21.28)">
+      <g class="lini-node lini-oval" style="fill: #811442; stroke: none; stroke-width: 0" transform="translate(-156.8,24.14)">
         <title>8, 22</title>
         <ellipse cx="0" cy="0" rx="3.5" ry="3.5"/>
       </g>
-      <g class="lini-node lini-oval" style="fill: #811442; stroke: none; stroke-width: 0" transform="translate(81.3867,44.88)">
+      <g class="lini-node lini-oval" style="fill: #811442; stroke: none; stroke-width: 0" transform="translate(81.3867,46.44)">
         <title>30, 12</title>
         <ellipse cx="0" cy="0" rx="3.5" ry="3.5"/>
       </g>
       <text class="lini-text" x="-166.1" y="73.2" style="fill: #888; font-size: 11px">0</text>
-      <text class="lini-text" x="-169.4" y="26" style="fill: #888; font-size: 11px">20</text>
-      <text class="lini-text" x="-169.4" y="-21.2" style="fill: #888; font-size: 11px">40</text>
-      <text class="lini-text" x="-169.4" y="-68.4" style="fill: #888; font-size: 11px">60</text>
-      <text class="lini-text" x="-133.7" y="-74.4" style="fill: #888; font-size: 11px">share %</text>
+      <text class="lini-text" x="-169.4" y="28.6" style="fill: #888; font-size: 11px">20</text>
+      <text class="lini-text" x="-169.4" y="-16" style="fill: #888; font-size: 11px">40</text>
+      <text class="lini-text" x="-169.4" y="-60.6" style="fill: #888; font-size: 11px">60</text>
+      <text class="lini-text" x="-133.7" y="-66.6" style="fill: #888; font-size: 11px">share %</text>
       <text class="lini-text" x="-135.1467" y="84.9" style="fill: #888; font-size: 11px">10</text>
       <text class="lini-text" x="-26.88" y="84.9" style="fill: #888; font-size: 11px">20</text>
       <text class="lini-text" x="81.3867" y="84.9" style="fill: #888; font-size: 11px">30</text>

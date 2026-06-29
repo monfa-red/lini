@@ -20,66 +20,66 @@ input_file: samples/chart_stacked.lini
         <line x1="-150.2" y1="71" x2="168" y2="71"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-150.2" y1="19.4" x2="168" y2="19.4"/>
+        <line x1="-150.2" y1="22" x2="168" y2="22"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-150.2" y1="-32.2" x2="168" y2="-32.2"/>
+        <line x1="-150.2" y1="-27" x2="168" y2="-27"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-150.2" y1="-83.8" x2="168" y2="-83.8"/>
+        <line x1="-150.2" y1="-76" x2="168" y2="-76"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(-110.425,50.36)">
+      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(-110.425,51.4)">
         <title>Q1 · NA: 40</title>
-        <rect x="-25.7742" y="-20.64" width="51.5484" height="41.28" rx="0" ry="0"/>
+        <rect x="-25.7742" y="-19.6" width="51.5484" height="39.2" rx="0" ry="0"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #00bcb1; stroke-width: 0" transform="translate(-110.425,14.24)">
+      <g class="lini-node lini-block" style="fill: #00bcb1; stroke-width: 0" transform="translate(-110.425,17.1)">
         <title>Q1 · EU: 30</title>
-        <rect x="-25.7742" y="-15.48" width="51.5484" height="30.96" rx="0" ry="0"/>
+        <rect x="-25.7742" y="-14.7" width="51.5484" height="29.4" rx="0" ry="0"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #e78022; stroke-width: 0" transform="translate(-110.425,-11.56)">
+      <g class="lini-node lini-block" style="fill: #e78022; stroke-width: 0" transform="translate(-110.425,-7.4)">
         <title>Q1 · APAC: 20</title>
-        <rect x="-25.7742" y="-10.32" width="51.5484" height="20.64" rx="0" ry="0"/>
+        <rect x="-25.7742" y="-9.8" width="51.5484" height="19.6" rx="0" ry="0"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(-30.875,47.78)">
+      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(-30.875,48.95)">
         <title>Q2 · NA: 45</title>
-        <rect x="-25.7742" y="-23.22" width="51.5484" height="46.44" rx="0" ry="0"/>
+        <rect x="-25.7742" y="-22.05" width="51.5484" height="44.1" rx="0" ry="0"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #00bcb1; stroke-width: 0" transform="translate(-30.875,6.5)">
+      <g class="lini-node lini-block" style="fill: #00bcb1; stroke-width: 0" transform="translate(-30.875,9.75)">
         <title>Q2 · EU: 35</title>
-        <rect x="-25.7742" y="-18.06" width="51.5484" height="36.12" rx="0" ry="0"/>
+        <rect x="-25.7742" y="-17.15" width="51.5484" height="34.3" rx="0" ry="0"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #e78022; stroke-width: 0" transform="translate(-30.875,-24.46)">
+      <g class="lini-node lini-block" style="fill: #e78022; stroke-width: 0" transform="translate(-30.875,-19.65)">
         <title>Q2 · APAC: 25</title>
-        <rect x="-25.7742" y="-12.9" width="51.5484" height="25.8" rx="0" ry="0"/>
+        <rect x="-25.7742" y="-12.25" width="51.5484" height="24.5" rx="0" ry="0"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(48.675,45.2)">
+      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(48.675,46.5)">
         <title>Q3 · NA: 50</title>
-        <rect x="-25.7742" y="-25.8" width="51.5484" height="51.6" rx="0" ry="0"/>
+        <rect x="-25.7742" y="-24.5" width="51.5484" height="49" rx="0" ry="0"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #00bcb1; stroke-width: 0" transform="translate(48.675,2.372)">
+      <g class="lini-node lini-block" style="fill: #00bcb1; stroke-width: 0" transform="translate(48.675,5.83)">
         <title>Q3 · EU: 33</title>
-        <rect x="-25.7742" y="-17.028" width="51.5484" height="34.056" rx="0" ry="0"/>
+        <rect x="-25.7742" y="-16.17" width="51.5484" height="32.34" rx="0" ry="0"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #e78022; stroke-width: 0" transform="translate(48.675,-30.136)">
+      <g class="lini-node lini-block" style="fill: #e78022; stroke-width: 0" transform="translate(48.675,-25.04)">
         <title>Q3 · APAC: 30</title>
-        <rect x="-25.7742" y="-15.48" width="51.5484" height="30.96" rx="0" ry="0"/>
+        <rect x="-25.7742" y="-14.7" width="51.5484" height="29.4" rx="0" ry="0"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(128.225,40.04)">
+      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(128.225,41.6)">
         <title>Q4 · NA: 60</title>
-        <rect x="-25.7742" y="-30.96" width="51.5484" height="61.92" rx="0" ry="0"/>
+        <rect x="-25.7742" y="-29.4" width="51.5484" height="58.8" rx="0" ry="0"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #00bcb1; stroke-width: 0" transform="translate(128.225,-11.56)">
+      <g class="lini-node lini-block" style="fill: #00bcb1; stroke-width: 0" transform="translate(128.225,-7.4)">
         <title>Q4 · EU: 40</title>
-        <rect x="-25.7742" y="-20.64" width="51.5484" height="41.28" rx="0" ry="0"/>
+        <rect x="-25.7742" y="-19.6" width="51.5484" height="39.2" rx="0" ry="0"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #e78022; stroke-width: 0" transform="translate(128.225,-51.808)">
+      <g class="lini-node lini-block" style="fill: #e78022; stroke-width: 0" transform="translate(128.225,-45.62)">
         <title>Q4 · APAC: 38</title>
-        <rect x="-25.7742" y="-19.608" width="51.5484" height="39.216" rx="0" ry="0"/>
+        <rect x="-25.7742" y="-18.62" width="51.5484" height="37.24" rx="0" ry="0"/>
       </g>
       <text class="lini-text" x="-159.5" y="71" style="fill: #888; font-size: 11px">0</text>
-      <text class="lini-text" x="-162.8" y="19.4" style="fill: #888; font-size: 11px">50</text>
-      <text class="lini-text" x="-166.1" y="-32.2" style="fill: #888; font-size: 11px">100</text>
-      <text class="lini-text" x="-166.1" y="-83.8" style="fill: #888; font-size: 11px">150</text>
+      <text class="lini-text" x="-162.8" y="22" style="fill: #888; font-size: 11px">50</text>
+      <text class="lini-text" x="-166.1" y="-27" style="fill: #888; font-size: 11px">100</text>
+      <text class="lini-text" x="-166.1" y="-76" style="fill: #888; font-size: 11px">150</text>
       <text class="lini-text" x="-110.425" y="82.7" style="fill: #888; font-size: 11px">Q1</text>
       <text class="lini-text" x="-30.875" y="82.7" style="fill: #888; font-size: 11px">Q2</text>
       <text class="lini-text" x="48.675" y="82.7" style="fill: #888; font-size: 11px">Q3</text>

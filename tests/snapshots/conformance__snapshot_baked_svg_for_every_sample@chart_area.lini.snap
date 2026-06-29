@@ -21,34 +21,34 @@ input_file: samples/chart_area.lini
         <line x1="-156.8" y1="71" x2="168" y2="71"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-156.8" y1="32.3" x2="168" y2="32.3"/>
+        <line x1="-156.8" y1="34.25" x2="168" y2="34.25"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-156.8" y1="-6.4" x2="168" y2="-6.4"/>
+        <line x1="-156.8" y1="-2.5" x2="168" y2="-2.5"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-156.8" y1="-45.1" x2="168" y2="-45.1"/>
+        <line x1="-156.8" y1="-39.25" x2="168" y2="-39.25"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-156.8" y1="-83.8" x2="168" y2="-83.8"/>
+        <line x1="-156.8" y1="-76" x2="168" y2="-76"/>
       </g>
       <g class="lini-node lini-poly" style="fill: #ec6e97; stroke: none; stroke-width: 0; opacity: 0.82" transform="translate(0,0)">
-        <polygon points="-124.32,12.95 -59.36,-16.075 5.6,-45.1 70.56,-35.425 135.52,-83.8 135.52,71 -124.32,71"/>
+        <polygon points="-124.32,15.875 -59.36,-11.6875 5.6,-39.25 70.56,-30.0625 135.52,-76 135.52,71 -124.32,71"/>
       </g>
-      <g class="lini-node lini-line" style="fill: none; stroke: #ec6e97; stroke-width: 2" transform="translate(0,0)">
-        <polyline points="-124.32,12.95 -59.36,-16.075 5.6,-45.1 70.56,-35.425 135.52,-83.8"/>
+      <g class="lini-node lini-line" style="fill: none; stroke: #b8476e; stroke-width: 2" transform="translate(0,0)">
+        <polyline points="-124.32,15.875 -59.36,-11.6875 5.6,-39.25 70.56,-30.0625 135.52,-76"/>
       </g>
       <g class="lini-node lini-poly" style="fill: #00bcb1; stroke: none; stroke-width: 0; opacity: 0.82" transform="translate(0,0)">
-        <polygon points="-124.32,51.65 -59.36,36.17 5.6,28.43 70.56,12.95 135.52,-2.53 135.52,71 -124.32,71"/>
+        <polygon points="-124.32,52.625 -59.36,37.925 5.6,30.575 70.56,15.875 135.52,1.175 135.52,71 -124.32,71"/>
       </g>
-      <g class="lini-node lini-line" style="fill: none; stroke: #00bcb1; stroke-width: 2" transform="translate(0,0)">
-        <polyline points="-124.32,51.65 -59.36,36.17 5.6,28.43 70.56,12.95 135.52,-2.53"/>
+      <g class="lini-node lini-line" style="fill: none; stroke: #008e85; stroke-width: 2" transform="translate(0,0)">
+        <polyline points="-124.32,52.625 -59.36,37.925 5.6,30.575 70.56,15.875 135.52,1.175"/>
       </g>
       <text class="lini-text" x="-166.1" y="71" style="fill: #888; font-size: 11px">0</text>
-      <text class="lini-text" x="-169.4" y="32.3" style="fill: #888; font-size: 11px">20</text>
-      <text class="lini-text" x="-169.4" y="-6.4" style="fill: #888; font-size: 11px">40</text>
-      <text class="lini-text" x="-169.4" y="-45.1" style="fill: #888; font-size: 11px">60</text>
-      <text class="lini-text" x="-169.4" y="-83.8" style="fill: #888; font-size: 11px">80</text>
+      <text class="lini-text" x="-169.4" y="34.25" style="fill: #888; font-size: 11px">20</text>
+      <text class="lini-text" x="-169.4" y="-2.5" style="fill: #888; font-size: 11px">40</text>
+      <text class="lini-text" x="-169.4" y="-39.25" style="fill: #888; font-size: 11px">60</text>
+      <text class="lini-text" x="-169.4" y="-76" style="fill: #888; font-size: 11px">80</text>
       <text class="lini-text" x="-124.32" y="82.7" style="fill: #888; font-size: 11px">Jan</text>
       <text class="lini-text" x="-59.36" y="82.7" style="fill: #888; font-size: 11px">Feb</text>
       <text class="lini-text" x="5.6" y="82.7" style="fill: #888; font-size: 11px">Mar</text>

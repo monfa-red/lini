@@ -20,83 +20,83 @@ input_file: samples/chart_log.lini
         <line x1="-130.4" y1="88.6" x2="168" y2="88.6"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-130.4" y1="79.1477" x2="168" y2="79.1477"/>
+        <line x1="-130.4" y1="79.6173" x2="168" y2="79.6173"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-130.4" y1="66.6523" x2="168" y2="66.6523"/>
+        <line x1="-130.4" y1="67.7427" x2="168" y2="67.7427"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-130.4" y1="57.2" x2="168" y2="57.2"/>
+        <line x1="-130.4" y1="58.76" x2="168" y2="58.76"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-130.4" y1="47.7477" x2="168" y2="47.7477"/>
+        <line x1="-130.4" y1="49.7773" x2="168" y2="49.7773"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-130.4" y1="35.2523" x2="168" y2="35.2523"/>
+        <line x1="-130.4" y1="37.9027" x2="168" y2="37.9027"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-130.4" y1="25.8" x2="168" y2="25.8"/>
+        <line x1="-130.4" y1="28.92" x2="168" y2="28.92"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-130.4" y1="16.3477" x2="168" y2="16.3477"/>
+        <line x1="-130.4" y1="19.9373" x2="168" y2="19.9373"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-130.4" y1="3.8523" x2="168" y2="3.8523"/>
+        <line x1="-130.4" y1="8.0627" x2="168" y2="8.0627"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-130.4" y1="-5.6" x2="168" y2="-5.6"/>
+        <line x1="-130.4" y1="-0.92" x2="168" y2="-0.92"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-130.4" y1="-15.0523" x2="168" y2="-15.0523"/>
+        <line x1="-130.4" y1="-9.9027" x2="168" y2="-9.9027"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-130.4" y1="-27.5477" x2="168" y2="-27.5477"/>
+        <line x1="-130.4" y1="-21.7773" x2="168" y2="-21.7773"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-130.4" y1="-37" x2="168" y2="-37"/>
+        <line x1="-130.4" y1="-30.76" x2="168" y2="-30.76"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-130.4" y1="-46.4523" x2="168" y2="-46.4523"/>
+        <line x1="-130.4" y1="-39.7427" x2="168" y2="-39.7427"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-130.4" y1="-58.9477" x2="168" y2="-58.9477"/>
+        <line x1="-130.4" y1="-51.6173" x2="168" y2="-51.6173"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-130.4" y1="-68.4" x2="168" y2="-68.4"/>
+        <line x1="-130.4" y1="-60.6" x2="168" y2="-60.6"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(-93.1,77.6262)">
+      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(-93.1,78.1714)">
         <title>free: 5</title>
-        <rect x="-24.1704" y="-10.9738" width="48.3408" height="21.9477" rx="0" ry="0"/>
+        <rect x="-24.1704" y="-10.4286" width="48.3408" height="20.8573" rx="0" ry="0"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(-18.5,58.7215)">
+      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(-18.5,60.2059)">
         <title>pro: 80</title>
-        <rect x="-24.1704" y="-29.8785" width="48.3408" height="59.757" rx="0" ry="0"/>
+        <rect x="-24.1704" y="-28.3941" width="48.3408" height="56.7882" rx="0" ry="0"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(56.1,40.2569)">
+      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(56.1,42.6586)">
         <title>team: 1200</title>
-        <rect x="-24.1704" y="-48.3431" width="48.3408" height="96.6863" rx="0" ry="0"/>
+        <rect x="-24.1704" y="-45.9414" width="48.3408" height="91.8828" rx="0" ry="0"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(130.7,15.5446)">
+      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(130.7,19.1741)">
         <title>ent: 45000</title>
-        <rect x="-24.1704" y="-73.0554" width="48.3408" height="146.1109" rx="0" ry="0"/>
+        <rect x="-24.1704" y="-69.4259" width="48.3408" height="138.8519" rx="0" ry="0"/>
       </g>
       <text class="lini-text" x="-139.7" y="88.6" style="fill: #888; font-size: 11px">1</text>
-      <text class="lini-text" x="-139.7" y="79.1477" style="fill: #888; font-size: 11px">2</text>
-      <text class="lini-text" x="-139.7" y="66.6523" style="fill: #888; font-size: 11px">5</text>
-      <text class="lini-text" x="-143" y="57.2" style="fill: #888; font-size: 11px">10</text>
-      <text class="lini-text" x="-143" y="47.7477" style="fill: #888; font-size: 11px">20</text>
-      <text class="lini-text" x="-143" y="35.2523" style="fill: #888; font-size: 11px">50</text>
-      <text class="lini-text" x="-146.3" y="25.8" style="fill: #888; font-size: 11px">100</text>
-      <text class="lini-text" x="-146.3" y="16.3477" style="fill: #888; font-size: 11px">200</text>
-      <text class="lini-text" x="-146.3" y="3.8523" style="fill: #888; font-size: 11px">500</text>
-      <text class="lini-text" x="-149.6" y="-5.6" style="fill: #888; font-size: 11px">1000</text>
-      <text class="lini-text" x="-149.6" y="-15.0523" style="fill: #888; font-size: 11px">2000</text>
-      <text class="lini-text" x="-149.6" y="-27.5477" style="fill: #888; font-size: 11px">5000</text>
-      <text class="lini-text" x="-152.9" y="-37" style="fill: #888; font-size: 11px">10000</text>
-      <text class="lini-text" x="-152.9" y="-46.4523" style="fill: #888; font-size: 11px">20000</text>
-      <text class="lini-text" x="-152.9" y="-58.9477" style="fill: #888; font-size: 11px">50000</text>
-      <text class="lini-text" x="-156.2" y="-68.4" style="fill: #888; font-size: 11px">100000</text>
-      <text class="lini-text" x="-113.9" y="-74.4" style="fill: #888; font-size: 11px">req/s</text>
+      <text class="lini-text" x="-139.7" y="79.6173" style="fill: #888; font-size: 11px">2</text>
+      <text class="lini-text" x="-139.7" y="67.7427" style="fill: #888; font-size: 11px">5</text>
+      <text class="lini-text" x="-143" y="58.76" style="fill: #888; font-size: 11px">10</text>
+      <text class="lini-text" x="-143" y="49.7773" style="fill: #888; font-size: 11px">20</text>
+      <text class="lini-text" x="-143" y="37.9027" style="fill: #888; font-size: 11px">50</text>
+      <text class="lini-text" x="-146.3" y="28.92" style="fill: #888; font-size: 11px">100</text>
+      <text class="lini-text" x="-146.3" y="19.9373" style="fill: #888; font-size: 11px">200</text>
+      <text class="lini-text" x="-146.3" y="8.0627" style="fill: #888; font-size: 11px">500</text>
+      <text class="lini-text" x="-149.6" y="-0.92" style="fill: #888; font-size: 11px">1000</text>
+      <text class="lini-text" x="-149.6" y="-9.9027" style="fill: #888; font-size: 11px">2000</text>
+      <text class="lini-text" x="-149.6" y="-21.7773" style="fill: #888; font-size: 11px">5000</text>
+      <text class="lini-text" x="-152.9" y="-30.76" style="fill: #888; font-size: 11px">10000</text>
+      <text class="lini-text" x="-152.9" y="-39.7427" style="fill: #888; font-size: 11px">20000</text>
+      <text class="lini-text" x="-152.9" y="-51.6173" style="fill: #888; font-size: 11px">50000</text>
+      <text class="lini-text" x="-156.2" y="-60.6" style="fill: #888; font-size: 11px">100000</text>
+      <text class="lini-text" x="-113.9" y="-66.6" style="fill: #888; font-size: 11px">req/s</text>
       <text class="lini-text" x="-93.1" y="100.3" style="fill: #888; font-size: 11px">free</text>
       <text class="lini-text" x="-18.5" y="100.3" style="fill: #888; font-size: 11px">pro</text>
       <text class="lini-text" x="56.1" y="100.3" style="fill: #888; font-size: 11px">team</text>

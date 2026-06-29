@@ -20,38 +20,38 @@ input_file: samples/chart_threshold.lini
         <line x1="-150.2" y1="88.6" x2="168" y2="88.6"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-150.2" y1="31.1333" x2="168" y2="31.1333"/>
+        <line x1="-150.2" y1="33.7333" x2="168" y2="33.7333"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-150.2" y1="-26.3333" x2="168" y2="-26.3333"/>
+        <line x1="-150.2" y1="-21.1333" x2="168" y2="-21.1333"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-150.2" y1="-83.8" x2="168" y2="-83.8"/>
+        <line x1="-150.2" y1="-76" x2="168" y2="-76"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(-110.425,85.152)">
+      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(-110.425,85.308)">
         <title>p50 · v2: 12</title>
-        <rect x="-25.7742" y="-3.448" width="51.5484" height="6.896" rx="0" ry="0"/>
+        <rect x="-25.7742" y="-3.292" width="51.5484" height="6.584" rx="0" ry="0"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(-30.875,77.1067)">
+      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(-30.875,77.6267)">
         <title>p90 · v2: 40</title>
-        <rect x="-25.7742" y="-11.4933" width="51.5484" height="22.9867" rx="0" ry="0"/>
+        <rect x="-25.7742" y="-10.9733" width="51.5484" height="21.9467" rx="0" ry="0"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(48.675,65.6133)">
+      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(48.675,66.6533)">
         <title>p99 · v2: 80</title>
-        <rect x="-25.7742" y="-22.9867" width="51.5484" height="45.9733" rx="0" ry="0"/>
+        <rect x="-25.7742" y="-21.9467" width="51.5484" height="43.8933" rx="0" ry="0"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(128.225,2.4)">
+      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(128.225,6.3)">
         <title>p999 · v2: 300</title>
-        <rect x="-25.7742" y="-86.2" width="51.5484" height="172.4" rx="0" ry="0"/>
+        <rect x="-25.7742" y="-82.3" width="51.5484" height="164.6" rx="0" ry="0"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: #f27168; stroke-width: 1.5; stroke-dasharray: 5,3.75" transform="translate(0,0)">
-        <line x1="-150.2" y1="-55.0667" x2="168" y2="-55.0667"/>
+        <line x1="-150.2" y1="-48.5667" x2="168" y2="-48.5667"/>
       </g>
-      <text class="lini-text" x="-124.1" y="-61.6667" style="fill: #f27168; font-size: 11px">SLO 250</text>
+      <text class="lini-text" x="-124.1" y="-55.1667" style="fill: #f27168; font-size: 11px">SLO 250</text>
       <text class="lini-text" x="-159.5" y="88.6" style="fill: #888; font-size: 11px">0</text>
-      <text class="lini-text" x="-166.1" y="31.1333" style="fill: #888; font-size: 11px">100</text>
-      <text class="lini-text" x="-166.1" y="-26.3333" style="fill: #888; font-size: 11px">200</text>
-      <text class="lini-text" x="-166.1" y="-83.8" style="fill: #888; font-size: 11px">300</text>
+      <text class="lini-text" x="-166.1" y="33.7333" style="fill: #888; font-size: 11px">100</text>
+      <text class="lini-text" x="-166.1" y="-21.1333" style="fill: #888; font-size: 11px">200</text>
+      <text class="lini-text" x="-166.1" y="-76" style="fill: #888; font-size: 11px">300</text>
       <text class="lini-text" x="-110.425" y="100.3" style="fill: #888; font-size: 11px">p50</text>
       <text class="lini-text" x="-30.875" y="100.3" style="fill: #888; font-size: 11px">p90</text>
       <text class="lini-text" x="48.675" y="100.3" style="fill: #888; font-size: 11px">p99</text>

@@ -21,44 +21,44 @@ input_file: samples/chart_line.lini
         <line x1="-150.2" y1="71" x2="168" y2="71"/>
       </g>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-150.2" y1="40.04" x2="168" y2="40.04"/>
+        <line x1="-150.2" y1="41.6" x2="168" y2="41.6"/>
       </g>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-150.2" y1="9.08" x2="168" y2="9.08"/>
+        <line x1="-150.2" y1="12.2" x2="168" y2="12.2"/>
       </g>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-150.2" y1="-21.88" x2="168" y2="-21.88"/>
+        <line x1="-150.2" y1="-17.2" x2="168" y2="-17.2"/>
       </g>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-150.2" y1="-52.84" x2="168" y2="-52.84"/>
+        <line x1="-150.2" y1="-46.6" x2="168" y2="-46.6"/>
       </g>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-150.2" y1="-83.8" x2="168" y2="-83.8"/>
+        <line x1="-150.2" y1="-76" x2="168" y2="-76"/>
       </g>
       <g class="lini-node lini-line" style="stroke: #b8476e" transform="translate(0,0)">
-        <polyline points="-110.425,67.2848 -30.875,58.616 48.675,33.848 128.225,-77.608"/>
+        <polyline points="-110.425,67.472 -30.875,59.24 48.675,35.72 128.225,-70.12"/>
       </g>
-      <g class="lini-node lini-oval" style="fill: #b8476e; stroke: none; stroke-width: 0" transform="translate(-110.425,67.2848)">
+      <g class="lini-node lini-oval" style="fill: #b8476e; stroke: none; stroke-width: 0" transform="translate(-110.425,67.472)">
         <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
       </g>
-      <g class="lini-node lini-oval" style="fill: #b8476e; stroke: none; stroke-width: 0" transform="translate(-30.875,58.616)">
+      <g class="lini-node lini-oval" style="fill: #b8476e; stroke: none; stroke-width: 0" transform="translate(-30.875,59.24)">
         <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
       </g>
-      <g class="lini-node lini-oval" style="fill: #b8476e; stroke: none; stroke-width: 0" transform="translate(48.675,33.848)">
+      <g class="lini-node lini-oval" style="fill: #b8476e; stroke: none; stroke-width: 0" transform="translate(48.675,35.72)">
         <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
       </g>
-      <g class="lini-node lini-oval" style="fill: #b8476e; stroke: none; stroke-width: 0" transform="translate(128.225,-77.608)">
+      <g class="lini-node lini-oval" style="fill: #b8476e; stroke: none; stroke-width: 0" transform="translate(128.225,-70.12)">
         <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
       </g>
       <g class="lini-node lini-line" style="stroke: #008e85; stroke-dasharray: 6,4.5" transform="translate(0,0)">
-        <polyline points="-110.425,68.2136 -30.875,62.3312 48.675,47.78 128.225,-21.88"/>
+        <polyline points="-110.425,68.354 -30.875,62.768 48.675,48.95 128.225,-17.2"/>
       </g>
       <text class="lini-text" x="-159.5" y="71" style="fill: #888; font-size: 11px">0</text>
-      <text class="lini-text" x="-166.1" y="40.04" style="fill: #888; font-size: 11px">100</text>
-      <text class="lini-text" x="-166.1" y="9.08" style="fill: #888; font-size: 11px">200</text>
-      <text class="lini-text" x="-166.1" y="-21.88" style="fill: #888; font-size: 11px">300</text>
-      <text class="lini-text" x="-166.1" y="-52.84" style="fill: #888; font-size: 11px">400</text>
-      <text class="lini-text" x="-166.1" y="-83.8" style="fill: #888; font-size: 11px">500</text>
+      <text class="lini-text" x="-166.1" y="41.6" style="fill: #888; font-size: 11px">100</text>
+      <text class="lini-text" x="-166.1" y="12.2" style="fill: #888; font-size: 11px">200</text>
+      <text class="lini-text" x="-166.1" y="-17.2" style="fill: #888; font-size: 11px">300</text>
+      <text class="lini-text" x="-166.1" y="-46.6" style="fill: #888; font-size: 11px">400</text>
+      <text class="lini-text" x="-166.1" y="-76" style="fill: #888; font-size: 11px">500</text>
       <text class="lini-text" x="-110.425" y="82.7" style="fill: #888; font-size: 11px">p50</text>
       <text class="lini-text" x="-30.875" y="82.7" style="fill: #888; font-size: 11px">p90</text>
       <text class="lini-text" x="48.675" y="82.7" style="fill: #888; font-size: 11px">p99</text>

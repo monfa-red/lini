@@ -146,7 +146,7 @@ fn plot_rect(chart: &Chart, w: f64, h: f64) -> Plot {
     let left = nonzero(side_gutter(chart, false), 12.0);
     let right = nonzero(side_gutter(chart, true), 12.0);
     let title_h = if chart.title.is_some() {
-        TITLE_SIZE * 1.4
+        TITLE_SIZE * 2.0
     } else {
         0.0
     };
@@ -181,7 +181,7 @@ fn plot_rect(chart: &Chart, w: f64, h: f64) -> Plot {
 /// value labels and axis title.
 fn row_plot(chart: &Chart, w: f64, h: f64) -> Plot {
     let title_h = if chart.title.is_some() {
-        TITLE_SIZE * 1.4
+        TITLE_SIZE * 2.0
     } else {
         0.0
     };
@@ -221,7 +221,7 @@ fn domain_gutter(chart: &Chart) -> f64 {
 /// round for the spoke labels that sit just outside the rim ([CHARTS.md] §12).
 fn radial_plot(chart: &Chart, w: f64, h: f64) -> Plot {
     let title_h = if chart.title.is_some() {
-        TITLE_SIZE * 1.4
+        TITLE_SIZE * 2.0
     } else {
         0.0
     };

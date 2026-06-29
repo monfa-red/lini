@@ -27,7 +27,7 @@ pub fn layout_pie(inst: &ResolvedInst) -> Result<PlacedNode, Error> {
 
     // The circle is centred in the box below the title, above the legend.
     let title_h = if pie.title.is_some() {
-        TITLE_SIZE * 1.4
+        TITLE_SIZE * 2.0
     } else {
         0.0
     };

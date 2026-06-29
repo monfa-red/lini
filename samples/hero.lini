@@ -1,17 +1,17 @@
 // The Lini hero — a colourful service map. Palette colours, a gradient entry
 // point, mixed link styles. Source for assets/hero.png.
 {
-  layout: column; gap: 52; padding: 26; font-weight: normal; link: --gray-deep; link-width: 2; clearance: 16;
+  layout: column; gap: 40; padding: 25; font-weight: normal; link: --gray-deep; link-width: 2; clearance: 16;
 
-  |edge::box| { fill: --sky-wash; stroke: --sky-deep; color: --sky-ink; }
-  |svc::box| { fill: --teal-wash; stroke: --teal-deep; color: --teal-ink; }
+  |edge::box| { fill: --sky-wash; stroke: --sky-ink; color: --sky-ink; }
+  |svc::box| { fill: --teal-wash; stroke: --teal-ink; color: --teal-ink; }
   |api::sign| {
-    symbol: octagon; fill: --green-wash; stroke: --green-deep; color: --green-ink;
+    symbol: octagon; fill: --green-wash; stroke: --green-ink; color: --green-ink;
   }
   |auth::sign| {
-    symbol: shield; fill: --purple-wash; stroke: --purple-deep; color: --purple-ink; translate: 0 2;
+    symbol: shield; fill: --purple-wash; stroke: --purple-ink; color: --purple-ink; translate: 0 2;
   }
-  |store::cyl| { fill: --rose-wash; stroke: --rose-deep; color: --rose-ink; }
+  |store::cyl| { fill: --rose-wash; stroke: --rose-ink; color: --rose-ink; }
 
   .flow { link: --blue-deep; }
   .cache { link: --teal-deep; }
@@ -23,13 +23,17 @@
   width: 156; height: 62; fill: gradient(--sky, --purple); stroke: none; color: white; font-weight: bold;
 }
 
-|group#edge| { layout: row; gap: 28; } [
+|group#edge| { layout: row; gap: 20; } [
   |caption| "Edge"
   |edge#lb| [
     "Load balancer"
     |badge| "v2"
   ]
-  |edge#cdn| "CDN" { stack: 5; }
+  |sign#cdn| "cloud" {
+    fill: --orange-wash; stroke: --orange-ink; color: --orange-ink; width: 85;
+  } [
+    "CDN" { translate: 6 2; }
+  ]
 ]
 
 |group#svc| { layout: row; gap: 28; } [
@@ -49,11 +53,11 @@
   |store#pg| "Postgres"
   |store#redis| "Redis"
   |svc#queue| "Queue" {
-    fill: --amber-wash; stroke: --amber-deep; color: --amber-ink;
+    fill: --amber-wash; stroke: --amber-deep; color: --amber-ink; stack: 4;
   }
 ]
 
-users -> edge.lb "https" .flow
+users -> edge.lb .flow
 edge.lb -> svc.api
 edge.lb -> svc.auth .auth
 svc.api -> data.pg .flow

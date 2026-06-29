@@ -16,51 +16,54 @@ input_file: samples/chart_segmented.lini
   <g class="lini-scene">
     <g class="lini-node lini-chart lini-block" transform="translate(0,0)">
       <rect x="-179" y="-109" width="358" height="218" rx="0" ry="0"/>
-      <g class="lini-node lini-block" style="fill: #00b2e5; stroke-width: 0; opacity: 0.15" transform="translate(-117.9137,-10.8)">
-        <rect x="-45.4863" y="-73" width="90.9725" height="146" rx="0" ry="0"/>
+      <g class="lini-node lini-block" style="fill: #00b2e5; stroke-width: 0; opacity: 0.15" transform="translate(-117.9137,-6.9)">
+        <rect x="-45.4863" y="-69.1" width="90.9725" height="138.2" rx="0" ry="0"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0; opacity: 0.15" transform="translate(-17.1941,-10.8)">
-        <rect x="-55.2333" y="-73" width="110.4667" height="146" rx="0" ry="0"/>
+      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0; opacity: 0.15" transform="translate(-17.1941,-6.9)">
+        <rect x="-55.2333" y="-69.1" width="110.4667" height="138.2" rx="0" ry="0"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #cf9300; stroke-width: 0; opacity: 0.15" transform="translate(103.0196,-10.8)">
-        <rect x="-64.9804" y="-73" width="129.9608" height="146" rx="0" ry="0"/>
+      <g class="lini-node lini-block" style="fill: #cf9300; stroke-width: 0; opacity: 0.15" transform="translate(103.0196,-6.9)">
+        <rect x="-64.9804" y="-69.1" width="129.9608" height="138.2" rx="0" ry="0"/>
       </g>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
         <line x1="-163.4" y1="62.2" x2="168" y2="62.2"/>
       </g>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-163.4" y1="33" x2="168" y2="33"/>
+        <line x1="-163.4" y1="34.56" x2="168" y2="34.56"/>
       </g>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-163.4" y1="3.8" x2="168" y2="3.8"/>
+        <line x1="-163.4" y1="6.92" x2="168" y2="6.92"/>
       </g>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-163.4" y1="-25.4" x2="168" y2="-25.4"/>
+        <line x1="-163.4" y1="-20.72" x2="168" y2="-20.72"/>
       </g>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-163.4" y1="-54.6" x2="168" y2="-54.6"/>
+        <line x1="-163.4" y1="-48.36" x2="168" y2="-48.36"/>
       </g>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-163.4" y1="-83.8" x2="168" y2="-83.8"/>
+        <line x1="-163.4" y1="-76" x2="168" y2="-76"/>
       </g>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-163.4" y1="-83.8" x2="-163.4" y2="62.2"/>
+        <line x1="-163.4" y1="-76" x2="-163.4" y2="62.2"/>
       </g>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-33.4392" y1="-83.8" x2="-33.4392" y2="62.2"/>
+        <line x1="-33.4392" y1="-76" x2="-33.4392" y2="62.2"/>
       </g>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="96.5216" y1="-83.8" x2="96.5216" y2="62.2"/>
+        <line x1="96.5216" y1="-76" x2="96.5216" y2="62.2"/>
       </g>
       <g class="lini-node lini-line" style="stroke: #b8476e" transform="translate(0,0)">
-        <polyline points="-163.4,58.696 -159.4447,58.696 -155.4893,58.696 -151.534,58.696 -147.5787,58.696 -143.6234,58.696 -139.668,58.696 -135.7127,58.696 -131.7574,58.696 -127.802,58.6957 -123.8467,58.6927 -119.8914,58.6695 -115.9361,58.5341 -111.9807,57.9338 -108.0254,55.9366 -104.0701,51.0134 -100.1147,42.2457 -96.1594,31.6053 -92.2041,24.3843 -88.2488,25.2734 -84.2934,33.6572 -80.3381,44.2694 -76.3828,52.3032 -72.4275,56.5173 -72.4275,18.4 -67.6246,15.6164 -62.8217,12.4333 -58.0188,9.0796 -53.2159,5.61 -48.413,2.0518 -43.6101,-1.5788 -38.8072,-5.2707 -34.0043,-9.0159 -29.2014,-12.8083 -24.3985,-16.6432 -19.5956,-20.5166 -14.7927,-24.4255 -9.9898,-28.3672 -5.1869,-32.3393 -0.384,-36.3399 4.4189,-40.3673 9.2218,-44.4199 14.0247,-48.4965 18.8276,-52.5958 23.6305,-56.7167 28.4334,-60.8583 33.2363,-65.0197 38.0392,-69.2 38.0392,47.6 43.6897,47.6 49.3402,47.6 54.9906,47.6 60.6411,47.6 66.2916,47.6 71.942,47.6 77.5925,47.6 83.243,47.6 88.8934,47.6 94.5439,47.6 100.1944,47.6 105.8448,47.6 111.4953,47.6 117.1458,47.6 122.7962,47.6 128.4467,47.6 134.0972,47.6 139.7477,47.6 145.3981,47.6 151.0486,47.6 156.6991,47.6 162.3495,47.6 168,47.6"/>
+        <polyline points="-163.4,58.8832 -159.4447,58.8832 -155.4893,58.8832 -151.534,58.8832 -147.5787,58.8832 -143.6234,58.8832 -139.668,58.8832 -135.7127,58.8832 -131.7574,58.8832 -127.802,58.8829 -123.8467,58.8801 -119.8914,58.8582 -115.9361,58.7299 -111.9807,58.1617 -108.0254,56.2712 -104.0701,51.6111 -100.1147,43.3117 -96.1594,33.2398 -92.2041,26.4046 -88.2488,27.2462 -84.2934,35.1821 -80.3381,45.2274 -76.3828,52.832 -72.4275,56.8209 -72.4275,20.74 -67.6246,18.1051 -62.8217,15.092 -58.0188,11.9175 -53.2159,8.6333 -48.413,5.2652 -43.6101,1.8285 -38.8072,-1.6661 -34.0043,-5.2112 -29.2014,-8.801 -24.3985,-12.431 -19.5956,-16.0975 -14.7927,-19.7976 -9.9898,-23.5287 -5.1869,-27.2886 -0.384,-31.0754 4.4189,-34.8876 9.2218,-38.7238 14.0247,-42.5826 18.8276,-46.4628 23.6305,-50.3636 28.4334,-54.2839 33.2363,-58.223 38.0392,-62.18 38.0392,48.38"/>
+      </g>
+      <g class="lini-node lini-line" style="stroke: #b8476e" transform="translate(0,0)">
+        <polyline points="38.0392,48.38 43.6897,48.38 49.3402,48.38 54.9906,48.38 60.6411,48.38 66.2916,48.38 71.942,48.38 77.5925,48.38 83.243,48.38 88.8934,48.38 94.5439,48.38 100.1944,48.38 105.8448,48.38 111.4953,48.38 117.1458,48.38 122.7962,48.38 128.4467,48.38 134.0972,48.38 139.7477,48.38 145.3981,48.38 151.0486,48.38 156.6991,48.38 162.3495,48.38 168,48.38"/>
       </g>
       <text class="lini-text" x="-172.7" y="62.2" style="fill: #888; font-size: 11px">0</text>
-      <text class="lini-text" x="-172.7" y="33" style="fill: #888; font-size: 11px">1</text>
-      <text class="lini-text" x="-172.7" y="3.8" style="fill: #888; font-size: 11px">2</text>
-      <text class="lini-text" x="-172.7" y="-25.4" style="fill: #888; font-size: 11px">3</text>
-      <text class="lini-text" x="-172.7" y="-54.6" style="fill: #888; font-size: 11px">4</text>
-      <text class="lini-text" x="-172.7" y="-83.8" style="fill: #888; font-size: 11px">5</text>
+      <text class="lini-text" x="-172.7" y="34.56" style="fill: #888; font-size: 11px">1</text>
+      <text class="lini-text" x="-172.7" y="6.92" style="fill: #888; font-size: 11px">2</text>
+      <text class="lini-text" x="-172.7" y="-20.72" style="fill: #888; font-size: 11px">3</text>
+      <text class="lini-text" x="-172.7" y="-48.36" style="fill: #888; font-size: 11px">4</text>
+      <text class="lini-text" x="-172.7" y="-76" style="fill: #888; font-size: 11px">5</text>
       <text class="lini-text" x="-163.4" y="73.9" style="fill: #888; font-size: 11px">0</text>
       <text class="lini-text" x="-33.4392" y="73.9" style="fill: #888; font-size: 11px">2</text>
       <text class="lini-text" x="96.5216" y="73.9" style="fill: #888; font-size: 11px">4</text>

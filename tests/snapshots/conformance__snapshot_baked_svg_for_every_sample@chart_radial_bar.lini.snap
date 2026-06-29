@@ -18,81 +18,81 @@ input_file: samples/chart_radial_bar.lini
     <g class="lini-node lini-chart lini-block" transform="translate(0,0)">
       <rect x="-139" y="-139" width="278" height="278" rx="0" ry="0"/>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <polyline points="0,-12.68 17.0283,-4.4796 21.2339,13.9465 9.45,28.7231 -9.45,28.7231 -21.2339,13.9465 -17.0283,-4.4796 0,-12.68"/>
+        <polyline points="0,-8 16.4185,-0.0933 20.4735,17.6729 9.1116,31.9203 -9.1116,31.9203 -20.4735,17.6729 -16.4185,-0.0933 0,-8"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <polyline points="0,-34.46 34.0566,-18.0592 42.4679,18.793 18.9,48.3462 -18.9,48.3462 -42.4679,18.793 -34.0566,-18.0592 0,-34.46"/>
+        <polyline points="0,-29 32.8369,-13.1866 40.947,22.3459 18.2231,50.8407 -18.2231,50.8407 -40.947,22.3459 -32.8369,-13.1866 0,-29"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <polyline points="0,-56.24 51.0849,-31.6388 63.7018,23.6395 28.35,67.9693 -28.35,67.9693 -63.7018,23.6395 -51.0849,-31.6388 0,-56.24"/>
+        <polyline points="0,-50 49.2554,-26.2799 61.4205,27.0188 27.3347,69.761 -27.3347,69.761 -61.4205,27.0188 -49.2554,-26.2799 0,-50"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <polyline points="0,-78.02 68.1132,-45.2184 84.9357,28.486 37.8,87.5924 -37.8,87.5924 -84.9357,28.486 -68.1132,-45.2184 0,-78.02"/>
+        <polyline points="0,-71 65.6738,-39.3731 81.8939,31.6918 36.4462,88.6814 -36.4462,88.6814 -81.8939,31.6918 -65.6738,-39.3731 0,-71"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <polyline points="0,-99.8 85.1414,-58.798 106.1696,33.3325 47.2499,107.2155 -47.2499,107.2155 -106.1696,33.3325 -85.1414,-58.798 0,-99.8"/>
+        <polyline points="0,-92 82.0923,-52.4664 102.3674,36.3647 45.5578,107.6017 -45.5578,107.6017 -102.3674,36.3647 -82.0923,-52.4664 0,-92"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="0" y1="9.1" x2="0" y2="-99.8"/>
+        <line x1="0" y1="13" x2="0" y2="-92"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="0" y1="9.1" x2="85.1414" y2="-58.798"/>
+        <line x1="0" y1="13" x2="82.0923" y2="-52.4664"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="0" y1="9.1" x2="106.1696" y2="33.3325"/>
+        <line x1="0" y1="13" x2="102.3674" y2="36.3647"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="0" y1="9.1" x2="47.2499" y2="107.2155"/>
+        <line x1="0" y1="13" x2="45.5578" y2="107.6017"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="0" y1="9.1" x2="-47.2499" y2="107.2155"/>
+        <line x1="0" y1="13" x2="-45.5578" y2="107.6017"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="0" y1="9.1" x2="-106.1696" y2="33.3325"/>
+        <line x1="0" y1="13" x2="-102.3674" y2="36.3647"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="0" y1="9.1" x2="-85.1414" y2="-58.798"/>
+        <line x1="0" y1="13" x2="-82.0923" y2="-52.4664"/>
       </g>
       <g class="lini-node lini-poly" style="fill: #ec6e97; stroke: none; stroke-width: 0; opacity: 1" transform="translate(0,0)">
         <title>Mon · steps: 80</title>
-        <polygon points="-27.6642,-73.5111 -19.9302,-75.7097 -12.0264,-77.1859 -4.0202,-77.9272 4.0202,-77.9272 12.0264,-77.1859 19.9302,-75.7097 27.6642,-73.5111 0,9.1"/>
+        <polygon points="-26.6735,-66.6525 -19.2164,-68.7724 -11.5957,-70.1958 -3.8762,-70.9105 3.8762,-70.9105 11.5957,-70.1958 19.2164,-68.7724 26.6735,-66.6525 0,13"/>
       </g>
       <g class="lini-node lini-poly" style="fill: #ec6e97; stroke: none; stroke-width: 0; opacity: 1" transform="translate(0,0)">
         <title>Tue · steps: 65</title>
-        <polygon points="38.4634,-50.3229 43.778,-46.5238 48.7197,-42.2508 53.2464,-37.5405 57.3196,-32.4329 60.9045,-26.9716 63.9707,-21.2029 66.492,-15.1762 0,9.1"/>
+        <polygon points="37.0859,-44.2948 42.2102,-40.6317 46.9749,-36.5118 51.3395,-31.9702 55.2668,-27.0455 58.7234,-21.7797 61.6797,-16.2177 64.1107,-10.4068 0,13"/>
       </g>
       <g class="lini-node lini-poly" style="fill: #ec6e97; stroke: none; stroke-width: 0; opacity: 1" transform="translate(0,0)">
         <title>Wed · steps: 90</title>
-        <polygon points="97.5327,-0.5614 98.008,8.4716 97.6485,17.51 96.4573,26.4767 94.4445,35.2954 91.6272,43.891 88.0295,52.1902 83.682,60.1224 0,9.1"/>
+        <polygon points="94.0397,3.6846 94.4981,12.3941 94.1515,21.1088 93.0029,29.7544 91.0622,38.2573 88.3458,46.545 84.8769,54.547 80.6851,62.1952 0,13"/>
       </g>
       <g class="lini-node lini-poly" style="fill: #ec6e97; stroke: none; stroke-width: 0; opacity: 1" transform="translate(0,0)">
         <title>Thu · steps: 70</title>
-        <polygon points="53.1721,63.7236 47.9098,68.3931 42.2393,72.5575 36.2091,76.1814 29.8704,79.234 23.2773,81.6891 16.4859,83.526 9.5542,84.7289 0,9.1"/>
+        <polygon points="51.2679,65.6674 46.194,70.1696 40.7266,74.1849 34.9123,77.6791 28.8007,80.6223 22.4437,82.9895 15.8955,84.7606 9.212,85.9204 0,13"/>
       </g>
       <g class="lini-node lini-poly" style="fill: #ec6e97; stroke: none; stroke-width: 0; opacity: 1" transform="translate(0,0)">
         <title>Fri · steps: 95</title>
-        <polygon points="-12.9663,111.7392 -22.3738,110.1067 -31.5906,107.6138 -40.5384,104.2818 -49.1409,100.1391 -57.3248,95.2209 -65.0204,89.5692 -72.1622,83.232 0,9.1"/>
+        <polygon points="-12.502,111.9634 -21.5725,110.3894 -30.4593,107.9858 -39.0866,104.7731 -47.381,100.7787 -55.2718,96.0367 -62.6918,90.5873 -69.5779,84.4771 0,13"/>
       </g>
       <g class="lini-node lini-poly" style="fill: #ec6e97; stroke: none; stroke-width: 0; opacity: 1" transform="translate(0,0)">
         <title>Sat · steps: 40</title>
-        <polygon points="-37.192,31.7766 -39.1242,28.2512 -40.7232,24.5627 -41.9753,20.7424 -42.8699,16.823 -43.3993,12.8378 -43.5591,8.8207 -43.3478,4.8061 0,9.1"/>
+        <polygon points="-35.86,34.8645 -37.7231,31.4654 -39.2648,27.9089 -40.4721,24.2255 -41.3346,20.4464 -41.8451,16.6039 -41.9991,12.7307 -41.7954,8.8598 0,13"/>
       </g>
       <g class="lini-node lini-poly" style="fill: #ec6e97; stroke: none; stroke-width: 0; opacity: 1" transform="translate(0,0)">
         <title>Sun · steps: 55</title>
-        <polygon points="-56.2624,-11.4414 -54.129,-16.541 -51.5346,-21.4221 -48.5012,-26.0432 -45.0546,-30.365 -41.2244,-34.3507 -37.0429,-37.9663 -32.546,-41.1809 0,9.1"/>
+        <polygon points="-54.2475,-6.8058 -52.1905,-11.7227 -49.689,-16.429 -46.7642,-20.8847 -43.4411,-25.0517 -39.748,-28.8946 -35.7163,-32.3807 -31.3804,-35.4802 0,13"/>
       </g>
-      <text class="lini-text" x="0" y="-109.7" style="fill: #888; font-size: 11px">Mon</text>
-      <text class="lini-text" x="92.8816" y="-64.9706" style="fill: #888; font-size: 11px">Tue</text>
-      <text class="lini-text" x="115.8214" y="35.5355" style="fill: #888; font-size: 11px">Wed</text>
-      <text class="lini-text" x="51.5454" y="116.1351" style="fill: #888; font-size: 11px">Thu</text>
-      <text class="lini-text" x="-51.5454" y="116.1351" style="fill: #888; font-size: 11px">Fri</text>
-      <text class="lini-text" x="-115.8214" y="35.5355" style="fill: #888; font-size: 11px">Sat</text>
-      <text class="lini-text" x="-92.8816" y="-64.9706" style="fill: #888; font-size: 11px">Sun</text>
-      <text class="lini-text" x="9.6" y="-12.68" style="fill: #888; font-size: 11px">20</text>
-      <text class="lini-text" x="9.6" y="-34.46" style="fill: #888; font-size: 11px">40</text>
-      <text class="lini-text" x="9.6" y="-56.24" style="fill: #888; font-size: 11px">60</text>
-      <text class="lini-text" x="9.6" y="-78.02" style="fill: #888; font-size: 11px">80</text>
-      <text class="lini-text" x="12.9" y="-99.8" style="fill: #888; font-size: 11px">100</text>
+      <text class="lini-text" x="0" y="-101.9" style="fill: #888; font-size: 11px">Mon</text>
+      <text class="lini-text" x="89.8324" y="-58.639" style="fill: #888; font-size: 11px">Tue</text>
+      <text class="lini-text" x="112.0192" y="38.5677" style="fill: #888; font-size: 11px">Wed</text>
+      <text class="lini-text" x="49.8532" y="116.5213" style="fill: #888; font-size: 11px">Thu</text>
+      <text class="lini-text" x="-49.8532" y="116.5213" style="fill: #888; font-size: 11px">Fri</text>
+      <text class="lini-text" x="-112.0192" y="38.5677" style="fill: #888; font-size: 11px">Sat</text>
+      <text class="lini-text" x="-89.8324" y="-58.639" style="fill: #888; font-size: 11px">Sun</text>
+      <text class="lini-text" x="9.6" y="-8" style="fill: #888; font-size: 11px">20</text>
+      <text class="lini-text" x="9.6" y="-29" style="fill: #888; font-size: 11px">40</text>
+      <text class="lini-text" x="9.6" y="-50" style="fill: #888; font-size: 11px">60</text>
+      <text class="lini-text" x="9.6" y="-71" style="fill: #888; font-size: 11px">80</text>
+      <text class="lini-text" x="12.9" y="-92" style="fill: #888; font-size: 11px">100</text>
       <text class="lini-text" x="0" y="-122.9" style="font-weight: bold; font-size: 13px">Goal completion %</text>
     </g>
   </g>

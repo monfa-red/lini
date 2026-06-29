@@ -20,50 +20,50 @@ input_file: samples/chart_bars.lini
         <line x1="-156.8" y1="71" x2="168" y2="71"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-156.8" y1="40.04" x2="168" y2="40.04"/>
+        <line x1="-156.8" y1="41.6" x2="168" y2="41.6"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-156.8" y1="9.08" x2="168" y2="9.08"/>
+        <line x1="-156.8" y1="12.2" x2="168" y2="12.2"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-156.8" y1="-21.88" x2="168" y2="-21.88"/>
+        <line x1="-156.8" y1="-17.2" x2="168" y2="-17.2"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-156.8" y1="-52.84" x2="168" y2="-52.84"/>
+        <line x1="-156.8" y1="-46.6" x2="168" y2="-46.6"/>
       </g>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-156.8" y1="-83.8" x2="168" y2="-83.8"/>
+        <line x1="-156.8" y1="-76" x2="168" y2="-76"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(-122.1547,43.136)">
+      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(-122.1547,44.54)">
         <title>15 cm³ · 1.8 kW: 9</title>
-        <rect x="-17.5392" y="-27.864" width="35.0784" height="55.728" rx="0" ry="0"/>
+        <rect x="-17.5392" y="-26.46" width="35.0784" height="52.92" rx="0" ry="0"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #00bcb1; stroke-width: 0" transform="translate(-83.1787,49.328)">
+      <g class="lini-node lini-block" style="fill: #00bcb1; stroke-width: 0" transform="translate(-83.1787,50.42)">
         <title>15 cm³ · 2.3 kW: 7</title>
-        <rect x="-17.5392" y="-21.672" width="35.0784" height="43.344" rx="0" ry="0"/>
+        <rect x="-17.5392" y="-20.58" width="35.0784" height="41.16" rx="0" ry="0"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(-13.888,24.56)">
+      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(-13.888,26.9)">
         <title>30 cm³ · 1.8 kW: 15</title>
-        <rect x="-17.5392" y="-46.44" width="35.0784" height="92.88" rx="0" ry="0"/>
+        <rect x="-17.5392" y="-44.1" width="35.0784" height="88.2" rx="0" ry="0"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #00bcb1; stroke-width: 0" transform="translate(25.088,30.752)">
+      <g class="lini-node lini-block" style="fill: #00bcb1; stroke-width: 0" transform="translate(25.088,32.78)">
         <title>30 cm³ · 2.3 kW: 13</title>
-        <rect x="-17.5392" y="-40.248" width="35.0784" height="80.496" rx="0" ry="0"/>
+        <rect x="-17.5392" y="-38.22" width="35.0784" height="76.44" rx="0" ry="0"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(94.3787,-3.304)">
+      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(94.3787,0.44)">
         <title>50 cm³ · 1.8 kW: 24</title>
-        <rect x="-17.5392" y="-74.304" width="35.0784" height="148.608" rx="0" ry="0"/>
+        <rect x="-17.5392" y="-70.56" width="35.0784" height="141.12" rx="0" ry="0"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #00bcb1; stroke-width: 0" transform="translate(133.3547,9.08)">
+      <g class="lini-node lini-block" style="fill: #00bcb1; stroke-width: 0" transform="translate(133.3547,12.2)">
         <title>50 cm³ · 2.3 kW: 20</title>
-        <rect x="-17.5392" y="-61.92" width="35.0784" height="123.84" rx="0" ry="0"/>
+        <rect x="-17.5392" y="-58.8" width="35.0784" height="117.6" rx="0" ry="0"/>
       </g>
       <text class="lini-text" x="-166.1" y="71" style="fill: #888; font-size: 11px">0</text>
-      <text class="lini-text" x="-166.1" y="40.04" style="fill: #888; font-size: 11px">5</text>
-      <text class="lini-text" x="-169.4" y="9.08" style="fill: #888; font-size: 11px">10</text>
-      <text class="lini-text" x="-169.4" y="-21.88" style="fill: #888; font-size: 11px">15</text>
-      <text class="lini-text" x="-169.4" y="-52.84" style="fill: #888; font-size: 11px">20</text>
-      <text class="lini-text" x="-169.4" y="-83.8" style="fill: #888; font-size: 11px">25</text>
+      <text class="lini-text" x="-166.1" y="41.6" style="fill: #888; font-size: 11px">5</text>
+      <text class="lini-text" x="-169.4" y="12.2" style="fill: #888; font-size: 11px">10</text>
+      <text class="lini-text" x="-169.4" y="-17.2" style="fill: #888; font-size: 11px">15</text>
+      <text class="lini-text" x="-169.4" y="-46.6" style="fill: #888; font-size: 11px">20</text>
+      <text class="lini-text" x="-169.4" y="-76" style="fill: #888; font-size: 11px">25</text>
       <text class="lini-text" x="-102.6667" y="82.7" style="fill: #888; font-size: 11px">15 cm³</text>
       <text class="lini-text" x="5.6" y="82.7" style="fill: #888; font-size: 11px">30 cm³</text>
       <text class="lini-text" x="113.8667" y="82.7" style="fill: #888; font-size: 11px">50 cm³</text>
