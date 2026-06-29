@@ -13,7 +13,7 @@ use super::model::{Chart, SeriesKind};
 use super::prim;
 use super::project::Plot;
 use crate::layout::PlacedNode;
-use crate::resolve::ResolvedValue;
+use crate::resolve::{MarkerKind, ResolvedValue};
 
 /// A drawn line segment (pixel space) a label should not sit on.
 type Seg = ((f64, f64), (f64, f64));
@@ -25,12 +25,15 @@ const SIZE: f64 = 10.0;
 const GAP: f64 = 7.0;
 const PAD: f64 = 2.0;
 
-/// One label to place ([CHARTS.md] §14): the point it annotates (pixels), its text and
-/// the tint it takes when placed *beside* the point, whether it is `forced` (`always` —
-/// placed regardless) or may drop to its hover card (`auto`), and an optional `inside`
-/// seat (a bubble label sits centred in the bubble when it fits).
+/// One label to place ([CHARTS.md] §14): the point it annotates (pixels), the `radius` of
+/// the mark there (so an outside label clears its *edge*, not its centre — a fat bubble
+/// pushes its label far, a small dot barely), its text and the tint it takes when placed
+/// *beside* the point, whether it is `forced` (`always` — placed regardless) or may drop
+/// to its hover card (`auto`), and an optional `inside` seat (a bubble label sits centred
+/// in the bubble when it fits).
 pub(super) struct Req {
     pub anchor: (f64, f64),
+    pub radius: f64,
     pub text: String,
     pub color: ResolvedValue,
     pub forced: bool,
@@ -55,12 +58,22 @@ pub(super) fn collect_series(plot: &Plot, chart: &Chart, reqs: &mut Vec<Req>) {
         if ser.tags.is_empty() || !ser.tooltip.inline() {
             continue;
         }
+        // The marker the tag must clear: a `|dots|`'s `width`, a line/area's vertex marker
+        // (when it has one), else a bare point.
+        let radius = match ser.kind {
+            SeriesKind::Dots => ser.dot.0 / 2.0,
+            _ if ser.marker != MarkerKind::None => {
+                marks::marker_diameter(ser.marker, ser.thickness) / 2.0
+            }
+            _ => 0.0,
+        };
         for (((xd, yd), (xp, yp)), tag) in marks::samples(plot, chart, ser).iter().zip(&ser.tags) {
             if tag.is_empty() || !marks::in_domain(chart, ser, *xd, *yd) {
                 continue;
             }
             reqs.push(Req {
                 anchor: (*xp, *yp),
+                radius,
                 text: tag.clone(),
                 color: ser.tag_color.clone(),
                 forced: ser.tooltip.forced(),
@@ -110,7 +123,7 @@ pub(super) fn place(reqs: &[Req], plot: &Plot, lines: &[Seg]) -> Vec<PlacedNode>
         {
             seats.push((req.anchor, &ins.color));
         }
-        seats.extend(candidates(req.anchor, w, h).map(|c| (c, &req.color)));
+        seats.extend(candidates(req.anchor, w, h, req.radius).map(|c| (c, &req.color)));
 
         // Pick a seat (the borrow of `placed` is confined to this block, freed before the
         // push below). Greedy: the first seat that is in-plot, clear of the placed labels,
@@ -151,10 +164,12 @@ pub(super) fn place(reqs: &[Req], plot: &Plot, lines: &[Seg]) -> Vec<PlacedNode>
 
 /// Candidate label-box centres around a point, in priority order: above first (the
 /// conventional data-label seat), then below, the sides, then the diagonals — enough
-/// freedom for the greedy pass to fan a cluster out without a solver.
-fn candidates((ax, ay): (f64, f64), w: f64, h: f64) -> [(f64, f64); 8] {
-    let dx = w / 2.0 + GAP;
-    let dy = h / 2.0 + GAP;
+/// freedom for the greedy pass to fan a cluster out without a solver. Each seat clears the
+/// mark's `radius` plus [`GAP`], so the label sits a constant gap off the mark's *edge*
+/// (a fat bubble pushes it far, a small dot barely).
+fn candidates((ax, ay): (f64, f64), w: f64, h: f64, radius: f64) -> [(f64, f64); 8] {
+    let dx = w / 2.0 + GAP + radius;
+    let dy = h / 2.0 + GAP + radius;
     [
         (ax, ay - dy),      // above
         (ax, ay + dy),      // below

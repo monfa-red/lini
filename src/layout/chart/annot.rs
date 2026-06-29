@@ -209,15 +209,19 @@ fn point(
     }
     let xp = plot.x_at(&chart.x.scale, x);
     let yp = plot.y_at(&chart.values[vi].scale, y);
-    if m.marker != MarkerKind::None {
+    let radius = if m.marker != MarkerKind::None {
         let d = marker_diameter(m.marker, 2.0);
         out.push(prim::marker(m.marker, xp, yp, d, d, m.color.clone()));
-    }
+        d / 2.0
+    } else {
+        0.0
+    };
     if let Some(text) = &m.label
         && m.tooltip != Tooltip::None
     {
         reqs.push(labels::Req {
             anchor: (xp, yp),
+            radius,
             text: text.clone(),
             color: m.color.clone(),
             forced: true,

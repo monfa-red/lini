@@ -116,14 +116,14 @@ input_file: samples/chart_line.lini
         <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
       </g>
       <text class="lini-text" x="53.2" y="100.1" style="font-weight: bold; font-size: 11px">Speed</text>
-      <text class="lini-text lini-chart-label" x="-110.425" y="54.481" style="fill: #888; font-weight: normal; font-size: 10px">Low</text>
-      <text class="lini-text lini-chart-label" x="-55.875" y="38.278" style="fill: #888; font-weight: normal; font-size: 10px">medium</text>
-      <text class="lini-text lini-chart-label" x="29.675" y="14.71" style="fill: #888; font-weight: normal; font-size: 10px">High</text>
-      <text class="lini-text lini-chart-label" x="144.225" y="-58.508" style="fill: #888; font-weight: normal; font-size: 10px">Max</text>
-      <text class="lini-text lini-chart-label" x="128.225" y="-29.48" style="fill: #888; font-weight: normal; font-size: 10px">Max</text>
-      <text class="lini-text lini-chart-label" x="-110.425" y="-26.534" style="fill: #888; font-weight: normal; font-size: 10px">Cool</text>
-      <text class="lini-text lini-chart-label" x="-11.875" y="11.764" style="fill: #888; font-weight: normal; font-size: 10px">Warm</text>
-      <text class="lini-text lini-chart-label" x="48.675" y="62.278" style="fill: #888; font-weight: normal; font-size: 10px">Hot</text>
+      <text class="lini-text lini-chart-label" x="-110.425" y="48.981" style="fill: #888; font-weight: normal; font-size: 10px">Low</text>
+      <text class="lini-text lini-chart-label" x="-61.375" y="32.778" style="fill: #888; font-weight: normal; font-size: 10px">medium</text>
+      <text class="lini-text lini-chart-label" x="24.175" y="9.21" style="fill: #888; font-weight: normal; font-size: 10px">High</text>
+      <text class="lini-text lini-chart-label" x="149.725" y="-53.008" style="fill: #888; font-weight: normal; font-size: 10px">Max</text>
+      <text class="lini-text lini-chart-label" x="48.675" y="58.94" style="fill: #888; font-weight: normal; font-size: 10px">High</text>
+      <text class="lini-text lini-chart-label" x="128.225" y="-34.98" style="fill: #888; font-weight: normal; font-size: 10px">Max</text>
+      <text class="lini-text lini-chart-label" x="-110.425" y="-32.034" style="fill: #888; font-weight: normal; font-size: 10px">Cool</text>
+      <text class="lini-text lini-chart-label" x="-30.875" y="6.264" style="fill: #888; font-weight: normal; font-size: 10px">Warm</text>
     </g>
   </g>
   <g class="lini-links"/>

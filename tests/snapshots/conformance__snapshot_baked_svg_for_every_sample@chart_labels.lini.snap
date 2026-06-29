@@ -98,13 +98,13 @@ input_file: samples/chart_labels.lini
         <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
       </g>
       <text class="lini-text" x="86.2" y="140.1" style="font-weight: bold; font-size: 11px">Opus 4.8</text>
-      <text class="lini-text lini-chart-label" x="-123.5355" y="6.4429" style="fill: #888; font-weight: normal; font-size: 10px">Non-Thinking</text>
-      <text class="lini-text lini-chart-label" x="-73.3161" y="-68.0857" style="fill: #888; font-weight: normal; font-size: 10px">High</text>
-      <text class="lini-text lini-chart-label" x="212" y="-84.9286" style="fill: #888; font-weight: normal; font-size: 10px">Max</text>
-      <text class="lini-text lini-chart-label" x="-145.0581" y="68.2" style="fill: #888; font-weight: normal; font-size: 10px">Non-Thinking</text>
-      <text class="lini-text lini-chart-label" x="-51.7935" y="10.5143" style="fill: #888; font-weight: normal; font-size: 10px">Max</text>
-      <text class="lini-text lini-chart-label" x="-200.8" y="-38.4714" style="fill: #888; font-weight: normal; font-size: 10px">Low</text>
-      <text class="lini-text lini-chart-label" x="-68.6645" y="-89.7714" style="fill: #888; font-weight: normal; font-size: 10px">High</text>
+      <text class="lini-text lini-chart-label" x="-123.5355" y="11.9429" style="fill: #888; font-weight: normal; font-size: 10px">Non-Thinking</text>
+      <text class="lini-text lini-chart-label" x="-73.3161" y="-73.5857" style="fill: #888; font-weight: normal; font-size: 10px">High</text>
+      <text class="lini-text lini-chart-label" x="206.5" y="-90.4286" style="fill: #888; font-weight: normal; font-size: 10px">Max</text>
+      <text class="lini-text lini-chart-label" x="-145.0581" y="73.7" style="fill: #888; font-weight: normal; font-size: 10px">Non-Thinking</text>
+      <text class="lini-text lini-chart-label" x="-51.7935" y="5.0143" style="fill: #888; font-weight: normal; font-size: 10px">Max</text>
+      <text class="lini-text lini-chart-label" x="-195.3" y="-67.9714" style="fill: #888; font-weight: normal; font-size: 10px">Low</text>
+      <text class="lini-text lini-chart-label" x="-63.1645" y="-89.7714" style="fill: #888; font-weight: normal; font-size: 10px">High</text>
     </g>
   </g>
   <g class="lini-links"/>

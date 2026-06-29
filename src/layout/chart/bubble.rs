@@ -48,6 +48,7 @@ pub fn lay_out(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>, reqs: &mut
         {
             reqs.push(labels::Req {
                 anchor: (cx, cy),
+                radius: d / 2.0,
                 text: label.clone(),
                 color: muted(),
                 forced: b.tooltip.forced(),
