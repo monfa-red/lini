@@ -23,17 +23,14 @@ Thirty-odd lines of Lini ([`samples/hero.lini`](https://github.com/monfa-red/lin
 
 ## Why Lini
 
-Lini automates the tedious part of a diagram — routing the connectors — and leaves placement to you. Arrange nodes with flex, grid, or anchors, and Lini draws clean orthogonal paths between them.
+Lini handles the fiddly part of a diagram — drawing the connectors — and leaves the layout to you. Arrange nodes in rows, grids, or by anchor; name any two and Lini routes a clean orthogonal path between them, staying clear of everything in the way.
 
-- **Automatic link routing.** Name two nodes and Lini finds an orthogonal path between them, keeping clearance from everything else and rounding the corners. Force a side when you need to steer one.
-- **Real control over the look.** Sizes, anchors, strokes, shadows, rotation, opacity, gradients, and raw SVG paths are all yours — the diagram renders the way you set it.
-- **A small language.** Two brackets — `{ }` for style, `[ ]` for children — and a handful of sigils. `cat -> dog` is already a diagram; the rest you learn in one sitting.
-- **A node for anything.** 11 primitives and 11 templates, built-in Phosphor icons, and a raw `path` that takes any SVG path string.
-- **Compute when you want it.** Backtick expressions are compile-time math, and a stylesheet function returns a number or a point — `width: scale(3)` sizes a node, a parametric `points:` draws a sine wave or spiral. All baked to literals, no runtime.
-- **One fast binary.** ~1.5 MB, a single runtime dependency, no Node or headless browser. A typical diagram compiles in about 2 ms, startup included.
-- **Deterministic output.** Every run is byte-identical, so SVGs diff cleanly and never churn in CI. 441 tests cover it, including property tests on the router's laws.
-- **A curated palette.** 11 named hues in five OKLCH-tuned tiers, plus angle-less gradients — themeable, with no hex codes to pick.
-- **Automatic dark mode.** Every colour is a `light-dark()` variable, so one SVG carries both palettes and follows the viewer's OS theme or a `data-theme` toggle.
+- **You place, Lini connects.** Routing is automatic, orthogonal, and rounded, with a clearance it won't cross. Force a side when you want to steer one.
+- **The look is yours.** Sizes, anchors, strokes, shadows, rotation, gradients, and raw SVG paths render exactly as set — never filtered through a theme.
+- **Charts from data.** `layout: chart` plots bars, lines, areas, scatter, radar, and pie straight from numbers, working out the scales, ticks, and colours for you.
+- **Small, and quick to learn.** `{ }` for style, `[ ]` for children, a few sigils, and `cat -> dog` is already a diagram. Backtick expressions add compile-time math, baked to literals.
+- **One fast binary.** About 1.5 MB, no Node or browser, compiling a typical diagram in a couple of milliseconds — and byte-identically each run, so SVGs diff cleanly in CI. Hundreds of tests, property tests on the router included, keep it honest.
+- **Good colour for free.** Eleven OKLCH-tuned hues in five tiers, gradients at a flattering angle, and automatic dark mode — every colour a `light-dark()` variable, no hex to pick.
 
 ---
 
@@ -55,17 +52,6 @@ Building from a clone instead? `cargo install --path .`
 ---
 
 ## A tour of Lini
-
-**Names become boxes; `->` connects them.** Line styles and fans mix freely:
-
-```
-cat -> dog -> bird     // a chain: three boxes, two arrows
-fox & owl -> mouse     // fan-in
-frog ~> pond           // wavy
-fish --> bowl          // dashed
-```
-
-<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/flow.png" alt="Lini's link styles, in colour" width="300"></p>
 
 **A diagram reads like a CSS file.** A `{ }` stylesheet at the top sets defaults, declares reusable classes, and extends nodes; then come the instances, then the links:
 
@@ -111,6 +97,23 @@ store ---> api "ack"                       // dotted arrow
 ```
 
 Block (the bare frameless rectangle), oval, hex, slant, cylinder, diamond, polygon, line, icon (a Phosphor symbol — `|icon| { symbol: heart }`, painted like a node), and image, plus `path` for anything else. Text is not a primitive: a bare `"…"` is content — styleable in place (`"x" { color: red }`) — and `|block|` is the frameless box for a label that needs an id or a link. Templates (`box`, `rect`, `group`, `caption`, `footer`, `badge`, `note`, `row`, `column`, `table`, `sign`) bundle common patterns over a base type, and you can define your own from any base: `|panel::group| { stroke: --accent; }`.
+
+---
+
+## Charts
+
+Give a node `layout: chart` and it becomes a plot, drawn from data instead of pixels. Hand it some numbers and it sorts out the scale, the ticks, the gridlines, and a colour per series, then lowers the whole thing to the same primitives as everything else — so a chart themes, bakes, and diffs exactly like the rest of a diagram.
+
+<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/charts.png" alt="Four Lini charts: grouped bars, smooth lines, a radar, and a banded area" width="640"></p>
+
+```
+|chart| "Revenue ($M)" { categories: "Q1" "Q2" "Q3" "Q4" } [
+  |bars| "2023" { data: 12 19 15 25 }
+  |bars| "2024" { data: 18 24 22 31 }
+]
+```
+
+`|bars|`, `|line|`, `|area|`, `|dots|`, and `|bubble|` share one x/value plane; `|slice|` makes a pie or donut. `direction: radial` bends the plane into a radar and `direction: row` lays it on its side, with no change to the data. A series reads either `data:` (plain numbers, or `x y` points) or `fn:` — a formula sampled over the domain, using the language's own compile-time math. Axes auto-fit or take a `range:`, run linear or `log`, and you declare an `|axis|` only when you want to say something; shade a zone with `|band|`, drop a threshold or callout with `|mark|`, and every mark gets a hover tooltip for free. The whole chart language is in [`CHARTS.md`](https://github.com/monfa-red/lini/blob/main/CHARTS.md).
 
 ---
 

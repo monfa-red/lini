@@ -1,0 +1,31 @@
+|block| { layout: grid; columns: repeat(2); gap: 24; padding: 16; } [
+  |chart| "Revenue by quarter ($M)" {
+    width: 360; height: 240; categories: "Q1" "Q2" "Q3" "Q4";
+  } [
+    |bars| "2023" { data: 12 19 15 25; }
+    |bars| "2024" { data: 18 24 22 31; }
+  ]
+  |chart| "Active users (k)" {
+    width: 360; height: 240; categories: "Jan" "Feb" "Mar" "Apr" "May" "Jun";
+  } [
+    |line| "web" { data: 12 18 22 28 35 44; curve: smooth; marker: dot; }
+    |line| "app" { data: 8 14 20 30 42 58; curve: smooth; marker: dot; }
+  ]
+  |chart| "Profiles" {
+    width: 360; height: 240; direction: radial; categories: "Speed" "Range" "Armor" "Cost" "Stealth";
+  } [
+    |axis| { range: 0 5; }
+    |line| "Scout" { data: 5 4 2 3 5; }
+    |area| "Cruiser" { data: 3 3 5 4 2; fill: --teal; }
+  ]
+  |chart| "Reactor temperature (°C)" { width: 360; height: 240; } [
+    |axis#t| "min" { side: bottom; range: 0 6; }
+    |axis| { side: left; }
+    |band| "Warm-up" { span: 0 1.5; axis: t; fill: --sky; }
+    |band| "Hold" { span: 1.5 4; axis: t; fill: --amber; }
+    |band| "Cool" { span: 4 6; axis: t; fill: --teal; }
+    |area| "core" {
+      data: 0 20, 1 120, 2 300, 3 320, 4 260, 5 80; fill: --rose;
+    }
+  ]
+]
