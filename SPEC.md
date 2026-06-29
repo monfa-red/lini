@@ -665,8 +665,10 @@ dimensions (or an empty `|oval|`) make a circle.
 | `marker-start: X` | Start end (link source). |
 | `marker-end: X` | End end (link target). |
 
-Values: `none`, `arrow`, `dot`, `diamond`, `crow`. Markers scale with `stroke-width`
-(on a link, with `link-width`), floor 5 px; colour follows the stroke / link colour.
+Values: `none`, `arrow`, `dot`, `circle`, `diamond`, `crow`. `circle` is a larger `dot` —
+a filled point sized for hovering or reading (on a chart line it marks a data point;
+[CHARTS §3](CHARTS.md)). Markers scale with `stroke-width` (on a link, with `link-width`),
+floor 5 px; colour follows the stroke / link colour.
 `|line|` is bare by default — write `|line| { marker-end: arrow }` for a one-shot
 arrow. For links the operator picks markers (see [§9](#9-links)). Source order wins:
 `marker: arrow; marker-end: dot` → start arrow, end dot.

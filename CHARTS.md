@@ -85,7 +85,7 @@ frame, and the cascade styles a chart like any box.
 | `samples` | chart | integer — `fn:` sample count | `24` |
 | `hole` | pie | `0` ≤ n < `1` — inner-radius fraction (a donut) | `0` |
 | `legend` | both | `top` · `right` · `bottom` · `none` | auto (shown when ≥ 2 entries) |
-| `tooltip` | both | `rich` · `title` · `none` | `rich` |
+| `tooltip` | both | `none` · `hover` · `auto` · `always` — label presentation ([§14](#14-tooltips)) | `auto` |
 | `gap` | both | number — the clear space between the plot and the title / legend outside it ([§9](#9-legend--title)) | `10` |
 
 `categories` is the common-case shorthand for the **x (domain) axis's** tick labels;
@@ -122,10 +122,16 @@ exactly as it decides a stylesheet rule from a worn class ([SPEC §4](SPEC.md)) 
 chart line *is* a line, so the name is reused, not duplicated.
 
 **A line carries markers at every datum**, reusing the core `marker:` family
-([SPEC §7](SPEC.md)) generalised from line *ends* to every vertex: `|line| { marker: dot }`
-shows a dot at each point (`marker-start` / `marker-end` have no meaning on a chart
-line and are ignored). `|dots|` is markers with no connecting line; its dot diameter is
-`width` (`height` too for an ellipse) — there is **no** `size:` property.
+([SPEC §7](SPEC.md)) generalised from line *ends* to every vertex: `|line| { marker: circle }`
+shows a marker at each point (`marker-start` / `marker-end` have no meaning on a chart
+line and are ignored). A chart marker is a **centred** glyph, so only the symmetric kinds
+apply — **`dot`** (a small point), **`circle`** (a larger, hover-sized point), and
+**`diamond`** (a rhombus); the directional `arrow` / `crow` have no centred reading and
+are an error on a series ([§18](#18-errors)). Every marker carries the datum's `<title>`
+([§14](#14-tooltips)), so a marked point is a hover target — reach for `circle` when the
+point is something to hover or read. `|dots|` is markers with no connecting line, **`circle`**
+by default; its diameter is `width` (`height` too for an ellipse), its shape `marker:` —
+there is **no** `size:` property.
 
 **`curve:`** sets a line's / area's interpolation:
 
@@ -168,6 +174,21 @@ So a comma-less `data:` is always a value list; a single point cannot be written
 comma-less (`data: 9 15` is two categorical values, not one pair). A `|line|` / `|area|`
 needs ≥ 2 vertices. With categorical data, the value count must match the `categories:`
 count ([§18](#18-errors)).
+
+**`tags:` labels each datum.** A series' smart label is its *legend* entry
+([§9](#9-legend--title)) — one name for the whole line; **`tags:`** is the **per-datum**
+text, a quoted-string list parallel to `data:` (one tag per value, or per `x y` point):
+
+```
+|line| "GLM-5.2" { data: 35 63, 42 72, 84 75; tags: "Non-Thinking" "High" "Max"; marker: circle }
+```
+
+A tag rides with its datum: it shows **on the plot** beside the point and, when there is
+no room, **on hover** — the placement is `tooltip:`'s job ([§14](#14-tooltips)). The tag
+count must equal the data count ([§18](#18-errors)); `tags:` needs discrete `data:` (a
+sampled `fn:` has no authored points to label, so `tags:` with `fn:` is an error). A
+per-node mark — `|bubble|`, `|slice|`, `|mark|` — takes no `tags:`: its one smart label
+*is* its point label.
 
 **Formulas are the core expression engine** ([SPEC §11.7](SPEC.md)): operators, the
 math library, `name = expr;` locals, the ternary, and stylesheet functions. Charts bind
@@ -427,22 +448,48 @@ value / percent labels, a centred total in the hole, and exploded slices are
 
 ## 14. Tooltips
 
-Hover is the only interactivity, with no script ([SPEC §13](SPEC.md) governs output):
+A datum's label has two presentations, and one property — **`tooltip:`** — sets how much
+shows where. Hover is the only interactivity, with no script ([SPEC §13](SPEC.md) governs
+output):
 
-- **Baked-safe floor** — every hit target carries a native `<title>`
-  ([SPEC §10](SPEC.md) `title:`), so a value shows on hover in any renderer and survives
-  `--bake-vars`.
-- **Live card** — `tooltip: rich` (default) also emits a CSS `:hover` rule revealing a
-  hidden `<g class="lini-chart-tip">`. The card is generated from primitives, **minimal
-  by default** (the series name and value, small padding), positioned beside the point
-  so it never blankets the plot; `.lini-chart-tip` is a reserved styling hook. It is
-  live-only — a baked SVG keeps the `<title>` and drops the `:hover` card.
-- **Hit targets are sparse** — a sampled curve draws at `samples:` density but emits
-  hover dots only at data points / turning points (~10–20 per series), so node count
-  stays bounded. An invisible-but-hoverable point is a `|dots|` with a transparent fill
-  carrying its `<title>`.
+| `tooltip:` | On the plot (inline) | On hover | For |
+|---|---|---|---|
+| `none` | — | — | a clean static plot, no labels |
+| `hover` | — | card + `<title>` | labels on demand |
+| `auto` *(default)* | where it fits, else falls to hover | card + `<title>` | the printable default |
+| `always` | every label, forced | card + `<title>` | export — every label must read |
 
-`tooltip: title` keeps only the native title; `tooltip: none` emits neither.
+The two texts **complement**: the *inline* label is the datum's own text — a series'
+`tags:` entry ([§4](#4-data--formulas)), or a per-node mark's smart label (`|bubble|` /
+`|slice|`) — while *hover* shows its **value**. So a point can read `Max` on the plot and
+`GLM-5.2: 75%` on hover, never competing.
+
+**The hover floor is always honest.** A labelled mark carries a native `<title>`
+([SPEC §10](SPEC.md) `title:`) — its accessible name, readable in any renderer and
+surviving `--bake-vars`. Over it, a live CSS `:hover` rule reveals a hidden
+`<g class="lini-chart-tip">` card built from primitives — minimal by default (name and
+value), positioned beside the point so it never blankets the plot; `.lini-chart-tip` is a
+reserved styling hook. The card is **live-only**: a baked SVG keeps the `<title>` and
+drops the `:hover` rule. Only `tooltip: none` strips the `<title>` too.
+
+**Inline placement is one greedy pass, not a solver.** Each label tries a few offsets
+around its point — above, below, beside, the diagonals; a `|bubble|` first tries *centred
+inside* — and takes the first that clears the labels already placed and stays in the plot.
+Under `auto` a label with nowhere to sit **drops to its hover card** (so the tag is never
+lost); under `always` it is placed at its preferred offset regardless. The pass is
+O(labels²) over a *sparse* set (data points, not samples), so it is fast and deterministic
+— it never iterates to convergence like routing ([LINKING.md](LINKING.md)). Inline labels
+are small and muted (`color:` overrides, default `--muted`) and carry `pointer-events:
+none`, so a label never blocks the hover of the point beneath it. Label-vs-*line*
+avoidance is [deferred](#20-deferred); the pass avoids other labels and the plot edge.
+
+**`tooltip:` cascades** ([SPEC §4](SPEC.md)): set on the `|chart|` it is the default for
+every series; a series (or `|bubble|`) overrides it — `|bubble| { tooltip: always }` — so
+one knob tunes the whole plot and any mark refines it.
+
+**Hit targets stay sparse** — a sampled curve draws at `samples:` density but a marker
+(hence a hover target) sits only at data points / turning points (~10–20 per series), so
+node count stays bounded.
 
 ---
 
@@ -462,7 +509,7 @@ since the shared scale needs every child's data first:
    bars→`|rect|`s (or `|poly|` wedges, radial), dots→`|oval|`s/markers, slice→`|path|`,
    ticks/labels→text, gridlines→`|line|`s, the tooltip card→a `|block|`.
 5. **Emit** in a **semantic draw order** — bands → gridlines → areas → bars → lines →
-   dots → annotations → axes → labels → tooltip — so a line sits above its bars without
+   dots → annotations → axes → labels → inline data labels → tooltip — so a line sits above its bars without
    hand-ordering. This is the one place a chart overrides source-order rendering
    ([SPEC §6](SPEC.md)); `layer:` on a generated node still overrides it.
 
@@ -495,10 +542,11 @@ meaning.
 | `samples` | `\|chart\|` | integer | `fn:` sample count (default 24). |
 | `hole` | `\|pie\|` | `0` ≤ n < `1` | donut inner radius. |
 | `legend` | `\|chart\|` `\|pie\|` | `top` · `right` · `bottom` · `none` | legend placement. |
-| `tooltip` | `\|chart\|` `\|pie\|` | `rich` · `title` · `none` | hover behaviour. |
+| `tooltip` | `\|chart\|` `\|pie\|` · series | `none` · `hover` · `auto` · `always` | label presentation; cascades ([§14](#14-tooltips)). |
 | `gap` | `\|chart\|` `\|pie\|` | number | title / legend gutter ([§9](#9-legend--title)); `0` ≈ touching. |
 | `data` | series | value list / `x y` pairs | explicit data ([§4](#4-data--formulas)). |
 | `fn` | series | backtick, or a per-band list | computed data ([§4](#4-data--formulas), [§7](#7-bands--segmentation)). |
+| `tags` | series | quoted-string list | per-datum labels, parallel to `data:` ([§4](#4-data--formulas)). |
 | `baseline` | `\|area\|` | number | fill target — default the axis zero, or the range floor when zero is out of range. |
 | `curve` | `\|line\|` `\|area\|` | `linear` · `smooth` · `step` | interpolation ([§3](#3-series)). |
 | `axis` | series, `\|mark\|`, `\|band\|` | an `\|axis\|` id | the axis to read / measure against. |
@@ -544,8 +592,11 @@ compile-time, with a span.
 | Empty pie | `a pie needs at least one '\|slice\|'` |
 | Series with both `data:` and `fn:` | `a series takes 'data' or 'fn', not both` |
 | Series with neither | `a series needs 'data' or 'fn'` |
+| `arrow` / `crow` marker on a series | `'marker: arrow' has no centred form on a chart — use dot, circle, or diamond` |
 | `fn:` list ≠ band count | `'fn' has N formulas but the chart has M bands` |
 | Data ≠ categories count | `series data has N values but the chart has M categories` |
+| `tags:` count ≠ data count | `'tags' has N labels but the series has M data points` |
+| `tags:` on an `fn:` series | `'tags' needs explicit 'data' — a sampled 'fn' has no points to label` |
 | `categories:` with an axis `labels:` | `set 'categories' or an axis 'labels', not both` |
 | `\|mark\|` without `axis:` | `a '\|mark\|' needs 'axis:' to place it` |
 | `\|mark\|` `at:` wrong arity | `'at' takes one value (a line) or two (a point)` |
@@ -595,6 +646,15 @@ compile-time, with a span.
 ]
 ```
 
+**Labelled points (`tags:` per datum, hover-sized markers, always shown):**
+```
+|chart| "Effort vs. score" [
+  |axis| "tokens (k)" { side: bottom }
+  |axis| "score %"    { side: left }
+  |line| "GLM-5.2" { data: 35 63, 42 72, 84 75; tags: "Non-Thinking" "High" "Max"; marker: circle; tooltip: always }
+]
+```
+
 **Bubbles (one node each — position, size, colour, name):**
 ```
 |chart| "Markets" [
@@ -629,5 +689,7 @@ Named, not yet built; the syntax above is stable without them.
   ([§7](#7-bands--segmentation)).
 - **Time scale** — date domains with calendar-aware nice ticks.
 - **Multi-ring pie / sunburst** — nested `|slice|` levels.
-- **Per-datum styling** — a parallel paint list over `data:` (highlight one bar);
-  today, overlay a `|mark|`.
+- **Per-datum styling** — a parallel *paint* list over `data:` (highlight one bar); today,
+  overlay a `|mark|`. (Per-datum *text* already exists — `tags:`, [§4](#4-data--formulas).)
+- **Label-vs-line avoidance** — inline labels ([§14](#14-tooltips)) dodge other labels and
+  the plot edge, not the series lines themselves; a line-aware nudge is the next refinement.
