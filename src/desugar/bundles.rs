@@ -36,7 +36,7 @@ pub fn primitive_bundle(kind: NodeKind) -> Vec<Decl> {
         vec![
             var("fill", "fill"),
             var("stroke", "stroke"),
-            n("stroke-width", 2.0),
+            n("stroke-width", 1.5),
             n("padding", 20.0),
             n("gap", 20.0),
         ]
@@ -45,12 +45,12 @@ pub fn primitive_bundle(kind: NodeKind) -> Vec<Decl> {
         // The bare rectangle (SPEC §7): frameless, no padding — like a `div`.
         // It keeps the default `stroke-width` (invisible while `stroke: none`, so
         // bbox geometry is unchanged from the old `|plain|`, and a styled `|block|`
-        // gets a sensible 2px border); the `|box|` template lifts paint/radius/
+        // gets a sensible 1.5px border); the `|box|` template lifts paint/radius/
         // padding back on top.
         Block => vec![
             id("fill", "none"),
             id("stroke", "none"),
-            n("stroke-width", 2.0),
+            n("stroke-width", 1.5),
             n("padding", 0.0),
             n("gap", 20.0),
         ],
@@ -64,12 +64,12 @@ pub fn primitive_bundle(kind: NodeKind) -> Vec<Decl> {
         Poly | Path => vec![
             var("fill", "fill"),
             var("stroke", "stroke"),
-            n("stroke-width", 2.0),
+            n("stroke-width", 1.5),
         ],
         Line => vec![
             id("fill", "none"),
             var("stroke", "stroke"),
-            n("stroke-width", 2.0),
+            n("stroke-width", 1.5),
         ],
         // Phosphor icon: painted like a box (fill body, stroke line) at a
         // counter-scaled stroke-width; defaults to a soft-grey duotone at 32px.
@@ -92,7 +92,7 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
         "box" => vec![
             var("fill", "fill"),
             var("stroke", "stroke"),
-            n("stroke-width", 2.0),
+            n("stroke-width", 1.5),
             n("padding", 20.0),
             n("radius", 8.0),
         ],
@@ -165,11 +165,14 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
         // A larger icon meant to stand alone as a node, with room for a short
         // label: the icon primitive at 64px with a little padding. Defaults to
         // `fit: contain` so the glyph fills that box rather than floating small
-        // inside Phosphor's margin like a bare `|icon|` (SPEC §8).
+        // inside Phosphor's margin like a bare `|icon|` (SPEC §8). A bare `|icon|`
+        // keeps the heavier `stroke-width: 2`; a `|sign|`, sitting among ordinary
+        // nodes, takes their `1.5` so its line weight matches the diagram.
         "sign" => vec![
             n("width", 64.0),
             n("height", 64.0),
             n("padding", 4.0),
+            n("stroke-width", 1.5),
             id("fit", "contain"),
         ],
         "table" => vec![
@@ -238,7 +241,7 @@ mod tests {
         let boxt = template_bundle("box");
         assert_eq!(num(&boxt, "radius"), Some(8.0));
         assert_eq!(num(&boxt, "padding"), Some(20.0));
-        assert_eq!(num(&boxt, "stroke-width"), Some(2.0));
+        assert_eq!(num(&boxt, "stroke-width"), Some(1.5));
         assert!(has(&boxt, "fill") && has(&boxt, "stroke"));
     }
 

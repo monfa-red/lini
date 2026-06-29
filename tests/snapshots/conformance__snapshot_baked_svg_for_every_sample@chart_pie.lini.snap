@@ -5,9 +5,9 @@ input_file: samples/chart_pie.lini
 ---
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-161.8 -160 323.6 320" width="323.6" height="320" class="lini">
   <style>
-    .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: bold; color: black; }
+    .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
-    .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-block { fill: none; stroke: none; stroke-width: 1.5; stroke-dasharray: none; }
     .lini .lini-poly { stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
   </style>
@@ -15,7 +15,7 @@ input_file: samples/chart_pie.lini
   <rect class="lini-canvas" x="-161.8" y="-160" width="323.6" height="320"/>
   <g class="lini-scene">
     <g class="lini-node lini-pie lini-block" transform="translate(0,0)">
-      <rect x="-139" y="-139" width="278" height="278" rx="0" ry="0"/>
+      <rect x="-139.25" y="-139.25" width="278.5" height="278.5" rx="0" ry="0"/>
       <g class="lini-node lini-poly" style="fill: #ec6e97; stroke: none; stroke-width: 0; opacity: 1" transform="translate(0,0)">
         <title>Search: 45 (45%)</title>
         <polygon points="0,-106.4 10.7418,-105.8759 21.3816,-104.3087 31.8184,-101.7132 41.9529,-98.1141 51.6889,-93.5456 60.9339,-88.051 69.6002,-81.6825 77.6054,-74.5007 84.8735,-66.5738 91.3355,-57.977 96.9299,-48.792 101.6036,-39.106 105.3123,-29.0111 108.0207,-18.6031 109.7031,-7.9809 110.3435,2.7546 109.9359,13.5015 108.484,24.1576 106.0017,34.6219 102.5126,44.7947 98.0498,54.5797 92.6557,63.8837 86.3815,72.6185 79.2868,80.701 71.4391,88.0546 62.9128,94.6093 53.7889,100.3029 44.1542,105.0813 34.1,108.8991 0,3.95"/>

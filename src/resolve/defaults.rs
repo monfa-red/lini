@@ -94,7 +94,7 @@ pub fn built_in_defaults() -> VarTable {
                 .into(),
         ),
     );
-    set_visual(&mut t, "font-weight", ident("bold"));
+    set_visual(&mut t, "font-weight", ident("normal"));
     set_visual(&mut t, "caption-font-weight", ident("normal"));
     set_visual(&mut t, "link-font-weight", ident("normal"));
     set_visual(

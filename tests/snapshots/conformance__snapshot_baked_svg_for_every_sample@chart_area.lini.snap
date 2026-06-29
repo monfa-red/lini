@@ -5,9 +5,9 @@ input_file: samples/chart_area.lini
 ---
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-200 -130 400 260" width="400" height="260" class="lini">
   <style>
-    .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: bold; color: black; }
+    .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
-    .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-block { fill: none; stroke: none; stroke-width: 1.5; stroke-dasharray: none; }
     .lini .lini-poly { stroke-dasharray: none; }
     .lini .lini-line { stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
@@ -16,7 +16,7 @@ input_file: samples/chart_area.lini
   <rect class="lini-canvas" x="-200" y="-130" width="400" height="260"/>
   <g class="lini-scene">
     <g class="lini-node lini-chart lini-block" transform="translate(0,0)">
-      <rect x="-179" y="-109" width="358" height="218" rx="0" ry="0"/>
+      <rect x="-179.25" y="-109.25" width="358.5" height="218.5" rx="0" ry="0"/>
       <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
         <line x1="-156.8" y1="70.9" x2="168" y2="70.9"/>
       </g>
@@ -35,13 +35,13 @@ input_file: samples/chart_area.lini
       <g class="lini-node lini-poly" style="fill: #ec6e97; stroke: none; stroke-width: 0; opacity: 0.82" transform="translate(0,0)">
         <polygon points="-124.32,15.6625 -59.36,-11.9563 5.6,-39.575 70.56,-30.3688 135.52,-76.4 135.52,70.9 -124.32,70.9"/>
       </g>
-      <g class="lini-node lini-line" style="fill: none; stroke: #b8476e; stroke-width: 2" transform="translate(0,0)">
+      <g class="lini-node lini-line" style="fill: none; stroke: #b8476e; stroke-width: 1.5" transform="translate(0,0)">
         <polyline points="-124.32,15.6625 -59.36,-11.9563 5.6,-39.575 70.56,-30.3688 135.52,-76.4"/>
       </g>
       <g class="lini-node lini-poly" style="fill: #00bcb1; stroke: none; stroke-width: 0; opacity: 0.82" transform="translate(0,0)">
         <polygon points="-124.32,52.4875 -59.36,37.7575 5.6,30.3925 70.56,15.6625 135.52,0.9325 135.52,70.9 -124.32,70.9"/>
       </g>
-      <g class="lini-node lini-line" style="fill: none; stroke: #008e85; stroke-width: 2" transform="translate(0,0)">
+      <g class="lini-node lini-line" style="fill: none; stroke: #008e85; stroke-width: 1.5" transform="translate(0,0)">
         <polyline points="-124.32,52.4875 -59.36,37.7575 5.6,30.3925 70.56,15.6625 135.52,0.9325"/>
       </g>
       <text class="lini-text" x="-166.1" y="70.9" style="fill: #888; font-weight: normal; font-size: 11px">0</text>

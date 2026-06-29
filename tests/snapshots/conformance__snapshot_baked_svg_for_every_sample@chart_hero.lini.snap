@@ -3,23 +3,23 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/chart_hero.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-379 -279 758 558" width="758" height="558" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-378.75 -278.75 757.5 557.5" width="757.5" height="557.5" class="lini">
   <style>
-    .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: bold; color: black; }
+    .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
-    .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-block { fill: none; stroke: none; stroke-width: 1.5; stroke-dasharray: none; }
     .lini .lini-oval { stroke-dasharray: none; }
     .lini .lini-poly { stroke-dasharray: none; }
-    .lini .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-line { fill: none; stroke: #444; stroke-width: 1.5; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
   </style>
   <defs/>
-  <rect class="lini-canvas" x="-379" y="-279" width="758" height="558"/>
+  <rect class="lini-canvas" x="-378.75" y="-278.75" width="757.5" height="557.5"/>
   <g class="lini-scene">
     <g class="lini-node lini-block" transform="translate(0,0)">
       <rect x="-358" y="-258" width="716" height="516" rx="0" ry="0"/>
       <g class="lini-node lini-chart lini-block" transform="translate(-182,-132)">
-        <rect x="-169" y="-119" width="338" height="238" rx="0" ry="0"/>
+        <rect x="-169.25" y="-119.25" width="338.5" height="238.5" rx="0" ry="0"/>
         <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
           <line x1="-146.8" y1="80.9" x2="158" y2="80.9"/>
         </g>
@@ -87,7 +87,7 @@ input_file: samples/chart_hero.lini
         <text class="lini-text" x="37.2" y="110.1" style="font-weight: bold; font-size: 11px">2024</text>
       </g>
       <g class="lini-node lini-chart lini-block" transform="translate(182,-132)">
-        <rect x="-169" y="-119" width="338" height="238" rx="0" ry="0"/>
+        <rect x="-169.25" y="-119.25" width="338.5" height="238.5" rx="0" ry="0"/>
         <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
           <line x1="-146.8" y1="80.9" x2="158" y2="80.9"/>
         </g>
@@ -178,7 +178,7 @@ input_file: samples/chart_hero.lini
         <text class="lini-text" x="33.9" y="110.1" style="font-weight: bold; font-size: 11px">app</text>
       </g>
       <g class="lini-node lini-chart lini-block" transform="translate(-182,132)">
-        <rect x="-169" y="-119" width="338" height="238" rx="0" ry="0"/>
+        <rect x="-169.25" y="-119.25" width="338.5" height="238.5" rx="0" ry="0"/>
         <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
           <polyline points="0,-21.5 22.0403,-8.775 22.0403,16.675 0,29.4 -22.0403,16.675 -22.0403,-8.775 0,-21.5"/>
         </g>
@@ -242,7 +242,7 @@ input_file: samples/chart_hero.lini
         <text class="lini-text" x="79.6" y="110.1" style="font-weight: bold; font-size: 11px">Truck</text>
       </g>
       <g class="lini-node lini-chart lini-block" transform="translate(182,132)">
-        <rect x="-169" y="-119" width="338" height="238" rx="0" ry="0"/>
+        <rect x="-169.25" y="-119.25" width="338.5" height="238.5" rx="0" ry="0"/>
         <g class="lini-node lini-block" style="fill: #00b2e5; stroke-width: 0; opacity: 0.15" transform="translate(-102.925,-7.1)">
           <rect x="-37.275" y="-79.3" width="74.55" height="158.6" rx="0" ry="0"/>
         </g>

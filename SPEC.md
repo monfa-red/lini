@@ -730,7 +730,7 @@ primitives ([§7](#7-nodes)) stand on their own.
 
 | Template | Base | Defaults | For |
 |---|---|---|---|
-| `\|box\|` | `\|block\|` | `fill: --fill; stroke: --stroke; stroke-width: 2; radius: 6; padding: 20` | The **default** node — a rounded, framed card. |
+| `\|box\|` | `\|block\|` | `fill: --fill; stroke: --stroke; stroke-width: 1.5; radius: 6; padding: 20` | The **default** node — a rounded, framed card. |
 | `\|rect\|` | `\|box\|` | `radius: 0` | A sharp-cornered box. |
 | `\|group\|` | `\|block\|` | `stroke: --group-stroke; stroke-style: dashed; stroke-width: 1; fill: --group-fill; radius: 6; padding: 20` | Dashed frame for a caption + children. |
 | `\|caption\|` | `\|block\|` | `pin: top left; translate: 0 -18; color: --caption-color; font-size: 12; font-weight: normal` | A title, pinned just above the group's top-left corner. |
@@ -739,7 +739,7 @@ primitives ([§7](#7-nodes)) stand on their own.
 | `\|note\|` | `\|block\|` | `radius: 2; shadow: 2; fill: --note-bg; padding: 20` | Sticky note. |
 | `\|row\|` | `\|block\|` | `layout: row` | Frameless wrapper — children in a row. |
 | `\|column\|` | `\|block\|` | `layout: column` | Frameless wrapper — children in a column. |
-| `\|sign\|` | `\|icon\|` | `width: 64; height: 64; padding: 4; fit: contain` | A larger icon as a stand-alone node, with room for a short label; `fit: contain` fills the box (unlike a bare `\|icon\|`). |
+| `\|sign\|` | `\|icon\|` | `width: 64; height: 64; padding: 4; stroke-width: 1.5; fit: contain` | A larger icon as a stand-alone node, with room for a short label; `fit: contain` fills the box (unlike a bare `\|icon\|`), and its line weight drops to the node default `1.5` (a bare `\|icon\|` keeps `2`). |
 | `\|table\|` | `\|group\|` | `layout: grid; divider: all; gap: 0; padding: 4 8; fill: none; stroke: --stroke; stroke-style: solid; font-size: 14; font-weight: normal` | Ruled grid (see below). |
 
 The bare `|block|` is the base everything rectangular builds on: no fill, no stroke,
@@ -1071,7 +1071,7 @@ text too. To pin or size a piece of text, wrap it in a `|block|`.
 |---|---|---|
 | `font-family` | `--font-family` | ident, string, or `--var`. |
 | `font-size` | 15 (body), 12 (caption), 11 (link label) | px; a baked layout constant. |
-| `font-weight` | `--font-weight` (body `bold`; captions / link labels `normal`) | `normal` / `bold`. |
+| `font-weight` | `--font-weight` (body `normal`; chart title / legend `bold`) | `normal` / `bold`. |
 | `font-style` | `normal` | `normal` / `italic` / `oblique` — live CSS. |
 | `text-transform` | `none` | `uppercase` / `lowercase` / `capitalize` — live CSS (browser-applied; some SVG renderers ignore it). |
 | `text-decoration` | `none` | `underline` / `overline` / `line-through` — live CSS. |
@@ -1141,7 +1141,7 @@ Each colour is a `light-dark(LIGHT, DARK)` value, so one SVG carries both modes:
 --lini-caption-color light-dark(rgba(0,0,0,.5), rgba(255,255,255,.55))
 --lini-footer-color  light-dark(rgba(0,0,0,.5), rgba(255,255,255,.55))
 --lini-font-family   ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace
---lini-font-weight         bold
+--lini-font-weight         normal
 --lini-caption-font-weight normal
 --lini-link-font-weight    normal
 --lini-text-color    var(--lini-fg)
@@ -1259,9 +1259,9 @@ Baked compile-time defaults — override per-node, on the root, in rules, or in 
 instance / link block:
 
 ```
-font-size 15    link-font-size 11   caption-font-size 12
-stroke-width 2  radius 6            gap 20                 padding 20
-clearance 16    icon-size 32        link-width 2
+font-size 15     link-font-size 11   caption-font-size 12
+stroke-width 1.5 radius 6            gap 20                 padding 20
+clearance 16     icon-size 32        link-width 2          icon stroke-width 2
 ```
 
 `font-size` is body text. Link labels and captions carry their own baked defaults (11

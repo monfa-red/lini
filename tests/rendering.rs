@@ -671,11 +671,12 @@ fn icon_fit_stretch_is_non_uniform() {
 #[test]
 fn icon_fit_holds_the_stroke_weight() {
     // The counter-scaled stroke follows the fit scale, so the on-screen weight is
-    // constant: auto bakes 2 / 0.25 = 8, contain 2 / 0.3478 = 5.75 — both draw 2px.
+    // constant: a |sign|'s 1.5 bakes auto 1.5 / 0.25 = 6, contain 1.5 / 0.3478 = 4.3125 —
+    // both draw 1.5px.
     let auto = render_live("|sign#x| { symbol: shield; fit: auto }\n");
     let contain = render_live("|sign#x| { symbol: shield; fit: contain }\n");
-    assert!(auto.contains(r#"stroke-width="8""#), "{auto}");
-    assert!(contain.contains(r#"stroke-width="5.75""#), "{contain}");
+    assert!(auto.contains(r#"stroke-width="6""#), "{auto}");
+    assert!(contain.contains(r#"stroke-width="4.3125""#), "{contain}");
 }
 
 #[cfg(feature = "icons")]

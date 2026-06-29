@@ -3,19 +3,19 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/expr.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-185 -189.4273 370 378.8546" width="370" height="378.8546" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-185 -188.6773 370 377.3546" width="370" height="377.3546" class="lini">
   <style>
-    .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: bold; color: black; }
+    .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
-    .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-block { fill: none; stroke: none; stroke-width: 1.5; stroke-dasharray: none; }
+    .lini .lini-line { fill: none; stroke: #444; stroke-width: 1.5; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
-    .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
+    .lini .lini-box { fill: white; stroke: #444; stroke-width: 1.5; }
   </style>
   <defs/>
-  <rect class="lini-canvas" x="-185" y="-189.4273" width="370" height="378.8546"/>
+  <rect class="lini-canvas" x="-185" y="-188.6773" width="370" height="377.3546"/>
   <g class="lini-scene">
-    <g class="lini-node lini-box lini-block" data-id="a" style="fill: #cdf9f4; stroke: #005d56" transform="translate(0,-136.9273)">
+    <g class="lini-node lini-box lini-block" data-id="a" style="fill: #cdf9f4; stroke: #005d56" transform="translate(0,-136.4273)">
       <rect x="-56" y="-27.5" width="112" height="55" rx="8" ry="8"/>
       <text class="lini-text" x="0" y="0">scale(0)</text>
     </g>
@@ -23,14 +23,14 @@ input_file: samples/expr.lini
       <rect x="-77.76" y="-27.5" width="155.52" height="55" rx="8" ry="8"/>
       <text class="lini-text" x="0" y="0">scale(3)</text>
     </g>
-    <g class="lini-node lini-box lini-block" data-id="pad" style="fill: #feedca; stroke: #6d3b00" transform="translate(0,13.0727)">
+    <g class="lini-node lini-box lini-block" data-id="pad" style="fill: #feedca; stroke: #6d3b00" transform="translate(0,12.5727)">
       <rect x="-65.5" y="-23.5" width="131" height="47" rx="8" ry="8"/>
       <text class="lini-text" x="0" y="0">padding 8*2</text>
     </g>
-    <g class="lini-node lini-line" data-id="sine" style="stroke: #0085b3" transform="translate(-160,82.5056)">
+    <g class="lini-node lini-line" data-id="sine" style="stroke: #0085b3; stroke-width: 2" transform="translate(-160,81.7556)">
       <polyline points="0,0 5.0794,7.0741 10.1587,13.5197 15.2381,18.764 20.3175,22.341 25.3968,23.9329 30.4762,23.3983 35.5556,20.7846 40.6349,16.3241 45.7143,10.4132 50.7937,3.577 55.873,-3.577 60.9524,-10.4132 66.0317,-16.3241 71.1111,-20.7846 76.1905,-23.3983 81.2698,-23.9329 86.3492,-22.341 91.4286,-18.764 96.5079,-13.5197 101.5873,-7.0741 106.6667,-0 111.746,7.0741 116.8254,13.5197 121.9048,18.764 126.9841,22.341 132.0635,23.9329 137.1429,23.3983 142.2222,20.7846 147.3016,16.3241 152.381,10.4132 157.4603,3.577 162.5397,-3.577 167.619,-10.4132 172.6984,-16.3241 177.7778,-20.7846 182.8571,-23.3983 187.9365,-23.9329 193.0159,-22.341 198.0952,-18.764 203.1746,-13.5197 208.254,-7.0741 213.3333,-0 218.4127,7.0741 223.4921,13.5197 228.5714,18.764 233.6508,22.341 238.7302,23.9329 243.8095,23.3983 248.8889,20.7846 253.9683,16.3241 259.0476,10.4132 264.127,3.577 269.2063,-3.577 274.2857,-10.4132 279.3651,-16.3241 284.4444,-20.7846 289.5238,-23.3983 294.6032,-23.9329 299.6825,-22.341 304.7619,-18.764 309.8413,-13.5197 314.9206,-7.0741 320,-0"/>
     </g>
-    <g class="lini-node lini-line" data-id="named" style="stroke: #b8476e" transform="translate(-160,146.4329)">
+    <g class="lini-node lini-line" data-id="named" style="stroke: #b8476e; stroke-width: 2" transform="translate(-160,145.6829)">
       <polyline points="0,0 5.0794,3.5666 10.1587,6.9918 15.2381,10.1398 20.3175,12.8856 25.3968,15.1205 30.4762,16.7557 35.5556,17.7265 40.6349,17.9944 45.7143,17.5487 50.7937,16.4071 55.873,14.6149 60.9524,12.2431 66.0317,9.3858 71.1111,6.1564 76.1905,2.6828 81.2698,-0.8972 86.3492,-4.4416 91.4286,-7.8099 96.5079,-10.8685 101.5873,-13.4961 106.6667,-15.5885 111.746,-17.0627 116.8254,-17.8603 121.9048,-17.9497 126.9841,-17.3272 132.0635,-16.0177 137.1429,-14.073 142.2222,-11.5702 147.3016,-8.6086 152.381,-5.3056 157.4603,-1.7922 162.5397,1.7922 167.619,5.3056 172.6984,8.6086 177.7778,11.5702 182.8571,14.073 187.9365,16.0177 193.0159,17.3272 198.0952,17.9497 203.1746,17.8603 208.254,17.0627 213.3333,15.5885 218.4127,13.4961 223.4921,10.8685 228.5714,7.8099 233.6508,4.4416 238.7302,0.8972 243.8095,-2.6828 248.8889,-6.1564 253.9683,-9.3858 259.0476,-12.2431 264.127,-14.6149 269.2063,-16.4071 274.2857,-17.5487 279.3651,-17.9944 284.4444,-17.7265 289.5238,-16.7557 294.6032,-15.1205 299.6825,-12.8856 304.7619,-10.1398 309.8413,-6.9918 314.9206,-3.5666 320,-0"/>
     </g>
   </g>
