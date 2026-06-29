@@ -6,6 +6,7 @@
 use crate::layout::{Bbox, PlacedNode, approx_height, approx_width};
 use crate::resolve::{AttrMap, Markers, NodeKind, ResolvedValue};
 use crate::span::Span;
+use std::f64::consts::TAU;
 
 fn node(kind: NodeKind, bbox: Bbox) -> PlacedNode {
     PlacedNode {
@@ -97,6 +98,36 @@ pub fn poly(points: Vec<(f64, f64)>, fill: ResolvedValue, opacity: f64) -> Place
     n.attrs.insert("stroke-width", ResolvedValue::Number(0.0));
     n.attrs.insert("opacity", ResolvedValue::Number(opacity));
     n
+}
+
+/// An annular-sector filled polygon (a pie / donut slice — [CHARTS.md] §13 — or a
+/// radial bar, §12): radius `r0`→`r1` over angles `[a_lo, a_hi]` (0 straight up,
+/// increasing clockwise). The arcs are segmented finely enough to read smooth at any
+/// size; `r0 ≈ 0` collapses the inner edge to the centre (a full wedge). `opacity` lets
+/// overlapping wedges read through.
+#[allow(clippy::too_many_arguments)]
+pub fn wedge(
+    cx: f64,
+    cy: f64,
+    r0: f64,
+    r1: f64,
+    a_lo: f64,
+    a_hi: f64,
+    fill: ResolvedValue,
+    opacity: f64,
+) -> PlacedNode {
+    let span = a_hi - a_lo;
+    let steps = (span.abs() / TAU * 64.0).ceil().max(2.0) as usize; // ~one segment / 6°
+    let at = |r: f64, a: f64| (cx + r * a.sin(), cy - r * a.cos());
+    let mut pts: Vec<(f64, f64)> = (0..=steps)
+        .map(|k| at(r1, a_lo + span * k as f64 / steps as f64))
+        .collect();
+    if r0 <= 0.5 {
+        pts.push((cx, cy));
+    } else {
+        pts.extend((0..=steps).map(|k| at(r0, a_hi - span * k as f64 / steps as f64)));
+    }
+    poly(pts, fill, opacity)
 }
 
 /// A polyline (a gridline or a line series) through `points`, with the given stroke

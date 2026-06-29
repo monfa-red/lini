@@ -15,10 +15,13 @@ mod bars;
 mod marks;
 mod model;
 mod palette;
+mod pie;
 mod prim;
 mod project;
 mod radial;
 mod scale;
+
+pub(super) use pie::{is_pie, layout_pie};
 
 use crate::error::Error;
 use crate::layout::{Bbox, PlacedNode};
@@ -26,13 +29,13 @@ use crate::resolve::{AttrMap, NodeKind, ResolvedInst, ResolvedValue};
 use model::{Chart, Side};
 use project::{Dir, Plot};
 
-const TITLE_SIZE: f64 = 13.0;
+pub(super) const TITLE_SIZE: f64 = 13.0;
 const AXIS_TITLE_SIZE: f64 = 11.0;
-const LABEL_SIZE: f64 = 11.0;
+pub(super) const LABEL_SIZE: f64 = 11.0;
 
 /// Is this node a chart container ([CHARTS.md] §2)? Detected by its `layout:` attr —
-/// the same key `read_layout_mode` owns — so a chart is intercepted before the
-/// generic container path. (`layout: pie` is recognised in a later step.)
+/// the same key `read_layout_mode` owns — so a chart is intercepted before the generic
+/// container path. (`layout: pie` is the sibling layout, `pie::is_pie`.)
 pub(super) fn is_chart(attrs: &AttrMap) -> bool {
     matches!(attrs.get("layout"), Some(ResolvedValue::Ident(s)) if s == "chart")
 }
@@ -43,7 +46,6 @@ pub(super) fn layout_chart(
     inst: &ResolvedInst,
     funcs: &crate::expr::FuncTable,
 ) -> Result<PlacedNode, Error> {
-    let span = inst.span;
     let chart = model::build(inst, funcs)?;
     // A radial (or pie) chart is square; a cartesian one is wide ([CHARTS.md] §2).
     let square = chart.dir == Dir::Radial;
@@ -100,7 +102,14 @@ pub(super) fn layout_chart(
         lay_out_legend(&legend, h / 2.0 - LABEL_SIZE * 0.9, &mut kids);
     }
 
-    Ok(PlacedNode {
+    Ok(chart_box(inst, w, h, kids))
+}
+
+/// The chart container `PlacedNode`: a `Block` of the chart box carrying the lowered
+/// primitives as pre-positioned children. Shared by `layout: chart` and `layout: pie`,
+/// so both place as one unit and keep the node's id / classes / paint.
+pub(super) fn chart_box(inst: &ResolvedInst, w: f64, h: f64, kids: Vec<PlacedNode>) -> PlacedNode {
+    PlacedNode {
         id: inst.id.clone(),
         kind: NodeKind::Block,
         type_chain: inst.type_chain.clone(),
@@ -115,8 +124,8 @@ pub(super) fn layout_chart(
         rotation: inst.attrs.number("rotate").unwrap_or(0.0),
         children: kids,
         dividers: Vec::new(),
-        span,
-    })
+        span: inst.span,
+    }
 }
 
 /// The plot rect = the chart box inset by the gutters its labels / titles / legend
@@ -261,8 +270,12 @@ fn legend_entries(chart: &Chart) -> Vec<(String, ResolvedValue)> {
         .collect()
 }
 
-/// A centred row of swatch + label entries at vertical `cy`.
-fn lay_out_legend(entries: &[(String, ResolvedValue)], cy: f64, out: &mut Vec<PlacedNode>) {
+/// A centred row of swatch + label entries at vertical `cy`. Shared by chart and pie.
+pub(super) fn lay_out_legend(
+    entries: &[(String, ResolvedValue)],
+    cy: f64,
+    out: &mut Vec<PlacedNode>,
+) {
     const SW: f64 = 11.0; // swatch side
     const GAP: f64 = 5.0; // swatch → label
     const ITEM_GAP: f64 = 16.0; // entry → entry
@@ -612,5 +625,50 @@ mod tests {
             "|chart| { direction: sideways; categories: \"a\" } [\n  |bars| { data: 5 }\n]\n",
         );
         assert!(e.contains("column, row, or radial"), "{e}");
+    }
+
+    #[test]
+    fn a_pie_draws_slice_wedges_and_a_legend() {
+        let s =
+            svg("|pie| \"T\" [\n  |slice| \"a\" { value: 3 }\n  |slice| \"b\" { value: 1 }\n]\n");
+        assert!(s.contains("<polygon"), "slice wedges: {s}");
+        assert!(
+            s.contains("var(--lini-rose)"),
+            "slice 0 walks the palette: {s}"
+        );
+        assert!(
+            s.contains("var(--lini-orange)"),
+            "slice 1 walks the palette: {s}"
+        );
+        assert!(s.contains(">a</text>"), "a legend label: {s}");
+    }
+
+    #[test]
+    fn a_non_slice_child_of_a_pie_errors() {
+        let e = layout_err("|pie| [\n  |bars| { data: 1 }\n]\n");
+        assert!(e.contains("'|slice|' only"), "{e}");
+    }
+
+    #[test]
+    fn an_empty_pie_errors() {
+        assert!(layout_err("|pie| \"T\"\n").contains("at least one '|slice|'"));
+    }
+
+    #[test]
+    fn a_negative_slice_value_errors() {
+        let e = layout_err("|pie| [\n  |slice| { value: -1 }\n]\n");
+        assert!(e.contains("≥ 0"), "{e}");
+    }
+
+    #[test]
+    fn a_pie_summing_to_zero_errors() {
+        let e = layout_err("|pie| [\n  |slice| { value: 0 }\n  |slice| { value: 0 }\n]\n");
+        assert!(e.contains("sum to zero"), "{e}");
+    }
+
+    #[test]
+    fn a_hole_out_of_range_errors() {
+        let e = layout_err("|pie| { hole: 1.5 } [\n  |slice| { value: 1 }\n]\n");
+        assert!(e.contains("fraction 0..1"), "{e}");
     }
 }

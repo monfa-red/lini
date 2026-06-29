@@ -145,6 +145,22 @@ pub struct Chart {
     pub dir: Dir,
 }
 
+/// One wedge of a `layout: pie` ([CHARTS.md] §13): its magnitude, legend label, and
+/// colour (an explicit `fill` / `stroke`, else the per-slice palette walk).
+pub struct Slice {
+    pub value: f64,
+    pub label: Option<String>,
+    pub color: ResolvedValue,
+}
+
+/// A parsed pie ([CHARTS.md] §13): its slices (source order, clockwise from the top),
+/// title, and `hole` fraction (`0` a pie, `0 < n < 1` a donut).
+pub struct Pie {
+    pub slices: Vec<Slice>,
+    pub title: Option<String>,
+    pub hole: f64,
+}
+
 /// One end of a `range:` window: a fixed number, or `auto` (fit from data).
 enum End {
     Num(f64),
@@ -305,6 +321,68 @@ pub fn build(inst: &ResolvedInst, funcs: &FuncTable) -> Result<Chart, Error> {
         bars,
         dir,
     })
+}
+
+/// Parse a `layout: pie` into its slices ([CHARTS.md] §13). All pie validation (§18)
+/// lives here; the wedge geometry is the renderer's job. Reuses the chart's `tag`,
+/// `label_of`, `series_color`, and the palette walk (per slice — [§10]).
+pub fn build_pie(inst: &ResolvedInst) -> Result<Pie, Error> {
+    let span = inst.span;
+    let hole = read_hole(&inst.attrs)?;
+    let mut title = None;
+    let mut slice_insts = Vec::new();
+    for child in &inst.children {
+        if child.kind == NodeKind::Text {
+            if title.is_none() {
+                title = child
+                    .label
+                    .as_deref()
+                    .filter(|t| !t.is_empty())
+                    .map(str::to_string);
+            }
+            continue;
+        }
+        match tag(child) {
+            Some("slice") => slice_insts.push(child),
+            _ => return Err(Error::at(child.span, "a pie's children are '|slice|' only")),
+        }
+    }
+    if slice_insts.is_empty() {
+        return Err(Error::at(span, "a pie needs at least one '|slice|'"));
+    }
+    let mut slices = Vec::with_capacity(slice_insts.len());
+    for (i, s) in slice_insts.iter().enumerate() {
+        let value = s
+            .attrs
+            .number("value")
+            .ok_or_else(|| Error::at(s.span, "a '|slice|' needs a 'value:'"))?;
+        if value < 0.0 {
+            return Err(Error::at(s.span, "a '|slice|' value must be ≥ 0"));
+        }
+        let color = series_color(&s.attrs).unwrap_or_else(|| live(palette::hue(i)));
+        slices.push(Slice {
+            value,
+            label: label_of(s),
+            color,
+        });
+    }
+    if slices.iter().map(|s| s.value).sum::<f64>() <= 0.0 {
+        return Err(Error::at(span, "a pie's slice values sum to zero"));
+    }
+    Ok(Pie {
+        slices,
+        title,
+        hole,
+    })
+}
+
+/// A pie's `hole:` fraction ([CHARTS.md] §13) — `0` a pie, `0 < n < 1` a donut.
+fn read_hole(attrs: &AttrMap) -> Result<f64, Error> {
+    match attrs.get("hole") {
+        None => Ok(0.0),
+        Some(ResolvedValue::Number(n)) if *n >= 0.0 && *n < 1.0 => Ok(*n),
+        _ => Err(Error::at(Span::empty(), "'hole' is a fraction 0..1")),
+    }
 }
 
 /// The chart's `direction` ([CHARTS.md] §11) — its orientation / projection.

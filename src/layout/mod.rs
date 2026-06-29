@@ -265,6 +265,9 @@ fn layout_inst(
     if chart::is_chart(&inst.attrs) {
         return chart::layout_chart(inst, funcs);
     }
+    if chart::is_pie(&inst.attrs) {
+        return chart::layout_pie(inst);
+    }
 
     // Recurse into children first.
     let mut children: Vec<PlacedNode> = Vec::with_capacity(inst.children.len());

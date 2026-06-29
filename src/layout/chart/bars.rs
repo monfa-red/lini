@@ -214,29 +214,9 @@ fn emit_wedge(
     if (r1 - r0).abs() < 0.5 {
         return;
     }
-    let mut wedge = prim::poly(
-        sector(cx, cy, r0, r1, a_lo, a_hi),
-        ser.color.clone(),
-        opacity,
-    );
+    let mut wedge = prim::wedge(cx, cy, r0, r1, a_lo, a_hi, ser.color.clone(), opacity);
     prim::set_title(&mut wedge, title(category, ser.label.as_deref(), value));
     out.push(wedge);
-}
-
-/// An annular-sector polygon from radius `r0` to `r1` over `[a_lo, a_hi]` (angle 0 up,
-/// clockwise). The arcs are line-segment–approximated; `r0 ≈ 0` collapses to the pole.
-fn sector(cx: f64, cy: f64, r0: f64, r1: f64, a_lo: f64, a_hi: f64) -> Vec<(f64, f64)> {
-    const K: usize = 10;
-    let pt = |r: f64, a: f64| (cx + r * a.sin(), cy - r * a.cos());
-    let mut pts: Vec<(f64, f64)> = (0..=K)
-        .map(|k| pt(r1, a_lo + (a_hi - a_lo) * k as f64 / K as f64))
-        .collect();
-    if r0 <= 0.5 {
-        pts.push((cx, cy));
-    } else {
-        pts.extend((0..=K).map(|k| pt(r0, a_hi - (a_hi - a_lo) * k as f64 / K as f64)));
-    }
-    pts
 }
 
 /// The `<title>` text for a bar: category and/or series name, then the value.
