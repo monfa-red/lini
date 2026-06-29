@@ -42,9 +42,20 @@ pub fn render(laid_out: &LaidOut, opts: &Options) -> String {
     // color) for the whole tree. Per-node differences ride `style=`.
     let ruleset = rules::build(laid_out, opts);
     let used = used_vars::referenced(laid_out, &ruleset);
-    // The `:hover` tooltip rule is emitted only when a live chart carries a tip card.
-    let tooltips = !opts.bake_vars && any_chart_tip(&laid_out.nodes);
-    style_block::emit(&mut out, &laid_out.vars, &ruleset, &used, opts, tooltips);
+    // One `:hover ~` reveal rule per tooltip card — live charts only.
+    let tooltip_rules = if opts.bake_vars {
+        0
+    } else {
+        tooltip_count(&laid_out.nodes)
+    };
+    style_block::emit(
+        &mut out,
+        &laid_out.vars,
+        &ruleset,
+        &used,
+        opts,
+        tooltip_rules,
+    );
 
     let filters = FilterTable::collect(&laid_out.nodes, &laid_out.vars, opts);
     if filters.is_empty() && laid_out.gradients.is_empty() {
@@ -119,12 +130,22 @@ pub fn render(laid_out: &LaidOut, opts: &Options) -> String {
     out
 }
 
-/// Whether any node (recursively) is a rich tooltip card — the signal to emit the
-/// `:hover` reveal rule ([CHARTS.md] §14).
-fn any_chart_tip(nodes: &[PlacedNode]) -> bool {
-    nodes
-        .iter()
-        .any(|n| n.type_chain.iter().any(|t| t == "chart-tip") || any_chart_tip(&n.children))
+/// The number of rich tooltip cards (max `tip-N` index + 1) — the renderer emits one
+/// `.lini-hit-N:hover ~ .lini-tip-N` reveal rule per card ([CHARTS.md] §14).
+fn tooltip_count(nodes: &[PlacedNode]) -> usize {
+    fn scan(nodes: &[PlacedNode], max: &mut Option<usize>) {
+        for n in nodes {
+            for t in &n.type_chain {
+                if let Some(i) = t.strip_prefix("tip-").and_then(|s| s.parse::<usize>().ok()) {
+                    *max = Some(max.map_or(i, |m| m.max(i)));
+                }
+            }
+            scan(&n.children, max);
+        }
+    }
+    let mut max = None;
+    scan(nodes, &mut max);
+    max.map_or(0, |m| m + 1)
 }
 
 fn render_node(
@@ -167,7 +188,21 @@ fn render_node(
         depth
     };
     let indent = "  ".repeat(depth);
-    let class_list = values::class_list(n.kind.as_str(), &n.type_chain, &n.applied_styles);
+    // The tooltip `hit-N` class is a live-only hover hook ([CHARTS.md] §14): strip it when
+    // baking so a data mark renders exactly as it would with tooltips off.
+    let stripped;
+    let chain: &[String] = if opts.bake_vars && n.type_chain.iter().any(|t| t.starts_with("hit-")) {
+        stripped = n
+            .type_chain
+            .iter()
+            .filter(|t| !t.starts_with("hit-"))
+            .cloned()
+            .collect::<Vec<_>>();
+        &stripped
+    } else {
+        &n.type_chain
+    };
+    let class_list = values::class_list(n.kind.as_str(), chain, &n.applied_styles);
     let classes = class_list.join(" ");
     let transform = if n.rotation != 0.0 {
         format!(

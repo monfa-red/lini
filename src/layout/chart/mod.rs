@@ -707,9 +707,10 @@ mod tests {
             "the title floor stays: {s}"
         );
         assert!(
-            s.contains(":hover + .lini-chart-tip"),
-            "the reveal rule: {s}"
+            s.contains(":hover ~ .lini-tip-0"),
+            "the reveal rule links the mark to its card: {s}"
         );
+        assert!(s.contains("lini-hit-0"), "the hovered mark is tagged: {s}");
     }
 
     #[test]

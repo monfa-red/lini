@@ -16,7 +16,7 @@ pub fn emit(
     rules: &RuleSet,
     used: &BTreeSet<String>,
     opts: &Options,
-    tooltips: bool,
+    tooltip_cards: usize,
 ) {
     out.push_str("  <style>\n");
 
@@ -66,11 +66,18 @@ pub fn emit(
     }
 
     rules.emit(out);
-    // The rich chart tooltip ([CHARTS.md] §14): a hover on a mark reveals its adjacent
-    // `.lini-chart-tip` card. Live-only — `--bake-vars` drops both the card and this rule.
-    if tooltips {
+    // The rich chart tooltip ([CHARTS.md] §14): cards are hidden in a top layer; hovering
+    // a mark (`.lini-hit-N`) reveals its `.lini-tip-N` card, a later sibling, so no other
+    // mark can paint over it. Live-only — `--bake-vars` drops the cards and these rules.
+    if tooltip_cards > 0 {
         out.push_str("    .lini .lini-chart-tip { visibility: hidden; pointer-events: none; }\n");
-        out.push_str("    .lini .lini-node:hover + .lini-chart-tip { visibility: visible; }\n");
+        for i in 0..tooltip_cards {
+            writeln!(
+                out,
+                "    .lini .lini-hit-{i}:hover ~ .lini-tip-{i} {{ visibility: visible; }}"
+            )
+            .unwrap();
+        }
     }
     out.push_str("  </style>\n");
 }

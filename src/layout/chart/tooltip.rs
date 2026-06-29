@@ -1,8 +1,10 @@
 //! Chart tooltips ([CHARTS.md] §14). The baked-safe floor is the native `<title>` each
 //! mark already carries; this adds the `tooltip:` mode on top — `none` strips the titles,
 //! `title` keeps only them, `rich` (default) also emits a hidden `.lini-chart-tip` card
-//! after each titled mark, revealed by a CSS `:hover` rule (live-only — the renderer drops
-//! the card when baking). One post-pass over the lowered nodes does all three modes.
+//! per titled mark in a **top layer** (appended last, so nothing paints over it), revealed
+//! by a per-index `.lini-hit-N:hover ~ .lini-tip-N` rule (live-only — the renderer drops
+//! the cards and strips the hooks when baking). One post-pass over the lowered nodes does
+//! all three modes.
 
 use super::prim;
 use crate::error::Error;
@@ -41,8 +43,14 @@ pub fn read(attrs: &AttrMap) -> Result<Tooltip, Error> {
 }
 
 /// Apply the tooltip mode to a chart's lowered children, within the `w`×`h` box: `none`
-/// strips the `<title>` floor, `title` keeps it, `rich` adds a hover card after each
-/// titled mark.
+/// strips the `<title>` floor, `title` keeps it, `rich` adds a hover card per titled mark.
+///
+/// The cards are appended **last** (a top layer), not interleaved after each mark, so a
+/// card never hides behind a later-drawn mark. Each is linked back to its mark by an
+/// index — the mark gains a `hit-N` class, the card a `tip-N` class — and revealed by a
+/// `.lini-hit-N:hover ~ .lini-tip-N` rule (the mark stays the hover target, so a nested
+/// label still triggers it). The index class is render-stripped when baking, so baked
+/// output is unchanged.
 pub fn apply(kids: Vec<PlacedNode>, mode: Tooltip, w: f64, h: f64) -> Vec<PlacedNode> {
     match mode {
         Tooltip::Title => kids,
@@ -54,33 +62,43 @@ pub fn apply(kids: Vec<PlacedNode>, mode: Tooltip, w: f64, h: f64) -> Vec<Placed
             kids
         }
         Tooltip::Rich => {
-            let mut out = Vec::with_capacity(kids.len() * 2);
-            for node in kids {
-                let card = card_for(&node, w, h);
-                out.push(node);
-                out.extend(card);
+            let mut kids = kids;
+            let mut cards = Vec::new();
+            for node in kids.iter_mut() {
+                let Some(text) = title_string(node) else {
+                    continue;
+                };
+                let i = cards.len();
+                let (ax, ay) = anchor(node);
+                cards.push(make_card(&text, ax, ay, i, w, h));
+                node.type_chain.push(format!("hit-{i}"));
             }
-            out
+            kids.extend(cards);
+            kids
         }
     }
 }
 
-/// The hover card for a titled mark, placed beside the mark's centre — or `None` for a
-/// mark with no `<title>` (gridlines, labels, areas, lines).
-fn card_for(node: &PlacedNode, w: f64, h: f64) -> Option<PlacedNode> {
-    let ResolvedValue::String(text) = node.attrs.get("title")? else {
-        return None;
-    };
-    // Absolute anchor = the mark's placed centre (cx/cy + its origin-relative bbox mid;
-    // a `poly` keeps cx/cy at 0 and carries absolute points, so this holds for any kind).
-    let ax = node.cx + (node.bbox.min_x + node.bbox.max_x) / 2.0;
-    let ay = node.cy + (node.bbox.min_y + node.bbox.max_y) / 2.0;
-    Some(make_card(text, ax, ay, w, h))
+/// A titled mark's `<title>` text, cloned so the node can then be tagged.
+fn title_string(node: &PlacedNode) -> Option<String> {
+    match node.attrs.get("title") {
+        Some(ResolvedValue::String(s)) => Some(s.clone()),
+        _ => None,
+    }
 }
 
-/// A `.lini-chart-tip` card: a solid rounded box + its text, up-right of `(ax, ay)` and
-/// clamped inside the chart box.
-fn make_card(text: &str, ax: f64, ay: f64, w: f64, h: f64) -> PlacedNode {
+/// A mark's placed centre — `cx`/`cy` plus its origin-relative bbox mid (a `poly` keeps
+/// `cx`/`cy` at 0 with absolute points, so this holds for any kind).
+fn anchor(node: &PlacedNode) -> (f64, f64) {
+    (
+        node.cx + (node.bbox.min_x + node.bbox.max_x) / 2.0,
+        node.cy + (node.bbox.min_y + node.bbox.max_y) / 2.0,
+    )
+}
+
+/// Card `index`'s `.lini-chart-tip` / `.lini-tip-{index}` group: a solid rounded box + its
+/// text, up-right of `(ax, ay)` and clamped inside the chart box.
+fn make_card(text: &str, ax: f64, ay: f64, index: usize, w: f64, h: f64) -> PlacedNode {
     let cw = prim::text_width(text, SIZE) + PAD * 2.0;
     let ch = SIZE + PAD * 2.0;
     let cx = (ax + GAP + cw / 2.0).clamp(-w / 2.0 + cw / 2.0, w / 2.0 - cw / 2.0);
@@ -94,7 +112,8 @@ fn make_card(text: &str, ax: f64, ay: f64, w: f64, h: f64) -> PlacedNode {
         max_x: cx + cw / 2.0,
         max_y: cy + ch / 2.0,
     };
-    prim::group(vec![bg, txt], vec!["chart-tip".to_string()], bbox)
+    let classes = vec!["chart-tip".to_string(), format!("tip-{index}")];
+    prim::group(vec![bg, txt], classes, bbox)
 }
 
 fn live(name: &str) -> ResolvedValue {
