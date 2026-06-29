@@ -260,8 +260,8 @@ fn layout_inst(
     // A chart ([CHARTS.md]) owns its whole subtree: it reads its children's data,
     // fixes a shared scale, samples any `fn:`, and emits primitive PlacedNodes itself.
     // Intercept it here — before the child recursion (which would run `leaf_bbox` on a
-    // series with no `points:`) and before the row/column/grid path (`read_layout_mode`
-    // rejects `layout: chart`).
+    // series with no `points:`) and before the flow/grid path (`read_layout_mode`
+    // only handles flow and grid).
     if chart::is_chart(&inst.attrs) {
         return chart::layout_chart(inst, funcs);
     }
@@ -351,10 +351,10 @@ fn layout_inst(
 fn one_d_dividers(
     children: &[PlacedNode],
     flow: &[usize],
-    mode: LayoutMode,
+    axis: Axis,
     flow_bbox: Bbox,
 ) -> Vec<GridRule> {
-    let row = matches!(mode, LayoutMode::Row);
+    let row = axis == Axis::Row;
     let main = |i: usize| if row { children[i].cx } else { children[i].cy };
     let half = |i: usize| {
         if row {
@@ -420,6 +420,11 @@ fn lay_out_container_children(
 
     // Lay out the flow children per the container's `layout=` attr.
     let mode = read_layout_mode(container_attrs, span)?;
+    // A flow's axis comes from `direction`; a grid has none.
+    let flow_axis = match mode {
+        LayoutMode::Flow => Some(read_flow_direction(container_attrs, span)?),
+        LayoutMode::Grid => None,
+    };
     // Slack for align/justify/stretch comes only from an explicit container
     // size: the content area is the declared dimension minus padding (SPEC §5).
     let pad = primitives::padding(container_attrs, span)?;
@@ -437,11 +442,8 @@ fn lay_out_container_children(
         let mut flow_children: Vec<PlacedNode> =
             flow_indices.iter().map(|i| children[*i].clone()).collect();
         let bbox = match mode {
-            LayoutMode::Row => {
-                flex::lay_out_flex(Axis::Row, &mut flow_children, container_attrs, span, avail)?
-            }
-            LayoutMode::Column => flex::lay_out_flex(
-                Axis::Column,
+            LayoutMode::Flow => flex::lay_out_flex(
+                flow_axis.expect("a flow has an axis"),
                 &mut flow_children,
                 container_attrs,
                 span,
@@ -488,14 +490,14 @@ fn lay_out_container_children(
     // 1-D dividers between flow children (a grid produced its own above), painted
     // by the container's own stroke (SPEC §5). They track the offset flow; the
     // body bbox below stays centred, since `closed_bbox` and pins anchor to it.
-    if matches!(mode, LayoutMode::Row | LayoutMode::Column)
+    if let Some(axis) = flow_axis
         && grid::read_divider(container_attrs) != grid::Divider::None
         && flow_indices.len() > 1
     {
         grid_rules = one_d_dividers(
             children,
             &flow_indices,
-            mode,
+            axis,
             flow_bbox.shifted(off_x, off_y),
         );
     }
@@ -546,28 +548,57 @@ fn lay_out_container_children(
     Ok((body_bbox, grid_rules))
 }
 
-/// Container layout mode, parsed from the `layout=` attr.
-#[derive(Clone, Copy, Debug)]
+/// Container layout engine, parsed from the `layout=` attr. Chart/pie are a
+/// separate engine intercepted in `layout_inst` *before* this runs, so this only
+/// ever sees the box-arranger's two modes.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum LayoutMode {
-    Row,
-    Column,
+    /// 1-D flex; its axis comes from `direction` (`read_flow_direction`).
+    Flow,
     /// 2D grid; sized by its `columns` / `rows` track lists (read in `grid`).
     Grid,
 }
 
 fn read_layout_mode(attrs: &crate::resolve::AttrMap, span: Span) -> Result<LayoutMode, Error> {
     match attrs.get("layout") {
-        None => Ok(LayoutMode::Column),
+        None => Ok(LayoutMode::Flow),
         Some(ResolvedValue::Ident(s)) => match s.as_str() {
-            "row" => Ok(LayoutMode::Row),
-            "column" => Ok(LayoutMode::Column),
+            "flow" => Ok(LayoutMode::Flow),
             "grid" => Ok(LayoutMode::Grid),
+            // Removed: orientation moved to `direction` (SPEC §5).
+            dir @ ("row" | "column") => Err(Error::at(
+                span,
+                format!(
+                    "'layout: {dir}' is not a layout — flow is the default; set 'direction: {dir}'"
+                ),
+            )),
             other => Err(Error::at(
                 span,
-                format!("unknown layout '{}' — expected row, column, or grid", other),
+                format!("unknown layout '{other}' — expected flow or grid"),
             )),
         },
-        Some(_) => Err(Error::at(span, "'layout' expects row, column, or grid")),
+        Some(_) => Err(Error::at(span, "'layout' expects flow or grid")),
+    }
+}
+
+/// A flow's main axis from `direction` (SPEC §5), default `column`. `radial`
+/// belongs to a chart, which owns its subtree and never reaches here.
+fn read_flow_direction(attrs: &crate::resolve::AttrMap, span: Span) -> Result<Axis, Error> {
+    match attrs.get("direction") {
+        None => Ok(Axis::Column),
+        Some(ResolvedValue::Ident(s)) => match s.as_str() {
+            "column" => Ok(Axis::Column),
+            "row" => Ok(Axis::Row),
+            "radial" => Err(Error::at(
+                span,
+                "'direction: radial' is only valid in a chart — a flow is row or column",
+            )),
+            other => Err(Error::at(
+                span,
+                format!("unknown direction '{other}' — expected row or column"),
+            )),
+        },
+        Some(_) => Err(Error::at(span, "'direction' expects row or column")),
     }
 }
 
@@ -686,7 +717,7 @@ mod tests {
     #[test]
     fn row_layout_stacks_horizontally() {
         let l = lay_out(
-            "{ layout: row; gap: 10; }\n\
+            "{ direction: row; gap: 10; }\n\
              |box| { width: 100; height: 40; }\n\
              |box| { width: 60; height: 40; }\n",
         );
@@ -700,7 +731,7 @@ mod tests {
     #[test]
     fn column_layout_stacks_vertically() {
         let l = lay_out(
-            "{ layout: column; gap: 20; }\n\
+            "{ direction: column; gap: 20; }\n\
              |box| { width: 100; height: 40; }\n\
              |box| { width: 100; height: 60; }\n",
         );
@@ -708,6 +739,35 @@ mod tests {
         let dy = l.nodes[1].cy - l.nodes[0].cy;
         assert!((dy - 71.5).abs() < 0.5, "dy={}", dy);
         assert!((l.nodes[0].cx - l.nodes[1].cx).abs() < 0.01);
+    }
+
+    fn lay_out_err(src: &str) -> Error {
+        let tokens = crate::lexer::lex(src).expect("lex");
+        let file = crate::syntax::parser::parse(&tokens).expect("parse");
+        let lowered = crate::desugar::desugar(&file).expect("desugar");
+        let program = crate::resolve::resolve_with_theme(&lowered, &[]).expect("resolve");
+        match layout(&program) {
+            Ok(_) => panic!("expected a layout error"),
+            Err(e) => e,
+        }
+    }
+
+    #[test]
+    fn layout_row_and_column_are_removed() {
+        for dir in ["row", "column"] {
+            let err = lay_out_err(&format!("{{ layout: {dir}; }}\n|box|\n|box|\n"));
+            assert!(
+                err.message.contains(&format!("direction: {dir}")),
+                "msg={}",
+                err.message
+            );
+        }
+    }
+
+    #[test]
+    fn direction_radial_is_rejected_in_a_flow() {
+        let err = lay_out_err("{ direction: radial; }\n|box|\n|box|\n");
+        assert!(err.message.contains("chart"), "msg={}", err.message);
     }
 
     #[test]

@@ -22,6 +22,7 @@ pub const TEMPLATES: &[(&str, &str)] = &[
     ("badge", "block"),
     ("row", "block"),
     ("column", "block"),
+    ("grid", "block"),
     ("table", "group"),
     ("sign", "icon"),
     // Charts ([CHARTS.md]): the two container layouts and the series / structural

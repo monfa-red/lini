@@ -138,8 +138,11 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             n("font-size", 11.0),
             id("font-weight", "normal"),
         ],
-        "row" => vec![id("layout", "row")],
-        "column" => vec![id("layout", "column")],
+        // Frameless flow wrappers over |block| (SPEC §8): the engine is flow by
+        // default, so these only set the orientation. |grid| is the grid sibling.
+        "row" => vec![id("direction", "row")],
+        "column" => vec![id("direction", "column")],
+        "grid" => vec![id("layout", "grid")],
         // Chart containers ([CHARTS.md] §2): the layout preset is the whole bundle,
         // exactly as `table` is `grid + divider`. The chart layout reads everything
         // else (sizes, scales, paint) from the node and its children at layout time.
@@ -191,7 +194,7 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
 /// Scene/root config defaults — prepended to the global block (user decls override).
 pub fn root_defaults() -> Vec<Decl> {
     vec![
-        id("layout", "column"),
+        id("layout", "flow"),
         n("padding", 20.0),
         n("gap", 20.0),
         n("font-size", 15.0),
@@ -266,6 +269,33 @@ mod tests {
         assert_eq!(num(&template_bundle("chart"), "gap"), Some(10.0));
         assert_eq!(num(&template_bundle("pie"), "gap"), Some(10.0));
         assert_eq!(num(&template_bundle("bars"), "radius"), Some(2.0));
+    }
+
+    #[test]
+    fn flow_sugars_set_direction_and_grid_sets_layout() {
+        let dir = |t: &str| match template_bundle(t).iter().find(|d| d.name == "direction") {
+            Some(d) => match d.groups.first().and_then(|g| g.first()) {
+                Some(Value::Ident(s)) => Some(s.clone()),
+                _ => None,
+            },
+            None => None,
+        };
+        assert_eq!(dir("row").as_deref(), Some("row"));
+        assert_eq!(dir("column").as_deref(), Some("column"));
+        assert!(!has(&template_bundle("row"), "layout"));
+        assert_eq!(num(&template_bundle("grid"), "radius"), None);
+        assert!(template_bundle("grid")
+            .iter()
+            .any(|d| d.name == "layout"
+                && matches!(d.groups.first().and_then(|g| g.first()), Some(Value::Ident(s)) if s == "grid")));
+    }
+
+    #[test]
+    fn root_default_layout_is_flow() {
+        assert!(root_defaults()
+            .iter()
+            .any(|d| d.name == "layout"
+                && matches!(d.groups.first().and_then(|g| g.first()), Some(Value::Ident(s)) if s == "flow")));
     }
 
     #[test]
