@@ -98,6 +98,17 @@ pub struct Mark {
     pub stroke_style: Option<ResolvedValue>,
 }
 
+/// A `|bubble|` ([CHARTS.md] §3): one labelled mark at a data point `(x, y)`, sized by
+/// `value` (area-scaled across the chart) — its own colour (explicit or palette walk).
+pub struct Bubble {
+    pub at: (f64, f64),
+    pub value: f64,
+    /// Index into [`Chart::values`] — the value axis its `y` is read against.
+    pub axis: usize,
+    pub label: Option<String>,
+    pub color: ResolvedValue,
+}
+
 pub struct Series {
     pub kind: SeriesKind,
     pub data: Data,
@@ -141,6 +152,7 @@ pub struct Chart {
     pub series: Vec<Series>,
     pub bands: Vec<Band>,
     pub marks: Vec<Mark>,
+    pub bubbles: Vec<Bubble>,
     pub bars: BarMode,
     pub dir: Dir,
 }
@@ -167,9 +179,10 @@ enum End {
     Auto,
 }
 
-/// The children of a chart, split by role: series, axes, bands, marks, and the
+/// The children of a chart, split by role: series, axes, bands, marks, bubbles, and the
 /// harvested title.
 type Split<'a> = (
+    Vec<&'a ResolvedInst>,
     Vec<&'a ResolvedInst>,
     Vec<&'a ResolvedInst>,
     Vec<&'a ResolvedInst>,
@@ -195,8 +208,8 @@ pub fn build(inst: &ResolvedInst, funcs: &FuncTable) -> Result<Chart, Error> {
     let dir = read_direction(&inst.attrs)?;
     let samples = sample_count(&inst.attrs);
     let bars = read_bars(&inst.attrs)?;
-    let (series_insts, axis_insts, band_insts, mark_insts, title) = partition(inst)?;
-    if series_insts.is_empty() {
+    let (series_insts, axis_insts, band_insts, mark_insts, bubble_insts, title) = partition(inst)?;
+    if series_insts.is_empty() && bubble_insts.is_empty() {
         return Err(Error::at(span, "a chart needs at least one series"));
     }
 
@@ -272,6 +285,11 @@ pub fn build(inst: &ResolvedInst, funcs: &FuncTable) -> Result<Chart, Error> {
         .iter()
         .map(|m| read_mark(m, x_id, &value_specs))
         .collect::<Result<_, _>>()?;
+    let bubbles: Vec<Bubble> = bubble_insts
+        .iter()
+        .enumerate()
+        .map(|(i, b)| read_bubble(b, i, &value_specs))
+        .collect::<Result<_, _>>()?;
     // The segmentation partition: x-bound bands' spans, in source order.
     let segments: Vec<(f64, f64)> = bands
         .iter()
@@ -280,8 +298,8 @@ pub fn build(inst: &ResolvedInst, funcs: &FuncTable) -> Result<Chart, Error> {
         .collect();
 
     // The x scale: a band for categorical data (categories or indices), or a numeric
-    // domain when the data is points / a formula / a bottom axis range / bands.
-    let x = build_x_axis(x_inst, &categories, &series, &segments, span)?;
+    // domain when the data is points / a formula / a bottom axis range / bands / bubbles.
+    let x = build_x_axis(x_inst, &categories, &series, &segments, &bubbles, span)?;
 
     // Sample any deferred `fn:` over the now-fixed x-domain → concrete points
     // ([CHARTS.md] §4); after this, every series carries data feeding the value axes.
@@ -309,7 +327,7 @@ pub fn build(inst: &ResolvedInst, funcs: &FuncTable) -> Result<Chart, Error> {
         }
     }
 
-    let values = build_value_axes(value_specs, &series, &bars)?;
+    let values = build_value_axes(value_specs, &series, &bars, &bubbles)?;
 
     Ok(Chart {
         title,
@@ -318,8 +336,27 @@ pub fn build(inst: &ResolvedInst, funcs: &FuncTable) -> Result<Chart, Error> {
         series,
         bands,
         marks,
+        bubbles,
         bars,
         dir,
+    })
+}
+
+/// Parse a `|bubble|` ([CHARTS.md] §3): a labelled point `at: x y`, its `value` (area
+/// size), the bound value axis, and its colour (explicit `fill`/`stroke`, else palette).
+fn read_bubble(inst: &ResolvedInst, index: usize, specs: &[AxisSpec]) -> Result<Bubble, Error> {
+    let needs = || Error::at(inst.span, "a '|bubble|' needs 'at:' (x y) and 'value:'");
+    let MarkAt::Point(x, y) = read_at(inst).map_err(|_| needs())? else {
+        return Err(needs());
+    };
+    let value = inst.attrs.number("value").ok_or_else(needs)?;
+    let color = series_color(&inst.attrs).unwrap_or_else(|| live(palette::hue(index)));
+    Ok(Bubble {
+        at: (x, y),
+        value,
+        axis: bind_axis(inst, specs)?,
+        label: label_of(inst),
+        color,
     })
 }
 
@@ -412,6 +449,7 @@ fn partition(inst: &ResolvedInst) -> Result<Split<'_>, Error> {
     let mut axes = Vec::new();
     let mut bands = Vec::new();
     let mut marks = Vec::new();
+    let mut bubbles = Vec::new();
     let mut title = None;
     for child in &inst.children {
         if child.kind == NodeKind::Text {
@@ -429,6 +467,7 @@ fn partition(inst: &ResolvedInst) -> Result<Split<'_>, Error> {
             Some("axis") => axes.push(child),
             Some("band") => bands.push(child),
             Some("mark") => marks.push(child),
+            Some("bubble") => bubbles.push(child),
             Some("slice") => {
                 return Err(Error::at(
                     child.span,
@@ -449,7 +488,7 @@ fn partition(inst: &ResolvedInst) -> Result<Split<'_>, Error> {
             }
         }
     }
-    Ok((series, axes, bands, marks, title))
+    Ok((series, axes, bands, marks, bubbles, title))
 }
 
 /// The chart type tag a child carries — its `type_chain` entry, or `line` for the
@@ -770,17 +809,19 @@ fn build_x_axis(
     categories: &Option<Vec<String>>,
     series: &[Series],
     segments: &[(f64, f64)],
+    bubbles: &[Bubble],
     span: Span,
 ) -> Result<XAxis, Error> {
     let (title, unit, grid) = match x_inst {
         Some(a) => (label_of(a), read_unit(a)?, read_grid(a)?),
         None => (None, None, Grid::Default),
     };
-    // Categorical when categories are set or every series is categorical; numeric
-    // when the data is points / a formula, or a bottom axis fixes a range.
-    let any_numeric = series
-        .iter()
-        .any(|s| matches!(s.data, Data::Points(_) | Data::Formula(_)));
+    // Categorical when categories are set or every series is categorical; numeric when
+    // the data is points / a formula / bubbles, or a bottom axis fixes a range.
+    let any_numeric = !bubbles.is_empty()
+        || series
+            .iter()
+            .any(|s| matches!(s.data, Data::Points(_) | Data::Formula(_)));
     if let Some(cats) = categories {
         return Ok(XAxis {
             scale: Scale::band(cats.len()),
@@ -823,6 +864,7 @@ fn build_x_axis(
             _ => Vec::new(),
         })
         .collect();
+    xs.extend(bubbles.iter().map(|b| b.at.0));
     if xs.is_empty() {
         for &(a, b) in segments {
             xs.push(a);
@@ -830,6 +872,14 @@ fn build_x_axis(
         }
     }
     let range = x_inst.map(read_range).transpose()?.flatten();
+    // Bubbles have a drawn radius, so pad the auto domain to keep edge bubbles inside.
+    if range.is_none() && !bubbles.is_empty() {
+        let lo = xs.iter().copied().fold(f64::INFINITY, f64::min);
+        let hi = xs.iter().copied().fold(f64::NEG_INFINITY, f64::max);
+        let pad = ((hi - lo) * 0.1).max(1.0);
+        xs.push(lo - pad);
+        xs.push(hi + pad);
+    }
     let scale = numeric_scale(&xs, range, x_inst)?;
     Ok(XAxis {
         scale,
@@ -844,6 +894,7 @@ fn build_value_axes(
     specs: Vec<AxisSpec>,
     series: &[Series],
     bars: &BarMode,
+    bubbles: &[Bubble],
 ) -> Result<Vec<ValueAxis>, Error> {
     let mut out = Vec::with_capacity(specs.len());
     for (i, spec) in specs.iter().enumerate() {
@@ -870,6 +921,7 @@ fn build_value_axes(
                 Data::Formula(_) => {}
             }
         }
+        vals.extend(bubbles.iter().filter(|b| b.axis == i).map(|b| b.at.1));
         if matches!(bars, BarMode::Stacked) {
             let n = bar_data.iter().map(|v| v.len()).max().unwrap_or(0);
             for c in 0..n {

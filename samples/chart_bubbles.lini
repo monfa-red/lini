@@ -1,0 +1,8 @@
+|chart| "Markets" [
+  |axis| "growth %" { side: bottom }
+  |axis| "share %" { side: left }
+  |bubble| "EU" { at: 12 40; value: 8; fill: --teal }
+  |bubble| "US" { at: 25 55; value: 20; fill: --rose }
+  |bubble| "APAC" { at: 38 30; value: 14; fill: --sky }
+  |bubble| "LatAm" { at: 30 15; value: 6; fill: --amber }
+]

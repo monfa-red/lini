@@ -11,7 +11,14 @@ This is a roadmap, not a line-by-line script: each step says its purpose, the fi
 touches, **what it reuses**, **what is genuinely new**, the refactors it performs, what
 it defers, and how it is verified. Decide the fine detail while implementing.
 
-**Status (branch `charts`):** steps 1 ✓, 2 ✓, 3 ✓, 4 ✓, 5 ✓ done. Step 6 (pie / bubble) next.
+**Status (branch `charts`):** steps 1 ✓, 2 ✓, 3 ✓, 4 ✓, 5 ✓, 6 ✓ done. Step 7 (rich
+`:hover` tooltips + `fmt` round-trip + final polish) next.
+Step 6 added `layout: pie` (the sibling layout in `pie.rs`: value→angle wedges via the
+shared `prim::wedge`, `hole:` donut, per-slice palette, §18 pie errors) and `|bubble|`
+(in `bubble.rs`: area-scaled ovals on the cartesian plane, label-when-it-fits-else-hover,
+auto x-domain padded so edge bubbles fit). `prim::wedge` and `chart_box` /
+`lay_out_legend` are factored and shared (chart + pie + radial bars), so no geometry or
+box/legend logic is duplicated.
 Step 5 added the projection seam `Plot::project(x, value)` with `Dir::{Column, Row,
 Radial}` (column byte-identical — no cartesian churn); `direction: radial` (radar /
 filled radar / radial-bar wedges / web in `radial.rs`) and `direction: row` (the

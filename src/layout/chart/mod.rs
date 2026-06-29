@@ -3,15 +3,17 @@
 //! cascade, palette, theming, and `--bake-vars` are all reused unchanged; the chart
 //! adds only the scale-and-place algorithm here.
 //!
-//! `|bars|` / `|line|` / `|dots|` / `|area|` over a categorical band or a numeric x,
-//! with explicit `|axis|` children, nice/log scales, formulas, bands, annotations, a
-//! legend, and a title. Every series lowers through one `Plot::project`, so the
-//! `direction: column | row | radial` flip (a radar reusing the cartesian builders) is
-//! a projector change, not a rewrite. Pie / bubble follow in a later step (`PLAN.md`).
+//! `|bars|` / `|line|` / `|dots|` / `|area|` / `|bubble|` over a categorical band or a
+//! numeric x, with explicit `|axis|` children, nice/log scales, formulas, bands,
+//! annotations, a legend, and a title. Every series lowers through one `Plot::project`,
+//! so the `direction: column | row | radial` flip (a radar reusing the cartesian
+//! builders) is a projector change, not a rewrite. `layout: pie` is the sibling layout
+//! (`pie.rs`). Rich `:hover` tooltips + `fmt` polish are the remaining step (`PLAN.md`).
 
 mod annot;
 mod axis;
 mod bars;
+mod bubble;
 mod marks;
 mod model;
 mod palette;
@@ -77,6 +79,7 @@ pub(super) fn layout_chart(
     bars::lay_out(&plot, &chart, &mut kids);
     marks::lines(&plot, &chart, &mut kids);
     marks::dots(&plot, &chart, &mut kids);
+    bubble::lay_out(&plot, &chart, &mut kids);
     match plot.dir {
         Dir::Radial => radial::labels(&plot, &chart, &mut kids),
         // Bands / annotations are column-oriented today; in a row they are deferred.
@@ -670,5 +673,25 @@ mod tests {
     fn a_hole_out_of_range_errors() {
         let e = layout_err("|pie| { hole: 1.5 } [\n  |slice| { value: 1 }\n]\n");
         assert!(e.contains("fraction 0..1"), "{e}");
+    }
+
+    #[test]
+    fn bubbles_render_as_ovals_with_a_title_floor() {
+        let s = svg(
+            "|chart| [\n  |axis| { side: bottom }\n  |axis| { side: left }\n  |bubble| \"A\" { at: 1 2; value: 4 }\n  |bubble| \"B\" { at: 3 4; value: 16 }\n]\n",
+        );
+        assert!(s.contains("<ellipse"), "bubbles are ovals: {s}");
+        assert!(
+            s.contains("<title>B: 16</title>"),
+            "the bubble <title> floor: {s}"
+        );
+    }
+
+    #[test]
+    fn a_bubble_needs_at_and_value() {
+        let e = layout_err(
+            "|chart| [\n  |axis| { side: bottom }\n  |axis| { side: left }\n  |bubble| \"A\" { at: 1 2 }\n]\n",
+        );
+        assert!(e.contains("needs 'at:' (x y) and 'value:'"), "{e}");
     }
 }
