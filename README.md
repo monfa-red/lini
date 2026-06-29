@@ -57,8 +57,8 @@ Building from a clone instead? `cargo install --path .`
 
 ```
 {                                   // the stylesheet — pure setup, draws nothing
-  link: #444; clearance: 10;          // link defaults cascade to every link
-  .hot  { fill: #fee; stroke: crimson; }    // a node class
+  link: --gray-deep; clearance: 10;   // link defaults cascade to every link
+  .hot  { fill: --red-wash; stroke: --red-ink; }  // a node class
   .loud { link: red; link-width: 2; }       // a link class
   |db::cyl| { fill: lightyellow; }    // a new type from the cylinder primitive
 }
@@ -75,7 +75,7 @@ store ---> api "ack"                       // dotted arrow
 **Containers lay their children out.** Style sits in `{ }`, children in `[ ]`; pick a mode and they flow, grid, or anchor:
 
 ```
-|group#services| "Services" { layout: row; gap: 24 } [
+|group#services| "Services" { direction: row; gap: 24 } [
   |box#api|  "API"
   |box#auth| "Auth"
 ]
@@ -261,7 +261,7 @@ A single-pass parser, bottom-up layout, and an orthogonal router. No browser to 
 | Visual control | **full SVG** (CSS vars + classes) | theme presets |
 | Runtime | **single native binary**, written in Rust | varies (Node, browser, JVM, …) |
 
-<sub>*the common auto-layout diagram tools (Mermaid, Graphviz, PlantUML, and the like)</sub>
+<sub>*the common auto-layout diagram generators that place nodes for you from a text description</sub>
 
 Reach for Lini when you already have a layout in mind — a grid, a top-down flow, framed groups — and want it to look that way without drawing the connectors by hand.
 
