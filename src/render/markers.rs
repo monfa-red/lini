@@ -312,7 +312,19 @@ mod tests {
         // Every head pulls the line back the same `2 × stroke-width` so its end
         // tucks under the head — the dot included, so no hairline gap forms.
         assert_eq!(line_inset(MarkerKind::Dot, 1.0), 2.0);
+        assert_eq!(line_inset(MarkerKind::Circle, 1.0), 2.0);
         assert_eq!(line_inset(MarkerKind::Arrow, 1.0), 2.0);
         assert_eq!(line_inset(MarkerKind::None, 1.0), 0.0);
+    }
+
+    #[test]
+    fn a_circle_marker_is_a_fuller_dot() {
+        // `circle` reuses the dot path at a larger radius fraction — a deliberately
+        // bigger, hover-sized point ([SPEC §7]).
+        let size = marker_size(1.0);
+        assert!(
+            size * CIRCLE_RADIUS > size * DOT_RADIUS,
+            "circle radius exceeds the dot's"
+        );
     }
 }

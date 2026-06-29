@@ -846,6 +846,26 @@ mod tests {
     }
 
     #[test]
+    fn a_circle_marker_is_bigger_than_a_dot() {
+        // A line vertex `circle` is a hover-sized point; `dot` stays small.
+        let c = svg(
+            "|chart| { categories: \"a\" \"b\" } [\n  |line| { data: 3 6; marker: circle }\n]\n",
+        );
+        let d =
+            svg("|chart| { categories: \"a\" \"b\" } [\n  |line| { data: 3 6; marker: dot }\n]\n");
+        assert!(c.contains("rx=\"5.5\""), "circle marker radius: {c}");
+        assert!(d.contains("rx=\"2.5\""), "dot marker radius: {d}");
+    }
+
+    #[test]
+    fn a_diamond_marker_draws_a_rhombus() {
+        let s = svg(
+            "|chart| { categories: \"a\" \"b\" } [\n  |line| { data: 3 6; marker: diamond }\n]\n",
+        );
+        assert!(s.contains("<polygon"), "diamond marker is a polygon: {s}");
+    }
+
+    #[test]
     fn tags_count_must_match_the_data() {
         let e = layout_err(
             "|chart| { categories: \"a\" \"b\" } [\n  |line| { data: 3 6; tags: \"only\" }\n]\n",
