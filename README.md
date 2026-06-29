@@ -81,7 +81,7 @@ store ---> api "ack"                       // dotted arrow
 ]
 ```
 
-`row`, `column`, and `grid` (sized by `columns` / `rows`, placed with `cell:` / `span:`), plus `pin` and `translate` to lift a child out of the flow.
+A flow orients with `direction: row` or `column`; a `grid` is sized by `columns` / `rows` and placed with `cell:` / `span:`; plus `pin` and `translate` to lift a child out of the flow.
 
 ---
 
@@ -96,7 +96,7 @@ store ---> api "ack"                       // dotted arrow
 |path| { path: "M -34 6 C -34 -34 34 -34 34 6 C 20 34 -20 34 -34 6 Z"; }
 ```
 
-Block (the bare frameless rectangle), oval, hex, slant, cylinder, diamond, polygon, line, icon (a Phosphor symbol — `|icon| { symbol: heart }`, painted like a node), and image, plus `path` for anything else. Text is not a primitive: a bare `"…"` is content — styleable in place (`"x" { color: red }`) — and `|block|` is the frameless box for a label that needs an id or a link. Templates (`box`, `rect`, `group`, `caption`, `footer`, `badge`, `row`, `column`, `table`, `sign`) bundle common patterns over a base type, and you can define your own from any base: `|panel::group| { stroke: --accent; }`.
+Block (the bare frameless rectangle), oval, hex, slant, cylinder, diamond, polygon, line, icon (a Phosphor symbol — `|icon| { symbol: heart }`, painted like a node), and image, plus `path` for anything else. Text is not a primitive: a bare `"…"` is content — styleable in place (`"x" { color: red }`) — and `|block|` is the frameless box for a label that needs an id or a link. Templates (`box`, `rect`, `group`, `caption`, `footer`, `badge`, `row`, `column`, `grid`, `table`, `sign`) bundle common patterns over a base type, and you can define your own from any base: `|panel::group| { stroke: --accent; }`.
 
 ---
 
@@ -104,7 +104,7 @@ Block (the bare frameless rectangle), oval, hex, slant, cylinder, diamond, polyg
 
 Give a node `layout: chart` and it becomes a plot, drawn from data instead of pixels. Hand it some numbers and it sorts out the scale, the ticks, the gridlines, and a colour per series, then lowers the whole thing to the same primitives as everything else — so a chart themes, bakes, and diffs exactly like the rest of a diagram.
 
-<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/charts.png" alt="Four Lini charts: grouped bars, smooth lines, a radar, and a banded area" width="640"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/charts.png" alt="Four Lini charts: grouped bars, smooth lines, a radar, and a banded area" width="680"></p>
 
 ```
 |chart| "Revenue ($M)" { categories: "Q1" "Q2" "Q3" "Q4" } [
