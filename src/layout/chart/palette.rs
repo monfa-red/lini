@@ -3,9 +3,11 @@
 //! by series colour assignment and (later) pie / bubble per-datum colour, so the
 //! walk lives in exactly one place.
 
-/// The hue order, `red` deliberately absent.
+/// The hue order, `red` deliberately absent. Interleaved around the hue wheel (every
+/// adjacent pair ≥ ~90° apart in OKLCH hue), not marched warm→cool, so neighbouring
+/// series read as distinct — the common 2–4-series case gets the strongest contrast.
 const WALK: &[&str] = &[
-    "rose", "orange", "amber", "lime", "green", "teal", "sky", "blue", "purple", "gray",
+    "rose", "teal", "orange", "sky", "amber", "purple", "green", "blue", "lime", "gray",
 ];
 
 /// The palette-var hue name for the `i`-th coloured datum (the bare base tier — a
@@ -21,7 +23,7 @@ mod tests {
     #[test]
     fn walk_skips_red_and_wraps() {
         assert_eq!(hue(0), "rose");
-        assert_eq!(hue(1), "orange");
+        assert_eq!(hue(1), "teal");
         assert!(!WALK.contains(&"red"), "red is reserved for danger");
         assert_eq!(hue(WALK.len()), hue(0), "the walk wraps when exhausted");
     }

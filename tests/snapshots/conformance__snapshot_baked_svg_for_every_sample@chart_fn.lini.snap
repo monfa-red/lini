@@ -41,7 +41,7 @@ input_file: samples/chart_fn.lini
       <g class="lini-node lini-line" style="stroke: #00bcb1" transform="translate(0,0)">
         <polyline points="-143.6,-57.1273 -131.9739,-57.1273 -120.3478,-57.1273 -108.7217,-57.1273 -97.0957,-57.1273 -85.4696,-57.1273 -73.8435,-57.1273 -62.2174,-57.1273 -50.5913,-57.1273 -38.9652,-57.1273 -27.3391,-57.1273 -15.713,-57.1273 -4.087,-57.1273 7.5391,-57.1273 19.1652,-57.1273 30.7913,-57.1273 42.4174,-57.1273 54.0435,-52.3587 65.6696,-47.1601 77.2957,-41.9615 88.9217,-36.763 100.5478,-31.5644 112.1739,-26.3658 123.8,-21.1673"/>
       </g>
-      <g class="lini-node lini-line" style="stroke: #b45700; stroke-dasharray: 6,4.5" transform="translate(0,0)">
+      <g class="lini-node lini-line" style="stroke: #008e85; stroke-dasharray: 6,4.5" transform="translate(0,0)">
         <polyline points="-143.6,55.6 -131.9739,51.0713 -120.3478,46.5426 -108.7217,42.0139 -97.0957,37.4852 -85.4696,32.9565 -73.8435,28.4278 -62.2174,23.8991 -50.5913,19.3704 -38.9652,14.8417 -27.3391,10.313 -15.713,5.7843 -4.087,1.2557 7.5391,-3.273 19.1652,-7.8017 30.7913,-12.3304 42.4174,-16.8591 54.0435,-21.3878 65.6696,-25.9165 77.2957,-30.4452 88.9217,-34.9739 100.5478,-39.5026 112.1739,-44.0313 123.8,-48.56"/>
       </g>
       <text class="lini-text" x="-152.9" y="55.6" style="fill: #888; font-size: 11px">0</text>
@@ -64,7 +64,7 @@ input_file: samples/chart_fn.lini
         <rect x="-5.5" y="-5.5" width="11" height="11" rx="0" ry="0"/>
       </g>
       <text class="lini-text" x="-21.2" y="100.1" style="font-size: 11px">Pressure</text>
-      <g class="lini-node lini-block" style="fill: #b45700; stroke-width: 0" transform="translate(26.7,100.1)">
+      <g class="lini-node lini-block" style="fill: #008e85; stroke-width: 0" transform="translate(26.7,100.1)">
         <rect x="-5.5" y="-5.5" width="11" height="11" rx="0" ry="0"/>
       </g>
       <text class="lini-text" x="50.4" y="100.1" style="font-size: 11px">Flow</text>

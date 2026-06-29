@@ -50,7 +50,7 @@ input_file: samples/chart_line.lini
       <g class="lini-node lini-oval" style="fill: #b8476e; stroke: none; stroke-width: 0" transform="translate(128.225,-77.608)">
         <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
       </g>
-      <g class="lini-node lini-line" style="stroke: #b45700; stroke-dasharray: 6,4.5" transform="translate(0,0)">
+      <g class="lini-node lini-line" style="stroke: #008e85; stroke-dasharray: 6,4.5" transform="translate(0,0)">
         <polyline points="-110.425,68.2136 -30.875,62.3312 48.675,47.78 128.225,-21.88"/>
       </g>
       <text class="lini-text" x="-159.5" y="71" style="fill: #888; font-size: 11px">0</text>
@@ -68,7 +68,7 @@ input_file: samples/chart_line.lini
         <rect x="-5.5" y="-5.5" width="11" height="11" rx="0" ry="0"/>
       </g>
       <text class="lini-text" x="-14.6" y="100.1" style="font-size: 11px">v1</text>
-      <g class="lini-node lini-block" style="fill: #b45700; stroke-width: 0" transform="translate(13.5,100.1)">
+      <g class="lini-node lini-block" style="fill: #008e85; stroke-width: 0" transform="translate(13.5,100.1)">
         <rect x="-5.5" y="-5.5" width="11" height="11" rx="0" ry="0"/>
       </g>
       <text class="lini-text" x="30.6" y="100.1" style="font-size: 11px">v2</text>

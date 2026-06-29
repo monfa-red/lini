@@ -331,9 +331,9 @@ mod tests {
             "|chart| \"T\" { categories: \"a\" \"b\" } [\n  |bars| \"S1\" { data: 3 6 }\n  |bars| \"S2\" { data: 4 2 }\n]\n",
         );
         assert!(s.contains("lini-chart"), "chart container class: {s}");
-        // Palette walk: series 0 rose, series 1 orange — red skipped.
+        // Palette walk: series 0 rose, series 1 teal — red skipped.
         assert!(s.contains("var(--lini-rose)"), "series 0 hue: {s}");
-        assert!(s.contains("var(--lini-orange)"), "series 1 hue: {s}");
+        assert!(s.contains("var(--lini-teal)"), "series 1 hue: {s}");
         assert!(!s.contains("var(--lini-red)"), "red is reserved: {s}");
         assert!(s.contains("var(--lini-grid)"), "gridlines: {s}");
         assert!(s.contains("<title>a · S1: 3</title>"), "bar title: {s}");
@@ -643,7 +643,7 @@ mod tests {
             "slice 0 walks the palette: {s}"
         );
         assert!(
-            s.contains("var(--lini-orange)"),
+            s.contains("var(--lini-teal)"),
             "slice 1 walks the palette: {s}"
         );
         assert!(s.contains(">a</text>"), "a legend label: {s}");

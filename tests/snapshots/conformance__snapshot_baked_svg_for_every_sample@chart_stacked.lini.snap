@@ -32,11 +32,11 @@ input_file: samples/chart_stacked.lini
         <title>Q1 · NA: 40</title>
         <rect x="-25.7742" y="-20.64" width="51.5484" height="41.28" rx="0" ry="0"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #e78022; stroke-width: 0" transform="translate(-110.425,14.24)">
+      <g class="lini-node lini-block" style="fill: #00bcb1; stroke-width: 0" transform="translate(-110.425,14.24)">
         <title>Q1 · EU: 30</title>
         <rect x="-25.7742" y="-15.48" width="51.5484" height="30.96" rx="0" ry="0"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #cf9300; stroke-width: 0" transform="translate(-110.425,-11.56)">
+      <g class="lini-node lini-block" style="fill: #e78022; stroke-width: 0" transform="translate(-110.425,-11.56)">
         <title>Q1 · APAC: 20</title>
         <rect x="-25.7742" y="-10.32" width="51.5484" height="20.64" rx="0" ry="0"/>
       </g>
@@ -44,11 +44,11 @@ input_file: samples/chart_stacked.lini
         <title>Q2 · NA: 45</title>
         <rect x="-25.7742" y="-23.22" width="51.5484" height="46.44" rx="0" ry="0"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #e78022; stroke-width: 0" transform="translate(-30.875,6.5)">
+      <g class="lini-node lini-block" style="fill: #00bcb1; stroke-width: 0" transform="translate(-30.875,6.5)">
         <title>Q2 · EU: 35</title>
         <rect x="-25.7742" y="-18.06" width="51.5484" height="36.12" rx="0" ry="0"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #cf9300; stroke-width: 0" transform="translate(-30.875,-24.46)">
+      <g class="lini-node lini-block" style="fill: #e78022; stroke-width: 0" transform="translate(-30.875,-24.46)">
         <title>Q2 · APAC: 25</title>
         <rect x="-25.7742" y="-12.9" width="51.5484" height="25.8" rx="0" ry="0"/>
       </g>
@@ -56,11 +56,11 @@ input_file: samples/chart_stacked.lini
         <title>Q3 · NA: 50</title>
         <rect x="-25.7742" y="-25.8" width="51.5484" height="51.6" rx="0" ry="0"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #e78022; stroke-width: 0" transform="translate(48.675,2.372)">
+      <g class="lini-node lini-block" style="fill: #00bcb1; stroke-width: 0" transform="translate(48.675,2.372)">
         <title>Q3 · EU: 33</title>
         <rect x="-25.7742" y="-17.028" width="51.5484" height="34.056" rx="0" ry="0"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #cf9300; stroke-width: 0" transform="translate(48.675,-30.136)">
+      <g class="lini-node lini-block" style="fill: #e78022; stroke-width: 0" transform="translate(48.675,-30.136)">
         <title>Q3 · APAC: 30</title>
         <rect x="-25.7742" y="-15.48" width="51.5484" height="30.96" rx="0" ry="0"/>
       </g>
@@ -68,11 +68,11 @@ input_file: samples/chart_stacked.lini
         <title>Q4 · NA: 60</title>
         <rect x="-25.7742" y="-30.96" width="51.5484" height="61.92" rx="0" ry="0"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #e78022; stroke-width: 0" transform="translate(128.225,-11.56)">
+      <g class="lini-node lini-block" style="fill: #00bcb1; stroke-width: 0" transform="translate(128.225,-11.56)">
         <title>Q4 · EU: 40</title>
         <rect x="-25.7742" y="-20.64" width="51.5484" height="41.28" rx="0" ry="0"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #cf9300; stroke-width: 0" transform="translate(128.225,-51.808)">
+      <g class="lini-node lini-block" style="fill: #e78022; stroke-width: 0" transform="translate(128.225,-51.808)">
         <title>Q4 · APAC: 38</title>
         <rect x="-25.7742" y="-19.608" width="51.5484" height="39.216" rx="0" ry="0"/>
       </g>
@@ -89,11 +89,11 @@ input_file: samples/chart_stacked.lini
         <rect x="-5.5" y="-5.5" width="11" height="11" rx="0" ry="0"/>
       </g>
       <text class="lini-text" x="-43.8" y="100.1" style="font-size: 11px">NA</text>
-      <g class="lini-node lini-block" style="fill: #e78022; stroke-width: 0" transform="translate(-15.7,100.1)">
+      <g class="lini-node lini-block" style="fill: #00bcb1; stroke-width: 0" transform="translate(-15.7,100.1)">
         <rect x="-5.5" y="-5.5" width="11" height="11" rx="0" ry="0"/>
       </g>
       <text class="lini-text" x="1.4" y="100.1" style="font-size: 11px">EU</text>
-      <g class="lini-node lini-block" style="fill: #cf9300; stroke-width: 0" transform="translate(29.5,100.1)">
+      <g class="lini-node lini-block" style="fill: #e78022; stroke-width: 0" transform="translate(29.5,100.1)">
         <rect x="-5.5" y="-5.5" width="11" height="11" rx="0" ry="0"/>
       </g>
       <text class="lini-text" x="53.2" y="100.1" style="font-size: 11px">APAC</text>

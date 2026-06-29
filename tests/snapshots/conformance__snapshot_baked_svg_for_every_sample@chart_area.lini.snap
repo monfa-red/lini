@@ -38,10 +38,10 @@ input_file: samples/chart_area.lini
       <g class="lini-node lini-line" style="fill: none; stroke: #ec6e97; stroke-width: 2" transform="translate(0,0)">
         <polyline points="-124.32,12.95 -59.36,-16.075 5.6,-45.1 70.56,-35.425 135.52,-83.8"/>
       </g>
-      <g class="lini-node lini-poly" style="fill: #e78022; stroke: none; stroke-width: 0; opacity: 0.82" transform="translate(0,0)">
+      <g class="lini-node lini-poly" style="fill: #00bcb1; stroke: none; stroke-width: 0; opacity: 0.82" transform="translate(0,0)">
         <polygon points="-124.32,51.65 -59.36,36.17 5.6,28.43 70.56,12.95 135.52,-2.53 135.52,71 -124.32,71"/>
       </g>
-      <g class="lini-node lini-line" style="fill: none; stroke: #e78022; stroke-width: 2" transform="translate(0,0)">
+      <g class="lini-node lini-line" style="fill: none; stroke: #00bcb1; stroke-width: 2" transform="translate(0,0)">
         <polyline points="-124.32,51.65 -59.36,36.17 5.6,28.43 70.56,12.95 135.52,-2.53"/>
       </g>
       <text class="lini-text" x="-166.1" y="71" style="fill: #888; font-size: 11px">0</text>
@@ -59,7 +59,7 @@ input_file: samples/chart_area.lini
         <rect x="-5.5" y="-5.5" width="11" height="11" rx="0" ry="0"/>
       </g>
       <text class="lini-text" x="-21.2" y="100.1" style="font-size: 11px">free</text>
-      <g class="lini-node lini-block" style="fill: #e78022; stroke-width: 0" transform="translate(13.5,100.1)">
+      <g class="lini-node lini-block" style="fill: #00bcb1; stroke-width: 0" transform="translate(13.5,100.1)">
         <rect x="-5.5" y="-5.5" width="11" height="11" rx="0" ry="0"/>
       </g>
       <text class="lini-text" x="37.2" y="100.1" style="font-size: 11px">paid</text>

@@ -38,7 +38,7 @@ input_file: samples/chart_bars.lini
         <title>15 cm³ · 1.8 kW: 9</title>
         <rect x="-17.5392" y="-27.864" width="35.0784" height="55.728" rx="0" ry="0"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #e78022; stroke-width: 0" transform="translate(-83.1787,49.328)">
+      <g class="lini-node lini-block" style="fill: #00bcb1; stroke-width: 0" transform="translate(-83.1787,49.328)">
         <title>15 cm³ · 2.3 kW: 7</title>
         <rect x="-17.5392" y="-21.672" width="35.0784" height="43.344" rx="0" ry="0"/>
       </g>
@@ -46,7 +46,7 @@ input_file: samples/chart_bars.lini
         <title>30 cm³ · 1.8 kW: 15</title>
         <rect x="-17.5392" y="-46.44" width="35.0784" height="92.88" rx="0" ry="0"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #e78022; stroke-width: 0" transform="translate(25.088,30.752)">
+      <g class="lini-node lini-block" style="fill: #00bcb1; stroke-width: 0" transform="translate(25.088,30.752)">
         <title>30 cm³ · 2.3 kW: 13</title>
         <rect x="-17.5392" y="-40.248" width="35.0784" height="80.496" rx="0" ry="0"/>
       </g>
@@ -54,7 +54,7 @@ input_file: samples/chart_bars.lini
         <title>50 cm³ · 1.8 kW: 24</title>
         <rect x="-17.5392" y="-74.304" width="35.0784" height="148.608" rx="0" ry="0"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #e78022; stroke-width: 0" transform="translate(133.3547,9.08)">
+      <g class="lini-node lini-block" style="fill: #00bcb1; stroke-width: 0" transform="translate(133.3547,9.08)">
         <title>50 cm³ · 2.3 kW: 20</title>
         <rect x="-17.5392" y="-61.92" width="35.0784" height="123.84" rx="0" ry="0"/>
       </g>
@@ -72,7 +72,7 @@ input_file: samples/chart_bars.lini
         <rect x="-5.5" y="-5.5" width="11" height="11" rx="0" ry="0"/>
       </g>
       <text class="lini-text" x="-27.8" y="100.1" style="font-size: 11px">1.8 kW</text>
-      <g class="lini-node lini-block" style="fill: #e78022; stroke-width: 0" transform="translate(13.5,100.1)">
+      <g class="lini-node lini-block" style="fill: #00bcb1; stroke-width: 0" transform="translate(13.5,100.1)">
         <rect x="-5.5" y="-5.5" width="11" height="11" rx="0" ry="0"/>
       </g>
       <text class="lini-text" x="43.8" y="100.1" style="font-size: 11px">2.3 kW</text>

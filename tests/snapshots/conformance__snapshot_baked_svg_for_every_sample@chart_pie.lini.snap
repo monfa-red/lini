@@ -20,15 +20,15 @@ input_file: samples/chart_pie.lini
         <title>Search: 45 (45%)</title>
         <polygon points="0,-113.8 11.1069,-113.2581 22.1082,-111.6376 32.8996,-108.9539 43.3785,-105.2325 53.4454,-100.5087 63.0046,-94.8274 71.9654,-88.2426 80.2427,-80.8167 87.7578,-72.6204 94.4393,-63.7314 100.2238,-54.2343 105.0564,-44.2192 108.8911,-33.7812 111.6916,-23.0196 113.4311,-12.0364 114.0933,-0.936 113.6718,10.1761 112.1706,21.1943 109.6039,32.0142 105.9962,42.5328 101.3818,52.6502 95.8044,62.2704 89.317,71.302 81.9812,79.6593 73.8668,87.2627 65.0507,94.0401 55.6168,99.9272 45.6547,104.868 35.2588,108.8155 0,0.3"/>
       </g>
-      <g class="lini-node lini-poly" style="fill: #e78022; stroke: none; stroke-width: 0; opacity: 1" transform="translate(0,0)">
+      <g class="lini-node lini-poly" style="fill: #00bcb1; stroke: none; stroke-width: 0; opacity: 1" transform="translate(0,0)">
         <title>Direct: 25 (25%)</title>
         <polygon points="35.2588,108.8155 24.4527,111.749 13.411,113.6091 2.2402,114.378 -8.9522,114.0483 -20.0584,112.6231 -30.9714,110.1161 -41.5861,106.5516 -51.8003,101.9638 -61.5157,96.397 -70.6386,89.9047 -79.0813,82.5494 -86.7623,74.402 -93.6078,65.541 -99.5518,56.0517 -104.537,46.0254 -108.5155,35.5588 0,0.3"/>
       </g>
-      <g class="lini-node lini-poly" style="fill: #cf9300; stroke: none; stroke-width: 0; opacity: 1" transform="translate(0,0)">
+      <g class="lini-node lini-poly" style="fill: #e78022; stroke: none; stroke-width: 0; opacity: 1" transform="translate(0,0)">
         <title>Social: 18 (18%)</title>
         <polygon points="-108.5155,35.5588 -111.3521,25.1901 -113.2003,14.6005 -114.0437,3.884 -113.8748,-6.8644 -112.6952,-17.5492 -110.5153,-28.0755 -107.3545,-38.35 -103.2408,-48.2814 -98.2107,-57.7816 -92.3088,-66.7663 -85.5877,-75.1557 -78.1068,-82.8753 0,0.3"/>
       </g>
-      <g class="lini-node lini-poly" style="fill: #8aae21; stroke: none; stroke-width: 0; opacity: 1" transform="translate(0,0)">
+      <g class="lini-node lini-poly" style="fill: #00b2e5; stroke: none; stroke-width: 0; opacity: 1" transform="translate(0,0)">
         <title>Referral: 12 (12%)</title>
         <polygon points="-78.1068,-82.8753 -69.9327,-89.8567 -61.1378,-96.0378 -51.8003,-101.3638 -42.003,-105.7875 -31.8329,-109.2695 -21.3802,-111.779 -10.7378,-113.2936 -0,-113.8 0,0.3"/>
       </g>
@@ -37,15 +37,15 @@ input_file: samples/chart_pie.lini
         <rect x="-5.5" y="-5.5" width="11" height="11" rx="0" ry="0"/>
       </g>
       <text class="lini-text" x="-106" y="130.1" style="font-size: 11px">Search</text>
-      <g class="lini-node lini-block" style="fill: #e78022; stroke-width: 0" transform="translate(-64.7,130.1)">
+      <g class="lini-node lini-block" style="fill: #00bcb1; stroke-width: 0" transform="translate(-64.7,130.1)">
         <rect x="-5.5" y="-5.5" width="11" height="11" rx="0" ry="0"/>
       </g>
       <text class="lini-text" x="-34.4" y="130.1" style="font-size: 11px">Direct</text>
-      <g class="lini-node lini-block" style="fill: #cf9300; stroke-width: 0" transform="translate(6.9,130.1)">
+      <g class="lini-node lini-block" style="fill: #e78022; stroke-width: 0" transform="translate(6.9,130.1)">
         <rect x="-5.5" y="-5.5" width="11" height="11" rx="0" ry="0"/>
       </g>
       <text class="lini-text" x="37.2" y="130.1" style="font-size: 11px">Social</text>
-      <g class="lini-node lini-block" style="fill: #8aae21; stroke-width: 0" transform="translate(78.5,130.1)">
+      <g class="lini-node lini-block" style="fill: #00b2e5; stroke-width: 0" transform="translate(78.5,130.1)">
         <rect x="-5.5" y="-5.5" width="11" height="11" rx="0" ry="0"/>
       </g>
       <text class="lini-text" x="115.4" y="130.1" style="font-size: 11px">Referral</text>

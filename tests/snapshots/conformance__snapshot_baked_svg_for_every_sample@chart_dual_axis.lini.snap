@@ -45,19 +45,19 @@ input_file: samples/chart_dual_axis.lini
         <title>thu · requests: 1090</title>
         <rect x="-23.7978" y="-50.6487" width="47.5956" height="101.2973" rx="0" ry="0"/>
       </g>
-      <g class="lini-node lini-line" style="stroke: #b45700" transform="translate(0,0)">
+      <g class="lini-node lini-line" style="stroke: #008e85" transform="translate(0,0)">
         <polyline points="-106.875,41.726 -33.425,59.848 40.025,50.09 113.475,65.424"/>
       </g>
-      <g class="lini-node lini-oval" style="fill: #b45700; stroke: none; stroke-width: 0" transform="translate(-106.875,41.726)">
+      <g class="lini-node lini-oval" style="fill: #008e85; stroke: none; stroke-width: 0" transform="translate(-106.875,41.726)">
         <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
       </g>
-      <g class="lini-node lini-oval" style="fill: #b45700; stroke: none; stroke-width: 0" transform="translate(-33.425,59.848)">
+      <g class="lini-node lini-oval" style="fill: #008e85; stroke: none; stroke-width: 0" transform="translate(-33.425,59.848)">
         <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
       </g>
-      <g class="lini-node lini-oval" style="fill: #b45700; stroke: none; stroke-width: 0" transform="translate(40.025,50.09)">
+      <g class="lini-node lini-oval" style="fill: #008e85; stroke: none; stroke-width: 0" transform="translate(40.025,50.09)">
         <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
       </g>
-      <g class="lini-node lini-oval" style="fill: #b45700; stroke: none; stroke-width: 0" transform="translate(113.475,65.424)">
+      <g class="lini-node lini-oval" style="fill: #008e85; stroke: none; stroke-width: 0" transform="translate(113.475,65.424)">
         <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
       </g>
       <text class="lini-text" x="-152.9" y="71" style="fill: #888; font-size: 11px">0</text>
@@ -81,7 +81,7 @@ input_file: samples/chart_dual_axis.lini
         <rect x="-5.5" y="-5.5" width="11" height="11" rx="0" ry="0"/>
       </g>
       <text class="lini-text" x="-31.1" y="100.1" style="font-size: 11px">requests</text>
-      <g class="lini-node lini-block" style="fill: #b45700; stroke-width: 0" transform="translate(16.8,100.1)">
+      <g class="lini-node lini-block" style="fill: #008e85; stroke-width: 0" transform="translate(16.8,100.1)">
         <rect x="-5.5" y="-5.5" width="11" height="11" rx="0" ry="0"/>
       </g>
       <text class="lini-text" x="50.4" y="100.1" style="font-size: 11px">error %</text>
