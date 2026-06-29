@@ -107,42 +107,54 @@ input_file: samples/chart_hero.lini
           <polyline points="37.35,0.5584 40.525,-0.5808 43.7,-1.7262 46.875,-2.8797 50.05,-4.0434 53.225,-5.2194 56.4,-6.4097 59.575,-7.6163 62.75,-8.8413 65.925,-10.0867 69.1,-11.3546 72.275,-12.647 75.45,-13.966 78.625,-15.3135 81.8,-16.6917 84.975,-18.1069 88.15,-19.5617 91.325,-21.0518 94.5,-22.5733 97.675,-24.122 100.85,-25.6938 104.025,-27.2847 107.2,-28.8906 110.375,-30.5074 113.55,-32.131 116.725,-33.7573 119.9,-35.3822 123.075,-37.0017 126.25,-38.6117 129.425,-40.208 132.6,-41.7867"/>
         </g>
         <g class="lini-node lini-oval" style="fill: #00bcb1; stroke: none; stroke-width: 0" transform="translate(-121.4,47.44)">
+          <title>web: Jan: 12</title>
           <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
         </g>
         <g class="lini-node lini-oval" style="fill: #00bcb1; stroke: none; stroke-width: 0" transform="translate(-70.6,30.71)">
+          <title>web: Feb: 18</title>
           <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
         </g>
         <g class="lini-node lini-oval" style="fill: #00bcb1; stroke: none; stroke-width: 0" transform="translate(-19.8,19.5567)">
+          <title>web: Mar: 22</title>
           <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
         </g>
         <g class="lini-node lini-oval" style="fill: #00bcb1; stroke: none; stroke-width: 0" transform="translate(31,2.8267)">
+          <title>web: Apr: 28</title>
           <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
         </g>
         <g class="lini-node lini-oval" style="fill: #00bcb1; stroke: none; stroke-width: 0" transform="translate(81.8,-16.6917)">
+          <title>web: May: 35</title>
           <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
         </g>
         <g class="lini-node lini-oval" style="fill: #00bcb1; stroke: none; stroke-width: 0" transform="translate(132.6,-41.7867)">
+          <title>web: Jun: 44</title>
           <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
         </g>
         <g class="lini-node lini-line" style="stroke: #968cff" transform="translate(0,0)">
           <polyline points="-121.4,58.5933 -118.225,57.5477 -115.05,56.5021 -111.875,55.4565 -108.7,54.4108 -105.525,53.3652 -102.35,52.3196 -99.175,51.274 -96,50.2283 -92.825,49.1827 -89.65,48.1371 -86.475,47.0915 -83.3,46.0458 -80.125,45.0002 -76.95,43.9546 -73.775,42.909 -70.6,41.8633 -67.425,40.8381 -64.25,39.8483 -61.075,38.8858 -57.9,37.9422 -54.725,37.0096 -51.55,36.0797 -48.375,35.1444 -45.2,34.1954 -42.025,33.2247 -38.85,32.224 -35.675,31.1852 -32.5,30.1001 -29.325,28.9605 -26.15,27.7583 -22.975,26.4853 -19.8,25.1333 -16.625,23.7072 -13.45,22.2197 -10.275,20.6751 -7.1,19.0774 -3.925,17.4307 -0.75,15.739 2.425,14.0065 5.6,12.2373 8.775,10.4354 11.95,8.6048 15.125,6.7498 18.3,4.8743 21.475,2.9826 24.65,1.0785 27.825,-0.8337 31,-2.75 34.175,-4.6677 37.35,-6.5894 40.525,-8.5193 43.7,-10.4615 46.875,-12.42 50.05,-14.3989 53.225,-16.4023 56.4,-18.4344 59.575,-20.4991 62.75,-22.6005 65.925,-24.7428 69.1,-26.9301 72.275,-29.1663 75.45,-31.4557 78.625,-33.8022 81.8,-36.21 84.975,-38.692 88.15,-41.253 91.325,-43.8847 94.5,-46.5791 97.675,-49.328 100.85,-52.1231 104.025,-54.9564 107.2,-57.8196 110.375,-60.7046 113.55,-63.6032 116.725,-66.5073 119.9,-69.4086 123.075,-72.299 126.25,-75.1704 129.425,-78.0146 132.6,-80.8233"/>
         </g>
         <g class="lini-node lini-oval" style="fill: #968cff; stroke: none; stroke-width: 0" transform="translate(-121.4,58.5933)">
+          <title>app: Jan: 8</title>
           <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
         </g>
         <g class="lini-node lini-oval" style="fill: #968cff; stroke: none; stroke-width: 0" transform="translate(-70.6,41.8633)">
+          <title>app: Feb: 14</title>
           <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
         </g>
         <g class="lini-node lini-oval" style="fill: #968cff; stroke: none; stroke-width: 0" transform="translate(-19.8,25.1333)">
+          <title>app: Mar: 20</title>
           <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
         </g>
         <g class="lini-node lini-oval" style="fill: #968cff; stroke: none; stroke-width: 0" transform="translate(31,-2.75)">
+          <title>app: Apr: 30</title>
           <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
         </g>
         <g class="lini-node lini-oval" style="fill: #968cff; stroke: none; stroke-width: 0" transform="translate(81.8,-36.21)">
+          <title>app: May: 42</title>
           <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
         </g>
         <g class="lini-node lini-oval" style="fill: #968cff; stroke: none; stroke-width: 0" transform="translate(132.6,-80.8233)">
+          <title>app: Jun: 58</title>
           <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
         </g>
         <text class="lini-text" x="-156.1" y="80.9" style="fill: #888; font-size: 11px">0</text>

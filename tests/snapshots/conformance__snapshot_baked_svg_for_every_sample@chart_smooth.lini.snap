@@ -42,21 +42,27 @@ input_file: samples/chart_smooth.lini
         <polyline points="-62.0667,-1.3766 -58.6833,-4.4615 -55.3,-7.635 -51.9167,-10.8633 -48.5333,-14.1125 -45.15,-17.3489 -41.7667,-20.5385 -38.3833,-23.6475 -35,-26.6422 -31.6167,-29.4886 -28.2333,-32.1529 -24.85,-34.6013 -21.4667,-36.8 -18.0833,-38.8351 -14.7,-40.809 -11.3167,-42.712 -7.9333,-44.5344 -4.55,-46.2666 -1.1667,-47.8988 2.2167,-49.4215 5.6,-50.825 8.9833,-52.0996 12.3667,-53.2355 15.75,-54.2233 19.1333,-55.0531 22.5167,-55.7154 25.9,-56.2004 29.2833,-56.4985 32.6667,-56.6 36.05,-56.3623 39.4333,-55.6783 42.8167,-54.5915 46.2,-53.1453 49.5833,-51.3833 52.9667,-49.349 56.35,-47.0859 59.7333,-44.6375 63.1167,-42.0473 66.5,-39.3588 69.8833,-36.6155 73.2667,-33.8609 76.65,-31.1386 80.0333,-28.492 83.4167,-25.9646 86.8,-23.6 90.1833,-21.3063 93.5667,-18.9658 96.95,-16.5835 100.3333,-14.1641 103.7167,-11.7124 107.1,-9.2334 110.4833,-6.7318 113.8667,-4.2125 117.25,-1.6803 120.6333,0.86 124.0167,3.4034 127.4,5.9453 130.7833,8.4807 134.1667,11.0049 137.55,13.5129 140.9333,16"/>
       </g>
       <g class="lini-node lini-oval" style="fill: #b8476e; stroke: none; stroke-width: 0" transform="translate(-129.7333,35.8)">
+        <title>outdoor: 6h: 8</title>
         <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
       </g>
       <g class="lini-node lini-oval" style="fill: #b8476e; stroke: none; stroke-width: 0" transform="translate(-75.6,9.4)">
+        <title>outdoor: 9h: 12</title>
         <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
       </g>
       <g class="lini-node lini-oval" style="fill: #b8476e; stroke: none; stroke-width: 0" transform="translate(-21.4667,-36.8)">
+        <title>outdoor: 12h: 19</title>
         <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
       </g>
       <g class="lini-node lini-oval" style="fill: #b8476e; stroke: none; stroke-width: 0" transform="translate(32.6667,-56.6)">
+        <title>outdoor: 15h: 22</title>
         <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
       </g>
       <g class="lini-node lini-oval" style="fill: #b8476e; stroke: none; stroke-width: 0" transform="translate(86.8,-23.6)">
+        <title>outdoor: 18h: 17</title>
         <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
       </g>
       <g class="lini-node lini-oval" style="fill: #b8476e; stroke: none; stroke-width: 0" transform="translate(140.9333,16)">
+        <title>outdoor: 21h: 11</title>
         <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
       </g>
       <text class="lini-text" x="-166.1" y="88.6" style="fill: #888; font-size: 11px">0</text>

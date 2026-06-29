@@ -49,15 +49,19 @@ input_file: samples/chart_dual_axis.lini
         <polyline points="-106.875,43.201 -33.425,60.348 40.025,51.115 113.475,65.624"/>
       </g>
       <g class="lini-node lini-oval" style="fill: #008e85; stroke: none; stroke-width: 0" transform="translate(-106.875,43.201)">
+        <title>error %: mon: 2.1</title>
         <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
       </g>
       <g class="lini-node lini-oval" style="fill: #008e85; stroke: none; stroke-width: 0" transform="translate(-33.425,60.348)">
+        <title>error %: tue: 0.8</title>
         <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
       </g>
       <g class="lini-node lini-oval" style="fill: #008e85; stroke: none; stroke-width: 0" transform="translate(40.025,51.115)">
+        <title>error %: wed: 1.5</title>
         <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
       </g>
       <g class="lini-node lini-oval" style="fill: #008e85; stroke: none; stroke-width: 0" transform="translate(113.475,65.624)">
+        <title>error %: thu: 0.4</title>
         <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
       </g>
       <text class="lini-text" x="-152.9" y="70.9" style="fill: #888; font-size: 11px">0</text>

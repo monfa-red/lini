@@ -33,15 +33,19 @@ input_file: samples/chart_reversed.lini
         <polyline points="-121.975,45.8571 -39.125,3.1143 43.725,24.4857 126.575,-39.6286"/>
       </g>
       <g class="lini-node lini-oval" style="fill: #b8476e; stroke: none; stroke-width: 0" transform="translate(-121.975,45.8571)">
+        <title>team: Q1: 6</title>
         <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
       </g>
       <g class="lini-node lini-oval" style="fill: #b8476e; stroke: none; stroke-width: 0" transform="translate(-39.125,3.1143)">
+        <title>team: Q2: 4</title>
         <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
       </g>
       <g class="lini-node lini-oval" style="fill: #b8476e; stroke: none; stroke-width: 0" transform="translate(43.725,24.4857)">
+        <title>team: Q3: 5</title>
         <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
       </g>
       <g class="lini-node lini-oval" style="fill: #b8476e; stroke: none; stroke-width: 0" transform="translate(126.575,-39.6286)">
+        <title>team: Q4: 2</title>
         <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
       </g>
       <text class="lini-text" x="-172.7" y="-39.6286" style="fill: #888; font-size: 11px">2</text>

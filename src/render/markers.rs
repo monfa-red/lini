@@ -74,6 +74,11 @@ pub fn marker_size(thickness: f64) -> f64 {
 /// reads level with the arrow and diamond rather than undersized.
 const DOT_RADIUS: f64 = 0.375;
 
+/// `circle` radius as a fraction of the marker `size` — a deliberately larger `dot`
+/// ([SPEC §7]), big enough to hover or read on a chart point. Same drawing as the dot,
+/// only fuller.
+const CIRCLE_RADIUS: f64 = 0.5;
+
 /// How far a mitred crow's-foot point overshoots its vertex, in `stroke-width`s
 /// — its 0.5 splay makes a ~53° point, so the vertex pulls back by this and the
 /// drawn tip lands on the endpoint, level with the other tips. `1 / (2·sin(atan 0.5))`.
@@ -141,12 +146,36 @@ fn pulled_back(inner: (f64, f64), endpoint: (f64, f64), amount: f64) -> Option<(
     ))
 }
 
-/// A dot marker's centre: pulled back from the tip (on the shape edge) by its
+/// A round marker's centre: pulled back from the tip (on the shape edge) by its
 /// radius along the link, so the circle sits fully on the link side — tangent to
-/// the edge, never poking into the shape.
-pub fn dot_center(tip: (f64, f64), direction: (f64, f64), size: f64) -> (f64, f64) {
-    let r = size * DOT_RADIUS;
+/// the edge, never poking into the shape. Shared by `dot` and `circle`.
+fn round_center(tip: (f64, f64), direction: (f64, f64), r: f64) -> (f64, f64) {
     (tip.0 - direction.0 * r, tip.1 - direction.1 * r)
+}
+
+/// Emit a filled round marker (`dot` / `circle`): one mechanism, the radius fraction
+/// the only difference. Pulled back so its leading edge sits tangent to the endpoint.
+fn emit_round(
+    out: &mut String,
+    indent: &str,
+    suffix: &str,
+    tip: (f64, f64),
+    direction: (f64, f64),
+    r: f64,
+    fill: &str,
+) {
+    let (cx, cy) = round_center(tip, direction, r);
+    writeln!(
+        out,
+        r#"{}<circle class="lini-marker lini-marker-{}" cx="{}" cy="{}" r="{}"{}/>"#,
+        indent,
+        suffix,
+        num(cx),
+        num(cy),
+        num(r),
+        fill,
+    )
+    .unwrap();
 }
 
 /// Paint a marker. Filled heads (arrow / diamond / dot) take their `fill` and
@@ -199,17 +228,18 @@ pub fn emit_marker(
             ).unwrap();
         }
         MarkerKind::Dot => {
-            let (cx, cy) = dot_center(tip, direction, size);
-            writeln!(
+            emit_round(out, indent, "dot", tip, direction, size * DOT_RADIUS, &fill);
+        }
+        MarkerKind::Circle => {
+            emit_round(
                 out,
-                r#"{}<circle class="lini-marker lini-marker-dot" cx="{}" cy="{}" r="{}"{}/>"#,
                 indent,
-                num(cx),
-                num(cy),
-                num(size * DOT_RADIUS),
-                fill,
-            )
-            .unwrap();
+                "circle",
+                tip,
+                direction,
+                size * CIRCLE_RADIUS,
+                &fill,
+            );
         }
         MarkerKind::Diamond => {
             let bx = tip.0 - ux * size;
@@ -268,7 +298,7 @@ mod tests {
         // the tip (no overshoot) and the whole circle is on the link side.
         let size = marker_size(1.0);
         let r = size * DOT_RADIUS;
-        let (cx, cy) = dot_center((100.0, 50.0), (1.0, 0.0), size);
+        let (cx, cy) = round_center((100.0, 50.0), (1.0, 0.0), r);
         assert!((cx - (100.0 - r)).abs() < 1e-9, "centre pulled back by r");
         assert!((cy - 50.0).abs() < 1e-9);
         assert!(

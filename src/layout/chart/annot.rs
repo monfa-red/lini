@@ -4,11 +4,12 @@
 //! named axis through one projector (`axis_px`), so they survive a `direction` flip and
 //! lower to the same `prim::*` primitives the renderer already draws.
 
+use super::marks::marker_diameter;
 use super::model::{AxisRef, Chart, Mark, MarkAt};
 use super::prim;
 use super::project::Plot;
 use crate::layout::PlacedNode;
-use crate::resolve::ResolvedValue;
+use crate::resolve::{MarkerKind, ResolvedValue};
 
 const LABEL_SIZE: f64 = 11.0;
 /// A band wash's opacity, so the data reads clearly over it.
@@ -195,11 +196,13 @@ fn point(plot: &Plot, chart: &Chart, m: &Mark, x: f64, y: f64, out: &mut Vec<Pla
     }
     let xp = plot.x_at(&chart.x.scale, x);
     let yp = plot.y_at(&chart.values[vi].scale, y);
-    if m.dot {
-        out.push(prim::oval(xp, yp, 7.0, 7.0, m.color.clone()));
+    let has_dot = m.marker != MarkerKind::None;
+    if has_dot {
+        let d = marker_diameter(m.marker, 2.0);
+        out.push(prim::marker(m.marker, xp, yp, d, d, m.color.clone()));
     }
     if let Some(text) = &m.label {
-        let ly = if m.dot { yp - LABEL_SIZE } else { yp };
+        let ly = if has_dot { yp - LABEL_SIZE } else { yp };
         out.push(prim::text(
             text,
             xp,

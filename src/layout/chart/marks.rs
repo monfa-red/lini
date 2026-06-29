@@ -7,7 +7,7 @@ use super::prim;
 use super::project::{Dir, Plot};
 use super::scale::{Scale, fmt_tick};
 use crate::layout::PlacedNode;
-use crate::resolve::ResolvedValue;
+use crate::resolve::{MarkerKind, ResolvedValue};
 
 /// One datum's data-space coordinate paired with its pixel coordinate.
 type Plotted = ((f64, f64), (f64, f64));
@@ -162,16 +162,31 @@ fn draw_area(plot: &Plot, chart: &Chart, ser: &Series, out: &mut Vec<PlacedNode>
     vertex_markers(chart, ser, &pts, out);
 }
 
-/// Markers at each in-domain datum (the dot family generalised to every vertex,
-/// [CHARTS.md] §3), drawn when a line / area sets `marker:`.
+/// The diameter of a centred chart marker by kind ([CHARTS.md] §3): a `dot` stays small,
+/// a `circle` / `diamond` is larger (hover-sized), each scaling gently with the line
+/// thickness. A `|dots|` series sizes itself by `width` instead; a `|mark|` point passes a
+/// nominal thickness. Shared by line/area vertices ([`vertex_markers`]) and mark points.
+pub(super) fn marker_diameter(kind: MarkerKind, thickness: f64) -> f64 {
+    match kind {
+        MarkerKind::Circle | MarkerKind::Diamond => (thickness * 4.0).max(11.0),
+        _ => (thickness * 2.5).max(5.0),
+    }
+}
+
+/// Markers at each in-domain datum (the marker family generalised to every vertex,
+/// [CHARTS.md] §3), drawn when a line / area sets `marker:`. Each carries the datum's
+/// `<title>`, so a marked point is a hover target ([§14]) — pick `circle` to size it for
+/// hovering.
 fn vertex_markers(chart: &Chart, ser: &Series, pts: &[Plotted], out: &mut Vec<PlacedNode>) {
-    if !ser.marker {
+    if ser.marker == MarkerKind::None {
         return;
     }
-    let d = (ser.thickness * 2.5).max(5.0);
+    let d = marker_diameter(ser.marker, ser.thickness);
     for ((xd, yd), (xp, yp)) in pts {
         if in_domain(chart, ser, *xd, *yd) {
-            out.push(prim::oval(*xp, *yp, d, d, ser.color.clone()));
+            let mut m = prim::marker(ser.marker, *xp, *yp, d, d, ser.color.clone());
+            prim::set_title(&mut m, dot_title(chart, ser, *xd, *yd));
+            out.push(m);
         }
     }
 }
@@ -182,7 +197,7 @@ fn draw_dots(plot: &Plot, chart: &Chart, ser: &Series, out: &mut Vec<PlacedNode>
         if !in_domain(chart, ser, xd, yd) {
             continue;
         }
-        let mut dot = prim::oval(xp, yp, w, h, ser.color.clone());
+        let mut dot = prim::marker(ser.marker, xp, yp, w, h, ser.color.clone());
         prim::set_title(&mut dot, dot_title(chart, ser, xd, yd));
         out.push(dot);
     }

@@ -4,7 +4,7 @@
 //! emitters (`emit_rect` / `emit_line` / the text path) draw them unchanged.
 
 use crate::layout::{Bbox, PlacedNode, approx_height, approx_width};
-use crate::resolve::{AttrMap, Markers, NodeKind, ResolvedValue};
+use crate::resolve::{AttrMap, MarkerKind, Markers, NodeKind, ResolvedValue};
 use crate::span::Span;
 use std::f64::consts::TAU;
 
@@ -69,16 +69,43 @@ fn bounds(points: &[(f64, f64)]) -> Bbox {
     )
 }
 
-/// A filled ellipse (a dot, a line-vertex marker) centred at (cx, cy). Stroke off
-/// and width 0 so the drawn ellipse matches the bbox exactly.
-pub fn oval(cx: f64, cy: f64, w: f64, h: f64, fill: ResolvedValue) -> PlacedNode {
-    let mut n = node(NodeKind::Oval, Bbox::centered(w, h));
+/// A `w`×`h` filled primitive centred at (cx, cy), stroke off and width 0 so the drawn
+/// shape matches the bbox exactly. The shared body of [`oval`] and [`marker`].
+fn filled(kind: NodeKind, cx: f64, cy: f64, w: f64, h: f64, fill: ResolvedValue) -> PlacedNode {
+    let mut n = node(kind, Bbox::centered(w, h));
     n.cx = cx;
     n.cy = cy;
     n.attrs.insert("fill", fill);
     n.attrs.insert("stroke", ident("none"));
     n.attrs.insert("stroke-width", ResolvedValue::Number(0.0));
     n
+}
+
+/// A filled ellipse (a dot, a bubble) centred at (cx, cy).
+pub fn oval(cx: f64, cy: f64, w: f64, h: f64, fill: ResolvedValue) -> PlacedNode {
+    filled(NodeKind::Oval, cx, cy, w, h, fill)
+}
+
+/// A centred chart point marker ([CHARTS.md] §3): a filled round point (`dot` / `circle`)
+/// or a rhombus (`diamond`), `w`×`h` at (cx, cy). The kind picks the shape; the caller
+/// sizes it (a line vertex by the kind, a `|dots|` by its `width`). The **one** place a
+/// chart point marker is built — line/area vertices, `|dots|`, and `|mark|` points all
+/// route through it, so dot/circle/diamond never diverge. `arrow` / `crow` never reach
+/// here (rejected at parse, [CHARTS.md] §18); any non-diamond draws round.
+pub fn marker(
+    kind: MarkerKind,
+    cx: f64,
+    cy: f64,
+    w: f64,
+    h: f64,
+    fill: ResolvedValue,
+) -> PlacedNode {
+    let shape = if matches!(kind, MarkerKind::Diamond) {
+        NodeKind::Diamond
+    } else {
+        NodeKind::Oval
+    };
+    filled(shape, cx, cy, w, h, fill)
 }
 
 /// A filled polygon (an area's body) through `points`. Stroke off; `opacity` lets

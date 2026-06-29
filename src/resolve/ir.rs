@@ -251,6 +251,9 @@ pub enum MarkerKind {
     None,
     Arrow,
     Dot,
+    /// A larger `dot` — a filled point sized for hovering / reading ([SPEC §7]). On a
+    /// chart line it marks a data point ([CHARTS §3]).
+    Circle,
     Diamond,
     Crow,
 }
@@ -261,6 +264,7 @@ impl MarkerKind {
             "none" => Self::None,
             "arrow" => Self::Arrow,
             "dot" => Self::Dot,
+            "circle" => Self::Circle,
             "diamond" => Self::Diamond,
             "crow" => Self::Crow,
             _ => return None,

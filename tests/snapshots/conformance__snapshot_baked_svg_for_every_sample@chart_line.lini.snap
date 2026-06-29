@@ -39,16 +39,20 @@ input_file: samples/chart_line.lini
         <polyline points="-110.425,67.3648 -30.875,59.116 48.675,35.548 128.225,-70.508"/>
       </g>
       <g class="lini-node lini-oval" style="fill: #b8476e; stroke: none; stroke-width: 0" transform="translate(-110.425,67.3648)">
-        <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
+        <title>v1: p50: 12</title>
+        <ellipse cx="0" cy="0" rx="5.5" ry="5.5"/>
       </g>
       <g class="lini-node lini-oval" style="fill: #b8476e; stroke: none; stroke-width: 0" transform="translate(-30.875,59.116)">
-        <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
+        <title>v1: p90: 40</title>
+        <ellipse cx="0" cy="0" rx="5.5" ry="5.5"/>
       </g>
       <g class="lini-node lini-oval" style="fill: #b8476e; stroke: none; stroke-width: 0" transform="translate(48.675,35.548)">
-        <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
+        <title>v1: p99: 120</title>
+        <ellipse cx="0" cy="0" rx="5.5" ry="5.5"/>
       </g>
       <g class="lini-node lini-oval" style="fill: #b8476e; stroke: none; stroke-width: 0" transform="translate(128.225,-70.508)">
-        <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
+        <title>v1: p999: 480</title>
+        <ellipse cx="0" cy="0" rx="5.5" ry="5.5"/>
       </g>
       <g class="lini-node lini-line" style="stroke: #008e85; stroke-dasharray: 6,4.5" transform="translate(0,0)">
         <polyline points="-110.425,68.2486 -30.875,62.6512 48.675,48.805 128.225,-17.48"/>

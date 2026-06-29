@@ -91,8 +91,10 @@ pub struct Mark {
     pub axis: AxisRef,
     pub at: MarkAt,
     pub label: Option<String>,
-    /// Whether a point draws its dot (`marker: none` → false → label only).
-    pub dot: bool,
+    /// A point's centred marker ([CHARTS.md] §8): `dot` by default (the `|mark|`
+    /// template), `circle` / `diamond` to enlarge it, `None` (from `marker: none`) for a
+    /// label-only mark. Validated against `arrow` / `crow` at parse ([§18]).
+    pub marker: MarkerKind,
     /// The accent for the line / dot / label: an explicit `stroke` / `fill`, else muted.
     pub color: ResolvedValue,
     pub stroke_style: Option<ResolvedValue>,
@@ -119,7 +121,10 @@ pub struct Series {
     pub color: ResolvedValue,
     /// Index into [`Chart::values`] — the value axis this series is read against.
     pub axis: usize,
-    pub marker: bool,
+    /// The centred marker at each vertex ([CHARTS.md] §3): `None` draws none; `dot` /
+    /// `circle` / `diamond` are the centred shapes. A `|dots|` is never `None` (it *is*
+    /// markers). Validated against `arrow` / `crow` at parse ([§18]).
+    pub marker: MarkerKind,
     pub curve: Curve,
     pub stroke_style: Option<ResolvedValue>,
     /// An explicit `stroke:` outline ([CHARTS.md] §10): its colour and `stroke-width`.
@@ -595,13 +600,21 @@ fn read_series(
     });
     let dot_w = inst.attrs.number("width").unwrap_or(7.0);
     let dot_h = inst.attrs.number("height").unwrap_or(dot_w);
+    // A `|dots|` *is* markers, so an unset marker draws a round `dot` (sized by `width`);
+    // every other series draws vertex markers only when `marker:` asks for them.
+    let marker = chart_marker(inst)?;
+    let marker = if matches!(kind, SeriesKind::Dots) && marker == MarkerKind::None {
+        MarkerKind::Dot
+    } else {
+        marker
+    };
     Ok(Series {
         kind,
         data,
         label: label_of(inst),
         color,
         axis,
-        marker: has_marker(inst),
+        marker,
         curve: read_curve(&inst.attrs)?,
         stroke_style: inst.attrs.get("stroke-style").cloned(),
         outline: outline(&inst.attrs),
@@ -796,7 +809,7 @@ fn read_mark(inst: &ResolvedInst, x_id: Option<&str>, specs: &[AxisSpec]) -> Res
         axis,
         at: read_at(inst)?,
         label: label_of(inst),
-        dot: has_marker(inst),
+        marker: chart_marker(inst)?,
         color,
         stroke_style: inst.attrs.get("stroke-style").cloned(),
     })
@@ -1221,13 +1234,35 @@ fn read_curve(attrs: &AttrMap) -> Result<Curve, Error> {
     }
 }
 
-/// Whether a node carries a drawn marker ([CHARTS.md] §3/§8): a line's vertex dot, or
-/// a mark point's dot. The `marker:` shorthand is extracted to the resolved [`Markers`]
-/// (and dropped from the attr map), and `marker: none` resolves to the default
-/// `MarkerKind::None`; a `|mark|`'s template default `marker: dot` separates that
-/// explicit `none` from a plain point, which shows a dot.
-fn has_marker(inst: &ResolvedInst) -> bool {
-    inst.markers.start != MarkerKind::None || inst.markers.end != MarkerKind::None
+/// The effective **centred** marker for a chart node ([CHARTS.md] §3/§8): a line's
+/// vertex, a `|dots|`, or a `|mark|` point. The `marker:` shorthand is extracted to the
+/// resolved [`Markers`] (and dropped from the attr map), so this reads the resolved kind
+/// (`start`, else `end` — `marker:` sets both; the directional ends have no chart
+/// meaning). `marker: none` resolves to `None`; a `|mark|`'s template default `marker:
+/// dot` separates an explicit `none` (label only) from a plain point (a dot). A chart
+/// marker is centred, so the directional `arrow` / `crow` are rejected here ([§18]).
+fn chart_marker(inst: &ResolvedInst) -> Result<MarkerKind, Error> {
+    let kind = if inst.markers.start != MarkerKind::None {
+        inst.markers.start
+    } else {
+        inst.markers.end
+    };
+    match kind {
+        MarkerKind::Arrow | MarkerKind::Crow => {
+            let name = if kind == MarkerKind::Arrow {
+                "arrow"
+            } else {
+                "crow"
+            };
+            Err(Error::at(
+                inst.span,
+                format!(
+                    "'marker: {name}' has no centred form on a chart — use dot, circle, or diamond"
+                ),
+            ))
+        }
+        k => Ok(k),
+    }
 }
 
 fn read_categories(attrs: &AttrMap, span: Span) -> Result<Option<Vec<String>>, Error> {
