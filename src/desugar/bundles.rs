@@ -149,8 +149,15 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
         // Chart containers ([CHARTS.md] §2): the layout preset is the whole bundle,
         // exactly as `table` is `grid + divider`. The chart layout reads everything
         // else (sizes, scales, paint) from the node and its children at layout time.
-        "chart" => vec![id("layout", "chart")],
-        "pie" => vec![id("layout", "pie")],
+        // `gap` is the clear space between the plot and the title / legend that sit
+        // outside it ([CHARTS.md] §9), overriding the `|block|` base `gap: 20`; the
+        // user tunes it (`gap: 0` ≈ touching).
+        "chart" => vec![id("layout", "chart"), n("gap", 10.0)],
+        "pie" => vec![id("layout", "pie"), n("gap", 10.0)],
+        // A bar's corners are softly rounded by default ([CHARTS.md] §3), set on the
+        // class so the user overrides it (`radius: 0` for square); the chart reads the
+        // resolved `radius` and rounds each bar's rect.
+        "bars" => vec![n("radius", 2.0)],
         // A `|mark|` annotation point shows a dot by default ([CHARTS.md] §8); the
         // marker cascade then distinguishes that default (and `marker: dot`) from an
         // explicit `marker: none`, which resolve would otherwise collapse together.
@@ -249,6 +256,15 @@ mod tests {
         assert!(g.iter().any(|d| d.name == "stroke-style"));
         assert_eq!(num(&g, "stroke-width"), Some(1.0));
         assert!(template_bundle("oval").is_empty());
+    }
+
+    #[test]
+    fn chart_templates_set_the_gap_and_bars_round() {
+        // The chart/pie templates override the |block| base gap with the title/legend
+        // gutter default; |bars| carries the default corner radius on its class.
+        assert_eq!(num(&template_bundle("chart"), "gap"), Some(10.0));
+        assert_eq!(num(&template_bundle("pie"), "gap"), Some(10.0));
+        assert_eq!(num(&template_bundle("bars"), "radius"), Some(2.0));
     }
 
     #[test]

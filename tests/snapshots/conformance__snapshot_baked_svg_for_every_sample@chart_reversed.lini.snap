@@ -18,37 +18,37 @@ input_file: samples/chart_reversed.lini
     <g class="lini-node lini-chart lini-block" transform="translate(0,0)">
       <rect x="-179" y="-109" width="358" height="218" rx="0" ry="0"/>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-163.4" y1="-39.2857" x2="168" y2="-39.2857"/>
+        <line x1="-163.4" y1="-39.6286" x2="168" y2="-39.6286"/>
       </g>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-163.4" y1="3.3429" x2="168" y2="3.3429"/>
+        <line x1="-163.4" y1="3.1143" x2="168" y2="3.1143"/>
       </g>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-163.4" y1="45.9714" x2="168" y2="45.9714"/>
+        <line x1="-163.4" y1="45.8571" x2="168" y2="45.8571"/>
       </g>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
         <line x1="-163.4" y1="88.6" x2="168" y2="88.6"/>
       </g>
       <g class="lini-node lini-line" style="stroke: #b8476e" transform="translate(0,0)">
-        <polyline points="-121.975,45.9714 -39.125,3.3429 43.725,24.6571 126.575,-39.2857"/>
+        <polyline points="-121.975,45.8571 -39.125,3.1143 43.725,24.4857 126.575,-39.6286"/>
       </g>
-      <g class="lini-node lini-oval" style="fill: #b8476e; stroke: none; stroke-width: 0" transform="translate(-121.975,45.9714)">
+      <g class="lini-node lini-oval" style="fill: #b8476e; stroke: none; stroke-width: 0" transform="translate(-121.975,45.8571)">
         <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
       </g>
-      <g class="lini-node lini-oval" style="fill: #b8476e; stroke: none; stroke-width: 0" transform="translate(-39.125,3.3429)">
+      <g class="lini-node lini-oval" style="fill: #b8476e; stroke: none; stroke-width: 0" transform="translate(-39.125,3.1143)">
         <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
       </g>
-      <g class="lini-node lini-oval" style="fill: #b8476e; stroke: none; stroke-width: 0" transform="translate(43.725,24.6571)">
+      <g class="lini-node lini-oval" style="fill: #b8476e; stroke: none; stroke-width: 0" transform="translate(43.725,24.4857)">
         <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
       </g>
-      <g class="lini-node lini-oval" style="fill: #b8476e; stroke: none; stroke-width: 0" transform="translate(126.575,-39.2857)">
+      <g class="lini-node lini-oval" style="fill: #b8476e; stroke: none; stroke-width: 0" transform="translate(126.575,-39.6286)">
         <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
       </g>
-      <text class="lini-text" x="-172.7" y="-39.2857" style="fill: #888; font-size: 11px">2</text>
-      <text class="lini-text" x="-172.7" y="3.3429" style="fill: #888; font-size: 11px">4</text>
-      <text class="lini-text" x="-172.7" y="45.9714" style="fill: #888; font-size: 11px">6</text>
+      <text class="lini-text" x="-172.7" y="-39.6286" style="fill: #888; font-size: 11px">2</text>
+      <text class="lini-text" x="-172.7" y="3.1143" style="fill: #888; font-size: 11px">4</text>
+      <text class="lini-text" x="-172.7" y="45.8571" style="fill: #888; font-size: 11px">6</text>
       <text class="lini-text" x="-172.7" y="88.6" style="fill: #888; font-size: 11px">8</text>
-      <text class="lini-text" x="-150.2" y="-66.6" style="fill: #888; font-size: 11px">rank</text>
+      <text class="lini-text" x="-150.2" y="-67" style="fill: #888; font-size: 11px">rank</text>
       <text class="lini-text" x="-121.975" y="100.3" style="fill: #888; font-size: 11px">Q1</text>
       <text class="lini-text" x="-39.125" y="100.3" style="fill: #888; font-size: 11px">Q2</text>
       <text class="lini-text" x="43.725" y="100.3" style="fill: #888; font-size: 11px">Q3</text>

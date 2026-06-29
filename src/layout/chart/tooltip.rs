@@ -104,7 +104,7 @@ fn make_card(text: &str, ax: f64, ay: f64, index: usize, w: f64, h: f64) -> Plac
     let cx = (ax + GAP + cw / 2.0).clamp(-w / 2.0 + cw / 2.0, w / 2.0 - cw / 2.0);
     let cy = (ay - GAP - ch / 2.0).clamp(-h / 2.0 + ch / 2.0, h / 2.0 - ch / 2.0);
     let mut bg = prim::rect(cx, cy, cw, ch, live("tip-bg"), 1.0);
-    bg.attrs.insert("radius", ResolvedValue::Number(3.0));
+    prim::round(&mut bg, 3.0);
     let txt = prim::text(text, cx, cy, SIZE, Some(live("tip-fg")), false);
     let bbox = Bbox {
         min_x: cx - cw / 2.0,

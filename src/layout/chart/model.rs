@@ -107,6 +107,9 @@ pub struct Bubble {
     pub axis: usize,
     pub label: Option<String>,
     pub color: ResolvedValue,
+    /// An explicit `stroke:` outline ([CHARTS.md] §10): colour + `stroke-width`, drawn
+    /// around the bubble. `None` → no outline.
+    pub outline: Option<(ResolvedValue, f64)>,
 }
 
 pub struct Series {
@@ -119,11 +122,16 @@ pub struct Series {
     pub marker: bool,
     pub curve: Curve,
     pub stroke_style: Option<ResolvedValue>,
-    /// An `|area|`'s explicit edge `stroke` ([CHARTS.md] §3/§10); `None` → a deep tier of
-    /// the fill. Unused by other series (their `color` is already the stroke).
-    pub edge: Option<ResolvedValue>,
+    /// An explicit `stroke:` outline ([CHARTS.md] §10): its colour and `stroke-width`.
+    /// An `|area|` draws it as its top edge (defaulting to a deep tier of the fill when
+    /// absent); `|bars|` draw it as the rect / wedge outline. `None` → no outline. The
+    /// fill is read separately (from `fill:`), so a stroke never bleeds into the body.
+    pub outline: Option<(ResolvedValue, f64)>,
     /// A line's `stroke-width` (default 2).
     pub thickness: f64,
+    /// A `|bars|` corner radius ([CHARTS.md] §3), from the resolved `radius:` (default 2
+    /// via the `.lini-bars` class). Rounds a rectangular bar; a radial wedge ignores it.
+    pub radius: f64,
     /// A dot's diameter `width` × `height` (default a small circle).
     pub dot: (f64, f64),
     /// An `|area|`'s fill target ([CHARTS.md] §16) — the axis zero / range floor by
@@ -158,6 +166,9 @@ pub struct Chart {
     pub bubbles: Vec<Bubble>,
     pub bars: BarMode,
     pub dir: Dir,
+    /// The clear space between the plot and the title / legend outside it ([CHARTS.md]
+    /// §9), from the resolved `gap:` (default 10 via the `.lini-chart` class).
+    pub gap: f64,
 }
 
 /// One wedge of a `layout: pie` ([CHARTS.md] §13): its magnitude, legend label, and
@@ -166,6 +177,9 @@ pub struct Slice {
     pub value: f64,
     pub label: Option<String>,
     pub color: ResolvedValue,
+    /// An explicit `stroke:` outline ([CHARTS.md] §10): colour + `stroke-width`, drawn
+    /// around the wedge. `None` → no outline.
+    pub outline: Option<(ResolvedValue, f64)>,
 }
 
 /// A parsed pie ([CHARTS.md] §13): its slices (source order, clockwise from the top),
@@ -174,6 +188,9 @@ pub struct Pie {
     pub slices: Vec<Slice>,
     pub title: Option<String>,
     pub hole: f64,
+    /// The clear space between the pie and its title / legend ([CHARTS.md] §9), from the
+    /// resolved `gap:` (default 10 via the `.lini-pie` class).
+    pub gap: f64,
 }
 
 /// One end of a `range:` window: a fixed number, or `auto` (fit from data).
@@ -342,7 +359,14 @@ pub fn build(inst: &ResolvedInst, funcs: &FuncTable) -> Result<Chart, Error> {
         bubbles,
         bars,
         dir,
+        gap: read_gap(&inst.attrs),
     })
+}
+
+/// The chart's title / legend gutter ([CHARTS.md] §9), from the resolved `gap:` (the
+/// `.lini-chart` / `.lini-pie` class defaults it to 10, overriding the `|block|` 20).
+fn read_gap(attrs: &AttrMap) -> f64 {
+    attrs.number("gap").unwrap_or(10.0)
 }
 
 /// Parse a `|bubble|` ([CHARTS.md] §3): a labelled point `at: x y`, its `value` (area
@@ -353,19 +377,21 @@ fn read_bubble(inst: &ResolvedInst, index: usize, specs: &[AxisSpec]) -> Result<
         return Err(needs());
     };
     let value = inst.attrs.number("value").ok_or_else(needs)?;
-    let color = series_color(&inst.attrs).unwrap_or_else(|| live(palette::hue(index)));
+    let color = fill_color(&inst.attrs).unwrap_or_else(|| live(palette::hue(index)));
     Ok(Bubble {
         at: (x, y),
         value,
         axis: bind_axis(inst, specs)?,
         label: label_of(inst),
         color,
+        outline: outline(&inst.attrs),
     })
 }
 
 /// Parse a `layout: pie` into its slices ([CHARTS.md] §13). All pie validation (§18)
 /// lives here; the wedge geometry is the renderer's job. Reuses the chart's `tag`,
-/// `label_of`, `series_color`, and the palette walk (per slice — [§10]).
+/// `label_of`, the `fill:` / `outline:` paint readers, and the palette walk (per
+/// slice — [§10]).
 pub fn build_pie(inst: &ResolvedInst) -> Result<Pie, Error> {
     let span = inst.span;
     let hole = read_hole(&inst.attrs)?;
@@ -399,11 +425,12 @@ pub fn build_pie(inst: &ResolvedInst) -> Result<Pie, Error> {
         if value < 0.0 {
             return Err(Error::at(s.span, "a '|slice|' value must be ≥ 0"));
         }
-        let color = series_color(&s.attrs).unwrap_or_else(|| live(palette::hue(i)));
+        let color = fill_color(&s.attrs).unwrap_or_else(|| live(palette::hue(i)));
         slices.push(Slice {
             value,
             label: label_of(s),
             color,
+            outline: outline(&s.attrs),
         });
     }
     if slices.iter().map(|s| s.value).sum::<f64>() <= 0.0 {
@@ -413,6 +440,7 @@ pub fn build_pie(inst: &ResolvedInst) -> Result<Pie, Error> {
         slices,
         title,
         hole,
+        gap: read_gap(&inst.attrs),
     })
 }
 
@@ -545,9 +573,19 @@ fn read_series(
         ));
     }
     let axis = bind_axis(inst, value_specs)?;
-    let color = series_color(&inst.attrs).unwrap_or_else(|| {
-        // No explicit paint → walk the palette at the tier the role wants
-        // ([CHARTS.md] §10): a line the deep stroke, dots the ink, a bar the base.
+    // Paint by role ([CHARTS.md] §10): a fill shape (bars / area) takes its body from
+    // `fill:`, a line its colour from `stroke:`, dots from either. An explicit `stroke:`
+    // is a separate outline (read into `outline` below), never the body — so a stroke on
+    // a bar no longer leaks into its fill. No explicit paint → walk the palette at the
+    // role's tier (a line the deep stroke, dots the ink, a bar the base fill).
+    let fill = fill_color(&inst.attrs);
+    let stroke = real_color(inst.attrs.get("stroke"));
+    let color = match kind {
+        SeriesKind::Bars | SeriesKind::Area => fill,
+        SeriesKind::Line => stroke.or(fill),
+        SeriesKind::Dots => fill.or(stroke),
+    }
+    .unwrap_or_else(|| {
         let suffix = match kind {
             SeriesKind::Line => "-deep",
             SeriesKind::Dots => "-ink",
@@ -566,8 +604,9 @@ fn read_series(
         marker: has_marker(inst),
         curve: read_curve(&inst.attrs)?,
         stroke_style: inst.attrs.get("stroke-style").cloned(),
-        edge: real_color(inst.attrs.get("stroke")),
+        outline: outline(&inst.attrs),
         thickness: inst.attrs.number("stroke-width").unwrap_or(2.0),
+        radius: inst.attrs.number("radius").unwrap_or(0.0),
         dot: (dot_w, dot_h),
         baseline: inst.attrs.number("baseline"),
     })
@@ -1246,12 +1285,20 @@ fn label_of(inst: &ResolvedInst) -> Option<String> {
     })
 }
 
-/// A series' user-chosen colour ([CHARTS.md] §10): an explicit `fill` (areas / bars)
-/// or `stroke` (lines / dots). The inherited primitive defaults — `none`, or the
-/// bare `--stroke` / `--fill` role vars a `|line|`/`|block|` carries — are **not** a
+/// The explicit **fill** of a fill shape ([CHARTS.md] §10) — `fill:` only, never the
+/// stroke (a stroke is a separate outline, read by [`outline`]). The inherited primitive
+/// defaults — `none`, or the bare `--fill` role var a `|block|` carries — are **not** a
 /// choice, so they fall through to the palette walk.
-fn series_color(attrs: &AttrMap) -> Option<ResolvedValue> {
-    real_color(attrs.get("fill")).or_else(|| real_color(attrs.get("stroke")))
+fn fill_color(attrs: &AttrMap) -> Option<ResolvedValue> {
+    real_color(attrs.get("fill"))
+}
+
+/// A fill shape's explicit `stroke:` outline ([CHARTS.md] §10): its colour paired with
+/// `stroke-width` (default 2), or `None` for no outline. The one reader shared by series
+/// (bars / area), slices, and bubbles — so a `stroke:` is always a separate outline and
+/// never leaks into the fill.
+fn outline(attrs: &AttrMap) -> Option<(ResolvedValue, f64)> {
+    real_color(attrs.get("stroke")).map(|c| (c, attrs.number("stroke-width").unwrap_or(2.0)))
 }
 
 fn real_color(v: Option<&ResolvedValue>) -> Option<ResolvedValue> {

@@ -114,7 +114,11 @@ fn draw_area(plot: &Plot, chart: &Chart, ser: &Series, out: &mut Vec<PlacedNode>
     let px: Vec<(f64, f64)> = pts.iter().map(|(_, p)| *p).collect();
     // The edge stroke ([CHARTS.md] §10): an explicit `stroke`, else a deep tier of the
     // fill so the area reads as a filled shape with a defined outline, not a flat blob.
-    let edge = ser.edge.clone().unwrap_or_else(|| deepen(&ser.color));
+    let edge = ser
+        .outline
+        .as_ref()
+        .map(|(c, _)| c.clone())
+        .unwrap_or_else(|| deepen(&ser.color));
     // A filled radar fills the closed spoke polygon — there is no baseline ([§12]).
     if plot.is_radial() {
         out.push(prim::poly(px.clone(), ser.color.clone(), 0.82));

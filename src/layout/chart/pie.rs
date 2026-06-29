@@ -6,7 +6,7 @@
 use super::model::{self, Slice};
 use super::prim;
 use super::scale::fmt_tick;
-use super::{LABEL_SIZE, TITLE_SIZE, chart_box, lay_out_legend};
+use super::{LABEL_SIZE, TITLE_SIZE, chart_box, lay_out_legend, legend_reserve, title_reserve};
 use crate::error::Error;
 use crate::layout::PlacedNode;
 use crate::resolve::{AttrMap, ResolvedInst, ResolvedValue};
@@ -26,17 +26,9 @@ pub fn layout_pie(inst: &ResolvedInst) -> Result<PlacedNode, Error> {
     let h = inst.attrs.number("height").unwrap_or(280.0);
 
     // The circle is centred in the box below the title, above the legend.
-    let title_h = if pie.title.is_some() {
-        TITLE_SIZE * 2.0
-    } else {
-        0.0
-    };
+    let title_h = title_reserve(pie.title.is_some(), pie.gap);
     let entries = legend_entries(&pie.slices);
-    let legend_h = if entries.len() >= 2 {
-        LABEL_SIZE * 1.6
-    } else {
-        0.0
-    };
+    let legend_h = legend_reserve(entries.len(), pie.gap);
     let margin = 8.0;
     let top = title_h + margin;
     let avail_h = h - top - legend_h - margin;
@@ -51,6 +43,9 @@ pub fn layout_pie(inst: &ResolvedInst) -> Result<PlacedNode, Error> {
         let span = s.value / total * TAU;
         if span > 0.0 {
             let mut wedge = prim::wedge(0.0, cy, inner, r, a, a + span, s.color.clone(), 1.0);
+            if let Some((color, width)) = &s.outline {
+                prim::outline(&mut wedge, color.clone(), *width);
+            }
             prim::set_title(&mut wedge, slice_title(s, total));
             kids.push(wedge);
         }

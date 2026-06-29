@@ -145,11 +145,7 @@ fn plot_rect(chart: &Chart, w: f64, h: f64) -> Plot {
     }
     let left = nonzero(side_gutter(chart, false), 12.0);
     let right = nonzero(side_gutter(chart, true), 12.0);
-    let title_h = if chart.title.is_some() {
-        TITLE_SIZE * 2.0
-    } else {
-        0.0
-    };
+    let title_h = title_reserve(chart.title.is_some(), chart.gap);
     let value_title_h = if chart.values.iter().any(|a| a.title.is_some()) {
         AXIS_TITLE_SIZE * 1.4
     } else {
@@ -160,11 +156,7 @@ fn plot_rect(chart: &Chart, w: f64, h: f64) -> Plot {
     } else {
         0.0
     };
-    let legend_h = if legend_entries(chart).len() >= 2 {
-        LABEL_SIZE * 1.6
-    } else {
-        0.0
-    };
+    let legend_h = legend_reserve(legend_entries(chart).len(), chart.gap);
     let band_row = annot::x_band_row(chart);
     Plot {
         x0: -w / 2.0 + left,
@@ -180,21 +172,13 @@ fn plot_rect(chart: &Chart, w: f64, h: f64) -> Plot {
 /// gutters swap — a left gutter sized to the widest category, a bottom gutter for the
 /// value labels and axis title.
 fn row_plot(chart: &Chart, w: f64, h: f64) -> Plot {
-    let title_h = if chart.title.is_some() {
-        TITLE_SIZE * 2.0
-    } else {
-        0.0
-    };
+    let title_h = title_reserve(chart.title.is_some(), chart.gap);
     let value_title_h = if chart.values.iter().any(|a| a.title.is_some()) {
         AXIS_TITLE_SIZE * 1.4
     } else {
         0.0
     };
-    let legend_h = if legend_entries(chart).len() >= 2 {
-        LABEL_SIZE * 1.6
-    } else {
-        0.0
-    };
+    let legend_h = legend_reserve(legend_entries(chart).len(), chart.gap);
     let left = nonzero(domain_gutter(chart), 12.0);
     Plot {
         x0: -w / 2.0 + left,
@@ -220,16 +204,8 @@ fn domain_gutter(chart: &Chart) -> f64 {
 /// inset from the chart box by the title (top), legend (bottom), and a margin all
 /// round for the spoke labels that sit just outside the rim ([CHARTS.md] §12).
 fn radial_plot(chart: &Chart, w: f64, h: f64) -> Plot {
-    let title_h = if chart.title.is_some() {
-        TITLE_SIZE * 2.0
-    } else {
-        0.0
-    };
-    let legend_h = if legend_entries(chart).len() >= 2 {
-        LABEL_SIZE * 1.6
-    } else {
-        0.0
-    };
+    let title_h = title_reserve(chart.title.is_some(), chart.gap);
+    let legend_h = legend_reserve(legend_entries(chart).len(), chart.gap);
     let margin = LABEL_SIZE * 2.0;
     let top = title_h + margin;
     let avail_h = h - top - legend_h - margin;
@@ -266,6 +242,29 @@ fn nonzero(v: f64, fallback: f64) -> f64 {
     if v > 0.0 { v } else { fallback }
 }
 
+/// Space reserved above the plot for the title ([CHARTS.md] §9): its drawn height plus
+/// the chart's `gap` (the clear gutter to the plot), or 0 with no title. The one place
+/// the title inset is computed — column, row, radial, and pie all call it, so `gap:`
+/// tunes the spacing identically everywhere (`gap: 0` ≈ touching).
+pub(super) fn title_reserve(has_title: bool, gap: f64) -> f64 {
+    if has_title {
+        TITLE_SIZE * 1.2 + gap
+    } else {
+        0.0
+    }
+}
+
+/// Space reserved below the plot for the legend ([CHARTS.md] §9): its band plus the
+/// chart's `gap`, or 0 below two entries — shared with the title by `gap`
+/// ([`title_reserve`]).
+pub(super) fn legend_reserve(entries: usize, gap: f64) -> f64 {
+    if entries >= 2 {
+        LABEL_SIZE * 0.7 + gap
+    } else {
+        0.0
+    }
+}
+
 /// The legend entries — one per series that carries a label (no label → no entry,
 /// [CHARTS.md] §9).
 fn legend_entries(chart: &Chart) -> Vec<(String, ResolvedValue)> {
@@ -293,7 +292,9 @@ pub(super) fn lay_out_legend(
     let total = per + ITEM_GAP * widths.len().saturating_sub(1) as f64;
     let mut x = -total / 2.0;
     for ((label, color), &tw) in entries.iter().zip(&widths) {
-        out.push(prim::rect(x + SW / 2.0, cy, SW, SW, color.clone(), 1.0));
+        let mut swatch = prim::rect(x + SW / 2.0, cy, SW, SW, color.clone(), 1.0);
+        prim::round(&mut swatch, 2.0); // soft swatch corners ([CHARTS.md] §9)
+        out.push(swatch);
         out.push(prim::text(
             label,
             x + SW + GAP + tw / 2.0,
@@ -359,6 +360,68 @@ mod tests {
         let s = svg("|chart| { categories: \"a\" } [\n  |bars| { data: 5; fill: --teal }\n]\n");
         assert!(s.contains("var(--lini-teal)"), "explicit fill kept: {s}");
         assert!(!s.contains("var(--lini-rose)"), "palette not walked: {s}");
+    }
+
+    #[test]
+    fn a_bar_radius_rounds_the_rect() {
+        // The desugar defaults |bars| to radius 2; an explicit `radius:` overrides it.
+        let s = svg("|chart| { categories: \"a\" } [\n  |bars| { data: 5; radius: 6 }\n]\n");
+        assert!(
+            s.contains("rx=\"6\""),
+            "explicit bar radius rounds the rect: {s}"
+        );
+        let d = svg("|chart| { categories: \"a\" } [\n  |bars| { data: 5 }\n]\n");
+        assert!(
+            d.contains("rx=\"2\""),
+            "the default bar radius rounds the rect: {d}"
+        );
+    }
+
+    #[test]
+    fn a_bar_stroke_draws_an_outline_without_recoloring_the_fill() {
+        // A `stroke:` on a fill shape is a separate outline ([CHARTS.md] §10) — it must
+        // not become the fill. With no `fill:`, the body stays the palette base (rose)
+        // and the stroke is the outline (sky); the old bug made the body sky.
+        let s = svg("|chart| { categories: \"a\" } [\n  |bars| { data: 5; stroke: --sky }\n]\n");
+        assert!(
+            s.contains("var(--lini-rose)"),
+            "the fill stays the palette base: {s}"
+        );
+        assert!(
+            s.contains("var(--lini-sky)"),
+            "the stroke draws as an outline: {s}"
+        );
+    }
+
+    #[test]
+    fn a_slice_stroke_outlines_without_recoloring_the_fill() {
+        // The pie bug ([CHARTS.md] §10): `stroke:` on a slice recoloured its fill and
+        // drew no outline. Now slice 0's fill walks the palette (rose) and the stroke is
+        // a separate outline (sky).
+        let s = svg(
+            "|pie| [\n  |slice| \"a\" { value: 1; stroke: --sky }\n  |slice| \"b\" { value: 1 }\n]\n",
+        );
+        assert!(
+            s.contains("var(--lini-rose)"),
+            "slice 0 fill stays the palette walk: {s}"
+        );
+        assert!(
+            s.contains("var(--lini-sky)"),
+            "slice 0 stroke draws as an outline: {s}"
+        );
+    }
+
+    #[test]
+    fn the_chart_gap_tunes_the_title_inset() {
+        // `gap:` sets the title→plot space ([CHARTS.md] §9), so different gaps shift the
+        // plot geometry; the default (10) is set on the .lini-chart class at desugar.
+        let tight = svg("|chart| \"T\" { categories: \"a\"; gap: 0 } [\n  |bars| { data: 5 }\n]\n");
+        let loose =
+            svg("|chart| \"T\" { categories: \"a\"; gap: 60 } [\n  |bars| { data: 5 }\n]\n");
+        assert_ne!(
+            tight, loose,
+            "the chart 'gap' changes the title / plot spacing"
+        );
     }
 
     #[test]

@@ -224,6 +224,24 @@ pub fn set_title(n: &mut PlacedNode, title: String) {
     n.attrs.insert("title", ResolvedValue::String(title));
 }
 
+/// Draw a `stroke:` outline on a fill shape ([CHARTS.md] §10): replace the builder's
+/// `stroke: none` / width-0 default with `color` at `width`. The one place a chart
+/// shape gains an outline — reused by bars, slices, and bubbles (an area's outline is
+/// its own top edge, a `prim::line`), so `stroke:` never bleeds into the fill.
+pub fn outline(n: &mut PlacedNode, color: ResolvedValue, width: f64) {
+    n.attrs.insert("stroke", color);
+    n.attrs.insert("stroke-width", ResolvedValue::Number(width));
+}
+
+/// Round a rect's corners ([CHARTS.md] §3): set the `radius` the `Block` renderer reads
+/// (`emit_rect` → `rx`/`ry`). Skipped at 0 so a square shape's attrs don't churn. Shared
+/// by bars, the legend swatches, and the tooltip card.
+pub fn round(n: &mut PlacedNode, radius: f64) {
+    if radius > 0.0 {
+        n.attrs.insert("radius", ResolvedValue::Number(radius));
+    }
+}
+
 /// Set a text prop on both `attrs` (so layout measures with it) and `own_style` (so
 /// render emits it, beating the inherited `.lini` value).
 fn set(n: &mut PlacedNode, name: &str, v: ResolvedValue) {

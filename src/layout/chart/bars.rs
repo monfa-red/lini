@@ -187,6 +187,10 @@ fn emit_rect(
         return;
     }
     let mut bar = prim::rect(cx, cy, w, h, ser.color.clone(), opacity);
+    prim::round(&mut bar, ser.radius);
+    if let Some((color, width)) = &ser.outline {
+        prim::outline(&mut bar, color.clone(), *width);
+    }
     prim::set_title(&mut bar, title(category, ser.label.as_deref(), value));
     out.push(bar);
 }
@@ -215,6 +219,9 @@ fn emit_wedge(
         return;
     }
     let mut wedge = prim::wedge(cx, cy, r0, r1, a_lo, a_hi, ser.color.clone(), opacity);
+    if let Some((color, width)) = &ser.outline {
+        prim::outline(&mut wedge, color.clone(), *width);
+    }
     prim::set_title(&mut wedge, title(category, ser.label.as_deref(), value));
     out.push(wedge);
 }

@@ -33,6 +33,9 @@ pub fn lay_out(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
         let (cx, cy) = plot.project(xs, b.at.0, vs, b.at.1);
         let d = ((b.value / vmax).sqrt() * rmax * 2.0).max(2.0); // area ∝ value
         let mut bubble = prim::oval(cx, cy, d, d, b.color.clone());
+        if let Some((color, width)) = &b.outline {
+            prim::outline(&mut bubble, color.clone(), *width);
+        }
         prim::set_title(&mut bubble, bubble_title(b));
         // The centred label rides *inside* the bubble's `<g>` (at its centre, so relative
         // to the group's translate), not as a sibling on top: hovering the label then

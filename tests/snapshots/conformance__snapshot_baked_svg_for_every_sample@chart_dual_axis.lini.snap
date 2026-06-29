@@ -18,71 +18,71 @@ input_file: samples/chart_dual_axis.lini
     <g class="lini-node lini-chart lini-block" transform="translate(0,0)">
       <rect x="-179" y="-109" width="358" height="218" rx="0" ry="0"/>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-143.6" y1="71" x2="150.2" y2="71"/>
+        <line x1="-143.6" y1="70.9" x2="150.2" y2="70.9"/>
       </g>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-143.6" y1="27.1333" x2="150.2" y2="27.1333"/>
+        <line x1="-143.6" y1="26.9333" x2="150.2" y2="26.9333"/>
       </g>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-143.6" y1="-16.7333" x2="150.2" y2="-16.7333"/>
+        <line x1="-143.6" y1="-17.0333" x2="150.2" y2="-17.0333"/>
       </g>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-143.6" y1="-60.6" x2="150.2" y2="-60.6"/>
+        <line x1="-143.6" y1="-61" x2="150.2" y2="-61"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(-106.875,35.0293)">
+      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(-106.875,34.8473)">
         <title>mon · requests: 820</title>
-        <rect x="-23.7978" y="-35.9707" width="47.5956" height="71.9413" rx="0" ry="0"/>
+        <rect x="-23.7978" y="-36.0527" width="47.5956" height="72.1053" rx="2" ry="2"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(-33.425,30.1163)">
+      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(-33.425,29.9231)">
         <title>tue · requests: 932</title>
-        <rect x="-23.7978" y="-40.8837" width="47.5956" height="81.7675" rx="0" ry="0"/>
+        <rect x="-23.7978" y="-40.9769" width="47.5956" height="81.9539" rx="2" ry="2"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(40.025,31.4761)">
+      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(40.025,31.286)">
         <title>wed · requests: 901</title>
-        <rect x="-23.7978" y="-39.5239" width="47.5956" height="79.0477" rx="0" ry="0"/>
+        <rect x="-23.7978" y="-39.614" width="47.5956" height="79.2279" rx="2" ry="2"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(113.475,23.1853)">
+      <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(113.475,22.9763)">
         <title>thu · requests: 1090</title>
-        <rect x="-23.7978" y="-47.8147" width="47.5956" height="95.6293" rx="0" ry="0"/>
+        <rect x="-23.7978" y="-47.9237" width="47.5956" height="95.8473" rx="2" ry="2"/>
       </g>
       <g class="lini-node lini-line" style="stroke: #008e85" transform="translate(0,0)">
-        <polyline points="-106.875,43.364 -33.425,60.472 40.025,51.26 113.475,65.736"/>
+        <polyline points="-106.875,43.201 -33.425,60.348 40.025,51.115 113.475,65.624"/>
       </g>
-      <g class="lini-node lini-oval" style="fill: #008e85; stroke: none; stroke-width: 0" transform="translate(-106.875,43.364)">
+      <g class="lini-node lini-oval" style="fill: #008e85; stroke: none; stroke-width: 0" transform="translate(-106.875,43.201)">
         <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
       </g>
-      <g class="lini-node lini-oval" style="fill: #008e85; stroke: none; stroke-width: 0" transform="translate(-33.425,60.472)">
+      <g class="lini-node lini-oval" style="fill: #008e85; stroke: none; stroke-width: 0" transform="translate(-33.425,60.348)">
         <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
       </g>
-      <g class="lini-node lini-oval" style="fill: #008e85; stroke: none; stroke-width: 0" transform="translate(40.025,51.26)">
+      <g class="lini-node lini-oval" style="fill: #008e85; stroke: none; stroke-width: 0" transform="translate(40.025,51.115)">
         <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
       </g>
-      <g class="lini-node lini-oval" style="fill: #008e85; stroke: none; stroke-width: 0" transform="translate(113.475,65.736)">
+      <g class="lini-node lini-oval" style="fill: #008e85; stroke: none; stroke-width: 0" transform="translate(113.475,65.624)">
         <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
       </g>
-      <text class="lini-text" x="-152.9" y="71" style="fill: #888; font-size: 11px">0</text>
-      <text class="lini-text" x="-159.5" y="27.1333" style="fill: #888; font-size: 11px">500</text>
-      <text class="lini-text" x="-162.8" y="-16.7333" style="fill: #888; font-size: 11px">1000</text>
-      <text class="lini-text" x="-162.8" y="-60.6" style="fill: #888; font-size: 11px">1500</text>
-      <text class="lini-text" x="-117.2" y="-66.6" style="fill: #888; font-size: 11px">requests</text>
-      <text class="lini-text" x="162.8" y="71" style="fill: #888; font-size: 11px">0%</text>
-      <text class="lini-text" x="162.8" y="44.68" style="fill: #888; font-size: 11px">2%</text>
-      <text class="lini-text" x="162.8" y="18.36" style="fill: #888; font-size: 11px">4%</text>
-      <text class="lini-text" x="162.8" y="-7.96" style="fill: #888; font-size: 11px">6%</text>
-      <text class="lini-text" x="162.8" y="-34.28" style="fill: #888; font-size: 11px">8%</text>
-      <text class="lini-text" x="166.1" y="-60.6" style="fill: #888; font-size: 11px">10%</text>
-      <text class="lini-text" x="133.7" y="-66.6" style="fill: #888; font-size: 11px">error</text>
-      <text class="lini-text" x="-106.875" y="82.7" style="fill: #888; font-size: 11px">mon</text>
-      <text class="lini-text" x="-33.425" y="82.7" style="fill: #888; font-size: 11px">tue</text>
-      <text class="lini-text" x="40.025" y="82.7" style="fill: #888; font-size: 11px">wed</text>
-      <text class="lini-text" x="113.475" y="82.7" style="fill: #888; font-size: 11px">thu</text>
+      <text class="lini-text" x="-152.9" y="70.9" style="fill: #888; font-size: 11px">0</text>
+      <text class="lini-text" x="-159.5" y="26.9333" style="fill: #888; font-size: 11px">500</text>
+      <text class="lini-text" x="-162.8" y="-17.0333" style="fill: #888; font-size: 11px">1000</text>
+      <text class="lini-text" x="-162.8" y="-61" style="fill: #888; font-size: 11px">1500</text>
+      <text class="lini-text" x="-117.2" y="-67" style="fill: #888; font-size: 11px">requests</text>
+      <text class="lini-text" x="162.8" y="70.9" style="fill: #888; font-size: 11px">0%</text>
+      <text class="lini-text" x="162.8" y="44.52" style="fill: #888; font-size: 11px">2%</text>
+      <text class="lini-text" x="162.8" y="18.14" style="fill: #888; font-size: 11px">4%</text>
+      <text class="lini-text" x="162.8" y="-8.24" style="fill: #888; font-size: 11px">6%</text>
+      <text class="lini-text" x="162.8" y="-34.62" style="fill: #888; font-size: 11px">8%</text>
+      <text class="lini-text" x="166.1" y="-61" style="fill: #888; font-size: 11px">10%</text>
+      <text class="lini-text" x="133.7" y="-67" style="fill: #888; font-size: 11px">error</text>
+      <text class="lini-text" x="-106.875" y="82.6" style="fill: #888; font-size: 11px">mon</text>
+      <text class="lini-text" x="-33.425" y="82.6" style="fill: #888; font-size: 11px">tue</text>
+      <text class="lini-text" x="40.025" y="82.6" style="fill: #888; font-size: 11px">wed</text>
+      <text class="lini-text" x="113.475" y="82.6" style="fill: #888; font-size: 11px">thu</text>
       <text class="lini-text" x="0" y="-92.9" style="font-weight: bold; font-size: 13px">Throughput vs error</text>
       <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(-68,100.1)">
-        <rect x="-5.5" y="-5.5" width="11" height="11" rx="0" ry="0"/>
+        <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
       </g>
       <text class="lini-text" x="-31.1" y="100.1" style="font-size: 11px">requests</text>
       <g class="lini-node lini-block" style="fill: #008e85; stroke-width: 0" transform="translate(16.8,100.1)">
-        <rect x="-5.5" y="-5.5" width="11" height="11" rx="0" ry="0"/>
+        <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
       </g>
       <text class="lini-text" x="50.4" y="100.1" style="font-size: 11px">error %</text>
     </g>

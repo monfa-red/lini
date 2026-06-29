@@ -20,21 +20,21 @@ input_file: samples/chart_step.lini
         <line x1="-156.8" y1="88.6" x2="168" y2="88.6"/>
       </g>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-156.8" y1="33.7333" x2="168" y2="33.7333"/>
+        <line x1="-156.8" y1="33.6" x2="168" y2="33.6"/>
       </g>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-156.8" y1="-21.1333" x2="168" y2="-21.1333"/>
+        <line x1="-156.8" y1="-21.4" x2="168" y2="-21.4"/>
       </g>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
-        <line x1="-156.8" y1="-76" x2="168" y2="-76"/>
+        <line x1="-156.8" y1="-76.4" x2="168" y2="-76.4"/>
       </g>
       <g class="lini-node lini-line" style="stroke: #b8476e" transform="translate(0,0)">
-        <polyline points="-116.2,33.7333 -35,33.7333 -35,33.7333 46.2,33.7333 46.2,-43.08 127.4,-43.08 127.4,-43.08"/>
+        <polyline points="-116.2,33.6 -35,33.6 -35,33.6 46.2,33.6 46.2,-43.4 127.4,-43.4 127.4,-43.4"/>
       </g>
       <text class="lini-text" x="-166.1" y="88.6" style="fill: #888; font-size: 11px">0</text>
-      <text class="lini-text" x="-166.1" y="33.7333" style="fill: #888; font-size: 11px">5</text>
-      <text class="lini-text" x="-169.4" y="-21.1333" style="fill: #888; font-size: 11px">10</text>
-      <text class="lini-text" x="-169.4" y="-76" style="fill: #888; font-size: 11px">15</text>
+      <text class="lini-text" x="-166.1" y="33.6" style="fill: #888; font-size: 11px">5</text>
+      <text class="lini-text" x="-169.4" y="-21.4" style="fill: #888; font-size: 11px">10</text>
+      <text class="lini-text" x="-169.4" y="-76.4" style="fill: #888; font-size: 11px">15</text>
       <text class="lini-text" x="-116.2" y="100.3" style="fill: #888; font-size: 11px">0</text>
       <text class="lini-text" x="-35" y="100.3" style="fill: #888; font-size: 11px">10</text>
       <text class="lini-text" x="46.2" y="100.3" style="fill: #888; font-size: 11px">20</text>

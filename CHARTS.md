@@ -86,6 +86,7 @@ frame, and the cascade styles a chart like any box.
 | `hole` | pie | `0` ≤ n < `1` — inner-radius fraction (a donut) | `0` |
 | `legend` | both | `top` · `right` · `bottom` · `none` | auto (shown when ≥ 2 entries) |
 | `tooltip` | both | `rich` · `title` · `none` | `rich` |
+| `gap` | both | number — the clear space between the plot and the title / legend outside it ([§9](#9-legend--title)) | `10` |
 
 `categories` is the common-case shorthand for the **x (domain) axis's** tick labels;
 an `|axis|` child's `labels:` ([§5](#5-axes)) is the general form. The two name the same
@@ -322,7 +323,10 @@ One smart-label rule ([SPEC §3](SPEC.md)), placed by where the label sits:
 | a `\|mark\|` | the annotation's **label** |
 
 A legend appears automatically once there are ≥ 2 entries; `legend: top | right |
-bottom | none` positions or suppresses it ([§2](#2-the-chart-container)).
+bottom | none` positions or suppresses it ([§2](#2-the-chart-container)). **`gap:`** sets
+the clear space between the plot and the title (above) and legend (below) that sit
+outside it — the chart repurposes the core container `gap` (a chart owns its layout, so
+it has no inter-child spacing of its own). It defaults to `10`; `gap: 0` ≈ touching.
 
 ---
 
@@ -492,6 +496,7 @@ meaning.
 | `hole` | `\|pie\|` | `0` ≤ n < `1` | donut inner radius. |
 | `legend` | `\|chart\|` `\|pie\|` | `top` · `right` · `bottom` · `none` | legend placement. |
 | `tooltip` | `\|chart\|` `\|pie\|` | `rich` · `title` · `none` | hover behaviour. |
+| `gap` | `\|chart\|` `\|pie\|` | number | title / legend gutter ([§9](#9-legend--title)); `0` ≈ touching. |
 | `data` | series | value list / `x y` pairs | explicit data ([§4](#4-data--formulas)). |
 | `fn` | series | backtick, or a per-band list | computed data ([§4](#4-data--formulas), [§7](#7-bands--segmentation)). |
 | `baseline` | `\|area\|` | number | fill target — default the axis zero, or the range floor when zero is out of range. |

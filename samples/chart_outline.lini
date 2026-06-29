@@ -1,0 +1,18 @@
+// Shape outlines (stroke:), rounded bars (radius:), and a tunable title gap (gap:).
+|block| { layout: grid; columns: repeat(2); gap: 24; padding: 6; } [
+  |chart| "Outlined & rounded" {
+    width: 340; height: 220; categories: "Q1" "Q2" "Q3" "Q4"; gap: 4;
+  } [
+    |bars| "Plan" {
+      data: 12 19 15 25; fill: --sky-soft; stroke: --sky; radius: 5;
+    }
+    |bars| "Actual" {
+      data: 18 24 22 31; fill: --amber-soft; stroke: --amber; radius: 5;
+    }
+  ]
+  |pie| "Share of spend" { width: 340; height: 220; gap: 4; } [
+    |slice| "Ads" { value: 40; fill: --rose-soft; stroke: --rose-deep; }
+    |slice| "SEO" { value: 30; fill: --teal-soft; stroke: --teal-deep; }
+    |slice| "Direct" { value: 30; fill: --sky-soft; stroke: --sky-deep; }
+  ]
+]
