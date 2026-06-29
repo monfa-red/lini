@@ -178,8 +178,8 @@ input_file: samples/chart_hero.lini
           <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
         </g>
         <text class="lini-text" x="33.9" y="110.1" style="font-weight: bold; font-size: 11px">app</text>
-        <text class="lini-text lini-chart-label" x="-107.1" y="18.71" style="fill: #888; font-weight: normal; font-size: 10px">UI change</text>
-        <text class="lini-text lini-chart-label" x="115.3" y="-4.6917" style="fill: #888; font-weight: normal; font-size: 10px">Redesign</text>
+        <text class="lini-text lini-chart-label" x="-73.1" y="16.21" style="fill: #888; font-weight: normal; font-size: 10px">UI change</text>
+        <text class="lini-text lini-chart-label" x="117.8" y="-2.1917" style="fill: #888; font-weight: normal; font-size: 10px">Redesign</text>
       </g>
       <g class="lini-node lini-chart lini-block" transform="translate(-187.5,0)">
         <rect x="-174.25" y="-119.25" width="348.5" height="238.5" rx="0" ry="0"/>
@@ -310,19 +310,19 @@ input_file: samples/chart_hero.lini
         <rect x="-174.25" y="-119.25" width="348.5" height="238.5" rx="0" ry="0"/>
         <g class="lini-node lini-poly" style="fill: #ffb2c9; stroke: #b8476e; stroke-width: 1.5; opacity: 1" transform="translate(0,0)">
           <title>Ads: 40 (40%)</title>
-          <polygon points="0,-86.4 8.72,-85.9782 17.3586,-84.7168 25.8352,-82.6275 34.0705,-79.7299 41.9877,-76.051 49.5129,-71.6251 56.5758,-66.4936 63.1105,-60.7044 69.0559,-54.3115 74.3566,-47.3746 78.963,-39.9586 82.8322,-32.1326 85.928,-23.9697 88.2215,-15.5461 89.6912,-6.9405 90.3236,1.7668 90.1127,10.4945 89.0604,19.1611 87.1765,27.6856 84.4787,35.9886 80.9922,43.9924 76.7494,51.6223 71.7901,58.8071 66.1605,65.4798 59.9131,71.5779 53.1064,77.0447 29.2085,44.1521 32.9522,41.1454 36.3883,37.7914 39.4846,34.1214 42.2122,30.1698 44.5457,25.9733 46.4633,21.5712 47.9471,17.0046 48.9832,12.3161 49.562,7.5495 49.678,2.7492 49.3302,-2.0398 48.5218,-6.7729 47.2604,-11.4058 45.5577,-15.8954 43.4297,-20.1997 40.8961,-24.2786 37.9808,-28.0938 34.7108,-31.6099 31.1167,-34.794 27.2321,-37.6163 23.0933,-40.0505 18.7388,-42.0739 14.2094,-43.6676 9.5473,-44.8167 4.796,-45.5105 0,-45.7425"/>
+          <polygon points="0,-86.4 8.72,-85.9782 17.3586,-84.7168 25.8352,-82.6275 34.0705,-79.7299 41.9877,-76.051 49.5129,-71.6251 56.5758,-66.4936 63.1105,-60.7044 69.0559,-54.3115 74.3566,-47.3746 78.963,-39.9586 82.8322,-32.1326 85.928,-23.9697 88.2215,-15.5461 89.6912,-6.9405 90.3236,1.7668 90.1127,10.4945 89.0604,19.1611 87.1765,27.6856 84.4787,35.9886 80.9922,43.9924 76.7494,51.6223 71.7901,58.8071 66.1605,65.4798 59.9131,71.5779 53.1064,77.0447 0,3.95"/>
         </g>
         <g class="lini-node lini-poly" style="fill: #79e3da; stroke: #008e85; stroke-width: 1.5; opacity: 1" transform="translate(0,0)">
           <title>SEO: 25 (25%)</title>
-          <polygon points="53.1064,77.0447 45.6861,81.8981 37.8259,86.0007 29.6014,89.3132 21.0918,91.8036 12.3791,93.4479 3.5471,94.2303 -5.319,94.1433 -14.1339,93.1876 -22.8126,91.3726 -31.2717,88.7156 -39.4296,85.2423 -47.2077,80.986 -54.5313,75.9879 -61.3296,70.296 -67.5374,63.9652 -73.0947,57.0564 -40.2021,33.1585 -37.1456,36.9584 -33.7313,40.4403 -29.9922,43.5709 -25.9643,46.3198 -21.6863,48.6607 -17.1994,50.5711 -12.5469,52.0324 -7.7736,53.0307 -2.9254,53.5563 1.9509,53.6042 6.8085,53.1739 11.6005,52.2695 16.2808,50.8998 20.8042,49.0779 25.1274,46.8214 29.2085,44.1521"/>
+          <polygon points="53.1064,77.0447 45.6861,81.8981 37.8259,86.0007 29.6014,89.3132 21.0918,91.8036 12.3791,93.4479 3.5471,94.2303 -5.319,94.1433 -14.1339,93.1876 -22.8126,91.3726 -31.2717,88.7156 -39.4296,85.2423 -47.2077,80.986 -54.5313,75.9879 -61.3296,70.296 -67.5374,63.9652 -73.0947,57.0564 0,3.95"/>
         </g>
         <g class="lini-node lini-poly" style="fill: #ffbd8d; stroke: #b45700; stroke-width: 1.5; opacity: 1" transform="translate(0,0)">
           <title>Email: 20 (20%)</title>
-          <polygon points="-73.0947,57.0564 -77.879,49.7538 -81.9361,42.0236 -85.2282,33.9379 -87.7246,25.5722 -89.4019,17.0046 -90.2445,8.3151 -90.2445,-0.4151 -89.4019,-9.1046 -87.7246,-17.6722 -85.2282,-26.0379 -81.9361,-34.1236 -77.879,-41.8538 -73.0947,-49.1564 -40.2021,-25.2585 -42.8334,-21.2421 -45.0649,-16.9905 -46.8755,-12.5433 -48.2485,-7.9422 -49.171,-3.23 -49.6345,1.5492 -49.6345,6.3508 -49.171,11.13 -48.2485,15.8422 -46.8755,20.4433 -45.0649,24.8905 -42.8334,29.1421 -40.2021,33.1585"/>
+          <polygon points="-73.0947,57.0564 -77.879,49.7538 -81.9361,42.0236 -85.2282,33.9379 -87.7246,25.5722 -89.4019,17.0046 -90.2445,8.3151 -90.2445,-0.4151 -89.4019,-9.1046 -87.7246,-17.6722 -85.2282,-26.0379 -81.9361,-34.1236 -77.879,-41.8538 -73.0947,-49.1564 0,3.95"/>
         </g>
         <g class="lini-node lini-poly" style="fill: #7eddfd; stroke: #0085b3; stroke-width: 1.5; opacity: 1" transform="translate(0,0)">
           <title>Direct: 15 (15%)</title>
-          <polygon points="-73.0947,-49.1564 -67.7725,-55.7995 -61.8488,-61.9123 -55.3762,-67.4405 -48.412,-72.335 -41.018,-76.5524 -33.2601,-80.0553 -25.2068,-82.8125 -16.9299,-84.7997 -8.5027,-85.999 -0,-86.4 -0,-45.7425 -4.6765,-45.522 -9.3114,-44.8623 -13.8638,-43.7694 -18.293,-42.2529 -22.5599,-40.3263 -26.6266,-38.0068 -30.4569,-35.3148 -34.0169,-32.2743 -37.2749,-28.9122 -40.2021,-25.2585"/>
+          <polygon points="-73.0947,-49.1564 -67.7725,-55.7995 -61.8488,-61.9123 -55.3762,-67.4405 -48.412,-72.335 -41.018,-76.5524 -33.2601,-80.0553 -25.2068,-82.8125 -16.9299,-84.7997 -8.5027,-85.999 -0,-86.4 0,3.95"/>
         </g>
         <text class="lini-text" x="0" y="-102.9" style="font-weight: bold; font-size: 13px">Spend by channel</text>
         <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e; stroke-width: 1" transform="translate(-106.6,110.1)">
@@ -385,7 +385,7 @@ input_file: samples/chart_hero.lini
           <ellipse cx="0" cy="0" rx="11.8242" ry="11.8242"/>
         </g>
         <g class="lini-node lini-oval" style="fill: #cf9300; stroke: none; stroke-width: 0" transform="translate(-93.7687,26.66)">
-          <title>MEA: 5</title>
+          <title>ME: 5</title>
           <ellipse cx="0" cy="0" rx="10.794" ry="10.794"/>
         </g>
         <g class="lini-node lini-oval" style="fill: #968cff; stroke: none; stroke-width: 0" transform="translate(136.7667,-40.16)">
@@ -406,8 +406,8 @@ input_file: samples/chart_hero.lini
         <text class="lini-text lini-chart-label" x="-125.5667" y="-19.6" style="fill: white; font-weight: normal; font-size: 10px">EU</text>
         <text class="lini-text lini-chart-label" x="-22.2232" y="-58.15" style="fill: white; font-weight: normal; font-size: 10px">US</text>
         <text class="lini-text lini-chart-label" x="81.1202" y="6.1" style="fill: white; font-weight: normal; font-size: 10px">APAC</text>
-        <text class="lini-text lini-chart-label" x="17.5242" y="32.65" style="fill: #888; font-weight: normal; font-size: 10px">LatAm</text>
-        <text class="lini-text lini-chart-label" x="-93.7687" y="26.66" style="fill: white; font-weight: normal; font-size: 10px">MEA</text>
+        <text class="lini-text lini-chart-label" x="17.5242" y="20.8258" style="fill: #888; font-weight: normal; font-size: 10px">LatAm</text>
+        <text class="lini-text lini-chart-label" x="-93.7687" y="26.66" style="fill: white; font-weight: normal; font-size: 10px">ME</text>
         <text class="lini-text lini-chart-label" x="136.7667" y="-40.16" style="fill: white; font-weight: normal; font-size: 10px">China</text>
       </g>
     </g>

@@ -37,7 +37,7 @@
       data: 0 20, 1 120, 2 300, 3 320, 4 260, 5 80; fill: --rose;
     }
   ]
-  |pie| "Spend by channel" { width: 350; height: 240; hole: 0.55; } [
+  |pie| "Spend by channel" { width: 350; height: 240; } [
     |slice| "Ads" { value: 40; }
     |slice| "SEO" { value: 25; }
     |slice| "Email" { value: 20; }
@@ -50,7 +50,7 @@
     |bubble| "US" { at: 25 55; value: 20; }
     |bubble| "APAC" { at: 38 30; value: 14; }
     |bubble| "LatAm" { at: 30 15; value: 6; }
-    |bubble| "MEA" { at: 16 22; value: 5; }
+    |bubble| "ME" { at: 16 22; value: 5; }
     |bubble| "China" { at: 45 48; value: 17; }
   ]
 ]
