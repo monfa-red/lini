@@ -1,4 +1,11 @@
 |chart| "Latency (ms)" { categories: "p50" "p90" "p99" "p999"; } [
-  |line| "v1" { data: 12 40 120 480; marker: circle; }
-  |line| "v2" { data: 9 28 75 300; stroke-style: dashed; }
+  |line| "v1" {
+    data: 15 70 150 480; marker: circle; tags: "Low" "medium" "High" "Max";
+  }
+  |line| "v2" {
+    data: 12 40 100 300; stroke-style: dashed; marker: circle; tags: "Low" "medium" "High" "Max";
+  }
+  |line| "Speed" {
+    data: 290 160 70 40; stroke-style: dotted; marker: circle; tags: "Cool" "Warm" "Hot" ""; fill: --purple;
+  }
 ]

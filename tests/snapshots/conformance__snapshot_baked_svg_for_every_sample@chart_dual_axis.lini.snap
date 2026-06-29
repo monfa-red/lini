@@ -64,31 +64,31 @@ input_file: samples/chart_dual_axis.lini
         <title>error %: thu: 0.4</title>
         <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
       </g>
-      <text class="lini-text" x="-152.9" y="70.9" style="fill: #888; font-size: 11px">0</text>
-      <text class="lini-text" x="-159.5" y="26.9333" style="fill: #888; font-size: 11px">500</text>
-      <text class="lini-text" x="-162.8" y="-17.0333" style="fill: #888; font-size: 11px">1000</text>
-      <text class="lini-text" x="-162.8" y="-61" style="fill: #888; font-size: 11px">1500</text>
-      <text class="lini-text" x="-117.2" y="-67" style="fill: #888; font-size: 11px">requests</text>
-      <text class="lini-text" x="162.8" y="70.9" style="fill: #888; font-size: 11px">0%</text>
-      <text class="lini-text" x="162.8" y="44.52" style="fill: #888; font-size: 11px">2%</text>
-      <text class="lini-text" x="162.8" y="18.14" style="fill: #888; font-size: 11px">4%</text>
-      <text class="lini-text" x="162.8" y="-8.24" style="fill: #888; font-size: 11px">6%</text>
-      <text class="lini-text" x="162.8" y="-34.62" style="fill: #888; font-size: 11px">8%</text>
-      <text class="lini-text" x="166.1" y="-61" style="fill: #888; font-size: 11px">10%</text>
-      <text class="lini-text" x="133.7" y="-67" style="fill: #888; font-size: 11px">error</text>
-      <text class="lini-text" x="-106.875" y="82.6" style="fill: #888; font-size: 11px">mon</text>
-      <text class="lini-text" x="-33.425" y="82.6" style="fill: #888; font-size: 11px">tue</text>
-      <text class="lini-text" x="40.025" y="82.6" style="fill: #888; font-size: 11px">wed</text>
-      <text class="lini-text" x="113.475" y="82.6" style="fill: #888; font-size: 11px">thu</text>
+      <text class="lini-text" x="-152.9" y="70.9" style="fill: #888; font-weight: normal; font-size: 11px">0</text>
+      <text class="lini-text" x="-159.5" y="26.9333" style="fill: #888; font-weight: normal; font-size: 11px">500</text>
+      <text class="lini-text" x="-162.8" y="-17.0333" style="fill: #888; font-weight: normal; font-size: 11px">1000</text>
+      <text class="lini-text" x="-162.8" y="-61" style="fill: #888; font-weight: normal; font-size: 11px">1500</text>
+      <text class="lini-text" x="-117.2" y="-67" style="fill: #888; font-weight: normal; font-size: 11px">requests</text>
+      <text class="lini-text" x="162.8" y="70.9" style="fill: #888; font-weight: normal; font-size: 11px">0%</text>
+      <text class="lini-text" x="162.8" y="44.52" style="fill: #888; font-weight: normal; font-size: 11px">2%</text>
+      <text class="lini-text" x="162.8" y="18.14" style="fill: #888; font-weight: normal; font-size: 11px">4%</text>
+      <text class="lini-text" x="162.8" y="-8.24" style="fill: #888; font-weight: normal; font-size: 11px">6%</text>
+      <text class="lini-text" x="162.8" y="-34.62" style="fill: #888; font-weight: normal; font-size: 11px">8%</text>
+      <text class="lini-text" x="166.1" y="-61" style="fill: #888; font-weight: normal; font-size: 11px">10%</text>
+      <text class="lini-text" x="133.7" y="-67" style="fill: #888; font-weight: normal; font-size: 11px">error</text>
+      <text class="lini-text" x="-106.875" y="82.6" style="fill: #888; font-weight: normal; font-size: 11px">mon</text>
+      <text class="lini-text" x="-33.425" y="82.6" style="fill: #888; font-weight: normal; font-size: 11px">tue</text>
+      <text class="lini-text" x="40.025" y="82.6" style="fill: #888; font-weight: normal; font-size: 11px">wed</text>
+      <text class="lini-text" x="113.475" y="82.6" style="fill: #888; font-weight: normal; font-size: 11px">thu</text>
       <text class="lini-text" x="0" y="-92.9" style="font-weight: bold; font-size: 13px">Throughput vs error</text>
       <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(-68,100.1)">
         <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
       </g>
-      <text class="lini-text" x="-31.1" y="100.1" style="font-size: 11px">requests</text>
+      <text class="lini-text" x="-31.1" y="100.1" style="font-weight: bold; font-size: 11px">requests</text>
       <g class="lini-node lini-block" style="fill: #008e85; stroke-width: 0" transform="translate(16.8,100.1)">
         <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
       </g>
-      <text class="lini-text" x="50.4" y="100.1" style="font-size: 11px">error %</text>
+      <text class="lini-text" x="50.4" y="100.1" style="font-weight: bold; font-size: 11px">error %</text>
     </g>
   </g>
   <g class="lini-links"/>

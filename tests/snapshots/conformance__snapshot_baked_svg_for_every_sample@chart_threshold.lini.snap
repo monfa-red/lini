@@ -47,15 +47,15 @@ input_file: samples/chart_threshold.lini
       <g class="lini-node lini-line" style="fill: none; stroke: #f27168; stroke-width: 1.5; stroke-dasharray: 5,3.75" transform="translate(0,0)">
         <line x1="-150.2" y1="-48.9" x2="168" y2="-48.9"/>
       </g>
-      <text class="lini-text" x="-124.1" y="-55.5" style="fill: #f27168; font-size: 11px">SLO 250</text>
-      <text class="lini-text" x="-159.5" y="88.6" style="fill: #888; font-size: 11px">0</text>
-      <text class="lini-text" x="-166.1" y="33.6" style="fill: #888; font-size: 11px">100</text>
-      <text class="lini-text" x="-166.1" y="-21.4" style="fill: #888; font-size: 11px">200</text>
-      <text class="lini-text" x="-166.1" y="-76.4" style="fill: #888; font-size: 11px">300</text>
-      <text class="lini-text" x="-110.425" y="100.3" style="fill: #888; font-size: 11px">p50</text>
-      <text class="lini-text" x="-30.875" y="100.3" style="fill: #888; font-size: 11px">p90</text>
-      <text class="lini-text" x="48.675" y="100.3" style="fill: #888; font-size: 11px">p99</text>
-      <text class="lini-text" x="128.225" y="100.3" style="fill: #888; font-size: 11px">p999</text>
+      <text class="lini-text" x="-124.1" y="-55.5" style="fill: #f27168; font-weight: normal; font-size: 11px">SLO 250</text>
+      <text class="lini-text" x="-159.5" y="88.6" style="fill: #888; font-weight: normal; font-size: 11px">0</text>
+      <text class="lini-text" x="-166.1" y="33.6" style="fill: #888; font-weight: normal; font-size: 11px">100</text>
+      <text class="lini-text" x="-166.1" y="-21.4" style="fill: #888; font-weight: normal; font-size: 11px">200</text>
+      <text class="lini-text" x="-166.1" y="-76.4" style="fill: #888; font-weight: normal; font-size: 11px">300</text>
+      <text class="lini-text" x="-110.425" y="100.3" style="fill: #888; font-weight: normal; font-size: 11px">p50</text>
+      <text class="lini-text" x="-30.875" y="100.3" style="fill: #888; font-weight: normal; font-size: 11px">p90</text>
+      <text class="lini-text" x="48.675" y="100.3" style="fill: #888; font-weight: normal; font-size: 11px">p99</text>
+      <text class="lini-text" x="128.225" y="100.3" style="fill: #888; font-weight: normal; font-size: 11px">p999</text>
       <text class="lini-text" x="0" y="-92.9" style="font-weight: bold; font-size: 13px">API latency (ms)</text>
     </g>
   </g>

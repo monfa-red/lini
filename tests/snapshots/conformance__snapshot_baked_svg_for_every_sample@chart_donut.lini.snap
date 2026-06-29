@@ -32,15 +32,15 @@ input_file: samples/chart_donut.lini
       <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(-74.1,130.1)">
         <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
       </g>
-      <text class="lini-text" x="-53.7" y="130.1" style="font-size: 11px">Ads</text>
+      <text class="lini-text" x="-53.7" y="130.1" style="font-weight: bold; font-size: 11px">Ads</text>
       <g class="lini-node lini-block" style="fill: #00bcb1; stroke-width: 0" transform="translate(-22.3,130.1)">
         <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
       </g>
-      <text class="lini-text" x="-1.9" y="130.1" style="font-size: 11px">SEO</text>
+      <text class="lini-text" x="-1.9" y="130.1" style="font-weight: bold; font-size: 11px">SEO</text>
       <g class="lini-node lini-block" style="fill: #e78022; stroke-width: 0" transform="translate(29.5,130.1)">
         <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
       </g>
-      <text class="lini-text" x="59.8" y="130.1" style="font-size: 11px">Direct</text>
+      <text class="lini-text" x="59.8" y="130.1" style="font-weight: bold; font-size: 11px">Direct</text>
     </g>
   </g>
   <g class="lini-links"/>

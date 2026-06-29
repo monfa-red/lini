@@ -80,27 +80,27 @@ input_file: samples/chart_log.lini
         <title>ent: 45000</title>
         <rect x="-24.1704" y="-69.6121" width="48.3408" height="139.2241" rx="2" ry="2"/>
       </g>
-      <text class="lini-text" x="-139.7" y="88.6" style="fill: #888; font-size: 11px">1</text>
-      <text class="lini-text" x="-139.7" y="79.5932" style="fill: #888; font-size: 11px">2</text>
-      <text class="lini-text" x="-139.7" y="67.6868" style="fill: #888; font-size: 11px">5</text>
-      <text class="lini-text" x="-143" y="58.68" style="fill: #888; font-size: 11px">10</text>
-      <text class="lini-text" x="-143" y="49.6732" style="fill: #888; font-size: 11px">20</text>
-      <text class="lini-text" x="-143" y="37.7668" style="fill: #888; font-size: 11px">50</text>
-      <text class="lini-text" x="-146.3" y="28.76" style="fill: #888; font-size: 11px">100</text>
-      <text class="lini-text" x="-146.3" y="19.7532" style="fill: #888; font-size: 11px">200</text>
-      <text class="lini-text" x="-146.3" y="7.8468" style="fill: #888; font-size: 11px">500</text>
-      <text class="lini-text" x="-149.6" y="-1.16" style="fill: #888; font-size: 11px">1000</text>
-      <text class="lini-text" x="-149.6" y="-10.1668" style="fill: #888; font-size: 11px">2000</text>
-      <text class="lini-text" x="-149.6" y="-22.0732" style="fill: #888; font-size: 11px">5000</text>
-      <text class="lini-text" x="-152.9" y="-31.08" style="fill: #888; font-size: 11px">10000</text>
-      <text class="lini-text" x="-152.9" y="-40.0868" style="fill: #888; font-size: 11px">20000</text>
-      <text class="lini-text" x="-152.9" y="-51.9932" style="fill: #888; font-size: 11px">50000</text>
-      <text class="lini-text" x="-156.2" y="-61" style="fill: #888; font-size: 11px">100000</text>
-      <text class="lini-text" x="-113.9" y="-67" style="fill: #888; font-size: 11px">req/s</text>
-      <text class="lini-text" x="-93.1" y="100.3" style="fill: #888; font-size: 11px">free</text>
-      <text class="lini-text" x="-18.5" y="100.3" style="fill: #888; font-size: 11px">pro</text>
-      <text class="lini-text" x="56.1" y="100.3" style="fill: #888; font-size: 11px">team</text>
-      <text class="lini-text" x="130.7" y="100.3" style="fill: #888; font-size: 11px">ent</text>
+      <text class="lini-text" x="-139.7" y="88.6" style="fill: #888; font-weight: normal; font-size: 11px">1</text>
+      <text class="lini-text" x="-139.7" y="79.5932" style="fill: #888; font-weight: normal; font-size: 11px">2</text>
+      <text class="lini-text" x="-139.7" y="67.6868" style="fill: #888; font-weight: normal; font-size: 11px">5</text>
+      <text class="lini-text" x="-143" y="58.68" style="fill: #888; font-weight: normal; font-size: 11px">10</text>
+      <text class="lini-text" x="-143" y="49.6732" style="fill: #888; font-weight: normal; font-size: 11px">20</text>
+      <text class="lini-text" x="-143" y="37.7668" style="fill: #888; font-weight: normal; font-size: 11px">50</text>
+      <text class="lini-text" x="-146.3" y="28.76" style="fill: #888; font-weight: normal; font-size: 11px">100</text>
+      <text class="lini-text" x="-146.3" y="19.7532" style="fill: #888; font-weight: normal; font-size: 11px">200</text>
+      <text class="lini-text" x="-146.3" y="7.8468" style="fill: #888; font-weight: normal; font-size: 11px">500</text>
+      <text class="lini-text" x="-149.6" y="-1.16" style="fill: #888; font-weight: normal; font-size: 11px">1000</text>
+      <text class="lini-text" x="-149.6" y="-10.1668" style="fill: #888; font-weight: normal; font-size: 11px">2000</text>
+      <text class="lini-text" x="-149.6" y="-22.0732" style="fill: #888; font-weight: normal; font-size: 11px">5000</text>
+      <text class="lini-text" x="-152.9" y="-31.08" style="fill: #888; font-weight: normal; font-size: 11px">10000</text>
+      <text class="lini-text" x="-152.9" y="-40.0868" style="fill: #888; font-weight: normal; font-size: 11px">20000</text>
+      <text class="lini-text" x="-152.9" y="-51.9932" style="fill: #888; font-weight: normal; font-size: 11px">50000</text>
+      <text class="lini-text" x="-156.2" y="-61" style="fill: #888; font-weight: normal; font-size: 11px">100000</text>
+      <text class="lini-text" x="-113.9" y="-67" style="fill: #888; font-weight: normal; font-size: 11px">req/s</text>
+      <text class="lini-text" x="-93.1" y="100.3" style="fill: #888; font-weight: normal; font-size: 11px">free</text>
+      <text class="lini-text" x="-18.5" y="100.3" style="fill: #888; font-weight: normal; font-size: 11px">pro</text>
+      <text class="lini-text" x="56.1" y="100.3" style="fill: #888; font-weight: normal; font-size: 11px">team</text>
+      <text class="lini-text" x="130.7" y="100.3" style="fill: #888; font-weight: normal; font-size: 11px">ent</text>
       <text class="lini-text" x="0" y="-92.9" style="font-weight: bold; font-size: 13px">Requests by tier</text>
     </g>
   </g>

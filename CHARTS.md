@@ -349,6 +349,10 @@ the clear space between the plot and the title (above) and legend (below) that s
 outside it — the chart repurposes the core container `gap` (a chart owns its layout, so
 it has no inter-child spacing of its own). It defaults to `10`; `gap: 0` ≈ touching.
 
+The chart's **chrome** — its title and legend — stays **bold** (the diagram-wide default,
+[SPEC §10](SPEC.md)); its **data text** — axis ticks, tags ([§14](#14-tooltips)), and
+annotation labels — is **normal** weight, so the numbers read quietly beneath the captions.
+
 ---
 
 ## 10. Colour
@@ -477,11 +481,12 @@ around its point — above, below, beside, the diagonals; a `|bubble|` first tri
 inside* — and takes the first that clears the labels already placed and stays in the plot.
 Under `auto` a label with nowhere to sit **drops to its hover card** (so the tag is never
 lost); under `always` it is placed at its preferred offset regardless. The pass is
-O(labels²) over a *sparse* set (data points, not samples), so it is fast and deterministic
-— it never iterates to convergence like routing ([LINKING.md](LINKING.md)). Inline labels
-are small and muted (`color:` overrides, default `--muted`) and carry `pointer-events:
-none`, so a label never blocks the hover of the point beneath it. Label-vs-*line*
-avoidance is [deferred](#20-deferred); the pass avoids other labels and the plot edge.
+O(labels² + labels·segments) over a *sparse* set (data points, not samples), so it is fast
+and deterministic — it never iterates to convergence like routing ([LINKING.md](LINKING.md)).
+A seat must also sit **off the series lines** — a tag never lands on a `|line|` / `|area|`
+stroke (bars and bubbles fill a region a tag reads fine beside, so they don't constrain
+it). Inline labels are small and muted (`color:` overrides, default `--muted`) and carry
+`pointer-events: none`, so a label never blocks the hover of the point beneath it.
 
 **`tooltip:` cascades** ([SPEC §4](SPEC.md)): set on the `|chart|` it is the default for
 every series; a series (or `|bubble|`) overrides it — `|bubble| { tooltip: always }` — so
@@ -691,5 +696,3 @@ Named, not yet built; the syntax above is stable without them.
 - **Multi-ring pie / sunburst** — nested `|slice|` levels.
 - **Per-datum styling** — a parallel *paint* list over `data:` (highlight one bar); today,
   overlay a `|mark|`. (Per-datum *text* already exists — `tags:`, [§4](#4-data--formulas).)
-- **Label-vs-line avoidance** — inline labels ([§14](#14-tooltips)) dodge other labels and
-  the plot edge, not the series lines themselves; a line-aware nudge is the next refinement.

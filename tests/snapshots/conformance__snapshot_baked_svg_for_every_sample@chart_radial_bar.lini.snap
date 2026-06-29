@@ -81,18 +81,18 @@ input_file: samples/chart_radial_bar.lini
         <title>Sun · steps: 55</title>
         <polygon points="-54.3509,-7.0435 -52.2899,-11.9698 -49.7836,-16.6851 -46.8533,-21.1492 -43.5239,-25.3242 -39.8237,-29.1744 -35.7843,-32.6671 -31.4402,-35.7726 0,12.8"/>
       </g>
-      <text class="lini-text" x="0" y="-102.3" style="fill: #888; font-size: 11px">Mon</text>
-      <text class="lini-text" x="89.9888" y="-58.9637" style="fill: #888; font-size: 11px">Tue</text>
-      <text class="lini-text" x="112.2142" y="38.4122" style="fill: #888; font-size: 11px">Wed</text>
-      <text class="lini-text" x="49.94" y="116.5015" style="fill: #888; font-size: 11px">Thu</text>
-      <text class="lini-text" x="-49.94" y="116.5015" style="fill: #888; font-size: 11px">Fri</text>
-      <text class="lini-text" x="-112.2142" y="38.4122" style="fill: #888; font-size: 11px">Sat</text>
-      <text class="lini-text" x="-89.9888" y="-58.9637" style="fill: #888; font-size: 11px">Sun</text>
-      <text class="lini-text" x="9.6" y="-8.24" style="fill: #888; font-size: 11px">20</text>
-      <text class="lini-text" x="9.6" y="-29.28" style="fill: #888; font-size: 11px">40</text>
-      <text class="lini-text" x="9.6" y="-50.32" style="fill: #888; font-size: 11px">60</text>
-      <text class="lini-text" x="9.6" y="-71.36" style="fill: #888; font-size: 11px">80</text>
-      <text class="lini-text" x="12.9" y="-92.4" style="fill: #888; font-size: 11px">100</text>
+      <text class="lini-text" x="0" y="-102.3" style="fill: #888; font-weight: normal; font-size: 11px">Mon</text>
+      <text class="lini-text" x="89.9888" y="-58.9637" style="fill: #888; font-weight: normal; font-size: 11px">Tue</text>
+      <text class="lini-text" x="112.2142" y="38.4122" style="fill: #888; font-weight: normal; font-size: 11px">Wed</text>
+      <text class="lini-text" x="49.94" y="116.5015" style="fill: #888; font-weight: normal; font-size: 11px">Thu</text>
+      <text class="lini-text" x="-49.94" y="116.5015" style="fill: #888; font-weight: normal; font-size: 11px">Fri</text>
+      <text class="lini-text" x="-112.2142" y="38.4122" style="fill: #888; font-weight: normal; font-size: 11px">Sat</text>
+      <text class="lini-text" x="-89.9888" y="-58.9637" style="fill: #888; font-weight: normal; font-size: 11px">Sun</text>
+      <text class="lini-text" x="9.6" y="-8.24" style="fill: #888; font-weight: normal; font-size: 11px">20</text>
+      <text class="lini-text" x="9.6" y="-29.28" style="fill: #888; font-weight: normal; font-size: 11px">40</text>
+      <text class="lini-text" x="9.6" y="-50.32" style="fill: #888; font-weight: normal; font-size: 11px">60</text>
+      <text class="lini-text" x="9.6" y="-71.36" style="fill: #888; font-weight: normal; font-size: 11px">80</text>
+      <text class="lini-text" x="12.9" y="-92.4" style="fill: #888; font-weight: normal; font-size: 11px">100</text>
       <text class="lini-text" x="0" y="-122.9" style="font-weight: bold; font-size: 13px">Goal completion %</text>
     </g>
   </g>

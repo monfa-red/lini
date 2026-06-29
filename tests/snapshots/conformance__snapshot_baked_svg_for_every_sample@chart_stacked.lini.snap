@@ -76,27 +76,27 @@ input_file: samples/chart_stacked.lini
         <title>Q4 · APAC: 38</title>
         <rect x="-25.7742" y="-18.658" width="51.5484" height="37.316" rx="2" ry="2"/>
       </g>
-      <text class="lini-text" x="-159.5" y="70.9" style="fill: #888; font-size: 11px">0</text>
-      <text class="lini-text" x="-162.8" y="21.8" style="fill: #888; font-size: 11px">50</text>
-      <text class="lini-text" x="-166.1" y="-27.3" style="fill: #888; font-size: 11px">100</text>
-      <text class="lini-text" x="-166.1" y="-76.4" style="fill: #888; font-size: 11px">150</text>
-      <text class="lini-text" x="-110.425" y="82.6" style="fill: #888; font-size: 11px">Q1</text>
-      <text class="lini-text" x="-30.875" y="82.6" style="fill: #888; font-size: 11px">Q2</text>
-      <text class="lini-text" x="48.675" y="82.6" style="fill: #888; font-size: 11px">Q3</text>
-      <text class="lini-text" x="128.225" y="82.6" style="fill: #888; font-size: 11px">Q4</text>
+      <text class="lini-text" x="-159.5" y="70.9" style="fill: #888; font-weight: normal; font-size: 11px">0</text>
+      <text class="lini-text" x="-162.8" y="21.8" style="fill: #888; font-weight: normal; font-size: 11px">50</text>
+      <text class="lini-text" x="-166.1" y="-27.3" style="fill: #888; font-weight: normal; font-size: 11px">100</text>
+      <text class="lini-text" x="-166.1" y="-76.4" style="fill: #888; font-weight: normal; font-size: 11px">150</text>
+      <text class="lini-text" x="-110.425" y="82.6" style="fill: #888; font-weight: normal; font-size: 11px">Q1</text>
+      <text class="lini-text" x="-30.875" y="82.6" style="fill: #888; font-weight: normal; font-size: 11px">Q2</text>
+      <text class="lini-text" x="48.675" y="82.6" style="fill: #888; font-weight: normal; font-size: 11px">Q3</text>
+      <text class="lini-text" x="128.225" y="82.6" style="fill: #888; font-weight: normal; font-size: 11px">Q4</text>
       <text class="lini-text" x="0" y="-92.9" style="font-weight: bold; font-size: 13px">Revenue by region ($k)</text>
       <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(-60.9,100.1)">
         <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
       </g>
-      <text class="lini-text" x="-43.8" y="100.1" style="font-size: 11px">NA</text>
+      <text class="lini-text" x="-43.8" y="100.1" style="font-weight: bold; font-size: 11px">NA</text>
       <g class="lini-node lini-block" style="fill: #00bcb1; stroke-width: 0" transform="translate(-15.7,100.1)">
         <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
       </g>
-      <text class="lini-text" x="1.4" y="100.1" style="font-size: 11px">EU</text>
+      <text class="lini-text" x="1.4" y="100.1" style="font-weight: bold; font-size: 11px">EU</text>
       <g class="lini-node lini-block" style="fill: #e78022; stroke-width: 0" transform="translate(29.5,100.1)">
         <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
       </g>
-      <text class="lini-text" x="53.2" y="100.1" style="font-size: 11px">APAC</text>
+      <text class="lini-text" x="53.2" y="100.1" style="font-weight: bold; font-size: 11px">APAC</text>
     </g>
   </g>
   <g class="lini-links"/>

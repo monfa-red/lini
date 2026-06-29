@@ -58,20 +58,20 @@ input_file: samples/chart_bands.lini
       <g class="lini-node lini-line" style="stroke: #b8476e" transform="translate(0,0)">
         <polyline points="-44.1333,-30.2 8.9,-39.44 61.9333,12.92 114.9667,43.72"/>
       </g>
-      <text class="lini-text" x="-159.5" y="62.2" style="fill: #888; font-size: 11px">0</text>
-      <text class="lini-text" x="-166.1" y="31.4" style="fill: #888; font-size: 11px">100</text>
-      <text class="lini-text" x="-166.1" y="0.6" style="fill: #888; font-size: 11px">200</text>
-      <text class="lini-text" x="-166.1" y="-30.2" style="fill: #888; font-size: 11px">300</text>
-      <text class="lini-text" x="-166.1" y="-61" style="fill: #888; font-size: 11px">400</text>
-      <text class="lini-text" x="-143.6" y="-67" style="fill: #888; font-size: 11px">°C</text>
-      <text class="lini-text" x="-150.2" y="73.9" style="fill: #888; font-size: 11px">0</text>
-      <text class="lini-text" x="-44.1333" y="73.9" style="fill: #888; font-size: 11px">2</text>
-      <text class="lini-text" x="61.9333" y="73.9" style="fill: #888; font-size: 11px">4</text>
-      <text class="lini-text" x="168" y="73.9" style="fill: #888; font-size: 11px">6</text>
-      <text class="lini-text" x="8.9" y="99.6" style="fill: #888; font-size: 11px">min</text>
-      <text class="lini-text" x="-110.425" y="84.9" style="fill: #00b2e5; font-size: 11px">Warm</text>
-      <text class="lini-text" x="-17.6167" y="84.9" style="fill: #cf9300; font-size: 11px">Hold</text>
-      <text class="lini-text" x="101.7083" y="84.9" style="fill: #00bcb1; font-size: 11px">Cool</text>
+      <text class="lini-text" x="-159.5" y="62.2" style="fill: #888; font-weight: normal; font-size: 11px">0</text>
+      <text class="lini-text" x="-166.1" y="31.4" style="fill: #888; font-weight: normal; font-size: 11px">100</text>
+      <text class="lini-text" x="-166.1" y="0.6" style="fill: #888; font-weight: normal; font-size: 11px">200</text>
+      <text class="lini-text" x="-166.1" y="-30.2" style="fill: #888; font-weight: normal; font-size: 11px">300</text>
+      <text class="lini-text" x="-166.1" y="-61" style="fill: #888; font-weight: normal; font-size: 11px">400</text>
+      <text class="lini-text" x="-143.6" y="-67" style="fill: #888; font-weight: normal; font-size: 11px">°C</text>
+      <text class="lini-text" x="-150.2" y="73.9" style="fill: #888; font-weight: normal; font-size: 11px">0</text>
+      <text class="lini-text" x="-44.1333" y="73.9" style="fill: #888; font-weight: normal; font-size: 11px">2</text>
+      <text class="lini-text" x="61.9333" y="73.9" style="fill: #888; font-weight: normal; font-size: 11px">4</text>
+      <text class="lini-text" x="168" y="73.9" style="fill: #888; font-weight: normal; font-size: 11px">6</text>
+      <text class="lini-text" x="8.9" y="99.6" style="fill: #888; font-weight: normal; font-size: 11px">min</text>
+      <text class="lini-text" x="-110.425" y="84.9" style="fill: #00b2e5; font-weight: normal; font-size: 11px">Warm</text>
+      <text class="lini-text" x="-17.6167" y="84.9" style="fill: #cf9300; font-weight: normal; font-size: 11px">Hold</text>
+      <text class="lini-text" x="101.7083" y="84.9" style="fill: #00bcb1; font-weight: normal; font-size: 11px">Cool</text>
       <text class="lini-text" x="0" y="-92.9" style="font-weight: bold; font-size: 13px">Reactor warm-up</text>
     </g>
   </g>

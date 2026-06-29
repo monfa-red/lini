@@ -44,25 +44,25 @@ input_file: samples/chart_area.lini
       <g class="lini-node lini-line" style="fill: none; stroke: #008e85; stroke-width: 2" transform="translate(0,0)">
         <polyline points="-124.32,52.4875 -59.36,37.7575 5.6,30.3925 70.56,15.6625 135.52,0.9325"/>
       </g>
-      <text class="lini-text" x="-166.1" y="70.9" style="fill: #888; font-size: 11px">0</text>
-      <text class="lini-text" x="-169.4" y="34.075" style="fill: #888; font-size: 11px">20</text>
-      <text class="lini-text" x="-169.4" y="-2.75" style="fill: #888; font-size: 11px">40</text>
-      <text class="lini-text" x="-169.4" y="-39.575" style="fill: #888; font-size: 11px">60</text>
-      <text class="lini-text" x="-169.4" y="-76.4" style="fill: #888; font-size: 11px">80</text>
-      <text class="lini-text" x="-124.32" y="82.6" style="fill: #888; font-size: 11px">Jan</text>
-      <text class="lini-text" x="-59.36" y="82.6" style="fill: #888; font-size: 11px">Feb</text>
-      <text class="lini-text" x="5.6" y="82.6" style="fill: #888; font-size: 11px">Mar</text>
-      <text class="lini-text" x="70.56" y="82.6" style="fill: #888; font-size: 11px">Apr</text>
-      <text class="lini-text" x="135.52" y="82.6" style="fill: #888; font-size: 11px">May</text>
+      <text class="lini-text" x="-166.1" y="70.9" style="fill: #888; font-weight: normal; font-size: 11px">0</text>
+      <text class="lini-text" x="-169.4" y="34.075" style="fill: #888; font-weight: normal; font-size: 11px">20</text>
+      <text class="lini-text" x="-169.4" y="-2.75" style="fill: #888; font-weight: normal; font-size: 11px">40</text>
+      <text class="lini-text" x="-169.4" y="-39.575" style="fill: #888; font-weight: normal; font-size: 11px">60</text>
+      <text class="lini-text" x="-169.4" y="-76.4" style="fill: #888; font-weight: normal; font-size: 11px">80</text>
+      <text class="lini-text" x="-124.32" y="82.6" style="fill: #888; font-weight: normal; font-size: 11px">Jan</text>
+      <text class="lini-text" x="-59.36" y="82.6" style="fill: #888; font-weight: normal; font-size: 11px">Feb</text>
+      <text class="lini-text" x="5.6" y="82.6" style="fill: #888; font-weight: normal; font-size: 11px">Mar</text>
+      <text class="lini-text" x="70.56" y="82.6" style="fill: #888; font-weight: normal; font-size: 11px">Apr</text>
+      <text class="lini-text" x="135.52" y="82.6" style="fill: #888; font-weight: normal; font-size: 11px">May</text>
       <text class="lini-text" x="0" y="-92.9" style="font-weight: bold; font-size: 13px">Signups</text>
       <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(-44.9,100.1)">
         <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
       </g>
-      <text class="lini-text" x="-21.2" y="100.1" style="font-size: 11px">free</text>
+      <text class="lini-text" x="-21.2" y="100.1" style="font-weight: bold; font-size: 11px">free</text>
       <g class="lini-node lini-block" style="fill: #00bcb1; stroke-width: 0" transform="translate(13.5,100.1)">
         <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
       </g>
-      <text class="lini-text" x="37.2" y="100.1" style="font-size: 11px">paid</text>
+      <text class="lini-text" x="37.2" y="100.1" style="font-weight: bold; font-size: 11px">paid</text>
     </g>
   </g>
   <g class="lini-links"/>

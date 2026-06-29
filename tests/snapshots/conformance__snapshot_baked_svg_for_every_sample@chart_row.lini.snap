@@ -60,24 +60,24 @@ input_file: samples/chart_row.lini
         <title>Ops · Q2: 4</title>
         <rect x="-35.6533" y="-5.3419" width="71.3067" height="10.6839" rx="2" ry="2"/>
       </g>
-      <text class="lini-text" x="-99.4" y="67.2" style="fill: #888; font-size: 11px">0</text>
-      <text class="lini-text" x="-10.2667" y="67.2" style="fill: #888; font-size: 11px">5</text>
-      <text class="lini-text" x="78.8667" y="67.2" style="fill: #888; font-size: 11px">10</text>
-      <text class="lini-text" x="168" y="67.2" style="fill: #888; font-size: 11px">15</text>
-      <text class="lini-text" x="34.3" y="81.9" style="fill: #888; font-size: 11px">people</text>
-      <text class="lini-text" x="-141.7" y="-59.9125" style="fill: #888; font-size: 11px">Engineering</text>
-      <text class="lini-text" x="-121.9" y="-26.9375" style="fill: #888; font-size: 11px">Sales</text>
-      <text class="lini-text" x="-128.5" y="6.0375" style="fill: #888; font-size: 11px">Support</text>
-      <text class="lini-text" x="-115.3" y="39.0125" style="fill: #888; font-size: 11px">Ops</text>
+      <text class="lini-text" x="-99.4" y="67.2" style="fill: #888; font-weight: normal; font-size: 11px">0</text>
+      <text class="lini-text" x="-10.2667" y="67.2" style="fill: #888; font-weight: normal; font-size: 11px">5</text>
+      <text class="lini-text" x="78.8667" y="67.2" style="fill: #888; font-weight: normal; font-size: 11px">10</text>
+      <text class="lini-text" x="168" y="67.2" style="fill: #888; font-weight: normal; font-size: 11px">15</text>
+      <text class="lini-text" x="34.3" y="81.9" style="fill: #888; font-weight: normal; font-size: 11px">people</text>
+      <text class="lini-text" x="-141.7" y="-59.9125" style="fill: #888; font-weight: normal; font-size: 11px">Engineering</text>
+      <text class="lini-text" x="-121.9" y="-26.9375" style="fill: #888; font-weight: normal; font-size: 11px">Sales</text>
+      <text class="lini-text" x="-128.5" y="6.0375" style="fill: #888; font-weight: normal; font-size: 11px">Support</text>
+      <text class="lini-text" x="-115.3" y="39.0125" style="fill: #888; font-weight: normal; font-size: 11px">Ops</text>
       <text class="lini-text" x="0" y="-92.9" style="font-weight: bold; font-size: 13px">Quarterly hires by team</text>
       <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(-31.7,100.1)">
         <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
       </g>
-      <text class="lini-text" x="-14.6" y="100.1" style="font-size: 11px">Q1</text>
+      <text class="lini-text" x="-14.6" y="100.1" style="font-weight: bold; font-size: 11px">Q1</text>
       <g class="lini-node lini-block" style="fill: #00bcb1; stroke-width: 0" transform="translate(13.5,100.1)">
         <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
       </g>
-      <text class="lini-text" x="30.6" y="100.1" style="font-size: 11px">Q2</text>
+      <text class="lini-text" x="30.6" y="100.1" style="font-weight: bold; font-size: 11px">Q2</text>
     </g>
   </g>
   <g class="lini-links"/>

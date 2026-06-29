@@ -48,15 +48,15 @@ input_file: samples/chart_reversed.lini
         <title>team: Q4: 2</title>
         <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
       </g>
-      <text class="lini-text" x="-172.7" y="-39.6286" style="fill: #888; font-size: 11px">2</text>
-      <text class="lini-text" x="-172.7" y="3.1143" style="fill: #888; font-size: 11px">4</text>
-      <text class="lini-text" x="-172.7" y="45.8571" style="fill: #888; font-size: 11px">6</text>
-      <text class="lini-text" x="-172.7" y="88.6" style="fill: #888; font-size: 11px">8</text>
-      <text class="lini-text" x="-150.2" y="-67" style="fill: #888; font-size: 11px">rank</text>
-      <text class="lini-text" x="-121.975" y="100.3" style="fill: #888; font-size: 11px">Q1</text>
-      <text class="lini-text" x="-39.125" y="100.3" style="fill: #888; font-size: 11px">Q2</text>
-      <text class="lini-text" x="43.725" y="100.3" style="fill: #888; font-size: 11px">Q3</text>
-      <text class="lini-text" x="126.575" y="100.3" style="fill: #888; font-size: 11px">Q4</text>
+      <text class="lini-text" x="-172.7" y="-39.6286" style="fill: #888; font-weight: normal; font-size: 11px">2</text>
+      <text class="lini-text" x="-172.7" y="3.1143" style="fill: #888; font-weight: normal; font-size: 11px">4</text>
+      <text class="lini-text" x="-172.7" y="45.8571" style="fill: #888; font-weight: normal; font-size: 11px">6</text>
+      <text class="lini-text" x="-172.7" y="88.6" style="fill: #888; font-weight: normal; font-size: 11px">8</text>
+      <text class="lini-text" x="-150.2" y="-67" style="fill: #888; font-weight: normal; font-size: 11px">rank</text>
+      <text class="lini-text" x="-121.975" y="100.3" style="fill: #888; font-weight: normal; font-size: 11px">Q1</text>
+      <text class="lini-text" x="-39.125" y="100.3" style="fill: #888; font-weight: normal; font-size: 11px">Q2</text>
+      <text class="lini-text" x="43.725" y="100.3" style="fill: #888; font-weight: normal; font-size: 11px">Q3</text>
+      <text class="lini-text" x="126.575" y="100.3" style="fill: #888; font-weight: normal; font-size: 11px">Q4</text>
       <text class="lini-text" x="0" y="-92.9" style="font-weight: bold; font-size: 13px">League rank</text>
     </g>
   </g>

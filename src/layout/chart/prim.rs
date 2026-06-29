@@ -205,9 +205,14 @@ pub fn text(
     n.cy = cy;
     n.label = Some(content.to_string());
     set(&mut n, "font-size", ResolvedValue::Number(size));
-    if bold {
-        set(&mut n, "font-weight", ident("bold"));
-    }
+    // The diagram-wide default weight is bold (`--lini-font-weight`); a chart keeps that
+    // for the title and legend (`bold`) but states `normal` for its data text — axis
+    // ticks, tags, annotations — so the numbers and labels don't shout ([CHARTS.md] §9).
+    set(
+        &mut n,
+        "font-weight",
+        ident(if bold { "bold" } else { "normal" }),
+    );
     if let Some(c) = color {
         set(&mut n, "color", c);
     }

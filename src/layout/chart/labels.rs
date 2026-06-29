@@ -1,18 +1,22 @@
 //! Inline data labels ([CHARTS.md] §14): a series' `tags:` drawn on the plot beside their
 //! points, positioned by one greedy, deterministic pass. Each label takes the first
-//! candidate offset that clears the labels already placed and stays inside the plot; an
-//! `auto` label with nowhere to sit is dropped (its hover card still carries the tag), an
-//! `always` label is forced. Fast and order-stable — O(labels²) over the *sparse* data
-//! points, never the iterative relaxation links route with. This is the one home for "text
-//! beside a chart point"; series tags feed it here, with bubbles / marks routed in next to
-//! them, so every point label is placed by the same rule.
+//! candidate offset that clears the labels already placed, stays inside the plot, and
+//! sits off the series lines; an `auto` label with nowhere to sit is dropped (its hover
+//! card still carries the tag), an `always` label is forced. Fast and order-stable —
+//! O(labels² + labels·segments) over the *sparse* data points, never the iterative
+//! relaxation links route with. This is the one home for "text beside a chart point";
+//! series tags feed it here, with bubbles / marks routed in next to them, so every point
+//! label is placed by the same rule.
 
 use super::marks;
-use super::model::Chart;
+use super::model::{Chart, SeriesKind};
 use super::prim;
 use super::project::Plot;
 use crate::layout::PlacedNode;
 use crate::resolve::ResolvedValue;
+
+/// A drawn line segment (pixel space) a label should not sit on.
+type Seg = ((f64, f64), (f64, f64));
 
 /// Inline-label font size — small, in the register of a link label ([CHARTS.md] §14).
 const SIZE: f64 = 10.0;
@@ -66,12 +70,33 @@ pub(super) fn collect_series(plot: &Plot, chart: &Chart, reqs: &mut Vec<Req>) {
     }
 }
 
+/// The line/area series' drawn polylines (pixel space) a label should avoid sitting on
+/// ([CHARTS.md] §14). Bars / bubbles / dots fill or dot a region a tag reads fine beside,
+/// so only `|line|` / `|area|` contribute. Reuses `marks::samples`, so the segments track
+/// the points the line is drawn through.
+pub(super) fn series_lines(plot: &Plot, chart: &Chart) -> Vec<Seg> {
+    let mut segs = Vec::new();
+    for ser in &chart.series {
+        if !matches!(ser.kind, SeriesKind::Line | SeriesKind::Area) {
+            continue;
+        }
+        let pts: Vec<(f64, f64)> = marks::samples(plot, chart, ser)
+            .iter()
+            .map(|(_, p)| *p)
+            .collect();
+        for win in pts.windows(2) {
+            segs.push((win[0], win[1]));
+        }
+    }
+    segs
+}
+
 /// Place the requests and emit their text nodes ([CHARTS.md] §14). Greedy: each label
 /// takes the first candidate offset that clears every label already placed and stays in
 /// the plot; failing that, an `always` label keeps the first in-plot offset (else its
 /// preferred one) while an `auto` label is dropped to its hover card. Deterministic —
 /// source order in, the same candidate order each time.
-pub(super) fn place(reqs: &[Req], plot: &Plot) -> Vec<PlacedNode> {
+pub(super) fn place(reqs: &[Req], plot: &Plot, lines: &[Seg]) -> Vec<PlacedNode> {
     let mut placed: Vec<Rect> = Vec::new();
     let mut out = Vec::new();
     for req in reqs {
@@ -88,12 +113,15 @@ pub(super) fn place(reqs: &[Req], plot: &Plot) -> Vec<PlacedNode> {
         seats.extend(candidates(req.anchor, w, h).map(|c| (c, &req.color)));
 
         // Pick a seat (the borrow of `placed` is confined to this block, freed before the
-        // push below). Greedy: the first clear, in-plot seat; a forced label falls back to
-        // the first in-plot seat even if it collides, then to its anchor.
+        // push below). Greedy: the first seat that is in-plot, clear of the placed labels,
+        // and off the series lines; a forced label falls back to the first in-plot seat
+        // even if it collides, then to its anchor.
         let pick: Option<((f64, f64), ResolvedValue)> = {
             let clear = |c: (f64, f64)| {
                 let r = Rect::around(c, w, h);
-                r.within(plot) && placed.iter().all(|p| !p.hits(&r))
+                r.within(plot)
+                    && placed.iter().all(|p| !p.hits(&r))
+                    && lines.iter().all(|&(a, b)| !seg_hits_rect(a, b, &r))
             };
             let chosen = seats.iter().find(|(c, _)| clear(*c)).or_else(|| {
                 req.forced
@@ -167,5 +195,75 @@ impl Rect {
     /// Whether two label boxes overlap.
     fn hits(&self, o: &Rect) -> bool {
         self.x0 < o.x1 && o.x0 < self.x1 && self.y0 < o.y1 && o.y0 < self.y1
+    }
+}
+
+/// Whether segment `p0`–`p1` crosses (or lies inside) the rect — Liang–Barsky: the segment
+/// intersects iff the clipped parameter window `[t0, t1]` stays non-empty across all four
+/// edges. Lets a label reject any seat that would sit over a series line.
+fn seg_hits_rect(p0: (f64, f64), p1: (f64, f64), r: &Rect) -> bool {
+    let (dx, dy) = (p1.0 - p0.0, p1.1 - p0.1);
+    let edges = [
+        (-dx, p0.0 - r.x0),
+        (dx, r.x1 - p0.0),
+        (-dy, p0.1 - r.y0),
+        (dy, r.y1 - p0.1),
+    ];
+    let (mut t0, mut t1) = (0.0_f64, 1.0_f64);
+    for (p, q) in edges {
+        if p.abs() < 1e-9 {
+            if q < 0.0 {
+                return false; // parallel to this edge and wholly outside it
+            }
+        } else {
+            let t = q / p;
+            if p < 0.0 {
+                t0 = t0.max(t);
+            } else {
+                t1 = t1.min(t);
+            }
+            if t0 > t1 {
+                return false;
+            }
+        }
+    }
+    true
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn rect() -> Rect {
+        Rect {
+            x0: 0.0,
+            y0: 0.0,
+            x1: 10.0,
+            y1: 10.0,
+        }
+    }
+
+    #[test]
+    fn seg_hits_rect_crossing_and_inside() {
+        assert!(
+            seg_hits_rect((-5.0, 5.0), (15.0, 5.0), &rect()),
+            "a line crossing right through is a hit"
+        );
+        assert!(
+            seg_hits_rect((5.0, 5.0), (5.0, 5.0), &rect()),
+            "a point inside is a hit"
+        );
+    }
+
+    #[test]
+    fn seg_hits_rect_clear() {
+        assert!(
+            !seg_hits_rect((-5.0, -5.0), (-1.0, -1.0), &rect()),
+            "a segment wholly outside misses"
+        );
+        assert!(
+            !seg_hits_rect((20.0, 0.0), (20.0, 10.0), &rect()),
+            "a parallel segment past the edge misses"
+        );
     }
 }

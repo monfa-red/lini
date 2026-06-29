@@ -58,24 +58,24 @@ input_file: samples/chart_bars.lini
         <title>50 cm³ · 2.3 kW: 20</title>
         <rect x="-17.5392" y="-58.92" width="35.0784" height="117.84" rx="2" ry="2"/>
       </g>
-      <text class="lini-text" x="-166.1" y="70.9" style="fill: #888; font-size: 11px">0</text>
-      <text class="lini-text" x="-166.1" y="41.44" style="fill: #888; font-size: 11px">5</text>
-      <text class="lini-text" x="-169.4" y="11.98" style="fill: #888; font-size: 11px">10</text>
-      <text class="lini-text" x="-169.4" y="-17.48" style="fill: #888; font-size: 11px">15</text>
-      <text class="lini-text" x="-169.4" y="-46.94" style="fill: #888; font-size: 11px">20</text>
-      <text class="lini-text" x="-169.4" y="-76.4" style="fill: #888; font-size: 11px">25</text>
-      <text class="lini-text" x="-102.6667" y="82.6" style="fill: #888; font-size: 11px">15 cm³</text>
-      <text class="lini-text" x="5.6" y="82.6" style="fill: #888; font-size: 11px">30 cm³</text>
-      <text class="lini-text" x="113.8667" y="82.6" style="fill: #888; font-size: 11px">50 cm³</text>
+      <text class="lini-text" x="-166.1" y="70.9" style="fill: #888; font-weight: normal; font-size: 11px">0</text>
+      <text class="lini-text" x="-166.1" y="41.44" style="fill: #888; font-weight: normal; font-size: 11px">5</text>
+      <text class="lini-text" x="-169.4" y="11.98" style="fill: #888; font-weight: normal; font-size: 11px">10</text>
+      <text class="lini-text" x="-169.4" y="-17.48" style="fill: #888; font-weight: normal; font-size: 11px">15</text>
+      <text class="lini-text" x="-169.4" y="-46.94" style="fill: #888; font-weight: normal; font-size: 11px">20</text>
+      <text class="lini-text" x="-169.4" y="-76.4" style="fill: #888; font-weight: normal; font-size: 11px">25</text>
+      <text class="lini-text" x="-102.6667" y="82.6" style="fill: #888; font-weight: normal; font-size: 11px">15 cm³</text>
+      <text class="lini-text" x="5.6" y="82.6" style="fill: #888; font-weight: normal; font-size: 11px">30 cm³</text>
+      <text class="lini-text" x="113.8667" y="82.6" style="fill: #888; font-weight: normal; font-size: 11px">50 cm³</text>
       <text class="lini-text" x="0" y="-92.9" style="font-weight: bold; font-size: 13px">Cycle time (s)</text>
       <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(-58.1,100.1)">
         <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
       </g>
-      <text class="lini-text" x="-27.8" y="100.1" style="font-size: 11px">1.8 kW</text>
+      <text class="lini-text" x="-27.8" y="100.1" style="font-weight: bold; font-size: 11px">1.8 kW</text>
       <g class="lini-node lini-block" style="fill: #00bcb1; stroke-width: 0" transform="translate(13.5,100.1)">
         <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
       </g>
-      <text class="lini-text" x="43.8" y="100.1" style="font-size: 11px">2.3 kW</text>
+      <text class="lini-text" x="43.8" y="100.1" style="font-weight: bold; font-size: 11px">2.3 kW</text>
     </g>
   </g>
   <g class="lini-links"/>

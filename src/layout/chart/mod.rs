@@ -116,7 +116,8 @@ pub(super) fn layout_chart(
     // reqs gathered above, all placed by one greedy pass after the series / axes / title
     // so they sit above them and below the hover cards.
     labels::collect_series(&plot, &chart, &mut reqs);
-    kids.extend(labels::place(&reqs, &plot));
+    let lines = labels::series_lines(&plot, &chart);
+    kids.extend(labels::place(&reqs, &plot, &lines));
 
     let kids = tooltip::apply(kids, chart.tooltip, w, h);
     Ok(chart_box(inst, w, h, kids))
@@ -306,13 +307,14 @@ pub(super) fn lay_out_legend(
         let mut swatch = prim::rect(x + SW / 2.0, cy, SW, SW, color.clone(), 1.0);
         prim::round(&mut swatch, 2.0); // soft swatch corners ([CHARTS.md] §9)
         out.push(swatch);
+        // The legend stays bold (the chart's chrome), like the title ([CHARTS.md] §9).
         out.push(prim::text(
             label,
             x + SW + GAP + tw / 2.0,
             cy,
             LABEL_SIZE,
             None,
-            false,
+            true,
         ));
         x += SW + GAP + tw + ITEM_GAP;
     }
@@ -863,6 +865,27 @@ mod tests {
             "|chart| { categories: \"a\" \"b\" } [\n  |line| { data: 3 6; marker: diamond }\n]\n",
         );
         assert!(s.contains("<polygon"), "diamond marker is a polygon: {s}");
+    }
+
+    #[test]
+    fn data_text_is_normal_weight_chrome_is_bold() {
+        // The diagram-wide default is bold; a chart keeps it for the title and legend but
+        // states `normal` for its axis ticks (and tags) ([CHARTS.md] §9).
+        let s = svg(
+            "|chart| \"Cost\" { categories: \"a\" \"b\" } [\n  |bars| \"A\" { data: 5 8 }\n  |bars| \"B\" { data: 3 4 }\n]\n",
+        );
+        assert!(
+            s.contains("font-weight: bold; font-size: 13px\">Cost</text>"),
+            "title bold: {s}"
+        );
+        assert!(
+            s.contains("font-weight: bold; font-size: 11px\">A</text>"),
+            "legend bold: {s}"
+        );
+        assert!(
+            s.contains("font-weight: normal; font-size: 11px\">a</text>"),
+            "axis tick normal: {s}"
+        );
     }
 
     #[test]

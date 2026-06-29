@@ -55,19 +55,19 @@ input_file: samples/chart_segmented.lini
       <g class="lini-node lini-line" style="stroke: #b8476e" transform="translate(0,0)">
         <polyline points="-163.4,58.8736 -159.4447,58.8736 -155.4893,58.8736 -151.534,58.8736 -147.5787,58.8736 -143.6234,58.8736 -139.668,58.8736 -135.7127,58.8736 -131.7574,58.8736 -127.802,58.8733 -123.8467,58.8704 -119.8914,58.8485 -115.9361,58.7199 -111.9807,58.15 -108.0254,56.2541 -104.0701,51.5804 -100.1147,43.257 -96.1594,33.156 -92.2041,26.301 -88.2488,27.1451 -84.2934,35.1039 -80.3381,45.1782 -76.3828,52.8049 -72.4275,56.8054 -72.4275,20.62 -67.6246,17.9775 -62.8217,14.9557 -58.0188,11.772 -53.2159,8.4783 -48.413,5.1004 -43.6101,1.6538 -38.8072,-1.851 -34.0043,-5.4063 -29.2014,-9.0065 -24.3985,-12.647 -19.5956,-16.3242 -14.7927,-20.0349 -9.9898,-23.7768 -5.1869,-27.5476 -0.384,-31.3454 4.4189,-35.1686 9.2218,-39.0159 14.0247,-42.8858 18.8276,-46.7774 23.6305,-50.6894 28.4334,-54.6211 33.2363,-58.5715 38.0392,-62.54 38.0392,48.34 43.6897,48.34 49.3402,48.34 54.9906,48.34 60.6411,48.34 66.2916,48.34 71.942,48.34 77.5925,48.34 83.243,48.34 88.8934,48.34 94.5439,48.34 100.1944,48.34 105.8448,48.34 111.4953,48.34 117.1458,48.34 122.7962,48.34 128.4467,48.34 134.0972,48.34 139.7477,48.34 145.3981,48.34 151.0486,48.34 156.6991,48.34 162.3495,48.34 168,48.34"/>
       </g>
-      <text class="lini-text" x="-172.7" y="62.2" style="fill: #888; font-size: 11px">0</text>
-      <text class="lini-text" x="-172.7" y="34.48" style="fill: #888; font-size: 11px">1</text>
-      <text class="lini-text" x="-172.7" y="6.76" style="fill: #888; font-size: 11px">2</text>
-      <text class="lini-text" x="-172.7" y="-20.96" style="fill: #888; font-size: 11px">3</text>
-      <text class="lini-text" x="-172.7" y="-48.68" style="fill: #888; font-size: 11px">4</text>
-      <text class="lini-text" x="-172.7" y="-76.4" style="fill: #888; font-size: 11px">5</text>
-      <text class="lini-text" x="-163.4" y="73.9" style="fill: #888; font-size: 11px">0</text>
-      <text class="lini-text" x="-33.4392" y="73.9" style="fill: #888; font-size: 11px">2</text>
-      <text class="lini-text" x="96.5216" y="73.9" style="fill: #888; font-size: 11px">4</text>
-      <text class="lini-text" x="2.3" y="99.6" style="fill: #888; font-size: 11px">phase</text>
-      <text class="lini-text" x="-117.9137" y="84.9" style="fill: #00b2e5; font-size: 11px">Close</text>
-      <text class="lini-text" x="-17.1941" y="84.9" style="fill: #ec6e97; font-size: 11px">Inject</text>
-      <text class="lini-text" x="103.0196" y="84.9" style="fill: #cf9300; font-size: 11px">Hold</text>
+      <text class="lini-text" x="-172.7" y="62.2" style="fill: #888; font-weight: normal; font-size: 11px">0</text>
+      <text class="lini-text" x="-172.7" y="34.48" style="fill: #888; font-weight: normal; font-size: 11px">1</text>
+      <text class="lini-text" x="-172.7" y="6.76" style="fill: #888; font-weight: normal; font-size: 11px">2</text>
+      <text class="lini-text" x="-172.7" y="-20.96" style="fill: #888; font-weight: normal; font-size: 11px">3</text>
+      <text class="lini-text" x="-172.7" y="-48.68" style="fill: #888; font-weight: normal; font-size: 11px">4</text>
+      <text class="lini-text" x="-172.7" y="-76.4" style="fill: #888; font-weight: normal; font-size: 11px">5</text>
+      <text class="lini-text" x="-163.4" y="73.9" style="fill: #888; font-weight: normal; font-size: 11px">0</text>
+      <text class="lini-text" x="-33.4392" y="73.9" style="fill: #888; font-weight: normal; font-size: 11px">2</text>
+      <text class="lini-text" x="96.5216" y="73.9" style="fill: #888; font-weight: normal; font-size: 11px">4</text>
+      <text class="lini-text" x="2.3" y="99.6" style="fill: #888; font-weight: normal; font-size: 11px">phase</text>
+      <text class="lini-text" x="-117.9137" y="84.9" style="fill: #00b2e5; font-weight: normal; font-size: 11px">Close</text>
+      <text class="lini-text" x="-17.1941" y="84.9" style="fill: #ec6e97; font-weight: normal; font-size: 11px">Inject</text>
+      <text class="lini-text" x="103.0196" y="84.9" style="fill: #cf9300; font-weight: normal; font-size: 11px">Hold</text>
       <text class="lini-text" x="0" y="-92.9" style="font-weight: bold; font-size: 13px">Motor draw (A)</text>
     </g>
   </g>

@@ -44,30 +44,30 @@ input_file: samples/chart_fn.lini
       <g class="lini-node lini-line" style="stroke: #008e85; stroke-dasharray: 6,4.5" transform="translate(0,0)">
         <polyline points="-143.6,55.5 -131.9739,51.2452 -120.3478,46.9904 -108.7217,42.7357 -97.0957,38.4809 -85.4696,34.2261 -73.8435,29.9713 -62.2174,25.7165 -50.5913,21.4617 -38.9652,17.207 -27.3391,12.9522 -15.713,8.6974 -4.087,4.4426 7.5391,0.1878 19.1652,-4.067 30.7913,-8.3217 42.4174,-12.5765 54.0435,-16.8313 65.6696,-21.0861 77.2957,-25.3409 88.9217,-29.5957 100.5478,-33.8504 112.1739,-38.1052 123.8,-42.36"/>
       </g>
-      <text class="lini-text" x="-152.9" y="55.5" style="fill: #888; font-size: 11px">0</text>
-      <text class="lini-text" x="-159.5" y="2.5455" style="fill: #888; font-size: 11px">500</text>
-      <text class="lini-text" x="-162.8" y="-50.4091" style="fill: #888; font-size: 11px">1000</text>
-      <text class="lini-text" x="-97.4" y="-67" style="fill: #888; font-size: 11px">Pressure (bar)</text>
-      <text class="lini-text" x="149.6" y="55.5" style="fill: #888; font-size: 11px">0cm³/s</text>
-      <text class="lini-text" x="152.9" y="32.2" style="fill: #888; font-size: 11px">10cm³/s</text>
-      <text class="lini-text" x="152.9" y="8.9" style="fill: #888; font-size: 11px">20cm³/s</text>
-      <text class="lini-text" x="152.9" y="-14.4" style="fill: #888; font-size: 11px">30cm³/s</text>
-      <text class="lini-text" x="152.9" y="-37.7" style="fill: #888; font-size: 11px">40cm³/s</text>
-      <text class="lini-text" x="152.9" y="-61" style="fill: #888; font-size: 11px">50cm³/s</text>
-      <text class="lini-text" x="110.6" y="-67" style="fill: #888; font-size: 11px">Flow</text>
-      <text class="lini-text" x="-143.6" y="67.2" style="fill: #888; font-size: 11px">0</text>
-      <text class="lini-text" x="-43.0737" y="67.2" style="fill: #888; font-size: 11px">50</text>
-      <text class="lini-text" x="57.4526" y="67.2" style="fill: #888; font-size: 11px">100</text>
-      <text class="lini-text" x="-9.9" y="81.9" style="fill: #888; font-size: 11px">Speed (mm/s)</text>
+      <text class="lini-text" x="-152.9" y="55.5" style="fill: #888; font-weight: normal; font-size: 11px">0</text>
+      <text class="lini-text" x="-159.5" y="2.5455" style="fill: #888; font-weight: normal; font-size: 11px">500</text>
+      <text class="lini-text" x="-162.8" y="-50.4091" style="fill: #888; font-weight: normal; font-size: 11px">1000</text>
+      <text class="lini-text" x="-97.4" y="-67" style="fill: #888; font-weight: normal; font-size: 11px">Pressure (bar)</text>
+      <text class="lini-text" x="149.6" y="55.5" style="fill: #888; font-weight: normal; font-size: 11px">0cm³/s</text>
+      <text class="lini-text" x="152.9" y="32.2" style="fill: #888; font-weight: normal; font-size: 11px">10cm³/s</text>
+      <text class="lini-text" x="152.9" y="8.9" style="fill: #888; font-weight: normal; font-size: 11px">20cm³/s</text>
+      <text class="lini-text" x="152.9" y="-14.4" style="fill: #888; font-weight: normal; font-size: 11px">30cm³/s</text>
+      <text class="lini-text" x="152.9" y="-37.7" style="fill: #888; font-weight: normal; font-size: 11px">40cm³/s</text>
+      <text class="lini-text" x="152.9" y="-61" style="fill: #888; font-weight: normal; font-size: 11px">50cm³/s</text>
+      <text class="lini-text" x="110.6" y="-67" style="fill: #888; font-weight: normal; font-size: 11px">Flow</text>
+      <text class="lini-text" x="-143.6" y="67.2" style="fill: #888; font-weight: normal; font-size: 11px">0</text>
+      <text class="lini-text" x="-43.0737" y="67.2" style="fill: #888; font-weight: normal; font-size: 11px">50</text>
+      <text class="lini-text" x="57.4526" y="67.2" style="fill: #888; font-weight: normal; font-size: 11px">100</text>
+      <text class="lini-text" x="-9.9" y="81.9" style="fill: #888; font-weight: normal; font-size: 11px">Speed (mm/s)</text>
       <text class="lini-text" x="0" y="-92.9" style="font-weight: bold; font-size: 13px">Injection profile</text>
       <g class="lini-node lini-block" style="fill: #00bcb1; stroke-width: 0" transform="translate(-58.1,100.1)">
         <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
       </g>
-      <text class="lini-text" x="-21.2" y="100.1" style="font-size: 11px">Pressure</text>
+      <text class="lini-text" x="-21.2" y="100.1" style="font-weight: bold; font-size: 11px">Pressure</text>
       <g class="lini-node lini-block" style="fill: #008e85; stroke-width: 0" transform="translate(26.7,100.1)">
         <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
       </g>
-      <text class="lini-text" x="50.4" y="100.1" style="font-size: 11px">Flow</text>
+      <text class="lini-text" x="50.4" y="100.1" style="font-weight: bold; font-size: 11px">Flow</text>
     </g>
   </g>
   <g class="lini-links"/>

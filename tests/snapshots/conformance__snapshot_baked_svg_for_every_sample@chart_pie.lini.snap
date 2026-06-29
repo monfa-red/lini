@@ -36,19 +36,19 @@ input_file: samples/chart_pie.lini
       <g class="lini-node lini-block" style="fill: #ec6e97; stroke-width: 0" transform="translate(-136.3,130.1)">
         <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
       </g>
-      <text class="lini-text" x="-106" y="130.1" style="font-size: 11px">Search</text>
+      <text class="lini-text" x="-106" y="130.1" style="font-weight: bold; font-size: 11px">Search</text>
       <g class="lini-node lini-block" style="fill: #00bcb1; stroke-width: 0" transform="translate(-64.7,130.1)">
         <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
       </g>
-      <text class="lini-text" x="-34.4" y="130.1" style="font-size: 11px">Direct</text>
+      <text class="lini-text" x="-34.4" y="130.1" style="font-weight: bold; font-size: 11px">Direct</text>
       <g class="lini-node lini-block" style="fill: #e78022; stroke-width: 0" transform="translate(6.9,130.1)">
         <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
       </g>
-      <text class="lini-text" x="37.2" y="130.1" style="font-size: 11px">Social</text>
+      <text class="lini-text" x="37.2" y="130.1" style="font-weight: bold; font-size: 11px">Social</text>
       <g class="lini-node lini-block" style="fill: #00b2e5; stroke-width: 0" transform="translate(78.5,130.1)">
         <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
       </g>
-      <text class="lini-text" x="115.4" y="130.1" style="font-size: 11px">Referral</text>
+      <text class="lini-text" x="115.4" y="130.1" style="font-weight: bold; font-size: 11px">Referral</text>
     </g>
   </g>
   <g class="lini-links"/>
