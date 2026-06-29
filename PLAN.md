@@ -11,8 +11,19 @@ This is a roadmap, not a line-by-line script: each step says its purpose, the fi
 touches, **what it reuses**, **what is genuinely new**, the refactors it performs, what
 it defers, and how it is verified. Decide the fine detail while implementing.
 
-**Status (branch `charts`):** steps 1 ✓, 2 ✓, 3 ✓, 4 ✓, 5 ✓, 6 ✓ done. Step 7 (rich
-`:hover` tooltips + `fmt` round-trip + final polish) next.
+**Status (branch `charts`):** steps 1–7 ✓ all done — the whole `CHARTS.md` surface is
+built. Merge `charts` → `main` is the user's to do.
+Step 7 added `tooltip: rich | title | none` (`tooltip.rs`): a one-pass over the lowered
+nodes that, for `rich` (default), drops a hidden `.lini-chart-tip` card after each titled
+mark, revealed by a CSS `:hover` rule the renderer emits **live-only** — `--bake-vars`
+drops both the card (skipped in `render_node`) and the rule, so baked output is byte-for-
+byte unchanged. `title` keeps only the native `<title>` floor, `none` strips it. The two
+tooltip role vars (`tip-bg`/`tip-fg`) and `prim::group` are the new shared pieces. The
+chart samples were canonicalized with `lini fmt` (idempotent + semantic-preserving — no
+snapshot change); `tests/fmt.rs` already round-trips every sample, charts included.
+Deferred (CHARTS §20, unchanged): gauge, stacked areas, polar circular gridlines +
+start-angle, on-slice / donut-centre labels, per-segment style list, time scale,
+sunburst, per-datum style list; plus row annotations (column-oriented today).
 Step 6 added `layout: pie` (the sibling layout in `pie.rs`: value→angle wedges via the
 shared `prim::wedge`, `hole:` donut, per-slice palette, §18 pie errors) and `|bubble|`
 (in `bubble.rs`: area-scaled ovals on the cartesian plane, label-when-it-fits-else-hover,

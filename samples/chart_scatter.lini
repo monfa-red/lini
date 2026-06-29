@@ -1,5 +1,5 @@
 |chart| "Markets" [
-  |axis| "growth %" { side: bottom }
-  |axis| "share %" { side: left }
-  |dots| { data: 12 40, 25 55, 38 30, 8 22, 30 12 }
+  |axis| "growth %" { side: bottom; }
+  |axis| "share %" { side: left; }
+  |dots| { data: 12 40, 25 55, 38 30, 8 22, 30 12; }
 ]

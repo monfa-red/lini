@@ -16,6 +16,7 @@ pub fn emit(
     rules: &RuleSet,
     used: &BTreeSet<String>,
     opts: &Options,
+    tooltips: bool,
 ) {
     out.push_str("  <style>\n");
 
@@ -65,6 +66,12 @@ pub fn emit(
     }
 
     rules.emit(out);
+    // The rich chart tooltip ([CHARTS.md] §14): a hover on a mark reveals its adjacent
+    // `.lini-chart-tip` card. Live-only — `--bake-vars` drops both the card and this rule.
+    if tooltips {
+        out.push_str("    .lini .lini-chart-tip { visibility: hidden; pointer-events: none; }\n");
+        out.push_str("    .lini .lini-node:hover + .lini-chart-tip { visibility: visible; }\n");
+    }
     out.push_str("  </style>\n");
 }
 

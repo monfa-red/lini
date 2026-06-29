@@ -1,6 +1,6 @@
 |pie| "Traffic sources" [
-  |slice| "Search" { value: 45 }
-  |slice| "Direct" { value: 25 }
-  |slice| "Social" { value: 18 }
-  |slice| "Referral" { value: 12 }
+  |slice| "Search" { value: 45; }
+  |slice| "Direct" { value: 25; }
+  |slice| "Social" { value: 18; }
+  |slice| "Referral" { value: 12; }
 ]

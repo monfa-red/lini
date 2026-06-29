@@ -148,6 +148,16 @@ pub fn line(points: Vec<(f64, f64)>, stroke: ResolvedValue, width: f64) -> Place
     n
 }
 
+/// A transparent group wrapping `children` (e.g. a tooltip card's box + text), tagged
+/// with `type_chain` so it carries `.lini-{name}` classes. `bbox` is its absolute bounds
+/// (the children are positioned absolutely; the group keeps `cx`/`cy` at the origin).
+pub fn group(children: Vec<PlacedNode>, type_chain: Vec<String>, bbox: Bbox) -> PlacedNode {
+    let mut n = node(NodeKind::Block, bbox);
+    n.type_chain = type_chain;
+    n.children = children;
+    n
+}
+
 /// Centred text at (cx, cy) — anchor middle, the `.lini-text` default. `size` (and
 /// `bold` / `color`) ride `own_style`, so they appear in the output, overriding the
 /// chart `<g>`'s inherited root font.

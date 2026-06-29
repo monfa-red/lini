@@ -72,6 +72,10 @@ pub fn built_in_defaults() -> VarTable {
         "grid",
         light_dark(rgba(0.0, 0.0, 0.0, 0.10), rgba(255.0, 255.0, 255.0, 0.14)),
     );
+    // The rich chart tooltip card ([CHARTS.md] §14): a solid contrasting surface and its
+    // text — inverted from the page so the card pops in either theme.
+    set_visual(&mut t, "tip-bg", light_dark(hex("333"), hex("e8e8ea")));
+    set_visual(&mut t, "tip-fg", light_dark(ident("white"), hex("1a1a1f")));
     set_visual(
         &mut t,
         "caption-color",

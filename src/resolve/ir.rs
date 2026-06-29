@@ -161,6 +161,11 @@ impl AttrMap {
         self.map.get(name)
     }
 
+    /// Remove an attr, if present.
+    pub fn remove(&mut self, name: &str) {
+        self.map.remove(name);
+    }
+
     /// The attr's numeric value, if it has one (see [`ResolvedValue::as_number`]).
     pub fn number(&self, name: &str) -> Option<f64> {
         self.get(name).and_then(ResolvedValue::as_number)

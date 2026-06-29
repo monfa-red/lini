@@ -1,7 +1,11 @@
 |chart| "Injection profile" [
-  |axis#bar|  "Pressure (bar)" { side: left;  range: 0 1100 }
-  |axis#flow| "Flow"          { side: right; range: 0 50; gridlines: none; unit: " cm³/s" }
-  |axis#x|    "Speed (mm/s)"  { side: bottom; range: 0 133 }
-  |area| "Pressure" { axis: bar;  fn: `x <= 93 ? 1000 : 1000 - 319*((x-93)/40)`; fill: --teal }
-  |line| "Flow"     { axis: flow; fn: `x*42/133`; stroke-style: dashed }
+  |axis#bar| "Pressure (bar)" { side: left; range: 0 1100; }
+  |axis#flow| "Flow" {
+    side: right; range: 0 50; gridlines: none; unit: "cm³/s";
+  }
+  |axis#x| "Speed (mm/s)" { side: bottom; range: 0 133; }
+  |area| "Pressure" {
+    axis: bar; fn: `x <= 93 ? 1000 : 1000 - 319*((x-93)/40)`; fill: --teal;
+  }
+  |line| "Flow" { axis: flow; fn: `x*42/133`; stroke-style: dashed; }
 ]

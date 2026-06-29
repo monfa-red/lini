@@ -1,4 +1,4 @@
-|chart| "Requests by tier" { categories: "free" "pro" "team" "ent" } [
-  |axis| "req/s" { side: left; scale: log }
-  |bars| { data: 5 80 1200 45000 }
+|chart| "Requests by tier" { categories: "free" "pro" "team" "ent"; } [
+  |axis| "req/s" { side: left; scale: log; }
+  |bars| { data: 5 80 1200 45000; }
 ]

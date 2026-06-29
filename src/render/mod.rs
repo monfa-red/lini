@@ -42,7 +42,9 @@ pub fn render(laid_out: &LaidOut, opts: &Options) -> String {
     // color) for the whole tree. Per-node differences ride `style=`.
     let ruleset = rules::build(laid_out, opts);
     let used = used_vars::referenced(laid_out, &ruleset);
-    style_block::emit(&mut out, &laid_out.vars, &ruleset, &used, opts);
+    // The `:hover` tooltip rule is emitted only when a live chart carries a tip card.
+    let tooltips = !opts.bake_vars && any_chart_tip(&laid_out.nodes);
+    style_block::emit(&mut out, &laid_out.vars, &ruleset, &used, opts, tooltips);
 
     let filters = FilterTable::collect(&laid_out.nodes, &laid_out.vars, opts);
     if filters.is_empty() && laid_out.gradients.is_empty() {
@@ -117,6 +119,14 @@ pub fn render(laid_out: &LaidOut, opts: &Options) -> String {
     out
 }
 
+/// Whether any node (recursively) is a rich tooltip card — the signal to emit the
+/// `:hover` reveal rule ([CHARTS.md] §14).
+fn any_chart_tip(nodes: &[PlacedNode]) -> bool {
+    nodes
+        .iter()
+        .any(|n| n.type_chain.iter().any(|t| t == "chart-tip") || any_chart_tip(&n.children))
+}
+
 fn render_node(
     out: &mut String,
     n: &PlacedNode,
@@ -127,6 +137,11 @@ fn render_node(
     opts: &Options,
 ) {
     use std::fmt::Write;
+    // The rich chart tooltip card is live-only ([CHARTS.md] §14): a baked SVG keeps the
+    // `<title>` floor and drops the `:hover` card, so skip it (and its subtree) here.
+    if opts.bake_vars && n.type_chain.iter().any(|t| t == "chart-tip") {
+        return;
+    }
     // Text renders as a bare `<text class="lini-text">` at its placed position —
     // no wrapping `<g>` (SPEC §13). Font and colour inherit from the enclosing box.
     if n.kind == NodeKind::Text {

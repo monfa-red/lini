@@ -1,5 +1,7 @@
-|chart| "Quarterly hires by team" { direction: row; categories: "Engineering" "Sales" "Support" "Ops" } [
-  |axis| "people" { side: bottom }
-  |bars| "Q1" { data: 12 8 5 3 }
-  |bars| "Q2" { data: 15 10 6 4 }
+|chart| "Quarterly hires by team" {
+  direction: row; categories: "Engineering" "Sales" "Support" "Ops";
+} [
+  |axis| "people" { side: bottom; }
+  |bars| "Q1" { data: 12 8 5 3; }
+  |bars| "Q2" { data: 15 10 6 4; }
 ]

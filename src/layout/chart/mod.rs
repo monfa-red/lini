@@ -8,7 +8,8 @@
 //! annotations, a legend, and a title. Every series lowers through one `Plot::project`,
 //! so the `direction: column | row | radial` flip (a radar reusing the cartesian
 //! builders) is a projector change, not a rewrite. `layout: pie` is the sibling layout
-//! (`pie.rs`). Rich `:hover` tooltips + `fmt` polish are the remaining step (`PLAN.md`).
+//! (`pie.rs`). Hover is a native `<title>` floor plus an optional rich `:hover` card
+//! (`tooltip.rs`, live-only) — `tooltip: rich | title | none`.
 
 mod annot;
 mod axis;
@@ -22,6 +23,7 @@ mod prim;
 mod project;
 mod radial;
 mod scale;
+mod tooltip;
 
 pub(super) use pie::{is_pie, layout_pie};
 
@@ -105,6 +107,7 @@ pub(super) fn layout_chart(
         lay_out_legend(&legend, h / 2.0 - LABEL_SIZE * 0.9, &mut kids);
     }
 
+    let kids = tooltip::apply(kids, tooltip::read(&inst.attrs)?, w, h);
     Ok(chart_box(inst, w, h, kids))
 }
 
@@ -693,5 +696,33 @@ mod tests {
             "|chart| [\n  |axis| { side: bottom }\n  |axis| { side: left }\n  |bubble| \"A\" { at: 1 2 }\n]\n",
         );
         assert!(e.contains("needs 'at:' (x y) and 'value:'"), "{e}");
+    }
+
+    #[test]
+    fn rich_tooltips_add_a_hover_card_over_the_title_floor() {
+        let s = svg("|chart| { categories: \"a\" } [\n  |bars| { data: 5 }\n]\n");
+        assert!(s.contains("lini-chart-tip"), "the rich hover card: {s}");
+        assert!(
+            s.contains("<title>a: 5</title>"),
+            "the title floor stays: {s}"
+        );
+        assert!(
+            s.contains(":hover + .lini-chart-tip"),
+            "the reveal rule: {s}"
+        );
+    }
+
+    #[test]
+    fn tooltip_title_keeps_the_floor_without_a_card() {
+        let s = svg("|chart| { categories: \"a\"; tooltip: title } [\n  |bars| { data: 5 }\n]\n");
+        assert!(s.contains("<title>a: 5</title>"), "the title floor: {s}");
+        assert!(!s.contains("lini-chart-tip"), "no card: {s}");
+    }
+
+    #[test]
+    fn tooltip_none_drops_the_floor() {
+        let s = svg("|chart| { categories: \"a\"; tooltip: none } [\n  |bars| { data: 5 }\n]\n");
+        assert!(!s.contains("<title>"), "no title floor: {s}");
+        assert!(!s.contains("lini-chart-tip"), "no card: {s}");
     }
 }

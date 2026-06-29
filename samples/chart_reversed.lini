@@ -1,4 +1,4 @@
-|chart| "League rank" { categories: "Q1" "Q2" "Q3" "Q4" } [
-  |axis| "rank" { side: left; range: 8 1 }
-  |line| "team" { data: 6 4 5 2; marker: dot }
+|chart| "League rank" { categories: "Q1" "Q2" "Q3" "Q4"; } [
+  |axis| "rank" { side: left; range: 8 1; }
+  |line| "team" { data: 6 4 5 2; marker: dot; }
 ]

@@ -1,4 +1,4 @@
-|chart| "Latency (ms)" { categories: "p50" "p90" "p99" "p999" } [
-  |line| "v1" { data: 12 40 120 480; marker: dot }
-  |line| "v2" { data: 9 28 75 300; stroke-style: dashed }
+|chart| "Latency (ms)" { categories: "p50" "p90" "p99" "p999"; } [
+  |line| "v1" { data: 12 40 120 480; marker: dot; }
+  |line| "v2" { data: 9 28 75 300; stroke-style: dashed; }
 ]

@@ -1,5 +1,7 @@
-|chart| "Revenue by region ($k)" { categories: "Q1" "Q2" "Q3" "Q4"; bars: stacked } [
-  |bars| "NA" { data: 40 45 50 60 }
-  |bars| "EU" { data: 30 35 33 40 }
-  |bars| "APAC" { data: 20 25 30 38 }
+|chart| "Revenue by region ($k)" {
+  categories: "Q1" "Q2" "Q3" "Q4"; bars: stacked;
+} [
+  |bars| "NA" { data: 40 45 50 60; }
+  |bars| "EU" { data: 30 35 33 40; }
+  |bars| "APAC" { data: 20 25 30 38; }
 ]

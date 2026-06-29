@@ -1,5 +1,5 @@
-|pie| "Spend" { hole: 0.5 } [
-  |slice| "Ads" { value: 40 }
-  |slice| "SEO" { value: 30 }
-  |slice| "Direct" { value: 30 }
+|pie| "Spend" { hole: 0.5; } [
+  |slice| "Ads" { value: 40; }
+  |slice| "SEO" { value: 30; }
+  |slice| "Direct" { value: 30; }
 ]

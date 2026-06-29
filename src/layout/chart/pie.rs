@@ -69,6 +69,7 @@ pub fn layout_pie(inst: &ResolvedInst) -> Result<PlacedNode, Error> {
     if entries.len() >= 2 {
         lay_out_legend(&entries, h / 2.0 - LABEL_SIZE * 0.9, &mut kids);
     }
+    let kids = super::tooltip::apply(kids, super::tooltip::read(&inst.attrs)?, w, h);
     Ok(chart_box(inst, w, h, kids))
 }
 

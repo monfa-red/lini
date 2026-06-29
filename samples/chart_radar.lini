@@ -1,5 +1,7 @@
-|chart| "Ship profiles" { direction: radial; categories: "Speed" "Range" "Armor" "Cost" "Stealth" } [
-  |axis| { range: 0 5 }
-  |line| "Scout" { data: 5 4 2 3 5 }
-  |area| "Cruiser" { data: 3 3 5 4 2; fill: --teal }
+|chart| "Ship profiles" {
+  direction: radial; categories: "Speed" "Range" "Armor" "Cost" "Stealth";
+} [
+  |axis| { range: 0 5; }
+  |line| "Scout" { data: 5 4 2 3 5; }
+  |area| "Cruiser" { data: 3 3 5 4 2; fill: --teal; }
 ]
