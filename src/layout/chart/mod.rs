@@ -71,6 +71,9 @@ pub(super) fn layout_chart(
     // radial chart reuses the exact `areas`/`lines`/`dots`/`bars` passes; only the
     // gridlines, labels, and annotations differ by direction.
     let mut kids = Vec::new();
+    // Inline-label requests accrue as the marks lay out (bubbles, `|mark|` points), then
+    // join the series' `tags:` for one placement pass ([CHARTS.md] §14).
+    let mut reqs = Vec::new();
     match plot.dir {
         Dir::Radial => radial::gridlines(&plot, &chart, &mut kids),
         Dir::Column => {
@@ -83,13 +86,13 @@ pub(super) fn layout_chart(
     bars::lay_out(&plot, &chart, &mut kids);
     marks::lines(&plot, &chart, &mut kids);
     marks::dots(&plot, &chart, &mut kids);
-    bubble::lay_out(&plot, &chart, &mut kids);
+    bubble::lay_out(&plot, &chart, &mut kids, &mut reqs);
     match plot.dir {
         Dir::Radial => radial::labels(&plot, &chart, &mut kids),
         // Bands / annotations are column-oriented today; in a row they are deferred.
         Dir::Row => axis::labels(&plot, &chart, &mut kids),
         Dir::Column => {
-            annot::marks(&plot, &chart, &mut kids);
+            annot::marks(&plot, &chart, &mut kids, &mut reqs);
             axis::labels(&plot, &chart, &mut kids);
             annot::band_ticks(&plot, &chart, &mut kids);
         }
@@ -109,9 +112,10 @@ pub(super) fn layout_chart(
         lay_out_legend(&legend, h / 2.0 - LABEL_SIZE * 0.9, &mut kids);
     }
 
-    // Inline data labels ([CHARTS.md] §14): the series' `tags:`, placed by one greedy pass
-    // after the series / axes / title so they sit above them and below the hover cards.
-    let reqs = labels::collect(&plot, &chart);
+    // Inline data labels ([CHARTS.md] §14): the series' `tags:` join the bubble / mark
+    // reqs gathered above, all placed by one greedy pass after the series / axes / title
+    // so they sit above them and below the hover cards.
+    labels::collect_series(&plot, &chart, &mut reqs);
     kids.extend(labels::place(&reqs, &plot));
 
     let kids = tooltip::apply(kids, chart.tooltip, w, h);

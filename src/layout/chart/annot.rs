@@ -4,10 +4,12 @@
 //! named axis through one projector (`axis_px`), so they survive a `direction` flip and
 //! lower to the same `prim::*` primitives the renderer already draws.
 
+use super::labels;
 use super::marks::marker_diameter;
 use super::model::{AxisRef, Chart, Mark, MarkAt};
 use super::prim;
 use super::project::Plot;
+use super::tooltip::Tooltip;
 use crate::layout::PlacedNode;
 use crate::resolve::{MarkerKind, ResolvedValue};
 
@@ -138,11 +140,11 @@ pub fn x_band_row(chart: &Chart) -> f64 {
 
 /// `|mark|` annotations ([CHARTS.md] §8): a reference line at a value, or a labelled
 /// point. Drawn after the series, before the axes / labels ([§15]).
-pub fn marks(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
+pub fn marks(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>, reqs: &mut Vec<labels::Req>) {
     for m in &chart.marks {
         match m.at {
             MarkAt::Line(v) => ref_line(plot, chart, m, v, out),
-            MarkAt::Point(x, y) => point(plot, chart, m, x, y, out),
+            MarkAt::Point(x, y) => point(plot, chart, m, x, y, out, reqs),
         }
     }
 }
@@ -185,8 +187,19 @@ fn ref_line(plot: &Plot, chart: &Chart, m: &Mark, v: f64, out: &mut Vec<PlacedNo
 }
 
 /// A labelled point at `(x, y)` — `x` on the domain axis, `y` on the bound value axis
-/// (the primary axis if the mark binds the x axis). `marker: none` drops the dot.
-fn point(plot: &Plot, chart: &Chart, m: &Mark, x: f64, y: f64, out: &mut Vec<PlacedNode>) {
+/// (the primary axis if the mark binds the x axis). `marker: none` drops the dot. The
+/// label joins the shared placement pass ([CHARTS.md] §14) — forced (a mark is a
+/// deliberate annotation, so its label is always placed, never dropped) yet registered, so
+/// a series' tags fan out around it. `tooltip: none` suppresses it.
+fn point(
+    plot: &Plot,
+    chart: &Chart,
+    m: &Mark,
+    x: f64,
+    y: f64,
+    out: &mut Vec<PlacedNode>,
+    reqs: &mut Vec<labels::Req>,
+) {
     let vi = match &m.axis {
         AxisRef::Value(i) => *i,
         AxisRef::X => 0,
@@ -196,21 +209,20 @@ fn point(plot: &Plot, chart: &Chart, m: &Mark, x: f64, y: f64, out: &mut Vec<Pla
     }
     let xp = plot.x_at(&chart.x.scale, x);
     let yp = plot.y_at(&chart.values[vi].scale, y);
-    let has_dot = m.marker != MarkerKind::None;
-    if has_dot {
+    if m.marker != MarkerKind::None {
         let d = marker_diameter(m.marker, 2.0);
         out.push(prim::marker(m.marker, xp, yp, d, d, m.color.clone()));
     }
-    if let Some(text) = &m.label {
-        let ly = if has_dot { yp - LABEL_SIZE } else { yp };
-        out.push(prim::text(
-            text,
-            xp,
-            ly,
-            LABEL_SIZE,
-            Some(m.color.clone()),
-            false,
-        ));
+    if let Some(text) = &m.label
+        && m.tooltip != Tooltip::None
+    {
+        reqs.push(labels::Req {
+            anchor: (xp, yp),
+            text: text.clone(),
+            color: m.color.clone(),
+            forced: true,
+            inside: None,
+        });
     }
 }
 

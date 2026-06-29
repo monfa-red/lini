@@ -22,20 +22,31 @@ const GAP: f64 = 7.0;
 const PAD: f64 = 2.0;
 
 /// One label to place ([CHARTS.md] §14): the point it annotates (pixels), its text and
-/// tint, and whether it is `forced` (`always` — placed regardless) or may drop to its
-/// hover card (`auto`).
+/// the tint it takes when placed *beside* the point, whether it is `forced` (`always` —
+/// placed regardless) or may drop to its hover card (`auto`), and an optional `inside`
+/// seat (a bubble label sits centred in the bubble when it fits).
 pub(super) struct Req {
     pub anchor: (f64, f64),
     pub text: String,
     pub color: ResolvedValue,
     pub forced: bool,
+    pub inside: Option<Inside>,
 }
 
-/// Collect the inline-label requests a chart's series raise ([CHARTS.md] §14): each
+/// A bubble's first choice ([CHARTS.md] §14): when the text fits within `fit` (the
+/// bubble's diameter) the label sits centred *inside*, tinted `color` (the on-fill role);
+/// otherwise it falls through to the outside seats with the request's own tint.
+pub(super) struct Inside {
+    pub fit: f64,
+    pub color: ResolvedValue,
+}
+
+/// Append the inline-label requests a chart's series raise ([CHARTS.md] §14): each
 /// `tags:` entry on a series whose `tooltip:` shows inline, anchored on the datum's pixel
 /// point. Reuses `marks::samples`, so a tag sits on exactly the point its marker does.
-pub(super) fn collect(plot: &Plot, chart: &Chart) -> Vec<Req> {
-    let mut reqs = Vec::new();
+/// (`|bubble|` / `|mark|` push their own reqs as they lay out — the same `reqs` list, so
+/// every point label dedups against every other.)
+pub(super) fn collect_series(plot: &Plot, chart: &Chart, reqs: &mut Vec<Req>) {
     for ser in &chart.series {
         if ser.tags.is_empty() || !ser.tooltip.inline() {
             continue;
@@ -49,10 +60,10 @@ pub(super) fn collect(plot: &Plot, chart: &Chart) -> Vec<Req> {
                 text: tag.clone(),
                 color: ser.tag_color.clone(),
                 forced: ser.tooltip.forced(),
+                inside: None,
             });
         }
     }
-    reqs
 }
 
 /// Place the requests and emit their text nodes ([CHARTS.md] §14). Greedy: each label
@@ -66,29 +77,44 @@ pub(super) fn place(reqs: &[Req], plot: &Plot) -> Vec<PlacedNode> {
     for req in reqs {
         let w = prim::text_width(&req.text, SIZE);
         let h = prim::text_height(&req.text, SIZE);
-        let cands = candidates(req.anchor, w, h);
-        let free = cands.iter().copied().find(|&c| {
-            let r = Rect::around(c, w, h);
-            r.within(plot) && placed.iter().all(|p| !p.hits(&r))
-        });
-        let center = match free {
-            Some(c) => c,
-            None if req.forced => cands
-                .iter()
-                .copied()
-                .find(|&c| Rect::around(c, w, h).within(plot))
-                .unwrap_or(cands[0]),
-            None => continue, // auto: the tag lives on in the hover card
+        // Seats to try, in order, each with the tint it would wear: a bubble's inside seat
+        // first (when the text fits), then the offsets beside the point.
+        let mut seats: Vec<((f64, f64), &ResolvedValue)> = Vec::new();
+        if let Some(ins) = &req.inside
+            && w <= ins.fit
+        {
+            seats.push((req.anchor, &ins.color));
+        }
+        seats.extend(candidates(req.anchor, w, h).map(|c| (c, &req.color)));
+
+        // Pick a seat (the borrow of `placed` is confined to this block, freed before the
+        // push below). Greedy: the first clear, in-plot seat; a forced label falls back to
+        // the first in-plot seat even if it collides, then to its anchor.
+        let pick: Option<((f64, f64), ResolvedValue)> = {
+            let clear = |c: (f64, f64)| {
+                let r = Rect::around(c, w, h);
+                r.within(plot) && placed.iter().all(|p| !p.hits(&r))
+            };
+            let chosen = seats.iter().find(|(c, _)| clear(*c)).or_else(|| {
+                req.forced
+                    .then(|| {
+                        seats
+                            .iter()
+                            .find(|(c, _)| Rect::around(*c, w, h).within(plot))
+                    })
+                    .flatten()
+            });
+            match chosen {
+                Some(&(c, col)) => Some((c, col.clone())),
+                None if req.forced => Some((req.anchor, req.color.clone())),
+                None => None, // auto: the label lives on in the hover card
+            }
+        };
+        let Some((center, color)) = pick else {
+            continue;
         };
         placed.push(Rect::around(center, w, h));
-        let mut t = prim::text(
-            &req.text,
-            center.0,
-            center.1,
-            SIZE,
-            Some(req.color.clone()),
-            false,
-        );
+        let mut t = prim::text(&req.text, center.0, center.1, SIZE, Some(color), false);
         t.type_chain.push("chart-label".to_string());
         out.push(t);
     }

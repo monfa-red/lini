@@ -99,6 +99,9 @@ pub struct Mark {
     /// The accent for the line / dot / label: an explicit `stroke` / `fill`, else muted.
     pub color: ResolvedValue,
     pub stroke_style: Option<ResolvedValue>,
+    /// How the mark's label presents ([CHARTS.md] §14) — the cascaded `tooltip:`. A mark
+    /// is a deliberate annotation, so its label is forced (always placed) unless `none`.
+    pub tooltip: Tooltip,
 }
 
 /// A `|bubble|` ([CHARTS.md] §3): one labelled mark at a data point `(x, y)`, sized by
@@ -113,6 +116,9 @@ pub struct Bubble {
     /// An explicit `stroke:` outline ([CHARTS.md] §10): colour + `stroke-width`, drawn
     /// around the bubble. `None` → no outline.
     pub outline: Option<(ResolvedValue, f64)>,
+    /// How the bubble's label presents ([CHARTS.md] §14) — the cascaded `tooltip:`.
+    /// `auto` sits it inside when it fits, else beside, else on hover; `none` hover-only.
+    pub tooltip: Tooltip,
 }
 
 pub struct Series {
@@ -329,12 +335,12 @@ pub fn build(inst: &ResolvedInst, funcs: &FuncTable) -> Result<Chart, Error> {
         .collect::<Result<_, _>>()?;
     let marks: Vec<Mark> = mark_insts
         .iter()
-        .map(|m| read_mark(m, x_id, &value_specs))
+        .map(|m| read_mark(m, x_id, &value_specs, chart_tip))
         .collect::<Result<_, _>>()?;
     let bubbles: Vec<Bubble> = bubble_insts
         .iter()
         .enumerate()
-        .map(|(i, b)| read_bubble(b, i, &value_specs))
+        .map(|(i, b)| read_bubble(b, i, &value_specs, chart_tip))
         .collect::<Result<_, _>>()?;
     // The segmentation partition: x-bound bands' spans, in source order.
     let segments: Vec<(f64, f64)> = bands
@@ -398,7 +404,12 @@ fn read_gap(attrs: &AttrMap) -> f64 {
 
 /// Parse a `|bubble|` ([CHARTS.md] §3): a labelled point `at: x y`, its `value` (area
 /// size), the bound value axis, and its colour (explicit `fill`/`stroke`, else palette).
-fn read_bubble(inst: &ResolvedInst, index: usize, specs: &[AxisSpec]) -> Result<Bubble, Error> {
+fn read_bubble(
+    inst: &ResolvedInst,
+    index: usize,
+    specs: &[AxisSpec],
+    chart_tip: Tooltip,
+) -> Result<Bubble, Error> {
     let needs = || Error::at(inst.span, "a '|bubble|' needs 'at:' (x y) and 'value:'");
     let MarkAt::Point(x, y) = read_at(inst).map_err(|_| needs())? else {
         return Err(needs());
@@ -412,6 +423,7 @@ fn read_bubble(inst: &ResolvedInst, index: usize, specs: &[AxisSpec]) -> Result<
         label: label_of(inst),
         color,
         outline: outline(&inst.attrs),
+        tooltip: super::tooltip::read_or(&inst.attrs, chart_tip)?,
     })
 }
 
@@ -859,7 +871,12 @@ fn read_band(inst: &ResolvedInst, x_id: Option<&str>, specs: &[AxisSpec]) -> Res
 
 /// Parse a `|mark|` ([CHARTS.md] §8): a required bound axis, its `at` placement, the
 /// label, whether a point shows its dot, and the accent (`stroke` / `fill`, else muted).
-fn read_mark(inst: &ResolvedInst, x_id: Option<&str>, specs: &[AxisSpec]) -> Result<Mark, Error> {
+fn read_mark(
+    inst: &ResolvedInst,
+    x_id: Option<&str>,
+    specs: &[AxisSpec],
+    chart_tip: Tooltip,
+) -> Result<Mark, Error> {
     let axis = match axis_id(inst) {
         Some(id) => lookup_axis(id, x_id, specs, inst.span)?,
         None => return Err(Error::at(inst.span, "a '|mark|' needs 'axis:' to place it")),
@@ -874,6 +891,7 @@ fn read_mark(inst: &ResolvedInst, x_id: Option<&str>, specs: &[AxisSpec]) -> Res
         marker: chart_marker(inst)?,
         color,
         stroke_style: inst.attrs.get("stroke-style").cloned(),
+        tooltip: super::tooltip::read_or(&inst.attrs, chart_tip)?,
     })
 }
 

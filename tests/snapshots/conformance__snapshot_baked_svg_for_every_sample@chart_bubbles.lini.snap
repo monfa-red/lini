@@ -11,6 +11,7 @@ input_file: samples/chart_bubbles.lini
     .lini .lini-oval { stroke-dasharray: none; }
     .lini .lini-line { stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
+    .lini .lini-chart-label { pointer-events: none; }
   </style>
   <defs/>
   <rect class="lini-canvas" x="-200" y="-130" width="400" height="260"/>
@@ -44,17 +45,14 @@ input_file: samples/chart_bubbles.lini
       <g class="lini-node lini-oval" style="fill: #00bcb1; stroke: none; stroke-width: 0" transform="translate(-129.7333,-16.2667)">
         <title>EU: 8</title>
         <ellipse cx="0" cy="0" rx="11.8826" ry="11.8826"/>
-        <text class="lini-text" x="0" y="0" style="fill: white; font-size: 11px">EU</text>
       </g>
       <g class="lini-node lini-oval" style="fill: #ec6e97; stroke: none; stroke-width: 0" transform="translate(5.6,-49.8167)">
         <title>US: 20</title>
         <ellipse cx="0" cy="0" rx="18.788" ry="18.788"/>
-        <text class="lini-text" x="0" y="0" style="fill: white; font-size: 11px">US</text>
       </g>
       <g class="lini-node lini-oval" style="fill: #00b2e5; stroke: none; stroke-width: 0" transform="translate(140.9333,6.1)">
         <title>APAC: 14</title>
         <ellipse cx="0" cy="0" rx="15.7192" ry="15.7192"/>
-        <text class="lini-text" x="0" y="0" style="fill: white; font-size: 11px">APAC</text>
       </g>
       <g class="lini-node lini-oval" style="fill: #cf9300; stroke: none; stroke-width: 0" transform="translate(57.6513,39.65)">
         <title>LatAm: 6</title>
@@ -71,6 +69,10 @@ input_file: samples/chart_bubbles.lini
       <text class="lini-text" x="161.7538" y="84.9" style="fill: #888; font-size: 11px">40</text>
       <text class="lini-text" x="5.6" y="99.6" style="fill: #888; font-size: 11px">growth %</text>
       <text class="lini-text" x="0" y="-92.9" style="font-weight: bold; font-size: 13px">Markets</text>
+      <text class="lini-text lini-chart-label" x="-129.7333" y="-16.2667" style="fill: white; font-size: 10px">EU</text>
+      <text class="lini-text lini-chart-label" x="5.6" y="-49.8167" style="fill: white; font-size: 10px">US</text>
+      <text class="lini-text lini-chart-label" x="140.9333" y="6.1" style="fill: white; font-size: 10px">APAC</text>
+      <text class="lini-text lini-chart-label" x="57.6513" y="27.65" style="fill: #888; font-size: 10px">LatAm</text>
     </g>
   </g>
   <g class="lini-links"/>

@@ -1,9 +1,10 @@
 //! `|bubble|` rendering ([CHARTS.md] §3): one labelled oval per node, area-scaled across
 //! the chart (area ∝ value, so the largest fits) and projected through `Plot` like any
-//! datum. The smart label sits centred in the bubble when it fits, else only as the
-//! `<title>` floor (§14). Reuses `prim::oval` / the projection / the palette.
+//! datum. The label rides the shared placement pass ([`super::labels`], §14): centred in
+//! the bubble when it fits, else beside it, else on hover. Reuses `prim::oval` / the
+//! projection / the palette.
 
-use super::LABEL_SIZE;
+use super::labels;
 use super::model::{Bubble, Chart};
 use super::prim;
 use super::project::Plot;
@@ -14,7 +15,7 @@ use crate::resolve::ResolvedValue;
 /// The largest bubble's radius, as a fraction of the smaller plot dimension.
 const MAX_R: f64 = 0.14;
 
-pub fn lay_out(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
+pub fn lay_out(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>, reqs: &mut Vec<labels::Req>) {
     let vmax = chart
         .bubbles
         .iter()
@@ -37,23 +38,33 @@ pub fn lay_out(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
             prim::outline(&mut bubble, color.clone(), *width);
         }
         prim::set_title(&mut bubble, bubble_title(b));
-        // The centred label rides *inside* the bubble's `<g>` (at its centre, so relative
-        // to the group's translate), not as a sibling on top: hovering the label then
-        // still counts as hovering the bubble, so its `:hover` tooltip stays put — and the
-        // label keeps default pointer events, so it remains selectable ([CHARTS.md] §14).
-        if let Some(label) = &b.label
-            && prim::text_width(label, LABEL_SIZE) <= d
-        {
-            bubble.children.push(prim::text(
-                label,
-                0.0,
-                0.0,
-                LABEL_SIZE,
-                Some(on_fill()),
-                false,
-            ));
-        }
         out.push(bubble);
+        // The label joins the shared pass ([CHARTS.md] §14): its `inside` seat centres it
+        // on the bubble when the text fits (the on-fill tint), else it sits beside (muted);
+        // a `pointer-events: none` keeps the bubble's hover working through it.
+        if let Some(label) = &b.label
+            && !label.is_empty()
+            && b.tooltip.inline()
+        {
+            reqs.push(labels::Req {
+                anchor: (cx, cy),
+                text: label.clone(),
+                color: muted(),
+                forced: b.tooltip.forced(),
+                inside: Some(labels::Inside {
+                    fit: d,
+                    color: on_fill(),
+                }),
+            });
+        }
+    }
+}
+
+/// The muted role tint a bubble label takes when it sits *beside* the bubble.
+fn muted() -> ResolvedValue {
+    ResolvedValue::LiveVar {
+        name: "muted".into(),
+        raw: false,
     }
 }
 
