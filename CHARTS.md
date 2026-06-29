@@ -379,9 +379,8 @@ distinct colour), the one place colour walks per datum rather than per series.
 
 ## 11. Direction & the flip
 
-`direction` is a chart property (new in this spec; a core `layout`/`direction` split —
-generalising `layout: row`/`column` to an engine + orientation — is planned for
-`SPEC.md` and would subsume it). It sets the chart's orientation:
+`direction` orients the chart. It is the same property a `flow` uses to pick its
+axis (SPEC §5, `layout: flow` + `direction: row`/`column`); a chart adds `radial`:
 
 | `direction` | Plane | Bars grow |
 |---|---|---|
