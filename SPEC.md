@@ -248,7 +248,7 @@ root's setup block, so it additionally holds the file-global definitions:
 
 ```
 {
-  layout: column;  gap: 16;  fill: --bg;  link: #666;
+  gap: 16;  fill: --bg;  link: #666;
   --brand: #ff6600;
   scale(n) `100 * 1.2^n`;
   |box| { radius: 6; }
@@ -440,16 +440,19 @@ complex values merge.
 
 ## 5. Layout
 
-A container picks a mode with `layout`:
+A container picks an engine with `layout`, and a flow's orientation with `direction`:
 
 | Value | Behavior |
 |---|---|
-| `layout: row` | 1D horizontal flex. |
-| `layout: column` | 1D vertical flex. |
+| `layout: flow` | 1D flex. `direction: row` runs horizontally, `direction: column` (default) vertically. |
 | `layout: grid` | 2D grid — sized by `columns` / `rows`. |
 
-**Defaults:** every container — the root included — defaults to `layout: column`
-with `gap: 20`. The default `|box|` pads its content by 20; so does the root, and
+`direction` is `row` or `column` (default `column`) — the same property a chart uses
+to orient its plot, where it also takes `radial` ([CHARTS.md](CHARTS.md)). `chart` /
+`pie` are separate engines, set via their templates ([§8](#8-templates)).
+
+**Defaults:** every container — the root included — defaults to `layout: flow`
+with `direction: column` and `gap: 20`. The default `|box|` pads its content by 20; so does the root, and
 its padding is the margin that frames the whole rendered scene — links and labels
 included — out to the SVG edge. The frameless `|block|` / `|row|` / `|column|` pad
 by 0 (see [§8](#8-templates)).
@@ -525,7 +528,8 @@ otherwise): a separator wants the cells flush against it. This is what lets
 
 | Property | Applies to | Notes |
 |---|---|---|
-| `layout` | all | `row`, `column`, `grid`. |
+| `layout` | all | `flow`, `grid` (chart / pie via templates). |
+| `direction` | flow | `row` / `column` — orients a flow. Default `column`. (A chart's `direction` also takes `radial`.) |
 | `gap` | all | Space between children. `N` = both axes; `row col` per axis. Must be `≥ 0`; `0` required with `divider`. |
 | `padding` | all | Inner padding. `N`, `v h`, or `t r b l`. On a `\|table\|`, the inset around each cell's text. |
 | `align` / `justify` | all | Cross / main axis (above). |
@@ -736,8 +740,9 @@ primitives ([§7](#7-nodes)) stand on their own.
 | `\|caption\|` | `\|block\|` | `pin: top left; translate: 0 -18; color: --caption-color; font-size: 12; font-weight: normal` | A title, pinned just above the group's top-left corner. |
 | `\|footer\|` | `\|caption\|` | `pin: bottom; translate: 0 17; font-size: 11; color: --footer-color` | A caption flipped to the bottom edge, centred and muted. |
 | `\|badge\|` | `\|block\|` | `pin: top right; translate: 6 -6; radius: 8; padding: 2 6; shadow: 2 3 3; fill: --accent; color: --accent-text; font-size: 11; font-weight: normal` | Corner pill — nudged out over the top-right corner, grows nothing. |
-| `\|row\|` | `\|block\|` | `layout: row` | Frameless wrapper — children in a row. |
-| `\|column\|` | `\|block\|` | `layout: column` | Frameless wrapper — children in a column. |
+| `\|row\|` | `\|block\|` | `direction: row` | Frameless wrapper — children in a row. |
+| `\|column\|` | `\|block\|` | `direction: column` | Frameless wrapper — children in a column. |
+| `\|grid\|` | `\|block\|` | `layout: grid` | Frameless grid (needs `columns`). |
 | `\|sign\|` | `\|icon\|` | `width: 64; height: 64; padding: 4; stroke-width: 1.5; fit: contain` | A larger icon as a stand-alone node, with room for a short label; `fit: contain` fills the box (unlike a bare `\|icon\|`), and its line weight drops to the node default `1.5` (a bare `\|icon\|` keeps `2`). |
 | `\|table\|` | `\|group\|` | `layout: grid; divider: all; gap: 0; padding: 4 8; fill: none; stroke: --stroke; stroke-style: solid; font-size: 14; font-weight: normal` | Ruled grid (see below). |
 
@@ -960,7 +965,7 @@ instance — the same sealed-body rule. From outside, the dot-path navigates in:
 ```
 {
   |room::group| {
-    layout: column;  gap: 10;
+    gap: 10;
   } [
     |box#inlet|  "Inlet"
     |box#outlet| "Outlet"
@@ -1684,7 +1689,7 @@ surface here.
 
 **Layout** (bottom-up): leaf bbox from `width`/`height` or defaults (text → its glyphs;
 box → content + `padding`; + half-`stroke-width` per side); arrange flow children per
-`layout` honouring `align`/`justify`/`stretch`/`evenly` when there is slack; pin
+`layout` / `direction` honouring `align`/`justify`/`stretch`/`evenly` when there is slack; pin
 out-of-flow children to their parent anchor (the parent never grows for them); compute
 dividers; apply `padding`; apply each node's `translate`; `rotate` last.
 
@@ -1718,10 +1723,10 @@ keywords only after an endpoint's `:` (`a:left`), so a node may be named `|box#l
 
 Single quotes (`'`) are reserved and are not strings.
 
-Value keywords are **contextual**, not reserved as ids — `grid`, `row`, `column`,
+Value keywords are **contextual**, not reserved as ids — `flow`, `grid`, `row`, `column`,
 `start`, `center`, `end`, `stretch`, `evenly`, `none`, `auto`, `orthogonal` mean their
-keyword only after the property that expects them (`layout: grid`, `routing:
-orthogonal`). Function names `rgb`, `rgba`, `hsl`, `repeat` are reserved only before
+keyword only after the property that expects them (`layout: flow`, `direction: row`,
+`routing: orthogonal`). Function names `rgb`, `rgba`, `hsl`, `repeat` are reserved only before
 `(`.
 
 Inside an expression (a backtick region, [§11.7](#117-expressions--functions)), `pi`,
@@ -1770,7 +1775,7 @@ ids elsewhere.
   |alert::oval| { stroke: red; width: 36; height: 36; }   // a circle
 
   |room::group| {
-    layout: column;  gap: 8;
+    gap: 8;
   } [
     |box#inlet|  "Inlet"
     |box#outlet| "Outlet"
@@ -1781,10 +1786,10 @@ ids elsewhere.
 |oval#cat| "Cat — patient hunter" { cell: 1 1 }
 
 |group#kitchen| "Kitchen" {
-  cell: 2 1;  layout: column;  gap: 20;
+  cell: 2 1;  gap: 20;
 } [
   |group#counter| "Counter" {
-    layout: column;  gap: 10;
+    gap: 10;
   } [
     |treat#bowl| "Bowl of oats"
     |nest#water| "Water"
@@ -1792,10 +1797,10 @@ ids elsewhere.
 ]
 
 |group#garden| "Garden" {
-  cell: 3 1;  layout: column;  gap: 20;
+  cell: 3 1;  gap: 20;
 } [
   |group#den| "Den" {
-    layout: column;  gap: 15;
+    gap: 15;
   } [
     |alert#rabbit| "Rabbit" [ |badge| "FAST" ]
     |box#carrot| "Carrot patch" { stack: 4; width: 80; height: 40; fill: white }
@@ -1829,7 +1834,7 @@ closet.outlet -> fridge.inlet "restocks"
 }
 ```
 
-### Mermaid-fast
+### Shorthand — implicit boxes & arrows
 
 ```
 cat -> dog -> bird     // 3 implicit boxes, 2 links
