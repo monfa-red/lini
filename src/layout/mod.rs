@@ -75,19 +75,14 @@ fn attempt(program: &Program, growth: &GapGrowth) -> Result<Attempt, Error> {
     // Lay out top-level scene children.
     let mut top_nodes = Vec::with_capacity(program.scene.nodes.len());
     for inst in &program.scene.nodes {
-        top_nodes.push(layout_inst(
-            inst,
-            growth,
-            &child_path("", inst),
-            &program.funcs,
-        )?);
+        top_nodes.push(layout_inst(inst, growth, &child_path("", inst), program)?);
     }
 
     // A root sequence (`{ layout: sequence }`, SPEC §10) owns the whole scene: it
-    // arranges the participants and draws their lifelines (and, later, the messages),
-    // bypassing the generic arrange and the orthogonal router.
+    // arranges the participants and draws their lifelines and messages, bypassing the
+    // generic arrange and the orthogonal router (the messages are its scope's links).
     if sequence::is_sequence(&program.scene.attrs) {
-        let bbox = sequence::layout_root(&mut top_nodes, &program.scene.attrs)?;
+        let bbox = sequence::layout_root(&mut top_nodes, program)?;
         return Ok(Attempt {
             nodes: top_nodes,
             bbox,
@@ -149,19 +144,21 @@ fn growable(program: &Program, path: &str) -> bool {
     if path.is_empty() {
         return true;
     }
+    node_at(program, path)
+        .is_some_and(|inst| inst.attrs.get("width").is_none() && inst.attrs.get("height").is_none())
+}
+
+/// The scene instance at a dot-path (`""` → `None`: the root is not an instance).
+/// Walks by id, like an endpoint path. Shared by gap growth and the sequence engine.
+pub(super) fn node_at<'a>(program: &'a Program, path: &str) -> Option<&'a ResolvedInst> {
     let mut nodes = &program.scene.nodes;
-    let mut found: Option<&ResolvedInst> = None;
+    let mut found = None;
     for seg in path.split('.') {
-        match nodes.iter().find(|n| n.id.as_deref() == Some(seg)) {
-            Some(inst) => {
-                nodes = &inst.children;
-                found = Some(inst);
-            }
-            None => return false,
-        }
+        let inst = nodes.iter().find(|n| n.id.as_deref() == Some(seg))?;
+        found = Some(inst);
+        nodes = &inst.children;
     }
     found
-        .is_some_and(|inst| inst.attrs.get("width").is_none() && inst.attrs.get("height").is_none())
 }
 
 fn gap_bump(growth: &GapGrowth, path: &str) -> (f64, f64) {
@@ -269,8 +266,9 @@ fn layout_inst(
     inst: &ResolvedInst,
     growth: &GapGrowth,
     path: &str,
-    funcs: &crate::expr::FuncTable,
+    program: &Program,
 ) -> Result<PlacedNode, Error> {
+    let funcs = &program.funcs;
     // A chart ([CHARTS.md]) owns its whole subtree: it reads its children's data,
     // fixes a shared scale, samples any `fn:`, and emits primitive PlacedNodes itself.
     // Intercept it here — before the child recursion (which would run `leaf_bbox` on a
@@ -285,13 +283,13 @@ fn layout_inst(
     // A `|sequence|` node ([SPEC §10]) owns its subtree the same way — it reads its
     // participants (and, later, messages / frames / notes) and lowers to primitives.
     if sequence::is_sequence(&inst.attrs) {
-        return sequence::layout_node(inst, growth, path, funcs);
+        return sequence::layout_node(inst, growth, path, program);
     }
 
     // Recurse into children first.
     let mut children: Vec<PlacedNode> = Vec::with_capacity(inst.children.len());
     for c in &inst.children {
-        children.push(layout_inst(c, growth, &child_path(path, c), funcs)?);
+        children.push(layout_inst(c, growth, &child_path(path, c), program)?);
     }
 
     // Determine this node's bbox + arrange children inside.

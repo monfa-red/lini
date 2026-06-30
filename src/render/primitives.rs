@@ -249,8 +249,14 @@ fn emit_line(
     // the arrowhead; the markers still ride the true endpoints (below).
     let drawn = super::markers::shorten_for_markers(&points, &n.markers, thickness, 0.0);
 
-    // 2 points → SVG <line>; 3+ → SVG <polyline>.
-    if drawn.len() == 2 {
+    // A `stroke-style: wavy` line rides an undulating centreline (reusing the link
+    // wave) rather than a dash pattern — an async sequence message (SPEC §10), or an
+    // explicit wavy `|line|`. `wavy_d` returns `None` below one wavelength, falling
+    // back to the straight forms.
+    let wavy = matches!(n.attrs.get("stroke-style"), Some(ResolvedValue::Ident(s)) if s == "wavy");
+    if let Some(d) = wavy.then(|| super::wavy::wavy_d(&drawn, &[])).flatten() {
+        writeln!(out, r#"{indent}<path d="{d}" fill="none"/>"#).unwrap();
+    } else if drawn.len() == 2 {
         let (from, to) = (drawn[0], drawn[1]);
         writeln!(
             out,

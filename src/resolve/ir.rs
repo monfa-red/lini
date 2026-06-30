@@ -284,6 +284,11 @@ impl MarkerKind {
 
 pub struct ResolvedLink {
     pub endpoints: Vec<ResolvedEndpoint>,
+    /// The dot-path of the container this link was written in (`""` = the scene
+    /// root) — the link's **scope** (SPEC §9). Its scope's `layout` picks the wiring
+    /// strategy: a `sequence` scope draws its links as time-row arrows and skips the
+    /// orthogonal router (SPEC §10).
+    pub scope: String,
     pub attrs: AttrMap,
     /// Names of the `.style`s applied to this link, in source order — emitted as
     /// `lini-style-{name}` classes, exactly like a node's (SPEC §14).

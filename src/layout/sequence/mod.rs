@@ -5,17 +5,21 @@
 //! The renderer, cascade, palette, and theming are reused unchanged, as for charts.
 //!
 //! It owns its scope's links: in a sequence scope a message's *order is time*, so the
-//! orthogonal router ([LINKING.md]) is bypassed and the layout draws each message itself
-//! (the `sequence` wiring strategy, SPEC §10) — that arrives in a later step.
+//! orthogonal router ([LINKING.md]) is bypassed (`bundle` skips the scope) and the layout
+//! draws each message itself — a horizontal arrow at its row (the `sequence` wiring
+//! strategy, SPEC §10).
 //!
-//! Step 2 (current): participants across the top, each with a lifeline. Messages,
-//! activations, frames, and notes follow in later steps (see PLAN.md).
+//! Done: participants + lifelines, and messages (call / return / async / self) in
+//! [`messages`]. Activations, frames, and notes follow in later steps (see PLAN.md).
+
+mod messages;
 
 use crate::error::Error;
 use crate::layout::prim;
 use crate::layout::{Bbox, PlacedNode};
-use crate::resolve::{AttrMap, NodeKind, ResolvedInst, ResolvedValue};
+use crate::resolve::{AttrMap, NodeKind, Program, ResolvedInst, ResolvedLink, ResolvedValue};
 use crate::span::Span;
+use std::collections::HashMap;
 
 /// Type names that are **not** participants — the frames, the compartment separator, and
 /// notes (SPEC §10). Every other box is a participant (the open fallback, unlike a chart's
@@ -35,7 +39,7 @@ pub(super) fn layout_node(
     inst: &ResolvedInst,
     growth: &super::GapGrowth,
     path: &str,
-    funcs: &crate::expr::FuncTable,
+    program: &Program,
 ) -> Result<PlacedNode, Error> {
     // Participants are real boxes — lay each out as usual, then arrange.
     let mut participants = Vec::new();
@@ -45,11 +49,12 @@ pub(super) fn layout_node(
                 c,
                 growth,
                 &super::child_path(path, c),
-                funcs,
+                program,
             )?);
         }
     }
-    let (children, bbox) = lay_out(&inst.attrs, participants, inst.span)?;
+    let messages = messages_for(program, path);
+    let (children, bbox) = lay_out(&inst.attrs, participants, &messages, inst.span)?;
     Ok(prim::container(inst, bbox, children))
 }
 
@@ -58,63 +63,117 @@ pub(super) fn layout_node(
 /// returning the scene bbox. Intercepted in `attempt` before the generic arrange + route.
 pub(super) fn layout_root(
     scene_nodes: &mut Vec<PlacedNode>,
-    attrs: &AttrMap,
+    program: &Program,
 ) -> Result<Bbox, Error> {
     let participants = std::mem::take(scene_nodes)
         .into_iter()
         .filter(|p| is_participant(&p.kind, &p.type_chain))
         .collect();
-    let (children, bbox) = lay_out(attrs, participants, Span::empty())?;
+    let messages = messages_for(program, "");
+    let (children, bbox) = lay_out(&program.scene.attrs, participants, &messages, Span::empty())?;
     *scene_nodes = children;
     Ok(bbox)
 }
 
-/// Arrange participants across the top, drop a lifeline from each, and return the lowered
-/// children (lifelines behind, participants in front) plus the overall bbox — centred on
-/// the origin, like a chart's lowered subtree.
+/// Whether the container at `scope` is a `layout: sequence` — so the router skips its links
+/// (they are drawn as time-row arrows here). Shared with the link partition (`bundle`).
+pub(crate) fn is_sequence_scope(program: &Program, scope: &str) -> bool {
+    scope_attrs(program, scope).is_some_and(is_sequence)
+}
+
+/// The attrs of the container at `scope` (`""` = the scene root).
+fn scope_attrs<'a>(program: &'a Program, scope: &str) -> Option<&'a AttrMap> {
+    if scope.is_empty() {
+        Some(&program.scene.attrs)
+    } else {
+        super::node_at(program, scope).map(|i| &i.attrs)
+    }
+}
+
+/// This sequence scope's messages — the resolved links written in it — in time (source)
+/// order. The router never sees them ([`bundle`] skips a sequence scope).
+fn messages_for<'a>(program: &'a Program, scope: &str) -> Vec<&'a ResolvedLink> {
+    let mut msgs: Vec<&ResolvedLink> = program.links.iter().filter(|w| w.scope == scope).collect();
+    msgs.sort_by_key(|w| w.span.start);
+    msgs
+}
+
+/// Arrange participants across the top, drop a lifeline from each down to the last message
+/// row, and draw the messages. Returns the lowered children (lifelines behind, headers,
+/// then arrows) and the centred bbox. `gap: row col` — the column part spaces participants,
+/// the row part is the message pitch (SPEC §10).
 fn lay_out(
     attrs: &AttrMap,
     mut participants: Vec<PlacedNode>,
+    messages: &[&ResolvedLink],
     span: Span,
 ) -> Result<(Vec<PlacedNode>, Bbox), Error> {
     if participants.is_empty() {
         return Err(Error::at(span, "a sequence needs at least one participant"));
     }
-    // `gap: row col` — the column part spaces participants; the row part is the message
-    // pitch (used once messages land).
     let (gap_row, gap_col) = super::primitives::gap(attrs, span)?;
-    let total_w: f64 = participants.iter().map(|p| p.bbox.w()).sum::<f64>()
-        + gap_col * (participants.len() - 1) as f64;
+
+    // Time-ordered message pairs (a chain → consecutive pairs), and participant columns
+    // widened so each message's label fits over its span.
+    let pairs = messages::pairs(messages);
+    let widths: Vec<f64> = participants.iter().map(|p| p.bbox.w()).collect();
+    let ids: Vec<&str> = participants
+        .iter()
+        .map(|p| p.id.as_deref().unwrap_or(""))
+        .collect();
+    let centres = messages::columns(&widths, &ids, &pairs, gap_col);
+
     let header_h = participants
         .iter()
         .map(|p| p.bbox.h())
         .fold(0.0_f64, f64::max);
-    // Step 2 reserves a short lifeline below the headers; Step 3 sets the foot to the last
-    // message row.
-    let body_h = gap_row.max(20.0) * 3.0;
+    let rows = pairs.len();
+    let body_h = gap_row * (rows as f64 + 1.0); // a row per message at `gap_row`, plus a foot
     let total_h = header_h + body_h;
     let top = -total_h / 2.0;
-    let foot_y = top + total_h;
+    let header_bottom = top + header_h;
+    let foot_y = header_bottom + body_h;
+    let row_y = |i: usize| header_bottom + gap_row * (i as f64 + 1.0);
 
+    // Place participants at their column centres, top-aligned; drop a lifeline to the foot.
     let stroke = lifeline_stroke(attrs);
     let mut lifelines = Vec::with_capacity(participants.len());
-    let mut x = -total_w / 2.0;
-    for p in &mut participants {
-        let cx = x + p.bbox.w() / 2.0;
+    let mut lifeline_x: HashMap<String, f64> = HashMap::new();
+    for (p, &cx) in participants.iter_mut().zip(&centres) {
         p.cx = cx;
-        p.cy = top + p.bbox.h() / 2.0; // headers top-aligned
+        p.cy = top + p.bbox.h() / 2.0;
         let head_bottom = p.cy + p.bbox.h() / 2.0;
         lifelines.push(prim::line(
             vec![(cx, head_bottom), (cx, foot_y)],
             stroke.clone(),
             1.0,
         ));
-        x += p.bbox.w() + gap_col;
+        if let Some(id) = p.id.as_deref() {
+            lifeline_x.insert(id.to_string(), cx);
+        }
     }
 
-    let mut children = lifelines; // drawn behind
-    children.extend(participants); // headers in front
-    Ok((children, Bbox::centered(total_w, total_h)))
+    let arrows = messages::draw(&pairs, &lifeline_x, row_y);
+
+    // Lifelines behind, headers, then messages on top.
+    let mut children = lifelines;
+    children.extend(participants);
+    children.extend(arrows);
+    let bbox = enclosing_bbox(&children);
+    Ok((children, bbox))
+}
+
+/// A symmetric, origin-centred bbox enclosing every child (lifelines, headers, arrows, and
+/// labels — including any self-hook or label overflow), so a nested sequence's container is
+/// sized correctly. Mirrors how `finish` takes the true visual extent.
+fn enclosing_bbox(children: &[PlacedNode]) -> Bbox {
+    let mut ext = Bbox::empty();
+    for c in children {
+        ext = ext.union(c.bbox.shifted(c.cx, c.cy));
+    }
+    let w = 2.0 * ext.min_x.abs().max(ext.max_x.abs());
+    let h = 2.0 * ext.min_y.abs().max(ext.max_y.abs());
+    Bbox::centered(w.max(1.0), h.max(1.0))
 }
 
 /// The lifeline colour: the scene's `stroke` if set, else the `--stroke` role var.
@@ -200,5 +259,42 @@ mod tests {
     #[test]
     fn an_empty_sequence_errors() {
         assert!(layout_err("|sequence#s|\n").contains("at least one participant"));
+    }
+
+    #[test]
+    fn a_call_renders_as_an_arrow_not_routed() {
+        let s = svg("{ layout: sequence }\n|box#a| \"A\"\n|box#b| \"B\"\na -> b \"hi\"\n");
+        assert!(s.contains(">hi</text>"), "the message label: {s}");
+        assert!(s.contains("lini-marker"), "an arrowhead: {s}");
+        // The orthogonal router never sees a sequence message — it is lowered to an arrow.
+        assert!(!s.contains("data-from"), "no routed link: {s}");
+    }
+
+    #[test]
+    fn a_return_message_is_dashed() {
+        let s = svg("{ layout: sequence }\n|box#a| \"A\"\n|box#b| \"B\"\nb --> a \"ok\"\n");
+        assert!(
+            s.contains("stroke-dasharray: 6"),
+            "the return is dashed: {s}"
+        );
+    }
+
+    #[test]
+    fn an_async_message_is_wavy() {
+        let s = svg("{ layout: sequence }\n|box#a| \"A\"\n|box#b| \"B\"\na ~> b \"event\"\n");
+        assert!(
+            s.contains("<path d=\"M"),
+            "the async message is a wavy path: {s}"
+        );
+    }
+
+    #[test]
+    fn a_self_message_draws_a_hook() {
+        let s = svg("{ layout: sequence }\n|box#a| \"A\"\na -> a \"retry\"\n");
+        assert!(
+            s.contains("<polyline"),
+            "the self-message hook is a polyline: {s}"
+        );
+        assert!(s.contains(">retry</text>"), "its label: {s}");
     }
 }

@@ -1949,7 +1949,8 @@ ids elsewhere.
   of lifelines); found / lost messages and create / destroy lifelines; explicit activation
   spans; message auto-numbering; dividers / delays (`==` / `...`); and an `|actor|` stick-figure
   primitive (an actor is `|icon|` today).
-- `stroke-style: wavy` rendering on nodes.
+- `stroke-style: wavy` rendering on **closed** primitives (`|line|` waves — it backs an
+  async sequence message, [§10](#10-sequences) — but a hex / oval / rect outline does not yet).
 - **gradient fills on text** — `fill: gradient(…)` on a label (gradients fill nodes
   today, [§12.3](#123-gradients)).
 - `radius` on non-rect primitives (hex / diamond / slant / poly).

@@ -68,6 +68,15 @@ pub fn requests(program: &Program, index: &SceneIndex) -> Result<Vec<EdgeReq>, E
     let mut out = Vec::new();
     let mut stmt_ids: Vec<Span> = Vec::new();
     for w in &program.links {
+        // Wiring strategy (SPEC §9/§10) — which subsystem realises a scope's links,
+        // chosen by the scope's `layout`:
+        //   • orthogonal — this router (the LINKING.md contract), for flow / grid scopes.
+        //   • sequence   — the sequence layout draws them as time-row arrows; skip here.
+        //   • straight / curved — future graph / mindmap routing (not built; SPEC §20).
+        // Only `sequence` diverts from the router today; the rest stay orthogonal.
+        if crate::layout::sequence::is_sequence_scope(program, &w.scope) {
+            continue;
+        }
         let stmt = match stmt_ids.iter().position(|s| *s == w.span) {
             Some(i) => i,
             None => {

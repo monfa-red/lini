@@ -16,7 +16,7 @@ step can be executed in a fresh session: each step lists its files, changes, tes
 
 - [x] **Step 1 — Grammar relaxation (parser + fmt)** ✓ (parser both sites relaxed; `fmt` source-order merge; 427 lib tests + clippy + fmt clean)
 - [x] **Step 2 — Sequence types + dispatch + participants/lifelines** ✓ (6 types + defaults; `prim` promoted to shared `layout::prim`; root + node forms render headers + lifelines; tests + clippy + fmt clean; visually verified)
-- [ ] Step 3 — Messages + the link-partition / wiring-strategy seam
+- [x] **Step 3 — Messages + the link-partition / wiring-strategy seam** ✓ (call/return/async/self render as time-row arrows; router skips sequence scopes; async wavy un-deferred; 435 lib tests + clippy + fmt clean; visually verified)
 - [ ] Step 4 — Activations
 - [ ] Step 5 — Frames (`loop`/`opt`/`alt`/`else`) + notes
 - [ ] Step 6 — Samples, snapshots, render-verify, polish, acceptance
@@ -244,6 +244,26 @@ async, a self-hook, labels above arrows, none routed orthogonally. Snapshots.
 
 **Done when:** messages render as time arrows; router skips them; `tests/linking.rs` unaffected;
 the strategy seam + future-arm comments are in place.
+
+> **Step 3 outcome / decisions (done):**
+> - **Scope tagging:** added `ResolvedLink.scope` (set at resolve from the link's
+>   `path_prefix.join(".")`); `""` = root. `bundle::requests` skips links whose scope is a
+>   sequence (`sequence::is_sequence_scope`) — the **wiring-strategy dispatch**, doc-commented
+>   with the future `straight`/`curved` arms (comment-only, per request).
+> - **Threading:** `layout_inst`'s `funcs: &FuncTable` → **`program: &Program`** (3 callers,
+>   all in-tree) so a sequence node reaches `program.links`; charts use `&program.funcs`.
+>   Extracted a shared `node_at(program, path)` (reused by `growable` + sequence scope lookup
+>   — no parallel walk).
+> - **messages.rs:** `pairs` (a chain → consecutive pairs; fans are already separate links),
+>   `columns` (greedy, deterministic label-aware spacing), `draw` (arrow / self-hook / label).
+>   The **paint map is free** — resolve already maps `link*→stroke*` (`map_link_props`) and
+>   resolves markers, so a message just copies `attrs` + `markers` onto a `prim::line`.
+> - **Async wavy:** `emit_line` didn't render `stroke-style: wavy` (it was §19-deferred for
+>   nodes). Wired the existing `wavy::wavy_d` into `emit_line` (reuse, ~6 lines) so a `|line|`
+>   waves — async messages now read wavy; narrowed SPEC §19 to closed primitives.
+> - **GOTCHA:** a chain applies the link's full `markers` to each pair — correct for
+>   `->`/`-->`/`~>` (no start marker); a `<->` *chain* would over-mark intermediate hops
+>   (rare). Foot length is now the last message row (Step 2 placeholder removed).
 
 ---
 
