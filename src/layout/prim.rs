@@ -177,6 +177,19 @@ pub fn line(points: Vec<(f64, f64)>, stroke: ResolvedValue, width: f64) -> Place
     n
 }
 
+/// A filled shape through a raw SVG path `d` (absolute coords baked in, like [`line`] /
+/// [`poly`]; the node stays at the origin). For a composed outline a `rect` / `poly`
+/// can't state — a frame's banner tab or a note's folded corner (SPEC §10). `bbox` is
+/// its absolute bounds, so the enclosing engine sizes correctly.
+pub fn path(d: String, fill: ResolvedValue, bbox: Bbox) -> PlacedNode {
+    let mut n = node(NodeKind::Path, bbox);
+    n.attrs.insert("path", ResolvedValue::String(d));
+    n.attrs.insert("fill", fill);
+    n.attrs.insert("stroke", ident("none"));
+    n.attrs.insert("stroke-width", ResolvedValue::Number(0.0));
+    n
+}
+
 /// A transparent group wrapping `children` (e.g. a tooltip card's box + text), tagged
 /// with `type_chain` so it carries `.lini-{name}` classes. `bbox` is its absolute bounds
 /// (the children are positioned absolutely; the group keeps `cx`/`cy` at the origin).
@@ -242,6 +255,23 @@ pub fn text(
     if let Some(c) = color {
         set(&mut n, "color", c);
     }
+    n
+}
+
+/// Text whose size / weight come from a `.lini-{class}` **stylesheet rule** rather than
+/// inline `style=` — for a sequence message label and the like, mirroring how a link label
+/// rides `.lini-link-label`. `size` only bounds the bbox (so the engine measures the label);
+/// the class states the rendered font. Centred at (cx, cy); `.lini-text` gives the anchors.
+pub fn text_classed(content: &str, cx: f64, cy: f64, size: f64, class: &str) -> PlacedNode {
+    let bbox = Bbox::centered(
+        approx_width(content, size, 0.0),
+        approx_height(content, size, 0.0),
+    );
+    let mut n = node(NodeKind::Text, bbox);
+    n.cx = cx;
+    n.cy = cy;
+    n.label = Some(content.to_string());
+    n.type_chain = vec![class.to_string()];
     n
 }
 

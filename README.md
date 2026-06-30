@@ -122,7 +122,7 @@ Give a node `layout: chart` and it becomes a plot, drawn from data instead of pi
 
 Give the scene `layout: sequence` and the diagram reads on a **time axis**: named participants line up across the top, each drops a lifeline, and the messages — ordinary links — fall top-to-bottom **in the order you write them**. No new syntax: participants are nodes, messages are links, frames and notes are nodes. Like a chart it lowers to the same primitives, so it themes, bakes, and diffs like everything else.
 
-<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/sequence.png" alt="A Lini sequence diagram: a login flow with activation bars, an alt/else frame, and a note" width="420"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/sequence.png" alt="A Lini sequence diagram: a checkout flow with activation bars, a loop frame, a self-message, and a note" width="560"></p>
 
 ```
 { layout: sequence }

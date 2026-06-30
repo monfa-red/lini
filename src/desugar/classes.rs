@@ -44,8 +44,8 @@ pub fn class_defs(
     extra_order: &[String],
 ) -> Vec<Rule> {
     let mut rules = Vec::new();
-    let mut emit = |name: &str, bundle: Vec<Decl>| {
-        if !present.contains(name) {
+    let mut emit = |name: &str, bundle: Vec<Decl>, force: bool| {
+        if !force && !present.contains(name) {
             return;
         }
         let decls = match element_rules.get(name) {
@@ -58,15 +58,20 @@ pub fn class_defs(
         rules.push(class_rule(name, decls));
     };
     for kind in NodeKind::ALL {
-        emit(kind.as_str(), primitive_bundle(kind));
+        // `line` / `block` are lowered by the layout engines (chart gridlines, sequence
+        // lifelines / frames / bars) with no source `|line|` / `|block|`, so always carry
+        // their primitive defaults — otherwise a lowered shape would inline `fill` /
+        // `stroke-width` a class rule should state, leaving only its per-instance diff inline.
+        let synthesized = matches!(kind, NodeKind::Line | NodeKind::Block);
+        emit(kind.as_str(), primitive_bundle(kind), synthesized);
     }
     for (name, _) in TEMPLATES {
-        emit(name, template_bundle(name));
+        emit(name, template_bundle(name), false);
     }
     let mut seen = HashSet::new();
     for name in extra_order {
         if seen.insert(name.as_str()) {
-            emit(name, Vec::new());
+            emit(name, Vec::new(), false);
         }
     }
     rules

@@ -13,7 +13,7 @@ use super::rules::{RuleSet, effective_stroke};
 use super::values::{attr_or_var, attr_points, class_list, escape_xml, num};
 use crate::Options;
 use crate::layout::PlacedNode;
-use crate::resolve::{NodeKind, ResolvedValue, VarTable};
+use crate::resolve::{MarkerKind, NodeKind, ResolvedValue, VarTable};
 use std::fmt::Write;
 
 pub fn render_geometry(
@@ -254,6 +254,10 @@ fn emit_line(
     // explicit wavy `|line|`. `wavy_d` returns `None` below one wavelength, falling
     // back to the straight forms.
     let wavy = matches!(n.attrs.get("stroke-style"), Some(ResolvedValue::Ident(s)) if s == "wavy");
+    // `radius` rounds the interior corners of a multi-point line into quarter arcs,
+    // reusing the link fillet formatter ([`super::rounding`]) — a sequence self-message
+    // hook bends exactly like a routed wire (SPEC §10), and any `|line|` may round.
+    let radius = n.attrs.number("radius").unwrap_or(0.0);
     if let Some(d) = wavy.then(|| super::wavy::wavy_d(&drawn, &[])).flatten() {
         writeln!(out, r#"{indent}<path d="{d}" fill="none"/>"#).unwrap();
     } else if drawn.len() == 2 {
@@ -268,6 +272,10 @@ fn emit_line(
             num(to.1),
         )
         .unwrap();
+    } else if radius > 0.5 {
+        let targets = vec![radius; drawn.len() - 2];
+        let d = super::rounding::path_d(&drawn, &targets);
+        writeln!(out, r#"{indent}<path d="{d}" fill="none"/>"#).unwrap();
     } else {
         let pts: Vec<String> = drawn
             .iter()
@@ -287,9 +295,22 @@ fn emit_line(
         inline: ruleset.marker_fill(&classes) != Some(color.as_str()),
         thickness,
     };
-    let from = points[0];
-    let to = points[points.len() - 1];
-    super::markers::emit_inline_markers(out, indent, n, from, to, &paint);
+    // A marker orients to its **own end segment**, not the line's overall direction:
+    // a multi-point hook (a sequence self-message) turns back on itself, so an
+    // end-to-end vector would point the head along the lifeline instead of into it.
+    // The router resolves markers the same way (per-segment, [`super::links`]).
+    let np = points.len();
+    if n.markers.start != MarkerKind::None
+        && let Some((tip, dir)) = super::markers::marker_anchor(points[1], points[0], false)
+    {
+        super::markers::emit_marker(out, indent, n.markers.start, tip, dir, &paint);
+    }
+    if n.markers.end != MarkerKind::None
+        && let Some((tip, dir)) =
+            super::markers::marker_anchor(points[np - 2], points[np - 1], false)
+    {
+        super::markers::emit_marker(out, indent, n.markers.end, tip, dir, &paint);
+    }
 }
 
 fn emit_poly(out: &mut String, n: &PlacedNode, indent: &str) {

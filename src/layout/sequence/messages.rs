@@ -10,16 +10,22 @@ use crate::layout::prim;
 use crate::resolve::ResolvedLink;
 use std::collections::HashMap;
 
-/// Link-label fallback size (SPEC §9) — used only if a message's resolved `font-size` is
-/// somehow absent; normally [`Pair::label_size`] reads the link's own (`link-font-size`).
-const LABEL_SIZE: f64 = 11.0;
+/// Sequence message-label size — a touch larger than the generic 11px link label so the
+/// messages read comfortably on the time axis (SPEC §10). A message's own `font-size`
+/// overrides it ([`Pair::label_size`]).
+const LABEL_SIZE: f64 = 12.0;
 /// Clear space above the arrow for its label.
 const LABEL_RISE: f64 = 5.0;
 /// Clear space a label wants beyond its text when spacing participants.
 const LABEL_MARGIN: f64 = 16.0;
-/// A self-message hook's width and depth.
-const SELF_DX: f64 = 26.0;
-const SELF_DY: f64 = 16.0;
+/// Smallest a self-hook gets, so a `clearance: 0` message still shows a loop.
+const HOOK_MIN: f64 = 14.0;
+/// A self-hook starts on the activation-bar edge (`BAR_W / 2` off the lifeline); its reach
+/// (this + the hook width) is the arrow area that may widen the layout — the label never
+/// does. Matching the bar half-width keeps a frame's right inset equal to its other sides.
+const HOOK_BAR_EDGE: f64 = 5.0;
+/// Clear space a self-hook keeps from the next lifeline.
+const HOOK_MARGIN: f64 = 10.0;
 
 /// One drawn message: a pair of participants (by id) and the link it came from (its paint,
 /// markers, and label). A chain `a -> b -> c` is two pairs.
@@ -53,25 +59,40 @@ impl Pair<'_> {
     pub(super) fn ends(&self) -> (&str, &str) {
         (self.from, self.to)
     }
-    /// Extra vertical room a self-message needs below its row — its hook drops `SELF_DY`, so
-    /// the next message clears it (0 for a normal message, which lives on its row alone).
-    pub(super) fn hook_drop(&self) -> f64 {
-        if self.from == self.to { SELF_DY } else { 0.0 }
+    /// A self-message (`a -> a`): a hook on one lifeline, not an inter-lifeline arrow.
+    pub(super) fn is_self(&self) -> bool {
+        self.from == self.to
     }
-    /// How far this message's label rises above its arrow — so the first message in a frame
-    /// compartment can clear the border / divider by its label, not just its arrow. A
-    /// self-message's label sits to the side, so it doesn't rise.
-    pub(super) fn label_rise(&self) -> f64 {
-        if self.from != self.to && self.label().is_some() {
-            LABEL_RISE + self.label_size()
+    /// This message's `clearance` (SPEC §11) — drives the self-hook's size and corner
+    /// radius, so the loop honours the same turn rule as a routed wire.
+    fn clearance(&self) -> f64 {
+        self.link.attrs.number("clearance").unwrap_or(16.0)
+    }
+    /// A self-hook's `(width, depth, corner-radius)`, from the message's `clearance`.
+    fn hook(&self) -> (f64, f64, f64) {
+        let s = self.clearance().max(HOOK_MIN);
+        (s, s, s / 2.0)
+    }
+    /// How far a self-hook reaches right of its lifeline centre — the arrow area that may
+    /// widen the layout and its frame (the label rides above and reserves nothing). 0 for
+    /// a normal message.
+    pub(super) fn hook_reach(&self) -> f64 {
+        if self.is_self() {
+            HOOK_BAR_EDGE + self.hook().0
         } else {
             0.0
         }
     }
-    /// The label's font size — the message's own resolved `font-size` (`link-font-size`,
-    /// SPEC §9), so a message reads its size from the cascade, not a hardcoded constant.
+    /// Extra vertical room a self-message needs below its row — its hook drops by its depth,
+    /// so the next message clears it (0 for a normal message, which lives on its row alone).
+    pub(super) fn hook_drop(&self) -> f64 {
+        if self.is_self() { self.hook().1 } else { 0.0 }
+    }
+    /// The label's font size — the sequence default ([`LABEL_SIZE`]), used to measure the
+    /// label for column spacing and to bound its bbox. The rendered size rides the
+    /// `.lini-message` stylesheet rule, not an inline style.
     fn label_size(&self) -> f64 {
-        self.link.attrs.number("font-size").unwrap_or(LABEL_SIZE)
+        LABEL_SIZE
     }
     fn label_width(&self) -> f64 {
         self.label()
@@ -80,7 +101,7 @@ impl Pair<'_> {
     /// This message's kind: a self-message (`a -> a`) regardless of operator, else by
     /// the operator's line (`~>` async · `-->` return · `->` / other call).
     pub(super) fn kind(&self) -> Kind {
-        if self.from == self.to {
+        if self.is_self() {
             Kind::Self_
         } else {
             match self.link.line {
@@ -131,7 +152,17 @@ pub(super) fn columns(widths: &[f64], ids: &[&str], pairs: &[Pair], gap_col: f64
             continue;
         };
         if a == b {
-            continue; // a self-message needs no inter-lifeline room
+            // A self-message: reserve its hook's reach to the next lifeline (the arrow area
+            // may widen the layout) so the loop never crosses it; the label rides above and
+            // reserves nothing.
+            if a + 1 < n {
+                let need = p.hook_reach() + HOOK_MARGIN;
+                let dist = half(a) + gaps[a] + half(a + 1);
+                if need > dist {
+                    gaps[a] += need - dist;
+                }
+            }
+            continue;
         }
         let (lo, hi) = (a.min(b), a.max(b));
         let mut dist = half(lo) + half(hi);
@@ -181,26 +212,31 @@ pub(super) fn draw(
             .get("stroke")
             .cloned()
             .unwrap_or_else(|| super::live("stroke"));
-        let width = p.link.attrs.number("stroke-width").unwrap_or(2.0);
+        let width = p.link.attrs.number("stroke-width").unwrap_or(1.5);
         if fcx == tcx {
-            // A self-message: a hook on the lifeline, off its near (right) bar edge.
+            // A self-message: a rounded hook on the lifeline, off its near (right) bar edge.
+            // The corner radius and size come from the message's `clearance`, so the loop
+            // bends like a routed wire (the rounding is applied by `emit_line`).
+            let (dx, dy, r) = p.hook();
             let fx = endpoint_x(p.from, i, fcx + 1.0);
             let mut hook = prim::line(
-                vec![
-                    (fx, y),
-                    (fx + SELF_DX, y),
-                    (fx + SELF_DX, y + SELF_DY),
-                    (fx, y + SELF_DY),
-                ],
+                vec![(fx, y), (fx + dx, y), (fx + dx, y + dy), (fx, y + dy)],
                 stroke,
                 width,
             );
+            prim::round(&mut hook, r);
             style(&mut hook, p.link);
             out.push(hook);
             if let Some(label) = p.label() {
                 let size = p.label_size();
-                let lx = fx + SELF_DX + 6.0 + prim::text_width(label, size) / 2.0;
-                out.push(prim::text(label, lx, y + SELF_DY / 2.0, size, None, false));
+                // Tucked over the loop: the label's left edge starts at the loop's middle and
+                // sits just above its top arm — so it reads as coming out of the loop, not set
+                // out to its right, and stays clear of the lifeline. It reserves no width (the
+                // engine never widens a frame/column for it), so a long label overhangs rather
+                // than growing the fragment — only the hook (arrow area) does.
+                let ly = y - LABEL_RISE - size / 2.0;
+                let cx = fx + dx / 2.0 + prim::text_width(label, size) / 2.0;
+                out.push(prim::text_classed(label, cx, ly, size, "message"));
             }
         } else {
             let fx = endpoint_x(p.from, i, tcx);
@@ -210,13 +246,12 @@ pub(super) fn draw(
             out.push(arrow);
             if let Some(label) = p.label() {
                 let size = p.label_size();
-                out.push(prim::text(
+                out.push(prim::text_classed(
                     label,
                     (fcx + tcx) / 2.0,
                     y - LABEL_RISE - size / 2.0,
                     size,
-                    None,
-                    false,
+                    "message",
                 ));
             }
         }

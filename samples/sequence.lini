@@ -1,23 +1,30 @@
 // A sequence diagram (SPEC §10): `layout: sequence` reads the wires as time —
 // participants across the top, messages top-to-bottom in source order. Calls open
-// activation bars, an alt/else fragment branches, a note annotates. A participant's own
-// paint flows onto its lifeline + activation bars. Source for assets/sequence.png.
-{ layout: sequence }
+// activation bars, a loop repeats a span, a self-message is internal work, a note
+// annotates. A participant's own paint flows onto its lifeline + bars. Source for
+// assets/sequence.png.
+{
+  layout: sequence;
+}
 
-|box#user| "User"
-|box#api|  "API"   { fill: --sky-wash; stroke: --sky-deep }
-|cyl#db|   "Store" { fill: --orange-wash; stroke: --orange-deep }
+|icon#user| "user" { width: 64; stroke: --rose-deep; fill: --rose-wash; }
+|box#shop| "Storefront" { fill: --sky-wash; stroke: --sky-deep; }
+|box#pay| "Payments" { fill: --green-wash; stroke: --green-deep; }
+|slant#db| "Orders" { fill: --orange-wash; stroke: --orange-deep; }
 
-|note| "signs in" { over: user; fill: --amber-soft; stroke: --amber-deep; radius: 6 }
-user -> api "POST /login"
-api  -> db  "find user"
-db  --> api "row"
+|note| "starts checkout" { over: user; fill: --rose-soft; stroke: --rose-deep; }
 
-|alt| "valid" { stroke: --purple; fill: --purple-wash } [
-  api  -> api  "sign JWT"
-  api --> user "200 + token"
-  |else| "invalid"
-  api --> user "401"
+user -> shop "place order"
+shop -> pay "charge $42"
+pay -> pay "verify card"
+pay --> shop "receipt"
+
+|loop| "each item" {
+  fill: --purple-wash; stroke: --purple-ink; color: --gray-deep;
+} [
+  shop -> db "reserve stock"
+  db --> shop "in stock"
 ]
 
-user ~> api "log event"
+shop --> user "order #1024"
+user ~> shop "track parcel"

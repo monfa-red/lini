@@ -4,7 +4,6 @@
 use super::markers::{
     MARKER_OVERLAP, MarkerPaint, emit_marker, marker_anchor, shorten_for_markers,
 };
-use super::rounding::{Seg, round};
 use super::rules::{RuleSet, effective_stroke};
 use super::values::{attr_or_var, escape_xml, format_value, num};
 use super::wavy;
@@ -223,24 +222,7 @@ pub fn render_stray(out: &mut String, a: &Stray, vars: &VarTable, opts: &Options
 /// of each adjacent *drawn* segment so arcs never eat marker run-ups
 /// (LINKING §Model step 7). The end segments stay straight.
 fn rounded_d(pts: &[(f64, f64)], targets: &[f64]) -> String {
-    let rounded = round(pts, targets);
-    let mut d = format!("M {} {}", num(rounded.start.0), num(rounded.start.1));
-    for seg in &rounded.segs {
-        match seg {
-            Seg::Line { to } => write!(d, " L {} {}", num(to.0), num(to.1)).unwrap(),
-            Seg::Arc {
-                to, radius, sweep, ..
-            } => write!(
-                d,
-                " A {r} {r} 0 0 {sweep} {} {}",
-                num(to.0),
-                num(to.1),
-                r = num(*radius),
-            )
-            .unwrap(),
-        }
-    }
-    d
+    super::rounding::path_d(pts, targets)
 }
 
 /// One interior corner of one polyline, keyed for nesting: the turn's

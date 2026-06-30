@@ -4,11 +4,61 @@
 //! styling are reused — no parallel layout); this module only reads the placement and
 //! fixes the box's centre over the right lifelines at its row.
 
-use crate::resolve::{AttrMap, ResolvedValue};
+use crate::layout::prim;
+use crate::layout::{Bbox, PlacedNode};
+use crate::resolve::{AttrMap, NodeKind, ResolvedValue};
 use std::collections::HashMap;
 
 /// Clear space between a `left` / `right` note and the lifeline it sits beside.
 const SIDE_GAP: f64 = 12.0;
+
+/// A note's folded-corner size, as a fraction of its height (capped), so the dog-ear
+/// scales with the note but never dominates a tall one.
+const FOLD_FRAC: f64 = 0.34;
+const FOLD_MAX: f64 = 15.0;
+
+/// Reshape a laid-out note box into a **sticky note**: a body with its top-right corner
+/// clipped, plus a small folded flap (the dog-ear) in the note's stroke colour — so a note
+/// reads as an annotation, not a participant box (SPEC §10). Reuses the box's own resolved
+/// `fill` / `stroke` (carried on its `<g>`) and keeps its text child; only the silhouette
+/// changes, from a `Block` rect to a `Path`.
+pub(super) fn sticky(note: &mut PlacedNode) {
+    let (w, h) = (note.bbox.w(), note.bbox.h());
+    let fold = (h * FOLD_FRAC).min(FOLD_MAX).min(w * 0.5);
+    let (l, t, rg, b) = (-w / 2.0, -h / 2.0, w / 2.0, h / 2.0);
+    let body = format!(
+        "M {l} {t} L {} {t} L {rg} {} L {rg} {b} L {l} {b} Z",
+        rg - fold,
+        t + fold
+    );
+    note.kind = NodeKind::Path;
+    note.attrs.insert("path", ResolvedValue::String(body));
+    let stroke = note
+        .attrs
+        .get("stroke")
+        .cloned()
+        .unwrap_or_else(|| super::live("stroke"));
+    let flap = format!(
+        "M {} {t} L {rg} {} L {} {} Z",
+        rg - fold,
+        t + fold,
+        rg - fold,
+        t + fold
+    );
+    note.children.insert(
+        0,
+        prim::path(
+            flap,
+            stroke,
+            Bbox {
+                min_x: rg - fold,
+                min_y: t,
+                max_x: rg,
+                max_y: t + fold,
+            },
+        ),
+    );
+}
 
 /// Where a note binds to the lifelines (SPEC §10). `over` may name several — the box
 /// centres over their span.

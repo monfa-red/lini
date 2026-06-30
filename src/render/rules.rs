@@ -308,6 +308,19 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
             props,
         });
     }
+    // A sequence message label (SPEC §10) — a link's label the layout draws — takes its size
+    // and weight from this rule, not an inline `style=`, like `.lini-link-label` does. `12px`
+    // reads a touch larger than the generic link label on the time axis; `.lini-text` (always
+    // present alongside) states the fill and anchors.
+    if present.contains("message") {
+        rules.push(Rule {
+            class: "lini-message".into(),
+            props: vec![
+                ("font-size".into(), "12px".into()),
+                ("font-weight".into(), "normal".into()),
+            ],
+        });
+    }
 
     // Template + define looks (group's wash, a define's paint), in class-def order
     // (templates then defines). Element rules are already folded into these.
@@ -672,7 +685,7 @@ mod tests {
         let css = emit_str(&rules_for("a -> b\n"));
         assert!(
             css.contains(
-                ".lini .lini-link { fill: none; stroke: var(--lini-stroke); stroke-width: 2; stroke-dasharray: none; }"
+                ".lini .lini-link { fill: none; stroke: var(--lini-stroke); stroke-width: 1.5; stroke-dasharray: none; }"
             ),
             "{}",
             css

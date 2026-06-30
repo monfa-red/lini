@@ -1,5 +1,6 @@
 ---
 source: tests/conformance.rs
+assertion_line: 40
 expression: svg
 input_file: samples/chart_bars.lini
 ---
@@ -8,7 +9,7 @@ input_file: samples/chart_bars.lini
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
     .lini .lini-block { fill: none; stroke: none; stroke-width: 1.5; stroke-dasharray: none; }
-    .lini .lini-line { stroke-dasharray: none; }
+    .lini .lini-line { fill: none; stroke: #444; stroke-width: 1.5; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
   </style>
   <defs/>
@@ -18,22 +19,22 @@ input_file: samples/chart_bars.lini
       <rect x="-372" y="-232" width="744" height="464" rx="0" ry="0"/>
       <g class="lini-node lini-chart lini-block" transform="translate(-192,-122)">
         <rect x="-179.25" y="-109.25" width="358.5" height="218.5" rx="0" ry="0"/>
-        <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
           <line x1="-156.8" y1="70.9" x2="168" y2="70.9"/>
         </g>
-        <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
           <line x1="-156.8" y1="41.44" x2="168" y2="41.44"/>
         </g>
-        <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
           <line x1="-156.8" y1="11.98" x2="168" y2="11.98"/>
         </g>
-        <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
           <line x1="-156.8" y1="-17.48" x2="168" y2="-17.48"/>
         </g>
-        <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
           <line x1="-156.8" y1="-46.94" x2="168" y2="-46.94"/>
         </g>
-        <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
           <line x1="-156.8" y1="-76.4" x2="168" y2="-76.4"/>
         </g>
         <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e" transform="translate(-122.1547,44.386)">
@@ -81,16 +82,16 @@ input_file: samples/chart_bars.lini
       </g>
       <g class="lini-node lini-chart lini-block" transform="translate(192,-122)">
         <rect x="-179.25" y="-109.25" width="358.5" height="218.5" rx="0" ry="0"/>
-        <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
           <line x1="-150.2" y1="70.9" x2="168" y2="70.9"/>
         </g>
-        <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
           <line x1="-150.2" y1="21.8" x2="168" y2="21.8"/>
         </g>
-        <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
           <line x1="-150.2" y1="-27.3" x2="168" y2="-27.3"/>
         </g>
-        <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
           <line x1="-150.2" y1="-76.4" x2="168" y2="-76.4"/>
         </g>
         <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e" transform="translate(-110.425,51.26)">
@@ -165,16 +166,16 @@ input_file: samples/chart_bars.lini
       </g>
       <g class="lini-node lini-chart lini-block" transform="translate(-192,122)">
         <rect x="-179.25" y="-109.25" width="358.5" height="218.5" rx="0" ry="0"/>
-        <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
           <line x1="-99.4" y1="-76.4" x2="-99.4" y2="55.5"/>
         </g>
-        <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
           <line x1="-10.2667" y1="-76.4" x2="-10.2667" y2="55.5"/>
         </g>
-        <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
           <line x1="78.8667" y1="-76.4" x2="78.8667" y2="55.5"/>
         </g>
-        <g class="lini-node lini-line" style="fill: none; stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
+        <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
           <line x1="168" y1="-76.4" x2="168" y2="55.5"/>
         </g>
         <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e" transform="translate(7.56,-65.848)">

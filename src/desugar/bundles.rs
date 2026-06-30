@@ -8,10 +8,11 @@ use crate::resolve::NodeKind;
 use crate::span::Span;
 use crate::syntax::ast::{Decl, Value};
 
-/// A sequence's default `gap` (SPEC §10) — the message pitch / participant spacing, larger
-/// than the generic `20` so the time axis breathes. Shared by the `|sequence|` template and
-/// the root `{ layout: sequence }` form (applied in [`crate::desugar`]).
-pub(crate) const SEQ_GAP: f64 = 34.0;
+/// A sequence's default `gap: row col` (SPEC §10) — the message pitch (rows) and the
+/// participant spacing (columns), larger than the generic `20` so the time axis breathes.
+/// Shared by the `|sequence|` template and the root `{ layout: sequence }` form.
+pub(crate) const SEQ_GAP_ROW: f64 = 32.0;
+pub(crate) const SEQ_GAP_COL: f64 = 24.0;
 
 fn decl(name: &str, values: Vec<Value>) -> Decl {
     Decl {
@@ -38,7 +39,7 @@ fn pair(name: &str, a: f64, b: f64) -> Decl {
 /// gets the same `gap`. The default lives here, so the layout core stays dumb.
 pub(crate) fn root_layout_defaults(layout: Option<&str>) -> Vec<Decl> {
     match layout {
-        Some("sequence") => vec![n("gap", SEQ_GAP)],
+        Some("sequence") => vec![pair("gap", SEQ_GAP_ROW, SEQ_GAP_COL)],
         _ => Vec::new(),
     }
 }
@@ -171,11 +172,14 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
         // looks, all reusing scene role variables (no new ones). Participants are ordinary
         // boxes and keep their own type's paint. (A root `{ layout: sequence }` picks up the
         // same `gap` default in `desugar`.)
-        "sequence" => vec![id("layout", "sequence"), n("gap", SEQ_GAP)],
+        "sequence" => vec![
+            id("layout", "sequence"),
+            pair("gap", SEQ_GAP_ROW, SEQ_GAP_COL),
+        ],
         "note" => vec![
             var("fill", "fill"),
             var("stroke", "stroke"),
-            pair("padding", 8.0, 10.0),
+            pair("padding", 5.0, 9.0),
             n("font-size", 12.0),
         ],
         // A frame: a dashed, rounded rectangle around a span of messages. `padding` insets
@@ -186,7 +190,7 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             id("stroke-style", "dashed"),
             n("stroke-width", 1.0),
             n("radius", 4.0),
-            pair("padding", 16.0, 22.0),
+            n("padding", 18.0),
             n("font-size", 11.0),
         ],
         // An |alt| compartment separator: the same dashed line, no body radius.
@@ -252,7 +256,7 @@ pub fn root_defaults() -> Vec<Decl> {
 /// class rules, and the link's own block.
 pub fn link_defaults() -> Vec<Decl> {
     vec![
-        n("stroke-width", 2.0),
+        n("stroke-width", 1.5),
         n("clearance", 16.0),
         n("font-size", 11.0),
     ]

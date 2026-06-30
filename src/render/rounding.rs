@@ -27,6 +27,33 @@ pub struct RoundedPath {
     pub segs: Vec<Seg>,
 }
 
+/// The SVG path `d` for a polyline with each interior corner rounded to its
+/// `targets` radius — the **one** formatter, shared by routed links
+/// ([`super::links`]) and a lowered `|line|` primitive's rounded corners
+/// ([`super::primitives`]), so a self-message hook bends exactly like a wire.
+pub fn path_d(pts: &[Point], targets: &[f64]) -> String {
+    use super::values::num;
+    use std::fmt::Write;
+    let rounded = round(pts, targets);
+    let mut d = format!("M {} {}", num(rounded.start.0), num(rounded.start.1));
+    for seg in &rounded.segs {
+        match seg {
+            Seg::Line { to } => write!(d, " L {} {}", num(to.0), num(to.1)).unwrap(),
+            Seg::Arc {
+                to, radius, sweep, ..
+            } => write!(
+                d,
+                " A {r} {r} 0 0 {sweep} {} {}",
+                num(to.0),
+                num(to.1),
+                r = num(*radius),
+            )
+            .unwrap(),
+        }
+    }
+    d
+}
+
 /// Round each interior corner of the orthogonal polyline `pts` to its fillet
 /// radius in `targets`, capped at half of each adjacent run so an arc never eats
 /// a neighbour. A degenerate (sub-pixel) or collinear corner stays a sharp

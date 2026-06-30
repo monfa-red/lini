@@ -29,6 +29,10 @@ use std::collections::HashMap;
 /// closed series set).
 const NON_PARTICIPANT: &[&str] = &["loop", "opt", "alt", "else", "note"];
 
+/// Every lifeline is this thin, whatever its participant's stroke weight — a uniform guide,
+/// so an `|icon|`'s bold 2px glyph stroke doesn't make one lifeline heavier than the rest.
+const LIFELINE_WIDTH: f64 = 1.5;
+
 /// Is this node a sequence container (SPEC §10)? Detected by its `layout:` attr — the same
 /// key the chart / flow / grid dispatch reads — so it is intercepted before the generic
 /// container path, exactly like `chart::is_chart`.
@@ -163,10 +167,12 @@ fn lay_out(
     let msg_y = &timeline.msg_y;
     let row_y = |i: usize| if i < msg_y.len() { msg_y[i] } else { foot_y };
 
-    // Each participant lends its own paint to its **apparatus** — its lifeline and activation
-    // bars (SPEC §10) — so colouring a participant colours its whole timeline, and a plain box
-    // gives a `--stroke` line at width 1.5. Place participants at their column centres,
-    // top-aligned, and drop a lifeline to the foot.
+    // Each participant lends its **colour** to its apparatus — lifeline and activation bars
+    // (SPEC §10) — so colouring a participant colours its whole timeline. The lifeline is a
+    // uniform thin guide ([`LIFELINE_WIDTH`]): it takes the participant's stroke *colour* but
+    // not a heavier glyph/border weight (an `|icon|`'s bold 2px would otherwise stand out), so
+    // every lifeline reads the same. The bars keep the participant's full paint. Place
+    // participants at their column centres, top-aligned, and drop a lifeline to the foot.
     let mut lifelines = Vec::with_capacity(participants.len());
     let mut lifeline_x: HashMap<String, f64> = HashMap::new();
     let mut paint: HashMap<String, Apparatus> = HashMap::new();
@@ -178,7 +184,7 @@ fn lay_out(
         lifelines.push(prim::line(
             vec![(cx, head_bottom), (cx, foot_y)],
             a.stroke.clone(),
-            a.width,
+            LIFELINE_WIDTH,
         ));
         if let Some(id) = p.id.as_deref() {
             lifeline_x.insert(id.to_string(), cx);
@@ -356,6 +362,13 @@ fn place_notes(
             let placement = notes::placement(&n.attrs)?;
             n.cx = notes::centre_x(&placement, n.bbox.w(), lifeline_x)?;
             n.cy = y;
+            // `translate: x y` nudges a note off its placement, so it can be positioned by
+            // hand (SPEC §11) — the one post-placement mechanism, reused here.
+            if let Ok(Some((dx, dy))) = super::anchors::translate(&n.attrs, n.span) {
+                n.cx += dx;
+                n.cy += dy;
+            }
+            notes::sticky(&mut n);
             Some(n)
         })
         .collect()
@@ -440,7 +453,7 @@ mod tests {
     fn a_return_message_is_dashed() {
         let s = svg("{ layout: sequence }\n|box#a| \"A\"\n|box#b| \"B\"\nb --> a \"ok\"\n");
         assert!(
-            s.contains("stroke-dasharray: 6"),
+            s.contains("stroke-dasharray: 5,3.75"),
             "the return is dashed: {s}"
         );
     }
@@ -457,9 +470,15 @@ mod tests {
     #[test]
     fn a_self_message_draws_a_hook() {
         let s = svg("{ layout: sequence }\n|box#a| \"A\"\na -> a \"retry\"\n");
+        // The hook is a rounded path — an arc joins its legs (clearance-driven turn) —
+        // ending in an arrowhead that returns to the lifeline; its label rides above.
         assert!(
-            s.contains("<polyline"),
-            "the self-message hook is a polyline: {s}"
+            s.contains(" A "),
+            "the self-message hook bends through an arc: {s}"
+        );
+        assert!(
+            s.contains("lini-marker-arrow"),
+            "the hook returns with an arrowhead: {s}"
         );
         assert!(s.contains(">retry</text>"), "its label: {s}");
     }

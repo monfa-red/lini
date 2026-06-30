@@ -2,7 +2,6 @@
 //! `|line|` primitives and link rendering.
 
 use super::values::num;
-use crate::layout::PlacedNode;
 use crate::resolve::{MarkerKind, Markers};
 use std::fmt::Write;
 
@@ -14,28 +13,6 @@ pub struct MarkerPaint<'a> {
     pub color: &'a str,
     pub inline: bool,
     pub thickness: f64,
-}
-
-/// Emit markers for inline `|line|` primitives. Resolve has already settled
-/// `n.markers` per source-order rules — we just paint what's there.
-pub fn emit_inline_markers(
-    out: &mut String,
-    indent: &str,
-    n: &PlacedNode,
-    from: (f64, f64),
-    to: (f64, f64),
-    paint: &MarkerPaint,
-) {
-    if n.markers.start != MarkerKind::None
-        && let Some((tip, dir)) = marker_anchor(from, to, true)
-    {
-        emit_marker(out, indent, n.markers.start, tip, dir, paint);
-    }
-    if n.markers.end != MarkerKind::None
-        && let Some((tip, dir)) = marker_anchor(from, to, false)
-    {
-        emit_marker(out, indent, n.markers.end, tip, dir, paint);
-    }
 }
 
 /// The marker tip sits on the line endpoint, with the direction unit-vector
