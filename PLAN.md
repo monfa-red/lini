@@ -17,7 +17,7 @@ step can be executed in a fresh session: each step lists its files, changes, tes
 - [x] **Step 1 — Grammar relaxation (parser + fmt)** ✓ (parser both sites relaxed; `fmt` source-order merge; 427 lib tests + clippy + fmt clean)
 - [x] **Step 2 — Sequence types + dispatch + participants/lifelines** ✓ (6 types + defaults; `prim` promoted to shared `layout::prim`; root + node forms render headers + lifelines; tests + clippy + fmt clean; visually verified)
 - [x] **Step 3 — Messages + the link-partition / wiring-strategy seam** ✓ (call/return/async/self render as time-row arrows; router skips sequence scopes; async wavy un-deferred; 435 lib tests + clippy + fmt clean; visually verified)
-- [ ] Step 4 — Activations
+- [x] **Step 4 — Activations** ✓ (per-participant LIFO bars; nesting offsets outward; arrows attach to bar edges; `activation: none` toggle; 439 lib tests + clippy + fmt clean; visually verified)
 - [ ] Step 5 — Frames (`loop`/`opt`/`alt`/`else`) + notes
 - [ ] Step 6 — Samples, snapshots, render-verify, polish, acceptance
 
@@ -286,6 +286,23 @@ the strategy seam + future-arm comments are in place.
 stacked bars, correct open/close rows, `activation: none` removes them. Snapshots.
 
 **Done when:** bars are correct + deterministic; the toggle works.
+
+> **Step 4 outcome / decisions (done):**
+> - **Operator kind, not stroke-style:** added `ResolvedLink.line` (the operator's `LineStyle`,
+>   set in `resolve_link` from `w.op.line`) so call/return/async is read from the operator even
+>   when a `link-style:` override changes the dash. `messages::Pair::kind()` classifies
+>   (self if `from == to`, else Wavy→async / Dashed→return / else call) — the one classifier,
+>   shared by `draw` and `activations`.
+> - **`activations.rs`** (new): `bars(pairs)` runs a per-participant LIFO stack (call pushes a
+>   bar on `to`; return pops `from`'s top; async/self push none; orphan return pops none;
+>   unclosed runs to the foot). Nesting depth = stack height → bar offset outward (`NEST_DX`).
+>   `draw` lowers each to a thin filled+stroked `|block|` (`prim::rect` + `prim::outline`).
+> - **Edge attachment:** `activations::edge` gives a live bar's facing edge; `lay_out` builds an
+>   `endpoint_x(id,row,toward)` closure threaded into `messages::draw`, so arrows meet the bar
+>   they open instead of crossing the lifeline. Decoupled — `messages` takes a closure, not `Bar`.
+> - **Shared `live(name)`** helper hoisted to `mod.rs` (was duplicated in `messages`); lifelines,
+>   bars, and message strokes all name role vars through it.
+> - Constants frozen: `BAR_W = 10`, `NEST_DX = 4`. Child order: lifelines → bars → headers → arrows.
 
 ---
 

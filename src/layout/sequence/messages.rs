@@ -4,9 +4,10 @@
 //! resolve) and end marker (the arrowhead). A chain `a -> b -> c` splits into consecutive
 //! pairs, each its own row; fans are already separate links.
 
+use crate::ast::LineStyle;
 use crate::layout::PlacedNode;
 use crate::layout::prim;
-use crate::resolve::{ResolvedLink, ResolvedValue};
+use crate::resolve::ResolvedLink;
 use std::collections::HashMap;
 
 /// Link-label default size (SPEC §9), sitting just above the arrow.
@@ -27,6 +28,17 @@ pub(super) struct Pair<'a> {
     link: &'a ResolvedLink,
 }
 
+/// A message's kind on the time axis (SPEC §10), read from the operator — not from
+/// `stroke-style`, which a `link-style:` override can change. It drives activations
+/// (a call opens a bar, a return closes one; async / self open none).
+#[derive(PartialEq, Eq, Clone, Copy)]
+pub(super) enum Kind {
+    Call,
+    Return,
+    Async,
+    Self_,
+}
+
 impl Pair<'_> {
     fn label(&self) -> Option<&str> {
         self.link.texts.first().map(|t| t.text.as_str())
@@ -34,6 +46,19 @@ impl Pair<'_> {
     fn label_width(&self) -> f64 {
         self.label()
             .map_or(0.0, |l| prim::text_width(l, LABEL_SIZE))
+    }
+    /// This message's kind: a self-message (`a -> a`) regardless of operator, else by
+    /// the operator's line (`~>` async · `-->` return · `->` / other call).
+    pub(super) fn kind(&self) -> Kind {
+        if self.from == self.to {
+            Kind::Self_
+        } else {
+            match self.link.line {
+                LineStyle::Wavy => Kind::Async,
+                LineStyle::Dashed => Kind::Return,
+                _ => Kind::Call,
+            }
+        }
     }
 }
 
@@ -105,15 +130,18 @@ pub(super) fn columns(widths: &[f64], ids: &[&str], pairs: &[Pair], gap_col: f64
 
 /// Draw the messages: each pair is a horizontal arrow at its row carrying the link's paint
 /// and end marker, label centred above. A self-message (`a -> a`) is a hook on the lifeline,
-/// label to the right.
+/// label to the right. `lifeline_x` gives each participant's centre (for direction and label
+/// placement); `endpoint_x(id, row, toward)` gives the actual attach x — a live activation
+/// bar's edge, or the lifeline centre — so an arrow meets the bar it opens (SPEC §10).
 pub(super) fn draw(
     pairs: &[Pair],
     lifeline_x: &HashMap<String, f64>,
+    endpoint_x: impl Fn(&str, usize, f64) -> f64,
     row_y: impl Fn(usize) -> f64,
 ) -> Vec<PlacedNode> {
     let mut out = Vec::new();
     for (i, p) in pairs.iter().enumerate() {
-        let (Some(&fx), Some(&tx)) = (lifeline_x.get(p.from), lifeline_x.get(p.to)) else {
+        let (Some(&fcx), Some(&tcx)) = (lifeline_x.get(p.from), lifeline_x.get(p.to)) else {
             continue;
         };
         let y = row_y(i);
@@ -122,9 +150,11 @@ pub(super) fn draw(
             .attrs
             .get("stroke")
             .cloned()
-            .unwrap_or_else(|| live("stroke"));
+            .unwrap_or_else(|| super::live("stroke"));
         let width = p.link.attrs.number("stroke-width").unwrap_or(2.0);
-        if fx == tx {
+        if fcx == tcx {
+            // A self-message: a hook on the lifeline, off its near (right) bar edge.
+            let fx = endpoint_x(p.from, i, fcx + 1.0);
             let mut hook = prim::line(
                 vec![
                     (fx, y),
@@ -149,14 +179,15 @@ pub(super) fn draw(
                 ));
             }
         } else {
+            let fx = endpoint_x(p.from, i, tcx);
+            let tx = endpoint_x(p.to, i, fcx);
             let mut arrow = prim::line(vec![(fx, y), (tx, y)], stroke, width);
             style(&mut arrow, p.link);
             out.push(arrow);
             if let Some(label) = p.label() {
-                let cx = (fx + tx) / 2.0;
                 out.push(prim::text(
                     label,
-                    cx,
+                    (fcx + tcx) / 2.0,
                     y - LABEL_RISE - LABEL_SIZE / 2.0,
                     LABEL_SIZE,
                     None,
@@ -176,12 +207,5 @@ fn style(n: &mut PlacedNode, link: &ResolvedLink) {
     if let Some(ss) = link.attrs.get("stroke-style") {
         n.attrs.insert("stroke-style", ss.clone());
         n.own_style.insert("stroke-style", ss.clone());
-    }
-}
-
-fn live(name: &str) -> ResolvedValue {
-    ResolvedValue::LiveVar {
-        name: name.to_string(),
-        raw: false,
     }
 }

@@ -125,6 +125,7 @@ pub fn resolve_link(
         out.push(ResolvedLink {
             endpoints,
             scope: path_prefix.join("."),
+            line: w.op.line,
             attrs: attrs.clone(),
             applied_styles: w.classes.clone(),
             markers: markers.clone(),

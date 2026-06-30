@@ -1,4 +1,4 @@
-use crate::ast::Side;
+use crate::ast::{LineStyle, Side};
 use crate::expr::{Expr, FuncTable};
 use crate::span::Span;
 use std::collections::{BTreeMap, HashMap};
@@ -289,6 +289,10 @@ pub struct ResolvedLink {
     /// strategy: a `sequence` scope draws its links as time-row arrows and skips the
     /// orthogonal router (SPEC §10).
     pub scope: String,
+    /// The operator's line part (`->` solid · `-->` dashed · `~>` wavy) — the
+    /// message's *kind* in a sequence (call / return / async), read here rather than
+    /// from `stroke-style`, which a `link-style:` override can change (SPEC §10).
+    pub line: LineStyle,
     pub attrs: AttrMap,
     /// Names of the `.style`s applied to this link, in source order — emitted as
     /// `lini-style-{name}` classes, exactly like a node's (SPEC §14).

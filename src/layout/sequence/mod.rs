@@ -12,6 +12,7 @@
 //! Done: participants + lifelines, and messages (call / return / async / self) in
 //! [`messages`]. Activations, frames, and notes follow in later steps (see PLAN.md).
 
+mod activations;
 mod messages;
 
 use crate::error::Error;
@@ -153,10 +154,24 @@ fn lay_out(
         }
     }
 
-    let arrows = messages::draw(&pairs, &lifeline_x, row_y);
+    // Activation bars (SPEC §10): a per-participant LIFO stack over the messages, unless
+    // `activation: none`. Message endpoints attach to a live bar's edge, so an arrow meets
+    // the bar it opens rather than crossing the lifeline.
+    let bars = if activations_on(attrs) {
+        activations::bars(&pairs)
+    } else {
+        Vec::new()
+    };
+    let endpoint_x = |id: &str, row: usize, toward: f64| {
+        let cx = lifeline_x.get(id).copied().unwrap_or(0.0);
+        activations::edge(&bars, id, row, cx, toward).unwrap_or(cx)
+    };
+    let arrows = messages::draw(&pairs, &lifeline_x, endpoint_x, row_y);
+    let bar_nodes = activations::draw(&bars, &lifeline_x, row_y);
 
-    // Lifelines behind, headers, then messages on top.
+    // Lifelines behind, then bars, headers, and messages on top.
     let mut children = lifelines;
+    children.extend(bar_nodes);
     children.extend(participants);
     children.extend(arrows);
     let bbox = enclosing_bbox(&children);
@@ -181,10 +196,21 @@ fn lifeline_stroke(attrs: &AttrMap) -> ResolvedValue {
     attrs
         .get("stroke")
         .cloned()
-        .unwrap_or(ResolvedValue::LiveVar {
-            name: "stroke".to_string(),
-            raw: false,
-        })
+        .unwrap_or_else(|| live("stroke"))
+}
+
+/// Activation bars are drawn unless `activation: none` (SPEC §10).
+fn activations_on(attrs: &AttrMap) -> bool {
+    !matches!(attrs.get("activation"), Some(ResolvedValue::Ident(s)) if s == "none")
+}
+
+/// A `--name` role variable as a live value — palette colours stay themeable. The one
+/// place the engine names a role var, shared by the lifelines, bars, and messages.
+pub(super) fn live(name: &str) -> ResolvedValue {
+    ResolvedValue::LiveVar {
+        name: name.to_string(),
+        raw: false,
+    }
 }
 
 /// A participant is any drawn box that is not a frame / separator / note type (SPEC §10).
@@ -296,5 +322,57 @@ mod tests {
             "the self-message hook is a polyline: {s}"
         );
         assert!(s.contains(">retry</text>"), "its label: {s}");
+    }
+
+    // ── Activations (SPEC §10) ──
+
+    /// Activation bars are the anonymous `Block` rects on the lifelines — distinct from
+    /// the id'd participant headers and the `Line` lifelines / arrows.
+    fn bar_count(src: &str) -> usize {
+        let toks = crate::lexer::lex(src).expect("lex");
+        let file = crate::syntax::parser::parse(&toks).expect("parse");
+        let lowered = crate::desugar::desugar(&file).expect("desugar");
+        let program = crate::resolve::resolve_with_theme(&lowered, &[]).expect("resolve");
+        let laid = crate::layout::layout(&program).expect("layout");
+        laid.nodes[0]
+            .children
+            .iter()
+            .filter(|c| c.kind == crate::resolve::NodeKind::Block && c.id.is_none())
+            .count()
+    }
+
+    #[test]
+    fn a_call_opens_one_activation_bar() {
+        // A call opens a bar on its target; the matching return closes it — one bar.
+        let n = bar_count(
+            "|sequence#s| [\n  |box#a| \"A\"\n  |box#b| \"B\"\n  a -> b \"q\"\n  b --> a \"r\"\n]\n",
+        );
+        assert_eq!(n, 1, "one activation bar");
+    }
+
+    #[test]
+    fn nested_calls_stack_two_bars() {
+        // Two calls to the same target before any return stack two bars.
+        let n = bar_count(
+            "|sequence#s| [\n  |box#a| \"A\"\n  |box#b| \"B\"\n  a -> b \"c1\"\n  a -> b \"c2\"\n  b --> a \"r2\"\n  b --> a \"r1\"\n]\n",
+        );
+        assert_eq!(n, 2, "two stacked bars");
+    }
+
+    #[test]
+    fn self_and_async_open_no_bar() {
+        // A self-message and an async (`~>`) open none (SPEC §10).
+        let n = bar_count(
+            "|sequence#s| [\n  |box#a| \"A\"\n  |box#b| \"B\"\n  a -> a \"loop\"\n  a ~> b \"event\"\n]\n",
+        );
+        assert_eq!(n, 0, "self and async open no activation");
+    }
+
+    #[test]
+    fn activation_none_draws_no_bars() {
+        let n = bar_count(
+            "|sequence#s| { activation: none } [\n  |box#a| \"A\"\n  |box#b| \"B\"\n  a -> b \"q\"\n  b --> a \"r\"\n]\n",
+        );
+        assert_eq!(n, 0, "activation: none suppresses bars");
     }
 }
