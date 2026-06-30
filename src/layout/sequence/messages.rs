@@ -57,6 +57,16 @@ impl Pair<'_> {
     pub(super) fn hook_drop(&self) -> f64 {
         if self.from == self.to { SELF_DY } else { 0.0 }
     }
+    /// How far this message's label rises above its arrow — so the first message in a frame
+    /// compartment can clear the border / divider by its label, not just its arrow. A
+    /// self-message's label sits to the side, so it doesn't rise.
+    pub(super) fn label_rise(&self) -> f64 {
+        if self.from != self.to && self.label().is_some() {
+            LABEL_RISE + LABEL_SIZE
+        } else {
+            0.0
+        }
+    }
     fn label_width(&self) -> f64 {
         self.label()
             .map_or(0.0, |l| prim::text_width(l, LABEL_SIZE))

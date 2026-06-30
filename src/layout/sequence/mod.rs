@@ -200,16 +200,18 @@ fn lay_out(
     };
     let arrows = messages::draw(&pairs, &lifeline_x, endpoint_x, row_y);
     let bar_nodes = activations::draw(&bars, &lifeline_x, row_y, &paint);
-    let frame_nodes = frames::draw(&seq_frames, &timeline.geom, &pairs, &lifeline_x);
+    let (frames_behind, frames_front) =
+        frames::draw(&seq_frames, &timeline.geom, &pairs, &lifeline_x);
     let placed_notes = place_notes(notes, &timeline.note_y, &lifeline_x);
 
-    // Frames behind (so a tinted fill backs the scene), then lifelines, bars, headers,
-    // messages, and notes on top.
-    let mut children = frame_nodes;
+    // Frame fills + borders behind (so a tinted fill backs the scene), then lifelines, bars,
+    // headers, messages; frame tabs / guards and notes on top so they stay readable.
+    let mut children = frames_behind;
     children.extend(lifelines);
     children.extend(bar_nodes);
     children.extend(participants);
     children.extend(arrows);
+    children.extend(frames_front);
     children.extend(placed_notes);
     let bbox = enclosing_bbox(&children);
     Ok((children, bbox))

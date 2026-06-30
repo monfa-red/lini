@@ -17,6 +17,8 @@ use std::collections::HashMap;
 const NEST_INSET: f64 = 6.0;
 /// The title-tab height — reserved in the gap above a frame's first message.
 const TAB_H: f64 = 16.0;
+/// Minimum room below an `|else|` divider, so its guard clears the next message.
+const GUARD_CLEAR: f64 = 16.0;
 /// Tab keyword and guard text sizes.
 const KEYWORD_SIZE: f64 = 10.0;
 const GUARD_SIZE: f64 = 10.0;
@@ -167,29 +169,41 @@ pub(super) fn timeline(
             else_ys: vec![0.0; f.elses.len()],
         })
         .collect();
+    // A frame is laid out like a stack of padded compartments: its `padding` insets the
+    // messages from every structural line (the top border, each `|else|` divider, the bottom
+    // border), messages within a compartment sit a `gap` apart, and the frame's outer borders
+    // keep a `gap` from the messages outside it. When `padding == gap` the whole diagram is
+    // perfectly even.
     for (_, _, ev) in &events {
         match ev {
-            // The top border sits a full row below the previous content (the tab rides that
-            // gap); the first message is the frame's `padding` below the border.
+            // The top border keeps a `gap` from the content above; the first message is the
+            // frame's `padding` below it, but never less than the tab height (so its label
+            // clears the operator tab).
             Ev::Open(f) => {
                 if placed {
                     y += gap_row;
                 }
                 geom[*f].top = y;
-                y += frames[*f].pad.top;
+                y += frames[*f].pad.top.max(TAB_H);
                 placed = false;
             }
-            // The divider splits the compartments; its guard rides the room below it.
+            // The divider is the compartments' shared edge — padded from the message above and
+            // below, with room for the guard that labels the next compartment.
             Ev::Else(f, e) => {
-                y += gap_row * 0.4;
+                y += frames[*f].pad.bottom;
                 geom[*f].else_ys[*e] = y;
-                y += gap_row * 0.6;
+                y += frames[*f].pad.top.max(GUARD_CLEAR);
                 placed = false;
             }
             Ev::Msg(i) => {
-                if placed {
-                    y += gap_row;
-                }
+                // Within a compartment, rows are a `gap` apart; the first message after a
+                // border / divider instead clears it by its own label rise, so `padding`
+                // measures border-to-label, not border-to-arrow.
+                y += if placed {
+                    gap_row
+                } else {
+                    pairs[*i].label_rise()
+                };
                 msg_y[*i] = y;
                 y += pairs[*i].hook_drop(); // a self-message's hook drops below its row
                 placed = true;
@@ -203,10 +217,12 @@ pub(super) fn timeline(
                 y += notes[*i].1;
                 placed = true;
             }
-            // The bottom border sits the frame's `padding` below the last message; the next
-            // row still gaps a full `gap_row` from that message, so the border rides the gap.
+            // The bottom border is the frame's `padding` below the last message; advance to it
+            // so the next row keeps a full `gap` *from the border*, not from the last message.
             Ev::Close(f) => {
-                geom[*f].bot = y + frames[*f].pad.bottom;
+                y += frames[*f].pad.bottom;
+                geom[*f].bot = y;
+                placed = true;
             }
         }
     }
@@ -218,16 +234,17 @@ pub(super) fn timeline(
     }
 }
 
-/// Lower the frames to primitives: a dashed border (reusing the frame's resolved paint),
-/// a title tab with the operator + guard, and an `|else|` divider + guard per compartment.
-/// Outermost first, so a nested frame draws over its parent.
+/// Lower the frames to primitives, split by z-order: `behind` holds the dashed borders +
+/// fills + dividers (drawn under the lifelines, so a fill tints the region); `front` holds
+/// the operator tabs + guard labels (drawn over the bars, so they stay readable). Outermost
+/// first, so a nested frame draws over its parent.
 pub(super) fn draw(
     frames: &[Frame],
     geom: &[FrameGeom],
     pairs: &[Pair],
     lifeline_x: &HashMap<String, f64>,
-) -> Vec<PlacedNode> {
-    let mut out = Vec::new();
+) -> (Vec<PlacedNode>, Vec<PlacedNode>) {
+    let (mut behind, mut front) = (Vec::new(), Vec::new());
     for (fr, g) in frames.iter().zip(geom) {
         let Some((lo, hi)) = lifeline_span(fr, pairs, lifeline_x) else {
             continue; // a frame with no placed messages spans nothing
@@ -239,17 +256,17 @@ pub(super) fn draw(
             lo - (fr.pad.left - nest).max(4.0),
             hi + (fr.pad.right - nest).max(4.0),
         );
-        out.push(border(fr.inst, left, g.top, right, g.bot));
-        out.extend(tab(fr, left, g.top));
+        behind.push(border(fr.inst, left, g.top, right, g.bot));
+        front.extend(tab(fr, left, g.top));
         // `|else|` dividers split the alt into compartments; each carries its guard.
         for (el, &ey) in fr.elses.iter().zip(&g.else_ys) {
-            out.push(divider(fr.inst, left, right, ey));
+            behind.push(divider(fr.inst, left, right, ey));
             if let Some(text) = guard(el) {
-                out.push(guard_text(text, left, ey + GUARD_SIZE));
+                front.push(guard_text(text, left, ey + GUARD_SIZE));
             }
         }
     }
-    out
+    (behind, front)
 }
 
 /// The lifeline x-span the frame's messages touch — every message whose source position
@@ -308,12 +325,13 @@ fn border(inst: &ResolvedInst, left: f64, top: f64, right: f64, bot: f64) -> Pla
 /// frame's guard (`[cond]`) just to its right.
 fn tab(frame: &Frame, left: f64, top: f64) -> Vec<PlacedNode> {
     let tab_w = prim::text_width(frame.keyword, KEYWORD_SIZE) + 12.0;
+    // An opaque fill so the tab reads even when it sits over an activation bar.
     let mut card = prim::rect(
         left + tab_w / 2.0,
         top + TAB_H / 2.0,
         tab_w,
         TAB_H,
-        super::live("group-fill"),
+        super::live("fill"),
         1.0,
     );
     prim::outline(&mut card, super::live("group-stroke"), 1.0);
