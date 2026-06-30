@@ -1,5 +1,6 @@
-//! Marker geometry (arrow / dot / diamond / crow). Shared between inline
-//! `|line|` primitives and link rendering.
+//! Marker geometry — filled heads (arrow / dot / circle / diamond) and the open ER
+//! cardinality family (crow's-foot / one / zero-or-one / one-or-many / zero-or-many).
+//! Shared between inline `|line|` primitives and link rendering.
 
 use super::values::num;
 use crate::resolve::{MarkerKind, Markers};
@@ -56,10 +57,13 @@ const DOT_RADIUS: f64 = 0.375;
 /// only fuller.
 const CIRCLE_RADIUS: f64 = 0.5;
 
-/// How far a mitred crow's-foot point overshoots its vertex, in `stroke-width`s
-/// — its 0.5 splay makes a ~53° point, so the vertex pulls back by this and the
-/// drawn tip lands on the endpoint, level with the other tips. `1 / (2·sin(atan 0.5))`.
-const CROW_MITER: f64 = 1.118034;
+/// ER crow's-foot family geometry, in `marker_size` units (SPEC §7). The fan splays
+/// onto the entity edge (at the tip) and converges back along the line; a bar / ring
+/// sits behind it for the finer cardinalities.
+const CROW_DEPTH: f64 = 1.0; // foot convergence, back from the entity edge
+const CROW_SPREAD: f64 = 0.55; // foot half-spread, perpendicular to the line
+const BAR_HALF: f64 = 0.5; // the "one" bar's half-width
+const RING_R: f64 = 0.4; // the optionality ring's radius
 
 /// How far a link's marker tip is pushed past the endpoint into the shape, so the
 /// head overlaps the border by a hair and reads as connected — constant at every
@@ -75,7 +79,23 @@ pub const MARKER_OVERLAP: f64 = 0.5;
 pub fn line_inset(kind: MarkerKind, thickness: f64) -> f64 {
     match kind {
         MarkerKind::None => 0.0,
+        // An open ER marker is stroked, not filled, so the line must stop *behind* it
+        // (at its furthest element back from the entity) rather than tuck under it.
+        k if k.is_open() => marker_size(thickness) * open_back_extent(k),
         _ => thickness * 2.0,
+    }
+}
+
+/// How far back from the entity edge an open ER marker reaches, in `marker_size` units
+/// — where the drawn line ends so it never crosses the marker's strokes.
+fn open_back_extent(kind: MarkerKind) -> f64 {
+    match kind {
+        MarkerKind::One => 0.7,
+        MarkerKind::Crow => CROW_DEPTH,
+        MarkerKind::OneOrMany => 1.5,
+        MarkerKind::ZeroOrOne => 1.5 + RING_R,
+        MarkerKind::ZeroOrMany => 1.7 + RING_R,
+        _ => CROW_DEPTH,
     }
 }
 
@@ -160,9 +180,9 @@ fn emit_round(
 /// `.lini-style-* .lini-marker` descendant rule when the link/line carries a
 /// recolouring class. They inline `fill` (via `style=`, to beat those rules)
 /// only for a *direct* inline `stroke:`, which no class rule can target
-/// (`inline`). The crow is stroked, not filled: it paints entirely via the
-/// `.lini-marker-crow` rule (`stroke: inherit` off the enclosing `<g>`), so it
-/// needs no inline paint.
+/// (`inline`). The open ER markers are stroked, not filled: they paint entirely via the
+/// `.lini-marker-open` rule (`stroke: inherit` off the enclosing `<g>`), so they
+/// need no inline paint.
 pub fn emit_marker(
     out: &mut String,
     indent: &str,
@@ -238,30 +258,97 @@ pub fn emit_marker(
                 fill,
             ).unwrap();
         }
+        // The ER cardinality family ([SPEC §7]) — all open strokes (`stroke: inherit`
+        // via `.lini-marker-open`). The crow's foot splays onto the entity edge and
+        // converges back along the line; a bar means "one", a ring "optional (zero)".
         MarkerKind::Crow => {
-            // The feet sit back at the arrow head's base (tip − size) but a touch
-            // narrower (±0.375·size) so the foot splay reads cleanly; the vertex
-            // pulls in by the miter overshoot `e` so its drawn point sits on the
-            // tip, level with the other markers, without lengthening the head.
-            let e = thickness * CROW_MITER;
-            let (vx, vy) = (tip.0 - ux * e, tip.1 - uy * e);
-            let (bx, by) = (tip.0 - ux * size, tip.1 - uy * size);
-            let lx = bx + px * size * 0.375;
-            let ly = by + py * size * 0.375;
-            let rx = bx - px * size * 0.375;
-            let ry = by - py * size * 0.375;
-            // Outer prongs are one path through the vertex (a real mitred point);
-            // the centre prong tucks inside it. Paint rides `.lini-marker-crow`.
-            writeln!(
-                out,
-                r#"{}<path class="lini-marker lini-marker-crow" d="M {} {} L {} {} L {} {} M {} {} L {} {}"/>"#,
-                indent,
-                num(lx), num(ly), num(vx), num(vy), num(rx), num(ry),
-                num(bx), num(by), num(vx), num(vy),
-            ).unwrap();
+            open_path(out, indent, &crow_d(tip, (ux, uy), (px, py), size));
+        }
+        MarkerKind::One => {
+            open_path(out, indent, &bar_d(tip, (ux, uy), (px, py), size, 0.7));
+        }
+        MarkerKind::ZeroOrOne => {
+            open_path(out, indent, &bar_d(tip, (ux, uy), (px, py), size, 0.6));
+            open_ring(out, indent, tip, (ux, uy), size, 1.5);
+        }
+        MarkerKind::OneOrMany => {
+            open_path(out, indent, &crow_d(tip, (ux, uy), (px, py), size));
+            open_path(out, indent, &bar_d(tip, (ux, uy), (px, py), size, 1.5));
+        }
+        MarkerKind::ZeroOrMany => {
+            open_path(out, indent, &crow_d(tip, (ux, uy), (px, py), size));
+            open_ring(out, indent, tip, (ux, uy), size, 1.7);
         }
         MarkerKind::None => {}
     }
+}
+
+/// An open-stroke marker element — a crow's-foot fan or a bar — sharing the
+/// `.lini-marker-open` class so the stroked-marker rule paints it (`stroke: inherit`).
+fn open_path(out: &mut String, indent: &str, d: &str) {
+    writeln!(
+        out,
+        r#"{}<path class="lini-marker lini-marker-open" d="{}"/>"#,
+        indent, d
+    )
+    .unwrap();
+}
+
+/// The optionality ring (`zero-or-*`), centred `offset · size` back along the line.
+fn open_ring(
+    out: &mut String,
+    indent: &str,
+    tip: (f64, f64),
+    dir: (f64, f64),
+    size: f64,
+    offset: f64,
+) {
+    let (cx, cy) = (tip.0 - dir.0 * size * offset, tip.1 - dir.1 * size * offset);
+    writeln!(
+        out,
+        r#"{}<circle class="lini-marker lini-marker-open" cx="{}" cy="{}" r="{}"/>"#,
+        indent,
+        num(cx),
+        num(cy),
+        num(size * RING_R),
+    )
+    .unwrap();
+}
+
+/// The crow's-foot path: three prongs fanning from a convergence point (back along the
+/// line) onto the entity edge at the tip — the standard ER "many".
+fn crow_d(tip: (f64, f64), dir: (f64, f64), perp: (f64, f64), size: f64) -> String {
+    let (depth, spread) = (size * CROW_DEPTH, size * CROW_SPREAD);
+    let (cx, cy) = (tip.0 - dir.0 * depth, tip.1 - dir.1 * depth);
+    let (lx, ly) = (tip.0 + perp.0 * spread, tip.1 + perp.1 * spread);
+    let (rx, ry) = (tip.0 - perp.0 * spread, tip.1 - perp.1 * spread);
+    format!(
+        "M {} {} L {} {} L {} {} M {} {} L {} {}",
+        num(lx),
+        num(ly),
+        num(cx),
+        num(cy),
+        num(rx),
+        num(ry),
+        num(tip.0),
+        num(tip.1),
+        num(cx),
+        num(cy),
+    )
+}
+
+/// A cardinality bar — a tick perpendicular to the line, `offset · size` back from the
+/// entity edge.
+fn bar_d(tip: (f64, f64), dir: (f64, f64), perp: (f64, f64), size: f64, offset: f64) -> String {
+    let half = size * BAR_HALF;
+    let (bx, by) = (tip.0 - dir.0 * size * offset, tip.1 - dir.1 * size * offset);
+    format!(
+        "M {} {} L {} {}",
+        num(bx + perp.0 * half),
+        num(by + perp.1 * half),
+        num(bx - perp.0 * half),
+        num(by - perp.1 * half),
+    )
 }
 
 #[cfg(test)]
@@ -303,5 +390,53 @@ mod tests {
             size * CIRCLE_RADIUS > size * DOT_RADIUS,
             "circle radius exceeds the dot's"
         );
+    }
+
+    #[test]
+    fn open_er_markers_are_stroked_via_the_shared_class() {
+        let paint = MarkerPaint {
+            color: "red",
+            inline: true,
+            thickness: 2.0,
+        };
+        // Every ER marker rides `.lini-marker-open` and never inlines a `fill` — even
+        // when `inline` is set (which a filled head would honour).
+        for kind in [
+            MarkerKind::Crow,
+            MarkerKind::One,
+            MarkerKind::ZeroOrOne,
+            MarkerKind::OneOrMany,
+            MarkerKind::ZeroOrMany,
+        ] {
+            let mut s = String::new();
+            emit_marker(&mut s, "", kind, (100.0, 50.0), (1.0, 0.0), &paint);
+            assert!(
+                s.contains("lini-marker-open"),
+                "{kind:?} uses the open class"
+            );
+            assert!(
+                !s.contains("fill"),
+                "{kind:?} is stroked, never inline-filled"
+            );
+        }
+        // A compound cardinality draws two elements (crow/bar + bar/ring).
+        let mut s = String::new();
+        emit_marker(
+            &mut s,
+            "",
+            MarkerKind::ZeroOrMany,
+            (100.0, 50.0),
+            (1.0, 0.0),
+            &paint,
+        );
+        assert_eq!(s.matches("lini-marker-open").count(), 2);
+    }
+
+    #[test]
+    fn open_marker_line_inset_clears_the_whole_marker() {
+        // The line stops behind an open marker (it is stroked, so it can't tuck under);
+        // a marker reaching further back (the ring) pulls the line back further.
+        assert!(line_inset(MarkerKind::Crow, 2.0) > line_inset(MarkerKind::Arrow, 2.0));
+        assert!(line_inset(MarkerKind::ZeroOrMany, 2.0) >= line_inset(MarkerKind::Crow, 2.0));
     }
 }

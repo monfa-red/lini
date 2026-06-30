@@ -6,9 +6,9 @@
 //! Constants that used to inline on every element ride a class instead: link
 //! labels (`.lini-link-label`, mirroring `.lini-text`) and markers
 //! (`.lini-marker` — `fill` the link stroke, `stroke: none`). A marker whose
-//! link is recoloured states its own `fill`; the stroked crow flips to
-//! `fill: none; stroke: inherit` via `.lini-marker-crow`, pulling the line's
-//! paint off the enclosing `<g>`.
+//! link is recoloured states its own `fill`; the stroked open ER markers (crow's-foot,
+//! cardinality bars / rings) flip to `fill: none; stroke: inherit` via
+//! `.lini-marker-open`, pulling the line's paint off the enclosing `<g>`.
 
 use super::values::format_value;
 use crate::Options;
@@ -172,14 +172,14 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
     let mut present: BTreeSet<&str> = BTreeSet::new();
     let mut used_styles: BTreeSet<&str> = BTreeSet::new();
     let mut has_markers = false;
-    let mut has_crow = false;
+    let mut has_open = false;
     for node in &laid.nodes {
         collect(
             node,
             &mut present,
             &mut used_styles,
             &mut has_markers,
-            &mut has_crow,
+            &mut has_open,
         );
     }
     // Links carry styles too (same class surface as nodes), so a style used
@@ -190,7 +190,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
         }
         has_markers |=
             link.markers.start != MarkerKind::None || link.markers.end != MarkerKind::None;
-        has_crow |= link.markers.start == MarkerKind::Crow || link.markers.end == MarkerKind::Crow;
+        has_open |= link.markers.start.is_open() || link.markers.end.is_open();
     }
     let has_labels = laid.links.iter().any(|w| !w.texts.is_empty());
 
@@ -504,14 +504,14 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
         }
     }
 
-    // The crow's-foot is stroked, not filled — the opposite of the other heads.
-    // A compound selector (specificity ties the `.lini-style-* .lini-marker` fill
-    // descendants and wins by coming last) flips the base `.lini-marker` paint;
-    // `stroke: inherit` pulls the line's colour and width off the enclosing `<g>`,
-    // so the crow's paint never needs inlining.
-    if has_crow {
+    // The open ER markers (crow's-foot, bars, rings) are stroked, not filled — the
+    // opposite of the other heads. A compound selector (specificity ties the
+    // `.lini-style-* .lini-marker` fill descendants and wins by coming last) flips the
+    // base `.lini-marker` paint; `stroke: inherit` pulls the line's colour and width off
+    // the enclosing `<g>`, so an open marker's paint never needs inlining.
+    if has_open {
         rules.push(Rule {
-            class: "lini-marker.lini-marker-crow".into(),
+            class: "lini-marker.lini-marker-open".into(),
             props: vec![
                 ("fill".into(), "none".into()),
                 ("stroke".into(), "inherit".into()),
@@ -603,7 +603,7 @@ fn collect<'a>(
     present: &mut BTreeSet<&'a str>,
     used_styles: &mut BTreeSet<&'a str>,
     has_markers: &mut bool,
-    has_crow: &mut bool,
+    has_open: &mut bool,
 ) {
     present.insert(node.kind.as_str());
     // An icon's optional label renders as a `lini-text`, so register the text
@@ -618,9 +618,9 @@ fn collect<'a>(
         used_styles.insert(name.as_str());
     }
     *has_markers |= node.markers.start != MarkerKind::None || node.markers.end != MarkerKind::None;
-    *has_crow |= node.markers.start == MarkerKind::Crow || node.markers.end == MarkerKind::Crow;
+    *has_open |= node.markers.start.is_open() || node.markers.end.is_open();
     for child in &node.children {
-        collect(child, present, used_styles, has_markers, has_crow);
+        collect(child, present, used_styles, has_markers, has_open);
     }
 }
 

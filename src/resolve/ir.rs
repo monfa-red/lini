@@ -255,7 +255,17 @@ pub enum MarkerKind {
     /// chart line it marks a data point ([CHARTS §3]).
     Circle,
     Diamond,
+    /// The ER "many" crow's-foot ([SPEC §7]); the four below pair it / a bar with an
+    /// optionality ring for the full cardinality set.
     Crow,
+    /// ER "one" — a single perpendicular bar.
+    One,
+    /// ER "zero or one" — an optionality ring + a bar.
+    ZeroOrOne,
+    /// ER "one or many" — a bar + the crow's foot.
+    OneOrMany,
+    /// ER "zero or many" — an optionality ring + the crow's foot.
+    ZeroOrMany,
 }
 
 impl MarkerKind {
@@ -266,9 +276,23 @@ impl MarkerKind {
             "dot" => Self::Dot,
             "circle" => Self::Circle,
             "diamond" => Self::Diamond,
-            "crow" => Self::Crow,
+            // The ER cardinality family ([SPEC §7]); `many` is an alias of `crow`.
+            "crow" | "many" => Self::Crow,
+            "one" => Self::One,
+            "zero-or-one" => Self::ZeroOrOne,
+            "one-or-many" => Self::OneOrMany,
+            "zero-or-many" => Self::ZeroOrMany,
             _ => return None,
         })
+    }
+
+    /// An open-stroked marker (the ER family) paints via `stroke: inherit` off the
+    /// enclosing `<g>`, never a `fill` — unlike the filled heads (arrow / dot / diamond).
+    pub fn is_open(self) -> bool {
+        matches!(
+            self,
+            Self::Crow | Self::One | Self::ZeroOrOne | Self::OneOrMany | Self::ZeroOrMany
+        )
     }
 
     pub fn from_marker(m: crate::ast::LinkMarker) -> Self {
@@ -324,4 +348,33 @@ pub struct ResolvedText {
 pub enum Along {
     Auto,
     Fraction(f64),
+}
+
+#[cfg(test)]
+mod tests {
+    use super::MarkerKind;
+
+    #[test]
+    fn parses_the_er_cardinality_family() {
+        assert_eq!(MarkerKind::parse("one"), Some(MarkerKind::One));
+        assert_eq!(
+            MarkerKind::parse("zero-or-one"),
+            Some(MarkerKind::ZeroOrOne)
+        );
+        assert_eq!(
+            MarkerKind::parse("one-or-many"),
+            Some(MarkerKind::OneOrMany)
+        );
+        assert_eq!(
+            MarkerKind::parse("zero-or-many"),
+            Some(MarkerKind::ZeroOrMany)
+        );
+        // `many` is an alias of `crow`.
+        assert_eq!(MarkerKind::parse("many"), Some(MarkerKind::Crow));
+        assert_eq!(MarkerKind::parse("crow"), Some(MarkerKind::Crow));
+        assert_eq!(MarkerKind::parse("nope"), None);
+        // The ER family is open-stroked; the filled heads are not.
+        assert!(MarkerKind::One.is_open() && MarkerKind::Crow.is_open());
+        assert!(!MarkerKind::Arrow.is_open() && !MarkerKind::Dot.is_open());
+    }
 }

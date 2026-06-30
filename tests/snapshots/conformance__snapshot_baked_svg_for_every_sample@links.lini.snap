@@ -20,7 +20,7 @@ input_file: samples/links.lini
     .lini .lini-cut-bg { fill: white; stroke: none; }
     .lini .lini-cut { fill: black; stroke: none; }
     .lini .lini-marker { fill: #444; stroke: none; }
-    .lini .lini-marker.lini-marker-crow { fill: none; stroke: inherit; stroke-linecap: round; stroke-dasharray: none; }
+    .lini .lini-marker.lini-marker-open { fill: none; stroke: inherit; stroke-linecap: round; stroke-dasharray: none; }
   </style>
   <defs/>
   <rect class="lini-canvas" x="-154.35" y="-207" width="363.2" height="452"/>
@@ -45,8 +45,8 @@ input_file: samples/links.lini
         <polygon class="lini-marker lini-marker-diamond" points="80,0 76,3.4 72,0 76,-3.4" style="fill: #6e62cc"/>
       </g>
       <g class="lini-node lini-line" style="stroke: #b45700; stroke-width: 2" transform="translate(0,24)">
-        <line x1="-80" y1="0" x2="76" y2="0"/>
-        <path class="lini-marker lini-marker-crow" d="M 72 3 L 77.7639 0 L 72 -3 M 72 0 L 77.7639 0"/>
+        <line x1="-80" y1="0" x2="72" y2="0"/>
+        <path class="lini-marker lini-marker-open" d="M 80 4.4 L 72 0 L 80 -4.4 M 80 0 L 72 0"/>
       </g>
       <g class="lini-node lini-caption lini-block" transform="translate(-75.05,-56.25)">
         <rect x="-25.2" y="-6" width="50.4" height="12" rx="0" ry="0"/>
