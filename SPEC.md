@@ -673,10 +673,12 @@ dimensions (or an empty `|oval|`) make a circle.
 | `marker-start: X` | Start end (link source). |
 | `marker-end: X` | End end (link target). |
 
-Values: `none`, `arrow`, `dot`, `circle`, `diamond`, `crow`. `circle` is a larger `dot` —
-a filled point sized for hovering or reading (on a chart line it marks a data point;
-[CHARTS §3](CHARTS.md)). Markers scale with `stroke-width` (on a link, with `link-width`),
-floor 5 px; colour follows the stroke / link colour.
+Values: `none`, `arrow`, `dot`, `circle`, `diamond`, and the ER **cardinality set** —
+`crow` (the "many" foot), `one` (a bar `|`), `zero-or-one`, `one-or-many`, `zero-or-many`
+(a bar or `○` paired with the foot). `circle` is a larger `dot` — a filled point sized for
+hovering or reading (on a chart line it marks a data point; [CHARTS §3](CHARTS.md)). Markers scale
+with `stroke-width` (on a link, with `link-width`), floor 5 px; colour follows the stroke /
+link colour.
 `|line|` is bare by default — write `|line| { marker-end: arrow }` for a one-shot
 arrow. For links the operator picks markers (see [§9](#9-links)). Source order wins:
 `marker: arrow; marker-end: dot` → start arrow, end dot.
@@ -742,13 +744,16 @@ primitives ([§7](#7-nodes)) stand on their own.
 | `\|rect\|` | `\|box\|` | `radius: 0` | A sharp-cornered box. |
 | `\|group\|` | `\|block\|` | `stroke: --group-stroke; stroke-style: dashed; stroke-width: 1; fill: --group-fill; radius: 6; padding: 20` | Dashed frame for a caption + children. |
 | `\|caption\|` | `\|block\|` | `pin: top left; translate: 0 -18; color: --caption-color; font-size: 12; font-weight: normal` | A title, pinned just above the group's top-left corner. |
-| `\|footer\|` | `\|caption\|` | `pin: bottom; translate: 0 17; font-size: 11; color: --footer-color` | A caption flipped to the bottom edge, centred and muted. |
+| `\|footnote\|` | `\|caption\|` | `pin: bottom; translate: 0 17; font-size: 11; color: --footer-color` | A caption flipped to a shape's bottom edge — a centred, muted footnote. |
 | `\|badge\|` | `\|block\|` | `pin: top right; translate: 6 -6; radius: 8; padding: 2 6; shadow: 2 3 3; fill: --accent; color: --accent-text; font-size: 11; font-weight: normal` | Corner pill — nudged out over the top-right corner, grows nothing. |
 | `\|row\|` | `\|block\|` | `direction: row` | Frameless wrapper — children in a row. |
 | `\|column\|` | `\|block\|` | `direction: column` | Frameless wrapper — children in a column. |
 | `\|grid\|` | `\|block\|` | `layout: grid` | Frameless grid (needs `columns`). |
 | `\|sign\|` | `\|icon\|` | `width: 64; height: 64; padding: 4; stroke-width: 1.5; fit: contain` | A larger icon as a stand-alone node, with room for a short label; `fit: contain` fills the box (unlike a bare `\|icon\|`), and its line weight drops to the node default `1.5` (a bare `\|icon\|` keeps `2`). |
 | `\|table\|` | `\|group\|` | `layout: grid; divider: all; gap: 0; padding: 4 8; fill: none; stroke: --stroke; stroke-style: solid; font-size: 14; font-weight: normal` | Ruled grid (see below). |
+| `\|header\|` | `\|block\|` | `justify: stretch; align: stretch; fill: --header-fill; font-weight: bold` | A **header** cell filling its grid cell (a `\|table\|`'s first row; an `\|entity\|`'s title spans them). |
+| `\|footer\|` | `\|block\|` | `justify: stretch; align: stretch; color: --footer-color` | A **footer** cell — muted text filling its cell; opt-in on the last row. |
+| `\|entity\|` | `\|table\|` | `columns: auto auto` | An ER / database **entity** — a titled, two-column field list (see below). |
 
 The bare `|block|` is the base everything rectangular builds on: no fill, no stroke,
 `radius: 0`, `padding: 0` — a frameless box that shows only its content, but is a real
@@ -756,7 +761,7 @@ box (id, class, children, wirable, positionable). It is what you reach for to wr
 text that needs box behaviour.
 
 **Captions.** A `|caption|` is a small `|block|` **pinned** just above the group's
-top-left corner; a `|footer|` is the same flipped to the bottom. Both are out-of-flow
+top-left corner; a `|footnote|` is the same flipped to the bottom. Both are out-of-flow
 overlays, so they never push the content, and their place is fixed by the template,
 not by where they sit among the children. A group's **label is its caption** ([§3](#the-label)),
 so the two forms are equal:
@@ -765,7 +770,7 @@ so the two forms are equal:
 |group#panel| "Settings" [          // label → caption
   |box#a| "General"
   |box#b| "Network"
-  |footer| "synced"
+  |footnote| "synced"
 ]
 |group#panel| [                     // the explicit form
   |caption| "Settings"
@@ -784,11 +789,16 @@ comes from the track sizes (`columns` / `rows`) and the table's `padding`. The o
 frame is the group border and the inner lines are `divider: all`, both painted by the
 table's `stroke*`; no edge is ever doubled. A table's label is its caption.
 
+A table's **first row becomes its header** — each cell wrapped as a `|header|`
+([§8](#8-templates)), a filled bold band; `|table| |header| { font-weight: normal; fill: none }`
+reverts it. A **footer** is opt-in: wrap a last-row cell in `|footer|`. Only header (and any
+footer) cells are boxes — the body stays bare text ([§14](#14-svg-output)).
+
 ```
 |table#basket| {
   columns: 80 140 80;
 } [
-  "Fruit" "Quantity" "Notes"
+  "Fruit" "Quantity" "Notes"   // the header row — filled + bold
   "Apple" "12"       "fresh"
   "Mango" "3"        "ripe"
 ]
@@ -798,6 +808,19 @@ table's `stroke*`; no edge is ever doubled. A table's label is its caption.
 reads like the table it is. A cell that must be placed or linked is a **box** child
 (`|block| "X"` or `|box| { cell: 2 1; … }`); a cell that just needs a colour or
 weight can take its own style block (`"Apple" { color: --red-ink }`).
+
+**Entities.** An `|entity|` is sugar over `|table|` (two auto columns) for an ER / database
+card: its **label is its title** — a `|header|` spanning every column — over `"field" "type"`
+rows. In an entity (not a plain table) a `|header|` / `|footer|` cell spans the full width.
+
+```
+|entity#users| "Users" [ "id" "int"  "name" "varchar" ]
+```
+
+Relationships are ordinary links ([§9](#9-links)): `users -< orders` is one-to-many, `a >-< b`
+many-to-many, landing on the entity edge. To anchor a wire to one **field**, give that cell an
+id (`|block#user_id| "user_id"`) and link the path (`orders.user_id -< users.id`). Keys are
+plain content (`"id" { font-weight: bold }`); an entity adds no grammar.
 
 Extend any template: `|panel::group| { stroke: --accent }`. Common nodes need no
 template:
@@ -849,6 +872,9 @@ If the operator carries no markers, there are none on both ends. Explicit `marke
 `marker-start:` / `marker-end:` override the operator (source order wins). The
 operator's line part sets the link's `link-style` (`--` ⇒ `dashed`, `---` ⇒ `dotted`,
 `~` ⇒ `wavy`); an explicit `link-style:` overrides it.
+
+`-<` / `>-<` draw the ER **crow's-foot** ("many"); the finer cardinalities ([§7](#7-nodes)) are
+set via `marker*:`, with no operator spelling ([§20](#20-deferred)).
 
 ### Syntax
 
@@ -1337,6 +1363,7 @@ Each colour is a `light-dark(LIGHT, DARK)` value, so one SVG carries both modes:
 --lini-stray         light-dark(crimson, #ff6b6b)    the stray-link fallback (LINKING.md, §Impossible layouts)
 --lini-group-stroke  light-dark(rgba(0,0,0,.4), rgba(255,255,255,.4))
 --lini-group-fill    light-dark(rgba(0,0,0,.03), rgba(255,255,255,.05))
+--lini-header-fill   light-dark(rgba(0,0,0,.06), rgba(255,255,255,.08))  the table / entity header band
 --lini-icon-fill     light-dark(rgba(0,0,0,.16), rgba(255,255,255,.18))  the soft body behind a duotone icon
 --lini-caption-color light-dark(rgba(0,0,0,.5), rgba(255,255,255,.55))
 --lini-footer-color  light-dark(rgba(0,0,0,.5), rgba(255,255,255,.55))
@@ -1635,7 +1662,8 @@ inherits, down to `lini-block`); `lini-style-{name}` (per worn class). With rota
 the transform becomes `translate(X,Y) rotate(N)`.
 
 **Text** emits a bare `<text class="lini-text">…</text>` at its placed position — no
-wrapping `<g>`, so a table of N cells is N `<text>` elements, not N boxes. Its font and
+wrapping `<g>`, so a table's body cells are N `<text>` elements, not N boxes (only the
+header — and any `|footer|` — cells, which carry a background, are boxes). Its font and
 colour come by inheritance from the enclosing `<g>`; a string's own style block emits as
 a `style="…"` (and `translate` / `rotate` as a `transform`) on the `<text>` itself.
 
@@ -1949,6 +1977,11 @@ ids elsewhere.
 
 - `routing: straight` / `routing: curved` — non-orthogonal link strategies
   ([§9](#9-links); `orthogonal` is the only mode built today).
+- **operator spellings for the ER cardinality markers** ([§7](#7-nodes)) — `one`,
+  `zero-or-one`, `one-or-many`, `zero-or-many` are set via `marker*:` today; `-<` / `>-<`
+  are the only crow's-foot operators.
+- **arbitrary per-cell backgrounds in a `|table|`** — only the header and any `|footer|`
+  cells carry a fill today; a body cell that needs one is a `|block|` ([§8](#8-templates)).
 - **sequence features beyond v1** ([§10](#10-sequences)) — fragments `par` (parallel, with an
   `|and|` separator), `break`, `critical`, and `ref`; participant grouping (a box around a set
   of lifelines); found / lost messages and create / destroy lifelines; explicit activation
@@ -2045,6 +2078,17 @@ closet.outlet -> fridge.inlet "restocks"
   points: 0 200, 300 200;
   marker: arrow;  color: #666;
 }
+```
+
+### Entity — a database schema
+
+```
+{ layout: flow; direction: row; gap: 120 }
+
+|entity#users|  "Users"  [ "id" "int"  "name" "varchar"  "email" "varchar" ]
+|entity#orders| "Orders" [ "id" "int"  "user_id" "int"  "total" "decimal" ]
+
+users -< orders "places"     // one-to-many — crow's foot on Orders
 ```
 
 ### Shorthand — implicit boxes & arrows
