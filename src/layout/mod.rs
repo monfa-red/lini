@@ -43,6 +43,7 @@ pub fn layout_raw(program: &Program) -> Result<LaidOut, Error> {
 /// the deficit and rerun — at most 2 rounds, keeping the best result (most
 /// drawn, then fewest crossings). Strays cover whatever still fails.
 fn layout_mode(program: &Program, growth_on: bool) -> Result<LaidOut, Error> {
+    sequence::validate(program)?;
     let mut growth = GapGrowth::new();
     let mut best = attempt(program, &growth)?;
     if growth_on && !best.routing.starved.is_empty() {

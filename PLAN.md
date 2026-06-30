@@ -18,7 +18,7 @@ step can be executed in a fresh session: each step lists its files, changes, tes
 - [x] **Step 2 — Sequence types + dispatch + participants/lifelines** ✓ (6 types + defaults; `prim` promoted to shared `layout::prim`; root + node forms render headers + lifelines; tests + clippy + fmt clean; visually verified)
 - [x] **Step 3 — Messages + the link-partition / wiring-strategy seam** ✓ (call/return/async/self render as time-row arrows; router skips sequence scopes; async wavy un-deferred; 435 lib tests + clippy + fmt clean; visually verified)
 - [x] **Step 4 — Activations** ✓ (per-participant LIFO bars; nesting offsets outward; arrows attach to bar edges; `activation: none` toggle; 439 lib tests + clippy + fmt clean; visually verified)
-- [ ] Step 5 — Frames (`loop`/`opt`/`alt`/`else`) + notes
+- [x] **Step 5 — Frames + notes** ✓ (scope transparency via desugar hoisting + no-phantom test; loop/opt/alt + else compartments + nesting; notes over/left/right; §16 errors; 449 lib tests + clippy + fmt clean; login flow verified light+dark)
 - [ ] Step 6 — Samples, snapshots, render-verify, polish, acceptance
 
 ---
@@ -336,6 +336,30 @@ guards, note placement. Snapshots. Re-render the full §21 login flow.
 
 **Done when:** frames (incl. nesting + `alt`/`else`) and notes render; scope-transparency tests
 pass; the §21 example renders as drawn in SPEC §10.
+
+> **Step 5 outcome / decisions (done):**
+> - **Transparency = desugar hoisting (5a).** `drain_frame_links` lifts a frame child's links
+>   into its parent (recursion collects nested subtrees); a frame never auto-creates, the
+>   sequence auto-creates against participants ∪ hoisted messages. Result: frame messages carry
+>   the *sequence's* scope, so `messages_for` claims them, the router skips them, endpoints
+>   resolve among participants, and **resolve/route need zero frame special-casing**. Locked by
+>   `a_sequence_frame_is_scope_transparent` (no phantom boxes).
+> - **One timeline (5b).** `frames.rs` collects frames depth-first, then `timeline` interleaves
+>   messages + frame open/close + `|else|` + notes by **source span**, assigning each its y; a
+>   nested frame's extent falls inside its outer for free. Computed from 0, then `shift`ed so the
+>   diagram stays origin-centred (body height measured from the timeline foot).
+> - **Frame paint reused, not hardcoded** — the dashed border copies the frame node's own
+>   resolved `fill`/`stroke`/`stroke-style`/`radius` (the bundle defaults), so the cascade still
+>   styles it. Tab shows the **operator** (`loop`/`opt`/`alt`); the guard renders `[cond]` (first
+>   compartment = the frame's label, each `|else|` = its own). Nested frames inset inward.
+> - **Notes (5c) reuse `layout_inst`** — a note is laid out as an ordinary box (text/padding/
+>   styling for free), then positioned at its time row over its `over`/`left`/`right` lifelines.
+>   `over: a b` centres over the span. Notes-inside-frames deferred (rare; top-level notes only).
+> - **§16 errors (5d):** a `sequence::validate` pass walks the scene tracking sequence/alt
+>   context — frame/note/`|else|` placement and `over`/`left`/`right`/`activation` off a sequence.
+> - **GOTCHA (Step 6 polish):** a self-message hook (and its label) on a frame's rightmost
+>   lifeline pokes past the frame border — `lifeline_span` measures lifelines, not hook/label
+>   reach. Cosmetic; fix in the polish pass.
 
 ---
 

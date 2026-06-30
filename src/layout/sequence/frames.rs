@@ -53,11 +53,16 @@ pub(super) struct FrameGeom {
     else_ys: Vec<f64>,
 }
 
-/// The timeline shared by messages and frames: each message's row y, the foot, and the
-/// frames' y-extents (parallel to the collected frames). Computed from `0`; the engine
-/// measures `foot_y` (the body height) to centre the diagram, then [`Timeline::shift`]s.
+/// Vertical clear space above and below a note's box on its row.
+const NOTE_MARGIN: f64 = 8.0;
+
+/// The timeline of the whole sequence body: each message's row y, each note's centre y, the
+/// foot, and the frames' y-extents (parallel to the collected frames). Messages, frames, and
+/// notes interleave by source order. Computed from `0`; the engine measures `foot_y` (the
+/// body height) to centre the diagram, then [`Timeline::shift`]s.
 pub(super) struct Timeline {
     pub msg_y: Vec<f64>,
+    pub note_y: Vec<f64>,
     pub foot_y: f64,
     pub geom: Vec<FrameGeom>,
 }
@@ -66,7 +71,7 @@ impl Timeline {
     /// Offset every y by `dy` (the engine's `header_bottom`), turning the relative layout
     /// into absolute, origin-centred coordinates.
     pub(super) fn shift(&mut self, dy: f64) {
-        for y in &mut self.msg_y {
+        for y in self.msg_y.iter_mut().chain(&mut self.note_y) {
             *y += dy;
         }
         self.foot_y += dy;
@@ -122,22 +127,29 @@ fn guard(inst: &ResolvedInst) -> Option<&str> {
         .and_then(|c| c.label.as_deref())
 }
 
-/// Place the messages and frames on one timeline by **source order** (SPEC §10): a frame's
-/// open / close and each `|else|` reserve vertical room, a message takes a row at `gap_row`.
-/// Walking events in span order makes a nested frame's extent fall inside its outer. Ys are
-/// relative to `0` (the engine shifts to centre — [`Timeline::shift`]).
-pub(super) fn timeline(pairs: &[Pair], frames: &[Frame], gap_row: f64) -> Timeline {
+/// Place messages, frames, and notes on one timeline by **source order** (SPEC §10): a
+/// frame's open / close and each `|else|` reserve vertical room, a message takes a row at
+/// `gap_row`, and a note reserves its own box height. `notes` is each note's `(source
+/// position, box height)`. Walking events in span order makes a nested frame's extent fall
+/// inside its outer. Ys are relative to `0` (the engine shifts to centre — [`Timeline::shift`]).
+pub(super) fn timeline(
+    pairs: &[Pair],
+    frames: &[Frame],
+    notes: &[(usize, f64)],
+    gap_row: f64,
+) -> Timeline {
     enum Ev {
         Open(usize),
         Else(usize, usize),
+        Note(usize),
         Msg(usize),
         Close(usize),
     }
-    // (source position, rank for ties, event) — Open before Else before Msg before Close.
+    // (source position, rank for ties, event) — Open, Else, then Note / Msg, then Close.
     let mut events: Vec<(usize, u8, Ev)> = Vec::new();
     for (f, fr) in frames.iter().enumerate() {
         events.push((fr.inst.span.start, 0, Ev::Open(f)));
-        events.push((fr.inst.span.end, 3, Ev::Close(f)));
+        events.push((fr.inst.span.end, 4, Ev::Close(f)));
         for (e, el) in fr.elses.iter().enumerate() {
             events.push((el.span.start, 1, Ev::Else(f, e)));
         }
@@ -145,10 +157,14 @@ pub(super) fn timeline(pairs: &[Pair], frames: &[Frame], gap_row: f64) -> Timeli
     for (i, p) in pairs.iter().enumerate() {
         events.push((p.span().start, 2, Ev::Msg(i)));
     }
+    for (i, (pos, _)) in notes.iter().enumerate() {
+        events.push((*pos, 2, Ev::Note(i)));
+    }
     events.sort_by_key(|(pos, rank, _)| (*pos, *rank));
 
     let mut y = 0.0;
     let mut msg_y = vec![0.0; pairs.len()];
+    let mut note_y = vec![0.0; notes.len()];
     let mut geom: Vec<FrameGeom> = frames
         .iter()
         .map(|f| FrameGeom {
@@ -174,6 +190,12 @@ pub(super) fn timeline(pairs: &[Pair], frames: &[Frame], gap_row: f64) -> Timeli
                 y += gap_row;
                 msg_y[*i] = y;
             }
+            // A note reserves its box height, centred with a margin above and below.
+            Ev::Note(i) => {
+                y += NOTE_MARGIN;
+                note_y[*i] = y + notes[*i].1 / 2.0;
+                y += notes[*i].1 + NOTE_MARGIN;
+            }
             // The bottom border sits below the last message.
             Ev::Close(f) => {
                 y += BOT_MARGIN;
@@ -183,6 +205,7 @@ pub(super) fn timeline(pairs: &[Pair], frames: &[Frame], gap_row: f64) -> Timeli
     }
     Timeline {
         msg_y,
+        note_y,
         foot_y: y + gap_row,
         geom,
     }

@@ -15,6 +15,7 @@
 mod activations;
 mod frames;
 mod messages;
+mod notes;
 
 use crate::error::Error;
 use crate::layout::prim;
@@ -43,22 +44,22 @@ pub(super) fn layout_node(
     path: &str,
     program: &Program,
 ) -> Result<PlacedNode, Error> {
-    // Participants are real boxes — lay each out as usual, then arrange.
+    // Participants and notes are real boxes — lay each out as usual, then arrange.
     let mut participants = Vec::new();
+    let mut notes = Vec::new();
     for c in &inst.children {
+        let placed = || super::layout_inst(c, growth, &super::child_path(path, c), program);
         if is_participant(&c.kind, &c.type_chain) {
-            participants.push(super::layout_inst(
-                c,
-                growth,
-                &super::child_path(path, c),
-                program,
-            )?);
+            participants.push(placed()?);
+        } else if is_note(&c.type_chain) {
+            notes.push(placed()?);
         }
     }
     let messages = messages_for(program, path);
     let (children, bbox) = lay_out(
         &inst.attrs,
         participants,
+        notes,
         &messages,
         &inst.children,
         inst.span,
@@ -73,14 +74,20 @@ pub(super) fn layout_root(
     scene_nodes: &mut Vec<PlacedNode>,
     program: &Program,
 ) -> Result<Bbox, Error> {
-    let participants = std::mem::take(scene_nodes)
-        .into_iter()
-        .filter(|p| is_participant(&p.kind, &p.type_chain))
-        .collect();
+    let mut participants = Vec::new();
+    let mut notes = Vec::new();
+    for p in std::mem::take(scene_nodes) {
+        if is_participant(&p.kind, &p.type_chain) {
+            participants.push(p);
+        } else if is_note(&p.type_chain) {
+            notes.push(p);
+        }
+    }
     let messages = messages_for(program, "");
     let (children, bbox) = lay_out(
         &program.scene.attrs,
         participants,
+        notes,
         &messages,
         &program.scene.nodes,
         Span::empty(),
@@ -119,6 +126,7 @@ fn messages_for<'a>(program: &'a Program, scope: &str) -> Vec<&'a ResolvedLink> 
 fn lay_out(
     attrs: &AttrMap,
     mut participants: Vec<PlacedNode>,
+    notes: Vec<PlacedNode>,
     messages: &[&ResolvedLink],
     frame_src: &[ResolvedInst],
     span: Span,
@@ -139,9 +147,10 @@ fn lay_out(
         .collect();
     let centres = messages::columns(&widths, &ids, &pairs, gap_col);
 
-    // The shared timeline assigns each message a row y and each frame its y-extent; its
-    // foot is the body height, which centres the diagram on the origin.
-    let mut timeline = frames::timeline(&pairs, &seq_frames, gap_row);
+    // The shared timeline assigns each message a row y, each note its centre y, and each
+    // frame its y-extent; its foot is the body height, which centres the diagram on origin.
+    let note_rows: Vec<(usize, f64)> = notes.iter().map(|n| (n.span.start, n.bbox.h())).collect();
+    let mut timeline = frames::timeline(&pairs, &seq_frames, &note_rows, gap_row);
     let header_h = participants
         .iter()
         .map(|p| p.bbox.h())
@@ -187,13 +196,15 @@ fn lay_out(
     let arrows = messages::draw(&pairs, &lifeline_x, endpoint_x, row_y);
     let bar_nodes = activations::draw(&bars, &lifeline_x, row_y);
     let frame_nodes = frames::draw(&seq_frames, &timeline.geom, &pairs, &lifeline_x);
+    let placed_notes = place_notes(notes, &timeline.note_y, &lifeline_x);
 
-    // Lifelines and frames behind, then bars, headers, and messages on top.
+    // Lifelines and frames behind, then bars, headers, messages, and notes on top.
     let mut children = lifelines;
     children.extend(frame_nodes);
     children.extend(bar_nodes);
     children.extend(participants);
     children.extend(arrows);
+    children.extend(placed_notes);
     let bbox = enclosing_bbox(&children);
     Ok((children, bbox))
 }
@@ -239,6 +250,93 @@ fn is_participant(kind: &NodeKind, type_chain: &[String]) -> bool {
         && !type_chain
             .iter()
             .any(|t| NON_PARTICIPANT.contains(&t.as_str()))
+}
+
+/// A `|note|` — a callout placed beside / over lifelines, not a participant (SPEC §10).
+fn is_note(type_chain: &[String]) -> bool {
+    type_chain.iter().any(|t| t == "note")
+}
+
+/// The properties valid only in a sequence (SPEC §16): a note's placement and the
+/// activation toggle.
+const SEQ_PROPS: &[&str] = &["over", "left", "right", "activation"];
+
+/// Validate sequence structure (SPEC §16), before layout: a frame / note / `|else|` belongs
+/// in a sequence (an `|else|` directly in an `|alt|`), a note needs a placement, and the
+/// sequence properties are valid only in a sequence. Walks the scene tracking whether each
+/// node sits in a sequence scope (a sequence's own body, or a frame nested in one) and
+/// whether it sits directly in an `|alt|`.
+pub(crate) fn validate(program: &Program) -> Result<(), Error> {
+    let in_seq = is_sequence(&program.scene.attrs);
+    for n in &program.scene.nodes {
+        check_node(n, in_seq, false)?;
+    }
+    Ok(())
+}
+
+fn check_node(inst: &ResolvedInst, in_seq: bool, in_alt: bool) -> Result<(), Error> {
+    let is = |t: &str| inst.type_chain.iter().any(|x| x == t);
+    let seq_ctx = in_seq || is_sequence(&inst.attrs);
+
+    // Frame and note types belong in a sequence.
+    for ty in ["loop", "opt", "alt", "note"] {
+        if is(ty) && !in_seq {
+            return Err(Error::at(
+                inst.span,
+                format!("'|{ty}|' belongs in a 'layout: sequence'"),
+            ));
+        }
+    }
+    if is("else") && !in_alt {
+        return Err(Error::at(
+            inst.span,
+            "'|else|' separates an '|alt|' — write it inside one",
+        ));
+    }
+    if is("note") && notes::placement(&inst.attrs).is_none() {
+        return Err(Error::at(
+            inst.span,
+            "a '|note|' needs 'over:', 'left:', or 'right:'",
+        ));
+    }
+    if !seq_ctx {
+        for p in SEQ_PROPS {
+            if inst.attrs.get(p).is_some() {
+                return Err(Error::at(
+                    inst.span,
+                    format!("'{p}' is valid only in a 'layout: sequence'"),
+                ));
+            }
+        }
+    }
+
+    // A sequence's own body and the bodies of its frames are in-sequence; a participant's
+    // children (its own content) are not. `|else|` only ever separates a direct `|alt|` child.
+    let child_in_seq =
+        is_sequence(&inst.attrs) || (in_seq && (is("loop") || is("opt") || is("alt")));
+    for c in &inst.children {
+        check_node(c, child_in_seq, is("alt"))?;
+    }
+    Ok(())
+}
+
+/// Fix each laid-out note box at its time row (`note_y`) and over its placed lifelines
+/// (`over` / `left` / `right`). A note naming an unknown participant is dropped.
+fn place_notes(
+    notes: Vec<PlacedNode>,
+    note_y: &[f64],
+    lifeline_x: &HashMap<String, f64>,
+) -> Vec<PlacedNode> {
+    notes
+        .into_iter()
+        .zip(note_y)
+        .filter_map(|(mut n, &y)| {
+            let placement = notes::placement(&n.attrs)?;
+            n.cx = notes::centre_x(&placement, n.bbox.w(), lifeline_x)?;
+            n.cy = y;
+            Some(n)
+        })
+        .collect()
 }
 
 #[cfg(test)]
@@ -431,6 +529,47 @@ mod tests {
         assert!(
             s.contains(">loop</text>") && s.contains(">opt</text>"),
             "both nested frame tabs render: {s}"
+        );
+    }
+
+    // ── Notes (SPEC §10) ──
+
+    #[test]
+    fn a_note_renders_over_its_lifelines() {
+        let s = svg(
+            "{ layout: sequence }\n|box#a| \"A\"\n|box#b| \"B\"\n|note| \"spanning\" { over: a b }\na -> b \"x\"\n",
+        );
+        assert!(s.contains(">spanning</text>"), "the note text renders: {s}");
+    }
+
+    // ── Structural errors (SPEC §16) ──
+
+    #[test]
+    fn a_frame_outside_a_sequence_errors() {
+        assert!(layout_err("|loop| [\n  |box#a|\n]\n").contains("belongs in a 'layout: sequence'"));
+    }
+
+    #[test]
+    fn an_else_outside_an_alt_errors() {
+        assert!(
+            layout_err("{ layout: sequence }\n|box#a| \"A\"\n|else| \"x\"\n")
+                .contains("separates an '|alt|'")
+        );
+    }
+
+    #[test]
+    fn a_note_without_placement_errors() {
+        assert!(
+            layout_err("{ layout: sequence }\n|box#a| \"A\"\n|note| \"hi\"\n")
+                .contains("needs 'over:', 'left:', or 'right:'")
+        );
+    }
+
+    #[test]
+    fn a_sequence_property_off_a_sequence_errors() {
+        assert!(
+            layout_err("|box#a| { activation: none }\n")
+                .contains("valid only in a 'layout: sequence'")
         );
     }
 }
