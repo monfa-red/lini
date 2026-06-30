@@ -1107,10 +1107,11 @@ and an async (`~>`) open none, and a return with no open bar just draws its arro
 
 ### Frames
 
-A frame is a **node whose `[ ]` holds its messages**, drawn as a labelled rectangle spanning
-the lifelines those messages touch (plus a small inset) over the rows they occupy; its
-**smart label** is the title in a top-left tab. Frames **nest**, and resolve endpoints in the
-sequence scope (above) — a frame only groups, it never re-scopes:
+A frame is a **node whose `[ ]` holds its messages**, drawn as a dashed rectangle spanning
+the lifelines those messages touch (plus a small inset) over the rows they occupy. A
+top-left **tab** names the operator (`loop` / `opt` / `alt`); the frame's **smart label** is
+its **guard**, drawn as the first compartment's condition. Frames **nest**, and resolve
+endpoints in the sequence scope (above) — a frame only groups, it never re-scopes:
 
 | Frame | Means |
 |---|---|
