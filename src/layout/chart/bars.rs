@@ -6,10 +6,10 @@
 //! carries its `<title>` (§14).
 
 use super::model::{BarMode, Chart, Data, Series, SeriesKind};
-use super::prim;
 use super::project::{Dir, Plot};
 use super::scale::{Scale, fmt_tick};
 use crate::layout::PlacedNode;
+use crate::layout::prim;
 use std::f64::consts::TAU;
 
 /// The bar group's share of a category slot (~14% padding each side).

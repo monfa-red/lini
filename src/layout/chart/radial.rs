@@ -5,10 +5,10 @@
 //! gridlines and labels are radial-specific.
 
 use super::model::Chart;
-use super::prim;
 use super::project::Plot;
 use super::scale::{self, Scale};
 use crate::layout::PlacedNode;
+use crate::layout::prim;
 use crate::resolve::ResolvedValue;
 
 const LABEL_SIZE: f64 = 11.0;

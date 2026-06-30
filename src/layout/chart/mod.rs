@@ -21,7 +21,7 @@ mod marks;
 mod model;
 mod palette;
 mod pie;
-mod prim;
+use super::prim;
 mod project;
 mod radial;
 mod scale;
@@ -31,7 +31,7 @@ pub(super) use pie::{is_pie, layout_pie};
 
 use crate::error::Error;
 use crate::layout::{Bbox, PlacedNode};
-use crate::resolve::{AttrMap, NodeKind, ResolvedInst, ResolvedValue};
+use crate::resolve::{AttrMap, ResolvedInst, ResolvedValue};
 use model::{Chart, Series, SeriesKind, Side};
 use project::{Dir, Plot};
 
@@ -127,23 +127,7 @@ pub(super) fn layout_chart(
 /// primitives as pre-positioned children. Shared by `layout: chart` and `layout: pie`,
 /// so both place as one unit and keep the node's id / classes / paint.
 pub(super) fn chart_box(inst: &ResolvedInst, w: f64, h: f64, kids: Vec<PlacedNode>) -> PlacedNode {
-    PlacedNode {
-        id: inst.id.clone(),
-        kind: NodeKind::Block,
-        type_chain: inst.type_chain.clone(),
-        applied_styles: inst.applied_styles.clone(),
-        label: None,
-        attrs: inst.attrs.clone(),
-        own_style: AttrMap::new(),
-        markers: inst.markers.clone(),
-        cx: 0.0,
-        cy: 0.0,
-        bbox: Bbox::centered(w, h),
-        rotation: inst.attrs.number("rotate").unwrap_or(0.0),
-        children: kids,
-        dividers: Vec::new(),
-        span: inst.span,
-    }
+    prim::container(inst, Bbox::centered(w, h), kids)
 }
 
 /// The plot rect = the chart box inset by the gutters its labels / titles / legend

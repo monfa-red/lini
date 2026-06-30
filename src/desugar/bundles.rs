@@ -151,6 +151,31 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
         // user tunes it (`gap: 0` ≈ touching).
         "chart" => vec![id("layout", "chart"), n("gap", 10.0)],
         "pie" => vec![id("layout", "pie"), n("gap", 10.0)],
+        // Sequences (SPEC §10): the layout preset, plus the note / frame / separator
+        // looks, all reusing scene role variables (no new ones). Participants are
+        // ordinary boxes and keep their own type's paint.
+        "sequence" => vec![id("layout", "sequence")],
+        "note" => vec![
+            var("fill", "group-fill"),
+            var("stroke", "stroke"),
+            pair("padding", 6.0, 8.0),
+            n("font-size", 12.0),
+        ],
+        // A frame: a dashed, rounded rectangle around a span of messages.
+        "loop" | "opt" | "alt" => vec![
+            id("fill", "none"),
+            var("stroke", "group-stroke"),
+            id("stroke-style", "dashed"),
+            n("stroke-width", 1.0),
+            n("radius", 4.0),
+        ],
+        // An |alt| compartment separator: the same dashed line, no body radius.
+        "else" => vec![
+            id("fill", "none"),
+            var("stroke", "group-stroke"),
+            id("stroke-style", "dashed"),
+            n("stroke-width", 1.0),
+        ],
         // A bar's corners are softly rounded by default ([CHARTS.md] §3); `stroke: auto`
         // is the outlined-look sentinel ([§10]) — the chart draws a deep edge of the soft
         // fill, while an explicit `stroke: none` (overriding `auto`) removes it. Both ride

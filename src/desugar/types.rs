@@ -38,6 +38,15 @@ pub const TEMPLATES: &[(&str, &str)] = &[
     ("axis", "block"),
     ("band", "block"),
     ("mark", "block"),
+    // Sequences (SPEC §10): the container layout and the frame / separator / note
+    // types, each a bundle over |block|. Participants are ordinary boxes, so they
+    // need no type here.
+    ("sequence", "block"),
+    ("note", "block"),
+    ("loop", "block"),
+    ("opt", "block"),
+    ("alt", "block"),
+    ("else", "block"),
 ];
 
 pub fn is_template(name: &str) -> bool {

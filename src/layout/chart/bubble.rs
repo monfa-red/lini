@@ -6,10 +6,10 @@
 
 use super::labels;
 use super::model::{Bubble, Chart};
-use super::prim;
 use super::project::Plot;
 use super::scale::fmt_tick;
 use crate::layout::PlacedNode;
+use crate::layout::prim;
 use crate::resolve::ResolvedValue;
 
 /// The largest bubble's radius, as a fraction of the smaller plot dimension.

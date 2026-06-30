@@ -1,10 +1,12 @@
-//! `PlacedNode` builders for a chart's lowered primitives ([CHARTS.md] §15). Every
-//! bar, gridline, tick, label, swatch, and title is built through these — never an
-//! open-coded `PlacedNode` — so the lowering stays one mechanism and the render
-//! emitters (`emit_rect` / `emit_line` / the text path) draw them unchanged.
+//! `PlacedNode` **builders** for a layout engine's lowered primitives — shared by
+//! charts ([CHARTS.md] §15) and sequences (SPEC §10). Every bar, gridline, lifeline,
+//! arrow, label, frame, and note is built through these — never an open-coded
+//! `PlacedNode` — so lowering stays one mechanism and the render emitters
+//! (`emit_rect` / `emit_line` / the text path) draw them unchanged. (Distinct from
+//! `layout::primitives`, which *sizes* primitives.)
 
 use crate::layout::{Bbox, PlacedNode, approx_height, approx_width};
-use crate::resolve::{AttrMap, MarkerKind, Markers, NodeKind, ResolvedValue};
+use crate::resolve::{AttrMap, MarkerKind, Markers, NodeKind, ResolvedInst, ResolvedValue};
 use crate::span::Span;
 use std::f64::consts::TAU;
 
@@ -183,6 +185,30 @@ pub fn group(children: Vec<PlacedNode>, type_chain: Vec<String>, bbox: Bbox) -> 
     n.type_chain = type_chain;
     n.children = children;
     n
+}
+
+/// The container shell for a **layout-owning engine** (chart, pie, sequence): a `Block`
+/// carrying the node's identity, classes, and paint, with the lowered primitives as its
+/// pre-positioned `children`. The one place that shell is built, so the engines don't each
+/// open-code a `PlacedNode`.
+pub fn container(inst: &ResolvedInst, bbox: Bbox, children: Vec<PlacedNode>) -> PlacedNode {
+    PlacedNode {
+        id: inst.id.clone(),
+        kind: NodeKind::Block,
+        type_chain: inst.type_chain.clone(),
+        applied_styles: inst.applied_styles.clone(),
+        label: None,
+        attrs: inst.attrs.clone(),
+        own_style: AttrMap::new(),
+        markers: inst.markers.clone(),
+        cx: 0.0,
+        cy: 0.0,
+        bbox,
+        rotation: inst.attrs.number("rotate").unwrap_or(0.0),
+        children,
+        dividers: Vec::new(),
+        span: inst.span,
+    }
 }
 
 /// Centred text at (cx, cy) — anchor middle, the `.lini-text` default. `size` (and

@@ -5,7 +5,9 @@ mod grid;
 mod ir;
 mod links;
 pub(crate) mod path_bbox; // glyph-extent computation also serves `render::icon_fit`
-mod primitives;
+mod prim; // PlacedNode *builders* for lowered primitives (charts, sequences)
+mod primitives; // primitive *sizing* (leaf/closed bbox) — distinct from `prim`
+mod sequence;
 mod text;
 mod values;
 
@@ -79,6 +81,18 @@ fn attempt(program: &Program, growth: &GapGrowth) -> Result<Attempt, Error> {
             &child_path("", inst),
             &program.funcs,
         )?);
+    }
+
+    // A root sequence (`{ layout: sequence }`, SPEC §10) owns the whole scene: it
+    // arranges the participants and draws their lifelines (and, later, the messages),
+    // bypassing the generic arrange and the orthogonal router.
+    if sequence::is_sequence(&program.scene.attrs) {
+        let bbox = sequence::layout_root(&mut top_nodes, &program.scene.attrs)?;
+        return Ok(Attempt {
+            nodes: top_nodes,
+            bbox,
+            routing: links::Routing::default(),
+        });
     }
 
     // Apply scene-level layout to top-level children (scene itself is a
@@ -267,6 +281,11 @@ fn layout_inst(
     }
     if chart::is_pie(&inst.attrs) {
         return chart::layout_pie(inst);
+    }
+    // A `|sequence|` node ([SPEC §10]) owns its subtree the same way — it reads its
+    // participants (and, later, messages / frames / notes) and lowers to primitives.
+    if sequence::is_sequence(&inst.attrs) {
+        return sequence::layout_node(inst, growth, path, funcs);
     }
 
     // Recurse into children first.

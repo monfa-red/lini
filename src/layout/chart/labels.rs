@@ -10,9 +10,9 @@
 
 use super::marks;
 use super::model::{Chart, SeriesKind};
-use super::prim;
 use super::project::Plot;
 use crate::layout::PlacedNode;
+use crate::layout::prim;
 use crate::resolve::{MarkerKind, ResolvedValue};
 
 /// A drawn line segment (pixel space) a label should not sit on.

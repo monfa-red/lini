@@ -3,10 +3,10 @@
 //! gridlines by default; `gridlines: none | colour` overrides per axis.
 
 use super::model::{Chart, Grid, Side, ValueAxis};
-use super::prim;
 use super::project::{Dir, Plot};
 use super::scale::{self, Scale};
 use crate::layout::PlacedNode;
+use crate::layout::prim;
 use crate::resolve::ResolvedValue;
 
 const LABEL_SIZE: f64 = 11.0;

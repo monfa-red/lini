@@ -15,7 +15,7 @@ step can be executed in a fresh session: each step lists its files, changes, tes
 ## Progress
 
 - [x] **Step 1 — Grammar relaxation (parser + fmt)** ✓ (parser both sites relaxed; `fmt` source-order merge; 427 lib tests + clippy + fmt clean)
-- [ ] Step 2 — Sequence types + dispatch + participants/lifelines (skeleton renders)
+- [x] **Step 2 — Sequence types + dispatch + participants/lifelines** ✓ (6 types + defaults; `prim` promoted to shared `layout::prim`; root + node forms render headers + lifelines; tests + clippy + fmt clean; visually verified)
 - [ ] Step 3 — Messages + the link-partition / wiring-strategy seam
 - [ ] Step 4 — Activations
 - [ ] Step 5 — Frames (`loop`/`opt`/`alt`/`else`) + notes
@@ -190,6 +190,20 @@ PNG**: two headers, two lifelines, common foot. Add a first `insta` snapshot.
 
 **Done when:** a participant-only sequence renders correctly; sequence types desugar/resolve;
 non-participant children error clearly; tests green.
+
+> **Step 2 outcome / decisions (done):**
+> - **Refactor for reuse:** promoted `chart/prim.rs` → **`layout::prim`** (the generic
+>   `PlacedNode` builder library) so charts *and* sequences share it (9 chart imports rewired,
+>   `chart_box` now calls the new `prim::container` — no duplicated container shell). `prim`
+>   (builders) sits beside `primitives` (sizing); both documented to avoid the name clash.
+> - **Dispatch:** node-form `|sequence|` intercepted in `layout_inst` (like `is_chart`);
+>   **root-form `{ layout: sequence }`** intercepted in `attempt()` (it owns the whole scene,
+>   bypassing the generic arrange + router). Shared core `lay_out(attrs, participants)`.
+> - **Participant detection** by type: every box that isn't `loop`/`opt`/`alt`/`else`/`note`.
+> - **GOTCHA / deferred:** non-participant children (frames/notes) and messages are **filtered
+>   out (not yet drawn)** in Step 2 — they arrive in Steps 3/5. A root sequence with frames
+>   silently drops them *until Step 5*; that's the only interim gap. Lifeline foot length is a
+>   placeholder (`gap_row*3`) until Step 3 sets it to the last message row.
 
 ---
 

@@ -4,11 +4,11 @@
 //! the chart's box, palette, legend, and `<title>` machinery — the renderer learns nothing.
 
 use super::model::{self, Slice};
-use super::prim;
 use super::scale::fmt_tick;
 use super::{LABEL_SIZE, TITLE_SIZE, chart_box, lay_out_legend, legend_reserve, title_reserve};
 use crate::error::Error;
 use crate::layout::PlacedNode;
+use crate::layout::prim;
 use crate::resolve::{AttrMap, ResolvedInst, ResolvedValue};
 use std::f64::consts::TAU;
 

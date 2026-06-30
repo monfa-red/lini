@@ -7,10 +7,10 @@
 use super::labels;
 use super::marks::marker_diameter;
 use super::model::{AxisRef, Chart, Mark, MarkAt};
-use super::prim;
 use super::project::Plot;
 use super::tooltip::Tooltip;
 use crate::layout::PlacedNode;
+use crate::layout::prim;
 use crate::resolve::{MarkerKind, ResolvedValue};
 
 const LABEL_SIZE: f64 = 11.0;

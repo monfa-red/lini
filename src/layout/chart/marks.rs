@@ -4,10 +4,10 @@
 
 use super::model::{Chart, Curve, Data, Series, SeriesKind};
 use super::palette::deepen;
-use super::prim;
 use super::project::{Dir, Plot};
 use super::scale::{Scale, fmt_tick};
 use crate::layout::PlacedNode;
+use crate::layout::prim;
 use crate::resolve::MarkerKind;
 
 /// One datum's data-space coordinate paired with its pixel coordinate.

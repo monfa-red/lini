@@ -6,8 +6,8 @@
 //! the cards and strips the hooks when baking). One post-pass over the lowered nodes does
 //! all three modes.
 
-use super::prim;
 use crate::error::Error;
+use crate::layout::prim;
 use crate::layout::{Bbox, PlacedNode};
 use crate::resolve::{AttrMap, ResolvedValue};
 use crate::span::Span;
