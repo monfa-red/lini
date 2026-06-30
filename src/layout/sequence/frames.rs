@@ -258,6 +258,10 @@ fn lifeline_span(
                     hi = hi.max(x);
                 }
             }
+            // A self-message's hook + label reach right of its lifeline; enclose them.
+            if let Some(&x) = lifeline_x.get(a) {
+                hi = hi.max(x + p.self_reach());
+            }
         }
     }
     (lo <= hi).then_some((lo, hi))

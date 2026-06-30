@@ -52,6 +52,15 @@ impl Pair<'_> {
     pub(super) fn ends(&self) -> (&str, &str) {
         (self.from, self.to)
     }
+    /// How far a self-message's hook and label reach to the right of its lifeline (0 for a
+    /// normal message) — so a frame that holds one widens to enclose it.
+    pub(super) fn self_reach(&self) -> f64 {
+        if self.from == self.to {
+            SELF_DX + 6.0 + self.label_width()
+        } else {
+            0.0
+        }
+    }
     fn label_width(&self) -> f64 {
         self.label()
             .map_or(0.0, |l| prim::text_width(l, LABEL_SIZE))
