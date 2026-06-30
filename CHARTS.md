@@ -44,7 +44,7 @@ Three properties of the model, each inherited from the core language:
   a node's head lowers per type ([§9](#9-legend--title)): a chart's label is its
   **title**, a series' its **legend** entry, an axis's its **axis title**, a band's a
   **tick**, an annotation's its **label**.
-- **Paint, text, and markers are the core properties** ([SPEC §10](SPEC.md)). A line's
+- **Paint, text, and markers are the core properties** ([SPEC §11](SPEC.md)). A line's
   colour is `stroke`, an area/bar/slice body is `fill`, a dashed line is
   `stroke-style: dashed`, thickness is `stroke-width`; there are no chart-only paint
   shorthands. User text is quoted, bare words are identifiers ([SPEC §2](SPEC.md)).
@@ -72,7 +72,7 @@ plot area is the remainder after labels are measured ([SPEC §6](SPEC.md) — te
 measured at compile time). Unset, a chart defaults to **360 × 220**; a `pie` or
 `radial` chart is **square** (default **280**) — a chart cannot size to its content
 (the content depends on the scale, which depends on the size), so these are baked
-layout constants ([SPEC §11.5](SPEC.md)). `fill` is the chart background, `stroke` its
+layout constants ([SPEC §12.5](SPEC.md)). `fill` is the chart background, `stroke` its
 frame, and the cascade styles a chart like any box.
 
 **Chart-level properties** (on the `|chart|` / `|pie|` node):
@@ -160,7 +160,7 @@ points, a `|dots|` series is terser.
 ## 4. Data & formulas
 
 A series' values come from `data:` (explicit) or `fn:` (computed) — never both
-([§18](#18-errors)). Both use the core value grammar ([SPEC §16](SPEC.md)) — space
+([§18](#18-errors)). Both use the core value grammar ([SPEC §17](SPEC.md)) — space
 within a group, comma between groups — so charts add **no value form**. A comma is the
 discriminator:
 
@@ -190,7 +190,7 @@ sampled `fn:` has no authored points to label, so `tags:` with `fn:` is an error
 per-node mark — `|bubble|`, `|slice|`, `|mark|` — takes no `tags:`: its one smart label
 *is* its point label.
 
-**Formulas are the core expression engine** ([SPEC §11.7](SPEC.md)): operators, the
+**Formulas are the core expression engine** ([SPEC §12.7](SPEC.md)): operators, the
 math library, `name = expr;` locals, the ternary, and stylesheet functions. Charts bind
 two ambient names into it — the same seam that injects `u` for parametric `points:`:
 
@@ -200,7 +200,7 @@ two ambient names into it — the same seam that injects `u` for parametric `poi
 A `fn:` is therefore **not folded at resolve** (its `x` is unbound there) but held and
 **sampled at chart layout**, once the x-domain is fixed, with `x` (and `u`) bound at
 each step. It reuses the same sample-an-ambient seam a parametric `points:` uses for
-`u` ([SPEC §11.7](SPEC.md)), only deferred to the layout phase because `x`'s domain
+`u` ([SPEC §12.7](SPEC.md)), only deferred to the layout phase because `x`'s domain
 comes from sibling data. The sampled result bakes to literals like any geometry.
 `samples:` is the step count (default 24).
 
@@ -235,7 +235,7 @@ axis, so simple charts declare none — an axis is written only to *say* somethi
 | `unit` | `"%"` | a quoted suffix appended to tick labels (and tooltips). |
 | `labels` | quoted-string list | explicit tick text — the general form of `categories:` ([§2](#2-the-chart-container)). |
 | `gridlines` | `none` · *colour* | this axis's gridlines: `none`, or a colour (a colour turns them on). |
-| `stroke` / `color` / `font-size` | core | `stroke` tints the axis line + ticks, `color` the labels + title ([SPEC §10](SPEC.md)). |
+| `stroke` / `color` / `font-size` | core | `stroke` tints the axis line + ticks, `color` the labels + title ([SPEC §11](SPEC.md)). |
 
 An **x (domain) axis** is categorical when `categories:` / `labels:` give it labels (or
 by default, indices `1…N`) and numeric when the data is points or a `fn:`. A **value
@@ -246,7 +246,7 @@ gridlines by default — so a normal grid appears, and a second value axis adds 
 (avoiding moiré). Override per axis with `gridlines:`; the x axis's (vertical) and a
 value axis's (horizontal) gridlines are perpendicular and never conflict. The default
 tint is `--lini-grid` — a faint role variable charts add to the palette
-([SPEC §11.1](SPEC.md)), themeable and dark/light-aware like the rest.
+([SPEC §12.1](SPEC.md)), themeable and dark/light-aware like the rest.
 
 ---
 
@@ -350,7 +350,7 @@ outside it — the chart repurposes the core container `gap` (a chart owns its l
 it has no inter-child spacing of its own). It defaults to `10`; `gap: 0` ≈ touching.
 
 The chart's **chrome** — its title and legend — stays **bold** (the diagram-wide default,
-[SPEC §10](SPEC.md)); its **data text** — axis ticks, tags ([§14](#14-tooltips)), and
+[SPEC §11](SPEC.md)); its **data text** — axis ticks, tags ([§14](#14-tooltips)), and
 annotation labels — is **normal** weight, so the numbers read quietly beneath the captions.
 
 ---
@@ -358,7 +358,7 @@ annotation labels — is **normal** weight, so the numbers read quietly beneath 
 ## 10. Colour
 
 Explicit `stroke:` / `fill:` wins. Otherwise series **walk the palette**
-([SPEC §11.2](SPEC.md)) in declaration order, skipping `red` (reserved for danger), in
+([SPEC §12.2](SPEC.md)) in declaration order, skipping `red` (reserved for danger), in
 this fixed sequence — repeating if exhausted, so the result is deterministic
 ([§15](#15-lowering--render)):
 
@@ -455,7 +455,7 @@ value / percent labels, a centred total in the hole, and exploded slices are
 ## 14. Tooltips
 
 A datum's label has two presentations, and one property — **`tooltip:`** — sets how much
-shows where. Hover is the only interactivity, with no script ([SPEC §13](SPEC.md) governs
+shows where. Hover is the only interactivity, with no script ([SPEC §14](SPEC.md) governs
 output):
 
 | `tooltip:` | On the plot (inline) | On hover | For |
@@ -471,7 +471,7 @@ The two texts **complement**: the *inline* label is the datum's own text — a s
 `GLM-5.2: 75%` on hover, never competing.
 
 **The hover floor is always honest.** A labelled mark carries a native `<title>`
-([SPEC §10](SPEC.md) `title:`) — its accessible name, readable in any renderer and
+([SPEC §11](SPEC.md) `title:`) — its accessible name, readable in any renderer and
 surviving `--bake-vars`. Over it, a live CSS `:hover` rule reveals a hidden
 `<g class="lini-chart-tip">` card built from primitives — minimal by default (name and
 value), positioned beside the point so it never blankets the plot; `.lini-chart-tip` is a
@@ -502,7 +502,7 @@ node count stays bounded.
 
 ## 15. Lowering & render
 
-`layout: chart` / `layout: pie` resolve in the layout phase ([SPEC §17](SPEC.md)),
+`layout: chart` / `layout: pie` resolve in the layout phase ([SPEC §18](SPEC.md)),
 since the shared scale needs every child's data first:
 
 1. **Collect** series; resolve `data:` to data-space points (a `fn:`, held unfolded
@@ -522,15 +522,15 @@ since the shared scale needs every child's data first:
 
 The output is an ordinary primitive subtree, so route/render, theming, the palette,
 gradients, shadows, `--bake-vars`, `fmt`, and byte-for-byte determinism
-([SPEC §14, §17](SPEC.md)) all apply with no chart-specific code. Because the
+([SPEC §15, §17](SPEC.md)) all apply with no chart-specific code. Because the
 data→pixel lowering needs the shared scale, it runs in the **layout** phase, not
-desugar — so `lini desugar` ([SPEC §14](SPEC.md)) shows a chart's *type* desugaring (a
+desugar — so `lini desugar` ([SPEC §15](SPEC.md)) shows a chart's *type* desugaring (a
 `|chart|` is a `|block|` wearing `.lini-chart`; each series a classed `|block|` carrying
 its `data:` / `fn:`), while the geometric primitive subtree — the bars, paths, ticks — is
 produced at layout, a render-time artefact like a link's routed geometry. That subtree
 still themes, bakes, and renders like any primitive. Charts add **no lexer or parser
 grammar** ([§17](#17-grammar)) — they are nodes, declarations, and children per
-[SPEC §16](SPEC.md); the new surface is type names ([§3](#3-series)), properties
+[SPEC §17](SPEC.md); the new surface is type names ([§3](#3-series)), properties
 ([§16](#16-properties)), and the two layout algorithms.
 
 ---
@@ -538,7 +538,7 @@ grammar** ([§17](#17-grammar)) — they are nodes, declarations, and children p
 ## 16. Properties
 
 New properties, with the layout / node each applies to. All paint, text, geometry, and
-`marker:` properties are the core ones ([SPEC §10](SPEC.md)), used with their core
+`marker:` properties are the core ones ([SPEC §11](SPEC.md)), used with their core
 meaning.
 
 | Property | On | Value | Notes |
@@ -572,21 +572,21 @@ meaning.
 
 ## 17. Grammar
 
-Charts add **no grammar** to [SPEC §16](SPEC.md). A chart is a `node` with
+Charts add **no grammar** to [SPEC §17](SPEC.md). A chart is a `node` with
 `layout: chart` (or the `|chart|` / `|pie|` template); series, axes, bands, marks, and
 slices are child `node`s; `data:` / `fn:` / `range:` / `at:` / `span:` are ordinary
 `decl`s whose values are the existing `value` forms (a list of points is comma-grouped;
 a per-band `fn:` is a space-group of backticks and numbers). The additions are the
 built-in **type names** — `chart`, `pie`, `line`, `area`, `bars`, `dots`, `bubble`,
 `slice`, `axis`, `band`, `mark` (`line` already exists as a primitive, [SPEC §7](SPEC.md), and is
-reused) — protected from shadowing like any built-in ([SPEC §15](SPEC.md)) yet free as
-ids ([SPEC §18](SPEC.md)), and the properties of [§16](#16-properties).
+reused) — protected from shadowing like any built-in ([SPEC §16](SPEC.md)) yet free as
+ids ([SPEC §19](SPEC.md)), and the properties of [§16](#16-properties).
 
 ---
 
 ## 18. Errors
 
-Format and discipline per [SPEC §15](SPEC.md): `filename:line:col: error: <message>`,
+Format and discipline per [SPEC §16](SPEC.md): `filename:line:col: error: <message>`,
 compile-time, with a span.
 
 | Condition | Message |
