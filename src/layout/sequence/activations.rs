@@ -78,12 +78,15 @@ pub(super) fn edge(
     })
 }
 
-/// Lower each bar to a thin filled + stroked `|block|` on its participant's lifeline
-/// (SPEC §10 — `fill: --fill; stroke: --stroke`), spanning its open → close rows.
+/// Lower each bar to a thin `|block|` on its participant's lifeline (SPEC §10 — `fill:
+/// --fill`, outlined in the sequence's own `stroke` / `stroke-width` so it matches the
+/// lifelines), spanning its open → close rows.
 pub(super) fn draw(
     bars: &[Bar],
     lifeline_x: &HashMap<String, f64>,
     row_y: impl Fn(usize) -> f64,
+    stroke: crate::resolve::ResolvedValue,
+    width: f64,
 ) -> Vec<PlacedNode> {
     bars.iter()
         .filter_map(|b| {
@@ -97,7 +100,7 @@ pub(super) fn draw(
                 super::live("fill"),
                 1.0,
             );
-            prim::outline(&mut bar, super::live("stroke"), 1.0);
+            prim::outline(&mut bar, stroke.clone(), width);
             Some(bar)
         })
         .collect()

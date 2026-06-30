@@ -1161,8 +1161,11 @@ styling; the cascade overrides any of it. They reuse the scene's role variables 
 | `\|loop\|` / `\|opt\|` / `\|alt\|` | `fill: none; stroke: --group-stroke; stroke-style: dashed; stroke-width: 1; radius: 4` |
 | `\|else\|` | `fill: none; stroke: --group-stroke; stroke-style: dashed; stroke-width: 1` |
 
-A participant keeps its own type's paint; a **lifeline** draws in the scene `stroke`, and an
-**activation bar** is a thin `|block|` on it (`fill: --fill; stroke: --stroke`).
+A participant keeps its own type's paint (its header box). The **lifelines** and **activation
+bars** are the sequence's *apparatus*, drawn uniformly in **its own** `stroke` / `stroke-width`
+(default `--stroke`, width 1) — set them on the sequence, not per participant; a bar fills with
+`--fill`. A **frame** draws **behind** the lifelines, so giving it a `fill` tints the region
+without hiding the wires.
 
 ### Lowering
 

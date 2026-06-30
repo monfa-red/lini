@@ -2,19 +2,21 @@
 // participants across the top, messages top-to-bottom in source order. Calls open
 // activation bars, an alt/else fragment branches, a note annotates. Source for
 // assets/sequence.png.
-{ layout: sequence }
+{
+  layout: sequence;
+}
 
 |box#user| "User"
-|box#api|  "API"
-|cyl#db|   "Store"
+|box#api| "API" { fill: --sky-wash; stroke: --sky-deep; }
+|cyl#db| "Store" { fill: --orange-wash; }
 
-|note| "signs in" { over: user }
+|note| "signs in" { over: user; }
 user -> api "POST /login"
-api  -> db  "find user"
-db  --> api "row"
+api -> db "find user"
+db --> api "row"
 
-|alt| "valid" [
-  api  -> api  "sign JWT"
+|alt| "valid" { stroke: --purple; fill: --purple-wash; } [
+  api -> api "sign JWT"
   api --> user "200 + token"
   |else| "invalid"
   api --> user "401"

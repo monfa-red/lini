@@ -163,8 +163,12 @@ fn lay_out(
     let msg_y = &timeline.msg_y;
     let row_y = |i: usize| if i < msg_y.len() { msg_y[i] } else { foot_y };
 
-    // Place participants at their column centres, top-aligned; drop a lifeline to the foot.
+    // The lifelines and activation bars are the sequence's "apparatus" — drawn uniformly in
+    // its own `stroke` / `stroke-width` (SPEC §10), so a participant's paint styles its
+    // header, not its timeline. Place participants at their column centres, top-aligned, and
+    // drop a lifeline to the foot.
     let stroke = lifeline_stroke(attrs);
+    let width = apparatus_width(attrs);
     let mut lifelines = Vec::with_capacity(participants.len());
     let mut lifeline_x: HashMap<String, f64> = HashMap::new();
     for (p, &cx) in participants.iter_mut().zip(&centres) {
@@ -174,7 +178,7 @@ fn lay_out(
         lifelines.push(prim::line(
             vec![(cx, head_bottom), (cx, foot_y)],
             stroke.clone(),
-            1.0,
+            width,
         ));
         if let Some(id) = p.id.as_deref() {
             lifeline_x.insert(id.to_string(), cx);
@@ -194,13 +198,14 @@ fn lay_out(
         activations::edge(&bars, id, row, cx, toward).unwrap_or(cx)
     };
     let arrows = messages::draw(&pairs, &lifeline_x, endpoint_x, row_y);
-    let bar_nodes = activations::draw(&bars, &lifeline_x, row_y);
+    let bar_nodes = activations::draw(&bars, &lifeline_x, row_y, stroke.clone(), width);
     let frame_nodes = frames::draw(&seq_frames, &timeline.geom, &pairs, &lifeline_x);
     let placed_notes = place_notes(notes, &timeline.note_y, &lifeline_x);
 
-    // Lifelines and frames behind, then bars, headers, messages, and notes on top.
-    let mut children = lifelines;
-    children.extend(frame_nodes);
+    // Frames behind (so a tinted fill backs the scene), then lifelines, bars, headers,
+    // messages, and notes on top.
+    let mut children = frame_nodes;
+    children.extend(lifelines);
     children.extend(bar_nodes);
     children.extend(participants);
     children.extend(arrows);
@@ -222,12 +227,17 @@ fn enclosing_bbox(children: &[PlacedNode]) -> Bbox {
     Bbox::centered(w.max(1.0), h.max(1.0))
 }
 
-/// The lifeline colour: the scene's `stroke` if set, else the `--stroke` role var.
+/// The lifeline / bar colour: the sequence's `stroke` if set, else the `--stroke` role var.
 fn lifeline_stroke(attrs: &AttrMap) -> ResolvedValue {
     attrs
         .get("stroke")
         .cloned()
         .unwrap_or_else(|| live("stroke"))
+}
+
+/// The lifeline / bar stroke width: the sequence's `stroke-width` if set, else 1.
+fn apparatus_width(attrs: &AttrMap) -> f64 {
+    attrs.number("stroke-width").unwrap_or(1.0)
 }
 
 /// Activation bars are drawn unless `activation: none` (SPEC §10).

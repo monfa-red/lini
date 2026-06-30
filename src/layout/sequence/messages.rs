@@ -52,14 +52,10 @@ impl Pair<'_> {
     pub(super) fn ends(&self) -> (&str, &str) {
         (self.from, self.to)
     }
-    /// How far a self-message's hook and label reach to the right of its lifeline (0 for a
-    /// normal message) — so a frame that holds one widens to enclose it.
-    pub(super) fn self_reach(&self) -> f64 {
-        if self.from == self.to {
-            SELF_DX + 6.0 + self.label_width()
-        } else {
-            0.0
-        }
+    /// Extra vertical room a self-message needs below its row — its hook drops `SELF_DY`, so
+    /// the next message clears it (0 for a normal message, which lives on its row alone).
+    pub(super) fn hook_drop(&self) -> f64 {
+        if self.from == self.to { SELF_DY } else { 0.0 }
     }
     fn label_width(&self) -> f64 {
         self.label()
