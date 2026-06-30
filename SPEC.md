@@ -1157,15 +1157,16 @@ styling; the cascade overrides any of it. They reuse the scene's role variables 
 | Type | Defaults over `\|block\|` |
 |---|---|
 | `\|sequence\|` | `layout: sequence` |
-| `\|note\|` | `fill: --group-fill; stroke: --stroke; padding: 6 8; font-size: 12` |
-| `\|loop\|` / `\|opt\|` / `\|alt\|` | `fill: none; stroke: --group-stroke; stroke-style: dashed; stroke-width: 1; radius: 4` |
+| `\|note\|` | `fill: --fill; stroke: --stroke; padding: 6 8; font-size: 12` |
+| `\|loop\|` / `\|opt\|` / `\|alt\|` | `fill: none; stroke: --group-stroke; stroke-style: dashed; stroke-width: 1; radius: 4; padding: 8 14` |
 | `\|else\|` | `fill: none; stroke: --group-stroke; stroke-style: dashed; stroke-width: 1` |
 
-A participant keeps its own type's paint (its header box). The **lifelines** and **activation
-bars** are the sequence's *apparatus*, drawn uniformly in **its own** `stroke` / `stroke-width`
-(default `--stroke`, width 1) — set them on the sequence, not per participant; a bar fills with
-`--fill`. A **frame** draws **behind** the lifelines, so giving it a `fill` tints the region
-without hiding the wires.
+A participant **lends its paint to its apparatus**: its lifeline and activation bars take the
+participant's own `fill` / `stroke` / `stroke-width`, so colouring a participant colours its
+whole timeline (a plain box gives a `--stroke` line at width 1.5 with a `--fill` bar). A
+**frame** draws **behind** the lifelines — a `fill` tints its region without hiding the wires —
+and its `padding` insets the border from the messages and lifelines it spans. Rows sit a uniform
+`gap` apart; the frame chrome (tab, dividers) rides that rhythm, so spacing reads even.
 
 ### Lowering
 

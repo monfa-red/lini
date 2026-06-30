@@ -163,25 +163,26 @@ fn lay_out(
     let msg_y = &timeline.msg_y;
     let row_y = |i: usize| if i < msg_y.len() { msg_y[i] } else { foot_y };
 
-    // The lifelines and activation bars are the sequence's "apparatus" — drawn uniformly in
-    // its own `stroke` / `stroke-width` (SPEC §10), so a participant's paint styles its
-    // header, not its timeline. Place participants at their column centres, top-aligned, and
-    // drop a lifeline to the foot.
-    let stroke = lifeline_stroke(attrs);
-    let width = apparatus_width(attrs);
+    // Each participant lends its own paint to its **apparatus** — its lifeline and activation
+    // bars (SPEC §10) — so colouring a participant colours its whole timeline, and a plain box
+    // gives a `--stroke` line at width 1.5. Place participants at their column centres,
+    // top-aligned, and drop a lifeline to the foot.
     let mut lifelines = Vec::with_capacity(participants.len());
     let mut lifeline_x: HashMap<String, f64> = HashMap::new();
+    let mut paint: HashMap<String, Apparatus> = HashMap::new();
     for (p, &cx) in participants.iter_mut().zip(&centres) {
         p.cx = cx;
         p.cy = top + p.bbox.h() / 2.0;
         let head_bottom = p.cy + p.bbox.h() / 2.0;
+        let a = Apparatus::of(&p.attrs);
         lifelines.push(prim::line(
             vec![(cx, head_bottom), (cx, foot_y)],
-            stroke.clone(),
-            width,
+            a.stroke.clone(),
+            a.width,
         ));
         if let Some(id) = p.id.as_deref() {
             lifeline_x.insert(id.to_string(), cx);
+            paint.insert(id.to_string(), a);
         }
     }
 
@@ -198,7 +199,7 @@ fn lay_out(
         activations::edge(&bars, id, row, cx, toward).unwrap_or(cx)
     };
     let arrows = messages::draw(&pairs, &lifeline_x, endpoint_x, row_y);
-    let bar_nodes = activations::draw(&bars, &lifeline_x, row_y, stroke.clone(), width);
+    let bar_nodes = activations::draw(&bars, &lifeline_x, row_y, &paint);
     let frame_nodes = frames::draw(&seq_frames, &timeline.geom, &pairs, &lifeline_x);
     let placed_notes = place_notes(notes, &timeline.note_y, &lifeline_x);
 
@@ -227,17 +228,26 @@ fn enclosing_bbox(children: &[PlacedNode]) -> Bbox {
     Bbox::centered(w.max(1.0), h.max(1.0))
 }
 
-/// The lifeline / bar colour: the sequence's `stroke` if set, else the `--stroke` role var.
-fn lifeline_stroke(attrs: &AttrMap) -> ResolvedValue {
-    attrs
-        .get("stroke")
-        .cloned()
-        .unwrap_or_else(|| live("stroke"))
+/// The paint a participant lends its **apparatus** — its lifeline and activation bars (SPEC
+/// §10). Read from the participant's own resolved attrs, so styling the participant styles
+/// its timeline; a plain box falls back to `--fill` / `--stroke` at width 1.5.
+pub(super) struct Apparatus {
+    pub fill: ResolvedValue,
+    pub stroke: ResolvedValue,
+    pub width: f64,
 }
 
-/// The lifeline / bar stroke width: the sequence's `stroke-width` if set, else 1.
-fn apparatus_width(attrs: &AttrMap) -> f64 {
-    attrs.number("stroke-width").unwrap_or(1.0)
+impl Apparatus {
+    fn of(attrs: &AttrMap) -> Self {
+        Self {
+            fill: attrs.get("fill").cloned().unwrap_or_else(|| live("fill")),
+            stroke: attrs
+                .get("stroke")
+                .cloned()
+                .unwrap_or_else(|| live("stroke")),
+            width: attrs.number("stroke-width").unwrap_or(1.5),
+        }
+    }
 }
 
 /// Activation bars are drawn unless `activation: none` (SPEC §10).

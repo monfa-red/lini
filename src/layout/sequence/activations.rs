@@ -78,29 +78,31 @@ pub(super) fn edge(
     })
 }
 
-/// Lower each bar to a thin `|block|` on its participant's lifeline (SPEC §10 — `fill:
-/// --fill`, outlined in the sequence's own `stroke` / `stroke-width` so it matches the
-/// lifelines), spanning its open → close rows.
+/// Lower each bar to a thin `|block|` on its participant's lifeline, painted in **that
+/// participant's** own fill / stroke / stroke-width / radius (SPEC §10) — so colouring a
+/// participant colours its activation bars too — spanning its open → close rows.
 pub(super) fn draw(
     bars: &[Bar],
     lifeline_x: &HashMap<String, f64>,
     row_y: impl Fn(usize) -> f64,
-    stroke: crate::resolve::ResolvedValue,
-    width: f64,
+    paint: &HashMap<String, super::Apparatus>,
 ) -> Vec<PlacedNode> {
     bars.iter()
         .filter_map(|b| {
             let cx = lifeline_x.get(&b.participant)? + b.depth as f64 * NEST_DX;
+            let a = paint.get(&b.participant)?;
             let (top, bot) = (row_y(b.open_row), row_y(b.close_row));
+            // Square bars (the UML convention); a participant's fill / stroke / width carry
+            // over, but not its card `radius`.
             let mut bar = prim::rect(
                 cx,
                 (top + bot) / 2.0,
                 BAR_W,
                 (bot - top).max(1.0),
-                super::live("fill"),
+                a.fill.clone(),
                 1.0,
             );
-            prim::outline(&mut bar, stroke.clone(), width);
+            prim::outline(&mut bar, a.stroke.clone(), a.width);
             Some(bar)
         })
         .collect()

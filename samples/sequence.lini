@@ -1,22 +1,20 @@
 // A sequence diagram (SPEC §10): `layout: sequence` reads the wires as time —
 // participants across the top, messages top-to-bottom in source order. Calls open
-// activation bars, an alt/else fragment branches, a note annotates. Source for
-// assets/sequence.png.
-{
-  layout: sequence;
-}
+// activation bars, an alt/else fragment branches, a note annotates. A participant's own
+// paint flows onto its lifeline + activation bars. Source for assets/sequence.png.
+{ layout: sequence; gap: 30 }
 
 |box#user| "User"
-|box#api| "API" { fill: --sky-wash; stroke: --sky-deep; }
-|cyl#db| "Store" { fill: --orange-wash; }
+|box#api|  "API"   { fill: --sky-wash; stroke: --sky-deep }
+|cyl#db|   "Store" { fill: --orange-wash; stroke: --orange-deep }
 
-|note| "signs in" { over: user; }
+|note| "signs in" { over: user; fill: --amber-soft; color: --amber-ink; stroke: --amber-deep; radius: 6 }
 user -> api "POST /login"
-api -> db "find user"
-db --> api "row"
+api  -> db  "find user"
+db  --> api "row"
 
-|alt| "valid" { stroke: --purple; fill: --purple-wash; } [
-  api -> api "sign JWT"
+|alt| "valid" { stroke: --purple; fill: --purple-wash; padding: 14 } [
+  api  -> api  "sign JWT"
   api --> user "200 + token"
   |else| "invalid"
   api --> user "401"

@@ -9,24 +9,13 @@
 use super::messages::Pair;
 use crate::layout::PlacedNode;
 use crate::layout::prim;
+use crate::layout::primitives::{PaddingBox, padding};
 use crate::resolve::{NodeKind, ResolvedInst, ResolvedValue};
 use std::collections::HashMap;
 
-/// Horizontal inset of the frame border past the outermost lifeline it spans.
-const INSET: f64 = 14.0;
 /// Each nesting level draws its border inward, so a nested frame reads inside its parent.
 const NEST_INSET: f64 = 6.0;
-/// Gap above a frame's top border (separating it from the message before it).
-const TOP_MARGIN: f64 = 10.0;
-/// Room between the top border and the first message — the tab plus the message's label.
-const TAB_CLEAR: f64 = 26.0;
-/// Room between the last message and the bottom border.
-const BOT_MARGIN: f64 = 12.0;
-/// Room from the previous message down to an `|else|` divider.
-const ELSE_MARGIN: f64 = 12.0;
-/// Room from an `|else|` divider to the next message (for its guard).
-const ELSE_CLEAR: f64 = 22.0;
-/// The title-tab height.
+/// The title-tab height — reserved in the gap above a frame's first message.
 const TAB_H: f64 = 16.0;
 /// Tab keyword and guard text sizes.
 const KEYWORD_SIZE: f64 = 10.0;
@@ -36,13 +25,15 @@ const GUARD_SIZE: f64 = 10.0;
 /// separator collected within an `alt`, not a frame of its own.
 const FRAME_KINDS: &[&str] = &["loop", "opt", "alt"];
 
-/// A frame collected from the scene tree, flattened with its nesting depth and the
-/// `|else|` separators inside it (empty for `loop` / `opt`).
+/// A frame collected from the scene tree, flattened with its nesting depth, the `|else|`
+/// separators inside it (empty for `loop` / `opt`), and its `padding` (the inset of the
+/// border from the messages it spans and the lifelines it touches).
 pub(super) struct Frame<'a> {
     inst: &'a ResolvedInst,
     keyword: &'a str,
     depth: usize,
     elses: Vec<&'a ResolvedInst>,
+    pad: PaddingBox,
 }
 
 /// The y-extent a frame occupies on the timeline: its top and bottom border, and the y
@@ -52,9 +43,6 @@ pub(super) struct FrameGeom {
     bot: f64,
     else_ys: Vec<f64>,
 }
-
-/// Vertical clear space above and below a note's box on its row.
-const NOTE_MARGIN: f64 = 8.0;
 
 /// The timeline of the whole sequence body: each message's row y, each note's centre y, the
 /// foot, and the frames' y-extents (parallel to the collected frames). Messages, frames, and
@@ -101,6 +89,7 @@ fn gather<'a>(children: &'a [ResolvedInst], depth: usize, out: &mut Vec<Frame<'a
                 keyword,
                 depth,
                 elses: inst.children.iter().filter(|c| is_else(c)).collect(),
+                pad: padding(&inst.attrs, inst.span).unwrap_or_default(),
             });
             gather(&inst.children, depth + 1, out);
         }
@@ -162,7 +151,12 @@ pub(super) fn timeline(
     }
     events.sort_by_key(|(pos, rank, _)| (*pos, *rank));
 
+    // Rows (messages, notes) sit a uniform `gap_row` apart; the frame chrome (tab, dividers,
+    // borders) reserves room *within* that rhythm rather than on top of it, so the spacing
+    // reads even at any `gap`. `placed` tracks whether the previous element was a row, so the
+    // first message inside a frame doesn't add a second gap over the frame's own padding.
     let mut y = 0.0;
+    let mut placed = true; // the header sits above; the first row gaps from it
     let mut msg_y = vec![0.0; pairs.len()];
     let mut note_y = vec![0.0; notes.len()];
     let mut geom: Vec<FrameGeom> = frames
@@ -175,32 +169,44 @@ pub(super) fn timeline(
         .collect();
     for (_, _, ev) in &events {
         match ev {
-            // The top border sits just below the previous content; the first message clears
-            // the tab and its own label.
+            // The top border sits a full row below the previous content (the tab rides that
+            // gap); the first message is the frame's `padding` below the border.
             Ev::Open(f) => {
-                geom[*f].top = y + TOP_MARGIN;
-                y += TOP_MARGIN + TAB_CLEAR;
+                if placed {
+                    y += gap_row;
+                }
+                geom[*f].top = y;
+                y += frames[*f].pad.top;
+                placed = false;
             }
-            // The divider sits below the previous message; the next message clears the guard.
+            // The divider splits the compartments; its guard rides the room below it.
             Ev::Else(f, e) => {
-                geom[*f].else_ys[*e] = y + ELSE_MARGIN;
-                y += ELSE_MARGIN + ELSE_CLEAR;
+                y += gap_row * 0.4;
+                geom[*f].else_ys[*e] = y;
+                y += gap_row * 0.6;
+                placed = false;
             }
             Ev::Msg(i) => {
-                y += gap_row;
+                if placed {
+                    y += gap_row;
+                }
                 msg_y[*i] = y;
                 y += pairs[*i].hook_drop(); // a self-message's hook drops below its row
+                placed = true;
             }
-            // A note reserves its box height, centred with a margin above and below.
+            // A note reserves its own box height plus a row's clearance above and below.
             Ev::Note(i) => {
-                y += NOTE_MARGIN;
+                if placed {
+                    y += gap_row;
+                }
                 note_y[*i] = y + notes[*i].1 / 2.0;
-                y += notes[*i].1 + NOTE_MARGIN;
+                y += notes[*i].1;
+                placed = true;
             }
-            // The bottom border sits below the last message.
+            // The bottom border sits the frame's `padding` below the last message; the next
+            // row still gaps a full `gap_row` from that message, so the border rides the gap.
             Ev::Close(f) => {
-                y += BOT_MARGIN;
-                geom[*f].bot = y;
+                geom[*f].bot = y + frames[*f].pad.bottom;
             }
         }
     }
@@ -226,8 +232,13 @@ pub(super) fn draw(
         let Some((lo, hi)) = lifeline_span(fr, pairs, lifeline_x) else {
             continue; // a frame with no placed messages spans nothing
         };
-        let inset = (INSET - fr.depth as f64 * NEST_INSET).max(4.0);
-        let (left, right) = (lo - inset, hi + inset);
+        // The horizontal inset is the frame's `padding`, pulled inward by nesting depth so a
+        // nested frame reads inside its parent.
+        let nest = fr.depth as f64 * NEST_INSET;
+        let (left, right) = (
+            lo - (fr.pad.left - nest).max(4.0),
+            hi + (fr.pad.right - nest).max(4.0),
+        );
         out.push(border(fr.inst, left, g.top, right, g.bot));
         out.extend(tab(fr, left, g.top));
         // `|else|` dividers split the alt into compartments; each carries its guard.

@@ -156,18 +156,20 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
         // ordinary boxes and keep their own type's paint.
         "sequence" => vec![id("layout", "sequence")],
         "note" => vec![
-            var("fill", "group-fill"),
+            var("fill", "fill"),
             var("stroke", "stroke"),
             pair("padding", 6.0, 8.0),
             n("font-size", 12.0),
         ],
-        // A frame: a dashed, rounded rectangle around a span of messages.
+        // A frame: a dashed, rounded rectangle around a span of messages. `padding` insets
+        // the border from the messages it spans (vertical) and the lifelines (horizontal).
         "loop" | "opt" | "alt" => vec![
             id("fill", "none"),
             var("stroke", "group-stroke"),
             id("stroke-style", "dashed"),
             n("stroke-width", 1.0),
             n("radius", 4.0),
+            pair("padding", 8.0, 14.0),
         ],
         // An |alt| compartment separator: the same dashed line, no body radius.
         "else" => vec![
