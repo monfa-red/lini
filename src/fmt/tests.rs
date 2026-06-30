@@ -202,6 +202,26 @@ fn phases_separated_by_a_blank_line() {
 }
 
 #[test]
+fn interleaved_body_keeps_source_order() {
+    // SPEC §3: a child after a link in a body stays put (a `layout: sequence`
+    // reads this order as time) — the formatter must not reorder to children-then-links.
+    assert_eq!(
+        fmt("|group#g| [\n  a -> b\n  |box#m|\n  m -> a\n]\n"),
+        "|group#g| [\n  a -> b\n  |box#m|\n  m -> a\n]\n"
+    );
+}
+
+#[test]
+fn interleaved_root_keeps_source_order_no_phase_break() {
+    // A root `layout: sequence` interleaves participants and messages; the
+    // canvas/links blank-line split applies only to a cleanly phased file.
+    assert_eq!(
+        fmt("{layout:sequence}\n|box#a|\na -> b\n|loop#l| [ b -> a ]\n"),
+        "{\n  layout: sequence;\n}\n\n|box#a|\na -> b\n|loop#l| [\n  b -> a\n]\n"
+    );
+}
+
+#[test]
 fn comments_are_preserved() {
     assert_eq!(fmt("// header\n|box#x|\n"), "// header\n|box#x|\n");
 }

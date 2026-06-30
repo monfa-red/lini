@@ -14,7 +14,7 @@ step can be executed in a fresh session: each step lists its files, changes, tes
 
 ## Progress
 
-- [ ] Step 1 — Grammar relaxation (parser + fmt)
+- [x] **Step 1 — Grammar relaxation (parser + fmt)** ✓ (parser both sites relaxed; `fmt` source-order merge; 427 lib tests + clippy + fmt clean)
 - [ ] Step 2 — Sequence types + dispatch + participants/lifelines (skeleton renders)
 - [ ] Step 3 — Messages + the link-partition / wiring-strategy seam
 - [ ] Step 4 — Activations
@@ -136,6 +136,23 @@ formatter round-trips it. Standalone, useful on its own; unblocks frames.
 
 **Done when:** interleaved bodies parse + fmt round-trips; all existing tests green (the two
 removed-error tests are replaced, not just deleted).
+
+> **Step 1 outcome / decisions (done):**
+> - **AST kept the `(Vec<Child>, Vec<Link>)` split** (not a unified ordered body). Rationale:
+>   resolve's two-phase build genuinely wants the split, it maximises reuse (AST/resolve/desugar
+>   untouched), and source order is faithfully recoverable from `Span`. The interleave is
+>   reconstructed only where it matters (fmt now; the sequence engine in Step 3). Spans are the
+>   canonical position source, so this is a core read, not patchwork. *If Step 3/5 finds span
+>   ordering fragile with synthesised nodes, escalate to a unified `body: Vec<Stmt>`.*
+> - **Parser:** removed both ordering guards (`parser.rs` root loop + `parse_children`); nodes
+>   and links append to their lists in source order. Doc comments updated.
+> - **fmt:** one shared `emit_ordered(children, links, depth)` (replaces `emit_children`), used by
+>   the file level *and* every `[ ]` body — merges by span so the trivia cursor stays monotonic.
+>   A `phased(instances, links)` helper preserves the conventional canvas↔links blank line for
+>   normal files and drops it only when interleaved (a sequence). **File-level interleave is
+>   handled** — nothing deferred here.
+> - **Tests:** the two error-tests became relaxation tests (`instances_and_links_interleave_at_root`,
+>   `body_children_and_links_interleave`); two fmt round-trip tests added.
 
 ---
 

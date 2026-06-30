@@ -72,19 +72,22 @@ impl Emitter<'_> {
             self.emit_stylesheet(file);
             phases += 1;
         }
-        if !file.instances.is_empty() {
-            self.section_break(phases);
-            self.emit_children(&file.instances, 0);
-            phases += 1;
-        }
-        if !file.links.is_empty() {
-            self.section_break(phases);
-            for w in &file.links {
-                self.emit_trivia_before(w.span.start, 0);
-                self.emit_link(w, 0);
-                self.out.push('\n');
-                self.cursor = w.span.end;
+        // The drawn statements: instances and links in source order. A normal
+        // (phased) file keeps the conventional blank line between the canvas and
+        // the links; a `layout: sequence` interleaves them, so there is no split.
+        if phased(&file.instances, &file.links) {
+            if !file.instances.is_empty() {
+                self.section_break(phases);
+                self.emit_ordered(&file.instances, &[], 0);
+                phases += 1;
             }
+            if !file.links.is_empty() {
+                self.section_break(phases);
+                self.emit_ordered(&[], &file.links, 0);
+            }
+        } else {
+            self.section_break(phases);
+            self.emit_ordered(&file.instances, &file.links, 0);
         }
         self.emit_trivia_before(src_len, 0);
         if self.out.is_empty() {
@@ -220,19 +223,41 @@ impl Emitter<'_> {
 
     // ───────── Instances ─────────
 
-    fn emit_children(&mut self, children: &[Child], depth: usize) {
-        for c in children {
-            let span = child_span(c);
-            self.emit_trivia_before(span.start, depth);
-            match c {
-                Child::Box(n) => self.emit_node(n, depth),
-                Child::Text(t) => {
+    /// Emit a scope's children and internal links **interleaved in source order**
+    /// (SPEC §3) — by span, so the formatter is faithful to a `layout: sequence`
+    /// (where that order is time) and the trivia cursor advances monotonically.
+    /// One emitter per item kind, shared by the file and every `[ ]` body.
+    fn emit_ordered(&mut self, children: &[Child], links: &[Link], depth: usize) {
+        enum Item<'a> {
+            Child(&'a Child),
+            Link(&'a Link),
+        }
+        let mut items: Vec<Item> = Vec::with_capacity(children.len() + links.len());
+        items.extend(children.iter().map(Item::Child));
+        items.extend(links.iter().map(Item::Link));
+        items.sort_by_key(|it| match it {
+            Item::Child(c) => child_span(c).start,
+            Item::Link(w) => w.span.start,
+        });
+        for it in items {
+            let (start, end) = match &it {
+                Item::Child(c) => {
+                    let s = child_span(c);
+                    (s.start, s.end)
+                }
+                Item::Link(w) => (w.span.start, w.span.end),
+            };
+            self.emit_trivia_before(start, depth);
+            match it {
+                Item::Child(Child::Box(n)) => self.emit_node(n, depth),
+                Item::Child(Child::Text(t)) => {
                     self.indent(depth);
                     self.emit_text_node(t, depth);
                 }
+                Item::Link(w) => self.emit_link(w, depth),
             }
             self.out.push('\n');
-            self.cursor = span.end;
+            self.cursor = end;
         }
     }
 
@@ -318,13 +343,7 @@ impl Emitter<'_> {
             return;
         }
         self.out.push_str(" [\n");
-        self.emit_children(children, depth + 1);
-        for w in links {
-            self.emit_trivia_before(w.span.start, depth + 1);
-            self.emit_link(w, depth + 1);
-            self.out.push('\n');
-            self.cursor = w.span.end;
-        }
+        self.emit_ordered(children, links, depth + 1);
         self.emit_trivia_before(end.saturating_sub(1), depth + 1);
         self.indent(depth);
         self.out.push(']');
@@ -685,6 +704,20 @@ fn child_span(c: &Child) -> Span {
     match c {
         Child::Box(n) => n.span,
         Child::Text(t) => t.span,
+    }
+}
+
+/// Whether a scope's instances and links are cleanly **phased** — every instance
+/// before every link, the conventional case the formatter separates with a blank
+/// line. A `layout: sequence` interleaves them (`false`), so they merge with no
+/// split. One side empty is trivially phased.
+fn phased(instances: &[Child], links: &[Link]) -> bool {
+    match (
+        instances.iter().map(|c| child_span(c).start).max(),
+        links.iter().map(|w| w.span.start).min(),
+    ) {
+        (Some(last_instance), Some(first_link)) => last_instance < first_link,
+        _ => true,
     }
 }
 

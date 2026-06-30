@@ -222,19 +222,14 @@ impl<'a> Parser<'a> {
             file.stylesheet_span = Span::new(start.start, self.last_span().end);
             self.skip_newlines();
         }
-        let mut in_links = false;
+        // Instances and links interleave, in source order (SPEC §3): a
+        // `layout: sequence` reads that order as time. They stay in separate
+        // lists — each already in source order — and the formatter / sequence
+        // engine recover the interleave from spans.
         while self.kind().is_some() {
             match self.classify_body() {
-                Kind::Node => {
-                    if in_links {
-                        return Err(self.err("instances must come before links"));
-                    }
-                    file.instances.push(self.parse_child()?);
-                }
-                Kind::Link => {
-                    in_links = true;
-                    file.links.push(self.parse_link()?);
-                }
+                Kind::Node => file.instances.push(self.parse_child()?),
+                Kind::Link => file.links.push(self.parse_link()?),
                 Kind::Decl => return Err(self.err("a declaration belongs in a '{ }' block")),
                 Kind::Var => {
                     return Err(self.err("variables are declared in the stylesheet '{ }'"));
@@ -656,7 +651,9 @@ impl<'a> Parser<'a> {
         }
     }
 
-    /// `[ children, then internal links ]` (SPEC §3).
+    /// `[ children and internal links, in source order ]` (SPEC §3). They stay in
+    /// two lists, each in source order; the interleave is recovered from spans
+    /// where it matters (the formatter, the `layout: sequence` time axis).
     fn parse_children(&mut self) -> Result<(Vec<Child>, Vec<Link>), Error> {
         self.expect(&TokKind::LBracket, "'['")?;
         self.skip_newlines();
@@ -664,12 +661,7 @@ impl<'a> Parser<'a> {
         let mut links = Vec::new();
         while !matches!(self.kind(), Some(TokKind::RBracket) | None) {
             match self.classify_body() {
-                Kind::Node => {
-                    if !links.is_empty() {
-                        return Err(self.err("a child must come before the body's links"));
-                    }
-                    children.push(self.parse_child()?);
-                }
+                Kind::Node => children.push(self.parse_child()?),
                 Kind::Link => links.push(self.parse_link()?),
                 Kind::Decl => return Err(self.err("declarations go in '{ }', not '[ ]'")),
                 Kind::Var => {
@@ -1252,8 +1244,12 @@ mod tests {
     }
 
     #[test]
-    fn instance_after_link_errors() {
-        assert!(parse_err("a -> b\n|box#c|\n").contains("must come before links"));
+    fn instances_and_links_interleave_at_root() {
+        // SPEC §3: nodes and links interleave in source order (a `layout: sequence`
+        // reads that order as time) — a node after a link is no longer an error.
+        let f = parse_ok("a -> b\n|box#c|\n");
+        assert_eq!(f.instances.len(), 1, "the |box#c| instance");
+        assert_eq!(f.links.len(), 1, "the a -> b link");
     }
 
     #[test]
@@ -1277,11 +1273,14 @@ mod tests {
     }
 
     #[test]
-    fn child_after_link_errors() {
-        assert!(
-            parse_err("|group#g| [\n  |box#a|\n  a -> a\n  |box#b|\n]\n")
-                .contains("before the body's links")
-        );
+    fn body_children_and_links_interleave() {
+        // A child may follow an internal link in a body (SPEC §3).
+        let f = parse_ok("|group#g| [\n  |box#a|\n  a -> a\n  |box#b|\n]\n");
+        let Child::Box(g) = &f.instances[0] else {
+            panic!("group node");
+        };
+        assert_eq!(g.children.len(), 2, "boxes a and b");
+        assert_eq!(g.links.len(), 1, "the a -> a link");
     }
 
     #[test]
