@@ -28,6 +28,7 @@ Lini handles the fiddly part of a diagram — drawing the connectors — and lea
 - **You place, Lini connects.** Routing is automatic, orthogonal, and rounded, with a clearance it won't cross. Force a side when you want to steer one.
 - **The look is yours.** Sizes, anchors, strokes, shadows, rotation, gradients, and raw SVG paths render exactly as set — never filtered through a theme.
 - **Charts from data.** `layout: chart` plots bars, lines, areas, scatter, radar, and pie straight from numbers, working out the scales, ticks, and colours for you.
+- **Sequence diagrams.** `layout: sequence` reads your wires as time — participants across the top, messages top-to-bottom, with activation bars, `loop` / `opt` / `alt` frames, and notes, all from the links you already write.
 - **Small, and quick to learn.** `{ }` for style, `[ ]` for children, a few sigils, and `cat -> dog` is already a diagram. Backtick expressions add compile-time math, baked to literals.
 - **One fast binary.** About 1.5 MB, no Node or browser, compiling a typical diagram in a couple of milliseconds — and byte-identically each run, so SVGs diff cleanly in CI. Hundreds of tests, property tests on the router included, keep it honest.
 - **Good colour for free.** Eleven OKLCH-tuned hues in five tiers, gradients at a flattering angle, and automatic dark mode — every colour a `light-dark()` variable, no hex to pick.
@@ -114,6 +115,27 @@ Give a node `layout: chart` and it becomes a plot, drawn from data instead of pi
 ```
 
 `|bars|`, `|line|`, `|area|`, `|dots|`, and `|bubble|` share one x/value plane; `|slice|` makes a pie or donut. `direction: radial` bends the plane into a radar and `direction: row` lays it on its side, with no change to the data. A series reads either `data:` (plain numbers, or `x y` points) or `fn:` — a formula sampled over the domain, using the language's own compile-time math. Axes auto-fit or take a `range:`, run linear or `log`, and you declare an `|axis|` only when you want to say something; shade a zone with `|band|`, drop a threshold or callout with `|mark|`. Label individual points with `tags:` and they place themselves without colliding — on the plot where they fit, on hover where they don't (`tooltip: none | hover | auto | always`); size a point for hovering with `marker: circle`. The whole chart language is in [`CHARTS.md`](https://github.com/monfa-red/lini/blob/main/CHARTS.md).
+
+---
+
+## Sequences
+
+Give the scene `layout: sequence` and the diagram reads on a **time axis**: named participants line up across the top, each drops a lifeline, and the messages — ordinary links — fall top-to-bottom **in the order you write them**. No new syntax: participants are nodes, messages are links, frames and notes are nodes. Like a chart it lowers to the same primitives, so it themes, bakes, and diffs like everything else.
+
+<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/sequence.png" alt="A Lini sequence diagram: a login flow with activation bars, an alt/else frame, and a note" width="420"></p>
+
+```
+{ layout: sequence }
+|box#user| "User"
+|box#api|  "API"
+user -> api  "POST /login"   // a call — solid arrow, opens an activation bar
+api --> user "200 + token"   // a return — dashed
+|alt| "valid" [              // a branch frame; |else| "…" splits compartments
+  user ~> api "log event"    // async — wavy
+]
+```
+
+The operator picks the message: `->` a call, `-->` a return, `~>` async, and `a -> a` a self-message. A call opens an **activation bar** on its target and the matching return closes it — nesting stacks, automatically. Wrap a span of messages in `|loop|`, `|opt|`, or `|alt|` (with `|else|` compartments) to frame it, and a frame only groups — its messages still wire the outer participants. Drop a `|note| "…" { over: a }` (or `{ left: a }` / `{ right: a }`, or `over: a b` to span). The whole sequence language is §10 of [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md).
 
 ---
 

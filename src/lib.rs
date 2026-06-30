@@ -198,11 +198,14 @@ pub mod testing {
     }
 
     /// The number of routable edges the source declares (fans/chains already expanded
-    /// at resolve into one `ResolvedLink` per edge-chain).
+    /// at resolve into one `ResolvedLink` per edge-chain). Sequence-scope messages are
+    /// **not** routable — the sequence layout draws them as time-row arrows (SPEC §10), so
+    /// the router never sees them — and are excluded here, mirroring `links::bundle`.
     pub fn declared_edges(src: &str) -> usize {
         let prog = super::resolve_pipeline(src, &Options::default()).expect("resolve");
         prog.links
             .iter()
+            .filter(|w| !layout::sequence::is_sequence_scope(&prog, &w.scope))
             .map(|w| w.endpoints.len().saturating_sub(1))
             .sum()
     }

@@ -7,7 +7,7 @@ mod links;
 pub(crate) mod path_bbox; // glyph-extent computation also serves `render::icon_fit`
 mod prim; // PlacedNode *builders* for lowered primitives (charts, sequences)
 mod primitives; // primitive *sizing* (leaf/closed bbox) — distinct from `prim`
-mod sequence;
+pub(crate) mod sequence;
 mod text;
 mod values;
 

@@ -18,8 +18,8 @@ step can be executed in a fresh session: each step lists its files, changes, tes
 - [x] **Step 2 — Sequence types + dispatch + participants/lifelines** ✓ (6 types + defaults; `prim` promoted to shared `layout::prim`; root + node forms render headers + lifelines; tests + clippy + fmt clean; visually verified)
 - [x] **Step 3 — Messages + the link-partition / wiring-strategy seam** ✓ (call/return/async/self render as time-row arrows; router skips sequence scopes; async wavy un-deferred; 435 lib tests + clippy + fmt clean; visually verified)
 - [x] **Step 4 — Activations** ✓ (per-participant LIFO bars; nesting offsets outward; arrows attach to bar edges; `activation: none` toggle; 439 lib tests + clippy + fmt clean; visually verified)
-- [x] **Step 5 — Frames + notes** ✓ (scope transparency via desugar hoisting + no-phantom test; loop/opt/alt + else compartments + nesting; notes over/left/right; §16 errors; 449 lib tests + clippy + fmt clean; login flow verified light+dark)
-- [ ] Step 6 — Samples, snapshots, render-verify, polish, acceptance
+- [x] **Step 5 — Frames + notes** ✓ (scope transparency at resolve + no-phantom test; loop/opt/alt + else compartments + nesting; notes over/left/right; §16 errors; clippy + fmt clean; login flow verified light+dark)
+- [x] **Step 6 — Samples, snapshots, render-verify, polish, acceptance** ✓ (`samples/sequence.lini` + conformance snapshot; `assets/sequence.png`; README Sequences section + feature bullet; vscode grammar; `declared_edges` excludes sequence scopes; all gates green)
 
 ---
 
@@ -395,16 +395,16 @@ Sequences section, mirroring Charts).
 
 ## Acceptance checklist (final)
 
-- [ ] §10 examples and the §21 login flow render correctly (read the PNGs), light + dark + baked.
-- [ ] Messages: call/return/async/self all correct; router never touches them; `tests/linking.rs` green.
-- [ ] Activations deterministic; `activation: none` works.
-- [ ] Frames (`loop`/`opt`/`alt` + `|else|`, nested) and notes (`over`/`over a b`/`left`/`right`) correct.
-- [ ] Frame bodies are scope-transparent — no phantom participants (test).
-- [ ] Undeclared endpoints auto-create participants; declared order honoured.
-- [ ] `fmt` round-trips interleaved bodies and sequence diagrams.
-- [ ] Determinism: two runs byte-identical; one `samples/sequence.lini`; snapshots committed.
-- [ ] `cargo fmt --check`, `cargo clippy`, `cargo test` clean; no `unsafe`.
-- [ ] Linking seam documented with future `straight`/`curved` arms scaffolded (comment-only).
+- [x] §10 examples and the login flow render correctly (read the PNGs), light + dark + baked.
+- [x] Messages: call/return/async/self all correct; router never touches them; `tests/linking.rs` green.
+- [x] Activations deterministic; `activation: none` works.
+- [x] Frames (`loop`/`opt`/`alt` + `|else|`, nested) and notes (`over`/`over a b`/`left`/`right`) correct.
+- [x] Frame bodies are scope-transparent — no phantom participants (test).
+- [x] Undeclared endpoints auto-create participants; declared order honoured.
+- [x] `fmt` round-trips interleaved bodies and sequence diagrams (idempotent, byte-identical SVG).
+- [x] Determinism: two runs byte-identical; one `samples/sequence.lini`; snapshot committed.
+- [x] `cargo fmt --check`, `cargo clippy`, `cargo test` clean; no `unsafe`.
+- [x] Linking seam documented with future `straight`/`curved` arms scaffolded (comment-only).
 
 ## Risks & mitigations
 

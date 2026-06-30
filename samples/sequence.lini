@@ -1,0 +1,23 @@
+// A sequence diagram (SPEC §10): `layout: sequence` reads the wires as time —
+// participants across the top, messages top-to-bottom in source order. Calls open
+// activation bars, an alt/else fragment branches, a note annotates. Source for
+// assets/sequence.png.
+{ layout: sequence }
+
+|box#user| "User"
+|box#api|  "API"
+|cyl#db|   "Store"
+
+|note| "signs in" { over: user }
+user -> api "POST /login"
+api  -> db  "find user"
+db  --> api "row"
+
+|alt| "valid" [
+  api  -> api  "sign JWT"
+  api --> user "200 + token"
+  |else| "invalid"
+  api --> user "401"
+]
+
+user ~> api "log event"
