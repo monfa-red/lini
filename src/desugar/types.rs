@@ -18,12 +18,17 @@ pub const TEMPLATES: &[(&str, &str)] = &[
     ("rect", "box"),
     ("group", "block"),
     ("caption", "block"),
-    ("footer", "caption"),
+    ("footnote", "caption"),
     ("badge", "block"),
     ("row", "block"),
     ("column", "block"),
     ("grid", "block"),
     ("table", "group"),
+    // Table header / footer cells and the ER entity (SPEC §8). `header` / `footer`
+    // are `|block|` cells that fill their grid track; `entity` is a 2-column table.
+    ("header", "block"),
+    ("footer", "block"),
+    ("entity", "table"),
     ("sign", "icon"),
     // Charts ([CHARTS.md]): the two container layouts and the series / structural
     // types, each a bundle over |block|. `line` is absent — a chart line reuses the

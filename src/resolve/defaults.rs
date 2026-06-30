@@ -57,6 +57,13 @@ pub fn built_in_defaults() -> VarTable {
         "group-fill",
         light_dark(rgba(0.0, 0.0, 0.0, 0.03), rgba(255.0, 255.0, 255.0, 0.05)),
     );
+    // The table / entity header band (SPEC §8): a touch stronger than group-fill so a
+    // header row reads as a band; dark/light aware, tree-shaken in only when referenced.
+    set_visual(
+        &mut t,
+        "header-fill",
+        light_dark(rgba(0.0, 0.0, 0.0, 0.06), rgba(255.0, 255.0, 255.0, 0.08)),
+    );
     // A soft but visible grey so a duotone icon reads as two-tone by default
     // (heavier than the near-invisible group-fill).
     set_visual(

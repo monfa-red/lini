@@ -106,7 +106,7 @@
         },
         {
           "comment": "a built-in primitive or template",
-          "match": "(?<![\\w-])(box|oval|line|path|poly|hex|slant|cyl|diamond|cloud|icon|image|block|rect|group|caption|footer|badge|note|row|column|grid|table|sequence|loop|opt|alt|else)(?![\\w-])",
+          "match": "(?<![\\w-])(box|oval|line|path|poly|hex|slant|cyl|diamond|cloud|icon|image|block|rect|group|caption|footnote|header|footer|entity|badge|note|row|column|grid|table|sequence|loop|opt|alt|else)(?![\\w-])",
           "name": "entity.name.tag.lini"
         },
         {

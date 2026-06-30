@@ -19,7 +19,7 @@ use crate::error::Error;
 use crate::resolve::NodeKind;
 use crate::span::Span;
 use crate::syntax::ast::{
-    Child, Decl, File, Link, Node, Rule, SelUnit, Selector, StyleItem, Value,
+    Child, Decl, File, Link, Node, Rule, SelUnit, Selector, StyleItem, TextNode, Value,
 };
 use bundles::root_defaults;
 use classes::{class_defs, is_lini_class, lini_class, merge_decls, worn_classes};
@@ -178,6 +178,97 @@ fn lower_child(child: &Child, types: &Types, bodies: &Bodies) -> Result<Child, E
     }
 }
 
+fn decl(name: &str, values: Vec<Value>) -> Decl {
+    Decl {
+        name: name.into(),
+        groups: vec![values],
+        span: Span::empty(),
+    }
+}
+
+/// The grid column count for a table / entity node (SPEC §8): its own `columns:` decl,
+/// else a bundle default in its chain (`entity` carries `columns: auto auto`). `None`
+/// when undeterminable — the auto-header and title-span then no-op.
+fn column_count(style: &[Decl], chain: &[String]) -> Option<usize> {
+    if let Some(d) = style.iter().find(|d| d.name == "columns") {
+        let n = count_tracks(d);
+        if n > 0 {
+            return Some(n);
+        }
+    }
+    chain.iter().rev().find_map(|name| {
+        let n = count_tracks(
+            bundles::template_bundle(name)
+                .iter()
+                .find(|d| d.name == "columns")?,
+        );
+        (n > 0).then_some(n)
+    })
+}
+
+/// Tracks a `columns:` value declares — each token is one track, `repeat(N)` is N.
+fn count_tracks(d: &Decl) -> usize {
+    d.groups
+        .iter()
+        .flatten()
+        .map(|v| match v {
+            Value::Call(c) if c.name == "repeat" => match c.args.first() {
+                Some(Value::Number(n)) if *n >= 1.0 => *n as usize,
+                _ => 1,
+            },
+            _ => 1,
+        })
+        .sum()
+}
+
+/// A `|header|` node carrying `text` (SPEC §8). With `span`, it is an `|entity|`'s title
+/// at the grid top-left; without, it wraps one bare-text table cell (the auto-header).
+fn header_node(text: &TextNode, span: Option<usize>) -> Node {
+    let style = match span {
+        Some(cols) => vec![
+            decl("cell", vec![Value::Number(1.0), Value::Number(1.0)]),
+            decl("span", vec![Value::Number(cols as f64)]),
+        ],
+        None => Vec::new(),
+    };
+    Node {
+        id: None,
+        ty: Some("header".into()),
+        label: Some(text.clone()),
+        classes: Vec::new(),
+        style,
+        style_span: None,
+        children: Vec::new(),
+        links: Vec::new(),
+        span: text.span,
+    }
+}
+
+/// Auto-header a `|table|`'s first row (SPEC §8): wrap the first `cols` children as
+/// `|header|` cells when they are all bare text. A first row holding a box or an
+/// explicit `cell:` is left alone — that is a custom layout, not a header.
+fn wrap_header_row(
+    children: &mut [Child],
+    cols: usize,
+    types: &Types,
+    bodies: &Bodies,
+) -> Result<(), Error> {
+    let row_end = cols.min(children.len());
+    if row_end == 0
+        || !children[..row_end]
+            .iter()
+            .all(|c| matches!(c, Child::Text(_)))
+    {
+        return Ok(());
+    }
+    for c in &mut children[..row_end] {
+        if let Child::Text(t) = c {
+            *c = Child::Box(lower_node(&header_node(t, None), types, bodies)?);
+        }
+    }
+    Ok(())
+}
+
 fn lower_node(node: &Node, types: &Types, bodies: &Bodies) -> Result<Node, Error> {
     let ty = node.ty.as_deref().unwrap_or("box");
     let info = types.resolve(ty, node.span)?;
@@ -219,6 +310,16 @@ fn lower_node(node: &Node, types: &Types, bodies: &Bodies) -> Result<Node, Error
         children.push(lower_child(c, types, bodies)?);
     }
 
+    // Table / entity structure (SPEC §8). `cols` is the grid column count, driving both
+    // a `|table|`'s auto-header (its first row → `|header|` cells, below) and an
+    // `|entity|`'s title span (its label → a spanning header, in the smart-label block).
+    let is_entity = info.chain.iter().any(|n| n == "entity");
+    let is_table = !is_entity && info.chain.iter().any(|n| n == "table");
+    let cols = column_count(&node.style, &info.chain);
+    if is_table && let Some(cols) = cols {
+        wrap_header_row(&mut children, cols, types, bodies)?;
+    }
+
     // The smart label, lowered per type (SPEC §3/§7) — the single shared lowering
     // for a node's text (a link's labels go through the same `TextNode`). A box-like
     // type → centred text prepended; a group/table → a `|caption|` child; an
@@ -241,6 +342,10 @@ fn lower_node(node: &Node, types: &Types, bodies: &Bodies) -> Result<Node, Error
                 ));
             }
             style.push(labels::symbol_decl(&label.text, node.span));
+        } else if is_entity {
+            // An entity's label is its title: a `|header|` spanning every column (SPEC §8).
+            let title = header_node(label, Some(cols.unwrap_or(2)));
+            children.insert(0, Child::Box(lower_node(&title, types, bodies)?));
         } else if is_container {
             let caption = lower_node(&labels::caption_node(label), types, bodies)?;
             children.insert(0, Child::Box(caption));
@@ -251,6 +356,21 @@ fn lower_node(node: &Node, types: &Types, bodies: &Bodies) -> Result<Node, Error
             // still *names* the node — keep it so a chart can read a `|line|` series'
             // legend name. Inert for a standalone primitive (render ignores it).
             kept_label = Some(label.clone());
+        }
+    }
+
+    // In an entity, header / footer cells span every column (SPEC §8): the title above
+    // carries its own span; a hand-written `|footer|` (or `|header|`) gets one here.
+    if is_entity && let Some(cols) = cols {
+        for child in &mut children {
+            if let Child::Box(n) = child
+                && n.classes
+                    .iter()
+                    .any(|c| c == "lini-header" || c == "lini-footer")
+                && !n.style.iter().any(|d| d.name == "span")
+            {
+                n.style.push(decl("span", vec![Value::Number(cols as f64)]));
+            }
         }
     }
 
@@ -378,5 +498,69 @@ fn root_layout(user_root: &[Decl]) -> Option<&str> {
 fn push_unique(v: &mut Vec<String>, name: &str) {
     if !v.iter().any(|x| x == name) {
         v.push(name.to_string());
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn lower(src: &str) -> File {
+        let toks = crate::lexer::lex(src).expect("lex");
+        let file = crate::syntax::parser::parse(&toks).expect("parse");
+        desugar(&file).expect("desugar")
+    }
+    fn root_box<'a>(f: &'a File, id: &str) -> &'a Node {
+        f.instances
+            .iter()
+            .find_map(|c| match c {
+                Child::Box(n) if n.id.as_deref() == Some(id) => Some(n),
+                _ => None,
+            })
+            .expect("node")
+    }
+    fn is_header(c: &Child) -> bool {
+        matches!(c, Child::Box(n) if n.classes.iter().any(|x| x == "lini-header"))
+    }
+
+    #[test]
+    fn table_first_row_becomes_header_cells() {
+        let f = lower("|table#t| { columns: 30 30 } [\n\"a\"\n\"b\"\n\"c\"\n\"d\"\n]\n");
+        let t = root_box(&f, "t");
+        // Row 0 (the first `cols` cells) are header boxes; the body stays bare text.
+        assert!(
+            is_header(&t.children[0]) && is_header(&t.children[1]),
+            "first row is header"
+        );
+        assert!(
+            matches!(t.children[2], Child::Text(_)) && matches!(t.children[3], Child::Text(_)),
+            "body stays bare text"
+        );
+    }
+
+    #[test]
+    fn entity_label_is_a_spanning_header_fields_stay_text() {
+        let f = lower("|entity#e| \"Users\" [\n\"id\"\n\"int\"\n]\n");
+        let e = root_box(&f, "e");
+        let Child::Box(title) = &e.children[0] else {
+            panic!("the entity title is a box");
+        };
+        assert!(title.classes.iter().any(|c| c == "lini-header"));
+        assert!(
+            title.style.iter().any(|d| d.name == "span"),
+            "the title spans its columns"
+        );
+        // Field rows are not auto-headered — only the label is the title.
+        assert!(matches!(e.children[1], Child::Text(_)) && matches!(e.children[2], Child::Text(_)));
+    }
+
+    #[test]
+    fn bare_grid_does_not_auto_header() {
+        let f = lower("|grid#g| { columns: 30 30 } [\n\"a\"\n\"b\"\n]\n");
+        let g = root_box(&f, "g");
+        assert!(
+            g.children.iter().all(|c| !is_header(c)),
+            "a bare grid is not a table — no auto-header"
+        );
     }
 }

@@ -22,9 +22,10 @@ input_file: samples/shapes.lini
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 1.5; }
     .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
     .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
-    .lini .lini-footer { color: rgba(0, 0, 0, 0.5); font-size: 11px; }
+    .lini .lini-footnote { color: rgba(0, 0, 0, 0.5); font-size: 11px; }
     .lini .lini-badge { fill: #0a84ff; color: white; font-size: 11px; font-weight: normal; }
     .lini .lini-table { fill: none; stroke: #444; font-size: 14px; font-weight: normal; stroke-dasharray: none; }
+    .lini .lini-header { fill: rgba(0, 0, 0, 0.06); font-weight: bold; }
     .lini .lini-cap { color: #888; font-size: 12px; }
     .lini .lini-marker { fill: #444; stroke: none; }
   </style>
@@ -169,25 +170,34 @@ input_file: samples/shapes.lini
           <rect x="-18" y="-6" width="36" height="12" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="0">Group</text>
         </g>
-        <g class="lini-node lini-footer lini-caption lini-block" transform="translate(0,40.5)">
-          <rect x="-19.8" y="-5.5" width="39.6" height="11" rx="0" ry="0"/>
-          <text class="lini-text" x="0" y="0">footer</text>
+        <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,40.5)">
+          <rect x="-26.4" y="-5.5" width="52.8" height="11" rx="0" ry="0"/>
+          <text class="lini-text" x="0" y="0">footnote</text>
         </g>
       </g>
     </g>
     <g class="lini-node lini-tile lini-column lini-block" transform="translate(-152,156.5)">
-      <rect x="-36.5" y="-33.75" width="73" height="67.5" rx="0" ry="0"/>
+      <rect x="-36.5" y="-34.5" width="73" height="69" rx="0" ry="0"/>
       <g class="lini-node lini-table lini-group lini-block" transform="translate(0,-11.25)">
-        <rect x="-36" y="-22" width="72" height="44" rx="8" ry="8"/>
-        <path d="M -12 -22 L -12 22 M 12 -22 L 12 22 M -36 0 L 36 0" fill="none"/>
-        <text class="lini-text" x="-24" y="-11">a</text>
-        <text class="lini-text" x="0" y="-11">b</text>
-        <text class="lini-text" x="24" y="-11">c</text>
-        <text class="lini-text" x="-24" y="11">d</text>
-        <text class="lini-text" x="0" y="11">e</text>
-        <text class="lini-text" x="24" y="11">f</text>
+        <rect x="-36" y="-22.75" width="72" height="45.5" rx="8" ry="8"/>
+        <path d="M -12 -22.75 L -12 22.75 M 12 -22.75 L 12 22.75 M -36 0.75 L 36 0.75" fill="none"/>
+        <g class="lini-node lini-header lini-block" transform="translate(-24,-11)">
+          <rect x="-11.25" y="-11" width="22.5" height="22" rx="0" ry="0"/>
+          <text class="lini-text" x="0" y="0">a</text>
+        </g>
+        <g class="lini-node lini-header lini-block" transform="translate(0,-11)">
+          <rect x="-11.25" y="-11" width="22.5" height="22" rx="0" ry="0"/>
+          <text class="lini-text" x="0" y="0">b</text>
+        </g>
+        <g class="lini-node lini-header lini-block" transform="translate(24,-11)">
+          <rect x="-11.25" y="-11" width="22.5" height="22" rx="0" ry="0"/>
+          <text class="lini-text" x="0" y="0">c</text>
+        </g>
+        <text class="lini-text" x="-24" y="11.75">d</text>
+        <text class="lini-text" x="0" y="11.75">e</text>
+        <text class="lini-text" x="24" y="11.75">f</text>
       </g>
-      <g class="lini-node lini-cap lini-block" transform="translate(0,27)">
+      <g class="lini-node lini-cap lini-block" transform="translate(0,27.75)">
         <rect x="-18" y="-6" width="36" height="12" rx="0" ry="0"/>
         <text class="lini-text" x="0" y="0">table</text>
       </g>

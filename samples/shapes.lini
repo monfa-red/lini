@@ -67,7 +67,7 @@
   |group| { padding: 12; } [
     |caption| "Group"
     |box| { width: 56; height: 34; fill: --gray-wash; stroke: --gray-ink; }
-    |footer| "footer"
+    |footnote| "footnote"
   ]
 ]
 |tile| [

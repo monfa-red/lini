@@ -12,9 +12,10 @@ input_file: samples/templates.lini
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 1.5; }
     .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
     .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
-    .lini .lini-footer { color: rgba(0, 0, 0, 0.5); font-size: 11px; }
+    .lini .lini-footnote { color: rgba(0, 0, 0, 0.5); font-size: 11px; }
     .lini .lini-badge { fill: #0a84ff; color: white; font-size: 11px; font-weight: normal; }
     .lini .lini-table { fill: none; stroke: #444; font-size: 14px; font-weight: normal; stroke-dasharray: none; }
+    .lini .lini-header { fill: rgba(0, 0, 0, 0.06); font-weight: bold; }
     .lini .lini-panel { fill: #eeeeee; stroke: #cecece; }
     .lini .lini-tile { fill: #7eddfd; stroke: #00547e; color: #00547e; }
   </style>
@@ -43,7 +44,7 @@ input_file: samples/templates.lini
           <rect x="-25.2" y="-6" width="50.4" height="12" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="0">Profile</text>
         </g>
-        <g class="lini-node lini-footer lini-caption lini-block" transform="translate(0,86.25)">
+        <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,86.25)">
           <rect x="-33" y="-5.5" width="66" height="11" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="0">since 1843</text>
         </g>
@@ -90,18 +91,27 @@ input_file: samples/templates.lini
           <text class="lini-text" x="0" y="0">NEW</text>
         </g>
       </g>
-      <g class="lini-node lini-table lini-group lini-block" data-id="basket" style="stroke: #484848" transform="translate(27,-2.25)">
-        <rect x="-103" y="-33" width="206" height="66" rx="8" ry="8"/>
-        <path d="M -23 -33 L -23 33 M 33 -33 L 33 33 M -103 -11 L 103 -11 M -103 11 L 103 11" fill="none"/>
-        <text class="lini-text" x="-63" y="-22">Fruit</text>
-        <text class="lini-text" x="5" y="-22">Qty</text>
-        <text class="lini-text" x="68" y="-22">Note</text>
-        <text class="lini-text" x="-63" y="0">Apple</text>
-        <text class="lini-text" x="5" y="0">12</text>
-        <text class="lini-text" x="68" y="0">fresh</text>
-        <text class="lini-text" x="-63" y="22">Mango</text>
-        <text class="lini-text" x="5" y="22">3</text>
-        <text class="lini-text" x="68" y="22">ripe</text>
+      <g class="lini-node lini-table lini-group lini-block" data-id="basket" style="stroke: #484848" transform="translate(27,-1.5)">
+        <rect x="-103" y="-33.75" width="206" height="67.5" rx="8" ry="8"/>
+        <path d="M -23 -33.75 L -23 33.75 M 33 -33.75 L 33 33.75 M -103 -10.25 L 103 -10.25 M -103 11.75 L 103 11.75" fill="none"/>
+        <g class="lini-node lini-header lini-block" transform="translate(-63,-22)">
+          <rect x="-39.25" y="-11" width="78.5" height="22" rx="0" ry="0"/>
+          <text class="lini-text" x="0" y="0">Fruit</text>
+        </g>
+        <g class="lini-node lini-header lini-block" transform="translate(5,-22)">
+          <rect x="-27.25" y="-11" width="54.5" height="22" rx="0" ry="0"/>
+          <text class="lini-text" x="0" y="0">Qty</text>
+        </g>
+        <g class="lini-node lini-header lini-block" transform="translate(68,-22)">
+          <rect x="-34.25" y="-11" width="68.5" height="22" rx="0" ry="0"/>
+          <text class="lini-text" x="0" y="0">Note</text>
+        </g>
+        <text class="lini-text" x="-63" y="0.75">Apple</text>
+        <text class="lini-text" x="5" y="0.75">12</text>
+        <text class="lini-text" x="68" y="0.75">fresh</text>
+        <text class="lini-text" x="-63" y="22.75">Mango</text>
+        <text class="lini-text" x="5" y="22.75">3</text>
+        <text class="lini-text" x="68" y="22.75">ripe</text>
       </g>
       <a href="https://example.com">
         <g class="lini-node lini-tile lini-box lini-block" data-id="docs" style="fill: #c6c4ff; stroke: #443394; color: #443394" transform="translate(201.25,0)">

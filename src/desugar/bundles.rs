@@ -131,7 +131,7 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             n("font-size", 12.0),
             var("font-weight", "caption-font-weight"),
         ],
-        "footer" => vec![
+        "footnote" => vec![
             id("pin", "bottom"),
             pair("translate", 0.0, 17.0),
             n("font-size", 11.0),
@@ -237,6 +237,28 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             n("font-size", 14.0),
             id("font-weight", "normal"),
         ],
+        // A table header cell (SPEC §8): a box that fills its grid track (the table
+        // inflates each cell by its `padding`, so this needs none of its own) and
+        // paints its own `fill` as the band. `bold` + the fill is the whole look;
+        // the cascade overrides via `|table| |header| { … }`.
+        "header" => vec![
+            id("justify", "stretch"),
+            id("align", "stretch"),
+            var("fill", "header-fill"),
+            id("font-weight", "bold"),
+        ],
+        // A table footer cell (SPEC §8): the same full-cell box, muted text, no fill.
+        "footer" => vec![
+            id("justify", "stretch"),
+            id("align", "stretch"),
+            var("color", "footer-color"),
+        ],
+        // An ER / database entity (SPEC §8): a two-column table; its label lowers to a
+        // spanning header (desugar). Everything else is the |table| base.
+        "entity" => vec![decl(
+            "columns",
+            vec![Value::Ident("auto".into()), Value::Ident("auto".into())],
+        )],
         _ => Vec::new(),
     }
 }
@@ -277,6 +299,24 @@ mod tests {
             .find(|d| d.name == name)
             .and_then(|d| match d.groups.first()?.first()? {
                 Value::Number(n) => Some(*n),
+                _ => None,
+            })
+    }
+    fn ident(decls: &[Decl], name: &str) -> Option<String> {
+        decls
+            .iter()
+            .find(|d| d.name == name)
+            .and_then(|d| match d.groups.first()?.first()? {
+                Value::Ident(s) => Some(s.clone()),
+                _ => None,
+            })
+    }
+    fn var(decls: &[Decl], name: &str) -> Option<String> {
+        decls
+            .iter()
+            .find(|d| d.name == name)
+            .and_then(|d| match d.groups.first()?.first()? {
+                Value::Var(s) => Some(s.clone()),
                 _ => None,
             })
     }
@@ -354,5 +394,27 @@ mod tests {
         assert_eq!(num(&root_defaults(), "font-size"), Some(15.0));
         assert_eq!(num(&link_defaults(), "clearance"), Some(16.0));
         assert_eq!(num(&link_defaults(), "font-size"), Some(11.0));
+    }
+
+    #[test]
+    fn header_footer_entity_footnote_bundles() {
+        // The header cell: a stretched, filled, bold band (SPEC §8).
+        let h = template_bundle("header");
+        assert_eq!(ident(&h, "justify").as_deref(), Some("stretch"));
+        assert_eq!(ident(&h, "align").as_deref(), Some("stretch"));
+        assert_eq!(var(&h, "fill").as_deref(), Some("header-fill"));
+        assert_eq!(ident(&h, "font-weight").as_deref(), Some("bold"));
+        // The footer cell: stretched, muted text, no fill.
+        let f = template_bundle("footer");
+        assert_eq!(ident(&f, "justify").as_deref(), Some("stretch"));
+        assert_eq!(var(&f, "color").as_deref(), Some("footer-color"));
+        assert!(!has(&f, "fill"));
+        // The entity: two auto columns over the |table| base.
+        let e = template_bundle("entity");
+        assert!(has(&e, "columns"));
+        // The footnote (the renamed old footer): still the pinned bottom caption.
+        let foot = template_bundle("footnote");
+        assert_eq!(ident(&foot, "pin").as_deref(), Some("bottom"));
+        assert_eq!(num(&foot, "font-size"), Some(11.0));
     }
 }

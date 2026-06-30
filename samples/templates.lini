@@ -1,5 +1,5 @@
-// Every built-in template — group, caption, footer, badge, row, column,
-// table, link — on one captioned board, in palette colours.
+// Every built-in template — group, caption, footnote, badge, row, column,
+// table (with its auto-header), link — on one captioned board, in palette colours.
 {
   gap: 22; padding: 26;
 
@@ -14,14 +14,14 @@
 |block| "Templates" { font-size: 18; font-weight: bold; }
 
 |row#upper| { gap: 22; align: start; } [
-  // group with a caption (top edge) and a footer (bottom edge)
+  // group with a caption (top edge) and a footnote (bottom edge)
   |panel#profile| [
     |caption| "Profile"
     |tile#name| "Ada Lovelace"
     |tile#role| "Engineer" {
       fill: --teal-soft; stroke: --teal-ink; color: --teal-ink;
     }
-    |footer| "since 1843"
+    |footnote| "since 1843"
   ]
   // row + column nested inside a group
   |panel#nested| { direction: row; gap: 16; } [
