@@ -233,6 +233,9 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             pair("padding", 4.0, 8.0),
             id("fill", "none"),
             var("stroke", "stroke"),
+            // A touch heavier than the group base (1) so the frame and its dividers —
+            // and an |entity|, which builds on this — read crisply (SPEC §8).
+            n("stroke-width", 1.5),
             id("stroke-style", "solid"),
             n("font-size", 14.0),
             id("font-weight", "normal"),

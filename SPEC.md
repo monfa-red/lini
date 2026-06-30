@@ -750,7 +750,7 @@ primitives ([§7](#7-nodes)) stand on their own.
 | `\|column\|` | `\|block\|` | `direction: column` | Frameless wrapper — children in a column. |
 | `\|grid\|` | `\|block\|` | `layout: grid` | Frameless grid (needs `columns`). |
 | `\|sign\|` | `\|icon\|` | `width: 64; height: 64; padding: 4; stroke-width: 1.5; fit: contain` | A larger icon as a stand-alone node, with room for a short label; `fit: contain` fills the box (unlike a bare `\|icon\|`), and its line weight drops to the node default `1.5` (a bare `\|icon\|` keeps `2`). |
-| `\|table\|` | `\|group\|` | `layout: grid; divider: all; gap: 0; padding: 4 8; fill: none; stroke: --stroke; stroke-style: solid; font-size: 14; font-weight: normal` | Ruled grid (see below). |
+| `\|table\|` | `\|group\|` | `layout: grid; divider: all; gap: 0; padding: 4 8; fill: none; stroke: --stroke; stroke-width: 1.5; stroke-style: solid; font-size: 14; font-weight: normal` | Ruled grid (see below). |
 | `\|header\|` | `\|block\|` | `justify: stretch; align: stretch; fill: --header-fill; font-weight: bold` | A **header** cell filling its grid cell (a `\|table\|`'s first row; an `\|entity\|`'s title spans them). |
 | `\|footer\|` | `\|block\|` | `justify: stretch; align: stretch; color: --footer-color` | A **footer** cell — muted text filling its cell; opt-in on the last row. |
 | `\|entity\|` | `\|table\|` | `columns: auto auto` | An ER / database **entity** — a titled, two-column field list (see below). |

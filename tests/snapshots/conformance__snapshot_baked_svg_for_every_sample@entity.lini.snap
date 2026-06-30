@@ -3,14 +3,14 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/entity.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-222.2 -65.25 444.4 130.5" width="444.4" height="130.5" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-222.7 -65.5 445.4 131" width="445.4" height="131" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
     .lini .lini-block { fill: none; stroke: none; stroke-width: 1.5; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
-    .lini .lini-table { fill: none; stroke: #444; font-size: 14px; font-weight: normal; stroke-dasharray: none; }
+    .lini .lini-table { fill: none; stroke: #444; stroke-width: 1.5; font-size: 14px; font-weight: normal; stroke-dasharray: none; }
     .lini .lini-header { fill: rgba(0, 0, 0, 0.06); font-weight: bold; }
     .lini .lini-link { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-link-label { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; font-size: 11px; font-weight: normal; }
@@ -20,9 +20,9 @@ input_file: samples/entity.lini
     .lini .lini-marker.lini-marker-open { fill: none; stroke: inherit; stroke-linecap: round; stroke-dasharray: none; }
   </style>
   <defs/>
-  <rect class="lini-canvas" x="-222.2" y="-65.25" width="444.4" height="130.5"/>
+  <rect class="lini-canvas" x="-222.7" y="-65.5" width="445.4" height="131"/>
   <g class="lini-scene">
-    <g class="lini-node lini-entity lini-table lini-group lini-block" data-id="users" transform="translate(-135.3,0)">
+    <g class="lini-node lini-entity lini-table lini-group lini-block" data-id="users" transform="translate(-135.55,0)">
       <rect x="-66.4" y="-44.75" width="132.8" height="89.5" rx="8" ry="8"/>
       <path d="M -8.4 -21.25 L -8.4 44.75 M -66.4 -21.25 L 66.4 -21.25 M -66.4 0.75 L 66.4 0.75 M -66.4 22.75 L 66.4 22.75" fill="none"/>
       <g class="lini-node lini-header lini-block" transform="translate(0,-33)">
@@ -36,7 +36,7 @@ input_file: samples/entity.lini
       <text class="lini-text" x="-37.4" y="33.75">email</text>
       <text class="lini-text" x="29" y="33.75">varchar</text>
     </g>
-    <g class="lini-node lini-entity lini-table lini-group lini-block" data-id="orders" transform="translate(126.9,0)">
+    <g class="lini-node lini-entity lini-table lini-group lini-block" data-id="orders" transform="translate(127.15,0)">
       <rect x="-74.8" y="-44.75" width="149.6" height="89.5" rx="8" ry="8"/>
       <path d="M 0 -21.25 L 0 44.75 M -74.8 -21.25 L 74.8 -21.25 M -74.8 0.75 L 74.8 0.75 M -74.8 22.75 L 74.8 22.75" fill="none"/>
       <g class="lini-node lini-header lini-block" transform="translate(0,-33)">
