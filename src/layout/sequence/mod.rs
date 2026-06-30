@@ -9,10 +9,11 @@
 //! draws each message itself — a horizontal arrow at its row (the `sequence` wiring
 //! strategy, SPEC §10).
 //!
-//! Done: participants + lifelines, and messages (call / return / async / self) in
-//! [`messages`]. Activations, frames, and notes follow in later steps (see PLAN.md).
+//! Submodules: [`messages`] (call / return / async / self arrows), [`activations`]
+//! (implicit bars), [`frames`] (`loop` / `opt` / `alt` + `else`). Notes follow (PLAN.md).
 
 mod activations;
+mod frames;
 mod messages;
 
 use crate::error::Error;
@@ -55,7 +56,13 @@ pub(super) fn layout_node(
         }
     }
     let messages = messages_for(program, path);
-    let (children, bbox) = lay_out(&inst.attrs, participants, &messages, inst.span)?;
+    let (children, bbox) = lay_out(
+        &inst.attrs,
+        participants,
+        &messages,
+        &inst.children,
+        inst.span,
+    )?;
     Ok(prim::container(inst, bbox, children))
 }
 
@@ -71,7 +78,13 @@ pub(super) fn layout_root(
         .filter(|p| is_participant(&p.kind, &p.type_chain))
         .collect();
     let messages = messages_for(program, "");
-    let (children, bbox) = lay_out(&program.scene.attrs, participants, &messages, Span::empty())?;
+    let (children, bbox) = lay_out(
+        &program.scene.attrs,
+        participants,
+        &messages,
+        &program.scene.nodes,
+        Span::empty(),
+    )?;
     *scene_nodes = children;
     Ok(bbox)
 }
@@ -107,6 +120,7 @@ fn lay_out(
     attrs: &AttrMap,
     mut participants: Vec<PlacedNode>,
     messages: &[&ResolvedLink],
+    frame_src: &[ResolvedInst],
     span: Span,
 ) -> Result<(Vec<PlacedNode>, Bbox), Error> {
     if participants.is_empty() {
@@ -114,9 +128,10 @@ fn lay_out(
     }
     let (gap_row, gap_col) = super::primitives::gap(attrs, span)?;
 
-    // Time-ordered message pairs (a chain → consecutive pairs), and participant columns
-    // widened so each message's label fits over its span.
+    // Time-ordered message pairs (a chain → consecutive pairs) and frames (depth-first),
+    // then participant columns widened so each message's label fits over its span.
     let pairs = messages::pairs(messages);
+    let seq_frames = frames::collect(frame_src);
     let widths: Vec<f64> = participants.iter().map(|p| p.bbox.w()).collect();
     let ids: Vec<&str> = participants
         .iter()
@@ -124,17 +139,20 @@ fn lay_out(
         .collect();
     let centres = messages::columns(&widths, &ids, &pairs, gap_col);
 
+    // The shared timeline assigns each message a row y and each frame its y-extent; its
+    // foot is the body height, which centres the diagram on the origin.
+    let mut timeline = frames::timeline(&pairs, &seq_frames, gap_row);
     let header_h = participants
         .iter()
         .map(|p| p.bbox.h())
         .fold(0.0_f64, f64::max);
-    let rows = pairs.len();
-    let body_h = gap_row * (rows as f64 + 1.0); // a row per message at `gap_row`, plus a foot
-    let total_h = header_h + body_h;
+    let total_h = header_h + timeline.foot_y;
     let top = -total_h / 2.0;
     let header_bottom = top + header_h;
-    let foot_y = header_bottom + body_h;
-    let row_y = |i: usize| header_bottom + gap_row * (i as f64 + 1.0);
+    timeline.shift(header_bottom);
+    let foot_y = timeline.foot_y;
+    let msg_y = &timeline.msg_y;
+    let row_y = |i: usize| if i < msg_y.len() { msg_y[i] } else { foot_y };
 
     // Place participants at their column centres, top-aligned; drop a lifeline to the foot.
     let stroke = lifeline_stroke(attrs);
@@ -168,9 +186,11 @@ fn lay_out(
     };
     let arrows = messages::draw(&pairs, &lifeline_x, endpoint_x, row_y);
     let bar_nodes = activations::draw(&bars, &lifeline_x, row_y);
+    let frame_nodes = frames::draw(&seq_frames, &timeline.geom, &pairs, &lifeline_x);
 
-    // Lifelines behind, then bars, headers, and messages on top.
+    // Lifelines and frames behind, then bars, headers, and messages on top.
     let mut children = lifelines;
+    children.extend(frame_nodes);
     children.extend(bar_nodes);
     children.extend(participants);
     children.extend(arrows);
@@ -374,5 +394,43 @@ mod tests {
             "|sequence#s| { activation: none } [\n  |box#a| \"A\"\n  |box#b| \"B\"\n  a -> b \"q\"\n  b --> a \"r\"\n]\n",
         );
         assert_eq!(n, 0, "activation: none suppresses bars");
+    }
+
+    // ── Frames (SPEC §10) ──
+
+    #[test]
+    fn a_loop_frame_draws_its_tab_and_guard() {
+        let s = svg(
+            "{ layout: sequence }\n|box#a| \"A\"\n|box#b| \"B\"\n|loop| \"5x\" [\n  a -> b \"poll\"\n]\n",
+        );
+        assert!(s.contains(">loop</text>"), "the operator tab: {s}");
+        assert!(s.contains(">[5x]</text>"), "the guard: {s}");
+    }
+
+    #[test]
+    fn an_alt_splits_into_guarded_compartments() {
+        let s = svg(
+            "{ layout: sequence }\n|box#a| \"A\"\n|box#b| \"B\"\n|alt| \"ok\" [\n  a -> b \"x\"\n  |else| \"no\"\n  a -> b \"y\"\n]\n",
+        );
+        assert!(s.contains(">alt</text>"), "the alt tab: {s}");
+        assert!(
+            s.contains(">[ok]</text>"),
+            "the first compartment guard: {s}"
+        );
+        assert!(
+            s.contains(">[no]</text>"),
+            "the else compartment guard: {s}"
+        );
+    }
+
+    #[test]
+    fn frames_nest() {
+        let s = svg(
+            "{ layout: sequence }\n|box#a| \"A\"\n|box#b| \"B\"\n|loop| \"r\" [\n  |opt| \"o\" [\n    a -> b \"x\"\n  ]\n]\n",
+        );
+        assert!(
+            s.contains(">loop</text>") && s.contains(">opt</text>"),
+            "both nested frame tabs render: {s}"
+        );
     }
 }

@@ -43,6 +43,15 @@ impl Pair<'_> {
     fn label(&self) -> Option<&str> {
         self.link.texts.first().map(|t| t.text.as_str())
     }
+    /// The source span of the link this pair came from — its time position, used to
+    /// interleave messages with frames and notes (SPEC §10).
+    pub(super) fn span(&self) -> crate::span::Span {
+        self.link.span
+    }
+    /// The two participants this message touches, for a frame's lifeline span.
+    pub(super) fn ends(&self) -> (&str, &str) {
+        (self.from, self.to)
+    }
     fn label_width(&self) -> f64 {
         self.label()
             .map_or(0.0, |l| prim::text_width(l, LABEL_SIZE))

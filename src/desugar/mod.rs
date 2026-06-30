@@ -81,13 +81,18 @@ pub fn desugar(file: &File) -> Result<File, Error> {
         }
     }
 
-    // ── Lower instances, then auto-create root boxes for undeclared link ids. ──
+    // ── Lower instances, hoist any root-sequence frame's messages, then auto-create root
+    //    boxes for undeclared link ids. A top-level `|alt|`'s messages join the scene's
+    //    links (a frame opens no scope, SPEC §10) and auto-create against its participants. ──
     let mut instances = Vec::new();
     for child in &file.instances {
         instances.push(lower_child(child, &types, &bodies)?);
     }
+    let hoisted = drain_frame_links(&mut instances);
     let declared = scene::declared_ids(&instances);
-    for (id, span) in scene::auto_created_ids(&file.links, &declared) {
+    let mut root_msgs: Vec<Link> = file.links.clone();
+    root_msgs.extend(hoisted.iter().cloned());
+    for (id, span) in scene::auto_created_ids(&root_msgs, &declared) {
         instances.push(Child::Box(lower_node(
             &scene::auto_box(&id, span),
             &types,
@@ -121,12 +126,44 @@ pub fn desugar(file: &File) -> Result<File, Error> {
         stylesheet.push(StyleItem::Rule(r));
     }
 
+    // The scene's links: the written root links plus the hoisted root-sequence frame
+    // messages (already lowered when drained), all at scene scope (SPEC §10).
+    let mut links: Vec<Link> = file.links.iter().map(labels::lower_link).collect();
+    links.extend(hoisted);
+
     Ok(File {
         stylesheet,
         stylesheet_span: Span::empty(),
         instances,
-        links: file.links.iter().map(labels::lower_link).collect(),
+        links,
     })
+}
+
+/// The sequence frame types (SPEC §10): they open no scope, so their `[ ]` messages hoist
+/// to the enclosing sequence. `|else|` carries no messages of its own but is listed for
+/// uniformity (and idempotency on re-desugar).
+const FRAME_TYPES: [&str; 4] = ["loop", "opt", "alt", "else"];
+
+/// Whether a (lowered) node wears a frame type's `.lini-*` class.
+fn is_frame_classes(classes: &[String]) -> bool {
+    classes.iter().any(|c| {
+        c.strip_prefix("lini-")
+            .is_some_and(|x| FRAME_TYPES.contains(&x))
+    })
+}
+
+/// Hoist sequence-frame messages out of `children` (SPEC §10 — a frame opens no scope):
+/// move every frame child's links into the returned vec, leaving the frames link-free.
+fn drain_frame_links(children: &mut [Child]) -> Vec<Link> {
+    let mut out = Vec::new();
+    for c in children.iter_mut() {
+        if let Child::Box(n) = c
+            && is_frame_classes(&n.classes)
+        {
+            out.append(&mut n.links);
+        }
+    }
+    out
 }
 
 fn lower_child(child: &Child, types: &Types, bodies: &Bodies) -> Result<Child, Error> {
@@ -228,15 +265,26 @@ fn lower_node(node: &Node, types: &Types, bodies: &Bodies) -> Result<Node, Error
         links.push(labels::lower_link(w));
     }
 
-    // Auto-create undeclared body-link endpoints among this body's own children
-    // (SPEC §3 — auto-create runs in any scope, not just the root).
-    if !already {
+    // Sequence-frame transparency (SPEC §10): a frame (`loop`/`opt`/`alt`/`else`) opens no
+    // scope, so the messages in its `[ ]` belong to the enclosing sequence. Hoist any frame
+    // child's links up into this node's — recursion (each frame drained its own sub-frames
+    // as it lowered) makes this shallow pass collect a whole nested subtree.
+    let hoisted = drain_frame_links(&mut children);
+
+    // Auto-create undeclared body-link endpoints among this body's own children (SPEC §3 —
+    // auto-create runs in any scope, not just the root), counting the hoisted frame messages
+    // so a participant first named inside a frame is created on the sequence, not the frame.
+    // A frame itself never auto-creates; its endpoints resolve on the sequence.
+    if !already && !is_frame_classes(&classes) {
         let declared = scene::declared_ids(&children);
-        for (auto_id, auto_span) in scene::auto_created_ids(&node.links, &declared) {
+        let mut msgs: Vec<Link> = node.links.clone();
+        msgs.extend(hoisted.iter().cloned());
+        for (auto_id, auto_span) in scene::auto_created_ids(&msgs, &declared) {
             let created = lower_node(&scene::auto_box(&auto_id, auto_span), types, bodies)?;
             children.push(Child::Box(created));
         }
     }
+    links.extend(hoisted);
 
     Ok(Node {
         id: node.id.clone(),

@@ -659,6 +659,35 @@ mod tests {
     }
 
     #[test]
+    fn a_sequence_frame_is_scope_transparent() {
+        // SPEC §10: a message inside a frame resolves against the sequence's participants,
+        // not the frame body — it hoists to the scene scope and auto-creates nothing local.
+        let p =
+            rv4("{ layout: sequence }\n|box#api|\n|cyl#db|\napi -> db\n|alt| [\n  db --> api\n]\n");
+        // Both messages live at scene scope; the frame opened none.
+        assert_eq!(p.links.len(), 2);
+        assert!(
+            p.links.iter().all(|w| w.scope.is_empty()),
+            "frame message hoisted to scene scope"
+        );
+        // The frame-body return wires the outer db → api.
+        let ret = &p.links[1];
+        assert_eq!(ret.endpoints[0].path, "db");
+        assert_eq!(ret.endpoints[1].path, "api");
+        // No phantom frame-local participants: the alt holds no boxes.
+        let alt = p
+            .scene
+            .nodes
+            .iter()
+            .find(|n| n.type_chain.iter().any(|t| t == "alt"))
+            .expect("the alt frame");
+        assert!(
+            alt.children.iter().all(|c| c.id.is_none()),
+            "no phantom boxes inside the frame"
+        );
+    }
+
+    #[test]
     fn internal_link_resolves_with_scoped_paths() {
         let p = rv4(
             "{ |room::group| [\n  |box#inlet|\n  |box#outlet|\n  inlet -> outlet\n] }\n|room#r|\n",
