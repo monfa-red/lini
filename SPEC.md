@@ -60,9 +60,9 @@ Three defaults make small diagrams trivial:
 - Omit the label → the box is empty.
 - Name an undeclared id in a link → it's auto-created as a labelled `|box|` (`cat -> dog` adds `|box#cat| "cat"`).
 
-**A file has three parts, in order: the stylesheet, the canvas, then the links.**
-The stylesheet is one `{ }` block at the top — setup that draws nothing. After it
-come the instances, then the links:
+**A file is a stylesheet, then drawn statements.** The stylesheet is one `{ }` block at the
+top — setup that draws nothing. After it come the instances and links, in source order
+(usually instances first, then links — a `layout: sequence` reads the order as time, [§10](#10-sequences)):
 
 ```
 {                                               // the stylesheet — setup only
@@ -103,7 +103,7 @@ opens a rule. There is no prescan, no ambiguity.
   lives — on an instance (`|box#cat|`), a rule (`|box| { }`), or a define
   (`|treat::box| { }`).
 - `{ … }` — **style**: `key: value;` declarations. The *only* place styling lives.
-- `[ … ]` — **content**: a node's children (boxes and text), then its internal
+- `[ … ]` — **content**: a node's children (boxes and text) and its internal
   links, in source order.
 
 A drawn node is `|type#id| "label" .class { style } [ children ]`. Only the bars
@@ -226,9 +226,9 @@ is reached through ordinary `--name` references.
 
 ## 3. Statements
 
-A file is **stylesheet → canvas → links** ([§1](#1-mental-model)), and a
-container's body nests the same idea: a `{ }` style block, then a `[ ]` of children
-and internal links.
+A file is a **stylesheet, then drawn statements in source order** ([§1](#1-mental-model)), and
+a container's body nests the same idea: a `{ }` style block, then a `[ ]` of children and
+internal links.
 
 ### The stylesheet
 
@@ -452,9 +452,8 @@ A container picks an engine with `layout`, and a flow's orientation with `direct
 
 `direction` is `row` or `column` (default `column`) — the same property a chart uses
 to orient its plot, where it also takes `radial` ([CHARTS.md](CHARTS.md)). `chart` /
-`pie` (data plots) and `sequence` ([§10](#10-sequences)) are separate engines — `chart` /
-`pie` via their templates, `sequence` via its `layout` or the `|sequence|` template
-([§8](#8-templates)).
+`pie` (data plots) and `sequence` are separate engines — `chart` / `pie` via their templates,
+`sequence` via its `layout` or the `|sequence|` template ([§10](#10-sequences)).
 
 **Defaults:** every container — the root included — defaults to `layout: flow`
 with `direction: column` and `gap: 20`. The default `|box|` pads its content by 20; so does the root, and
@@ -1012,47 +1011,58 @@ the order they happen. Like a chart ([CHARTS.md](CHARTS.md)) it is a layout that
 to primitives** — participants, lifelines, arrows, frames, and notes all become `|block|`s,
 `|line|`s, and text — so the cascade, palette, theming, and baking apply unchanged. It adds
 **no grammar**: participants are nodes, messages are links ([§9](#9-links)), frames and notes
-are nodes — only the engine and a handful of type names are new.
+are nodes — only the engine, six type names, and four properties are new.
 
-A sequence is **the one place a link's *order* is its geometry**, not a routing problem: the
-orthogonal router ([LINKING.md](LINKING.md)) is replaced in this scope by a sequence
-**wiring strategy** that draws each message as a horizontal arrow at its time row. (One
-isolated subsystem, one strategy per scope: `orthogonal` for `flow` / `grid`, the
-named-but-deferred `straight` / `curved` for future graph layouts — [§20](#20-deferred) —
-and `sequence` here, picked by the layout rather than `routing:`.)
+A sequence is **the one place a link's *order* is its geometry**, not a routing problem: in a
+sequence scope the orthogonal router does not run — the layout **lowers each message to a
+primitive arrow** at its time row, just as it lowers participants and frames. (Which
+subsystem realises a scope's links is the scope's **wiring strategy**: `orthogonal` — the
+router, the [LINKING.md](LINKING.md) contract — for `flow` / `grid`; `sequence` — this
+layout-time lowering — here; `straight` / `curved` for future graph layouts
+([§20](#20-deferred)). One strategy per scope, chosen by the layout, not `routing:`.)
 
 ### The sequence container
 
 `layout: sequence` on the root (`{ layout: sequence }`) or any node makes a sequence; the
-`|sequence|` template is the preset over `|block|`, exactly as `|chart|` is `layout: chart`.
-Its children **split by role, recognised by type** the chart way ([CHARTS.md](CHARTS.md) §3) —
-`|loop|` / `|opt|` / `|alt|` are frames, `|note|` a note, and every **other** box a
-participant:
+`|sequence|` template is the preset over `|block|`, as `|chart|` is `layout: chart`. Its
+children **split by role, recognised by type** — `|loop|` / `|opt|` / `|alt|` are frames,
+`|else|` a compartment separator, `|note|` a note, and every **other** box a participant (an
+open fallback, unlike a chart's closed series set — [CHARTS.md](CHARTS.md) §3):
 
 | Child | Is a | Drawn |
 |---|---|---|
 | a box (`\|box\|`, `\|cyl\|`, `\|icon\|`, …) | participant | a header at the top + a lifeline down |
 | a link (`a -> b`) | message | a time-row arrow between two lifelines |
 | `\|loop\|` / `\|opt\|` / `\|alt\|` | frame | a labelled rectangle around a span of messages |
+| `\|else\|` | separator | a guarded compartment divider inside an `\|alt\|` |
 | `\|note\|` | note | a callout over / beside lifelines |
 
-**In a sequence scope, nodes and links interleave in source order** — the "children before
-links" rule ([§3](#3-statements)) relaxes to *source order preserved*, because a frame (a
-node) must sit among the messages (links) around it. Elsewhere the order of unrelated nodes
-and links is invisible, so nothing else changes.
+**In a sequence scope, nodes and links interleave in source order** — the body's "children
+before links" ordering ([§17](#17-grammar-ebnf)) relaxes to *source order preserved*, so a
+frame (a node) sits among the messages (links) around it. Elsewhere the order of unrelated
+nodes and links is invisible, so nothing else changes.
 
-`gap` is the one spacing knob: its **row** part is the time pitch between messages, its
-**column** part the space between participants (`gap: row col`, [§5](#5-layout)).
-`width` / `height` size the whole frame; unset, it sizes to its content.
+**One scope.** Every message resolves its endpoints against the **sequence's participants**,
+whatever frame it sits in: a frame's `[ ]` groups messages for layout but opens **no new
+scope** — it declares no participants and auto-creates none, overriding the sealed-body and
+body-auto-create rules ([§3](#implicit-nodes), [§9](#endpoints--scope)) inside a sequence. So
+`|alt| [ db --> api … ]` wires the outer `db` / `api` lifelines, never frame-local boxes.
+
+`gap` sets spacing: its **column** part the space between participants, its **row** part the
+gap between message rows (`gap: row col`, [§5](#5-layout)). A label wider than its span
+widens it — adjacent lifelines sit `max(gap-column, widest message label between them +
+margin)` apart, text measured at compile time ([§6](#6-positioning--anchors)).
+`width` / `height` size the whole frame and distribute any surplus; unset, it sizes to its
+content.
 
 ### Participants & lifelines
 
-A participant is an ordinary node; its **smart label** is its header text ([§3](#the-label)).
-Participants sit across the top **in declaration order** (left to right), each dropping a
-**lifeline** — a thin vertical line in the scene's `stroke`, run to the last message that
-touches it. An **undeclared** endpoint **auto-creates** a participant ([§3](#implicit-nodes)) —
-`a -> b` with neither declared draws two — appended in first-use order, so a quick sequence
-needs no header:
+A participant is an ordinary node; its **smart label** is placed as its header **by its type**
+([§3](#the-label)) — centred text for a box, the symbol for an `|icon|`. Participants sit
+across the top **in declaration order** (left to right), each dropping a **lifeline** — a thin
+line in the scene's `stroke` — and all lifelines share a common foot at the last row. An
+**undeclared** endpoint **auto-creates** a participant ([§3](#implicit-nodes)) — `a -> b` with
+neither declared draws two — appended in first-use order, so a quick sequence needs no header:
 
 ```
 { layout: sequence }
@@ -1060,9 +1070,9 @@ user   -> server "login"     // two auto-created participants, one message
 server --> user  "token"
 ```
 
-Declare a participant to fix its order, type, or paint (`|cyl#db| "Store"`); any box works,
-so an actor is just `|icon| "user"`. A participant carries its own `{ }` and classes like any
-node.
+Declare a participant (with an `#id`, so messages can name it) to fix its order, type, or
+paint: `|cyl#db| "Store"`, or `|icon#user| "user"` for an actor glyph. A participant carries
+its own `{ }` and classes like any node.
 
 ### Messages
 
@@ -1080,22 +1090,27 @@ Every operator, marker, class, and `{ }` is the link's own ([§9](#9-links)); on
 *placement* differs, so a message's label sits centred above its arrow and `along:`
 ([§9](#labels)) has no role. A chain `a -> b -> c` is two messages on two rows; a fan
 `a -> b & c` likewise expands to two, in expansion order. A forced side (`a:left`) and
-`routing` have no meaning on a time-row arrow and are ignored.
+`routing` have no meaning on a time-row arrow and are ignored. Call vs. return is read from
+the **operator** (`->` vs `-->`), not a `link-style:` override. (Async-as-wavy is a Lini
+convention — UML draws an open arrowhead; reusing the operators keeps the syntax sigil-free.)
 
 ### Activations
 
 A participant is **active** while it handles a call. By default (`activation: auto`) a call
-(`->`) **opens** an activation bar on its target's lifeline and the next **return** (`-->`)
-from that target **closes** the most recent open one; nested calls **stack** (each bar offset
-outward), and an unclosed bar runs to that participant's last message. An async `~>` opens
-none. `activation: none` on the sequence draws no bars. (Explicit per-message control is
-deferred — [§20](#20-deferred).)
+(`->`) **opens** an activation bar on its target's lifeline; the next **return** (`-->`) from
+that target **closes** its most recent open bar; nested calls **stack** (each bar offset
+outward), and an unclosed bar runs to that participant's last row. The bar stack is
+**sequence-global** — a call inside a frame may close outside it. A self-message (`a -> a`)
+and an async (`~>`) open none, and a return with no open bar just draws its arrow.
+`activation: none` on the sequence draws no bars. (Explicit per-message control is deferred —
+[§20](#20-deferred).)
 
 ### Frames
 
 A frame is a **node whose `[ ]` holds its messages**, drawn as a labelled rectangle spanning
-the lifelines those messages touch over the rows they occupy; its **smart label** is the
-title in a top-left tab. Frames **nest** and read in source order like everything else:
+the lifelines those messages touch (plus a small inset) over the rows they occupy; its
+**smart label** is the title in a top-left tab. Frames **nest**, and resolve endpoints in the
+sequence scope (above) — a frame only groups, it never re-scopes:
 
 | Frame | Means |
 |---|---|
@@ -1103,9 +1118,9 @@ title in a top-left tab. Frames **nest** and read in source order like everythin
 | `\|opt\| "guard"` | the messages happen **only if** the guard holds (an *if*) |
 | `\|alt\| "guard"` | one of several **alternatives** (an *if/else*) |
 
-An `|alt|` holds two or more **compartments** split by `|else| "guard"` — a divider node
-valid only inside an `|alt|`, its label that branch's guard; the first compartment's guard is
-the `|alt|`'s own label:
+An `|alt|` holds two or more **compartments** split by `|else| "guard"` — a **compartment
+separator** valid only inside an `|alt|`, its label that branch's guard; the first
+compartment's guard is the `|alt|`'s own label:
 
 ```
 api -> db "query"
@@ -1133,18 +1148,36 @@ A `|note|` is a callout placed at its time row (source order), bound to lifeline
 Its smart label is the text; a multi-line or styled note rides the `[ ]` like any box
 ([§3](#text-content)). `over` / `left` / `right` are valid only in a sequence.
 
+### Defaults
+
+The six sequence types are bundles over `|block|` ([§8](#8-templates)), tuned to read with no
+styling; the cascade overrides any of it. They reuse the scene's role variables — no new ones:
+
+| Type | Defaults over `\|block\|` |
+|---|---|
+| `\|sequence\|` | `layout: sequence` |
+| `\|note\|` | `fill: --group-fill; stroke: --stroke; padding: 6 8; font-size: 12` |
+| `\|loop\|` / `\|opt\|` / `\|alt\|` | `fill: none; stroke: --group-stroke; stroke-style: dashed; stroke-width: 1; radius: 4` |
+| `\|else\|` | `fill: none; stroke: --group-stroke; stroke-style: dashed; stroke-width: 1` |
+
+A participant keeps its own type's paint; a **lifeline** draws in the scene `stroke`, and an
+**activation bar** is a thin `|block|` on it (`fill: --fill; stroke: --stroke`).
+
 ### Lowering
 
 `layout: sequence` resolves in the **layout** phase ([§18](#18-implementer-algorithm)), since
 a message's x-ends are the lifelines' positions (fixed only once participants are placed) and
 its y is its row:
 
-1. **Place** participants across the top in declaration order; fix each lifeline's x.
+1. **Place** participants across the top in declaration order; fix each lifeline's x and the
+   common foot.
 2. **Walk** the scope's messages, frames, and notes in **source order**, giving each message a
    **row** — a frame records the row span of its contents, a note its row.
-3. **Lower** every part to primitives at baked coordinates: header → `|block|` + text,
-   lifeline / arrow → `|line|`, activation / frame / note → `|block|`, label → text. Messages
-   are placed by the sequence wiring strategy, the orthogonal router bypassed in this scope.
+3. **Lower** to primitives at baked coordinates: header → `|block|` + text, lifeline → `|line|`,
+   message → a `|line|` arrow + its label text, activation / frame / note → `|block|`. A
+   message's link paint maps to the line's — `link` → `stroke`, `link-width` → `stroke-width`,
+   `link-style` → `stroke-style`, the operator's end marker → `marker-end`. The orthogonal
+   router never sees these links.
 
 The output is an ordinary primitive subtree — so render, theming, palette, `--bake-vars`,
 `fmt`, and determinism ([§14](#14-svg-output), [§18](#18-implementer-algorithm)) all apply
@@ -1224,6 +1257,9 @@ text too. To pin or size a piece of text, wrap it in a `|block|`.
 `divider`, `routing` — see [Layout](#5-layout) and
 [Positioning](#6-positioning--anchors). Longhands
 `padding-top`/`-right`/`-bottom`/`-left` are accepted.
+
+The **sequence** properties — `over` / `left` / `right` (a `\|note\|`'s placement) and
+`activation` (`auto` / `none`) — are valid only in a `layout: sequence` ([§10](#10-sequences)).
 
 ### Text
 
@@ -1712,6 +1748,7 @@ Format: `filename:line:col: error: <message>` (LSP-compatible).
 | Sequence node outside a sequence | `'\|loop\|' belongs in a 'layout: sequence'` (same for `\|opt\|` / `\|alt\|` / `\|note\|`) |
 | `\|else\|` outside an `\|alt\|` | `'\|else\|' separates an '\|alt\|' — write it inside one` |
 | `\|note\|` with no placement | `a '\|note\|' needs 'over:', 'left:', or 'right:'` |
+| Sequence property off a sequence | `'over' is valid only in a 'layout: sequence'` (same for `left` / `right` / `activation`) |
 | Negative `gap` | `'gap' must be ≥ 0` |
 | `skew` out of range | `skew: N must be in (-89, 89)` |
 | Single-quoted string | `single quotes are not strings — use "…"` |
@@ -1848,11 +1885,17 @@ surface here.
 box → content + `padding`; + half-`stroke-width` per side); arrange flow children per
 `layout` / `direction` honouring `align`/`justify`/`stretch`/`evenly` when there is slack; pin
 out-of-flow children to their parent anchor (the parent never grows for them); compute
-dividers; apply `padding`; apply each node's `translate`; `rotate` last.
+dividers; apply `padding`; apply each node's `translate`; `rotate` last. A **layout-owning**
+container — `chart` / `pie` ([CHARTS.md](CHARTS.md)) and `sequence` ([§10](#10-sequences)) —
+instead reads its whole subtree here and lowers it to primitives: a sequence places
+participants, walks its scope's messages / frames / notes in source order, and emits the
+lifelines, arrows, frames, and notes — **consuming those messages**, so the router never
+sees them.
 
 **Route links.** Per [`LINKING.md`](LINKING.md) — orthogonal, clearance-respecting,
-deterministic. Place markers (sized `max(5, link-width × 4)`, tip on the endpoint) and
-link labels at their `along:` fractions (auto-distributed when unset).
+deterministic — over every link **except** those a `sequence` scope already drew as arrows
+([§10](#10-sequences)). Place markers (sized `max(5, link-width × 4)`, tip on the endpoint)
+and link labels at their `along:` fractions (auto-distributed when unset).
 
 **Render.** Depth-first emit SVG per [SVG Output](#14-svg-output): a box is a `<g>`, a
 string is a `<text>`.
@@ -1901,10 +1944,11 @@ ids elsewhere.
 
 - `routing: straight` / `routing: curved` — non-orthogonal link strategies
   ([§9](#9-links); `orthogonal` is the only mode built today).
-- **sequence fragments beyond `loop` / `opt` / `alt`** — `par` (parallel, with an `|and|`
-  separator), `break`, `critical`; plus create / destroy lifelines, explicit activation
-  spans, message auto-numbering, and an `|actor|` stick-figure primitive (an actor is
-  `|icon|` today) ([§10](#10-sequences)).
+- **sequence features beyond v1** ([§10](#10-sequences)) — fragments `par` (parallel, with an
+  `|and|` separator), `break`, `critical`, and `ref`; participant grouping (a box around a set
+  of lifelines); found / lost messages and create / destroy lifelines; explicit activation
+  spans; message auto-numbering; dividers / delays (`==` / `...`); and an `|actor|` stick-figure
+  primitive (an actor is `|icon|` today).
 - `stroke-style: wavy` rendering on nodes.
 - **gradient fills on text** — `fill: gradient(…)` on a label (gradients fill nodes
   today, [§12.3](#123-gradients)).

@@ -522,7 +522,7 @@ since the shared scale needs every child's data first:
 
 The output is an ordinary primitive subtree, so route/render, theming, the palette,
 gradients, shadows, `--bake-vars`, `fmt`, and byte-for-byte determinism
-([SPEC §15, §17](SPEC.md)) all apply with no chart-specific code. Because the
+([SPEC §15, §18](SPEC.md)) all apply with no chart-specific code. Because the
 data→pixel lowering needs the shared scale, it runs in the **layout** phase, not
 desugar — so `lini desugar` ([SPEC §15](SPEC.md)) shows a chart's *type* desugaring (a
 `|chart|` is a `|block|` wearing `.lini-chart`; each series a classed `|block|` carrying
