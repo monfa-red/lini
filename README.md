@@ -303,7 +303,7 @@ Parsing is recursive-descent over an LL(1) grammar; resolve applies CSS-like spe
 
 ## Status
 
-**v0.11.** The language (the box/text model in [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md)) is stable, and the pipeline is complete and tested: links route and render, layout and theming work, charts plot from data ([`CHARTS.md`](https://github.com/monfa-red/lini/blob/main/CHARTS.md)), and the formatter and dev server ship in the same binary.
+**v0.13.** The language (the box/text model in [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md)) is stable, and the pipeline is complete and tested: links route and render, layout and theming work, charts plot from data ([`CHARTS.md`](https://github.com/monfa-red/lini/blob/main/CHARTS.md)), sequence diagrams read the wires as time ([§10](https://github.com/monfa-red/lini/blob/main/SPEC.md#10-sequences)), and the formatter and dev server ship in the same binary.
 
 ## Development
 
