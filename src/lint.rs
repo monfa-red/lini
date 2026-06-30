@@ -53,7 +53,8 @@ fn shadow_scope(
     out: &mut Vec<Diagnostic>,
 ) {
     let declared = declared_ids(children);
-    for (id, span) in auto_created_ids(links, &declared) {
+    let link_refs: Vec<&Link> = links.iter().collect();
+    for (id, span) in auto_created_ids(&link_refs, &declared) {
         let here = join_path(prefix, &id);
         if let Some(other) = id_paths
             .get(&id)

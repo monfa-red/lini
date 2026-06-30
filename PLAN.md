@@ -338,11 +338,17 @@ guards, note placement. Snapshots. Re-render the full §21 login flow.
 pass; the §21 example renders as drawn in SPEC §10.
 
 > **Step 5 outcome / decisions (done):**
-> - **Transparency = desugar hoisting (5a).** `drain_frame_links` lifts a frame child's links
->   into its parent (recursion collects nested subtrees); a frame never auto-creates, the
->   sequence auto-creates against participants ∪ hoisted messages. Result: frame messages carry
->   the *sequence's* scope, so `messages_for` claims them, the router skips them, endpoints
->   resolve among participants, and **resolve/route need zero frame special-casing**. Locked by
+> - **Transparency = scope-transparent frame at resolve (5a).** A frame (`loop`/`opt`/`alt`/
+>   `else`) contributes **no path segment** in `resolve::scene` (it adds its id only if it is
+>   *not* a frame), so its body links lift with the **enclosing sequence's** prefix → their
+>   scope is the sequence (so `messages_for` claims them, `is_sequence_scope` skips the router)
+>   and their endpoints resolve against the sequence's participants. A frame never auto-creates;
+>   desugar's sequence/root auto-create *reads* frame messages (`gather_frame_messages`, no
+>   move) so a participant first named in a frame is created on the sequence. The frame **keeps
+>   its links in place** — the engine anchors each message to its frame by source span.
+>   *(First tried desugar hoisting — drain a frame's links up to the sequence — but moving them
+>   broke desugar idempotency: re-serialising put the messages outside the frame's `[ ]` span,
+>   so span-containment failed `tests/oracle.rs`. Keeping links in place fixes it.)* Locked by
 >   `a_sequence_frame_is_scope_transparent` (no phantom boxes).
 > - **One timeline (5b).** `frames.rs` collects frames depth-first, then `timeline` interleaves
 >   messages + frame open/close + `|else|` + notes by **source span**, assigning each its y; a

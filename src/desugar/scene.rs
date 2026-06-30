@@ -21,10 +21,10 @@ pub fn declared_ids(children: &[Child]) -> HashSet<String> {
         .collect()
 }
 
-/// The ids to auto-create: each single-segment root-link endpoint absent from
-/// `declared`, in first-seen order, deduped. Multi-segment paths navigate and
-/// never create.
-pub fn auto_created_ids(links: &[Link], declared: &HashSet<String>) -> Vec<(String, Span)> {
+/// The ids to auto-create: each single-segment link endpoint absent from `declared`, in
+/// first-seen order, deduped. Multi-segment paths navigate and never create. Takes links by
+/// reference so a scope can pool its own with messages gathered from its frames (SPEC §10).
+pub fn auto_created_ids(links: &[&Link], declared: &HashSet<String>) -> Vec<(String, Span)> {
     let mut seen = HashSet::new();
     let mut out = Vec::new();
     for w in links {
@@ -76,7 +76,8 @@ mod tests {
     fn auto_ids(src: &str) -> Vec<String> {
         let f = parse(src);
         let declared = declared_ids(&f.instances);
-        auto_created_ids(&f.links, &declared)
+        let links: Vec<&Link> = f.links.iter().collect();
+        auto_created_ids(&links, &declared)
             .into_iter()
             .map(|(s, _)| s)
             .collect()

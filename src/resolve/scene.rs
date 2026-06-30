@@ -196,8 +196,14 @@ pub fn resolve_node(
         }
     }
 
+    // A sequence frame (`loop`/`opt`/`alt`/`else`) is **scope-transparent** (SPEC §10): it
+    // opens no scope, so it contributes no path segment — its body links lift with the
+    // enclosing sequence's prefix and resolve against the sequence's participants, never
+    // frame-local ids. (Frames are usually unnamed; this also covers a named one.)
     let mut child_prefix = path_prefix.to_vec();
-    if let Some(id) = &node.id {
+    if let Some(id) = &node.id
+        && !is_frame_type(&type_chain)
+    {
         child_prefix.push(id.clone());
     }
 
@@ -508,6 +514,13 @@ fn drop_blank_text(children: &mut Vec<ResolvedInst>, container: &AttrMap) {
 /// A text node with no visible content and no id — from a `""` label.
 fn is_blank_anon_text(r: &ResolvedInst) -> bool {
     r.id.is_none() && r.kind == NodeKind::Text && r.label.as_deref().is_none_or(str::is_empty)
+}
+
+/// A sequence frame type (SPEC §10) — scope-transparent, so it adds no path segment.
+fn is_frame_type(type_chain: &[String]) -> bool {
+    type_chain
+        .iter()
+        .any(|t| crate::desugar::FRAME_TYPES.contains(&t.as_str()))
 }
 
 fn join_path(prefix: &[String], id: &str) -> String {
