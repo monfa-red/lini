@@ -10,10 +10,10 @@ use crate::layout::prim;
 use crate::resolve::ResolvedLink;
 use std::collections::HashMap;
 
-/// Sequence message-label size — a touch larger than the generic 11px link label so the
-/// messages read comfortably on the time axis (SPEC §10). A message's own `font-size`
-/// overrides it ([`Pair::label_size`]).
-const LABEL_SIZE: f64 = 12.0;
+/// Sequence message-label size — larger than the generic 11px link label so the messages
+/// read comfortably on the time axis (SPEC §10). Kept in sync with the `.lini-sequence-message`
+/// stylesheet rule ([`crate::render`]), which states the rendered size.
+const LABEL_SIZE: f64 = 13.0;
 /// Clear space above the arrow for its label.
 const LABEL_RISE: f64 = 5.0;
 /// Clear space a label wants beyond its text when spacing participants.
@@ -90,7 +90,7 @@ impl Pair<'_> {
     }
     /// The label's font size — the sequence default ([`LABEL_SIZE`]), used to measure the
     /// label for column spacing and to bound its bbox. The rendered size rides the
-    /// `.lini-message` stylesheet rule, not an inline style.
+    /// `.lini-sequence-message` stylesheet rule, not an inline style.
     fn label_size(&self) -> f64 {
         LABEL_SIZE
     }
@@ -236,7 +236,7 @@ pub(super) fn draw(
                 // than growing the fragment — only the hook (arrow area) does.
                 let ly = y - LABEL_RISE - size / 2.0;
                 let cx = fx + dx / 2.0 + prim::text_width(label, size) / 2.0;
-                out.push(prim::text_classed(label, cx, ly, size, "message"));
+                out.push(prim::text_classed(label, cx, ly, size, "sequence-message"));
             }
         } else {
             let fx = endpoint_x(p.from, i, tcx);
@@ -251,7 +251,7 @@ pub(super) fn draw(
                     (fcx + tcx) / 2.0,
                     y - LABEL_RISE - size / 2.0,
                     size,
-                    "message",
+                    "sequence-message",
                 ));
             }
         }

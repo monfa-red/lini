@@ -400,15 +400,15 @@ fn tab(frame: &Frame, left: f64, top: f64) -> Vec<PlacedNode> {
     prim::outline(&mut banner, frame_stroke(frame.inst), sw);
     let mut out = vec![
         banner,
-        // The operator keyword keeps the default (prominent) text colour — it reads as the
-        // structural label, distinct from the guards, which take the frame's `color`.
-        prim::text(
+        // The operator keyword — bold via the `.lini-sequence-tab` stylesheet rule, not an
+        // inline style; the default text colour reads as the structural label, distinct from
+        // the guards (which take the frame's `color`).
+        prim::text_classed(
             frame.keyword,
             left + hw + (tab_w - cut / 2.0) / 2.0,
             top + hw + TAB_H / 2.0,
             size,
-            None,
-            true,
+            "sequence-tab",
         ),
     ];
     if let Some(g) = guard(frame.inst) {
@@ -453,8 +453,16 @@ fn divider(inst: &ResolvedInst, left: f64, right: f64, y: f64) -> PlacedNode {
     line
 }
 
-/// A guard label `[cond]`, left-aligned at `x` — the condition on a frame or compartment,
-/// in the frame's text `color` (so styling the fragment styles its guards too).
+/// A guard label `[cond]`, left edge at `x` — the condition on a frame or compartment. Its
+/// size / weight ride the `.lini-sequence-guard` stylesheet rule (not inline); only the
+/// frame's text `color` is inlined, since it varies per fragment.
 fn guard_text(text: &str, x: f64, cy: f64, size: f64, color: Option<ResolvedValue>) -> PlacedNode {
-    prim::text_left(&format!("[{text}]"), x, cy, size, color)
+    let label = format!("[{text}]");
+    let cx = x + prim::text_width(&label, size) / 2.0;
+    let mut n = prim::text_classed(&label, cx, cy, size, "sequence-guard");
+    if let Some(c) = color {
+        n.attrs.insert("color", c.clone());
+        n.own_style.insert("color", c);
+    }
+    n
 }

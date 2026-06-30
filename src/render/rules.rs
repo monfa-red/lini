@@ -308,13 +308,31 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
             props,
         });
     }
-    // A sequence message label (SPEC §10) — a link's label the layout draws — takes its size
-    // and weight from this rule, not an inline `style=`, like `.lini-link-label` does. `12px`
-    // reads a touch larger than the generic link label on the time axis; `.lini-text` (always
-    // present alongside) states the fill and anchors.
-    if present.contains("message") {
+    // Sequence text (SPEC §10) takes its size / weight from these rules, never an inline
+    // `style=` — so a diagram's many labels don't each carry the same font props. `.lini-text`
+    // (always present alongside) states the fill and anchors. Sizes track the layout constants
+    // (`messages::LABEL_SIZE`, the frame bundle `font-size`).
+    if present.contains("sequence-message") {
         rules.push(Rule {
-            class: "lini-message".into(),
+            class: "lini-sequence-message".into(),
+            props: vec![
+                ("font-size".into(), "13px".into()),
+                ("font-weight".into(), "normal".into()),
+            ],
+        });
+    }
+    if present.contains("sequence-tab") {
+        rules.push(Rule {
+            class: "lini-sequence-tab".into(),
+            props: vec![
+                ("font-size".into(), "12px".into()),
+                ("font-weight".into(), "bold".into()),
+            ],
+        });
+    }
+    if present.contains("sequence-guard") {
+        rules.push(Rule {
+            class: "lini-sequence-guard".into(),
             props: vec![
                 ("font-size".into(), "12px".into()),
                 ("font-weight".into(), "normal".into()),

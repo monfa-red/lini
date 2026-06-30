@@ -180,7 +180,7 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             var("fill", "fill"),
             var("stroke", "stroke"),
             pair("padding", 5.0, 9.0),
-            n("font-size", 12.0),
+            n("font-size", 13.0),
         ],
         // A frame: a dashed, rounded rectangle around a span of messages. `padding` insets
         // the border from the messages it spans (vertical) and the lifelines (horizontal).
@@ -191,7 +191,7 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             n("stroke-width", 1.0),
             n("radius", 4.0),
             n("padding", 18.0),
-            n("font-size", 11.0),
+            n("font-size", 12.0),
         ],
         // An |alt| compartment separator: the same dashed line, no body radius.
         "else" => vec![
@@ -199,7 +199,7 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             var("stroke", "group-stroke"),
             id("stroke-style", "dashed"),
             n("stroke-width", 1.0),
-            n("font-size", 11.0),
+            n("font-size", 12.0),
         ],
         // A bar's corners are softly rounded by default ([CHARTS.md] §3); `stroke: auto`
         // is the outlined-look sentinel ([§10]) — the chart draws a deep edge of the soft
