@@ -17,9 +17,9 @@ and a "done when" gate, and every step leaves `cargo build && cargo test` green.
 
 ## Progress
 
-- [ ] **Step 1 — Table headers & footers** (rename footer→footnote; `|header|`/`|footer|` cells; auto-header)
-- [ ] **Step 2 — The `|entity|` node** (title→spanning header; field rows; entity span)
-- [ ] **Step 3 — ER relationship markers** (redraw crow's-foot; add the cardinality family)
+- [x] **Step 1 — Table headers & footers** ✓ (footer→footnote; `|header|`/`|footer|` bundles + `--header-fill`; `|table|` first row auto-wraps to `|header|`; bare `|grid|` unaffected; samples/snapshots/README/grammar updated; 452 tests + clippy + fmt clean; verified light+dark)
+- [x] **Step 2 — The `|entity|` node** ✓ (built with Step 1 — same `lower_node` branch: label→spanning `|header|` title, field rows stay text, header/footer cells span; `samples/entity.lini` + snapshot; verified light+dark)
+- [ ] **Step 3 — ER relationship markers** (redraw crow's-foot; add the cardinality family) — *next*
 
 ---
 
