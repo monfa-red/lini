@@ -19,9 +19,8 @@ const NEST_INSET: f64 = 6.0;
 const TAB_H: f64 = 16.0;
 /// Minimum room below an `|else|` divider, so its guard clears the next message.
 const GUARD_CLEAR: f64 = 16.0;
-/// Tab keyword and guard text sizes.
+/// Fallback tab / guard text size, used only if a frame has no resolved `font-size`.
 const KEYWORD_SIZE: f64 = 10.0;
-const GUARD_SIZE: f64 = 10.0;
 
 /// The operator keywords that name a frame (SPEC §10). `else` is a compartment
 /// separator collected within an `alt`, not a frame of its own.
@@ -259,10 +258,11 @@ pub(super) fn draw(
         behind.push(border(fr.inst, left, g.top, right, g.bot));
         front.extend(tab(fr, left, g.top));
         // `|else|` dividers split the alt into compartments; each carries its guard.
+        let size = text_size(fr.inst);
         for (el, &ey) in fr.elses.iter().zip(&g.else_ys) {
             behind.push(divider(fr.inst, left, right, ey));
             if let Some(text) = guard(el) {
-                front.push(guard_text(text, left, ey + GUARD_SIZE));
+                front.push(guard_text(text, left, ey + size, size));
             }
         }
     }
@@ -321,10 +321,17 @@ fn border(inst: &ResolvedInst, left: f64, top: f64, right: f64, bot: f64) -> Pla
     n
 }
 
+/// The frame's text size for its tab + guards — its resolved `font-size` (set by the bundle,
+/// overridable by the cascade), not a hardcoded constant.
+fn text_size(inst: &ResolvedInst) -> f64 {
+    inst.attrs.number("font-size").unwrap_or(KEYWORD_SIZE)
+}
+
 /// The top-left title tab: a small filled rect carrying the operator keyword, with the
 /// frame's guard (`[cond]`) just to its right.
 fn tab(frame: &Frame, left: f64, top: f64) -> Vec<PlacedNode> {
-    let tab_w = prim::text_width(frame.keyword, KEYWORD_SIZE) + 12.0;
+    let size = text_size(frame.inst);
+    let tab_w = prim::text_width(frame.keyword, size) + 12.0;
     // An opaque fill so the tab reads even when it sits over an activation bar.
     let mut card = prim::rect(
         left + tab_w / 2.0,
@@ -341,13 +348,13 @@ fn tab(frame: &Frame, left: f64, top: f64) -> Vec<PlacedNode> {
             frame.keyword,
             left + tab_w / 2.0,
             top + TAB_H / 2.0,
-            KEYWORD_SIZE,
+            size,
             None,
             true,
         ),
     ];
     if let Some(g) = guard(frame.inst) {
-        out.push(guard_text(g, left + tab_w + 4.0, top + TAB_H / 2.0));
+        out.push(guard_text(g, left + tab_w + 4.0, top + TAB_H / 2.0, size));
     }
     out
 }
@@ -368,6 +375,6 @@ fn divider(inst: &ResolvedInst, left: f64, right: f64, y: f64) -> PlacedNode {
 }
 
 /// A guard label `[cond]`, left-aligned at `x` — the condition on a frame or compartment.
-fn guard_text(text: &str, x: f64, cy: f64) -> PlacedNode {
-    prim::text_left(&format!("[{text}]"), x, cy, GUARD_SIZE, None)
+fn guard_text(text: &str, x: f64, cy: f64, size: f64) -> PlacedNode {
+    prim::text_left(&format!("[{text}]"), x, cy, size, None)
 }

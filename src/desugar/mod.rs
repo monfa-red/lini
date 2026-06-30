@@ -18,7 +18,9 @@ mod types;
 use crate::error::Error;
 use crate::resolve::NodeKind;
 use crate::span::Span;
-use crate::syntax::ast::{Child, Decl, File, Link, Node, Rule, SelUnit, Selector, StyleItem};
+use crate::syntax::ast::{
+    Child, Decl, File, Link, Node, Rule, SelUnit, Selector, StyleItem, Value,
+};
 use bundles::root_defaults;
 use classes::{class_defs, is_lini_class, lini_class, merge_decls, worn_classes};
 use std::collections::{BTreeSet, HashMap};
@@ -109,7 +111,13 @@ pub fn desugar(file: &File) -> Result<File, Error> {
     //    scene config, vars, the generated `.lini-*` defs, then the user
     //    descendant/class rules. ──
     let mut stylesheet: Vec<StyleItem> = Vec::new();
-    for d in merge_decls(root_defaults(), &user_root) {
+    // The scene defaults, plus any root-engine defaults (a root `{ layout: sequence }` gets
+    // the sequence `gap`), then the user's own decls on top.
+    let base = merge_decls(
+        root_defaults(),
+        &bundles::root_layout_defaults(root_layout(&user_root)),
+    );
+    for d in merge_decls(base, &user_root) {
         stylesheet.push(StyleItem::RootDecl(d));
     }
     for d in user_vars {
@@ -350,6 +358,21 @@ fn mark_present(child: &Child, present: &mut BTreeSet<String>) {
             mark_present(ch, present);
         }
     }
+}
+
+/// The `layout:` ident set on the root, if any — picks the root-engine defaults.
+fn root_layout(user_root: &[Decl]) -> Option<&str> {
+    user_root
+        .iter()
+        .rev()
+        .find(|d| d.name == "layout")
+        .and_then(|d| match d.groups.as_slice() {
+            [group] => match group.as_slice() {
+                [Value::Ident(s)] => Some(s.as_str()),
+                _ => None,
+            },
+            _ => None,
+        })
 }
 
 fn push_unique(v: &mut Vec<String>, name: &str) {

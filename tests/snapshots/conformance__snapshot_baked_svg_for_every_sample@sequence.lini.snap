@@ -3,7 +3,7 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/sequence.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-156.25 -181 312.5 362" width="312.5" height="362" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-171.05 -247 342.1 494" width="342.1" height="494" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
@@ -16,85 +16,85 @@ input_file: samples/sequence.lini
     .lini .lini-marker { fill: #444; stroke: none; }
   </style>
   <defs/>
-  <rect class="lini-canvas" x="-156.25" y="-181" width="312.5" height="362"/>
+  <rect class="lini-canvas" x="-171.05" y="-247" width="342.1" height="494"/>
   <g class="lini-scene">
-    <g class="lini-node lini-block" style="fill: #eaebff; stroke: #968cff; stroke-width: 1; stroke-dasharray: 4,3" transform="translate(-51,71)">
-      <rect x="-60" y="-49.5" width="120" height="99" rx="4" ry="4"/>
+    <g class="lini-node lini-block" style="fill: #eaebff; stroke: #968cff; stroke-width: 1; stroke-dasharray: 4,3" transform="translate(-58,94)">
+      <rect x="-75" y="-64.5" width="150" height="129" rx="4" ry="4"/>
     </g>
     <g class="lini-node lini-line" style="fill: none; stroke: #968cff; stroke-width: 1; stroke-dasharray: 4,3" transform="translate(0,0)">
-      <line x1="-111.5" y1="81" x2="9.5" y2="81"/>
+      <line x1="-133.5" y1="111" x2="17.5" y2="111"/>
     </g>
     <g class="lini-node lini-line" style="fill: none; stroke: #444; stroke-width: 1.5" transform="translate(0,0)">
-      <line x1="-97.5" y1="-104.5" x2="-97.5" y2="161"/>
+      <line x1="-111.5" y1="-170.5" x2="-111.5" y2="227"/>
     </g>
     <g class="lini-node lini-line" style="fill: none; stroke: #0085b3; stroke-width: 1.5" transform="translate(0,0)">
-      <line x1="-4.5" y1="-104.5" x2="-4.5" y2="161"/>
+      <line x1="-4.5" y1="-170.5" x2="-4.5" y2="227"/>
     </g>
     <g class="lini-node lini-line" style="fill: none; stroke: #b45700; stroke-width: 1.5" transform="translate(0,0)">
-      <line x1="93" y1="-104.5" x2="93" y2="161"/>
+      <line x1="107" y1="-170.5" x2="107" y2="227"/>
     </g>
-    <g class="lini-node lini-block" style="fill: #cff6ff; stroke: #0085b3" transform="translate(-4.5,17)">
-      <rect x="-4.25" y="-55.25" width="8.5" height="110.5" rx="0" ry="0"/>
+    <g class="lini-node lini-block" style="fill: #cff6ff; stroke: #0085b3" transform="translate(-4.5,11)">
+      <rect x="-4.25" y="-83.25" width="8.5" height="166.5" rx="0" ry="0"/>
     </g>
-    <g class="lini-node lini-block" style="fill: #ffe8d2; stroke: #b45700" transform="translate(93,-9)">
-      <rect x="-4.25" y="-9.25" width="8.5" height="18.5" rx="0" ry="0"/>
+    <g class="lini-node lini-block" style="fill: #ffe8d2; stroke: #b45700" transform="translate(107,-22)">
+      <rect x="-4.25" y="-16.25" width="8.5" height="32.5" rx="0" ry="0"/>
     </g>
-    <g class="lini-node lini-box lini-block" data-id="user" transform="translate(-97.5,-132.75)">
+    <g class="lini-node lini-box lini-block" data-id="user" transform="translate(-111.5,-198.75)">
       <rect x="-38" y="-27.5" width="76" height="55" rx="8" ry="8"/>
       <text class="lini-text" x="0" y="0">User</text>
     </g>
-    <g class="lini-node lini-box lini-block" data-id="api" style="fill: #cff6ff; stroke: #0085b3" transform="translate(-4.5,-132.75)">
+    <g class="lini-node lini-box lini-block" data-id="api" style="fill: #cff6ff; stroke: #0085b3" transform="translate(-4.5,-198.75)">
       <rect x="-33.5" y="-27.5" width="67" height="55" rx="8" ry="8"/>
       <text class="lini-text" x="0" y="0">API</text>
     </g>
-    <g class="lini-node lini-cyl" data-id="db" style="fill: #ffe8d2; stroke: #b45700" transform="translate(93,-132.75)">
+    <g class="lini-node lini-cyl" data-id="db" style="fill: #ffe8d2; stroke: #b45700" transform="translate(107,-198.75)">
       <path d="M -42.5 -22 L -42.5 22 A 42.5 5.5 0 0 0 42.5 22 L 42.5 -22 A 42.5 5.5 0 0 0 -42.5 -22 Z"/>
       <ellipse cx="0" cy="-22" rx="42.5" ry="5.5"/>
       <text class="lini-text" x="0" y="1.695">Store</text>
     </g>
     <g class="lini-node lini-line" style="fill: none; stroke: #444; stroke-width: 2" transform="translate(0,0)">
-      <line x1="-97.5" y1="-39" x2="-13.5" y2="-39"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-9.5,-39 -17.5,-35 -17.5,-43"/>
+      <line x1="-111.5" y1="-73" x2="-13.5" y2="-73"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-9.5,-73 -17.5,-69 -17.5,-77"/>
     </g>
-    <text class="lini-text" x="-51" y="-49.5" style="font-weight: normal; font-size: 11px">POST /login</text>
+    <text class="lini-text" x="-58" y="-83.5" style="font-weight: normal; font-size: 11px">POST /login</text>
     <g class="lini-node lini-line" style="fill: none; stroke: #444; stroke-width: 2" transform="translate(0,0)">
-      <line x1="0.5" y1="-19" x2="84" y2="-19"/>
-      <polygon class="lini-marker lini-marker-arrow" points="88,-19 80,-15 80,-23"/>
+      <line x1="0.5" y1="-39" x2="98" y2="-39"/>
+      <polygon class="lini-marker lini-marker-arrow" points="102,-39 94,-35 94,-43"/>
     </g>
-    <text class="lini-text" x="44.25" y="-29.5" style="font-weight: normal; font-size: 11px">find user</text>
+    <text class="lini-text" x="51.25" y="-49.5" style="font-weight: normal; font-size: 11px">find user</text>
     <g class="lini-node lini-line" style="fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: 6,4.5" transform="translate(0,0)">
-      <line x1="88" y1="1" x2="4.5" y2="1"/>
-      <polygon class="lini-marker lini-marker-arrow" points="0.5,1 8.5,-3 8.5,5"/>
+      <line x1="102" y1="-5" x2="4.5" y2="-5"/>
+      <polygon class="lini-marker lini-marker-arrow" points="0.5,-5 8.5,-9 8.5,-1"/>
     </g>
-    <text class="lini-text" x="44.25" y="-9.5" style="font-weight: normal; font-size: 11px">row</text>
+    <text class="lini-text" x="51.25" y="-15.5" style="font-weight: normal; font-size: 11px">row</text>
     <g class="lini-node lini-line" style="fill: none; stroke: #444; stroke-width: 2" transform="translate(0,0)">
-      <polyline points="0.5,37 26.5,37 26.5,53 4.5,53"/>
-      <polygon class="lini-marker lini-marker-arrow" points="0.5,53 -3.5,45 4.5,45"/>
+      <polyline points="0.5,45 26.5,45 26.5,61 4.5,61"/>
+      <polygon class="lini-marker lini-marker-arrow" points="0.5,61 -3.5,53 4.5,53"/>
     </g>
-    <text class="lini-text" x="58.9" y="45" style="font-weight: normal; font-size: 11px">sign JWT</text>
+    <text class="lini-text" x="58.9" y="53" style="font-weight: normal; font-size: 11px">sign JWT</text>
     <g class="lini-node lini-line" style="fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: 6,4.5" transform="translate(0,0)">
-      <line x1="-9.5" y1="73" x2="-93.5" y2="73"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-97.5,73 -89.5,69 -89.5,77"/>
+      <line x1="-9.5" y1="95" x2="-107.5" y2="95"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-111.5,95 -103.5,91 -103.5,99"/>
     </g>
-    <text class="lini-text" x="-51" y="62.5" style="font-weight: normal; font-size: 11px">200 + token</text>
+    <text class="lini-text" x="-58" y="84.5" style="font-weight: normal; font-size: 11px">200 + token</text>
     <g class="lini-node lini-line" style="fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: 6,4.5" transform="translate(0,0)">
-      <line x1="-4.5" y1="113" x2="-93.5" y2="113"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-97.5,113 -89.5,109 -89.5,117"/>
+      <line x1="-4.5" y1="143" x2="-107.5" y2="143"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-111.5,143 -103.5,139 -103.5,147"/>
     </g>
-    <text class="lini-text" x="-51" y="102.5" style="font-weight: normal; font-size: 11px">401</text>
+    <text class="lini-text" x="-58" y="132.5" style="font-weight: normal; font-size: 11px">401</text>
     <g class="lini-node lini-line" style="fill: none; stroke: #444; stroke-width: 2" transform="translate(0,0)">
-      <path d="M -97.5 141 C -96.4848 141 -95.4896 141.3476 -94.5333 141.6882 C -93.5804 142.0277 -92.383 141.6462 -91.5667 141.0488 C -90.6788 140.3991 -89.6994 139.6441 -88.6 139.6019 C -87.5211 139.5605 -86.5049 140.265 -85.6333 140.9023 C -84.7398 141.5557 -83.7714 142.3241 -82.6667 142.3947 C -81.596 142.4631 -80.5669 141.7784 -79.7 141.1463 C -78.8002 140.4903 -77.8425 139.7095 -76.7333 139.6104 C -75.6715 139.5156 -74.6294 140.1789 -73.7667 140.8052 C -72.8603 141.4631 -71.9127 142.2552 -70.8 142.3828 C -69.7476 142.5035 -68.6923 141.8632 -67.8333 141.2431 C -66.9201 140.5839 -65.9821 139.7817 -64.8667 139.6257 C -63.8241 139.4799 -62.7555 140.0955 -61.9 140.7089 C -60.9797 141.3688 -60.0506 142.1799 -58.9333 142.3641 C -57.901 142.5344 -56.8193 141.9451 -55.9667 141.3387 C -55.0391 140.679 -54.1183 139.8599 -53 139.6477 C -51.9782 139.4538 -50.8835 140.015 -50.0333 140.6141 C -49.0983 141.273 -48.1851 142.0991 -47.0667 142.3388 C -46.0556 142.5555 -44.9482 142.024 -44.1 141.4326 C -43.1573 140.7754 -42.2511 139.943 -41.1333 139.6763 C -40.1332 139.4376 -39.0134 139.9379 -38.1667 140.5212 C -37.2161 141.1759 -36.3164 142.0137 -35.2 142.307 C -34.2108 142.5669 -33.0792 142.0993 -32.2333 141.5244 C -31.2748 140.873 -30.3808 140.0304 -29.2667 139.7113 C -28.2885 139.4311 -27.1455 139.8644 -26.3 140.4306 C -25.3334 141.0779 -24.4446 141.9246 -23.3333 142.2688 C -22.366 142.5685 -21.2123 142.1709 -20.3667 141.6137 C -19.3918 140.9715 -18.5077 140.1212 -17.4 139.7526 C -16.4433 139.4342 -15.2771 139.791 -14.4333 140.343 C -13.5344 140.9311 -12.5318 141.7419 -11.4667 141.602 C -10.4662 141.4706 -9.509 141 -8.5 141" fill="none"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-4.5,141 -12.5,145 -12.5,137"/>
+      <path d="M -111.5 193 C -110.4628 193 -109.4513 193.3726 -108.4706 193.7102 C -107.4867 194.0489 -106.2805 193.5719 -105.4412 192.9569 C -104.5488 192.3031 -103.5174 191.5641 -102.4118 191.6015 C -101.2879 191.6395 -100.2899 192.4222 -99.3824 193.0862 C -98.4945 193.7358 -97.4513 194.4578 -96.3529 194.3959 C -95.2242 194.3322 -94.2367 193.5373 -93.3235 192.8708 C -92.4399 192.2258 -91.3847 191.5221 -90.2941 191.6081 C -89.1612 191.6975 -88.1837 192.5035 -87.2647 193.172 C -86.3849 193.8121 -85.3177 194.4962 -84.2353 194.3866 C -83.0989 194.2715 -82.1309 193.4553 -81.2059 192.7853 C -80.3297 192.1506 -79.2502 191.4873 -78.1765 191.62 C -77.0373 191.7608 -76.0783 192.5862 -75.1471 193.2572 C -74.2741 193.8863 -73.1824 194.5273 -72.1176 194.372 C -70.9764 194.2057 -70.0259 193.372 -69.0882 192.7005 C -68.2181 192.0774 -67.1143 191.4601 -66.0588 191.6372 C -64.9162 191.829 -63.9737 192.6702 -63.0294 193.3415 C -62.1618 193.9583 -61.0459 194.5507 -60 194.3523 C -58.8566 194.1354 -57.9217 193.2875 -56.9706 192.6169 C -56.1051 192.0066 -54.9773 191.4404 -53.9412 191.6595 C -52.7978 191.9013 -51.8698 192.7552 -50.9118 193.4244 C -50.0479 194.0278 -48.9086 194.5665 -47.8824 194.3274 C -46.7396 194.0612 -45.8181 193.202 -44.8529 192.5347 C -43.9904 191.9384 -42.8398 191.4285 -41.8235 191.6869 C -40.682 191.9771 -39.7665 192.8411 -38.7941 193.5057 C -37.9325 194.0947 -36.771 194.5745 -35.7647 194.2975 C -34.6251 193.9838 -33.715 193.1157 -32.7353 192.4543 C -31.8741 191.8729 -30.7022 191.4243 -29.7059 191.7193 C -28.5687 192.056 -27.6636 192.9278 -26.6765 193.5851 C -25.8152 194.1587 -24.6336 194.575 -23.6471 194.2627 C -22.5129 193.9036 -21.6123 193.0286 -20.6176 192.376 C -19.7559 191.8105 -18.565 191.4275 -17.5882 191.7565 C -16.4576 192.1373 -15.561 193.0151 -14.5588 193.6623 C -13.7105 194.2102 -12.4375 194.0625 -11.5294 193.6205 C -10.6026 193.1694 -9.5308 193 -8.5 193" fill="none"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-4.5,193 -12.5,197 -12.5,189"/>
     </g>
-    <text class="lini-text" x="-51" y="130.5" style="font-weight: normal; font-size: 11px">log event</text>
-    <g class="lini-node lini-block" style="fill: white; stroke: rgba(0, 0, 0, 0.4); stroke-width: 1" transform="translate(-96.5,29)">
-      <rect x="-14.5" y="-7.5" width="29" height="15" rx="0" ry="0"/>
+    <text class="lini-text" x="-58" y="182.5" style="font-weight: normal; font-size: 11px">log event</text>
+    <g class="lini-node lini-block" style="fill: white; stroke: rgba(0, 0, 0, 0.4); stroke-width: 1" transform="translate(-117.6,37)">
+      <rect x="-15.4" y="-7.5" width="30.8" height="15" rx="0" ry="0"/>
     </g>
-    <text class="lini-text" x="-96.5" y="29" style="font-weight: bold; font-size: 10px">alt</text>
-    <text class="lini-text" x="-56.5" y="29" style="font-weight: normal; font-size: 10px">[valid]</text>
-    <text class="lini-text" x="-84.5" y="91" style="font-weight: normal; font-size: 10px">[invalid]</text>
-    <g class="lini-node lini-note lini-block" style="fill: #eec978; stroke: #9f6900" transform="translate(-97.5,-71.75)">
-      <rect x="-36.8" y="-12" width="73.6" height="24" rx="6" ry="6"/>
+    <text class="lini-text" x="-117.6" y="37" style="font-weight: bold; font-size: 11px">alt</text>
+    <text class="lini-text" x="-74.6" y="37" style="font-weight: normal; font-size: 11px">[valid]</text>
+    <text class="lini-text" x="-103.8" y="122" style="font-weight: normal; font-size: 11px">[invalid]</text>
+    <g class="lini-node lini-note lini-block" style="fill: #eec978; stroke: #9f6900" transform="translate(-111.5,-121.75)">
+      <rect x="-38.8" y="-14" width="77.6" height="28" rx="6" ry="6"/>
       <text class="lini-text" x="0" y="0">signs in</text>
     </g>
   </g>

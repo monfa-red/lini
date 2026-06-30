@@ -10,7 +10,8 @@ use crate::layout::prim;
 use crate::resolve::ResolvedLink;
 use std::collections::HashMap;
 
-/// Link-label default size (SPEC §9), sitting just above the arrow.
+/// Link-label fallback size (SPEC §9) — used only if a message's resolved `font-size` is
+/// somehow absent; normally [`Pair::label_size`] reads the link's own (`link-font-size`).
 const LABEL_SIZE: f64 = 11.0;
 /// Clear space above the arrow for its label.
 const LABEL_RISE: f64 = 5.0;
@@ -62,14 +63,19 @@ impl Pair<'_> {
     /// self-message's label sits to the side, so it doesn't rise.
     pub(super) fn label_rise(&self) -> f64 {
         if self.from != self.to && self.label().is_some() {
-            LABEL_RISE + LABEL_SIZE
+            LABEL_RISE + self.label_size()
         } else {
             0.0
         }
     }
+    /// The label's font size — the message's own resolved `font-size` (`link-font-size`,
+    /// SPEC §9), so a message reads its size from the cascade, not a hardcoded constant.
+    fn label_size(&self) -> f64 {
+        self.link.attrs.number("font-size").unwrap_or(LABEL_SIZE)
+    }
     fn label_width(&self) -> f64 {
         self.label()
-            .map_or(0.0, |l| prim::text_width(l, LABEL_SIZE))
+            .map_or(0.0, |l| prim::text_width(l, self.label_size()))
     }
     /// This message's kind: a self-message (`a -> a`) regardless of operator, else by
     /// the operator's line (`~>` async · `-->` return · `->` / other call).
@@ -192,15 +198,9 @@ pub(super) fn draw(
             style(&mut hook, p.link);
             out.push(hook);
             if let Some(label) = p.label() {
-                let lx = fx + SELF_DX + 6.0 + prim::text_width(label, LABEL_SIZE) / 2.0;
-                out.push(prim::text(
-                    label,
-                    lx,
-                    y + SELF_DY / 2.0,
-                    LABEL_SIZE,
-                    None,
-                    false,
-                ));
+                let size = p.label_size();
+                let lx = fx + SELF_DX + 6.0 + prim::text_width(label, size) / 2.0;
+                out.push(prim::text(label, lx, y + SELF_DY / 2.0, size, None, false));
             }
         } else {
             let fx = endpoint_x(p.from, i, tcx);
@@ -209,11 +209,12 @@ pub(super) fn draw(
             style(&mut arrow, p.link);
             out.push(arrow);
             if let Some(label) = p.label() {
+                let size = p.label_size();
                 out.push(prim::text(
                     label,
                     (fcx + tcx) / 2.0,
-                    y - LABEL_RISE - LABEL_SIZE / 2.0,
-                    LABEL_SIZE,
+                    y - LABEL_RISE - size / 2.0,
+                    size,
                     None,
                     false,
                 ));

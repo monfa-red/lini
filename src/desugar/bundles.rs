@@ -8,6 +8,11 @@ use crate::resolve::NodeKind;
 use crate::span::Span;
 use crate::syntax::ast::{Decl, Value};
 
+/// A sequence's default `gap` (SPEC §10) — the message pitch / participant spacing, larger
+/// than the generic `20` so the time axis breathes. Shared by the `|sequence|` template and
+/// the root `{ layout: sequence }` form (applied in [`crate::desugar`]).
+pub(crate) const SEQ_GAP: f64 = 34.0;
+
 fn decl(name: &str, values: Vec<Value>) -> Decl {
     Decl {
         name: name.into(),
@@ -26,6 +31,16 @@ fn var(name: &str, v: &str) -> Decl {
 }
 fn pair(name: &str, a: f64, b: f64) -> Decl {
     decl(name, vec![Value::Number(a), Value::Number(b)])
+}
+
+/// Root defaults specific to a root `{ layout: X }` engine, layered over [`root_defaults`]
+/// (the user's own decls still win). A root sequence breathes like a `|sequence|` node — it
+/// gets the same `gap`. The default lives here, so the layout core stays dumb.
+pub(crate) fn root_layout_defaults(layout: Option<&str>) -> Vec<Decl> {
+    match layout {
+        Some("sequence") => vec![n("gap", SEQ_GAP)],
+        _ => Vec::new(),
+    }
 }
 
 /// A primitive's complete default set (paint + geometry).
@@ -151,14 +166,16 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
         // user tunes it (`gap: 0` ≈ touching).
         "chart" => vec![id("layout", "chart"), n("gap", 10.0)],
         "pie" => vec![id("layout", "pie"), n("gap", 10.0)],
-        // Sequences (SPEC §10): the layout preset, plus the note / frame / separator
-        // looks, all reusing scene role variables (no new ones). Participants are
-        // ordinary boxes and keep their own type's paint.
-        "sequence" => vec![id("layout", "sequence")],
+        // Sequences (SPEC §10): the layout preset + the message pitch / participant spacing
+        // (`gap`, larger than the generic 20 to breathe), plus the note / frame / separator
+        // looks, all reusing scene role variables (no new ones). Participants are ordinary
+        // boxes and keep their own type's paint. (A root `{ layout: sequence }` picks up the
+        // same `gap` default in `desugar`.)
+        "sequence" => vec![id("layout", "sequence"), n("gap", SEQ_GAP)],
         "note" => vec![
             var("fill", "fill"),
             var("stroke", "stroke"),
-            pair("padding", 6.0, 8.0),
+            pair("padding", 8.0, 10.0),
             n("font-size", 12.0),
         ],
         // A frame: a dashed, rounded rectangle around a span of messages. `padding` insets
@@ -169,7 +186,8 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             id("stroke-style", "dashed"),
             n("stroke-width", 1.0),
             n("radius", 4.0),
-            pair("padding", 8.0, 14.0),
+            pair("padding", 16.0, 22.0),
+            n("font-size", 11.0),
         ],
         // An |alt| compartment separator: the same dashed line, no body radius.
         "else" => vec![
@@ -177,6 +195,7 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             var("stroke", "group-stroke"),
             id("stroke-style", "dashed"),
             n("stroke-width", 1.0),
+            n("font-size", 11.0),
         ],
         // A bar's corners are softly rounded by default ([CHARTS.md] §3); `stroke: auto`
         // is the outlined-look sentinel ([§10]) — the chart draws a deep edge of the soft
