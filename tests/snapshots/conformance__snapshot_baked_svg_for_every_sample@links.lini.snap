@@ -45,8 +45,8 @@ input_file: samples/links.lini
         <polygon class="lini-marker lini-marker-diamond" points="80,0 75.5,3.825 71,0 75.5,-3.825" style="fill: #6e62cc"/>
       </g>
       <g class="lini-node lini-line" style="stroke: #b45700; stroke-width: 2" transform="translate(0,24)">
-        <line x1="-80" y1="0" x2="72" y2="0"/>
-        <path class="lini-marker lini-marker-open" d="M 80 4.4 L 72 0 L 80 -4.4 M 80 0 L 72 0"/>
+        <line x1="-80" y1="0" x2="71" y2="0"/>
+        <path class="lini-marker lini-marker-open" d="M 80 4.95 L 71 0 L 80 -4.95 M 80 0 L 71 0"/>
       </g>
       <g class="lini-node lini-caption lini-block" transform="translate(-75,-56.2)">
         <rect x="-25.2" y="-6" width="50.4" height="12" rx="0" ry="0"/>

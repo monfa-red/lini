@@ -55,8 +55,8 @@ input_file: samples/entity.lini
   <g class="lini-links">
     <g class="lini-link" style="font-size: 11" data-from="users" data-to="orders">
       <mask id="lini-label-cut-0" maskUnits="userSpaceOnUse" x="-70.15" y="-1.75" width="123.5" height="3.5"><rect class="lini-cut-bg" x="-70.15" y="-1.75" width="123.5" height="3.5"/><rect class="lini-cut" x="-31.5" y="-7.15" width="46.2" height="14.3"/></mask>
-      <path d="M -68.4 0 L 46.1 0" mask="url(#lini-label-cut-0)"/>
-      <path class="lini-marker lini-marker-open" d="M 52.1 3.3 L 46.1 0 L 52.1 -3.3 M 52.1 0 L 46.1 0"/>
+      <path d="M -68.4 0 L 45.1 0" mask="url(#lini-label-cut-0)"/>
+      <path class="lini-marker lini-marker-open" d="M 52.1 3.85 L 45.1 0 L 52.1 -3.85 M 52.1 0 L 45.1 0"/>
       <text class="lini-link-label" x="-8.4" y="0">places</text>
     </g>
   </g>

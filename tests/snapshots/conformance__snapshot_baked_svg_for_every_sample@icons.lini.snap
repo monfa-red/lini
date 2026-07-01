@@ -317,8 +317,8 @@ input_file: samples/icons.lini
       <polygon class="lini-marker lini-marker-arrow" points="184.5,30.6 175.5,35.1 175.5,26.1" style="fill: #484848"/>
     </g>
     <g class="lini-link lini-link-dotted" style="font-size: 11" data-from="b.web" data-to="b.auth">
-      <path d="M -184 158.8 L -147.5 158.8"/>
-      <path class="lini-marker lini-marker-open" d="M -139.5 163.2 L -147.5 158.8 L -139.5 154.4 M -139.5 158.8 L -147.5 158.8"/>
+      <path d="M -184 158.8 L -148.5 158.8"/>
+      <path class="lini-marker lini-marker-open" d="M -139.5 163.75 L -148.5 158.8 L -139.5 153.85 M -139.5 158.8 L -148.5 158.8"/>
     </g>
     <g class="lini-link lini-link-dashed" style="font-size: 11" data-from="b.auth" data-to="b.svc">
       <path d="M -76 158.8 L -35.5 158.8"/>

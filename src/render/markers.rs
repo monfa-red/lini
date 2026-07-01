@@ -41,24 +41,12 @@ pub fn marker_anchor(
     Some((anchor, (dx / len, dy / len)))
 }
 
-/// Marker scales gently with line thickness, with a small floor so thin lines
-/// still get a visible head — 5 gives a 1 px line a clear base, and a 4× slope
-/// keeps thicker links' heads in proportion without chunking. This is the ER
-/// family's size (crow's-foot, bars, rings) and the line-inset base; the filled
-/// heads read a touch larger via [`head_size`].
+/// Marker scales gently with line thickness: a floor so a thin line still lands a
+/// clearly visible head, and a 4× slope so thicker links stay in proportion. The
+/// trailing `+ 1` is one small uniform lift across every head — arrow, dot,
+/// circle, diamond and the ER crow's-foot / bars / rings alike — tuned by eye.
 pub fn marker_size(thickness: f64) -> f64 {
-    5.0_f64.max(thickness * 4.0)
-}
-
-/// A filled head gains this over the ER base — see [`head_size`].
-const HEAD_BUMP: f64 = 1.0;
-
-/// Filled heads — arrow, dot, circle, diamond — draw one step larger than the ER
-/// family at the same thickness: [`marker_size`] plus [`HEAD_BUMP`], so a thin line
-/// still lands a clearly visible head and its floor lifts with it. The open ER
-/// crow's-foot keeps `marker_size` — its splay already reads full.
-fn head_size(thickness: f64) -> f64 {
-    marker_size(thickness) + HEAD_BUMP
+    5.0_f64.max(thickness * 4.0) + 1.0
 }
 
 /// Dot radius as a fraction of the marker `size` — a touch fuller so the circle
@@ -210,7 +198,6 @@ pub fn emit_marker(
         thickness,
     } = *paint;
     let size = marker_size(thickness);
-    let head = head_size(thickness);
     let ux = direction.0;
     let uy = direction.1;
     let px = -uy;
@@ -222,12 +209,12 @@ pub fn emit_marker(
     };
     match kind {
         MarkerKind::Arrow => {
-            let bx = tip.0 - ux * head;
-            let by = tip.1 - uy * head;
-            let lx = bx + px * head * 0.5;
-            let ly = by + py * head * 0.5;
-            let rx = bx - px * head * 0.5;
-            let ry = by - py * head * 0.5;
+            let bx = tip.0 - ux * size;
+            let by = tip.1 - uy * size;
+            let lx = bx + px * size * 0.5;
+            let ly = by + py * size * 0.5;
+            let rx = bx - px * size * 0.5;
+            let ry = by - py * size * 0.5;
             writeln!(
                 out,
                 r#"{}<polygon class="lini-marker lini-marker-arrow" points="{},{} {},{} {},{}"{}/>"#,
@@ -239,7 +226,7 @@ pub fn emit_marker(
             ).unwrap();
         }
         MarkerKind::Dot => {
-            emit_round(out, indent, "dot", tip, direction, head * DOT_RADIUS, &fill);
+            emit_round(out, indent, "dot", tip, direction, size * DOT_RADIUS, &fill);
         }
         MarkerKind::Circle => {
             emit_round(
@@ -248,19 +235,19 @@ pub fn emit_marker(
                 "circle",
                 tip,
                 direction,
-                head * CIRCLE_RADIUS,
+                size * CIRCLE_RADIUS,
                 &fill,
             );
         }
         MarkerKind::Diamond => {
-            let bx = tip.0 - ux * head;
-            let by = tip.1 - uy * head;
+            let bx = tip.0 - ux * size;
+            let by = tip.1 - uy * size;
             let mx = (tip.0 + bx) / 2.0;
             let my = (tip.1 + by) / 2.0;
-            let lx = mx + px * head * 0.425;
-            let ly = my + py * head * 0.425;
-            let rx = mx - px * head * 0.425;
-            let ry = my - py * head * 0.425;
+            let lx = mx + px * size * 0.425;
+            let ly = my + py * size * 0.425;
+            let rx = mx - px * size * 0.425;
+            let ry = my - py * size * 0.425;
             writeln!(
                 out,
                 r#"{}<polygon class="lini-marker lini-marker-diamond" points="{},{} {},{} {},{} {},{}"{}/>"#,
@@ -374,7 +361,7 @@ mod tests {
         // tip on the shape edge, direction pointing into the shape (+x here). The dot
         // centre is pulled back by its radius, so its leading edge lands exactly on
         // the tip (no overshoot) and the whole circle is on the link side.
-        let r = head_size(1.0) * DOT_RADIUS;
+        let r = marker_size(1.0) * DOT_RADIUS;
         let (cx, cy) = round_center((100.0, 50.0), (1.0, 0.0), r);
         assert!((cx - (100.0 - r)).abs() < 1e-9, "centre pulled back by r");
         assert!((cy - 50.0).abs() < 1e-9);
@@ -398,7 +385,7 @@ mod tests {
     fn a_circle_marker_is_a_fuller_dot() {
         // `circle` reuses the dot path at a larger radius fraction — a deliberately
         // bigger, hover-sized point ([SPEC §7]).
-        let size = head_size(1.0);
+        let size = marker_size(1.0);
         assert!(
             size * CIRCLE_RADIUS > size * DOT_RADIUS,
             "circle radius exceeds the dot's"

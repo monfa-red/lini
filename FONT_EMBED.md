@@ -78,8 +78,9 @@ Consequences:
 
 ## Already shipped alongside this (separate work, on `main`)
 
-Node `stroke-width` 1.5 → **1.6** (icon stays 2; group + sequence frames stay 1); filled markers
-(arrow/dot/circle/diamond) **+1px** via `head_size` in `src/render/markers.rs` (crow/ER unchanged).
+Node `stroke-width` 1.5 → **1.6** (icon stays 2; group + sequence frames stay 1); all markers
+**+1px** via a single `marker_size` lift in `src/render/markers.rs` (one mechanism, no per-family
+exception — the ER crow's-foot grows the same +1).
 `tests/linking.rs`: `links_hard` crossings re-pinned 5→7 (lawful); `a_walled_in_link_is_reported_impossible`
 is `#[ignore]`d — at 1.6 the gap-growth lever routes `core→n2` instead of reporting impossible;
 routing wiring to be revisited.
