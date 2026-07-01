@@ -108,8 +108,8 @@ const TIERS: &[Tier] = &[
     },
     Tier {
         suffix: "",
-        light: (0.7, 0.160),
-        dark: (0.53, 0.160),
+        light: (0.68, 0.170),
+        dark: (0.54, 0.170),
     },
     Tier {
         suffix: "-deep",

@@ -1,16 +1,17 @@
 ---
 source: tests/conformance.rs
+assertion_line: 40
 expression: svg
 input_file: samples/desugar.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-115 -86.25 230 155" width="230" height="155" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-115.1 -86.3 230.2 155.1" width="230.2" height="155.1" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
-    .lini .lini-block { fill: none; stroke: none; stroke-width: 1.5; stroke-dasharray: none; }
-    .lini .lini-cyl { fill: white; stroke: #444; stroke-width: 1.5; stroke-dasharray: none; }
+    .lini .lini-block { fill: none; stroke: none; stroke-width: 1.6; stroke-dasharray: none; }
+    .lini .lini-cyl { fill: white; stroke: #444; stroke-width: 1.6; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
-    .lini .lini-box { fill: white; stroke: #444; stroke-width: 1.5; }
+    .lini .lini-box { fill: white; stroke: #444; stroke-width: 1.6; }
     .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
     .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
     .lini .lini-badge { fill: #0a84ff; color: white; font-size: 11px; font-weight: normal; }
@@ -19,10 +20,10 @@ input_file: samples/desugar.lini
   <defs>
     <filter id="lini-shadow-1" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="rgba(0, 0, 0, 0.2)"/></filter>
   </defs>
-  <rect class="lini-canvas" x="-115" y="-86.25" width="230" height="155"/>
+  <rect class="lini-canvas" x="-115.1" y="-86.3" width="230.2" height="155.1"/>
   <g class="lini-scene">
-    <g class="lini-node lini-group lini-block" data-id="api" transform="translate(-44.75,0)">
-      <rect x="-49.75" y="-48.25" width="99.5" height="96.5" rx="8" ry="8"/>
+    <g class="lini-node lini-group lini-block" data-id="api" transform="translate(-44.8,0)">
+      <rect x="-49.8" y="-48.3" width="99.6" height="96.6" rx="8" ry="8"/>
       <g class="lini-node lini-chip lini-box lini-block" data-id="health" transform="translate(0,0)">
         <rect x="-29" y="-27.5" width="58" height="55" rx="12" ry="12"/>
         <text class="lini-text" x="0" y="0">OK</text>
@@ -38,10 +39,10 @@ input_file: samples/desugar.lini
         <text class="lini-text" x="0" y="0">v2</text>
       </g>
     </g>
-    <g class="lini-node lini-cyl" data-id="db" transform="translate(65.25,0)">
+    <g class="lini-node lini-cyl" data-id="db" transform="translate(65.3,0)">
       <path d="M -29 -22 L -29 22 A 29 5.5 0 0 0 29 22 L 29 -22 A 29 5.5 0 0 0 -29 -22 Z"/>
       <ellipse cx="0" cy="-22" rx="29" ry="5.5"/>
-      <text class="lini-text" x="0" y="1.695">db</text>
+      <text class="lini-text" x="0" y="1.698">db</text>
     </g>
   </g>
   <g class="lini-links"/>

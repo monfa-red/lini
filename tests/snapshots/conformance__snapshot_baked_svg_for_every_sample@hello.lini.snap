@@ -1,18 +1,19 @@
 ---
 source: tests/conformance.rs
+assertion_line: 40
 expression: svg
 input_file: samples/hello.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-63.25 -48.25 126.5 96.5" width="126.5" height="96.5" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-63.3 -48.3 126.6 96.6" width="126.6" height="96.6" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
-    .lini .lini-block { fill: none; stroke: none; stroke-width: 1.5; stroke-dasharray: none; }
+    .lini .lini-block { fill: none; stroke: none; stroke-width: 1.6; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
-    .lini .lini-box { fill: white; stroke: #444; stroke-width: 1.5; }
+    .lini .lini-box { fill: white; stroke: #444; stroke-width: 1.6; }
   </style>
   <defs/>
-  <rect class="lini-canvas" x="-63.25" y="-48.25" width="126.5" height="96.5"/>
+  <rect class="lini-canvas" x="-63.3" y="-48.3" width="126.6" height="96.6"/>
   <g class="lini-scene">
     <g class="lini-node lini-box lini-block" transform="translate(0,0)">
       <rect x="-42.5" y="-27.5" width="85" height="55" rx="8" ry="8"/>

@@ -1,26 +1,27 @@
 ---
 source: tests/conformance.rs
+assertion_line: 40
 expression: svg
 input_file: samples/chart_hero.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-388.25 -410.75 776.5 821.5" width="776.5" height="821.5" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-388.3 -410.8 776.6 821.6" width="776.6" height="821.6" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
-    .lini .lini-block { fill: none; stroke: none; stroke-width: 1.5; stroke-dasharray: none; }
+    .lini .lini-block { fill: none; stroke: none; stroke-width: 1.6; stroke-dasharray: none; }
     .lini .lini-oval { stroke-dasharray: none; }
     .lini .lini-poly { stroke-dasharray: none; }
-    .lini .lini-line { fill: none; stroke: #444; stroke-width: 1.5; stroke-dasharray: none; }
+    .lini .lini-line { fill: none; stroke: #444; stroke-width: 1.6; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-chart-label { pointer-events: none; }
   </style>
   <defs/>
-  <rect class="lini-canvas" x="-388.25" y="-410.75" width="776.5" height="821.5"/>
+  <rect class="lini-canvas" x="-388.3" y="-410.8" width="776.6" height="821.6"/>
   <g class="lini-scene">
     <g class="lini-node lini-block" transform="translate(0,0)">
       <rect x="-367.5" y="-390" width="735" height="780" rx="0" ry="0"/>
       <g class="lini-node lini-chart lini-block" transform="translate(-187.5,-265)">
-        <rect x="-174.25" y="-119.25" width="348.5" height="238.5" rx="0" ry="0"/>
+        <rect x="-174.2" y="-119.2" width="348.4" height="238.4" rx="0" ry="0"/>
         <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
           <line x1="-151.8" y1="80.9" x2="163" y2="80.9"/>
         </g>
@@ -38,35 +39,35 @@ input_file: samples/chart_hero.lini
         </g>
         <g class="lini-node lini-block" style="fill: #ffbd8d; stroke: #b45700" transform="translate(-126.616,55.805)">
           <title>Q1 · 2023: 12</title>
-          <rect x="-11.9994" y="-24.345" width="23.9988" height="48.69" rx="2" ry="2"/>
+          <rect x="-11.9494" y="-24.295" width="23.8988" height="48.59" rx="2" ry="2"/>
         </g>
         <g class="lini-node lini-block" style="fill: #7eddfd; stroke: #0085b3" transform="translate(-98.284,43.2575)">
           <title>Q1 · 2024: 18</title>
-          <rect x="-11.9994" y="-36.8925" width="23.9988" height="73.785" rx="2" ry="2"/>
+          <rect x="-11.9494" y="-36.8425" width="23.8988" height="73.685" rx="2" ry="2"/>
         </g>
         <g class="lini-node lini-block" style="fill: #ffbd8d; stroke: #b45700" transform="translate(-47.916,41.1662)">
           <title>Q2 · 2023: 19</title>
-          <rect x="-11.9994" y="-38.9838" width="23.9988" height="77.9675" rx="2" ry="2"/>
+          <rect x="-11.9494" y="-38.9338" width="23.8988" height="77.8675" rx="2" ry="2"/>
         </g>
         <g class="lini-node lini-block" style="fill: #7eddfd; stroke: #0085b3" transform="translate(-19.584,30.71)">
           <title>Q2 · 2024: 24</title>
-          <rect x="-11.9994" y="-49.44" width="23.9988" height="98.88" rx="2" ry="2"/>
+          <rect x="-11.9494" y="-49.39" width="23.8988" height="98.78" rx="2" ry="2"/>
         </g>
         <g class="lini-node lini-block" style="fill: #ffbd8d; stroke: #b45700" transform="translate(30.784,49.5312)">
           <title>Q3 · 2023: 15</title>
-          <rect x="-11.9994" y="-30.6188" width="23.9988" height="61.2375" rx="2" ry="2"/>
+          <rect x="-11.9494" y="-30.5688" width="23.8988" height="61.1375" rx="2" ry="2"/>
         </g>
         <g class="lini-node lini-block" style="fill: #7eddfd; stroke: #0085b3" transform="translate(59.116,34.8925)">
           <title>Q3 · 2024: 22</title>
-          <rect x="-11.9994" y="-45.2575" width="23.9988" height="90.515" rx="2" ry="2"/>
+          <rect x="-11.9494" y="-45.2075" width="23.8988" height="90.415" rx="2" ry="2"/>
         </g>
         <g class="lini-node lini-block" style="fill: #ffbd8d; stroke: #b45700" transform="translate(109.484,28.6187)">
           <title>Q4 · 2023: 25</title>
-          <rect x="-11.9994" y="-51.5312" width="23.9988" height="103.0625" rx="2" ry="2"/>
+          <rect x="-11.9494" y="-51.4813" width="23.8988" height="102.9625" rx="2" ry="2"/>
         </g>
         <g class="lini-node lini-block" style="fill: #7eddfd; stroke: #0085b3" transform="translate(137.816,16.0712)">
           <title>Q4 · 2024: 31</title>
-          <rect x="-11.9994" y="-64.0787" width="23.9988" height="128.1575" rx="2" ry="2"/>
+          <rect x="-11.9494" y="-64.0288" width="23.8988" height="128.0575" rx="2" ry="2"/>
         </g>
         <text class="lini-text" x="-161.1" y="80.9" style="fill: #888; font-weight: normal; font-size: 11px">0</text>
         <text class="lini-text" x="-164.4" y="39.075" style="fill: #888; font-weight: normal; font-size: 11px">10</text>
@@ -88,7 +89,7 @@ input_file: samples/chart_hero.lini
         <text class="lini-text" x="37.2" y="110.1" style="font-weight: bold; font-size: 11px">2024</text>
       </g>
       <g class="lini-node lini-chart lini-block" transform="translate(187.5,-265)">
-        <rect x="-174.25" y="-119.25" width="348.5" height="238.5" rx="0" ry="0"/>
+        <rect x="-174.2" y="-119.2" width="348.4" height="238.4" rx="0" ry="0"/>
         <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
           <line x1="-151.8" y1="80.9" x2="163" y2="80.9"/>
         </g>
@@ -101,64 +102,64 @@ input_file: samples/chart_hero.lini
         <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
           <line x1="-151.8" y1="-86.4" x2="163" y2="-86.4"/>
         </g>
-        <g class="lini-node lini-line" style="stroke: #00bcb1" transform="translate(0,0)">
+        <g class="lini-node lini-line" style="stroke: #00b8ac" transform="translate(0,0)">
           <polyline points="-125.5667,36.2867 -122.2875,35.9483 -119.0083,35.6277 -115.7292,35.3207 -112.45,35.0232 -109.1708,34.7312 -105.8917,34.4405 -102.6125,34.1471 -99.3333,33.8469 -96.0542,33.5358 -92.775,33.2097 -89.4958,32.8646 -86.2167,32.4963 -82.9375,32.1008 -79.6583,31.6739 -76.3792,31.2117 -73.1,30.71 -69.8208,30.1763 -66.5417,29.6208 -63.2625,29.0435 -59.9833,28.4445 -56.7042,27.8236 -53.425,27.181 -50.1458,26.5166 -46.8667,25.8304 -43.5875,25.1224 -40.3083,24.3927 -37.0292,23.6411 -33.75,22.8678 -30.4708,22.0727 -27.1917,21.2558 -23.9125,20.4171 -20.6333,19.5567 -17.3542,18.6693 -14.075,17.7513 -10.7958,16.8048 -7.5167,15.8316 -4.2375,14.834 -0.9583,13.8139 2.3208,12.7734 5.6,11.7145 8.8792,10.6392 12.1583,9.5497 15.4375,8.4479 18.7167,7.3359 21.9958,6.2158 25.275,5.0895 28.5542,3.9591 31.8333,2.8267 35.1125,1.6834 38.3917,0.5203 41.6708,-0.6605 44.95,-1.8569 48.2292,-3.0669 51.5083,-4.2885 54.7875,-5.5196 58.0667,-6.7582 61.3458,-8.0023 64.625,-9.2498 67.9042,-10.4986 71.1833,-11.7467 74.4625,-12.9922 77.7417,-14.2328 81.0208,-15.4667 84.3,-16.6917 87.5792,-17.9116 90.8583,-19.1315 94.1375,-20.3514 97.4167,-21.5713 100.6958,-22.7911 103.975,-24.011 107.2542,-25.2309 110.5333,-26.4508 113.8125,-27.6707 117.0917,-28.8906 120.3708,-30.1105 123.65,-31.3304 126.9292,-32.5503 130.2083,-33.7702 133.4875,-34.9901 136.7667,-36.21"/>
         </g>
-        <g class="lini-node lini-oval" style="fill: #00bcb1; stroke: none; stroke-width: 0" transform="translate(-125.5667,36.2867)">
+        <g class="lini-node lini-oval" style="fill: #00b8ac; stroke: none; stroke-width: 0" transform="translate(-125.5667,36.2867)">
           <title>web: Jan: 16</title>
           <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
         </g>
-        <g class="lini-node lini-oval" style="fill: #00bcb1; stroke: none; stroke-width: 0" transform="translate(-73.1,30.71)">
+        <g class="lini-node lini-oval" style="fill: #00b8ac; stroke: none; stroke-width: 0" transform="translate(-73.1,30.71)">
           <title>web: Feb: 18</title>
           <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
         </g>
-        <g class="lini-node lini-oval" style="fill: #00bcb1; stroke: none; stroke-width: 0" transform="translate(-20.6333,19.5567)">
+        <g class="lini-node lini-oval" style="fill: #00b8ac; stroke: none; stroke-width: 0" transform="translate(-20.6333,19.5567)">
           <title>web: Mar: 22</title>
           <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
         </g>
-        <g class="lini-node lini-oval" style="fill: #00bcb1; stroke: none; stroke-width: 0" transform="translate(31.8333,2.8267)">
+        <g class="lini-node lini-oval" style="fill: #00b8ac; stroke: none; stroke-width: 0" transform="translate(31.8333,2.8267)">
           <title>web: Apr: 28</title>
           <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
         </g>
-        <g class="lini-node lini-oval" style="fill: #00bcb1; stroke: none; stroke-width: 0" transform="translate(84.3,-16.6917)">
+        <g class="lini-node lini-oval" style="fill: #00b8ac; stroke: none; stroke-width: 0" transform="translate(84.3,-16.6917)">
           <title>web: May: 35</title>
           <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
         </g>
-        <g class="lini-node lini-oval" style="fill: #00bcb1; stroke: none; stroke-width: 0" transform="translate(136.7667,-36.21)">
+        <g class="lini-node lini-oval" style="fill: #00b8ac; stroke: none; stroke-width: 0" transform="translate(136.7667,-36.21)">
           <title>web: Jun: 42</title>
           <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
         </g>
-        <g class="lini-node lini-line" style="stroke: #968cff" transform="translate(0,0)">
+        <g class="lini-node lini-line" style="stroke: #9084ff" transform="translate(0,0)">
           <polyline points="-125.5667,58.5933 -122.2875,57.5477 -119.0083,56.5021 -115.7292,55.4565 -112.45,54.4108 -109.1708,53.3652 -105.8917,52.3196 -102.6125,51.274 -99.3333,50.2283 -96.0542,49.1827 -92.775,48.1371 -89.4958,47.0915 -86.2167,46.0458 -82.9375,45.0002 -79.6583,43.9546 -76.3792,42.909 -73.1,41.8633 -69.8208,40.8381 -66.5417,39.8483 -63.2625,38.8858 -59.9833,37.9422 -56.7042,37.0096 -53.425,36.0797 -50.1458,35.1444 -46.8667,34.1954 -43.5875,33.2247 -40.3083,32.224 -37.0292,31.1852 -33.75,30.1001 -30.4708,28.9605 -27.1917,27.7583 -23.9125,26.4853 -20.6333,25.1333 -17.3542,23.7072 -14.075,22.2197 -10.7958,20.6751 -7.5167,19.0774 -4.2375,17.4307 -0.9583,15.739 2.3208,14.0065 5.6,12.2373 8.8792,10.4354 12.1583,8.6048 15.4375,6.7498 18.7167,4.8743 21.9958,2.9826 25.275,1.0785 28.5542,-0.8337 31.8333,-2.75 35.1125,-4.6677 38.3917,-6.5894 41.6708,-8.5193 44.95,-10.4615 48.2292,-12.42 51.5083,-14.3989 54.7875,-16.4023 58.0667,-18.4344 61.3458,-20.4991 64.625,-22.6005 67.9042,-24.7428 71.1833,-26.9301 74.4625,-29.1663 77.7417,-31.4557 81.0208,-33.8022 84.3,-36.21 87.5792,-38.692 90.8583,-41.253 94.1375,-43.8847 97.4167,-46.5791 100.6958,-49.328 103.975,-52.1231 107.2542,-54.9564 110.5333,-57.8196 113.8125,-60.7046 117.0917,-63.6032 120.3708,-66.5073 123.65,-69.4086 126.9292,-72.299 130.2083,-75.1704 133.4875,-78.0146 136.7667,-80.8233"/>
         </g>
-        <g class="lini-node lini-oval" style="fill: #968cff; stroke: none; stroke-width: 0" transform="translate(-125.5667,58.5933)">
+        <g class="lini-node lini-oval" style="fill: #9084ff; stroke: none; stroke-width: 0" transform="translate(-125.5667,58.5933)">
           <title>app: Jan: 8</title>
           <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
         </g>
-        <g class="lini-node lini-oval" style="fill: #968cff; stroke: none; stroke-width: 0" transform="translate(-73.1,41.8633)">
+        <g class="lini-node lini-oval" style="fill: #9084ff; stroke: none; stroke-width: 0" transform="translate(-73.1,41.8633)">
           <title>app: Feb: 14</title>
           <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
         </g>
-        <g class="lini-node lini-oval" style="fill: #968cff; stroke: none; stroke-width: 0" transform="translate(-20.6333,25.1333)">
+        <g class="lini-node lini-oval" style="fill: #9084ff; stroke: none; stroke-width: 0" transform="translate(-20.6333,25.1333)">
           <title>app: Mar: 20</title>
           <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
         </g>
-        <g class="lini-node lini-oval" style="fill: #968cff; stroke: none; stroke-width: 0" transform="translate(31.8333,-2.75)">
+        <g class="lini-node lini-oval" style="fill: #9084ff; stroke: none; stroke-width: 0" transform="translate(31.8333,-2.75)">
           <title>app: Apr: 30</title>
           <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
         </g>
-        <g class="lini-node lini-oval" style="fill: #968cff; stroke: none; stroke-width: 0" transform="translate(84.3,-36.21)">
+        <g class="lini-node lini-oval" style="fill: #9084ff; stroke: none; stroke-width: 0" transform="translate(84.3,-36.21)">
           <title>app: May: 42</title>
           <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
         </g>
-        <g class="lini-node lini-oval" style="fill: #968cff; stroke: none; stroke-width: 0" transform="translate(136.7667,-80.8233)">
+        <g class="lini-node lini-oval" style="fill: #9084ff; stroke: none; stroke-width: 0" transform="translate(136.7667,-80.8233)">
           <title>app: Jun: 58</title>
           <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
         </g>
-        <g class="lini-node lini-line" style="stroke: #f27168; stroke-dasharray: 5,3.75" transform="translate(0,0)">
+        <g class="lini-node lini-line" style="stroke: #ef675e; stroke-width: 1.5; stroke-dasharray: 5,3.75" transform="translate(0,0)">
           <line x1="-151.8" y1="-52.94" x2="163" y2="-52.94"/>
         </g>
-        <text class="lini-text" x="-135.6" y="-59.54" style="fill: #f27168; font-weight: normal; font-size: 11px">Goal</text>
+        <text class="lini-text" x="-135.6" y="-59.54" style="fill: #ef675e; font-weight: normal; font-size: 11px">Goal</text>
         <text class="lini-text" x="-161.1" y="80.9" style="fill: #888; font-weight: normal; font-size: 11px">0</text>
         <text class="lini-text" x="-164.4" y="25.1333" style="fill: #888; font-weight: normal; font-size: 11px">20</text>
         <text class="lini-text" x="-164.4" y="-30.6333" style="fill: #888; font-weight: normal; font-size: 11px">40</text>
@@ -170,11 +171,11 @@ input_file: samples/chart_hero.lini
         <text class="lini-text" x="84.3" y="92.6" style="fill: #888; font-weight: normal; font-size: 11px">May</text>
         <text class="lini-text" x="136.7667" y="92.6" style="fill: #888; font-weight: normal; font-size: 11px">Jun</text>
         <text class="lini-text" x="0" y="-102.9" style="font-weight: bold; font-size: 13px">Active users (k)</text>
-        <g class="lini-node lini-block" style="fill: #00bcb1; stroke: #00bcb1; stroke-width: 1" transform="translate(-38.3,110.1)">
+        <g class="lini-node lini-block" style="fill: #00b8ac; stroke: #00b8ac; stroke-width: 1" transform="translate(-38.3,110.1)">
           <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
         </g>
         <text class="lini-text" x="-17.9" y="110.1" style="font-weight: bold; font-size: 11px">web</text>
-        <g class="lini-node lini-block" style="fill: #968cff; stroke: #968cff; stroke-width: 1" transform="translate(13.5,110.1)">
+        <g class="lini-node lini-block" style="fill: #9084ff; stroke: #9084ff; stroke-width: 1" transform="translate(13.5,110.1)">
           <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
         </g>
         <text class="lini-text" x="33.9" y="110.1" style="font-weight: bold; font-size: 11px">app</text>
@@ -182,7 +183,7 @@ input_file: samples/chart_hero.lini
         <text class="lini-text lini-chart-label" x="117.8" y="-2.1917" style="fill: #888; font-weight: normal; font-size: 10px">Redesign</text>
       </g>
       <g class="lini-node lini-chart lini-block" transform="translate(-187.5,0)">
-        <rect x="-174.25" y="-119.25" width="348.5" height="238.5" rx="0" ry="0"/>
+        <rect x="-174.2" y="-119.2" width="348.4" height="238.4" rx="0" ry="0"/>
         <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
           <polyline points="0,-21.5 22.0403,-8.775 22.0403,16.675 0,29.4 -22.0403,16.675 -22.0403,-8.775 0,-21.5"/>
         </g>
@@ -216,10 +217,10 @@ input_file: samples/chart_hero.lini
         <g class="lini-node lini-line" style="stroke: #008d51" transform="translate(0,0)">
           <polyline points="0,-34.225 44.0807,-21.5 55.1009,35.7625 0,67.575 -44.0807,29.4 -44.0807,-21.5 0,-34.225"/>
         </g>
-        <g class="lini-node lini-line" style="stroke: #ec6e97" transform="translate(0,0)">
+        <g class="lini-node lini-line" style="stroke: #e96490" transform="translate(0,0)">
           <polyline points="0,-59.675 44.0807,-21.5 33.0605,23.0375 0,54.85 -55.1009,35.7625 -55.1009,-27.8625 0,-59.675"/>
         </g>
-        <g class="lini-node lini-line" style="stroke: #4e9fff" transform="translate(0,0)">
+        <g class="lini-node lini-line" style="stroke: #3f98ff" transform="translate(0,0)">
           <polyline points="0,-46.95 55.1009,-27.8625 33.0605,23.0375 0,42.125 -44.0807,29.4 -55.1009,-27.8625 0,-46.95"/>
         </g>
         <text class="lini-text" x="0" y="-82.3" style="fill: #888; font-weight: normal; font-size: 11px">Speed</text>
@@ -236,24 +237,24 @@ input_file: samples/chart_hero.lini
           <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
         </g>
         <text class="lini-text" x="-57" y="110.1" style="font-weight: bold; font-size: 11px">Cruiser</text>
-        <g class="lini-node lini-block" style="fill: #ec6e97; stroke: #ec6e97; stroke-width: 1" transform="translate(-12.4,110.1)">
+        <g class="lini-node lini-block" style="fill: #e96490; stroke: #e96490; stroke-width: 1" transform="translate(-12.4,110.1)">
           <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
         </g>
         <text class="lini-text" x="14.6" y="110.1" style="font-weight: bold; font-size: 11px">Scout</text>
-        <g class="lini-node lini-block" style="fill: #4e9fff; stroke: #4e9fff; stroke-width: 1" transform="translate(52.6,110.1)">
+        <g class="lini-node lini-block" style="fill: #3f98ff; stroke: #3f98ff; stroke-width: 1" transform="translate(52.6,110.1)">
           <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
         </g>
         <text class="lini-text" x="79.6" y="110.1" style="font-weight: bold; font-size: 11px">Truck</text>
       </g>
       <g class="lini-node lini-chart lini-block" transform="translate(187.5,0)">
-        <rect x="-169.25" y="-119.25" width="338.5" height="238.5" rx="0" ry="0"/>
-        <g class="lini-node lini-block" style="fill: #00b2e5; stroke-width: 0; opacity: 0.15" transform="translate(-102.925,0.6)">
+        <rect x="-169.2" y="-119.2" width="338.4" height="238.4" rx="0" ry="0"/>
+        <g class="lini-node lini-block" style="fill: #00ace2; stroke-width: 0; opacity: 0.15" transform="translate(-102.925,0.6)">
           <rect x="-37.275" y="-87" width="74.55" height="174" rx="0" ry="0"/>
         </g>
-        <g class="lini-node lini-block" style="fill: #cf9300; stroke-width: 0; opacity: 0.15" transform="translate(-3.525,0.6)">
+        <g class="lini-node lini-block" style="fill: #cb8b00; stroke-width: 0; opacity: 0.15" transform="translate(-3.525,0.6)">
           <rect x="-62.125" y="-87" width="124.25" height="174" rx="0" ry="0"/>
         </g>
-        <g class="lini-node lini-block" style="fill: #00bcb1; stroke-width: 0; opacity: 0.15" transform="translate(108.3,0.6)">
+        <g class="lini-node lini-block" style="fill: #00b8ac; stroke-width: 0; opacity: 0.15" transform="translate(108.3,0.6)">
           <rect x="-49.7" y="-87" width="99.4" height="174" rx="0" ry="0"/>
         </g>
         <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
@@ -283,7 +284,7 @@ input_file: samples/chart_hero.lini
         <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
           <line x1="158" y1="-86.4" x2="158" y2="87.6"/>
         </g>
-        <g class="lini-node lini-poly" style="fill: #ec6e97; stroke: none; stroke-width: 0; opacity: 0.82" transform="translate(0,0)">
+        <g class="lini-node lini-poly" style="fill: #e96490; stroke: none; stroke-width: 0; opacity: 0.82" transform="translate(0,0)">
           <polygon points="-140.2,78.9 -90.5,35.4 -40.8,-42.9 8.9,-51.6 58.6,-25.5 108.3,52.8 108.3,87.6 -140.2,87.6"/>
         </g>
         <g class="lini-node lini-line" style="stroke: #b8476e" transform="translate(0,0)">
@@ -301,26 +302,26 @@ input_file: samples/chart_hero.lini
         <text class="lini-text" x="-40.8" y="99.3" style="fill: #888; font-weight: normal; font-size: 11px">2</text>
         <text class="lini-text" x="58.6" y="99.3" style="fill: #888; font-weight: normal; font-size: 11px">4</text>
         <text class="lini-text" x="158" y="99.3" style="fill: #888; font-weight: normal; font-size: 11px">6</text>
-        <text class="lini-text" x="-102.925" y="110.3" style="fill: #00b2e5; font-weight: normal; font-size: 11px">Warm-up</text>
-        <text class="lini-text" x="-3.525" y="110.3" style="fill: #cf9300; font-weight: normal; font-size: 11px">Hold</text>
-        <text class="lini-text" x="108.3" y="110.3" style="fill: #00bcb1; font-weight: normal; font-size: 11px">Cool</text>
+        <text class="lini-text" x="-102.925" y="110.3" style="fill: #00ace2; font-weight: normal; font-size: 11px">Warm-up</text>
+        <text class="lini-text" x="-3.525" y="110.3" style="fill: #cb8b00; font-weight: normal; font-size: 11px">Hold</text>
+        <text class="lini-text" x="108.3" y="110.3" style="fill: #00b8ac; font-weight: normal; font-size: 11px">Cool</text>
         <text class="lini-text" x="0" y="-102.9" style="font-weight: bold; font-size: 13px">Reactor temperature (°C)</text>
       </g>
       <g class="lini-node lini-pie lini-block" transform="translate(-187.5,265)">
-        <rect x="-174.25" y="-119.25" width="348.5" height="238.5" rx="0" ry="0"/>
-        <g class="lini-node lini-poly" style="fill: #ffb2c9; stroke: #b8476e; stroke-width: 1.5; opacity: 1" transform="translate(0,0)">
+        <rect x="-174.2" y="-119.2" width="348.4" height="238.4" rx="0" ry="0"/>
+        <g class="lini-node lini-poly" style="fill: #ffb2c9; stroke: #b8476e; stroke-width: 1.6; opacity: 1" transform="translate(0,0)">
           <title>Ads: 40 (40%)</title>
           <polygon points="0,-86.4 8.72,-85.9782 17.3586,-84.7168 25.8352,-82.6275 34.0705,-79.7299 41.9877,-76.051 49.5129,-71.6251 56.5758,-66.4936 63.1105,-60.7044 69.0559,-54.3115 74.3566,-47.3746 78.963,-39.9586 82.8322,-32.1326 85.928,-23.9697 88.2215,-15.5461 89.6912,-6.9405 90.3236,1.7668 90.1127,10.4945 89.0604,19.1611 87.1765,27.6856 84.4787,35.9886 80.9922,43.9924 76.7494,51.6223 71.7901,58.8071 66.1605,65.4798 59.9131,71.5779 53.1064,77.0447 0,3.95"/>
         </g>
-        <g class="lini-node lini-poly" style="fill: #79e3da; stroke: #008e85; stroke-width: 1.5; opacity: 1" transform="translate(0,0)">
+        <g class="lini-node lini-poly" style="fill: #79e3da; stroke: #008e85; stroke-width: 1.6; opacity: 1" transform="translate(0,0)">
           <title>SEO: 25 (25%)</title>
           <polygon points="53.1064,77.0447 45.6861,81.8981 37.8259,86.0007 29.6014,89.3132 21.0918,91.8036 12.3791,93.4479 3.5471,94.2303 -5.319,94.1433 -14.1339,93.1876 -22.8126,91.3726 -31.2717,88.7156 -39.4296,85.2423 -47.2077,80.986 -54.5313,75.9879 -61.3296,70.296 -67.5374,63.9652 -73.0947,57.0564 0,3.95"/>
         </g>
-        <g class="lini-node lini-poly" style="fill: #ffbd8d; stroke: #b45700; stroke-width: 1.5; opacity: 1" transform="translate(0,0)">
+        <g class="lini-node lini-poly" style="fill: #ffbd8d; stroke: #b45700; stroke-width: 1.6; opacity: 1" transform="translate(0,0)">
           <title>Email: 20 (20%)</title>
           <polygon points="-73.0947,57.0564 -77.879,49.7538 -81.9361,42.0236 -85.2282,33.9379 -87.7246,25.5722 -89.4019,17.0046 -90.2445,8.3151 -90.2445,-0.4151 -89.4019,-9.1046 -87.7246,-17.6722 -85.2282,-26.0379 -81.9361,-34.1236 -77.879,-41.8538 -73.0947,-49.1564 0,3.95"/>
         </g>
-        <g class="lini-node lini-poly" style="fill: #7eddfd; stroke: #0085b3; stroke-width: 1.5; opacity: 1" transform="translate(0,0)">
+        <g class="lini-node lini-poly" style="fill: #7eddfd; stroke: #0085b3; stroke-width: 1.6; opacity: 1" transform="translate(0,0)">
           <title>Direct: 15 (15%)</title>
           <polygon points="-73.0947,-49.1564 -67.7725,-55.7995 -61.8488,-61.9123 -55.3762,-67.4405 -48.412,-72.335 -41.018,-76.5524 -33.2601,-80.0553 -25.2068,-82.8125 -16.9299,-84.7997 -8.5027,-85.999 -0,-86.4 0,3.95"/>
         </g>
@@ -343,7 +344,7 @@ input_file: samples/chart_hero.lini
         <text class="lini-text" x="92.3" y="110.1" style="font-weight: bold; font-size: 11px">Direct</text>
       </g>
       <g class="lini-node lini-chart lini-block" transform="translate(187.5,265)">
-        <rect x="-174.25" y="-119.25" width="348.5" height="238.5" rx="0" ry="0"/>
+        <rect x="-174.2" y="-119.2" width="348.4" height="238.4" rx="0" ry="0"/>
         <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
           <line x1="-151.8" y1="83.2" x2="163" y2="83.2"/>
         </g>
@@ -368,27 +369,27 @@ input_file: samples/chart_hero.lini
         <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
           <line x1="97.0192" y1="-71" x2="97.0192" y2="83.2"/>
         </g>
-        <g class="lini-node lini-oval" style="fill: #ec6e97; stroke: none; stroke-width: 0" transform="translate(-125.5667,-19.6)">
+        <g class="lini-node lini-oval" style="fill: #e96490; stroke: none; stroke-width: 0" transform="translate(-125.5667,-19.6)">
           <title>EU: 8</title>
           <ellipse cx="0" cy="0" rx="13.6535" ry="13.6535"/>
         </g>
-        <g class="lini-node lini-oval" style="fill: #00bcb1; stroke: none; stroke-width: 0" transform="translate(-22.2232,-58.15)">
+        <g class="lini-node lini-oval" style="fill: #00b8ac; stroke: none; stroke-width: 0" transform="translate(-22.2232,-58.15)">
           <title>US: 20</title>
           <ellipse cx="0" cy="0" rx="21.588" ry="21.588"/>
         </g>
-        <g class="lini-node lini-oval" style="fill: #e78022; stroke: none; stroke-width: 0" transform="translate(81.1202,6.1)">
+        <g class="lini-node lini-oval" style="fill: #e47600; stroke: none; stroke-width: 0" transform="translate(81.1202,6.1)">
           <title>APAC: 14</title>
           <ellipse cx="0" cy="0" rx="18.0618" ry="18.0618"/>
         </g>
-        <g class="lini-node lini-oval" style="fill: #00b2e5; stroke: none; stroke-width: 0" transform="translate(17.5242,44.65)">
+        <g class="lini-node lini-oval" style="fill: #00ace2; stroke: none; stroke-width: 0" transform="translate(17.5242,44.65)">
           <title>LatAm: 6</title>
           <ellipse cx="0" cy="0" rx="11.8242" ry="11.8242"/>
         </g>
-        <g class="lini-node lini-oval" style="fill: #cf9300; stroke: none; stroke-width: 0" transform="translate(-93.7687,26.66)">
+        <g class="lini-node lini-oval" style="fill: #cb8b00; stroke: none; stroke-width: 0" transform="translate(-93.7687,26.66)">
           <title>ME: 5</title>
           <ellipse cx="0" cy="0" rx="10.794" ry="10.794"/>
         </g>
-        <g class="lini-node lini-oval" style="fill: #968cff; stroke: none; stroke-width: 0" transform="translate(136.7667,-40.16)">
+        <g class="lini-node lini-oval" style="fill: #9084ff; stroke: none; stroke-width: 0" transform="translate(136.7667,-40.16)">
           <title>China: 17</title>
           <ellipse cx="0" cy="0" rx="19.9032" ry="19.9032"/>
         </g>

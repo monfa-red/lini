@@ -4,15 +4,15 @@ assertion_line: 40
 expression: svg
 input_file: samples/icons.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-276.75 -215.25 553.5 438.5" width="553.5" height="438.5" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-276.8 -215.6 553.6 439.2" width="553.6" height="439.2" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
-    .lini .lini-block { fill: none; stroke: none; stroke-width: 1.5; stroke-dasharray: none; }
+    .lini .lini-block { fill: none; stroke: none; stroke-width: 1.6; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-icon { fill: rgba(0, 0, 0, 0.16); stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
-    .lini .lini-sign { stroke-width: 1.5; font-size: 12px; }
+    .lini .lini-sign { stroke-width: 1.6; font-size: 12px; }
     .lini .lini-tile { font-size: 13px; }
     .lini .lini-lbl { color: #484848; font-size: 13px; font-weight: bold; }
     .lini .lini-cap { color: #747474; font-size: 11px; }
@@ -35,17 +35,17 @@ input_file: samples/icons.lini
     .lini .lini-marker.lini-marker-open { fill: none; stroke: inherit; stroke-linecap: round; stroke-dasharray: none; }
   </style>
   <defs/>
-  <rect class="lini-canvas" x="-276.75" y="-215.25" width="553.5" height="438.5"/>
+  <rect class="lini-canvas" x="-276.8" y="-215.6" width="553.6" height="439.2"/>
   <g class="lini-scene">
-    <g class="lini-node lini-lbl lini-block" transform="translate(0,-192)">
+    <g class="lini-node lini-lbl lini-block" transform="translate(0,-192.3)">
       <rect x="-19.5" y="-14.5" width="39" height="29" rx="0" ry="0"/>
       <text class="lini-text" x="0" y="8">Icons</text>
     </g>
-    <g class="lini-node lini-group lini-block" style="fill: none" transform="translate(0,-112.75)">
-      <rect x="-247.35" y="-47.5" width="494.7" height="95" rx="8" ry="8"/>
-      <g class="lini-node lini-tile lini-column lini-block" transform="translate(-202.75,0)">
-        <rect x="-23.85" y="-26.75" width="47.7" height="53.5" rx="0" ry="0"/>
-        <g class="lini-node lini-icon" transform="translate(0,-10.75)">
+    <g class="lini-node lini-group lini-block" style="fill: none" transform="translate(0,-112.9)">
+      <rect x="-247.8" y="-47.6" width="495.6" height="95.2" rx="8" ry="8"/>
+      <g class="lini-node lini-tile lini-column lini-block" transform="translate(-203.1,0)">
+        <rect x="-23.9" y="-26.8" width="47.8" height="53.6" rx="0" ry="0"/>
+        <g class="lini-node lini-icon" transform="translate(0,-10.8)">
           <g transform="scale(0.125) translate(-128 -128)">
             <g fill="rgba(0, 0, 0, 0.16)" stroke="none">
               <path d="M104,216V152h48v64h64V120a8,8,0,0,0-2.34-5.66l-80-80a8,8,0,0,0-11.32,0l-80,80A8,8,0,0,0,40,120v96Z"/>
@@ -60,9 +60,9 @@ input_file: samples/icons.lini
           <text class="lini-text" x="0" y="0">default</text>
         </g>
       </g>
-      <g class="lini-node lini-tile lini-column lini-block" transform="translate(-110.25,0)">
-        <rect x="-27.15" y="-26.75" width="54.3" height="53.5" rx="0" ry="0"/>
-        <g class="lini-node lini-icon lini-style-rose" transform="translate(0,-10.75)">
+      <g class="lini-node lini-tile lini-column lini-block" transform="translate(-110.4,0)">
+        <rect x="-27.2" y="-26.8" width="54.4" height="53.6" rx="0" ry="0"/>
+        <g class="lini-node lini-icon lini-style-rose" transform="translate(0,-10.8)">
           <g transform="scale(0.125) translate(-128 -128)">
             <g fill="#ffe3ec" stroke="none">
               <path d="M128,224S24,168,24,102A54,54,0,0,1,78,48c22.59,0,41.94,12.31,50,32,8.06-19.69,27.41-32,50-32a54,54,0,0,1,54,54C232,168,128,224,128,224Z"/>
@@ -78,8 +78,8 @@ input_file: samples/icons.lini
         </g>
       </g>
       <g class="lini-node lini-tile lini-column lini-block" transform="translate(-25.6,0)">
-        <rect x="-16" y="-26.75" width="32" height="53.5" rx="0" ry="0"/>
-        <g class="lini-node lini-icon" style="fill: none; stroke: #0085b3" transform="translate(0,-10.75)">
+        <rect x="-16" y="-26.8" width="32" height="53.6" rx="0" ry="0"/>
+        <g class="lini-node lini-icon" style="fill: none; stroke: #0085b3" transform="translate(0,-10.8)">
           <g transform="scale(0.125) translate(-128 -128)">
             <g fill="none" stroke="#0085b3" stroke-width="16" stroke-linecap="round" stroke-linejoin="round">
               <path d="M80,128a80,80,0,1,1,80,80H72A56,56,0,1,1,85.92,97.74"/>
@@ -91,9 +91,9 @@ input_file: samples/icons.lini
           <text class="lini-text" x="0" y="0">line</text>
         </g>
       </g>
-      <g class="lini-node lini-tile lini-column lini-block" transform="translate(47.9,0)">
-        <rect x="-16" y="-26.75" width="32" height="53.5" rx="0" ry="0"/>
-        <g class="lini-node lini-icon lini-style-teal" transform="translate(0,-10.75)">
+      <g class="lini-node lini-tile lini-column lini-block" transform="translate(48,0)">
+        <rect x="-16" y="-26.8" width="32" height="53.6" rx="0" ry="0"/>
+        <g class="lini-node lini-icon lini-style-teal" transform="translate(0,-10.8)">
           <g transform="scale(0.125) translate(-128 -128)">
             <g fill="#cdf9f4" stroke="none">
               <circle cx="128" cy="96" r="64"/>
@@ -109,9 +109,9 @@ input_file: samples/icons.lini
           <text class="lini-text" x="0" y="0">user</text>
         </g>
       </g>
-      <g class="lini-node lini-tile lini-column lini-block" transform="translate(129.25,0)">
-        <rect x="-23.85" y="-26.75" width="47.7" height="53.5" rx="0" ry="0"/>
-        <g class="lini-node lini-icon lini-style-amber" transform="translate(0,-10.75)">
+      <g class="lini-node lini-tile lini-column lini-block" transform="translate(129.5,0)">
+        <rect x="-23.9" y="-26.8" width="47.8" height="53.6" rx="0" ry="0"/>
+        <g class="lini-node lini-icon lini-style-amber" transform="translate(0,-10.8)">
           <g transform="scale(0.125) translate(-128 -128)">
             <g fill="#feedca" stroke="none">
               <path d="M56,104a72,72,0,0,1,144,0c0,35.82,8.3,64.6,14.9,76A8,8,0,0,1,208,192H48a8,8,0,0,1-6.88-12C47.71,168.6,56,139.81,56,104Z"/>
@@ -128,9 +128,9 @@ input_file: samples/icons.lini
           <text class="lini-text" x="0" y="0">+ label</text>
         </g>
       </g>
-      <g class="lini-node lini-tile lini-column lini-block" transform="translate(210.6,0)">
-        <rect x="-16" y="-26.75" width="32" height="53.5" rx="0" ry="0"/>
-        <g class="lini-node lini-icon lini-style-purple" transform="translate(0,-10.75)">
+      <g class="lini-node lini-tile lini-column lini-block" transform="translate(211,0)">
+        <rect x="-16" y="-26.8" width="32" height="53.6" rx="0" ry="0"/>
+        <g class="lini-node lini-icon lini-style-purple" transform="translate(0,-10.8)">
           <g transform="scale(0.125) translate(-128 -128)">
             <g fill="#eaebff" stroke="none">
               <path d="M128,189.09l54.72,33.65a8.4,8.4,0,0,0,12.52-9.17l-14.88-62.79,48.7-42A8.46,8.46,0,0,0,224.27,94L160.36,88.8,135.74,29.2a8.36,8.36,0,0,0-15.48,0L95.64,88.8,31.73,94a8.46,8.46,0,0,0-4.79,14.83l48.7,42L60.76,213.57a8.4,8.4,0,0,0,12.52,9.17Z"/>
@@ -150,14 +150,14 @@ input_file: samples/icons.lini
       <rect x="-62.4" y="-14.5" width="124.8" height="29" rx="0" ry="0"/>
       <text class="lini-text" x="0" y="8">Signs, fit: auto</text>
     </g>
-    <g class="lini-node lini-row lini-block" data-id="a" transform="translate(0,30.5)">
+    <g class="lini-node lini-row lini-block" data-id="a" transform="translate(0,30.6)">
       <rect x="-248" y="-32" width="496" height="64" rx="0" ry="0"/>
       <g class="lini-node lini-sign lini-icon lini-style-sky" data-id="web" transform="translate(-216,0)">
         <g transform="scale(0.25) translate(-128 -128)">
           <g fill="#cff6ff" stroke="none">
             <path d="M216,216l-29.33-24-29.34,24L128,192,98.67,216,69.33,192,40,216V120a88,88,0,0,1,176,0Z"/>
           </g>
-          <g fill="none" stroke="#00547e" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+          <g fill="none" stroke="#00547e" stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round">
             <path d="M216,216l-29.33-24-29.34,24L128,192,98.67,216,69.33,192,40,216V120a88,88,0,0,1,176,0Z"/>
           </g>
           <g fill="#00547e" stroke="none">
@@ -172,7 +172,7 @@ input_file: samples/icons.lini
             <path d="M41.85,147.24a8,8,0,0,0-1.66,6.86l12.36,55.63a8,8,0,0,0,12.81,4.51L94.81,192C76.7,161.43,71,134.25,72.16,110.91Z"/>
             <path d="M183.84,110.91c1.21,23.34-4.54,50.52-22.65,81.09l29.45,22.24a8,8,0,0,0,12.81-4.51l12.36-55.63a8,8,0,0,0-1.66-6.86Z"/>
           </g>
-          <g fill="none" stroke="#443394" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+          <g fill="none" stroke="#443394" stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round">
             <line x1="144" y1="224" x2="112" y2="224"/>
             <path d="M94.81,192C37.52,95.32,103.87,32.53,123.09,17.68a8,8,0,0,1,9.82,0C152.13,32.53,218.48,95.32,161.19,192Z"/>
             <path d="M183.84,110.88l30.31,36.36a8,8,0,0,1,1.66,6.86l-12.36,55.63a8,8,0,0,1-12.81,4.51L161.19,192"/>
@@ -188,7 +188,7 @@ input_file: samples/icons.lini
           <g fill="#cdf9f4" stroke="none">
             <path d="M207.86,123.18l16.78-21a99.14,99.14,0,0,0-10.07-24.29l-26.7-3a81,81,0,0,0-6.81-6.81l-3-26.71a99.43,99.43,0,0,0-24.3-10l-21,16.77a81.59,81.59,0,0,0-9.64,0l-21-16.78A99.14,99.14,0,0,0,77.91,41.43l-3,26.7a81,81,0,0,0-6.81,6.81l-26.71,3a99.43,99.43,0,0,0-10,24.3l16.77,21a81.59,81.59,0,0,0,0,9.64l-16.78,21a99.14,99.14,0,0,0,10.07,24.29l26.7,3a81,81,0,0,0,6.81,6.81l3,26.71a99.43,99.43,0,0,0,24.3,10l21-16.77a81.59,81.59,0,0,0,9.64,0l21,16.78a99.14,99.14,0,0,0,24.29-10.07l3-26.7a81,81,0,0,0,6.81-6.81l26.71-3a99.43,99.43,0,0,0,10-24.3l-16.77-21A81.59,81.59,0,0,0,207.86,123.18ZM128,168a40,40,0,1,1,40-40A40,40,0,0,1,128,168Z"/>
           </g>
-          <g fill="none" stroke="#005d56" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+          <g fill="none" stroke="#005d56" stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="128" cy="128" r="40"/>
             <path d="M41.43,178.09A99.14,99.14,0,0,1,31.36,153.8l16.78-21a81.59,81.59,0,0,1,0-9.64l-16.77-21a99.43,99.43,0,0,1,10.05-24.3l26.71-3a81,81,0,0,1,6.81-6.81l3-26.7A99.14,99.14,0,0,1,102.2,31.36l21,16.78a81.59,81.59,0,0,1,9.64,0l21-16.77a99.43,99.43,0,0,1,24.3,10.05l3,26.71a81,81,0,0,1,6.81,6.81l26.7,3a99.14,99.14,0,0,1,10.07,24.29l-16.78,21a81.59,81.59,0,0,1,0,9.64l16.77,21a99.43,99.43,0,0,1-10,24.3l-26.71,3a81,81,0,0,1-6.81,6.81l-3,26.7a99.14,99.14,0,0,1-24.29,10.07l-21-16.78a81.59,81.59,0,0,1-9.64,0l-21,16.77a99.43,99.43,0,0,1-24.3-10l-3-26.71a81,81,0,0,1-6.81-6.81Z"/>
           </g>
@@ -199,7 +199,7 @@ input_file: samples/icons.lini
           <g fill="#feedca" stroke="none">
             <path d="M200,48H56a8,8,0,0,0-8,8V200a8,8,0,0,0,8,8H200a8,8,0,0,0,8-8V56A8,8,0,0,0,200,48ZM152,152H104V104h48Z"/>
           </g>
-          <g fill="none" stroke="#6d3b00" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+          <g fill="none" stroke="#6d3b00" stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round">
             <rect x="104" y="104" width="48" height="48"/>
             <rect x="48" y="48" width="160" height="160" rx="8"/>
             <line x1="208" y1="104" x2="232" y2="104"/>
@@ -218,7 +218,7 @@ input_file: samples/icons.lini
           <g fill="#ffe3ec" stroke="none">
             <ellipse cx="128" cy="80" rx="88" ry="48"/>
           </g>
-          <g fill="none" stroke="#811442" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+          <g fill="none" stroke="#811442" stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round">
             <ellipse cx="128" cy="80" rx="88" ry="48"/>
             <path d="M40,80v48c0,26.51,39.4,48,88,48s88-21.49,88-48V80"/>
             <path d="M40,128v48c0,26.51,39.4,48,88,48s88-21.49,88-48V128"/>
@@ -226,18 +226,18 @@ input_file: samples/icons.lini
         </g>
       </g>
     </g>
-    <g class="lini-node lini-lbl lini-block" transform="translate(0,94.5)">
+    <g class="lini-node lini-lbl lini-block" transform="translate(0,94.7)">
       <rect x="-46.8" y="-14.5" width="93.6" height="29" rx="0" ry="0"/>
       <text class="lini-text" x="0" y="8">Signs + Text</text>
     </g>
-    <g class="lini-node lini-row lini-block" data-id="b" transform="translate(0,158.5)">
+    <g class="lini-node lini-row lini-block" data-id="b" transform="translate(0,158.8)">
       <rect x="-248" y="-32" width="496" height="64" rx="0" ry="0"/>
       <g class="lini-node lini-sign lini-icon lini-style-teal" data-id="web" transform="translate(-216,0)">
         <g transform="scale(0.3333) translate(-128 -132)">
           <g fill="#cdf9f4" stroke="none">
             <path d="M224,88V200.89a7.11,7.11,0,0,1-7.11,7.11H40a8,8,0,0,1-8-8V64a8,8,0,0,1,8-8H93.33a8,8,0,0,1,4.8,1.6L128,80h88A8,8,0,0,1,224,88Z"/>
           </g>
-          <g fill="none" stroke="#005d56" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round">
+          <g fill="none" stroke="#005d56" stroke-width="4.8" stroke-linecap="round" stroke-linejoin="round">
             <path d="M224,88V200.89a7.11,7.11,0,0,1-7.11,7.11H40a8,8,0,0,1-8-8V64a8,8,0,0,1,8-8H93.33a8,8,0,0,1,4.8,1.6L128,80h88A8,8,0,0,1,224,88Z"/>
           </g>
         </g>
@@ -248,7 +248,7 @@ input_file: samples/icons.lini
           <g fill="#e8f4d3" stroke="none">
             <rect x="32" y="48" width="192" height="136" rx="8"/>
           </g>
-          <g fill="none" stroke="#385300" stroke-width="4.6875" stroke-linecap="round" stroke-linejoin="round">
+          <g fill="none" stroke="#385300" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
             <rect x="32" y="48" width="192" height="136" rx="8"/>
             <line x1="160" y1="184" x2="192" y2="224"/>
             <line x1="96" y1="184" x2="64" y2="224"/>
@@ -262,7 +262,7 @@ input_file: samples/icons.lini
           <g fill="#eaebff" stroke="none">
             <path d="M54.46,201.54c-9.2-9.2-3.1-28.53-7.78-39.85C41.82,150,24,140.5,24,128s17.82-22,22.68-33.69C51.36,83,45.26,63.66,54.46,54.46S83,51.36,94.31,46.68C106.05,41.82,115.5,24,128,24S150,41.82,161.69,46.68c11.32,4.68,30.65-1.42,39.85,7.78s3.1,28.53,7.78,39.85C214.18,106.05,232,115.5,232,128S214.18,150,209.32,161.69c-4.68,11.32,1.42,30.65-7.78,39.85s-28.53,3.1-39.85,7.78C150,214.18,140.5,232,128,232s-22-17.82-33.69-22.68C83,204.64,63.66,210.74,54.46,201.54Z"/>
           </g>
-          <g fill="none" stroke="#443394" stroke-width="4.875" stroke-linecap="round" stroke-linejoin="round">
+          <g fill="none" stroke="#443394" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M54.46,201.54c-9.2-9.2-3.1-28.53-7.78-39.85C41.82,150,24,140.5,24,128s17.82-22,22.68-33.69C51.36,83,45.26,63.66,54.46,54.46S83,51.36,94.31,46.68C106.05,41.82,115.5,24,128,24S150,41.82,161.69,46.68c11.32,4.68,30.65-1.42,39.85,7.78s3.1,28.53,7.78,39.85C214.18,106.05,232,115.5,232,128S214.18,150,209.32,161.69c-4.68,11.32,1.42,30.65-7.78,39.85s-28.53,3.1-39.85,7.78C150,214.18,140.5,232,128,232s-22-17.82-33.69-22.68C83,204.64,63.66,210.74,54.46,201.54Z"/>
           </g>
         </g>
@@ -273,7 +273,7 @@ input_file: samples/icons.lini
           <g fill="#ffe3ec" stroke="none">
             <rect x="24" y="64" width="176" height="128" rx="8"/>
           </g>
-          <g fill="none" stroke="#811442" stroke-width="5.25" stroke-linecap="round" stroke-linejoin="round">
+          <g fill="none" stroke="#811442" stroke-width="5.6" stroke-linecap="round" stroke-linejoin="round">
             <rect x="24" y="64" width="176" height="128" rx="8"/>
             <polyline points="200 112 248 80 248 176 200 144"/>
           </g>
@@ -286,7 +286,7 @@ input_file: samples/icons.lini
             <polygon points="176 104 176 152 128 152 128 200 224 200 224 152 224 104 176 104"/>
             <rect x="32" y="56" width="96" height="48"/>
           </g>
-          <g fill="none" stroke="#6d3b00" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round">
+          <g fill="none" stroke="#6d3b00" stroke-width="4.8" stroke-linecap="round" stroke-linejoin="round">
             <line x1="128" y1="104" x2="128" y2="56"/>
             <line x1="80" y1="152" x2="80" y2="104"/>
             <line x1="176" y1="152" x2="176" y2="104"/>
@@ -301,36 +301,36 @@ input_file: samples/icons.lini
   </g>
   <g class="lini-links">
     <g class="lini-link" style="font-size: 11" data-from="a.web" data-to="a.auth">
-      <path d="M -184 30.5 L -143.5 30.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-139.5,30.5 -147.5,34.5 -147.5,26.5" style="fill: #484848"/>
+      <path d="M -184 30.6 L -143.5 30.6"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-139.5,30.6 -148.5,35.1 -148.5,26.1" style="fill: #484848"/>
     </g>
     <g class="lini-link" style="font-size: 11" data-from="a.auth" data-to="a.svc">
-      <path d="M -76 30.5 L -35.5 30.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-31.5,30.5 -39.5,34.5 -39.5,26.5" style="fill: #484848"/>
+      <path d="M -76 30.6 L -35.5 30.6"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-31.5,30.6 -40.5,35.1 -40.5,26.1" style="fill: #484848"/>
     </g>
     <g class="lini-link" style="font-size: 11" data-from="a.svc" data-to="a.cpu">
-      <path d="M 32 30.5 L 72.5 30.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="76.5,30.5 68.5,34.5 68.5,26.5" style="fill: #484848"/>
+      <path d="M 32 30.6 L 72.5 30.6"/>
+      <polygon class="lini-marker lini-marker-arrow" points="76.5,30.6 67.5,35.1 67.5,26.1" style="fill: #484848"/>
     </g>
     <g class="lini-link" style="font-size: 11" data-from="a.cpu" data-to="a.store">
-      <path d="M 140 30.5 L 180.5 30.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="184.5,30.5 176.5,34.5 176.5,26.5" style="fill: #484848"/>
+      <path d="M 140 30.6 L 180.5 30.6"/>
+      <polygon class="lini-marker lini-marker-arrow" points="184.5,30.6 175.5,35.1 175.5,26.1" style="fill: #484848"/>
     </g>
     <g class="lini-link lini-link-dotted" style="font-size: 11" data-from="b.web" data-to="b.auth">
-      <path d="M -184 158.5 L -147.5 158.5"/>
-      <path class="lini-marker lini-marker-open" d="M -139.5 162.9 L -147.5 158.5 L -139.5 154.1 M -139.5 158.5 L -147.5 158.5"/>
+      <path d="M -184 158.8 L -147.5 158.8"/>
+      <path class="lini-marker lini-marker-open" d="M -139.5 163.2 L -147.5 158.8 L -139.5 154.4 M -139.5 158.8 L -147.5 158.8"/>
     </g>
     <g class="lini-link lini-link-dashed" style="font-size: 11" data-from="b.auth" data-to="b.svc">
-      <path d="M -76 158.5 L -35.5 158.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-31.5,158.5 -39.5,162.5 -39.5,154.5" style="fill: #484848"/>
+      <path d="M -76 158.8 L -35.5 158.8"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-31.5,158.8 -40.5,163.3 -40.5,154.3" style="fill: #484848"/>
     </g>
     <g class="lini-link lini-link-dashed" style="font-size: 11" data-from="b.svc" data-to="b.cpu">
-      <path d="M 32 158.5 L 72.5 158.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="76.5,158.5 68.5,162.5 68.5,154.5" style="fill: #484848"/>
+      <path d="M 32 158.8 L 72.5 158.8"/>
+      <polygon class="lini-marker lini-marker-arrow" points="76.5,158.8 67.5,163.3 67.5,154.3" style="fill: #484848"/>
     </g>
     <g class="lini-link" style="font-size: 11" data-from="b.cpu" data-to="b.store">
-      <path d="M 140 158.5 C 140.9892 158.5 141.9647 158.8195 142.8929 159.1615 C 143.8114 159.4999 144.9914 159.2283 145.7857 158.6562 C 146.6717 158.018 147.5949 157.2528 148.6786 157.1198 C 149.6989 156.9945 150.7351 157.5908 151.5714 158.1885 C 152.4755 158.8346 153.3752 159.6243 154.4643 159.8453 C 155.4523 160.0458 156.5281 159.536 157.3571 158.9624 C 158.2848 158.3206 159.1639 157.5112 160.25 157.2066 C 161.2042 156.9389 162.3159 157.3464 163.1429 157.8926 C 164.0954 158.5217 164.9598 159.3438 166.0357 159.7253 C 166.957 160.052 168.098 159.7603 168.9286 159.2448 C 169.9067 158.6377 170.7616 157.8078 171.8214 157.3582 C 172.7131 156.98 173.8841 157.1314 174.7143 157.6304 C 175.628 158.1795 176.5416 159.0254 177.6071 158.994 C 178.585 158.9652 179.5218 158.5 180.5 158.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="184.5,158.5 176.5,162.5 176.5,154.5" style="fill: #484848"/>
+      <path d="M 140 158.8 C 140.9892 158.8 141.9647 159.1195 142.8929 159.4615 C 143.8114 159.7999 144.9914 159.5283 145.7857 158.9562 C 146.6717 158.318 147.5949 157.5528 148.6786 157.4198 C 149.6989 157.2945 150.7351 157.8908 151.5714 158.4885 C 152.4755 159.1346 153.3752 159.9243 154.4643 160.1453 C 155.4523 160.3458 156.5281 159.836 157.3571 159.2624 C 158.2848 158.6206 159.1639 157.8112 160.25 157.5066 C 161.2042 157.2389 162.3159 157.6464 163.1429 158.1926 C 164.0954 158.8217 164.9598 159.6438 166.0357 160.0253 C 166.957 160.352 168.098 160.0603 168.9286 159.5448 C 169.9067 158.9377 170.7616 158.1078 171.8214 157.6582 C 172.7131 157.28 173.8841 157.4314 174.7143 157.9304 C 175.628 158.4795 176.5416 159.3254 177.6071 159.294 C 178.585 159.2652 179.5218 158.8 180.5 158.8"/>
+      <polygon class="lini-marker lini-marker-arrow" points="184.5,158.8 175.5,163.3 175.5,154.3" style="fill: #484848"/>
     </g>
   </g>
 </svg>

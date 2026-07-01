@@ -1,8 +1,9 @@
 ---
 source: tests/hello.rs
+assertion_line: 5
 expression: svg
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-63.25 -48.25 126.5 96.5" width="126.5" height="96.5" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-63.3 -48.3 126.6 96.6" width="126.6" height="96.6" class="lini">
   <style>
     @layer lini.defaults {
       :root, .lini { color-scheme: light dark; --lini-bg: light-dark(white, #1b1b1f); --lini-fg: light-dark(black, #e8e8ea); --lini-fill: light-dark(white, #26262b); --lini-font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; --lini-font-weight: normal; --lini-stroke: light-dark(#444, #9aa0a6); --lini-text-color: var(--lini-fg); }
@@ -11,12 +12,12 @@ expression: svg
     }
     .lini { font-family: var(--lini-font-family); font-size: 15px; font-weight: var(--lini-font-weight); color: var(--lini-text-color); }
     .lini .lini-canvas { fill: var(--lini-bg); }
-    .lini .lini-block { fill: none; stroke: none; stroke-width: 1.5; stroke-dasharray: none; }
+    .lini .lini-block { fill: none; stroke: none; stroke-width: 1.6; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
-    .lini .lini-box { fill: var(--lini-fill); stroke: var(--lini-stroke); stroke-width: 1.5; }
+    .lini .lini-box { fill: var(--lini-fill); stroke: var(--lini-stroke); stroke-width: 1.6; }
   </style>
   <defs/>
-  <rect class="lini-canvas" x="-63.25" y="-48.25" width="126.5" height="96.5"/>
+  <rect class="lini-canvas" x="-63.3" y="-48.3" width="126.6" height="96.6"/>
   <g class="lini-scene">
     <g class="lini-node lini-box lini-block" transform="translate(0,0)">
       <rect x="-42.5" y="-27.5" width="85" height="55" rx="8" ry="8"/>

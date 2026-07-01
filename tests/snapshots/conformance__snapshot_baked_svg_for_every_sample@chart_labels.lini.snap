@@ -1,5 +1,6 @@
 ---
 source: tests/conformance.rs
+assertion_line: 40
 expression: svg
 input_file: samples/chart_labels.lini
 ---
@@ -7,9 +8,9 @@ input_file: samples/chart_labels.lini
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
-    .lini .lini-block { fill: none; stroke: none; stroke-width: 1.5; stroke-dasharray: none; }
+    .lini .lini-block { fill: none; stroke: none; stroke-width: 1.6; stroke-dasharray: none; }
     .lini .lini-oval { stroke-dasharray: none; }
-    .lini .lini-line { fill: none; stroke: #444; stroke-width: 1.5; stroke-dasharray: none; }
+    .lini .lini-line { fill: none; stroke: #444; stroke-width: 1.6; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-chart-label { pointer-events: none; }
   </style>
@@ -17,7 +18,7 @@ input_file: samples/chart_labels.lini
   <rect class="lini-canvas" x="-260" y="-170" width="520" height="340"/>
   <g class="lini-scene">
     <g class="lini-node lini-chart lini-block" transform="translate(0,0)">
-      <rect x="-239.25" y="-149.25" width="478.5" height="298.5" rx="0" ry="0"/>
+      <rect x="-239.2" y="-149.2" width="478.4" height="298.4" rx="0" ry="0"/>
       <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
         <line x1="-216.8" y1="67.4286" x2="228" y2="67.4286"/>
       </g>

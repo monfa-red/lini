@@ -1,36 +1,37 @@
 ---
 source: tests/conformance.rs
+assertion_line: 40
 expression: svg
 input_file: samples/chart_pie.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-313.8 -160.75 626.55 321.5" width="626.55" height="321.5" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-313.8 -160.8 626.6 321.6" width="626.6" height="321.6" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
-    .lini .lini-block { fill: none; stroke: none; stroke-width: 1.5; stroke-dasharray: none; }
+    .lini .lini-block { fill: none; stroke: none; stroke-width: 1.6; stroke-dasharray: none; }
     .lini .lini-poly { stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
   </style>
   <defs/>
-  <rect class="lini-canvas" x="-313.8" y="-160.75" width="626.55" height="321.5"/>
+  <rect class="lini-canvas" x="-313.8" y="-160.8" width="626.6" height="321.6"/>
   <g class="lini-scene">
     <g class="lini-node lini-grid lini-block" transform="translate(0,0)">
       <rect x="-292" y="-140" width="584" height="280" rx="0" ry="0"/>
       <g class="lini-node lini-pie lini-block" transform="translate(-152,0)">
-        <rect x="-139.25" y="-139.25" width="278.5" height="278.5" rx="0" ry="0"/>
-        <g class="lini-node lini-poly" style="fill: #ffb2c9; stroke: #b8476e; stroke-width: 1.5; opacity: 1" transform="translate(0,0)">
+        <rect x="-139.2" y="-139.2" width="278.4" height="278.4" rx="0" ry="0"/>
+        <g class="lini-node lini-poly" style="fill: #ffb2c9; stroke: #b8476e; stroke-width: 1.6; opacity: 1" transform="translate(0,0)">
           <title>Search: 45 (45%)</title>
           <polygon points="0,-106.4 10.7418,-105.8759 21.3816,-104.3087 31.8184,-101.7132 41.9529,-98.1141 51.6889,-93.5456 60.9339,-88.051 69.6002,-81.6825 77.6054,-74.5007 84.8735,-66.5738 91.3355,-57.977 96.9299,-48.792 101.6036,-39.106 105.3123,-29.0111 108.0207,-18.6031 109.7031,-7.9809 110.3435,2.7546 109.9359,13.5015 108.484,24.1576 106.0017,34.6219 102.5126,44.7947 98.0498,54.5797 92.6557,63.8837 86.3815,72.6185 79.2868,80.701 71.4391,88.0546 62.9128,94.6093 53.7889,100.3029 44.1542,105.0813 34.1,108.8991 0,3.95"/>
         </g>
-        <g class="lini-node lini-poly" style="fill: #79e3da; stroke: #008e85; stroke-width: 1.5; opacity: 1" transform="translate(0,0)">
+        <g class="lini-node lini-poly" style="fill: #79e3da; stroke: #008e85; stroke-width: 1.6; opacity: 1" transform="translate(0,0)">
           <title>Direct: 25 (25%)</title>
           <polygon points="34.1,108.8991 23.649,111.7361 12.9703,113.5351 2.1666,114.2787 -8.658,113.9598 -19.3991,112.5815 -29.9535,110.1569 -40.2193,106.7096 -50.0979,102.2726 -59.4939,96.8887 -68.317,90.6097 -76.4822,83.4962 -83.9108,75.6166 -90.5313,67.0468 -96.2799,57.8694 -101.1013,48.1726 -104.9491,38.05 0,3.95"/>
         </g>
-        <g class="lini-node lini-poly" style="fill: #ffbd8d; stroke: #b45700; stroke-width: 1.5; opacity: 1" transform="translate(0,0)">
+        <g class="lini-node lini-poly" style="fill: #ffbd8d; stroke: #b45700; stroke-width: 1.6; opacity: 1" transform="translate(0,0)">
           <title>Social: 18 (18%)</title>
           <polygon points="-104.9491,38.05 -107.6924,28.0221 -109.4799,17.7805 -110.2955,7.4162 -110.1322,-2.9789 -108.9914,-13.3125 -106.8832,-23.4929 -103.8262,-33.4297 -99.8477,-43.0347 -94.9829,-52.2227 -89.275,-60.9121 -82.7748,-69.0258 -75.5398,-76.4917 0,3.95"/>
         </g>
-        <g class="lini-node lini-poly" style="fill: #7eddfd; stroke: #0085b3; stroke-width: 1.5; opacity: 1" transform="translate(0,0)">
+        <g class="lini-node lini-poly" style="fill: #7eddfd; stroke: #0085b3; stroke-width: 1.6; opacity: 1" transform="translate(0,0)">
           <title>Referral: 12 (12%)</title>
           <polygon points="-75.5398,-76.4917 -67.6343,-83.2436 -59.1285,-89.2216 -50.0979,-94.3726 -40.6225,-98.6508 -30.7867,-102.0184 -20.6775,-104.4454 -10.3849,-105.9103 -0,-106.4 0,3.95"/>
         </g>
@@ -53,16 +54,16 @@ input_file: samples/chart_pie.lini
         <text class="lini-text" x="115.4" y="130.1" style="font-weight: bold; font-size: 11px">Referral</text>
       </g>
       <g class="lini-node lini-pie lini-block" transform="translate(152,0)">
-        <rect x="-139.25" y="-139.25" width="278.5" height="278.5" rx="0" ry="0"/>
-        <g class="lini-node lini-poly" style="fill: #ffb2c9; stroke: #b8476e; stroke-width: 1.5; opacity: 1" transform="translate(0,0)">
+        <rect x="-139.2" y="-139.2" width="278.4" height="278.4" rx="0" ry="0"/>
+        <g class="lini-node lini-poly" style="fill: #ffb2c9; stroke: #b8476e; stroke-width: 1.6; opacity: 1" transform="translate(0,0)">
           <title>Ads: 40 (40%)</title>
           <polygon points="0,-106.4 10.6503,-105.8848 21.2012,-104.3442 31.5541,-101.7924 41.6124,-98.2534 51.2822,-93.7601 60.4732,-88.3545 69.0995,-82.0871 77.0807,-75.0163 84.3422,-67.2083 90.8163,-58.7359 96.4424,-49.6783 101.168,-40.1199 104.9491,-30.15 107.7503,-19.8618 109.5454,-9.3512 110.3178,1.2835 110.0601,11.9432 108.7749,22.5282 106.474,32.9398 103.179,43.0806 98.9207,52.8562 93.7388,62.1751 87.6816,70.9504 80.8058,79.1001 73.1756,86.5482 64.8621,93.225 32.4311,48.5875 36.5878,45.2491 40.4029,41.5251 43.8408,37.4502 46.8694,33.0626 49.4604,28.4031 51.5895,23.5153 53.237,18.4449 54.3874,13.2391 55.0301,7.9466 55.1589,2.6168 54.7727,-2.7006 53.8751,-7.9559 52.4745,-13.1 50.584,-18.0849 48.2212,-22.8641 45.4081,-27.393 42.1711,-31.6292 38.5404,-35.5332 34.5498,-39.0685 30.2366,-42.2022 25.6411,-44.905 20.8062,-47.1517 15.7771,-48.9212 10.6006,-50.1971 5.3252,-50.9674 0,-51.225"/>
         </g>
-        <g class="lini-node lini-poly" style="fill: #79e3da; stroke: #008e85; stroke-width: 1.5; opacity: 1" transform="translate(0,0)">
+        <g class="lini-node lini-poly" style="fill: #79e3da; stroke: #008e85; stroke-width: 1.6; opacity: 1" transform="translate(0,0)">
           <title>SEO: 30 (30%)</title>
           <polygon points="64.8621,93.225 56.1727,98.9329 46.9847,103.7977 37.3797,107.7762 27.4429,110.8332 17.2625,112.9414 6.9289,114.0822 -3.4662,114.2455 -13.8305,113.4299 -24.0721,111.6424 -34.1,108.8991 -43.8253,105.2242 -53.1615,100.6504 -62.0259,95.2183 -70.3397,88.9761 -78.0292,81.9792 -85.0261,74.2897 -91.2683,65.9759 -96.7004,57.1115 -101.2742,47.7753 -104.9491,38.05 -52.4745,21 -50.6371,25.8626 -48.3502,30.5308 -45.6342,34.963 -42.5131,39.1199 -39.0146,42.9646 -35.1699,46.4631 -31.013,49.5842 -26.5808,52.3002 -21.9126,54.5871 -17.05,56.4245 -12.0361,57.7962 -6.9153,58.6899 -1.7331,59.0978 3.4645,59.0161 8.6313,58.4457 13.7215,57.3916 18.6899,55.8631 23.4924,53.8738 28.0864,51.4414 32.4311,48.5875"/>
         </g>
-        <g class="lini-node lini-poly" style="fill: #ffbd8d; stroke: #b45700; stroke-width: 1.5; opacity: 1" transform="translate(0,0)">
+        <g class="lini-node lini-poly" style="fill: #ffbd8d; stroke: #b45700; stroke-width: 1.6; opacity: 1" transform="translate(0,0)">
           <title>Direct: 30 (30%)</title>
           <polygon points="-104.9491,38.05 -107.6924,28.0221 -109.4799,17.7805 -110.2955,7.4162 -110.1322,-2.9789 -108.9914,-13.3125 -106.8832,-23.4929 -103.8262,-33.4297 -99.8477,-43.0347 -94.9829,-52.2227 -89.275,-60.9121 -82.7748,-69.0258 -75.5398,-76.4917 -67.6343,-83.2436 -59.1285,-89.2216 -50.0979,-94.3726 -40.6225,-98.6508 -30.7867,-102.0184 -20.6775,-104.4454 -10.3849,-105.9103 -0,-106.4 -0,-51.225 -5.1924,-50.9801 -10.3388,-50.2477 -15.3933,-49.0342 -20.3113,-47.3504 -25.0489,-45.2113 -29.5642,-42.6358 -33.8171,-39.6468 -37.7699,-36.2708 -41.3874,-32.5379 -44.6375,-28.4811 -47.4914,-24.1364 -49.9238,-19.5424 -51.9131,-14.7399 -53.4416,-9.7715 -54.4957,-4.6813 -55.0661,0.4855 -55.1478,5.6831 -54.7399,10.8653 -53.8462,15.9861 -52.4745,21"/>
         </g>

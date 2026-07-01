@@ -1,26 +1,27 @@
 ---
 source: tests/conformance.rs
+assertion_line: 40
 expression: svg
 input_file: samples/chart_lines.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-392.75 -252.75 785.5 505.5" width="785.5" height="505.5" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-392.8 -252.8 785.6 505.6" width="785.6" height="505.6" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
-    .lini .lini-block { fill: none; stroke: none; stroke-width: 1.5; stroke-dasharray: none; }
+    .lini .lini-block { fill: none; stroke: none; stroke-width: 1.6; stroke-dasharray: none; }
     .lini .lini-oval { stroke-dasharray: none; }
     .lini .lini-poly { stroke-dasharray: none; }
-    .lini .lini-line { fill: none; stroke: #444; stroke-width: 1.5; stroke-dasharray: none; }
+    .lini .lini-line { fill: none; stroke: #444; stroke-width: 1.6; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-chart-label { pointer-events: none; }
   </style>
   <defs/>
-  <rect class="lini-canvas" x="-392.75" y="-252.75" width="785.5" height="505.5"/>
+  <rect class="lini-canvas" x="-392.8" y="-252.8" width="785.6" height="505.6"/>
   <g class="lini-scene">
     <g class="lini-node lini-grid lini-block" transform="translate(0,0)">
       <rect x="-372" y="-232" width="744" height="464" rx="0" ry="0"/>
       <g class="lini-node lini-chart lini-block" transform="translate(-192,-122)">
-        <rect x="-179.25" y="-109.25" width="358.5" height="218.5" rx="0" ry="0"/>
+        <rect x="-179.2" y="-109.2" width="358.4" height="218.4" rx="0" ry="0"/>
         <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
           <line x1="-150.2" y1="70.9" x2="168" y2="70.9"/>
         </g>
@@ -58,7 +59,7 @@ input_file: samples/chart_lines.lini
           <title>v1: p999: 480</title>
           <ellipse cx="0" cy="0" rx="5.5" ry="5.5"/>
         </g>
-        <g class="lini-node lini-line" style="stroke: #008e85; stroke-dasharray: 5,3.75" transform="translate(0,0)">
+        <g class="lini-node lini-line" style="stroke: #008e85; stroke-dasharray: 5.2,3.9" transform="translate(0,0)">
           <polyline points="-110.425,67.3648 -30.875,59.116 48.675,41.44 128.225,-17.48"/>
         </g>
         <g class="lini-node lini-oval" style="fill: #008e85; stroke: none; stroke-width: 0" transform="translate(-110.425,67.3648)">
@@ -77,22 +78,22 @@ input_file: samples/chart_lines.lini
           <title>v2: p999: 300</title>
           <ellipse cx="0" cy="0" rx="5.5" ry="5.5"/>
         </g>
-        <g class="lini-node lini-line" style="stroke: #968cff; stroke-dasharray: 1.5,3" transform="translate(0,0)">
+        <g class="lini-node lini-line" style="stroke: #9084ff; stroke-dasharray: 1.6,3.2" transform="translate(0,0)">
           <polyline points="-110.425,-14.534 -30.875,23.764 48.675,50.278 128.225,59.116"/>
         </g>
-        <g class="lini-node lini-oval" style="fill: #968cff; stroke: none; stroke-width: 0" transform="translate(-110.425,-14.534)">
+        <g class="lini-node lini-oval" style="fill: #9084ff; stroke: none; stroke-width: 0" transform="translate(-110.425,-14.534)">
           <title>Speed: p50: 290</title>
           <ellipse cx="0" cy="0" rx="5.5" ry="5.5"/>
         </g>
-        <g class="lini-node lini-oval" style="fill: #968cff; stroke: none; stroke-width: 0" transform="translate(-30.875,23.764)">
+        <g class="lini-node lini-oval" style="fill: #9084ff; stroke: none; stroke-width: 0" transform="translate(-30.875,23.764)">
           <title>Speed: p90: 160</title>
           <ellipse cx="0" cy="0" rx="5.5" ry="5.5"/>
         </g>
-        <g class="lini-node lini-oval" style="fill: #968cff; stroke: none; stroke-width: 0" transform="translate(48.675,50.278)">
+        <g class="lini-node lini-oval" style="fill: #9084ff; stroke: none; stroke-width: 0" transform="translate(48.675,50.278)">
           <title>Speed: p99: 70</title>
           <ellipse cx="0" cy="0" rx="5.5" ry="5.5"/>
         </g>
-        <g class="lini-node lini-oval" style="fill: #968cff; stroke: none; stroke-width: 0" transform="translate(128.225,59.116)">
+        <g class="lini-node lini-oval" style="fill: #9084ff; stroke: none; stroke-width: 0" transform="translate(128.225,59.116)">
           <title>Speed: p999: 40</title>
           <ellipse cx="0" cy="0" rx="5.5" ry="5.5"/>
         </g>
@@ -115,7 +116,7 @@ input_file: samples/chart_lines.lini
           <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
         </g>
         <text class="lini-text" x="-1.9" y="100.1" style="font-weight: bold; font-size: 11px">v2</text>
-        <g class="lini-node lini-block" style="fill: #968cff; stroke-width: 0" transform="translate(26.2,100.1)">
+        <g class="lini-node lini-block" style="fill: #9084ff; stroke-width: 0" transform="translate(26.2,100.1)">
           <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
         </g>
         <text class="lini-text" x="53.2" y="100.1" style="font-weight: bold; font-size: 11px">Speed</text>
@@ -129,7 +130,7 @@ input_file: samples/chart_lines.lini
         <text class="lini-text lini-chart-label" x="-30.875" y="6.264" style="fill: #888; font-weight: normal; font-size: 10px">Warm</text>
       </g>
       <g class="lini-node lini-chart lini-block" transform="translate(192,-122)">
-        <rect x="-179.25" y="-109.25" width="358.5" height="218.5" rx="0" ry="0"/>
+        <rect x="-179.2" y="-109.2" width="358.4" height="218.4" rx="0" ry="0"/>
         <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
           <line x1="-156.8" y1="88.6" x2="168" y2="88.6"/>
         </g>
@@ -193,7 +194,7 @@ input_file: samples/chart_lines.lini
         <text class="lini-text" x="0" y="-92.9" style="font-weight: bold; font-size: 13px">Temperature (°C)</text>
       </g>
       <g class="lini-node lini-chart lini-block" transform="translate(-192,122)">
-        <rect x="-179.25" y="-109.25" width="358.5" height="218.5" rx="0" ry="0"/>
+        <rect x="-179.2" y="-109.2" width="358.4" height="218.4" rx="0" ry="0"/>
         <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
           <line x1="-156.8" y1="88.6" x2="168" y2="88.6"/>
         </g>
@@ -220,7 +221,7 @@ input_file: samples/chart_lines.lini
         <text class="lini-text" x="0" y="-92.9" style="font-weight: bold; font-size: 13px">Tier price ($)</text>
       </g>
       <g class="lini-node lini-chart lini-block" transform="translate(192,122)">
-        <rect x="-179.25" y="-109.25" width="358.5" height="218.5" rx="0" ry="0"/>
+        <rect x="-179.2" y="-109.2" width="358.4" height="218.4" rx="0" ry="0"/>
         <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
           <line x1="-156.8" y1="70.9" x2="168" y2="70.9"/>
         </g>

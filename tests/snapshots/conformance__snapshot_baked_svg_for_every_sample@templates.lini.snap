@@ -1,20 +1,21 @@
 ---
 source: tests/conformance.rs
+assertion_line: 40
 expression: svg
 input_file: samples/templates.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-277 -176.75 554 353.5" width="554" height="353.5" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-277.2 -177.1 554.4 354.2" width="554.4" height="354.2" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
-    .lini .lini-block { fill: none; stroke: none; stroke-width: 1.5; stroke-dasharray: none; }
+    .lini .lini-block { fill: none; stroke: none; stroke-width: 1.6; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
-    .lini .lini-box { fill: white; stroke: #444; stroke-width: 1.5; }
+    .lini .lini-box { fill: white; stroke: #444; stroke-width: 1.6; }
     .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
     .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
     .lini .lini-footnote { color: rgba(0, 0, 0, 0.5); font-size: 11px; }
     .lini .lini-badge { fill: #0a84ff; color: white; font-size: 11px; font-weight: normal; }
-    .lini .lini-table { fill: none; stroke: #444; stroke-width: 1.5; font-size: 14px; font-weight: normal; stroke-dasharray: none; }
+    .lini .lini-table { fill: none; stroke: #444; stroke-width: 1.6; font-size: 14px; font-weight: normal; stroke-dasharray: none; }
     .lini .lini-header { fill: rgba(0, 0, 0, 0.06); font-weight: bold; }
     .lini .lini-panel { fill: #eeeeee; stroke: #cecece; }
     .lini .lini-tile { fill: #7eddfd; stroke: #00547e; color: #00547e; }
@@ -22,99 +23,99 @@ input_file: samples/templates.lini
   <defs>
     <filter id="lini-shadow-1" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="rgba(0, 0, 0, 0.2)"/></filter>
   </defs>
-  <rect class="lini-canvas" x="-277" y="-176.75" width="554" height="353.5"/>
+  <rect class="lini-canvas" x="-277.2" y="-177.1" width="554.4" height="354.2"/>
   <g class="lini-scene">
-    <g class="lini-node lini-block" style="font-size: 18px; font-weight: bold" transform="translate(0,-141)">
+    <g class="lini-node lini-block" style="font-size: 18px; font-weight: bold" transform="translate(0,-141.3)">
       <rect x="-48.6" y="-9" width="97.2" height="18" rx="0" ry="0"/>
       <text class="lini-text" x="0" y="0">Templates</text>
     </g>
-    <g class="lini-node lini-row lini-block" data-id="upper" transform="translate(0,-26.75)">
-      <rect x="-210" y="-81.75" width="420" height="163.5" rx="0" ry="0"/>
-      <g class="lini-node lini-panel lini-group lini-block" data-id="profile" transform="translate(-120.75,-5.75)">
-        <rect x="-88.75" y="-75.5" width="177.5" height="151" rx="8" ry="8"/>
-        <g class="lini-node lini-tile lini-box lini-block" data-id="name" transform="translate(0,-33.25)">
+    <g class="lini-node lini-row lini-block" data-id="upper" transform="translate(0,-26.8)">
+      <rect x="-210.3" y="-81.9" width="420.6" height="163.8" rx="0" ry="0"/>
+      <g class="lini-node lini-panel lini-group lini-block" data-id="profile" transform="translate(-121,-5.8)">
+        <rect x="-88.8" y="-75.6" width="177.6" height="151.2" rx="8" ry="8"/>
+        <g class="lini-node lini-tile lini-box lini-block" data-id="name" transform="translate(0,-33.3)">
           <rect x="-74" y="-27.5" width="148" height="55" rx="6" ry="6"/>
           <text class="lini-text" x="0" y="0">Ada Lovelace</text>
         </g>
-        <g class="lini-node lini-tile lini-box lini-block" data-id="role" style="fill: #79e3da; stroke: #005d56; color: #005d56" transform="translate(0,33.25)">
+        <g class="lini-node lini-tile lini-box lini-block" data-id="role" style="fill: #79e3da; stroke: #005d56; color: #005d56" transform="translate(0,33.3)">
           <rect x="-56" y="-27.5" width="112" height="55" rx="6" ry="6"/>
           <text class="lini-text" x="0" y="0">Engineer</text>
         </g>
-        <g class="lini-node lini-caption lini-block" transform="translate(-62.8,-86.75)">
+        <g class="lini-node lini-caption lini-block" transform="translate(-62.8,-86.8)">
           <rect x="-25.2" y="-6" width="50.4" height="12" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="0">Profile</text>
         </g>
-        <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,86.25)">
+        <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,86.3)">
           <rect x="-33" y="-5.5" width="66" height="11" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="0">since 1843</text>
         </g>
       </g>
-      <g class="lini-node lini-panel lini-group lini-block" data-id="nested" transform="translate(100.25,0)">
-        <rect x="-109.25" y="-81.25" width="218.5" height="162.5" rx="8" ry="8"/>
-        <g class="lini-node lini-row lini-block" transform="translate(-34,0)">
-          <rect x="-60.5" y="-28.25" width="121" height="56.5" rx="0" ry="0"/>
-          <g class="lini-node lini-tile lini-box lini-block" data-id="r1" style="fill: #eec978; stroke: #6d3b00; color: #6d3b00" transform="translate(-35.25,0)">
+      <g class="lini-node lini-panel lini-group lini-block" data-id="nested" transform="translate(100.3,0)">
+        <rect x="-109.5" y="-81.4" width="219" height="162.8" rx="8" ry="8"/>
+        <g class="lini-node lini-row lini-block" transform="translate(-34.1,0)">
+          <rect x="-60.6" y="-28.3" width="121.2" height="56.6" rx="0" ry="0"/>
+          <g class="lini-node lini-tile lini-box lini-block" data-id="r1" style="fill: #eec978; stroke: #6d3b00; color: #6d3b00" transform="translate(-35.3,0)">
             <rect x="-24.5" y="-27.5" width="49" height="55" rx="6" ry="6"/>
             <text class="lini-text" x="0" y="0">a</text>
           </g>
-          <g class="lini-node lini-tile lini-box lini-block" data-id="r2" style="fill: #eec978; stroke: #6d3b00; color: #6d3b00" transform="translate(35.25,0)">
+          <g class="lini-node lini-tile lini-box lini-block" data-id="r2" style="fill: #eec978; stroke: #6d3b00; color: #6d3b00" transform="translate(35.3,0)">
             <rect x="-24.5" y="-27.5" width="49" height="55" rx="6" ry="6"/>
             <text class="lini-text" x="0" y="0">b</text>
           </g>
         </g>
-        <g class="lini-node lini-column lini-block" transform="translate(69.25,0)">
-          <rect x="-25.25" y="-66.5" width="50.5" height="133" rx="0" ry="0"/>
-          <g class="lini-node lini-tile lini-box lini-block" data-id="c1" style="fill: #ffb2c9; stroke: #811442; color: #811442" transform="translate(0,-38.25)">
+        <g class="lini-node lini-column lini-block" transform="translate(69.4,0)">
+          <rect x="-25.3" y="-66.6" width="50.6" height="133.2" rx="0" ry="0"/>
+          <g class="lini-node lini-tile lini-box lini-block" data-id="c1" style="fill: #ffb2c9; stroke: #811442; color: #811442" transform="translate(0,-38.3)">
             <rect x="-24.5" y="-27.5" width="49" height="55" rx="6" ry="6"/>
             <text class="lini-text" x="0" y="0">p</text>
           </g>
-          <g class="lini-node lini-tile lini-box lini-block" data-id="c2" style="fill: #ffb2c9; stroke: #811442; color: #811442" transform="translate(0,38.25)">
+          <g class="lini-node lini-tile lini-box lini-block" data-id="c2" style="fill: #ffb2c9; stroke: #811442; color: #811442" transform="translate(0,38.3)">
             <rect x="-24.5" y="-27.5" width="49" height="55" rx="6" ry="6"/>
             <text class="lini-text" x="0" y="0">q</text>
           </g>
         </g>
-        <g class="lini-node lini-caption lini-block" transform="translate(-65.3,-92.5)">
+        <g class="lini-node lini-caption lini-block" transform="translate(-65.5,-92.6)">
           <rect x="-43.2" y="-6" width="86.4" height="12" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="0">row + column</text>
         </g>
       </g>
     </g>
-    <g class="lini-node lini-row lini-block" data-id="lower" transform="translate(0,114.25)">
-      <rect x="-250.25" y="-35.75" width="500.5" height="71.5" rx="0" ry="0"/>
-      <g class="lini-node lini-tile lini-box lini-block" data-id="svc" style="fill: #79e3da; stroke: #005d56; color: #005d56" transform="translate(-174.5,0)">
+    <g class="lini-node lini-row lini-block" data-id="lower" transform="translate(0,114.5)">
+      <rect x="-250.4" y="-35.8" width="500.8" height="71.6" rx="0" ry="0"/>
+      <g class="lini-node lini-tile lini-box lini-block" data-id="svc" style="fill: #79e3da; stroke: #005d56; color: #005d56" transform="translate(-174.6,0)">
         <rect x="-75" y="-35" width="150" height="70" rx="6" ry="6"/>
         <text class="lini-text" x="0" y="0">Service</text>
-        <g class="lini-node lini-badge lini-block" transform="translate(64.35,-32.75)">
+        <g class="lini-node lini-badge lini-block" transform="translate(64.3,-32.7)">
           <g filter="url(#lini-shadow-1)">
             <rect x="-15.9" y="-7.5" width="31.8" height="15" rx="8" ry="8"/>
           </g>
           <text class="lini-text" x="0" y="0">NEW</text>
         </g>
       </g>
-      <g class="lini-node lini-table lini-group lini-block" data-id="basket" style="stroke: #484848" transform="translate(27,-1.25)">
-        <rect x="-103" y="-33.75" width="206" height="67.5" rx="8" ry="8"/>
-        <path d="M -23 -33.75 L -23 33.75 M 33 -33.75 L 33 33.75 M -103 -10.25 L 103 -10.25 M -103 11.75 L 103 11.75" fill="none"/>
+      <g class="lini-node lini-table lini-group lini-block" data-id="basket" style="stroke: #484848" transform="translate(27,-1.2)">
+        <rect x="-103" y="-33.8" width="206" height="67.6" rx="8" ry="8"/>
+        <path d="M -23 -33.8 L -23 33.8 M 33 -33.8 L 33 33.8 M -103 -10.2 L 103 -10.2 M -103 11.8 L 103 11.8" fill="none"/>
         <g class="lini-node lini-header lini-block" transform="translate(-63,-22)">
-          <rect x="-39.25" y="-11" width="78.5" height="22" rx="0" ry="0"/>
+          <rect x="-39.2" y="-11" width="78.4" height="22" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="0">Fruit</text>
         </g>
         <g class="lini-node lini-header lini-block" transform="translate(5,-22)">
-          <rect x="-27.25" y="-11" width="54.5" height="22" rx="0" ry="0"/>
+          <rect x="-27.2" y="-11" width="54.4" height="22" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="0">Qty</text>
         </g>
         <g class="lini-node lini-header lini-block" transform="translate(68,-22)">
-          <rect x="-34.25" y="-11" width="68.5" height="22" rx="0" ry="0"/>
+          <rect x="-34.2" y="-11" width="68.4" height="22" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="0">Note</text>
         </g>
-        <text class="lini-text" x="-63" y="0.75">Apple</text>
-        <text class="lini-text" x="5" y="0.75">12</text>
-        <text class="lini-text" x="68" y="0.75">fresh</text>
-        <text class="lini-text" x="-63" y="22.75">Mango</text>
-        <text class="lini-text" x="5" y="22.75">3</text>
-        <text class="lini-text" x="68" y="22.75">ripe</text>
+        <text class="lini-text" x="-63" y="0.8">Apple</text>
+        <text class="lini-text" x="5" y="0.8">12</text>
+        <text class="lini-text" x="68" y="0.8">fresh</text>
+        <text class="lini-text" x="-63" y="22.8">Mango</text>
+        <text class="lini-text" x="5" y="22.8">3</text>
+        <text class="lini-text" x="68" y="22.8">ripe</text>
       </g>
       <a href="https://example.com">
-        <g class="lini-node lini-tile lini-box lini-block" data-id="docs" style="fill: #c6c4ff; stroke: #443394; color: #443394" transform="translate(201.5,0)">
+        <g class="lini-node lini-tile lini-box lini-block" data-id="docs" style="fill: #c6c4ff; stroke: #443394; color: #443394" transform="translate(201.6,0)">
           <rect x="-48" y="-35" width="96" height="70" rx="6" ry="6"/>
           <text class="lini-text" x="0" y="0">Docs</text>
         </g>

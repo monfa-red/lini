@@ -647,17 +647,17 @@ mod tests {
 
     #[test]
     fn empty_closed_primitive_is_two_paddings() {
-        // padding 20 each side → 40 drawn; + stroke 1.5 → 41.5 bbox.
+        // padding 20 each side → 40 drawn; + stroke 1.6 → 41.6 bbox.
         let n = &lay_out("|box|\n").nodes[0];
-        assert!((n.bbox.w() - 41.5).abs() < 0.01, "w={}", n.bbox.w());
-        assert!((n.bbox.h() - 41.5).abs() < 0.01, "h={}", n.bbox.h());
+        assert!((n.bbox.w() - 41.6).abs() < 0.01, "w={}", n.bbox.w());
+        assert!((n.bbox.h() - 41.6).abs() < 0.01, "h={}", n.bbox.h());
     }
 
     #[test]
     fn explicit_dims_are_border_box() {
         let n = &lay_out("|box| { width: 100; height: 50; }\n").nodes[0];
-        assert!((n.bbox.w() - 101.5).abs() < 0.01, "w={}", n.bbox.w());
-        assert!((n.bbox.h() - 51.5).abs() < 0.01, "h={}", n.bbox.h());
+        assert!((n.bbox.w() - 101.6).abs() < 0.01, "w={}", n.bbox.w());
+        assert!((n.bbox.h() - 51.6).abs() < 0.01, "h={}", n.bbox.h());
     }
 
     #[test]
@@ -678,9 +678,9 @@ mod tests {
     #[test]
     fn dims_are_independent_per_axis() {
         let n = &lay_out("|box| \"hi\" { width: 200 }\n").nodes[0];
-        assert!((n.bbox.w() - 201.5).abs() < 0.01, "w={}", n.bbox.w());
-        // height auto = one text line (15) + 40 padding + 1.5 stroke = 56.5.
-        assert!((n.bbox.h() - 56.5).abs() < 0.01, "h={}", n.bbox.h());
+        assert!((n.bbox.w() - 201.6).abs() < 0.01, "w={}", n.bbox.w());
+        // height auto = one text line (15) + 40 padding + 1.6 stroke = 56.6.
+        assert!((n.bbox.h() - 56.6).abs() < 0.01, "h={}", n.bbox.h());
     }
 
     #[test]
@@ -694,7 +694,7 @@ mod tests {
         );
         // A width the content fits within is honoured exactly (border-box + stroke).
         let kept = &lay_out("|box| \"hi\" { width: 300 }\n").nodes[0];
-        assert!((kept.bbox.w() - 301.5).abs() < 0.01, "w={}", kept.bbox.w());
+        assert!((kept.bbox.w() - 301.6).abs() < 0.01, "w={}", kept.bbox.w());
     }
 
     #[test]
@@ -719,8 +719,8 @@ mod tests {
     #[test]
     fn oval_uses_width_height() {
         let n = &lay_out("|oval| { width: 100; height: 50; }\n").nodes[0];
-        assert!((n.bbox.w() - 101.5).abs() < 0.01, "w={}", n.bbox.w());
-        assert!((n.bbox.h() - 51.5).abs() < 0.01, "h={}", n.bbox.h());
+        assert!((n.bbox.w() - 101.6).abs() < 0.01, "w={}", n.bbox.w());
+        assert!((n.bbox.h() - 51.6).abs() < 0.01, "h={}", n.bbox.h());
     }
 
     #[test]
@@ -740,9 +740,9 @@ mod tests {
              |box| { width: 60; height: 40; }\n",
         );
         assert_eq!(l.nodes.len(), 2);
-        // half (50.75) + gap (10) + half (30.75) = 91.5.
+        // half (50.8) + gap (10) + half (30.8) = 91.6.
         let dx = l.nodes[1].cx - l.nodes[0].cx;
-        assert!((dx - 91.5).abs() < 0.5, "dx={}", dx);
+        assert!((dx - 91.6).abs() < 0.5, "dx={}", dx);
         assert!((l.nodes[0].cy - l.nodes[1].cy).abs() < 0.01);
     }
 
@@ -753,9 +753,9 @@ mod tests {
              |box| { width: 100; height: 40; }\n\
              |box| { width: 100; height: 60; }\n",
         );
-        // half (20.75) + gap (20) + half (30.75) = 71.5.
+        // half (20.8) + gap (20) + half (30.8) = 71.6.
         let dy = l.nodes[1].cy - l.nodes[0].cy;
-        assert!((dy - 71.5).abs() < 0.5, "dy={}", dy);
+        assert!((dy - 71.6).abs() < 0.5, "dy={}", dy);
         assert!((l.nodes[0].cx - l.nodes[1].cx).abs() < 0.01);
     }
 
@@ -790,10 +790,10 @@ mod tests {
 
     #[test]
     fn viewbox_wraps_content_with_scene_padding() {
-        // bbox 101.5×41.5, + the scene's 20 padding each side → 141.5×81.5.
+        // bbox 101.6×41.6, + the scene's 20 padding each side → 141.6×81.6.
         let l = lay_out("|box| { width: 100; height: 40; }\n");
-        assert!((l.viewbox.w - 141.5).abs() < 0.01, "w={}", l.viewbox.w);
-        assert!((l.viewbox.h - 81.5).abs() < 0.01, "h={}", l.viewbox.h);
+        assert!((l.viewbox.w - 141.6).abs() < 0.01, "w={}", l.viewbox.w);
+        assert!((l.viewbox.h - 81.6).abs() < 0.01, "h={}", l.viewbox.h);
     }
 
     // ── Captions: ordinary flow children (SPEC §8) ──

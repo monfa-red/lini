@@ -1,24 +1,25 @@
 ---
 source: tests/conformance.rs
+assertion_line: 40
 expression: svg
 input_file: samples/chart_axes.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-392.75 -252.75 785.5 505.5" width="785.5" height="505.5" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-392.8 -252.8 785.6 505.6" width="785.6" height="505.6" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
-    .lini .lini-block { fill: none; stroke: none; stroke-width: 1.5; stroke-dasharray: none; }
+    .lini .lini-block { fill: none; stroke: none; stroke-width: 1.6; stroke-dasharray: none; }
     .lini .lini-oval { stroke-dasharray: none; }
-    .lini .lini-line { fill: none; stroke: #444; stroke-width: 1.5; stroke-dasharray: none; }
+    .lini .lini-line { fill: none; stroke: #444; stroke-width: 1.6; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
   </style>
   <defs/>
-  <rect class="lini-canvas" x="-392.75" y="-252.75" width="785.5" height="505.5"/>
+  <rect class="lini-canvas" x="-392.8" y="-252.8" width="785.6" height="505.6"/>
   <g class="lini-scene">
     <g class="lini-node lini-grid lini-block" transform="translate(0,0)">
       <rect x="-372" y="-232" width="744" height="464" rx="0" ry="0"/>
       <g class="lini-node lini-chart lini-block" transform="translate(-192,-122)">
-        <rect x="-179.25" y="-109.25" width="358.5" height="218.5" rx="0" ry="0"/>
+        <rect x="-179.2" y="-109.2" width="358.4" height="218.4" rx="0" ry="0"/>
         <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
           <line x1="-130.4" y1="88.6" x2="168" y2="88.6"/>
         </g>
@@ -69,19 +70,19 @@ input_file: samples/chart_axes.lini
         </g>
         <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e" transform="translate(-93.1,78.1434)">
           <title>free: 5</title>
-          <rect x="-23.4204" y="-9.7066" width="46.8408" height="19.4132" rx="2" ry="2"/>
+          <rect x="-23.3704" y="-9.6566" width="46.7408" height="19.3132" rx="2" ry="2"/>
         </g>
         <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e" transform="translate(-18.5,60.1298)">
           <title>pro: 80</title>
-          <rect x="-23.4204" y="-27.7202" width="46.8408" height="55.4405" rx="2" ry="2"/>
+          <rect x="-23.3704" y="-27.6702" width="46.7408" height="55.3405" rx="2" ry="2"/>
         </g>
         <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e" transform="translate(56.1,42.5354)">
           <title>team: 1200</title>
-          <rect x="-23.4204" y="-45.3146" width="46.8408" height="90.6291" rx="2" ry="2"/>
+          <rect x="-23.3704" y="-45.2646" width="46.7408" height="90.5291" rx="2" ry="2"/>
         </g>
         <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e" transform="translate(130.7,18.9879)">
           <title>ent: 45000</title>
-          <rect x="-23.4204" y="-68.8621" width="46.8408" height="137.7241" rx="2" ry="2"/>
+          <rect x="-23.3704" y="-68.8121" width="46.7408" height="137.6241" rx="2" ry="2"/>
         </g>
         <text class="lini-text" x="-139.7" y="88.6" style="fill: #888; font-weight: normal; font-size: 11px">1</text>
         <text class="lini-text" x="-139.7" y="79.5932" style="fill: #888; font-weight: normal; font-size: 11px">2</text>
@@ -107,7 +108,7 @@ input_file: samples/chart_axes.lini
         <text class="lini-text" x="0" y="-92.9" style="font-weight: bold; font-size: 13px">Requests by tier</text>
       </g>
       <g class="lini-node lini-chart lini-block" transform="translate(192,-122)">
-        <rect x="-179.25" y="-109.25" width="358.5" height="218.5" rx="0" ry="0"/>
+        <rect x="-179.2" y="-109.2" width="358.4" height="218.4" rx="0" ry="0"/>
         <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
           <line x1="-163.4" y1="-39.6286" x2="168" y2="-39.6286"/>
         </g>
@@ -151,7 +152,7 @@ input_file: samples/chart_axes.lini
         <text class="lini-text" x="0" y="-92.9" style="font-weight: bold; font-size: 13px">League rank</text>
       </g>
       <g class="lini-node lini-chart lini-block" transform="translate(-192,122)">
-        <rect x="-179.25" y="-109.25" width="358.5" height="218.5" rx="0" ry="0"/>
+        <rect x="-179.2" y="-109.2" width="358.4" height="218.4" rx="0" ry="0"/>
         <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
           <line x1="-143.6" y1="70.9" x2="150.2" y2="70.9"/>
         </g>
@@ -166,19 +167,19 @@ input_file: samples/chart_axes.lini
         </g>
         <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e" transform="translate(-106.875,34.8473)">
           <title>mon · requests: 820</title>
-          <rect x="-23.0478" y="-35.3027" width="46.0956" height="70.6053" rx="2" ry="2"/>
+          <rect x="-22.9978" y="-35.2527" width="45.9956" height="70.5053" rx="2" ry="2"/>
         </g>
         <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e" transform="translate(-33.425,29.9231)">
           <title>tue · requests: 932</title>
-          <rect x="-23.0478" y="-40.2269" width="46.0956" height="80.4539" rx="2" ry="2"/>
+          <rect x="-22.9978" y="-40.1769" width="45.9956" height="80.3539" rx="2" ry="2"/>
         </g>
         <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e" transform="translate(40.025,31.286)">
           <title>wed · requests: 901</title>
-          <rect x="-23.0478" y="-38.864" width="46.0956" height="77.7279" rx="2" ry="2"/>
+          <rect x="-22.9978" y="-38.814" width="45.9956" height="77.6279" rx="2" ry="2"/>
         </g>
         <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e" transform="translate(113.475,22.9763)">
           <title>thu · requests: 1090</title>
-          <rect x="-23.0478" y="-47.1737" width="46.0956" height="94.3473" rx="2" ry="2"/>
+          <rect x="-22.9978" y="-47.1237" width="45.9956" height="94.2473" rx="2" ry="2"/>
         </g>
         <g class="lini-node lini-line" style="stroke: #008e85" transform="translate(0,0)">
           <polyline points="-106.875,43.201 -33.425,60.348 40.025,51.115 113.475,65.624"/>
