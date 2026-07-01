@@ -3,7 +3,7 @@
 //! Multi-source, multi-target Dijkstra with the lexicographic cost
 //! `(crossings, length, turns)` — never a weighted blend. Crossings are
 //! supplied by the caller as a segment-counting callback: zero in the
-//! initial pass (LINKING §Model step 4 routes by `(length, turns)`), the
+//! initial pass (ROUTING §Model step 4 routes by `(length, turns)`), the
 //! transversal count against every drawn link in the audit's retries
 //! (§Model step 6 — a link always detours rather than crosses). Lengths are
 //! L1 distances through cell centres (exact ordinates land in the runs

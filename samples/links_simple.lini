@@ -1,4 +1,4 @@
-// The development scene — every basic linking feature once, small enough to
+// The development scene — every basic routing feature once, small enough to
 // debug by eye. Expected: all four laws hold, ZERO crossings.
 //
 //   clear shot · duplicate rails · a detour around a node · a fan trunk

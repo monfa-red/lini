@@ -66,14 +66,14 @@ lex → parse → desugar → resolve → layout → route → render
   from `route_links`; the seam is documented for future `straight`/`curved` (Step 3).
 - **render**: **unchanged** — sequence lowers to primitives. Each visual step verifies this.
 
-### The link-partition / wiring-strategy seam (the "linking refactor")
+### The link-partition / wiring-strategy seam (the "routing refactor")
 
 The user-facing model (SPEC §10): each scope has a **wiring strategy** that realises its
 links. Implementation is a *dispatch*, not a second router:
 
 | Strategy | Realised by | Status |
 |---|---|---|
-| `orthogonal` | `links::route_links` (the LINKING.md contract) | built |
+| `orthogonal` | `links::route_links` (the ROUTING.md contract) | built |
 | `sequence` | the sequence **layout** (lowers messages to `|line|` arrows) | this feature |
 | `straight` / `curved` | future graph/mindmap layouts | **comment-only scaffold** |
 
@@ -81,7 +81,7 @@ Concretely (Step 3): after resolve, `program.links` is partitioned by each link'
 links whose scope container has `layout: sequence` go to the sequence engine; the rest go to
 `route_links`. Add a `links::strategy(scope_layout) -> Strategy` helper and a doc-comment block
 naming the future `Straight`/`Curved` arms (no code — the user asked to scaffold, not build,
-graph routing). Keep linking isolated from rendering, as today.
+graph routing). Keep routing isolated from rendering, as today.
 
 ## 3. Locked design decisions (from SPEC §10 — do not re-litigate)
 

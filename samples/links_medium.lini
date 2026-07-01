@@ -1,5 +1,5 @@
 // The realistic scene — a mid-size diagram with groups, exercising every
-// common linking pattern at once.
+// common routing pattern at once.
 
 {
   direction: row; gap: 40; clearance: 12;

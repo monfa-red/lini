@@ -1,4 +1,4 @@
-//! Crossing collection and the bounded reroute audit (LINKING §Model step 6).
+//! Crossing collection and the bounded reroute audit (ROUTING §Model step 6).
 //!
 //! Crossings are collected geometrically from the drawn chains: every
 //! transversal H×V intersection strictly inside both segments — an
@@ -300,7 +300,7 @@ pub fn breaches(chains: &[Option<Chain>], clearance: f64) -> Vec<(usize, usize)>
 /// links conflicts, the round pools every repair — retrying one of the pair
 /// (or a link sharing a port side with one) with the conflict sites walled
 /// off (stubs and runs alike), rerouting body-graziers off the body, and
-/// sliding a port group along its side off the conflicted row (LINKING
+/// sliding a port group along its side off the conflicted row (ROUTING
 /// §Ports) — and applies the **best** strict improvement of
 /// `(breaches, crossings)`, the crossing audit's own discipline: a
 /// first-found accept can take a crossing-heavy reroute when a gentle slide
@@ -492,7 +492,7 @@ fn separation_with_protect(
 /// the slides the repair settled on, and the links it undrew in exchange.
 type Insertion = (Vec<Option<Chain>>, Vec<Option<Chain>>, Slides, Vec<usize>);
 
-/// The completeness pass — starvation rip-up (LINKING §Impossible layouts).
+/// The completeness pass — starvation rip-up (ROUTING §Impossible layouts).
 /// Routing is first-come in declaration order, and a hard closure never
 /// asks an incumbent to move: a late bundle can starve while plenty of
 /// legal geometry remains. Every bundle with an undrawn member proposes
@@ -586,7 +586,7 @@ pub fn complete(
                 }
             }
         }
-        // Degradation under pressure (LINKING §Duplicates): a bundle no
+        // Degradation under pressure (ROUTING §Duplicates): a bundle no
         // insertion places whole — or one whose displacement kept blocking
         // every swap — splits, and the next pass tries the pieces alone.
         // Splits strictly grow the bundle count, so the loop stays bounded.
@@ -603,7 +603,7 @@ pub fn complete(
             }
         }
         // Port compaction — the very last routing lever before the
-        // impossible report (LINKING §Ports, Law 2's compaction clause):
+        // impossible report (ROUTING §Ports, Law 2's compaction clause):
         // every rip-up, swap, and split spent, a link starved of port
         // slots lands on a full side, and the side re-pitches all its
         // ports evenly below clearance, like the pins of an IC.
@@ -631,7 +631,7 @@ pub fn complete(
     }
 }
 
-/// The port-compaction lever for one starved bundle (LINKING Law 2's
+/// The port-compaction lever for one starved bundle (ROUTING Law 2's
 /// compaction clause): route with full sides reopened
 /// ([`Router::route_bundle`]'s compact mode) and hand the result to the
 /// separation audit like any insertion. Stateless by design — the side's
@@ -755,7 +755,7 @@ fn compact_insertion(
     false
 }
 
-/// Law 1's third surrender (LINKING — the row band of a compacted side):
+/// Law 1's third surrender (ROUTING — the row band of a compacted side):
 /// per `(node, side)`, the outermost port ordinates of every row holding
 /// two distinct ports nearer than clearance. Sub-clearance pitch exists
 /// only where `place_ports` compacted the side, so the pitch itself is the
@@ -812,7 +812,7 @@ fn shared_bands(
 /// witness interval on the band's axis — the facing endpoints when their
 /// extents are disjoint, the overlap when they run alongside — must sit
 /// between the row's outermost ports. Links hugging beyond the band still
-/// breach (LINKING Law 1, third surrender).
+/// breach (ROUTING Law 1, third surrender).
 pub(super) fn band_contact(
     (vertical, lo, hi): (bool, f64, f64),
     sa: &[(f64, f64)],

@@ -1,4 +1,4 @@
-//! Link labels (LINKING §Model step 7, SPEC §9): a label rides its link at an
+//! Link labels (ROUTING §Model step 7, SPEC §9): a label rides its link at an
 //! auto-distributed anchor or an explicit `along:` fraction of its statement's
 //! whole drawn route, shifted by `translate: x y` in world coords (the same
 //! nudge as on any node). A label is an obstacle to nothing and the link never

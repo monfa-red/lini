@@ -168,7 +168,7 @@ fn main() -> ExitCode {
     match lini::compile_str_checked(&source, &opts) {
         Ok((svg, route_diags)) => {
             if !cli.no_warn {
-                // Impossible links and law breaches — LINKING requires these
+                // Impossible links and law breaches — ROUTING requires these
                 // never be silent.
                 for d in &route_diags {
                     eprintln!("{}", d.display_with_source(&source, &filename));

@@ -115,7 +115,7 @@ pub fn check_with(src: &str, opts: &Options) -> Result<(), Error> {
 }
 
 /// Lex, parse, resolve, lay out, route, then validate the routing against the
-/// contract in LINKING.md. Returns the violations found (empty = clean). Parse
+/// contract in ROUTING.md. Returns the violations found (empty = clean). Parse
 /// and resolve errors surface as `Err`.
 pub fn validate_str(src: &str) -> Result<Vec<Violation>, Error> {
     let program = resolve_pipeline(src, &Options::default())?;

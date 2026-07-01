@@ -484,7 +484,7 @@ inside* — and takes the first that clears the labels already placed and stays 
 Under `auto` a label with nowhere to sit **drops to its hover card** (so the tag is never
 lost); under `always` it is placed at its preferred offset regardless. The pass is
 O(labels² + labels·segments) over a *sparse* set (data points, not samples), so it is fast
-and deterministic — it never iterates to convergence like routing ([LINKING.md](LINKING.md)).
+and deterministic — it never iterates to convergence like routing ([ROUTING.md](ROUTING.md)).
 A seat must also sit **off the series lines** — a tag never lands on a `|line|` / `|area|`
 stroke (bars and bubbles fill a region a tag reads fine beside, so they don't constrain
 it). Inline labels are small and muted (`color:` overrides, default `--muted`) and carry

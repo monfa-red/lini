@@ -39,7 +39,7 @@ pub fn layout_raw(program: &Program) -> Result<LaidOut, Error> {
 }
 
 /// Lay out and route; when links are impossible for lack of corridor lanes
-/// (LINKING §Impossible layouts), grow the named containers' gaps by exactly
+/// (ROUTING §Impossible layouts), grow the named containers' gaps by exactly
 /// the deficit and rerun — at most 2 rounds, keeping the best result (most
 /// drawn, then fewest crossings). Strays cover whatever still fails.
 fn layout_mode(program: &Program, growth_on: bool) -> Result<LaidOut, Error> {
@@ -245,7 +245,7 @@ fn finish(program: &Program, attempt: Attempt) -> Result<LaidOut, Error> {
     })
 }
 
-/// Validate a laid-out scene's links against the routing contract (LINKING.md):
+/// Validate a laid-out scene's links against the routing contract (ROUTING.md):
 /// the router's own report (kept crossings, impossible links), then the
 /// independent four-law check. Used by `lini::validate_str`.
 pub fn validate_routing(laid: &LaidOut) -> Vec<Violation> {

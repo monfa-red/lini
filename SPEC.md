@@ -16,7 +16,7 @@ inside or beside one. `"…"` is text, exactly as it sits inside an element on a
 page — stylable in place (`"x" { color: red }`), but a leaf, never a box.
 
 This document is complete: an implementer can build a conforming engine from it
-alone. **Link** routing has its own contract — see [`LINKING.md`](LINKING.md).
+alone. **Link** routing has its own contract — see [`ROUTING.md`](ROUTING.md).
 
 ---
 
@@ -1024,7 +1024,7 @@ and `curved` are named but deferred ([§20](#20-deferred)). It pairs with `layou
 route its internals one way while the root routes another.
 
 The full routing contract — clearance, spacing, crossings, fan-out, self-loops — lives
-in [`LINKING.md`](LINKING.md), the source of truth for routing.
+in [`ROUTING.md`](ROUTING.md), the source of truth for routing.
 
 ---
 
@@ -1043,7 +1043,7 @@ A sequence is **the one place a link's *order* is its geometry**, not a routing 
 sequence scope the orthogonal router does not run — the layout **lowers each message to a
 primitive arrow** at its time row, just as it lowers participants and frames. (Which
 subsystem realises a scope's links is the scope's **wiring strategy**: `orthogonal` — the
-router, the [LINKING.md](LINKING.md) contract — for `flow` / `grid`; `sequence` — this
+router, the [ROUTING.md](ROUTING.md) contract — for `flow` / `grid`; `sequence` — this
 layout-time lowering — here; `straight` / `curved` for future graph layouts
 ([§20](#20-deferred)). One strategy per scope, chosen by the layout, not `routing:`.)
 
@@ -1360,7 +1360,7 @@ Each colour is a `light-dark(LIGHT, DARK)` value, so one SVG carries both modes:
 --lini-muted         light-dark(#888, #9aa0a6)
 --lini-danger        light-dark(crimson, #ff6b6b)
 --lini-warn          light-dark(orange, #ffb454)
---lini-stray         light-dark(crimson, #ff6b6b)    the stray-link fallback (LINKING.md, §Impossible layouts)
+--lini-stray         light-dark(crimson, #ff6b6b)    the stray-link fallback (ROUTING.md, §Impossible layouts)
 --lini-group-stroke  light-dark(rgba(0,0,0,.4), rgba(255,255,255,.4))
 --lini-group-fill    light-dark(rgba(0,0,0,.03), rgba(255,255,255,.05))
 --lini-header-fill   light-dark(rgba(0,0,0,.06), rgba(255,255,255,.08))  the table / entity header band
@@ -1925,7 +1925,7 @@ participants, walks its scope's messages / frames / notes in source order, and e
 lifelines, arrows, frames, and notes — **consuming those messages**, so the router never
 sees them.
 
-**Route links.** Per [`LINKING.md`](LINKING.md) — orthogonal, clearance-respecting,
+**Route links.** Per [`ROUTING.md`](ROUTING.md) — orthogonal, clearance-respecting,
 deterministic — over every link **except** those a `sequence` scope already drew as arrows
 ([§10](#10-sequences)). Place markers (sized `max(5, link-width × 4)`, tip on the endpoint)
 and link labels at their `along:` fractions (auto-distributed when unset).

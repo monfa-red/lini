@@ -1,4 +1,4 @@
-# Linking — The Routing Contract
+# The Routing Contract
 
 Lini routes links **orthogonally**: horizontal and vertical runs through the free
 space between nodes, corners rounded, like the clean right angles of a transit

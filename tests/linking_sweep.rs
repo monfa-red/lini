@@ -54,7 +54,7 @@ fn completeness_holds_where_the_raw_router_owns_it() {
 
 /// Gap growth's gate (Phase 8, re-derived for Phase 8½): where the raw
 /// router honestly runs out of corridor lanes, growth makes room — every
-/// linking scene draws every declared edge at every sweep clearance.
+/// routing scene draws every declared edge at every sweep clearance.
 /// (`links_medium` at clearance 16 was pinned at 13/14 + one stray until
 /// Phase 9: the separation audit's best-of-round repair selection found the
 /// lawful mesh the first-accept greedy walked past.)

@@ -70,7 +70,7 @@ pub fn requests(program: &Program, index: &SceneIndex) -> Result<Vec<EdgeReq>, E
     for w in &program.links {
         // Wiring strategy (SPEC §9/§10) — which subsystem realises a scope's links,
         // chosen by the scope's `layout`:
-        //   • orthogonal — this router (the LINKING.md contract), for flow / grid scopes.
+        //   • orthogonal — this router (the ROUTING.md contract), for flow / grid scopes.
         //   • sequence   — the sequence layout draws them as time-row arrows; skip here.
         //   • straight / curved — future graph / mindmap routing (not built; SPEC §20).
         // Only `sequence` diverts from the router today; the rest stay orthogonal.
@@ -179,7 +179,7 @@ pub fn bundles(reqs: &[EdgeReq]) -> Vec<Bundle> {
     out.into_iter().map(|(_, b)| b).collect()
 }
 
-/// Degrade bundle `bi` one step (LINKING §Duplicates): the first ⌈k/2⌉
+/// Degrade bundle `bi` one step (ROUTING §Duplicates): the first ⌈k/2⌉
 /// members keep the slot, the rest become the next bundle in line, so the
 /// pieces still route in declaration order. The caller retries the head —
 /// adjacent rails are the preferred form, splitting beats vanishing.
@@ -249,7 +249,7 @@ pub fn fan_groups(reqs: &[EdgeReq]) -> Fans {
     Fans { groups: kept, of }
 }
 
-/// The one clearance number (LINKING §Vocabulary): the link's merged attrs,
+/// The one clearance number (ROUTING §Vocabulary): the link's merged attrs,
 /// already carrying the cascaded link default.
 pub fn link_clearance(attrs: &AttrMap) -> f64 {
     attrs.number("clearance").unwrap_or(0.0)

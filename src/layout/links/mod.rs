@@ -1,4 +1,4 @@
-//! Link routing — the orthogonal corridor router (`LINKING.md`, `PLAN.md`).
+//! Link routing — the orthogonal corridor router (`ROUTING.md`, `PLAN.md`).
 //!
 //! Stages: requests → bundles → per-bundle path search with hard capacity
 //! closure → per-channel run assignment (ports, ordinates, inversion swaps)
@@ -145,7 +145,7 @@ pub struct Routing {
 const NO_ROUTE: &str = "no legal route: every side entry or channel is closed at this layout";
 const NO_CLEAN_ROUTE: &str = "no conflict-free route at this layout";
 
-/// LINKING §Impossible layouts: a link with no legal route is reported with
+/// ROUTING §Impossible layouts: a link with no legal route is reported with
 /// its source span, never drawn dirty. `--strict` escalates the warning.
 fn impossible(req: &bundle::EdgeReq, detail: &str) -> Violation {
     Violation {
@@ -189,7 +189,7 @@ impl Router {
             .expect("world built")
     }
 
-    /// Whether a routeless bundle may degrade (LINKING §Duplicates): more
+    /// Whether a routeless bundle may degrade (ROUTING §Duplicates): more
     /// than one member, none of them fanned — a fan's siblings share one
     /// port and stub, which a split would tear apart.
     fn splittable(&self, bi: usize) -> bool {
@@ -524,7 +524,7 @@ pub fn route_links(program: &Program, nodes: &[PlacedNode]) -> Result<Routing, E
             }
             // No route holds the whole bundle at any rung of the world
             // ladder: degrade — halves, then singles — and retry the head
-            // piece. Splitting beats vanishing (LINKING §Duplicates).
+            // piece. Splitting beats vanishing (ROUTING §Duplicates).
             None if router.splittable(bi) => {
                 bundle::split(&mut router.bundles, bi);
                 continue;
@@ -613,7 +613,7 @@ pub fn route_links(program: &Program, nodes: &[PlacedNode]) -> Result<Routing, E
 }
 
 /// Route one self-loop bundle: a pinned shape around the keep-out corner
-/// (LINKING §Special shapes), committed straight to ports and occupancy —
+/// (ROUTING §Special shapes), committed straight to ports and occupancy —
 /// or reported impossible with its structural reason.
 fn route_self_loop(
     router: &Router,
@@ -666,7 +666,7 @@ fn route_self_loop(
 
 /// Self-loop side resolution: defaults right → top; a forced side wins and its
 /// free partner takes the default that stays adjacent; one shared side is
-/// invalid (LINKING §Special shapes).
+/// invalid (ROUTING §Special shapes).
 fn self_loop_sides(a: Option<Side>, b: Option<Side>) -> Option<(Side, Side)> {
     let (sa, sb) = match (a, b) {
         (None, None) => (Side::Right, Side::Top),

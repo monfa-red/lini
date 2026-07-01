@@ -323,7 +323,7 @@ pub struct ResolvedLink {
     pub applied_styles: Vec<String>,
     pub markers: Markers,
     /// Link labels (label sugar + body `|text|`s), placed onto the drawn
-    /// route by the router's label pass (LINKING §Model step 7).
+    /// route by the router's label pass (ROUTING §Model step 7).
     pub texts: Vec<ResolvedText>,
     pub span: Span,
 }

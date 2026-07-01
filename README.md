@@ -169,7 +169,7 @@ The operator is the link's look, written `[start][line][end]` with no spaces:
 
 So `->` is a solid arrow, `<->` is bidirectional, `--*` a dashed line ending in a dot, `~>` a wavy arrow. Endpoints support fan-out, fan-in, and cartesian fans with `&`, and dot-paths into nested containers (`closet.outlet -> fridge.inlet`). Routing is automatic but steerable: name a side (`a:right -> b:left`) to force where a link leaves or arrives. Labels ride the link and slide to clear nodes; the link never moves for a label.
 
-The full routing contract (crossings, priority, self-loops, starvation) lives in [`LINKING.md`](https://github.com/monfa-red/lini/blob/main/LINKING.md).
+The full routing contract (crossings, priority, self-loops, starvation) lives in [`ROUTING.md`](https://github.com/monfa-red/lini/blob/main/ROUTING.md).
 
 ---
 
@@ -308,7 +308,7 @@ Parsing is recursive-descent over an LL(1) grammar; resolve applies CSS-like spe
 ## Development
 
 ```bash
-cargo test                               # full suite: unit, snapshot, linking
+cargo test                               # full suite: unit, snapshot, routing
 cargo run -- samples/hello.lini
 cargo run -- serve samples/hero.lini
 ```

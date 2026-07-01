@@ -1,4 +1,4 @@
-//! Per-channel run assignment — the global stage (LINKING §Model step 5).
+//! Per-channel run assignment — the global stage (ROUTING §Model step 5).
 //!
 //! A routed link is a **chain** of channel runs. This module owns port
 //! placement and the ordinate assignment that mixes port-pinned approach
@@ -100,7 +100,7 @@ pub struct Chain {
 
 /// Port-group slides per `(node, side)`: Law 2 lets a whole group slide
 /// along its side, spacing and order intact, when the centred rows would
-/// break Law 1 (LINKING §Ports). Owned by the routing pass; the separation
+/// break Law 1 (ROUTING §Ports). Owned by the routing pass; the separation
 /// audit proposes entries, ground truth accepts them.
 pub type Slides = BTreeMap<(String, u8), f64>;
 
@@ -126,7 +126,7 @@ pub fn assign(worlds: &[World], chains: &mut [Option<Chain>], clearance: f64, sl
     }
 }
 
-/// Law 2's lone-port freedom (LINKING §Ports): a chain whose runs all share
+/// Law 2's lone-port freedom (ROUTING §Ports): a chain whose runs all share
 /// one axis is a **straight shot** — one drawn line, its lateral position
 /// owned by its two ports. When the port ordinates differ, the goal end
 /// re-pins to the start's ordinate (or the start to the goal's): an end may
@@ -249,7 +249,7 @@ struct Swap {
     partner: usize,
 }
 
-/// The realisation's own ground-truth gate (LINKING §Model step 5: "the
+/// The realisation's own ground-truth gate (ROUTING §Model step 5: "the
 /// halves flank the partner"). Ordinates settle only after the split, and
 /// the assignment may land both halves on one side of the partner's run —
 /// a swap that cannot cross it: two turns and an extra lane that buy no
@@ -379,7 +379,7 @@ fn channel_map(chains: &[Option<Chain>]) -> BTreeMap<ChanKey, Vec<(usize, usize)
     channels
 }
 
-/// Realise inversions (LINKING §Model step 5): when two overlapping runs'
+/// Realise inversions (ROUTING §Model step 5): when two overlapping runs'
 /// ends demand opposite orders, the later link swaps sides mid-channel — its
 /// run splits at the overlap midpoint, and the perpendicular jog between the
 /// halves crosses the partner square-on, both links locally straight. The
@@ -498,7 +498,7 @@ fn find_inversion(
 /// Port placement: group every chain end (and fan groups as one unit) per
 /// `(node, side)`, order units with the end comparator, spread ordinates at
 /// `clearance` pitch centred on the side — shifted by the side's accepted
-/// slide, if any. A side past its capacity **compacts** (LINKING Law 2): all
+/// slide, if any. A side past its capacity **compacts** (ROUTING Law 2): all
 /// of its units re-space evenly at the widest pitch the side allows,
 /// `usable / (units − 1)`, corner margins intact at full clearance — pitch
 /// zero, ports coinciding, when the side is too short for distinct points.
@@ -679,7 +679,7 @@ type OwnedLayout = (Vec<usize>, Vec<Option<f64>>, Vec<f64>);
 /// the comparator's pick is planar either way, and `pack`'s lane sharing
 /// is decided by span clearance alone — yet both choices matter across
 /// channels, where staircase links can interleave their steps nearer than
-/// clearance while another arrangement nests them cleanly (LINKING §Model
+/// clearance while another arrangement nests them cleanly (ROUTING §Model
 /// step 5 — nested, never braided). When the packed layout draws the
 /// cluster into conflict, try every order of its free rails, on the
 /// packed sharing and on variants giving one shared-rail member its own
@@ -930,7 +930,7 @@ mod tests {
     fn a_lone_port_meets_its_straight_link() {
         // Two stacked boxes whose centres miss by 6: the straight shot
         // between them must ride one ordinate (the start's), not jog
-        // mid-corridor to bridge the centres (LINKING §Ports, lone-port
+        // mid-corridor to bridge the centres (ROUTING §Ports, lone-port
         // freedom).
         use crate::layout::links::{geometry, graph::ChannelGraph, path};
 

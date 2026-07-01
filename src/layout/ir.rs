@@ -8,7 +8,7 @@ pub struct LaidOut {
     /// The router's report: kept crossings (counted output) and the links it
     /// could not legally draw.
     pub link_report: Vec<super::links::Violation>,
-    /// The impossible links made visible (LINKING §Impossible layouts) —
+    /// The impossible links made visible (ROUTING §Impossible layouts) —
     /// carried beside the links, never as one, so the validator never sees
     /// them.
     pub strays: Vec<Stray>,

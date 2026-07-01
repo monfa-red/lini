@@ -151,7 +151,7 @@ real foundation (could just as well be noted outside auto-layout):
   `radial` mindmap, wired together — one SVG. Heterogeneous diagrams composed and
   interconnected; nothing else does this.
 - **Context-aware routing.** Wires already route *inside* a group (root is just a
-  container — linking doesn't have to live at the top). The new bit is choosing the
+  container — routing doesn't have to live at the top). The new bit is choosing the
   routing *strategy* from where the wire sits: orthogonal in a flow/manual container,
   a dumb straight/curve inside an auto-layout. So a mindmap can hold a child with
   orthogonally-wired internals, or vice versa — the sky's the limit.

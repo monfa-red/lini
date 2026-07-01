@@ -25,7 +25,7 @@ fn is_wavy(attrs: &AttrMap) -> bool {
 const LABEL_CUT_PAD_H: f64 = 0.3;
 const LABEL_CUT_PAD_V: f64 = 0.15;
 
-/// The link's corner-radius cap (LINKING §Model step 7): the link's resolved
+/// The link's corner-radius cap (ROUTING §Model step 7): the link's resolved
 /// `clearance` (its cascaded default), else 0.
 pub fn radius_cap(w: &RoutedLink) -> f64 {
     w.attrs.number("clearance").unwrap_or(0.0)
@@ -161,7 +161,7 @@ pub fn render_link(
     }
 }
 
-/// A stray (LINKING §Impossible layouts): a dashed straight segment in the
+/// A stray (ROUTING §Impossible layouts): a dashed straight segment in the
 /// `--lini-stray` style with a warning glyph at its midpoint. Lawful links
 /// are orthogonal, so the slant is structurally unmistakable; the dashing and
 /// glyph cover the aligned-bodies case.
@@ -220,7 +220,7 @@ pub fn render_stray(out: &mut String, a: &Stray, vars: &VarTable, opts: &Options
 /// The path `d` with every interior corner rounded into a quarter arc —
 /// radius from the fillet pass ([`fillet_targets`]), still capped by half
 /// of each adjacent *drawn* segment so arcs never eat marker run-ups
-/// (LINKING §Model step 7). The end segments stay straight.
+/// (ROUTING §Model step 7). The end segments stay straight.
 fn rounded_d(pts: &[(f64, f64)], targets: &[f64]) -> String {
     super::rounding::path_d(pts, targets)
 }
@@ -245,7 +245,7 @@ struct Corner {
     cap: f64,
 }
 
-/// Per-link, per-interior-corner fillet radius targets (LINKING §Model
+/// Per-link, per-interior-corner fillet radius targets (ROUTING §Model
 /// step 7): corners nested on one diagonal — same turn quadrant, vertices
 /// offset equally in x and y — round **concentrically**: the innermost
 /// keeps the base cap and each corner outward grows by exactly its offset,

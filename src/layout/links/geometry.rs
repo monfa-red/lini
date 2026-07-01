@@ -1,7 +1,7 @@
 //! Route → chain → orthogonal polyline.
 //!
 //! A cell route becomes alternating channel **runs**; a run that ends at a
-//! port is pinned to the port's ordinate (LINKING §Model step 5 — the stub
+//! port is pinned to the port's ordinate (ROUTING §Model step 5 — the stub
 //! continues straight into the channel), through-runs are assigned by
 //! [`super::runs`]. Corners are the meet of adjacent runs' ordinates. A
 //! self-loop is a fixed chain along its keep-out boundary, its legs pinned to
@@ -235,7 +235,7 @@ fn simplify(pts: Vec<(f64, f64)>) -> Vec<(f64, f64)> {
     out
 }
 
-/// The stray segment for an impossible link (LINKING §Impossible layouts):
+/// The stray segment for an impossible link (ROUTING §Impossible layouts):
 /// centre to centre, each end trimmed to its own body's boundary. `None` when
 /// the trim leaves nothing — coincident or overlapping bodies (self-loops,
 /// containment), where no between-bodies segment exists.

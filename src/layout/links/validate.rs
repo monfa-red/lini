@@ -1,4 +1,4 @@
-//! The independent four-law checker (LINKING §The Four Laws) — judgeable on
+//! The independent four-law checker (ROUTING §The Four Laws) — judgeable on
 //! the output alone: routed polylines, placed nodes, and the engine's report.
 //!
 //! No router knowledge: clearance and separation are segment-distance
@@ -340,7 +340,7 @@ fn landing(rect: Rect, port: (f64, f64), inward: (f64, f64), c: f64) -> Result<u
 
 /// Law 1 — Clearance from bodies: ≥ clearance from every solid rect, and
 /// from the link's own endpoints on every segment but the adjoining stub.
-/// A containment link runs inside its outer endpoint by design (LINKING
+/// A containment link runs inside its outer endpoint by design (ROUTING
 /// §Special shapes), so that body is skipped.
 fn clearance(index: &SceneIndex, links: &[RoutedLink], c: f64, out: &mut Vec<Violation>) {
     for w in links {

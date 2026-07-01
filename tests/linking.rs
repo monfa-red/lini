@@ -1,6 +1,6 @@
-//! The linking CI gate (see `LINKING.md`, `PLAN.md`).
+//! The ROUTING CI gate (see `ROUTING.md`, `PLAN.md`).
 //!
-//! Linking is gated **semantically** — the four laws, the crossing report, edge
+//! ROUTING is gated **semantically** — the four laws, the crossing report, edge
 //! completeness, determinism — never on SVG snapshots: a snapshot pins one
 //! router's coordinates, the validator pins the contract. Tests marked
 //! `#[ignore]` are phase gates; each phase un-ignores the ones it makes true.
@@ -82,7 +82,7 @@ fn every_declared_edge_is_drawn_or_reported() {
 }
 
 /// Completeness under pressure (Phase 6): at the native clearance the three
-/// linking scenes draw every declared edge — nothing starved by first-come
+/// routing scenes draw every declared edge — nothing starved by first-come
 /// routing, nothing undrawn by a repair.
 #[test]
 fn the_scenes_draw_every_edge_at_native_clearance() {
@@ -198,7 +198,7 @@ fn seg_rect_distance(a: (f64, f64), b: (f64, f64), r: (f64, f64, f64, f64)) -> f
     (dx * dx + dy * dy).sqrt()
 }
 
-/// Law 3 pins: the three linking scenes carry a known number of forced
+/// Law 3 pins: the three routing scenes carry a known number of forced
 /// crossings — simple stays clean, the others force a handful. The compass
 /// groups carry captions and stacked units, so the dense gap leaves little
 /// corridor room and the scene is heavily contended. Behaviour pin, not a
@@ -278,7 +278,7 @@ fn a_walled_in_link_is_reported_impossible() {
         "the impossible link must not be drawn"
     );
 
-    // The report made visible (LINKING §Impossible layouts): the impossible
+    // The report made visible (ROUTING §Impossible layouts): the impossible
     // link renders as an stray — beside the links, never as one, so the
     // validator (which already ran clean above) never sees it.
     assert_eq!(laid.strays.len(), 1, "the report must be drawn");
@@ -493,7 +493,7 @@ fn the_kept_crossing_names_its_link_pair() {
     );
 }
 
-/// Phase 9: link labels ride their link (LINKING §Model step 7). Every
+/// Phase 9: link labels ride their link (ROUTING §Model step 7). Every
 /// declared label is placed once on its statement's drawn route — a chain's
 /// label on exactly one of its segments — and a label's box overlaps no
 /// leaf node body (it may slide along the link, never off it).

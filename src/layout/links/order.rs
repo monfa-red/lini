@@ -1,4 +1,4 @@
-//! The run-order comparator (LINKING §Model step 5, PLAN §Run ordering).
+//! The run-order comparator (ROUTING §Model step 5, PLAN §Run ordering).
 //!
 //! Two links sharing a channel are ordered by where their paths diverge: walk
 //! both outward from the shared run; the first divergence — a turn off the
@@ -201,7 +201,7 @@ pub fn cmp_runs(chains: &[Option<Chain>], a: (usize, usize), b: (usize, usize)) 
 
 /// Whether two runs sharing a channel are **inverted** — both outward walks
 /// are geometric and demand opposite orders, so the pair must cross exactly
-/// once (LINKING §Model step 5).
+/// once (ROUTING §Model step 5).
 pub fn inverted(chains: &[Option<Chain>], a: (usize, usize), b: (usize, usize)) -> bool {
     if a == b {
         return false;

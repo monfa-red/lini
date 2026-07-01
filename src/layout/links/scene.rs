@@ -323,8 +323,8 @@ mod tests {
 
     #[test]
     fn labels_block_inside_transparent_ancestors_but_not_inside_endpoints() {
-        // garden{ label, dog, bird } — linking dog→bird must avoid the label;
-        // linking garden→garden must not see its own inner label.
+        // garden{ label, dog, bird } — routing dog→bird must avoid the label;
+        // routing garden→garden must not see its own inner label.
         let label = node(None, NodeKind::Text, 0.0, -25.0, 40.0, 10.0, Vec::new());
         let dog = rect_node("dog", -15.0, 5.0, 20.0, 10.0);
         let bird = rect_node("bird", 15.0, 5.0, 20.0, 10.0);

@@ -1,4 +1,4 @@
-//! Layout feedback for gap growth (LINKING §Impossible
+//! Layout feedback for gap growth (ROUTING §Impossible
 //! layouts): why did a link stay impossible, and which corridors are short?
 //!
 //! After every lever has run, each reported-impossible bundle is probed —

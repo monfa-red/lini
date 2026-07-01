@@ -5,7 +5,7 @@
 //! The renderer, cascade, palette, and theming are reused unchanged, as for charts.
 //!
 //! It owns its scope's links: in a sequence scope a message's *order is time*, so the
-//! orthogonal router ([LINKING.md]) is bypassed (`bundle` skips the scope) and the layout
+//! orthogonal router ([ROUTING.md]) is bypassed (`bundle` skips the scope) and the layout
 //! draws each message itself — a horizontal arrow at its row (the `sequence` wiring
 //! strategy, SPEC §10).
 //!
