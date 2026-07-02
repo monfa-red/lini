@@ -10,6 +10,7 @@ mod lint;
 mod palette;
 mod render;
 mod resolve;
+mod routing;
 mod serve;
 mod span;
 mod syntax;
@@ -29,7 +30,7 @@ pub fn desugar_source(src: &str) -> Result<String, Error> {
     let file = syntax::parser::parse(&tokens)?;
     Ok(fmt::print_file(&desugar::desugar(&file)?))
 }
-pub use layout::{Rule, Severity, Violation};
+pub use routing::{Rule, Severity, Violation};
 pub use serve::{ServeTarget, serve};
 pub use theme::{builtin_css, extract_lini_vars, list_themes, pair_css};
 
@@ -158,7 +159,7 @@ fn wrap_html(svg: &str) -> String {
     )
 }
 
-/// Test-only hooks for the link-routing parameter sweep (see `tests/linking_sweep.rs`).
+/// Test-only hooks for the routing suite (see `ROUTING-V2.md` stage 4/6).
 /// Not part of the public API.
 #[doc(hidden)]
 pub mod testing {
@@ -170,37 +171,25 @@ pub mod testing {
 
     /// A node's absolute rect by full dot-path, for geometric assertions.
     pub fn node_rect(laid: &LaidOut, path: &str) -> Option<(f64, f64, f64, f64)> {
-        layout::node_rect(&laid.nodes, path)
+        crate::routing::node_rect(&laid.nodes, path)
     }
 
     /// Compile `src` to a laid-out scene with `clearance` forced on every link,
-    /// overriding whatever the source set. Gap growth runs as in production —
-    /// starved corridors may widen the layout.
+    /// overriding whatever the source set.
     pub fn route_sample(src: &str, clearance: f64) -> LaidOut {
-        layout::layout(&forced(src, clearance)).expect("layout")
-    }
-
-    /// [`route_sample`] with gap growth disabled: the raw router's result, the
-    /// one the clearance sweep measures. `clearance` does not move nodes here,
-    /// so the node geometry — and hence which links are routable — is
-    /// identical across values.
-    pub fn route_sample_raw(src: &str, clearance: f64) -> LaidOut {
-        layout::layout_raw(&forced(src, clearance)).expect("layout")
-    }
-
-    fn forced(src: &str, clearance: f64) -> crate::resolve::Program {
         let mut prog = super::resolve_pipeline(src, &Options::default()).expect("resolve");
         for w in &mut prog.links {
             w.attrs
                 .insert("clearance", ResolvedValue::Number(clearance));
         }
-        prog
+        layout::layout(&prog).expect("layout")
     }
 
     /// The number of routable edges the source declares (fans/chains already expanded
     /// at resolve into one `ResolvedLink` per edge-chain). Sequence-scope messages are
-    /// **not** routable — the sequence layout draws them as time-row arrows (SPEC §10), so
-    /// the router never sees them — and are excluded here, mirroring `links::bundle`.
+    /// **not** routable — the sequence layout draws them as time-row arrows (SPEC §10),
+    /// so the router never sees them — and are excluded here, mirroring
+    /// `routing::ortho::request`.
     pub fn declared_edges(src: &str) -> usize {
         let prog = super::resolve_pipeline(src, &Options::default()).expect("resolve");
         prog.links

@@ -286,7 +286,7 @@ pub fn fillet_targets(polys: &[&[(f64, f64)]], caps: &[f64]) -> Vec<Vec<f64>> {
                 }
                 for s in other.windows(2) {
                     for leg in [[a, v], [v, b]] {
-                        if let Some(at) = crate::layout::cross(&leg, s) {
+                        if let Some(at) = crate::routing::cross(&leg, s) {
                             let t = (at.0 - v.0).abs() + (at.1 - v.1).abs();
                             ceil = ceil.min(t);
                         }

@@ -335,10 +335,13 @@ pub struct ResolvedEndpoint {
     pub span: Span,
 }
 
+// Scaffold: label placement consumes these again (ROUTING-V2.md stage 4).
 #[derive(Clone)]
 pub struct ResolvedText {
     pub text: String,
+    #[allow(dead_code)]
     pub along: Along,
+    #[allow(dead_code)]
     pub attrs: AttrMap,
 }
 
@@ -347,6 +350,7 @@ pub struct ResolvedText {
 #[derive(Clone, Debug)]
 pub enum Along {
     Auto,
+    #[allow(dead_code)]
     Fraction(f64),
 }
 

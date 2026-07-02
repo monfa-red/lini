@@ -7,6 +7,10 @@
 //! one **bundle** of multiplicity *k* (adjacent rails); edges of one statement
 //! sharing a segment endpoint form a **fan group** (one shared port and stub).
 
+// Scaffold: bundles and fans are consumed by the search stage
+// (ROUTING-V2.md stage 2/4); this allow leaves with the stray stub.
+#![allow(dead_code)]
+
 use super::rect::Rect;
 use super::scene::SceneIndex;
 use crate::ast::Side;
@@ -68,12 +72,10 @@ pub fn requests(program: &Program, index: &SceneIndex) -> Result<Vec<EdgeReq>, E
     let mut out = Vec::new();
     let mut stmt_ids: Vec<Span> = Vec::new();
     for w in &program.links {
-        // Wiring strategy (SPEC §9/§10) — which subsystem realises a scope's links,
-        // chosen by the scope's `layout`:
-        //   • orthogonal — this router (the ROUTING.md contract), for flow / grid scopes.
-        //   • sequence   — the sequence layout draws them as time-row arrows; skip here.
-        //   • straight / curved — future graph / mindmap routing (not built; SPEC §20).
-        // Only `sequence` diverts from the router today; the rest stay orthogonal.
+        // A sequence scope's messages ride the `straight` strategy, drawn by
+        // the sequence layout at fixed rows (SPEC §10) — they are not
+        // orthogonal requests. (Their migration onto the shared routing
+        // spine is ROUTING-V2.md stage 5.)
         if crate::layout::sequence::is_sequence_scope(program, &w.scope) {
             continue;
         }
@@ -177,16 +179,6 @@ pub fn bundles(reqs: &[EdgeReq]) -> Vec<Bundle> {
         }
     }
     out.into_iter().map(|(_, b)| b).collect()
-}
-
-/// Degrade bundle `bi` one step (ROUTING §Duplicates): the first ⌈k/2⌉
-/// members keep the slot, the rest become the next bundle in line, so the
-/// pieces still route in declaration order. The caller retries the head —
-/// adjacent rails are the preferred form, splitting beats vanishing.
-pub fn split(bundles: &mut Vec<Bundle>, bi: usize) {
-    let members = &mut bundles[bi].members;
-    let tail = members.split_off(members.len().div_ceil(2));
-    bundles.insert(bi + 1, Bundle { members: tail });
 }
 
 /// Fan groups: requests of one statement sharing a segment endpoint share that
@@ -303,22 +295,6 @@ mod tests {
         let r2 = req(1, 0, 0, "a", "b");
         let bs = bundles(&[r1, r2]);
         assert_eq!(bs.len(), 2);
-    }
-
-    #[test]
-    fn split_halves_then_singles_in_declaration_order() {
-        let reqs = vec![
-            req(0, 0, 0, "a", "b"),
-            req(1, 0, 0, "a", "b"),
-            req(2, 0, 0, "a", "b"),
-        ];
-        let mut bs = bundles(&reqs);
-        split(&mut bs, 0);
-        let members: Vec<_> = bs.iter().map(|b| b.members.clone()).collect();
-        assert_eq!(members, vec![vec![0, 1], vec![2]]);
-        split(&mut bs, 0);
-        let members: Vec<_> = bs.iter().map(|b| b.members.clone()).collect();
-        assert_eq!(members, vec![vec![0], vec![1], vec![2]]);
     }
 
     #[test]

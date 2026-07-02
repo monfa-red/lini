@@ -5,9 +5,9 @@ pub struct LaidOut {
     pub viewbox: ViewBox,
     pub nodes: Vec<PlacedNode>,
     pub links: Vec<RoutedLink>,
-    /// The router's report: kept crossings (counted output) and the links it
+    /// The routing report: drawn crossings (counted output) and the links it
     /// could not legally draw.
-    pub link_report: Vec<super::links::Violation>,
+    pub link_report: Vec<crate::routing::Violation>,
     /// The impossible links made visible (ROUTING §Impossible layouts) —
     /// carried beside the links, never as one, so the validator never sees
     /// them.

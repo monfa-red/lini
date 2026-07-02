@@ -2,8 +2,7 @@ mod anchors;
 mod chart;
 mod flex;
 mod grid;
-mod ir;
-mod links;
+pub(crate) mod ir;
 pub(crate) mod path_bbox; // glyph-extent computation also serves `render::icon_fit`
 mod prim; // PlacedNode *builders* for lowered primitives (charts, sequences)
 mod primitives; // primitive *sizing* (leaf/closed bbox) — distinct from `prim`
@@ -13,70 +12,25 @@ mod values;
 
 pub(crate) use anchors::is_pinned;
 pub use ir::*;
-pub(crate) use links::cross;
-pub use links::{Rule, Severity, Violation, node_rect};
 pub(crate) use text::{approx_height, approx_width};
 
 use crate::error::Error;
 use crate::resolve::{NodeKind, Program, ResolvedInst, ResolvedValue};
+use crate::routing;
 use crate::span::Span;
 
 use flex::Axis;
 
-/// Extra gap per container (dot-path → `(Δy, Δx)` px), accumulated by gap
-/// growth. Growth only ever adds to the gap the user set — `gap` stays
-/// their density dial.
-type GapGrowth = std::collections::BTreeMap<String, (f64, f64)>;
-
+/// Lay out the scene, then route its links over the finished, immutable
+/// layout (ROUTING.md) — layout never moves for a link; whatever cannot be
+/// drawn lawfully is reported and rendered as a stray.
 pub fn layout(program: &Program) -> Result<LaidOut, Error> {
-    layout_mode(program, true)
-}
-
-/// The testing hook: growth disabled, so the clearance sweep
-/// measures the raw router rather than the escape hatch.
-pub fn layout_raw(program: &Program) -> Result<LaidOut, Error> {
-    layout_mode(program, false)
-}
-
-/// Lay out and route; when links are impossible for lack of corridor lanes
-/// (ROUTING §Impossible layouts), grow the named containers' gaps by exactly
-/// the deficit and rerun — at most 2 rounds, keeping the best result (most
-/// drawn, then fewest crossings). Strays cover whatever still fails.
-fn layout_mode(program: &Program, growth_on: bool) -> Result<LaidOut, Error> {
     sequence::validate(program)?;
-    let mut growth = GapGrowth::new();
-    let mut best = attempt(program, &growth)?;
-    if growth_on && !best.routing.starved.is_empty() {
-        let mut starved = best.routing.starved.clone();
-        for _ in 0..2 {
-            if !grow(&mut growth, &starved, program) {
-                break;
-            }
-            let next = attempt(program, &growth)?;
-            starved = next.routing.starved.clone();
-            if better(&next, &best) {
-                best = next;
-            }
-            if starved.is_empty() {
-                break;
-            }
-        }
-    }
-    finish(program, best)
-}
 
-/// One placed-and-routed scene under a given growth map.
-struct Attempt {
-    nodes: Vec<PlacedNode>,
-    bbox: Bbox,
-    routing: links::Routing,
-}
-
-fn attempt(program: &Program, growth: &GapGrowth) -> Result<Attempt, Error> {
     // Lay out top-level scene children.
     let mut top_nodes = Vec::with_capacity(program.scene.nodes.len());
     for inst in &program.scene.nodes {
-        top_nodes.push(layout_inst(inst, growth, &child_path("", inst), program)?);
+        top_nodes.push(layout_inst(inst, &child_path("", inst), program)?);
     }
 
     // A root sequence (`{ layout: sequence }`, SPEC §10) owns the whole scene: it
@@ -84,73 +38,22 @@ fn attempt(program: &Program, growth: &GapGrowth) -> Result<Attempt, Error> {
     // generic arrange and the orthogonal router (the messages are its scope's links).
     if sequence::is_sequence(&program.scene.attrs) {
         let bbox = sequence::layout_root(&mut top_nodes, program)?;
-        return Ok(Attempt {
-            nodes: top_nodes,
-            bbox,
-            routing: links::Routing::default(),
-        });
+        return finish(program, top_nodes, bbox, routing::Routing::default());
     }
 
     // Apply scene-level layout to top-level children (scene itself is a
     // container; its attrs drive how its children are positioned). The scene
     // is never a table, so its grid rules — if any — are discarded.
-    let (bbox, _) = lay_out_container_children(
-        &mut top_nodes,
-        &program.scene.attrs,
-        Span::empty(),
-        gap_bump(growth, ""),
-    )?;
+    let (bbox, _) =
+        lay_out_container_children(&mut top_nodes, &program.scene.attrs, Span::empty())?;
 
     // Route links once the nodes are placed.
-    let routing = links::route_links(program, &top_nodes)?;
-    Ok(Attempt {
-        nodes: top_nodes,
-        bbox,
-        routing,
-    })
-}
-
-/// Strictly better routing outcome: more links drawn, then fewer crossings.
-fn better(a: &Attempt, b: &Attempt) -> bool {
-    let key = |t: &Attempt| {
-        let crossings = t
-            .routing
-            .report
-            .iter()
-            .filter(|v| v.rule == Rule::Crossing)
-            .count();
-        (t.routing.links.len(), std::cmp::Reverse(crossings))
-    };
-    key(a) > key(b)
-}
-
-/// Fold one routing's corridor deficits into the growth map. A container
-/// pinned by an explicit `size` cannot honestly widen and is skipped.
-/// Returns whether anything grew — `false` ends the growth loop.
-fn grow(growth: &mut GapGrowth, starved: &GapGrowth, program: &Program) -> bool {
-    let mut grew = false;
-    for (path, &(dy, dx)) in starved {
-        if !growable(program, path) {
-            continue;
-        }
-        let (gy, gx) = growth.entry(path.clone()).or_insert((0.0, 0.0));
-        *gy += dy;
-        *gx += dx;
-        grew |= dy > 0.0 || dx > 0.0;
-    }
-    grew
-}
-
-fn growable(program: &Program, path: &str) -> bool {
-    if path.is_empty() {
-        return true;
-    }
-    node_at(program, path)
-        .is_some_and(|inst| inst.attrs.get("width").is_none() && inst.attrs.get("height").is_none())
+    let routed = routing::route(program, &top_nodes)?;
+    finish(program, top_nodes, bbox, routed)
 }
 
 /// The scene instance at a dot-path (`""` → `None`: the root is not an instance).
-/// Walks by id, like an endpoint path. Shared by gap growth and the sequence engine.
+/// Walks by id, like an endpoint path. Used by the sequence engine.
 pub(super) fn node_at<'a>(program: &'a Program, path: &str) -> Option<&'a ResolvedInst> {
     let mut nodes = &program.scene.nodes;
     let mut found = None;
@@ -162,12 +65,8 @@ pub(super) fn node_at<'a>(program: &'a Program, path: &str) -> Option<&'a Resolv
     found
 }
 
-fn gap_bump(growth: &GapGrowth, path: &str) -> (f64, f64) {
-    growth.get(path).copied().unwrap_or((0.0, 0.0))
-}
-
 /// A child's dot-path under `parent`. Anonymous children get a `#` segment —
-/// never a link endpoint's ancestor, so never a growth target.
+/// never addressable, so never a link endpoint's ancestor.
 fn child_path(parent: &str, inst: &ResolvedInst) -> String {
     let id = inst.id.as_deref().unwrap_or("#");
     if parent.is_empty() {
@@ -187,7 +86,12 @@ fn accumulate_extent(n: &PlacedNode, ox: f64, oy: f64, bbox: &mut Bbox) {
     }
 }
 
-fn finish(program: &Program, attempt: Attempt) -> Result<LaidOut, Error> {
+fn finish(
+    program: &Program,
+    nodes: Vec<PlacedNode>,
+    scene_bbox: Bbox,
+    routing: routing::Routing,
+) -> Result<LaidOut, Error> {
     // Viewbox = the whole drawn extent (scene bbox + link paths, labels, strays,
     // overlays) framed by the scene's `padding` on every side — the margin between
     // the diagram and the SVG edge.
@@ -195,11 +99,10 @@ fn finish(program: &Program, attempt: Attempt) -> Result<LaidOut, Error> {
     // Absolute overlays don't grow their parent's bbox, so the scene bbox can
     // miss one that overflows; the canvas must still include every drawn node,
     // so take the true visual extent of the whole tree.
-    let mut bbox = attempt.bbox;
-    for n in &attempt.nodes {
+    let mut bbox = scene_bbox;
+    for n in &nodes {
         accumulate_extent(n, 0.0, 0.0, &mut bbox);
     }
-    let routing = attempt.routing;
     let link_points = routing.links.iter().flat_map(|w| &w.path);
     let air_points = routing.strays.iter().flat_map(|a| [&a.from, &a.to]);
     for &(x, y) in link_points.chain(air_points) {
@@ -234,7 +137,7 @@ fn finish(program: &Program, attempt: Attempt) -> Result<LaidOut, Error> {
 
     Ok(LaidOut {
         viewbox: vb,
-        nodes: attempt.nodes,
+        nodes,
         links: routing.links,
         link_report: routing.report,
         strays: routing.strays,
@@ -246,11 +149,11 @@ fn finish(program: &Program, attempt: Attempt) -> Result<LaidOut, Error> {
 }
 
 /// Validate a laid-out scene's links against the routing contract (ROUTING.md):
-/// the router's own report (kept crossings, impossible links), then the
+/// the engine's own report (drawn crossings, impossible links), then the
 /// independent four-law check. Used by `lini::validate_str`.
-pub fn validate_routing(laid: &LaidOut) -> Vec<Violation> {
+pub fn validate_routing(laid: &LaidOut) -> Vec<routing::Violation> {
     let mut out = laid.link_report.clone();
-    out.extend(links::validate_routing(
+    out.extend(routing::validate_routing(
         &laid.nodes,
         &laid.links,
         &laid.link_report,
@@ -262,13 +165,8 @@ pub fn validate_routing(laid: &LaidOut) -> Vec<Violation> {
 ///
 /// Bottom-up: lay out children first, then size this node around them. For
 /// leaf primitives (no children), the shape's dimensions drive the bbox.
-/// `path` is the inst's dot-path — the key gap growth bumps it under.
-fn layout_inst(
-    inst: &ResolvedInst,
-    growth: &GapGrowth,
-    path: &str,
-    program: &Program,
-) -> Result<PlacedNode, Error> {
+/// `path` is the inst's dot-path — how a sequence scope finds its messages.
+fn layout_inst(inst: &ResolvedInst, path: &str, program: &Program) -> Result<PlacedNode, Error> {
     let funcs = &program.funcs;
     // A chart ([CHARTS.md]) owns its whole subtree: it reads its children's data,
     // fixes a shared scale, samples any `fn:`, and emits primitive PlacedNodes itself.
@@ -284,13 +182,13 @@ fn layout_inst(
     // A `|sequence|` node ([SPEC §10]) owns its subtree the same way — it reads its
     // participants (and, later, messages / frames / notes) and lowers to primitives.
     if sequence::is_sequence(&inst.attrs) {
-        return sequence::layout_node(inst, growth, path, program);
+        return sequence::layout_node(inst, path, program);
     }
 
     // Recurse into children first.
     let mut children: Vec<PlacedNode> = Vec::with_capacity(inst.children.len());
     for c in &inst.children {
-        children.push(layout_inst(c, growth, &child_path(path, c), program)?);
+        children.push(layout_inst(c, &child_path(path, c), program)?);
     }
 
     // Determine this node's bbox + arrange children inside.
@@ -300,12 +198,8 @@ fn layout_inst(
         primitives::leaf_bbox(inst)?
     } else {
         // Container or closed primitive with content.
-        let (content_bbox, rules) = lay_out_container_children(
-            &mut children,
-            &inst.attrs,
-            inst.span,
-            gap_bump(growth, path),
-        )?;
+        let (content_bbox, rules) =
+            lay_out_container_children(&mut children, &inst.attrs, inst.span)?;
 
         // Interior dividers (grid or 1-D) the container draws, per `divider:`.
         // A table is just a group with `divider: all` — no special-casing; its
@@ -397,33 +291,15 @@ fn one_d_dividers(
 
 /// Position children within their container per its `layout=` attr.
 /// Returns the bounding bbox of all placed children, in container-local
-/// coords. A non-zero `grow` is gap growth's `(Δy, Δx)` for this container,
-/// added to whatever gap the user set.
+/// coords.
 fn lay_out_container_children(
     children: &mut [PlacedNode],
     container_attrs: &crate::resolve::AttrMap,
     span: Span,
-    grow: (f64, f64),
 ) -> Result<(Bbox, Vec<GridRule>), Error> {
     if children.is_empty() {
         return Ok((Bbox::empty(), Vec::new()));
     }
-    let grown;
-    let container_attrs = if grow == (0.0, 0.0) {
-        container_attrs
-    } else {
-        let (gy, gx) = primitives::gap(container_attrs, span)?;
-        let mut attrs = container_attrs.clone();
-        attrs.insert(
-            "gap",
-            ResolvedValue::Tuple(vec![
-                ResolvedValue::Number(gy + grow.0),
-                ResolvedValue::Number(gx + grow.1),
-            ]),
-        );
-        grown = attrs;
-        &grown
-    };
 
     // Split children by role (SPEC §6): a `pin`ned child is an out-of-flow
     // overlay (the parent does not grow for it); everything else flows.

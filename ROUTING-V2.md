@@ -156,16 +156,16 @@ the tree contains no code that fights the v2 contract.
   `#[ignore = "routing-v2: re-enabled in stage 6/7"]`.
 
 **Steps:**
-- [ ] Move the keepers; fix imports; delete the v1 router files
-- [ ] Excise gap growth from `src/layout/mod.rs` (see Execution log if the
+- [x] Move the keepers; fix imports; delete the v1 router files
+- [x] Excise gap growth from `src/layout/mod.rs` (see Execution log if the
       threading has drifted from this description)
-- [ ] `routing::route()` stub: expand requests via `request.rs`, return every
+- [x] `routing::route()` stub: expand requests via `request.rs`, return every
       link as a stray + `Rule::Impossible` violation (`detail: "routing v2 in
       construction"`)
-- [ ] Prune/ignore tests as above; `cargo fmt && cargo clippy && cargo test`
+- [x] Prune/ignore tests as above; `cargo fmt && cargo clippy && cargo test`
       green
-- [ ] Render `samples/pcb_fail.lini` — nodes + 8 strays, nothing panics
-- [ ] Commit (`refactor: raze v1 router, scaffold src/routing`)
+- [x] Render `samples/pcb_fail.lini` — nodes + 8 strays, nothing panics
+- [x] Commit (`refactor: raze v1 router, scaffold src/routing`)
 
 **Done when:** no `layout/links` directory, no gap-growth code, green build,
 strays render.
@@ -446,4 +446,29 @@ Executing sessions: append dated notes here — decisions the plan didn't
 anticipate, gotchas, deferred items, comparator cases that needed deepening,
 anything the next session must know. Keep entries terse.
 
-- *(empty)*
+- **2026-07-02, stage 1.** Done; deviations from the stage-1 file list:
+  - `graph.rs` and `labels.rs` were *not* pre-moved (they'd sit dead until
+    their consumers exist). Retrieve from history when their stage lands:
+    `git show c70b13f:src/layout/links/graph.rs` (unit tests included, port
+    them too) in stage 2, same for `labels.rs` (+ `order.rs`/`path.rs`/
+    `runs.rs` as reference) in stages 2–4. v1 `geometry.rs`'s
+    `polyline`/`simplify`/`self_loop_chain` likewise — they typed against v1's
+    `Chain`; v2's `Chain` differs, so stage 4 rebuilds them from that
+    reference rather than inheriting a mismatched shape.
+  - Transitional `#[allow(dead_code)]`s are all tagged with a `// Scaffold:`
+    comment naming the stage that consumes them — `grep -rn "Scaffold:" src/`
+    is the cleanup list (request.rs, scene.rs, rect.rs module-level;
+    `Side::ALL` in ast.rs; `ResolvedText.along/attrs` + `Along::Fraction` in
+    resolve/ir.rs). Remove each allow when its consumer lands.
+  - Ignored tests all carry the literal prefix `routing-v2:` in their ignore
+    reason — `grep -rn "routing-v2:" tests/ src/` is the re-enable list
+    (conformance glob, hello snapshot, 3 link tests in tests/rendering.rs,
+    2 unit tests in src/render/rules.rs). `tests/linking.rs` and
+    `tests/linking_sweep.rs` are deleted outright — stage 6 rebuilds the law
+    sweep as `tests/laws.rs`.
+  - `layout_raw` / `route_sample_raw` died with gap growth (raw is the only
+    path now); `lini::testing` keeps `node_rect`, `route_sample`,
+    `declared_edges`, `laws`.
+  - `layout::ir` became `pub(crate)` so `routing` can name IR types directly;
+    `cross()` now lives in `routing::report` (renderer calls
+    `crate::routing::cross`).

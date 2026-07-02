@@ -1,5 +1,9 @@
 //! Axis-aligned rectangle — the one geometric primitive the router shares.
 
+// Scaffold: the keep-out and channel maths consume these again
+// (ROUTING-V2.md stage 2); the allow leaves with them.
+#![allow(dead_code)]
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Rect {
     pub x0: f64,

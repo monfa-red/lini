@@ -394,6 +394,7 @@ fn font_size_on_container_reaches_descendant_text() {
 }
 
 #[test]
+#[ignore = "routing-v2: drawn links return in ROUTING-V2.md stage 4/5"]
 fn css_cascade_emits_rules_and_diffs() {
     // Self-contained: element rules, class rules, inline diffs, link defaults, the
     // operator-dash class, and cascading text props. (The pretty user-facing
@@ -713,6 +714,7 @@ fn image_fit_auto_omits_preserve_aspect_ratio() {
 // ── Text leaves: a node's text and a link's label share one renderer ──
 
 #[test]
+#[ignore = "routing-v2: drawn links return in ROUTING-V2.md stage 4/5"]
 fn link_label_translate_is_applied_once() {
     // Regression: `translate` used to be folded in at routing *and* re-applied at
     // render, doubling the nudge on a link label vs a node's text (SPEC §6/§9).
@@ -730,6 +732,7 @@ fn link_label_translate_is_applied_once() {
 }
 
 #[test]
+#[ignore = "routing-v2: drawn links return in ROUTING-V2.md stage 4/5"]
 fn link_label_supports_multiline_and_letter_spacing() {
     // A link label is an ordinary styleable text leaf (SPEC §3/§9), so the same
     // multi-line `\n` tspans and baked `letter-spacing` dx a node's text gets must

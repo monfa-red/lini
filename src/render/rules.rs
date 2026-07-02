@@ -711,6 +711,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "routing-v2: drawn links return in ROUTING-V2.md stage 4"]
     fn marker_rule_states_fill_and_stroke_none() {
         // `a -> b` carries an arrow, so the shared marker rule emits once.
         let css = emit_str(&rules_for("a -> b\n"));
@@ -725,6 +726,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "routing-v2: drawn links return in ROUTING-V2.md stage 4"]
     fn link_label_rule_states_constants() {
         let css = emit_str(&rules_for("a -> b \"x\"\n"));
         assert!(

@@ -14,6 +14,8 @@ pub enum Side {
 
 impl Side {
     /// In `index` order — the canonical side enumeration.
+    // Scaffold: consumed again by the search stage (ROUTING-V2.md stage 2).
+    #[allow(dead_code)]
     pub const ALL: [Side; 4] = [Side::Top, Side::Right, Side::Bottom, Side::Left];
 
     pub fn parse(s: &str) -> Option<Self> {

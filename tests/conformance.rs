@@ -15,6 +15,7 @@ use lini::{Options, OutputFormat};
 const LINK_SAMPLES: &[&str] = &["links_simple.lini", "links_medium.lini", "links_hard.lini"];
 
 #[test]
+#[ignore = "routing-v2: snapshots re-accepted in ROUTING-V2.md stage 7"]
 fn snapshot_baked_svg_for_every_sample() {
     let opts = Options {
         bake_vars: true,

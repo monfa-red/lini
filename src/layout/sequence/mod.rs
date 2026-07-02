@@ -44,7 +44,6 @@ pub(super) fn is_sequence(attrs: &AttrMap) -> bool {
 /// container `PlacedNode`. Intercepted in `layout_inst` before the generic path.
 pub(super) fn layout_node(
     inst: &ResolvedInst,
-    growth: &super::GapGrowth,
     path: &str,
     program: &Program,
 ) -> Result<PlacedNode, Error> {
@@ -52,7 +51,7 @@ pub(super) fn layout_node(
     let mut participants = Vec::new();
     let mut notes = Vec::new();
     for c in &inst.children {
-        let placed = || super::layout_inst(c, growth, &super::child_path(path, c), program);
+        let placed = || super::layout_inst(c, &super::child_path(path, c), program);
         if is_participant(&c.kind, &c.type_chain) {
             participants.push(placed()?);
         } else if is_note(&c.type_chain) {
@@ -73,7 +72,7 @@ pub(super) fn layout_node(
 
 /// A **root** sequence (`{ layout: sequence }`, SPEC §10): the scene's top-level nodes are
 /// the participants (already laid out). Arrange them in place and append the lifelines,
-/// returning the scene bbox. Intercepted in `attempt` before the generic arrange + route.
+/// returning the scene bbox. Intercepted in `layout` before the generic arrange + route.
 pub(super) fn layout_root(
     scene_nodes: &mut Vec<PlacedNode>,
     program: &Program,
