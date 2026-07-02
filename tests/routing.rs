@@ -256,6 +256,51 @@ fn pcb_fail_reports_zero_crossings() {
     assert_eq!(crossings(PCB_FAIL), 0);
 }
 
+#[test]
+fn pcb_fail_flash_bends_on_the_corridor_midline_at_full_pitch() {
+    // The corridor between the flash/pwr column and mcu is one void, however
+    // the sweep fragments it: the flash drops ride its midline at full
+    // clearance pitch — never a fragment's midline, never a squeezed ladder
+    // in a corridor with room to spare (Law 1's relief is for scarcity).
+    let laid = route_sample(PCB_FAIL, 10.0);
+    let flash = node_rect(&laid, "flash").expect("flash placed");
+    let mcu = node_rect(&laid, "mcu").expect("mcu placed");
+    let r = routes(PCB_FAIL);
+    let mut drops: Vec<f64> = paths(&r, "flash", "mcu")
+        .iter()
+        .map(|p| {
+            let (i, j) = (p.len() / 2 - 1, p.len() / 2);
+            assert_eq!(p[i].0, p[j].0, "the middle leg is the drop: {p:?}");
+            p[i].0
+        })
+        .collect();
+    drops.sort_by(f64::total_cmp);
+    for w in drops.windows(2) {
+        assert!(
+            (w[1] - w[0] - 10.0).abs() < 1e-9,
+            "drops at clearance pitch: {drops:?}"
+        );
+    }
+    let midline = ((flash.2 + 10.0) + (mcu.0 - 10.0)) / 2.0;
+    let mean = drops.iter().sum::<f64>() / drops.len() as f64;
+    assert!(
+        (mean - midline).abs() <= 10.0,
+        "the ladder centres by the void midline {midline}: {drops:?}"
+    );
+    // Ports at both ends spread at full pitch too — the fragment's phantom
+    // soft margins never compress a roomy window.
+    for (paths, idx) in [(paths(&r, "flash", "mcu"), 0), (paths(&r, "pwr", "mcu"), 0)] {
+        let mut ys: Vec<f64> = paths.iter().map(|p| p[idx].1).collect();
+        ys.sort_by(f64::total_cmp);
+        for w in ys.windows(2) {
+            assert!(
+                (w[1] - w[0] - 10.0).abs() < 1e-9,
+                "ports at clearance pitch: {ys:?}"
+            );
+        }
+    }
+}
+
 // ── Forced sides, fans, self-loops, containment ──
 
 #[test]

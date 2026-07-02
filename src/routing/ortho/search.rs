@@ -176,15 +176,23 @@ fn state(cell: usize, dir: usize) -> usize {
     cell * 4 + dir
 }
 
+/// A channel span the caller has learned is unusable — a whole-run track
+/// check failed there ([`crate::routing::ortho::route`]'s admission), so the
+/// next search must route around it.
+pub(crate) type Deny = (Axis, usize, (f64, f64));
+
 /// The cheapest route from any start entry to any goal entry for a bundle of
-/// `k`, under the committed state in `ledger`. Ties break goal-side rank,
-/// then start-side rank (entries come in side-rank order), then state id.
+/// `k`, under the committed state in `ledger` and the caller's learned
+/// closures in `deny`. Ties break goal-side rank, then start-side rank
+/// (entries come in side-rank order), then state id.
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn cheapest(
     graph: &ChannelGraph,
     world: usize,
     starts: &[Entry],
     goals: &[Entry],
     ledger: &Ledger,
+    deny: &[Deny],
     k: usize,
     clearance: f64,
 ) -> Option<Route> {
@@ -209,14 +217,11 @@ pub(crate) fn cheapest(
         ledger.crossings_overlapping(world, e.axis, (a.min(b), a.max(b)), e.window)
     };
     // Crossings of run travel along a channel: only the certain rails — span
-    // covering the channel's whole cross-section — are charged; a dodgeable
-    // rail costs nothing here and lands in the report if the drawn wire does
-    // cross it.
+    // covering the corridor's whole cross-section, every track the run could
+    // take — are charged; a dodgeable rail costs nothing here and lands in
+    // the report if the drawn wire does cross it.
     let edge_xings = |ax: Axis, chan: usize, travel: (f64, f64)| {
-        let covered = match ax {
-            Axis::H => graph.h[chan].walls(),
-            Axis::V => graph.v[chan].walls(),
-        };
+        let covered = graph.corridor(ax, chan, travel.0, travel.1).walls;
         ledger.crossings_covering(world, ax, travel, covered)
     };
     // A reversal's U-connector, estimated at the bounced cell's centre
@@ -231,6 +236,13 @@ pub(crate) fn cheapest(
             Axis::V => ledger.crossings_overlapping(world, Axis::H, (r.x0, r.x1), (c.1, c.1)),
             Axis::H => ledger.crossings_overlapping(world, Axis::V, (r.y0, r.y1), (c.0, c.0)),
         }
+    };
+    // A channel span holds the bundle when it has k tracks left and the
+    // caller hasn't learned otherwise (a denied span overlapping this one).
+    let open = |ax: Axis, chan: usize, span: (f64, f64)| {
+        deny.iter()
+            .all(|d| d.0 != ax || d.1 != chan || d.2.0 >= span.1 || d.2.1 <= span.0)
+            && ledger.tracks_left(world, ax, chan, span, graph) >= k
     };
     // The U-connector is a run in the bounce cell's crossing channel like
     // any other: it needs its own track over its whole stretch, or the
@@ -248,7 +260,7 @@ pub(crate) fn cheapest(
             Axis::V => c.1,
         };
         let span = pin.map_or((uq, uq), |p| (p.min(uq), p.max(uq)));
-        ledger.tracks_left(world, uax, uchan, span, graph) >= k
+        open(uax, uchan, span)
     };
     // An entry's port ordinate across its travel axis.
     let entry_pin = |e: &Entry| match e.axis {
@@ -330,7 +342,7 @@ pub(crate) fn cheapest(
         for &(next, ax, chan) in &graph.adj[cell] {
             let (qa, qb) = (along(cell, ax), along(next, ax));
             let span = (qa.min(qb), qa.max(qb));
-            if ledger.tracks_left(world, ax, chan, span, graph) < k {
+            if !open(ax, chan, span) {
                 continue;
             }
             let (ca, cb) = (centre(cell), centre(next));
@@ -408,8 +420,7 @@ pub(crate) fn cheapest(
                 Axis::H => (Axis::V, graph.cells[c].v),
                 Axis::V => (Axis::H, graph.cells[c].h),
             };
-            (ledger.tracks_left(world, jog_axis, chan, span, graph) >= k)
-                .then(|| edge_xings(jog_axis, chan, span))
+            open(jog_axis, chan, span).then(|| edge_xings(jog_axis, chan, span))
         })
     };
 
@@ -448,7 +459,7 @@ pub(crate) fn cheapest(
                     Axis::H => graph.cells[g.cell].h,
                     Axis::V => graph.cells[g.cell].v,
                 };
-                if ledger.tracks_left(world, g.axis, chan, travel, graph) < k {
+                if !open(g.axis, chan, travel) {
                     continue;
                 }
                 if fits(wa, wg) {
@@ -519,7 +530,7 @@ mod tests {
     ) -> Option<Route> {
         let starts = entries(g, a, C, C, forced.0, &[], false);
         let goals = entries(g, b, C, C, forced.1, &[], false);
-        cheapest(g, 0, &starts, &goals, ledger, k, C)
+        cheapest(g, 0, &starts, &goals, ledger, &[], k, C)
     }
 
     #[test]
@@ -689,12 +700,14 @@ mod tests {
 
     #[test]
     fn closed_channel_forces_the_detour() {
-        // A block above the facing row splits the row channel; closing the
-        // row channel with committed load forces the route down and around.
+        // The facing row runs between two blocks — a walled corridor, its
+        // own void. Closing it with committed load forces the route down
+        // and around, through the separate passage under the lower block.
         let a = body(20.0, 40.0, 40.0, 60.0);
         let b = body(160.0, 40.0, 180.0, 60.0);
-        let block = Rect::new(90.0, 0.0, 110.0, 30.0);
-        let g = ChannelGraph::build(BOUNDS, &[a.inflate(C), b.inflate(C), block], false);
+        let above = Rect::new(60.0, 10.0, 140.0, 32.0);
+        let below = Rect::new(60.0, 68.0, 140.0, 90.0);
+        let g = ChannelGraph::build(BOUNDS, &[a.inflate(C), b.inflate(C), above, below], false);
         let ledger = Ledger::new(C);
         let direct = route(&g, a, b, &ledger, 1, (None, None)).expect("route");
         let row =

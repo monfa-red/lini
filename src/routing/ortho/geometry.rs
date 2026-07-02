@@ -50,19 +50,23 @@ fn pin_ord(e: &Entry) -> f64 {
     }
 }
 
-fn anchor(graph: &ChannelGraph, axis: Axis, chan: usize) -> f64 {
+/// A cell's extent along `axis` — a jog's provisional travel range.
+fn cell_interval(graph: &ChannelGraph, cell: usize, axis: Axis) -> (f64, f64) {
+    let r = graph.cells[cell].rect;
     match axis {
-        Axis::H => graph.h[chan].anchor(),
-        Axis::V => graph.v[chan].anchor(),
+        Axis::H => (r.x0, r.x1),
+        Axis::V => (r.y0, r.y1),
     }
 }
 
-/// One run in the making: its channel and travel direction (`0.0` for a jog,
-/// whose extent placement decides).
+/// One run in the making: its channel, travel direction (`0.0` for a jog),
+/// and provisional travel extent — what an interior run's corridor anchor
+/// is estimated over.
 struct Seed {
     axis: Axis,
     chan: usize,
     dir: f64,
+    ext: (f64, f64),
 }
 
 /// Lower a winning cell path to a chain of channel runs. `ledger`, `k`, and
@@ -83,12 +87,21 @@ pub(crate) fn chain(
     clearance: f64,
 ) -> Chain {
     let sgn = |v: f64| if v < 0.0 { -1.0 } else { 1.0 };
-    let seed = |cell: usize, axis: Axis, dir: f64| Seed {
-        axis,
-        chan: chan_of(graph, cell, axis),
-        dir,
+    let seed = |cell: usize, axis: Axis, dir: f64, from: f64| {
+        let c = centre_along(graph, cell, axis);
+        Seed {
+            axis,
+            chan: chan_of(graph, cell, axis),
+            dir,
+            ext: (from.min(c), from.max(c)),
+        }
     };
-    let jog_at = |cell: usize, axis: Axis| seed(cell, perp(axis), 0.0);
+    let jog_at = |cell: usize, axis: Axis| Seed {
+        axis: perp(axis),
+        chan: chan_of(graph, cell, perp(axis)),
+        dir: 0.0,
+        ext: cell_interval(graph, cell, perp(axis)),
+    };
 
     // Travel runs: directed hops merged along their channel; a reversal
     // splits legs around a jog at the bounce cell.
@@ -100,15 +113,18 @@ pub(crate) fn chain(
         } else {
             Axis::V
         };
-        let dir = sgn(centre_along(graph, b, axis) - centre_along(graph, a, axis));
-        match seeds.last() {
+        let (ca, cb) = (centre_along(graph, a, axis), centre_along(graph, b, axis));
+        let dir = sgn(cb - ca);
+        match seeds.last_mut() {
             Some(s) if s.axis == axis && s.chan == chan_of(graph, a, axis) => {
-                if s.dir != dir {
+                if s.dir == dir {
+                    s.ext = (s.ext.0.min(cb), s.ext.1.max(cb));
+                } else {
                     seeds.push(jog_at(a, axis));
-                    seeds.push(seed(a, axis, dir));
+                    seeds.push(seed(a, axis, dir, ca));
                 }
             }
-            _ => seeds.push(seed(a, axis, dir)),
+            _ => seeds.push(seed(a, axis, dir, ca)),
         }
     }
 
@@ -119,26 +135,27 @@ pub(crate) fn chain(
     let dir_sign = |d: usize| if d < 2 { 1.0 } else { -1.0 };
     let (sdir, gdir) = (dir_sign(start.dir), -dir_sign(goal.dir));
     let (first_cell, last_cell) = (cells[0], *cells.last().expect("entered cell"));
+    let (s_line, g_line) = (ends[0].side_coord(), ends[1].side_coord());
     match seeds.first() {
-        None if start.axis == goal.axis => seeds.push(seed(first_cell, start.axis, sdir)),
+        None if start.axis == goal.axis => seeds.push(seed(first_cell, start.axis, sdir, s_line)),
         None => {
-            seeds.push(seed(first_cell, start.axis, sdir));
-            seeds.push(seed(last_cell, goal.axis, gdir));
+            seeds.push(seed(first_cell, start.axis, sdir, s_line));
+            seeds.push(seed(last_cell, goal.axis, gdir, g_line));
         }
         Some(f) if f.axis == start.axis && f.dir == sdir => {}
         Some(f) if f.axis == start.axis => {
             seeds.insert(0, jog_at(first_cell, start.axis));
-            seeds.insert(0, seed(first_cell, start.axis, sdir));
+            seeds.insert(0, seed(first_cell, start.axis, sdir, s_line));
         }
-        Some(_) => seeds.insert(0, seed(first_cell, start.axis, sdir)),
+        Some(_) => seeds.insert(0, seed(first_cell, start.axis, sdir, s_line)),
     }
     match seeds.last() {
         Some(l) if l.axis == goal.axis && l.dir == gdir => {}
         Some(l) if l.axis == goal.axis => {
             seeds.push(jog_at(last_cell, goal.axis));
-            seeds.push(seed(last_cell, goal.axis, gdir));
+            seeds.push(seed(last_cell, goal.axis, gdir, g_line));
         }
-        _ => seeds.push(seed(last_cell, goal.axis, gdir)),
+        _ => seeds.push(seed(last_cell, goal.axis, gdir, g_line)),
     }
 
     // One straight run claimed by both ends draws straight only when the
@@ -167,15 +184,22 @@ pub(crate) fn chain(
                     ) >= k
                 })
                 .expect("the search verified the jog's channel");
-            let leg = || seed(first_cell, axis, seeds[0].dir);
-            seeds = vec![leg(), jog_at(cell, axis), leg()];
+            let dir = seeds[0].dir;
+            let mut jog = jog_at(cell, axis);
+            jog.ext = span;
+            seeds = vec![
+                seed(first_cell, axis, dir, s_line),
+                jog,
+                seed(last_cell, axis, dir, g_line),
+            ];
         }
     }
 
     // Provisional spans: every run reaches its neighbours' estimates — the
-    // ports for end runs, channel anchors inside — and the end runs start on
-    // their side lines. Placement replaces the estimates; geometry then takes
-    // corners from the placed ordinates.
+    // ports for end runs, corridor anchors inside (over the seed's own
+    // travel extent, the same anchor placement will prefer) — and the end
+    // runs start on their side lines. Placement replaces the estimates;
+    // geometry then takes corners from the placed ordinates.
     let n = seeds.len();
     let ests: Vec<f64> = seeds
         .iter()
@@ -186,7 +210,7 @@ pub(crate) fn chain(
             } else if i == n - 1 {
                 pin_ord(goal)
             } else {
-                anchor(graph, s.axis, s.chan)
+                graph.corridor(s.axis, s.chan, s.ext.0, s.ext.1).anchor()
             }
         })
         .collect();
@@ -338,7 +362,7 @@ mod tests {
         let ledger = Ledger::new(C);
         let starts = entries(&graph, a, C, C, None, extra, false);
         let goals = entries(&graph, b, C, C, None, extra, false);
-        let r = cheapest(&graph, 0, &starts, &goals, &ledger, 1, C).expect("route");
+        let r = cheapest(&graph, 0, &starts, &goals, &ledger, &[], 1, C).expect("route");
         let (se, ge) = (&starts[r.start], &goals[r.goal]);
         let ends = [end_of(se, a), end_of(ge, b)];
         let mut chains = vec![Some(chain(

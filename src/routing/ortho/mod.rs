@@ -284,8 +284,48 @@ pub(crate) fn route(index: &SceneIndex, reqs: &[EdgeReq]) -> (Routing, Vec<usize
             if starts.is_empty() || goals.is_empty() {
                 continue;
             }
-            if let Some(route) = search::cheapest(graph, w, &starts, &goals, &ledger, k_eff, c) {
-                picked = Some((w, route, starts, goals));
+            // Admission runs whole-span: the search prices edge by edge, but
+            // a merged run needs one ordinate lawful over its entire travel
+            // — its corridor's intersection, which a junction-fed edge can
+            // overstate. A failed run's span becomes a learned closure and
+            // the same world searches again around it, until a route holds
+            // whole or the world is exhausted — never an unlawful squeeze.
+            let mut deny: Vec<search::Deny> = Vec::new();
+            let mut last: Option<search::Route> = None;
+            while let Some(route) =
+                search::cheapest(graph, w, &starts, &goals, &ledger, &deny, k_eff, c)
+            {
+                // A closure that changed nothing (an end run's channel no
+                // edge consults) can't make progress; neither can unbounded
+                // learning. Both give up on the world, honestly.
+                if deny.len() > 32 || last.as_ref() == Some(&route) {
+                    break;
+                }
+                let (se, ge) = (&starts[route.start], &goals[route.goal]);
+                let ends = [(se, &rep.a_rect), (ge, &rep.b_rect)].map(|(e, r)| EndInfo {
+                    side: e.side,
+                    rect: *r,
+                    window: e.window,
+                    fan: None,
+                });
+                let probe =
+                    geometry::chain(graph, w, &ledger, &route.cells, se, ge, ends, m0, k_eff, c);
+                let blocked = probe
+                    .runs
+                    .iter()
+                    .find(|run| ledger.tracks_left(w, run.axis, run.chan, run.span, graph) < k_eff);
+                match blocked {
+                    None => {
+                        picked = Some((w, route, starts, goals));
+                        break;
+                    }
+                    Some(run) => {
+                        deny.push((run.axis, run.chan, run.span));
+                        last = Some(route);
+                    }
+                }
+            }
+            if picked.is_some() {
                 break;
             }
         }

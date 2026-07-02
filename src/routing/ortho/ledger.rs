@@ -53,10 +53,7 @@ impl Ledger {
         graph: &ChannelGraph,
     ) {
         let span = (span.0.min(span.1), span.0.max(span.1));
-        let ord = match axis {
-            Axis::H => graph.h[chan].anchor(),
-            Axis::V => graph.v[chan].anchor(),
-        };
+        let ord = graph.corridor(axis, chan, span.0, span.1).anchor();
         self.runs
             .entry((world, axis.index(), chan))
             .or_default()
@@ -72,10 +69,11 @@ impl Ledger {
     }
 
     /// Tracks still free over `span` of a channel at maximum compression:
-    /// capacity `floor(usable / min_pitch) + 1` minus the committed maximum
-    /// point-load. Spans count as concurrent within `min_pitch` of each other
-    /// — near-touching runs need distinct tracks, exactly as placement will
-    /// cluster them.
+    /// the **corridor's** capacity `floor(usable / min_pitch) + 1` minus the
+    /// committed maximum point-load across every channel the corridor
+    /// absorbs — fragments of one void share its tracks. Spans count as
+    /// concurrent within `min_pitch` of each other — near-touching runs need
+    /// distinct tracks, exactly as placement will cluster them.
     pub fn tracks_left(
         &self,
         world: usize,
@@ -85,11 +83,8 @@ impl Ledger {
         graph: &ChannelGraph,
     ) -> usize {
         let (lo, hi) = (span.0.min(span.1), span.0.max(span.1));
-        let channel = match axis {
-            Axis::H => &graph.h[chan],
-            Axis::V => &graph.v[chan],
-        };
-        let (u0, u1) = channel.usable(lo, hi, self.clearance);
+        let corridor = graph.corridor(axis, chan, lo, hi);
+        let (u0, u1) = corridor.usable(self.clearance);
         // A zero-width usable range still holds one track (the +1 below);
         // only a genuine inversion — overlapping soft margins, always a
         // multiple of half the clearance — closes the span. The epsilon
@@ -99,27 +94,30 @@ impl Ledger {
             return 0;
         }
         let capacity = ((u1 - u0).max(0.0) / min_pitch(self.clearance)).floor() as usize + 1;
-        capacity.saturating_sub(self.max_load(world, axis, chan, (lo, hi)))
+        capacity.saturating_sub(self.max_load(world, axis, &corridor.chans, (lo, hi)))
     }
 
     /// The maximum k-weighted number of committed runs concurrent at any
-    /// point of `span`, runs reaching `min_pitch` past their ends.
-    fn max_load(&self, world: usize, axis: Axis, chan: usize, span: (f64, f64)) -> usize {
-        let Some(committed) = self.runs.get(&(world, axis.index(), chan)) else {
-            return 0;
-        };
+    /// point of `span` across the corridor's channels, runs reaching
+    /// `min_pitch` past their ends.
+    fn max_load(&self, world: usize, axis: Axis, chans: &[usize], span: (f64, f64)) -> usize {
         let reach = min_pitch(self.clearance);
         // Sweep events over the query span; at equal position ends retire
         // before starts, so a gap of exactly min_pitch shares a track.
         let mut events: Vec<(f64, i64)> = Vec::new();
-        for c in committed {
-            let lo = (c.span.0 - reach).max(span.0);
-            let hi = (c.span.1 + reach).min(span.1);
-            if hi <= lo {
+        for chan in chans {
+            let Some(committed) = self.runs.get(&(world, axis.index(), *chan)) else {
                 continue;
+            };
+            for c in committed {
+                let lo = (c.span.0 - reach).max(span.0);
+                let hi = (c.span.1 + reach).min(span.1);
+                if hi <= lo {
+                    continue;
+                }
+                events.push((lo, c.k as i64));
+                events.push((hi, -(c.k as i64)));
             }
-            events.push((lo, c.k as i64));
-            events.push((hi, -(c.k as i64)));
         }
         events.sort_by(|a, b| a.0.total_cmp(&b.0).then(a.1.cmp(&b.1)));
         let (mut load, mut max) = (0i64, 0i64);

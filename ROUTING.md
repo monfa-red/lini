@@ -57,7 +57,11 @@ The rest of this document is the `orthogonal` contract.
   each axis's channels partition the free space. A **cell** is an H∩V
   overlap; cells are the graph's vertices. A channel wall is a keep-out edge,
   a **shared boundary** with a same-axis channel (each side keeps half a
-  clearance off it), or the **canvas edge**.
+  clearance off it), or the **canvas edge**. The sweep may slice one free
+  corridor into several same-axis channels; capacity, anchors, and usable
+  width always read the reassembled **corridor** — the walls that actually
+  bound a run's span — so a shared boundary interior to a void costs
+  nothing.
 - **Run** — one straight piece of a route, lying in one channel of its axis.
   A run's **track** is its ordinate across the channel. A route is an
   alternating chain of runs.

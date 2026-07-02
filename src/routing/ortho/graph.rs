@@ -9,6 +9,15 @@
 //! and two cells connect iff they abut in a shared channel. Pure geometry: no
 //! link knowledge, identical output for identical input — capacity and load
 //! live in the [`super::ledger`].
+//!
+//! The sweep may slice one free corridor into several parallel channels — a
+//! far-away node's edge cuts the strip list globally. A run cares about the
+//! **corridor**: the void's true walls for its span, reassembled by walking
+//! across shared boundaries into every same-axis channel free over the whole
+//! span ([`ChannelGraph::corridor`]). Anchors, usable width, and capacity all
+//! read the corridor, never the fragment — otherwise a fragment's midline
+//! poses as "halfway between the nodes" and its phantom soft margins compress
+//! pitch in a void with room to spare.
 
 use super::rect::Rect;
 
@@ -53,34 +62,57 @@ impl Channel {
         }
     }
 
-    /// Where a lone run in this channel sits (ROUTING.md model step 5): the
+    /// The channel extent on the travel axis.
+    pub fn travel(&self) -> (f64, f64) {
+        match self.axis {
+            Axis::V => (self.rect.y0, self.rect.y1),
+            Axis::H => (self.rect.x0, self.rect.x1),
+        }
+    }
+}
+
+/// The void a run really lives in: the walls that bound its span once every
+/// same-axis channel free over the whole span is walked across (ROUTING.md
+/// model steps 2/5). One decision surface for three consumers — the anchor
+/// preference, the usable ordinate range, and capacity — so a fragment of a
+/// corridor can never pose as the corridor.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Corridor {
+    pub walls: (f64, f64),
+    /// Whether each final wall is the root world's open canvas bound.
+    pub outer: [bool; 2],
+    /// Whether each final wall still faces free space somewhere over the
+    /// span — a neighbour covering only part of it, whose wires the run owes
+    /// half a clearance across the shared boundary.
+    pub soft: [bool; 2],
+    /// The same-axis channels the corridor absorbs — the committed-load set.
+    pub chans: Vec<usize>,
+}
+
+impl Corridor {
+    /// Where a lone run in this corridor sits (ROUTING.md model step 5): the
     /// midline between two keep-out walls — a bend between two nodes lands
     /// halfway between them — or hugging the keep-out wall when the other
     /// wall is the canvas edge. Placement's interior-run preference and the
     /// ledger's committed-ordinate estimate share this one anchor.
     pub fn anchor(&self) -> f64 {
-        let (w0, w1) = self.walls();
         match self.outer {
-            [false, true] => w0,
-            [true, false] => w1,
-            _ => (w0 + w1) / 2.0,
+            [false, true] => self.walls.0,
+            [true, false] => self.walls.1,
+            _ => (self.walls.0 + self.walls.1) / 2.0,
         }
     }
 
-    /// The ordinate range runs spanning `[lo, hi]` may use: the walls, pulled
-    /// in by half a clearance wherever the span **faces** a soft wall — each
-    /// side of a free boundary surrenders half the separation it cannot
-    /// guarantee alone. Facing means overlap, not proximity: a soft stretch
-    /// just past the span's end constrains the perpendicular continuation in
-    /// its own channel, never this run — charging it here sealed lawful
-    /// single-track corner passes shut.
-    pub fn usable(&self, lo: f64, hi: f64, clearance: f64) -> (f64, f64) {
-        let (w0, w1) = self.walls();
-        let margin = |soft: &[(f64, f64)]| {
-            let faced = soft.iter().any(|&(a, b)| a < hi && b > lo);
-            if faced { clearance / 2.0 } else { 0.0 }
-        };
-        (w0 + margin(&self.soft[0]), w1 - margin(&self.soft[1]))
+    /// The ordinate range runs may use: the corridor walls, pulled in by half
+    /// a clearance where a wall still faces free space over the span — each
+    /// side of a shared boundary surrenders half the separation it cannot
+    /// guarantee alone.
+    pub fn usable(&self, clearance: f64) -> (f64, f64) {
+        let margin = |soft: bool| if soft { clearance / 2.0 } else { 0.0 };
+        (
+            self.walls.0 + margin(self.soft[0]),
+            self.walls.1 - margin(self.soft[1]),
+        )
     }
 }
 
@@ -113,6 +145,48 @@ pub struct ChannelGraph {
 }
 
 impl ChannelGraph {
+    /// The corridor around channel `chan` of `axis` for a run spanning
+    /// `[lo, hi]`: the walls grown across shared boundaries into every
+    /// same-axis channel free over the whole span, out to the void's true
+    /// walls. The span is clamped to the channel's own travel extent first —
+    /// an end segment's tail inside its own endpoint's keep-out never blocks
+    /// the walk. Wall coordinates come from one sweep-edge list, so the
+    /// abutting test is exact equality, as in [`soften`].
+    pub fn corridor(&self, axis: Axis, chan: usize, lo: f64, hi: f64) -> Corridor {
+        let list = match axis {
+            Axis::H => &self.h,
+            Axis::V => &self.v,
+        };
+        let (t0, t1) = list[chan].travel();
+        let (lo, hi) = (lo.max(t0).min(t1), hi.min(t1).max(t0));
+        let covers = |c: &Channel| {
+            let (a, b) = c.travel();
+            a <= lo && hi <= b
+        };
+        let mut chans = vec![chan];
+        let (mut low, mut high) = (chan, chan);
+        while let Some(j) =
+            (0..list.len()).find(|&j| list[j].walls().1 == list[low].walls().0 && covers(&list[j]))
+        {
+            low = j;
+            chans.push(j);
+        }
+        while let Some(j) =
+            (0..list.len()).find(|&j| list[j].walls().0 == list[high].walls().1 && covers(&list[j]))
+        {
+            high = j;
+            chans.push(j);
+        }
+        chans.sort_unstable();
+        let faced = |soft: &[(f64, f64)]| soft.iter().any(|&(a, b)| a < hi && b > lo);
+        Corridor {
+            walls: (list[low].walls().0, list[high].walls().1),
+            outer: [list[low].outer[0], list[high].outer[1]],
+            soft: [faced(&list[low].soft[0]), faced(&list[high].soft[1])],
+            chans,
+        }
+    }
+
     /// Decompose the free space — `bounds` minus `keepouts` — into channels,
     /// cells, and adjacencies. Keep-outs may overlap each other and `bounds`.
     /// `open` marks `bounds` as the root world's canvas bound rather than a
@@ -342,22 +416,78 @@ mod tests {
         assert_eq!(top_mid.soft[1], vec![(0.0, 40.0)]);
     }
 
+    /// Two full-height side walls with a small block at the top splitting
+    /// the corridor's sweep into three V fragments.
+    fn split_corridor() -> ChannelGraph {
+        ChannelGraph::build(
+            Rect::new(0.0, 0.0, 200.0, 100.0),
+            &[
+                Rect::new(0.0, 0.0, 40.0, 100.0),
+                Rect::new(160.0, 0.0, 200.0, 100.0),
+                Rect::new(90.0, 0.0, 110.0, 20.0),
+            ],
+            false,
+        )
+    }
+
+    fn v_chan(g: &ChannelGraph, x0: f64, x1: f64) -> usize {
+        g.v.iter()
+            .position(|c| c.rect.x0 == x0 && c.rect.x1 == x1)
+            .expect("V channel")
+    }
+
     #[test]
-    fn soft_margins_shrink_the_usable_range_only_where_faced() {
-        let mut chan = channel(Axis::V, 40.0, 0.0, 50.0, 100.0);
-        chan.soft = [vec![(0.0, 40.0)], Vec::new()];
-        // A span clear of the soft stretch keeps the full width — even one
-        // ending right beside it (the corner's continuation is the next
-        // channel's concern); a span overlapping it surrenders half a
-        // clearance.
-        assert_eq!(chan.usable(50.0, 90.0, 8.0), (40.0, 50.0));
-        assert_eq!(chan.usable(41.0, 90.0, 8.0), (40.0, 50.0));
-        assert_eq!(chan.usable(30.0, 90.0, 8.0), (44.0, 50.0));
-        // Soft on both walls: a sliver's usable range inverts (no room).
-        let mut sliver = channel(Axis::H, 0.0, 50.0, 100.0, 56.0);
-        sliver.soft = [vec![(0.0, 100.0)], vec![(0.0, 100.0)]];
-        let (u0, u1) = sliver.usable(10.0, 20.0, 8.0);
-        assert!(u1 < u0, "both margins overlap: {u0}..{u1}");
+    fn a_fragmented_corridor_reassembles_to_the_voids_walls() {
+        let g = split_corridor();
+        let west = v_chan(&g, 40.0, 90.0);
+        // A span below the top block sees the whole void: hard wall to hard
+        // wall, every fragment absorbed, midline anchor, no margins.
+        let c = g.corridor(Axis::V, west, 30.0, 90.0);
+        assert_eq!(c.walls, (40.0, 160.0));
+        assert_eq!(c.soft, [false, false]);
+        assert_eq!(c.anchor(), 100.0);
+        assert_eq!(c.usable(8.0), (40.0, 160.0));
+        assert_eq!(c.chans.len(), 3);
+        // Growth works from any fragment of the void.
+        let mid = v_chan(&g, 90.0, 110.0);
+        assert_eq!(g.corridor(Axis::V, mid, 30.0, 90.0).walls, (40.0, 160.0));
+    }
+
+    #[test]
+    fn a_partial_neighbour_stops_the_walk_and_stays_soft() {
+        let g = split_corridor();
+        let west = v_chan(&g, 40.0, 90.0);
+        // The span reaches beside the top block: the middle fragment covers
+        // only y ≥ 20, so the wall at 90 stands — still facing free space
+        // below the block, where the run surrenders half a clearance.
+        let c = g.corridor(Axis::V, west, 10.0, 90.0);
+        assert_eq!(c.walls, (40.0, 90.0));
+        assert_eq!(c.soft, [false, true]);
+        assert_eq!(c.usable(8.0), (40.0, 86.0));
+    }
+
+    #[test]
+    fn an_end_spans_keepout_tail_never_blocks_the_walk() {
+        // The pcb shape: an east wall, two west boxes, an end run whose span
+        // pokes into the east wall's keep-out (the lawful end-segment tail).
+        // The walk clamps to the channel's travel extent, so the corridor
+        // still opens to the whole west void.
+        let g = ChannelGraph::build(
+            Rect::new(0.0, 0.0, 200.0, 150.0),
+            &[
+                Rect::new(160.0, 0.0, 200.0, 150.0),
+                Rect::new(0.0, 20.0, 40.0, 60.0),
+                Rect::new(0.0, 90.0, 40.0, 130.0),
+            ],
+            false,
+        );
+        let row =
+            g.h.iter()
+                .position(|c| c.rect == Rect::new(40.0, 90.0, 160.0, 130.0))
+                .expect("the lower row fragment");
+        let c = g.corridor(Axis::H, row, 100.0, 170.0);
+        assert_eq!(c.walls, (0.0, 150.0));
+        assert_eq!(c.outer, [false, false]);
     }
 
     #[test]

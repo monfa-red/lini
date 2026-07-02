@@ -446,6 +446,52 @@ Executing sessions: append dated notes here — decisions the plan didn't
 anticipate, gotchas, deferred items, comparator cases that needed deepening,
 anything the next session must know. Keep entries terse.
 
+- **2026-07-02, corridor view** (between stages 5 and 6; fixes the pcb_fail
+  aesthetics the user flagged — fragment-midline bends, sub-clearance pitch
+  with room to spare — both symptoms of the fragmentation weakness the
+  stage-4 log recorded). The sweep slices one free corridor into several
+  same-axis channels wherever any far-away node edge cuts the strip list;
+  every consumer now reads the reassembled **corridor** instead
+  (`ChannelGraph::corridor(axis, chan, span)`: walk shared boundaries into
+  each same-axis channel free over the whole span, clamped to the origin
+  channel's travel extent so an end segment's keep-out tail never blocks the
+  walk). Consequences and decisions:
+  - **One decision surface, three consumers**: `Corridor::{anchor, usable}`
+    replace `Channel::{anchor, usable}` (deleted); `Ledger::tracks_left`
+    takes corridor capacity minus the committed load of *every* absorbed
+    channel (fragments share the void's tracks — over-stuffing one closes
+    all, see the rebuilt `closed_channel_forces_the_detour`); commit
+    ordinates, placement preferences, and geometry's seed estimates (seeds
+    now carry their travel extent) all use the corridor anchor.
+  - **Placement clusters across fragments** (union-find on span proximity +
+    corridor connectivity, per world/axis) — without this, corridor-wide
+    bounds would let blind per-fragment ladders collide. The cluster-pitch
+    shortcut `min(clearance, usable/(n−1))` died: seps start at clearance
+    and the **relief valve is the one compression mechanism**. Seps are owed
+    only by *contending* neighbours (spans overlapping or within a
+    clearance); transitively-chained far-apart items owe 0 — links_medium's
+    20-item merged cluster is serializable only under that rule. Known
+    approximation, logged for stage 6: an overlapping pair bridged *only* by
+    span-disjoint middles can under-separate (the chain model can't express
+    pairwise constraints); the validator should watch for it.
+  - **Whole-span admission with learned closures**: the search prices edge
+    by edge, but a merged run needs one ordinate lawful over its entire
+    travel — the corridor intersection, which junction-fed edges overstate
+    (the hub row-gaps admitted six wires through a 6 px band; stage 5 drew
+    them in mutually-blind fragment clusters, quietly unlawful). After
+    `cheapest`, the driver probes the chain run by run; a failing run's
+    `(channel, span)` becomes a `Deny` and the same world searches again
+    around it (bounded, no-progress-guarded) — so links with lawful
+    alternatives find them and only genuine oversubscription strays.
+  - Interior bounds fall back to the corridor **walls** when a sliver's soft
+    margins cross — the search admitted the run; it draws there.
+  - **Results**: pcb_fail — drops at clearance pitch 10 (was 6.13) centred
+    by the void midline (was the fragment's), flash exits and the 8-port
+    mcu:left ladder at pitch 10 (were 8.87/8.09); pins added to
+    tests/routing.rs. pcb — `mcu → rf` ×2 now routes (was 2 honest strays).
+    links_hard — 4 strays (was 6): `ww2 → ss1` ×2 now route; the rest are
+    genuine capacity truths at gap 30/clearance 12. Sequence output
+    byte-identical. pcb.lini ~17 ms release (corridor walks; budget 50 ms).
 - **2026-07-02, stage 5.** Done (straight.rs, dispatch in `routing::route`,
   sequence messages on the spine). Decisions and drift:
   - **Dispatch shape:** `ResolvedLink`/`EdgeReq` carry a typed
