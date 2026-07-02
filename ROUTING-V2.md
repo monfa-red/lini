@@ -472,6 +472,46 @@ anything the next session must know. Keep entries terse.
   - `layout::ir` became `pub(crate)` so `routing` can name IR types directly;
     `cross()` now lives in `routing::report` (renderer calls
     `crate::routing::cross`).
+- **2026-07-02, stage-4 handoff notes** (written at the stage-3/4 boundary —
+  tacit knowledge the driver session needs):
+  - Where this log contradicts the plan's earlier sections (the vocabulary
+    block especially), **the log wins**: it records what stages 1–3 actually
+    built. Current true signatures: `entries(graph, body, stub, clearance,
+    forced, blockers, inward)`; `cheapest(graph, world, starts, goals,
+    ledger, k, clearance) -> Option<Route>`; `Ledger::{commit_run,
+    commit_port, tracks_left, side_free, crossings_covering,
+    crossings_overlapping}`; `ladder(prefs, bounds, seps)`;
+    `place(worlds, chains, clearance)`; types in `ortho/mod.rs`.
+  - The driver replaces the stray-stub body of `routing::route()` — keep the
+    stub's stray+Impossible construction for links that end up undrawn.
+  - Filter each end's entries to sides with `ledger.side_free(path, side,
+    rect) ≥ k` before search (a fan group needs 1 slot, not k). Fan side
+    fixing: the first-routed sibling's side binds the group — port the
+    `fan_pick` idea from v1's driver, reference at
+    `git show c70b13f:src/layout/links/mod.rs` (also `world_ladder`,
+    `route_self_loop`, and commit ordering). Port patterns, never v1
+    mechanisms the spec killed.
+  - Route → Chain: merge consecutive same-channel cells into one run (v1
+    `geometry::chain` is the reference, `git show c70b13f:src/layout/links/
+    geometry.rs`); a repeated cell in `Route::cells` is a U-turn — expand to
+    run–jog–run; a single-run route whose windows don't overlap likewise
+    expands to end–jog–end (the search already verified the jog's channel
+    and priced its two turns; the jog run's channel is the cell's
+    perpendicular one). End-run spans start at `EndInfo::side_coord()`.
+  - `Ledger::commit_run` per run with provisional spans right after each
+    bundle routes; `commit_port` per landing side (fan groups once).
+  - After `place()`: corners are adjacent runs' ordinates; polyline = port →
+    corners → port; collinear points merge (port v1 `simplify`); first/last
+    segments stay ≥ `EdgeReq::stub_*` (marker run-up). `labels.rs` returns
+    from history (`git show c70b13f:src/layout/links/labels.rs`) — it reads
+    `EdgeReq` + polylines and should port nearly clean.
+  - Remove each `// Scaffold:` allow whose code the driver consumes (grep
+    `Scaffold:`); re-enable the `routing-v2:`-tagged tests drawn links
+    satisfy again (grep `routing-v2:` — the two `src/render/rules.rs` unit
+    tests and the three `tests/rendering.rs` link tests belong to stage 4/5;
+    conformance + hello snapshots stay ignored until stage 7).
+  - Visual dev loop: `lini <sample> --bake-vars -o x.svg && resvg x.svg
+    x.png --zoom 2` — without `--bake-vars`, resvg renders var() as black.
 - **2026-07-02, stage 3.** Done (ladder.rs, place.rs, pipeline types in
   ortho/mod.rs; 67 unit tests). Notes for stages 4/6:
   - **`ladder` takes per-pair separations**, not one pitch: two pieces of one
