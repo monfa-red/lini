@@ -13,6 +13,7 @@ mod values;
 pub(crate) use anchors::is_pinned;
 pub use ir::*;
 pub(crate) use text::{approx_height, approx_width};
+pub(crate) use values::as_pair;
 
 use crate::error::Error;
 use crate::resolve::{NodeKind, Program, ResolvedInst, ResolvedValue};

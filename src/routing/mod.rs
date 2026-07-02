@@ -34,29 +34,7 @@ pub struct Routing {
 pub fn route(program: &Program, nodes: &[PlacedNode]) -> Result<Routing, Error> {
     let index = ortho::scene::SceneIndex::build(nodes);
     let reqs = ortho::request::requests(program, &index)?;
-    // The v2 pipeline lands stage by stage (ROUTING-V2.md): until the
-    // orthogonal strategy exists, every link is reported and drawn as a
-    // stray — the honest degraded state, never a lawful-looking guess.
-    let mut routing = Routing::default();
-    for req in &reqs {
-        routing.report.push(Violation {
-            rule: Rule::Impossible,
-            severity: Severity::Warning,
-            links: vec![format!("{} -> {}", req.a_path, req.b_path)],
-            detail: "routing v2 under construction: the orthogonal strategy is not built yet"
-                .to_owned(),
-            span: req.span,
-        });
-        if let Some((from, to)) = ortho::geometry::stray_segment(req.a_rect, req.b_rect) {
-            routing.strays.push(Stray {
-                from,
-                to,
-                data_from: req.data_from.clone(),
-                data_to: req.data_to.clone(),
-            });
-        }
-    }
-    Ok(routing)
+    Ok(ortho::route(program, &index, &reqs))
 }
 
 /// The independent four-law check over a drawn scene (see [`validate`]).

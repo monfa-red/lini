@@ -7,10 +7,6 @@
 //! one **bundle** of multiplicity *k* (adjacent rails); edges of one statement
 //! sharing a segment endpoint form a **fan group** (one shared port and stub).
 
-// Scaffold: bundles and fans are consumed by the search stage
-// (ROUTING-V2.md stage 2/4); this allow leaves with the stray stub.
-#![allow(dead_code)]
-
 use super::rect::Rect;
 use super::scene::SceneIndex;
 use crate::ast::Side;

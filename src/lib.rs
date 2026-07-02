@@ -174,6 +174,20 @@ pub mod testing {
         crate::routing::node_rect(&laid.nodes, path)
     }
 
+    /// Routed polylines by endpoint pair, in declaration order — the contract
+    /// tests' geometry hook (ROUTING-V2.md stage 4): parse → resolve → layout,
+    /// then each drawn link's `(seg_from, seg_to)` and path.
+    #[allow(clippy::type_complexity)]
+    pub fn routes_str(src: &str) -> Result<Vec<((String, String), Vec<(f64, f64)>)>, crate::Error> {
+        let program = super::resolve_pipeline(src, &Options::default())?;
+        let laid = layout::layout(&program)?;
+        Ok(laid
+            .links
+            .iter()
+            .map(|l| ((l.seg_from.clone(), l.seg_to.clone()), l.path.clone()))
+            .collect())
+    }
+
     /// Compile `src` to a laid-out scene with `clearance` forced on every link,
     /// overriding whatever the source set.
     pub fn route_sample(src: &str, clearance: f64) -> LaidOut {

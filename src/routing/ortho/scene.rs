@@ -6,10 +6,6 @@
 //! first among them — are **labels** (obstacles owned by their enclosing body,
 //! never endpoints).
 
-// Scaffold: worlds, solidity, and obstacle sets are consumed by the search
-// and placement stages (ROUTING-V2.md stage 2/4); the allow leaves with them.
-#![allow(dead_code)]
-
 use super::rect::Rect;
 use crate::layout::ir::PlacedNode;
 use std::collections::BTreeMap;

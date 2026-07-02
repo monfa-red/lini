@@ -8,10 +8,6 @@
 //! when fewer than *k* tracks remain. Capacity is never exceeded, only
 //! priced — the search detours around a closed span or reports a stray.
 
-// Scaffold: consumed by the pipeline driver too (ROUTING-V2.md stage 4);
-// the allow leaves with it.
-#![allow(dead_code)]
-
 use std::collections::BTreeMap;
 
 use super::cost::min_pitch;
@@ -94,10 +90,15 @@ impl Ledger {
             Axis::V => &graph.v[chan],
         };
         let (u0, u1) = channel.usable(lo, hi, self.clearance);
-        if u1 < u0 {
+        // A zero-width usable range still holds one track (the +1 below);
+        // only a genuine inversion — overlapping soft margins, always a
+        // multiple of half the clearance — closes the span. The epsilon
+        // absorbs float noise in wall coordinates, which otherwise flips an
+        // exact-zero width (a corner pass through a min-width corridor) shut.
+        if u1 - u0 < -1e-6 {
             return 0;
         }
-        let capacity = ((u1 - u0) / min_pitch(self.clearance)).floor() as usize + 1;
+        let capacity = ((u1 - u0).max(0.0) / min_pitch(self.clearance)).floor() as usize + 1;
         capacity.saturating_sub(self.max_load(world, axis, chan, (lo, hi)))
     }
 

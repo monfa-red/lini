@@ -10,10 +10,6 @@
 //! link knowledge, identical output for identical input — capacity and load
 //! live in the [`super::ledger`].
 
-// Scaffold: graph construction is consumed by the pipeline driver
-// (ROUTING-V2.md stage 4); the allow leaves with it.
-#![allow(dead_code)]
-
 use super::rect::Rect;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -72,16 +68,17 @@ impl Channel {
     }
 
     /// The ordinate range runs spanning `[lo, hi]` may use: the walls, pulled
-    /// in by half a clearance wherever the span (inflated by `clearance`)
-    /// faces a soft wall — each side of a free boundary surrenders half the
-    /// separation it cannot guarantee alone.
+    /// in by half a clearance wherever the span **faces** a soft wall — each
+    /// side of a free boundary surrenders half the separation it cannot
+    /// guarantee alone. Facing means overlap, not proximity: a soft stretch
+    /// just past the span's end constrains the perpendicular continuation in
+    /// its own channel, never this run — charging it here sealed lawful
+    /// single-track corner passes shut.
     pub fn usable(&self, lo: f64, hi: f64, clearance: f64) -> (f64, f64) {
         let (w0, w1) = self.walls();
         let margin = |soft: &[(f64, f64)]| {
-            let near = soft
-                .iter()
-                .any(|&(a, b)| a < hi + clearance && b > lo - clearance);
-            if near { clearance / 2.0 } else { 0.0 }
+            let faced = soft.iter().any(|&(a, b)| a < hi && b > lo);
+            if faced { clearance / 2.0 } else { 0.0 }
         };
         (w0 + margin(&self.soft[0]), w1 - margin(&self.soft[1]))
     }
@@ -346,13 +343,16 @@ mod tests {
     }
 
     #[test]
-    fn soft_margins_shrink_the_usable_range_only_near_the_span() {
+    fn soft_margins_shrink_the_usable_range_only_where_faced() {
         let mut chan = channel(Axis::V, 40.0, 0.0, 50.0, 100.0);
         chan.soft = [vec![(0.0, 40.0)], Vec::new()];
-        // A span clear of the soft stretch (inflated by clearance) keeps the
-        // full width; one within reach surrenders half a clearance.
+        // A span clear of the soft stretch keeps the full width — even one
+        // ending right beside it (the corner's continuation is the next
+        // channel's concern); a span overlapping it surrenders half a
+        // clearance.
         assert_eq!(chan.usable(50.0, 90.0, 8.0), (40.0, 50.0));
-        assert_eq!(chan.usable(45.0, 90.0, 8.0), (44.0, 50.0));
+        assert_eq!(chan.usable(41.0, 90.0, 8.0), (40.0, 50.0));
+        assert_eq!(chan.usable(30.0, 90.0, 8.0), (44.0, 50.0));
         // Soft on both walls: a sliver's usable range inverts (no room).
         let mut sliver = channel(Axis::H, 0.0, 50.0, 100.0, 56.0);
         sliver.soft = [vec![(0.0, 100.0)], vec![(0.0, 100.0)]];

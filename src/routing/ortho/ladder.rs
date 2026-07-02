@@ -13,10 +13,6 @@
 //! block must re-balance its neighbours — the brute-force tests below pin
 //! the difference.)
 
-// Scaffold: consumed by placement's caller, the pipeline driver
-// (ROUTING-V2.md stage 4); the allow leaves with it.
-#![allow(dead_code)]
-
 /// Deterministic, unique, order-preserving ladder. `seps[i]` is the minimum
 /// gap between items i and i+1 — a cluster's pitch between different wires,
 /// zero between two pieces of one wire (a jog may collapse; its legs owe
@@ -182,7 +178,8 @@ mod tests {
 
     #[test]
     fn matches_brute_force_on_hard_small_cases() {
-        let cases: &[(&[f64], &[(f64, f64)], f64)] = &[
+        type Case = (&'static [f64], &'static [(f64, f64)], f64);
+        let cases: &[Case] = &[
             // Crossing pulls: order forced against the preferences.
             (&[30.0, 10.0, 20.0], &[(0.0, 40.0); 3], 8.0),
             // Tight walls: the ladder squeezes to the boundary.

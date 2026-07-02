@@ -319,25 +319,25 @@ count over final polylines using `report::cross` — one O(L²·S²) pass, tiny)
 
 **Contract tests — `tests/routing.rs`** (helpers: `turns(path)` = direction
 changes; `is_straight`; assert with geometry, never images):
-- [ ] **Consequences table, one test per row** (small inline `.lini` sources):
+- [x] **Consequences table, one test per row** (small inline `.lini` sources):
       facing aligned → 2 points; offset-within-windows → still 2 points;
       offset-past-windows → 4 points with mid-run on the gap midline
       (assert ordinate == midline ± ε); bundle ×4 → 4 parallel rails at pitch
       centred on midline; canvas-edge wire hugs keep-outs (ordinate ==
       keep-out wall); crossing beats orbit (assert total length < direct
       distance + margin, crossings reported == expected count)
-- [ ] **pcb_fail pins:** all 4 `pwr → mcu` have `turns == 0`; all 4
+- [x] **pcb_fail pins:** all 4 `pwr → mcu` have `turns == 0`; all 4
       `flash → mcu` have `turns == 2` and every point stays left of `mcu`'s
       right edge (no orbit); crossings reported == 0
-- [ ] Forced sides honored or stray (`a:left -> b` with `a`'s left walled)
-- [ ] Fan trunk: `a -> b & c` siblings share their first point
-- [ ] Self-loop right → top; both-ends-one-side errors
-- [ ] Containment link lands on the parent's inner side
-- [ ] Determinism: `routes_str` twice, assert equal
-- [ ] Render `pcb.lini`, `pcb_fail.lini`, `links_hard.lini` to PNG
+- [x] Forced sides honored or stray (`a:left -> b` with `a`'s left walled)
+- [x] Fan trunk: `a -> b & c` siblings share their first point
+- [x] Self-loop right → top; both-ends-one-side errors
+- [x] Containment link lands on the parent's inner side
+- [x] Determinism: `routes_str` twice, assert equal
+- [x] Render `pcb.lini`, `pcb_fail.lini`, `links_hard.lini` to PNG
       (`--bake-vars` + `resvg`) and **look at them** — development
       verification, not CI
-- [ ] `cargo fmt && cargo clippy && cargo test`; commit
+- [x] `cargo fmt && cargo clippy && cargo test`; commit
       (`feat: routing v2 orthogonal pipeline — search, placement, geometry`)
 
 **Done when:** the two pcb bugs are impossible per tests, samples render sane
@@ -446,6 +446,65 @@ Executing sessions: append dated notes here — decisions the plan didn't
 anticipate, gotchas, deferred items, comparator cases that needed deepening,
 anything the next session must know. Keep entries terse.
 
+- **2026-07-02, stage 4.** Done (driver in ortho/mod.rs, chain construction +
+  polylines in geometry.rs, labels.rs ported, `ortho/order.rs` added,
+  tests/routing.rs with 17 contract tests; `routes_str` lives in
+  `lini::testing` beside the other hooks, not top-level). pcb.lini routes in
+  3 ms release. Decisions and fixes the stage forced — stage 5/6 sessions
+  read these first:
+  - **Self-loops ride the ordinary search** — no ported `self_loop_chain`.
+    `self_loop_sides` (v1's resolution: default right → top, forced side's
+    partner stays adjacent, one side = Impossible) turns the loop into a
+    forced-sides bundle; wall runs hug the keep-out through ordinary channel
+    anchors, ties wrap over the top through ordinary state-id ties. One
+    mechanism; the contract test pins the drawn corner shape.
+  - **The one-hop nesting key died; `ortho/order.rs` replaces it** — the v1
+    outward-walk comparator rebuilt over v2 chains, reading placement
+    estimates (ports/anchors) instead of assigned ordinates. The stage-3 log's
+    predicted braid materialized immediately (pcb_fail: flash landing *below*
+    pwr, 16 crossings). Cluster order is preference → walk → declaration:
+    prefs sit inside their boxes so disjoint windows order themselves; the
+    walk arbitrates equal preferences (nested, never braided); same-chain
+    pieces order by estimate (no self-nesting).
+  - **Search holes found by first light, fixed at source, all with the same
+    shape — a run the Dijkstra edges never priced:**
+    (a) the single-run straight never checked its channel's committed load
+    nor that the *shared window holds k* rails at min pitch — `fits` added,
+    and `jog_span`'s formula already generalizes to the too-tight-overlap
+    case (it yields the shared window); geometry mirrors the same rule;
+    (b) a reversal's U-connector was costed but never capacity-checked —
+    `u_open` closes it, estimating the connector span from the doubled leg's
+    port when it is an end run (links.lini: three side-hooks overcommitted
+    one 8.8 px corridor without this).
+  - **`usable()` charges soft walls the span faces, not walls it merely comes
+    within a clearance of** — proximity charging sealed lawful single-track
+    corner passes shut (links_hard's hub pocket). Plus `tracks_left` takes a
+    −1e-6 epsilon: an exact-zero usable width is one lawful track, and float
+    noise in wall coordinates flipped it closed.
+  - **`settle` grew the general relief valve**: any stretch of cluster items
+    pinned between two hard boxes compresses *uniformly* to fit (floored at
+    min pitch), subsuming per-side and per-window compression. Same-wire
+    seps stay 0. pcb_fail's 8-rail cluster (flash's channel floor vs pwr's
+    window cap: 54 px for 7 gaps) needs exactly this.
+  - The canvas-edge hug is keep-out edge **plus clearance/2** wherever the
+    crossing span faces free space past the wall's ends — the soft-boundary
+    surrender, pinned in the hug test. Bottom outranks top on side-rank
+    ties, so the symmetric over/under detour goes under.
+  - The consequences dogleg row holds for **facing sides**; unforced, the
+    one-turn L via a third side is cheaper and correct (turns cost length) —
+    both pinned as tests.
+  - **Strays that remain by design** (v1 drew these by splitting bundles or
+    ignoring capacity; v2 must not): pcb `mcu → rf` ×2 (a k=2 bundle through
+    a 10 px soft-walled neck holding one track), links_hard `nn2 → ee1` ×3
+    and `ww2 → ss1` ×2 (no k-track exit exists). The user's lever is `gap`.
+  - **Stage-6 work items:** links_hard `hub → north.nn1` (k=1) strays because
+    the sweep fragments one wide junction void into parallel same-axis
+    channels that each charge phantom-neighbour soft margins — capacity
+    needs to see the void, not the fragment (or junction-aware merging).
+    Fan siblings routing in *different worlds* would not share a port
+    (`merge_fans` is per-channel) — theoretical, but the law says one port.
+    Min end-segment length is enforced only by the punch stub (as v1);
+    a marker run-up exceeding clearance isn't specially held.
 - **2026-07-02, stage 1.** Done; deviations from the stage-1 file list:
   - `graph.rs` and `labels.rs` were *not* pre-moved (they'd sit dead until
     their consumers exist). Retrieve from history when their stage lands:

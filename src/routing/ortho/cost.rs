@@ -12,10 +12,6 @@
 //! sites via these functions, never inlined, so that knob stays a one-line
 //! change.
 
-// Scaffold: consumed by the pipeline driver too (ROUTING-V2.md stage 4);
-// the allow leaves with it.
-#![allow(dead_code)]
-
 /// What one 90° turn costs, in px of equivalent length.
 pub(crate) fn turn_cost(clearance: f64) -> f64 {
     2.0 * clearance

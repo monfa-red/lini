@@ -4,23 +4,21 @@
 //! Runs whose spans come within a clearance of one another form a cluster; a
 //! cluster's pitch is `min(clearance, usable/(n−1))` floored at half the
 //! clearance (the search guaranteed fit). Within a cluster runs order so
-//! wires leave in the order they arrive — nested, never braided — and take
-//! the order-preserving ordinates nearest their preferences ([`ladder`]).
+//! wires leave in the order they arrive — nested, never braided — by the
+//! outward-walk comparator ([`super::order`]) — and take the
+//! order-preserving ordinates nearest their preferences ([`ladder`]).
 //! Preferences are the aesthetic law: interior runs want their channel's
 //! anchor (the midline between two nodes, the keep-out wall at the canvas
 //! edge); end runs want the straightest lawful line to their port. Ports
 //! *are* end-run ordinates — fan siblings merge into one item and share one
 //! port — so a port can never disagree with the wire it serves.
 
-// Scaffold: consumed by the pipeline driver (ROUTING-V2.md stage 4);
-// the allow leaves with it.
-#![allow(dead_code)]
-
 use std::collections::BTreeMap;
 
 use super::cost::min_pitch;
 use super::graph::{Axis, Channel};
 use super::ladder::ladder;
+use super::order;
 use super::{Chain, World};
 
 /// One ladder item: a run (or a fan's merged end runs) awaiting its
@@ -33,22 +31,29 @@ struct Item {
     /// Hard bounds from the port window; `None` for interior runs (the
     /// channel's usable range applies alone).
     window: Option<(f64, f64)>,
-    /// Nesting keys toward the chain's two neighbours (see [`keys`]).
-    key: [Option<(i8, i8, f64)>; 2],
-    /// Declaration-order tie break.
+    /// Declaration-order key for span ties.
     link: usize,
-    run: usize,
 }
 
+/// A run's ordinate preference and its hard port window, if any.
+type Pref = (f64, Option<(f64, f64)>);
+
 /// Assign every `Run::ord` in every chain. Channels are processed in fixed
-/// (world, axis, channel) order; preferences and nesting keys are static, so
-/// the outcome is independent of that order — and deterministic.
+/// (world, axis, channel) order; preferences and the nesting walk read only
+/// static estimates, so the outcome is independent of that order — and
+/// deterministic.
 pub(crate) fn place(worlds: &[World], chains: &mut [Option<Chain>], clearance: f64) {
+    let prefs: Vec<Vec<Pref>> = chains
+        .iter()
+        .map(|c| c.as_ref().map_or(Vec::new(), |ch| chain_prefs(ch, worlds)))
+        .collect();
+    let ests: Vec<Vec<f64>> = prefs
+        .iter()
+        .map(|v| v.iter().map(|p| p.0).collect())
+        .collect();
     let mut by_channel: BTreeMap<(usize, u8, usize), Vec<Item>> = BTreeMap::new();
     for (ci, chain) in chains.iter().enumerate() {
         let Some(chain) = chain else { continue };
-        let prefs = chain_prefs(chain, worlds);
-        let keys = chain_keys(chain, &prefs);
         for (ri, run) in chain.runs.iter().enumerate() {
             by_channel
                 .entry((chain.world, run.axis.index(), run.chan))
@@ -56,11 +61,9 @@ pub(crate) fn place(worlds: &[World], chains: &mut [Option<Chain>], clearance: f
                 .push(Item {
                     members: vec![(ci, ri)],
                     span: (run.span.0.min(run.span.1), run.span.0.max(run.span.1)),
-                    pref: prefs[ri].0,
-                    window: prefs[ri].1,
-                    key: keys[ri],
+                    pref: prefs[ci][ri].0,
+                    window: prefs[ci][ri].1,
                     link: chain.link,
-                    run: ri,
                 });
         }
     }
@@ -77,7 +80,7 @@ pub(crate) fn place(worlds: &[World], chains: &mut [Option<Chain>], clearance: f
         let mut reach = f64::MIN;
         for item in items {
             if !cluster.is_empty() && item.span.0 >= reach + clearance {
-                settle(cluster, channel, clearance, chains);
+                settle(cluster, channel, clearance, chains, &ests);
                 cluster = Vec::new();
                 reach = f64::MIN;
             }
@@ -85,7 +88,7 @@ pub(crate) fn place(worlds: &[World], chains: &mut [Option<Chain>], clearance: f
             cluster.push(item);
         }
         if !cluster.is_empty() {
-            settle(cluster, channel, clearance, chains);
+            settle(cluster, channel, clearance, chains, &ests);
         }
     }
 }
@@ -95,7 +98,7 @@ pub(crate) fn place(worlds: &[World], chains: &mut [Option<Chain>], clearance: f
 /// the two side centres' midpoint clamped into the shared window; an end
 /// run prefers its own side's centre inside its window; an interior run
 /// prefers its channel's anchor.
-fn chain_prefs(chain: &Chain, worlds: &[World]) -> Vec<(f64, Option<(f64, f64)>)> {
+fn chain_prefs(chain: &Chain, worlds: &[World]) -> Vec<Pref> {
     let last = chain.runs.len() - 1;
     chain
         .runs
@@ -122,56 +125,6 @@ fn chain_prefs(chain: &Chain, worlds: &[World]) -> Vec<(f64, Option<(f64, f64)>)
                 };
                 (anchor, None)
             }
-        })
-        .collect()
-}
-
-/// Nesting keys — how a run's chain neighbours order it against cluster
-/// mates with equal preferences (nested, never braided). Toward each
-/// neighbour: the two arm directions away from their shared corner (the
-/// neighbour's, then this run's, as ±1) and the neighbour's own ordinate
-/// preference signed by their product — for corners turning the same way,
-/// ascending key is ascending ordinate, so wires leave in the order they
-/// arrive. Ends have no key on the port side: the far side decides.
-fn chain_keys(
-    chain: &Chain,
-    prefs: &[(f64, Option<(f64, f64)>)],
-) -> Vec<[Option<(i8, i8, f64)>; 2]> {
-    let n = chain.runs.len();
-    // Each run's provisional endpoints along its travel axis: the chain-side
-    // neighbour's preference, or the side line at the ports.
-    let lo_est: Vec<f64> = (0..n)
-        .map(|i| {
-            if i == 0 {
-                chain.ends[0].side_coord()
-            } else {
-                prefs[i - 1].0
-            }
-        })
-        .collect();
-    let hi_est: Vec<f64> = (0..n)
-        .map(|i| {
-            if i == n - 1 {
-                chain.ends[1].side_coord()
-            } else {
-                prefs[i + 1].0
-            }
-        })
-        .collect();
-    let sign = |v: f64| if v < 0.0 { -1i8 } else { 1i8 };
-    (0..n)
-        .map(|i| {
-            let towards_prev = (i > 0).then(|| {
-                let arm_n = sign(lo_est[i - 1] - hi_est[i - 1]);
-                let arm_r = sign(hi_est[i] - lo_est[i]);
-                (arm_n, arm_r, f64::from(arm_n * arm_r) * prefs[i - 1].0)
-            });
-            let towards_next = (i + 1 < n).then(|| {
-                let arm_n = sign(hi_est[i + 1] - lo_est[i + 1]);
-                let arm_r = sign(lo_est[i] - hi_est[i]);
-                (arm_n, arm_r, f64::from(arm_n * arm_r) * prefs[i + 1].0)
-            });
-            [towards_prev, towards_next]
         })
         .collect()
 }
@@ -218,7 +171,13 @@ fn fan_of(chain: &Chain, ri: usize) -> Option<usize> {
 }
 
 /// Order one cluster and ladder it into ordinates.
-fn settle(mut cluster: Vec<Item>, channel: &Channel, clearance: f64, chains: &mut [Option<Chain>]) {
+fn settle(
+    mut cluster: Vec<Item>,
+    channel: &Channel,
+    clearance: f64,
+    chains: &mut [Option<Chain>],
+    ests: &[Vec<f64>],
+) {
     let lo = cluster.iter().map(|i| i.span.0).fold(f64::MAX, f64::min);
     let hi = cluster.iter().map(|i| i.span.1).fold(f64::MIN, f64::max);
     let (u0, u1) = channel.usable(lo, hi, clearance);
@@ -229,23 +188,19 @@ fn settle(mut cluster: Vec<Item>, channel: &Channel, clearance: f64, chains: &mu
         clearance
     };
 
-    // Nested, never braided: preference first, then the nesting keys, then
-    // declaration order.
-    let key_cmp = |a: &Option<(i8, i8, f64)>, b: &Option<(i8, i8, f64)>| match (a, b) {
-        (Some((an, ar, ak)), Some((bn, br, bk))) => {
-            an.cmp(bn).then(ar.cmp(br)).then(ak.total_cmp(bk))
-        }
-        (None, None) => std::cmp::Ordering::Equal,
-        (None, Some(_)) => std::cmp::Ordering::Less,
-        (Some(_), None) => std::cmp::Ordering::Greater,
+    // Preference orders what geometry doesn't couple (prefs sit inside
+    // their boxes, so disjoint windows order themselves); the outward walk
+    // arbitrates equal preferences — nested, never braided — and declaration
+    // order settles the rest inside [`order::cmp_runs`]. A fan's merged item
+    // walks as its first member.
+    let ctx = order::Ctx {
+        chains: &*chains,
+        ests,
     };
     cluster.sort_by(|a, b| {
         a.pref
             .total_cmp(&b.pref)
-            .then_with(|| key_cmp(&a.key[0], &b.key[0]))
-            .then_with(|| key_cmp(&a.key[1], &b.key[1]))
-            .then(a.link.cmp(&b.link))
-            .then(a.run.cmp(&b.run))
+            .then_with(|| order::cmp_runs(&ctx, a.members[0], b.members[0]))
     });
 
     let prefs: Vec<f64> = cluster.iter().map(|i| i.pref).collect();
@@ -263,7 +218,7 @@ fn settle(mut cluster: Vec<Item>, channel: &Channel, clearance: f64, chains: &mu
         .collect();
     // Two pieces of one wire owe each other nothing unless their spans
     // overlap (a U's doubled-back legs); different wires always keep pitch.
-    let seps: Vec<f64> = cluster
+    let mut seps: Vec<f64> = cluster
         .windows(2)
         .map(|w| {
             let same_wire = w[0]
@@ -278,6 +233,30 @@ fn settle(mut cluster: Vec<Item>, channel: &Channel, clearance: f64, chains: &mu
             }
         })
         .collect();
+    // Law 1's relief valve: a stretch of items pinned between two hard boxes
+    // (a bundle's shared window, one side's landings, a window against a
+    // channel wall) that cannot hold full pitch compresses **uniformly** —
+    // every gap in the stretch drops to one target, floored at half the
+    // clearance and never grown past a tighter inner stretch's answer.
+    // Whatever still doesn't fit is a routing bug the ladder's feasibility
+    // check catches in debug builds.
+    for i in 0..n {
+        let mut need = 0.0;
+        for j in i + 1..n {
+            need += seps[j - 1];
+            let avail = (bounds[j].1 - bounds[i].0).max(0.0);
+            if need > avail {
+                let gaps = seps[i..j].iter().filter(|s| **s > 0.0).count();
+                if gaps > 0 {
+                    let target = (avail / gaps as f64).max(min_pitch(clearance));
+                    for s in &mut seps[i..j] {
+                        *s = s.min(target);
+                    }
+                }
+                need = seps[i..j].iter().sum();
+            }
+        }
+    }
     let ords = ladder(&prefs, &bounds, &seps);
     for (item, ord) in cluster.iter().zip(ords) {
         for &(ci, ri) in &item.members {

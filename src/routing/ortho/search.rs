@@ -15,11 +15,7 @@
 //! enter in the fixed rank right → bottom → left → top; every tie breaks on
 //! discrete ids.
 
-// Scaffold: consumed by the pipeline driver (ROUTING-V2.md stage 4);
-// the allow leaves with it.
-#![allow(dead_code)]
-
-use super::cost::{cross_cost, turn_cost};
+use super::cost::{cross_cost, min_pitch, turn_cost};
 use super::graph::{Axis, ChannelGraph};
 use super::ledger::Ledger;
 use super::rect::Rect;
@@ -236,6 +232,29 @@ pub(crate) fn cheapest(
             Axis::H => ledger.crossings_overlapping(world, Axis::V, (r.y0, r.y1), (c.0, c.0)),
         }
     };
+    // The U-connector is a run in the bounce cell's crossing channel like
+    // any other: it needs its own track over its whole stretch, or the
+    // reversal is closed. `pin` is a leg's known ordinate — the port when
+    // the doubled leg is an end run — widening the estimate from the bounce
+    // cell's centre; an interior leg rests near the centre already.
+    let u_open = |cell: usize, axis: Axis, pin: Option<f64>| {
+        let (uax, uchan) = match axis {
+            Axis::H => (Axis::V, graph.cells[cell].v),
+            Axis::V => (Axis::H, graph.cells[cell].h),
+        };
+        let c = centre(cell);
+        let uq = match uax {
+            Axis::H => c.0,
+            Axis::V => c.1,
+        };
+        let span = pin.map_or((uq, uq), |p| (p.min(uq), p.max(uq)));
+        ledger.tracks_left(world, uax, uchan, span, graph) >= k
+    };
+    // An entry's port ordinate across its travel axis.
+    let entry_pin = |e: &Entry| match e.axis {
+        Axis::H => e.port.1,
+        Axis::V => e.port.0,
+    };
     let along = |c: usize, axis: Axis| {
         let p = centre(c);
         match axis {
@@ -337,8 +356,14 @@ pub(crate) fn cheapest(
                 + f64::from(turn) * tc
                 + f64::from(edge_xings(ax, chan, span)) * xc;
             if turn == 2 {
-                // Doubling back: the U's connector crosses whatever covers
-                // the bounce cell.
+                // Doubling back: the U's connector needs a track of its own
+                // and crosses whatever covers the bounce cell. On the start's
+                // own end run the doubled leg sits at the port, not the cell
+                // centre.
+                let pin = (turns == 0).then(|| entry_pin(&starts[origin]));
+                if !u_open(cell, ax, pin) {
+                    continue;
+                }
                 ncost += f64::from(u_xings(cell, ax)) * xc;
             }
             push(
@@ -353,10 +378,14 @@ pub(crate) fn cheapest(
         }
     }
 
-    // Windows meet on one track ⇒ a single-run route draws straight; else it
+    // Windows meet on k tracks ⇒ a single-run route draws straight; else it
     // jogs once (ROUTING.md model step 4) — two turns, and the jog is a run
     // in a crossing channel with capacity and crossings like any other.
-    let overlap = |a: (f64, f64), b: (f64, f64)| a.0.max(b.0) <= a.1.min(b.1);
+    let fits = |a: (f64, f64), b: (f64, f64)| {
+        let shared = (a.0.max(b.0), a.1.min(b.1));
+        shared.0 <= shared.1
+            && ((shared.1 - shared.0) / min_pitch(clearance)).floor() as usize + 1 >= k
+    };
     let jog_span = |a: (f64, f64), b: (f64, f64)| {
         let (lo, hi) = (a.1.min(b.1), a.0.max(b.0));
         (lo.min(hi), hi.max(lo))
@@ -399,10 +428,15 @@ pub(crate) fn cheapest(
                 + f64::from(goal_turn) * tc
                 + f64::from(stub_xings(g)) * xc;
             if goal_turn == 2 {
+                if !u_open(g.cell, axis_of(dir), Some(entry_pin(g))) {
+                    continue;
+                }
                 total += f64::from(u_xings(g.cell, axis_of(dir))) * xc;
             }
-            // A single straight run claimed by both ends: charge the certain
-            // rails over the shared window, or the jog when none exists.
+            // A single straight run claimed by both ends: its own channel
+            // must hold the bundle over the whole travel (no edge relaxation
+            // ever checked it), then charge the certain rails over the shared
+            // window — or the jog when the windows can't hold k together.
             if turns == 0 && goal_turn == 0 && starts[si].axis == g.axis {
                 let (wa, wg) = (starts[si].window, g.window);
                 let (ta, tg) = match g.axis {
@@ -410,7 +444,14 @@ pub(crate) fn cheapest(
                     Axis::V => (starts[si].tip.1, g.tip.1),
                 };
                 let travel = (ta.min(tg), ta.max(tg));
-                if overlap(wa, wg) {
+                let chan = match g.axis {
+                    Axis::H => graph.cells[g.cell].h,
+                    Axis::V => graph.cells[g.cell].v,
+                };
+                if ledger.tracks_left(world, g.axis, chan, travel, graph) < k {
+                    continue;
+                }
+                if fits(wa, wg) {
                     let shared = (wa.0.max(wg.0), wa.1.min(wg.1));
                     total +=
                         f64::from(ledger.crossings_covering(world, g.axis, travel, shared)) * xc;
