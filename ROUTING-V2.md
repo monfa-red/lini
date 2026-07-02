@@ -276,16 +276,16 @@ pub(crate) fn place(worlds: &[World], chains: &mut [Option<Chain>], reqs: &[Edge
   Fan siblings' shared end: one run/ordinate shared by the group.
 
 **Tests:**
-- [ ] `ladder` vs brute force (n ≤ 5, random-ish fixed seeds hand-inlined):
+- [x] `ladder` vs brute force (n ≤ 5, random-ish fixed seeds hand-inlined):
       optimality, order, pitch, bounds — plus degenerate cases (one item,
       all-equal prefs, tight walls forcing exact pitch)
-- [ ] A 4-run bundle cluster centres its ladder on the midline preference
-- [ ] Two buses landing on one side ladder without braid (flash/pwr shape:
+- [x] A 4-run bundle cluster centres its ladder on the midline preference
+- [x] Two buses landing on one side ladder without braid (flash/pwr shape:
       prefs 300×4 + [285,295,305,315], pitch 10 → flash block yields
       [245,255,265,275], pwr exact — the worked example from the design)
-- [ ] Cluster chaining: spans touching within pitch merge; disjoint spans
+- [x] Cluster chaining: spans touching within pitch merge; disjoint spans
       place independently (both may sit on the midline)
-- [ ] `cargo fmt && cargo clippy && cargo test`; commit
+- [x] `cargo fmt && cargo clippy && cargo test`; commit
       (`feat: constructive placement — ladder, clusters, ports`)
 
 ---
@@ -472,6 +472,30 @@ anything the next session must know. Keep entries terse.
   - `layout::ir` became `pub(crate)` so `routing` can name IR types directly;
     `cross()` now lives in `routing::report` (renderer calls
     `crate::routing::cross`).
+- **2026-07-02, stage 3.** Done (ladder.rs, place.rs, pipeline types in
+  ortho/mod.rs; 67 unit tests). Notes for stages 4/6:
+  - **`ladder` takes per-pair separations**, not one pitch: two pieces of one
+    wire owe each other nothing unless their spans overlap (a U's doubled
+    legs keep pitch; a Z's jog may collapse to zero and the legs weld).
+    `settle()` derives the seps; the same-wire test is member-chain overlap.
+  - The first ladder cut (clip the unbounded isotonic fit by bound
+    envelopes) was provably suboptimal — a bound activating inside a pooled
+    block must re-balance its neighbours. The landed algorithm is bounded
+    PAV with clipped block minimizers; the brute-force tests pin the
+    difference. Treat `ladder` as sealed math.
+  - `place(worlds, chains, clearance)` — the plan's `reqs` param went unused
+    (declaration order rides `Chain::link`; bundles need no bookkeeping:
+    rails come out adjacent because equal prefs + equal keys fall to
+    declaration ties).
+  - Nesting comparator is one-hop: sort by (pref, key-to-prev, key-to-next,
+    link, run); a key is (arm_n, arm_r, arm_n·arm_r·neighbour_pref) — the
+    sign product makes ascending key = ascending ordinate for corners
+    turning the same way. If stage 4/6 exposes a braid, deepen the walk
+    here, never add a repair pass.
+  - Pipeline types live in `ortho/mod.rs`: `Chain{link, world, runs, ends}`,
+    `Run{axis, chan, span, ord}`, `EndInfo{side, rect, window, fan}` (+
+    `side_coord()`/`centre()`), `World{path, graph}`. Ports are end-run
+    ordinates; fan siblings merge to one ladder item (windows intersected).
 - **2026-07-02, stage 2.** Done (graph restored, cost.rs, ledger.rs,
   search.rs; 53 unit tests). Design decisions the plan didn't anticipate —
   stage 3/4 sessions read these first:
