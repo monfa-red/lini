@@ -1,0 +1,705 @@
+//! Weighted search over a world's channel graph (ROUTING.md model step 4).
+//!
+//! Multi-source, multi-target Dijkstra with the Law-3 scalar cost
+//! `length + 2·clearance·turns + 4·clearance·crossings` — one formula, never
+//! a lexicographic blend. Length is the L1 estimate through cell centres
+//! (exact ordinates land in placement). States are (cell, travel direction),
+//! so turns are counted honestly: a perpendicular step is one, a reversal —
+//! doubling back along the same channel — is the two corners its drawn U
+//! really has. Crossings are the ledger's committed perpendicular bands,
+//! counted once per run over half-open travel intervals. A channel span
+//! without the bundle's *k* tracks at minimum pitch is closed — capacity is
+//! never exceeded, only priced. Entries are **punches**: a straight
+//! perpendicular run from the side's centre through any transparent ancestor
+//! walls into the first world cell, blocked by any solid keep-out. Sides
+//! enter in the fixed rank right → bottom → left → top; every tie breaks on
+//! discrete ids.
+
+// Scaffold: consumed by the pipeline driver (ROUTING-V2.md stage 4);
+// the allow leaves with it.
+#![allow(dead_code)]
+
+use super::cost::{cross_cost, turn_cost};
+use super::graph::{Axis, ChannelGraph};
+use super::ledger::Ledger;
+use super::rect::Rect;
+use crate::ast::Side;
+
+/// Travel directions, indexed E, S, W, N — opposite = `(d + 2) % 4`.
+const DIRS: [(f64, f64); 4] = [(1.0, 0.0), (0.0, 1.0), (-1.0, 0.0), (0.0, -1.0)];
+
+fn opposite(dir: usize) -> usize {
+    (dir + 2) % 4
+}
+
+fn axis_of(dir: usize) -> Axis {
+    if dir.is_multiple_of(2) {
+        Axis::H
+    } else {
+        Axis::V
+    }
+}
+
+/// Corners drawn when travel changes from `a` to `b`: none straight on, one
+/// for a perpendicular step, two for a reversal (the U's pair).
+fn turn_count(a: usize, b: usize) -> u32 {
+    if a == b {
+        0
+    } else if opposite(a) == b {
+        2
+    } else {
+        1
+    }
+}
+
+/// One way into the graph: a side's provisional port (its centre — placement
+/// re-pins), the lawful port **window** on that side (corner margins
+/// applied), the punch tip where the link reaches the world's free space,
+/// and the punch direction (the wire leaves the port along it).
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct Entry {
+    pub side: Side,
+    pub port: (f64, f64),
+    pub window: (f64, f64),
+    pub tip: (f64, f64),
+    pub axis: Axis,
+    pub dir: usize,
+    pub cell: usize,
+}
+
+/// The chosen route: the cell path (a cell may repeat around a U-turn),
+/// which start/goal entries it used, and its cost under the Law-3 formula.
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct Route {
+    pub cells: Vec<usize>,
+    pub start: usize,
+    pub goal: usize,
+    pub cost: f64,
+}
+
+/// The graph entries of a node — one per side whose punch reaches a world
+/// cell without crossing a blocker. `forced` prunes to that side; `inward`
+/// flips the punch into the body (containment ends). `clearance` sets the
+/// window's corner margins; a side too short for margins still offers its
+/// centre point.
+pub(crate) fn entries(
+    graph: &ChannelGraph,
+    body: Rect,
+    stub: f64,
+    clearance: f64,
+    forced: Option<Side>,
+    blockers: &[Rect],
+    inward: bool,
+) -> Vec<Entry> {
+    let cx = (body.x0 + body.x1) / 2.0;
+    let cy = (body.y0 + body.y1) / 2.0;
+    let window = |lo: f64, hi: f64, centre: f64| {
+        let (wlo, whi) = (lo + clearance, hi - clearance);
+        if whi < wlo {
+            (centre, centre)
+        } else {
+            (wlo, whi)
+        }
+    };
+    let candidates = [
+        (Side::Right, (body.x1, cy), 0, Axis::H),
+        (Side::Bottom, (cx, body.y1), 1, Axis::V),
+        (Side::Left, (body.x0, cy), 2, Axis::H),
+        (Side::Top, (cx, body.y0), 3, Axis::V),
+    ];
+    candidates
+        .into_iter()
+        .filter(|(s, ..)| forced.is_none_or(|f| f == *s))
+        .filter_map(|(side, port, dir, axis)| {
+            let dir = if inward { opposite(dir) } else { dir };
+            punch(graph, port, DIRS[dir], stub, blockers).map(|(tip, cell)| Entry {
+                side,
+                port,
+                window: match axis {
+                    Axis::H => window(body.y0, body.y1, cy),
+                    Axis::V => window(body.x0, body.x1, cx),
+                },
+                tip,
+                axis,
+                dir,
+                cell,
+            })
+        })
+        .collect()
+}
+
+/// March from `port` along `dir` to the nearest reachable point inside a
+/// world cell: at least `stub` out when the cell allows, clamped into the
+/// cell otherwise, and never across a blocker.
+fn punch(
+    graph: &ChannelGraph,
+    port: (f64, f64),
+    dir: (f64, f64),
+    stub: f64,
+    blockers: &[Rect],
+) -> Option<((f64, f64), usize)> {
+    let mut hits: Vec<(f64, f64, usize)> = Vec::new();
+    for (i, c) in graph.cells.iter().enumerate() {
+        let r = c.rect;
+        let (near, far) = if dir.0 != 0.0 {
+            if port.1 < r.y0 || port.1 > r.y1 {
+                continue;
+            }
+            ((r.x0 - port.0) * dir.0, (r.x1 - port.0) * dir.0)
+        } else {
+            if port.0 < r.x0 || port.0 > r.x1 {
+                continue;
+            }
+            ((r.y0 - port.1) * dir.1, (r.y1 - port.1) * dir.1)
+        };
+        let (near, far) = (near.min(far), near.max(far));
+        if far <= 0.0 {
+            continue;
+        }
+        hits.push((near.max(0.0), far, i));
+    }
+    hits.sort_by(|a, b| a.0.total_cmp(&b.0).then(a.2.cmp(&b.2)));
+    for (near, far, cell) in hits {
+        let t = stub.clamp(near, far);
+        if t <= 0.0 {
+            continue;
+        }
+        let tip = (port.0 + dir.0 * t, port.1 + dir.1 * t);
+        let clear = blockers.iter().all(|b| {
+            let (x0, x1) = (port.0.min(tip.0), port.0.max(tip.0));
+            let (y0, y1) = (port.1.min(tip.1), port.1.max(tip.1));
+            !(x0 < b.x1 && x1 > b.x0 && y0 < b.y1 && y1 > b.y0)
+        });
+        return clear.then_some((tip, cell));
+    }
+    None
+}
+
+/// Dijkstra state: one per (cell, travel direction).
+fn state(cell: usize, dir: usize) -> usize {
+    cell * 4 + dir
+}
+
+/// The cheapest route from any start entry to any goal entry for a bundle of
+/// `k`, under the committed state in `ledger`. Ties break goal-side rank,
+/// then start-side rank (entries come in side-rank order), then state id.
+pub(crate) fn cheapest(
+    graph: &ChannelGraph,
+    world: usize,
+    starts: &[Entry],
+    goals: &[Entry],
+    ledger: &Ledger,
+    k: usize,
+    clearance: f64,
+) -> Option<Route> {
+    use std::cmp::{Ordering, Reverse};
+    use std::collections::BinaryHeap;
+
+    let centre = |c: usize| {
+        let r = graph.cells[c].rect;
+        ((r.x0 + r.x1) / 2.0, (r.y0 + r.y1) / 2.0)
+    };
+    let l1 = |a: (f64, f64), b: (f64, f64)| (a.0 - b.0).abs() + (a.1 - b.1).abs();
+    let xc = cross_cost(clearance);
+    let tc = turn_cost(clearance);
+    // Crossings of an entry's stub piece (port → tip): the one stretch with
+    // no freedom to dodge, charged when a committed rail's span overlaps the
+    // window of ordinates the end run may take.
+    let stub_xings = |e: &Entry| {
+        let (a, b) = match e.axis {
+            Axis::H => (e.port.0, e.tip.0),
+            Axis::V => (e.port.1, e.tip.1),
+        };
+        ledger.crossings_overlapping(world, e.axis, (a.min(b), a.max(b)), e.window)
+    };
+    // Crossings of run travel along a channel: only the certain rails — span
+    // covering the channel's whole cross-section — are charged; a dodgeable
+    // rail costs nothing here and lands in the report if the drawn wire does
+    // cross it.
+    let edge_xings = |ax: Axis, chan: usize, travel: (f64, f64)| {
+        let covered = match ax {
+            Axis::H => graph.h[chan].walls(),
+            Axis::V => graph.v[chan].walls(),
+        };
+        ledger.crossings_covering(world, ax, travel, covered)
+    };
+    // A reversal's U-connector, estimated at the bounced cell's centre
+    // ordinate across the cell's width: what the doubling-back wire must
+    // cross to come back.
+    let u_xings = |cell: usize, axis: Axis| {
+        let r = graph.cells[cell].rect;
+        let c = centre(cell);
+        match axis {
+            // Reversing V travel: the connector runs horizontally at the
+            // bounce ordinate.
+            Axis::V => ledger.crossings_overlapping(world, Axis::H, (r.x0, r.x1), (c.1, c.1)),
+            Axis::H => ledger.crossings_overlapping(world, Axis::V, (r.y0, r.y1), (c.0, c.0)),
+        }
+    };
+    let along = |c: usize, axis: Axis| {
+        let p = centre(c);
+        match axis {
+            Axis::H => p.0,
+            Axis::V => p.1,
+        }
+    };
+
+    // (cost, turns, origin start, predecessor state) per state.
+    type Best = (f64, u32, usize, Option<usize>);
+    let mut best: Vec<Option<Best>> = vec![None; graph.cells.len() * 4];
+
+    #[derive(PartialEq)]
+    struct Item {
+        cost: f64,
+        state: usize,
+        origin: usize,
+    }
+    impl Eq for Item {}
+    impl Ord for Item {
+        fn cmp(&self, other: &Self) -> Ordering {
+            self.cost
+                .total_cmp(&other.cost)
+                .then(self.state.cmp(&other.state))
+                .then(self.origin.cmp(&other.origin))
+        }
+    }
+    impl PartialOrd for Item {
+        fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+            Some(self.cmp(other))
+        }
+    }
+
+    let mut heap: BinaryHeap<Reverse<Item>> = BinaryHeap::new();
+    let push = |best: &mut Vec<Option<Best>>,
+                heap: &mut BinaryHeap<Reverse<Item>>,
+                st: usize,
+                cost: f64,
+                turns: u32,
+                origin: usize,
+                prev: Option<usize>| {
+        if best[st].is_none_or(|(c, ..)| cost.total_cmp(&c) == Ordering::Less) {
+            best[st] = Some((cost, turns, origin, prev));
+            heap.push(Reverse(Item {
+                cost,
+                state: st,
+                origin,
+            }));
+        }
+    };
+
+    for (si, e) in starts.iter().enumerate() {
+        let cost = l1(e.tip, centre(e.cell)) + f64::from(stub_xings(e)) * xc;
+        push(
+            &mut best,
+            &mut heap,
+            state(e.cell, e.dir),
+            cost,
+            0,
+            si,
+            None,
+        );
+    }
+
+    while let Some(Reverse(item)) = heap.pop() {
+        let Some((cost, turns, origin, _)) = best[item.state] else {
+            continue;
+        };
+        if cost.total_cmp(&item.cost) != Ordering::Equal || origin != item.origin {
+            continue; // stale
+        }
+        let (cell, dir) = (item.state / 4, item.state % 4);
+        for &(next, ax, chan) in &graph.adj[cell] {
+            let (qa, qb) = (along(cell, ax), along(next, ax));
+            let span = (qa.min(qb), qa.max(qb));
+            if ledger.tracks_left(world, ax, chan, span, graph) < k {
+                continue;
+            }
+            let (ca, cb) = (centre(cell), centre(next));
+            let edge_dir = match ax {
+                Axis::H => {
+                    if cb.0 > ca.0 {
+                        0
+                    } else {
+                        2
+                    }
+                }
+                Axis::V => {
+                    if cb.1 > ca.1 {
+                        1
+                    } else {
+                        3
+                    }
+                }
+            };
+            let turn = turn_count(dir, edge_dir);
+            let mut ncost = cost
+                + l1(ca, cb)
+                + f64::from(turn) * tc
+                + f64::from(edge_xings(ax, chan, span)) * xc;
+            if turn == 2 {
+                // Doubling back: the U's connector crosses whatever covers
+                // the bounce cell.
+                ncost += f64::from(u_xings(cell, ax)) * xc;
+            }
+            push(
+                &mut best,
+                &mut heap,
+                state(next, edge_dir),
+                ncost,
+                turns + turn,
+                origin,
+                Some(item.state),
+            );
+        }
+    }
+
+    // Windows meet on one track ⇒ a single-run route draws straight; else it
+    // jogs once (ROUTING.md model step 4) — two turns, and the jog is a run
+    // in a crossing channel with capacity and crossings like any other.
+    let overlap = |a: (f64, f64), b: (f64, f64)| a.0.max(b.0) <= a.1.min(b.1);
+    let jog_span = |a: (f64, f64), b: (f64, f64)| {
+        let (lo, hi) = (a.1.min(b.1), a.0.max(b.0));
+        (lo.min(hi), hi.max(lo))
+    };
+    let path_cells = |mut st: usize| {
+        let mut cells = vec![st / 4];
+        while let Some((_, _, _, Some(prev))) = best[st] {
+            st = prev;
+            cells.push(st / 4);
+        }
+        cells.reverse();
+        cells.dedup();
+        cells
+    };
+    // The first traversed cell whose crossing channel holds the jog — the
+    // deterministic estimate; placement picks the drawn spot.
+    let jog = |cells: &[usize], axis: Axis, span: (f64, f64)| {
+        cells.iter().find_map(|&c| {
+            let (jog_axis, chan) = match axis {
+                Axis::H => (Axis::V, graph.cells[c].v),
+                Axis::V => (Axis::H, graph.cells[c].h),
+            };
+            (ledger.tracks_left(world, jog_axis, chan, span, graph) >= k)
+                .then(|| edge_xings(jog_axis, chan, span))
+        })
+    };
+
+    // Best goal over (cost, goal rank, start rank).
+    let mut winner: Option<(f64, usize, usize, usize)> = None; // (cost, gi, si, state)
+    for (gi, g) in goals.iter().enumerate() {
+        let goal_dir = opposite(g.dir);
+        for dir in 0..4 {
+            let st = state(g.cell, dir);
+            let Some((c, turns, si, _)) = best[st] else {
+                continue;
+            };
+            let goal_turn = turn_count(dir, goal_dir);
+            let mut total = c
+                + l1(centre(g.cell), g.tip)
+                + f64::from(goal_turn) * tc
+                + f64::from(stub_xings(g)) * xc;
+            if goal_turn == 2 {
+                total += f64::from(u_xings(g.cell, axis_of(dir))) * xc;
+            }
+            // A single straight run claimed by both ends: charge the certain
+            // rails over the shared window, or the jog when none exists.
+            if turns == 0 && goal_turn == 0 && starts[si].axis == g.axis {
+                let (wa, wg) = (starts[si].window, g.window);
+                let (ta, tg) = match g.axis {
+                    Axis::H => (starts[si].tip.0, g.tip.0),
+                    Axis::V => (starts[si].tip.1, g.tip.1),
+                };
+                let travel = (ta.min(tg), ta.max(tg));
+                if overlap(wa, wg) {
+                    let shared = (wa.0.max(wg.0), wa.1.min(wg.1));
+                    total +=
+                        f64::from(ledger.crossings_covering(world, g.axis, travel, shared)) * xc;
+                } else {
+                    let span = jog_span(wa, wg);
+                    let Some(jog_xings) = jog(&path_cells(st), g.axis, span) else {
+                        continue; // no crossing channel holds the jog
+                    };
+                    total += 2.0 * tc + f64::from(jog_xings) * xc;
+                }
+            }
+            let better = match &winner {
+                None => true,
+                Some((wc, wgi, wsi, wst)) => match total.total_cmp(wc) {
+                    Ordering::Less => true,
+                    Ordering::Greater => false,
+                    Ordering::Equal => (gi, si, st) < (*wgi, *wsi, *wst),
+                },
+            };
+            if better {
+                winner = Some((total, gi, si, st));
+            }
+        }
+    }
+    let (cost, gi, si, st) = winner?;
+    Some(Route {
+        cells: path_cells(st),
+        start: si,
+        goal: gi,
+        cost,
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const BOUNDS: Rect = Rect {
+        x0: 0.0,
+        y0: 0.0,
+        x1: 200.0,
+        y1: 100.0,
+    };
+    const C: f64 = 8.0;
+
+    fn body(x0: f64, y0: f64, x1: f64, y1: f64) -> Rect {
+        Rect::new(x0, y0, x1, y1)
+    }
+
+    /// Two nodes facing each other across open space, centres aligned.
+    fn facing() -> (ChannelGraph, Rect, Rect) {
+        let a = body(20.0, 40.0, 40.0, 60.0);
+        let b = body(160.0, 40.0, 180.0, 60.0);
+        let g = ChannelGraph::build(BOUNDS, &[a.inflate(C), b.inflate(C)], false);
+        (g, a, b)
+    }
+
+    fn route(
+        g: &ChannelGraph,
+        a: Rect,
+        b: Rect,
+        ledger: &Ledger,
+        k: usize,
+        forced: (Option<Side>, Option<Side>),
+    ) -> Option<Route> {
+        let starts = entries(g, a, C, C, forced.0, &[], false);
+        let goals = entries(g, b, C, C, forced.1, &[], false);
+        cheapest(g, 0, &starts, &goals, ledger, k, C)
+    }
+
+    #[test]
+    fn entries_offer_each_clear_side_in_rank_order() {
+        let (g, a, _) = facing();
+        let es = entries(&g, a, C, C, None, &[], false);
+        let sides: Vec<Side> = es.iter().map(|e| e.side).collect();
+        assert_eq!(sides, [Side::Right, Side::Bottom, Side::Left, Side::Top]);
+        // Right-side port sits mid-side, tip one stub out, window inside the
+        // corner margins.
+        assert_eq!(es[0].port, (40.0, 50.0));
+        assert_eq!(es[0].tip, (48.0, 50.0));
+        assert_eq!(es[0].window, (48.0, 52.0));
+        assert_eq!(es[0].dir, 0);
+        for e in &es {
+            let c = g.cells[e.cell].rect;
+            assert!(
+                e.tip.0 >= c.x0 && e.tip.0 <= c.x1 && e.tip.1 >= c.y0 && e.tip.1 <= c.y1,
+                "tip {:?} not in its cell {c:?}",
+                e.tip
+            );
+        }
+    }
+
+    #[test]
+    fn a_short_side_offers_its_centre_point_window() {
+        let (g, ..) = facing();
+        let tiny = body(90.0, 40.0, 102.0, 60.0); // width 12 < 2·clearance
+        let es = entries(&g, tiny, C, C, Some(Side::Top), &[], false);
+        assert_eq!(es.len(), 1);
+        assert_eq!(es[0].window, (96.0, 96.0));
+    }
+
+    #[test]
+    fn diagonal_neighbours_connect_with_one_l_turn() {
+        let a = body(20.0, 10.0, 40.0, 30.0);
+        let b = body(160.0, 70.0, 180.0, 90.0);
+        let g = ChannelGraph::build(BOUNDS, &[a.inflate(C), b.inflate(C)], false);
+        let ledger = Ledger::new(C);
+        let r = route(&g, a, b, &ledger, 1, (None, None)).expect("route");
+        let starts = entries(&g, a, C, C, None, &[], false);
+        let goals = entries(&g, b, C, C, None, &[], false);
+        let picked = (starts[r.start].side, goals[r.goal].side);
+        assert!(
+            picked == (Side::Right, Side::Top) || picked == (Side::Bottom, Side::Left),
+            "an L between facing quadrants: {picked:?}"
+        );
+    }
+
+    #[test]
+    fn walled_off_sides_are_dropped() {
+        let a = body(20.0, 40.0, 40.0, 60.0);
+        let wall = Rect::new(0.0, 0.0, 12.0, 100.0); // flush against a's left keep-out
+        let g = ChannelGraph::build(BOUNDS, &[a.inflate(C), wall], false);
+        let es = entries(&g, a, C, C, None, &[wall], false);
+        assert!(es.iter().all(|e| e.side != Side::Left));
+        assert_eq!(es.len(), 3);
+    }
+
+    #[test]
+    fn forced_side_prunes_to_one_entry() {
+        let (g, a, _) = facing();
+        let es = entries(&g, a, C, C, Some(Side::Top), &[], false);
+        assert_eq!(es.len(), 1);
+        assert_eq!(es[0].side, Side::Top);
+    }
+
+    #[test]
+    fn punch_crosses_a_transparent_wall_and_is_blocked_by_a_sibling() {
+        // A group at x ∈ [60, 120] holds the endpoint; the world sees the
+        // group as one keep-out, so the first cell starts at 128.
+        let group = Rect::new(60.0, 20.0, 120.0, 80.0);
+        let g = ChannelGraph::build(BOUNDS, &[group.inflate(C)], false);
+        let inner = body(70.0, 40.0, 90.0, 60.0);
+        let es = entries(&g, inner, C, C, Some(Side::Right), &[], false);
+        assert_eq!(es.len(), 1);
+        assert_eq!(es[0].port, (90.0, 50.0));
+        assert_eq!(es[0].tip, (128.0, 50.0));
+        let sibling = Rect::new(95.0, 30.0, 115.0, 70.0);
+        let blocked = entries(&g, inner, C, C, Some(Side::Right), &[sibling], false);
+        assert!(blocked.is_empty());
+    }
+
+    #[test]
+    fn inner_entries_point_into_the_body() {
+        let parent = body(40.0, 20.0, 160.0, 80.0);
+        let g = ChannelGraph::build(parent, &[Rect::new(90.0, 45.0, 110.0, 55.0)], false);
+        let es = entries(&g, parent, C, C, None, &[], true);
+        let right = es.iter().find(|e| e.side == Side::Right).expect("right");
+        assert_eq!(right.port, (160.0, 50.0));
+        assert_eq!(right.tip, (152.0, 50.0));
+        assert_eq!(right.dir, 2); // punches westward, into the body
+    }
+
+    #[test]
+    fn facing_nodes_connect_straight_via_their_facing_sides() {
+        let (g, a, b) = facing();
+        let ledger = Ledger::new(C);
+        let r = route(&g, a, b, &ledger, 1, (None, None)).expect("route");
+        let starts = entries(&g, a, C, C, None, &[], false);
+        let goals = entries(&g, b, C, C, None, &[], false);
+        assert_eq!(starts[r.start].side, Side::Right);
+        assert_eq!(goals[r.goal].side, Side::Left);
+        // Aligned windows: pure length, no turn or crossing surcharge.
+        assert_eq!(r.cost, 104.0);
+        assert_eq!(r.cells.len(), 1);
+    }
+
+    #[test]
+    fn misaligned_windows_in_one_cell_cost_the_jog() {
+        // Offset just past window overlap, both punches into the same cell.
+        let a = body(20.0, 40.0, 40.0, 60.0); // right window (48, 52)
+        let b = body(160.0, 46.0, 180.0, 66.0); // left window (54, 58)
+        let g = ChannelGraph::build(BOUNDS, &[a.inflate(C), b.inflate(C)], false);
+        let ledger = Ledger::new(C);
+        let r = route(&g, a, b, &ledger, 1, (None, None)).expect("route");
+        // L1 through the cell centre (55 + 55) plus two jog turns (2 × 16).
+        assert_eq!(r.cost, 110.0 + 2.0 * turn_cost(C));
+    }
+
+    #[test]
+    fn a_jog_with_no_free_crossing_channel_fails_over() {
+        let a = body(20.0, 40.0, 40.0, 60.0);
+        let b = body(160.0, 46.0, 180.0, 66.0);
+        let g = ChannelGraph::build(BOUNDS, &[a.inflate(C), b.inflate(C)], false);
+        // Fill the one V-channel the jog could use to capacity.
+        let vchan =
+            g.v.iter()
+                .position(|c| c.rect == Rect::new(48.0, 0.0, 152.0, 100.0))
+                .expect("middle V-channel");
+        let mut ledger = Ledger::new(C);
+        // Past capacity for every sub-span (narrow spans dodge soft-wall
+        // margins, so their capacity runs higher than the full span's).
+        let cap = ledger.tracks_left(0, Axis::V, vchan, (0.0, 100.0), &g);
+        ledger.commit_run(0, Axis::V, vchan, (0.0, 100.0), cap + 8, &g);
+        // Forced onto the facing sides, the jog has nowhere to run.
+        assert_eq!(
+            route(&g, a, b, &ledger, 1, (Some(Side::Right), Some(Side::Left))),
+            None
+        );
+    }
+
+    #[test]
+    fn crossing_beats_the_long_way_and_yields_to_the_bundle() {
+        let (g, a, b) = facing();
+        let vchan =
+            g.v.iter()
+                .position(|c| c.rect == Rect::new(48.0, 0.0, 152.0, 100.0))
+                .expect("middle V-channel");
+        // One committed rail across the corridor, sparing the low road.
+        let mut one = Ledger::new(C);
+        one.commit_run(0, Axis::V, vchan, (10.0, 70.0), 1, &g);
+        let r = route(&g, a, b, &one, 1, (None, None)).expect("route");
+        assert_eq!(r.cells.len(), 1, "one crossing beats any detour: {r:?}");
+        assert_eq!(r.cost, 104.0 + cross_cost(C));
+        // Eight committed rails: crossing costs 8× — the U-detour under
+        // their span end is now cheaper.
+        let mut eight = Ledger::new(C);
+        eight.commit_run(0, Axis::V, vchan, (10.0, 70.0), 8, &g);
+        let r = route(&g, a, b, &eight, 1, (None, None)).expect("route");
+        assert!(
+            r.cells.len() > 1,
+            "eight crossings lose to the detour: {r:?}"
+        );
+        assert!(r.cost < 104.0 + 8.0 * cross_cost(C));
+    }
+
+    #[test]
+    fn closed_channel_forces_the_detour() {
+        // A block above the facing row splits the row channel; closing the
+        // row channel with committed load forces the route down and around.
+        let a = body(20.0, 40.0, 40.0, 60.0);
+        let b = body(160.0, 40.0, 180.0, 60.0);
+        let block = Rect::new(90.0, 0.0, 110.0, 30.0);
+        let g = ChannelGraph::build(BOUNDS, &[a.inflate(C), b.inflate(C), block], false);
+        let ledger = Ledger::new(C);
+        let direct = route(&g, a, b, &ledger, 1, (None, None)).expect("route");
+        let row =
+            g.h.iter()
+                .position(|c| c.rect == Rect::new(48.0, 32.0, 152.0, 68.0))
+                .expect("row channel");
+        let mut full = Ledger::new(C);
+        let cap = full.tracks_left(0, Axis::H, row, (48.0, 152.0), &g);
+        full.commit_run(0, Axis::H, row, (48.0, 152.0), cap + 8, &g);
+        let detour = route(&g, a, b, &full, 1, (None, None)).expect("route");
+        assert!(
+            detour.cells.len() > direct.cells.len(),
+            "detour {detour:?} vs direct {direct:?}"
+        );
+    }
+
+    #[test]
+    fn a_bundle_needs_k_tracks_or_detours() {
+        // Squeeze the corridor between two blocks so it holds few tracks.
+        let a = body(20.0, 40.0, 40.0, 60.0);
+        let b = body(160.0, 40.0, 180.0, 60.0);
+        let above = Rect::new(60.0, 0.0, 140.0, 36.0);
+        let below = Rect::new(60.0, 64.0, 140.0, 100.0);
+        let g = ChannelGraph::build(BOUNDS, &[a.inflate(C), b.inflate(C), above, below], false);
+        // The pinch: y 36..64 between the blocks, soft margins at both walls
+        // pull usable to 20 → floor(20/4)+1 = 6 tracks at min pitch. The
+        // blocks reach the canvas bounds, so an over-wide bundle has no way
+        // around either.
+        let ledger = Ledger::new(C);
+        let six = route(&g, a, b, &ledger, 6, (None, None)).expect("route");
+        assert_eq!(six.cells.len(), 3, "the pinch holds six: {six:?}");
+        assert_eq!(route(&g, a, b, &ledger, 7, (None, None)), None);
+    }
+
+    #[test]
+    fn cheapest_is_deterministic() {
+        let (g, a, b) = facing();
+        let mut ledger = Ledger::new(C);
+        let vchan =
+            g.v.iter()
+                .position(|c| c.rect == Rect::new(48.0, 0.0, 152.0, 100.0))
+                .expect("middle V-channel");
+        ledger.commit_run(0, Axis::V, vchan, (10.0, 70.0), 8, &g);
+        let first = route(&g, a, b, &ledger, 1, (None, None));
+        for _ in 0..100 {
+            assert_eq!(route(&g, a, b, &ledger, 1, (None, None)), first);
+        }
+    }
+}

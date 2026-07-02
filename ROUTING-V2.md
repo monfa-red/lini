@@ -215,20 +215,20 @@ pub(crate) fn cheapest(graph: &ChannelGraph, world: usize, starts: &[Entry], goa
   the ledger only needs `side_free` to treat a fan group as one landing).
 
 **Tests (unit, in-module):**
-- [ ] Port v1 `path.rs` entry/punch tests (facing sides, walled-off side,
+- [x] Port v1 `path.rs` entry/punch tests (facing sides, walled-off side,
       forced side, transparent-wall punch, blocked sibling)
-- [ ] `cheapest` picks facing sides for neighbours; picks an L for diagonal
+- [x] `cheapest` picks facing sides for neighbours; picks an L for diagonal
       placement; detours around a closed channel
-- [ ] Weighted trade: a scene where the crossing-free route is > `CROSS_COST`
+- [x] Weighted trade: a scene where the crossing-free route is > `CROSS_COST`
       longer → route crosses; shrink the detour below `CROSS_COST` → route
       detours. (Build committed state via `Ledger::commit` by hand.)
-- [ ] Jog: same-channel misaligned windows costs 2 turns and respects the
+- [x] Jog: same-channel misaligned windows costs 2 turns and respects the
       crossing channel's capacity
-- [ ] `tracks_left`: overlapping committed spans reduce it by max point-load,
+- [x] `tracks_left`: overlapping committed spans reduce it by max point-load,
       disjoint spans don't; capacity floor at `MIN_PITCH` matches
       `floor(usable/(c/2)) + 1`
-- [ ] Determinism: 100 identical runs, identical `Route`
-- [ ] `cargo fmt && cargo clippy && cargo test`; commit
+- [x] Determinism: 100 identical runs, identical `Route`
+- [x] `cargo fmt && cargo clippy && cargo test`; commit
       (`feat: weighted search + capacity ledger for routing v2`)
 
 ---
@@ -472,3 +472,34 @@ anything the next session must know. Keep entries terse.
   - `layout::ir` became `pub(crate)` so `routing` can name IR types directly;
     `cross()` now lives in `routing::report` (renderer calls
     `crate::routing::cross`).
+- **2026-07-02, stage 2.** Done (graph restored, cost.rs, ledger.rs,
+  search.rs; 53 unit tests). Design decisions the plan didn't anticipate —
+  stage 3/4 sessions read these first:
+  - **Dijkstra states are (cell, travel direction) — 4 per cell, not 2.**
+    Axis-only turn counting priced a doubling-back U at zero turns (a v1
+    blind spot that made backtracking artificially cheap once crossings cost
+    money). A reversal now costs its real two corners plus the U-connector's
+    crossing estimate. **Stage 4's chain builder must expand a reversal
+    (repeated cell in `Route::cells`) into run–jog–run**, same shape as the
+    misaligned-window jog; a bundle's U needs 2k concurrent tracks but the
+    search checks k per leg — placement's pitch compression absorbs it;
+    revisit if a stage-6 sweep catches a violation.
+  - **Crossing charges are certainty-based and optimistic.** Committed runs
+    are stored as `(span, k, ord)` with `ord = Channel::anchor()` — the same
+    anchor placement's interior-run preference uses (midline between
+    keep-out walls, hug when one wall is the canvas edge; `graph.rs`).
+    `crossings_covering` (rail's span covers the candidate's whole ordinate
+    window → unavoidable) charges run travel, edges, jogs; half-open travel
+    intervals stop double-charging at piece joints. `crossings_overlapping`
+    charges only pinned stubs and U-connectors. Dodgeable rails are *never*
+    charged — optimism is deliberate: over-charging is what bred v1's
+    orbits; the exact count lands post-placement in the report.
+  - Interface drift from the plan's vocabulary block: `entries()` gained
+    `clearance` (port windows) and entries carry `dir`; the ledger is
+    chain-agnostic (`commit_run`/`commit_port` instead of `commit(&Chain)`)
+    — the stage-4 driver iterates a chain's runs itself; `crossings(band)`
+    became the covering/overlapping pair.
+  - v1's `Channel::capacity/width/capacity_for` died with their tests;
+    capacity exists only in the ledger, at min pitch over `usable()`. Soft
+    walls shrink pinches more than raw width suggests (a 28px pinch holds 6
+    tracks, not 8) — remember when hand-deriving capacities in tests.
