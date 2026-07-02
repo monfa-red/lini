@@ -127,6 +127,11 @@ pub struct PlacedNode {
     /// own `stroke*`. The outer frame is the container's border, so dividers
     /// never double it. Empty unless `divider:` is set.
     pub dividers: Vec<GridRule>,
+    /// Links this container drew itself, in its local frame — a sequence's
+    /// messages, lowered through the `straight` strategy (SPEC §10). Routing
+    /// lifts them into scene coordinates; the renderer's one link path draws
+    /// them. Empty everywhere else.
+    pub links: Vec<RoutedLink>,
     pub span: Span,
 }
 

@@ -35,11 +35,16 @@ pub fn layout(program: &Program) -> Result<LaidOut, Error> {
     }
 
     // A root sequence (`{ layout: sequence }`, SPEC §10) owns the whole scene: it
-    // arranges the participants and draws their lifelines and messages, bypassing the
-    // generic arrange and the orthogonal router (the messages are its scope's links).
+    // arranges the participants and lowers its messages through the `straight`
+    // strategy itself, bypassing the generic arrange and the orthogonal router.
     if sequence::is_sequence(&program.scene.attrs) {
-        let bbox = sequence::layout_root(&mut top_nodes, program)?;
-        return finish(program, top_nodes, bbox, routing::Routing::default());
+        let (bbox, mut links) = sequence::layout_root(&mut top_nodes, program)?;
+        links.extend(routing::owned_links(&top_nodes));
+        let routed = routing::Routing {
+            links,
+            ..Default::default()
+        };
+        return finish(program, top_nodes, bbox, routed);
     }
 
     // Apply scene-level layout to top-level children (scene itself is a
@@ -254,6 +259,7 @@ fn layout_inst(inst: &ResolvedInst, path: &str, program: &Program) -> Result<Pla
         rotation,
         children,
         dividers,
+        links: Vec::new(),
         span: inst.span,
     })
 }

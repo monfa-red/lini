@@ -236,6 +236,7 @@ mod tests {
             rotation: 0.0,
             children,
             dividers: Vec::new(),
+            links: Vec::new(),
             span: Span::empty(),
         }
     }

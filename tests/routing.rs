@@ -357,6 +357,53 @@ fn a_containment_link_lands_on_the_parents_inner_side() {
     }
 }
 
+// ── The straight strategy (ROUTING.md §Strategies) ──
+
+#[test]
+fn routing_straight_draws_one_trimmed_oblique_segment() {
+    // `routing: straight` (SPEC §9): one segment between the body centres,
+    // trimmed to the boundaries — oblique is lawful here, and nothing is
+    // avoided or reported.
+    let src = "{ layout: grid; columns: repeat(2, 60); rows: repeat(2, 60); gap: 40; \
+               clearance: 10; routing: straight }\n\
+               |box#a| { cell: 1 1; width: 60; height: 60 }\n\
+               |box#b| { cell: 2 2; width: 60; height: 60 }\n\
+               a -> b\n";
+    let r = routes(src);
+    let p = path(&r, "a", "b");
+    assert_eq!(p.len(), 2, "one segment: {p:?}");
+    assert!(
+        p[0].0 != p[1].0 && p[0].1 != p[1].1,
+        "oblique, no avoidance: {p:?}"
+    );
+    let laid = route_sample(src, 10.0);
+    let a = node_rect(&laid, "a").expect("a placed");
+    let b = node_rect(&laid, "b").expect("b placed");
+    // The diagonal centres sit 45° apart, so the trim lands exactly on the
+    // facing corners — the stray's trim math, shared.
+    let close = |p: (f64, f64), q: (f64, f64)| (p.0 - q.0).abs() < 1e-9 && (p.1 - q.1).abs() < 1e-9;
+    assert!(close(p[0], (a.2, a.3)), "trimmed to a's corner: {p:?}");
+    assert!(close(p[1], (b.0, b.1)), "trimmed to b's corner: {p:?}");
+    assert_eq!(impossibles(src), 0);
+    assert_eq!(crossings(src), 0);
+}
+
+#[test]
+fn routing_straight_self_link_draws_the_rectangular_hook() {
+    let src = "{ clearance: 16; routing: straight }\n|box#a| { width: 80; height: 40 }\na -> a\n";
+    let r = routes(src);
+    let p = path(&r, "a", "a");
+    assert_eq!(p.len(), 4, "the rectangular self-hook: {p:?}");
+    let laid = route_sample(src, 16.0);
+    let a = node_rect(&laid, "a").expect("a placed");
+    assert!(
+        p.iter().all(|pt| pt.0 >= a.2),
+        "the hook hangs off the right side: {p:?}"
+    );
+    assert_eq!(p[0].0, a.2);
+    assert_eq!(p[3].0, a.2);
+}
+
 // ── Determinism (Law 4) ──
 
 #[test]

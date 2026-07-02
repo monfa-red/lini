@@ -17,7 +17,7 @@ pub(crate) mod search;
 
 use crate::ast::Side;
 use crate::layout::ir::{RoutedLink, Stray};
-use crate::resolve::Program;
+use crate::resolve::Strategy;
 use crate::routing::{Routing, Rule, Severity, Violation, cross};
 
 use graph::{Axis, ChannelGraph};
@@ -138,22 +138,32 @@ fn impossible(req: &EdgeReq, detail: &str) -> Violation {
     }
 }
 
-/// Route every request over the placed scene — the six steps, in order, one
-/// decision each: worlds and their channel graphs, bundles in declaration
-/// order through the weighted search (committing to the ledger as they win),
-/// placement over all chains at once, then geometry, labels, and the report.
-pub(crate) fn route(program: &Program, index: &SceneIndex, reqs: &[EdgeReq]) -> Routing {
+/// Route the orthogonal requests over the placed scene — the six steps, in
+/// order, one decision each: worlds and their channel graphs, bundles in
+/// declaration order through the weighted search (committing to the ledger as
+/// they win), placement over all chains at once, then geometry and the
+/// crossing report. Requests of other strategies pass through untouched —
+/// their strategies and the shared label pass live with the dispatch
+/// ([`crate::routing::route`]). Returns the drawn links' request indices
+/// alongside, for that label pass.
+pub(crate) fn route(index: &SceneIndex, reqs: &[EdgeReq]) -> (Routing, Vec<usize>) {
     let mut routing = Routing::default();
-    if reqs.is_empty() {
-        return routing;
+    let mine = |r: &&EdgeReq| r.routing == Strategy::Orthogonal;
+    if !reqs.iter().any(|r| r.routing == Strategy::Orthogonal) {
+        return (routing, Vec::new());
     }
     // The diagram routes at the maximum clearance any link carries
     // (ROUTING.md §Vocabulary); the root world gets a canvas margin.
-    let c = reqs.iter().map(|r| r.clearance).fold(0.0_f64, f64::max);
+    let c = reqs
+        .iter()
+        .filter(mine)
+        .map(|r| r.clearance)
+        .fold(0.0_f64, f64::max);
     let bounds = index.bounds().inflate(2.0 * c + 20.0);
 
     let mut world_paths: Vec<String> = reqs
         .iter()
+        .filter(mine)
         .flat_map(|r| world_ladder(&r.a_path, &r.b_path))
         .collect();
     world_paths.sort();
@@ -346,6 +356,9 @@ pub(crate) fn route(program: &Program, index: &SceneIndex, reqs: &[EdgeReq]) -> 
 
     let mut req_of = Vec::new();
     for (i, req) in reqs.iter().enumerate() {
+        if req.routing != Strategy::Orthogonal {
+            continue;
+        }
         let Some(chain) = &chains[i] else {
             routing
                 .report
@@ -401,6 +414,5 @@ pub(crate) fn route(program: &Program, index: &SceneIndex, reqs: &[EdgeReq]) -> 
         }
     }
 
-    labels::place(&mut routing.links, &req_of, reqs, program, index);
-    routing
+    (routing, req_of)
 }

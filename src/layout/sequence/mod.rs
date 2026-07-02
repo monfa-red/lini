@@ -19,7 +19,7 @@ mod notes;
 
 use crate::error::Error;
 use crate::layout::prim;
-use crate::layout::{Bbox, PlacedNode};
+use crate::layout::{Bbox, PlacedNode, RoutedLink};
 use crate::resolve::{AttrMap, NodeKind, Program, ResolvedInst, ResolvedLink, ResolvedValue};
 use crate::span::Span;
 use std::collections::HashMap;
@@ -59,7 +59,7 @@ pub(super) fn layout_node(
         }
     }
     let messages = messages_for(program, path);
-    let (children, bbox) = lay_out(
+    let (children, bbox, wires) = lay_out(
         &inst.attrs,
         participants,
         notes,
@@ -67,16 +67,19 @@ pub(super) fn layout_node(
         &inst.children,
         inst.span,
     )?;
-    Ok(prim::container(inst, bbox, children))
+    let mut node = prim::container(inst, bbox, children);
+    node.links = wires;
+    Ok(node)
 }
 
 /// A **root** sequence (`{ layout: sequence }`, SPEC §10): the scene's top-level nodes are
 /// the participants (already laid out). Arrange them in place and append the lifelines,
-/// returning the scene bbox. Intercepted in `layout` before the generic arrange + route.
+/// returning the scene bbox and the message wires (already in scene coordinates).
+/// Intercepted in `layout` before the generic arrange + route.
 pub(super) fn layout_root(
     scene_nodes: &mut Vec<PlacedNode>,
     program: &Program,
-) -> Result<Bbox, Error> {
+) -> Result<(Bbox, Vec<RoutedLink>), Error> {
     let mut participants = Vec::new();
     let mut notes = Vec::new();
     for p in std::mem::take(scene_nodes) {
@@ -87,7 +90,7 @@ pub(super) fn layout_root(
         }
     }
     let messages = messages_for(program, "");
-    let (children, bbox) = lay_out(
+    let (children, bbox, wires) = lay_out(
         &program.scene.attrs,
         participants,
         notes,
@@ -96,7 +99,7 @@ pub(super) fn layout_root(
         Span::empty(),
     )?;
     *scene_nodes = children;
-    Ok(bbox)
+    Ok((bbox, wires))
 }
 
 /// Whether the container at `scope` is a `layout: sequence` — so the router skips its links
@@ -123,9 +126,10 @@ fn messages_for<'a>(program: &'a Program, scope: &str) -> Vec<&'a ResolvedLink> 
 }
 
 /// Arrange participants across the top, drop a lifeline from each down to the last message
-/// row, and draw the messages. Returns the lowered children (lifelines behind, headers,
-/// then arrows) and the centred bbox. `gap: row col` — the column part spaces participants,
-/// the row part is the message pitch (SPEC §10).
+/// row, and draw the messages through the `straight` strategy. Returns the lowered children
+/// (lifelines behind, headers, frames, notes), the centred bbox, and the message wires (the
+/// renderer's one link path draws them). `gap: row col` — the column part spaces
+/// participants, the row part is the message pitch (SPEC §10).
 fn lay_out(
     attrs: &AttrMap,
     mut participants: Vec<PlacedNode>,
@@ -133,7 +137,7 @@ fn lay_out(
     messages: &[&ResolvedLink],
     frame_src: &[ResolvedInst],
     span: Span,
-) -> Result<(Vec<PlacedNode>, Bbox), Error> {
+) -> Result<(Vec<PlacedNode>, Bbox, Vec<RoutedLink>), Error> {
     if participants.is_empty() {
         return Err(Error::at(span, "a sequence needs at least one participant"));
     }
@@ -203,32 +207,56 @@ fn lay_out(
         let cx = lifeline_x.get(id).copied().unwrap_or(0.0);
         activations::edge(&bars, id, row, cx, toward).unwrap_or(cx)
     };
-    let arrows = messages::draw(&pairs, &lifeline_x, endpoint_x, row_y);
+    let wires = messages::draw(&pairs, &lifeline_x, endpoint_x, row_y);
     let bar_nodes = activations::draw(&bars, &lifeline_x, row_y, &paint);
     let (frames_behind, frames_front) =
         frames::draw(&seq_frames, &timeline.geom, &pairs, &lifeline_x);
     let placed_notes = place_notes(notes, &timeline.note_y, &lifeline_x);
 
     // Frame fills + borders behind (so a tinted fill backs the scene), then lifelines, bars,
-    // headers, messages; frame tabs / guards and notes on top so they stay readable.
+    // headers; frame tabs / guards and notes on top so they stay readable. The messages ride
+    // the link layer, drawn over the whole scene by the renderer's one link path.
     let mut children = frames_behind;
     children.extend(lifelines);
     children.extend(bar_nodes);
     children.extend(participants);
-    children.extend(arrows);
     children.extend(frames_front);
     children.extend(placed_notes);
-    let bbox = enclosing_bbox(&children);
-    Ok((children, bbox))
+    let bbox = enclosing_bbox(&children, &wires);
+    Ok((children, bbox, wires))
 }
 
-/// A symmetric, origin-centred bbox enclosing every child (lifelines, headers, arrows, and
-/// labels — including any self-hook or label overflow), so a nested sequence's container is
-/// sized correctly. Mirrors how `finish` takes the true visual extent.
-fn enclosing_bbox(children: &[PlacedNode]) -> Bbox {
+/// A symmetric, origin-centred bbox enclosing every child and every message
+/// wire (including any self-hook or label overflow), so a nested sequence's
+/// container is sized correctly. Mirrors how `finish` takes the true visual
+/// extent.
+fn enclosing_bbox(children: &[PlacedNode], wires: &[RoutedLink]) -> Bbox {
     let mut ext = Bbox::empty();
     for c in children {
         ext = ext.union(c.bbox.shifted(c.cx, c.cy));
+    }
+    for w in wires {
+        for &(x, y) in &w.path {
+            ext = ext.union(Bbox {
+                min_x: x,
+                min_y: y,
+                max_x: x,
+                max_y: y,
+            });
+        }
+        for t in &w.texts {
+            let size = t.attrs.number("font-size").unwrap_or(0.0);
+            let (hw, hh) = (
+                prim::text_width(&t.content, size) / 2.0,
+                crate::layout::approx_height(&t.content, size, 0.0) / 2.0,
+            );
+            ext = ext.union(Bbox {
+                min_x: t.position.0 - hw,
+                min_y: t.position.1 - hh,
+                max_x: t.position.0 + hw,
+                max_y: t.position.1 + hh,
+            });
+        }
     }
     let w = 2.0 * ext.min_x.abs().max(ext.max_x.abs());
     let h = 2.0 * ext.min_y.abs().max(ext.max_y.abs());
@@ -440,12 +468,16 @@ mod tests {
     }
 
     #[test]
-    fn a_call_renders_as_an_arrow_not_routed() {
+    fn a_call_renders_as_a_straight_time_row_wire() {
         let s = svg("{ layout: sequence }\n|box#a| \"A\"\n|box#b| \"B\"\na -> b \"hi\"\n");
         assert!(s.contains(">hi</text>"), "the message label: {s}");
         assert!(s.contains("lini-marker"), "an arrowhead: {s}");
-        // The orthogonal router never sees a sequence message — it is lowered to an arrow.
-        assert!(!s.contains("data-from"), "no routed link: {s}");
+        // The message rides the shared link layer through the `straight`
+        // strategy (SPEC §10) — a drawn link, never an orthogonal route.
+        assert!(
+            s.contains(r#"data-from="a" data-to="b""#),
+            "the message is a drawn link: {s}"
+        );
     }
 
     #[test]

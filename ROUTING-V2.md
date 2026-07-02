@@ -364,13 +364,13 @@ wires, and `time ./target/release/lini samples/pcb.lini -o /dev/null` is
   `samples/sequence.lini`
 
 **Steps:**
-- [ ] `straight.rs` + unit tests (trim math, self-hook shape, marker anchors)
-- [ ] Sequence migration; visual check that arrows/hooks/labels look
+- [x] `straight.rs` + unit tests (trim math, self-hook shape, marker anchors)
+- [x] Sequence migration; visual check that arrows/hooks/labels look
       unchanged (hook rounding now via the shared fillet pass — log any
       radius drift in the Execution log)
-- [ ] `routing: straight` end-to-end test in `tests/routing.rs` (an oblique
+- [x] `routing: straight` end-to-end test in `tests/routing.rs` (an oblique
       pair renders one trimmed segment)
-- [ ] Snapshots re-accepted for sequence; `cargo fmt && cargo clippy &&
+- [x] Snapshots re-accepted for sequence; `cargo fmt && cargo clippy &&
       cargo test`; commit (`feat: straight strategy; sequence messages ride
       the routing spine`)
 
@@ -446,6 +446,37 @@ Executing sessions: append dated notes here — decisions the plan didn't
 anticipate, gotchas, deferred items, comparator cases that needed deepening,
 anything the next session must know. Keep entries terse.
 
+- **2026-07-02, stage 5.** Done (straight.rs, dispatch in `routing::route`,
+  sequence messages on the spine). Decisions and drift:
+  - **Dispatch shape:** `ResolvedLink`/`EdgeReq` carry a typed
+    `routing: Strategy` (resolve still strips the attr, so nothing leaks
+    into `style=`); `bundles()` admits only orthogonal requests;
+    `ortho::route(index, reqs)` skips foreign requests and returns its
+    drawn links' request indices; `routing::route` merges the strategies'
+    output in declaration order and runs the **shared label pass** — labels
+    moved out of the ortho driver into the spine, where ROUTING.md puts
+    them.
+  - **Sequence seam:** the layout owns *where*, so messages are lowered in
+    the sequence's local frame through `straight::wire`/`hook` and stored on
+    the container's new `PlacedNode::links`; `routing::owned_links` lifts
+    them into scene coordinates (the root-sequence branch collects them
+    directly). The renderer's one link path draws them — no `prim::line`
+    arrows, no `.lini-sequence-message` labels (the text carries
+    `font-size: 13` itself; the rule stays for any future use).
+  - **Visual drift** (sequence.lini before/after, 0.2 % of pixels, all on
+    the wires): arrow tips gain the standard `MARKER_OVERLAP` half-pixel
+    nudge, dash phase starts from the marker-shortened end, and the
+    self-hook's return corner radius moved 6.5 → 6.75 (the fillet pass
+    caps at half the *drawn* leg, the old line path at half the shortened
+    leg). No layout movement; labels, frames, bars identical. Messages now
+    render in the link layer — above frame tabs and notes rather than
+    below; nothing in the samples overlaps to show it.
+  - Sequence "snapshots" are the conformance suite, ignored until stage 7 —
+    the before/after PNG diff replaces the re-accept here. Orthogonal
+    samples are byte-identical across the refactor.
+  - A `routing: straight` pair whose trim leaves nothing (containment,
+    coincident bodies) draws nothing, silently — the strategy has no
+    report by contract. Revisit in stage 6 if the validator wants a say.
 - **2026-07-02, stage 4.** Done (driver in ortho/mod.rs, chain construction +
   polylines in geometry.rs, labels.rs ported, `ortho/order.rs` added,
   tests/routing.rs with 17 contract tests; `routes_str` lives in

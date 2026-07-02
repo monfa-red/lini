@@ -9,6 +9,7 @@
 
 pub(crate) mod ortho;
 mod report;
+pub(crate) mod straight;
 mod validate;
 
 /// The transversal-crossing primitive, shared with the renderer's fillet
@@ -30,11 +31,48 @@ pub struct Routing {
     pub strays: Vec<Stray>,
 }
 
-/// Route every link of the scene over the finished, immutable layout.
+/// Route every link of the scene over the finished, immutable layout: expand
+/// the requests once, hand each strategy its own, then run the shared spine —
+/// declaration order, the label pass, and the wires containers drew
+/// themselves (a sequence's messages, already lowered through `straight`).
 pub fn route(program: &Program, nodes: &[PlacedNode]) -> Result<Routing, Error> {
     let index = ortho::scene::SceneIndex::build(nodes);
     let reqs = ortho::request::requests(program, &index)?;
-    Ok(ortho::route(program, &index, &reqs))
+    let (mut routing, mut req_of) = ortho::route(&index, &reqs);
+    straight::route(&reqs, &mut routing, &mut req_of);
+    let mut drawn: Vec<(usize, RoutedLink)> =
+        req_of.drain(..).zip(routing.links.drain(..)).collect();
+    drawn.sort_by_key(|&(i, _)| i);
+    (req_of, routing.links) = drawn.into_iter().unzip();
+    ortho::labels::place(&mut routing.links, &req_of, &reqs, program, &index);
+    routing.links.extend(owned_links(nodes));
+    Ok(routing)
+}
+
+/// The links containers drew themselves — a sequence's messages, stored on
+/// their `PlacedNode` in local coordinates — lifted into scene coordinates.
+pub(crate) fn owned_links(nodes: &[PlacedNode]) -> Vec<RoutedLink> {
+    fn walk(n: &PlacedNode, ox: f64, oy: f64, out: &mut Vec<RoutedLink>) {
+        let (cx, cy) = (ox + n.cx, oy + n.cy);
+        for l in &n.links {
+            let mut l = l.clone();
+            for p in &mut l.path {
+                *p = (p.0 + cx, p.1 + cy);
+            }
+            for t in &mut l.texts {
+                t.position = (t.position.0 + cx, t.position.1 + cy);
+            }
+            out.push(l);
+        }
+        for c in &n.children {
+            walk(c, cx, cy, out);
+        }
+    }
+    let mut out = Vec::new();
+    for n in nodes {
+        walk(n, 0.0, 0.0, &mut out);
+    }
+    out
 }
 
 /// The independent four-law check over a drawn scene (see [`validate`]).
