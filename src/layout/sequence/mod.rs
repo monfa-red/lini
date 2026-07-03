@@ -29,10 +29,6 @@ use std::collections::HashMap;
 /// closed series set).
 const NON_PARTICIPANT: &[&str] = &["loop", "opt", "alt", "else", "note"];
 
-/// Every lifeline is this thin, whatever its participant's stroke weight — a uniform guide,
-/// so an `|icon|`'s bold 2px glyph stroke doesn't make one lifeline heavier than the rest.
-const LIFELINE_WIDTH: f64 = 1.5;
-
 /// Is this node a sequence container (SPEC §10)? Detected by its `layout:` attr — the same
 /// key the chart / flow / grid dispatch reads — so it is intercepted before the generic
 /// container path, exactly like `chart::is_chart`.
@@ -170,12 +166,11 @@ fn lay_out(
     let msg_y = &timeline.msg_y;
     let row_y = |i: usize| if i < msg_y.len() { msg_y[i] } else { foot_y };
 
-    // Each participant lends its **colour** to its apparatus — lifeline and activation bars
-    // (SPEC §10) — so colouring a participant colours its whole timeline. The lifeline is a
-    // uniform thin guide ([`LIFELINE_WIDTH`]): it takes the participant's stroke *colour* but
-    // not a heavier glyph/border weight (an `|icon|`'s bold 2px would otherwise stand out), so
-    // every lifeline reads the same. The bars keep the participant's full paint. Place
-    // participants at their column centres, top-aligned, and drop a lifeline to the foot.
+    // Each participant lends its **paint** to its apparatus — lifeline and activation bars
+    // (SPEC §10) — so colouring or weighting a participant carries through its whole timeline.
+    // A node comes with its lifeline: the lifeline takes the participant's stroke colour *and*
+    // width, and the bars keep the same paint. Place participants at their column centres,
+    // top-aligned, and drop a lifeline to the foot.
     let mut lifelines = Vec::with_capacity(participants.len());
     let mut lifeline_x: HashMap<String, f64> = HashMap::new();
     let mut paint: HashMap<String, Apparatus> = HashMap::new();
@@ -187,7 +182,7 @@ fn lay_out(
         lifelines.push(prim::line(
             vec![(cx, head_bottom), (cx, foot_y)],
             a.stroke.clone(),
-            LIFELINE_WIDTH,
+            a.width,
         ));
         if let Some(id) = p.id.as_deref() {
             lifeline_x.insert(id.to_string(), cx);
@@ -280,7 +275,7 @@ impl Apparatus {
                 .get("stroke")
                 .cloned()
                 .unwrap_or_else(|| live("stroke")),
-            width: attrs.number("stroke-width").unwrap_or(1.5),
+            width: attrs.number("stroke-width").unwrap_or(2.0),
         }
     }
 }

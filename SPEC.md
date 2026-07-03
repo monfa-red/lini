@@ -1234,8 +1234,9 @@ styling; the cascade overrides any of it. They reuse the scene's role variables 
 | `\|else\|` | `fill: none; stroke: --group-stroke; stroke-style: dashed; stroke-width: 1; font-size: 11` |
 
 A participant **lends its paint to its apparatus**: its lifeline and activation bars take the
-participant's own `fill` / `stroke` / `stroke-width`, so colouring a participant colours its
-whole timeline (a plain box gives a `--stroke` line at width 1.5 with a `--fill` bar). A
+participant's own `fill` / `stroke` / `stroke-width`, so colouring or weighting a participant
+carries down its whole timeline (a plain box gives a `--stroke` line at width 2 with a `--fill`
+bar; `|box#db| { stroke-width: 3 }` thickens db's lifeline to match). A
 **frame** draws **behind** the lifelines — a `fill` tints its region without hiding the wires —
 and its `padding` insets the border from the messages and lifelines it spans. Rows sit a uniform
 `gap` apart; the frame chrome (tab, dividers) rides that rhythm, so spacing reads even.
@@ -1535,7 +1536,7 @@ instance / link block:
 
 ```
 font-size 15     link-font-size 11   caption-font-size 12
-stroke-width 1.5 radius 6            gap 20                 padding 20
+stroke-width 2   radius 6            gap 20                 padding 20
 clearance 16     icon-size 32        link-width 2          icon stroke-width 2
 ```
 

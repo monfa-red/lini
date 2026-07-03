@@ -1,24 +1,23 @@
 ---
 source: tests/conformance.rs
-assertion_line: 40
 expression: svg
 input_file: samples/chart_annotations.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-392.8 -252.8 785.6 505.6" width="785.6" height="505.6" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-393 -253 786 506" width="786" height="506" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
-    .lini .lini-block { fill: none; stroke: none; stroke-width: 1.6; stroke-dasharray: none; }
-    .lini .lini-line { fill: none; stroke: #444; stroke-width: 1.6; stroke-dasharray: none; }
+    .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
   </style>
   <defs/>
-  <rect class="lini-canvas" x="-392.8" y="-252.8" width="785.6" height="505.6"/>
+  <rect class="lini-canvas" x="-393" y="-253" width="786" height="506"/>
   <g class="lini-scene">
     <g class="lini-node lini-grid lini-block" transform="translate(0,0)">
       <rect x="-372" y="-232" width="744" height="464" rx="0" ry="0"/>
       <g class="lini-node lini-chart lini-block" transform="translate(-192,-122)">
-        <rect x="-179.2" y="-109.2" width="358.4" height="218.4" rx="0" ry="0"/>
+        <rect x="-179" y="-109" width="358" height="218" rx="0" ry="0"/>
         <g class="lini-node lini-block" style="fill: #00ace2; stroke-width: 0; opacity: 0.15" transform="translate(-117.9137,-7.1)">
           <rect x="-45.4863" y="-69.3" width="90.9725" height="138.6" rx="0" ry="0"/>
         </g>
@@ -74,7 +73,7 @@ input_file: samples/chart_annotations.lini
         <text class="lini-text" x="0" y="-92.9" style="font-weight: bold; font-size: 13px">Motor draw (A)</text>
       </g>
       <g class="lini-node lini-chart lini-block" transform="translate(192,-122)">
-        <rect x="-179.2" y="-109.2" width="358.4" height="218.4" rx="0" ry="0"/>
+        <rect x="-179" y="-109" width="358" height="218" rx="0" ry="0"/>
         <g class="lini-node lini-block" style="fill: #00ace2; stroke-width: 0; opacity: 0.15" transform="translate(-110.425,0.6)">
           <rect x="-39.775" y="-61.6" width="79.55" height="123.2" rx="0" ry="0"/>
         </g>
@@ -134,7 +133,7 @@ input_file: samples/chart_annotations.lini
         <text class="lini-text" x="0" y="-92.9" style="font-weight: bold; font-size: 13px">Reactor warm-up</text>
       </g>
       <g class="lini-node lini-chart lini-block" transform="translate(-192,122)">
-        <rect x="-179.2" y="-109.2" width="358.4" height="218.4" rx="0" ry="0"/>
+        <rect x="-179" y="-109" width="358" height="218" rx="0" ry="0"/>
         <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
           <line x1="-150.2" y1="88.6" x2="168" y2="88.6"/>
         </g>
@@ -149,19 +148,19 @@ input_file: samples/chart_annotations.lini
         </g>
         <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e" transform="translate(-110.425,85.3)">
           <title>p50 · v2: 12</title>
-          <rect x="-24.9742" y="-2.5" width="49.9484" height="5" rx="2" ry="2"/>
+          <rect x="-24.7742" y="-2.3" width="49.5484" height="4.6" rx="2" ry="2"/>
         </g>
         <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e" transform="translate(-30.875,77.6)">
           <title>p90 · v2: 40</title>
-          <rect x="-24.9742" y="-10.2" width="49.9484" height="20.4" rx="2" ry="2"/>
+          <rect x="-24.7742" y="-10" width="49.5484" height="20" rx="2" ry="2"/>
         </g>
         <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e" transform="translate(48.675,66.6)">
           <title>p99 · v2: 80</title>
-          <rect x="-24.9742" y="-21.2" width="49.9484" height="42.4" rx="2" ry="2"/>
+          <rect x="-24.7742" y="-21" width="49.5484" height="42" rx="2" ry="2"/>
         </g>
         <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e" transform="translate(128.225,6.1)">
           <title>p999 · v2: 300</title>
-          <rect x="-24.9742" y="-81.7" width="49.9484" height="163.4" rx="2" ry="2"/>
+          <rect x="-24.7742" y="-81.5" width="49.5484" height="163" rx="2" ry="2"/>
         </g>
         <g class="lini-node lini-line" style="stroke: #ef675e; stroke-width: 1.5; stroke-dasharray: 5,3.75" transform="translate(0,0)">
           <line x1="-150.2" y1="-48.9" x2="168" y2="-48.9"/>

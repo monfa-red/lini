@@ -1,25 +1,24 @@
 ---
 source: tests/conformance.rs
-assertion_line: 40
 expression: svg
 input_file: samples/chart_radial.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-312.8 -160.8 625.6 321.6" width="625.6" height="321.6" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-313 -161 626 322" width="626" height="322" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
-    .lini .lini-block { fill: none; stroke: none; stroke-width: 1.6; stroke-dasharray: none; }
+    .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-poly { stroke-dasharray: none; }
-    .lini .lini-line { fill: none; stroke: #444; stroke-width: 1.6; stroke-dasharray: none; }
+    .lini .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
   </style>
   <defs/>
-  <rect class="lini-canvas" x="-312.8" y="-160.8" width="625.6" height="321.6"/>
+  <rect class="lini-canvas" x="-313" y="-161" width="626" height="322"/>
   <g class="lini-scene">
     <g class="lini-node lini-grid lini-block" transform="translate(0,0)">
       <rect x="-292" y="-140" width="584" height="280" rx="0" ry="0"/>
       <g class="lini-node lini-chart lini-block" transform="translate(-152,0)">
-        <rect x="-139.2" y="-139.2" width="278.4" height="278.4" rx="0" ry="0"/>
+        <rect x="-139" y="-139" width="278" height="278" rx="0" ry="0"/>
         <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
           <polyline points="0,-15.32 18.3269,-2.0048 11.3266,19.5398 -11.3266,19.5398 -18.3269,-2.0048 0,-15.32"/>
         </g>
@@ -80,7 +79,7 @@ input_file: samples/chart_radial.lini
         <text class="lini-text" x="40.5" y="130.1" style="font-weight: bold; font-size: 11px">Cruiser</text>
       </g>
       <g class="lini-node lini-chart lini-block" transform="translate(152,0)">
-        <rect x="-139.2" y="-139.2" width="278.4" height="278.4" rx="0" ry="0"/>
+        <rect x="-139" y="-139" width="278" height="278" rx="0" ry="0"/>
         <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
           <polyline points="0,-8.24 16.4497,-0.3182 20.5125,17.4818 9.1289,31.7564 -9.1289,31.7564 -20.5125,17.4818 -16.4497,-0.3182 0,-8.24"/>
         </g>
@@ -117,31 +116,31 @@ input_file: samples/chart_radial.lini
         <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
           <line x1="0" y1="12.8" x2="-82.2487" y2="-52.7911"/>
         </g>
-        <g class="lini-node lini-poly" style="fill: #ffb2c9; stroke: #b8476e; stroke-width: 1.6; opacity: 1" transform="translate(0,0)">
+        <g class="lini-node lini-poly" style="fill: #ffb2c9; stroke: #b8476e; stroke-width: 2; opacity: 1" transform="translate(0,0)">
           <title>Mon · steps: 80</title>
           <polygon points="-26.7243,-67.0043 -19.253,-69.1282 -11.6178,-70.5543 -3.8836,-71.2703 3.8836,-71.2703 11.6178,-70.5543 19.253,-69.1282 26.7243,-67.0043 0,12.8"/>
         </g>
-        <g class="lini-node lini-poly" style="fill: #ffb2c9; stroke: #b8476e; stroke-width: 1.6; opacity: 1" transform="translate(0,0)">
+        <g class="lini-node lini-poly" style="fill: #ffb2c9; stroke: #b8476e; stroke-width: 2; opacity: 1" transform="translate(0,0)">
           <title>Tue · steps: 65</title>
           <polygon points="37.1566,-44.6039 42.2906,-40.9339 47.0644,-36.8061 51.4373,-32.2558 55.3721,-27.3218 58.8352,-22.046 61.7972,-16.4734 64.2328,-10.6514 0,12.8"/>
         </g>
-        <g class="lini-node lini-poly" style="fill: #ffb2c9; stroke: #b8476e; stroke-width: 1.6; opacity: 1" transform="translate(0,0)">
+        <g class="lini-node lini-poly" style="fill: #ffb2c9; stroke: #b8476e; stroke-width: 2; opacity: 1" transform="translate(0,0)">
           <title>Wed · steps: 90</title>
           <polygon points="94.2189,3.4669 94.6781,12.193 94.3308,20.9242 93.1801,29.5863 91.2356,38.1054 88.5141,46.4089 85.0386,54.4262 80.8388,62.0889 0,12.8"/>
         </g>
-        <g class="lini-node lini-poly" style="fill: #ffb2c9; stroke: #b8476e; stroke-width: 1.6; opacity: 1" transform="translate(0,0)">
+        <g class="lini-node lini-poly" style="fill: #ffb2c9; stroke: #b8476e; stroke-width: 2; opacity: 1" transform="translate(0,0)">
           <title>Thu · steps: 70</title>
           <polygon points="51.3656,65.5677 46.282,70.0785 40.8042,74.1015 34.9788,77.6023 28.8555,80.5511 22.4864,82.9228 15.9258,84.6973 9.2295,85.8593 0,12.8"/>
         </g>
-        <g class="lini-node lini-poly" style="fill: #ffb2c9; stroke: #b8476e; stroke-width: 1.6; opacity: 1" transform="translate(0,0)">
+        <g class="lini-node lini-poly" style="fill: #ffb2c9; stroke: #b8476e; stroke-width: 2; opacity: 1" transform="translate(0,0)">
           <title>Fri · steps: 95</title>
           <polygon points="-12.5258,111.9519 -21.6136,110.3749 -30.5173,107.9667 -39.1611,104.7479 -47.4712,100.7459 -55.3771,95.9948 -62.8113,90.5351 -69.7104,84.4133 0,12.8"/>
         </g>
-        <g class="lini-node lini-poly" style="fill: #ffb2c9; stroke: #b8476e; stroke-width: 1.6; opacity: 1" transform="translate(0,0)">
+        <g class="lini-node lini-poly" style="fill: #ffb2c9; stroke: #b8476e; stroke-width: 2; opacity: 1" transform="translate(0,0)">
           <title>Sat · steps: 40</title>
           <polygon points="-35.9283,34.7062 -37.7949,31.3005 -39.3396,27.7373 -40.5492,24.0468 -41.4134,20.2606 -41.9248,16.4108 -42.0791,12.5302 -41.8751,8.6519 0,12.8"/>
         </g>
-        <g class="lini-node lini-poly" style="fill: #ffb2c9; stroke: #b8476e; stroke-width: 1.6; opacity: 1" transform="translate(0,0)">
+        <g class="lini-node lini-poly" style="fill: #ffb2c9; stroke: #b8476e; stroke-width: 2; opacity: 1" transform="translate(0,0)">
           <title>Sun · steps: 55</title>
           <polygon points="-54.3509,-7.0435 -52.2899,-11.9698 -49.7836,-16.6851 -46.8533,-21.1492 -43.5239,-25.3242 -39.8237,-29.1744 -35.7843,-32.6671 -31.4402,-35.7726 0,12.8"/>
         </g>

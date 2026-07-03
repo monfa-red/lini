@@ -1,16 +1,15 @@
 ---
 source: tests/conformance.rs
-assertion_line: 40
 expression: svg
 input_file: samples/gradient.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-277.1 -170.3 554.2 340.6" width="554.2" height="340.6" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-277.5 -171.5 555 343" width="555" height="343" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 13px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
-    .lini .lini-block { fill: none; stroke: none; stroke-width: 1.6; stroke-dasharray: none; }
+    .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
-    .lini .lini-box { fill: white; stroke: #444; stroke-width: 1.6; }
+    .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
     .lini .lini-card { stroke: none; color: white; }
   </style>
   <defs>
@@ -21,37 +20,37 @@ input_file: samples/gradient.lini
     <linearGradient id="lini-gradient-5" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#00b8ac"/><stop offset="100%" stop-color="#9084ff"/></linearGradient>
     <linearGradient id="lini-gradient-6" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#f97770"/><stop offset="100%" stop-color="#9c93ff"/></linearGradient>
   </defs>
-  <rect class="lini-canvas" x="-277.1" y="-170.3" width="554.2" height="340.6"/>
+  <rect class="lini-canvas" x="-277.5" y="-171.5" width="555" height="343"/>
   <g class="lini-scene">
-    <g class="lini-node lini-block" style="font-size: 18px" transform="translate(0,-134.5)">
+    <g class="lini-node lini-block" style="font-size: 18px" transform="translate(0,-135.5)">
       <rect x="-48.6" y="-9" width="97.2" height="18" rx="0" ry="0"/>
       <text class="lini-text" x="0" y="0">Gradients</text>
     </g>
-    <g class="lini-node lini-row lini-block" data-id="r1" transform="translate(0,-72.1)">
-      <rect x="-249.6" y="-35.8" width="499.2" height="71.6" rx="0" ry="0"/>
-      <g class="lini-node lini-card lini-box lini-block" style="fill: url(#lini-gradient-1)" transform="translate(-128.8,0)">
+    <g class="lini-node lini-row lini-block" data-id="r1" transform="translate(0,-72.5)">
+      <rect x="-250" y="-36" width="500" height="72" rx="0" ry="0"/>
+      <g class="lini-node lini-card lini-box lini-block" style="fill: url(#lini-gradient-1)" transform="translate(-129,0)">
         <rect x="-120" y="-35" width="240" height="70" rx="8" ry="8"/>
         <text class="lini-text" x="0" y="0">gradient(--teal, --blue)</text>
       </g>
-      <g class="lini-node lini-card lini-box lini-block" style="fill: url(#lini-gradient-2)" transform="translate(128.8,0)">
+      <g class="lini-node lini-card lini-box lini-block" style="fill: url(#lini-gradient-2)" transform="translate(129,0)">
         <rect x="-120" y="-35" width="240" height="70" rx="8" ry="8"/>
         <text class="lini-text" x="0" y="0">three stops, auto-angled</text>
       </g>
     </g>
-    <g class="lini-node lini-row lini-block" data-id="r2" transform="translate(0,17.1)">
-      <rect x="-249.6" y="-35.8" width="499.2" height="71.6" rx="0" ry="0"/>
-      <g class="lini-node lini-card lini-box lini-block" style="fill: url(#lini-gradient-3)" transform="translate(-128.8,0)">
+    <g class="lini-node lini-row lini-block" data-id="r2" transform="translate(0,17.5)">
+      <rect x="-250" y="-36" width="500" height="72" rx="0" ry="0"/>
+      <g class="lini-node lini-card lini-box lini-block" style="fill: url(#lini-gradient-3)" transform="translate(-129,0)">
         <rect x="-120" y="-35" width="240" height="70" rx="8" ry="8"/>
         <text class="lini-text" x="0" y="0">linear-gradient(90, …)</text>
       </g>
-      <g class="lini-node lini-card lini-box lini-block" style="fill: url(#lini-gradient-4)" transform="translate(128.8,0)">
+      <g class="lini-node lini-card lini-box lini-block" style="fill: url(#lini-gradient-4)" transform="translate(129,0)">
         <rect x="-120" y="-35" width="240" height="70" rx="8" ry="8"/>
         <text class="lini-text" x="0" y="0">radial-gradient(…)</text>
       </g>
     </g>
-    <g class="lini-node lini-row lini-block" data-id="r3" transform="translate(0,107)">
-      <rect x="-250.3" y="-36.5" width="500.6" height="73" rx="0" ry="0"/>
-      <g class="lini-node lini-card lini-box lini-block" style="fill: #eeeeee; stroke: url(#lini-gradient-5); stroke-width: 3; color: #484848" transform="translate(-128.8,0)">
+    <g class="lini-node lini-row lini-block" data-id="r3" transform="translate(0,108)">
+      <rect x="-250.5" y="-36.5" width="501" height="73" rx="0" ry="0"/>
+      <g class="lini-node lini-card lini-box lini-block" style="fill: #eeeeee; stroke: url(#lini-gradient-5); stroke-width: 3; color: #484848" transform="translate(-129,0)">
         <rect x="-120" y="-35" width="240" height="70" rx="8" ry="8"/>
         <text class="lini-text" x="0" y="0">gradient on stroke</text>
       </g>

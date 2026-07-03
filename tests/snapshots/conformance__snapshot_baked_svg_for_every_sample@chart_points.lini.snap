@@ -1,26 +1,25 @@
 ---
 source: tests/conformance.rs
-assertion_line: 40
 expression: svg
 input_file: samples/chart_points.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-392.8 -130.8 785.6 261.6" width="785.6" height="261.6" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-393 -131 786 262" width="786" height="262" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
-    .lini .lini-block { fill: none; stroke: none; stroke-width: 1.6; stroke-dasharray: none; }
+    .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-oval { stroke-dasharray: none; }
-    .lini .lini-line { fill: none; stroke: #444; stroke-width: 1.6; stroke-dasharray: none; }
+    .lini .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-chart-label { pointer-events: none; }
   </style>
   <defs/>
-  <rect class="lini-canvas" x="-392.8" y="-130.8" width="785.6" height="261.6"/>
+  <rect class="lini-canvas" x="-393" y="-131" width="786" height="262"/>
   <g class="lini-scene">
     <g class="lini-node lini-grid lini-block" transform="translate(0,0)">
       <rect x="-372" y="-110" width="744" height="220" rx="0" ry="0"/>
       <g class="lini-node lini-chart lini-block" transform="translate(-192,0)">
-        <rect x="-179.2" y="-109.2" width="358.4" height="218.4" rx="0" ry="0"/>
+        <rect x="-179" y="-109" width="358" height="218" rx="0" ry="0"/>
         <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
           <line x1="-156.8" y1="73.2" x2="168" y2="73.2"/>
         </g>
@@ -74,7 +73,7 @@ input_file: samples/chart_points.lini
         <text class="lini-text" x="0" y="-92.9" style="font-weight: bold; font-size: 13px">Markets — scatter</text>
       </g>
       <g class="lini-node lini-chart lini-block" transform="translate(192,0)">
-        <rect x="-179.2" y="-109.2" width="358.4" height="218.4" rx="0" ry="0"/>
+        <rect x="-179" y="-109" width="358" height="218" rx="0" ry="0"/>
         <g class="lini-node lini-line" style="stroke: rgba(0, 0, 0, 0.1); stroke-width: 1" transform="translate(0,0)">
           <line x1="-156.8" y1="73.2" x2="168" y2="73.2"/>
         </g>

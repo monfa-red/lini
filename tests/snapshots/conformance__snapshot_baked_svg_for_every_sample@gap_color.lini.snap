@@ -3,22 +3,22 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/gap_color.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-150.7 -91.9 301.4 183.8" width="301.4" height="183.8" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-151.5 -92.5 303 185" width="303" height="185" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
-    .lini .lini-block { fill: none; stroke: none; stroke-width: 1.6; stroke-dasharray: none; }
+    .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
-    .lini .lini-box { fill: white; stroke: #444; stroke-width: 1.6; }
+    .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
   </style>
   <defs/>
-  <rect class="lini-canvas" x="-150.7" y="-91.9" width="301.4" height="183.8"/>
+  <rect class="lini-canvas" x="-151.5" y="-92.5" width="303" height="185"/>
   <g class="lini-scene">
-    <g class="lini-node lini-row lini-block" data-id="bands" transform="translate(0,-36.8)">
-      <rect x="-123.9" y="-28.3" width="247.8" height="56.6" rx="0" ry="0"/>
-      <rect x="-55.3" y="-28.3" width="12" height="56.6" fill="#7eddfd" stroke="none"/>
-      <rect x="25.3" y="-28.3" width="12" height="56.6" fill="#7eddfd" stroke="none"/>
-      <g class="lini-node lini-box lini-block" data-id="a" style="fill: #cff6ff; stroke: #00547e; color: #00547e" transform="translate(-89.6,0)">
+    <g class="lini-node lini-row lini-block" data-id="bands" transform="translate(0,-37)">
+      <rect x="-124.5" y="-28.5" width="249" height="57" rx="0" ry="0"/>
+      <rect x="-55.5" y="-28.5" width="12" height="57" fill="#7eddfd" stroke="none"/>
+      <rect x="25.5" y="-28.5" width="12" height="57" fill="#7eddfd" stroke="none"/>
+      <g class="lini-node lini-box lini-block" data-id="a" style="fill: #cff6ff; stroke: #00547e; color: #00547e" transform="translate(-90,0)">
         <rect x="-33.5" y="-27.5" width="67" height="55" rx="8" ry="8"/>
         <text class="lini-text" x="0" y="0">one</text>
       </g>
@@ -26,12 +26,12 @@ input_file: samples/gap_color.lini
         <rect x="-33.5" y="-27.5" width="67" height="55" rx="8" ry="8"/>
         <text class="lini-text" x="0" y="0">two</text>
       </g>
-      <g class="lini-node lini-box lini-block" data-id="c" style="fill: #cff6ff; stroke: #00547e; color: #00547e" transform="translate(80.6,0)">
+      <g class="lini-node lini-box lini-block" data-id="c" style="fill: #cff6ff; stroke: #00547e; color: #00547e" transform="translate(81,0)">
         <rect x="-42.5" y="-27.5" width="85" height="55" rx="8" ry="8"/>
         <text class="lini-text" x="0" y="0">three</text>
       </g>
     </g>
-    <g class="lini-node lini-grid lini-block" data-id="week" transform="translate(0,46.1)">
+    <g class="lini-node lini-grid lini-block" data-id="week" transform="translate(0,46.5)">
       <rect x="-120" y="-19" width="240" height="38" rx="0" ry="0"/>
       <rect x="-120" y="-4" width="240" height="8" fill="#005d56" stroke="none"/>
       <text class="lini-text" x="-80" y="-11.5">Mon</text>

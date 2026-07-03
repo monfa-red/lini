@@ -3,76 +3,76 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/table_align.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-177.8 -92.7 355.6 168.2" width="355.6" height="168.2" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-178 -93.5 356 170" width="356" height="170" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
-    .lini .lini-block { fill: none; stroke: none; stroke-width: 1.6; stroke-dasharray: none; }
+    .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
     .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
-    .lini .lini-table { fill: none; stroke: #444; stroke-width: 1.6; font-size: 14px; font-weight: normal; stroke-dasharray: none; }
+    .lini .lini-table { fill: none; stroke: #444; stroke-width: 2; font-size: 14px; font-weight: normal; stroke-dasharray: none; }
     .lini .lini-header { fill: rgba(0, 0, 0, 0.06); font-weight: bold; }
   </style>
   <defs/>
-  <rect class="lini-canvas" x="-177.8" y="-92.7" width="355.6" height="168.2"/>
+  <rect class="lini-canvas" x="-178" y="-93.5" width="356" height="170"/>
   <g class="lini-scene">
     <g class="lini-node lini-table lini-group lini-block" data-id="invoice" transform="translate(0,0)">
-      <rect x="-151" y="-48.7" width="302" height="97.4" rx="8" ry="8"/>
-      <rect x="-21" y="-48.7" width="1" height="97.4" fill="#444" stroke="none"/>
-      <rect x="50" y="-48.7" width="1" height="97.4" fill="#444" stroke="none"/>
-      <rect x="-151" y="-25.1" width="302" height="1" fill="#444" stroke="none"/>
+      <rect x="-151" y="-49.5" width="302" height="99" rx="8" ry="8"/>
+      <rect x="-21" y="-49.5" width="1" height="99" fill="#444" stroke="none"/>
+      <rect x="50" y="-49.5" width="1" height="99" fill="#444" stroke="none"/>
+      <rect x="-151" y="-25.5" width="302" height="1" fill="#444" stroke="none"/>
       <rect x="-151" y="-0.5" width="302" height="1" fill="#444" stroke="none"/>
-      <rect x="-151" y="24.1" width="302" height="1" fill="#444" stroke="none"/>
-      <g class="lini-node lini-header lini-cell lini-align-start lini-block" transform="translate(-86,-36.9)">
-        <rect x="-64.2" y="-11" width="128.4" height="22" rx="0" ry="0"/>
+      <rect x="-151" y="24.5" width="302" height="1" fill="#444" stroke="none"/>
+      <g class="lini-node lini-header lini-cell lini-align-start lini-block" transform="translate(-86,-37.5)">
+        <rect x="-64" y="-11" width="128" height="22" rx="0" ry="0"/>
         <text class="lini-text" x="-40.2" y="0">Item</text>
       </g>
-      <g class="lini-node lini-header lini-cell lini-block" transform="translate(15,-36.9)">
-        <rect x="-34.2" y="-11" width="68.4" height="22" rx="0" ry="0"/>
+      <g class="lini-node lini-header lini-cell lini-block" transform="translate(15,-37.5)">
+        <rect x="-34" y="-11" width="68" height="22" rx="0" ry="0"/>
         <text class="lini-text" x="0" y="0">Qty</text>
       </g>
-      <g class="lini-node lini-header lini-cell lini-align-end lini-block" transform="translate(101,-36.9)">
-        <rect x="-49.2" y="-11" width="98.4" height="22" rx="0" ry="0"/>
+      <g class="lini-node lini-header lini-cell lini-align-end lini-block" transform="translate(101,-37.5)">
+        <rect x="-49" y="-11" width="98" height="22" rx="0" ry="0"/>
         <text class="lini-text" x="21" y="0">Price</text>
       </g>
-      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(-86,-12.3)">
-        <rect x="-64.2" y="-11" width="128.4" height="22" rx="0" ry="0"/>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(-86,-12.5)">
+        <rect x="-64" y="-11" width="128" height="22" rx="0" ry="0"/>
         <text class="lini-text" x="-23.4" y="0">Keyboard</text>
       </g>
-      <g class="lini-node lini-cell lini-block" transform="translate(15,-12.3)">
-        <rect x="-34.2" y="-11" width="68.4" height="22" rx="0" ry="0"/>
+      <g class="lini-node lini-cell lini-block" transform="translate(15,-12.5)">
+        <rect x="-34" y="-11" width="68" height="22" rx="0" ry="0"/>
         <text class="lini-text" x="0" y="0">2</text>
       </g>
-      <g class="lini-node lini-cell lini-align-end lini-block" transform="translate(101,-12.3)">
-        <rect x="-49.2" y="-11" width="98.4" height="22" rx="0" ry="0"/>
+      <g class="lini-node lini-cell lini-align-end lini-block" transform="translate(101,-12.5)">
+        <rect x="-49" y="-11" width="98" height="22" rx="0" ry="0"/>
         <text class="lini-text" x="12.6" y="0">$120.00</text>
       </g>
-      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(-86,12.3)">
-        <rect x="-64.2" y="-11" width="128.4" height="22" rx="0" ry="0"/>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(-86,12.5)">
+        <rect x="-64" y="-11" width="128" height="22" rx="0" ry="0"/>
         <text class="lini-text" x="-27.6" y="0">Monitor</text>
       </g>
-      <g class="lini-node lini-cell lini-block" transform="translate(15,12.3)">
-        <rect x="-34.2" y="-11" width="68.4" height="22" rx="0" ry="0"/>
+      <g class="lini-node lini-cell lini-block" transform="translate(15,12.5)">
+        <rect x="-34" y="-11" width="68" height="22" rx="0" ry="0"/>
         <text class="lini-text" x="0" y="0">1</text>
       </g>
-      <g class="lini-node lini-cell lini-align-end lini-block" transform="translate(101,12.3)">
-        <rect x="-49.2" y="-11" width="98.4" height="22" rx="0" ry="0"/>
+      <g class="lini-node lini-cell lini-align-end lini-block" transform="translate(101,12.5)">
+        <rect x="-49" y="-11" width="98" height="22" rx="0" ry="0"/>
         <text class="lini-text" x="12.6" y="0">$340.00</text>
       </g>
-      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(-86,36.9)">
-        <rect x="-64.2" y="-11" width="128.4" height="22" rx="0" ry="0"/>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(-86,37.5)">
+        <rect x="-64" y="-11" width="128" height="22" rx="0" ry="0"/>
         <text class="lini-text" x="-19.2" y="0">USB cable</text>
       </g>
-      <g class="lini-node lini-cell lini-block" transform="translate(15,36.9)">
-        <rect x="-34.2" y="-11" width="68.4" height="22" rx="0" ry="0"/>
+      <g class="lini-node lini-cell lini-block" transform="translate(15,37.5)">
+        <rect x="-34" y="-11" width="68" height="22" rx="0" ry="0"/>
         <text class="lini-text" x="0" y="0">5</text>
       </g>
-      <g class="lini-node lini-cell lini-align-end lini-block" transform="translate(101,36.9)">
-        <rect x="-49.2" y="-11" width="98.4" height="22" rx="0" ry="0"/>
+      <g class="lini-node lini-cell lini-align-end lini-block" transform="translate(101,37.5)">
+        <rect x="-49" y="-11" width="98" height="22" rx="0" ry="0"/>
         <text class="lini-text" x="21" y="0">$9.50</text>
       </g>
-      <g class="lini-node lini-caption lini-block" transform="translate(-125,-59.9)">
+      <g class="lini-node lini-caption lini-block" transform="translate(-124.8,-60.5)">
         <rect x="-25.2" y="-6" width="50.4" height="12" rx="0" ry="0"/>
         <text class="lini-text" x="0" y="0">Invoice</text>
       </g>
