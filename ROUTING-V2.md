@@ -422,20 +422,20 @@ delete the compaction/slide excuses (those laws are gone).
 
 ## Stage 7 — Polish, snapshots, docs
 
-- [ ] Visual pass: render **every** sample `--bake-vars` → PNG, read each one
+- [x] Visual pass: render **every** sample `--bake-vars` → PNG, read each one
       (AGENTS.md: don't make the user spot-check). Specifically confirm:
       concentric fillets on turning buses (also at compressed pitch — the
       radii grow by the *actual* track offset), crossing never mid-arc,
       labels legible, `pcb.lini` pretty end to end
-- [ ] Re-accept remaining snapshots; remove every stage-1 `#[ignore]`
-- [ ] Cosmetics-last pass over `src/routing/` (naming, dead imports, doc
+- [x] Re-accept remaining snapshots; remove every stage-1 `#[ignore]`
+- [x] Cosmetics-last pass over `src/routing/` (naming, dead imports, doc
       comments; every file ≤ ~500 LOC)
-- [ ] Docs: purge stale references — `PLAN.md` routing/architecture sections
+- [x] Docs: purge stale references — `PLAN.md` routing/architecture sections
       (point at `ROUTING.md`), `graph.rs`'s "PLAN.md §Architecture" header,
       SPEC.md §9's "only mode built today" line (now orthogonal + straight),
       README if it names routing modes
-- [ ] Full gate: `cargo fmt --all -- --check && cargo clippy && cargo test`
-- [ ] Final commit; leave pushing/merging to the user
+- [x] Full gate: `cargo fmt --all -- --check && cargo clippy && cargo test`
+- [x] Final commit; leave pushing/merging to the user
       (`superpowers:finishing-a-development-branch`)
 
 ---
@@ -446,6 +446,26 @@ Executing sessions: append dated notes here — decisions the plan didn't
 anticipate, gotchas, deferred items, comparator cases that needed deepening,
 anything the next session must know. Keep entries terse.
 
+- **2026-07-03, stage 7.** Done (snapshots, cosmetics, docs; the bug batch
+  above landed first so snapshots were accepted once).
+  - Visual pass: all 31 samples rendered `--bake-vars` → PNG and read.
+    pcb end-to-end clean, flash/pwr/usb buses fully concentric (radii
+    10/20/30/40 measured in the SVG arcs), links_medium/links_simple nest
+    without braids, links_hard stands at its four pinned strays.
+  - Snapshots re-accepted; both stage-1 `#[ignore]`s removed (conformance,
+    hello). Link samples stay excluded from snapshots by design — routing
+    is gated semantically (tests/laws.rs, tests/routing.rs). links.lini
+    gained its first accepted snapshot.
+  - Splits along concept seams, code ≤ ~500 lines per file:
+    `ortho/pairwise.rs` (the general pairwise settle) out of place.rs,
+    `ortho/entry.rs` (punches, port windows, clipping) out of search.rs,
+    `validate/excuse.rs` (Law 1's contention-component excuse) out of
+    validate.rs. Shared predicates (`contend`, `near`) stayed with the
+    cluster model in place.rs.
+  - Docs: SPEC §9/§10/§16/§20 now say `straight` is built (`curved` alone
+    deferred); the resolver's deferred-routing message pointed at §19,
+    fixed to §20; sequence/mod.rs's PLAN.md pointer and README/conformance
+    references to the old `tests/linking.rs` updated.
 - **2026-07-03, bug batch (user-reported, pre stage 7).** Two fixed, one
   diagnosed to its architectural root and deferred whole:
   - **Duplicate parallels braided** (links_simple `over`/`chat`,

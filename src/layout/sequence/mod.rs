@@ -10,7 +10,7 @@
 //! strategy, SPEC §10).
 //!
 //! Submodules: [`messages`] (call / return / async / self arrows), [`activations`]
-//! (implicit bars), [`frames`] (`loop` / `opt` / `alt` + `else`). Notes follow (PLAN.md).
+//! (implicit bars), [`frames`] (`loop` / `opt` / `alt` + `else`). Notes follow (SPEC §10).
 
 mod activations;
 mod frames;

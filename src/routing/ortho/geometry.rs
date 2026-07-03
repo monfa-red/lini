@@ -14,10 +14,10 @@
 //! polyline takes corners from those.
 
 use super::cost::min_pitch;
+use super::entry::Entry;
 use super::graph::{Axis, ChannelGraph};
 use super::ledger::Ledger;
 use super::rect::Rect;
-use super::search::Entry;
 use super::{Chain, EndInfo, Run};
 
 fn perp(axis: Axis) -> Axis {
@@ -322,8 +322,9 @@ pub fn stray_segment(a: Rect, b: Rect) -> Option<((f64, f64), (f64, f64))> {
 #[cfg(test)]
 mod tests {
     use super::super::World;
+    use super::super::entry::entries;
     use super::super::place::place;
-    use super::super::search::{cheapest, entries};
+    use super::super::search::cheapest;
     use super::*;
     use crate::ast::Side;
 

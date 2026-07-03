@@ -1,10 +1,9 @@
 ---
 source: tests/conformance.rs
-assertion_line: 40
 expression: svg
 input_file: samples/themes.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-97.3 -154.9 228.6 292.3" width="228.6" height="292.3" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-97.3 -154.9 210.6 292.3" width="210.6" height="292.3" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
@@ -24,7 +23,7 @@ input_file: samples/themes.lini
   <defs>
     <filter id="lini-shadow-1" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="rgba(0, 0, 0, 0.2)"/></filter>
   </defs>
-  <rect class="lini-canvas" x="-97.3" y="-154.9" width="228.6" height="292.3"/>
+  <rect class="lini-canvas" x="-97.3" y="-154.9" width="210.6" height="292.3"/>
   <g class="lini-scene">
     <g class="lini-node lini-group lini-block" data-id="service" transform="translate(0,0)">
       <rect x="-76.8" y="-116.9" width="153.6" height="233.8" rx="8" ry="8"/>
@@ -55,13 +54,13 @@ input_file: samples/themes.lini
   </g>
   <g class="lini-links">
     <g class="lini-link" style="font-size: 11" data-from="service.web" data-to="service.db">
-      <path d="M 34.3 -68.6 L 45.925 -68.6 A 11.625 11.625 0 0 1 57.55 -56.975 L 57.55 -19.625 A 11.625 11.625 0 0 1 45.925 -8 L 34.3 -8"/>
+      <path d="M 34.3 -61.5 L 47.8 -61.5 A 16 16 0 0 1 63.8 -45.5 L 63.8 -24 A 16 16 0 0 1 47.8 -8 L 34.3 -8"/>
     </g>
     <g class="lini-link" style="font-size: 11" data-from="service.web" data-to="service.db">
-      <mask id="lini-label-cut-1" maskUnits="userSpaceOnUse" x="32.55" y="6.25" width="80.5" height="64.1"><rect class="lini-cut-bg" x="32.55" y="6.25" width="80.5" height="64.1"/><rect class="lini-cut" x="57" y="0.85" width="39.6" height="14.3"/></mask>
-      <path d="M 34.3 8 L 95.3 8 A 16 16 0 0 1 111.3 24 L 111.3 52.6 A 16 16 0 0 1 95.3 68.6 L 59.3 68.6" mask="url(#lini-label-cut-1)"/>
+      <mask id="lini-label-cut-1" maskUnits="userSpaceOnUse" x="32.55" y="6.25" width="62.5" height="64.1"><rect class="lini-cut-bg" x="32.55" y="6.25" width="62.5" height="64.1"/><rect class="lini-cut" x="36.3" y="0.85" width="39.6" height="14.3"/></mask>
+      <path d="M 34.3 8 L 77.3 8 A 16 16 0 0 1 93.3 24 L 93.3 52.6 A 16 16 0 0 1 77.3 68.6 L 59.3 68.6" mask="url(#lini-label-cut-1)"/>
       <polygon class="lini-marker lini-marker-arrow" points="56.3,68.6 63.3,65.1 63.3,72.1"/>
-      <text class="lini-link-label" x="76.8" y="8">query</text>
+      <text class="lini-link-label" x="56.1" y="8">query</text>
     </g>
   </g>
 </svg>

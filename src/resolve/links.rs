@@ -233,7 +233,7 @@ fn parse_routing(attrs: &AttrMap, span: crate::span::Span) -> Result<Strategy, E
         Some(ResolvedValue::Ident(r)) if r == "straight" => Ok(Strategy::Straight),
         Some(_) => Err(Error::at(
             span,
-            "routing: 'orthogonal' and 'straight' are built; 'curved' is deferred (SPEC §19)",
+            "routing: 'orthogonal' and 'straight' are built; 'curved' is deferred (SPEC §20)",
         )),
     }
 }

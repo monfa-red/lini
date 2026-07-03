@@ -3,12 +3,14 @@
 //! Each step decides once; none revisits an earlier step's answer.
 
 pub(crate) mod cost;
+pub(crate) mod entry;
 pub(crate) mod geometry;
 pub(crate) mod graph;
 pub(crate) mod labels;
 pub(crate) mod ladder;
 pub(crate) mod ledger;
 pub(crate) mod order;
+pub(crate) mod pairwise;
 pub(crate) mod place;
 pub(crate) mod rect;
 pub(crate) mod request;
@@ -20,12 +22,12 @@ use crate::layout::ir::{RoutedLink, Stray};
 use crate::resolve::Strategy;
 use crate::routing::{Routing, Rule, Severity, Violation, cross};
 
+use entry::Entry;
 use graph::{Axis, ChannelGraph};
 use ledger::Ledger;
 use rect::Rect;
 use request::{EdgeReq, End};
 use scene::SceneIndex;
-use search::Entry;
 
 /// One routing world: a container's interior (`""` = the scene root) and its
 /// channel decomposition.
@@ -257,7 +259,7 @@ pub(crate) fn route(index: &SceneIndex, reqs: &[EdgeReq]) -> (Routing, Vec<usize
                     Some(g) => usize::from(fan_pick[g].is_none()),
                     None => k,
                 };
-                let offered = search::entries(graph, rect, stub, c, forced, &blockers, inward);
+                let offered = entry::entries(graph, rect, stub, c, forced, &blockers, inward);
                 offered
                     .into_iter()
                     .filter(|e| need == 0 || ledger.side_free(path, e.side, rect) >= need)

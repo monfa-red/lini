@@ -313,7 +313,7 @@ cargo run -- samples/hello.lini
 cargo run -- serve samples/hero.lini
 ```
 
-`samples/` holds a `.lini` per feature area; `tests/conformance.rs` snapshots their SVG with `insta`, and `tests/linking.rs` asserts the router's laws on every scene.
+`samples/` holds a `.lini` per feature area; `tests/conformance.rs` snapshots their SVG with `insta`, and `tests/laws.rs` asserts the router's laws on every scene.
 
 ## License
 
