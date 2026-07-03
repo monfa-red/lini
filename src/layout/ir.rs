@@ -104,8 +104,13 @@ pub struct ViewBox {
     pub h: f64,
 }
 
-/// One straight divider segment `(x1, y1, x2, y2)` in node-local coords.
-pub type GridRule = (f64, f64, f64, f64);
+/// One interior gutter rect `(cx, cy, w, h)` in node-local coords, centred on its
+/// own centre — the gap region between cells, filled with the container's
+/// `gap-color` (SPEC §5). Rendered as a `<rect fill="…" stroke="none">`: a filled
+/// rect (not a stroked line) both carries a gradient `gap-color` — a `<line>`'s
+/// degenerate bbox can't — and states `stroke="none"` so the container's own
+/// `stroke` never bleeds onto it.
+pub type Gutter = (f64, f64, f64, f64);
 
 #[derive(Clone)]
 pub struct PlacedNode {
@@ -127,10 +132,10 @@ pub struct PlacedNode {
     pub bbox: Bbox,
     pub rotation: f64,
     pub children: Vec<PlacedNode>,
-    /// Interior divider segments the container draws (SPEC §5), painted by its
-    /// own `stroke*`. The outer frame is the container's border, so dividers
-    /// never double it. Empty unless `divider:` is set.
-    pub dividers: Vec<GridRule>,
+    /// Interior gutter rects the container fills with its `gap-color` (SPEC §5) —
+    /// the gap regions between children. Interior only: the outer frame is the
+    /// container's own border. Empty unless `gap-color:` is set.
+    pub gutters: Vec<Gutter>,
     /// Links this container drew itself, in its local frame — a sequence's
     /// messages, lowered through the `straight` strategy (SPEC §10). Routing
     /// lifts them into scene coordinates; the renderer's one link path draws

@@ -3,9 +3,9 @@
 
 {
   layout: grid; columns: repeat(3); gap: 30; clearance: 12;
-  .hot { link: --red; link-width: 3; }
-  .cool { link: --blue; }
-  .attention { link: --orange; }
+  .hot { link-color: --red; link-width: 3; }
+  .cool { link-color: --blue; }
+  .attention { link-color: --orange; }
 }
 
 |box#alpha| "Alpha" { cell: 1 1; }

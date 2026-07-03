@@ -126,7 +126,14 @@ pub fn desugar(file: &File) -> Result<File, Error> {
     for f in user_funcs {
         stylesheet.push(StyleItem::Func(f));
     }
-    for r in class_defs(&present, &element_rules, &extra_order) {
+    // The chart / sequence engines synthesize `|line|` / `|block|` shapes at layout
+    // (with no source node), so their primitive class rules must exist even unworn —
+    // a plain scene synthesizes nothing and skips them (SPEC §14).
+    let synthesizes_shapes = ["chart", "pie", "sequence"]
+        .iter()
+        .any(|t| present.contains(*t))
+        || root_layout(&user_root) == Some("sequence");
+    for r in class_defs(&present, &element_rules, &extra_order, synthesizes_shapes) {
         stylesheet.push(StyleItem::Rule(r));
     }
     for r in user_rules {
@@ -244,6 +251,86 @@ fn header_node(text: &TextNode, span: Option<usize>) -> Node {
     }
 }
 
+/// A `|cell|` wrapping one bare-text table/entity body cell (SPEC §8): the text
+/// node survives inside it, and the `|cell|` type carries the padding inset and the
+/// column's alignment class. Header/footer/box cells stay as they are.
+fn block_cell(text: &TextNode) -> Node {
+    Node {
+        id: None,
+        ty: Some("cell".into()),
+        label: None,
+        classes: Vec::new(),
+        style: Vec::new(),
+        style_span: None,
+        children: vec![Child::Text(text.clone())],
+        links: Vec::new(),
+        span: text.span,
+    }
+}
+
+/// Wrap each remaining bare-text body cell of a `|table|`/`|entity|` in a `|cell|`
+/// (SPEC §8), the box that carries the cell padding. Header/footer/box cells are
+/// already boxes and pass through; re-desugar is a fixed point (a wrapped cell is a
+/// box, not text, so it is never re-wrapped).
+fn wrap_body_cells(children: &mut [Child], types: &Types, bodies: &Bodies) -> Result<(), Error> {
+    for c in children.iter_mut() {
+        if let Child::Text(t) = c {
+            *c = Child::Box(lower_node(&block_cell(t), types, bodies)?);
+        }
+    }
+    Ok(())
+}
+
+/// Carry a table's per-column `align`/`justify` down to its cells (SPEC §8). Each is
+/// one keyword per column (a scalar repeats), applied to the cell in that column by
+/// auto-flow order (`i % cols`); `center`/`stretch` add nothing (the cell already
+/// centres / fills). A `start`/`end` column wears a `.lini-align-*` / `.lini-justify-*`
+/// class (defined in `classes`), so a whole column shares one class — not an inlined
+/// copy per cell — and the grid honours it once it has stretched the cell.
+fn distribute_cell_alignment(children: &mut [Child], table_style: &[Decl], cols: usize) {
+    let h = per_column(table_style, "align", cols);
+    let v = per_column(table_style, "justify", cols);
+    if h.is_none() && v.is_none() {
+        return;
+    }
+    for (i, child) in children.iter_mut().enumerate() {
+        let Child::Box(cell) = child else { continue };
+        let col = i % cols;
+        for (list, axis) in [(&h, "align"), (&v, "justify")] {
+            if let Some(vals) = list
+                && matches!(vals[col].as_str(), "start" | "end")
+            {
+                let class = lini_class(&format!("{axis}-{}", vals[col]));
+                if !cell.classes.contains(&class) {
+                    cell.classes.push(class);
+                }
+            }
+        }
+    }
+}
+
+/// A table property's value as one keyword per column: a scalar repeats to every
+/// column, a list maps by position (a short list repeats its first). `None` when
+/// the property is absent or carries no keyword.
+fn per_column(style: &[Decl], name: &str, cols: usize) -> Option<Vec<String>> {
+    let d = style.iter().find(|d| d.name == name)?;
+    let vals: Vec<String> = d
+        .groups
+        .iter()
+        .flatten()
+        .filter_map(|v| match v {
+            Value::Ident(s) => Some(s.clone()),
+            _ => None,
+        })
+        .collect();
+    let first = vals.first()?.clone();
+    Some(
+        (0..cols)
+            .map(|c| vals.get(c).cloned().unwrap_or_else(|| first.clone()))
+            .collect(),
+    )
+}
+
 /// Auto-header a `|table|`'s first row (SPEC §8): wrap the first `cols` children as
 /// `|header|` cells when they are all bare text. A first row holding a box or an
 /// explicit `cell:` is left alone — that is a custom layout, not a header.
@@ -319,6 +406,23 @@ fn lower_node(node: &Node, types: &Types, bodies: &Bodies) -> Result<Node, Error
     if is_table && let Some(cols) = cols {
         wrap_header_row(&mut children, cols, types, bodies)?;
     }
+    // Wrap every remaining bare-text body cell in a `|cell|` (the box that carries
+    // the cell padding, SPEC §8). The entity title (a spanning header) is inserted
+    // after this, already a box.
+    if is_table || is_entity {
+        wrap_body_cells(&mut children, types, bodies)?;
+    }
+    // Distribute the table's per-column `align`/`justify` onto its cells (SPEC §8):
+    // every cell fills its track (the |table| bundle forces `stretch`), so the
+    // user's align/justify instead place each cell's text — carried to the cell in
+    // its own column. The table's own align/justify are dropped below so `stretch`
+    // stands. Only auto-flow cells are covered (the assumption the header sugar
+    // already makes); `cell:`/`span:` cells keep the column default.
+    if (is_table || is_entity)
+        && let Some(cols) = cols
+    {
+        distribute_cell_alignment(&mut children, &node.style, cols);
+    }
 
     // The smart label, lowered per type (SPEC §3/§7) — the single shared lowering
     // for a node's text (a link's labels go through the same `TextNode`). A box-like
@@ -331,7 +435,17 @@ fn lower_node(node: &Node, types: &Types, bodies: &Bodies) -> Result<Node, Error
     );
     let is_icon = kind == NodeKind::Icon;
     let is_container = info.chain.iter().any(|n| n == "group");
-    let mut style = node.style.clone();
+    // A table/entity's own `align`/`justify` are consumed above (distributed to its
+    // cells), so drop them here — the bundle's `stretch` fills the cells.
+    let mut style: Vec<Decl> = if is_table || is_entity {
+        node.style
+            .iter()
+            .filter(|d| d.name != "align" && d.name != "justify")
+            .cloned()
+            .collect()
+    } else {
+        node.style.clone()
+    };
     let mut kept_label = None;
     if let Some(label) = node.label.as_ref().filter(|l| !l.text.is_empty()) {
         if is_icon {
@@ -522,24 +636,30 @@ mod tests {
     fn is_header(c: &Child) -> bool {
         matches!(c, Child::Box(n) if n.classes.iter().any(|x| x == "lini-header"))
     }
+    /// A body cell is now a frameless `|block|` wrapping its bare text (SPEC §8).
+    fn is_block_cell(c: &Child) -> bool {
+        matches!(c, Child::Box(n)
+            if n.classes.iter().any(|x| x == "lini-block")
+            && matches!(n.children.as_slice(), [Child::Text(_)]))
+    }
 
     #[test]
     fn table_first_row_becomes_header_cells() {
         let f = lower("|table#t| { columns: 30 30 } [\n\"a\"\n\"b\"\n\"c\"\n\"d\"\n]\n");
         let t = root_box(&f, "t");
-        // Row 0 (the first `cols` cells) are header boxes; the body stays bare text.
+        // Row 0 (the first `cols` cells) are header boxes; body cells are `|block|`s.
         assert!(
             is_header(&t.children[0]) && is_header(&t.children[1]),
             "first row is header"
         );
         assert!(
-            matches!(t.children[2], Child::Text(_)) && matches!(t.children[3], Child::Text(_)),
-            "body stays bare text"
+            is_block_cell(&t.children[2]) && is_block_cell(&t.children[3]),
+            "body cells wrap in |block|"
         );
     }
 
     #[test]
-    fn entity_label_is_a_spanning_header_fields_stay_text() {
+    fn entity_label_is_a_spanning_header_fields_wrap_in_blocks() {
         let f = lower("|entity#e| \"Users\" [\n\"id\"\n\"int\"\n]\n");
         let e = root_box(&f, "e");
         let Child::Box(title) = &e.children[0] else {
@@ -550,17 +670,74 @@ mod tests {
             title.style.iter().any(|d| d.name == "span"),
             "the title spans its columns"
         );
-        // Field rows are not auto-headered — only the label is the title.
-        assert!(matches!(e.children[1], Child::Text(_)) && matches!(e.children[2], Child::Text(_)));
+        // Field rows are not auto-headered — only the label is the title — but each
+        // field cell now wraps in a `|block|`.
+        assert!(is_block_cell(&e.children[1]) && is_block_cell(&e.children[2]));
     }
 
     #[test]
-    fn bare_grid_does_not_auto_header() {
+    fn table_distributes_per_column_align_to_cells() {
+        // The table's own `align` is consumed (dropped, so the bundle's `stretch`
+        // fills the cells) and carried to each cell by column (SPEC §8).
+        let f = lower(
+            "|table#t| { columns: 40 40; align: start end } [\n\"a\"\n\"b\"\n\"c\"\n\"d\"\n]\n",
+        );
+        let t = root_box(&f, "t");
+        assert!(
+            t.style.iter().all(|d| d.name != "align"),
+            "the table's own align is consumed"
+        );
+        // Each start/end column's cells wear a shared alignment class (not inlined).
+        let cell_class = |i: usize| match &t.children[i] {
+            Child::Box(n) => n
+                .classes
+                .iter()
+                .find(|c| c.starts_with("lini-align-"))
+                .cloned(),
+            _ => None,
+        };
+        // Columns 0/1 → start/end, for the header row (a, b) and the body row (c, d).
+        assert_eq!(cell_class(0).as_deref(), Some("lini-align-start"));
+        assert_eq!(cell_class(1).as_deref(), Some("lini-align-end"));
+        assert_eq!(cell_class(2).as_deref(), Some("lini-align-start"));
+        assert_eq!(cell_class(3).as_deref(), Some("lini-align-end"));
+    }
+
+    #[test]
+    fn table_cells_get_lini_cell_but_the_caption_does_not() {
+        // Cells are `|cell|`s (which carry the padding); a table's caption is a plain
+        // `|block|`, not a `|cell|` (SPEC §8), so it must not wear `.lini-cell` — else
+        // its title text would be inset like a cell.
+        let f = lower("|table#t| \"Cap\" { columns: 30 30 } [\n\"a\"\n\"b\"\n\"c\"\n\"d\"\n]\n");
+        let t = root_box(&f, "t");
+        let Child::Box(cap) = &t.children[0] else {
+            panic!("the caption is a box");
+        };
+        assert!(cap.classes.iter().any(|c| c == "lini-caption"));
+        assert!(
+            !cap.classes.iter().any(|c| c == "lini-cell"),
+            "the caption is not a cell"
+        );
+        // Every actual cell carries `.lini-cell`.
+        assert!(
+            t.children[1..].iter().all(|c| matches!(
+                c, Child::Box(n) if n.classes.iter().any(|x| x == "lini-cell"))),
+            "every cell carries lini-cell"
+        );
+    }
+
+    #[test]
+    fn bare_grid_does_not_auto_header_or_wrap() {
         let f = lower("|grid#g| { columns: 30 30 } [\n\"a\"\n\"b\"\n]\n");
         let g = root_box(&f, "g");
         assert!(
             g.children.iter().all(|c| !is_header(c)),
             "a bare grid is not a table — no auto-header"
+        );
+        // A bare grid is not a table, so its bare-text cells stay bare text.
+        assert!(
+            g.children.iter().all(|c| matches!(c, Child::Text(_))),
+            "bare grid cells stay bare text"
         );
     }
 }

@@ -58,20 +58,32 @@ pub fn render_geometry(
         writeln!(out, "{}</g>", "  ".repeat(depth)).unwrap();
     }
 
-    // Interior dividers as one path, painted by the container's stroke through
-    // inheritance — drawn over the shape so border and inner lines share one
-    // colour, never doubled (the container owns its rules; cells stay
-    // borderless).
-    if !n.dividers.is_empty() {
+    // Interior gutters, each a `<rect>` filled with the container's resolved
+    // `gap-color` (SPEC §5) — drawn over the shape, interior only, so the outer
+    // frame stays the container's own border and no edge is doubled. The rect
+    // states its own `stroke="none"`, so the container's border never bleeds onto
+    // it, and a filled rect (unlike a `<line>`) carries a gradient `gap-color`.
+    // Layout emits gutters only when `gap-color` is set, so it is always a real paint.
+    if !n.gutters.is_empty() {
         let indent = "  ".repeat(depth);
-        let d: Vec<String> = n
-            .dividers
-            .iter()
-            .map(|(x1, y1, x2, y2)| {
-                format!("M {} {} L {} {}", num(*x1), num(*y1), num(*x2), num(*y2))
-            })
-            .collect();
-        writeln!(out, r#"{}<path d="{}" fill="none"/>"#, indent, d.join(" ")).unwrap();
+        let fill = n
+            .attrs
+            .get("gap-color")
+            .map(|v| super::values::format_value(v, vars, opts))
+            .unwrap_or_else(|| "none".to_string());
+        for (cx, cy, w, h) in &n.gutters {
+            writeln!(
+                out,
+                r#"{}<rect x="{}" y="{}" width="{}" height="{}" fill="{}" stroke="none"/>"#,
+                indent,
+                num(cx - w / 2.0),
+                num(cy - h / 2.0),
+                num(*w),
+                num(*h),
+                fill,
+            )
+            .unwrap();
+        }
     }
 }
 

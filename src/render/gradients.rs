@@ -1,5 +1,6 @@
 //! Gradient paints (SPEC §11.3): `gradient()` / `linear-gradient()` /
-//! `radial-gradient()` on `fill` and `stroke`. Twin of the drop-shadow filter
+//! `radial-gradient()` on any paint — `fill`, `stroke`, `link-color`, `gap-color`
+//! (the rewrite is property-agnostic: any gradient-valued attr). Twin of the drop-shadow filter
 //! table — every distinct gradient is interned once, emitted as a
 //! `<linearGradient>` / `<radialGradient>` in `<defs>`, and the paint use-site
 //! rewritten to a `url(#…)` reference.

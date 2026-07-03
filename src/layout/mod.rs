@@ -198,19 +198,19 @@ fn layout_inst(inst: &ResolvedInst, path: &str, program: &Program) -> Result<Pla
     }
 
     // Determine this node's bbox + arrange children inside.
-    let mut dividers: Vec<GridRule> = Vec::new();
+    let mut gutters: Vec<Gutter> = Vec::new();
     let bbox = if children.is_empty() {
         // Leaf primitive.
         primitives::leaf_bbox(inst)?
     } else {
         // Container or closed primitive with content.
-        let (content_bbox, rules) =
+        let (content_bbox, rects) =
             lay_out_container_children(&mut children, &inst.attrs, inst.span)?;
 
-        // Interior dividers (grid or 1-D) the container draws, per `divider:`.
-        // A table is just a group with `divider: all` — no special-casing; its
-        // border is the group rect, its inner lines these dividers.
-        dividers = rules;
+        // Interior gutters (grid or 1-D) the container fills with `gap-color`.
+        // A table is just a group with `gap-color: --stroke` — no special-casing;
+        // its border is the group rect, its inner rules these gutter rects.
+        gutters = rects;
 
         // An icon sizes to a square that grows with its label child (SPEC §7);
         // every other closed primitive sizes border-box — explicit width/height,
@@ -258,21 +258,22 @@ fn layout_inst(inst: &ResolvedInst, path: &str, program: &Program) -> Result<Pla
         bbox,
         rotation,
         children,
-        dividers,
+        gutters,
         links: Vec::new(),
         span: inst.span,
     })
 }
 
-/// Interior separators between adjacent flow children — perpendicular to the
-/// flow at each gap's midpoint, spanning the flow's cross extent (SPEC §5,
-/// 1-D `divider`).
-fn one_d_dividers(
+/// Interior gutter rects between adjacent flow children — at each gap's midpoint,
+/// `gap` thick along the main axis and spanning the flow's cross extent (SPEC §5,
+/// the 1-D `gap-color` case). Filled with the container's `gap-color`.
+fn one_d_gutters(
     children: &[PlacedNode],
     flow: &[usize],
     axis: Axis,
     flow_bbox: Bbox,
-) -> Vec<GridRule> {
+    gap: f64,
+) -> Vec<Gutter> {
     let row = axis == Axis::Row;
     let main = |i: usize| if row { children[i].cx } else { children[i].cy };
     let half = |i: usize| {
@@ -282,18 +283,22 @@ fn one_d_dividers(
             children[i].bbox.h() / 2.0
         }
     };
+    let (cx, cy) = (
+        (flow_bbox.min_x + flow_bbox.max_x) / 2.0,
+        (flow_bbox.min_y + flow_bbox.max_y) / 2.0,
+    );
     let mut order: Vec<usize> = flow.to_vec();
     order.sort_by(|&a, &b| main(a).total_cmp(&main(b)));
-    let mut segs = Vec::new();
+    let mut out = Vec::new();
     for pair in order.windows(2) {
         let mid = (main(pair[0]) + half(pair[0]) + main(pair[1]) - half(pair[1])) / 2.0;
         if row {
-            segs.push((mid, flow_bbox.min_y, mid, flow_bbox.max_y));
+            out.push((mid, cy, gap, flow_bbox.h()));
         } else {
-            segs.push((flow_bbox.min_x, mid, flow_bbox.max_x, mid));
+            out.push((cx, mid, flow_bbox.w(), gap));
         }
     }
-    segs
+    out
 }
 
 /// Position children within their container per its `layout=` attr.
@@ -303,7 +308,7 @@ fn lay_out_container_children(
     children: &mut [PlacedNode],
     container_attrs: &crate::resolve::AttrMap,
     span: Span,
-) -> Result<(Bbox, Vec<GridRule>), Error> {
+) -> Result<(Bbox, Vec<Gutter>), Error> {
     if children.is_empty() {
         return Ok((Bbox::empty(), Vec::new()));
     }
@@ -338,7 +343,7 @@ fn lay_out_container_children(
             .map(|h| (h - pad.top - pad.bottom).max(0.0)),
     );
 
-    let mut grid_rules: Vec<GridRule> = Vec::new();
+    let mut gutters: Vec<Gutter> = Vec::new();
     let flow_bbox = if !flow_indices.is_empty() {
         let mut flow_children: Vec<PlacedNode> =
             flow_indices.iter().map(|i| children[*i].clone()).collect();
@@ -351,16 +356,8 @@ fn lay_out_container_children(
                 avail,
             )?,
             LayoutMode::Grid => {
-                // A table (a grid with dividers) reads `padding` as the per-cell
-                // inset (SPEC §8): inflate each cell so auto tracks size to
-                // content + inset and the text centres with that breathing room.
-                if grid::is_inset_grid(container_attrs) {
-                    for c in &mut flow_children {
-                        c.bbox = c.bbox.expand(pad.top, pad.right, pad.bottom, pad.left);
-                    }
-                }
-                let (bbox, rules) = grid::lay_out_grid(&mut flow_children, container_attrs, span)?;
-                grid_rules = rules;
+                let (bbox, rects) = grid::lay_out_grid(&mut flow_children, container_attrs, span)?;
+                gutters = rects;
                 bbox
             }
         };
@@ -374,13 +371,8 @@ fn lay_out_container_children(
 
     // Asymmetric padding offsets the flow within the box (SPEC §6): the content
     // area is the box inset by `padding`, so the flow centre sits at
-    // ((left−right)/2, (top−bottom)/2) from the box centre. A table's padding is
-    // a per-cell inset, not box padding, so it adds no offset.
-    let (off_x, off_y) = if grid::is_inset_grid(container_attrs) {
-        (0.0, 0.0)
-    } else {
-        ((pad.left - pad.right) / 2.0, (pad.top - pad.bottom) / 2.0)
-    };
+    // ((left−right)/2, (top−bottom)/2) from the box centre.
+    let (off_x, off_y) = ((pad.left - pad.right) / 2.0, (pad.top - pad.bottom) / 2.0);
     if (off_x, off_y) != (0.0, 0.0) {
         for &i in &flow_indices {
             children[i].cx += off_x;
@@ -388,19 +380,28 @@ fn lay_out_container_children(
         }
     }
 
-    // 1-D dividers between flow children (a grid produced its own above), painted
-    // by the container's own stroke (SPEC §5). They track the offset flow; the
-    // body bbox below stays centred, since `closed_bbox` and pins anchor to it.
+    // 1-D gutters between flow children (a grid produced its own above), filled by
+    // the container's `gap-color` (SPEC §5) when set and the main-axis gap is
+    // positive. They track the offset flow; the body bbox below stays centred,
+    // since `closed_bbox` and pins anchor to it.
     if let Some(axis) = flow_axis
-        && grid::read_divider(container_attrs) != grid::Divider::None
+        && grid::has_gap_color(container_attrs)
         && flow_indices.len() > 1
     {
-        grid_rules = one_d_dividers(
-            children,
-            &flow_indices,
-            axis,
-            flow_bbox.shifted(off_x, off_y),
-        );
+        let (gap_y, gap_x) = primitives::gap(container_attrs, span)?;
+        let main_gap = match axis {
+            Axis::Row => gap_x,
+            Axis::Column => gap_y,
+        };
+        if main_gap > 0.0 {
+            gutters = one_d_gutters(
+                children,
+                &flow_indices,
+                axis,
+                flow_bbox.shifted(off_x, off_y),
+                main_gap,
+            );
+        }
     }
 
     // The body the parent sizes to is the flow content alone — pinned children
@@ -410,18 +411,13 @@ fn lay_out_container_children(
     // Resolution box for pins: the parent's drawn shape — its padding included —
     // the same box `closed_bbox` sizes, and like it **centred** on the origin. An
     // explicit size gives it directly; otherwise it is the flow content plus
-    // padding (a table consumes its padding as a cell inset, so its drawn box is
-    // the content alone). Centring matters under asymmetric padding: an off-centre
-    // box would drag a pinned caption/badge off the corner it anchors to.
+    // padding. Centring matters under asymmetric padding: an off-centre box would
+    // drag a pinned caption/badge off the corner it anchors to.
     let anchor_parent_bbox = container_anchor_bbox(container_attrs).unwrap_or_else(|| {
-        if grid::is_inset_grid(container_attrs) {
-            body_bbox
-        } else {
-            Bbox::centered(
-                body_bbox.w() + pad.left + pad.right,
-                body_bbox.h() + pad.top + pad.bottom,
-            )
-        }
+        Bbox::centered(
+            body_bbox.w() + pad.left + pad.right,
+            body_bbox.h() + pad.top + pad.bottom,
+        )
     });
 
     // Pin out-of-flow children flush onto their parent anchor (SPEC §6). The
@@ -446,7 +442,7 @@ fn lay_out_container_children(
         }
     }
 
-    Ok((body_bbox, grid_rules))
+    Ok((body_bbox, gutters))
 }
 
 /// Container layout engine, parsed from the `layout=` attr. Chart/pie are a
@@ -850,51 +846,88 @@ mod tests {
         assert!(layout(&program).is_err());
     }
 
-    // ── Dividers (SPEC §5) ──
+    // ── Gutters (SPEC §5) ──
 
     #[test]
-    fn table_draws_interior_dividers_no_frame() {
+    fn table_fills_interior_gutters_no_frame() {
         let l = lay_out("|table#t| { columns: 40 40 } [\n  \"a\" \"b\" \"c\" \"d\"\n]\n");
-        // 2×2 grid with the table's divider: all → interior separators.
-        assert!(
-            !l.nodes[0].dividers.is_empty(),
-            "table has interior dividers"
-        );
-        // A plain group draws none.
+        // The table's `gap-color: --stroke` fills the interior gutters.
+        assert!(!l.nodes[0].gutters.is_empty(), "table has interior gutters");
+        // A plain group has no `gap-color`, so no gutters.
         assert!(
             lay_out("|group#g| [ |box#x| ]\n").nodes[0]
-                .dividers
+                .gutters
                 .is_empty()
         );
     }
 
     #[test]
-    fn grid_dividers_stay_within_the_content_box() {
-        // Interior dividers must not overshoot the frame: every endpoint sits
-        // inside the grid's own content box (a gap-sized overshoot at the far
-        // edge once leaked past the group's border).
+    fn grid_gutters_stay_within_the_content_box() {
+        // Interior gutter rects must not overshoot the frame: every rect sits fully
+        // inside the grid's own content box.
         let l = lay_out(
             "|table#t| { columns: 40 40; gap: 20 } [\n  \"a\"\n  \"b\"\n  \"c\"\n  \"d\"\n]\n",
         );
         let t = &l.nodes[0];
         let (hw, hh) = (t.bbox.w() / 2.0 + 0.01, t.bbox.h() / 2.0 + 0.01);
-        for (x1, y1, x2, y2) in &t.dividers {
-            for (x, y) in [(x1, y1), (x2, y2)] {
-                assert!(x.abs() <= hw, "divider x {x} exceeds half-width {hw}");
-                assert!(y.abs() <= hh, "divider y {y} exceeds half-height {hh}");
-            }
+        for (cx, cy, w, h) in &t.gutters {
+            assert!(cx.abs() + w / 2.0 <= hw, "gutter x {cx}±{} > {hw}", w / 2.0);
+            assert!(cy.abs() + h / 2.0 <= hh, "gutter y {cy}±{} > {hh}", h / 2.0);
         }
     }
 
     #[test]
-    fn one_d_divider_falls_between_flow_children() {
+    fn one_d_gutter_falls_between_flow_children() {
         let l = lay_out(
-            "|row#g| { divider: all } [\n  |box#a| { width: 30; height: 30; }\n  |box#b| { width: 30; height: 30; }\n  |box#c| { width: 30; height: 30; }\n]\n",
+            "|row#g| { gap-color: --stroke } [\n  |box#a| { width: 30; height: 30; }\n  |box#b| { width: 30; height: 30; }\n  |box#c| { width: 30; height: 30; }\n]\n",
         );
         assert_eq!(
-            l.nodes[0].dividers.len(),
+            l.nodes[0].gutters.len(),
             2,
-            "two separators between three children"
+            "two gutters between three children"
+        );
+    }
+
+    #[test]
+    fn gap_color_per_axis_selects_gutters() {
+        // `gap: row col` (SPEC §5): `4 0` paints row rules (horizontal gutters), `0 4`
+        // column rules (vertical). A 2×2 grid has one interior boundary each way.
+        let rows_only = lay_out(
+            "|grid#g| { columns: 40 40; gap: 4 0; gap-color: --stroke } [\n  \"a\" \"b\"\n  \"c\" \"d\"\n]\n",
+        );
+        let (_, _, w, h) = rows_only.nodes[0].gutters[0];
+        assert_eq!(rows_only.nodes[0].gutters.len(), 1, "row gap → one gutter");
+        assert!(w > h, "horizontal gutter is wide: w={w} h={h}");
+
+        let cols_only = lay_out(
+            "|grid#g| { columns: 40 40; gap: 0 4; gap-color: --stroke } [\n  \"a\" \"b\"\n  \"c\" \"d\"\n]\n",
+        );
+        let (_, _, w2, h2) = cols_only.nodes[0].gutters[0];
+        assert_eq!(cols_only.nodes[0].gutters.len(), 1, "col gap → one gutter");
+        assert!(h2 > w2, "vertical gutter is tall: w={w2} h={h2}");
+    }
+
+    #[test]
+    fn a_filled_grid_cell_aligns_its_text_by_its_own_align() {
+        // A grid cell filled by the container's `align: stretch` then honours its
+        // own `align` (↔) to place its text (SPEC §5) — the generic rule tables use.
+        let text_cx = |a: &str| {
+            let src = format!(
+                "|grid#g| {{ columns: 200; align: stretch }} [\n  |block#c| \"x\" {{ align: {a} }}\n]\n"
+            );
+            let l = lay_out(&src);
+            let text = &l.nodes[0].children[0].children[0];
+            assert_eq!(text.kind, NodeKind::Text);
+            text.cx
+        };
+        // The cell fills the 200-wide track; `start` hugs the text left of centre,
+        // `end` right, `center` stays centred.
+        assert!(text_cx("start") < -50.0, "start: {}", text_cx("start"));
+        assert!(text_cx("end") > 50.0, "end: {}", text_cx("end"));
+        assert!(
+            text_cx("center").abs() < 5.0,
+            "center: {}",
+            text_cx("center")
         );
     }
 }

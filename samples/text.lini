@@ -3,7 +3,7 @@
 // link's [ ] labels are the same styleable leaves, nudgeable with translate/rotate.
 
 {
-  gap: 26; padding: 26; link: --gray;
+  gap: 26; padding: 26; link-color: --gray;
 }
 
 "Styleable text, in place" { font-size: 20; font-weight: bold; }

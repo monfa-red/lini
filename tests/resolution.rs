@@ -215,10 +215,10 @@ fn body_link_suggestion_stays_in_scope() {
 
 #[test]
 fn stroke_props_on_a_link_are_rejected() {
-    // A link is painted by the `link` family, never `stroke*` (SPEC §9) — it is a
-    // link, not a stroked shape. The error names the `link*` replacement.
+    // A link is painted by the `link-*` family, never `stroke*` (SPEC §9) — it is a
+    // link, not a stroked shape. The error names the `link-*` replacement.
     let cases = [
-        ("a -> b { stroke: red }\n", "link"),
+        ("a -> b { stroke: red }\n", "link-color"),
         ("a -> b { stroke-width: 3 }\n", "link-width"),
         ("a -> b { stroke-style: dashed }\n", "link-style"),
     ];
@@ -238,7 +238,7 @@ fn stroke_props_on_a_link_are_rejected() {
     assert!(msg.contains("paints a shape's outline"), "{msg}");
     // The link family is valid on a link; a stroke class on a box still is too.
     lini::check(
-        "{ .x { stroke: red } }\n|box#a| .x\n|box#b|\na -> b { link: red; link-width: 3 }\n",
+        "{ .x { stroke: red } }\n|box#a| .x\n|box#b|\na -> b { link-color: red; link-width: 3 }\n",
     )
     .expect("link family on a link, stroke class on a box");
 }

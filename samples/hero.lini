@@ -1,7 +1,7 @@
 // The Lini hero — a colourful service map. Palette colours, a gradient entry
 // point, mixed link styles. Source for assets/hero.png.
 {
-  gap: 40; padding: 25; link: --gray-deep; link-width: 2; clearance: 16;
+  gap: 40; padding: 25; link-color: --gray-deep; link-width: 2; clearance: 16;
 
   |edge::box| { fill: --sky-wash; stroke: --sky-ink; color: --sky-ink; }
   |svc::box| { fill: --teal-wash; stroke: --teal-ink; color: --teal-ink; }
@@ -13,10 +13,10 @@
   }
   |store::cyl| { fill: --rose-wash; stroke: --rose-ink; color: --rose-ink; }
 
-  .flow { link: --blue-deep; }
-  .cache { link: --teal-deep; }
-  .async { link: --amber-deep; }
-  .auth { link: --purple-deep; }
+  .flow { link-color: --blue-deep; }
+  .cache { link-color: --teal-deep; }
+  .async { link-color: --amber-deep; }
+  .auth { link-color: --purple-deep; }
 }
 
 |oval#users| "Users" {

@@ -9,7 +9,7 @@ use super::bundles::{primitive_bundle, template_bundle};
 use super::types::{TEMPLATES, TypeInfo};
 use crate::resolve::NodeKind;
 use crate::span::Span;
-use crate::syntax::ast::{Decl, Rule, SelUnit, Selector};
+use crate::syntax::ast::{Decl, Rule, SelUnit, Selector, Value};
 use std::collections::{BTreeSet, HashMap, HashSet};
 
 /// The `.lini-<name>` class for a type/primitive name.
@@ -42,6 +42,7 @@ pub fn class_defs(
     present: &BTreeSet<String>,
     element_rules: &HashMap<String, Vec<Decl>>,
     extra_order: &[String],
+    synthesizes_shapes: bool,
 ) -> Vec<Rule> {
     let mut rules = Vec::new();
     let mut emit = |name: &str, bundle: Vec<Decl>, force: bool| {
@@ -58,11 +59,12 @@ pub fn class_defs(
         rules.push(class_rule(name, decls));
     };
     for kind in NodeKind::ALL {
-        // `line` / `block` are lowered by the layout engines (chart gridlines, sequence
-        // lifelines / frames / bars) with no source `|line|` / `|block|`, so always carry
-        // their primitive defaults — otherwise a lowered shape would inline `fill` /
-        // `stroke-width` a class rule should state, leaving only its per-instance diff inline.
-        let synthesized = matches!(kind, NodeKind::Line | NodeKind::Block);
+        // `line` / `block` are lowered by the chart / sequence engines (gridlines,
+        // lifelines, frames, bars) with no source `|line|` / `|block|`, so when the
+        // scene runs one of those engines they always carry their primitive defaults —
+        // otherwise a lowered shape would inline `fill` / `stroke-width` a class rule
+        // should state. A plain scene synthesizes nothing, so it emits neither dead rule.
+        let synthesized = synthesizes_shapes && matches!(kind, NodeKind::Line | NodeKind::Block);
         emit(kind.as_str(), primitive_bundle(kind), synthesized);
     }
     for (name, _) in TEMPLATES {
@@ -74,7 +76,37 @@ pub fn class_defs(
             emit(name, Vec::new(), false);
         }
     }
+    // The per-column cell-alignment classes a table distributes (SPEC §8): each sets
+    // one `align`/`justify` keyword, worn by the cells of a start/end-aligned column.
+    // Emitted only when actually worn, like any type class.
+    for (name, prop, value) in ALIGN_CLASSES {
+        if present.contains(name) {
+            rules.push(align_class_rule(name, prop, value));
+        }
+    }
     rules
+}
+
+/// The cell-alignment classes and the single declaration each carries.
+pub(super) const ALIGN_CLASSES: [(&str, &str, &str); 4] = [
+    ("align-start", "align", "start"),
+    ("align-end", "align", "end"),
+    ("justify-start", "justify", "start"),
+    ("justify-end", "justify", "end"),
+];
+
+fn align_class_rule(name: &str, prop: &str, value: &str) -> Rule {
+    Rule {
+        selector: Selector {
+            units: vec![SelUnit::Class(lini_class(name))],
+        },
+        decls: vec![Decl {
+            name: prop.to_string(),
+            groups: vec![vec![Value::Ident(value.to_string())]],
+            span: Span::empty(),
+        }],
+        span: Span::empty(),
+    }
 }
 
 /// Merge `extra` decls into `base`: an extra whose property name already exists
@@ -144,7 +176,7 @@ mod tests {
         present.insert("box".to_string());
         let mut el: HashMap<String, Vec<Decl>> = HashMap::new();
         el.insert("box".to_string(), vec![decl("radius", 4.0)]);
-        let defs = class_defs(&present, &el, &[]);
+        let defs = class_defs(&present, &el, &[], false);
         let boxdef = defs
             .iter()
             .find(|r| sel_class(&r.selector) == "lini-box")
@@ -163,7 +195,7 @@ mod tests {
     fn empty_bundle_type_emits_no_rule() {
         let mut present = BTreeSet::new();
         present.insert("image".to_string());
-        let defs = class_defs(&present, &HashMap::new(), &[]);
+        let defs = class_defs(&present, &HashMap::new(), &[], false);
         assert!(defs.iter().all(|r| sel_class(&r.selector) != "lini-image"));
     }
 }

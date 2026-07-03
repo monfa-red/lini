@@ -5,15 +5,17 @@
 //! (sized to its widest / tallest single-span child), or `repeat(N)` /
 //! `repeat(N, size)`; the track count is the list length. Children flow
 //! left-to-right, wrapping at the column count; `cell: c r` pins one (1-indexed)
-//! and `span: c r` widens it. A cell fills its track only when it carries
-//! `align`/`justify: stretch` (the table's shipped `|table box| { … }` rule) and
-//! has no explicit size on that axis; otherwise it sits at natural size, centred.
+//! and `span: c r` widens it. `align` (↔) / `justify` (↕) accept a per-column list
+//! (parallel to `columns`) or a scalar and place each cell's box in its track
+//! (`stretch` fills, else pack start/center/end, default centre); a **filled**
+//! cell then honours its *own* `align`/`justify` to place its text (SPEC §5).
+//! `gap-color` fills the interior gutters between cells.
 
-use super::ir::{Bbox, GridRule, PlacedNode};
+use super::ir::{Bbox, Gutter, PlacedNode};
 use super::primitives;
 use super::values::as_pair;
 use crate::error::Error;
-use crate::resolve::{AttrMap, ResolvedValue};
+use crate::resolve::{AttrMap, NodeKind, ResolvedValue};
 use crate::span::Span;
 
 #[derive(Clone, Copy)]
@@ -22,14 +24,14 @@ enum Track {
     Auto,
 }
 
-/// Lay out a grid; returns the content bbox plus the rule segments a table
-/// draws (frame + interior separators, span-aware). Non-table callers ignore
-/// the rules.
+/// Lay out a grid; returns the content bbox plus the interior gutter rects the
+/// container fills with its `gap-color` (span-aware, per-axis). Empty when
+/// `gap-color` is unset.
 pub fn lay_out_grid(
     children: &mut [PlacedNode],
     attrs: &AttrMap,
     span: Span,
-) -> Result<(Bbox, Vec<GridRule>), Error> {
+) -> Result<(Bbox, Vec<Gutter>), Error> {
     let (gap_y, gap_x) = primitives::gap(attrs, span)?;
 
     let col_tracks = match attrs.get("columns") {
@@ -90,35 +92,63 @@ pub fn lay_out_grid(
     for p in &placements {
         let (x0, x1) = (col_off[p.col], col_off[p.col + p.colspan] - gap_x);
         let (y0, y1) = (row_off[p.row], row_off[p.row + p.rowspan] - gap_y);
-        let child = &mut children[p.child_index];
 
-        // Cell-fill (SPEC §5/§8): the cell's own `align`/`justify: stretch` fills
-        // its track, unless an explicit size pins that axis.
-        let fill_w = stretch(&child.attrs, "justify") && child.attrs.get("width").is_none();
-        let fill_h = stretch(&child.attrs, "align") && child.attrs.get("height").is_none();
+        // The container's per-column box alignment (SPEC §5): a scalar applies to
+        // every column, a tuple is one value per column (parallel to `columns`). On
+        // a grid `align` is the horizontal (↔) axis and `justify` the vertical (↕) —
+        // matching column-flow, not CSS grid. `stretch` fills the track,
+        // `start`/`center`/`end` pack the box, and the default centres.
+        let col_h = track_align(attrs, "align", p.col);
+        let col_v = track_align(attrs, "justify", p.col);
+
+        let child = &mut children[p.child_index];
+        let is_box = child.kind != NodeKind::Text;
+
+        // A box cell fills its track when the column — or the cell itself — is
+        // `stretch` on that axis and no explicit size pins it. Text can't stretch.
+        let fill_w = is_box
+            && (col_h == Some("stretch") || stretch(&child.attrs, "align"))
+            && child.attrs.get("width").is_none();
+        let fill_h = is_box
+            && (col_v == Some("stretch") || stretch(&child.attrs, "justify"))
+            && child.attrs.get("height").is_none();
         if fill_w || fill_h {
             let w = if fill_w { x1 - x0 } else { child.bbox.w() };
             let h = if fill_h { y1 - y0 } else { child.bbox.h() };
             child.bbox = Bbox::centered(w, h);
         }
 
-        let cell_cx = (x0 + x1) / 2.0 - total_w / 2.0;
-        let cell_cy = (y0 + y1) / 2.0 - total_h / 2.0;
+        // Pack the box in its track per the column alignment (a filled box centres —
+        // its size equals the track).
+        let (cw, ch) = (child.bbox.w(), child.bbox.h());
+        let cell_cx = pack(col_h, x0, x1, cw) - total_w / 2.0;
+        let cell_cy = pack(col_v, y0, y1, ch) - total_h / 2.0;
         let off_x = (child.bbox.min_x + child.bbox.max_x) / 2.0;
         let off_y = (child.bbox.min_y + child.bbox.max_y) / 2.0;
         child.cx = cell_cx - off_x;
         child.cy = cell_cy - off_y;
+
+        // A filled box was sized *after* it laid out its text, so the text sits
+        // centred; complete the cell's own `align` (↔) / `justify` (↕) now that its
+        // final size is known (SPEC §5). Generic — a plain grid never triggers it
+        // (only a stretched cell has the slack), and the core needs no "table" notion.
+        if fill_w || fill_h {
+            align_cell_content(child, span)?;
+        }
     }
 
-    let dividers = divider_segments(
-        read_divider(attrs),
-        &col_off,
-        &row_off,
-        (total_w, total_h),
-        (gap_x, gap_y),
-        &grid.owner,
-    );
-    Ok((Bbox::centered(total_w, total_h), dividers))
+    let gutters = if has_gap_color(attrs) {
+        interior_gutters(
+            &col_off,
+            &row_off,
+            (total_w, total_h),
+            (gap_x, gap_y),
+            &grid.owner,
+        )
+    } else {
+        Vec::new()
+    };
+    Ok((Bbox::centered(total_w, total_h), gutters))
 }
 
 // ───────────────────────── Track lists ─────────────────────────
@@ -210,6 +240,87 @@ fn cumulative(sizes: &[f64], gap: f64) -> Vec<f64> {
 
 fn stretch(attrs: &AttrMap, name: &str) -> bool {
     matches!(attrs.get(name), Some(ResolvedValue::Ident(s)) if s == "stretch")
+}
+
+/// A per-column alignment keyword for column `c` (SPEC §5): a scalar `Ident`
+/// applies to every column; a `Tuple` is one value per column, parallel to
+/// `columns` (like [`parse_tracks`]). `None` when unset or out of range.
+fn track_align<'a>(attrs: &'a AttrMap, name: &str, c: usize) -> Option<&'a str> {
+    match attrs.get(name)? {
+        ResolvedValue::Ident(s) => Some(s.as_str()),
+        ResolvedValue::Tuple(items) => match items.get(c)? {
+            ResolvedValue::Ident(s) => Some(s.as_str()),
+            _ => None,
+        },
+        _ => None,
+    }
+}
+
+/// The centre of a `size`-wide box packed in the track `[lo, hi]` per an alignment
+/// keyword: `start`/`end` push it to an edge, everything else (incl. `stretch`,
+/// already filled to the track) centres.
+fn pack(align: Option<&str>, lo: f64, hi: f64, size: f64) -> f64 {
+    match align {
+        Some("start") => lo + size / 2.0,
+        Some("end") => hi - size / 2.0,
+        _ => (lo + hi) / 2.0,
+    }
+}
+
+/// Complete a filled cell's own content alignment (SPEC §5). The grid sizes a cell
+/// *after* the cell has laid out its text, so the text sits centred at the cell's
+/// natural size; now that the final size is known, slide its single text leaf to
+/// the cell's `align` (↔) / `justify` (↕) edge within the padded content box. Only
+/// a box wrapping one text node — a `|block|` body cell or a `|header|` — has a leaf
+/// to move; anything else, or a centred cell, is left as-is. The leaf keeps its
+/// centred bbox, so `text-anchor: middle` still renders it flush.
+fn align_cell_content(cell: &mut PlacedNode, span: Span) -> Result<(), Error> {
+    let (h, v) = (
+        ident(cell.attrs.get("align")),
+        ident(cell.attrs.get("justify")),
+    );
+    if edge(h).is_none() && edge(v).is_none() {
+        return Ok(());
+    }
+    let pad = primitives::padding(&cell.attrs, span)?;
+    let (bw, bh) = (cell.bbox.w(), cell.bbox.h());
+    let [leaf] = cell.children.as_mut_slice() else {
+        return Ok(());
+    };
+    if leaf.kind != NodeKind::Text {
+        return Ok(());
+    }
+    // The leaf's centre when flush to the near / far content edge on each axis.
+    let (lw, lh) = (leaf.bbox.w() / 2.0, leaf.bbox.h() / 2.0);
+    if let Some(dir) = edge(h) {
+        leaf.cx = flush(dir, -bw / 2.0 + pad.left + lw, bw / 2.0 - pad.right - lw);
+    }
+    if let Some(dir) = edge(v) {
+        leaf.cy = flush(dir, -bh / 2.0 + pad.top + lh, bh / 2.0 - pad.bottom - lh);
+    }
+    Ok(())
+}
+
+/// `Some(false)` for `start`, `Some(true)` for `end`, `None` for anything else
+/// (`center` / unset / `stretch` — the leaf keeps its centred position).
+fn edge(align: Option<&str>) -> Option<bool> {
+    match align {
+        Some("start") => Some(false),
+        Some("end") => Some(true),
+        _ => None,
+    }
+}
+
+/// The near edge (`false`) or far edge (`true`).
+fn flush(far: bool, near_center: f64, far_center: f64) -> f64 {
+    if far { far_center } else { near_center }
+}
+
+fn ident(v: Option<&ResolvedValue>) -> Option<&str> {
+    match v {
+        Some(ResolvedValue::Ident(s)) => Some(s.as_str()),
+        _ => None,
+    }
 }
 
 // ───────────────────────── Placement / occupancy ─────────────────────────
@@ -332,59 +443,43 @@ fn positive_int(name: &str, n: f64, span: Span) -> Result<usize, Error> {
     Ok(n as usize)
 }
 
-// ───────────────────────── Dividers ─────────────────────────
+// ───────────────────────── Gutters ─────────────────────────
 
-/// Which interior separators a container draws (SPEC §5). The outer frame is the
-/// container's own border, so dividers are **interior only** — never doubled.
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub enum Divider {
-    None,
-    All,
-    Rows,
-    Columns,
-}
-
-pub fn read_divider(attrs: &AttrMap) -> Divider {
-    match attrs.get("divider") {
-        Some(ResolvedValue::Ident(s)) => match s.as_str() {
-            "all" => Divider::All,
-            "rows" => Divider::Rows,
-            "columns" => Divider::Columns,
-            _ => Divider::None,
-        },
-        _ => Divider::None,
+/// Whether a container paints its gutters — `gap-color` set to a real colour
+/// (not `none`, the default). Layout emits the gutter rects when this holds;
+/// render resolves the colour itself.
+pub(super) fn has_gap_color(attrs: &AttrMap) -> bool {
+    match attrs.get("gap-color") {
+        None => false,
+        Some(ResolvedValue::Ident(s)) => s != "none",
+        Some(_) => true,
     }
 }
 
-/// A grid that insets its cells — a `|table|` (SPEC §8): its `padding` is the
-/// per-cell text-to-divider inset, not outer box padding. A grid drawing
-/// dividers is exactly that, so the divider is the signal.
-pub(super) fn is_inset_grid(attrs: &AttrMap) -> bool {
-    matches!(attrs.get("layout"), Some(ResolvedValue::Ident(s)) if s == "grid")
-        && read_divider(attrs) != Divider::None
-}
-
-/// The interior separators of a grid, each run merged across the tracks where it
-/// is a real boundary — so a spanning cell has no line crossing its interior.
-/// Node-local coords (the grid is centred on the origin). No frame: the
-/// container's own border supplies the outer edge, so the outer boundaries clamp
-/// exactly to the content box and interior lines sit centred in the gap.
+/// The interior gutters of a grid — the gap regions between cells, each run
+/// merged across the tracks where its boundary is real (owner-diff), so a
+/// spanning cell has no gutter crossing its interior. A vertical gutter (a column
+/// boundary) is `gap_x` wide, painted only when the column gap is positive; a
+/// horizontal one (a row boundary) is `gap_y` tall, painted only when the row gap
+/// is positive (SPEC §5: `gap: 1 0` → row rules, `gap: 0 1` → column rules).
+/// Node-local, centred coords; each gutter is `(cx, cy, w, h)`. Interior only —
+/// the container's own border supplies the outer edge.
 // The boundary scans run one index past the data to close a run at the final
 // edge, so they can't iterate `owner` directly.
 #[allow(clippy::needless_range_loop)]
-fn divider_segments(
-    divider: Divider,
+fn interior_gutters(
     col_offsets: &[f64],
     row_offsets: &[f64],
     (total_w, total_h): (f64, f64),
     (gap_x, gap_y): (f64, f64),
     owner: &[Vec<Option<usize>>],
-) -> Vec<GridRule> {
+) -> Vec<Gutter> {
     // The cumulative offsets carry one entry past each axis's track count.
     let cols = col_offsets.len() - 1;
     let rows = row_offsets.len() - 1;
     // A boundary's coordinate: the outer edges clamp to the content box; an
-    // interior boundary sits in the middle of the gap between its tracks.
+    // interior boundary sits in the middle of the gap between its tracks (so a
+    // gutter of that gap's width fills exactly the gap region).
     let x = |i: usize| match i {
         0 => -total_w / 2.0,
         i if i == cols => total_w / 2.0,
@@ -395,8 +490,10 @@ fn divider_segments(
         j if j == rows => total_h / 2.0,
         j => row_offsets[j] - gap_y / 2.0 - total_h / 2.0,
     };
-    let mut segs: Vec<GridRule> = Vec::new();
-    if matches!(divider, Divider::All | Divider::Columns) {
+    let mut out: Vec<Gutter> = Vec::new();
+    // Vertical gutters (column boundaries), only when the column gap paints: a
+    // `gap_x`-wide rect at the boundary, spanning its run of rows.
+    if gap_x > 0.0 {
         for c in 1..cols {
             let mut start: Option<usize> = None;
             for r in 0..=rows {
@@ -404,12 +501,15 @@ fn divider_segments(
                 if real && start.is_none() {
                     start = Some(r);
                 } else if !real && let Some(s) = start.take() {
-                    segs.push((x(c), y(s), x(c), y(r)));
+                    let (y0, y1) = (y(s), y(r));
+                    out.push((x(c), (y0 + y1) / 2.0, gap_x, y1 - y0));
                 }
             }
         }
     }
-    if matches!(divider, Divider::All | Divider::Rows) {
+    // Horizontal gutters (row boundaries), only when the row gap paints: a
+    // `gap_y`-tall rect at the boundary, spanning its run of columns.
+    if gap_y > 0.0 {
         for r in 1..rows {
             let mut start: Option<usize> = None;
             for c in 0..=cols {
@@ -417,10 +517,11 @@ fn divider_segments(
                 if real && start.is_none() {
                     start = Some(c);
                 } else if !real && let Some(s) = start.take() {
-                    segs.push((x(s), y(r), x(c), y(r)));
+                    let (x0, x1) = (x(s), x(c));
+                    out.push(((x0 + x1) / 2.0, y(r), x1 - x0, gap_y));
                 }
             }
         }
     }
-    segs
+    out
 }

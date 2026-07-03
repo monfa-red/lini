@@ -53,7 +53,7 @@ pub fn resolve_link(
             resolve_property(&d.name, &d.groups, d.span, ctx.vars, ctx.funcs)?,
         ));
     }
-    // A link's paint family is `link` / `link-width` / `link-style` (SPEC §9);
+    // A link's paint family is `link-color` / `link-width` / `link-style` (SPEC §9);
     // map them onto the path's `stroke*` so the cascade and renderer are uniform.
     let ordered = map_link_props(ordered);
 
@@ -161,10 +161,10 @@ fn inject_line_style(attrs: &mut AttrMap, line: LineStyle) {
 /// `link*` family instead, so the two never both apply to a line.
 const STROKE_PROPS: [&str; 3] = ["stroke", "stroke-width", "stroke-style"];
 
-/// The `link*` property that replaces a `stroke*` one on a link.
+/// The `link-*` property that replaces a `stroke*` one on a link.
 fn link_equiv(name: &str) -> &str {
     match name {
-        "stroke" => "link",
+        "stroke" => "link-color",
         "stroke-width" => "link-width",
         "stroke-style" => "link-style",
         other => other,
@@ -173,7 +173,7 @@ fn link_equiv(name: &str) -> &str {
 
 fn stroke_on_link(name: &str) -> String {
     format!(
-        "'{}' paints a shape's outline, not a link — a link uses the 'link' family, so write '{}' (SPEC §9)",
+        "'{}' paints a shape's outline, not a link — a link uses the 'link-*' family, so write '{}' (SPEC §9)",
         name,
         link_equiv(name)
     )
@@ -201,7 +201,7 @@ fn reject_stroke_props(
     Ok(())
 }
 
-/// Map a link's surface paint family — `link` / `link-width` / `link-style` /
+/// Map a link's surface paint family — `link-color` / `link-width` / `link-style` /
 /// `link-font-size` (SPEC §9) — onto the SVG path's `stroke*` / `font-size`, so
 /// the cascade, the renderer, and the `.lini-link` rule all speak one vocabulary.
 /// Every other property (clearance, along, marker*, …) passes through unchanged.
@@ -216,7 +216,7 @@ pub(super) fn map_link_props(
 
 fn map_link_name(name: &str) -> &str {
     match name {
-        "link" => "stroke",
+        "link-color" => "stroke",
         "link-width" => "stroke-width",
         "link-style" => "stroke-style",
         "link-font-size" => "font-size",

@@ -24,10 +24,12 @@ pub const TEMPLATES: &[(&str, &str)] = &[
     ("column", "block"),
     ("grid", "block"),
     ("table", "group"),
-    // Table header / footer cells and the ER entity (SPEC §8). `header` / `footer`
-    // are `|block|` cells that fill their grid track; `entity` is a 2-column table.
-    ("header", "block"),
-    ("footer", "block"),
+    // Table cells and the ER entity (SPEC §8). `cell` is a `|block|` carrying the
+    // cell inset (`padding`); `header` / `footer` build on it (so `|table| |cell|`
+    // reaches them, not the caption); `entity` is a 2-column table.
+    ("cell", "block"),
+    ("header", "cell"),
+    ("footer", "cell"),
     ("entity", "table"),
     ("sign", "icon"),
     // Charts ([CHARTS.md]): the two container layouts and the series / structural

@@ -133,8 +133,8 @@ like wrapping a web page's text in an element.
 **The file is the root container.** The stylesheet `{ }` is the root's own setup
 block; the canvas instances are its children (written bare — the file *is* its
 `[ ]`); the links are its internal links. Scene properties (`layout`, `gap`,
-`padding`, `fill`, `font-size`, `link`, `routing`, …) sit in that block;
-inheritable ones (`font-*`, `color`, `link`, `clearance`, `routing`) cascade to
+`padding`, `fill`, `font-size`, `link-color`, `routing`, …) sit in that block;
+inheritable ones (`font-*`, `color`, `link-color`, `clearance`, `routing`) cascade to
 every node and link.
 
 **Render order is source order; the cascade is whole-file.** Instances draw in the
@@ -217,7 +217,7 @@ and 8-digit forms carry alpha), CSS names (`red`, `cornflowerblue`), `rgb(…)`,
 `oklch(L, C, H[, A])` (the palette's own space — L/A in 0–1, C the chroma, H in
 degrees; folded to a hex at compile time, so it renders in every target), a
 `--name` variable reference, or `none`. Out-of-range channels are an error. Beyond
-a flat colour, a **paint** (`fill` / `stroke` / `link`) may be a **gradient** —
+a flat colour, a **paint** (`fill` / `stroke` / `link-color` / `gap-color`) may be a **gradient** —
 `gradient(…)`, `linear-gradient(…)`, or `radial-gradient(…)`
 ([§12.3](#123-gradients)); the built-in hue palette ([§12.2](#122-the-colour-palette))
 is reached through ordinary `--name` references.
@@ -239,7 +239,7 @@ root's setup block, so it additionally holds the file-global definitions:
 | Item | Form | Means |
 |---|---|---|
 | Scene config | `layout: grid;` | a declaration on the root |
-| Link / routing defaults | `link: #666;` `routing: orthogonal;` | declarations that cascade to every link ([§9](#9-links)) |
+| Link / routing defaults | `link-color: #666;` `routing: orthogonal;` | declarations that cascade to every link ([§9](#9-links)) |
 | Variable | `--brand: #f60;` | a themeable visual variable (colour / font) |
 | Function | `scale(n) …` | a reusable compute function — a backtick body ([§12.7](#127-expressions--functions)) |
 | Rule | `\|box\| { … }` | style every box (an element selector) |
@@ -250,7 +250,7 @@ root's setup block, so it additionally holds the file-global definitions:
 
 ```
 {
-  gap: 16;  fill: --bg;  link: #666;
+  gap: 16;  fill: --bg;  link-color: #666;
   --brand: #ff6600;
   scale(n) `100 * 1.2^n`;
   |box| { radius: 6; }
@@ -496,8 +496,8 @@ A **track** is a size (`80`), `auto` (sized to its widest/tallest child), or
 list length.
 
 **Auto-flow.** Children without `cell:` flow left-to-right, wrapping at the column
-count; a `cell:` pins one explicitly and the rest flow around it. Bare-text cells (a
-table) are pure auto-flow — `cell:` / `span:` apply to **box** children only (a text
+count; a `cell:` pins one explicitly and the rest flow around it. Bare-text cells are
+pure auto-flow — `cell:` / `span:` apply to **box** children only (a text
 node has no block to carry them). A grid is positional, so an empty `""` cell is
 **kept** — it holds its track and keeps the cells after it aligned (in flow, an
 empty `""` is dropped).
@@ -506,27 +506,40 @@ empty `""` is dropped).
 `|table|`) — `span` is also a chart band's extent ([`CHARTS.md`](CHARTS.md)); using
 them elsewhere is an error.
 
-### Dividers
+**Per-column alignment.** On a grid, `align` (horizontal ↔) and `justify`
+(vertical ↕) accept a **list parallel to `columns`** (one value per track) or a
+scalar for all — so `align: start center end` aligns three columns in one
+declaration. Mind the axes: a grid follows **column-flow, not CSS grid**, so `align`
+is horizontal — the same knob that left-aligns text in a `direction: column` box.
+`stretch` fills the track; `start`/`center`/`end` pack the cell's box at natural
+size; the default centres.
 
-`divider` draws separators between flow children, painted by the container's
-`stroke` / `stroke-width` / `stroke-style`:
+A cell that **fills** its track (`stretch`) then honours its **own** `align`/
+`justify` to place its content: an auto cell has no slack and sits centred, but a
+filled one slides its text to the aligned edge. This is what lets a `|table|` align a
+whole column — every table cell fills, and the column's `align` is carried onto the
+cells to place their text ([§8](#8-templates)); the core needs no notion of "table".
 
-| Value | Effect |
+### Gap paint — `gap-color`
+
+`gap-color: <color> | none` (default `none`) fills the interior **gutters** between
+children — the gap regions — with a colour. Valid on a flow or a grid. The gutter's
+thickness is the `gap`, so `gap: 1; gap-color: --stroke` paints hairline rules while
+a larger gap paints a bold band:
+
+| `gap-color:` | Effect |
 |---|---|
-| `none` (default) | no separators |
-| `all` | every **interior** separator — in 1-D between children; in a grid between rows and columns |
-| `rows` / `columns` | grid only — separators along that axis |
+| `none` (default) | no gutters painted |
+| a colour | every **interior** gutter filled with it, thickness = `gap` |
 
-Dividers are **interior only** — the outer frame is the container's own border (its
-`stroke`), so a frameless grid (`stroke: none`) shows only inner lines and a
-bordered one is never doubled. `divider` is span-aware in grids (a separator never
-crosses a spanning cell's interior, and a shared edge is never drawn twice) and
-skips pinned children.
-
-A container with `divider` other than `none` **requires `gap: 0`** (an error
-otherwise): a separator wants the cells flush against it. This is what lets
-`|table|` be plain `grid + divider: all + gap: 0` rather than a magic type (see
-[§8](#8-templates)).
+Per-axis `gap` selects which rules appear: `gap: 1 0` (row gap only) paints the row
+rules (horizontal), `gap: 0 1` the column rules (vertical), `gap: 1` both; a `0` gap
+on an axis paints nothing there. Gutters are **interior only** — the outer frame is
+the container's own border (its `stroke`), so a frameless grid (`stroke: none`) shows
+only inner rules and a bordered one is never doubled. In a grid the gutters are
+span-aware (a gutter never crosses a spanning cell's interior, and a shared edge is
+never doubled) and skip pinned children. This is what lets `|table|` be plain
+`grid + gap: 1 + gap-color: --stroke` rather than a magic type (see [§8](#8-templates)).
 
 ### Container properties
 
@@ -534,11 +547,11 @@ otherwise): a separator wants the cells flush against it. This is what lets
 |---|---|---|
 | `layout` | all | `flow`, `grid` (chart / pie via templates). |
 | `direction` | flow | `row` / `column` — orients a flow. Default `column`. (A chart's `direction` also takes `radial`.) |
-| `gap` | all | Space between children. `N` = both axes; `row col` per axis. Must be `≥ 0`; `0` required with `divider`. |
-| `padding` | all | Inner padding. `N`, `v h`, or `t r b l`. On a `\|table\|`, the inset around each cell's text. |
-| `align` / `justify` | all | Cross / main axis (above). |
+| `gap` | all | Space between children. `N` = both axes; `row col` per axis. Must be `≥ 0`. |
+| `gap-color` | all | Fills the interior gutters with a colour, thickness = `gap` (above). Default `none`. |
+| `padding` | all | Inner padding. `N`, `v h`, or `t r b l`. |
+| `align` / `justify` | all | Cross / main axis in a flow; on a grid `align` is horizontal (↔), `justify` vertical (↕) — a per-column list or a scalar (above). |
 | `columns` / `rows` | grid | Track lists (above). |
-| `divider` | all | Separators (above). |
 | `fill` | all | Body colour; on the root it is the **canvas** colour. |
 | `routing` | all | Routing strategy for links in this scope ([§9](#9-links)). |
 
@@ -750,9 +763,10 @@ primitives ([§7](#7-nodes)) stand on their own.
 | `\|column\|` | `\|block\|` | `direction: column` | Frameless wrapper — children in a column. |
 | `\|grid\|` | `\|block\|` | `layout: grid` | Frameless grid (needs `columns`). |
 | `\|sign\|` | `\|icon\|` | `width: 64; height: 64; padding: 4; stroke-width: 1.5; fit: contain` | A larger icon as a stand-alone node, with room for a short label; `fit: contain` fills the box (unlike a bare `\|icon\|`), and its line weight drops to the node default `1.5` (a bare `\|icon\|` keeps `2`). |
-| `\|table\|` | `\|group\|` | `layout: grid; divider: all; gap: 0; padding: 4 8; fill: none; stroke: --stroke; stroke-width: 1.5; stroke-style: solid; font-size: 14; font-weight: normal` | Ruled grid (see below). |
-| `\|header\|` | `\|block\|` | `justify: stretch; align: stretch; fill: --header-fill; font-weight: bold` | A **header** cell filling its grid cell (a `\|table\|`'s first row; an `\|entity\|`'s title spans them). |
-| `\|footer\|` | `\|block\|` | `justify: stretch; align: stretch; color: --footer-color` | A **footer** cell — muted text filling its cell; opt-in on the last row. |
+| `\|table\|` | `\|group\|` | `layout: grid; align: stretch; justify: stretch; gap: 1; gap-color: --stroke; padding: 0; fill: none; stroke: --stroke; stroke-width: 1.6; stroke-style: solid; font-size: 14; font-weight: normal` | Ruled grid (see below). |
+| `\|cell\|` | `\|block\|` | `padding: 4 8` | A **table cell** — a frameless `\|block\|` carrying the text-to-gutter inset. Body cells wrap in it; `\|header\|` / `\|footer\|` build on it. Style all cells with `\|cell\| { … }` or, per table, `\|table\| \|cell\| { … }`. |
+| `\|header\|` | `\|cell\|` | `fill: --header-fill; font-weight: bold` | A **header** cell — a filled, bold band (a `\|table\|`'s first row; an `\|entity\|`'s title spans them). It fills its track from the `\|table\|` defaults, like every cell. |
+| `\|footer\|` | `\|cell\|` | `color: --footer-color` | A **footer** cell — muted text; opt-in on the last row. |
 | `\|entity\|` | `\|table\|` | `columns: auto auto` | An ER / database **entity** — a titled, two-column field list (see below). |
 
 The bare `|block|` is the base everything rectangular builds on: no fill, no stroke,
@@ -782,17 +796,31 @@ Style every caption globally with `|caption| { font-size: 16; font-weight: bold 
 that targets captions without touching body text. Because a caption is pinned (not in
 flow), a group laid out as a `row` carries its title just the same.
 
-**Tables.** A `|table|` is sugar — a `group` that is a grid, draws dividers, and has
-`gap: 0`. Cells are **bare text** that auto-flows into the tracks; there is no
-`|cell|` type and no per-cell styling beyond the text's own style block — spacing
-comes from the track sizes (`columns` / `rows`) and the table's `padding`. The outer
-frame is the group border and the inner lines are `divider: all`, both painted by the
-table's `stroke*`; no edge is ever doubled. A table's label is its caption.
+**Tables.** A `|table|` is sugar — a `group` that is a grid with `gap: 1` and
+`gap-color: --stroke`, so the 1px gaps between cells paint as hairline rules
+([§5](#gap-paint--gap-color)). Each body cell wraps in a `|cell|`, the type that
+carries the text-to-gutter inset (`padding: 4 8`); `|header|` / `|footer|` build on
+`|cell|`, so every cell — but not the caption, a plain `|block|` — is inset. Style all
+cells with `|cell| { … }`, or per table with `|table| |cell| { … }`, exactly as you
+style headers with `|table| |header| { … }`. The table sets `align: stretch;
+justify: stretch`, so **every cell fills its track** — backgrounds fill and text has
+room. The outer frame is the group border and the inner rules are the gap paint, both
+painted by the table's `stroke` / `gap-color`; no edge is ever doubled. A table's
+label is its caption.
+
+**Column alignment.** `align` (↔) / `justify` (↕) on the table read per column
+([§5](#grid--columns--rows--cell--span)) and align the *cells' text*: since the cells
+already fill (above), the table's own `align`/`justify` are carried onto each cell —
+a `start`/`end` column's cells wear a `.lini-align-*` / `.lini-justify-*` class — and a
+filled cell places its text at that edge (`center` is the default). So `align: start
+center end` reads three columns left / centre / right, header band and body alike.
 
 A table's **first row becomes its header** — each cell wrapped as a `|header|`
 ([§8](#8-templates)), a filled bold band; `|table| |header| { font-weight: normal; fill: none }`
-reverts it. A **footer** is opt-in: wrap a last-row cell in `|footer|`. Only header (and any
-footer) cells are boxes — the body stays bare text ([§14](#14-svg-output)).
+reverts it. A **footer** is opt-in: wrap a last-row cell in `|footer|`. Every cell is a
+box now — header/footer carry a fill; a body cell is a frameless `|block|` wrapping its
+text (a `<g><text>`), so the padding rule and the column's alignment reach it
+([§14](#14-svg-output)).
 
 ```
 |table#basket| {
@@ -806,8 +834,8 @@ footer) cells are boxes — the body stays bare text ([§14](#14-svg-output)).
 
 `fmt` knows the column count and pads the cells into aligned columns, so the flat form
 reads like the table it is. A cell that must be placed or linked is a **box** child
-(`|block| "X"` or `|box| { cell: 2 1; … }`); a cell that just needs a colour or
-weight can take its own style block (`"Apple" { color: --red-ink }`).
+(`|cell| "X"` for a padded cell, or `|box| { cell: 2 1; … }`); a cell that just needs a
+colour or weight can take its own style block (`"Apple" { color: --red-ink }`).
 
 **Entities.** An `|entity|` is sugar over `|table|` (two auto columns) for an ER / database
 card: its **label is its title** — a `|header|` spanning every column — over `"field" "type"`
@@ -840,7 +868,7 @@ A link connects scene-node ids with an operator (`a -> b`). Like every node it h
 placed along the route by `along:`. It is never written as a `|link|` instance; the
 operator draws it.
 
-Defaults for every link — `link` (colour), `link-width`, `link-style`, `clearance`,
+Defaults for every link — `link-color`, `link-width`, `link-style`, `clearance`,
 `marker*`, `routing` — **cascade** from the link's scope: set them on the root or any
 container's `{ }` and they reach every link in that scope, exactly as `color` reaches
 text. A link's own `{ }` overrides.
@@ -906,25 +934,25 @@ every link the statement expands to.
 
 ### Styling
 
-`link` / `link-width` / `link-style` are the **link paint family**, parallel to
+`link-color` / `link-width` / `link-style` are the **link paint family**, parallel to
 `stroke` / `stroke-width` / `stroke-style` for nodes and `color` for text:
 
 | Property | Type | Default | Notes |
 |---|---|---|---|
-| `link` | colour | `--stroke` | The line colour. |
+| `link-color` | colour | `--stroke` | The line colour. |
 | `link-width` | number | 2 | Line thickness; markers scale with it. |
 | `link-style` | `solid` / `dashed` / `dotted` / `wavy` | from the operator | The dash pattern; usually set by the op (`-->` ⇒ dashed), overridable here. |
 
 A link is a **link, not a stroked shape**: it is painted by this family alone, so
 `stroke` / `stroke-width` / `stroke-style` on a link — in its own `{ }` or a class it
-wears — is an **error** that names the `link*` replacement. A class meant for links
-uses `link*` (`.flow { link: --blue }`), one meant for nodes uses `stroke*`.
+wears — is an **error** that names the `link-*` replacement. A class meant for links
+uses `link-*` (`.flow { link-color: --blue }`), one meant for nodes uses `stroke*`.
 
 All three cascade from the link's scope and override on the link's own `{ }`:
 
 ```
-{ link: #888; link-width: 1.5; clearance: 12; routing: orthogonal }
-a -> b { link: red; link-style: dashed }     // one link overrides
+{ link-color: #888; link-width: 1.5; clearance: 12; routing: orthogonal }
+a -> b { link-color: red; link-style: dashed }     // one link overrides
 ```
 
 `clearance` (default 16) and `routing` (default `orthogonal`) cascade the same way;
@@ -945,7 +973,7 @@ content:
 
 ```
 a -> b "watches"                                // the common case — one label, auto-placed
-a -> b "watches" .loud { link: red }            // + a class and link style
+a -> b "watches" .loud { link-color: red }            // + a class and link style
 a -> b { along: 0.3 0.7 } [ "near a" "near b" ] // two labels
 a -> b [ "watches" { translate: 0 -6 } ]        // a styled / nudged label
 ```
@@ -1207,7 +1235,7 @@ its y is its row:
    **row** — a frame records the row span of its contents, a note its row.
 3. **Lower** to primitives at baked coordinates: header → `|block|` + text, lifeline → `|line|`,
    message → a `|line|` arrow + its label text, activation / frame / note → `|block|`. A
-   message's link paint maps to the line's — `link` → `stroke`, `link-width` → `stroke-width`,
+   message's link paint maps to the line's — `link-color` → `stroke`, `link-width` → `stroke-width`,
    `link-style` → `stroke-style`, the operator's end marker → `marker-end`. The orthogonal
    router never sees these links.
 
@@ -1236,8 +1264,8 @@ Every property is `name: value;`. Dash-case names; positional, space-separated v
 
 `color` cascades through the SVG via native `currentColor`: set it on a container to
 recolour every descendant's text that doesn't override. Use `color` for *labels*,
-`fill` for *bodies*. `fill`, `stroke`, and `link` all accept a **gradient** as well as
-a flat colour ([§12.3](#123-gradients)).
+`fill` for *bodies*. `fill`, `stroke`, `link-color`, and `gap-color` all accept a **gradient** as
+well as a flat colour ([§12.3](#123-gradients)).
 
 ### Stroke
 
@@ -1247,14 +1275,14 @@ a flat colour ([§12.3](#123-gradients)).
 | `stroke-width` | number | 2 (`\|group\|` is `1`) |
 | `stroke-style` | `solid` / `dashed` / `dotted` | `solid` |
 
-`stroke*` paints a **shape's** outline; a **link** uses the parallel `link*` family
+`stroke*` paints a **shape's** outline; a **link** uses the parallel `link-*` family
 below (`stroke*` on a link is an error — [§9](#9-links)).
 
 ### Links
 
 | Property | Type | Default | Notes |
 |---|---|---|---|
-| `link` | color | `--stroke` | A link's line colour ([§9](#9-links)). Cascades to links in scope. |
+| `link-color` | color | `--stroke` | A link's line colour ([§9](#9-links)). Cascades to links in scope. |
 | `link-width` | number | 2 | A link's thickness. |
 | `link-style` | `solid` / `dashed` / `dotted` / `wavy` | from the operator | A link's dash pattern. |
 | `clearance` | number | 16 | Min gap a link keeps from nodes and links. Cascades. |
@@ -1262,7 +1290,7 @@ below (`stroke*` on a link is an error — [§9](#9-links)).
 | `along` | fraction list | auto | Label positions along the route. |
 | `marker` / `marker-start` / `marker-end` | marker | from the operator | Endpoint glyphs ([§7](#7-nodes)). |
 
-`link*`, `clearance`, and `routing` are **inheritable**: set on the root or a
+`link-*`, `clearance`, and `routing` are **inheritable**: set on the root or a
 container, they reach every link in that scope; a link's own block overrides.
 
 ### Geometry & placement
@@ -1285,8 +1313,8 @@ text too. To pin or size a piece of text, wrap it in a `|block|`.
 
 ### Spacing & layout
 
-`padding`, `gap`, `layout`, `align`, `justify`, `columns`, `rows`, `cell`, `span`,
-`divider`, `routing` — see [Layout](#5-layout) and
+`padding`, `gap`, `gap-color`, `layout`, `align`, `justify`, `columns`, `rows`,
+`cell`, `span`, `routing` — see [Layout](#5-layout) and
 [Positioning](#6-positioning--anchors). Longhands
 `padding-top`/`-right`/`-bottom`/`-left` are accepted.
 
@@ -1435,7 +1463,7 @@ diagram references are emitted, so the full palette costs a three-box diagram no
 
 ### 12.3 Gradients
 
-`fill`, `stroke`, and `link` accept a **gradient** in place of a flat colour. Stops are
+`fill`, `stroke`, `link-color`, and `gap-color` accept a **gradient** in place of a flat colour. Stops are
 ordinary colours — palette `--name`s flip dark/light and bake, a raw `#hex` is a fixed
 literal.
 
@@ -1599,7 +1627,7 @@ Properties on a node merge like CSS — **the more specific source wins**, ties 
 5. **The instance's own block** — `|box#client| { fill: white }` — the most specific,
    beats everything above.
 
-For a link: cascaded `link*` / `clearance` / `routing` from its scope →
+For a link: cascaded `link-*` / `clearance` / `routing` from its scope →
 descendant/class/id rules → the link's own declarations.
 
 Complex values (`translate: x y`, `padding: t r b l`) replace wholesale — the merge is
@@ -1663,10 +1691,11 @@ inherits, down to `lini-block`); `lini-style-{name}` (per worn class). With rota
 the transform becomes `translate(X,Y) rotate(N)`.
 
 **Text** emits a bare `<text class="lini-text">…</text>` at its placed position — no
-wrapping `<g>`, so a table's body cells are N `<text>` elements, not N boxes (only the
-header — and any `|footer|` — cells, which carry a background, are boxes). Its font and
-colour come by inheritance from the enclosing `<g>`; a string's own style block emits as
-a `style="…"` (and `translate` / `rotate` as a `transform`) on the `<text>` itself.
+wrapping `<g>`. A table's cells are `|block|`s wrapping their text, so each renders as a
+`<g class="lini-block …"><text>…</text></g>`; the header and any `|footer|` cells carry
+a fill, a body cell is frameless (SPEC §8). Text's font and colour come by inheritance
+from the enclosing `<g>`; a string's own style block emits as a `style="…"` (and
+`translate` / `rotate` as a `transform`) on the `<text>` itself.
 
 **Link:**
 
@@ -1757,8 +1786,8 @@ Format: `filename:line:col: error: <message>` (LSP-compatible).
 | Declaration outside a block | `a declaration belongs in a '{ }' block` |
 | Bare node on the canvas | `a node leads with bars — write '\|box#X\|' (a bare name is a link endpoint)` |
 | Bare type in the stylesheet | `a type only appears in bars — write '\|box\| { }' to style every box` |
-| `->` in the stylesheet | `'->' draws a link on the canvas — set link defaults with 'link:' / 'link-width:' in a '{ }' block` |
-| `stroke*` on a link | `'stroke-width' paints a shape's outline, not a link — a link uses the 'link' family, so write 'link-width' (SPEC §9)` |
+| `->` in the stylesheet | `'->' draws a link on the canvas — set link defaults with 'link-color:' / 'link-width:' in a '{ }' block` |
+| `stroke*` on a link | `'stroke-width' paints a shape's outline, not a link — a link uses the 'link-*' family, so write 'link-width' (SPEC §9)` |
 | Deferred routing | `routing: 'orthogonal' and 'straight' are built; 'curved' is deferred (§20)` |
 | Glued compound in a rule | `a selector unit can't glue a type and a class — space them (descendant) or style '.hot'` |
 | Spaced class chain | `classes glue into a chain — write '.hot.loud', no space` |
@@ -1769,7 +1798,6 @@ Format: `filename:line:col: error: <message>` (LSP-compatible).
 | Label after a class | `a label comes before classes — write '\|box\| "X" .hot'` |
 | Link labels split | `keep a link's labels together — write 'a -> b [ "x" "y" ]'` (warning) |
 | Stylesheet after canvas | `the stylesheet '{ }' must come first, before any instance` |
-| Divider needs flush cells | `'divider' requires 'gap: 0'` |
 | Invalid / out-of-range color | `invalid color 'XYZ'` / `rgb(300,0,0): component out of range` |
 | Invalid `oklch()` | `oklch expects (L, C, H) or (L, C, H, A) — L and A in 0..1, C ≥ 0, H in degrees` |
 | Gradient with < 2 stops | `gradient() needs at least two colour stops` |
@@ -1892,7 +1920,7 @@ chain (derived→base→primitive, down to `block` for every rectangular type); 
 defaults and any `|type| { }` element rule fold into a generated `.lini-<type> { … }`
 class; a `|table| |box| { }` descendant rule rewrites to `.lini-table .lini-box { }`;
 define bodies inline per instance; the scene defaults (`layout`, `padding`, `gap`,
-`font-size`) and the cascaded link defaults (`link`, `link-width`, `clearance`,
+`font-size`) and the cascaded link defaults (`link-color`, `link-width`, `clearance`,
 `routing`) settle on the root; the per-type smart label (text / caption /
 symbol / link label), auto-`along:`, and link auto-create (an undeclared
 endpoint `x` → `|box#x| "x"`) become explicit. The pass
@@ -2007,7 +2035,7 @@ ids elsewhere.
 ```
 {
   layout: grid;  columns: repeat(3);  gap: 40;  padding: 20;
-  fill: --bg;  link: #666;  clearance: 12;     // link + routing defaults, cascaded
+  fill: --bg;  link-color: #666;  clearance: 12;     // link + routing defaults, cascaded
 
   |box| { radius: 4; }                         // round a touch less than the default 6
 
@@ -2015,7 +2043,7 @@ ids elsewhere.
 
   .thin { stroke: #444; }
   .bold { font-weight: bold; }
-  .loud { link: red; link-width: 2; }
+  .loud { link-color: red; link-width: 2; }
 
   |treat::box|  { radius: 5; }
   |nest::slant| { fill: gray; }

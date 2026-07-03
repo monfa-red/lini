@@ -15,7 +15,7 @@
     width: 54; height: 42; stroke: none; fill: #222428; color: #c9ced6; radius: 2; padding: 0;
   }
 
-  link: --amber; link-width: 2; clearance: 10;
+  link-color: --amber; link-width: 2; clearance: 10;
 }
 
 // the hero: a big gradient MCU spanning the centre

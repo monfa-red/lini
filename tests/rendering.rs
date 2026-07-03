@@ -111,6 +111,23 @@ fn single_line_label_stays_a_bare_text() {
 }
 
 #[test]
+fn gap_color_accepts_a_gradient() {
+    // SPEC §11.3: `gap-color` is a paint like `stroke`, so it takes a gradient — the
+    // gutter rect fills with a `url(#…)` reference and the def is emitted.
+    let svg = render_baked(
+        "|row#r| { gap: 10; gap-color: gradient(red, blue) } [\n  |box#a| \"x\" { width: 40; height: 40 }\n  |box#b| \"y\" { width: 40; height: 40 }\n]\n",
+    );
+    assert!(
+        svg.contains("<linearGradient"),
+        "gradient def emitted: {svg}"
+    );
+    assert!(
+        svg.contains(r#"fill="url(#lini-gradient-1)" stroke="none""#),
+        "the gutter rect fills with the gradient: {svg}"
+    );
+}
+
+#[test]
 fn letter_spacing_bakes_a_dx_list_never_css() {
     // SPEC §10: letter-spacing compiles into a per-glyph `dx` list (geometry),
     // never a CSS property. "abc" → two 5px gaps.
@@ -399,11 +416,11 @@ fn css_cascade_emits_rules_and_diffs() {
     // operator-dash class, and cascading text props. (The pretty user-facing
     // cascade demo lives in samples/styles.lini.)
     let src = r#"{
-  link: #666; link-width: 1;
+  link-color: #666; link-width: 1;
   |box| { fill: lightyellow; }
   .loud { stroke: red; stroke-width: 2; }
   .calm { stroke: teal; }
-  .wire { link: teal; }
+  .wire { link-color: teal; }
 }
 
 |box#flat| "Plain"
@@ -455,12 +472,12 @@ loud --> mix .wire
         "the operator dash must be stated once as a class rule: {}",
         svg
     );
-    // A link's `.wire` class paints with the `link` family; its colour states
-    // once as a `.lini-style-wire { stroke: … }` rule (mapped from `link:`), like
+    // A link's `.wire` class paints with the `link-*` family; its colour states
+    // once as a `.lini-style-wire { stroke: … }` rule (mapped from `link-color:`), like
     // a node's stroke class — never inline on the link (SPEC §9/§13).
     assert!(
         svg.contains(".lini .lini-style-wire { stroke: teal; }"),
-        "a link class's `link:` maps to a stroke rule: {}",
+        "a link class's `link-color:` maps to a stroke rule: {}",
         svg
     );
     let link_g = svg

@@ -75,13 +75,7 @@ pub fn leaf_bbox(inst: &ResolvedInst) -> Result<Bbox, Error> {
 /// grows past the declared size rather than clip or spill its content (SPEC §6).
 /// Inflated by half the stroke so the outline counts toward the bbox.
 pub fn closed_bbox(inst: &ResolvedInst, content: Bbox) -> Result<Bbox, Error> {
-    // A table consumes its `padding` as a per-cell inset inside the grid (SPEC
-    // §8), so its outer box adds none.
-    let pad = if super::grid::is_inset_grid(&inst.attrs) {
-        PaddingBox::default()
-    } else {
-        padding(&inst.attrs, inst.span)?
-    };
+    let pad = padding(&inst.attrs, inst.span)?;
     let w = floor_dim(
         inst.attrs.number("width"),
         content.w(),

@@ -303,7 +303,7 @@ fn baked_link_defaults(
 /// The `link*` / `clearance` / `routing` properties that cascade to a link from
 /// its scope's container chain (SPEC §9), nearest ancestor winning.
 const LINK_PROPS: &[&str] = &[
-    "link",
+    "link-color",
     "link-width",
     "link-style",
     "clearance",
@@ -611,9 +611,9 @@ mod tests {
 
     #[test]
     fn root_link_defaults_cascade_to_links() {
-        // SPEC §9: `link` / `link-width` on the root cascade to every link,
+        // SPEC §9: `link-color` / `link-width` on the root cascade to every link,
         // mapping onto the path's `stroke` / `stroke-width`.
-        let p = rv4("{ link: red; link-width: 3; }\na -> b\n");
+        let p = rv4("{ link-color: red; link-width: 3; }\na -> b\n");
         assert!(
             matches!(p.links[0].attrs.get("stroke"), Some(ResolvedValue::Ident(s)) if s == "red")
         );
@@ -626,7 +626,7 @@ mod tests {
         // root-scope link keeps the root value. Root links resolve before lifted
         // (body) links, so [0] is `a -> g` and [1] is the internal `x -> y`.
         let p = rv4(
-            "{ link: --gray; }\n|box#a|\n|group#g| { link: --red-ink } [\n  |box#x|\n  |box#y|\n  x -> y\n]\na -> g\n",
+            "{ link-color: --gray; }\n|box#a|\n|group#g| { link-color: --red-ink } [\n  |box#x|\n  |box#y|\n  x -> y\n]\na -> g\n",
         );
         let stroke_var = |i: usize| match p.links[i].attrs.get("stroke") {
             Some(ResolvedValue::LiveVar { name, .. }) => name.clone(),

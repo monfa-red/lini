@@ -160,7 +160,7 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
         "column" => vec![id("direction", "column")],
         "grid" => vec![id("layout", "grid")],
         // Chart containers ([CHARTS.md] §2): the layout preset is the whole bundle,
-        // exactly as `table` is `grid + divider`. The chart layout reads everything
+        // exactly as `table` is `grid + gap-color`. The chart layout reads everything
         // else (sizes, scales, paint) from the node and its children at layout time.
         // `gap` is the clear space between the plot and the title / legend that sit
         // outside it ([CHARTS.md] §9), overriding the `|block|` base `gap: 20`; the
@@ -226,36 +226,40 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             n("stroke-width", 1.6),
             id("fit", "contain"),
         ],
+        // A ruled grid (SPEC §8): hairline `gap-color` gutters fill the 1px gaps
+        // between cells, the group border frames the whole. `padding: 0` on the
+        // table itself — each cell's inset comes from the shipped `|table| |block|`
+        // rule (desugar::classes), since body cells are now `|block|`s. Cells
+        // `stretch` on both axes so every cell fills its track (backgrounds fill,
+        // text has room); the user's own `align`/`justify` are distributed to the
+        // cells to place their text (desugar::mod).
         "table" => vec![
             id("layout", "grid"),
-            id("divider", "all"),
-            n("gap", 0.0),
-            pair("padding", 4.0, 8.0),
+            id("align", "stretch"),
+            id("justify", "stretch"),
+            n("gap", 1.0),
+            var("gap-color", "stroke"),
+            n("padding", 0.0),
             id("fill", "none"),
             var("stroke", "stroke"),
-            // A touch heavier than the group base (1) so the frame and its dividers —
+            // A touch heavier than the group base (1) so the frame and its gutters —
             // and an |entity|, which builds on this — read crisply (SPEC §8).
             n("stroke-width", 1.6),
             id("stroke-style", "solid"),
             n("font-size", 14.0),
             id("font-weight", "normal"),
         ],
-        // A table header cell (SPEC §8): a box that fills its grid track (the table
-        // inflates each cell by its `padding`, so this needs none of its own) and
-        // paints its own `fill` as the band. `bold` + the fill is the whole look;
-        // the cascade overrides via `|table| |header| { … }`.
-        "header" => vec![
-            id("justify", "stretch"),
-            id("align", "stretch"),
-            var("fill", "header-fill"),
-            id("font-weight", "bold"),
-        ],
-        // A table footer cell (SPEC §8): the same full-cell box, muted text, no fill.
-        "footer" => vec![
-            id("justify", "stretch"),
-            id("align", "stretch"),
-            var("color", "footer-color"),
-        ],
+        // A table cell (SPEC §8): a frameless `|block|` carrying the text-to-gutter
+        // inset. Body cells wrap in it; `|header|` / `|footer|` build on it. Only the
+        // caption (a plain `|block|`) is left uninset. Override with `|cell| { … }`
+        // or, per table, `|table| |cell| { … }`.
+        "cell" => vec![pair("padding", 4.0, 8.0)],
+        // A table header cell (SPEC §8): a `|cell|` with the fill band and `bold`
+        // weight. It fills its track and takes its inset / text alignment from the
+        // `|cell|` + `|table|` defaults. The cascade overrides via `|table| |header| { … }`.
+        "header" => vec![var("fill", "header-fill"), id("font-weight", "bold")],
+        // A table footer cell (SPEC §8): a `|cell|`, muted text, no fill.
+        "footer" => vec![var("color", "footer-color")],
         // An ER / database entity (SPEC §8): a two-column table; its label lowers to a
         // spanning header (desugar). Everything else is the |table| base.
         "entity" => vec![decl(
@@ -401,15 +405,16 @@ mod tests {
 
     #[test]
     fn header_footer_entity_footnote_bundles() {
-        // The header cell: a stretched, filled, bold band (SPEC §8).
+        // The header cell: a filled, bold band (SPEC §8) — it fills its track and
+        // takes its alignment from the |table| cell defaults, so it carries no
+        // align/justify of its own.
         let h = template_bundle("header");
-        assert_eq!(ident(&h, "justify").as_deref(), Some("stretch"));
-        assert_eq!(ident(&h, "align").as_deref(), Some("stretch"));
+        assert!(!has(&h, "justify") && !has(&h, "align"));
         assert_eq!(var(&h, "fill").as_deref(), Some("header-fill"));
         assert_eq!(ident(&h, "font-weight").as_deref(), Some("bold"));
-        // The footer cell: stretched, muted text, no fill.
+        // The footer cell: muted text, no fill, no align of its own.
         let f = template_bundle("footer");
-        assert_eq!(ident(&f, "justify").as_deref(), Some("stretch"));
+        assert!(!has(&f, "justify") && !has(&f, "align"));
         assert_eq!(var(&f, "color").as_deref(), Some("footer-color"));
         assert!(!has(&f, "fill"));
         // The entity: two auto columns over the |table| base.

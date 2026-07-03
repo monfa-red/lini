@@ -545,7 +545,7 @@ pub fn effective_stroke(
     super::values::attr_or_var(&AttrMap::default(), "stroke", "stroke", vars, opts)
 }
 
-/// Rename a class's link paint family (`link` / `link-width` / `link-style`,
+/// Rename a class's link paint family (`link-color` / `link-width` / `link-style`,
 /// SPEC §9) to `stroke*`, so a `.lini-style-*` rule speaks one paint vocabulary
 /// whether the class dresses a node or a link (the same map [`super::super::resolve`]
 /// applies per link). Node paint and every other property pass through unchanged.
@@ -553,7 +553,7 @@ fn map_link_paint(attrs: &AttrMap) -> AttrMap {
     let mut out = AttrMap::new();
     for (k, v) in &attrs.map {
         let k = match k.as_str() {
-            "link" => "stroke",
+            "link-color" => "stroke",
             "link-width" => "stroke-width",
             "link-style" => "stroke-style",
             other => other,

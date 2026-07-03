@@ -25,7 +25,7 @@ fn node(kind: NodeKind, bbox: Bbox) -> PlacedNode {
         bbox,
         rotation: 0.0,
         children: Vec::new(),
-        dividers: Vec::new(),
+        gutters: Vec::new(),
         links: Vec::new(),
         span: Span::empty(),
     }
@@ -220,7 +220,7 @@ pub fn container(inst: &ResolvedInst, bbox: Bbox, children: Vec<PlacedNode>) -> 
         bbox,
         rotation: inst.attrs.number("rotate").unwrap_or(0.0),
         children,
-        dividers: Vec::new(),
+        gutters: Vec::new(),
         links: Vec::new(),
         span: inst.span,
     }

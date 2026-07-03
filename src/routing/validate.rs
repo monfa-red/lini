@@ -440,7 +440,7 @@ mod tests {
             bbox: Bbox::centered(w, h),
             rotation: 0.0,
             children: Vec::new(),
-            dividers: Vec::new(),
+            gutters: Vec::new(),
             links: Vec::new(),
             span: Span::empty(),
         }

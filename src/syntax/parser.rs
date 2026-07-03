@@ -152,7 +152,7 @@ impl<'a> Parser<'a> {
             Some(TokKind::Dot) => Ok(Kind::Rule),  // .class { … }
             Some(TokKind::Hash(_)) => Ok(Kind::Rule), // #hero { … } — an id rule
             Some(TokKind::LinkOp(_)) => Err(self.err(
-                "'->' draws a link on the canvas — set link defaults with 'link:' / 'link-width:' in a '{ }' block",
+                "'->' draws a link on the canvas — set link defaults with 'link-color:' / 'link-width:' in a '{ }' block",
             )),
             Some(TokKind::Pipe) => Ok(
                 // `|name::base|` is a define; any other `|…|` is a rule selector.
