@@ -109,7 +109,7 @@ pub(super) fn pairwise(
         }
     }
     // A system the relief could not make feasible even at the floors — the
-    // admission's cross-window blind spot (ROUTING-V2.md execution log) —
+    // admission's cross-window blind spot (ROUTING-LOG.md execution log) —
     // leaves Dykstra splitting the shortfall across every constraint.
     // Windows and walls are absolute law; pitch below them is at least
     // visible. Bounds win, and the gaps carry the debt.

@@ -159,7 +159,7 @@ fn wrap_html(svg: &str) -> String {
     )
 }
 
-/// Test-only hooks for the routing suite (see `ROUTING-V2.md` stage 4/6).
+/// Test-only hooks for the routing suite (see `ROUTING-LOG.md` stage 4/6).
 /// Not part of the public API.
 #[doc(hidden)]
 pub mod testing {
@@ -175,7 +175,7 @@ pub mod testing {
     }
 
     /// Routed polylines by endpoint pair, in declaration order — the contract
-    /// tests' geometry hook (ROUTING-V2.md stage 4): parse → resolve → layout,
+    /// tests' geometry hook (ROUTING-LOG.md stage 4): parse → resolve → layout,
     /// then each drawn link's `(seg_from, seg_to)` and path.
     #[allow(clippy::type_complexity)]
     pub fn routes_str(src: &str) -> Result<Vec<((String, String), Vec<(f64, f64)>)>, crate::Error> {

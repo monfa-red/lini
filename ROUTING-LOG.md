@@ -1,12 +1,14 @@
-# Routing v2 — Implementation Plan
+# Routing v2 — implementation log
 
-> **For the executing session:** work happens on branch `routing-v2`. Re-orient
-> by reading `ROUTING.md` (the contract — the single source of truth), this
-> plan's **Global constraints**, your stage below, and the **Execution log** at
-> the bottom. Check off steps as you complete them. When you hit a gotcha, make
-> a judgement call the plan didn't anticipate, or leave something for a later
-> stage — **append a dated note to the Execution log**. If a rendered result
-> looks stale, remember `cargo clean -p lini` (the binary can run stale code).
+> The v2 rewrite's plan and its **Execution log** — all seven stages landed
+> (2026-07). Kept as the record of what was built and *why*: the log's dated
+> entries hold every design decision the plan didn't anticipate, and the
+> open-bug diagnoses future sessions start from — most importantly the
+> **bug batch** entry on links_hard's four strays (estimate-overshot
+> admission; needs connection-feasible pricing + coupled cross-axis
+> placement bounds). Re-orient with `ROUTING.md` (the contract, the source
+> of truth) first, then the Execution log at the bottom, newest first. If a
+> rendered result looks stale: `cargo clean -p lini`.
 
 **Goal:** Replace the v1 guess-then-repair router with the ROUTING.md v2
 contract: a sequential weighted channel router with constructive placement,
@@ -487,10 +489,10 @@ anything the next session must know. Keep entries terse.
     scales the whole bus and pitch stays uniform under squeeze.
   - **links_hard's 4 strays are NOT capacity truths** — stage 6's "no
     k-track exit at gap 30 / clearance 12" is hereby corrected. Lawful
-    routes exist (hand-verified against the channel table): hub→nn1 up the
+    routes exist (hand-verified against the channel table): hub→n1 up the
     west flank with a corner shuffle through the H sliver below north;
-    nn2→ee1 ×3 down through north's bottom wall into the hub pocket and
-    into ee1.left, V legs ending above hub's inflated top. They stray
+    n2→e1 ×3 down through north's bottom wall into the hub pocket and
+    into e1.left, V legs ending above hub's inflated top. They stray
     because **admission prices estimate-overshot spans**: a run's span
     reaches its neighbours' *anchor estimates* (mid-void), which poke past
     fragment boundaries the traversed cells never cross — the corridor
@@ -645,7 +647,7 @@ anything the next session must know. Keep entries terse.
     by the void midline (was the fragment's), flash exits and the 8-port
     mcu:left ladder at pitch 10 (were 8.87/8.09); pins added to
     tests/routing.rs. pcb — `mcu → rf` ×2 now routes (was 2 honest strays).
-    links_hard — 4 strays (was 6): `ww2 → ss1` ×2 now route; the rest are
+    links_hard — 4 strays (was 6): `w2 → s1` ×2 now route; the rest are
     genuine capacity truths at gap 30/clearance 12. Sequence output
     byte-identical. pcb.lini ~17 ms release (corridor walks; budget 50 ms).
 - **2026-07-02, stage 5.** Done (straight.rs, dispatch in `routing::route`,
@@ -728,9 +730,9 @@ anything the next session must know. Keep entries terse.
     both pinned as tests.
   - **Strays that remain by design** (v1 drew these by splitting bundles or
     ignoring capacity; v2 must not): pcb `mcu → rf` ×2 (a k=2 bundle through
-    a 10 px soft-walled neck holding one track), links_hard `nn2 → ee1` ×3
-    and `ww2 → ss1` ×2 (no k-track exit exists). The user's lever is `gap`.
-  - **Stage-6 work items:** links_hard `hub → north.nn1` (k=1) strays because
+    a 10 px soft-walled neck holding one track), links_hard `n2 → e1` ×3
+    and `w2 → s1` ×2 (no k-track exit exists). The user's lever is `gap`.
+  - **Stage-6 work items:** links_hard `hub → north.n1` (k=1) strays because
     the sweep fragments one wide junction void into parallel same-axis
     channels that each charge phantom-neighbour soft margins — capacity
     needs to see the void, not the fragment (or junction-aware merging).

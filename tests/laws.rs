@@ -1,4 +1,4 @@
-//! The routing CI gate (ROUTING.md, ROUTING-V2.md stage 6): every sample is
+//! The routing CI gate (ROUTING.md, ROUTING-LOG.md stage 6): every sample is
 //! re-judged by the independent law checker — semantically, never on SVG
 //! snapshots. A snapshot pins one router's coordinates; the validator pins
 //! the contract: the four laws hold on everything drawn, every declared edge
@@ -65,7 +65,7 @@ fn every_sample_satisfies_the_laws() {
 /// impossible count is pinned. `links_hard`'s four have lawful routes the
 /// engine cannot yet price — admission reaches for anchor estimates that
 /// overshoot the traversed cells, and realizing the routes needs coupled
-/// cross-axis placement bounds (ROUTING-V2.md execution log, bug batch);
+/// cross-axis placement bounds (ROUTING-LOG.md execution log, bug batch);
 /// everything else draws whole. When admission learns connection-feasible
 /// pricing, this pin should drop to zero.
 #[test]
@@ -122,7 +122,7 @@ fn every_sample_compiles_and_routes_byte_identically() {
 ///
 /// One pinned exception: admission is per corridor and per side, so a group
 /// jointly pinched by several nodes' port windows can over-admit by a hair
-/// and compress below the floor instead of straying (ROUTING-V2.md
+/// and compress below the floor instead of straying (ROUTING-LOG.md
 /// execution log, stage 6). `links_medium` at clearance 13 sits exactly on
 /// that blind spot; the pin keeps it visible without blessing new ones.
 #[test]
