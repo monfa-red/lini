@@ -508,7 +508,7 @@ mod tests {
         assert_eq!((t[0][0], t[1][0], t[2][0]), (8.0, 16.0, 24.0));
     }
 
-    /// The S-bend bus (pcb_fail's flash → mcu): four wires at pitch 10 turn
+    /// The S-bend bus (a pcb-style flash → mcu): four wires at pitch 10 turn
     /// two nested corners each. Concentric radii grow to 4× clearance on the
     /// outermost track — the legs *jointly* fit every pair (40+10 on a
     /// 56-long shared leg), so no half-leg squash may flatten the nest.

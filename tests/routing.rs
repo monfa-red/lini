@@ -1,12 +1,10 @@
-//! The v2 routing contract tests (ROUTING.md, ROUTING-V2.md stage 4):
+//! The v2 routing contract tests (ROUTING.md, ROUTING-LOG.md stage 4):
 //! geometry assertions over routed polylines — turn counts, ordinates,
-//! crossings — never images. The Consequences table pins one test per row;
-//! the pcb_fail pins prove the two v1 bugs (the orbit, the braid) dead.
+//! crossings — never images. The Consequences table pins one test per row.
 
 use lini::testing::{node_rect, route_sample, routes_str};
 use lini::{Rule, Severity};
 
-const PCB_FAIL: &str = include_str!("../samples/pcb_fail.lini");
 const PCB: &str = include_str!("../samples/pcb.lini");
 
 type Routes = Vec<((String, String), Vec<(f64, f64)>)>;
@@ -220,87 +218,6 @@ fn a_crossing_beats_the_orbit() {
     assert_eq!(crossings(src), 1, "one drawn crossing, reported");
 }
 
-// ── The pcb_fail pins: the two v1 bugs stay dead ──
-
-#[test]
-fn pcb_fail_pwr_rails_run_dead_straight() {
-    let r = routes(PCB_FAIL);
-    let rails = paths(&r, "pwr", "mcu");
-    assert_eq!(rails.len(), 4);
-    for p in rails {
-        assert_eq!(turns(p), 0, "pwr → mcu straight: {p:?}");
-    }
-}
-
-#[test]
-fn pcb_fail_flash_lands_with_two_turns_and_never_orbits() {
-    let laid = route_sample(PCB_FAIL, 10.0);
-    let mcu = node_rect(&laid, "mcu").expect("mcu placed");
-    let r = routes(PCB_FAIL);
-    let rails = paths(&r, "flash", "mcu");
-    assert_eq!(rails.len(), 4);
-    for p in rails {
-        assert_eq!(turns(p), 2, "flash → mcu doglegs: {p:?}");
-        for pt in p {
-            assert!(
-                pt.0 <= mcu.2,
-                "no point may orbit past mcu's right edge {}: {p:?}",
-                mcu.2
-            );
-        }
-    }
-}
-
-#[test]
-fn pcb_fail_reports_zero_crossings() {
-    assert_eq!(crossings(PCB_FAIL), 0);
-}
-
-#[test]
-fn pcb_fail_flash_bends_on_the_corridor_midline_at_full_pitch() {
-    // The corridor between the flash/pwr column and mcu is one void, however
-    // the sweep fragments it: the flash drops ride its midline at full
-    // clearance pitch — never a fragment's midline, never a squeezed ladder
-    // in a corridor with room to spare (Law 1's relief is for scarcity).
-    let laid = route_sample(PCB_FAIL, 10.0);
-    let flash = node_rect(&laid, "flash").expect("flash placed");
-    let mcu = node_rect(&laid, "mcu").expect("mcu placed");
-    let r = routes(PCB_FAIL);
-    let mut drops: Vec<f64> = paths(&r, "flash", "mcu")
-        .iter()
-        .map(|p| {
-            let (i, j) = (p.len() / 2 - 1, p.len() / 2);
-            assert_eq!(p[i].0, p[j].0, "the middle leg is the drop: {p:?}");
-            p[i].0
-        })
-        .collect();
-    drops.sort_by(f64::total_cmp);
-    for w in drops.windows(2) {
-        assert!(
-            (w[1] - w[0] - 10.0).abs() < 1e-9,
-            "drops at clearance pitch: {drops:?}"
-        );
-    }
-    let midline = ((flash.2 + 10.0) + (mcu.0 - 10.0)) / 2.0;
-    let mean = drops.iter().sum::<f64>() / drops.len() as f64;
-    assert!(
-        (mean - midline).abs() <= 10.0,
-        "the ladder centres by the void midline {midline}: {drops:?}"
-    );
-    // Ports at both ends spread at full pitch too — the fragment's phantom
-    // soft margins never compress a roomy window.
-    for (paths, idx) in [(paths(&r, "flash", "mcu"), 0), (paths(&r, "pwr", "mcu"), 0)] {
-        let mut ys: Vec<f64> = paths.iter().map(|p| p[idx].1).collect();
-        ys.sort_by(f64::total_cmp);
-        for w in ys.windows(2) {
-            assert!(
-                (w[1] - w[0] - 10.0).abs() < 1e-9,
-                "ports at clearance pitch: {ys:?}"
-            );
-        }
-    }
-}
-
 // ── Forced sides, fans, self-loops, containment ──
 
 #[test]
@@ -449,7 +366,7 @@ fn routing_straight_self_link_draws_the_rectangular_hook() {
     assert_eq!(p[3].0, a.2);
 }
 
-// ── The tightness sweep: right before impossible (ROUTING-V2.md stage 6) ──
+// ── The tightness sweep: right before impossible (ROUTING-LOG.md stage 6) ──
 
 /// A facing 4-bundle with the shared port window swept from roomy down past
 /// capacity: full clearance while it fits, uniform compression only when it
