@@ -5,7 +5,7 @@
 //! ordinate space** — one channel, fragments of one corridor
 //! ([`ChannelGraph::corridor`]), or, across worlds, one landing side — form
 //! a cluster. Within a cluster runs order so wires leave in the order they
-//! arrive — nested, never braided — by the outward-walk comparator
+//! arrive — nested, never braided — by the outward-walk order
 //! ([`super::order`]) — and take the order-preserving ordinates nearest
 //! their preferences at clearance pitch: the exact chain ([`ladder`]) when
 //! the cluster's contention is a chain, the pairwise projection
@@ -345,7 +345,7 @@ fn fan_of(chain: &Chain, ri: usize) -> Option<usize> {
 
 /// Order one cluster and ladder it into ordinates.
 fn settle(
-    mut cluster: Vec<(Item, Corridor)>,
+    cluster: Vec<(Item, Corridor)>,
     clearance: f64,
     chains: &mut [Option<Chain>],
     ests: &[Vec<f64>],
@@ -353,31 +353,48 @@ fn settle(
     // Preference orders what geometry doesn't couple (prefs sit inside
     // their boxes, so disjoint windows order themselves); the outward walk
     // arbitrates equal preferences — nested, never braided — and declaration
-    // order settles the rest inside [`order::cmp_runs`]. A fan's merged item
-    // walks as its first member.
+    // order settles the rest, all inside [`order::ranks`]. A fan's merged
+    // item walks as its first member.
     let ctx = order::Ctx {
         chains: &*chains,
         ests,
     };
-    cluster.sort_by(|a, b| {
-        a.0.pref
-            .total_cmp(&b.0.pref)
-            .then_with(|| order::cmp_runs(&ctx, a.0.members[0], b.0.members[0]))
-    });
-
-    let n = cluster.len();
-    let prefs: Vec<f64> = cluster.iter().map(|(i, _)| i.pref).collect();
-    let bounds: Vec<(f64, f64)> = cluster
+    // A run's lawful bounds: law range ∩ corner clamp. The corner clamp
+    // binds hard; a search-admitted run always has room inside it (the
+    // route's corners sat in cells), so an inversion only flags float dust
+    // at a channel edge.
+    let bound = |(i, corr): &(Item, Corridor)| {
+        let r = law_range(i.window, corr, clearance);
+        let tight = (r.0.max(i.clamp.0), r.1.min(i.clamp.1));
+        if tight.0 <= tight.1 { tight } else { r }
+    };
+    // The preference is the nearest lawful ordinate to the aesthetic target
+    // (ROUTING.md step 5). A raw corridor anchor can fall outside a run's
+    // own bounds — a refreshed span can reach through a void far wider than
+    // the pocket its corners pin it to — and ordering by the raw anchor
+    // then interleaves runs whose lawful ranges never meet, an order no
+    // solver realises lawfully (the trunk rails of an S-curve bundle
+    // collapse onto one ordinate). Clamping keeps the sort's premise true:
+    // prefs sit inside their boxes, so disjoint ranges order themselves.
+    let reps: Vec<(usize, usize)> = cluster.iter().map(|(i, _)| i.members[0]).collect();
+    let item_prefs: Vec<f64> = cluster
         .iter()
-        .map(|(i, corr)| {
-            let r = law_range(i.window, corr, clearance);
-            // The corner clamp binds hard; a search-admitted run always has
-            // room inside it (the route's corners sat in cells), so an
-            // inversion only flags float dust at a channel edge.
-            let tight = (r.0.max(i.clamp.0), r.1.min(i.clamp.1));
-            if tight.0 <= tight.1 { tight } else { r }
+        .map(|c| {
+            let (lo, hi) = bound(c);
+            c.0.pref.max(lo).min(hi)
         })
         .collect();
+    let pos = order::ranks(&ctx, &reps, &item_prefs);
+    let mut indexed: Vec<_> = pos
+        .into_iter()
+        .zip(item_prefs.into_iter().zip(cluster))
+        .collect();
+    indexed.sort_by_key(|(p, _)| *p);
+    let (prefs, cluster): (Vec<f64>, Vec<(Item, Corridor)>) =
+        indexed.into_iter().map(|(_, pc)| pc).unzip();
+
+    let n = cluster.len();
+    let bounds: Vec<(f64, f64)> = cluster.iter().map(bound).collect();
     // Every gap starts at full clearance — the relief below is the one
     // compression mechanism. Only **contending** neighbours owe each other
     // pitch; a transitively-chained pair whose spans lie far apart never

@@ -579,6 +579,46 @@ fn links_simple_reports_zero_crossings() {
     assert_eq!(crossings(src), 0);
 }
 
+/// A bundle whose rails S-curve between two corridors keeps its pitch the
+/// whole way (user-reported: the round-two corridor read handed the second
+/// legs an anchor outside their lawful bounds, the preference-first order
+/// interleaved the trunk with the pocket, and the pairwise clamp collapsed
+/// all three trunk rails onto one ordinate).
+#[test]
+fn a_bundle_of_s_curves_keeps_pitch_on_both_legs() {
+    let src = "{ layout: grid; columns: repeat(3); gap: 35; clearance: 12; }\n\
+        |box#alpha| \"Alpha\" { cell: 1 1; }\n\
+        |group#north| { cell: 2 1; gap: 16; } [\n\
+          |caption| \"North\"\n\
+          |box#nn1| \"N1\"\n\
+          |box#nn2| \"N2\"\n\
+        ]\n\
+        |box#beta| \"Beta\" { cell: 3 1; }\n\
+        |group#west| { cell: 1 2; gap: 16; } [\n\
+          |caption| \"West\"\n\
+          |box#ww1| \"W1\"\n\
+          |box#ww2| \"W2\"\n\
+        ]\n\
+        |group#east| { cell: 3 2; padding: 16; gap: 16; } [\n\
+          |caption| \"East\"\n\
+          |box#ee1| \"E1\"\n\
+          |box#ee2| \"E2\"\n\
+        ]\n\
+        |group#south| { cell: 2 3; gap: 16; } [\n\
+          |caption| \"South\"\n\
+          |box#ss1| \"S1\"\n\
+        ]\n\
+        hub -> south.ss1 & west.ww1\n\
+        north.nn2 -> east.ee1\n\
+        north.nn2 -> east.ee1\n\
+        north.nn2 -> east.ee1\n";
+    let breaches: Vec<_> = report(src)
+        .into_iter()
+        .filter(|v| v.severity == Severity::Warning)
+        .collect();
+    assert!(breaches.is_empty(), "{breaches:?}");
+}
+
 // ── Determinism (Law 4) ──
 
 #[test]

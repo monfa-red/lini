@@ -448,6 +448,53 @@ Executing sessions: append dated notes here — decisions the plan didn't
 anticipate, gotchas, deferred items, comparator cases that needed deepening,
 anything the next session must know. Keep entries terse.
 
+- **2026-07-03, run-order totality + lawful preferences (user bug batch,
+  post stage 7).** Two placement bugs fixed at source, one new known-limit
+  pin, one open diagnosis. Every sample byte-identical at native attributes.
+  - **`cmp_runs` was not a total order** (links_hard @ clearance 6 panicked
+    Rust's sort — latent; the stroke-width 1.6→2 bbox shift exposed it).
+    Each pairwise judgment is sound, but the three criteria (walk±,
+    convention, same-chain est→index) don't compose: the geometric walks
+    ordered the hub fan trunk *between* the two end runs of `east → west` —
+    a chain revisiting the middle corridor — while the same-chain
+    convention said the opposite; a cycle no pairwise tie-break can fix
+    (both conflicting edges were genuinely geometric vs conventional).
+    Fix in `order.rs`: the cluster's order is built whole — `ranks()` sorts
+    preference classes, then linearly extends the pairwise judgments:
+    geometric (anti-braid) edges bind, conventions rank what geometry
+    leaves free, declaration settles ties; a braid-forced knot (geometric
+    edges themselves cyclic) competes as one pool. Where judgments are
+    consistent — every cluster the old comparator sorted without panicking
+    — the extension is provably their unique order, so nothing lawful
+    moved. Unit test pins the links_hard triple.
+  - **A duplicate bundle's trunk rails collapsed onto one ordinate**
+    (user repro: `nn2 → ee1` ×3 S-curving across a 3×3 grid, gap 35 —
+    drawn 0 apart, floor 6). Round-two spans reach through voids far wider
+    than the pockets their corners pin them to, so `chain_prefs`' corridor
+    anchors landed *outside* the runs' own bounds; the preference-first
+    sort then interleaved the N2 trunk (bounds ≤ 22) with the E1 pocket
+    (bounds ≥ 50.5) — an order no solver realises — the zero-gap bridges
+    broke the chain model and pairwise's final clamp piled all three trunk
+    rails onto x = 22. Fix in `place.rs::settle`: a preference is the
+    nearest lawful ordinate to its aesthetic target — clamped into
+    law range ∩ corner clamp — which makes the sort's stated premise
+    ("prefs sit inside their boxes") true by construction. The clamp is
+    the identity wherever the invariant already held: all samples
+    byte-identical. Test: `a_bundle_of_s_curves_keeps_pitch_on_both_legs`.
+  - **links_hard @ 8 joins the known-limit pins** (links_medium @13,
+    pcb @12) — same admission blind spot, previously masked by the @6
+    panic: admission counts point-load (the chan-22 sliver's 6 px usable
+    lawfully holds `hub→n1` and `alpha→delta`, span-disjoint), but
+    `beta→gamma` runs the full height between them and the nesting chain
+    needs both gaps at once — 8 px in a 6 px band; pairwise leaves
+    2.67/3.33 (< floor 4). The honest fix is still the placement-aware
+    admission probe.
+  - **Open, diagnosed:** the user scene at clearance 16 draws its fan
+    siblings 11 apart where the checker proves room for 16. The engine's
+    relief is working as designed *on its corridor read* (11 px usable —
+    the pair spans the whole band); the checker's rebuilt per-wire ranges
+    disagree. Engine corridor walk vs checker excuse model need
+    reconciling; a session of its own.
 - **2026-07-03, stage 7.** Done (snapshots, cosmetics, docs; the bug batch
   above landed first so snapshots were accepted once).
   - Visual pass: all 31 samples rendered `--bake-vars` → PNG and read.

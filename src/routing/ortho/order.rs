@@ -1,7 +1,7 @@
-//! The run-order comparator (ROUTING.md model step 5): wires leave in the
+//! The run-order mechanism (ROUTING.md model step 5): wires leave in the
 //! order they arrive — nested, never braided.
 //!
-//! Two runs sharing a channel are ordered by where their chains diverge:
+//! Two runs sharing a channel are **judged** by where their chains diverge:
 //! walk both chains outward from the shared channel; the first divergence —
 //! a turn off the channel, or a terminal port — decides. A wire turning
 //! toward the positive ordinate sweeps that flank, so it sits on it; wires
@@ -12,8 +12,16 @@
 //! paid for. A pair no geometry orders — exact parallels, tied at both
 //! ends — resolves by one oriented convention: the earlier-declared wire
 //! keeps the left of its own travel, so every channel the pair shares
-//! agrees on the same nesting (an offset curve never braids). Total either
-//! way.
+//! agrees on the same nesting (an offset curve never braids).
+//!
+//! Each judgment is sound for its pair, but judgments need not compose: a
+//! third wire can be walked *between* the two end runs of a chain that
+//! revisits the corridor, contradicting the same-chain convention, and a
+//! braid-forced knot can cycle outright — no comparator over these
+//! judgments is transitive in general (the unit test pins links_hard's
+//! triple). So the cluster's total order is built whole, by [`ranks`]:
+//! geometric judgments bind, conventions rank what geometry leaves free,
+//! declaration settles ties.
 
 use std::cmp::Ordering;
 
@@ -210,26 +218,223 @@ fn cursor(ctx: &Ctx, (ci, ri): (usize, usize), dir: i8) -> Cursor {
     }
 }
 
-/// Total cross order of two runs sharing a channel: the positive-end walk
-/// wins when geometric, then the negative-end walk, then [`convention`].
-/// Two pieces of one wire owe each other no nesting — they order by estimate.
-pub(crate) fn cmp_runs(ctx: &Ctx, a: (usize, usize), b: (usize, usize)) -> Ordering {
-    if a == b {
-        return Ordering::Equal;
-    }
+/// The pairwise judgment of two runs sharing a channel, and whether it is
+/// **geometric** (a real anti-braid constraint) or a convention: the
+/// positive-end walk wins when geometric, then the negative-end walk, then
+/// [`convention`]. Two pieces of one wire owe each other no nesting — they
+/// order by estimate, then run index.
+fn judge(ctx: &Ctx, a: (usize, usize), b: (usize, usize)) -> (Ordering, bool) {
     if a.0 == b.0 {
-        return ctx
+        let o = ctx
             .est(a.0, a.1)
             .total_cmp(&ctx.est(b.0, b.1))
             .then(a.1.cmp(&b.1));
+        return (o, false);
     }
     let (op, gp) = walk(ctx, cursor(ctx, a, 1), cursor(ctx, b, 1), 1);
     if gp {
-        return op;
+        return (op, true);
     }
     let (om, gm) = walk(ctx, cursor(ctx, a, -1), cursor(ctx, b, -1), -1);
     if gm {
-        return om;
+        return (om, true);
     }
-    convention(ctx, a, b)
+    (convention(ctx, a, b), false)
+}
+
+/// Sort positions for one cluster's items: preference first (`total_cmp`),
+/// then, within each preference class, a linear extension of the pairwise
+/// judgments — a genuine total order where a pairwise comparator is not.
+///
+/// The extension emits, repeatedly, the item no remaining item precedes
+/// **geometrically**; among those free items the one preceding the most
+/// (judgments of any strength), declaration order last. Where the judgments
+/// are consistent — every cluster the old comparator sorted without
+/// contradiction — this is their unique total order, so nothing already
+/// lawful moves. Where they knot, geometry yields as little as the
+/// tournament allows and the surrendered pair braids honestly (a knot *is*
+/// a braid no order avoids); a contradicted convention costs nothing.
+///
+/// `runs[i]` is item `i`'s walk representative (a fan's merged item walks
+/// as its first member), `prefs[i]` its preference. Returns each item's
+/// position in the settled order.
+pub(crate) fn ranks(ctx: &Ctx, runs: &[(usize, usize)], prefs: &[f64]) -> Vec<usize> {
+    let n = runs.len();
+    let mut by_pref: Vec<usize> = (0..n).collect();
+    by_pref.sort_by(|&a, &b| prefs[a].total_cmp(&prefs[b]).then(a.cmp(&b)));
+    let mut pos = vec![0; n];
+    let (mut p, mut lo) = (0, 0);
+    while lo < n {
+        let hi = (lo..n)
+            .take_while(|&i| prefs[by_pref[i]].total_cmp(&prefs[by_pref[lo]]) == Ordering::Equal)
+            .count()
+            + lo;
+        for i in extend(ctx, runs, &by_pref[lo..hi]) {
+            pos[i] = p;
+            p += 1;
+        }
+        lo = hi;
+    }
+    pos
+}
+
+/// Linearly extend one preference class's judgments; returns the class's
+/// item indices in emitted order.
+fn extend(ctx: &Ctx, runs: &[(usize, usize)], class: &[usize]) -> Vec<usize> {
+    let m = class.len();
+    if m == 1 {
+        return vec![class[0]];
+    }
+    let mut verdict = vec![vec![(Ordering::Equal, false); m]; m];
+    for i in 0..m {
+        for j in i + 1..m {
+            let (o, g) = judge(ctx, runs[class[i]], runs[class[j]]);
+            verdict[i][j] = (o, g);
+            verdict[j][i] = (o.reverse(), g);
+        }
+    }
+    let decl = |i: usize| {
+        let (ci, ri) = runs[class[i]];
+        (ctx.chain(ci).link, ci, ri)
+    };
+    let mut remaining: Vec<usize> = (0..m).collect();
+    let mut out = Vec::with_capacity(m);
+    while !remaining.is_empty() {
+        let free: Vec<usize> = remaining
+            .iter()
+            .copied()
+            .filter(|&i| {
+                remaining
+                    .iter()
+                    .all(|&j| j == i || verdict[j][i] != (Ordering::Less, true))
+            })
+            .collect();
+        // No free item means the geometric constraints themselves cycle —
+        // a braid no order avoids; the whole remainder competes.
+        let pool = if free.is_empty() {
+            remaining.clone()
+        } else {
+            free
+        };
+        let pick = pool
+            .iter()
+            .copied()
+            .max_by(|&a, &b| {
+                let wins = |i: usize| {
+                    pool.iter()
+                        .filter(|&&j| j != i && verdict[i][j].0 == Ordering::Less)
+                        .count()
+                };
+                wins(a).cmp(&wins(b)).then_with(|| decl(b).cmp(&decl(a)))
+            })
+            .expect("non-empty pool");
+        remaining.retain(|&i| i != pick);
+        out.push(class[pick]);
+    }
+    out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::super::rect::Rect;
+    use super::super::{Chain, EndInfo, Run};
+    use super::*;
+    use crate::ast::Side;
+
+    fn run(axis: Axis, chan: usize, span: (f64, f64)) -> Run {
+        Run {
+            axis,
+            chan,
+            span,
+            ord: None,
+        }
+    }
+
+    /// An end whose `side` line sits at `coord`; the walk reads nothing
+    /// else of the rect.
+    fn end(side: Side, coord: f64) -> EndInfo {
+        let rect = match side {
+            Side::Left => Rect::new(coord, -10.0, coord + 20.0, 10.0),
+            Side::Right => Rect::new(coord - 20.0, -10.0, coord, 10.0),
+            Side::Top => Rect::new(-10.0, coord, 10.0, coord + 20.0),
+            Side::Bottom => Rect::new(-10.0, coord - 20.0, 10.0, coord),
+        };
+        EndInfo {
+            side,
+            rect,
+            window: (-10.0, 10.0),
+            fan: None,
+        }
+    }
+
+    /// links_hard at clearance 6, reduced: chain `u` revisits the middle
+    /// corridor (both its end runs land there at ordinate 0), and chain
+    /// `f` is walked geometrically *between* them — `u4 < f0` and
+    /// `f0 < u0` — while the same-chain convention (est tie → run index)
+    /// says `u4 > u0`. No pairwise comparator survives that triple (the
+    /// old one panicked Rust's sort); the extension must honour both
+    /// geometric constraints and surrender the convention.
+    #[test]
+    fn a_run_walked_between_a_revisiting_chains_ends_ranks_consistently() {
+        let f = Chain {
+            link: 0,
+            world: 0,
+            runs: vec![
+                run(Axis::H, 25, (38.5, 69.5)),
+                run(Axis::V, 22, (-237.5, 0.0)),
+                run(Axis::H, 26, (34.0, 69.5)),
+            ],
+            ends: [end(Side::Right, 38.5), end(Side::Right, 34.0)],
+        };
+        let u = Chain {
+            link: 17,
+            world: 0,
+            runs: vec![
+                run(Axis::H, 25, (61.5, 84.5)),
+                run(Axis::V, 21, (-72.0, 0.0)),
+                run(Axis::H, 19, (4.0, 61.5)),
+                run(Axis::V, 11, (-72.0, 0.0)),
+                run(Axis::H, 20, (-76.5, 4.0)),
+            ],
+            ends: [end(Side::Left, 84.5), end(Side::Right, -76.5)],
+        };
+        let chains = vec![Some(f), Some(u)];
+        let ests = vec![vec![0.0, 69.5, -237.5], vec![0.0, 61.5, -72.0, -53.5, 0.0]];
+        let ctx = Ctx {
+            chains: &chains,
+            ests: &ests,
+        };
+        assert_eq!(judge(&ctx, (1, 4), (0, 0)), (Ordering::Less, true));
+        assert_eq!(judge(&ctx, (0, 0), (1, 0)), (Ordering::Less, true));
+        assert_eq!(judge(&ctx, (1, 4), (1, 0)), (Ordering::Greater, false));
+        let pos = ranks(&ctx, &[(1, 4), (0, 0), (1, 0)], &[0.0; 3]);
+        assert!(
+            pos[0] < pos[1] && pos[1] < pos[2],
+            "geometric nesting must hold: {pos:?}"
+        );
+    }
+
+    /// Preference stays the primary key: items in different preference
+    /// classes never consult the walk.
+    #[test]
+    fn preference_orders_across_classes() {
+        let straight = |link: usize, y: f64| Chain {
+            link,
+            world: 0,
+            runs: vec![run(Axis::H, 0, (20.0, 80.0))],
+            ends: [end(Side::Right, 20.0), {
+                let mut e = end(Side::Left, 80.0);
+                e.window = (y - 10.0, y + 10.0);
+                e
+            }],
+        };
+        let chains = vec![Some(straight(0, 30.0)), Some(straight(1, 10.0))];
+        let ests = vec![vec![30.0], vec![10.0]];
+        let ctx = Ctx {
+            chains: &chains,
+            ests: &ests,
+        };
+        let pos = ranks(&ctx, &[(0, 0), (1, 0)], &[30.0, 10.0]);
+        assert_eq!(pos, vec![1, 0]);
+    }
 }
