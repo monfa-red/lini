@@ -3,9 +3,9 @@
 
 {
   direction: row; gap: 40; clearance: 12;
-  .loud { link-color: --red; }
-  .quiet { link-color: --blue; }
-  .happy { link-color: --green; }
+  .loud { stroke: --red; }
+  .quiet { stroke: --blue; }
+  .happy { stroke: --green; }
   |treat::box| { radius: 6; }
 }
 

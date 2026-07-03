@@ -3,24 +3,24 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/text.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-211.8 -139.9 423.6 279.8" width="423.6" height="279.8" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-211.8 -181.2 423.6 362.4" width="423.6" height="362.4" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
     .lini .lini-block { fill: none; stroke: none; stroke-width: 1.6; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 1.6; }
-    .lini .lini-link { fill: none; stroke: #989898; stroke-width: 1.5; stroke-dasharray: none; }
-    .lini .lini-link-label { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; font-size: 11px; font-weight: normal; }
+    .lini .lini-link { fill: none; stroke: #989898; stroke-width: 1.5; stroke-dasharray: none; color: #005d56; }
+    .lini .lini-link-label { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; font-size: 12px; font-weight: normal; }
     .lini .lini-cut-bg { fill: white; stroke: none; }
     .lini .lini-cut { fill: black; stroke: none; }
     .lini .lini-marker { fill: #444; stroke: none; }
   </style>
   <defs/>
-  <rect class="lini-canvas" x="-211.8" y="-139.9" width="423.6" height="279.8"/>
+  <rect class="lini-canvas" x="-211.8" y="-181.2" width="423.6" height="362.4"/>
   <g class="lini-scene">
-    <text class="lini-text" x="0" y="-103.9" style="font-weight: bold; font-size: 20px">Styleable text, in place</text>
-    <g class="lini-node lini-row lini-block" data-id="styles" transform="translate(0,-59.6)">
+    <text class="lini-text" x="0" y="-145.2" style="font-weight: bold; font-size: 20px">Styleable text, in place</text>
+    <g class="lini-node lini-row lini-block" data-id="styles" transform="translate(0,-100.9)">
       <rect x="-185" y="-7.5" width="370" height="15" rx="0" ry="0"/>
       <text class="lini-text" x="-153.5" y="0">default</text>
       <text class="lini-text" x="-70" y="0" style="fill: #851618">coloured</text>
@@ -28,21 +28,31 @@ input_file: samples/text.lini
       <text class="lini-text" x="61" y="0" style="font-style: italic">italic</text>
       <text class="lini-text" x="144.5" y="0" style="text-decoration: underline">underline</text>
     </g>
-    <g class="lini-node lini-box lini-block" data-id="a" transform="translate(0,3)">
+    <g class="lini-node lini-box lini-block" data-id="a" transform="translate(0,-38.3)">
       <rect x="-42.5" y="-27.5" width="85" height="55" rx="8" ry="8"/>
       <text class="lini-text" x="0" y="0">Alpha</text>
     </g>
-    <g class="lini-node lini-box lini-block" data-id="b" transform="translate(0,85.6)">
+    <g class="lini-node lini-box lini-block" data-id="b" transform="translate(0,44.3)">
       <rect x="-38" y="-27.5" width="76" height="55" rx="8" ry="8"/>
       <text class="lini-text" x="0" y="0">Beta</text>
     </g>
+    <g class="lini-node lini-box lini-block" data-id="c" transform="translate(0,126.9)">
+      <rect x="-42.5" y="-27.5" width="85" height="55" rx="8" ry="8"/>
+      <text class="lini-text" x="0" y="0">Gamma</text>
+    </g>
   </g>
   <g class="lini-links">
-    <g class="lini-link" style="font-size: 11" data-from="a" data-to="b">
-      <mask id="lini-label-cut-0" maskUnits="userSpaceOnUse" x="37.05" y="1.25" width="32" height="86.1"><rect class="lini-cut-bg" x="37.05" y="1.25" width="32" height="86.1"/><rect class="lini-cut" x="14.5" y="33.4" width="105.6" height="14.3"/></mask>
-      <path d="M 43.3 3 L 51.3 3 A 16 16 0 0 1 67.3 19 L 67.3 69.6 A 16 16 0 0 1 51.3 85.6 L 41.3 85.6" mask="url(#lini-label-cut-0)"/>
-      <polygon class="lini-marker lini-marker-arrow" points="38.3,85.6 45.3,82.1 45.3,89.1" style="fill: #989898"/>
-      <text class="lini-link-label" x="67.3" y="40.55" style="fill: #005d56" transform="rotate(-6 67.3 40.55)">nudged &amp; turned</text>
+    <g class="lini-link" style="font-size: 12; font-weight: bold" data-from="a" data-to="b">
+      <mask id="lini-label-cut-0" maskUnits="userSpaceOnUse" x="37.05" y="-40.05" width="32" height="78.1"><rect class="lini-cut-bg" x="37.05" y="-40.05" width="32" height="78.1"/><rect class="lini-cut" x="16.9" y="-6.55" width="100.8" height="15.6"/></mask>
+      <path d="M 43.3 -38.3 L 51.3 -38.3 A 16 16 0 0 1 67.3 -22.3 L 67.3 20.3 A 16 16 0 0 1 51.3 36.3 L 41.3 36.3" mask="url(#lini-label-cut-0)"/>
+      <polygon class="lini-marker lini-marker-arrow" points="38.3,36.3 45.3,32.8 45.3,39.8" style="fill: #989898"/>
+      <text class="lini-link-label" x="67.3" y="1.25" style="fill: #005d56; font-weight: bold">styled by |-|</text>
+    </g>
+    <g class="lini-link" style="font-size: 12; font-weight: bold" data-from="b" data-to="c">
+      <mask id="lini-label-cut-1" maskUnits="userSpaceOnUse" x="37.05" y="50.55" width="48" height="78.1"><rect class="lini-cut-bg" x="37.05" y="50.55" width="48" height="78.1"/><rect class="lini-cut" x="25.7" y="73.55" width="115.2" height="15.6"/></mask>
+      <path d="M 38.8 52.3 L 67.3 52.3 A 16 16 0 0 1 83.3 68.3 L 83.3 110.9 A 16 16 0 0 1 67.3 126.9 L 45.8 126.9" mask="url(#lini-label-cut-1)"/>
+      <polygon class="lini-marker lini-marker-arrow" points="42.8,126.9 49.8,123.4 49.8,130.4" style="fill: #989898"/>
+      <text class="lini-link-label" x="83.3" y="81.35" style="fill: #851618; font-weight: bold" transform="rotate(-6 83.3 81.35)">nudged &amp; turned</text>
     </g>
   </g>
 </svg>

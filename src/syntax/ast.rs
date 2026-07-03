@@ -73,6 +73,11 @@ pub enum SelUnit {
     Class(String),
     /// `#hero` — an id selector.
     Id(String),
+    /// `|-|` — the link type (SPEC §4, §9). Selector-only: it matches every link
+    /// (a link is drawn by an operator, never instantiated), so a link is styled
+    /// with the ordinary node/text vocabulary — `stroke` the wire, `color`/`font-*`
+    /// the labels. Desugar lowers it to `.lini-link`, the class every link wears.
+    Link,
 }
 
 /// `|name::base| { style } [ children ]` — a new type from a base. `style` is the

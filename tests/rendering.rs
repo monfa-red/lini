@@ -416,11 +416,11 @@ fn css_cascade_emits_rules_and_diffs() {
     // operator-dash class, and cascading text props. (The pretty user-facing
     // cascade demo lives in samples/styles.lini.)
     let src = r#"{
-  link-color: #666; link-width: 1;
+  |-| { stroke: #666; stroke-width: 1; }
   |box| { fill: lightyellow; }
   .loud { stroke: red; stroke-width: 2; }
   .calm { stroke: teal; }
-  .wire { link-color: teal; }
+  .wire { stroke: teal; }
 }
 
 |box#flat| "Plain"
@@ -472,12 +472,12 @@ loud --> mix .wire
         "the operator dash must be stated once as a class rule: {}",
         svg
     );
-    // A link's `.wire` class paints with the `link-*` family; its colour states
-    // once as a `.lini-style-wire { stroke: … }` rule (mapped from `link-color:`), like
-    // a node's stroke class — never inline on the link (SPEC §9/§13).
+    // A link's `.wire` class paints its wire with `stroke`, one vocabulary with a
+    // node's outline (SPEC §9/§13); its colour states once as a
+    // `.lini-style-wire { stroke: … }` rule — never inline on the link.
     assert!(
         svg.contains(".lini .lini-style-wire { stroke: teal; }"),
-        "a link class's `link-color:` maps to a stroke rule: {}",
+        "a link's stroke class states once as a rule: {}",
         svg
     );
     let link_g = svg

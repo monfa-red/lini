@@ -58,9 +58,10 @@ Building from a clone instead? `cargo install --path .`
 
 ```
 {                                   // the stylesheet — pure setup, draws nothing
-  link-color: --gray-deep; clearance: 10;   // link defaults cascade to every link
+  clearance: 10;                     // clearance cascades to every link
+  |-|   { stroke: --gray-deep; }     // |-| styles every link's wire
   .hot  { fill: --red-wash; stroke: --red-ink; }  // a node class
-  .loud { link-color: red; link-width: 2; }       // a link class
+  .loud { stroke: red; stroke-width: 2; }         // a class — for a link's wire or a node's outline
   |db::cyl| { fill: lightyellow; }    // a new type from the cylinder primitive
 }
 

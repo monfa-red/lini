@@ -139,7 +139,7 @@ Scale splits the world in two, the drafting way — the model scales, the sheet 
 
 | Scales with `scale:` (model) | Stays sheet-space px (chrome) |
 |---|---|
-| `draw:` paths, `points:`, `width` / `height` of geometry | `stroke-width`, `link-width`, markers |
+| `draw:` paths, `points:`, `width` / `height` of geometry | `stroke-width` (shapes and links), markers |
 | `translate:` of geometry children, mate `gap:` | `font-size`, all text |
 | `pattern:` offsets and radii | hatch pitch, center-mark overhang |
 | | dimension offsets, stacking pitch, leader gaps |
@@ -534,12 +534,13 @@ A dimension sits **outside** the geometry, on a `side:` (the chart-axis property
 - Anatomy, all baked sheet-space constants ([§13](#13-lowering--render)): extension
   lines spring from the anchors with a small gap at the feature and overshoot past the
   dim line; arrows are **drafting-slender** — the drawing lowers its own links, so its
-  arrowhead is the long, narrow, filled form (≈3:1), sized by `link-width`, while `->`
-  elsewhere keeps the core marker; the value sits centred **above** the line. A span
-  too narrow for text + arrows flips its arrows outside the extension lines and slides
-  the text past the nearer one, away from the geometry — deterministic, no solver.
-- Dimensions are painted by the **link family** (`link`, `link-width`, `link-style` —
-  `stroke*` on a link errors, per core); a drawing scope defaults `link-width: 1`, so
+  arrowhead is the long, narrow, filled form (≈3:1), sized by the dim's `stroke-width`,
+  while `->` elsewhere keeps the core marker; the value sits centred **above** the line.
+  A span too narrow for text + arrows flips its arrows outside the extension lines and
+  slides the text past the nearer one, away from the geometry — deterministic, no solver.
+- Dimensions are links, styled like any link ([SPEC §9](SPEC.md)): `stroke` /
+  `stroke-width` / `stroke-style` via the `|-|` selector or the dim's own `{ }`. A
+  drawing scope defaults its links to `stroke-width: 1` (`|-| { stroke-width: 1 }`), so
   annotation lines read one weight under the 1.5 object lines. Dimension text uses the
   link-label defaults (`font-size: 11`, normal weight); `font-size:` / `color:` on the
   dim restyle it, per core.
@@ -617,8 +618,8 @@ colours are ordinary paints, so hatching themes, flips dark/light, and bakes. Ha
 line width is fixed (0.75) — a texture, not a stroke.
 
 **`stroke-style: center`** is a new stroke-style value — the dash-dot **centerline**
-pattern — on shapes and `|line|`s (`link-style` keeps its core set). Two built-in
-types carry it, one per geometry:
+pattern — on shapes and `|line|`s (a link's `stroke-style` keeps its core set — no
+`center`). Two built-in types carry it, one per geometry:
 
 | Type | Base | Requires | Draws |
 |---|---|---|---|
@@ -711,8 +712,8 @@ exist before it can be measured:
    children ([§10](#10-line--material-conventions)); dim → extension `|line|`s + a
    marker-tipped dimension `|line|` + text; an angle → its arc `|path|` + text;
    leader → `|line|` + marker (`datum` for `>-`) + text; hatch → a `<defs>`
-   `<pattern>`; balloon / note / table — already primitives. Link paint maps to line
-   paint (`link` → `stroke`, `link-width` → `stroke-width`), as in a sequence.
+   `<pattern>`; balloon / note / table — already primitives. A link's wire paint
+   (`stroke` / `stroke-width` / `stroke-style`) is already the `|line|`'s, as in a sequence.
 7. **Scale**: multiply geometry by `scale:`; chrome stays sheet-space
    ([§2](#2-the-drawing-container)). Emit with geometry in source order and annotations
    **above** all of it (the drawing's one draw-order override, like a chart's semantic
@@ -732,7 +733,7 @@ link.
 ```
 dim-offset 18      dim-pitch 16            dim-ext-gap 3     dim-ext-overshoot 3
 dim-arrow 9 × 3    note-offset 14          center-mark-overhang 4
-hatch pitch 6      hatch line-width 0.75   drawing link-width 1   tol-stack 0.7
+hatch pitch 6      hatch line-width 0.75   drawing link stroke-width 1   tol-stack 0.7
 ```
 
 ---

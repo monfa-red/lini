@@ -33,8 +33,9 @@ pub fn desugar(file: &File) -> Result<File, Error> {
     let types = Types::build(file)?;
 
     // ── Stylesheet walk: element-rule decls per type, define bodies, the extra
-    //    class order, and user vars / root decls / rules. Link defaults are a
-    //    resolve-time cascade now (SPEC §9), not a desugared rule. ──
+    //    class order, and user vars / root decls / rules. The baked link base stays
+    //    a resolve-time layer (SPEC §9); a `|-|` rule lowers to `.lini-link` like any
+    //    selector, so the link cascade is the node cascade. ──
     let mut element_rules: HashMap<String, Vec<Decl>> = HashMap::new();
     let mut bodies: Bodies = HashMap::new();
     let mut extra_order: Vec<String> = Vec::new();
@@ -65,6 +66,13 @@ pub fn desugar(file: &File) -> Result<File, Error> {
                     .entry(name.clone())
                     .or_default()
                     .extend(r.decls.iter().cloned()),
+                // `.lini-link` is the lowered `|-|` (SPEC §9), not an instance type:
+                // it never enters `present` (no node wears it), so keep it a plain
+                // rule the link cascade reads — folding it as a type class would drop
+                // it on re-desugar. Every other `.lini-X` is a real type.
+                [SelUnit::Class(c)] if is_lini_class(c) && c == "lini-link" => {
+                    user_rules.push(rewrite_selector(r, &types)?)
+                }
                 // A pre-lowered type class (`.lini-X`, on re-desugar): fold it back
                 // as an element rule so the regenerated class is byte-identical.
                 [SelUnit::Class(c)] if is_lini_class(c) => {
@@ -570,6 +578,9 @@ fn rewrite_selector(rule: &Rule, types: &Types) -> Result<Rule, Error> {
             }
             SelUnit::Class(c) => units.push(SelUnit::Class(c.clone())),
             SelUnit::Id(i) => units.push(SelUnit::Id(i.clone())),
+            // `|-|` — the link type (SPEC §9): every link wears `.lini-link`, so the
+            // selector lowers to that class and the node cascade matches it unchanged.
+            SelUnit::Link => units.push(SelUnit::Class(lini_class("link"))),
         }
     }
     Ok(Rule {

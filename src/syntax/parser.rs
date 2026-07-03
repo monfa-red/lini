@@ -7,7 +7,7 @@
 //! `[ ]` of children and internal links).
 
 use super::ast::*;
-use crate::ast::{LinkOp, Side};
+use crate::ast::{LineStyle, LinkMarker, LinkOp, Side};
 use crate::error::Error;
 use crate::lexer::{TokKind, Token};
 use crate::span::Span;
@@ -58,6 +58,22 @@ impl<'a> Parser<'a> {
 
     fn kind_at(&self, n: usize) -> Option<&TokKind> {
         self.toks.get(self.pos + n).map(|t| &t.kind)
+    }
+
+    /// The cursor sits on the link selector `|-|` (SPEC §4, §9): bars wrapping a
+    /// bare solid dash — a line, in the identity capsule. The `-` lexes as a
+    /// marker-less solid link op, so this is `| · - · |`.
+    fn at_link_bars(&self) -> bool {
+        matches!(self.kind(), Some(TokKind::Pipe))
+            && matches!(
+                self.kind_at(1),
+                Some(TokKind::LinkOp(LinkOp {
+                    line: LineStyle::Solid,
+                    start: LinkMarker::None,
+                    end: LinkMarker::None,
+                }))
+            )
+            && matches!(self.kind_at(2), Some(TokKind::Pipe))
     }
 
     fn span(&self) -> Span {
@@ -152,7 +168,7 @@ impl<'a> Parser<'a> {
             Some(TokKind::Dot) => Ok(Kind::Rule),  // .class { … }
             Some(TokKind::Hash(_)) => Ok(Kind::Rule), // #hero { … } — an id rule
             Some(TokKind::LinkOp(_)) => Err(self.err(
-                "'->' draws a link on the canvas — set link defaults with 'link-color:' / 'link-width:' in a '{ }' block",
+                "'->' draws a link on the canvas — style every link with '|-| { stroke: … }' in a '{ }' block",
             )),
             Some(TokKind::Pipe) => Ok(
                 // `|name::base|` is a define; any other `|…|` is a rule selector.
@@ -403,6 +419,11 @@ impl<'a> Parser<'a> {
         let mut units = Vec::new();
         loop {
             match self.kind() {
+                // `|-|` — the link type (SPEC §9): every link, styled like a node.
+                Some(TokKind::Pipe) if self.at_link_bars() => {
+                    self.pos += 3;
+                    units.push(SelUnit::Link);
+                }
                 Some(TokKind::Pipe) => {
                     let (ty, id) = self.parse_identity(BarsCtx::Selector)?;
                     units.push(match ty {
@@ -428,6 +449,12 @@ impl<'a> Parser<'a> {
     /// and id, at least one present. Shared by an instance and a selector unit;
     /// `ctx` only picks the glued-class error wording.
     fn parse_identity(&mut self, ctx: BarsCtx) -> Result<(Option<String>, Option<String>), Error> {
+        // `|-|` is the link selector, not an identity: reachable here only as an
+        // instance (a selector peels it first), so it draws nothing (SPEC §9).
+        if ctx == BarsCtx::Instance && self.at_link_bars() {
+            return Err(self
+                .err("a link is drawn by an operator — '|-|' only styles links (write 'a -> b')"));
+        }
         self.expect(&TokKind::Pipe, "'|'")?;
         let (ty, id) = match self.kind() {
             // `|#id|` — an id alone, the default box type.
@@ -857,8 +884,9 @@ fn link_op_str(op: LinkOp) -> String {
     )
 }
 
-/// Which bars are being parsed — picks the glued-class error wording only.
-#[derive(Clone, Copy)]
+/// Which bars are being parsed — picks the glued-class error wording, and gates
+/// the `|-|`-as-instance rejection (SPEC §9).
+#[derive(Clone, Copy, PartialEq)]
 enum BarsCtx {
     Instance,
     Selector,

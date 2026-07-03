@@ -167,6 +167,9 @@ fn unit_matches(unit: &SelUnit, facts: &NodeFacts) -> bool {
             facts.classes.iter().any(|x| x == name)
                 && id.as_deref().is_none_or(|i| facts.id.as_deref() == Some(i))
         }
+        // `|-|` lowers to `.lini-link` in desugar (SPEC §9), so the cascade — which
+        // runs on the lowered stylesheet — never sees it.
+        SelUnit::Link => unreachable!("'|-|' is lowered to '.lini-link' before resolve"),
     }
 }
 

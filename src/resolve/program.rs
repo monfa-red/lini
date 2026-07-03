@@ -5,7 +5,7 @@
 //!
 //! [`lib.rs`]'s compile pipeline enters resolution here (after `desugar`).
 
-use super::cascade::Stylesheet;
+use super::cascade::{NodeFacts, Stylesheet};
 use super::defaults;
 use super::ir::{
     AttrMap, Program, ResolvedCall, ResolvedInst, ResolvedScene, ResolvedValue, SheetInputs,
@@ -71,23 +71,31 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
     )?;
     let index = PathIndex::build(&nodes);
 
-    // ── Links: root statements then lifted internal links. Each link's lowest
-    //    layer is the baked base plus the `link*` / `clearance` / `routing`
-    //    cascaded from its scope's container chain (SPEC §9). ──
+    // ── Links: root statements then lifted internal links. A link resolves through
+    //    the node cascade (SPEC §9, §13): `resolve_link` layers the `|-|` rules over
+    //    a base of the baked defaults plus the scope's `clearance` / `routing`, and
+    //    matches descendant rules against the scope's container chain. ──
     let baked = baked_link_defaults(&vars, &funcs)?;
     let mut link_list = Vec::new();
     for w in &file.links {
-        let base = link_cascade(&baked, &nodes, &root_attrs, &[]);
-        link_list.extend(links::resolve_link(w, &ctx, &index, &[], &base)?);
+        let (base, ancestors) = link_scope(&baked, &nodes, &root_attrs, &[]);
+        link_list.extend(links::resolve_link(
+            w,
+            &ctx,
+            &index,
+            &[],
+            &ancestors,
+            &base,
+        )?);
     }
     for lw in &lifted {
-        let base = link_cascade(&baked, &nodes, &root_attrs, &lw.prefix);
+        let (base, ancestors) = link_scope(&baked, &nodes, &root_attrs, &lw.prefix);
         link_list.extend(links::resolve_link(
-            &lw.link, &ctx, &index, &lw.prefix, &base,
+            &lw.link, &ctx, &index, &lw.prefix, &ancestors, &base,
         )?);
     }
 
-    let sheet_inputs = build_sheet_inputs(file, &vars, &funcs, &root_attrs, &baked)?;
+    let sheet_inputs = build_sheet_inputs(file, &vars, &funcs, &root_attrs, &baked, &sheet)?;
 
     Ok(Program {
         vars,
@@ -300,45 +308,72 @@ fn baked_link_defaults(
     Ok(out)
 }
 
-/// The `link*` / `clearance` / `routing` properties that cascade to a link from
-/// its scope's container chain (SPEC §9), nearest ancestor winning.
-const LINK_PROPS: &[&str] = &[
-    "link-color",
-    "link-width",
-    "link-style",
-    "clearance",
-    "routing",
-    "link-font-size",
-];
+/// The scene-config properties a link takes from its scope (SPEC §9): geometry, not
+/// paint, so they live on a container's own block and cascade nearest-wins — unlike
+/// the wire and label look, which come from `|-|` rules. `clearance` is respected
+/// between links *and* nodes; `routing` pairs with `layout`.
+const SCOPE_LINK_PROPS: &[&str] = &["clearance", "routing"];
 
-/// A link's base cascade: the baked defaults, then each [`LINK_PROPS`] value
-/// taken from the nearest container on the path root → `scope` that sets it.
-/// Returned in `link*` surface terms; [`links::resolve_link`] maps them to
-/// `stroke*`. A root-scope link passes `nodes: &[]` / `scope: &[]`.
-fn link_cascade(
-    baked: &[(String, ResolvedValue)],
-    nodes: &[ResolvedInst],
-    root_attrs: &AttrMap,
-    scope: &[String],
-) -> Vec<(String, ResolvedValue)> {
-    let mut chain: Vec<&AttrMap> = vec![root_attrs];
+/// The container chain from the scene root down to `scope` (each segment an id),
+/// stopping at the first missing segment. The root is not a node, so it is absent —
+/// [`link_scope`] folds it in for the config cascade, and a bare `|-|` matches every
+/// link with no ancestor needed.
+fn scope_chain<'a>(nodes: &'a [ResolvedInst], scope: &[String]) -> Vec<&'a ResolvedInst> {
+    let mut out = Vec::new();
     let mut cur = nodes;
     for seg in scope {
         match cur.iter().find(|n| n.id.as_deref() == Some(seg)) {
             Some(n) => {
-                chain.push(&n.attrs);
+                out.push(n);
                 cur = &n.children;
             }
             None => break,
         }
     }
-    let mut out = baked.to_vec();
-    for prop in LINK_PROPS {
-        if let Some(v) = chain.iter().rev().find_map(|a| a.get(prop)) {
-            out.push((prop.to_string(), v.clone()));
+    out
+}
+
+/// The selector identity of a resolved container (SPEC §13): its worn `.lini-*` type
+/// classes (the type chain plus its primitive) and user classes, and its id — what a
+/// descendant `|table| |-|` matches against.
+fn inst_facts(inst: &ResolvedInst) -> NodeFacts {
+    let mut classes: Vec<String> = inst
+        .type_chain
+        .iter()
+        .map(|t| format!("lini-{t}"))
+        .collect();
+    classes.push(format!("lini-{}", inst.kind.as_str()));
+    classes.extend(inst.applied_styles.iter().cloned());
+    NodeFacts {
+        classes,
+        id: inst.id.clone(),
+    }
+}
+
+/// A link's scope inputs: its `base` layer — the baked defaults plus the nearest
+/// scope's [`SCOPE_LINK_PROPS`] (root → container chain, nearest winning) — and the
+/// `ancestors` its descendant `|…| |-|` rules match against. A root-scope link
+/// passes `scope: &[]`.
+fn link_scope(
+    baked: &[(String, ResolvedValue)],
+    nodes: &[ResolvedInst],
+    root_attrs: &AttrMap,
+    scope: &[String],
+) -> (Vec<(String, ResolvedValue)>, Vec<NodeFacts>) {
+    let chain = scope_chain(nodes, scope);
+    let mut base = baked.to_vec();
+    for prop in SCOPE_LINK_PROPS {
+        let nearest = chain
+            .iter()
+            .rev()
+            .find_map(|n| n.attrs.get(prop))
+            .or_else(|| root_attrs.get(prop));
+        if let Some(v) = nearest {
+            base.push((prop.to_string(), v.clone()));
         }
     }
-    out
+    let ancestors = chain.iter().map(|n| inst_facts(n)).collect();
+    (base, ancestors)
 }
 
 /// The renderer's [`SheetInputs`]: every single-class rule's attrs (the generated
@@ -351,6 +386,7 @@ fn build_sheet_inputs(
     funcs: &FuncTable,
     root_attrs: &AttrMap,
     baked: &[(String, ResolvedValue)],
+    sheet: &Stylesheet,
 ) -> Result<SheetInputs, Error> {
     let mut class_rules = Vec::new();
     for item in &file.stylesheet {
@@ -360,14 +396,13 @@ fn build_sheet_inputs(
             class_rules.push((c.clone(), decls_attrmap(&r.decls, vars, funcs)?));
         }
     }
-    // The `.lini-link` rule's defaults: the root-level link cascade, mapped to
-    // `stroke*` terms for the SVG path (SPEC §9, §13).
-    let link_defaults = collapse(&links::map_link_props(link_cascade(
-        baked,
-        &[],
-        root_attrs,
-        &[],
-    )));
+    // The `.lini-link` rule's defaults: a root-scope link — the baked base plus the
+    // scope config, then the root `|-|` element rule (SPEC §9, §13). Its paint states
+    // the `.lini-link` CSS rule; a link that differs inlines the difference.
+    let (base, _) = link_scope(baked, &[], root_attrs, &[]);
+    let mut link_defaults = base;
+    link_defaults.extend(sheet.class_decls(links::LINK_CLASS));
+    let link_defaults = collapse(&link_defaults);
     let root_font_size = root_attrs.number("font-size").unwrap_or(15.0);
     // Inherited-text props the global block set, for the `.lini` rule (SPEC §10).
     // `font-family` / `font-weight` / `color` override their themeable var when set
@@ -610,10 +645,10 @@ mod tests {
     }
 
     #[test]
-    fn root_link_defaults_cascade_to_links() {
-        // SPEC §9: `link-color` / `link-width` on the root cascade to every link,
-        // mapping onto the path's `stroke` / `stroke-width`.
-        let p = rv4("{ link-color: red; link-width: 3; }\na -> b\n");
+    fn link_selector_styles_every_link() {
+        // SPEC §9: `|-| { stroke; stroke-width }` styles every link's wire — the
+        // ordinary node vocabulary, scoped by the selector, no `link-*` family.
+        let p = rv4("{ |-| { stroke: red; stroke-width: 3 } }\na -> b\n");
         assert!(
             matches!(p.links[0].attrs.get("stroke"), Some(ResolvedValue::Ident(s)) if s == "red")
         );
@@ -621,12 +656,12 @@ mod tests {
     }
 
     #[test]
-    fn link_props_cascade_from_a_container_scope() {
-        // SPEC §9: a group's `link` overrides the root's for links in its body; a
-        // root-scope link keeps the root value. Root links resolve before lifted
-        // (body) links, so [0] is `a -> g` and [1] is the internal `x -> y`.
+    fn scoped_link_rule_overrides_the_root_one() {
+        // SPEC §13: a descendant `#g |-|` styles the links written in `g`'s body; a
+        // root-scope link keeps the bare `|-|` value. Root links resolve before
+        // lifted (body) links, so [0] is `a -> g` and [1] is the internal `x -> y`.
         let p = rv4(
-            "{ link-color: --gray; }\n|box#a|\n|group#g| { link-color: --red-ink } [\n  |box#x|\n  |box#y|\n  x -> y\n]\na -> g\n",
+            "{ |-| { stroke: --gray }\n#g |-| { stroke: --red-ink } }\n|box#a|\n|group#g| [\n  |box#x|\n  |box#y|\n  x -> y\n]\na -> g\n",
         );
         let stroke_var = |i: usize| match p.links[i].attrs.get("stroke") {
             Some(ResolvedValue::LiveVar { name, .. }) => name.clone(),
@@ -634,6 +669,17 @@ mod tests {
         };
         assert_eq!(stroke_var(0), "gray");
         assert_eq!(stroke_var(1), "red-ink");
+    }
+
+    #[test]
+    fn clearance_cascades_from_a_container_block() {
+        // SPEC §9: `clearance` / `routing` stay scene config — set on a container's
+        // own block, they cascade to that scope's links, nearest winning.
+        let p = rv4(
+            "{ clearance: 8 }\n|box#a|\n|group#g| { clearance: 20 } [\n  |box#x|\n  |box#y|\n  x -> y\n]\na -> g\n",
+        );
+        assert_eq!(p.links[0].attrs.number("clearance"), Some(8.0)); // a -> g (root)
+        assert_eq!(p.links[1].attrs.number("clearance"), Some(20.0)); // x -> y (in g)
     }
 
     #[test]

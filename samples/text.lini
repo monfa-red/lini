@@ -3,7 +3,10 @@
 // link's [ ] labels are the same styleable leaves, nudgeable with translate/rotate.
 
 {
-  gap: 26; padding: 26; link-color: --gray;
+  gap: 26; padding: 26;
+  // |-| styles every link at once — its wire (stroke) and, in one place, all of its
+  // labels (color / font-*), the pair that once needed a class on each link.
+  |-| { stroke: --gray; color: --teal-ink; font-size: 12; font-weight: bold; }
 }
 
 "Styleable text, in place" { font-size: 20; font-weight: bold; }
@@ -18,5 +21,7 @@
 
 |box#a| "Alpha"
 |box#b| "Beta"
+|box#c| "Gamma"
 
-a -> b [ "nudged & turned" { translate: 0 -10; rotate: -6; color: --teal-ink; } ]
+a -> b "styled by |-|"                    // wears the global label look — teal, bold, 12
+b -> c [ "nudged & turned" { translate: 0 -10; rotate: -6; color: --red-ink; } ]  // one label overrides

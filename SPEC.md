@@ -133,9 +133,9 @@ like wrapping a web page's text in an element.
 **The file is the root container.** The stylesheet `{ }` is the root's own setup
 block; the canvas instances are its children (written bare — the file *is* its
 `[ ]`); the links are its internal links. Scene properties (`layout`, `gap`,
-`padding`, `fill`, `font-size`, `link-color`, `routing`, …) sit in that block;
-inheritable ones (`font-*`, `color`, `link-color`, `clearance`, `routing`) cascade to
-every node and link.
+`padding`, `fill`, `font-size`, `clearance`, `routing`, …) sit in that block, alongside
+rules like `|-| { stroke: … }` for link look; inheritable ones (`font-*`, `color`,
+`clearance`, `routing`) cascade to every node and link.
 
 **Render order is source order; the cascade is whole-file.** Instances draw in the
 order written (later on top, pinned children above the flow; `layer:` overrides),
@@ -217,7 +217,7 @@ and 8-digit forms carry alpha), CSS names (`red`, `cornflowerblue`), `rgb(…)`,
 `oklch(L, C, H[, A])` (the palette's own space — L/A in 0–1, C the chroma, H in
 degrees; folded to a hex at compile time, so it renders in every target), a
 `--name` variable reference, or `none`. Out-of-range channels are an error. Beyond
-a flat colour, a **paint** (`fill` / `stroke` / `link-color` / `gap-color`) may be a **gradient** —
+a flat colour, a **paint** (`fill` / `stroke` — a shape's outline or a link's wire — / `gap-color`) may be a **gradient** —
 `gradient(…)`, `linear-gradient(…)`, or `radial-gradient(…)`
 ([§12.3](#123-gradients)); the built-in hue palette ([§12.2](#122-the-colour-palette))
 is reached through ordinary `--name` references.
@@ -238,11 +238,11 @@ root's setup block, so it additionally holds the file-global definitions:
 
 | Item | Form | Means |
 |---|---|---|
-| Scene config | `layout: grid;` | a declaration on the root |
-| Link / routing defaults | `link-color: #666;` `routing: orthogonal;` | declarations that cascade to every link ([§9](#9-links)) |
+| Scene config | `layout: grid;` `routing: orthogonal;` | a declaration on the root — `clearance` / `routing` cascade to every link ([§9](#9-links)) |
 | Variable | `--brand: #f60;` | a themeable visual variable (colour / font) |
 | Function | `scale(n) …` | a reusable compute function — a backtick body ([§12.7](#127-expressions--functions)) |
 | Rule | `\|box\| { … }` | style every box (an element selector) |
+| Link rule | `\|-\| { stroke: #666; }` | style every link — the `\|-\|` selector ([§9](#9-links)) |
 | Descendant rule | `\|table\| \|box\| { … }` | style every box inside a table |
 | Class | `.hot { … }` | define class `hot` |
 | Id rule | `#hero { … }` | style the one node with id `hero` |
@@ -250,10 +250,11 @@ root's setup block, so it additionally holds the file-global definitions:
 
 ```
 {
-  gap: 16;  fill: --bg;  link-color: #666;
+  gap: 16;  fill: --bg;
   --brand: #ff6600;
   scale(n) `100 * 1.2^n`;
   |box| { radius: 6; }
+  |-| { stroke: #666; }
   .hot { stroke-width: 2; }
   |treat::box| { radius: 5; }
 }
@@ -400,21 +401,25 @@ bare `key: value` outside a `{ }` is an error. See [Properties](#11-properties).
 
 A **rule** is `selector { declarations }`. A selector is one or more
 space-separated **units**; the space is the descendant combinator. A unit is a type
-`|box|` (with an optional `#id`, `|table#main|`), a class `.hot`, or an id `#hero`:
+`|box|` (with an optional `#id`, `|table#main|`), the **link type `|-|`**, a class
+`.hot`, or an id `#hero`:
 
 ```
 |box| { … }              // every box (element selector)
+|-| { … }                // every link — a line in the identity capsule ([§9](#9-links))
 .hot { … }               // every node with class .hot
 #hero { … }              // the one node with id hero
 |table| |box| { … }      // every box inside a table (descendant)
+#g |-| { … }             // every link written in #g
 .sidebar |box| { … }     // every box inside a .sidebar
 |table| .hot { … }       // every .hot inside a table
 ```
 
-A **descendant selector** matches a node whose ancestor chain contains each unit in
-order (not necessarily adjacent), exactly like CSS's descendant combinator. Every
-construct keeps its sigil — `|box|`, `.hot`, `#hero` — so a selector reads as a run
-of marked units; a bare word is never a selector.
+A **descendant selector** matches a node (or link) whose ancestor chain contains each
+unit in order (not necessarily adjacent), exactly like CSS's descendant combinator.
+Every construct keeps its sigil — `|box|`, `|-|`, `.hot`, `#hero` — so a selector reads
+as a run of marked units; a bare word is never a selector. `|-|` is selector-only: a
+link is drawn by an operator, never instantiated ([§9](#9-links)).
 
 A type's class never glues into its bars (`|box.hot|` is rejected): a class is
 **worn**, not part of identity. To match boxes-with-a-class, style the class
@@ -690,8 +695,8 @@ Values: `none`, `arrow`, `dot`, `circle`, `diamond`, and the ER **cardinality se
 `crow` (the "many" foot), `one` (a bar `|`), `zero-or-one`, `one-or-many`, `zero-or-many`
 (a bar or `○` paired with the foot). `circle` is a larger `dot` — a filled point sized for
 hovering or reading (on a chart line it marks a data point; [CHARTS §3](CHARTS.md)). Markers scale
-with `stroke-width` (on a link, with `link-width`), floor 5 px; colour follows the stroke /
-link colour.
+with `stroke-width` (a link's wire and a shape's outline alike), floor 5 px; colour follows
+the stroke.
 `|line|` is bare by default — write `|line| { marker-end: arrow }` for a one-shot
 arrow. For links the operator picks markers (see [§9](#9-links)). Source order wins:
 `marker: arrow; marker-end: dot` → start arrow, end dot.
@@ -868,10 +873,13 @@ A link connects scene-node ids with an operator (`a -> b`). Like every node it h
 placed along the route by `along:`. It is never written as a `|link|` instance; the
 operator draws it.
 
-Defaults for every link — `link-color`, `link-width`, `link-style`, `clearance`,
-`marker*`, `routing` — **cascade** from the link's scope: set them on the root or any
-container's `{ }` and they reach every link in that scope, exactly as `color` reaches
-text. A link's own `{ }` overrides.
+A link is **styled like a node** ([Styling](#styling)): its type is `|-|` — a line in
+the identity capsule, the one selector that matches every link — so `stroke` is its
+wire and `color` / `font-*` its labels, the ordinary vocabulary with no parallel
+family. `|-| { … }` styles every link; a descendant (`#g |-|`, `|table| |-|`) or a worn
+class scopes it; a link's own `{ }` overrides. Only **`clearance`** and **`routing`**
+stay scene config — geometry, not paint — set on a container's `{ }` and cascading to
+its links.
 
 ### Operators
 
@@ -898,8 +906,8 @@ end).
 
 If the operator carries no markers, there are none on both ends. Explicit `marker:` /
 `marker-start:` / `marker-end:` override the operator (source order wins). The
-operator's line part sets the link's `link-style` (`--` ⇒ `dashed`, `---` ⇒ `dotted`,
-`~` ⇒ `wavy`); an explicit `link-style:` overrides it.
+operator's line part sets the link's `stroke-style` (`--` ⇒ `dashed`, `---` ⇒ `dotted`,
+`~` ⇒ `wavy`); an explicit `stroke-style:` overrides it.
 
 `-<` / `>-<` draw the ER **crow's-foot** ("many"); the finer cardinalities ([§7](#7-nodes)) are
 set via `marker*:`, with no operator spelling ([§20](#20-deferred)).
@@ -934,29 +942,37 @@ every link the statement expands to.
 
 ### Styling
 
-`link-color` / `link-width` / `link-style` are the **link paint family**, parallel to
-`stroke` / `stroke-width` / `stroke-style` for nodes and `color` for text:
+A link's **type is `|-|`** — the one selector that matches every link — so it is
+styled with the ordinary node/text vocabulary, no parallel `link-*` family. **`stroke`
+is the wire; `color` / `font-*` the labels.** The same `stroke` paints a node's outline
+and a link's wire — one role, one property — and a class carrying it dresses either:
 
-| Property | Type | Default | Notes |
+| Property | Type | Default | Role |
 |---|---|---|---|
-| `link-color` | colour | `--stroke` | The line colour. |
-| `link-width` | number | 2 | Line thickness; markers scale with it. |
-| `link-style` | `solid` / `dashed` / `dotted` / `wavy` | from the operator | The dash pattern; usually set by the op (`-->` ⇒ dashed), overridable here. |
+| `stroke` | colour | `--stroke` | The wire's colour. |
+| `stroke-width` | number | 2 | Wire thickness; markers scale with it. |
+| `stroke-style` | `solid` / `dashed` / `dotted` / `wavy` | from the operator | The dash pattern; usually set by the op (`-->` ⇒ dashed), overridable here. |
+| `color` · every `font-*` · `letter-spacing` · … | — | inherits / baked | The labels ([Labels](#labels)). |
 
-A link is a **link, not a stroked shape**: it is painted by this family alone, so
-`stroke` / `stroke-width` / `stroke-style` on a link — in its own `{ }` or a class it
-wears — is an **error** that names the `link-*` replacement. A class meant for links
-uses `link-*` (`.flow { link-color: --blue }`), one meant for nodes uses `stroke*`.
-
-All three cascade from the link's scope and override on the link's own `{ }`:
+`|-| { … }` styles every link; a descendant (`#g |-|`, `|table| |-|`) or a worn class
+scopes it, exactly as `|box|` / `#g |box|` / `.hot` scope a node; a link's own `{ }`
+overrides — the same cascade a node walks ([§13](#13-specificity)):
 
 ```
-{ link-color: #888; link-width: 1.5; clearance: 12; routing: orthogonal }
-a -> b { link-color: red; link-style: dashed }     // one link overrides
+{
+  |-| { stroke: #888; stroke-width: 1.5; font-size: 12 }   // every link
+  #g |-| { stroke: --blue }                                // links written in #g
+  .flow { stroke: --teal }                                 // a worn class — nodes or links
+  clearance: 12; routing: orthogonal                       // scene config, cascades to links
+}
+a -> b .flow "hi" { stroke: red; stroke-style: dashed }    // one link overrides
 ```
 
-`clearance` (default 16) and `routing` (default `orthogonal`) cascade the same way;
-`marker*` come from the operator and override per link.
+`|-|` is **selector-only**: a link is drawn by an operator, so `|-|` never appears as an
+instance ([§16](#16-errors)). `clearance` (default 16) and `routing` (default
+`orthogonal`) are **scene config** — geometry, not paint — set on a container's `{ }`,
+cascading to that scope's links, nearest winning; `marker*` come from the operator and
+override per link.
 
 ### Labels
 
@@ -973,7 +989,7 @@ content:
 
 ```
 a -> b "watches"                                // the common case — one label, auto-placed
-a -> b "watches" .loud { link-color: red }            // + a class and link style
+a -> b "watches" .loud { stroke: red }          // + a class and wire colour
 a -> b { along: 0.3 0.7 } [ "near a" "near b" ] // two labels
 a -> b [ "watches" { translate: 0 -6 } ]        // a styled / nudged label
 ```
@@ -983,9 +999,10 @@ own `{ }` in the `[ ]` to nudge or turn it. The head label takes no style — th
 after a link's head is the *link's* — so a styled label rides the `[ ]`, exactly as a
 node's does. A label is an obstacle to nothing, and may slide along the link to keep
 clear of nodes and other labels; the link never moves for it. Link labels default to
-`font-size: 11`, `font-weight: normal`, and are tinted by the link's `color` — each
-link carries those baked text defaults, cascading to its labels; set `font-size` /
-`color` on the link to restyle them all at once, or on a label to restyle one.
+`font-size: 11`, `font-weight: normal`, and are tinted by the link's `color` — a link's
+text props cascade to its labels; set them via `|-| { font-size: 14; color: --blue }`
+to restyle every link's labels at once, on one link's `{ }` to restyle its labels, or
+on a label's own `{ }` to restyle one.
 
 ### Endpoints & scope
 
@@ -1146,7 +1163,7 @@ Every operator, marker, class, and `{ }` is the link's own ([§9](#9-links)); on
 ([§9](#labels)) has no role. A chain `a -> b -> c` is two messages on two rows; a fan
 `a -> b & c` likewise expands to two, in expansion order. A forced side (`a:left`) and
 `routing` have no meaning on a time-row arrow and are ignored. Call vs. return is read from
-the **operator** (`->` vs `-->`), not a `link-style:` override. (Async-as-wavy is a Lini
+the **operator** (`->` vs `-->`), not a `stroke-style:` override. (Async-as-wavy is a Lini
 convention — UML draws an open arrowhead; reusing the operators keeps the syntax sigil-free.)
 
 ### Activations
@@ -1235,9 +1252,8 @@ its y is its row:
    **row** — a frame records the row span of its contents, a note its row.
 3. **Lower** to primitives at baked coordinates: header → `|block|` + text, lifeline → `|line|`,
    message → a `|line|` arrow + its label text, activation / frame / note → `|block|`. A
-   message's link paint maps to the line's — `link-color` → `stroke`, `link-width` → `stroke-width`,
-   `link-style` → `stroke-style`, the operator's end marker → `marker-end`. The orthogonal
-   router never sees these links.
+   message's wire paint (`stroke` / `stroke-width` / `stroke-style`) is already the `|line|`'s,
+   and the operator's end marker → `marker-end`. The orthogonal router never sees these links.
 
 The output is an ordinary primitive subtree — so render, theming, palette, `--bake-vars`,
 `fmt`, and determinism ([§14](#14-svg-output), [§18](#18-implementer-algorithm)) all apply
@@ -1264,34 +1280,37 @@ Every property is `name: value;`. Dash-case names; positional, space-separated v
 
 `color` cascades through the SVG via native `currentColor`: set it on a container to
 recolour every descendant's text that doesn't override. Use `color` for *labels*,
-`fill` for *bodies*. `fill`, `stroke`, `link-color`, and `gap-color` all accept a **gradient** as
+`fill` for *bodies*. `fill`, `stroke`, and `gap-color` all accept a **gradient** as
 well as a flat colour ([§12.3](#123-gradients)).
 
 ### Stroke
 
 | Property | Type | Default |
 |---|---|---|
-| `stroke` | color | `--stroke` (a node's outline / a `\|line\|`'s colour) |
+| `stroke` | color | `--stroke` (a node's outline, a `\|line\|`'s colour, a link's wire) |
 | `stroke-width` | number | 2 (`\|group\|` is `1`) |
-| `stroke-style` | `solid` / `dashed` / `dotted` | `solid` |
+| `stroke-style` | `solid` / `dashed` / `dotted` / `wavy` (links) | `solid` |
 
-`stroke*` paints a **shape's** outline; a **link** uses the parallel `link-*` family
-below (`stroke*` on a link is an error — [§9](#9-links)).
+`stroke*` paints a **shape's outline** and a **link's wire** alike — one role, one
+family, selected on a link by `|-|` ([§9](#9-links)). A `.class` carrying `stroke`
+dresses whichever wears it, node or link.
 
 ### Links
 
+A link is styled like a node ([§9](#9-links)): its wire takes `stroke` / `stroke-width`
+/ `stroke-style` (above), its labels the text props ([Text](#text)), all via the `|-|`
+selector or the link's own `{ }`. Its own properties are the geometry and label placement:
+
 | Property | Type | Default | Notes |
 |---|---|---|---|
-| `link-color` | color | `--stroke` | A link's line colour ([§9](#9-links)). Cascades to links in scope. |
-| `link-width` | number | 2 | A link's thickness. |
-| `link-style` | `solid` / `dashed` / `dotted` / `wavy` | from the operator | A link's dash pattern. |
-| `clearance` | number | 16 | Min gap a link keeps from nodes and links. Cascades. |
-| `routing` | `orthogonal` (+ deferred) | `orthogonal` | Routing strategy for links in scope. Cascades. |
+| `clearance` | number | 16 | Min gap a link keeps from nodes and links. **Scene config** — set on a container, cascades to its links. |
+| `routing` | `orthogonal` (+ deferred) | `orthogonal` | Routing strategy for links in scope. Scene config, cascades. |
 | `along` | fraction list | auto | Label positions along the route. |
 | `marker` / `marker-start` / `marker-end` | marker | from the operator | Endpoint glyphs ([§7](#7-nodes)). |
 
-`link-*`, `clearance`, and `routing` are **inheritable**: set on the root or a
-container, they reach every link in that scope; a link's own block overrides.
+`clearance` and `routing` are **inheritable scene config**: set on the root or a
+container, they reach every link in that scope; a link's own block overrides. The wire
+and label look come from `|-|` rules and the link's own block, not inheritance.
 
 ### Geometry & placement
 
@@ -1463,7 +1482,7 @@ diagram references are emitted, so the full palette costs a three-box diagram no
 
 ### 12.3 Gradients
 
-`fill`, `stroke`, `link-color`, and `gap-color` accept a **gradient** in place of a flat colour. Stops are
+`fill`, `stroke` (a shape's outline or a link's wire), and `gap-color` accept a **gradient** in place of a flat colour. Stops are
 ordinary colours — palette `--name`s flip dark/light and bake, a raw `#hex` is a fixed
 literal.
 
@@ -1521,9 +1540,9 @@ clearance 16     icon-size 32        link-width 2          icon stroke-width 2
 ```
 
 `font-size` is body text. Link labels and captions carry their own baked defaults (11
-and 12); a global `font-size:` in the stylesheet sets body text and cascades, each link
-carries the `link-font-size` default for its labels (set `font-size:` on a link to
-change them), and `|caption| { font-size: … }` sets captions. `radius` rounds a `|box|`
+and 12); a global `font-size:` in the stylesheet sets body text and cascades, each link's
+labels carry the baked link-label size (11) — set `font-size:` via `|-|` or a link to
+change them — and `|caption| { font-size: … }` sets captions. `radius` rounds a `|box|`
 by default; `|block|` / `|rect|` are `0`.
 
 Padding defaults to 20 — including the root, whose padding frames the whole scene (the
@@ -1627,8 +1646,10 @@ Properties on a node merge like CSS — **the more specific source wins**, ties 
 5. **The instance's own block** — `|box#client| { fill: white }` — the most specific,
    beats everything above.
 
-For a link: cascaded `link-*` / `clearance` / `routing` from its scope →
-descendant/class/id rules → the link's own declarations.
+A link walks the **same ladder** — its type is `|-|`, its ancestors are its scope's
+container chain, it has no id: the baked base plus the scope's `clearance` / `routing`
+(tier 0), the `|-|` element rule (type), descendant `|…| |-|` and worn-class rules, then
+the link's own block.
 
 Complex values (`translate: x y`, `padding: t r b l`) replace wholesale — the merge is
 per-property, not deep. A `pin`ned child ignores `cell:` — pinning takes it out of the
@@ -1786,8 +1807,8 @@ Format: `filename:line:col: error: <message>` (LSP-compatible).
 | Declaration outside a block | `a declaration belongs in a '{ }' block` |
 | Bare node on the canvas | `a node leads with bars — write '\|box#X\|' (a bare name is a link endpoint)` |
 | Bare type in the stylesheet | `a type only appears in bars — write '\|box\| { }' to style every box` |
-| `->` in the stylesheet | `'->' draws a link on the canvas — set link defaults with 'link-color:' / 'link-width:' in a '{ }' block` |
-| `stroke*` on a link | `'stroke-width' paints a shape's outline, not a link — a link uses the 'link-*' family, so write 'link-width' (SPEC §9)` |
+| `->` in the stylesheet | `'->' draws a link on the canvas — style every link with '\|-\| { stroke: … }' in a '{ }' block` |
+| `\|-\|` as an instance | `a link is drawn by an operator — '\|-\|' only styles links (write 'a -> b')` |
 | Deferred routing | `routing: 'orthogonal' and 'straight' are built; 'curved' is deferred (§20)` |
 | Glued compound in a rule | `a selector unit can't glue a type and a class — space them (descendant) or style '.hot'` |
 | Spaced class chain | `classes glue into a chain — write '.hot.loud', no space` |
@@ -1803,7 +1824,7 @@ Format: `filename:line:col: error: <message>` (LSP-compatible).
 | Gradient with < 2 stops | `gradient() needs at least two colour stops` |
 | `linear-gradient` without an angle | `linear-gradient needs an angle first, then ≥ 2 colour stops` |
 | Unknown side | `':X' is not a side — use top, bottom, left, or right` |
-| `\|link\|` / `\|node\|` as instance | `links are drawn by operators, not the '\|link\|' type` / `'node' is the umbrella concept — write '\|block\|' for the bare box` |
+| `\|link\|` / `\|node\|` as instance | `links are drawn by operators, not the '\|link\|' type (style them with '\|-\|')` / `'node' is the umbrella concept — write '\|block\|' for the bare box` |
 | Grid out of range | `cell: 5 _ exceeds columns=3` |
 | Grid props off a grid | `'cell' is valid only on a grid` |
 | Missing `columns` | `'layout: grid' requires 'columns'` |
@@ -1849,7 +1870,7 @@ body        = [ style ] [ children ]                 # define / container body
 link        = endpoints link_op endpoints { link_op endpoints }
               [ string ] [ classes ] [ style ] [ label_block ]   # the node tail, on a link head
 selector    = sel_unit { sel_unit }                 # whitespace-separated = descendant
-sel_unit    = ident_bars | "." ident | "#" ident    # a type(+id), a class, or an id
+sel_unit    = ident_bars | "|-|" | "." ident | "#" ident  # a type(+id), the link type, a class, or an id
 endpoints   = endpoint { "&" endpoint }
 endpoint    = ident { "." ident } [ ":" side ]
 side        = "top" | "bottom" | "left" | "right"
@@ -1918,9 +1939,9 @@ statement with one token of lookahead — no type-set prescan.
 Each template/define instance becomes its base primitive wearing a `.lini-*` class
 chain (derived→base→primitive, down to `block` for every rectangular type); a type's
 defaults and any `|type| { }` element rule fold into a generated `.lini-<type> { … }`
-class; a `|table| |box| { }` descendant rule rewrites to `.lini-table .lini-box { }`;
-define bodies inline per instance; the scene defaults (`layout`, `padding`, `gap`,
-`font-size`) and the cascaded link defaults (`link-color`, `link-width`, `clearance`,
+class; a `|table| |box| { }` descendant rule rewrites to `.lini-table .lini-box { }`, and
+`|-|` (the link type) to `.lini-link` — the class every link wears; define bodies inline
+per instance; the scene defaults (`layout`, `padding`, `gap`, `font-size`, `clearance`,
 `routing`) settle on the root; the per-type smart label (text / caption /
 symbol / link label), auto-`along:`, and link auto-create (an undeclared
 endpoint `x` → `|box#x| "x"`) become explicit. The pass
@@ -1939,9 +1960,10 @@ surface here.
    and the instance block; lift internal links; build the path index. (Types, labels,
    define bodies, and auto-create were all lowered by **Desugar**.)
 3. *Links:* resolve endpoints by scoped path walk with suggestion errors; merge link
-   properties — cascaded `link*` / `clearance` / `routing` from the scope chain, then
-   class/id rules, then the link's own block; cartesian-expand fan groups into one
-   resolved link per pair; the operator's line sets `link-style` unless overridden.
+   properties through the node cascade — the baked base plus the scope's `clearance` /
+   `routing`, the `|-|` element rule, descendant `|…| |-|` and class rules, then the
+   link's own block; cartesian-expand fan groups into one resolved link per pair; the
+   operator's line sets `stroke-style` unless overridden.
 
 **Layout** (bottom-up): leaf bbox from `width`/`height` or defaults (text → its glyphs;
 box → content + `padding`; + half-`stroke-width` per side); arrange flow children per
@@ -1956,7 +1978,7 @@ sees them.
 
 **Route links.** Per [`ROUTING.md`](ROUTING.md) — orthogonal, clearance-respecting,
 deterministic — over every link **except** those a `sequence` scope already drew as arrows
-([§10](#10-sequences)). Place markers (sized `max(5, link-width × 4)`, tip on the endpoint)
+([§10](#10-sequences)). Place markers (sized `max(5, stroke-width × 4)`, tip on the endpoint)
 and link labels at their `along:` fractions (auto-distributed when unset).
 
 **Render.** Depth-first emit SVG per [SVG Output](#14-svg-output): a box is a `<g>`, a
@@ -1972,9 +1994,10 @@ names are free as ids and ids are free as type names** — `|block#oval|` is fin
 
 - **`node`, `link`,** and the structural class names **`text`, `marker`, `canvas`,
   `scene`, `links`, `cut`:** not instantiable types — `node` is the umbrella concept (write
-  `|block|` for the bare box), links are drawn by operators (`|link|` is an error), and
-  a define may not take one of these (its generated `.lini-<name>` would collide with a
-  built-in SVG class).
+  `|block|` for the bare box), links are drawn by operators and styled by the `|-|` selector
+  (`|link|` is an error), and a define may not take one of these (its generated
+  `.lini-<name>` would collide with a built-in SVG class — `|-|` lowers to the reserved
+  `.lini-link`).
 
 The **`.lini-*` class prefix** is reserved: desugar generates the type classes
 (`.lini-block`, `.lini-box`, `.lini-<define>`), so a user class may not begin `lini-`.
@@ -2035,15 +2058,16 @@ ids elsewhere.
 ```
 {
   layout: grid;  columns: repeat(3);  gap: 40;  padding: 20;
-  fill: --bg;  link-color: #666;  clearance: 12;     // link + routing defaults, cascaded
+  fill: --bg;  clearance: 12;                   // clearance cascades to every link
 
-  |box| { radius: 4; }                         // round a touch less than the default 6
+  |box| { radius: 4; }                          // round a touch less than the default 6
+  |-|  { stroke: #666; }                        // every link's wire
 
   --accent: #0a84ff;
 
   .thin { stroke: #444; }
   .bold { font-weight: bold; }
-  .loud { link-color: red; link-width: 2; }
+  .loud { stroke: red; stroke-width: 2; }       // a link (or node) class — one vocabulary
 
   |treat::box|  { radius: 5; }
   |nest::slant| { fill: gray; }

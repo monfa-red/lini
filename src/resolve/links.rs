@@ -1,7 +1,12 @@
-//! Link resolution (SPEC §9). Each link statement cascades `link { }` defaults →
-//! class rules → its own block, derives markers and line style from the
-//! operator, resolves every endpoint by a scoped path-walk (with did-you-mean
-//! errors), and cartesian-expands fan groups into one [`ResolvedLink`] per pair.
+//! Link resolution (SPEC §9). A link resolves through the **node cascade** (SPEC
+//! §13): its type is `lini-link` (what `|-|` lowers to), its ancestors are its
+//! scope chain, it has no id — so `stroke` is its wire and `color` / `font-*` its
+//! labels, the ordinary vocabulary with no `link-*` family. Each statement layers
+//! the baked base + scope `clearance`/`routing`, the `|-|` element rule, the
+//! descendant / worn-class rules, then its own block; derives markers and line
+//! style from the operator; resolves every endpoint by a scoped path-walk (with
+//! did-you-mean errors); and cartesian-expands fan groups into one [`ResolvedLink`]
+//! per pair.
 
 use super::cascade::NodeFacts;
 use super::ir::{
@@ -15,15 +20,22 @@ use crate::ast::LineStyle;
 use crate::error::Error;
 use crate::syntax::ast::{Endpoint, EndpointGroup, Link};
 
+/// The class every link wears (SPEC §9): `|-|` lowers to it in desugar, so a link
+/// resolves through the node cascade — its type tier, descendant/class rules, and
+/// own block — with no `link-*` family.
+pub const LINK_CLASS: &str = "lini-link";
+
 /// Resolve one link statement into one resolved link per cartesian pair.
 /// `path_prefix` scopes a lifted internal link to its host instance;
-/// `link_defaults` is the `link { }` element rule (lowest specificity).
+/// `scope_ancestors` is that scope's container chain (for descendant rules);
+/// `base` is the baked link defaults plus the scope's `clearance`/`routing`.
 pub fn resolve_link(
     w: &Link,
     ctx: &SceneCtx,
     paths: &PathIndex,
     path_prefix: &[String],
-    link_defaults: &[(String, ResolvedValue)],
+    scope_ancestors: &[NodeFacts],
+    base: &[(String, ResolvedValue)],
 ) -> Result<Vec<ResolvedLink>, Error> {
     for class in &w.classes {
         if !ctx.sheet.defines_class(class) {
@@ -31,31 +43,28 @@ pub fn resolve_link(
         }
     }
 
-    // Cascade: link defaults → class rules → own block (SPEC §4). A link has no
-    // id, so id-tier rules never target it.
+    // A link is a node whose type is `lini-link`, whose ancestors are its scope
+    // chain, with no id (SPEC §9, §13).
     let link_facts = NodeFacts {
-        classes: w.classes.clone(),
+        classes: std::iter::once(LINK_CLASS.to_string())
+            .chain(w.classes.iter().cloned())
+            .collect(),
         id: None,
     };
-    // A link is painted by the `link` family, never `stroke*` (SPEC §9) — it is a
-    // link, not a stroked shape — so a `stroke*` property a user puts on it (its
-    // own block or a worn class) is an error, pointing at the `link*` equivalent.
-    // The baked defaults carry `stroke-width` as the *internal* link-width, so
-    // they are exempt — only what the user wrote is checked.
-    let class_layers = ctx.sheet.node_layers(&[], &link_facts);
-    reject_stroke_props(&w.style, &class_layers, w.span)?;
 
-    let mut ordered: Vec<(String, ResolvedValue)> = link_defaults.to_vec();
-    ordered.extend(class_layers);
+    // The cascade ladder, least-specific first (SPEC §13): the baked base + scope
+    // `clearance`/`routing`, the `|-|` element rule (the type tier), the descendant
+    // / worn-class rules, then the link's own block. `stroke` is the wire, `font-*`
+    // / `color` the labels — the same vocabulary a node uses.
+    let mut ordered: Vec<(String, ResolvedValue)> = base.to_vec();
+    ordered.extend(ctx.sheet.class_decls(LINK_CLASS));
+    ordered.extend(ctx.sheet.node_layers(scope_ancestors, &link_facts));
     for d in &w.style {
         ordered.push((
             d.name.clone(),
             resolve_property(&d.name, &d.groups, d.span, ctx.vars, ctx.funcs)?,
         ));
     }
-    // A link's paint family is `link-color` / `link-width` / `link-style` (SPEC §9);
-    // map them onto the path's `stroke*` so the cascade and renderer are uniform.
-    let ordered = map_link_props(ordered);
 
     let markers = resolve_markers(
         &ordered,
@@ -82,7 +91,7 @@ pub fn resolve_link(
     let mut texts: Vec<ResolvedText> = Vec::new();
     for (i, label) in w.labels.iter().enumerate() {
         let pos = along.get(i).copied().map_or(Along::Auto, Along::Fraction);
-        let mut lattrs = link_text_attrs(AttrMap::new(), &attrs);
+        let mut lattrs = link_text_attrs(&attrs);
         for d in &label.style {
             if !super::scene::is_text_prop(&d.name) {
                 return Err(Error::at(
@@ -157,73 +166,6 @@ fn inject_line_style(attrs: &mut AttrMap, line: LineStyle) {
     }
 }
 
-/// The shape-outline paint that a link rejects (SPEC §9) — it owns the parallel
-/// `link*` family instead, so the two never both apply to a line.
-const STROKE_PROPS: [&str; 3] = ["stroke", "stroke-width", "stroke-style"];
-
-/// The `link-*` property that replaces a `stroke*` one on a link.
-fn link_equiv(name: &str) -> &str {
-    match name {
-        "stroke" => "link-color",
-        "stroke-width" => "link-width",
-        "stroke-style" => "link-style",
-        other => other,
-    }
-}
-
-fn stroke_on_link(name: &str) -> String {
-    format!(
-        "'{}' paints a shape's outline, not a link — a link uses the 'link-*' family, so write '{}' (SPEC §9)",
-        name,
-        link_equiv(name)
-    )
-}
-
-/// Reject a `stroke*` property on a link (SPEC §9): the link's own block reports
-/// at the offending declaration; one a **worn class** contributes reports at the
-/// link statement (the class is fine on a box — just not worn by a link).
-fn reject_stroke_props(
-    own: &[crate::syntax::ast::Decl],
-    class_layers: &[(String, ResolvedValue)],
-    link_span: crate::span::Span,
-) -> Result<(), Error> {
-    for d in own {
-        if STROKE_PROPS.contains(&d.name.as_str()) {
-            return Err(Error::at(d.span, stroke_on_link(&d.name)));
-        }
-    }
-    if let Some((name, _)) = class_layers
-        .iter()
-        .find(|(k, _)| STROKE_PROPS.contains(&k.as_str()))
-    {
-        return Err(Error::at(link_span, stroke_on_link(name)));
-    }
-    Ok(())
-}
-
-/// Map a link's surface paint family — `link-color` / `link-width` / `link-style` /
-/// `link-font-size` (SPEC §9) — onto the SVG path's `stroke*` / `font-size`, so
-/// the cascade, the renderer, and the `.lini-link` rule all speak one vocabulary.
-/// Every other property (clearance, along, marker*, …) passes through unchanged.
-pub(super) fn map_link_props(
-    ordered: Vec<(String, ResolvedValue)>,
-) -> Vec<(String, ResolvedValue)> {
-    ordered
-        .into_iter()
-        .map(|(k, v)| (map_link_name(&k).to_string(), v))
-        .collect()
-}
-
-fn map_link_name(name: &str) -> &str {
-    match name {
-        "link-color" => "stroke",
-        "link-width" => "stroke-width",
-        "link-style" => "stroke-style",
-        "link-font-size" => "font-size",
-        other => other,
-    }
-}
-
 /// The resolved wiring strategy (SPEC §9): `orthogonal` (the default) and
 /// `straight` are built; `curved` is named but deferred.
 fn parse_routing(attrs: &AttrMap, span: crate::span::Span) -> Result<Strategy, Error> {
@@ -249,15 +191,16 @@ fn collect_fractions(v: &ResolvedValue) -> Vec<f64> {
     }
 }
 
-/// Default a link label's `font-size` to the baked `--link-font-size` (12) when
-/// unset, so labels read a touch smaller than body text.
-/// A link label inherits the link's `font-size` (the baked `11`
-/// default, or an override) so its measured size and rendered size agree.
-fn link_text_attrs(mut map: AttrMap, link_attrs: &AttrMap) -> AttrMap {
-    if map.get("font-size").is_none()
-        && let Some(fs) = link_attrs.get("font-size")
-    {
-        map.insert("font-size", fs.clone());
+/// A link's labels inherit its text context (SPEC §9): every inheritable text prop
+/// the link resolved — `font-*`, `color`, the spacings — seeds each label, which
+/// its own `{ }` then overrides. This is how a `|-| { font-size: 14; color: red }`
+/// restyles every label at once, exactly as a node's text inherits the node's.
+fn link_text_attrs(link_attrs: &AttrMap) -> AttrMap {
+    let mut map = AttrMap::new();
+    for name in super::scene::INHERITED_TEXT {
+        if let Some(v) = link_attrs.get(name) {
+            map.insert(*name, v.clone());
+        }
     }
     map
 }

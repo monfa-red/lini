@@ -3,7 +3,8 @@
 // size. `|sign|` is a larger preset and an ordinary wireable node. Source for
 // assets/icons.png.
 {
-  gap: 16; padding: 8 28 24 28; align: center; link-color: --gray-ink; link-width: 2; clearance: 14;
+  gap: 16; padding: 8 28 24 28; align: center; clearance: 14;
+  |-| { stroke: --gray-ink; stroke-width: 2; }
 
   |row| { align: end; }
   |tile::column| { gap: 9; align: center; font-size: 13; }

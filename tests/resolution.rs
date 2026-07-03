@@ -214,33 +214,26 @@ fn body_link_suggestion_stays_in_scope() {
 }
 
 #[test]
-fn stroke_props_on_a_link_are_rejected() {
-    // A link is painted by the `link-*` family, never `stroke*` (SPEC §9) — it is a
-    // link, not a stroked shape. The error names the `link-*` replacement.
-    let cases = [
-        ("a -> b { stroke: red }\n", "link-color"),
-        ("a -> b { stroke-width: 3 }\n", "link-width"),
-        ("a -> b { stroke-style: dashed }\n", "link-style"),
-    ];
-    for (link, equiv) in cases {
-        let src = format!("|box#a|\n|box#b|\n{link}");
-        let msg = lini::check(&src).expect_err("stroke on a link").to_string();
-        assert!(msg.contains("paints a shape's outline"), "{src} → {msg}");
-        assert!(
-            msg.contains(equiv),
-            "should suggest '{equiv}': {src} → {msg}"
-        );
-    }
-    // A stroke property reaching a link through a worn class is rejected too.
-    let msg = lini::check("{ .x { stroke: red } }\n|box#a|\n|box#b|\na -> b .x\n")
-        .expect_err("stroke via class on a link")
-        .to_string();
-    assert!(msg.contains("paints a shape's outline"), "{msg}");
-    // The link family is valid on a link; a stroke class on a box still is too.
-    lini::check(
-        "{ .x { stroke: red } }\n|box#a| .x\n|box#b|\na -> b { link-color: red; link-width: 3 }\n",
-    )
-    .expect("link family on a link, stroke class on a box");
+fn a_link_is_styled_with_the_ordinary_vocabulary() {
+    // A link is styled like a node (SPEC §9): `stroke` is its wire, `stroke-width` /
+    // `stroke-style` its weight and dash, `font-*` / `color` its labels — no `link-*`
+    // family. Valid on the link's own block, via a worn class, or globally via `|-|`.
+    lini::check("|box#a|\n|box#b|\na -> b { stroke: red; stroke-width: 3; font-size: 14 }\n")
+        .expect("stroke/font on a link's own block");
+    // A stroke class paints a link's wire and a box's outline alike — one class, one
+    // vocabulary.
+    lini::check("{ .x { stroke: red } }\n|box#a| .x\n|box#b|\na -> b .x\n")
+        .expect("a stroke class worn by a link and a box");
+    // `|-|` styles every link at once.
+    lini::check("{ |-| { stroke: red; color: blue; font-weight: bold } }\na -> b\n")
+        .expect("|-| styles every link");
+    // `|-|` is selector-only — a link is drawn by an operator, never instantiated.
+    assert!(
+        lini::check("|-| \"x\"\n")
+            .expect_err("'|-|' as an instance")
+            .to_string()
+            .contains("only styles links")
+    );
 }
 
 // SPEC §2: a string-valued property (`title` / `href` / `src` / `path`) takes a

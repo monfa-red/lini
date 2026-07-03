@@ -217,6 +217,8 @@ impl Emitter<'_> {
                     self.out.push('#');
                     self.out.push_str(i);
                 }
+                // `|-|` — the link type (SPEC §9).
+                SelUnit::Link => self.out.push_str("|-|"),
             }
         }
     }

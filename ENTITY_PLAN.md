@@ -130,7 +130,7 @@ draw the standard ER glyphs.
   alias of `Crow`). `from_marker` (operator glyphs) is unchanged — no new operator spellings.
 - `render/markers.rs`:
   - **Redraw `Crow`** so the splay lands on the shape edge (three prongs fan onto the entity,
-    converging back along the line) and reads at the default `link-width` — fixing the
+    converging back along the line) and reads at the default link `stroke-width` — fixing the
     chevron-that-looks-like-an-arrow (current `Crow` arm).
   - Add a **bar** primitive (a short perpendicular tick) and a small **ring**; compose:
     `one` = bar; `one-or-many` = bar + crow; `zero-or-one` = ring + bar; `zero-or-many` =
