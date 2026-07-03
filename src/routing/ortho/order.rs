@@ -9,7 +9,11 @@
 //! as corners invert. Ordinates are placement *estimates* (port preferences,
 //! channel anchors — placement hasn't run yet), the same estimates the
 //! search priced, so the order placement realises is the order the search
-//! paid for. Every remaining tie breaks on declaration order — total.
+//! paid for. A pair no geometry orders — exact parallels, tied at both
+//! ends — resolves by one oriented convention: the earlier-declared wire
+//! keeps the left of its own travel, so every channel the pair shares
+//! agrees on the same nesting (an offset curve never braids). Total either
+//! way.
 
 use std::cmp::Ordering;
 
@@ -178,6 +182,24 @@ fn walk(ctx: &Ctx, a: Cursor, b: Cursor, dir: i8) -> (Ordering, bool) {
     }
 }
 
+/// The convention for pairs no geometry orders: the earlier-declared wire
+/// takes the **left of its own travel** through the queried channel — a
+/// V run heading down sits at greater x, heading up at lesser x; an H run
+/// heading right sits at lesser y, heading left at greater y. One fixed
+/// side per travel direction is the offset-curve rule: every channel an
+/// exact-parallel pair shares resolves to the same nesting, where a fixed
+/// declaration order flipped by each walk's parity braids the pair.
+fn convention(ctx: &Ctx, a: (usize, usize), b: (usize, usize)) -> Ordering {
+    let led = ctx.tie(a.0, b.0) == Ordering::Less;
+    let (ci, ri) = if led { a } else { b };
+    let downstream = ctx.end_q(ci, ri, 1) >= ctx.end_q(ci, ri, 0);
+    let leader = match (ctx.chain(ci).runs[ri].axis, downstream) {
+        (Axis::V, true) | (Axis::H, false) => Ordering::Greater,
+        _ => Ordering::Less,
+    };
+    if led { leader } else { leader.reverse() }
+}
+
 /// The walk cursor for a run, facing the channel's `dir` end.
 fn cursor(ctx: &Ctx, (ci, ri): (usize, usize), dir: i8) -> Cursor {
     let plus = usize::from(ctx.end_q(ci, ri, 1) >= ctx.end_q(ci, ri, 0));
@@ -189,8 +211,8 @@ fn cursor(ctx: &Ctx, (ci, ri): (usize, usize), dir: i8) -> Cursor {
 }
 
 /// Total cross order of two runs sharing a channel: the positive-end walk
-/// wins when geometric, then the negative-end walk, then convention. Two
-/// pieces of one wire owe each other no nesting — they order by estimate.
+/// wins when geometric, then the negative-end walk, then [`convention`].
+/// Two pieces of one wire owe each other no nesting — they order by estimate.
 pub(crate) fn cmp_runs(ctx: &Ctx, a: (usize, usize), b: (usize, usize)) -> Ordering {
     if a == b {
         return Ordering::Equal;
@@ -209,5 +231,5 @@ pub(crate) fn cmp_runs(ctx: &Ctx, a: (usize, usize), b: (usize, usize)) -> Order
     if gm {
         return om;
     }
-    op
+    convention(ctx, a, b)
 }

@@ -634,6 +634,34 @@ fn crossings_appear_one_at_a_time_and_never_wrap() {
     }
 }
 
+// ── Duplicate wires nest, never braid (ROUTING.md model step 5) ──
+
+/// Two wires between one endpoint pair detouring around a wall are exact
+/// parallels — no geometry forces an order, so the convention must pick one
+/// consistently at all three shared channels. A braid shows up as a
+/// self-inflicted crossing, whichever way the pair is declared.
+#[test]
+fn duplicate_detours_nest_without_crossing() {
+    let dims = "{ direction: row; gap: 50; clearance: 10 }\n\
+                |box#a| { width: 60; height: 60 }\n\
+                |box#wall| { width: 60; height: 140 }\n\
+                |box#b| { width: 60; height: 60 }\n";
+    for pair in ["a -> b\nb -> a\n", "a -> b\na -> b\n"] {
+        let src = format!("{dims}{pair}");
+        assert_eq!(crossings(&src), 0, "the pair braids: {pair:?}");
+        assert_eq!(impossibles(&src), 0);
+    }
+}
+
+/// The development sample keeps its header's promise: every routing pattern
+/// it stages — duplicates, detours, a fan, a self-loop — draws with zero
+/// crossings.
+#[test]
+fn links_simple_reports_zero_crossings() {
+    let src = include_str!("../samples/links_simple.lini");
+    assert_eq!(crossings(src), 0);
+}
+
 // ── Determinism (Law 4) ──
 
 #[test]
