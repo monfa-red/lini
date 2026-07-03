@@ -1,13 +1,17 @@
-//! Sequence messages (SPEC §10): a link in a sequence scope, lowered to a horizontal
-//! **time-row arrow** between two lifelines through [`crate::layout::prim`]. A message is a
-//! `|line|` carrying the link's already-resolved paint (`stroke*`, mapped from `link*` at
-//! resolve) and end marker (the arrowhead). A chain `a -> b -> c` splits into consecutive
-//! pairs, each its own row; fans are already separate links.
+//! Sequence messages (SPEC §10): a link in a sequence scope, lowered to a
+//! horizontal **time-row arrow** between two lifelines through the `straight`
+//! strategy ([`crate::routing::straight`]) — the layout owns *where* (column
+//! x, row y), the strategy owns the wire. Each message becomes a
+//! [`RoutedLink`] carrying the link's resolved paint, its end marker, and its
+//! label as riding text; the renderer's one link path draws it (fillets round
+//! the self-hook). A chain `a -> b -> c` splits into consecutive pairs, each
+//! its own row; fans are already separate links.
 
 use crate::ast::LineStyle;
-use crate::layout::PlacedNode;
+use crate::layout::ir::{RoutedLink, RoutedText};
 use crate::layout::prim;
-use crate::resolve::ResolvedLink;
+use crate::resolve::{AttrMap, ResolvedLink, ResolvedValue};
+use crate::routing::straight;
 use std::collections::HashMap;
 
 /// Sequence message-label size — larger than the generic 11px link label so the messages
@@ -18,8 +22,6 @@ const LABEL_SIZE: f64 = 13.0;
 const LABEL_RISE: f64 = 5.0;
 /// Clear space a label wants beyond its text when spacing participants.
 const LABEL_MARGIN: f64 = 16.0;
-/// Smallest a self-hook gets, so a `clearance: 0` message still shows a loop.
-const HOOK_MIN: f64 = 14.0;
 /// A self-hook starts on the activation-bar edge (`BAR_W / 2` off the lifeline); its reach
 /// (this + the hook width) is the arrow area that may widen the layout — the label never
 /// does. Matching the bar half-width keeps a frame's right inset equal to its other sides.
@@ -68,10 +70,11 @@ impl Pair<'_> {
     fn clearance(&self) -> f64 {
         self.link.attrs.number("clearance").unwrap_or(16.0)
     }
-    /// A self-hook's `(width, depth, corner-radius)`, from the message's `clearance`.
-    fn hook(&self) -> (f64, f64, f64) {
-        let s = self.clearance().max(HOOK_MIN);
-        (s, s, s / 2.0)
+    /// A self-hook's `(width, depth)`, from the message's `clearance` — the
+    /// corner radius falls out of the render-time fillet pass.
+    fn hook(&self) -> (f64, f64) {
+        let s = self.clearance().max(straight::HOOK_MIN);
+        (s, s)
     }
     /// How far a self-hook reaches right of its lifeline centre — the arrow area that may
     /// widen the layout and its frame (the label rides above and reserves nothing). 0 for
@@ -87,6 +90,20 @@ impl Pair<'_> {
     /// so the next message clears it (0 for a normal message, which lives on its row alone).
     pub(super) fn hook_drop(&self) -> f64 {
         if self.is_self() { self.hook().1 } else { 0.0 }
+    }
+    /// This message's label as riding text on its wire, centred at `(cx, cy)`
+    /// — measured at the sequence label size, which the text carries so the
+    /// renderer sizes it identically.
+    fn text_at(&self, cx: f64, cy: f64) -> Option<RoutedText> {
+        let label = self.label()?;
+        let mut attrs = AttrMap::new();
+        attrs.insert("font-size", ResolvedValue::Number(self.label_size()));
+        Some(RoutedText {
+            content: label.to_owned(),
+            position: (cx, cy),
+            tangent: (1.0, 0.0),
+            attrs,
+        })
     }
     /// The label's font size — the sequence default ([`LABEL_SIZE`]), used to measure the
     /// label for column spacing and to bound its bbox. The rendered size rides the
@@ -189,83 +206,54 @@ pub(super) fn columns(widths: &[f64], ids: &[&str], pairs: &[Pair], gap_col: f64
     centres.iter().map(|c| c - shift).collect()
 }
 
-/// Draw the messages: each pair is a horizontal arrow at its row carrying the link's paint
-/// and end marker, label centred above. A self-message (`a -> a`) is a hook on the lifeline,
-/// label to the right. `lifeline_x` gives each participant's centre (for direction and label
-/// placement); `endpoint_x(id, row, toward)` gives the actual attach x — a live activation
-/// bar's edge, or the lifeline centre — so an arrow meets the bar it opens (SPEC §10).
+/// Draw the messages: each pair is a horizontal wire at its row carrying the
+/// link's paint, end marker, and label — a [`RoutedLink`] through the
+/// `straight` strategy, in the sequence's local frame. A self-message
+/// (`a -> a`) is the strategy's rectangular hook on the lifeline, label
+/// tucked over the loop. `lifeline_x` gives each participant's centre (for
+/// direction and label placement); `endpoint_x(id, row, toward)` gives the
+/// actual attach x — a live activation bar's edge, or the lifeline centre —
+/// so an arrow meets the bar it opens (SPEC §10).
 pub(super) fn draw(
     pairs: &[Pair],
     lifeline_x: &HashMap<String, f64>,
     endpoint_x: impl Fn(&str, usize, f64) -> f64,
     row_y: impl Fn(usize) -> f64,
-) -> Vec<PlacedNode> {
+) -> Vec<RoutedLink> {
     let mut out = Vec::new();
     for (i, p) in pairs.iter().enumerate() {
         let (Some(&fcx), Some(&tcx)) = (lifeline_x.get(p.from), lifeline_x.get(p.to)) else {
             continue;
         };
         let y = row_y(i);
-        let stroke = p
-            .link
-            .attrs
-            .get("stroke")
-            .cloned()
-            .unwrap_or_else(|| super::live("stroke"));
-        let width = p.link.attrs.number("stroke-width").unwrap_or(1.5);
-        if fcx == tcx {
-            // A self-message: a rounded hook on the lifeline, off its near (right) bar edge.
-            // The corner radius and size come from the message's `clearance`, so the loop
-            // bends like a routed wire (the rounding is applied by `emit_line`).
-            let (dx, dy, r) = p.hook();
+        let size = p.label_size();
+        let ly = y - LABEL_RISE - size / 2.0;
+        let (path, text) = if fcx == tcx {
+            // A self-message: the strategy's hook off the near (right) bar
+            // edge, sized by the message's `clearance` so the loop bends
+            // like a routed wire. Its label tucks over the loop: the left
+            // edge starts at the loop's middle, just above its top arm — it
+            // reads as coming out of the loop and reserves no width (a long
+            // label overhangs; only the hook may widen the layout).
+            let (dx, dy) = p.hook();
             let fx = endpoint_x(p.from, i, fcx + 1.0);
-            let mut hook = prim::line(
-                vec![(fx, y), (fx + dx, y), (fx + dx, y + dy), (fx, y + dy)],
-                stroke,
-                width,
-            );
-            prim::round(&mut hook, r);
-            style(&mut hook, p.link);
-            out.push(hook);
-            if let Some(label) = p.label() {
-                let size = p.label_size();
-                // Tucked over the loop: the label's left edge starts at the loop's middle and
-                // sits just above its top arm — so it reads as coming out of the loop, not set
-                // out to its right, and stays clear of the lifeline. It reserves no width (the
-                // engine never widens a frame/column for it), so a long label overhangs rather
-                // than growing the fragment — only the hook (arrow area) does.
-                let ly = y - LABEL_RISE - size / 2.0;
-                let cx = fx + dx / 2.0 + prim::text_width(label, size) / 2.0;
-                out.push(prim::text_classed(label, cx, ly, size, "sequence-message"));
-            }
+            let cx = fx + dx / 2.0 + p.label_width() / 2.0;
+            (straight::hook(fx, y, y + dy, dx), p.text_at(cx, ly))
         } else {
             let fx = endpoint_x(p.from, i, tcx);
             let tx = endpoint_x(p.to, i, fcx);
-            let mut arrow = prim::line(vec![(fx, y), (tx, y)], stroke, width);
-            style(&mut arrow, p.link);
-            out.push(arrow);
-            if let Some(label) = p.label() {
-                let size = p.label_size();
-                out.push(prim::text_classed(
-                    label,
-                    (fcx + tcx) / 2.0,
-                    y - LABEL_RISE - size / 2.0,
-                    size,
-                    "sequence-message",
-                ));
-            }
-        }
+            (vec![(fx, y), (tx, y)], p.text_at((fcx + tcx) / 2.0, ly))
+        };
+        out.push(straight::wire(
+            path,
+            text.into_iter().collect(),
+            (p.from, p.to),
+            (p.from, p.to),
+            p.link.markers.clone(),
+            &p.link.attrs,
+            &p.link.applied_styles,
+            p.link.span,
+        ));
     }
     out
-}
-
-/// Copy the message's resolved detail onto its lowered `|line|`: the end marker (the
-/// arrowhead, from the operator) and the dash pattern. Stroke + width are already set by
-/// `prim::line`, so paint stays one mechanism.
-fn style(n: &mut PlacedNode, link: &ResolvedLink) {
-    n.markers = link.markers.clone();
-    if let Some(ss) = link.attrs.get("stroke-style") {
-        n.attrs.insert("stroke-style", ss.clone());
-        n.own_style.insert("stroke-style", ss.clone());
-    }
 }

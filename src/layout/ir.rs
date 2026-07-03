@@ -1,13 +1,13 @@
-use crate::resolve::{AttrMap, Markers, NodeKind, ResolvedValue, SheetInputs, VarTable};
+use crate::resolve::{AttrMap, Markers, NodeKind, ResolvedValue, SheetInputs, Strategy, VarTable};
 use crate::span::Span;
 
 pub struct LaidOut {
     pub viewbox: ViewBox,
     pub nodes: Vec<PlacedNode>,
     pub links: Vec<RoutedLink>,
-    /// The router's report: kept crossings (counted output) and the links it
+    /// The routing report: drawn crossings (counted output) and the links it
     /// could not legally draw.
-    pub link_report: Vec<super::links::Violation>,
+    pub link_report: Vec<crate::routing::Violation>,
     /// The impossible links made visible (ROUTING §Impossible layouts) —
     /// carried beside the links, never as one, so the validator never sees
     /// them.
@@ -55,10 +55,14 @@ pub struct Stray {
     pub data_to: String,
 }
 
-/// One routed link: its orthogonal path polyline plus what render needs.
+/// One routed link: its path polyline plus what render needs.
 #[derive(Clone)]
 pub struct RoutedLink {
     pub path: Vec<(f64, f64)>,
+    /// The strategy that drew this wire. The independent law checker judges
+    /// orthogonal wires only — a `straight` wire is lawfully oblique and
+    /// avoids nothing (ROUTING §Strategies).
+    pub strategy: Strategy,
     pub markers: Markers,
     pub attrs: AttrMap,
     /// `.style` names applied to the link — rendered as `lini-style-*` classes,
@@ -127,6 +131,11 @@ pub struct PlacedNode {
     /// own `stroke*`. The outer frame is the container's border, so dividers
     /// never double it. Empty unless `divider:` is set.
     pub dividers: Vec<GridRule>,
+    /// Links this container drew itself, in its local frame — a sequence's
+    /// messages, lowered through the `straight` strategy (SPEC §10). Routing
+    /// lifts them into scene coordinates; the renderer's one link path draws
+    /// them. Empty everywhere else.
+    pub links: Vec<RoutedLink>,
     pub span: Span,
 }
 

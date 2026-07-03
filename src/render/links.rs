@@ -218,9 +218,9 @@ pub fn render_stray(out: &mut String, a: &Stray, vars: &VarTable, opts: &Options
 }
 
 /// The path `d` with every interior corner rounded into a quarter arc —
-/// radius from the fillet pass ([`fillet_targets`]), still capped by half
-/// of each adjacent *drawn* segment so arcs never eat marker run-ups
-/// (ROUTING §Model step 7). The end segments stay straight.
+/// radius from the fillet pass ([`fillet_targets`]), kept feasible on the
+/// *drawn* (marker-shortened) legs by the shared formatter, so an arc never
+/// eats a neighbouring arc or a marker pull-back (ROUTING §Model step 7).
 fn rounded_d(pts: &[(f64, f64)], targets: &[f64]) -> String {
     super::rounding::path_d(pts, targets)
 }
@@ -237,8 +237,10 @@ struct Corner {
     quad: (i8, i8),
     diag: f64,
     proj: f64,
-    /// Structural ceiling: min(half legs, nearest crossing on the legs).
-    /// Nested radii may exceed the clearance cap, never this.
+    /// Structural ceiling: min(own legs, nearest crossing on the legs).
+    /// Nested radii may exceed the clearance cap, never this. Two corners
+    /// sharing a leg settle their joint fit at draw time
+    /// ([`super::rounding::round`]) — the ceiling is per corner.
     ceil: f64,
     /// The link's clearance cap — the base radius for lone and innermost
     /// corners.
@@ -279,14 +281,14 @@ pub fn fillet_targets(polys: &[&[(f64, f64)]], caps: &[f64]) -> Vec<Vec<f64>> {
             let quad = ((wx - ux).signum() as i8, (wy - uy).signum() as i8);
             let in_len = ix.abs() + iy.abs();
             let out_len = ox.abs() + oy.abs();
-            let mut ceil = (in_len / 2.0).min(out_len / 2.0);
+            let mut ceil = in_len.min(out_len);
             for (wj, other) in polys.iter().enumerate() {
                 if wj == wi {
                     continue;
                 }
                 for s in other.windows(2) {
                     for leg in [[a, v], [v, b]] {
-                        if let Some(at) = crate::layout::cross(&leg, s) {
+                        if let Some(at) = crate::routing::cross(&leg, s) {
                             let t = (at.0 - v.0).abs() + (at.1 - v.1).abs();
                             ceil = ceil.min(t);
                         }
@@ -506,6 +508,35 @@ mod tests {
         assert_eq!((t[0][0], t[1][0], t[2][0]), (8.0, 16.0, 24.0));
     }
 
+    /// The S-bend bus (a pcb-style flash → mcu): four wires at pitch 10 turn
+    /// two nested corners each. Concentric radii grow to 4× clearance on the
+    /// outermost track — the legs *jointly* fit every pair (40+10 on a
+    /// 56-long shared leg), so no half-leg squash may flatten the nest.
+    #[test]
+    fn a_bus_s_bend_keeps_full_concentric_radii() {
+        let wires: Vec<Vec<(f64, f64)>> = (0..4)
+            .map(|k| {
+                let (port, dive, land) = (
+                    10.0 * k as f64,
+                    94.0 - 10.0 * k as f64,
+                    56.0 + 10.0 * k as f64,
+                );
+                vec![(0.0, port), (dive, port), (dive, land), (110.0, land)]
+            })
+            .collect();
+        let polys: Vec<&[(f64, f64)]> = wires.iter().map(|w| &w[..]).collect();
+        let t = fillet_targets(&polys, &[10.0; 4]);
+        assert_eq!(
+            t,
+            vec![
+                vec![40.0, 10.0],
+                vec![30.0, 20.0],
+                vec![20.0, 30.0],
+                vec![10.0, 40.0]
+            ]
+        );
+    }
+
     #[test]
     fn opposite_travel_still_nests() {
         // The outer link traverses the same corner the other way
@@ -553,14 +584,14 @@ mod tests {
 
     #[test]
     fn short_legs_cap_a_nested_radius_without_unnesting_the_rest() {
-        // The middle link's outgoing leg holds only r = 10: it caps there,
+        // The middle link's outgoing leg holds only r = 12: it caps there,
         // and the outer corner keeps stepping from the capped value.
         let (a, b, c) = (
             ell((0.0, 0.0), 100.0),
-            vec![(-92.0, -8.0), (8.0, -8.0), (8.0, 12.0)],
+            vec![(-92.0, -8.0), (8.0, -8.0), (8.0, 4.0)],
             ell((16.0, -16.0), 100.0),
         );
         let t = fillet_targets(&[&a, &b, &c], &[8.0; 3]);
-        assert_eq!((t[0][0], t[1][0], t[2][0]), (8.0, 10.0, 18.0));
+        assert_eq!((t[0][0], t[1][0], t[2][0]), (8.0, 12.0, 20.0));
     }
 }

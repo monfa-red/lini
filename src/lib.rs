@@ -10,6 +10,7 @@ mod lint;
 mod palette;
 mod render;
 mod resolve;
+mod routing;
 mod serve;
 mod span;
 mod syntax;
@@ -29,7 +30,7 @@ pub fn desugar_source(src: &str) -> Result<String, Error> {
     let file = syntax::parser::parse(&tokens)?;
     Ok(fmt::print_file(&desugar::desugar(&file)?))
 }
-pub use layout::{Rule, Severity, Violation};
+pub use routing::{Rule, Severity, Violation};
 pub use serve::{ServeTarget, serve};
 pub use theme::{builtin_css, extract_lini_vars, list_themes, pair_css};
 
@@ -158,7 +159,7 @@ fn wrap_html(svg: &str) -> String {
     )
 }
 
-/// Test-only hooks for the link-routing parameter sweep (see `tests/linking_sweep.rs`).
+/// Test-only hooks for the routing suite (see `ROUTING-LOG.md` stage 4/6).
 /// Not part of the public API.
 #[doc(hidden)]
 pub mod testing {
@@ -170,42 +171,47 @@ pub mod testing {
 
     /// A node's absolute rect by full dot-path, for geometric assertions.
     pub fn node_rect(laid: &LaidOut, path: &str) -> Option<(f64, f64, f64, f64)> {
-        layout::node_rect(&laid.nodes, path)
+        crate::routing::node_rect(&laid.nodes, path)
+    }
+
+    /// Routed polylines by endpoint pair, in declaration order — the contract
+    /// tests' geometry hook (ROUTING-LOG.md stage 4): parse → resolve → layout,
+    /// then each drawn link's `(seg_from, seg_to)` and path.
+    #[allow(clippy::type_complexity)]
+    pub fn routes_str(src: &str) -> Result<Vec<((String, String), Vec<(f64, f64)>)>, crate::Error> {
+        let program = super::resolve_pipeline(src, &Options::default())?;
+        let laid = layout::layout(&program)?;
+        Ok(laid
+            .links
+            .iter()
+            .map(|l| ((l.seg_from.clone(), l.seg_to.clone()), l.path.clone()))
+            .collect())
     }
 
     /// Compile `src` to a laid-out scene with `clearance` forced on every link,
-    /// overriding whatever the source set. Gap growth runs as in production —
-    /// starved corridors may widen the layout.
+    /// overriding whatever the source set.
     pub fn route_sample(src: &str, clearance: f64) -> LaidOut {
-        layout::layout(&forced(src, clearance)).expect("layout")
-    }
-
-    /// [`route_sample`] with gap growth disabled: the raw router's result, the
-    /// one the clearance sweep measures. `clearance` does not move nodes here,
-    /// so the node geometry — and hence which links are routable — is
-    /// identical across values.
-    pub fn route_sample_raw(src: &str, clearance: f64) -> LaidOut {
-        layout::layout_raw(&forced(src, clearance)).expect("layout")
-    }
-
-    fn forced(src: &str, clearance: f64) -> crate::resolve::Program {
         let mut prog = super::resolve_pipeline(src, &Options::default()).expect("resolve");
         for w in &mut prog.links {
             w.attrs
                 .insert("clearance", ResolvedValue::Number(clearance));
         }
-        prog
+        layout::layout(&prog).expect("layout")
     }
 
     /// The number of routable edges the source declares (fans/chains already expanded
     /// at resolve into one `ResolvedLink` per edge-chain). Sequence-scope messages are
-    /// **not** routable — the sequence layout draws them as time-row arrows (SPEC §10), so
-    /// the router never sees them — and are excluded here, mirroring `links::bundle`.
+    /// **not** routable — the sequence layout draws them as time-row arrows (SPEC §10),
+    /// so the router never sees them — and are excluded here, mirroring
+    /// `routing::ortho::request`.
     pub fn declared_edges(src: &str) -> usize {
         let prog = super::resolve_pipeline(src, &Options::default()).expect("resolve");
         prog.links
             .iter()
-            .filter(|w| !layout::sequence::is_sequence_scope(&prog, &w.scope))
+            .filter(|w| {
+                w.routing == crate::resolve::Strategy::Orthogonal
+                    && !layout::sequence::is_sequence_scope(&prog, &w.scope)
+            })
             .map(|w| w.endpoints.len().saturating_sub(1))
             .sum()
     }
@@ -213,5 +219,16 @@ pub mod testing {
     /// Judge a laid-out scene against the four laws (the independent validator).
     pub fn laws(laid: &LaidOut) -> Vec<crate::Violation> {
         layout::validate_routing(laid)
+    }
+
+    /// Drawn links that answer to `declared_edges`: what the orthogonal
+    /// strategy drew. Straight wires stay out on both sides of the count —
+    /// a sequence's messages are the layout's own, and a `routing: straight`
+    /// pair whose trim leaves nothing lawfully draws nothing.
+    pub fn drawn_edges(laid: &LaidOut) -> usize {
+        laid.links
+            .iter()
+            .filter(|w| w.strategy == crate::resolve::Strategy::Orthogonal)
+            .count()
     }
 }

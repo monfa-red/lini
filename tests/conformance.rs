@@ -10,7 +10,7 @@
 use lini::{Options, OutputFormat};
 
 /// Link-bearing samples are excluded: routing is gated semantically by
-/// `tests/linking.rs` (laws, crossing counts, determinism), never by snapshots —
+/// `tests/laws.rs` and `tests/routing.rs` (laws, crossing counts, determinism), never by snapshots —
 /// a snapshot would pin one router's coordinates and churn on every phase.
 const LINK_SAMPLES: &[&str] = &["links_simple.lini", "links_medium.lini", "links_hard.lini"];
 

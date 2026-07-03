@@ -1,15 +1,15 @@
-//! Link labels (ROUTING §Model step 7, SPEC §9): a label rides its link at an
-//! auto-distributed anchor or an explicit `along:` fraction of its statement's
-//! whole drawn route, shifted by `translate: x y` in world coords (the same
-//! nudge as on any node). A label is an obstacle to nothing and the link never
-//! moves for it — but the label may slide along the link to dodge node
-//! bodies, node labels, and other link labels.
+//! Link labels (ROUTING.md model step 6, SPEC §9): a label rides its link at
+//! an auto-distributed anchor or an explicit `along:` fraction of its
+//! statement's whole drawn route, shifted by `translate: x y` in world coords
+//! (the same nudge as on any node). A label is an obstacle to nothing and the
+//! link never moves for it — but the label may slide along the link to dodge
+//! node bodies, node labels, and other link labels.
 
-use super::bundle::EdgeReq;
 use super::rect::Rect;
+use super::request::EdgeReq;
 use super::scene::SceneIndex;
 use crate::layout::ir::{RoutedLink, RoutedText};
-use crate::layout::text::{approx_height, approx_width};
+use crate::layout::{approx_height, approx_width, as_pair};
 use crate::resolve::{Along, Program, ResolvedText, ResolvedValue};
 use crate::span::Span;
 
@@ -21,7 +21,7 @@ const STEPS: usize = 40;
 
 /// Place every link statement's texts onto its drawn segments.
 /// `req_of[k]` is the request behind `links[k]`; statements are re-walked
-/// exactly as [`super::bundle::requests`] numbered them, so a chain's
+/// exactly as [`super::request::requests`] numbered them, so a chain's
 /// segments concatenate in declaration order and the label's anchor is a
 /// fraction of the whole drawn route.
 pub fn place(
@@ -62,9 +62,9 @@ pub fn place(
             continue;
         }
 
-        // Default (`at:auto`) labels distribute along the route: spread evenly
-        // across the hops, each at its hop's `(j+1)/(k+1)` fractions — so one
-        // never lands on a junction and several never pile up (SPEC §10).
+        // Default (`along` unset) labels distribute along the route: spread
+        // evenly across the hops, each at its hop's `(j+1)/(k+1)` fractions —
+        // so one never lands on a junction and several never pile up.
         let auto_anchors = distribute_auto(&w.texts, &lens, total);
         let mut auto_i = 0;
 
@@ -209,6 +209,6 @@ fn at_arc(
 /// primitive a node's `translate` uses (`layout::anchors`); anything else is no
 /// shift.
 fn translate_of(v: Option<&ResolvedValue>) -> (f64, f64) {
-    v.and_then(|v| crate::layout::values::as_pair(v, Span::empty()).ok())
+    v.and_then(|v| as_pair(v, Span::empty()).ok())
         .unwrap_or((0.0, 0.0))
 }

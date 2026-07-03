@@ -306,6 +306,15 @@ impl MarkerKind {
     }
 }
 
+/// A link's wiring strategy (SPEC §9, ROUTING.md §Strategies): `routing:`
+/// cascades from the scope like `clearance`. `curved` is deferred and never
+/// resolves.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Strategy {
+    Orthogonal,
+    Straight,
+}
+
 pub struct ResolvedLink {
     pub endpoints: Vec<ResolvedEndpoint>,
     /// The dot-path of the container this link was written in (`""` = the scene
@@ -317,6 +326,9 @@ pub struct ResolvedLink {
     /// message's *kind* in a sequence (call / return / async), read here rather than
     /// from `stroke-style`, which a `link-style:` override can change (SPEC §10).
     pub line: LineStyle,
+    /// The resolved `routing:` (cascaded, then the link's own block) — which
+    /// strategy draws this link's wire.
+    pub routing: Strategy,
     pub attrs: AttrMap,
     /// Names of the `.style`s applied to this link, in source order — emitted as
     /// `lini-style-{name}` classes, exactly like a node's (SPEC §14).

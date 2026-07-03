@@ -1018,8 +1018,9 @@ explicit `:side` forces one. `clearance` (default 16) is the minimum gap every l
 keeps from nodes and from other links.
 
 `routing` selects the strategy for a scope and cascades like `clearance`: `orthogonal`
-(the default and the only mode built today) routes by the contract below; `straight`
-and `curved` are named but deferred ([§20](#20-deferred)). It pairs with `layout` —
+(the default) routes by the contract below; `straight` draws each link as one segment
+between the bodies, trimmed to their boundaries — it avoids nothing and reports
+nothing; `curved` is named but deferred ([§20](#20-deferred)). It pairs with `layout` —
 `layout` places the nodes, `routing` routes the links between them — so a group can
 route its internals one way while the root routes another.
 
@@ -1044,8 +1045,8 @@ sequence scope the orthogonal router does not run — the layout **lowers each m
 primitive arrow** at its time row, just as it lowers participants and frames. (Which
 subsystem realises a scope's links is the scope's **wiring strategy**: `orthogonal` — the
 router, the [ROUTING.md](ROUTING.md) contract — for `flow` / `grid`; `sequence` — this
-layout-time lowering — here; `straight` / `curved` for future graph layouts
-([§20](#20-deferred)). One strategy per scope, chosen by the layout, not `routing:`.)
+layout-time lowering — here; `straight` — one trimmed segment per link ([§9](#9-links));
+`curved` for future graph layouts ([§20](#20-deferred)).)
 
 ### The sequence container
 
@@ -1758,7 +1759,7 @@ Format: `filename:line:col: error: <message>` (LSP-compatible).
 | Bare type in the stylesheet | `a type only appears in bars — write '\|box\| { }' to style every box` |
 | `->` in the stylesheet | `'->' draws a link on the canvas — set link defaults with 'link:' / 'link-width:' in a '{ }' block` |
 | `stroke*` on a link | `'stroke-width' paints a shape's outline, not a link — a link uses the 'link' family, so write 'link-width' (SPEC §9)` |
-| Deferred routing | `routing: only 'orthogonal' is built; 'straight' / 'curved' are deferred (§20)` |
+| Deferred routing | `routing: 'orthogonal' and 'straight' are built; 'curved' is deferred (§20)` |
 | Glued compound in a rule | `a selector unit can't glue a type and a class — space them (descendant) or style '.hot'` |
 | Spaced class chain | `classes glue into a chain — write '.hot.loud', no space` |
 | Style block holds non-decl | `a '{ }' style block holds only declarations` |
@@ -1975,8 +1976,8 @@ ids elsewhere.
 
 **Deferred** — named in the language, not built yet; the syntax is stable:
 
-- `routing: straight` / `routing: curved` — non-orthogonal link strategies
-  ([§9](#9-links); `orthogonal` is the only mode built today).
+- `routing: curved` — the curved link strategy ([§9](#9-links); `orthogonal`
+  and `straight` are built).
 - **operator spellings for the ER cardinality markers** ([§7](#7-nodes)) — `one`,
   `zero-or-one`, `one-or-many`, `zero-or-many` are set via `marker*:` today; `-<` / `>-<`
   are the only crow's-foot operators.

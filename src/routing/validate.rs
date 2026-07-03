@@ -1,58 +1,56 @@
-//! The independent four-law checker (ROUTING §The Four Laws) — judgeable on
-//! the output alone: routed polylines, placed nodes, and the engine's report.
+//! The independent law checker (ROUTING.md §The Four Laws) — a test oracle
+//! judging the drawn output alone: routed polylines, placed nodes, and the
+//! engine's report. No router state is consulted. Contact is side
+//! arithmetic; clearance is segment–box distance; separation is pairwise
+//! segment distance, with Law 1's one excuse re-derived from scratch
+//! ([`excuse::excused`]): a sub-clearance gap stands only where the contention
+//! component it belongs to demonstrably cannot spread to full clearance —
+//! port windows and the contract's channel model ([`ChannelGraph`] is pure
+//! node geometry) grant each wire its lawful range — and nothing may ever
+//! fall below half the clearance. Crossings reconcile against the report
+//! both ways — every drawn crossing named, every named crossing drawn.
 //!
-//! No router knowledge: clearance and separation are segment-distance
-//! arithmetic, contact is side arithmetic, and crossings are reconciled
-//! against the report — every drawn crossing named, every named crossing
-//! drawn. Anything found here is an engine bug (`Severity::Warning`); the
-//! checker exists to catch it in CI, never to patch the routing.
+//! Only orthogonal wires are judged: the four laws are the orthogonal
+//! contract, and a `straight` wire is lawfully oblique and avoids nothing.
+//! Anything found here is an engine bug (`Severity::Warning`); the checker
+//! exists to catch it in CI, never to repair the routing.
 
-use super::audit;
-use super::bundle::link_clearance;
-use super::rect::Rect;
-use super::scene::SceneIndex;
-use super::{Rule, Severity, Violation};
+use super::ortho::cost::min_pitch;
+use super::ortho::rect::Rect;
+use super::ortho::request::link_clearance;
+use super::ortho::scene::SceneIndex;
+use super::report::{Rule, Severity, Violation, cross};
+use crate::ast::Side;
 use crate::layout::ir::{PlacedNode, RoutedLink};
+use crate::resolve::Strategy;
 use crate::span::Span;
 use std::collections::BTreeMap;
+
+mod excuse;
 
 const EPS: f64 = 1e-6;
 
 pub fn check(nodes: &[PlacedNode], links: &[RoutedLink], report: &[Violation]) -> Vec<Violation> {
+    let links: Vec<&RoutedLink> = links
+        .iter()
+        .filter(|w| w.strategy == Strategy::Orthogonal)
+        .collect();
     if links.is_empty() {
         return Vec::new();
     }
+    // The diagram routes at the maximum clearance any link carries
+    // (ROUTING.md §Vocabulary), so every link is judged at that number.
     let c = links
         .iter()
         .map(|w| link_clearance(&w.attrs))
         .fold(0.0_f64, f64::max);
     let index = SceneIndex::build(nodes);
     let mut out = Vec::new();
-    contact(&index, links, c, &mut out);
-    clearance(&index, links, c, &mut out);
-    separation(&index, links, c, report, &mut out);
-    self_crossing(links, &mut out);
+    contact(&index, &links, c, &mut out);
+    clearance(&index, &links, c, &mut out);
+    separation(&index, &links, c, report, &mut out);
+    self_crossing(&links, &mut out);
     out
-}
-
-/// Law 3's blind spot made checkable: a link crossing **itself** is a
-/// crossing the report cannot even name — always an engine bug, never
-/// counted output.
-fn self_crossing(links: &[RoutedLink], out: &mut Vec<Violation>) {
-    for w in links {
-        let segs: Vec<_> = w.path.windows(2).collect();
-        for (i, sa) in segs.iter().enumerate() {
-            for sb in segs.iter().skip(i + 1) {
-                if let Some(at) = audit::cross(sa, sb) {
-                    out.push(breach(
-                        Rule::Crossing,
-                        w,
-                        format!("link crosses itself at {at:?}"),
-                    ));
-                }
-            }
-        }
-    }
 }
 
 fn name(w: &RoutedLink) -> String {
@@ -89,236 +87,25 @@ fn rect_box(r: Rect) -> (f64, f64, f64, f64) {
     (r.x0, r.y0, r.x1, r.y1)
 }
 
-/// Law 2 — Contact: every end on a side, perpendicular, clear of corners;
-/// ports sharing a side evenly spaced ≥ clearance apart, median on the side's
-/// centre. A side past its capacity **compacts** (the compaction clause): a
-/// sub-clearance pitch is excused only by genuine overflow — more ports
-/// than the side holds at clearance — and must be uniform at exactly the
-/// widest pitch the side allows. Orthogonality rides along: an oblique
-/// segment voids every law.
-fn contact(index: &SceneIndex, links: &[RoutedLink], c: f64, out: &mut Vec<Violation>) {
-    let mut sides: BTreeMap<(String, u8), Vec<(f64, usize)>> = BTreeMap::new();
-    for (wi, w) in links.iter().enumerate() {
-        if w.path.len() < 2 {
-            out.push(breach(Rule::Contact, w, "degenerate path".to_owned()));
-            continue;
-        }
-        if let Some(s) = w
-            .path
-            .windows(2)
-            .find(|s| s[0].0 != s[1].0 && s[0].1 != s[1].1)
-        {
-            out.push(breach(Rule::Contact, w, format!("diagonal segment {s:?}")));
-        }
-        let n = w.path.len();
-        let ends = [
-            (&w.seg_from, w.path[0], w.path[1]),
-            (&w.seg_to, w.path[n - 1], w.path[n - 2]),
-        ];
-        for (path, port, inward) in ends {
-            let Some(rect) = index.rect(path) else {
-                out.push(breach(
-                    Rule::Contact,
-                    w,
-                    format!("endpoint '{path}' has no placed body"),
-                ));
-                continue;
-            };
-            match landing(rect, port, inward, c) {
-                Ok(side) => sides
-                    .entry((path.clone(), side))
-                    .or_default()
-                    .push((ord_on(side, port), wi)),
-                Err(why) => out.push(breach(
-                    Rule::Contact,
-                    w,
-                    format!("{why} at {port:?} on '{path}'"),
-                )),
-            }
-        }
-    }
-
-    for ((path, side), mut ports) in sides {
-        ports.sort_by(|a, b| a.0.total_cmp(&b.0));
-        let members: Vec<usize> = ports.iter().map(|p| p.1).collect();
-        // Fan siblings share one port; identical ordinates are one slot.
-        ports.dedup_by(|a, b| (a.0 - b.0).abs() <= EPS);
-        let rect = index.rect(&path).expect("landed ends have a body");
-        let centre = match side {
-            0 | 2 => (rect.x0 + rect.x1) / 2.0,
-            _ => (rect.y0 + rect.y1) / 2.0,
-        };
-        let mut flag = |wi: usize, detail: String| {
-            out.push(breach(
-                Rule::Contact,
-                &links[wi],
-                format!("{detail} on '{path}'"),
-            ));
-        };
-        let gaps: Vec<f64> = ports.windows(2).map(|p| p[1].0 - p[0].0).collect();
-        if ports.len() > side_capacity(rect, side, c) {
-            let pitch = side_usable(rect, side, c) / (ports.len() as f64 - 1.0);
-            if let Some(g) = gaps.iter().find(|g| (**g - pitch).abs() > EPS) {
-                flag(
-                    ports[0].1,
-                    format!("compacted ports {g} apart, the side's even pitch is {pitch}"),
-                );
-            }
-        } else if let Some(g) = gaps.iter().find(|g| **g < c - EPS) {
-            flag(ports[0].1, format!("ports {g} apart, need ≥ {c}"));
-        } else if gaps.windows(2).any(|g| (g[1] - g[0]).abs() > EPS) {
-            flag(ports[0].1, "ports unevenly spaced".to_owned());
-        }
-        // Law 2's centred median binds sides holding two or more ports; a
-        // lone port is free along its side (it aligns with its link).
-        let median = (ports[0].0 + ports[ports.len() - 1].0) / 2.0;
-        if ports.len() > 1
-            && (median - centre).abs() > EPS
-            && !slide_excused(links, &ports, &members, rect, side, centre - median, c)
-        {
-            flag(
-                ports[0].1,
-                format!("port median {median} off the side's centre {centre}"),
-            );
-        }
-    }
-}
-
-/// Law 2's slide clause: a port group may sit off its side's centre only
-/// when the centred rows are unavailable — some port, slid back by `shift`,
-/// would come nearer than clearance to a link outside the group. Checkable
-/// on the output alone.
-fn slide_excused(
-    links: &[RoutedLink],
-    ports: &[(f64, usize)],
-    members: &[usize],
-    rect: Rect,
-    side: u8,
-    shift: f64,
-    c: f64,
-) -> bool {
-    ports.iter().any(|&(o, _)| {
-        let p = match side {
-            0 => (o + shift, rect.y0),
-            1 => (rect.x1, o + shift),
-            2 => (o + shift, rect.y1),
-            _ => (rect.x0, o + shift),
-        };
-        links.iter().enumerate().any(|(wj, w)| {
-            !members.contains(&wj)
-                && w.path
-                    .windows(2)
-                    .any(|s| box_dist((p.0, p.1, p.0, p.1), seg_box(s)) < c - EPS)
-        })
-    })
-}
-
-/// The port's ordinate along its side: x on horizontal sides, y on vertical.
-fn ord_on(side: u8, port: (f64, f64)) -> f64 {
-    match side {
-        0 | 2 => port.0,
-        _ => port.1,
-    }
-}
-
-/// A side's extent along its own axis (0/2 horizontal → width).
-fn side_extent(rect: Rect, side: u8) -> f64 {
-    match side {
-        0 | 2 => rect.w(),
-        _ => rect.h(),
-    }
-}
-
-fn side_usable(rect: Rect, side: u8, c: f64) -> f64 {
-    (side_extent(rect, side) - 2.0 * c).max(0.0)
-}
-
-/// Law 2's side capacity: `floor((len − 2c)/c) + 1`, minimum 1.
-fn side_capacity(rect: Rect, side: u8, c: f64) -> usize {
-    let free = side_extent(rect, side) - 2.0 * c;
-    if free < 0.0 {
-        1
-    } else {
-        (free / c).floor() as usize + 1
-    }
-}
-
-/// The compacted rows, established independently of the router from Law
-/// 2's excuse: every `(node, side)` carrying more distinct ports than its
-/// capacity — with the links that land there and the band its outermost
-/// ports bound.
-struct Row {
-    vertical: bool,
-    lo: f64,
-    hi: f64,
-    members: Vec<usize>,
-}
-
-fn compacted_rows(index: &SceneIndex, links: &[RoutedLink], c: f64) -> Vec<Row> {
-    let mut rows: BTreeMap<(String, u8), Vec<(usize, f64)>> = BTreeMap::new();
-    for (wi, w) in links.iter().enumerate() {
-        if w.path.len() < 2 {
-            continue;
-        }
-        let n = w.path.len();
-        let ends = [
-            (&w.seg_from, w.path[0], w.path[1]),
-            (&w.seg_to, w.path[n - 1], w.path[n - 2]),
-        ];
-        for (path, port, inward) in ends {
-            let Some(rect) = index.rect(path) else {
-                continue;
-            };
-            let Ok(side) = landing(rect, port, inward, c) else {
-                continue;
-            };
-            rows.entry((path.clone(), side))
-                .or_default()
-                .push((wi, ord_on(side, port)));
-        }
-    }
-    let mut out = Vec::new();
-    for ((path, side), ends) in rows {
-        let rect = index.rect(&path).expect("landed ends have a body");
-        let mut ords: Vec<f64> = ends.iter().map(|t| t.1).collect();
-        ords.sort_by(f64::total_cmp);
-        ords.dedup_by(|a, b| (*a - *b).abs() <= EPS);
-        if ords.len() <= side_capacity(rect, side, c) {
-            continue;
-        }
-        let mut members: Vec<usize> = ends.iter().map(|t| t.0).collect();
-        members.sort_unstable();
-        members.dedup();
-        out.push(Row {
-            vertical: side == 1 || side == 3,
-            lo: ords[0],
-            hi: *ords.last().unwrap(),
-            members,
-        });
-    }
-    out
-}
-
-/// Which side (0 top, 1 right, 2 bottom, 3 left) the port lands on — or why
-/// the landing is illegal. Corner margin relaxes to half the side on sides
-/// too short for full clearance (port capacity bottoms out at one).
-fn landing(rect: Rect, port: (f64, f64), inward: (f64, f64), c: f64) -> Result<u8, String> {
+/// Which side the port lands on — or why the landing is illegal (Law 2:
+/// on a side, perpendicular, ≥ clearance from the corners).
+fn landing(rect: Rect, port: (f64, f64), inward: (f64, f64), c: f64) -> Result<Side, String> {
     let (x, y) = port;
     let on_x = x > rect.x0 + EPS && x < rect.x1 - EPS;
     let on_y = y > rect.y0 + EPS && y < rect.y1 - EPS;
     let side = if (y - rect.y0).abs() <= EPS && on_x {
-        0
+        Side::Top
     } else if (x - rect.x1).abs() <= EPS && on_y {
-        1
+        Side::Right
     } else if (y - rect.y1).abs() <= EPS && on_x {
-        2
+        Side::Bottom
     } else if (x - rect.x0).abs() <= EPS && on_y {
-        3
+        Side::Left
     } else {
         return Err("end is not on a side".to_owned());
     };
     let (margin, len, perpendicular) = match side {
-        0 | 2 => (
+        Side::Top | Side::Bottom => (
             (x - rect.x0).min(rect.x1 - x),
             rect.w(),
             (inward.0 - x).abs() <= EPS,
@@ -338,11 +125,59 @@ fn landing(rect: Rect, port: (f64, f64), inward: (f64, f64), c: f64) -> Result<u
     Ok(side)
 }
 
+/// One drawn end: its endpoint path, the port, and the inward point.
+type End<'a> = (&'a str, (f64, f64), (f64, f64));
+
+/// The two ends of a drawn polyline.
+fn ends(w: &RoutedLink) -> [End<'_>; 2] {
+    let n = w.path.len();
+    [
+        (w.seg_from.as_str(), w.path[0], w.path[1]),
+        (w.seg_to.as_str(), w.path[n - 1], w.path[n - 2]),
+    ]
+}
+
+/// Law 2 — Contact: every end on a side of its own endpoint, perpendicular,
+/// clear of the corners; the polyline orthogonal throughout. Port spacing is
+/// separation's job — end segments hug like any other wires.
+fn contact(index: &SceneIndex, links: &[&RoutedLink], c: f64, out: &mut Vec<Violation>) {
+    for w in links {
+        if w.path.len() < 2 {
+            out.push(breach(Rule::Contact, w, "degenerate path".to_owned()));
+            continue;
+        }
+        if let Some(s) = w
+            .path
+            .windows(2)
+            .find(|s| s[0].0 != s[1].0 && s[0].1 != s[1].1)
+        {
+            out.push(breach(Rule::Contact, w, format!("diagonal segment {s:?}")));
+        }
+        for (path, port, inward) in ends(w) {
+            let Some(rect) = index.rect(path) else {
+                out.push(breach(
+                    Rule::Contact,
+                    w,
+                    format!("endpoint '{path}' has no placed body"),
+                ));
+                continue;
+            };
+            if let Err(why) = landing(rect, port, inward, c) {
+                out.push(breach(
+                    Rule::Contact,
+                    w,
+                    format!("{why} at {port:?} on '{path}'"),
+                ));
+            }
+        }
+    }
+}
+
 /// Law 1 — Clearance from bodies: ≥ clearance from every solid rect, and
-/// from the link's own endpoints on every segment but the adjoining stub.
-/// A containment link runs inside its outer endpoint by design (ROUTING
-/// §Special shapes), so that body is skipped.
-fn clearance(index: &SceneIndex, links: &[RoutedLink], c: f64, out: &mut Vec<Violation>) {
+/// from the link's own endpoints on every segment but the adjoining end
+/// segment. A containment link runs inside its outer endpoint by design
+/// (ROUTING.md §Special nodes), so that body is skipped.
+fn clearance(index: &SceneIndex, links: &[&RoutedLink], c: f64, out: &mut Vec<Violation>) {
     for w in links {
         if w.path.len() < 2 {
             continue;
@@ -396,50 +231,54 @@ fn clearance(index: &SceneIndex, links: &[RoutedLink], c: f64, out: &mut Vec<Vio
     }
 }
 
-/// Law 1 (link–link) and Law 3's audit promise: every segment pair of two
-/// links keeps clearance, except the sanctioned contacts — transversal
-/// crossings (reconciled against the report), fan-sibling trunks (drawn as
-/// one line), and the port rows of compacted sides (Law 1's third
-/// surrender): among one such side's links, the final approach legs and
-/// each leg's feeding corner may under-clear one another.
+/// Law 1 (link–link) and Law 3's promise, pairwise: every segment pair of
+/// two links keeps clearance, except the sanctioned contacts — transversal
+/// crossings (reconciled against the report) and fan-sibling trunks (one
+/// drawn line until the split). A gap below clearance stands only on a
+/// scarcity excuse ([`excused`]); a gap below half the clearance never
+/// stands (the relief valve's floor).
 fn separation(
     index: &SceneIndex,
-    links: &[RoutedLink],
+    links: &[&RoutedLink],
     c: f64,
     report: &[Violation],
     out: &mut Vec<Violation>,
 ) {
-    let rows = compacted_rows(index, links, c);
     let mut drawn: BTreeMap<(String, String), Vec<(f64, f64)>> = BTreeMap::new();
     for i in 0..links.len() {
         for j in i + 1..links.len() {
-            let (a, b) = (&links[i], &links[j]);
+            let (a, b) = (links[i], links[j]);
             let fan_pair = [a.fan_from, a.fan_to]
                 .iter()
                 .flatten()
                 .any(|g| [b.fan_from, b.fan_to].contains(&Some(*g)));
-            let bands: Vec<(bool, f64, f64)> = rows
-                .iter()
-                .filter(|r| r.members.contains(&i) && r.members.contains(&j))
-                .map(|r| (r.vertical, r.lo, r.hi))
-                .collect();
             let mut offence: Option<String> = None;
-            for sa in a.path.windows(2) {
-                for sb in b.path.windows(2) {
-                    if let Some(at) = audit::cross(sa, sb) {
+            for (sk, sa) in a.path.windows(2).enumerate() {
+                for (tk, sb) in b.path.windows(2).enumerate() {
+                    if let Some(at) = cross(sa, sb) {
                         drawn.entry(pair_key(a, b)).or_default().push(at);
                         continue;
                     }
                     let d = box_dist(seg_box(sa), seg_box(sb));
-                    if d >= c - EPS
-                        || (fan_pair && trunk_contact(sa, sb, a, b, d))
-                        || bands.iter().any(|&band| audit::band_contact(band, sa, sb))
-                    {
+                    if d >= c - EPS || (fan_pair && trunk_contact(sa, sb, a, b, d)) {
                         continue;
                     }
-                    offence.get_or_insert_with(|| {
-                        format!("segments {sa:?} and {sb:?} are {d} apart, need ≥ {c}")
-                    });
+                    if d < min_pitch(c) - EPS {
+                        offence.get_or_insert_with(|| {
+                            format!(
+                                "segments {sa:?} and {sb:?} are {d} apart, \
+                                 below the half-clearance floor {}",
+                                min_pitch(c)
+                            )
+                        });
+                    } else if !excuse::excused(index, links, (i, sk, sa), (j, tk, sb), c) {
+                        offence.get_or_insert_with(|| {
+                            format!(
+                                "segments {sa:?} and {sb:?} are {d} apart with room \
+                                 for full clearance {c}"
+                            )
+                        });
+                    }
                 }
             }
             if let Some(detail) = offence {
@@ -457,11 +296,10 @@ fn separation(
 }
 
 /// Fan-sibling contact that is the shared trunk rather than a braid: an
-/// outright overlap or touch, a segment that lies on the partner's polyline
+/// outright overlap or touch, a segment lying on the partner's polyline
 /// (the trunk is one drawn line, so the partner extends it), or corner
-/// adjacency where staggered branch points peel off the trunk — parallel
-/// segments whose travel extents only touch. Siblings running alongside each
-/// other past the split still breach.
+/// adjacency where staggered branch points peel off the trunk. Siblings
+/// running alongside each other past the split still breach.
 fn trunk_contact(
     sa: &[(f64, f64)],
     sb: &[(f64, f64)],
@@ -500,15 +338,35 @@ fn break_out(sa: &[(f64, f64)], sb: &[(f64, f64)]) -> bool {
     }
 }
 
+/// Law 3's blind spot made checkable: a link crossing **itself** is a
+/// crossing the report cannot even name — always an engine bug.
+fn self_crossing(links: &[&RoutedLink], out: &mut Vec<Violation>) {
+    for w in links {
+        let segs: Vec<_> = w.path.windows(2).collect();
+        for (i, sa) in segs.iter().enumerate() {
+            for sb in segs.iter().skip(i + 1) {
+                if let Some(at) = cross(sa, sb) {
+                    out.push(breach(
+                        Rule::Crossing,
+                        w,
+                        format!("link crosses itself at {at:?}"),
+                    ));
+                }
+            }
+        }
+    }
+}
+
 fn pair_key(a: &RoutedLink, b: &RoutedLink) -> (String, String) {
     let (x, y) = (name(a), name(b));
     if x <= y { (x, y) } else { (y, x) }
 }
 
-/// Law 3: "a crossing the report doesn't name is a bug" — and a named
-/// crossing that is not drawn is the same bug mirrored.
+/// Law 3: "the report counts every drawn crossing" — a crossing the report
+/// doesn't name is a bug, and a named crossing that is not drawn is the
+/// same bug mirrored.
 fn reconcile(
-    links: &[RoutedLink],
+    links: &[&RoutedLink],
     drawn: &BTreeMap<(String, String), Vec<(f64, f64)>>,
     report: &[Violation],
     out: &mut Vec<Violation>,
@@ -567,7 +425,7 @@ mod tests {
     use crate::layout::ir::Bbox;
     use crate::resolve::{AttrMap, Markers, NodeKind, ResolvedValue};
 
-    fn body(id: &str, cx: f64, cy: f64) -> PlacedNode {
+    fn sized(id: &str, cx: f64, cy: f64, w: f64, h: f64) -> PlacedNode {
         PlacedNode {
             id: Some(id.to_owned()),
             kind: NodeKind::Block,
@@ -579,12 +437,17 @@ mod tests {
             markers: Markers::default(),
             cx,
             cy,
-            bbox: Bbox::centered(40.0, 40.0),
+            bbox: Bbox::centered(w, h),
             rotation: 0.0,
             children: Vec::new(),
             dividers: Vec::new(),
+            links: Vec::new(),
             span: Span::empty(),
         }
+    }
+
+    fn body(id: &str, cx: f64, cy: f64) -> PlacedNode {
+        sized(id, cx, cy, 40.0, 40.0)
     }
 
     fn link(from: &str, to: &str, path: Vec<(f64, f64)>) -> RoutedLink {
@@ -592,6 +455,7 @@ mod tests {
         attrs.insert("clearance", ResolvedValue::Number(8.0));
         RoutedLink {
             path,
+            strategy: Strategy::Orthogonal,
             markers: Markers::default(),
             attrs,
             applied_styles: Vec::new(),
@@ -618,6 +482,16 @@ mod tests {
     #[test]
     fn a_clean_straight_link_is_silent() {
         let w = link("a", "b", vec![(20.0, 0.0), (180.0, 0.0)]);
+        let out = check(&pair(), &[w], &[]);
+        assert_eq!(out.len(), 0, "{out:?}");
+    }
+
+    #[test]
+    fn a_straight_strategy_wire_is_exempt_from_the_laws() {
+        // Oblique, corner-grazing, avoidance-free — lawful for `straight`
+        // (ROUTING.md §Strategies), so the orthogonal checker keeps silent.
+        let mut w = link("a", "b", vec![(20.0, 20.0), (180.0, -20.0)]);
+        w.strategy = Strategy::Straight;
         let out = check(&pair(), &[w], &[]);
         assert_eq!(out.len(), 0, "{out:?}");
     }
@@ -670,72 +544,132 @@ mod tests {
     #[test]
     fn contact_fires_on_corner_oblique_and_diagonal_landings() {
         let corner = link("a", "b", vec![(20.0, -20.0), (180.0, -20.0)]);
-        let near_corner = link("a", "b", vec![(20.0, -15.0), (180.0, -15.0)]);
+        let graze = link("a", "b", vec![(20.0, -15.0), (180.0, -15.0)]);
         let oblique = link(
             "a",
             "b",
             vec![(20.0, 0.0), (20.0, -40.0), (180.0, -40.0), (180.0, 0.0)],
         );
         let diagonal = link("a", "b", vec![(20.0, 0.0), (170.0, -10.0), (180.0, 0.0)]);
-        for w in [corner, near_corner, oblique, diagonal] {
+        for w in [corner, graze, oblique, diagonal] {
             let out = check(&pair(), &[w], &[]);
             assert!(rules(&out).contains(&Rule::Contact), "{out:?}");
         }
     }
 
     #[test]
-    fn contact_fires_when_ports_cram_or_drift_off_centre() {
+    fn separation_fires_below_the_half_clearance_floor() {
+        // Two rails 3 apart: below clearance/2 = 4 — no excuse exists.
         let nodes = vec![
-            body("a", 0.0, 0.0),
-            body("b", 200.0, 0.0),
-            body("c", 0.0, 100.0),
+            sized("a", 0.0, 0.0, 40.0, 100.0),
+            sized("b", 200.0, 0.0, 40.0, 100.0),
         ];
-        // Two ports on b's left side 4 apart (need ≥ 8), median off centre.
         let w1 = link("a", "b", vec![(20.0, 0.0), (180.0, 0.0)]);
-        let w2 = link(
-            "c",
-            "b",
-            vec![(20.0, 100.0), (100.0, 100.0), (100.0, 4.0), (180.0, 4.0)],
-        );
+        let w2 = link("a", "b", vec![(20.0, 3.0), (180.0, 3.0)]);
         let out = check(&nodes, &[w1, w2], &[]);
         assert!(
             out.iter()
-                .any(|v| v.rule == Rule::Contact && v.detail.contains("ports")),
+                .any(|v| v.rule == Rule::Separation && v.detail.contains("floor")),
             "{out:?}"
         );
     }
 
     #[test]
-    fn separation_fires_on_a_parallel_hug() {
+    fn a_squeeze_with_room_to_spare_is_flagged() {
+        // Five rails at pitch 5 between 100-tall boxes: the shared window
+        // (84) and the corridor both hold five wires at full clearance, so
+        // the sub-clearance hug has no excuse.
         let nodes = vec![
-            body("a", 0.0, 0.0),
-            body("b", 200.0, 0.0),
-            body("c", 0.0, 100.0),
-            body("d", 200.0, 100.0),
+            sized("a", 0.0, 0.0, 40.0, 100.0),
+            sized("b", 200.0, 0.0, 40.0, 100.0),
         ];
+        let links: Vec<RoutedLink> = (0..5)
+            .map(|i| {
+                let y = -10.0 + 5.0 * i as f64;
+                link("a", "b", vec![(20.0, y), (180.0, y)])
+            })
+            .collect();
+        let out = check(&nodes, &links, &[]);
+        assert!(rules(&out).contains(&Rule::Separation), "{out:?}");
+    }
+
+    #[test]
+    fn a_full_side_excuses_its_compressed_ports() {
+        // Four rails at the pitch floor between 28-tall boxes: the lawful
+        // window is 28 − 2·8 = 12, four ports at full clearance need 24 —
+        // the side cannot hold them, so the compression stands.
+        let nodes = vec![
+            sized("a", 0.0, 0.0, 40.0, 28.0),
+            sized("b", 200.0, 0.0, 40.0, 28.0),
+        ];
+        let links: Vec<RoutedLink> = (0..4)
+            .map(|i| {
+                let y = -6.0 + 4.0 * i as f64;
+                link("a", "b", vec![(20.0, y), (180.0, y)])
+            })
+            .collect();
+        let out = check(&nodes, &links, &[]);
+        assert_eq!(out.len(), 0, "{out:?}");
+    }
+
+    #[test]
+    fn a_pinched_corridor_excuses_the_compression() {
+        // Two wires drop through a 4-wide slot between two tall walls —
+        // their vertical legs 4 apart (the floor, exactly). The corridor's
+        // usable width cannot hold two wires at clearance 8: excused.
+        let mut nodes = vec![
+            sized("ww", -35.0, 0.0, 50.0, 200.0),
+            sized("we", 35.0, 0.0, 50.0, 200.0),
+        ];
+        nodes.push(sized("a1", -60.0, -150.0, 40.0, 20.0));
+        nodes.push(sized("a2", 50.0, -150.0, 40.0, 20.0));
+        nodes.push(sized("b1", -60.0, 150.0, 40.0, 20.0));
+        nodes.push(sized("b2", 50.0, 150.0, 40.0, 20.0));
         let w1 = link(
-            "a",
-            "b",
+            "a1",
+            "b1",
             vec![
-                (20.0, 0.0),
-                (60.0, 0.0),
-                (60.0, 40.0),
-                (160.0, 40.0),
-                (160.0, 0.0),
-                (180.0, 0.0),
+                (-40.0, -150.0),
+                (-2.0, -150.0),
+                (-2.0, 150.0),
+                (-40.0, 150.0),
             ],
         );
         let w2 = link(
-            "c",
-            "d",
+            "a2",
+            "b2",
+            vec![(30.0, -150.0), (2.0, -150.0), (2.0, 150.0), (30.0, 150.0)],
+        );
+        let out = check(&nodes, &[w1, w2], &[]);
+        assert_eq!(out.len(), 0, "{out:?}");
+    }
+
+    #[test]
+    fn the_same_hug_in_a_roomy_corridor_is_flagged() {
+        // Identical wires, walls pulled apart to a 36-wide slot: room for
+        // both at clearance, so the 4-gap is an engine bug.
+        let mut nodes = vec![
+            sized("ww", -51.0, 0.0, 50.0, 200.0),
+            sized("we", 51.0, 0.0, 50.0, 200.0),
+        ];
+        nodes.push(sized("a1", -60.0, -150.0, 40.0, 20.0));
+        nodes.push(sized("a2", 50.0, -150.0, 40.0, 20.0));
+        nodes.push(sized("b1", -60.0, 150.0, 40.0, 20.0));
+        nodes.push(sized("b2", 50.0, 150.0, 40.0, 20.0));
+        let w1 = link(
+            "a1",
+            "b1",
             vec![
-                (20.0, 100.0),
-                (60.0, 100.0),
-                (60.0, 44.0),
-                (160.0, 44.0),
-                (160.0, 100.0),
-                (180.0, 100.0),
+                (-40.0, -150.0),
+                (-2.0, -150.0),
+                (-2.0, 150.0),
+                (-40.0, 150.0),
             ],
+        );
+        let w2 = link(
+            "a2",
+            "b2",
+            vec![(30.0, -150.0), (2.0, -150.0), (2.0, 150.0), (30.0, 150.0)],
         );
         let out = check(&nodes, &[w1, w2], &[]);
         assert!(rules(&out).contains(&Rule::Separation), "{out:?}");
@@ -788,8 +722,7 @@ mod tests {
 
     #[test]
     fn a_link_crossing_itself_is_flagged() {
-        // A hook past the port row whose final approach sweeps back through
-        // the link's own run — the failed-inversion bubble shape.
+        // A hook whose final approach sweeps back through the link's own run.
         let w = link(
             "a",
             "b",

@@ -6,6 +6,7 @@
 use super::cascade::NodeFacts;
 use super::ir::{
     Along, AttrMap, MarkerKind, ResolvedEndpoint, ResolvedLink, ResolvedText, ResolvedValue,
+    Strategy,
 };
 use super::merge::{collapse, resolve_markers};
 use super::scene::{PathIndex, SceneCtx};
@@ -64,7 +65,7 @@ pub fn resolve_link(
     )?;
     let mut attrs = collapse(&ordered);
     inject_line_style(&mut attrs, w.op.line);
-    validate_routing(&attrs, w.span)?;
+    let routing = parse_routing(&attrs, w.span)?;
     attrs.map.remove("routing");
 
     // `along:` distributes the labels along the drawn route (SPEC §9): one
@@ -126,6 +127,7 @@ pub fn resolve_link(
             endpoints,
             scope: path_prefix.join("."),
             line: w.op.line,
+            routing,
             attrs: attrs.clone(),
             applied_styles: w.classes.clone(),
             markers: markers.clone(),
@@ -222,15 +224,16 @@ fn map_link_name(name: &str) -> &str {
     }
 }
 
-/// Only `routing: orthogonal` is built; `straight` / `curved` are named but
-/// deferred (SPEC §19).
-fn validate_routing(attrs: &AttrMap, span: crate::span::Span) -> Result<(), Error> {
+/// The resolved wiring strategy (SPEC §9): `orthogonal` (the default) and
+/// `straight` are built; `curved` is named but deferred.
+fn parse_routing(attrs: &AttrMap, span: crate::span::Span) -> Result<Strategy, Error> {
     match attrs.get("routing") {
-        None => Ok(()),
-        Some(ResolvedValue::Ident(r)) if r == "orthogonal" => Ok(()),
+        None => Ok(Strategy::Orthogonal),
+        Some(ResolvedValue::Ident(r)) if r == "orthogonal" => Ok(Strategy::Orthogonal),
+        Some(ResolvedValue::Ident(r)) if r == "straight" => Ok(Strategy::Straight),
         Some(_) => Err(Error::at(
             span,
-            "routing: only 'orthogonal' is built; 'straight' / 'curved' are deferred (SPEC §19)",
+            "routing: 'orthogonal' and 'straight' are built; 'curved' is deferred (SPEC §20)",
         )),
     }
 }

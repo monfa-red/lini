@@ -55,11 +55,28 @@ pub fn path_d(pts: &[Point], targets: &[f64]) -> String {
 }
 
 /// Round each interior corner of the orthogonal polyline `pts` to its fillet
-/// radius in `targets`, capped at half of each adjacent run so an arc never eats
-/// a neighbour. A degenerate (sub-pixel) or collinear corner stays a sharp
-/// joint. The legs are axis-aligned, so the Manhattan run length doubles as the
-/// Euclidean one.
+/// radius in `targets`, kept feasible per leg: a leg is shared by the corners
+/// at its two ends, so their arcs together may fill it — when the pair
+/// over-fills, both scale in proportion to their desires (a squeezed nest
+/// keeps its pitch uniform instead of collapsing the smaller arc), and a
+/// terminal leg belongs to its one corner whole (marker pull-back already
+/// shortened it). A degenerate (sub-pixel) or collinear corner stays a sharp
+/// joint. The legs are axis-aligned, so the Manhattan run length doubles as
+/// the Euclidean one.
 pub fn round(pts: &[Point], targets: &[f64]) -> RoundedPath {
+    let corners = pts.len().saturating_sub(2);
+    let target = |k: usize| targets.get(k).copied().unwrap_or(0.0);
+    let leg = |i: usize| (pts[i + 1].0 - pts[i].0).abs() + (pts[i + 1].1 - pts[i].1).abs();
+    let radius = |k: usize| {
+        let t = target(k);
+        if t <= 0.0 {
+            return 0.0;
+        }
+        let before = if k == 0 { 0.0 } else { target(k - 1) };
+        let after = if k + 1 < corners { target(k + 1) } else { 0.0 };
+        let f = (leg(k) / (before + t)).min(leg(k + 1) / (t + after));
+        t * f.min(1.0)
+    };
     let mut segs = Vec::new();
     for i in 1..pts.len() - 1 {
         let (a, b, c) = (pts[i - 1], pts[i], pts[i + 1]);
@@ -67,12 +84,7 @@ pub fn round(pts: &[Point], targets: &[f64]) -> RoundedPath {
         let (out_dx, out_dy) = (c.0 - b.0, c.1 - b.1);
         let in_len = in_dx.abs() + in_dy.abs();
         let out_len = out_dx.abs() + out_dy.abs();
-        let r = targets
-            .get(i - 1)
-            .copied()
-            .unwrap_or(0.0)
-            .min(in_len / 2.0)
-            .min(out_len / 2.0);
+        let r = radius(i - 1);
         let cross = in_dx * out_dy - in_dy * out_dx;
         if r < 0.5 || cross == 0.0 {
             segs.push(Seg::Line { to: b });
@@ -98,5 +110,43 @@ pub fn round(pts: &[Point], targets: &[f64]) -> RoundedPath {
     RoundedPath {
         start: pts[0],
         segs,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn radii(pts: &[Point], targets: &[f64]) -> Vec<f64> {
+        round(pts, targets)
+            .segs
+            .iter()
+            .filter_map(|s| match s {
+                Seg::Arc { radius, .. } => Some(*radius),
+                Seg::Line { .. } => None,
+            })
+            .collect()
+    }
+
+    #[test]
+    fn corners_share_a_legs_length_in_proportion() {
+        // Both corners want 30 on a 40-long shared leg: they split it evenly.
+        let pts = [(0.0, 0.0), (40.0, 0.0), (40.0, 40.0), (80.0, 40.0)];
+        assert_eq!(radii(&pts, &[30.0, 30.0]), vec![20.0, 20.0]);
+        // Unequal desires split in proportion — the nest's constant pitch
+        // scales instead of collapsing onto the smaller corner.
+        let pts = [(0.0, 0.0), (60.0, 0.0), (60.0, 40.0), (120.0, 40.0)];
+        assert_eq!(radii(&pts, &[10.0, 30.0]), vec![10.0, 30.0]);
+        let pts = [(0.0, 0.0), (60.0, 0.0), (60.0, 20.0), (120.0, 20.0)];
+        assert_eq!(radii(&pts, &[10.0, 30.0]), vec![5.0, 15.0]);
+    }
+
+    #[test]
+    fn a_lone_corner_may_take_a_whole_terminal_leg() {
+        // The S-bend's big first arc: 40 fits the 64-long terminal leg and
+        // pairs with the far corner's 10 on the 56-long shared leg — the old
+        // half-leg rule squashed it to 28 for no reason.
+        let pts = [(0.0, 0.0), (64.0, 0.0), (64.0, 56.0), (100.0, 56.0)];
+        assert_eq!(radii(&pts, &[40.0, 10.0]), vec![40.0, 10.0]);
     }
 }

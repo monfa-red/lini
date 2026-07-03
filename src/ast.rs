@@ -13,9 +13,6 @@ pub enum Side {
 }
 
 impl Side {
-    /// In `index` order — the canonical side enumeration.
-    pub const ALL: [Side; 4] = [Side::Top, Side::Right, Side::Bottom, Side::Left];
-
     pub fn parse(s: &str) -> Option<Self> {
         Some(match s {
             "top" => Self::Top,

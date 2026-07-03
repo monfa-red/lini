@@ -12,7 +12,7 @@ use super::scene::SceneIndex;
 use crate::ast::Side;
 use crate::error::Error;
 use crate::render::markers::marker_size;
-use crate::resolve::{AttrMap, MarkerKind, Markers, Program};
+use crate::resolve::{AttrMap, MarkerKind, Markers, Program, Strategy};
 use crate::span::Span;
 
 pub struct EdgeReq {
@@ -22,6 +22,9 @@ pub struct EdgeReq {
     pub b_rect: Rect,
     pub side_a: Option<Side>,
     pub side_b: Option<Side>,
+    /// The wiring strategy drawing this edge (SPEC §9): `routing:` cascades
+    /// per scope and per link, so one expansion serves every strategy.
+    pub routing: Strategy,
     pub clearance: f64,
     /// Stub lengths: ≥ clearance, and ≥ the end's marker so it has a run-up.
     pub stub_a: f64,
@@ -68,12 +71,9 @@ pub fn requests(program: &Program, index: &SceneIndex) -> Result<Vec<EdgeReq>, E
     let mut out = Vec::new();
     let mut stmt_ids: Vec<Span> = Vec::new();
     for w in &program.links {
-        // Wiring strategy (SPEC §9/§10) — which subsystem realises a scope's links,
-        // chosen by the scope's `layout`:
-        //   • orthogonal — this router (the ROUTING.md contract), for flow / grid scopes.
-        //   • sequence   — the sequence layout draws them as time-row arrows; skip here.
-        //   • straight / curved — future graph / mindmap routing (not built; SPEC §20).
-        // Only `sequence` diverts from the router today; the rest stay orthogonal.
+        // A sequence scope's messages are drawn by the sequence layout, which
+        // owns *where* (column x, row y) and lowers each wire through the
+        // `straight` strategy itself (SPEC §10) — they are never requests.
         if crate::layout::sequence::is_sequence_scope(program, &w.scope) {
             continue;
         }
@@ -125,6 +125,7 @@ pub fn requests(program: &Program, index: &SceneIndex) -> Result<Vec<EdgeReq>, E
                 b_rect: rect_of(b)?,
                 side_a: a.side,
                 side_b: b.side,
+                routing: w.routing,
                 clearance,
                 stub_a: stub(start),
                 stub_b: stub(end),
@@ -159,10 +160,14 @@ fn pair_key(r: &EdgeReq) -> PairKey {
 }
 
 /// Bundles in declaration order of their first member; members in declaration
-/// order within. Self-loops never bundle.
+/// order within. Self-loops never bundle, and only orthogonal requests enter —
+/// a `routing: straight` wire is one trimmed segment, never a rail.
 pub fn bundles(reqs: &[EdgeReq]) -> Vec<Bundle> {
     let mut out: Vec<(PairKey, Bundle)> = Vec::new();
     for (i, r) in reqs.iter().enumerate() {
+        if r.routing != Strategy::Orthogonal {
+            continue;
+        }
         if r.a_path == r.b_path {
             out.push((pair_key(r), Bundle { members: vec![i] }));
             continue;
@@ -177,16 +182,6 @@ pub fn bundles(reqs: &[EdgeReq]) -> Vec<Bundle> {
         }
     }
     out.into_iter().map(|(_, b)| b).collect()
-}
-
-/// Degrade bundle `bi` one step (ROUTING §Duplicates): the first ⌈k/2⌉
-/// members keep the slot, the rest become the next bundle in line, so the
-/// pieces still route in declaration order. The caller retries the head —
-/// adjacent rails are the preferred form, splitting beats vanishing.
-pub fn split(bundles: &mut Vec<Bundle>, bi: usize) {
-    let members = &mut bundles[bi].members;
-    let tail = members.split_off(members.len().div_ceil(2));
-    bundles.insert(bi + 1, Bundle { members: tail });
 }
 
 /// Fan groups: requests of one statement sharing a segment endpoint share that
@@ -267,6 +262,7 @@ mod tests {
             b_rect: Rect::new(40.0, 0.0, 50.0, 10.0),
             side_a: None,
             side_b: None,
+            routing: Strategy::Orthogonal,
             clearance: 8.0,
             stub_a: 8.0,
             stub_b: 8.0,
@@ -303,22 +299,6 @@ mod tests {
         let r2 = req(1, 0, 0, "a", "b");
         let bs = bundles(&[r1, r2]);
         assert_eq!(bs.len(), 2);
-    }
-
-    #[test]
-    fn split_halves_then_singles_in_declaration_order() {
-        let reqs = vec![
-            req(0, 0, 0, "a", "b"),
-            req(1, 0, 0, "a", "b"),
-            req(2, 0, 0, "a", "b"),
-        ];
-        let mut bs = bundles(&reqs);
-        split(&mut bs, 0);
-        let members: Vec<_> = bs.iter().map(|b| b.members.clone()).collect();
-        assert_eq!(members, vec![vec![0, 1], vec![2]]);
-        split(&mut bs, 0);
-        let members: Vec<_> = bs.iter().map(|b| b.members.clone()).collect();
-        assert_eq!(members, vec![vec![0], vec![1], vec![2]]);
     }
 
     #[test]
