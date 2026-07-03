@@ -58,9 +58,9 @@ Building from a clone instead? `cargo install --path .`
 
 ```
 {                                   // the stylesheet — pure setup, draws nothing
-  link: --gray-deep; clearance: 10;   // link defaults cascade to every link
+  link-color: --gray-deep; clearance: 10;   // link defaults cascade to every link
   .hot  { fill: --red-wash; stroke: --red-ink; }  // a node class
-  .loud { link: red; link-width: 2; }       // a link class
+  .loud { link-color: red; link-width: 2; }       // a link class
   |db::cyl| { fill: lightyellow; }    // a new type from the cylinder primitive
 }
 
@@ -97,7 +97,7 @@ A flow orients with `direction: row` or `column`; a `grid` is sized by `columns`
 |path| { path: "M -34 6 C -34 -34 34 -34 34 6 C 20 34 -20 34 -34 6 Z"; }
 ```
 
-Block (the bare frameless rectangle), oval, hex, slant, cylinder, diamond, polygon, line, icon (a Phosphor symbol — `|icon| { symbol: heart }`, painted like a node), and image, plus `path` for anything else. Text is not a primitive: a bare `"…"` is content — styleable in place (`"x" { color: red }`) — and `|block|` is the frameless box for a label that needs an id or a link. Templates (`box`, `rect`, `group`, `caption`, `footnote`, `badge`, `row`, `column`, `grid`, `table`, `header`, `footer`, `entity`, `sign`) bundle common patterns over a base type, and you can define your own from any base: `|panel::group| { stroke: --accent; }`. A `|table|`'s first row is an automatic `|header|`; an `|entity|` is a two-column ER/database card (a `|header|` title + `"field" "type"` rows) wired with the crow's-foot operators (`a -< b`).
+Block (the bare frameless rectangle), oval, hex, slant, cylinder, diamond, polygon, line, icon (a Phosphor symbol — `|icon| { symbol: heart }`, painted like a node), and image, plus `path` for anything else. Text is not a primitive: a bare `"…"` is content — styleable in place (`"x" { color: red }`) — and `|block|` is the frameless box for a label that needs an id or a link. Templates (`box`, `rect`, `group`, `caption`, `footnote`, `badge`, `row`, `column`, `grid`, `table`, `cell`, `header`, `footer`, `entity`, `sign`) bundle common patterns over a base type, and you can define your own from any base: `|panel::group| { stroke: --accent; }`. A `|table|`'s first row is an automatic `|header|`; an `|entity|` is a two-column ER/database card (a `|header|` title + `"field" "type"` rows) wired with the crow's-foot operators (`a -< b`).
 
 ---
 
@@ -105,7 +105,7 @@ Block (the bare frameless rectangle), oval, hex, slant, cylinder, diamond, polyg
 
 Give a node `layout: chart` and it becomes a plot, drawn from data instead of pixels. Hand it some numbers and it sorts out the scale, the ticks, the gridlines, and a colour per series, then lowers the whole thing to the same primitives as everything else — so a chart themes, bakes, and diffs exactly like the rest of a diagram.
 
-<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/charts.png" alt="Four Lini charts: grouped bars, smooth lines, a radar, and a banded area" width="680"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/charts.png" alt="Four Lini charts: grouped bars, smooth lines, a radar, and a banded area" width="700"></p>
 
 ```
 |chart| "Revenue ($M)" { categories: "Q1" "Q2" "Q3" "Q4" } [
@@ -303,7 +303,7 @@ Parsing is recursive-descent over an LL(1) grammar; resolve applies CSS-like spe
 
 ## Status
 
-**v0.13.** The language (the box/text model in [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md)) is stable, and the pipeline is complete and tested: links route and render, layout and theming work, charts plot from data ([`CHARTS.md`](https://github.com/monfa-red/lini/blob/main/CHARTS.md)), sequence diagrams read the wires as time ([§10](https://github.com/monfa-red/lini/blob/main/SPEC.md#10-sequences)), and the formatter and dev server ship in the same binary.
+**v0.14.** The language (the box/text model in [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md)) is stable, and the pipeline is complete and tested: links route and render, layout and theming work, charts plot from data ([`CHARTS.md`](https://github.com/monfa-red/lini/blob/main/CHARTS.md)), sequence diagrams read the wires as time ([§10](https://github.com/monfa-red/lini/blob/main/SPEC.md#10-sequences)), and the formatter and dev server ship in the same binary.
 
 ## Development
 
