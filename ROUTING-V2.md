@@ -446,6 +446,53 @@ Executing sessions: append dated notes here — decisions the plan didn't
 anticipate, gotchas, deferred items, comparator cases that needed deepening,
 anything the next session must know. Keep entries terse.
 
+- **2026-07-03, bug batch (user-reported, pre stage 7).** Two fixed, one
+  diagnosed to its architectural root and deferred whole:
+  - **Duplicate parallels braided** (links_simple `over`/`chat`,
+    links_medium `.happy` ×2). Exact parallels tie at every estimate; every
+    cluster fell to the declaration tie, each flipped by its own walk
+    parity `m` — the clusters disagreed about who is inner. `cmp_runs` now
+    falls to one oriented convention (`order::convention`): the
+    earlier-declared wire keeps the left of its own travel through the
+    queried channel — the offset-curve rule, self-consistent across every
+    channel a pair shares. Tests: `duplicate_detours_nest_without_crossing`,
+    `links_simple_reports_zero_crossings`.
+  - **Fillet radii squashed** (pcb_fail outer track drew r 27.9, nest wants
+    40). Both `fillet_targets`' ceiling and `rounding::round` capped every
+    corner at *half* of each adjacent leg. The real constraint is joint:
+    the two arcs sharing a leg together fill its length; a terminal leg
+    belongs to its one corner (marker pull-back already shortened it).
+    `round()` scales an over-full leg's pair in proportion to their desires
+    — concentric desired sums are constant per shared leg, so one factor
+    scales the whole bus and pitch stays uniform under squeeze.
+  - **links_hard's 4 strays are NOT capacity truths** — stage 6's "no
+    k-track exit at gap 30 / clearance 12" is hereby corrected. Lawful
+    routes exist (hand-verified against the channel table): hub→nn1 up the
+    west flank with a corner shuffle through the H sliver below north;
+    nn2→ee1 ×3 down through north's bottom wall into the hub pocket and
+    into ee1.left, V legs ending above hub's inflated top. They stray
+    because **admission prices estimate-overshot spans**: a run's span
+    reaches its neighbours' *anchor estimates* (mid-void), which poke past
+    fragment boundaries the traversed cells never cross — the corridor
+    walk then loses its absorbing neighbours and reads an inverted sliver.
+    Three fixes tried, each surfacing coupling one layer deeper: (a)
+    in-search pass-capacity (prev-centre→next-centre spans on straight
+    extensions) — sound, but the probe still denies on estimates; (b)
+    containment-based deny — sound, but estimate-driven denials contain no
+    pass, so the loop loses progress and *more* links stray; (c) admission
+    over the traversed extent (`Run.ext`) — all four draw, but **placement
+    cannot realize them lawfully**: the lawful geometry needs an H run
+    hugging the top of its pocket because its perpendicular *neighbour's*
+    range ends there — a coupled cross-axis constraint placement doesn't
+    model (corner clamps only bound by travel extents), so round-2 span
+    refresh stretched V legs into west's latitudes (11.5 < 12) and pinned
+    three wires onto one boundary ordinate (0 apart). The honest fix is a
+    stage of its own: connection-feasible admission (price the traversed
+    extent + the nearest lawful connection ordinate, not the anchor) plus
+    coupled-axis placement bounds (a run's law range clipped by its
+    perpendicular neighbours' placed/feasible ordinates). Until then the
+    four strays stand: honest, conservative, and pinned in laws.rs with the
+    real reason.
 - **2026-07-03, stage 6.** Done (validate.rs filled, tests/laws.rs, three
   adversarial sweeps in tests/routing.rs). The oracle earned its keep on day
   one: it found six real engine bugs, each fixed at source — stage 6 turned

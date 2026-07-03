@@ -61,10 +61,13 @@ fn every_sample_satisfies_the_laws() {
     }
 }
 
-/// Strays are capacity truths, not regressions: at native attributes each
-/// sample's impossible count is pinned. `links_hard`'s four are genuine —
-/// no k-track exit exists at gap 30 / clearance 12 (ROUTING-V2.md execution
-/// log); everything else draws whole.
+/// Strays are honest, not regressions: at native attributes each sample's
+/// impossible count is pinned. `links_hard`'s four have lawful routes the
+/// engine cannot yet price — admission reaches for anchor estimates that
+/// overshoot the traversed cells, and realizing the routes needs coupled
+/// cross-axis placement bounds (ROUTING-V2.md execution log, bug batch);
+/// everything else draws whole. When admission learns connection-feasible
+/// pricing, this pin should drop to zero.
 #[test]
 fn impossible_links_are_exactly_the_known_capacity_truths() {
     for path in sample_paths() {
