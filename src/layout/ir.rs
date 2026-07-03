@@ -1,4 +1,4 @@
-use crate::resolve::{AttrMap, Markers, NodeKind, ResolvedValue, SheetInputs, VarTable};
+use crate::resolve::{AttrMap, Markers, NodeKind, ResolvedValue, SheetInputs, Strategy, VarTable};
 use crate::span::Span;
 
 pub struct LaidOut {
@@ -55,10 +55,14 @@ pub struct Stray {
     pub data_to: String,
 }
 
-/// One routed link: its orthogonal path polyline plus what render needs.
+/// One routed link: its path polyline plus what render needs.
 #[derive(Clone)]
 pub struct RoutedLink {
     pub path: Vec<(f64, f64)>,
+    /// The strategy that drew this wire. The independent law checker judges
+    /// orthogonal wires only — a `straight` wire is lawfully oblique and
+    /// avoids nothing (ROUTING §Strategies).
+    pub strategy: Strategy,
     pub markers: Markers,
     pub attrs: AttrMap,
     /// `.style` names applied to the link — rendered as `lini-style-*` classes,

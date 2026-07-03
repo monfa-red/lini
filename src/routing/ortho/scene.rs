@@ -20,6 +20,11 @@ pub enum NodeKind {
 pub struct SceneNode {
     pub path: String,
     pub rect: Rect,
+    /// Descendant rects poking out of `rect` — a group's caption, an
+    /// absolute overlay. A collapsed keep-out is `rect` plus these: what is
+    /// drawn must be avoided, and only the overflow itself blocks (a hull
+    /// would wall off free space beside a narrow caption).
+    pub overflow: Vec<Rect>,
     pub kind: NodeKind,
     children: Vec<usize>,
 }
@@ -61,15 +66,24 @@ impl SceneIndex {
         self.nodes.push(SceneNode {
             path: path.clone(),
             rect,
+            overflow: Vec::new(),
             kind,
             children: Vec::new(),
         });
         if kind == NodeKind::Body {
             self.by_path.insert(path.clone(), i);
         }
+        let inside = |outer: Rect, r: Rect| {
+            r.x0 >= outer.x0 && r.y0 >= outer.y0 && r.x1 <= outer.x1 && r.y1 <= outer.y1
+        };
         for c in &n.children {
             let ci = self.walk(c, &path, cx, cy);
             self.nodes[i].children.push(ci);
+            let pokes: Vec<Rect> = std::iter::once(self.nodes[ci].rect)
+                .chain(self.nodes[ci].overflow.iter().copied())
+                .filter(|&r| !inside(rect, r))
+                .collect();
+            self.nodes[i].overflow.extend(pokes);
         }
         i
     }
@@ -151,8 +165,8 @@ impl SceneIndex {
     }
 
     /// Direct-child rects of the body at `path` (`""` = the scene roots) —
-    /// the keep-out set of that interior: bodies collapse their subtrees,
-    /// anonymous labels count as nodes.
+    /// the keep-out set of that interior: bodies collapse their subtrees
+    /// (rect plus drawn overflow), anonymous labels count as nodes.
     pub fn child_rects(&self, path: &str) -> Vec<Rect> {
         let ids: &[usize] = if path.is_empty() {
             &self.roots
@@ -162,7 +176,11 @@ impl SceneIndex {
                 None => &[],
             }
         };
-        ids.iter().map(|&i| self.nodes[i].rect).collect()
+        ids.iter()
+            .flat_map(|&i| {
+                std::iter::once(self.nodes[i].rect).chain(self.nodes[i].overflow.iter().copied())
+            })
+            .collect()
     }
 
     /// The solid rects a link between `endpoints` must avoid. Endpoints and
@@ -200,6 +218,7 @@ impl SceneIndex {
         }
         if !(n.kind == NodeKind::Label && inside_endpoint) {
             out.push(n.rect);
+            out.extend(n.overflow.iter().copied());
         }
         false
     }

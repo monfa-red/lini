@@ -416,6 +416,7 @@ pub(crate) fn route(index: &SceneIndex, reqs: &[EdgeReq]) -> (Routing, Vec<usize
         req_of.push(i);
         routing.links.push(RoutedLink {
             path: geometry::polyline(chain),
+            strategy: Strategy::Orthogonal,
             markers: req.markers.clone(),
             attrs: req.attrs.clone(),
             applied_styles: req.applied_styles.clone(),

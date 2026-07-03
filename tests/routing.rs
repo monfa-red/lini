@@ -449,6 +449,191 @@ fn routing_straight_self_link_draws_the_rectangular_hook() {
     assert_eq!(p[3].0, a.2);
 }
 
+// ── The tightness sweep: right before impossible (ROUTING-V2.md stage 6) ──
+
+/// A facing 4-bundle with the shared port window swept from roomy down past
+/// capacity: full clearance while it fits, uniform compression only when it
+/// cannot (never below half the clearance), and the stray appears exactly
+/// at the capacity boundary — no silent squeeze, no ugly detour.
+#[test]
+fn a_bundle_compresses_uniformly_then_strays_exactly_at_capacity() {
+    // Sides forced: unforced, the router lawfully spills the whole bundle
+    // over the top once the facing sides fill — a better outcome, but this
+    // sweep pins the capacity boundary itself.
+    let src = |h: u32| {
+        format!(
+            "{{ direction: row; gap: 100; clearance: 10 }}\n\
+             |box#a| {{ width: 60; height: {h} }}\n\
+             |box#b| {{ width: 60; height: {h} }}\n\
+             a:right -> b:left\na:right -> b:left\na:right -> b:left\na:right -> b:left\n"
+        )
+    };
+    for h in (30..=60).rev() {
+        let text = src(h);
+        // The drawn bbox carries the stroke, so the lawful window comes off
+        // the placed rect, not the declared height.
+        let a = node_rect(&route_sample(&text, 10.0), "a").expect("a placed");
+        let window = (a.3 - a.1) - 20.0;
+        let rails = routes(&text);
+        let report = report(&text);
+        let breaches: Vec<_> = report
+            .iter()
+            .filter(|v| v.severity == Severity::Warning && v.rule != Rule::Impossible)
+            .collect();
+        assert!(breaches.is_empty(), "h={h}: {breaches:?}");
+        if window < 15.0 {
+            // Fewer than 4 tracks at half clearance: the whole bundle
+            // strays (a bundle routes whole or not at all).
+            assert!(rails.is_empty(), "h={h}: past capacity, all stray");
+            assert_eq!(impossibles(&text), 4, "h={h}");
+            continue;
+        }
+        assert_eq!(rails.len(), 4, "h={h}: the bundle routes whole");
+        let mut ys: Vec<f64> = rails
+            .iter()
+            .map(|(_, p)| {
+                assert_eq!(p.len(), 2, "h={h}: rails stay straight: {p:?}");
+                p[0].1
+            })
+            .collect();
+        ys.sort_by(f64::total_cmp);
+        let expect = (window / 3.0).min(10.0);
+        for w in ys.windows(2) {
+            assert!(
+                (w[1] - w[0] - expect).abs() < 1e-9,
+                "h={h}: uniform pitch {expect}, got {ys:?}"
+            );
+        }
+    }
+}
+
+// ── The side-capacity sweep: a full side spills, then strays ──
+
+/// n wires from a west column onto one 30×30 target: its left side holds 3
+/// ports at half clearance, every side holds 12 — excess routes to other
+/// sides, then strays, and the ports that share the left side land in their
+/// wires' vertical order (no braid at the mouth).
+#[test]
+fn a_full_side_spills_to_other_sides_then_strays() {
+    let src = |n: usize| {
+        let mut s = String::from(
+            "{ layout: grid; columns: 40 200 40; rows: repeat(15, 34); gap: 10; clearance: 10 }\n\
+             |box#t| { cell: 2 8; width: 30; height: 30 }\n",
+        );
+        for i in 0..n {
+            s.push_str(&format!(
+                "|box#s{i}| {{ cell: 1 {}; width: 30; height: 30 }}\n",
+                i + 1
+            ));
+        }
+        for i in 0..n {
+            s.push_str(&format!("s{i} -> t\n"));
+        }
+        s
+    };
+    for n in [1, 3, 6, 12, 13, 14] {
+        let text = src(n);
+        let r = routes(&text);
+        let breaches: Vec<_> = report(&text)
+            .into_iter()
+            .filter(|v| v.severity == Severity::Warning && v.rule != Rule::Impossible)
+            .collect();
+        assert!(breaches.is_empty(), "n={n}: {breaches:?}");
+        let drawn = r.len();
+        assert_eq!(
+            drawn + impossibles(&text),
+            n,
+            "n={n}: every wire drawn or honestly reported"
+        );
+        assert_eq!(drawn, n.min(12), "n={n}: capacity is 12 ports");
+        // No braid at the mouth: ports on t's left side keep their wires'
+        // vertical order (source i sits above source j for i < j).
+        let laid = route_sample(&text, 10.0);
+        let t = node_rect(&laid, "t").expect("t placed");
+        let mut left: Vec<(f64, usize)> = r
+            .iter()
+            .filter(|((_, to), p)| to == "t" && p.last().unwrap().0 == t.0)
+            .map(|((from, _), p)| {
+                let i: usize = from[1..].parse().expect("source index");
+                (p.last().unwrap().1, i)
+            })
+            .collect();
+        left.sort_by(|a, b| a.0.total_cmp(&b.0));
+        let order: Vec<usize> = left.iter().map(|&(_, i)| i).collect();
+        let mut sorted = order.clone();
+        sorted.sort_unstable();
+        assert_eq!(order, sorted, "n={n}: left ports braid");
+    }
+}
+
+// ── The crossing torture: crossings arrive one at a time, never a wrap ──
+
+/// The corridor across the middle is progressively walled by longer and
+/// more committed rails: while a dodge over a short rail is cheaper than
+/// `4·clearance` the wire dodges, then crossings appear exactly one per
+/// rail — each drawn square-on and each reported — and the wire never orbits
+/// the diagram.
+#[test]
+fn crossings_appear_one_at_a_time_and_never_wrap() {
+    // `h` sets each rail's node height: 40 leaves a cheap hop over the rail;
+    // 160 walls the hop off (the orbit costs far more than a crossing).
+    let src = |rails: &[u32]| {
+        let cols = rails.len() + 2;
+        let mut s = format!(
+            "{{ layout: grid; columns: repeat({cols}, 60); rows: 160 60 160; \
+             gap: 30; clearance: 10 }}\n\
+             |box#a| {{ cell: 1 2; width: 60; height: 60 }}\n\
+             |box#b| {{ cell: {cols} 2; width: 60; height: 60 }}\n"
+        );
+        for (i, h) in rails.iter().enumerate() {
+            s.push_str(&format!(
+                "|box#n{i}| {{ cell: {c} 1; width: 60; height: {h} }}\n\
+                 |box#s{i}| {{ cell: {c} 3; width: 60; height: {h} }}\n\
+                 n{i} -> s{i}\n",
+                c = i + 2
+            ));
+        }
+        s.push_str("a -> b\n");
+        s
+    };
+    // Every rail costs exactly one crossing: a dodge over even a short rail
+    // needs two extra turns — already the crossing's whole price — plus
+    // length, so Law 3 crosses square-on and counts it (the consequences
+    // table's "crossing beats orbit", one rail at a time).
+    for (rails, expected) in [
+        (vec![], 0),
+        (vec![40], 1),
+        (vec![160], 1),
+        (vec![160, 40], 2),
+        (vec![160, 160], 2),
+        (vec![160, 160, 160], 3),
+    ] {
+        let text = src(&rails);
+        assert_eq!(
+            crossings(&text),
+            expected,
+            "rails {rails:?} force exactly {expected} crossing(s)"
+        );
+        assert_eq!(impossibles(&text), 0, "rails {rails:?}");
+        let breaches: Vec<_> = report(&text)
+            .into_iter()
+            .filter(|v| v.severity == Severity::Warning)
+            .collect();
+        assert!(breaches.is_empty(), "rails {rails:?}: {breaches:?}");
+        // Never a wrap: a → b stays inside the lane band, clear of the
+        // canvas margin above and below.
+        let r = routes(&text);
+        let laid = route_sample(&text, 10.0);
+        let a = node_rect(&laid, "a").expect("a placed");
+        for &(x, y) in path(&r, "a", "b") {
+            assert!(
+                y >= a.1 - 40.0 && y <= a.3 + 40.0 && x >= a.0,
+                "rails {rails:?}: the wire wraps: ({x}, {y})"
+            );
+        }
+    }
+}
+
 // ── Determinism (Law 4) ──
 
 #[test]

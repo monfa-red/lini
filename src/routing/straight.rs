@@ -43,6 +43,7 @@ pub(crate) fn wire(
 ) -> RoutedLink {
     RoutedLink {
         path,
+        strategy: Strategy::Straight,
         markers,
         attrs: attrs.clone(),
         applied_styles: applied_styles.to_vec(),

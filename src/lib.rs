@@ -208,7 +208,10 @@ pub mod testing {
         let prog = super::resolve_pipeline(src, &Options::default()).expect("resolve");
         prog.links
             .iter()
-            .filter(|w| !layout::sequence::is_sequence_scope(&prog, &w.scope))
+            .filter(|w| {
+                w.routing == crate::resolve::Strategy::Orthogonal
+                    && !layout::sequence::is_sequence_scope(&prog, &w.scope)
+            })
             .map(|w| w.endpoints.len().saturating_sub(1))
             .sum()
     }
@@ -216,5 +219,16 @@ pub mod testing {
     /// Judge a laid-out scene against the four laws (the independent validator).
     pub fn laws(laid: &LaidOut) -> Vec<crate::Violation> {
         layout::validate_routing(laid)
+    }
+
+    /// Drawn links that answer to `declared_edges`: what the orthogonal
+    /// strategy drew. Straight wires stay out on both sides of the count —
+    /// a sequence's messages are the layout's own, and a `routing: straight`
+    /// pair whose trim leaves nothing lawfully draws nothing.
+    pub fn drawn_edges(laid: &LaidOut) -> usize {
+        laid.links
+            .iter()
+            .filter(|w| w.strategy == crate::resolve::Strategy::Orthogonal)
+            .count()
     }
 }

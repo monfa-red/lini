@@ -1,19 +1,22 @@
 //! Placement (ROUTING.md model step 5): every run's ordinate, decided once,
-//! per corridor, by one mechanism — cluster, order, ladder.
+//! per corridor, by one mechanism — cluster, order, settle.
 //!
 //! Runs whose spans come within a clearance of one another **and share
-//! ordinate space** — one channel, or fragments of one corridor
-//! ([`ChannelGraph::corridor`]) — form a cluster. Within a cluster runs
-//! order so wires leave in the order they arrive — nested, never braided —
-//! by the outward-walk comparator ([`super::order`]) — and take the
-//! order-preserving ordinates nearest their preferences ([`ladder`]) at
-//! clearance pitch; the relief valve compresses whatever a stretch's hard
-//! boxes cannot hold, never below half the clearance. Preferences are the
-//! aesthetic law: interior runs want their corridor's anchor (the midline
-//! between two nodes, the keep-out wall at the canvas edge); end runs want
-//! the straightest lawful line to their port. Ports *are* end-run ordinates
-//! — fan siblings merge into one item and share one port — so a port can
-//! never disagree with the wire it serves.
+//! ordinate space** — one channel, fragments of one corridor
+//! ([`ChannelGraph::corridor`]), or, across worlds, one landing side — form
+//! a cluster. Within a cluster runs order so wires leave in the order they
+//! arrive — nested, never braided — by the outward-walk comparator
+//! ([`super::order`]) — and take the order-preserving ordinates nearest
+//! their preferences at clearance pitch: the exact chain ([`ladder`]) when
+//! the cluster's contention is a chain, the pairwise projection
+//! ([`pairwise`]) when a zero gap bridges contenders the chain cannot
+//! express. The relief valve compresses only what a stretch's hard boxes
+//! genuinely cannot hold, never below half the clearance. Preferences are
+//! the aesthetic law: interior runs want their corridor's anchor (the
+//! midline between two nodes, the keep-out wall at the canvas edge); end
+//! runs want the straightest lawful line to their port. Ports *are* end-run
+//! ordinates — fan siblings merge into one item and share one port — so a
+//! port can never disagree with the wire it serves.
 
 use std::collections::BTreeMap;
 
@@ -21,7 +24,9 @@ use super::cost::min_pitch;
 use super::graph::{Axis, Corridor};
 use super::ladder::ladder;
 use super::order;
-use super::{Chain, World};
+use super::rect::Rect;
+use super::{Chain, Run, World};
+use crate::ast::Side;
 
 /// One ladder item: a run (or a fan's merged end runs) awaiting its
 /// ordinate.
@@ -29,25 +34,135 @@ struct Item {
     /// `(chain index, run index)` of every run taking this ordinate.
     members: Vec<(usize, usize)>,
     span: (f64, f64),
+    /// The corner clamp ([`corner_clamp`]) — hard bounds keeping every
+    /// corner inside both of its runs' channels.
+    clamp: (f64, f64),
     pref: f64,
     /// Hard bounds from the port window; `None` for interior runs (the
     /// corridor's usable range applies alone).
     window: Option<(f64, f64)>,
     /// Declaration-order key for span ties.
     link: usize,
+    /// The world whose channel graph this run rides in.
+    world: usize,
     /// The channel the run rides — fragments of one corridor cluster across
     /// channels.
     chan: usize,
+    /// The physical sides an end run lands on (both for a single-run wire).
+    /// Worlds share these: an inner wire's port and an outer wire's punch
+    /// meet on the same body side, so same-landing items cluster across
+    /// worlds — the one place two worlds' wires lawfully share space.
+    landings: Vec<(Side, Rect)>,
 }
 
 /// A run's ordinate preference and its hard port window, if any.
 type Pref = (f64, Option<(f64, f64)>);
 
-/// Assign every `Run::ord` in every chain. Axes are processed in fixed
-/// (world, axis) order; preferences and the nesting walk read only static
-/// estimates, so the outcome is independent of that order — and
-/// deterministic.
+/// Assign every `Run::ord` in every chain — two rounds of the one pass,
+/// the second's answer standing. Geometry's provisional spans reach
+/// *estimates* of unplaced neighbours (a corridor anchor a jog may ladder
+/// well away from), so first-round contention is partly phantom: spans that
+/// touch only at a shared estimate charge pitch two wires never owe, and
+/// the relief valve can then compress a window with room to spare. The
+/// second round re-derives every span from the placed ordinates — the
+/// corners the polyline will actually take — and settles the real
+/// contention, the same probe-refine shape the search uses for learned
+/// closures. Deciding on refreshed truth, once.
+///
+/// Corners, by contrast, never ride an estimate: a run's drawn extent
+/// follows wherever its neighbours finally land, so every ordinate is
+/// clamped into its perpendicular neighbours' channel travel extents — the
+/// corner stays inside both runs' channels (a run lies in one channel of
+/// its axis, ROUTING.md §Vocabulary), so a drawn segment can never leave
+/// the free space it was priced in, no matter where a later round moves
+/// the far corner.
 pub(crate) fn place(worlds: &[World], chains: &mut [Option<Chain>], clearance: f64) {
+    settle_axes(worlds, chains, clearance);
+    refresh_spans(chains);
+    settle_axes(worlds, chains, clearance);
+}
+
+/// A run's lawful ordinate range: its port window intersected with the
+/// corridor's usable range — the window winning when the corridor's
+/// tightening would invert it, the walls standing in for a sliver whose
+/// soft margins cross (the search admitted the run, so it draws there,
+/// surrendering what the sliver cannot give).
+fn law_range(window: Option<(f64, f64)>, corr: &Corridor, clearance: f64) -> (f64, f64) {
+    let u = corr.usable(clearance);
+    match window {
+        Some(w) => {
+            let tight = (w.0.max(u.0), w.1.min(u.1));
+            if tight.0 <= tight.1 { tight } else { w }
+        }
+        None => {
+            if u.0 <= u.1 {
+                u
+            } else {
+                corr.walls
+            }
+        }
+    }
+}
+
+/// The corner clamp of run `ri`: its ordinate is the corner's coordinate
+/// along each perpendicular neighbour's travel, so it must lie inside those
+/// neighbours' channel travel extents — the corner may never leave either
+/// run's channel.
+fn corner_clamp(worlds: &[World], chain: &Chain, ri: usize) -> (f64, f64) {
+    let graph = &worlds[chain.world].graph;
+    let travel = |r: &Run| {
+        match r.axis {
+            Axis::H => &graph.h[r.chan],
+            Axis::V => &graph.v[r.chan],
+        }
+        .travel()
+    };
+    let mut clamp = (f64::NEG_INFINITY, f64::INFINITY);
+    if ri > 0 {
+        let t = travel(&chain.runs[ri - 1]);
+        clamp = (clamp.0.max(t.0), clamp.1.min(t.1));
+    }
+    if ri + 1 < chain.runs.len() {
+        let t = travel(&chain.runs[ri + 1]);
+        clamp = (clamp.0.max(t.0), clamp.1.min(t.1));
+    }
+    clamp
+}
+
+/// Re-derive every run's span from its neighbours' placed ordinates — end
+/// runs from their side line to the first corner, interior runs corner to
+/// corner (the segment extents [`super::geometry::polyline`] will draw).
+fn refresh_spans(chains: &mut [Option<Chain>]) {
+    for chain in chains.iter_mut().flatten() {
+        let n = chain.runs.len();
+        if n < 2 {
+            continue;
+        }
+        let ords: Vec<f64> = chain
+            .runs
+            .iter()
+            .map(|r| r.ord.expect("first round placed every run"))
+            .collect();
+        for (i, run) in chain.runs.iter_mut().enumerate() {
+            let lo = if i == 0 {
+                chain.ends[0].side_coord()
+            } else {
+                ords[i - 1]
+            };
+            let hi = if i == n - 1 {
+                chain.ends[1].side_coord()
+            } else {
+                ords[i + 1]
+            };
+            run.span = (lo.min(hi), lo.max(hi));
+        }
+    }
+}
+
+/// One placement pass: cluster, order, ladder, per (world, axis) in fixed
+/// order — preferences and the nesting walk read only static estimates, so
+/// the outcome is independent of that order, and deterministic.
+fn settle_axes(worlds: &[World], chains: &mut [Option<Chain>], clearance: f64) {
     let prefs: Vec<Vec<Pref>> = chains
         .iter()
         .map(|c| c.as_ref().map_or(Vec::new(), |ch| chain_prefs(ch, worlds)))
@@ -56,26 +171,34 @@ pub(crate) fn place(worlds: &[World], chains: &mut [Option<Chain>], clearance: f
         .iter()
         .map(|v| v.iter().map(|p| p.0).collect())
         .collect();
-    let mut by_axis: BTreeMap<(usize, u8), Vec<Item>> = BTreeMap::new();
+    let mut by_axis: BTreeMap<u8, Vec<Item>> = BTreeMap::new();
     for (ci, chain) in chains.iter().enumerate() {
         let Some(chain) = chain else { continue };
+        let last = chain.runs.len() - 1;
         for (ri, run) in chain.runs.iter().enumerate() {
-            by_axis
-                .entry((chain.world, run.axis.index()))
-                .or_default()
-                .push(Item {
-                    members: vec![(ci, ri)],
-                    span: (run.span.0.min(run.span.1), run.span.0.max(run.span.1)),
-                    pref: prefs[ci][ri].0,
-                    window: prefs[ci][ri].1,
-                    link: chain.link,
-                    chan: run.chan,
-                });
+            let mut landings = Vec::new();
+            if ri == 0 {
+                landings.push((chain.ends[0].side, chain.ends[0].rect));
+            }
+            if ri == last {
+                landings.push((chain.ends[1].side, chain.ends[1].rect));
+            }
+            let span = (run.span.0.min(run.span.1), run.span.0.max(run.span.1));
+            by_axis.entry(run.axis.index()).or_default().push(Item {
+                members: vec![(ci, ri)],
+                span,
+                clamp: corner_clamp(worlds, chain, ri),
+                pref: prefs[ci][ri].0,
+                window: prefs[ci][ri].1,
+                link: chain.link,
+                world: chain.world,
+                chan: run.chan,
+                landings,
+            });
         }
     }
 
-    for ((world, axis), mut items) in by_axis {
-        let graph = &worlds[world].graph;
+    for (axis, mut items) in by_axis {
         let axis = [Axis::H, Axis::V][axis as usize];
         merge_fans(&mut items, chains);
         items.sort_by(|a, b| {
@@ -83,15 +206,21 @@ pub(crate) fn place(worlds: &[World], chains: &mut [Option<Chain>], clearance: f
                 .0
                 .total_cmp(&b.span.0)
                 .then(a.link.cmp(&b.link))
+                .then(a.world.cmp(&b.world))
                 .then(a.chan.cmp(&b.chan))
         });
         let corridors: Vec<Corridor> = items
             .iter()
-            .map(|i| graph.corridor(axis, i.chan, i.span.0, i.span.1))
+            .map(|i| {
+                worlds[i.world]
+                    .graph
+                    .corridor(axis, i.chan, i.span.0, i.span.1)
+            })
             .collect();
 
         // Cluster items that contend for tracks: spans within a clearance of
-        // each other, in one channel or across fragments of one corridor.
+        // each other, in one channel or across fragments of one corridor —
+        // or, across worlds, landing on one physical side.
         let n = items.len();
         let mut parent: Vec<usize> = (0..n).collect();
         fn root(parent: &mut [usize], mut i: usize) -> usize {
@@ -103,11 +232,15 @@ pub(crate) fn place(worlds: &[World], chains: &mut [Option<Chain>], clearance: f
         }
         for i in 0..n {
             for j in i + 1..n {
-                let near = items[j].span.0 < items[i].span.1 + clearance
-                    && items[i].span.0 < items[j].span.1 + clearance;
-                let shared = items[i].chan == items[j].chan
-                    || corridors[i].chans.contains(&items[j].chan)
-                    || corridors[j].chans.contains(&items[i].chan);
+                let near = near(items[i].span, items[j].span, clearance);
+                let shared = (items[i].world == items[j].world
+                    && (items[i].chan == items[j].chan
+                        || corridors[i].chans.contains(&items[j].chan)
+                        || corridors[j].chans.contains(&items[i].chan)))
+                    || items[i]
+                        .landings
+                        .iter()
+                        .any(|l| items[j].landings.contains(l));
                 if near && shared {
                     let (a, b) = (root(&mut parent, i), root(&mut parent, j));
                     parent[a.max(b)] = a.min(b);
@@ -180,12 +313,18 @@ fn merge_fans(items: &mut Vec<Item>, chains: &[Option<Chain>]) {
         match twin {
             Some(m) => {
                 m.span = (m.span.0.min(item.span.0), m.span.1.max(item.span.1));
+                m.clamp = (m.clamp.0.max(item.clamp.0), m.clamp.1.min(item.clamp.1));
                 m.window = match (m.window, item.window) {
                     (Some(a), Some(b)) => Some((a.0.max(b.0), a.1.min(b.1))),
                     (w, None) | (None, w) => w,
                 };
                 m.link = m.link.min(item.link);
                 m.members.extend(item.members);
+                for l in item.landings {
+                    if !m.landings.contains(&l) {
+                        m.landings.push(l);
+                    }
+                }
             }
             None => merged.push(item),
         }
@@ -231,82 +370,231 @@ fn settle(
     let bounds: Vec<(f64, f64)> = cluster
         .iter()
         .map(|(i, corr)| {
-            let u = corr.usable(clearance);
-            match i.window {
-                // A port window bounds its run hard; the corridor's usable
-                // range tightens it where it can, but the lawful window
-                // always wins.
-                Some(w) => {
-                    let tight = (w.0.max(u.0), w.1.min(u.1));
-                    if tight.0 <= tight.1 { tight } else { w }
-                }
-                // A sliver whose soft margins cross leaves the walls as the
-                // outer limit — the search admitted the run, so it draws
-                // there, surrendering what the sliver cannot give.
-                None => {
-                    if u.0 <= u.1 {
-                        u
-                    } else {
-                        corr.walls
-                    }
-                }
-            }
+            let r = law_range(i.window, corr, clearance);
+            // The corner clamp binds hard; a search-admitted run always has
+            // room inside it (the route's corners sat in cells), so an
+            // inversion only flags float dust at a channel edge.
+            let tight = (r.0.max(i.clamp.0), r.1.min(i.clamp.1));
+            if tight.0 <= tight.1 { tight } else { r }
         })
         .collect();
     // Every gap starts at full clearance — the relief below is the one
     // compression mechanism. Only **contending** neighbours owe each other
-    // pitch: spans that overlap, or end within a clearance of one another
-    // (their tips flank). A transitively-chained pair whose spans lie far
-    // apart never runs alongside — its gap is 0, so the ladder may reuse the
-    // ordinate space. Two pieces of one wire owe each other nothing unless
-    // their spans overlap (a U's doubled-back legs; a Z's jog collapses).
+    // pitch; a transitively-chained pair whose spans lie far apart never
+    // runs alongside — its gap is 0, so the ladder may reuse the ordinate
+    // space.
     let mut seps: Vec<f64> = cluster
         .windows(2)
         .map(|w| {
-            let (a, b) = (&w[0].0, &w[1].0);
-            let same_wire = a
-                .members
-                .iter()
-                .any(|(c0, _)| b.members.iter().any(|(c1, _)| c0 == c1));
-            let overlap = a.span.0.max(b.span.0) < a.span.1.min(b.span.1);
-            let near = b.span.0 < a.span.1 + clearance && a.span.0 < b.span.1 + clearance;
-            if overlap || (near && !same_wire) {
+            if contend(&w[0].0, &w[1].0, clearance) {
                 clearance
             } else {
                 0.0
             }
         })
         .collect();
-    // Law 1's relief valve: a stretch of items pinned between two hard boxes
-    // (a bundle's shared window, one side's landings, a window against a
-    // channel wall) that cannot hold full pitch compresses **uniformly** —
-    // every gap in the stretch drops to one target, floored at half the
-    // clearance and never grown past a tighter inner stretch's answer.
-    // Whatever still doesn't fit is a routing bug the ladder's feasibility
-    // check catches in debug builds.
-    for i in 0..n {
-        let mut need = 0.0;
-        for j in i + 1..n {
-            need += seps[j - 1];
-            let avail = (bounds[j].1 - bounds[i].0).max(0.0);
-            if need > avail {
-                let gaps = seps[i..j].iter().filter(|s| **s > 0.0).count();
-                if gaps > 0 {
-                    let target = (avail / gaps as f64).max(min_pitch(clearance));
-                    for s in &mut seps[i..j] {
-                        *s = s.min(target);
-                    }
+    // The chain expresses this cluster only when no contending pair is
+    // bridged by a zero gap. Across such a bridge the chain goes wrong both
+    // ways at once: the pair's pitch dissolves (its gaps sum to nothing),
+    // while order and envelope bind travel-disjoint groups the pair never
+    // coupled — the relief then compresses windows with room to spare.
+    // Those clusters settle on their true pairwise constraints instead.
+    let chain_ok = (0..n).all(|i| {
+        (i + 2..n).all(|j| {
+            !contend(&cluster[i].0, &cluster[j].0, clearance) || seps[i..j].iter().all(|s| *s > 0.0)
+        })
+    });
+    let mut feasible = chain_ok;
+    if chain_ok {
+        // Law 1's relief valve: only a stretch that genuinely cannot hold
+        // full pitch compresses, **uniformly** — every gap in the binding
+        // stretch drops toward one target, floored at half the clearance.
+        // Feasibility is judged exactly, not by envelope: the greedy pass
+        // exploits staggered boxes (a wire whose corridor reaches further
+        // lends the room), so a stretch that fits at full clearance in the
+        // drawn order is never squeezed.
+        for _ in 0..n.max(1) * 2 {
+            let mut binding = 0;
+            let mut x = f64::NEG_INFINITY;
+            let mut violated = None;
+            for k in 0..n {
+                let pushed = if k == 0 { bounds[k].0 } else { x + seps[k - 1] };
+                if pushed <= bounds[k].0 {
+                    binding = k;
                 }
-                need = seps[i..j].iter().sum();
+                x = pushed.max(bounds[k].0);
+                if x > bounds[k].1 + 1e-9 {
+                    violated = Some((binding, k));
+                    break;
+                }
+            }
+            let Some((i, j)) = violated else {
+                feasible = true;
+                break;
+            };
+            feasible = false;
+            let avail = (bounds[j].1 - bounds[i].0).max(0.0);
+            let gaps = seps[i..j].iter().filter(|s| **s > 0.0).count().max(1);
+            let target = (avail / gaps as f64).max(min_pitch(clearance));
+            let mut lowered = false;
+            for s in &mut seps[i..j] {
+                if *s > target {
+                    *s = target;
+                    lowered = true;
+                }
+            }
+            if !lowered {
+                break;
             }
         }
     }
-    let ords = ladder(&prefs, &bounds, &seps);
-    for ((item, _), ord) in cluster.iter().zip(ords) {
+    // A chain the floors cannot make feasible — the admission's
+    // cross-window blind spot — settles through the pairwise solver, whose
+    // final clamp keeps windows and walls absolute and lets the gaps carry
+    // the visible debt.
+    let ords = if feasible {
+        ladder(&prefs, &bounds, &seps)
+    } else {
+        pairwise(&cluster, &prefs, &bounds, clearance)
+    };
+    for ((item, _), ord) in cluster.iter().zip(&ords) {
         for &(ci, ri) in &item.members {
-            chains[ci].as_mut().expect("placed chain").runs[ri].ord = Some(ord);
+            chains[ci].as_mut().expect("placed chain").runs[ri].ord = Some(*ord);
         }
     }
+}
+
+/// Whether two items owe each other pitch: spans that overlap, or end
+/// within a clearance of one another (their tips flank). Two pieces of one
+/// wire owe each other nothing unless their spans overlap (a U's
+/// doubled-back legs; a Z's jog collapses to zero and the legs weld).
+fn contend(a: &Item, b: &Item, clearance: f64) -> bool {
+    let same_wire = a
+        .members
+        .iter()
+        .any(|(c0, _)| b.members.iter().any(|(c1, _)| c0 == c1));
+    let overlap = a.span.0.max(b.span.0) < a.span.1.min(b.span.1);
+    overlap || (near(a.span, b.span, clearance) && !same_wire)
+}
+
+/// Whether two spans come within a clearance of one another — inclusive at
+/// exactly a clearance: round one separates contenders by precisely the
+/// pitch they owe, so the refreshed spans of a settled pair sit exactly a
+/// clearance apart, and a strict test would let round two forget the
+/// contention and collapse the pair back together.
+fn near(a: (f64, f64), b: (f64, f64), clearance: f64) -> bool {
+    b.0 <= a.1 + clearance + 1e-6 && a.0 <= b.1 + clearance + 1e-6
+}
+
+/// The general settle for clusters the chain cannot express: each
+/// contending pair — and only those — owes its pitch, signed by the cluster
+/// order (nested, never braided); non-contending items stay uncoupled, free
+/// to share ordinate space. Relief first makes the system feasible (the
+/// same uniform compression, applied along the tightest constraint chains),
+/// then the ordinates are the least-squares projection of the preferences
+/// onto the feasible set (Dykstra's alternating projections — exact in the
+/// limit, run to well below geometric tolerance, deterministic).
+fn pairwise(
+    cluster: &[(Item, Corridor)],
+    prefs: &[f64],
+    bounds: &[(f64, f64)],
+    clearance: f64,
+) -> Vec<f64> {
+    let n = cluster.len();
+    let mut gaps: Vec<(usize, usize, f64)> = Vec::new();
+    for i in 0..n {
+        for j in i + 1..n {
+            if contend(&cluster[i].0, &cluster[j].0, clearance) {
+                gaps.push((i, j, clearance));
+            }
+        }
+    }
+
+    // Feasibility relief, judged exactly: each item's minimal lawful
+    // ordinate is its box floor pushed up by every contender below it
+    // (staggered boxes lend their room — an envelope test would squeeze
+    // stretches that actually fit). When a chain overruns a box, the gaps
+    // riding it compress uniformly toward what fits, floored at half the
+    // clearance; floors bound the loop.
+    for _ in 0..64 {
+        let mut reach = vec![f64::NEG_INFINITY; n];
+        let mut origin: Vec<usize> = (0..n).collect();
+        let mut via: Vec<Option<usize>> = vec![None; n];
+        let mut violated = None;
+        'feasible: for j in 0..n {
+            let mut x = bounds[j].0;
+            for (e, &(i, jj, g)) in gaps.iter().enumerate() {
+                if jj == j && reach[i] + g > x {
+                    x = reach[i] + g;
+                    origin[j] = origin[i];
+                    via[j] = Some(e);
+                }
+            }
+            reach[j] = x;
+            if x > bounds[j].1 + 1e-9 {
+                violated = Some(j);
+                break 'feasible;
+            }
+        }
+        let Some(t) = violated else { break };
+        let mut path = Vec::new();
+        let mut at = t;
+        while let Some(e) = via[at] {
+            path.push(e);
+            at = gaps[e].0;
+        }
+        let avail = (bounds[t].1 - bounds[origin[t]].0).max(0.0);
+        let target = (avail / path.len().max(1) as f64).max(min_pitch(clearance));
+        let mut lowered = false;
+        for e in path {
+            if gaps[e].2 > target {
+                gaps[e].2 = target;
+                lowered = true;
+            }
+        }
+        if !lowered {
+            break;
+        }
+    }
+
+    // Dykstra: project the preferences onto the boxes and every gap
+    // halfspace in turn, with per-constraint corrections, until a full
+    // sweep moves nothing.
+    let mut x = prefs.to_vec();
+    let mut box_corr = vec![0.0; n];
+    let mut gap_corr = vec![0.0; gaps.len()];
+    for _ in 0..10_000 {
+        let mut moved = 0.0_f64;
+        for i in 0..n {
+            let y = x[i] + box_corr[i];
+            let p = y.max(bounds[i].0).min(bounds[i].1);
+            box_corr[i] = y - p;
+            moved = moved.max((p - x[i]).abs());
+            x[i] = p;
+        }
+        for (e, &(i, j, g)) in gaps.iter().enumerate() {
+            let (yi, yj) = (x[i] + gap_corr[e] / 2.0, x[j] - gap_corr[e] / 2.0);
+            let short = g - (yj - yi);
+            let d = short.max(0.0);
+            gap_corr[e] = d;
+            let (pi, pj) = (yi - d / 2.0, yj + d / 2.0);
+            moved = moved.max((pi - x[i]).abs()).max((pj - x[j]).abs());
+            x[i] = pi;
+            x[j] = pj;
+        }
+        if moved < 1e-11 {
+            break;
+        }
+    }
+    // A system the relief could not make feasible even at the floors — the
+    // admission's cross-window blind spot (ROUTING-V2.md execution log) —
+    // leaves Dykstra splitting the shortfall across every constraint.
+    // Windows and walls are absolute law; pitch below them is at least
+    // visible. Bounds win, and the gaps carry the debt.
+    for i in 0..n {
+        x[i] = x[i].max(bounds[i].0).min(bounds[i].1);
+    }
+    x
 }
 
 #[cfg(test)]

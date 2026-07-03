@@ -11,7 +11,7 @@
 use std::collections::BTreeMap;
 
 use super::cost::min_pitch;
-use super::graph::{Axis, ChannelGraph};
+use super::graph::{Axis, ChannelGraph, Corridor};
 use super::rect::Rect;
 use crate::ast::Side;
 
@@ -94,22 +94,29 @@ impl Ledger {
             return 0;
         }
         let capacity = ((u1 - u0).max(0.0) / min_pitch(self.clearance)).floor() as usize + 1;
-        capacity.saturating_sub(self.max_load(world, axis, &corridor.chans, (lo, hi)))
+        capacity.saturating_sub(self.max_load(world, axis, &corridor, (lo, hi)))
     }
 
     /// The maximum k-weighted number of committed runs concurrent at any
-    /// point of `span` across the corridor's channels, runs reaching
-    /// `min_pitch` past their ends.
-    fn max_load(&self, world: usize, axis: Axis, chans: &[usize], span: (f64, f64)) -> usize {
+    /// point of `span` inside the corridor, runs reaching `min_pitch` past
+    /// their ends. Runs in absorbed channels count whole; a fragment the
+    /// walk could not absorb (it covers only part of the span) still parks
+    /// its wires in the same void, so its commits count wherever their
+    /// estimated ordinate lies inside the corridor's walls — otherwise two
+    /// overlapping corridors each admit a full complement into shared
+    /// ordinate space and placement inherits an impossible cluster.
+    fn max_load(&self, world: usize, axis: Axis, corridor: &Corridor, span: (f64, f64)) -> usize {
         let reach = min_pitch(self.clearance);
         // Sweep events over the query span; at equal position ends retire
         // before starts, so a gap of exactly min_pitch shares a track.
         let mut events: Vec<(f64, i64)> = Vec::new();
-        for chan in chans {
-            let Some(committed) = self.runs.get(&(world, axis.index(), *chan)) else {
-                continue;
-            };
+        let range = (world, axis.index(), 0)..=(world, axis.index(), usize::MAX);
+        for ((.., chan), committed) in self.runs.range(range) {
+            let absorbed = corridor.chans.contains(chan);
             for c in committed {
+                if !(absorbed || (corridor.walls.0 <= c.ord && c.ord <= corridor.walls.1)) {
+                    continue;
+                }
                 let lo = (c.span.0 - reach).max(span.0);
                 let hi = (c.span.1 + reach).min(span.1);
                 if hi <= lo {

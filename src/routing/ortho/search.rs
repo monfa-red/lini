@@ -108,20 +108,72 @@ pub(crate) fn entries(
         .filter(|(s, ..)| forced.is_none_or(|f| f == *s))
         .filter_map(|(side, port, dir, axis)| {
             let dir = if inward { opposite(dir) } else { dir };
-            punch(graph, port, DIRS[dir], stub, blockers).map(|(tip, cell)| Entry {
-                side,
-                port,
-                window: match axis {
+            punch(graph, port, DIRS[dir], stub, blockers).map(|(tip, cell)| {
+                let win = match axis {
                     Axis::H => window(body.y0, body.y1, cy),
                     Axis::V => window(body.x0, body.x1, cx),
-                },
-                tip,
-                axis,
-                dir,
-                cell,
+                };
+                Entry {
+                    side,
+                    port,
+                    window: clip_window(win, port, tip, axis, blockers),
+                    tip,
+                    axis,
+                    dir,
+                    cell,
+                }
             })
         })
+        .filter(|e| e.window.0 <= e.window.1)
         .collect()
+}
+
+/// Shrink a side's port window by the blockers a straight end segment would
+/// cross between the side line and the punch tip: there are no cells to
+/// turn in before the tip, so the segment holds its port ordinate the whole
+/// stretch, and a blocker there — a label inside a transparent ancestor, a
+/// walled-in sibling — rules out the port rows it covers. The world's
+/// channels never see those interiors; the window is where they are priced.
+/// A blocker splitting the window keeps the wider shore.
+fn clip_window(
+    mut win: (f64, f64),
+    port: (f64, f64),
+    tip: (f64, f64),
+    axis: Axis,
+    blockers: &[Rect],
+) -> (f64, f64) {
+    let (t0, t1) = match axis {
+        Axis::H => (port.0.min(tip.0), port.0.max(tip.0)),
+        Axis::V => (port.1.min(tip.1), port.1.max(tip.1)),
+    };
+    let mut cuts: Vec<(f64, f64)> = blockers
+        .iter()
+        .map(|b| match axis {
+            Axis::H => (b.x0, b.x1, b.y0, b.y1),
+            Axis::V => (b.y0, b.y1, b.x0, b.x1),
+        })
+        .filter(|&(blo, bhi, ..)| blo < t1 && bhi > t0)
+        .map(|(.., olo, ohi)| (olo, ohi))
+        .collect();
+    cuts.sort_by(|a, b| a.0.total_cmp(&b.0).then(a.1.total_cmp(&b.1)));
+    for (olo, ohi) in cuts {
+        if ohi <= win.0 || olo >= win.1 {
+            continue;
+        }
+        win = if olo <= win.0 {
+            (ohi.max(win.0), win.1)
+        } else if ohi >= win.1 {
+            (win.0, olo.min(win.1))
+        } else if olo - win.0 >= win.1 - ohi {
+            (win.0, olo)
+        } else {
+            (ohi, win.1)
+        };
+        if win.0 > win.1 {
+            break;
+        }
+    }
+    win
 }
 
 /// March from `port` along `dir` to the nearest reachable point inside a
