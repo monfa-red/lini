@@ -479,7 +479,7 @@ mod tests {
     fn a_return_message_is_dashed() {
         let s = svg("{ layout: sequence }\n|box#a| \"A\"\n|box#b| \"B\"\nb --> a \"ok\"\n");
         assert!(
-            s.contains("stroke-dasharray: 5,3.75"),
+            s.contains("stroke-dasharray: 6,4.5"),
             "the return is dashed: {s}"
         );
     }

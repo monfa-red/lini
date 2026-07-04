@@ -14,7 +14,7 @@ input_file: samples/links.lini
     .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
     .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
     .lini .lini-room { fill: #cdf9f4; stroke: #005d56; }
-    .lini .lini-link { fill: none; stroke: #444; stroke-width: 1.5; stroke-dasharray: none; }
+    .lini .lini-link { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-link-label { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; font-size: 11px; font-weight: normal; }
     .lini .lini-cut-bg { fill: white; stroke: none; }
     .lini .lini-cut { fill: black; stroke: none; }
@@ -92,21 +92,21 @@ input_file: samples/links.lini
   </g>
   <g class="lini-links">
     <g class="lini-link" style="font-size: 11" data-from="rooms.garden.outlet" data-to="rooms.kitchen.inlet">
-      <mask id="lini-label-cut-0" maskUnits="userSpaceOnUse" x="-46.25" y="65.25" width="97" height="86.5"><rect class="lini-cut-bg" x="-46.25" y="65.25" width="97" height="86.5"/><rect class="lini-cut" x="-26.4" y="99.1" width="52.8" height="14.3"/></mask>
-      <path d="M -44.5 150 L -32 150 A 32 32 0 0 0 0 118 L 0 99 A 32 32 0 0 1 32 67 L 46.5 67" mask="url(#lini-label-cut-0)"/>
-      <polygon class="lini-marker lini-marker-arrow" points="49.5,67 42.5,70.5 42.5,63.5"/>
+      <mask id="lini-label-cut-0" maskUnits="userSpaceOnUse" x="-46.5" y="65" width="97.5" height="87"><rect class="lini-cut-bg" x="-46.5" y="65" width="97.5" height="87"/><rect class="lini-cut" x="-26.4" y="99.1" width="52.8" height="14.3"/></mask>
+      <path d="M -44.5 150 L -32 150 A 32 32 0 0 0 0 118 L 0 99 A 32 32 0 0 1 32 67 L 45.5 67" mask="url(#lini-label-cut-0)"/>
+      <polygon class="lini-marker lini-marker-arrow" points="49.5,67 40.5,71.5 40.5,62.5"/>
       <text class="lini-link-label" x="0" y="106.25">carries</text>
     </g>
     <g class="lini-link" style="font-size: 11" data-from="rooms.garden.inlet" data-to="rooms.garden.outlet">
-      <mask id="lini-label-cut-1" maskUnits="userSpaceOnUse" x="-50.75" y="73.25" width="36.5" height="62.5"><rect class="lini-cut-bg" x="-50.75" y="73.25" width="36.5" height="62.5"/><rect class="lini-cut" x="-35.8" y="83.1" width="39.6" height="14.3"/></mask>
-      <path d="M -49 75 L -32 75 A 16 16 0 0 1 -16 91 L -16 118 A 16 16 0 0 1 -32 134 L -42 134" mask="url(#lini-label-cut-1)"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-45,134 -38,130.5 -38,137.5"/>
+      <mask id="lini-label-cut-1" maskUnits="userSpaceOnUse" x="-51" y="73" width="37" height="63"><rect class="lini-cut-bg" x="-51" y="73" width="37" height="63"/><rect class="lini-cut" x="-35.8" y="83.1" width="39.6" height="14.3"/></mask>
+      <path d="M -49 75 L -32 75 A 16 16 0 0 1 -16 91 L -16 118 A 16 16 0 0 1 -32 134 L -41 134" mask="url(#lini-label-cut-1)"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-45,134 -36,129.5 -36,138.5"/>
       <text class="lini-link-label" x="-16" y="90.25">flows</text>
     </g>
     <g class="lini-link" style="font-size: 11" data-from="rooms.kitchen.inlet" data-to="rooms.kitchen.outlet">
-      <mask id="lini-label-cut-2" maskUnits="userSpaceOnUse" x="14.25" y="81.25" width="36.5" height="62.5"><rect class="lini-cut-bg" x="14.25" y="81.25" width="36.5" height="62.5"/><rect class="lini-cut" x="-3.8" y="115.1" width="39.6" height="14.3"/></mask>
-      <path d="M 49 83 L 32 83 A 16 16 0 0 0 16 99 L 16 126 A 16 16 0 0 0 32 142 L 42 142" mask="url(#lini-label-cut-2)"/>
-      <polygon class="lini-marker lini-marker-arrow" points="45,142 38,145.5 38,138.5"/>
+      <mask id="lini-label-cut-2" maskUnits="userSpaceOnUse" x="14" y="81" width="37" height="63"><rect class="lini-cut-bg" x="14" y="81" width="37" height="63"/><rect class="lini-cut" x="-3.8" y="115.1" width="39.6" height="14.3"/></mask>
+      <path d="M 49 83 L 32 83 A 16 16 0 0 0 16 99 L 16 126 A 16 16 0 0 0 32 142 L 41 142" mask="url(#lini-label-cut-2)"/>
+      <polygon class="lini-marker lini-marker-arrow" points="45,142 36,146.5 36,137.5"/>
       <text class="lini-link-label" x="16" y="122.25">flows</text>
     </g>
   </g>

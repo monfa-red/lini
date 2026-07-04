@@ -684,7 +684,7 @@ mod tests {
         let css = emit_str(&rules_for("a -> b\n"));
         assert!(
             css.contains(
-                ".lini .lini-link { fill: none; stroke: var(--lini-stroke); stroke-width: 1.5; stroke-dasharray: none; }"
+                ".lini .lini-link { fill: none; stroke: var(--lini-stroke); stroke-width: 2; stroke-dasharray: none; }"
             ),
             "{}",
             css

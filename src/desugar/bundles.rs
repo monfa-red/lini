@@ -285,7 +285,7 @@ pub fn root_defaults() -> Vec<Decl> {
 /// class rules, and the link's own block.
 pub fn link_defaults() -> Vec<Decl> {
     vec![
-        n("stroke-width", 1.5),
+        n("stroke-width", 2.0),
         n("clearance", 16.0),
         n("font-size", 11.0),
     ]
