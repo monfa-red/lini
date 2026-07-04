@@ -55,10 +55,11 @@ pub(crate) fn admits(
             let broken = (0..cluster.len()).find_map(|i| {
                 (i + 1..cluster.len()).find_map(|j| {
                     let (a, b) = (&cluster[i].0, &cluster[j].0);
-                    let owed = place::contend(a, b, clearance)
-                        && (ord(a.members[0]) - ord(b.members[0])).abs() + 1e-6
-                            < min_pitch(clearance);
-                    owed.then_some((i, j))
+                    // The floor of the distance model: what the pair's
+                    // diagonal needs at half-clearance separation.
+                    let floor = place::owed(a, b, clearance, min_pitch(clearance));
+                    let short = (ord(a.members[0]) - ord(b.members[0])).abs() + 1e-6 < floor;
+                    short.then_some((i, j))
                 })
             });
             let Some((i, j)) = broken else { continue };

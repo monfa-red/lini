@@ -145,7 +145,7 @@ input_file: samples/hero.lini
       <polygon class="lini-marker lini-marker-arrow" points="-23.55,-117.5 -28.05,-126.5 -19.05,-126.5"/>
     </g>
     <g class="lini-link" style="font-size: 11" data-from="edge.lb" data-to="svc.api">
-      <path d="M -132 -89.5 L -168.5 -89.5 A 16 16 0 0 0 -184.5 -73.5 L -184.5 50 A 16 16 0 0 0 -168.5 66 L -143.5 66"/>
+      <path d="M -132 -89.5 L -160.5 -89.5 A 16 16 0 0 0 -176.5 -73.5 L -176.5 50 A 16 16 0 0 0 -160.5 66 L -143.5 66"/>
       <polygon class="lini-marker lini-marker-arrow" points="-139.5,66 -148.5,70.5 -148.5,61.5" style="fill: #747474"/>
     </g>
     <g class="lini-link lini-style-auth" style="font-size: 11" data-from="edge.lb" data-to="svc.auth">

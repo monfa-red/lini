@@ -55,13 +55,15 @@ The rest of this document is the `orthogonal` contract.
 - **Channel** — a maximal free rectangle between keep-outs, from the sweep
   decomposition: V-channels carry vertical travel, H-channels horizontal;
   each axis's channels partition the free space. A **cell** is an H∩V
-  overlap; cells are the graph's vertices. A channel wall is a keep-out edge,
-  a **shared boundary** with a same-axis channel (each side keeps half a
-  clearance off it), or the **canvas edge**. The sweep may slice one free
-  corridor into several same-axis channels; capacity, anchors, and usable
-  width always read the reassembled **corridor** — the walls that actually
-  bound a run's span — so a shared boundary interior to a void costs
-  nothing.
+  overlap; cells are the graph's vertices. A channel wall is a keep-out
+  edge, a **shared boundary** with a same-axis channel, or the **canvas
+  edge**; no wall charges a margin — a run may hug whatever bounds its
+  corridor, and separation across a shared boundary is placement's job like
+  any other (near runs on the two sides settle in one cluster). The sweep
+  may slice one free corridor into several same-axis channels; capacity,
+  anchors, and usable width always read the reassembled **corridor** — the
+  walls that actually bound a run's span — so a shared boundary interior to
+  a void costs nothing.
 - **Run** — one straight piece of a route, lying in one channel of its axis.
   A run's **track** is its ordinate across the channel. A route is an
   alternating chain of runs.

@@ -189,10 +189,10 @@ fn a_wire_over_the_top_hugs_the_keepout_not_the_margin() {
     let laid = route_sample(src, 10.0);
     let w = node_rect(&laid, "w").expect("w placed");
     // Bottom outranks top on the side rank, so the wire passes under; it
-    // rides the wall's keep-out edge plus the half-clearance the channel
-    // surrenders where its far stretches face free space — one wire-width
-    // off the diagram, never out in the canvas margin.
-    let hug = w.3 + 10.0 + 5.0;
+    // rides the wall's keep-out edge exactly — walls charge no margin
+    // (near neighbours cluster instead), so the wire hugs the diagram,
+    // never the canvas margin.
+    let hug = w.3 + 10.0;
     assert!(
         p.windows(2)
             .any(|s| s[0].1 == s[1].1 && (s[0].1 - hug).abs() < 1e-9),
@@ -617,6 +617,41 @@ fn a_bundle_of_s_curves_keeps_pitch_on_both_legs() {
         .filter(|v| v.severity == Severity::Warning)
         .collect();
     assert!(breaches.is_empty(), "{breaches:?}");
+}
+
+/// Pitch never compresses where the void holds full clearance
+/// (user-reported: links_hard's w2 → s1 pair drew its middle legs 7.5
+/// apart beside gamma — the wall behind them is keep-out-backed, a rail
+/// may hug it, and 12 fits; the retired soft-boundary margin charged the
+/// pair half a clearance for free space no wire could reach).
+#[test]
+fn a_duplicate_pair_keeps_full_pitch_beside_a_keepout() {
+    let src = include_str!("../samples/links_hard.lini");
+    let r = routes(src);
+    let pair = paths(&r, "west.w2", "south.s1");
+    assert_eq!(pair.len(), 2, "both rails draw");
+    assert_eq!(pair[0].len(), pair[1].len(), "rails share one shape");
+    // Corresponding legs of the two rails stay a full clearance apart —
+    // every leg, not just the straights near the ports.
+    for (i, (a, b)) in pair[0].windows(2).zip(pair[1].windows(2)).enumerate() {
+        let (da, db) = (
+            (a[1].0 - a[0].0, a[1].1 - a[0].1),
+            (b[1].0 - b[0].0, b[1].1 - b[0].1),
+        );
+        let gap = if da.0 == 0.0 && db.0 == 0.0 {
+            (a[0].0 - b[0].0).abs()
+        } else if da.1 == 0.0 && db.1 == 0.0 {
+            (a[0].1 - b[0].1).abs()
+        } else {
+            continue;
+        };
+        assert!(
+            gap >= 12.0 - 1e-6,
+            "leg {i} of the pair compressed to {gap}: {:?} vs {:?}",
+            pair[0],
+            pair[1]
+        );
+    }
 }
 
 // ── Determinism (Law 4) ──

@@ -544,14 +544,13 @@ mod tests {
         let above = Rect::new(60.0, 0.0, 140.0, 36.0);
         let below = Rect::new(60.0, 64.0, 140.0, 100.0);
         let g = ChannelGraph::build(BOUNDS, &[a.inflate(C), b.inflate(C), above, below], false);
-        // The pinch: y 36..64 between the blocks, soft margins at both walls
-        // pull usable to 20 → floor(20/4)+1 = 6 tracks at min pitch. The
-        // blocks reach the canvas bounds, so an over-wide bundle has no way
-        // around either.
+        // The pinch: y 36..64 between the blocks, wall to wall — 28 usable
+        // → floor(28/4)+1 = 8 tracks at min pitch. The blocks reach the
+        // canvas bounds, so an over-wide bundle has no way around either.
         let ledger = Ledger::new(C);
-        let six = route(&g, a, b, &ledger, 6, (None, None)).expect("route");
-        assert_eq!(six.cells.len(), 3, "the pinch holds six: {six:?}");
-        assert_eq!(route(&g, a, b, &ledger, 7, (None, None)), None);
+        let eight = route(&g, a, b, &ledger, 8, (None, None)).expect("route");
+        assert_eq!(eight.cells.len(), 3, "the pinch holds eight: {eight:?}");
+        assert_eq!(route(&g, a, b, &ledger, 9, (None, None)), None);
     }
 
     #[test]

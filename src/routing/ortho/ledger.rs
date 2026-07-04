@@ -84,15 +84,9 @@ impl Ledger {
     ) -> usize {
         let (lo, hi) = (span.0.min(span.1), span.0.max(span.1));
         let corridor = graph.corridor(axis, chan, lo, hi);
-        let (u0, u1) = corridor.usable(self.clearance);
-        // A zero-width usable range still holds one track (the +1 below);
-        // only a genuine inversion — overlapping soft margins, always a
-        // multiple of half the clearance — closes the span. The epsilon
-        // absorbs float noise in wall coordinates, which otherwise flips an
-        // exact-zero width (a corner pass through a min-width corridor) shut.
-        if u1 - u0 < -1e-6 {
-            return 0;
-        }
+        let (u0, u1) = corridor.usable();
+        // A zero-width usable range still holds one track (the +1 below) —
+        // a corner pass through a min-width corridor.
         let capacity = ((u1 - u0).max(0.0) / min_pitch(self.clearance)).floor() as usize + 1;
         capacity.saturating_sub(self.max_load(world, axis, &corridor, (lo, hi)))
     }

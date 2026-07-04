@@ -7,11 +7,13 @@
 //! a cluster. Within a cluster runs order so wires leave in the order they
 //! arrive — nested, never braided — by the outward-walk order
 //! ([`super::order`]) — and take the order-preserving ordinates nearest
-//! their preferences at clearance pitch: the exact chain ([`ladder`]) when
-//! the cluster's contention is a chain, the pairwise projection
-//! ([`super::pairwise`]) when a zero gap bridges contenders the chain cannot
-//! express. The relief valve compresses only what a stretch's hard boxes
-//! genuinely cannot hold, never below half the clearance. Preferences are
+//! their preferences at the pitch each pair genuinely owes ([`owed`] — the
+//! distance model: full clearance alongside, the diagonal remainder past
+//! each other): the exact chain ([`ladder`]) when the cluster's contention
+//! is a chain, the pairwise projection ([`super::pairwise`]) when an
+//! under-sized bridge leaves debt the chain cannot express. The relief
+//! valve compresses only what a stretch's hard boxes genuinely cannot
+//! hold, never below half the clearance. Preferences are
 //! the aesthetic law: interior runs want their corridor's anchor (the
 //! midline between two nodes, the keep-out wall at the canvas edge); end
 //! runs want the straightest lawful line to their port. Ports *are* end-run
@@ -84,23 +86,16 @@ pub(crate) fn place(worlds: &[World], chains: &mut [Option<Chain>], clearance: f
 
 /// A run's lawful ordinate range: its port window intersected with the
 /// corridor's usable range — the window winning when the corridor's
-/// tightening would invert it, the walls standing in for a sliver whose
-/// soft margins cross (the search admitted the run, so it draws there,
-/// surrendering what the sliver cannot give).
-fn law_range(window: Option<(f64, f64)>, corr: &Corridor, clearance: f64) -> (f64, f64) {
-    let u = corr.usable(clearance);
+/// tightening would invert it (the search admitted the run, so it draws
+/// there, surrendering what the sliver cannot give).
+fn law_range(window: Option<(f64, f64)>, corr: &Corridor) -> (f64, f64) {
+    let u = corr.usable();
     match window {
         Some(w) => {
             let tight = (w.0.max(u.0), w.1.min(u.1));
             if tight.0 <= tight.1 { tight } else { w }
         }
-        None => {
-            if u.0 <= u.1 {
-                u
-            } else {
-                corr.walls
-            }
-        }
+        None => u,
     }
 }
 
@@ -255,10 +250,18 @@ pub(super) fn clusters_of(
     for i in 0..n {
         for j in i + 1..n {
             let near = near(items[i].span, items[j].span, clearance);
+            // Corridors meeting at a shared boundary couple too: their
+            // walls charge no margin, so near runs on the two sides owe
+            // their pitch through the one ladder — placement owns
+            // cross-boundary separation (wall coordinates come from one
+            // sweep-edge list, so the abutting test is exact equality).
+            let abuts = corridors[i].walls.1 == corridors[j].walls.0
+                || corridors[j].walls.1 == corridors[i].walls.0;
             let shared = (items[i].world == items[j].world
                 && (items[i].chan == items[j].chan
                     || corridors[i].chans.contains(&items[j].chan)
-                    || corridors[j].chans.contains(&items[i].chan)))
+                    || corridors[j].chans.contains(&items[i].chan)
+                    || abuts))
                 || items[i]
                     .landings
                     .iter()
@@ -309,7 +312,14 @@ fn chain_prefs(chain: &Chain, worlds: &[World]) -> Vec<Pref> {
                 let corridor = worlds[chain.world]
                     .graph
                     .corridor(run.axis, run.chan, lo, hi);
-                (corridor.anchor(), None)
+                // The aesthetic target is the anchor of the corridor the
+                // run can lawfully inhabit: a span kissing a keep-out
+                // corner lets the walk absorb a void the corner clamp
+                // forbids, and the raw anchor then hugs a wall its twin —
+                // one lane over, reading the narrow corridor — never
+                // sees, ordering the pair into an unplaceable chain.
+                let clamp = corner_clamp(worlds, chain, ri);
+                (corridor.clipped(clamp.0, clamp.1).anchor(), None)
             }
         })
         .collect()
@@ -366,8 +376,8 @@ fn fan_of(chain: &Chain, ri: usize) -> Option<usize> {
 /// hard; a search-admitted run always has room inside it (the route's
 /// corners sat in cells), so an inversion only flags float dust at a
 /// channel edge.
-pub(super) fn bound((i, corr): &(Item, Corridor), clearance: f64) -> (f64, f64) {
-    let r = law_range(i.window, corr, clearance);
+pub(super) fn bound((i, corr): &(Item, Corridor)) -> (f64, f64) {
+    let r = law_range(i.window, corr);
     let tight = (r.0.max(i.clamp.0), r.1.min(i.clamp.1));
     if tight.0 <= tight.1 { tight } else { r }
 }
@@ -387,7 +397,6 @@ pub(super) fn bound((i, corr): &(Item, Corridor), clearance: f64) -> (f64, f64) 
 /// prefs sit inside their boxes, so disjoint ranges order themselves.
 pub(super) fn arrange(
     cluster: Vec<(Item, Corridor)>,
-    clearance: f64,
     chains: &[Option<Chain>],
     ests: &[Vec<f64>],
 ) -> (Vec<f64>, Vec<(Item, Corridor)>) {
@@ -396,7 +405,7 @@ pub(super) fn arrange(
     let item_prefs: Vec<f64> = cluster
         .iter()
         .map(|c| {
-            let (lo, hi) = bound(c, clearance);
+            let (lo, hi) = bound(c);
             c.0.pref.max(lo).min(hi)
         })
         .collect();
@@ -437,34 +446,30 @@ fn settle(
     chains: &mut [Option<Chain>],
     ests: &[Vec<f64>],
 ) {
-    let (prefs, cluster) = arrange(cluster, clearance, &*chains, ests);
+    let (prefs, cluster) = arrange(cluster, &*chains, ests);
 
     let n = cluster.len();
-    let bounds: Vec<(f64, f64)> = cluster.iter().map(|c| bound(c, clearance)).collect();
-    // Every gap starts at full clearance — the relief below is the one
-    // compression mechanism. Only **contending** neighbours owe each other
-    // pitch; a transitively-chained pair whose spans lie far apart never
-    // runs alongside — its gap is 0, so the ladder may reuse the ordinate
-    // space.
+    let bounds: Vec<(f64, f64)> = cluster.iter().map(bound).collect();
+    // Every gap starts at what the pair genuinely owes ([`owed`]) — the
+    // relief below is the one compression mechanism. Only **contending**
+    // neighbours owe pitch; a transitively-chained pair whose spans lie far
+    // apart never runs alongside — its gap is 0, so the ladder may reuse
+    // the ordinate space.
     let mut seps: Vec<f64> = cluster
         .windows(2)
-        .map(|w| {
-            if contend(&w[0].0, &w[1].0, clearance) {
-                clearance
-            } else {
-                0.0
-            }
-        })
+        .map(|w| owed(&w[0].0, &w[1].0, clearance, clearance))
         .collect();
-    // The chain expresses this cluster only when no contending pair is
-    // bridged by a zero gap. Across such a bridge the chain goes wrong both
-    // ways at once: the pair's pitch dissolves (its gaps sum to nothing),
-    // while order and envelope bind travel-disjoint groups the pair never
-    // coupled — the relief then compresses windows with room to spare.
-    // Those clusters settle on their true pairwise constraints instead.
+    // The chain expresses this cluster only when every contending pair's
+    // debt fits through the gaps between them. Across an under-sized
+    // bridge the chain goes wrong both ways at once: the pair's pitch
+    // dissolves, while order and envelope bind travel-disjoint groups the
+    // pair never coupled — the relief then compresses windows with room to
+    // spare. Those clusters settle on their true pairwise constraints
+    // instead.
     let chain_ok = (0..n).all(|i| {
         (i + 2..n).all(|j| {
-            !contend(&cluster[i].0, &cluster[j].0, clearance) || seps[i..j].iter().all(|s| *s > 0.0)
+            owed(&cluster[i].0, &cluster[j].0, clearance, clearance)
+                <= seps[i..j].iter().sum::<f64>() + 1e-9
         })
     });
     let mut feasible = chain_ok;
@@ -524,6 +529,25 @@ pub(super) fn contend(a: &Item, b: &Item, clearance: f64) -> bool {
         .any(|(c0, _)| b.members.iter().any(|(c1, _)| c0 == c1));
     let overlap = a.span.0.max(b.span.0) < a.span.1.min(b.span.1);
     overlap || (near(a.span, b.span, clearance) && !same_wire)
+}
+
+/// The ordinate pitch two items genuinely owe, at separation `pitch`
+/// (the clearance for placement, its floor for the admission probe).
+/// Law 1 is a **distance**: runs alongside (spans overlapping) owe the
+/// full pitch across; runs past each other owe only what the diagonal
+/// needs — tips `g` apart along travel are lawful at ordinate offset `d`
+/// once `g² + d² ≥ pitch²`, so a pair whose travel gap alone reaches the
+/// pitch may share an ordinate (two collinear segments a clearance
+/// apart), and the flat charge that laddered such pairs apart — stage 6's
+/// recorded conservatism — is spent. The pair still couples ([`contend`]
+/// stays inclusive at exactly a clearance), so round two never forgets
+/// the contention; it just owes the truth.
+pub(super) fn owed(a: &Item, b: &Item, clearance: f64, pitch: f64) -> f64 {
+    if !contend(a, b, clearance) {
+        return 0.0;
+    }
+    let gap = (b.span.0 - a.span.1).max(a.span.0 - b.span.1).max(0.0);
+    (pitch * pitch - gap * gap).max(0.0).sqrt()
 }
 
 /// Whether two spans come within a clearance of one another — inclusive at

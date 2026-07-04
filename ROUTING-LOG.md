@@ -448,6 +448,40 @@ Executing sessions: append dated notes here — decisions the plan didn't
 anticipate, gotchas, deferred items, comparator cases that needed deepening,
 anything the next session must know. Keep entries terse.
 
+- **2026-07-04, cross-boundary separation owned by placement (user bug
+  batch 4).** The soft-boundary margin is retired; ROUTING.md §Vocabulary
+  updated: no wall charges anything — separation across a shared boundary
+  is placement's job like any other. Four pieces, one principle (Law 1 is
+  a distance, and one mechanism owns it):
+  - **Walls charge nothing** (`Corridor::usable` = walls; `Channel.soft`,
+    `soften`, the corridor's faced-margins all deleted). Corridor capacity
+    gains the lane the two half-margins used to eat; the canvas-edge hug
+    is now exact (the hug test pins keep-out + clearance, no surrendered
+    half). The margin guarded near-tip pairs in mutually-unabsorbed
+    abutting channels — clusters now couple those directly: corridors
+    whose walls meet (exact sweep-edge equality) share a cluster when
+    their spans are near, and the ladder holds the pitch.
+  - **Interior preferences anchor the corridor a run can inhabit**
+    (`Corridor::clipped` to the corner clamp): a span kissing a keep-out
+    corner lets the walk absorb a void the clamp forbids, flipping the
+    anchor rule (outer-hug vs midline) between twin rails and ordering
+    them into unplaceable chains.
+  - **Separations are the distance model** (`place::owed`): runs
+    alongside owe the full pitch across; runs past each other owe
+    `√(pitch² − gap²)` — tips a clearance apart along travel may share an
+    ordinate (two collinear segments a clearance apart are lawful), so
+    stage 6's recorded conservatism is spent. Coupling stays inclusive at
+    exactly a clearance (round two never forgets a pair); only the owed
+    amount tells the truth. `chain_ok` becomes sum-of-gaps ≥ owed;
+    `pairwise` and the admission probe's floor ride the same function.
+  - **Results:** w2 → s1 draws at full pitch (contract test
+    `a_duplicate_pair_keeps_full_pitch_beside_a_keepout`); links_hard's
+    alpha → delta now routes through the middle instead of orbiting the
+    west perimeter; 8 samples drift, each visually verified (hero, links,
+    links_hard, links_medium, links_simple, pcb, text, themes — mostly
+    tighter hugs and nicer nests); the link-heavy benchmark runs 18%
+    *faster* (2.26 s vs 2.77 s for 50×5 compiles — fewer denials, less
+    relief); laws sweep green at every clearance.
 - **2026-07-04, concentric fillets across asymmetric pitches (user bug
   batch 3).** links_hard ships at gap 32 (everything routes — the showcase
   renders whole; the four gap-30 strays and their pin are history), and

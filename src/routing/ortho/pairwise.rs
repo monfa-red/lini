@@ -6,12 +6,13 @@
 
 use super::cost::min_pitch;
 use super::graph::Corridor;
-use super::place::{Item, contend};
+use super::place::{Item, owed};
 
 /// The general settle for clusters the chain cannot express: each
-/// contending pair — and only those — owes its pitch, signed by the cluster
-/// order (nested, never braided); non-contending items stay uncoupled, free
-/// to share ordinate space. Relief first makes the system feasible (the
+/// contending pair — and only those — owes its pitch ([`owed`]: the
+/// distance model — full clearance alongside, the diagonal remainder past
+/// each other), signed by the cluster order (nested, never braided);
+/// non-contending items stay uncoupled, free to share ordinate space. Relief first makes the system feasible (the
 /// same uniform compression, applied along the tightest constraint chains),
 /// then the ordinates are the least-squares projection of the preferences
 /// onto the feasible set (Dykstra's alternating projections — exact in the
@@ -26,8 +27,9 @@ pub(super) fn pairwise(
     let mut gaps: Vec<(usize, usize, f64)> = Vec::new();
     for i in 0..n {
         for j in i + 1..n {
-            if contend(&cluster[i].0, &cluster[j].0, clearance) {
-                gaps.push((i, j, clearance));
+            let owes = owed(&cluster[i].0, &cluster[j].0, clearance, clearance);
+            if owes > 0.0 {
+                gaps.push((i, j, owes));
             }
         }
     }

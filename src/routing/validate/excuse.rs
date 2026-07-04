@@ -141,7 +141,7 @@ pub(super) fn excused(
             }
             let usable = channel_at(&graph, axis, (lo + hi) / 2.0, o).map(|chan| {
                 let corr = graph.corridor(axis, chan, lo, hi);
-                let u = corr.usable(c);
+                let u = corr.usable();
                 if u.0 <= u.1 { u } else { corr.walls }
             });
             // Mirror placement's bounds: the port window wins where the

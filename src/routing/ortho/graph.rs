@@ -41,11 +41,6 @@ impl Axis {
 pub struct Channel {
     pub rect: Rect,
     pub axis: Axis,
-    /// Per wall (`[low, high]` on the ordinate axis): the travel intervals
-    /// where another same-axis channel abuts — the wall is free space there,
-    /// not a keep-out edge, and separation across it is shared between the
-    /// two channels rather than guaranteed by either alone.
-    pub soft: [Vec<(f64, f64)>; 2],
     /// Per wall: whether it is the **open canvas bound** of the root world —
     /// not geometry, just where the decomposition stopped. Runs never lack
     /// lanes against an open wall: the margin holds any overflow, pitched
@@ -81,10 +76,6 @@ pub struct Corridor {
     pub walls: (f64, f64),
     /// Whether each final wall is the root world's open canvas bound.
     pub outer: [bool; 2],
-    /// Whether each final wall still faces free space somewhere over the
-    /// span — a neighbour covering only part of it, whose wires the run owes
-    /// half a clearance across the shared boundary.
-    pub soft: [bool; 2],
     /// The same-axis channels the corridor absorbs — the committed-load set.
     pub chans: Vec<usize>,
 }
@@ -103,16 +94,31 @@ impl Corridor {
         }
     }
 
-    /// The ordinate range runs may use: the corridor walls, pulled in by half
-    /// a clearance where a wall still faces free space over the span — each
-    /// side of a shared boundary surrenders half the separation it cannot
-    /// guarantee alone.
-    pub fn usable(&self, clearance: f64) -> (f64, f64) {
-        let margin = |soft: bool| if soft { clearance / 2.0 } else { 0.0 };
-        (
-            self.walls.0 + margin(self.soft[0]),
-            self.walls.1 - margin(self.soft[1]),
-        )
+    /// The ordinate range runs may use: the corridor walls, whole. A wall a
+    /// same-axis neighbour still abuts somewhere over the span used to cost
+    /// half a clearance here; separation across a shared boundary is owned
+    /// by placement instead — near runs in abutting corridors cluster
+    /// ([`super::place`]) and the ladder holds their pitch, so the wall
+    /// charges nothing and a run may hug whatever bounds its corridor.
+    pub fn usable(&self) -> (f64, f64) {
+        self.walls
+    }
+
+    /// The corridor a clamped run effectively inhabits: walls intersected
+    /// with `[lo, hi]`, a clipped side losing its open-canvas flag — the
+    /// clip *is* geometry (a corner clamp, a neighbour's travel edge), so
+    /// the anchor treats it as a real wall, not the decomposition's edge.
+    /// Keeps the anchor rule one function when a run's lawful range is
+    /// narrower than the walk's reach.
+    pub fn clipped(&self, lo: f64, hi: f64) -> Corridor {
+        Corridor {
+            walls: (self.walls.0.max(lo), self.walls.1.min(hi)),
+            outer: [
+                self.outer[0] && lo <= self.walls.0,
+                self.outer[1] && hi >= self.walls.1,
+            ],
+            chans: self.chans.clone(),
+        }
     }
 }
 
@@ -178,11 +184,9 @@ impl ChannelGraph {
             chans.push(j);
         }
         chans.sort_unstable();
-        let faced = |soft: &[(f64, f64)]| soft.iter().any(|&(a, b)| a < hi && b > lo);
         Corridor {
             walls: (list[low].walls().0, list[high].walls().1),
             outer: [list[low].outer[0], list[high].outer[1]],
-            soft: [faced(&list[low].soft[0]), faced(&list[high].soft[1])],
             chans,
         }
     }
@@ -206,15 +210,12 @@ impl ChannelGraph {
                 .map(|c| Channel {
                     rect: transpose(c.rect),
                     axis: Axis::H,
-                    soft: [Vec::new(), Vec::new()],
                     outer: [false, false],
                 })
                 .collect();
             h.sort_by(|a, b| pos_order(a.rect, b.rect));
             h
         };
-        soften(&mut v);
-        soften(&mut h);
         if open {
             for c in &mut v {
                 c.outer = [c.rect.x0 == bounds.x0, c.rect.x1 == bounds.x1];
@@ -280,32 +281,6 @@ fn transpose(r: Rect) -> Rect {
     Rect::new(r.y0, r.x0, r.y1, r.x1)
 }
 
-/// Mark every wall stretch where two same-axis channels abut as soft on both.
-/// Boundary coordinates come from the one sorted sweep-edge list, so equality
-/// is exact.
-fn soften(channels: &mut [Channel]) {
-    let geom = |c: &Channel| match c.axis {
-        Axis::V => (c.rect.x0, c.rect.x1, c.rect.y0, c.rect.y1),
-        Axis::H => (c.rect.y0, c.rect.y1, c.rect.x0, c.rect.x1),
-    };
-    for i in 0..channels.len() {
-        for j in 0..channels.len() {
-            let (_, hi_wall, t0, t1) = geom(&channels[i]);
-            let (lo_wall, _, s0, s1) = geom(&channels[j]);
-            let (o0, o1) = (t0.max(s0), t1.min(s1));
-            if i == j || hi_wall != lo_wall || o1 <= o0 {
-                continue;
-            }
-            channels[i].soft[1].push((o0, o1));
-            channels[j].soft[0].push((o0, o1));
-        }
-    }
-    for c in channels {
-        c.soft[0].sort_by(|a, b| a.0.total_cmp(&b.0));
-        c.soft[1].sort_by(|a, b| a.0.total_cmp(&b.0));
-    }
-}
-
 /// Reading order — the total tie-free order every channel/cell list uses.
 fn pos_order(a: Rect, b: Rect) -> std::cmp::Ordering {
     a.x0.total_cmp(&b.x0).then(a.y0.total_cmp(&b.y0))
@@ -333,7 +308,6 @@ fn sweep_channels(bounds: Rect, blocks: &[Rect], axis: Axis) -> Vec<Channel> {
                     out.push(Channel {
                         rect: Rect::new(x0, y0, x, y1),
                         axis,
-                        soft: [Vec::new(), Vec::new()],
                         outer: [false, false],
                     });
                 }
@@ -394,26 +368,8 @@ mod tests {
         Channel {
             rect: Rect::new(x0, y0, x1, y1),
             axis,
-            soft: [Vec::new(), Vec::new()],
             outer: [false, false],
         }
-    }
-
-    #[test]
-    fn abutting_same_axis_channels_soften_each_others_walls() {
-        // The single-box ring: the left column's right wall faces the two
-        // middle channels (above and below the box) across free space; the
-        // stretch blocked by the box itself stays hard.
-        let b = Rect::new(0.0, 0.0, 100.0, 100.0);
-        let g = ChannelGraph::build(b, &[Rect::new(40.0, 40.0, 60.0, 60.0)], false);
-        let left = &g.v[0];
-        assert_eq!(left.rect, Rect::new(0.0, 0.0, 40.0, 100.0));
-        assert_eq!(left.soft[0], Vec::new());
-        assert_eq!(left.soft[1], vec![(0.0, 40.0), (60.0, 100.0)]);
-        let top_mid = &g.v[1];
-        assert_eq!(top_mid.rect, Rect::new(40.0, 0.0, 60.0, 40.0));
-        assert_eq!(top_mid.soft[0], vec![(0.0, 40.0)]);
-        assert_eq!(top_mid.soft[1], vec![(0.0, 40.0)]);
     }
 
     /// Two full-height side walls with a small block at the top splitting
@@ -444,9 +400,8 @@ mod tests {
         // wall, every fragment absorbed, midline anchor, no margins.
         let c = g.corridor(Axis::V, west, 30.0, 90.0);
         assert_eq!(c.walls, (40.0, 160.0));
-        assert_eq!(c.soft, [false, false]);
         assert_eq!(c.anchor(), 100.0);
-        assert_eq!(c.usable(8.0), (40.0, 160.0));
+        assert_eq!(c.usable(), (40.0, 160.0));
         assert_eq!(c.chans.len(), 3);
         // Growth works from any fragment of the void.
         let mid = v_chan(&g, 90.0, 110.0);
@@ -454,16 +409,16 @@ mod tests {
     }
 
     #[test]
-    fn a_partial_neighbour_stops_the_walk_and_stays_soft() {
+    fn a_partial_neighbour_stops_the_walk_and_charges_nothing() {
         let g = split_corridor();
         let west = v_chan(&g, 40.0, 90.0);
         // The span reaches beside the top block: the middle fragment covers
-        // only y ≥ 20, so the wall at 90 stands — still facing free space
-        // below the block, where the run surrenders half a clearance.
+        // only y ≥ 20, so the wall at 90 stands. It charges no margin —
+        // placement clusters near runs across the shared boundary and the
+        // ladder owns their pitch.
         let c = g.corridor(Axis::V, west, 10.0, 90.0);
         assert_eq!(c.walls, (40.0, 90.0));
-        assert_eq!(c.soft, [false, true]);
-        assert_eq!(c.usable(8.0), (40.0, 86.0));
+        assert_eq!(c.usable(), (40.0, 90.0));
     }
 
     #[test]

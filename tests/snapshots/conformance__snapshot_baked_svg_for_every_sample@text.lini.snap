@@ -43,16 +43,16 @@ input_file: samples/text.lini
   </g>
   <g class="lini-links">
     <g class="lini-link" style="font-size: 12; font-weight: bold" data-from="a" data-to="b">
-      <mask id="lini-label-cut-0" maskUnits="userSpaceOnUse" x="37.25" y="-40.25" width="32" height="78.5"><rect class="lini-cut-bg" x="37.25" y="-40.25" width="32" height="78.5"/><rect class="lini-cut" x="17.1" y="-6.55" width="100.8" height="15.6"/></mask>
-      <path d="M 43.5 -38.5 L 51.5 -38.5 A 16 16 0 0 1 67.5 -22.5 L 67.5 20.5 A 16 16 0 0 1 51.5 36.5 L 41.5 36.5" mask="url(#lini-label-cut-0)"/>
+      <mask id="lini-label-cut-0" maskUnits="userSpaceOnUse" x="37.25" y="-40.25" width="24" height="78.5"><rect class="lini-cut-bg" x="37.25" y="-40.25" width="24" height="78.5"/><rect class="lini-cut" x="9.1" y="-6.55" width="100.8" height="15.6"/></mask>
+      <path d="M 43.5 -38.5 L 43.5 -38.5 A 16 16 0 0 1 59.5 -22.5 L 59.5 20.5 A 16 16 0 0 1 43.5 36.5 L 41.5 36.5" mask="url(#lini-label-cut-0)"/>
       <polygon class="lini-marker lini-marker-arrow" points="38.5,36.5 45.5,33 45.5,40" style="fill: #989898"/>
-      <text class="lini-link-label" x="67.5" y="1.25" style="fill: #005d56; font-weight: bold">styled by |-|</text>
+      <text class="lini-link-label" x="59.5" y="1.25" style="fill: #005d56; font-weight: bold">styled by |-|</text>
     </g>
     <g class="lini-link" style="font-size: 12; font-weight: bold" data-from="b" data-to="c">
-      <mask id="lini-label-cut-1" maskUnits="userSpaceOnUse" x="37.25" y="50.75" width="48" height="78.5"><rect class="lini-cut-bg" x="37.25" y="50.75" width="48" height="78.5"/><rect class="lini-cut" x="25.9" y="73.95" width="115.2" height="15.6"/></mask>
-      <path d="M 39 52.5 L 67.5 52.5 A 16 16 0 0 1 83.5 68.5 L 83.5 111.5 A 16 16 0 0 1 67.5 127.5 L 46 127.5" mask="url(#lini-label-cut-1)"/>
+      <mask id="lini-label-cut-1" maskUnits="userSpaceOnUse" x="37.25" y="50.75" width="24" height="78.5"><rect class="lini-cut-bg" x="37.25" y="50.75" width="24" height="78.5"/><rect class="lini-cut" x="1.9" y="73.95" width="115.2" height="15.6"/></mask>
+      <path d="M 39 52.5 L 43.5 52.5 A 16 16 0 0 1 59.5 68.5 L 59.5 114 A 13.5 13.5 0 0 1 46 127.5 L 46 127.5" mask="url(#lini-label-cut-1)"/>
       <polygon class="lini-marker lini-marker-arrow" points="43,127.5 50,124 50,131" style="fill: #989898"/>
-      <text class="lini-link-label" x="83.5" y="81.75" style="fill: #851618; font-weight: bold" transform="rotate(-6 83.5 81.75)">nudged &amp; turned</text>
+      <text class="lini-link-label" x="59.5" y="81.75" style="fill: #851618; font-weight: bold" transform="rotate(-6 59.5 81.75)">nudged &amp; turned</text>
     </g>
   </g>
 </svg>
