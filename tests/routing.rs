@@ -674,10 +674,10 @@ fn uncontended_fan_ports_take_their_side_centres() {
     let src = include_str!("../samples/links_medium.lini");
     let r = routes(src);
     let laid = route_sample(src, 12.0);
-    for (to, port_of) in [("kitchen.bowl", 0), ("kitchen.water", 1)] {
+    for to in ["kitchen.bowl", "kitchen.water"] {
         let rect = node_rect(&laid, to).expect("placed");
         let centre = (rect.1 + rect.3) / 2.0;
-        let p = paths(&r, "cat", to)[port_of.min(0)];
+        let p = paths(&r, "cat", to)[0];
         let port = p.last().unwrap().1;
         assert!(
             (port - centre).abs() < 1e-9,
