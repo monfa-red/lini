@@ -9,6 +9,19 @@ How to work in this repo.
 - Ask before risky or irreversible actions (force push, destructive ops, publishing). Local edits are free.
 - No emojis unless asked. Plain Markdown; tables over bullets when comparing.
 
+## Subagents
+- **Always set `model` explicitly when spawning agents** (Agent tool,
+  workflow `agent()`): the main session may run a pricier model and a
+  subagent must never inherit it. Forks are the one exception — they
+  always inherit the parent by design, which is fine.
+- Pick the tier by the task: **`opus` at `xhigh` effort** for most real
+  work (investigation, implementation, review); **`opus` at `high`** for
+  simpler scoped tasks; **`sonnet` at `high`** for genuinely simple
+  mechanical ones (lookups, renders, bulk edits).
+- Per-call `effort` exists only on workflow `agent()`; the Agent tool
+  takes `model` alone — there, choose the tier by model and let effort
+  ride the agent definition.
+
 ## Code style
 - **No `unsafe`.** Find another path, or surface the question.
 - **One mechanism per problem.** Extend whatever owns a failure mode; never add a second that re-fights it. Robust fixes over patches.
