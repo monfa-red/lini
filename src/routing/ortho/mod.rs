@@ -2,6 +2,7 @@
 //! worlds → channels → requests → weighted search → placement → geometry.
 //! Each step decides once; none revisits an earlier step's answer.
 
+pub(crate) mod admit;
 pub(crate) mod cost;
 pub(crate) mod entry;
 pub(crate) mod geometry;
@@ -304,25 +305,30 @@ pub(crate) fn route(index: &SceneIndex, reqs: &[EdgeReq]) -> (Routing, Vec<usize
                     break;
                 }
                 let (se, ge) = (&starts[route.start], &goals[route.goal]);
-                let ends = [(se, &rep.a_rect), (ge, &rep.b_rect)].map(|(e, r)| EndInfo {
-                    side: e.side,
-                    rect: *r,
-                    window: e.window,
-                    fan: None,
-                });
+                let ends =
+                    [(se, &rep.a_rect, fan_a), (ge, &rep.b_rect, fan_b)].map(|(e, r, fan)| {
+                        EndInfo {
+                            side: e.side,
+                            rect: *r,
+                            window: e.window,
+                            fan,
+                        }
+                    });
                 let probe =
                     geometry::chain(graph, w, &ledger, &route.cells, se, ge, ends, m0, k_eff, c);
                 let blocked = probe
                     .runs
                     .iter()
-                    .find(|run| ledger.tracks_left(w, run.axis, run.chan, run.span, graph) < k_eff);
+                    .find(|run| ledger.tracks_left(w, run.axis, run.chan, run.span, graph) < k_eff)
+                    .map(|run| (run.axis, run.chan, run.span))
+                    .or_else(|| admit::admits(&worlds, &chains, &probe, k_eff, c));
                 match blocked {
                     None => {
                         picked = Some((w, route, starts, goals));
                         break;
                     }
                     Some(run) => {
-                        deny.push((run.axis, run.chan, run.span));
+                        deny.push(run);
                         last = Some(route);
                     }
                 }

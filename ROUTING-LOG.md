@@ -448,6 +448,45 @@ Executing sessions: append dated notes here — decisions the plan didn't
 anticipate, gotchas, deferred items, comparator cases that needed deepening,
 anything the next session must know. Keep entries terse.
 
+- **2026-07-04, placement-aware admission (user bug batch 2).** The
+  stage-6 "honest fix is a placement-aware admission probe" landed;
+  every known-limit pin healed and dropped. Every sample byte-identical
+  at native attributes.
+  - **The probe** (`ortho/admit.rs`): before a route commits, the driver
+    runs the real `place()` over a copy of every committed chain plus the
+    candidate's k rails, refreshes spans from the final ordinates, and
+    judges every contending pair against the half-clearance floor — no
+    separate model, so nothing to drift (a first cut re-judging the
+    *chain* feasibility on provisional spans false-denied the side-spill
+    sweep: committed corner estimates manufacture phantom contention that
+    only the two-round simulation resolves). A failing route becomes a
+    `Deny` on the same learned-closure loop the ledger rides. Shared
+    machinery factored from place.rs: `collect`, `clusters_of`,
+    `arrange`, `bound`, `overrun`; the probe chain now carries its fan
+    groups so a sibling merges with its committed twin instead of
+    contending.
+  - **All three pinned cells heal**: links_hard @8 — `beta → gamma`
+    denied from the 6 px sliver (point-load 2 fits, but the full-height
+    run chained between two span-disjoint neighbours needs both gaps),
+    reroutes east, zero breaches; links_medium @13 — one honest stray;
+    pcb @12 — the rf bundle's own corners spread its H legs into a 1 px
+    refreshed-span pocket (the stage-6 coupled-axis case: admission saw
+    7 px on provisional spans), now caught by the simulation and strayed
+    honestly. `known_limit` is gone from tests/laws.rs.
+  - **Fan sibling braid, diagnosed and deferred** (user-reported:
+    `hub → n1 & e1` crosses itself right after the split, links_hard @8).
+    A clean twin route ties: a committed rail sitting exactly on a travel
+    endpoint is a corner in the rail's own channel — both estimate the
+    same anchor — and `crossings_covering`'s half-open bound charges it,
+    so crossing and clean routes price equal and the tie-break drew the
+    braid. A strict bound fixes it and breaks the mirror case
+    (links_simple's fan then draws two *real* crossings the inclusive
+    charge steered around): whether a corner-at-anchor crossing is real
+    depends on which flank the nesting order gives the corner's
+    perpendicular leg — deciding it truly needs the order walk over both
+    chains at pricing time, and the ledger holds spans, not topology.
+    Ignored test `fan_siblings_split_without_crossing_each_other` pins
+    the repro; the braid is a lawful, counted Info crossing meanwhile.
 - **2026-07-03, run-order totality + lawful preferences (user bug batch,
   post stage 7).** Two placement bugs fixed at source, one new known-limit
   pin, one open diagnosis. Every sample byte-identical at native attributes.

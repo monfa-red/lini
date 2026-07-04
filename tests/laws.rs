@@ -120,40 +120,21 @@ fn every_sample_compiles_and_routes_byte_identically() {
 /// never silently vanish, and a tighter diagram may only trade wires for
 /// honest strays.
 ///
-/// One pinned exception: admission counts a corridor's *load* (max
-/// concurrent spans) and a side's slots, but placement realises the nesting
-/// *order* — a full-length run chained between two span-disjoint neighbours
-/// needs the chain's total gaps, not the point-load's — so a group jointly
-/// pinched can over-admit by a hair and compress below the floor instead of
-/// straying (ROUTING-LOG.md execution log, stage 6; the honest fix is a
-/// placement-aware admission probe). `links_medium` at clearance 13, `pcb`
-/// at 12 and `links_hard` at 8 sit exactly on that blind spot; the pins
-/// keep it visible without blessing new ones.
+/// The admission probe (`src/routing/ortho/admit.rs`) places every route
+/// beside the committed chains before it commits, so what the ledger's
+/// load counting alone once over-admitted — links_medium @13, pcb @12,
+/// links_hard @8, each formerly pinned here as a known limit — now routes
+/// lawfully or strays honestly like every other cell.
 #[test]
 fn every_sample_holds_the_laws_at_every_clearance() {
-    let known_limit = |name: &str, c: f64| {
-        matches!(
-            (name, c),
-            ("links_medium", 13.0) | ("pcb", 12.0) | ("links_hard", 8.0)
-        )
-    };
     for path in sample_paths() {
         let src = read(&path);
-        let name = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
         let declared = declared_edges(&src);
         for c in CLEARANCES {
             let laid = route_sample(&src, c);
             let report = laws(&laid);
             let impossible = report.iter().filter(|v| v.rule == Rule::Impossible).count();
             let found = breaches(report);
-            if known_limit(name, c) {
-                assert!(
-                    !found.is_empty(),
-                    "{} at clearance {c}: the pinned admission limit healed — drop the pin",
-                    path.display()
-                );
-                continue;
-            }
             assert!(
                 found.is_empty(),
                 "{} at clearance {c}: {found:?}",

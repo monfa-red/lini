@@ -32,22 +32,22 @@ use crate::ast::Side;
 /// ordinate.
 pub(super) struct Item {
     /// `(chain index, run index)` of every run taking this ordinate.
-    members: Vec<(usize, usize)>,
-    span: (f64, f64),
+    pub(super) members: Vec<(usize, usize)>,
+    pub(super) span: (f64, f64),
     /// The corner clamp ([`corner_clamp`]) — hard bounds keeping every
     /// corner inside both of its runs' channels.
     clamp: (f64, f64),
     pref: f64,
     /// Hard bounds from the port window; `None` for interior runs (the
     /// corridor's usable range applies alone).
-    window: Option<(f64, f64)>,
+    pub(super) window: Option<(f64, f64)>,
     /// Declaration-order key for span ties.
     link: usize,
     /// The world whose channel graph this run rides in.
     world: usize,
     /// The channel the run rides — fragments of one corridor cluster across
     /// channels.
-    chan: usize,
+    pub(super) chan: usize,
     /// The physical sides an end run lands on (both for a single-run wire).
     /// Worlds share these: an inner wire's port and an outer wire's punch
     /// meet on the same body side, so same-landing items cluster across
@@ -132,7 +132,7 @@ fn corner_clamp(worlds: &[World], chain: &Chain, ri: usize) -> (f64, f64) {
 /// Re-derive every run's span from its neighbours' placed ordinates — end
 /// runs from their side line to the first corner, interior runs corner to
 /// corner (the segment extents [`super::geometry::polyline`] will draw).
-fn refresh_spans(chains: &mut [Option<Chain>]) {
+pub(super) fn refresh_spans(chains: &mut [Option<Chain>]) {
     for chain in chains.iter_mut().flatten() {
         let n = chain.runs.len();
         if n < 2 {
@@ -163,6 +163,23 @@ fn refresh_spans(chains: &mut [Option<Chain>]) {
 /// order — preferences and the nesting walk read only static estimates, so
 /// the outcome is independent of that order, and deterministic.
 fn settle_axes(worlds: &[World], chains: &mut [Option<Chain>], clearance: f64) {
+    let (ests, by_axis) = collect(worlds, chains);
+    for (axis, mut items) in by_axis {
+        let axis = [Axis::H, Axis::V][axis as usize];
+        merge_fans(&mut items, chains);
+        for cluster in clusters_of(axis, items, worlds, clearance) {
+            settle(cluster, clearance, chains, &ests);
+        }
+    }
+}
+
+/// Every run of every chain as a ladder item, grouped by axis, plus each
+/// chain's ordinate estimates — the one item model placement settles and
+/// admission ([`super::admit`]) probes.
+pub(super) fn collect(
+    worlds: &[World],
+    chains: &[Option<Chain>],
+) -> (Vec<Vec<f64>>, BTreeMap<u8, Vec<Item>>) {
     let prefs: Vec<Vec<Pref>> = chains
         .iter()
         .map(|c| c.as_ref().map_or(Vec::new(), |ch| chain_prefs(ch, worlds)))
@@ -197,67 +214,69 @@ fn settle_axes(worlds: &[World], chains: &mut [Option<Chain>], clearance: f64) {
             });
         }
     }
+    (ests, by_axis)
+}
 
-    for (axis, mut items) in by_axis {
-        let axis = [Axis::H, Axis::V][axis as usize];
-        merge_fans(&mut items, chains);
-        items.sort_by(|a, b| {
-            a.span
-                .0
-                .total_cmp(&b.span.0)
-                .then(a.link.cmp(&b.link))
-                .then(a.world.cmp(&b.world))
-                .then(a.chan.cmp(&b.chan))
-        });
-        let corridors: Vec<Corridor> = items
-            .iter()
-            .map(|i| {
-                worlds[i.world]
-                    .graph
-                    .corridor(axis, i.chan, i.span.0, i.span.1)
-            })
-            .collect();
+/// Group one axis's items into contention clusters: spans within a
+/// clearance of each other, in one channel or across fragments of one
+/// corridor — or, across worlds, landing on one physical side.
+pub(super) fn clusters_of(
+    axis: Axis,
+    mut items: Vec<Item>,
+    worlds: &[World],
+    clearance: f64,
+) -> Vec<Vec<(Item, Corridor)>> {
+    items.sort_by(|a, b| {
+        a.span
+            .0
+            .total_cmp(&b.span.0)
+            .then(a.link.cmp(&b.link))
+            .then(a.world.cmp(&b.world))
+            .then(a.chan.cmp(&b.chan))
+    });
+    let corridors: Vec<Corridor> = items
+        .iter()
+        .map(|i| {
+            worlds[i.world]
+                .graph
+                .corridor(axis, i.chan, i.span.0, i.span.1)
+        })
+        .collect();
 
-        // Cluster items that contend for tracks: spans within a clearance of
-        // each other, in one channel or across fragments of one corridor —
-        // or, across worlds, landing on one physical side.
-        let n = items.len();
-        let mut parent: Vec<usize> = (0..n).collect();
-        fn root(parent: &mut [usize], mut i: usize) -> usize {
-            while parent[i] != i {
-                parent[i] = parent[parent[i]];
-                i = parent[i];
+    let n = items.len();
+    let mut parent: Vec<usize> = (0..n).collect();
+    fn root(parent: &mut [usize], mut i: usize) -> usize {
+        while parent[i] != i {
+            parent[i] = parent[parent[i]];
+            i = parent[i];
+        }
+        i
+    }
+    for i in 0..n {
+        for j in i + 1..n {
+            let near = near(items[i].span, items[j].span, clearance);
+            let shared = (items[i].world == items[j].world
+                && (items[i].chan == items[j].chan
+                    || corridors[i].chans.contains(&items[j].chan)
+                    || corridors[j].chans.contains(&items[i].chan)))
+                || items[i]
+                    .landings
+                    .iter()
+                    .any(|l| items[j].landings.contains(l));
+            if near && shared {
+                let (a, b) = (root(&mut parent, i), root(&mut parent, j));
+                parent[a.max(b)] = a.min(b);
             }
-            i
-        }
-        for i in 0..n {
-            for j in i + 1..n {
-                let near = near(items[i].span, items[j].span, clearance);
-                let shared = (items[i].world == items[j].world
-                    && (items[i].chan == items[j].chan
-                        || corridors[i].chans.contains(&items[j].chan)
-                        || corridors[j].chans.contains(&items[i].chan)))
-                    || items[i]
-                        .landings
-                        .iter()
-                        .any(|l| items[j].landings.contains(l));
-                if near && shared {
-                    let (a, b) = (root(&mut parent, i), root(&mut parent, j));
-                    parent[a.max(b)] = a.min(b);
-                }
-            }
-        }
-        let mut clusters: BTreeMap<usize, Vec<(Item, Corridor)>> = BTreeMap::new();
-        for (i, (item, corr)) in items.into_iter().zip(corridors).enumerate() {
-            clusters
-                .entry(root(&mut parent, i))
-                .or_default()
-                .push((item, corr));
-        }
-        for (_, cluster) in clusters {
-            settle(cluster, clearance, chains, &ests);
         }
     }
+    let mut clusters: BTreeMap<usize, Vec<(Item, Corridor)>> = BTreeMap::new();
+    for (i, (item, corr)) in items.into_iter().zip(corridors).enumerate() {
+        clusters
+            .entry(root(&mut parent, i))
+            .or_default()
+            .push((item, corr));
+    }
+    clusters.into_values().collect()
 }
 
 /// Per-run `(preference, port window)` for one chain (ROUTING.md step 5):
@@ -298,7 +317,7 @@ fn chain_prefs(chain: &Chain, worlds: &[World]) -> Vec<Pref> {
 
 /// Fan siblings' end runs share one port: merge same-group items into one,
 /// spans united, windows intersected.
-fn merge_fans(items: &mut Vec<Item>, chains: &[Option<Chain>]) {
+pub(super) fn merge_fans(items: &mut Vec<Item>, chains: &[Option<Chain>]) {
     let mut merged: Vec<Item> = Vec::new();
     for item in items.drain(..) {
         let (ci, ri) = item.members[0];
@@ -343,44 +362,41 @@ fn fan_of(chain: &Chain, ri: usize) -> Option<usize> {
     }
 }
 
-/// Order one cluster and ladder it into ordinates.
-fn settle(
+/// A run's lawful bounds: law range ∩ corner clamp. The corner clamp binds
+/// hard; a search-admitted run always has room inside it (the route's
+/// corners sat in cells), so an inversion only flags float dust at a
+/// channel edge.
+pub(super) fn bound((i, corr): &(Item, Corridor), clearance: f64) -> (f64, f64) {
+    let r = law_range(i.window, corr, clearance);
+    let tight = (r.0.max(i.clamp.0), r.1.min(i.clamp.1));
+    if tight.0 <= tight.1 { tight } else { r }
+}
+
+/// Order one cluster into its drawn order and lawful preferences.
+///
+/// Preference orders what geometry doesn't couple; the outward walk
+/// arbitrates equal preferences — nested, never braided — and declaration
+/// order settles the rest, all inside [`order::ranks`]. A fan's merged item
+/// walks as its first member. The preference is the nearest lawful ordinate
+/// to the aesthetic target (ROUTING.md step 5): a raw corridor anchor can
+/// fall outside a run's own bounds — a refreshed span can reach through a
+/// void far wider than the pocket its corners pin it to — and ordering by
+/// the raw anchor then interleaves runs whose lawful ranges never meet, an
+/// order no solver realises lawfully (the trunk rails of an S-curve bundle
+/// collapse onto one ordinate). Clamping keeps the sort's premise true:
+/// prefs sit inside their boxes, so disjoint ranges order themselves.
+pub(super) fn arrange(
     cluster: Vec<(Item, Corridor)>,
     clearance: f64,
-    chains: &mut [Option<Chain>],
+    chains: &[Option<Chain>],
     ests: &[Vec<f64>],
-) {
-    // Preference orders what geometry doesn't couple (prefs sit inside
-    // their boxes, so disjoint windows order themselves); the outward walk
-    // arbitrates equal preferences — nested, never braided — and declaration
-    // order settles the rest, all inside [`order::ranks`]. A fan's merged
-    // item walks as its first member.
-    let ctx = order::Ctx {
-        chains: &*chains,
-        ests,
-    };
-    // A run's lawful bounds: law range ∩ corner clamp. The corner clamp
-    // binds hard; a search-admitted run always has room inside it (the
-    // route's corners sat in cells), so an inversion only flags float dust
-    // at a channel edge.
-    let bound = |(i, corr): &(Item, Corridor)| {
-        let r = law_range(i.window, corr, clearance);
-        let tight = (r.0.max(i.clamp.0), r.1.min(i.clamp.1));
-        if tight.0 <= tight.1 { tight } else { r }
-    };
-    // The preference is the nearest lawful ordinate to the aesthetic target
-    // (ROUTING.md step 5). A raw corridor anchor can fall outside a run's
-    // own bounds — a refreshed span can reach through a void far wider than
-    // the pocket its corners pin it to — and ordering by the raw anchor
-    // then interleaves runs whose lawful ranges never meet, an order no
-    // solver realises lawfully (the trunk rails of an S-curve bundle
-    // collapse onto one ordinate). Clamping keeps the sort's premise true:
-    // prefs sit inside their boxes, so disjoint ranges order themselves.
+) -> (Vec<f64>, Vec<(Item, Corridor)>) {
+    let ctx = order::Ctx { chains, ests };
     let reps: Vec<(usize, usize)> = cluster.iter().map(|(i, _)| i.members[0]).collect();
     let item_prefs: Vec<f64> = cluster
         .iter()
         .map(|c| {
-            let (lo, hi) = bound(c);
+            let (lo, hi) = bound(c, clearance);
             c.0.pref.max(lo).min(hi)
         })
         .collect();
@@ -390,11 +406,41 @@ fn settle(
         .zip(item_prefs.into_iter().zip(cluster))
         .collect();
     indexed.sort_by_key(|(p, _)| *p);
-    let (prefs, cluster): (Vec<f64>, Vec<(Item, Corridor)>) =
-        indexed.into_iter().map(|(_, pc)| pc).unzip();
+    indexed.into_iter().map(|(_, pc)| pc).unzip()
+}
+
+/// The greedy feasibility scan: pack every item leftmost at its separations
+/// and report the first binding stretch `(i, j)` whose box the chain
+/// overruns — `None` when the order fits. The pass is exact for chain
+/// constraints (staggered boxes lend their room), so a stretch that fits in
+/// the drawn order is never reported.
+pub(super) fn overrun(bounds: &[(f64, f64)], seps: &[f64]) -> Option<(usize, usize)> {
+    let mut binding = 0;
+    let mut x = f64::NEG_INFINITY;
+    for k in 0..bounds.len() {
+        let pushed = if k == 0 { bounds[k].0 } else { x + seps[k - 1] };
+        if pushed <= bounds[k].0 {
+            binding = k;
+        }
+        x = pushed.max(bounds[k].0);
+        if x > bounds[k].1 + 1e-9 {
+            return Some((binding, k));
+        }
+    }
+    None
+}
+
+/// Order one cluster and ladder it into ordinates.
+fn settle(
+    cluster: Vec<(Item, Corridor)>,
+    clearance: f64,
+    chains: &mut [Option<Chain>],
+    ests: &[Vec<f64>],
+) {
+    let (prefs, cluster) = arrange(cluster, clearance, &*chains, ests);
 
     let n = cluster.len();
-    let bounds: Vec<(f64, f64)> = cluster.iter().map(bound).collect();
+    let bounds: Vec<(f64, f64)> = cluster.iter().map(|c| bound(c, clearance)).collect();
     // Every gap starts at full clearance — the relief below is the one
     // compression mechanism. Only **contending** neighbours owe each other
     // pitch; a transitively-chained pair whose spans lie far apart never
@@ -431,21 +477,7 @@ fn settle(
         // lends the room), so a stretch that fits at full clearance in the
         // drawn order is never squeezed.
         for _ in 0..n.max(1) * 2 {
-            let mut binding = 0;
-            let mut x = f64::NEG_INFINITY;
-            let mut violated = None;
-            for k in 0..n {
-                let pushed = if k == 0 { bounds[k].0 } else { x + seps[k - 1] };
-                if pushed <= bounds[k].0 {
-                    binding = k;
-                }
-                x = pushed.max(bounds[k].0);
-                if x > bounds[k].1 + 1e-9 {
-                    violated = Some((binding, k));
-                    break;
-                }
-            }
-            let Some((i, j)) = violated else {
+            let Some((i, j)) = overrun(&bounds, &seps) else {
                 feasible = true;
                 break;
             };

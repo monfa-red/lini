@@ -143,6 +143,16 @@ impl Ledger {
     /// count lands in the report once geometry is drawn. Half-open travel
     /// intervals let a route's consecutive pieces share endpoints without
     /// double-charging the rail sitting exactly on the joint.
+    ///
+    /// A rail exactly on a travel endpoint is a *corner in the rail's own
+    /// channel* — corner and rail share one anchor estimate, and whether the
+    /// drawn wire crosses depends on which flank the nesting order gives the
+    /// corner's perpendicular leg. The half-open charge over-counts a fan
+    /// sibling's own split rail (links_hard @8 draws a sibling braid whose
+    /// clean twin route ties); a strict bound was tried and under-counts the
+    /// mirror case (links_simple's fan drew two real crossings). Deciding
+    /// the corner case truly needs the order walk over both chains —
+    /// committed topology this ledger doesn't hold; future work.
     pub fn crossings_covering(
         &self,
         world: usize,
