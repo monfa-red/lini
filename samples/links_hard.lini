@@ -2,7 +2,7 @@
 // detours, forced sides, a parent→child link, and a forced outer pair.
 
 {
-  layout: grid; columns: repeat(3); gap: 32; clearance: 12;
+  layout: grid; columns: repeat(3); gap: 34; clearance: 12;
   .hot { stroke: --red; stroke-width: 3; }
   .cool { stroke: --blue; }
   .attention { stroke: --orange; }
@@ -41,21 +41,20 @@ hub -> south.s1 & west.w1
 
 north.n2 -> east.e1 .cool
 north.n2 -> east.e1 .cool
-north.n2 -> east.e1 .cool
 west.w2 -> south.s1
 west.w2 -> south.s1
 
 alpha -> delta [ "One" "Two" "Three" ]
-beta -> gamma "diag"
+beta -> gamma
 
-gamma -> south.s1 -> delta "relay"
+gamma -> south.s1 -> delta:top
 
 east -> east.e2
 
-alpha:left -> west.w2:left .hot
-west.w1:left -> gamma:left .hot
+alpha -> west.w2 .hot
+west.w1 -> gamma .hot
 
-beta:right -> delta:right
+beta -> delta
 
 east -> west .attention
 east -> hub .attention
