@@ -139,7 +139,7 @@ pub(super) fn excused(
                     });
                 }
             }
-            let usable = channel_at(&graph, axis, (lo + hi) / 2.0, o).map(|chan| {
+            let usable = channel_of(&graph, axis, (lo, hi), o).map(|chan| {
                 let corr = graph.corridor(axis, chan, lo, hi);
                 let u = corr.usable();
                 if u.0 <= u.1 { u } else { corr.walls }
@@ -272,6 +272,38 @@ fn channel_at(graph: &ChannelGraph, axis: Axis, travel: f64, ordinate: f64) -> O
         let (v0, v1) = ch.travel();
         v0 - EPS <= travel && travel <= v1 + EPS && w0 - EPS <= ordinate && ordinate <= w1 + EPS
     })
+}
+
+/// The channel a drawn run of `axis` actually rides: walls containing its
+/// ordinate, travel containing its midpoint — preferring one whose travel
+/// covers the **whole** extent. A wire hugging a wall (walls charge no
+/// margin) sits on two channels' shared coordinate, and the neighbour's
+/// shorter travel would clamp the corridor query past the very stretch
+/// that pins the wire, overstating its lawful range (links_hard at
+/// clearance 9: a wall-hugger's tail beside hub read as free to slide
+/// west, and a genuinely pinched component was flagged instead of
+/// excused).
+fn channel_of(graph: &ChannelGraph, axis: Axis, ext: (f64, f64), ordinate: f64) -> Option<usize> {
+    let chans = match axis {
+        Axis::H => &graph.h,
+        Axis::V => &graph.v,
+    };
+    let mid = (ext.0 + ext.1) / 2.0;
+    let holds = |ch: &crate::routing::ortho::graph::Channel| {
+        let (w0, w1) = ch.walls();
+        let (v0, v1) = ch.travel();
+        v0 - EPS <= mid && mid <= v1 + EPS && w0 - EPS <= ordinate && ordinate <= w1 + EPS
+    };
+    let covers = |i: &usize| {
+        let (v0, v1) = chans[*i].travel();
+        v0 - EPS <= ext.0 && ext.1 <= v1 + EPS
+    };
+    let candidates: Vec<usize> = (0..chans.len()).filter(|&i| holds(&chans[i])).collect();
+    candidates
+        .iter()
+        .find(|i| covers(i))
+        .or(candidates.first())
+        .copied()
 }
 
 /// The lawful port window along `side`: the side minus a `clearance` corner

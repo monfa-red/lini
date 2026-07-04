@@ -448,6 +448,21 @@ Executing sessions: append dated notes here — decisions the plan didn't
 anticipate, gotchas, deferred items, comparator cases that needed deepening,
 anything the next session must know. Keep entries terse.
 
+- **2026-07-04, the checker reads the wall-hugger's own channel (user bug
+  batch 6).** The author's links_hard tuning (gap 34, two blues) tripped
+  the clearance-9 sweep: four Separation flags, each "with room for full
+  clearance" — the excuse model judged a genuinely pinched five-wire
+  pocket spreadable. The checker's `channel_at` resolved a wire's channel
+  by point containment; a wire hugging a wall (normal since walls charge
+  nothing) sits exactly on two channels' shared coordinate, and the
+  EPS-inclusive test picked the neighbour — whose shorter travel then
+  clamped the corridor query past the very stretch that pins the wire
+  (east → west's tail beside hub read as free to slide to x = 1, through
+  hub's keep-out). `channel_of` now prefers the candidate whose travel
+  covers the wire's whole extent, falling back to the old pick. Checker
+  only — engine output untouched, all samples byte-identical. The
+  batch-3 open item (fan siblings 11 apart "with room for 16") was this
+  same tie: re-tested, resolved.
 - **2026-07-04, the chain never crosses a zero gap (user bug batch 5).**
   links_medium's `cat → bowl & water` ports sat pinned at the top of
   their windows instead of the side centres. The fan's end runs owe
