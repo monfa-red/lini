@@ -8,9 +8,9 @@
 //! its own row; fans are already separate links.
 
 use crate::ast::LineStyle;
-use crate::layout::ir::{RoutedLink, RoutedText};
+use crate::layout::ir::{RoutedLink, RoutedText, SEQUENCE_MESSAGE_CLASS};
 use crate::layout::prim;
-use crate::resolve::{AttrMap, ResolvedLink, ResolvedValue};
+use crate::resolve::{AttrMap, ResolvedLink};
 use crate::routing::straight;
 use std::collections::HashMap;
 
@@ -96,13 +96,14 @@ impl Pair<'_> {
     /// renderer sizes it identically.
     fn text_at(&self, cx: f64, cy: f64) -> Option<RoutedText> {
         let label = self.label()?;
-        let mut attrs = AttrMap::new();
-        attrs.insert("font-size", ResolvedValue::Number(self.label_size()));
+        // The size rides the `.lini-sequence-message` class (stated once), not an
+        // inline per label; layout still measures at `label_size()` (SPEC §10).
         Some(RoutedText {
             content: label.to_owned(),
             position: (cx, cy),
             tangent: (1.0, 0.0),
-            attrs,
+            attrs: AttrMap::new(),
+            class: SEQUENCE_MESSAGE_CLASS,
         })
     }
     /// The label's font size — the sequence default ([`LABEL_SIZE`]), used to measure the

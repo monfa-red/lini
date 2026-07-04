@@ -12,7 +12,7 @@ use crate::syntax::ast::{Decl, Value};
 /// participant spacing (columns), larger than the generic `20` so the time axis breathes.
 /// Shared by the `|sequence|` template and the root `{ layout: sequence }` form.
 pub(crate) const SEQ_GAP_ROW: f64 = 32.0;
-pub(crate) const SEQ_GAP_COL: f64 = 24.0;
+pub(crate) const SEQ_GAP_COL: f64 = 32.0;
 
 fn decl(name: &str, values: Vec<Value>) -> Decl {
     Decl {
@@ -179,7 +179,7 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
         "note" => vec![
             var("fill", "fill"),
             var("stroke", "stroke"),
-            pair("padding", 5.0, 9.0),
+            pair("padding", 6.0, 10.0),
             n("font-size", 13.0),
         ],
         // A frame: a dashed, rounded rectangle around a span of messages. `padding` insets
@@ -190,7 +190,7 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             id("stroke-style", "dashed"),
             n("stroke-width", 1.0),
             n("radius", 4.0),
-            n("padding", 18.0),
+            n("padding", 24.0),
             n("font-size", 12.0),
         ],
         // An |alt| compartment separator: the same dashed line, no body radius.

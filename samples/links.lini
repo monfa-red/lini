@@ -3,9 +3,7 @@
 {
   gap: 40; padding: 24;
 
-  |room::group| {
-    gap: 10; padding: 12; fill: --teal-wash; stroke: --teal-ink;
-  } [
+  |room::group| { gap: 10; padding: 12; fill: --teal-wash; stroke: --teal-ink; } [
     |box#inlet| "in" {
       fill: --teal-soft; stroke: --teal-ink; color: --teal-ink;
     }

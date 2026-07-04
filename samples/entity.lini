@@ -1,16 +1,11 @@
 // An ER / database schema: two |entity| cards wired with the crow's-foot operator.
 // Each entity's label is its title (a spanning header); rows are "field" "type".
-{ layout: flow; direction: row; gap: 120; }
+{
+  layout: flow; direction: row; gap: 120;
+}
 
-|entity#users| "Users" [
-  "id"    "int"
-  "name"  "varchar"
-  "email" "varchar"
-]
-|entity#orders| "Orders" [
-  "id"      "int"
-  "user_id" "int"
-  "total"   "decimal"
-]
+|entity#users| "Users" [ "id" "int" "name" "varchar" "email" "varchar" ]
+|entity#orders| "Orders" [ "id" "int" "user_id" "int" "total" "decimal" ]
 
-users -< orders "places"     // one-to-many — crow's foot on Orders
+users -< orders "places"
+// one-to-many — crow's foot on Orders

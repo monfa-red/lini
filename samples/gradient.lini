@@ -3,9 +3,7 @@
 {
   gap: 16; padding: 26; font-size: 13;
 
-  |card::box| {
-    width: 240; height: 70; stroke: none; color: white;
-  }
+  |card::box| { width: 240; height: 70; stroke: none; color: white; }
 }
 
 |block| "Gradients" { font-size: 18; }

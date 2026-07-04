@@ -5,9 +5,7 @@
 
   |sw::box| { width: 80; height: 34; stroke: none; }
   |h::block| { color: --muted; }
-  |card::box| {
-    stroke-width: 1.5; width: 88; padding: 15 0;
-  }
+  |card::box| { stroke-width: 1.5; width: 88; padding: 15 0; }
 }
 
 |block| "Lini palette — 11 hues × 5 tiers" { font-size: 18; }

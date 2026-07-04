@@ -1229,7 +1229,7 @@ styling; the cascade overrides any of it. They reuse the scene's role variables 
 | Type | Defaults over `\|block\|` |
 |---|---|
 | `\|sequence\|` | `layout: sequence; gap: 34` (the time axis breathes; a root `{ layout: sequence }` gets the same `gap`) |
-| `\|note\|` | `fill: --fill; stroke: --stroke; padding: 8 10; font-size: 12` |
+| `\|note\|` | `fill: --fill; stroke: --stroke; padding: 6 10; font-size: 13` |
 | `\|loop\|` / `\|opt\|` / `\|alt\|` | `fill: none; stroke: --group-stroke; stroke-style: dashed; stroke-width: 1; radius: 4; padding: 16 22; font-size: 11` |
 | `\|else\|` | `fill: none; stroke: --group-stroke; stroke-style: dashed; stroke-width: 1; font-size: 11` |
 

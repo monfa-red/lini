@@ -3,7 +3,7 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/sequence.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-295.5 -249.5 591 499" width="591" height="499" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-302.5 -252.5 605 505" width="605" height="505" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
@@ -14,127 +14,127 @@ input_file: samples/sequence.lini
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-icon { fill: rgba(0, 0, 0, 0.16); stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-sequence-tab { font-size: 12px; font-weight: bold; }
-    .lini .lini-sequence-guard { font-size: 12px; font-weight: normal; }
+    .lini .lini-sequence-guard { font-size: 11px; font-weight: normal; }
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
     .lini .lini-note { fill: white; stroke: #444; font-size: 13px; }
     .lini .lini-link { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-link-dashed { stroke-dasharray: 6,4.5; }
-    .lini .lini-link-label { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; font-size: 11px; font-weight: normal; }
+    .lini .lini-sequence-message { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; font-size: 13px; font-weight: normal; }
     .lini .lini-cut-bg { fill: white; stroke: none; }
     .lini .lini-cut { fill: black; stroke: none; }
     .lini .lini-marker { fill: #444; stroke: none; }
   </style>
   <defs/>
-  <rect class="lini-canvas" x="-295.5" y="-249.5" width="591" height="499"/>
+  <rect class="lini-canvas" x="-302.5" y="-252.5" width="605" height="505"/>
   <g class="lini-scene">
-    <g class="lini-node lini-block" style="fill: #eaebff; stroke: #443394; stroke-width: 1; stroke-dasharray: 4,3" transform="translate(53,92.5)">
-      <rect x="-155.5" y="-40.5" width="311" height="81" rx="4" ry="4"/>
+    <g class="lini-node lini-block" style="fill: #eaebff; stroke: #443394; stroke-width: 1; stroke-dasharray: 4,3" transform="translate(56,92.5)">
+      <rect x="-165.5" y="-43.5" width="331" height="87" rx="4" ry="4"/>
     </g>
     <g class="lini-node lini-line" style="stroke: #b8476e" transform="translate(0,0)">
-      <line x1="-207" y1="-165.5" x2="-207" y2="229.5"/>
+      <line x1="-213" y1="-170.5" x2="-213" y2="232.5"/>
     </g>
     <g class="lini-node lini-line" style="stroke: #0085b3" transform="translate(0,0)">
-      <line x1="-85" y1="-172.5" x2="-85" y2="229.5"/>
+      <line x1="-86" y1="-179.5" x2="-86" y2="232.5"/>
     </g>
     <g class="lini-node lini-line" style="stroke: #008d51" transform="translate(0,0)">
-      <line x1="62" y1="-172.5" x2="62" y2="229.5"/>
+      <line x1="65" y1="-179.5" x2="65" y2="232.5"/>
     </g>
     <g class="lini-node lini-line" style="stroke: #b45700" transform="translate(0,0)">
-      <line x1="191" y1="-172.5" x2="191" y2="229.5"/>
+      <line x1="198" y1="-179.5" x2="198" y2="232.5"/>
     </g>
-    <g class="lini-node lini-block" style="fill: #cff6ff; stroke: #0085b3" transform="translate(-85,36.5)">
-      <rect x="-4" y="-128" width="8" height="256" rx="0" ry="0"/>
+    <g class="lini-node lini-block" style="fill: #cff6ff; stroke: #0085b3" transform="translate(-86,36.5)">
+      <rect x="-5" y="-131" width="10" height="262" rx="0" ry="0"/>
     </g>
-    <g class="lini-node lini-block" style="fill: #d6f8e3; stroke: #008d51" transform="translate(62,-20.5)">
-      <rect x="-4" y="-39" width="8" height="78" rx="0" ry="0"/>
+    <g class="lini-node lini-block" style="fill: #d6f8e3; stroke: #008d51" transform="translate(65,-23.5)">
+      <rect x="-5" y="-39" width="10" height="78" rx="0" ry="0"/>
     </g>
-    <g class="lini-node lini-block" style="fill: #ffe8d2; stroke: #b45700" transform="translate(191,99.5)">
-      <rect x="-4" y="-15" width="8" height="30" rx="0" ry="0"/>
+    <g class="lini-node lini-block" style="fill: #ffe8d2; stroke: #b45700" transform="translate(198,96.5)">
+      <rect x="-5" y="-15" width="10" height="30" rx="0" ry="0"/>
     </g>
-    <g class="lini-node lini-icon" data-id="user" style="fill: #ffe3ec; stroke: #b8476e" transform="translate(-207,-197.5)">
-      <g transform="scale(0.25) translate(-128 -128)">
+    <g class="lini-node lini-icon" data-id="user" style="fill: #ffe3ec; stroke: #b8476e" transform="translate(-213,-201.5)">
+      <g transform="scale(0.2422) translate(-128 -128)">
         <g fill="#ffe3ec" stroke="none">
           <circle cx="128" cy="96" r="64"/>
         </g>
-        <g fill="none" stroke="#b8476e" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+        <g fill="none" stroke="#b8476e" stroke-width="8.2581" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="128" cy="96" r="64"/>
           <path d="M32,216c19.37-33.47,54.55-56,96-56s76.63,22.53,96,56"/>
         </g>
       </g>
     </g>
-    <g class="lini-node lini-box lini-block" data-id="shop" style="fill: #cff6ff; stroke: #0085b3" transform="translate(-85,-201)">
-      <rect x="-65" y="-27.5" width="130" height="55" rx="8" ry="8"/>
+    <g class="lini-node lini-box lini-block" data-id="shop" style="fill: #cff6ff; stroke: #0085b3" transform="translate(-86,-206)">
+      <rect x="-63" y="-25.5" width="126" height="51" rx="8" ry="8"/>
       <text class="lini-text" x="0" y="0">Storefront</text>
     </g>
-    <g class="lini-node lini-box lini-block" data-id="pay" style="fill: #d6f8e3; stroke: #008d51" transform="translate(62,-201)">
-      <rect x="-56" y="-27.5" width="112" height="55" rx="8" ry="8"/>
+    <g class="lini-node lini-box lini-block" data-id="pay" style="fill: #d6f8e3; stroke: #008d51" transform="translate(65,-206)">
+      <rect x="-54" y="-25.5" width="108" height="51" rx="8" ry="8"/>
       <text class="lini-text" x="0" y="0">Payments</text>
     </g>
-    <g class="lini-node lini-slant" data-id="db" style="fill: #ffe8d2; stroke: #b45700" transform="translate(191,-201)">
-      <polygon points="-39.6314,-27.5 54.3686,-27.5 39.6314,27.5 -54.3686,27.5"/>
+    <g class="lini-node lini-slant" data-id="db" style="fill: #ffe8d2; stroke: #b45700" transform="translate(198,-206)">
+      <polygon points="-38.1673,-25.5 51.8327,-25.5 38.1673,25.5 -51.8327,25.5"/>
       <text class="lini-text" x="0" y="0">Orders</text>
     </g>
     <g class="lini-node lini-path" style="fill: white; stroke: #443394; stroke-width: 1" transform="translate(0,0)">
-      <path d="M -98.5 52 L -59.7 52 L -59.7 61.28 L -66.42 68 L -102.5 68 L -102.5 56 A 4 4 0 0 1 -98.5 52 Z"/>
+      <path d="M -105.5 49 L -66.7 49 L -66.7 58.28 L -73.42 65 L -109.5 65 L -109.5 53 A 4 4 0 0 1 -105.5 49 Z"/>
     </g>
-    <text class="lini-text lini-sequence-tab" x="-82.78" y="60">loop</text>
-    <text class="lini-text lini-sequence-guard" x="-16.6" y="60.5" style="fill: #747474">[each item]</text>
-    <g class="lini-node lini-note lini-path" style="fill: #ffb2c9; stroke: #b8476e; stroke-width: 2" transform="translate(-207,-137)">
-      <path d="M -68.5 -12.5 L 60 -12.5 L 68.5 -4 L 68.5 12.5 L -68.5 12.5 Z"/>
+    <text class="lini-text lini-sequence-tab" x="-89.78" y="57">loop</text>
+    <text class="lini-text lini-sequence-guard" x="-23.6" y="57.5" style="fill: #747474">[each item]</text>
+    <g class="lini-node lini-note lini-path" style="fill: #ffb2c9; stroke: #b8476e; stroke-width: 2" transform="translate(-213,-141)">
+      <path d="M -69.5 -13.5 L 60.32 -13.5 L 69.5 -4.3199999999999985 L 69.5 13.5 L -69.5 13.5 Z"/>
       <g class="lini-node lini-path" style="fill: #b8476e; stroke: none; stroke-width: 0" transform="translate(0,0)">
-        <path d="M 60 -12.5 L 68.5 -4 L 60 -4 Z"/>
+        <path d="M 60.32 -13.5 L 69.5 -4.3199999999999985 L 60.32 -4.3199999999999985 Z"/>
       </g>
       <text class="lini-text" x="0" y="0">starts checkout</text>
     </g>
   </g>
   <g class="lini-links">
-    <g class="lini-link" style="font-size: 11" data-from="user" data-to="shop">
-      <mask id="lini-label-cut-0" maskUnits="userSpaceOnUse" x="-209" y="-94.5" width="121" height="4"><rect class="lini-cut-bg" x="-209" y="-94.5" width="121" height="4"/><rect class="lini-cut" x="-192.8" y="-112.45" width="93.6" height="16.9"/></mask>
-      <path d="M -207 -92.5 L -93.5 -92.5" mask="url(#lini-label-cut-0)"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-89.5,-92.5 -98.5,-88 -98.5,-97"/>
-      <text class="lini-link-label" x="-146" y="-104" style="font-size: 13px">place order</text>
+    <g class="lini-link" data-from="user" data-to="shop">
+      <mask id="lini-label-cut-0" maskUnits="userSpaceOnUse" x="-215" y="-97.5" width="125" height="4"><rect class="lini-cut-bg" x="-215" y="-97.5" width="125" height="4"/><rect class="lini-cut" x="-149.5" y="-107" width="0" height="0"/></mask>
+      <path d="M -213 -95.5 L -95.5 -95.5" mask="url(#lini-label-cut-0)"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-91.5,-95.5 -100.5,-91 -100.5,-100"/>
+      <text class="lini-sequence-message" x="-149.5" y="-107">place order</text>
     </g>
-    <g class="lini-link" style="font-size: 11" data-from="shop" data-to="pay">
-      <mask id="lini-label-cut-1" maskUnits="userSpaceOnUse" x="-82" y="-62.5" width="141" height="4"><rect class="lini-cut-bg" x="-82" y="-62.5" width="141" height="4"/><rect class="lini-cut" x="-54.4" y="-80.45" width="85.8" height="16.9"/></mask>
-      <path d="M -80 -60.5 L 53.5 -60.5" mask="url(#lini-label-cut-1)"/>
-      <polygon class="lini-marker lini-marker-arrow" points="57.5,-60.5 48.5,-56 48.5,-65"/>
-      <text class="lini-link-label" x="-11.5" y="-72" style="font-size: 13px">charge $42</text>
+    <g class="lini-link" data-from="shop" data-to="pay">
+      <mask id="lini-label-cut-1" maskUnits="userSpaceOnUse" x="-82" y="-65.5" width="143" height="4"><rect class="lini-cut-bg" x="-82" y="-65.5" width="143" height="4"/><rect class="lini-cut" x="-10.5" y="-75" width="0" height="0"/></mask>
+      <path d="M -80 -63.5 L 55.5 -63.5" mask="url(#lini-label-cut-1)"/>
+      <polygon class="lini-marker lini-marker-arrow" points="59.5,-63.5 50.5,-59 50.5,-68"/>
+      <text class="lini-sequence-message" x="-10.5" y="-75">charge $42</text>
     </g>
-    <g class="lini-link" style="font-size: 11" data-from="pay" data-to="pay">
-      <mask id="lini-label-cut-2" maskUnits="userSpaceOnUse" x="65" y="-30.5" width="20" height="20"><rect class="lini-cut-bg" x="65" y="-30.5" width="20" height="20"/><rect class="lini-cut" x="71.1" y="-48.45" width="93.6" height="16.9"/></mask>
-      <path d="M 67 -28.5 L 75 -28.5 A 8 8 0 0 1 83 -20.5 L 83 -20.5 A 8 8 0 0 1 75 -12.5 L 70.5 -12.5" mask="url(#lini-label-cut-2)"/>
-      <polygon class="lini-marker lini-marker-arrow" points="66.5,-12.5 75.5,-17 75.5,-8"/>
-      <text class="lini-link-label" x="117.9" y="-40" style="font-size: 13px">verify card</text>
+    <g class="lini-link" data-from="pay" data-to="pay">
+      <mask id="lini-label-cut-2" maskUnits="userSpaceOnUse" x="69" y="-33.5" width="20" height="20"><rect class="lini-cut-bg" x="69" y="-33.5" width="20" height="20"/><rect class="lini-cut" x="121.9" y="-43" width="0" height="0"/></mask>
+      <path d="M 71 -31.5 L 79 -31.5 A 8 8 0 0 1 87 -23.5 L 87 -23.5 A 8 8 0 0 1 79 -15.5 L 74.5 -15.5" mask="url(#lini-label-cut-2)"/>
+      <polygon class="lini-marker lini-marker-arrow" points="70.5,-15.5 79.5,-20 79.5,-11"/>
+      <text class="lini-sequence-message" x="121.9" y="-43">verify card</text>
     </g>
-    <g class="lini-link lini-link-dashed" style="font-size: 11" data-from="pay" data-to="shop">
-      <mask id="lini-label-cut-3" maskUnits="userSpaceOnUse" x="-82" y="17.5" width="141" height="4"><rect class="lini-cut-bg" x="-82" y="17.5" width="141" height="4"/><rect class="lini-cut" x="-42.7" y="-0.45" width="62.4" height="16.9"/></mask>
-      <path d="M 57 19.5 L -76.5 19.5" mask="url(#lini-label-cut-3)"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-80.5,19.5 -71.5,15 -71.5,24"/>
-      <text class="lini-link-label" x="-11.5" y="8" style="font-size: 13px">receipt</text>
+    <g class="lini-link lini-link-dashed" data-from="pay" data-to="shop">
+      <mask id="lini-label-cut-3" maskUnits="userSpaceOnUse" x="-82" y="14.5" width="143" height="4"><rect class="lini-cut-bg" x="-82" y="14.5" width="143" height="4"/><rect class="lini-cut" x="-10.5" y="5" width="0" height="0"/></mask>
+      <path d="M 59 16.5 L -76.5 16.5" mask="url(#lini-label-cut-3)"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-80.5,16.5 -71.5,12 -71.5,21"/>
+      <text class="lini-sequence-message" x="-10.5" y="5">receipt</text>
     </g>
-    <g class="lini-link" style="font-size: 11" data-from="shop" data-to="db">
-      <mask id="lini-label-cut-4" maskUnits="userSpaceOnUse" x="-82" y="81.5" width="270" height="4"><rect class="lini-cut-bg" x="-82" y="81.5" width="270" height="4"/><rect class="lini-cut" x="-1.6" y="63.55" width="109.2" height="16.9"/></mask>
-      <path d="M -80 83.5 L 182.5 83.5" mask="url(#lini-label-cut-4)"/>
-      <polygon class="lini-marker lini-marker-arrow" points="186.5,83.5 177.5,88 177.5,79"/>
-      <text class="lini-link-label" x="53" y="72" style="font-size: 13px">reserve stock</text>
+    <g class="lini-link" data-from="shop" data-to="db">
+      <mask id="lini-label-cut-4" maskUnits="userSpaceOnUse" x="-82" y="78.5" width="276" height="4"><rect class="lini-cut-bg" x="-82" y="78.5" width="276" height="4"/><rect class="lini-cut" x="56" y="69" width="0" height="0"/></mask>
+      <path d="M -80 80.5 L 188.5 80.5" mask="url(#lini-label-cut-4)"/>
+      <polygon class="lini-marker lini-marker-arrow" points="192.5,80.5 183.5,85 183.5,76"/>
+      <text class="lini-sequence-message" x="56" y="69">reserve stock</text>
     </g>
-    <g class="lini-link lini-link-dashed" style="font-size: 11" data-from="db" data-to="shop">
-      <mask id="lini-label-cut-5" maskUnits="userSpaceOnUse" x="-82" y="113.5" width="270" height="4"><rect class="lini-cut-bg" x="-82" y="113.5" width="270" height="4"/><rect class="lini-cut" x="17.9" y="95.55" width="70.2" height="16.9"/></mask>
-      <path d="M 186 115.5 L -76.5 115.5" mask="url(#lini-label-cut-5)"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-80.5,115.5 -71.5,111 -71.5,120"/>
-      <text class="lini-link-label" x="53" y="104" style="font-size: 13px">in stock</text>
+    <g class="lini-link lini-link-dashed" data-from="db" data-to="shop">
+      <mask id="lini-label-cut-5" maskUnits="userSpaceOnUse" x="-82" y="110.5" width="276" height="4"><rect class="lini-cut-bg" x="-82" y="110.5" width="276" height="4"/><rect class="lini-cut" x="56" y="101" width="0" height="0"/></mask>
+      <path d="M 192 112.5 L -76.5 112.5" mask="url(#lini-label-cut-5)"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-80.5,112.5 -71.5,108 -71.5,117"/>
+      <text class="lini-sequence-message" x="56" y="101">in stock</text>
     </g>
-    <g class="lini-link lini-link-dashed" style="font-size: 11" data-from="shop" data-to="user">
-      <mask id="lini-label-cut-6" maskUnits="userSpaceOnUse" x="-209" y="163.5" width="121" height="4"><rect class="lini-cut-bg" x="-209" y="163.5" width="121" height="4"/><rect class="lini-cut" x="-192.8" y="145.55" width="93.6" height="16.9"/></mask>
-      <path d="M -90 165.5 L -203.5 165.5" mask="url(#lini-label-cut-6)"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-207.5,165.5 -198.5,161 -198.5,170"/>
-      <text class="lini-link-label" x="-146" y="154" style="font-size: 13px">order #1024</text>
+    <g class="lini-link lini-link-dashed" data-from="shop" data-to="user">
+      <mask id="lini-label-cut-6" maskUnits="userSpaceOnUse" x="-215" y="166.5" width="125" height="4"><rect class="lini-cut-bg" x="-215" y="166.5" width="125" height="4"/><rect class="lini-cut" x="-149.5" y="157" width="0" height="0"/></mask>
+      <path d="M -92 168.5 L -209.5 168.5" mask="url(#lini-label-cut-6)"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-213.5,168.5 -204.5,164 -204.5,173"/>
+      <text class="lini-sequence-message" x="-149.5" y="157">order #1024</text>
     </g>
-    <g class="lini-link" style="font-size: 11" data-from="user" data-to="shop">
-      <mask id="lini-label-cut-7" maskUnits="userSpaceOnUse" x="-210.4" y="194.1" width="128.8" height="6.8"><rect class="lini-cut-bg" x="-210.4" y="194.1" width="128.8" height="6.8"/><rect class="lini-cut" x="-196.7" y="177.55" width="101.4" height="16.9"/></mask>
-      <path d="M -207 197.5 C -205.9863 197.5 -204.9922 197.846 -204.0375 198.1867 C -203.0866 198.5262 -201.89 198.151 -201.075 197.5549 C -200.1873 196.9056 -199.2113 196.1498 -198.1125 196.1024 C -197.0367 196.056 -196.0194 196.7548 -195.15 197.3902 C -194.256 198.0435 -193.292 198.8139 -192.1875 198.8933 C -191.1212 198.9699 -190.0893 198.2937 -189.225 197.6646 C -188.3238 197.0085 -187.3716 196.2246 -186.2625 196.1132 C -185.2064 196.0071 -184.1598 196.6585 -183.3 197.281 C -182.3913 197.9389 -181.4502 198.7348 -180.3375 198.8782 C -179.2922 199.0129 -178.2308 198.3884 -177.375 197.7731 C -176.4585 197.1142 -175.5276 196.3077 -174.4125 196.1325 C -173.3785 195.9701 -172.3023 196.5657 -171.45 197.1732 C -170.5254 197.8322 -169.604 198.648 -168.4875 198.8546 C -167.4653 199.0438 -166.3744 198.4793 -165.525 197.88 C -164.592 197.2218 -163.6793 196.3979 -162.5625 196.1603 C -161.5524 195.9453 -160.4472 196.4767 -159.6 197.0674 C -158.6584 197.7238 -157.7536 198.5547 -156.6375 198.8227 C -155.6396 199.0624 -154.5206 198.5661 -153.675 197.9846 C -152.7246 197.3309 -151.8269 196.494 -150.7125 196.1963 C -149.7269 195.933 -148.5947 196.3922 -147.75 196.9642 C -146.7906 197.614 -145.8992 198.4561 -144.7875 198.7827 C -143.8142 199.0686 -142.6694 198.6483 -141.825 198.0861 C -140.8565 197.4414 -139.9707 196.5949 -138.8625 196.2404 C -137.9013 195.9329 -136.7449 196.3126 -135.9 196.8644 C -134.9223 197.503 -134.0413 198.3533 -132.9375 198.7347 C -131.9882 199.0627 -130.8212 198.7252 -129.975 198.1841 C -128.9879 197.5528 -128.1111 196.6994 -127.0125 196.2922 C -126.0747 195.9445 -124.8981 196.2384 -124.05 196.7685 C -123.0536 197.3913 -122.1803 198.2472 -121.0875 198.6791 C -120.1607 199.0454 -118.9759 198.7964 -118.125 198.2778 C -117.1192 197.6648 -116.2488 196.8068 -115.1625 196.3514 C -114.2463 195.9674 -113.0545 196.1704 -112.2 196.6771 C -111.1848 197.2791 -110.3168 198.1387 -109.2375 198.6162 C -108.3312 199.0172 -107.1339 198.8611 -106.275 198.3667 C -105.2506 197.777 -104.3843 196.9162 -103.3125 196.4178 C -102.4156 196.0007 -101.214 196.1092 -100.35 196.5908 C -99.3164 197.1669 -98.4514 198.0285 -97.3875 198.5465 C -96.4992 198.9791 -95.2908 198.9259 -94.425 198.4499 C -93.4622 197.9206 -92.5612 197.0016 -91.4625 197.0049 C -90.4613 197.0079 -89.5012 197.5 -88.5 197.5" mask="url(#lini-label-cut-7)"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-84.5,197.5 -93.5,202 -93.5,193"/>
-      <text class="lini-link-label" x="-146" y="186" style="font-size: 13px">track parcel</text>
+    <g class="lini-link" data-from="user" data-to="shop">
+      <mask id="lini-label-cut-7" maskUnits="userSpaceOnUse" x="-216.4" y="197.1" width="133.8" height="6.8"><rect class="lini-cut-bg" x="-216.4" y="197.1" width="133.8" height="6.8"/><rect class="lini-cut" x="-149.5" y="189" width="0" height="0"/></mask>
+      <path d="M -213 200.5 C -211.9689 200.5 -210.9618 200.8657 -209.9878 201.2043 C -209.0125 201.5433 -207.8084 201.0925 -206.9756 200.4821 C -206.0846 199.8291 -205.068 199.0847 -203.9634 199.1003 C -202.8513 199.1159 -201.8484 199.8783 -200.9512 200.5358 C -200.0622 201.1872 -199.0409 201.9251 -197.939 201.8993 C -196.8246 201.8732 -195.8261 201.1051 -194.9268 200.4464 C -194.0397 199.7966 -193.0137 199.0654 -191.9146 199.1014 C -190.798 199.138 -189.8039 199.9115 -188.9024 200.5715 C -188.0172 201.2195 -186.9863 201.9438 -185.8902 201.8977 C -184.7715 201.8506 -183.7818 201.0718 -182.878 200.4107 C -181.9947 199.7644 -180.9589 199.0472 -179.8659 199.1035 C -178.7451 199.1611 -177.7597 199.945 -176.8537 200.6072 C -175.972 201.2515 -174.9315 201.9614 -173.8415 201.8952 C -172.7189 201.8269 -171.7376 201.0382 -170.8293 200.375 C -169.9494 199.7326 -168.9039 199.0302 -167.8171 199.1064 C -166.6927 199.1852 -165.7156 199.9787 -164.8049 200.6428 C -163.9266 201.2832 -162.8762 201.9778 -161.7927 201.8918 C -160.6667 201.8023 -159.6936 201.0044 -158.7805 200.3394 C -157.9038 199.7011 -156.8485 199.0145 -155.7683 199.1103 C -154.6408 199.2103 -153.6716 200.0126 -152.7561 200.6783 C -151.881 201.3146 -150.8207 201.993 -149.7439 201.8874 C -148.615 201.7768 -147.6497 200.9703 -146.7317 200.304 C -145.8581 199.6699 -144.7928 198.9999 -143.7195 199.1151 C -142.5893 199.2363 -141.6279 200.0468 -140.7073 200.7137 C -139.8352 201.3455 -138.7648 202.0068 -137.6951 201.8822 C -136.5637 201.7504 -135.606 200.936 -134.6829 200.2686 C -133.8122 199.6391 -132.7368 198.9867 -131.6707 199.1208 C -130.5383 199.2632 -129.5842 200.0812 -128.6585 200.749 C -127.7891 201.3762 -126.7088 202.0195 -125.6463 201.8761 C -124.513 201.7231 -123.5624 200.9015 -122.6341 200.2335 C -121.766 199.6087 -120.6806 198.9747 -119.622 199.1273 C -118.4878 199.2908 -117.5407 200.1159 -116.6098 200.7841 C -115.7428 201.4064 -114.6524 202.0308 -113.5976 201.869 C -112.4627 201.695 -111.519 200.8667 -110.5854 200.1984 C -109.7195 199.5786 -108.6242 198.9641 -107.5732 199.1348 C -106.4377 199.3193 -105.4973 200.1507 -104.561 200.819 C -103.6962 201.4362 -102.5959 202.0408 -101.5488 201.8611 C -100.4129 201.6662 -99.4756 200.8318 -98.5366 200.1636 C -97.6728 199.549 -96.5676 198.9547 -95.5244 199.1432 C -94.4155 199.3435 -93.6006 200.3858 -92.5122 200.6779 C -91.5408 200.9386 -90.5058 200.5 -89.5 200.5" mask="url(#lini-label-cut-7)"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-85.5,200.5 -94.5,205 -94.5,196"/>
+      <text class="lini-sequence-message" x="-149.5" y="189">track parcel</text>
     </g>
   </g>
 </svg>

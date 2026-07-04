@@ -1,8 +1,8 @@
 // The Lini hero — a colourful service map. Palette colours, a gradient entry
 // point, mixed link styles. Source for assets/hero.png.
 {
-  gap: 40; padding: 25; clearance: 16;
-  |-| { stroke: --gray-deep; stroke-width: 2; }
+  gap: 38; padding: 24;
+  |-| { stroke: --gray-deep; }
 
   |edge::box| { fill: --sky-wash; stroke: --sky-ink; color: --sky-ink; }
   |svc::box| { fill: --teal-wash; stroke: --teal-ink; color: --teal-ink; }
@@ -63,4 +63,4 @@ edge.lb -> svc.api
 edge.lb -> svc.auth .auth
 svc.api -> data.pg .flow
 svc.api --> data.redis "cache" .cache
-svc.worker ~> data.queue "jobs" .async
+svc.worker ~> data.queue:right "jobs" .async

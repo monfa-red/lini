@@ -299,35 +299,35 @@ input_file: samples/icons.lini
     </g>
   </g>
   <g class="lini-links">
-    <g class="lini-link" style="font-size: 11" data-from="a.web" data-to="a.auth">
+    <g class="lini-link" data-from="a.web" data-to="a.auth">
       <path d="M -184 31 L -143.5 31"/>
       <polygon class="lini-marker lini-marker-arrow" points="-139.5,31 -148.5,35.5 -148.5,26.5" style="fill: #484848"/>
     </g>
-    <g class="lini-link" style="font-size: 11" data-from="a.auth" data-to="a.svc">
+    <g class="lini-link" data-from="a.auth" data-to="a.svc">
       <path d="M -76 31 L -35.5 31"/>
       <polygon class="lini-marker lini-marker-arrow" points="-31.5,31 -40.5,35.5 -40.5,26.5" style="fill: #484848"/>
     </g>
-    <g class="lini-link" style="font-size: 11" data-from="a.svc" data-to="a.cpu">
+    <g class="lini-link" data-from="a.svc" data-to="a.cpu">
       <path d="M 32 31 L 72.5 31"/>
       <polygon class="lini-marker lini-marker-arrow" points="76.5,31 67.5,35.5 67.5,26.5" style="fill: #484848"/>
     </g>
-    <g class="lini-link" style="font-size: 11" data-from="a.cpu" data-to="a.store">
+    <g class="lini-link" data-from="a.cpu" data-to="a.store">
       <path d="M 140 31 L 180.5 31"/>
       <polygon class="lini-marker lini-marker-arrow" points="184.5,31 175.5,35.5 175.5,26.5" style="fill: #484848"/>
     </g>
-    <g class="lini-link lini-link-dotted" style="font-size: 11" data-from="b.web" data-to="b.auth">
+    <g class="lini-link lini-link-dotted" data-from="b.web" data-to="b.auth">
       <path d="M -184 160 L -148.5 160"/>
       <path class="lini-marker lini-marker-open" d="M -139.5 164.95 L -148.5 160 L -139.5 155.05 M -139.5 160 L -148.5 160"/>
     </g>
-    <g class="lini-link lini-link-dashed" style="font-size: 11" data-from="b.auth" data-to="b.svc">
+    <g class="lini-link lini-link-dashed" data-from="b.auth" data-to="b.svc">
       <path d="M -76 160 L -35.5 160"/>
       <polygon class="lini-marker lini-marker-arrow" points="-31.5,160 -40.5,164.5 -40.5,155.5" style="fill: #484848"/>
     </g>
-    <g class="lini-link lini-link-dashed" style="font-size: 11" data-from="b.svc" data-to="b.cpu">
+    <g class="lini-link lini-link-dashed" data-from="b.svc" data-to="b.cpu">
       <path d="M 32 160 L 72.5 160"/>
       <polygon class="lini-marker lini-marker-arrow" points="76.5,160 67.5,164.5 67.5,155.5" style="fill: #484848"/>
     </g>
-    <g class="lini-link" style="font-size: 11" data-from="b.cpu" data-to="b.store">
+    <g class="lini-link" data-from="b.cpu" data-to="b.store">
       <path d="M 140 160 C 140.9892 160 141.9647 160.3195 142.8929 160.6615 C 143.8114 160.9999 144.9914 160.7283 145.7857 160.1562 C 146.6717 159.518 147.5949 158.7528 148.6786 158.6198 C 149.6989 158.4945 150.7351 159.0908 151.5714 159.6885 C 152.4755 160.3346 153.3752 161.1243 154.4643 161.3453 C 155.4523 161.5458 156.5281 161.036 157.3571 160.4624 C 158.2848 159.8206 159.1639 159.0112 160.25 158.7066 C 161.2042 158.4389 162.3159 158.8464 163.1429 159.3926 C 164.0954 160.0217 164.9598 160.8438 166.0357 161.2253 C 166.957 161.552 168.098 161.2603 168.9286 160.7448 C 169.9067 160.1377 170.7616 159.3078 171.8214 158.8582 C 172.7131 158.48 173.8841 158.6314 174.7143 159.1304 C 175.628 159.6795 176.5416 160.5254 177.6071 160.494 C 178.585 160.4652 179.5218 160 180.5 160"/>
       <polygon class="lini-marker lini-marker-arrow" points="184.5,160 175.5,164.5 175.5,155.5" style="fill: #484848"/>
     </g>

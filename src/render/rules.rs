@@ -12,6 +12,7 @@
 
 use super::values::format_value;
 use crate::Options;
+use crate::layout::ir::{LINK_LABEL_CLASS, SEQUENCE_MESSAGE_CLASS};
 use crate::layout::{LaidOut, PlacedNode};
 use crate::resolve::{AttrMap, MarkerKind, NodeKind, ResolvedValue, VarTable};
 use std::collections::{BTreeSet, HashMap};
@@ -193,6 +194,14 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
         has_open |= link.markers.start.is_open() || link.markers.end.is_open();
     }
     let has_labels = laid.links.iter().any(|w| !w.texts.is_empty());
+    let label_class = |c: &str| {
+        laid.links
+            .iter()
+            .flat_map(|w| &w.texts)
+            .any(|t| t.class == c)
+    };
+    let has_link_labels = label_class(LINK_LABEL_CLASS);
+    let has_seq_labels = label_class(SEQUENCE_MESSAGE_CLASS);
 
     let mut rules: Vec<Rule> = Vec::new();
 
@@ -308,19 +317,9 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
             props,
         });
     }
-    // Sequence text (SPEC §10) takes its size / weight from these rules, never an inline
-    // `style=` — so a diagram's many labels don't each carry the same font props. `.lini-text`
-    // (always present alongside) states the fill and anchors. Sizes track the layout constants
-    // (`messages::LABEL_SIZE`, the frame bundle `font-size`).
-    if present.contains("sequence-message") {
-        rules.push(Rule {
-            class: "lini-sequence-message".into(),
-            props: vec![
-                ("font-size".into(), "13px".into()),
-                ("font-weight".into(), "normal".into()),
-            ],
-        });
-    }
+    // Sequence tab / guard text (SPEC §10) takes its size / weight from these rules,
+    // never an inline `style=`, so a diagram's many labels don't each repeat the font
+    // props. (The message-label rule rides `has_seq_labels`, with the wire-label rules.)
     if present.contains("sequence-tab") {
         rules.push(Rule {
             class: "lini-sequence-tab".into(),
@@ -334,7 +333,9 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
         rules.push(Rule {
             class: "lini-sequence-guard".into(),
             props: vec![
-                ("font-size".into(), "12px".into()),
+                // A touch smaller than the bold tab keyword, so the guard reads as its
+                // subordinate condition.
+                ("font-size".into(), "11px".into()),
                 ("font-weight".into(), "normal".into()),
             ],
         });
@@ -421,10 +422,12 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
         }
     }
 
-    // Link labels: the constant `<text>` paint stated once (mirrors `.lini-text`),
-    // plus the baked link font size. A label that overrides any of these inlines
-    // the difference via `style=`.
-    if has_labels {
+    // Link labels: the constant `<text>` paint stated once per role, plus the baked
+    // font size — a diagram label rides on the wire (`.lini-link-label`, the baked
+    // link size), a sequence message rides above the arrow like a heading
+    // (`.lini-sequence-message`, the larger `messages::LABEL_SIZE`). Two rules so
+    // both coexist in one file; a label that overrides one inlines the difference.
+    if has_link_labels {
         let wfs = laid.sheet.link_defaults.number("font-size").unwrap_or(11.0);
         rules.push(Rule {
             class: "lini-link-label".into(),
@@ -437,6 +440,23 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
                 ("font-weight".into(), live("link-font-weight")),
             ],
         });
+    }
+    if has_seq_labels {
+        rules.push(Rule {
+            class: "lini-sequence-message".into(),
+            props: vec![
+                ("fill".into(), "currentColor".into()),
+                ("stroke".into(), "none".into()),
+                ("text-anchor".into(), "middle".into()),
+                ("dominant-baseline".into(), "central".into()),
+                // `messages::LABEL_SIZE` — larger than the wire label so messages read
+                // on the time axis; kept in sync with that constant.
+                ("font-size".into(), "13px".into()),
+                ("font-weight".into(), "normal".into()),
+            ],
+        });
+    }
+    if has_labels {
         // The label cut's mask rects state their fill/stroke as CSS, not inline —
         // so the link's own `stroke` can't bleed into the luminance mask, and the
         // SVG stays free of per-label paint attrs (SPEC §13). White shows the

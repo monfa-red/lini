@@ -64,12 +64,21 @@ pub fn render_link(
     // A link's `<g>` paint is the same class-diff a node's is (SPEC §13) — one
     // shared computation; a link never aliases `color` and formats with plain
     // `format_value`.
-    let decls = ruleset.inline_paint_diff(
+    let mut decls = ruleset.inline_paint_diff(
         &link_classes,
         &w.attrs,
         |lini| w.attrs.get(lini),
         |_lini, v| format_value(v, vars, opts),
     );
+    // The `<g>` carries only **wire** paint; its labels own their text (font / colour),
+    // stated once by the label's own class — so text props never inline on the link
+    // (once per label × diagram), and no stray `font-size` rides the `<g>` (SPEC §9).
+    decls.retain(|(k, _)| {
+        matches!(
+            *k,
+            "stroke" | "stroke-width" | "stroke-dasharray" | "opacity"
+        )
+    });
     let style_attr = super::style_attr_from(&decls);
 
     // `href:` makes the link clickable, mirroring a node's `<a href>` wrap.
@@ -431,9 +440,10 @@ fn label_mask(
 }
 
 /// A link label. The constant paint (`fill: currentColor`, `stroke: none` so the
-/// glyphs don't inherit the link `<g>`'s stroke, the anchor pair, the baked link
-/// font size) rides `.lini-link-label`; only a label that overrides one of those
-/// inlines the difference via `style=` (which beats the class rule).
+/// glyphs don't inherit the link `<g>`'s stroke, the anchor pair, the baked font
+/// size) rides the label's own class (`t.class` — `.lini-link-label` on a diagram
+/// wire, `.lini-sequence-message` above a sequence arrow); only a label that
+/// overrides one of those inlines the difference via `style=`.
 fn render_link_text(out: &mut String, t: &RoutedText, wfs: f64, vars: &VarTable, opts: &Options) {
     let mut style: Vec<String> = Vec::new();
 
@@ -480,7 +490,7 @@ fn render_link_text(out: &mut String, t: &RoutedText, wfs: f64, vars: &VarTable,
     super::text::emit(
         out,
         "      ",
-        "lini-link-label",
+        t.class,
         &t.content,
         t.position,
         &t.attrs,

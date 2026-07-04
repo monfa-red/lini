@@ -7,10 +7,10 @@
   layout: sequence;
 }
 
-|icon#user| "user" { width: 64; stroke: --rose-deep; fill: --rose-wash; }
-|box#shop| "Storefront" { fill: --sky-wash; stroke: --sky-deep; }
-|box#pay| "Payments" { fill: --green-wash; stroke: --green-deep; }
-|slant#db| "Orders" { fill: --orange-wash; stroke: --orange-deep; }
+|icon#user| "user" { width: 62; stroke: --rose-deep; fill: --rose-wash; }
+|box#shop| "Storefront" { fill: --sky-wash; stroke: --sky-deep; padding: 18; }
+|box#pay| "Payments" { fill: --green-wash; stroke: --green-deep; padding: 18; }
+|slant#db| "Orders" { fill: --orange-wash; stroke: --orange-deep; padding: 18; }
 
 |note| "starts checkout" { over: user; fill: --rose-soft; stroke: --rose-deep; }
 

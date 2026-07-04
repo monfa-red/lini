@@ -2,12 +2,8 @@
 // start / center / end → left / centre / right, reaching the filled |header| band
 // and every body cell alike. Every table cell fills its track (so backgrounds
 // fill and the text has room); the column's `align` places the text inside.
-{ padding: 26; }
 
-|table#invoice| "Invoice" {
-  columns: 130 70 100;
-  align: start center end;
-} [
+|table#invoice| "Invoice" { columns: 130 70 100; align: start center end; } [
   "Item"      "Qty" "Price"
   "Keyboard"  "2"   "$120.00"
   "Monitor"   "1"   "$340.00"

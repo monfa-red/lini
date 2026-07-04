@@ -10,8 +10,9 @@ use crate::layout::PlacedNode;
 use crate::layout::prim;
 use std::collections::HashMap;
 
-/// A bar's width on the lifeline.
-const BAR_W: f64 = 10.0;
+/// A bar's width on the lifeline (its bbox; the drawn fill is this minus the
+/// participant's border, so a 2px border leaves a 10px fill).
+const BAR_W: f64 = 12.0;
 /// Each nesting level shifts the bar outward (to the right) so stacked calls read.
 const NEST_DX: f64 = 4.0;
 

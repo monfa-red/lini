@@ -125,6 +125,7 @@ pub fn place(
                 position: pos,
                 tangent,
                 attrs: t.attrs.clone(),
+                class: crate::layout::ir::LINK_LABEL_CLASS,
             });
         }
     }

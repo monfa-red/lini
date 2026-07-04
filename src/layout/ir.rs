@@ -94,7 +94,17 @@ pub struct RoutedText {
     /// Unit tangent at the text position (for future rotation / offset frames).
     pub tangent: (f64, f64),
     pub attrs: AttrMap,
+    /// The CSS class the label wears — `lini-link-label` for a diagram link label
+    /// (on the wire), `lini-sequence-message` for a sequence message label (a
+    /// heading above the arrow). One shared rule per role, so the size states once
+    /// and the two coexist in one file (SPEC §9/§10).
+    pub class: &'static str,
 }
+
+/// The default label class: a diagram link label riding on the wire.
+pub const LINK_LABEL_CLASS: &str = "lini-link-label";
+/// A sequence message label — a heading above the arrow.
+pub const SEQUENCE_MESSAGE_CLASS: &str = "lini-sequence-message";
 
 #[derive(Debug, Clone, Copy)]
 pub struct ViewBox {

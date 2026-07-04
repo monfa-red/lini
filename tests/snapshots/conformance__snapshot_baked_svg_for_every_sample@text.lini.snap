@@ -42,13 +42,13 @@ input_file: samples/text.lini
     </g>
   </g>
   <g class="lini-links">
-    <g class="lini-link" style="font-size: 12; font-weight: bold" data-from="a" data-to="b">
+    <g class="lini-link" data-from="a" data-to="b">
       <mask id="lini-label-cut-0" maskUnits="userSpaceOnUse" x="37" y="-40.5" width="24.5" height="79"><rect class="lini-cut-bg" x="37" y="-40.5" width="24.5" height="79"/><rect class="lini-cut" x="9.1" y="-6.55" width="100.8" height="15.6"/></mask>
       <path d="M 43.5 -38.5 L 43.5 -38.5 A 16 16 0 0 1 59.5 -22.5 L 59.5 20.5 A 16 16 0 0 1 43.5 36.5 L 42.5 36.5" mask="url(#lini-label-cut-0)"/>
       <polygon class="lini-marker lini-marker-arrow" points="38.5,36.5 47.5,32 47.5,41" style="fill: #989898"/>
       <text class="lini-link-label" x="59.5" y="1.25" style="fill: #005d56; font-weight: bold">styled by |-|</text>
     </g>
-    <g class="lini-link" style="font-size: 12; font-weight: bold" data-from="b" data-to="c">
+    <g class="lini-link" data-from="b" data-to="c">
       <mask id="lini-label-cut-1" maskUnits="userSpaceOnUse" x="37" y="50.5" width="24.5" height="79"><rect class="lini-cut-bg" x="37" y="50.5" width="24.5" height="79"/><rect class="lini-cut" x="1.9" y="73.95" width="115.2" height="15.6"/></mask>
       <path d="M 39 52.5 L 43.5 52.5 A 16 16 0 0 1 59.5 68.5 L 59.5 115 A 12.5 12.5 0 0 1 47 127.5 L 47 127.5" mask="url(#lini-label-cut-1)"/>
       <polygon class="lini-marker lini-marker-arrow" points="43,127.5 52,123 52,132" style="fill: #989898"/>

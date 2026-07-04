@@ -3,7 +3,7 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/table_align.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-178 -93.5 356 170" width="356" height="170" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-172 -87.5 344 158" width="344" height="158" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
@@ -15,7 +15,7 @@ input_file: samples/table_align.lini
     .lini .lini-header { fill: rgba(0, 0, 0, 0.06); font-weight: bold; }
   </style>
   <defs/>
-  <rect class="lini-canvas" x="-178" y="-93.5" width="356" height="170"/>
+  <rect class="lini-canvas" x="-172" y="-87.5" width="344" height="158"/>
   <g class="lini-scene">
     <g class="lini-node lini-table lini-group lini-block" data-id="invoice" transform="translate(0,0)">
       <rect x="-151" y="-49.5" width="302" height="99" rx="8" ry="8"/>

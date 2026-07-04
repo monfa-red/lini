@@ -51,7 +51,7 @@ usb:bottom -> mcu:top
 usb:bottom -> mcu:top
 usb:bottom -> mcu:top
 mcu:top -> rf:bottom
-mcu:top -> rf:bottom
+rf:bottom -> r1:bottom
 
 // power rails + flash bus (left)
 pwr:right -> mcu:left
@@ -67,7 +67,8 @@ mcu:right -> motor:left
 mcu:right -> motor:left
 mcu:right -> motor:left
 mcu:right -> motor:left
-osc:bottom -> motor:top
+osc -> motor:top
+osc:left -> mcu:right
 
 // sensor + adc buses (bottom)
 mcu:bottom -> sens:top
@@ -80,5 +81,6 @@ usb:left -> c1:right
 pwr:bottom -> c2:top
 motor:bottom -> r2:top
 imu:top -> r2:bottom
+imu -> mcu:right
 adc:left -> c3:right
 sens -> r3:top

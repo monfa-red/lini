@@ -94,7 +94,7 @@ input_file: samples/entity.lini
     </g>
   </g>
   <g class="lini-links">
-    <g class="lini-link" style="font-size: 11" data-from="users" data-to="orders">
+    <g class="lini-link" data-from="users" data-to="orders">
       <mask id="lini-label-cut-0" maskUnits="userSpaceOnUse" x="-70.4" y="-2" width="124" height="4"><rect class="lini-cut-bg" x="-70.4" y="-2" width="124" height="4"/><rect class="lini-cut" x="-31.5" y="-7.15" width="46.2" height="14.3"/></mask>
       <path d="M -68.4 0 L 43.1 0" mask="url(#lini-label-cut-0)"/>
       <path class="lini-marker lini-marker-open" d="M 52.1 4.95 L 43.1 0 L 52.1 -4.95 M 52.1 0 L 43.1 0"/>
