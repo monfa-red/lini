@@ -1,4 +1,4 @@
-//! Law 1's one excuse (ROUTING.md §The Four Laws), re-derived from the
+//! Law 1's one excuse (ROUTING.md The Four Laws), re-derived from the
 //! output alone: a sub-clearance gap stands only where the contested
 //! pair's **contention component** — the parallel wires transitively owing
 //! each other pitch — demonstrably cannot spread to full clearance. Port
@@ -21,7 +21,7 @@ use crate::routing::ortho::scene::SceneIndex;
 /// as the law grants it: an end segment answers to its port window
 /// tightened by its corridor, an interior run to its corridor's usable
 /// width (the contract's channel model rebuilt from the placed nodes; soft
-/// shared boundaries surrender half a clearance, ROUTING.md §Vocabulary),
+/// shared boundaries surrender half a clearance, ROUTING.md Vocabulary),
 /// and a wire outside this world's channels holds its drawn ordinate.
 /// Feasibility runs in the drawn order — wires never reorder; braids are
 /// unlawful — as a longest-path reach over the contention edges, so a chain

@@ -6,7 +6,7 @@ pub struct Error {
     pub message: String,
     pub span: Span,
     /// A secondary span rendered inline as `(previously at L:C)` — used for
-    /// duplicate-definition diagnostics (SPEC §16). Only shown with source.
+    /// duplicate-definition diagnostics [SPEC 19]. Only shown with source.
     pub related: Option<Span>,
 }
 

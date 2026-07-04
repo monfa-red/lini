@@ -8,26 +8,26 @@ pub struct LaidOut {
     /// The routing report: drawn crossings (counted output) and the links it
     /// could not legally draw.
     pub link_report: Vec<crate::routing::Violation>,
-    /// The impossible links made visible (ROUTING §Impossible layouts) —
+    /// The impossible links made visible (ROUTING Impossible layouts) —
     /// carried beside the links, never as one, so the validator never sees
     /// them.
     pub strays: Vec<Stray>,
     /// Resolved CSS variables — carried through to render so the `<style>`
     /// block and `--bake-vars` mode can both read them.
     pub vars: VarTable,
-    /// Defs-block stylesheet inputs (SPEC §14) — the renderer states these
+    /// Defs-block stylesheet inputs [SPEC 16] — the renderer states these
     /// as class rules and diffs node attrs against them.
     pub sheet: SheetInputs,
-    /// The root container's `fill:`, when set (SPEC §13): render paints a
+    /// The root container's `fill:`, when set [SPEC 16]: render paints a
     /// backing rect over the whole viewBox. `None` ⇒ a transparent canvas.
     pub canvas_fill: Option<ResolvedValue>,
-    /// Distinct gradients (SPEC §11.3), collected post-layout: paint use-sites are
+    /// Distinct gradients [SPEC 10.3], collected post-layout: paint use-sites are
     /// rewritten to `url(#lini-gradient-N)` and the definitions emitted into
     /// `<defs>`. Empty unless the scene paints with a gradient.
     pub gradients: Vec<GradientDef>,
 }
 
-/// A distinct gradient paint (SPEC §11.3): a kind plus its colour stops, evenly
+/// A distinct gradient paint [SPEC 10.3]: a kind plus its colour stops, evenly
 /// spaced. Twin of the drop-shadow filter — collected, deduplicated, and emitted
 /// once into `<defs>`; the stops stay `ResolvedValue`s so they flip and bake.
 #[derive(Clone)]
@@ -61,12 +61,12 @@ pub struct RoutedLink {
     pub path: Vec<(f64, f64)>,
     /// The strategy that drew this wire. The independent law checker judges
     /// orthogonal wires only — a `straight` wire is lawfully oblique and
-    /// avoids nothing (ROUTING §Strategies).
+    /// avoids nothing (ROUTING Strategies).
     pub strategy: Strategy,
     pub markers: Markers,
     pub attrs: AttrMap,
     /// `.style` names applied to the link — rendered as `lini-style-*` classes,
-    /// the same surface a node's styles get (SPEC §14). Routing never reads it.
+    /// the same surface a node's styles get [SPEC 16]. Routing never reads it.
     pub applied_styles: Vec<String>,
     pub texts: Vec<RoutedText>,
     /// First and last endpoints of the chain this segment belongs to — surfaced
@@ -97,7 +97,7 @@ pub struct RoutedText {
     /// The CSS class the label wears — `lini-link-label` for a diagram link label
     /// (on the wire), `lini-sequence-message` for a sequence message label (a
     /// heading above the arrow). One shared rule per role, so the size states once
-    /// and the two coexist in one file (SPEC §9/§10).
+    /// and the two coexist in one file [SPEC 9/13].
     pub class: &'static str,
 }
 
@@ -116,7 +116,7 @@ pub struct ViewBox {
 
 /// One interior gutter rect `(cx, cy, w, h)` in node-local coords, centred on its
 /// own centre — the gap region between cells, filled with the container's
-/// `gap-color` (SPEC §5). Rendered as a `<rect fill="…" stroke="none">`: a filled
+/// `gap-color` [SPEC 11]. Rendered as a `<rect fill="…" stroke="none">`: a filled
 /// rect (not a stroked line) both carries a gradient `gap-color` — a `<line>`'s
 /// degenerate bbox can't — and states `stroke="none"` so the container's own
 /// `stroke` never bleeds onto it.
@@ -130,7 +130,7 @@ pub struct PlacedNode {
     pub applied_styles: Vec<String>,
     pub label: Option<String>,
     pub attrs: AttrMap,
-    /// A `Text` node's own `{ }` style (SPEC §3) — rendered as `style=` /
+    /// A `Text` node's own `{ }` style [SPEC 3] — rendered as `style=` /
     /// `transform` on the `<text>`. Empty for boxes and unstyled text.
     pub own_style: AttrMap,
     pub markers: Markers,
@@ -142,12 +142,12 @@ pub struct PlacedNode {
     pub bbox: Bbox,
     pub rotation: f64,
     pub children: Vec<PlacedNode>,
-    /// Interior gutter rects the container fills with its `gap-color` (SPEC §5) —
+    /// Interior gutter rects the container fills with its `gap-color` [SPEC 11] —
     /// the gap regions between children. Interior only: the outer frame is the
     /// container's own border. Empty unless `gap-color:` is set.
     pub gutters: Vec<Gutter>,
     /// Links this container drew itself, in its local frame — a sequence's
-    /// messages, lowered through the `straight` strategy (SPEC §10). Routing
+    /// messages, lowered through the `straight` strategy [SPEC 13]. Routing
     /// lifts them into scene coordinates; the renderer's one link path draws
     /// them. Empty everywhere else.
     pub links: Vec<RoutedLink>,

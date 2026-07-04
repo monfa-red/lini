@@ -1,9 +1,9 @@
-//! Bar geometry ([CHARTS.md] §3, §11–§12): one mark per datum, combined by the chart's
+//! Bar geometry [SPEC 14.2]: one mark per datum, combined by the chart's
 //! `bars:` mode. [`visit_bars`] is the one place the modes branch — grouped splits the
 //! category slot, stacked piles on the running total, overlay draws translucently on
 //! top — and each direction consumes it: a `column` grows the value up (a rect), a
 //! `row` grows it right (a rect), a `radial` chart grows it outward (a wedge). Every bar
-//! carries its `<title>` (§14).
+//! carries its `<title>` [SPEC 14.8].
 
 use super::model::{BarMode, Chart, Data, Series, SeriesKind};
 use super::project::{Dir, Plot};
@@ -132,7 +132,7 @@ fn row_bars(plot: &Plot, chart: &Chart, bars: &[&Series], n: usize, out: &mut Ve
     }
 }
 
-/// Radial bars are wedges ([CHARTS.md] §12): each category owns the angular slot around
+/// Radial bars are wedges [SPEC 14.7]: each category owns the angular slot around
 /// its spoke, grouped splits it angularly, stacked piles outward in radius.
 fn radial_bars(plot: &Plot, chart: &Chart, bars: &[&Series], n: usize, out: &mut Vec<PlacedNode>) {
     let xs = &chart.x.scale;

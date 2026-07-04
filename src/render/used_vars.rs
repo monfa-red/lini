@@ -1,4 +1,4 @@
-//! Tree-shake the `@layer` variable block (SPEC §11.2 / §13): collect the `--lini-*`
+//! Tree-shake the `@layer` variable block [SPEC 10.2 / 16]: collect the `--lini-*`
 //! variables a document actually references — directly or transitively — so the
 //! built-in palette costs a diagram that doesn't use it nothing.
 //!
@@ -48,7 +48,7 @@ pub fn referenced(laid: &LaidOut, ruleset: &RuleSet) -> BTreeSet<String> {
         collect_live(fill, &mut names);
     }
     // Gradient stops were rewritten out of the attrs into `laid.gradients`; walk
-    // them so their palette vars survive the shake (SPEC §11.3).
+    // them so their palette vars survive the shake [SPEC 10.3].
     for g in &laid.gradients {
         for stop in &g.stops {
             collect_live(stop, &mut names);

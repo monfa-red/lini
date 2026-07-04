@@ -1,4 +1,4 @@
-//! The `straight` strategy (ROUTING.md §Strategies): each link is one
+//! The `straight` strategy (ROUTING.md Strategies): each link is one
 //! segment between two anchors its caller supplies, trimmed to the endpoint
 //! bodies, plus the rectangular self-hook. It avoids nothing and reports
 //! nothing; markers and labels ride it like any wire, and corners (the
@@ -7,7 +7,7 @@
 //! Two callers: a `routing: straight` scope's requests, whose anchors are
 //! the body centres (the trim is [`stray_segment`]'s — one mechanism); and
 //! sequence messages, whose layout owns *where* (column x, row y) and lowers
-//! each wire through [`wire`] itself (SPEC §10).
+//! each wire through [`wire`] itself [SPEC 13].
 
 use crate::layout::ir::{RoutedLink, RoutedText};
 use crate::resolve::{AttrMap, Markers, Strategy};

@@ -1,4 +1,4 @@
-//! Notes (SPEC §10): a `|note|` callout placed at its time row (source order), bound to
+//! Notes [SPEC 13]: a `|note|` callout placed at its time row (source order), bound to
 //! lifelines by **placement** — `over` (one lifeline, or a span of them), `left`, or
 //! `right`. The box itself is laid out by the generic engine (so its text, padding, and
 //! styling are reused — no parallel layout); this module only reads the placement and
@@ -19,7 +19,7 @@ const FOLD_MAX: f64 = 15.0;
 
 /// Reshape a laid-out note box into a **sticky note**: a body with its top-right corner
 /// clipped, plus a small folded flap (the dog-ear) in the note's stroke colour — so a note
-/// reads as an annotation, not a participant box (SPEC §10). Reuses the box's own resolved
+/// reads as an annotation, not a participant box [SPEC 13]. Reuses the box's own resolved
 /// `fill` / `stroke` (carried on its `<g>`) and keeps its text child; only the silhouette
 /// changes, from a `Block` rect to a `Path`.
 pub(super) fn sticky(note: &mut PlacedNode) {
@@ -60,7 +60,7 @@ pub(super) fn sticky(note: &mut PlacedNode) {
     );
 }
 
-/// Where a note binds to the lifelines (SPEC §10). `over` may name several — the box
+/// Where a note binds to the lifelines [SPEC 13]. `over` may name several — the box
 /// centres over their span.
 pub(super) enum Placement {
     Over(Vec<String>),

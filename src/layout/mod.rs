@@ -34,7 +34,7 @@ pub fn layout(program: &Program) -> Result<LaidOut, Error> {
         top_nodes.push(layout_inst(inst, &child_path("", inst), program)?);
     }
 
-    // A root sequence (`{ layout: sequence }`, SPEC §10) owns the whole scene: it
+    // A root sequence (`{ layout: sequence }`, [SPEC 13]) owns the whole scene: it
     // arranges the participants and lowers its messages through the `straight`
     // strategy itself, bypassing the generic arrange and the orthogonal router.
     if sequence::is_sequence(&program.scene.attrs) {
@@ -137,7 +137,7 @@ fn finish(
         h: bbox.h() + pad.top + pad.bottom,
     };
 
-    // A root `fill:` overrides the canvas colour inline (SPEC §13); the default
+    // A root `fill:` overrides the canvas colour inline [SPEC 16]; the default
     // comes from the `.lini-canvas` rule (`--lini-bg`). `none` → transparent.
     let canvas_fill = program.scene.attrs.get("fill").cloned();
 
@@ -174,7 +174,7 @@ pub fn validate_routing(laid: &LaidOut) -> Vec<routing::Violation> {
 /// `path` is the inst's dot-path — how a sequence scope finds its messages.
 fn layout_inst(inst: &ResolvedInst, path: &str, program: &Program) -> Result<PlacedNode, Error> {
     let funcs = &program.funcs;
-    // A chart ([CHARTS.md]) owns its whole subtree: it reads its children's data,
+    // A chart [SPEC 14] owns its whole subtree: it reads its children's data,
     // fixes a shared scale, samples any `fn:`, and emits primitive PlacedNodes itself.
     // Intercept it here — before the child recursion (which would run `leaf_bbox` on a
     // series with no `points:`) and before the flow/grid path (`read_layout_mode`
@@ -185,7 +185,7 @@ fn layout_inst(inst: &ResolvedInst, path: &str, program: &Program) -> Result<Pla
     if chart::is_pie(&inst.attrs) {
         return chart::layout_pie(inst);
     }
-    // A `|sequence|` node ([SPEC §10]) owns its subtree the same way — it reads its
+    // A `|sequence|` node ([SPEC 13]) owns its subtree the same way — it reads its
     // participants (and, later, messages / frames / notes) and lowers to primitives.
     if sequence::is_sequence(&inst.attrs) {
         return sequence::layout_node(inst, path, program);
@@ -212,9 +212,9 @@ fn layout_inst(inst: &ResolvedInst, path: &str, program: &Program) -> Result<Pla
         // its border is the group rect, its inner rules these gutter rects.
         gutters = rects;
 
-        // An icon sizes to a square that grows with its label child (SPEC §7);
+        // An icon sizes to a square that grows with its label child [SPEC 7];
         // every other closed primitive sizes border-box — explicit width/height,
-        // else content + padding per axis (SPEC §6).
+        // else content + padding per axis [SPEC 5].
         let b = if inst.kind == NodeKind::Icon {
             primitives::icon_square_bbox(inst, content_bbox)?
         } else {
@@ -265,7 +265,7 @@ fn layout_inst(inst: &ResolvedInst, path: &str, program: &Program) -> Result<Pla
 }
 
 /// Interior gutter rects between adjacent flow children — at each gap's midpoint,
-/// `gap` thick along the main axis and spanning the flow's cross extent (SPEC §5,
+/// `gap` thick along the main axis and spanning the flow's cross extent ([SPEC 12],
 /// the 1-D `gap-color` case). Filled with the container's `gap-color`.
 fn one_d_gutters(
     children: &[PlacedNode],
@@ -313,7 +313,7 @@ fn lay_out_container_children(
         return Ok((Bbox::empty(), Vec::new()));
     }
 
-    // Split children by role (SPEC §6): a `pin`ned child is an out-of-flow
+    // Split children by role [SPEC 5]: a `pin`ned child is an out-of-flow
     // overlay (the parent does not grow for it); everything else flows.
     let mut flow_indices: Vec<usize> = Vec::new();
     let mut pinned_indices: Vec<usize> = Vec::new();
@@ -332,7 +332,7 @@ fn lay_out_container_children(
         LayoutMode::Grid => None,
     };
     // Slack for align/justify/stretch comes only from an explicit container
-    // size: the content area is the declared dimension minus padding (SPEC §5).
+    // size: the content area is the declared dimension minus padding [SPEC 12].
     let pad = primitives::padding(container_attrs, span)?;
     let avail = (
         container_attrs
@@ -369,7 +369,7 @@ fn lay_out_container_children(
         Bbox::empty()
     };
 
-    // Asymmetric padding offsets the flow within the box (SPEC §6): the content
+    // Asymmetric padding offsets the flow within the box [SPEC 5]: the content
     // area is the box inset by `padding`, so the flow centre sits at
     // ((left−right)/2, (top−bottom)/2) from the box centre.
     let (off_x, off_y) = ((pad.left - pad.right) / 2.0, (pad.top - pad.bottom) / 2.0);
@@ -381,7 +381,7 @@ fn lay_out_container_children(
     }
 
     // 1-D gutters between flow children (a grid produced its own above), filled by
-    // the container's `gap-color` (SPEC §5) when set and the main-axis gap is
+    // the container's `gap-color` [SPEC 11] when set and the main-axis gap is
     // positive. They track the offset flow; the body bbox below stays centred,
     // since `closed_bbox` and pins anchor to it.
     if let Some(axis) = flow_axis
@@ -405,7 +405,7 @@ fn lay_out_container_children(
     }
 
     // The body the parent sizes to is the flow content alone — pinned children
-    // are overlays that never grow it (SPEC §6).
+    // are overlays that never grow it [SPEC 5].
     let body_bbox = flow_bbox;
 
     // Resolution box for pins: the parent's drawn shape — its padding included —
@@ -420,7 +420,7 @@ fn lay_out_container_children(
         )
     });
 
-    // Pin out-of-flow children flush onto their parent anchor (SPEC §6). The
+    // Pin out-of-flow children flush onto their parent anchor [SPEC 5]. The
     // parent does not grow for them — an all-pinned container with no explicit
     // size collapses — and the canvas still includes them (see `finish`), so an
     // overlay is never clipped.
@@ -432,7 +432,7 @@ fn lay_out_container_children(
         children[i].cy = cy;
     }
 
-    // `translate:` nudges every node after placement (SPEC §6) — applied last,
+    // `translate:` nudges every node after placement [SPEC 5] — applied last,
     // once the body bbox is fixed, so it shifts the child (and its subtree, via
     // `cx`/`cy`) without reflowing siblings or growing the parent.
     for c in children.iter_mut() {
@@ -462,7 +462,7 @@ fn read_layout_mode(attrs: &crate::resolve::AttrMap, span: Span) -> Result<Layou
         Some(ResolvedValue::Ident(s)) => match s.as_str() {
             "flow" => Ok(LayoutMode::Flow),
             "grid" => Ok(LayoutMode::Grid),
-            // Removed: orientation moved to `direction` (SPEC §5).
+            // Removed: orientation moved to `direction` [SPEC 11].
             dir @ ("row" | "column") => Err(Error::at(
                 span,
                 format!(
@@ -478,7 +478,7 @@ fn read_layout_mode(attrs: &crate::resolve::AttrMap, span: Span) -> Result<Layou
     }
 }
 
-/// A flow's main axis from `direction` (SPEC §5), default `column`. `radial`
+/// A flow's main axis from `direction` [SPEC 11], default `column`. `radial`
 /// belongs to a chart, which owns its subtree and never reaches here.
 fn read_flow_direction(attrs: &crate::resolve::AttrMap, span: Span) -> Result<Axis, Error> {
     match attrs.get("direction") {
@@ -522,7 +522,7 @@ mod tests {
         layout(&program).expect("layout")
     }
 
-    // ── Sizing (SPEC §6) ──
+    // ── Sizing [SPEC 5] ──
 
     #[test]
     fn empty_closed_primitive_is_two_paddings() {
@@ -541,7 +541,7 @@ mod tests {
 
     #[test]
     fn stroke_width_counts_toward_the_bbox() {
-        // SPEC §6: width 100 height 50 stroke-width 4 → 104×54.
+        // [SPEC 5]: width 100 height 50 stroke-width 4 → 104×54.
         let n = &lay_out("|box| { width: 100; height: 50; stroke-width: 4; }\n").nodes[0];
         assert!((n.bbox.w() - 104.0).abs() < 0.01, "w={}", n.bbox.w());
         assert!((n.bbox.h() - 54.0).abs() < 0.01, "h={}", n.bbox.h());
@@ -675,7 +675,7 @@ mod tests {
         assert!((l.viewbox.h - 82.0).abs() < 0.01, "h={}", l.viewbox.h);
     }
 
-    // ── Captions: ordinary flow children (SPEC §8) ──
+    // ── Captions: ordinary flow children [SPEC 8] ──
 
     #[test]
     fn caption_overlay_does_not_grow_the_group() {
@@ -709,7 +709,7 @@ mod tests {
         assert!(cap.cy < a.cy, "cap.cy={} a.cy={}", cap.cy, a.cy);
     }
 
-    // ── Flex distribution with slack (SPEC §5) ──
+    // ── Flex distribution with slack [SPEC 12] ──
 
     #[test]
     fn justify_orders_children_start_center_end() {
@@ -762,7 +762,7 @@ mod tests {
         );
     }
 
-    // ── Grid (SPEC §5) ──
+    // ── Grid [SPEC 12] ──
 
     #[test]
     fn grid_fixed_columns_place_children_in_order() {
@@ -820,7 +820,7 @@ mod tests {
 
     #[test]
     fn grid_rows_track_list_is_a_floor_implicit_rows_overflow() {
-        // SPEC §5/§20: a declared `rows` track list sizes the first rows; extra
+        // [SPEC 12/18]: a declared `rows` track list sizes the first rows; extra
         // children flow into implicit auto rows (CSS grid) rather than erroring.
         // Here 2 cols × 1 declared row track, 4 children → a second, implicit row.
         let l = lay_out(
@@ -846,7 +846,7 @@ mod tests {
         assert!(layout(&program).is_err());
     }
 
-    // ── Gutters (SPEC §5) ──
+    // ── Gutters [SPEC 11] ──
 
     #[test]
     fn table_fills_interior_gutters_no_frame() {
@@ -890,7 +890,7 @@ mod tests {
 
     #[test]
     fn gap_color_per_axis_selects_gutters() {
-        // `gap: row col` (SPEC §5): `4 0` paints row rules (horizontal gutters), `0 4`
+        // `gap: row col` [SPEC 11]: `4 0` paints row rules (horizontal gutters), `0 4`
         // column rules (vertical). A 2×2 grid has one interior boundary each way.
         let rows_only = lay_out(
             "|grid#g| { columns: 40 40; gap: 4 0; gap-color: --stroke } [\n  \"a\" \"b\"\n  \"c\" \"d\"\n]\n",
@@ -910,7 +910,7 @@ mod tests {
     #[test]
     fn a_filled_grid_cell_aligns_its_text_by_its_own_align() {
         // A grid cell filled by the container's `align: stretch` then honours its
-        // own `align` (↔) to place its text (SPEC §5) — the generic rule tables use.
+        // own `align` (↔) to place its text [SPEC 12] — the generic rule tables use.
         let text_cx = |a: &str| {
             let src = format!(
                 "|grid#g| {{ columns: 200; align: stretch }} [\n  |block#c| \"x\" {{ align: {a} }}\n]\n"

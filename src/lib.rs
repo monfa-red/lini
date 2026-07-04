@@ -201,7 +201,7 @@ pub mod testing {
 
     /// The number of routable edges the source declares (fans/chains already expanded
     /// at resolve into one `ResolvedLink` per edge-chain). Sequence-scope messages are
-    /// **not** routable — the sequence layout draws them as time-row arrows (SPEC §10),
+    /// **not** routable — the sequence layout draws them as time-row arrows [SPEC 13],
     /// so the router never sees them — and are excluded here, mirroring
     /// `routing::ortho::request`.
     pub fn declared_edges(src: &str) -> usize {

@@ -1,4 +1,4 @@
-//! Line and dot geometry ([CHARTS.md] §3): a polyline through the data (with
+//! Line and dot geometry [SPEC 14.2]: a polyline through the data (with
 //! optional vertex markers), or one marker per datum. Both crop to the plot via the
 //! shared clip, and a line honours `curve: linear | step` and `stroke-style`.
 
@@ -13,7 +13,7 @@ use crate::resolve::MarkerKind;
 /// One datum's data-space coordinate paired with its pixel coordinate.
 pub(super) type Plotted = ((f64, f64), (f64, f64));
 
-/// All `|area|` series — drawn behind bars and lines ([CHARTS.md] §15).
+/// All `|area|` series — drawn behind bars and lines [SPEC 14.9].
 pub fn areas(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
     for ser in &chart.series {
         if matches!(ser.kind, SeriesKind::Area) {
@@ -22,7 +22,7 @@ pub fn areas(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
     }
 }
 
-/// All `|line|` series — drawn over areas and bars ([CHARTS.md] §15).
+/// All `|line|` series — drawn over areas and bars [SPEC 14.9].
 pub fn lines(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
     for ser in &chart.series {
         if matches!(ser.kind, SeriesKind::Line) {
@@ -31,7 +31,7 @@ pub fn lines(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
     }
 }
 
-/// All `|dots|` series — drawn on top ([CHARTS.md] §15).
+/// All `|dots|` series — drawn on top [SPEC 14.9].
 pub fn dots(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
     for ser in &chart.series {
         if matches!(ser.kind, SeriesKind::Dots) {
@@ -41,7 +41,7 @@ pub fn dots(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
 }
 
 /// (data-space coords, pixel coords) for every datum of a series. The pixel point comes
-/// from the shared `Plot::project`, so a radar reuses these builders unchanged ([§11]).
+/// from the shared `Plot::project`, so a radar reuses these builders unchanged ([SPEC 14.7]).
 /// Shared with the inline-label collector ([`super::labels`]), so a tag sits on the
 /// exact point its marker does.
 pub(super) fn samples(plot: &Plot, chart: &Chart, ser: &Series) -> Vec<Plotted> {
@@ -80,7 +80,7 @@ fn draw_line(plot: &Plot, chart: &Chart, ser: &Series, out: &mut Vec<PlacedNode>
 
 /// The polyline run(s) for a series' pixel points: a radar (radial) closes the loop
 /// back to the first point and is uncropped (it sits within the rim); a cartesian line
-/// is interpolated by `curve:` and cropped to the plot ([CHARTS.md] §6/§12).
+/// is interpolated by `curve:` and cropped to the plot [SPEC 14.4].
 fn line_runs(plot: &Plot, px: &[(f64, f64)], curve: &Curve) -> Vec<Vec<(f64, f64)>> {
     if plot.is_radial() {
         let mut loop_ = px.to_vec();
@@ -91,21 +91,21 @@ fn line_runs(plot: &Plot, px: &[(f64, f64)], curve: &Curve) -> Vec<Vec<(f64, f64
 }
 
 /// An `|area|`: a filled polygon from the (curved, plot-clamped) top edge down to the
-/// baseline, plus the top edge as a line ([CHARTS.md] §3).
+/// baseline, plus the top edge as a line [SPEC 14.2].
 fn draw_area(plot: &Plot, chart: &Chart, ser: &Series, out: &mut Vec<PlacedNode>) {
     let pts = samples(plot, chart, ser);
     if pts.len() < 2 {
         return;
     }
     let px: Vec<(f64, f64)> = pts.iter().map(|(_, p)| *p).collect();
-    // The edge stroke ([CHARTS.md] §10): an explicit `stroke`, else a deep tier of the
+    // The edge stroke [SPEC 14.6]: an explicit `stroke`, else a deep tier of the
     // fill so the area reads as a filled shape with a defined outline, not a flat blob.
     let edge = ser
         .outline
         .as_ref()
         .map(|(c, _)| c.clone())
         .unwrap_or_else(|| deepen(&ser.color));
-    // A filled radar fills the closed spoke polygon — there is no baseline ([§12]).
+    // A filled radar fills the closed spoke polygon — there is no baseline ([SPEC 14.7]).
     if plot.is_radial() {
         out.push(prim::poly(px.clone(), ser.color.clone(), 0.82));
         for run in line_runs(plot, &px, &ser.curve) {
@@ -148,7 +148,7 @@ fn draw_area(plot: &Plot, chart: &Chart, ser: &Series, out: &mut Vec<PlacedNode>
     vertex_markers(chart, ser, &pts, out);
 }
 
-/// The diameter of a centred chart marker by kind ([CHARTS.md] §3): a `dot` stays small,
+/// The diameter of a centred chart marker by kind [SPEC 14.2]: a `dot` stays small,
 /// a `circle` / `diamond` is larger (hover-sized), each scaling gently with the line
 /// thickness. A `|dots|` series sizes itself by `width` instead; a `|mark|` point passes a
 /// nominal thickness. Shared by line/area vertices ([`vertex_markers`]) and mark points.
@@ -160,8 +160,8 @@ pub(super) fn marker_diameter(kind: MarkerKind, thickness: f64) -> f64 {
 }
 
 /// Markers at each in-domain datum (the marker family generalised to every vertex,
-/// [CHARTS.md] §3), drawn when a line / area sets `marker:`. Each carries the datum's
-/// `<title>`, so a marked point is a hover target ([§14]) — pick `circle` to size it for
+/// [SPEC 14.2]), drawn when a line / area sets `marker:`. Each carries the datum's
+/// `<title>`, so a marked point is a hover target ([SPEC 14.8]) — pick `circle` to size it for
 /// hovering.
 fn vertex_markers(chart: &Chart, ser: &Series, pts: &[Plotted], out: &mut Vec<PlacedNode>) {
     if ser.marker == MarkerKind::None {
@@ -189,7 +189,7 @@ fn draw_dots(plot: &Plot, chart: &Chart, ser: &Series, out: &mut Vec<PlacedNode>
     }
 }
 
-/// Whether a datum's data coords lie inside both axes' domains (crop, §6).
+/// Whether a datum's data coords lie inside both axes' domains (crop, [SPEC 6]).
 pub(super) fn in_domain(chart: &Chart, ser: &Series, x: f64, y: f64) -> bool {
     chart.x.scale.contains(x) && chart.values[ser.axis].scale.contains(y)
 }
@@ -211,7 +211,7 @@ fn dot_title(chart: &Chart, ser: &Series, x: f64, y: f64) -> String {
     }
 }
 
-/// The pixel polyline a curve draws through `pts` ([CHARTS.md] §3): straight
+/// The pixel polyline a curve draws through `pts` [SPEC 14.2]: straight
 /// segments, a staircase, or a monotone-cubic resampled into a dense polyline (so
 /// the clip and polyline emitters are reused unchanged — no separate bézier path).
 fn curve_points(pts: &[(f64, f64)], curve: &Curve) -> Vec<(f64, f64)> {
@@ -231,7 +231,7 @@ fn curve_points(pts: &[(f64, f64)], curve: &Curve) -> Vec<(f64, f64)> {
 
 /// A monotone cubic Hermite (Fritsch–Carlson) through `pts`, resampled into a dense
 /// polyline. Passes through every point and **never overshoots** — no invented peak
-/// or sub-baseline dip ([CHARTS.md] §3). Assumes x is monotonic (line / fn data).
+/// or sub-baseline dip [SPEC 14.2]. Assumes x is monotonic (line / fn data).
 fn monotone_resample(pts: &[(f64, f64)]) -> Vec<(f64, f64)> {
     let n = pts.len();
     if n < 3 {

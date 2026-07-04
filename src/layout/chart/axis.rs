@@ -1,4 +1,4 @@
-//! Axis rendering ([CHARTS.md] §5/§9): gridlines (drawn behind the data), then the
+//! Axis rendering [SPEC 14.4]: gridlines (drawn behind the data), then the
 //! tick labels and axis titles. The primary value axis and a numeric x axis draw
 //! gridlines by default; `gridlines: none | colour` overrides per axis.
 
@@ -133,7 +133,7 @@ fn x_labels(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
     }
 }
 
-/// Row gridlines ([CHARTS.md] §11): the value axis runs along the bottom, so its
+/// Row gridlines [SPEC 14.7]: the value axis runs along the bottom, so its
 /// gridlines are vertical (at each value tick, spanning the plot height).
 fn row_gridlines(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
     for axis in &chart.values {
@@ -150,7 +150,7 @@ fn row_gridlines(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
     }
 }
 
-/// Row labels ([CHARTS.md] §11): value ticks and the value-axis title along the bottom,
+/// Row labels [SPEC 14.7]: value ticks and the value-axis title along the bottom,
 /// the domain (category) labels down the left at each slot centre.
 fn row_labels(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
     for axis in &chart.values {
@@ -197,7 +197,7 @@ fn row_labels(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
 }
 
 /// The gridline colour for a value axis: an explicit tint, the faint default for the
-/// primary axis, else none (a secondary axis adds none, avoiding moiré — §5).
+/// primary axis, else none (a secondary axis adds none, avoiding moiré — [SPEC 5]).
 fn value_grid(axis: &ValueAxis) -> Option<ResolvedValue> {
     match &axis.grid {
         Grid::Color(c) => Some(c.clone()),

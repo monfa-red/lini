@@ -1,4 +1,4 @@
-//! Gradient paints (SPEC §11.3): `gradient()` / `linear-gradient()` /
+//! Gradient paints [SPEC 10.3]: `gradient()` / `linear-gradient()` /
 //! `radial-gradient()` on any paint — `fill`, `stroke`, `link-color`, `gap-color`
 //! (the rewrite is property-agnostic: any gradient-valued attr). Twin of the drop-shadow filter
 //! table — every distinct gradient is interned once, emitted as a
@@ -46,7 +46,7 @@ fn key(g: &GradientDef) -> String {
 }
 
 /// Intern every distinct gradient, rewrite each paint use-site to `url(#…)`, and
-/// store the definitions on the scene (SPEC §11.3). Runs once after layout.
+/// store the definitions on the scene [SPEC 10.3]. Runs once after layout.
 pub(crate) fn lower(laid: &mut LaidOut) {
     let mut keys: Vec<String> = Vec::new();
     for node in &mut laid.nodes {

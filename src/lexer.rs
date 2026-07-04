@@ -7,16 +7,16 @@ pub enum TokKind {
     Ident(String),
     String(String),
     Number(f64),
-    Percent(f64), // a number with a '%' suffix (color components, SPEC §2)
+    Percent(f64), // a number with a '%' suffix (color components, [SPEC 2])
     /// `#` + the raw run of ident chars after it, undecided: the parser reads it
     /// as a colour in a value (`#f80`, validated as hex) or an id in bars / at a
     /// rule head (`#cat`, validated as an ident). A context-free lexer can't tell
-    /// the two apart, so it emits one raw token (SPEC §2).
+    /// the two apart, so it emits one raw token [SPEC 2].
     Hash(String),
     RawCssVar(String), // CSS var name without leading '--'
     /// A backtick `` `…` `` expression body, captured raw (multi-line); the
     /// expression sub-language ([`crate::expr`]) parses it, so the main lexer never
-    /// sees its operators (SPEC §11.7).
+    /// sees its operators [SPEC 10.7].
     Expr(String),
 
     Pipe,   // |
@@ -95,7 +95,7 @@ impl<'a> Lexer<'a> {
                 b',' => self.push_punct(TokKind::Comma, 1),
                 b'&' => self.push_punct(TokKind::Amp, 1),
                 b'"' => self.lex_string()?,
-                // Single quotes are reserved, not strings (SPEC §2/§18).
+                // Single quotes are reserved, not strings [SPEC 2/21].
                 b'\'' => {
                     return Err(Error::at(
                         Span::new(self.i, self.i + 1),
@@ -188,7 +188,7 @@ impl<'a> Lexer<'a> {
                 self.i += 1;
                 // Leading / trailing whitespace is trimmed from every string
                 // value (inner spacing kept) so source spacing never leaks into
-                // the render — `" ABC "` is "ABC" (SPEC §2). The span still covers
+                // the render — `" ABC "` is "ABC" [SPEC 2]. The span still covers
                 // the quotes for errors.
                 self.tokens.push(Token {
                     kind: TokKind::String(value.trim().to_string()),
@@ -229,7 +229,7 @@ impl<'a> Lexer<'a> {
     }
 
     /// A backtick `` `…` `` region, captured raw (multi-line) — the expression
-    /// engine parses the body, so the main lexer never sees operators (SPEC §11.7).
+    /// engine parses the body, so the main lexer never sees operators [SPEC 10.7].
     fn lex_expr(&mut self) -> Result<(), Error> {
         let start = self.i;
         self.i += 1; // opening backtick
@@ -321,7 +321,7 @@ impl<'a> Lexer<'a> {
                 format!("invalid number literal '{}'", text),
             )
         })?;
-        // A trailing `%` makes it a percentage (color components, SPEC §2).
+        // A trailing `%` makes it a percentage (color components, [SPEC 2]).
         let kind = if self.i < self.bytes.len() && self.bytes[self.i] == b'%' {
             self.i += 1;
             TokKind::Percent(value)

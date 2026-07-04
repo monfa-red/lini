@@ -1,4 +1,4 @@
-//! The stylesheet and cascade (SPEC §4, §12), class-only after desugar.
+//! The stylesheet and cascade [SPEC 4, 4], class-only after desugar.
 //!
 //! A rule is `selector { decls }`. After desugar every type/template/define is a
 //! generated `.lini-*` class, so selectors carry only classes: a single class
@@ -66,7 +66,7 @@ impl Stylesheet {
     }
 
     /// Whether `name` is a class any rule references — a node may apply only
-    /// these (SPEC §15 `unknown class`). Generated `.lini-*` classes are always
+    /// these ([SPEC 19] `unknown class`). Generated `.lini-*` classes are always
     /// known and never validated this way; this gates only user classes.
     pub fn defines_class(&self, name: &str) -> bool {
         self.classes.contains(name)
@@ -88,7 +88,7 @@ impl Stylesheet {
 
     /// The descendant (tier 2), user-class (tier 3), then id (tier 4) declaration
     /// layers matching a node, flattened in cascade order — most-specific last
-    /// (SPEC §12). A worn `.lini-*` class is the type tier (1), looked up via
+    /// [SPEC 4]. A worn `.lini-*` class is the type tier (1), looked up via
     /// [`Self::class_decls`], and excluded here; the instance's own block (tier 5)
     /// is appended by the caller.
     pub fn node_layers(
@@ -123,7 +123,7 @@ impl Stylesheet {
 }
 
 /// A single-unit selector targeting one id — `#hero` or an id-pinned type
-/// `|table#main|` — the cascade's id tier (SPEC §12).
+/// `|table#main|` — the cascade's id tier [SPEC 4].
 fn selector_is_id(sel: &[SelUnit]) -> bool {
     matches!(sel, [SelUnit::Id(_)] | [SelUnit::Type { id: Some(_), .. }])
 }
@@ -167,7 +167,7 @@ fn unit_matches(unit: &SelUnit, facts: &NodeFacts) -> bool {
             facts.classes.iter().any(|x| x == name)
                 && id.as_deref().is_none_or(|i| facts.id.as_deref() == Some(i))
         }
-        // `|-|` lowers to `.lini-link` in desugar (SPEC §9), so the cascade — which
+        // `|-|` lowers to `.lini-link` in desugar [SPEC 9], so the cascade — which
         // runs on the lowered stylesheet — never sees it.
         SelUnit::Link => unreachable!("'|-|' is lowered to '.lini-link' before resolve"),
     }

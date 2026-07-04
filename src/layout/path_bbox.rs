@@ -1,5 +1,5 @@
 //! Bounding box of an SVG `<path>` `d` string. `|path|` draws in native
-//! coordinates (SPEC §7), so to size it in flow we walk the command stream and
+//! coordinates [SPEC 7], so to size it in flow we walk the command stream and
 //! accumulate a tight extent — every on-curve point, the analytic extrema of
 //! each bézier, and sampled points along each elliptical arc. Layout only;
 //! rendering emits the raw `d` untouched.

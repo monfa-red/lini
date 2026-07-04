@@ -1,4 +1,4 @@
-//! Inline data labels ([CHARTS.md] §14): a series' `tags:` drawn on the plot beside their
+//! Inline data labels [SPEC 14.8]: a series' `tags:` drawn on the plot beside their
 //! points, positioned by one greedy, deterministic pass. Each label takes the first
 //! candidate offset that clears the labels already placed, stays inside the plot, and
 //! sits off the series lines; an `auto` label with nowhere to sit is dropped (its hover
@@ -18,14 +18,14 @@ use crate::resolve::{MarkerKind, ResolvedValue};
 /// A drawn line segment (pixel space) a label should not sit on.
 type Seg = ((f64, f64), (f64, f64));
 
-/// Inline-label font size — small, in the register of a link label ([CHARTS.md] §14).
+/// Inline-label font size — small, in the register of a link label [SPEC 14.8].
 const SIZE: f64 = 10.0;
 /// Clearance from a point to its label box (clearing the marker), and the margin folded
 /// into a box for label-vs-label / label-vs-edge spacing.
 const GAP: f64 = 7.0;
 const PAD: f64 = 2.0;
 
-/// One label to place ([CHARTS.md] §14): the point it annotates (pixels), the `radius` of
+/// One label to place [SPEC 14.8]: the point it annotates (pixels), the `radius` of
 /// the mark there (so an outside label clears its *edge*, not its centre — a fat bubble
 /// pushes its label far, a small dot barely), its text and the tint it takes when placed
 /// *beside* the point, whether it is `forced` (`always` — placed regardless) or may drop
@@ -40,7 +40,7 @@ pub(super) struct Req {
     pub inside: Option<Inside>,
 }
 
-/// A bubble's first choice ([CHARTS.md] §14): when the text fits within `fit` (the
+/// A bubble's first choice [SPEC 14.8]: when the text fits within `fit` (the
 /// bubble's diameter) the label sits centred *inside*, tinted `color` (the on-fill role);
 /// otherwise it falls through to the outside seats with the request's own tint.
 pub(super) struct Inside {
@@ -48,7 +48,7 @@ pub(super) struct Inside {
     pub color: ResolvedValue,
 }
 
-/// Append the inline-label requests a chart's series raise ([CHARTS.md] §14): each
+/// Append the inline-label requests a chart's series raise [SPEC 14.8]: each
 /// `tags:` entry on a series whose `tooltip:` shows inline, anchored on the datum's pixel
 /// point. Reuses `marks::samples`, so a tag sits on exactly the point its marker does.
 /// (`|bubble|` / `|mark|` push their own reqs as they lay out — the same `reqs` list, so
@@ -84,7 +84,7 @@ pub(super) fn collect_series(plot: &Plot, chart: &Chart, reqs: &mut Vec<Req>) {
 }
 
 /// The line/area series' drawn polylines (pixel space) a label should avoid sitting on
-/// ([CHARTS.md] §14). Bars / bubbles / dots fill or dot a region a tag reads fine beside,
+/// [SPEC 14.8]. Bars / bubbles / dots fill or dot a region a tag reads fine beside,
 /// so only `|line|` / `|area|` contribute. Reuses `marks::samples`, so the segments track
 /// the points the line is drawn through.
 pub(super) fn series_lines(plot: &Plot, chart: &Chart) -> Vec<Seg> {
@@ -104,7 +104,7 @@ pub(super) fn series_lines(plot: &Plot, chart: &Chart) -> Vec<Seg> {
     segs
 }
 
-/// Place the requests and emit their text nodes ([CHARTS.md] §14). Greedy: each label
+/// Place the requests and emit their text nodes [SPEC 14.8]. Greedy: each label
 /// takes the first candidate offset that clears every label already placed and stays in
 /// the plot; failing that, an `always` label keeps the first in-plot offset (else its
 /// preferred one) while an `auto` label is dropped to its hover card. Deterministic —

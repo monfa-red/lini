@@ -1,4 +1,4 @@
-//! Bands and annotations ([CHARTS.md] §7–§8) — children that paint the shared plane
+//! Bands and annotations [SPEC 14.5] — children that paint the shared plane
 //! in *data* coordinates. A `|band|` shades (or divides) a span on its axis and labels
 //! it; a `|mark|` draws a reference line or a labelled point. Both place by value on a
 //! named axis through one projector (`axis_px`), so they survive a `direction` flip and
@@ -20,7 +20,7 @@ const SHADE: f64 = 0.15;
 const LINE_W: f64 = 1.5;
 
 /// The pixel coordinate of value `v` measured on `axis` — an x-pixel on the domain
-/// axis, a y-pixel on a value axis — clamped into the drawn domain (crop, [§6]).
+/// axis, a y-pixel on a value axis — clamped into the drawn domain (crop, [SPEC 14.4]).
 fn axis_px(plot: &Plot, chart: &Chart, axis: &AxisRef, v: f64) -> f64 {
     match axis {
         AxisRef::X => plot.x_at(&chart.x.scale, chart.x.scale.clamp(v)),
@@ -39,7 +39,7 @@ fn contains(chart: &Chart, axis: &AxisRef, v: f64) -> bool {
     }
 }
 
-/// Band shades and dividers, drawn first so the data sits over them ([CHARTS.md] §7/§15).
+/// Band shades and dividers, drawn first so the data sits over them [SPEC 14.5].
 pub fn band_shades(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
     let mut drawn: Vec<f64> = Vec::new(); // divider positions, to dedup a shared edge
     for b in &chart.bands {
@@ -105,7 +105,7 @@ fn dividers(
     }
 }
 
-/// Band tick labels along each band's axis, tinted its fill ([CHARTS.md] §9). An x-band
+/// Band tick labels along each band's axis, tinted its fill [SPEC 14.6]. An x-band
 /// tick sits a row below the x labels so band names and numeric ticks don't collide.
 pub fn band_ticks(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
     for b in &chart.bands {
@@ -138,8 +138,8 @@ pub fn x_band_row(chart: &Chart) -> f64 {
     if labelled { LABEL_SIZE } else { 0.0 }
 }
 
-/// `|mark|` annotations ([CHARTS.md] §8): a reference line at a value, or a labelled
-/// point. Drawn after the series, before the axes / labels ([§15]).
+/// `|mark|` annotations [SPEC 14.5]: a reference line at a value, or a labelled
+/// point. Drawn after the series, before the axes / labels ([SPEC 14.9]).
 pub fn marks(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>, reqs: &mut Vec<labels::Req>) {
     for m in &chart.marks {
         match m.at {
@@ -188,7 +188,7 @@ fn ref_line(plot: &Plot, chart: &Chart, m: &Mark, v: f64, out: &mut Vec<PlacedNo
 
 /// A labelled point at `(x, y)` — `x` on the domain axis, `y` on the bound value axis
 /// (the primary axis if the mark binds the x axis). `marker: none` drops the dot. The
-/// label joins the shared placement pass ([CHARTS.md] §14) — forced (a mark is a
+/// label joins the shared placement pass [SPEC 14.8] — forced (a mark is a
 /// deliberate annotation, so its label is always placed, never dropped) yet registered, so
 /// a series' tags fan out around it. `tooltip: none` suppresses it.
 fn point(

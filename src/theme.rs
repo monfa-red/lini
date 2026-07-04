@@ -1,4 +1,4 @@
-//! Themes: the `--theme` argument and the built-in palettes (SPEC §11/§14).
+//! Themes: the `--theme` argument and the built-in palettes [SPEC 10/16].
 //!
 //! A theme is a set of `--lini-*` values. Built-ins are typed palettes here;
 //! `--theme FILE` reads the same shape from CSS ([`extract_lini_vars`]). Both flow
@@ -76,7 +76,7 @@ pub fn list_themes() -> &'static [(&'static str, &'static str)] {
 }
 
 /// The CSS for a built-in theme — the `--lini-*` declarations a user can copy
-/// (SPEC §14). `None` for an unknown name.
+/// [SPEC 16]. `None` for an unknown name.
 pub fn builtin_css(name: &str) -> Option<String> {
     Some(to_css(&palette(name)?))
 }
@@ -142,7 +142,7 @@ fn collapse(v: &mut VarTable, arm: usize) {
     }
 }
 
-/// Render a palette to the canonical theme CSS (SPEC §14). `color-scheme` rides
+/// Render a palette to the canonical theme CSS [SPEC 16]. `color-scheme` rides
 /// the rule when adaptive; `font-family` is commented so the engine default
 /// (monospace, exact text sizing) holds unless a user uncomments it.
 fn to_css(vars: &VarTable) -> String {

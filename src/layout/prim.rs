@@ -1,5 +1,5 @@
 //! `PlacedNode` **builders** for a layout engine's lowered primitives — shared by
-//! charts ([CHARTS.md] §15) and sequences (SPEC §10). Every bar, gridline, lifeline,
+//! charts [SPEC 14.9] and sequences [SPEC 13]. Every bar, gridline, lifeline,
 //! arrow, label, frame, and note is built through these — never an open-coded
 //! `PlacedNode` — so lowering stays one mechanism and the render emitters
 //! (`emit_rect` / `emit_line` / the text path) draw them unchanged. (Distinct from
@@ -89,12 +89,12 @@ pub fn oval(cx: f64, cy: f64, w: f64, h: f64, fill: ResolvedValue) -> PlacedNode
     filled(NodeKind::Oval, cx, cy, w, h, fill)
 }
 
-/// A centred chart point marker ([CHARTS.md] §3): a filled round point (`dot` / `circle`)
+/// A centred chart point marker [SPEC 14.2]: a filled round point (`dot` / `circle`)
 /// or a rhombus (`diamond`), `w`×`h` at (cx, cy). The kind picks the shape; the caller
 /// sizes it (a line vertex by the kind, a `|dots|` by its `width`). The **one** place a
 /// chart point marker is built — line/area vertices, `|dots|`, and `|mark|` points all
 /// route through it, so dot/circle/diamond never diverge. `arrow` / `crow` never reach
-/// here (rejected at parse, [CHARTS.md] §18); any non-diamond draws round.
+/// here (rejected at parse, [SPEC 19]); any non-diamond draws round.
 pub fn marker(
     kind: MarkerKind,
     cx: f64,
@@ -130,8 +130,8 @@ pub fn poly(points: Vec<(f64, f64)>, fill: ResolvedValue, opacity: f64) -> Place
     n
 }
 
-/// An annular-sector filled polygon (a pie / donut slice — [CHARTS.md] §13 — or a
-/// radial bar, §12): radius `r0`→`r1` over angles `[a_lo, a_hi]` (0 straight up,
+/// An annular-sector filled polygon (a pie / donut slice — [SPEC 14.7] — or a
+/// radial bar, [SPEC 12]): radius `r0`→`r1` over angles `[a_lo, a_hi]` (0 straight up,
 /// increasing clockwise). The arcs are segmented finely enough to read smooth at any
 /// size; `r0 ≈ 0` collapses the inner edge to the centre (a full wedge). `opacity` lets
 /// overlapping wedges read through.
@@ -180,7 +180,7 @@ pub fn line(points: Vec<(f64, f64)>, stroke: ResolvedValue, width: f64) -> Place
 
 /// A filled shape through a raw SVG path `d` (absolute coords baked in, like [`line`] /
 /// [`poly`]; the node stays at the origin). For a composed outline a `rect` / `poly`
-/// can't state — a frame's banner tab or a note's folded corner (SPEC §10). `bbox` is
+/// can't state — a frame's banner tab or a note's folded corner [SPEC 13]. `bbox` is
 /// its absolute bounds, so the enclosing engine sizes correctly.
 pub fn path(d: String, fill: ResolvedValue, bbox: Bbox) -> PlacedNode {
     let mut n = node(NodeKind::Path, bbox);
@@ -248,7 +248,7 @@ pub fn text(
     set(&mut n, "font-size", ResolvedValue::Number(size));
     // The diagram-wide default weight is bold (`--lini-font-weight`); a chart keeps that
     // for the title and legend (`bold`) but states `normal` for its data text — axis
-    // ticks, tags, annotations — so the numbers and labels don't shout ([CHARTS.md] §9).
+    // ticks, tags, annotations — so the numbers and labels don't shout [SPEC 14.6].
     set(
         &mut n,
         "font-weight",
@@ -303,23 +303,23 @@ pub fn text_left(
 }
 
 /// The drawn width of a centred label, for laying out legends and right-aligned
-/// ticks (compile-time text measurement, SPEC §6).
+/// ticks (compile-time text measurement, [SPEC 5]).
 pub fn text_width(content: &str, size: f64) -> f64 {
     approx_width(content, size, 0.0)
 }
 
-/// The drawn height of a label, for collision-testing inline labels ([CHARTS.md] §14).
+/// The drawn height of a label, for collision-testing inline labels [SPEC 14.8].
 pub fn text_height(content: &str, size: f64) -> f64 {
     approx_height(content, size, 0.0)
 }
 
-/// Attach a native `<title>` — the baked-safe tooltip floor ([CHARTS.md] §14),
+/// Attach a native `<title>` — the baked-safe tooltip floor [SPEC 14.8],
 /// emitted by `render_node` on any node carrying a `title:`.
 pub fn set_title(n: &mut PlacedNode, title: String) {
     n.attrs.insert("title", ResolvedValue::String(title));
 }
 
-/// Draw a `stroke:` outline on a fill shape ([CHARTS.md] §10): replace the builder's
+/// Draw a `stroke:` outline on a fill shape [SPEC 14.6]: replace the builder's
 /// `stroke: none` / width-0 default with `color` at `width`. The one place a chart
 /// shape gains an outline — reused by bars, slices, and bubbles (an area's outline is
 /// its own top edge, a `prim::line`), so `stroke:` never bleeds into the fill.
@@ -328,7 +328,7 @@ pub fn outline(n: &mut PlacedNode, color: ResolvedValue, width: f64) {
     n.attrs.insert("stroke-width", ResolvedValue::Number(width));
 }
 
-/// Round a rect's corners ([CHARTS.md] §3): set the `radius` the `Block` renderer reads
+/// Round a rect's corners [SPEC 14.2]: set the `radius` the `Block` renderer reads
 /// (`emit_rect` → `rx`/`ry`). Skipped at 0 so a square shape's attrs don't churn. Shared
 /// by bars, the legend swatches, and the tooltip card.
 pub fn round(n: &mut PlacedNode, radius: f64) {

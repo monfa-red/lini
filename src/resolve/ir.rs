@@ -9,14 +9,14 @@ pub struct Program {
     pub scene: ResolvedScene,
     pub links: Vec<ResolvedLink>,
     pub sheet: SheetInputs,
-    /// Stylesheet functions (SPEC §11.7), carried to the layout phase so a chart can
-    /// sample a deferred `fn:` once its x-domain is fixed ([CHARTS.md] §4). Built at
+    /// Stylesheet functions [SPEC 10.7], carried to the layout phase so a chart can
+    /// sample a deferred `fn:` once its x-domain is fixed [SPEC 14.3]. Built at
     /// resolve; only the chart layout reads it.
     pub funcs: FuncTable,
 }
 
 /// The render inputs the rules builder restates as CSS class rules — paint rides
-/// CSS, geometry bakes (SPEC §13). After desugar every type/template/define lives
+/// CSS, geometry bakes [SPEC 16]. After desugar every type/template/define lives
 /// as a single-class rule, so this is just those rules' resolved attrs (the
 /// generated `.lini-*` type classes and the user `.style` classes, in stylesheet
 /// order), the link defaults, and the root inherited-text baseline. Descendant
@@ -31,7 +31,7 @@ pub struct SheetInputs {
     /// The root container's `font-size` — the inherited-text baseline for `.lini`
     /// (a baked layout constant carried in the global block, not a CSS var).
     pub root_font_size: f64,
-    /// Inherited-text props the global block set, for the `.lini` rule (SPEC §10):
+    /// Inherited-text props the global block set, for the `.lini` rule [SPEC 6]:
     /// `font-family` / `font-weight` / `color` override their themeable var, the
     /// rest (`font-style`, `text-transform`, `text-decoration`, `text-shadow`) are
     /// live CSS with no default. Present only when authored.
@@ -59,7 +59,7 @@ pub struct ResolvedInst {
     /// label sugar on non-text shapes produces a `Text` child instead.
     pub label: Option<String>,
     pub attrs: AttrMap,
-    /// A `Text` node's own `{ }` style (SPEC §3) — the text-valid props it set,
+    /// A `Text` node's own `{ }` style [SPEC 3] — the text-valid props it set,
     /// emitted as a `style=` / `transform` on the `<text>`. Empty for boxes (their
     /// per-node diff is computed at render) and for unstyled text. `attrs` stays
     /// the effective text context (inherited ∪ own) for layout measurement.
@@ -71,7 +71,7 @@ pub struct ResolvedInst {
 
 /// One of the built-in primitives. All user shapes resolve to one of these.
 /// (There is no title primitive — a caption is just a small-text `|block|` flow
-/// child, first in a column for a title or last for a footer, SPEC §8.)
+/// child, first in a column for a title or last for a footer, [SPEC 8].)
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum NodeKind {
     Block,
@@ -175,7 +175,7 @@ impl AttrMap {
 #[derive(Clone, Debug)]
 pub enum ResolvedValue {
     Number(f64),
-    /// A percentage — `50%`, only valid inside a colour (SPEC §2).
+    /// A percentage — `50%`, only valid inside a colour [SPEC 2].
     Percent(f64),
     String(String),
     Hex(String),
@@ -192,7 +192,7 @@ pub enum ResolvedValue {
         raw: bool,
     },
     /// A `fn:` series formula, held **unevaluated** (its `x` / `u` are unbound at
-    /// resolve, [CHARTS.md] §4): one `Expr` for a whole-domain `fn:`, or several for a
+    /// resolve, [SPEC 14.3]): one `Expr` for a whole-domain `fn:`, or several for a
     /// per-band list. Sampled to baked numbers at chart layout and never rendered, so
     /// the two exhaustive `ResolvedValue` matches (`render::values::format_value`,
     /// `layout::values::describe`) treat it as unreachable / opaque.
@@ -201,7 +201,7 @@ pub enum ResolvedValue {
 
 impl ResolvedValue {
     /// The numeric value, if this is a plain number. A `--name` reference is a
-    /// visual var (SPEC §11.2), never a layout number, so it has none.
+    /// visual var [SPEC 10.2], never a layout number, so it has none.
     pub fn as_number(&self) -> Option<f64> {
         match self {
             ResolvedValue::Number(n) => Some(*n),
@@ -216,7 +216,7 @@ pub struct ResolvedCall {
     pub args: Vec<ResolvedValue>,
 }
 
-/// The visual `--lini-*` variable table (SPEC §11.2 — vars are visual-only).
+/// The visual `--lini-*` variable table ([SPEC 10.2] — vars are visual-only).
 /// Entries are keyed by name without the `--lini-` prefix.
 #[derive(Clone, Debug, Default)]
 pub struct VarTable {
@@ -251,11 +251,11 @@ pub enum MarkerKind {
     None,
     Arrow,
     Dot,
-    /// A larger `dot` — a filled point sized for hovering / reading ([SPEC §7]). On a
-    /// chart line it marks a data point ([CHARTS §3]).
+    /// A larger `dot` — a filled point sized for hovering / reading ([SPEC 7]). On a
+    /// chart line it marks a data point ([SPEC 14.2]).
     Circle,
     Diamond,
-    /// The ER "many" crow's-foot ([SPEC §7]); the four below pair it / a bar with an
+    /// The ER "many" crow's-foot ([SPEC 7]); the four below pair it / a bar with an
     /// optionality ring for the full cardinality set.
     Crow,
     /// ER "one" — a single perpendicular bar.
@@ -276,7 +276,7 @@ impl MarkerKind {
             "dot" => Self::Dot,
             "circle" => Self::Circle,
             "diamond" => Self::Diamond,
-            // The ER cardinality family ([SPEC §7]); `many` is an alias of `crow`.
+            // The ER cardinality family ([SPEC 7]); `many` is an alias of `crow`.
             "crow" | "many" => Self::Crow,
             "one" => Self::One,
             "zero-or-one" => Self::ZeroOrOne,
@@ -306,7 +306,7 @@ impl MarkerKind {
     }
 }
 
-/// A link's wiring strategy (SPEC §9, ROUTING.md §Strategies): `routing:`
+/// A link's wiring strategy ([SPEC 9], ROUTING.md Strategies): `routing:`
 /// cascades from the scope like `clearance`. `curved` is deferred and never
 /// resolves.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -318,24 +318,24 @@ pub enum Strategy {
 pub struct ResolvedLink {
     pub endpoints: Vec<ResolvedEndpoint>,
     /// The dot-path of the container this link was written in (`""` = the scene
-    /// root) — the link's **scope** (SPEC §9). Its scope's `layout` picks the wiring
+    /// root) — the link's **scope** [SPEC 9]. Its scope's `layout` picks the wiring
     /// strategy: a `sequence` scope draws its links as time-row arrows and skips the
-    /// orthogonal router (SPEC §10).
+    /// orthogonal router [SPEC 13].
     pub scope: String,
     /// The operator's line part (`->` solid · `-->` dashed · `~>` wavy) — the
     /// message's *kind* in a sequence (call / return / async), read here rather than
-    /// from `stroke-style`, which a `link-style:` override can change (SPEC §10).
+    /// from `stroke-style`, which a `link-style:` override can change [SPEC 13].
     pub line: LineStyle,
     /// The resolved `routing:` (cascaded, then the link's own block) — which
     /// strategy draws this link's wire.
     pub routing: Strategy,
     pub attrs: AttrMap,
     /// Names of the `.style`s applied to this link, in source order — emitted as
-    /// `lini-style-{name}` classes, exactly like a node's (SPEC §14).
+    /// `lini-style-{name}` classes, exactly like a node's [SPEC 16].
     pub applied_styles: Vec<String>,
     pub markers: Markers,
     /// Link labels (label sugar + body `|text|`s), placed onto the drawn
-    /// route by the router's label pass (ROUTING §Model step 7).
+    /// route by the router's label pass (ROUTING Model step 7).
     pub texts: Vec<ResolvedText>,
     pub span: Span,
 }
@@ -354,7 +354,7 @@ pub struct ResolvedText {
     pub attrs: AttrMap,
 }
 
-/// Where a label rides its link (SPEC §9): `Auto` distributes it along the
+/// Where a label rides its link [SPEC 9]: `Auto` distributes it along the
 /// route; `Fraction` pins it at an explicit `along:` fraction (0..1).
 #[derive(Clone, Debug)]
 pub enum Along {

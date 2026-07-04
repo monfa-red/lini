@@ -22,7 +22,7 @@ pub struct EdgeReq {
     pub b_rect: Rect,
     pub side_a: Option<Side>,
     pub side_b: Option<Side>,
-    /// The wiring strategy drawing this edge (SPEC §9): `routing:` cascades
+    /// The wiring strategy drawing this edge [SPEC 9]: `routing:` cascades
     /// per scope and per link, so one expansion serves every strategy.
     pub routing: Strategy,
     pub clearance: f64,
@@ -73,7 +73,7 @@ pub fn requests(program: &Program, index: &SceneIndex) -> Result<Vec<EdgeReq>, E
     for w in &program.links {
         // A sequence scope's messages are drawn by the sequence layout, which
         // owns *where* (column x, row y) and lowers each wire through the
-        // `straight` strategy itself (SPEC §10) — they are never requests.
+        // `straight` strategy itself [SPEC 13] — they are never requests.
         if crate::layout::sequence::is_sequence_scope(program, &w.scope) {
             continue;
         }
@@ -244,7 +244,7 @@ pub fn fan_groups(reqs: &[EdgeReq]) -> Fans {
     Fans { groups: kept, of }
 }
 
-/// The one clearance number (ROUTING §Vocabulary): the link's merged attrs,
+/// The one clearance number (ROUTING Vocabulary): the link's merged attrs,
 /// already carrying the cascaded link default.
 pub fn link_clearance(attrs: &AttrMap) -> f64 {
     attrs.number("clearance").unwrap_or(0.0)

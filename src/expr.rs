@@ -1,4 +1,4 @@
-//! The backtick expression sub-language (SPEC §11.7) — a small, total compile-time
+//! The backtick expression sub-language [SPEC 10.7] — a small, total compile-time
 //! calculator with its own lexer, Pratt parser, and tree-walk evaluator. It is
 //! the **only** place operators live, so the main lexer never sees them: it
 //! captures a backtick region raw and hands the body here.
@@ -11,7 +11,7 @@
 
 use std::collections::HashMap;
 
-/// A folded expression value (SPEC §11.7): a number, or a point for geometry.
+/// A folded expression value [SPEC 10.7]: a number, or a point for geometry.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Value {
     Number(f64),
@@ -409,7 +409,7 @@ struct Func {
     body: Expr,
 }
 
-/// The stylesheet's defined functions (SPEC §11.7), built at resolve time.
+/// The stylesheet's defined functions [SPEC 10.7], built at resolve time.
 #[derive(Default)]
 pub struct FuncTable {
     funcs: HashMap<String, Func>,
@@ -470,8 +470,8 @@ pub fn call(funcs: &FuncTable, name: &str, args: &[Value]) -> Result<Value, Expr
 }
 
 /// Sample `expr` with the ambient `name` bound to each of `values` in turn. The one
-/// seam for ambient sampling: parametric `points:` binds `u` (0→1, SPEC §11.7), a
-/// chart `fn:` binds `x` over its domain ([CHARTS.md] §4).
+/// seam for ambient sampling: parametric `points:` binds `u` (0→1, [SPEC 10.7]), a
+/// chart `fn:` binds `x` over its domain [SPEC 14.3].
 pub fn sample(
     expr: &Expr,
     name: &str,

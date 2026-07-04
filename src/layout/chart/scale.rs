@@ -1,4 +1,4 @@
-//! Axis scales ([CHARTS.md] §6): a categorical **band** (evenly-spaced slots) or a
+//! Axis scales [SPEC 14.4]: a categorical **band** (evenly-spaced slots) or a
 //! numeric **linear** domain. One type for x and value axes, so the projection and
 //! every tick renderer speak one scale. (`log` follows in a later step.)
 
@@ -82,7 +82,7 @@ impl Scale {
         }
     }
 
-    /// Clamp a value into the numeric domain (crop to the plot, [CHARTS.md] §6); a
+    /// Clamp a value into the numeric domain (crop to the plot, [SPEC 14.4]); a
     /// band passes its index through.
     pub fn clamp(&self, v: f64) -> f64 {
         match self {
@@ -159,7 +159,7 @@ pub fn ticks_by_step(min: f64, max: f64, step: f64) -> Vec<f64> {
     out
 }
 
-/// Decade ticks for a log axis ([CHARTS.md] §6): 1-2-5 × 10ⁿ within `[min, max]`.
+/// Decade ticks for a log axis [SPEC 14.4]: 1-2-5 × 10ⁿ within `[min, max]`.
 fn decade_ticks(min: f64, max: f64) -> Vec<f64> {
     if min <= 0.0 || max <= min {
         return vec![min.max(1e-9), max.max(1.0)];
@@ -183,7 +183,7 @@ fn decade_ticks(min: f64, max: f64) -> Vec<f64> {
     out
 }
 
-/// A tick label: the formatted value with an optional unit suffix ([CHARTS.md] §5).
+/// A tick label: the formatted value with an optional unit suffix [SPEC 14.4].
 pub fn label(value: f64, unit: &Option<String>) -> String {
     let mut s = fmt_tick(value);
     if let Some(u) = unit {

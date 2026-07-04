@@ -1,4 +1,4 @@
-//! Canonical source formatter (SPEC §14). Parses to the AST and re-emits a
+//! Canonical source formatter [SPEC 18]. Parses to the AST and re-emits a
 //! normalized form: the three phases in order (the stylesheet `{ }`, then the
 //! instances, then the links), `{ }` style blocks and `[ ]` child lists, bar-wrapped
 //! type selectors and `|name::base|` defines, 2-space indent, space-separated value
@@ -193,7 +193,7 @@ impl Emitter<'_> {
     }
 
     fn emit_selector(&mut self, sel: &Selector) {
-        // Juxtaposed units, single-spaced (SPEC §4): a type `|box|` / `|table#main|`
+        // Juxtaposed units, single-spaced [SPEC 4]: a type `|box|` / `|table#main|`
         // keeps its bars, a class `.hot` and an id `#hero` keep their sigil.
         for (i, unit) in sel.units.iter().enumerate() {
             if i > 0 {
@@ -217,7 +217,7 @@ impl Emitter<'_> {
                     self.out.push('#');
                     self.out.push_str(i);
                 }
-                // `|-|` — the link type (SPEC §9).
+                // `|-|` — the link type [SPEC 9].
                 SelUnit::Link => self.out.push_str("|-|"),
             }
         }
@@ -226,7 +226,7 @@ impl Emitter<'_> {
     // ───────── Instances ─────────
 
     /// Emit a scope's children and internal links **interleaved in source order**
-    /// (SPEC §3) — by span, so the formatter is faithful to a `layout: sequence`
+    /// [SPEC 3] — by span, so the formatter is faithful to a `layout: sequence`
     /// (where that order is time) and the trivia cursor advances monotonically.
     /// One emitter per item kind, shared by the file and every `[ ]` body.
     fn emit_ordered(&mut self, children: &[Child], links: &[Link], depth: usize) {
@@ -264,14 +264,14 @@ impl Emitter<'_> {
     }
 
     /// A node head: `|type#id|`, then the head label, then classes, then a `{ }`
-    /// block, then the `[ ]` content (SPEC §3/§14).
+    /// block, then the `[ ]` content [SPEC 3/16].
     fn emit_node(&mut self, node: &Node, depth: usize) {
         self.indent(depth);
         self.out.push_str(&identity_bars(node));
         // The head label is exactly the source's, never contracted from a `[ ]`
         // text child — its meaning is type-dependent and fmt resolves no types.
         if let Some(label) = &node.label {
-            // The head label takes no style of its own (SPEC §3).
+            // The head label takes no style of its own [SPEC 3].
             self.out.push(' ');
             self.emit_string(&label.text);
         }
@@ -352,7 +352,7 @@ impl Emitter<'_> {
     }
 
     /// The column count if these body cells are *all* bare text (a `|table|`) with
-    /// no interleaved comment — then they align into columns (SPEC §8/§14).
+    /// no interleaved comment — then they align into columns [SPEC 8/16].
     /// Otherwise `None`, falling back to one child per line. The caller has already
     /// excluded a node with internal links.
     fn table_cols(&self, cells: &[Child], style: &[Decl]) -> Option<usize> {
@@ -399,7 +399,7 @@ impl Emitter<'_> {
     }
 
     /// Emit a run of declarations grouped onto as few lines as the source's
-    /// trivia allows (SPEC §20): consecutive decls with nothing between them
+    /// trivia allows [SPEC 18]: consecutive decls with nothing between them
     /// share one line, and a comment or blank line starts a fresh one.
     fn emit_grouped_decls(&mut self, decls: &[&Decl], depth: usize) {
         let mut mid_line = false;
@@ -492,7 +492,7 @@ impl Emitter<'_> {
                 self.emit_endpoint(ep);
             }
         }
-        // The tail mirrors a node's order (SPEC §9): head label, then classes,
+        // The tail mirrors a node's order [SPEC 9]: head label, then classes,
         // then style, then the `[ ]` labels. A lone bare label trails the head
         // (`a -> b "x"`); two or more, or a styled one, ride the `[ ]`.
         let all: Vec<&TextNode> = w.label.iter().chain(w.labels.iter()).collect();
@@ -522,7 +522,7 @@ impl Emitter<'_> {
         }
     }
 
-    /// A text leaf `"…"` with its optional `{ }` style block (SPEC §3).
+    /// A text leaf `"…"` with its optional `{ }` style block [SPEC 3].
     fn emit_text_node(&mut self, t: &TextNode, depth: usize) {
         self.emit_string(&t.text);
         if !t.style.is_empty() {

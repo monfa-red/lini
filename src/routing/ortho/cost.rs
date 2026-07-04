@@ -1,4 +1,4 @@
-//! Law 3's economy constants (ROUTING.md §The Four Laws) — the one place the
+//! Law 3's economy constants (ROUTING.md The Four Laws) — the one place the
 //! cost formula's numbers live.
 //!
 //! cost = length + 2·clearance per turn + 4·clearance per crossing. A

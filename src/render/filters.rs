@@ -1,4 +1,4 @@
-//! Drop-shadow `<filter>` defs (SPEC §8). A closed shape's `shadow:` compiles
+//! Drop-shadow `<filter>` defs [SPEC 8]. A closed shape's `shadow:` compiles
 //! to one `<filter>`; identical specs share a filter, emitted once into
 //! `<defs>` and referenced from the shape's geometry by id.
 //!
@@ -28,7 +28,7 @@ fn default_tint() -> ResolvedValue {
     }
 }
 
-/// Parse a `shadow:` value (SPEC §8). Forms: `N` → offset (N, N) blur N ·
+/// Parse a `shadow:` value [SPEC 8]. Forms: `N` → offset (N, N) blur N ·
 /// `(dx, dy)` · `(dx, dy, blur)` · `(dx, dy, blur, color)`. The tint defaults
 /// to `--lini-shadow-color`. A malformed value yields `None` (drawn unshadowed).
 fn parse(value: &ResolvedValue) -> Option<Shadow> {

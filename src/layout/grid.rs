@@ -1,4 +1,4 @@
-//! Grid layout (SPEC §5).
+//! Grid layout [SPEC 12].
 //!
 //! `layout: grid` sizes from track lists: `columns` (required) and `rows`
 //! (optional — implicit, auto-sized rows). A track is a fixed size, `auto`
@@ -8,7 +8,7 @@
 //! and `span: c r` widens it. `align` (↔) / `justify` (↕) accept a per-column list
 //! (parallel to `columns`) or a scalar and place each cell's box in its track
 //! (`stretch` fills, else pack start/center/end, default centre); a **filled**
-//! cell then honours its *own* `align`/`justify` to place its text (SPEC §5).
+//! cell then honours its *own* `align`/`justify` to place its text [SPEC 12].
 //! `gap-color` fills the interior gutters between cells.
 
 use super::ir::{Bbox, Gutter, PlacedNode};
@@ -72,7 +72,7 @@ pub fn lay_out_grid(
         });
     }
 
-    // A declared `rows` track list is a floor (SPEC §5/§20): it sizes the first
+    // A declared `rows` track list is a floor [SPEC 12/18]: it sizes the first
     // rows, and any overflow flows into implicit auto rows (CSS grid). Columns
     // are fixed — only a `cell:` past the column count errors (in the loop above).
     let declared = row_tracks.as_ref().map_or(0, Vec::len);
@@ -93,7 +93,7 @@ pub fn lay_out_grid(
         let (x0, x1) = (col_off[p.col], col_off[p.col + p.colspan] - gap_x);
         let (y0, y1) = (row_off[p.row], row_off[p.row + p.rowspan] - gap_y);
 
-        // The container's per-column box alignment (SPEC §5): a scalar applies to
+        // The container's per-column box alignment [SPEC 12]: a scalar applies to
         // every column, a tuple is one value per column (parallel to `columns`). On
         // a grid `align` is the horizontal (↔) axis and `justify` the vertical (↕) —
         // matching column-flow, not CSS grid. `stretch` fills the track,
@@ -130,7 +130,7 @@ pub fn lay_out_grid(
 
         // A filled box was sized *after* it laid out its text, so the text sits
         // centred; complete the cell's own `align` (↔) / `justify` (↕) now that its
-        // final size is known (SPEC §5). Generic — a plain grid never triggers it
+        // final size is known [SPEC 12]. Generic — a plain grid never triggers it
         // (only a stretched cell has the slack), and the core needs no "table" notion.
         if fill_w || fill_h {
             align_cell_content(child, span)?;
@@ -242,7 +242,7 @@ fn stretch(attrs: &AttrMap, name: &str) -> bool {
     matches!(attrs.get(name), Some(ResolvedValue::Ident(s)) if s == "stretch")
 }
 
-/// A per-column alignment keyword for column `c` (SPEC §5): a scalar `Ident`
+/// A per-column alignment keyword for column `c` [SPEC 12]: a scalar `Ident`
 /// applies to every column; a `Tuple` is one value per column, parallel to
 /// `columns` (like [`parse_tracks`]). `None` when unset or out of range.
 fn track_align<'a>(attrs: &'a AttrMap, name: &str, c: usize) -> Option<&'a str> {
@@ -267,7 +267,7 @@ fn pack(align: Option<&str>, lo: f64, hi: f64, size: f64) -> f64 {
     }
 }
 
-/// Complete a filled cell's own content alignment (SPEC §5). The grid sizes a cell
+/// Complete a filled cell's own content alignment [SPEC 12]. The grid sizes a cell
 /// *after* the cell has laid out its text, so the text sits centred at the cell's
 /// natural size; now that the final size is known, slide its single text leaf to
 /// the cell's `align` (↔) / `justify` (↕) edge within the padded content box. Only
@@ -421,7 +421,7 @@ fn read_cell(attrs: &AttrMap, span: Span) -> Result<Option<(usize, usize)>, Erro
 fn read_span(attrs: &AttrMap, span: Span) -> Result<(usize, usize), Error> {
     match attrs.get("span") {
         None => Ok((1, 1)),
-        // `span: N` is `N 1` (SPEC §5).
+        // `span: N` is `N 1` [SPEC 12].
         Some(ResolvedValue::Number(n)) => Ok((positive_int("span", *n, span)?.max(1), 1)),
         Some(v) => {
             let (c, r) = as_pair(v, span)?;
@@ -461,7 +461,7 @@ pub(super) fn has_gap_color(attrs: &AttrMap) -> bool {
 /// spanning cell has no gutter crossing its interior. A vertical gutter (a column
 /// boundary) is `gap_x` wide, painted only when the column gap is positive; a
 /// horizontal one (a row boundary) is `gap_y` tall, painted only when the row gap
-/// is positive (SPEC §5: `gap: 1 0` → row rules, `gap: 0 1` → column rules).
+/// is positive ([SPEC 12]: `gap: 1 0` → row rules, `gap: 0 1` → column rules).
 /// Node-local, centred coords; each gutter is `(cx, cy, w, h)`. Interior only —
 /// the container's own border supplies the outer edge.
 // The boundary scans run one index past the data to close a run at the final

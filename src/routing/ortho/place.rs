@@ -75,7 +75,7 @@ type Pref = (f64, Option<(f64, f64)>);
 /// follows wherever its neighbours finally land, so every ordinate is
 /// clamped into its perpendicular neighbours' channel travel extents — the
 /// corner stays inside both runs' channels (a run lies in one channel of
-/// its axis, ROUTING.md §Vocabulary), so a drawn segment can never leave
+/// its axis, ROUTING.md Vocabulary), so a drawn segment can never leave
 /// the free space it was priced in, no matter where a later round moves
 /// the far corner.
 pub(crate) fn place(worlds: &[World], chains: &mut [Option<Chain>], clearance: f64) {

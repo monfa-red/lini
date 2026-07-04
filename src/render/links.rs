@@ -25,7 +25,7 @@ fn is_wavy(attrs: &AttrMap) -> bool {
 const LABEL_CUT_PAD_H: f64 = 0.3;
 const LABEL_CUT_PAD_V: f64 = 0.15;
 
-/// The link's corner-radius cap (ROUTING §Model step 7): the link's resolved
+/// The link's corner-radius cap (ROUTING Model step 7): the link's resolved
 /// `clearance` (its cascaded default), else 0.
 pub fn radius_cap(w: &RoutedLink) -> f64 {
     w.attrs.number("clearance").unwrap_or(0.0)
@@ -61,7 +61,7 @@ pub fn render_link(
         link_classes.push(format!("lini-link-{s}"));
     }
     link_classes.extend(w.applied_styles.iter().map(|s| format!("lini-style-{}", s)));
-    // A link's `<g>` paint is the same class-diff a node's is (SPEC §13) — one
+    // A link's `<g>` paint is the same class-diff a node's is [SPEC 16] — one
     // shared computation; a link never aliases `color` and formats with plain
     // `format_value`.
     let mut decls = ruleset.inline_paint_diff(
@@ -72,7 +72,7 @@ pub fn render_link(
     );
     // The `<g>` carries only **wire** paint; its labels own their text (font / colour),
     // stated once by the label's own class — so text props never inline on the link
-    // (once per label × diagram), and no stray `font-size` rides the `<g>` (SPEC §9).
+    // (once per label × diagram), and no stray `font-size` rides the `<g>` [SPEC 9].
     decls.retain(|(k, _)| {
         matches!(
             *k,
@@ -170,7 +170,7 @@ pub fn render_link(
     }
 }
 
-/// A stray (ROUTING §Impossible layouts): a dashed straight segment in the
+/// A stray (ROUTING Impossible layouts): a dashed straight segment in the
 /// `--lini-stray` style with a warning glyph at its midpoint. Lawful links
 /// are orthogonal, so the slant is structurally unmistakable; the dashing and
 /// glyph cover the aligned-bodies case.
@@ -178,7 +178,7 @@ pub fn render_stray(out: &mut String, a: &Stray, vars: &VarTable, opts: &Options
     let none = AttrMap::default();
     let stroke = attr_or_var(&none, "stroke", "stray", vars, opts);
     // The warning glyph knocks out against the box fill so it reads on any
-    // background (was `--lini-bg`, now the scene background — SPEC §11.1).
+    // background (was `--lini-bg`, now the scene background — [SPEC 10.1]).
     let glyph_fill = attr_or_var(&none, "fill", "fill", vars, opts);
     writeln!(
         out,
@@ -229,7 +229,7 @@ pub fn render_stray(out: &mut String, a: &Stray, vars: &VarTable, opts: &Options
 /// The path `d` with every interior corner rounded into a quarter arc —
 /// radius from the fillet pass ([`fillet_targets`]), kept feasible on the
 /// *drawn* (marker-shortened) legs by the shared formatter, so an arc never
-/// eats a neighbouring arc or a marker pull-back (ROUTING §Model step 7).
+/// eats a neighbouring arc or a marker pull-back (ROUTING Model step 7).
 fn rounded_d(pts: &[(f64, f64)], targets: &[f64]) -> String {
     super::rounding::path_d(pts, targets)
 }
@@ -255,7 +255,7 @@ struct Corner {
     cap: f64,
 }
 
-/// Per-link, per-interior-corner fillet radius targets (ROUTING §Model
+/// Per-link, per-interior-corner fillet radius targets (ROUTING Model
 /// step 7): corners nested on one diagonal — same turn quadrant, each
 /// vertex offset outward from an inner corner on **both** axes — round
 /// **concentrically**: the innermost keeps the base cap and each corner
@@ -406,7 +406,7 @@ fn label_mask(
     let (rw, rh) = (x1 - x0 + 2.0 * pad, y1 - y0 + 2.0 * pad);
     // The mask rects carry their fill/stroke via CSS (`.lini-cut-bg` /
     // `.lini-cut`), not inline — so the link's own `stroke` can't bleed into the
-    // luminance mask, and the SVG stays free of per-label paint (SPEC §13).
+    // luminance mask, and the SVG stays free of per-label paint [SPEC 16].
     let mut m = format!(
         r#"<mask id="{id}" maskUnits="userSpaceOnUse" x="{}" y="{}" width="{}" height="{}"><rect class="lini-cut-bg" x="{}" y="{}" width="{}" height="{}"/>"#,
         num(rx),

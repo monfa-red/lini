@@ -1,5 +1,5 @@
 //! The resolve orchestrator: variables → stylesheet → scene tree → links →
-//! render inputs, assembled into a [`Program`] (SPEC §17). Types, templates,
+//! render inputs, assembled into a [`Program`] [SPEC 17]. Types, templates,
 //! defines, labels, and auto-create are lowered upstream by `desugar`, so resolve
 //! only ever sees primitives and `.lini-*` classes.
 //!
@@ -26,7 +26,7 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
     let mut vars = defaults::built_in_defaults();
     apply_theme(&mut vars, theme);
 
-    // ── Functions: parse each `name(params) `body`` and reject cycles (SPEC §11.7);
+    // ── Functions: parse each `name(params) `body`` and reject cycles [SPEC 10.7];
     //    every numeric value folds against this table. ──
     let funcs = build_funcs(file)?;
     apply_var_decls(&mut vars, file, &funcs)?;
@@ -72,7 +72,7 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
     let index = PathIndex::build(&nodes);
 
     // ── Links: root statements then lifted internal links. A link resolves through
-    //    the node cascade (SPEC §9, §13): `resolve_link` layers the `|-|` rules over
+    //    the node cascade [SPEC 9, 4]: `resolve_link` layers the `|-|` rules over
     //    a base of the baked defaults plus the scope's `clearance` / `routing`, and
     //    matches descendant rules against the scope's container chain. ──
     let baked = baked_link_defaults(&vars, &funcs)?;
@@ -105,7 +105,7 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
         },
         links: link_list,
         sheet: sheet_inputs,
-        // Carried to the layout phase for deferred `fn:` sampling ([CHARTS.md] §4);
+        // Carried to the layout phase for deferred `fn:` sampling [SPEC 14.3];
         // every borrow of it above (scene ctx, sheet inputs) has ended by here.
         funcs,
     })
@@ -202,7 +202,7 @@ fn split_top_commas(s: &str) -> Vec<&str> {
 }
 
 /// Apply `--name: value` declarations in source order (each sees the prior).
-/// All vars are visual (SPEC §11.2); a built-in `--lini-*` name keeps its
+/// All vars are visual [SPEC 10.2]; a built-in `--lini-*` name keeps its
 /// meaning, a new name is the author's.
 fn apply_var_decls(vars: &mut VarTable, file: &File, funcs: &FuncTable) -> Result<(), Error> {
     for item in &file.stylesheet {
@@ -215,7 +215,7 @@ fn apply_var_decls(vars: &mut VarTable, file: &File, funcs: &FuncTable) -> Resul
 }
 
 /// Parse the stylesheet's `funcdef`s into a [`FuncTable`] and reject reference
-/// cycles (SPEC §11.7). Arity and unknown-name errors surface at fold time.
+/// cycles [SPEC 10.7]. Arity and unknown-name errors surface at fold time.
 fn build_funcs(file: &File) -> Result<FuncTable, Error> {
     let mut parsed = Vec::new();
     for item in &file.stylesheet {
@@ -291,7 +291,7 @@ fn root_attrs(file: &File, vars: &VarTable, funcs: &FuncTable) -> Result<AttrMap
 
 // ─────────────────────────── Render inputs ───────────────────────────
 
-/// The baked link base (SPEC §11.5) — a link's lowest-specificity layer, below
+/// The baked link base [SPEC 10.5] — a link's lowest-specificity layer, below
 /// the scope cascade, class rules, and its own block. The values live in the one
 /// tuning home (`desugar::bundles`).
 fn baked_link_defaults(
@@ -308,7 +308,7 @@ fn baked_link_defaults(
     Ok(out)
 }
 
-/// The scene-config properties a link takes from its scope (SPEC §9): geometry, not
+/// The scene-config properties a link takes from its scope [SPEC 9]: geometry, not
 /// paint, so they live on a container's own block and cascade nearest-wins — unlike
 /// the wire and label look, which come from `|-|` rules. `clearance` is respected
 /// between links *and* nodes; `routing` pairs with `layout`.
@@ -333,7 +333,7 @@ fn scope_chain<'a>(nodes: &'a [ResolvedInst], scope: &[String]) -> Vec<&'a Resol
     out
 }
 
-/// The selector identity of a resolved container (SPEC §13): its worn `.lini-*` type
+/// The selector identity of a resolved container [SPEC 4]: its worn `.lini-*` type
 /// classes (the type chain plus its primitive) and user classes, and its id — what a
 /// descendant `|table| |-|` matches against.
 fn inst_facts(inst: &ResolvedInst) -> NodeFacts {
@@ -397,14 +397,14 @@ fn build_sheet_inputs(
         }
     }
     // The `.lini-link` rule's defaults: a root-scope link — the baked base plus the
-    // scope config, then the root `|-|` element rule (SPEC §9, §13). Its paint states
+    // scope config, then the root `|-|` element rule [SPEC 9, 16]. Its paint states
     // the `.lini-link` CSS rule; a link that differs inlines the difference.
     let (base, _) = link_scope(baked, &[], root_attrs, &[]);
     let mut link_defaults = base;
     link_defaults.extend(sheet.class_decls(links::LINK_CLASS));
     let link_defaults = collapse(&link_defaults);
     let root_font_size = root_attrs.number("font-size").unwrap_or(15.0);
-    // Inherited-text props the global block set, for the `.lini` rule (SPEC §10).
+    // Inherited-text props the global block set, for the `.lini` rule [SPEC 6].
     // `font-family` / `font-weight` / `color` override their themeable var when set
     // globally; the rest are live CSS with no default, present only when authored.
     let mut root_text = AttrMap::new();
@@ -517,7 +517,7 @@ mod tests {
 
     #[test]
     fn id_rule_targets_one_node() {
-        // SPEC §12: `#hero { }` paints only the node with that id, and the instance
+        // [SPEC 4]: `#hero { }` paints only the node with that id, and the instance
         // block still beats it.
         let p = rv4("{ #hero { fill: gold; } }\n|box#hero|\n|box#other|\n");
         assert_eq!(ident(&p, 0, "fill"), Some("gold"));
@@ -545,7 +545,7 @@ mod tests {
 
     #[test]
     fn label_becomes_a_centred_text_child() {
-        // SPEC §3: a box's smart label lowers to a centred text child.
+        // [SPEC 3]: a box's smart label lowers to a centred text child.
         let p = rv4("|box#cat| \"cat\"\n");
         let label = &p.scene.nodes[0].children[0];
         assert_eq!(label.kind, NodeKind::Text);
@@ -554,14 +554,14 @@ mod tests {
 
     #[test]
     fn an_empty_label_draws_nothing() {
-        // SPEC §3: `""` is an empty string — nothing in flow.
+        // [SPEC 3]: `""` is an empty string — nothing in flow.
         let p = rv4("|box#cat| \"\"\n");
         assert!(p.scene.nodes[0].children.is_empty());
     }
 
     #[test]
     fn caption_is_a_small_text_plain_title() {
-        // SPEC §8: a caption is a `|block|`-based title, pinned to the top edge
+        // [SPEC 8]: a caption is a `|block|`-based title, pinned to the top edge
         // with a smaller font (`mount` is gone entirely).
         let p = rv4("|group#g| [\n  |caption| \"Title\"\n]\n");
         let cap = &p.scene.nodes[0].children[0];
@@ -577,7 +577,7 @@ mod tests {
 
     #[test]
     fn group_label_lowers_to_a_caption() {
-        // SPEC §3/§8: a group's smart label is its caption.
+        // [SPEC 3/8]: a group's smart label is its caption.
         let p = rv4("|group#k| \"Kitchen\"\n");
         let cap = &p.scene.nodes[0].children[0];
         assert!(cap.type_chain.iter().any(|t| t == "caption"));
@@ -587,7 +587,7 @@ mod tests {
     #[cfg(feature = "icons")]
     #[test]
     fn icon_named_by_symbol_with_optional_text() {
-        // SPEC §7: `symbol` names the icon; a bare string in `[ ]` is an ordinary
+        // [SPEC 7]: `symbol` names the icon; a bare string in `[ ]` is an ordinary
         // centred-text **child** (so `translate` / styling reach it like any node's
         // text), not folded onto the node.
         let p = rv4("|icon#i| { symbol: house } [ \"3\" ]\n");
@@ -602,7 +602,7 @@ mod tests {
     #[cfg(feature = "icons")]
     #[test]
     fn icon_label_sets_the_symbol() {
-        // SPEC §7: the smart label of an icon is its symbol.
+        // [SPEC 7]: the smart label of an icon is its symbol.
         let p = rv4("|icon#i| \"house\"\n");
         assert_eq!(ident(&p, 0, "symbol"), Some("house"));
     }
@@ -646,7 +646,7 @@ mod tests {
 
     #[test]
     fn link_selector_styles_every_link() {
-        // SPEC §9: `|-| { stroke; stroke-width }` styles every link's wire — the
+        // [SPEC 9]: `|-| { stroke; stroke-width }` styles every link's wire — the
         // ordinary node vocabulary, scoped by the selector, no `link-*` family.
         let p = rv4("{ |-| { stroke: red; stroke-width: 3 } }\na -> b\n");
         assert!(
@@ -657,7 +657,7 @@ mod tests {
 
     #[test]
     fn scoped_link_rule_overrides_the_root_one() {
-        // SPEC §13: a descendant `#g |-|` styles the links written in `g`'s body; a
+        // [SPEC 4]: a descendant `#g |-|` styles the links written in `g`'s body; a
         // root-scope link keeps the bare `|-|` value. Root links resolve before
         // lifted (body) links, so [0] is `a -> g` and [1] is the internal `x -> y`.
         let p = rv4(
@@ -673,7 +673,7 @@ mod tests {
 
     #[test]
     fn clearance_cascades_from_a_container_block() {
-        // SPEC §9: `clearance` / `routing` stay scene config — set on a container's
+        // [SPEC 9]: `clearance` / `routing` stay scene config — set on a container's
         // own block, they cascade to that scope's links, nearest winning.
         let p = rv4(
             "{ clearance: 8 }\n|box#a|\n|group#g| { clearance: 20 } [\n  |box#x|\n  |box#y|\n  x -> y\n]\na -> g\n",
@@ -708,7 +708,7 @@ mod tests {
 
     #[test]
     fn a_sequence_frame_is_scope_transparent() {
-        // SPEC §10: a message inside a frame resolves against the sequence's participants,
+        // [SPEC 13]: a message inside a frame resolves against the sequence's participants,
         // not the frame body — it hoists to the scene scope and auto-creates nothing local.
         let p =
             rv4("{ layout: sequence }\n|box#api|\n|cyl#db|\napi -> db\n|alt| [\n  db --> api\n]\n");
@@ -745,7 +745,7 @@ mod tests {
         assert_eq!(w.endpoints[1].path, "r.outlet");
     }
 
-    // ── Errors (SPEC §15) ──
+    // ── Errors [SPEC 19] ──
 
     #[test]
     fn unknown_type_errors() {
@@ -764,7 +764,7 @@ mod tests {
 
     #[test]
     fn side_names_are_free_ids() {
-        // SPEC §18: sides are keywords only after an endpoint `:`, so a node may be
+        // [SPEC 21]: sides are keywords only after an endpoint `:`, so a node may be
         // named `|box#top|` — no longer a reserved-id error.
         let p = rv4("|box#top|\n");
         assert_eq!(p.scene.nodes[0].id.as_deref(), Some("top"));

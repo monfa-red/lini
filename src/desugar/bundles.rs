@@ -8,7 +8,7 @@ use crate::resolve::NodeKind;
 use crate::span::Span;
 use crate::syntax::ast::{Decl, Value};
 
-/// A sequence's default `gap: row col` (SPEC §10) — the message pitch (rows) and the
+/// A sequence's default `gap: row col` [SPEC 13] — the message pitch (rows) and the
 /// participant spacing (columns), larger than the generic `20` so the time axis breathes.
 /// Shared by the `|sequence|` template and the root `{ layout: sequence }` form.
 pub(crate) const SEQ_GAP_ROW: f64 = 32.0;
@@ -58,7 +58,7 @@ pub fn primitive_bundle(kind: NodeKind) -> Vec<Decl> {
         ]
     };
     match kind {
-        // The bare rectangle (SPEC §7): frameless, no padding — like a `div`.
+        // The bare rectangle [SPEC 7]: frameless, no padding — like a `div`.
         // It keeps the default `stroke-width` (invisible while `stroke: none`, so
         // bbox geometry is unchanged from the old `|plain|`, and a styled `|block|`
         // gets a sensible 2px border); the `|box|` template lifts paint/radius/
@@ -101,7 +101,7 @@ pub fn primitive_bundle(kind: NodeKind) -> Vec<Decl> {
     }
 }
 
-/// A built-in template's delta over its base (SPEC §8). Empty for a non-template.
+/// A built-in template's delta over its base [SPEC 8]. Empty for a non-template.
 pub fn template_bundle(name: &str) -> Vec<Decl> {
     match name {
         // The default node: a rounded, framed card over the bare `|block|` base.
@@ -154,20 +154,20 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             n("font-size", 11.0),
             id("font-weight", "normal"),
         ],
-        // Frameless flow wrappers over |block| (SPEC §8): the engine is flow by
+        // Frameless flow wrappers over |block| [SPEC 8]: the engine is flow by
         // default, so these only set the orientation. |grid| is the grid sibling.
         "row" => vec![id("direction", "row")],
         "column" => vec![id("direction", "column")],
         "grid" => vec![id("layout", "grid")],
-        // Chart containers ([CHARTS.md] §2): the layout preset is the whole bundle,
+        // Chart containers [SPEC 14.1]: the layout preset is the whole bundle,
         // exactly as `table` is `grid + gap-color`. The chart layout reads everything
         // else (sizes, scales, paint) from the node and its children at layout time.
         // `gap` is the clear space between the plot and the title / legend that sit
-        // outside it ([CHARTS.md] §9), overriding the `|block|` base `gap: 20`; the
+        // outside it [SPEC 14.6], overriding the `|block|` base `gap: 20`; the
         // user tunes it (`gap: 0` ≈ touching).
         "chart" => vec![id("layout", "chart"), n("gap", 10.0)],
         "pie" => vec![id("layout", "pie"), n("gap", 10.0)],
-        // Sequences (SPEC §10): the layout preset + the message pitch / participant spacing
+        // Sequences [SPEC 13]: the layout preset + the message pitch / participant spacing
         // (`gap`, larger than the generic 20 to breathe), plus the note / frame / separator
         // looks, all reusing scene role variables (no new ones). Participants are ordinary
         // boxes and keep their own type's paint. (A root `{ layout: sequence }` picks up the
@@ -201,22 +201,22 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             n("stroke-width", 1.0),
             n("font-size", 12.0),
         ],
-        // A bar's corners are softly rounded by default ([CHARTS.md] §3); `stroke: auto`
-        // is the outlined-look sentinel ([§10]) — the chart draws a deep edge of the soft
+        // A bar's corners are softly rounded by default [SPEC 14.2]; `stroke: auto`
+        // is the outlined-look sentinel ([SPEC 10]) — the chart draws a deep edge of the soft
         // fill, while an explicit `stroke: none` (overriding `auto`) removes it. Both ride
         // the class so the user overrides them (`radius: 0` square, `stroke: none` flat).
         "bars" => vec![n("radius", 2.0), id("stroke", "auto")],
-        // A pie slice shares the outlined look ([CHARTS.md] §10/§13): `stroke: auto` gives
+        // A pie slice shares the outlined look [SPEC 14.6]: `stroke: auto` gives
         // it a deep edge of its soft fill unless `stroke: none` opts out.
         "slice" => vec![id("stroke", "auto")],
-        // A `|mark|` annotation point shows a dot by default ([CHARTS.md] §8); the
+        // A `|mark|` annotation point shows a dot by default [SPEC 14.5]; the
         // marker cascade then distinguishes that default (and `marker: dot`) from an
         // explicit `marker: none`, which resolve would otherwise collapse together.
         "mark" => vec![id("marker", "dot")],
         // A larger icon meant to stand alone as a node, with room for a short
         // label: the icon primitive at 64px with a little padding. Defaults to
         // `fit: contain` so the glyph fills that box rather than floating small
-        // inside Phosphor's margin like a bare `|icon|` (SPEC §8). A `|sign|` sits
+        // inside Phosphor's margin like a bare `|icon|` [SPEC 8]. A `|sign|` sits
         // among ordinary nodes and takes their `stroke-width: 2`, matching the
         // diagram's line weight (the same weight a bare `|icon|` keeps).
         "sign" => vec![
@@ -226,7 +226,7 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             n("stroke-width", 2.0),
             id("fit", "contain"),
         ],
-        // A ruled grid (SPEC §8): hairline `gap-color` gutters fill the 1px gaps
+        // A ruled grid [SPEC 8]: hairline `gap-color` gutters fill the 1px gaps
         // between cells, the group border frames the whole. `padding: 0` on the
         // table itself — each cell's inset comes from the shipped `|table| |block|`
         // rule (desugar::classes), since body cells are now `|block|`s. Cells
@@ -243,24 +243,24 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             id("fill", "none"),
             var("stroke", "stroke"),
             // A touch heavier than the group base (1) so the frame and its gutters —
-            // and an |entity|, which builds on this — read crisply (SPEC §8).
+            // and an |entity|, which builds on this — read crisply [SPEC 8].
             n("stroke-width", 2.0),
             id("stroke-style", "solid"),
             n("font-size", 14.0),
             id("font-weight", "normal"),
         ],
-        // A table cell (SPEC §8): a frameless `|block|` carrying the text-to-gutter
+        // A table cell [SPEC 8]: a frameless `|block|` carrying the text-to-gutter
         // inset. Body cells wrap in it; `|header|` / `|footer|` build on it. Only the
         // caption (a plain `|block|`) is left uninset. Override with `|cell| { … }`
         // or, per table, `|table| |cell| { … }`.
         "cell" => vec![pair("padding", 4.0, 8.0)],
-        // A table header cell (SPEC §8): a `|cell|` with the fill band and `bold`
+        // A table header cell [SPEC 8]: a `|cell|` with the fill band and `bold`
         // weight. It fills its track and takes its inset / text alignment from the
         // `|cell|` + `|table|` defaults. The cascade overrides via `|table| |header| { … }`.
         "header" => vec![var("fill", "header-fill"), id("font-weight", "bold")],
-        // A table footer cell (SPEC §8): a `|cell|`, muted text, no fill.
+        // A table footer cell [SPEC 8]: a `|cell|`, muted text, no fill.
         "footer" => vec![var("color", "footer-color")],
-        // An ER / database entity (SPEC §8): a two-column table; its label lowers to a
+        // An ER / database entity [SPEC 8]: a two-column table; its label lowers to a
         // spanning header (desugar). Everything else is the |table| base.
         "entity" => vec![decl(
             "columns",
@@ -280,7 +280,7 @@ pub fn root_defaults() -> Vec<Decl> {
     ]
 }
 
-/// The baked link base (SPEC §11.5): a link's lowest-specificity layer, resolved
+/// The baked link base [SPEC 10.5]: a link's lowest-specificity layer, resolved
 /// per link below the scope's `link*` / `clearance` / `routing` cascade, the
 /// class rules, and the link's own block.
 pub fn link_defaults() -> Vec<Decl> {
@@ -405,7 +405,7 @@ mod tests {
 
     #[test]
     fn header_footer_entity_footnote_bundles() {
-        // The header cell: a filled, bold band (SPEC §8) — it fills its track and
+        // The header cell: a filled, bold band [SPEC 8] — it fills its track and
         // takes its alignment from the |table| cell defaults, so it carries no
         // align/justify of its own.
         let h = template_bundle("header");

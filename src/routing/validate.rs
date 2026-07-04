@@ -1,4 +1,4 @@
-//! The independent law checker (ROUTING.md §The Four Laws) — a test oracle
+//! The independent law checker (ROUTING.md The Four Laws) — a test oracle
 //! judging the drawn output alone: routed polylines, placed nodes, and the
 //! engine's report. No router state is consulted. Contact is side
 //! arithmetic; clearance is segment–box distance; separation is pairwise
@@ -39,7 +39,7 @@ pub fn check(nodes: &[PlacedNode], links: &[RoutedLink], report: &[Violation]) -
         return Vec::new();
     }
     // The diagram routes at the maximum clearance any link carries
-    // (ROUTING.md §Vocabulary), so every link is judged at that number.
+    // (ROUTING.md Vocabulary), so every link is judged at that number.
     let c = links
         .iter()
         .map(|w| link_clearance(&w.attrs))
@@ -176,7 +176,7 @@ fn contact(index: &SceneIndex, links: &[&RoutedLink], c: f64, out: &mut Vec<Viol
 /// Law 1 — Clearance from bodies: ≥ clearance from every solid rect, and
 /// from the link's own endpoints on every segment but the adjoining end
 /// segment. A containment link runs inside its outer endpoint by design
-/// (ROUTING.md §Special nodes), so that body is skipped.
+/// (ROUTING.md Special nodes), so that body is skipped.
 fn clearance(index: &SceneIndex, links: &[&RoutedLink], c: f64, out: &mut Vec<Violation>) {
     for w in links {
         if w.path.len() < 2 {
@@ -489,7 +489,7 @@ mod tests {
     #[test]
     fn a_straight_strategy_wire_is_exempt_from_the_laws() {
         // Oblique, corner-grazing, avoidance-free — lawful for `straight`
-        // (ROUTING.md §Strategies), so the orthogonal checker keeps silent.
+        // (ROUTING.md Strategies), so the orthogonal checker keeps silent.
         let mut w = link("a", "b", vec![(20.0, 20.0), (180.0, -20.0)]);
         w.strategy = Strategy::Straight;
         let out = check(&pair(), &[w], &[]);

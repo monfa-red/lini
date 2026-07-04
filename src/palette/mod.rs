@@ -1,4 +1,4 @@
-//! The built-in named-hue palette (SPEC §11.2): 11 hues × 5 job-named tiers,
+//! The built-in named-hue palette [SPEC 10.2]: 11 hues × 5 job-named tiers,
 //! generated from OKLCH seeds so the ramp is perceptually even and the hues read as
 //! a family. Each tier is a `light-dark(#light, #dark)` literal — themeable like any
 //! `--lini-*` var, flipping with the mode, baking for resvg. Aliases catch the
@@ -135,7 +135,7 @@ const ALIASES: &[(&str, &str)] = &[
 
 /// Every palette variable as `(name_without_lini_prefix, value)`: each hue's five
 /// tiers as `light-dark()` literals, then the aliases. Appended to the built-in
-/// defaults (SPEC §11.1) by [`crate::resolve::built_in_defaults`].
+/// defaults [SPEC 10.1] by [`crate::resolve::built_in_defaults`].
 pub fn palette_vars() -> Vec<(String, ResolvedValue)> {
     let mut out = Vec::with_capacity(HUES.len() * TIERS.len() + ALIASES.len());
     for hue in HUES {

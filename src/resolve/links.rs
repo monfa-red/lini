@@ -1,5 +1,5 @@
-//! Link resolution (SPEC §9). A link resolves through the **node cascade** (SPEC
-//! §13): its type is `lini-link` (what `|-|` lowers to), its ancestors are its
+//! Link resolution [SPEC 9]. A link resolves through the **node cascade**
+//! [SPEC 13]: its type is `lini-link` (what `|-|` lowers to), its ancestors are its
 //! scope chain, it has no id — so `stroke` is its wire and `color` / `font-*` its
 //! labels, the ordinary vocabulary with no `link-*` family. Each statement layers
 //! the baked base + scope `clearance`/`routing`, the `|-|` element rule, the
@@ -20,7 +20,7 @@ use crate::ast::LineStyle;
 use crate::error::Error;
 use crate::syntax::ast::{Endpoint, EndpointGroup, Link};
 
-/// The class every link wears (SPEC §9): `|-|` lowers to it in desugar, so a link
+/// The class every link wears [SPEC 9]: `|-|` lowers to it in desugar, so a link
 /// resolves through the node cascade — its type tier, descendant/class rules, and
 /// own block — with no `link-*` family.
 pub const LINK_CLASS: &str = "lini-link";
@@ -44,7 +44,7 @@ pub fn resolve_link(
     }
 
     // A link is a node whose type is `lini-link`, whose ancestors are its scope
-    // chain, with no id (SPEC §9, §13).
+    // chain, with no id [SPEC 9, 4].
     let link_facts = NodeFacts {
         classes: std::iter::once(LINK_CLASS.to_string())
             .chain(w.classes.iter().cloned())
@@ -52,7 +52,7 @@ pub fn resolve_link(
         id: None,
     };
 
-    // The cascade ladder, least-specific first (SPEC §13): the baked base + scope
+    // The cascade ladder, least-specific first [SPEC 4]: the baked base + scope
     // `clearance`/`routing`, the `|-|` element rule (the type tier), the descendant
     // / worn-class rules, then the link's own block. `stroke` is the wire, `font-*`
     // / `color` the labels — the same vocabulary a node uses.
@@ -77,7 +77,7 @@ pub fn resolve_link(
     let routing = parse_routing(&attrs, w.span)?;
     attrs.map.remove("routing");
 
-    // `along:` distributes the labels along the drawn route (SPEC §9): one
+    // `along:` distributes the labels along the drawn route [SPEC 9]: one
     // fraction (0..1) per label, in order; an absent fraction is `Auto` (the
     // router spreads it). It is a placement directive, not a paint attr.
     let along: Vec<f64> = attrs
@@ -86,7 +86,7 @@ pub fn resolve_link(
         .unwrap_or_default();
     attrs.map.remove("along");
 
-    // Labels ride `along:`, each a styleable text leaf (SPEC §9): the link's text
+    // Labels ride `along:`, each a styleable text leaf [SPEC 9]: the link's text
     // baseline (font-size) overlaid with the label's own `{ }` (text-valid props).
     let mut texts: Vec<ResolvedText> = Vec::new();
     for (i, label) in w.labels.iter().enumerate() {
@@ -153,7 +153,7 @@ pub fn resolve_link(
 }
 
 /// The operator's line part sets `stroke-style` unless an explicit one already
-/// won the cascade (SPEC §9).
+/// won the cascade [SPEC 9].
 fn inject_line_style(attrs: &mut AttrMap, line: LineStyle) {
     let style = match line {
         LineStyle::Solid => return,
@@ -166,7 +166,7 @@ fn inject_line_style(attrs: &mut AttrMap, line: LineStyle) {
     }
 }
 
-/// The resolved wiring strategy (SPEC §9): `orthogonal` (the default) and
+/// The resolved wiring strategy [SPEC 9]: `orthogonal` (the default) and
 /// `straight` are built; `curved` is named but deferred.
 fn parse_routing(attrs: &AttrMap, span: crate::span::Span) -> Result<Strategy, Error> {
     match attrs.get("routing") {
@@ -175,7 +175,7 @@ fn parse_routing(attrs: &AttrMap, span: crate::span::Span) -> Result<Strategy, E
         Some(ResolvedValue::Ident(r)) if r == "straight" => Ok(Strategy::Straight),
         Some(_) => Err(Error::at(
             span,
-            "routing: 'orthogonal' and 'straight' are built; 'curved' is deferred (SPEC §20)",
+            "routing: 'orthogonal' and 'straight' are built; 'curved' is deferred (SPEC 22)",
         )),
     }
 }
@@ -191,7 +191,7 @@ fn collect_fractions(v: &ResolvedValue) -> Vec<f64> {
     }
 }
 
-/// A link's labels inherit its text context (SPEC §9): every inheritable text prop
+/// A link's labels inherit its text context [SPEC 9]: every inheritable text prop
 /// the link resolved — `font-*`, `color`, the spacings — seeds each label, which
 /// its own `{ }` then overrides. This is how a `|-| { font-size: 14; color: red }`
 /// restyles every label at once, exactly as a node's text inherits the node's.

@@ -1,4 +1,4 @@
-//! The deterministic series colour walk ([CHARTS.md] §10). One ordered hue
+//! The deterministic series colour walk [SPEC 14.6]. One ordered hue
 //! sequence, skipping `red` (reserved for danger), wrapping when exhausted — shared
 //! by series colour assignment and (later) pie / bubble per-datum colour, so the
 //! walk lives in exactly one place.
@@ -18,7 +18,7 @@ pub fn hue(i: usize) -> &'static str {
     WALK[i % WALK.len()]
 }
 
-/// The `-deep` tier of a palette hue, for a fill shape's edge ([CHARTS.md] §10):
+/// The `-deep` tier of a palette hue, for a fill shape's edge [SPEC 14.6]:
 /// `--teal` → `--teal-deep`, `--green-soft` → `--green-deep`. A non-palette colour
 /// (a hex, a gradient) is its own edge. Shared by the area edge and the bars / slice
 /// default outline, so the outlined look derives its edge in one place.

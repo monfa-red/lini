@@ -1,4 +1,4 @@
-//! Out-of-flow positioning for children inside a parent's bbox (SPEC §6).
+//! Out-of-flow positioning for children inside a parent's bbox [SPEC 5].
 //!
 //! `pin` lifts a child out of the flow and centers its bbox on a named point of
 //! the parent — `center`, an edge midpoint, or a corner. `translate` then nudges
@@ -49,7 +49,7 @@ impl Pin {
     }
 }
 
-/// Read a child's `pin` (SPEC §6). `None` for an absent `pin` or `pin: none` (a
+/// Read a child's `pin` [SPEC 5]. `None` for an absent `pin` or `pin: none` (a
 /// flow child); `Some(Pin)` for a named anchor; an error otherwise.
 pub fn read_pin(attrs: &AttrMap, span: Span) -> Result<Option<Pin>, Error> {
     let Some(v) = attrs.get("pin") else {

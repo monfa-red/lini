@@ -1,4 +1,4 @@
-//! `fit` — how an icon's symbol (or an `|image|`) maps into its box (SPEC §7/§10).
+//! `fit` — how an icon's symbol (or an `|image|`) maps into its box [SPEC 7/7].
 //!
 //! The box is fixed by layout; `fit` only scales and centres the content inside
 //! it. `auto` keeps the content's natural framing (for an icon, the full 256-grid

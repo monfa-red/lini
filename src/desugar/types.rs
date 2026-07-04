@@ -11,7 +11,7 @@ use std::collections::HashMap;
 
 const MAX_INHERITANCE_DEPTH: usize = 16;
 
-/// Built-in templates and their base type (SPEC §8). Each is a bundle over a
+/// Built-in templates and their base type [SPEC 8]. Each is a bundle over a
 /// primitive (or, for `table`, over `group`).
 pub const TEMPLATES: &[(&str, &str)] = &[
     ("box", "block"),
@@ -24,7 +24,7 @@ pub const TEMPLATES: &[(&str, &str)] = &[
     ("column", "block"),
     ("grid", "block"),
     ("table", "group"),
-    // Table cells and the ER entity (SPEC §8). `cell` is a `|block|` carrying the
+    // Table cells and the ER entity [SPEC 8]. `cell` is a `|block|` carrying the
     // cell inset (`padding`); `header` / `footer` build on it (so `|table| |cell|`
     // reaches them, not the caption); `entity` is a 2-column table.
     ("cell", "block"),
@@ -32,7 +32,7 @@ pub const TEMPLATES: &[(&str, &str)] = &[
     ("footer", "cell"),
     ("entity", "table"),
     ("sign", "icon"),
-    // Charts ([CHARTS.md]): the two container layouts and the series / structural
+    // Charts [SPEC 14]: the two container layouts and the series / structural
     // types, each a bundle over |block|. `line` is absent — a chart line reuses the
     // |line| primitive (the chart layout branches on its `data:`/`fn:` vs `points:`).
     ("chart", "block"),
@@ -45,7 +45,7 @@ pub const TEMPLATES: &[(&str, &str)] = &[
     ("axis", "block"),
     ("band", "block"),
     ("mark", "block"),
-    // Sequences (SPEC §10): the container layout and the frame / separator / note
+    // Sequences [SPEC 13]: the container layout and the frame / separator / note
     // types, each a bundle over |block|. Participants are ordinary boxes, so they
     // need no type here.
     ("sequence", "block"),
@@ -66,7 +66,7 @@ pub fn template_base(name: &str) -> Option<&'static str> {
 }
 
 /// A define may not take the name of a primitive, a template, the `link` rule
-/// target, or a structural SVG class (SPEC §18) — once the `shape` infix is gone,
+/// target, or a structural SVG class [SPEC 21] — once the `shape` infix is gone,
 /// a `|node::box|` define's `.lini-node` would collide with the universal marker.
 fn is_builtin_type(name: &str) -> bool {
     NodeKind::parse(name).is_some()

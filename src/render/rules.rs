@@ -1,4 +1,4 @@
-//! The output stylesheet's structural rules (SPEC §14): paint defaults stated
+//! The output stylesheet's structural rules [SPEC 16]: paint defaults stated
 //! once as class rules — paint rides CSS, geometry bakes. Rules are unlayered
 //! so non-browser renderers (which skip `@layer`) parse them, and scoped under
 //! `.lini` so an SVG inlined into a host document restyles nothing else.
@@ -97,7 +97,7 @@ impl RuleSet {
     /// link `<g>` — as the **difference** from what its classes already provide:
     /// each `PAINT_PROPS` entry, then the joint `stroke-style → stroke-dasharray`
     /// pair, kept only when it differs from the class rule (so inline beats the
-    /// rule, SPEC §13). The one place that diff lives, shared by both renderers:
+    /// rule, [SPEC 16]). The one place that diff lives, shared by both renderers:
     /// `value_of` resolves a prop to its value (a node aliases text `color`→`fill`),
     /// `fmt` formats it (a node's `css_value` adds `px` to `font-size`; a link's
     /// `format_value` does not).
@@ -244,7 +244,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
 
     // The scene background plate: `.lini-canvas` fills with `--lini-bg`, stated as
     // a CSS rule (not a presentation attr, where `var()` is invalid) so it switches
-    // live and bakes to a literal for resvg/email (SPEC §13).
+    // live and bakes to a literal for resvg/email [SPEC 16].
     rules.push(Rule {
         class: "lini-canvas".into(),
         props: vec![("fill".into(), live("bg"))],
@@ -294,7 +294,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
         });
     }
     if present.contains("text") {
-        // A bare `<text class="lini-text">` (SPEC §13). `fill: currentColor` ties
+        // A bare `<text class="lini-text">` [SPEC 16]. `fill: currentColor` ties
         // the glyph colour to the inherited `color`; `stroke: none` keeps a
         // container's stroke off the glyphs; the anchor pair centres it on (x, y).
         rules.push(Rule {
@@ -317,7 +317,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
             props,
         });
     }
-    // Sequence tab / guard text (SPEC §10) takes its size / weight from these rules,
+    // Sequence tab / guard text [SPEC 13] takes its size / weight from these rules,
     // never an inline `style=`, so a diagram's many labels don't each repeat the font
     // props. (The message-label rule rides `has_seq_labels`, with the wire-label rules.)
     if present.contains("sequence-tab") {
@@ -357,7 +357,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
 
     // Links: the `|link|` defaults stated once. Emitted *before* the style
     // rules — it is the link's default layer (like a primitive rule for a node), so
-    // a link's `.style` class overrides it in the cascade (SPEC §13).
+    // a link's `.style` class overrides it in the cascade [SPEC 4].
     if !laid.links.is_empty() || !laid.strays.is_empty() {
         // The link path's paint, in a fixed order (fill, stroke, width, dash) so a
         // root `link:` that overrides only some props still emits a stable rule. Font
@@ -459,7 +459,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
     if has_labels {
         // The label cut's mask rects state their fill/stroke as CSS, not inline —
         // so the link's own `stroke` can't bleed into the luminance mask, and the
-        // SVG stays free of per-label paint attrs (SPEC §13). White shows the
+        // SVG stays free of per-label paint attrs [SPEC 16]. White shows the
         // link, a black box per label punches the hole.
         rules.push(Rule {
             class: "lini-cut-bg".into(),
@@ -489,7 +489,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
         });
     }
 
-    // Inline chart labels ([CHARTS.md] §14) take no pointer events, so hovering a labelled
+    // Inline chart labels [SPEC 14.8] take no pointer events, so hovering a labelled
     // point still reveals the point's card through the label sitting over it.
     if present.contains("chart-label") {
         rules.push(Rule {
@@ -506,7 +506,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
         }
         // One paint vocabulary: a `.style` class states `stroke` whether it dresses a
         // node's outline or a link's wire, so its `.lini-style-*` rule paints both
-        // with no per-link inline (SPEC §13).
+        // with no per-link inline [SPEC 16].
         rules.push(Rule {
             class: format!("lini-style-{}", name),
             props: paint_props(attrs, vars, opts),

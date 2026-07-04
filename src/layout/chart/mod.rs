@@ -1,4 +1,4 @@
-//! `layout: chart` ([CHARTS.md]) — a container that reads all its children, fixes a
+//! `layout: chart` [SPEC 14] — a container that reads all its children, fixes a
 //! shared data→pixel scale, and **lowers to primitive `PlacedNode`s**. The renderer,
 //! cascade, palette, theming, and `--bake-vars` are all reused unchanged; the chart
 //! adds only the scale-and-place algorithm here.
@@ -39,7 +39,7 @@ pub(super) const TITLE_SIZE: f64 = 13.0;
 const AXIS_TITLE_SIZE: f64 = 11.0;
 pub(super) const LABEL_SIZE: f64 = 11.0;
 
-/// Is this node a chart container ([CHARTS.md] §2)? Detected by its `layout:` attr —
+/// Is this node a chart container [SPEC 14.1]? Detected by its `layout:` attr —
 /// the same key `read_layout_mode` owns — so a chart is intercepted before the generic
 /// container path. (`layout: pie` is the sibling layout, `pie::is_pie`.)
 pub(super) fn is_chart(attrs: &AttrMap) -> bool {
@@ -53,7 +53,7 @@ pub(super) fn layout_chart(
     funcs: &crate::expr::FuncTable,
 ) -> Result<PlacedNode, Error> {
     let chart = model::build(inst, funcs)?;
-    // A radial (or pie) chart is square; a cartesian one is wide ([CHARTS.md] §2).
+    // A radial (or pie) chart is square; a cartesian one is wide [SPEC 14.1].
     let square = chart.dir == Dir::Radial;
     let w = inst
         .attrs
@@ -65,14 +65,14 @@ pub(super) fn layout_chart(
         .unwrap_or(if square { 280.0 } else { 220.0 });
     let plot = plot_rect(&chart, w, h);
 
-    // Semantic draw order ([CHARTS.md] §15): gridlines/web behind, then areas, bars,
+    // Semantic draw order [SPEC 14.9]: gridlines/web behind, then areas, bars,
     // lines, dots, then annotations and labels — pushed in order, so a later child
     // paints over an earlier one. The series builders project through `Plot`, so a
     // radial chart reuses the exact `areas`/`lines`/`dots`/`bars` passes; only the
     // gridlines, labels, and annotations differ by direction.
     let mut kids = Vec::new();
     // Inline-label requests accrue as the marks lay out (bubbles, `|mark|` points), then
-    // join the series' `tags:` for one placement pass ([CHARTS.md] §14).
+    // join the series' `tags:` for one placement pass [SPEC 14.8].
     let mut reqs = Vec::new();
     match plot.dir {
         Dir::Radial => radial::gridlines(&plot, &chart, &mut kids),
@@ -112,7 +112,7 @@ pub(super) fn layout_chart(
         lay_out_legend(&legend, h / 2.0 - LABEL_SIZE * 0.9, &mut kids);
     }
 
-    // Inline data labels ([CHARTS.md] §14): the series' `tags:` join the bubble / mark
+    // Inline data labels [SPEC 14.8]: the series' `tags:` join the bubble / mark
     // reqs gathered above, all placed by one greedy pass after the series / axes / title
     // so they sit above them and below the hover cards.
     labels::collect_series(&plot, &chart, &mut reqs);
@@ -131,7 +131,7 @@ pub(super) fn chart_box(inst: &ResolvedInst, w: f64, h: f64, kids: Vec<PlacedNod
 }
 
 /// The plot rect = the chart box inset by the gutters its labels / titles / legend
-/// need, all measured at compile time (SPEC §6).
+/// need, all measured at compile time [SPEC 5].
 fn plot_rect(chart: &Chart, w: f64, h: f64) -> Plot {
     if chart.dir == Dir::Radial {
         return radial_plot(chart, w, h);
@@ -163,7 +163,7 @@ fn plot_rect(chart: &Chart, w: f64, h: f64) -> Plot {
     }
 }
 
-/// A row chart's plot rect: the cartesian flip ([CHARTS.md] §11). The domain
+/// A row chart's plot rect: the cartesian flip [SPEC 14.7]. The domain
 /// (category) labels sit on the left and the value labels along the bottom, so the
 /// gutters swap — a left gutter sized to the widest category, a bottom gutter for the
 /// value labels and axis title.
@@ -198,7 +198,7 @@ fn domain_gutter(chart: &Chart) -> f64 {
 
 /// A radial chart's plot rect: a centred square (the spoke-circle's bounding box),
 /// inset from the chart box by the title (top), legend (bottom), and a margin all
-/// round for the spoke labels that sit just outside the rim ([CHARTS.md] §12).
+/// round for the spoke labels that sit just outside the rim [SPEC 14.7].
 fn radial_plot(chart: &Chart, w: f64, h: f64) -> Plot {
     let title_h = title_reserve(chart.title.is_some(), chart.gap);
     let legend_h = legend_reserve(legend_entries(chart).len(), chart.gap);
@@ -238,7 +238,7 @@ fn nonzero(v: f64, fallback: f64) -> f64 {
     if v > 0.0 { v } else { fallback }
 }
 
-/// Space reserved above the plot for the title ([CHARTS.md] §9): its drawn height plus
+/// Space reserved above the plot for the title [SPEC 14.6]: its drawn height plus
 /// the chart's `gap` (the clear gutter to the plot), or 0 with no title. The one place
 /// the title inset is computed — column, row, radial, and pie all call it, so `gap:`
 /// tunes the spacing identically everywhere (`gap: 0` ≈ touching).
@@ -250,7 +250,7 @@ pub(super) fn title_reserve(has_title: bool, gap: f64) -> f64 {
     }
 }
 
-/// Space reserved below the plot for the legend ([CHARTS.md] §9): its band plus the
+/// Space reserved below the plot for the legend [SPEC 14.6]: its band plus the
 /// chart's `gap`, or 0 below two entries — shared with the title by `gap`
 /// ([`title_reserve`]).
 pub(super) fn legend_reserve(entries: usize, gap: f64) -> f64 {
@@ -261,13 +261,13 @@ pub(super) fn legend_reserve(entries: usize, gap: f64) -> f64 {
     }
 }
 
-/// A legend entry ([CHARTS.md] §9): its label, the swatch **fill**, and an optional
+/// A legend entry [SPEC 14.6]: its label, the swatch **fill**, and an optional
 /// swatch **edge** — so the swatch mirrors a series' paint (an outlined bar / slice gets
 /// an outlined swatch, a flat one a flat swatch).
 pub(super) type LegendEntry = (String, ResolvedValue, Option<ResolvedValue>);
 
 /// The legend entries — one per series that carries a label (no label → no entry,
-/// [CHARTS.md] §9). The swatch wears the series' fill and edge ([`swatch_edge`]).
+/// [SPEC 14.6]). The swatch wears the series' fill and edge ([`swatch_edge`]).
 fn legend_entries(chart: &Chart) -> Vec<LegendEntry> {
     chart
         .series
@@ -280,7 +280,7 @@ fn legend_entries(chart: &Chart) -> Vec<LegendEntry> {
         .collect()
 }
 
-/// The edge a series' legend swatch should wear, mirroring what it draws ([CHARTS.md] §9):
+/// The edge a series' legend swatch should wear, mirroring what it draws [SPEC 14.6]:
 /// a bar / slice its (default-deep or explicit) outline, an area its always-drawn deep
 /// edge, a line / dots usually nothing.
 fn swatch_edge(s: &Series) -> Option<ResolvedValue> {
@@ -305,12 +305,12 @@ pub(super) fn lay_out_legend(entries: &[LegendEntry], cy: f64, out: &mut Vec<Pla
     let mut x = -total / 2.0;
     for ((label, fill, edge), &tw) in entries.iter().zip(&widths) {
         let mut swatch = prim::rect(x + SW / 2.0, cy, SW, SW, fill.clone(), 1.0);
-        prim::round(&mut swatch, 2.0); // soft swatch corners ([CHARTS.md] §9)
+        prim::round(&mut swatch, 2.0); // soft swatch corners [SPEC 14.6]
         if let Some(edge) = edge {
             prim::outline(&mut swatch, edge.clone(), 1.0); // mirror the series' edge
         }
         out.push(swatch);
-        // The legend stays bold (the chart's chrome), like the title ([CHARTS.md] §9).
+        // The legend stays bold (the chart's chrome), like the title [SPEC 14.6].
         out.push(prim::text(
             label,
             x + SW + GAP + tw / 2.0,
@@ -349,7 +349,7 @@ mod tests {
         );
         assert!(s.contains("lini-chart"), "chart container class: {s}");
         // Palette walk: series 0 rose, series 1 teal — red skipped. Bars fill with the
-        // soft tier (the outlined look, [CHARTS.md] §10).
+        // soft tier (the outlined look, [SPEC 14.6]).
         assert!(s.contains("var(--lini-rose-soft)"), "series 0 hue: {s}");
         assert!(s.contains("var(--lini-teal-soft)"), "series 1 hue: {s}");
         assert!(!s.contains("var(--lini-red)"), "red is reserved: {s}");
@@ -396,7 +396,7 @@ mod tests {
 
     #[test]
     fn a_bar_stroke_draws_an_outline_without_recoloring_the_fill() {
-        // A `stroke:` on a fill shape is a separate outline ([CHARTS.md] §10) — it must
+        // A `stroke:` on a fill shape is a separate outline [SPEC 14.6] — it must
         // not become the fill. With no `fill:`, the body stays the palette soft tier
         // (rose) and the stroke is the outline (sky); the old bug made the body sky.
         let s = svg("|chart| { categories: \"a\" } [\n  |bars| { data: 5; stroke: --sky }\n]\n");
@@ -412,7 +412,7 @@ mod tests {
 
     #[test]
     fn bars_default_to_an_outlined_look() {
-        // A default bar fills with the soft tier and gains a deep edge ([CHARTS.md] §10).
+        // A default bar fills with the soft tier and gains a deep edge [SPEC 14.6].
         let s = svg("|chart| { categories: \"a\" } [\n  |bars| { data: 5 }\n]\n");
         assert!(s.contains("var(--lini-rose-soft)"), "soft fill: {s}");
         assert!(s.contains("var(--lini-rose-deep)"), "deep edge: {s}");
@@ -428,7 +428,7 @@ mod tests {
 
     #[test]
     fn a_slice_stroke_outlines_without_recoloring_the_fill() {
-        // The pie bug ([CHARTS.md] §10): `stroke:` on a slice recoloured its fill and
+        // The pie bug [SPEC 14.6]: `stroke:` on a slice recoloured its fill and
         // drew no outline. Now slice 0's fill walks the palette soft tier (rose) and the
         // stroke is a separate outline (sky).
         let s = svg(
@@ -446,7 +446,7 @@ mod tests {
 
     #[test]
     fn the_chart_gap_tunes_the_title_inset() {
-        // `gap:` sets the title→plot space ([CHARTS.md] §9), so different gaps shift the
+        // `gap:` sets the title→plot space [SPEC 14.6], so different gaps shift the
         // plot geometry; the default (10) is set on the .lini-chart class at desugar.
         let tight = svg("|chart| \"T\" { categories: \"a\"; gap: 0 } [\n  |bars| { data: 5 }\n]\n");
         let loose =
@@ -890,7 +890,7 @@ mod tests {
     #[test]
     fn data_text_is_normal_weight_chrome_is_bold() {
         // The diagram-wide default is bold; a chart keeps it for the title and legend but
-        // states `normal` for its axis ticks (and tags) ([CHARTS.md] §9).
+        // states `normal` for its axis ticks (and tags) [SPEC 14.6].
         let s = svg(
             "|chart| \"Cost\" { categories: \"a\" \"b\" } [\n  |bars| \"A\" { data: 5 8 }\n  |bars| \"B\" { data: 3 4 }\n]\n",
         );

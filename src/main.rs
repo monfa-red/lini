@@ -513,7 +513,7 @@ fn theme_names() -> String {
 }
 
 /// `lini theme [NAME]` — list the built-in themes, or print one as `--lini-*`
-/// CSS for a user to copy (SPEC §14).
+/// CSS for a user to copy [SPEC 16].
 fn run_theme(args: &[String]) -> ExitCode {
     let mut name: Option<&str> = None;
     for a in args {

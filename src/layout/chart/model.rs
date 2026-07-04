@@ -1,6 +1,6 @@
 //! Parse a chart's resolved children into a typed model: the x (domain) axis, the
-//! value axes, and the series bound to them ([CHARTS.md] §3–§6). All chart-shape
-//! validation (§18) lives here; the geometry is the renderers' job.
+//! value axes, and the series bound to them [SPEC 14.2]. All chart-shape
+//! validation [SPEC 19] lives here; the geometry is the renderers' job.
 
 use super::palette;
 use super::project::Dir;
@@ -18,7 +18,7 @@ pub enum Side {
     Right,
 }
 
-/// A node's gridline setting ([CHARTS.md] §5): the default (drawn for the primary
+/// A node's gridline setting [SPEC 14.4]: the default (drawn for the primary
 /// value axis and a numeric x axis), off, or an explicit tint.
 pub enum Grid {
     Default,
@@ -39,7 +39,7 @@ pub enum Data {
     /// `x y` pairs (scatter / irregular).
     Points(Vec<(f64, f64)>),
     /// A `fn:` formula, held unevaluated until the x-domain is fixed, then sampled to
-    /// `Points` ([CHARTS.md] §4). One expr is a whole-domain `fn:`.
+    /// `Points` [SPEC 14.3]. One expr is a whole-domain `fn:`.
     Formula(Vec<Expr>),
 }
 
@@ -50,7 +50,7 @@ pub enum Curve {
     Step,
 }
 
-/// How multiple `|bars|` series combine ([CHARTS.md] §3): side-by-side, piled, or
+/// How multiple `|bars|` series combine [SPEC 14.2]: side-by-side, piled, or
 /// translucently on top.
 pub enum BarMode {
     Grouped,
@@ -58,21 +58,21 @@ pub enum BarMode {
     Overlay,
 }
 
-/// The axis a band / annotation is measured against ([CHARTS.md] §8): the x (domain)
+/// The axis a band / annotation is measured against [SPEC 14.5]: the x (domain)
 /// axis, or a value axis by index into [`Chart::values`].
 pub enum AxisRef {
     X,
     Value(usize),
 }
 
-/// A `|mark|`'s placement ([CHARTS.md] §8): a reference line at one value, or a point
+/// A `|mark|`'s placement [SPEC 14.5]: a reference line at one value, or a point
 /// at `(x, value)`.
 pub enum MarkAt {
     Line(f64),
     Point(f64, f64),
 }
 
-/// A `|band|` ([CHARTS.md] §7): a shaded zone over `span` on its bound axis, a tick
+/// A `|band|` [SPEC 14.5]: a shaded zone over `span` on its bound axis, a tick
 /// (its label), and — for an x-bound band — a boundary in the shared segmentation
 /// partition. `fill: none` (or no fill) makes it a divider, not a shade.
 pub struct Band {
@@ -82,29 +82,29 @@ pub struct Band {
     /// The shade tint; `None` draws dividers at the span edges instead.
     pub fill: Option<ResolvedValue>,
     /// The colour of the tick label (and, for an unfilled band, its dividers): the
-    /// `fill` tint ([CHARTS.md] §9), or muted when there is none.
+    /// `fill` tint [SPEC 14.6], or muted when there is none.
     pub tick: ResolvedValue,
 }
 
-/// A `|mark|` annotation ([CHARTS.md] §8): a reference line or a labelled point,
+/// A `|mark|` annotation [SPEC 14.5]: a reference line or a labelled point,
 /// placed by value on a named axis (so it survives a `direction` flip).
 pub struct Mark {
     pub axis: AxisRef,
     pub at: MarkAt,
     pub label: Option<String>,
-    /// A point's centred marker ([CHARTS.md] §8): `dot` by default (the `|mark|`
+    /// A point's centred marker [SPEC 14.5]: `dot` by default (the `|mark|`
     /// template), `circle` / `diamond` to enlarge it, `None` (from `marker: none`) for a
-    /// label-only mark. Validated against `arrow` / `crow` at parse ([§18]).
+    /// label-only mark. Validated against `arrow` / `crow` at parse ([SPEC 19]).
     pub marker: MarkerKind,
     /// The accent for the line / dot / label: an explicit `stroke` / `fill`, else muted.
     pub color: ResolvedValue,
     pub stroke_style: Option<ResolvedValue>,
-    /// How the mark's label presents ([CHARTS.md] §14) — the cascaded `tooltip:`. A mark
+    /// How the mark's label presents [SPEC 14.8] — the cascaded `tooltip:`. A mark
     /// is a deliberate annotation, so its label is forced (always placed) unless `none`.
     pub tooltip: Tooltip,
 }
 
-/// A `|bubble|` ([CHARTS.md] §3): one labelled mark at a data point `(x, y)`, sized by
+/// A `|bubble|` [SPEC 14.2]: one labelled mark at a data point `(x, y)`, sized by
 /// `value` (area-scaled across the chart) — its own colour (explicit or palette walk).
 pub struct Bubble {
     pub at: (f64, f64),
@@ -113,10 +113,10 @@ pub struct Bubble {
     pub axis: usize,
     pub label: Option<String>,
     pub color: ResolvedValue,
-    /// An explicit `stroke:` outline ([CHARTS.md] §10): colour + `stroke-width`, drawn
+    /// An explicit `stroke:` outline [SPEC 14.6]: colour + `stroke-width`, drawn
     /// around the bubble. `None` → no outline.
     pub outline: Option<(ResolvedValue, f64)>,
-    /// How the bubble's label presents ([CHARTS.md] §14) — the cascaded `tooltip:`.
+    /// How the bubble's label presents [SPEC 14.8] — the cascaded `tooltip:`.
     /// `auto` sits it inside when it fits, else beside, else on hover; `none` hover-only.
     pub tooltip: Tooltip,
 }
@@ -128,34 +128,34 @@ pub struct Series {
     pub color: ResolvedValue,
     /// Index into [`Chart::values`] — the value axis this series is read against.
     pub axis: usize,
-    /// The centred marker at each vertex ([CHARTS.md] §3): `None` draws none; `dot` /
+    /// The centred marker at each vertex [SPEC 14.2]: `None` draws none; `dot` /
     /// `circle` / `diamond` are the centred shapes. A `|dots|` is never `None` (it *is*
-    /// markers). Validated against `arrow` / `crow` at parse ([§18]).
+    /// markers). Validated against `arrow` / `crow` at parse ([SPEC 19]).
     pub marker: MarkerKind,
-    /// Per-datum label text ([CHARTS.md] §4), parallel to the data — one tag per value /
+    /// Per-datum label text [SPEC 14.3], parallel to the data — one tag per value /
     /// point, or empty. Drawn inline / on hover per [`tooltip`](Self::tooltip).
     pub tags: Vec<String>,
-    /// How this series' labels present ([CHARTS.md] §14) — the cascaded `tooltip:` (its
+    /// How this series' labels present [SPEC 14.8] — the cascaded `tooltip:` (its
     /// own, else the chart's). Governs whether the `tags` draw inline.
     pub tooltip: Tooltip,
-    /// The tint for this series' inline tag labels ([CHARTS.md] §14): an explicit
+    /// The tint for this series' inline tag labels [SPEC 14.8]: an explicit
     /// `color:`, else the muted role.
     pub tag_color: ResolvedValue,
     pub curve: Curve,
     pub stroke_style: Option<ResolvedValue>,
-    /// An explicit `stroke:` outline ([CHARTS.md] §10): its colour and `stroke-width`.
+    /// An explicit `stroke:` outline [SPEC 14.6]: its colour and `stroke-width`.
     /// An `|area|` draws it as its top edge (defaulting to a deep tier of the fill when
     /// absent); `|bars|` draw it as the rect / wedge outline. `None` → no outline. The
     /// fill is read separately (from `fill:`), so a stroke never bleeds into the body.
     pub outline: Option<(ResolvedValue, f64)>,
     /// A line's `stroke-width` (default 2).
     pub thickness: f64,
-    /// A `|bars|` corner radius ([CHARTS.md] §3), from the resolved `radius:` (default 2
+    /// A `|bars|` corner radius [SPEC 14.2], from the resolved `radius:` (default 2
     /// via the `.lini-bars` class). Rounds a rectangular bar; a radial wedge ignores it.
     pub radius: f64,
     /// A dot's diameter `width` × `height` (default a small circle).
     pub dot: (f64, f64),
-    /// An `|area|`'s fill target ([CHARTS.md] §16) — the axis zero / range floor by
+    /// An `|area|`'s fill target [SPEC 15] — the axis zero / range floor by
     /// default.
     pub baseline: Option<f64>,
 }
@@ -187,32 +187,32 @@ pub struct Chart {
     pub bubbles: Vec<Bubble>,
     pub bars: BarMode,
     pub dir: Dir,
-    /// The clear space between the plot and the title / legend outside it ([CHARTS.md]
-    /// §9), from the resolved `gap:` (default 10 via the `.lini-chart` class).
+    /// The clear space between the plot and the title / legend outside it
+    /// [SPEC 14.6], from the resolved `gap:` (default 10 via the `.lini-chart` class).
     pub gap: f64,
-    /// The chart-level label presentation ([CHARTS.md] §14), default `auto` — the hover
+    /// The chart-level label presentation [SPEC 14.8], default `auto` — the hover
     /// card driver and each series' `tooltip:` fallback.
     pub tooltip: Tooltip,
 }
 
-/// One wedge of a `layout: pie` ([CHARTS.md] §13): its magnitude, legend label, and
+/// One wedge of a `layout: pie` [SPEC 14.7]: its magnitude, legend label, and
 /// colour (an explicit `fill` / `stroke`, else the per-slice palette walk).
 pub struct Slice {
     pub value: f64,
     pub label: Option<String>,
     pub color: ResolvedValue,
-    /// An explicit `stroke:` outline ([CHARTS.md] §10): colour + `stroke-width`, drawn
+    /// An explicit `stroke:` outline [SPEC 14.6]: colour + `stroke-width`, drawn
     /// around the wedge. `None` → no outline.
     pub outline: Option<(ResolvedValue, f64)>,
 }
 
-/// A parsed pie ([CHARTS.md] §13): its slices (source order, clockwise from the top),
+/// A parsed pie [SPEC 14.7]: its slices (source order, clockwise from the top),
 /// title, and `hole` fraction (`0` a pie, `0 < n < 1` a donut).
 pub struct Pie {
     pub slices: Vec<Slice>,
     pub title: Option<String>,
     pub hole: f64,
-    /// The clear space between the pie and its title / legend ([CHARTS.md] §9), from the
+    /// The clear space between the pie and its title / legend [SPEC 14.6], from the
     /// resolved `gap:` (default 10 via the `.lini-pie` class).
     pub gap: f64,
 }
@@ -261,9 +261,9 @@ pub fn build(inst: &ResolvedInst, funcs: &FuncTable) -> Result<Chart, Error> {
     let categories = read_categories(&inst.attrs, span)?;
 
     // Split declared axes into the one domain (x) axis and the value axes, by which
-    // screen edge plays the domain in this direction ([CHARTS.md] §11): the bottom/top
+    // screen edge plays the domain in this direction [SPEC 14.7]: the bottom/top
     // in a column, the left/right in a row. A radial chart has no sides — one radius
-    // (value) axis, the domain being the spokes ([§12]).
+    // (value) axis, the domain being the spokes ([SPEC 14.7]).
     let mut x_inst: Option<&ResolvedInst> = None;
     let mut value_specs: Vec<AxisSpec> = Vec::new();
     let default_value_side = if dir == Dir::Row {
@@ -354,7 +354,7 @@ pub fn build(inst: &ResolvedInst, funcs: &FuncTable) -> Result<Chart, Error> {
     let x = build_x_axis(x_inst, &categories, &series, &segments, &bubbles, span)?;
 
     // Sample any deferred `fn:` over the now-fixed x-domain → concrete points
-    // ([CHARTS.md] §4); after this, every series carries data feeding the value axes.
+    // [SPEC 14.3]; after this, every series carries data feeding the value axes.
     for (si, s) in series_insts.iter().zip(series.iter_mut()) {
         if let Data::Formula(exprs) = &s.data {
             s.data = sample_formula(exprs, &x.scale, samples, funcs, si.span, &segments)?;
@@ -396,13 +396,13 @@ pub fn build(inst: &ResolvedInst, funcs: &FuncTable) -> Result<Chart, Error> {
     })
 }
 
-/// The chart's title / legend gutter ([CHARTS.md] §9), from the resolved `gap:` (the
+/// The chart's title / legend gutter [SPEC 14.6], from the resolved `gap:` (the
 /// `.lini-chart` / `.lini-pie` class defaults it to 10, overriding the `|block|` 20).
 fn read_gap(attrs: &AttrMap) -> f64 {
     attrs.number("gap").unwrap_or(10.0)
 }
 
-/// Parse a `|bubble|` ([CHARTS.md] §3): a labelled point `at: x y`, its `value` (area
+/// Parse a `|bubble|` [SPEC 14.2]: a labelled point `at: x y`, its `value` (area
 /// size), the bound value axis, and its colour (explicit `fill`/`stroke`, else palette).
 fn read_bubble(
     inst: &ResolvedInst,
@@ -427,10 +427,10 @@ fn read_bubble(
     })
 }
 
-/// Parse a `layout: pie` into its slices ([CHARTS.md] §13). All pie validation (§18)
+/// Parse a `layout: pie` into its slices [SPEC 14.7]. All pie validation [SPEC 19]
 /// lives here; the wedge geometry is the renderer's job. Reuses the chart's `tag`,
 /// `label_of`, the `fill:` / `outline:` paint readers, and the palette walk (per
-/// slice — [§10]).
+/// slice — [SPEC 14.6]).
 pub fn build_pie(inst: &ResolvedInst) -> Result<Pie, Error> {
     let span = inst.span;
     let hole = read_hole(&inst.attrs)?;
@@ -485,7 +485,7 @@ pub fn build_pie(inst: &ResolvedInst) -> Result<Pie, Error> {
     })
 }
 
-/// A pie's `hole:` fraction ([CHARTS.md] §13) — `0` a pie, `0 < n < 1` a donut.
+/// A pie's `hole:` fraction [SPEC 14.7] — `0` a pie, `0 < n < 1` a donut.
 fn read_hole(attrs: &AttrMap) -> Result<f64, Error> {
     match attrs.get("hole") {
         None => Ok(0.0),
@@ -494,7 +494,7 @@ fn read_hole(attrs: &AttrMap) -> Result<f64, Error> {
     }
 }
 
-/// The chart's `direction` ([CHARTS.md] §11) — its orientation / projection.
+/// The chart's `direction` [SPEC 14.7] — its orientation / projection.
 fn read_direction(attrs: &AttrMap) -> Result<Dir, Error> {
     match attrs.get("direction") {
         None => Ok(Dir::Column),
@@ -515,7 +515,7 @@ fn read_direction(attrs: &AttrMap) -> Result<Dir, Error> {
 }
 
 /// Split children into series, axes, bands, marks, and the harvested title; reject
-/// non-chart children and the constructs that arrive in later steps ([CHARTS.md] §18).
+/// non-chart children and the constructs that arrive in later steps [SPEC 19].
 fn partition(inst: &ResolvedInst) -> Result<Split<'_>, Error> {
     let mut series = Vec::new();
     let mut axes = Vec::new();
@@ -615,7 +615,7 @@ fn read_series(
         ));
     }
     let axis = bind_axis(inst, value_specs)?;
-    // Paint by role ([CHARTS.md] §10): a fill shape (bars / area) takes its body from
+    // Paint by role [SPEC 14.6]: a fill shape (bars / area) takes its body from
     // `fill:`, a line its colour from `stroke:`, dots from either. An explicit `stroke:`
     // is a separate outline (read into `outline` below), never the body — so a stroke on
     // a bar no longer leaks into its fill. No explicit paint → walk the palette at the
@@ -628,7 +628,7 @@ fn read_series(
         SeriesKind::Dots => fill.or(stroke),
     }
     .unwrap_or_else(|| {
-        // The outlined look ([CHARTS.md] §10): a bar / area fills with the **soft** tier
+        // The outlined look [SPEC 14.6]: a bar / area fills with the **soft** tier
         // and gains a **deep** edge below; a line takes the deep stroke, dots the ink.
         let suffix = match kind {
             SeriesKind::Line => "-deep",
@@ -650,7 +650,7 @@ fn read_series(
     let tags = read_tags(inst, &data)?;
     let tooltip = super::tooltip::read_or(&inst.attrs, chart_tip)?;
     let tag_color = real_color(inst.attrs.get("color")).unwrap_or_else(muted);
-    // `|bars|` default to a deep edge of their soft fill (the outlined look, [§10]); an
+    // `|bars|` default to a deep edge of their soft fill (the outlined look, [SPEC 14.6]); an
     // `|area|` reads its explicit `stroke` here and otherwise deepens its fill at draw.
     let edge = match kind {
         SeriesKind::Bars => fill_outline(&inst.attrs, &color),
@@ -676,7 +676,7 @@ fn read_series(
     })
 }
 
-/// The chart's `fn:` sample count ([CHARTS.md] §2/§4), default 24.
+/// The chart's `fn:` sample count [SPEC 14.1], default 24.
 fn sample_count(attrs: &AttrMap) -> usize {
     attrs
         .number("samples")
@@ -685,11 +685,11 @@ fn sample_count(attrs: &AttrMap) -> usize {
         .unwrap_or(24)
 }
 
-/// Sample a `fn:` over the x-domain → points ([CHARTS.md] §4). A single expr is the
+/// Sample a `fn:` over the x-domain → points [SPEC 14.3]. A single expr is the
 /// whole-domain form: bind `x` at `samples` steps over the numeric domain. A per-band
 /// list samples each expr in band-local `u` (0→1) across its segment's x-span, the
-/// segments connecting end-to-start ([CHARTS.md] §7) — one continuous polyline whose
-/// boundary risers are drawn. A list length ≠ the band count is an error ([§18]).
+/// segments connecting end-to-start [SPEC 14.5] — one continuous polyline whose
+/// boundary risers are drawn. A list length ≠ the band count is an error ([SPEC 19]).
 fn sample_formula(
     exprs: &[Expr],
     x: &Scale,
@@ -733,7 +733,7 @@ fn sample_formula(
 }
 
 /// Zip sampled xs with their evaluated ys into points; a point-valued result is an
-/// error (a series `fn:` must return a number, [CHARTS.md] §4).
+/// error (a series `fn:` must return a number, [SPEC 14.3]).
 fn points_from(xs: &[f64], ys: Vec<ExprValue>, span: Span) -> Result<Vec<(f64, f64)>, Error> {
     let mut pts = Vec::with_capacity(xs.len());
     for (&xv, yv) in xs.iter().zip(ys) {
@@ -775,9 +775,9 @@ fn read_data(inst: &ResolvedInst, kind: &SeriesKind) -> Result<Data, Error> {
     }
 }
 
-/// Parse a series' `tags:` ([CHARTS.md] §4): a quoted-string list, one per datum,
+/// Parse a series' `tags:` [SPEC 14.3]: a quoted-string list, one per datum,
 /// validated against the data count. A `fn:` series has no authored points to label, so
-/// `tags:` on one is an error ([§18]). Reuses [`collect_strings`] (the `categories:`
+/// `tags:` on one is an error ([SPEC 19]). Reuses [`collect_strings`] (the `categories:`
 /// reader), so a tag list parses exactly like the chart's category list.
 fn read_tags(inst: &ResolvedInst, data: &Data) -> Result<Vec<String>, Error> {
     let Some(v) = inst.attrs.get("tags") else {
@@ -809,7 +809,7 @@ fn read_tags(inst: &ResolvedInst, data: &Data) -> Result<Vec<String>, Error> {
 }
 
 /// Bind a series to a value axis by its `axis:` id, defaulting to the first value
-/// axis. An unknown id reports the chart's own axis ids ([CHARTS.md] §18).
+/// axis. An unknown id reports the chart's own axis ids [SPEC 19].
 fn bind_axis(inst: &ResolvedInst, specs: &[AxisSpec]) -> Result<usize, Error> {
     let Some(id) = axis_id(inst) else {
         return Ok(0);
@@ -829,7 +829,7 @@ fn axis_id(inst: &ResolvedInst) -> Option<&str> {
     }
 }
 
-/// The "axis 'X' not found; did you mean 'Y'?" error ([CHARTS.md] §18), shared by
+/// The "axis 'X' not found; did you mean 'Y'?" error [SPEC 19], shared by
 /// series, band, and mark binding. Axes are chart-local (not in the global index),
 /// so the suggestion ranges over the chart's own `|axis|` ids.
 fn no_axis(id: &str, known: &[&str], span: Span) -> Error {
@@ -842,7 +842,7 @@ fn no_axis(id: &str, known: &[&str], span: Span) -> Error {
     Error::at(span, format!("axis '{id}' not found{hint}"))
 }
 
-/// Resolve a band / mark `axis:` id to the x axis or a value axis ([CHARTS.md] §8).
+/// Resolve a band / mark `axis:` id to the x axis or a value axis [SPEC 14.5].
 fn lookup_axis(
     id: &str,
     x_id: Option<&str>,
@@ -861,7 +861,7 @@ fn lookup_axis(
     Err(no_axis(id, &known, span))
 }
 
-/// Parse a `|band|` ([CHARTS.md] §7): its bound axis (default the x/domain axis), its
+/// Parse a `|band|` [SPEC 14.5]: its bound axis (default the x/domain axis), its
 /// `span`, label, and fill (a real fill shades; `none` / unset makes it a divider).
 fn read_band(inst: &ResolvedInst, x_id: Option<&str>, specs: &[AxisSpec]) -> Result<Band, Error> {
     let axis = match axis_id(inst) {
@@ -879,7 +879,7 @@ fn read_band(inst: &ResolvedInst, x_id: Option<&str>, specs: &[AxisSpec]) -> Res
     })
 }
 
-/// Parse a `|mark|` ([CHARTS.md] §8): a required bound axis, its `at` placement, the
+/// Parse a `|mark|` [SPEC 14.5]: a required bound axis, its `at` placement, the
 /// label, whether a point shows its dot, and the accent (`stroke` / `fill`, else muted).
 fn read_mark(
     inst: &ResolvedInst,
@@ -905,7 +905,7 @@ fn read_mark(
     })
 }
 
-/// A `|band|`'s `span: a b` — its data range on the bound axis ([CHARTS.md] §7).
+/// A `|band|`'s `span: a b` — its data range on the bound axis [SPEC 14.5].
 fn read_span(inst: &ResolvedInst) -> Result<(f64, f64), Error> {
     match inst.attrs.get("span") {
         Some(ResolvedValue::Tuple(items)) if items.len() == 2 => {
@@ -915,7 +915,7 @@ fn read_span(inst: &ResolvedInst) -> Result<(f64, f64), Error> {
     }
 }
 
-/// A `|mark|`'s `at:` — one value (a reference line) or two (a point) ([CHARTS.md] §8).
+/// A `|mark|`'s `at:` — one value (a reference line) or two (a point) [SPEC 14.5].
 fn read_at(inst: &ResolvedInst) -> Result<MarkAt, Error> {
     match inst.attrs.get("at") {
         Some(ResolvedValue::Number(v)) => Ok(MarkAt::Line(*v)),
@@ -930,7 +930,7 @@ fn read_at(inst: &ResolvedInst) -> Result<MarkAt, Error> {
     }
 }
 
-/// The chart's `bars:` mode ([CHARTS.md] §3) — how multiple `|bars|` series combine.
+/// The chart's `bars:` mode [SPEC 14.2] — how multiple `|bars|` series combine.
 fn read_bars(attrs: &AttrMap) -> Result<BarMode, Error> {
     match attrs.get("bars") {
         None => Ok(BarMode::Grouped),
@@ -1002,7 +1002,7 @@ fn build_x_axis(
     }
     // Numeric x: domain from a bottom axis `range:`, else the union of point x's (a
     // formula contributes none — it samples over whatever domain this fixes). With no
-    // point data, x-bound bands define the domain (the segmentation case, [§7]).
+    // point data, x-bound bands define the domain (the segmentation case, [SPEC 14.5]).
     let mut xs: Vec<f64> = series
         .iter()
         .flat_map(|s| match &s.data {
@@ -1047,7 +1047,7 @@ fn build_value_axes(
         // The value range bound to this axis. Non-bar series contribute their values
         // (`Points` their y; formulas were sampled to `Points` before this runs). Bar
         // series contribute their values too — except stacked bars, whose envelope is
-        // the per-category sum (the top of the pile, [CHARTS.md] §3).
+        // the per-category sum (the top of the pile, [SPEC 14.2]).
         let mut vals: Vec<f64> = Vec::new();
         let bar_data: Vec<&[f64]> = series
             .iter()
@@ -1099,7 +1099,7 @@ fn build_value_axes(
 }
 
 /// A value axis's scale: its data domain (bars include zero), honouring an explicit
-/// `range:` window / reverse and `step:` / `ticks:` ([CHARTS.md] §6).
+/// `range:` window / reverse and `step:` / `ticks:` [SPEC 14.4].
 fn value_scale(vals: &[f64], has_bars: bool, spec: &AxisSpec) -> Result<Scale, Error> {
     let data_min = vals.iter().copied().fold(f64::INFINITY, f64::min);
     let data_max = vals.iter().copied().fold(f64::NEG_INFINITY, f64::max);
@@ -1176,7 +1176,7 @@ fn numeric_scale(
     Ok(Scale::linear(min, max, rev, ticks))
 }
 
-/// A log scale over a positive domain ([CHARTS.md] §6): the data domain is rounded
+/// A log scale over a positive domain [SPEC 14.4]: the data domain is rounded
 /// out to whole decades unless an explicit `range:` fixes it. A non-positive domain
 /// is an error.
 fn log_scale(lo: f64, hi: f64, has_range: bool, span: Span) -> Result<Scale, Error> {
@@ -1219,7 +1219,7 @@ fn axis_spec(inst: &ResolvedInst, side: Side) -> Result<AxisSpec<'_>, Error> {
     })
 }
 
-/// Whether an axis is `scale: log` ([CHARTS.md] §6); `scale:` accepts only
+/// Whether an axis is `scale: log` [SPEC 14.4]; `scale:` accepts only
 /// `linear` / `log`.
 fn read_log(inst: &ResolvedInst) -> Result<bool, Error> {
     match inst.attrs.get("scale") {
@@ -1324,13 +1324,13 @@ fn read_curve(attrs: &AttrMap) -> Result<Curve, Error> {
     }
 }
 
-/// The effective **centred** marker for a chart node ([CHARTS.md] §3/§8): a line's
+/// The effective **centred** marker for a chart node [SPEC 14.2]: a line's
 /// vertex, a `|dots|`, or a `|mark|` point. The `marker:` shorthand is extracted to the
 /// resolved [`Markers`] (and dropped from the attr map), so this reads the resolved kind
 /// (`start`, else `end` — `marker:` sets both; the directional ends have no chart
 /// meaning). `marker: none` resolves to `None`; a `|mark|`'s template default `marker:
 /// dot` separates an explicit `none` (label only) from a plain point (a dot). A chart
-/// marker is centred, so the directional `arrow` / `crow` are rejected here ([§18]).
+/// marker is centred, so the directional `arrow` / `crow` are rejected here ([SPEC 19]).
 fn chart_marker(inst: &ResolvedInst) -> Result<MarkerKind, Error> {
     let kind = if inst.markers.start != MarkerKind::None {
         inst.markers.start
@@ -1396,7 +1396,7 @@ fn number(v: &ResolvedValue, span: Span) -> Result<f64, Error> {
         .ok_or_else(|| Error::at(span, "'data' values must be numbers"))
 }
 
-/// A series' legend label, harvested from the smart label ([CHARTS.md] §9): a
+/// A series' legend label, harvested from the smart label [SPEC 14.6]: a
 /// geometry series (`|line|`) keeps it on the node; a block series (`|bars|` /
 /// `|dots|`) lowered it to a centred text child.
 fn label_of(inst: &ResolvedInst) -> Option<String> {
@@ -1410,7 +1410,7 @@ fn label_of(inst: &ResolvedInst) -> Option<String> {
     })
 }
 
-/// The explicit **fill** of a fill shape ([CHARTS.md] §10) — `fill:` only, never the
+/// The explicit **fill** of a fill shape [SPEC 14.6] — `fill:` only, never the
 /// stroke (a stroke is a separate outline, read by [`outline`]). The inherited primitive
 /// defaults — `none`, or the bare `--fill` role var a `|block|` carries — are **not** a
 /// choice, so they fall through to the palette walk.
@@ -1418,14 +1418,14 @@ fn fill_color(attrs: &AttrMap) -> Option<ResolvedValue> {
     real_color(attrs.get("fill"))
 }
 
-/// A fill shape's explicit `stroke:` outline ([CHARTS.md] §10): its colour paired with
+/// A fill shape's explicit `stroke:` outline [SPEC 14.6]: its colour paired with
 /// `stroke-width` (default 1.5), or `None` for no outline. Used by `|area|` and `|bubble|`
 /// (explicit-only); `|bars|` / `|slice|` use [`fill_outline`] for the default deep edge.
 fn outline(attrs: &AttrMap) -> Option<(ResolvedValue, f64)> {
     real_color(attrs.get("stroke")).map(|c| (c, attrs.number("stroke-width").unwrap_or(1.5)))
 }
 
-/// A fill *series'* outline — the outlined look ([CHARTS.md] §10). An explicit `stroke:`
+/// A fill *series'* outline — the outlined look [SPEC 14.6]. An explicit `stroke:`
 /// colour wins; the class default `stroke: auto` (or a bare role var / unset) draws a
 /// **deep** edge of the `fill`; `stroke: none` removes it. The `auto` sentinel on the
 /// `.lini-bars` / `.lini-slice` class is what separates an unset stroke (→ a default edge)

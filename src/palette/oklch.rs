@@ -2,7 +2,7 @@
 //! (<https://bottosson.github.io/posts/oklab/>) inverted, then the sRGB transfer
 //! function. Pure `f64`, no dependencies.
 //!
-//! The palette tiers (SPEC §11.2) are chosen in OKLCH — perceptually even lightness
+//! The palette tiers [SPEC 10.2] are chosen in OKLCH — perceptually even lightness
 //! and chroma — and baked to `#rrggbb` literals here. Targets are picked in-gamut, so
 //! the channel clamp is a backstop, not a normal path.
 

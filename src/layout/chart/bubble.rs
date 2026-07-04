@@ -1,6 +1,6 @@
-//! `|bubble|` rendering ([CHARTS.md] §3): one labelled oval per node, area-scaled across
+//! `|bubble|` rendering [SPEC 14.2]: one labelled oval per node, area-scaled across
 //! the chart (area ∝ value, so the largest fits) and projected through `Plot` like any
-//! datum. The label rides the shared placement pass ([`super::labels`], §14): centred in
+//! datum. The label rides the shared placement pass ([`super::labels`], [SPEC 14]): centred in
 //! the bubble when it fits, else beside it, else on hover. Reuses `prim::oval` / the
 //! projection / the palette.
 
@@ -39,7 +39,7 @@ pub fn lay_out(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>, reqs: &mut
         }
         prim::set_title(&mut bubble, bubble_title(b));
         out.push(bubble);
-        // The label joins the shared pass ([CHARTS.md] §14): its `inside` seat centres it
+        // The label joins the shared pass [SPEC 14.8]: its `inside` seat centres it
         // on the bubble when the text fits (the on-fill tint), else it sits beside (muted);
         // a `pointer-events: none` keeps the bubble's hover working through it.
         if let Some(label) = &b.label

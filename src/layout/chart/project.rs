@@ -1,4 +1,4 @@
-//! The chart's data→pixel projection ([CHARTS.md] §11). This is the **seam** every
+//! The chart's data→pixel projection [SPEC 14.7]. This is the **seam** every
 //! series and axis builder lowers through, so `direction: row` and the polar (radial)
 //! projection are variants here — not a rewrite of the callers. The joint
 //! [`Plot::project`] maps a (domain, value) datum to a pixel point in any direction;
@@ -11,7 +11,7 @@ use std::f64::consts::TAU;
 
 type P = (f64, f64);
 
-/// The chart's orientation ([CHARTS.md] §11). `column`/`row` are cartesian (the value
+/// The chart's orientation [SPEC 14.7]. `column`/`row` are cartesian (the value
 /// grows up / right); `radial` is polar (the value grows outward from the centre).
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Dir {
@@ -40,7 +40,7 @@ impl Plot {
     }
 
     /// A datum at domain coordinate `x` (on the x scale) and value `v` (on a value
-    /// scale) → its pixel point, in this chart's direction ([CHARTS.md] §11). This is
+    /// scale) → its pixel point, in this chart's direction [SPEC 14.7]. This is
     /// the one projection every series lowers through, so a radar reuses the exact
     /// `|line|` / `|area|` / `|dots|` builders — only the projector differs.
     pub fn project(&self, x: &Scale, xv: f64, value: &Scale, v: f64) -> P {
@@ -76,7 +76,7 @@ impl Plot {
         self.w().min(self.h()) / 2.0
     }
 
-    /// The angle of spoke / domain coordinate `xv` ([CHARTS.md] §12): `0` straight up,
+    /// The angle of spoke / domain coordinate `xv` [SPEC 14.7]: `0` straight up,
     /// increasing clockwise, one full turn over the `n` band slots.
     pub fn spoke_angle(&self, x: &Scale, xv: f64) -> f64 {
         let n = match x {
@@ -103,7 +103,7 @@ impl Plot {
     }
 
     /// Clip a pixel polyline to the plot rect (Liang–Barsky per segment), so data
-    /// outside an axis `range:` is cropped to the plot ([CHARTS.md] §1/§6). Splits
+    /// outside an axis `range:` is cropped to the plot [SPEC 14.1]. Splits
     /// into runs where the line re-enters the rect.
     pub fn clip(&self, points: &[P]) -> Vec<Vec<P>> {
         let mut runs: Vec<Vec<P>> = Vec::new();

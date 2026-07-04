@@ -86,7 +86,7 @@ impl EndInfo {
     }
 }
 
-/// ROUTING.md §Impossible layouts — the stray reasons, one per failure shape.
+/// ROUTING.md Impossible layouts — the stray reasons, one per failure shape.
 const NO_ROUTE: &str = "no legal route: every side entry or channel is closed at this layout";
 const ONE_SIDE_LOOP: &str = "self-loop with both ends forced onto one side";
 
@@ -111,7 +111,7 @@ fn world_ladder(a: &str, b: &str) -> Vec<String> {
     out
 }
 
-/// Self-loop side resolution (ROUTING.md §Special nodes): defaults
+/// Self-loop side resolution (ROUTING.md Special nodes): defaults
 /// right → top; a forced side wins and its free partner takes the default
 /// that stays adjacent; one shared side is invalid.
 fn self_loop_sides(a: Option<Side>, b: Option<Side>) -> Option<(Side, Side)> {
@@ -156,7 +156,7 @@ pub(crate) fn route(index: &SceneIndex, reqs: &[EdgeReq]) -> (Routing, Vec<usize
         return (routing, Vec::new());
     }
     // The diagram routes at the maximum clearance any link carries
-    // (ROUTING.md §Vocabulary); the root world gets a canvas margin.
+    // (ROUTING.md Vocabulary); the root world gets a canvas margin.
     let c = reqs
         .iter()
         .filter(mine)

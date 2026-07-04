@@ -34,7 +34,7 @@ pub fn desugar(file: &File) -> Result<File, Error> {
 
     // ── Stylesheet walk: element-rule decls per type, define bodies, the extra
     //    class order, and user vars / root decls / rules. The baked link base stays
-    //    a resolve-time layer (SPEC §9); a `|-|` rule lowers to `.lini-link` like any
+    //    a resolve-time layer [SPEC 9]; a `|-|` rule lowers to `.lini-link` like any
     //    selector, so the link cascade is the node cascade. ──
     let mut element_rules: HashMap<String, Vec<Decl>> = HashMap::new();
     let mut bodies: Bodies = HashMap::new();
@@ -47,7 +47,7 @@ pub fn desugar(file: &File) -> Result<File, Error> {
     for item in &file.stylesheet {
         match item {
             StyleItem::RootDecl(d) => user_root.push(d.clone()),
-            // Functions are compile-time (SPEC §11.7); pass them through so resolve
+            // Functions are compile-time [SPEC 10.7]; pass them through so resolve
             // can fold values against them.
             StyleItem::Func(f) => user_funcs.push(f.clone()),
             StyleItem::Var(d) => user_vars.push(d.clone()),
@@ -66,7 +66,7 @@ pub fn desugar(file: &File) -> Result<File, Error> {
                     .entry(name.clone())
                     .or_default()
                     .extend(r.decls.iter().cloned()),
-                // `.lini-link` is the lowered `|-|` (SPEC §9), not an instance type:
+                // `.lini-link` is the lowered `|-|` [SPEC 9], not an instance type:
                 // it never enters `present` (no node wears it), so keep it a plain
                 // rule the link cascade reads — folding it as a type class would drop
                 // it on re-desugar. Every other `.lini-X` is a real type.
@@ -93,7 +93,7 @@ pub fn desugar(file: &File) -> Result<File, Error> {
 
     // ── Lower instances, then auto-create root boxes for undeclared link ids — counting
     //    messages inside any root-sequence frame, since a frame opens no scope and its
-    //    endpoints resolve against the scene's participants (SPEC §10). ──
+    //    endpoints resolve against the scene's participants [SPEC 13]. ──
     let mut instances = Vec::new();
     for child in &file.instances {
         instances.push(lower_child(child, &types, &bodies)?);
@@ -136,7 +136,7 @@ pub fn desugar(file: &File) -> Result<File, Error> {
     }
     // The chart / sequence engines synthesize `|line|` / `|block|` shapes at layout
     // (with no source node), so their primitive class rules must exist even unworn —
-    // a plain scene synthesizes nothing and skips them (SPEC §14).
+    // a plain scene synthesizes nothing and skips them [SPEC 16].
     let synthesizes_shapes = ["chart", "pie", "sequence"]
         .iter()
         .any(|t| present.contains(*t))
@@ -156,7 +156,7 @@ pub fn desugar(file: &File) -> Result<File, Error> {
     })
 }
 
-/// The sequence frame types (SPEC §10): they open no scope, so their `[ ]` messages resolve
+/// The sequence frame types [SPEC 13]: they open no scope, so their `[ ]` messages resolve
 /// against the enclosing sequence — counted for its auto-create here, kept in place for the
 /// layout (which anchors each message to its frame by source position). Shared with resolve
 /// (frame transparency) and the layout engine.
@@ -170,7 +170,7 @@ fn is_frame_classes(classes: &[String]) -> bool {
     })
 }
 
-/// The messages inside a scope's frames (SPEC §10 — a frame opens no scope, so its endpoints
+/// The messages inside a scope's frames ([SPEC 13] — a frame opens no scope, so its endpoints
 /// belong to the enclosing sequence's auto-create), descending through nested frames.
 /// Read-only: the frames keep their links in place, so desugar stays a fixed point.
 fn gather_frame_messages(children: &[Child]) -> Vec<&Link> {
@@ -201,7 +201,7 @@ fn decl(name: &str, values: Vec<Value>) -> Decl {
     }
 }
 
-/// The grid column count for a table / entity node (SPEC §8): its own `columns:` decl,
+/// The grid column count for a table / entity node [SPEC 8]: its own `columns:` decl,
 /// else a bundle default in its chain (`entity` carries `columns: auto auto`). `None`
 /// when undeterminable — the auto-header and title-span then no-op.
 fn column_count(style: &[Decl], chain: &[String]) -> Option<usize> {
@@ -236,7 +236,7 @@ fn count_tracks(d: &Decl) -> usize {
         .sum()
 }
 
-/// A `|header|` node carrying `text` (SPEC §8). With `span`, it is an `|entity|`'s title
+/// A `|header|` node carrying `text` [SPEC 8]. With `span`, it is an `|entity|`'s title
 /// at the grid top-left; without, it wraps one bare-text table cell (the auto-header).
 fn header_node(text: &TextNode, span: Option<usize>) -> Node {
     let style = match span {
@@ -259,7 +259,7 @@ fn header_node(text: &TextNode, span: Option<usize>) -> Node {
     }
 }
 
-/// A `|cell|` wrapping one bare-text table/entity body cell (SPEC §8): the text
+/// A `|cell|` wrapping one bare-text table/entity body cell [SPEC 8]: the text
 /// node survives inside it, and the `|cell|` type carries the padding inset and the
 /// column's alignment class. Header/footer/box cells stay as they are.
 fn block_cell(text: &TextNode) -> Node {
@@ -277,7 +277,7 @@ fn block_cell(text: &TextNode) -> Node {
 }
 
 /// Wrap each remaining bare-text body cell of a `|table|`/`|entity|` in a `|cell|`
-/// (SPEC §8), the box that carries the cell padding. Header/footer/box cells are
+/// [SPEC 8], the box that carries the cell padding. Header/footer/box cells are
 /// already boxes and pass through; re-desugar is a fixed point (a wrapped cell is a
 /// box, not text, so it is never re-wrapped).
 fn wrap_body_cells(children: &mut [Child], types: &Types, bodies: &Bodies) -> Result<(), Error> {
@@ -289,7 +289,7 @@ fn wrap_body_cells(children: &mut [Child], types: &Types, bodies: &Bodies) -> Re
     Ok(())
 }
 
-/// Carry a table's per-column `align`/`justify` down to its cells (SPEC §8). Each is
+/// Carry a table's per-column `align`/`justify` down to its cells [SPEC 8]. Each is
 /// one keyword per column (a scalar repeats), applied to the cell in that column by
 /// auto-flow order (`i % cols`); `center`/`stretch` add nothing (the cell already
 /// centres / fills). A `start`/`end` column wears a `.lini-align-*` / `.lini-justify-*`
@@ -339,7 +339,7 @@ fn per_column(style: &[Decl], name: &str, cols: usize) -> Option<Vec<String>> {
     )
 }
 
-/// Auto-header a `|table|`'s first row (SPEC §8): wrap the first `cols` children as
+/// Auto-header a `|table|`'s first row [SPEC 8]: wrap the first `cols` children as
 /// `|header|` cells when they are all bare text. A first row holding a box or an
 /// explicit `cell:` is left alone — that is a custom layout, not a header.
 fn wrap_header_row(
@@ -405,7 +405,7 @@ fn lower_node(node: &Node, types: &Types, bodies: &Bodies) -> Result<Node, Error
         children.push(lower_child(c, types, bodies)?);
     }
 
-    // Table / entity structure (SPEC §8). `cols` is the grid column count, driving both
+    // Table / entity structure [SPEC 8]. `cols` is the grid column count, driving both
     // a `|table|`'s auto-header (its first row → `|header|` cells, below) and an
     // `|entity|`'s title span (its label → a spanning header, in the smart-label block).
     let is_entity = info.chain.iter().any(|n| n == "entity");
@@ -415,12 +415,12 @@ fn lower_node(node: &Node, types: &Types, bodies: &Bodies) -> Result<Node, Error
         wrap_header_row(&mut children, cols, types, bodies)?;
     }
     // Wrap every remaining bare-text body cell in a `|cell|` (the box that carries
-    // the cell padding, SPEC §8). The entity title (a spanning header) is inserted
+    // the cell padding, [SPEC 8]). The entity title (a spanning header) is inserted
     // after this, already a box.
     if is_table || is_entity {
         wrap_body_cells(&mut children, types, bodies)?;
     }
-    // Distribute the table's per-column `align`/`justify` onto its cells (SPEC §8):
+    // Distribute the table's per-column `align`/`justify` onto its cells [SPEC 8]:
     // every cell fills its track (the |table| bundle forces `stretch`), so the
     // user's align/justify instead place each cell's text — carried to the cell in
     // its own column. The table's own align/justify are dropped below so `stretch`
@@ -432,7 +432,7 @@ fn lower_node(node: &Node, types: &Types, bodies: &Bodies) -> Result<Node, Error
         distribute_cell_alignment(&mut children, &node.style, cols);
     }
 
-    // The smart label, lowered per type (SPEC §3/§7) — the single shared lowering
+    // The smart label, lowered per type [SPEC 3/7] — the single shared lowering
     // for a node's text (a link's labels go through the same `TextNode`). A box-like
     // type → centred text prepended; a group/table → a `|caption|` child; an
     // icon/sign → the `symbol`. An empty `""` lowers to nothing. Geometry-only
@@ -465,7 +465,7 @@ fn lower_node(node: &Node, types: &Types, bodies: &Bodies) -> Result<Node, Error
             }
             style.push(labels::symbol_decl(&label.text, node.span));
         } else if is_entity {
-            // An entity's label is its title: a `|header|` spanning every column (SPEC §8).
+            // An entity's label is its title: a `|header|` spanning every column [SPEC 8].
             let title = header_node(label, Some(cols.unwrap_or(2)));
             children.insert(0, Child::Box(lower_node(&title, types, bodies)?));
         } else if is_container {
@@ -481,7 +481,7 @@ fn lower_node(node: &Node, types: &Types, bodies: &Bodies) -> Result<Node, Error
         }
     }
 
-    // In an entity, header / footer cells span every column (SPEC §8): the title above
+    // In an entity, header / footer cells span every column [SPEC 8]: the title above
     // carries its own span; a hand-written `|footer|` (or `|header|`) gets one here.
     if is_entity && let Some(cols) = cols {
         for child in &mut children {
@@ -512,11 +512,11 @@ fn lower_node(node: &Node, types: &Types, bodies: &Bodies) -> Result<Node, Error
         links.push(labels::lower_link(w));
     }
 
-    // Auto-create undeclared body-link endpoints among this body's own children (SPEC §3 —
+    // Auto-create undeclared body-link endpoints among this body's own children ([SPEC 3] —
     // auto-create runs in any scope, not just the root), counting messages inside any frame
     // child so a participant first named inside a frame is created on the sequence, not the
     // frame. A frame (`loop`/`opt`/`alt`/`else`) opens no scope, so it never auto-creates —
-    // its endpoints resolve against the enclosing sequence's participants (SPEC §10).
+    // its endpoints resolve against the enclosing sequence's participants [SPEC 13].
     if !already && !is_frame_classes(&classes) {
         let declared = scene::declared_ids(&children);
         // Scope the message borrows of `children` so the auto-create push below is free.
@@ -578,7 +578,7 @@ fn rewrite_selector(rule: &Rule, types: &Types) -> Result<Rule, Error> {
             }
             SelUnit::Class(c) => units.push(SelUnit::Class(c.clone())),
             SelUnit::Id(i) => units.push(SelUnit::Id(i.clone())),
-            // `|-|` — the link type (SPEC §9): every link wears `.lini-link`, so the
+            // `|-|` — the link type [SPEC 9]: every link wears `.lini-link`, so the
             // selector lowers to that class and the node cascade matches it unchanged.
             SelUnit::Link => units.push(SelUnit::Class(lini_class("link"))),
         }
@@ -647,7 +647,7 @@ mod tests {
     fn is_header(c: &Child) -> bool {
         matches!(c, Child::Box(n) if n.classes.iter().any(|x| x == "lini-header"))
     }
-    /// A body cell is now a frameless `|block|` wrapping its bare text (SPEC §8).
+    /// A body cell is now a frameless `|block|` wrapping its bare text [SPEC 8].
     fn is_block_cell(c: &Child) -> bool {
         matches!(c, Child::Box(n)
             if n.classes.iter().any(|x| x == "lini-block")
@@ -689,7 +689,7 @@ mod tests {
     #[test]
     fn table_distributes_per_column_align_to_cells() {
         // The table's own `align` is consumed (dropped, so the bundle's `stretch`
-        // fills the cells) and carried to each cell by column (SPEC §8).
+        // fills the cells) and carried to each cell by column [SPEC 8].
         let f = lower(
             "|table#t| { columns: 40 40; align: start end } [\n\"a\"\n\"b\"\n\"c\"\n\"d\"\n]\n",
         );
@@ -717,7 +717,7 @@ mod tests {
     #[test]
     fn table_cells_get_lini_cell_but_the_caption_does_not() {
         // Cells are `|cell|`s (which carry the padding); a table's caption is a plain
-        // `|block|`, not a `|cell|` (SPEC §8), so it must not wear `.lini-cell` — else
+        // `|block|`, not a `|cell|` [SPEC 8], so it must not wear `.lini-cell` — else
         // its title text would be inset like a cell.
         let f = lower("|table#t| \"Cap\" { columns: 30 30 } [\n\"a\"\n\"b\"\n\"c\"\n\"d\"\n]\n");
         let t = root_box(&f, "t");

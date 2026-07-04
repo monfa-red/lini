@@ -1,4 +1,4 @@
-//! Activations (SPEC §10): the implicit bars showing when a participant is handling a
+//! Activations [SPEC 13]: the implicit bars showing when a participant is handling a
 //! call. A call (`->`) **opens** a bar on its target's lifeline; the next **return**
 //! (`-->`) from that target **closes** its most recent open one; nested calls **stack**,
 //! each offset outward; an unclosed bar runs to the foot. Self / async messages open
@@ -80,7 +80,7 @@ pub(super) fn edge(
 }
 
 /// Lower each bar to a thin `|block|` on its participant's lifeline, painted in **that
-/// participant's** own fill / stroke / stroke-width / radius (SPEC §10) — so colouring a
+/// participant's** own fill / stroke / stroke-width / radius [SPEC 13] — so colouring a
 /// participant colours its activation bars too — spanning its open → close rows.
 pub(super) fn draw(
     bars: &[Bar],

@@ -1,5 +1,5 @@
 //! Extract layout-time numeric values from `ResolvedValue`s. A `--name`
-//! reference is a visual var (SPEC §11.2), never a layout number, so it errors
+//! reference is a visual var [SPEC 10.2], never a layout number, so it errors
 //! where a number is required.
 
 use crate::error::Error;

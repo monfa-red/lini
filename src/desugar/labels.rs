@@ -1,12 +1,12 @@
 //! Label / `along:` lowering helpers, used by the full desugar pass ([`super`]).
 //! The smart label (a box's text, a group's caption, an icon's symbol) and a
 //! link's auto-distributed `along:` fractions are each a small, reusable
-//! transform (SPEC §3, §7, §9, §14).
+//! transform [SPEC 3, 7, 9, 16].
 
 use crate::span::Span;
 use crate::syntax::ast::{Decl, Link, Node, TextNode, Value};
 
-/// A `|caption|` node carrying a group/table's smart-label text (SPEC §3/§8): the
+/// A `|caption|` node carrying a group/table's smart-label text [SPEC 3/8]: the
 /// container's label lowers to this, then through the normal node path (so it
 /// gains its `.lini-caption` chain and its centred text child).
 pub(super) fn caption_node(label: &TextNode) -> Node {
@@ -23,7 +23,7 @@ pub(super) fn caption_node(label: &TextNode) -> Node {
     }
 }
 
-/// The `symbol: <name>` declaration an icon's smart label lowers to (SPEC §7).
+/// The `symbol: <name>` declaration an icon's smart label lowers to [SPEC 7].
 pub(super) fn symbol_decl(name: &str, span: Span) -> Decl {
     Decl {
         name: "symbol".to_string(),
@@ -32,7 +32,7 @@ pub(super) fn symbol_decl(name: &str, span: Span) -> Decl {
     }
 }
 
-/// Lower a link's labels (SPEC §9): the head label leads, then the `[ ]` labels;
+/// Lower a link's labels [SPEC 9]: the head label leads, then the `[ ]` labels;
 /// the combined list feeds auto-`along:`. The output carries `label: None`, the
 /// full list in `labels`, and — when no `along:` was written — an even-fraction
 /// `along:` prepended to its style.

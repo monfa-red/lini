@@ -1,4 +1,4 @@
-//! Radial (polar) gridlines and labels ([CHARTS.md] §12). The value axis's concentric
+//! Radial (polar) gridlines and labels [SPEC 14.7]. The value axis's concentric
 //! polygon **web** through the spokes, the spokes themselves (the domain gridlines),
 //! the spoke (category) labels around the rim, and the radius tick labels up the top
 //! spoke. The series reuse the cartesian builders through `Plot::project`; only these

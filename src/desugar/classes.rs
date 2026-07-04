@@ -76,7 +76,7 @@ pub fn class_defs(
             emit(name, Vec::new(), false);
         }
     }
-    // The per-column cell-alignment classes a table distributes (SPEC §8): each sets
+    // The per-column cell-alignment classes a table distributes [SPEC 8]: each sets
     // one `align`/`justify` keyword, worn by the cells of a start/end-aligned column.
     // Emitted only when actually worn, like any type class.
     for (name, prop, value) in ALIGN_CLASSES {

@@ -1,15 +1,15 @@
 //! Text width / height approximation for bbox math.
 //!
-//! A coarse linear approximation per char. SPEC §7 calls for embedded font
+//! A coarse linear approximation per char. [SPEC 7] calls for embedded font
 //! metrics for reproducibility — that lands once a default font is picked.
-//! `letter-spacing` / `line-spacing` (SPEC §10) feed in here so the box grows to
+//! `letter-spacing` / `line-spacing` [SPEC 13] feed in here so the box grows to
 //! fit the baked spacing.
 
 /// Average char width as a fraction of font size. The default font is
 /// **monospace**, where every glyph shares one advance (~0.6 em across Menlo /
 /// Consolas / Courier), so this linear estimate is essentially exact — no font
 /// metrics needed. A proportional `font-family` override makes it approximate
-/// again (SPEC §19).
+/// again [SPEC 22].
 const AVG_CHAR_WIDTH_RATIO: f64 = 0.6;
 
 /// Approximate the width of a label at the given font size, in px. Multi-line
@@ -30,7 +30,7 @@ pub fn approx_width(text: &str, font_size: f64, letter_spacing: f64) -> f64 {
 }
 
 /// Per-line box for multi-line text: lines render ~1.2 em tall and abut at this
-/// leading (SPEC §6), so a multi-line block needs the full `n × 1.2` or its
+/// leading [SPEC 5], so a multi-line block needs the full `n × 1.2` or its
 /// outer lines clip.
 const LINE_LEADING: f64 = 1.2;
 /// A single line's tight box — about one em, so the glyphs nearly fill it.
@@ -39,7 +39,7 @@ const LINE_LEADING: f64 = 1.2;
 const SINGLE_LINE_EM: f64 = 1.0;
 
 /// Height of a (possibly multi-line) text block. A lone line gets the tight box;
-/// multi-line keeps the full per-line leading so nothing clips (SPEC §6). Lines
+/// multi-line keeps the full per-line leading so nothing clips [SPEC 5]. Lines
 /// step by `leading + line_spacing`; like `letter-spacing`, once that turns
 /// negative the lines overlap and reverse, so the drawn block spans `leading +
 /// (n − 1) × |step|` — never below one line.

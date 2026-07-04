@@ -1,6 +1,6 @@
 //! Emit the `<style>` block: the `@layer lini.defaults` variable defaults
-//! (host CSS wins automatically per SPEC §12.1) plus the unlayered structural
-//! rules (SPEC §14 — paint rides CSS, geometry bakes; unlayered so renderers
+//! (host CSS wins automatically per [SPEC 10.1]) plus the unlayered structural
+//! rules ([SPEC 16] — paint rides CSS, geometry bakes; unlayered so renderers
 //! that skip `@layer` still parse them).
 
 use super::rules::RuleSet;
@@ -23,7 +23,7 @@ pub fn emit(
     // `--bake-vars` inlines every value (the rules below carry literals), so the
     // themeable `@layer` block is only emitted when vars stay live.
     if !opts.bake_vars {
-        // Tree-shake: emit only the vars the document references (SPEC §11.2/§13),
+        // Tree-shake: emit only the vars the document references [SPEC 10.2/16],
         // so the built-in palette never bloats a diagram that doesn't use it.
         let mut names: Vec<&String> = vars
             .entries
@@ -34,7 +34,7 @@ pub fn emit(
         if !names.is_empty() {
             // Adaptive when any emitted colour is a light-dark() pair: emit
             // `color-scheme` so `light-dark()` follows the OS, plus the `data-theme`
-            // toggles that force a mode by flipping it (SPEC §11.1).
+            // toggles that force a mode by flipping it [SPEC 10.1].
             let adaptive = names
                 .iter()
                 .any(|n| is_light_dark(vars.entries.get(*n).unwrap()));
@@ -66,7 +66,7 @@ pub fn emit(
     }
 
     rules.emit(out);
-    // The rich chart tooltip ([CHARTS.md] §14): cards are hidden in a top layer; hovering
+    // The rich chart tooltip [SPEC 14.8]: cards are hidden in a top layer; hovering
     // a mark (`.lini-hit-N`) reveals its `.lini-tip-N` card, a later sibling, so no other
     // mark can paint over it. Live-only — `--bake-vars` drops the cards and these rules.
     if tooltip_cards > 0 {

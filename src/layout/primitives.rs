@@ -1,4 +1,4 @@
-//! Per-primitive bbox computation (SPEC §6–§7).
+//! Per-primitive bbox computation ([SPEC 5–7]).
 //!
 //! A closed primitive sizes **border-box**: `width`/`height` each default `auto` =
 //! content + `padding` on that axis; an empty one is `2 × padding`; an explicit
@@ -56,7 +56,7 @@ pub fn leaf_bbox(inst: &ResolvedInst) -> Result<Bbox, Error> {
             let (w, h) = image_dims(inst)?;
             Ok(Bbox::centered(w, h))
         }
-        // Native top-left coords (SPEC §7): size to the parsed path extent.
+        // Native top-left coords [SPEC 7]: size to the parsed path extent.
         NodeKind::Path => {
             let Some(ResolvedValue::String(d)) = inst.attrs.get("path") else {
                 return Err(Error::at(inst.span, "'|path|' requires 'path'"));
@@ -72,7 +72,7 @@ pub fn leaf_bbox(inst: &ResolvedInst) -> Result<Bbox, Error> {
 
 /// A closed primitive's bbox: each axis is `content + padding`, with an explicit
 /// `width`/`height` as a **floor** — border-box (padding inside), and the box
-/// grows past the declared size rather than clip or spill its content (SPEC §6).
+/// grows past the declared size rather than clip or spill its content [SPEC 5].
 /// Inflated by half the stroke so the outline counts toward the bbox.
 pub fn closed_bbox(inst: &ResolvedInst, content: Bbox) -> Result<Bbox, Error> {
     let pad = padding(&inst.attrs, inst.span)?;
@@ -91,7 +91,7 @@ pub fn closed_bbox(inst: &ResolvedInst, content: Bbox) -> Result<Bbox, Error> {
 
 /// An `|icon|`'s bbox: a **square** that grows uniformly with its label content
 /// and `padding`, so the symbol scales up *with* the text and keeps its
-/// proportion (SPEC §7). The side is the larger of the declared size (the bundle's
+/// proportion [SPEC 7]. The side is the larger of the declared size (the bundle's
 /// `icon-size` 32) and the content + padding on either axis — no stroke inflate
 /// (the symbol's stroke sits inside its 256 grid). `content` is the empty box for
 /// a bare icon, or its laid-out label child's extent.
@@ -112,7 +112,7 @@ pub fn icon_square_bbox(inst: &ResolvedInst, content: Bbox) -> Result<Bbox, Erro
 /// explicit dimension as a **floor** over it — the box grows to fit content
 /// rather than clip or spill. An **empty** box (no content on this axis) keeps
 /// its declared size, since there is nothing to protect; an *auto* empty box is
-/// `2 × padding` (SPEC §6).
+/// `2 × padding` [SPEC 5].
 fn floor_dim(declared: Option<f64>, content: f64, pad: f64) -> f64 {
     match declared {
         None => content + pad,

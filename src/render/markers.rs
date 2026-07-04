@@ -54,11 +54,11 @@ pub fn marker_size(thickness: f64) -> f64 {
 const DOT_RADIUS: f64 = 0.375;
 
 /// `circle` radius as a fraction of the marker `size` — a deliberately larger `dot`
-/// ([SPEC §7]), big enough to hover or read on a chart point. Same drawing as the dot,
+/// ([SPEC 7]), big enough to hover or read on a chart point. Same drawing as the dot,
 /// only fuller.
 const CIRCLE_RADIUS: f64 = 0.5;
 
-/// ER crow's-foot family geometry, in `marker_size` units (SPEC §7). The fan splays
+/// ER crow's-foot family geometry, in `marker_size` units [SPEC 7]. The fan splays
 /// onto the entity edge (at the tip) and converges back along the line; a bar / ring
 /// sits behind it for the finer cardinalities.
 const CROW_DEPTH: f64 = 1.0; // foot convergence, back from the entity edge
@@ -259,7 +259,7 @@ pub fn emit_marker(
                 fill,
             ).unwrap();
         }
-        // The ER cardinality family ([SPEC §7]) — all open strokes (`stroke: inherit`
+        // The ER cardinality family ([SPEC 7]) — all open strokes (`stroke: inherit`
         // via `.lini-marker-open`). The crow's foot splays onto the entity edge and
         // converges back along the line; a bar means "one", a ring "optional (zero)".
         MarkerKind::Crow => {
@@ -384,7 +384,7 @@ mod tests {
     #[test]
     fn a_circle_marker_is_a_fuller_dot() {
         // `circle` reuses the dot path at a larger radius fraction — a deliberately
-        // bigger, hover-sized point ([SPEC §7]).
+        // bigger, hover-sized point ([SPEC 7]).
         let size = marker_size(1.0);
         assert!(
             size * CIRCLE_RADIUS > size * DOT_RADIUS,

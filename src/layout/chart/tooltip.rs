@@ -1,4 +1,4 @@
-//! Chart tooltips ([CHARTS.md] §14). The baked-safe floor is the native `<title>` each
+//! Chart tooltips [SPEC 14.8]. The baked-safe floor is the native `<title>` each
 //! mark already carries; this adds the `tooltip:` mode on top — `none` strips the titles,
 //! `title` keeps only them, `rich` (default) also emits a hidden `.lini-chart-tip` card
 //! per titled mark in a **top layer** (appended last, so nothing paints over it), revealed
@@ -12,7 +12,7 @@ use crate::layout::{Bbox, PlacedNode};
 use crate::resolve::{AttrMap, ResolvedValue};
 use crate::span::Span;
 
-/// A datum's label presentation ([CHARTS.md] §14): nothing, hover only, inline-where-it-
+/// A datum's label presentation [SPEC 14.8]: nothing, hover only, inline-where-it-
 /// fits (else hover), or inline always. `Auto` / `Always` draw an inline label; every
 /// non-`None` mode keeps the hover `<title>` + card.
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -24,7 +24,7 @@ pub enum Tooltip {
 }
 
 impl Tooltip {
-    /// Whether this mode draws an inline label on the plot ([CHARTS.md] §14).
+    /// Whether this mode draws an inline label on the plot [SPEC 14.8].
     pub fn inline(self) -> bool {
         matches!(self, Tooltip::Auto | Tooltip::Always)
     }
@@ -40,13 +40,13 @@ const SIZE: f64 = 11.0;
 const PAD: f64 = 5.0;
 const GAP: f64 = 7.0;
 
-/// The chart's `tooltip:` mode ([CHARTS.md] §14/§16), default `auto`.
+/// The chart's `tooltip:` mode [SPEC 14.8], default `auto`.
 pub fn read(attrs: &AttrMap) -> Result<Tooltip, Error> {
     read_or(attrs, Tooltip::Auto)
 }
 
 /// A node's `tooltip:` mode, falling back to `default` (the chart's, for a series that
-/// sets none) — the cascade in one read ([CHARTS.md] §14).
+/// sets none) — the cascade in one read [SPEC 14.8].
 pub fn read_or(attrs: &AttrMap, default: Tooltip) -> Result<Tooltip, Error> {
     match attrs.get("tooltip") {
         None => Ok(default),

@@ -287,7 +287,7 @@ fn simplify(pts: Vec<(f64, f64)>) -> Vec<(f64, f64)> {
     out
 }
 
-/// The stray segment for an impossible link (ROUTING.md §Impossible layouts):
+/// The stray segment for an impossible link (ROUTING.md Impossible layouts):
 /// centre to centre, each end trimmed to its own body's boundary. `None` when
 /// the trim leaves nothing — coincident or overlapping bodies (self-loops,
 /// containment), where no between-bodies segment exists.

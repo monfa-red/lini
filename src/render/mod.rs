@@ -67,8 +67,8 @@ pub fn render(laid_out: &LaidOut, opts: &Options) -> String {
         out.push_str("  </defs>\n");
     }
 
-    // The backing rect paints the scene background over the whole viewBox (SPEC
-    // §13); its fill comes from the `.lini-canvas` rule (`--lini-bg`), unless the
+    // The backing rect paints the scene background over the whole viewBox
+    // [SPEC 13]; its fill comes from the `.lini-canvas` rule (`--lini-bg`), unless the
     // root set an explicit `fill:`, which overrides it inline.
     let canvas_style = match &laid_out.canvas_fill {
         Some(fill) => format!(
@@ -131,7 +131,7 @@ pub fn render(laid_out: &LaidOut, opts: &Options) -> String {
 }
 
 /// The number of rich tooltip cards (max `tip-N` index + 1) — the renderer emits one
-/// `.lini-hit-N:hover ~ .lini-tip-N` reveal rule per card ([CHARTS.md] §14).
+/// `.lini-hit-N:hover ~ .lini-tip-N` reveal rule per card [SPEC 14.8].
 fn tooltip_count(nodes: &[PlacedNode]) -> usize {
     fn scan(nodes: &[PlacedNode], max: &mut Option<usize>) {
         for n in nodes {
@@ -158,19 +158,19 @@ fn render_node(
     opts: &Options,
 ) {
     use std::fmt::Write;
-    // The rich chart tooltip card is live-only ([CHARTS.md] §14): a baked SVG keeps the
+    // The rich chart tooltip card is live-only [SPEC 14.8]: a baked SVG keeps the
     // `<title>` floor and drops the `:hover` card, so skip it (and its subtree) here.
     if opts.bake_vars && n.type_chain.iter().any(|t| t == "chart-tip") {
         return;
     }
     // Text renders as a bare `<text class="lini-text">` at its placed position —
-    // no wrapping `<g>` (SPEC §13). Font and colour inherit from the enclosing box.
+    // no wrapping `<g>` [SPEC 16]. Font and colour inherit from the enclosing box.
     if n.kind == NodeKind::Text {
         render_text(out, n, depth, vars, opts);
         return;
     }
     // `href:` wraps the whole node in an `<a href>` so the shape (and its
-    // children) is clickable (SPEC §10). The group sits one level deeper inside.
+    // children) is clickable [SPEC 13]. The group sits one level deeper inside.
     let href = match n.attrs.get("href") {
         Some(crate::resolve::ResolvedValue::String(s)) => Some(s.clone()),
         _ => None,
@@ -188,7 +188,7 @@ fn render_node(
         depth
     };
     let indent = "  ".repeat(depth);
-    // The tooltip `hit-N` class is a live-only hover hook ([CHARTS.md] §14): strip it when
+    // The tooltip `hit-N` class is a live-only hover hook [SPEC 14.8]: strip it when
     // baking so a data mark renders exactly as it would with tooltips off.
     let stripped;
     let chain: &[String] = if opts.bake_vars && n.type_chain.iter().any(|t| t.starts_with("hit-")) {
@@ -227,7 +227,7 @@ fn render_node(
     .unwrap();
 
     // `title:` emits a `<title>` as the group's first child — an SVG tooltip
-    // and the accessible name (SPEC §13).
+    // and the accessible name [SPEC 16].
     if let Some(crate::resolve::ResolvedValue::String(title)) = n.attrs.get("title") {
         writeln!(out, "{}  <title>{}</title>", indent, escape_xml(title)).unwrap();
     }
@@ -243,8 +243,8 @@ fn render_node(
     }
 }
 
-/// A text node: a bare `<text class="lini-text">` at its placed centre (SPEC
-/// §13), via the shared text emitter ([`text::emit`]) that also draws link
+/// A text node: a bare `<text class="lini-text">` at its placed centre
+/// [SPEC 13], via the shared text emitter ([`text::emit`]) that also draws link
 /// labels. `text-anchor: middle` + `dominant-baseline: central` (on `.lini-text`)
 /// centre it on (cx, cy); font and colour inherit from the enclosing box's `<g>`.
 /// Its own `{ }` paint/font rides `style=`; `translate` is folded into (cx, cy).
@@ -253,7 +253,7 @@ fn render_text(out: &mut String, n: &PlacedNode, depth: usize, vars: &VarTable, 
     let label = n.label.as_deref().unwrap_or("");
     let style = text_style_attr(&n.own_style, vars, opts);
     // A text node's `type_chain` carries any extra class (e.g. a chart's `.lini-chart-label`
-    // inline labels, [CHARTS.md] §14); plain text has none, so this stays `lini-text`.
+    // inline labels, [SPEC 14.8]); plain text has none, so this stays `lini-text`.
     let mut class = String::from("lini-text");
     for t in &n.type_chain {
         class.push_str(" lini-");
@@ -262,7 +262,7 @@ fn render_text(out: &mut String, n: &PlacedNode, depth: usize, vars: &VarTable, 
     text::emit(out, &indent, &class, label, (n.cx, n.cy), &n.attrs, &style);
 }
 
-/// The `style=` for a text node's own `{ }` (SPEC §3): paint and font props ride
+/// The `style=` for a text node's own `{ }` [SPEC 3]: paint and font props ride
 /// CSS. `letter-spacing` / `line-spacing` / `translate` / `rotate` / `layer` are
 /// geometry or transforms, handled elsewhere, so they never appear here.
 fn text_style_attr(own: &AttrMap, vars: &VarTable, opts: &Options) -> String {
@@ -295,7 +295,7 @@ fn text_style_attr(own: &AttrMap, vars: &VarTable, opts: &Options) -> String {
 
 /// The node's paint, as the difference against what the stylesheet already
 /// provides for its classes — inline style beats class rules, mirroring the
-/// specificity ladder (SPEC §13/§14). Geometry never appears here.
+/// specificity ladder [SPEC 4/16]. Geometry never appears here.
 fn node_style_attr(
     n: &PlacedNode,
     classes: &[String],
@@ -319,7 +319,7 @@ fn node_style_attr(
 }
 
 /// Siblings in paint order: ascending effective layer, ties by source order
-/// (SPEC §6). The effective layer is the explicit `layer:`, else 1 for a pinned
+/// [SPEC 5]. The effective layer is the explicit `layer:`, else 1 for a pinned
 /// child (overlays paint above the flow) and 0 for a flow child. A stable sort
 /// keeps source order within each layer.
 fn in_layer_order(nodes: &[PlacedNode]) -> Vec<&PlacedNode> {
@@ -384,7 +384,7 @@ mod tests {
     #[test]
     fn layer_lifts_a_node_above_later_source_order() {
         // `a` is written first; its higher `layer` paints it last (on top),
-        // so its <g> is emitted after `b`'s (SPEC §6).
+        // so its <g> is emitted after `b`'s [SPEC 5].
         let svg = svg_for("|box#a| { layer: 5; }\n|box#b|\n");
         let ai = svg.find(r#"data-id="a""#).expect("a");
         let bi = svg.find(r#"data-id="b""#).expect("b");

@@ -1,4 +1,4 @@
-//! `layout: pie` ([CHARTS.md] §13) — value as **angle**. Each `|slice|` is a wedge whose
+//! `layout: pie` [SPEC 14.7] — value as **angle**. Each `|slice|` is a wedge whose
 //! angle is its share of the total, filled clockwise from the top; `hole:` cuts a donut.
 //! Like a chart, a pie owns its subtree and lowers to primitives (`prim::wedge`), reusing
 //! the chart's box, palette, legend, and `<title>` machinery — the renderer learns nothing.
@@ -12,7 +12,7 @@ use crate::layout::prim;
 use crate::resolve::{AttrMap, ResolvedInst, ResolvedValue};
 use std::f64::consts::TAU;
 
-/// Is this node a pie container ([CHARTS.md] §2)? Detected by its `layout:` attr.
+/// Is this node a pie container [SPEC 14.1]? Detected by its `layout:` attr.
 pub fn is_pie(attrs: &AttrMap) -> bool {
     matches!(attrs.get("layout"), Some(ResolvedValue::Ident(s)) if s == "pie")
 }
@@ -21,7 +21,7 @@ pub fn is_pie(attrs: &AttrMap) -> bool {
 /// and legend.
 pub fn layout_pie(inst: &ResolvedInst) -> Result<PlacedNode, Error> {
     let pie = model::build_pie(inst)?;
-    // A pie is square ([CHARTS.md] §2).
+    // A pie is square [SPEC 14.1].
     let w = inst.attrs.number("width").unwrap_or(280.0);
     let h = inst.attrs.number("height").unwrap_or(280.0);
 
@@ -68,7 +68,7 @@ pub fn layout_pie(inst: &ResolvedInst) -> Result<PlacedNode, Error> {
     Ok(chart_box(inst, w, h, kids))
 }
 
-/// The legend entries — one per slice that carries a label ([CHARTS.md] §9). The swatch
+/// The legend entries — one per slice that carries a label [SPEC 14.6]. The swatch
 /// mirrors the slice's fill and its (default-deep or explicit) edge.
 fn legend_entries(slices: &[Slice]) -> Vec<super::LegendEntry> {
     slices
@@ -80,7 +80,7 @@ fn legend_entries(slices: &[Slice]) -> Vec<super::LegendEntry> {
         .collect()
 }
 
-/// A slice's `<title>` ([CHARTS.md] §14): its name, value, and percent of the total.
+/// A slice's `<title>` [SPEC 14.8]: its name, value, and percent of the total.
 fn slice_title(s: &Slice, total: f64) -> String {
     let pct = fmt_tick((s.value / total * 100.0).round());
     let v = fmt_tick(s.value);

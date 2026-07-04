@@ -1,4 +1,4 @@
-//! Link labels (ROUTING.md model step 6, SPEC §9): a label rides its link at
+//! Link labels (ROUTING.md model step 6, [SPEC 9]): a label rides its link at
 //! an auto-distributed anchor or an explicit `along:` fraction of its
 //! statement's whole drawn route, shifted by `translate: x y` in world coords
 //! (the same nudge as on any node). A label is an obstacle to nothing and the
@@ -86,7 +86,7 @@ pub fn place(
                 Along::Fraction(f) => f * total,
             };
             // A label rides on the line; lift it off with `translate: x y` — a
-            // world-frame nudge, the same as on any node (SPEC §6/§9).
+            // world-frame nudge, the same as on any node [SPEC 5/9].
             let spot = |s: f64| {
                 let (p, tan, si) = at_arc(links, &segs, &lens, s);
                 ((p.0 + tx, p.1 + ty), tan, si)

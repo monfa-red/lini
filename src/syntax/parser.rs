@@ -1,4 +1,4 @@
-//! The parser — single-pass recursive descent over the grammar in SPEC §16.
+//! The parser — single-pass recursive descent over the grammar in [SPEC 20].
 //!
 //! The bracket-and-bars vocabulary makes one token of lookahead enough, with no
 //! type-set prescan: `{` opens style, `[` opens children, `|…|` is a type. The
@@ -17,7 +17,7 @@ pub fn parse(tokens: &[Token]) -> Result<File, Error> {
     Parser::new(tokens).parse_file()
 }
 
-/// The shared head tail (SPEC §3/§9): a head label, worn classes, and the head's
+/// The shared head tail [SPEC 3/9]: a head label, worn classes, and the head's
 /// own style block — what `parse_tail` reads after a node's bars or a link's
 /// endpoints. The `[ ]` content is parsed by the caller.
 struct Tail {
@@ -60,7 +60,7 @@ impl<'a> Parser<'a> {
         self.toks.get(self.pos + n).map(|t| &t.kind)
     }
 
-    /// The cursor sits on the link selector `|-|` (SPEC §4, §9): bars wrapping a
+    /// The cursor sits on the link selector `|-|` [SPEC 4, 9]: bars wrapping a
     /// bare solid dash — a line, in the identity capsule. The `-` lexes as a
     /// marker-less solid link op, so this is `| · - · |`.
     fn at_link_bars(&self) -> bool {
@@ -142,7 +142,7 @@ impl<'a> Parser<'a> {
 
     /// Consume a statement terminator (newline / `;`), or accept a closing
     /// bracket / a following string / EOF. A string is self-delimiting, so
-    /// `"a" "b" "c"` is three text nodes (SPEC §3).
+    /// `"a" "b" "c"` is three text nodes [SPEC 3].
     fn terminator(&mut self) -> Result<(), Error> {
         if matches!(self.kind(), Some(TokKind::Newline) | Some(TokKind::Semi)) {
             self.pos += 1;
@@ -182,7 +182,7 @@ impl<'a> Parser<'a> {
             ),
             Some(TokKind::Ident(_)) => match self.kind_at(1) {
                 Some(TokKind::Colon) => Ok(Kind::Decl),
-                // `name(params) `…`` is a function definition (SPEC §11.7).
+                // `name(params) `…`` is a function definition [SPEC 10.7].
                 Some(TokKind::LParen) => Ok(Kind::Func),
                 _ => Err(self
                     .err("a type only appears in bars — write '|box| { }' to style every box")),
@@ -238,7 +238,7 @@ impl<'a> Parser<'a> {
             file.stylesheet_span = Span::new(start.start, self.last_span().end);
             self.skip_newlines();
         }
-        // Instances and links interleave, in source order (SPEC §3): a
+        // Instances and links interleave, in source order [SPEC 3]: a
         // `layout: sequence` reads that order as time. They stay in separate
         // lists — each already in source order — and the formatter / sequence
         // engine recover the interleave from spans.
@@ -323,7 +323,7 @@ impl<'a> Parser<'a> {
 
     /// Comma-separated value groups; each group is a space-separated sequence. A
     /// declaration's value runs to `;` (or a closing `}` / `]`), so it may span
-    /// lines — a newline inside a value is whitespace, not a terminator (SPEC §2/§3).
+    /// lines — a newline inside a value is whitespace, not a terminator [SPEC 2/3].
     fn parse_values(&mut self) -> Result<(Vec<Vec<Value>>, Span), Error> {
         let start = self.span();
         let mut groups: Vec<Vec<Value>> = Vec::new();
@@ -374,7 +374,7 @@ impl<'a> Parser<'a> {
             Some(TokKind::RawCssVar(s)) => Value::Var(s.clone()),
             Some(TokKind::Expr(s)) => Value::Expr(s.clone()),
             // A `:` in value position is the start of the next declaration — the
-            // previous one ran on because it lacks a terminating `;` (SPEC §3/§15).
+            // previous one ran on because it lacks a terminating `;` [SPEC 3/19].
             Some(TokKind::Colon) => return Err(self.err("a declaration ends with ';'")),
             _ => return Err(self.err("expected a value")),
         };
@@ -399,7 +399,7 @@ impl<'a> Parser<'a> {
 
     // ───────────────────────── Rules & defines ─────────────────────────
 
-    /// `selector { decls }` (SPEC §4) — `|box| { }`, `.hot { }`, `#hero { }`,
+    /// `selector { decls }` [SPEC 4] — `|box| { }`, `.hot { }`, `#hero { }`,
     /// `|table| |box| { }`.
     fn parse_rule(&mut self) -> Result<Rule, Error> {
         let start = self.span();
@@ -412,14 +412,14 @@ impl<'a> Parser<'a> {
         })
     }
 
-    /// A run of space-separated selector units up to the `{` (SPEC §4): a type
+    /// A run of space-separated selector units up to the `{` [SPEC 4]: a type
     /// `|box|` / `|table#main|`, a class `.hot`, or an id `#hero`. The space is
     /// the descendant combinator; each unit keeps its sigil.
     fn parse_selector(&mut self) -> Result<Selector, Error> {
         let mut units = Vec::new();
         loop {
             match self.kind() {
-                // `|-|` — the link type (SPEC §9): every link, styled like a node.
+                // `|-|` — the link type [SPEC 9]: every link, styled like a node.
                 Some(TokKind::Pipe) if self.at_link_bars() => {
                     self.pos += 3;
                     units.push(SelUnit::Link);
@@ -445,12 +445,12 @@ impl<'a> Parser<'a> {
         Ok(Selector { units })
     }
 
-    /// The bars — `|type|`, `|type#id|`, or `|#id|` (SPEC §3): the optional type
+    /// The bars — `|type|`, `|type#id|`, or `|#id|` [SPEC 3]: the optional type
     /// and id, at least one present. Shared by an instance and a selector unit;
     /// `ctx` only picks the glued-class error wording.
     fn parse_identity(&mut self, ctx: BarsCtx) -> Result<(Option<String>, Option<String>), Error> {
         // `|-|` is the link selector, not an identity: reachable here only as an
-        // instance (a selector peels it first), so it draws nothing (SPEC §9).
+        // instance (a selector peels it first), so it draws nothing [SPEC 9].
         if ctx == BarsCtx::Instance && self.at_link_bars() {
             return Err(self
                 .err("a link is drawn by an operator — '|-|' only styles links (write 'a -> b')"));
@@ -540,7 +540,7 @@ impl<'a> Parser<'a> {
         })
     }
 
-    /// `name(params) `body`;` — a compute function (SPEC §11.7): a name, a
+    /// `name(params) `body`;` — a compute function [SPEC 10.7]: a name, a
     /// parameter list, and a backtick body, juxtaposed (no colon). The trailing
     /// `;` is consumed by the caller's terminator, like a declaration.
     fn parse_funcdef(&mut self) -> Result<FuncDef, Error> {
@@ -573,7 +573,7 @@ impl<'a> Parser<'a> {
 
     // ───────────────────────── Nodes ─────────────────────────
 
-    /// A drawn child (SPEC §3): a bare string is a text node; anything else is a
+    /// A drawn child [SPEC 3]: a bare string is a text node; anything else is a
     /// box.
     fn parse_child(&mut self) -> Result<Child, Error> {
         if matches!(self.kind(), Some(TokKind::String(_))) {
@@ -583,7 +583,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    /// A text node `"…"` with an optional `{ … }` style block (SPEC §3) — a `{`
+    /// A text node `"…"` with an optional `{ … }` style block [SPEC 3] — a `{`
     /// glued-or-spaced right after the string is its own text style; otherwise it
     /// is bare. (Strings are self-delimiting, so a following `"` is the next node.)
     fn parse_text_node(&mut self) -> Result<TextNode, Error> {
@@ -602,7 +602,7 @@ impl<'a> Parser<'a> {
         })
     }
 
-    /// A drawn box (SPEC §3): identity in the bars, then the shared tail (head
+    /// A drawn box [SPEC 3]: identity in the bars, then the shared tail (head
     /// label, classes, style), then the `[ ]` children. The smart label rides
     /// `Node.label` and is lowered per type at desugar.
     fn parse_node(&mut self) -> Result<Node, Error> {
@@ -629,7 +629,7 @@ impl<'a> Parser<'a> {
     }
 
     /// The class slot — `.name` worn by a node after its type or by a link after
-    /// its endpoints (SPEC §3/§9). A `.` glued to an id or endpoint is a path and
+    /// its endpoints [SPEC 3/9]. A `.` glued to an id or endpoint is a path and
     /// never reaches here; what does is the worn-class chain, written `.hot.loud`.
     fn parse_classes(&mut self) -> Result<Vec<String>, Error> {
         let mut classes = Vec::new();
@@ -678,7 +678,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    /// `[ children and internal links, in source order ]` (SPEC §3). They stay in
+    /// `[ children and internal links, in source order ]` [SPEC 3]. They stay in
     /// two lists, each in source order; the interleave is recovered from spans
     /// where it matters (the formatter, the `layout: sequence` time axis).
     fn parse_children(&mut self) -> Result<(Vec<Child>, Vec<Link>), Error> {
@@ -707,7 +707,7 @@ impl<'a> Parser<'a> {
     }
 
     /// The shared head tail after the bars (a node) or the endpoints (a link),
-    /// SPEC §3/§9: an optional one-string **head label**, then worn **classes**,
+    /// [SPEC 3/9]: an optional one-string **head label**, then worn **classes**,
     /// then the head's own **style** block — in that order. The `[ ]` content
     /// (children for a node, labels for a link) is parsed by the caller. The head
     /// label carries no style of its own — a `{ }` after it is the node's / link's
@@ -747,7 +747,7 @@ impl<'a> Parser<'a> {
         })
     }
 
-    /// A link's `[ "label"… ]` content block (SPEC §9) — labels are styleable
+    /// A link's `[ "label"… ]` content block [SPEC 9] — labels are styleable
     /// text leaves, newline-separated; the canonical form of the trailing sugar.
     fn parse_label_block(&mut self) -> Result<Vec<TextNode>, Error> {
         self.expect(&TokKind::LBracket, "'['")?;
@@ -784,7 +784,7 @@ impl<'a> Parser<'a> {
         }
         // The same tail a node uses: a head label, worn classes, the link's own
         // style. The head label and the `[ ]` labels coexist — desugar
-        // concatenates them for `along:` (SPEC §9).
+        // concatenates them for `along:` [SPEC 9].
         let Tail {
             label,
             classes,
@@ -829,7 +829,7 @@ impl<'a> Parser<'a> {
             path.push(seg);
             end = seg_span;
         }
-        // A trailing `:side` forces an edge (SPEC §9). The path no longer peels a
+        // A trailing `:side` forces an edge [SPEC 9]. The path no longer peels a
         // final `.left` — that is now a child named `left`.
         let side = if self.eat(&TokKind::Colon) {
             let (name, name_span) = self.expect_ident()?;
@@ -885,7 +885,7 @@ fn link_op_str(op: LinkOp) -> String {
 }
 
 /// Which bars are being parsed — picks the glued-class error wording, and gates
-/// the `|-|`-as-instance rejection (SPEC §9).
+/// the `|-|`-as-instance rejection [SPEC 9].
 #[derive(Clone, Copy, PartialEq)]
 enum BarsCtx {
     Instance,
@@ -981,7 +981,7 @@ mod tests {
 
     #[test]
     fn head_label_may_carry_the_nodes_own_style() {
-        // `{ }` after the head label is the node's block, not the label's (SPEC §3).
+        // `{ }` after the head label is the node's block, not the label's [SPEC 3].
         let f = parse_ok("|box#api| \"API\" { fill: red }\n");
         let n = instance(&f, 0);
         assert_eq!(label(n), Some("API"));
@@ -1273,7 +1273,7 @@ mod tests {
 
     #[test]
     fn instances_and_links_interleave_at_root() {
-        // SPEC §3: nodes and links interleave in source order (a `layout: sequence`
+        // [SPEC 3]: nodes and links interleave in source order (a `layout: sequence`
         // reads that order as time) — a node after a link is no longer an error.
         let f = parse_ok("a -> b\n|box#c|\n");
         assert_eq!(f.instances.len(), 1, "the |box#c| instance");
@@ -1302,7 +1302,7 @@ mod tests {
 
     #[test]
     fn body_children_and_links_interleave() {
-        // A child may follow an internal link in a body (SPEC §3).
+        // A child may follow an internal link in a body [SPEC 3].
         let f = parse_ok("|group#g| [\n  |box#a|\n  a -> a\n  |box#b|\n]\n");
         let Child::Box(g) = &f.instances[0] else {
             panic!("group node");
@@ -1321,7 +1321,7 @@ mod tests {
         assert!(parse_err("|box#a| { radius: 6 stroke: 2 }\n").contains("ends with ';'"));
     }
 
-    // ── Expressions & functions (SPEC §11.7) ──
+    // ── Expressions & functions [SPEC 10.7] ──
 
     #[test]
     fn funcdef_and_expr_values() {
@@ -1343,7 +1343,7 @@ mod tests {
 
     #[test]
     fn a_declaration_value_spans_lines_until_semicolon() {
-        // Newlines inside a value are whitespace; the value runs to `;` (SPEC §2/§3).
+        // Newlines inside a value are whitespace; the value runs to `;` [SPEC 2/3].
         let f = parse_ok("|line#x| { points: 0 0,\n  10 10,\n  20 0; }\n");
         let points = instance(&f, 0)
             .style

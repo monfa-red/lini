@@ -1,4 +1,4 @@
-//! Text-leaf emission (SPEC §3/§13): one `<text>` for a node's text **and** a
+//! Text-leaf emission [SPEC 3/16]: one `<text>` for a node's text **and** a
 //! link's label — the single code path behind both, so a styleable text leaf
 //! reads the same wherever it sits. It bakes `letter-spacing` into a per-glyph
 //! `dx`, splits multi-line `\n` text into `<tspan>`s (leading `font-size × 1.2`
@@ -28,7 +28,7 @@ pub(crate) fn emit(
     let (x, y) = pos;
     let (xs, ys) = (num(x), num(y));
     // `letter-spacing` bakes into a per-glyph `dx` list — geometry, never CSS
-    // (SPEC §10); `text-anchor: middle` still centres the spaced run.
+    // [SPEC 13]; `text-anchor: middle` still centres the spaced run.
     let ls = attrs.number("letter-spacing").unwrap_or(0.0);
     // A styled leaf's `rotate` turns it about its own centre; `translate` is
     // already in `(x, y)`.
@@ -49,7 +49,7 @@ pub(crate) fn emit(
         return;
     }
 
-    // Multi-line (SPEC §6): one tspan per line, leading `font-size × 1.2` plus
+    // Multi-line [SPEC 5]: one tspan per line, leading `font-size × 1.2` plus
     // `line-spacing`, the block centred on (x, y) so `dominant-baseline: central`
     // still holds.
     let size = attrs.number("font-size").unwrap_or(0.0);

@@ -1,4 +1,4 @@
-//! Frames (SPEC §10): `loop` / `opt` / `alt` fragments and the `alt`'s `else`
+//! Frames [SPEC 13]: `loop` / `opt` / `alt` fragments and the `alt`'s `else`
 //! compartments. A frame is a node whose `[ ]` holds messages (hoisted to the sequence
 //! at desugar — a frame opens no scope); the engine draws it as a dashed `|block|`
 //! spanning the lifelines those messages touch, over the rows they occupy, with a
@@ -31,7 +31,7 @@ const CHROME_CLEAR: f64 = 32.0;
 /// Fallback tab / guard text size, used only if a frame has no resolved `font-size`.
 const KEYWORD_SIZE: f64 = 10.0;
 
-/// The operator keywords that name a frame (SPEC §10). `else` is a compartment
+/// The operator keywords that name a frame [SPEC 13]. `else` is a compartment
 /// separator collected within an `alt`, not a frame of its own.
 const FRAME_KINDS: &[&str] = &["loop", "opt", "alt"];
 
@@ -133,7 +133,7 @@ fn guard(inst: &ResolvedInst) -> Option<&str> {
         .and_then(|c| c.label.as_deref())
 }
 
-/// Place messages, frames, and notes on one timeline by **source order** (SPEC §10): a
+/// Place messages, frames, and notes on one timeline by **source order** [SPEC 13]: a
 /// frame's open / close and each `|else|` reserve vertical room, a message takes a row at
 /// `gap_row`, and a note reserves its own box height. `notes` is each note's `(source
 /// position, box height)`. Walking events in span order makes a nested frame's extent fall
@@ -221,7 +221,7 @@ pub(super) fn timeline(
                 placed = true;
             }
             // A note hugs the timeline — half a row's clearance, not a full gap — so it
-            // annotates without pushing everything down (SPEC §10).
+            // annotates without pushing everything down [SPEC 13].
             Ev::Note(i) => {
                 if let Some(f) = pending.take() {
                     y += frames[f].pad.top.max(MIN_EDGE);
@@ -310,7 +310,7 @@ fn lifeline_span(
                 }
             }
             // A self-message's hook (the arrow area) extends right of its lifeline, so the
-            // frame grows to contain it — the loop reads as inside the fragment (SPEC §10).
+            // frame grows to contain it — the loop reads as inside the fragment [SPEC 13].
             if p.is_self()
                 && let Some(&x) = lifeline_x.get(a)
             {
@@ -352,7 +352,7 @@ fn text_size(inst: &ResolvedInst) -> f64 {
 }
 
 /// The frame's resolved stroke colour — shared by the border, the `|else|` dividers, and the
-/// tab outline, so the whole fragment (chrome included) reads in one colour (SPEC §10).
+/// tab outline, so the whole fragment (chrome included) reads in one colour [SPEC 13].
 fn frame_stroke(inst: &ResolvedInst) -> ResolvedValue {
     inst.attrs
         .get("stroke")

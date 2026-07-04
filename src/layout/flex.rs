@@ -1,4 +1,4 @@
-//! Row / column flex layout (SPEC §5).
+//! Row / column flex layout [SPEC 12].
 //!
 //! `justify` runs *along* the main axis, `align` runs *across* it; both default
 //! `center`. `start`/`center`/`end` pack the line at an edge / centre /

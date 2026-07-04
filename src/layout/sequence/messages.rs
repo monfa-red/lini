@@ -1,4 +1,4 @@
-//! Sequence messages (SPEC §10): a link in a sequence scope, lowered to a
+//! Sequence messages [SPEC 13]: a link in a sequence scope, lowered to a
 //! horizontal **time-row arrow** between two lifelines through the `straight`
 //! strategy ([`crate::routing::straight`]) — the layout owns *where* (column
 //! x, row y), the strategy owns the wire. Each message becomes a
@@ -15,7 +15,7 @@ use crate::routing::straight;
 use std::collections::HashMap;
 
 /// Sequence message-label size — larger than the generic 11px link label so the messages
-/// read comfortably on the time axis (SPEC §10). Kept in sync with the `.lini-sequence-message`
+/// read comfortably on the time axis [SPEC 13]. Kept in sync with the `.lini-sequence-message`
 /// stylesheet rule ([`crate::render`]), which states the rendered size.
 const LABEL_SIZE: f64 = 13.0;
 /// Clear space above the arrow for its label.
@@ -37,7 +37,7 @@ pub(super) struct Pair<'a> {
     link: &'a ResolvedLink,
 }
 
-/// A message's kind on the time axis (SPEC §10), read from the operator — not from
+/// A message's kind on the time axis [SPEC 13], read from the operator — not from
 /// `stroke-style`, which a `link-style:` override can change. It drives activations
 /// (a call opens a bar, a return closes one; async / self open none).
 #[derive(PartialEq, Eq, Clone, Copy)]
@@ -53,7 +53,7 @@ impl Pair<'_> {
         self.link.texts.first().map(|t| t.text.as_str())
     }
     /// The source span of the link this pair came from — its time position, used to
-    /// interleave messages with frames and notes (SPEC §10).
+    /// interleave messages with frames and notes [SPEC 13].
     pub(super) fn span(&self) -> crate::span::Span {
         self.link.span
     }
@@ -65,7 +65,7 @@ impl Pair<'_> {
     pub(super) fn is_self(&self) -> bool {
         self.from == self.to
     }
-    /// This message's `clearance` (SPEC §11) — drives the self-hook's size and corner
+    /// This message's `clearance` [SPEC 9] — drives the self-hook's size and corner
     /// radius, so the loop honours the same turn rule as a routed wire.
     fn clearance(&self) -> f64 {
         self.link.attrs.number("clearance").unwrap_or(16.0)
@@ -97,7 +97,7 @@ impl Pair<'_> {
     fn text_at(&self, cx: f64, cy: f64) -> Option<RoutedText> {
         let label = self.label()?;
         // The size rides the `.lini-sequence-message` class (stated once), not an
-        // inline per label; layout still measures at `label_size()` (SPEC §10).
+        // inline per label; layout still measures at `label_size()` [SPEC 13].
         Some(RoutedText {
             content: label.to_owned(),
             position: (cx, cy),
@@ -148,13 +148,13 @@ pub(super) fn pairs<'a>(messages: &[&'a ResolvedLink]) -> Vec<Pair<'a>> {
 }
 
 /// A participant is a direct child of the sequence, so an endpoint's last path segment is
-/// its id (SPEC §10 — a message resolves to a participant).
+/// its id ([SPEC 13] — a message resolves to a participant).
 fn leaf(path: &str) -> &str {
     path.rsplit('.').next().unwrap_or(path)
 }
 
 /// Column x-centres for the participants, widened so a message label fits over its span
-/// (SPEC §10: adjacent lifelines sit `max(gap-col, label + margin)` apart). Greedy and
+/// ([SPEC 13]: adjacent lifelines sit `max(gap-col, label + margin)` apart). Greedy and
 /// deterministic — each message, in time order, widens the gaps it spans if its label
 /// doesn't fit; the centres are then balanced on the origin.
 pub(super) fn columns(widths: &[f64], ids: &[&str], pairs: &[Pair], gap_col: f64) -> Vec<f64> {
@@ -214,7 +214,7 @@ pub(super) fn columns(widths: &[f64], ids: &[&str], pairs: &[Pair], gap_col: f64
 /// tucked over the loop. `lifeline_x` gives each participant's centre (for
 /// direction and label placement); `endpoint_x(id, row, toward)` gives the
 /// actual attach x — a live activation bar's edge, or the lifeline centre —
-/// so an arrow meets the bar it opens (SPEC §10).
+/// so an arrow meets the bar it opens [SPEC 13].
 pub(super) fn draw(
     pairs: &[Pair],
     lifeline_x: &HashMap<String, f64>,

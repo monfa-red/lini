@@ -24,7 +24,7 @@ fn idempotent(src: &str) {
 #[test]
 fn node_head_label() {
     // A head label is preserved; a `[ ]` text child is left as written (fmt resolves
-    // no types, and the head label's meaning is type-dependent — SPEC §3).
+    // no types, and the head label's meaning is type-dependent — [SPEC 3]).
     assert_eq!(fmt("|box#x| \"hi\"\n"), "|box#x| \"hi\"\n");
     assert_eq!(fmt("|box#x|[ \"hi\" ]\n"), "|box#x| [ \"hi\" ]\n");
 }
@@ -137,7 +137,7 @@ fn node_with_style_and_children() {
 
 #[test]
 fn block_declarations_group_on_one_line() {
-    // SPEC §20: config decls share a line in the style block, off the head.
+    // [SPEC 18]: config decls share a line in the style block, off the head.
     assert_eq!(
         fmt("|group#g| { cell: 1 2; direction: column; gap: 16 } [\n|box#a|\n]\n"),
         "|group#g| { cell: 1 2; direction: column; gap: 16; } [\n  |box#a|\n]\n"
@@ -203,7 +203,7 @@ fn phases_separated_by_a_blank_line() {
 
 #[test]
 fn interleaved_body_keeps_source_order() {
-    // SPEC §3: a child after a link in a body stays put (a `layout: sequence`
+    // [SPEC 3]: a child after a link in a body stays put (a `layout: sequence`
     // reads this order as time) — the formatter must not reorder to children-then-links.
     assert_eq!(
         fmt("|group#g| [\n  a -> b\n  |box#m|\n  m -> a\n]\n"),
@@ -238,7 +238,7 @@ fn runs_of_blank_lines_collapse_to_one() {
 
 #[test]
 fn table_cells_align_into_columns() {
-    // SPEC §8/§14: a |table|'s bare-text cells align, each column padded to its
+    // [SPEC 8/16]: a |table|'s bare-text cells align, each column padded to its
     // widest cell; the track list lives in the style block.
     let out = "|table#t| { columns: 80 80; } [\n  \"A\"     \"Quantity\"\n  \"Apple\" \"3\"\n]\n";
     assert_eq!(

@@ -36,7 +36,7 @@ pub fn render_geometry(
         None => depth,
     };
 
-    // `stack:` draws an offset copy behind the shape (SPEC §7); both copies
+    // `stack:` draws an offset copy behind the shape [SPEC 7]; both copies
     // sit inside the shadow group, so the stacked silhouette casts one shadow.
     if let Some((dx, dy)) = stack_offset(n) {
         let indent = "  ".repeat(body_depth);
@@ -59,7 +59,7 @@ pub fn render_geometry(
     }
 
     // Interior gutters, each a `<rect>` filled with the container's resolved
-    // `gap-color` (SPEC §5) — drawn over the shape, interior only, so the outer
+    // `gap-color` [SPEC 11] — drawn over the shape, interior only, so the outer
     // frame stays the container's own border and no edge is doubled. The rect
     // states its own `stroke="none"`, so the container's border never bleeds onto
     // it, and a filled rect (unlike a `<line>`) carries a gradient `gap-color`.
@@ -87,7 +87,7 @@ pub fn render_geometry(
     }
 }
 
-/// The `(dx, dy)` of a `stack:` offset copy (SPEC §7): scalar `N` ⇒ `(N, -N)`.
+/// The `(dx, dy)` of a `stack:` offset copy [SPEC 7]: scalar `N` ⇒ `(N, -N)`.
 fn stack_offset(n: &PlacedNode) -> Option<(f64, f64)> {
     match n.attrs.get("stack")? {
         ResolvedValue::Number(v) => Some((*v, -*v)),
@@ -107,7 +107,7 @@ fn emit_shape(
     opts: &Options,
 ) {
     let indent = "  ".repeat(depth);
-    // Default matches the `stroke-width` layout var (SPEC §11.3) so the drawn
+    // Default matches the `stroke-width` layout var [SPEC 10.3] so the drawn
     // shape stays inside the bbox the layout reserved.
     let thickness = n.attrs.number("stroke-width").unwrap_or(0.0);
 
@@ -118,7 +118,7 @@ fn emit_shape(
         NodeKind::Diamond => emit_diamond(out, n, &indent, thickness),
         NodeKind::Cyl => emit_cyl(out, n, &indent, thickness),
         NodeKind::Oval => emit_oval(out, n, &indent, thickness),
-        // Text is emitted by `render::render_text` as a bare `<text>` (SPEC §13),
+        // Text is emitted by `render::render_text` as a bare `<text>` [SPEC 16],
         // never as wrapped geometry — so it never reaches this dispatch.
         NodeKind::Text => {}
         NodeKind::Line => emit_line(out, n, &indent, vars, ruleset, opts, thickness),
@@ -166,7 +166,7 @@ fn emit_oval(out: &mut String, n: &PlacedNode, indent: &str, thickness: f64) {
 
 fn emit_hex(out: &mut String, n: &PlacedNode, indent: &str, thickness: f64) {
     let (w, h) = dim_excluding_stroke(n, thickness);
-    // Flat-top hex per SPEC §8. Two horizontal edges, four slanted edges.
+    // Flat-top hex per [SPEC 8]. Two horizontal edges, four slanted edges.
     let pts = [
         (-w / 2.0, 0.0),
         (-w / 4.0, -h / 2.0),
@@ -262,13 +262,13 @@ fn emit_line(
     let drawn = super::markers::shorten_for_markers(&points, &n.markers, thickness, 0.0);
 
     // A `stroke-style: wavy` line rides an undulating centreline (reusing the link
-    // wave) rather than a dash pattern — an async sequence message (SPEC §10), or an
+    // wave) rather than a dash pattern — an async sequence message [SPEC 13], or an
     // explicit wavy `|line|`. `wavy_d` returns `None` below one wavelength, falling
     // back to the straight forms.
     let wavy = matches!(n.attrs.get("stroke-style"), Some(ResolvedValue::Ident(s)) if s == "wavy");
     // `radius` rounds the interior corners of a multi-point line into quarter arcs,
     // reusing the link fillet formatter ([`super::rounding`]) — a sequence self-message
-    // hook bends exactly like a routed wire (SPEC §10), and any `|line|` may round.
+    // hook bends exactly like a routed wire [SPEC 13], and any `|line|` may round.
     let radius = n.attrs.number("radius").unwrap_or(0.0);
     if let Some(d) = wavy.then(|| super::wavy::wavy_d(&drawn, &[])).flatten() {
         writeln!(out, r#"{indent}<path d="{d}" fill="none"/>"#).unwrap();
@@ -342,7 +342,7 @@ fn emit_icon(out: &mut String, n: &PlacedNode, indent: &str, vars: &VarTable, op
     // The `symbol` (validated at resolve) names a Phosphor glyph: a list of
     // geometry fragments, each tagged with a paint role. They are authored on a
     // 256-unit grid and scaled into the node box; the stroke is counter-scaled so
-    // its weight stays constant at any size and matches other strokes (SPEC §7).
+    // its weight stays constant at any size and matches other strokes [SPEC 7].
     let Some(ResolvedValue::Ident(name) | ResolvedValue::String(name)) = n.attrs.get("symbol")
     else {
         return;
@@ -352,7 +352,7 @@ fn emit_icon(out: &mut String, n: &PlacedNode, indent: &str, vars: &VarTable, op
     };
     let frags: Vec<(crate::icon::Role, &str)> = frags.collect();
 
-    // `fit` picks the content rectangle to map into the box (SPEC §10): the whole
+    // `fit` picks the content rectangle to map into the box [SPEC 7]: the whole
     // 256-grid for `auto` (Phosphor's authored margin), else the glyph's own
     // extent. `contain`/`auto` fit inside (min scale), `cover` covers (max),
     // `stretch` fills both axes independently.
@@ -421,7 +421,7 @@ fn emit_icon(out: &mut String, n: &PlacedNode, indent: &str, vars: &VarTable, op
         &format!(r#"fill="{ink}" stroke="none""#),
     );
     writeln!(out, "{indent}</g>").unwrap();
-    // The optional label is an ordinary centred-text child (SPEC §7), drawn by the
+    // The optional label is an ordinary centred-text child [SPEC 7], drawn by the
     // shared text emitter via the normal child recursion — so it inherits the
     // colour / `font-size`, never scales with the glyph, and honours `translate` /
     // `rotate` / styling exactly like any node's text.
@@ -452,7 +452,7 @@ fn emit_image(out: &mut String, n: &PlacedNode, indent: &str) {
         _ => return,
     };
     // Image dimensions come from its bbox (driven by `width`/`height`). `fit` maps
-    // to `preserveAspectRatio` (SPEC §10); `auto`/`contain` is the SVG default
+    // to `preserveAspectRatio` [SPEC 13]; `auto`/`contain` is the SVG default
     // (`xMidYMid meet`), so only `cover`/`stretch` need stating.
     let w = n.bbox.w();
     let h = n.bbox.h();

@@ -1,4 +1,4 @@
-//! Scene-tree resolution (SPEC §3–§8). Each instance node becomes a
+//! Scene-tree resolution ([SPEC 3–8]). Each instance node becomes a
 //! [`ResolvedInst`]: its type cascade resolved, descendant/class/block layers
 //! applied, caption/label sugar expanded into `|caption|`/`|text|` children,
 //! text properties inherited, define bodies materialised (with scoped ids), and
@@ -14,7 +14,7 @@ use crate::span::Span;
 use crate::syntax::ast::{Call, Child, Decl, Link, Node, TextNode, Value};
 use std::collections::HashMap;
 
-/// Text properties that cascade to descendant text (SPEC §10): nearest ancestor
+/// Text properties that cascade to descendant text [SPEC 6]: nearest ancestor
 /// wins, a node's own value beats inherited.
 pub(super) const INHERITED_TEXT: &[&str] = &[
     "font-family",
@@ -71,7 +71,7 @@ pub fn resolve_instances(
     Ok(nodes)
 }
 
-/// Resolve a body child (SPEC §3): a box recurses; a bare string becomes a text
+/// Resolve a body child [SPEC 3]: a box recurses; a bare string becomes a text
 /// node carrying the inherited text properties.
 #[allow(clippy::too_many_arguments)]
 fn resolve_child(
@@ -127,7 +127,7 @@ pub fn resolve_node(
     }
 
     // Sides (`top`/`bottom`/`left`/`right`) are free as ids — a `:side` is peeled
-    // by position now, not from the path (SPEC §18) — so the only id error here is
+    // by position now, not from the path [SPEC 17] — so the only id error here is
     // a duplicate.
     if let Some(id) = &node.id {
         let full = join_path(path_prefix, id);
@@ -142,7 +142,7 @@ pub fn resolve_node(
         id: node.id.clone(),
     };
 
-    // The cascade ladder, least-specific first (SPEC §12): the worn `.lini-*`
+    // The cascade ladder, least-specific first [SPEC 4]: the worn `.lini-*`
     // classes as the type tier (folded base→derived — worn order is
     // derived→base→primitive, so iterate reversed), then descendant + user-class
     // layers, then the instance's own block.
@@ -155,14 +155,14 @@ pub fn resolve_node(
     ordered.extend(ctx.sheet.node_layers(ancestors, &facts));
     for d in &node.style {
         // A `fn:` series formula is held unevaluated: its `x` / `u` are unbound here
-        // and are bound only at chart layout, once the x-domain is fixed ([CHARTS.md]
-        // §4) — the same defer `points:` would need if its domain came from siblings.
+        // and are bound only at chart layout, once the x-domain is fixed
+        // [SPEC 14.3] — the same defer `points:` would need if its domain came from siblings.
         if d.name == "fn" {
             ordered.push(("fn".to_string(), defer_fn(d)?));
             continue;
         }
         // A `points:` parametric expression in `u` is sampled into a vertex list
-        // here (SPEC §11.7); any other value folds normally.
+        // here [SPEC 10.7]; any other value folds normally.
         if d.name == "points"
             && let Some(sampled) = sample_points(d, &node.style, ctx.funcs)?
         {
@@ -196,7 +196,7 @@ pub fn resolve_node(
         }
     }
 
-    // A sequence frame (`loop`/`opt`/`alt`/`else`) is **scope-transparent** (SPEC §10): it
+    // A sequence frame (`loop`/`opt`/`alt`/`else`) is **scope-transparent** [SPEC 13]: it
     // opens no scope, so it contributes no path segment — its body links lift with the
     // enclosing sequence's prefix and resolve against the sequence's participants, never
     // frame-local ids. (Frames are usually unnamed; this also covers a named one.)
@@ -216,7 +216,7 @@ pub fn resolve_node(
         });
     }
 
-    // An `|icon|` is named by its `symbol` (SPEC §7), not its id, so it gains no
+    // An `|icon|` is named by its `symbol` [SPEC 7], not its id, so it gains no
     // id-as-label (desugar skips it); a bare string it carries is an ordinary
     // centred-text child — the same leaf through the same renderer, so `translate`
     // and styling reach it exactly as on any node's text.
@@ -260,11 +260,11 @@ pub fn resolve_node(
     })
 }
 
-/// Hold a `fn:` series formula unevaluated ([CHARTS.md] §4): each value in the
+/// Hold a `fn:` series formula unevaluated [SPEC 14.3]: each value in the
 /// single space-group is a backtick expression — or a bare constant — parsed now
 /// (so a syntax error surfaces here, with this span) but **not** evaluated, since
 /// its `x` / `u` bind only at chart layout. A whole-domain `fn:` is one expression;
-/// a per-band list ([CHARTS.md] §7) is several.
+/// a per-band list [SPEC 14.5] is several.
 fn defer_fn(d: &Decl) -> Result<ResolvedValue, Error> {
     let [group] = d.groups.as_slice() else {
         return Err(Error::at(
@@ -289,7 +289,7 @@ fn defer_fn(d: &Decl) -> Result<ResolvedValue, Error> {
     Ok(ResolvedValue::Deferred(exprs))
 }
 
-/// Sample a parametric `points:` into a vertex list (SPEC §11.7): a backtick
+/// Sample a parametric `points:` into a vertex list [SPEC 10.7]: a backtick
 /// `` `(…u…)` `` or a named curve `wave(20, 3)` whose `u` sweeps 0→1 over
 /// `samples:` steps, each step evaluating to a point. Returns `None` for a literal
 /// points list or a constant expression — the normal fold handles those.
@@ -319,7 +319,7 @@ fn sample_points(
     }
     let n = sample_count(style).max(2);
     // `u` sweeps 0 → 1 across the samples — the same ambient-sampling seam a chart's
-    // `fn:` uses for `x` ([CHARTS.md] §4), shared via `expr::sample`.
+    // `fn:` uses for `x` [SPEC 14.3], shared via `expr::sample`.
     let us: Vec<f64> = (0..n).map(|i| i as f64 / (n - 1) as f64).collect();
     let mut pts = Vec::with_capacity(n);
     for v in expr::sample(&expr, "u", &us, funcs).map_err(|e| Error::at(d.span, e.0))? {
@@ -376,7 +376,7 @@ fn sample_count(style: &[Decl]) -> usize {
         .unwrap_or(2)
 }
 
-/// A resolved text node (SPEC §3/§10): content carrying the text properties
+/// A resolved text node [SPEC 3/6]: content carrying the text properties
 /// inherited from its container, overlaid with its own `{ }` style (text-valid
 /// props only). `Text` is internal — never a user `|type|`, only the kind of a
 /// string node (a label, a cell, canvas text). The own style renders as a
@@ -389,7 +389,7 @@ fn text_inst(t: &TextNode, ctx: &SceneCtx, text_ctx: &AttrMap) -> Result<Resolve
         }
     }
     // The text's own `{ }`: text-valid props only — a box property errors and
-    // points at `|block|` (SPEC §3, §15).
+    // points at `|block|` [SPEC 3, 19].
     let mut own_style = AttrMap::new();
     for d in &t.style {
         if !is_text_prop(&d.name) {
@@ -416,7 +416,7 @@ fn text_inst(t: &TextNode, ctx: &SceneCtx, text_ctx: &AttrMap) -> Result<Resolve
     })
 }
 
-/// Properties valid on a bare text node (SPEC §3/§10): paint, every `font-*`, the
+/// Properties valid on a bare text node [SPEC 3/6]: paint, every `font-*`, the
 /// baked spacings, the live-CSS text props, and the two transforms. Anything else
 /// (`pin`, `padding`, `width`, a border, `layout`, …) needs a box. Shared with the
 /// link-label path ([`super::links`]).
@@ -441,7 +441,7 @@ pub(super) fn is_text_prop(name: &str) -> bool {
     )
 }
 
-/// An `|icon|` must name a known `symbol` (SPEC §7). Errors point at the node,
+/// An `|icon|` must name a known `symbol` [SPEC 7]. Errors point at the node,
 /// suggest the nearest name, or — when the set was not compiled in — hint at the
 /// `icons` feature.
 fn validate_icon(attrs: &AttrMap, span: Span) -> Result<(), Error> {
@@ -483,7 +483,7 @@ fn validate_icon(attrs: &AttrMap, span: Span) -> Result<(), Error> {
     Err(Error::at(span, msg))
 }
 
-/// `fit` (SPEC §10) accepts only the four object-fit keywords — used by `|icon|`
+/// `fit` [SPEC 7] accepts only the four object-fit keywords — used by `|icon|`
 /// and `|image|` to map content into the box.
 fn validate_fit(attrs: &AttrMap, span: Span) -> Result<(), Error> {
     match attrs.get("fit") {
@@ -502,7 +502,7 @@ fn validate_fit(attrs: &AttrMap, span: Span) -> Result<(), Error> {
 
 /// Drop empty (`""`) text children — they suppress the label and would emit an
 /// empty `<text>` — **unless** the container is a grid, where an empty `""` is a
-/// real cell that holds its track (SPEC §3/§5). A grid is positional, so its
+/// real cell that holds its track [SPEC 3/12]. A grid is positional, so its
 /// cells keep their slots; flow has no slot for an empty to hold.
 fn drop_blank_text(children: &mut Vec<ResolvedInst>, container: &AttrMap) {
     let is_grid = matches!(container.get("layout"), Some(ResolvedValue::Ident(s)) if s == "grid");
@@ -516,7 +516,7 @@ fn is_blank_anon_text(r: &ResolvedInst) -> bool {
     r.id.is_none() && r.kind == NodeKind::Text && r.label.as_deref().is_none_or(str::is_empty)
 }
 
-/// A sequence frame type (SPEC §10) — scope-transparent, so it adds no path segment.
+/// A sequence frame type [SPEC 13] — scope-transparent, so it adds no path segment.
 fn is_frame_type(type_chain: &[String]) -> bool {
     type_chain
         .iter()
@@ -534,7 +534,7 @@ fn join_path(prefix: &[String], id: &str) -> String {
 // ─────────────────────────── Path index ───────────────────────────
 
 /// Maps every node's fully-qualified dot-path, for endpoint resolution and
-/// auto-create (SPEC §9).
+/// auto-create [SPEC 9].
 pub struct PathIndex {
     paths: Vec<String>,
 }

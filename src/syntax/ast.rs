@@ -1,6 +1,6 @@
 //! The syntax tree: produced by [`super::parser`], consumed by `resolve`.
 //!
-//! A file is three ordered parts (SPEC §1/§3): the **stylesheet** — one leading
+//! A file is three ordered parts [SPEC 1/3]: the **stylesheet** — one leading
 //! `{ }` block of root declarations, `--var` declarations, rules, and
 //! `|name::base|` defines — then the **instances** (the canvas), then the
 //! **links**. Two brackets carry structure: `{ }` is style (declarations), `[ ]`
@@ -30,15 +30,15 @@ pub enum StyleItem {
     Var(Decl),
     /// `|selector| { decls }` / `.class { decls }` — element / class / descendant
     /// rule. (Link defaults are cascading `link*` / `clearance` / `routing`
-    /// properties now, not a rule — SPEC §9.)
+    /// properties now, not a rule — [SPEC 9].)
     Rule(Rule),
     /// `|name::base| { style } [ children ]` — a new type from a base.
     Define(Define),
-    /// `name(params) `body`;` — a compute function (SPEC §11.7).
+    /// `name(params) `body`;` — a compute function [SPEC 10.7].
     Func(FuncDef),
 }
 
-/// `name(params) `body`;` — a stylesheet function (SPEC §11.7). The body is the
+/// `name(params) `body`;` — a stylesheet function [SPEC 10.7]. The body is the
 /// raw backtick text, parsed by [`crate::expr`] at resolve.
 #[derive(Debug, Clone)]
 pub struct FuncDef {
@@ -62,7 +62,7 @@ pub struct Selector {
     pub units: Vec<SelUnit>,
 }
 
-/// A juxtaposed selector unit (SPEC §4): a type (with an optional `#id`), a
+/// A juxtaposed selector unit [SPEC 4]: a type (with an optional `#id`), a
 /// `.class`, or an `#id`. Each keeps its sigil, so a selector reads as a run of
 /// marked units and a bare word is never one.
 #[derive(Debug, Clone)]
@@ -73,7 +73,7 @@ pub enum SelUnit {
     Class(String),
     /// `#hero` — an id selector.
     Id(String),
-    /// `|-|` — the link type (SPEC §4, §9). Selector-only: it matches every link
+    /// `|-|` — the link type [SPEC 4, 9]. Selector-only: it matches every link
     /// (a link is drawn by an operator, never instantiated), so a link is styled
     /// with the ordinary node/text vocabulary — `stroke` the wire, `color`/`font-*`
     /// the labels. Desugar lowers it to `.lini-link`, the class every link wears.
@@ -95,7 +95,7 @@ pub struct Define {
     pub span: Span,
 }
 
-/// A box — a drawn node (SPEC §3). Leads with an id or a `|type|`. Its `style` is
+/// A box — a drawn node [SPEC 3]. Leads with an id or a `|type|`. Its `style` is
 /// the `{ }` block; its `children` and internal `links` are the `[ ]` block. Its
 /// text is a `Child::Text` among the children, or its id (id-as-label) when there
 /// is none.
@@ -118,14 +118,14 @@ pub struct Node {
     pub span: Span,
 }
 
-/// A body child, in source order: a box or a bare text node (SPEC §3).
+/// A body child, in source order: a box or a bare text node [SPEC 3].
 #[derive(Debug, Clone)]
 pub enum Child {
     Box(Node),
     Text(TextNode),
 }
 
-/// Text content `"…"` (SPEC §3) — a label, a cell, a link label. A leaf: no id,
+/// Text content `"…"` [SPEC 3] — a label, a cell, a link label. A leaf: no id,
 /// type, classes, or children, but it **may carry a style block** of text-only
 /// properties (`"x" { color: red; translate: 0 -6 }`).
 #[derive(Debug, Clone)]
@@ -140,7 +140,7 @@ pub struct TextNode {
     pub span: Span,
 }
 
-/// A link (SPEC §9). `style` is its `{ }` (`along:`, `link*`); `labels` are its
+/// A link [SPEC 9]. `style` is its `{ }` (`along:`, `link*`); `labels` are its
 /// text content — trailing strings, or a `[ ]` of styleable text leaves.
 #[derive(Debug, Clone)]
 pub struct Link {
@@ -184,7 +184,7 @@ pub struct Decl {
 #[derive(Debug, Clone)]
 pub enum Value {
     Number(f64),
-    /// A number with a `%` suffix — a percentage (color components, SPEC §2).
+    /// A number with a `%` suffix — a percentage (color components, [SPEC 2]).
     Percent(f64),
     String(String),
     Hex(String),
@@ -193,7 +193,7 @@ pub enum Value {
     Var(String),
     /// `rgb(…)`, `hsl(…)`, `repeat(…)`.
     Call(Call),
-    /// A backtick `` `…` `` compile-time expression body (SPEC §11.7), folded to a
+    /// A backtick `` `…` `` compile-time expression body [SPEC 10.7], folded to a
     /// number or a point at resolve.
     Expr(String),
 }

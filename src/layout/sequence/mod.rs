@@ -1,4 +1,4 @@
-//! `layout: sequence` (SPEC §10) — a layout-owning container that reads its
+//! `layout: sequence` [SPEC 13] — a layout-owning container that reads its
 //! participants, frames, and notes plus the scope's messages, fixes the lifeline
 //! positions and time rows, and **lowers to primitive `PlacedNode`s** (lifelines /
 //! arrows / frames / notes → `|line|` / `|block|` / text) through [`crate::layout::prim`].
@@ -7,10 +7,10 @@
 //! It owns its scope's links: in a sequence scope a message's *order is time*, so the
 //! orthogonal router ([ROUTING.md]) is bypassed (`bundle` skips the scope) and the layout
 //! draws each message itself — a horizontal arrow at its row (the `sequence` wiring
-//! strategy, SPEC §10).
+//! strategy, [SPEC 13]).
 //!
 //! Submodules: [`messages`] (call / return / async / self arrows), [`activations`]
-//! (implicit bars), [`frames`] (`loop` / `opt` / `alt` + `else`). Notes follow (SPEC §10).
+//! (implicit bars), [`frames`] (`loop` / `opt` / `alt` + `else`). Notes follow [SPEC 13].
 
 mod activations;
 mod frames;
@@ -25,18 +25,18 @@ use crate::span::Span;
 use std::collections::HashMap;
 
 /// Type names that are **not** participants — the frames, the compartment separator, and
-/// notes (SPEC §10). Every other box is a participant (the open fallback, unlike a chart's
+/// notes [SPEC 13]. Every other box is a participant (the open fallback, unlike a chart's
 /// closed series set).
 const NON_PARTICIPANT: &[&str] = &["loop", "opt", "alt", "else", "note"];
 
-/// Is this node a sequence container (SPEC §10)? Detected by its `layout:` attr — the same
+/// Is this node a sequence container [SPEC 13]? Detected by its `layout:` attr — the same
 /// key the chart / flow / grid dispatch reads — so it is intercepted before the generic
 /// container path, exactly like `chart::is_chart`.
 pub(super) fn is_sequence(attrs: &AttrMap) -> bool {
     matches!(attrs.get("layout"), Some(ResolvedValue::Ident(s)) if s == "sequence")
 }
 
-/// A `|sequence|` **node** (SPEC §10): lay out its participant children and return the
+/// A `|sequence|` **node** [SPEC 13]: lay out its participant children and return the
 /// container `PlacedNode`. Intercepted in `layout_inst` before the generic path.
 pub(super) fn layout_node(
     inst: &ResolvedInst,
@@ -68,7 +68,7 @@ pub(super) fn layout_node(
     Ok(node)
 }
 
-/// A **root** sequence (`{ layout: sequence }`, SPEC §10): the scene's top-level nodes are
+/// A **root** sequence (`{ layout: sequence }`, [SPEC 13]): the scene's top-level nodes are
 /// the participants (already laid out). Arrange them in place and append the lifelines,
 /// returning the scene bbox and the message wires (already in scene coordinates).
 /// Intercepted in `layout` before the generic arrange + route.
@@ -125,7 +125,7 @@ fn messages_for<'a>(program: &'a Program, scope: &str) -> Vec<&'a ResolvedLink> 
 /// row, and draw the messages through the `straight` strategy. Returns the lowered children
 /// (lifelines behind, headers, frames, notes), the centred bbox, and the message wires (the
 /// renderer's one link path draws them). `gap: row col` — the column part spaces
-/// participants, the row part is the message pitch (SPEC §10).
+/// participants, the row part is the message pitch [SPEC 13].
 fn lay_out(
     attrs: &AttrMap,
     mut participants: Vec<PlacedNode>,
@@ -167,7 +167,7 @@ fn lay_out(
     let row_y = |i: usize| if i < msg_y.len() { msg_y[i] } else { foot_y };
 
     // Each participant lends its **paint** to its apparatus — lifeline and activation bars
-    // (SPEC §10) — so colouring or weighting a participant carries through its whole timeline.
+    // [SPEC 13] — so colouring or weighting a participant carries through its whole timeline.
     // A node comes with its lifeline: the lifeline takes the participant's stroke colour *and*
     // width, and the bars keep the same paint. Place participants at their column centres,
     // top-aligned, and drop a lifeline to the foot.
@@ -190,7 +190,7 @@ fn lay_out(
         }
     }
 
-    // Activation bars (SPEC §10): a per-participant LIFO stack over the messages, unless
+    // Activation bars [SPEC 13]: a per-participant LIFO stack over the messages, unless
     // `activation: none`. Message endpoints attach to a live bar's edge, so an arrow meets
     // the bar it opens rather than crossing the lifeline.
     let bars = if activations_on(attrs) {
@@ -258,8 +258,8 @@ fn enclosing_bbox(children: &[PlacedNode], wires: &[RoutedLink]) -> Bbox {
     Bbox::centered(w.max(1.0), h.max(1.0))
 }
 
-/// The paint a participant lends its **apparatus** — its lifeline and activation bars (SPEC
-/// §10). Read from the participant's own resolved attrs, so styling the participant styles
+/// The paint a participant lends its **apparatus** — its lifeline and activation bars
+/// [SPEC 10]. Read from the participant's own resolved attrs, so styling the participant styles
 /// its timeline; a plain box falls back to `--fill` / `--stroke` at width 1.5.
 pub(super) struct Apparatus {
     pub fill: ResolvedValue,
@@ -280,7 +280,7 @@ impl Apparatus {
     }
 }
 
-/// Activation bars are drawn unless `activation: none` (SPEC §10).
+/// Activation bars are drawn unless `activation: none` [SPEC 13].
 fn activations_on(attrs: &AttrMap) -> bool {
     !matches!(attrs.get("activation"), Some(ResolvedValue::Ident(s)) if s == "none")
 }
@@ -294,7 +294,7 @@ pub(super) fn live(name: &str) -> ResolvedValue {
     }
 }
 
-/// A participant is any drawn box that is not a frame / separator / note type (SPEC §10).
+/// A participant is any drawn box that is not a frame / separator / note type [SPEC 13].
 fn is_participant(kind: &NodeKind, type_chain: &[String]) -> bool {
     *kind != NodeKind::Text
         && !type_chain
@@ -302,16 +302,16 @@ fn is_participant(kind: &NodeKind, type_chain: &[String]) -> bool {
             .any(|t| NON_PARTICIPANT.contains(&t.as_str()))
 }
 
-/// A `|note|` — a callout placed beside / over lifelines, not a participant (SPEC §10).
+/// A `|note|` — a callout placed beside / over lifelines, not a participant [SPEC 13].
 fn is_note(type_chain: &[String]) -> bool {
     type_chain.iter().any(|t| t == "note")
 }
 
-/// The properties valid only in a sequence (SPEC §16): a note's placement and the
+/// The properties valid only in a sequence [SPEC 19]: a note's placement and the
 /// activation toggle.
 const SEQ_PROPS: &[&str] = &["over", "left", "right", "activation"];
 
-/// Validate sequence structure (SPEC §16), before layout: a frame / note / `|else|` belongs
+/// Validate sequence structure [SPEC 19], before layout: a frame / note / `|else|` belongs
 /// in a sequence (an `|else|` directly in an `|alt|`), a note needs a placement, and the
 /// sequence properties are valid only in a sequence. Walks the scene tracking whether each
 /// node sits in a sequence scope (a sequence's own body, or a frame nested in one) and
@@ -385,7 +385,7 @@ fn place_notes(
             n.cx = notes::centre_x(&placement, n.bbox.w(), lifeline_x)?;
             n.cy = y;
             // `translate: x y` nudges a note off its placement, so it can be positioned by
-            // hand (SPEC §11) — the one post-placement mechanism, reused here.
+            // hand [SPEC 5] — the one post-placement mechanism, reused here.
             if let Ok(Some((dx, dy))) = super::anchors::translate(&n.attrs, n.span) {
                 n.cx += dx;
                 n.cy += dy;
@@ -468,7 +468,7 @@ mod tests {
         assert!(s.contains(">hi</text>"), "the message label: {s}");
         assert!(s.contains("lini-marker"), "an arrowhead: {s}");
         // The message rides the shared link layer through the `straight`
-        // strategy (SPEC §10) — a drawn link, never an orthogonal route.
+        // strategy [SPEC 13] — a drawn link, never an orthogonal route.
         assert!(
             s.contains(r#"data-from="a" data-to="b""#),
             "the message is a drawn link: {s}"
@@ -509,7 +509,7 @@ mod tests {
         assert!(s.contains(">retry</text>"), "its label: {s}");
     }
 
-    // ── Activations (SPEC §10) ──
+    // ── Activations [SPEC 13] ──
 
     /// Activation bars are the anonymous `Block` rects on the lifelines — distinct from
     /// the id'd participant headers and the `Line` lifelines / arrows.
@@ -546,7 +546,7 @@ mod tests {
 
     #[test]
     fn self_and_async_open_no_bar() {
-        // A self-message and an async (`~>`) open none (SPEC §10).
+        // A self-message and an async (`~>`) open none [SPEC 13].
         let n = bar_count(
             "|sequence#s| [\n  |box#a| \"A\"\n  |box#b| \"B\"\n  a -> a \"loop\"\n  a ~> b \"event\"\n]\n",
         );
@@ -561,7 +561,7 @@ mod tests {
         assert_eq!(n, 0, "activation: none suppresses bars");
     }
 
-    // ── Frames (SPEC §10) ──
+    // ── Frames [SPEC 13] ──
 
     #[test]
     fn a_loop_frame_draws_its_tab_and_guard() {
@@ -599,7 +599,7 @@ mod tests {
         );
     }
 
-    // ── Notes (SPEC §10) ──
+    // ── Notes [SPEC 13] ──
 
     #[test]
     fn a_note_renders_over_its_lifelines() {
@@ -609,7 +609,7 @@ mod tests {
         assert!(s.contains(">spanning</text>"), "the note text renders: {s}");
     }
 
-    // ── Structural errors (SPEC §16) ──
+    // ── Structural errors [SPEC 19] ──
 
     #[test]
     fn a_frame_outside_a_sequence_errors() {

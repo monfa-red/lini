@@ -2,7 +2,7 @@
 //! becomes a sequence of straight runs and arcs. Both the plain link path
 //! ([`super::links`]) and the wavy link ([`super::wavy`]) build on this one
 //! decomposition, so a corner's fillet is computed in exactly one place
-//! (ROUTING §Model step 7).
+//! (ROUTING Model step 7).
 
 pub type Point = (f64, f64);
 

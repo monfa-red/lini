@@ -27,7 +27,7 @@ pub fn format_value(value: &ResolvedValue, vars: &VarTable, opts: &Options) -> S
         }
         ResolvedValue::Call(c) => {
             // Baked output carries no `light-dark()`; freeze its light arm so a
-            // standalone file renders correctly (SPEC §11.4).
+            // standalone file renders correctly [SPEC 10.6].
             if opts.bake_vars && c.name == "light-dark" && !c.args.is_empty() {
                 format_value(&c.args[0], vars, opts)
             } else {
@@ -35,7 +35,7 @@ pub fn format_value(value: &ResolvedValue, vars: &VarTable, opts: &Options) -> S
             }
         }
         // A `fn:` formula is sampled to baked numbers at chart layout, so it never
-        // reaches render ([CHARTS.md] §4).
+        // reaches render [SPEC 14.3].
         ResolvedValue::Deferred(_) => {
             unreachable!("a deferred fn: is sampled at chart layout, never rendered")
         }
@@ -67,7 +67,7 @@ fn format_call(c: &ResolvedCall, vars: &VarTable, opts: &Options) -> String {
 }
 
 /// Format a paint/text property value for CSS output. lini numbers are unitless
-/// (SPEC §2), so `font-size` and the length parts of `text-shadow` get `px`
+/// [SPEC 2], so `font-size` and the length parts of `text-shadow` get `px`
 /// added; every other property formats plainly.
 pub fn css_value(prop: &str, value: &ResolvedValue, vars: &VarTable, opts: &Options) -> String {
     match prop {
@@ -145,7 +145,7 @@ pub fn attr_points(attrs: &AttrMap, name: &str) -> Option<Vec<(f64, f64)>> {
 /// The `stroke-dasharray` pattern for `stroke-style: dashed|dotted` (sized
 /// against `stroke-width`), or empty for solid. `wavy` also returns empty — its
 /// stroke is solid, the wave living in the link geometry ([`super::wavy`]); on a
-/// shape it stays solid (deferred, SPEC §19). Shared by shapes, links, and the
+/// shape it stays solid (deferred, [SPEC 22]). Shared by shapes, links, and the
 /// rules builder.
 pub fn dasharray_value(attrs: &AttrMap, width: f64) -> String {
     match attrs.get("stroke-style") {
