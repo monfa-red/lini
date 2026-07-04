@@ -448,6 +448,46 @@ Executing sessions: append dated notes here — decisions the plan didn't
 anticipate, gotchas, deferred items, comparator cases that needed deepening,
 anything the next session must know. Keep entries terse.
 
+- **2026-07-04, concentric fillets across asymmetric pitches (user bug
+  batch 3).** links_hard ships at gap 32 (everything routes — the showcase
+  renders whole; the four gap-30 strays and their pin are history), and
+  the fillet nest generalised.
+  - **Fillet nesting** (`render/links.rs::fillet_targets`): the old
+    cluster key demanded corners on one *exact* diagonal (equal x and y
+    offsets within 1e-6). Two relief groups can compress the two axes
+    differently — links_hard's blue bundle rides a V corridor at pitch 8
+    and a port ladder at 9.94 — so co-turning corners sat on a skewed
+    diagonal and every arc drew the base radius, pinching the gaps
+    through the turns. Corners now chain per pair: same quadrant, offset
+    outward on **both** axes at lane scale, radius growing by the mean
+    offset — for equal offsets exactly the old concentric family
+    (byte-identical), for skewed ones the choice whose arc gap never
+    drops below the tighter leg pitch (nested circles: gap ≥ (r₂−r₁) −
+    |ΔC| = mean − half the skew = the smaller offset). Interleaved
+    independent nests stay independent (the backward scan skips
+    one-sided offsets). pcb's rf pair and links_medium's parallel
+    detours pick up nests they always deserved; snapshots re-accepted
+    after a visual pass.
+  - **Open, diagnosed — sub-clearance pitch without visible scarcity**
+    (user: w2 → s1 ×2 middle legs at 7.5 where the void looks wide).
+    Two stacked corridor-model effects: (a) the pair's corridor reads
+    *diverge* — one span ends exactly at gamma's keep-out corner and the
+    walk absorbs the whole western void (walls to −223.5), the other
+    crosses the corner and stops at −73.5 — so their prefs and bounds
+    disagree and relief squeezes the mixed boxes to 7.5; (b) the
+    surviving wall is charged the soft-boundary c/2 margin over the whole
+    span although gamma's keep-out backs it for all but a sliver —
+    usable 9 instead of 15, when 12 fits with one rail hugging the
+    keep-out. (b) is contract-specified (ROUTING.md §Vocabulary: each
+    side of a shared boundary keeps half a clearance off it) and guards
+    exactly the near-tip pairs in mutually-unabsorbed channels that
+    clustering never couples; most such neighbours *do* cluster (either
+    side's corridor absorbing the other suffices), so the margin
+    double-guards them at the cost of pitch. Fixing it honestly means
+    either per-stretch wall character (hard where keep-out-backed) plus
+    cluster-coupling for abutting near-tip pairs — one mechanism owning
+    cross-boundary separation — or accepting the margin as the law.
+    A contract decision, not a patch; parked for the user.
 - **2026-07-04, placement-aware admission (user bug batch 2).** The
   stage-6 "honest fix is a placement-aware admission probe" landed;
   every known-limit pin healed and dropped. Every sample byte-identical

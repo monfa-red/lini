@@ -227,15 +227,14 @@ fn rounded_d(pts: &[(f64, f64)], targets: &[f64]) -> String {
 
 /// One interior corner of one polyline, keyed for nesting: the turn's
 /// **quadrant** (the diagonal direction its arc centre lies in, from the
-/// leg directions), the **diagonal line** it sits on (the coordinate
-/// orthogonal to the quadrant diagonal), and its **projection** along the
-/// diagonal (innermost — nearest the shared centre side — first).
+/// leg directions), its **vertex**, and its **projection** along the
+/// quadrant diagonal (innermost — nearest the shared centre side — first).
 struct Corner {
     link: usize,
     /// Interior vertex index − 1: position in the link's target vector.
     slot: usize,
     quad: (i8, i8),
-    diag: f64,
+    v: (f64, f64),
     proj: f64,
     /// Structural ceiling: min(own legs, nearest crossing on the legs).
     /// Nested radii may exceed the clearance cap, never this. Two corners
@@ -248,10 +247,15 @@ struct Corner {
 }
 
 /// Per-link, per-interior-corner fillet radius targets (ROUTING §Model
-/// step 7): corners nested on one diagonal — same turn quadrant, vertices
-/// offset equally in x and y — round **concentrically**: the innermost
-/// keeps the base cap and each corner outward grows by exactly its offset,
-/// so the gap through the turn holds constant instead of flaring. Every
+/// step 7): corners nested on one diagonal — same turn quadrant, each
+/// vertex offset outward from an inner corner on **both** axes — round
+/// **concentrically**: the innermost keeps the base cap and each corner
+/// outward grows by the mean of its two axis offsets. Equal offsets (one
+/// true diagonal) share an exact centre and the gap holds constant through
+/// the turn; unequal offsets — two relief groups can compress the two axes
+/// differently — have no common centre, and the mean is the choice whose
+/// arc gap never drops below the tighter leg pitch (nested circles: gap ≥
+/// (r₂−r₁) − |ΔC| = mean − half the skew = the smaller offset). Every
 /// radius also caps at the nearest crossing on its own legs, so a crossing
 /// never lands mid-arc (an arc may land tangent exactly on one — the
 /// perpendicular point contact is preserved). A capped radius only ever
@@ -299,58 +303,56 @@ pub fn fillet_targets(polys: &[&[(f64, f64)]], caps: &[f64]) -> Vec<Vec<f64>> {
                 link: wi,
                 slot: k - 1,
                 quad,
-                diag: if quad.0 as f64 * quad.1 as f64 > 0.0 {
-                    v.0 - v.1
-                } else {
-                    v.0 + v.1
-                },
+                v,
                 proj: v.0 * quad.0 as f64 + v.1 * quad.1 as f64,
                 ceil,
                 cap: caps[wi],
             });
         }
     }
-    // Cluster first — same quadrant, diagonal coordinates chained within
-    // EPS (one geometric diagonal carries float dust from differing
-    // coordinate sums) — then walk each cluster innermost-out by
-    // projection. Sorting by the raw diagonal value alone once interleaved
-    // a nest's walk order and drove radii negative.
+    // Walk each quadrant innermost-out by projection; every corner chains
+    // to the nearest inner corner it nests on — offset outward on both
+    // axes, at lane scale (a far-apart pair is coincidence, not nesting; a
+    // skipped lane still nests). Two independent nests interleaved along
+    // the projection stay independent: the backward scan skips corners
+    // whose offset is one-sided.
     corners.sort_by(|a, b| {
         a.quad
             .cmp(&b.quad)
-            .then(a.diag.total_cmp(&b.diag))
+            .then(b.proj.total_cmp(&a.proj))
             .then(a.link.cmp(&b.link))
             .then(a.slot.cmp(&b.slot))
     });
+    // Outward per-axis offsets from inner `p` to outer `c` — positive when
+    // `c` sits past `p` away from the arc-centre side on that axis.
+    let off = |p: &Corner, c: &Corner| {
+        (
+            (c.v.0 - p.v.0) * -f64::from(p.quad.0),
+            (c.v.1 - p.v.1) * -f64::from(p.quad.1),
+        )
+    };
     let mut i = 0;
     while i < corners.len() {
         let mut j = i + 1;
-        while j < corners.len()
-            && corners[j].quad == corners[i].quad
-            && (corners[j].diag - corners[j - 1].diag).abs() <= EPS
-        {
+        while j < corners.len() && corners[j].quad == corners[i].quad {
             j += 1;
         }
-        let mut cluster: Vec<&Corner> = corners[i..j].iter().collect();
-        cluster.sort_by(|a, b| {
-            b.proj
-                .total_cmp(&a.proj)
-                .then(a.link.cmp(&b.link))
-                .then(a.slot.cmp(&b.slot))
-        });
-        let mut prev: Option<(&Corner, f64)> = None;
-        for c in cluster {
-            // Offset to the previous (inner) corner along the diagonal. A
-            // far-apart pair on one diagonal is coincidence, not nesting:
-            // only lane-scale offsets chain (a skipped lane still nests).
-            let r = match prev {
-                Some((p, pr)) if (p.proj - c.proj) / 2.0 <= 2.0 * c.cap.max(p.cap) + EPS => {
-                    (pr + (p.proj - c.proj) / 2.0).min(c.ceil)
+        let mut radii: Vec<f64> = Vec::with_capacity(j - i);
+        for k in i..j {
+            let c = &corners[k];
+            let parent = (i..k).rev().find(|&p| {
+                let (u, w) = off(&corners[p], c);
+                u > EPS && w > EPS && (u + w) / 2.0 <= 2.0 * c.cap.max(corners[p].cap) + EPS
+            });
+            let r = match parent {
+                Some(p) => {
+                    let (u, w) = off(&corners[p], c);
+                    (radii[p - i] + (u + w) / 2.0).min(c.ceil)
                 }
-                _ => c.cap.min(c.ceil),
+                None => c.cap.min(c.ceil),
             };
+            radii.push(r);
             out[c.link][c.slot] = r;
-            prev = Some((c, r));
         }
         i = j;
     }
@@ -545,6 +547,23 @@ mod tests {
         let b = vec![(8.0, 92.0), (8.0, -8.0), (-92.0, -8.0)];
         let t = fillet_targets(&[&a, &b], &[8.0; 2]);
         assert_eq!((t[0][0], t[1][0]), (8.0, 16.0));
+    }
+
+    /// Two relief groups can compress the two axes differently (links_hard:
+    /// a V corridor at pitch 8, the port ladder at 10): the corners then sit
+    /// on a skewed diagonal, but they still turn together and must still
+    /// nest — the radius grows by the mean offset, which keeps the arc gap
+    /// no smaller than the tighter leg pitch (nested circles: gap ≥
+    /// (r₂−r₁) − |ΔC| = mean − half the skew = the smaller offset).
+    #[test]
+    fn asymmetric_lane_pitches_nest_by_the_mean_offset() {
+        let (a, b, c) = (
+            ell((0.0, 0.0), 100.0),
+            ell((8.0, -10.0), 100.0),
+            ell((16.0, -20.0), 100.0),
+        );
+        let t = fillet_targets(&[&a, &b, &c], &[8.0; 3]);
+        assert_eq!((t[0][0], t[1][0], t[2][0]), (8.0, 17.0, 26.0));
     }
 
     #[test]
