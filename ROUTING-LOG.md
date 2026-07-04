@@ -448,6 +448,24 @@ Executing sessions: append dated notes here — decisions the plan didn't
 anticipate, gotchas, deferred items, comparator cases that needed deepening,
 anything the next session must know. Keep entries terse.
 
+- **2026-07-04, the chain never crosses a zero gap (user bug batch 5).**
+  links_medium's `cat → bowl & water` ports sat pinned at the top of
+  their windows instead of the side centres. The fan's end runs owe
+  nothing to the packed bowl↔dog band (spans 78 apart), but one cluster
+  legitimately spans both (cat → roof's long H bridges them), and the
+  ladder's **total order** still forces `x_i ≤ x_j` across a zero-sep
+  boundary — so the band, relieved to exactly its window, crushed the
+  fan's port to the window edge through an order constraint no pair owed.
+  `chain_ok` now also requires every adjacent gap positive: a chain with
+  a zero gap over-constrains (order across the boundary) exactly as an
+  under-sized bridge under-constrains, and either sends the cluster to
+  the pairwise solver, which imposes only the true contending
+  constraints. When the chain holds, the two feasible sets coincide and
+  the ladder stays the exact, cheaper solve. Ports of uncontended end
+  runs land on their side centres (contract test
+  `uncontended_fan_ports_take_their_side_centres`); links, links_medium,
+  links_hard drift (ports centring), visually verified; benchmark flat
+  (2.40 s vs 2.26 s, still well under the pre-batch-4 2.77 s).
 - **2026-07-04, cross-boundary separation owned by placement (user bug
   batch 4).** The soft-boundary margin is retired; ROUTING.md §Vocabulary
   updated: no wall charges anything — separation across a shared boundary

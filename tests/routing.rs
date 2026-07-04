@@ -663,3 +663,25 @@ fn identical_input_routes_identically() {
         assert_eq!(routes(PCB), first);
     }
 }
+
+/// A fan's ports land on their sides' centres when nothing contends there
+/// (user-reported: links_medium's `cat -> bowl & water` ports sat pinned
+/// at the top of their windows — the packed bowl↔dog band transmitted its
+/// pressure through the ladder's total order across a zero-sep boundary,
+/// an order two span-disjoint wires never owed each other).
+#[test]
+fn uncontended_fan_ports_take_their_side_centres() {
+    let src = include_str!("../samples/links_medium.lini");
+    let r = routes(src);
+    let laid = route_sample(src, 12.0);
+    for (to, port_of) in [("kitchen.bowl", 0), ("kitchen.water", 1)] {
+        let rect = node_rect(&laid, to).expect("placed");
+        let centre = (rect.1 + rect.3) / 2.0;
+        let p = paths(&r, "cat", to)[port_of.min(0)];
+        let port = p.last().unwrap().1;
+        assert!(
+            (port - centre).abs() < 1e-9,
+            "{to}: port {port} != side centre {centre}: {p:?}"
+        );
+    }
+}

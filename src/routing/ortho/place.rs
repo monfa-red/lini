@@ -459,19 +459,24 @@ fn settle(
         .windows(2)
         .map(|w| owed(&w[0].0, &w[1].0, clearance, clearance))
         .collect();
-    // The chain expresses this cluster only when every contending pair's
-    // debt fits through the gaps between them. Across an under-sized
-    // bridge the chain goes wrong both ways at once: the pair's pitch
-    // dissolves, while order and envelope bind travel-disjoint groups the
-    // pair never coupled — the relief then compresses windows with room to
-    // spare. Those clusters settle on their true pairwise constraints
-    // instead.
-    let chain_ok = (0..n).all(|i| {
-        (i + 2..n).all(|j| {
-            owed(&cluster[i].0, &cluster[j].0, clearance, clearance)
-                <= seps[i..j].iter().sum::<f64>() + 1e-9
-        })
-    });
+    // The chain expresses this cluster only when it is chained whole:
+    // every adjacent pair owes a real gap, and every farther pair's debt
+    // fits through the gaps between them. A zero gap anywhere means the
+    // chain over-constrains — its total order still forces x_i ≤ x_j
+    // across the boundary, so a packed stretch crushes a neighbour that
+    // owes it nothing (links_medium's fan ports pinned at their windows'
+    // edges by the bowl↔dog band) — and an under-sized bridge means it
+    // under-constrains, dissolving a pair's pitch. Either way the cluster
+    // settles on its true pairwise constraints instead; when the chain
+    // holds, the two models' feasible sets coincide and the ladder is the
+    // exact, cheaper solve.
+    let chain_ok = seps.iter().all(|s| *s > 0.0)
+        && (0..n).all(|i| {
+            (i + 2..n).all(|j| {
+                owed(&cluster[i].0, &cluster[j].0, clearance, clearance)
+                    <= seps[i..j].iter().sum::<f64>() + 1e-9
+            })
+        });
     let mut feasible = chain_ok;
     if chain_ok {
         // Law 1's relief valve: only a stretch that genuinely cannot hold
