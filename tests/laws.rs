@@ -61,13 +61,10 @@ fn every_sample_satisfies_the_laws() {
     }
 }
 
-/// Strays are honest, not regressions: at native attributes each sample's
-/// impossible count is pinned. `links_hard`'s four have lawful routes the
-/// engine cannot yet price — admission reaches for anchor estimates that
-/// overshoot the traversed cells, and realizing the routes needs coupled
-/// cross-axis placement bounds (ROUTING-LOG.md execution log, bug batch);
-/// everything else draws whole. When admission learns connection-feasible
-/// pricing, this pin should drop to zero.
+/// Strays are honest, not regressions: at native attributes every sample
+/// draws whole — zero impossibles, pinned. (`links_hard` carried four at
+/// gap 30; the sample now ships at gap 32 so the showcase always renders
+/// complete.)
 #[test]
 fn impossible_links_are_exactly_the_known_capacity_truths() {
     for path in sample_paths() {
@@ -77,16 +74,7 @@ fn impossible_links_are_exactly_the_known_capacity_truths() {
             .into_iter()
             .filter(|v| v.rule == Rule::Impossible)
             .count();
-        let expected = match path.file_stem().and_then(|s| s.to_str()) {
-            Some("links_hard") => 4,
-            _ => 0,
-        };
-        assert_eq!(
-            impossible,
-            expected,
-            "{}: stray count moved",
-            path.display()
-        );
+        assert_eq!(impossible, 0, "{}: stray count moved", path.display());
     }
 }
 

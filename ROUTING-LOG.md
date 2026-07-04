@@ -485,8 +485,9 @@ anything the next session must know. Keep entries terse.
     depends on which flank the nesting order gives the corner's
     perpendicular leg — deciding it truly needs the order walk over both
     chains at pricing time, and the ledger holds spans, not topology.
-    Ignored test `fan_siblings_split_without_crossing_each_other` pins
-    the repro; the braid is a lawful, counted Info crossing meanwhile.
+    The braid is a lawful, counted Info crossing; the user accepted it
+    (2026-07-04) and the repro pin was dropped — the mechanism stays
+    documented at `Ledger::crossings_covering`.
 - **2026-07-03, run-order totality + lawful preferences (user bug batch,
   post stage 7).** Two placement bugs fixed at source, one new known-limit
   pin, one open diagnosis. Every sample byte-identical at native attributes.

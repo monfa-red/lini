@@ -619,33 +619,6 @@ fn a_bundle_of_s_curves_keeps_pitch_on_both_legs() {
     assert!(breaches.is_empty(), "{breaches:?}");
 }
 
-/// Fan siblings split without crossing each other when a crossing-free
-/// split exists (links_hard at clearance 8: `hub -> north.n1 & east.e1` —
-/// e1's corner can nest east of n1's committed rail). The clean twin route
-/// exists at equal length and turns, but a rail sitting exactly on a
-/// travel endpoint shares the corner's anchor estimate, and the half-open
-/// crossing charge counts it — the two routes tie and the tie-break draws
-/// the braid. A strict bound fixes this and breaks the mirror case
-/// (links_simple draws two real crossings); the true charge needs the
-/// nesting-order walk over both chains at pricing time
-/// (`Ledger::crossings_covering`, ROUTING-LOG.md). Lawful either way — the
-/// braid is a counted Info crossing.
-#[test]
-#[ignore = "corner-at-anchor crossing charge cannot see the nesting order; needs order-aware pricing"]
-fn fan_siblings_split_without_crossing_each_other() {
-    let src = include_str!("../samples/links_hard.lini");
-    let laid = route_sample(src, 8.0);
-    let sibling_crossings = lini::testing::laws(&laid)
-        .iter()
-        .filter(|v| {
-            v.rule == Rule::Crossing
-                && v.links.contains(&"hub -> north.n1".to_owned())
-                && v.links.contains(&"hub -> east.e1".to_owned())
-        })
-        .count();
-    assert_eq!(sibling_crossings, 0, "the hub fan crosses itself");
-}
-
 // ── Determinism (Law 4) ──
 
 #[test]
