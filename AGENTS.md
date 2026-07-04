@@ -3,17 +3,22 @@
 How to work in this repo.
 
 ## Communication
-- **Keep replies short.** No preamble, recap, or closing summary — a sentence or a small table beats a paragraph.
+- **Short by default: aim for ≤5 sentences.** Go longer only when the
+  substance earns it — a real finding, a tradeoff the user must weigh —
+  and even then, tight. Code blocks and tool output don't count.
+- Say each thing once. No preamble, no restating the question, no recap
+  of what was already said, no closing summary.
+- No headers or bold walls; bullets/tables only when the answer is
+  genuinely a list or a comparison.
+- Explain only when asked, and keep it tight. Short beats well-worded.
 - Don't narrate intentions; do the thing and report what changed.
 - Exploratory questions: propose one path + the main tradeoff, then wait — don't decide and implement.
 - Ask before risky or irreversible actions (force push, destructive ops, publishing). Local edits are free.
-- No emojis unless asked. Plain Markdown; tables over bullets when comparing.
 
 ## Subagents
 - **Always set `model` explicitly when spawning agents** (Agent tool,
   workflow `agent()`): the main session may run a pricier model and a
-  subagent must never inherit it. Forks are the one exception — they
-  always inherit the parent by design, which is fine.
+  subagent must never inherit it. Forks are the one exception.
 - Pick the tier by the task: **`opus` at `xhigh` effort** for most real
   work (investigation, implementation, review); **`opus` at `high`** for
   simpler scoped tasks; **`sonnet` at `high`** for genuinely simple
