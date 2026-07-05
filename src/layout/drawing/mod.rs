@@ -27,19 +27,19 @@ use crate::resolve::{AttrMap, Program, ResolvedInst, ResolvedValue};
 use geometry::P;
 
 /// A folded sketch's annotation geometry, carried on its placed node
-/// [SPEC 15.2/15.6]: the authored `:name` products, the applied `mirror:`
+/// [SPEC 15.2/15.6]: the authored `:segment`s, the applied `mirror:`
 /// axes (the unary mirrored readings), and the drawn outline (leader tips
 /// ray-cast onto it). Everything is in the node's local frame, scaled.
 pub struct SketchGeo {
-    pub names: Vec<(String, Product)>,
+    pub segments: Vec<(String, Segment)>,
     pub mirrors: Vec<geometry::MirrorAxis>,
     pub outline: Vec<geometry::Subpath>,
 }
 
-/// What an authored `:name` addresses [SPEC 15.2] — the pen's output
+/// What an authored `:segment` addresses [SPEC 15.2] — the pen's output
 /// vocabulary, produced by the fold and consumed by the anchors.
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub enum Product {
+pub enum Segment {
     /// A freestanding name — the pen's point there.
     Point(P),
     /// A straight run (or a chamfer bevel, or a `close()` seam) — carries its
@@ -52,19 +52,19 @@ pub enum Product {
     Circle { center: P, r: f64 },
 }
 
-impl Product {
-    /// The product under the node's own `scale:` — a uniform coordinate map,
+impl Segment {
+    /// The segment under the node's own `scale:` — a uniform coordinate map,
     /// so directions survive and radii multiply.
     pub(super) fn scaled(self, s: f64) -> Self {
         let m = |p: P| (p.0 * s, p.1 * s);
         match self {
-            Product::Point(p) => Product::Point(m(p)),
-            Product::Edge(a, b) => Product::Edge(m(a), m(b)),
-            Product::Arc { mid, r } => Product::Arc {
+            Segment::Point(p) => Segment::Point(m(p)),
+            Segment::Edge(a, b) => Segment::Edge(m(a), m(b)),
+            Segment::Arc { mid, r } => Segment::Arc {
                 mid: m(mid),
                 r: r * s,
             },
-            Product::Circle { center, r } => Product::Circle {
+            Segment::Circle { center, r } => Segment::Circle {
                 center: m(center),
                 r: r * s,
             },

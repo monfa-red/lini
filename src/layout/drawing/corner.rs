@@ -3,8 +3,8 @@
 //! or a straight bevel. The pen (`super::pen`) owns *when* a modifier applies
 //! (incl. cyclically through `close()`); this module owns the trim itself.
 
-use super::Product;
-use super::geometry::{self, Seg, dist};
+use super::Segment;
+use super::geometry::{self, PathSeg, dist};
 use crate::error::Error;
 use crate::span::Span;
 
@@ -27,14 +27,15 @@ impl Mod {
 /// Trim the corner between two straight runs and drop in the modifier's joint:
 /// a tangent arc (`fillet`) or a straight bevel (`chamfer`, cut `c` back along
 /// each leg) [SPEC 15.3]. Returns (trimmed prev, joint, trimmed next, the
-/// joint's `:name` product).
+/// joint's `:segment`).
 pub(super) fn apply_mod(
     m: Mod,
-    prev: Seg,
-    next: Seg,
+    prev: PathSeg,
+    next: PathSeg,
     span: Span,
-) -> Result<(Seg, Seg, Seg, Product), Error> {
-    let (Seg::Line { from: a, to: c1 }, Seg::Line { from: c2, to: b }) = (prev, next) else {
+) -> Result<(PathSeg, PathSeg, PathSeg, Segment), Error> {
+    let (PathSeg::Line { from: a, to: c1 }, PathSeg::Line { from: c2, to: b }) = (prev, next)
+    else {
         return Err(Error::at(
             span,
             format!("'{}' joins two straight segments today", m.word()),
@@ -73,7 +74,7 @@ pub(super) fn apply_mod(
     }
     let ta = (c.0 - da.0 * t, c.1 - da.1 * t);
     let tb = (c.0 + db.0 * t, c.1 + db.1 * t);
-    let (mid, product) = match m {
+    let (mid, segment) = match m {
         Mod::Fillet(r) => {
             let sweep = cross > 0.0;
             // Centre: perpendicular off the incoming leg at the tangent point.
@@ -88,22 +89,22 @@ pub(super) fn apply_mod(
                 centre.1 + (c.1 - centre.1) / clen * r,
             );
             (
-                Seg::Arc {
+                PathSeg::Arc {
                     from: ta,
                     to: tb,
                     r,
                     large: false,
                     sweep,
                 },
-                Product::Arc { mid: on_arc, r },
+                Segment::Arc { mid: on_arc, r },
             )
         }
-        Mod::Chamfer(_) => (Seg::Line { from: ta, to: tb }, Product::Edge(ta, tb)),
+        Mod::Chamfer(_) => (PathSeg::Line { from: ta, to: tb }, Segment::Edge(ta, tb)),
     };
     Ok((
-        Seg::Line { from: a, to: ta },
+        PathSeg::Line { from: a, to: ta },
         mid,
-        Seg::Line { from: tb, to: b },
-        product,
+        PathSeg::Line { from: tb, to: b },
+        segment,
     ))
 }

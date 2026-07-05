@@ -205,13 +205,13 @@ pub enum ResolvedValue {
     Deferred(Vec<Expr>),
     /// One `draw:` pen item [SPEC 15.3], held structured for the sketch fold at
     /// layout — a call (args resolved to numbers) that may name its drawn
-    /// product. Like `Deferred`, it is consumed at layout and never rendered.
+    /// segment. Like `Deferred`, it is consumed at layout and never rendered.
     PenCall {
         call: ResolvedCall,
-        product: Option<String>,
+        segment: Option<String>,
     },
-    /// A freestanding `:name` pen item — names the pen's current point.
-    PenPoint(String),
+    /// A freestanding `:segment` pen item — names the pen's current point.
+    PenSegment(String),
 }
 
 impl ResolvedValue {
@@ -389,7 +389,7 @@ pub struct ResolvedEndpoint {
     pub path: String,
     pub side: Option<Side>,
     /// A drawing-scope anchor beyond the four sides [SPEC 15.2] — a corner,
-    /// `center`, or a sketch-authored name; `None` everywhere else (the router
+    /// `center`, or a sketch-authored segment; `None` everywhere else (the router
     /// vocabulary is `side`).
     pub point: Option<String>,
     pub span: Span,

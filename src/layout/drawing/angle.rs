@@ -5,7 +5,7 @@
 //! the **included** angle against its own reflection.
 
 use super::super::ir::{Bbox, PlacedNode};
-use super::Product;
+use super::Segment;
 use super::anchors::{self, Anchor, Spot, rotated};
 use super::annotate::{Ctx, Paint};
 use super::compose::{self, Glyph};
@@ -34,7 +34,7 @@ pub(super) fn lower(ctx: &Ctx, w: &ResolvedLink) -> Result<Vec<PlacedNode>, Erro
 fn unary(ctx: &Ctx, w: &ResolvedLink, paint: &Paint) -> Result<Vec<PlacedNode>, Error> {
     let ep = &w.endpoints[0];
     let a = anchors::resolve(ctx.kids, ctx.scope, ep, "dimension")?;
-    let Spot::Product(Product::Edge(pa, pb)) = a.spot else {
+    let Spot::Segment(Segment::Edge(pa, pb)) = a.spot else {
         return Err(two_edges(w));
     };
     let Some(axis) = a.mirrors().first() else {

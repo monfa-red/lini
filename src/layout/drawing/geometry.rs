@@ -10,7 +10,7 @@ pub type P = (f64, f64);
 /// One drawn segment. `from`/`to` chain through a subpath; an arc is circular
 /// (SVG `A r r 0 large sweep`), `sweep: true` = clockwise on screen.
 #[derive(Debug, Clone, Copy)]
-pub enum Seg {
+pub enum PathSeg {
     Line {
         from: P,
         to: P,
@@ -30,42 +30,44 @@ pub enum Seg {
     },
 }
 
-impl Seg {
+impl PathSeg {
     pub fn from(&self) -> P {
         match *self {
-            Seg::Line { from, .. } | Seg::Arc { from, .. } | Seg::Cubic { from, .. } => from,
+            PathSeg::Line { from, .. }
+            | PathSeg::Arc { from, .. }
+            | PathSeg::Cubic { from, .. } => from,
         }
     }
 
     pub fn to(&self) -> P {
         match *self {
-            Seg::Line { to, .. } | Seg::Arc { to, .. } | Seg::Cubic { to, .. } => to,
+            PathSeg::Line { to, .. } | PathSeg::Arc { to, .. } | PathSeg::Cubic { to, .. } => to,
         }
     }
 
     /// The segment reflected across a line through the origin with unit
     /// direction `u`. An arc's sweep flips — reflection reverses handedness.
-    fn reflect(&self, u: P) -> Seg {
+    fn reflect(&self, u: P) -> PathSeg {
         let m = |p: P| reflect_point(p, u);
         match *self {
-            Seg::Line { from, to } => Seg::Line {
+            PathSeg::Line { from, to } => PathSeg::Line {
                 from: m(from),
                 to: m(to),
             },
-            Seg::Arc {
+            PathSeg::Arc {
                 from,
                 to,
                 r,
                 large,
                 sweep,
-            } => Seg::Arc {
+            } => PathSeg::Arc {
                 from: m(from),
                 to: m(to),
                 r,
                 large,
                 sweep: !sweep,
             },
-            Seg::Cubic { from, c1, c2, to } => Seg::Cubic {
+            PathSeg::Cubic { from, c1, c2, to } => PathSeg::Cubic {
                 from: m(from),
                 c1: m(c1),
                 c2: m(c2),
@@ -76,23 +78,23 @@ impl Seg {
 
     /// The segment walked the other way (endpoints swapped; an arc's sweep
     /// flips, a cubic swaps its controls).
-    fn reverse(&self) -> Seg {
+    fn reverse(&self) -> PathSeg {
         match *self {
-            Seg::Line { from, to } => Seg::Line { from: to, to: from },
-            Seg::Arc {
+            PathSeg::Line { from, to } => PathSeg::Line { from: to, to: from },
+            PathSeg::Arc {
                 from,
                 to,
                 r,
                 large,
                 sweep,
-            } => Seg::Arc {
+            } => PathSeg::Arc {
                 from: to,
                 to: from,
                 r,
                 large,
                 sweep: !sweep,
             },
-            Seg::Cubic { from, c1, c2, to } => Seg::Cubic {
+            PathSeg::Cubic { from, c1, c2, to } => PathSeg::Cubic {
                 from: to,
                 c1: c2,
                 c2: c1,
@@ -106,7 +108,7 @@ impl Seg {
 /// mirror or a `close()`).
 #[derive(Debug, Clone)]
 pub struct Subpath {
-    pub segs: Vec<Seg>,
+    pub segs: Vec<PathSeg>,
     pub closed: bool,
 }
 
@@ -185,11 +187,11 @@ pub fn mirror(subs: &mut Vec<Subpath>, axis: MirrorAxis) -> bool {
         let (a2, b2) = (reflect_point(a, u), reflect_point(b, u));
         let mut segs = sub.segs.clone();
         if dist(b, b2) > SEAM_EPS {
-            segs.push(Seg::Line { from: b, to: b2 });
+            segs.push(PathSeg::Line { from: b, to: b2 });
         }
         segs.extend(sub.segs.iter().rev().map(|s| s.reflect(u).reverse()));
         if dist(a2, a) > SEAM_EPS {
-            segs.push(Seg::Line { from: a2, to: a });
+            segs.push(PathSeg::Line { from: a2, to: a });
         }
         out.push(Subpath { segs, closed: true });
     }
@@ -242,24 +244,24 @@ pub fn scale(subs: &mut [Subpath], s: f64) {
     for sub in subs {
         for seg in &mut sub.segs {
             *seg = match *seg {
-                Seg::Line { from, to } => Seg::Line {
+                PathSeg::Line { from, to } => PathSeg::Line {
                     from: m(from),
                     to: m(to),
                 },
-                Seg::Arc {
+                PathSeg::Arc {
                     from,
                     to,
                     r,
                     large,
                     sweep,
-                } => Seg::Arc {
+                } => PathSeg::Arc {
                     from: m(from),
                     to: m(to),
                     r: r * s,
                     large,
                     sweep,
                 },
-                Seg::Cubic { from, c1, c2, to } => Seg::Cubic {
+                PathSeg::Cubic { from, c1, c2, to } => PathSeg::Cubic {
                     from: m(from),
                     c1: m(c1),
                     c2: m(c2),
@@ -287,10 +289,10 @@ pub fn to_d(subs: &[Subpath]) -> String {
         // `Z` draws — skip the redundant `L` (a filleted seam is an arc and
         // stays).
         let count = sub.segs.len();
-        let skip_last = |i: usize, seg: &Seg| {
+        let skip_last = |i: usize, seg: &PathSeg| {
             sub.closed
                 && i + 1 == count
-                && matches!(seg, Seg::Line { .. })
+                && matches!(seg, PathSeg::Line { .. })
                 && dist(seg.to(), start) < SEAM_EPS
         };
         for (i, seg) in sub.segs.iter().enumerate() {
@@ -298,8 +300,8 @@ pub fn to_d(subs: &[Subpath]) -> String {
                 continue;
             }
             match *seg {
-                Seg::Line { to, .. } => d.push_str(&format!(" L {} {}", n(to.0), n(to.1))),
-                Seg::Arc {
+                PathSeg::Line { to, .. } => d.push_str(&format!(" L {} {}", n(to.0), n(to.1))),
+                PathSeg::Arc {
                     to,
                     r,
                     large,
@@ -314,7 +316,7 @@ pub fn to_d(subs: &[Subpath]) -> String {
                     n(to.0),
                     n(to.1)
                 )),
-                Seg::Cubic { c1, c2, to, .. } => d.push_str(&format!(
+                PathSeg::Cubic { c1, c2, to, .. } => d.push_str(&format!(
                     " C {} {} {} {} {} {}",
                     n(c1.0),
                     n(c1.1),

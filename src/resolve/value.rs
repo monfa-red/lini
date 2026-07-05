@@ -130,7 +130,7 @@ pub fn resolve_property(
 }
 
 /// A `draw:` value [SPEC 15.3]: one run of pen items — calls (optionally naming
-/// their product) and freestanding `:name` points — kept structured; only the
+/// their segment) and freestanding `:name` points — kept structured; only the
 /// call **arguments** fold (numbers, backticks, compute calls).
 fn resolve_pen(
     groups: &[Vec<Value>],
@@ -148,17 +148,17 @@ fn resolve_pen(
         items.push(match v {
             Value::Call(c) => ResolvedValue::PenCall {
                 call: fold_call_args(c, span, funcs)?,
-                product: None,
+                segment: None,
             },
-            Value::NamedCall(c, product) => ResolvedValue::PenCall {
+            Value::NamedCall(c, segment) => ResolvedValue::PenCall {
                 call: fold_call_args(c, span, funcs)?,
-                product: Some(product.clone()),
+                segment: Some(segment.clone()),
             },
-            Value::PointName(name) => ResolvedValue::PenPoint(name.clone()),
+            Value::PointName(name) => ResolvedValue::PenSegment(name.clone()),
             _ => {
                 return Err(Error::at(
                     span,
-                    "'draw' holds pen calls and ':name' points — see SPEC 15.3",
+                    "'draw' holds pen calls and ':segment' points — see SPEC 15.3",
                 ));
             }
         });
@@ -279,7 +279,7 @@ fn resolve_scalar(
         Value::NamedCall(..) | Value::PointName(_) => {
             return Err(Error::at(
                 span,
-                "a ':name' pen item belongs in a 'draw:' value",
+                "a ':segment' pen item belongs in a 'draw:' value",
             ));
         }
     })

@@ -4,7 +4,7 @@
 // edges; `(-)` reads a fillet's radius; a `|balloon|` wires with `-*` and a
 // `|note|` with an ordinary arrow.
 
-{ layout: drawing; scale: 2 }
+{ layout: drawing; scale: 3 }
 
 |sketch#bracket| {
   draw: move(-40, 30) right(80):base fillet(6):heel up(60):wall line(-80, 60):flank close();
@@ -13,7 +13,7 @@
 
 bracket:flank (<) bracket:base            // → 36.87° — the flank's rise off the base
 bracket:heel (-)                          // → R6 — the fillet knows its radius
-eye:top (-)                               // → ⌀16 — the diametral line, spilling upward
+eye:top (-)                               // → ⌀16 — the diametral line through the eye
 bracket:base >- "A"                       // datum A on the base face
 bracket:flank *- "GRIND" { side: left }   // a dot lands within the face
 |balloon#b1| "1" { translate: 55 -35 }

@@ -40,7 +40,7 @@ pub fn format_value(value: &ResolvedValue, vars: &VarTable, opts: &Options) -> S
         ResolvedValue::Deferred(_) => {
             unreachable!("a deferred fn: is sampled at chart layout, never rendered")
         }
-        ResolvedValue::PenCall { .. } | ResolvedValue::PenPoint(_) => {
+        ResolvedValue::PenCall { .. } | ResolvedValue::PenSegment(_) => {
             unreachable!("a draw: pen item folds to a path at layout, never rendered")
         }
         ResolvedValue::LiveVar { name, raw } => {

@@ -253,7 +253,7 @@ mod tests {
     #[test]
     fn iso_text_turns_with_a_vertical_dim() {
         let l = laid(
-            "{ layout: drawing }\n|rect#a| { width: 60; height: 40 }\na:top <-> a:bottom { side: right }\n",
+            "{ layout: drawing; scale: 1 }\n|rect#a| { width: 60; height: 40 }\na:top <-> a:bottom { side: right }\n",
         );
         let (x, _, rot) = text_at(&l.nodes, "40");
         assert_eq!(rot, -90.0, "reads from the right");
@@ -266,7 +266,7 @@ mod tests {
         // An 18-wide span can't hold text + arrows: the text slides right,
         // past the higher-u extension line.
         let l = laid(
-            "{ layout: drawing }\n|rect#a| { width: 18; height: 10 }\na:left <-> a:right { side: bottom }\n",
+            "{ layout: drawing; scale: 1 }\n|rect#a| { width: 18; height: 10 }\na:left <-> a:right { side: bottom }\n",
         );
         let (x, _, _) = text_at(&l.nodes, "18");
         assert!(x > 9.0, "text outside the span: x={x}");
@@ -275,7 +275,7 @@ mod tests {
     #[test]
     fn corner_anchors_on_one_edge_pull_the_dim_there() {
         let l = laid(
-            "{ layout: drawing }\n|rect#a| { width: 40; height: 20 }\n|rect#b| { width: 40; height: 20; translate: 70 0 }\na:top-left <-> b:top-right\n",
+            "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\n|rect#b| { width: 40; height: 20; translate: 70 0 }\na:top-left <-> b:top-right\n",
         );
         let (_, y, _) = text_at(&l.nodes, "110");
         let a = by_id(&l.nodes, "a");
@@ -285,7 +285,7 @@ mod tests {
     #[test]
     fn a_two_ended_label_replaces_the_number() {
         let l = laid(
-            "{ layout: drawing }\n|rect#a| { width: 40; height: 20 }\na:left <-> a:right \"180\"\n",
+            "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\na:left <-> a:right \"180\"\n",
         );
         text_at(&l.nodes, "180");
         assert!(
@@ -307,25 +307,25 @@ mod tests {
     fn dim_errors_speak_spec() {
         assert_eq!(
             layout_err(
-                "{ layout: drawing }\n|rect#a| { width: 40; height: 20 }\n|rect#b| { width: 40; height: 20 }\na:left <-> b:top\n"
+                "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\n|rect#b| { width: 40; height: 20 }\na:left <-> b:top\n"
             ),
             "'a:left <-> b:top' mixes axes — anchor one axis"
         );
         assert_eq!(
             layout_err(
-                "{ layout: drawing }\n|rect#a| { width: 40; height: 20 }\na:left <-> a:right { side: left }\n"
+                "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\na:left <-> a:right { side: left }\n"
             ),
             "a horizontal dimension stacks on top or bottom"
         );
         assert_eq!(
             layout_err(
-                "{ layout: drawing }\n|rect#a| { width: 40; height: 20 }\na:top <-> a:bottom { side: top }\n"
+                "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\na:top <-> a:bottom { side: top }\n"
             ),
             "a vertical dimension stacks on left or right"
         );
         assert_eq!(
             layout_err(
-                "{ layout: drawing }\n|rect#a| { width: 40; height: 20 }\na:left <-> a:right { tol: \"x\" }\n"
+                "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\na:left <-> a:right { tol: \"x\" }\n"
             ),
             "'tol' takes a number, '+upper -lower', or a fit ident"
         );
@@ -336,18 +336,18 @@ mod tests {
     #[test]
     fn tol_composes_its_three_forms() {
         let sym = laid(
-            "{ layout: drawing }\n|rect#a| { width: 40; height: 20 }\na:left <-> a:right { tol: 0.1 }\n",
+            "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\na:left <-> a:right { tol: 0.1 }\n",
         );
         text_at(&sym.nodes, "40±0.1");
 
         let fit = laid(
-            "{ layout: drawing }\n|rect#a| { width: 40; height: 20 }\na:left <-> a:right { tol: H7 }\n",
+            "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\na:left <-> a:right { tol: H7 }\n",
         );
         text_at(&fit.nodes, "40 H7");
 
         // Stacked deviations: raised / lowered beside the value, 0.7 × font.
         let dev = laid(
-            "{ layout: drawing }\n|rect#a| { width: 40; height: 20 }\na:left <-> a:right { tol: +0.2 -0.05 }\n",
+            "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\na:left <-> a:right { tol: +0.2 -0.05 }\n",
         );
         let (_, yu, _) = text_at(&dev.nodes, "+0.2");
         let (_, yl, _) = text_at(&dev.nodes, "-0.05");
@@ -369,9 +369,9 @@ mod tests {
     }
 
     #[test]
-    fn a_circle_product_reads_its_diameter() {
+    fn a_circle_segment_reads_its_diameter() {
         let l = laid(
-            "{ layout: drawing }\n|sketch#s| { draw: move(0, 0) right(40) up(20) left(40) close() move(20, -10) circle(5):c }\ns:c (-)\n",
+            "{ layout: drawing; scale: 1 }\n|sketch#s| { draw: move(0, 0) right(40) up(20) left(40) close() move(20, -10) circle(5):c }\ns:c (-)\n",
         );
         text_at(&l.nodes, "⌀10");
     }
@@ -379,7 +379,7 @@ mod tests {
     #[test]
     fn a_bare_round_node_leaders_its_diameter_with_the_copy_count() {
         let l = laid(
-            "{ layout: drawing }\n|rect#plate| { width: 120; height: 60 } [\n  |hole#pin| { width: 10; translate: -35 0; pattern: grid(2, 1, 70, 0) }\n]\nplate.pin (-) \"H7\"\n",
+            "{ layout: drawing; scale: 1 }\n|rect#plate| { width: 120; height: 60 } [\n  |hole#pin| { width: 10; translate: -35 0; pattern: grid(2, 1, 70, 0) }\n]\nplate.pin (-) \"H7\"\n",
         );
         text_at(&l.nodes, "2× ⌀10 H7");
     }
@@ -389,7 +389,7 @@ mod tests {
         // The value doesn't fit inside ⌀16 — the line overruns the anchored
         // rim and the text spills upward, turned with the vertical line.
         let l = laid(
-            "{ layout: drawing }\n|rect#plate| { width: 80; height: 40 }\n|hole#eye| { width: 16 }\neye:top (-)\n",
+            "{ layout: drawing; scale: 1 }\n|rect#plate| { width: 80; height: 40 }\n|hole#eye| { width: 16 }\neye:top (-)\n",
         );
         let (_, y, rot) = text_at(&l.nodes, "⌀16");
         assert_eq!(rot, -90.0, "turned with the line");
@@ -399,7 +399,7 @@ mod tests {
     #[test]
     fn a_side_anchor_on_any_node_spans_to_the_opposite_side() {
         let l = laid(
-            "{ layout: drawing }\n|rect#bore| { width: 60; height: 16 }\nbore:top (-) { side: right }\n",
+            "{ layout: drawing; scale: 1 }\n|rect#bore| { width: 60; height: 16 }\nbore:top (-) { side: right }\n",
         );
         let (x, _, _) = text_at(&l.nodes, "⌀16");
         assert!(x > 30.0, "stacked on the right: x={x}");
@@ -416,8 +416,10 @@ mod tests {
     #[test]
     fn a_bare_round_measure_needs_an_axis() {
         assert_eq!(
-            layout_err("{ layout: drawing }\n|rect#block| { width: 40; height: 20 }\nblock (-)\n"),
-            "'(-)' can't pick an axis on 'block' — anchor a side ('block:top (-)') or a name"
+            layout_err(
+                "{ layout: drawing; scale: 1 }\n|rect#block| { width: 40; height: 20 }\nblock (-)\n"
+            ),
+            "'(-)' can't pick an axis on 'block' — anchor a side ('block:top (-)') or a segment"
         );
     }
 
@@ -437,7 +439,7 @@ mod tests {
         // A 10-in-40 taper mirrored about x: included angle = 2 · atan(10/40)
         // = 28.07°.
         let l = laid(
-            "{ layout: drawing }\n|sketch#cone| { draw: move(0, 0) line(40, -10):taper; mirror: x-axis }\ncone:taper (<)\n",
+            "{ layout: drawing; scale: 1 }\n|sketch#cone| { draw: move(0, 0) line(40, -10):taper; mirror: x-axis }\ncone:taper (<)\n",
         );
         text_at(&l.nodes, "28.07°");
     }
@@ -446,19 +448,19 @@ mod tests {
     fn angle_errors_speak_spec() {
         assert_eq!(
             layout_err(
-                "{ layout: drawing }\n|oval#a| { width: 20; height: 20 }\n|oval#b| { width: 20; height: 20 }\na (<) b\n"
+                "{ layout: drawing; scale: 1 }\n|oval#a| { width: 20; height: 20 }\n|oval#b| { width: 20; height: 20 }\na (<) b\n"
             ),
             "an angle reads two edges — a named segment, a '|line|', or a side"
         );
         assert_eq!(
             layout_err(
-                "{ layout: drawing }\n|sketch#s| { draw: move(0, 0) line(40, -10):taper up(10) close() }\ns:taper (<)\n"
+                "{ layout: drawing; scale: 1 }\n|sketch#s| { draw: move(0, 0) line(40, -10):taper up(10) close() }\ns:taper (<)\n"
             ),
             "'(<)' on ':taper' needs 'mirror:' — no twin to measure against"
         );
         assert_eq!(
             layout_err(
-                "{ layout: drawing }\n|rect#a| { width: 40; height: 20 }\n|rect#b| { width: 40; height: 20 }\na:top (<) b:bottom\n"
+                "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\n|rect#b| { width: 40; height: 20 }\na:top (<) b:bottom\n"
             ),
             "the angle's edges are parallel — they never meet"
         );
@@ -469,7 +471,7 @@ mod tests {
     #[test]
     fn a_leader_tip_ray_casts_onto_the_outline_with_a_landing_elbow() {
         let l = laid(
-            "{ layout: drawing }\n|oval#disc| { width: 40; height: 40 }\ndisc:top-right <- \"THRU\"\n",
+            "{ layout: drawing; scale: 1 }\n|oval#disc| { width: 40; height: 40 }\ndisc:top-right <- \"THRU\"\n",
         );
         let line = l
             .nodes
@@ -497,7 +499,7 @@ mod tests {
     #[test]
     fn side_steers_a_leader() {
         let l = laid(
-            "{ layout: drawing }\n|oval#disc| { width: 40; height: 40 }\ndisc <- \"A\" { side: left }\n",
+            "{ layout: drawing; scale: 1 }\n|oval#disc| { width: 40; height: 40 }\ndisc <- \"A\" { side: left }\n",
         );
         let (tx, _, _) = text_at(&l.nodes, "A");
         assert!(tx < -20.0, "text left of the disc: {tx}");
@@ -506,7 +508,7 @@ mod tests {
     #[test]
     fn the_datum_leader_lowers_to_the_datum_marker() {
         let l = laid(
-            "{ layout: drawing }\n|rect#block| { width: 60; height: 30 }\nblock:bottom >- \"A\"\n",
+            "{ layout: drawing; scale: 1 }\n|rect#block| { width: 60; height: 30 }\nblock:bottom >- \"A\"\n",
         );
         assert!(
             l.nodes
@@ -521,7 +523,7 @@ mod tests {
         // `b1 -* part`: the line springs from the balloon's rim (default
         // anchor → trimmed) and its dot lands at the part's origin (within).
         let l = laid(
-            "{ layout: drawing }\n|rect#part| { width: 60; height: 30 }\n|balloon#b1| \"1\" { translate: 60 -40 }\nb1 -* part\n",
+            "{ layout: drawing; scale: 1 }\n|rect#part| { width: 60; height: 30 }\n|balloon#b1| \"1\" { translate: 60 -40 }\nb1 -* part\n",
         );
         let line = l
             .nodes
@@ -544,16 +546,32 @@ mod tests {
 
     #[test]
     fn drawing_links_thin_to_stroke_width_1() {
-        let l =
-            laid("{ layout: drawing }\n|rect#a| { width: 40; height: 20 }\na:left <-> a:right\n");
-        let dim_line = l
-            .nodes
-            .iter()
-            .find(|n| n.kind == NodeKind::Line)
-            .expect("a dim line");
-        assert!(
-            matches!(dim_line.attrs.get("stroke-width"), Some(ResolvedValue::Number(w)) if *w == 1.0),
-            "the built-in '|drawing| |-|' rule"
+        let width_of = |src: &str| {
+            let l = laid(src);
+            let dim_line = l
+                .nodes
+                .iter()
+                .find(|n| n.kind == NodeKind::Line)
+                .expect("a dim line");
+            match dim_line.attrs.get("stroke-width") {
+                Some(ResolvedValue::Number(w)) => *w,
+                other => panic!("stroke-width: {other:?}"),
+            }
+        };
+        assert_eq!(
+            width_of(
+                "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\na:left <-> a:right\n"
+            ),
+            1.0,
+            "the drawing-scope link default"
+        );
+        // A scope default, not a rule — a plain `|-|` rule overrides it.
+        assert_eq!(
+            width_of(
+                "{ layout: drawing; scale: 1;\n  |-| { stroke-width: 2 }\n}\n|rect#a| { width: 40; height: 20 }\na:left <-> a:right\n"
+            ),
+            2.0,
+            "a user '|-|' rule wins over the scope default"
         );
     }
 }

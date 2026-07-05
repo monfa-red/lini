@@ -599,7 +599,7 @@ impl Emitter<'_> {
                 self.out.push_str(s);
                 self.out.push('`');
             }
-            // Pen items [SPEC 15.3]: the product name glues to its call; a
+            // Pen items [SPEC 15.3]: the segment name glues to its call; a
             // freestanding point stands alone.
             Value::NamedCall(c, name) => {
                 self.emit_value(&Value::Call(c.clone()));

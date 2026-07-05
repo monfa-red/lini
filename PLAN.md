@@ -59,7 +59,7 @@ coordinates through `prim::*`).
    bare → `⌀` leader; round node + side/corner anchor → **diametral line** (text
    inside if it fits, else the line overruns the *anchored* rim and carries the text);
    any node + side anchor → span to the opposite side, ⌀-formatted, stacked; mirrored
-   `:name` → station span across the axis, stacked; bare with no inferable axis →
+   `:segment` → station span across the axis, stacked; bare with no inferable axis →
    error. Roundness is **by construction only** (`|oval|` lineage, `circle()` product,
    `|pitch-circle|`) — never geometric detection.
 4. **One-ended relaxation**: RHS endpoints omissible for `<-` `*-` `>-` `(-)` `(<)`;
@@ -68,7 +68,7 @@ coordinates through `prim::*`).
    annotation line, markers per op. One-ended `->` / `-*` → "a leader points back at
    its feature".
 5. **Anchors**: geometry-bbox points; corners vertical-word-first (`:top-right`;
-   reversed → did-you-mean); corners + `:center` drawing-scope only; authored `:name`s
+   reversed → did-you-mean); corners + `:center` drawing-scope only; authored `:segment`s
    from the pen (attached = product incl. its direction/radius; freestanding = pen
    point; duplicates error; built-ins win). Leader tips ray-cast onto the drawn path;
    dim extension lines spring from the anchor points exactly.
@@ -86,7 +86,8 @@ coordinates through `prim::*`).
    sketch is mirrored across the break axis); **measured values always read the
    unbroken model** (displayed positions come from a piecewise offset map).
 9. **`scale:`** is a per-node property (px per drawing unit, default 1,
-   nearest-ancestor-wins): a node's **position** (`translate:`) scales by its
+   nearest-ancestor-wins; *amended 2026-07-05 by Abbas*: a `|drawing|` and a root
+   `{ layout: drawing }` default to **4** — ≈1 mm per unit at screen resolution): a node's **position** (`translate:`) scales by its
    *parent's* effective scale, its **own shape** (`draw:`/`points:`/`width`/`height`/
    `pattern:` offsets) by its *own*. Text, `stroke-width`, markers, hatch pitch, and
    all dim/leader constants **never** scale. `|note|`/`|balloon|`/`|table|` templates
@@ -102,7 +103,9 @@ coordinates through `prim::*`).
     Row packing per side (`dim-pitch`/`dim-offset`, innermost free row, source order);
     ISO **aligned** text above the line; drafting-slender arrows ≈3:1 sized by the
     dim's stroke-width; narrow spans flip arrows outside. Geometry `stroke-width` 2,
-    drawing links 1 (built-in `|-|` rule in the drawing scope).
+    drawing links 1 (*amended 2026-07-05*: a **scope-level link default** in the
+    base layer, not a built-in `|drawing| |-|` rule — the rule form outranked and
+    swallowed a user's plain `|-| { stroke-width: … }`, which must win).
 12. **Leaders**: text auto-places outward past the geometry (`note-offset`) with a
     horizontal **landing** (`note-landing`) elbow; `side:` picks a direction; `>-`
     lowers to the new `datum` marker; callout text is an unboxed leaf.
@@ -159,7 +162,7 @@ nothing new except what's listed.
   `draw:` pen calls structured (a new structured-value class beside `is_builder` —
   pen calls fold to *pen items*, never to numbers); `pattern:`/`hatch()` values kept
   structured likewise; a `drawing`-scope detector (`layout: drawing` attr) and the
-  **validation gates**: drawing ops/`tol:`/corner anchors/`:name` endpoints outside a
+  **validation gates**: drawing ops/`tol:`/corner anchors/`:segment` endpoints outside a
   drawing scope error with the SPEC 20 messages; mates/dims never auto-create; the
   sequence `|note|` gate reworded per SPEC 20.
 - **Expr** (`expr.rs`): bare zero-arg-function constants with the decision-13 lookup
@@ -183,7 +186,7 @@ yet.
   `draw:` items to a segment list (lines, arcs, cubics, circle subpaths) with heading
   state; apply `fillet`/`chamfer` (incl. cyclic through `close()`); collect authored
   names — points, edges (with direction), arcs (with radius); `mirror:` fuse/duplicate
-  per decision 7 (record the fused-axis for chrome + the mirrored-name unary
+  per decision 7 (record the fused-axis for chrome + the mirrored-segment unary
   readings); emit an SVG `d` via `prim::path` with exact bbox (extend
   `path_bbox` if arcs need it).
 - `NodeKind::Sketch` lowering (the kind is already plumbed; stage 1 errors at
@@ -337,11 +340,11 @@ deviated from this plan and **why**, open threads for the next session.
     "'fillet' joins two straight segments today" (added to SPEC 23 Deferred).
     The closing seam is a real segment (cyclic corners need it); `to_d` skips
     emitting a redundant trailing `L` that `Z` draws.
-  - After `close()`, only `fillet`/`chamfer`/`circle`/`move`/`:name` may follow
+  - After `close()`, only `fillet`/`chamfer`/`circle`/`move`/`:segment` may follow
     ("after close(), start the next subpath with move()"). The tangent
     `arc(r, deg)` requires a heading; `circle(r)` appends its own closed
     subpath without disturbing the pen.
-  - Duplicate `:name` message is "':x' is already named in this 'draw:'" — pen
+  - Duplicate `:segment` message is "':x' is already named in this 'draw:'" — pen
     items carry no spans, so SPEC 20's old "at L:C" form was amended to match.
   - `mirror:` fuse/duplicate per subpath as spec'd; reflection is applied
     chain-order (continuity preserved), reverse-then-reflect keeps an arc's
@@ -420,7 +423,7 @@ deviated from this plan and **why**, open threads for the next session.
     pads. `is_drawing_scope` skips the router + `declared_edges`.
   - **Anchors** (`layout/drawing/anchors.rs`, stage 4 extends): sides/corners/
     `center` on the geometry bbox (stroke-deflated), no-anchor = **origin**,
-    authored names from `PlacedNode.names` (a new field — the pen's products,
+    authored segments from `PlacedNode.names` (a new field — the pen's products,
     scaled, carried on the placed sketch). Rotation accumulates through the
     dot-path walk, so rotate-then-mate is exact. **A named edge's outward
     normal is the left of the pen's travel** — the away-from-centre guess was
@@ -584,6 +587,44 @@ deviated from this plan and **why**, open threads for the next session.
     non-`fill` property, not just stroke.
   - `samples/drawing_bushing.lini` flipped from the flat-fill stopgap to
     `fill: hatch(45, 6)` — now the SPEC 24 example's paint.
+- **2026-07-05 — review follow-ups from Abbas** (same session, after the hatch
+  slice; all gates green — 705 tests — clippy silent, fmt clean; every drawing
+  sample re-rendered to PNG and inspected at the new scales):
+  - **`:name` → `:segment`.** The authored point sigil's concept renamed
+    everywhere — SPEC (grammar, 15.2/15.3/15.6 tables, SPEC 20 rows, SPEC 21
+    comment, SPEC 23), PLAN (ledger + log), and code: `Product` →
+    `Segment`, `SketchGeo.names` → `segments`, `Folded.names` → `segments`,
+    `PenCall.product` → `segment`, `PenPoint` → `PenSegment`,
+    `Spot::Product` → `Spot::Segment`; the path-segment enum `geometry::Seg`
+    became `PathSeg` so the two segment vocabularies can't be confused.
+    Messages updated: "no segment ':step' on 'body'", "'move' takes no
+    segment — name its landing with a freestanding ':segment'", "… anchor a
+    side ('X:top (-)') or a segment".
+  - **`scale:` defaults to 4 on a drawing.** `|drawing|`'s template bundle
+    and the root `{ layout: drawing }` engine defaults carry `scale: 4`
+    (≈1 mm per unit at screen resolution — Abbas's call; ledger decision 9
+    annotated, SPEC 8/15.1/15.10 updated). Everything else still defaults
+    to 1; `|note|`/`|balloon|`/`|table|` keep `scale: 1`. Nearest-wins is
+    unchanged — note a *nested* `|drawing|` re-defaults to 4 rather than
+    inheriting an ancestor's explicit scale (template tier beats
+    inheritance, exactly like `|table|`'s `scale: 1`); sub-assembly views
+    state their scale. Samples: dims drops its decl (showcases the
+    default), tie bar / bushing / leaders / mate at 3, SPEC 24 examples
+    updated to match (tie bar 2→3, bushing 1.6→3). Unit tests that assert
+    absolute px pin `scale: 1`.
+  - **The drawing link weight is a scope default, not a rule.** Abbas hit
+    it: `|-| { stroke-width: 2 }` didn't restyle dim lines — the stage-4
+    built-in `|drawing| |-|` *descendant* rule outranked a user's plain
+    `|-|` element rule. Replaced at the source: `link_scope` pushes
+    `stroke-width: 1` into the link **base layer** when the scope chain
+    (or root) is a drawing — below every user rule, like the scope's
+    `clearance`/`routing`; the scoped rule is gone (ledger decision 11
+    annotated, SPEC 15.1 reworded). Regression test covers the exact
+    override. The `|sequence|`/`|drawing| |note|` compaction rules keep the
+    rule form deliberately — they must beat the note *template's* padding,
+    and the descendant-selector override (`|drawing| |note| { … }`) is the
+    documented escape there.
+
   - **Still open in stage 5**: `break:` (the big one — clip the folded
     subpaths at the stations, slide the far piece, the piecewise
     view-offset map through `annotate::Ctx`, `|breakline|` zigzag +

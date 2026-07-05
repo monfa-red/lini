@@ -3,7 +3,7 @@
 // surface doubled about the axis and takes a fit tolerance; the thread spec
 // rides a leader steered onto the surface.
 
-{ layout: drawing; scale: 2; unit: "mm" }
+{ layout: drawing; scale: 3; unit: "mm" }
 
 |sketch#bar| {
   draw: move(-150, 0) up(10) chamfer(1.5)
@@ -12,6 +12,6 @@
 }
 
 bar:left <-> bar:right { side: bottom }          // → 300 mm
-bar:left <-> bar:a     { side: top }             // → 40 mm — ':a' is a freestanding point
+bar:left <-> bar:a     { side: top }             // → 40 mm — ':a' is a freestanding segment
 bar:thread (-) { side: left; tol: h6 }           // → ⌀20 h6 — doubled about the axis
 bar:thread <- "M20×1.5" { side: top }            // thread spec — leader to the surface

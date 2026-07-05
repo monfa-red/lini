@@ -773,7 +773,7 @@ the cascade ([SPEC 4](#4-selectors-cascade--specificity)) — every value here i
 | `\|entity\|` | `\|table\|` | `columns: auto auto` | An ER / database **entity** — a titled, two-column field list (see below). |
 | `\|note\|` | `\|block\|` | `fill: --fill; stroke: --stroke; padding: 20; scale: 1` | A **note** — the folded-corner callout card, one type in every layout (see below). |
 | `\|balloon\|` | `\|oval\|` | `width: 16; fill: --fill; stroke: --stroke; font-size: 11; scale: 1` | An item **balloon** — the numbered circle an assembly leaders to a part ([SPEC 15.8](#158-assemblies-views--titles)). |
-| `\|drawing\|` | `\|block\|` | `layout: drawing; padding: 0` | An engineering **drawing** — geometry on a datum, measured annotations ([SPEC 15](#15-drawing)). |
+| `\|drawing\|` | `\|block\|` | `layout: drawing; padding: 0; scale: 4` | An engineering **drawing** — geometry on a datum, measured annotations ([SPEC 15](#15-drawing)). |
 | `\|hole\|` | `\|oval\|` | `fill: --bg; stroke: --stroke` — `width:` **required**, the diameter | A round **hole** — punches by paint order, draws its own centre marks ([SPEC 15.4](#154-features-holes--patterns)). |
 | `\|centerline\|` | `\|line\|` | `stroke-style: center; stroke-width: 1; fill: none` — needs `points:` | The dash-dot axis / symmetry line ([SPEC 15.7](#157-leaders-notes--line-conventions)). |
 | `\|pitch-circle\|` | `\|oval\|` | `stroke-style: center; stroke-width: 1; fill: none` — `width:` **required**, the diameter | The dash-dot bolt circle; round, so a `(-)` reads its PCD ([SPEC 15.7](#157-leaders-notes--line-conventions)). |
@@ -2023,8 +2023,8 @@ Four properties of the model, each inherited from the core:
   child that owns a layout (a `\|table\|`, a nested `\|drawing\|`, a `\|row\|`…) lays
   out its interior as usual and places as one box.
 - **What you measure is a node — or a point or edge it names.** Anything dimensioned,
-  mated, or pointed at is a node with an id, or a `:name` a `\|sketch\|` authors on its
-  own profile ([15.2](#152-anchors), [15.3](#153-the-sketch-pen)). Anonymous geometry is
+  mated, or pointed at is a node with an id, or a `:segment` a `\|sketch\|` authors on
+  its own profile ([15.2](#152-anchors), [15.3](#153-the-sketch-pen)). Anonymous geometry is
   drawable but not addressable.
 
 The geometry machinery is ordinary Lini, usable in any layout; only the annotation
@@ -2034,7 +2034,7 @@ semantics need a drawing scope:
 |---|---|
 | `\|sketch\|` + `draw:` / `mirror:` / `break:`; `pattern:`; `scale:`; `hatch()` fills; `stroke-style: center` / `phantom`; `\|note\|` / `\|balloon\|` | the measuring ops (`<->`-as-dimension, `(-)`, `(<)`), the leader ops, `\|\|`, `tol:`, dim `side:` / `gap:`, auto-measure, `unit:`, datum placement, the chrome (centre marks, auto centerlines, dimension packing) |
 
-Outside a drawing a `\|sketch\|` is just a shape; its authored `:name`s are declared
+Outside a drawing a `\|sketch\|` is just a shape; its authored `:segment`s are declared
 but dormant (a routed link landing on one is deferred — [SPEC 23](#23-deferred)).
 
 ### 15.1 The container, the datum & the scale
@@ -2055,8 +2055,10 @@ overlaps, punched holes, and cutaways compose with no boolean operations. The
 it ([15.5](#155-mates)); to reground, reorder the declarations.
 
 **Scale — drawing units are your millimetres.** Numbers in a drawing are **drawing
-units**; `scale:` (default 1) is **pixels per unit**. Draw a 300 mm bar as
-`right(300)`, set `scale: 4`, and it renders 1200 px wide while every dimension still
+units**; `scale:` is **pixels per unit**. A `|drawing|` (and a root
+`{ layout: drawing }`) defaults to **4** — roughly a millimetre per unit at screen
+resolution; every other node's `scale:` defaults to 1. Draw a 300 mm bar as
+`right(300)` at the default and it renders 1200 px wide while every dimension still
 reads `300` — **measured values are always pre-scale**. `unit: "mm"` appends a suffix
 to auto-measured **linear** values only — a `⌀` / `R` / `°` reading is symbol-speak,
 and drafting states units once, in the title block.
@@ -2080,8 +2082,9 @@ bboxes *and* its annotations (dimensions stack outside the geometry and count), 
 `padding`; an explicit `width` / `height` is a floor, per core. Measurement, by
 contrast, uses each node's **geometry bbox** — the drawn path, stroke excluded — so
 line weight never leaks into a value or a mate. Geometry defaults to
-`stroke-width: 2` and a drawing's links to `1` (via its built-in `|-|` rule), the
-drafting 2 : 1 line-weight contrast. `gap`, `align`, `justify`, and `direction` have no
+`stroke-width: 2` and a drawing's links to `1` — a drawing-scope link default (like
+the scope's `clearance` / `routing`), below every user rule, so a plain
+`|-| { stroke-width: … }` restyles it — the drafting 2 : 1 line-weight contrast. `gap`, `align`, `justify`, and `direction` have no
 role on a drawing container and are ignored.
 
 ### 15.2 Anchors
@@ -2094,7 +2097,7 @@ anchor = id { "." id } [ ":" point ]
 point  = center                                            (the default)
        | top | bottom | left | right                       (side midpoints)
        | top-left | top-right | bottom-left | bottom-right  (corners)
-       | name                                               (authored in draw:, 15.3)
+       | segment                                            (authored in draw:, 15.3)
 ```
 
 - Points sit on the node's **geometry bbox** ([15.1](#151-the-container-the-datum--the-scale)):
@@ -2102,11 +2105,11 @@ point  = center                                            (the default)
   Corners glue **vertical word first**, matching `pin`'s vocabulary (`pin: top left` →
   `:top-left`); the reversed order errors with a did-you-mean. Corners and `:center`
   are drawing-scope only — elsewhere the core four sides stand.
-- A `|sketch|` **authors** its own names with the point sigil in `draw:`
+- A `|sketch|` **authors** its own **segments** with the point sigil in `draw:`
   ([15.3](#153-the-sketch-pen)) — declared in the pen, selected on an endpoint, the
   same declare / select symmetry as `#id`. Built-in names win (`:left` cannot be
-  authored); an unknown name errors with suggestions; `mirror:` / `pattern:` copies of
-  a name are not addressable ([SPEC 23](#23-deferred)).
+  authored); an unknown segment errors with suggestions; `mirror:` / `pattern:` copies
+  of a segment are not addressable ([SPEC 23](#23-deferred)).
 - For **measurement** every anchor reduces to a representative point — a point is
   itself, an edge or arc its midpoint, a bbox name its bbox point — and a named edge
   additionally carries its **direction**, which sets a dimension's axis and feeds the
@@ -2130,7 +2133,7 @@ point  = center                                            (the default)
 geometry.
 
 `draw:` is a left-to-right list of **bare calls** — ordinary value-position calls, no
-new value grammar beyond the `:name` suffix; the value runs to its `;` and may span
+new value grammar beyond the `:segment` suffix; the value runs to its `;` and may span
 lines. An argument is a number, a call, or a backtick — operators stay fenced, and a
 stylesheet constant reads bare in the fence (`right(`w/2`)`,
 [SPEC 10.7](#107-expressions--functions)).
@@ -2161,22 +2164,22 @@ parts are overlapping nodes, and no boolean operations exist or are needed. An o
 path (no `close()`, no `mirror:`) is legal; `fill` paints it as if closed (SVG
 semantics).
 
-#### `:name` — the point sigil in the pen
+#### `:segment` — the point sigil in the pen
 
-Anything the pen draws can carry a name, written with the point sigil
+Anything the pen draws can carry a **segment name**, written with the point sigil
 ([15.2](#152-anchors)) in two positions of one rule:
 
 | Position | Names | Example |
 |---|---|---|
-| **attached** — glued to a call | that call's drawn product: an edge, an arc, a bevel, a circle, a `close()` seam | `right(50):neck`, `fillet(3):r1` |
+| **attached** — glued to a call | that call's drawn segment: an edge, an arc, a bevel, a circle, a `close()` seam | `right(50):neck`, `fillet(3):r1` |
 | **freestanding** — between calls | the pen's **current point** | `right(38):thread :m1 right(32)` — a station with no drawn edge |
 
 The names are **yours**, not vocabulary — `neck`, `r1`, `m1` above are examples. A
-freestanding `:name` draws nothing and changes nothing; at a `fillet` / `chamfer`
+freestanding `:segment` draws nothing and changes nothing; at a `fillet` / `chamfer`
 corner it records the **theoretical sharp corner** — the point drafting measures (the
 arc itself is named on the modifier), and the two may sit in either order. `move()`
-takes no product name — name its landing freestanding (`move(-90, 0) :origin`). A
-duplicate name in one `draw:` is an error.
+takes no segment — name its landing freestanding (`move(-90, 0) :origin`). A
+duplicate segment in one `draw:` is an error.
 
 #### `mirror:` — draw half, get the whole
 
@@ -2321,10 +2324,10 @@ measuring and leader ops may stand **one-ended** ([SPEC 21](#21-grammar)).
 | `pin (-)` | a round feature | a **leader** onto the rim — `2× ⌀10` |
 | `hole:top (-)` | a round feature, side-anchored | the **diametral line** through the circle |
 | `bore:top (-)` | any node, side-anchored | the span to the opposite side, ⌀-read — `⌀16` |
-| `body:neck (-)` | a mirrored-profile name | the station's span across the axis — `⌀28` |
+| `body:neck (-)` | a mirrored-profile segment | the station's span across the axis — `⌀28` |
 | `body:r1 (-)` | a named arc | a leader — `R3` |
 | `body:flank (<) body:base` | two line-like anchors | the angle arc — `40°` |
-| `body:taper (<)` | a mirrored-profile name | the **included** angle vs its own twin |
+| `body:taper (<)` | a mirrored-profile segment | the **included** angle vs its own twin |
 
 **`(-)` — the round measure.** One op, **unary only** — the side anchor replaced
 the old two-ended form, so `a (-) b` errors ([SPEC 20](#20-errors)). The **feature
@@ -2389,7 +2392,7 @@ links, styled per core ([SPEC 9](#9-links)); dimension text uses the link-label
 defaults (`font-size: 11`).
 
 ```
-{ layout: drawing; scale: 2; unit: "mm" }
+{ layout: drawing; scale: 3; unit: "mm" }
 
 |sketch#body| {
   draw: move(-80, 0)
@@ -2486,7 +2489,7 @@ caption template), because drafting titles sit under the view:
 geometry must exist before it can be measured:
 
 1. **Geometry** per child, bottom-up: fold `draw:` to a path (corner modifiers applied
-   cyclically through `close()`), collect its `:name`s, apply `mirror:`, expand
+   cyclically through `close()`), collect its `:segment`s, apply `mirror:`, expand
    `pattern:`, build `break:`'s view map; nested drawings lower first, becoming rigid
    subtrees. Compute each node's geometry bbox (stroke excluded) and paint bbox (core).
 2. **Place** children: origins on the datum, `translate:` applied.
@@ -2517,9 +2520,9 @@ properties are the core ones.
 
 | Property | On | Value | Notes |
 |---|---|---|---|
-| `scale` | any node | number > 0 | px per drawing unit; nearest-wins; position scales by the parent, shape by self ([15.1](#151-the-container-the-datum--the-scale)) |
+| `scale` | any node | number > 0 | px per drawing unit; nearest-wins; a `\|drawing\|` defaults to 4, other nodes to 1; position scales by the parent, shape by self ([15.1](#151-the-container-the-datum--the-scale)) |
 | `unit` | `\|drawing\|` | quoted string | suffix on auto-measured values only |
-| `draw` | `\|sketch\|` | pen calls + `:name`s | **required** ([15.3](#153-the-sketch-pen)) |
+| `draw` | `\|sketch\|` | pen calls + `:segment`s | **required** ([15.3](#153-the-sketch-pen)) |
 | `mirror` | `\|sketch\|` | list of `x-axis` / `y-axis` / bearing | reflect + union, left to right |
 | `break` | a geometry node | `a b [axis]` groups | cut the view between stations; longer axis default ([15.3](#153-the-sketch-pen)) |
 | `pattern` | any node | `grid(c, r, dx, dy)` / `radial(n, r)` | replicate about its position ([15.4](#154-features-holes--patterns)) |
@@ -2649,7 +2652,7 @@ Read on the listed primitive; required where noted ([SPEC 7](#7-nodes)).
 | `skew` | `\|slant\|` | degrees `(-89,89)` | 15. |
 | `stack` | closed primitives | `N` · `dx dy` | offset duplicate behind. |
 | `marker` · `marker-start` · `marker-end` | `\|line\|`, links | see [SPEC 7](#7-nodes) | endpoint / vertex glyphs; from the operator on a link. |
-| `draw` | `\|sketch\|` | pen calls + `:name`s | ⌛ **required** ([SPEC 15.3](#153-the-sketch-pen)). |
+| `draw` | `\|sketch\|` | pen calls + `:segment`s | ⌛ **required** ([SPEC 15.3](#153-the-sketch-pen)). |
 | `mirror` | `\|sketch\|` | `x-axis` / `y-axis` / bearing list | ⌛ reflect + union ([SPEC 15.3](#153-the-sketch-pen)). |
 | `break` | geometry nodes | `a b [axis]` groups | ⌛ cut the view between stations ([SPEC 15.3](#153-the-sketch-pen)). |
 
@@ -3010,12 +3013,12 @@ Format: `filename:line:col: error: <message>` (LSP-compatible), compile-time, wi
 | Two-ended `(-)` | `'(-)' measures one round feature — write 'a:top (-)' for a span` |
 | Empty one-ended leader | `a leader needs its text — 'bolt <- "THRU"'` |
 | One-ended `->` / `-*` | `a leader points back at its feature — write 'a <- "…"'` |
-| Bare `(-)` with no axis | `'(-)' can't pick an axis on 'X' — anchor a side ('X:top (-)') or a name` |
+| Bare `(-)` with no axis | `'(-)' can't pick an axis on 'X' — anchor a side ('X:top (-)') or a segment` |
 | `(<)` on a point anchor | `an angle reads two edges — a named segment, a '\|line\|', or a side` |
 | Unary `(<)` on an unmirrored name | `'(<)' on ':taper' needs 'mirror:' — no twin to measure against` |
-| `:name` shadows a built-in point | `':left' is a built-in anchor — pick another name` |
-| Unknown authored name | `no point ':step' on 'body'` + suggestions |
-| Duplicate `:name` in one `draw:` | `':step' is already named in this 'draw:'` |
+| `:segment` shadows a built-in point | `':left' is a built-in anchor — pick another name` |
+| Unknown `:segment` | `no segment ':step' on 'body'` + suggestions |
+| Duplicate `:segment` in one `draw:` | `':step' is already named in this 'draw:'` |
 | Label on a mate | `a mate takes no label` |
 | Mate on sheet content | `a mate seats geometry — '\|note\|' is sheet content` |
 | `gap:` on a point mate | `a point mate coincides — 'gap' needs directed anchors (sides or named edges)` |
@@ -3069,7 +3072,7 @@ selector    = sel_unit { sel_unit }                 # whitespace-separated = des
 sel_unit    = ident_bars | "|-|" | "." ident | "#" ident  # a type(+id), the link type, a class, or an id
 endpoints   = endpoint { "&" endpoint }
 endpoint    = ident { "." ident } [ ":" point ]
-point       = "top" | "bottom" | "left" | "right"    # + corners, center, authored names
+point       = "top" | "bottom" | "left" | "right"    # + corners, center, authored segments
                                                      #   in a drawing scope (SPEC 15.2)
 pen_item    = call [ ":" ident ]                     # a draw: item — a pen call, optionally
             | ":" ident                              #   naming its product / the pen point
@@ -3225,12 +3228,12 @@ dividers / delays (`==` / `...`); and an `|actor|` stick-figure primitive (an ac
 - **`explode:`** — scale every directed mate's separation along its normal for exploded
   views; unmated overlaid children stay put (overlay composes one part, mates relate
   parts — only relationships explode). Balloons follow their parts.
-- **authored-name twins** — a `mirror:` / `pattern:` copy of a `:name` is unaddressable
+- **authored-segment twins** — a `mirror:` / `pattern:` copy of a `:segment` is unaddressable
   (the name reads the drawn original; the unary mirrored readings cover the
   turned-profile cases).
 - **routed links to authored anchors** — `a -> b:port` in a flow / grid diagram needs a
   [ROUTING.md](ROUTING.md) contract extension (ports and Law 2 are side-based).
-- **repeated-name counting** — one `:name` on several corners auto-prefixing `4× R3`,
+- **repeated-segment counting** — one `:segment` on several corners auto-prefixing `4× R3`,
   as `pattern:` does for features; today, type it.
 - **GD&T** — feature-control frames, boxed datums, surface finish: note types over
   `\|table\|` / `\|note\|` with a built-in glyph set named by ident, drawn as paths like
@@ -3377,7 +3380,7 @@ db      --> api     "record"
 **Drawings — a broken tie bar, a bushing in section, and a mated assembly** ([SPEC 15](#15-drawing)):
 
 ```
-{ layout: drawing; scale: 2; unit: "mm" }
+{ layout: drawing; scale: 3; unit: "mm" }
 
 |sketch#bar| {                                   // a 300 mm tie bar, drawn true
   draw: move(-150, 0) up(10) chamfer(1.5)
@@ -3387,14 +3390,14 @@ db      --> api     "record"
 }
 
 bar:left <-> bar:right { side: bottom }          // → 300 mm — true, across the break
-bar:left <-> bar:a     { side: top }             // → 40 mm — ':a' is a freestanding point
+bar:left <-> bar:a     { side: top }             // → 40 mm — ':a' is a freestanding segment
 bar:thread (-) { side: left; tol: h6 }           // → ⌀20 h6 — doubled about the axis
 bar:thread <- "M20×1.5" { side: top }            // thread spec — leader to the surface
 ```
 
 ```
 {
-  layout: drawing;  scale: 1.6;
+  layout: drawing;  scale: 3;
   |steel::sketch| { fill: hatch(45, 6) }
 }
 

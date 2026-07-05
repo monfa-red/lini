@@ -304,7 +304,7 @@ impl<'a> Parser<'a> {
     // ───────────────────────── Declarations ─────────────────────────
 
     /// `key: v…, v…` — the name token is an `Ident`. A `draw:` value additionally
-    /// admits the pen items (`call:name` / freestanding `:name`) [SPEC 15.3, 21] —
+    /// admits the pen items (`call:segment` / freestanding `:segment`) [SPEC 15.3, 21] —
     /// the property-scoped flag keeps the runaway-declaration diagnostics sharp
     /// everywhere else.
     fn parse_decl(&mut self) -> Result<Decl, Error> {
@@ -382,8 +382,8 @@ impl<'a> Parser<'a> {
             let (name, _) = self.expect_ident()?;
             return if matches!(self.kind(), Some(TokKind::LParen)) {
                 let call = self.parse_call(name)?;
-                // In a pen, a glued `:name` after the `)` names the call's drawn
-                // product (`right(50):seat`, `fillet(3):r1`) [SPEC 15.3].
+                // In a pen, a glued `:segment` after the `)` names the call's drawn
+                // segment (`right(50):seat`, `fillet(3):r1`) [SPEC 15.3].
                 if pen && self.at_glued_point_name() {
                     self.pos += 1; // ':'
                     let (point, _) = self.expect_ident()?;
@@ -397,7 +397,7 @@ impl<'a> Parser<'a> {
                 Ok(Value::Ident(name))
             };
         }
-        // In a pen, a freestanding `:name` marks the current point [SPEC 15.3].
+        // In a pen, a freestanding `:segment` marks the current point [SPEC 15.3].
         if pen && self.at_glued_point_name() {
             self.pos += 1; // ':'
             let (point, _) = self.expect_ident()?;

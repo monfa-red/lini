@@ -5,7 +5,7 @@
 // inside-out.
 
 {
-  layout: drawing;  scale: 1.6;
+  layout: drawing;  scale: 3;
   |steel::sketch| { fill: hatch(45, 6) }
 }
 

@@ -1,15 +1,15 @@
 //! The sketch pen [SPEC 15.3]: fold a `|sketch|`'s structured `draw:` items
-//! (kept as [`ResolvedValue::PenCall`] / [`PenPoint`] by resolve) into
+//! (kept as [`ResolvedValue::PenCall`] / [`PenSegment`] by resolve) into
 //! [`Subpath`]s, apply corner modifiers and `mirror:`, collect the authored
-//! `:name` products, and emit the SVG `d` + geometry bbox.
+//! `:segment`s, and emit the SVG `d` + geometry bbox.
 //!
 //! Errors follow SPEC 20 verbatim where a message is specified there.
 
 use super::super::ir::Bbox;
-use super::Product;
+use super::Segment;
 use super::corner::{Mod, apply_mod};
 use super::geometry::{
-    self, MirrorAxis, P, Seg, Subpath, arc_mid, bearing_dir, dir_bearing, dist, geometry_bbox,
+    self, MirrorAxis, P, PathSeg, Subpath, arc_mid, bearing_dir, dir_bearing, dist, geometry_bbox,
     rotate_about, to_d,
 };
 use crate::error::Error;
@@ -23,9 +23,9 @@ pub struct Folded {
     pub d: String,
     /// The drawn extent, stroke excluded — the measurement box [SPEC 15.1].
     pub geometry: Bbox,
-    /// Authored `:name`s in source order (duplicates rejected at fold) — carried
-    /// on the placed node so mates (and, later, dimensions) can anchor on them.
-    pub names: Vec<(String, Product)>,
+    /// Authored `:segment`s in source order (duplicates rejected at fold) —
+    /// carried on the placed node so mates and dimensions anchor on them.
+    pub segments: Vec<(String, Segment)>,
     /// The applied `mirror:` axes — the unary mirrored readings read them.
     pub mirror_axes: Vec<MirrorAxis>,
     /// The folded subpaths, scaled — the drawn outline leader tips ray-cast
@@ -58,17 +58,17 @@ pub fn fold(inst: &ResolvedInst, scale: f64) -> Result<Folded, Error> {
     let mut pen = Pen::new(span);
     for item in items {
         match item {
-            ResolvedValue::PenCall { call, product } => pen.call(call, product.as_deref())?,
-            ResolvedValue::PenPoint(name) => pen.point_name(name)?,
+            ResolvedValue::PenCall { call, segment } => pen.call(call, segment.as_deref())?,
+            ResolvedValue::PenSegment(name) => pen.point_segment(name)?,
             _ => {
                 return Err(Error::at(
                     span,
-                    "'draw' holds pen calls and ':name' points — see SPEC 15.3",
+                    "'draw' holds pen calls and ':segment' points — see SPEC 15.3",
                 ));
             }
         }
     }
-    let (mut subs, mut names) = pen.finish()?;
+    let (mut subs, mut segments) = pen.finish()?;
 
     let mut mirror_axes = Vec::new();
     let mut fused = false;
@@ -80,7 +80,7 @@ pub fn fold(inst: &ResolvedInst, scale: f64) -> Result<Folded, Error> {
     }
     if scale != 1.0 {
         geometry::scale(&mut subs, scale);
-        for (_, p) in &mut names {
+        for (_, p) in &mut segments {
             *p = p.scaled(scale);
         }
     }
@@ -89,14 +89,14 @@ pub fn fold(inst: &ResolvedInst, scale: f64) -> Result<Folded, Error> {
     Ok(Folded {
         geometry: geometry_bbox(&d),
         d,
-        names,
+        segments,
         mirror_axes,
         subs,
         fused,
     })
 }
 
-/// The built-in anchor names an authored `:name` may not shadow [SPEC 15.2].
+/// The built-in anchor names an authored `:segment` may not shadow [SPEC 15.2].
 fn is_builtin_point(name: &str) -> bool {
     matches!(
         name,
@@ -131,15 +131,15 @@ fn parse_mirror(v: &ResolvedValue, span: Span) -> Result<Vec<MirrorAxis>, Error>
     }
 }
 
-/// Authored names with their products, in source order.
-type Names = Vec<(String, Product)>;
+/// Authored segments by name, in source order.
+type Segments = Vec<(String, Segment)>;
 
 /// The fold state machine: position, heading, the open subpath, a parked
 /// corner modifier, and the finished subpaths.
 struct Pen {
     span: Span,
     subs: Vec<Subpath>,
-    cur: Vec<Seg>,
+    cur: Vec<PathSeg>,
     start: Option<P>,
     pos: P,
     /// Bearing after the last drawing call; `angle()` sets it absolutely, the
@@ -149,7 +149,7 @@ struct Pen {
     /// The subpath just closed by `close()` — a modifier right after it rounds
     /// the seam-to-first corner (the cyclic case, [SPEC 15.3]).
     just_closed: bool,
-    names: Vec<(String, Product)>,
+    segments: Vec<(String, Segment)>,
 }
 
 impl Pen {
@@ -163,7 +163,7 @@ impl Pen {
             heading: None,
             pending: None,
             just_closed: false,
-            names: Vec::new(),
+            segments: Vec::new(),
         }
     }
 
@@ -171,29 +171,29 @@ impl Pen {
         Error::at(self.span, msg.into())
     }
 
-    fn name(&mut self, name: &str, product: Product) -> Result<(), Error> {
+    fn segment(&mut self, name: &str, segment: Segment) -> Result<(), Error> {
         if is_builtin_point(name) {
             return Err(self.err(format!(
                 "':{name}' is a built-in anchor — pick another name"
             )));
         }
-        if self.names.iter().any(|(n, _)| n == name) {
+        if self.segments.iter().any(|(n, _)| n == name) {
             return Err(self.err(format!("':{name}' is already named in this 'draw:'")));
         }
-        self.names.push((name.to_string(), product));
+        self.segments.push((name.to_string(), segment));
         Ok(())
     }
 
-    /// A freestanding `:name` — the pen's current point; at a modifier corner
+    /// A freestanding `:segment` — the pen's current point; at a modifier corner
     /// it records the theoretical sharp corner, in either order [SPEC 15.3].
-    fn point_name(&mut self, name: &str) -> Result<(), Error> {
+    fn point_segment(&mut self, name: &str) -> Result<(), Error> {
         if self.start.is_none() && !self.just_closed {
             return Err(self.err("the pen starts with move(x, y)"));
         }
-        self.name(name, Product::Point(self.pos))
+        self.segment(name, Segment::Point(self.pos))
     }
 
-    fn call(&mut self, call: &ResolvedCall, product: Option<&str>) -> Result<(), Error> {
+    fn call(&mut self, call: &ResolvedCall, segment: Option<&str>) -> Result<(), Error> {
         // Only the corner modifiers (and a name / new subpath) may follow a
         // close() — the pen returned to the seam [SPEC 15.3].
         if self.just_closed
@@ -204,9 +204,9 @@ impl Pen {
         match call.name.as_str() {
             "move" => {
                 let [x, y] = self.nums::<2>(call, "'move' takes (x, y)")?;
-                if product.is_some() {
+                if segment.is_some() {
                     return Err(self.err(
-                        "'move' takes no product name — name its landing with a freestanding ':name'",
+                        "'move' takes no segment — name its landing with a freestanding ':segment'",
                     ));
                 }
                 self.flush()?;
@@ -221,25 +221,25 @@ impl Pen {
                     "down" => 180.0,
                     _ => 270.0,
                 };
-                self.run(bearing_scaled(bearing, len), Some(bearing), product)?;
+                self.run(bearing_scaled(bearing, len), Some(bearing), segment)?;
             }
             "line" => {
                 let [dx, dy] = self.nums::<2>(call, "'line' takes (dx, dy)")?;
-                self.run((dx, dy), Some(dir_bearing((dx, dy))), product)?;
+                self.run((dx, dy), Some(dir_bearing((dx, dy))), segment)?;
             }
             "angle" => {
                 let [deg, len] = self.nums::<2>(call, "'angle' takes (deg, n)")?;
-                self.run(bearing_scaled(deg, len), Some(deg), product)?;
+                self.run(bearing_scaled(deg, len), Some(deg), segment)?;
             }
             "arc" => match call.args.len() {
                 3 => {
                     let [dx, dy, r] =
                         self.nums::<3>(call, "'arc' takes (dx, dy, r) or (r, deg)")?;
-                    self.arc_to((dx, dy), r, product)?;
+                    self.arc_to((dx, dy), r, segment)?;
                 }
                 2 => {
                     let [r, deg] = self.nums::<2>(call, "'arc' takes (dx, dy, r) or (r, deg)")?;
-                    self.arc_turn(r, deg, product)?;
+                    self.arc_turn(r, deg, segment)?;
                 }
                 _ => return Err(self.err("'arc' takes (dx, dy, r) or (r, deg)")),
             },
@@ -250,14 +250,14 @@ impl Pen {
                 let c1 = (from.0 + dx1, from.1 + dy1);
                 let c2 = (from.0 + dx2, from.1 + dy2);
                 let to = (from.0 + dx, from.1 + dy);
-                self.push_seg(Seg::Cubic { from, c1, c2, to })?;
+                self.push_seg(PathSeg::Cubic { from, c1, c2, to })?;
                 let tangent = (to.0 - c2.0, to.1 - c2.1);
                 if dist(tangent, (0.0, 0.0)) > 1e-9 {
                     self.heading = Some(dir_bearing(tangent));
                 }
                 self.pos = to;
-                if let Some(nm) = product {
-                    self.name(nm, Product::Edge(from, to))?;
+                if let Some(nm) = segment {
+                    self.segment(nm, Segment::Edge(from, to))?;
                 }
             }
             "fillet" | "chamfer" => {
@@ -274,15 +274,15 @@ impl Pen {
                 if self.just_closed {
                     // The cyclic corner: between the closed subpath's last
                     // segment (the seam) and its first [SPEC 15.3].
-                    let name = self.apply_cyclic(m, product)?;
+                    let name = self.apply_cyclic(m, segment)?;
                     if let Some((nm, p)) = name {
-                        self.name(&nm, p)?;
+                        self.segment(&nm, p)?;
                     }
                 } else {
                     if self.cur.is_empty() {
                         return Err(self.err(msg));
                     }
-                    self.pending = Some((m, product.map(str::to_string)));
+                    self.pending = Some((m, segment.map(str::to_string)));
                 }
             }
             "circle" => {
@@ -297,14 +297,14 @@ impl Pen {
                 let (w, e) = ((cx - r, cy), (cx + r, cy));
                 self.subs.push(Subpath {
                     segs: vec![
-                        Seg::Arc {
+                        PathSeg::Arc {
                             from: w,
                             to: e,
                             r,
                             large: false,
                             sweep: true,
                         },
-                        Seg::Arc {
+                        PathSeg::Arc {
                             from: e,
                             to: w,
                             r,
@@ -314,10 +314,10 @@ impl Pen {
                     ],
                     closed: true,
                 });
-                if let Some(nm) = product {
-                    self.name(
+                if let Some(nm) = segment {
+                    self.segment(
                         nm,
-                        Product::Circle {
+                        Segment::Circle {
                             center: self.pos,
                             r,
                         },
@@ -329,7 +329,7 @@ impl Pen {
                     return Err(self.err("close() needs a drawn subpath"));
                 }
                 let start = self.start.expect("cur non-empty implies a start");
-                let seam = Seg::Line {
+                let seam = PathSeg::Line {
                     from: self.pos,
                     to: start,
                 };
@@ -342,8 +342,8 @@ impl Pen {
                         m.word()
                     )));
                 }
-                if let Some(nm) = product {
-                    self.name(nm, Product::Edge(self.pos, start))?;
+                if let Some(nm) = segment {
+                    self.segment(nm, Segment::Edge(self.pos, start))?;
                 }
                 self.pos = start;
                 let segs = std::mem::take(&mut self.cur);
@@ -357,23 +357,23 @@ impl Pen {
     }
 
     /// A straight run by `delta`; the heading follows the drawn direction.
-    fn run(&mut self, delta: P, bearing: Option<f64>, product: Option<&str>) -> Result<(), Error> {
+    fn run(&mut self, delta: P, bearing: Option<f64>, segment: Option<&str>) -> Result<(), Error> {
         let from = self.started()?;
         let to = (from.0 + delta.0, from.1 + delta.1);
-        self.push_seg(Seg::Line { from, to })?;
+        self.push_seg(PathSeg::Line { from, to })?;
         self.pos = to;
         if bearing.is_some() {
             self.heading = bearing;
         }
-        if let Some(nm) = product {
-            self.name(nm, Product::Edge(from, to))?;
+        if let Some(nm) = segment {
+            self.segment(nm, Segment::Edge(from, to))?;
         }
         Ok(())
     }
 
     /// `arc(dx, dy, r)` — the minor arc to a relative point; `r > 0` sweeps
     /// clockwise; `|r|` at least half the chord [SPEC 15.3].
-    fn arc_to(&mut self, delta: P, r: f64, product: Option<&str>) -> Result<(), Error> {
+    fn arc_to(&mut self, delta: P, r: f64, segment: Option<&str>) -> Result<(), Error> {
         let from = self.started()?;
         let to = (from.0 + delta.0, from.1 + delta.1);
         let chord = dist(from, to);
@@ -391,7 +391,7 @@ impl Pen {
         let ra = ra.max(chord / 2.0);
         let m = ((from.0 + to.0) / 2.0, (from.1 + to.1) / 2.0);
         let centre = geometry::arc_center(from, to, ra, false, sweep);
-        self.push_seg(Seg::Arc {
+        self.push_seg(PathSeg::Arc {
             from,
             to,
             r: ra,
@@ -406,16 +406,16 @@ impl Pen {
             (rad.1, -rad.0)
         };
         self.heading = Some(dir_bearing(tangent));
-        if let Some(nm) = product {
+        if let Some(nm) = segment {
             let mid = arc_mid(centre, m, ra, from, sweep);
-            self.name(nm, Product::Arc { mid, r: ra })?;
+            self.segment(nm, Segment::Arc { mid, r: ra })?;
         }
         Ok(())
     }
 
     /// `arc(r, deg)` — a tangent arc: continue the heading, sweep `deg`
     /// (positive turns clockwise); the heading updates by `deg` [SPEC 15.3].
-    fn arc_turn(&mut self, r: f64, deg: f64, product: Option<&str>) -> Result<(), Error> {
+    fn arc_turn(&mut self, r: f64, deg: f64, segment: Option<&str>) -> Result<(), Error> {
         let from = self.started()?;
         if r <= 0.0 {
             return Err(self.err("'arc(r, deg)' takes a radius > 0"));
@@ -435,7 +435,7 @@ impl Pen {
             (from.0 + hv.1 * r, from.1 - hv.0 * r)
         };
         let to = rotate_about(from, centre, deg);
-        self.push_seg(Seg::Arc {
+        self.push_seg(PathSeg::Arc {
             from,
             to,
             r,
@@ -444,26 +444,26 @@ impl Pen {
         })?;
         self.pos = to;
         self.heading = Some((heading + deg).rem_euclid(360.0));
-        if let Some(nm) = product {
+        if let Some(nm) = segment {
             let mid = rotate_about(from, centre, deg / 2.0);
-            self.name(nm, Product::Arc { mid, r })?;
+            self.segment(nm, Segment::Arc { mid, r })?;
         }
         Ok(())
     }
 
     /// Append a segment, applying any parked corner modifier between the
     /// previous segment and this one.
-    fn push_seg(&mut self, seg: Seg) -> Result<(), Error> {
+    fn push_seg(&mut self, seg: PathSeg) -> Result<(), Error> {
         self.just_closed = false;
         let seg = match self.pending.take() {
             None => seg,
             Some((m, name)) => {
                 let prev = self.cur.pop().expect("pending implies a previous segment");
-                let (prev, mid, next, product) = apply_mod(m, prev, seg, self.span)?;
+                let (prev, mid, next, segment) = apply_mod(m, prev, seg, self.span)?;
                 self.cur.push(prev);
                 self.cur.push(mid);
                 if let Some(nm) = name {
-                    self.name(&nm, product)?;
+                    self.segment(&nm, segment)?;
                 }
                 next
             }
@@ -477,8 +477,8 @@ impl Pen {
     fn apply_cyclic(
         &mut self,
         m: Mod,
-        product: Option<&str>,
-    ) -> Result<Option<(String, Product)>, Error> {
+        segment: Option<&str>,
+    ) -> Result<Option<(String, Segment)>, Error> {
         let sub = self.subs.last_mut().expect("just_closed implies a subpath");
         if sub.segs.len() < 2 {
             return Err(self.err(format!(
@@ -492,7 +492,7 @@ impl Pen {
         sub.segs.insert(0, first);
         sub.segs.push(last);
         sub.segs.push(mid);
-        Ok(product.map(|nm| (nm.to_string(), prod)))
+        Ok(segment.map(|nm| (nm.to_string(), prod)))
     }
 
     fn started(&self) -> Result<P, Error> {
@@ -522,12 +522,12 @@ impl Pen {
         Ok(())
     }
 
-    fn finish(mut self) -> Result<(Vec<Subpath>, Names), Error> {
+    fn finish(mut self) -> Result<(Vec<Subpath>, Segments), Error> {
         self.flush()?;
         if self.subs.iter().all(|s| s.segs.is_empty()) {
             return Err(self.err("'draw' draws nothing — add a pen run"));
         }
-        Ok((self.subs, self.names))
+        Ok((self.subs, self.segments))
     }
 
     /// N numeric arguments, exactly.
@@ -605,20 +605,20 @@ mod tests {
     }
 
     #[test]
-    fn names_collect_products() {
+    fn segments_collect_the_drawn_vocabulary() {
         let f = folded("draw: move(0, 0) right(40):flat :station down(10) circle(4):bore;");
         let get = |n: &str| {
-            f.names
+            f.segments
                 .iter()
                 .find(|(name, _)| name == n)
                 .map(|(_, p)| *p)
                 .expect("named")
         };
-        assert_eq!(get("flat"), Product::Edge((0.0, 0.0), (40.0, 0.0)));
-        assert_eq!(get("station"), Product::Point((40.0, 0.0)));
+        assert_eq!(get("flat"), Segment::Edge((0.0, 0.0), (40.0, 0.0)));
+        assert_eq!(get("station"), Segment::Point((40.0, 0.0)));
         assert_eq!(
             get("bore"),
-            Product::Circle {
+            Segment::Circle {
                 center: (40.0, 10.0),
                 r: 4.0
             }
@@ -708,7 +708,7 @@ mod tests {
         assert!(fold_err("draw: move(0, 0) right(5):left;").contains("built-in anchor"));
         assert!(fold_err("draw: move(0, 0) right(5):a up(2):a;").contains("already named"));
         assert!(fold_err("draw: move(0, 0) arc(4, 90);").contains("continues a heading"));
-        assert!(fold_err("draw: move(0, 0):spot right(4);").contains("no product name"));
+        assert!(fold_err("draw: move(0, 0):spot right(4);").contains("takes no segment"));
         assert!(
             fold_err("draw: move(0, 0) right(4); mirror: sideways;")
                 .contains("x-axis, y-axis, or a bearing")

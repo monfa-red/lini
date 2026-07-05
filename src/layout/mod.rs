@@ -344,7 +344,7 @@ fn layout_inst(
         let half = inst.attrs.number("stroke-width").unwrap_or(0.0) / 2.0;
         sketch_d = Some(folded.d);
         sketch_geo = Some(std::sync::Arc::new(drawing::SketchGeo {
-            names: folded.names,
+            segments: folded.segments,
             mirrors: folded.mirror_axes,
             outline: folded.subs,
         }));

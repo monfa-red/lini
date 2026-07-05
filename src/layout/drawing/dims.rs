@@ -2,7 +2,7 @@
 //! `(-)` round readings: a named arc → an `R` leader; a bare round node → a
 //! `⌀` leader; a round node + side / corner → the **diametral line**; any
 //! node + side → the span to the opposite side, ⌀-read and stacked; a
-//! mirrored `:name` → the station span across the axis. Measured values are
+//! mirrored `:segment` → the station span across the axis. Measured values are
 //! anchor distances in drawing units — pre-scale, on the unbroken model —
 //! and the anatomy (extension lines, slender arrows, ISO-aligned text) is
 //! baked sheet constants.
@@ -14,7 +14,7 @@ use super::annotate::{
 };
 use super::compose::{self, DimText, Glyph};
 use super::geometry::{P, reflect_point};
-use super::{Product, leaders};
+use super::{Segment, leaders};
 use crate::ast::Side;
 use crate::error::Error;
 use crate::resolve::{ResolvedLink, ResolvedText};
@@ -107,7 +107,7 @@ pub(super) fn round(
         Error::at(
             w.span,
             format!(
-                "'(-)' can't pick an axis on '{who}' — anchor a side ('{who}:top (-)') or a name"
+                "'(-)' can't pick an axis on '{who}' — anchor a side ('{who}:top (-)') or a segment"
             ),
         )
     };
@@ -126,7 +126,7 @@ pub(super) fn round(
 
     match &a.spot {
         // A named arc knows its radius — an `R` leader onto the arc itself.
-        Spot::Product(Product::Arc { mid, r }) => {
+        Spot::Segment(Segment::Arc { mid, r }) => {
             let text = compose(Glyph::R, r / ctx.scale)?;
             let aim = a.to_world(*mid);
             Ok(leaders::measured(
@@ -140,16 +140,16 @@ pub(super) fn round(
                 w.span,
             ))
         }
-        // A `circle()` product — round by construction, a `⌀` leader onto its rim.
-        Spot::Product(Product::Circle { center, r }) => {
+        // A `circle()` segment — round by construction, a `⌀` leader onto its rim.
+        Spot::Segment(Segment::Circle { center, r }) => {
             let text = compose(Glyph::Dia, 2.0 * r / ctx.scale)?;
             let c = a.to_world(*center);
             Ok(leaders::measured_circle(
                 ctx, &a, c, *r, &w.attrs, text, &paint, w.span,
             ))
         }
-        // A mirrored `:name` — the station's span across the axis, stacked.
-        Spot::Product(Product::Edge(..) | Product::Point(..)) => {
+        // A mirrored `:segment` — the station's span across the axis, stacked.
+        Spot::Segment(Segment::Edge(..) | Segment::Point(..)) => {
             let m = a.local_point();
             let axis = a
                 .mirrors()

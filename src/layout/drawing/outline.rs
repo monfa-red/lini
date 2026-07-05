@@ -8,7 +8,7 @@
 
 use super::super::ir::{Bbox, PlacedNode};
 use super::chrome;
-use super::geometry::{P, Seg, arc_center};
+use super::geometry::{P, PathSeg, arc_center};
 use crate::resolve::NodeKind;
 
 /// The first crossing (smallest `t > eps`) of the ray `o + t·d` with the
@@ -66,10 +66,10 @@ fn geometry_box(node: &PlacedNode) -> Bbox {
 const EPS: f64 = 1e-6;
 
 /// Ray × one folded segment.
-fn ray_seg(o: P, d: P, seg: &Seg) -> Option<f64> {
+fn ray_seg(o: P, d: P, seg: &PathSeg) -> Option<f64> {
     match *seg {
-        Seg::Line { from, to } => ray_line(o, d, from, to),
-        Seg::Arc {
+        PathSeg::Line { from, to } => ray_line(o, d, from, to),
+        PathSeg::Arc {
             from,
             to,
             r,
@@ -77,7 +77,7 @@ fn ray_seg(o: P, d: P, seg: &Seg) -> Option<f64> {
             sweep,
         } => ray_arc(o, d, from, to, r, large, sweep),
         // The advanced 10 % — flattened; drafting precision, not spline-exact.
-        Seg::Cubic { from, c1, c2, to } => {
+        PathSeg::Cubic { from, c1, c2, to } => {
             let at = |t: f64| {
                 let u = 1.0 - t;
                 (

@@ -1,7 +1,7 @@
 //! Drawing anchors [SPEC 15.2], against **seated** placed geometry: a side or
 //! corner sits on the node's geometry bbox (stroke excluded), `center` is its
 //! centre, no point is the node's **origin** (`cap || barrel` is
-//! origin-to-origin), and an authored `:name` reads the pen product the sketch
+//! origin-to-origin), and an authored `:segment` reads what the pen
 //! collected. Every anchor reduces to a representative point in the drawing's
 //! frame; sides and named edges additionally carry an **outward** unit normal
 //! (what a mate seats along, what sets a dimension's axis) and the line-like
@@ -12,7 +12,7 @@
 
 use super::super::ir::{Bbox, PlacedNode};
 use super::geometry::{MirrorAxis, P, dist};
-use super::{Product, chrome};
+use super::{Segment, chrome};
 use crate::ast::Side;
 use crate::error::Error;
 use crate::resolve::{ResolvedEndpoint, ResolvedValue};
@@ -27,8 +27,8 @@ pub(super) enum Spot {
     /// A bbox corner — carries its outward unit diagonal.
     Corner(P),
     Center,
-    /// An authored pen product, in the node's local frame (scaled).
-    Product(Product),
+    /// An authored pen segment, in the node's local frame (scaled).
+    Segment(Segment),
 }
 
 /// A resolved anchor: the scope-level child it belongs to (what a mate
@@ -97,7 +97,7 @@ pub(super) fn resolve<'a>(
 }
 
 /// The anchor's spot in the node's own frame: the endpoint's side, corner,
-/// `center`, authored name, or (bare) the origin.
+/// `center`, authored segment, or (bare) the origin.
 fn spot(node: &PlacedNode, ep: &ResolvedEndpoint, node_name: &str) -> Result<Spot, Error> {
     if let Some(side) = ep.side {
         return Ok(Spot::Side(side));
@@ -114,15 +114,15 @@ fn spot(node: &PlacedNode, ep: &ResolvedEndpoint, node_name: &str) -> Result<Spo
         "bottom-right" => return Ok(Spot::Corner((d, d))),
         _ => {}
     }
-    // An authored `:name` [SPEC 15.3]: the pen product the sketch collected.
-    let names = node
+    // An authored `:segment` [SPEC 15.3]: what the pen collected.
+    let segments = node
         .sketch
         .as_ref()
-        .map(|s| s.names.as_slice())
+        .map(|s| s.segments.as_slice())
         .unwrap_or(&[]);
-    let Some((_, product)) = names.iter().find(|(n, _)| n == point) else {
-        let mut msg = format!("no point ':{point}' on '{node_name}'");
-        let mut near: Vec<&str> = names.iter().map(|(n, _)| n.as_str()).collect();
+    let Some((_, segment)) = segments.iter().find(|(n, _)| n == point) else {
+        let mut msg = format!("no segment ':{point}' on '{node_name}'");
+        let mut near: Vec<&str> = segments.iter().map(|(n, _)| n.as_str()).collect();
         near.sort_by_key(|n| usize::abs_diff(n.len(), point.len()));
         let near: Vec<String> = near.iter().take(2).map(|n| format!("':{n}'")).collect();
         if !near.is_empty() {
@@ -130,7 +130,7 @@ fn spot(node: &PlacedNode, ep: &ResolvedEndpoint, node_name: &str) -> Result<Spo
         }
         return Err(Error::at(ep.span, msg));
     };
-    Ok(Spot::Product(*product))
+    Ok(Spot::Segment(*segment))
 }
 
 impl Anchor<'_> {
@@ -176,11 +176,11 @@ impl Anchor<'_> {
                 if *dx < 0.0 { g.min_x } else { g.max_x },
                 if *dy < 0.0 { g.min_y } else { g.max_y },
             ),
-            Spot::Product(p) => match *p {
-                Product::Point(p) => p,
-                Product::Arc { mid, .. } => mid,
-                Product::Circle { center, .. } => center,
-                Product::Edge(a, b) => ((a.0 + b.0) / 2.0, (a.1 + b.1) / 2.0),
+            Spot::Segment(p) => match *p {
+                Segment::Point(p) => p,
+                Segment::Arc { mid, .. } => mid,
+                Segment::Circle { center, .. } => center,
+                Segment::Edge(a, b) => ((a.0 + b.0) / 2.0, (a.1 + b.1) / 2.0),
             },
         }
     }
@@ -201,7 +201,7 @@ impl Anchor<'_> {
                 Side::Left => (-1.0, 0.0),
                 Side::Right => (1.0, 0.0),
             },
-            Spot::Product(Product::Edge(a, b)) => {
+            Spot::Segment(Segment::Edge(a, b)) => {
                 let len = dist(*a, *b).max(1e-9);
                 let t = ((b.0 - a.0) / len, (b.1 - a.1) / len);
                 // Outward = the **left of the pen's travel** [SPEC 15.5]: a
@@ -219,7 +219,7 @@ impl Anchor<'_> {
     /// angle op measures [SPEC 15.6]: a named edge, a `|line|`'s run, a bbox
     /// side (the edge along it). `None` for the point anchors.
     pub fn direction(&self) -> Option<P> {
-        if let Spot::Product(Product::Edge(a, b)) = &self.spot {
+        if let Spot::Segment(Segment::Edge(a, b)) = &self.spot {
             let len = dist(*a, *b).max(1e-9);
             return Some(rotated(((b.0 - a.0) / len, (b.1 - a.1) / len), self.rot));
         }
@@ -249,12 +249,12 @@ impl Anchor<'_> {
     }
 
     /// A round-by-construction anchor's **diameter**, px [SPEC 15.6]: a named
-    /// `circle()` product, or an `|oval|`-lineage node drawn as a circle —
+    /// `circle()` segment, or an `|oval|`-lineage node drawn as a circle —
     /// never guessed from coordinates.
     pub fn round_diameter(&self) -> Option<f64> {
-        if let Spot::Product(p) = &self.spot {
+        if let Spot::Segment(p) = &self.spot {
             return match p {
-                Product::Circle { r, .. } => Some(2.0 * r),
+                Segment::Circle { r, .. } => Some(2.0 * r),
                 _ => None,
             };
         }

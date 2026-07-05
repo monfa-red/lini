@@ -207,10 +207,10 @@ pub enum Value {
     /// A backtick `` `…` `` compile-time expression body [SPEC 10.7], folded to a
     /// number or a point at resolve.
     Expr(String),
-    /// `right(50):name` — a pen call naming its drawn product; parsed only
+    /// `right(50):name` — a pen call naming its drawn segment; parsed only
     /// inside a `draw:` value [SPEC 15.3, 21].
     NamedCall(Call, String),
-    /// A freestanding `:name` — the pen's current point; `draw:` only.
+    /// A freestanding `:segment` — the pen's current point; `draw:` only.
     PointName(String),
     /// A space-separated run inside **one call-argument slot** —
     /// `hatch(45 -45, 6)`'s angle group [SPEC 10.3]. Never nests.

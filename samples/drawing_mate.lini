@@ -3,7 +3,7 @@
 // mate's gap may go negative: the pin is seated 20 deep inside the socket's
 // bore, its `--bg` fill reading as the insertion.
 
-{ layout: drawing; scale: 2 }
+{ layout: drawing; scale: 3 }
 
 |sketch#socket| {
   draw: move(0, 0) up(14) right(50) down(8) left(30) down(6):seat;

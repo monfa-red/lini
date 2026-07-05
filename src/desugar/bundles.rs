@@ -40,6 +40,9 @@ fn pair(name: &str, a: f64, b: f64) -> Decl {
 pub(crate) fn root_layout_defaults(layout: Option<&str>) -> Vec<Decl> {
     match layout {
         Some("sequence") => vec![pair("gap", SEQ_GAP_ROW, SEQ_GAP_COL)],
+        // A drawing's units are millimetres at screen resolution: ~4 px/mm,
+        // so the view defaults to 4 [SPEC 15.1]; any authored scale wins.
+        Some("drawing") => vec![n("scale", 4.0)],
         _ => Vec::new(),
     }
 }
@@ -197,7 +200,7 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
         ],
         // Drawings [SPEC 15]: the container (frameless — the geometry and its
         // annotations are the content)…
-        "drawing" => vec![id("layout", "drawing"), n("padding", 0.0)],
+        "drawing" => vec![id("layout", "drawing"), n("padding", 0.0), n("scale", 4.0)],
         // …the round hole — `width:` (required) is its diameter; it punches by
         // paint order and draws its own centre marks [SPEC 15.4]…
         "hole" => vec![var("fill", "bg"), var("stroke", "stroke")],

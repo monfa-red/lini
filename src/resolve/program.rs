@@ -378,20 +378,7 @@ fn scoped_rules() -> Vec<Rule> {
         ],
         span: Span::empty(),
     };
-    // The drafting line-weight contrast [SPEC 15.1]: geometry keeps stroke 2,
-    // a drawing's links (dimensions, leaders, arrows) thin to 1 — the built-in
-    // `|drawing| |-|` rule; override it like any rule.
-    let thin_links = Rule {
-        selector: Selector {
-            units: vec![
-                SelUnit::Class("lini-drawing".to_string()),
-                SelUnit::Class("lini-link".to_string()),
-            ],
-        },
-        decls: vec![number("stroke-width", &[1.0])],
-        span: Span::empty(),
-    };
-    vec![compact("sequence"), compact("drawing"), thin_links]
+    vec![compact("sequence"), compact("drawing")]
 }
 
 /// Whether a link's scope is a drawing [SPEC 15] — its immediate container (or
@@ -454,6 +441,17 @@ fn link_scope(
 ) -> (Vec<(String, ResolvedValue)>, Vec<NodeFacts>) {
     let chain = scope_chain(nodes, scope);
     let mut base = baked.to_vec();
+    // The drafting line-weight contrast [SPEC 15.1]: geometry keeps stroke 2,
+    // a drawing's links thin to 1. A **scope default**, not a rule — it rides
+    // the base layer below every user rule, so a plain `|-| { stroke-width: … }`
+    // overrides it like any other link default.
+    let in_drawing = matches!(root_attrs.get("layout"), Some(ResolvedValue::Ident(l)) if l == "drawing")
+        || chain.iter().any(
+            |n| matches!(n.attrs.get("layout"), Some(ResolvedValue::Ident(l)) if l == "drawing"),
+        );
+    if in_drawing {
+        base.push(("stroke-width".to_string(), ResolvedValue::Number(1.0)));
+    }
     for prop in SCOPE_LINK_PROPS {
         let nearest = chain
             .iter()
