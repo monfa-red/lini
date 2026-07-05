@@ -1,0 +1,30 @@
+---
+source: tests/conformance.rs
+expression: svg
+input_file: samples/drawing_mate.lini
+---
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-24.5 -49 157 98" width="157" height="98" class="lini">
+  <style>
+    .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
+    .lini .lini-canvas { fill: white; }
+    .lini .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-centerline { fill: none; stroke-width: 1; stroke-dasharray: 10,3,1,3; }
+  </style>
+  <defs/>
+  <rect class="lini-canvas" x="-24.5" y="-49" width="157" height="98"/>
+  <g class="lini-scene">
+    <g class="lini-node lini-sketch" data-id="socket" style="fill: white; stroke: #444; stroke-width: 2" transform="translate(0,0)">
+      <path d="M 0 0 L 0 -28 L 100 -28 L 100 -12 L 40 -12 L 40 0 L 40 12 L 100 12 L 100 28 L 0 28 Z" fill-rule="evenodd"/>
+      <g class="lini-node lini-centerline lini-line" transform="translate(0,0)">
+        <line x1="-4" y1="0" x2="104" y2="0"/>
+      </g>
+    </g>
+    <g class="lini-node lini-sketch" data-id="pin" style="fill: white; stroke: #444; stroke-width: 2" transform="translate(108,0)">
+      <path d="M 0 0 L 0 -10 L -44 -10 L -48 -6 L -48 0 L -48 6 L -44 10 L 0 10 Z" fill-rule="evenodd"/>
+      <g class="lini-node lini-centerline lini-line" transform="translate(0,0)">
+        <line x1="-52" y1="0" x2="4" y2="0"/>
+      </g>
+    </g>
+  </g>
+  <g class="lini-links"/>
+</svg>

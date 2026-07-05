@@ -47,7 +47,10 @@ pub(super) fn layout_node(
     let mut participants = Vec::new();
     let mut notes = Vec::new();
     for c in &inst.children {
-        let placed = || super::layout_inst(c, &super::child_path(path, c), program);
+        // A sequence's interior is sheet-space [SPEC 15.1] — participants never
+        // inherit an enclosing drawing's view scale.
+        let placed =
+            || super::layout_inst(c, &super::child_path(path, c), program, super::Ctx::sheet());
         if is_participant(&c.kind, &c.type_chain) {
             participants.push(placed()?);
         } else if is_note(&c.type_chain) {
@@ -101,16 +104,7 @@ pub(super) fn layout_root(
 /// Whether the container at `scope` is a `layout: sequence` — so the router skips its links
 /// (they are drawn as time-row arrows here). Shared with the link partition (`bundle`).
 pub(crate) fn is_sequence_scope(program: &Program, scope: &str) -> bool {
-    scope_attrs(program, scope).is_some_and(is_sequence)
-}
-
-/// The attrs of the container at `scope` (`""` = the scene root).
-fn scope_attrs<'a>(program: &'a Program, scope: &str) -> Option<&'a AttrMap> {
-    if scope.is_empty() {
-        Some(&program.scene.attrs)
-    } else {
-        super::node_at(program, scope).map(|i| &i.attrs)
-    }
+    super::scope_attrs(program, scope).is_some_and(is_sequence)
 }
 
 /// This sequence scope's messages — the resolved links written in it — in time (source)

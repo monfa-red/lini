@@ -75,6 +75,30 @@ pub fn expand_box_value(value: &ResolvedValue, span: Span) -> Result<(f64, f64, 
     }
 }
 
+/// Multiply a `points:` attr's coordinates by the node's own `scale:`
+/// [SPEC 15.1] — the render draws them off the placed node, so they must carry
+/// the same factor sizing applied. Non-numbers pass through (they error in
+/// sizing first).
+pub(super) fn scale_points_attr(attrs: &mut crate::resolve::AttrMap, scale: f64) {
+    let Some(v) = attrs.get("points") else {
+        return;
+    };
+    fn scaled(v: &ResolvedValue, s: f64) -> ResolvedValue {
+        match v {
+            ResolvedValue::Number(n) => ResolvedValue::Number(n * s),
+            ResolvedValue::Tuple(items) => {
+                ResolvedValue::Tuple(items.iter().map(|i| scaled(i, s)).collect())
+            }
+            ResolvedValue::List(items) => {
+                ResolvedValue::List(items.iter().map(|i| scaled(i, s)).collect())
+            }
+            other => other.clone(),
+        }
+    }
+    let v = scaled(v, scale);
+    attrs.insert("points", v);
+}
+
 fn describe(v: &ResolvedValue) -> &'static str {
     match v {
         ResolvedValue::Number(_) => "number",

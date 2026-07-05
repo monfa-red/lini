@@ -202,8 +202,8 @@ pub mod testing {
     /// The number of routable edges the source declares (fans/chains already expanded
     /// at resolve into one `ResolvedLink` per edge-chain). Sequence-scope messages are
     /// **not** routable — the sequence layout draws them as time-row arrows [SPEC 13],
-    /// so the router never sees them — and are excluded here, mirroring
-    /// `routing::ortho::request`.
+    /// so the router never sees them — and a drawing scope's links belong to its own
+    /// engine [SPEC 15]; both are excluded here, mirroring `routing::ortho::request`.
     pub fn declared_edges(src: &str) -> usize {
         let prog = super::resolve_pipeline(src, &Options::default()).expect("resolve");
         prog.links
@@ -211,6 +211,7 @@ pub mod testing {
             .filter(|w| {
                 w.routing == crate::resolve::Strategy::Orthogonal
                     && !layout::sequence::is_sequence_scope(&prog, &w.scope)
+                    && !layout::drawing::is_drawing_scope(&prog, &w.scope)
             })
             .map(|w| w.endpoints.len().saturating_sub(1))
             .sum()

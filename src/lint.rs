@@ -2,12 +2,15 @@
 //! [SPEC 20]. It runs on the parsed file and reuses the desugar auto-create gate
 //! so its view of what will be created matches the real lowering.
 //!
-//! Two warnings live here:
+//! Three warnings live here:
 //! - **link labels split** — a link carries a head label *and* a `[ ]` of labels;
 //!   they read better kept together.
 //! - **auto-create shadows a node** — a bare link endpoint is auto-created in its
 //!   scope while a same-named node already exists elsewhere in the tree.
+//! - **`pin:` on a mated child** — a mate seats the part, so its `pin:` is
+//!   ignored [SPEC 15.5].
 
+use crate::ast::ChainOp;
 use crate::desugar::scene::{auto_created_ids, declared_ids};
 use crate::error::Diagnostic;
 use crate::syntax::ast::{Child, File, Link};
@@ -17,7 +20,43 @@ pub fn lint(file: &File) -> Vec<Diagnostic> {
     let mut out = Vec::new();
     lint_split_labels(file, &mut out);
     lint_auto_create_shadows(file, &mut out);
+    lint_pinned_mates(file, &mut out);
     out
+}
+
+/// A `pin:` on a mated child is ignored — the mate seats the part [SPEC 15.5].
+/// Scope-local, like the placement itself: each mate's endpoints are matched
+/// against the sibling nodes of the body the mate is written in.
+fn lint_pinned_mates(file: &File, out: &mut Vec<Diagnostic>) {
+    fn scan(children: &[Child], links: &[Link], out: &mut Vec<Diagnostic>) {
+        let pinned: Vec<&str> = children
+            .iter()
+            .filter_map(|c| match c {
+                Child::Box(n) if n.style.iter().any(|d| d.name == "pin") && n.id.is_some() => {
+                    n.id.as_deref()
+                }
+                _ => None,
+            })
+            .collect();
+        for w in links.iter().filter(|w| matches!(w.op, ChainOp::Mate)) {
+            for ep in w.chain.iter().flat_map(|g| &g.endpoints) {
+                if let [first, ..] = ep.path.as_slice()
+                    && pinned.contains(&first.as_str())
+                {
+                    out.push(Diagnostic::warn(
+                        w.span,
+                        format!("'pin' on '{first}' is ignored — the mate seats it"),
+                    ));
+                }
+            }
+        }
+        for c in children {
+            if let Child::Box(n) = c {
+                scan(&n.children, &n.links, out);
+            }
+        }
+    }
+    scan(&file.instances, &file.links, out);
 }
 
 /// A link with both a head label and a `[ ]` of labels [SPEC 20]: keep them
@@ -143,6 +182,23 @@ mod tests {
     fn inline_paint_is_not_linted() {
         // Inline paint in an instance block is idiomatic — no warning.
         assert!(warnings("|box#x| { fill: red; stroke: blue; }\n").is_empty());
+    }
+
+    #[test]
+    fn pin_on_a_mated_child_warns() {
+        let w = warnings(
+            "{ layout: drawing }\n|rect#a| { width: 20; height: 20 }\n|rect#b| { width: 20; height: 20; pin: center }\na:right || b:left\n",
+        );
+        assert!(
+            w.iter()
+                .any(|m| m == "'pin' on 'b' is ignored — the mate seats it"),
+            "{w:?}"
+        );
+        // An unmated pinned node, or a mate without pins, stays silent.
+        assert!(
+            warnings("{ layout: drawing }\n|rect#a| { width: 20; height: 20 }\n|rect#b| { width: 20; height: 20 }\na:right || b:left\n")
+                .is_empty()
+        );
     }
 
     #[test]

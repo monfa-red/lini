@@ -151,6 +151,10 @@ pub struct PlacedNode {
     /// lifts them into scene coordinates; the renderer's one link path draws
     /// them. Empty everywhere else.
     pub links: Vec<RoutedLink>,
+    /// A sketch's authored `:name` products [SPEC 15.2], in the node's local
+    /// frame (scaled) — the drawing engine's mate / dimension anchors read
+    /// them. Empty for everything but a `|sketch|`.
+    pub names: Vec<(String, super::drawing::pen::Product)>,
     pub span: Span,
 }
 

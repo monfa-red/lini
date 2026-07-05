@@ -29,6 +29,26 @@ pub enum Product {
     Circle { center: P, r: f64 },
 }
 
+impl Product {
+    /// The product under the node's own `scale:` — a uniform coordinate map,
+    /// so directions survive and radii multiply.
+    fn scaled(self, s: f64) -> Self {
+        let m = |p: P| (p.0 * s, p.1 * s);
+        match self {
+            Product::Point(p) => Product::Point(m(p)),
+            Product::Edge(a, b) => Product::Edge(m(a), m(b)),
+            Product::Arc { mid, r } => Product::Arc {
+                mid: m(mid),
+                r: r * s,
+            },
+            Product::Circle { center, r } => Product::Circle {
+                center: m(center),
+                r: r * s,
+            },
+        }
+    }
+}
+
 /// A folded sketch: the path, its measurement bbox, and everything the drawing
 /// engine reads later.
 #[derive(Debug)]
@@ -36,23 +56,30 @@ pub struct Folded {
     pub d: String,
     /// The drawn extent, stroke excluded — the measurement box [SPEC 15.1].
     pub geometry: Bbox,
-    /// Authored `:name`s in source order (duplicates rejected at fold). Read
-    /// by this module's tests today, by the drawing anchors in stage 4 — an
-    /// `expect` can't span those two targets, hence the plain allow.
-    #[allow(dead_code, reason = "read by the drawing anchors — PLAN.md stage 4")]
+    /// Authored `:name`s in source order (duplicates rejected at fold) — carried
+    /// on the placed node so mates (and, later, dimensions) can anchor on them.
     pub names: Vec<(String, Product)>,
-    /// The applied `mirror:` axes — the unary mirrored readings (stage 4) and
-    /// the auto-centerline chrome (stage 3) read them.
-    #[expect(dead_code, reason = "read by the drawing engine — PLAN.md stages 3-4")]
+    /// The applied `mirror:` axes — the unary mirrored readings read them.
+    #[expect(
+        dead_code,
+        reason = "read by the drawing annotations — PLAN.md stage 4"
+    )]
     pub mirror_axes: Vec<MirrorAxis>,
-    /// Whether any open subpath fused — the auto-centerline cue [SPEC 15.7].
-    #[expect(dead_code, reason = "read by the drawing chrome — PLAN.md stage 3")]
+    /// Whether any open subpath fused. The auto-centerline chrome keys on the
+    /// same fact *syntactically* at desugar (an open subpath + `mirror:` —
+    /// [SPEC 15.7]); the tests assert the two judgements agree.
+    #[allow(
+        dead_code,
+        reason = "asserted against desugar's openness check in tests"
+    )]
     pub fused: bool,
 }
 
-/// Fold a `|sketch|`'s `draw:` (+ `mirror:`) into its geometry. The one entry
-/// point — layout calls it; the drawing engine will re-read the same result.
-pub fn fold(inst: &ResolvedInst) -> Result<Folded, Error> {
+/// Fold a `|sketch|`'s `draw:` (+ `mirror:`) into its geometry, at the node's
+/// own effective `scale:` (px per drawing unit — applied to the folded output,
+/// so every call keeps its authored semantics; [SPEC 15.1]). The one entry
+/// point — layout calls it; the drawing engine reads the same result.
+pub fn fold(inst: &ResolvedInst, scale: f64) -> Result<Folded, Error> {
     let span = inst.span;
     let Some(draw) = inst.attrs.get("draw") else {
         return Err(Error::at(span, "'|sketch|' requires 'draw'"));
@@ -75,7 +102,7 @@ pub fn fold(inst: &ResolvedInst) -> Result<Folded, Error> {
             }
         }
     }
-    let (mut subs, names) = pen.finish()?;
+    let (mut subs, mut names) = pen.finish()?;
 
     let mut mirror_axes = Vec::new();
     let mut fused = false;
@@ -83,6 +110,12 @@ pub fn fold(inst: &ResolvedInst) -> Result<Folded, Error> {
         for axis in parse_mirror(v, span)? {
             fused |= geometry::mirror(&mut subs, axis);
             mirror_axes.push(axis);
+        }
+    }
+    if scale != 1.0 {
+        geometry::scale(&mut subs, scale);
+        for (_, p) in &mut names {
+            *p = p.scaled(scale);
         }
     }
 
@@ -690,7 +723,7 @@ mod tests {
     fn folded(style: &str) -> Folded {
         let src = format!("|sketch#s| {{ {style} }}\n");
         let program = program(&src).expect("pipeline");
-        fold(&program.scene.nodes[0]).expect("fold")
+        fold(&program.scene.nodes[0], 1.0).expect("fold")
     }
 
     fn fold_err(style: &str) -> String {
@@ -698,7 +731,7 @@ mod tests {
         match program(&src) {
             Err(e) => e.message,
             Ok(p) => {
-                fold(&p.scene.nodes[0])
+                fold(&p.scene.nodes[0], 1.0)
                     .expect_err("expected a fold error")
                     .message
             }

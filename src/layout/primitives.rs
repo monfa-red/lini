@@ -24,15 +24,17 @@ pub struct PaddingBox {
 
 /// Bbox for a leaf primitive (no flow children). A closed primitive is empty here —
 /// `2 × padding` (or its explicit dims); text / icon / geometry size to their
-/// own content.
-pub fn leaf_bbox(inst: &ResolvedInst) -> Result<Bbox, Error> {
+/// own content. `scale` is the node's own effective `scale:` [SPEC 15.1]: it
+/// multiplies the **shape** — declared `width`/`height`, `points:`, the pen's
+/// fold — never text, padding, or stroke.
+pub fn leaf_bbox(inst: &ResolvedInst, scale: f64) -> Result<Bbox, Error> {
     match inst.kind {
         NodeKind::Block
         | NodeKind::Oval
         | NodeKind::Hex
         | NodeKind::Slant
         | NodeKind::Cyl
-        | NodeKind::Diamond => closed_bbox(inst, Bbox::empty()),
+        | NodeKind::Diamond => closed_bbox(inst, Bbox::empty(), scale),
         NodeKind::Text => {
             let size = font_size(inst);
             let label = inst.label.as_deref().unwrap_or("");
@@ -45,18 +47,21 @@ pub fn leaf_bbox(inst: &ResolvedInst) -> Result<Bbox, Error> {
         }
         // A label-less icon: an empty content box (the labelled case sizes the
         // same square from its laid-out label child — see `icon_square_bbox`).
-        NodeKind::Icon => icon_square_bbox(inst, Bbox::empty()),
-        NodeKind::Line => {
-            Ok(bounding_box(&require_points(inst, "line", 2)?).inflate(stroke_half(inst)))
-        }
-        NodeKind::Poly => {
-            Ok(bounding_box(&require_points(inst, "poly", 3)?).inflate(stroke_half(inst)))
-        }
+        NodeKind::Icon => icon_square_bbox(inst, Bbox::empty(), scale),
+        NodeKind::Line => Ok(
+            bounding_box(&scaled_points(require_points(inst, "line", 2)?, scale))
+                .inflate(stroke_half(inst)),
+        ),
+        NodeKind::Poly => Ok(
+            bounding_box(&scaled_points(require_points(inst, "poly", 3)?, scale))
+                .inflate(stroke_half(inst)),
+        ),
         NodeKind::Image => {
             let (w, h) = image_dims(inst)?;
-            Ok(Bbox::centered(w, h))
+            Ok(Bbox::centered(w * scale, h * scale))
         }
-        // Native top-left coords [SPEC 7]: size to the parsed path extent.
+        // Native top-left coords [SPEC 7]: size to the parsed path extent. A raw
+        // `path:` is not in the shape set `scale:` multiplies ([SPEC 15.10]).
         NodeKind::Path => {
             let Some(ResolvedValue::String(d)) = inst.attrs.get("path") else {
                 return Err(Error::at(inst.span, "'|path|' requires 'path'"));
@@ -71,7 +76,7 @@ pub fn leaf_bbox(inst: &ResolvedInst) -> Result<Bbox, Error> {
         // source of truth (layout_inst intercepts sketches to keep the folded
         // `d`; this arm serves any other caller the bbox alone).
         NodeKind::Sketch => {
-            let folded = super::drawing::pen::fold(inst)?;
+            let folded = super::drawing::pen::fold(inst, scale)?;
             Ok(folded.geometry.inflate(stroke_half(inst)))
         }
     }
@@ -80,20 +85,31 @@ pub fn leaf_bbox(inst: &ResolvedInst) -> Result<Bbox, Error> {
 /// A closed primitive's bbox: each axis is `content + padding`, with an explicit
 /// `width`/`height` as a **floor** — border-box (padding inside), and the box
 /// grows past the declared size rather than clip or spill its content [SPEC 5].
-/// Inflated by half the stroke so the outline counts toward the bbox.
-pub fn closed_bbox(inst: &ResolvedInst, content: Bbox) -> Result<Bbox, Error> {
+/// Inflated by half the stroke so the outline counts toward the bbox. The
+/// declared dims are drawing units × the node's own `scale:`; content (text,
+/// laid-out children), padding, and stroke stay sheet-space [SPEC 15.1].
+pub fn closed_bbox(inst: &ResolvedInst, content: Bbox, scale: f64) -> Result<Bbox, Error> {
     let pad = padding(&inst.attrs, inst.span)?;
     let w = floor_dim(
-        inst.attrs.number("width"),
+        inst.attrs.number("width").map(|v| v * scale),
         content.w(),
         pad.left + pad.right,
     );
     let h = floor_dim(
-        inst.attrs.number("height"),
+        inst.attrs.number("height").map(|v| v * scale),
         content.h(),
         pad.top + pad.bottom,
     );
     Ok(Bbox::centered(w, h).inflate(stroke_half(inst)))
+}
+
+fn scaled_points(mut points: Vec<(f64, f64)>, scale: f64) -> Vec<(f64, f64)> {
+    if scale != 1.0 {
+        for p in &mut points {
+            *p = (p.0 * scale, p.1 * scale);
+        }
+    }
+    points
 }
 
 /// An `|icon|`'s bbox: a **square** that grows uniformly with its label content
@@ -102,13 +118,14 @@ pub fn closed_bbox(inst: &ResolvedInst, content: Bbox) -> Result<Bbox, Error> {
 /// `icon-size` 32) and the content + padding on either axis — no stroke inflate
 /// (the symbol's stroke sits inside its 256 grid). `content` is the empty box for
 /// a bare icon, or its laid-out label child's extent.
-pub fn icon_square_bbox(inst: &ResolvedInst, content: Bbox) -> Result<Bbox, Error> {
+pub fn icon_square_bbox(inst: &ResolvedInst, content: Bbox, scale: f64) -> Result<Bbox, Error> {
     let pad = padding(&inst.attrs, inst.span)?;
-    let declared = inst
-        .attrs
-        .number("width")
-        .unwrap_or(0.0)
-        .max(inst.attrs.number("height").unwrap_or(0.0));
+    let declared = scale
+        * inst
+            .attrs
+            .number("width")
+            .unwrap_or(0.0)
+            .max(inst.attrs.number("height").unwrap_or(0.0));
     let side = declared
         .max(content.w() + pad.left + pad.right)
         .max(content.h() + pad.top + pad.bottom);

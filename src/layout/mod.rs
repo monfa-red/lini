@@ -1,11 +1,12 @@
 mod anchors;
 mod chart;
-mod drawing;
+pub(crate) mod drawing;
 mod flex;
 mod grid;
 pub(crate) mod ir;
 mod note;
 pub(crate) mod path_bbox; // glyph-extent computation also serves `render::icon_fit`
+mod pattern;
 mod prim; // PlacedNode *builders* for lowered primitives (charts, sequences)
 mod primitives; // primitive *sizing* (leaf/closed bbox) — distinct from `prim`
 pub(crate) mod sequence;
@@ -30,19 +31,29 @@ use flex::Axis;
 pub fn layout(program: &Program) -> Result<LaidOut, Error> {
     sequence::validate(program)?;
 
-    // A root drawing [SPEC 15] parses and resolves (the stage-1 language
-    // surface); its engine lands per PLAN.md stage 3.
-    if is_drawing(&program.scene.attrs) {
-        return Err(Error::at(
-            Span::empty(),
-            "'layout: drawing' is not built yet (PLAN.md stage 3)",
-        ));
+    // A root drawing (`{ layout: drawing }`, [SPEC 15]) owns the whole scene:
+    // its children datum-place, mates seat them, and its links never route —
+    // intercepted before the generic per-child layout, which would flow-arrange
+    // features and reject the chrome.
+    if drawing::is_drawing(&program.scene.attrs) {
+        let (top_nodes, bbox) = drawing::layout_root(program)?;
+        let links = routing::owned_links(&top_nodes);
+        let routed = routing::Routing {
+            links,
+            ..Default::default()
+        };
+        return finish(program, top_nodes, bbox, routed);
     }
+
+    let ctx = Ctx {
+        scale: effective_scale(&program.scene.attrs, 1.0, Span::empty())?,
+        drawing: false,
+    };
 
     // Lay out top-level scene children.
     let mut top_nodes = Vec::with_capacity(program.scene.nodes.len());
     for inst in &program.scene.nodes {
-        top_nodes.push(layout_inst(inst, &child_path("", inst), program)?);
+        top_nodes.push(layout_inst(inst, &child_path("", inst), program, ctx)?);
     }
 
     // A root sequence (`{ layout: sequence }`, [SPEC 13]) owns the whole scene: it
@@ -61,12 +72,65 @@ pub fn layout(program: &Program) -> Result<LaidOut, Error> {
     // Apply scene-level layout to top-level children (scene itself is a
     // container; its attrs drive how its children are positioned). The scene
     // is never a table, so its grid rules — if any — are discarded.
-    let (bbox, _) =
-        lay_out_container_children(&mut top_nodes, &program.scene.attrs, Span::empty())?;
+    let (bbox, _) = lay_out_container_children(
+        &mut top_nodes,
+        &program.scene.attrs,
+        Span::empty(),
+        ctx.scale,
+    )?;
 
     // Route links once the nodes are placed.
     let routed = routing::route(program, &top_nodes)?;
     finish(program, top_nodes, bbox, routed)
+}
+
+/// The layout context a node inherits [SPEC 15]: the parent's effective
+/// `scale:` (px per drawing unit — nearest ancestor wins) and whether the node
+/// sits in a drawing scope, where a shape's `[ ]` children datum-place as its
+/// features. Layout-owning engines (chart / pie / sequence) reset it — their
+/// interiors are sheet-space.
+#[derive(Clone, Copy)]
+pub(crate) struct Ctx {
+    pub scale: f64,
+    pub drawing: bool,
+}
+
+impl Ctx {
+    pub(crate) fn sheet() -> Self {
+        Ctx {
+            scale: 1.0,
+            drawing: false,
+        }
+    }
+}
+
+/// A node's effective `scale:` — its own when set (must be > 0, [SPEC 20]),
+/// else the inherited one.
+pub(crate) fn effective_scale(
+    attrs: &crate::resolve::AttrMap,
+    inherited: f64,
+    span: Span,
+) -> Result<f64, Error> {
+    match attrs.get("scale") {
+        None => Ok(inherited),
+        Some(v) => match v.as_number() {
+            Some(s) if s > 0.0 => Ok(s),
+            _ => Err(Error::at(span, "'scale' must be > 0")),
+        },
+    }
+}
+
+/// The attrs of the container at `scope` (`""` = the scene root) — shared by
+/// the sequence's and the drawing's scope detectors.
+pub(crate) fn scope_attrs<'a>(
+    program: &'a Program,
+    scope: &str,
+) -> Option<&'a crate::resolve::AttrMap> {
+    if scope.is_empty() {
+        Some(&program.scene.attrs)
+    } else {
+        node_at(program, scope).map(|i| &i.attrs)
+    }
 }
 
 /// The scene instance at a dot-path (`""` → `None`: the root is not an instance).
@@ -183,7 +247,12 @@ pub fn validate_routing(laid: &LaidOut) -> Vec<routing::Violation> {
 /// Bottom-up: lay out children first, then size this node around them. For
 /// leaf primitives (no children), the shape's dimensions drive the bbox.
 /// `path` is the inst's dot-path — how a sequence scope finds its messages.
-fn layout_inst(inst: &ResolvedInst, path: &str, program: &Program) -> Result<PlacedNode, Error> {
+fn layout_inst(
+    inst: &ResolvedInst,
+    path: &str,
+    program: &Program,
+    ctx: Ctx,
+) -> Result<PlacedNode, Error> {
     let funcs = &program.funcs;
     // A chart [SPEC 14] owns its whole subtree: it reads its children's data,
     // fixes a shared scale, samples any `fn:`, and emits primitive PlacedNodes itself.
@@ -201,43 +270,62 @@ fn layout_inst(inst: &ResolvedInst, path: &str, program: &Program) -> Result<Pla
     if sequence::is_sequence(&inst.attrs) {
         return sequence::layout_node(inst, path, program);
     }
-    // A `|drawing|` node [SPEC 15] will own its subtree the same way; the
-    // language surface is in (it parses and resolves), the engine lands per
-    // PLAN.md stage 3.
-    if is_drawing(&inst.attrs) {
-        return Err(Error::at(
-            inst.span,
-            "'layout: drawing' is not built yet (PLAN.md stage 3)",
-        ));
+    // A `|drawing|` node [SPEC 15] owns its subtree too: children datum-place,
+    // mates seat them, the engine sizes the sheet.
+    if drawing::is_drawing(&inst.attrs) {
+        return drawing::layout_node(inst, path, program, ctx);
     }
+    // Generated drawing chrome ([SPEC 15.7]) has no geometry of its own — the
+    // parent's shape decides it once that shape is sized (below).
+    if ctx.drawing && drawing::chrome::is_chrome(&inst.attrs) {
+        return Ok(drawing::chrome::placeholder(inst));
+    }
+
+    let own = effective_scale(&inst.attrs, ctx.scale, inst.span)?;
+    // In a drawing scope a shape's `[ ]` children are its **features** — they
+    // datum-place at the part's origin, rigid with it [SPEC 15.4]; a child that
+    // owns a layout — or is sheet content (a note, the title) — arranges its
+    // interior as usual and places as one box.
+    let part =
+        ctx.drawing && !owns_layout(&inst.attrs) && !drawing::is_sheet(inst.kind, &inst.type_chain);
+    let child_ctx = Ctx {
+        scale: own,
+        drawing: part,
+    };
 
     // Recurse into children first.
     let mut children: Vec<PlacedNode> = Vec::with_capacity(inst.children.len());
     for c in &inst.children {
-        children.push(layout_inst(c, &child_path(path, c), program)?);
+        children.push(layout_inst(c, &child_path(path, c), program, child_ctx)?);
     }
 
     // Determine this node's bbox + arrange children inside.
     let mut gutters: Vec<Gutter> = Vec::new();
     let mut sketch_d: Option<String> = None;
+    let mut pen_names = Vec::new();
     let bbox = if inst.kind == NodeKind::Sketch {
         // The pen folds here [SPEC 15.3]: geometry decides the bbox — never
-        // content + padding — and any children still arrange normally over it
-        // (a part's features ride in its `[ ]`, [SPEC 15.4]).
-        if !children.is_empty() {
-            let _ = lay_out_container_children(&mut children, &inst.attrs, inst.span)?;
+        // content + padding. Outside a drawing any children still arrange
+        // normally over it; in one they are features, datum-placed below.
+        if !children.is_empty() && !part {
+            let _ = lay_out_container_children(&mut children, &inst.attrs, inst.span, own)?;
         }
-        let folded = drawing::pen::fold(inst)?;
+        let folded = drawing::pen::fold(inst, own)?;
         let half = inst.attrs.number("stroke-width").unwrap_or(0.0) / 2.0;
         sketch_d = Some(folded.d);
+        pen_names = folded.names;
         folded.geometry.inflate(half)
+    } else if part {
+        // A part sizes to its own shape — its features never grow it, they
+        // overhang [SPEC 15.4] (`|hole|` / `|pitch-circle|` are circles, ⌀ width).
+        drawing::part_bbox(inst, own)?
     } else if children.is_empty() {
         // Leaf primitive.
-        primitives::leaf_bbox(inst)?
+        primitives::leaf_bbox(inst, own)?
     } else {
         // Container or closed primitive with content.
         let (content_bbox, rects) =
-            lay_out_container_children(&mut children, &inst.attrs, inst.span)?;
+            lay_out_container_children(&mut children, &inst.attrs, inst.span, own)?;
 
         // Interior gutters (grid or 1-D) the container fills with `gap-color`.
         // A table is just a group with `gap-color: --stroke` — no special-casing;
@@ -248,9 +336,9 @@ fn layout_inst(inst: &ResolvedInst, path: &str, program: &Program) -> Result<Pla
         // every other closed primitive sizes border-box — explicit width/height,
         // else content + padding per axis [SPEC 5].
         let b = if inst.kind == NodeKind::Icon {
-            primitives::icon_square_bbox(inst, content_bbox)?
+            primitives::icon_square_bbox(inst, content_bbox, own)?
         } else {
-            primitives::closed_bbox(inst, content_bbox)?
+            primitives::closed_bbox(inst, content_bbox, own)?
         };
         let text_only = children.iter().all(|c| c.kind == NodeKind::Text);
 
@@ -274,6 +362,15 @@ fn layout_inst(inst: &ResolvedInst, path: &str, program: &Program) -> Result<Pla
         b
     };
 
+    // A part's features datum-place (origin on the part's datum, `translate:`
+    // in drawing units × the part's scale, [SPEC 15.4]); its generated chrome
+    // takes its geometry from the sized shape.
+    if part {
+        let half = inst.attrs.number("stroke-width").unwrap_or(0.0) / 2.0;
+        drawing::place_features(&mut children, own)?;
+        drawing::chrome::fill(&mut children, bbox.inflate(-half));
+    }
+
     let rotation = inst.attrs.number("rotate").unwrap_or(0.0);
 
     let mut placed = PlacedNode {
@@ -292,10 +389,22 @@ fn layout_inst(inst: &ResolvedInst, path: &str, program: &Program) -> Result<Pla
         children,
         gutters,
         links: Vec::new(),
+        names: pen_names,
         span: inst.span,
     };
     if let Some(d) = sketch_d {
         placed.attrs.insert("path", ResolvedValue::String(d));
+    }
+    // The drawn `points:` scale with the shape [SPEC 15.1] — the render reads
+    // them off the placed node, so they carry the same factor `leaf_bbox`
+    // sized with.
+    if own != 1.0 {
+        values::scale_points_attr(&mut placed.attrs, own);
+    }
+    // `pattern:` replicates the node about its own position [SPEC 15.4] — any
+    // layout; the offsets are shape, so they carry the node's own scale.
+    if placed.attrs.get("pattern").is_some() {
+        pattern::expand(&mut placed, own)?;
     }
     // The core `|note|` silhouette [SPEC 8] — folded once, whatever the layout;
     // the sequence (and later the drawing) engine only places the card.
@@ -303,6 +412,14 @@ fn layout_inst(inst: &ResolvedInst, path: &str, program: &Program) -> Result<Pla
         note::fold(&mut placed);
     }
     Ok(placed)
+}
+
+/// Whether a node arranges its own interior — an explicit `layout:` (grid /
+/// chart / sequence / drawing) or a flow `direction:` (`|row|` / `|column|`).
+/// In a drawing scope such a child seals: it lays out as usual and places as
+/// one box [SPEC 15.1]; everything else datum-places its children as features.
+fn owns_layout(attrs: &crate::resolve::AttrMap) -> bool {
+    attrs.get("layout").is_some() || attrs.get("direction").is_some()
 }
 
 /// Interior gutter rects between adjacent flow children — at each gap's midpoint,
@@ -344,11 +461,14 @@ fn one_d_gutters(
 
 /// Position children within their container per its `layout=` attr.
 /// Returns the bounding bbox of all placed children, in container-local
-/// coords.
+/// coords. `scale` is the container's own effective `scale:` — a child's
+/// `translate:` (and the container's declared content area) are drawing
+/// units under it [SPEC 15.1].
 fn lay_out_container_children(
     children: &mut [PlacedNode],
     container_attrs: &crate::resolve::AttrMap,
     span: Span,
+    scale: f64,
 ) -> Result<(Bbox, Vec<Gutter>), Error> {
     if children.is_empty() {
         return Ok((Bbox::empty(), Vec::new()));
@@ -378,10 +498,10 @@ fn lay_out_container_children(
     let avail = (
         container_attrs
             .number("width")
-            .map(|w| (w - pad.left - pad.right).max(0.0)),
+            .map(|w| (w * scale - pad.left - pad.right).max(0.0)),
         container_attrs
             .number("height")
-            .map(|h| (h - pad.top - pad.bottom).max(0.0)),
+            .map(|h| (h * scale - pad.top - pad.bottom).max(0.0)),
     );
 
     let mut gutters: Vec<Gutter> = Vec::new();
@@ -454,7 +574,7 @@ fn lay_out_container_children(
     // explicit size gives it directly; otherwise it is the flow content plus
     // padding. Centring matters under asymmetric padding: an off-centre box would
     // drag a pinned caption/badge off the corner it anchors to.
-    let anchor_parent_bbox = container_anchor_bbox(container_attrs).unwrap_or_else(|| {
+    let anchor_parent_bbox = container_anchor_bbox(container_attrs, scale).unwrap_or_else(|| {
         Bbox::centered(
             body_bbox.w() + pad.left + pad.right,
             body_bbox.h() + pad.top + pad.bottom,
@@ -475,11 +595,12 @@ fn lay_out_container_children(
 
     // `translate:` nudges every node after placement [SPEC 5] — applied last,
     // once the body bbox is fixed, so it shifts the child (and its subtree, via
-    // `cx`/`cy`) without reflowing siblings or growing the parent.
+    // `cx`/`cy`) without reflowing siblings or growing the parent. A position
+    // is drawing units under the parent's `scale:` [SPEC 15.1].
     for c in children.iter_mut() {
         if let Some((dx, dy)) = anchors::translate(&c.attrs, c.span)? {
-            c.cx += dx;
-            c.cy += dy;
+            c.cx += dx * scale;
+            c.cy += dy * scale;
         }
     }
 
@@ -495,12 +616,6 @@ enum LayoutMode {
     Flow,
     /// 2D grid; sized by its `columns` / `rows` track lists (read in `grid`).
     Grid,
-}
-
-/// `layout: drawing` [SPEC 15] — the drawing engine's dispatch check, the
-/// `is_sequence` twin.
-fn is_drawing(attrs: &crate::resolve::AttrMap) -> bool {
-    matches!(attrs.get("layout"), Some(ResolvedValue::Ident(l)) if l == "drawing")
 }
 
 fn read_layout_mode(attrs: &crate::resolve::AttrMap, span: Span) -> Result<LayoutMode, Error> {
@@ -548,11 +663,12 @@ fn read_flow_direction(attrs: &crate::resolve::AttrMap, span: Span) -> Result<Ax
 
 /// If the container declared explicit `width` *and* `height`, the children's
 /// anchors resolve against those edges (no stroke pad — anchors live on the
-/// drawn shape); otherwise they fall back to the body extent.
-fn container_anchor_bbox(attrs: &crate::resolve::AttrMap) -> Option<Bbox> {
+/// drawn shape); otherwise they fall back to the body extent. The declared
+/// dims are drawing units × the container's own `scale:` [SPEC 15.1].
+fn container_anchor_bbox(attrs: &crate::resolve::AttrMap, scale: f64) -> Option<Bbox> {
     let w = attrs.number("width")?;
     let h = attrs.number("height")?;
-    Some(Bbox::centered(w, h))
+    Some(Bbox::centered(w * scale, h * scale))
 }
 
 // ───────────────────────────── Tests ─────────────────────────────
@@ -952,6 +1068,98 @@ mod tests {
         let (_, _, w2, h2) = cols_only.nodes[0].gutters[0];
         assert_eq!(cols_only.nodes[0].gutters.len(), 1, "col gap → one gutter");
         assert!(h2 > w2, "vertical gutter is tall: w={w2} h={h2}");
+    }
+
+    // ── `scale:` — a global node transform [SPEC 15.1] ──
+
+    #[test]
+    fn scale_multiplies_the_shape_never_text_or_stroke() {
+        let plain = &lay_out("|box#a| \"hi\" { width: 100; height: 40 }\n").nodes[0];
+        let scaled = &lay_out("|box#a| \"hi\" { width: 100; height: 40; scale: 2 }\n").nodes[0];
+        assert!(
+            (scaled.bbox.w() - 202.0).abs() < 0.01,
+            "w={}",
+            scaled.bbox.w()
+        );
+        assert!(
+            (scaled.bbox.h() - 82.0).abs() < 0.01,
+            "h={}",
+            scaled.bbox.h()
+        );
+        // The text child keeps its size — text never scales.
+        assert!((scaled.children[0].bbox.w() - plain.children[0].bbox.w()).abs() < 0.01);
+    }
+
+    #[test]
+    fn scale_inherits_nearest_ancestor_wins() {
+        // The root's scale reaches the child; the note's own `scale: 1` opts out.
+        let l = lay_out(
+            "{ scale: 2 }\n|rect#a| { width: 50; height: 20 }\n|note#n| { width: 50; height: 20 }\n",
+        );
+        let a = &l.nodes[0];
+        assert!(
+            (a.bbox.w() - 102.0).abs() < 0.01,
+            "inherited: w={}",
+            a.bbox.w()
+        );
+        let n = &l.nodes[1];
+        assert!(
+            n.bbox.w() < 60.0,
+            "the note is sheet chrome: w={}",
+            n.bbox.w()
+        );
+    }
+
+    #[test]
+    fn translate_scales_by_the_parent() {
+        // A column flow: the x offset between the boxes is the translate alone,
+        // in drawing units × the parent's scale [SPEC 15.1].
+        let nudge = |src: &str| {
+            let l = lay_out(src);
+            l.nodes[1].cx - l.nodes[0].cx
+        };
+        let plain = nudge(
+            "|rect#a| { width: 10; height: 10 }\n|rect#b| { width: 10; height: 10; translate: 5 0 }\n",
+        );
+        let scaled = nudge(
+            "{ scale: 3 }\n|rect#a| { width: 10; height: 10 }\n|rect#b| { width: 10; height: 10; translate: 5 0 }\n",
+        );
+        assert!((plain - 5.0).abs() < 0.01, "plain={plain}");
+        assert!((scaled - 15.0).abs() < 0.01, "scaled={scaled}");
+    }
+
+    #[test]
+    fn a_scaled_sketch_in_a_flow_doubles_its_geometry() {
+        let one = &lay_out("|sketch#s| { draw: move(0, 0) right(40) down(20) left(40) close() }\n")
+            .nodes[0];
+        let two = &lay_out(
+            "|sketch#s| { draw: move(0, 0) right(40) down(20) left(40) close(); scale: 2 }\n",
+        )
+        .nodes[0];
+        assert!((two.bbox.w() - one.bbox.w() - 40.0).abs() < 0.01);
+        // The folded d carries the scaled coordinates for render.
+        assert!(
+            matches!(two.attrs.get("path"), Some(ResolvedValue::String(d)) if d.contains("80")),
+            "scaled path"
+        );
+    }
+
+    #[test]
+    fn scale_must_be_positive() {
+        let err = lay_out_err("|box#a| { scale: 0 }\n");
+        assert_eq!(err.message, "'scale' must be > 0");
+    }
+
+    // ── `pattern:` — replicate in any layout [SPEC 15.4] ──
+
+    #[test]
+    fn a_patterned_box_in_a_flow_unions_its_copies() {
+        let l = lay_out("|rect#a| { width: 20; height: 20; pattern: grid(3, 1, 30, 0) }\n");
+        let a = &l.nodes[0];
+        // Seed at 0, copies at 30 and 60 → 20 + 60 + stroke.
+        assert!((a.bbox.w() - 82.0).abs() < 0.01, "w={}", a.bbox.w());
+        assert_eq!(a.children.len(), 3, "three copies");
+        assert!(a.id.as_deref() == Some("a"), "the carrier keeps the id");
     }
 
     #[test]

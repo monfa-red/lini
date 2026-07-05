@@ -74,10 +74,12 @@ pub fn requests(program: &Program, index: &SceneIndex) -> Result<Vec<EdgeReq>, E
         // A sequence scope's messages are drawn by the sequence layout, which
         // owns *where* (column x, row y) and lowers each wire through the
         // `straight` strategy itself [SPEC 13] — they are never requests. The
-        // router likewise only ever routes wires: a drawing's measures and mates
-        // are its own layout's job [SPEC 15].
+        // router likewise only ever routes wires, and a drawing scope owns
+        // *all* its links — measures, mates, and its annotation arrows alike
+        // [SPEC 15].
         if w.kind != crate::resolve::LinkKind::Wire
             || crate::layout::sequence::is_sequence_scope(program, &w.scope)
+            || crate::layout::drawing::is_drawing_scope(program, &w.scope)
         {
             continue;
         }

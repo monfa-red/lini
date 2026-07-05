@@ -25,6 +25,15 @@ use crate::syntax::ast::{Endpoint, EndpointGroup, Link};
 /// own block — with no `link-*` family.
 pub const LINK_CLASS: &str = "lini-link";
 
+/// A link scope's drawing classification [SPEC 15/20]: `drawing` gates the
+/// drawing statements; `flow_in_drawing` names the layout-owning container
+/// when a drawing encloses the scope without being it — the mate gate's
+/// "a '|row|' places its own children" refinement.
+pub struct LinkScope {
+    pub drawing: bool,
+    pub flow_in_drawing: Option<String>,
+}
+
 /// Resolve one link statement into one resolved link per cartesian pair.
 /// `path_prefix` scopes a lifted internal link to its host instance;
 /// `scope_ancestors` is that scope's container chain (for descendant rules);
@@ -36,14 +45,15 @@ pub fn resolve_link(
     path_prefix: &[String],
     scope_ancestors: &[NodeFacts],
     base: &[(String, ResolvedValue)],
-    drawing_scope: bool,
+    scope_kind: &LinkScope,
 ) -> Result<Vec<ResolvedLink>, Error> {
     for class in &w.classes {
         if !ctx.sheet.defines_class(class) {
             return Err(Error::at(w.span, format!("unknown class '.{}'", class)));
         }
     }
-    validate_statement(w, drawing_scope)?;
+    let drawing_scope = scope_kind.drawing;
+    validate_statement(w, scope_kind)?;
 
     // A link is a node whose type is `lini-link`, whose ancestors are its scope
     // chain, with no id [SPEC 9, 4].
@@ -185,7 +195,8 @@ pub fn resolve_link(
 /// The statement-shape gates [SPEC 15, 20]: the drawing ops need a drawing
 /// scope; a mate takes no label; and a one-ended statement is legal only for
 /// the leader-shaped and measuring ops, in a drawing.
-fn validate_statement(w: &Link, drawing: bool) -> Result<(), Error> {
+fn validate_statement(w: &Link, scope: &LinkScope) -> Result<(), Error> {
+    let drawing = scope.drawing;
     if !drawing {
         match w.op {
             ChainOp::Measure(d) => {
@@ -198,6 +209,14 @@ fn validate_statement(w: &Link, drawing: bool) -> Result<(), Error> {
                 ));
             }
             ChainOp::Mate => {
+                // Inside a layout-owning child of a drawing, the flow already
+                // decided every position [SPEC 15.5] — name the container.
+                if let Some(ty) = &scope.flow_in_drawing {
+                    return Err(Error::at(
+                        w.span,
+                        format!("a '|{ty}|' places its own children — mates seat a drawing's"),
+                    ));
+                }
                 return Err(Error::at(
                     w.span,
                     "a mate seats a drawing's parts — '||' belongs in a 'layout: drawing'",

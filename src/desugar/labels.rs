@@ -23,6 +23,23 @@ pub(super) fn caption_node(label: &TextNode) -> Node {
     }
 }
 
+/// A `|footnote|` node carrying a drawing's smart-label title [SPEC 15.8] —
+/// drafting titles sit **under** the view, so the label lowers to the
+/// bottom-centred caption template and `|drawing| |footnote| { … }` styles it.
+pub(super) fn footnote_node(label: &TextNode) -> Node {
+    Node {
+        id: None,
+        ty: Some("footnote".to_string()),
+        label: Some(label.clone()),
+        classes: Vec::new(),
+        style: Vec::new(),
+        style_span: None,
+        children: Vec::new(),
+        links: Vec::new(),
+        span: label.span,
+    }
+}
+
 /// The `symbol: <name>` declaration an icon's smart label lowers to [SPEC 7].
 pub(super) fn symbol_decl(name: &str, span: Span) -> Decl {
     Decl {

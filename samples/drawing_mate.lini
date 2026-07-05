@@ -1,0 +1,19 @@
+// Mates [SPEC 15.5]: `||` seats parts without drawing anything. Directed
+// anchors abut flush along their shared normal, `gap:` apart — and only a
+// mate's gap may go negative: the pin is seated 20 deep inside the socket's
+// bore, its `--bg` fill reading as the insertion.
+
+{ layout: drawing; scale: 2 }
+
+|sketch#socket| {
+  draw: move(0, 0) up(14) right(50) down(8) left(30) down(6):seat;
+  mirror: x-axis;
+}
+
+|sketch#pin| {
+  draw: move(0, 0) up(5) left(24) chamfer(2) down(5);
+  mirror: x-axis;
+  fill: --bg;
+}
+
+pin:left || socket:right { gap: -20 }

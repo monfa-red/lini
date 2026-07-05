@@ -80,7 +80,7 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
     let mut link_list = Vec::new();
     for w in &file.links {
         let (base, ancestors) = link_scope(&baked, &nodes, &root_attrs, &[]);
-        let drawing = scope_is_drawing(&nodes, &root_attrs, &[]);
+        let kind = link_scope_kind(&nodes, &root_attrs, &[]);
         link_list.extend(links::resolve_link(
             w,
             &ctx,
@@ -88,14 +88,14 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
             &[],
             &ancestors,
             &base,
-            drawing,
+            &kind,
         )?);
     }
     for lw in &lifted {
         let (base, ancestors) = link_scope(&baked, &nodes, &root_attrs, &lw.prefix);
-        let drawing = scope_is_drawing(&nodes, &root_attrs, &lw.prefix);
+        let kind = link_scope_kind(&nodes, &root_attrs, &lw.prefix);
         link_list.extend(links::resolve_link(
-            &lw.link, &ctx, &index, &lw.prefix, &ancestors, &base, drawing,
+            &lw.link, &ctx, &index, &lw.prefix, &ancestors, &base, &kind,
         )?);
     }
 
@@ -390,6 +390,43 @@ fn scope_is_drawing(nodes: &[ResolvedInst], root_attrs: &AttrMap, scope: &[Strin
         None => root_attrs.get("layout"),
     };
     matches!(layout, Some(ResolvedValue::Ident(l)) if l == "drawing")
+}
+
+/// A link scope's drawing classification [SPEC 15/20]: whether the immediate
+/// container is a drawing, and — when it is not but a drawing encloses it —
+/// that container's display type, so a mate written inside a `|row|` in a
+/// drawing errors "a '|row|' places its own children".
+fn link_scope_kind(
+    nodes: &[ResolvedInst],
+    root_attrs: &AttrMap,
+    scope: &[String],
+) -> links::LinkScope {
+    let drawing = scope_is_drawing(nodes, root_attrs, scope);
+    let flow_in_drawing = if drawing {
+        None
+    } else {
+        let chain = scope_chain(nodes, scope);
+        let is_drawing = |attrs: &AttrMap| matches!(attrs.get("layout"), Some(ResolvedValue::Ident(l)) if l == "drawing");
+        let enclosed = is_drawing(root_attrs)
+            || chain
+                .iter()
+                .take(chain.len().saturating_sub(1))
+                .any(|c| is_drawing(&c.attrs));
+        match (enclosed, chain.last()) {
+            (true, Some(container)) => Some(
+                container
+                    .type_chain
+                    .first()
+                    .cloned()
+                    .unwrap_or_else(|| container.kind.as_str().to_string()),
+            ),
+            _ => None,
+        }
+    };
+    links::LinkScope {
+        drawing,
+        flow_in_drawing,
+    }
 }
 
 /// A link's scope inputs: its `base` layer — the baked defaults plus the nearest

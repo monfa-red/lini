@@ -201,6 +201,41 @@ pub fn dist(a: P, b: P) -> f64 {
     (a.0 - b.0).hypot(a.1 - b.1)
 }
 
+/// Multiply every coordinate (and arc radius) by `s` — the node's own `scale:`
+/// applied to the folded output, exact for lines and circular arcs [SPEC 15.1].
+pub fn scale(subs: &mut [Subpath], s: f64) {
+    let m = |p: P| (p.0 * s, p.1 * s);
+    for sub in subs {
+        for seg in &mut sub.segs {
+            *seg = match *seg {
+                Seg::Line { from, to } => Seg::Line {
+                    from: m(from),
+                    to: m(to),
+                },
+                Seg::Arc {
+                    from,
+                    to,
+                    r,
+                    large,
+                    sweep,
+                } => Seg::Arc {
+                    from: m(from),
+                    to: m(to),
+                    r: r * s,
+                    large,
+                    sweep,
+                },
+                Seg::Cubic { from, c1, c2, to } => Seg::Cubic {
+                    from: m(from),
+                    c1: m(c1),
+                    c2: m(c2),
+                    to: m(to),
+                },
+            };
+        }
+    }
+}
+
 /// Fold subpaths to an SVG `d` — absolute commands, deterministic number
 /// formatting, even-odd fill semantics left to the emitter.
 pub fn to_d(subs: &[Subpath]) -> String {

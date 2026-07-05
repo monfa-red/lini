@@ -11,6 +11,7 @@
 
 pub(crate) mod bundles;
 mod classes;
+mod drawing;
 mod labels;
 pub(crate) mod scene;
 mod types;
@@ -94,13 +95,14 @@ pub fn desugar(file: &File) -> Result<File, Error> {
     // ── Lower instances, then auto-create root boxes for undeclared link ids — counting
     //    messages inside any root-sequence frame, since a frame opens no scope and its
     //    endpoints resolve against the scene's participants [SPEC 13]. ──
+    let root_drawing = root_layout(&user_root) == Some("drawing");
     let mut instances = Vec::new();
     for child in &file.instances {
-        instances.push(lower_child(child, &types, &bodies)?);
+        instances.push(lower_child(child, &types, &bodies, root_drawing)?);
     }
     // A drawing scope never auto-creates [SPEC 15]: an annotation must point at
     // real geometry, so an unknown endpoint stays unknown and errors at resolve.
-    if root_layout(&user_root) != Some("drawing") {
+    if !root_drawing {
         let declared = scene::declared_ids(&instances);
         let mut root_msgs: Vec<&Link> = file.links.iter().collect();
         root_msgs.extend(gather_frame_messages(&instances));
@@ -109,6 +111,7 @@ pub fn desugar(file: &File) -> Result<File, Error> {
                 &scene::auto_box(&id, span),
                 &types,
                 &bodies,
+                false,
             )?));
         }
     }
@@ -190,9 +193,18 @@ fn gather_frame_messages(children: &[Child]) -> Vec<&Link> {
     out
 }
 
-fn lower_child(child: &Child, types: &Types, bodies: &Bodies) -> Result<Child, Error> {
+/// `in_drawing`: whether this child sits in a drawing scope [SPEC 15] — the
+/// gate for the generated chrome. Class-detected, like frames: a container
+/// made a drawing only by an element rule is not seen here (the accepted
+/// stage-1 edge; resolve's gates still hold).
+fn lower_child(
+    child: &Child,
+    types: &Types,
+    bodies: &Bodies,
+    in_drawing: bool,
+) -> Result<Child, Error> {
     match child {
-        Child::Box(n) => Ok(Child::Box(lower_node(n, types, bodies)?)),
+        Child::Box(n) => Ok(Child::Box(lower_node(n, types, bodies, in_drawing)?)),
         Child::Text(t) => Ok(Child::Text(t.clone())),
     }
 }
@@ -287,7 +299,7 @@ fn block_cell(text: &TextNode) -> Node {
 fn wrap_body_cells(children: &mut [Child], types: &Types, bodies: &Bodies) -> Result<(), Error> {
     for c in children.iter_mut() {
         if let Child::Text(t) = c {
-            *c = Child::Box(lower_node(&block_cell(t), types, bodies)?);
+            *c = Child::Box(lower_node(&block_cell(t), types, bodies, false)?);
         }
     }
     Ok(())
@@ -362,16 +374,28 @@ fn wrap_header_row(
     }
     for c in &mut children[..row_end] {
         if let Child::Text(t) = c {
-            *c = Child::Box(lower_node(&header_node(t, None), types, bodies)?);
+            *c = Child::Box(lower_node(&header_node(t, None), types, bodies, false)?);
         }
     }
     Ok(())
 }
 
-fn lower_node(node: &Node, types: &Types, bodies: &Bodies) -> Result<Node, Error> {
+fn lower_node(
+    node: &Node,
+    types: &Types,
+    bodies: &Bodies,
+    in_drawing: bool,
+) -> Result<Node, Error> {
     let ty = node.ty.as_deref().unwrap_or("box");
     let info = types.resolve(ty, node.span)?;
     let kind = info.kind;
+
+    // The drawing scope [SPEC 15]: opened by a drawing node, carried through
+    // its parts and their features, sealed by a child that owns its own layout
+    // (a |row|, a |table|, a chart — it "lays out as one box", [SPEC 15.1]).
+    let is_drawing = is_drawing_body(&info.chain, &node.style);
+    let child_in_drawing =
+        is_drawing || (in_drawing && !seals_drawing_scope(&info.chain, &node.style));
 
     // Idempotency: a node already at a primitive type and wearing its `.lini-<kind>`
     // class is already lowered — keep its classes and type verbatim (re-prepending
@@ -400,13 +424,21 @@ fn lower_node(node: &Node, types: &Types, bodies: &Bodies) -> Result<Node, Error
         for name in &info.chain {
             if let Some((body, _)) = bodies.get(name) {
                 for c in body {
-                    children.push(lower_child(c, types, bodies)?);
+                    children.push(lower_child(c, types, bodies, child_in_drawing)?);
                 }
             }
         }
     }
     for c in &node.children {
-        children.push(lower_child(c, types, bodies)?);
+        children.push(lower_child(c, types, bodies, child_in_drawing)?);
+    }
+    // The generated chrome [SPEC 15.7] — real children, so the cascade styles
+    // or removes them. Only for a node in a drawing scope, and only on first
+    // lowering (re-desugar keeps the ones already there).
+    if !already && in_drawing {
+        for ch in drawing::chrome_children(node, kind, &info.chain) {
+            children.push(Child::Box(lower_node(&ch, types, bodies, false)?));
+        }
     }
 
     // Table / entity structure [SPEC 8]. `cols` is the grid column count, driving both
@@ -471,9 +503,14 @@ fn lower_node(node: &Node, types: &Types, bodies: &Bodies) -> Result<Node, Error
         } else if is_entity {
             // An entity's label is its title: a `|header|` spanning every column [SPEC 8].
             let title = header_node(label, Some(cols.unwrap_or(2)));
-            children.insert(0, Child::Box(lower_node(&title, types, bodies)?));
+            children.insert(0, Child::Box(lower_node(&title, types, bodies, false)?));
+        } else if is_drawing {
+            // A drawing's smart label is its title, lowered to a |footnote|
+            // under the view [SPEC 15.8].
+            let title = lower_node(&labels::footnote_node(label), types, bodies, false)?;
+            children.insert(0, Child::Box(title));
         } else if is_container {
-            let caption = lower_node(&labels::caption_node(label), types, bodies)?;
+            let caption = lower_node(&labels::caption_node(label), types, bodies, false)?;
             children.insert(0, Child::Box(caption));
         } else if text_capable {
             children.insert(0, Child::Text(label.clone()));
@@ -531,7 +568,7 @@ fn lower_node(node: &Node, types: &Types, bodies: &Bodies) -> Result<Node, Error
             scene::auto_created_ids(&msgs, &declared)
         };
         for (auto_id, auto_span) in to_create {
-            let created = lower_node(&scene::auto_box(&auto_id, auto_span), types, bodies)?;
+            let created = lower_node(&scene::auto_box(&auto_id, auto_span), types, bodies, false)?;
             children.push(Child::Box(created));
         }
     }
@@ -615,6 +652,21 @@ fn mark_present(child: &Child, present: &mut BTreeSet<String>) {
 /// define over it) or an explicit `layout: drawing` on the instance [SPEC 15].
 fn is_drawing_body(chain: &[String], style: &[Decl]) -> bool {
     chain.iter().any(|t| t == "drawing") || root_layout(style) == Some("drawing")
+}
+
+/// Whether a node **seals** an enclosing drawing scope [SPEC 15.1]: it owns a
+/// layout (a flow wrapper, a grid, an engine) and arranges its interior as
+/// usual — its children are not the drawing's features. The layout-side twin
+/// is `layout::owns_layout` (attr-based, post-cascade).
+fn seals_drawing_scope(chain: &[String], style: &[Decl]) -> bool {
+    chain.iter().any(|t| {
+        matches!(
+            t.as_str(),
+            "row" | "column" | "grid" | "table" | "entity" | "chart" | "pie" | "sequence"
+        )
+    }) || style
+        .iter()
+        .any(|d| d.name == "layout" || d.name == "direction")
 }
 
 fn root_layout(user_root: &[Decl]) -> Option<&str> {

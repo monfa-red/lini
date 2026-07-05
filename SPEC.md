@@ -2283,12 +2283,16 @@ piston:left || bore:left { gap: -6 }     // negative gap — inserted 6 deep
   already grounded is over-constrained — an error naming the cycle; an unconnected
   island grounds its own first-declared node. Deterministic, source-ordered.
 - **Directed vs point anchors.** Sides and named edges are **directed**: a mate
-  between them aligns the faces flush, the two directions must be parallel
-  (`a:left || b:top` errors), and a named edge seats a part against an **interior**
-  face (`ring:right || housing:shoulder`). `gap:` offsets along the shared normal and
-  may be **negative** (overlap — the one place `gap` goes below zero). **Point**
-  anchors (`center`, a freestanding name) make the points **coincide** — the bare
-  `a || b` is the origin-to-origin case — and have no normal, so `gap:` there errors.
+  between them aligns the faces flush along the shared normal (the other axis stays
+  where the datum put it — `translate:` slides it), the two directions must be
+  parallel (`a:left || b:top` errors), and a named edge seats a part against an
+  **interior** face (`ring:right || housing:shoulder`). A named edge faces the
+  **left of the pen's travel** — draw the profile with the material on the pen's
+  right (axis → up → across → down, the natural half) and every face points out,
+  interior shoulders included. `gap:` offsets along the normal and may be
+  **negative** (overlap — the one place `gap` goes below zero). **Point** anchors
+  (`center`, a freestanding name) make the points **coincide** — the bare `a || b`
+  is the origin-to-origin case — and have no normal, so `gap:` there errors.
 - **Rotate, then mate; translate after.** A part's `rotate:` turns its geometry first
   and the mate aligns the *rotated* anchor; the mated child's own `translate:` applies
   **after** — the universal post-placement nudge, here a lateral slide along the face.

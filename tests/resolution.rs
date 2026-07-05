@@ -286,6 +286,12 @@ fn drawing_ops_need_a_drawing_scope() {
         "|box#a|\n|box#b|\na || b\n",
         "'||' belongs in a 'layout: drawing'",
     );
+    // Inside a layout-owning child of a drawing the flow already decided every
+    // position — the gate names the container [SPEC 20].
+    assert_resolve_error(
+        "{ layout: drawing }\n|rect#part| { width: 20; height: 20 }\n|row#r| [\n  |box#a|\n  |box#b|\n  a || b\n]\n",
+        "a '|row|' places its own children — mates seat a drawing's",
+    );
     assert_resolve_error(
         "a <-> b { tol: 0.1 }\n",
         "'tol' composes a dimension's text",

@@ -1,0 +1,11 @@
+// The drawing layout [SPEC 15]: children place their origins on one shared
+// datum — symmetric primitives stack concentric with no positioning at all —
+// and the view's `scale:` multiplies geometry while text, stroke, and the
+// centre-mark chrome stay sheet-space. The smart label is the title, under
+// the view.
+
+|drawing#washer| "WASHER  ⌀36" { scale: 3 } [
+  |oval#rim|  { width: 36; height: 36 }
+  |oval#land| { width: 22; height: 22; fill: none }
+  |hole#bore| { width: 12 }
+]

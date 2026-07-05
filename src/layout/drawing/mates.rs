@@ -1,0 +1,204 @@
+//! Mates [SPEC 15.5] — `a:anchor || b:anchor` seats parts after datum
+//! placement, walking outward from the **ground** (the first-declared geometry
+//! child): each mate translates the side not yet connected to the ground,
+//! whole and rigid. Directed anchors (sides, named edges) must face along one
+//! axis and seat flush, `gap:` apart along the shared normal (negative =
+//! inserted); point anchors coincide. A part's `rotate:` turned its anchors
+//! already; its own `translate:` re-applies **after** the seat — the universal
+//! post-placement nudge, here a lateral slide along the face.
+
+use super::super::ir::PlacedNode;
+use super::anchors::{self, Hit};
+use super::geometry::P;
+use crate::ast::Side;
+use crate::error::Error;
+use crate::resolve::{ResolvedEndpoint, ResolvedLink};
+use std::collections::HashMap;
+
+pub(super) fn seat(
+    kids: &mut [PlacedNode],
+    ground: usize,
+    mates: &[&ResolvedLink],
+    scope: &str,
+    scale: f64,
+) -> Result<(), Error> {
+    // A chain (`a || b || c`) is one mate per hop, in source order.
+    let mut pending: Vec<(&ResolvedLink, usize)> = Vec::new();
+    for w in mates {
+        for i in 0..w.endpoints.len() - 1 {
+            pending.push((w, i));
+        }
+    }
+    if pending.is_empty() {
+        return Ok(());
+    }
+
+    // Who is positioned, and by which mate (the ground by none) — the walk's
+    // frontier and the over-constraint report's evidence.
+    let mut seated: HashMap<usize, (Option<String>, usize)> = HashMap::new();
+    seated.insert(ground, (None, 0));
+    let mut seq = 1;
+
+    while !pending.is_empty() {
+        let mut progressed = false;
+        let mut i = 0;
+        while i < pending.len() {
+            let (w, hop) = pending[i];
+            let (ea, eb) = (&w.endpoints[hop], &w.endpoints[hop + 1]);
+            let a = anchors::resolve(kids, scope, ea)?;
+            let b = anchors::resolve(kids, scope, eb)?;
+            if a.child == b.child {
+                return Err(Error::at(
+                    w.span,
+                    format!(
+                        "'{}' and '{}' are features of one part — a part is rigid",
+                        rel(ea, scope),
+                        rel(eb, scope)
+                    ),
+                ));
+            }
+            match (seated.contains_key(&a.child), seated.contains_key(&b.child)) {
+                (true, true) => {
+                    // Over-constrained: name the end a mate already positioned
+                    // (the later seat; the ground itself is never the culprit).
+                    let (xa, xb) = (&seated[&a.child], &seated[&b.child]);
+                    let (child, via) = if xb.1 > xa.1 {
+                        (b.child, xb)
+                    } else {
+                        (a.child, xa)
+                    };
+                    let who = kids[child].id.clone().unwrap_or_default();
+                    let via = via.0.clone().unwrap_or_else(|| spell_pair(ea, eb, scope));
+                    return Err(Error::at(
+                        w.span,
+                        format!("mate over-constrains '{who}' — already positioned via '{via}'"),
+                    ));
+                }
+                (true, false) => {
+                    let d = delta(kids, &a, &b, ea, eb, w, scope, scale)?;
+                    let moved = b.child;
+                    kids[moved].cx += d.0;
+                    kids[moved].cy += d.1;
+                    seated.insert(moved, (Some(spell_pair(ea, eb, scope)), seq));
+                }
+                (false, true) => {
+                    let d = delta(kids, &b, &a, eb, ea, w, scope, scale)?;
+                    let moved = a.child;
+                    kids[moved].cx += d.0;
+                    kids[moved].cy += d.1;
+                    seated.insert(moved, (Some(spell_pair(ea, eb, scope)), seq));
+                }
+                (false, false) => {
+                    i += 1;
+                    continue;
+                }
+            }
+            seq += 1;
+            pending.remove(i);
+            progressed = true;
+        }
+        if !progressed {
+            // Unconnected islands ground their own first-declared node
+            // [SPEC 15.5] — deterministic, source-ordered.
+            let island = pending
+                .iter()
+                .flat_map(|(w, hop)| [&w.endpoints[*hop], &w.endpoints[*hop + 1]])
+                .filter_map(|ep| anchors::resolve(kids, scope, ep).ok().map(|h| h.child))
+                .min()
+                .expect("pending mates have endpoints");
+            seated.insert(island, (None, seq));
+            seq += 1;
+        }
+    }
+    Ok(())
+}
+
+/// The translation that seats `mover` against `fixed` [SPEC 15.5]. The seat is
+/// computed from the mover's **datum-pure** position (its own `translate:`
+/// re-applies after — subtracting it here and moving the placed node is the
+/// same thing).
+#[expect(clippy::too_many_arguments, reason = "one seat, all its evidence")]
+fn delta(
+    kids: &[PlacedNode],
+    fixed: &Hit,
+    mover: &Hit,
+    ef: &ResolvedEndpoint,
+    em: &ResolvedEndpoint,
+    w: &ResolvedLink,
+    scope: &str,
+    scale: f64,
+) -> Result<P, Error> {
+    let gap = match w.attrs.get("gap") {
+        None => None,
+        Some(v) => Some(
+            v.as_number()
+                .ok_or_else(|| Error::at(w.span, "a mate's 'gap' is a number"))?,
+        ),
+    };
+    let t = super::super::anchors::translate(&kids[mover.child].attrs, w.span)?
+        .map(|(x, y)| (x * scale, y * scale))
+        .unwrap_or((0.0, 0.0));
+    let pm = (mover.point.0 - t.0, mover.point.1 - t.1);
+    let pf = fixed.point;
+    match (fixed.outward, mover.outward) {
+        (Some(nf), Some(nm)) => {
+            if (nf.0 * nm.1 - nf.1 * nm.0).abs() > 1e-6 {
+                return Err(Error::at(
+                    w.span,
+                    format!(
+                        "mated anchors must face along one axis — '{}' has no shared normal",
+                        spell_pair(ef, em, scope)
+                    ),
+                ));
+            }
+            let gap_px = gap.unwrap_or(0.0) * scale;
+            let d = gap_px - ((pm.0 - pf.0) * nf.0 + (pm.1 - pf.1) * nf.1);
+            Ok((nf.0 * d, nf.1 * d))
+        }
+        (None, None) => {
+            if gap.is_some() {
+                return Err(Error::at(
+                    w.span,
+                    "a point mate coincides — 'gap' needs directed anchors (sides or named edges)",
+                ));
+            }
+            Ok((pf.0 - pm.0, pf.1 - pm.1))
+        }
+        _ => Err(Error::at(
+            w.span,
+            format!(
+                "mated anchors must face along one axis — '{}' has no shared normal",
+                spell_pair(ef, em, scope)
+            ),
+        )),
+    }
+}
+
+/// An endpoint as the author wrote it — scope-relative path plus its anchor.
+fn spell(ep: &ResolvedEndpoint, scope: &str) -> String {
+    let mut s = rel(ep, scope).to_string();
+    if let Some(side) = ep.side {
+        s.push(':');
+        s.push_str(match side {
+            Side::Top => "top",
+            Side::Bottom => "bottom",
+            Side::Left => "left",
+            Side::Right => "right",
+        });
+    } else if let Some(p) = &ep.point {
+        s.push(':');
+        s.push_str(p);
+    }
+    s
+}
+
+fn spell_pair(a: &ResolvedEndpoint, b: &ResolvedEndpoint, scope: &str) -> String {
+    format!("{} || {}", spell(a, scope), spell(b, scope))
+}
+
+fn rel<'a>(ep: &'a ResolvedEndpoint, scope: &str) -> &'a str {
+    ep.path
+        .strip_prefix(scope)
+        .map(|p| p.trim_start_matches('.'))
+        .unwrap_or(&ep.path)
+}

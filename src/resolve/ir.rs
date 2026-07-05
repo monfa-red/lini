@@ -375,10 +375,6 @@ pub struct ResolvedEndpoint {
     /// A drawing-scope anchor beyond the four sides [SPEC 15.2] — a corner,
     /// `center`, or a sketch-authored name; `None` everywhere else (the router
     /// vocabulary is `side`).
-    #[expect(
-        dead_code,
-        reason = "read by the drawing annotation pass — PLAN.md stage 4"
-    )]
     pub point: Option<String>,
     pub span: Span,
 }

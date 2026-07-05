@@ -1,0 +1,19 @@
+// Assemblies [SPEC 15.8]: an assembly is a drawing whose children mate — and
+// drawings nest. Each sub-view is one rigid body from outside (its own parts,
+// features, and chrome sealed in its [ ]); mates reach in where both ends are
+// visible by dot-path.
+
+{ layout: drawing }
+
+|drawing#motor| [
+  |rect#frame|  { width: 50; height: 40 }
+  |rect#shaft|  { width: 24; height: 8 }
+  shaft:left || frame:right
+]
+
+|drawing#pump| [
+  |oval#casing| { width: 44; height: 44 }
+  |hole#gland|  { width: 10 }
+]
+
+pump:left || motor:right { gap: 4 }
