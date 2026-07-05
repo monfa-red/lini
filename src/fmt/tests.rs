@@ -281,3 +281,48 @@ cat -> kitchen.bowl .loud
     idempotent(src);
     reparses(src);
 }
+
+// ───────── The drawing statements [SPEC 15/19] ─────────
+
+#[test]
+fn draw_gets_its_own_paragraph_and_wraps_at_the_budget() {
+    // The pen never shares a line with another declaration; calls flow to the
+    // line budget and continuations align under the first call.
+    let src = "|sketch#bar| { draw: move(-150, 0) up(10) chamfer(1.5) right(40):thread :a right(260) chamfer(1.5) down(10); mirror: x-axis; }\n";
+    let out = fmt(src);
+    assert_eq!(
+        out,
+        "|sketch#bar| {\n  draw: move(-150, 0) up(10) chamfer(1.5) right(40):thread :a right(260)\n        chamfer(1.5) down(10);\n  mirror: x-axis;\n}\n"
+    );
+    idempotent(src);
+}
+
+#[test]
+fn each_move_starts_its_own_subpath_line() {
+    let src = "|sketch#plate| { draw: move(0, 0) right(60) close() move(20, 15) circle(6); }\n";
+    let out = fmt(src);
+    assert_eq!(
+        out,
+        "|sketch#plate| {\n  draw: move(0, 0) right(60) close()\n        move(20, 15) circle(6);\n}\n"
+    );
+    idempotent(src);
+}
+
+#[test]
+fn a_short_single_subpath_draw_still_inlines() {
+    let src = "|sketch#s| { draw: move(0, 0) right(10); }\n";
+    assert_eq!(fmt(src), "|sketch#s| { draw: move(0, 0) right(10); }\n");
+}
+
+#[test]
+fn mates_and_measures_format_like_links() {
+    // The drawing ops are ordinary link statements to the formatter: the op
+    // between two-ended groups, after a one-ended group [SPEC 15.6/21].
+    let src = "a:left||b:right{gap:-10}\nbar:thread   (-)   { side: left; tol: h6 }\nbar:left<->bar:right{side:bottom}\nbolt <- \"THRU\"\n";
+    let out = fmt(src);
+    assert_eq!(
+        out,
+        "a:left || b:right { gap: -10; }\nbar:thread (-) { side: left; tol: h6; }\nbar:left <-> bar:right { side: bottom; }\nbolt <- \"THRU\"\n"
+    );
+    idempotent(src);
+}

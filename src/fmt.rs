@@ -403,7 +403,8 @@ impl Emitter<'_> {
     fn emit_grouped_decls(&mut self, decls: &[&Decl], depth: usize) {
         let mut mid_line = false;
         for d in decls {
-            if mid_line && self.has_trivia_between(self.cursor, d.span.start) {
+            if mid_line && (d.name == "draw" || self.has_trivia_between(self.cursor, d.span.start))
+            {
                 self.out.push('\n');
                 mid_line = false;
             }
@@ -413,6 +414,15 @@ impl Emitter<'_> {
             } else {
                 self.indent(depth);
             }
+            if d.name == "draw" {
+                // The pen reads as a paragraph — never sharing a line with
+                // another declaration, each subpath on its own [SPEC 15.3/19].
+                self.emit_draw_decl(d, depth);
+                self.cursor = d.span.end;
+                self.out.push('\n');
+                mid_line = false;
+                continue;
+            }
             self.emit_decl(d, false);
             self.cursor = d.span.end;
             mid_line = true;
@@ -420,6 +430,37 @@ impl Emitter<'_> {
         if mid_line {
             self.out.push('\n');
         }
+    }
+
+    /// The canonical `draw:` layout [SPEC 19]: pen calls flow to the line
+    /// budget, every `move()` after the first starts a new subpath line, and
+    /// continuations indent to align under the first call.
+    fn emit_draw_decl(&mut self, d: &Decl, depth: usize) {
+        self.out.push_str("draw: ");
+        let pad = " ".repeat(INDENT.len() * depth + "draw: ".len());
+        let mut first = true;
+        for v in d.groups.iter().flatten() {
+            let start = self.out.len();
+            let new_subpath = matches!(v, Value::Call(c) if c.name == "move");
+            if !first {
+                if new_subpath {
+                    self.out.push('\n');
+                    self.out.push_str(&pad);
+                } else {
+                    self.out.push(' ');
+                }
+            }
+            self.emit_value(v);
+            let line_start = self.out.rfind('\n').map_or(0, |i| i + 1);
+            if !first && !new_subpath && self.out.len() - line_start >= MAX_LINE {
+                self.out.truncate(start);
+                self.out.push('\n');
+                self.out.push_str(&pad);
+                self.emit_value(v);
+            }
+            first = false;
+        }
+        self.out.push(';');
     }
 
     fn has_trivia_between(&self, start: usize, end: usize) -> bool {
@@ -453,6 +494,19 @@ impl Emitter<'_> {
     /// exceeds [`MAX_LINE`].
     fn try_inline_decls(&mut self, decls: &[Decl], end: usize) -> bool {
         if self.has_trivia_between(self.cursor, end) {
+            return false;
+        }
+        // A multi-subpath pen always breaks — one line per `move()` [SPEC 19].
+        let multi_subpath = |d: &Decl| {
+            d.name == "draw"
+                && d.groups
+                    .iter()
+                    .flatten()
+                    .filter(|v| matches!(v, Value::Call(c) if c.name == "move"))
+                    .count()
+                    > 1
+        };
+        if decls.iter().any(multi_subpath) {
             return false;
         }
         let line_start = self.out.rfind('\n').map_or(0, |i| i + 1);
