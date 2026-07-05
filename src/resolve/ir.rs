@@ -270,6 +270,10 @@ pub enum MarkerKind {
     /// chart line it marks a data point ([SPEC 14.2]).
     Circle,
     Diamond,
+    /// The filled drafting **datum** triangle ([SPEC 7]) — base on the feature
+    /// face, apex toward the leader; what a drawing's `>-` lowers to
+    /// ([SPEC 15.7]).
+    Datum,
     /// The ER "many" crow's-foot ([SPEC 7]); the four below pair it / a bar with an
     /// optionality ring for the full cardinality set.
     Crow,
@@ -291,6 +295,7 @@ impl MarkerKind {
             "dot" => Self::Dot,
             "circle" => Self::Circle,
             "diamond" => Self::Diamond,
+            "datum" => Self::Datum,
             // The ER cardinality family ([SPEC 7]); `many` is an alias of `crow`.
             "crow" | "many" => Self::Crow,
             "one" => Self::One,
@@ -336,8 +341,19 @@ pub enum Strategy {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LinkKind {
     Wire,
-    Measure(crate::ast::DrawOp),
+    Measure(MeasureOp),
     Mate,
+}
+
+/// A drawing measure's reading [SPEC 15.6]. `Linear` is the two-ended `<->`
+/// in a drawing scope — classified at resolve from the *operator* (an
+/// explicit `marker:` never re-types a statement); `Round` / `(-)` and
+/// `Angle` / `(<)` carry over from their lexed ops.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MeasureOp {
+    Linear,
+    Round,
+    Angle,
 }
 
 pub struct ResolvedLink {

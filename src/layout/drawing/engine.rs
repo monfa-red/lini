@@ -1,15 +1,15 @@
 //! `layout: drawing` [SPEC 15] — the engine. One placement model, whole scope:
 //! every child's origin lands on the container's **datum** (`translate:` the
-//! only offset), mates then seat parts against each other, and the sheet sizes
-//! to the union of its children's paint. The scope owns its links — the router
-//! never runs here; mates are consumed now, dimensions and leaders land per
-//! PLAN.md stage 4.
+//! only offset), mates seat parts against each other, annotations lower
+//! against the seated geometry, and the sheet sizes to the union of its
+//! children's paint — annotations included. The scope owns its links; the
+//! router never runs here.
 
 use super::super::ir::{Bbox, PlacedNode};
 use super::super::{Ctx, anchors, child_path, effective_scale, layout_inst, prim, primitives};
-use super::{mates, place_features};
+use super::{annotate, mates, place_features};
 use crate::error::Error;
-use crate::resolve::{LinkKind, Program, ResolvedInst, ResolvedLink};
+use crate::resolve::{LinkKind, Program, ResolvedInst, ResolvedLink, ResolvedValue};
 use crate::span::Span;
 
 /// A `|drawing|` **node**: lay out and seat its children, then size border-box
@@ -22,7 +22,14 @@ pub(in crate::layout) fn layout_node(
     ctx: Ctx,
 ) -> Result<PlacedNode, Error> {
     let own = effective_scale(&inst.attrs, ctx.scale, inst.span)?;
-    let mut children = lay_out(&inst.children, path, program, own, inst.span)?;
+    let mut children = lay_out(
+        &inst.children,
+        path,
+        program,
+        own,
+        unit_of(&inst.attrs),
+        inst.span,
+    )?;
 
     // Centre the drawn extent on the node's origin, so the container places in
     // a flow like any box (and a styled drawing's own rect backs its content).
@@ -48,7 +55,14 @@ pub(in crate::layout) fn layout_node(
 /// stay in scene coordinates — the root's padding frames them in `finish`.
 pub(in crate::layout) fn layout_root(program: &Program) -> Result<(Vec<PlacedNode>, Bbox), Error> {
     let own = effective_scale(&program.scene.attrs, 1.0, Span::empty())?;
-    let mut children = lay_out(&program.scene.nodes, "", program, own, Span::empty())?;
+    let mut children = lay_out(
+        &program.scene.nodes,
+        "",
+        program,
+        own,
+        unit_of(&program.scene.attrs),
+        Span::empty(),
+    )?;
     let extent = flow_extent(&children);
     place_pinned(&mut children, extent)?;
     Ok((children, extent))
@@ -56,12 +70,16 @@ pub(in crate::layout) fn layout_root(program: &Program) -> Result<(Vec<PlacedNod
 
 /// The shared body: lay each child out (features, chrome, and patterns fold
 /// inside `layout_inst` under the drawing context), place origins on the
-/// datum, consume the scope's links.
+/// datum, seat the mates, then lower every other link — dimensions, leaders,
+/// annotation arrows — against the seated geometry [SPEC 15.9]. The
+/// annotations append after the children, so they paint above the geometry
+/// (`layer:` still wins) and size into the drawing's bbox.
 fn lay_out(
     insts: &[ResolvedInst],
     path: &str,
     program: &Program,
     own: f64,
+    unit: Option<&str>,
     span: Span,
 ) -> Result<Vec<PlacedNode>, Error> {
     let ctx = Ctx {
@@ -86,20 +104,27 @@ fn lay_out(
         ));
     }
 
-    // The scope's links, in source order: mates seat parts; everything else —
-    // dimensions, leaders, annotation arrows — is the next stage's job.
+    // The scope's links, in source order: mates seat parts first, and the
+    // annotations measure the seated result [SPEC 15.9].
     let mut links: Vec<&ResolvedLink> = program.links.iter().filter(|w| w.scope == path).collect();
     links.sort_by_key(|w| w.span.start);
-    if let Some(w) = links.iter().find(|w| w.kind != LinkKind::Mate) {
-        return Err(Error::at(
-            w.span,
-            "a drawing's dimensions and leaders are not built yet (PLAN.md stage 4)",
-        ));
-    }
+    let (mates, annotations): (Vec<&ResolvedLink>, Vec<&ResolvedLink>) =
+        links.iter().partition(|w| w.kind == LinkKind::Mate);
 
     place_features(&mut kids, own)?;
-    mates::seat(&mut kids, geometry[0], &links, path, own)?;
+    mates::seat(&mut kids, geometry[0], &mates, path, own)?;
+    let mut lowered = annotate::lower(&kids, &annotations, path, own, unit)?;
+    kids.append(&mut lowered);
     Ok(kids)
+}
+
+/// The drawing's `unit:` — a suffix on auto-measured linear values
+/// [SPEC 15.1].
+fn unit_of(attrs: &crate::resolve::AttrMap) -> Option<&str> {
+    match attrs.get("unit") {
+        Some(ResolvedValue::String(u)) => Some(u),
+        _ => None,
+    }
 }
 
 /// The drawn extent of the in-flow children (pinned overlays never grow their
@@ -138,42 +163,9 @@ fn place_pinned(kids: &mut [PlacedNode], anchor_box: Bbox) -> Result<(), Error> 
 
 #[cfg(test)]
 mod tests {
+    use super::super::testutil::{by_id, laid, layout_err};
     use crate::layout::PlacedNode;
     use crate::resolve::NodeKind;
-
-    fn laid(src: &str) -> crate::layout::LaidOut {
-        let toks = crate::lexer::lex(src).expect("lex");
-        let file = crate::syntax::parser::parse(&toks).expect("parse");
-        let lowered = crate::desugar::desugar(&file).expect("desugar");
-        let program = crate::resolve::resolve_with_theme(&lowered, &[]).expect("resolve");
-        crate::layout::layout(&program).expect("layout")
-    }
-
-    fn layout_err(src: &str) -> String {
-        let toks = crate::lexer::lex(src).expect("lex");
-        let file = crate::syntax::parser::parse(&toks).expect("parse");
-        let lowered = crate::desugar::desugar(&file).expect("desugar");
-        let program = crate::resolve::resolve_with_theme(&lowered, &[]).expect("resolve");
-        match crate::layout::layout(&program) {
-            Ok(_) => panic!("expected a layout error"),
-            Err(e) => e.message,
-        }
-    }
-
-    fn by_id<'a>(nodes: &'a [PlacedNode], id: &str) -> &'a PlacedNode {
-        fn walk<'a>(nodes: &'a [PlacedNode], id: &str) -> Option<&'a PlacedNode> {
-            for n in nodes {
-                if n.id.as_deref() == Some(id) {
-                    return Some(n);
-                }
-                if let Some(hit) = walk(&n.children, id) {
-                    return Some(hit);
-                }
-            }
-            None
-        }
-        walk(nodes, id).unwrap_or_else(|| panic!("node '{id}' placed"))
-    }
 
     // ── Datum placement [SPEC 15.1] ──
 
@@ -226,13 +218,36 @@ mod tests {
         );
     }
 
+    // ── Annotations [SPEC 15.6] ──
+
     #[test]
-    fn annotations_error_until_stage_4() {
+    fn a_linear_dim_measures_the_seated_pre_scale_span() {
+        // Two 20-wide rects, b mated flush to a's right at scale 2: the dim
+        // reads the anchors after mates, in drawing units — 40, not 80 px.
+        let l = laid(
+            "{ layout: drawing; scale: 2 }\n|rect#a| { width: 20; height: 20 }\n|rect#b| { width: 20; height: 20 }\nb:left || a:right\na:left <-> b:right { side: bottom }\n",
+        );
+        let texts: Vec<&PlacedNode> = l
+            .nodes
+            .iter()
+            .filter(|n| n.kind == NodeKind::Text)
+            .collect();
         assert!(
-            layout_err(
-                "{ layout: drawing }\n|rect#a| { width: 20; height: 20 }\n|rect#b| { width: 20; height: 20 }\na:right <-> b:left\n"
-            )
-            .contains("PLAN.md stage 4")
+            texts.iter().any(|t| t.label.as_deref() == Some("40")),
+            "measured 40: {:?}",
+            texts.iter().map(|t| &t.label).collect::<Vec<_>>()
+        );
+        // The dim stacks below the geometry: its text sits under both rects.
+        let dim_text = texts
+            .iter()
+            .find(|t| t.label.as_deref() == Some("40"))
+            .unwrap();
+        let a = by_id(&l.nodes, "a");
+        assert!(
+            dim_text.cy > a.cy + a.bbox.max_y,
+            "stacked on bottom: text.cy={} a.bottom={}",
+            dim_text.cy,
+            a.cy + a.bbox.max_y
         );
     }
 

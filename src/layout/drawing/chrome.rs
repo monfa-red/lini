@@ -42,7 +42,7 @@ pub(in crate::layout) fn placeholder(inst: &ResolvedInst) -> PlacedNode {
         children: Vec::new(),
         gutters: Vec::new(),
         links: Vec::new(),
-        names: Vec::new(),
+        sketch: None,
         span: inst.span,
     }
 }

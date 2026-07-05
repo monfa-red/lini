@@ -8,12 +8,28 @@
 //! post-placement nudge, here a lateral slide along the face.
 
 use super::super::ir::PlacedNode;
-use super::anchors::{self, Hit};
+use super::anchors;
 use super::geometry::P;
-use crate::ast::Side;
 use crate::error::Error;
 use crate::resolve::{ResolvedEndpoint, ResolvedLink};
 use std::collections::HashMap;
+
+/// A mate-side anchor, reduced to what the seat needs — plain data, so the
+/// walk can mutate `kids` after resolving both ends.
+struct Hit {
+    child: usize,
+    point: P,
+    outward: Option<P>,
+}
+
+fn hit(kids: &[PlacedNode], scope: &str, ep: &ResolvedEndpoint) -> Result<Hit, Error> {
+    let a = anchors::resolve(kids, scope, ep, "mate")?;
+    Ok(Hit {
+        child: a.child,
+        point: a.point(),
+        outward: a.outward(),
+    })
+}
 
 pub(super) fn seat(
     kids: &mut [PlacedNode],
@@ -45,8 +61,8 @@ pub(super) fn seat(
         while i < pending.len() {
             let (w, hop) = pending[i];
             let (ea, eb) = (&w.endpoints[hop], &w.endpoints[hop + 1]);
-            let a = anchors::resolve(kids, scope, ea)?;
-            let b = anchors::resolve(kids, scope, eb)?;
+            let a = hit(kids, scope, ea)?;
+            let b = hit(kids, scope, eb)?;
             // A mate seats two **geometry** nodes [SPEC 15.5] — sheet content
             // (a note, a balloon, the title) is placed by its own rules.
             for hit in [&a, &b] {
@@ -117,7 +133,7 @@ pub(super) fn seat(
             let island = pending
                 .iter()
                 .flat_map(|(w, hop)| [&w.endpoints[*hop], &w.endpoints[*hop + 1]])
-                .filter_map(|ep| anchors::resolve(kids, scope, ep).ok().map(|h| h.child))
+                .filter_map(|ep| hit(kids, scope, ep).ok().map(|h| h.child))
                 .min()
                 .expect("pending mates have endpoints");
             seated.insert(island, (None, seq));
@@ -181,26 +197,12 @@ fn delta(
     }
 }
 
-/// An endpoint as the author wrote it — scope-relative path plus its anchor.
-fn spell(ep: &ResolvedEndpoint, scope: &str) -> String {
-    let mut s = rel(ep, scope).to_string();
-    if let Some(side) = ep.side {
-        s.push(':');
-        s.push_str(match side {
-            Side::Top => "top",
-            Side::Bottom => "bottom",
-            Side::Left => "left",
-            Side::Right => "right",
-        });
-    } else if let Some(p) = &ep.point {
-        s.push(':');
-        s.push_str(p);
-    }
-    s
-}
-
 fn spell_pair(a: &ResolvedEndpoint, b: &ResolvedEndpoint, scope: &str) -> String {
-    format!("{} || {}", spell(a, scope), spell(b, scope))
+    format!(
+        "{} || {}",
+        anchors::spell(a, scope),
+        anchors::spell(b, scope)
+    )
 }
 
 fn rel<'a>(ep: &'a ResolvedEndpoint, scope: &str) -> &'a str {

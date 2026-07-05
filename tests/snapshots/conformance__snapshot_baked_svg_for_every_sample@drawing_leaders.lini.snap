@@ -1,0 +1,89 @@
+---
+source: tests/conformance.rs
+assertion_line: 40
+expression: svg
+input_file: samples/drawing_leaders.lini
+---
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-213.9 -116.5 368.2 226.5" width="368.2" height="226.5" class="lini">
+  <style>
+    .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
+    .lini .lini-canvas { fill: white; }
+    .lini .lini-oval { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-poly { stroke-dasharray: none; }
+    .lini .lini-path { stroke-dasharray: none; }
+    .lini .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
+    .lini .lini-note { fill: white; stroke: #444; }
+    .lini .lini-balloon { fill: white; stroke: #444; font-size: 11px; }
+    .lini .lini-hole { fill: white; stroke: #444; }
+    .lini .lini-centerline { fill: none; stroke-width: 1; stroke-dasharray: 10,3,1,3; }
+    .lini .lini-marker { fill: #444; stroke: none; }
+  </style>
+  <defs/>
+  <rect class="lini-canvas" x="-213.9" y="-116.5" width="368.2" height="226.5"/>
+  <g class="lini-scene">
+    <g class="lini-node lini-sketch" data-id="bracket" style="fill: white; stroke: #444; stroke-width: 2" transform="translate(0,0)">
+      <path d="M -80 60 L 68 60 A 12 12 0 0 0 80 48 L 80 -60 Z" fill-rule="evenodd"/>
+    </g>
+    <g class="lini-node lini-hole lini-oval" data-id="eye" transform="translate(40,50)">
+      <ellipse cx="0" cy="0" rx="16" ry="16"/>
+      <g class="lini-node lini-centerline lini-line" transform="translate(0,0)">
+        <line x1="-20" y1="0" x2="20" y2="0"/>
+      </g>
+      <g class="lini-node lini-centerline lini-line" transform="translate(0,0)">
+        <line x1="0" y1="20" x2="0" y2="-20"/>
+      </g>
+    </g>
+    <g class="lini-node lini-balloon lini-oval" data-id="b1" transform="translate(110,-70)">
+      <ellipse cx="0" cy="0" rx="23.3" ry="25.5"/>
+      <text class="lini-text" x="0" y="0">1</text>
+    </g>
+    <g class="lini-node lini-note lini-path" data-id="hint" style="stroke-width: 2; font-size: 13px" transform="translate(-140,-40)">
+      <path d="M -53.9 -13.5 L 44.72 -13.5 L 53.9 -4.3199999999999985 L 53.9 13.5 L -53.9 13.5 Z"/>
+      <g class="lini-node lini-path" style="fill: #444; stroke: none; stroke-width: 0" transform="translate(0,0)">
+        <path d="M 44.72 -13.5 L 53.9 -4.3199999999999985 L 44.72 -4.3199999999999985 Z"/>
+      </g>
+      <text class="lini-text" x="0" y="0">BREAK EDGES</text>
+    </g>
+    <g class="lini-node lini-path" style="fill: none; stroke: #444; stroke-width: 1" transform="translate(0,0)">
+      <path d="M -48 36 A 40 40 0 0 1 -40 60"/>
+    </g>
+    <text class="lini-text" x="-31.1428" y="43.7143" style="font-weight: normal; font-size: 11px">36.87°</text>
+    <g class="lini-node lini-line" style="stroke-width: 1" transform="translate(0,0)">
+      <polyline points="76.4853,56.4853 92.2618,68.1364 100.2618,68.1364"/>
+    </g>
+    <g class="lini-node lini-poly" style="fill: #444; stroke: none; stroke-width: 0; opacity: 1" transform="translate(0,0)">
+      <polygon points="76.4853,56.4853 84.6161,60.6253 82.8339,63.0385"/>
+    </g>
+    <text class="lini-text" x="108.8618" y="68.1364" style="font-weight: normal; font-size: 11px">R6</text>
+    <g class="lini-node lini-line" style="stroke-width: 1" transform="translate(0,0)">
+      <line x1="40" y1="66" x2="40" y2="6.2"/>
+    </g>
+    <g class="lini-node lini-poly" style="fill: #444; stroke: none; stroke-width: 0; opacity: 1" transform="translate(0,0)">
+      <polygon points="40,34 41.5,43 38.5,43"/>
+    </g>
+    <g class="lini-node lini-poly" style="fill: #444; stroke: none; stroke-width: 0; opacity: 1" transform="translate(0,0)">
+      <polygon points="40,66 38.5,57 41.5,57"/>
+    </g>
+    <text class="lini-text" x="32.5" y="20.1" style="font-weight: normal; font-size: 11px" transform="rotate(-90 32.5 20.1)">⌀16</text>
+    <g class="lini-node lini-line" style="stroke-width: 1" transform="translate(0,0)">
+      <polyline points="0,66 0,84.5 8,84.5"/>
+      <polygon class="lini-marker lini-marker-datum" points="3,60 -3,60 0,66"/>
+    </g>
+    <text class="lini-text" x="13.3" y="84.5" style="font-weight: normal; font-size: 11px">A</text>
+    <g class="lini-node lini-line" style="stroke-width: 1" transform="translate(0,0)">
+      <polyline points="-2,0 -95,0 -103,0"/>
+      <circle class="lini-marker lini-marker-dot" cx="-2.25" cy="0" r="2.25"/>
+    </g>
+    <text class="lini-text" x="-121.5" y="0" style="font-weight: normal; font-size: 11px">GRIND</text>
+    <g class="lini-node lini-line" style="stroke-width: 1" transform="translate(0,0)">
+      <line x1="100.1057" y1="-46.9133" x2="80.7878" y2="-1.8383"/>
+      <circle class="lini-marker lini-marker-dot" cx="80.8863" cy="-2.0681" r="2.25"/>
+    </g>
+    <g class="lini-node lini-line" style="stroke-width: 1" transform="translate(0,0)">
+      <line x1="-140" y1="-40" x2="-81.029" y2="58.285"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-80,60 -85.6595,56.3985 -80.5145,53.3116"/>
+    </g>
+  </g>
+  <g class="lini-links"/>
+</svg>

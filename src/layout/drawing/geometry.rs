@@ -201,6 +201,20 @@ pub fn dist(a: P, b: P) -> f64 {
     (a.0 - b.0).hypot(a.1 - b.1)
 }
 
+/// A circular arc segment's centre — the SVG centre parameterization for the
+/// pen's `(r, large, sweep)` encoding. The centre sits off the chord midpoint
+/// along its perpendicular, on the side the flags pick: for a minor arc the
+/// sweep side, flipped when `large`.
+pub fn arc_center(from: P, to: P, r: f64, large: bool, sweep: bool) -> P {
+    let chord = dist(from, to).max(1e-12);
+    let m = ((from.0 + to.0) / 2.0, (from.1 + to.1) / 2.0);
+    let dhat = ((to.0 - from.0) / chord, (to.1 - from.1) / chord);
+    let perp = (-dhat.1, dhat.0);
+    let h = (r * r - (chord / 2.0) * (chord / 2.0)).max(0.0).sqrt();
+    let sign = if sweep != large { 1.0 } else { -1.0 };
+    (m.0 + perp.0 * h * sign, m.1 + perp.1 * h * sign)
+}
+
 /// Rotate `p` about `centre` by `deg` — positive reads clockwise on screen
 /// (y grows down), matching the pen's bearing convention.
 pub fn rotate_about(p: P, centre: P, deg: f64) -> P {

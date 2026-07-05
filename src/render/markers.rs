@@ -80,6 +80,9 @@ pub const MARKER_OVERLAP: f64 = 0.5;
 pub fn line_inset(kind: MarkerKind, thickness: f64) -> f64 {
     match kind {
         MarkerKind::None => 0.0,
+        // The datum triangle's base sits on the feature and its apex meets the
+        // leader ([SPEC 15.7]) — the line stops at the apex, a full head back.
+        MarkerKind::Datum => marker_size(thickness),
         // An open ER marker is stroked, not filled, so the line must stop *behind* it
         // (at its furthest element back from the entity) rather than tuck under it.
         k if k.is_open() => marker_size(thickness) * open_back_extent(k),
@@ -238,6 +241,23 @@ pub fn emit_marker(
                 size * CIRCLE_RADIUS,
                 &fill,
             );
+        }
+        // The GD&T datum feature triangle ([SPEC 15.7]): filled, its **base**
+        // on the feature face (at the tip, perpendicular to the leader) and
+        // its apex back along the line, where the leader meets it.
+        MarkerKind::Datum => {
+            let ax = tip.0 - ux * size;
+            let ay = tip.1 - uy * size;
+            let half = size * 0.5;
+            writeln!(
+                out,
+                r#"{}<polygon class="lini-marker lini-marker-datum" points="{},{} {},{} {},{}"{}/>"#,
+                indent,
+                num(tip.0 + px * half), num(tip.1 + py * half),
+                num(tip.0 - px * half), num(tip.1 - py * half),
+                num(ax), num(ay),
+                fill,
+            ).unwrap();
         }
         MarkerKind::Diamond => {
             let bx = tip.0 - ux * size;
@@ -430,6 +450,38 @@ mod tests {
             &paint,
         );
         assert_eq!(s.matches("lini-marker-open").count(), 2);
+    }
+
+    #[test]
+    fn the_datum_triangle_bases_on_the_feature_apex_at_the_leader() {
+        // Direction points into the shape; the base straddles the tip
+        // (perpendicular) and the apex sits a full head back, where the
+        // leader stops ([SPEC 15.7]).
+        let paint = MarkerPaint {
+            color: "black",
+            inline: false,
+            thickness: 1.0,
+        };
+        let mut s = String::new();
+        emit_marker(
+            &mut s,
+            "",
+            MarkerKind::Datum,
+            (100.0, 50.0),
+            (1.0, 0.0),
+            &paint,
+        );
+        let size = marker_size(1.0);
+        assert!(s.contains("lini-marker-datum"), "{s}");
+        assert!(
+            s.contains(&format!("{},{}", num(100.0 - size), num(50.0))),
+            "apex a head back along the line: {s}"
+        );
+        assert_eq!(
+            line_inset(MarkerKind::Datum, 1.0),
+            size,
+            "the leader stops at the apex"
+        );
     }
 
     #[test]

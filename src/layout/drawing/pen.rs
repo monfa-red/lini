@@ -27,11 +27,10 @@ pub struct Folded {
     /// on the placed node so mates (and, later, dimensions) can anchor on them.
     pub names: Vec<(String, Product)>,
     /// The applied `mirror:` axes — the unary mirrored readings read them.
-    #[expect(
-        dead_code,
-        reason = "read by the drawing annotations — PLAN.md stage 4"
-    )]
     pub mirror_axes: Vec<MirrorAxis>,
+    /// The folded subpaths, scaled — the drawn outline leader tips ray-cast
+    /// onto [SPEC 15.2].
+    pub subs: Vec<Subpath>,
     /// Whether any open subpath fused. The auto-centerline chrome keys on the
     /// same fact *syntactically* at desugar (an open subpath + `mirror:` —
     /// [SPEC 15.7]); the tests assert the two judgements agree.
@@ -92,6 +91,7 @@ pub fn fold(inst: &ResolvedInst, scale: f64) -> Result<Folded, Error> {
         d,
         names,
         mirror_axes,
+        subs,
         fused,
     })
 }
@@ -389,16 +389,8 @@ impl Pen {
         }
         let sweep = r > 0.0;
         let ra = ra.max(chord / 2.0);
-        // Centre: chord midpoint offset along the (sweep-side) perpendicular.
         let m = ((from.0 + to.0) / 2.0, (from.1 + to.1) / 2.0);
-        let dhat = ((to.0 - from.0) / chord, (to.1 - from.1) / chord);
-        let perp = (-dhat.1, dhat.0);
-        let h = (ra * ra - (chord / 2.0) * (chord / 2.0)).max(0.0).sqrt();
-        let centre = if sweep {
-            (m.0 + perp.0 * h, m.1 + perp.1 * h)
-        } else {
-            (m.0 - perp.0 * h, m.1 - perp.1 * h)
-        };
+        let centre = geometry::arc_center(from, to, ra, false, sweep);
         self.push_seg(Seg::Arc {
             from,
             to,

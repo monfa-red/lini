@@ -256,7 +256,7 @@ mod tests {
             children,
             gutters: Vec::new(),
             links: Vec::new(),
-            names: Vec::new(),
+            sketch: None,
             span: Span::empty(),
         }
     }

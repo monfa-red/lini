@@ -1,0 +1,20 @@
+// The bushing in section [SPEC 24] — flat fills until `hatch()` lands
+// (stage 5): duplicated-mirror walls, a `--bg` bore that punches by paint
+// order, and side-anchored `(-)` spans read as diameters — written smallest
+// first, since source order packs the rows inside-out.
+
+{
+  layout: drawing;  scale: 1.6;
+  |steel::sketch| { fill: --sky }
+}
+
+|steel#body| {
+  draw: move(-30, -8) right(60) up(10) left(60) close();    // the upper wall
+  mirror: x-axis;                                           // → both walls (duplicated)
+}
+|rect#bore| { width: 60; height: 16; fill: --bg; stroke: none }   // the bore punches
+|centerline| { points: -34 0, 34 0 }             // duplicated subpaths add no auto axis
+
+bore:top (-) { side: right }                     // → ⌀16 — the inner row
+body:top (-) { side: right }                     // → ⌀36 — stacks outside it
+body:left <-> body:right { side: bottom }        // → 60

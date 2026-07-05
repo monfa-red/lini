@@ -221,7 +221,7 @@ yet.
 - Samples: concentric primitives, plate + patterned holes, a two-part mate with
   negative gap, a nested-drawing assembly. PNG-inspect each.
 
-### Stage 4 — Annotations (dims, leaders, notes)
+### Stage 4 — Annotations (dims, leaders, notes)  ← DONE (see the Execution log)
 
 The largest stage; if it must split, split **measure/compose** from **place/pack**.
 (Stage 3 is nearly as heavy — its natural split is **placement/features** first,
@@ -481,3 +481,78 @@ deviated from this plan and **why**, open threads for the next session.
     read the carrier's union bbox; SPEC 15.2 fixes only its *position*
     (grid → seed, radial → ring centre). Decide seed-vs-union for dims when
     anchoring `plate.pin:top` on a patterned hole.
+
+- **2026-07-05 — stage 4 landed** (fresh session; all suites green — 555 lib
+  tests + 4 new sample snapshots — clippy silent, fmt clean; every new sample
+  PNG-rendered via resvg and inspected; every measured value cross-checked by
+  hand: plate 150/70/25·125/50/2× ⌀10 H7/⌀6, tie bar 300/40/⌀20 h6, bushing
+  ⌀16/⌀36/60, bracket 36.87° = atan(120/160), taper 28.07° = 2·atan(10/40)).
+  What shipped, and what stage 5 must know:
+  - **Modules** (`layout/drawing/`): `annotate.rs` (orchestrator: geometry
+    extent, the row packer, per-link dispatch, the sheet constants),
+    `dims.rs` (linear + the `(-)` readings + stacked lowering + diametral +
+    the slender arrow), `angle.rs`, `leaders.rs` (leader skeleton, callouts,
+    straight arrows, label leaves), `compose.rs` (glyph/number/label/tol/
+    count/unit + `DimText::nodes` for ISO-rotated text with deviation
+    stacks), `outline.rs` (ray-casting: sketch subpaths incl. arcs, ellipse,
+    poly/line points, rect fallback, pattern-copy union; `exit_box` for
+    leader text placement). The engine partitions links (mates seat first),
+    lowers annotations against the seated kids, and **appends** them — later
+    in source order = painted above geometry, `layer:` still wins, and the
+    drawing bbox includes them for free.
+  - **IR at the source**: `PlacedNode.names` became
+    `sketch: Option<Arc<SketchGeo>>` — names **+ mirror axes + folded
+    outline** (the pen keeps its subpaths; `arc_center` factored into
+    `geometry.rs`, shared by `arc_to` and the ray-caster). `anchors.rs` was
+    rebuilt around one `Anchor { child, node, origin, rot, spot }` with
+    `point/outward/direction/round_diameter/mirrors/pattern_count`; mates
+    consume the same model (their `Hit` is a projection of it).
+  - **`<->` is typed at resolve**: `LinkKind::Measure(MeasureOp::Linear)`
+    from the *operator* in a drawing scope (`MeasureOp { Linear, Round,
+    Angle }` replaced the raw `DrawOp` payload) — an explicit `marker:` can
+    restyle a wire but never re-type a statement.
+  - **The built-in `|drawing| |-| { stroke-width: 1 }`** scoped rule (the
+    drafting 2 : 1 contrast); `link_scope` now seeds the synthetic root fact
+    (scene.rs `root_facts`, shared), so a **root** drawing's links match
+    `|drawing| |-|` exactly like a `|drawing#x|`'s.
+  - **`MarkerKind::Datum`** (parse "datum"): filled GD&T triangle, base on
+    the feature, apex a full head back where the leader stops
+    (`line_inset = marker_size`); a one-ended `>-`'s Crow lowers to it —
+    only the leader lowering converts, a two-ended `>-` keeps core crow.
+  - **Decisions taken here** (the spec was amended where noted):
+    - `unit:` suffixes **linear** auto-values only — `300 mm` but `⌀20 h6`,
+      matching every SPEC 24 comment (SPEC 15.1 now says so).
+    - The stage-3 open question: a patterned node's anchors read **one
+      copy's geometry about the pattern datum** — the copy is the feature,
+      the pattern only places it (SPEC 15.2 sentence added). Mates on
+      patterned nodes changed from union-bbox to the same rule.
+    - SPEC 24 bushing dims **reordered** (bore first): the packing law
+      (source order, innermost free row) contradicted the old "⌀16 stacks
+      inside the ⌀36" comment; source order now teaches the control. The
+      tie bar's thread leader gained `{ side: top }` — the default
+      datum-ray grazes a long bar and lands on its end face.
+    - Angle value = the drawn **wedge** at the (extended) intersection
+      (`acos(u1·u2)`, ≤ 180°, legs toward the anchors) — supplement-proof
+      where raw travel directions would flip; arc radius = min leg length
+      clamped to [14, 40]; **parallel edges error** added to SPEC 20.
+    - The off-axis `side:` message got its vertical twin ("a vertical
+      dimension stacks on left or right" — SPEC 20 row extended).
+    - Station / point↔point spans measure the **dominant-axis projection**
+      (true aligned dims stay deferred, SPEC 23); `(-)` on an unmirrored
+      name or a corner of a non-round node reuses the no-axis error.
+    - `(-)` leaders (R / ⌀) tip with the **slender dim arrow** (dim
+      anatomy); word callouts keep core markers. A leader whose feature
+      sits on the datum has no outward ray — falls back to up-right.
+    - Corner anchors both on one edge pull the dim to that side (the
+      "anchors both on one edge" clause is corner-specific; side anchors
+      set the axis instead, so they can never share a valid stack side).
+    - Chain labels map to hops in order (`a <-> b <-> c [ "L1" "L2" ]`).
+  - **Stage-5 notes**: leaders and diametral lines are not collision-packed
+    against dim rows (deterministic; `side:` steers) — fine in practice,
+    revisit only if the break samples collide. The angle arc draws no leg
+    extension lines when its endpoints sit off the drawn edges. `break:`
+    must feed annotations *displayed* anchor positions while values read
+    the unbroken model — the seam is `annotate::Ctx` (one place to carry a
+    view-offset map). SPEC 24's three examples must now land byte-for-byte
+    **including this session's two edits** (bushing order, tie-bar `side:
+    top`).

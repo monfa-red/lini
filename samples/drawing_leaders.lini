@@ -1,0 +1,22 @@
+// Leaders, callouts & the datum [SPEC 15.7]: tips ray-cast onto the drawn
+// outline and land past a horizontal elbow — `<-` arrow, `*-` dot (within a
+// face), `>-` the filled datum triangle; `(<)` arcs the angle between two
+// edges; `(-)` reads a fillet's radius; a `|balloon|` wires with `-*` and a
+// `|note|` with an ordinary arrow.
+
+{ layout: drawing; scale: 2 }
+
+|sketch#bracket| {
+  draw: move(-40, 30) right(80):base fillet(6):heel up(60):wall line(-80, 60):flank close();
+}
+|hole#eye| { width: 16; translate: 20 25 }
+
+bracket:flank (<) bracket:base            // → 36.87° — the flank's rise off the base
+bracket:heel (-)                          // → R6 — the fillet knows its radius
+eye:top (-)                               // → ⌀16 — the diametral line, spilling upward
+bracket:base >- "A"                       // datum A on the base face
+bracket:flank *- "GRIND" { side: left }   // a dot lands within the face
+|balloon#b1| "1" { translate: 55 -35 }
+b1 -* bracket:wall
+|note#hint| "BREAK EDGES" { translate: -70 -20 }
+hint -> bracket:bottom-left

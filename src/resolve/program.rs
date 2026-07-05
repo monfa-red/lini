@@ -378,7 +378,20 @@ fn scoped_rules() -> Vec<Rule> {
         ],
         span: Span::empty(),
     };
-    vec![compact("sequence"), compact("drawing")]
+    // The drafting line-weight contrast [SPEC 15.1]: geometry keeps stroke 2,
+    // a drawing's links (dimensions, leaders, arrows) thin to 1 — the built-in
+    // `|drawing| |-|` rule; override it like any rule.
+    let thin_links = Rule {
+        selector: Selector {
+            units: vec![
+                SelUnit::Class("lini-drawing".to_string()),
+                SelUnit::Class("lini-link".to_string()),
+            ],
+        },
+        decls: vec![number("stroke-width", &[1.0])],
+        span: Span::empty(),
+    };
+    vec![compact("sequence"), compact("drawing"), thin_links]
 }
 
 /// Whether a link's scope is a drawing [SPEC 15] — its immediate container (or
@@ -451,7 +464,10 @@ fn link_scope(
             base.push((prop.to_string(), v.clone()));
         }
     }
-    let ancestors = chain.iter().map(|n| inst_facts(n)).collect();
+    // The file is the root container [SPEC 1]: a root engine's synthetic fact
+    // heads the chain, so `|drawing| |-|` reaches a root drawing's links.
+    let mut ancestors: Vec<NodeFacts> = scene::root_facts(root_attrs).into_iter().collect();
+    ancestors.extend(chain.iter().map(|n| inst_facts(n)));
     (base, ancestors)
 }
 

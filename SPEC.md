@@ -2058,7 +2058,8 @@ it ([15.5](#155-mates)); to reground, reorder the declarations.
 units**; `scale:` (default 1) is **pixels per unit**. Draw a 300 mm bar as
 `right(300)`, set `scale: 4`, and it renders 1200 px wide while every dimension still
 reads `300` — **measured values are always pre-scale**. `unit: "mm"` appends a suffix
-to auto-measured values only (drafting states units once, in the title block).
+to auto-measured **linear** values only — a `⌀` / `R` / `°` reading is symbol-speak,
+and drafting states units once, in the title block.
 
 `scale:` is an ordinary node property, nearest ancestor wins: on the drawing it is the
 view scale (a 2:1 detail view is a sibling drawing with `scale:` doubled,
@@ -2113,7 +2114,9 @@ point  = center                                            (the default)
 - Dot-paths walk into children as everywhere (`pump.body:right`), resolve in the
   statement's scope, and never search ([SPEC 9](#9-links)). A **grid**-patterned node's
   position is its **seed** copy; a **radial**-patterned node's is its ring **centre**
-  ([15.4](#154-features-holes--patterns)) — each the point drafting locates.
+  ([15.4](#154-features-holes--patterns)) — each the point drafting locates. Its other
+  anchors read **one copy's geometry** about that datum — the copy is the feature, the
+  pattern only places it.
 - **The anchor aims; the outline lands.** A leader's tip is a ray from its text toward
   the anchor's representative point, stopped at the ray's *first crossing of the drawn
   path* — aiming at the bbox corner of a filleted plate touches the fillet arc itself.
@@ -3020,7 +3023,8 @@ Format: `filename:line:col: error: <message>` (LSP-compatible), compile-time, wi
 | Over-constrained mate | `mate over-constrains 'X' — already positioned via 'A \|\| B'` |
 | Mate within one part | `'a' and 'b' are features of one part — a part is rigid` |
 | Mixed dim axes | `'a:left <-> b:top' mixes axes — anchor one axis` |
-| `side:` off-axis | `a horizontal dimension stacks on top or bottom` |
+| `side:` off-axis | `a horizontal dimension stacks on top or bottom` / `a vertical dimension stacks on left or right` |
+| Parallel `(<)` edges | `the angle's edges are parallel — they never meet` |
 | Bad `tol:` | `'tol' takes a number, '+upper -lower', or a fit ident` |
 | Bad `pattern:` | `'radial' needs count ≥ 2 and radius > 0` |
 | `scale:` ≤ 0 | `'scale' must be > 0` |
@@ -3385,7 +3389,7 @@ db      --> api     "record"
 bar:left <-> bar:right { side: bottom }          // → 300 mm — true, across the break
 bar:left <-> bar:a     { side: top }             // → 40 mm — ':a' is a freestanding point
 bar:thread (-) { side: left; tol: h6 }           // → ⌀20 h6 — doubled about the axis
-bar:thread <- "M20×1.5"                          // thread spec — leader to the surface
+bar:thread <- "M20×1.5" { side: top }            // thread spec — leader to the surface
 ```
 
 ```
@@ -3401,8 +3405,8 @@ bar:thread <- "M20×1.5"                          // thread spec — leader to t
 |rect#bore| { width: 60; height: 16; fill: --bg; stroke: none }   // the bore punches
 |centerline| { points: -34 0, 34 0 }             // duplicated subpaths add no auto axis
 
-body:top (-) { side: right }                     // → ⌀36
-bore:top (-) { side: right }                     // → ⌀16 — stacks inside the ⌀36
+bore:top (-) { side: right }                     // → ⌀16 — written first, the inner row
+body:top (-) { side: right }                     // → ⌀36 — stacks outside it
 body:left <-> body:right { side: bottom }        // → 60
 ```
 

@@ -1,0 +1,20 @@
+// Dimensions [SPEC 15.6]: `<->` spans and chains pack into rows outside the
+// geometry (source order, innermost free row; `gap:` pins one), values are
+// measured on the seated model in pre-scale drawing units, `unit:` suffixes
+// the linear ones, `tol:` composes the tolerance, a patterned hole's `(-)`
+// counts its copies, and a span too narrow for its text flips its arrows
+// outside.
+
+{ layout: drawing; scale: 2; unit: "mm" }
+
+|rect#plate| { width: 150; height: 70 } [
+  |hole#bolt|  { width: 10; translate: -50 -15; pattern: grid(2, 1, 100, 0) }
+  |hole#dowel| { width: 6; translate: 0 15 }
+]
+
+plate:left <-> plate.bolt <-> plate:right { side: bottom }   // 25 · 125 — the flipped 25 climbs a row
+plate:left <-> plate:right { side: bottom }                  // 150 — the outer row
+plate:top <-> plate.dowel { side: left }                     // 50 — to the dowel's centre
+plate:top <-> plate:bottom { side: left; tol: +0.2 -0.05 }   // 70, stacked deviations
+plate.bolt (-) "H7"                                          // 2× ⌀10 H7 — the copies counted
+plate.dowel (-) { side: top-right }                          // ⌀6 — the leader steered

@@ -331,7 +331,7 @@ fn layout_inst(
     // Determine this node's bbox + arrange children inside.
     let mut gutters: Vec<Gutter> = Vec::new();
     let mut sketch_d: Option<String> = None;
-    let mut pen_names = Vec::new();
+    let mut sketch_geo = None;
     let bbox = if inst.kind == NodeKind::Sketch {
         // The pen folds here [SPEC 15.3]: geometry decides the bbox — never
         // content + padding. Outside a drawing any children still arrange
@@ -342,7 +342,11 @@ fn layout_inst(
         let folded = drawing::pen::fold(inst, own)?;
         let half = inst.attrs.number("stroke-width").unwrap_or(0.0) / 2.0;
         sketch_d = Some(folded.d);
-        pen_names = folded.names;
+        sketch_geo = Some(std::sync::Arc::new(drawing::SketchGeo {
+            names: folded.names,
+            mirrors: folded.mirror_axes,
+            outline: folded.subs,
+        }));
         folded.geometry.inflate(half)
     } else if part {
         // A part sizes to its own shape — its features never grow it, they
@@ -418,7 +422,7 @@ fn layout_inst(
         children,
         gutters,
         links: Vec::new(),
-        names: pen_names,
+        sketch: sketch_geo,
         span: inst.span,
     };
     if let Some(d) = sketch_d {

@@ -27,7 +27,7 @@ fn node(kind: NodeKind, bbox: Bbox) -> PlacedNode {
         children: Vec::new(),
         gutters: Vec::new(),
         links: Vec::new(),
-        names: Vec::new(),
+        sketch: None,
         span: Span::empty(),
     }
 }
@@ -223,7 +223,7 @@ pub fn container(inst: &ResolvedInst, bbox: Bbox, children: Vec<PlacedNode>) -> 
         children,
         gutters: Vec::new(),
         links: Vec::new(),
-        names: Vec::new(),
+        sketch: None,
         span: inst.span,
     }
 }

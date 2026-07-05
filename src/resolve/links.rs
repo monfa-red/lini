@@ -10,13 +10,13 @@
 
 use super::cascade::NodeFacts;
 use super::ir::{
-    Along, AttrMap, LinkKind, MarkerKind, Markers, ResolvedEndpoint, ResolvedLink, ResolvedText,
-    ResolvedValue, Strategy,
+    Along, AttrMap, LinkKind, MarkerKind, Markers, MeasureOp, ResolvedEndpoint, ResolvedLink,
+    ResolvedText, ResolvedValue, Strategy,
 };
 use super::merge::{collapse, resolve_markers};
 use super::scene::{PathIndex, SceneCtx};
 use super::value::{resolve_groups, resolve_property};
-use crate::ast::{ChainOp, LineStyle, LinkMarker, Side};
+use crate::ast::{ChainOp, DrawOp, LineStyle, LinkMarker, Side};
 use crate::error::Error;
 use crate::syntax::ast::{Endpoint, EndpointGroup, Link};
 
@@ -170,8 +170,21 @@ pub fn resolve_link(
         out.push(ResolvedLink {
             endpoints,
             kind: match w.op {
+                // A two-ended `<->` in a drawing scope *is* the linear
+                // dimension [SPEC 15] — typed by the operator, so an explicit
+                // `marker:` can restyle a wire but never re-read it.
+                ChainOp::Wire(op)
+                    if drawing_scope
+                        && w.chain.len() >= 2
+                        && op.start == LinkMarker::Arrow
+                        && op.end == LinkMarker::Arrow
+                        && op.line == LineStyle::Solid =>
+                {
+                    LinkKind::Measure(MeasureOp::Linear)
+                }
                 ChainOp::Wire(_) => LinkKind::Wire,
-                ChainOp::Measure(d) => LinkKind::Measure(d),
+                ChainOp::Measure(DrawOp::Round) => LinkKind::Measure(MeasureOp::Round),
+                ChainOp::Measure(DrawOp::Angle) => LinkKind::Measure(MeasureOp::Angle),
                 ChainOp::Mate => LinkKind::Mate,
             },
             scope: path_prefix.join("."),

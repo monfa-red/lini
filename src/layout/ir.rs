@@ -151,10 +151,12 @@ pub struct PlacedNode {
     /// lifts them into scene coordinates; the renderer's one link path draws
     /// them. Empty everywhere else.
     pub links: Vec<RoutedLink>,
-    /// A sketch's authored `:name` products [SPEC 15.2], in the node's local
-    /// frame (scaled) — the drawing engine's mate / dimension anchors read
-    /// them. Empty for everything but a `|sketch|`.
-    pub names: Vec<(String, super::drawing::Product)>,
+    /// A sketch's annotation geometry [SPEC 15.2/15.6] — authored `:name`
+    /// products, `mirror:` axes, and the drawn outline, in the node's local
+    /// frame (scaled). The drawing engine's mates, dimensions, and leaders
+    /// read it; `None` for everything but a `|sketch|`. Shared, not cloned:
+    /// a `pattern:` copies the whole body.
+    pub sketch: Option<std::sync::Arc<super::drawing::SketchGeo>>,
     pub span: Span,
 }
 

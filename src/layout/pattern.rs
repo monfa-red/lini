@@ -165,7 +165,7 @@ fn empty_like(n: &PlacedNode) -> PlacedNode {
         children: Vec::new(),
         gutters: Vec::new(),
         links: Vec::new(),
-        names: Vec::new(),
+        sketch: None,
         span: n.span,
     }
 }
