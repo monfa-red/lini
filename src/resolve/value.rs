@@ -130,7 +130,7 @@ pub fn resolve_property(
 }
 
 /// A `draw:` value [SPEC 15.3]: one run of pen items — calls (optionally naming
-/// their segment) and freestanding `:name` points — kept structured; only the
+/// their segment) and freestanding `:segment` points — kept structured; only the
 /// call **arguments** fold (numbers, backticks, compute calls).
 fn resolve_pen(
     groups: &[Vec<Value>],

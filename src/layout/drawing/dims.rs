@@ -1,20 +1,17 @@
-//! Dimension lowering [SPEC 15.6] — `<->` linear spans and chains, and the
-//! `(-)` round readings: a named arc → an `R` leader; a bare round node → a
-//! `⌀` leader; a round node + side / corner → the **diametral line**; any
-//! node + side → the span to the opposite side, ⌀-read and stacked; a
-//! mirrored `:segment` → the station span across the axis. Measured values are
-//! anchor distances in drawing units — pre-scale, on the unbroken model —
-//! and the anatomy (extension lines, slender arrows, ISO-aligned text) is
-//! baked sheet constants.
+//! Linear dimensions [SPEC 15.6] — `<->` spans and chains — and the shared
+//! **stacked-dim anatomy** every span reading lowers through: extension
+//! lines springing from the anchors, the dim line on its packed row,
+//! drafting-slender arrows (flipped outside a narrow span), ISO-aligned
+//! text. Measured values are anchor distances in drawing units — pre-scale,
+//! on the unbroken model. The `(-)` readings live in `round`.
 
 use super::super::ir::PlacedNode;
-use super::anchors::{self, Anchor, Spot, rotated};
+use super::anchors::{self, Anchor, Spot};
 use super::annotate::{
-    ARROW_HALF, ARROW_LEN, Axis, Ctx, EXT_GAP, EXT_OVERSHOOT, Paint, Rows, side_attr, side_unit,
+    ARROW_HALF, ARROW_LEN, Axis, Ctx, EXT_GAP, EXT_OVERSHOOT, Paint, Rows, side_attr,
 };
 use super::compose::{self, DimText, Glyph};
-use super::geometry::{P, reflect_point};
-use super::{Segment, leaders};
+use super::geometry::P;
 use crate::ast::Side;
 use crate::error::Error;
 use crate::resolve::{ResolvedLink, ResolvedText};
@@ -90,217 +87,22 @@ pub(super) fn linear(
     Ok(out)
 }
 
-/// `(-)` — the round measure, unary; the feature picks the reading
-/// [SPEC 15.6].
-pub(super) fn round(
-    ctx: &Ctx,
-    w: &ResolvedLink,
-    rows: &mut Rows,
-) -> Result<Vec<PlacedNode>, Error> {
-    let paint = Paint::of(&w.attrs);
-    let ep = &w.endpoints[0];
-    let a = anchors::resolve(ctx.kids, ctx.scope, ep, "dimension")?;
-    let follows = w.texts.first();
-    let count = a.pattern_count();
-    let no_axis = || {
-        let who = super::rel_path(&ep.path, ctx.scope);
-        Error::at(
-            w.span,
-            format!(
-                "'(-)' can't pick an axis on '{who}' — anchor a side ('{who}:top (-)') or a segment"
-            ),
-        )
-    };
-    let compose = |glyph: Glyph, value: f64| {
-        compose::compose(
-            glyph,
-            value,
-            count,
-            None,
-            follows.map(|t| t.text.as_str()),
-            &w.attrs,
-            ctx.unit,
-            w.span,
-        )
-    };
-
-    match &a.spot {
-        // A named arc knows its radius — an `R` leader onto the arc itself.
-        Spot::Segment(Segment::Arc { mid, r }) => {
-            let text = compose(Glyph::R, r / ctx.scale)?;
-            let aim = a.to_world(*mid);
-            Ok(leaders::measured(
-                ctx,
-                &a,
-                aim,
-                Some(aim),
-                &w.attrs,
-                text,
-                &paint,
-                w.span,
-            ))
-        }
-        // A `circle()` segment — round by construction, a `⌀` leader onto its rim.
-        Spot::Segment(Segment::Circle { center, r }) => {
-            let text = compose(Glyph::Dia, 2.0 * r / ctx.scale)?;
-            let c = a.to_world(*center);
-            Ok(leaders::measured_circle(
-                ctx, &a, c, *r, &w.attrs, text, &paint, w.span,
-            ))
-        }
-        // A mirrored `:segment` — the station's span across the axis, stacked.
-        Spot::Segment(Segment::Edge(..) | Segment::Point(..)) => {
-            let m = a.local_point();
-            let axis = a
-                .mirrors()
-                .iter()
-                .find(|ax| {
-                    let twin = reflect_point(m, ax.dir());
-                    super::geometry::dist(m, twin) > 1e-6
-                })
-                .copied()
-                .ok_or_else(no_axis)?;
-            let (pa, pb) = (a.point(), a.to_world(reflect_point(m, axis.dir())));
-            station(ctx, w, rows, &paint, pa, pb, count, follows)
-        }
-        // A side anchor: the diametral line through a round node, or the span
-        // to the opposite side — ⌀-read, stacked — on anything else.
-        Spot::Side(side) => {
-            if let Some(d) = a.round_diameter() {
-                let dir = spill_dir(&w.attrs, &a).unwrap_or_else(|| {
-                    rotated(side_unit(side_name(*side)).expect("a side"), a.rot)
-                });
-                let text = compose(Glyph::Dia, d / ctx.scale)?;
-                return Ok(diametral(centre_of(&a), d / 2.0, dir, text, &paint));
-            }
-            let g = a.geometry_box();
-            let (cx, cy) = ((g.min_x + g.max_x) / 2.0, (g.min_y + g.max_y) / 2.0);
-            let (la, lb) = match side {
-                Side::Top | Side::Bottom => ((cx, g.min_y), (cx, g.max_y)),
-                Side::Left | Side::Right => ((g.min_x, cy), (g.max_x, cy)),
-            };
-            station(
-                ctx,
-                w,
-                rows,
-                &paint,
-                a.to_world(la),
-                a.to_world(lb),
-                count,
-                follows,
-            )
-        }
-        Spot::Corner(diag) => {
-            let Some(d) = a.round_diameter() else {
-                return Err(no_axis());
-            };
-            let dir = spill_dir(&w.attrs, &a).unwrap_or_else(|| rotated(*diag, a.rot));
-            let text = compose(Glyph::Dia, d / ctx.scale)?;
-            Ok(diametral(centre_of(&a), d / 2.0, dir, text, &paint))
-        }
-        // Bare: a round node reads its ⌀ onto the rim; a mirrored sketch its
-        // full span across the axis; anything else can't pick an axis.
-        Spot::Origin | Spot::Center => {
-            if let Some(d) = a.round_diameter() {
-                let c = centre_of(&a);
-                let text = compose(Glyph::Dia, d / ctx.scale)?;
-                return Ok(leaders::measured_circle(
-                    ctx,
-                    &a,
-                    c,
-                    d / 2.0,
-                    &w.attrs,
-                    text,
-                    &paint,
-                    w.span,
-                ));
-            }
-            let axis = a.mirrors().first().copied().ok_or_else(no_axis)?;
-            let g = a.geometry_box();
-            let (cx, cy) = ((g.min_x + g.max_x) / 2.0, (g.min_y + g.max_y) / 2.0);
-            let perp = {
-                let d = axis.dir();
-                (-d.1, d.0)
-            };
-            let (la, lb) = if perp.1.abs() >= perp.0.abs() {
-                ((cx, g.min_y), (cx, g.max_y))
-            } else {
-                ((g.min_x, cy), (g.max_x, cy))
-            };
-            station(
-                ctx,
-                w,
-                rows,
-                &paint,
-                a.to_world(la),
-                a.to_world(lb),
-                count,
-                follows,
-            )
-        }
-    }
-}
-
-/// A ⌀-read span between two world points, stacked like a linear dim — the
-/// station and opposite-side readings share it.
-#[allow(clippy::too_many_arguments)]
-fn station(
-    ctx: &Ctx,
-    w: &ResolvedLink,
-    rows: &mut Rows,
-    paint: &Paint,
-    pa: P,
-    pb: P,
-    count: Option<usize>,
-    follows: Option<&ResolvedText>,
-) -> Result<Vec<PlacedNode>, Error> {
-    let axis = if (pb.1 - pa.1).abs() > (pb.0 - pa.0).abs() {
-        Axis::Vertical
-    } else {
-        Axis::Horizontal
-    };
-    let text = compose::compose(
-        Glyph::Dia,
-        span_on(pa, pb, axis) / ctx.scale,
-        count,
-        None,
-        follows.map(|t| t.text.as_str()),
-        &w.attrs,
-        ctx.unit,
-        w.span,
-    )?;
-    let side = stack_side(&w.attrs, axis, None, w.span)?;
-    Ok(stacked(
-        Stacked {
-            axis,
-            a: pa,
-            b: pb,
-            text,
-            side,
-            gap: w.attrs.number("gap"),
-            label: follows,
-        },
-        rows,
-        paint,
-    ))
-}
-
 /// One stacked dimension: extension lines springing from the anchors, the
 /// dim line on its packed row, slender arrows, ISO-aligned text above the
 /// line — flipped outside when the span is too narrow [SPEC 15.6].
-struct Stacked<'a> {
-    axis: Axis,
-    a: P,
-    b: P,
-    text: DimText,
-    side: Side,
-    gap: Option<f64>,
+pub(super) struct Stacked<'a> {
+    pub axis: Axis,
+    pub a: P,
+    pub b: P,
+    pub text: DimText,
+    pub side: Side,
+    pub gap: Option<f64>,
     /// The authored label, if any — its `translate:` / `rotate:` override the
     /// auto text placement (the styled-label form).
-    label: Option<&'a ResolvedText>,
+    pub label: Option<&'a ResolvedText>,
 }
 
-fn stacked(s: Stacked, rows: &mut Rows, paint: &Paint) -> Vec<PlacedNode> {
+pub(super) fn stacked(s: Stacked, rows: &mut Rows, paint: &Paint) -> Vec<PlacedNode> {
     let (fs, sw) = (paint.fs, paint.sw);
     let u = |p: P| match s.axis {
         Axis::Horizontal => p.0,
@@ -385,49 +187,6 @@ fn stacked(s: Stacked, rows: &mut Rows, paint: &Paint) -> Vec<PlacedNode> {
     out
 }
 
-/// The diametral line [SPEC 15.6]: through a round node's centre along the
-/// anchored direction, arrows out against the rims; the value rides the line
-/// when it fits inside, else the line overruns the **anchored** rim and
-/// carries the text there. Deterministic, no solver.
-fn diametral(c: P, r: f64, dir: P, text: DimText, paint: &Paint) -> Vec<PlacedNode> {
-    let (fs, sw) = (paint.fs, paint.sw);
-    let rim_a = (c.0 + dir.0 * r, c.1 + dir.1 * r);
-    let rim_b = (c.0 - dir.0 * r, c.1 - dir.1 * r);
-    let arrow_len = ARROW_LEN * sw;
-    let tw = text.width(fs);
-    let fits = 2.0 * r >= 2.0 * arrow_len + tw + 8.0;
-    // ISO alignment: turn with the line, reading from the bottom / right —
-    // a vertical line turns its text −90, like a stacked vertical dim.
-    let mut theta = dir.1.atan2(dir.0).to_degrees();
-    if theta < -90.0 {
-        theta += 180.0;
-    } else if theta >= 90.0 {
-        theta -= 180.0;
-    }
-    let (ts, tc) = theta.to_radians().sin_cos();
-    let up = (ts, -tc);
-    let lift = fs / 2.0 + 2.0;
-
-    let mut out = Vec::new();
-    let (end, text_c) = if fits {
-        (rim_a, c)
-    } else {
-        let over = 4.0 + tw + 4.0;
-        (
-            (rim_a.0 + dir.0 * over, rim_a.1 + dir.1 * over),
-            (
-                rim_a.0 + dir.0 * (4.0 + tw / 2.0),
-                rim_a.1 + dir.1 * (4.0 + tw / 2.0),
-            ),
-        )
-    };
-    out.push(paint.line(vec![rim_b, end]));
-    out.push(arrow(rim_a, dir, paint));
-    out.push(arrow(rim_b, scale_p(dir, -1.0), paint));
-    out.extend(text.nodes((text_c.0 + up.0 * lift, text_c.1 + up.1 * lift), theta, fs));
-    out
-}
-
 /// The drafting-slender arrowhead [SPEC 15.6]: ≈ 3 : 1, filled with the dim's
 /// stroke and sized by its stroke-width; `dir` is where the tip points.
 pub(super) fn arrow(tip: P, dir: P, paint: &Paint) -> PlacedNode {
@@ -447,7 +206,7 @@ pub(super) fn arrow(tip: P, dir: P, paint: &Paint) -> PlacedNode {
 
 /// The stacking side [SPEC 15.6]: explicit `side:` (validated against the
 /// axis), a corner pull, or the axis default — bottom / right.
-fn stack_side(
+pub(super) fn stack_side(
     attrs: &crate::resolve::AttrMap,
     axis: Axis,
     pull: Option<Side>,
@@ -512,27 +271,6 @@ fn corner_pull(a: &Anchor, b: &Anchor, axis: Axis) -> Option<Side> {
     }
 }
 
-/// An explicit `side:` (side **or corner**) as the diametral spill direction.
-fn spill_dir(attrs: &crate::resolve::AttrMap, a: &Anchor) -> Option<P> {
-    let _ = a;
-    side_attr(attrs).and_then(side_unit)
-}
-
-/// The round feature's centre, world.
-fn centre_of(a: &Anchor) -> P {
-    let g = a.geometry_box();
-    a.to_world(((g.min_x + g.max_x) / 2.0, (g.min_y + g.max_y) / 2.0))
-}
-
-fn side_name(side: Side) -> &'static str {
-    match side {
-        Side::Top => "top",
-        Side::Bottom => "bottom",
-        Side::Left => "left",
-        Side::Right => "right",
-    }
-}
-
 /// A directed anchor's axis: the dominant component of its outward normal —
 /// left / right → horizontal, top / bottom → vertical, a vertical shoulder →
 /// a horizontal dim across it [SPEC 15.6].
@@ -545,7 +283,7 @@ fn dominant(outward: P) -> Axis {
 }
 
 /// The span projected on the dim's axis, px.
-fn span_on(a: P, b: P, axis: Axis) -> f64 {
+pub(super) fn span_on(a: P, b: P, axis: Axis) -> f64 {
     match axis {
         Axis::Horizontal => (b.0 - a.0).abs(),
         Axis::Vertical => (b.1 - a.1).abs(),

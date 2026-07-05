@@ -2,7 +2,7 @@
 //! folds `draw:` profiles in any layout; the **engine** (`engine`, `mates`,
 //! `anchors`, `chrome`) is the `layout: drawing` scope itself — datum
 //! placement, features, mates, the generated chrome; the **annotations**
-//! (`annotate`, `dims`, `angle`, `leaders`, `compose`, `outline`) lower the
+//! (`annotate`, `dims`, `round`, `angle`, `leaders`, `compose`, `outline`) lower the
 //! scope's measuring and leader links onto the seated geometry.
 
 pub(crate) mod anchors;
@@ -18,6 +18,7 @@ mod leaders;
 mod mates;
 mod outline;
 pub(crate) mod pen;
+mod round;
 
 pub(super) use engine::{layout_node, layout_root};
 

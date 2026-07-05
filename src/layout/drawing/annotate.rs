@@ -7,7 +7,7 @@
 
 use super::super::ir::{Bbox, PlacedNode};
 use super::geometry::P;
-use super::{angle, dims, leaders};
+use super::{angle, dims, leaders, round};
 use crate::ast::Side;
 use crate::error::Error;
 use crate::resolve::{AttrMap, LinkKind, MeasureOp, ResolvedLink, ResolvedValue};
@@ -112,7 +112,7 @@ pub(in crate::layout) fn lower(
                 out.extend(dims::linear(&ctx, w, &mut rows)?);
             }
             LinkKind::Measure(MeasureOp::Round) => {
-                out.extend(dims::round(&ctx, w, &mut rows)?);
+                out.extend(round::lower(&ctx, w, &mut rows)?);
             }
             LinkKind::Measure(MeasureOp::Angle) => out.extend(angle::lower(&ctx, w)?),
             LinkKind::Wire if w.endpoints.len() == 1 => {
@@ -566,6 +566,17 @@ mod tests {
             "the drawing-scope link default"
         );
         // A scope default, not a rule — a plain `|-|` rule overrides it.
+        // And it is the *immediate* scope's default: a flow container nested
+        // in a drawing owns ordinary routed links, weight 2.
+        let l = laid(
+            "|drawing#d| { scale: 1 } [\n  |rect#part| { width: 40; height: 20 }\n  |row#legend| { translate: 0 60 } [\n    |box#a| \"a\"\n    |box#b| \"b\"\n    a -> b\n  ]\n]\n",
+        );
+        let wire = l.links.first().expect("the routed flow link");
+        assert!(
+            wire.attrs.number("stroke-width").is_none_or(|w| w != 1.0),
+            "a nested flow's links keep the flow weight: {:?}",
+            wire.attrs.get("stroke-width")
+        );
         assert_eq!(
             width_of(
                 "{ layout: drawing; scale: 1;\n  |-| { stroke-width: 2 }\n}\n|rect#a| { width: 40; height: 20 }\na:left <-> a:right\n"

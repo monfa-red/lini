@@ -25,7 +25,7 @@ pub struct File {
 pub enum StyleItem {
     /// `key: value;` — configures the root container.
     RootDecl(Decl),
-    /// `--name: value;` — a themeable variable declaration. `Decl::name` holds
+    /// `--name: value;` — a themeable variable declaration. `Decl::segment` holds
     /// the name without the `--` prefix.
     Var(Decl),
     /// `|selector| { decls }` / `.class { decls }` — element / class / descendant
@@ -207,7 +207,7 @@ pub enum Value {
     /// A backtick `` `…` `` compile-time expression body [SPEC 10.7], folded to a
     /// number or a point at resolve.
     Expr(String),
-    /// `right(50):name` — a pen call naming its drawn segment; parsed only
+    /// `right(50):segment` — a pen call naming its drawn segment; parsed only
     /// inside a `draw:` value [SPEC 15.3, 21].
     NamedCall(Call, String),
     /// A freestanding `:segment` — the pen's current point; `draw:` only.

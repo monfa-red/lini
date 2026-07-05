@@ -444,12 +444,9 @@ fn link_scope(
     // The drafting line-weight contrast [SPEC 15.1]: geometry keeps stroke 2,
     // a drawing's links thin to 1. A **scope default**, not a rule — it rides
     // the base layer below every user rule, so a plain `|-| { stroke-width: … }`
-    // overrides it like any other link default.
-    let in_drawing = matches!(root_attrs.get("layout"), Some(ResolvedValue::Ident(l)) if l == "drawing")
-        || chain.iter().any(
-            |n| matches!(n.attrs.get("layout"), Some(ResolvedValue::Ident(l)) if l == "drawing"),
-        );
-    if in_drawing {
+    // overrides it. The same immediate-scope predicate as the mate gate: a
+    // `|row|` nested in a drawing owns ordinary routed links, weight 2.
+    if scope_is_drawing(nodes, root_attrs, scope) {
         base.push(("stroke-width".to_string(), ResolvedValue::Number(1.0)));
     }
     for prop in SCOPE_LINK_PROPS {

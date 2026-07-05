@@ -625,6 +625,32 @@ deviated from this plan and **why**, open threads for the next session.
     and the descendant-selector override (`|drawing| |note| { … }`) is the
     documented escape there.
 
+- **2026-07-05 — independent audit round** (opus agent over stages 1–5a,
+  emphasis on the hatch slice and the review follow-ups; hatch tile geometry,
+  the `(-)` dispatch, packing, wedge math, ray-cast frames, scale-4 fallout
+  and the rename all probed clean — measured values re-verified by hand).
+  Fixed at the source:
+  - **The `|-|` scope default leaked into nested flow scopes** (the audit's
+    one major): `link_scope` pushed `stroke-width: 1` when *any* ancestor
+    was a drawing, while the mate gate classifies by the **immediate**
+    scope — so a `|row|` nested in a drawing had its routed links thinned
+    to 1. Both now use `scope_is_drawing` (one predicate, one mechanism);
+    regression test covers a `|row|` in a `|drawing|` node.
+  - Three stale `:name` doc comments swept (value.rs, syntax/ast.rs,
+    parser.rs).
+  - `dims.rs` (565 LOC) split per the ~500 law: the `(-)` readings moved to
+    `round.rs`; `dims.rs` keeps `<->` + the shared stacked-dim anatomy
+    (`Stacked`/`stacked`/`stack_side`/`arrow`/`span_on`, now `pub(super)`).
+  - **New open thread** (audit-adjacent, pre-existing): a **root** drawing
+    never runs the router, so a wire inside a nested flow scope (`|row|` in
+    a root `{ layout: drawing }`) is silently dropped — a *node* `|drawing|`
+    in a flow sheet routes it fine. Same family as the stage-3 anonymous
+    -container question; decide when `break:`/stage-5 lands.
+  - Deliberately not "fixed": the layout-time "{noun} endpoint 'x' not
+    placed" message (only reachable via the documented anonymous-container
+    edge); `pen.rs`/`engine.rs`/`annotate.rs` LOC counts (past ~500 only
+    with their test modules — the law targets code, and `pen.rs` already
+    ceded `corner.rs`).
   - **Still open in stage 5**: `break:` (the big one — clip the folded
     subpaths at the stations, slide the far piece, the piecewise
     view-offset map through `annotate::Ctx`, `|breakline|` zigzag +

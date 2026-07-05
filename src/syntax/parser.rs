@@ -427,7 +427,7 @@ impl<'a> Parser<'a> {
     }
 
     /// The cursor sits on a `:` immediately followed by a **glued** ident — the
-    /// pen's point sigil (`:name`), never a declaration's `:` (whose value is
+    /// pen's point sigil (`:segment`), never a declaration's `:` (whose value is
     /// spaced off it in canonical style and is not an ident-only suffix).
     fn at_glued_point_name(&self) -> bool {
         matches!(self.kind(), Some(TokKind::Colon))
