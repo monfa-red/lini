@@ -282,6 +282,13 @@ fn layout_inst(
     ctx: Ctx,
 ) -> Result<PlacedNode, Error> {
     let funcs = &program.funcs;
+    // `break:` clips a folded profile — only a `|sketch|` has one [SPEC 15.3].
+    if inst.attrs.get("break").is_some() && inst.kind != NodeKind::Sketch {
+        return Err(Error::at(
+            inst.span,
+            "'break' cuts a '|sketch|' — draw the profile with the pen",
+        ));
+    }
     // A layout-owning engine (chart / pie / sequence / drawing) owns its whole
     // subtree and emits primitive PlacedNodes itself — intercepted before the
     // child recursion (which would run `leaf_bbox` on a series with no
@@ -343,10 +350,12 @@ fn layout_inst(
         let folded = drawing::pen::fold(inst, own)?;
         let half = inst.attrs.number("stroke-width").unwrap_or(0.0) / 2.0;
         sketch_d = Some(folded.d);
+        drawing::breaks::fill_chrome(&mut children, &folded.cuts);
         sketch_geo = Some(std::sync::Arc::new(drawing::SketchGeo {
             segments: folded.segments,
             mirrors: folded.mirror_axes,
             outline: folded.subs,
+            view: folded.view,
         }));
         folded.geometry.inflate(half)
     } else if part {

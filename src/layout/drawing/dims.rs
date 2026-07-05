@@ -57,7 +57,9 @@ pub(super) fn linear(
             }
         };
 
-        let value = span_on(pa, pb, axis) / ctx.scale;
+        // Extension lines land at the displayed anchors; the value reads the
+        // unbroken model — a `break:` never changes a dimension [SPEC 15.3].
+        let value = span_on(a.model_point(), b.model_point(), axis) / ctx.scale;
         let label = w.texts.get(hop);
         let text = compose::compose(
             Glyph::None,

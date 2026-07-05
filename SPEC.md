@@ -2524,7 +2524,7 @@ properties are the core ones.
 | `unit` | `\|drawing\|` | quoted string | suffix on auto-measured values only |
 | `draw` | `\|sketch\|` | pen calls + `:segment`s | **required** ([15.3](#153-the-sketch-pen)) |
 | `mirror` | `\|sketch\|` | list of `x-axis` / `y-axis` / bearing | reflect + union, left to right |
-| `break` | a geometry node | `a b [axis]` groups | cut the view between stations; longer axis default ([15.3](#153-the-sketch-pen)) |
+| `break` | `\|sketch\|` | `a b [axis]` groups | cut the view between stations; longer axis default ([15.3](#153-the-sketch-pen)) |
 | `pattern` | any node | `grid(c, r, dx, dy)` / `radial(n, r)` | replicate about its position ([15.4](#154-features-holes--patterns)) |
 | `width` | `\|hole\|` `\|pitch-circle\|` | number | **required** — the diameter |
 | `tol` | a dimension | `t` / `+u -l` / fit ident | tolerance text ([15.6](#156-dimensions)) |
@@ -3005,6 +3005,10 @@ Format: `filename:line:col: error: <message>` (LSP-compatible), compile-time, wi
 | Arc radius too small | `arc radius N is smaller than half the chord` |
 | Bad `mirror:` item | `'mirror' takes x-axis, y-axis, or a bearing` |
 | Bad `break:` group | `'break' takes two stations 'a b' — a < b — and an optional x-axis / y-axis` |
+| `break:` off a sketch | `'break' cuts a '\|sketch\|' — draw the profile with the pen` |
+| `break:` station off the profile | `'break' at N misses the profile` |
+| Overlapping `break:` groups | `'break' spans overlap — merge them` |
+| `break:` through a cubic | `a 'break' can't cut a 'curve()' — move the stations` ([SPEC 23](#23-deferred)) |
 | Drawing statement outside a drawing | `'(-)' draws a dimension — it belongs in a 'layout: drawing'` (same for `(<)`, `\|\|`, corner anchors, `tol:`, …) |
 | Unknown endpoint | `dimension endpoint 'X' not found at <scope>` + suggestions — **never auto-created** |
 | Corner order | `':right-top' is not an anchor — did you mean ':top-right'?` |
@@ -3242,7 +3246,10 @@ dividers / delays (`==` / `...`); and an `|actor|` stick-figure primitive (an ac
 - **hole variants** — counterbore, countersink, thread conventions.
 - **view machinery** — projection lines between views, detail circles ("VIEW A"),
   cutting-plane arrows (A–A), cross-view alignment; today, composed by hand.
-- **angled break lines** and a scope-level `break:` on the `\|drawing\|` itself.
+- **angled break lines** and a scope-level `break:` on the `\|drawing\|` itself; a
+  `break:` station **through a `curve()`** (lines and arcs clip exactly today — move the
+  stations off the cubic) and `break:` on non-sketch geometry (draw the profile with
+  the pen).
 - **`fillet` / `chamfer` against a curved segment** — today the modifiers join two
   straight runs (an arc is already tangent-friendly; draw it with the radius you
   want).

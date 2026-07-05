@@ -9,6 +9,7 @@
 //! | a fused `mirror:` (an **open** subpath + `mirror:`) | the axis `\|centerline\|` |
 //! | a `\|hole\|` | its centre-mark crosshair — two axis `\|centerline\|`s |
 //! | `pattern: radial(…)` | the `\|pitch-circle\|` ring through the copies |
+//! | a `break:` | the `\|breakline\|` pair per group — zigzag / round-stock S |
 //!
 //! Openness is judged **syntactically** (no `close()` before the next `move()`
 //! or the end) — the same rule the pen's `mirror` fuses by; the tests assert
@@ -44,6 +45,19 @@ pub(super) fn chrome_children(node: &Node, kind: NodeKind, chain: &[String]) -> 
             Value::Ident("ring".into()),
             node,
         ));
+    }
+    if kind == NodeKind::Sketch
+        && let Some(breaks) = node.style.iter().find(|d| d.name == "break")
+    {
+        // Two cut edges per comma group, indexed in authored order — the pen
+        // fills their geometry from the clipped profile [SPEC 15.3].
+        for idx in 0..breaks.groups.len() * 2 {
+            out.push(chrome_group(
+                "breakline",
+                vec![Value::Ident("break".into()), Value::Number(idx as f64)],
+                node,
+            ));
+        }
     }
     out
 }
@@ -99,6 +113,10 @@ fn has_radial_pattern(style: &[Decl]) -> bool {
 }
 
 fn chrome_node(ty: &str, chrome: Value, at: &Node) -> Node {
+    chrome_group(ty, vec![chrome], at)
+}
+
+fn chrome_group(ty: &str, chrome: Vec<Value>, at: &Node) -> Node {
     Node {
         id: None,
         ty: Some(ty.into()),
@@ -106,7 +124,7 @@ fn chrome_node(ty: &str, chrome: Value, at: &Node) -> Node {
         classes: Vec::new(),
         style: vec![Decl {
             name: "chrome".into(),
-            groups: vec![vec![chrome]],
+            groups: vec![chrome],
             span: at.span,
         }],
         style_span: None,
@@ -189,6 +207,32 @@ mod tests {
                 ("lini-pitch-circle".to_string(), "ring".to_string()),
             ]
         );
+    }
+
+    #[test]
+    fn a_break_generates_a_breakline_pair_per_group() {
+        let f = lower(
+            "{ layout: drawing }\n|sketch#s| { draw: move(-90, 0) up(10) right(180) down(10); mirror: x-axis; break: -60 -20, 20 60; }\n",
+        );
+        // Indexed `chrome: break N` in authored order — the pen fills them;
+        // they wear the breakline chrome class like all generated chrome.
+        let idx: Vec<f64> = node(&f, "s")
+            .children
+            .iter()
+            .filter_map(|c| match c {
+                Child::Box(b) if b.classes.iter().any(|c| c == "lini-breakline") => Some(b),
+                _ => None,
+            })
+            .filter_map(|b| {
+                b.style.iter().find(|d| d.name == "chrome").and_then(|d| {
+                    match d.groups[0].as_slice() {
+                        [Value::Ident(k), Value::Number(i)] if k == "break" => Some(*i),
+                        _ => None,
+                    }
+                })
+            })
+            .collect();
+        assert_eq!(idx, vec![0.0, 1.0, 2.0, 3.0], "two cut edges per group");
     }
 
     #[test]

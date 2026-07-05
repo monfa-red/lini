@@ -28,9 +28,15 @@ pub struct Folded {
     pub segments: Vec<(String, Segment)>,
     /// The applied `mirror:` axes — the unary mirrored readings read them.
     pub mirror_axes: Vec<MirrorAxis>,
-    /// The folded subpaths, scaled — the drawn outline leader tips ray-cast
-    /// onto [SPEC 15.2].
+    /// The folded subpaths, scaled and break-clipped — the drawn outline
+    /// leader tips ray-cast onto [SPEC 15.2].
     pub subs: Vec<Subpath>,
+    /// The `break:` view map [SPEC 15.3] — identity without one. Segments
+    /// stay model; the anchors map through this for display.
+    pub view: super::breaks::ViewMap,
+    /// The break cut edges, authored order — the `|breakline|` chrome's
+    /// geometry [SPEC 15.7].
+    pub cuts: Vec<super::breaks::CutEdge>,
     /// Whether any open subpath fused. The auto-centerline chrome keys on the
     /// same fact *syntactically* at desugar (an open subpath + `mirror:` —
     /// [SPEC 15.7]); the tests assert the two judgements agree.
@@ -84,6 +90,7 @@ pub fn fold(inst: &ResolvedInst, scale: f64) -> Result<Folded, Error> {
             *p = p.scaled(scale);
         }
     }
+    let (view, cuts) = super::breaks::apply(inst, &mut subs, &mirror_axes, scale, span)?;
 
     let d = to_d(&subs);
     Ok(Folded {
@@ -92,6 +99,8 @@ pub fn fold(inst: &ResolvedInst, scale: f64) -> Result<Folded, Error> {
         segments,
         mirror_axes,
         subs,
+        view,
+        cuts,
         fused,
     })
 }

@@ -76,8 +76,10 @@ pub(super) fn lower(
             ))
         }
         // A mirrored `:segment` — the station's span across the axis, stacked.
+        // The reflection happens on the **model** (the axis mirrors the
+        // unbroken profile); display maps each end through any break.
         Spot::Segment(Segment::Edge(..) | Segment::Point(..)) => {
-            let m = a.local_point();
+            let m = a.unmap_local(a.local_point());
             let axis = a
                 .mirrors()
                 .iter()
@@ -87,8 +89,19 @@ pub(super) fn lower(
                 })
                 .copied()
                 .ok_or_else(no_axis)?;
-            let (pa, pb) = (a.point(), a.to_world(reflect_point(m, axis.dir())));
-            station(ctx, w, rows, &paint, pa, pb, count, follows)
+            let twin = reflect_point(m, axis.dir());
+            station(
+                ctx,
+                w,
+                rows,
+                &paint,
+                Span2 {
+                    disp: (a.to_world(a.map_local(m)), a.to_world(a.map_local(twin))),
+                    model: (a.to_world(m), a.to_world(twin)),
+                },
+                count,
+                follows,
+            )
         }
         // A side anchor: the diametral line through a round node, or the span
         // to the opposite side — ⌀-read, stacked — on anything else.
@@ -106,16 +119,7 @@ pub(super) fn lower(
                 Side::Top | Side::Bottom => ((cx, g.min_y), (cx, g.max_y)),
                 Side::Left | Side::Right => ((g.min_x, cy), (g.max_x, cy)),
             };
-            station(
-                ctx,
-                w,
-                rows,
-                &paint,
-                a.to_world(la),
-                a.to_world(lb),
-                count,
-                follows,
-            )
+            station(ctx, w, rows, &paint, span2(&a, la, lb), count, follows)
         }
         Spot::Corner(diag) => {
             let Some(d) = a.round_diameter() else {
@@ -154,41 +158,47 @@ pub(super) fn lower(
             } else {
                 ((g.min_x, cy), (g.max_x, cy))
             };
-            station(
-                ctx,
-                w,
-                rows,
-                &paint,
-                a.to_world(la),
-                a.to_world(lb),
-                count,
-                follows,
-            )
+            station(ctx, w, rows, &paint, span2(&a, la, lb), count, follows)
         }
     }
 }
 
+/// A span read off the displayed geometry box: drawn there, valued on the
+/// unbroken model [SPEC 15.3].
+fn span2(a: &Anchor, la: P, lb: P) -> Span2 {
+    Span2 {
+        disp: (a.to_world(la), a.to_world(lb)),
+        model: (a.to_world(a.unmap_local(la)), a.to_world(a.unmap_local(lb))),
+    }
+}
+
+/// A station span's two lives: where it draws, what it measures.
+struct Span2 {
+    disp: (P, P),
+    model: (P, P),
+}
+
 /// A ⌀-read span between two world points, stacked like a linear dim — the
-/// station and opposite-side readings share it.
-#[allow(clippy::too_many_arguments)]
+/// station and opposite-side readings share it. Drawn at the displayed
+/// points; the value reads the model pair [SPEC 15.3].
 fn station(
     ctx: &Ctx,
     w: &ResolvedLink,
     rows: &mut Rows,
     paint: &Paint,
-    pa: P,
-    pb: P,
+    s: Span2,
     count: Option<usize>,
     follows: Option<&ResolvedText>,
 ) -> Result<Vec<PlacedNode>, Error> {
-    let axis = if (pb.1 - pa.1).abs() > (pb.0 - pa.0).abs() {
+    let (ma, mb) = s.model;
+    let axis = if (mb.1 - ma.1).abs() > (mb.0 - ma.0).abs() {
         Axis::Vertical
     } else {
         Axis::Horizontal
     };
     let text = compose::compose(
         Glyph::Dia,
-        span_on(pa, pb, axis) / ctx.scale,
+        span_on(ma, mb, axis) / ctx.scale,
         count,
         None,
         follows.map(|t| t.text.as_str()),
@@ -200,8 +210,8 @@ fn station(
     Ok(stacked(
         Stacked {
             axis,
-            a: pa,
-            b: pb,
+            a: s.disp.0,
+            b: s.disp.1,
             text,
             side,
             gap: w.attrs.number("gap"),

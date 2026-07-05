@@ -8,6 +8,7 @@
 pub(crate) mod anchors;
 mod angle;
 mod annotate;
+pub(crate) mod breaks;
 pub(crate) mod chrome;
 mod compose;
 mod corner;
@@ -28,13 +29,16 @@ use crate::resolve::{AttrMap, Program, ResolvedInst, ResolvedValue};
 use geometry::P;
 
 /// A folded sketch's annotation geometry, carried on its placed node
-/// [SPEC 15.2/15.6]: the authored `:segment`s, the applied `mirror:`
-/// axes (the unary mirrored readings), and the drawn outline (leader tips
-/// ray-cast onto it). Everything is in the node's local frame, scaled.
+/// [SPEC 15.2/15.6]: the authored `:segment`s (model coordinates — a
+/// `break:` never moves them), the applied `mirror:` axes (the unary
+/// mirrored readings), the drawn outline (leader tips ray-cast onto it —
+/// displayed, clipped at any break), and the break **view map** (identity
+/// without one). Everything is in the node's local frame, scaled.
 pub struct SketchGeo {
     pub segments: Vec<(String, Segment)>,
     pub mirrors: Vec<geometry::MirrorAxis>,
     pub outline: Vec<geometry::Subpath>,
+    pub view: breaks::ViewMap,
 }
 
 /// What an authored `:segment` addresses [SPEC 15.2] — the pen's output

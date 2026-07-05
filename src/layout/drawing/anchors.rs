@@ -114,7 +114,9 @@ fn spot(node: &PlacedNode, ep: &ResolvedEndpoint, node_name: &str) -> Result<Spo
         "bottom-right" => return Ok(Spot::Corner((d, d))),
         _ => {}
     }
-    // An authored `:segment` [SPEC 15.3]: what the pen collected.
+    // An authored `:segment` [SPEC 15.3]: what the pen collected — model
+    // coordinates, mapped here to the **displayed** position (a `break:`
+    // slides the kept pieces; without one the map is identity).
     let segments = node
         .sketch
         .as_ref()
@@ -130,7 +132,8 @@ fn spot(node: &PlacedNode, ep: &ResolvedEndpoint, node_name: &str) -> Result<Spo
         }
         return Err(Error::at(ep.span, msg));
     };
-    Ok(Spot::Segment(*segment))
+    let view = &node.sketch.as_ref().expect("segments imply a sketch").view;
+    Ok(Spot::Segment(view.segment(*segment)))
 }
 
 impl Anchor<'_> {
@@ -185,9 +188,32 @@ impl Anchor<'_> {
         }
     }
 
-    /// The representative point in the drawing frame.
+    /// The representative point in the drawing frame — the **displayed**
+    /// position (a `break:` compresses the view; [SPEC 15.3]).
     pub fn point(&self) -> P {
         self.to_world(self.local_point())
+    }
+
+    /// The representative point with any `break:` undone — what measured
+    /// values read: *dimensions stay true* [SPEC 15.3/15.6].
+    pub fn model_point(&self) -> P {
+        self.to_world(self.unmap_local(self.local_point()))
+    }
+
+    /// The feature's break view map, if it has one.
+    fn view(&self) -> Option<&super::breaks::ViewMap> {
+        let v = &self.feature().sketch.as_ref()?.view;
+        (!v.is_identity()).then_some(v)
+    }
+
+    /// Node-local model → displayed under the feature's break map.
+    pub fn map_local(&self, p: P) -> P {
+        self.view().map_or(p, |v| v.map(p))
+    }
+
+    /// Node-local displayed → model — the unbroken position.
+    pub fn unmap_local(&self, p: P) -> P {
+        self.view().map_or(p, |v| v.unmap(p))
     }
 
     /// The **outward** unit normal of a directed anchor (a side, a named
