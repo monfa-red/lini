@@ -14,9 +14,11 @@ input_file: samples/drawing_bushing.lini
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
     .lini .lini-centerline { fill: none; stroke-width: 1; stroke-dasharray: 10,3,1,3; }
-    .lini .lini-steel { fill: #00ace2; }
+    .lini .lini-steel { fill: url(#lini-hatch-1); }
   </style>
-  <defs/>
+  <defs>
+    <pattern id="lini-hatch-1" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)"><line x1="3" y1="0" x2="3" y2="6" stroke="#444" stroke-width="0.75"/></pattern>
+  </defs>
   <rect class="lini-canvas" x="-74.9" y="-67.6" width="186.8" height="138.4"/>
   <g class="lini-scene">
     <g class="lini-node lini-steel lini-sketch" data-id="body" style="stroke: #444; stroke-width: 2" transform="translate(0,0)">

@@ -25,6 +25,21 @@ pub struct LaidOut {
     /// rewritten to `url(#lini-gradient-N)` and the definitions emitted into
     /// `<defs>`. Empty unless the scene paints with a gradient.
     pub gradients: Vec<GradientDef>,
+    /// Distinct hatches [SPEC 10.3] — the drafting section-line texture —
+    /// collected exactly like the gradients: use-sites rewritten to
+    /// `url(#lini-hatch-N)`, one `<pattern>` per distinct hatch in `<defs>`.
+    pub hatches: Vec<HatchDef>,
+}
+
+/// One distinct `hatch()` paint [SPEC 10.3]: line bearings (0 = up, clockwise
+/// — the drawing convention), the sheet-space pitch (never scaled), and the
+/// line colour (an ordinary paint — themes, flips, bakes). Line width is
+/// fixed at 0.75: a texture, not a stroke.
+#[derive(Clone)]
+pub struct HatchDef {
+    pub angles: Vec<f64>,
+    pub pitch: f64,
+    pub color: ResolvedValue,
 }
 
 /// A distinct gradient paint [SPEC 10.3]: a kind plus its colour stops, evenly

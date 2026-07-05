@@ -65,7 +65,7 @@ pub fn compile_str(src: &str) -> Result<String, Error> {
 pub fn compile_str_with(src: &str, opts: &Options) -> Result<String, Error> {
     let program = resolve_pipeline(src, opts)?;
     let mut laid_out = layout::layout(&program)?;
-    render::lower_gradients(&mut laid_out);
+    render::lower_paints(&mut laid_out);
     Ok(finish_svg(&laid_out, opts))
 }
 
@@ -75,7 +75,7 @@ pub fn compile_str_with(src: &str, opts: &Options) -> Result<String, Error> {
 pub fn compile_str_checked(src: &str, opts: &Options) -> Result<(String, Vec<Diagnostic>), Error> {
     let program = resolve_pipeline(src, opts)?;
     let mut laid_out = layout::layout(&program)?;
-    render::lower_gradients(&mut laid_out);
+    render::lower_paints(&mut laid_out);
     let diags = routing_diagnostics_of(layout::validate_routing(&laid_out));
     Ok((finish_svg(&laid_out, opts), diags))
 }

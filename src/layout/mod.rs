@@ -253,6 +253,7 @@ fn finish(
         sheet: program.sheet.clone(),
         canvas_fill,
         gradients: Vec::new(),
+        hatches: Vec::new(),
     })
 }
 

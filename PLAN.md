@@ -247,7 +247,7 @@ The largest stage; if it must split, split **measure/compose** from **place/pack
 ### Stage 5 — Conventions, break, fmt & finish
 
 - `hatch()`: `<defs>` `<pattern>` emission, dedup, theming/bake parity with
-  gradients.
+  gradients.  ← DONE (see the Execution log)
 - `break:`: station validation, longer-axis default, clipping the folded path at the
   cut stations, the piecewise view-offset map (annotations read displayed positions,
   values read the model), `|breakline|` zigzag + S-break chrome, `break-gap`.
@@ -556,3 +556,37 @@ deviated from this plan and **why**, open threads for the next session.
     view-offset map). SPEC 24's three examples must now land byte-for-byte
     **including this session's two edits** (bushing order, tie-bar `side:
     top`).
+
+- **2026-07-05 — stage 5, first slice: `hatch()` landed** (same session as
+  stage 4, directly after; all gates green — 705 tests — clippy silent, fmt
+  clean; the bushing PNG-rendered and inspected: 45° section lines, exact
+  ±45 cross-hatch probed separately, the `--bg` bore punching the hatch
+  with no special case). What shipped:
+  - `render/gradients.rs` → **`paints.rs`**: one post-layout walk interns
+    both defs-backed paints (`Interner { gradients, hatches }`), rewriting
+    use-sites to `url(#lini-gradient-N)` / `url(#lini-hatch-N)`;
+    `HatchDef { angles, pitch, color }` rides `LaidOut.hatches` beside the
+    gradients. `lower_gradients` is now `lower_paints`.
+  - The tile: `pitch × pitch`, `patternTransform=rotate(first bearing)` —
+    exact for **any** single bearing; a family at +90° from the first is
+    the full-width line, so the standard cross-hatch tiles exactly at any
+    bearing too. An oblique extra family (no shared tile period exists —
+    `45 60` has none mathematically) draws through the tile centre, best
+    effort. Lines mid-tile (a boundary line would lose half its stroke to
+    tile clipping). Width fixed 0.75; colour via `format_value` — themes,
+    flips, bakes exactly like gradient stops (live `style=`, baked attr).
+  - Defaults: pitch 6, colour `--stroke`; forms `hatch(a)`, `hatch(a, p)`,
+    `hatch(a, p, colour)`, `hatch(a b, p)`. A malformed first arg is not
+    recognised and the call falls through to `fold_call`'s arity error —
+    no bespoke message; acceptable.
+  - The **fill-only gate** lives in `resolve_property` ("'hatch' is a
+    fill — 'stroke' takes a colour or gradient", SPEC 20 verbatim) — any
+    non-`fill` property, not just stroke.
+  - `samples/drawing_bushing.lini` flipped from the flat-fill stopgap to
+    `fill: hatch(45, 6)` — now the SPEC 24 example's paint.
+  - **Still open in stage 5**: `break:` (the big one — clip the folded
+    subpaths at the stations, slide the far piece, the piecewise
+    view-offset map through `annotate::Ctx`, `|breakline|` zigzag +
+    S-break chrome), `fmt` for `draw:`, the three SPEC 24 examples
+    byte-for-byte as samples, the barrel stress sample, the SPEC 16
+    ledger sweep, delete `DRAWING_OLD.md`, README check.

@@ -119,6 +119,13 @@ pub fn resolve_property(
             format!("'{name}' takes a quoted string — write {name}: \"…\""),
         ));
     }
+    // `hatch()` is the section-line texture, a `fill`-only paint [SPEC 10.3].
+    if name != "fill" && matches!(&value, ResolvedValue::Call(c) if c.name == "hatch") {
+        return Err(Error::at(
+            span,
+            "'hatch' is a fill — 'stroke' takes a colour or gradient",
+        ));
+    }
     Ok(value)
 }
 

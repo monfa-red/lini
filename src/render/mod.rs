@@ -1,8 +1,8 @@
 mod filters;
-mod gradients;
 mod icon_fit;
 mod links;
 pub(crate) mod markers; // `marker_size` is read by the router to reserve stub room
+mod paints;
 mod primitives;
 mod rounding;
 mod rules;
@@ -16,7 +16,7 @@ use crate::Options;
 use crate::layout::{LaidOut, PlacedNode};
 use crate::resolve::{AttrMap, NodeKind, VarTable};
 use filters::FilterTable;
-pub(crate) use gradients::lower as lower_gradients;
+pub(crate) use paints::lower as lower_paints;
 use rules::RuleSet;
 use values::{escape_xml, format_value, num};
 
@@ -58,12 +58,12 @@ pub fn render(laid_out: &LaidOut, opts: &Options) -> String {
     );
 
     let filters = FilterTable::collect(&laid_out.nodes, &laid_out.vars, opts);
-    if filters.is_empty() && laid_out.gradients.is_empty() {
+    if filters.is_empty() && laid_out.gradients.is_empty() && laid_out.hatches.is_empty() {
         out.push_str("  <defs/>\n");
     } else {
         out.push_str("  <defs>\n");
         filters.emit_defs(&mut out, &laid_out.vars, opts);
-        gradients::emit_defs(laid_out, &mut out, opts);
+        paints::emit_defs(laid_out, &mut out, opts);
         out.push_str("  </defs>\n");
     }
 
@@ -357,7 +357,7 @@ mod tests {
         let lowered = crate::desugar::desugar(&file).expect("desugar");
         let program = crate::resolve::resolve_with_theme(&lowered, &[]).expect("resolve");
         let mut laid = crate::layout::layout(&program).expect("layout");
-        gradients::lower(&mut laid);
+        paints::lower(&mut laid);
         render(&laid, &Options::default())
     }
 
