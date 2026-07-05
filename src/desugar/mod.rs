@@ -136,7 +136,7 @@ pub fn desugar(file: &File) -> Result<File, Error> {
     }
     // The chart / sequence engines synthesize `|line|` / `|block|` shapes at layout
     // (with no source node), so their primitive class rules must exist even unworn —
-    // a plain scene synthesizes nothing and skips them [SPEC 16].
+    // a plain scene synthesizes nothing and skips them [SPEC 17].
     let synthesizes_shapes = ["chart", "pie", "sequence"]
         .iter()
         .any(|t| present.contains(*t))

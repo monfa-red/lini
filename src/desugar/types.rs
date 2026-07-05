@@ -66,7 +66,7 @@ pub fn template_base(name: &str) -> Option<&'static str> {
 }
 
 /// A define may not take the name of a primitive, a template, the `link` rule
-/// target, or a structural SVG class [SPEC 21] — once the `shape` infix is gone,
+/// target, or a structural SVG class [SPEC 22] — once the `shape` infix is gone,
 /// a `|node::box|` define's `.lini-node` would collide with the universal marker.
 fn is_builtin_type(name: &str) -> bool {
     NodeKind::parse(name).is_some()

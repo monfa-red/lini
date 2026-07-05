@@ -1,4 +1,4 @@
-//! The parser — single-pass recursive descent over the grammar in [SPEC 20].
+//! The parser — single-pass recursive descent over the grammar in [SPEC 21].
 //!
 //! The bracket-and-bars vocabulary makes one token of lookahead enough, with no
 //! type-set prescan: `{` opens style, `[` opens children, `|…|` is a type. The

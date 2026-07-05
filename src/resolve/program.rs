@@ -1,5 +1,5 @@
 //! The resolve orchestrator: variables → stylesheet → scene tree → links →
-//! render inputs, assembled into a [`Program`] [SPEC 17]. Types, templates,
+//! render inputs, assembled into a [`Program`] [SPEC 18]. Types, templates,
 //! defines, labels, and auto-create are lowered upstream by `desugar`, so resolve
 //! only ever sees primitives and `.lini-*` classes.
 //!
@@ -745,7 +745,7 @@ mod tests {
         assert_eq!(w.endpoints[1].path, "r.outlet");
     }
 
-    // ── Errors [SPEC 19] ──
+    // ── Errors [SPEC 20] ──
 
     #[test]
     fn unknown_type_errors() {
@@ -764,7 +764,7 @@ mod tests {
 
     #[test]
     fn side_names_are_free_ids() {
-        // [SPEC 21]: sides are keywords only after an endpoint `:`, so a node may be
+        // [SPEC 22]: sides are keywords only after an endpoint `:`, so a node may be
         // named `|box#top|` — no longer a reserved-id error.
         let p = rv4("|box#top|\n");
         assert_eq!(p.scene.nodes[0].id.as_deref(), Some("top"));

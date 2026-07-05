@@ -118,7 +118,7 @@ fn emit_shape(
         NodeKind::Diamond => emit_diamond(out, n, &indent, thickness),
         NodeKind::Cyl => emit_cyl(out, n, &indent, thickness),
         NodeKind::Oval => emit_oval(out, n, &indent, thickness),
-        // Text is emitted by `render::render_text` as a bare `<text>` [SPEC 16],
+        // Text is emitted by `render::render_text` as a bare `<text>` [SPEC 17],
         // never as wrapped geometry — so it never reaches this dispatch.
         NodeKind::Text => {}
         NodeKind::Line => emit_line(out, n, &indent, vars, ruleset, opts, thickness),

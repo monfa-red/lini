@@ -15,10 +15,10 @@ pub struct LaidOut {
     /// Resolved CSS variables — carried through to render so the `<style>`
     /// block and `--bake-vars` mode can both read them.
     pub vars: VarTable,
-    /// Defs-block stylesheet inputs [SPEC 16] — the renderer states these
+    /// Defs-block stylesheet inputs [SPEC 17] — the renderer states these
     /// as class rules and diffs node attrs against them.
     pub sheet: SheetInputs,
-    /// The root container's `fill:`, when set [SPEC 16]: render paints a
+    /// The root container's `fill:`, when set [SPEC 17]: render paints a
     /// backing rect over the whole viewBox. `None` ⇒ a transparent canvas.
     pub canvas_fill: Option<ResolvedValue>,
     /// Distinct gradients [SPEC 10.3], collected post-layout: paint use-sites are
@@ -66,7 +66,7 @@ pub struct RoutedLink {
     pub markers: Markers,
     pub attrs: AttrMap,
     /// `.style` names applied to the link — rendered as `lini-style-*` classes,
-    /// the same surface a node's styles get [SPEC 16]. Routing never reads it.
+    /// the same surface a node's styles get [SPEC 17]. Routing never reads it.
     pub applied_styles: Vec<String>,
     pub texts: Vec<RoutedText>,
     /// First and last endpoints of the chain this segment belongs to — surfaced

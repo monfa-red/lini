@@ -1,4 +1,4 @@
-//! The output stylesheet's structural rules [SPEC 16]: paint defaults stated
+//! The output stylesheet's structural rules [SPEC 17]: paint defaults stated
 //! once as class rules — paint rides CSS, geometry bakes. Rules are unlayered
 //! so non-browser renderers (which skip `@layer`) parse them, and scoped under
 //! `.lini` so an SVG inlined into a host document restyles nothing else.
@@ -97,7 +97,7 @@ impl RuleSet {
     /// link `<g>` — as the **difference** from what its classes already provide:
     /// each `PAINT_PROPS` entry, then the joint `stroke-style → stroke-dasharray`
     /// pair, kept only when it differs from the class rule (so inline beats the
-    /// rule, [SPEC 16]). The one place that diff lives, shared by both renderers:
+    /// rule, [SPEC 17]). The one place that diff lives, shared by both renderers:
     /// `value_of` resolves a prop to its value (a node aliases text `color`→`fill`),
     /// `fmt` formats it (a node's `css_value` adds `px` to `font-size`; a link's
     /// `format_value` does not).
@@ -244,7 +244,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
 
     // The scene background plate: `.lini-canvas` fills with `--lini-bg`, stated as
     // a CSS rule (not a presentation attr, where `var()` is invalid) so it switches
-    // live and bakes to a literal for resvg/email [SPEC 16].
+    // live and bakes to a literal for resvg/email [SPEC 17].
     rules.push(Rule {
         class: "lini-canvas".into(),
         props: vec![("fill".into(), live("bg"))],
@@ -294,7 +294,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
         });
     }
     if present.contains("text") {
-        // A bare `<text class="lini-text">` [SPEC 16]. `fill: currentColor` ties
+        // A bare `<text class="lini-text">` [SPEC 17]. `fill: currentColor` ties
         // the glyph colour to the inherited `color`; `stroke: none` keeps a
         // container's stroke off the glyphs; the anchor pair centres it on (x, y).
         rules.push(Rule {
@@ -459,7 +459,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
     if has_labels {
         // The label cut's mask rects state their fill/stroke as CSS, not inline —
         // so the link's own `stroke` can't bleed into the luminance mask, and the
-        // SVG stays free of per-label paint attrs [SPEC 16]. White shows the
+        // SVG stays free of per-label paint attrs [SPEC 17]. White shows the
         // link, a black box per label punches the hole.
         rules.push(Rule {
             class: "lini-cut-bg".into(),
@@ -506,7 +506,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
         }
         // One paint vocabulary: a `.style` class states `stroke` whether it dresses a
         // node's outline or a link's wire, so its `.lini-style-*` rule paints both
-        // with no per-link inline [SPEC 16].
+        // with no per-link inline [SPEC 17].
         rules.push(Rule {
             class: format!("lini-style-{}", name),
             props: paint_props(attrs, vars, opts),

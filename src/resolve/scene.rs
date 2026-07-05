@@ -127,7 +127,7 @@ pub fn resolve_node(
     }
 
     // Sides (`top`/`bottom`/`left`/`right`) are free as ids — a `:side` is peeled
-    // by position now, not from the path [SPEC 17] — so the only id error here is
+    // by position now, not from the path [SPEC 18] — so the only id error here is
     // a duplicate.
     if let Some(id) = &node.id {
         let full = join_path(path_prefix, id);

@@ -76,7 +76,7 @@ pub fn list_themes() -> &'static [(&'static str, &'static str)] {
 }
 
 /// The CSS for a built-in theme — the `--lini-*` declarations a user can copy
-/// [SPEC 16]. `None` for an unknown name.
+/// [SPEC 17]. `None` for an unknown name.
 pub fn builtin_css(name: &str) -> Option<String> {
     Some(to_css(&palette(name)?))
 }
@@ -142,7 +142,7 @@ fn collapse(v: &mut VarTable, arm: usize) {
     }
 }
 
-/// Render a palette to the canonical theme CSS [SPEC 16]. `color-scheme` rides
+/// Render a palette to the canonical theme CSS [SPEC 17]. `color-scheme` rides
 /// the rule when adaptive; `font-family` is commented so the engine default
 /// (monospace, exact text sizing) holds unless a user uncomments it.
 fn to_css(vars: &VarTable) -> String {

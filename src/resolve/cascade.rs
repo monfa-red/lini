@@ -66,7 +66,7 @@ impl Stylesheet {
     }
 
     /// Whether `name` is a class any rule references — a node may apply only
-    /// these ([SPEC 19] `unknown class`). Generated `.lini-*` classes are always
+    /// these ([SPEC 20] `unknown class`). Generated `.lini-*` classes are always
     /// known and never validated this way; this gates only user classes.
     pub fn defines_class(&self, name: &str) -> bool {
         self.classes.contains(name)

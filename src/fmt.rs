@@ -1,4 +1,4 @@
-//! Canonical source formatter [SPEC 18]. Parses to the AST and re-emits a
+//! Canonical source formatter [SPEC 19]. Parses to the AST and re-emits a
 //! normalized form: the three phases in order (the stylesheet `{ }`, then the
 //! instances, then the links), `{ }` style blocks and `[ ]` child lists, bar-wrapped
 //! type selectors and `|name::base|` defines, 2-space indent, space-separated value
@@ -399,7 +399,7 @@ impl Emitter<'_> {
     }
 
     /// Emit a run of declarations grouped onto as few lines as the source's
-    /// trivia allows [SPEC 18]: consecutive decls with nothing between them
+    /// trivia allows [SPEC 19]: consecutive decls with nothing between them
     /// share one line, and a comment or blank line starts a fresh one.
     fn emit_grouped_decls(&mut self, decls: &[&Decl], depth: usize) {
         let mut mid_line = false;

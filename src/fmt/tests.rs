@@ -137,7 +137,7 @@ fn node_with_style_and_children() {
 
 #[test]
 fn block_declarations_group_on_one_line() {
-    // [SPEC 18]: config decls share a line in the style block, off the head.
+    // [SPEC 19]: config decls share a line in the style block, off the head.
     assert_eq!(
         fmt("|group#g| { cell: 1 2; direction: column; gap: 16 } [\n|box#a|\n]\n"),
         "|group#g| { cell: 1 2; direction: column; gap: 16; } [\n  |box#a|\n]\n"

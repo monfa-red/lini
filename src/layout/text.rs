@@ -9,7 +9,7 @@
 /// **monospace**, where every glyph shares one advance (~0.6 em across Menlo /
 /// Consolas / Courier), so this linear estimate is essentially exact — no font
 /// metrics needed. A proportional `font-family` override makes it approximate
-/// again [SPEC 22].
+/// again [SPEC 23].
 const AVG_CHAR_WIDTH_RATIO: f64 = 0.6;
 
 /// Approximate the width of a label at the given font size, in px. Multi-line

@@ -61,7 +61,7 @@ pub fn render_link(
         link_classes.push(format!("lini-link-{s}"));
     }
     link_classes.extend(w.applied_styles.iter().map(|s| format!("lini-style-{}", s)));
-    // A link's `<g>` paint is the same class-diff a node's is [SPEC 16] — one
+    // A link's `<g>` paint is the same class-diff a node's is [SPEC 17] — one
     // shared computation; a link never aliases `color` and formats with plain
     // `format_value`.
     let mut decls = ruleset.inline_paint_diff(
@@ -406,7 +406,7 @@ fn label_mask(
     let (rw, rh) = (x1 - x0 + 2.0 * pad, y1 - y0 + 2.0 * pad);
     // The mask rects carry their fill/stroke via CSS (`.lini-cut-bg` /
     // `.lini-cut`), not inline — so the link's own `stroke` can't bleed into the
-    // luminance mask, and the SVG stays free of per-label paint [SPEC 16].
+    // luminance mask, and the SVG stays free of per-label paint [SPEC 17].
     let mut m = format!(
         r#"<mask id="{id}" maskUnits="userSpaceOnUse" x="{}" y="{}" width="{}" height="{}"><rect class="lini-cut-bg" x="{}" y="{}" width="{}" height="{}"/>"#,
         num(rx),

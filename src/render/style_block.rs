@@ -1,6 +1,6 @@
 //! Emit the `<style>` block: the `@layer lini.defaults` variable defaults
 //! (host CSS wins automatically per [SPEC 10.1]) plus the unlayered structural
-//! rules ([SPEC 16] — paint rides CSS, geometry bakes; unlayered so renderers
+//! rules ([SPEC 17] — paint rides CSS, geometry bakes; unlayered so renderers
 //! that skip `@layer` still parse them).
 
 use super::rules::RuleSet;

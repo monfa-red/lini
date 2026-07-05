@@ -145,7 +145,7 @@ pub fn attr_points(attrs: &AttrMap, name: &str) -> Option<Vec<(f64, f64)>> {
 /// The `stroke-dasharray` pattern for `stroke-style: dashed|dotted` (sized
 /// against `stroke-width`), or empty for solid. `wavy` also returns empty — its
 /// stroke is solid, the wave living in the link geometry ([`super::wavy`]); on a
-/// shape it stays solid (deferred, [SPEC 22]). Shared by shapes, links, and the
+/// shape it stays solid (deferred, [SPEC 23]). Shared by shapes, links, and the
 /// rules builder.
 pub fn dasharray_value(attrs: &AttrMap, width: f64) -> String {
     match attrs.get("stroke-style") {

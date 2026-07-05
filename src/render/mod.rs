@@ -164,7 +164,7 @@ fn render_node(
         return;
     }
     // Text renders as a bare `<text class="lini-text">` at its placed position —
-    // no wrapping `<g>` [SPEC 16]. Font and colour inherit from the enclosing box.
+    // no wrapping `<g>` [SPEC 17]. Font and colour inherit from the enclosing box.
     if n.kind == NodeKind::Text {
         render_text(out, n, depth, vars, opts);
         return;
@@ -227,7 +227,7 @@ fn render_node(
     .unwrap();
 
     // `title:` emits a `<title>` as the group's first child — an SVG tooltip
-    // and the accessible name [SPEC 16].
+    // and the accessible name [SPEC 17].
     if let Some(crate::resolve::ResolvedValue::String(title)) = n.attrs.get("title") {
         writeln!(out, "{}  <title>{}</title>", indent, escape_xml(title)).unwrap();
     }

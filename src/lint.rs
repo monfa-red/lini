@@ -1,5 +1,5 @@
 //! Lint pass — stylistic / advisory warnings that are not parse/resolve errors
-//! [SPEC 19]. It runs on the parsed file and reuses the desugar auto-create gate
+//! [SPEC 20]. It runs on the parsed file and reuses the desugar auto-create gate
 //! so its view of what will be created matches the real lowering.
 //!
 //! Two warnings live here:
@@ -20,7 +20,7 @@ pub fn lint(file: &File) -> Vec<Diagnostic> {
     out
 }
 
-/// A link with both a head label and a `[ ]` of labels [SPEC 19]: keep them
+/// A link with both a head label and a `[ ]` of labels [SPEC 20]: keep them
 /// together in the `[ ]`.
 fn lint_split_labels(file: &File, out: &mut Vec<Diagnostic>) {
     let mut visit = |w: &Link| {

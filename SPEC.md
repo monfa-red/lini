@@ -2,8 +2,8 @@
 
 Pretty diagrams, charts, and technical drawings from plain text, with fine-grained
 control. One core — composable nodes, a CSS-driven cascade, compile-time layout —
-drives a family of layouts (flow, grid, sequence, charts, with engineering drawings
-next), and compiles to clean, themeable SVG.
+drives a family of layouts (flow, grid, sequence, charts, and engineering drawings),
+and compiles to clean, themeable SVG.
 
 **Two brackets and one capsule carry the whole language.** `{ … }` is **style** —
 `key: value;` declarations, dash-case, space-separated, exactly like CSS. `[ … ]`
@@ -20,11 +20,9 @@ page — stylable in place (`"x" { color: red }`), but a leaf, never a box.
 This document is complete: an implementer can build a conforming engine from it
 alone. **Everything is defined once and reused** — a property, the cascade, colour,
 the expression engine all apply across every node and every layout, and a layout
-section states only what is *new* to that layout. **Charts and sequences are
-layouts** ([Part II](#part-ii--layout)), peers of flow and grid over the same core.
-A future **drawing** layout is named but not yet built ([DRAWING.md](DRAWING.md)); it
-slots into the same frame. **Link routing** has its own contract —
-[ROUTING.md](ROUTING.md).
+section states only what is *new* to that layout. **Charts, sequences, and drawings
+are layouts** ([Part II](#part-ii--layout)), peers of flow and grid over the same
+core. **Link routing** has its own contract — [ROUTING.md](ROUTING.md).
 
 ---
 
@@ -42,14 +40,14 @@ slots into the same frame. **Link routing** has its own contract —
 ### Part II — Layout
 
 11 [The Layout Model](#11-the-layout-model) · 12 [Flow & Grid](#12-flow--grid) ·
-13 [Sequence](#13-sequence) · 14 [Charts](#14-charts)
+13 [Sequence](#13-sequence) · 14 [Charts](#14-charts) · 15 [Drawing](#15-drawing)
 
 ### Part III — Reference
 
-15 [Property Ledger & Support](#15-property-ledger--support) · 16 [SVG Output](#16-svg-output) ·
-17 [Compile Pipeline](#17-compile-pipeline) · 18 [CLI](#18-cli) · 19 [Errors](#19-errors) ·
-20 [Grammar](#20-grammar) · 21 [Reserved Words](#21-reserved-words) ·
-22 [Deferred](#22-deferred) · 23 [Examples](#23-examples)
+16 [Property Ledger & Support](#16-property-ledger--support) · 17 [SVG Output](#17-svg-output) ·
+18 [Compile Pipeline](#18-compile-pipeline) · 19 [CLI](#19-cli) · 20 [Errors](#20-errors) ·
+21 [Grammar](#21-grammar) · 22 [Reserved Words](#22-reserved-words) ·
+23 [Deferred](#23-deferred) · 24 [Examples](#24-examples)
 
 ---
 
@@ -210,7 +208,7 @@ says otherwise:
 double-quoted string is always text; leading and trailing whitespace in its value is
 **trimmed** (`" ABC "` is "ABC", and a spaces-only `" "` becomes `""`), so source
 spacing never leaks into the render.
-Single quotes are **not** strings (reserved, [SPEC 21](#21-reserved-words)).
+Single quotes are **not** strings (reserved, [SPEC 22](#22-reserved-words)).
 
 **A bare word is an identifier, never a string.** In a value, an unquoted word is
 always an identifier — a keyword, a colour or `symbol` name, a `font-family`, or an id
@@ -235,7 +233,9 @@ makes a **percentage** (`50%`), valid only in colour components.
 separates list items and appears only where a property takes a list of groups
 (`points: 0 0, 10 10`). **Functions** use parentheses and sit in value position —
 `rgb(…)`, `hsl(…)`, `repeat(…)`, the math library, and any you define
-([SPEC 10](#10-colour-variables--expressions)); a call needs no backtick (only an operator does).
+([SPEC 10](#10-colour-variables--expressions)); a call needs no backtick (only an operator does). A call's `(` **glues to
+its name** (`rgb(…)`, never `rgb (…)`) — a free-standing `(-)` or `(<)` is a measuring
+op ([SPEC 15.6](#156-dimensions)), which is how `move(-2, 5)` and `pin (-)` never meet.
 
 **Colors** — `#fff`, `#f80c`, `#ffaa00`, `#ffaa00cc` (3/4/6/8 hex digits; the 4-
 and 8-digit forms carry alpha), CSS names (`red`, `cornflowerblue`), `rgb(…)`,
@@ -422,7 +422,7 @@ are space-separated and positional. A declaration **ends with `;`** — its valu
 to that `;` (or the block's closing `}`), so a value may span several lines (a long
 expression, a per-segment list); the `;` is optional only immediately before `}`. A
 bare `key: value` outside a `{ }` is an error. Every property, its value shape, and
-where it applies is in the [Property Ledger](#15-property-ledger--support).
+where it applies is in the [Property Ledger](#16-property-ledger--support).
 
 ---
 
@@ -580,14 +580,14 @@ exactly.
 
 Text width uses one advance per character (≈ 0.6 em). The default font is monospace,
 so this is essentially exact; a proportional `font-family` override makes it
-approximate until embedded font metrics land ([SPEC 22](#22-deferred)).
+approximate until embedded font metrics land ([SPEC 23](#23-deferred)).
 
 ---
 
 ## 6. Paint, Stroke & Text
 
 The visual vocabulary shared by every node. These are ordinary properties — the full
-list, with value shapes and defaults, is the [Property Ledger](#15-property-ledger--support);
+list, with value shapes and defaults, is the [Property Ledger](#16-property-ledger--support);
 the colour system they draw on is [SPEC 10](#10-colour-variables--expressions). This section
 is the *behaviour*.
 
@@ -633,13 +633,13 @@ Two kinds of text property, split by whether they touch layout:
 For a global `font-family` / `color`, prefer the `--lini-font-family` /
 `--lini-text-color` variables (or a `--theme`) for an **embeddable** diagram — they stay
 live for a host page to re-theme, where a global property bakes its value into the
-`.lini` rule ([SPEC 10](#10-colour-variables--expressions), [SPEC 16](#16-svg-output)).
+`.lini` rule ([SPEC 10](#10-colour-variables--expressions), [SPEC 17](#17-svg-output)).
 
 ---
 
 ## 7. Nodes
 
-11 primitives. All accept position ([SPEC 5](#5-the-box-model)) and paint ([SPEC 6](#6-paint-stroke--text));
+12 primitives. All accept position ([SPEC 5](#5-the-box-model)) and paint ([SPEC 6](#6-paint-stroke--text));
 closed primitives also accept `stack`, `rotate`, `shadow`. Text is **not** a primitive —
 it is bare content ([SPEC 3](#3-statements--the-label)); the frameless `|block|` box
 ([SPEC 8](#8-templates)) is what you reach for when text needs an id, a class, a link, or box
@@ -663,16 +663,17 @@ empty `|oval|`) make a circle.
 | `\|line\|` | `points` | 2+ points. Markers via `marker*:`. |
 | `\|icon\|` | `symbol` | A **Phosphor** icon — `symbol:` (or the label) names it; paints two-tone like a box (`fill` body, `stroke` line, counter-scaled `stroke-width`). A square that grows with its `[ ]` text (`32` floor); `\|sign\|` is the larger preset. See [Icons](#icons). |
 | `\|image\|` | `src`, `width`, `height` | `<image href="…">`. External URLs only; both dimensions required. `fit` maps it into the box — `auto` (default, letterbox), `contain`, `cover`, or `stretch`. |
+| `\|sketch\|` | `draw` | A **pen** that folds to a path — profiles drawn call by call, with named points and edges, mirroring, and view breaks ([SPEC 15.3](#153-the-sketch-pen)). Closed-primitive paint; bbox from the geometry. |
 
 **`radius`** rounds a rectangle's corners — `|box|` defaults to 8, `|block|` / `|rect|`
 to 0. It is honoured on the rectangle (and on a multi-point `|line|`'s joins); `radius`
-on the non-rect primitives (hex / diamond / slant / poly) is deferred ([SPEC 22](#22-deferred)).
+on the non-rect primitives (hex / diamond / slant / poly) is deferred ([SPEC 23](#23-deferred)).
 
 ### Visual modifiers (closed primitives)
 
 | Property | Forms | Effect |
 |---|---|---|
-| `stroke-style` | `solid` / `dashed` / `dotted` | Stroke pattern. Default `solid`. (`wavy` draws on links — [SPEC 9](#9-links); on closed primitives it is deferred — [SPEC 22](#22-deferred).) |
+| `stroke-style` | `solid` / `dashed` / `dotted` / `center` / `phantom` | Stroke pattern. Default `solid`. `center` (dash-dot) and `phantom` (dash-dot-dot) are the drafting line conventions — axes and alternate positions — valid on shapes and `\|line\|`s everywhere ([SPEC 15.7](#157-leaders-notes--line-conventions)); a link's set stays `solid` / `dashed` / `dotted` / `wavy` ([SPEC 9](#9-links)). (`wavy` on closed primitives is deferred — [SPEC 23](#23-deferred).) |
 | `stack` | `N` / `dx dy` | Draw an offset duplicate behind the node. Scalar `N` = `N -N`. |
 | `rotate` | `N` degrees | Rotate around the bbox center ([SPEC 5](#5-the-box-model)). |
 | `shadow` | `N` / `dx dy` / `dx dy blur` / `dx dy blur color` | Drop shadow via SVG `<filter>`. Scalar `N` = offset `N N`, blur `N`; tint defaults to `--lini-shadow-color`. |
@@ -685,7 +686,8 @@ on the non-rect primitives (hex / diamond / slant / poly) is deferred ([SPEC 22]
 | `marker-start: X` | Start end (link source). |
 | `marker-end: X` | End end (link target). |
 
-Values: `none`, `arrow`, `dot`, `circle`, `diamond`, and the ER **cardinality set** —
+Values: `none`, `arrow`, `dot`, `circle`, `diamond`, **`datum`** (the filled drafting
+triangle a drawing's `>-` leader lowers to — [SPEC 15.7](#157-leaders-notes--line-conventions)), and the ER **cardinality set** —
 `crow` (the "many" foot), `one` (a bar `|`), `zero-or-one`, `one-or-many`, `zero-or-many`
 (a bar or `○` paired with the foot). `circle` is a larger `dot` — a filled point sized for
 hovering or reading (on a chart line it marks a data point; [SPEC 14](#14-charts)). Markers scale
@@ -740,7 +742,7 @@ weight stays constant whichever `fit` you choose.
 
 A missing `symbol` errors like `|poly|` without `points`; an unknown one suggests the
 nearest name. Only the icons a diagram uses are embedded (a default-on `icons` feature,
-[SPEC 22](#22-deferred)).
+[SPEC 23](#23-deferred)).
 
 ---
 
@@ -763,11 +765,17 @@ the cascade ([SPEC 4](#4-selectors-cascade--specificity)) — every value here i
 | `\|column\|` | `\|block\|` | `direction: column` | Frameless wrapper — children in a column. |
 | `\|grid\|` | `\|block\|` | `layout: grid` | Frameless grid (needs `columns`). |
 | `\|sign\|` | `\|icon\|` | `width: 64; height: 64; padding: 4; stroke-width: 2; fit: contain` | A larger icon as a stand-alone node, with room for a short label; `fit: contain` fills the box (unlike a bare `\|icon\|`). |
-| `\|table\|` | `\|group\|` | `layout: grid; align: stretch; justify: stretch; gap: 1; gap-color: --stroke; padding: 0; fill: none; stroke: --stroke; stroke-width: 2; stroke-style: solid; font-size: 14; font-weight: normal` | Ruled grid (see below). |
+| `\|table\|` | `\|group\|` | `layout: grid; align: stretch; justify: stretch; gap: 1; gap-color: --stroke; padding: 0; fill: none; stroke: --stroke; stroke-width: 2; stroke-style: solid; font-size: 14; font-weight: normal; scale: 1` | Ruled grid (see below). |
 | `\|cell\|` | `\|block\|` | `padding: 4 8` | A **table cell** — a frameless `\|block\|` carrying the text-to-gutter inset. Body cells wrap in it; `\|header\|` / `\|footer\|` build on it. Style all cells with `\|cell\| { … }` or, per table, `\|table\| \|cell\| { … }`. |
 | `\|header\|` | `\|cell\|` | `fill: --header-fill; font-weight: bold` | A **header** cell — a filled, bold band (a `\|table\|`'s first row; an `\|entity\|`'s title spans them). |
 | `\|footer\|` | `\|cell\|` | `color: --footer-color` | A **footer** cell — muted text; opt-in on the last row. |
 | `\|entity\|` | `\|table\|` | `columns: auto auto` | An ER / database **entity** — a titled, two-column field list (see below). |
+| `\|note\|` | `\|block\|` | `fill: --fill; stroke: --stroke; padding: 20; scale: 1` | A **note** — the folded-corner callout card, one type in every layout (see below). |
+| `\|balloon\|` | `\|oval\|` | `width: 16; fill: --fill; stroke: --stroke; font-size: 11; scale: 1` | An item **balloon** — the numbered circle an assembly leaders to a part ([SPEC 15.8](#158-assemblies-views--titles)). |
+| `\|drawing\|` | `\|block\|` | `layout: drawing; padding: 0` | An engineering **drawing** — geometry on a datum, measured annotations ([SPEC 15](#15-drawing)). |
+| `\|hole\|` | `\|oval\|` | `fill: --bg; stroke: --stroke` — `width:` **required**, the diameter | A round **hole** — punches by paint order, draws its own centre marks ([SPEC 15.4](#154-features-holes--patterns)). |
+| `\|centerline\|` | `\|line\|` | `stroke-style: center; stroke-width: 1; fill: none` — needs `points:` | The dash-dot axis / symmetry line ([SPEC 15.7](#157-leaders-notes--line-conventions)). |
+| `\|pitch-circle\|` | `\|oval\|` | `stroke-style: center; stroke-width: 1; fill: none` — `width:` **required**, the diameter | The dash-dot bolt circle; round, so a `(-)` reads its PCD ([SPEC 15.7](#157-leaders-notes--line-conventions)). |
 
 The bare `|block|` is the base everything rectangular builds on — frameless, yet a real
 box (id, class, children, wirable, positionable): what you reach for to wrap text that
@@ -795,6 +803,14 @@ Style every caption globally with `|caption| { font-size: 16; font-weight: bold 
 that targets captions without touching body text. Because a caption is pinned (not in
 flow), a group laid out as a `row` carries its title just the same.
 
+**Notes.** A `|note|` is the callout card — a filled block with a folded top-right
+corner. It is **one type in every layout**: in a `sequence` it binds to lifelines with
+`over:` / `left:` / `right:` ([SPEC 13](#13-sequence)); in a `drawing` it places at the
+datum, usually wired by a leader ([SPEC 15.7](#157-leaders-notes--line-conventions)); in
+flow / grid it is an ordinary padded card. Built-in scoped rules — `|sequence| |note|`
+and `|drawing| |note|`, each `{ padding: 6 10; font-size: 13 }` — keep it compact where
+convention expects, exactly as `|table|` insets its `|cell|`s; override them like any rule.
+
 **Tables.** A `|table|` is sugar — a `group` that is a grid with `gap: 1` and
 `gap-color: --stroke`, so the 1px gaps between cells paint as hairline rules
 ([SPEC 12](#12-flow--grid)). Each body cell wraps in a `|cell|`, the type that
@@ -817,7 +833,7 @@ A table's **first row becomes its header** — each cell wrapped as a `|header|`
 bold band; `|table| |header| { font-weight: normal; fill: none }` reverts it. A **footer**
 is opt-in: wrap a last-row cell in `|footer|`. Every cell is a box now — header/footer
 carry a fill; a body cell is a frameless `|block|` wrapping its text, so the padding rule
-and the column's alignment reach it ([SPEC 16](#16-svg-output)).
+and the column's alignment reach it ([SPEC 17](#17-svg-output)).
 
 ```
 |table#basket| {
@@ -899,7 +915,7 @@ operator's line part sets the link's `stroke-style` (`--` ⇒ `dashed`, `---` �
 `~` ⇒ `wavy`); an explicit `stroke-style:` overrides it.
 
 `-<` / `>-<` draw the ER **crow's-foot** ("many"); the finer cardinalities ([SPEC 7](#7-nodes)) are
-set via `marker*:`, with no operator spelling ([SPEC 22](#22-deferred)).
+set via `marker*:`, with no operator spelling ([SPEC 23](#23-deferred)).
 
 ### Syntax
 
@@ -957,7 +973,7 @@ a -> b .flow "hi" { stroke: red; stroke-style: dashed }    // one link overrides
 ```
 
 `|-|` is **selector-only**: a link is drawn by an operator, so `|-|` never appears as an
-instance ([SPEC 19](#19-errors)). `clearance` (default 16) and `routing` (default
+instance ([SPEC 20](#20-errors)). `clearance` (default 16) and `routing` (default
 `orthogonal`) are **scene config** — geometry, not paint — set on a container's `{ }`,
 cascading to that scope's links, nearest winning; `marker*` come from the operator and
 override per link.
@@ -1050,12 +1066,12 @@ keeps from nodes and from other links.
 `routing` selects the strategy for a scope and cascades like `clearance`: `orthogonal`
 (the default) routes by the contract below; `straight` draws each link as one segment
 between the bodies, trimmed to their boundaries — it avoids nothing and reports
-nothing; `curved` is named but deferred ([SPEC 22](#22-deferred)). It pairs with `layout` —
+nothing; `curved` is named but deferred ([SPEC 23](#23-deferred)). It pairs with `layout` —
 `layout` places the nodes, `routing` routes the links between them — so a group can
 route its internals one way while the root routes another. Which subsystem realises a
 scope's links is the scope's **wiring strategy** ([SPEC 11](#11-the-layout-model)): the
 orthogonal (or `straight`) router for `flow` / `grid`, layout-time lowering for
-`sequence` and `chart` / `pie`.
+`sequence`, `chart` / `pie`, and `drawing`.
 
 The full routing contract — clearance, spacing, crossings, fan-out, self-loops — lives
 in [`ROUTING.md`](ROUTING.md), the source of truth for routing.
@@ -1101,7 +1117,7 @@ Each colour is a `light-dark(LIGHT, DARK)` value, so one SVG carries both modes:
 `--lini-bg` paints the scene background (the canvas rect), so the diagram is
 self-contained in either mode. The default font is a **monospace** stack: it reads
 crisp, and a fixed glyph advance keeps text-width estimation accurate without embedded
-font metrics ([SPEC 22](#22-deferred)). Body text, captions, and link labels are all
+font metrics ([SPEC 23](#23-deferred)). Body text, captions, and link labels are all
 `normal` weight by default.
 
 **Dark/light is automatic.** The compiler emits `color-scheme: light dark` on `.lini`,
@@ -1151,7 +1167,7 @@ with aliases for muscle memory: `--yellow → --amber`, `--pink → --rose`, `--
 you decorate with (its `wash` / `soft` tiers are your pinks), `green` is tuned to an
 emerald, and `lime` is the lemony one.
 
-The palette is **tree-shaken** ([SPEC 16](#16-svg-output)): only the `--lini-*` variables a
+The palette is **tree-shaken** ([SPEC 17](#17-svg-output)): only the `--lini-*` variables a
 diagram references are emitted, so the full palette costs a three-box diagram nothing.
 
 ### 10.3 Gradients
@@ -1178,9 +1194,25 @@ rather than muddy.
 
 Each distinct gradient is emitted once as a `<linearGradient>` / `<radialGradient>` in
 `<defs>` and referenced by `url(#…)` — deduplicated and shared like the drop-shadow
-`<filter>`s ([SPEC 16](#16-svg-output)). `objectBoundingBox` units fit one definition to
+`<filter>`s ([SPEC 17](#17-svg-output)). `objectBoundingBox` units fit one definition to
 any node at any size. The stops being palette vars, a gradient themes, flips, and bakes
-like any other paint; gradient-on-text is deferred ([SPEC 22](#22-deferred)).
+like any other paint; gradient-on-text is deferred ([SPEC 23](#23-deferred)).
+
+**Hatches.** `hatch()` is a paint function beside `gradient()`, valid on **`fill`**
+only — the drafting section-line texture, usable in any layout:
+
+| Form | Result |
+|---|---|
+| `hatch(45)` | section lines at 45°, pitch 6 |
+| `hatch(45, 6)` | explicit pitch (sheet-space px — hatch never scales, [SPEC 15.1](#151-the-container-the-datum--the-scale)) |
+| `hatch(45, 6, --gray-deep)` | explicit line colour (default `--stroke`) |
+| `hatch(45 -45, 6)` | a space-group of angles — cross-hatch |
+
+Angles use the drawing bearing (0 = up, clockwise — [SPEC 15.3](#153-the-sketch-pen)).
+Each distinct hatch emits one `<pattern>` in `<defs>`, deduplicated like gradients; the
+colour is an ordinary paint, so hatching themes, flips dark/light, and bakes. Hatch
+line width is fixed (0.75) — a texture, not a stroke. `hatch()` on `stroke` is an
+error — a stroke takes a colour or gradient.
 
 ### 10.4 `--name` references
 
@@ -1225,6 +1257,15 @@ cell inset). It doubles as the minimum size of an empty box (`2 × padding`; see
 the template bundles — lives in one place**, so the whole look is tuned from a single
 file.
 
+The drawing chrome ([SPEC 15](#15-drawing)) — sheet-space, never scaled:
+
+```
+dim-offset 18    dim-pitch 16            dim-ext-gap 3    dim-ext-overshoot 3
+dim-arrow 9 × 3  note-offset 14          note-landing 8   center-mark-overhang 4
+hatch-pitch 6    hatch line-width 0.75   break-gap 12     tol-stack 0.7
+drawing link stroke-width 1
+```
+
 ### 10.6 `--bake-vars`
 
 Class rules and inline `style=` work everywhere, but CSS *variables* don't — resvg and
@@ -1250,6 +1291,16 @@ until an operator does:
 }
 ```
 
+The rule is the same in every property — a chart's formula and a sketch's pen included.
+A signed number is not an operator, so `-2` is bare everywhere (`translate: -35 20`):
+
+```
+fn:   ramp(1)               // a call — bare
+fn:   `x * 2`               // operators → fenced
+draw: move(-2, 5) up(8)     // calls and signed numbers — bare
+draw: right(`w / 2`)        // an operator argument → fence just that argument
+```
+
 Inside a backtick the language is small and total:
 
 - **Operators** `+ - * / ^` (`^` power, right-associative), unary `-`, grouping `( )`,
@@ -1259,7 +1310,9 @@ Inside a backtick the language is small and total:
   `name(args)`. (Colour / track builders like `rgb` / `repeat` make typed values, so
   they live in value position, never inside math.)
 - **Constants** `pi`, `e`; **scientific notation** `1e6`, `1.32e-6`; the sample
-  parameter `u` (geometry, below).
+  parameter `u` (geometry, below); and your **zero-parameter functions**, read bare
+  (below). A bare name resolves: locals → the ambient (`u` / `x`) → `pi` / `e` → your
+  named constants.
 - **Locals** — `name = expr;` binds for the rest of the expression; the **final
   expression is the value** (no keyword, no `return`). `=` binds, `==` compares. Values
   are numbers and points — no strings, no loops.
@@ -1271,14 +1324,16 @@ Inside a backtick the language is small and total:
 **Functions** are defined in the stylesheet — a name, a parameter list, and a backtick
 body, **juxtaposed** with no colon (which keeps a definition apart from a property:
 `scale: …` is a property, `scale(n) …` a function). A zero-parameter function is a
-named constant:
+**named constant**, and reads **bare inside a fence**, like `pi` — outside one, the
+call form stands (`width: w()`):
 
 ```
 {
   scale(n)   `100 * 1.2^n`;
-  unit()     `8`;                          // a named constant
+  w()        `42`;                         // a named constant — bare `w` in any fence
   wave(a, f) `(u*300, a*sin(2*pi*f*u))`;   // a parametric point
 }
+|sketch#part| { draw: move(`-w/2`, 0) right(`w`) up(`w/3`); }   // one number, reused
 ```
 
 Call a function anywhere a value goes — bare like `rgb(…)` / `repeat(…)`, or inside a
@@ -1301,7 +1356,7 @@ curves, waves, and spirals procedurally:
 Everything an expression touches **bakes** — a computed size, a sampled curve — so a
 standalone SVG never depends on host CSS. The same sample-an-ambient seam feeds a
 chart's `fn:` (with `x` bound to the domain — [SPEC 14](#14-charts)). Unknown names, wrong
-arity, and out-of-range results are compile-time errors ([SPEC 19](#19-errors)).
+arity, and out-of-range results are compile-time errors ([SPEC 20](#20-errors)).
 
 ---
 # Part II — Layout
@@ -1322,7 +1377,7 @@ properties. This part is the family; each section states just its delta.
 | `sequence` | time axis | participants + messages + frames + notes ([SPEC 13](#13-sequence)) | layout-time time-rows | yes |
 | `chart` | data plane | series + axes + bands + marks ([SPEC 14](#14-charts)) | layout-time data→pixels | yes |
 | `pie` | part-to-whole | slices ([SPEC 14](#14-charts)) | layout-time value→angle | yes |
-| *`drawing`* | datum / geometry | geometry + annotations *(future — [DRAWING.md](DRAWING.md))* | layout-time dimensions | yes |
+| `drawing` | datum / geometry | geometry + annotations + mates ([SPEC 15](#15-drawing)) | layout-time dims / leaders | yes |
 
 **Defaults.** Every container — the root included — defaults to `layout: flow` with
 `direction: column` and `gap: 20`. The default `|box|` pads its content by 20; so does
@@ -1341,7 +1396,8 @@ small, bounded addition ([Part III](#part-iii--reference) formalises each):
 
 2. **The wiring strategy realises a scope's links.** `flow` / `grid` hand their links to
    the router ([SPEC 9](#9-links), [ROUTING.md](ROUTING.md)); `sequence` lowers each message to a
-   time-row arrow; `chart` / `pie` have no links. One scope, one strategy — set by the
+   time-row arrow; a `drawing` lowers each link to a dimension, leader, or mate
+   ([SPEC 15](#15-drawing)); `chart` / `pie` have no links. One scope, one strategy — set by the
    scope's `layout` (with `routing:` selecting `orthogonal` vs `straight` for the routed
    ones). A `sequence` message is thus the one place a link's *order* is its geometry, not a
    routing problem.
@@ -1349,7 +1405,7 @@ small, bounded addition ([Part III](#part-iii--reference) formalises each):
 3. **A layout-owning engine lowers to primitives in the layout phase.** `flow` / `grid`
    arrange their children where they sit. `sequence` / `chart` / `pie` instead **read their
    whole subtree** and emit an ordinary primitive tree — `|block|`s, `|line|`s, `|path|`s,
-   text — at baked coordinates ([SPEC 17](#17-compile-pipeline)). So the cascade, palette, theming,
+   text — at baked coordinates ([SPEC 18](#18-compile-pipeline)). So the cascade, palette, theming,
    gradients, `--bake-vars`, `fmt`, and determinism all apply to a chart or a sequence with
    **no engine-specific render code** — a chart *is* a diagram once lowered.
 
@@ -1373,9 +1429,11 @@ a sequence, or a pie can carry a background, a frame, or a link like any `|box|`
 
 `gap` is honoured everywhere but **means what the engine needs**: inter-child spacing in
 flow / grid, the plot-to-title/legend gutter in a chart / pie (default 10), and the
-message pitch / participant spacing in a sequence (default 32). `direction`, `align`,
-`justify`, `gap-color`, and `padding` are the **flow / grid arranger's** knobs — a
-`sequence`, `chart`, or `pie` container places its own children and ignores them.
+message pitch / participant spacing in a sequence (default 32); a drawing places by
+datum and ignores it (its dims and mates read a scoped `gap:` of their own —
+[SPEC 15](#15-drawing)). `direction`, `align`, `justify`, `gap-color`, and `padding`
+are the **flow / grid arranger's** knobs — a `sequence`, `chart` / `pie`, or `drawing`
+container places its own children and ignores them.
 
 **Nested boxes are unaffected.** These knobs govern a container *engine*'s placement of
 its own children; an ordinary box **nested inside any layout** still lays out its own
@@ -1383,7 +1441,7 @@ content by the box model. So a participant box in a `sequence` — an ordinary b
 honours `padding`, `align`, `justify`, and `gap-color` on its **own** content, even
 though the sequence engine placed the participant on the time axis. (A `chart` / `pie`
 consumes its children into marks, so this case does not arise there — [SPEC 14](#14-charts).)
-The full property-by-layout picture is the [support matrix](#15-property-ledger--support).
+The full property-by-layout picture is the [support matrix](#16-property-ledger--support).
 
 ### Gap paint — `gap-color`
 
@@ -1500,7 +1558,7 @@ chart's closed series set):
 | `\|note\|` | note | a callout over / beside lifelines |
 
 **Nodes and links interleave in source order** — the body's "children before links"
-ordering ([SPEC 20](#20-grammar)) relaxes to *source order preserved*, so a frame (a node) sits
+ordering ([SPEC 21](#21-grammar)) relaxes to *source order preserved*, so a frame (a node) sits
 among the messages (links) around it.
 
 **One scope.** Every message resolves its endpoints against the **sequence's
@@ -1567,7 +1625,7 @@ bar offset outward), and an unclosed bar runs to that participant's last row. Th
 stack is **sequence-global** — a call inside a frame may close outside it. A self-message
 (`a -> a`) and an async (`~>`) open none, and a return with no open bar just draws its
 arrow. `activation: none` on the sequence draws no bars. (Explicit per-message control is
-deferred — [SPEC 22](#22-deferred).)
+deferred — [SPEC 23](#23-deferred).)
 
 ### Frames & notes
 
@@ -1602,24 +1660,25 @@ A `|note|` is a callout placed at its time row (source order), bound to lifeline
 those (and any between), `{ left: api }` / `{ right: api }` a box beside one. Its smart
 label is the text; a multi-line or styled note rides the `[ ]` like any box. `over` /
 `left` / `right` are valid only in a sequence. `par` and other fragments are deferred
-([SPEC 22](#22-deferred)).
+([SPEC 23](#23-deferred)).
 
 ### Defaults
 
-The six sequence types are bundles over `|block|`, tuned to read with no styling; the
-cascade overrides any of it, and they reuse the scene's role variables — no new ones:
+The five sequence types are bundles over `|block|`, tuned to read with no styling; the
+cascade overrides any of it, and they reuse the scene's role variables — no new ones.
+(`|note|` is the **core** template, [SPEC 8](#8-templates), compacted here by the
+built-in `|sequence| |note| { padding: 6 10; font-size: 13 }` rule.)
 
 | Type | Defaults over `\|block\|` |
 |---|---|
 | `\|sequence\|` | `layout: sequence; gap: 32 32` (a root `{ layout: sequence }` gets the same `gap`) |
-| `\|note\|` | `fill: --fill; stroke: --stroke; padding: 6 10; font-size: 13` |
 | `\|loop\| / \|opt\| / \|alt\|` | `fill: none; stroke: --group-stroke; stroke-style: dashed; stroke-width: 1; radius: 4; padding: 24; font-size: 12` |
 | `\|else\|` | `fill: none; stroke: --group-stroke; stroke-style: dashed; stroke-width: 1; font-size: 12` |
 
 The engine resolves in the layout phase — a message's x-ends are the lifelines' positions
 (fixed once participants are placed) and its y is its row — placing participants, walking
 messages/frames/notes in source order, and lowering headers → `|block|` + text, lifelines
-and arrows → `|line|`, activations/frames/notes → `|block|` ([SPEC 17](#17-compile-pipeline)).
+and arrows → `|line|`, activations/frames/notes → `|block|` ([SPEC 18](#18-compile-pipeline)).
 The orthogonal router never sees these links.
 
 ---
@@ -1663,7 +1722,7 @@ its frame, and the cascade styles a chart like any box.
 
 `categories` is the common-case shorthand for the **x (domain) axis's** tick labels; an
 `|axis|` child sets them the general way, but the two name the same thing — setting both is
-an error ([SPEC 19](#19-errors)).
+an error ([SPEC 20](#20-errors)).
 
 ### 14.2 Series
 
@@ -1692,7 +1751,7 @@ A chart line is *a line*, so the name is reused, not duplicated.
 from line *ends* to every vertex: `|line| { marker: circle }` shows a marker at each point.
 A chart marker is **centred**, so only the symmetric kinds apply — **`dot`**, **`circle`**
 (a larger, hover-sized point), and **`diamond`**; the directional `arrow` / `crow` are an
-error on a series ([SPEC 19](#19-errors)). Every marker carries the datum's `<title>` — a
+error on a series ([SPEC 20](#20-errors)). Every marker carries the datum's `<title>` — a
 marked point is a hover target ([SPEC 14.8](#148-tooltips)). `|dots|` is markers with no line,
 **`circle`** by default; its diameter is `width` (`height` too for an ellipse), its shape
 `marker:` — there is **no** `size:` property.
@@ -1724,7 +1783,7 @@ value form**; a comma is the discriminator:
 
 A comma-less `data:` is always a value list (a single point cannot be written comma-less).
 A `|line|` / `|area|` needs ≥ 2 vertices; with categorical data the value count must match
-the `categories:` count ([SPEC 19](#19-errors)).
+the `categories:` count ([SPEC 20](#20-errors)).
 
 **`tags:`** is the **per-datum** text — a quoted-string list parallel to `data:` (one tag
 per value or `x y` point), distinct from the series' one legend label. A tag rides with its
@@ -1783,11 +1842,11 @@ faint role variable charts add to the palette, themeable and dark/light-aware.
 **`range: a b`** does three jobs at once: it sets the visible **window** (`a`…`b`),
 **crops** data outside it to the plot area, and **reverses** the axis when `a > b`
 (`range: 50 1` runs high→low — both scale and tick order flip). Either end may be `auto`
-(`range: 0 auto`); the two ends must be distinct ([SPEC 19](#19-errors)). Ticks are "nice" by
+(`range: 0 auto`); the two ends must be distinct ([SPEC 20](#20-errors)). Ticks are "nice" by
 default (1-2-5 × 10ⁿ); `step:` sets a spacing, `ticks:` an explicit list, `scale: log`
 decade ticks (domain above 0). Tick labels come from `categories:` (an x axis) or the
 formatted tick value + `unit:` (a value axis). Explicit per-axis tick text (a general
-`labels:`) is deferred — use `categories:` for the x axis ([SPEC 22](#22-deferred)).
+`labels:`) is deferred — use `categories:` for the x axis ([SPEC 23](#23-deferred)).
 
 ### 14.5 Bands & annotations
 
@@ -1808,7 +1867,7 @@ with no shading.
 bare constant) per band, evaluated in local `u`; a **single** `fn:` samples the whole
 domain in `x` and ignores bands. Consecutive segments connect end-to-start (the riser is
 drawn), so a jump is explicit. A per-band list whose length ≠ the band count is an error
-([SPEC 19](#19-errors)) — never a silent truncation.
+([SPEC 20](#20-errors)) — never a silent truncation.
 
 A **`|mark|`** places a reference line, point, or label by *value* on a *named* axis, so it
 survives a `direction` flip unchanged:
@@ -1821,7 +1880,7 @@ survives a `direction` flip unchanged:
 
 `at: V` (one value) is a line, `at: X Y` (two) a point; `marker: none` suppresses a point's
 dot, leaving the label — so there is no separate free-label node. Bands and marks render in
-**column** direction today; in `row` / `radial` they are deferred ([SPEC 22](#22-deferred)).
+**column** direction today; in `row` / `radial` they are deferred ([SPEC 23](#23-deferred)).
 
 ### 14.6 Legend, title & colour
 
@@ -1862,7 +1921,7 @@ x (domain) axis bends into a ring (categories → evenly-spaced **spokes**, from
 clockwise) and the value axis becomes the **radius**. A radar `|line|` connects a series'
 value on every spoke and **closes** to the first; an `|area|` fills that polygon; `|bars|`
 fill their angular slot. A radial chart has **one value (radius) axis** — writing `side:`
-on it is an error ([SPEC 19](#19-errors)) — and one x axis (the spokes). Concentric circular
+on it is an error ([SPEC 20](#20-errors)) — and one x axis (the spokes). Concentric circular
 gridlines and a configurable start angle are deferred; the polygon web is the default.
 
 **Pie** (`layout: pie`) encodes value as **angle** — each slice's angle is its value over
@@ -1881,7 +1940,7 @@ A `|slice|`'s `value:` is its magnitude (`≥ 0`), its smart label its legend en
 fill clockwise from the top, each angle = `value / Σ value × 360°`, and walk the palette
 (so slices are distinctly coloured). A total of zero is an error. **`hole:`** (`0` ≤ n < `1`)
 cuts an inner hole — `hole: 0` a pie, `hole: 0.5` a donut. On-slice value labels, a centred
-total, and exploded slices are deferred ([SPEC 22](#22-deferred)).
+total, and exploded slices are deferred ([SPEC 23](#23-deferred)).
 
 ### 14.8 Tooltips
 
@@ -1916,7 +1975,7 @@ so node count stays bounded.
 
 ### 14.9 Lowering
 
-`layout: chart` / `pie` resolve in the layout phase ([SPEC 17](#17-compile-pipeline)), since the
+`layout: chart` / `pie` resolve in the layout phase ([SPEC 18](#18-compile-pipeline)), since the
 shared scale needs every child's data first: **collect** series and resolve `data:` /
 sample `fn:`; fix each axis **domain** and scale (bars force zero); inset the **plot rect**
 by measured label / legend gutters; **lower** every series, axis, band, annotation, and the
@@ -1924,7 +1983,541 @@ legend to primitives at baked pixels; **emit** in a **semantic draw order** — 
 gridlines → areas → bars → lines → dots → annotations → axes → labels → inline labels →
 tooltip — so a line sits above its bars without hand-ordering (the one place a chart
 overrides source-order rendering; `layer:` still wins). The output is an ordinary primitive
-subtree ([SPEC 17](#17-compile-pipeline)).
+subtree ([SPEC 18](#18-compile-pipeline)).
+
+---
+
+## 15. Drawing
+
+A **drawing** reads a diagram as a dimensioned sheet: `layout: drawing` places every
+geometry child on one shared **datum**, and its links are **annotations** — dimensions,
+callouts, leaders — or **mates** that seat parts against each other. One bet carries the
+design: because the engine *has* the geometry in numbers, a dimension's smart label is
+its **measured value** — the numbers live once, in the geometry, and the annotations
+point at them. Drawings are the one layout that extends the grammar, by three operator
+tokens and one value form ([SPEC 21](#21-grammar)); everything else is nodes,
+declarations, and links, and it lowers to primitives like any layout-owning engine
+([SPEC 11](#11-the-layout-model), seam 3). Its children split by role:
+
+| Child | Is | Drawn |
+|---|---|---|
+| a box (`\|sketch\|`, `\|rect\|`, `\|oval\|`, `\|hole\|`, …) | **geometry** — a part or a feature | its outline and fill, at the shared datum |
+| a link with a measuring op — `<->` `(-)` `(<)` — or a leader op — `<-` `*-` `>-` | an **annotation** | extension lines, arrows, text ([15.6](#156-dimensions), [15.7](#157-leaders-notes--line-conventions)) |
+| a link with `\|\|` | a **mate** — a positioning relationship | nothing — it seats a part ([15.5](#155-mates)) |
+| any other two-ended link (`->`, `-->`, `-*`, …) | a straight **annotation arrow** | one segment, markers per the op |
+| `"…"`, `\|note\|`, `\|balloon\|`, `\|table\|`, … | sheet content | per its own type, sheet-space ([15.1](#151-the-container-the-datum--the-scale)) |
+
+Four properties of the model, each inherited from the core:
+
+- **A drawing scope owns its links** — the wiring strategy ([SPEC 11](#11-the-layout-model)).
+  The router never runs here; every link lowers at layout time to dimension or leader
+  primitives, or (for `||`) to a position. `routing:`, `clearance:`, and `along:` have
+  no role in a drawing.
+- **No auto-create.** Unlike a diagram (`cat -> dog` invents boxes), a drawing never
+  invents an endpoint: an annotation must point at real geometry. An unknown endpoint
+  is an error with suggestions ([SPEC 20](#20-errors)).
+- **One placement model, whole scope.** Every geometry child — and a part's own `[ ]`
+  features, recursively — places its **origin on the parent's datum**, not by flow. A
+  child that owns a layout (a `\|table\|`, a nested `\|drawing\|`, a `\|row\|`…) lays
+  out its interior as usual and places as one box.
+- **What you measure is a node — or a point or edge it names.** Anything dimensioned,
+  mated, or pointed at is a node with an id, or a `:name` a `\|sketch\|` authors on its
+  own profile ([15.2](#152-anchors), [15.3](#153-the-sketch-pen)). Anonymous geometry is
+  drawable but not addressable.
+
+The geometry machinery is ordinary Lini, usable in any layout; only the annotation
+semantics need a drawing scope:
+
+| Global — works everywhere | Drawing-scope only |
+|---|---|
+| `\|sketch\|` + `draw:` / `mirror:` / `break:`; `pattern:`; `scale:`; `hatch()` fills; `stroke-style: center` / `phantom`; `\|note\|` / `\|balloon\|` | the measuring ops (`<->`-as-dimension, `(-)`, `(<)`), the leader ops, `\|\|`, `tol:`, dim `side:` / `gap:`, auto-measure, `unit:`, datum placement, the chrome (centre marks, auto centerlines, dimension packing) |
+
+Outside a drawing a `\|sketch\|` is just a shape; its authored `:name`s are declared
+but dormant (a routed link landing on one is deferred — [SPEC 23](#23-deferred)).
+
+### 15.1 The container, the datum & the scale
+
+`|drawing|` is `|block|` + `layout: drawing` — frameless, padding 0 (the geometry and
+its annotations *are* the content). `{ layout: drawing }` on the root makes the whole
+file one drawing, exactly as a root sequence works; the root's padding then frames the
+sheet.
+
+**Datum & ground.** The datum is the container's own origin. Every child's **origin**
+lands on it — *not* its bbox centre: a symmetric primitive's origin is its centre, so
+primitives stack concentric by default; a `|sketch|`'s origin is its **pen origin**
+([15.3](#153-the-sketch-pen)), so two sketches drawn at different pen offsets keep
+their drawn relationship. `translate: x y` offsets a child from the datum — the
+universal nudge, unchanged. Children paint in **source order** (later on top), so
+overlaps, punched holes, and cutaways compose with no boolean operations. The
+**ground** is the first-declared geometry child: mates resolve by walking outward from
+it ([15.5](#155-mates)); to reground, reorder the declarations.
+
+**Scale — drawing units are your millimetres.** Numbers in a drawing are **drawing
+units**; `scale:` (default 1) is **pixels per unit**. Draw a 300 mm bar as
+`right(300)`, set `scale: 4`, and it renders 1200 px wide while every dimension still
+reads `300` — **measured values are always pre-scale**. `unit: "mm"` appends a suffix
+to auto-measured values only (drafting states units once, in the title block).
+
+`scale:` is an ordinary node property, nearest ancestor wins: on the drawing it is the
+view scale (a 2:1 detail view is a sibling drawing with `scale:` doubled,
+[15.8](#158-assemblies-views--titles)); on any node it overrides — `scale: 1` opts a
+node out. One split makes it behave: a node's **position** (`translate:`) scales by its
+*parent's* scale, its **own shape** (`draw:`, `points:`, `width` / `height`,
+`pattern:` offsets) by its *own* — so a balloon in a 2:1 view stays beside its part at
+true size. What never scales, at any setting: text (`font-size` is compile-measured,
+per core), `stroke-width`, markers, hatch pitch, and every dimension / leader constant
+([SPEC 10.5](#105-layout-constants-baked)). The `|note|` / `|balloon|` / `|table|`
+templates carry `scale: 1` ([SPEC 8](#8-templates)) — annotations are sheet chrome — and
+a define inherits its base's side (`|steel::sketch|` scales, `|finish::note|` doesn't).
+
+**Sizing & measurement.** A drawing's bbox is the union of its children's **paint**
+bboxes *and* its annotations (dimensions stack outside the geometry and count), plus
+`padding`; an explicit `width` / `height` is a floor, per core. Measurement, by
+contrast, uses each node's **geometry bbox** — the drawn path, stroke excluded — so
+line weight never leaks into a value or a mate. Geometry defaults to
+`stroke-width: 2` and a drawing's links to `1` (via its built-in `|-|` rule), the
+drafting 2 : 1 line-weight contrast. `gap`, `align`, `justify`, and `direction` have no
+role on a drawing container and are ignored.
+
+### 15.2 Anchors
+
+The endpoint form is the core one ([SPEC 9](#9-links)) with a wider point set, valid
+only in a drawing scope:
+
+```
+anchor = id { "." id } [ ":" point ]
+point  = center                                            (the default)
+       | top | bottom | left | right                       (side midpoints)
+       | top-left | top-right | bottom-left | bottom-right  (corners)
+       | name                                               (authored in draw:, 15.3)
+```
+
+- Points sit on the node's **geometry bbox** ([15.1](#151-the-container-the-datum--the-scale)):
+  a side is that side's midpoint, a corner the bbox corner, `center` its centre.
+  Corners glue **vertical word first**, matching `pin`'s vocabulary (`pin: top left` →
+  `:top-left`); the reversed order errors with a did-you-mean. Corners and `:center`
+  are drawing-scope only — elsewhere the core four sides stand.
+- A `|sketch|` **authors** its own names with the point sigil in `draw:`
+  ([15.3](#153-the-sketch-pen)) — declared in the pen, selected on an endpoint, the
+  same declare / select symmetry as `#id`. Built-in names win (`:left` cannot be
+  authored); an unknown name errors with suggestions; `mirror:` / `pattern:` copies of
+  a name are not addressable ([SPEC 23](#23-deferred)).
+- For **measurement** every anchor reduces to a representative point — a point is
+  itself, an edge or arc its midpoint, a bbox name its bbox point — and a named edge
+  additionally carries its **direction**, which sets a dimension's axis and feeds the
+  angular op ([15.6](#156-dimensions)).
+- Dot-paths walk into children as everywhere (`pump.body:right`), resolve in the
+  statement's scope, and never search ([SPEC 9](#9-links)). A **grid**-patterned node's
+  position is its **seed** copy; a **radial**-patterned node's is its ring **centre**
+  ([15.4](#154-features-holes--patterns)) — each the point drafting locates.
+- **The anchor aims; the outline lands.** A leader's tip is a ray from its text toward
+  the anchor's representative point, stopped at the ray's *first crossing of the drawn
+  path* — aiming at the bbox corner of a filleted plate touches the fillet arc itself.
+  Dimension extension lines, by contrast, spring exactly from the anchor points.
+
+### 15.3 The sketch pen
+
+`|sketch|` is a closed primitive ([SPEC 7](#7-nodes)): a pen that folds to a path. It
+**requires `draw:`** (as `|poly|` requires `points:`), paints like any closed primitive
+(defaults `--fill` / `--stroke` / `stroke-width: 2`), and derives its bbox from the
+geometry.
+
+`draw:` is a left-to-right list of **bare calls** — ordinary value-position calls, no
+new value grammar beyond the `:name` suffix; the value runs to its `;` and may span
+lines. An argument is a number, a call, or a backtick — operators stay fenced, and a
+stylesheet constant reads bare in the fence (`right(`w/2`)`,
+[SPEC 10.7](#107-expressions--functions)).
+
+| Call | Does |
+|---|---|
+| `move(x, y)` | set the start / begin a new subpath — **absolute**, in the sketch's own frame |
+| `left(n)` / `right(n)` / `up(n)` / `down(n)` | an orthogonal run; the verb is visual (`up` goes up on screen) |
+| `line(dx, dy)` | a relative straight segment |
+| `angle(deg, n)` | a run of length `n` at a bearing — **0 = up, clockwise** (90 right, 180 down, 270 left) |
+| `arc(dx, dy, r)` | the **minor** arc to a relative point; `r > 0` sweeps clockwise, `r < 0` counter-clockwise; `\|r\|` ≥ half the chord or it errors |
+| `arc(r, deg)` | a **tangent** arc: continue the current heading, sweeping `deg` on radius `r > 0` — `deg > 0` turns clockwise; the heading updates by `deg` |
+| `curve(dx1, dy1, dx2, dy2, dx, dy)` | a relative cubic bézier (the advanced 10 %) |
+| `fillet(r)` / `chamfer(c)` | **corner modifiers** between two segments — trim both legs (`chamfer` cuts `c` back along each; on a square corner, the 45° bevel) and join with a tangent arc / a straight bevel. They draw nothing alone and error anywhere but at a corner. |
+| `circle(r)` | a circle subpath centred on the current point; the point and heading are unchanged |
+| `close()` | close the current subpath. **A closed path is cyclic**: a modifier may sit on either side of `close()` — `fillet(3) close()` rounds the corner where the last segment meets the seam, `close() fillet(3)` the one where the seam meets the first segment. |
+
+**Coordinates.** The pen's frame keeps the core orientation — y grows **down**, like
+`points:` and `translate:` everywhere in Lini — but the verbs and bearings are visual,
+so a profile written with `up` / `right` / `arc` never types a signed y; only
+`move()`, `line()`, and `curve()` expose raw coordinates. Heading state: each drawing
+call leaves the pen heading along its own direction; `angle()` and the tangent `arc()`
+read and update it.
+
+**Subpaths & holes.** A second `move()` starts a new subpath; fill is **even-odd**, so
+an inner subpath reads as a hole — an outline with a bore is one shape, composite
+parts are overlapping nodes, and no boolean operations exist or are needed. An open
+path (no `close()`, no `mirror:`) is legal; `fill` paints it as if closed (SVG
+semantics).
+
+#### `:name` — the point sigil in the pen
+
+Anything the pen draws can carry a name, written with the point sigil
+([15.2](#152-anchors)) in two positions of one rule:
+
+| Position | Names | Example |
+|---|---|---|
+| **attached** — glued to a call | that call's drawn product: an edge, an arc, a bevel, a circle, a `close()` seam | `right(50):neck`, `fillet(3):r1` |
+| **freestanding** — between calls | the pen's **current point** | `right(38):thread :m1 right(32)` — a station with no drawn edge |
+
+The names are **yours**, not vocabulary — `neck`, `r1`, `m1` above are examples. A
+freestanding `:name` draws nothing and changes nothing; at a `fillet` / `chamfer`
+corner it records the **theoretical sharp corner** — the point drafting measures (the
+arc itself is named on the modifier), and the two may sit in either order. `move()`
+takes no product name — name its landing freestanding (`move(-90, 0) :origin`). A
+duplicate name in one `draw:` is an error.
+
+#### `mirror:` — draw half, get the whole
+
+`mirror:` reflects the entire drawn path and unions the copy. The value is a **list**,
+applied left to right, each item reflecting the union so far — two items give a 4-fold
+part:
+
+| Item | Axis (through the pen origin) | Gives |
+|---|---|---|
+| `x-axis` | the horizontal axis (y = 0) | top ↔ bottom symmetry |
+| `y-axis` | the vertical axis (x = 0) | left ↔ right symmetry |
+| a number `45` | the line at that bearing (`angle()`'s convention) | angled symmetry |
+
+What mirroring does is decided **per subpath**, and both intents fall out of one rule
+each: an **open** subpath is **fused** — the copy joins end-to-end, the edge on the
+axis the invisible seam (*draw the half, get the whole*); a **closed** subpath is
+**duplicated** — a reflected second copy (*draw one ear, get both*). So leave a
+half-profile open (a `close()` there would draw a visible spine down the axis — the
+cue you meant the other form), and close a feature you want twice. A fused mirror also
+generates its axis `|centerline|` — auto chrome,
+[15.7](#157-leaders-notes--line-conventions); a duplicated subpath generates none.
+`mirror:` runs before `pattern:` and before placement: it builds the node's geometry,
+so anchors, dimensions, and mates all see the whole part.
+
+#### `break:` — cut the boring middle
+
+`break: a b;` removes the span between two stations from the **view** — the model
+stays whole. `a < b` (error otherwise) are coordinates in the node's own frame on the
+**break axis**: the node's **longer axis** by default, or named per group —
+`break: -40 40 y-axis;` reads *the stations sit on the y-axis*. Several breaks are a
+comma list, each group defaulting to the longer axis: `break: -90 -30, 30 90;`.
+
+- The far piece slides toward the near one, leaving a sheet-space `break-gap`; the cut
+  edges draw as generated `|breakline|` children — zigzag, or the round-stock **S**
+  when the sketch is mirrored across the break axis — styled or removed by the cascade
+  like all chrome ([15.7](#157-leaders-notes--line-conventions)).
+- **Dimensions stay true.** Anchors and extension lines land at *displayed* positions;
+  measured values always read the *unbroken* model — the same law as `scale:`.
+
+### 15.4 Features, holes & patterns
+
+**A part's features ride in its `[ ]`** — placed at the part's datum and **rigid**
+with it: mate or translate the part and its holes travel along.
+
+```
+|rect#plate| { width: 120; height: 70 } [
+  |hole#pin| { width: 10; translate: -35 20; pattern: grid(2, 1, 70, 0) }
+]
+plate:left <-> plate.pin { side: top }        // dot-path to the feature → 25
+```
+
+**`|hole|`** ([SPEC 8](#8-templates)) is round: `width:` — **required** — is its
+**diameter**. It **punches** by paint order (`fill: --bg` over a filled or hatched
+part reads as a through-hole, hatch-exempt with no special case) and draws its own
+dash-dot **centre marks**, overhanging by a sheet-space constant — a hole without
+marks is a plain `|oval|`. `pin (-)` reads its diameter ([15.6](#156-dimensions));
+`pattern:` prefixes the count (`2× ⌀10`). Counterbores, countersinks, and threads are
+defines or deferred ([SPEC 23](#23-deferred)).
+
+**`pattern:`** replicates a node about its own position — a node property, legal in
+any layout, though its chrome belongs to drawings:
+
+| Form | Copies |
+|---|---|
+| `pattern: grid(cols, rows, dx, dy)` | `cols × rows` copies at offsets `(i·dx, j·dy)`; the **seed is copy one** and keeps the node's position |
+| `pattern: radial(count, radius)` | `count` copies **on** the circle, first at bearing 0, clockwise; the node's position is the **ring centre** and no copy is drawn there |
+
+The two datums match drafting practice — you locate a grid by its first hole and a
+bolt circle by its centre. The node's bbox becomes the **union** of the copies; each
+copy repeats the full lowering (a patterned `|hole|` punches and centre-marks per
+copy); a radial pattern generates its `|pitch-circle|`
+([15.7](#157-leaders-notes--line-conventions)). Counts ≥ 1 (grid) / ≥ 2 (radial),
+`radius > 0`; offsets are drawing units. Per-copy addressing is deferred
+([SPEC 23](#23-deferred)).
+
+**Composition is the geometry model** — there is no CSG. A part is one `|sketch|`,
+its surfaces and corners named where dimensions will land, or **composed** from
+overlapping nodes in paint order: a bore in a section view is a `--bg`-filled
+`|rect|` — it punches the hatch and its edges anchor a `(-)`. The escape hatches are
+core (`|poly|`, `|path|`, `|image|`). A **parts library** is plain defines — no engine
+support, just bundled geometry and paint:
+
+```
+{
+  |steel::sketch| { fill: hatch(45, 6) }
+  |brass::sketch| { fill: hatch(-45, 4) }
+}
+```
+
+### 15.5 Mates
+
+`a:anchor || b:anchor` seats two geometry nodes — `||`, the parallel bars of GD&T: it
+moves a part and **draws nothing**, so it can never be confused with an annotation.
+Grammatically one more link op ([SPEC 21](#21-grammar)); chains and fans parse as
+usual; a mate takes **no label** and no markers.
+
+```
+nozzle:left || barrel:right              // abut those faces, flush
+cap || barrel                            // no anchors — concentric (origins coincide)
+nozzle:left || barrel:right { gap: 4 }   // 4 units of daylight along the normal
+piston:left || bore:left { gap: -6 }     // negative gap — inserted 6 deep
+```
+
+- **Resolution.** Mates resolve after datum placement, walking outward from the
+  **ground** (the first-declared child, [15.1](#151-the-container-the-datum--the-scale)):
+  each mate moves the side *not yet connected* to the ground, translating that whole
+  scope-level child, rigid, features and all. `a || b` and `b || a` are the same
+  mate — grounding, not operator order, decides who moves. A mate whose ends are both
+  already grounded is over-constrained — an error naming the cycle; an unconnected
+  island grounds its own first-declared node. Deterministic, source-ordered.
+- **Directed vs point anchors.** Sides and named edges are **directed**: a mate
+  between them aligns the faces flush, the two directions must be parallel
+  (`a:left || b:top` errors), and a named edge seats a part against an **interior**
+  face (`ring:right || housing:shoulder`). `gap:` offsets along the shared normal and
+  may be **negative** (overlap — the one place `gap` goes below zero). **Point**
+  anchors (`center`, a freestanding name) make the points **coincide** — the bare
+  `a || b` is the origin-to-origin case — and have no normal, so `gap:` there errors.
+- **Rotate, then mate; translate after.** A part's `rotate:` turns its geometry first
+  and the mate aligns the *rotated* anchor; the mated child's own `translate:` applies
+  **after** — the universal post-placement nudge, here a lateral slide along the face.
+  A `pin:` on a mated child is ignored with a warning.
+- A mate between two features of **one** part errors — a part is rigid. Mates are
+  valid only where children datum-place: inside a layout-owning child the flow already
+  decided every position, the same over-constraint error. Dot-paths reach into parts
+  (`pump.shaft:right || frame:left`), moving the scope-level child that contains the
+  moving anchor.
+
+### 15.6 Dimensions
+
+A dimension is a **link**; the operator carries the kind and supplies the glyph you
+can't type. The statement is the core link statement, with one relaxation: the
+measuring and leader ops may stand **one-ended** ([SPEC 21](#21-grammar)).
+
+| Write | Reads | Renders |
+|---|---|---|
+| `a:left <-> b:right` | a linear span | extension lines, arrows, `25` |
+| `a:left <-> b <-> c` | a **chain** | each hop its own dim, one shared row |
+| `pin (-)` | a round feature | a **leader** onto the rim — `2× ⌀10` |
+| `hole:top (-)` | a round feature, side-anchored | the **diametral line** through the circle |
+| `bore:top (-)` | any node, side-anchored | the span to the opposite side, ⌀-read — `⌀16` |
+| `body:neck (-)` | a mirrored-profile name | the station's span across the axis — `⌀28` |
+| `body:r1 (-)` | a named arc | a leader — `R3` |
+| `body:flank (<) body:base` | two line-like anchors | the angle arc — `40°` |
+| `body:taper (<)` | a mirrored-profile name | the **included** angle vs its own twin |
+
+**`(-)` — the round measure.** One op; the **feature picks the symbol**, per the
+standards: a named **arc** (a `fillet`, an `arc()` product) reads its radius — `R` —
+and **everything else** reads as a diameter, `⌀`, across whatever span its anchor
+gives. Roundness is by construction (`|hole|` / `|oval|` lineage, a `circle()`
+product, `|pitch-circle|`), never guessed from coordinates. A bare `(-)` needs an
+inferable axis — a round node (symmetric, any) or a mirrored sketch (across its
+axis, the full span); otherwise the error asks for an anchor. `R` on a full circle
+has no auto form (the standards say ⌀) — type a leader (`pin <- "SR5"`), the
+universal fallback for anything auto-measure can't read.
+
+**The diametral line.** On a **round** node, a side anchor draws the dimension
+*through* the circle, arrows out against the rims: `:top` / `:bottom` vertical,
+`:left` / `:right` horizontal, a corner the 45° diagonal. The value sits on the line
+when it fits inside; otherwise the line overruns the **anchored** rim and carries the
+text there — `hole:top (-)` spills upward. Deterministic, no solver.
+
+**`(<)` — the angle.** Binary, between two **line-like** anchors — a named edge, a
+`|line|` / `|centerline|`, a bbox side: the angle between their directions, the arc
+drawn at their (extended) intersection, the value riding the arc. Unary, on a named
+edge of a mirrored sketch: the **included** angle of a taper against its own
+reflection. Point anchors have no direction and error. `(>)` is **reserved** — an
+error with a did-you-mean, kept for a future reading.
+
+**Auto-measure — the smart label.** A dimension with no label renders its **measured
+value**: the anchor distance projected on its axis, in drawing units, measured **after
+mates resolve** and on the **unbroken** model. Values round to at most 2 decimals,
+trailing zeros trimmed; `unit:` appends its suffix. The text composes from sources
+that each own one thing:
+
+| Source | Owns | Example |
+|---|---|---|
+| the **op** | the glyph | `(-)` → `⌀` / `R` · `(<)` → `°` · `tol:` → `±` |
+| the **geometry** | the number | `10` |
+| the **label** | the words | two-ended: **replaces** the number (`a <-> b "180"` — the honest override for schematic or nominal figures); one-ended: **follows** the value (`pin (-) "H7"` → `2× ⌀10 H7`) |
+| **`tol:`** | the tolerance, appended | `tol: 0.1` → `±0.1` · `tol: +0.2 -0.05` → stacked deviations, 0.7 × font, raised / lowered · `tol: H7` → a fit class |
+| **`pattern:`** | the count prefix | `2× ` |
+
+**Axis.** A **directed** anchor sets it — a side name (`left` / `right` → horizontal,
+`top` / `bottom` → vertical) or a named edge (a vertical shoulder → a horizontal dim
+across it). One directed anchor is enough; two must agree — perpendicular directions
+in one `<->` error, pointing at `(<)`. Point ↔ point measures the dominant delta
+(tie → horizontal); true aligned dims are deferred ([SPEC 23](#23-deferred)).
+
+**Placement & stacking.** A dimension sits **outside** the geometry, on a `side:` —
+a horizontal dim defaults to `bottom`, a vertical one to `right`; anchors both on one
+edge pull it there; `side:` must suit the axis. Dims sharing a side pack into
+**rows**, `dim-pitch` apart, the first row `dim-offset` from the geometry's extent;
+each dim, in source order, takes the innermost row where its span — text included —
+overlaps nothing already placed, so a chain shares one row and dims over different
+stations share too. `gap:` pins one dim's own offset; `translate` nudges it freely.
+The anatomy is baked sheet constants ([SPEC 10.5](#105-layout-constants-baked)):
+extension lines spring from the anchors with a small gap and overshoot past the dim
+line; arrows are **drafting-slender** (≈ 3 : 1, filled), sized by the dim's
+`stroke-width`; the value rides **above the line, ISO-aligned** — it rotates with the
+line and reads from the bottom or from the right, overridable like any text (the
+styled-label form + `rotate:`). A span too narrow for text + arrows flips its arrows
+outside the extension lines and slides the text past the nearer one. Dimensions are
+links, styled per core ([SPEC 9](#9-links)); dimension text uses the link-label
+defaults (`font-size: 11`).
+
+```
+{ layout: drawing; scale: 2; unit: "mm" }
+
+|sketch#body| {
+  draw: move(-80, 0)
+        up(14) right(50):neck fillet(3):r1 up(8) right(60):mid fillet(3) down(8) right(50) down(14);
+  mirror: x-axis;                              // half → whole, + the axis centerline
+}
+
+body:left <-> body:right { side: bottom }      // → 160 mm
+body:neck (-) { side: left; tol: h6 }          // → ⌀28 h6 — the surface, doubled about the axis
+body:r1 (-)                                    // → R3 — the fillet knows its radius
+```
+
+### 15.7 Leaders, notes & line conventions
+
+A **callout** is a one-ended link, written tip-first: the glyph hugs the feature, the
+line runs toward the text — which is formally the link's **label**, so everything core
+says about labels (the `[ ]` form, styling, one inline label) applies verbatim:
+
+| Op | Tip on the feature | For |
+|---|---|---|
+| `<-` | arrow | an edge or outline |
+| `*-` | dot | a leader landing **within** an outline — a face, a region |
+| `>-` | **datum** triangle | a datum feature (`>-` is the crow op elsewhere — the scope reinterprets it, as a sequence reinterprets `->`) |
+
+```
+bolt <- "THRU"                              // arrow lands on the hole's rim
+face *- "Ra 1.6"                            // a dot — a surface note
+body:seat >- "A"                            // datum A on that face
+bolt <- [ "R3 TYP" { translate: 30 -24 } ]  // a styled / nudged text — the core form
+```
+
+- A callout has **one** tip, so the singular `marker:` overrides it; the marker set
+  gains **`datum`** ([SPEC 7](#7-nodes)). A one-ended callout with no text is an
+  error; a one-ended `->` / `-*` errors the other way — a leader points *back* at its
+  feature. A label-terminated statement is single-hop; fan leaders are deferred
+  ([SPEC 23](#23-deferred)).
+- **Text placement.** The text auto-places **outward** — along the ray from the
+  drawing's datum through the feature, just past the geometry union (`note-offset`),
+  horizontal — and the leader ends in a short horizontal **landing** (`note-landing`)
+  before it, the drafting elbow. `side:` picks the direction instead (a side or a
+  corner); a styled label's `translate` nudges from there. The tip ray-casts onto the
+  drawn outline ([15.2](#152-anchors)).
+- **The leader makes the note.** A callout's text lowers to a bare leaf — drafting
+  callouts are unboxed. A **boxed** note is the `|note|` template
+  ([SPEC 8](#8-templates)) wired with an ordinary two-ended link; a **balloon** is
+  `|balloon|` plus a leader (`b1 -* nozzle`); bare `"…"` stays plain sheet text
+  ("SECTION A-A"). Any other **two-ended** op between two nodes draws a straight
+  annotation line, markers per the op — a flow direction, an exploded-view path.
+
+**Line & material conventions.** `hatch()` fills section cuts
+([SPEC 10.3](#103-gradients)); `stroke-style: center` / `phantom` are the drafting
+dash conventions and `dashed` the hidden-edge one, each on its own child — one node
+has one stroke style ([SPEC 7](#7-nodes)). Two chrome types carry the centerline
+pattern ([SPEC 8](#8-templates)): `|centerline|` (a `|line|` — an axis, a symmetry
+line, a spoke) and `|pitch-circle|` (an `|oval|`, `width:` its diameter — the bolt
+circle; being round, `bc (-)` reads its PCD). A manual `|pitch-circle|` covers what
+`pattern:` can't — unequally spaced holes still share one drawn circle.
+
+**Auto chrome — one mechanism, four producers.** The lines drafting always draws are
+**generated children**, so the cascade styles or removes them with no dedicated knobs
+(`|sketch| |centerline| { stroke: none }`):
+
+| Producer | Generates |
+|---|---|
+| a **fused** `mirror:` ([15.3](#153-the-sketch-pen)) | the axis `\|centerline\|`, overhanging the profile |
+| `pattern: radial` ([15.4](#154-features-holes--patterns)) | the `\|pitch-circle\|` through the copies |
+| a `\|hole\|` | its centre-mark crosshair |
+| a `break:` ([15.3](#153-the-sketch-pen)) | the `\|breakline\|` pair — zigzag, or the round-stock S |
+
+### 15.8 Assemblies, views & titles
+
+There is no `|assembly|` type: **an assembly is a drawing whose children mate** — and
+drawings **nest**. A child `|drawing|` is one rigid body from outside (the core
+sealed-body law): its internal mates, dims, and features stay in its `[ ]`, its
+geometry bbox is its parts' union, and it grounds, mates, and anchors like any part.
+Build sub-assemblies in isolation, then seat them — the same vocabulary at every
+level; reach in where both ends are visible (`motor.shaft:right || pump.rotor:left`).
+A project that wants the word writes `|assembly::drawing| { }` — a define, not a
+language feature. Item balloons are `|balloon|` + a leader; the parts list is a core
+`|table|` beside the drawing; auto-numbering and auto-BOM are deferred
+([SPEC 23](#23-deferred)).
+
+A multi-view sheet is ordinary layout: drawings in a `|row|` / `|grid|`, each view its
+own scope and `scale:` (a 2 : 1 detail still dims true,
+[15.1](#151-the-container-the-datum--the-scale)). There is no `|view|` type and no
+projection engine; alignment between views is the author's. **A drawing's smart label
+is its title, placed *below*** — it lowers to a `|footnote|` (the bottom-centred
+caption template), because drafting titles sit under the view:
+`|drawing| "SECTION A-A"`; style every title with `|drawing| |footnote| { … }`.
+
+### 15.9 Lowering
+
+`layout: drawing` resolves in the **layout** phase ([SPEC 18](#18-compile-pipeline)) —
+geometry must exist before it can be measured:
+
+1. **Geometry** per child, bottom-up: fold `draw:` to a path (corner modifiers applied
+   cyclically through `close()`), collect its `:name`s, apply `mirror:`, expand
+   `pattern:`, build `break:`'s view map; nested drawings lower first, becoming rigid
+   subtrees. Compute each node's geometry bbox (stroke excluded) and paint bbox (core).
+2. **Place** children: origins on the datum, `translate:` applied.
+3. **Mates**: walk from the ground; rotate first, seat, the child's own translate
+   after; flag cycles and over-constraints.
+4. **Measure** every annotation's anchors against the seated, unbroken geometry;
+   compose the texts (glyph + number / label + `tol:` + count + `unit:`).
+5. **Annotate**: assign dims to sides and pack the rows in source order; auto-place
+   callout texts outward; ray-cast leader tips; land the elbow.
+6. **Lower** to primitives at baked coordinates: sketch → `|path|`; hole → `|oval|` +
+   centre marks; the auto chrome → generated children; dim → extension `|line|`s + a
+   marker-tipped dimension `|line|` + text; an angle → its arc `|path|` + text;
+   leader → `|line|` + marker + text; hatch → one deduplicated `<defs>` `<pattern>`.
+7. **Scale** geometry per the effective per-node scale; chrome stays sheet-space. Emit
+   geometry in source order and annotations **above** all of it (the drawing's one
+   draw-order override, like a chart's semantic order; `layer:` still wins).
+
+The output is an ordinary primitive subtree — theming, the palette, gradients,
+`--bake-vars`, `fmt`, and byte-for-byte determinism apply with no drawing-specific
+render code. The **parser is scope-blind**: the ops and forms parse everywhere and
+*mean* drawing only in a drawing scope — elsewhere they error at resolve
+([SPEC 20](#20-errors)).
+
+### 15.10 Properties
+
+New properties, and core ones reused with their core meaning; paint, text, and marker
+properties are the core ones.
+
+| Property | On | Value | Notes |
+|---|---|---|---|
+| `scale` | any node | number > 0 | px per drawing unit; nearest-wins; position scales by the parent, shape by self ([15.1](#151-the-container-the-datum--the-scale)) |
+| `unit` | `\|drawing\|` | quoted string | suffix on auto-measured values only |
+| `draw` | `\|sketch\|` | pen calls + `:name`s | **required** ([15.3](#153-the-sketch-pen)) |
+| `mirror` | `\|sketch\|` | list of `x-axis` / `y-axis` / bearing | reflect + union, left to right |
+| `break` | a geometry node | `a b [axis]` groups | cut the view between stations; longer axis default ([15.3](#153-the-sketch-pen)) |
+| `pattern` | any node | `grid(c, r, dx, dy)` / `radial(n, r)` | replicate about its position ([15.4](#154-features-holes--patterns)) |
+| `width` | `\|hole\|` `\|pitch-circle\|` | number | **required** — the diameter |
+| `tol` | a dimension | `t` / `+u -l` / fit ident | tolerance text ([15.6](#156-dimensions)) |
+| `side` | a dimension / callout | side — or a corner (callouts, diametral dims) | stack side / text direction |
+| `gap` | a dimension / a mate | number | dim: its offset from the geometry. Mate: separation along the normal — **may be negative** |
+
+`fill` accepts `hatch()` ([SPEC 10.3](#103-gradients)); `stroke-style` has `center` /
+`phantom` and `marker` has `datum` ([SPEC 7](#7-nodes)). `routing`, `clearance`,
+`along`, and the container `gap` / `align` / `justify` have no role in a drawing scope.
 
 ---
 # Part III — Reference
@@ -1935,7 +2528,7 @@ the errors — and never repeats the prose.
 
 ---
 
-## 15. Property Ledger & Support
+## 16. Property Ledger & Support
 
 Every property is `name: value;` — dash-case, positional, space-separated values
 ([SPEC 3](#3-statements--the-label)). This section is the one place that answers **which
@@ -1947,34 +2540,36 @@ always one of two kinds: **type-owned** — a property a primitive requires or r
 property an engine interprets (`cell` on a grid, `over` on a sequence, `data` on a chart).
 An **unknown or misspelled** property is **silently ignored** — the engine reads properties
 by name and never rejects an unrecognised one (an unknown-property warning is deferred —
-[SPEC 22](#22-deferred)). A **wrong-context** property is usually ignored too (`cell:` off a grid
+[SPEC 23](#23-deferred)). A **wrong-context** property is usually ignored too (`cell:` off a grid
 simply has no effect), but a handful of **hard gates** do error: the sequence-placement props
 (`over` / `left` / `right` / `activation`) off a sequence, a box property on bare text, a grid
-without `columns`, and a layout's own type names used outside it ([SPEC 19](#19-errors)).
+without `columns`, a layout's own type names used outside it, and the drawing statements —
+the measuring ops, `||`, `tol:` — outside a `layout: drawing` ([SPEC 20](#20-errors)).
 
 **State marks** used below: **✓** built and honoured · **⌛** meaningful but not built, a
-candidate ([SPEC 22](#22-deferred)) · **—** not applicable.
+candidate ([SPEC 23](#23-deferred)) · **—** not applicable.
 
 ### The container × layout matrix
 
 The high-signal grid: which **container / layout** property each engine honours. (Paint,
 text, and box-model properties are universal to every node — the tables that follow.)
 
-| Property | `flow` | `grid` | `sequence` | `chart` | `pie` |
-|---|---|---|---|---|---|
-| `direction` | ✓ `row`/`column` | — | — | ✓ `+radial` | — |
-| `gap` | ✓ spacing | ✓ spacing | ✓ pitch / spacing | ✓ plot gutter | ✓ plot gutter |
-| `gap-color` | ✓ | ✓ | ✓ᵇ | — | — |
-| `padding` | ✓ | ✓ | ✓ᵇ | — | — |
-| `align` / `justify` | ✓ | ✓ per-column | ✓ᵇ | — | — |
-| `width` / `height` | ✓ (slack) | ✓ (slack) | — content-sized | ✓ box size | ✓ box size |
-| `columns` / `rows` / `cell` / `span` | — | ✓ | — | — (`span`→band) | — |
-| container paint (`fill` `stroke` `radius` `shadow` `opacity` `href`) | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Property | `flow` | `grid` | `sequence` | `chart` | `pie` | `drawing` |
+|---|---|---|---|---|---|---|
+| `direction` | ✓ `row`/`column` | — | — | ✓ `+radial` | — | — |
+| `gap` | ✓ spacing | ✓ spacing | ✓ pitch / spacing | ✓ plot gutter | ✓ plot gutter | — (dims / mates read their own — [SPEC 15](#15-drawing)) |
+| `gap-color` | ✓ | ✓ | ✓ᵇ | — | — | — |
+| `padding` | ✓ | ✓ | ✓ᵇ | — | — | ⌛ frames the sheet |
+| `align` / `justify` | ✓ | ✓ per-column | ✓ᵇ | — | — | — |
+| `width` / `height` | ✓ (slack) | ✓ (slack) | — content-sized | ✓ box size | ✓ box size | ⌛ a floor |
+| `columns` / `rows` / `cell` / `span` | — | ✓ | — | — (`span`→band) | — | — |
+| container paint (`fill` `stroke` `radius` `shadow` `opacity` `href`) | ✓ | ✓ | ✓ | ✓ | ✓ | ⌛ |
 
 **✓ᵇ** — honoured on the participant / frame **boxes' own content** (they are ordinary
 boxes), but *not* by the sequence engine's placement of them on the time axis
 ([SPEC 11](#11-the-layout-model)). A `chart` / `pie` consumes its children into marks, so that
-case does not arise — hence `—`.
+case does not arise — hence `—`. The `drawing` column is ⌛ as one unit — the engine
+lands per `PLAN.md`, and its marks flip to ✓ together.
 
 ### Universal properties
 
@@ -1989,7 +2584,7 @@ Honoured on every drawn node, in every layout (a box; text takes the marked subs
 | `opacity` | `0..1` | 1 |
 | `stroke` | colour · `none` · gradient | `--stroke` (`--group-stroke` on group) |
 | `stroke-width` | number | 2 (group / frame 1) |
-| `stroke-style` | `solid`·`dashed`·`dotted`·`wavy` | `solid` — `wavy` on links today (closed prims ⌛) |
+| `stroke-style` | `solid`·`dashed`·`dotted`·`wavy`·`center`·`phantom` | `solid` — `wavy` on links today (closed prims ⌛); `center` / `phantom` on shapes and `\|line\|`s ⌛ ([SPEC 15.7](#157-leaders-notes--line-conventions)) |
 | `radius` | number | 0 (block/rect) · 8 (box/group) — rect + polyline join; non-rect ⌛ |
 | `shadow` | `N` · `dx dy` · `dx dy blur` · `dx dy blur color` | off — tint `--shadow-color` |
 
@@ -2016,6 +2611,8 @@ Honoured on every drawn node, in every layout (a box; text takes the marked subs
 | `translate` | `x y` | — | post-placement nudge; **any** node incl. text. |
 | `rotate` | degrees | 0 | turn about bbox centre; **any** node incl. text. |
 | `layer` | integer | 0 (flow) · 1 (pinned) | paint order; ties → source order. |
+| `scale` | number > 0 | 1 | ⌛ px per drawing unit — nearest-wins; position scales by the parent, shape by self ([SPEC 15.1](#151-the-container-the-datum--the-scale)). |
+| `pattern` | `grid(…)` · `radial(…)` | — | ⌛ replicate about the node's position ([SPEC 15.4](#154-features-holes--patterns)). |
 
 **Media & accessibility** — any node (`href` also a link):
 
@@ -2039,15 +2636,18 @@ Read on the listed primitive; required where noted ([SPEC 7](#7-nodes)).
 | `skew` | `\|slant\|` | degrees `(-89,89)` | 15. |
 | `stack` | closed primitives | `N` · `dx dy` | offset duplicate behind. |
 | `marker` · `marker-start` · `marker-end` | `\|line\|`, links | see [SPEC 7](#7-nodes) | endpoint / vertex glyphs; from the operator on a link. |
+| `draw` | `\|sketch\|` | pen calls + `:name`s | ⌛ **required** ([SPEC 15.3](#153-the-sketch-pen)). |
+| `mirror` | `\|sketch\|` | `x-axis` / `y-axis` / bearing list | ⌛ reflect + union ([SPEC 15.3](#153-the-sketch-pen)). |
+| `break` | geometry nodes | `a b [axis]` groups | ⌛ cut the view between stations ([SPEC 15.3](#153-the-sketch-pen)). |
 
-### Grid, chart, pie & sequence properties
+### Grid, chart, pie, sequence & drawing properties
 
-Layout-owned — an error only where a hard gate exists ([SPEC 19](#19-errors)); otherwise inert
+Layout-owned — an error only where a hard gate exists ([SPEC 20](#20-errors)); otherwise inert
 out of scope.
 
 | Property | Owner | Value | Default | Ref |
 |---|---|---|---|---|
-| `layout` | any container | `flow`·`grid`·`sequence`·`chart`·`pie` | `flow` | [SPEC 11](#11-the-layout-model) |
+| `layout` | any container | `flow`·`grid`·`sequence`·`chart`·`pie`·`drawing` | `flow` | [SPEC 11](#11-the-layout-model) |
 | `direction` | flow, chart | `row`·`column`·`radial` | `column` | [SPEC 11](#11-the-layout-model) |
 | `gap` · `gap-color` · `align` · `justify` · `padding` | flow, grid | — | see matrix | [SPEC 11](#11-the-layout-model), [SPEC 12](#12-flow--grid) |
 | `columns` · `rows` | grid | track list | — (`columns` required) | [SPEC 12](#12-flow--grid) |
@@ -2065,6 +2665,11 @@ out of scope.
 | `side` · `range` · `scale` · `step` · `ticks` · `unit` · `gridlines` | `\|axis\|` | see [SPEC 14.4](#144-axes-scales--domain) | — | [SPEC 14.4](#144-axes-scales--domain) |
 | `over` · `left` · `right` | sequence `\|note\|` | id(s) | — | [SPEC 13](#13-sequence) |
 | `activation` | `\|sequence\|` | `auto` · `none` | `auto` | [SPEC 13](#13-sequence) |
+| `scale` (homonym: an `\|axis\|`'s is `linear`·`log`) | any node | number > 0 | 1 | [SPEC 15.1](#151-the-container-the-datum--the-scale) |
+| `unit` | `\|drawing\|`, `\|axis\|` | quoted string | — | [SPEC 15.1](#151-the-container-the-datum--the-scale), [SPEC 14.4](#144-axes-scales--domain) |
+| `tol` | a dimension | `t` / `+u -l` / fit ident | — | [SPEC 15.6](#156-dimensions) |
+| `side` | a dimension / callout (also `\|axis\|`, above) | side · corner | by axis | [SPEC 15.6](#156-dimensions) |
+| `gap` | a dimension / a mate | number (a mate's may be < 0) | — | [SPEC 15.5](#155-mates), [SPEC 15.6](#156-dimensions) |
 
 ### Link properties
 
@@ -2080,7 +2685,7 @@ text props. Its own properties:
 
 ---
 
-## 16. SVG Output
+## 17. SVG Output
 
 ```svg
 <svg xmlns="http://www.w3.org/2000/svg"
@@ -2152,19 +2757,19 @@ inheritance from the enclosing `<g>`; a string's own style block emits as a `sty
 
 Host CSS may restyle any `lini-`-prefixed class; layout is computed at compile time, so
 runtime restyling (a fatter `stroke-width`) restyles without re-layout. A chart's or
-sequence's lowered primitives ([SPEC 17](#17-compile-pipeline)) emit exactly like the boxes,
+sequence's lowered primitives ([SPEC 18](#18-compile-pipeline)) emit exactly like the boxes,
 text, and lines above — a chart's tooltip card is a `<g class="lini-chart-tip">`, a
 reserved styling hook.
 
 ---
 
-## 17. Compile Pipeline
+## 18. Compile Pipeline
 
 A reference pipeline; implementations may differ if the observable output matches.
 
 **Parse.** Lex to tokens, then a single recursive-descent pass to the AST. The
 bracket-and-bars vocabulary (`|…|` identity, `{ }` style, `[ ]` content) resolves every
-statement with one token of lookahead — no type-set prescan ([SPEC 20](#20-grammar)).
+statement with one token of lookahead — no type-set prescan ([SPEC 21](#21-grammar)).
 
 **Desugar.** Lower all surface sugar to primitives + classes — the engine's true input.
 Each template/define instance becomes its base primitive wearing a `.lini-*` class
@@ -2199,25 +2804,28 @@ box → content + `padding`; + half-`stroke-width` per side); arrange flow child
 `layout` / `direction` honouring `align`/`justify`/`stretch`/`evenly` when there is slack; pin
 out-of-flow children to their parent anchor (the parent never grows for them); compute
 gutters; apply `padding`; apply each node's `translate`; `rotate` last. A **layout-owning**
-container — `sequence` ([SPEC 13](#13-sequence)) and `chart` / `pie` ([SPEC 14](#14-charts)) — instead
+container — `sequence` ([SPEC 13](#13-sequence)), `chart` / `pie` ([SPEC 14](#14-charts)), and
+`drawing` ([SPEC 15](#15-drawing)) — instead
 reads its whole subtree here and lowers it to primitives: a sequence places participants
 and walks its scope's messages / frames / notes in source order, emitting lifelines, arrows,
 frames, and notes — **consuming those messages**, so the router never sees them; a chart
-fixes its shared scale and lowers series / axes / bands / annotations at baked pixels.
+fixes its shared scale and lowers series / axes / bands / annotations at baked pixels; a
+drawing folds its geometry, seats its mates, measures, and lowers its annotations the same
+way ([SPEC 15.9](#159-lowering)).
 
 **Route links.** Per [`ROUTING.md`](ROUTING.md) — orthogonal, clearance-respecting,
-deterministic — over every link **except** those a `sequence` scope already drew as arrows.
+deterministic — over every link **except** those a `sequence` or `drawing` scope already drew.
 Place markers (sized `max(5, stroke-width × 4)`, tip on the endpoint) and link labels at
 their `along:` fractions (auto-distributed when unset).
 
-**Render.** Depth-first emit SVG per [SPEC 16](#16-svg-output): a box is a `<g>`, a string is a
+**Render.** Depth-first emit SVG per [SPEC 17](#17-svg-output): a box is a `<g>`, a string is a
 `<text>`. A lowered chart / sequence subtree renders as ordinary primitives — so theming,
 palette, gradients, `--bake-vars`, `fmt`, and byte-for-byte determinism apply with no
 layout-specific render code.
 
 ---
 
-## 18. CLI
+## 19. CLI
 
 ```
 lini [options] <input.lini>
@@ -2248,22 +2856,24 @@ your own (`light-dark()` colours, the font commented out).
 **`lini fmt`** reformats to canonical style — 2-space indent, `key: value;`
 declarations grouped on one line, a style-only node collapsed onto its head line when it
 fits (`|box#api| { fill: red }`), a lone label trailing the head (`|box#api| "API"`),
-children one per line in `[ ]`, table cells padded into aligned columns, comments and
+children one per line in `[ ]`, table cells padded into aligned columns, a `draw:`
+value broken before each `move()` and wrapped between calls at the column limit
+(continuations indented, so a profile reads as its subpaths), comments and
 blank lines preserved. `--check` exits 1 if it would change anything; `--stdout` writes
 instead of rewriting.
 
 **`lini desugar`** prints the file fully **lowered to primitives** — the Desugar pass
-([SPEC 17](#17-compile-pipeline)) that is the engine's true input — so the lowered form
+([SPEC 18](#18-compile-pipeline)) that is the engine's true input — so the lowered form
 re-renders byte-identically. A chart's or sequence's *type* desugars here (a `|chart|`
 is a `|block|` wearing `.lini-chart`); its geometric primitive subtree is a layout-phase
-artefact ([SPEC 17](#17-compile-pipeline)), like a routed link's geometry. A
+artefact ([SPEC 18](#18-compile-pipeline)), like a routed link's geometry. A
 teaching/debugging view; prints to stdout, never rewrites, comments not preserved.
 
 Exit codes: 0 success · 1 parse/resolution error or `--check` reformat needed · 2 I/O ·
 3 invalid CLI.
 
 ---
-## 19. Errors
+## 20. Errors
 
 Format: `filename:line:col: error: <message>` (LSP-compatible), compile-time, with a span.
 
@@ -2306,7 +2916,7 @@ Format: `filename:line:col: error: <message>` (LSP-compatible), compile-time, wi
 | `->` in the stylesheet | `'->' draws a link on the canvas — style every link with '\|-\| { stroke: … }' in a '{ }' block` |
 | `\|-\|` / `\|link\|` as an instance | `a link is drawn by an operator — '\|-\|' only styles links (write 'a -> b')` / `links are drawn by operators, not the '\|link\|' type` |
 | `\|node\|` as instance | `'node' is the umbrella concept — write '\|block\|' for the bare box` |
-| Deferred routing | `routing: 'orthogonal' and 'straight' are built; 'curved' is deferred (SPEC 22)` |
+| Deferred routing | `routing: 'orthogonal' and 'straight' are built; 'curved' is deferred (SPEC 23)` |
 | Unknown side | `':X' is not a side — use top, bottom, left, or right` |
 | Link labels split | `keep a link's labels together — write 'a -> b [ "x" "y" ]'` (warning) |
 
@@ -2325,6 +2935,8 @@ Format: `filename:line:col: error: <message>` (LSP-compatible), compile-time, wi
 | `skew` out of range | `skew: N must be in (-89, 89)` |
 | Unknown name in an expression | `unknown name 'foo' in an expression` |
 | Function arity | `'scale' takes 1 argument, got 2` |
+| Spaced call paren | `a call's '(' glues to its name — write 'rgb(…)'` |
+| `hatch()` off `fill` | `'hatch' is a fill — 'stroke' takes a colour or gradient` |
 
 **Layout — grid**
 
@@ -2338,9 +2950,9 @@ Format: `filename:line:col: error: <message>` (LSP-compatible), compile-time, wi
 
 | Condition | Message |
 |---|---|
-| Sequence node outside a sequence | `'\|loop\|' belongs in a 'layout: sequence'` (same for `\|opt\|` / `\|alt\|` / `\|note\|`) |
+| Sequence node outside a sequence | `'\|loop\|' belongs in a 'layout: sequence'` (same for `\|opt\|` / `\|alt\|`; a `\|note\|` is core — [SPEC 8](#8-templates)) |
 | `\|else\|` outside an `\|alt\|` | `'\|else\|' separates an '\|alt\|' — write it inside one` |
-| `\|note\|` with no placement | `a '\|note\|' needs 'over:', 'left:', or 'right:'` |
+| `\|note\|` in a sequence, no placement | `a sequence '\|note\|' needs 'over:', 'left:', or 'right:'` |
 | Sequence property off a sequence | `'over' is valid only in a 'layout: sequence'` (same for `left` / `right` / `activation`) |
 
 **Layout — chart & pie**
@@ -2366,12 +2978,50 @@ Format: `filename:line:col: error: <message>` (LSP-compatible), compile-time, wi
 | `hole:` out of range | `'hole' is a fraction 0..1` |
 | Negative slice value / pie total zero | `a '\|slice\|' value must be ≥ 0` / `a pie's slice values sum to zero` |
 
+**Layout — drawing** ([SPEC 15](#15-drawing))
+
+| Condition | Message |
+|---|---|
+| `\|sketch\|` without `draw:` | `'\|sketch\|' requires 'draw'` |
+| `\|hole\|` / `\|pitch-circle\|` without `width:` | `'\|hole\|' requires 'width' — its diameter` |
+| Unknown pen call / arity | `unknown draw call 'X'` / `'arc' takes (dx, dy, r) or (r, deg)` |
+| `fillet` / `chamfer` off a corner | `'fillet' modifies the corner between two segments` |
+| Arc radius too small | `arc radius N is smaller than half the chord` |
+| Bad `mirror:` item | `'mirror' takes x-axis, y-axis, or a bearing` |
+| Bad `break:` group | `'break' takes two stations 'a b' — a < b — and an optional x-axis / y-axis` |
+| Drawing statement outside a drawing | `'(-)' draws a dimension — it belongs in a 'layout: drawing'` (same for `(<)`, `\|\|`, corner anchors, `tol:`, …) |
+| Unknown endpoint | `dimension endpoint 'X' not found at <scope>` + suggestions — **never auto-created** |
+| Corner order | `':right-top' is not an anchor — did you mean ':top-right'?` |
+| `(>)` | `'(>)' is reserved — the angle op is '(<)'` |
+| One-ended `<->` / `\|\|` | `a linear dimension measures two anchors` / `a mate seats two parts` |
+| Empty one-ended leader | `a leader needs its text — 'bolt <- "THRU"'` |
+| One-ended `->` / `-*` | `a leader points back at its feature — write 'a <- "…"'` |
+| Bare `(-)` with no axis | `'(-)' can't pick an axis on 'X' — anchor a side ('X:top (-)') or a name` |
+| `(<)` on a point anchor | `an angle reads two edges — a named segment, a '\|line\|', or a side` |
+| Unary `(<)` on an unmirrored name | `'(<)' on ':taper' needs 'mirror:' — no twin to measure against` |
+| `:name` shadows a built-in point | `':left' is a built-in anchor — pick another name` |
+| Unknown authored name | `no point ':step' on 'body'` + suggestions |
+| Duplicate `:name` in one `draw:` | `':step' is already named at L:C` |
+| Label on a mate | `a mate takes no label` |
+| `gap:` on a point mate | `a point mate coincides — 'gap' needs directed anchors (sides or named edges)` |
+| Non-parallel mate directions | `mated anchors must face along one axis — 'a:left \|\| b:top' has no shared normal` |
+| Over-constrained mate | `mate over-constrains 'X' — already positioned via 'A \|\| B'` |
+| Mate within one part | `'a' and 'b' are features of one part — a part is rigid` |
+| Mixed dim axes | `'a:left <-> b:top' mixes axes — anchor one axis` |
+| `side:` off-axis | `a horizontal dimension stacks on top or bottom` |
+| Bad `tol:` | `'tol' takes a number, '+upper -lower', or a fit ident` |
+| Bad `pattern:` | `'radial' needs count ≥ 2 and radius > 0` |
+| `scale:` ≤ 0 | `'scale' must be > 0` |
+| Chain past a label | `a text callout ends its statement — chain before it` |
+| Mate in a flow scope | `a '\|row\|' places its own children — mates seat a drawing's` |
+| Empty drawing | `a drawing needs at least one geometry child` |
+
 An **unknown property name** is not currently an error — it is silently ignored; a
-warning with a did-you-mean hint is deferred ([SPEC 22](#22-deferred)).
+warning with a did-you-mean hint is deferred ([SPEC 23](#23-deferred)).
 
 ---
 
-## 20. Grammar
+## 21. Grammar
 
 ```
 file        = [ stylesheet ] { drawn }              # setup block, then drawn statements in source order
@@ -2395,13 +3045,18 @@ style       = "{" { decl } "}"                       # declarations only
 children    = "[" { node | text | link } "]"         # nodes, text, links — in source order
 body        = [ style ] [ children ]                 # define / container body
 
-link        = endpoints link_op endpoints { link_op endpoints }
+link        = endpoints op [ endpoints ] { op endpoints }
               [ string ] [ classes ] [ style ] [ label_block ]   # the node tail, on a link head
+op          = link_op | draw_op
+draw_op     = "||" | "(-)" | "(<)"                  # mate, round measure, angle (SPEC 15)
 selector    = sel_unit { sel_unit }                 # whitespace-separated = descendant
 sel_unit    = ident_bars | "|-|" | "." ident | "#" ident  # a type(+id), the link type, a class, or an id
 endpoints   = endpoint { "&" endpoint }
-endpoint    = ident { "." ident } [ ":" side ]
-side        = "top" | "bottom" | "left" | "right"
+endpoint    = ident { "." ident } [ ":" point ]
+point       = "top" | "bottom" | "left" | "right"    # + corners, center, authored names
+                                                     #   in a drawing scope (SPEC 15.2)
+pen_item    = call [ ":" ident ]                     # a draw: item — a pen call, optionally
+            | ":" ident                              #   naming its product / the pen point
 
 label_block = "[" { text } "]"                       # canonical labels — styleable text leaves
 
@@ -2439,15 +3094,25 @@ makes it a worn class (`a .hot`), no space an endpoint path (`a.b`); the first c
 spaced from the identity, the rest of the chain glues (`.hot.loud`); a `:` after an
 endpoint forces a side (`a:left`), distinct from the declaration `:` by position.
 
-**Every layout reuses this grammar.** Charts and sequences add **no** lexer or parser
-grammar — they are nodes, declarations, and children, distinguished by type name and by the
-scope's `layout` ([SPEC 13](#13-sequence), [SPEC 14](#14-charts)). A future `drawing` layout adds a
-few operator tokens and one value form ([DRAWING.md](DRAWING.md)); it is the first layout to
-extend the grammar at all.
+**Every layout reuses this grammar; drawing alone extends it.** Charts and sequences add
+**no** lexer or parser grammar — they are nodes, declarations, and children, distinguished
+by type name and by the scope's `layout` ([SPEC 13](#13-sequence), [SPEC 14](#14-charts)).
+The `drawing` layout ([SPEC 15](#15-drawing)) adds exactly: the three `draw_op` tokens —
+glued, like every link op; `||` is resolved in the parser from two **adjacent** pipes at
+operator position, so bars stay paired (a glued `|box||cell|` selector must be spaced) —
+the **one-ended relaxation** (the right-hand endpoints may be omitted for `<-`, `*-`,
+`>-`, `(-)`, `(<)`; one token of lookahead decides — after the op, an ident is an
+endpoint; a string, `.`, `{`, `[`, or end-of-statement is the tail; `<->` and `||`
+require both ends), the widened endpoint `point` set in drawing scope, and the
+`pen_item` form inside a `draw:` value. A call's `(` **glues to its name**; a
+free-standing `(-)` / `(<)` lexes as an op ([SPEC 2](#2-lexical-syntax)) — so
+`move(-2, 5)` is a call and `pin (-)` a dimension, with no ambiguity. The pen calls,
+`grid` / `radial`, and `hatch` are **call names**, contextual before `(` like `rgb` /
+`repeat` ([SPEC 22](#22-reserved-words)).
 
 ---
 
-## 21. Reserved Words
+## 22. Reserved Words
 
 Because a type only ever appears in bars (`|box|`) and an id always wears a `#`, **type
 names are free as ids and ids are free as type names** — `|block#oval|` is fine, and
@@ -2472,8 +3137,13 @@ Value keywords are **contextual**, not reserved as ids — `flow`, `grid`, `sequ
 `none`, `auto`, `orthogonal`, `straight` mean their keyword only after the property that
 expects them. The layout type names (`chart`, `pie`, `axis`, `band`, `mark`, `bars`, `dots`,
 `bubble`, `slice`, `area`, `line`, and the sequence `loop`, `opt`, `alt`, `else`, `note`)
-are built-in types like `box` — protected from a define shadowing them, free as ids.
-Function names `rgb`, `rgba`, `hsl`, `repeat` are reserved only before `(`.
+are built-in types like `box` — protected from a define shadowing them, free as ids; so
+are the drawing types (`drawing`, `sketch`, `hole`, `centerline`, `pitch-circle`,
+`balloon`, `breakline` — [SPEC 15](#15-drawing)).
+Function names `rgb`, `rgba`, `hsl`, `repeat` are reserved only before `(` — as are
+`hatch`, `grid` / `radial` (in `pattern:`), and the pen calls (`move`, `left`, `right`,
+`up`, `down`, `line`, `angle`, `arc`, `curve`, `fillet`, `chamfer`, `circle`, `close`)
+inside a `draw:` value.
 
 Inside an expression ([SPEC 10.7](#107-expressions--functions)), `pi`, `e`, and the sample
 parameter `u` are keywords, and the math-function names (`sin`, `exp`, `min`, …) are
@@ -2481,7 +3151,7 @@ reserved before `(` — all contextual to the expression, free as ids elsewhere.
 
 ---
 
-## 22. Deferred
+## 23. Deferred
 
 Named in the language, not built yet; the syntax is stable.
 
@@ -2501,7 +3171,7 @@ Named in the language, not built yet; the syntax is stable.
 - embedded font metrics — the monospace default keeps the estimate close; a proportional
   `font-family` override is approximate until then.
 - **an unknown-property warning + a "did you mean" property-name hint** — an unrecognised
-  property is silently ignored today ([SPEC 15](#15-property-ledger--support), [SPEC 19](#19-errors)).
+  property is silently ignored today ([SPEC 16](#16-property-ledger--support), [SPEC 20](#20-errors)).
 - `aria-label`.
 
 **Tables & entities**
@@ -2529,13 +3199,43 @@ dividers / delays (`==` / `...`); and an `|actor|` stick-figure primitive (an ac
   **per-datum paint styling** (a parallel paint list over `data:` — today, overlay a
   `|mark|`).
 
-**A future layout** — `layout: drawing` (dimensioned engineering drawings) is designed but
-unbuilt; see [DRAWING.md](DRAWING.md). It slots into [Part II](#part-ii--layout) as one more
-layout.
+**Drawings** ([SPEC 15](#15-drawing))
+
+- **aligned (point-to-point) dimensions** — today a dim is horizontal or vertical.
+- **per-copy pattern anchors** (`bolt.2`) and pitch dims between copies — the callout
+  count and a `\|pitch-circle\|`'s own `(-)` cover the common cases.
+- **fan leaders** — `a & b <- "2× R5"`, one note with two leaders.
+- **`explode:`** — scale every directed mate's separation along its normal for exploded
+  views; unmated overlaid children stay put (overlay composes one part, mates relate
+  parts — only relationships explode). Balloons follow their parts.
+- **authored-name twins** — a `mirror:` / `pattern:` copy of a `:name` is unaddressable
+  (the name reads the drawn original; the unary mirrored readings cover the
+  turned-profile cases).
+- **routed links to authored anchors** — `a -> b:port` in a flow / grid diagram needs a
+  [ROUTING.md](ROUTING.md) contract extension (ports and Law 2 are side-based).
+- **repeated-name counting** — one `:name` on several corners auto-prefixing `4× R3`,
+  as `pattern:` does for features; today, type it.
+- **GD&T** — feature-control frames, boxed datums, surface finish: note types over
+  `\|table\|` / `\|note\|` with a built-in glyph set named by ident, drawn as paths like
+  icons — the designed direction, no new grammar. Today: `body:seat >- "A"`,
+  `face *- "Ra 1.6"`.
+- **hole variants** — counterbore, countersink, thread conventions.
+- **view machinery** — projection lines between views, detail circles ("VIEW A"),
+  cutting-plane arrows (A–A), cross-view alignment; today, composed by hand.
+- **angled break lines** and a scope-level `break:` on the `\|drawing\|` itself.
+- **dim-line breaks / halos** where annotations cross geometry; the ASME
+  text-in-a-broken-line diametral form and a horizontal-text knob (ISO aligned is the
+  built-in).
+- an ambient **`w` / `h`** bound to a node's own size (circular against auto-sizing
+  today — a named constant covers the workflow, [SPEC 10.7](#107-expressions--functions)).
+- **physical-size emission** — an SVG `width` / `height` in real mm for true-scale
+  prints.
+- **balloon auto-numbering and auto-BOM** from the scene's parts.
+- **`\|mark\|` / `\|note\|` in charts** — data-coordinate placement (`at:`).
 
 ---
 
-## 23. Examples
+## 24. Examples
 
 **A scene — grid, defines, groups, nested links:**
 
@@ -2651,5 +3351,73 @@ db      --> api     "record"
   |axis| "tokens (k)" { side: bottom }
   |axis| "score %"    { side: left }
   |line| "GLM-5.2" { data: 35 63, 42 72, 84 75; tags: "Base" "High" "Max"; marker: circle; tooltip: always }
+]
+```
+
+**Drawings — a broken tie bar, a bushing in section, and a mated assembly** ([SPEC 15](#15-drawing)):
+
+```
+{ layout: drawing; scale: 2; unit: "mm" }
+
+|sketch#bar| {                                   // a 300 mm tie bar, drawn true
+  draw: move(-150, 0) up(10) chamfer(1.5)
+        right(40):thread :a right(260) chamfer(1.5) down(10);
+  mirror: x-axis;                                // half → whole, + the axis centerline
+  break: -80 60;                                 // cut the boring middle from the view
+}
+
+bar:left <-> bar:right { side: bottom }          // → 300 mm — true, across the break
+bar:left <-> bar:a     { side: top }             // → 40 mm — ':a' is a freestanding point
+bar:thread (-) { side: left; tol: h6 }           // → ⌀20 h6 — doubled about the axis
+bar:thread <- "M20×1.5"                          // thread spec — leader to the surface
+```
+
+```
+{
+  layout: drawing;  scale: 1.6;
+  |steel::sketch| { fill: hatch(45, 6) }
+}
+
+|steel#body| {
+  draw: move(-30, -8) right(60) up(10) left(60) close();    // the upper wall
+  mirror: x-axis;                                           // → both walls (duplicated)
+}
+|rect#bore| { width: 60; height: 16; fill: --bg; stroke: none }   // the bore punches
+|centerline| { points: -34 0, 34 0 }             // duplicated subpaths add no auto axis
+
+body:top (-) { side: right }                     // → ⌀36
+bore:top (-) { side: right }                     // → ⌀16 — stacks inside the ⌀36
+body:left <-> body:right { side: bottom }        // → 60
+```
+
+```
+{
+  gap: 24;
+  |steel::sketch| { fill: hatch(45, 6) }
+}
+
+|drawing#pump| "HAND PUMP — SECTION" [
+  |steel#barrel| {
+    draw: move(-90, 0) up(23) right(60) up(6) right(60) down(6) right(60) down(23);
+    mirror: x-axis;
+  }
+  |steel#nozzle| {
+    draw: move(0, 0) up(12) right(40) down(4) right(20) down(8);
+    mirror: x-axis;
+  }
+  nozzle:left || barrel:right { gap: -10 }       // pressed 10 into the barrel
+
+  barrel:left <-> nozzle:right { side: bottom }  // → the overall length, as seated
+
+  |balloon#b1| "1" { translate: -60 -50 }
+  |balloon#b2| "2" { translate: 100 -40 }
+  b1 -* barrel
+  b2 -* nozzle
+]
+
+|table#bom| { columns: 24 auto 30 } [
+  "#" "Part"   "Qty"
+  "1" "Barrel" "1"
+  "2" "Nozzle" "1"
 ]
 ```

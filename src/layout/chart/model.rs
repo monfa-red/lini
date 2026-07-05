@@ -1,6 +1,6 @@
 //! Parse a chart's resolved children into a typed model: the x (domain) axis, the
 //! value axes, and the series bound to them [SPEC 14.2]. All chart-shape
-//! validation [SPEC 19] lives here; the geometry is the renderers' job.
+//! validation [SPEC 20] lives here; the geometry is the renderers' job.
 
 use super::palette;
 use super::project::Dir;
@@ -94,7 +94,7 @@ pub struct Mark {
     pub label: Option<String>,
     /// A point's centred marker [SPEC 14.5]: `dot` by default (the `|mark|`
     /// template), `circle` / `diamond` to enlarge it, `None` (from `marker: none`) for a
-    /// label-only mark. Validated against `arrow` / `crow` at parse ([SPEC 19]).
+    /// label-only mark. Validated against `arrow` / `crow` at parse ([SPEC 20]).
     pub marker: MarkerKind,
     /// The accent for the line / dot / label: an explicit `stroke` / `fill`, else muted.
     pub color: ResolvedValue,
@@ -130,7 +130,7 @@ pub struct Series {
     pub axis: usize,
     /// The centred marker at each vertex [SPEC 14.2]: `None` draws none; `dot` /
     /// `circle` / `diamond` are the centred shapes. A `|dots|` is never `None` (it *is*
-    /// markers). Validated against `arrow` / `crow` at parse ([SPEC 19]).
+    /// markers). Validated against `arrow` / `crow` at parse ([SPEC 20]).
     pub marker: MarkerKind,
     /// Per-datum label text [SPEC 14.3], parallel to the data — one tag per value /
     /// point, or empty. Drawn inline / on hover per [`tooltip`](Self::tooltip).
@@ -155,7 +155,7 @@ pub struct Series {
     pub radius: f64,
     /// A dot's diameter `width` × `height` (default a small circle).
     pub dot: (f64, f64),
-    /// An `|area|`'s fill target [SPEC 15] — the axis zero / range floor by
+    /// An `|area|`'s fill target [SPEC 16] — the axis zero / range floor by
     /// default.
     pub baseline: Option<f64>,
 }
@@ -427,7 +427,7 @@ fn read_bubble(
     })
 }
 
-/// Parse a `layout: pie` into its slices [SPEC 14.7]. All pie validation [SPEC 19]
+/// Parse a `layout: pie` into its slices [SPEC 14.7]. All pie validation [SPEC 20]
 /// lives here; the wedge geometry is the renderer's job. Reuses the chart's `tag`,
 /// `label_of`, the `fill:` / `outline:` paint readers, and the palette walk (per
 /// slice — [SPEC 14.6]).
@@ -515,7 +515,7 @@ fn read_direction(attrs: &AttrMap) -> Result<Dir, Error> {
 }
 
 /// Split children into series, axes, bands, marks, and the harvested title; reject
-/// non-chart children and the constructs that arrive in later steps [SPEC 19].
+/// non-chart children and the constructs that arrive in later steps [SPEC 20].
 fn partition(inst: &ResolvedInst) -> Result<Split<'_>, Error> {
     let mut series = Vec::new();
     let mut axes = Vec::new();
@@ -689,7 +689,7 @@ fn sample_count(attrs: &AttrMap) -> usize {
 /// whole-domain form: bind `x` at `samples` steps over the numeric domain. A per-band
 /// list samples each expr in band-local `u` (0→1) across its segment's x-span, the
 /// segments connecting end-to-start [SPEC 14.5] — one continuous polyline whose
-/// boundary risers are drawn. A list length ≠ the band count is an error ([SPEC 19]).
+/// boundary risers are drawn. A list length ≠ the band count is an error ([SPEC 20]).
 fn sample_formula(
     exprs: &[Expr],
     x: &Scale,
@@ -777,7 +777,7 @@ fn read_data(inst: &ResolvedInst, kind: &SeriesKind) -> Result<Data, Error> {
 
 /// Parse a series' `tags:` [SPEC 14.3]: a quoted-string list, one per datum,
 /// validated against the data count. A `fn:` series has no authored points to label, so
-/// `tags:` on one is an error ([SPEC 19]). Reuses [`collect_strings`] (the `categories:`
+/// `tags:` on one is an error ([SPEC 20]). Reuses [`collect_strings`] (the `categories:`
 /// reader), so a tag list parses exactly like the chart's category list.
 fn read_tags(inst: &ResolvedInst, data: &Data) -> Result<Vec<String>, Error> {
     let Some(v) = inst.attrs.get("tags") else {
@@ -809,7 +809,7 @@ fn read_tags(inst: &ResolvedInst, data: &Data) -> Result<Vec<String>, Error> {
 }
 
 /// Bind a series to a value axis by its `axis:` id, defaulting to the first value
-/// axis. An unknown id reports the chart's own axis ids [SPEC 19].
+/// axis. An unknown id reports the chart's own axis ids [SPEC 20].
 fn bind_axis(inst: &ResolvedInst, specs: &[AxisSpec]) -> Result<usize, Error> {
     let Some(id) = axis_id(inst) else {
         return Ok(0);
@@ -829,7 +829,7 @@ fn axis_id(inst: &ResolvedInst) -> Option<&str> {
     }
 }
 
-/// The "axis 'X' not found; did you mean 'Y'?" error [SPEC 19], shared by
+/// The "axis 'X' not found; did you mean 'Y'?" error [SPEC 20], shared by
 /// series, band, and mark binding. Axes are chart-local (not in the global index),
 /// so the suggestion ranges over the chart's own `|axis|` ids.
 fn no_axis(id: &str, known: &[&str], span: Span) -> Error {
@@ -1330,7 +1330,7 @@ fn read_curve(attrs: &AttrMap) -> Result<Curve, Error> {
 /// (`start`, else `end` — `marker:` sets both; the directional ends have no chart
 /// meaning). `marker: none` resolves to `None`; a `|mark|`'s template default `marker:
 /// dot` separates an explicit `none` (label only) from a plain point (a dot). A chart
-/// marker is centred, so the directional `arrow` / `crow` are rejected here ([SPEC 19]).
+/// marker is centred, so the directional `arrow` / `crow` are rejected here ([SPEC 20]).
 fn chart_marker(inst: &ResolvedInst) -> Result<MarkerKind, Error> {
     let kind = if inst.markers.start != MarkerKind::None {
         inst.markers.start

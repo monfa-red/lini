@@ -307,11 +307,11 @@ fn is_note(type_chain: &[String]) -> bool {
     type_chain.iter().any(|t| t == "note")
 }
 
-/// The properties valid only in a sequence [SPEC 19]: a note's placement and the
+/// The properties valid only in a sequence [SPEC 20]: a note's placement and the
 /// activation toggle.
 const SEQ_PROPS: &[&str] = &["over", "left", "right", "activation"];
 
-/// Validate sequence structure [SPEC 19], before layout: a frame / note / `|else|` belongs
+/// Validate sequence structure [SPEC 20], before layout: a frame / note / `|else|` belongs
 /// in a sequence (an `|else|` directly in an `|alt|`), a note needs a placement, and the
 /// sequence properties are valid only in a sequence. Walks the scene tracking whether each
 /// node sits in a sequence scope (a sequence's own body, or a frame nested in one) and
@@ -609,7 +609,7 @@ mod tests {
         assert!(s.contains(">spanning</text>"), "the note text renders: {s}");
     }
 
-    // ── Structural errors [SPEC 19] ──
+    // ── Structural errors [SPEC 20] ──
 
     #[test]
     fn a_frame_outside_a_sequence_errors() {

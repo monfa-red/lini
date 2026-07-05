@@ -1,4 +1,4 @@
-//! Resolve: a parsed file → a layout-ready [`Program`] [SPEC 17].
+//! Resolve: a parsed file → a layout-ready [`Program`] [SPEC 18].
 //!
 //! The work splits by concept: [`value`] maps declaration values into
 //! `ResolvedValue`s, [`cascade`] is the stylesheet plus selector matching,
