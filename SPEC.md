@@ -604,7 +604,8 @@ every descendant's text that doesn't override. `opacity` (0–1) fades a node wh
 
 **One stroke role paints a shape's outline and a link's wire alike** — `stroke` the
 colour, `stroke-width` the thickness (markers scale with it), `stroke-style` the dash
-pattern (`solid` / `dashed` / `dotted`, and `wavy` on links). There is no parallel
+pattern (`solid` / `dashed` / `dotted`, plus the drafting `center` / `phantom` on
+shapes and `|line|`s and `wavy` on links — [SPEC 7](#7-nodes)). There is no parallel
 `link-*` family: a `.class` carrying `stroke` dresses whichever wears it, node or link
 ([SPEC 9](#9-links)). A closed primitive's default outline is `--stroke` at width 2; a
 `|group|` softens to width 1.
@@ -776,6 +777,7 @@ the cascade ([SPEC 4](#4-selectors-cascade--specificity)) — every value here i
 | `\|hole\|` | `\|oval\|` | `fill: --bg; stroke: --stroke` — `width:` **required**, the diameter | A round **hole** — punches by paint order, draws its own centre marks ([SPEC 15.4](#154-features-holes--patterns)). |
 | `\|centerline\|` | `\|line\|` | `stroke-style: center; stroke-width: 1; fill: none` — needs `points:` | The dash-dot axis / symmetry line ([SPEC 15.7](#157-leaders-notes--line-conventions)). |
 | `\|pitch-circle\|` | `\|oval\|` | `stroke-style: center; stroke-width: 1; fill: none` — `width:` **required**, the diameter | The dash-dot bolt circle; round, so a `(-)` reads its PCD ([SPEC 15.7](#157-leaders-notes--line-conventions)). |
+| `\|breakline\|` | `\|line\|` | `stroke-width: 1; fill: none` — needs `points:` | A break cut's edge — the zigzag / round-stock S a `break:` generates ([SPEC 15.3](#153-the-sketch-pen)); manual use is free. |
 
 The bare `|block|` is the base everything rectangular builds on — frameless, yet a real
 box (id, class, children, wirable, positionable): what you reach for to wrap text that
@@ -2315,15 +2317,17 @@ measuring and leader ops may stand **one-ended** ([SPEC 21](#21-grammar)).
 | `body:flank (<) body:base` | two line-like anchors | the angle arc — `40°` |
 | `body:taper (<)` | a mirrored-profile name | the **included** angle vs its own twin |
 
-**`(-)` — the round measure.** One op; the **feature picks the symbol**, per the
-standards: a named **arc** (a `fillet`, an `arc()` product) reads its radius — `R` —
-and **everything else** reads as a diameter, `⌀`, across whatever span its anchor
-gives. Roundness is by construction (`|hole|` / `|oval|` lineage, a `circle()`
-product, `|pitch-circle|`), never guessed from coordinates. A bare `(-)` needs an
-inferable axis — a round node (symmetric, any) or a mirrored sketch (across its
-axis, the full span); otherwise the error asks for an anchor. `R` on a full circle
-has no auto form (the standards say ⌀) — type a leader (`pin <- "SR5"`), the
-universal fallback for anything auto-measure can't read.
+**`(-)` — the round measure.** One op, **unary only** — the side anchor replaced
+the old two-ended form, so `a (-) b` errors ([SPEC 20](#20-errors)). The **feature
+picks the symbol**, per the standards: a named **arc** (a `fillet`, an `arc()`
+product) reads its radius — `R` — and **everything else** reads as a diameter, `⌀`,
+across whatever span its anchor gives. Roundness is by construction (`|hole|` /
+`|oval|` lineage, a `circle()` product, `|pitch-circle|`), never guessed from
+coordinates. A bare `(-)` needs an inferable axis — a round node (symmetric, any)
+or a mirrored sketch (across its axis, the full span); otherwise the error asks for
+an anchor. `R` on a full circle has no auto form (the standards say ⌀) — type a
+leader (`pin <- "SR5"`), the universal fallback for anything auto-measure can't
+read.
 
 **The diametral line.** On a **round** node, a side anchor draws the dimension
 *through* the circle, arrows out against the rims: `:top` / `:bottom` vertical,
@@ -2931,7 +2935,7 @@ Format: `filename:line:col: error: <message>` (LSP-compatible), compile-time, wi
 | Single-quoted string | `single quotes are not strings — use "…"` |
 | Unquoted text value | `'title' takes a quoted string — write title: "…"` |
 | Invalid `pin` value | `'pin' expects none, center, an edge (top/bottom/left/right), or a corner (e.g. 'top right')` |
-| Negative `gap` | `'gap' must be ≥ 0` |
+| Negative container `gap` | `a container's 'gap' must be ≥ 0` — a **mate's** `gap:` may go negative ([SPEC 15.5](#155-mates)) |
 | `skew` out of range | `skew: N must be in (-89, 89)` |
 | Unknown name in an expression | `unknown name 'foo' in an expression` |
 | Function arity | `'scale' takes 1 argument, got 2` |
@@ -2994,6 +2998,7 @@ Format: `filename:line:col: error: <message>` (LSP-compatible), compile-time, wi
 | Corner order | `':right-top' is not an anchor — did you mean ':top-right'?` |
 | `(>)` | `'(>)' is reserved — the angle op is '(<)'` |
 | One-ended `<->` / `\|\|` | `a linear dimension measures two anchors` / `a mate seats two parts` |
+| Two-ended `(-)` | `'(-)' measures one round feature — write 'a:top (-)' for a span` |
 | Empty one-ended leader | `a leader needs its text — 'bolt <- "THRU"'` |
 | One-ended `->` / `-*` | `a leader points back at its feature — write 'a <- "…"'` |
 | Bare `(-)` with no axis | `'(-)' can't pick an axis on 'X' — anchor a side ('X:top (-)') or a name` |
@@ -3099,10 +3104,11 @@ endpoint forces a side (`a:left`), distinct from the declaration `:` by position
 by type name and by the scope's `layout` ([SPEC 13](#13-sequence), [SPEC 14](#14-charts)).
 The `drawing` layout ([SPEC 15](#15-drawing)) adds exactly: the three `draw_op` tokens —
 glued, like every link op; `||` is resolved in the parser from two **adjacent** pipes at
-operator position, so bars stay paired (a glued `|box||cell|` selector must be spaced) —
-the **one-ended relaxation** (the right-hand endpoints may be omitted for `<-`, `*-`,
-`>-`, `(-)`, `(<)`; one token of lookahead decides — after the op, an ident is an
-endpoint; a string, `.`, `{`, `[`, or end-of-statement is the tail; `<->` and `||`
+**operator position only**, so bars stay paired and selectors are untouched — the
+**one-ended relaxation** (the right-hand endpoints may be omitted for `<-`, `*-`,
+`>-`, `(<)`, and **must** be for the unary-only `(-)`; one token of lookahead
+decides — after the op, an ident is an endpoint; a string, `.`, `{`, `[`, or
+end-of-statement is the tail; `<->` and `||`
 require both ends), the widened endpoint `point` set in drawing scope, and the
 `pen_item` form inside a `draw:` value. A call's `(` **glues to its name**; a
 free-standing `(-)` / `(<)` lexes as an op ([SPEC 2](#2-lexical-syntax)) — so

@@ -67,6 +67,17 @@ pub fn leaf_bbox(inst: &ResolvedInst) -> Result<Bbox, Error> {
             }
             Ok(bounding_box(&pts).inflate(stroke_half(inst)))
         }
+        // The pen folds at layout [SPEC 15.3] — its geometry lands in PLAN.md
+        // stage 2; the language surface (stage 1) accepts it up to here.
+        NodeKind::Sketch => {
+            if inst.attrs.get("draw").is_none() {
+                return Err(Error::at(inst.span, "'|sketch|' requires 'draw'"));
+            }
+            Err(Error::at(
+                inst.span,
+                "'|sketch|' geometry is not built yet (PLAN.md stage 2)",
+            ))
+        }
     }
 }
 
@@ -152,11 +163,11 @@ pub fn gap(attrs: &AttrMap, span: Span) -> Result<(f64, f64), Error> {
             ));
         }
     };
-    // Gap is non-negative, like CSS — overlap is `pin`'s job, not a spacing
-    // value's. (To allow negative gaps again, drop this check; the flex/grid
-    // math already handles them.)
+    // A container's gap is non-negative, like CSS — overlap is `pin`'s job, not
+    // a spacing value's. (A **mate**'s `gap:` may go negative — that one is the
+    // drawing engine's, read off the link, never through here [SPEC 15.5].)
     if gy < 0.0 || gx < 0.0 {
-        return Err(Error::at(span, "'gap' must be ≥ 0"));
+        return Err(Error::at(span, "a container's 'gap' must be ≥ 0"));
     }
     Ok((gy, gx))
 }
