@@ -391,7 +391,8 @@ fn place_notes(
                 n.cx += dx;
                 n.cy += dy;
             }
-            notes::sticky(&mut n);
+            // The silhouette was folded by the generic arranger — the core
+            // |note| look [SPEC 8]; this engine only places the card.
             Some(n)
         })
         .collect()

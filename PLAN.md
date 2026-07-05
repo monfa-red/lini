@@ -174,7 +174,7 @@ nothing new except what's listed.
 `layout: drawing` file should *parse and resolve* but may error "not yet built" at
 layout — a single clearly-marked `todo`-style compile error, not a panic.
 
-### Stage 2 — The sketch pen (geometry, any layout)
+### Stage 2 — The sketch pen (geometry, any layout)  ← DONE (see the Execution log)
 
 `|sketch|` becomes a real primitive usable in flow/grid too — nothing drawing-scoped
 yet.
@@ -193,10 +193,6 @@ yet.
   support exists anywhere in src/render yet).
 - `stroke-style: center` / `phantom` dash arrays, global (render layer; links keep
   their set). `|centerline|` / `|pitch-circle|` work as plain styled primitives.
-- `scale:` and `pattern:` are **global node transforms** ([SPEC 15]'s global
-  column): wire them in the generic arranger here (a scaled / patterned sketch in
-  a flow diagram works), so stage 3 only adds the drawing-specific chrome and the
-  view-scale cascade.
 - The `|note|` folded-corner silhouette becomes the **core** look (today only the
   sequence engine folds it via `notes::sticky` — factor that into the shared
   geometry path, one mechanism).
@@ -208,6 +204,10 @@ yet.
 
 - `layout/mod.rs`: `is_drawing` interception + root case; `is_drawing_scope` link
   skip (mirror `is_sequence_scope` — routing and `declared_edges` both honour it).
+- `scale:` and `pattern:` as **global node transforms** ([SPEC 15]'s global
+  column) — wired here, once, alongside the drawing view-scale cascade (moved
+  from stage 2: one scale context, one mechanism). A scaled / patterned sketch
+  in a flow diagram must work, not just in a drawing.
 - A typed model à la `chart::build`: partition children into geometry / annotation
   links / mates / sheet content; datum placement (origins, `translate:`), features in
   `[ ]` rigid with the part; nested drawings as rigid bodies; per-node effective
@@ -319,3 +319,49 @@ deviated from this plan and **why**, open threads for the next session.
     prose (+`center`/`phantom`), `(-)` unary-only statement + its SPEC 20 error,
     container-`gap` error scoped (`a container's 'gap' must be ≥ 0` — code
     message updated to match).
+
+- **2026-07-05 — stage 2 landed** (same session; 14 suites green, clippy + fmt
+  clean; `samples/sketch.lini` rendered to PNG via resvg and visually verified —
+  chamfer/fillet corners, punched even-odd bore, fused pin, duplicated ears,
+  tangent-arc hook, center/phantom dashes, folded note all read correctly).
+  What shipped, and what a later stage must know:
+  - `src/layout/drawing/{pen,geometry}.rs`: `pen::fold(inst) -> Folded { d,
+    geometry (stroke-excluded bbox), names, mirror_axes, fused }`. Segments are
+    Line/Arc/Cubic chains per subpath; bbox comes from the folded `d` through
+    the existing `path_bbox::extent_points` (one mechanism). Bearings: the four
+    cardinals are **exact** vectors, not sin/cos — their coordinates feed
+    measured values in stage 4.
+  - Corner modifiers: pending-slot model; cyclic through `close()` both ways
+    (`fillet(3) close()` = last-to-seam, `close() fillet(3)` = seam-to-first).
+    **Straight runs only** for now — a modifier against an arc errors
+    "'fillet' joins two straight segments today" (added to SPEC 23 Deferred).
+    The closing seam is a real segment (cyclic corners need it); `to_d` skips
+    emitting a redundant trailing `L` that `Z` draws.
+  - After `close()`, only `fillet`/`chamfer`/`circle`/`move`/`:name` may follow
+    ("after close(), start the next subpath with move()"). The tangent
+    `arc(r, deg)` requires a heading; `circle(r)` appends its own closed
+    subpath without disturbing the pen.
+  - Duplicate `:name` message is "':x' is already named in this 'draw:'" — pen
+    items carry no spans, so SPEC 20's old "at L:C" form was amended to match.
+  - `mirror:` fuse/duplicate per subpath as spec'd; reflection is applied
+    chain-order (continuity preserved), reverse-then-reflect keeps an arc's
+    sweep; axis-degenerate seams are skipped. `Folded.mirror_axes` / `fused`
+    carry `#[expect(dead_code)]` until stages 3-4 consume them.
+  - Sketch integration: `layout_inst` intercepts `NodeKind::Sketch` (geometry
+    decides the bbox — never content+padding; children still arrange over it),
+    stores the folded `d` as the placed node's `path` attr;
+    `primitives::leaf_bbox` delegates to the same fold for any other caller.
+    Render: `emit_sketch` = `<path d fill-rule="evenodd"/>`, paint riding the
+    `<g>` like every closed primitive.
+  - `|note|` fold moved to `layout/note.rs::fold`, applied once by the generic
+    arranger (kind Block + type chain "note"); the sequence engine now only
+    places the card — its snapshot stayed byte-identical, which validates the
+    move.
+  - `dash_pattern` gained `center` (long,gap,dot,gap) and `phantom`
+    (long,gap,dot,gap,dot,gap), stroke-proportional like `dashed`; links
+    reject both at resolve ("a link's stroke-style is solid, dashed, dotted,
+    or wavy").
+  - **Deviation:** generic `scale:`/`pattern:` wiring moved from stage 2 to
+    stage 3 — they need the same effective-scale context the drawing engine
+    builds, so wiring them once there is the one-mechanism play (stage 3
+    bullet updated).

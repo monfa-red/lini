@@ -88,6 +88,15 @@ pub fn resolve_link(
             "'tol' composes a dimension's text — it belongs in a 'layout: drawing'",
         ));
     }
+    // The drafting dash conventions are shape / |line| values [SPEC 7]; a
+    // link's set stays the core four.
+    if matches!(attrs.get("stroke-style"), Some(ResolvedValue::Ident(s)) if s == "center" || s == "phantom")
+    {
+        return Err(Error::at(
+            w.span,
+            "a link's stroke-style is solid, dashed, dotted, or wavy",
+        ));
+    }
     let routing = parse_routing(&attrs, w.span)?;
     attrs.map.remove("routing");
 

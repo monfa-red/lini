@@ -3006,7 +3006,7 @@ Format: `filename:line:col: error: <message>` (LSP-compatible), compile-time, wi
 | Unary `(<)` on an unmirrored name | `'(<)' on ':taper' needs 'mirror:' — no twin to measure against` |
 | `:name` shadows a built-in point | `':left' is a built-in anchor — pick another name` |
 | Unknown authored name | `no point ':step' on 'body'` + suggestions |
-| Duplicate `:name` in one `draw:` | `':step' is already named at L:C` |
+| Duplicate `:name` in one `draw:` | `':step' is already named in this 'draw:'` |
 | Label on a mate | `a mate takes no label` |
 | `gap:` on a point mate | `a point mate coincides — 'gap' needs directed anchors (sides or named edges)` |
 | Non-parallel mate directions | `mated anchors must face along one axis — 'a:left \|\| b:top' has no shared normal` |
@@ -3229,6 +3229,9 @@ dividers / delays (`==` / `...`); and an `|actor|` stick-figure primitive (an ac
 - **view machinery** — projection lines between views, detail circles ("VIEW A"),
   cutting-plane arrows (A–A), cross-view alignment; today, composed by hand.
 - **angled break lines** and a scope-level `break:` on the `\|drawing\|` itself.
+- **`fillet` / `chamfer` against a curved segment** — today the modifiers join two
+  straight runs (an arc is already tangent-friendly; draw it with the radius you
+  want).
 - **dim-line breaks / halos** where annotations cross geometry; the ASME
   text-in-a-broken-line diametral form and a horizontal-text knob (ISO aligned is the
   built-in).

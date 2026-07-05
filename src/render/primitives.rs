@@ -126,10 +126,23 @@ fn emit_shape(
         NodeKind::Path => emit_path(out, n, &indent),
         NodeKind::Icon => emit_icon(out, n, &indent, vars, opts),
         NodeKind::Image => emit_image(out, n, &indent),
-        // A sketch lowers to a `|path|` at layout (PLAN.md stage 2) and layout
-        // errors before then, so the kind never reaches the emitter.
-        NodeKind::Sketch => {}
+        NodeKind::Sketch => emit_sketch(out, n, &indent),
     }
+}
+
+/// The folded pen path [SPEC 15.3]: even-odd fill so an inner subpath reads as
+/// a hole; paint rides the node's `<g>` like every closed primitive.
+fn emit_sketch(out: &mut String, n: &PlacedNode, indent: &str) {
+    let Some(crate::resolve::ResolvedValue::String(d)) = n.attrs.get("path") else {
+        return;
+    };
+    writeln!(
+        out,
+        r#"{}<path d="{}" fill-rule="evenodd"/>"#,
+        indent,
+        escape_xml(d)
+    )
+    .unwrap();
 }
 
 fn dim_excluding_stroke(n: &PlacedNode, thickness: f64) -> (f64, f64) {

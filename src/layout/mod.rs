@@ -1,8 +1,10 @@
 mod anchors;
 mod chart;
+mod drawing;
 mod flex;
 mod grid;
 pub(crate) mod ir;
+mod note;
 pub(crate) mod path_bbox; // glyph-extent computation also serves `render::icon_fit`
 mod prim; // PlacedNode *builders* for lowered primitives (charts, sequences)
 mod primitives; // primitive *sizing* (leaf/closed bbox) — distinct from `prim`
@@ -217,7 +219,19 @@ fn layout_inst(inst: &ResolvedInst, path: &str, program: &Program) -> Result<Pla
 
     // Determine this node's bbox + arrange children inside.
     let mut gutters: Vec<Gutter> = Vec::new();
-    let bbox = if children.is_empty() {
+    let mut sketch_d: Option<String> = None;
+    let bbox = if inst.kind == NodeKind::Sketch {
+        // The pen folds here [SPEC 15.3]: geometry decides the bbox — never
+        // content + padding — and any children still arrange normally over it
+        // (a part's features ride in its `[ ]`, [SPEC 15.4]).
+        if !children.is_empty() {
+            let _ = lay_out_container_children(&mut children, &inst.attrs, inst.span)?;
+        }
+        let folded = drawing::pen::fold(inst)?;
+        let half = inst.attrs.number("stroke-width").unwrap_or(0.0) / 2.0;
+        sketch_d = Some(folded.d);
+        folded.geometry.inflate(half)
+    } else if children.is_empty() {
         // Leaf primitive.
         primitives::leaf_bbox(inst)?
     } else {
@@ -262,7 +276,7 @@ fn layout_inst(inst: &ResolvedInst, path: &str, program: &Program) -> Result<Pla
 
     let rotation = inst.attrs.number("rotate").unwrap_or(0.0);
 
-    Ok(PlacedNode {
+    let mut placed = PlacedNode {
         id: inst.id.clone(),
         kind: inst.kind,
         type_chain: inst.type_chain.clone(),
@@ -279,7 +293,16 @@ fn layout_inst(inst: &ResolvedInst, path: &str, program: &Program) -> Result<Pla
         gutters,
         links: Vec::new(),
         span: inst.span,
-    })
+    };
+    if let Some(d) = sketch_d {
+        placed.attrs.insert("path", ResolvedValue::String(d));
+    }
+    // The core `|note|` silhouette [SPEC 8] — folded once, whatever the layout;
+    // the sequence (and later the drawing) engine only places the card.
+    if placed.kind == NodeKind::Block && placed.type_chain.iter().any(|t| t == "note") {
+        note::fold(&mut placed);
+    }
+    Ok(placed)
 }
 
 /// Interior gutter rects between adjacent flow children — at each gap's midpoint,

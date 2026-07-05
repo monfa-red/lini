@@ -1,0 +1,35 @@
+// The sketch pen [SPEC 15.3] in an ordinary flow — profiles, corner modifiers,
+// mirrors, and the drafting line styles, all usable outside a drawing.
+{
+  direction: row;  gap: 48;  align: center;
+}
+
+// Chamfer + fillet + a punched bore (even-odd subpaths).
+|sketch#plate| {
+  draw: move(0, 0) right(60) chamfer(8) down(30) left(60) fillet(8) close()
+        move(20, 15) circle(6);
+}
+
+// Draw the half, get the whole: a fused mirror about the axis.
+|sketch#pin| {
+  draw: move(-40, 0) up(8) right(30):shank down(3) right(50) down(5);
+  mirror: x-axis;
+}
+
+// Draw one ear, get both: a closed subpath duplicates.
+|sketch#clip| {
+  draw: move(-20, -6) right(12) down(12) left(12) close();
+  mirror: y-axis;
+}
+
+// A tangent arc continues the heading; a cubic finishes the hook.
+|sketch#hook| {
+  draw: move(0, 0) down(20) arc(10, -180) up(10) curve(0, -8, 10, -12, 18, -12);
+  stroke-width: 3; fill: none;
+}
+
+|column| { gap: 14 } [
+  |centerline#axis| { points: 0 0, 90 0 }
+  |line#ghost| { points: 0 0, 90 0; stroke-style: phantom; stroke-width: 1 }
+  |note#memo| "folded corner"
+]

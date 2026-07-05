@@ -173,6 +173,19 @@ pub fn dash_pattern(style: &str, width: f64) -> String {
             format!("{},{}", num(unit * 2.0), num(unit * 1.5))
         }
         "dotted" => format!("{},{}", num(width), num(width * 2.0)),
+        // The drafting conventions [SPEC 15.7]: `center` is dash-dot (axes,
+        // symmetry), `phantom` dash-dot-dot (alternate positions) — a long run,
+        // then dot(s) sized to the stroke, gapped like `dashed`.
+        "center" => {
+            let unit = width + 1.0;
+            let (long, gap, dot) = (num(unit * 5.0), num(unit * 1.5), num(width));
+            format!("{long},{gap},{dot},{gap}")
+        }
+        "phantom" => {
+            let unit = width + 1.0;
+            let (long, gap, dot) = (num(unit * 5.0), num(unit * 1.5), num(width));
+            format!("{long},{gap},{dot},{gap},{dot},{gap}")
+        }
         _ => String::new(),
     }
 }

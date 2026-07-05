@@ -67,16 +67,12 @@ pub fn leaf_bbox(inst: &ResolvedInst) -> Result<Bbox, Error> {
             }
             Ok(bounding_box(&pts).inflate(stroke_half(inst)))
         }
-        // The pen folds at layout [SPEC 15.3] — its geometry lands in PLAN.md
-        // stage 2; the language surface (stage 1) accepts it up to here.
+        // The pen [SPEC 15.3]: geometry-sized, like |path| — the fold is the one
+        // source of truth (layout_inst intercepts sketches to keep the folded
+        // `d`; this arm serves any other caller the bbox alone).
         NodeKind::Sketch => {
-            if inst.attrs.get("draw").is_none() {
-                return Err(Error::at(inst.span, "'|sketch|' requires 'draw'"));
-            }
-            Err(Error::at(
-                inst.span,
-                "'|sketch|' geometry is not built yet (PLAN.md stage 2)",
-            ))
+            let folded = super::drawing::pen::fold(inst)?;
+            Ok(folded.geometry.inflate(stroke_half(inst)))
         }
     }
 }
