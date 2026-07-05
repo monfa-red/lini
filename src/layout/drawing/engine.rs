@@ -40,7 +40,7 @@ pub(in crate::layout) fn layout_node(
     }
     let bbox = primitives::closed_bbox(inst, extent, own)?;
     let half = inst.attrs.number("stroke-width").unwrap_or(0.0) / 2.0;
-    place_pinned(&mut children, bbox.inflate(-half), own)?;
+    place_pinned(&mut children, bbox.inflate(-half))?;
     Ok(prim::container(inst, bbox, children))
 }
 
@@ -50,7 +50,7 @@ pub(in crate::layout) fn layout_root(program: &Program) -> Result<(Vec<PlacedNod
     let own = effective_scale(&program.scene.attrs, 1.0, Span::empty())?;
     let mut children = lay_out(&program.scene.nodes, "", program, own, Span::empty())?;
     let extent = flow_extent(&children);
-    place_pinned(&mut children, extent, own)?;
+    place_pinned(&mut children, extent)?;
     Ok((children, extent))
 }
 
@@ -112,14 +112,16 @@ fn flow_extent(kids: &[PlacedNode]) -> Bbox {
         max_y: f64::NEG_INFINITY,
     };
     for k in kids.iter().filter(|k| !anchors::is_pinned(&k.attrs)) {
-        super::super::accumulate_extent(k, 0.0, 0.0, &mut ext);
+        super::super::accumulate_extent(k, 0.0, 0.0, 0.0, &mut ext);
     }
     ext
 }
 
 /// Pin sheet chrome onto the finished box — the title `|footnote|` under the
-/// view [SPEC 15.8] — flush per the core pin law, `translate:` after.
-fn place_pinned(kids: &mut [PlacedNode], anchor_box: Bbox, scale: f64) -> Result<(), Error> {
+/// view [SPEC 15.8] — flush per the core pin law, `translate:` after. A pinned
+/// overlay's nudge is chrome **anatomy** (the title's 17 px gap), sheet-space
+/// like every drafting constant — never the view scale [SPEC 15.1].
+fn place_pinned(kids: &mut [PlacedNode], anchor_box: Bbox) -> Result<(), Error> {
     for k in kids.iter_mut().filter(|k| anchors::is_pinned(&k.attrs)) {
         if let Some(pin) = anchors::read_pin(&k.attrs, k.span)? {
             let (cx, cy) = pin.target(anchor_box, k.bbox);
@@ -127,8 +129,8 @@ fn place_pinned(kids: &mut [PlacedNode], anchor_box: Bbox, scale: f64) -> Result
             k.cy = cy;
         }
         if let Some((dx, dy)) = anchors::translate(&k.attrs, k.span)? {
-            k.cx += dx * scale;
-            k.cy += dy * scale;
+            k.cx += dx;
+            k.cy += dy;
         }
     }
     Ok(())
@@ -247,6 +249,31 @@ mod tests {
             .expect("the title footnote");
         let a = by_id(&v.children, "a");
         assert!(title.cy > a.cy + a.bbox.max_y, "title sits under the view");
+    }
+
+    #[test]
+    fn the_title_gap_is_sheet_space_at_any_view_scale() {
+        // A pinned overlay's translate is chrome anatomy [SPEC 15.1]: the
+        // title's 17 px drafting gap must not grow with the view scale.
+        let gap = |scale: u32| {
+            let l = laid(&format!(
+                "|drawing#v| \"T\" {{ scale: {scale} }} [\n  |rect#a| {{ width: 30; height: 20 }}\n]\n"
+            ));
+            let v = by_id(&l.nodes, "v");
+            let title = v
+                .children
+                .iter()
+                .find(|c| c.type_chain.iter().any(|t| t == "footnote"))
+                .expect("title");
+            let a = by_id(&v.children, "a");
+            (title.cy + title.bbox.min_y) - (a.cy + a.bbox.max_y)
+        };
+        assert!(
+            (gap(1) - gap(4)).abs() < 0.01,
+            "gap(1)={} gap(4)={}",
+            gap(1),
+            gap(4)
+        );
     }
 
     // ── Chrome [SPEC 15.7] ──
@@ -524,6 +551,17 @@ mod tests {
                 "{ layout: drawing }\n|rect#plate| { width: 60; height: 40 } [\n  |hole#x| { width: 6; translate: -20 0 }\n  |hole#y| { width: 6; translate: 20 0 }\n]\nplate.x || plate.y\n"
             ),
             "'plate.x' and 'plate.y' are features of one part — a part is rigid"
+        );
+    }
+
+    #[test]
+    fn a_mate_rejects_sheet_content() {
+        // A mate seats two geometry nodes [SPEC 15.5]; a note is sheet content.
+        assert_eq!(
+            layout_err(
+                "{ layout: drawing }\n|rect#a| { width: 20; height: 20 }\n|note#n| \"x\"\na:right || n:left\n"
+            ),
+            "a mate seats geometry — '|note|' is sheet content"
         );
     }
 

@@ -443,3 +443,41 @@ deviated from this plan and **why**, open threads for the next session.
   - No pre-existing snapshot moved — the Ctx/scale threading is a proven
     no-op outside drawings. Samples: `drawing.lini`, `drawing_pattern.lini`,
     `drawing_mate.lini`, `drawing_assembly.lini`.
+
+- **2026-07-05 — stage-3 audit round** (same session; an independent opus
+  audit + a hand probe pass over renders and edge cases; all gates green
+  after). Fixed at the source:
+  - **Rotated parts clipped at the canvas** — `accumulate_extent` ignored
+    `rotate:`; it now swings bbox corners by the accumulated rotation (the
+    one extent mechanism, so `finish` and the engine both benefit; a mated
+    bar stood on end renders whole). No pre-existing snapshot moved.
+  - **`pattern:` on a layout-owning node was a silent no-op** — the engine
+    dispatch (chart/pie/sequence/drawing) returned before the pattern hook;
+    the dispatch tail now expands too, and the `|note|` fold runs **before**
+    expansion so a patterned note copies folded cards.
+  - **The title gap scaled with the view** — `place_pinned` (and the generic
+    container path) applied `translate × scale` to pinned overlays; a
+    pin-relative nudge is chrome **anatomy** and stays sheet-space. SPEC 15.1's
+    never-scales list now includes it. `drawing.lini`'s snapshot moved
+    (title 99.5 → 65.5 at scale 3 — the fix, PNG-verified).
+  - **Mates silently moved sheet content** — SPEC 15.5 seats *geometry*;
+    now "a mate seats geometry — '|note|' is sheet content" (added to the
+    SPEC 20 table).
+  - Style: `pen.rs` split per the ~500-LOC law (`corner.rs` holds the
+    fillet/chamfer trim; `Product` is the module-level pen↔anchors
+    vocabulary; `rotate_about`/`arc_mid` joined `geometry.rs`); the
+    scope-relative path helper is one `drawing::rel_path`; mate errors spell
+    the pair as written (never fixed/mover order).
+  - **Open question for Abbas (blocks nothing):** links inside an
+    **anonymous** layout-owning container are mis-scoped — resolve's lifted
+    prefix skips id-less nodes (scene.rs), so an anonymous `|drawing|`'s
+    mates leak to the enclosing scope ("mate endpoint 'a' not placed" /
+    "'||' belongs in a 'layout: drawing'"), and an anonymous `|sequence|`'s
+    messages get **routed** instead of drawn (pre-existing core behavior,
+    same root). Decide: give anonymous containers positional scope segments
+    (core scoping surgery, resolve + layout agreeing), or require ids for
+    link-owning bodies with a clean error.
+  - **Stage-4 note:** a patterned node's **side/corner anchors** currently
+    read the carrier's union bbox; SPEC 15.2 fixes only its *position*
+    (grid → seed, radial → ring centre). Decide seed-vs-union for dims when
+    anchoring `plate.pin:top` on a patterned hole.

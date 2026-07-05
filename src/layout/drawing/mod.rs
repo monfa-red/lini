@@ -6,6 +6,7 @@
 
 pub(crate) mod anchors;
 pub(crate) mod chrome;
+mod corner;
 mod engine;
 pub(crate) mod geometry;
 mod mates;
@@ -16,6 +17,43 @@ pub(super) use engine::{layout_node, layout_root};
 use super::ir::Bbox;
 use crate::error::Error;
 use crate::resolve::{AttrMap, Program, ResolvedInst, ResolvedValue};
+use geometry::P;
+
+/// What an authored `:name` addresses [SPEC 15.2] — the pen's output
+/// vocabulary, produced by the fold and consumed by the anchors.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Product {
+    /// A freestanding name — the pen's point there.
+    Point(P),
+    /// A straight run (or a chamfer bevel, or a `close()` seam) — carries its
+    /// direction for dimension axes.
+    Edge(P, P),
+    /// An arc (drawn, tangent, or a fillet) — a point on it plus its radius,
+    /// the `R` reading.
+    Arc { mid: P, r: f64 },
+    /// A `circle(r)` subpath — round by construction, the `⌀` reading.
+    Circle { center: P, r: f64 },
+}
+
+impl Product {
+    /// The product under the node's own `scale:` — a uniform coordinate map,
+    /// so directions survive and radii multiply.
+    pub(super) fn scaled(self, s: f64) -> Self {
+        let m = |p: P| (p.0 * s, p.1 * s);
+        match self {
+            Product::Point(p) => Product::Point(m(p)),
+            Product::Edge(a, b) => Product::Edge(m(a), m(b)),
+            Product::Arc { mid, r } => Product::Arc {
+                mid: m(mid),
+                r: r * s,
+            },
+            Product::Circle { center, r } => Product::Circle {
+                center: m(center),
+                r: r * s,
+            },
+        }
+    }
+}
 
 /// `layout: drawing` [SPEC 15] — the drawing engine's dispatch check, the
 /// `is_sequence` twin.
@@ -28,6 +66,15 @@ pub(crate) fn is_drawing(attrs: &AttrMap) -> bool {
 /// count skip them, exactly as a sequence scope's messages are skipped.
 pub(crate) fn is_drawing_scope(program: &Program, scope: &str) -> bool {
     super::scope_attrs(program, scope).is_some_and(is_drawing)
+}
+
+/// A scene-rooted endpoint path relative to its drawing scope (`""` = root).
+/// Resolve always qualifies endpoints under their scope, so the prefix is
+/// exact — shared by the anchor walk and the mate error spellings.
+pub(super) fn rel_path<'a>(path: &'a str, scope: &str) -> &'a str {
+    path.strip_prefix(scope)
+        .map(|p| p.trim_start_matches('.'))
+        .unwrap_or(path)
 }
 
 /// Sheet content [SPEC 15]: placed and styled per its own type, never a part —

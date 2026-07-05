@@ -154,7 +154,7 @@ pub struct PlacedNode {
     /// A sketch's authored `:name` products [SPEC 15.2], in the node's local
     /// frame (scaled) — the drawing engine's mate / dimension anchors read
     /// them. Empty for everything but a `|sketch|`.
-    pub names: Vec<(String, super::drawing::pen::Product)>,
+    pub names: Vec<(String, super::drawing::Product)>,
     pub span: Span,
 }
 

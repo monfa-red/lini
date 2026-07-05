@@ -6,48 +6,15 @@
 //! Errors follow SPEC 20 verbatim where a message is specified there.
 
 use super::super::ir::Bbox;
+use super::Product;
+use super::corner::{Mod, apply_mod};
 use super::geometry::{
-    self, MirrorAxis, P, Seg, Subpath, bearing_dir, dir_bearing, dist, geometry_bbox, to_d,
+    self, MirrorAxis, P, Seg, Subpath, arc_mid, bearing_dir, dir_bearing, dist, geometry_bbox,
+    rotate_about, to_d,
 };
 use crate::error::Error;
 use crate::resolve::{ResolvedCall, ResolvedInst, ResolvedValue};
 use crate::span::Span;
-
-/// What an authored `:name` addresses [SPEC 15.2] — collected here, consumed by
-/// the drawing engine's anchors (PLAN.md stage 4).
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum Product {
-    /// A freestanding name — the pen's point there.
-    Point(P),
-    /// A straight run (or a chamfer bevel, or a `close()` seam) — carries its
-    /// direction for dimension axes.
-    Edge(P, P),
-    /// An arc (drawn, tangent, or a fillet) — a point on it plus its radius,
-    /// the `R` reading.
-    Arc { mid: P, r: f64 },
-    /// A `circle(r)` subpath — round by construction, the `⌀` reading.
-    Circle { center: P, r: f64 },
-}
-
-impl Product {
-    /// The product under the node's own `scale:` — a uniform coordinate map,
-    /// so directions survive and radii multiply.
-    fn scaled(self, s: f64) -> Self {
-        let m = |p: P| (p.0 * s, p.1 * s);
-        match self {
-            Product::Point(p) => Product::Point(m(p)),
-            Product::Edge(a, b) => Product::Edge(m(a), m(b)),
-            Product::Arc { mid, r } => Product::Arc {
-                mid: m(mid),
-                r: r * s,
-            },
-            Product::Circle { center, r } => Product::Circle {
-                center: m(center),
-                r: r * s,
-            },
-        }
-    }
-}
 
 /// A folded sketch: the path, its measurement bbox, and everything the drawing
 /// engine reads later.
@@ -161,22 +128,6 @@ fn parse_mirror(v: &ResolvedValue, span: Span) -> Result<Vec<MirrorAxis>, Error>
     match v {
         ResolvedValue::Tuple(items) => items.iter().map(one).collect(),
         item => Ok(vec![one(item)?]),
-    }
-}
-
-/// A pending corner modifier — parked between its two segments.
-#[derive(Clone, Copy)]
-enum Mod {
-    Fillet(f64),
-    Chamfer(f64),
-}
-
-impl Mod {
-    fn word(self) -> &'static str {
-        match self {
-            Mod::Fillet(_) => "fillet",
-            Mod::Chamfer(_) => "chamfer",
-        }
     }
 }
 
@@ -606,105 +557,6 @@ impl Pen {
 fn bearing_scaled(bearing: f64, len: f64) -> P {
     let d = bearing_dir(bearing);
     (d.0 * len, d.1 * len)
-}
-
-/// Rotate `p` about `centre` by `deg` — positive reads clockwise on screen
-/// (y grows down), matching the pen's bearing convention.
-fn rotate_about(p: P, centre: P, deg: f64) -> P {
-    let (s, c) = deg.to_radians().sin_cos();
-    let (x, y) = (p.0 - centre.0, p.1 - centre.1);
-    (centre.0 + x * c - y * s, centre.1 + x * s + y * c)
-}
-
-/// The minor arc's midpoint — on the far side of the chord from the centre;
-/// for a semicircle, a quarter-turn from the start in the sweep direction.
-fn arc_mid(centre: P, chord_mid: P, r: f64, from: P, sweep: bool) -> P {
-    let v = (chord_mid.0 - centre.0, chord_mid.1 - centre.1);
-    let len = dist(v, (0.0, 0.0));
-    if len > 1e-9 {
-        (centre.0 + v.0 / len * r, centre.1 + v.1 / len * r)
-    } else {
-        rotate_about(from, centre, if sweep { 90.0 } else { -90.0 })
-    }
-}
-
-/// Trim the corner between two straight runs and drop in the modifier's joint:
-/// a tangent arc (`fillet`) or a straight bevel (`chamfer`, cut `c` back along
-/// each leg) [SPEC 15.3]. Returns (trimmed prev, joint, trimmed next, the
-/// joint's `:name` product).
-fn apply_mod(m: Mod, prev: Seg, next: Seg, span: Span) -> Result<(Seg, Seg, Seg, Product), Error> {
-    let (Seg::Line { from: a, to: c1 }, Seg::Line { from: c2, to: b }) = (prev, next) else {
-        return Err(Error::at(
-            span,
-            format!("'{}' joins two straight segments today", m.word()),
-        ));
-    };
-    debug_assert!(dist(c1, c2) < 1e-9, "corner segments meet at one point");
-    let c = c1;
-    let (la, lb) = (dist(a, c), dist(c, b));
-    let da = ((c.0 - a.0) / la, (c.1 - a.1) / la);
-    let db = ((b.0 - c.0) / lb, (b.1 - c.1) / lb);
-    let cross = da.0 * db.1 - da.1 * db.0;
-    if cross.abs() < 1e-9 {
-        return Err(Error::at(
-            span,
-            format!("'{}' needs a turn between its two runs", m.word()),
-        ));
-    }
-    let interior = (-(da.0 * db.0 + da.1 * db.1)).clamp(-1.0, 1.0).acos();
-    let t = match m {
-        Mod::Fillet(r) => r / (interior / 2.0).tan(),
-        Mod::Chamfer(cc) => cc,
-    };
-    let amount = match m {
-        Mod::Fillet(r) => r,
-        Mod::Chamfer(cc) => cc,
-    };
-    if amount <= 0.0 || t > la - 1e-9 || t > lb - 1e-9 {
-        return Err(Error::at(
-            span,
-            format!(
-                "{} {} does not fit its corner",
-                m.word(),
-                geometry::n(amount)
-            ),
-        ));
-    }
-    let ta = (c.0 - da.0 * t, c.1 - da.1 * t);
-    let tb = (c.0 + db.0 * t, c.1 + db.1 * t);
-    let (mid, product) = match m {
-        Mod::Fillet(r) => {
-            let sweep = cross > 0.0;
-            // Centre: perpendicular off the incoming leg at the tangent point.
-            let centre = if sweep {
-                (ta.0 - da.1 * r, ta.1 + da.0 * r)
-            } else {
-                (ta.0 + da.1 * r, ta.1 - da.0 * r)
-            };
-            let clen = dist(centre, c);
-            let on_arc = (
-                centre.0 + (c.0 - centre.0) / clen * r,
-                centre.1 + (c.1 - centre.1) / clen * r,
-            );
-            (
-                Seg::Arc {
-                    from: ta,
-                    to: tb,
-                    r,
-                    large: false,
-                    sweep,
-                },
-                Product::Arc { mid: on_arc, r },
-            )
-        }
-        Mod::Chamfer(_) => (Seg::Line { from: ta, to: tb }, Product::Edge(ta, tb)),
-    };
-    Ok((
-        Seg::Line { from: a, to: ta },
-        mid,
-        Seg::Line { from: tb, to: b },
-        product,
-    ))
 }
 
 #[cfg(test)]

@@ -8,8 +8,8 @@
 //! `rotate:` turns its anchors with it.
 
 use super::super::ir::{Bbox, PlacedNode};
+use super::Product;
 use super::geometry::P;
-use super::pen::Product;
 use crate::ast::Side;
 use crate::error::Error;
 use crate::resolve::ResolvedEndpoint;
@@ -30,11 +30,7 @@ pub(super) fn resolve(
     scope: &str,
     ep: &ResolvedEndpoint,
 ) -> Result<Hit, Error> {
-    let rel = ep
-        .path
-        .strip_prefix(scope)
-        .map(|p| p.trim_start_matches('.'))
-        .unwrap_or(&ep.path);
+    let rel = super::rel_path(&ep.path, scope);
     let mut segs = rel.split('.');
     let first = segs.next().expect("an endpoint path is non-empty");
     let child = kids

@@ -159,11 +159,38 @@ fn child_path(parent: &str, inst: &ResolvedInst) -> String {
 
 /// Union every node's drawn extent into `bbox`, in world coords — so the
 /// canvas includes absolute overlays that don't grow their parent's bbox.
-fn accumulate_extent(n: &PlacedNode, ox: f64, oy: f64, bbox: &mut Bbox) {
-    let (wx, wy) = (ox + n.cx, oy + n.cy);
-    *bbox = bbox.union(n.bbox.shifted(wx, wy));
+/// `rot` is the accumulated ancestor rotation: each node renders as
+/// `translate(cx, cy) rotate(deg)`, so a turned node's true extent is its
+/// bbox corners swung about its origin — without this, a `rotate:`d part
+/// (a mated bar stood on end, [SPEC 15.5]) clips at the canvas edge.
+fn accumulate_extent(n: &PlacedNode, ox: f64, oy: f64, rot: f64, bbox: &mut Bbox) {
+    let turn = |x: f64, y: f64, deg: f64| -> (f64, f64) {
+        if deg == 0.0 {
+            return (x, y);
+        }
+        let (s, c) = deg.to_radians().sin_cos();
+        (x * c - y * s, x * s + y * c)
+    };
+    let (dx, dy) = turn(n.cx, n.cy, rot);
+    let (wx, wy) = (ox + dx, oy + dy);
+    let total = rot + n.rotation;
+    let b = &n.bbox;
+    for (x, y) in [
+        (b.min_x, b.min_y),
+        (b.max_x, b.min_y),
+        (b.min_x, b.max_y),
+        (b.max_x, b.max_y),
+    ] {
+        let (px, py) = turn(x, y, total);
+        *bbox = bbox.union(Bbox {
+            min_x: wx + px,
+            min_y: wy + py,
+            max_x: wx + px,
+            max_y: wy + py,
+        });
+    }
     for c in &n.children {
-        accumulate_extent(c, wx, wy, bbox);
+        accumulate_extent(c, wx, wy, total, bbox);
     }
 }
 
@@ -182,7 +209,7 @@ fn finish(
     // so take the true visual extent of the whole tree.
     let mut bbox = scene_bbox;
     for n in &nodes {
-        accumulate_extent(n, 0.0, 0.0, &mut bbox);
+        accumulate_extent(n, 0.0, 0.0, 0.0, &mut bbox);
     }
     let link_points = routing.links.iter().flat_map(|w| &w.path);
     let air_points = routing.strays.iter().flat_map(|a| [&a.from, &a.to]);
@@ -254,26 +281,28 @@ fn layout_inst(
     ctx: Ctx,
 ) -> Result<PlacedNode, Error> {
     let funcs = &program.funcs;
-    // A chart [SPEC 14] owns its whole subtree: it reads its children's data,
-    // fixes a shared scale, samples any `fn:`, and emits primitive PlacedNodes itself.
-    // Intercept it here — before the child recursion (which would run `leaf_bbox` on a
-    // series with no `points:`) and before the flow/grid path (`read_layout_mode`
-    // only handles flow and grid).
-    if chart::is_chart(&inst.attrs) {
-        return chart::layout_chart(inst, funcs);
-    }
-    if chart::is_pie(&inst.attrs) {
-        return chart::layout_pie(inst);
-    }
-    // A `|sequence|` node ([SPEC 13]) owns its subtree the same way — it reads its
-    // participants (and, later, messages / frames / notes) and lowers to primitives.
-    if sequence::is_sequence(&inst.attrs) {
-        return sequence::layout_node(inst, path, program);
-    }
-    // A `|drawing|` node [SPEC 15] owns its subtree too: children datum-place,
-    // mates seat them, the engine sizes the sheet.
-    if drawing::is_drawing(&inst.attrs) {
-        return drawing::layout_node(inst, path, program, ctx);
+    // A layout-owning engine (chart / pie / sequence / drawing) owns its whole
+    // subtree and emits primitive PlacedNodes itself — intercepted before the
+    // child recursion (which would run `leaf_bbox` on a series with no
+    // `points:`) and before the flow/grid path. `pattern:` still applies to
+    // the finished box — it is a node property, any node [SPEC 15.4].
+    let engine = if chart::is_chart(&inst.attrs) {
+        Some(chart::layout_chart(inst, funcs)?)
+    } else if chart::is_pie(&inst.attrs) {
+        Some(chart::layout_pie(inst)?)
+    } else if sequence::is_sequence(&inst.attrs) {
+        Some(sequence::layout_node(inst, path, program)?)
+    } else if drawing::is_drawing(&inst.attrs) {
+        Some(drawing::layout_node(inst, path, program, ctx)?)
+    } else {
+        None
+    };
+    if let Some(mut placed) = engine {
+        if placed.attrs.get("pattern").is_some() {
+            let own = effective_scale(&inst.attrs, ctx.scale, inst.span)?;
+            pattern::expand(&mut placed, own)?;
+        }
+        return Ok(placed);
     }
     // Generated drawing chrome ([SPEC 15.7]) has no geometry of its own — the
     // parent's shape decides it once that shape is sized (below).
@@ -401,15 +430,16 @@ fn layout_inst(
     if own != 1.0 {
         values::scale_points_attr(&mut placed.attrs, own);
     }
+    // The core `|note|` silhouette [SPEC 8] — folded once, whatever the layout;
+    // the sequence (and later the drawing) engine only places the card. Before
+    // any pattern expansion, so the copies are folded cards.
+    if placed.kind == NodeKind::Block && placed.type_chain.iter().any(|t| t == "note") {
+        note::fold(&mut placed);
+    }
     // `pattern:` replicates the node about its own position [SPEC 15.4] — any
     // layout; the offsets are shape, so they carry the node's own scale.
     if placed.attrs.get("pattern").is_some() {
         pattern::expand(&mut placed, own)?;
-    }
-    // The core `|note|` silhouette [SPEC 8] — folded once, whatever the layout;
-    // the sequence (and later the drawing) engine only places the card.
-    if placed.kind == NodeKind::Block && placed.type_chain.iter().any(|t| t == "note") {
-        note::fold(&mut placed);
     }
     Ok(placed)
 }
@@ -595,12 +625,19 @@ fn lay_out_container_children(
 
     // `translate:` nudges every node after placement [SPEC 5] — applied last,
     // once the body bbox is fixed, so it shifts the child (and its subtree, via
-    // `cx`/`cy`) without reflowing siblings or growing the parent. A position
-    // is drawing units under the parent's `scale:` [SPEC 15.1].
-    for c in children.iter_mut() {
+    // `cx`/`cy`) without reflowing siblings or growing the parent. A flow
+    // child's translate is a position — drawing units under the parent's
+    // `scale:` — while a pinned overlay's is chrome anatomy (a badge's nudge,
+    // the title's gap) and stays sheet-space [SPEC 15.1].
+    for (i, c) in children.iter_mut().enumerate() {
         if let Some((dx, dy)) = anchors::translate(&c.attrs, c.span)? {
-            c.cx += dx * scale;
-            c.cy += dy * scale;
+            let s = if pinned_indices.contains(&i) {
+                1.0
+            } else {
+                scale
+            };
+            c.cx += dx * s;
+            c.cy += dy * s;
         }
     }
 

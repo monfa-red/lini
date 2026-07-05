@@ -3,7 +3,7 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/drawing.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-76 -76 152 202" width="152" height="202" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-76 -76 152 168" width="152" height="168" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
@@ -17,7 +17,7 @@ input_file: samples/drawing.lini
     .lini .lini-centerline { fill: none; stroke-width: 1; stroke-dasharray: 10,3,1,3; }
   </style>
   <defs/>
-  <rect class="lini-canvas" x="-76" y="-76" width="152" height="202"/>
+  <rect class="lini-canvas" x="-76" y="-76" width="152" height="168"/>
   <g class="lini-scene">
     <g class="lini-node lini-drawing lini-block" data-id="washer" transform="translate(0,0)">
       <rect x="-55" y="-55" width="110" height="110" rx="0" ry="0"/>
@@ -36,7 +36,7 @@ input_file: samples/drawing.lini
           <line x1="0" y1="22" x2="0" y2="-22"/>
         </g>
       </g>
-      <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,99.5)">
+      <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,65.5)">
         <rect x="-36.3" y="-5.5" width="72.6" height="11" rx="0" ry="0"/>
         <text class="lini-text" x="0" y="0">WASHER  ⌀36</text>
       </g>

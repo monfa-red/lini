@@ -201,6 +201,26 @@ pub fn dist(a: P, b: P) -> f64 {
     (a.0 - b.0).hypot(a.1 - b.1)
 }
 
+/// Rotate `p` about `centre` by `deg` — positive reads clockwise on screen
+/// (y grows down), matching the pen's bearing convention.
+pub fn rotate_about(p: P, centre: P, deg: f64) -> P {
+    let (s, c) = deg.to_radians().sin_cos();
+    let (x, y) = (p.0 - centre.0, p.1 - centre.1);
+    (centre.0 + x * c - y * s, centre.1 + x * s + y * c)
+}
+
+/// The minor arc's midpoint — on the far side of the chord from the centre;
+/// for a semicircle, a quarter-turn from the start in the sweep direction.
+pub fn arc_mid(centre: P, chord_mid: P, r: f64, from: P, sweep: bool) -> P {
+    let v = (chord_mid.0 - centre.0, chord_mid.1 - centre.1);
+    let len = dist(v, (0.0, 0.0));
+    if len > 1e-9 {
+        (centre.0 + v.0 / len * r, centre.1 + v.1 / len * r)
+    } else {
+        rotate_about(from, centre, if sweep { 90.0 } else { -90.0 })
+    }
+}
+
 /// Multiply every coordinate (and arc radius) by `s` — the node's own `scale:`
 /// applied to the folded output, exact for lines and circular arcs [SPEC 15.1].
 pub fn scale(subs: &mut [Subpath], s: f64) {

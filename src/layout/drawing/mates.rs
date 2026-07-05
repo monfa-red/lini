@@ -47,6 +47,18 @@ pub(super) fn seat(
             let (ea, eb) = (&w.endpoints[hop], &w.endpoints[hop + 1]);
             let a = anchors::resolve(kids, scope, ea)?;
             let b = anchors::resolve(kids, scope, eb)?;
+            // A mate seats two **geometry** nodes [SPEC 15.5] — sheet content
+            // (a note, a balloon, the title) is placed by its own rules.
+            for hit in [&a, &b] {
+                let k = &kids[hit.child];
+                if super::is_sheet(k.kind, &k.type_chain) {
+                    let ty = k.type_chain.first().map(String::as_str).unwrap_or("text");
+                    return Err(Error::at(
+                        w.span,
+                        format!("a mate seats geometry — '|{ty}|' is sheet content"),
+                    ));
+                }
+            }
             if a.child == b.child {
                 return Err(Error::at(
                     w.span,
@@ -75,18 +87,20 @@ pub(super) fn seat(
                     ));
                 }
                 (true, false) => {
-                    let d = delta(kids, &a, &b, ea, eb, w, scope, scale)?;
+                    let pair = spell_pair(ea, eb, scope);
+                    let d = delta(kids, &a, &b, &pair, w, scale)?;
                     let moved = b.child;
                     kids[moved].cx += d.0;
                     kids[moved].cy += d.1;
-                    seated.insert(moved, (Some(spell_pair(ea, eb, scope)), seq));
+                    seated.insert(moved, (Some(pair), seq));
                 }
                 (false, true) => {
-                    let d = delta(kids, &b, &a, eb, ea, w, scope, scale)?;
+                    let pair = spell_pair(ea, eb, scope);
+                    let d = delta(kids, &b, &a, &pair, w, scale)?;
                     let moved = a.child;
                     kids[moved].cx += d.0;
                     kids[moved].cy += d.1;
-                    seated.insert(moved, (Some(spell_pair(ea, eb, scope)), seq));
+                    seated.insert(moved, (Some(pair), seq));
                 }
                 (false, false) => {
                     i += 1;
@@ -116,16 +130,13 @@ pub(super) fn seat(
 /// The translation that seats `mover` against `fixed` [SPEC 15.5]. The seat is
 /// computed from the mover's **datum-pure** position (its own `translate:`
 /// re-applies after — subtracting it here and moving the placed node is the
-/// same thing).
-#[expect(clippy::too_many_arguments, reason = "one seat, all its evidence")]
+/// same thing). `pair` is the mate as the author wrote it, for the errors.
 fn delta(
     kids: &[PlacedNode],
     fixed: &Hit,
     mover: &Hit,
-    ef: &ResolvedEndpoint,
-    em: &ResolvedEndpoint,
+    pair: &str,
     w: &ResolvedLink,
-    scope: &str,
     scale: f64,
 ) -> Result<P, Error> {
     let gap = match w.attrs.get("gap") {
@@ -146,8 +157,7 @@ fn delta(
                 return Err(Error::at(
                     w.span,
                     format!(
-                        "mated anchors must face along one axis — '{}' has no shared normal",
-                        spell_pair(ef, em, scope)
+                        "mated anchors must face along one axis — '{pair}' has no shared normal"
                     ),
                 ));
             }
@@ -166,10 +176,7 @@ fn delta(
         }
         _ => Err(Error::at(
             w.span,
-            format!(
-                "mated anchors must face along one axis — '{}' has no shared normal",
-                spell_pair(ef, em, scope)
-            ),
+            format!("mated anchors must face along one axis — '{pair}' has no shared normal"),
         )),
     }
 }
@@ -197,8 +204,5 @@ fn spell_pair(a: &ResolvedEndpoint, b: &ResolvedEndpoint, scope: &str) -> String
 }
 
 fn rel<'a>(ep: &'a ResolvedEndpoint, scope: &str) -> &'a str {
-    ep.path
-        .strip_prefix(scope)
-        .map(|p| p.trim_start_matches('.'))
-        .unwrap_or(&ep.path)
+    super::rel_path(&ep.path, scope)
 }

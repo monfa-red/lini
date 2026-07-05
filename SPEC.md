@@ -2067,8 +2067,10 @@ node out. One split makes it behave: a node's **position** (`translate:`) scales
 *parent's* scale, its **own shape** (`draw:`, `points:`, `width` / `height`,
 `pattern:` offsets) by its *own* — so a balloon in a 2:1 view stays beside its part at
 true size. What never scales, at any setting: text (`font-size` is compile-measured,
-per core), `stroke-width`, markers, hatch pitch, and every dimension / leader constant
-([SPEC 10.5](#105-layout-constants-baked)). The `|note|` / `|balloon|` / `|table|`
+per core), `stroke-width`, markers, hatch pitch, every dimension / leader constant
+([SPEC 10.5](#105-layout-constants-baked)), and a **pinned** overlay's `translate:` —
+a pin-relative nudge is chrome anatomy (a badge's offset, the title's gap), not a
+position in the drawing. The `|note|` / `|balloon|` / `|table|`
 templates carry `scale: 1` ([SPEC 8](#8-templates)) — annotations are sheet chrome — and
 a define inherits its base's side (`|steel::sketch|` scales, `|finish::note|` doesn't).
 
@@ -3012,6 +3014,7 @@ Format: `filename:line:col: error: <message>` (LSP-compatible), compile-time, wi
 | Unknown authored name | `no point ':step' on 'body'` + suggestions |
 | Duplicate `:name` in one `draw:` | `':step' is already named in this 'draw:'` |
 | Label on a mate | `a mate takes no label` |
+| Mate on sheet content | `a mate seats geometry — '\|note\|' is sheet content` |
 | `gap:` on a point mate | `a point mate coincides — 'gap' needs directed anchors (sides or named edges)` |
 | Non-parallel mate directions | `mated anchors must face along one axis — 'a:left \|\| b:top' has no shared normal` |
 | Over-constrained mate | `mate over-constrains 'X' — already positioned via 'A \|\| B'` |
