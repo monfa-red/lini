@@ -86,12 +86,15 @@ pub enum NodeKind {
     Line,
     Icon,
     Image,
+    /// The sketch pen [SPEC 15.3] — a closed primitive folding `draw:` to a
+    /// path. Geometry lands per PLAN.md stage 2; until then layout reports it.
+    Sketch,
 }
 
 impl NodeKind {
     /// Every primitive, in `as_str` order — the canonical enumeration desugar
     /// walks to emit a `.lini-<kind>` class def per present primitive.
-    pub const ALL: [NodeKind; 12] = [
+    pub const ALL: [NodeKind; 13] = [
         Self::Block,
         Self::Oval,
         Self::Hex,
@@ -104,6 +107,7 @@ impl NodeKind {
         Self::Line,
         Self::Icon,
         Self::Image,
+        Self::Sketch,
     ];
 
     pub fn parse(s: &str) -> Option<Self> {
@@ -119,6 +123,7 @@ impl NodeKind {
             "line" => Self::Line,
             "icon" => Self::Icon,
             "image" => Self::Image,
+            "sketch" => Self::Sketch,
             _ => return None,
         })
     }
@@ -137,6 +142,7 @@ impl NodeKind {
             Self::Line => "line",
             Self::Icon => "icon",
             Self::Image => "image",
+            Self::Sketch => "sketch",
         }
     }
 }
@@ -197,6 +203,15 @@ pub enum ResolvedValue {
     /// the two exhaustive `ResolvedValue` matches (`render::values::format_value`,
     /// `layout::values::describe`) treat it as unreachable / opaque.
     Deferred(Vec<Expr>),
+    /// One `draw:` pen item [SPEC 15.3], held structured for the sketch fold at
+    /// layout — a call (args resolved to numbers) that may name its drawn
+    /// product. Like `Deferred`, it is consumed at layout and never rendered.
+    PenCall {
+        call: ResolvedCall,
+        product: Option<String>,
+    },
+    /// A freestanding `:name` pen item — names the pen's current point.
+    PenPoint(String),
 }
 
 impl ResolvedValue {
@@ -315,8 +330,21 @@ pub enum Strategy {
     Straight,
 }
 
+/// What a resolved link statement *is* [SPEC 9, 15]: a wire (routed, or drawn by
+/// a sequence / as a drawing's straight annotation or leader), a drawing measure,
+/// or a mate. Always `Wire` outside a drawing scope — resolve gates the rest.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LinkKind {
+    Wire,
+    Measure(crate::ast::DrawOp),
+    Mate,
+}
+
 pub struct ResolvedLink {
     pub endpoints: Vec<ResolvedEndpoint>,
+    /// Wire, measure, or mate — a drawing scope's layout consumes the non-wire
+    /// kinds [SPEC 15]; the router only ever sees wires.
+    pub kind: LinkKind,
     /// The dot-path of the container this link was written in (`""` = the scene
     /// root) — the link's **scope** [SPEC 9]. Its scope's `layout` picks the wiring
     /// strategy: a `sequence` scope draws its links as time-row arrows and skips the
@@ -344,6 +372,14 @@ pub struct ResolvedEndpoint {
     /// Fully-qualified dot-path from scene root (e.g. `garden.outlet`).
     pub path: String,
     pub side: Option<Side>,
+    /// A drawing-scope anchor beyond the four sides [SPEC 15.2] — a corner,
+    /// `center`, or a sketch-authored name; `None` everywhere else (the router
+    /// vocabulary is `side`).
+    #[expect(
+        dead_code,
+        reason = "read by the drawing annotation pass — PLAN.md stage 4"
+    )]
+    pub point: Option<String>,
     pub span: Span,
 }
 

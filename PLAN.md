@@ -1,0 +1,321 @@
+# PLAN — `layout: drawing` (SPEC 15)
+
+The implementation plan for engineering drawings, against **SPEC.md as of commit
+`520e49c`** (drawings are SPEC 15; Part III is 16–24). SPEC 15 is the contract; this
+file is the build order, the decisions that don't fit in a spec, and the **execution
+log**. Every session that works on this plan reads this file first and appends to the
+log — do not rely on chat memory for anything.
+
+**Quality bar (non-negotiable):** modular, modern, maintainable, human-readable Rust.
+No `unsafe`, no hacks, no patch layers, no repair passes. If an earlier stage's
+decision proves wrong, fix it **at its source** and record why in the Execution log.
+One mechanism per problem; no parallel implementations — shared logic is factored and
+called from both sides. Split any module past ~500 LOC. `insta` snapshots for
+output-shaped code; one sample per feature in `samples/`; verify SVG **visually**
+(render to PNG with `resvg` and look at it). Before any push: `cargo fmt`,
+`cargo test`, `cargo clippy`. Never add "Co-Authored-By" to commits.
+
+---
+
+## Architecture map (where things live today)
+
+The pipeline: `lexer::lex` → `syntax::parser::parse` → `desugar::desugar` →
+`resolve::resolve` (→ `resolve::Program`, `resolve/ir.rs`) → `layout::layout`
+(→ `LaidOut`, `layout/ir.rs`) → `routing::route` → `render::render`.
+
+| Concern | Where |
+|---|---|
+| Tokens & sigils | `src/lexer.rs` (one `match` in `Lexer::run`, ~line 72); link ops pre-composed into `LinkOp`/`LinkMarker`/`LineStyle` in `src/ast.rs` |
+| Statement dispatch | `syntax/parser.rs` — `classify_setup` ~165, `classify_body` ~198; links `parse_link` ~769, `parse_endpoint` ~819 |
+| Type registration | `desugar/types.rs` (`TEMPLATES` ~16); defaults as parser-shaped `Decl` bundles in `desugar/bundles.rs` (`primitive_bundle` ~48, `template_bundle` ~105, `root_defaults` ~274, `link_defaults` ~286) |
+| Value resolution | `resolve/value.rs` — builder calls kept structured via `is_builder` ~22, every other call folded to a number via `fold_call` ~56; string-valued props `is_string_valued` ~118 |
+| Cascade | `resolve/cascade.rs` (`node_layers` ~94, `selector_matches` ~142) — descendant rules already work |
+| Layout dispatch | `layout/mod.rs` — per-node interception in `layout_inst` ~175 (`chart::is_chart` → …), root case ~40; **no trait** — engines are free functions returning `PlacedNode` |
+| Scope-owns-links | `sequence::is_sequence_scope` (`layout/sequence/mod.rs` ~103) — routing and `testing::declared_edges` skip those links; drawing mirrors this |
+| Scope-only validation | `sequence/mod.rs` `SEQ_PROPS` ~312, `validate` ~327 — the model for the drawing's gates |
+| Primitive builders | `layout/prim.rs` — `rect` `oval` `marker` `poly` `wedge` `line` `path` (raw `d` + caller bbox) `group` `text*` `outline` `round` `set_title` |
+| Sizing | `layout/primitives.rs` (`leaf_bbox`, `closed_bbox`); path extents `layout/path_bbox.rs` |
+| Markers | `render/markers.rs`, `MarkerKind` in `resolve/ir.rs` ~249 — gains `Datum`; the drafting-slender dim arrow is drawn by the drawing's own lowering, not a core marker |
+| Expressions | `src/expr.rs` — `Value::Number/Point`, locals, ambients `u`/`x`, `math_arity` ~624; user functions via `FuncTable` |
+| Chart model (the analog) | `layout/chart/model.rs` — one `build()` parses children into a typed struct; per-kind geometry in sibling modules; copy this shape |
+
+Closest structural precedent for the whole feature: **sequence** (scope owns links,
+engine consumes them) + **chart** (typed model built from children, lowered at baked
+coordinates through `prim::*`).
+
+## Decisions ledger (settled in design review — do not relitigate)
+
+1. **Ops.** `(-)` round measure and `(<)` angle are **glued lexer tokens**; `(>)` is a
+   reserved error ("the angle op is '(<)'"). There is **no** `(-` radius op and **no**
+   binary `(-)`. `||` mate is **not** a lexer token: the parser recognizes two
+   **adjacent** `Pipe` tokens at operator position (after endpoints), so bars stay
+   paired everywhere else; a glued `|box||cell|` selector becomes an error asking for
+   a space.
+2. **Call-glue rule.** In the lexer, `(` **glued to a preceding ident** (no
+   whitespace) opens a call; otherwise `(-)` / `(<)` may lex as ops. `move(-2, 5)`
+   keeps lexing as today (signed-number arm beats the link-op arm). A **spaced**
+   `ident (` becomes the error "a call's '(' glues to its name".
+3. **`(-)` readings** (SPEC 15.6): named arc → `R` leader; round-by-construction node
+   bare → `⌀` leader; round node + side/corner anchor → **diametral line** (text
+   inside if it fits, else the line overruns the *anchored* rim and carries the text);
+   any node + side anchor → span to the opposite side, ⌀-formatted, stacked; mirrored
+   `:name` → station span across the axis, stacked; bare with no inferable axis →
+   error. Roundness is **by construction only** (`|oval|` lineage, `circle()` product,
+   `|pitch-circle|`) — never geometric detection.
+4. **One-ended relaxation**: RHS endpoints omissible for `<-` `*-` `>-` `(-)` `(<)`;
+   one token of lookahead (ident → endpoint; string/`.`/`{`/`[`/EOS → tail). `<->` and
+   `||` require both ends. Any **two-ended** core op in a drawing = straight
+   annotation line, markers per op. One-ended `->` / `-*` → "a leader points back at
+   its feature".
+5. **Anchors**: geometry-bbox points; corners vertical-word-first (`:top-right`;
+   reversed → did-you-mean); corners + `:center` drawing-scope only; authored `:name`s
+   from the pen (attached = product incl. its direction/radius; freestanding = pen
+   point; duplicates error; built-ins win). Leader tips ray-cast onto the drawn path;
+   dim extension lines spring from the anchor points exactly.
+6. **Pen** (SPEC 15.3): y-down frame, visual verbs, bearings 0=up CW; heading state;
+   even-odd subpaths; `fillet`/`chamfer` trim both legs and are **cyclic through
+   `close()`** (allowed on either side of it); `chamfer(c)` cuts `c` back along each
+   leg. `circle(r)` leaves point+heading unchanged.
+7. **`mirror:`** list, left-to-right, each item reflecting the union so far; per
+   subpath: open → **fused** (seam on the axis), closed → **duplicated**; fused
+   generates the axis `|centerline|` chrome. Runs before `pattern:` and placement.
+8. **`break: a b [x-axis|y-axis]`**, comma groups; every group defaults to the
+   node's **longer axis**; `a < b` else error; stations are coordinates in the node's
+   own frame. View-only compression: far piece slides toward the near piece leaving
+   sheet-space `break-gap`; generated `|breakline|` chrome (zigzag; S-break when the
+   sketch is mirrored across the break axis); **measured values always read the
+   unbroken model** (displayed positions come from a piecewise offset map).
+9. **`scale:`** is a per-node property (px per drawing unit, default 1,
+   nearest-ancestor-wins): a node's **position** (`translate:`) scales by its
+   *parent's* effective scale, its **own shape** (`draw:`/`points:`/`width`/`height`/
+   `pattern:` offsets) by its *own*. Text, `stroke-width`, markers, hatch pitch, and
+   all dim/leader constants **never** scale. `|note|`/`|balloon|`/`|table|` templates
+   carry `scale: 1`. Dims report **pre-scale** drawing units.
+10. **Mates**: resolve after datum placement, walking from the **ground** (first
+    declared geometry child); move the ungrounded side (whole scope-level child,
+    rigid); islands ground locally; both-grounded → over-constraint error. Directed
+    anchors must be parallel; `gap:` along the normal, may be negative; point anchors
+    coincide, `gap:` errors. Rotate-then-mate; child `translate:` applies after.
+11. **Dims**: measured after mates, on unbroken geometry; ≤ 2 decimals, trailing zeros
+    trimmed; text composition op-glyph + number/label + `tol:` + `pattern:` count +
+    `unit:` (two-ended label **replaces** the number; one-ended label **follows** it).
+    Row packing per side (`dim-pitch`/`dim-offset`, innermost free row, source order);
+    ISO **aligned** text above the line; drafting-slender arrows ≈3:1 sized by the
+    dim's stroke-width; narrow spans flip arrows outside. Geometry `stroke-width` 2,
+    drawing links 1 (built-in `|-|` rule in the drawing scope).
+12. **Leaders**: text auto-places outward past the geometry (`note-offset`) with a
+    horizontal **landing** (`note-landing`) elbow; `side:` picks a direction; `>-`
+    lowers to the new `datum` marker; callout text is an unboxed leaf.
+13. **Core promotions**: `|note|` core template (padding 20, `scale: 1`), compacted by
+    **built-in scoped rules** `|sequence| |note|` / `|drawing| |note|`
+    `{ padding: 6 10; font-size: 13 }`; `hatch()` core fill function (one deduped
+    `<defs>` pattern per distinct hatch, fixed 0.75 line width); `stroke-style:
+    center`/`phantom` global on shapes and `|line|`s; zero-arg functions read **bare
+    inside fences** (lookup order: locals → `u`/`x` → `pi`/`e` → named constants;
+    recursion is the existing **static cycle check**'s job at function-table build —
+    one mechanism, no runtime depth guard) — outside fences the call form `w()` stands.
+14. **No-roles**: `routing`/`clearance`/`along` and container `gap`/`align`/`justify`
+    ignored in a drawing; `pin:` on a mated child warns; auto-create **never** happens
+    in a drawing scope.
+15. **Errors**: the full table is SPEC 20 "Layout — drawing" — implement messages
+    verbatim from there.
+16. Names authored in a `draw:` are user vocabulary — samples use obviously-generic
+    names.
+
+## Stages
+
+Each stage ends green: `cargo fmt` + `cargo test` + `cargo clippy` clean, snapshots
+reviewed, new samples rendered to PNG via `resvg` and **looked at**. Commit per stage
+(one purposeful commit each, message says what and why). Append to the Execution log:
+what landed, deviations from this plan and their reasons, and anything the next
+session must know. The stages are sized for one `/compact`-able session each.
+
+### Stage 1 — Language surface & core plumbing  ← DONE (see the Execution log)
+
+Everything the rest builds on; after this stage the whole drawing vocabulary parses,
+desugars, resolves, and **errors correctly outside a drawing scope** — but draws
+nothing new except what's listed.
+
+- **Lexer** (`lexer.rs`): track ident-adjacency for `(`; lex free-standing `(-)` /
+  `(<)` as new tokens; `(>)` at op position → reserved error; spaced `ident (` →
+  call-glue error. New `TokKind::DrawOp(DrawOpKind { RoundMeasure, Angle })` (naming
+  free to improve). **No `||` token.**
+- **AST + parser** (`ast.rs`, `syntax/parser.rs`, `syntax/ast.rs`): link statements
+  accept `op = link_op | draw_op | mate` where mate = two adjacent `Pipe`s at operator
+  position; one-ended links (RHS `None`) per decision 4 with the lookahead rule;
+  endpoint `:point` widens from the `Side` enum to side-or-name (corners are single
+  idents — `top-left` already lexes as one ident); `pen_item` value forms, parsed
+  only when the declaration is `draw:` (a property-scoped flag keeps runaway-decl
+  diagnostics sharp elsewhere); **call-argument space groups** so
+  `hatch(45 -45, 6)` parses (`Value::Group`, one slot holding several values).
+- **Desugar** (`desugar/types.rs`, `desugar/bundles.rs`): register `drawing`,
+  `sketch`, `hole`, `centerline`, `pitch-circle`, `balloon`, `breakline`; template
+  bundles per SPEC 8 (incl. `scale: 1` on `note`/`balloon`/`table`); `|note|` loses
+  its sequence-only status; add the **built-in scoped rules** mechanism (a small list
+  of engine-supplied descendant rules at the lowest cascade tier — the
+  `|sequence| |note|` / `|drawing| |note|` compaction) — check whether a precedent
+  exists before inventing one.
+- **Resolve** (`resolve/value.rs`, `resolve/program.rs`, `resolve/links.rs`): keep
+  `draw:` pen calls structured (a new structured-value class beside `is_builder` —
+  pen calls fold to *pen items*, never to numbers); `pattern:`/`hatch()` values kept
+  structured likewise; a `drawing`-scope detector (`layout: drawing` attr) and the
+  **validation gates**: drawing ops/`tol:`/corner anchors/`:name` endpoints outside a
+  drawing scope error with the SPEC 20 messages; mates/dims never auto-create; the
+  sequence `|note|` gate reworded per SPEC 20.
+- **Expr** (`expr.rs`): bare zero-arg-function constants with the decision-13 lookup
+  order and a recursion cap.
+- **Tests**: lexer unit tests (`(-)` vs `move(-2,5)`, `(<)`, `(>)` error, call-glue
+  error, adjacency); parser tests (one-ended forms, mate from adjacent pipes, spaced
+  `|box| |cell|` still a selector, glued `|box||cell|` error, pen items in `draw:`);
+  desugar snapshots (new templates); resolve error tests (each gate, verbatim
+  messages); expr tests (bare constants, shadowing order, recursion cap).
+
+**Not in stage 1**: no geometry, no layout dispatch, no rendering change. A
+`layout: drawing` file should *parse and resolve* but may error "not yet built" at
+layout — a single clearly-marked `todo`-style compile error, not a panic.
+
+### Stage 2 — The sketch pen (geometry, any layout)
+
+`|sketch|` becomes a real primitive usable in flow/grid too — nothing drawing-scoped
+yet.
+
+- New module family `src/layout/drawing/` (e.g. `pen.rs`, `geometry.rs`): fold
+  `draw:` items to a segment list (lines, arcs, cubics, circle subpaths) with heading
+  state; apply `fillet`/`chamfer` (incl. cyclic through `close()`); collect authored
+  names — points, edges (with direction), arcs (with radius); `mirror:` fuse/duplicate
+  per decision 7 (record the fused-axis for chrome + the mirrored-name unary
+  readings); emit an SVG `d` via `prim::path` with exact bbox (extend
+  `path_bbox` if arcs need it).
+- `NodeKind::Sketch` lowering (the kind is already plumbed; stage 1 errors at
+  `leaf_bbox`). Two genuinely new render behaviours: the sketch's `|path|` must
+  carry its **own paint** (`prim::path` hardcodes `stroke: none` — built for chart
+  fills) and emit **`fill-rule="evenodd"`** for inner-subpath holes (no fill-rule
+  support exists anywhere in src/render yet).
+- `stroke-style: center` / `phantom` dash arrays, global (render layer; links keep
+  their set). `|centerline|` / `|pitch-circle|` work as plain styled primitives.
+- `scale:` and `pattern:` are **global node transforms** ([SPEC 15]'s global
+  column): wire them in the generic arranger here (a scaled / patterned sketch in
+  a flow diagram works), so stage 3 only adds the drawing-specific chrome and the
+  view-scale cascade.
+- The `|note|` folded-corner silhouette becomes the **core** look (today only the
+  sequence engine folds it via `notes::sticky` — factor that into the shared
+  geometry path, one mechanism).
+- **Samples + snapshots**: a profile with every call; fillet/chamfer corners incl.
+  seam; mirror fused vs duplicated; a sketch inside a plain flow diagram; center/
+  phantom styles. Render each to PNG and inspect.
+
+### Stage 3 — The drawing engine (placement, mates, scale)
+
+- `layout/mod.rs`: `is_drawing` interception + root case; `is_drawing_scope` link
+  skip (mirror `is_sequence_scope` — routing and `declared_edges` both honour it).
+- A typed model à la `chart::build`: partition children into geometry / annotation
+  links / mates / sheet content; datum placement (origins, `translate:`), features in
+  `[ ]` rigid with the part; nested drawings as rigid bodies; per-node effective
+  `scale:` (decision 9 — position by parent, shape by self); title → `|footnote|`.
+- `|hole|` punch + centre-mark chrome; `pattern:` grid/radial expansion (+
+  `|pitch-circle|` chrome, bbox union, seed/centre datums).
+- Mates: ground walk, directed/point, `gap:` (negative ok), rotate-then-mate,
+  translate-after, all the SPEC 20 mate errors.
+- Sizing: drawing bbox = paint bboxes ∪ annotations + padding (annotations come in
+  stage 4 — leave the seam).
+- Samples: concentric primitives, plate + patterned holes, a two-part mate with
+  negative gap, a nested-drawing assembly. PNG-inspect each.
+
+### Stage 4 — Annotations (dims, leaders, notes)
+
+The largest stage; if it must split, split **measure/compose** from **place/pack**.
+(Stage 3 is nearly as heavy — its natural split is **placement/features** first,
+**mates** second.)
+
+- Anchor resolution against seated geometry (sides, corners, `:center`, authored
+  names, dot-paths, pattern datums); representative points + directions.
+- `<->` linear dims + chains; `(-)` all five readings (decision 3) incl. the
+  diametral fits-inside rule; `(<)` binary/unary; auto-measure (pre-scale, unbroken,
+  ≤2 dp trimmed); text composition incl. `tol:` (three forms, stacked deviations at
+  0.7×), `unit:`, `pattern:` count, label seat rules.
+- Placement: side defaulting, row packing, `gap:` pin, extension lines
+  (gap/overshoot), slender ≈3:1 arrows, narrow-span flip, ISO-aligned text.
+- Leaders: ray-cast tips, outward text + landing elbow, `side:` directions, `datum`
+  marker (`MarkerKind::Datum` + `render/markers.rs`), straight annotation arrows for
+  two-ended ops, `|note|`/`|balloon|` wiring, drawing `|-|` stroke-width 1 default.
+- Annotations paint above geometry; `layer:` still wins; drawing bbox now includes
+  them.
+- Samples: the SPEC 24 tie bar (minus `break:` until stage 5), bushing section
+  (hatch arrives stage 5 — use flat fills), a fully-dimensioned plate, a leader/datum
+  sheet. Snapshot + PNG-inspect. Cross-check every measured value by hand.
+
+### Stage 5 — Conventions, break, fmt & finish
+
+- `hatch()`: `<defs>` `<pattern>` emission, dedup, theming/bake parity with
+  gradients.
+- `break:`: station validation, longer-axis default, clipping the folded path at the
+  cut stations, the piecewise view-offset map (annotations read displayed positions,
+  values read the model), `|breakline|` zigzag + S-break chrome, `break-gap`.
+- `fmt`: canonical `draw:` layout (break before each `move()`, wrap between calls at
+  the column limit, continuations indented); mate/dim statements format like links.
+- Samples: the three SPEC 24 examples byte-for-byte as written there; the barrel from
+  DRAWING_OLD §17 as a stress sample. Visual pass over **all** drawing samples.
+- Flip the SPEC 16 ledger ⌛ marks for the drawing column to ✓ in one sweep; delete
+  `DRAWING_OLD.md`; update `README.md` if it lists layouts.
+
+---
+
+## Execution log
+
+Append-only. Every working session adds: date, stage, what landed (commits), what
+deviated from this plan and **why**, open threads for the next session.
+
+- **2026-07-04 — plan written.** SPEC 15 landed in `520e49c` (spec rewrite; Part III
+  renumbered 15–23 → 16–24, code doc-comments rewired). Design review + all decisions
+  in the ledger above were settled in the same session with Abbas.
+
+- **2026-07-04 — stage 1 landed** (same session; all suites green, clippy + fmt
+  clean; both the spec and this plan were audited by independent agents and the
+  findings folded in). What shipped, and the deviations a later stage must know:
+  - Lexer: `TokKind::DrawOp` (`(-)` / `(<)`, exact three-char, free-standing per
+    the call-glue rule — prev byte ident-continue ⇒ call-open); `(>)` reserved
+    error. `move(-90, 0)` lexes untouched (signed-number arm outruns ops).
+  - Parser: `ChainOp { Wire(LinkOp), Measure(DrawOp), Mate }` on `Link.op`;
+    `||` recognised **only at operator position** from two adjacent `Pipe`s —
+    glued selectors like `|box||cell|` therefore **stay legal**, and SPEC 21 was
+    corrected to say so. One-ended chains = `chain.len() == 1`; op printed after
+    the single group by `fmt`. `Endpoint.side: Option<Side>` became
+    `point: Option<PointRef>` (raw name + span; resolve validates per scope).
+    Pen items parse only under `draw:`; call args accept space groups
+    (`Value::Group`).
+  - Resolve: `resolve_link` takes `drawing_scope` (from `scope_is_drawing`,
+    program.rs — immediate container / root `layout`); `validate_statement` in
+    links.rs holds every statement-shape gate (ops-outside-drawing, mate
+    label/one-ended, `(-)` unary-only, leader shapes, `tol:`), messages verbatim
+    from SPEC 20. `ResolvedLink.kind: LinkKind` (router filters non-wires in
+    request.rs); `ResolvedEndpoint.point` carries `#[expect(dead_code)]` until
+    stage 4 reads it (the expect will self-report then — remove it).
+    `resolve_property` keeps `draw:` (PenCall/PenPoint) and `pattern:`
+    structured; `hatch` joined `is_builder`. Endpoint-not-found noun is
+    "dimension"/"mate" in a drawing scope (never auto-created).
+  - Desugar: templates registered (`drawing`, `hole`, `centerline`,
+    `pitch-circle`, `balloon`, `breakline`; `sketch` is `NodeKind::Sketch`);
+    `|note|` de-gated from sequences (core, padding 20, `scale: 1`); auto-create
+    skipped for drawing scopes at both sites (root via `root_layout`, bodies via
+    `is_drawing_body` — chain- or instance-decl-based; a container made a drawing
+    by a bare **element rule** is not seen there, the same class-based limitation
+    frame detection has — resolve's gates still hold; accepted edge).
+  - Cascade: built-in scoped rules `|sequence| |note|` / `|drawing| |note|`
+    `{ padding: 6 10; font-size: 13 }` are prepended in `Stylesheet::build`'s
+    input (program.rs `scoped_rules`), and `resolve_instances` seeds the ancestor
+    chain with synthetic root facts (`.lini-sequence` / `.lini-drawing`) for a
+    root `{ layout: … }` — "the file is the root container". One snapshot shifted
+    (sequence.lini: `font-size: 13px` moved from the `.lini-note` class rule to
+    the note's inline diff; geometry identical — accepted).
+  - Expr: **no runtime recursion guard** — planned "capped like define depth" was
+    dropped after tests showed the static cycle check at function-table build
+    already rejects every cycle (bare or called); one mechanism. Bare zero-arg
+    constants already worked (`eval_var`); tests added.
+  - Layout: `layout: drawing` (root and node) errors
+    "'layout: drawing' is not built yet (PLAN.md stage 3)"; `|sketch|` errors at
+    `leaf_bbox` ("stage 2") after its `draw:`-required check. A flow-scope
+    `|note|` renders as a plain card until stage 2 folds the corner.
+  - Spec audit fixes applied alongside: `|breakline|` template row, SPEC 6 stroke
+    prose (+`center`/`phantom`), `(-)` unary-only statement + its SPEC 20 error,
+    container-`gap` error scoped (`a container's 'gap' must be ≥ 0` — code
+    message updated to match).

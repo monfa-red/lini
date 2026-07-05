@@ -88,5 +88,6 @@ fn describe(v: &ResolvedValue) -> &'static str {
         ResolvedValue::Call(_) => "function call",
         ResolvedValue::LiveVar { .. } => "var() reference",
         ResolvedValue::Deferred(_) => "deferred fn: expression",
+        ResolvedValue::PenCall { .. } | ResolvedValue::PenPoint(_) => "draw: pen item",
     }
 }

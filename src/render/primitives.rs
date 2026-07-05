@@ -126,6 +126,9 @@ fn emit_shape(
         NodeKind::Path => emit_path(out, n, &indent),
         NodeKind::Icon => emit_icon(out, n, &indent, vars, opts),
         NodeKind::Image => emit_image(out, n, &indent),
+        // A sketch lowers to a `|path|` at layout (PLAN.md stage 2) and layout
+        // errors before then, so the kind never reaches the emitter.
+        NodeKind::Sketch => {}
     }
 }
 

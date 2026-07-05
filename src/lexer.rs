@@ -1,4 +1,4 @@
-use crate::ast::{LineStyle, LinkMarker, LinkOp};
+use crate::ast::{DrawOp, LineStyle, LinkMarker, LinkOp};
 use crate::error::Error;
 use crate::span::Span;
 
@@ -34,6 +34,9 @@ pub enum TokKind {
     RBracket,
 
     LinkOp(LinkOp),
+    /// A drawing measuring op [SPEC 15.6] — `(-)` / `(<)`, lexed as one glued
+    /// token only where the `(` is free-standing (the call-glue rule, [SPEC 2]).
+    DrawOp(DrawOp),
 
     Newline,
 }
@@ -76,8 +79,25 @@ impl<'a> Lexer<'a> {
                 b'{' => self.push_punct(TokKind::LBrace, 1),
                 b'}' => self.push_punct(TokKind::RBrace, 1),
                 b'(' => {
-                    self.paren_depth += 1;
-                    self.push_punct(TokKind::LParen, 1);
+                    // The call-glue rule [SPEC 2]: a '(' glued to an ident char
+                    // opens a call; free-standing, an exact `(-)` / `(<)` is a
+                    // measuring op [SPEC 15.6] and `(>)` is reserved. The
+                    // three-char match keeps `pin (-90)` and every call intact.
+                    let glued_call = self.i > 0 && is_ident_continue(self.bytes[self.i - 1]);
+                    let rest = &self.bytes[self.i..];
+                    if !glued_call && rest.starts_with(b"(-)") {
+                        self.push_punct(TokKind::DrawOp(DrawOp::Round), 3);
+                    } else if !glued_call && rest.starts_with(b"(<)") {
+                        self.push_punct(TokKind::DrawOp(DrawOp::Angle), 3);
+                    } else if !glued_call && rest.starts_with(b"(>)") {
+                        return Err(Error::at(
+                            Span::new(self.i, self.i + 3),
+                            "'(>)' is reserved — the angle op is '(<)'",
+                        ));
+                    } else {
+                        self.paren_depth += 1;
+                        self.push_punct(TokKind::LParen, 1);
+                    }
                 }
                 b')' => {
                     self.paren_depth = self.paren_depth.saturating_sub(1);
@@ -535,5 +555,34 @@ mod tests {
     fn string_values_are_trimmed() {
         assert_eq!(kinds("\" ABC \""), vec![TokKind::String("ABC".into())]);
         assert_eq!(kinds("\"a b\""), vec![TokKind::String("a b".into())]);
+    }
+
+    #[test]
+    fn measuring_ops_lex_free_standing_only() {
+        use crate::ast::DrawOp;
+        // Free-standing exact matches are the ops [SPEC 15.6]…
+        assert_eq!(kinds("(-)"), vec![TokKind::DrawOp(DrawOp::Round)]);
+        assert_eq!(kinds("(<)"), vec![TokKind::DrawOp(DrawOp::Angle)]);
+        // …a '(' glued to an ident opens a call — `move(-90, 0)` is untouched
+        // (the call-glue rule, [SPEC 2])…
+        assert_eq!(
+            kinds("move(-90, 0)"),
+            vec![
+                TokKind::Ident("move".into()),
+                TokKind::LParen,
+                TokKind::Number(-90.0),
+                TokKind::Comma,
+                TokKind::Number(0.0),
+                TokKind::RParen,
+            ]
+        );
+        // …and a free-standing non-exact `(` stays a plain paren.
+        assert_eq!(kinds("(-90)")[0], TokKind::LParen);
+    }
+
+    #[test]
+    fn reversed_angle_op_is_reserved() {
+        let err = lex("a (>) b").expect_err("(>) is reserved");
+        assert!(err.message.contains("the angle op is '(<)'"), "{err:?}");
     }
 }

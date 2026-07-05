@@ -328,8 +328,9 @@ fn check_node(inst: &ResolvedInst, in_seq: bool, in_alt: bool) -> Result<(), Err
     let is = |t: &str| inst.type_chain.iter().any(|x| x == t);
     let seq_ctx = in_seq || is_sequence(&inst.attrs);
 
-    // Frame and note types belong in a sequence.
-    for ty in ["loop", "opt", "alt", "note"] {
+    // Frame types belong in a sequence. (A `|note|` is a core template
+    // [SPEC 8] — legal in any layout; only its placement is sequence business.)
+    for ty in ["loop", "opt", "alt"] {
         if is(ty) && !in_seq {
             return Err(Error::at(
                 inst.span,
@@ -343,10 +344,10 @@ fn check_node(inst: &ResolvedInst, in_seq: bool, in_alt: bool) -> Result<(), Err
             "'|else|' separates an '|alt|' — write it inside one",
         ));
     }
-    if is("note") && notes::placement(&inst.attrs).is_none() {
+    if in_seq && is("note") && notes::placement(&inst.attrs).is_none() {
         return Err(Error::at(
             inst.span,
-            "a '|note|' needs 'over:', 'left:', or 'right:'",
+            "a sequence '|note|' needs 'over:', 'left:', or 'right:'",
         ));
     }
     if !seq_ctx {

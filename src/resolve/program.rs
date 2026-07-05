@@ -17,7 +17,7 @@ use super::scene::{self, PathIndex, SceneCtx};
 use super::value::{resolve_groups, resolve_property};
 use crate::error::Error;
 use crate::expr::{Expr, FuncTable};
-use crate::syntax::ast::{Decl, File, Rule, SelUnit, StyleItem};
+use crate::syntax::ast::{Decl, File, Rule, SelUnit, Selector, StyleItem, Value};
 use std::collections::{HashMap, HashSet};
 
 /// Resolve a parsed file into a [`Program`].
@@ -31,15 +31,16 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
     let funcs = build_funcs(file)?;
     apply_var_decls(&mut vars, file, &funcs)?;
 
-    // ── Stylesheet: the desugared file's rules (generated `.lini-*` type classes,
-    //    descendant + user-class rules) ──
-    let rules: Vec<&Rule> = file
-        .stylesheet
+    // ── Stylesheet: the built-in scoped rules (lowest, overridable like any
+    //    rule — [SPEC 8]), then the desugared file's rules (generated `.lini-*`
+    //    type classes, descendant + user-class rules) ──
+    let scoped = scoped_rules();
+    let rules: Vec<&Rule> = scoped
         .iter()
-        .filter_map(|it| match it {
+        .chain(file.stylesheet.iter().filter_map(|it| match it {
             StyleItem::Rule(r) => Some(r),
             _ => None,
-        })
+        }))
         .collect();
     let sheet = Stylesheet::build(&rules, &vars, &funcs)?;
 
@@ -79,6 +80,7 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
     let mut link_list = Vec::new();
     for w in &file.links {
         let (base, ancestors) = link_scope(&baked, &nodes, &root_attrs, &[]);
+        let drawing = scope_is_drawing(&nodes, &root_attrs, &[]);
         link_list.extend(links::resolve_link(
             w,
             &ctx,
@@ -86,12 +88,14 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
             &[],
             &ancestors,
             &base,
+            drawing,
         )?);
     }
     for lw in &lifted {
         let (base, ancestors) = link_scope(&baked, &nodes, &root_attrs, &lw.prefix);
+        let drawing = scope_is_drawing(&nodes, &root_attrs, &lw.prefix);
         link_list.extend(links::resolve_link(
-            &lw.link, &ctx, &index, &lw.prefix, &ancestors, &base,
+            &lw.link, &ctx, &index, &lw.prefix, &ancestors, &base, drawing,
         )?);
     }
 
@@ -348,6 +352,44 @@ fn inst_facts(inst: &ResolvedInst) -> NodeFacts {
         classes,
         id: inst.id.clone(),
     }
+}
+
+/// The built-in scoped rules [SPEC 8]: `|sequence| |note|` and `|drawing| |note|`
+/// compact the core note card where drafting convention expects. Ordinary
+/// descendant rules at the lowest source position, so any user rule of equal
+/// specificity wins — the `|table| |cell|` mechanism, engine-supplied.
+fn scoped_rules() -> Vec<Rule> {
+    use crate::span::Span;
+    let number = |name: &str, ns: &[f64]| Decl {
+        name: name.to_string(),
+        groups: vec![ns.iter().map(|n| Value::Number(*n)).collect()],
+        span: Span::empty(),
+    };
+    let compact = |scope: &str| Rule {
+        selector: Selector {
+            units: vec![
+                SelUnit::Class(format!("lini-{scope}")),
+                SelUnit::Class("lini-note".to_string()),
+            ],
+        },
+        decls: vec![
+            number("padding", &[6.0, 10.0]),
+            number("font-size", &[13.0]),
+        ],
+        span: Span::empty(),
+    };
+    vec![compact("sequence"), compact("drawing")]
+}
+
+/// Whether a link's scope is a drawing [SPEC 15] — its immediate container (or
+/// the root, for top-level links) resolved `layout: drawing`. Gates the drawing
+/// statements: the measuring ops, `||`, `tol:`, and the wider anchor set.
+fn scope_is_drawing(nodes: &[ResolvedInst], root_attrs: &AttrMap, scope: &[String]) -> bool {
+    let layout = match scope_chain(nodes, scope).last() {
+        Some(container) => container.attrs.get("layout"),
+        None => root_attrs.get("layout"),
+    };
+    matches!(layout, Some(ResolvedValue::Ident(l)) if l == "drawing")
 }
 
 /// A link's scope inputs: its `base` layer — the baked defaults plus the nearest

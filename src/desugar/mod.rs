@@ -98,15 +98,19 @@ pub fn desugar(file: &File) -> Result<File, Error> {
     for child in &file.instances {
         instances.push(lower_child(child, &types, &bodies)?);
     }
-    let declared = scene::declared_ids(&instances);
-    let mut root_msgs: Vec<&Link> = file.links.iter().collect();
-    root_msgs.extend(gather_frame_messages(&instances));
-    for (id, span) in scene::auto_created_ids(&root_msgs, &declared) {
-        instances.push(Child::Box(lower_node(
-            &scene::auto_box(&id, span),
-            &types,
-            &bodies,
-        )?));
+    // A drawing scope never auto-creates [SPEC 15]: an annotation must point at
+    // real geometry, so an unknown endpoint stays unknown and errors at resolve.
+    if root_layout(&user_root) != Some("drawing") {
+        let declared = scene::declared_ids(&instances);
+        let mut root_msgs: Vec<&Link> = file.links.iter().collect();
+        root_msgs.extend(gather_frame_messages(&instances));
+        for (id, span) in scene::auto_created_ids(&root_msgs, &declared) {
+            instances.push(Child::Box(lower_node(
+                &scene::auto_box(&id, span),
+                &types,
+                &bodies,
+            )?));
+        }
     }
 
     // ── Present types = every `.lini-X` class worn anywhere. ──
@@ -516,8 +520,9 @@ fn lower_node(node: &Node, types: &Types, bodies: &Bodies) -> Result<Node, Error
     // auto-create runs in any scope, not just the root), counting messages inside any frame
     // child so a participant first named inside a frame is created on the sequence, not the
     // frame. A frame (`loop`/`opt`/`alt`/`else`) opens no scope, so it never auto-creates —
-    // its endpoints resolve against the enclosing sequence's participants [SPEC 13].
-    if !already && !is_frame_classes(&classes) {
+    // its endpoints resolve against the enclosing sequence's participants [SPEC 13]. A
+    // drawing body never auto-creates either [SPEC 15]: its links point at real geometry.
+    if !already && !is_frame_classes(&classes) && !is_drawing_body(&info.chain, &node.style) {
         let declared = scene::declared_ids(&children);
         // Scope the message borrows of `children` so the auto-create push below is free.
         let to_create = {
@@ -606,6 +611,12 @@ fn mark_present(child: &Child, present: &mut BTreeSet<String>) {
 }
 
 /// The `layout:` ident set on the root, if any — picks the root-engine defaults.
+/// A drawing scope, detected as frames are — by type chain (`|drawing|` or a
+/// define over it) or an explicit `layout: drawing` on the instance [SPEC 15].
+fn is_drawing_body(chain: &[String], style: &[Decl]) -> bool {
+    chain.iter().any(|t| t == "drawing") || root_layout(style) == Some("drawing")
+}
+
 fn root_layout(user_root: &[Decl]) -> Option<&str> {
     user_root
         .iter()

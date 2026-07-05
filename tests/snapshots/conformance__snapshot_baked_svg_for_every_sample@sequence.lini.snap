@@ -16,7 +16,7 @@ input_file: samples/sequence.lini
     .lini .lini-sequence-tab { font-size: 12px; font-weight: bold; }
     .lini .lini-sequence-guard { font-size: 11px; font-weight: normal; }
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
-    .lini .lini-note { fill: white; stroke: #444; font-size: 13px; }
+    .lini .lini-note { fill: white; stroke: #444; }
     .lini .lini-link { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-link-dashed { stroke-dasharray: 6,4.5; }
     .lini .lini-sequence-message { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; font-size: 13px; font-weight: normal; }
@@ -79,7 +79,7 @@ input_file: samples/sequence.lini
     </g>
     <text class="lini-text lini-sequence-tab" x="-89.78" y="57">loop</text>
     <text class="lini-text lini-sequence-guard" x="-23.6" y="57.5" style="fill: #747474">[each item]</text>
-    <g class="lini-node lini-note lini-path" style="fill: #ffb2c9; stroke: #b8476e; stroke-width: 2" transform="translate(-213,-141)">
+    <g class="lini-node lini-note lini-path" style="fill: #ffb2c9; stroke: #b8476e; stroke-width: 2; font-size: 13px" transform="translate(-213,-141)">
       <path d="M -69.5 -13.5 L 60.32 -13.5 L 69.5 -4.3199999999999985 L 69.5 13.5 L -69.5 13.5 Z"/>
       <g class="lini-node lini-path" style="fill: #b8476e; stroke: none; stroke-width: 0" transform="translate(0,0)">
         <path d="M 60.32 -13.5 L 69.5 -4.3199999999999985 L 60.32 -4.3199999999999985 Z"/>

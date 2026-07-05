@@ -73,6 +73,59 @@ pub enum LinkMarker {
     Diamond, // <> on either side
 }
 
+/// A drawing measuring op [SPEC 15.6]: `(-)` the round measure (⌀ / R by the
+/// feature), `(<)` the angle. Lexed as glued three-char tokens only where a `(`
+/// is free-standing — a `(` glued to an ident opens a call [SPEC 2].
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DrawOp {
+    Round, // (-)
+    Angle, // (<)
+}
+
+impl DrawOp {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Round => "(-)",
+            Self::Angle => "(<)",
+        }
+    }
+}
+
+/// A link statement's operator [SPEC 9, 15]: a core wire op, a measuring op, or
+/// the mate `||`. One statement carries one op; a chain never mixes them. The
+/// mate has no token of its own — the parser reads two **adjacent** pipes at
+/// operator position, so bars stay paired everywhere else [SPEC 21].
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ChainOp {
+    Wire(LinkOp),
+    Measure(DrawOp),
+    Mate, // ||
+}
+
+impl ChainOp {
+    /// The op's source spelling, for diagnostics.
+    pub fn spelling(self) -> String {
+        match self {
+            Self::Wire(op) => format!(
+                "{}{}{}",
+                op.start.start_str(),
+                op.line.as_str(),
+                op.end.end_str()
+            ),
+            Self::Measure(d) => d.as_str().to_string(),
+            Self::Mate => "||".to_string(),
+        }
+    }
+
+    /// The wire triple, for the ops that draw one (`None` for measure / mate).
+    pub fn wire(self) -> Option<LinkOp> {
+        match self {
+            Self::Wire(op) => Some(op),
+            _ => None,
+        }
+    }
+}
+
 impl LinkMarker {
     /// Glyph for this marker when rendered at the start side of a link op.
     pub fn start_str(self) -> &'static str {

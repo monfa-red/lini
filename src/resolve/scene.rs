@@ -54,7 +54,11 @@ pub fn resolve_instances(
     id_seen: &mut HashMap<String, Span>,
     lifted: &mut Vec<LiftedLink>,
 ) -> Result<Vec<ResolvedInst>, Error> {
-    let mut ancestors = Vec::new();
+    // The file is the root container [SPEC 1]: a root that picks a scope-owning
+    // engine wears its class for the cascade, so a scoped rule (`|sequence|
+    // |note|`, `|drawing| |note|` — [SPEC 8]) reaches a root-scoped child exactly
+    // as it reaches one inside a `|sequence|` / `|drawing|` node.
+    let mut ancestors: Vec<NodeFacts> = root_facts(root_attrs).into_iter().collect();
     let mut nodes = Vec::with_capacity(instances.len());
     for child in instances {
         nodes.push(resolve_child(
@@ -69,6 +73,18 @@ pub fn resolve_instances(
     }
     drop_blank_text(&mut nodes, root_attrs);
     Ok(nodes)
+}
+
+/// The synthetic cascade identity of a `{ layout: sequence }` / `{ layout:
+/// drawing }` root — the engines whose scoped rules select by container type.
+fn root_facts(root_attrs: &AttrMap) -> Option<NodeFacts> {
+    match root_attrs.get("layout") {
+        Some(ResolvedValue::Ident(l)) if l == "sequence" || l == "drawing" => Some(NodeFacts {
+            classes: vec![format!("lini-{l}")],
+            id: None,
+        }),
+        _ => None,
+    }
 }
 
 /// Resolve a body child [SPEC 3]: a box recurses; a bare string becomes a text
@@ -358,6 +374,9 @@ fn value_src(v: &Value) -> String {
         Value::Hex(h) => format!("#{h}"),
         Value::Ident(s) => s.clone(),
         Value::Var(s) => format!("--{s}"),
+        Value::Group(items) => items.iter().map(value_src).collect::<Vec<_>>().join(" "),
+        Value::NamedCall(c, name) => format!("{}:{name}", call_src(c)),
+        Value::PointName(name) => format!(":{name}"),
     }
 }
 

@@ -6,7 +6,6 @@
 //! their id column (the bars line up), and a plain group aligns its type column
 //! too (the labels). Idempotent: `fmt(fmt(x)) == fmt(x)`.
 
-use crate::ast::{LinkOp, Side};
 use crate::error::Error;
 use crate::lexer;
 use crate::span::Span;
@@ -482,7 +481,7 @@ impl Emitter<'_> {
         for (i, group) in w.chain.iter().enumerate() {
             if i > 0 {
                 self.out.push(' ');
-                self.out.push_str(&link_op_str(w.op));
+                self.out.push_str(&w.op.spelling());
                 self.out.push(' ');
             }
             for (j, ep) in group.endpoints.iter().enumerate() {
@@ -491,6 +490,12 @@ impl Emitter<'_> {
                 }
                 self.emit_endpoint(ep);
             }
+        }
+        // A one-ended statement — a leader or unary measure [SPEC 15.6] — carries
+        // its op after the single endpoint group, before the tail.
+        if w.chain.len() == 1 {
+            self.out.push(' ');
+            self.out.push_str(&w.op.spelling());
         }
         // The tail mirrors a node's order [SPEC 9]: head label, then classes,
         // then style, then the `[ ]` labels. A lone bare label trails the head
@@ -533,9 +538,9 @@ impl Emitter<'_> {
 
     fn emit_endpoint(&mut self, ep: &Endpoint) {
         self.out.push_str(&ep.path.join("."));
-        if let Some(side) = ep.side {
+        if let Some(point) = &ep.point {
             self.out.push(':');
-            self.out.push_str(side_str(side));
+            self.out.push_str(&point.name);
         }
     }
 
@@ -593,6 +598,26 @@ impl Emitter<'_> {
                 self.out.push('`');
                 self.out.push_str(s);
                 self.out.push('`');
+            }
+            // Pen items [SPEC 15.3]: the product name glues to its call; a
+            // freestanding point stands alone.
+            Value::NamedCall(c, name) => {
+                self.emit_value(&Value::Call(c.clone()));
+                self.out.push(':');
+                self.out.push_str(name);
+            }
+            Value::PointName(name) => {
+                self.out.push(':');
+                self.out.push_str(name);
+            }
+            // A space-group in one call-arg slot (`hatch(45 -45, 6)`).
+            Value::Group(items) => {
+                for (i, item) in items.iter().enumerate() {
+                    if i > 0 {
+                        self.out.push(' ');
+                    }
+                    self.emit_value(item);
+                }
             }
         }
     }
@@ -676,24 +701,6 @@ fn class_str(classes: &[String]) -> String {
         s.push_str(c);
     }
     s
-}
-
-fn link_op_str(op: LinkOp) -> String {
-    format!(
-        "{}{}{}",
-        op.start.start_str(),
-        op.line.as_str(),
-        op.end.end_str()
-    )
-}
-
-fn side_str(s: Side) -> &'static str {
-    match s {
-        Side::Top => "top",
-        Side::Bottom => "bottom",
-        Side::Left => "left",
-        Side::Right => "right",
-    }
 }
 
 fn pad(out: &mut String, n: usize) {

@@ -6,7 +6,7 @@
 //! **links**. Two brackets carry structure: `{ }` is style (declarations), `[ ]`
 //! is content (a container's children, then its internal links).
 
-use crate::ast::{LinkOp, Side};
+use crate::ast::ChainOp;
 use crate::span::Span;
 
 #[derive(Debug, Clone)]
@@ -141,11 +141,13 @@ pub struct TextNode {
 }
 
 /// A link [SPEC 9]. `style` is its `{ }` (`along:`, `link*`); `labels` are its
-/// text content — trailing strings, or a `[ ]` of styleable text leaves.
+/// text content — trailing strings, or a `[ ]` of styleable text leaves. A
+/// one-ended statement (a leader / unary measure, [SPEC 15.6/21]) has a single
+/// chain group; whether that is legal for the op is resolve's call, per scope.
 #[derive(Debug, Clone)]
 pub struct Link {
     pub chain: Vec<EndpointGroup>,
-    pub op: LinkOp,
+    pub op: ChainOp,
     pub classes: Vec<String>,
     pub style: Vec<Decl>,
     /// The `{ … }` style block's span, for the formatter's trivia; `None` when
@@ -167,7 +169,16 @@ pub struct EndpointGroup {
 #[derive(Debug, Clone)]
 pub struct Endpoint {
     pub path: Vec<String>,
-    pub side: Option<Side>,
+    /// The `:point` after the path [SPEC 9, 15.2] — raw at parse: a side, a
+    /// corner, `center`, or an authored name; resolve validates it per scope.
+    pub point: Option<PointRef>,
+    pub span: Span,
+}
+
+/// An endpoint's raw `:point` — the name and its own span, for anchor errors.
+#[derive(Debug, Clone)]
+pub struct PointRef {
+    pub name: String,
     pub span: Span,
 }
 
@@ -196,6 +207,14 @@ pub enum Value {
     /// A backtick `` `…` `` compile-time expression body [SPEC 10.7], folded to a
     /// number or a point at resolve.
     Expr(String),
+    /// `right(50):name` — a pen call naming its drawn product; parsed only
+    /// inside a `draw:` value [SPEC 15.3, 21].
+    NamedCall(Call, String),
+    /// A freestanding `:name` — the pen's current point; `draw:` only.
+    PointName(String),
+    /// A space-separated run inside **one call-argument slot** —
+    /// `hatch(45 -45, 6)`'s angle group [SPEC 10.3]. Never nests.
+    Group(Vec<Value>),
 }
 
 #[derive(Debug, Clone)]

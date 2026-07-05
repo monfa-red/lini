@@ -270,3 +270,95 @@ fn a_name_value_stays_a_bare_ident() {
     lini::check("|box#x| { font-family: monospace; fill: red }\n")
         .expect("a bare name value resolves");
 }
+
+// ─────────────────────────── Drawing gates [SPEC 15, 20] ───────────────────────────
+//
+// Stage 1 (PLAN.md): the whole drawing vocabulary parses and resolves; the ops,
+// `tol:`, and the wider anchor set are gated to a `layout: drawing` scope; a
+// drawing never auto-creates. The engine itself lands in stage 3, so a valid
+// drawing file passes `check` (resolve) and errors only at full compile.
+
+#[test]
+fn drawing_ops_need_a_drawing_scope() {
+    assert_resolve_error("pin (-)\n", "'(-)' draws a dimension");
+    assert_resolve_error("|box#a|\n|box#b|\na (<) b\n", "'(<)' draws a dimension");
+    assert_resolve_error(
+        "|box#a|\n|box#b|\na || b\n",
+        "'||' belongs in a 'layout: drawing'",
+    );
+    assert_resolve_error(
+        "a <-> b { tol: 0.1 }\n",
+        "'tol' composes a dimension's text",
+    );
+    assert_resolve_error("a -> b:top-left\n", "':top-left' is a drawing anchor");
+    assert_resolve_error("a -> b:middle\n", "':middle' is not a side");
+    assert_resolve_error("a -> b:right-top\n", "did you mean ':top-right'?");
+    // One-ended wires stay two-ended outside a drawing.
+    assert_resolve_error("bolt <- \"THRU\"\n", "at least two endpoints");
+}
+
+#[test]
+fn a_drawing_scope_resolves_its_statements() {
+    lini::check(concat!(
+        "{ layout: drawing; scale: 2; unit: \"mm\" }\n",
+        "|rect#plate| { width: 120; height: 70 } [\n",
+        "  |hole#pin| { width: 10; translate: -35 20; pattern: grid(2, 1, 70, 0) }\n",
+        "]\n",
+        "|rect#bore| { width: 60; height: 16 }\n",
+        "plate:left <-> plate:right { side: bottom }\n",
+        "plate:left <-> plate.pin { side: top }\n",
+        "plate.pin (-) { tol: H7 }\n",
+        "bore:top (-) { side: right }\n",
+        "plate:top-left <- \"C1.5\"\n",
+        "bore:left || plate:right { gap: 4 }\n",
+    ))
+    .expect("a valid drawing resolves (the engine gates at layout, not here)");
+}
+
+#[test]
+fn drawing_statement_shapes_are_gated() {
+    let in_drawing = |stmts: &str| {
+        format!(
+            "{{ layout: drawing; }}\n|rect#a| {{ width: 10 }}\n|rect#b| {{ width: 10 }}\n{stmts}"
+        )
+    };
+    assert_resolve_error(&in_drawing("a || b \"x\"\n"), "a mate takes no label");
+    assert_resolve_error(&in_drawing("a ||\n"), "a mate seats two parts");
+    assert_resolve_error(
+        &in_drawing("a <->\n"),
+        "a linear dimension measures two anchors",
+    );
+    assert_resolve_error(
+        &in_drawing("a:top (-) b:bottom\n"),
+        "'(-)' measures one round feature",
+    );
+    assert_resolve_error(&in_drawing("a ->\n"), "a leader points back at its feature");
+    assert_resolve_error(&in_drawing("a <-\n"), "a leader needs its text");
+    // No auto-create in a drawing scope [SPEC 15]: unknown endpoints stay unknown.
+    assert_resolve_error(
+        &in_drawing("a <-> ghost\n"),
+        "dimension endpoint 'ghost' not found",
+    );
+}
+
+#[test]
+fn note_is_a_core_template() {
+    // Legal anywhere now [SPEC 8]; a sequence still requires its placement.
+    lini::check("|note#n| \"anywhere\"\n").expect("a flow-scope note resolves");
+    let seq = "{ layout: sequence }\n|box#a| \"A\"\n|note| \"hi\"\n";
+    let err = lini::compile_str(seq).expect_err("sequence note needs placement");
+    assert!(
+        err.to_string().contains("a sequence '|note|' needs"),
+        "got: {err}"
+    );
+}
+
+#[test]
+fn named_constants_read_bare_in_fences() {
+    lini::check("{ w() `42`; }\n|box#x| { width: `w * 2`; padding: w() }\n")
+        .expect("a zero-arg function reads bare inside a fence");
+    // Recursion — bare or called — is the existing static cycle check's job:
+    // one mechanism, caught at function-table build, before any evaluation.
+    assert_resolve_error("{ a() `a`; }\n|box#x| { width: `a` }\n", "cycle");
+    assert_resolve_error("{ a() `b`; b() `a()`; }\n|box#x| { width: `a` }\n", "cycle");
+}

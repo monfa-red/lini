@@ -45,15 +45,25 @@ pub const TEMPLATES: &[(&str, &str)] = &[
     ("axis", "block"),
     ("band", "block"),
     ("mark", "block"),
-    // Sequences [SPEC 13]: the container layout and the frame / separator / note
-    // types, each a bundle over |block|. Participants are ordinary boxes, so they
-    // need no type here.
+    // Sequences [SPEC 13]: the container layout and the frame / separator types,
+    // each a bundle over |block|. Participants are ordinary boxes, so they need
+    // no type here.
     ("sequence", "block"),
-    ("note", "block"),
     ("loop", "block"),
     ("opt", "block"),
     ("alt", "block"),
     ("else", "block"),
+    // Core cross-layout templates [SPEC 8]: the note card (sequence, drawing,
+    // and plain diagrams alike) and the assembly balloon.
+    ("note", "block"),
+    ("balloon", "oval"),
+    // Drawings [SPEC 15]: the container layout, the round feature, and the
+    // centerline chrome types (|sketch| is a primitive, not a template).
+    ("drawing", "block"),
+    ("hole", "oval"),
+    ("centerline", "line"),
+    ("pitch-circle", "oval"),
+    ("breakline", "line"),
 ];
 
 pub fn is_template(name: &str) -> bool {

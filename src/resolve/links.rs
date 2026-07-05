@@ -10,13 +10,13 @@
 
 use super::cascade::NodeFacts;
 use super::ir::{
-    Along, AttrMap, MarkerKind, ResolvedEndpoint, ResolvedLink, ResolvedText, ResolvedValue,
-    Strategy,
+    Along, AttrMap, LinkKind, MarkerKind, Markers, ResolvedEndpoint, ResolvedLink, ResolvedText,
+    ResolvedValue, Strategy,
 };
 use super::merge::{collapse, resolve_markers};
 use super::scene::{PathIndex, SceneCtx};
 use super::value::{resolve_groups, resolve_property};
-use crate::ast::LineStyle;
+use crate::ast::{ChainOp, LineStyle, LinkMarker, Side};
 use crate::error::Error;
 use crate::syntax::ast::{Endpoint, EndpointGroup, Link};
 
@@ -36,12 +36,14 @@ pub fn resolve_link(
     path_prefix: &[String],
     scope_ancestors: &[NodeFacts],
     base: &[(String, ResolvedValue)],
+    drawing_scope: bool,
 ) -> Result<Vec<ResolvedLink>, Error> {
     for class in &w.classes {
         if !ctx.sheet.defines_class(class) {
             return Err(Error::at(w.span, format!("unknown class '.{}'", class)));
         }
     }
+    validate_statement(w, drawing_scope)?;
 
     // A link is a node whose type is `lini-link`, whose ancestors are its scope
     // chain, with no id [SPEC 9, 4].
@@ -66,14 +68,26 @@ pub fn resolve_link(
         ));
     }
 
-    let markers = resolve_markers(
-        &ordered,
-        MarkerKind::from_marker(w.op.start),
-        MarkerKind::from_marker(w.op.end),
-        w.span,
-    )?;
+    // A measure / mate has no wire: no markers to derive, no line style to inject.
+    let markers = match w.op.wire() {
+        Some(op) => resolve_markers(
+            &ordered,
+            MarkerKind::from_marker(op.start),
+            MarkerKind::from_marker(op.end),
+            w.span,
+        )?,
+        None => Markers::default(),
+    };
     let mut attrs = collapse(&ordered);
-    inject_line_style(&mut attrs, w.op.line);
+    if let Some(op) = w.op.wire() {
+        inject_line_style(&mut attrs, op.line);
+    }
+    if !drawing_scope && attrs.get("tol").is_some() {
+        return Err(Error::at(
+            w.span,
+            "'tol' composes a dimension's text — it belongs in a 'layout: drawing'",
+        ));
+    }
     let routing = parse_routing(&attrs, w.span)?;
     attrs.map.remove("routing");
 
@@ -125,17 +139,24 @@ pub fn resolve_link(
             };
             let path = paths
                 .resolve(&qualified)
-                .ok_or_else(|| endpoint_error(&ep, paths, path_prefix))?;
+                .ok_or_else(|| endpoint_error(&ep, paths, path_prefix, w.op, drawing_scope))?;
+            let (side, point) = resolve_point(&ep, drawing_scope)?;
             endpoints.push(ResolvedEndpoint {
                 path,
-                side: ep.side,
+                side,
+                point,
                 span: ep.span,
             });
         }
         out.push(ResolvedLink {
             endpoints,
+            kind: match w.op {
+                ChainOp::Wire(_) => LinkKind::Wire,
+                ChainOp::Measure(d) => LinkKind::Measure(d),
+                ChainOp::Mate => LinkKind::Mate,
+            },
             scope: path_prefix.join("."),
-            line: w.op.line,
+            line: w.op.wire().map_or(LineStyle::Solid, |op| op.line),
             routing,
             attrs: attrs.clone(),
             applied_styles: w.classes.clone(),
@@ -150,6 +171,126 @@ pub fn resolve_link(
         });
     }
     Ok(out)
+}
+
+/// The statement-shape gates [SPEC 15, 20]: the drawing ops need a drawing
+/// scope; a mate takes no label; and a one-ended statement is legal only for
+/// the leader-shaped and measuring ops, in a drawing.
+fn validate_statement(w: &Link, drawing: bool) -> Result<(), Error> {
+    if !drawing {
+        match w.op {
+            ChainOp::Measure(d) => {
+                return Err(Error::at(
+                    w.span,
+                    format!(
+                        "'{}' draws a dimension — it belongs in a 'layout: drawing'",
+                        d.as_str()
+                    ),
+                ));
+            }
+            ChainOp::Mate => {
+                return Err(Error::at(
+                    w.span,
+                    "a mate seats a drawing's parts — '||' belongs in a 'layout: drawing'",
+                ));
+            }
+            ChainOp::Wire(_) => {}
+        }
+    }
+    let labelled = w.label.is_some() || !w.labels.is_empty();
+    if matches!(w.op, ChainOp::Mate) && labelled {
+        return Err(Error::at(w.span, "a mate takes no label"));
+    }
+    // `(-)` is unary-only [SPEC 15.6] — the side anchor replaced the binary form.
+    if matches!(w.op, ChainOp::Measure(crate::ast::DrawOp::Round)) && w.chain.len() > 1 {
+        return Err(Error::at(
+            w.span,
+            "'(-)' measures one round feature — write 'a:top (-)' for a span",
+        ));
+    }
+    if w.chain.len() > 1 {
+        return Ok(());
+    }
+    // One-ended [SPEC 15.6/21]: a unary measure, or a leader toward its text.
+    match w.op {
+        ChainOp::Measure(_) => Ok(()),
+        ChainOp::Mate => Err(Error::at(w.span, "a mate seats two parts")),
+        ChainOp::Wire(op) => {
+            if !drawing {
+                return Err(Error::at(w.span, "link requires at least two endpoints"));
+            }
+            let leader_tip = matches!(
+                op.start,
+                LinkMarker::Arrow | LinkMarker::Dot | LinkMarker::Crow
+            ) && op.end == LinkMarker::None;
+            if leader_tip {
+                if !labelled {
+                    return Err(Error::at(
+                        w.span,
+                        "a leader needs its text — 'bolt <- \"THRU\"'",
+                    ));
+                }
+                return Ok(());
+            }
+            if op.start == LinkMarker::None && op.end != LinkMarker::None {
+                return Err(Error::at(
+                    w.span,
+                    "a leader points back at its feature — write 'a <- \"…\"'",
+                ));
+            }
+            if op.start != LinkMarker::None && op.end != LinkMarker::None {
+                return Err(Error::at(w.span, "a linear dimension measures two anchors"));
+            }
+            Err(Error::at(w.span, "link requires at least two endpoints"))
+        }
+    }
+}
+
+/// An endpoint's `:point` [SPEC 9, 15.2]: a side everywhere; corners, `center`,
+/// and authored names only in a drawing scope. A reversed corner gets its
+/// did-you-mean; outside a drawing the message matches the scope's vocabulary.
+fn resolve_point(ep: &Endpoint, drawing: bool) -> Result<(Option<Side>, Option<String>), Error> {
+    let Some(p) = &ep.point else {
+        return Ok((None, None));
+    };
+    if let Some(side) = Side::parse(&p.name) {
+        return Ok((Some(side), None));
+    }
+    if let Some(fix) = corner_reorder(&p.name) {
+        return Err(Error::at(
+            p.span,
+            format!("':{}' is not an anchor — did you mean ':{}'?", p.name, fix),
+        ));
+    }
+    if drawing {
+        return Ok((None, Some(p.name.clone())));
+    }
+    if matches!(
+        p.name.as_str(),
+        "center" | "top-left" | "top-right" | "bottom-left" | "bottom-right"
+    ) {
+        Err(Error::at(
+            p.span,
+            format!(
+                "':{}' is a drawing anchor — it belongs in a 'layout: drawing'",
+                p.name
+            ),
+        ))
+    } else {
+        Err(Error::at(
+            p.span,
+            format!(
+                "':{}' is not a side — use top, bottom, left, or right",
+                p.name
+            ),
+        ))
+    }
+}
+
+/// `right-top` → `top-right`: the corner glues vertical word first [SPEC 15.2].
+fn corner_reorder(name: &str) -> Option<String> {
+    let (a, b) = name.split_once('-')?;
+    (matches!(a, "left" | "right") && matches!(b, "top" | "bottom")).then(|| format!("{b}-{a}"))
 }
 
 /// The operator's line part sets `stroke-style` unless an explicit one already
@@ -223,13 +364,31 @@ fn expand_chain(chain: &[EndpointGroup]) -> Vec<Vec<Endpoint>> {
     acc
 }
 
-fn endpoint_error(ep: &Endpoint, paths: &PathIndex, scope: &[String]) -> Error {
+fn endpoint_error(
+    ep: &Endpoint,
+    paths: &PathIndex,
+    scope: &[String],
+    op: ChainOp,
+    drawing: bool,
+) -> Error {
     let where_ = if scope.is_empty() {
         "at scene root".to_string()
     } else {
         format!("in '{}'", scope.join("."))
     };
-    let mut msg = format!("link endpoint '{}' not found {}", ep.path.join("."), where_);
+    // A drawing statement's endpoint is never auto-created [SPEC 15], so the
+    // noun names what actually failed there — a `<->` in a drawing *is* a
+    // dimension; elsewhere every statement is a link.
+    let noun = match (op, drawing) {
+        (_, false) => "link",
+        (ChainOp::Mate, true) => "mate",
+        (_, true) => "dimension",
+    };
+    let mut msg = format!(
+        "{noun} endpoint '{}' not found {}",
+        ep.path.join("."),
+        where_
+    );
     let suggestions = paths.suggest(ep.path.last().expect("non-empty path"), scope);
     if !suggestions.is_empty() {
         let quoted: Vec<String> = suggestions.iter().map(|s| format!("'{}'", s)).collect();

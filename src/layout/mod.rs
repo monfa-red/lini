@@ -28,6 +28,15 @@ use flex::Axis;
 pub fn layout(program: &Program) -> Result<LaidOut, Error> {
     sequence::validate(program)?;
 
+    // A root drawing [SPEC 15] parses and resolves (the stage-1 language
+    // surface); its engine lands per PLAN.md stage 3.
+    if is_drawing(&program.scene.attrs) {
+        return Err(Error::at(
+            Span::empty(),
+            "'layout: drawing' is not built yet (PLAN.md stage 3)",
+        ));
+    }
+
     // Lay out top-level scene children.
     let mut top_nodes = Vec::with_capacity(program.scene.nodes.len());
     for inst in &program.scene.nodes {
@@ -189,6 +198,15 @@ fn layout_inst(inst: &ResolvedInst, path: &str, program: &Program) -> Result<Pla
     // participants (and, later, messages / frames / notes) and lowers to primitives.
     if sequence::is_sequence(&inst.attrs) {
         return sequence::layout_node(inst, path, program);
+    }
+    // A `|drawing|` node [SPEC 15] will own its subtree the same way; the
+    // language surface is in (it parses and resolves), the engine lands per
+    // PLAN.md stage 3.
+    if is_drawing(&inst.attrs) {
+        return Err(Error::at(
+            inst.span,
+            "'layout: drawing' is not built yet (PLAN.md stage 3)",
+        ));
     }
 
     // Recurse into children first.
@@ -454,6 +472,12 @@ enum LayoutMode {
     Flow,
     /// 2D grid; sized by its `columns` / `rows` track lists (read in `grid`).
     Grid,
+}
+
+/// `layout: drawing` [SPEC 15] — the drawing engine's dispatch check, the
+/// `is_sequence` twin.
+fn is_drawing(attrs: &crate::resolve::AttrMap) -> bool {
+    matches!(attrs.get("layout"), Some(ResolvedValue::Ident(l)) if l == "drawing")
 }
 
 fn read_layout_mode(attrs: &crate::resolve::AttrMap, span: Span) -> Result<LayoutMode, Error> {

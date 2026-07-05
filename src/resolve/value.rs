@@ -31,6 +31,7 @@ fn is_builder(name: &str) -> bool {
             | "hsl"
             | "hsla"
             | "repeat"
+            | "hatch"
     )
 }
 
@@ -102,6 +103,15 @@ pub fn resolve_property(
     vars: &VarTable,
     funcs: &FuncTable,
 ) -> Result<ResolvedValue, Error> {
+    // Two properties keep their calls **structured** instead of folding them to
+    // numbers: `draw:` holds pen items for the sketch fold [SPEC 15.3], and
+    // `pattern:` holds its `grid(…)` / `radial(…)` replication call [SPEC 15.4].
+    if name == "draw" {
+        return resolve_pen(groups, span, funcs);
+    }
+    if name == "pattern" {
+        return resolve_pattern(groups, span, funcs);
+    }
     let value = resolve_groups(groups, span, vars, funcs)?;
     if is_string_valued(name) && has_bare_ident(&value) {
         return Err(Error::at(
@@ -110,6 +120,74 @@ pub fn resolve_property(
         ));
     }
     Ok(value)
+}
+
+/// A `draw:` value [SPEC 15.3]: one run of pen items — calls (optionally naming
+/// their product) and freestanding `:name` points — kept structured; only the
+/// call **arguments** fold (numbers, backticks, compute calls).
+fn resolve_pen(
+    groups: &[Vec<Value>],
+    span: Span,
+    funcs: &FuncTable,
+) -> Result<ResolvedValue, Error> {
+    let [group] = groups else {
+        return Err(Error::at(
+            span,
+            "'draw' is one run of pen calls — commas belong inside call arguments",
+        ));
+    };
+    let mut items = Vec::with_capacity(group.len());
+    for v in group {
+        items.push(match v {
+            Value::Call(c) => ResolvedValue::PenCall {
+                call: fold_call_args(c, span, funcs)?,
+                product: None,
+            },
+            Value::NamedCall(c, product) => ResolvedValue::PenCall {
+                call: fold_call_args(c, span, funcs)?,
+                product: Some(product.clone()),
+            },
+            Value::PointName(name) => ResolvedValue::PenPoint(name.clone()),
+            _ => {
+                return Err(Error::at(
+                    span,
+                    "'draw' holds pen calls and ':name' points — see SPEC 15.3",
+                ));
+            }
+        });
+    }
+    Ok(ResolvedValue::Tuple(items))
+}
+
+/// A `pattern:` value [SPEC 15.4]: exactly one `grid(…)` / `radial(…)` call,
+/// kept structured for the layout replicator; its args fold to numbers.
+fn resolve_pattern(
+    groups: &[Vec<Value>],
+    span: Span,
+    funcs: &FuncTable,
+) -> Result<ResolvedValue, Error> {
+    if let [group] = groups
+        && let [Value::Call(c)] = group.as_slice()
+        && matches!(c.name.as_str(), "grid" | "radial")
+    {
+        return Ok(ResolvedValue::Call(fold_call_args(c, span, funcs)?));
+    }
+    Err(Error::at(
+        span,
+        "'pattern' takes grid(cols, rows, dx, dy) or radial(count, radius)",
+    ))
+}
+
+/// Fold a structured call's arguments to numbers, keeping the call itself.
+fn fold_call_args(c: &Call, span: Span, funcs: &FuncTable) -> Result<ResolvedCall, Error> {
+    let mut args = Vec::with_capacity(c.args.len());
+    for a in &c.args {
+        args.push(from_expr(fold_arg(a, span, funcs)?));
+    }
+    Ok(ResolvedCall {
+        name: c.name.clone(),
+        args,
+    })
 }
 
 /// Properties whose value is literal **text** — free text, a URL, an SVG path — and
@@ -182,6 +260,21 @@ fn resolve_scalar(
         Value::Call(c) => from_expr(fold_call(c, span, funcs)?),
         // A backtick expression folds to a number / point [SPEC 10.7].
         Value::Expr(s) => from_expr(fold_expr(s, span, funcs)?),
+        // A space-group in one call-arg slot (`hatch(45 -45, 6)`) [SPEC 10.3].
+        Value::Group(items) => {
+            let mut out = Vec::with_capacity(items.len());
+            for item in items {
+                out.push(resolve_scalar(item, span, vars, funcs)?);
+            }
+            ResolvedValue::Tuple(out)
+        }
+        // Pen items are parsed only inside `draw:`, which resolves above.
+        Value::NamedCall(..) | Value::PointName(_) => {
+            return Err(Error::at(
+                span,
+                "a ':name' pen item belongs in a 'draw:' value",
+            ));
+        }
     })
 }
 

@@ -76,8 +76,9 @@ pub fn primitive_bundle(kind: NodeKind) -> Vec<Decl> {
             b.push(n("skew", 15.0));
             b
         }
-        // Geometry-sized closed shapes: paint only, no box model.
-        Poly | Path => vec![
+        // Geometry-sized closed shapes: paint only, no box model. The sketch pen
+        // [SPEC 15.3] paints like them — object lines at the core weight 2.
+        Poly | Path | Sketch => vec![
             var("fill", "fill"),
             var("stroke", "stroke"),
             n("stroke-width", 2.0),
@@ -176,12 +177,43 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             id("layout", "sequence"),
             pair("gap", SEQ_GAP_ROW, SEQ_GAP_COL),
         ],
+        // The note card [SPEC 8] — one type in every layout: shape-like padding
+        // in flow / grid, compacted inside a sequence / drawing by the built-in
+        // scoped rules ([`scoped_rules`]), sheet-space in a scaled view.
         "note" => vec![
             var("fill", "fill"),
             var("stroke", "stroke"),
-            pair("padding", 6.0, 10.0),
-            n("font-size", 13.0),
+            n("padding", 20.0),
+            n("scale", 1.0),
         ],
+        // The assembly balloon [SPEC 8, 15.8]: a numbered circle a leader points
+        // from; sheet-space like all annotation chrome.
+        "balloon" => vec![
+            n("width", 16.0),
+            var("fill", "fill"),
+            var("stroke", "stroke"),
+            n("font-size", 11.0),
+            n("scale", 1.0),
+        ],
+        // Drawings [SPEC 15]: the container (frameless — the geometry and its
+        // annotations are the content)…
+        "drawing" => vec![id("layout", "drawing"), n("padding", 0.0)],
+        // …the round hole — `width:` (required) is its diameter; it punches by
+        // paint order and draws its own centre marks [SPEC 15.4]…
+        "hole" => vec![var("fill", "bg"), var("stroke", "stroke")],
+        // …and the dash-dot chrome types [SPEC 15.7]. `|breakline|` is the break
+        // cut's generated zigzag / S edge — solid, annotation-weight.
+        "centerline" => vec![
+            id("stroke-style", "center"),
+            n("stroke-width", 1.0),
+            id("fill", "none"),
+        ],
+        "pitch-circle" => vec![
+            id("stroke-style", "center"),
+            n("stroke-width", 1.0),
+            id("fill", "none"),
+        ],
+        "breakline" => vec![n("stroke-width", 1.0), id("fill", "none")],
         // A frame: a dashed, rounded rectangle around a span of messages. `padding` insets
         // the border from the messages it spans (vertical) and the lifelines (horizontal).
         "loop" | "opt" | "alt" => vec![
@@ -248,6 +280,9 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             id("stroke-style", "solid"),
             n("font-size", 14.0),
             id("font-weight", "normal"),
+            // A table is sheet furniture: in a scaled drawing view it keeps its
+            // size, like notes and balloons [SPEC 15.1].
+            n("scale", 1.0),
         ],
         // A table cell [SPEC 8]: a frameless `|block|` carrying the text-to-gutter
         // inset. Body cells wrap in it; `|header|` / `|footer|` build on it. Only the

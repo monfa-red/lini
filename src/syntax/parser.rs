@@ -7,7 +7,7 @@
 //! `[ ]` of children and internal links).
 
 use super::ast::*;
-use crate::ast::{LineStyle, LinkMarker, LinkOp, Side};
+use crate::ast::{ChainOp, LineStyle, LinkMarker, LinkOp};
 use crate::error::Error;
 use crate::lexer::{TokKind, Token};
 use crate::span::Span;
@@ -200,18 +200,26 @@ impl<'a> Parser<'a> {
             Some(TokKind::Pipe) | Some(TokKind::String(_)) => Kind::Node,
             Some(TokKind::RawCssVar(_)) => Kind::Var,
             Some(TokKind::Ident(_)) => match self.kind_at(1) {
-                Some(TokKind::LinkOp(_)) | Some(TokKind::Amp) => Kind::Link,
+                Some(TokKind::LinkOp(_)) | Some(TokKind::DrawOp(_)) | Some(TokKind::Amp) => {
+                    Kind::Link
+                }
                 Some(TokKind::Dot) if self.glued_at(1) => Kind::Link, // a.b endpoint path
+                // `a || b` — a mate [SPEC 15.5]: two adjacent pipes at operator
+                // position (a node can never follow a bare ident, so this is
+                // unambiguous and bars stay paired).
+                Some(TokKind::Pipe) if self.pipes_glued_at(1) => Kind::Link,
                 // `a:left -> b` is a sided first endpoint — `:ident` then a link-op
                 // / `&`. A misplaced `gap: 4` decl has a value there, not `side ->`,
-                // so it stays a (context-error) declaration; an invalid side then
-                // surfaces as the proper "not a side" error in `parse_endpoint`.
+                // so it stays a (context-error) declaration; an invalid point then
+                // surfaces as the proper anchor error at resolve.
                 Some(TokKind::Colon)
                     if matches!(self.kind_at(2), Some(TokKind::Ident(_)))
-                        && matches!(
+                        && (matches!(
                             self.kind_at(3),
-                            Some(TokKind::LinkOp(_)) | Some(TokKind::Amp)
-                        ) =>
+                            Some(TokKind::LinkOp(_))
+                                | Some(TokKind::DrawOp(_))
+                                | Some(TokKind::Amp)
+                        ) || self.pipes_glued_at(3)) =>
                 {
                     Kind::Link
                 }
@@ -220,6 +228,13 @@ impl<'a> Parser<'a> {
             },
             _ => Kind::Unknown,
         }
+    }
+
+    /// `||` at `pos + n` — two **adjacent** pipes, the mate op [SPEC 15.5, 21].
+    fn pipes_glued_at(&self, n: usize) -> bool {
+        matches!(self.kind_at(n), Some(TokKind::Pipe))
+            && matches!(self.kind_at(n + 1), Some(TokKind::Pipe))
+            && self.glued_at(n + 1)
     }
 
     // ───────────────────────── File ─────────────────────────
@@ -288,13 +303,17 @@ impl<'a> Parser<'a> {
 
     // ───────────────────────── Declarations ─────────────────────────
 
-    /// `key: v…, v…` — the name token is an `Ident`.
+    /// `key: v…, v…` — the name token is an `Ident`. A `draw:` value additionally
+    /// admits the pen items (`call:name` / freestanding `:name`) [SPEC 15.3, 21] —
+    /// the property-scoped flag keeps the runaway-declaration diagnostics sharp
+    /// everywhere else.
     fn parse_decl(&mut self) -> Result<Decl, Error> {
         let (name, start) = self.expect_ident()?;
         if !self.eat(&TokKind::Colon) {
             return Err(self.err(format!("expected ':' after '{}'", name)));
         }
-        let (groups, end) = self.parse_values()?;
+        let pen = name == "draw";
+        let (groups, end) = self.parse_values_in(pen)?;
         Ok(Decl {
             name,
             groups,
@@ -325,6 +344,10 @@ impl<'a> Parser<'a> {
     /// declaration's value runs to `;` (or a closing `}` / `]`), so it may span
     /// lines — a newline inside a value is whitespace, not a terminator [SPEC 2/3].
     fn parse_values(&mut self) -> Result<(Vec<Vec<Value>>, Span), Error> {
+        self.parse_values_in(false)
+    }
+
+    fn parse_values_in(&mut self, pen: bool) -> Result<(Vec<Vec<Value>>, Span), Error> {
         let start = self.span();
         let mut groups: Vec<Vec<Value>> = Vec::new();
         let mut current: Vec<Value> = Vec::new();
@@ -338,7 +361,7 @@ impl<'a> Parser<'a> {
                     self.pos += 1;
                     groups.push(std::mem::take(&mut current));
                 }
-                _ => current.push(self.parse_value()?),
+                _ => current.push(self.parse_value_in(pen)?),
             }
         }
         groups.push(current);
@@ -350,14 +373,35 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_value(&mut self) -> Result<Value, Error> {
+        self.parse_value_in(false)
+    }
+
+    fn parse_value_in(&mut self, pen: bool) -> Result<Value, Error> {
         // An ident may begin a call (`rgb(…)`, `repeat(…)`); handle separately.
         if matches!(self.kind(), Some(TokKind::Ident(_))) {
             let (name, _) = self.expect_ident()?;
             return if matches!(self.kind(), Some(TokKind::LParen)) {
-                self.parse_call(name)
+                let call = self.parse_call(name)?;
+                // In a pen, a glued `:name` after the `)` names the call's drawn
+                // product (`right(50):seat`, `fillet(3):r1`) [SPEC 15.3].
+                if pen && self.at_glued_point_name() {
+                    self.pos += 1; // ':'
+                    let (point, _) = self.expect_ident()?;
+                    if let Value::Call(c) = call {
+                        return Ok(Value::NamedCall(c, point));
+                    }
+                    unreachable!("parse_call returns Value::Call");
+                }
+                Ok(call)
             } else {
                 Ok(Value::Ident(name))
             };
+        }
+        // In a pen, a freestanding `:name` marks the current point [SPEC 15.3].
+        if pen && self.at_glued_point_name() {
+            self.pos += 1; // ':'
+            let (point, _) = self.expect_ident()?;
+            return Ok(Value::PointName(point));
         }
         let v = match self.kind() {
             Some(TokKind::Number(n)) => Value::Number(*n),
@@ -382,19 +426,48 @@ impl<'a> Parser<'a> {
         Ok(v)
     }
 
+    /// The cursor sits on a `:` immediately followed by a **glued** ident — the
+    /// pen's point sigil (`:name`), never a declaration's `:` (whose value is
+    /// spaced off it in canonical style and is not an ident-only suffix).
+    fn at_glued_point_name(&self) -> bool {
+        matches!(self.kind(), Some(TokKind::Colon))
+            && matches!(self.kind_at(1), Some(TokKind::Ident(_)))
+            && self.glued_at(1)
+    }
+
     fn parse_call(&mut self, name: String) -> Result<Value, Error> {
         self.pos += 1; // '('
         let mut args = Vec::new();
         if !matches!(self.kind(), Some(TokKind::RParen)) {
-            args.push(self.parse_value()?);
+            args.push(self.parse_call_arg()?);
             while self.eat(&TokKind::Comma) {
-                args.push(self.parse_value()?);
+                args.push(self.parse_call_arg()?);
             }
         }
         if !self.eat(&TokKind::RParen) {
             return Err(self.err("expected ')'"));
         }
         Ok(Value::Call(Call { name, args }))
+    }
+
+    /// One call-argument slot — usually a single value, but a slot may hold a
+    /// space-separated group (`hatch(45 -45, 6)`'s angles, [SPEC 10.3]).
+    fn parse_call_arg(&mut self) -> Result<Value, Error> {
+        let first = self.parse_value()?;
+        if matches!(
+            self.kind(),
+            Some(TokKind::Comma) | Some(TokKind::RParen) | None
+        ) {
+            return Ok(first);
+        }
+        let mut group = vec![first];
+        while !matches!(
+            self.kind(),
+            Some(TokKind::Comma) | Some(TokKind::RParen) | None
+        ) {
+            group.push(self.parse_value()?);
+        }
+        Ok(Value::Group(group))
     }
 
     // ───────────────────────── Rules & defines ─────────────────────────
@@ -769,18 +842,26 @@ impl<'a> Parser<'a> {
     fn parse_link(&mut self) -> Result<Link, Error> {
         let start = self.span();
         let mut chain = vec![self.parse_endpoint_group()?];
-        let op = self.expect_link_op()?;
-        chain.push(self.parse_endpoint_group()?);
-        while let Some(next) = self.peek_link_op() {
-            if next != op {
-                return Err(self.err(format!(
-                    "link chain mixes operators '{}' and '{}'",
-                    link_op_str(op),
-                    link_op_str(next)
-                )));
-            }
-            self.pos += 1;
+        let op = self.expect_chain_op()?;
+        // A statement may be one-ended — a leader or a unary measure toward its
+        // text [SPEC 15.6/21]: after the op, an ident is an endpoint; anything
+        // else is the tail. Which ops (and scopes) allow it is resolve's call.
+        if matches!(self.kind(), Some(TokKind::Ident(_))) {
             chain.push(self.parse_endpoint_group()?);
+            while let Some((next, width)) = self.peek_chain_op() {
+                if next != op {
+                    return Err(self.err(format!(
+                        "link chain mixes operators '{}' and '{}'",
+                        op.spelling(),
+                        next.spelling()
+                    )));
+                }
+                self.pos += width;
+                if !matches!(self.kind(), Some(TokKind::Ident(_))) {
+                    return Err(self.err("a text callout ends its statement — chain before it"));
+                }
+                chain.push(self.parse_endpoint_group()?);
+            }
         }
         // The same tail a node uses: a head label, worn classes, the link's own
         // style. The head label and the `[ ]` labels coexist — desugar
@@ -829,59 +910,47 @@ impl<'a> Parser<'a> {
             path.push(seg);
             end = seg_span;
         }
-        // A trailing `:side` forces an edge [SPEC 9]. The path no longer peels a
-        // final `.left` — that is now a child named `left`.
-        let side = if self.eat(&TokKind::Colon) {
+        // A trailing `:point` names an anchor [SPEC 9, 15.2] — a side everywhere,
+        // the wider set (corners, `center`, authored names) in a drawing scope;
+        // resolve validates it there. The path no longer peels a final `.left` —
+        // that is now a child named `left`.
+        let point = if self.eat(&TokKind::Colon) {
             let (name, name_span) = self.expect_ident()?;
-            match Side::parse(&name) {
-                Some(s) => {
-                    end = name_span;
-                    Some(s)
-                }
-                None => {
-                    return Err(Error::at(
-                        name_span,
-                        format!("':{name}' is not a side — use top, bottom, left, or right"),
-                    ));
-                }
-            }
+            end = name_span;
+            Some(PointRef {
+                name,
+                span: name_span,
+            })
         } else {
             None
         };
         Ok(Endpoint {
             path,
-            side,
+            point,
             span: Span::new(first_span.start, end.end),
         })
     }
 
-    /// The link op at the cursor as an owned copy, so a `while let` over it
-    /// doesn't hold a borrow of `self` across the loop body.
-    fn peek_link_op(&self) -> Option<LinkOp> {
+    /// The chain op at the cursor (and its token width — `||` spans two), as an
+    /// owned copy so a loop over it doesn't hold a borrow of `self`.
+    fn peek_chain_op(&self) -> Option<(ChainOp, usize)> {
         match self.kind() {
-            Some(TokKind::LinkOp(op)) => Some(*op),
+            Some(TokKind::LinkOp(op)) => Some((ChainOp::Wire(*op), 1)),
+            Some(TokKind::DrawOp(d)) => Some((ChainOp::Measure(*d), 1)),
+            Some(TokKind::Pipe) if self.pipes_glued_at(0) => Some((ChainOp::Mate, 2)),
             _ => None,
         }
     }
 
-    fn expect_link_op(&mut self) -> Result<LinkOp, Error> {
-        match self.peek_link_op() {
-            Some(op) => {
-                self.pos += 1;
+    fn expect_chain_op(&mut self) -> Result<ChainOp, Error> {
+        match self.peek_chain_op() {
+            Some((op, width)) => {
+                self.pos += width;
                 Ok(op)
             }
             None => Err(self.err("expected a link operator")),
         }
     }
-}
-
-fn link_op_str(op: LinkOp) -> String {
-    format!(
-        "{}{}{}",
-        op.start.start_str(),
-        op.line.as_str(),
-        op.end.end_str()
-    )
 }
 
 /// Which bars are being parsed — picks the glued-class error wording, and gates
@@ -1097,12 +1166,23 @@ mod tests {
         assert_eq!(f.links[0].chain.len(), 3);
     }
 
+    fn point_of(ep: &Endpoint) -> Option<&str> {
+        ep.point.as_ref().map(|p| p.name.as_str())
+    }
+
+    fn wire_line(f: &File) -> crate::ast::LineStyle {
+        match f.links[0].op {
+            ChainOp::Wire(op) => op.line,
+            other => panic!("expected a wire op, got {other:?}"),
+        }
+    }
+
     #[test]
     fn link_with_sides_label_class_style() {
         let f = parse_ok("a:left -> b:top \"watches\" .loud { along: 0.5 }\n");
         let w = &f.links[0];
-        assert_eq!(w.chain[0].endpoints[0].side, Some(Side::Left));
-        assert_eq!(w.chain[1].endpoints[0].side, Some(Side::Top));
+        assert_eq!(point_of(&w.chain[0].endpoints[0]), Some("left"));
+        assert_eq!(point_of(&w.chain[1].endpoints[0]), Some("top"));
         assert_eq!(w.label.as_ref().map(|t| t.text.as_str()), Some("watches"));
         assert_eq!(w.classes, vec!["loud"]);
         assert_eq!(w.style.len(), 1);
@@ -1111,19 +1191,19 @@ mod tests {
     #[test]
     fn link_line_styles() {
         assert_eq!(
-            parse_ok("a -> b\n").links[0].op.line,
+            wire_line(&parse_ok("a -> b\n")),
             crate::ast::LineStyle::Solid
         );
         assert_eq!(
-            parse_ok("a --> b\n").links[0].op.line,
+            wire_line(&parse_ok("a --> b\n")),
             crate::ast::LineStyle::Dashed
         );
         assert_eq!(
-            parse_ok("a ---> b\n").links[0].op.line,
+            wire_line(&parse_ok("a ---> b\n")),
             crate::ast::LineStyle::Dotted
         );
         assert_eq!(
-            parse_ok("a ~> b\n").links[0].op.line,
+            wire_line(&parse_ok("a ~> b\n")),
             crate::ast::LineStyle::Wavy
         );
     }
@@ -1162,17 +1242,83 @@ mod tests {
         let f = parse_ok("cat:right -> kitchen.counter.bowl:left\n");
         let w = &f.links[0];
         assert_eq!(w.chain[0].endpoints[0].path, vec!["cat"]);
-        assert_eq!(w.chain[0].endpoints[0].side, Some(Side::Right));
+        assert_eq!(point_of(&w.chain[0].endpoints[0]), Some("right"));
         assert_eq!(
             w.chain[1].endpoints[0].path,
             vec!["kitchen", "counter", "bowl"]
         );
-        assert_eq!(w.chain[1].endpoints[0].side, Some(Side::Left));
+        assert_eq!(point_of(&w.chain[1].endpoints[0]), Some("left"));
     }
 
     #[test]
-    fn unknown_side_errors() {
-        assert!(parse_err("a:middle -> b\n").contains("is not a side"));
+    fn endpoint_point_is_raw_at_parse() {
+        // The wider point set [SPEC 15.2] is resolve's call, per scope — the
+        // parser stores the raw name (`:middle` errors there, not here).
+        let f = parse_ok("a:middle -> b:top-left\n");
+        assert_eq!(point_of(&f.links[0].chain[0].endpoints[0]), Some("middle"));
+        assert_eq!(
+            point_of(&f.links[0].chain[1].endpoints[0]),
+            Some("top-left")
+        );
+    }
+
+    #[test]
+    fn measuring_ops_parse_one_ended_and_binary() {
+        // `pin (-)` — a unary measure toward its tail [SPEC 15.6/21].
+        let f = parse_ok("pin (-)\n");
+        assert_eq!(f.links[0].chain.len(), 1);
+        assert_eq!(f.links[0].op, ChainOp::Measure(crate::ast::DrawOp::Round));
+        // `(<)` binary — two line-like anchors.
+        let f = parse_ok("body:flank (<) body:base\n");
+        assert_eq!(f.links[0].chain.len(), 2);
+        assert_eq!(f.links[0].op, ChainOp::Measure(crate::ast::DrawOp::Angle));
+        // One-ended with a tail label.
+        let f = parse_ok("bolt <- \"THRU\"\n");
+        assert_eq!(f.links[0].chain.len(), 1);
+        assert_eq!(
+            f.links[0].label.as_ref().map(|t| t.text.as_str()),
+            Some("THRU")
+        );
+    }
+
+    #[test]
+    fn mate_is_two_adjacent_pipes_at_op_position() {
+        let f = parse_ok("nozzle:left || barrel:right { gap: 4 }\n");
+        assert_eq!(f.links[0].op, ChainOp::Mate);
+        assert_eq!(f.links[0].chain.len(), 2);
+        // Spaced pipes are not a mate — `a | b` stays an invalid statement.
+        assert!(!parse_err("a | | b\n").is_empty());
+    }
+
+    #[test]
+    fn chain_past_a_label_errors() {
+        assert!(parse_err("a <- b <- \"x\"\n").contains("a text callout ends its statement"));
+    }
+
+    #[test]
+    fn pen_items_parse_only_in_draw() {
+        let f = parse_ok("|sketch#s| { draw: move(-80, 0) right(50):seat :m1 close(); }\n");
+        let draw = &instance(&f, 0).style[0];
+        assert_eq!(draw.name, "draw");
+        let items = &draw.groups[0];
+        assert!(matches!(&items[0], Value::Call(c) if c.name == "move"));
+        assert!(matches!(&items[1], Value::NamedCall(c, n) if c.name == "right" && n == "seat"));
+        assert!(matches!(&items[2], Value::PointName(n) if n == "m1"));
+        assert!(matches!(&items[3], Value::Call(c) if c.name == "close"));
+        // Outside a draw:, a freestanding `:` keeps the runaway-decl diagnostic.
+        assert!(parse_err("|box| { padding: :x }\n").contains("a declaration ends with ';'"));
+    }
+
+    #[test]
+    fn call_arg_space_group() {
+        // `hatch(45 -45, 6)` — one slot holding a space-group [SPEC 10.3].
+        let f = parse_ok("|box| { fill: hatch(45 -45, 6) }\n");
+        let fill = &instance(&f, 0).style[0];
+        let Value::Call(c) = &fill.groups[0][0] else {
+            panic!("expected a call");
+        };
+        assert!(matches!(&c.args[0], Value::Group(g) if g.len() == 2));
+        assert!(matches!(&c.args[1], Value::Number(n) if *n == 6.0));
     }
 
     #[test]
