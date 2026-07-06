@@ -344,6 +344,12 @@ impl Anchor<'_> {
             .unwrap_or(&[])
     }
 
+    /// Whether the anchored profile is a `revolve:` — the `⌀` station and
+    /// full-span readings require it [SPEC 15.6].
+    pub fn revolved(&self) -> bool {
+        self.node.sketch.as_ref().is_some_and(|s| s.revolved)
+    }
+
     /// The anchored node's `pattern:` copy count — the dimension text's `N×`
     /// prefix [SPEC 15.4].
     pub fn pattern_count(&self) -> Option<usize> {

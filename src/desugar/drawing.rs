@@ -7,6 +7,7 @@
 //! | Producer | Generates |
 //! |---|---|
 //! | a fused `mirror:` (an **open** subpath + `mirror:`) | the axis `\|centerline\|` |
+//! | a `revolve:` | the axis `\|centerline\|` + the `\|shoulder\|` edge-line seed |
 //! | a `\|hole\|` | its centre-mark crosshair — two axis `\|centerline\|`s |
 //! | `pattern: radial(…)` | the `\|pitch-circle\|` ring through the copies |
 //! | a `break:` | the `\|breakline\|` pair per group — zigzag / round-stock S |
@@ -26,6 +27,14 @@ pub(super) fn chrome_children(node: &Node, kind: NodeKind, chain: &[String]) -> 
         && let Some(axis) = fused_mirror_axis(&node.style)
     {
         out.push(chrome_node("centerline", axis, node));
+    }
+    // A `revolve:` always draws its axis, and seeds the `|shoulder|` edge
+    // lines — the pen clones the seed per sharp diameter change [SPEC 15.3].
+    if kind == NodeKind::Sketch
+        && let Some(axis) = revolve_axis(&node.style)
+    {
+        out.push(chrome_node("centerline", axis, node));
+        out.push(chrome_node("shoulder", Value::Ident("edges".into()), node));
     }
     if chain.iter().any(|t| t == "hole") {
         out.push(chrome_node(
@@ -100,6 +109,17 @@ fn has_open_subpath(draw: &Decl) -> bool {
         }
     }
     open
+}
+
+/// A `revolve:`'s axis — the first value; the pen validates it [SPEC 15.3].
+fn revolve_axis(style: &[Decl]) -> Option<Value> {
+    style
+        .iter()
+        .find(|d| d.name == "revolve")?
+        .groups
+        .first()?
+        .first()
+        .cloned()
 }
 
 fn has_radial_pattern(style: &[Decl]) -> bool {

@@ -57,13 +57,16 @@ pub const TEMPLATES: &[(&str, &str)] = &[
     // and plain diagrams alike) and the assembly balloon.
     ("note", "block"),
     ("balloon", "oval"),
-    // Drawings [SPEC 15]: the container layout, the round feature, and the
-    // centerline chrome types (|sketch| is a primitive, not a template).
+    // Drawings [SPEC 15]: the container layout, the round feature, the
+    // centerline chrome types, hidden interior geometry, and the revolve's
+    // shoulder-line chrome (|sketch| is a primitive, not a template).
     ("drawing", "block"),
     ("hole", "oval"),
     ("centerline", "line"),
     ("pitch-circle", "oval"),
     ("breakline", "line"),
+    ("hidden", "sketch"),
+    ("shoulder", "line"),
 ];
 
 pub fn is_template(name: &str) -> bool {

@@ -11,11 +11,11 @@
 |drawing#pump| "HAND PUMP — SECTION" [
   |steel#barrel| {
     draw: move(-90, 0) up(23) right(60) up(6) right(60) down(6) right(60) down(23);
-    mirror: x-axis;
+    revolve: x-axis;
   }
   |steel#nozzle| {
     draw: move(0, 0) up(12) right(40) down(4) right(20) down(8);
-    mirror: x-axis;
+    revolve: x-axis;
   }
   nozzle:left || barrel:right { gap: -10 }       // pressed 10 into the barrel
 

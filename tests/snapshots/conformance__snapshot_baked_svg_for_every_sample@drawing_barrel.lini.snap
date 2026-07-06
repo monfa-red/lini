@@ -1,5 +1,6 @@
 ---
 source: tests/conformance.rs
+assertion_line: 40
 expression: svg
 input_file: samples/drawing_barrel.lini
 ---
@@ -55,6 +56,24 @@ input_file: samples/drawing_barrel.lini
       </g>
       <g class="lini-node lini-centerline lini-line" transform="translate(0,0)">
         <line x1="-489" y1="0" x2="351" y2="0"/>
+      </g>
+      <g class="lini-node lini-shoulder lini-line" transform="translate(0,0)">
+        <line x1="-482" y1="-42" x2="-482" y2="42"/>
+      </g>
+      <g class="lini-node lini-shoulder lini-line" transform="translate(0,0)">
+        <line x1="-345" y1="-45" x2="-345" y2="45"/>
+      </g>
+      <g class="lini-node lini-shoulder lini-line" transform="translate(0,0)">
+        <line x1="-317" y1="-45" x2="-317" y2="45"/>
+      </g>
+      <g class="lini-node lini-shoulder lini-line" transform="translate(0,0)">
+        <line x1="-303" y1="-45" x2="-303" y2="45"/>
+      </g>
+      <g class="lini-node lini-shoulder lini-line" transform="translate(0,0)">
+        <line x1="-283" y1="-50" x2="-283" y2="50"/>
+      </g>
+      <g class="lini-node lini-shoulder lini-line" transform="translate(0,0)">
+        <line x1="344" y1="-50" x2="344" y2="50"/>
       </g>
       <g class="lini-node lini-breakline lini-line" transform="translate(0,0)">
         <polyline points="180,-54 180,-9 184.5,-1.35 175.5,1.35 180,9 180,54"/>

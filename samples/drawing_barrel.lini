@@ -13,7 +13,7 @@
   draw: move(-242.5, 0) up(21) chamfer(1.5) right(38):thread :tl right(32):land
         up(1.5):sh1 right(14):port down(4):sh2 right(7):groove up(4):sh3
         right(10):collar up(2.5) right(384):tube chamfer(1.5) down(25);
-  mirror: x-axis; break: 90 165;
+  revolve: x-axis; break: 90 165;
 } [
   |hole#m8| { width: 8; translate: -45 0; pattern: grid(3, 1, 115, 0); }
 ]

@@ -1,0 +1,25 @@
+// A stepped shaft — the `revolve:` edge-line law [SPEC 15.3]: every sharp
+// diameter change draws its full line to the axis twin — the shoulder, the
+// groove lips, the chamfers' edge circles — while the filleted step root
+// (tangent) draws none. The centre bore is `|hidden|` interior geometry,
+// dashed on its own child [SPEC 15.7].
+
+{
+  layout: drawing; scale: 3; unit: "mm";
+  |hidden| |centerline| { stroke: none }         // the bore's own axis — the shaft's serves
+}
+
+|sketch#shaft| {
+  draw: move(-60, 0) up(12) chamfer(1.5) right(50) down(3) right(6):groove up(3)
+        right(30) down(4) fillet(3):r1 right(34) chamfer(1) down(8);
+  revolve: x-axis;
+} [
+  |hidden#bore| {                                // a ⌀5 centre bore, 12 deep
+    draw: move(60, 2.5) left(12) line(-5, -2.5);
+    mirror: x-axis;
+  }
+]
+
+shaft:left (-) shaft:right { side: bottom }      // → 120 mm
+shaft:groove (o) { side: left }                  // → ⌀18 — the groove root
+shaft:r1 (o)                                     // → R3 — the step fillet

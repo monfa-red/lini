@@ -664,11 +664,11 @@ mod tests {
     }
 
     #[test]
-    fn a_mirrored_station_span_reads_true_across_a_break() {
+    fn a_revolved_station_span_reads_true_across_a_break() {
         // The ⌀ station reading reflects on the model, so a break never
         // narrows it [SPEC 15.6].
         let l = laid(
-            "{ layout: drawing; scale: 1 }\n|sketch#bar| { draw: move(-150, 0) up(10) right(40):thread right(260) down(10); mirror: x-axis; break: -80 60 }\nbar:thread (o) { side: left }\n",
+            "{ layout: drawing; scale: 1 }\n|sketch#bar| { draw: move(-150, 0) up(10) right(40):thread right(260) down(10); revolve: x-axis; break: -80 60 }\nbar:thread (o) { side: left }\n",
         );
         text_at(&l.nodes, "⌀20");
     }

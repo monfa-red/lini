@@ -1,5 +1,6 @@
 ---
 source: tests/conformance.rs
+assertion_line: 40
 expression: svg
 input_file: samples/drawing_tiebar.lini
 ---
@@ -23,6 +24,12 @@ input_file: samples/drawing_tiebar.lini
       <path d="M -228 -30 L 37.5 -30 L 42 -25.5 L 42 0 L 42 25.5 L 37.5 30 L -228 30 M -240 30 L -330 30 L -445.5 30 L -450 25.5 L -450 0 L -450 -25.5 L -445.5 -30 L -330 -30 L -240 -30" fill-rule="evenodd"/>
       <g class="lini-node lini-centerline lini-line" transform="translate(0,0)">
         <line x1="-454" y1="0" x2="46" y2="0"/>
+      </g>
+      <g class="lini-node lini-shoulder lini-line" transform="translate(0,0)">
+        <line x1="-445.5" y1="-30" x2="-445.5" y2="30"/>
+      </g>
+      <g class="lini-node lini-shoulder lini-line" transform="translate(0,0)">
+        <line x1="37.5" y1="-30" x2="37.5" y2="30"/>
       </g>
       <g class="lini-node lini-breakline lini-line" transform="translate(0,0)">
         <polyline points="-240,-34 -240,-9 -235.5,-1.35 -244.5,1.35 -240,9 -240,34"/>

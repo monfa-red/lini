@@ -1,5 +1,6 @@
 ---
 source: tests/conformance.rs
+assertion_line: 40
 expression: svg
 input_file: samples/drawing_pump.lini
 ---
@@ -36,11 +37,20 @@ input_file: samples/drawing_pump.lini
         <g class="lini-node lini-centerline lini-line" transform="translate(0,0)">
           <line x1="-364" y1="0" x2="364" y2="0"/>
         </g>
+        <g class="lini-node lini-shoulder lini-line" transform="translate(0,0)">
+          <line x1="-120" y1="-116" x2="-120" y2="116"/>
+        </g>
+        <g class="lini-node lini-shoulder lini-line" transform="translate(0,0)">
+          <line x1="120" y1="-116" x2="120" y2="116"/>
+        </g>
       </g>
       <g class="lini-node lini-steel lini-sketch" data-id="nozzle" style="stroke: #444; stroke-width: 2" transform="translate(220,44.25)">
         <path d="M 0 0 L 0 -48 L 160 -48 L 160 -32 L 240 -32 L 240 0 L 240 32 L 160 32 L 160 48 L 0 48 Z" fill-rule="evenodd"/>
         <g class="lini-node lini-centerline lini-line" transform="translate(0,0)">
           <line x1="-4" y1="0" x2="244" y2="0"/>
+        </g>
+        <g class="lini-node lini-shoulder lini-line" transform="translate(0,0)">
+          <line x1="160" y1="-48" x2="160" y2="48"/>
         </g>
       </g>
       <g class="lini-node lini-balloon lini-oval" data-id="b1" transform="translate(-340,-155.75)">

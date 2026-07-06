@@ -223,6 +223,15 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             n("stroke-width", 1.0),
             id("fill", "none"),
         ],
+        // Hidden interior geometry [SPEC 15.7]: a dashed, unfilled pen profile
+        // on its own child — the one-node-one-stroke-style law. Thin, like the
+        // hidden-edge convention. (`|shoulder|`, the revolve’s edge line, is a
+        // real visible edge and keeps the |line| base's geometry weight.)
+        "hidden" => vec![
+            id("stroke-style", "dashed"),
+            n("stroke-width", 1.0),
+            id("fill", "none"),
+        ],
         // A frame: a dashed, rounded rectangle around a span of messages. `padding` insets
         // the border from the messages it spans (vertical) and the lifelines (horizontal).
         "loop" | "opt" | "alt" => vec![

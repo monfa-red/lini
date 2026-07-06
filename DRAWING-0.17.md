@@ -58,10 +58,13 @@ Scope: the `|page|` sheet container, `|title-block|`, `|hidden|` geometry,
    axis, a line to its mirrored twin, perpendicular to the axis; a span
    coincident with a drawn profile segment is skipped. Fillets are tangent →
    no line; a chamfer keeps two sharp vertices → its two edge circles; a
-   step completes itself; a groove draws its lips. Lowered as **`|edge|`**
-   chrome children — **geometry weight** (they are real visible edges), the
-   first thick chrome — cascade-removable like all generated children. Edge
-   lines live in the sketch frame, so they ride `break:` like features.
+   step completes itself; a groove draws its lips. Lowered as **`|shoulder|`**
+   chrome children (*amended 2026-07-06 in stage 1*: `|edge|` collided with
+   `hero.lini`'s `|edge::box|` define — "edge" is the graph word and no
+   built-in may claim it) — **geometry weight** (they are real visible
+   edges), the first thick chrome — cascade-removable like all generated
+   children. Edge lines live in the sketch frame, so they ride `break:` like
+   features.
 7. **`revolve:` and `mirror:` are exclusive** on one sketch (error; relax
    later if a real part needs both). `mirror:` stays exactly as built, for
    flat symmetric parts, and never draws edge lines.
@@ -164,6 +167,39 @@ commit per stage; append to the execution log.
 
 Append-only, per PLAN.md's rule.
 
+- **2026-07-06 — stage 1 landed** (same session; all suites green — 735
+  tests — clippy silent, fmt clean; shaft / tie bar / pump / barrel
+  PNG-rendered via resvg at `--bake-vars` and inspected). What shipped, and
+  what stages 2–3 must know:
+  - **`|edge|` → `|shoulder|`.** The planned chrome type name collided
+    immediately: `samples/hero.lini` defines `|edge::box|`, and "edge" is
+    *the* graph word in a diagram language — a built-in may not claim it.
+    Renamed to `|shoulder|` (the machining word; the SPEC prose already
+    called them shoulder lines). Ledger 6 stands otherwise; SPEC 8 / 15.3 /
+    15.7 / DRAWING-0.17 updated.
+  - **The edge law lives in `layout/drawing/edges.rs`**: sharp vertices from
+    the folded, scaled, break-clipped subpaths (open run ends and stitched
+    break cuts are not joints; arc tangents from `arc_center`, cubic
+    tangents from the control polygon); same-station dedup at the widest
+    span; the coverage skip merges the profile's own perpendicular straight
+    segments. Desugar seeds **one** `|shoulder|` chrome child
+    (`chrome: edges`); `edges::fill` clones it per span — the pattern-carrier
+    play, so the cascade's resolved style rides every line and
+    `|sketch| |shoulder| { stroke: none }` removes them (test pins it).
+  - **`revolve:`** parses in the pen (`x-axis` / `y-axis` only; exclusive
+    with `mirror:`; folds via the same `geometry::mirror` — one mechanism);
+    `Folded` / `SketchGeo` carry `revolved` + the spans. The ⌀ station and
+    bare full-span readings now error on mirror-only profiles ("a station
+    '⌀' reads a revolved profile — 'revolve: x-axis'"); the unary `(<)`
+    stays valid on both.
+  - Samples: tie bar (segment renamed `:thread` → `:m20`, per SPEC 24),
+    pump, and barrel migrated to `revolve:` — every shoulder, chamfer edge
+    circle, and groove lip now draws its full line, matching Abbas's
+    reference sheets; `drawing_shaft.lini` is the law's showpiece (root
+    fillet R3 draws nothing, the sharp step completes itself, a `|hidden|`
+    centre bore rides the `[ ]`, its redundant centerline removed by the
+    cascade in the stylesheet). Tie bar matches SPEC 24 fully only after
+    stage 2 adds `thread:`.
 - **2026-07-06 — stage 0 landed** (same session as the design). SPEC 15 amended
   per the ledger: SPEC 8 gained eight template rows (`|hidden|`, `|edge|`,
   `|page|`, `|title-block|`, `|frame|`, `|zone|`, `|tick|`); 15.3 gained the

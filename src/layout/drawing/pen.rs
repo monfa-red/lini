@@ -45,6 +45,12 @@ pub struct Folded {
         reason = "asserted against desugar's openness check in tests"
     )]
     pub fused: bool,
+    /// Whether the profile is a `revolve:` — the `⌀` readings gate on it
+    /// [SPEC 15.6], and the edge lines below exist only then.
+    pub revolved: bool,
+    /// The revolve's edge-line spans [SPEC 15.3] — displayed (scaled,
+    /// break-clipped) point pairs the `|shoulder|` chrome is cloned from.
+    pub edges: Vec<(P, P)>,
 }
 
 /// Fold a `|sketch|`'s `draw:` (+ `mirror:`) into its geometry, at the node's
@@ -78,6 +84,19 @@ pub fn fold(inst: &ResolvedInst, scale: f64) -> Result<Folded, Error> {
 
     let mut mirror_axes = Vec::new();
     let mut fused = false;
+    let mut revolve = None;
+    if let Some(v) = inst.attrs.get("revolve") {
+        if inst.attrs.get("mirror").is_some() {
+            return Err(Error::at(
+                span,
+                "a sketch takes 'revolve:' or 'mirror:', not both",
+            ));
+        }
+        let axis = parse_revolve(v, span)?;
+        fused |= geometry::mirror(&mut subs, axis);
+        mirror_axes.push(axis);
+        revolve = Some(axis);
+    }
     if let Some(v) = inst.attrs.get("mirror") {
         for axis in parse_mirror(v, span)? {
             fused |= geometry::mirror(&mut subs, axis);
@@ -91,6 +110,10 @@ pub fn fold(inst: &ResolvedInst, scale: f64) -> Result<Folded, Error> {
         }
     }
     let (view, cuts) = super::breaks::apply(inst, &mut subs, scale, span)?;
+    let edges = match revolve {
+        Some(axis) => super::edges::spans(&subs, axis),
+        None => Vec::new(),
+    };
 
     let d = to_d(&subs);
     Ok(Folded {
@@ -102,7 +125,19 @@ pub fn fold(inst: &ResolvedInst, scale: f64) -> Result<Folded, Error> {
         view,
         cuts,
         fused,
+        revolved: revolve.is_some(),
+        edges,
     })
+}
+
+/// `revolve:` → its axis [SPEC 15.3]: `x-axis` or `y-axis`, nothing else — a
+/// lathe turns about a cardinal axis of its profile.
+fn parse_revolve(v: &ResolvedValue, span: Span) -> Result<MirrorAxis, Error> {
+    match v {
+        ResolvedValue::Ident(s) if s == "x-axis" => Ok(MirrorAxis { bearing: 90.0 }),
+        ResolvedValue::Ident(s) if s == "y-axis" => Ok(MirrorAxis { bearing: 0.0 }),
+        _ => Err(Error::at(span, "'revolve' takes x-axis or y-axis")),
+    }
 }
 
 /// The built-in anchor names an authored `:segment` may not shadow [SPEC 15.2].

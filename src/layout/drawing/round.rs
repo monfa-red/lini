@@ -75,9 +75,10 @@ pub(super) fn lower(
                 ctx, &a, c, *r, &w.attrs, text, &paint, w.span,
             ))
         }
-        // A mirrored `:segment` — the station's span across the axis, stacked.
+        // A revolved `:segment` — the station's span across the axis, stacked.
         // The reflection happens on the **model** (the axis mirrors the
-        // unbroken profile); display maps each end through any break.
+        // unbroken profile); display maps each end through any break. A merely
+        // mirrored profile's span is a width, not a diameter [SPEC 15.6].
         Spot::Segment(Segment::Edge(..) | Segment::Point(..)) => {
             let m = a.unmap_local(a.local_point());
             let axis = a
@@ -89,6 +90,12 @@ pub(super) fn lower(
                 })
                 .copied()
                 .ok_or_else(no_axis)?;
+            if !a.revolved() {
+                return Err(Error::at(
+                    w.span,
+                    "a station '\u{2300}' reads a revolved profile — 'revolve: x-axis'",
+                ));
+            }
             let twin = reflect_point(m, axis.dir());
             station(
                 ctx,
@@ -126,7 +133,7 @@ pub(super) fn lower(
             let text = compose(Glyph::Dia, d / ctx.scale)?;
             Ok(diametral(centre_of(&a), d / 2.0, dir, text, &paint))
         }
-        // Bare: a round node reads its ⌀ onto the rim; a mirrored sketch its
+        // Bare: a round node reads its ⌀ onto the rim; a revolved sketch its
         // full span across the axis; anything else can't pick an axis.
         Spot::Origin | Spot::Center => {
             if let Some(d) = a.round_diameter() {
@@ -144,6 +151,12 @@ pub(super) fn lower(
                 ));
             }
             let axis = a.mirrors().first().copied().ok_or_else(no_axis)?;
+            if !a.revolved() {
+                return Err(Error::at(
+                    w.span,
+                    "a station '\u{2300}' reads a revolved profile — 'revolve: x-axis'",
+                ));
+            }
             let g = a.geometry_box();
             let (cx, cy) = ((g.min_x + g.max_x) / 2.0, (g.min_y + g.max_y) / 2.0);
             let perp = {

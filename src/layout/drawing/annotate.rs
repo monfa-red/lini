@@ -491,11 +491,23 @@ mod tests {
     }
 
     #[test]
-    fn a_mirrored_name_spans_its_station_across_the_axis() {
+    fn a_revolved_name_spans_its_station_across_the_axis() {
         let l = laid(
-            "{ layout: drawing; scale: 2 }\n|sketch#bar| { draw: move(-150, 0) up(10) right(40):thread right(260) down(10); mirror: x-axis }\nbar:thread (o) { side: left; tol: h6 }\n",
+            "{ layout: drawing; scale: 2 }\n|sketch#bar| { draw: move(-150, 0) up(10) right(40):thread right(260) down(10); revolve: x-axis }\nbar:thread (o) { side: left; tol: h6 }\n",
         );
         text_at(&l.nodes, "⌀20 h6");
+    }
+
+    #[test]
+    fn a_station_diameter_requires_a_revolve() {
+        // A merely mirrored profile's span is a width, not a diameter
+        // [SPEC 15.6] — the reading asks for the revolve.
+        assert_eq!(
+            layout_err(
+                "{ layout: drawing; scale: 2 }\n|sketch#bar| { draw: move(-150, 0) up(10) right(40):thread right(260) down(10); mirror: x-axis }\nbar:thread (o) { side: left }\n"
+            ),
+            "a station '⌀' reads a revolved profile — 'revolve: x-axis'"
+        );
     }
 
     #[test]

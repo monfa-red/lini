@@ -787,7 +787,7 @@ the cascade ([SPEC 4](#4-selectors-cascade--specificity)) — every value here i
 | `\|pitch-circle\|` | `\|oval\|` | `stroke-style: center; stroke: --stroke-light; stroke-width: 1; fill: none` — `width:` **required**, the diameter | The dash-dot bolt circle; round, so a `(o)` reads its PCD ([SPEC 15.7](#157-leaders-notes--line-conventions)). |
 | `\|breakline\|` | `\|line\|` | `stroke: --stroke-light; stroke-width: 1; fill: none` — needs `points:` | A break cut's edge — the thin jogged line a `break:` generates ([SPEC 15.3](#153-the-sketch-pen)); manual use is free. |
 | `\|hidden\|` | `\|sketch\|` | `stroke-style: dashed; stroke-width: 1; fill: none` — needs `draw:` | **Hidden edges** — interior geometry on its own dashed child, per the one-node-one-stroke-style law ([SPEC 15.7](#157-leaders-notes--line-conventions)). |
-| `\|edge\|` | `\|line\|` | `stroke: --stroke; stroke-width: 2; fill: none` — needs `points:` | A turned part's **shoulder line** — the geometry-weight edge a `revolve:` generates at every sharp diameter change ([SPEC 15.3](#153-the-sketch-pen)); manual use is free. |
+| `\|shoulder\|` | `\|line\|` | `stroke: --stroke; stroke-width: 2; fill: none` — needs `points:` | A turned part's **shoulder line** — the geometry-weight edge a `revolve:` generates at every sharp diameter change ([SPEC 15.3](#153-the-sketch-pen)); manual use is free. |
 | `\|page\|` | `\|block\|` | `layout: flow; scale: 4; fill: --bg` — `sheet: a4` unless sized | An ISO 5457 drawing **sheet** — mm dimensions via `sheet:`, `scale:` px per mm; frame, zones, and centring marks as generated chrome ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `\|title-block\|` | `\|table\|` | `font-size: 11; stroke-width: 1` | The ISO 7200 **title block** — a table the `\|page\|` seats flush inside its frame's bottom-right corner ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `\|frame\|` | `\|rect\|` | `fill: none; stroke: --stroke; stroke-width: 2` | A sheet's **frame** — the thick border a `\|page\|` generates at the ISO margins ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
@@ -2234,7 +2234,7 @@ axis — draw the half, get the whole, plus the axis `|centerline|` — and adds
 lathe part's side view owes drafting: the **edge lines**. Every sharp circular edge —
 a shoulder, a groove lip, a chamfer's two edge circles — projects to a straight line
 across the diameter, so at every profile vertex where two segments meet with a
-**tangent break**, off the axis, a generated `|edge|` line (geometry weight — these
+**tangent break**, off the axis, a generated `|shoulder|` line (geometry weight — these
 are real visible edges, [SPEC 8](#8-templates)) runs perpendicular to the axis to
 the vertex's reflected twin; a span the profile already draws whole is skipped, and
 vertices sharing a station draw once, at the widest span. A `fillet()` joins
@@ -2559,7 +2559,7 @@ circle; being round, `bc (o)` reads its PCD). A manual `|pitch-circle|` covers w
 | Producer | Generates |
 |---|---|
 | a **fused** `mirror:` ([15.3](#153-the-sketch-pen)) | the axis `\|centerline\|`, overhanging the profile |
-| a `revolve:` ([15.3](#153-the-sketch-pen)) | the axis `\|centerline\|` + the `\|edge\|` shoulder lines at every sharp diameter change |
+| a `revolve:` ([15.3](#153-the-sketch-pen)) | the axis `\|centerline\|` + the `\|shoulder\|` edge lines at every sharp diameter change |
 | a `thread:` ([15.3](#153-the-sketch-pen), [15.4](#154-features-holes--patterns)) | the thin minor line + the thread-end line; on a round view, the ¾ thread arc |
 | `pattern: radial` ([15.4](#154-features-holes--patterns)) | the `\|pitch-circle\|` through the copies |
 | a `\|hole\|` | its centre-mark crosshair |
@@ -2664,7 +2664,7 @@ properties are the core ones.
 | `unit` | `\|drawing\|` | quoted string | suffix on auto-measured values only |
 | `draw` | `\|sketch\|` | pen calls + `:segment`s | **required** ([15.3](#153-the-sketch-pen)) |
 | `mirror` | `\|sketch\|` | list of `x-axis` / `y-axis` / bearing | reflect + union, left to right |
-| `revolve` | `\|sketch\|` | `x-axis` / `y-axis` | a solid of revolution — fused fold + the `\|edge\|` lines; exclusive with `mirror:` ([15.3](#153-the-sketch-pen)) |
+| `revolve` | `\|sketch\|` | `x-axis` / `y-axis` | a solid of revolution — fused fold + the `\|shoulder\|` lines; exclusive with `mirror:` ([15.3](#153-the-sketch-pen)) |
 | `thread` | `\|sketch\|` · `\|hole\|` / round geometry | `seg pitch` groups · `pitch` | ISO 6410 dressing — minor + thread-end lines; the ¾ arc ([15.3](#153-the-sketch-pen), [15.4](#154-features-holes--patterns)) |
 | `sheet` | `\|page\|` | `a5…a0 [portrait \| landscape]` | trimmed-size sugar → `width` / `height` in mm ([15.8](#158-assemblies-views-sheets--titles)) |
 | `break` | `\|sketch\|` | `a b [axis]` groups | cut the view between stations; longer axis default ([15.3](#153-the-sketch-pen)) |
@@ -2796,7 +2796,7 @@ Read on the listed primitive; required where noted ([SPEC 7](#7-nodes)).
 | `marker` · `marker-start` · `marker-end` | `\|line\|`, links | see [SPEC 7](#7-nodes) | endpoint / vertex glyphs; from the operator on a link. |
 | `draw` | `\|sketch\|` | pen calls + `:segment`s | **required** ([SPEC 15.3](#153-the-sketch-pen)). |
 | `mirror` | `\|sketch\|` | `x-axis` / `y-axis` / bearing list | reflect + union ([SPEC 15.3](#153-the-sketch-pen)). |
-| `revolve` | `\|sketch\|` | `x-axis` / `y-axis` | solid of revolution — fused fold + `\|edge\|` lines ([SPEC 15.3](#153-the-sketch-pen)). |
+| `revolve` | `\|sketch\|` | `x-axis` / `y-axis` | solid of revolution — fused fold + `\|shoulder\|` lines ([SPEC 15.3](#153-the-sketch-pen)). |
 | `thread` | `\|sketch\|` `\|hole\|` round geometry | `seg pitch, …` · `pitch` | ISO 6410 thread dressing ([SPEC 15.3](#153-the-sketch-pen), [SPEC 15.4](#154-features-holes--patterns)). |
 | `sheet` | `\|page\|` | `a5…a0 [portrait \| landscape]` | trimmed-size sugar → `width` / `height` in mm ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `break` | `\|sketch\|` | `a b [axis]` groups | cut the view between stations ([SPEC 15.3](#153-the-sketch-pen)). |

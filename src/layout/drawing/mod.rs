@@ -13,6 +13,7 @@ pub(crate) mod chrome;
 mod compose;
 mod corner;
 mod dims;
+pub(crate) mod edges;
 mod engine;
 pub(crate) mod geometry;
 mod leaders;
@@ -37,6 +38,9 @@ use geometry::P;
 pub struct SketchGeo {
     pub segments: Vec<(String, Segment)>,
     pub mirrors: Vec<geometry::MirrorAxis>,
+    /// Whether the profile is a `revolve:` — the `⌀` station readings gate on
+    /// it ([SPEC 15.6]; a merely mirrored span is a width, not a diameter).
+    pub revolved: bool,
     pub outline: Vec<geometry::Subpath>,
     pub view: breaks::ViewMap,
 }
