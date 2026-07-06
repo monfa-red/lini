@@ -2436,12 +2436,14 @@ bolt <- [ "R3 TYP" { translate: 30 -24 } ]  // a styled / nudged text — the co
   error; a one-ended `->` / `-*` errors the other way — a leader points *back* at its
   feature. A label-terminated statement is single-hop; fan leaders are deferred
   ([SPEC 23](#23-deferred)).
-- **Text placement.** The text auto-places **outward** — along the ray from the
-  drawing's datum through the feature, just past the geometry union (`note-offset`),
-  horizontal — and the leader ends in a short horizontal **landing** (`note-landing`)
-  before it, the drafting elbow. `side:` picks the direction instead (a side or a
-  corner); a styled label's `translate` nudges from there. The tip ray-casts onto the
-  drawn outline ([15.2](#152-anchors)).
+- **Text placement.** The text auto-places **outward**: a **directed** feature's
+  leader leaves straight off its face — along the surface normal — while a point
+  feature's runs along the ray from the drawing's datum through it; either way just
+  past the geometry union (`note-offset`), horizontal — and the leader ends in a
+  short horizontal **landing** (`note-landing`) before it, the drafting elbow.
+  `side:` picks the direction instead (a side or a corner); a styled label's
+  `translate` nudges from there. The tip ray-casts onto the drawn outline
+  ([15.2](#152-anchors)).
 - **The leader makes the note.** A callout's text lowers to a bare leaf — drafting
   callouts are unboxed. A **boxed** note is the `|note|` template
   ([SPEC 8](#8-templates)) wired with an ordinary two-ended link; a **balloon** is

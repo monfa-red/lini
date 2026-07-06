@@ -133,12 +133,12 @@ input_file: samples/drawing_barrel.lini
     </g>
     <text class="lini-text" x="-637.4" y="-93.5" style="font-weight: normal; font-size: 11px">M42×1.5</text>
     <g class="lini-node lini-dim-line lini-line" transform="translate(0,0)">
-      <polyline points="-565.5,-69 -727.5211,-81.0501 -735.5211,-81.0501"/>
+      <polyline points="-565.5,-69 -565.5,-93.5 -557.5,-93.5"/>
     </g>
     <g class="lini-node lini-marker lini-marker-datum lini-poly" transform="translate(0,0)">
       <polygon points="-562.5,-63 -568.5,-63 -565.5,-69"/>
     </g>
-    <text class="lini-text" x="-740.8211" y="-81.0501" style="font-weight: normal; font-size: 11px">A</text>
+    <text class="lini-text" x="-552.2" y="-93.5" style="font-weight: normal; font-size: 11px">A</text>
     <g class="lini-node lini-ext-line lini-line" transform="translate(0,0)">
       <line x1="-568.5" y1="-63" x2="-753" y2="-63"/>
     </g>

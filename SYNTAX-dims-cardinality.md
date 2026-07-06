@@ -92,6 +92,28 @@ spellings for ER cardinality markers" deferral (now built); the existing
 Glyph shape = meaning: `*` solid, `o` hollow. Min-zero renders hollow, per the
 crow's-foot standard.
 
+### 6. `(-)` also selects all dimensions — a subtype of `|-|`
+
+Parallels `|-| { }` (all links). A dimension's type chain is **`|-|` → `(-)`**
+(dimension is a link subtype), so the cascade gives both behaviours for free:
+
+- `|-| { }` still reaches dimensions (the broad link look — stroke, color).
+- `(-) { }` overrides **for dimensions only** (type cascade tier 1, the more
+  specific type wins), decoupling dimension styling from link/leader styling.
+
+`(-)` is the **sole** dimension selector — the whole family, all three ops
+(`(-)`/`(o)`/`(<)`), exactly as `|-|` is the one selector for every link op
+(`->`/`<->`/`-*`). It is *not* "linear only": in selector position the type is
+"dimension"; linear/round/angular are op variations of that one type, not
+distinct types (mirroring `->` vs `<->` under `|-|`). The stylesheet-vs-canvas
+section rule disambiguates it from the linear operator, exactly as `|box| .hot`
+is a rule in the stylesheet and an instance on the canvas (SPEC 4). Per-kind
+dim selectors (`(o) { }`, `(<) { }`) are **deferred** — one family selector
+avoids three near-identical heads.
+
+Leaders (`<-`/`*-`/`>-`) stay under `|-|` — the "link/leader" bucket; a
+leader-specific selector is deferred (YAGNI).
+
 ## Lexing / grammar deltas (SPEC 21, 2)
 
 - `draw_op = "||" | "(-)" | "(o)" | "(<)"` — add `(o)` as a free-standing
@@ -104,9 +126,15 @@ crow's-foot standard.
 - One-ended relaxation list updates: `(o)` is unary-only (the slot old `(-)`
   held); `(-)` now requires both ends; `(<)` binary or unary as before.
 - `(>)` stays reserved (unchanged).
+- `sel_unit` gains `(-)` — a dimension-family selector at stylesheet
+  statement-head (a leading `(` is unambiguous there; calls only appear in
+  value position). Selector-only, like `|-|`; dimension is a `|-|` subtype in
+  the type cascade.
 
 ## SPEC.md sections to edit
 
+- **4 Selectors & Cascade** — `(-)` as a `sel_unit`; dimension is a `|-|`
+  subtype in the type cascade (tier 1).
 - **9 Links** — operator table: add `+`, `o`; the `[min][max]` cardinality
   rule; note `<->` etc. are plain links everywhere.
 - **7 Nodes / Markers** — the cardinality set now has operator spellings;
@@ -126,7 +154,8 @@ crow's-foot standard.
 
 1. **Lexer** — `(o)` op token; `o`/`+` markers with the sandwiched-`o` rule.
 2. **Parser / AST** — `(-)`→linear binary, `(o)`→round unary; cardinality
-   `LinkMarker` composition (min/max → the existing marker set).
+   `LinkMarker` composition (min/max → the existing marker set); `(-)` as a
+   `sel_unit` + the `|-|`→`(-)` type chain in the cascade.
 3. **Dims engine** — rewire `round.rs` / `dims.rs` to the new op assignment
    (`(-)` binary linear moves into the `<->` path; `(o)` takes round).
 4. **Cardinality lowering** — `-o<` etc. → `crow`/`one`/`zero-or-*` markers.

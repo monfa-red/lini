@@ -25,9 +25,11 @@ struct LeaderLine {
     sx: f64,
 }
 
-/// Build the leader skeleton toward `aim` (world). The text direction is the
-/// ray from the drawing's **datum** through the feature — or `side:`'s — and
-/// the text clears the geometry union by `NOTE_OFFSET` [SPEC 15.7]. The tip:
+/// Build the leader skeleton toward `aim` (world). The text direction is
+/// `side:`'s; else a **directed** feature's surface normal (the leader
+/// leaves a face straight off it, then the elbow — the drafting default); a
+/// point feature's is the ray from the drawing's **datum** through it. The
+/// text clears the geometry union by `NOTE_OFFSET` [SPEC 15.7]. The tip:
 /// `exact` lands as given (an arc's own point); `circle` intersects
 /// analytically; otherwise the ray casts onto the node's drawn outline.
 fn leader_line(
@@ -38,17 +40,29 @@ fn leader_line(
     exact: Option<P>,
     circle: Option<(P, f64)>,
 ) -> LeaderLine {
-    let u = dir_override.unwrap_or_else(|| {
-        let len = dist(aim, (0.0, 0.0));
-        if len > 1e-6 {
-            (aim.0 / len, aim.1 / len)
-        } else {
-            // A feature on the datum has no outward ray — drafting's default
-            // leader runs up-right.
-            let d = std::f64::consts::FRAC_1_SQRT_2;
-            (d, -d)
-        }
-    });
+    let u = dir_override
+        .or_else(|| {
+            // The normal's axis comes from the surface; its sign points away
+            // from the datum — an edge authored material-on-the-left reports
+            // `outward` into the part.
+            let n = anchor.outward()?;
+            Some(if n.0 * aim.0 + n.1 * aim.1 < 0.0 {
+                (-n.0, -n.1)
+            } else {
+                n
+            })
+        })
+        .unwrap_or_else(|| {
+            let len = dist(aim, (0.0, 0.0));
+            if len > 1e-6 {
+                (aim.0 / len, aim.1 / len)
+            } else {
+                // A feature on the datum has no outward ray — drafting's
+                // default leader runs up-right.
+                let d = std::f64::consts::FRAC_1_SQRT_2;
+                (d, -d)
+            }
+        });
     let t_exit = outline::exit_box(aim, u, ctx.extent);
     let elbow = (
         aim.0 + u.0 * (t_exit + NOTE_OFFSET),

@@ -842,3 +842,14 @@ deviated from this plan and **why**, open threads for the next session.
     placement (arrows out, value on the line) stays a future knob — the
     side-anchored diametral already covers the fits-inside case. Ledger 3
     annotated; SPEC 15.6's table row reworded.
+
+- **2026-07-05 — leaders leave straight off the face** (Abbas's catch: the
+  datum "A" ran a steep diagonal to the top-left — the auto direction was
+  always the datum-ray). The default leader direction for a **directed**
+  feature (a side, a named edge) is now its **surface normal**,
+  sign-corrected away from the datum — straight off the face, then the
+  horizontal elbow, exactly what `side: top` spelled by hand (the samples'
+  explicit `side: top` steers are now redundant but stay as documentation).
+  Point features (holes, origins, arcs) keep the datum-ray; `side:` still
+  overrides everything. SPEC 15.7's placement rule reworded; the seated
+  datum's test pins the vertical rise.

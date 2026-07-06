@@ -587,6 +587,20 @@ mod tests {
             "base on the bottom face: {pts:?}"
         );
         assert!(pts[2].1 > 15.0, "apex out along the normal: {pts:?}");
+        // …and its leader leaves straight off the face — vertical to the
+        // elbow, then the horizontal landing [SPEC 15.7].
+        let line = l
+            .nodes
+            .iter()
+            .find(|n| n.type_chain.iter().any(|t| t == "dim-line"))
+            .expect("the datum leader");
+        let lp = crate::layout::primitives::attr_points(&line.attrs, "points", line.span)
+            .unwrap()
+            .unwrap();
+        assert!(
+            (lp[0].0 - lp[1].0).abs() < 1e-6,
+            "straight off the surface: {lp:?}"
+        );
         // A point-anchored datum keeps the core marker, oriented by the line.
         let l = laid(
             "{ layout: drawing; scale: 1 }\n|oval#pin| { width: 20; height: 20 }\npin >- \"B\"\n",
