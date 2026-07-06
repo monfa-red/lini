@@ -853,3 +853,26 @@ deviated from this plan and **why**, open threads for the next session.
   Point features (holes, origins, arcs) keep the datum-ray; `side:` still
   overrides everything. SPEC 15.7's placement rule reworded; the seated
   datum's test pins the vertical rise.
+
+- **2026-07-05 — dim polish round** (Abbas's three catches on his re-cut
+  barrel; all gates green — 727 tests — clippy silent, fmt clean; barrel at
+  scale 2 + a `side: top` probe PNG-inspected):
+  - **"14·7 read as 147"**: the narrow-span flip moved arrows *and* value
+    outside, so adjacent flipped chain hops overlapped their texts. Now
+    three regimes (SPEC 15.6): everything inside; arrows out, **value
+    centred inside** while the bare text still fits (`tw + 4 ≤ span` —
+    drafting's middle form, what the chain needed); only a span too tight
+    even for the text slides it past the nearer line.
+  - **Rows dodge callout texts**: `side: top` seated the 485 on top of the
+    M42/A/M8 leader texts — the packer only knew other dims. Not routing:
+    leaders/callouts/angles lower **first** (they are feature-anchored) and
+    their text boxes register as **obstacles** in `Rows`; a candidate row
+    whose band (line + the value riding above it) intersects one is
+    skipped. Output keeps source order; `(-)` leader texts obstruct
+    later dims too. This closes most of the stage-4 "leaders aren't
+    collision-packed" thread from the dim side; leaders themselves still
+    place deterministically.
+  - **Slender arrows**: 9×3 → **10.5×3.5** (still 3:1, SPEC 10.5), and the
+    dim line now stops `2·stroke-width` short of each tip — a butt-capped
+    stroke ending exactly at the tip blunted it (same fix links carry).
+    The diametral line and R-leaders trim the same way.

@@ -58,13 +58,13 @@ input_file: samples/drawing_pump.lini
         <line x1="560" y1="3" x2="560" y2="138"/>
       </g>
       <g class="lini-node lini-dim-line lini-line" transform="translate(-100,44.25)">
-        <line x1="-360" y1="135" x2="560" y2="135"/>
+        <line x1="-358" y1="135" x2="558" y2="135"/>
       </g>
       <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(-100,44.25)">
-        <polygon points="-360,135 -351,133.5 -351,136.5"/>
+        <polygon points="-360,135 -349.5,133.25 -349.5,136.75"/>
       </g>
       <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(-100,44.25)">
-        <polygon points="560,135 551,136.5 551,133.5"/>
+        <polygon points="560,135 549.5,136.75 549.5,133.25"/>
       </g>
       <text class="lini-text" x="0" y="171.75" style="font-weight: normal; font-size: 11px">230</text>
       <g class="lini-node lini-dim-line lini-line" transform="translate(-100,44.25)">

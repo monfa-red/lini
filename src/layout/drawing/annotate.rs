@@ -10,7 +10,7 @@ use super::geometry::P;
 use super::{angle, dims, leaders, round};
 use crate::ast::Side;
 use crate::error::Error;
-use crate::resolve::{AttrMap, LinkKind, MeasureOp, ResolvedLink, ResolvedValue};
+use crate::resolve::{AttrMap, LinkKind, MeasureOp, NodeKind, ResolvedLink, ResolvedValue};
 
 // The dimension / leader anatomy — baked sheet constants [SPEC 10.5], never
 // scaled by the view.
@@ -18,10 +18,10 @@ pub(super) const DIM_OFFSET: f64 = 18.0;
 pub(super) const DIM_PITCH: f64 = 16.0;
 pub(super) const EXT_GAP: f64 = 3.0;
 pub(super) const EXT_OVERSHOOT: f64 = 3.0;
-/// The drafting-slender arrow, ≈ 3 : 1 [SPEC 15.6] — length × half-width, at
+/// The drafting-slender arrow, 3 : 1 [SPEC 15.6] — length × half-width, at
 /// stroke-width 1; both scale with the dim's `stroke-width`.
-pub(super) const ARROW_LEN: f64 = 9.0;
-pub(super) const ARROW_HALF: f64 = 1.5;
+pub(super) const ARROW_LEN: f64 = 10.5;
+pub(super) const ARROW_HALF: f64 = 1.75;
 pub(super) const NOTE_OFFSET: f64 = 14.0;
 pub(super) const NOTE_LANDING: f64 = 8.0;
 
@@ -98,10 +98,13 @@ impl Paint {
     }
 }
 
-/// Lower every non-mate link of a drawing scope, in source order. The
-/// returned nodes append after the geometry children, so annotations paint
-/// above it (`layer:` still wins) and the drawing's bbox includes them
-/// [SPEC 15.9].
+/// Lower every non-mate link of a drawing scope. Leaders, callouts, and
+/// angles go first — their placement is feature-anchored — and their **texts
+/// register as obstacles** with the row packer, so a dimension never seats
+/// its row on top of a callout ([SPEC 15.6]). Dims then pack in source
+/// order; the output keeps source order regardless. The returned nodes
+/// append after the geometry children, so annotations paint above it
+/// (`layer:` still wins) and the drawing's bbox includes them [SPEC 15.9].
 pub(in crate::layout) fn lower(
     kids: &[PlacedNode],
     links: &[&ResolvedLink],
@@ -117,24 +120,27 @@ pub(in crate::layout) fn lower(
         unit,
     };
     let mut rows = Rows::new(ctx.extent);
-    let mut out = Vec::new();
-    for w in links {
-        match w.kind {
-            LinkKind::Mate => {}
-            LinkKind::Measure(MeasureOp::Linear) => {
-                out.extend(dims::linear(&ctx, w, &mut rows)?);
-            }
-            LinkKind::Measure(MeasureOp::Round) => {
-                out.extend(round::lower(&ctx, w, &mut rows)?);
-            }
-            LinkKind::Measure(MeasureOp::Angle) => out.extend(angle::lower(&ctx, w)?),
-            LinkKind::Wire if w.endpoints.len() == 1 => {
-                out.extend(leaders::callout(&ctx, w)?);
-            }
-            LinkKind::Wire => out.extend(leaders::arrows(&ctx, w)?),
-        }
+    let mut outs: Vec<Vec<PlacedNode>> = vec![Vec::new(); links.len()];
+    for (i, w) in links.iter().enumerate() {
+        let nodes = match w.kind {
+            LinkKind::Measure(MeasureOp::Angle) => angle::lower(&ctx, w)?,
+            LinkKind::Wire if w.endpoints.len() == 1 => leaders::callout(&ctx, w)?,
+            LinkKind::Wire => leaders::arrows(&ctx, w)?,
+            _ => continue,
+        };
+        rows.obstruct_texts(&nodes);
+        outs[i] = nodes;
     }
-    Ok(out)
+    for (i, w) in links.iter().enumerate() {
+        let nodes = match w.kind {
+            LinkKind::Measure(MeasureOp::Linear) => dims::linear(&ctx, w, &mut rows)?,
+            LinkKind::Measure(MeasureOp::Round) => round::lower(&ctx, w, &mut rows)?,
+            _ => continue,
+        };
+        rows.obstruct_texts(&nodes);
+        outs[i] = nodes;
+    }
+    Ok(outs.into_iter().flatten().collect())
 }
 
 /// The extent dimensions stack outside of and leader texts clear: the drawn
@@ -169,6 +175,9 @@ fn geometry_extent(kids: &[PlacedNode]) -> Bbox {
 pub(super) struct Rows {
     extent: Bbox,
     placed: Vec<(Side, f64, (f64, f64))>,
+    /// World boxes a row must clear — the texts of leaders, callouts, and
+    /// angles, registered before dims pack ([SPEC 15.6]).
+    obstacles: Vec<Bbox>,
 }
 
 impl Rows {
@@ -176,6 +185,23 @@ impl Rows {
         Rows {
             extent,
             placed: Vec::new(),
+            obstacles: Vec::new(),
+        }
+    }
+
+    /// Register a lowered statement's texts as boxes the packed rows dodge.
+    fn obstruct_texts(&mut self, nodes: &[PlacedNode]) {
+        for n in nodes.iter().filter(|n| n.kind == NodeKind::Text) {
+            let mut b = Bbox {
+                min_x: f64::INFINITY,
+                min_y: f64::INFINITY,
+                max_x: f64::NEG_INFINITY,
+                max_y: f64::NEG_INFINITY,
+            };
+            super::super::accumulate_extent(n, 0.0, 0.0, 0.0, &mut b);
+            if b.min_x.is_finite() {
+                self.obstacles.push(b);
+            }
         }
     }
 
@@ -186,22 +212,56 @@ impl Rows {
             (0..)
                 .map(|k| DIM_OFFSET + k as f64 * DIM_PITCH)
                 .find(|cand| {
-                    !self.placed.iter().any(|(s, o, iv)| {
+                    let row_clash = self.placed.iter().any(|(s, o, iv)| {
                         *s == side
                             && (o - cand).abs() < DIM_PITCH - 1e-6
                             && iv.0 < interval.1 - 1e-6
                             && iv.1 > interval.0 + 1e-6
-                    })
+                    });
+                    !row_clash && !self.blocked(side, *cand, interval)
                 })
                 .expect("an offset frees up")
         });
         self.placed.push((side, off, interval));
+        self.line_at(side, off)
+    }
+
+    fn line_at(&self, side: Side, off: f64) -> f64 {
         match side {
             Side::Bottom => self.extent.max_y + off,
             Side::Top => self.extent.min_y - off,
             Side::Right => self.extent.max_x + off,
             Side::Left => self.extent.min_x - off,
         }
+    }
+
+    /// Whether a candidate row's band — the dim line plus the value riding
+    /// above it — would land on a registered obstacle.
+    fn blocked(&self, side: Side, off: f64, interval: (f64, f64)) -> bool {
+        let line_c = self.line_at(side, off);
+        // Text lift (fs/2 + 2) + half the text height above the line;
+        // overshoot below it.
+        let (lo, hi) = (line_c - 14.0, line_c + EXT_OVERSHOOT + 1.0);
+        let band = match side {
+            Side::Top | Side::Bottom => Bbox {
+                min_x: interval.0,
+                max_x: interval.1,
+                min_y: lo,
+                max_y: hi,
+            },
+            Side::Left | Side::Right => Bbox {
+                min_x: lo,
+                max_x: hi,
+                min_y: interval.0,
+                max_y: interval.1,
+            },
+        };
+        self.obstacles.iter().any(|o| {
+            o.max_x > band.min_x
+                && o.min_x < band.max_x
+                && o.max_y > band.min_y
+                && o.min_y < band.max_y
+        })
     }
 }
 
@@ -275,14 +335,26 @@ mod tests {
     }
 
     #[test]
-    fn a_narrow_span_slides_its_text_past_the_extension_line() {
-        // An 18-wide span can't hold text + arrows: the text slides right,
-        // past the higher-u extension line.
+    fn a_narrow_span_flips_arrows_out_but_keeps_a_fitting_value_inside() {
+        // An 18-wide span can't hold text + arrows, but the bare "18" still
+        // reads between the extension lines: arrows flip out, value centred
+        // inside — drafting's middle form [SPEC 15.6].
         let l = laid(
             "{ layout: drawing; scale: 1 }\n|rect#a| { width: 18; height: 10 }\na:left <-> a:right { side: bottom }\n",
         );
         let (x, _, _) = text_at(&l.nodes, "18");
-        assert!(x > 9.0, "text outside the span: x={x}");
+        assert!(x.abs() < 1e-6, "value centred inside the span: x={x}");
+    }
+
+    #[test]
+    fn a_span_too_tight_for_its_value_slides_the_text_past() {
+        // A 10-wide span can't even hold "10" — the text slides rightward,
+        // past the higher-u extension line.
+        let l = laid(
+            "{ layout: drawing; scale: 1 }\n|rect#a| { width: 10; height: 8 }\na:left <-> a:right { side: bottom }\n",
+        );
+        let (x, _, _) = text_at(&l.nodes, "10");
+        assert!(x > 5.0, "text outside the span: x={x}");
     }
 
     #[test]
@@ -671,6 +743,21 @@ mod tests {
         assert!(
             (pts[0].1 + 63.0).abs() < 1e-6 && (pts[1].1 + 63.0).abs() < 1e-6,
             "the datum base sits on the drawn surface: {pts:?}"
+        );
+    }
+
+    #[test]
+    fn a_dim_row_clears_leader_texts() {
+        // A callout's text registers as an obstacle: a dim stacked on the
+        // same side seats its row past it, never on top of it [SPEC 15.6].
+        let l = laid(
+            "{ layout: drawing; scale: 1 }\n|rect#bar| { width: 200; height: 30 }\nbar:top <- \"M42\"\nbar:left <-> bar:right { side: top }\n",
+        );
+        let (_, ty, _) = text_at(&l.nodes, "M42");
+        let (_, dy, _) = text_at(&l.nodes, "200");
+        assert!(
+            dy < ty - 8.0,
+            "the 200 climbs past the callout text: dim {dy} vs callout {ty}"
         );
     }
 

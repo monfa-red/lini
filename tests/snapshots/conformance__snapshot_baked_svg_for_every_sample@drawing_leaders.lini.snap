@@ -50,22 +50,22 @@ input_file: samples/drawing_leaders.lini
     </g>
     <text class="lini-text" x="-71.1428" y="73.7143" style="font-weight: normal; font-size: 11px">36.87°</text>
     <g class="lini-node lini-dim-line lini-line" transform="translate(0,0)">
-      <polyline points="114.7279,84.7279 132.2618,97.6769 140.2618,97.6769"/>
+      <polyline points="116.3367,85.9161 132.2618,97.6769 140.2618,97.6769"/>
     </g>
     <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,0)">
-      <polygon points="114.7279,84.7279 122.8588,88.8679 121.0765,91.2812"/>
+      <polygon points="114.7279,84.7279 124.2139,89.5579 122.1346,92.3734"/>
     </g>
     <text class="lini-text" x="148.8618" y="97.6769" style="font-weight: normal; font-size: 11px">R6</text>
     <g class="lini-node lini-dim-line lini-line" transform="translate(0,0)">
-      <line x1="60" y1="99" x2="60" y2="51"/>
+      <line x1="60" y1="97" x2="60" y2="23.2"/>
     </g>
     <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,0)">
-      <polygon points="60,51 61.5,60 58.5,60"/>
+      <polygon points="60,51 61.75,61.5 58.25,61.5"/>
     </g>
     <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,0)">
-      <polygon points="60,99 58.5,90 61.5,90"/>
+      <polygon points="60,99 58.25,88.5 61.75,88.5"/>
     </g>
-    <text class="lini-text" x="52.5" y="75" style="font-weight: normal; font-size: 11px" transform="rotate(-90 52.5 75)">⌀16</text>
+    <text class="lini-text" x="52.5" y="37.1" style="font-weight: normal; font-size: 11px" transform="rotate(-90 52.5 37.1)">⌀16</text>
     <g class="lini-node lini-dim-line lini-line" transform="translate(0,0)">
       <polyline points="0,96 0,117.5 8,117.5"/>
     </g>

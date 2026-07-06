@@ -148,13 +148,18 @@ fn plan(s: &Stacked, paint: &Paint) -> Plan {
     let arrow_len = ARROW_LEN * paint.sw;
     let tw = s.text.width(paint.fs);
     let stub = 2.0;
-    let fits = u_hi - u_lo >= 2.0 * arrow_len + tw + 6.0;
-    // A narrow span flips its arrows outside the extension lines and slides
-    // the text past the nearer one — rightward / upward, where it reads.
+    let span = u_hi - u_lo;
+    let fits = span >= 2.0 * arrow_len + tw + 6.0;
+    // A narrow span flips its arrows outside the extension lines; the value
+    // stays **inside** while it still reads there (drafting's middle form —
+    // chained narrow hops keep their numbers apart), and only a span too
+    // tight even for the bare text slides it past the nearer line.
+    let reach = arrow_len + stub;
     let (interval, text_u) = if fits {
         ((u_lo, u_hi), (u_lo + u_hi) / 2.0)
+    } else if span >= tw + 4.0 {
+        ((u_lo - reach, u_hi + reach), (u_lo + u_hi) / 2.0)
     } else {
-        let reach = arrow_len + stub;
         match s.axis {
             Axis::Horizontal => (
                 (u_lo - reach, u_hi + reach + 4.0 + tw),
@@ -205,9 +210,12 @@ fn at_row(s: Stacked, p: &Plan, line_c: f64, paint: &Paint) -> Vec<PlacedNode> {
             out.push(paint.ext(vec![pt(u(p), c0), pt(u(p), c1)]));
         }
     }
-    // The dim line (running past the span when the arrows flip outside).
+    // The dim line — stopped short of the arrow tips (a butt-capped stroke
+    // ending exactly at the tip blunts it, the same fix links carry); it runs
+    // past the span when the arrows flip outside.
+    let trim = 2.0 * sw;
     let (l0, l1) = if fits {
-        (u_lo, u_hi)
+        (u_lo + trim, u_hi - trim)
     } else {
         (u_lo - arrow_len - stub, u_hi + arrow_len + stub)
     };

@@ -158,6 +158,10 @@ fn lower_measured(
         let over = super::annotate::ARROW_LEN * paint.sw + 2.0;
         line.points[0] = (far.0 + to_tip.0 * over, far.1 + to_tip.1 * over);
         out.push(dims::arrow(far, (-to_tip.0, -to_tip.1), paint));
+    } else {
+        // The line stops short of the arrow tip, like every dim line.
+        let trim = 2.0 * paint.sw;
+        line.points[0] = (tip.0 - to_tip.0 * trim, tip.1 - to_tip.1 * trim);
     }
     out.insert(0, paint.dim(line.points.clone()));
     let tw = text.width(paint.fs);

@@ -39,13 +39,13 @@ input_file: samples/drawing_bushing.lini
       <line x1="3" y1="24" x2="123.5" y2="24"/>
     </g>
     <g class="lini-node lini-dim-line lini-line" transform="translate(0,0)">
-      <line x1="120.5" y1="-24" x2="120.5" y2="24"/>
+      <line x1="120.5" y1="-22" x2="120.5" y2="22"/>
     </g>
     <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,0)">
-      <polygon points="120.5,-24 122,-15 119,-15"/>
+      <polygon points="120.5,-24 122.25,-13.5 118.75,-13.5"/>
     </g>
     <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,0)">
-      <polygon points="120.5,24 119,15 122,15"/>
+      <polygon points="120.5,24 118.75,13.5 122.25,13.5"/>
     </g>
     <text class="lini-text" x="113" y="0" style="font-weight: normal; font-size: 11px" transform="rotate(-90 113 0)">⌀16</text>
     <g class="lini-node lini-ext-line lini-line" transform="translate(0,0)">
@@ -55,13 +55,13 @@ input_file: samples/drawing_bushing.lini
       <line x1="3" y1="54" x2="139.5" y2="54"/>
     </g>
     <g class="lini-node lini-dim-line lini-line" transform="translate(0,0)">
-      <line x1="136.5" y1="-54" x2="136.5" y2="54"/>
+      <line x1="136.5" y1="-52" x2="136.5" y2="52"/>
     </g>
     <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,0)">
-      <polygon points="136.5,-54 138,-45 135,-45"/>
+      <polygon points="136.5,-54 138.25,-43.5 134.75,-43.5"/>
     </g>
     <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,0)">
-      <polygon points="136.5,54 135,45 138,45"/>
+      <polygon points="136.5,54 134.75,43.5 138.25,43.5"/>
     </g>
     <text class="lini-text" x="129" y="0" style="font-weight: normal; font-size: 11px" transform="rotate(-90 129 0)">⌀36</text>
     <g class="lini-node lini-ext-line lini-line" transform="translate(0,0)">
@@ -71,13 +71,13 @@ input_file: samples/drawing_bushing.lini
       <line x1="90" y1="3" x2="90" y2="76"/>
     </g>
     <g class="lini-node lini-dim-line lini-line" transform="translate(0,0)">
-      <line x1="-90" y1="73" x2="90" y2="73"/>
+      <line x1="-88" y1="73" x2="88" y2="73"/>
     </g>
     <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,0)">
-      <polygon points="-90,73 -81,71.5 -81,74.5"/>
+      <polygon points="-90,73 -79.5,71.25 -79.5,74.75"/>
     </g>
     <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,0)">
-      <polygon points="90,73 81,74.5 81,71.5"/>
+      <polygon points="90,73 79.5,74.75 79.5,71.25"/>
     </g>
     <text class="lini-text" x="0" y="65.5" style="font-weight: normal; font-size: 11px">60</text>
   </g>

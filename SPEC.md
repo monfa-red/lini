@@ -1264,7 +1264,7 @@ The drawing chrome ([SPEC 15](#15-drawing)) — sheet-space, never scaled:
 
 ```
 dim-offset 18    dim-pitch 16            dim-ext-gap 3    dim-ext-overshoot 3
-dim-arrow 9 × 3  note-offset 14          note-landing 8   center-mark-overhang 4
+dim-arrow 10.5 × 3.5  note-offset 14      note-landing 8   center-mark-overhang 4
 hatch-pitch 6    hatch line-width 0.75   break-gap 12     tol-stack 0.7
 drawing link stroke-width 1
 ```
@@ -2394,7 +2394,10 @@ the geometry reads first; arrows are **drafting-slender** (≈ 3 : 1, filled), s
 the dim's `stroke-width`; the value rides **above the line, ISO-aligned** — it rotates
 with the line and reads from the bottom or from the right, overridable like any text
 (the styled-label form + `rotate:`). A span too narrow for text + arrows flips its
-arrows outside the extension lines and slides the text past the nearer one. Dimensions
+arrows outside the extension lines; the value stays centred **inside** while it still
+fits there, and only a span too tight even for the bare text slides it past the
+nearer one. A packed row also clears every callout's text — leaders and angles
+register as obstacles before dims seat. Dimensions
 are links, styled per core ([SPEC 9](#9-links)); dimension text uses the link-label
 defaults (`font-size: 11`).
 

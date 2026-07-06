@@ -244,7 +244,9 @@ fn diametral(c: P, r: f64, dir: P, text: DimText, paint: &Paint) -> Vec<PlacedNo
 
     let mut out = Vec::new();
     let (end, text_c) = if fits {
-        (rim_a, c)
+        // Stopped short of both tips, like every dim line.
+        let trim = 2.0 * sw;
+        ((rim_a.0 - dir.0 * trim, rim_a.1 - dir.1 * trim), c)
     } else {
         let over = 4.0 + tw + 4.0;
         (
@@ -255,7 +257,8 @@ fn diametral(c: P, r: f64, dir: P, text: DimText, paint: &Paint) -> Vec<PlacedNo
             ),
         )
     };
-    out.push(paint.dim(vec![rim_b, end]));
+    let trim = 2.0 * sw;
+    out.push(paint.dim(vec![(rim_b.0 + dir.0 * trim, rim_b.1 + dir.1 * trim), end]));
     out.push(arrow(rim_a, dir, paint));
     out.push(arrow(rim_b, (-dir.0, -dir.1), paint));
     out.extend(text.nodes((text_c.0 + up.0 * lift, text_c.1 + up.1 * lift), theta, fs));
