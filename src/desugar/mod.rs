@@ -132,10 +132,18 @@ pub fn desugar(file: &File) -> Result<File, Error> {
     let mut stylesheet: Vec<StyleItem> = Vec::new();
     // The scene defaults, plus any root-engine defaults (a root `{ layout: sequence }` gets
     // the sequence `gap`), then the user's own decls on top.
-    let base = merge_decls(
-        root_defaults(),
-        &bundles::root_layout_defaults(root_layout(&user_root)),
-    );
+    let mut layout_defaults = bundles::root_layout_defaults(root_layout(&user_root));
+    // A file whose drawn content is only `|page|` sheets hugs them — the
+    // paper is the margin, so the root's padding defaults to 0 [SPEC 15.8];
+    // the user's own padding still wins.
+    let only_pages = !instances.is_empty()
+        && instances
+            .iter()
+            .all(|c| matches!(c, Child::Box(n) if n.classes.iter().any(|k| k == "lini-page")));
+    if only_pages {
+        layout_defaults.push(decl("padding", vec![Value::Number(0.0)]));
+    }
+    let base = merge_decls(root_defaults(), &layout_defaults);
     for d in merge_decls(base, &user_root) {
         stylesheet.push(StyleItem::RootDecl(d));
     }

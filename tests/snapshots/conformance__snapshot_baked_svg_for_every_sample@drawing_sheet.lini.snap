@@ -4,7 +4,7 @@ assertion_line: 40
 expression: svg
 input_file: samples/drawing_sheet.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-614.5 -440.5 1229 881" width="1229" height="881" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-420 -296 840 592" width="840" height="592" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
@@ -33,11 +33,11 @@ input_file: samples/drawing_sheet.lini
     .lini .lini-marker { fill: #444; stroke: none; }
   </style>
   <defs/>
-  <rect class="lini-canvas" x="-614.5" y="-440.5" width="1229" height="881"/>
+  <rect class="lini-canvas" x="-420" y="-296" width="840" height="592"/>
   <g class="lini-scene">
     <g class="lini-node lini-page lini-block" data-id="sheet" transform="translate(0,0)">
-      <rect x="-594" y="-420" width="1188" height="840" rx="0" ry="0"/>
-      <g class="lini-node lini-drawing lini-block" data-id="side" transform="translate(20,-32)">
+      <rect x="-420" y="-296" width="840" height="592" rx="0" ry="0"/>
+      <g class="lini-node lini-drawing lini-block" data-id="side" transform="translate(-33,0)">
         <rect x="-116" y="-69" width="232" height="138" rx="0" ry="0"/>
         <g class="lini-node lini-sketch" data-id="screw" style="fill: white; stroke: #444; stroke-width: 2" transform="translate(-80.5,5)">
           <path d="M 0 0 L 0 -26 L 32 -26 L 32 -16 L 80 -16 L 188 -16 L 192 -12 L 192 0 L 192 12 L 188 16 L 80 16 L 32 16 L 32 26 L 0 26 Z" fill-rule="evenodd"/>
@@ -140,16 +140,32 @@ input_file: samples/drawing_sheet.lini
           <text class="lini-text" x="0" y="0">DIN 912 — M8 × 40</text>
         </g>
       </g>
-      <g class="lini-node lini-drawing lini-block" data-id="end" transform="translate(20,80)">
-        <rect x="-27" y="-21" width="54" height="42" rx="0" ry="0"/>
-        <g class="lini-node lini-oval" data-id="od" transform="translate(0,0)">
-          <ellipse cx="0" cy="0" rx="26" ry="20"/>
+      <g class="lini-node lini-drawing lini-block" data-id="end" transform="translate(162,14)">
+        <rect x="-27" y="-37.5" width="54" height="75" rx="0" ry="0"/>
+        <g class="lini-node lini-oval" data-id="od" transform="translate(0,-10.5)">
+          <ellipse cx="0" cy="0" rx="26" ry="26"/>
         </g>
-        <g class="lini-node lini-hex" transform="translate(0,0)">
-          <polygon points="-14,0 -7,-20 7,-20 14,0 7,20 -7,20"/>
+        <g class="lini-node lini-hex" data-id="socket" transform="translate(0,-10.5)">
+          <polygon points="-14,0 -7,-12 7,-12 14,0 7,12 -7,12"/>
         </g>
+        <g class="lini-node lini-ext-line lini-line" transform="translate(0,-10.5)">
+          <line x1="-14" y1="3" x2="-14" y2="48"/>
+        </g>
+        <g class="lini-node lini-ext-line lini-line" transform="translate(0,-10.5)">
+          <line x1="14" y1="3" x2="14" y2="48"/>
+        </g>
+        <g class="lini-node lini-dim-line lini-line" transform="translate(0,-10.5)">
+          <line x1="-26.5" y1="45" x2="26.5" y2="45"/>
+        </g>
+        <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,-10.5)">
+          <polygon points="-14,45 -24.5,46.75 -24.5,43.25"/>
+        </g>
+        <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,-10.5)">
+          <polygon points="14,45 24.5,43.25 24.5,46.75"/>
+        </g>
+        <text class="lini-text" x="0" y="27" style="font-weight: normal; font-size: 11px">7</text>
       </g>
-      <g class="lini-node lini-title-block lini-table lini-group lini-block" transform="translate(457.9,347)">
+      <g class="lini-node lini-title-block lini-table lini-group lini-block" transform="translate(283.9,223)">
         <rect x="-95.6" y="-32.5" width="191.2" height="65" rx="0" ry="0"/>
         <rect x="-35.6" y="-32.5" width="1" height="65" fill="#444" stroke="none"/>
         <rect x="-95.6" y="-11.5" width="191.2" height="1" fill="#444" stroke="none"/>
@@ -180,147 +196,91 @@ input_file: samples/drawing_sheet.lini
         </g>
       </g>
       <g class="lini-node lini-frame lini-rect lini-box lini-block" transform="translate(20,0)">
-        <rect x="-534" y="-380" width="1068" height="760" rx="0" ry="0"/>
+        <rect x="-360" y="-256" width="720" height="512" rx="0" ry="0"/>
       </g>
       <g class="lini-node lini-tick lini-line" transform="translate(0,0)">
-        <line x1="-396" y1="-420" x2="-396" y2="-380"/>
+        <line x1="-210" y1="-295.5" x2="-210" y2="-256"/>
       </g>
       <g class="lini-node lini-tick lini-line" transform="translate(0,0)">
-        <line x1="-198" y1="-420" x2="-198" y2="-380"/>
+        <line x1="0" y1="-295.5" x2="0" y2="-256"/>
       </g>
       <g class="lini-node lini-tick lini-line" transform="translate(0,0)">
-        <line x1="0" y1="-420" x2="0" y2="-380"/>
+        <line x1="210" y1="-295.5" x2="210" y2="-256"/>
       </g>
       <g class="lini-node lini-tick lini-line" transform="translate(0,0)">
-        <line x1="198" y1="-420" x2="198" y2="-380"/>
+        <line x1="-210" y1="256" x2="-210" y2="295.5"/>
       </g>
       <g class="lini-node lini-tick lini-line" transform="translate(0,0)">
-        <line x1="396" y1="-420" x2="396" y2="-380"/>
+        <line x1="0" y1="256" x2="0" y2="295.5"/>
       </g>
       <g class="lini-node lini-tick lini-line" transform="translate(0,0)">
-        <line x1="-396" y1="380" x2="-396" y2="420"/>
+        <line x1="210" y1="256" x2="210" y2="295.5"/>
       </g>
       <g class="lini-node lini-tick lini-line" transform="translate(0,0)">
-        <line x1="-198" y1="380" x2="-198" y2="420"/>
+        <line x1="-419.5" y1="0" x2="-340" y2="0"/>
       </g>
       <g class="lini-node lini-tick lini-line" transform="translate(0,0)">
-        <line x1="0" y1="380" x2="0" y2="420"/>
+        <line x1="380" y1="0" x2="419.5" y2="0"/>
       </g>
       <g class="lini-node lini-tick lini-line" transform="translate(0,0)">
-        <line x1="198" y1="380" x2="198" y2="420"/>
+        <line x1="0" y1="-295.5" x2="0" y2="-236"/>
       </g>
       <g class="lini-node lini-tick lini-line" transform="translate(0,0)">
-        <line x1="396" y1="380" x2="396" y2="420"/>
+        <line x1="0" y1="236" x2="0" y2="295.5"/>
       </g>
       <g class="lini-node lini-tick lini-line" transform="translate(0,0)">
-        <line x1="-594" y1="-210" x2="-514" y2="-210"/>
+        <line x1="-419.5" y1="0" x2="-320" y2="0"/>
       </g>
       <g class="lini-node lini-tick lini-line" transform="translate(0,0)">
-        <line x1="-594" y1="0" x2="-514" y2="0"/>
+        <line x1="360" y1="0" x2="419.5" y2="0"/>
       </g>
-      <g class="lini-node lini-tick lini-line" transform="translate(0,0)">
-        <line x1="-594" y1="210" x2="-514" y2="210"/>
-      </g>
-      <g class="lini-node lini-tick lini-line" transform="translate(0,0)">
-        <line x1="554" y1="-210" x2="594" y2="-210"/>
-      </g>
-      <g class="lini-node lini-tick lini-line" transform="translate(0,0)">
-        <line x1="554" y1="0" x2="594" y2="0"/>
-      </g>
-      <g class="lini-node lini-tick lini-line" transform="translate(0,0)">
-        <line x1="554" y1="210" x2="594" y2="210"/>
-      </g>
-      <g class="lini-node lini-tick lini-line" transform="translate(0,0)">
-        <line x1="0" y1="-420" x2="0" y2="-360"/>
-      </g>
-      <g class="lini-node lini-tick lini-line" transform="translate(0,0)">
-        <line x1="0" y1="360" x2="0" y2="420"/>
-      </g>
-      <g class="lini-node lini-tick lini-line" transform="translate(0,0)">
-        <line x1="-594" y1="0" x2="-494" y2="0"/>
-      </g>
-      <g class="lini-node lini-tick lini-line" transform="translate(0,0)">
-        <line x1="534" y1="0" x2="594" y2="0"/>
-      </g>
-      <g class="lini-node lini-zone lini-block" transform="translate(-495,-400)">
+      <g class="lini-node lini-zone lini-block" transform="translate(-315,-276)">
         <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
         <text class="lini-text" x="0" y="0">1</text>
       </g>
-      <g class="lini-node lini-zone lini-block" transform="translate(-297,-400)">
+      <g class="lini-node lini-zone lini-block" transform="translate(-105,-276)">
         <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
         <text class="lini-text" x="0" y="0">2</text>
       </g>
-      <g class="lini-node lini-zone lini-block" transform="translate(-99,-400)">
+      <g class="lini-node lini-zone lini-block" transform="translate(105,-276)">
         <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
         <text class="lini-text" x="0" y="0">3</text>
       </g>
-      <g class="lini-node lini-zone lini-block" transform="translate(99,-400)">
+      <g class="lini-node lini-zone lini-block" transform="translate(315,-276)">
         <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
         <text class="lini-text" x="0" y="0">4</text>
       </g>
-      <g class="lini-node lini-zone lini-block" transform="translate(297,-400)">
-        <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
-        <text class="lini-text" x="0" y="0">5</text>
-      </g>
-      <g class="lini-node lini-zone lini-block" transform="translate(495,-400)">
-        <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
-        <text class="lini-text" x="0" y="0">6</text>
-      </g>
-      <g class="lini-node lini-zone lini-block" transform="translate(-495,400)">
+      <g class="lini-node lini-zone lini-block" transform="translate(-315,276)">
         <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
         <text class="lini-text" x="0" y="0">1</text>
       </g>
-      <g class="lini-node lini-zone lini-block" transform="translate(-297,400)">
+      <g class="lini-node lini-zone lini-block" transform="translate(-105,276)">
         <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
         <text class="lini-text" x="0" y="0">2</text>
       </g>
-      <g class="lini-node lini-zone lini-block" transform="translate(-99,400)">
+      <g class="lini-node lini-zone lini-block" transform="translate(105,276)">
         <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
         <text class="lini-text" x="0" y="0">3</text>
       </g>
-      <g class="lini-node lini-zone lini-block" transform="translate(99,400)">
+      <g class="lini-node lini-zone lini-block" transform="translate(315,276)">
         <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
         <text class="lini-text" x="0" y="0">4</text>
       </g>
-      <g class="lini-node lini-zone lini-block" transform="translate(297,400)">
-        <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
-        <text class="lini-text" x="0" y="0">5</text>
-      </g>
-      <g class="lini-node lini-zone lini-block" transform="translate(495,400)">
-        <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
-        <text class="lini-text" x="0" y="0">6</text>
-      </g>
-      <g class="lini-node lini-zone lini-block" transform="translate(-554,-315)">
+      <g class="lini-node lini-zone lini-block" transform="translate(-380,-148)">
         <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
         <text class="lini-text" x="0" y="0">A</text>
       </g>
-      <g class="lini-node lini-zone lini-block" transform="translate(-554,-105)">
+      <g class="lini-node lini-zone lini-block" transform="translate(-380,148)">
         <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
         <text class="lini-text" x="0" y="0">B</text>
       </g>
-      <g class="lini-node lini-zone lini-block" transform="translate(-554,105)">
-        <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
-        <text class="lini-text" x="0" y="0">C</text>
-      </g>
-      <g class="lini-node lini-zone lini-block" transform="translate(-554,315)">
-        <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
-        <text class="lini-text" x="0" y="0">D</text>
-      </g>
-      <g class="lini-node lini-zone lini-block" transform="translate(574,-315)">
+      <g class="lini-node lini-zone lini-block" transform="translate(400,-148)">
         <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
         <text class="lini-text" x="0" y="0">A</text>
       </g>
-      <g class="lini-node lini-zone lini-block" transform="translate(574,-105)">
+      <g class="lini-node lini-zone lini-block" transform="translate(400,148)">
         <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
         <text class="lini-text" x="0" y="0">B</text>
-      </g>
-      <g class="lini-node lini-zone lini-block" transform="translate(574,105)">
-        <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
-        <text class="lini-text" x="0" y="0">C</text>
-      </g>
-      <g class="lini-node lini-zone lini-block" transform="translate(574,315)">
-        <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
-        <text class="lini-text" x="0" y="0">D</text>
       </g>
     </g>
   </g>

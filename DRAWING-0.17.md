@@ -200,6 +200,28 @@ Append-only, per PLAN.md's rule.
     centre bore rides the `[ ]`, its redundant centerline removed by the
     cascade in the stylesheet). Tie bar matches SPEC 24 fully only after
     stage 2 adds `thread:`.
+- **2026-07-06 — Abbas's sheet review** (same day; all gates green — 751
+  tests — clippy silent, fmt clean; the revised A5 sheet PNG-rendered and
+  inspected edge to edge). Two follow-ups:
+  - **A lone sheet hugs the canvas.** The scene root's default `padding: 20`
+    framed the page with dead space Abbas's `padding: 0` on the *sheet*
+    couldn't remove (a page's padding is its content inset). Fixed at the
+    source: when a file's drawn content is only `|page|`s, the root's
+    padding defaults to 0 — the paper is the margin (user's own
+    `{ padding: … }` still wins; SPEC 15.8 states it). Zone ticks and
+    centring marks pull their sheet-edge end in by the half-stroke, so
+    nothing pokes past the trimmed size and the SVG is exactly the sheet.
+  - Abbas reworked `drawing_sheet.lini` (A5 landscape, views in a `row`,
+    an S-dim on the end-view socket, a hand `translate:` aligning the end
+    view's centre); SPEC 24 synced byte-for-byte.
+  - **Open design thread — cross-view alignment**: flow `align: center`
+    aligns bounding boxes, so a view with one-sided dims drifts off its
+    neighbour's axis (hence the hand translate). Direction discussed:
+    a **datum alignment value** (`align: datum` / `justify: datum`) on the
+    existing flow/grid — children that carry a datum (drawings, sketches)
+    align datum-to-datum, others fall back to centre; a grid with both
+    gives first/third-angle projection layouts with no new layout or
+    grammar. Projection *lines* and view machinery stay deferred (SPEC 23).
 - **2026-07-06 — stage 3 landed** (same session; all suites green — 750
   tests — clippy silent, fmt clean; the DIN 912 sheet PNG-rendered and
   inspected: frame at the 20/10 margins, 6 × 4 zone grid with dividers and

@@ -2605,10 +2605,13 @@ the thick `|frame|` at the margins (a 20 mm filing edge on the left, 10 mm
 elsewhere); the **zone grid** — divisions of ≈ 50 mm, rounded to the nearest even
 count per edge (A4 4 × 6, A3 8 × 6, A0 24 × 16) — numbered `1…` left-to-right along
 top and bottom and lettered `A…` top-to-bottom along both sides, drawn as `|zone|`
-labels and `|tick|` dividers in the margin band; and the four centring marks. The content area is the frame inset by 5 mm (`padding:` adds to it). A
+labels and `|tick|` dividers in the margin band; and the four centring marks. The
+content area is the frame inset by 5 mm (`padding:` adds to it). A
 **`|title-block|`** child (ISO 7200 — a `|table|`, [SPEC 8](#8-templates)) is seated
 by **type**, flush inside the frame's bottom-right corner; its fields are ordinary
-cells.
+cells. A file whose drawn content is only pages **hugs them** — the paper is the
+margin, so the root's `padding` defaults to 0 (your own `{ padding: … }` still
+wins) and the sheet runs edge to edge of the SVG.
 
 ```
 |page| { sheet: a4 } [
@@ -3628,33 +3631,47 @@ body:left (-) body:right { side: bottom }        // → 60
 ```
 
 ```
-|page#sheet| { sheet: a4 landscape } [           // the ISO sheet: frame, zones, marks
+|page#sheet| { sheet: a5 landscape; gap: 50; direction: row; } [
+  // the ISO sheet: frame, zones, marks
 
   |drawing#side| "DIN 912 — M8 × 40" [
     |sketch#screw| {
-      draw: move(0, 0) up(6.5) right(8):head :k down(2.5)
-            right(12) :v right(28):m8 chamfer(1) down(4);
-      revolve: x-axis;                           // a turned part
-      thread: m8 1.25;                           // the threaded run
+      draw: move(0, 0) up(6.5) right(8):head :k down(2.5) right(12) :v
+            right(28):m8 chamfer(1) down(4);
+      revolve: x-axis;
+      // a turned part
+      thread: m8 1.25;
+      // the threaded run
     } [
-      |hidden#socket| {                          // the hex socket, dashed
+      |hidden#socket| {
+        // the hex socket, dashed
         draw: move(0, 3) right(4) line(3, -3);
         mirror: x-axis;
       }
     ]
-    screw:head (o) { side: left }                // → ⌀13
-    screw:left (-) screw:k { side: bottom }      // → 8 — K, the head
-    screw:k (-) screw:right { side: bottom }     // → 40 — L, under the head
-    screw:v (-) screw:right { side: top }        // → 28 — the thread length
-    screw:m8 <- { side: top }                    // → M8×1.25 — composed by the thread
+    screw:head (o) { side: left; }
+    // → ⌀13
+    screw:left (-) screw:k { side: bottom; }
+    // → 8 — K, the head
+    screw:k (-) screw:right { side: bottom; }
+    // → 40 — L, under the head
+    screw:v (-) screw:right { side: top; }
+    // → 28 — the thread length
+    screw:m8 <- { side: top; }
+    // → M8×1.25 — composed by the thread
   ]
 
-  |drawing#end| [
-    |oval#od| { width: 13 }                      // the head, end-on
-    |hex| { width: 7 }                           // the socket, visible here
+  |drawing#end| { translate: 0 3.5; } [
+    |oval#od| { width: 13; height: 13; }
+    // the head, end-on
+    |hex#socket| { width: 7; height: 6; }
+
+    // the socket, visible here
+    socket:left (-) socket:right
+
   ]
 
-  |title-block| { columns: 60 auto } [
+  |title-block| { columns: 60 auto; } [
     "Part"  "DIN 912 — M8 × 40"
     "Scale" "1:1"
     "Units" "mm"

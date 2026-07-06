@@ -119,32 +119,34 @@ pub(super) fn finish(children: &mut [PlacedNode], sheet: Bbox, s: f64) {
                 c.bbox = Bbox::centered(fx1 - fx0, fy1 - fy0).inflate(half);
             }
             Some(Marker::Tick(edge, i)) => {
+                // The sheet-edge end pulls in by the half-stroke, so the cap
+                // stays on the paper and the canvas is exactly the sheet.
                 let (a, b) = match edge {
                     "top" => {
                         let x = x0 + (i as f64) * w / cols as f64;
-                        ((x, y0), (x, fy0))
+                        ((x, y0 + half), (x, fy0))
                     }
                     "bottom" => {
                         let x = x0 + (i as f64) * w / cols as f64;
-                        ((x, fy1), (x, y1))
+                        ((x, fy1), (x, y1 - half))
                     }
                     "left" => {
                         let y = y0 + (i as f64) * h / rows as f64;
-                        ((x0, y), (fx0, y))
+                        ((x0 + half, y), (fx0, y))
                     }
                     _ => {
                         let y = y0 + (i as f64) * h / rows as f64;
-                        ((fx1, y), (x1, y))
+                        ((fx1, y), (x1 - half, y))
                     }
                 };
                 set_line(c, a, b);
             }
             Some(Marker::Mark(edge)) => {
                 let (a, b) = match edge {
-                    "top" => ((0.0, y0), (0.0, fy0 + MARK_INTO * s)),
-                    "bottom" => ((0.0, fy1 - MARK_INTO * s), (0.0, y1)),
-                    "left" => ((x0, 0.0), (fx0 + MARK_INTO * s, 0.0)),
-                    _ => ((fx1 - MARK_INTO * s, 0.0), (x1, 0.0)),
+                    "top" => ((0.0, y0 + half), (0.0, fy0 + MARK_INTO * s)),
+                    "bottom" => ((0.0, fy1 - MARK_INTO * s), (0.0, y1 - half)),
+                    "left" => ((x0 + half, 0.0), (fx0 + MARK_INTO * s, 0.0)),
+                    _ => ((fx1 - MARK_INTO * s, 0.0), (x1 - half, 0.0)),
                 };
                 set_line(c, a, b);
             }
@@ -258,6 +260,22 @@ mod tests {
             (bottom - (p.bbox.h() / 2.0 - MARGIN * s)).abs() < 1e-6,
             "flush bottom: {bottom}"
         );
+    }
+
+    #[test]
+    fn a_lone_sheet_hugs_the_canvas() {
+        // Only-pages content drops the root's padding to 0 — the paper is the
+        // margin [SPEC 15.8]; other content keeps the scene default, and the
+        // user's own padding still wins.
+        let l = laid("|page#p| { sheet: a4 landscape }\n");
+        assert_eq!((l.viewbox.w, l.viewbox.h), (1188.0, 840.0));
+        let framed = laid("|page#p| { sheet: a4 landscape }\n|box| \"beside\"\n");
+        assert!(
+            framed.viewbox.w > 1188.0,
+            "mixed content keeps the scene frame"
+        );
+        let padded = laid("{ padding: 12 }\n|page#p| { sheet: a4 landscape }\n");
+        assert_eq!(padded.viewbox.w, 1188.0 + 24.0, "the user's padding wins");
     }
 
     #[test]
