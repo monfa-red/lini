@@ -117,6 +117,10 @@ fn chrome_node(ty: &str, chrome: Value, at: &Node) -> Node {
 }
 
 fn chrome_group(ty: &str, chrome: Vec<Value>, at: &Node) -> Node {
+    // Generated children sit *after* the authored ones, so they carry the
+    // parent's tail as their span — the printer sorts a body by span, and a
+    // parent-headed span would hoist the chrome above the parent's `[ ]`.
+    let tail = crate::span::Span::new(at.span.end, at.span.end);
     Node {
         id: None,
         ty: Some(ty.into()),
@@ -125,12 +129,12 @@ fn chrome_group(ty: &str, chrome: Vec<Value>, at: &Node) -> Node {
         style: vec![Decl {
             name: "chrome".into(),
             groups: vec![chrome],
-            span: at.span,
+            span: tail,
         }],
         style_span: None,
         children: Vec::new(),
         links: Vec::new(),
-        span: at.span,
+        span: tail,
     }
 }
 

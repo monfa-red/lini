@@ -37,8 +37,12 @@ pub(super) enum Spot {
 pub(super) struct Anchor<'a> {
     pub child: usize,
     pub node: &'a PlacedNode,
-    /// The node's origin in the drawing frame (rotations accumulated).
+    /// The node's origin in the drawing frame (rotations accumulated) — the
+    /// **displayed** position, a broken parent's compression included.
     pub origin: P,
+    /// The origin with every ancestor's `break:` undone [SPEC 15.3] — where
+    /// the feature sits on the unbroken model; equals `origin` without one.
+    pub model_origin: P,
     /// The accumulated rotation, degrees — local geometry turns by it.
     pub rot: f64,
     pub spot: Spot,
@@ -63,8 +67,11 @@ pub(super) fn resolve<'a>(
 
     // Walk into features, accumulating origin and rotation — each level renders
     // as translate(cx, cy) rotate(deg), so a parent's turn carries its subtree.
+    // A broken parent placed its features through its view map [SPEC 15.3];
+    // the model origin unmaps each hop, so values stay true.
     let mut node = &kids[child];
     let mut origin = (node.cx, node.cy);
+    let mut model_origin = origin;
     let mut rot = node.rotation;
     for seg in segs {
         let next = node
@@ -81,6 +88,12 @@ pub(super) fn resolve<'a>(
             })?;
         let local = rotated((next.cx, next.cy), rot);
         origin = (origin.0 + local.0, origin.1 + local.1);
+        let unbroken = match node.sketch.as_ref() {
+            Some(geo) if !geo.view.is_identity() => geo.view.unmap((next.cx, next.cy)),
+            _ => (next.cx, next.cy),
+        };
+        let m = rotated(unbroken, rot);
+        model_origin = (model_origin.0 + m.0, model_origin.1 + m.1);
         rot += next.rotation;
         node = next;
     }
@@ -91,6 +104,7 @@ pub(super) fn resolve<'a>(
         child,
         node,
         origin,
+        model_origin,
         rot,
         spot,
     })
@@ -194,10 +208,17 @@ impl Anchor<'_> {
         self.to_world(self.local_point())
     }
 
-    /// The representative point with any `break:` undone — what measured
-    /// values read: *dimensions stay true* [SPEC 15.3/15.6].
+    /// The representative point with any `break:` undone — the node's own and
+    /// every ancestor's — what measured values read: *dimensions stay true*
+    /// [SPEC 15.3/15.6].
     pub fn model_point(&self) -> P {
-        self.to_world(self.unmap_local(self.local_point()))
+        self.model_world(self.local_point())
+    }
+
+    /// A displayed node-local point on the unbroken model, world frame.
+    pub fn model_world(&self, local_disp: P) -> P {
+        let r = rotated(self.unmap_local(local_disp), self.rot);
+        (self.model_origin.0 + r.0, self.model_origin.1 + r.1)
     }
 
     /// The feature's break view map, if it has one.

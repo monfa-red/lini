@@ -111,7 +111,7 @@ fn lay_out(
     let (mates, annotations): (Vec<&ResolvedLink>, Vec<&ResolvedLink>) =
         links.iter().partition(|w| w.kind == LinkKind::Mate);
 
-    place_features(&mut kids, own)?;
+    place_features(&mut kids, own, None)?;
     mates::seat(&mut kids, geometry[0], &mates, path, own)?;
     let mut lowered = annotate::lower(&kids, &annotations, path, own, unit)?;
     kids.append(&mut lowered);

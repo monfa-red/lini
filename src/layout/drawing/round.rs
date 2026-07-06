@@ -95,10 +95,7 @@ pub(super) fn lower(
                 w,
                 rows,
                 &paint,
-                Span2 {
-                    disp: (a.to_world(a.map_local(m)), a.to_world(a.map_local(twin))),
-                    model: (a.to_world(m), a.to_world(twin)),
-                },
+                span2(&a, a.map_local(m), a.map_local(twin)),
                 count,
                 follows,
             )
@@ -168,7 +165,7 @@ pub(super) fn lower(
 fn span2(a: &Anchor, la: P, lb: P) -> Span2 {
     Span2 {
         disp: (a.to_world(la), a.to_world(lb)),
-        model: (a.to_world(a.unmap_local(la)), a.to_world(a.unmap_local(lb))),
+        model: (a.model_world(la), a.model_world(lb)),
     }
 }
 

@@ -16,6 +16,6 @@
 |rect#bore| { width: 60; height: 16; fill: --bg; stroke: none }   // the bore punches
 |centerline| { points: -34 0, 34 0 }             // duplicated subpaths add no auto axis
 
-bore:top (-) { side: right }                     // → ⌀16 — the inner row
+bore:top (-) { side: right }                     // → ⌀16 — written first, the inner row
 body:top (-) { side: right }                     // → ⌀36 — stacks outside it
 body:left <-> body:right { side: bottom }        // → 60

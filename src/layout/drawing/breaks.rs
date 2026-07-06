@@ -734,6 +734,22 @@ mod tests {
     }
 
     #[test]
+    fn features_ride_the_broken_view_and_dims_to_them_stay_true() {
+        // A hole at x = 100 sits past the cut: displayed it slides with the
+        // far piece (100 − 140 + 12 = −28); a dim to it reads the model 250.
+        let l = laid(
+            "{ layout: drawing; scale: 1 }\n|sketch#bar| { draw: move(-150, -15) right(300) down(30) left(300) close(); break: -80 60 } [\n  |hole#vent| { width: 10; translate: 100 0 }\n]\nbar:left <-> bar.vent { side: bottom }\n",
+        );
+        let vent = by_id(&l.nodes, "vent");
+        assert!(
+            (vent.cx - -28.0).abs() < 1e-9,
+            "rigid with the far piece: {}",
+            vent.cx
+        );
+        text_at(&l.nodes, "250");
+    }
+
+    #[test]
     fn break_errors_speak_spec() {
         assert_eq!(
             layout_err(

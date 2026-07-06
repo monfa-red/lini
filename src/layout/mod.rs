@@ -410,7 +410,7 @@ fn layout_inst(
     // takes its geometry from the sized shape.
     if part {
         let half = inst.attrs.number("stroke-width").unwrap_or(0.0) / 2.0;
-        drawing::place_features(&mut children, own)?;
+        drawing::place_features(&mut children, own, sketch_geo.as_ref().map(|g| &g.view))?;
         drawing::chrome::fill(&mut children, bbox.inflate(-half));
     }
 

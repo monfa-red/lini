@@ -17,16 +17,18 @@ use crate::error::Error;
 use crate::resolve::{ResolvedLink, ResolvedText};
 use crate::span::Span;
 
-/// `a <-> b` (and chains — each hop its own dim, sharing rows naturally)
-/// [SPEC 15.6]. A hop's label **replaces** its number; labels map to hops in
-/// order.
+/// `a <-> b` (and chains — each hop its own dim) [SPEC 15.6]. A hop's label
+/// **replaces** its number; labels map to hops in order. A chain **shares
+/// one row**: its hops seat as one unit (their union interval), so a flipped
+/// narrow hop's outside arrow abutting its neighbour tip-to-tip at the
+/// shared extension line — drafting-normal — never splits the row.
 pub(super) fn linear(
     ctx: &Ctx,
     w: &ResolvedLink,
     rows: &mut Rows,
 ) -> Result<Vec<PlacedNode>, Error> {
     let paint = Paint::of(&w.attrs);
-    let mut out = Vec::new();
+    let mut hops = Vec::new();
     for hop in 0..w.endpoints.len() - 1 {
         let (ea, eb) = (&w.endpoints[hop], &w.endpoints[hop + 1]);
         let a = anchors::resolve(ctx.kids, ctx.scope, ea, "dimension")?;
@@ -72,19 +74,37 @@ pub(super) fn linear(
             w.span,
         )?;
         let side = stack_side(&w.attrs, axis, corner_pull(&a, &b, axis), w.span)?;
-        out.extend(stacked(
-            Stacked {
-                axis,
-                a: pa,
-                b: pb,
-                text,
-                side,
-                gap: w.attrs.number("gap"),
-                label,
-            },
-            rows,
-            &paint,
-        ));
+        hops.push(Stacked {
+            axis,
+            a: pa,
+            b: pb,
+            text,
+            side,
+            gap: w.attrs.number("gap"),
+            label,
+        });
+    }
+
+    let mut out = Vec::new();
+    let one_row = hops.len() > 1
+        && hops
+            .iter()
+            .all(|h| h.axis == hops[0].axis && h.side == hops[0].side);
+    if one_row {
+        let plans: Vec<Plan> = hops.iter().map(|h| plan(h, &paint)).collect();
+        let union = plans
+            .iter()
+            .map(|p| p.interval)
+            .reduce(|u, iv| (u.0.min(iv.0), u.1.max(iv.1)))
+            .expect("hops non-empty");
+        let line_c = rows.seat(hops[0].side, union, hops[0].gap);
+        for (h, p) in hops.into_iter().zip(plans) {
+            out.extend(at_row(h, &p, line_c, &paint));
+        }
+    } else {
+        for h in hops {
+            out.extend(stacked(h, rows, &paint));
+        }
     }
     Ok(out)
 }
@@ -105,23 +125,28 @@ pub(super) struct Stacked<'a> {
 }
 
 pub(super) fn stacked(s: Stacked, rows: &mut Rows, paint: &Paint) -> Vec<PlacedNode> {
-    let (fs, sw) = (paint.fs, paint.sw);
+    let p = plan(&s, paint);
+    let line_c = rows.seat(s.side, p.interval, s.gap);
+    at_row(s, &p, line_c, paint)
+}
+
+/// A dim's row footprint before seating: the packed interval (text included),
+/// where the text sits along the line, and whether it fits inside the span.
+struct Plan {
+    interval: (f64, f64),
+    text_u: f64,
+    fits: bool,
+}
+
+fn plan(s: &Stacked, paint: &Paint) -> Plan {
     let u = |p: P| match s.axis {
         Axis::Horizontal => p.0,
         Axis::Vertical => p.1,
     };
-    let cross = |p: P| match s.axis {
-        Axis::Horizontal => p.1,
-        Axis::Vertical => p.0,
-    };
-    let pt = |u: f64, c: f64| match s.axis {
-        Axis::Horizontal => (u, c),
-        Axis::Vertical => (c, u),
-    };
     let (ua, ub) = (u(s.a), u(s.b));
     let (u_lo, u_hi) = (ua.min(ub), ua.max(ub));
-    let arrow_len = ARROW_LEN * sw;
-    let tw = s.text.width(fs);
+    let arrow_len = ARROW_LEN * paint.sw;
+    let tw = s.text.width(paint.fs);
     let stub = 2.0;
     let fits = u_hi - u_lo >= 2.0 * arrow_len + tw + 6.0;
     // A narrow span flips its arrows outside the extension lines and slides
@@ -141,7 +166,33 @@ pub(super) fn stacked(s: Stacked, rows: &mut Rows, paint: &Paint) -> Vec<PlacedN
             ),
         }
     };
-    let line_c = rows.seat(s.side, interval, s.gap);
+    Plan {
+        interval,
+        text_u,
+        fits,
+    }
+}
+
+/// Lower one dim's anatomy onto its seated row.
+fn at_row(s: Stacked, p: &Plan, line_c: f64, paint: &Paint) -> Vec<PlacedNode> {
+    let (fs, sw) = (paint.fs, paint.sw);
+    let u = |p: P| match s.axis {
+        Axis::Horizontal => p.0,
+        Axis::Vertical => p.1,
+    };
+    let cross = |p: P| match s.axis {
+        Axis::Horizontal => p.1,
+        Axis::Vertical => p.0,
+    };
+    let pt = |u: f64, c: f64| match s.axis {
+        Axis::Horizontal => (u, c),
+        Axis::Vertical => (c, u),
+    };
+    let (ua, ub) = (u(s.a), u(s.b));
+    let (u_lo, u_hi) = (ua.min(ub), ua.max(ub));
+    let arrow_len = ARROW_LEN * sw;
+    let stub = 2.0;
+    let (fits, text_u) = (p.fits, p.text_u);
 
     let mut out = Vec::new();
     // Extension lines spring from the anchor points exactly [SPEC 15.2],

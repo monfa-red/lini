@@ -135,17 +135,27 @@ pub(super) fn part_bbox(inst: &ResolvedInst, own: f64) -> Result<Bbox, Error> {
 
 /// Datum placement [SPEC 15.1/15.4]: every child's **origin** lands on the
 /// parent's datum, offset only by `translate:` (drawing units × the parent's
-/// scale). Chrome children stay at the datum (their geometry is filled by
+/// scale). A broken parent's features ride its **view map** — rigid with the
+/// displayed pieces [SPEC 15.3] (their model position unmaps in the anchor
+/// walk). Chrome children stay at the datum (their geometry is filled by
 /// [`chrome::fill`]); pinned sheet content is re-placed by the engine after
 /// the extent is known.
-pub(super) fn place_features(children: &mut [super::PlacedNode], scale: f64) -> Result<(), Error> {
+pub(super) fn place_features(
+    children: &mut [super::PlacedNode],
+    scale: f64,
+    view: Option<&breaks::ViewMap>,
+) -> Result<(), Error> {
     for c in children.iter_mut() {
         if chrome::is_chrome(&c.attrs) {
             continue;
         }
         let (dx, dy) = super::anchors::translate(&c.attrs, c.span)?.unwrap_or((0.0, 0.0));
-        c.cx = dx * scale;
-        c.cy = dy * scale;
+        let p = match view {
+            Some(v) => v.map((dx * scale, dy * scale)),
+            None => (dx * scale, dy * scale),
+        };
+        c.cx = p.0;
+        c.cy = p.1;
     }
     Ok(())
 }
