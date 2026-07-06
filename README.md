@@ -175,6 +175,32 @@ The full routing contract (crossings, priority, self-loops, starvation) lives in
 
 ---
 
+## Entities
+
+An `|entity|` is an ER / database card — a titled field list built on `|table|`. Its label is the centred title; each row is `"field" "type"`, or `"key" "field" "type"` when you add a third column for a `PK` / `FK` gutter (`{ columns: auto auto auto }`). Relationships are ordinary links drawn with the **crow's-foot** operators, so a whole schema is a handful of lines:
+
+<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/entity_hero.png" alt="An e-commerce ER schema in Lini: six entities wired with crow's-foot cardinality" width="470"></p>
+
+| Op | Reads | Op | Reads |
+|---|---|---|---|
+| `-+` | one | `-o+` | zero-or-one |
+| `-<` | many | `-+<` | one-or-many |
+| `-++` | exactly one | `-o<` | zero-or-many |
+
+Each end-marker composes `[min][max]` — an optionality ring `o` (zero) or bar `+` (one) hugs the line, the crow `<` (many) or a bar `+` (one) sits at the entity — and it works on **either end** (`a +-< b` is one-to-many). Colour an entity like any node (`stroke: --blue-ink; fill: --blue-wash`), or leave it in the default palette.
+
+Entities lay out in **any** container today — `grid`, `flow`, or free-positioned with `pin` / `translate` (as above). They'll pair best with **`layout: auto`**, an automatic graph layout on the roadmap.
+
+---
+
+## Engineering drawings
+
+> **Work in progress** — the language is specified; the engine is landing incrementally.
+
+`layout: drawing` turns a profile drawn with a pen (`draw: move(…) up(10) fillet(3) …`) into a **dimensioned technical sheet**: parts *mate* against each other, holes and patterns punch through, a half-profile *mirrors* into the whole, a long bar *breaks* to fit — and every dimension's value is **measured from the geometry**, so the numbers stay true when the model changes. Dimensions live in the `( )` bracket — `(-)` a linear span, `(o)` a diameter or radius, `(<)` an angle — with leaders, datums, and hatched sections annotating the rest. It lowers to plain SVG like every other layout. See [`SPEC.md` §15](https://github.com/monfa-red/lini/blob/main/SPEC.md#15-drawing).
+
+---
+
 ## Colour
 
 **Pretty by default.** A curated palette of 11 named hues — `red rose orange amber lime green teal sky blue purple gray` — each in five job-named tiers, so the easy path is the flattering one:
@@ -305,7 +331,7 @@ Parsing is recursive-descent over an LL(1) grammar; resolve applies CSS-like spe
 
 ## Status
 
-**v0.14.** The language (the box/text model in [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md)) is stable, and the pipeline is complete and tested: links route and render, layout and theming work, charts plot from data ([`SPEC.md` §14](https://github.com/monfa-red/lini/blob/main/SPEC.md#14-charts)), sequence diagrams read the wires as time ([§13](https://github.com/monfa-red/lini/blob/main/SPEC.md#13-sequence)), and the formatter and dev server ship in the same binary.
+**v0.16.** The language (the box/text model in [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md)) is stable, and the pipeline is complete and tested: links route and render, layout and theming work, charts plot from data ([`SPEC.md` §14](https://github.com/monfa-red/lini/blob/main/SPEC.md#14-charts)), sequence diagrams read the wires as time ([§13](https://github.com/monfa-red/lini/blob/main/SPEC.md#13-sequence)), ER entities wire with crow's-foot cardinality ([§8](https://github.com/monfa-red/lini/blob/main/SPEC.md#8-templates)), and the formatter and dev server ship in the same binary. Engineering drawings ([§15](https://github.com/monfa-red/lini/blob/main/SPEC.md#15-drawing)) are specified and landing incrementally.
 
 ## Development
 
