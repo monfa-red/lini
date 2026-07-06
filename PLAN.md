@@ -772,3 +772,24 @@ deviated from this plan and **why**, open threads for the next session.
     check, and the kind-flip to `Path` are deleted (`|breakline|` is a
     plain `points:` polyline again). SPEC 8/15.3/15.7 reworded; ledger 8
     annotated; sample comments updated.
+
+- **2026-07-05 — Abbas's paint review** (same day; all gates green — 721
+  tests — clippy silent, fmt clean; dims + barrel PNG-inspected in both
+  tones). Two visual-layer fixes:
+  - **`--lini-stroke-light`** — a new visual var (SPEC 10.1), the secondary
+    line tone for drafting's thin support lines, aliasing
+    `--lini-gray-deep` (dark/light aware, tree-shaken, user-overridable).
+    The `|centerline|` / `|pitch-circle|` / `|breakline|` bundles now carry
+    `stroke: --stroke-light`, so the chrome class rules state it once and
+    a `|centerline| { stroke: … }` rule still overrides.
+  - **The dimension anatomy rides classes, not inline styles** (SPEC 17):
+    dim / leader linework is `lini-dim-line`, extension lines
+    `lini-ext-line` (painted `--stroke-light` unless the statement
+    recolours — `Paint.light` falls back to the explicit stroke), and the
+    slender arrowheads are `lini-marker lini-marker-dim` riding the
+    existing `.lini-marker` rule (`prim::dim_marker` — no stray
+    `stroke-width: 0; opacity: 1` inlines). The two new rules emit only
+    when present, placed after the shape rules so they win the
+    same-specificity tie; the repeated
+    `style="fill: …; stroke: none; stroke-width: 0; opacity: 1"` and
+    `style="stroke-width: 1"` inlines are gone from every drawing sample.

@@ -208,15 +208,21 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
         // cut's generated zigzag / S edge — solid, annotation-weight.
         "centerline" => vec![
             id("stroke-style", "center"),
+            var("stroke", "stroke-light"),
             n("stroke-width", 1.0),
             id("fill", "none"),
         ],
         "pitch-circle" => vec![
             id("stroke-style", "center"),
+            var("stroke", "stroke-light"),
             n("stroke-width", 1.0),
             id("fill", "none"),
         ],
-        "breakline" => vec![n("stroke-width", 1.0), id("fill", "none")],
+        "breakline" => vec![
+            var("stroke", "stroke-light"),
+            n("stroke-width", 1.0),
+            id("fill", "none"),
+        ],
         // A frame: a dashed, rounded rectangle around a span of messages. `padding` insets
         // the border from the messages it spans (vertical) and the lifelines (horizontal).
         "loop" | "opt" | "alt" => vec![

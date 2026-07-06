@@ -37,6 +37,18 @@ pub fn built_in_defaults() -> VarTable {
     set_visual(&mut t, "fg", light_dark(ident("black"), hex("e8e8ea")));
     set_visual(&mut t, "fill", light_dark(ident("white"), hex("26262b")));
     set_visual(&mut t, "stroke", light_dark(hex("444"), hex("9aa0a6")));
+    // The secondary line tone [SPEC 10.1] — drafting's thin support lines
+    // (centerlines, break lines, dimension extension lines) sit a step
+    // lighter than `--stroke`, so the geometry reads first. An alias into
+    // the palette's grey; overridable like any visual var.
+    set_visual(
+        &mut t,
+        "stroke-light",
+        ResolvedValue::LiveVar {
+            name: "gray-deep".into(),
+            raw: false,
+        },
+    );
     set_visual(&mut t, "accent", light_dark(hex("0a84ff"), hex("4aa3ff")));
     set_visual(&mut t, "accent-text", ident("white"));
     set_visual(&mut t, "muted", light_dark(hex("888"), hex("9aa0a6")));

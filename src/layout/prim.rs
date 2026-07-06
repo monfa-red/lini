@@ -112,6 +112,26 @@ pub fn marker(
     filled(shape, cx, cy, w, h, fill)
 }
 
+/// A drawing dimension's arrowhead [SPEC 15.6]: a filled polygon classed
+/// `lini-marker lini-marker-dim`, so the shared `.lini-marker` rule paints it
+/// (fill = the link stroke, stroke off) and only a recoloured statement
+/// inlines anything — exactly how link markers ride the sheet [SPEC 17].
+pub fn dim_marker(points: Vec<(f64, f64)>, fill: ResolvedValue) -> PlacedNode {
+    let bbox = bounds(&points);
+    let pts = points
+        .into_iter()
+        .map(|(x, y)| {
+            ResolvedValue::Tuple(vec![ResolvedValue::Number(x), ResolvedValue::Number(y)])
+        })
+        .collect();
+    let mut n = node(NodeKind::Poly, bbox);
+    n.type_chain = vec!["marker".into(), "marker-dim".into()];
+    n.attrs.insert("points", ResolvedValue::List(pts));
+    n.attrs.insert("fill", fill);
+    n.attrs.insert("stroke", ident("none"));
+    n
+}
+
 /// A filled polygon (an area's body) through `points`. Stroke off; `opacity` lets
 /// overlapping areas read through.
 pub fn poly(points: Vec<(f64, f64)>, fill: ResolvedValue, opacity: f64) -> PlacedNode {

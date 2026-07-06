@@ -293,6 +293,30 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
             props,
         });
     }
+    // The drawing dimension anatomy [SPEC 15.6] states its constant paint
+    // once: dimension / leader linework at the drafting thin weight, and the
+    // extension lines a step lighter (`--lini-stroke-light`) so the geometry
+    // reads first. After the shape rules, so they win the same-specificity tie.
+    if present.contains("dim-line") {
+        rules.push(Rule {
+            class: "lini-dim-line".into(),
+            props: vec![
+                ("fill".into(), "none".into()),
+                ("stroke".into(), live("stroke")),
+                ("stroke-width".into(), "1".into()),
+            ],
+        });
+    }
+    if present.contains("ext-line") {
+        rules.push(Rule {
+            class: "lini-ext-line".into(),
+            props: vec![
+                ("fill".into(), "none".into()),
+                ("stroke".into(), live("stroke-light")),
+                ("stroke-width".into(), "1".into()),
+            ],
+        });
+    }
     if present.contains("text") {
         // A bare `<text class="lini-text">` [SPEC 17]. `fill: currentColor` ties
         // the glyph colour to the inherited `color`; `stroke: none` keeps a
@@ -478,8 +502,10 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
     }
 
     // Markers: fill follows the link stroke (the common default stated once),
-    // `stroke: none` for the filled heads. The crow flips this below.
-    if has_markers {
+    // `stroke: none` for the filled heads. The crow flips this below. A
+    // drawing's dimension arrows are marker-classed nodes ([SPEC 15.6]), so
+    // their presence pulls the rule in too.
+    if has_markers || present.contains("marker") {
         rules.push(Rule {
             class: "lini-marker".into(),
             props: vec![

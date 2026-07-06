@@ -138,7 +138,7 @@ fn lower_measured(
     let tw = text.width(paint.fs);
     let centre = (line.text_at.0 + line.sx * tw / 2.0, line.text_at.1);
     let mut out = vec![
-        paint.line(line.points.clone()),
+        paint.dim(line.points.clone()),
         dims::arrow(tip, to_tip, paint),
     ];
     out.extend(text.nodes(centre, 0.0, paint.fs));
@@ -154,7 +154,7 @@ pub(super) fn callout(ctx: &Ctx, w: &ResolvedLink) -> Result<Vec<PlacedNode>, Er
     let dir = side_attr(&w.attrs).and_then(side_unit);
     let line = leader_line(ctx, &a, a.point(), dir, None, None);
 
-    let mut node = paint.line(line.points.clone());
+    let mut node = paint.dim(line.points.clone());
     node.markers.start = match w.markers.start {
         // `>-` is the crow op elsewhere — on a drawing's datum leader it
         // lowers to the filled datum triangle [SPEC 15.7].
@@ -180,7 +180,7 @@ pub(super) fn arrows(ctx: &Ctx, w: &ResolvedLink) -> Result<Vec<PlacedNode>, Err
         let full = dist(pa, pb);
         pa = trim(&a, pa, pb, w.markers.start, full);
         pb = trim(&b, pb, pa, w.markers.end, full);
-        let mut node = paint.line(vec![pa, pb]);
+        let mut node = paint.dim(vec![pa, pb]);
         node.markers = w.markers.clone();
         if let Some(style) = match w.line {
             crate::ast::LineStyle::Solid => None,

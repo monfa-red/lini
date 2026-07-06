@@ -1,6 +1,5 @@
 ---
 source: tests/conformance.rs
-assertion_line: 40
 expression: svg
 input_file: samples/drawing_leaders.lini
 ---
@@ -12,11 +11,12 @@ input_file: samples/drawing_leaders.lini
     .lini .lini-poly { stroke-dasharray: none; }
     .lini .lini-path { stroke-dasharray: none; }
     .lini .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-dim-line { fill: none; stroke: #444; stroke-width: 1; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-note { fill: white; stroke: #444; }
     .lini .lini-balloon { fill: white; stroke: #444; font-size: 11px; }
     .lini .lini-hole { fill: white; stroke: #444; }
-    .lini .lini-centerline { fill: none; stroke-width: 1; stroke-dasharray: 10,3,1,3; }
+    .lini .lini-centerline { fill: none; stroke: #747474; stroke-width: 1; stroke-dasharray: 10,3,1,3; }
     .lini .lini-marker { fill: #444; stroke: none; }
   </style>
   <defs/>
@@ -45,42 +45,42 @@ input_file: samples/drawing_leaders.lini
       </g>
       <text class="lini-text" x="0" y="0">BREAK EDGES</text>
     </g>
-    <g class="lini-node lini-path" style="fill: none; stroke: #444; stroke-width: 1" transform="translate(0,0)">
+    <g class="lini-node lini-dim-line lini-path" transform="translate(0,0)">
       <path d="M -88 66 A 40 40 0 0 1 -80 90"/>
     </g>
     <text class="lini-text" x="-71.1428" y="73.7143" style="font-weight: normal; font-size: 11px">36.87°</text>
-    <g class="lini-node lini-line" style="stroke-width: 1" transform="translate(0,0)">
+    <g class="lini-node lini-dim-line lini-line" transform="translate(0,0)">
       <polyline points="114.7279,84.7279 132.2618,97.6769 140.2618,97.6769"/>
     </g>
-    <g class="lini-node lini-poly" style="fill: #444; stroke: none; stroke-width: 0; opacity: 1" transform="translate(0,0)">
+    <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,0)">
       <polygon points="114.7279,84.7279 122.8588,88.8679 121.0765,91.2812"/>
     </g>
     <text class="lini-text" x="148.8618" y="97.6769" style="font-weight: normal; font-size: 11px">R6</text>
-    <g class="lini-node lini-line" style="stroke-width: 1" transform="translate(0,0)">
+    <g class="lini-node lini-dim-line lini-line" transform="translate(0,0)">
       <line x1="60" y1="99" x2="60" y2="51"/>
     </g>
-    <g class="lini-node lini-poly" style="fill: #444; stroke: none; stroke-width: 0; opacity: 1" transform="translate(0,0)">
+    <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,0)">
       <polygon points="60,51 61.5,60 58.5,60"/>
     </g>
-    <g class="lini-node lini-poly" style="fill: #444; stroke: none; stroke-width: 0; opacity: 1" transform="translate(0,0)">
+    <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,0)">
       <polygon points="60,99 58.5,90 61.5,90"/>
     </g>
     <text class="lini-text" x="52.5" y="75" style="font-weight: normal; font-size: 11px" transform="rotate(-90 52.5 75)">⌀16</text>
-    <g class="lini-node lini-line" style="stroke-width: 1" transform="translate(0,0)">
+    <g class="lini-node lini-dim-line lini-line" transform="translate(0,0)">
       <polyline points="0,96 0,117.5 8,117.5"/>
       <polygon class="lini-marker lini-marker-datum" points="3,90 -3,90 0,96"/>
     </g>
     <text class="lini-text" x="13.3" y="117.5" style="font-weight: normal; font-size: 11px">A</text>
-    <g class="lini-node lini-line" style="stroke-width: 1" transform="translate(0,0)">
+    <g class="lini-node lini-dim-line lini-line" transform="translate(0,0)">
       <polyline points="-2,0 -135,0 -143,0"/>
       <circle class="lini-marker lini-marker-dot" cx="-2.25" cy="0" r="2.25"/>
     </g>
     <text class="lini-text" x="-161.5" y="0" style="font-weight: normal; font-size: 11px">GRIND</text>
-    <g class="lini-node lini-line" style="stroke-width: 1" transform="translate(0,0)">
+    <g class="lini-node lini-dim-line lini-line" transform="translate(0,0)">
       <line x1="155.1057" y1="-81.9133" x2="120.7878" y2="-1.8383"/>
       <circle class="lini-marker lini-marker-dot" cx="120.8863" cy="-2.0681" r="2.25"/>
     </g>
-    <g class="lini-node lini-line" style="stroke-width: 1" transform="translate(0,0)">
+    <g class="lini-node lini-dim-line lini-line" transform="translate(0,0)">
       <line x1="-210" y1="-60" x2="-121.029" y2="88.285"/>
       <polygon class="lini-marker lini-marker-arrow" points="-120,90 -125.6595,86.3985 -120.5145,83.3116"/>
     </g>

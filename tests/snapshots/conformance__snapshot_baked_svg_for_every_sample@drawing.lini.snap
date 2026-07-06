@@ -14,7 +14,7 @@ input_file: samples/drawing.lini
     .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
     .lini .lini-footnote { color: rgba(0, 0, 0, 0.5); font-size: 11px; }
     .lini .lini-hole { fill: white; stroke: #444; }
-    .lini .lini-centerline { fill: none; stroke-width: 1; stroke-dasharray: 10,3,1,3; }
+    .lini .lini-centerline { fill: none; stroke: #747474; stroke-width: 1; stroke-dasharray: 10,3,1,3; }
   </style>
   <defs/>
   <rect class="lini-canvas" x="-76" y="-76" width="152" height="168"/>

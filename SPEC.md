@@ -775,9 +775,9 @@ the cascade ([SPEC 4](#4-selectors-cascade--specificity)) — every value here i
 | `\|balloon\|` | `\|oval\|` | `width: 16; fill: --fill; stroke: --stroke; font-size: 11; scale: 1` | An item **balloon** — the numbered circle an assembly leaders to a part ([SPEC 15.8](#158-assemblies-views--titles)). |
 | `\|drawing\|` | `\|block\|` | `layout: drawing; padding: 0; scale: 4` | An engineering **drawing** — geometry on a datum, measured annotations ([SPEC 15](#15-drawing)). |
 | `\|hole\|` | `\|oval\|` | `fill: --bg; stroke: --stroke` — `width:` **required**, the diameter | A round **hole** — punches by paint order, draws its own centre marks ([SPEC 15.4](#154-features-holes--patterns)). |
-| `\|centerline\|` | `\|line\|` | `stroke-style: center; stroke-width: 1; fill: none` — needs `points:` | The dash-dot axis / symmetry line ([SPEC 15.7](#157-leaders-notes--line-conventions)). |
-| `\|pitch-circle\|` | `\|oval\|` | `stroke-style: center; stroke-width: 1; fill: none` — `width:` **required**, the diameter | The dash-dot bolt circle; round, so a `(-)` reads its PCD ([SPEC 15.7](#157-leaders-notes--line-conventions)). |
-| `\|breakline\|` | `\|line\|` | `stroke-width: 1; fill: none` — needs `points:` | A break cut's edge — the thin jogged line a `break:` generates ([SPEC 15.3](#153-the-sketch-pen)); manual use is free. |
+| `\|centerline\|` | `\|line\|` | `stroke-style: center; stroke: --stroke-light; stroke-width: 1; fill: none` — needs `points:` | The dash-dot axis / symmetry line ([SPEC 15.7](#157-leaders-notes--line-conventions)). |
+| `\|pitch-circle\|` | `\|oval\|` | `stroke-style: center; stroke: --stroke-light; stroke-width: 1; fill: none` — `width:` **required**, the diameter | The dash-dot bolt circle; round, so a `(-)` reads its PCD ([SPEC 15.7](#157-leaders-notes--line-conventions)). |
+| `\|breakline\|` | `\|line\|` | `stroke: --stroke-light; stroke-width: 1; fill: none` — needs `points:` | A break cut's edge — the thin jogged line a `break:` generates ([SPEC 15.3](#153-the-sketch-pen)); manual use is free. |
 
 The bare `|block|` is the base everything rectangular builds on — frameless, yet a real
 box (id, class, children, wirable, positionable): what you reach for to wrap text that
@@ -1096,6 +1096,7 @@ Each colour is a `light-dark(LIGHT, DARK)` value, so one SVG carries both modes:
 --lini-fg            light-dark(black, #e8e8ea)
 --lini-fill          light-dark(white, #26262b)
 --lini-stroke        light-dark(#444, #9aa0a6)
+--lini-stroke-light  var(--lini-gray-deep)           the secondary line tone — drafting's thin support lines (centerlines, break lines, dimension extension lines)
 --lini-accent        light-dark(#0a84ff, #4aa3ff)
 --lini-accent-text   white                           text on an accent fill (e.g. a badge)
 --lini-muted         light-dark(#888, #9aa0a6)
@@ -2387,12 +2388,14 @@ overlaps nothing already placed, so a chain shares one row and dims over differe
 stations share too. `gap:` pins one dim's own offset; `translate` nudges it freely.
 The anatomy is baked sheet constants ([SPEC 10.5](#105-layout-constants-baked)):
 extension lines spring from the anchors with a small gap and overshoot past the dim
-line; arrows are **drafting-slender** (≈ 3 : 1, filled), sized by the dim's
-`stroke-width`; the value rides **above the line, ISO-aligned** — it rotates with the
-line and reads from the bottom or from the right, overridable like any text (the
-styled-label form + `rotate:`). A span too narrow for text + arrows flips its arrows
-outside the extension lines and slides the text past the nearer one. Dimensions are
-links, styled per core ([SPEC 9](#9-links)); dimension text uses the link-label
+line — painted the light support tone (`--stroke-light`,
+[SPEC 10.1](#101-visual-variables-live-themeable)) unless the statement recolours, so
+the geometry reads first; arrows are **drafting-slender** (≈ 3 : 1, filled), sized by
+the dim's `stroke-width`; the value rides **above the line, ISO-aligned** — it rotates
+with the line and reads from the bottom or from the right, overridable like any text
+(the styled-label form + `rotate:`). A span too narrow for text + arrows flips its
+arrows outside the extension lines and slides the text past the nearer one. Dimensions
+are links, styled per core ([SPEC 9](#9-links)); dimension text uses the link-label
 defaults (`font-size: 11`).
 
 ```
@@ -2778,7 +2781,10 @@ Host CSS may restyle any `lini-`-prefixed class; layout is computed at compile t
 runtime restyling (a fatter `stroke-width`) restyles without re-layout. A chart's or
 sequence's lowered primitives ([SPEC 18](#18-compile-pipeline)) emit exactly like the boxes,
 text, and lines above — a chart's tooltip card is a `<g class="lini-chart-tip">`, a
-reserved styling hook.
+reserved styling hook. A drawing's dimension anatomy ([SPEC 15.6](#156-dimensions))
+lowers with its own hooks, paint stated once per class: `lini-dim-line` (dimension /
+leader linework), `lini-ext-line` (extension lines, `--lini-stroke-light`), and the
+slender arrowheads as `lini-marker lini-marker-dim`.
 
 ---
 

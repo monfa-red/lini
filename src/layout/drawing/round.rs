@@ -255,7 +255,7 @@ fn diametral(c: P, r: f64, dir: P, text: DimText, paint: &Paint) -> Vec<PlacedNo
             ),
         )
     };
-    out.push(paint.line(vec![rim_b, end]));
+    out.push(paint.dim(vec![rim_b, end]));
     out.push(arrow(rim_a, dir, paint));
     out.push(arrow(rim_b, (-dir.0, -dir.1), paint));
     out.extend(text.nodes((text_c.0 + up.0 * lift, text_c.1 + up.1 * lift), theta, fs));

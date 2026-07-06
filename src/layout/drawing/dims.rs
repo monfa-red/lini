@@ -202,7 +202,7 @@ fn at_row(s: Stacked, p: &Plan, line_c: f64, paint: &Paint) -> Vec<PlacedNode> {
         let c0 = cross(p) + EXT_GAP * toward;
         let c1 = line_c + EXT_OVERSHOOT * toward;
         if (c1 - c0) * toward > 0.0 {
-            out.push(paint.line(vec![pt(u(p), c0), pt(u(p), c1)]));
+            out.push(paint.ext(vec![pt(u(p), c0), pt(u(p), c1)]));
         }
     }
     // The dim line (running past the span when the arrows flip outside).
@@ -211,7 +211,7 @@ fn at_row(s: Stacked, p: &Plan, line_c: f64, paint: &Paint) -> Vec<PlacedNode> {
     } else {
         (u_lo - arrow_len - stub, u_hi + arrow_len + stub)
     };
-    out.push(paint.line(vec![pt(l0, line_c), pt(l1, line_c)]));
+    out.push(paint.dim(vec![pt(l0, line_c), pt(l1, line_c)]));
     // Slender arrows: tips on the extension lines; bodies inside the span,
     // or outside pointing in when flipped.
     let along = match s.axis {
@@ -246,14 +246,13 @@ pub(super) fn arrow(tip: P, dir: P, paint: &Paint) -> PlacedNode {
     let (l, w) = (ARROW_LEN * paint.sw, ARROW_HALF * paint.sw);
     let base = (tip.0 - dir.0 * l, tip.1 - dir.1 * l);
     let perp = (-dir.1, dir.0);
-    super::super::prim::poly(
+    super::super::prim::dim_marker(
         vec![
             tip,
             (base.0 + perp.0 * w, base.1 + perp.1 * w),
             (base.0 - perp.0 * w, base.1 - perp.1 * w),
         ],
         paint.stroke.clone(),
-        1.0,
     )
 }
 

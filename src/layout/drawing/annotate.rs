@@ -45,39 +45,52 @@ pub(super) struct Ctx<'a> {
 }
 
 /// A link's resolved paint, read once per statement: the wire stroke (the
-/// `|-|` cascade), its width (1 in a drawing — the built-in rule), and the
-/// label font (the link-label 11).
+/// `|-|` cascade), the support-line tone (`--stroke-light` unless the
+/// statement recolours, [SPEC 10.1]), its width (1 in a drawing — the scope
+/// default), and the label font (the link-label 11).
 pub(super) struct Paint {
     pub stroke: ResolvedValue,
+    pub light: ResolvedValue,
     pub sw: f64,
     pub fs: f64,
 }
 
 impl Paint {
     pub fn of(attrs: &AttrMap) -> Paint {
+        let set = attrs.get("stroke").cloned();
+        let live = |name: &str| ResolvedValue::LiveVar {
+            name: name.into(),
+            raw: false,
+        };
         Paint {
-            stroke: attrs
-                .get("stroke")
-                .cloned()
-                .unwrap_or(ResolvedValue::LiveVar {
-                    name: "stroke".into(),
-                    raw: false,
-                }),
+            stroke: set.clone().unwrap_or_else(|| live("stroke")),
+            light: set.unwrap_or_else(|| live("stroke-light")),
             sw: attrs.number("stroke-width").unwrap_or(1.0),
             fs: attrs.number("font-size").unwrap_or(11.0),
         }
     }
 
-    /// A polyline in this link's stroke — extension lines, dim lines,
-    /// leaders all draw through it.
-    pub fn line(&self, points: Vec<P>) -> PlacedNode {
-        super::super::prim::line(points, self.stroke.clone(), self.sw)
+    /// A dimension / leader polyline in this link's stroke — classed
+    /// `lini-dim-line`, so the default paint rides the sheet [SPEC 17].
+    pub fn dim(&self, points: Vec<P>) -> PlacedNode {
+        let mut n = super::super::prim::line(points, self.stroke.clone(), self.sw);
+        n.type_chain = vec!["dim-line".into()];
+        n
+    }
+
+    /// An extension line — the thin spring that raises a dimension off the
+    /// shape — in the light support tone, classed `lini-ext-line`.
+    pub fn ext(&self, points: Vec<P>) -> PlacedNode {
+        let mut n = super::super::prim::line(points, self.light.clone(), self.sw);
+        n.type_chain = vec!["ext-line".into()];
+        n
     }
 
     /// A stroked open path (an angle's arc) in this link's stroke —
     /// `prim::path` is fill-only, built for chart bodies.
     pub fn stroked_path(&self, d: String, bbox: Bbox) -> PlacedNode {
         let mut n = super::super::prim::path(d, ResolvedValue::Ident("none".into()), bbox);
+        n.type_chain = vec!["dim-line".into()];
         n.attrs.insert("stroke", self.stroke.clone());
         n.attrs
             .insert("stroke-width", ResolvedValue::Number(self.sw));
@@ -540,6 +553,47 @@ mod tests {
             pts[0]
         );
         assert_eq!(pts[1], (0.0, 0.0), "the dot lands on the part's origin");
+    }
+
+    // ── The anatomy's class hooks [SPEC 17] ──
+
+    #[test]
+    fn dimension_anatomy_wears_its_classes() {
+        // Paint states once per class: the dim line, the light extension
+        // lines, the marker-classed arrowheads — no per-element inline style.
+        let l = laid(
+            "{ layout: drawing; scale: 1 }\n|rect#a| { width: 60; height: 20 }\na:left <-> a:right { side: bottom }\n",
+        );
+        let with_chain = |name: &str| {
+            l.nodes
+                .iter()
+                .filter(|n| n.type_chain.iter().any(|t| t == name))
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(with_chain("ext-line").len(), 2, "two extension springs");
+        assert_eq!(with_chain("dim-line").len(), 1, "the dim line");
+        assert_eq!(with_chain("marker-dim").len(), 2, "two arrowheads");
+        // Extension lines take the light support tone [SPEC 15.6]…
+        assert!(
+            matches!(
+                with_chain("ext-line")[0].attrs.get("stroke"),
+                Some(ResolvedValue::LiveVar { name, .. }) if name == "stroke-light"
+            ),
+            "--stroke-light by default"
+        );
+        // …until the statement recolours — then the whole dim follows.
+        let red = laid(
+            "{ layout: drawing; scale: 1 }\n|rect#a| { width: 60; height: 20 }\na:left <-> a:right { side: bottom; stroke: red }\n",
+        );
+        let ext = red
+            .nodes
+            .iter()
+            .find(|n| n.type_chain.iter().any(|t| t == "ext-line"))
+            .expect("extension line");
+        assert!(
+            matches!(ext.attrs.get("stroke"), Some(ResolvedValue::Ident(c)) if c == "red"),
+            "a recoloured statement recolours its extension lines too"
+        );
     }
 
     // ── The drawing's `|-|` weight [SPEC 15.1] ──

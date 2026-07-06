@@ -11,6 +11,8 @@ input_file: samples/drawing_pump.lini
     .lini .lini-oval { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-poly { stroke-dasharray: none; }
     .lini .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-dim-line { fill: none; stroke: #444; stroke-width: 1; }
+    .lini .lini-ext-line { fill: none; stroke: #747474; stroke-width: 1; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
     .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
@@ -18,7 +20,7 @@ input_file: samples/drawing_pump.lini
     .lini .lini-table { fill: none; stroke: #444; stroke-width: 2; font-size: 14px; font-weight: normal; stroke-dasharray: none; }
     .lini .lini-header { fill: rgba(0, 0, 0, 0.06); font-weight: bold; }
     .lini .lini-balloon { fill: white; stroke: #444; font-size: 11px; }
-    .lini .lini-centerline { fill: none; stroke-width: 1; stroke-dasharray: 10,3,1,3; }
+    .lini .lini-centerline { fill: none; stroke: #747474; stroke-width: 1; stroke-dasharray: 10,3,1,3; }
     .lini .lini-steel { fill: url(#lini-hatch-1); }
     .lini .lini-marker { fill: #444; stroke: none; }
   </style>
@@ -49,27 +51,27 @@ input_file: samples/drawing_pump.lini
         <ellipse cx="0" cy="0" rx="23.3" ry="25.5"/>
         <text class="lini-text" x="0" y="0">2</text>
       </g>
-      <g class="lini-node lini-line" style="stroke-width: 1" transform="translate(-100,44.25)">
+      <g class="lini-node lini-ext-line lini-line" transform="translate(-100,44.25)">
         <line x1="-360" y1="3" x2="-360" y2="138"/>
       </g>
-      <g class="lini-node lini-line" style="stroke-width: 1" transform="translate(-100,44.25)">
+      <g class="lini-node lini-ext-line lini-line" transform="translate(-100,44.25)">
         <line x1="560" y1="3" x2="560" y2="138"/>
       </g>
-      <g class="lini-node lini-line" style="stroke-width: 1" transform="translate(-100,44.25)">
+      <g class="lini-node lini-dim-line lini-line" transform="translate(-100,44.25)">
         <line x1="-360" y1="135" x2="560" y2="135"/>
       </g>
-      <g class="lini-node lini-poly" style="fill: #444; stroke: none; stroke-width: 0; opacity: 1" transform="translate(-100,44.25)">
+      <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(-100,44.25)">
         <polygon points="-360,135 -351,133.5 -351,136.5"/>
       </g>
-      <g class="lini-node lini-poly" style="fill: #444; stroke: none; stroke-width: 0; opacity: 1" transform="translate(-100,44.25)">
+      <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(-100,44.25)">
         <polygon points="560,135 551,136.5 551,133.5"/>
       </g>
       <text class="lini-text" x="0" y="171.75" style="font-weight: normal; font-size: 11px">230</text>
-      <g class="lini-node lini-line" style="stroke-width: 1" transform="translate(-100,44.25)">
+      <g class="lini-node lini-dim-line lini-line" transform="translate(-100,44.25)">
         <line x1="-221.4623" y1="-184.5519" x2="-1.5364" y2="-1.2804"/>
         <circle class="lini-marker lini-marker-dot" cx="-1.7285" cy="-1.4404" r="2.25"/>
       </g>
-      <g class="lini-node lini-line" style="stroke-width: 1" transform="translate(-100,44.25)">
+      <g class="lini-node lini-dim-line lini-line" transform="translate(-100,44.25)">
         <line x1="388.8151" y1="-137.6302" x2="320.8944" y2="-1.7889"/>
         <circle class="lini-marker lini-marker-dot" cx="321.0062" cy="-2.0125" r="2.25"/>
       </g>
