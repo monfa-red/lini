@@ -140,8 +140,9 @@ fn every_sample_holds_the_laws_at_every_clearance() {
 
 /// The perf tripwire: routing stays a counting problem — one Dijkstra per
 /// bundle over tens of cells, one placement sweep per channel. Ten debug
-/// compiles of the busiest sample run ~4 s on a dev laptop; the budget only
-/// has to catch an audit-style blowup, not machine variance.
+/// compiles of the busiest sample run a few seconds on a dev laptop and
+/// noticeably slower on a shared CI runner; the budget is deliberately loose —
+/// it only has to catch an audit-style blowup, never machine variance.
 #[test]
 fn routing_pcb_ten_times_stays_fast() {
     let src = read(std::path::Path::new("samples/pcb.lini"));
@@ -151,7 +152,7 @@ fn routing_pcb_ten_times_stays_fast() {
     }
     let took = start.elapsed();
     assert!(
-        took.as_secs_f64() < 10.0,
-        "10 debug compiles took {took:?}, budget 10 s"
+        took.as_secs_f64() < 30.0,
+        "10 debug compiles took {took:?}, budget 30 s"
     );
 }
