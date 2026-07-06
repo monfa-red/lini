@@ -5,6 +5,7 @@ mod flex;
 mod grid;
 pub(crate) mod ir;
 mod note;
+mod page;
 pub(crate) mod path_bbox; // glyph-extent computation also serves `render::icon_fit`
 mod pattern;
 mod prim; // PlacedNode *builders* for lowered primitives (charts, sequences)
@@ -392,9 +393,18 @@ fn layout_inst(
         // Leaf primitive.
         primitives::leaf_bbox(inst, own)?
     } else {
-        // Container or closed primitive with content.
+        // Container or closed primitive with content. A `|page|` arranges its
+        // flow inside the frame's content area — its inset folds into the
+        // padding for this pass alone [SPEC 15.8].
+        let page_attrs;
+        let arrange_attrs = if page::is_page(&inst.type_chain) {
+            page_attrs = page::padded_attrs(&inst.attrs, own, inst.span)?;
+            &page_attrs
+        } else {
+            &inst.attrs
+        };
         let (content_bbox, rects) =
-            lay_out_container_children(&mut children, &inst.attrs, inst.span, own)?;
+            lay_out_container_children(&mut children, arrange_attrs, inst.span, own)?;
 
         // Interior gutters (grid or 1-D) the container fills with `gap-fill`.
         // A table is just a group with `gap-fill: --stroke` — no special-casing;
@@ -438,6 +448,11 @@ fn layout_inst(
         let half = inst.attrs.number("stroke-width").unwrap_or(0.0) / 2.0;
         drawing::place_features(&mut children, own, sketch_geo.as_ref().map(|g| &g.view))?;
         drawing::chrome::fill(&mut children, bbox.inflate(-half), own);
+    }
+    // A page's furniture takes its geometry from the sized sheet, and any
+    // title block seats flush inside the frame corner [SPEC 15.8].
+    if page::is_page(&inst.type_chain) {
+        page::finish(&mut children, bbox, own);
     }
 
     let rotation = inst.attrs.number("rotate").unwrap_or(0.0);

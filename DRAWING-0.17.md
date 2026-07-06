@@ -200,6 +200,44 @@ Append-only, per PLAN.md's rule.
     centre bore rides the `[ ]`, its redundant centerline removed by the
     cascade in the stylesheet). Tie bar matches SPEC 24 fully only after
     stage 2 adds `thread:`.
+- **2026-07-06 — stage 3 landed** (same session; all suites green — 750
+  tests — clippy silent, fmt clean; the DIN 912 sheet PNG-rendered and
+  inspected: frame at the 20/10 margins, 6 × 4 zone grid with dividers and
+  references, centring marks, the screw at true 1 : 1, the title block sharp
+  and flush inside the frame corner). What shipped, and the decisions:
+  - **`sheet:`** desugars in place (`desugar/page.rs`) to `width` / `height`
+    in mm — a5…a0, ISO orientation defaults (A4/A5 portrait, A3–A0
+    landscape), a real did-you-mean via a small edit distance. The `|page|`
+    bundle carries the A4 default plus `scale: 4` and **`stroke-width: 0`**
+    (a trimmed sheet has no stroke; the `|frame|` child draws the border —
+    without this the sheet box ran 2 px proud).
+  - **The furniture** is desugar-generated pinned chrome (`pin: center`
+    keeps it out of the page's flow — core machinery, no new placement
+    mode): one `|frame|`, `|tick|` dividers + four centring marks (thin,
+    not ISO's frame weight — the house light aesthetic; SPEC reworded),
+    `|zone|` labels on all four edges. `layout/page.rs::finish` gives them
+    geometry from the sized sheet — the divisions derive from the children
+    desugar counted, so the two never disagree. The content area folds into
+    the padding for the arrange pass only (`padded_attrs`), so `padding:`
+    adds, per the spec; page sizing itself stays the plain floor.
+  - **`|title-block|`** (a `|table|`: font 11, stroke 1, sharp) gets
+    `pin: bottom right` injected at desugar when it has no `pin:` of its
+    own; `finish` pulls it in by the margins — flush inside the frame line.
+  - **A parser fix at the source**: a *spaced* `:name` after a pen call
+    (`right(12) :v`) silently **attached** as the call's segment —
+    `at_glued_point_name` never checked the colon's own gluing. Every
+    existing sample dodged it (their freestanding names all followed
+    already-named calls); the screw's `:v` exposed it as a phantom
+    "mixes axes" error. One-line fix (`glued_at(0)`); spaced = freestanding,
+    exactly as SPEC 15.2's table always said.
+  - **The anonymous-container scoping edge bit again**: an id-less `|page|`
+    broke its descendant drawings' link scoping ("'(o)' belongs in a
+    'layout: drawing'") — the known lifted-prefix limitation. The sample
+    and SPEC 24 example carry `|page#sheet|`; the real fix stays with the
+    deferred core-scoping session (PLAN.md's open thread).
+  - Samples: `drawing_sheet.lini` — SPEC 24's sheeted DIN 912,
+    byte-for-byte. README's drawings section now names revolve, thread,
+    and the sheet.
 - **2026-07-06 — stage 2 landed** (same session; all suites green — 740
   tests — clippy silent, fmt clean; tie bar + barrel PNG-rendered and
   inspected against Abbas's references: minor lines from the chamfer trim to

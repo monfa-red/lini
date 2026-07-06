@@ -240,6 +240,38 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             n("stroke-width", 1.0),
             id("fill", "none"),
         ],
+        // The ISO 5457 sheet [SPEC 15.8]: mm dimensions (A4 portrait unless
+        // `sheet:` says otherwise) at px-per-mm `scale: 4` — a |drawing|'s own
+        // default, so a default drawing draws 1 : 1 true on the sheet. The
+        // trimmed sheet has no stroke of its own (the |frame| child draws the
+        // border), so its box is the exact trimmed size.
+        "page" => vec![
+            n("scale", 4.0),
+            var("fill", "bg"),
+            n("stroke-width", 0.0),
+            n("width", 210.0),
+            n("height", 297.0),
+        ],
+        // The ISO 7200 title block [SPEC 15.8]: a |table| the page seats flush
+        // inside its frame's bottom-right corner — compact, thin-ruled, sharp.
+        "title-block" => vec![
+            n("font-size", 11.0),
+            n("stroke-width", 1.0),
+            n("radius", 0.0),
+        ],
+        // …and the sheet's generated furniture: the thick border, the zone
+        // reference labels, and the thin dividers / centring marks.
+        "frame" => vec![
+            id("fill", "none"),
+            var("stroke", "stroke"),
+            n("stroke-width", 2.0),
+        ],
+        "zone" => vec![n("font-size", 9.0), var("color", "stroke-light")],
+        "tick" => vec![
+            var("stroke", "stroke-light"),
+            n("stroke-width", 1.0),
+            id("fill", "none"),
+        ],
         // A frame: a dashed, rounded rectangle around a span of messages. `padding` insets
         // the border from the messages it spans (vertical) and the lifelines (horizontal).
         "loop" | "opt" | "alt" => vec![

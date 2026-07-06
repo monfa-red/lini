@@ -1,0 +1,38 @@
+// The sheeted screw [SPEC 24]: an ISO 5457 |page| — frame, zone references,
+// centring marks — hosting a DIN 912 socket cap screw. The side view is a
+// revolved profile with a thread: dressing and a |hidden| hex socket; the
+// end view is ordinary concentric geometry; the |title-block| seats itself
+// flush inside the frame's bottom-right corner, fields as plain cells.
+
+|page#sheet| { sheet: a4 landscape } [           // the ISO sheet: frame, zones, marks
+
+  |drawing#side| "DIN 912 — M8 × 40" [
+    |sketch#screw| {
+      draw: move(0, 0) up(6.5) right(8):head :k down(2.5)
+            right(12) :v right(28):m8 chamfer(1) down(4);
+      revolve: x-axis;                           // a turned part
+      thread: m8 1.25;                           // the threaded run
+    } [
+      |hidden#socket| {                          // the hex socket, dashed
+        draw: move(0, 3) right(4) line(3, -3);
+        mirror: x-axis;
+      }
+    ]
+    screw:head (o) { side: left }                // → ⌀13
+    screw:left (-) screw:k { side: bottom }      // → 8 — K, the head
+    screw:k (-) screw:right { side: bottom }     // → 40 — L, under the head
+    screw:v (-) screw:right { side: top }        // → 28 — the thread length
+    screw:m8 <- { side: top }                    // → M8×1.25 — composed by the thread
+  ]
+
+  |drawing#end| [
+    |oval#od| { width: 13 }                      // the head, end-on
+    |hex| { width: 7 }                           // the socket, visible here
+  ]
+
+  |title-block| { columns: 60 auto } [
+    "Part"  "DIN 912 — M8 × 40"
+    "Scale" "1:1"
+    "Units" "mm"
+  ]
+]

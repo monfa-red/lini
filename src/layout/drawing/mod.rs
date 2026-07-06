@@ -114,7 +114,7 @@ pub(super) fn is_sheet(kind: crate::resolve::NodeKind, type_chain: &[String]) ->
         || type_chain.iter().any(|t| {
             matches!(
                 t.as_str(),
-                "note" | "balloon" | "table" | "footnote" | "caption"
+                "note" | "balloon" | "table" | "footnote" | "caption" | "page"
             )
         })
 }

@@ -68,6 +68,13 @@ pub const TEMPLATES: &[(&str, &str)] = &[
     ("hidden", "sketch"),
     ("shoulder", "line"),
     ("threadline", "line"),
+    // The sheet [SPEC 15.8]: the ISO page container, its seated title block,
+    // and the generated furniture types (frame / zone references / ticks).
+    ("page", "block"),
+    ("title-block", "table"),
+    ("frame", "rect"),
+    ("zone", "block"),
+    ("tick", "line"),
 ];
 
 pub fn is_template(name: &str) -> bool {

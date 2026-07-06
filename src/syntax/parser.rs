@@ -390,8 +390,10 @@ impl<'a> Parser<'a> {
             return if matches!(self.kind(), Some(TokKind::LParen)) {
                 let call = self.parse_call(name)?;
                 // In a pen, a glued `:segment` after the `)` names the call's drawn
-                // segment (`right(50):seat`, `fillet(3):r1`) [SPEC 15.3].
-                if pen && self.at_glued_point_name() {
+                // segment (`right(50):seat`, `fillet(3):r1`) [SPEC 15.3] — glued to
+                // the `)` itself: a **spaced** `:name` is a freestanding point
+                // (`right(12) :v`), parsed by the caller's next item.
+                if pen && self.glued_at(0) && self.at_glued_point_name() {
                     self.pos += 1; // ':'
                     let (point, _) = self.expect_ident()?;
                     if let Value::Call(c) = call {

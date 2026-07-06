@@ -13,6 +13,7 @@ pub(crate) mod bundles;
 mod classes;
 mod drawing;
 mod labels;
+mod page;
 pub(crate) mod scene;
 mod types;
 
@@ -451,6 +452,37 @@ fn lower_node(
             children.push(Child::Box(lower_node(&ch, types, bodies, false)?));
         }
     }
+    // The sheet's furniture [SPEC 15.8]: `sheet:` desugars in place to
+    // `width` / `height` in mm first (the zone counts derive from the final
+    // numbers), then the pinned chrome children (frame, zone grid, centring
+    // marks) are generated, positioned by the layout once the page is sized;
+    // a `|title-block|` child is pulled out of the flow here so the page can
+    // seat it flush inside the frame's bottom-right corner.
+    let is_page = info.chain.iter().any(|n| n == "page");
+    let mut page_style: Option<Vec<Decl>> = None;
+    if is_page {
+        let mut s = node.style.clone();
+        page::expand_sheet(&mut s)?;
+        page_style = Some(s);
+    }
+    if !already && is_page {
+        for ch in page::chrome_children(page_style.as_deref().expect("a page"), node.span) {
+            children.push(Child::Box(lower_node(&ch, types, bodies, false)?));
+        }
+    }
+    if is_page {
+        for child in &mut children {
+            if let Child::Box(n) = child
+                && n.classes.iter().any(|c| c == "lini-title-block")
+                && !n.style.iter().any(|d| d.name == "pin")
+            {
+                n.style.push(decl(
+                    "pin",
+                    vec![Value::Ident("bottom".into()), Value::Ident("right".into())],
+                ));
+            }
+        }
+    }
 
     // Table / entity structure [SPEC 8]. `cols` is the grid column count, driving both
     // a `|table|`'s auto-header (its first row → `|header|` cells, below) and an
@@ -498,6 +530,8 @@ fn lower_node(
             .filter(|d| d.name != "align" && d.name != "justify")
             .cloned()
             .collect()
+    } else if let Some(expanded) = page_style {
+        expanded
     } else {
         node.style.clone()
     };
