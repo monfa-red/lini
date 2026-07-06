@@ -780,12 +780,19 @@ the cascade ([SPEC 4](#4-selectors-cascade--specificity)) — every value here i
 | `\|footer\|` | `\|cell\|` | `color: --footer-color` | A **footer** cell — muted text; opt-in on the last row. |
 | `\|entity\|` | `\|table\|` | `columns: auto auto` | An ER / database **entity** — a titled field list, rows left-aligned (see below). |
 | `\|note\|` | `\|block\|` | `fill: --fill; stroke: --stroke; padding: 20; scale: 1` | A **note** — the folded-corner callout card, one type in every layout (see below). |
-| `\|balloon\|` | `\|oval\|` | `width: 16; fill: --fill; stroke: --stroke; font-size: 11; scale: 1` | An item **balloon** — the numbered circle an assembly leaders to a part ([SPEC 15.8](#158-assemblies-views--titles)). |
+| `\|balloon\|` | `\|oval\|` | `width: 16; fill: --fill; stroke: --stroke; font-size: 11; scale: 1` | An item **balloon** — the numbered circle an assembly leaders to a part ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `\|drawing\|` | `\|block\|` | `layout: drawing; padding: 0; scale: 4` | An engineering **drawing** — geometry on a datum, measured annotations ([SPEC 15](#15-drawing)). |
 | `\|hole\|` | `\|oval\|` | `fill: --bg; stroke: --stroke` — `width:` **required**, the diameter | A round **hole** — punches by paint order, draws its own centre marks ([SPEC 15.4](#154-features-holes--patterns)). |
 | `\|centerline\|` | `\|line\|` | `stroke-style: center; stroke: --stroke-light; stroke-width: 1; fill: none` — needs `points:` | The dash-dot axis / symmetry line ([SPEC 15.7](#157-leaders-notes--line-conventions)). |
 | `\|pitch-circle\|` | `\|oval\|` | `stroke-style: center; stroke: --stroke-light; stroke-width: 1; fill: none` — `width:` **required**, the diameter | The dash-dot bolt circle; round, so a `(o)` reads its PCD ([SPEC 15.7](#157-leaders-notes--line-conventions)). |
 | `\|breakline\|` | `\|line\|` | `stroke: --stroke-light; stroke-width: 1; fill: none` — needs `points:` | A break cut's edge — the thin jogged line a `break:` generates ([SPEC 15.3](#153-the-sketch-pen)); manual use is free. |
+| `\|hidden\|` | `\|sketch\|` | `stroke-style: dashed; stroke-width: 1; fill: none` — needs `draw:` | **Hidden edges** — interior geometry on its own dashed child, per the one-node-one-stroke-style law ([SPEC 15.7](#157-leaders-notes--line-conventions)). |
+| `\|edge\|` | `\|line\|` | `stroke: --stroke; stroke-width: 2; fill: none` — needs `points:` | A turned part's **shoulder line** — the geometry-weight edge a `revolve:` generates at every sharp diameter change ([SPEC 15.3](#153-the-sketch-pen)); manual use is free. |
+| `\|page\|` | `\|block\|` | `layout: flow; scale: 4; fill: --bg` — `sheet: a4` unless sized | An ISO 5457 drawing **sheet** — mm dimensions via `sheet:`, `scale:` px per mm; frame, zones, and centring marks as generated chrome ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
+| `\|title-block\|` | `\|table\|` | `font-size: 11; stroke-width: 1` | The ISO 7200 **title block** — a table the `\|page\|` seats flush inside its frame's bottom-right corner ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
+| `\|frame\|` | `\|rect\|` | `fill: none; stroke: --stroke; stroke-width: 2` | A sheet's **frame** — the thick border a `\|page\|` generates at the ISO margins ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
+| `\|zone\|` | `\|block\|` | `font-size: 9; color: --stroke-light` | A **zone reference** label (1, 2… / A, B…) a `\|page\|` generates in the margin band ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
+| `\|tick\|` | `\|line\|` | `stroke: --stroke-light; stroke-width: 1; fill: none` — needs `points:` | A zone **divider** (and, frame-weight, a **centring mark**) a `\|page\|` generates ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 
 The bare `|block|` is the base everything rectangular builds on — frameless, yet a real
 box (id, class, children, wirable, positionable): what you reach for to wrap text that
@@ -2047,7 +2054,7 @@ semantics need a drawing scope:
 
 | Global — works everywhere | Drawing-scope only |
 |---|---|
-| `\|sketch\|` + `draw:` / `mirror:` / `break:`; `pattern:`; `scale:`; `hatch()` fills; `stroke-style: center` / `phantom`; `\|note\|` / `\|balloon\|` | the measuring ops (`(-)` linear, `(o)` round, `(<)` angle), the leader ops, `\|\|`, `tol:`, dim `side:` / `gap:`, auto-measure, `unit:`, datum placement, the chrome (centre marks, auto centerlines, dimension packing) |
+| `\|sketch\|` + `draw:` / `mirror:` / `revolve:` / `thread:` / `break:`; `pattern:`; `scale:`; `hatch()` fills; `stroke-style: center` / `phantom`; `\|note\|` / `\|balloon\|` / `\|hidden\|`; the `\|page\|` sheet | the measuring ops (`(-)` linear, `(o)` round, `(<)` angle), the leader ops, `\|\|`, `tol:`, dim `side:` / `gap:`, auto-measure, `unit:`, datum placement, the chrome (centre marks, auto centerlines, dimension packing) |
 
 Outside a drawing a `\|sketch\|` is just a shape; its authored `:segment`s are declared
 but dormant (a routed link landing on one is deferred — [SPEC 23](#23-deferred)).
@@ -2080,7 +2087,7 @@ and drafting states units once, in the title block.
 
 `scale:` is an ordinary node property, nearest ancestor wins: on the drawing it is the
 view scale (a 2:1 detail view is a sibling drawing with `scale:` doubled,
-[15.8](#158-assemblies-views--titles)); on any node it overrides — `scale: 1` opts a
+[15.8](#158-assemblies-views-sheets--titles)); on any node it overrides — `scale: 1` opts a
 node out. One split makes it behave: a node's **position** (`translate:`) scales by its
 *parent's* scale, its **own shape** (`draw:`, `points:`, `width` / `height`,
 `pattern:` offsets) by its *own* — so a balloon in a 2:1 view stays beside its part at
@@ -2219,6 +2226,25 @@ generates its axis `|centerline|` — auto chrome,
 `mirror:` runs before `pattern:` and before placement: it builds the node's geometry,
 so anchors, dimensions, and mates all see the whole part.
 
+#### `revolve:` — a turned part
+
+`revolve: x-axis` (or `y-axis`) declares the profile a **solid of revolution** about
+that axis through the pen origin. It folds exactly as a fused `mirror:` on the same
+axis — draw the half, get the whole, plus the axis `|centerline|` — and adds what a
+lathe part's side view owes drafting: the **edge lines**. Every sharp circular edge —
+a shoulder, a groove lip, a chamfer's two edge circles — projects to a straight line
+across the diameter, so at every profile vertex where two segments meet with a
+**tangent break**, off the axis, a generated `|edge|` line (geometry weight — these
+are real visible edges, [SPEC 8](#8-templates)) runs perpendicular to the axis to
+the vertex's reflected twin; a span the profile already draws whole is skipped, and
+vertices sharing a station draw once, at the widest span. A `fillet()` joins
+tangent-continuously and generates **nothing**; a `chamfer()` keeps two sharp
+vertices and generates its two lines; a step completes itself — drafting's rule
+falls out of the geometry, with no per-call cases. Edge lines live in the sketch's
+frame, so they ride `break:` like features. A sketch takes `revolve:` **or**
+`mirror:`, never both; the unary `⌀` readings require a revolved profile
+([15.6](#156-dimensions)).
+
 #### `break:` — cut the boring middle
 
 `break: a b;` removes the span between two stations from the **view** — the model
@@ -2238,6 +2264,31 @@ comma list, each group defaulting to the longer axis: `break: -90 -30, 30 90;`.
 - **Dimensions stay true.** Anchors and extension lines land at *displayed* positions;
   measured values always read the *unbroken* model — the same law as `scale:`.
 
+#### `thread:` — dress a threaded surface
+
+`thread: seg pitch;` marks an authored segment as an ISO 6410 thread — comma groups
+for several (`thread: left 1.5, right 1.5;`, a double-end stud). The segment name
+reads **bare** — a value has no id to separate it from, the same way a chart band's
+`axis: t` names its axis ([SPEC 14.5](#145-bands--annotations)) — and must name a
+straight run parallel to the `revolve:` axis, on a revolved profile. The pitch is in
+drawing units, and the numbers live once — the surface gives the major `⌀`,
+`thread:` the pitch, and the chrome follows:
+
+- the **minor line** — thin, `--stroke-light` — offset into the material by the
+  ISO 60° thread depth, **0.6134 × pitch**, running the segment and stopping at an
+  adjoining `chamfer()`'s trim point;
+- the **thread-end line** — geometry weight, across the full diameter — at an end
+  where the surface **continues collinearly** past the run (a thread stopping
+  mid-surface); where the profile turns instead — a chamfer, a face, a step — the
+  geometry already ends the thread and no line is drawn;
+- both doubled about the axis by the revolve.
+
+A **bare leader** on a threaded segment composes its spec — `bar:m20 <-` reads
+**`M20×1.5`** (major ⌀ × pitch, the metric form) — re-cut the bar and the callout
+follows; a label overrides, as everywhere ([15.7](#157-leaders-notes--line-conventions)).
+On a round node — a threaded hole's top view, a stud's end view — `thread:` takes
+the pitch alone ([15.4](#154-features-holes--patterns)).
+
 ### 15.4 Features, holes & patterns
 
 **A part's features ride in its `[ ]`** — placed at the part's datum and **rigid**
@@ -2255,8 +2306,17 @@ plate:left (-) plate.pin { side: top }        // dot-path to the feature → 25
 part reads as a through-hole, hatch-exempt with no special case) and draws its own
 dash-dot **centre marks**, overhanging by a sheet-space constant — a hole without
 marks is a plain `|oval|`. `pin (o)` reads its diameter ([15.6](#156-dimensions));
-`pattern:` prefixes the count (`2× ⌀10`). Counterbores, countersinks, and threads are
-defines or deferred ([SPEC 23](#23-deferred)).
+`pattern:` prefixes the count (`2× ⌀10`).
+
+**`thread: pitch`** dresses a round feature's view with the ISO 6410 **¾ arc** — a
+thin (`--stroke-light`) circle broken over its upper-right quadrant. The **type
+carries the sense**: on a `|hole|` the thread is internal — the drawn circle stays
+the drilled bore and the arc sits *outside* it at the major ⌀ (`width +
+1.0825 × pitch`, the ISO internal thread height); on plain round geometry (`|oval|`
+lineage) it is external — the outline is the major and the arc sits *inside* at the
+minor (`width − 1.2269 × pitch`). Centre marks are unchanged and `pin (o)` still
+reads the drawn width. Counterbores and countersinks stay deferred
+([SPEC 23](#23-deferred)).
 
 **`pattern:`** replicates a node about its own position — a node property, legal in
 any layout, though its chrome belongs to drawings:
@@ -2343,10 +2403,10 @@ measuring and leader ops may stand **one-ended** ([SPEC 21](#21-grammar)).
 | `pin (o)` | a round feature | the **⌀ line across the circle** — both arrows on the rims — `2× ⌀10` |
 | `hole:top (o)` | a round feature, side-anchored | the **diametral line** through the circle |
 | `bore:top (o)` | any node, side-anchored | the span to the opposite side, ⌀-read — `⌀16` |
-| `body:neck (o)` | a mirrored-profile segment | the station's span across the axis — `⌀28` |
+| `body:neck (o)` | a **revolved**-profile segment | the station's span across the axis — `⌀28` |
 | `body:r1 (o)` | a named arc | a leader — `R3` |
 | `body:flank (<) body:base` | two line-like anchors | the angle arc — `40°` |
-| `body:taper (<)` | a mirrored-profile segment | the **included** angle vs its own twin |
+| `body:taper (<)` | a mirrored- / revolved-profile segment | the **included** angle vs its own twin |
 
 Each glyph is a **picture of what it measures**: the dash `(-)` is a length, the
 circle `(o)` a diameter, the wedge `(<)` an angle. **Arity disambiguates** — `(-)` is
@@ -2364,9 +2424,11 @@ measures one round feature", [SPEC 20](#20-errors)). The **feature picks the sym
 per the standards: a named **arc** (a `fillet`, an `arc()` product) reads its radius —
 `R` — and **everything else** reads as a diameter, `⌀`, across whatever span its anchor
 gives. Roundness is by construction (`|hole|` / `|oval|` lineage, a `circle()` product,
-`|pitch-circle|`), never guessed from coordinates. A bare `(o)` needs an inferable
-axis — a round node (symmetric, any) or a mirrored sketch (across its axis, the full
-span); otherwise the error asks for an anchor. `R` on a full circle has no auto form
+`|pitch-circle|`, a **revolved** profile), never guessed from coordinates. A bare `(o)`
+needs an inferable axis — a round node (symmetric, any) or a revolved sketch (across
+its axis, the full span); otherwise the error asks for an anchor. The `⌀` station and
+full-span readings require `revolve:` — a merely mirrored profile's span is a width,
+not a diameter, and errors asking for the revolve ([SPEC 20](#20-errors)). `R` on a full circle has no auto form
 (the standards say ⌀) — type a leader (`pin <- "SR5"`), the universal fallback for
 anything auto-measure can't read.
 
@@ -2379,8 +2441,8 @@ text there — `hole:top (o)` spills upward. Deterministic, no solver.
 **`(<)` — the angle.** Binary, between two **line-like** anchors — a named edge, a
 `|line|` / `|centerline|`, a bbox side: the angle between their directions, the arc
 drawn at their (extended) intersection, the value riding the arc. Unary, on a named
-edge of a mirrored sketch: the **included** angle of a taper against its own
-reflection. Point anchors have no direction and error. `(>)` is **reserved** — an
+edge of a mirrored or revolved sketch: the **included** angle of a taper against its
+own reflection. Point anchors have no direction and error. `(>)` is **reserved** — an
 error with a did-you-mean, kept for a future reading.
 
 **Auto-measure — the smart label.** A dimension with no label renders its **measured
@@ -2431,7 +2493,7 @@ defaults (`font-size: 11`).
 |sketch#body| {
   draw: move(-80, 0)
         up(14) right(50):neck fillet(3):r1 up(8) right(60):mid fillet(3) down(8) right(50) down(14);
-  mirror: x-axis;                              // half → whole, + the axis centerline
+  revolve: x-axis;                             // a turned part: half → whole, axis + edge lines
 }
 
 body:left (-) body:right { side: bottom }      // → 160 mm
@@ -2481,24 +2543,30 @@ bolt <- [ "R3 TYP" { translate: 30 -24 } ]  // a styled / nudged text — the co
 **Line & material conventions.** `hatch()` fills section cuts
 ([SPEC 10.3](#103-gradients)); `stroke-style: center` / `phantom` are the drafting
 dash conventions and `dashed` the hidden-edge one, each on its own child — one node
-has one stroke style ([SPEC 7](#7-nodes)). Two chrome types carry the centerline
+has one stroke style ([SPEC 7](#7-nodes)). The **`|hidden|`** template
+([SPEC 8](#8-templates)) is that child ready-made — a dashed, unfilled pen profile
+for interior geometry (a socket, a bore): a feature in the part's `[ ]`, rigid under
+mates, riding `break:`, its `:segment`s dimensionable like any sketch's. Two chrome types carry the centerline
 pattern ([SPEC 8](#8-templates)): `|centerline|` (a `|line|` — an axis, a symmetry
 line, a spoke) and `|pitch-circle|` (an `|oval|`, `width:` its diameter — the bolt
 circle; being round, `bc (o)` reads its PCD). A manual `|pitch-circle|` covers what
 `pattern:` can't — unequally spaced holes still share one drawn circle.
 
-**Auto chrome — one mechanism, four producers.** The lines drafting always draws are
+**Auto chrome — one mechanism, seven producers.** The lines drafting always draws are
 **generated children**, so the cascade styles or removes them with no dedicated knobs
 (`|sketch| |centerline| { stroke: none }`):
 
 | Producer | Generates |
 |---|---|
 | a **fused** `mirror:` ([15.3](#153-the-sketch-pen)) | the axis `\|centerline\|`, overhanging the profile |
+| a `revolve:` ([15.3](#153-the-sketch-pen)) | the axis `\|centerline\|` + the `\|edge\|` shoulder lines at every sharp diameter change |
+| a `thread:` ([15.3](#153-the-sketch-pen), [15.4](#154-features-holes--patterns)) | the thin minor line + the thread-end line; on a round view, the ¾ thread arc |
 | `pattern: radial` ([15.4](#154-features-holes--patterns)) | the `\|pitch-circle\|` through the copies |
 | a `\|hole\|` | its centre-mark crosshair |
 | a `break:` ([15.3](#153-the-sketch-pen)) | the `\|breakline\|` pair — thin, sharply jogged mid-span |
+| a `\|page\|` ([15.8](#158-assemblies-views-sheets--titles)) | the sheet chrome — the `\|frame\|`, the `\|zone\|` references, the `\|tick\|` dividers and centring marks |
 
-### 15.8 Assemblies, views & titles
+### 15.8 Assemblies, views, sheets & titles
 
 There is no `|assembly|` type: **an assembly is a drawing whose children mate** — and
 drawings **nest**. A child `|drawing|` is one rigid body from outside (the core
@@ -2519,15 +2587,51 @@ is its title, placed *below*** — it lowers to a `|footnote|` (the bottom-centr
 caption template), because drafting titles sit under the view:
 `|drawing| "SECTION A-A"`; style every title with `|drawing| |footnote| { … }`.
 
+**The sheet.** `|page|` gives the multi-view story its walls: the trimmed ISO 5457
+sheet as a **template container**, not a layout — inside its frame it is an ordinary
+container (default `flow`; `layout:` / `columns:` / `direction:` free), hosting
+drawings, tables, and notes as normal children in **sheet space** (a page is never a
+drawing scope). **`sheet:`** names the trimmed size — `sheet: a3`,
+`sheet: a4 landscape` — pure sugar for `width` / `height` **in millimetres** (the
+orientation keyword swaps the pair; ISO defaults — A4 and A5 portrait, A3–A0
+landscape; a bare `|page|` is `a4`), so an explicit `width:` / `height:` overrides
+through the ordinary slot and a custom sheet still derives its zones. The page's
+`scale:` is **pixels per millimetre**, default 4 — a `|drawing|`'s own default, so a
+default drawing on a default page draws **1 : 1 true**, and the drafting ratio is the
+drawing's scale over the page's (a 2 : 1 detail is `scale: 8`).
+
+The ISO furniture is generated chrome ([15.7](#157-leaders-notes--line-conventions)):
+the thick `|frame|` at the margins (a 20 mm filing edge on the left, 10 mm
+elsewhere); the **zone grid** — divisions of ≈ 50 mm, rounded to the nearest even
+count per edge (A4 4 × 6, A3 8 × 6, A0 24 × 16) — numbered `1…` left-to-right along
+top and bottom and lettered `A…` top-to-bottom along both sides, drawn as `|zone|`
+labels and `|tick|` dividers in the margin band; and the four frame-weight centring
+marks. The content area is the frame inset by 5 mm (`padding:` adds to it). A
+**`|title-block|`** child (ISO 7200 — a `|table|`, [SPEC 8](#8-templates)) is seated
+by **type**, flush inside the frame's bottom-right corner; its fields are ordinary
+cells.
+
+```
+|page| { sheet: a4 } [
+  |drawing#side| "DIN 912 — M8 × 40" [ … ]        // 1 : 1 on the sheet
+  |drawing#detail| "DETAIL A" { scale: 8 } [ … ]   // a 2 : 1 view
+  |title-block| { columns: 60 auto } [
+    "Title" "Socket cap screw"
+    "Scale" "1:1"
+  ]
+]
+```
+
 ### 15.9 Lowering
 
 `layout: drawing` resolves in the **layout** phase ([SPEC 18](#18-compile-pipeline)) —
 geometry must exist before it can be measured:
 
 1. **Geometry** per child, bottom-up: fold `draw:` to a path (corner modifiers applied
-   cyclically through `close()`), collect its `:segment`s, apply `mirror:`, expand
-   `pattern:`, build `break:`'s view map; nested drawings lower first, becoming rigid
-   subtrees. Compute each node's geometry bbox (stroke excluded) and paint bbox (core).
+   cyclically through `close()`), collect its `:segment`s, apply `mirror:` /
+   `revolve:` (+ the edge lines and `thread:` dressing), expand `pattern:`, build
+   `break:`'s view map; nested drawings lower first, becoming rigid subtrees. Compute
+   each node's geometry bbox (stroke excluded) and paint bbox (core).
 2. **Place** children: origins on the datum, `translate:` applied.
 3. **Mates**: walk from the ground; rotate first, seat, the child's own translate
    after; flag cycles and over-constraints.
@@ -2560,6 +2664,9 @@ properties are the core ones.
 | `unit` | `\|drawing\|` | quoted string | suffix on auto-measured values only |
 | `draw` | `\|sketch\|` | pen calls + `:segment`s | **required** ([15.3](#153-the-sketch-pen)) |
 | `mirror` | `\|sketch\|` | list of `x-axis` / `y-axis` / bearing | reflect + union, left to right |
+| `revolve` | `\|sketch\|` | `x-axis` / `y-axis` | a solid of revolution — fused fold + the `\|edge\|` lines; exclusive with `mirror:` ([15.3](#153-the-sketch-pen)) |
+| `thread` | `\|sketch\|` · `\|hole\|` / round geometry | `seg pitch` groups · `pitch` | ISO 6410 dressing — minor + thread-end lines; the ¾ arc ([15.3](#153-the-sketch-pen), [15.4](#154-features-holes--patterns)) |
+| `sheet` | `\|page\|` | `a5…a0 [portrait \| landscape]` | trimmed-size sugar → `width` / `height` in mm ([15.8](#158-assemblies-views-sheets--titles)) |
 | `break` | `\|sketch\|` | `a b [axis]` groups | cut the view between stations; longer axis default ([15.3](#153-the-sketch-pen)) |
 | `pattern` | any node | `grid(c, r, dx, dy)` / `radial(n, r)` | replicate about its position ([15.4](#154-features-holes--patterns)) |
 | `width` | `\|hole\|` `\|pitch-circle\|` | number | **required** — the diameter |
@@ -2662,7 +2769,7 @@ Honoured on every drawn node, in every layout (a box; text takes the marked subs
 | `translate` | `x y` | — | post-placement nudge; **any** node incl. text. |
 | `rotate` | degrees | 0 | turn about bbox centre; **any** node incl. text. |
 | `layer` | integer | 0 (flow) · 1 (pinned) | paint order; ties → source order. |
-| `scale` | number > 0 | 1 (`\|drawing\|` 4) | px per drawing unit — nearest-wins; position scales by the parent, shape by self ([SPEC 15.1](#151-the-container-the-datum--the-scale)). |
+| `scale` | number > 0 | 1 (`\|drawing\|` / `\|page\|` 4) | px per drawing unit — nearest-wins; position scales by the parent, shape by self ([SPEC 15.1](#151-the-container-the-datum--the-scale)). |
 | `pattern` | `grid(…)` · `radial(…)` | — | replicate about the node's position ([SPEC 15.4](#154-features-holes--patterns)). |
 
 **Media & accessibility** — any node (`href` also a link):
@@ -2689,6 +2796,9 @@ Read on the listed primitive; required where noted ([SPEC 7](#7-nodes)).
 | `marker` · `marker-start` · `marker-end` | `\|line\|`, links | see [SPEC 7](#7-nodes) | endpoint / vertex glyphs; from the operator on a link. |
 | `draw` | `\|sketch\|` | pen calls + `:segment`s | **required** ([SPEC 15.3](#153-the-sketch-pen)). |
 | `mirror` | `\|sketch\|` | `x-axis` / `y-axis` / bearing list | reflect + union ([SPEC 15.3](#153-the-sketch-pen)). |
+| `revolve` | `\|sketch\|` | `x-axis` / `y-axis` | solid of revolution — fused fold + `\|edge\|` lines ([SPEC 15.3](#153-the-sketch-pen)). |
+| `thread` | `\|sketch\|` `\|hole\|` round geometry | `seg pitch, …` · `pitch` | ISO 6410 thread dressing ([SPEC 15.3](#153-the-sketch-pen), [SPEC 15.4](#154-features-holes--patterns)). |
+| `sheet` | `\|page\|` | `a5…a0 [portrait \| landscape]` | trimmed-size sugar → `width` / `height` in mm ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `break` | `\|sketch\|` | `a b [axis]` groups | cut the view between stations ([SPEC 15.3](#153-the-sketch-pen)). |
 
 ### Grid, chart, pie, sequence & drawing properties
@@ -3058,7 +3168,16 @@ Format: `filename:line:col: error: <message>` (LSP-compatible), compile-time, wi
 | One-ended `->` / `-*` | `a leader points back at its feature — write 'a <- "…"'` |
 | Bare `(o)` with no axis | `'(o)' can't pick an axis on 'X' — anchor a side ('X:top (o)') or a segment` |
 | `(<)` on a point anchor | `an angle reads two edges — a named segment, a '\|line\|', or a side` |
-| Unary `(<)` on an unmirrored name | `'(<)' on ':taper' needs 'mirror:' — no twin to measure against` |
+| Unary `(<)` on an unmirrored name | `'(<)' on ':taper' needs 'mirror:' or 'revolve:' — no twin to measure against` |
+| Station `⌀` on a mirror-only profile | `a station '⌀' reads a revolved profile — 'revolve: x-axis'` |
+| `revolve:` + `mirror:` together | `a sketch takes 'revolve:' or 'mirror:', not both` |
+| Bad `revolve:` value | `'revolve' takes x-axis or y-axis` |
+| Bad `thread:` group | `'thread' takes a segment and its pitch — 'thread: m8 1.5'` |
+| `thread:` without `revolve:` | `'thread' dresses a revolved profile — add 'revolve: x-axis'` |
+| `thread:` segment off-axis / not straight | `'thread' runs along the axis — 'm8' must be a straight run parallel to it` |
+| Unknown `thread:` segment | `no segment 'm8' in this 'draw:'` + suggestions |
+| `thread:` on a non-round node | `'thread' dresses a '\|sketch\|' segment or a round feature` |
+| Bad `sheet:` | `'sheet' takes a size a5…a0 and an optional portrait / landscape` + did-you-mean |
 | `:segment` shadows a built-in point | `':left' is a built-in anchor — pick another name` |
 | Unknown `:segment` | `no segment ':step' on 'body'` + suggestions |
 | Duplicate `:segment` in one `draw:` | `':step' is already named in this 'draw:'` |
@@ -3297,7 +3416,8 @@ dividers / delays (`==` / `...`); and an `|actor|` stick-figure primitive (an ac
   `\|table\|` / `\|note\|` with a built-in glyph set named by ident, drawn as paths like
   icons — the designed direction, no new grammar. Today: `body:seat >- "A"`,
   `face *- "Ra 1.6"`.
-- **hole variants** — counterbore, countersink, thread conventions.
+- **hole variants** — counterbore and countersink (threads are built — `thread:`,
+  [SPEC 15.3](#153-the-sketch-pen), [SPEC 15.4](#154-features-holes--patterns)).
 - **view machinery** — projection lines between views, detail circles ("VIEW A"),
   cutting-plane arrows (A–A), cross-view alignment; today, composed by hand.
 - **angled break lines** and a scope-level `break:` on the `\|drawing\|` itself; a
@@ -3438,22 +3558,24 @@ db      --> api     "record"
 ]
 ```
 
-**Drawings — a broken tie bar, a bushing in section, and a mated assembly** ([SPEC 15](#15-drawing)):
+**Drawings — a broken tie bar, a bushing in section, a mated assembly, and a
+sheeted screw** ([SPEC 15](#15-drawing)):
 
 ```
 { layout: drawing; scale: 3; unit: "mm" }
 
 |sketch#bar| {                                   // a 300 mm tie bar, drawn true
   draw: move(-150, 0) up(10) chamfer(1.5)
-        right(40):thread :a right(260) chamfer(1.5) down(10);
-  mirror: x-axis;                                // half → whole, + the axis centerline
+        right(40):m20 :a right(260) chamfer(1.5) down(10);
+  revolve: x-axis;                               // a turned part: axis + edge lines
+  thread: m20 1.5;                               // minor line + thread-end line
   break: -80 60;                                 // cut the boring middle from the view
 }
 
 bar:left (-) bar:right { side: bottom }          // → 300 mm — true, across the break
 bar:left (-) bar:a     { side: top }             // → 40 mm — ':a' is a freestanding segment
-bar:thread (o) { side: left; tol: h6 }           // → ⌀20 h6 — doubled about the axis
-bar:thread <- "M20×1.5" { side: top }            // thread spec — leader to the surface
+bar:m20 (o) { side: left; tol: h6 }              // → ⌀20 h6 — doubled about the axis
+bar:m20 <- { side: top }                         // → M20×1.5 — the thread composes its spec
 ```
 
 ```
@@ -3483,11 +3605,11 @@ body:left (-) body:right { side: bottom }        // → 60
 |drawing#pump| "HAND PUMP — SECTION" [
   |steel#barrel| {
     draw: move(-90, 0) up(23) right(60) up(6) right(60) down(6) right(60) down(23);
-    mirror: x-axis;
+    revolve: x-axis;
   }
   |steel#nozzle| {
     draw: move(0, 0) up(12) right(40) down(4) right(20) down(8);
-    mirror: x-axis;
+    revolve: x-axis;
   }
   nozzle:left || barrel:right { gap: -10 }       // pressed 10 into the barrel
 
@@ -3503,5 +3625,40 @@ body:left (-) body:right { side: bottom }        // → 60
   "#" "Part"   "Qty"
   "1" "Barrel" "1"
   "2" "Nozzle" "1"
+]
+```
+
+```
+|page| { sheet: a4 landscape } [                 // the ISO sheet: frame, zones, marks
+
+  |drawing#side| "DIN 912 — M8 × 40" [
+    |sketch#screw| {
+      draw: move(0, 0) up(6.5) right(8):head :k down(2.5)
+            right(12) :v right(28):m8 chamfer(1) down(4);
+      revolve: x-axis;                           // a turned part
+      thread: m8 1.25;                           // the threaded run
+    } [
+      |hidden#socket| {                          // the hex socket, dashed
+        draw: move(0, 3) right(4) line(3, -3);
+        mirror: x-axis;
+      }
+    ]
+    screw:head (o) { side: left }                // → ⌀13
+    screw:left (-) screw:k { side: bottom }      // → 8 — K, the head
+    screw:k (-) screw:right { side: bottom }     // → 40 — L, under the head
+    screw:v (-) screw:right { side: top }        // → 28 — the thread length
+    screw:m8 <- { side: top }                    // → M8×1.25 — composed by the thread
+  ]
+
+  |drawing#end| [
+    |oval#od| { width: 13 }                      // the head, end-on
+    |hex| { width: 7 }                           // the socket, visible here
+  ]
+
+  |title-block| { columns: 60 auto } [
+    "Part"  "DIN 912 — M8 × 40"
+    "Scale" "1:1"
+    "Units" "mm"
+  ]
 ]
 ```

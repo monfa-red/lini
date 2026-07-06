@@ -164,6 +164,29 @@ commit per stage; append to the execution log.
 
 Append-only, per PLAN.md's rule.
 
+- **2026-07-06 — stage 0 landed** (same session as the design). SPEC 15 amended
+  per the ledger: SPEC 8 gained eight template rows (`|hidden|`, `|edge|`,
+  `|page|`, `|title-block|`, `|frame|`, `|zone|`, `|tick|`); 15.3 gained the
+  `revolve:` and `thread:` subsections (the edge-line law includes the
+  coincident-span skip and same-station dedup; the thread-end line draws only
+  where the surface continues **collinearly** — where the profile turns, the
+  geometry already ends the thread); 15.4 the hole/round `thread:` senses
+  (internal major = `width + 1.0825 × pitch`, external minor =
+  `width − 1.2269 × pitch`, ¾ arc open over the upper-right quadrant); 15.6
+  re-gated the `⌀` station / full-span readings on `revolve:` (the unary `(<)`
+  stays valid on both); 15.7's producer table grew to seven; 15.8 retitled
+  "Assemblies, views, sheets & titles" (+ the `|page|` prose — content area =
+  frame inset by 5 mm, `padding:` adds); 15.10 / SPEC 16 property rows;
+  eleven SPEC 20 rows; SPEC 24's tie bar migrated to
+  `revolve:` + `thread: m20 1.5` + a bare composed leader (segment renamed
+  `:thread` → `:m20` — a segment named like the property read badly), the
+  pump's barrel/nozzle to `revolve:`, and a sheeted DIN 912 example landed.
+  Decision made here: the page's ISO furniture is **typed chrome children**
+  (`|frame|` / `|zone|` / `|tick|`), not classed lowering — the ledger's
+  cascade-styling promise requires types. Samples catch up per stage (tie bar:
+  revolve in stage 1, thread in stage 2 — SPEC 24 byte-for-byte only after
+  stage 2).
+
 - **2026-07-06 — design settled** (this file). The whole round emerged from
   Abbas's three asks: a standard sheet, threads on turned parts, and hidden
   geometry — plus his observation that every geometry change on a lathe part
