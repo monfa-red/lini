@@ -793,3 +793,16 @@ deviated from this plan and **why**, open threads for the next session.
     same-specificity tie; the repeated
     `style="fill: …; stroke: none; stroke-width: 0; opacity: 1"` and
     `style="stroke-width: 1"` inlines are gone from every drawing sample.
+
+- **2026-07-05 — the floating datum** (Abbas's catch: `body:land >- "A"` and
+  the `side: top` thread leader hovered at the bounding box instead of
+  touching the drawn edge). Root cause: a **sign error in
+  `outline::ray_line`** — the segment parameter `s` divided by `−denom`
+  while `t` divided by `denom`, so the on-segment test accepted each
+  segment's *mirror about its start point* and rejected true hits. Every
+  earlier ray-cast survived by symmetry (circle rims use `ray_circle`;
+  box-centre aims hit coincidentally); a **recessed** edge — the barrel's
+  thread section below the tube surface — exposed it: the miss fell to the
+  rect fallback, the box top. One-character fix at the source; regression
+  test pins both tips on the drawn surface (y = −63, not the box's −75).
+  The leaders sample's note arrow now lands exactly on the bracket corner.

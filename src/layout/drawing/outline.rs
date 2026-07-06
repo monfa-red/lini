@@ -102,6 +102,9 @@ fn ray_seg(o: P, d: P, seg: &PathSeg) -> Option<f64> {
 }
 
 /// Ray × segment `a..b`: `o + t·d = a + s·(b−a)`, `t > eps`, `s ∈ [0, 1]`.
+/// Cramer on `t·d − s·e = a − o`: both parameters divide by the same
+/// determinant — negating one of them accepts the segment's *mirror* about
+/// `a` and rejects true hits (the floating-datum bug).
 fn ray_line(o: P, d: P, a: P, b: P) -> Option<f64> {
     let e = (b.0 - a.0, b.1 - a.1);
     let denom = d.0 * e.1 - d.1 * e.0;
@@ -110,7 +113,7 @@ fn ray_line(o: P, d: P, a: P, b: P) -> Option<f64> {
     }
     let ao = (a.0 - o.0, a.1 - o.1);
     let t = (ao.0 * e.1 - ao.1 * e.0) / denom;
-    let s = (ao.0 * d.1 - ao.1 * d.0) / -denom;
+    let s = (ao.0 * d.1 - ao.1 * d.0) / denom;
     (t > EPS && (-EPS..=1.0 + EPS).contains(&s)).then_some(t)
 }
 

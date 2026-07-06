@@ -128,13 +128,13 @@ input_file: samples/drawing_barrel.lini
     </g>
     <text class="lini-text" x="-436.2" y="106" style="font-weight: normal; font-size: 11px">7</text>
     <g class="lini-node lini-dim-line lini-line" transform="translate(0,0)">
-      <polyline points="-670.5,-77 -670.5,-93.5 -662.5,-93.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-670.5,-75 -673.5,-81 -667.5,-81"/>
+      <polyline points="-670.5,-65 -670.5,-93.5 -662.5,-93.5"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-670.5,-63 -673.5,-69 -667.5,-69"/>
     </g>
     <text class="lini-text" x="-637.4" y="-93.5" style="font-weight: normal; font-size: 11px">M42×1.5</text>
     <g class="lini-node lini-dim-line lini-line" transform="translate(0,0)">
-      <polyline points="-679.1774,-75.6643 -727.5211,-81.0501 -735.5211,-81.0501"/>
-      <polygon class="lini-marker lini-marker-datum" points="-673.5464,-72.0184 -672.8821,-77.9816 -679.1774,-75.6643"/>
+      <polyline points="-571.4631,-63.6643 -727.5211,-81.0501 -735.5211,-81.0501"/>
+      <polygon class="lini-marker lini-marker-datum" points="-565.8322,-60.0184 -565.1678,-65.9816 -571.4631,-63.6643"/>
     </g>
     <text class="lini-text" x="-740.8211" y="-81.0501" style="font-weight: normal; font-size: 11px">A</text>
     <g class="lini-node lini-ext-line lini-line" transform="translate(0,0)">

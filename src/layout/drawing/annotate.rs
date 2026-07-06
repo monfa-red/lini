@@ -555,6 +555,35 @@ mod tests {
         assert_eq!(pts[1], (0.0, 0.0), "the dot lands on the part's origin");
     }
 
+    #[test]
+    fn a_leader_tip_lands_on_a_recessed_edge_not_the_box() {
+        // The thread section sits below the profile's outer surface: the tip
+        // must ray-cast onto the drawn edge (y = −63), not stop at the
+        // geometry box (y = −75) — the floating-datum bug (`ray_line`'s
+        // segment parameter accepted each segment's mirror about its start).
+        let l = laid(
+            "{ layout: drawing; scale: 3 }\n|sketch#body| { draw: move(-80, 0) up(21) right(38):thread right(32):land up(4) right(90) down(25); mirror: x-axis }\nbody:thread <- \"M42\" { side: top }\nbody:land >- \"A\"\n",
+        );
+        let tips: Vec<(f64, f64)> = l
+            .nodes
+            .iter()
+            .filter(|n| n.kind == NodeKind::Line && n.markers.start != MarkerKind::None)
+            .map(|n| {
+                let pts = crate::layout::primitives::attr_points(&n.attrs, "points", n.span)
+                    .unwrap()
+                    .unwrap();
+                pts[0]
+            })
+            .collect();
+        assert_eq!(tips.len(), 2, "the arrow and the datum leader");
+        for (x, y) in tips {
+            assert!(
+                (y + 63.0).abs() < 1e-6,
+                "tip touches the drawn surface: ({x}, {y})"
+            );
+        }
+    }
+
     // ── The anatomy's class hooks [SPEC 17] ──
 
     #[test]

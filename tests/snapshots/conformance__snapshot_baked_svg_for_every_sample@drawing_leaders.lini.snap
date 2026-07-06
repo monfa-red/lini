@@ -81,7 +81,7 @@ input_file: samples/drawing_leaders.lini
       <circle class="lini-marker lini-marker-dot" cx="120.8863" cy="-2.0681" r="2.25"/>
     </g>
     <g class="lini-node lini-dim-line lini-line" transform="translate(0,0)">
-      <line x1="-210" y1="-60" x2="-121.029" y2="88.285"/>
+      <line x1="-202.5" y1="-47.5" x2="-121.029" y2="88.285"/>
       <polygon class="lini-marker lini-marker-arrow" points="-120,90 -125.6595,86.3985 -120.5145,83.3116"/>
     </g>
   </g>
