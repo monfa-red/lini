@@ -3,14 +3,15 @@
 //! toward the near one leaving the sheet-space break gap, and a piecewise
 //! **view map** — monotone, total, invertible — carries the law: anchors and
 //! extension lines land at *displayed* positions, measured values always read
-//! the *unbroken* model ([`ViewMap::unmap`]). A clipped subpath stays **open**
-//! at its cut — SVG's implied fill closure is the straight cut edge, the
-//! profile stroke never draws there, and the generated `|breakline|` chrome
-//! (zigzag, or the round-stock S when the sketch mirrors across the break
-//! axis) draws the drafting line over it.
+//! the *unbroken* model ([`ViewMap::unmap`]). The map is a black hole for
+//! every position in the broken frame — features, their sub-features, a
+//! pattern's copies all ride it (`ride_view`). A clipped subpath stays
+//! **open** at its cut — SVG's implied fill closure is the straight cut edge,
+//! the profile stroke never draws there, and the generated `|breakline|`
+//! chrome (the standards' thin line with the sharp mid-jog) draws over it.
 
 use super::super::ir::{Bbox, PlacedNode};
-use super::geometry::{self, MirrorAxis, P, PathSeg, Subpath, arc_center, dist, n};
+use super::geometry::{self, P, PathSeg, Subpath, arc_center, dist, n};
 use crate::error::Error;
 use crate::resolve::{ResolvedInst, ResolvedValue};
 use crate::span::Span;
@@ -96,8 +97,7 @@ fn interp(knots: &[(f64, f64)], t: f64, pick: impl Fn(&(f64, f64)) -> (f64, f64)
 }
 
 /// One cut edge the chrome draws over [SPEC 15.7]: the cut line's displayed
-/// station, its crossing span on the other coordinate, and the shape — S for
-/// round stock (the sketch mirrors across the break axis), zigzag otherwise.
+/// station and its crossing span on the other coordinate.
 #[derive(Debug)]
 pub struct CutEdge {
     /// Stations on y (a `y-axis` break) — the cut line runs horizontal.
@@ -107,7 +107,6 @@ pub struct CutEdge {
     /// The crossing span on the other coordinate (lo, hi).
     pub lo: f64,
     pub hi: f64,
-    pub s_break: bool,
 }
 
 /// One `break:` group, resolved: stations in model px on its axis.
@@ -123,7 +122,6 @@ struct Group {
 pub(super) fn apply(
     inst: &ResolvedInst,
     subs: &mut Vec<Subpath>,
-    mirrors: &[MirrorAxis],
     scale: f64,
     span: Span,
 ) -> Result<(ViewMap, Vec<CutEdge>), Error> {
@@ -136,12 +134,6 @@ pub(super) fn apply(
     let view = build_map(&groups, span)?;
     let mut cuts = Vec::with_capacity(groups.len() * 2);
     for g in &groups {
-        // The break axis runs along the stations; round stock mirrors across it.
-        let axis_dir: P = if g.vertical { (0.0, 1.0) } else { (1.0, 0.0) };
-        let s_break = mirrors.iter().any(|m| {
-            let d = m.dir();
-            (d.0 * axis_dir.0 + d.1 * axis_dir.1).abs() > 1.0 - EPS
-        });
         let (kept, xa, xb) = clip_out(std::mem::take(subs), g.vertical, g.a, g.b, span)?;
         *subs = kept;
         for (station, crossings) in [(g.a, xa), (g.b, xb)] {
@@ -167,7 +159,6 @@ pub(super) fn apply(
                 t,
                 lo: forward(across, lo),
                 hi: forward(across, hi),
-                s_break,
             });
         }
     }
@@ -507,9 +498,9 @@ fn displace(subs: &mut [Subpath], view: &ViewMap) {
 }
 
 /// Fill the generated `|breakline|` chrome among a sketch's children
-/// [SPEC 15.7]: the zigzag is a thin polyline with the lightning jog
-/// mid-span; the round-stock S turns the node into a stroked path. Both
-/// sheet-space, node-local, indexed `chrome: break N` in authored order.
+/// [SPEC 15.7]: each cut edge is the standards' thin break line — straight
+/// across the profile with the sharp jog mid-span. Sheet-space, node-local,
+/// indexed `chrome: break N` in authored order.
 pub(in crate::layout) fn fill_chrome(children: &mut [PlacedNode], cuts: &[CutEdge]) {
     for c in children.iter_mut() {
         let Some(ResolvedValue::Tuple(items)) = c.attrs.get("chrome") else {
@@ -526,75 +517,39 @@ pub(in crate::layout) fn fill_chrome(children: &mut [PlacedNode], cuts: &[CutEdg
         };
         let half = c.attrs.number("stroke-width").unwrap_or(0.0) / 2.0;
         let pt = |t: f64, s: f64| if cut.horizontal { (s, t) } else { (t, s) };
-        if cut.s_break {
-            let (d, bbox) = s_break_d(cut, pt);
-            c.kind = crate::resolve::NodeKind::Path;
-            c.attrs.insert("path", ResolvedValue::String(d));
-            c.bbox = bbox.inflate(half);
-        } else {
-            let pts = zigzag(cut, pt);
-            let value = ResolvedValue::List(
-                pts.iter()
-                    .map(|p| {
-                        ResolvedValue::Tuple(vec![
-                            ResolvedValue::Number(p.0),
-                            ResolvedValue::Number(p.1),
-                        ])
-                    })
-                    .collect(),
-            );
-            c.attrs.insert("points", value);
-            c.bbox = bounds(&pts).inflate(half);
-        }
+        let pts = jogged(cut, pt);
+        let value = ResolvedValue::List(
+            pts.iter()
+                .map(|p| {
+                    ResolvedValue::Tuple(vec![
+                        ResolvedValue::Number(p.0),
+                        ResolvedValue::Number(p.1),
+                    ])
+                })
+                .collect(),
+        );
+        c.attrs.insert("points", value);
+        c.bbox = bounds(&pts).inflate(half);
     }
 }
 
 /// The thin long-break line: straight across the profile (+ overhang), with
-/// the lightning jog mid-span [SPEC 15.7].
-fn zigzag(cut: &CutEdge, pt: impl Fn(f64, f64) -> P) -> Vec<P> {
+/// the sharp jog mid-span [SPEC 15.7].
+fn jogged(cut: &CutEdge, pt: impl Fn(f64, f64) -> P) -> Vec<P> {
     let m = (cut.lo + cut.hi) / 2.0;
     let h = cut.hi - cut.lo;
-    let jog = (h * 0.3).min(6.0);
-    let amp = (h * 0.2).min(4.0);
+    // The jog stays clear of its twin across the 12 px gap — amplitude well
+    // under half of it.
+    let jog = (h * 0.28).min(9.0);
+    let amp = (h * 0.2).min(4.5);
     vec![
         pt(cut.t, cut.lo - OVERHANG),
         pt(cut.t, m - jog),
-        pt(cut.t + amp, m - jog / 3.0),
-        pt(cut.t - amp, m + jog / 3.0),
+        pt(cut.t + amp, m - jog * 0.15),
+        pt(cut.t - amp, m + jog * 0.15),
         pt(cut.t, m + jog),
         pt(cut.t, cut.hi + OVERHANG),
     ]
-}
-
-/// The round-stock S [SPEC 15.7]: two opposed bows meeting at the axis — the
-/// freehand break drafting draws on solid round bar.
-fn s_break_d(cut: &CutEdge, pt: impl Fn(f64, f64) -> P) -> (String, Bbox) {
-    let (lo, hi) = (cut.lo, cut.hi);
-    let m = (lo + hi) / 2.0;
-    let h = hi - lo;
-    let amp = (h * 0.15).clamp(2.0, 8.0);
-    let p = |q: P| format!("{} {}", n(q.0), n(q.1));
-    let d = format!(
-        "M {} C {} {} {} C {} {} {}",
-        p(pt(cut.t, lo)),
-        p(pt(cut.t + 2.2 * amp, lo + h * 0.28)),
-        p(pt(cut.t + 2.2 * amp, m - h * 0.12)),
-        p(pt(cut.t, m)),
-        p(pt(cut.t - 2.2 * amp, m + h * 0.12)),
-        p(pt(cut.t - 2.2 * amp, hi - h * 0.28)),
-        p(pt(cut.t, hi)),
-    );
-    let along = |t: f64, s: f64| pt(t, s);
-    let (a, b) = (along(cut.t - 2.2 * amp, lo), along(cut.t + 2.2 * amp, hi));
-    (
-        d,
-        Bbox {
-            min_x: a.0.min(b.0),
-            min_y: a.1.min(b.1),
-            max_x: a.0.max(b.0),
-            max_y: a.1.max(b.1),
-        },
-    )
 }
 
 fn bounds(pts: &[P]) -> Bbox {
@@ -669,41 +624,24 @@ mod tests {
     }
 
     #[test]
-    fn round_stock_gets_the_s_break_flat_gets_the_zigzag() {
-        // Mirrored across the break axis → the S (a stroked path); an
-        // unmirrored plate → the thin zigzag polyline [SPEC 15.7].
-        let round = laid(
-            "{ layout: drawing; scale: 1 }\n|sketch#bar| { draw: move(-150, 0) up(10) right(300) down(10); mirror: x-axis; break: -80 60 }\n",
+    fn every_cut_edge_draws_the_jogged_break_line() {
+        // One convention [SPEC 15.7]: the thin line across the profile with
+        // the sharp jog mid-span — a polyline pair per group.
+        let l = laid(
+            "{ layout: drawing; scale: 1 }\n|sketch#plate| { draw: move(-100, -12) right(200) down(24) left(200) close(); break: -50 50 }\n",
         );
-        let cuts: Vec<_> = by_id(&round.nodes, "bar")
+        let cuts: Vec<_> = by_id(&l.nodes, "plate")
             .children
             .iter()
             .filter(|c| c.type_chain.iter().any(|t| t == "breakline"))
             .collect();
         assert_eq!(cuts.len(), 2, "one pair per group");
+        assert!(cuts.iter().all(|c| c.kind == NodeKind::Line));
+        // The near edge stands at the displayed station, jog amplitude
+        // min(4.5, h/5) = 4.5 to its left, half a stroke more of paint.
         assert!(
-            cuts.iter().all(|c| c.kind == NodeKind::Path),
-            "the round-stock S is a path"
-        );
-
-        let flat = laid(
-            "{ layout: drawing; scale: 1 }\n|sketch#plate| { draw: move(-100, -12) right(200) down(24) left(200) close(); break: -50 50 }\n",
-        );
-        let cuts: Vec<_> = by_id(&flat.nodes, "plate")
-            .children
-            .iter()
-            .filter(|c| c.type_chain.iter().any(|t| t == "breakline"))
-            .collect();
-        assert_eq!(cuts.len(), 2);
-        assert!(
-            cuts.iter().all(|c| c.kind == NodeKind::Line),
-            "the zigzag stays a line"
-        );
-        // The near edge stands at the displayed station, spanning the profile
-        // + overhang.
-        assert!(
-            cuts.iter().any(|c| (c.bbox.min_x - -54.5).abs() < 1e-6),
-            "near cut at −50 − jog amplitude − half stroke: {}",
+            cuts.iter().any(|c| (c.bbox.min_x - -55.0).abs() < 1e-6),
+            "near cut at −50 − amp − half stroke: {}",
             cuts[0].bbox.min_x
         );
         assert!(
@@ -747,6 +685,27 @@ mod tests {
             vent.cx
         );
         text_at(&l.nodes, "250");
+    }
+
+    #[test]
+    fn pattern_copies_ride_the_broken_view_too() {
+        // The barrel bug: the view map is a black hole for every position in
+        // the broken frame — a patterned hole's far-side copies slide with
+        // the far piece, not just the carrier [SPEC 15.3].
+        let l = laid(
+            "{ layout: drawing; scale: 1 }\n|sketch#bar| { draw: move(-150, -15) right(300) down(30) left(300) close(); break: -30 30 } [\n  |hole#vent| { width: 10; translate: -120 0; pattern: grid(3, 1, 80, 0) }\n]\n",
+        );
+        let vent = by_id(&l.nodes, "vent");
+        assert_eq!((vent.cx, vent.cy), (-120.0, 0.0), "the seed stays put");
+        let copies: Vec<f64> = vent
+            .children
+            .iter()
+            .filter(|c| c.attrs.get("chrome").is_none() && c.kind == NodeKind::Oval)
+            .map(|c| c.cx)
+            .collect();
+        // Model copies at −120, −40, 40 in the bar frame; 40 sits past the
+        // cut → displayed 40 − 60 + 12 = −8, carrier-relative 112.
+        assert_eq!(copies, vec![0.0, 80.0, 112.0], "the far copy slides");
     }
 
     #[test]

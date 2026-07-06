@@ -777,7 +777,7 @@ the cascade ([SPEC 4](#4-selectors-cascade--specificity)) — every value here i
 | `\|hole\|` | `\|oval\|` | `fill: --bg; stroke: --stroke` — `width:` **required**, the diameter | A round **hole** — punches by paint order, draws its own centre marks ([SPEC 15.4](#154-features-holes--patterns)). |
 | `\|centerline\|` | `\|line\|` | `stroke-style: center; stroke-width: 1; fill: none` — needs `points:` | The dash-dot axis / symmetry line ([SPEC 15.7](#157-leaders-notes--line-conventions)). |
 | `\|pitch-circle\|` | `\|oval\|` | `stroke-style: center; stroke-width: 1; fill: none` — `width:` **required**, the diameter | The dash-dot bolt circle; round, so a `(-)` reads its PCD ([SPEC 15.7](#157-leaders-notes--line-conventions)). |
-| `\|breakline\|` | `\|line\|` | `stroke-width: 1; fill: none` — needs `points:` | A break cut's edge — the zigzag / round-stock S a `break:` generates ([SPEC 15.3](#153-the-sketch-pen)); manual use is free. |
+| `\|breakline\|` | `\|line\|` | `stroke-width: 1; fill: none` — needs `points:` | A break cut's edge — the thin jogged line a `break:` generates ([SPEC 15.3](#153-the-sketch-pen)); manual use is free. |
 
 The bare `|block|` is the base everything rectangular builds on — frameless, yet a real
 box (id, class, children, wirable, positionable): what you reach for to wrap text that
@@ -2213,9 +2213,13 @@ stays whole. `a < b` (error otherwise) are coordinates in the node's own frame o
 comma list, each group defaulting to the longer axis: `break: -90 -30, 30 90;`.
 
 - The far piece slides toward the near one, leaving a sheet-space `break-gap`; the cut
-  edges draw as generated `|breakline|` children — zigzag, or the round-stock **S**
-  when the sketch is mirrored across the break axis — styled or removed by the cascade
-  like all chrome ([15.7](#157-leaders-notes--line-conventions)).
+  edges draw as generated `|breakline|` children — the standards' thin line with a
+  sharp jog mid-span — styled or removed by the cascade like all chrome
+  ([15.7](#157-leaders-notes--line-conventions)).
+- **The break is a black hole for position.** Everything placed in the broken node's
+  frame rides the compression — its features, their sub-features, a `pattern:`'s
+  copies: a far-side hole slides with the far piece. (A descendant's own *shape*
+  never clips — only the profile cuts.)
 - **Dimensions stay true.** Anchors and extension lines land at *displayed* positions;
   measured values always read the *unbroken* model — the same law as `scale:`.
 
@@ -2460,7 +2464,7 @@ circle; being round, `bc (-)` reads its PCD). A manual `|pitch-circle|` covers w
 | a **fused** `mirror:` ([15.3](#153-the-sketch-pen)) | the axis `\|centerline\|`, overhanging the profile |
 | `pattern: radial` ([15.4](#154-features-holes--patterns)) | the `\|pitch-circle\|` through the copies |
 | a `\|hole\|` | its centre-mark crosshair |
-| a `break:` ([15.3](#153-the-sketch-pen)) | the `\|breakline\|` pair — zigzag, or the round-stock S |
+| a `break:` ([15.3](#153-the-sketch-pen)) | the `\|breakline\|` pair — thin, sharply jogged mid-span |
 
 ### 15.8 Assemblies, views & titles
 

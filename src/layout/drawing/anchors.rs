@@ -67,12 +67,18 @@ pub(super) fn resolve<'a>(
 
     // Walk into features, accumulating origin and rotation — each level renders
     // as translate(cx, cy) rotate(deg), so a parent's turn carries its subtree.
-    // A broken parent placed its features through its view map [SPEC 15.3];
-    // the model origin unmaps each hop, so values stay true.
+    // A broken ancestor slid every position in its frame through its view map
+    // (`ride_view`, [SPEC 15.3]); the model origin inverts that per hop —
+    // carrying the active view and the walked model position — so values stay
+    // true at any depth. The view deactivates exactly where the ride stopped:
+    // a turned child (positions inside leave the break frame).
     let mut node = &kids[child];
     let mut origin = (node.cx, node.cy);
     let mut model_origin = origin;
     let mut rot = node.rotation;
+    // (the map, walked model position, walked displayed position) — both
+    // accumulate in the broken sketch's frame, mirroring `ride_view`.
+    let mut view: Option<(&super::breaks::ViewMap, P, P)> = None;
     for seg in segs {
         let next = node
             .children
@@ -86,14 +92,30 @@ pub(super) fn resolve<'a>(
                     format!("'{rel}' sits inside a 'pattern:' — per-copy features are deferred (SPEC 23)"),
                 )
             })?;
-        let local = rotated((next.cx, next.cy), rot);
-        origin = (origin.0 + local.0, origin.1 + local.1);
-        let unbroken = match node.sketch.as_ref() {
-            Some(geo) if !geo.view.is_identity() => geo.view.unmap((next.cx, next.cy)),
-            _ => (next.cx, next.cy),
+        if let Some(geo) = node.sketch.as_ref()
+            && !geo.view.is_identity()
+        {
+            view = Some((&geo.view, (0.0, 0.0), (0.0, 0.0)));
+        }
+        let d_local = (next.cx, next.cy);
+        let m_local = match &mut view {
+            Some((v, bm, bd)) => {
+                let da = (bd.0 + d_local.0, bd.1 + d_local.1);
+                let ma = v.unmap(da);
+                let local = (ma.0 - bm.0, ma.1 - bm.1);
+                *bm = ma;
+                *bd = da;
+                local
+            }
+            None => d_local,
         };
-        let m = rotated(unbroken, rot);
+        let local = rotated(d_local, rot);
+        origin = (origin.0 + local.0, origin.1 + local.1);
+        let m = rotated(m_local, rot);
         model_origin = (model_origin.0 + m.0, model_origin.1 + m.1);
+        if next.rotation != 0.0 {
+            view = None;
+        }
         rot += next.rotation;
         node = next;
     }

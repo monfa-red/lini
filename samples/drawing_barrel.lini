@@ -2,8 +2,8 @@
 // the stress sample: one named profile carries every value. Stations chain
 // on one row (the narrow 7 flips its arrows outside), ⌀ fits stack at the
 // left in source order, the thread and the bolt pattern take leaders, datum
-// A sits on the land, and `break:` folds the boring tube — the 485 still
-// true across the S-break pair.
+// A sits on the land, and `break:` folds the boring tube — the far bolt
+// hole rides the far piece, and the 485 stays true across the break.
 
 { layout: drawing; scale: 3 }
 

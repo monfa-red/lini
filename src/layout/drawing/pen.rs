@@ -90,7 +90,7 @@ pub fn fold(inst: &ResolvedInst, scale: f64) -> Result<Folded, Error> {
             *p = p.scaled(scale);
         }
     }
-    let (view, cuts) = super::breaks::apply(inst, &mut subs, &mirror_axes, scale, span)?;
+    let (view, cuts) = super::breaks::apply(inst, &mut subs, scale, span)?;
 
     let d = to_d(&subs);
     Ok(Folded {

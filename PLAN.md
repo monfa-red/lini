@@ -82,9 +82,12 @@ coordinates through `prim::*`).
 8. **`break: a b [x-axis|y-axis]`**, comma groups; every group defaults to the
    node's **longer axis**; `a < b` else error; stations are coordinates in the node's
    own frame. View-only compression: far piece slides toward the near piece leaving
-   sheet-space `break-gap`; generated `|breakline|` chrome (zigzag; S-break when the
-   sketch is mirrored across the break axis); **measured values always read the
-   unbroken model** (displayed positions come from a piecewise offset map).
+   sheet-space `break-gap`; generated `|breakline|` chrome (*amended 2026-07-05 by
+   Abbas*: **one convention** — the thin line with the sharp mid-jog; the round-stock
+   S was dropped); the break is a **black hole for position** — features,
+   sub-features, and pattern copies in the broken frame all ride the map (*amended
+   2026-07-05, the barrel bug*); **measured values always read the unbroken model**
+   (displayed positions come from a piecewise offset map).
 9. **`scale:`** is a per-node property (px per drawing unit, default 1,
    nearest-ancestor-wins; *amended 2026-07-05 by Abbas*: a `|drawing|` and a root
    `{ layout: drawing }` default to **4** — ≈1 mm per unit at screen resolution): a node's **position** (`translate:`) scales by its
@@ -741,3 +744,31 @@ deviated from this plan and **why**, open threads for the next session.
     still aren't collision-packed against dim rows (deterministic;
     `side:` steers — the break samples didn't collide). The angle arc
     still draws no leg extension lines.
+
+- **2026-07-05 — Abbas's break review** (same day; all gates green — 720
+  tests — clippy silent, fmt clean; tie bar + barrel re-rendered to PNG and
+  inspected against his reference images). Two fixes at the source:
+  - **The break is a black hole for position** (the barrel bug he caught:
+    the third M8 hole ignored the compression). `place_features` mapped
+    only a feature's *own* translate; a `pattern:`'s copies — and any
+    deeper descendants — are placed by offsets inside the carrier and
+    never rode the map. Now `ride_view` recurses: every non-chrome
+    position in the broken frame maps through the view (`map(base + d)`),
+    stopping only where positions leave that frame — a turned child, a
+    layout-owning (sealed) child, a child with its own break — each of
+    which still rides as one box; a carrier's bbox re-unions around the
+    ridden copies. The anchor walk carries the same state (the active
+    view + walked model/displayed positions) and inverts it per hop, so
+    a dimension to a far-side copy still reads the unbroken model. First
+    walk version used `map(base)` as the displayed base — wrong when the
+    removed span contains the origin (child positions are stored absolute
+    in the sketch frame); the regression test pins it. SPEC 15.3 gained
+    the black-hole bullet; ledger 8 annotated.
+  - **One break-line convention** (Abbas's call, reference: the standards'
+    long-break line): the round-stock S is gone; both cut edges draw the
+    thin line with the **sharp compact jog** mid-span — jog half-height
+    min(0.28 h, 9), amplitude min(0.2 h, 4.5), safely inside the 12 px
+    gap so the twin jogs never touch. `CutEdge.s_break`, the mirror
+    check, and the kind-flip to `Path` are deleted (`|breakline|` is a
+    plain `points:` polyline again). SPEC 8/15.3/15.7 reworded; ledger 8
+    annotated; sample comments updated.

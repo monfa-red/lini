@@ -1,8 +1,8 @@
 // The tie bar [SPEC 24]: a mirrored half-profile with chamfered ends,
-// `break:` cutting the boring middle from the view — the S-break pair for
-// round stock, the 300 still true across it; the station `⌀` reads the
-// `:thread` surface doubled about the axis and takes a fit tolerance; the
-// thread spec rides a leader steered onto the surface.
+// `break:` cutting the boring middle from the view — the jogged break-line
+// pair, the 300 still true across it; the station `⌀` reads the `:thread`
+// surface doubled about the axis and takes a fit tolerance; the thread spec
+// rides a leader steered onto the surface.
 
 { layout: drawing; scale: 3; unit: "mm" }
 

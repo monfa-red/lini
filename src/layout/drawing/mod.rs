@@ -135,11 +135,12 @@ pub(super) fn part_bbox(inst: &ResolvedInst, own: f64) -> Result<Bbox, Error> {
 
 /// Datum placement [SPEC 15.1/15.4]: every child's **origin** lands on the
 /// parent's datum, offset only by `translate:` (drawing units × the parent's
-/// scale). A broken parent's features ride its **view map** — rigid with the
-/// displayed pieces [SPEC 15.3] (their model position unmaps in the anchor
-/// walk). Chrome children stay at the datum (their geometry is filled by
-/// [`chrome::fill`]); pinned sheet content is re-placed by the engine after
-/// the extent is known.
+/// scale). A broken parent's view map acts on **every position in its
+/// frame** — features, their sub-features, a pattern's copies — so the whole
+/// population rides the displayed pieces [SPEC 15.3] (model positions unmap
+/// in the anchor walk). Chrome children stay at the datum (their geometry is
+/// filled by [`chrome::fill`]); pinned sheet content is re-placed by the
+/// engine after the extent is known.
 pub(super) fn place_features(
     children: &mut [super::PlacedNode],
     scale: f64,
@@ -150,14 +151,54 @@ pub(super) fn place_features(
             continue;
         }
         let (dx, dy) = super::anchors::translate(&c.attrs, c.span)?.unwrap_or((0.0, 0.0));
+        let m = (dx * scale, dy * scale);
         let p = match view {
-            Some(v) => v.map((dx * scale, dy * scale)),
-            None => (dx * scale, dy * scale),
+            Some(v) => v.map(m),
+            None => m,
         };
         c.cx = p.0;
         c.cy = p.1;
+        if let Some(v) = view {
+            ride_view(c, v, m, p);
+        }
     }
     Ok(())
+}
+
+/// Slide a subtree's descendant positions through the broken ancestor's view
+/// map: a descendant at model offset `d` in the ancestor's frame displays at
+/// `map(base + d)`. Recursion stops where positions leave that frame — a
+/// turned child (its interior axes no longer align with the break axis), a
+/// layout-owning child (sealed, arranged by its own engine), or a child with
+/// its own break (its own view world, rigid from outside); each still rides
+/// as one box. Chrome stays with whatever generated it.
+fn ride_view(node: &mut super::PlacedNode, v: &breaks::ViewMap, base_model: P, base_disp: P) {
+    if node.rotation != 0.0
+        || super::owns_layout(&node.attrs)
+        || node.sketch.as_ref().is_some_and(|g| !g.view.is_identity())
+    {
+        return;
+    }
+    for c in node.children.iter_mut() {
+        if chrome::is_chrome(&c.attrs) {
+            continue;
+        }
+        let m = (base_model.0 + c.cx, base_model.1 + c.cy);
+        let d = v.map(m);
+        c.cx = d.0 - base_disp.0;
+        c.cy = d.1 - base_disp.1;
+        ride_view(c, v, m, d);
+    }
+    // A pattern carrier's bbox is its copies' union (`pattern::expand`) —
+    // re-union it around the ridden positions.
+    if node.attrs.get("pattern").is_some() {
+        let mut bbox = Bbox::empty();
+        for (i, c) in node.children.iter().enumerate() {
+            let b = c.bbox.shifted(c.cx, c.cy);
+            bbox = if i == 0 { b } else { bbox.union(b) };
+        }
+        node.bbox = bbox;
+    }
 }
 
 /// The one compile pipeline the drawing tests drive — source → `LaidOut` (or
