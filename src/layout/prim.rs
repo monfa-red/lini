@@ -112,11 +112,13 @@ pub fn marker(
     filled(shape, cx, cy, w, h, fill)
 }
 
-/// A drawing dimension's arrowhead [SPEC 15.6]: a filled polygon classed
-/// `lini-marker lini-marker-dim`, so the shared `.lini-marker` rule paints it
-/// (fill = the link stroke, stroke off) and only a recoloured statement
-/// inlines anything — exactly how link markers ride the sheet [SPEC 17].
-pub fn dim_marker(points: Vec<(f64, f64)>, fill: ResolvedValue) -> PlacedNode {
+/// A drawing annotation's filled marker head [SPEC 15.6/15.7] — the slender
+/// dimension arrow, the surface-seated datum triangle — classed
+/// `lini-marker lini-marker-{variant}`, so the shared `.lini-marker` rule
+/// paints it (fill = the link stroke, stroke off) and only a recoloured
+/// statement inlines anything — exactly how link markers ride the sheet
+/// [SPEC 17].
+pub fn dim_marker(variant: &str, points: Vec<(f64, f64)>, fill: ResolvedValue) -> PlacedNode {
     let bbox = bounds(&points);
     let pts = points
         .into_iter()
@@ -125,7 +127,7 @@ pub fn dim_marker(points: Vec<(f64, f64)>, fill: ResolvedValue) -> PlacedNode {
         })
         .collect();
     let mut n = node(NodeKind::Poly, bbox);
-    n.type_chain = vec!["marker".into(), "marker-dim".into()];
+    n.type_chain = vec!["marker".into(), format!("marker-{variant}")];
     n.attrs.insert("points", ResolvedValue::List(pts));
     n.attrs.insert("fill", fill);
     n.attrs.insert("stroke", ident("none"));

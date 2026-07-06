@@ -806,3 +806,18 @@ deviated from this plan and **why**, open threads for the next session.
   rect fallback, the box top. One-character fix at the source; regression
   test pins both tips on the drawn surface (y = −63, not the box's −75).
   The leaders sample's note arrow now lands exactly on the bracket corner.
+
+- **2026-07-05 — the tilted datum** (Abbas's catch: the `>-` triangle rode
+  the leader's angle — a shallow leader laid the symbol nearly flat along
+  the surface). GD&T seats the datum triangle on the **feature**, not the
+  line: on a directed anchor the lowering now draws it itself
+  (`prim::dim_marker("datum", …)` — the marker builder gained a variant,
+  classes `lini-marker lini-marker-datum`) with its base flush on the drawn
+  edge and its apex out along the **surface normal**; the leader meets the
+  apex at whatever angle it arrives. The surface sets the triangle's axis,
+  the leader its **sign** (the apex points to the elbow) — so an edge
+  authored material-on-the-left (the leaders sample's CCW bracket, where
+  `outward` faces into the part) still seats right side out. A
+  point-anchored datum (no normal) keeps the core line-oriented marker —
+  today's fallback. Size shares `render::markers::marker_size` (one
+  formula). Tests pin the seated base on the surface and the fallback.

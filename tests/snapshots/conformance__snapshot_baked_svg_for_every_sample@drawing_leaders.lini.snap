@@ -68,7 +68,9 @@ input_file: samples/drawing_leaders.lini
     <text class="lini-text" x="52.5" y="75" style="font-weight: normal; font-size: 11px" transform="rotate(-90 52.5 75)">⌀16</text>
     <g class="lini-node lini-dim-line lini-line" transform="translate(0,0)">
       <polyline points="0,96 0,117.5 8,117.5"/>
-      <polygon class="lini-marker lini-marker-datum" points="3,90 -3,90 0,96"/>
+    </g>
+    <g class="lini-node lini-marker lini-marker-datum lini-poly" transform="translate(0,0)">
+      <polygon points="-3,90 3,90 0,96"/>
     </g>
     <text class="lini-text" x="13.3" y="117.5" style="font-weight: normal; font-size: 11px">A</text>
     <g class="lini-node lini-dim-line lini-line" transform="translate(0,0)">

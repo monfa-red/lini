@@ -519,15 +519,35 @@ mod tests {
     }
 
     #[test]
-    fn the_datum_leader_lowers_to_the_datum_marker() {
+    fn the_datum_triangle_seats_on_the_surface() {
+        // `>-` on a directed feature: the GD&T triangle's base lies flush
+        // with the drawn edge (y = 15), its apex out along the surface
+        // normal — never tilted by the leader's approach angle [SPEC 15.7].
         let l = laid(
             "{ layout: drawing; scale: 1 }\n|rect#block| { width: 60; height: 30 }\nblock:bottom >- \"A\"\n",
+        );
+        let tri = l
+            .nodes
+            .iter()
+            .find(|n| n.type_chain.iter().any(|t| t == "marker-datum"))
+            .expect("the seated datum triangle");
+        let pts = crate::layout::primitives::attr_points(&tri.attrs, "points", tri.span)
+            .unwrap()
+            .unwrap();
+        assert!(
+            (pts[0].1 - 15.0).abs() < 1e-6 && (pts[1].1 - 15.0).abs() < 1e-6,
+            "base on the bottom face: {pts:?}"
+        );
+        assert!(pts[2].1 > 15.0, "apex out along the normal: {pts:?}");
+        // A point-anchored datum keeps the core marker, oriented by the line.
+        let l = laid(
+            "{ layout: drawing; scale: 1 }\n|oval#pin| { width: 20; height: 20 }\npin >- \"B\"\n",
         );
         assert!(
             l.nodes
                 .iter()
                 .any(|n| n.kind == NodeKind::Line && n.markers.start == MarkerKind::Datum),
-            "the '>-' tip is the datum triangle"
+            "the fallback datum marker"
         );
     }
 
@@ -564,24 +584,32 @@ mod tests {
         let l = laid(
             "{ layout: drawing; scale: 3 }\n|sketch#body| { draw: move(-80, 0) up(21) right(38):thread right(32):land up(4) right(90) down(25); mirror: x-axis }\nbody:thread <- \"M42\" { side: top }\nbody:land >- \"A\"\n",
         );
-        let tips: Vec<(f64, f64)> = l
+        let arrow_tip = l
             .nodes
             .iter()
-            .filter(|n| n.kind == NodeKind::Line && n.markers.start != MarkerKind::None)
+            .find(|n| n.kind == NodeKind::Line && n.markers.start == MarkerKind::Arrow)
             .map(|n| {
-                let pts = crate::layout::primitives::attr_points(&n.attrs, "points", n.span)
+                crate::layout::primitives::attr_points(&n.attrs, "points", n.span)
                     .unwrap()
-                    .unwrap();
-                pts[0]
+                    .unwrap()[0]
             })
-            .collect();
-        assert_eq!(tips.len(), 2, "the arrow and the datum leader");
-        for (x, y) in tips {
-            assert!(
-                (y + 63.0).abs() < 1e-6,
-                "tip touches the drawn surface: ({x}, {y})"
-            );
-        }
+            .expect("the arrow leader");
+        assert!(
+            (arrow_tip.1 + 63.0).abs() < 1e-6,
+            "the arrow touches the drawn surface: {arrow_tip:?}"
+        );
+        let tri = l
+            .nodes
+            .iter()
+            .find(|n| n.type_chain.iter().any(|t| t == "marker-datum"))
+            .expect("the seated datum triangle");
+        let pts = crate::layout::primitives::attr_points(&tri.attrs, "points", tri.span)
+            .unwrap()
+            .unwrap();
+        assert!(
+            (pts[0].1 + 63.0).abs() < 1e-6 && (pts[1].1 + 63.0).abs() < 1e-6,
+            "the datum base sits on the drawn surface: {pts:?}"
+        );
     }
 
     // ── The anatomy's class hooks [SPEC 17] ──

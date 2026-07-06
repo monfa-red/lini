@@ -247,6 +247,7 @@ pub(super) fn arrow(tip: P, dir: P, paint: &Paint) -> PlacedNode {
     let base = (tip.0 - dir.0 * l, tip.1 - dir.1 * l);
     let perp = (-dir.1, dir.0);
     super::super::prim::dim_marker(
+        "dim",
         vec![
             tip,
             (base.0 + perp.0 * w, base.1 + perp.1 * w),

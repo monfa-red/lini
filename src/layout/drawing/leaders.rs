@@ -152,16 +152,52 @@ pub(super) fn callout(ctx: &Ctx, w: &ResolvedLink) -> Result<Vec<PlacedNode>, Er
     let paint = Paint::of(&w.attrs);
     let a = anchors::resolve(ctx.kids, ctx.scope, &w.endpoints[0], "leader")?;
     let dir = side_attr(&w.attrs).and_then(side_unit);
-    let line = leader_line(ctx, &a, a.point(), dir, None, None);
+    let mut line = leader_line(ctx, &a, a.point(), dir, None, None);
 
-    let mut node = paint.dim(line.points.clone());
-    node.markers.start = match w.markers.start {
-        // `>-` is the crow op elsewhere — on a drawing's datum leader it
-        // lowers to the filled datum triangle [SPEC 15.7].
-        MarkerKind::Crow => MarkerKind::Datum,
-        m => m,
-    };
-    let mut out = vec![node];
+    // `>-` is the crow op elsewhere — on a drawing's datum leader it lowers
+    // to the filled GD&T triangle [SPEC 15.7]. On a directed feature the
+    // triangle **seats on the surface**: base flush with the drawn edge,
+    // apex out along the surface normal — the leader meets the apex at
+    // whatever angle it arrives, never tilting the symbol.
+    let mut out = Vec::new();
+    if w.markers.start == MarkerKind::Crow
+        && let Some(n) = a.outward()
+    {
+        let tip = line.points[0];
+        // The surface sets the triangle's axis; the leader sets its sign —
+        // the apex meets the leader, which approaches from outside the
+        // material (an edge authored the other way round flips `outward`).
+        let to_elbow = (line.points[1].0 - tip.0, line.points[1].1 - tip.1);
+        let n = if n.0 * to_elbow.0 + n.1 * to_elbow.1 < 0.0 {
+            (-n.0, -n.1)
+        } else {
+            n
+        };
+        let size = crate::render::markers::marker_size(paint.sw);
+        let half = size * 0.5;
+        let t = (-n.1, n.0);
+        let apex = (tip.0 + n.0 * size, tip.1 + n.1 * size);
+        line.points[0] = apex;
+        out.push(paint.dim(line.points.clone()));
+        out.push(prim::dim_marker(
+            "datum",
+            vec![
+                (tip.0 + t.0 * half, tip.1 + t.1 * half),
+                (tip.0 - t.0 * half, tip.1 - t.1 * half),
+                apex,
+            ],
+            paint.stroke.clone(),
+        ));
+    } else {
+        let mut node = paint.dim(line.points.clone());
+        node.markers.start = match w.markers.start {
+            // A point-anchored datum has no surface normal — the core marker
+            // orients along the leader, today's fallback.
+            MarkerKind::Crow => MarkerKind::Datum,
+            m => m,
+        };
+        out.push(node);
+    }
     out.extend(texts_beside(&w.texts, line.text_at, line.sx, paint.fs));
     Ok(out)
 }
