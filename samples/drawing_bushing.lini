@@ -1,6 +1,6 @@
 // The bushing in section [SPEC 24]: `hatch()` section lines on the
 // duplicated-mirror walls, a `--bg` bore that punches by paint order
-// (hatch-exempt with no special case), and side-anchored `(-)` spans read
+// (hatch-exempt with no special case), and side-anchored `(o)` spans read
 // as diameters — written smallest first, since source order packs the rows
 // inside-out.
 
@@ -16,6 +16,6 @@
 |rect#bore| { width: 60; height: 16; fill: --bg; stroke: none }   // the bore punches
 |centerline| { points: -34 0, 34 0 }             // duplicated subpaths add no auto axis
 
-bore:top (-) { side: right }                     // → ⌀16 — written first, the inner row
-body:top (-) { side: right }                     // → ⌀36 — stacks outside it
-body:left <-> body:right { side: bottom }        // → 60
+bore:top (o) { side: right }                     // → ⌀16 — written first, the inner row
+body:top (o) { side: right }                     // → ⌀36 — stacks outside it
+body:left (-) body:right { side: bottom }        // → 60

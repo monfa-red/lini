@@ -111,11 +111,11 @@ fn single_line_label_stays_a_bare_text() {
 }
 
 #[test]
-fn gap_color_accepts_a_gradient() {
-    // SPEC §11.3: `gap-color` is a paint like `stroke`, so it takes a gradient — the
+fn gap_fill_accepts_a_gradient() {
+    // SPEC §11.3: `gap-fill` is a paint like `stroke`, so it takes a gradient — the
     // gutter rect fills with a `url(#…)` reference and the def is emitted.
     let svg = render_baked(
-        "|row#r| { gap: 10; gap-color: gradient(red, blue) } [\n  |box#a| \"x\" { width: 40; height: 40 }\n  |box#b| \"y\" { width: 40; height: 40 }\n]\n",
+        "|row#r| { gap: 10; gap-fill: gradient(red, blue) } [\n  |box#a| \"x\" { width: 40; height: 40 }\n  |box#b| \"y\" { width: 40; height: 40 }\n]\n",
     );
     assert!(
         svg.contains("<linearGradient"),

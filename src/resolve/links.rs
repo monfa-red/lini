@@ -25,6 +25,11 @@ use crate::syntax::ast::{Endpoint, EndpointGroup, Link};
 /// own block — with no `link-*` family.
 pub const LINK_CLASS: &str = "lini-link";
 
+/// The class every **dimension** additionally wears [SPEC 4, 15.6]: `(-)` lowers to
+/// it, and its layer sits just above `LINK_CLASS`, so a `(-) { }` rule beats a
+/// `|-| { }` rule for dimensions — the `|-|` → `(-)` type cascade.
+pub const DIMENSION_CLASS: &str = "lini-dimension";
+
 /// A link scope's drawing classification [SPEC 15/20]: `drawing` gates the
 /// drawing statements; `flow_in_drawing` names the layout-owning container
 /// when a drawing encloses the scope without being it — the mate gate's
@@ -55,21 +60,40 @@ pub fn resolve_link(
     let drawing_scope = scope_kind.drawing;
     validate_statement(w, scope_kind)?;
 
-    // A link is a node whose type is `lini-link`, whose ancestors are its scope
-    // chain, with no id [SPEC 9, 4].
+    // The link's kind [SPEC 9, 15]: a plain wire, a measuring dimension, or a
+    // mate — a pure function of the operator (an explicit `marker:` restyles a
+    // wire but never re-types it), so it is the same for every fan pair. A
+    // **dimension** is any `Measure(_)`.
+    let kind = match w.op {
+        ChainOp::Wire(_) => LinkKind::Wire,
+        ChainOp::Measure(DrawOp::Linear) => LinkKind::Measure(MeasureOp::Linear),
+        ChainOp::Measure(DrawOp::Round) => LinkKind::Measure(MeasureOp::Round),
+        ChainOp::Measure(DrawOp::Angle) => LinkKind::Measure(MeasureOp::Angle),
+        ChainOp::Mate => LinkKind::Mate,
+    };
+    let is_dim = matches!(kind, LinkKind::Measure(_));
+
+    // A link is a node whose type is `lini-link` — plus `lini-dimension` for a
+    // dimension (the `|-|` subtype) — whose ancestors are its scope chain, with no
+    // id [SPEC 9, 4, 15.6].
     let link_facts = NodeFacts {
         classes: std::iter::once(LINK_CLASS.to_string())
+            .chain(is_dim.then(|| DIMENSION_CLASS.to_string()))
             .chain(w.classes.iter().cloned())
             .collect(),
         id: None,
     };
 
     // The cascade ladder, least-specific first [SPEC 4]: the baked base + scope
-    // `clearance`/`routing`, the `|-|` element rule (the type tier), the descendant
-    // / worn-class rules, then the link's own block. `stroke` is the wire, `font-*`
-    // / `color` the labels — the same vocabulary a node uses.
+    // `clearance`/`routing`, the `|-|` element rule (the type tier) then the more
+    // specific `(-)` dimension rule, the descendant / worn-class rules, then the
+    // link's own block. `stroke` is the wire, `font-*` / `color` the labels — the
+    // same vocabulary a node uses.
     let mut ordered: Vec<(String, ResolvedValue)> = base.to_vec();
     ordered.extend(ctx.sheet.class_decls(LINK_CLASS));
+    if is_dim {
+        ordered.extend(ctx.sheet.class_decls(DIMENSION_CLASS));
+    }
     ordered.extend(ctx.sheet.node_layers(scope_ancestors, &link_facts));
     for d in &w.style {
         ordered.push((
@@ -169,24 +193,7 @@ pub fn resolve_link(
         }
         out.push(ResolvedLink {
             endpoints,
-            kind: match w.op {
-                // A two-ended `<->` in a drawing scope *is* the linear
-                // dimension [SPEC 15] — typed by the operator, so an explicit
-                // `marker:` can restyle a wire but never re-read it.
-                ChainOp::Wire(op)
-                    if drawing_scope
-                        && w.chain.len() >= 2
-                        && op.start == LinkMarker::Arrow
-                        && op.end == LinkMarker::Arrow
-                        && op.line == LineStyle::Solid =>
-                {
-                    LinkKind::Measure(MeasureOp::Linear)
-                }
-                ChainOp::Wire(_) => LinkKind::Wire,
-                ChainOp::Measure(DrawOp::Round) => LinkKind::Measure(MeasureOp::Round),
-                ChainOp::Measure(DrawOp::Angle) => LinkKind::Measure(MeasureOp::Angle),
-                ChainOp::Mate => LinkKind::Mate,
-            },
+            kind,
             scope: path_prefix.join("."),
             line: w.op.wire().map_or(LineStyle::Solid, |op| op.line),
             routing,
@@ -242,18 +249,22 @@ fn validate_statement(w: &Link, scope: &LinkScope) -> Result<(), Error> {
     if matches!(w.op, ChainOp::Mate) && labelled {
         return Err(Error::at(w.span, "a mate takes no label"));
     }
-    // `(-)` is unary-only [SPEC 15.6] — the side anchor replaced the binary form.
+    // `(o)` is unary-only [SPEC 15.6] — the circle pictures one round feature.
     if matches!(w.op, ChainOp::Measure(crate::ast::DrawOp::Round)) && w.chain.len() > 1 {
         return Err(Error::at(
             w.span,
-            "'(-)' measures one round feature — write 'a:top (-)' for a span",
+            "'(o)' measures one round feature — write 'a:top (o)' for a span",
         ));
     }
     if w.chain.len() > 1 {
         return Ok(());
     }
-    // One-ended [SPEC 15.6/21]: a unary measure, or a leader toward its text.
+    // One-ended [SPEC 15.6/21]: a unary round / angle measure, or a leader toward
+    // its text. The binary `(-)` (linear) needs two ends.
     match w.op {
+        ChainOp::Measure(crate::ast::DrawOp::Linear) => {
+            Err(Error::at(w.span, "a linear dimension measures two anchors"))
+        }
         ChainOp::Measure(_) => Ok(()),
         ChainOp::Mate => Err(Error::at(w.span, "a mate seats two parts")),
         ChainOp::Wire(op) => {
@@ -279,9 +290,8 @@ fn validate_statement(w: &Link, scope: &LinkScope) -> Result<(), Error> {
                     "a leader points back at its feature — write 'a <- \"…\"'",
                 ));
             }
-            if op.start != LinkMarker::None && op.end != LinkMarker::None {
-                return Err(Error::at(w.span, "a linear dimension measures two anchors"));
-            }
+            // A two-marker op (`<->`, `*-*`, …) is a plain annotation arrow here
+            // [SPEC 15], not a dimension — it needs two ends like any link.
             Err(Error::at(w.span, "link requires at least two endpoints"))
         }
     }

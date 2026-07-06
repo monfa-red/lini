@@ -131,8 +131,8 @@ pub struct ViewBox {
 
 /// One interior gutter rect `(cx, cy, w, h)` in node-local coords, centred on its
 /// own centre — the gap region between cells, filled with the container's
-/// `gap-color` [SPEC 11]. Rendered as a `<rect fill="…" stroke="none">`: a filled
-/// rect (not a stroked line) both carries a gradient `gap-color` — a `<line>`'s
+/// `gap-fill` [SPEC 11]. Rendered as a `<rect fill="…" stroke="none">`: a filled
+/// rect (not a stroked line) both carries a gradient `gap-fill` — a `<line>`'s
 /// degenerate bbox can't — and states `stroke="none"` so the container's own
 /// `stroke` never bleeds onto it.
 pub type Gutter = (f64, f64, f64, f64);
@@ -157,9 +157,9 @@ pub struct PlacedNode {
     pub bbox: Bbox,
     pub rotation: f64,
     pub children: Vec<PlacedNode>,
-    /// Interior gutter rects the container fills with its `gap-color` [SPEC 11] —
+    /// Interior gutter rects the container fills with its `gap-fill` [SPEC 11] —
     /// the gap regions between children. Interior only: the outer frame is the
-    /// container's own border. Empty unless `gap-color:` is set.
+    /// container's own border. Empty unless `gap-fill:` is set.
     pub gutters: Vec<Gutter>,
     /// Links this container drew itself, in its local frame — a sequence's
     /// messages, lowered through the `straight` strategy [SPEC 13]. Routing

@@ -78,6 +78,11 @@ pub enum SelUnit {
     /// with the ordinary node/text vocabulary — `stroke` the wire, `color`/`font-*`
     /// the labels. Desugar lowers it to `.lini-link`, the class every link wears.
     Link,
+    /// `(-)` — the dimension type [SPEC 4, 15.6]: the `|-|` subtype, selector-only,
+    /// matching every drawing dimension (the whole family — `(-)`/`(o)`/`(<)`). A
+    /// `(-) { }` rule beats a `|-| { }` rule for dimensions (a more-specific type).
+    /// Desugar lowers it to `.lini-dimension`, worn by every dimension at resolve.
+    Dimension,
 }
 
 /// `|name::base| { style } [ children ]` — a new type from a base. `style` is the

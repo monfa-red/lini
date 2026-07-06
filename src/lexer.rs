@@ -34,8 +34,8 @@ pub enum TokKind {
     RBracket,
 
     LinkOp(LinkOp),
-    /// A drawing measuring op [SPEC 15.6] — `(-)` / `(<)`, lexed as one glued
-    /// token only where the `(` is free-standing (the call-glue rule, [SPEC 2]).
+    /// A drawing measuring op [SPEC 15.6] — `(-)` / `(o)` / `(<)`, lexed as one
+    /// glued token only where the `(` is free-standing (the call-glue rule, [SPEC 2]).
     DrawOp(DrawOp),
 
     Newline,
@@ -80,12 +80,15 @@ impl<'a> Lexer<'a> {
                 b'}' => self.push_punct(TokKind::RBrace, 1),
                 b'(' => {
                     // The call-glue rule [SPEC 2]: a '(' glued to an ident char
-                    // opens a call; free-standing, an exact `(-)` / `(<)` is a
-                    // measuring op [SPEC 15.6] and `(>)` is reserved. The
-                    // three-char match keeps `pin (-90)` and every call intact.
+                    // opens a call; free-standing, an exact `(-)` / `(o)` / `(<)` is
+                    // a measuring op [SPEC 15.6] and `(>)` is reserved. The
+                    // three-char match keeps `pin (-90)`, `foo(o)`, and every call
+                    // intact.
                     let glued_call = self.i > 0 && is_ident_continue(self.bytes[self.i - 1]);
                     let rest = &self.bytes[self.i..];
                     if !glued_call && rest.starts_with(b"(-)") {
+                        self.push_punct(TokKind::DrawOp(DrawOp::Linear), 3);
+                    } else if !glued_call && rest.starts_with(b"(o)") {
                         self.push_punct(TokKind::DrawOp(DrawOp::Round), 3);
                     } else if !glued_call && rest.starts_with(b"(<)") {
                         self.push_punct(TokKind::DrawOp(DrawOp::Angle), 3);
@@ -144,9 +147,16 @@ impl<'a> Lexer<'a> {
                 {
                     self.lex_number()?;
                 }
-                b'+' => self.lex_number()?,
+                // Signed number `+5` / `+.5`; otherwise `+` starts a cardinality
+                // link op (`+-`, `+o-`, `++-`, [SPEC 9]) — mirror of the `-` rule.
+                b'+' if self.peek(1).is_some_and(|c| c.is_ascii_digit())
+                    || (self.peek(1) == Some(b'.')
+                        && self.peek(2).is_some_and(|c| c.is_ascii_digit())) =>
+                {
+                    self.lex_number()?;
+                }
                 // Link-op starts: any of these characters can begin a link op.
-                b'-' | b'~' | b'<' | b'>' => self.lex_link_op()?,
+                b'-' | b'~' | b'<' | b'>' | b'+' => self.lex_link_op()?,
                 // `*` is a link-op start marker only when followed by a line char.
                 b'*' if self.peek(1).is_some_and(is_link_line_start) => self.lex_link_op()?,
                 d if d.is_ascii_digit() => self.lex_number()?,
@@ -380,7 +390,7 @@ impl<'a> Lexer<'a> {
         let start_i = self.i;
         let mut p = self.i;
 
-        let start = self.consume_marker(&mut p, MarkerSide::Start);
+        let start = self.consume_marker(&mut p, MarkerSide::Start)?;
         let line = match self.consume_line(&mut p) {
             Some(l) => l,
             None => {
@@ -393,7 +403,7 @@ impl<'a> Lexer<'a> {
                 ));
             }
         };
-        let end = self.consume_marker(&mut p, MarkerSide::End);
+        let end = self.consume_marker(&mut p, MarkerSide::End)?;
 
         // Reject the no-op case: a lone `--` followed by ident-start should have
         // been caught earlier as a RawCssVar. But a stray `--name` reached here
@@ -408,26 +418,75 @@ impl<'a> Lexer<'a> {
         Ok(())
     }
 
-    fn consume_marker(&self, p: &mut usize, side: MarkerSide) -> LinkMarker {
+    fn consume_marker(&self, p: &mut usize, side: MarkerSide) -> Result<LinkMarker, Error> {
         // Try `<>` first (longest match).
         if self.bytes.get(*p) == Some(&b'<') && self.bytes.get(*p + 1) == Some(&b'>') {
             *p += 2;
-            return LinkMarker::Diamond;
+            return Ok(LinkMarker::Diamond);
         }
         let c = match self.bytes.get(*p) {
             Some(&c) => c,
-            None => return LinkMarker::None,
+            None => return Ok(LinkMarker::None),
         };
+        let next = self.bytes.get(*p + 1).copied();
+        // The ER cardinality marker [SPEC 9] composes `[min][max]` on **either**
+        // side: the optionality ring `o` (min = zero) or a bar `+` (min = one) hugs
+        // the line, the max glyph — a bar `+` (one) or the crow (`<` at the end, `>`
+        // at the start, = many) — sits outermost. A lone `+` is "one"; a bare `o`
+        // (no max) is an error with a hint. The two sides mirror.
+        match side {
+            MarkerSide::End if c == b'+' || c == b'o' => {
+                let hit = match (c, next) {
+                    (b'+', Some(b'+')) => Some((LinkMarker::ExactlyOne, 2)),
+                    (b'+', Some(b'<')) => Some((LinkMarker::OneOrMany, 2)),
+                    (b'+', _) => Some((LinkMarker::One, 1)),
+                    (b'o', Some(b'+')) => Some((LinkMarker::ZeroOrOne, 2)),
+                    (b'o', Some(b'<')) => Some((LinkMarker::ZeroOrMany, 2)),
+                    _ => None, // a bare `o`
+                };
+                return self.finish_cardinality(p, hit);
+            }
+            MarkerSide::Start if c == b'+' || c == b'>' => {
+                let hit = match (c, next) {
+                    (b'+', Some(b'+')) => Some((LinkMarker::ExactlyOne, 2)),
+                    (b'+', Some(b'o')) => Some((LinkMarker::ZeroOrOne, 2)),
+                    (b'+', _) => Some((LinkMarker::One, 1)),
+                    (b'>', Some(b'+')) => Some((LinkMarker::OneOrMany, 2)),
+                    (b'>', Some(b'o')) => Some((LinkMarker::ZeroOrMany, 2)),
+                    (b'>', _) => Some((LinkMarker::Crow, 1)), // a bare crow-start
+                    _ => None,                                // guard admits only `+` / `>`
+                };
+                return self.finish_cardinality(p, hit);
+            }
+            _ => {}
+        }
         let marker = match (c, side) {
             (b'<', MarkerSide::Start) => LinkMarker::Arrow,
             (b'<', MarkerSide::End) => LinkMarker::Crow,
-            (b'>', MarkerSide::Start) => LinkMarker::Crow,
             (b'>', MarkerSide::End) => LinkMarker::Arrow,
             (b'*', _) => LinkMarker::Dot,
-            _ => return LinkMarker::None,
+            _ => return Ok(LinkMarker::None),
         };
         *p += 1;
-        marker
+        Ok(marker)
+    }
+
+    /// Land a composed cardinality marker (advance `p`), or the bare-`o` error.
+    fn finish_cardinality(
+        &self,
+        p: &mut usize,
+        hit: Option<(LinkMarker, usize)>,
+    ) -> Result<LinkMarker, Error> {
+        match hit {
+            Some((m, n)) => {
+                *p += n;
+                Ok(m)
+            }
+            None => Err(Error::at(
+                Span::new(p.saturating_sub(1), *p + 1),
+                "'-o' needs a max glyph — write '-o<', '-o+', or 'marker-end: circle'",
+            )),
+        }
     }
 
     fn consume_line(&self, p: &mut usize) -> Option<LineStyle> {
@@ -561,8 +620,19 @@ mod tests {
     fn measuring_ops_lex_free_standing_only() {
         use crate::ast::DrawOp;
         // Free-standing exact matches are the ops [SPEC 15.6]…
-        assert_eq!(kinds("(-)"), vec![TokKind::DrawOp(DrawOp::Round)]);
+        assert_eq!(kinds("(-)"), vec![TokKind::DrawOp(DrawOp::Linear)]);
+        assert_eq!(kinds("(o)"), vec![TokKind::DrawOp(DrawOp::Round)]);
         assert_eq!(kinds("(<)"), vec![TokKind::DrawOp(DrawOp::Angle)]);
+        // …`(o)` glued to an ident is still a call, so `foo(o)` is untouched…
+        assert_eq!(
+            kinds("foo(o)"),
+            vec![
+                TokKind::Ident("foo".into()),
+                TokKind::LParen,
+                TokKind::Ident("o".into()),
+                TokKind::RParen,
+            ]
+        );
         // …a '(' glued to an ident opens a call — `move(-90, 0)` is untouched
         // (the call-glue rule, [SPEC 2])…
         assert_eq!(
@@ -584,5 +654,37 @@ mod tests {
     fn reversed_angle_op_is_reserved() {
         let err = lex("a (>) b").expect_err("(>) is reserved");
         assert!(err.message.contains("the angle op is '(<)'"), "{err:?}");
+    }
+
+    #[test]
+    fn cardinality_markers_compose_min_max_on_both_sides() {
+        let op_of = |src: &str| match &kinds(src)[..] {
+            [TokKind::Ident(_), TokKind::LinkOp(op), TokKind::Ident(_)] => *op,
+            other => panic!("expected `a OP b`, got {other:?}"),
+        };
+        // End side [min][max]: the ring/bar hugs the line, the max glyph is outer.
+        assert_eq!(op_of("a -+ b").end, LinkMarker::One);
+        assert_eq!(op_of("a -< b").end, LinkMarker::Crow);
+        assert_eq!(op_of("a -++ b").end, LinkMarker::ExactlyOne);
+        assert_eq!(op_of("a -o+ b").end, LinkMarker::ZeroOrOne);
+        assert_eq!(op_of("a -+< b").end, LinkMarker::OneOrMany);
+        assert_eq!(op_of("a -o< b").end, LinkMarker::ZeroOrMany);
+        // Start side mirrors — `>` is the crow, the ring/bar still hugs the line.
+        assert_eq!(op_of("a +- b").start, LinkMarker::One);
+        assert_eq!(op_of("a >- b").start, LinkMarker::Crow);
+        assert_eq!(op_of("a ++- b").start, LinkMarker::ExactlyOne);
+        assert_eq!(op_of("a +o- b").start, LinkMarker::ZeroOrOne);
+        assert_eq!(op_of("a >+- b").start, LinkMarker::OneOrMany);
+        assert_eq!(op_of("a >o- b").start, LinkMarker::ZeroOrMany);
+        // Both sides at once: one-to-many, and the round-trip via the op spelling.
+        let both = op_of("a +-< b");
+        assert_eq!((both.start, both.end), (LinkMarker::One, LinkMarker::Crow));
+        assert_eq!(op_of("a +-+ b").start, LinkMarker::One);
+        assert_eq!(op_of("a +-+ b").end, LinkMarker::One);
+        // A signed number is still a number, never a start marker.
+        assert_eq!(kinds("+5"), vec![TokKind::Number(5.0)]);
+        // A bare `o` with no max glyph is an error with a did-you-mean [SPEC 9].
+        let err = lex("a -o b").expect_err("bare -o is an error");
+        assert!(err.message.contains("'-o' needs a max glyph"), "{err:?}");
     }
 }

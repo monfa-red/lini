@@ -83,20 +83,26 @@ pub fn line_inset(kind: MarkerKind, thickness: f64) -> f64 {
         // The datum triangle's base sits on the feature and its apex meets the
         // leader ([SPEC 15.7]) — the line stops at the apex, a full head back.
         MarkerKind::Datum => marker_size(thickness),
-        // An open ER marker is stroked, not filled, so the line must stop *behind* it
-        // (at its furthest element back from the entity) rather than tuck under it.
+        // An open ER marker is stroked, not filled. A **bar** is a tick the line
+        // passes *through* to the entity (so it reads connected and the set aligns
+        // end-to-end), so a bar-only marker stops the line at the tip (extent 0); a
+        // **ring** or **crow** caps the line, which stops behind it.
         k if k.is_open() => marker_size(thickness) * open_back_extent(k),
         _ => thickness * 2.0,
     }
 }
 
-/// How far back from the entity edge an open ER marker reaches, in `marker_size` units
-/// — where the drawn line ends so it never crosses the marker's strokes.
+/// How far back from the entity edge an open ER marker stops the drawn line, in
+/// `marker_size` units. `0` = the line runs to the entity (through the bar ticks);
+/// a ring / crow caps it, so the line stops behind that furthest element.
 fn open_back_extent(kind: MarkerKind) -> f64 {
     match kind {
-        MarkerKind::One => 0.7,
-        MarkerKind::Crow => CROW_DEPTH,
-        MarkerKind::OneOrMany => 1.5,
+        // Bar-only: the line runs through the tick(s) to the entity.
+        MarkerKind::One | MarkerKind::ExactlyOne => 0.0,
+        // Bar + crow: the line runs through the bar to the crow's convergence.
+        MarkerKind::Crow | MarkerKind::OneOrMany => CROW_DEPTH,
+        // Ring-capped: the line stops behind the ring; a stub (drawn by the marker)
+        // carries the max glyph on to the entity.
         MarkerKind::ZeroOrOne => 1.5 + RING_R,
         MarkerKind::ZeroOrMany => 1.7 + RING_R,
         _ => CROW_DEPTH,
@@ -285,23 +291,55 @@ pub fn emit_marker(
         MarkerKind::Crow => {
             open_path(out, indent, &crow_d(tip, (ux, uy), (px, py), size));
         }
+        // A bar the line passes *through* — a tick set back from the entity, the
+        // line running past it to the node ([SPEC 7]).
         MarkerKind::One => {
             open_path(out, indent, &bar_d(tip, (ux, uy), (px, py), size, 0.7));
         }
+        // "Exactly one" — a double bar (one and only one), the line through both.
+        MarkerKind::ExactlyOne => {
+            open_path(out, indent, &bar_d(tip, (ux, uy), (px, py), size, 0.7));
+            open_path(out, indent, &bar_d(tip, (ux, uy), (px, py), size, 1.2));
+        }
+        // Ring caps the main line; a stub carries the "one" bar on to the entity, so
+        // the max glyph connects while the line never crosses the ring ([SPEC 7]).
         MarkerKind::ZeroOrOne => {
-            open_path(out, indent, &bar_d(tip, (ux, uy), (px, py), size, 0.6));
             open_ring(out, indent, tip, (ux, uy), size, 1.5);
+            open_stub(out, indent, tip, (ux, uy), size, 1.5 - RING_R, 0.0);
+            open_path(out, indent, &bar_d(tip, (ux, uy), (px, py), size, 0.6));
         }
         MarkerKind::OneOrMany => {
             open_path(out, indent, &crow_d(tip, (ux, uy), (px, py), size));
             open_path(out, indent, &bar_d(tip, (ux, uy), (px, py), size, 1.5));
         }
+        // Ring caps the main line; a stub bridges it to the crow's convergence.
         MarkerKind::ZeroOrMany => {
             open_path(out, indent, &crow_d(tip, (ux, uy), (px, py), size));
             open_ring(out, indent, tip, (ux, uy), size, 1.7);
+            open_stub(out, indent, tip, (ux, uy), size, 1.7 - RING_R, CROW_DEPTH);
         }
         MarkerKind::None => {}
     }
+}
+
+/// A short line stub, `from`→`to` (in `marker_size` units back from the entity),
+/// carrying the relationship line past a ring-capped marker to the entity / crow.
+fn open_stub(
+    out: &mut String,
+    indent: &str,
+    tip: (f64, f64),
+    dir: (f64, f64),
+    size: f64,
+    from: f64,
+    to: f64,
+) {
+    let (ax, ay) = (tip.0 - dir.0 * size * from, tip.1 - dir.1 * size * from);
+    let (bx, by) = (tip.0 - dir.0 * size * to, tip.1 - dir.1 * size * to);
+    open_path(
+        out,
+        indent,
+        &format!("M {} {} L {} {}", num(ax), num(ay), num(bx), num(by)),
+    );
 }
 
 /// An open-stroke marker element — a crow's-foot fan or a bar — sharing the
@@ -424,6 +462,7 @@ mod tests {
         for kind in [
             MarkerKind::Crow,
             MarkerKind::One,
+            MarkerKind::ExactlyOne,
             MarkerKind::ZeroOrOne,
             MarkerKind::OneOrMany,
             MarkerKind::ZeroOrMany,
@@ -439,12 +478,24 @@ mod tests {
                 "{kind:?} is stroked, never inline-filled"
             );
         }
-        // A compound cardinality draws two elements (crow/bar + bar/ring).
+        // Zero-or-many draws three open strokes: the crow, the ring, and the stub
+        // that bridges the ring-capped line to the crow's convergence.
         let mut s = String::new();
         emit_marker(
             &mut s,
             "",
             MarkerKind::ZeroOrMany,
+            (100.0, 50.0),
+            (1.0, 0.0),
+            &paint,
+        );
+        assert_eq!(s.matches("lini-marker-open").count(), 3);
+        // "Exactly one" is a double bar — two open strokes.
+        let mut s = String::new();
+        emit_marker(
+            &mut s,
+            "",
+            MarkerKind::ExactlyOne,
             (100.0, 50.0),
             (1.0, 0.0),
             &paint,

@@ -318,11 +318,11 @@ fn a_short_single_subpath_draw_still_inlines() {
 fn mates_and_measures_format_like_links() {
     // The drawing ops are ordinary link statements to the formatter: the op
     // between two-ended groups, after a one-ended group [SPEC 15.6/21].
-    let src = "a:left||b:right{gap:-10}\nbar:thread   (-)   { side: left; tol: h6 }\nbar:left<->bar:right{side:bottom}\nbolt <- \"THRU\"\n";
+    let src = "a:left||b:right{gap:-10}\nbar:thread   (o)   { side: left; tol: h6 }\nbar:left (-) bar:right{side:bottom}\nbolt <- \"THRU\"\n";
     let out = fmt(src);
     assert_eq!(
         out,
-        "a:left || b:right { gap: -10; }\nbar:thread (-) { side: left; tol: h6; }\nbar:left <-> bar:right { side: bottom; }\nbolt <- \"THRU\"\n"
+        "a:left || b:right { gap: -10; }\nbar:thread (o) { side: left; tol: h6; }\nbar:left (-) bar:right { side: bottom; }\nbolt <- \"THRU\"\n"
     );
     idempotent(src);
 }

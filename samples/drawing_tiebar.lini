@@ -13,7 +13,7 @@
   break: -80 60;                                 // cut the boring middle from the view
 }
 
-bar:left <-> bar:right { side: bottom }          // → 300 mm — true, across the break
-bar:left <-> bar:a     { side: top }             // → 40 mm — ':a' is a freestanding segment
-bar:thread (-) { side: left; tol: h6 }           // → ⌀20 h6 — doubled about the axis
+bar:left (-) bar:right { side: bottom }          // → 300 mm — true, across the break
+bar:left (-) bar:a     { side: top }             // → 40 mm — ':a' is a freestanding segment
+bar:thread (o) { side: left; tol: h6 }           // → ⌀20 h6 — doubled about the axis
 bar:thread <- "M20×1.5" { side: top }            // thread spec — leader to the surface

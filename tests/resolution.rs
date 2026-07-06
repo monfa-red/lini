@@ -311,10 +311,10 @@ fn a_drawing_scope_resolves_its_statements() {
         "  |hole#pin| { width: 10; translate: -35 20; pattern: grid(2, 1, 70, 0) }\n",
         "]\n",
         "|rect#bore| { width: 60; height: 16 }\n",
-        "plate:left <-> plate:right { side: bottom }\n",
-        "plate:left <-> plate.pin { side: top }\n",
-        "plate.pin (-) { tol: H7 }\n",
-        "bore:top (-) { side: right }\n",
+        "plate:left (-) plate:right { side: bottom }\n",
+        "plate:left (-) plate.pin { side: top }\n",
+        "plate.pin (o) { tol: H7 }\n",
+        "bore:top (o) { side: right }\n",
         "plate:top-left <- \"C1.5\"\n",
         "bore:left || plate:right { gap: 4 }\n",
     ))
@@ -331,18 +331,18 @@ fn drawing_statement_shapes_are_gated() {
     assert_resolve_error(&in_drawing("a || b \"x\"\n"), "a mate takes no label");
     assert_resolve_error(&in_drawing("a ||\n"), "a mate seats two parts");
     assert_resolve_error(
-        &in_drawing("a <->\n"),
+        &in_drawing("a (-)\n"),
         "a linear dimension measures two anchors",
     );
     assert_resolve_error(
-        &in_drawing("a:top (-) b:bottom\n"),
-        "'(-)' measures one round feature",
+        &in_drawing("a:top (o) b:bottom\n"),
+        "'(o)' measures one round feature",
     );
     assert_resolve_error(&in_drawing("a ->\n"), "a leader points back at its feature");
     assert_resolve_error(&in_drawing("a <-\n"), "a leader needs its text");
     // No auto-create in a drawing scope [SPEC 15]: unknown endpoints stay unknown.
     assert_resolve_error(
-        &in_drawing("a <-> ghost\n"),
+        &in_drawing("a (-) ghost\n"),
         "dimension endpoint 'ghost' not found",
     );
 }

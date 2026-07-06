@@ -71,21 +71,31 @@ pub enum LinkMarker {
     Crow,    // > at start, < at end
     Dot,     // * on either side
     Diamond, // <> on either side
+    // The ER cardinality end-markers [SPEC 9] — composed `[min][max]`, end-side
+    // only (a start side mirrors only the simple crow). `Crow` above is "many".
+    One,        // -+
+    ExactlyOne, // -++
+    ZeroOrOne,  // -o+
+    OneOrMany,  // -+<
+    ZeroOrMany, // -o<
 }
 
-/// A drawing measuring op [SPEC 15.6]: `(-)` the round measure (⌀ / R by the
-/// feature), `(<)` the angle. Lexed as glued three-char tokens only where a `(`
-/// is free-standing — a `(` glued to an ident opens a call [SPEC 2].
+/// A drawing measuring op [SPEC 15.6]: `(-)` the linear measure (a length,
+/// binary), `(o)` the round measure (⌀ / R by the feature, unary), `(<)` the
+/// angle. Each glyph pictures what it measures. Lexed as glued three-char tokens
+/// only where a `(` is free-standing — a `(` glued to an ident opens a call [SPEC 2].
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DrawOp {
-    Round, // (-)
-    Angle, // (<)
+    Linear, // (-)
+    Round,  // (o)
+    Angle,  // (<)
 }
 
 impl DrawOp {
     pub fn as_str(self) -> &'static str {
         match self {
-            Self::Round => "(-)",
+            Self::Linear => "(-)",
+            Self::Round => "(o)",
             Self::Angle => "(<)",
         }
     }
@@ -135,6 +145,13 @@ impl LinkMarker {
             Self::Crow => ">",
             Self::Dot => "*",
             Self::Diamond => "<>",
+            // The cardinality markers mirror at the start [SPEC 9]: the max glyph
+            // (bar, or the `>` crow) sits outermost, the min ring / bar hugs the line.
+            Self::One => "+",
+            Self::ExactlyOne => "++",
+            Self::ZeroOrOne => "+o",
+            Self::OneOrMany => ">+",
+            Self::ZeroOrMany => ">o",
         }
     }
     /// Glyph for this marker when rendered at the end side of a link op.
@@ -145,6 +162,11 @@ impl LinkMarker {
             Self::Crow => "<",
             Self::Dot => "*",
             Self::Diamond => "<>",
+            Self::One => "+",
+            Self::ExactlyOne => "++",
+            Self::ZeroOrOne => "o+",
+            Self::OneOrMany => "+<",
+            Self::ZeroOrMany => "o<",
         }
     }
 }

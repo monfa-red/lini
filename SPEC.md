@@ -234,8 +234,9 @@ separates list items and appears only where a property takes a list of groups
 (`points: 0 0, 10 10`). **Functions** use parentheses and sit in value position —
 `rgb(…)`, `hsl(…)`, `repeat(…)`, the math library, and any you define
 ([SPEC 10](#10-colour-variables--expressions)); a call needs no backtick (only an operator does). A call's `(` **glues to
-its name** (`rgb(…)`, never `rgb (…)`) — a free-standing `(-)` or `(<)` is a measuring
-op ([SPEC 15.6](#156-dimensions)), which is how `move(-2, 5)` and `pin (-)` never meet.
+its name** (`rgb(…)`, never `rgb (…)`) — a free-standing `(-)`, `(o)`, or `(<)` is a
+measuring op ([SPEC 15.6](#156-dimensions)), which is how `move(-2, 5)` and `pin (o)`
+never meet.
 
 **Colors** — `#fff`, `#f80c`, `#ffaa00`, `#ffaa00cc` (3/4/6/8 hex digits; the 4-
 and 8-digit forms carry alpha), CSS names (`red`, `cornflowerblue`), `rgb(…)`,
@@ -243,7 +244,7 @@ and 8-digit forms carry alpha), CSS names (`red`, `cornflowerblue`), `rgb(…)`,
 `oklch(L, C, H[, A])` (the palette's own space — L/A in 0–1, C the chroma, H in
 degrees; folded to a hex at compile time, so it renders in every target), a
 `--name` variable reference, or `none`. Out-of-range channels are an error. Beyond
-a flat colour, a **paint** (`fill` / `stroke` / `gap-color`) may be a **gradient** —
+a flat colour, a **paint** (`fill` / `stroke` / `gap-fill`) may be a **gradient** —
 `gradient(…)`, `linear-gradient(…)`, or `radial-gradient(…)` — reached, like the
 built-in hue palette, through the colour system ([SPEC 10](#10-colour-variables--expressions)).
 
@@ -430,12 +431,14 @@ where it applies is in the [Property Ledger](#16-property-ledger--support).
 
 A **rule** is `selector { declarations }`. A selector is one or more
 space-separated **units**; the space is the descendant combinator. A unit is a type
-`|box|` (with an optional `#id`, `|table#main|`), the **link type `|-|`**, a class
+`|box|` (with an optional `#id`, `|table#main|`), the **link type `|-|`**, its
+drawing subtype the **dimension type `(-)`** ([SPEC 15.6](#156-dimensions)), a class
 `.hot`, or an id `#hero`:
 
 ```
 |box| { … }              // every box (element selector)
 |-| { … }                // every link — a line in the identity capsule ([SPEC 9](#9-links))
+(-) { … }                // every dimension — the |-| subtype ([SPEC 15.6](#156-dimensions))
 .hot { … }               // every node with class .hot
 #hero { … }              // the one node with id hero
 |table| |box| { … }      // every box inside a table (descendant)
@@ -446,9 +449,10 @@ space-separated **units**; the space is the descendant combinator. A unit is a t
 
 A **descendant selector** matches a node (or link) whose ancestor chain contains each
 unit in order (not necessarily adjacent), exactly like CSS's descendant combinator.
-Every construct keeps its sigil — `|box|`, `|-|`, `.hot`, `#hero` — so a selector reads
-as a run of marked units; a bare word is never a selector. `|-|` is selector-only: a
-link is drawn by an operator, never instantiated ([SPEC 9](#9-links)).
+Every construct keeps its sigil — `|box|`, `|-|`, `(-)`, `.hot`, `#hero` — so a selector
+reads as a run of marked units; a bare word is never a selector. `|-|` and its
+dimension subtype `(-)` are selector-only: a link is drawn by an operator, never
+instantiated ([SPEC 9](#9-links)).
 
 A type's class never glues into its bars (`|box.hot|` is rejected): a class is
 **worn**, not part of identity. To match boxes-with-a-class, style the class
@@ -486,7 +490,9 @@ by **later wins** (source order). The tiers, low to high:
 A link walks the **same ladder** — its type is `|-|`, its ancestors are its scope's
 container chain, it has no id: the baked link base plus the scope's `clearance` /
 `routing` (tier 0), the `|-|` element rule (type), descendant `|…| |-|` and worn-class
-rules, then the link's own block ([SPEC 9](#9-links)).
+rules, then the link's own block ([SPEC 9](#9-links)). A **dimension** is a link
+subtype — type chain `|-|` → `(-)` — so a `(-) { }` rule beats `|-| { }` for
+dimensions (the more-specific type, tier 1) ([SPEC 15.6](#156-dimensions)).
 
 **Complex values replace wholesale.** The merge is per-property, not deep:
 `translate: x y` or `padding: t r b l` on a higher tier replaces the whole value from a
@@ -597,7 +603,7 @@ is the *behaviour*.
 on text, an alias for its `fill`); `color` sets text colour for a subtree and
 cascades through the SVG via native `currentColor` — set it on a container to recolour
 every descendant's text that doesn't override. `opacity` (0–1) fades a node whole.
-`fill`, `stroke`, and `gap-color` each accept a **gradient** as well as a flat colour
+`fill`, `stroke`, and `gap-fill` each accept a **gradient** as well as a flat colour
 ([SPEC 10](#10-colour-variables--expressions)).
 
 ### Stroke
@@ -689,8 +695,10 @@ on the non-rect primitives (hex / diamond / slant / poly) is deferred ([SPEC 23]
 
 Values: `none`, `arrow`, `dot`, `circle`, `diamond`, **`datum`** (the filled drafting
 triangle a drawing's `>-` leader lowers to — [SPEC 15.7](#157-leaders-notes--line-conventions)), and the ER **cardinality set** —
-`crow` (the "many" foot), `one` (a bar `|`), `zero-or-one`, `one-or-many`, `zero-or-many`
-(a bar or `○` paired with the foot). `circle` is a larger `dot` — a filled point sized for
+`crow` (the "many" foot), `one` (a bar `|`), `exactly-one` (a double bar `‖`),
+`zero-or-one`, `one-or-many`, `zero-or-many` (a bar or `○` paired with the foot). The
+compositional operators `-+` / `-<` / `-o+` / `-+<` / `-o<` / `-++` are sugar over this
+set ([SPEC 9](#9-links)). `circle` is a larger `dot` — a filled point sized for
 hovering or reading (on a chart line it marks a data point; [SPEC 14](#14-charts)). Markers scale
 with `stroke-width` (a link's wire and a shape's outline alike), floor 5 px; colour follows
 the stroke.
@@ -766,7 +774,7 @@ the cascade ([SPEC 4](#4-selectors-cascade--specificity)) — every value here i
 | `\|column\|` | `\|block\|` | `direction: column` | Frameless wrapper — children in a column. |
 | `\|grid\|` | `\|block\|` | `layout: grid` | Frameless grid (needs `columns`). |
 | `\|sign\|` | `\|icon\|` | `width: 64; height: 64; padding: 4; stroke-width: 2; fit: contain` | A larger icon as a stand-alone node, with room for a short label; `fit: contain` fills the box (unlike a bare `\|icon\|`). |
-| `\|table\|` | `\|group\|` | `layout: grid; align: stretch; justify: stretch; gap: 1; gap-color: --stroke; padding: 0; fill: none; stroke: --stroke; stroke-width: 2; stroke-style: solid; font-size: 14; font-weight: normal; scale: 1` | Ruled grid (see below). |
+| `\|table\|` | `\|group\|` | `layout: grid; align: stretch; justify: stretch; gap: 1; gap-fill: --stroke; padding: 0; fill: none; stroke: --stroke; stroke-width: 2; stroke-style: solid; font-size: 14; font-weight: normal; scale: 1` | Ruled grid (see below). |
 | `\|cell\|` | `\|block\|` | `padding: 4 8` | A **table cell** — a frameless `\|block\|` carrying the text-to-gutter inset. Body cells wrap in it; `\|header\|` / `\|footer\|` build on it. Style all cells with `\|cell\| { … }` or, per table, `\|table\| \|cell\| { … }`. |
 | `\|header\|` | `\|cell\|` | `fill: --header-fill; font-weight: bold` | A **header** cell — a filled, bold band (a `\|table\|`'s first row; an `\|entity\|`'s title spans them). |
 | `\|footer\|` | `\|cell\|` | `color: --footer-color` | A **footer** cell — muted text; opt-in on the last row. |
@@ -776,7 +784,7 @@ the cascade ([SPEC 4](#4-selectors-cascade--specificity)) — every value here i
 | `\|drawing\|` | `\|block\|` | `layout: drawing; padding: 0; scale: 4` | An engineering **drawing** — geometry on a datum, measured annotations ([SPEC 15](#15-drawing)). |
 | `\|hole\|` | `\|oval\|` | `fill: --bg; stroke: --stroke` — `width:` **required**, the diameter | A round **hole** — punches by paint order, draws its own centre marks ([SPEC 15.4](#154-features-holes--patterns)). |
 | `\|centerline\|` | `\|line\|` | `stroke-style: center; stroke: --stroke-light; stroke-width: 1; fill: none` — needs `points:` | The dash-dot axis / symmetry line ([SPEC 15.7](#157-leaders-notes--line-conventions)). |
-| `\|pitch-circle\|` | `\|oval\|` | `stroke-style: center; stroke: --stroke-light; stroke-width: 1; fill: none` — `width:` **required**, the diameter | The dash-dot bolt circle; round, so a `(-)` reads its PCD ([SPEC 15.7](#157-leaders-notes--line-conventions)). |
+| `\|pitch-circle\|` | `\|oval\|` | `stroke-style: center; stroke: --stroke-light; stroke-width: 1; fill: none` — `width:` **required**, the diameter | The dash-dot bolt circle; round, so a `(o)` reads its PCD ([SPEC 15.7](#157-leaders-notes--line-conventions)). |
 | `\|breakline\|` | `\|line\|` | `stroke: --stroke-light; stroke-width: 1; fill: none` — needs `points:` | A break cut's edge — the thin jogged line a `break:` generates ([SPEC 15.3](#153-the-sketch-pen)); manual use is free. |
 
 The bare `|block|` is the base everything rectangular builds on — frameless, yet a real
@@ -814,7 +822,7 @@ and `|drawing| |note|`, each `{ padding: 6 10; font-size: 13 }` — keep it comp
 convention expects, exactly as `|table|` insets its `|cell|`s; override them like any rule.
 
 **Tables.** A `|table|` is sugar — a `group` that is a grid with `gap: 1` and
-`gap-color: --stroke`, so the 1px gaps between cells paint as hairline rules
+`gap-fill: --stroke`, so the 1px gaps between cells paint as hairline rules
 ([SPEC 12](#12-flow--grid)). Each body cell wraps in a `|cell|`, the type that
 carries the text-to-gutter inset (`padding: 4 8`); `|header|` / `|footer|` build on
 `|cell|`, so every cell — but not the caption, a plain `|block|` — is inset. Style all
@@ -861,7 +869,8 @@ rows. In an entity (not a plain table) a `|header|` / `|footer|` cell spans the 
 ```
 
 Relationships are ordinary links ([SPEC 9](#9-links)): `users -< orders` is one-to-many, `a >-< b`
-many-to-many, landing on the entity edge. To anchor a wire to one **field**, give that cell an
+many-to-many, landing on the entity edge; the full cardinality set composes from `[min][max]`
+end-markers (`-o<` zero-or-many, `-+<` one-or-many, `-o+` zero-or-one, [SPEC 9](#9-links)). To anchor a wire to one **field**, give that cell an
 id (`|block#user_id| "user_id"`) and link the path (`orders.user_id -< users.id`). Keys are
 plain content (`"id" { font-weight: bold }`); an entity adds no grammar.
 
@@ -895,8 +904,8 @@ A link op is `[start_marker?][line][end_marker?]`, no spaces:
 | Part | Tokens |
 |---|---|
 | Line | `-` solid · `--` dashed · `---` dotted · `~` wavy |
-| Start markers | `<` arrow · `>` crow · `*` dot · `<>` diamond |
-| End markers | `>` arrow · `<` crow · `*` dot · `<>` diamond |
+| Start markers | `<` arrow · `>` crow · `*` dot · `<>` diamond · `+`/`o` ER cardinality (below) |
+| End markers | `>` arrow · `<` crow · `*` dot · `<>` diamond · `+`/`o` ER cardinality (below) |
 
 The line grows more broken as it lengthens — solid `-`, dashed `--`, dotted `---`.
 The same marker glyph differs by position (`<` is arrow at the start, crow at the
@@ -907,7 +916,7 @@ end).
 | `->` `<-` `<->` | arrow combinations, solid |
 | `-*` `*-` `*-*` | dot combinations |
 | `-<>` `<>-<>` | diamond |
-| `-<` `>-<` | crow |
+| `-<` `-+` `-o<` `-+<` `-o+` `-++` `>-<` | ER cardinality (crow's-foot, below) |
 | `-->` `--->` `~>` | dashed / dotted / wavy |
 | `-` `--` `---` `~` | no markers (each line style) |
 
@@ -916,8 +925,24 @@ If the operator carries no markers, there are none on both ends. Explicit `marke
 operator's line part sets the link's `stroke-style` (`--` ⇒ `dashed`, `---` ⇒ `dotted`,
 `~` ⇒ `wavy`); an explicit `stroke-style:` overrides it.
 
-`-<` / `>-<` draw the ER **crow's-foot** ("many"); the finer cardinalities ([SPEC 7](#7-nodes)) are
-set via `marker*:`, with no operator spelling ([SPEC 23](#23-deferred)).
+**ER cardinality — a crow's-foot marker, composed.** A cardinality marker reads
+`[min][max]`: the **min** ring `o` (zero) or bar `+` (one) hugs the line, the **max**
+bar `+` (one) or crow (many — `<` at the end, `>` at the start) sits outermost. **Either
+end takes one; the two sides mirror** — `a +-< b` is one-to-many, `a >o-o< b` zero-or-many
+both ways. The six relations, shown end-side:
+
+| Op | Relation |
+|---|---|
+| `-+` | one |
+| `-<` | many |
+| `-o+` | zero-or-one |
+| `-+<` | one-or-many |
+| `-o<` | zero-or-many |
+| `-++` | exactly one |
+
+A lone `-o` (no max) errors; a hollow *endpoint* is `marker-end: circle` ([SPEC 7](#7-nodes)).
+The ops are sugar over the `marker:` set (`one`, `exactly-one`, `zero-or-one`,
+`one-or-many`, `zero-or-many`, `crow` — [SPEC 7](#7-nodes)); `marker*:` overrides.
 
 ### Syntax
 
@@ -1175,7 +1200,7 @@ diagram references are emitted, so the full palette costs a three-box diagram no
 
 ### 10.3 Gradients
 
-`fill`, `stroke` (a shape's outline or a link's wire), and `gap-color` accept a **gradient** in place of a flat colour. Stops are
+`fill`, `stroke` (a shape's outline or a link's wire), and `gap-fill` accept a **gradient** in place of a flat colour. Stops are
 ordinary colours — palette `--name`s flip dark/light and bake, a raw `#hex` is a fixed
 literal.
 
@@ -1424,7 +1449,7 @@ a sequence, or a pie can carry a background, a frame, or a link like any `|box|`
 | `layout` | picks the engine (above) | any container |
 | `direction` | orient a flow — `row` / `column` (default `column`); a chart adds `radial` | `flow`, `chart` |
 | `gap` | space between children — `N` both axes, `row col` per axis, `≥ 0` | all (semantics per engine — below) |
-| `gap-color` | paint the interior gutters (below) | `flow`, `grid` |
+| `gap-fill` | paint the interior gutters (below) | `flow`, `grid` |
 | `padding` | inner padding; frames and places the content ([SPEC 5](#5-the-box-model)) | `flow`, `grid` |
 | `align` / `justify` | cross / main-axis packing ([SPEC 12](#12-flow--grid)) | `flow`, `grid` |
 | `columns` / `rows` / `cell` / `span` | grid tracks & placement ([SPEC 12](#12-flow--grid)) | `grid` |
@@ -1434,38 +1459,24 @@ a sequence, or a pie can carry a background, a frame, or a link like any `|box|`
 flow / grid, the plot-to-title/legend gutter in a chart / pie (default 10), and the
 message pitch / participant spacing in a sequence (default 32); a drawing places by
 datum and ignores it (its dims and mates read a scoped `gap:` of their own —
-[SPEC 15](#15-drawing)). `direction`, `align`, `justify`, `gap-color`, and `padding`
+[SPEC 15](#15-drawing)). `direction`, `align`, `justify`, `gap-fill`, and `padding`
 are the **flow / grid arranger's** knobs — a `sequence`, `chart` / `pie`, or `drawing`
 container places its own children and ignores them.
 
 **Nested boxes are unaffected.** These knobs govern a container *engine*'s placement of
 its own children; an ordinary box **nested inside any layout** still lays out its own
 content by the box model. So a participant box in a `sequence` — an ordinary box —
-honours `padding`, `align`, `justify`, and `gap-color` on its **own** content, even
+honours `padding`, `align`, `justify`, and `gap-fill` on its **own** content, even
 though the sequence engine placed the participant on the time axis. (A `chart` / `pie`
 consumes its children into marks, so this case does not arise there — [SPEC 14](#14-charts).)
 The full property-by-layout picture is the [support matrix](#16-property-ledger--support).
 
-### Gap paint — `gap-color`
-
-`gap-color: <color> | none` (default `none`) fills the interior **gutters** between a
-flow's or grid's children — the gap regions — with a colour. The gutter's thickness is
-the `gap`, so `gap: 1; gap-color: --stroke` paints hairline rules while a larger gap
-paints a bold band:
-
-| `gap-color:` | Effect |
-|---|---|
-| `none` (default) | no gutters painted |
-| a colour | every **interior** gutter filled with it, thickness = `gap` |
-
-Per-axis `gap` selects which rules appear: `gap: 1 0` (row gap only) paints the row
-rules (horizontal), `gap: 0 1` the column rules (vertical), `gap: 1` both; a `0` gap
-on an axis paints nothing there. Gutters are **interior only** — the outer frame is
-the container's own border (its `stroke`), so a frameless grid (`stroke: none`) shows
-only inner rules and a bordered one is never doubled. In a grid the gutters are
-span-aware (a gutter never crosses a spanning cell's interior, and a shared edge is
-never doubled) and skip pinned children. This is what lets `|table|` be plain
-`grid + gap: 1 + gap-color: --stroke` rather than a magic type ([SPEC 8](#8-templates)).
+**`gap-fill`** (default `none`) fills a flow's or grid's interior **gutters** — the gap
+regions between children — with a colour, thickness = the `gap` (`gap: 1; gap-fill: --stroke`
+paints hairline rules). Per-axis `gap` picks which rules show (`gap: 1 0` row rules, `0 1`
+column). Gutters are **interior only** — the outer frame is the container's own `stroke`,
+never doubled — and span-aware in a grid (skipping pinned and spanning cells). This is what
+makes `|table|` plain `grid + gap: 1 + gap-fill: --stroke`, not a magic type ([SPEC 8](#8-templates)).
 
 ---
 
@@ -1531,7 +1542,7 @@ filled one slides its text to the aligned edge. This is what lets a `|table|` al
 whole column — every table cell fills, and the column's `align` is carried onto the
 cells to place their text ([SPEC 8](#8-templates)); the core needs no notion of "table".
 
-Both layouts paint interior gutters with `gap-color` ([SPEC 11](#11-the-layout-model)) and
+Both layouts paint interior gutters with `gap-fill` ([SPEC 11](#11-the-layout-model)) and
 frame the whole with the container's own `stroke`.
 
 ---
@@ -1997,7 +2008,7 @@ geometry child on one shared **datum**, and its links are **annotations** — di
 callouts, leaders — or **mates** that seat parts against each other. One bet carries the
 design: because the engine *has* the geometry in numbers, a dimension's smart label is
 its **measured value** — the numbers live once, in the geometry, and the annotations
-point at them. Drawings are the one layout that extends the grammar, by three operator
+point at them. Drawings are the one layout that extends the grammar, by four operator
 tokens and one value form ([SPEC 21](#21-grammar)); everything else is nodes,
 declarations, and links, and it lowers to primitives like any layout-owning engine
 ([SPEC 11](#11-the-layout-model), seam 3). Its children split by role:
@@ -2005,9 +2016,9 @@ declarations, and links, and it lowers to primitives like any layout-owning engi
 | Child | Is | Drawn |
 |---|---|---|
 | a box (`\|sketch\|`, `\|rect\|`, `\|oval\|`, `\|hole\|`, …) | **geometry** — a part or a feature | its outline and fill, at the shared datum |
-| a link with a measuring op — `<->` `(-)` `(<)` — or a leader op — `<-` `*-` `>-` | an **annotation** | extension lines, arrows, text ([15.6](#156-dimensions), [15.7](#157-leaders-notes--line-conventions)) |
+| a link with a measuring op — `(-)` `(o)` `(<)` — or a leader op — `<-` `*-` `>-` | an **annotation** | extension lines, arrows, text ([15.6](#156-dimensions), [15.7](#157-leaders-notes--line-conventions)) |
 | a link with `\|\|` | a **mate** — a positioning relationship | nothing — it seats a part ([15.5](#155-mates)) |
-| any other two-ended link (`->`, `-->`, `-*`, …) | a straight **annotation arrow** | one segment, markers per the op |
+| any other two-ended link (`->`, `<->`, `-->`, `-*`, …) | a straight **annotation arrow** | one segment, markers per the op |
 | `"…"`, `\|note\|`, `\|balloon\|`, `\|table\|`, … | sheet content | per its own type, sheet-space ([15.1](#151-the-container-the-datum--the-scale)) |
 
 Four properties of the model, each inherited from the core:
@@ -2033,7 +2044,7 @@ semantics need a drawing scope:
 
 | Global — works everywhere | Drawing-scope only |
 |---|---|
-| `\|sketch\|` + `draw:` / `mirror:` / `break:`; `pattern:`; `scale:`; `hatch()` fills; `stroke-style: center` / `phantom`; `\|note\|` / `\|balloon\|` | the measuring ops (`<->`-as-dimension, `(-)`, `(<)`), the leader ops, `\|\|`, `tol:`, dim `side:` / `gap:`, auto-measure, `unit:`, datum placement, the chrome (centre marks, auto centerlines, dimension packing) |
+| `\|sketch\|` + `draw:` / `mirror:` / `break:`; `pattern:`; `scale:`; `hatch()` fills; `stroke-style: center` / `phantom`; `\|note\|` / `\|balloon\|` | the measuring ops (`(-)` linear, `(o)` round, `(<)` angle), the leader ops, `\|\|`, `tol:`, dim `side:` / `gap:`, auto-measure, `unit:`, datum placement, the chrome (centre marks, auto centerlines, dimension packing) |
 
 Outside a drawing a `\|sketch\|` is just a shape; its authored `:segment`s are declared
 but dormant (a routed link landing on one is deferred — [SPEC 23](#23-deferred)).
@@ -2233,14 +2244,14 @@ with it: mate or translate the part and its holes travel along.
 |rect#plate| { width: 120; height: 70 } [
   |hole#pin| { width: 10; translate: -35 20; pattern: grid(2, 1, 70, 0) }
 ]
-plate:left <-> plate.pin { side: top }        // dot-path to the feature → 25
+plate:left (-) plate.pin { side: top }        // dot-path to the feature → 25
 ```
 
 **`|hole|`** ([SPEC 8](#8-templates)) is round: `width:` — **required** — is its
 **diameter**. It **punches** by paint order (`fill: --bg` over a filled or hatched
 part reads as a through-hole, hatch-exempt with no special case) and draws its own
 dash-dot **centre marks**, overhanging by a sheet-space constant — a hole without
-marks is a plain `|oval|`. `pin (-)` reads its diameter ([15.6](#156-dimensions));
+marks is a plain `|oval|`. `pin (o)` reads its diameter ([15.6](#156-dimensions));
 `pattern:` prefixes the count (`2× ⌀10`). Counterbores, countersinks, and threads are
 defines or deferred ([SPEC 23](#23-deferred)).
 
@@ -2263,7 +2274,7 @@ copy); a radial pattern generates its `|pitch-circle|`
 **Composition is the geometry model** — there is no CSG. A part is one `|sketch|`,
 its surfaces and corners named where dimensions will land, or **composed** from
 overlapping nodes in paint order: a bore in a section view is a `--bg`-filled
-`|rect|` — it punches the hatch and its edges anchor a `(-)`. The escape hatches are
+`|rect|` — it punches the hatch and its edges anchor a `(o)`. The escape hatches are
 core (`|poly|`, `|path|`, `|image|`). A **parts library** is plain defines — no engine
 support, just bundled geometry and paint:
 
@@ -2324,33 +2335,43 @@ measuring and leader ops may stand **one-ended** ([SPEC 21](#21-grammar)).
 
 | Write | Reads | Renders |
 |---|---|---|
-| `a:left <-> b:right` | a linear span | extension lines, arrows, `25` |
-| `a:left <-> b <-> c` | a **chain** | each hop its own dim, one shared row |
-| `pin (-)` | a round feature | the **⌀ line across the circle** — both arrows on the rims — `2× ⌀10` |
-| `hole:top (-)` | a round feature, side-anchored | the **diametral line** through the circle |
-| `bore:top (-)` | any node, side-anchored | the span to the opposite side, ⌀-read — `⌀16` |
-| `body:neck (-)` | a mirrored-profile segment | the station's span across the axis — `⌀28` |
-| `body:r1 (-)` | a named arc | a leader — `R3` |
+| `a:left (-) b:right` | a linear span | extension lines, arrows, `25` |
+| `a:left (-) b (-) c` | a **chain** | each hop its own dim, one shared row |
+| `pin (o)` | a round feature | the **⌀ line across the circle** — both arrows on the rims — `2× ⌀10` |
+| `hole:top (o)` | a round feature, side-anchored | the **diametral line** through the circle |
+| `bore:top (o)` | any node, side-anchored | the span to the opposite side, ⌀-read — `⌀16` |
+| `body:neck (o)` | a mirrored-profile segment | the station's span across the axis — `⌀28` |
+| `body:r1 (o)` | a named arc | a leader — `R3` |
 | `body:flank (<) body:base` | two line-like anchors | the angle arc — `40°` |
 | `body:taper (<)` | a mirrored-profile segment | the **included** angle vs its own twin |
 
-**`(-)` — the round measure.** One op, **unary only** — the side anchor replaced
-the old two-ended form, so `a (-) b` errors ([SPEC 20](#20-errors)). The **feature
-picks the symbol**, per the standards: a named **arc** (a `fillet`, an `arc()`
-product) reads its radius — `R` — and **everything else** reads as a diameter, `⌀`,
-across whatever span its anchor gives. Roundness is by construction (`|hole|` /
-`|oval|` lineage, a `circle()` product, `|pitch-circle|`), never guessed from
-coordinates. A bare `(-)` needs an inferable axis — a round node (symmetric, any)
-or a mirrored sketch (across its axis, the full span); otherwise the error asks for
-an anchor. `R` on a full circle has no auto form (the standards say ⌀) — type a
-leader (`pin <- "SR5"`), the universal fallback for anything auto-measure can't
-read.
+Each glyph is a **picture of what it measures**: the dash `(-)` is a length, the
+circle `(o)` a diameter, the wedge `(<)` an angle. **Arity disambiguates** — `(-)` is
+always binary, `(o)` always unary / side-anchored, `(<)` either.
+
+**`(-)` — the linear measure.** The dash pictures a length: `(-)` spans two anchors
+and reads the distance between them, projected on its axis. It is **always binary** —
+`a (-) b`, or a chain `a (-) b (-) c` sharing one row; a unary `a (-)` errors ("a
+linear dimension measures two anchors", [SPEC 20](#20-errors)). Extension lines spring
+from the anchors and the value rides the line (**Placement & stacking**, below).
+
+**`(o)` — the round measure.** The circle pictures a diameter: `(o)` is **unary /
+side-anchored** — `hole (o)`, `bore:top (o)`; a binary `a (o) b` errors ("`(o)`
+measures one round feature", [SPEC 20](#20-errors)). The **feature picks the symbol**,
+per the standards: a named **arc** (a `fillet`, an `arc()` product) reads its radius —
+`R` — and **everything else** reads as a diameter, `⌀`, across whatever span its anchor
+gives. Roundness is by construction (`|hole|` / `|oval|` lineage, a `circle()` product,
+`|pitch-circle|`), never guessed from coordinates. A bare `(o)` needs an inferable
+axis — a round node (symmetric, any) or a mirrored sketch (across its axis, the full
+span); otherwise the error asks for an anchor. `R` on a full circle has no auto form
+(the standards say ⌀) — type a leader (`pin <- "SR5"`), the universal fallback for
+anything auto-measure can't read.
 
 **The diametral line.** On a **round** node, a side anchor draws the dimension
 *through* the circle, arrows out against the rims: `:top` / `:bottom` vertical,
 `:left` / `:right` horizontal, a corner the 45° diagonal. The value sits on the line
 when it fits inside; otherwise the line overruns the **anchored** rim and carries the
-text there — `hole:top (-)` spills upward. Deterministic, no solver.
+text there — `hole:top (o)` spills upward. Deterministic, no solver.
 
 **`(<)` — the angle.** Binary, between two **line-like** anchors — a named edge, a
 `|line|` / `|centerline|`, a bbox side: the angle between their directions, the arc
@@ -2367,16 +2388,16 @@ that each own one thing:
 
 | Source | Owns | Example |
 |---|---|---|
-| the **op** | the glyph | `(-)` → `⌀` / `R` · `(<)` → `°` · `tol:` → `±` |
+| the **op** | the glyph | `(o)` → `⌀` / `R` · `(<)` → `°` · `tol:` → `±` (linear `(-)` adds none — a plain length) |
 | the **geometry** | the number | `10` |
-| the **label** | the words | two-ended: **replaces** the number (`a <-> b "180"` — the honest override for schematic or nominal figures); one-ended: **follows** the value (`pin (-) "H7"` → `2× ⌀10 H7`) |
+| the **label** | the words | two-ended: **replaces** the number (`a (-) b "180"` — the honest override for schematic or nominal figures); one-ended: **follows** the value (`pin (o) "H7"` → `2× ⌀10 H7`) |
 | **`tol:`** | the tolerance, appended | `tol: 0.1` → `±0.1` · `tol: +0.2 -0.05` → stacked deviations, 0.7 × font, raised / lowered · `tol: H7` → a fit class |
 | **`pattern:`** | the count prefix | `2× ` |
 
 **Axis.** A **directed** anchor sets it — a side name (`left` / `right` → horizontal,
 `top` / `bottom` → vertical) or a named edge (a vertical shoulder → a horizontal dim
 across it). One directed anchor is enough; two must agree — perpendicular directions
-in one `<->` error, pointing at `(<)`. Point ↔ point measures the dominant delta
+in one `(-)` error, pointing at `(<)`. Point ↔ point measures the dominant delta
 (tie → horizontal); true aligned dims are deferred ([SPEC 23](#23-deferred)).
 
 **Placement & stacking.** A dimension sits **outside** the geometry, on a `side:` —
@@ -2410,9 +2431,9 @@ defaults (`font-size: 11`).
   mirror: x-axis;                              // half → whole, + the axis centerline
 }
 
-body:left <-> body:right { side: bottom }      // → 160 mm
-body:neck (-) { side: left; tol: h6 }          // → ⌀28 h6 — the surface, doubled about the axis
-body:r1 (-)                                    // → R3 — the fillet knows its radius
+body:left (-) body:right { side: bottom }      // → 160 mm
+body:neck (o) { side: left; tol: h6 }          // → ⌀28 h6 — the surface, doubled about the axis
+body:r1 (o)                                    // → R3 — the fillet knows its radius
 ```
 
 ### 15.7 Leaders, notes & line conventions
@@ -2460,7 +2481,7 @@ dash conventions and `dashed` the hidden-edge one, each on its own child — one
 has one stroke style ([SPEC 7](#7-nodes)). Two chrome types carry the centerline
 pattern ([SPEC 8](#8-templates)): `|centerline|` (a `|line|` — an axis, a symmetry
 line, a spoke) and `|pitch-circle|` (an `|oval|`, `width:` its diameter — the bolt
-circle; being round, `bc (-)` reads its PCD). A manual `|pitch-circle|` covers what
+circle; being round, `bc (o)` reads its PCD). A manual `|pitch-circle|` covers what
 `pattern:` can't — unequally spaced holes still share one drawn circle.
 
 **Auto chrome — one mechanism, four producers.** The lines drafting always draws are
@@ -2586,7 +2607,7 @@ text, and box-model properties are universal to every node — the tables that f
 |---|---|---|---|---|---|---|
 | `direction` | ✓ `row`/`column` | — | — | ✓ `+radial` | — | — |
 | `gap` | ✓ spacing | ✓ spacing | ✓ pitch / spacing | ✓ plot gutter | ✓ plot gutter | — (dims / mates read their own — [SPEC 15](#15-drawing)) |
-| `gap-color` | ✓ | ✓ | ✓ᵇ | — | — | — |
+| `gap-fill` | ✓ | ✓ | ✓ᵇ | — | — | — |
 | `padding` | ✓ | ✓ | ✓ᵇ | — | — | ✓ frames the sheet |
 | `align` / `justify` | ✓ | ✓ per-column | ✓ᵇ | — | — | — |
 | `width` / `height` | ✓ (slack) | ✓ (slack) | — content-sized | ✓ box size | ✓ box size | ✓ a floor |
@@ -2676,7 +2697,7 @@ out of scope.
 |---|---|---|---|---|
 | `layout` | any container | `flow`·`grid`·`sequence`·`chart`·`pie`·`drawing` | `flow` | [SPEC 11](#11-the-layout-model) |
 | `direction` | flow, chart | `row`·`column`·`radial` | `column` | [SPEC 11](#11-the-layout-model) |
-| `gap` · `gap-color` · `align` · `justify` · `padding` | flow, grid | — | see matrix | [SPEC 11](#11-the-layout-model), [SPEC 12](#12-flow--grid) |
+| `gap` · `gap-fill` · `align` · `justify` · `padding` | flow, grid | — | see matrix | [SPEC 11](#11-the-layout-model), [SPEC 12](#12-flow--grid) |
 | `columns` · `rows` | grid | track list | — (`columns` required) | [SPEC 12](#12-flow--grid) |
 | `cell` · `span` | grid box child | `col row` / `cols rows` | `— / 1 1` | [SPEC 12](#12-flow--grid) |
 | `data` · `fn` | chart series | list / pairs / backtick | — | [SPEC 14.3](#143-data--formulas) |
@@ -2942,6 +2963,7 @@ Format: `filename:line:col: error: <message>` (LSP-compatible), compile-time, wi
 | Auto-create shadows a node | `endpoint 'X' auto-created at <scope> — a node 'X' also exists at 'A.B.X'` (warning) |
 | Chain mixes operators | `link chain mixes operators 'X' and 'Y'` |
 | Chain < 2 nodes | `link requires at least two endpoints` |
+| Bare `o` marker | `'-o' needs a max glyph — write '-o<', '-o+', or 'marker-end: circle'` |
 | Missing required property | `'\|line\|' requires 'points'` |
 | `->` in the stylesheet | `'->' draws a link on the canvas — style every link with '\|-\| { stroke: … }' in a '{ }' block` |
 | `\|-\|` / `\|link\|` as an instance | `a link is drawn by an operator — '\|-\|' only styles links (write 'a -> b')` / `links are drawn by operators, not the '\|link\|' type` |
@@ -3023,15 +3045,15 @@ Format: `filename:line:col: error: <message>` (LSP-compatible), compile-time, wi
 | `break:` station off the profile | `'break' at N misses the profile` |
 | Overlapping `break:` groups | `'break' spans overlap — merge them` |
 | `break:` through a cubic | `a 'break' can't cut a 'curve()' — move the stations` ([SPEC 23](#23-deferred)) |
-| Drawing statement outside a drawing | `'(-)' draws a dimension — it belongs in a 'layout: drawing'` (same for `(<)`, `\|\|`, corner anchors, `tol:`, …) |
+| Drawing statement outside a drawing | `'(-)' draws a dimension — it belongs in a 'layout: drawing'` (same for `(o)`, `(<)`, `\|\|`, corner anchors, `tol:`, …) |
 | Unknown endpoint | `dimension endpoint 'X' not found at <scope>` + suggestions — **never auto-created** |
 | Corner order | `':right-top' is not an anchor — did you mean ':top-right'?` |
 | `(>)` | `'(>)' is reserved — the angle op is '(<)'` |
-| One-ended `<->` / `\|\|` | `a linear dimension measures two anchors` / `a mate seats two parts` |
-| Two-ended `(-)` | `'(-)' measures one round feature — write 'a:top (-)' for a span` |
+| One-ended `(-)` / `\|\|` | `a linear dimension measures two anchors` / `a mate seats two parts` |
+| Two-ended `(o)` | `'(o)' measures one round feature — write 'a:top (o)' for a span` |
 | Empty one-ended leader | `a leader needs its text — 'bolt <- "THRU"'` |
 | One-ended `->` / `-*` | `a leader points back at its feature — write 'a <- "…"'` |
-| Bare `(-)` with no axis | `'(-)' can't pick an axis on 'X' — anchor a side ('X:top (-)') or a segment` |
+| Bare `(o)` with no axis | `'(o)' can't pick an axis on 'X' — anchor a side ('X:top (o)') or a segment` |
 | `(<)` on a point anchor | `an angle reads two edges — a named segment, a '\|line\|', or a side` |
 | Unary `(<)` on an unmirrored name | `'(<)' on ':taper' needs 'mirror:' — no twin to measure against` |
 | `:segment` shadows a built-in point | `':left' is a built-in anchor — pick another name` |
@@ -3043,7 +3065,7 @@ Format: `filename:line:col: error: <message>` (LSP-compatible), compile-time, wi
 | Non-parallel mate directions | `mated anchors must face along one axis — 'a:left \|\| b:top' has no shared normal` |
 | Over-constrained mate | `mate over-constrains 'X' — already positioned via 'A \|\| B'` |
 | Mate within one part | `'a' and 'b' are features of one part — a part is rigid` |
-| Mixed dim axes | `'a:left <-> b:top' mixes axes — anchor one axis` |
+| Mixed dim axes | `'a:left (-) b:top' mixes axes — anchor one axis` |
 | `side:` off-axis | `a horizontal dimension stacks on top or bottom` / `a vertical dimension stacks on left or right` |
 | Parallel `(<)` edges | `the angle's edges are parallel — they never meet` |
 | Bad `tol:` | `'tol' takes a number, '+upper -lower', or a fit ident` |
@@ -3085,9 +3107,9 @@ body        = [ style ] [ children ]                 # define / container body
 link        = endpoints op [ endpoints ] { op endpoints }
               [ string ] [ classes ] [ style ] [ label_block ]   # the node tail, on a link head
 op          = link_op | draw_op
-draw_op     = "||" | "(-)" | "(<)"                  # mate, round measure, angle (SPEC 15)
+draw_op     = "||" | "(-)" | "(o)" | "(<)"          # mate, linear, round, angle (SPEC 15)
 selector    = sel_unit { sel_unit }                 # whitespace-separated = descendant
-sel_unit    = ident_bars | "|-|" | "." ident | "#" ident  # a type(+id), the link type, a class, or an id
+sel_unit    = ident_bars | "|-|" | "(-)" | "." ident | "#" ident  # a type(+id), the link type, the dimension type, a class, or an id
 endpoints   = endpoint { "&" endpoint }
 endpoint    = ident { "." ident } [ ":" point ]
 point       = "top" | "bottom" | "left" | "right"    # + corners, center, authored segments
@@ -3104,9 +3126,12 @@ call        = ident "(" [ value { "," value } ] ")"
 css_var     = "--" ident { "-" ident }
 expr        = "`" { char } "`"                       # a compile-time math expression (SPEC 10.7)
 
-link_op     = [ marker ] line [ marker ]
+link_op     = [ start_marker ] line [ end_marker ]
 line        = "-" | "--" | "---" | "~"
-marker      = "<" | ">" | "*" | "<>"
+start_marker = "<" | ">" | "*" | "<>" | card_start
+end_marker  = "<" | ">" | "*" | "<>" | card_end   # ER cardinality, either side (SPEC 9)
+card_end    = [ "o" | "+" ] ( "+" | "<" )         # [min][max] — min (o/+) hugs the line, max (+/<) outer
+card_start  = ( "+" | ">" ) [ "o" | "+" ]         # the mirror — max (+/>) outer, min (o/+) hugs the line
 
 ident       = ( letter | "_" ) { letter | digit | "_" | "-" }
 number      = [ "+" | "-" ] ( digit+ [ "." digit+ ] | "." digit+ )
@@ -3134,17 +3159,19 @@ endpoint forces a side (`a:left`), distinct from the declaration `:` by position
 **Every layout reuses this grammar; drawing alone extends it.** Charts and sequences add
 **no** lexer or parser grammar — they are nodes, declarations, and children, distinguished
 by type name and by the scope's `layout` ([SPEC 13](#13-sequence), [SPEC 14](#14-charts)).
-The `drawing` layout ([SPEC 15](#15-drawing)) adds exactly: the three `draw_op` tokens —
+The `drawing` layout ([SPEC 15](#15-drawing)) adds exactly: the four `draw_op` tokens —
 glued, like every link op; `||` is resolved in the parser from two **adjacent** pipes at
 **operator position only**, so bars stay paired and selectors are untouched — the
 **one-ended relaxation** (the right-hand endpoints may be omitted for `<-`, `*-`,
-`>-`, `(<)`, and **must** be for the unary-only `(-)`; one token of lookahead
+`>-`, `(<)`, and **must** be for the unary-only `(o)`; one token of lookahead
 decides — after the op, an ident is an endpoint; a string, `.`, `{`, `[`, or
-end-of-statement is the tail; `<->` and `||`
-require both ends), the widened endpoint `point` set in drawing scope, and the
+end-of-statement is the tail; the binary `(-)` and `||`
+require both ends), the widened endpoint `point` set in drawing scope, the `(-)`
+dimension-family `sel_unit` at a stylesheet statement head (a leading `(` there is
+unambiguous — calls appear only in value position), and the
 `pen_item` form inside a `draw:` value. A call's `(` **glues to its name**; a
-free-standing `(-)` / `(<)` lexes as an op ([SPEC 2](#2-lexical-syntax)) — so
-`move(-2, 5)` is a call and `pin (-)` a dimension, with no ambiguity. The pen calls,
+free-standing `(-)`, `(o)`, or `(<)` lexes as an op ([SPEC 2](#2-lexical-syntax)) — so
+`move(-2, 5)` is a call and `pin (o)` a dimension, with no ambiguity. The pen calls,
 `grid` / `radial`, and `hatch` are **call names**, contextual before `(` like `rgb` /
 `repeat` ([SPEC 22](#22-reserved-words)).
 
@@ -3183,6 +3210,13 @@ Function names `rgb`, `rgba`, `hsl`, `repeat` are reserved only before `(` — a
 `up`, `down`, `line`, `angle`, `arc`, `curve`, `fillet`, `chamfer`, `circle`, `close`)
 inside a `draw:` value.
 
+In **link-operator position** the marker glyphs `+` (one) and `o` (zero) are contextual —
+they compose the ER cardinality marker ([SPEC 9](#9-links)) and mean nothing elsewhere;
+`o` is valid only next to a max glyph (`-o<`, `+o-`, …), so it never collides with an id or
+the round measuring op `(o)` (delimited by parens). A leading `+` not followed by a digit
+starts a cardinality op, mirroring `-`. The digit `0` is **not** part of any operator — a
+hollow endpoint is `marker-end: circle`, never `-o`.
+
 Inside an expression ([SPEC 10.7](#107-expressions--functions)), `pi`, `e`, and the sample
 parameter `u` are keywords, and the math-function names (`sin`, `exp`, `min`, …) are
 reserved before `(` — all contextual to the expression, free as ids elsewhere.
@@ -3197,9 +3231,9 @@ Named in the language, not built yet; the syntax is stable.
 
 - `routing: curved` — the curved link strategy ([SPEC 9](#9-links); `orthogonal` and `straight`
   are built).
-- operator spellings for the ER cardinality markers ([SPEC 7](#7-nodes)) — `one`,
-  `zero-or-one`, `one-or-many`, `zero-or-many` are set via `marker*:` today; `-<` / `>-<`
-  are the only crow's-foot operators.
+- **a bare hollow-circle endpoint operator** — `o` spells zero only next to a max glyph
+  (`-o<` / `-o+`); a standalone hollow endpoint is the paint `marker-end: circle`
+  ([SPEC 7](#7-nodes)), so `o` never needs to stand alone.
 - `stroke-style: wavy` on **closed** primitives (`|line|` waves — it backs an async
   sequence message; a hex / oval / rect outline does not yet).
 - **gradient fills on text** — gradients fill nodes today ([SPEC 10.3](#103-gradients)).
@@ -3239,9 +3273,12 @@ dividers / delays (`==` / `...`); and an `|actor|` stick-figure primitive (an ac
 
 **Drawings** ([SPEC 15](#15-drawing))
 
+- **per-kind dimension selectors** — `(o) { }` / `(<) { }`; the family selector `(-) { }`
+  reaches every dimension today ([SPEC 4](#4-selectors-cascade--specificity), [SPEC 15.6](#156-dimensions)),
+  and a leader-specific selector under `|-|` is deferred too (YAGNI).
 - **aligned (point-to-point) dimensions** — today a dim is horizontal or vertical.
 - **per-copy pattern anchors** (`bolt.2`) and pitch dims between copies — the callout
-  count and a `\|pitch-circle\|`'s own `(-)` cover the common cases.
+  count and a `\|pitch-circle\|`'s own `(o)` cover the common cases.
 - **fan leaders** — `a & b <- "2× R5"`, one note with two leaders.
 - **`explode:`** — scale every directed mate's separation along its normal for exploded
   views; unmated overlaid children stay put (overlay composes one part, mates relate
@@ -3328,7 +3365,7 @@ closet.outlet -> fridge.inlet "restocks"
 
 |entity#users|  "Users"  [ "id" "int"  "name" "varchar" ]
 |entity#orders| "Orders" [ "id" "int"  "user_id" "int" ]
-users -< orders "places"     // one-to-many — crow's foot on Orders
+users -o< orders "places"    // zero-or-many — [min][max] = hollow ring + crow's foot
 
 cat -> dog -> bird           // 3 implicit boxes, 2 links
 fox & owl -> mouse           // fan-in
@@ -3410,9 +3447,9 @@ db      --> api     "record"
   break: -80 60;                                 // cut the boring middle from the view
 }
 
-bar:left <-> bar:right { side: bottom }          // → 300 mm — true, across the break
-bar:left <-> bar:a     { side: top }             // → 40 mm — ':a' is a freestanding segment
-bar:thread (-) { side: left; tol: h6 }           // → ⌀20 h6 — doubled about the axis
+bar:left (-) bar:right { side: bottom }          // → 300 mm — true, across the break
+bar:left (-) bar:a     { side: top }             // → 40 mm — ':a' is a freestanding segment
+bar:thread (o) { side: left; tol: h6 }           // → ⌀20 h6 — doubled about the axis
 bar:thread <- "M20×1.5" { side: top }            // thread spec — leader to the surface
 ```
 
@@ -3429,9 +3466,9 @@ bar:thread <- "M20×1.5" { side: top }            // thread spec — leader to t
 |rect#bore| { width: 60; height: 16; fill: --bg; stroke: none }   // the bore punches
 |centerline| { points: -34 0, 34 0 }             // duplicated subpaths add no auto axis
 
-bore:top (-) { side: right }                     // → ⌀16 — written first, the inner row
-body:top (-) { side: right }                     // → ⌀36 — stacks outside it
-body:left <-> body:right { side: bottom }        // → 60
+bore:top (o) { side: right }                     // → ⌀16 — written first, the inner row
+body:top (o) { side: right }                     // → ⌀36 — stacks outside it
+body:left (-) body:right { side: bottom }        // → 60
 ```
 
 ```
@@ -3451,7 +3488,7 @@ body:left <-> body:right { side: bottom }        // → 60
   }
   nozzle:left || barrel:right { gap: -10 }       // pressed 10 into the barrel
 
-  barrel:left <-> nozzle:right { side: bottom }  // → the overall length, as seated
+  barrel:left (-) nozzle:right { side: bottom }  // → the overall length, as seated
 
   |balloon#b1| "1" { translate: -60 -50 }
   |balloon#b2| "2" { translate: 100 -40 }

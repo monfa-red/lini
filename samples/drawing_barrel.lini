@@ -18,22 +18,22 @@
   |hole#m8| { width: 8; translate: -45 0; pattern: grid(3, 1, 115, 0); }
 ]
 
-body:left <-> body:tl { side: bottom; }
+body:left (-) body:tl { side: bottom; }
 // → 38 — ':tl' is a freestanding
 //   point: no shoulder is drawn there
-body:sh1 <-> body:sh2 <-> body:sh3 { side: bottom; }
+body:sh1 (-) body:sh2 (-) body:sh3 { side: bottom; }
 // → 14 · 7 — a chain seats one row
-body:left <-> body:right { side: bottom; }
+body:left (-) body:right { side: bottom; }
 // → 485 — true, across the break
 body:thread <- "M42×1.5" { side: top; }
 // thread spec — leader to the surface
 body:land >- "A"
 // datum A on the ⌀42 land
-body:land (-) { tol: h6; side: left; }
+body:land (o) { tol: h6; side: left; }
 // → ⌀42 h6
-body:collar (-) { tol: f7; side: left; }
+body:collar (o) { tol: f7; side: left; }
 // → ⌀45 f7
-body:tube (-) { side: left; }
+body:tube (o) { side: left; }
 // → ⌀50
 body.m8 <- "3× M8×1.25 ↧10" { side: top; }
 // typed thread callout

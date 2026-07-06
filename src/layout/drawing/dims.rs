@@ -1,9 +1,9 @@
-//! Linear dimensions [SPEC 15.6] — `<->` spans and chains — and the shared
+//! Linear dimensions [SPEC 15.6] — `(-)` spans and chains — and the shared
 //! **stacked-dim anatomy** every span reading lowers through: extension
 //! lines springing from the anchors, the dim line on its packed row,
 //! drafting-slender arrows (flipped outside a narrow span), ISO-aligned
 //! text. Measured values are anchor distances in drawing units — pre-scale,
-//! on the unbroken model. The `(-)` readings live in `round`.
+//! on the unbroken model. The `(o)` readings live in `round`.
 
 use super::super::ir::PlacedNode;
 use super::anchors::{self, Anchor, Spot};
@@ -17,7 +17,7 @@ use crate::error::Error;
 use crate::resolve::{ResolvedLink, ResolvedText};
 use crate::span::Span;
 
-/// `a <-> b` (and chains — each hop its own dim) [SPEC 15.6]. A hop's label
+/// `a (-) b` (and chains — each hop its own dim) [SPEC 15.6]. A hop's label
 /// **replaces** its number; labels map to hops in order. A chain **shares
 /// one row**: its hops seat as one unit (their union interval), so a flipped
 /// narrow hop's outside arrow abutting its neighbour tip-to-tip at the
@@ -42,7 +42,7 @@ pub(super) fn linear(
                 return Err(Error::at(
                     w.span,
                     format!(
-                        "'{} <-> {}' mixes axes — anchor one axis",
+                        "'{} (-) {}' mixes axes — anchor one axis",
                         anchors::spell(ea, ctx.scope),
                         anchors::spell(eb, ctx.scope)
                     ),
@@ -303,7 +303,7 @@ pub(super) fn stack_side(
 }
 
 /// Corner anchors both on one edge pull the dim there [SPEC 15.6]:
-/// `a:top-left <-> b:top-right` stacks on top.
+/// `a:top-left (-) b:top-right` stacks on top.
 fn corner_pull(a: &Anchor, b: &Anchor, axis: Axis) -> Option<Side> {
     let edge = |anchor: &Anchor| -> Option<Side> {
         let Spot::Corner((dx, dy)) = anchor.spot else {

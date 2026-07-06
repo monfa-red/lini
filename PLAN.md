@@ -45,17 +45,18 @@ coordinates through `prim::*`).
 
 ## Decisions ledger (settled in design review — do not relitigate)
 
-1. **Ops.** `(-)` round measure and `(<)` angle are **glued lexer tokens**; `(>)` is a
-   reserved error ("the angle op is '(<)'"). There is **no** `(-` radius op and **no**
-   binary `(-)`. `||` mate is **not** a lexer token: the parser recognizes two
-   **adjacent** `Pipe` tokens at operator position (after endpoints), so bars stay
-   paired everywhere else; a glued `|box||cell|` selector becomes an error asking for
-   a space.
+1. **Ops.** `(-)` linear measure, `(o)` round measure, and `(<)` angle are **glued
+   lexer tokens**; `(>)` is a reserved error ("the angle op is '(<)'"). There is **no**
+   `(-` radius op; `(-)` is **binary** (linear), `(o)` **unary** (round). `||` mate is
+   **not** a lexer token: the parser recognizes two **adjacent** `Pipe` tokens at
+   operator position (after endpoints), so bars stay paired everywhere else; a glued
+   `|box||cell|` selector becomes an error asking for a space.
 2. **Call-glue rule.** In the lexer, `(` **glued to a preceding ident** (no
-   whitespace) opens a call; otherwise `(-)` / `(<)` may lex as ops. `move(-2, 5)`
-   keeps lexing as today (signed-number arm beats the link-op arm). A **spaced**
-   `ident (` becomes the error "a call's '(' glues to its name".
-3. **`(-)` readings** (SPEC 15.6): named arc → `R` leader; round-by-construction node
+   whitespace) opens a call; otherwise `(-)` / `(o)` / `(<)` may lex as ops.
+   `move(-2, 5)` keeps lexing as today (signed-number arm beats the link-op arm), and
+   a glued `foo(o)` is a call. A **spaced** `ident (` becomes the error "a call's '('
+   glues to its name".
+3. **`(o)` readings** (SPEC 15.6): named arc → `R` leader; round-by-construction node
    bare → `⌀` leader (*amended 2026-07-05 by Abbas*: the line runs **across the
    diameter**, both arrows pressing the rims from outside, overshooting the far
    one — a single-arrow tip read as a word leader); round node + side/corner anchor → **diametral line** (text
@@ -64,9 +65,10 @@ coordinates through `prim::*`).
    `:segment` → station span across the axis, stacked; bare with no inferable axis →
    error. Roundness is **by construction only** (`|oval|` lineage, `circle()` product,
    `|pitch-circle|`) — never geometric detection.
-4. **One-ended relaxation**: RHS endpoints omissible for `<-` `*-` `>-` `(-)` `(<)`;
-   one token of lookahead (ident → endpoint; string/`.`/`{`/`[`/EOS → tail). `<->` and
-   `||` require both ends. Any **two-ended** core op in a drawing = straight
+4. **One-ended relaxation**: RHS endpoints omissible for `<-` `*-` `>-` `(o)` `(<)`
+   (and **required** for the unary-only `(o)`); one token of lookahead (ident →
+   endpoint; string/`.`/`{`/`[`/EOS → tail). The binary `(-)` and `||` require both
+   ends. Any **two-ended** core op in a drawing (`->`, `<->`, `-->`, …) = straight
    annotation line, markers per op. One-ended `->` / `-*` → "a leader points back at
    its feature".
 5. **Anchors**: geometry-bbox points; corners vertical-word-first (`:top-right`;
@@ -145,7 +147,7 @@ desugars, resolves, and **errors correctly outside a drawing scope** — but dra
 nothing new except what's listed.
 
 - **Lexer** (`lexer.rs`): track ident-adjacency for `(`; lex free-standing `(-)` /
-  `(<)` as new tokens; `(>)` at op position → reserved error; spaced `ident (` →
+  `(o)` / `(<)` as new tokens; `(>)` at op position → reserved error; spaced `ident (` →
   call-glue error. New `TokKind::DrawOp(DrawOpKind { RoundMeasure, Angle })` (naming
   free to improve). **No `||` token.**
 - **AST + parser** (`ast.rs`, `syntax/parser.rs`, `syntax/ast.rs`): link statements
@@ -172,7 +174,7 @@ nothing new except what's listed.
   sequence `|note|` gate reworded per SPEC 20.
 - **Expr** (`expr.rs`): bare zero-arg-function constants with the decision-13 lookup
   order and a recursion cap.
-- **Tests**: lexer unit tests (`(-)` vs `move(-2,5)`, `(<)`, `(>)` error, call-glue
+- **Tests**: lexer unit tests (`(-)` / `(o)` vs `move(-2,5)`, `(<)`, `(>)` error, call-glue
   error, adjacency); parser tests (one-ended forms, mate from adjacent pipes, spaced
   `|box| |cell|` still a selector, glued `|box||cell|` error, pen items in `draw:`);
   desugar snapshots (new templates); resolve error tests (each gate, verbatim
@@ -237,7 +239,7 @@ The largest stage; if it must split, split **measure/compose** from **place/pack
 
 - Anchor resolution against seated geometry (sides, corners, `:center`, authored
   names, dot-paths, pattern datums); representative points + directions.
-- `<->` linear dims + chains; `(-)` all five readings (decision 3) incl. the
+- `(-)` linear dims + chains; `(o)` all five readings (decision 3) incl. the
   diametral fits-inside rule; `(<)` binary/unary; auto-measure (pre-scale, unbroken,
   ≤2 dp trimmed); text composition incl. `tol:` (three forms, stacked deviations at
   0.7×), `unit:`, `pattern:` count, label seat rules.
@@ -280,7 +282,7 @@ deviated from this plan and **why**, open threads for the next session.
 - **2026-07-04 — stage 1 landed** (same session; all suites green, clippy + fmt
   clean; both the spec and this plan were audited by independent agents and the
   findings folded in). What shipped, and the deviations a later stage must know:
-  - Lexer: `TokKind::DrawOp` (`(-)` / `(<)`, exact three-char, free-standing per
+  - Lexer: `TokKind::DrawOp` (`(-)` / `(o)` / `(<)`, exact three-char, free-standing per
     the call-glue rule — prev byte ident-continue ⇒ call-open); `(>)` reserved
     error. `move(-90, 0)` lexes untouched (signed-number arm outruns ops).
   - Parser: `ChainOp { Wire(LinkOp), Measure(DrawOp), Mate }` on `Link.op`;
@@ -294,7 +296,7 @@ deviated from this plan and **why**, open threads for the next session.
   - Resolve: `resolve_link` takes `drawing_scope` (from `scope_is_drawing`,
     program.rs — immediate container / root `layout`); `validate_statement` in
     links.rs holds every statement-shape gate (ops-outside-drawing, mate
-    label/one-ended, `(-)` unary-only, leader shapes, `tol:`), messages verbatim
+    label/one-ended, `(o)` unary-only / `(-)` binary-only, leader shapes, `tol:`), messages verbatim
     from SPEC 20. `ResolvedLink.kind: LinkKind` (router filters non-wires in
     request.rs); `ResolvedEndpoint.point` carries `#[expect(dead_code)]` until
     stage 4 reads it (the expect will self-report then — remove it).
@@ -324,7 +326,7 @@ deviated from this plan and **why**, open threads for the next session.
     `leaf_bbox` ("stage 2") after its `draw:`-required check. A flow-scope
     `|note|` renders as a plain card until stage 2 folds the corner.
   - Spec audit fixes applied alongside: `|breakline|` template row, SPEC 6 stroke
-    prose (+`center`/`phantom`), `(-)` unary-only statement + its SPEC 20 error,
+    prose (+`center`/`phantom`), `(o)` unary-only / `(-)` binary-only statement + its SPEC 20 error,
     container-`gap` error scoped (`a container's 'gap' must be ≥ 0` — code
     message updated to match).
 
@@ -498,7 +500,7 @@ deviated from this plan and **why**, open threads for the next session.
   What shipped, and what stage 5 must know:
   - **Modules** (`layout/drawing/`): `annotate.rs` (orchestrator: geometry
     extent, the row packer, per-link dispatch, the sheet constants),
-    `dims.rs` (linear + the `(-)` readings + stacked lowering + diametral +
+    `dims.rs` (linear + the `(o)` readings + stacked lowering + diametral +
     the slender arrow), `angle.rs`, `leaders.rs` (leader skeleton, callouts,
     straight arrows, label leaves), `compose.rs` (glyph/number/label/tol/
     count/unit + `DimText::nodes` for ISO-rotated text with deviation
@@ -515,7 +517,7 @@ deviated from this plan and **why**, open threads for the next session.
     rebuilt around one `Anchor { child, node, origin, rot, spot }` with
     `point/outward/direction/round_diameter/mirrors/pattern_count`; mates
     consume the same model (their `Hit` is a projection of it).
-  - **`<->` is typed at resolve**: `LinkKind::Measure(MeasureOp::Linear)`
+  - **`(-)` is typed at resolve**: `LinkKind::Measure(MeasureOp::Linear)`
     from the *operator* in a drawing scope (`MeasureOp { Linear, Round,
     Angle }` replaced the raw `DrawOp` payload) — an explicit `marker:` can
     restyle a wire but never re-type a statement.
@@ -546,15 +548,15 @@ deviated from this plan and **why**, open threads for the next session.
     - The off-axis `side:` message got its vertical twin ("a vertical
       dimension stacks on left or right" — SPEC 20 row extended).
     - Station / point↔point spans measure the **dominant-axis projection**
-      (true aligned dims stay deferred, SPEC 23); `(-)` on an unmirrored
+      (true aligned dims stay deferred, SPEC 23); `(o)` on an unmirrored
       name or a corner of a non-round node reuses the no-axis error.
-    - `(-)` leaders (R / ⌀) tip with the **slender dim arrow** (dim
+    - `(o)` leaders (R / ⌀) tip with the **slender dim arrow** (dim
       anatomy); word callouts keep core markers. A leader whose feature
       sits on the datum has no outward ray — falls back to up-right.
     - Corner anchors both on one edge pull the dim to that side (the
       "anchors both on one edge" clause is corner-specific; side anchors
       set the axis instead, so they can never share a valid stack side).
-    - Chain labels map to hops in order (`a <-> b <-> c [ "L1" "L2" ]`).
+    - Chain labels map to hops in order (`a (-) b (-) c [ "L1" "L2" ]`).
   - **Stage-5 notes**: leaders and diametral lines are not collision-packed
     against dim rows (deterministic; `side:` steers) — fine in practice,
     revisit only if the break samples collide. The angle arc draws no leg
@@ -604,7 +606,7 @@ deviated from this plan and **why**, open threads for the next session.
     became `PathSeg` so the two segment vocabularies can't be confused.
     Messages updated: "no segment ':step' on 'body'", "'move' takes no
     segment — name its landing with a freestanding ':segment'", "… anchor a
-    side ('X:top (-)') or a segment".
+    side ('X:top (o)') or a segment".
   - **`scale:` defaults to 4 on a drawing.** `|drawing|`'s template bundle
     and the root `{ layout: drawing }` engine defaults carry `scale: 4`
     (≈1 mm per unit at screen resolution — Abbas's call; ledger decision 9
@@ -632,7 +634,7 @@ deviated from this plan and **why**, open threads for the next session.
 
 - **2026-07-05 — independent audit round** (opus agent over stages 1–5a,
   emphasis on the hatch slice and the review follow-ups; hatch tile geometry,
-  the `(-)` dispatch, packing, wedge math, ray-cast frames, scale-4 fallout
+  the `(o)` dispatch, packing, wedge math, ray-cast frames, scale-4 fallout
   and the rename all probed clean — measured values re-verified by hand).
   Fixed at the source:
   - **The `|-|` scope default leaked into nested flow scopes** (the audit's
@@ -643,8 +645,8 @@ deviated from this plan and **why**, open threads for the next session.
     regression test covers a `|row|` in a `|drawing|` node.
   - Three stale `:name` doc comments swept (value.rs, syntax/ast.rs,
     parser.rs).
-  - `dims.rs` (565 LOC) split per the ~500 law: the `(-)` readings moved to
-    `round.rs`; `dims.rs` keeps `<->` + the shared stacked-dim anatomy
+  - `dims.rs` (565 LOC) split per the ~500 law: the `(o)` readings moved to
+    `round.rs`; `dims.rs` keeps `(-)` + the shared stacked-dim anatomy
     (`Stacked`/`stacked`/`stack_side`/`arrow`/`span_on`, now `pub(super)`).
   - **New open thread** (audit-adjacent, pre-existing): a **root** drawing
     never runs the router, so a wire inside a nested flow scope (`|row|` in
@@ -834,7 +836,7 @@ deviated from this plan and **why**, open threads for the next session.
     the tip fell back to the aim. Copies now shed `pattern` (they are not
     carriers); this also stopped `ride_view` re-unioning a copy's bbox
     over its chrome. Test pins the tip on the seed's rim.
-  - **The bare `(-)` circle reading looked like a word leader** (one
+  - **The bare `(o)` circle reading looked like a word leader** (one
     arrow): it now draws the drafting ⌀ line — along the diameter through
     the centre, overshooting the far rim by an arrow-length, with **both
     arrowheads pressing the rims inward from outside** (his reference's
@@ -868,7 +870,7 @@ deviated from this plan and **why**, open threads for the next session.
     leaders/callouts/angles lower **first** (they are feature-anchored) and
     their text boxes register as **obstacles** in `Rows`; a candidate row
     whose band (line + the value riding above it) intersects one is
-    skipped. Output keeps source order; `(-)` leader texts obstruct
+    skipped. Output keeps source order; `(o)` leader texts obstruct
     later dims too. This closes most of the stage-4 "leaders aren't
     collision-packed" thread from the dim side; leaders themselves still
     place deterministically.

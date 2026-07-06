@@ -59,16 +59,16 @@ pub fn render_geometry(
     }
 
     // Interior gutters, each a `<rect>` filled with the container's resolved
-    // `gap-color` [SPEC 11] — drawn over the shape, interior only, so the outer
+    // `gap-fill` [SPEC 11] — drawn over the shape, interior only, so the outer
     // frame stays the container's own border and no edge is doubled. The rect
     // states its own `stroke="none"`, so the container's border never bleeds onto
-    // it, and a filled rect (unlike a `<line>`) carries a gradient `gap-color`.
-    // Layout emits gutters only when `gap-color` is set, so it is always a real paint.
+    // it, and a filled rect (unlike a `<line>`) carries a gradient `gap-fill`.
+    // Layout emits gutters only when `gap-fill` is set, so it is always a real paint.
     if !n.gutters.is_empty() {
         let indent = "  ".repeat(depth);
         let fill = n
             .attrs
-            .get("gap-color")
+            .get("gap-fill")
             .map(|v| super::values::format_value(v, vars, opts))
             .unwrap_or_else(|| "none".to_string());
         for (cx, cy, w, h) in &n.gutters {

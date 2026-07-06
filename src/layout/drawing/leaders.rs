@@ -1,7 +1,7 @@
 //! Leaders & annotation arrows [SPEC 15.7]. A **callout** is a one-ended
 //! link written tip-first: the tip ray-casts onto the drawn outline, the
 //! text auto-places outward past the geometry (or where `side:` points) with
-//! a horizontal **landing** elbow before it. The `(-)` readings that leader
+//! a horizontal **landing** elbow before it. The `(o)` readings that leader
 //! (`R`, bare `⌀`) share the same line, tipped with the slender dim arrow.
 //! Any other two-ended op draws a **straight annotation line**, markers per
 //! the op, ends trimmed to the outlines they spring from.
@@ -97,7 +97,7 @@ fn circle_tip(circle: Option<(P, f64)>, from: P) -> Option<P> {
     Some((c.0 + v.0 / len * r, c.1 + v.1 / len * r))
 }
 
-/// A measured `(-)` leader (an `R` onto its arc, a `⌀` onto a rim): the
+/// A measured `(o)` leader (an `R` onto its arc, a `⌀` onto a rim): the
 /// leader line tipped with the slender dim arrow, the composed text past the
 /// landing [SPEC 15.6].
 #[allow(clippy::too_many_arguments)]

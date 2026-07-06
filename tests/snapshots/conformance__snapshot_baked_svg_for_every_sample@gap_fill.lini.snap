@@ -1,7 +1,7 @@
 ---
 source: tests/conformance.rs
 expression: svg
-input_file: samples/gap_color.lini
+input_file: samples/gap_fill.lini
 ---
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-151.5 -92.5 303 185" width="303" height="185" class="lini">
   <style>

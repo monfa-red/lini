@@ -9,7 +9,7 @@
 //! (parallel to `columns`) or a scalar and place each cell's box in its track
 //! (`stretch` fills, else pack start/center/end, default centre); a **filled**
 //! cell then honours its *own* `align`/`justify` to place its text [SPEC 12].
-//! `gap-color` fills the interior gutters between cells.
+//! `gap-fill` fills the interior gutters between cells.
 
 use super::ir::{Bbox, Gutter, PlacedNode};
 use super::primitives;
@@ -25,8 +25,8 @@ enum Track {
 }
 
 /// Lay out a grid; returns the content bbox plus the interior gutter rects the
-/// container fills with its `gap-color` (span-aware, per-axis). Empty when
-/// `gap-color` is unset.
+/// container fills with its `gap-fill` (span-aware, per-axis). Empty when
+/// `gap-fill` is unset.
 pub fn lay_out_grid(
     children: &mut [PlacedNode],
     attrs: &AttrMap,
@@ -137,7 +137,7 @@ pub fn lay_out_grid(
         }
     }
 
-    let gutters = if has_gap_color(attrs) {
+    let gutters = if has_gap_fill(attrs) {
         interior_gutters(
             &col_off,
             &row_off,
@@ -445,11 +445,11 @@ fn positive_int(name: &str, n: f64, span: Span) -> Result<usize, Error> {
 
 // ───────────────────────── Gutters ─────────────────────────
 
-/// Whether a container paints its gutters — `gap-color` set to a real colour
+/// Whether a container paints its gutters — `gap-fill` set to a real colour
 /// (not `none`, the default). Layout emits the gutter rects when this holds;
 /// render resolves the colour itself.
-pub(super) fn has_gap_color(attrs: &AttrMap) -> bool {
-    match attrs.get("gap-color") {
+pub(super) fn has_gap_fill(attrs: &AttrMap) -> bool {
+    match attrs.get("gap-fill") {
         None => false,
         Some(ResolvedValue::Ident(s)) => s != "none",
         Some(_) => true,

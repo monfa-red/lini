@@ -370,8 +370,8 @@ fn layout_inst(
         let (content_bbox, rects) =
             lay_out_container_children(&mut children, &inst.attrs, inst.span, own)?;
 
-        // Interior gutters (grid or 1-D) the container fills with `gap-color`.
-        // A table is just a group with `gap-color: --stroke` — no special-casing;
+        // Interior gutters (grid or 1-D) the container fills with `gap-fill`.
+        // A table is just a group with `gap-fill: --stroke` — no special-casing;
         // its border is the group rect, its inner rules these gutter rects.
         gutters = rects;
 
@@ -468,7 +468,7 @@ fn owns_layout(attrs: &crate::resolve::AttrMap) -> bool {
 
 /// Interior gutter rects between adjacent flow children — at each gap's midpoint,
 /// `gap` thick along the main axis and spanning the flow's cross extent ([SPEC 12],
-/// the 1-D `gap-color` case). Filled with the container's `gap-color`.
+/// the 1-D `gap-fill` case). Filled with the container's `gap-fill`.
 fn one_d_gutters(
     children: &[PlacedNode],
     flow: &[usize],
@@ -586,11 +586,11 @@ fn lay_out_container_children(
     }
 
     // 1-D gutters between flow children (a grid produced its own above), filled by
-    // the container's `gap-color` [SPEC 11] when set and the main-axis gap is
+    // the container's `gap-fill` [SPEC 11] when set and the main-axis gap is
     // positive. They track the offset flow; the body bbox below stays centred,
     // since `closed_bbox` and pins anchor to it.
     if let Some(axis) = flow_axis
-        && grid::has_gap_color(container_attrs)
+        && grid::has_gap_fill(container_attrs)
         && flow_indices.len() > 1
     {
         let (gap_y, gap_x) = primitives::gap(container_attrs, span)?;
@@ -1065,9 +1065,9 @@ mod tests {
     #[test]
     fn table_fills_interior_gutters_no_frame() {
         let l = lay_out("|table#t| { columns: 40 40 } [\n  \"a\" \"b\" \"c\" \"d\"\n]\n");
-        // The table's `gap-color: --stroke` fills the interior gutters.
+        // The table's `gap-fill: --stroke` fills the interior gutters.
         assert!(!l.nodes[0].gutters.is_empty(), "table has interior gutters");
-        // A plain group has no `gap-color`, so no gutters.
+        // A plain group has no `gap-fill`, so no gutters.
         assert!(
             lay_out("|group#g| [ |box#x| ]\n").nodes[0]
                 .gutters
@@ -1093,7 +1093,7 @@ mod tests {
     #[test]
     fn one_d_gutter_falls_between_flow_children() {
         let l = lay_out(
-            "|row#g| { gap-color: --stroke } [\n  |box#a| { width: 30; height: 30; }\n  |box#b| { width: 30; height: 30; }\n  |box#c| { width: 30; height: 30; }\n]\n",
+            "|row#g| { gap-fill: --stroke } [\n  |box#a| { width: 30; height: 30; }\n  |box#b| { width: 30; height: 30; }\n  |box#c| { width: 30; height: 30; }\n]\n",
         );
         assert_eq!(
             l.nodes[0].gutters.len(),
@@ -1103,18 +1103,18 @@ mod tests {
     }
 
     #[test]
-    fn gap_color_per_axis_selects_gutters() {
+    fn gap_fill_per_axis_selects_gutters() {
         // `gap: row col` [SPEC 11]: `4 0` paints row rules (horizontal gutters), `0 4`
         // column rules (vertical). A 2×2 grid has one interior boundary each way.
         let rows_only = lay_out(
-            "|grid#g| { columns: 40 40; gap: 4 0; gap-color: --stroke } [\n  \"a\" \"b\"\n  \"c\" \"d\"\n]\n",
+            "|grid#g| { columns: 40 40; gap: 4 0; gap-fill: --stroke } [\n  \"a\" \"b\"\n  \"c\" \"d\"\n]\n",
         );
         let (_, _, w, h) = rows_only.nodes[0].gutters[0];
         assert_eq!(rows_only.nodes[0].gutters.len(), 1, "row gap → one gutter");
         assert!(w > h, "horizontal gutter is wide: w={w} h={h}");
 
         let cols_only = lay_out(
-            "|grid#g| { columns: 40 40; gap: 0 4; gap-color: --stroke } [\n  \"a\" \"b\"\n  \"c\" \"d\"\n]\n",
+            "|grid#g| { columns: 40 40; gap: 0 4; gap-fill: --stroke } [\n  \"a\" \"b\"\n  \"c\" \"d\"\n]\n",
         );
         let (_, _, w2, h2) = cols_only.nodes[0].gutters[0];
         assert_eq!(cols_only.nodes[0].gutters.len(), 1, "col gap → one gutter");

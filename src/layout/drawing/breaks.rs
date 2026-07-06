@@ -576,9 +576,11 @@ mod tests {
 
     #[test]
     fn the_view_map_squashes_the_span_and_round_trips() {
-        let mut v = ViewMap::default();
         // One cut, 100..200 on x: 100 px folds into the 12 px gap.
-        v.x = vec![(100.0, 100.0), (200.0, 100.0 + BREAK_GAP)];
+        let v = ViewMap {
+            x: vec![(100.0, 100.0), (200.0, 100.0 + BREAK_GAP)],
+            ..Default::default()
+        };
         assert_eq!(v.map((50.0, 7.0)), (50.0, 7.0), "near is identity");
         assert_eq!(v.map((300.0, 0.0)).0, 300.0 - 100.0 + BREAK_GAP);
         assert_eq!(
@@ -597,7 +599,7 @@ mod tests {
         // 300 long, break −80..60: 140 removed, the gap left — 172 displayed;
         // the dimension still reads the unbroken 300 [SPEC 15.3].
         let l = laid(
-            "{ layout: drawing; scale: 1 }\n|sketch#bar| { draw: move(-150, 0) up(10) right(300) down(10); mirror: x-axis; break: -80 60 }\nbar:left <-> bar:right { side: bottom }\n",
+            "{ layout: drawing; scale: 1 }\n|sketch#bar| { draw: move(-150, 0) up(10) right(300) down(10); mirror: x-axis; break: -80 60 }\nbar:left (-) bar:right { side: bottom }\n",
         );
         let bar = by_id(&l.nodes, "bar");
         assert!(
@@ -656,7 +658,7 @@ mod tests {
         // `:mid` sits at x = 0, inside the cut — displayed it squashes into
         // the gap, but the dimension reads the model's 150.
         let l = laid(
-            "{ layout: drawing; scale: 1 }\n|sketch#bar| { draw: move(-150, 0) up(10) right(150):half :mid right(150) down(10); mirror: x-axis; break: -80 60 }\nbar:left <-> bar:mid { side: bottom }\n",
+            "{ layout: drawing; scale: 1 }\n|sketch#bar| { draw: move(-150, 0) up(10) right(150):half :mid right(150) down(10); mirror: x-axis; break: -80 60 }\nbar:left (-) bar:mid { side: bottom }\n",
         );
         text_at(&l.nodes, "150");
     }
@@ -666,7 +668,7 @@ mod tests {
         // The ⌀ station reading reflects on the model, so a break never
         // narrows it [SPEC 15.6].
         let l = laid(
-            "{ layout: drawing; scale: 1 }\n|sketch#bar| { draw: move(-150, 0) up(10) right(40):thread right(260) down(10); mirror: x-axis; break: -80 60 }\nbar:thread (-) { side: left }\n",
+            "{ layout: drawing; scale: 1 }\n|sketch#bar| { draw: move(-150, 0) up(10) right(40):thread right(260) down(10); mirror: x-axis; break: -80 60 }\nbar:thread (o) { side: left }\n",
         );
         text_at(&l.nodes, "⌀20");
     }
@@ -676,7 +678,7 @@ mod tests {
         // A hole at x = 100 sits past the cut: displayed it slides with the
         // far piece (100 − 140 + 12 = −28); a dim to it reads the model 250.
         let l = laid(
-            "{ layout: drawing; scale: 1 }\n|sketch#bar| { draw: move(-150, -15) right(300) down(30) left(300) close(); break: -80 60 } [\n  |hole#vent| { width: 10; translate: 100 0 }\n]\nbar:left <-> bar.vent { side: bottom }\n",
+            "{ layout: drawing; scale: 1 }\n|sketch#bar| { draw: move(-150, -15) right(300) down(30) left(300) close(); break: -80 60 } [\n  |hole#vent| { width: 10; translate: 100 0 }\n]\nbar:left (-) bar.vent { side: bottom }\n",
         );
         let vent = by_id(&l.nodes, "vent");
         assert!(

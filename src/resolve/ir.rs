@@ -279,6 +279,8 @@ pub enum MarkerKind {
     Crow,
     /// ER "one" — a single perpendicular bar.
     One,
+    /// ER "exactly one" — a double bar (one and only one).
+    ExactlyOne,
     /// ER "zero or one" — an optionality ring + a bar.
     ZeroOrOne,
     /// ER "one or many" — a bar + the crow's foot.
@@ -299,6 +301,7 @@ impl MarkerKind {
             // The ER cardinality family ([SPEC 7]); `many` is an alias of `crow`.
             "crow" | "many" => Self::Crow,
             "one" => Self::One,
+            "exactly-one" => Self::ExactlyOne,
             "zero-or-one" => Self::ZeroOrOne,
             "one-or-many" => Self::OneOrMany,
             "zero-or-many" => Self::ZeroOrMany,
@@ -311,17 +314,28 @@ impl MarkerKind {
     pub fn is_open(self) -> bool {
         matches!(
             self,
-            Self::Crow | Self::One | Self::ZeroOrOne | Self::OneOrMany | Self::ZeroOrMany
+            Self::Crow
+                | Self::One
+                | Self::ExactlyOne
+                | Self::ZeroOrOne
+                | Self::OneOrMany
+                | Self::ZeroOrMany
         )
     }
 
     pub fn from_marker(m: crate::ast::LinkMarker) -> Self {
+        use crate::ast::LinkMarker as L;
         match m {
-            crate::ast::LinkMarker::None => Self::None,
-            crate::ast::LinkMarker::Arrow => Self::Arrow,
-            crate::ast::LinkMarker::Crow => Self::Crow,
-            crate::ast::LinkMarker::Dot => Self::Dot,
-            crate::ast::LinkMarker::Diamond => Self::Diamond,
+            L::None => Self::None,
+            L::Arrow => Self::Arrow,
+            L::Crow => Self::Crow,
+            L::Dot => Self::Dot,
+            L::Diamond => Self::Diamond,
+            L::One => Self::One,
+            L::ExactlyOne => Self::ExactlyOne,
+            L::ZeroOrOne => Self::ZeroOrOne,
+            L::OneOrMany => Self::OneOrMany,
+            L::ZeroOrMany => Self::ZeroOrMany,
         }
     }
 }
@@ -345,10 +359,10 @@ pub enum LinkKind {
     Mate,
 }
 
-/// A drawing measure's reading [SPEC 15.6]. `Linear` is the two-ended `<->`
-/// in a drawing scope — classified at resolve from the *operator* (an
-/// explicit `marker:` never re-types a statement); `Round` / `(-)` and
-/// `Angle` / `(<)` carry over from their lexed ops.
+/// A drawing measure's reading [SPEC 15.6], one per measuring op: `Linear` from
+/// the binary `(-)`, `Round` from the unary `(o)` (⌀ / R by the feature), `Angle`
+/// from `(<)`. Classified at resolve from the *operator* — an explicit `marker:`
+/// restyles a wire but never re-types a statement.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MeasureOp {
     Linear,
@@ -418,6 +432,10 @@ mod tests {
     fn parses_the_er_cardinality_family() {
         assert_eq!(MarkerKind::parse("one"), Some(MarkerKind::One));
         assert_eq!(
+            MarkerKind::parse("exactly-one"),
+            Some(MarkerKind::ExactlyOne)
+        );
+        assert_eq!(
             MarkerKind::parse("zero-or-one"),
             Some(MarkerKind::ZeroOrOne)
         );
@@ -435,6 +453,7 @@ mod tests {
         assert_eq!(MarkerKind::parse("nope"), None);
         // The ER family is open-stroked; the filled heads are not.
         assert!(MarkerKind::One.is_open() && MarkerKind::Crow.is_open());
+        assert!(MarkerKind::ExactlyOne.is_open());
         assert!(!MarkerKind::Arrow.is_open() && !MarkerKind::Dot.is_open());
     }
 }

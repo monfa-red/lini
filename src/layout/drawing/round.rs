@@ -1,4 +1,4 @@
-//! The `(-)` round readings [SPEC 15.6] — unary; the feature picks the
+//! The `(o)` round readings [SPEC 15.6] — unary; the feature picks the
 //! reading: a named arc → an `R` leader onto the arc; a `circle()` segment
 //! or a bare round node → the `⌀` line across the circle; a round node + side /
 //! corner → the **diametral line**; any node + side → the span to the
@@ -17,7 +17,7 @@ use crate::ast::Side;
 use crate::error::Error;
 use crate::resolve::{ResolvedLink, ResolvedText};
 
-/// `(-)` — the round measure, unary; the feature picks the reading
+/// `(o)` — the round measure, unary; the feature picks the reading
 /// [SPEC 15.6].
 pub(super) fn lower(
     ctx: &Ctx,
@@ -34,7 +34,7 @@ pub(super) fn lower(
         Error::at(
             w.span,
             format!(
-                "'(-)' can't pick an axis on '{who}' — anchor a side ('{who}:top (-)') or a segment"
+                "'(o)' can't pick an axis on '{who}' — anchor a side ('{who}:top (o)') or a segment"
             ),
         )
     };

@@ -1,6 +1,6 @@
 //! Annotations [SPEC 15.6/15.7] — the drawing scope's links, lowered to
 //! primitives at baked coordinates after mates seat the geometry: linear
-//! dimensions and chains, the `(-)` readings, `(<)` angles, leaders, and
+//! dimensions and chains, the `(o)` readings, `(<)` angles, leaders, and
 //! straight annotation arrows. This module is the orchestrator: it fixes the
 //! geometry extent the dims stack outside of, owns the **row packer**, and
 //! dispatches each link to its lowering (`dims`, `angle`, `leaders`).
@@ -304,7 +304,7 @@ mod tests {
         // all fit their spans and share one row; the overall 150 overlaps
         // them and takes the next.
         let l = laid(
-            "{ layout: drawing; scale: 2 }\n|rect#plate| { width: 150; height: 40 }\n|hole#a| { width: 8; translate: -50 0 }\n|hole#b| { width: 8; translate: 10 0 }\nplate:left <-> a <-> b <-> plate:right { side: bottom }\nplate:left <-> plate:right { side: bottom }\n",
+            "{ layout: drawing; scale: 2 }\n|rect#plate| { width: 150; height: 40 }\n|hole#a| { width: 8; translate: -50 0 }\n|hole#b| { width: 8; translate: 10 0 }\nplate:left (-) a (-) b (-) plate:right { side: bottom }\nplate:left (-) plate:right { side: bottom }\n",
         );
         let (_, y25, _) = text_at(&l.nodes, "25");
         let (_, y60, _) = text_at(&l.nodes, "60");
@@ -326,7 +326,7 @@ mod tests {
     #[test]
     fn iso_text_turns_with_a_vertical_dim() {
         let l = laid(
-            "{ layout: drawing; scale: 1 }\n|rect#a| { width: 60; height: 40 }\na:top <-> a:bottom { side: right }\n",
+            "{ layout: drawing; scale: 1 }\n|rect#a| { width: 60; height: 40 }\na:top (-) a:bottom { side: right }\n",
         );
         let (x, _, rot) = text_at(&l.nodes, "40");
         assert_eq!(rot, -90.0, "reads from the right");
@@ -340,7 +340,7 @@ mod tests {
         // reads between the extension lines: arrows flip out, value centred
         // inside — drafting's middle form [SPEC 15.6].
         let l = laid(
-            "{ layout: drawing; scale: 1 }\n|rect#a| { width: 18; height: 10 }\na:left <-> a:right { side: bottom }\n",
+            "{ layout: drawing; scale: 1 }\n|rect#a| { width: 18; height: 10 }\na:left (-) a:right { side: bottom }\n",
         );
         let (x, _, _) = text_at(&l.nodes, "18");
         assert!(x.abs() < 1e-6, "value centred inside the span: x={x}");
@@ -351,7 +351,7 @@ mod tests {
         // A 10-wide span can't even hold "10" — the text slides rightward,
         // past the higher-u extension line.
         let l = laid(
-            "{ layout: drawing; scale: 1 }\n|rect#a| { width: 10; height: 8 }\na:left <-> a:right { side: bottom }\n",
+            "{ layout: drawing; scale: 1 }\n|rect#a| { width: 10; height: 8 }\na:left (-) a:right { side: bottom }\n",
         );
         let (x, _, _) = text_at(&l.nodes, "10");
         assert!(x > 5.0, "text outside the span: x={x}");
@@ -360,7 +360,7 @@ mod tests {
     #[test]
     fn corner_anchors_on_one_edge_pull_the_dim_there() {
         let l = laid(
-            "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\n|rect#b| { width: 40; height: 20; translate: 70 0 }\na:top-left <-> b:top-right\n",
+            "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\n|rect#b| { width: 40; height: 20; translate: 70 0 }\na:top-left (-) b:top-right\n",
         );
         let (_, y, _) = text_at(&l.nodes, "110");
         let a = by_id(&l.nodes, "a");
@@ -370,7 +370,7 @@ mod tests {
     #[test]
     fn a_two_ended_label_replaces_the_number() {
         let l = laid(
-            "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\na:left <-> a:right \"180\"\n",
+            "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\na:left (-) a:right \"180\"\n",
         );
         text_at(&l.nodes, "180");
         assert!(
@@ -382,7 +382,7 @@ mod tests {
     #[test]
     fn unit_suffixes_linear_values_only() {
         let l = laid(
-            "{ layout: drawing; unit: \"mm\" }\n|rect#a| { width: 40; height: 20 }\n|hole#h| { width: 12 }\na:left <-> a:right { side: bottom }\nh (-)\n",
+            "{ layout: drawing; unit: \"mm\" }\n|rect#a| { width: 40; height: 20 }\n|hole#h| { width: 12 }\na:left (-) a:right { side: bottom }\nh (o)\n",
         );
         text_at(&l.nodes, "40 mm");
         text_at(&l.nodes, "⌀12");
@@ -392,25 +392,25 @@ mod tests {
     fn dim_errors_speak_spec() {
         assert_eq!(
             layout_err(
-                "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\n|rect#b| { width: 40; height: 20 }\na:left <-> b:top\n"
+                "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\n|rect#b| { width: 40; height: 20 }\na:left (-) b:top\n"
             ),
-            "'a:left <-> b:top' mixes axes — anchor one axis"
+            "'a:left (-) b:top' mixes axes — anchor one axis"
         );
         assert_eq!(
             layout_err(
-                "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\na:left <-> a:right { side: left }\n"
+                "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\na:left (-) a:right { side: left }\n"
             ),
             "a horizontal dimension stacks on top or bottom"
         );
         assert_eq!(
             layout_err(
-                "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\na:top <-> a:bottom { side: top }\n"
+                "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\na:top (-) a:bottom { side: top }\n"
             ),
             "a vertical dimension stacks on left or right"
         );
         assert_eq!(
             layout_err(
-                "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\na:left <-> a:right { tol: \"x\" }\n"
+                "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\na:left (-) a:right { tol: \"x\" }\n"
             ),
             "'tol' takes a number, '+upper -lower', or a fit ident"
         );
@@ -421,18 +421,18 @@ mod tests {
     #[test]
     fn tol_composes_its_three_forms() {
         let sym = laid(
-            "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\na:left <-> a:right { tol: 0.1 }\n",
+            "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\na:left (-) a:right { tol: 0.1 }\n",
         );
         text_at(&sym.nodes, "40±0.1");
 
         let fit = laid(
-            "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\na:left <-> a:right { tol: H7 }\n",
+            "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\na:left (-) a:right { tol: H7 }\n",
         );
         text_at(&fit.nodes, "40 H7");
 
         // Stacked deviations: raised / lowered beside the value, 0.7 × font.
         let dev = laid(
-            "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\na:left <-> a:right { tol: +0.2 -0.05 }\n",
+            "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\na:left (-) a:right { tol: +0.2 -0.05 }\n",
         );
         let (_, yu, _) = text_at(&dev.nodes, "+0.2");
         let (_, yl, _) = text_at(&dev.nodes, "-0.05");
@@ -443,12 +443,12 @@ mod tests {
         );
     }
 
-    // ── The `(-)` readings [SPEC 15.6] ──
+    // ── The `(o)` readings [SPEC 15.6] ──
 
     #[test]
     fn a_named_arc_reads_its_radius() {
         let l = laid(
-            "{ layout: drawing; scale: 2 }\n|sketch#s| { draw: move(0, 0) right(30) fillet(3):r1 up(20) left(30) down(20) close() }\ns:r1 (-)\n",
+            "{ layout: drawing; scale: 2 }\n|sketch#s| { draw: move(0, 0) right(30) fillet(3):r1 up(20) left(30) down(20) close() }\ns:r1 (o)\n",
         );
         text_at(&l.nodes, "R3");
     }
@@ -456,7 +456,7 @@ mod tests {
     #[test]
     fn a_circle_segment_reads_its_diameter() {
         let l = laid(
-            "{ layout: drawing; scale: 1 }\n|sketch#s| { draw: move(0, 0) right(40) up(20) left(40) close() move(20, -10) circle(5):c }\ns:c (-)\n",
+            "{ layout: drawing; scale: 1 }\n|sketch#s| { draw: move(0, 0) right(40) up(20) left(40) close() move(20, -10) circle(5):c }\ns:c (o)\n",
         );
         text_at(&l.nodes, "⌀10");
     }
@@ -464,7 +464,7 @@ mod tests {
     #[test]
     fn a_bare_round_node_leaders_its_diameter_with_the_copy_count() {
         let l = laid(
-            "{ layout: drawing; scale: 1 }\n|rect#plate| { width: 120; height: 60 } [\n  |hole#pin| { width: 10; translate: -35 0; pattern: grid(2, 1, 70, 0) }\n]\nplate.pin (-) \"H7\"\n",
+            "{ layout: drawing; scale: 1 }\n|rect#plate| { width: 120; height: 60 } [\n  |hole#pin| { width: 10; translate: -35 0; pattern: grid(2, 1, 70, 0) }\n]\nplate.pin (o) \"H7\"\n",
         );
         text_at(&l.nodes, "2× ⌀10 H7");
     }
@@ -474,7 +474,7 @@ mod tests {
         // The value doesn't fit inside ⌀16 — the line overruns the anchored
         // rim and the text spills upward, turned with the vertical line.
         let l = laid(
-            "{ layout: drawing; scale: 1 }\n|rect#plate| { width: 80; height: 40 }\n|hole#eye| { width: 16 }\neye:top (-)\n",
+            "{ layout: drawing; scale: 1 }\n|rect#plate| { width: 80; height: 40 }\n|hole#eye| { width: 16 }\neye:top (o)\n",
         );
         let (_, y, rot) = text_at(&l.nodes, "⌀16");
         assert_eq!(rot, -90.0, "turned with the line");
@@ -484,7 +484,7 @@ mod tests {
     #[test]
     fn a_side_anchor_on_any_node_spans_to_the_opposite_side() {
         let l = laid(
-            "{ layout: drawing; scale: 1 }\n|rect#bore| { width: 60; height: 16 }\nbore:top (-) { side: right }\n",
+            "{ layout: drawing; scale: 1 }\n|rect#bore| { width: 60; height: 16 }\nbore:top (o) { side: right }\n",
         );
         let (x, _, _) = text_at(&l.nodes, "⌀16");
         assert!(x > 30.0, "stacked on the right: x={x}");
@@ -493,7 +493,7 @@ mod tests {
     #[test]
     fn a_mirrored_name_spans_its_station_across_the_axis() {
         let l = laid(
-            "{ layout: drawing; scale: 2 }\n|sketch#bar| { draw: move(-150, 0) up(10) right(40):thread right(260) down(10); mirror: x-axis }\nbar:thread (-) { side: left; tol: h6 }\n",
+            "{ layout: drawing; scale: 2 }\n|sketch#bar| { draw: move(-150, 0) up(10) right(40):thread right(260) down(10); mirror: x-axis }\nbar:thread (o) { side: left; tol: h6 }\n",
         );
         text_at(&l.nodes, "⌀20 h6");
     }
@@ -502,9 +502,9 @@ mod tests {
     fn a_bare_round_measure_needs_an_axis() {
         assert_eq!(
             layout_err(
-                "{ layout: drawing; scale: 1 }\n|rect#block| { width: 40; height: 20 }\nblock (-)\n"
+                "{ layout: drawing; scale: 1 }\n|rect#block| { width: 40; height: 20 }\nblock (o)\n"
             ),
-            "'(-)' can't pick an axis on 'block' — anchor a side ('block:top (-)') or a segment"
+            "'(o)' can't pick an axis on 'block' — anchor a side ('block:top (o)') or a segment"
         );
     }
 
@@ -606,7 +606,7 @@ mod tests {
         // The ⌀ line is a diameter, not a word leader [SPEC 15.6]: it crosses
         // the circle, overshoots the far rim, and presses both rims inward.
         let l = laid(
-            "{ layout: drawing; scale: 1 }\n|rect#plate| { width: 80; height: 40 }\n|hole#eye| { width: 12 }\neye (-)\n",
+            "{ layout: drawing; scale: 1 }\n|rect#plate| { width: 80; height: 40 }\n|hole#eye| { width: 12 }\neye (o)\n",
         );
         let arrows: Vec<_> = l
             .nodes
@@ -751,7 +751,7 @@ mod tests {
         // A callout's text registers as an obstacle: a dim stacked on the
         // same side seats its row past it, never on top of it [SPEC 15.6].
         let l = laid(
-            "{ layout: drawing; scale: 1 }\n|rect#bar| { width: 200; height: 30 }\nbar:top <- \"M42\"\nbar:left <-> bar:right { side: top }\n",
+            "{ layout: drawing; scale: 1 }\n|rect#bar| { width: 200; height: 30 }\nbar:top <- \"M42\"\nbar:left (-) bar:right { side: top }\n",
         );
         let (_, ty, _) = text_at(&l.nodes, "M42");
         let (_, dy, _) = text_at(&l.nodes, "200");
@@ -768,7 +768,7 @@ mod tests {
         // Paint states once per class: the dim line, the light extension
         // lines, the marker-classed arrowheads — no per-element inline style.
         let l = laid(
-            "{ layout: drawing; scale: 1 }\n|rect#a| { width: 60; height: 20 }\na:left <-> a:right { side: bottom }\n",
+            "{ layout: drawing; scale: 1 }\n|rect#a| { width: 60; height: 20 }\na:left (-) a:right { side: bottom }\n",
         );
         let with_chain = |name: &str| {
             l.nodes
@@ -789,7 +789,7 @@ mod tests {
         );
         // …until the statement recolours — then the whole dim follows.
         let red = laid(
-            "{ layout: drawing; scale: 1 }\n|rect#a| { width: 60; height: 20 }\na:left <-> a:right { side: bottom; stroke: red }\n",
+            "{ layout: drawing; scale: 1 }\n|rect#a| { width: 60; height: 20 }\na:left (-) a:right { side: bottom; stroke: red }\n",
         );
         let ext = red
             .nodes
@@ -820,7 +820,7 @@ mod tests {
         };
         assert_eq!(
             width_of(
-                "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\na:left <-> a:right\n"
+                "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\na:left (-) a:right\n"
             ),
             1.0,
             "the drawing-scope link default"
@@ -839,7 +839,7 @@ mod tests {
         );
         assert_eq!(
             width_of(
-                "{ layout: drawing; scale: 1;\n  |-| { stroke-width: 2 }\n}\n|rect#a| { width: 40; height: 20 }\na:left <-> a:right\n"
+                "{ layout: drawing; scale: 1;\n  |-| { stroke-width: 2 }\n}\n|rect#a| { width: 40; height: 20 }\na:left (-) a:right\n"
             ),
             2.0,
             "a user '|-|' rule wins over the scope default"

@@ -19,7 +19,7 @@
   }
   nozzle:left || barrel:right { gap: -10 }       // pressed 10 into the barrel
 
-  barrel:left <-> nozzle:right { side: bottom }  // → the overall length, as seated
+  barrel:left (-) nozzle:right { side: bottom }  // → the overall length, as seated
 
   |balloon#b1| "1" { translate: -60 -50 }
   |balloon#b2| "2" { translate: 100 -40 }

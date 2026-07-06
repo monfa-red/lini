@@ -1,7 +1,9 @@
-// Link markers (arrow, dot, diamond, crow on |line|) and template-internal links
-// — a |define| whose body links its own children, so every instance routes itself.
+// Link markers — the arrow / dot / diamond / crow heads and the full ER cardinality
+// set (on any |line| via marker-*, or composed by the crow's-foot operators on
+// either end) — plus template-internal links: a |define| whose body links its own
+// children, so every instance routes itself.
 {
-  gap: 40; padding: 24;
+  gap: 36; padding: 24;
 
   |room::group| { gap: 10; padding: 12; fill: --teal-wash; stroke: --teal-ink; } [
     |box#inlet| "in" {
@@ -16,7 +18,7 @@
 
 |block| "Markers & internal links" { font-size: 18; font-weight: bold; }
 
-|group#ends| { gap: 14; } [
+|group#ends| { gap: 20; } [
   |caption| "markers"
   |line| {
     points: -80 0, 80 0; marker-end: arrow; stroke: --sky-deep; stroke-width: 2;
@@ -27,14 +29,43 @@
   |line| {
     points: -80 0, 80 0; marker-end: diamond; stroke: --purple-deep; stroke-width: 2;
   }
+]
+
+// The ER cardinality set — the `[min][max]` glyphs, on any |line| as a marker value.
+|group#cardinality| { gap: 20; } [
+  |caption| "ER cardinality"
   |line| {
-    points: -80 0, 80 0; marker-end: crow; stroke: --orange-deep; stroke-width: 2;
+    points: -80 0, 80 0; marker-end: one; stroke: --sky-deep; stroke-width: 2;
+  }
+  |line| {
+    points: -80 0, 80 0; marker-end: crow; stroke: --sky-deep; stroke-width: 2;
+  }
+  |line| {
+    points: -80 0, 80 0; marker-end: exactly-one; stroke: --blue-deep; stroke-width: 2;
+  }
+  |line| {
+    points: -80 0, 80 0; marker-end: zero-or-one; stroke: --blue-deep; stroke-width: 2;
+  }
+  |line| {
+    points: -80 0, 80 0; marker-end: one-or-many; stroke: --blue-deep; stroke-width: 2;
+  }
+  |line| {
+    points: -80 0, 80 0; marker-end: zero-or-many; stroke: --blue-deep; stroke-width: 2;
   }
 ]
 
+// The same set composes from the crow's-foot operators on **either** end [SPEC 9]:
+// the ring `o` / bar `+` hugs the line, the max glyph (`+` one, `<`/`>` many) is outer.
+|row#rel| { gap: 96; padding: 2 0 0 0; } [
+  |caption| "cardinality operators — either end"
+  |box#author| "Author"
+  |box#book| "Book"
+  author +-o< book "writes"
+  // one author → zero-or-many books
+]
+
 // each |room| materialises its own inlet -> outlet link from the define body
-|row#rooms| { gap: 64; padding: 26 0 0 0; } [
-  |caption| "internal links"
+|row#rooms| { gap: 76; } [
   |room#garden| "Garden"
   |room#kitchen| "Kitchen"
 ]

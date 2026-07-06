@@ -7,7 +7,7 @@
 //! `[ ]` of children and internal links).
 
 use super::ast::*;
-use crate::ast::{ChainOp, LineStyle, LinkMarker, LinkOp};
+use crate::ast::{ChainOp, DrawOp, LineStyle, LinkMarker, LinkOp};
 use crate::error::Error;
 use crate::lexer::{TokKind, Token};
 use crate::span::Span;
@@ -169,6 +169,13 @@ impl<'a> Parser<'a> {
             Some(TokKind::Hash(_)) => Ok(Kind::Rule), // #hero { … } — an id rule
             Some(TokKind::LinkOp(_)) => Err(self.err(
                 "'->' draws a link on the canvas — style every link with '|-| { stroke: … }' in a '{ }' block",
+            )),
+            // `(-) { … }` is the dimension selector [SPEC 4, 15.6] — the `|-|` subtype;
+            // an operator only appears after endpoints, so a leading `(-)` is a rule.
+            Some(TokKind::DrawOp(DrawOp::Linear)) => Ok(Kind::Rule),
+            // Per-kind dimension selectors `(o) { }` / `(<) { }` are deferred [SPEC 23].
+            Some(TokKind::DrawOp(_)) => Err(self.err(
+                "'(-)' selects every dimension — per-kind '(o)' / '(<)' selectors are deferred (SPEC 23)",
             )),
             Some(TokKind::Pipe) => Ok(
                 // `|name::base|` is a define; any other `|…|` is a rule selector.
@@ -496,6 +503,13 @@ impl<'a> Parser<'a> {
                 Some(TokKind::Pipe) if self.at_link_bars() => {
                     self.pos += 3;
                     units.push(SelUnit::Link);
+                }
+                // `(-)` — the dimension type [SPEC 4, 15.6]: the `|-|` subtype, one
+                // token, matching every dimension. In selector position (not after
+                // endpoints) it never means the linear operator.
+                Some(TokKind::DrawOp(DrawOp::Linear)) => {
+                    self.pos += 1;
+                    units.push(SelUnit::Dimension);
                 }
                 Some(TokKind::Pipe) => {
                     let (ty, id) = self.parse_identity(BarsCtx::Selector)?;
@@ -1119,6 +1133,19 @@ mod tests {
     }
 
     #[test]
+    fn dimension_and_link_selectors() {
+        let f = parse_ok("{\n  |-| { stroke: gray; }\n  (-) { stroke: blue; }\n}\n");
+        let rule = |i: usize| match &f.stylesheet[i] {
+            StyleItem::Rule(r) => &r.selector.units,
+            _ => panic!("rule {i}"),
+        };
+        assert!(matches!(rule(0).as_slice(), [SelUnit::Link]));
+        assert!(matches!(rule(1).as_slice(), [SelUnit::Dimension]));
+        // Per-kind dimension selectors `(o)` / `(<)` are deferred [SPEC 23].
+        assert!(parse_err("{\n  (o) { stroke: red; }\n}\n").contains("deferred"));
+    }
+
+    #[test]
     fn compound_selector_unit_errors() {
         assert!(parse_err("{\n  |box.hot| { fill: red; }\n}\n").contains("can't glue"));
     }
@@ -1264,10 +1291,15 @@ mod tests {
 
     #[test]
     fn measuring_ops_parse_one_ended_and_binary() {
-        // `pin (-)` — a unary measure toward its tail [SPEC 15.6/21].
-        let f = parse_ok("pin (-)\n");
+        // `pin (o)` — a unary round measure toward its tail [SPEC 15.6/21]
+        // (the parser accepts unary; resolve gates arity per op).
+        let f = parse_ok("pin (o)\n");
         assert_eq!(f.links[0].chain.len(), 1);
         assert_eq!(f.links[0].op, ChainOp::Measure(crate::ast::DrawOp::Round));
+        // `(-)` binary — the linear span between two anchors.
+        let f = parse_ok("a:left (-) b:right\n");
+        assert_eq!(f.links[0].chain.len(), 2);
+        assert_eq!(f.links[0].op, ChainOp::Measure(crate::ast::DrawOp::Linear));
         // `(<)` binary — two line-like anchors.
         let f = parse_ok("body:flank (<) body:base\n");
         assert_eq!(f.links[0].chain.len(), 2);

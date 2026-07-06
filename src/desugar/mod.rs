@@ -67,11 +67,14 @@ pub fn desugar(file: &File) -> Result<File, Error> {
                     .entry(name.clone())
                     .or_default()
                     .extend(r.decls.iter().cloned()),
-                // `.lini-link` is the lowered `|-|` [SPEC 9], not an instance type:
-                // it never enters `present` (no node wears it), so keep it a plain
-                // rule the link cascade reads — folding it as a type class would drop
-                // it on re-desugar. Every other `.lini-X` is a real type.
-                [SelUnit::Class(c)] if is_lini_class(c) && c == "lini-link" => {
+                // `.lini-link` / `.lini-dimension` are the lowered `|-|` / `(-)`
+                // [SPEC 9, 15.6], not instance types: no node wears them (links wear
+                // them at resolve), so keep them plain rules the link cascade reads —
+                // folding either as a type class would drop it on re-desugar. Every
+                // other `.lini-X` is a real type.
+                [SelUnit::Class(c)]
+                    if is_lini_class(c) && (c == "lini-link" || c == "lini-dimension") =>
+                {
                     user_rules.push(rewrite_selector(r, &types)?)
                 }
                 // A pre-lowered type class (`.lini-X`, on re-desugar): fold it back
@@ -623,6 +626,9 @@ fn rewrite_selector(rule: &Rule, types: &Types) -> Result<Rule, Error> {
             // `|-|` — the link type [SPEC 9]: every link wears `.lini-link`, so the
             // selector lowers to that class and the node cascade matches it unchanged.
             SelUnit::Link => units.push(SelUnit::Class(lini_class("link"))),
+            // `(-)` — the dimension type [SPEC 15.6]: every dimension wears
+            // `.lini-dimension`, the `|-|` subtype, layered above `.lini-link`.
+            SelUnit::Dimension => units.push(SelUnit::Class(lini_class("dimension"))),
         }
     }
     Ok(Rule {

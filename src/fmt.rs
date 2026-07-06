@@ -218,6 +218,8 @@ impl Emitter<'_> {
                 }
                 // `|-|` — the link type [SPEC 9].
                 SelUnit::Link => self.out.push_str("|-|"),
+                // `(-)` — the dimension type [SPEC 15.6].
+                SelUnit::Dimension => self.out.push_str("(-)"),
             }
         }
     }

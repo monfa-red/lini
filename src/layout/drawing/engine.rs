@@ -225,7 +225,7 @@ mod tests {
         // Two 20-wide rects, b mated flush to a's right at scale 2: the dim
         // reads the anchors after mates, in drawing units — 40, not 80 px.
         let l = laid(
-            "{ layout: drawing; scale: 2 }\n|rect#a| { width: 20; height: 20 }\n|rect#b| { width: 20; height: 20 }\nb:left || a:right\na:left <-> b:right { side: bottom }\n",
+            "{ layout: drawing; scale: 2 }\n|rect#a| { width: 20; height: 20 }\n|rect#b| { width: 20; height: 20 }\nb:left || a:right\na:left (-) b:right { side: bottom }\n",
         );
         let texts: Vec<&PlacedNode> = l
             .nodes

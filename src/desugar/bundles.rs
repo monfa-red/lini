@@ -164,7 +164,7 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
         "column" => vec![id("direction", "column")],
         "grid" => vec![id("layout", "grid")],
         // Chart containers [SPEC 14.1]: the layout preset is the whole bundle,
-        // exactly as `table` is `grid + gap-color`. The chart layout reads everything
+        // exactly as `table` is `grid + gap-fill`. The chart layout reads everything
         // else (sizes, scales, paint) from the node and its children at layout time.
         // `gap` is the clear space between the plot and the title / legend that sit
         // outside it [SPEC 14.6], overriding the `|block|` base `gap: 20`; the
@@ -267,7 +267,7 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             n("stroke-width", 2.0),
             id("fit", "contain"),
         ],
-        // A ruled grid [SPEC 8]: hairline `gap-color` gutters fill the 1px gaps
+        // A ruled grid [SPEC 8]: hairline `gap-fill` gutters fill the 1px gaps
         // between cells, the group border frames the whole. `padding: 0` on the
         // table itself — each cell's inset comes from the shipped `|table| |block|`
         // rule (desugar::classes), since body cells are now `|block|`s. Cells
@@ -279,7 +279,7 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             id("align", "stretch"),
             id("justify", "stretch"),
             n("gap", 1.0),
-            var("gap-color", "stroke"),
+            var("gap-fill", "stroke"),
             n("padding", 0.0),
             id("fill", "none"),
             var("stroke", "stroke"),
