@@ -216,12 +216,17 @@ Append-only, per PLAN.md's rule.
     view's centre); SPEC 24 synced byte-for-byte.
   - **Open design thread — cross-view alignment**: flow `align: center`
     aligns bounding boxes, so a view with one-sided dims drifts off its
-    neighbour's axis (hence the hand translate). Direction discussed:
-    a **datum alignment value** (`align: datum` / `justify: datum`) on the
-    existing flow/grid — children that carry a datum (drawings, sketches)
-    align datum-to-datum, others fall back to centre; a grid with both
-    gives first/third-angle projection layouts with no new layout or
-    grammar. Projection *lines* and view machinery stay deferred (SPEC 23).
+    neighbour's axis (hence the hand translate). Settled direction (name
+    chosen with Abbas — `datum` collides with the GD&T `>- "A"` sense):
+    **`align: origin` / `justify: origin`** on the existing flow/grid — a
+    new alignment value, no new layout or grammar. Every node has an
+    origin (SPEC 5's own word): the bbox centre for ordinary nodes, the
+    pen origin for a `|sketch|`, the datum for a `|drawing|` — carried as
+    a bbox-relative offset on the `PlacedNode` (`(0,0)` default, so no
+    fallback case exists), and the aligner solves `cy + origin.y = shared
+    line` instead of `cy = 0`. A grid with both values gives first/third-
+    angle projection layouts; projection *lines* and view machinery stay
+    deferred (SPEC 23).
 - **2026-07-06 — stage 3 landed** (same session; all suites green — 750
   tests — clippy silent, fmt clean; the DIN 912 sheet PNG-rendered and
   inspected: frame at the 20/10 margins, 6 × 4 zone grid with dividers and
