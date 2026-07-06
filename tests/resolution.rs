@@ -339,7 +339,10 @@ fn drawing_statement_shapes_are_gated() {
         "'(o)' measures one round feature",
     );
     assert_resolve_error(&in_drawing("a ->\n"), "a leader points back at its feature");
-    assert_resolve_error(&in_drawing("a <-\n"), "a leader needs its text");
+    // A bare `<-` may compose its text from a threaded segment, so its
+    // empty-text gate lives at layout [SPEC 15.7]; the dot leader keeps the
+    // resolve-time gate.
+    assert_resolve_error(&in_drawing("a *-\n"), "a leader needs its text");
     // No auto-create in a drawing scope [SPEC 15]: unknown endpoints stay unknown.
     assert_resolve_error(
         &in_drawing("a (-) ghost\n"),

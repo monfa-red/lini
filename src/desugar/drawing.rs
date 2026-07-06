@@ -8,6 +8,8 @@
 //! |---|---|
 //! | a fused `mirror:` (an **open** subpath + `mirror:`) | the axis `\|centerline\|` |
 //! | a `revolve:` | the axis `\|centerline\|` + the `\|shoulder\|` edge-line seed |
+//! | a `thread:` on a revolved sketch | the `\|threadline\|` minor-line seed |
+//! | a `thread:` on a round feature | the `\|threadline\|` ¾ arc — internal on a `\|hole\|`, external on plain round geometry |
 //! | a `\|hole\|` | its centre-mark crosshair — two axis `\|centerline\|`s |
 //! | `pattern: radial(…)` | the `\|pitch-circle\|` ring through the copies |
 //! | a `break:` | the `\|breakline\|` pair per group — zigzag / round-stock S |
@@ -29,12 +31,20 @@ pub(super) fn chrome_children(node: &Node, kind: NodeKind, chain: &[String]) -> 
         out.push(chrome_node("centerline", axis, node));
     }
     // A `revolve:` always draws its axis, and seeds the `|shoulder|` edge
-    // lines — the pen clones the seed per sharp diameter change [SPEC 15.3].
+    // lines — the pen clones the seed per sharp diameter change [SPEC 15.3];
+    // a `thread:` on it seeds the `|threadline|` minors the same way.
     if kind == NodeKind::Sketch
         && let Some(axis) = revolve_axis(&node.style)
     {
         out.push(chrome_node("centerline", axis, node));
         out.push(chrome_node("shoulder", Value::Ident("edges".into()), node));
+        if node.style.iter().any(|d| d.name == "thread") {
+            out.push(chrome_node(
+                "threadline",
+                Value::Ident("thread".into()),
+                node,
+            ));
+        }
     }
     if chain.iter().any(|t| t == "hole") {
         out.push(chrome_node(
@@ -45,6 +55,29 @@ pub(super) fn chrome_children(node: &Node, kind: NodeKind, chain: &[String]) -> 
         out.push(chrome_node(
             "centerline",
             Value::Ident("y-axis".into()),
+            node,
+        ));
+    }
+    // A round feature's `thread: pitch` — the ¾ arc, its sense from the type:
+    // a `|hole|` is internal, plain round geometry external [SPEC 15.4].
+    if kind == NodeKind::Oval
+        && !chain
+            .iter()
+            .any(|t| matches!(t.as_str(), "pitch-circle" | "balloon"))
+        && let Some(pitch) = thread_pitch(&node.style)
+    {
+        let sense = if chain.iter().any(|t| t == "hole") {
+            "internal"
+        } else {
+            "external"
+        };
+        out.push(chrome_group(
+            "threadline",
+            vec![
+                Value::Ident("thread-arc".into()),
+                Value::Ident(sense.into()),
+                Value::Number(pitch),
+            ],
             node,
         ));
     }
@@ -109,6 +142,21 @@ fn has_open_subpath(draw: &Decl) -> bool {
         }
     }
     open
+}
+
+/// A round feature's `thread: pitch` — one positive number; layout validates
+/// the malformed forms [SPEC 15.4].
+fn thread_pitch(style: &[Decl]) -> Option<f64> {
+    match style
+        .iter()
+        .find(|d| d.name == "thread")?
+        .groups
+        .first()?
+        .as_slice()
+    {
+        [Value::Number(p)] if *p > 0.0 => Some(*p),
+        _ => None,
+    }
 }
 
 /// A `revolve:`'s axis — the first value; the pen validates it [SPEC 15.3].

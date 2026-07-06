@@ -50,9 +50,22 @@ pub(in crate::layout) fn placeholder(inst: &ResolvedInst) -> PlacedNode {
 /// Fill the axis chrome among a part's children from its **geometry** box
 /// (stroke excluded, part-local): the line runs through the datum along the
 /// axis, past the geometry's projection by the overhang. `ring` chrome is
-/// sized by the pattern expansion instead.
-pub(in crate::layout) fn fill(children: &mut [PlacedNode], geometry: Bbox) {
+/// sized by the pattern expansion instead; a round feature's `thread:` ¾ arc
+/// is drawn here from the drawn width + the pitch ([SPEC 15.4]) — `scale` is
+/// the part's own px per drawing unit.
+pub(in crate::layout) fn fill(children: &mut [PlacedNode], geometry: Bbox, scale: f64) {
     for c in children.iter_mut() {
+        if let Some(ResolvedValue::Tuple(items)) = c.attrs.get("chrome")
+            && let [
+                ResolvedValue::Ident(k),
+                ResolvedValue::Ident(sense),
+                ResolvedValue::Number(pitch),
+            ] = items.as_slice()
+            && k == "thread-arc"
+        {
+            thread_arc(c, geometry, sense == "internal", *pitch, scale);
+            continue;
+        }
         let bearing = match c.attrs.get("chrome") {
             Some(ResolvedValue::Ident(k)) if k == "x-axis" => 90.0,
             Some(ResolvedValue::Ident(k)) if k == "y-axis" => 0.0,
@@ -88,4 +101,39 @@ pub(in crate::layout) fn fill(children: &mut [PlacedNode], geometry: Bbox) {
         }
         .inflate(half);
     }
+}
+
+/// The ISO 6410 thread circle [SPEC 15.4]: a thin ¾ arc, its gap over the
+/// upper-right quadrant — outside the drilled bore at the major ⌀ on an
+/// internal thread (`width + 1.0825 × pitch`), inside the outline at the
+/// minor on an external one (`width − 1.2269 × pitch`). Drawn as a `|path|`
+/// (a `|line|` can't arc — the kind flips, the old S-break play).
+fn thread_arc(c: &mut PlacedNode, geometry: Bbox, internal: bool, pitch: f64, scale: f64) {
+    let r_drawn = geometry.w() / 2.0;
+    // Per-side thread heights: internal `H1 = 0.54125 × P` (drill to major),
+    // external `h3 = 0.61343 × P` (major to root) — ISO metric 60°.
+    let r = if internal {
+        r_drawn + 0.54125 * pitch * scale
+    } else {
+        r_drawn - super::threads::THREAD_DEPTH * pitch * scale
+    };
+    if r <= 0.0 {
+        return;
+    }
+    let n = super::geometry::n;
+    // From the east rim, sweeping clockwise through south and west to the
+    // north rim — the gap spans the upper-right quadrant.
+    c.attrs.insert(
+        "path",
+        crate::resolve::ResolvedValue::String(format!(
+            "M {} 0 A {} {} 0 1 1 0 {}",
+            n(r),
+            n(r),
+            n(r),
+            n(-r)
+        )),
+    );
+    c.kind = crate::resolve::NodeKind::Path;
+    let half = c.attrs.number("stroke-width").unwrap_or(0.0) / 2.0;
+    c.bbox = Bbox::centered(2.0 * r, 2.0 * r).inflate(half);
 }

@@ -289,6 +289,28 @@ fn layout_inst(
             "'break' cuts a '|sketch|' — draw the profile with the pen",
         ));
     }
+    // `thread:` dresses a sketch segment (side view) or a round feature's
+    // circle (the ¾ arc) [SPEC 15.3/15.4]; the pitch-only round form takes
+    // one positive number.
+    if let Some(v) = inst.attrs.get("thread") {
+        match inst.kind {
+            NodeKind::Sketch => {}
+            NodeKind::Oval => {
+                if !v.as_number().is_some_and(|p| p > 0.0) {
+                    return Err(Error::at(
+                        inst.span,
+                        "'thread' takes a segment and its pitch — 'thread: m8 1.5'",
+                    ));
+                }
+            }
+            _ => {
+                return Err(Error::at(
+                    inst.span,
+                    "'thread' dresses a '|sketch|' segment or a round feature",
+                ));
+            }
+        }
+    }
     // A layout-owning engine (chart / pie / sequence / drawing) owns its whole
     // subtree and emits primitive PlacedNodes itself — intercepted before the
     // child recursion (which would run `leaf_bbox` on a series with no
@@ -351,11 +373,13 @@ fn layout_inst(
         let half = inst.attrs.number("stroke-width").unwrap_or(0.0) / 2.0;
         sketch_d = Some(folded.d);
         drawing::breaks::fill_chrome(&mut children, &folded.cuts);
-        drawing::edges::fill(&mut children, &folded.edges);
+        drawing::edges::fill(&mut children, "edges", &folded.edges);
+        drawing::edges::fill(&mut children, "thread", &folded.threads);
         sketch_geo = Some(std::sync::Arc::new(drawing::SketchGeo {
             segments: folded.segments,
             mirrors: folded.mirror_axes,
             revolved: folded.revolved,
+            threads: folded.thread_specs,
             outline: folded.subs,
             view: folded.view,
         }));
@@ -413,7 +437,7 @@ fn layout_inst(
     if part {
         let half = inst.attrs.number("stroke-width").unwrap_or(0.0) / 2.0;
         drawing::place_features(&mut children, own, sketch_geo.as_ref().map(|g| &g.view))?;
-        drawing::chrome::fill(&mut children, bbox.inflate(-half));
+        drawing::chrome::fill(&mut children, bbox.inflate(-half), own);
     }
 
     let rotation = inst.attrs.number("rotate").unwrap_or(0.0);

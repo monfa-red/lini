@@ -176,6 +176,29 @@ fn lower_measured(
 pub(super) fn callout(ctx: &Ctx, w: &ResolvedLink) -> Result<Vec<PlacedNode>, Error> {
     let paint = Paint::of(&w.attrs);
     let a = anchors::resolve(ctx.kids, ctx.scope, &w.endpoints[0], "leader")?;
+    // A bare `<-` composes its spec from a threaded segment — `M⌀×pitch`,
+    // the numbers living once [SPEC 15.7]; anything else still needs its word.
+    let composed = if w.texts.is_empty() {
+        match thread_spec(ctx, &a, &w.endpoints[0]) {
+            Some(text) => Some(ResolvedText {
+                text,
+                along: crate::resolve::Along::Auto,
+                attrs: crate::resolve::AttrMap::default(),
+            }),
+            None => {
+                return Err(Error::at(
+                    w.span,
+                    "a leader needs its text — 'bolt <- \"THRU\"'",
+                ));
+            }
+        }
+    } else {
+        None
+    };
+    let texts: &[ResolvedText] = match &composed {
+        Some(t) => std::slice::from_ref(t),
+        None => &w.texts,
+    };
     let dir = side_attr(&w.attrs).and_then(side_unit);
     let mut line = leader_line(ctx, &a, a.point(), dir, None, None);
 
@@ -223,8 +246,29 @@ pub(super) fn callout(ctx: &Ctx, w: &ResolvedLink) -> Result<Vec<PlacedNode>, Er
         };
         out.push(node);
     }
-    out.extend(texts_beside(&w.texts, line.text_at, line.sx, paint.fs));
+    out.extend(texts_beside(texts, line.text_at, line.sx, paint.fs));
     Ok(out)
+}
+
+/// The `M⌀×pitch` spec of a threaded segment [SPEC 15.7]: the anchored
+/// sketch's `thread:` names the segment, its drawn level doubles to the
+/// major `⌀` about the revolve axis — re-cut the bar and the callout follows.
+fn thread_spec(ctx: &Ctx, a: &Anchor, ep: &crate::resolve::ResolvedEndpoint) -> Option<String> {
+    let name = ep.point.as_ref()?;
+    let geo = a.node.sketch.as_ref()?;
+    let (_, pitch) = geo.threads.iter().find(|(n, _)| n == name)?;
+    let axis = geo.mirrors.first()?;
+    let Spot::Segment(super::Segment::Edge(p, _)) = &a.spot else {
+        return None;
+    };
+    let u = axis.dir();
+    let level = p.0 * -u.1 + p.1 * u.0;
+    let dia = 2.0 * level.abs() / ctx.scale;
+    Some(format!(
+        "M{}×{}",
+        super::compose::fmt(dia),
+        super::compose::fmt(*pitch)
+    ))
 }
 
 /// Any other two-ended op — a straight annotation line between two nodes,

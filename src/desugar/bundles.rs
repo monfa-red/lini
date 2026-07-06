@@ -232,6 +232,14 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             n("stroke-width", 1.0),
             id("fill", "none"),
         ],
+        // A thread's ISO 6410 thin lines [SPEC 15.3/15.4]: the minor line
+        // beside a dressed run, the ¾ arc on a round view — continuous, the
+        // support tone, like extension lines.
+        "threadline" => vec![
+            var("stroke", "stroke-light"),
+            n("stroke-width", 1.0),
+            id("fill", "none"),
+        ],
         // A frame: a dashed, rounded rectangle around a span of messages. `padding` insets
         // the border from the messages it spans (vertical) and the lifelines (horizontal).
         "loop" | "opt" | "alt" => vec![

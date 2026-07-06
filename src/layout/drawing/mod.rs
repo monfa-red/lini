@@ -21,6 +21,7 @@ mod mates;
 mod outline;
 pub(crate) mod pen;
 mod round;
+mod threads;
 
 pub(super) use engine::{layout_node, layout_root};
 
@@ -41,6 +42,9 @@ pub struct SketchGeo {
     /// Whether the profile is a `revolve:` — the `⌀` station readings gate on
     /// it ([SPEC 15.6]; a merely mirrored span is a width, not a diameter).
     pub revolved: bool,
+    /// `(segment, pitch)` per `thread:` group — a bare leader onto one of
+    /// these composes its `M⌀×pitch` spec ([SPEC 15.7]).
+    pub threads: Vec<(String, f64)>,
     pub outline: Vec<geometry::Subpath>,
     pub view: breaks::ViewMap,
 }

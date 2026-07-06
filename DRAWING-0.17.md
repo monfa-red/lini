@@ -200,6 +200,42 @@ Append-only, per PLAN.md's rule.
     centre bore rides the `[ ]`, its redundant centerline removed by the
     cascade in the stylesheet). Tie bar matches SPEC 24 fully only after
     stage 2 adds `thread:`.
+- **2026-07-06 — stage 2 landed** (same session; all suites green — 740
+  tests — clippy silent, fmt clean; tie bar + barrel PNG-rendered and
+  inspected against Abbas's references: minor lines from the chamfer trim to
+  the thread-end line, ¾ arcs on all three tapped holes riding the pattern
+  copies, composed M-specs). What shipped, and what stage 3 must know:
+  - **`layout/drawing/threads.rs`**: parse the `thread:` groups (bare
+    segment + pitch; comma groups; SPEC 20 messages verbatim incl. the
+    did-you-mean); the minor lines at `level − 0.61343 × pitch` span the
+    segment's **drawn extent** — the profile's collinear segments clipped to
+    the authored run, so a chamfer's trim ends them with no chamfer-specific
+    code; the **thread-end line** draws where a collinear segment continues
+    past an authored end, and joins `Folded.edges` — it *is* an edge line,
+    so it rides the `|shoulder|` machinery (dedup, coverage, chrome) for
+    free. Minor spans ride a new `|threadline|` template
+    (`--stroke-light`, w1 — extension-line tone) through the generalized
+    `edges::fill(children, marker, spans)` seed-clone.
+  - **The ¾ arc** is a `chrome::fill` arm: desugar seeds
+    `chrome: thread-arc <sense> <pitch>` on a `|hole|` (internal — major =
+    `width + 1.0825 × P`) or plain `|oval|` (external — minor =
+    `width − 1.2269 × P`); fill flips the child's kind to `Path` (the old
+    S-break play) with the gap over the upper-right quadrant.
+    `chrome::fill` now takes the part's own scale.
+  - **The smart leader**: the empty-text gate for `<-` moved from resolve to
+    layout (only the arrow form — `*-` / `>-` still gate at resolve;
+    `tests/resolution.rs` updated), and `leaders::callout` composes
+    `M{⌀}×{pitch}` from `SketchGeo.threads` + the segment's level about the
+    revolve axis. A bare `<-` on anything unthreaded errors with the same
+    message, now at layout.
+  - Samples: the tie bar now matches SPEC 24 **byte-for-byte**; the barrel's
+    `:thread` segment became `:m42` (a segment named like the property read
+    badly), gained `thread: m42 1.5` + the bare leader, and its M8 holes
+    `thread: 1.25` — the ¾ arcs replicate per pattern copy with no new code.
+  - **Accepted edge** (noted for later): a `break:` cutting *through* a
+    threaded run maps only the minor line's endpoints — the line would span
+    the gap. No sample does this; fix if a real sheet ever breaks inside a
+    thread.
 - **2026-07-06 — stage 0 landed** (same session as the design). SPEC 15 amended
   per the ledger: SPEC 8 gained eight template rows (`|hidden|`, `|edge|`,
   `|page|`, `|title-block|`, `|frame|`, `|zone|`, `|tick|`); 15.3 gained the

@@ -67,6 +67,7 @@ pub const TEMPLATES: &[(&str, &str)] = &[
     ("breakline", "line"),
     ("hidden", "sketch"),
     ("shoulder", "line"),
+    ("threadline", "line"),
 ];
 
 pub fn is_template(name: &str) -> bool {

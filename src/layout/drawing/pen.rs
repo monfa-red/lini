@@ -49,8 +49,13 @@ pub struct Folded {
     /// [SPEC 15.6], and the edge lines below exist only then.
     pub revolved: bool,
     /// The revolve's edge-line spans [SPEC 15.3] — displayed (scaled,
-    /// break-clipped) point pairs the `|shoulder|` chrome is cloned from.
+    /// break-clipped) point pairs the `|shoulder|` chrome is cloned from —
+    /// including any `thread:`'s end lines (real edges).
     pub edges: Vec<(P, P)>,
+    /// A `thread:`'s minor-line spans — the `|threadline|` chrome [SPEC 15.3].
+    pub threads: Vec<(P, P)>,
+    /// `(segment, pitch)` per `thread:` group — the smart leader's source.
+    pub thread_specs: Vec<(String, f64)>,
 }
 
 /// Fold a `|sketch|`'s `draw:` (+ `mirror:`) into its geometry, at the node's
@@ -110,10 +115,12 @@ pub fn fold(inst: &ResolvedInst, scale: f64) -> Result<Folded, Error> {
         }
     }
     let (view, cuts) = super::breaks::apply(inst, &mut subs, scale, span)?;
-    let edges = match revolve {
+    let mut edges = match revolve {
         Some(axis) => super::edges::spans(&subs, axis),
         None => Vec::new(),
     };
+    let dressing = super::threads::dress(inst, &segments, &subs, revolve, &view, scale, span)?;
+    edges.extend(dressing.ends);
 
     let d = to_d(&subs);
     Ok(Folded {
@@ -127,6 +134,8 @@ pub fn fold(inst: &ResolvedInst, scale: f64) -> Result<Folded, Error> {
         fused,
         revolved: revolve.is_some(),
         edges,
+        threads: dressing.minors,
+        thread_specs: dressing.specs,
     })
 }
 

@@ -276,7 +276,11 @@ fn validate_statement(w: &Link, scope: &LinkScope) -> Result<(), Error> {
                 LinkMarker::Arrow | LinkMarker::Dot | LinkMarker::Crow
             ) && op.end == LinkMarker::None;
             if leader_tip {
-                if !labelled {
+                // A bare `<-` may compose its text from a threaded segment
+                // ([SPEC 15.7]) — that is layout knowledge, so the empty-text
+                // gate for the arrow leader moves there; `*-` / `>-` always
+                // need their word here.
+                if !labelled && op.start != LinkMarker::Arrow {
                     return Err(Error::at(
                         w.span,
                         "a leader needs its text — 'bolt <- \"THRU\"'",

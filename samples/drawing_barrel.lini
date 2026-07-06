@@ -10,12 +10,12 @@
 }
 
 |sketch#body| {
-  draw: move(-242.5, 0) up(21) chamfer(1.5) right(38):thread :tl right(32):land
+  draw: move(-242.5, 0) up(21) chamfer(1.5) right(38):m42 :tl right(32):land
         up(1.5):sh1 right(14):port down(4):sh2 right(7):groove up(4):sh3
         right(10):collar up(2.5) right(384):tube chamfer(1.5) down(25);
-  revolve: x-axis; break: 90 165;
+  revolve: x-axis; thread: m42 1.5; break: 90 165;
 } [
-  |hole#m8| { width: 8; translate: -45 0; pattern: grid(3, 1, 115, 0); }
+  |hole#m8| { width: 8; translate: -45 0; pattern: grid(3, 1, 115, 0); thread: 1.25; }
 ]
 
 body:left (-) body:tl { side: bottom; }
@@ -25,8 +25,8 @@ body:sh1 (-) body:sh2 (-) body:sh3 { side: bottom; }
 // → 14 · 7 — a chain seats one row
 body:left (-) body:right { side: bottom; }
 // → 485 — true, across the break
-body:thread <- "M42×1.5" { side: top; }
-// thread spec — leader to the surface
+body:m42 <- { side: top; }
+// → M42×1.5 — the thread composes its spec
 body:land >- "A"
 // datum A on the ⌀42 land
 body:land (o) { tol: h6; side: left; }

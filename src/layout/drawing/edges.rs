@@ -163,12 +163,13 @@ fn norm(v: P) -> P {
     }
 }
 
-/// Land the spans on the `|shoulder|` chrome seed among a sketch's children —
-/// one clone per span (each carrying the seed's cascade-resolved style); the
-/// seed itself is removed, so no empty placeholder survives.
-pub(in crate::layout) fn fill(children: &mut Vec<PlacedNode>, spans: &[(P, P)]) {
+/// Land spans on a chrome seed among a sketch's children — one clone per
+/// span (each carrying the seed's cascade-resolved style); the seed itself
+/// is removed, so no empty placeholder survives. `marker` picks the seed:
+/// `edges` (the `|shoulder|` lines) or `thread` (the `|threadline|` minors).
+pub(in crate::layout) fn fill(children: &mut Vec<PlacedNode>, marker: &str, spans: &[(P, P)]) {
     let Some(at) = children.iter().position(
-        |c| matches!(c.attrs.get("chrome"), Some(ResolvedValue::Ident(k)) if k == "edges"),
+        |c| matches!(c.attrs.get("chrome"), Some(ResolvedValue::Ident(k)) if k == marker),
     ) else {
         return;
     };
