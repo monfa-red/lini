@@ -127,7 +127,7 @@ fn lower_measured(
     paint: &Paint,
 ) -> Vec<PlacedNode> {
     let dir = side_attr(attrs).and_then(side_unit);
-    let line = leader_line(ctx, a, aim, dir, exact, circle);
+    let mut line = leader_line(ctx, a, aim, dir, exact, circle);
     let tip = line.points[0];
     let elbow = line.points[1];
     let to_tip = {
@@ -135,12 +135,19 @@ fn lower_measured(
         let len = dist(d, (0.0, 0.0)).max(1e-9);
         (d.0 / len, d.1 / len)
     };
+    let mut out = vec![dims::arrow(tip, to_tip, paint)];
+    // A circle's ⌀ line runs along the diameter [SPEC 15.6]: through the
+    // centre to the far rim, overshooting it, both arrowheads pressing the
+    // rims inward from outside — never mistakable for a word leader.
+    if let Some((c, _)) = circle {
+        let far = (2.0 * c.0 - tip.0, 2.0 * c.1 - tip.1);
+        let over = super::annotate::ARROW_LEN * paint.sw + 2.0;
+        line.points[0] = (far.0 + to_tip.0 * over, far.1 + to_tip.1 * over);
+        out.push(dims::arrow(far, (-to_tip.0, -to_tip.1), paint));
+    }
+    out.insert(0, paint.dim(line.points.clone()));
     let tw = text.width(paint.fs);
     let centre = (line.text_at.0 + line.sx * tw / 2.0, line.text_at.1);
-    let mut out = vec![
-        paint.dim(line.points.clone()),
-        dims::arrow(tip, to_tip, paint),
-    ];
     out.extend(text.nodes(centre, 0.0, paint.fs));
     out
 }

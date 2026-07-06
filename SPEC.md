@@ -2326,7 +2326,7 @@ measuring and leader ops may stand **one-ended** ([SPEC 21](#21-grammar)).
 |---|---|---|
 | `a:left <-> b:right` | a linear span | extension lines, arrows, `25` |
 | `a:left <-> b <-> c` | a **chain** | each hop its own dim, one shared row |
-| `pin (-)` | a round feature | a **leader** onto the rim — `2× ⌀10` |
+| `pin (-)` | a round feature | the **⌀ line across the circle** — both arrows on the rims — `2× ⌀10` |
 | `hole:top (-)` | a round feature, side-anchored | the **diametral line** through the circle |
 | `bore:top (-)` | any node, side-anchored | the span to the opposite side, ⌀-read — `⌀16` |
 | `body:neck (-)` | a mirrored-profile segment | the station's span across the axis — `⌀28` |

@@ -56,7 +56,9 @@ coordinates through `prim::*`).
    keeps lexing as today (signed-number arm beats the link-op arm). A **spaced**
    `ident (` becomes the error "a call's '(' glues to its name".
 3. **`(-)` readings** (SPEC 15.6): named arc → `R` leader; round-by-construction node
-   bare → `⌀` leader; round node + side/corner anchor → **diametral line** (text
+   bare → `⌀` leader (*amended 2026-07-05 by Abbas*: the line runs **across the
+   diameter**, both arrows pressing the rims from outside, overshooting the far
+   one — a single-arrow tip read as a word leader); round node + side/corner anchor → **diametral line** (text
    inside if it fits, else the line overruns the *anchored* rim and carries the text);
    any node + side anchor → span to the opposite side, ⌀-formatted, stacked; mirrored
    `:segment` → station span across the axis, stacked; bare with no inferable axis →
@@ -821,3 +823,22 @@ deviated from this plan and **why**, open threads for the next session.
   point-anchored datum (no normal) keeps the core line-oriented marker —
   today's fallback. Size shares `render::markers::marker_size` (one
   formula). Tests pin the seated base on the surface and the fallback.
+
+- **2026-07-05 — circle leaders press the rims** (Abbas's round: two fixes;
+  all gates green — 724 tests — clippy silent, fmt clean; dims + barrel
+  PNG-inspected against his reference).
+  - **A `<-` word leader on a patterned hole tipped the centre, not the
+    rim**: `pattern::expand` cloned the whole node as the copy body, so
+    every copy kept the `pattern` attr — the ray-cast's carrier arm
+    recursed into the copy, saw only chrome children, returned `None`, and
+    the tip fell back to the aim. Copies now shed `pattern` (they are not
+    carriers); this also stopped `ride_view` re-unioning a copy's bbox
+    over its chrome. Test pins the tip on the seed's rim.
+  - **The bare `(-)` circle reading looked like a word leader** (one
+    arrow): it now draws the drafting ⌀ line — along the diameter through
+    the centre, overshooting the far rim by an arrow-length, with **both
+    arrowheads pressing the rims inward from outside** (his reference's
+    ⌀20/⌀14.5 form). The `R` arc leader keeps its single arrow. Inside
+    placement (arrows out, value on the line) stays a future knob — the
+    side-anchored diametral already covers the fits-inside case. Ledger 3
+    annotated; SPEC 15.6's table row reworded.

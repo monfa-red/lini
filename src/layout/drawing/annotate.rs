@@ -510,6 +510,54 @@ mod tests {
     }
 
     #[test]
+    fn a_word_leader_tips_the_rim_of_a_patterned_hole() {
+        // The carrier's ray-cast recurses into a copy — the copy must not
+        // still look like a carrier (the pattern attr made it return None
+        // and the tip fell back to the hole's centre).
+        let l = laid(
+            "{ layout: drawing; scale: 1 }\n|rect#plate| { width: 120; height: 60 } [\n  |hole#pin| { width: 10; translate: -35 0; pattern: grid(2, 1, 70, 0) }\n]\nplate.pin <- \"THRU\" { side: top }\n",
+        );
+        let line = l
+            .nodes
+            .iter()
+            .find(|n| n.kind == NodeKind::Line && n.markers.start == MarkerKind::Arrow)
+            .expect("the leader");
+        let tip = crate::layout::primitives::attr_points(&line.attrs, "points", line.span)
+            .unwrap()
+            .unwrap()[0];
+        let d = ((tip.0 - -35.0).powi(2) + tip.1.powi(2)).sqrt();
+        assert!((d - 5.0).abs() < 0.75, "tip on the seed's rim: {tip:?}");
+    }
+
+    #[test]
+    fn a_circle_diameter_runs_across_with_both_arrows() {
+        // The ⌀ line is a diameter, not a word leader [SPEC 15.6]: it crosses
+        // the circle, overshoots the far rim, and presses both rims inward.
+        let l = laid(
+            "{ layout: drawing; scale: 1 }\n|rect#plate| { width: 80; height: 40 }\n|hole#eye| { width: 12 }\neye (-)\n",
+        );
+        let arrows: Vec<_> = l
+            .nodes
+            .iter()
+            .filter(|n| n.type_chain.iter().any(|t| t == "marker-dim"))
+            .collect();
+        assert_eq!(arrows.len(), 2, "an arrowhead on each rim");
+        let line = l
+            .nodes
+            .iter()
+            .find(|n| n.type_chain.iter().any(|t| t == "dim-line"))
+            .expect("the ⌀ line");
+        let pts = crate::layout::primitives::attr_points(&line.attrs, "points", line.span)
+            .unwrap()
+            .unwrap();
+        let start_r = (pts[0].0.powi(2) + pts[0].1.powi(2)).sqrt();
+        assert!(
+            start_r > 6.0 && start_r < 20.0,
+            "the line overshoots the far rim: {pts:?}"
+        );
+    }
+
+    #[test]
     fn side_steers_a_leader() {
         let l = laid(
             "{ layout: drawing; scale: 1 }\n|oval#disc| { width: 40; height: 40 }\ndisc <- \"A\" { side: left }\n",

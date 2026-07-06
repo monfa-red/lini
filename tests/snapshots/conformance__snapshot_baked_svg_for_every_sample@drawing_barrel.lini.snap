@@ -24,9 +24,9 @@ input_file: samples/drawing_barrel.lini
     <g class="lini-node lini-sketch" data-id="body" style="fill: white; stroke: #444; stroke-width: 2" transform="translate(0,0)">
       <path d="M 282 -75 L 510 -75 L 514.5 -70.5 L 514.5 0 L 514.5 70.5 L 510 75 L 282 75 M 270 75 L -424.5 75 L -424.5 67.5 L -454.5 67.5 L -454.5 55.5 L -475.5 55.5 L -475.5 67.5 L -517.5 67.5 L -517.5 63 L -613.5 63 L -723 63 L -727.5 58.5 L -727.5 0 L -727.5 -58.5 L -723 -63 L -613.5 -63 L -517.5 -63 L -517.5 -67.5 L -475.5 -67.5 L -475.5 -55.5 L -454.5 -55.5 L -454.5 -67.5 L -424.5 -67.5 L -424.5 -75 L 270 -75" fill-rule="evenodd"/>
       <g class="lini-node lini-hole lini-oval" data-id="m8" style="fill: none; stroke: none; stroke-width: 0" transform="translate(-135,0)">
-        <ellipse cx="0" cy="0" rx="255" ry="16.5"/>
+        <ellipse cx="0" cy="0" rx="251.5" ry="13"/>
         <g class="lini-node lini-hole lini-oval" transform="translate(0,0)">
-          <ellipse cx="0" cy="0" rx="15.5" ry="15.5"/>
+          <ellipse cx="0" cy="0" rx="12" ry="12"/>
           <g class="lini-node lini-centerline lini-line" transform="translate(0,0)">
             <line x1="-16" y1="0" x2="16" y2="0"/>
           </g>
@@ -35,7 +35,7 @@ input_file: samples/drawing_barrel.lini
           </g>
         </g>
         <g class="lini-node lini-hole lini-oval" transform="translate(345,0)">
-          <ellipse cx="0" cy="0" rx="15.5" ry="15.5"/>
+          <ellipse cx="0" cy="0" rx="12" ry="12"/>
           <g class="lini-node lini-centerline lini-line" transform="translate(0,0)">
             <line x1="-16" y1="0" x2="16" y2="0"/>
           </g>
@@ -44,7 +44,7 @@ input_file: samples/drawing_barrel.lini
           </g>
         </g>
         <g class="lini-node lini-hole lini-oval" transform="translate(477,0)">
-          <ellipse cx="0" cy="0" rx="15.5" ry="15.5"/>
+          <ellipse cx="0" cy="0" rx="12" ry="12"/>
           <g class="lini-node lini-centerline lini-line" transform="translate(0,0)">
             <line x1="-16" y1="0" x2="16" y2="0"/>
           </g>
@@ -188,8 +188,8 @@ input_file: samples/drawing_barrel.lini
     </g>
     <text class="lini-text" x="-789.5" y="0" style="font-weight: normal; font-size: 11px" transform="rotate(-90 -789.5 0)">⌀50</text>
     <g class="lini-node lini-dim-line lini-line" transform="translate(0,0)">
-      <polyline points="-135,-2 -135,-93.5 -127,-93.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-135,0 -138,-6 -132,-6"/>
+      <polyline points="-135,-14 -135,-93.5 -127,-93.5"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-135,-12 -138,-18 -132,-18"/>
     </g>
     <text class="lini-text" x="-78.8" y="-93.5" style="font-weight: normal; font-size: 11px">3× M8×1.25 ↧10</text>
   </g>

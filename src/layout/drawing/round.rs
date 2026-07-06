@@ -1,6 +1,6 @@
 //! The `(-)` round readings [SPEC 15.6] — unary; the feature picks the
 //! reading: a named arc → an `R` leader onto the arc; a `circle()` segment
-//! or a bare round node → a `⌀` leader onto the rim; a round node + side /
+//! or a bare round node → the `⌀` line across the circle; a round node + side /
 //! corner → the **diametral line**; any node + side → the span to the
 //! opposite side, ⌀-read; a mirrored `:segment` → the station span across
 //! the axis. Span readings lower through `dims::stacked`, leaders through
@@ -67,7 +67,7 @@ pub(super) fn lower(
                 w.span,
             ))
         }
-        // A `circle()` segment — round by construction, a `⌀` leader onto its rim.
+        // A `circle()` segment — round by construction, the `⌀` line across it.
         Spot::Segment(Segment::Circle { center, r }) => {
             let text = compose(Glyph::Dia, 2.0 * r / ctx.scale)?;
             let c = a.to_world(*center);

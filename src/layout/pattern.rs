@@ -51,6 +51,10 @@ pub(super) fn expand(placed: &mut PlacedNode, scale: f64) -> Result<(), Error> {
     body.attrs.remove("translate");
     body.attrs.remove("pin");
     body.attrs.remove("layer");
+    // A copy is not a carrier: keeping `pattern` re-entered the carrier arms
+    // downstream (a leader's ray-cast recursed into the copy, found only
+    // chrome, and missed the rim entirely).
+    body.attrs.remove("pattern");
     body.rotation = 0.0;
 
     let mut bbox = Bbox::empty();
