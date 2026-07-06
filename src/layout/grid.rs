@@ -105,12 +105,17 @@ pub fn lay_out_grid(
         let is_box = child.kind != NodeKind::Text;
 
         // A box cell fills its track when the column — or the cell itself — is
-        // `stretch` on that axis and no explicit size pins it. Text can't stretch.
+        // `stretch` on that axis and no explicit size pins it [SPEC 12]. A
+        // **layout-owning** child (a `|table|`/`|grid|`) carries `align: stretch` for
+        // *its own* cells, not to fill its parent's cell, so its own stretch is
+        // ignored here — only the column decides. Text can't stretch.
+        let owns_layout = child.attrs.get("layout").is_some();
+        let self_stretch = |axis| !owns_layout && stretch(&child.attrs, axis);
         let fill_w = is_box
-            && (col_h == Some("stretch") || stretch(&child.attrs, "align"))
+            && (col_h == Some("stretch") || self_stretch("align"))
             && child.attrs.get("width").is_none();
         let fill_h = is_box
-            && (col_v == Some("stretch") || stretch(&child.attrs, "justify"))
+            && (col_v == Some("stretch") || self_stretch("justify"))
             && child.attrs.get("height").is_none();
         if fill_w || fill_h {
             let w = if fill_w { x1 - x0 } else { child.bbox.w() };

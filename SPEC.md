@@ -778,7 +778,7 @@ the cascade ([SPEC 4](#4-selectors-cascade--specificity)) — every value here i
 | `\|cell\|` | `\|block\|` | `padding: 4 8` | A **table cell** — a frameless `\|block\|` carrying the text-to-gutter inset. Body cells wrap in it; `\|header\|` / `\|footer\|` build on it. Style all cells with `\|cell\| { … }` or, per table, `\|table\| \|cell\| { … }`. |
 | `\|header\|` | `\|cell\|` | `fill: --header-fill; font-weight: bold` | A **header** cell — a filled, bold band (a `\|table\|`'s first row; an `\|entity\|`'s title spans them). |
 | `\|footer\|` | `\|cell\|` | `color: --footer-color` | A **footer** cell — muted text; opt-in on the last row. |
-| `\|entity\|` | `\|table\|` | `columns: auto auto` | An ER / database **entity** — a titled, two-column field list (see below). |
+| `\|entity\|` | `\|table\|` | `columns: auto auto` | An ER / database **entity** — a titled field list, rows left-aligned (see below). |
 | `\|note\|` | `\|block\|` | `fill: --fill; stroke: --stroke; padding: 20; scale: 1` | A **note** — the folded-corner callout card, one type in every layout (see below). |
 | `\|balloon\|` | `\|oval\|` | `width: 16; fill: --fill; stroke: --stroke; font-size: 11; scale: 1` | An item **balloon** — the numbered circle an assembly leaders to a part ([SPEC 15.8](#158-assemblies-views--titles)). |
 | `\|drawing\|` | `\|block\|` | `layout: drawing; padding: 0; scale: 4` | An engineering **drawing** — geometry on a datum, measured annotations ([SPEC 15](#15-drawing)). |
@@ -860,9 +860,12 @@ reads like the table it is. A cell that must be placed or linked is a **box** ch
 (`|cell| "X"` for a padded cell, or `|box| { cell: 2 1; … }`); a cell that just needs a
 colour or weight can take its own style block (`"Apple" { color: --red-ink }`).
 
-**Entities.** An `|entity|` is sugar over `|table|` (two auto columns) for an ER / database
-card: its **label is its title** — a `|header|` spanning every column — over `"field" "type"`
-rows. In an entity (not a plain table) a `|header|` / `|footer|` cell spans the full width.
+**Entities.** An `|entity|` is sugar over `|table|` (two auto columns) for an ER /
+database card: its **label is its title** — a `|header|` spanning every column, centred
+over left-aligned `"field" "type"` rows (an entity's field rows read left by default; the
+title keeps its centred, full-span band). Add a column for a **key** gutter —
+`{ columns: auto auto auto }` gives `"PK"/"FK" "field" "type"`. In an entity (not a plain
+table) a `|header|` / `|footer|` cell spans the full width.
 
 ```
 |entity#users| "Users" [ "id" "int"  "name" "varchar" ]

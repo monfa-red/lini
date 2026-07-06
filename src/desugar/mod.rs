@@ -314,8 +314,16 @@ fn wrap_body_cells(children: &mut [Child], types: &Types, bodies: &Bodies) -> Re
 /// centres / fills). A `start`/`end` column wears a `.lini-align-*` / `.lini-justify-*`
 /// class (defined in `classes`), so a whole column shares one class — not an inlined
 /// copy per cell — and the grid honours it once it has stretched the cell.
-fn distribute_cell_alignment(children: &mut [Child], table_style: &[Decl], cols: usize) {
-    let h = per_column(table_style, "align", cols);
+fn distribute_cell_alignment(
+    children: &mut [Child],
+    table_style: &[Decl],
+    cols: usize,
+    is_entity: bool,
+) {
+    let h = per_column(table_style, "align", cols)
+        // An entity's field rows read left by default [SPEC 8]; the title header is
+        // inserted *after* this pass, so it keeps its centred, full-span default.
+        .or_else(|| is_entity.then(|| vec!["start".to_string(); cols]));
     let v = per_column(table_style, "justify", cols);
     if h.is_none() && v.is_none() {
         return;
@@ -468,7 +476,7 @@ fn lower_node(
     if (is_table || is_entity)
         && let Some(cols) = cols
     {
-        distribute_cell_alignment(&mut children, &node.style, cols);
+        distribute_cell_alignment(&mut children, &node.style, cols, is_entity);
     }
 
     // The smart label, lowered per type [SPEC 3/7] — the single shared lowering

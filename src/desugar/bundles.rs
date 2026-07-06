@@ -305,7 +305,9 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
         // A table footer cell [SPEC 8]: a `|cell|`, muted text, no fill.
         "footer" => vec![var("color", "footer-color")],
         // An ER / database entity [SPEC 8]: a two-column table; its label lowers to a
-        // spanning header (desugar). Everything else is the |table| base.
+        // spanning header (desugar) and its body cells default to left-aligned (in
+        // `distribute_cell_alignment`, so the title header stays centred and filled).
+        // Everything else is the |table| base.
         "entity" => vec![decl(
             "columns",
             vec![Value::Ident("auto".into()), Value::Ident("auto".into())],
@@ -461,9 +463,11 @@ mod tests {
         assert!(!has(&f, "justify") && !has(&f, "align"));
         assert_eq!(var(&f, "color").as_deref(), Some("footer-color"));
         assert!(!has(&f, "fill"));
-        // The entity: two auto columns over the |table| base.
+        // The entity: two auto columns over the |table| base (body cells are
+        // left-aligned by the entity path in `distribute_cell_alignment`, not the bundle).
         let e = template_bundle("entity");
         assert!(has(&e, "columns"));
+        assert!(!has(&e, "align"));
         // The footnote (the renamed old footer): still the pinned bottom caption.
         let foot = template_bundle("footnote");
         assert_eq!(ident(&foot, "pin").as_deref(), Some("bottom"));

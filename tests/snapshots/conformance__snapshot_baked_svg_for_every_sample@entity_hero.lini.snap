@@ -1,0 +1,293 @@
+---
+source: tests/conformance.rs
+expression: svg
+input_file: samples/entity_hero.lini
+---
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-321.8 -239 648 623.5" width="648" height="623.5" class="lini">
+  <style>
+    .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
+    .lini .lini-canvas { fill: white; }
+    .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
+    .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
+    .lini .lini-table { fill: none; stroke: #444; stroke-width: 2; font-size: 14px; font-weight: normal; stroke-dasharray: none; }
+    .lini .lini-header { fill: rgba(0, 0, 0, 0.06); font-weight: bold; }
+    .lini .lini-link { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-marker { fill: #444; stroke: none; }
+    .lini .lini-marker.lini-marker-open { fill: none; stroke: inherit; stroke-linecap: round; stroke-dasharray: none; }
+  </style>
+  <defs/>
+  <rect class="lini-canvas" x="-321.8" y="-239" width="648" height="623.5"/>
+  <g class="lini-scene">
+    <g class="lini-node lini-entity lini-table lini-group lini-block" data-id="user" style="fill: #daf1ff; stroke: #004496" transform="translate(0,-14)">
+      <rect x="-86.8" y="-49.5" width="173.6" height="99" rx="8" ry="8"/>
+      <rect x="-52" y="-25" width="1" height="74.5" fill="#444" stroke="none"/>
+      <rect x="9" y="-25" width="1" height="74.5" fill="#444" stroke="none"/>
+      <rect x="-86.8" y="-25.5" width="173.6" height="1" fill="#444" stroke="none"/>
+      <rect x="-86.8" y="-0.5" width="173.6" height="1" fill="#444" stroke="none"/>
+      <rect x="-86.8" y="24.5" width="173.6" height="1" fill="#444" stroke="none"/>
+      <g class="lini-node lini-header lini-cell lini-block" transform="translate(0,-37.5)">
+        <rect x="-85.8" y="-11" width="171.6" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="0" y="0">User</text>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(-69.4,-12.5)">
+        <rect x="-16.4" y="-11" width="32.8" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="-1" y="0">PK</text>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(-21,-12.5)">
+        <rect x="-29" y="-11" width="58" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="-13.6" y="0">id</text>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(48.4,-12.5)">
+        <rect x="-37.4" y="-11" width="74.8" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="-17.8" y="0">int</text>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(-69.4,12.5)">
+        <rect x="-16.4" y="-11" width="32.8" height="22" rx="0" ry="0"/>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(-21,12.5)">
+        <rect x="-29" y="-11" width="58" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="-5.2" y="0">name</text>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(48.4,12.5)">
+        <rect x="-37.4" y="-11" width="74.8" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="-1" y="0">varchar</text>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(-69.4,37.5)">
+        <rect x="-16.4" y="-11" width="32.8" height="22" rx="0" ry="0"/>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(-21,37.5)">
+        <rect x="-29" y="-11" width="58" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="-1" y="0">email</text>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(48.4,37.5)">
+        <rect x="-37.4" y="-11" width="74.8" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="-1" y="0">varchar</text>
+      </g>
+    </g>
+    <g class="lini-node lini-entity lini-table lini-group lini-block" data-id="order" style="fill: #cdf9f4; stroke: #005d56" transform="translate(200,124)">
+      <rect x="-95.2" y="-49.5" width="190.4" height="99" rx="8" ry="8"/>
+      <rect x="-60.4" y="-25" width="1" height="74.5" fill="#444" stroke="none"/>
+      <rect x="17.4" y="-25" width="1" height="74.5" fill="#444" stroke="none"/>
+      <rect x="-95.2" y="-25.5" width="190.4" height="1" fill="#444" stroke="none"/>
+      <rect x="-95.2" y="-0.5" width="190.4" height="1" fill="#444" stroke="none"/>
+      <rect x="-95.2" y="24.5" width="190.4" height="1" fill="#444" stroke="none"/>
+      <g class="lini-node lini-header lini-cell lini-block" transform="translate(0,-37.5)">
+        <rect x="-94.2" y="-11" width="188.4" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="0" y="0">Order</text>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(-77.8,-12.5)">
+        <rect x="-16.4" y="-11" width="32.8" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="-1" y="0">PK</text>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(-21,-12.5)">
+        <rect x="-37.4" y="-11" width="74.8" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="-22" y="0">id</text>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(56.8,-12.5)">
+        <rect x="-37.4" y="-11" width="74.8" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="-17.8" y="0">int</text>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(-77.8,12.5)">
+        <rect x="-16.4" y="-11" width="32.8" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="-1" y="0">FK</text>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(-21,12.5)">
+        <rect x="-37.4" y="-11" width="74.8" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="-1" y="0">user_id</text>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(56.8,12.5)">
+        <rect x="-37.4" y="-11" width="74.8" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="-17.8" y="0">int</text>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(-77.8,37.5)">
+        <rect x="-16.4" y="-11" width="32.8" height="22" rx="0" ry="0"/>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(-21,37.5)">
+        <rect x="-37.4" y="-11" width="74.8" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="-9.4" y="0">total</text>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(56.8,37.5)">
+        <rect x="-37.4" y="-11" width="74.8" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="-1" y="0">decimal</text>
+      </g>
+    </g>
+    <g class="lini-node lini-entity lini-table lini-group lini-block" data-id="item" style="fill: #feedca; stroke: #6d3b00" transform="translate(19,304)">
+      <rect x="-91" y="-49.5" width="182" height="99" rx="8" ry="8"/>
+      <rect x="-56.2" y="-25" width="1" height="74.5" fill="#444" stroke="none"/>
+      <rect x="46.8" y="-25" width="1" height="74.5" fill="#444" stroke="none"/>
+      <rect x="-91" y="-25.5" width="182" height="1" fill="#444" stroke="none"/>
+      <rect x="-91" y="-0.5" width="182" height="1" fill="#444" stroke="none"/>
+      <rect x="-91" y="24.5" width="182" height="1" fill="#444" stroke="none"/>
+      <g class="lini-node lini-header lini-cell lini-block" transform="translate(0,-37.5)">
+        <rect x="-90" y="-11" width="180" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="0" y="0">LineItem</text>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(-73.6,-12.5)">
+        <rect x="-16.4" y="-11" width="32.8" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="-1" y="0">PK</text>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(-4.2,-12.5)">
+        <rect x="-50" y="-11" width="100" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="-34.6" y="0">id</text>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(69.4,-12.5)">
+        <rect x="-20.6" y="-11" width="41.2" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="-1" y="0">int</text>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(-73.6,12.5)">
+        <rect x="-16.4" y="-11" width="32.8" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="-1" y="0">FK</text>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(-4.2,12.5)">
+        <rect x="-50" y="-11" width="100" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="-9.4" y="0">order_id</text>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(69.4,12.5)">
+        <rect x="-20.6" y="-11" width="41.2" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="-1" y="0">int</text>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(-73.6,37.5)">
+        <rect x="-16.4" y="-11" width="32.8" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="-1" y="0">FK</text>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(-4.2,37.5)">
+        <rect x="-50" y="-11" width="100" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="-1" y="0">product_id</text>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(69.4,37.5)">
+        <rect x="-20.6" y="-11" width="41.2" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="-1" y="0">int</text>
+      </g>
+    </g>
+    <g class="lini-node lini-entity lini-table lini-group lini-block" data-id="product" style="fill: #d6f8e3; stroke: #005d26" transform="translate(-204,185)">
+      <rect x="-86.8" y="-49.5" width="173.6" height="99" rx="8" ry="8"/>
+      <rect x="-52" y="-25" width="1" height="74.5" fill="#444" stroke="none"/>
+      <rect x="9" y="-25" width="1" height="74.5" fill="#444" stroke="none"/>
+      <rect x="-86.8" y="-25.5" width="173.6" height="1" fill="#444" stroke="none"/>
+      <rect x="-86.8" y="-0.5" width="173.6" height="1" fill="#444" stroke="none"/>
+      <rect x="-86.8" y="24.5" width="173.6" height="1" fill="#444" stroke="none"/>
+      <g class="lini-node lini-header lini-cell lini-block" transform="translate(0,-37.5)">
+        <rect x="-85.8" y="-11" width="171.6" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="0" y="0">Product</text>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(-69.4,-12.5)">
+        <rect x="-16.4" y="-11" width="32.8" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="-1" y="0">PK</text>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(-21,-12.5)">
+        <rect x="-29" y="-11" width="58" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="-13.6" y="0">id</text>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(48.4,-12.5)">
+        <rect x="-37.4" y="-11" width="74.8" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="-17.8" y="0">int</text>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(-69.4,12.5)">
+        <rect x="-16.4" y="-11" width="32.8" height="22" rx="0" ry="0"/>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(-21,12.5)">
+        <rect x="-29" y="-11" width="58" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="-5.2" y="0">name</text>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(48.4,12.5)">
+        <rect x="-37.4" y="-11" width="74.8" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="-1" y="0">varchar</text>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(-69.4,37.5)">
+        <rect x="-16.4" y="-11" width="32.8" height="22" rx="0" ry="0"/>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(-21,37.5)">
+        <rect x="-29" y="-11" width="58" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="-1" y="0">price</text>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(48.4,37.5)">
+        <rect x="-37.4" y="-11" width="74.8" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="-1" y="0">decimal</text>
+      </g>
+    </g>
+    <g class="lini-node lini-entity lini-table lini-group lini-block" data-id="cart" style="fill: #ffe3ec; stroke: #811442" transform="translate(176,-171)">
+      <rect x="-85.7" y="-37" width="171.4" height="74" rx="8" ry="8"/>
+      <rect x="-8.9" y="-12.5" width="1" height="49.5" fill="#444" stroke="none"/>
+      <rect x="-85.7" y="-13" width="171.4" height="1" fill="#444" stroke="none"/>
+      <rect x="-85.7" y="12" width="171.4" height="1" fill="#444" stroke="none"/>
+      <g class="lini-node lini-header lini-cell lini-block" transform="translate(0,-25)">
+        <rect x="-84.7" y="-11" width="169.4" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="0" y="0">Cart</text>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(-47.3,0)">
+        <rect x="-37.4" y="-11" width="74.8" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="-9.4" y="0">items</text>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(38.9,0)">
+        <rect x="-45.8" y="-11" width="91.6" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="-26.2" y="0">int</text>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(-47.3,25)">
+        <rect x="-37.4" y="-11" width="74.8" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="-1" y="0">updated</text>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(38.9,25)">
+        <rect x="-45.8" y="-11" width="91.6" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="-1" y="0">timestamp</text>
+      </g>
+    </g>
+    <g class="lini-node lini-entity lini-table lini-group lini-block" data-id="category" transform="translate(-195,-143)">
+      <rect x="-64.7" y="-37" width="129.4" height="74" rx="8" ry="8"/>
+      <rect x="-13.1" y="-12.5" width="1" height="49.5" fill="#444" stroke="none"/>
+      <rect x="-64.7" y="-13" width="129.4" height="1" fill="#444" stroke="none"/>
+      <rect x="-64.7" y="12" width="129.4" height="1" fill="#444" stroke="none"/>
+      <g class="lini-node lini-header lini-cell lini-block" transform="translate(0,-25)">
+        <rect x="-63.7" y="-11" width="127.4" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="0" y="0">Category</text>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(-38.9,0)">
+        <rect x="-24.8" y="-11" width="49.6" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="-1" y="0">name</text>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(26.3,0)">
+        <rect x="-37.4" y="-11" width="74.8" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="-1" y="0">varchar</text>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(-38.9,25)">
+        <rect x="-24.8" y="-11" width="49.6" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="-1" y="0">slug</text>
+      </g>
+      <g class="lini-node lini-cell lini-align-start lini-block" transform="translate(26.3,25)">
+        <rect x="-37.4" y="-11" width="74.8" height="22" rx="0" ry="0"/>
+        <text class="lini-text" x="-1" y="0">varchar</text>
+      </g>
+    </g>
+  </g>
+  <g class="lini-links">
+    <g class="lini-link" data-from="user" data-to="order">
+      <path d="M 87.8 -14 L 184 -14 A 16 16 0 0 1 200 2 L 200 55.1"/>
+      <path class="lini-marker lini-marker-open" d="M 195.05 74 L 200 65 L 204.95 74 M 200 74 L 200 65"/>
+      <circle class="lini-marker lini-marker-open" cx="200" cy="58.7" r="3.6"/>
+      <path class="lini-marker lini-marker-open" d="M 200 62.3 L 200 65"/>
+    </g>
+    <g class="lini-link" data-from="user" data-to="cart">
+      <path d="M 0 -64.5 L 0 -155 A 16 16 0 0 1 16 -171 L 72.7 -171"/>
+      <circle class="lini-marker lini-marker-open" cx="76.3" cy="-171" r="3.6"/>
+      <path class="lini-marker lini-marker-open" d="M 79.9 -171 L 89.8 -171"/>
+      <path class="lini-marker lini-marker-open" d="M 84.4 -166.5 L 84.4 -175.5"/>
+    </g>
+    <g class="lini-link" data-from="order" data-to="item">
+      <path d="M 200 174.5 L 200 288 A 16 16 0 0 1 184 304 L 119.5 304"/>
+      <path class="lini-marker lini-marker-open" d="M 110.5 299.05 L 119.5 304 L 110.5 308.95 M 110.5 304 L 119.5 304"/>
+      <path class="lini-marker lini-marker-open" d="M 124 299.5 L 124 308.5"/>
+    </g>
+    <g class="lini-link" data-from="product" data-to="item">
+      <path d="M -204 235.5 L -204 288 A 16 16 0 0 0 -188 304 L -91.4 304"/>
+      <path class="lini-marker lini-marker-open" d="M -72.5 308.95 L -81.5 304 L -72.5 299.05 M -72.5 304 L -81.5 304"/>
+      <circle class="lini-marker lini-marker-open" cx="-87.8" cy="304" r="3.6"/>
+      <path class="lini-marker lini-marker-open" d="M -84.2 304 L -81.5 304"/>
+    </g>
+    <g class="lini-link" data-from="category" data-to="product">
+      <path d="M -199.5 -105 L -199.5 116.1"/>
+      <path class="lini-marker lini-marker-open" d="M -204.45 135 L -199.5 126 L -194.55 135 M -199.5 135 L -199.5 126"/>
+      <circle class="lini-marker lini-marker-open" cx="-199.5" cy="119.7" r="3.6"/>
+      <path class="lini-marker lini-marker-open" d="M -199.5 123.3 L -199.5 126"/>
+    </g>
+  </g>
+</svg>

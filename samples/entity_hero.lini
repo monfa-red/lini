@@ -1,0 +1,42 @@
+// A small e-commerce schema — the |entity| ER card and the crow's-foot cardinality
+// operators [SPEC 8, 9]. An entity's label is its centred title; rows read left as
+// "field" "type", or "key" "field" "type" for a keyed (3-column) table. Entities are
+// pinned so the schema reads as a graph, not a grid; `-o<` is zero-or-many, `-+<`
+// one-or-many, `-o+` zero-or-one — the ring / bar / crow composed on the target end.
+// Category is left in the default palette; the rest wear a hue (ink stroke, wash fill).
+{ padding: 30; }
+
+|entity#user| "User" { pin: center; translate: 0 -14; columns: auto auto auto; stroke: --blue-ink; fill: --blue-wash } [
+  "PK" "id"    "int"
+  ""   "name"  "varchar"
+  ""   "email" "varchar"
+]
+|entity#order| "Order" { pin: center; translate: 200 124; columns: auto auto auto; stroke: --teal-ink; fill: --teal-wash } [
+  "PK" "id"      "int"
+  "FK" "user_id" "int"
+  ""   "total"   "decimal"
+]
+|entity#item| "LineItem" { pin: center; translate: 19 304; columns: auto auto auto; stroke: --amber-ink; fill: --amber-wash } [
+  "PK" "id"         "int"
+  "FK" "order_id"   "int"
+  "FK" "product_id" "int"
+]
+|entity#product| "Product" { pin: center; translate: -204 185; columns: auto auto auto; stroke: --green-ink; fill: --green-wash } [
+  "PK" "id"    "int"
+  ""   "name"  "varchar"
+  ""   "price" "decimal"
+]
+|entity#cart| "Cart" { pin: center; translate: 176 -171; stroke: --rose-ink; fill: --rose-wash } [
+  "items"   "int"
+  "updated" "timestamp"
+]
+|entity#category| "Category" { pin: center; translate: -195 -143 } [
+  "name" "varchar"
+  "slug" "varchar"
+]
+
+user     -o< order          // a user places zero-or-many orders
+user     -o+ cart           // a user owns zero-or-one cart
+order    -+< item:right     // an order contains one-or-many line items
+product  -o< item           // a product appears in zero-or-many line items
+category -o< product        // a category groups zero-or-many products
