@@ -2575,17 +2575,16 @@ text, and box-model properties are universal to every node — the tables that f
 | `direction` | ✓ `row`/`column` | — | — | ✓ `+radial` | — | — |
 | `gap` | ✓ spacing | ✓ spacing | ✓ pitch / spacing | ✓ plot gutter | ✓ plot gutter | — (dims / mates read their own — [SPEC 15](#15-drawing)) |
 | `gap-color` | ✓ | ✓ | ✓ᵇ | — | — | — |
-| `padding` | ✓ | ✓ | ✓ᵇ | — | — | ⌛ frames the sheet |
+| `padding` | ✓ | ✓ | ✓ᵇ | — | — | ✓ frames the sheet |
 | `align` / `justify` | ✓ | ✓ per-column | ✓ᵇ | — | — | — |
-| `width` / `height` | ✓ (slack) | ✓ (slack) | — content-sized | ✓ box size | ✓ box size | ⌛ a floor |
+| `width` / `height` | ✓ (slack) | ✓ (slack) | — content-sized | ✓ box size | ✓ box size | ✓ a floor |
 | `columns` / `rows` / `cell` / `span` | — | ✓ | — | — (`span`→band) | — | — |
-| container paint (`fill` `stroke` `radius` `shadow` `opacity` `href`) | ✓ | ✓ | ✓ | ✓ | ✓ | ⌛ |
+| container paint (`fill` `stroke` `radius` `shadow` `opacity` `href`) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 **✓ᵇ** — honoured on the participant / frame **boxes' own content** (they are ordinary
 boxes), but *not* by the sequence engine's placement of them on the time axis
 ([SPEC 11](#11-the-layout-model)). A `chart` / `pie` consumes its children into marks, so that
-case does not arise — hence `—`. The `drawing` column is ⌛ as one unit — the engine
-lands per `PLAN.md`, and its marks flip to ✓ together.
+case does not arise — hence `—`.
 
 ### Universal properties
 
@@ -2600,7 +2599,7 @@ Honoured on every drawn node, in every layout (a box; text takes the marked subs
 | `opacity` | `0..1` | 1 |
 | `stroke` | colour · `none` · gradient | `--stroke` (`--group-stroke` on group) |
 | `stroke-width` | number | 2 (group / frame 1) |
-| `stroke-style` | `solid`·`dashed`·`dotted`·`wavy`·`center`·`phantom` | `solid` — `wavy` on links today (closed prims ⌛); `center` / `phantom` on shapes and `\|line\|`s ⌛ ([SPEC 15.7](#157-leaders-notes--line-conventions)) |
+| `stroke-style` | `solid`·`dashed`·`dotted`·`wavy`·`center`·`phantom` | `solid` — `wavy` on links today (closed prims ⌛); `center` / `phantom` on shapes and `\|line\|`s ([SPEC 15.7](#157-leaders-notes--line-conventions)) |
 | `radius` | number | 0 (block/rect) · 8 (box/group) — rect + polyline join; non-rect ⌛ |
 | `shadow` | `N` · `dx dy` · `dx dy blur` · `dx dy blur color` | off — tint `--shadow-color` |
 
@@ -2627,8 +2626,8 @@ Honoured on every drawn node, in every layout (a box; text takes the marked subs
 | `translate` | `x y` | — | post-placement nudge; **any** node incl. text. |
 | `rotate` | degrees | 0 | turn about bbox centre; **any** node incl. text. |
 | `layer` | integer | 0 (flow) · 1 (pinned) | paint order; ties → source order. |
-| `scale` | number > 0 | 1 | ⌛ px per drawing unit — nearest-wins; position scales by the parent, shape by self ([SPEC 15.1](#151-the-container-the-datum--the-scale)). |
-| `pattern` | `grid(…)` · `radial(…)` | — | ⌛ replicate about the node's position ([SPEC 15.4](#154-features-holes--patterns)). |
+| `scale` | number > 0 | 1 (`\|drawing\|` 4) | px per drawing unit — nearest-wins; position scales by the parent, shape by self ([SPEC 15.1](#151-the-container-the-datum--the-scale)). |
+| `pattern` | `grid(…)` · `radial(…)` | — | replicate about the node's position ([SPEC 15.4](#154-features-holes--patterns)). |
 
 **Media & accessibility** — any node (`href` also a link):
 
@@ -2652,9 +2651,9 @@ Read on the listed primitive; required where noted ([SPEC 7](#7-nodes)).
 | `skew` | `\|slant\|` | degrees `(-89,89)` | 15. |
 | `stack` | closed primitives | `N` · `dx dy` | offset duplicate behind. |
 | `marker` · `marker-start` · `marker-end` | `\|line\|`, links | see [SPEC 7](#7-nodes) | endpoint / vertex glyphs; from the operator on a link. |
-| `draw` | `\|sketch\|` | pen calls + `:segment`s | ⌛ **required** ([SPEC 15.3](#153-the-sketch-pen)). |
-| `mirror` | `\|sketch\|` | `x-axis` / `y-axis` / bearing list | ⌛ reflect + union ([SPEC 15.3](#153-the-sketch-pen)). |
-| `break` | geometry nodes | `a b [axis]` groups | ⌛ cut the view between stations ([SPEC 15.3](#153-the-sketch-pen)). |
+| `draw` | `\|sketch\|` | pen calls + `:segment`s | **required** ([SPEC 15.3](#153-the-sketch-pen)). |
+| `mirror` | `\|sketch\|` | `x-axis` / `y-axis` / bearing list | reflect + union ([SPEC 15.3](#153-the-sketch-pen)). |
+| `break` | `\|sketch\|` | `a b [axis]` groups | cut the view between stations ([SPEC 15.3](#153-the-sketch-pen)). |
 
 ### Grid, chart, pie, sequence & drawing properties
 

@@ -247,7 +247,7 @@ The largest stage; if it must split, split **measure/compose** from **place/pack
   (hatch arrives stage 5 — use flat fills), a fully-dimensioned plate, a leader/datum
   sheet. Snapshot + PNG-inspect. Cross-check every measured value by hand.
 
-### Stage 5 — Conventions, break, fmt & finish
+### Stage 5 — Conventions, break, fmt & finish  ← DONE (see the Execution log)
 
 - `hatch()`: `<defs>` `<pattern>` emission, dedup, theming/bake parity with
   gradients.  ← DONE (see the Execution log)
@@ -657,3 +657,87 @@ deviated from this plan and **why**, open threads for the next session.
     S-break chrome), `fmt` for `draw:`, the three SPEC 24 examples
     byte-for-byte as samples, the barrel stress sample, the SPEC 16
     ledger sweep, delete `DRAWING_OLD.md`, README check.
+
+- **2026-07-05 — stage 5 finished** (fresh session; four commits —
+  `1d7b136` break:, `dbd0124` fmt, `478a527` samples, plus the finish
+  sweep; all 14 suites green — 719 tests — clippy silent, fmt clean; every
+  drawing sample PNG-rendered and inspected; measured values hand-checked:
+  tie bar 300 across the break, barrel 485/38/14·7/⌀42 h6/⌀45 f7/⌀50,
+  pump 230 = 180 + 60 − 10 press). What shipped, and the decisions:
+  - **`break:`** (`layout/drawing/breaks.rs`): stations parse from the
+    resolved groups (two numbers `a < b` + optional axis; default = the
+    model's longer axis), scale with the node, and clip the folded,
+    scaled subpaths — segments split exactly at the station lines (lines
+    and circular arcs closed-form; a **cubic** must clear both stations,
+    hull-tested, else the new "can't cut a 'curve()'" error — SPEC 23
+    note added). Kept pieces stitch into maximal runs that stay **open**
+    at the cut: SVG's implied fill closure *is* the straight cut edge,
+    the profile stroke never draws there, and the `|breakline|` chrome
+    draws over it. The far piece slides to the sheet-space 12 px gap via
+    a per-axis piecewise-linear **view map** — monotone, total,
+    invertible (the removed span squashes into the gap, so even a
+    station *inside* the cut displays sensibly). **Deviation from the
+    stage-4 note**: the map rides `SketchGeo` per node, not
+    `annotate::Ctx` — a break belongs to its sketch, and a drawing-wide
+    map would wrongly shift other parts. Anchors resolve **displayed**
+    (segments map at `spot()`, bbox spots read the clipped box);
+    `Anchor::model_point`/`model_world` unmap for values — dims, station
+    ⌀s, and the bare mirrored span all read the unbroken model. Mates
+    seat displayed (the view stays self-consistent).
+  - **Features ride the break** (found by the barrel): `place_features`
+    maps a broken parent's feature positions through its view map
+    (rigid with the displayed pieces — a far-side hole slides along),
+    and the anchor walk accumulates a parallel **model origin**, so a
+    dim to that hole still reads true. A feature's own *shape* never
+    clips (only positions map) — accepted edge, same family as SPEC 23's
+    angled break lines.
+  - **Chrome**: desugar generates two `|breakline|` children per comma
+    group (`chrome: break N`, authored order); the pen's fold fills them
+    — the thin zigzag with the lightning jog mid-span, or the round-stock
+    **S** (two opposed cubic bows) when a `mirror:` axis parallels the
+    break axis; the S node's kind flips to `Path` (a `|line|` can't arc).
+    Generated chrome now carries the parent's **tail** span — the fmt
+    printer sorts a body by span, and parent-headed spans hoisted chrome
+    above authored children, breaking `compile(desugar(src))`
+    byte-transparency (the oracle test caught it on the barrel).
+  - **Four new SPEC 20 rows**: break off a sketch ("'break' cuts a
+    '|sketch|' — draw the profile with the pen" — layout gates it on any
+    other node), a station that misses the profile, overlapping spans,
+    the cubic cut. SPEC 15.10's `break` row narrowed to `|sketch|`.
+  - **fmt**: a `draw:` is a paragraph — never shares a line with another
+    declaration; calls flow to the 80-column budget, every `move()`
+    after the first starts its own subpath line, continuations align
+    under the first call (exactly SPEC 19's promise); a short
+    single-subpath draw still inlines with its node, a multi-subpath one
+    never does. Mate/dim/leader statements already formatted like links
+    (stage 1); tests pin all of it now.
+  - **A chain seats one row** (found by the barrel's 14·7): SPEC 15.6
+    says "a chain shares one row", but hops seated independently and a
+    narrow hop's flipped-arrow reach poked the neighbour's interval,
+    splitting the row. `dims::stacked` split into `plan` (footprint) +
+    `at_row` (anatomy); a chain whose hops agree on axis + side seats
+    the **union** interval once — flipped arrows abutting tip-to-tip at
+    a shared extension line are drafting-normal, not a collision. Mixed
+    chains fall back to per-hop seating.
+  - **Samples**: the three SPEC 24 examples land **byte-for-byte** (code
+    below the header comment): `drawing_tiebar.lini` gained its
+    `break: -80 60` (S-break pair), `drawing_bushing.lini` one comment
+    word, `drawing_pump.lini` is new (mated assembly, balloons, BOM).
+    `drawing_barrel.lini` is the DRAWING_OLD §17 stress sample,
+    condensed: scale 3, no unit (the flipped narrow hops need the room),
+    manual centerline dropped (the fused mirror auto-generates it), the
+    m8 callout steered `side: top` (the datum ray grazed the ⌀ stack),
+    and `break: 90 165` threaded between the bolt holes.
+  - **Finish**: SPEC 16's drawing marks flipped to ✓ in one sweep (scale
+    default noted as `|drawing|` 4; `break` on `|sketch|`; the
+    "⌛ as one unit" footnote removed); `DRAWING_OLD.md` deleted; README
+    gained the drawings bullet.
+  - **Open threads** (all pre-existing, none blocking): the root-drawing
+    router gap (a wire in a nested flow scope of a *root* drawing is
+    dropped — a node `|drawing|` routes it fine) is **deferred to a core
+    scoping session together with the anonymous-container question** —
+    same family, and the fix should be one mechanism for both, with
+    Abbas's call on anonymous scope semantics. Leaders/diametral lines
+    still aren't collision-packed against dim rows (deterministic;
+    `side:` steers — the break samples didn't collide). The angle arc
+    still draws no leg extension lines.
