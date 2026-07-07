@@ -1069,6 +1069,13 @@ Cross-container links are written at the lowest level where both ends are visibl
 usually the root. Without a side the router picks edges by geometry; with a `:side`,
 that edge is forced.
 
+An **anonymous** container opens no scope: it is **scope-transparent** — its
+children belong to its parent's scope (ids stay unique across it), a dot-path
+never names it, and its own `[ ]` links resolve in the parent's scope. Name a
+container to give it a scope of its own — a scope-owning body (a `|drawing|`'s
+mates, a `|sequence|`'s messages) therefore wants an id. A sequence frame is
+transparent the same way ([SPEC 13](#13-sequence)).
+
 ### Internal links in a body
 
 A container's (or define's) `[ ]` may link its own children — children and links read in
@@ -3650,7 +3657,7 @@ body:left (-) body:right { side: bottom }        // → 60
 ```
 
 ```
-|page#sheet| { sheet: a5 landscape; gap: 50; direction: row; align: origin; } [
+|page| { sheet: a5 landscape; gap: 50; direction: row; align: origin; } [
   // the ISO sheet: frame, zones, marks — views share their axes datum-to-datum
 
   |drawing#side| "DIN 912 — M8 × 40" [

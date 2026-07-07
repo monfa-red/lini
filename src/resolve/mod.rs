@@ -12,7 +12,7 @@ mod ir;
 mod links;
 mod merge;
 mod program;
-mod scene;
+pub(crate) mod scene;
 mod value;
 
 pub use defaults::built_in_defaults;

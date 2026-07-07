@@ -29,6 +29,7 @@ pub(in crate::layout) fn layout_node(
         own,
         unit_of(&inst.attrs),
         inst.span,
+        inst.id.is_some(),
     )?;
 
     // Centre the drawn extent on the node's origin, so the container places in
@@ -67,6 +68,7 @@ pub(in crate::layout) fn layout_root(program: &Program) -> Result<(Vec<PlacedNod
         own,
         unit_of(&program.scene.attrs),
         Span::empty(),
+        true,
     )?;
     let extent = flow_extent(&children);
     place_pinned(&mut children, extent)?;
@@ -86,6 +88,7 @@ fn lay_out(
     own: f64,
     unit: Option<&str>,
     span: Span,
+    owns_links: bool,
 ) -> Result<Vec<PlacedNode>, Error> {
     let ctx = Ctx {
         scale: own,
@@ -110,8 +113,14 @@ fn lay_out(
     }
 
     // The scope's links, in source order: mates seat parts first, and the
-    // annotations measure the seated result [SPEC 15.9].
-    let mut links: Vec<&ResolvedLink> = program.links.iter().filter(|w| w.scope == path).collect();
+    // annotations measure the seated result [SPEC 15.9]. An **anonymous**
+    // drawing node is scope-transparent [SPEC 9]: its path is its parent's and
+    // its links resolved there — consuming by path would steal the parent's.
+    let mut links: Vec<&ResolvedLink> = if owns_links {
+        program.links.iter().filter(|w| w.scope == path).collect()
+    } else {
+        Vec::new()
+    };
     links.sort_by_key(|w| w.span.start);
     let (mates, annotations): (Vec<&ResolvedLink>, Vec<&ResolvedLink>) =
         links.iter().partition(|w| w.kind == LinkKind::Mate);
@@ -614,5 +623,41 @@ mod tests {
             by_id(&pump.children, "inlet").children.len() >= 2,
             "the sub-view kept its chrome"
         );
+    }
+
+    // ── Anonymous containers are scope-transparent [SPEC 9] ──
+
+    #[test]
+    fn an_anonymous_wrapper_keeps_its_drawings_scoped() {
+        // The id-less |page| bug: a drawing inside an anonymous container must
+        // still own its links — the scope walk descends through the wrapper.
+        let l = laid(
+            "|group| [\n  |drawing#d| { scale: 1 } [\n    |rect#bar| { width: 60; height: 20 }\n    bar:left (-) bar:right { side: bottom }\n  ]\n]\n",
+        );
+        super::super::testutil::text_at(&l.nodes, "60");
+    }
+
+    #[test]
+    fn a_dim_reaches_through_an_anonymous_wrapper() {
+        // A feature inside an id-less sealed wrapper is addressable — the
+        // anchor walk descends the wrapper's placed hops.
+        let l = laid(
+            "{ layout: drawing; scale: 1 }\n|row| [ |rect#x| { width: 40; height: 10 } ]\nx:left (-) x:right { side: bottom }\n",
+        );
+        super::super::testutil::text_at(&l.nodes, "40");
+    }
+
+    #[test]
+    fn an_anonymous_sequence_never_steals_its_parents_links() {
+        // Its path equals its parent's under transparency; the engine must not
+        // consume the parent's wires by that path.
+        let l = laid("|box#a| \"A\"\n|box#b| \"B\"\n|sequence| [ |box#p| \"P\" ]\na -> b\n");
+        assert_eq!(l.links.len(), 1, "the root wire still routes");
+    }
+
+    #[test]
+    fn wires_still_route_into_anonymous_groups() {
+        let l = laid("|group| [\n  |box#a| \"A\"\n  |box#b| \"B\"\n]\na -> b\n");
+        assert_eq!(l.links.len(), 1);
     }
 }

@@ -57,7 +57,14 @@ pub(super) fn layout_node(
             notes.push(placed()?);
         }
     }
-    let messages = messages_for(program, path);
+    // An **anonymous** sequence node is scope-transparent [SPEC 9]: its path is
+    // its parent's, and its (mis-scoped) messages resolved there — consuming by
+    // path here would steal the parent's links instead.
+    let messages = if inst.id.is_some() {
+        messages_for(program, path)
+    } else {
+        Vec::new()
+    };
     let (children, bbox, wires) = lay_out(
         &inst.attrs,
         participants,

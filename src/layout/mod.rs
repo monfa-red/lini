@@ -135,22 +135,28 @@ pub(crate) fn scope_attrs<'a>(
 }
 
 /// The scene instance at a dot-path (`""` → `None`: the root is not an instance).
-/// Walks by id, like an endpoint path. Used by the sequence engine.
+/// Walks by id, like an endpoint path — descending through **anonymous**
+/// containers, which are scope-transparent [SPEC 9]. Used by the scope
+/// detectors and the sequence engine.
 pub(super) fn node_at<'a>(program: &'a Program, path: &str) -> Option<&'a ResolvedInst> {
     let mut nodes = &program.scene.nodes;
     let mut found = None;
     for seg in path.split('.') {
-        let inst = nodes.iter().find(|n| n.id.as_deref() == Some(seg))?;
+        let inst = crate::resolve::scene::find_in_scope(nodes, seg, &mut Vec::new())?;
         found = Some(inst);
         nodes = &inst.children;
     }
     found
 }
 
-/// A child's dot-path under `parent`. Anonymous children get a `#` segment —
-/// never addressable, so never a link endpoint's ancestor.
+/// A child's dot-path under `parent`. **Anonymous children are
+/// scope-transparent** [SPEC 9]: they contribute no segment — their children
+/// address as the parent's — matching resolve's link prefixes and the routing
+/// index, so an engine's `w.scope == path` filter agrees with resolve.
 fn child_path(parent: &str, inst: &ResolvedInst) -> String {
-    let id = inst.id.as_deref().unwrap_or("#");
+    let Some(id) = inst.id.as_deref() else {
+        return parent.to_owned();
+    };
     if parent.is_empty() {
         id.to_owned()
     } else {

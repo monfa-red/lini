@@ -10,15 +10,27 @@ use std::collections::HashSet;
 /// The ids declared **directly** in a scope (its own children) — the auto-create
 /// gate [SPEC 3, 9]: a single bare endpoint not among them is created in that
 /// scope. Scope-local, not recursive — a deeper same-named node does not suppress
-/// the create; it instead raises a shadow warning (see [`crate::lint`]).
+/// the create; it instead raises a shadow warning (see [`crate::lint`]) — except
+/// through **anonymous** containers, which are scope-transparent [SPEC 9]: their
+/// children are this scope's, so a bare endpoint reaches them instead of minting
+/// a duplicate.
 pub fn declared_ids(children: &[Child]) -> HashSet<String> {
-    children
-        .iter()
-        .filter_map(|c| match c {
-            Child::Box(n) => n.id.clone(),
-            Child::Text(_) => None,
-        })
-        .collect()
+    let mut out = HashSet::new();
+    collect_ids(children, &mut out);
+    out
+}
+
+fn collect_ids(children: &[Child], out: &mut HashSet<String>) {
+    for c in children {
+        if let Child::Box(n) = c {
+            match &n.id {
+                Some(id) => {
+                    out.insert(id.clone());
+                }
+                None => collect_ids(&n.children, out),
+            }
+        }
+    }
 }
 
 /// The ids to auto-create: each single-segment link endpoint absent from `declared`, in

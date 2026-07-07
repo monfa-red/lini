@@ -611,6 +611,32 @@ fn final_segment(path: &str) -> &str {
     path.rsplit('.').next().unwrap_or(path)
 }
 
+/// Find the node a path segment names at this level — or inside an
+/// **anonymous** container here, which is scope-transparent [SPEC 9]: its
+/// children address as the parent's, exactly as this module's path prefixes
+/// and the routing index already skip it. Traversed wrappers append to `via`
+/// (the container chain still wants their facts and config). Deterministic:
+/// ids are unique within a transparent scope — the duplicate-id check keys
+/// full transparent paths.
+pub(crate) fn find_in_scope<'a>(
+    nodes: &'a [ResolvedInst],
+    seg: &str,
+    via: &mut Vec<&'a ResolvedInst>,
+) -> Option<&'a ResolvedInst> {
+    if let Some(n) = nodes.iter().find(|n| n.id.as_deref() == Some(seg)) {
+        return Some(n);
+    }
+    for anon in nodes.iter().filter(|n| n.id.is_none()) {
+        let mark = via.len();
+        via.push(anon);
+        if let Some(hit) = find_in_scope(&anon.children, seg, via) {
+            return Some(hit);
+        }
+        via.truncate(mark);
+    }
+    None
+}
+
 fn walk_paths(n: &ResolvedInst, stack: &mut Vec<String>, out: &mut Vec<String>) {
     if let Some(id) = &n.id {
         stack.push(id.clone());

@@ -319,14 +319,18 @@ fn baked_link_defaults(
 const SCOPE_LINK_PROPS: &[&str] = &["clearance", "routing"];
 
 /// The container chain from the scene root down to `scope` (each segment an id),
-/// stopping at the first missing segment. The root is not a node, so it is absent —
-/// [`link_scope`] folds it in for the config cascade, and a bare `|-|` matches every
-/// link with no ancestor needed.
+/// stopping at the first missing segment. **Anonymous containers are
+/// scope-transparent** [SPEC 9] — a segment may sit inside an id-less wrapper
+/// (an unnamed `|page|`, a `|group|`): the walk descends through it and keeps
+/// the wrapper in the chain, so its facts still match descendant rules and its
+/// config still cascades. The root is not a node, so it is absent —
+/// [`link_scope`] folds it in for the config cascade, and a bare `|-|` matches
+/// every link with no ancestor needed.
 fn scope_chain<'a>(nodes: &'a [ResolvedInst], scope: &[String]) -> Vec<&'a ResolvedInst> {
     let mut out = Vec::new();
     let mut cur = nodes;
     for seg in scope {
-        match cur.iter().find(|n| n.id.as_deref() == Some(seg)) {
+        match scene::find_in_scope(cur, seg, &mut out) {
             Some(n) => {
                 out.push(n);
                 cur = &n.children;

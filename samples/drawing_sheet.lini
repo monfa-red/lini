@@ -4,7 +4,7 @@
 // end view is ordinary concentric geometry; the |title-block| seats itself
 // flush inside the frame's bottom-right corner, fields as plain cells.
 
-|page#sheet| { sheet: a5 landscape; gap: 50; direction: row; align: origin; } [
+|page| { sheet: a5 landscape; gap: 50; direction: row; align: origin; } [
   // the ISO sheet: frame, zones, marks — views share their axes datum-to-datum
 
   |drawing#side| "DIN 912 — M8 × 40" [

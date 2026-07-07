@@ -60,10 +60,15 @@ pub(super) fn resolve<'a>(
     let rel = super::rel_path(&ep.path, scope);
     let mut segs = rel.split('.');
     let first = segs.next().expect("an endpoint path is non-empty");
+    // Anonymous containers are scope-transparent [SPEC 9]: a segment may sit
+    // inside an id-less wrapper, whose placed hops still carry position — the
+    // descent returns every hop down to the named node.
+    let first_hops = descend(kids, first)
+        .ok_or_else(|| Error::at(ep.span, format!("{noun} endpoint '{rel}' not placed")))?;
     let child = kids
         .iter()
-        .position(|k| k.id.as_deref() == Some(first))
-        .ok_or_else(|| Error::at(ep.span, format!("{noun} endpoint '{rel}' not placed")))?;
+        .position(|k| std::ptr::eq(k, first_hops[0]))
+        .expect("descend starts among kids");
 
     // Walk into features, accumulating origin and rotation — each level renders
     // as translate(cx, cy) rotate(deg), so a parent's turn carries its subtree.
@@ -72,33 +77,24 @@ pub(super) fn resolve<'a>(
     // carrying the active view and the walked model position — so values stay
     // true at any depth. The view deactivates exactly where the ride stopped:
     // a turned child (positions inside leave the break frame).
-    let mut node = &kids[child];
+    let mut hops = first_hops.into_iter();
+    let mut node = hops.next().expect("a descent is non-empty");
     let mut origin = (node.cx, node.cy);
     let mut model_origin = origin;
     let mut rot = node.rotation;
     // (the map, walked model position, walked displayed position) — both
     // accumulate in the broken sketch's frame, mirroring `ride_view`.
     let mut view: Option<(&super::breaks::ViewMap, P, P)> = None;
-    for seg in segs {
-        let next = node
-            .children
-            .iter()
-            .find(|c| c.id.as_deref() == Some(seg))
-            .ok_or_else(|| {
-                // The path resolved against the source tree, so the only placed
-                // divergence is a pattern's copies [SPEC 15.4/23].
-                Error::at(
-                    ep.span,
-                    format!("'{rel}' sits inside a 'pattern:' — per-copy features are deferred (SPEC 23)"),
-                )
-            })?;
+    let mut step = |node: &mut &'a PlacedNode,
+                    next: &'a PlacedNode,
+                    view: &mut Option<(&'a super::breaks::ViewMap, P, P)>| {
         if let Some(geo) = node.sketch.as_ref()
             && !geo.view.is_identity()
         {
-            view = Some((&geo.view, (0.0, 0.0), (0.0, 0.0)));
+            *view = Some((&geo.view, (0.0, 0.0), (0.0, 0.0)));
         }
         let d_local = (next.cx, next.cy);
-        let m_local = match &mut view {
+        let m_local = match view {
             Some((v, bm, bd)) => {
                 let da = (bd.0 + d_local.0, bd.1 + d_local.1);
                 let ma = v.unmap(da);
@@ -114,10 +110,33 @@ pub(super) fn resolve<'a>(
         let m = rotated(m_local, rot);
         model_origin = (model_origin.0 + m.0, model_origin.1 + m.1);
         if next.rotation != 0.0 {
-            view = None;
+            *view = None;
         }
         rot += next.rotation;
-        node = next;
+        *node = next;
+    };
+    for next in hops.by_ref() {
+        step(&mut node, next, &mut view);
+    }
+    for seg in segs {
+        // Under a `pattern:` carrier the children are its (id-less) copies —
+        // per-copy addressing stays deferred [SPEC 15.4/23], so the walk never
+        // descends into them; that is also the only placed divergence from the
+        // source tree the path resolved against.
+        let more = (node.attrs.get("pattern").is_none())
+            .then(|| descend(&node.children, seg))
+            .flatten()
+            .ok_or_else(|| {
+                Error::at(
+                    ep.span,
+                    format!(
+                        "'{rel}' sits inside a 'pattern:' — per-copy features are deferred (SPEC 23)"
+                    ),
+                )
+            })?;
+        for next in more {
+            step(&mut node, next, &mut view);
+        }
     }
 
     let last = rel.rsplit('.').next().expect("non-empty");
@@ -130,6 +149,24 @@ pub(super) fn resolve<'a>(
         rot,
         spot,
     })
+}
+
+/// The placed hops from `kids` down to the node `seg` names — one hop for a
+/// direct child, more when the target sits inside **anonymous** containers
+/// (scope-transparent, [SPEC 9]); each hop carries its own frame, so the walk
+/// accumulates them all. Deterministic: ids are unique within a transparent
+/// scope (resolve's duplicate-id check keys full transparent paths).
+fn descend<'a>(kids: &'a [PlacedNode], seg: &str) -> Option<Vec<&'a PlacedNode>> {
+    if let Some(k) = kids.iter().find(|k| k.id.as_deref() == Some(seg)) {
+        return Some(vec![k]);
+    }
+    for anon in kids.iter().filter(|k| k.id.is_none()) {
+        if let Some(mut chain) = descend(&anon.children, seg) {
+            chain.insert(0, anon);
+            return Some(chain);
+        }
+    }
+    None
 }
 
 /// The anchor's spot in the node's own frame: the endpoint's side, corner,

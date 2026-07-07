@@ -35,7 +35,7 @@ input_file: samples/drawing_sheet.lini
   <defs/>
   <rect class="lini-canvas" x="-420" y="-296" width="840" height="592"/>
   <g class="lini-scene">
-    <g class="lini-node lini-page lini-block" data-id="sheet" transform="translate(0,0)">
+    <g class="lini-node lini-page lini-block" transform="translate(0,0)">
       <rect x="-420" y="-296" width="840" height="592" rx="0" ry="0"/>
       <g class="lini-node lini-drawing lini-block" data-id="side" transform="translate(-33,0)">
         <rect x="-116" y="-69" width="232" height="138" rx="0" ry="0"/>

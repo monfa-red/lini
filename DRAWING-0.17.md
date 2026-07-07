@@ -200,6 +200,33 @@ Append-only, per PLAN.md's rule.
     centre bore rides the `[ ]`, its redundant centerline removed by the
     cascade in the stylesheet). Tie bar matches SPEC 24 fully only after
     stage 2 adds `thread:`.
+- **2026-07-07 — anonymous containers are scope-transparent** (all gates
+  green — 758 tests — clippy silent, fmt clean; the sheet sample rendered
+  id-less and pixel-compared against the id-ed render). Closes the
+  anonymous-container half of the scoping family — the id-less `|page|`
+  works now:
+  - **The model already existed in three places** (resolve's link prefixes
+    and `PathIndex`, the routing index's `None => prefix`) — the bug was the
+    *lookups* walking strictly by id. One transparent finder now serves them
+    all: `resolve::scene::find_in_scope` (collects traversed wrappers, so
+    their facts still match descendant rules and their config cascades) used
+    by `scope_chain` and `layout::node_at`; `layout::child_path` drops its
+    `#` segment (anonymous children address as the parent's, matching the
+    engines' `w.scope == path` filters); `anchors::resolve` descends
+    id-less placed hops with full transform accumulation (a carrier guard
+    keeps per-copy addressing deferred); desugar's `declared_ids` sees
+    through wrappers, so a root wire reaches a box inside an anonymous
+    `|group|` instead of minting a duplicate.
+  - **The steal guard**: an anonymous drawing/sequence node's path now
+    equals its parent's, so the engines consume links by path only when the
+    node has an id — an id-less engine's links resolved (and stay) in the
+    parent scope, which SPEC 9 now states outright ("a scope-owning body
+    wants an id"), alongside the transparency rule.
+  - `drawing_sheet.lini` reverted to the anonymous `|page|` (SPEC 24
+    synced); four regression tests pin the wrapper-scoped drawing, the
+    anchor descent, the no-steal guard, and root wires into anonymous
+    groups. The TODO's core-debt entry narrows to the root-drawing router
+    gap, with its one-mechanism sketch.
 - **2026-07-07 — `align: origin` / `justify: origin` landed** (all gates
   green — 750 tests — clippy silent, fmt clean; the A5 sheet PNG-rendered:
   the end view's centre sits on the side view's axis with the hand
