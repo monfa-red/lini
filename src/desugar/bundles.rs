@@ -138,7 +138,7 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
         "footnote" => vec![
             id("pin", "bottom"),
             pair("translate", 0.0, 17.0),
-            n("font-size", 11.0),
+            n("font-size", 12.0),
             var("color", "footer-color"),
         ],
         "badge" => vec![
@@ -520,6 +520,6 @@ mod tests {
         // The footnote (the renamed old footer): still the pinned bottom caption.
         let foot = template_bundle("footnote");
         assert_eq!(ident(&foot, "pin").as_deref(), Some("bottom"));
-        assert_eq!(num(&foot, "font-size"), Some(11.0));
+        assert_eq!(num(&foot, "font-size"), Some(12.0));
     }
 }

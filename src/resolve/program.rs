@@ -452,6 +452,9 @@ fn link_scope(
     // `|row|` nested in a drawing owns ordinary routed links, weight 2.
     if scope_is_drawing(nodes, root_attrs, scope) {
         base.push(("stroke-width".to_string(), ResolvedValue::Number(1.0)));
+        // …and its annotation text reads at the caption size, 12 — the same
+        // base-layer seat, so a plain `|-| { font-size: … }` still wins.
+        base.push(("font-size".to_string(), ResolvedValue::Number(12.0)));
     }
     for prop in SCOPE_LINK_PROPS {
         let nearest = chain

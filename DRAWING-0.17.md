@@ -200,6 +200,24 @@ Append-only, per PLAN.md's rule.
     centre bore rides the `[ ]`, its redundant centerline removed by the
     cascade in the stylesheet). Tie bar matches SPEC 24 fully only after
     stage 2 adds `thread:`.
+- **2026-07-07 — ISO 129 heads: one arrowhead per sheet, larger** (Abbas's
+  call; all gates green, barrel + leaders PNG-inspected against his CAD
+  refs). Word leaders' `<-` now tips with the **same slender arrow** as
+  every dimension (`leaders::callout` draws it and trims the line, exactly
+  like the measured leaders; the core arrow marker no longer appears on a
+  sheet) — `*-`'s dot and the datum keep their shapes. Sizes: the slender
+  arrow 10.5×3.5 → **12×4** at stroke 1 (3 : 1 kept, ISO's
+  arrow-≈-text-height weight; strokes realistically stay 1–2 so the linear
+  scaling stands); the **datum triangle** got its own formula
+  (`markers::datum_size`, 11 at stroke 1 — shared by the seated triangle
+  and the point-anchored fallback, one formula) instead of riding the
+  6px generic marker size. And the text pass: a drawing scope now pushes
+  **`font-size: 12`** into the link base beside its `stroke-width: 1`
+  (annotation text at the caption size; `|-| { font-size: … }` still
+  wins), and `|footnote|` went 11 → 12 to match captions. SPEC 8/10.5/
+  15.1/15.6/15.7 updated; 13 sample snapshots re-inspected and accepted.
+  The de-inlining of the remaining text styles (`.lini-dim-text`) is
+  planned in DRAWING-0.18.
 - **2026-07-07 — the origin line rides the sheet centreline** (Abbas's catch
   on his scale-6 sheet; all gates green, the render inspected: the screw's
   axis, the end view's centre, and the sheet's centring marks share one

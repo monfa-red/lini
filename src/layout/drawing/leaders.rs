@@ -221,7 +221,7 @@ pub(super) fn callout(ctx: &Ctx, w: &ResolvedLink) -> Result<Vec<PlacedNode>, Er
         } else {
             n
         };
-        let size = crate::render::markers::marker_size(paint.sw);
+        let size = crate::render::markers::datum_size(paint.sw);
         let half = size * 0.5;
         let t = (-n.1, n.0);
         let apex = (tip.0 + n.0 * size, tip.1 + n.1 * size);
@@ -236,6 +236,19 @@ pub(super) fn callout(ctx: &Ctx, w: &ResolvedLink) -> Result<Vec<PlacedNode>, Er
             ],
             paint.stroke.clone(),
         ));
+    } else if w.markers.start == MarkerKind::Arrow {
+        // ISO 129: one arrowhead style per sheet — a word leader tips with
+        // the same slender arrow as every dimension [SPEC 15.7].
+        let tip = line.points[0];
+        let to_tip = {
+            let d = (tip.0 - line.points[1].0, tip.1 - line.points[1].1);
+            let len = dist(d, (0.0, 0.0)).max(1e-9);
+            (d.0 / len, d.1 / len)
+        };
+        let trim = 2.0 * paint.sw;
+        line.points[0] = (tip.0 - to_tip.0 * trim, tip.1 - to_tip.1 * trim);
+        out.push(paint.dim(line.points.clone()));
+        out.push(dims::arrow(tip, to_tip, &paint));
     } else {
         let mut node = paint.dim(line.points.clone());
         node.markers.start = match w.markers.start {

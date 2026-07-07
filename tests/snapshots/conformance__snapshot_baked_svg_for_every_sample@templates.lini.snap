@@ -1,5 +1,6 @@
 ---
 source: tests/conformance.rs
+assertion_line: 40
 expression: svg
 input_file: samples/templates.lini
 ---
@@ -12,7 +13,7 @@ input_file: samples/templates.lini
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
     .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
     .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
-    .lini .lini-footnote { color: rgba(0, 0, 0, 0.5); font-size: 11px; }
+    .lini .lini-footnote { color: rgba(0, 0, 0, 0.5); font-size: 12px; }
     .lini .lini-badge { fill: #0a84ff; color: white; font-size: 11px; font-weight: normal; }
     .lini .lini-table { fill: none; stroke: #444; stroke-width: 2; font-size: 14px; font-weight: normal; stroke-dasharray: none; }
     .lini .lini-header { fill: rgba(0, 0, 0, 0.06); font-weight: bold; }
@@ -44,8 +45,8 @@ input_file: samples/templates.lini
           <rect x="-25.2" y="-6" width="50.4" height="12" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="0">Profile</text>
         </g>
-        <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,86.5)">
-          <rect x="-33" y="-5.5" width="66" height="11" rx="0" ry="0"/>
+        <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,86)">
+          <rect x="-36" y="-6" width="72" height="12" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="0">since 1843</text>
         </g>
       </g>

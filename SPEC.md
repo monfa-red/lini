@@ -768,7 +768,7 @@ the cascade ([SPEC 4](#4-selectors-cascade--specificity)) — every value here i
 | `\|rect\|` | `\|box\|` | `radius: 0` | A sharp-cornered box. |
 | `\|group\|` | `\|block\|` | `stroke: --group-stroke; stroke-style: dashed; stroke-width: 1; fill: --group-fill; radius: 8; padding: 20` | Dashed frame for a caption + children. |
 | `\|caption\|` | `\|block\|` | `pin: top left; translate: 0 -18; color: --caption-color; font-size: 12; font-weight: --caption-font-weight` | A title, pinned just above the group's top-left corner. |
-| `\|footnote\|` | `\|caption\|` | `pin: bottom; translate: 0 17; font-size: 11; color: --footer-color` | A caption flipped to a shape's bottom edge — a centred, muted footnote. |
+| `\|footnote\|` | `\|caption\|` | `pin: bottom; translate: 0 17; font-size: 12; color: --footer-color` | A caption flipped to a shape's bottom edge — a centred, muted footnote. |
 | `\|badge\|` | `\|block\|` | `pin: top right; translate: 6 -6; radius: 8; padding: 2 6; shadow: 2 3 3; fill: --accent; color: --accent-text; font-size: 11; font-weight: normal` | Corner pill — nudged out over the top-right corner, grows nothing. |
 | `\|row\|` | `\|block\|` | `direction: row` | Frameless wrapper — children in a row. |
 | `\|column\|` | `\|block\|` | `direction: column` | Frameless wrapper — children in a column. |
@@ -1306,9 +1306,9 @@ The drawing chrome ([SPEC 15](#15-drawing)) — sheet-space, never scaled:
 
 ```
 dim-offset 18    dim-pitch 16            dim-ext-gap 3    dim-ext-overshoot 3
-dim-arrow 10.5 × 3.5  note-offset 14      note-landing 8   center-mark-overhang 4
+dim-arrow 12 × 4      datum-triangle 11   note-offset 14   note-landing 8
 hatch-pitch 6    hatch line-width 0.75   break-gap 12     tol-stack 0.7
-drawing link stroke-width 1
+center-mark-overhang 4    drawing link stroke-width 1   drawing link font-size 12
 ```
 
 ### 10.6 `--bake-vars`
@@ -2129,9 +2129,10 @@ bboxes *and* its annotations (dimensions stack outside the geometry and count), 
 `padding`; an explicit `width` / `height` is a floor, per core. Measurement, by
 contrast, uses each node's **geometry bbox** — the drawn path, stroke excluded — so
 line weight never leaks into a value or a mate. Geometry defaults to
-`stroke-width: 2` and a drawing's links to `1` — a drawing-scope link default (like
-the scope's `clearance` / `routing`), below every user rule, so a plain
-`|-| { stroke-width: … }` restyles it — the drafting 2 : 1 line-weight contrast. `gap`, `align`, `justify`, and `direction` have no
+`stroke-width: 2` and a drawing's links to `1`, their text to `font-size: 12` (the
+caption size) — drawing-scope link defaults (like the scope's `clearance` /
+`routing`), below every user rule, so a plain `|-| { stroke-width: … }` restyles
+them — the drafting 2 : 1 line-weight contrast. `gap`, `align`, `justify`, and `direction` have no
 role on a drawing container and are ignored.
 
 ### 15.2 Anchors
@@ -2509,8 +2510,10 @@ arrows outside the extension lines; the value stays centred **inside** while it 
 fits there, and only a span too tight even for the bare text slides it past the
 nearer one. A packed row also clears every callout's text — leaders and angles
 register as obstacles before dims seat. Dimensions
-are links, styled per core ([SPEC 9](#9-links)); dimension text uses the link-label
-defaults (`font-size: 11`).
+are links, styled per core ([SPEC 9](#9-links)); a drawing's annotation text reads at
+the caption size — the scope pushes `font-size: 12` into the link base beside its
+`stroke-width: 1` ([15.1](#151-the-container-the-datum--the-scale)), so a plain
+`|-| { font-size: … }` still restyles it.
 
 ```
 { layout: drawing; scale: 3; unit: "mm" }
@@ -2546,7 +2549,9 @@ bolt <- [ "R3 TYP" { translate: 30 -24 } ]  // a styled / nudged text — the co
 ```
 
 - A callout has **one** tip, so the singular `marker:` overrides it; the marker set
-  gains **`datum`** ([SPEC 7](#7-nodes)). A one-ended callout with no text is an
+  gains **`datum`** ([SPEC 7](#7-nodes)). One arrowhead style per sheet (ISO 129):
+  a word leader's `<-` tips with the **same drafting-slender arrow** as every
+  dimension; `*-`'s dot and the datum triangle keep their own shapes. A one-ended callout with no text is an
   error; a one-ended `->` / `-*` errors the other way — a leader points *back* at its
   feature. A label-terminated statement is single-hop; fan leaders are deferred
   ([SPEC 23](#23-deferred)).

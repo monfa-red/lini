@@ -4,7 +4,7 @@ assertion_line: 40
 expression: svg
 input_file: samples/drawing_shaft.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-235.5 -66.8912 440 144.8912" width="440" height="144.8912" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-236.5 -67.3912 441 145.3912" width="441" height="145.3912" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
@@ -18,7 +18,7 @@ input_file: samples/drawing_shaft.lini
     .lini .lini-marker { fill: #444; stroke: none; }
   </style>
   <defs/>
-  <rect class="lini-canvas" x="-235.5" y="-66.8912" width="440" height="144.8912"/>
+  <rect class="lini-canvas" x="-236.5" y="-67.3912" width="441" height="145.3912"/>
   <g class="lini-scene">
     <g class="lini-node lini-sketch" data-id="shaft" style="fill: white; stroke: #444; stroke-width: 2" transform="translate(0,0)">
       <path d="M -180 0 L -180 -31.5 L -175.5 -36 L -30 -36 L -30 -27 L -12 -27 L -12 -36 L 78 -36 L 78 -33 A 9 9 0 0 0 87 -24 L 177 -24 L 180 -21 L 180 0 L 180 21 L 177 24 L 87 24 A 9 9 0 0 0 78 33 L 78 36 L -12 36 L -12 27 L -30 27 L -30 36 L -175.5 36 L -180 31.5 Z" fill-rule="evenodd"/>
@@ -57,12 +57,12 @@ input_file: samples/drawing_shaft.lini
       <line x1="-178" y1="55" x2="178" y2="55"/>
     </g>
     <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,0)">
-      <polygon points="-180,55 -169.5,53.25 -169.5,56.75"/>
+      <polygon points="-180,55 -168,53 -168,57"/>
     </g>
     <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,0)">
-      <polygon points="180,55 169.5,56.75 169.5,53.25"/>
+      <polygon points="180,55 168,57 168,53"/>
     </g>
-    <text class="lini-text" x="0" y="47.5" style="font-weight: normal; font-size: 11px">120 mm</text>
+    <text class="lini-text" x="0" y="47" style="font-weight: normal; font-size: 12px">120 mm</text>
     <g class="lini-node lini-ext-line lini-line" transform="translate(0,0)">
       <line x1="-24" y1="-27" x2="-205.5" y2="-27"/>
     </g>
@@ -73,19 +73,19 @@ input_file: samples/drawing_shaft.lini
       <line x1="-202.5" y1="-25" x2="-202.5" y2="25"/>
     </g>
     <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,0)">
-      <polygon points="-202.5,-27 -200.75,-16.5 -204.25,-16.5"/>
+      <polygon points="-202.5,-27 -200.5,-15 -204.5,-15"/>
     </g>
     <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,0)">
-      <polygon points="-202.5,27 -204.25,16.5 -200.75,16.5"/>
+      <polygon points="-202.5,27 -204.5,15 -200.5,15"/>
     </g>
-    <text class="lini-text" x="-210" y="0" style="font-weight: normal; font-size: 11px" transform="rotate(-90 -210 0)">⌀18</text>
+    <text class="lini-text" x="-210.5" y="0" style="font-weight: normal; font-size: 12px" transform="rotate(-90 -210.5 0)">⌀18</text>
     <g class="lini-node lini-dim-line lini-line" transform="translate(0,0)">
       <polyline points="82.5351,-27.2633 125.3047,-41.3912 133.3047,-41.3912"/>
     </g>
     <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,0)">
-      <polygon points="80.636,-26.636 90.0573,-31.5911 91.1551,-28.2677"/>
+      <polygon points="80.636,-26.636 91.4032,-32.299 92.6578,-28.5008"/>
     </g>
-    <text class="lini-text" x="141.9047" y="-41.3912" style="font-weight: normal; font-size: 11px">R3</text>
+    <text class="lini-text" x="142.5047" y="-41.3912" style="font-weight: normal; font-size: 12px">R3</text>
   </g>
   <g class="lini-links"/>
 </svg>

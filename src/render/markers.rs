@@ -49,6 +49,14 @@ pub fn marker_size(thickness: f64) -> f64 {
     5.0_f64.max(thickness * 4.0) + 1.0
 }
 
+/// The GD&T datum triangle's side [SPEC 15.7] — a chunkier symbol than an
+/// arrowhead (ISO 5459 reads it at roughly the text height), scaling with the
+/// stroke like every head. Shared by the seated triangle (`leaders`) and the
+/// point-anchored fallback marker below — one formula.
+pub fn datum_size(thickness: f64) -> f64 {
+    11.0_f64.max(thickness * 5.5)
+}
+
 /// Dot radius as a fraction of the marker `size` — a touch fuller so the circle
 /// reads level with the arrow and diamond rather than undersized.
 const DOT_RADIUS: f64 = 0.375;
@@ -82,7 +90,7 @@ pub fn line_inset(kind: MarkerKind, thickness: f64) -> f64 {
         MarkerKind::None => 0.0,
         // The datum triangle's base sits on the feature and its apex meets the
         // leader ([SPEC 15.7]) — the line stops at the apex, a full head back.
-        MarkerKind::Datum => marker_size(thickness),
+        MarkerKind::Datum => datum_size(thickness),
         // An open ER marker is stroked, not filled. A **bar** is a tick the line
         // passes *through* to the entity (so it reads connected and the set aligns
         // end-to-end), so a bar-only marker stops the line at the tip (extent 0); a
@@ -206,7 +214,11 @@ pub fn emit_marker(
         inline,
         thickness,
     } = *paint;
-    let size = marker_size(thickness);
+    let size = if kind == MarkerKind::Datum {
+        datum_size(thickness)
+    } else {
+        marker_size(thickness)
+    };
     let ux = direction.0;
     let uy = direction.1;
     let px = -uy;
@@ -522,7 +534,7 @@ mod tests {
             (1.0, 0.0),
             &paint,
         );
-        let size = marker_size(1.0);
+        let size = datum_size(1.0);
         assert!(s.contains("lini-marker-datum"), "{s}");
         assert!(
             s.contains(&format!("{},{}", num(100.0 - size), num(50.0))),

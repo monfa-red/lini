@@ -1,5 +1,6 @@
 ---
 source: tests/conformance.rs
+assertion_line: 40
 expression: svg
 input_file: samples/drawing_bushing.lini
 ---
@@ -39,15 +40,15 @@ input_file: samples/drawing_bushing.lini
       <line x1="3" y1="24" x2="123.5" y2="24"/>
     </g>
     <g class="lini-node lini-dim-line lini-line" transform="translate(0,0)">
-      <line x1="120.5" y1="-22" x2="120.5" y2="22"/>
+      <line x1="120.5" y1="-38" x2="120.5" y2="38"/>
     </g>
     <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,0)">
-      <polygon points="120.5,-24 122.25,-13.5 118.75,-13.5"/>
+      <polygon points="120.5,-24 118.5,-36 122.5,-36"/>
     </g>
     <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,0)">
-      <polygon points="120.5,24 118.75,13.5 122.25,13.5"/>
+      <polygon points="120.5,24 122.5,36 118.5,36"/>
     </g>
-    <text class="lini-text" x="113" y="0" style="font-weight: normal; font-size: 11px" transform="rotate(-90 113 0)">⌀16</text>
+    <text class="lini-text" x="112.5" y="0" style="font-weight: normal; font-size: 12px" transform="rotate(-90 112.5 0)">⌀16</text>
     <g class="lini-node lini-ext-line lini-line" transform="translate(0,0)">
       <line x1="3" y1="-54" x2="139.5" y2="-54"/>
     </g>
@@ -58,12 +59,12 @@ input_file: samples/drawing_bushing.lini
       <line x1="136.5" y1="-52" x2="136.5" y2="52"/>
     </g>
     <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,0)">
-      <polygon points="136.5,-54 138.25,-43.5 134.75,-43.5"/>
+      <polygon points="136.5,-54 138.5,-42 134.5,-42"/>
     </g>
     <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,0)">
-      <polygon points="136.5,54 134.75,43.5 138.25,43.5"/>
+      <polygon points="136.5,54 134.5,42 138.5,42"/>
     </g>
-    <text class="lini-text" x="129" y="0" style="font-weight: normal; font-size: 11px" transform="rotate(-90 129 0)">⌀36</text>
+    <text class="lini-text" x="128.5" y="0" style="font-weight: normal; font-size: 12px" transform="rotate(-90 128.5 0)">⌀36</text>
     <g class="lini-node lini-ext-line lini-line" transform="translate(0,0)">
       <line x1="-90" y1="3" x2="-90" y2="76"/>
     </g>
@@ -74,12 +75,12 @@ input_file: samples/drawing_bushing.lini
       <line x1="-88" y1="73" x2="88" y2="73"/>
     </g>
     <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,0)">
-      <polygon points="-90,73 -79.5,71.25 -79.5,74.75"/>
+      <polygon points="-90,73 -78,71 -78,75"/>
     </g>
     <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,0)">
-      <polygon points="90,73 79.5,74.75 79.5,71.25"/>
+      <polygon points="90,73 78,75 78,71"/>
     </g>
-    <text class="lini-text" x="0" y="65.5" style="font-weight: normal; font-size: 11px">60</text>
+    <text class="lini-text" x="0" y="65" style="font-weight: normal; font-size: 12px">60</text>
   </g>
   <g class="lini-links"/>
 </svg>

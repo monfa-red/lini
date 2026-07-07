@@ -19,9 +19,10 @@ pub(super) const DIM_PITCH: f64 = 16.0;
 pub(super) const EXT_GAP: f64 = 3.0;
 pub(super) const EXT_OVERSHOOT: f64 = 3.0;
 /// The drafting-slender arrow, 3 : 1 [SPEC 15.6] — length × half-width, at
-/// stroke-width 1; both scale with the dim's `stroke-width`.
-pub(super) const ARROW_LEN: f64 = 10.5;
-pub(super) const ARROW_HALF: f64 = 1.75;
+/// stroke-width 1; both scale with the dim's `stroke-width` (drafting strokes
+/// stay 1–2, so the heads read at ISO 129's arrow-≈-text-height weight).
+pub(super) const ARROW_LEN: f64 = 12.0;
+pub(super) const ARROW_HALF: f64 = 2.0;
 pub(super) const NOTE_OFFSET: f64 = 14.0;
 pub(super) const NOTE_LANDING: f64 = 8.0;
 
@@ -336,13 +337,13 @@ mod tests {
 
     #[test]
     fn a_narrow_span_flips_arrows_out_but_keeps_a_fitting_value_inside() {
-        // An 18-wide span can't hold text + arrows, but the bare "18" still
+        // A 20-wide span can't hold text + arrows, but the bare "20" still
         // reads between the extension lines: arrows flip out, value centred
         // inside — drafting's middle form [SPEC 15.6].
         let l = laid(
-            "{ layout: drawing; scale: 1 }\n|rect#a| { width: 18; height: 10 }\na:left (-) a:right { side: bottom }\n",
+            "{ layout: drawing; scale: 1 }\n|rect#a| { width: 20; height: 10 }\na:left (-) a:right { side: bottom }\n",
         );
-        let (x, _, _) = text_at(&l.nodes, "18");
+        let (x, _, _) = text_at(&l.nodes, "20");
         assert!(x.abs() < 1e-6, "value centred inside the span: x={x}");
     }
 
@@ -565,6 +566,21 @@ mod tests {
 
     // ── Leaders [SPEC 15.7] ──
 
+    /// The slender arrowhead's exact tip — its poly's first point
+    /// (`dims::arrow` builds tip-first); word leaders carry it since the
+    /// ISO 129 unification [SPEC 15.7].
+    fn arrow_tip(nodes: &[crate::layout::PlacedNode]) -> (f64, f64) {
+        nodes
+            .iter()
+            .find(|n| n.type_chain.iter().any(|t| t == "marker-dim"))
+            .map(|n| {
+                crate::layout::primitives::attr_points(&n.attrs, "points", n.span)
+                    .unwrap()
+                    .unwrap()[0]
+            })
+            .expect("a slender arrowhead")
+    }
+
     #[test]
     fn a_leader_tip_ray_casts_onto_the_outline_with_a_landing_elbow() {
         let l = laid(
@@ -573,14 +589,15 @@ mod tests {
         let line = l
             .nodes
             .iter()
-            .find(|n| n.kind == NodeKind::Line && n.markers.start == MarkerKind::Arrow)
+            .find(|n| n.type_chain.iter().any(|t| t == "dim-line"))
             .expect("the leader line");
         let pts = crate::layout::primitives::attr_points(&line.attrs, "points", line.span)
             .unwrap()
             .unwrap();
         assert_eq!(pts.len(), 3, "tip, elbow, landing");
-        // The tip sits on the circle (r = 20), not the bbox corner.
-        let tip = pts[0];
+        // The slender arrowhead's own tip sits on the circle (r = 20), not
+        // the bbox corner — the line stops a stub short of it [SPEC 15.6/7].
+        let tip = arrow_tip(&l.nodes);
         assert!(
             (tip.0.hypot(tip.1) - 20.0).abs() < 0.75,
             "tip on the rim: {tip:?}"
@@ -601,14 +618,7 @@ mod tests {
         let l = laid(
             "{ layout: drawing; scale: 1 }\n|rect#plate| { width: 120; height: 60 } [\n  |hole#pin| { width: 10; translate: -35 0; pattern: grid(2, 1, 70, 0) }\n]\nplate.pin <- \"THRU\" { side: top }\n",
         );
-        let line = l
-            .nodes
-            .iter()
-            .find(|n| n.kind == NodeKind::Line && n.markers.start == MarkerKind::Arrow)
-            .expect("the leader");
-        let tip = crate::layout::primitives::attr_points(&line.attrs, "points", line.span)
-            .unwrap()
-            .unwrap()[0];
+        let tip = arrow_tip(&l.nodes);
         let d = ((tip.0 - -35.0).powi(2) + tip.1.powi(2)).sqrt();
         assert!((d - 5.0).abs() < 0.75, "tip on the seed's rim: {tip:?}");
     }
@@ -636,7 +646,7 @@ mod tests {
             .unwrap();
         let start_r = (pts[0].0.powi(2) + pts[0].1.powi(2)).sqrt();
         assert!(
-            start_r > 6.0 && start_r < 20.0,
+            start_r > 6.0 && start_r < 21.0,
             "the line overshoots the far rim: {pts:?}"
         );
     }
@@ -730,16 +740,7 @@ mod tests {
         let l = laid(
             "{ layout: drawing; scale: 3 }\n|sketch#body| { draw: move(-80, 0) up(21) right(38):thread right(32):land up(4) right(90) down(25); mirror: x-axis }\nbody:thread <- \"M42\" { side: top }\nbody:land >- \"A\"\n",
         );
-        let arrow_tip = l
-            .nodes
-            .iter()
-            .find(|n| n.kind == NodeKind::Line && n.markers.start == MarkerKind::Arrow)
-            .map(|n| {
-                crate::layout::primitives::attr_points(&n.attrs, "points", n.span)
-                    .unwrap()
-                    .unwrap()[0]
-            })
-            .expect("the arrow leader");
+        let arrow_tip = arrow_tip(&l.nodes);
         assert!(
             (arrow_tip.1 + 63.0).abs() < 1e-6,
             "the arrow touches the drawn surface: {arrow_tip:?}"

@@ -1,9 +1,10 @@
 ---
 source: tests/conformance.rs
+assertion_line: 40
 expression: svg
 input_file: samples/drawing_dim_style.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-206.122 -77.261 317.122 164.261" width="317.122" height="164.261" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-212.722 -77.761 323.722 164.761" width="323.722" height="164.761" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
@@ -17,7 +18,7 @@ input_file: samples/drawing_dim_style.lini
     .lini .lini-marker { fill: #444; stroke: none; }
   </style>
   <defs/>
-  <rect class="lini-canvas" x="-206.122" y="-77.261" width="317.122" height="164.261"/>
+  <rect class="lini-canvas" x="-212.722" y="-77.761" width="323.722" height="164.761"/>
   <g class="lini-scene">
     <g class="lini-node lini-rect lini-box lini-block" data-id="plate" transform="translate(0,0)">
       <rect x="-90" y="-45" width="180" height="90" rx="0" ry="0"/>
@@ -32,17 +33,19 @@ input_file: samples/drawing_dim_style.lini
       <line x1="-88" y1="64" x2="88" y2="64"/>
     </g>
     <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: #004496" transform="translate(0,0)">
-      <polygon points="-90,64 -79.5,62.25 -79.5,65.75"/>
+      <polygon points="-90,64 -78,62 -78,66"/>
     </g>
     <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: #004496" transform="translate(0,0)">
-      <polygon points="90,64 79.5,65.75 79.5,62.25"/>
+      <polygon points="90,64 78,66 78,62"/>
     </g>
-    <text class="lini-text" x="0" y="56.5" style="font-weight: normal; font-size: 11px">60 mm</text>
+    <text class="lini-text" x="0" y="56" style="font-weight: normal; font-size: 12px">60 mm</text>
     <g class="lini-node lini-dim-line lini-line" style="stroke: #851618" transform="translate(0,0)">
       <polyline points="-91.7889,-45.8944 -103.522,-51.761 -111.522,-51.761"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-90,-45 -96.7082,-45 -94.0249,-50.3666" style="fill: #851618"/>
     </g>
-    <text class="lini-text" x="-149.822" y="-51.761" style="font-weight: normal; font-size: 11px">CHAMFER 1.5</text>
+    <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: #851618" transform="translate(0,0)">
+      <polygon points="-90,-45 -101.6276,-48.5777 -99.8387,-52.1554"/>
+    </g>
+    <text class="lini-text" x="-153.122" y="-51.761" style="font-weight: normal; font-size: 12px">CHAMFER 1.5</text>
   </g>
   <g class="lini-links"/>
 </svg>

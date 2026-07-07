@@ -4,7 +4,7 @@ assertion_line: 40
 expression: svg
 input_file: samples/drawing_tiebar.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-505.5 -101.5 572 177" width="572" height="177" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-506.5 -102.5 573 178" width="573" height="178" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
@@ -19,7 +19,7 @@ input_file: samples/drawing_tiebar.lini
     .lini .lini-marker { fill: #444; stroke: none; }
   </style>
   <defs/>
-  <rect class="lini-canvas" x="-505.5" y="-101.5" width="572" height="177"/>
+  <rect class="lini-canvas" x="-506.5" y="-102.5" width="573" height="178"/>
   <g class="lini-scene">
     <g class="lini-node lini-sketch" data-id="bar" style="fill: white; stroke: #444; stroke-width: 2" transform="translate(0,0)">
       <path d="M -228 -30 L 37.5 -30 L 42 -25.5 L 42 0 L 42 25.5 L 37.5 30 L -228 30 M -240 30 L -330 30 L -445.5 30 L -450 25.5 L -450 0 L -450 -25.5 L -445.5 -30 L -330 -30 L -240 -30" fill-rule="evenodd"/>
@@ -58,12 +58,12 @@ input_file: samples/drawing_tiebar.lini
       <line x1="-448" y1="52.5" x2="40" y2="52.5"/>
     </g>
     <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,0)">
-      <polygon points="-450,52.5 -439.5,50.75 -439.5,54.25"/>
+      <polygon points="-450,52.5 -438,50.5 -438,54.5"/>
     </g>
     <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,0)">
-      <polygon points="42,52.5 31.5,54.25 31.5,50.75"/>
+      <polygon points="42,52.5 30,54.5 30,50.5"/>
     </g>
-    <text class="lini-text" x="-204" y="45" style="font-weight: normal; font-size: 11px">300 mm</text>
+    <text class="lini-text" x="-204" y="44.5" style="font-weight: normal; font-size: 12px">300 mm</text>
     <g class="lini-node lini-ext-line lini-line" transform="translate(0,0)">
       <line x1="-450" y1="-3" x2="-450" y2="-71.5"/>
     </g>
@@ -74,12 +74,12 @@ input_file: samples/drawing_tiebar.lini
       <line x1="-448" y1="-68.5" x2="-332" y2="-68.5"/>
     </g>
     <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,0)">
-      <polygon points="-450,-68.5 -439.5,-70.25 -439.5,-66.75"/>
+      <polygon points="-450,-68.5 -438,-70.5 -438,-66.5"/>
     </g>
     <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,0)">
-      <polygon points="-330,-68.5 -340.5,-66.75 -340.5,-70.25"/>
+      <polygon points="-330,-68.5 -342,-66.5 -342,-70.5"/>
     </g>
-    <text class="lini-text" x="-390" y="-76" style="font-weight: normal; font-size: 11px">40 mm</text>
+    <text class="lini-text" x="-390" y="-76.5" style="font-weight: normal; font-size: 12px">40 mm</text>
     <g class="lini-node lini-ext-line lini-line" transform="translate(0,0)">
       <line x1="-393" y1="-30" x2="-475.5" y2="-30"/>
     </g>
@@ -87,20 +87,22 @@ input_file: samples/drawing_tiebar.lini
       <line x1="-393" y1="30" x2="-475.5" y2="30"/>
     </g>
     <g class="lini-node lini-dim-line lini-line" transform="translate(0,0)">
-      <line x1="-472.5" y1="-42.5" x2="-472.5" y2="42.5"/>
+      <line x1="-472.5" y1="-44" x2="-472.5" y2="44"/>
     </g>
     <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,0)">
-      <polygon points="-472.5,-30 -474.25,-40.5 -470.75,-40.5"/>
+      <polygon points="-472.5,-30 -474.5,-42 -470.5,-42"/>
     </g>
     <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,0)">
-      <polygon points="-472.5,30 -470.75,40.5 -474.25,40.5"/>
+      <polygon points="-472.5,30 -470.5,42 -474.5,42"/>
     </g>
-    <text class="lini-text" x="-480" y="0" style="font-weight: normal; font-size: 11px" transform="rotate(-90 -480 0)">⌀20 h6</text>
+    <text class="lini-text" x="-480.5" y="0" style="font-weight: normal; font-size: 12px" transform="rotate(-90 -480.5 0)">⌀20 h6</text>
     <g class="lini-node lini-dim-line lini-line" transform="translate(0,0)">
       <polyline points="-390,-32 -390,-48.5 -382,-48.5"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-390,-30 -393,-36 -387,-36"/>
     </g>
-    <text class="lini-text" x="-356.9" y="-48.5" style="font-weight: normal; font-size: 11px">M20×1.5</text>
+    <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,0)">
+      <polygon points="-390,-30 -392,-42 -388,-42"/>
+    </g>
+    <text class="lini-text" x="-354.8" y="-48.5" style="font-weight: normal; font-size: 12px">M20×1.5</text>
   </g>
   <g class="lini-links"/>
 </svg>
