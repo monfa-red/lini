@@ -48,7 +48,12 @@ pub(in crate::layout) fn layout_node(
     let bbox = primitives::closed_bbox(inst, extent, own)?;
     let half = inst.attrs.number("stroke-width").unwrap_or(0.0) / 2.0;
     place_pinned(&mut children, bbox.inflate(-half))?;
-    Ok(prim::container(inst, bbox, children))
+    let mut placed = prim::container(inst, bbox, children);
+    // The recentre moved the datum off the node's local zero — record where
+    // it landed, so `align/justify: origin` can line views up datum-to-datum
+    // [SPEC 12/15.8].
+    placed.origin = (-sx, -sy);
+    Ok(placed)
 }
 
 /// A **root** drawing (`{ layout: drawing; scale: 1 }`): the file is the sheet. Children

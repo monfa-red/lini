@@ -1506,14 +1506,28 @@ runs *across* it (cross axis). Both default `center`.
 | `start` / `center` / `end` | pack at the edge / centre / opposite | align each child to the edge / centre / opposite |
 | `stretch` | fills children to span the main axis | each child's **box** fills the cross axis |
 | `evenly` | equal gaps between and around children | (treated as `center`) |
+| `origin` | (treated as `center`) | children line up **origin-to-origin** |
 
 `stretch` fills the child's **box**, not its *content* (placed by the child's own
 `align`/`justify`, also `center`). `evenly` needs multiple children.
 
+**`align: origin` aligns what the boxes contain, not the boxes.** Every node has
+an **origin** — the bbox centre of an ordinary node, a `|sketch|`'s pen origin, a
+`pattern:`'s seed datum, a `|drawing|`'s datum ([SPEC 15.1](#151-the-container-the-datum--the-scale)) —
+and `origin` puts every child's origin on one shared cross-axis line (placed so the
+group still centres on the container). For ordinary children it *is* `center`; it
+differs exactly where a box is asymmetric about its origin — a view whose
+dimensions stack on one side — which is how a row of drawings shares one axis
+([SPEC 15.8](#158-assemblies-views-sheets--titles)). In a **grid**, both `align`
+and `justify` accept it: the cell puts the child's origin on its track centre, so
+one row of cells shares a horizontal axis and one column a vertical one — the
+projection-sheet arrangement. In a flow, `justify: origin` has no meaning along
+the sequence and reads as `center`.
+
 All of `align`/`justify`/`stretch`/`evenly` are **no-ops unless the container is
 larger than its packed children** — an auto-sized container has no slack to
-distribute. Slack comes from an explicit `width`/`height`, or a grid's fixed
-tracks.
+distribute (`origin` is the exception: it re-lines children even without slack).
+Slack comes from an explicit `width`/`height`, or a grid's fixed tracks.
 
 ### Grid — `columns` / `rows` / `cell` / `span`
 
@@ -2582,10 +2596,15 @@ language feature. Item balloons are `|balloon|` + a leader; the parts list is a 
 A multi-view sheet is ordinary layout: drawings in a `|row|` / `|grid|`, each view its
 own scope and `scale:` (a 2 : 1 detail still dims true,
 [15.1](#151-the-container-the-datum--the-scale)). There is no `|view|` type and no
-projection engine; alignment between views is the author's. **A drawing's smart label
-is its title, placed *below*** — it lowers to a `|footnote|` (the bottom-centred
-caption template), because drafting titles sit under the view:
-`|drawing| "SECTION A-A"`; style every title with `|drawing| |footnote| { … }`.
+projection engine; views **share their axes with `align: origin`**
+([SPEC 12](#12-flow--grid)) — a drawing's origin is its datum, so a row of views
+lines up datum-to-datum however their dimensions stack, and a grid with
+`align: origin; justify: origin` is the first- / third-angle arrangement.
+Projection *lines* between views stay deferred ([SPEC 23](#23-deferred)).
+**A drawing's smart label is its title, placed *below*** — it lowers to a
+`|footnote|` (the bottom-centred caption template), because drafting titles sit
+under the view: `|drawing| "SECTION A-A"`; style every title with
+`|drawing| |footnote| { … }`.
 
 **The sheet.** `|page|` gives the multi-view story its walls: the trimmed ISO 5457
 sheet as a **template container**, not a layout — inside its frame it is an ordinary
@@ -3631,8 +3650,8 @@ body:left (-) body:right { side: bottom }        // → 60
 ```
 
 ```
-|page#sheet| { sheet: a5 landscape; gap: 50; direction: row; } [
-  // the ISO sheet: frame, zones, marks
+|page#sheet| { sheet: a5 landscape; gap: 50; direction: row; align: origin; } [
+  // the ISO sheet: frame, zones, marks — views share their axes datum-to-datum
 
   |drawing#side| "DIN 912 — M8 × 40" [
     |sketch#screw| {
@@ -3661,7 +3680,7 @@ body:left (-) body:right { side: bottom }        // → 60
     // → M8×1.25 — composed by the thread
   ]
 
-  |drawing#end| { translate: 0 3.5; } [
+  |drawing#end| [
     |oval#od| { width: 13; height: 13; }
     // the head, end-on
     |hex#socket| { width: 7; height: 6; }

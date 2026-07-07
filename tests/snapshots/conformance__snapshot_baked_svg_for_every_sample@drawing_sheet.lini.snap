@@ -140,7 +140,7 @@ input_file: samples/drawing_sheet.lini
           <text class="lini-text" x="0" y="0">DIN 912 — M8 × 40</text>
         </g>
       </g>
-      <g class="lini-node lini-drawing lini-block" data-id="end" transform="translate(162,14)">
+      <g class="lini-node lini-drawing lini-block" data-id="end" transform="translate(162,15.5)">
         <rect x="-27" y="-37.5" width="54" height="75" rx="0" ry="0"/>
         <g class="lini-node lini-oval" data-id="od" transform="translate(0,-10.5)">
           <ellipse cx="0" cy="0" rx="26" ry="26"/>

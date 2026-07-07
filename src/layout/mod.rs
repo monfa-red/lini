@@ -474,6 +474,7 @@ fn layout_inst(
         gutters,
         links: Vec::new(),
         sketch: sketch_geo,
+        origin: (0.0, 0.0),
         span: inst.span,
     };
     if let Some(d) = sketch_d {

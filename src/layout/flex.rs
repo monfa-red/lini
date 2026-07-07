@@ -32,6 +32,10 @@ enum Cross {
     Center,
     End,
     Stretch,
+    /// Line children up **origin-to-origin** [SPEC 12]: a drawing's datum, a
+    /// sketch's pen origin, an ordinary box's centre — how a row of views
+    /// shares one axis [SPEC 15.8].
+    Origin,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -76,10 +80,17 @@ pub fn lay_out_flex(
 
     let packed = children.iter().map(|c| len(c, main_dim)).sum::<f64>() + gap * (n - 1.0);
     let main_extent = avail_main.map_or(packed, |a| a.max(packed));
-    let max_cross = children
-        .iter()
-        .map(|c| len(c, cross_dim))
-        .fold(0.0, f64::max);
+    // Origin alignment fixes every child's cross position (origins on one
+    // line), so the cross extent is that arrangement's union, not the widest
+    // child; the shared line then sits so the union stays centred.
+    let origin_line = (cross == Cross::Origin).then(|| origin_line(children, cross_dim));
+    let max_cross = match origin_line {
+        Some((_, union)) => union,
+        None => children
+            .iter()
+            .map(|c| len(c, cross_dim))
+            .fold(0.0, f64::max),
+    };
     let cross_extent = avail_cross.map_or(max_cross, |a| a.max(max_cross));
 
     // Cross stretch: each child whose cross dimension is unset fills the axis.
@@ -124,7 +135,11 @@ pub fn lay_out_flex(
     for c in children.iter_mut() {
         let m = len(c, main_dim);
         let main_center = cursor + m / 2.0;
-        let cross_center = align_cross(cross_extent, len(c, cross_dim), cross);
+        let cross_center = match origin_line {
+            // The box centre that puts this child's origin on the shared line.
+            Some((line, _)) => cross_mid(c, cross_dim) - cross_origin(c, cross_dim) + line,
+            None => align_cross(cross_extent, len(c, cross_dim), cross),
+        };
         place(c, axis, main_center, cross_center);
         cursor += m + inter;
     }
@@ -160,11 +175,46 @@ fn dim_set(c: &PlacedNode, dim: Dim) -> bool {
 }
 
 /// The child's cross-axis centre within `extent` for the given alignment.
+/// (`origin` is per-child and handled in the placement loop.)
 fn align_cross(extent: f64, child: f64, cross: Cross) -> f64 {
     match cross {
         Cross::Start => -extent / 2.0 + child / 2.0,
-        Cross::Center | Cross::Stretch => 0.0,
+        Cross::Center | Cross::Stretch | Cross::Origin => 0.0,
         Cross::End => extent / 2.0 - child / 2.0,
+    }
+}
+
+/// With every child's origin on one cross line, the group's union: returns
+/// `(line, extent)` — the line's coordinate that centres the union on the
+/// container, and the union's cross size. For all-ordinary children (origin =
+/// bbox centre) this degrades to plain `center`.
+fn origin_line(children: &[PlacedNode], cross_dim: Dim) -> (f64, f64) {
+    let (mut lo, mut hi) = (f64::INFINITY, f64::NEG_INFINITY);
+    for c in children {
+        let o = cross_origin(c, cross_dim);
+        let (min, max) = match cross_dim {
+            Dim::W => (c.bbox.min_x, c.bbox.max_x),
+            Dim::H => (c.bbox.min_y, c.bbox.max_y),
+        };
+        lo = lo.min(min - o);
+        hi = hi.max(max - o);
+    }
+    (-(lo + hi) / 2.0, hi - lo)
+}
+
+/// The node-local cross coordinate of a child's origin point.
+fn cross_origin(c: &PlacedNode, cross_dim: Dim) -> f64 {
+    match cross_dim {
+        Dim::W => c.origin.0,
+        Dim::H => c.origin.1,
+    }
+}
+
+/// The node-local cross coordinate of a child's bbox centre.
+fn cross_mid(c: &PlacedNode, cross_dim: Dim) -> f64 {
+    match cross_dim {
+        Dim::W => (c.bbox.min_x + c.bbox.max_x) / 2.0,
+        Dim::H => (c.bbox.min_y + c.bbox.max_y) / 2.0,
     }
 }
 
@@ -201,6 +251,7 @@ fn parse_cross(attrs: &AttrMap) -> Cross {
         Some("start") => Cross::Start,
         Some("end") => Cross::End,
         Some("stretch") => Cross::Stretch,
+        Some("origin") => Cross::Origin,
         _ => Cross::Center,
     }
 }
@@ -209,5 +260,77 @@ fn ident(v: Option<&ResolvedValue>) -> Option<&str> {
     match v {
         Some(ResolvedValue::Ident(s)) => Some(s.as_str()),
         _ => None,
+    }
+}
+
+#[cfg(test)]
+mod origin_tests {
+    use super::super::drawing::testutil::{by_id, laid};
+
+    /// A child's origin on the parent's cross axis: `cy + origin.y`.
+    fn origin_y(nodes: &[crate::layout::PlacedNode], id: &str) -> f64 {
+        let n = by_id(nodes, id);
+        n.cy + n.origin.1
+    }
+
+    #[test]
+    fn a_row_of_views_lines_up_datum_to_datum() {
+        // View `a` carries a bottom dim, so its bbox hangs below its datum;
+        // view `b` is bare. `align: center` would drift their axes apart —
+        // `align: origin` puts both datums on one line [SPEC 12/15.8].
+        let src = |align: &str| {
+            format!(
+                "|row#views| {{ align: {align} }} [\n  |drawing#a| {{ scale: 1 }} [\n    |oval#c1| {{ width: 20; height: 20 }}\n    c1:left (-) c1:right {{ side: bottom }}\n  ]\n  |drawing#b| {{ scale: 1 }} [ |oval#c2| {{ width: 30; height: 30 }} ]\n]\n"
+            )
+        };
+        let l = laid(&src("origin"));
+        let (a, b) = (origin_y(&l.nodes, "a"), origin_y(&l.nodes, "b"));
+        assert!((a - b).abs() < 1e-9, "datums share the line: {a} vs {b}");
+        let c = laid(&src("center"));
+        let (a, b) = (origin_y(&c.nodes, "a"), origin_y(&c.nodes, "b"));
+        assert!((a - b).abs() > 1.0, "centre alignment drifts: {a} vs {b}");
+    }
+
+    #[test]
+    fn a_sketch_aligns_by_its_pen_origin() {
+        // The profile sits entirely above its axis, so its box is asymmetric
+        // about the pen origin; a plain box's origin is its centre.
+        let l = laid(
+            "|row#r| { align: origin } [\n  |sketch#s| { draw: move(0, 0) up(10) right(20) down(10) }\n  |box#plain| { width: 20; height: 20 }\n]\n",
+        );
+        let s = by_id(&l.nodes, "s");
+        let plain = by_id(&l.nodes, "plain");
+        assert!(
+            (s.cy - plain.cy).abs() < 1e-9,
+            "pen origin on the box's centre line: {} vs {}",
+            s.cy,
+            plain.cy
+        );
+        assert!(
+            s.cy + s.bbox.max_y < plain.cy + plain.bbox.max_y - 5.0,
+            "the profile's body rides above the shared line"
+        );
+    }
+
+    #[test]
+    fn ordinary_children_degrade_to_center() {
+        let of = |align: &str| {
+            let l = laid(&format!(
+                "|row#r| {{ align: {align} }} [\n  |box#a| \"A\"\n  |box#b| {{ width: 40; height: 60 }}\n]\n"
+            ));
+            (by_id(&l.nodes, "a").cy, by_id(&l.nodes, "b").cy)
+        };
+        assert_eq!(of("origin"), of("center"));
+    }
+
+    #[test]
+    fn a_grid_origin_row_shares_an_axis() {
+        // Both views sit in one grid row: `justify: origin` (the vertical
+        // axis) puts each datum on its row's centre line [SPEC 12].
+        let l = laid(
+            "|grid#g| { columns: auto auto; justify: origin } [\n  |drawing#a| { scale: 1 } [\n    |oval#c1| { width: 20; height: 20 }\n    c1:left (-) c1:right { side: bottom }\n  ]\n  |drawing#b| { scale: 1 } [ |oval#c2| { width: 30; height: 30 } ]\n]\n",
+        );
+        let (a, b) = (origin_y(&l.nodes, "a"), origin_y(&l.nodes, "b"));
+        assert!((a - b).abs() < 1e-9, "row shares the axis: {a} vs {b}");
     }
 }

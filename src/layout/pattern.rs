@@ -170,6 +170,7 @@ fn empty_like(n: &PlacedNode) -> PlacedNode {
         gutters: Vec::new(),
         links: Vec::new(),
         sketch: None,
+        origin: (0.0, 0.0),
         span: n.span,
     }
 }

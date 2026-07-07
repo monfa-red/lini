@@ -4,8 +4,8 @@
 // end view is ordinary concentric geometry; the |title-block| seats itself
 // flush inside the frame's bottom-right corner, fields as plain cells.
 
-|page#sheet| { sheet: a5 landscape; gap: 50; direction: row; } [
-  // the ISO sheet: frame, zones, marks
+|page#sheet| { sheet: a5 landscape; gap: 50; direction: row; align: origin; } [
+  // the ISO sheet: frame, zones, marks — views share their axes datum-to-datum
 
   |drawing#side| "DIN 912 — M8 × 40" [
     |sketch#screw| {
@@ -34,7 +34,7 @@
     // → M8×1.25 — composed by the thread
   ]
 
-  |drawing#end| { translate: 0 3.5; } [
+  |drawing#end| [
     |oval#od| { width: 13; height: 13; }
     // the head, end-on
     |hex#socket| { width: 7; height: 6; }

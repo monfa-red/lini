@@ -124,12 +124,23 @@ pub fn lay_out_grid(
         }
 
         // Pack the box in its track per the column alignment (a filled box centres —
-        // its size equals the track).
+        // its size equals the track). `origin` puts the child's **origin** on the
+        // track's centre instead of its bbox [SPEC 12] — cells in one row or
+        // column then share an axis, the projection-sheet arrangement
+        // [SPEC 15.8].
         let (cw, ch) = (child.bbox.w(), child.bbox.h());
         let cell_cx = pack(col_h, x0, x1, cw) - total_w / 2.0;
         let cell_cy = pack(col_v, y0, y1, ch) - total_h / 2.0;
-        let off_x = (child.bbox.min_x + child.bbox.max_x) / 2.0;
-        let off_y = (child.bbox.min_y + child.bbox.max_y) / 2.0;
+        let off_x = if col_h == Some("origin") {
+            child.origin.0
+        } else {
+            (child.bbox.min_x + child.bbox.max_x) / 2.0
+        };
+        let off_y = if col_v == Some("origin") {
+            child.origin.1
+        } else {
+            (child.bbox.min_y + child.bbox.max_y) / 2.0
+        };
         child.cx = cell_cx - off_x;
         child.cy = cell_cy - off_y;
 

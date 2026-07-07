@@ -172,6 +172,12 @@ pub struct PlacedNode {
     /// read it; `None` for everything but a `|sketch|`. Shared, not cloned:
     /// a `pattern:` copies the whole body.
     pub sketch: Option<std::sync::Arc<super::drawing::SketchGeo>>,
+    /// The node-local coordinates of the node's **origin** — the point
+    /// `align/justify: origin` lines up across siblings [SPEC 12]. `(0, 0)`
+    /// for everything ordinary (the bbox centre of a symmetric node, a
+    /// `|sketch|`'s pen origin, a pattern's seed datum); a `|drawing|` that
+    /// recentres its interior records where the datum landed [SPEC 15.1].
+    pub origin: (f64, f64),
     pub span: Span,
 }
 

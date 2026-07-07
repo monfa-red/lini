@@ -28,6 +28,7 @@ fn node(kind: NodeKind, bbox: Bbox) -> PlacedNode {
         gutters: Vec::new(),
         links: Vec::new(),
         sketch: None,
+        origin: (0.0, 0.0),
         span: Span::empty(),
     }
 }
@@ -246,6 +247,7 @@ pub fn container(inst: &ResolvedInst, bbox: Bbox, children: Vec<PlacedNode>) -> 
         gutters: Vec::new(),
         links: Vec::new(),
         sketch: None,
+        origin: (0.0, 0.0),
         span: inst.span,
     }
 }

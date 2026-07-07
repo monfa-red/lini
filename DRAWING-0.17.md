@@ -200,6 +200,30 @@ Append-only, per PLAN.md's rule.
     centre bore rides the `[ ]`, its redundant centerline removed by the
     cascade in the stylesheet). Tie bar matches SPEC 24 fully only after
     stage 2 adds `thread:`.
+- **2026-07-07 — `align: origin` / `justify: origin` landed** (all gates
+  green — 750 tests — clippy silent, fmt clean; the A5 sheet PNG-rendered:
+  the end view's centre sits on the side view's axis with the hand
+  `translate:` gone). Closes the cross-view alignment thread:
+  - **`PlacedNode.origin`** — the node-local coordinates of the node's
+    origin point, `(0, 0)` by default. That default is already correct for
+    everything ordinary: a symmetric node's local zero *is* its bbox centre,
+    a `|sketch|`'s is its pen origin, a pattern carrier's its seed datum.
+    The one writer is the drawing engine, which records where the datum
+    landed when it recentres its interior (`origin = (-sx, -sy)`).
+  - **Flex**: `Cross::Origin` — every child's origin lands on one shared
+    cross line, placed so the union still centres on the container
+    (`origin_line` computes the union; per-child placement solves
+    `cross_mid − origin + line`). Cross extent is the arrangement's union,
+    not the widest child. `justify: origin` along a flow's main axis is
+    meaningless and reads as `center` (SPEC 12 says so).
+  - **Grid**: `origin` in a track's `align`/`justify` puts the child's
+    origin on the track centre — one row of cells shares a horizontal
+    axis, one column a vertical one: the first-/third-angle projection
+    arrangement, no new layout.
+  - SPEC 12 gained the value row + prose; SPEC 15.8's "alignment between
+    views is the author's" became "views share their axes with
+    `align: origin`". `drawing_sheet.lini` drops the hand `translate:` for
+    `align: origin` on the page; SPEC 24 synced byte-for-byte.
 - **2026-07-06 — Abbas's sheet review** (same day; all gates green — 751
   tests — clippy silent, fmt clean; the revised A5 sheet PNG-rendered and
   inspected edge to edge). Two follow-ups:
