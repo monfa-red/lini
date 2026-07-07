@@ -200,6 +200,15 @@ Append-only, per DRAWING-0.16.md's rule.
     centre bore rides the `[ ]`, its redundant centerline removed by the
     cascade in the stylesheet). Tie bar matches SPEC 24 fully only after
     stage 2 adds `thread:`.
+- **2026-07-07 — reference-band details** (Abbas's follow-up; gates green,
+  the A5 band re-inspected): `|tick|`s read `--stroke` (the definite line
+  tone — the labels stay `--stroke-light`); the **middle divider is not
+  drawn** (zone counts are even, so it always coincided with the centring
+  mark — the doubled line is gone); the **left centring mark starts at its
+  band** instead of the trimmed edge, so the filing strip is truly empty
+  end to end. The divider length stays the full 10 mm band — it *is* the
+  ISO margin (39.5 px = 10 mm × scale 4 − the half-stroke cap), not a
+  tunable.
 - **2026-07-07 — post-release sheet polish** (Abbas's session-close round,
   against the Fusion `tie_bar.pdf` reference; all gates green, the A5 sheet
   re-inspected):

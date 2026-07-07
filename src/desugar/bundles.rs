@@ -278,7 +278,7 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
         ],
         "zone" => vec![n("font-size", 9.0), var("color", "stroke-light")],
         "tick" => vec![
-            var("stroke", "stroke-light"),
+            var("stroke", "stroke"),
             n("stroke-width", 1.0),
             id("fill", "none"),
         ],

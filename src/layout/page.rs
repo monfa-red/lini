@@ -149,7 +149,10 @@ pub(super) fn finish(children: &mut [PlacedNode], sheet: Bbox, s: f64) {
                 let (a, b) = match edge {
                     "top" => ((0.0, y0 + half), (0.0, fy0 + MARK_INTO * s)),
                     "bottom" => ((0.0, fy1 - MARK_INTO * s), (0.0, y1 - half)),
-                    "left" => ((x0 + half, 0.0), (fx0 + MARK_INTO * s, 0.0)),
+                    // The left mark starts at its reference band, not the
+                    // trimmed edge — the filing strip stays truly empty,
+                    // matching the dividers [SPEC 15.8].
+                    "left" => ((fx0 - MARGIN * s, 0.0), (fx0 + MARK_INTO * s, 0.0)),
                     _ => ((fx1 - MARK_INTO * s, 0.0), (x1 - half, 0.0)),
                 };
                 set_line(c, a, b);

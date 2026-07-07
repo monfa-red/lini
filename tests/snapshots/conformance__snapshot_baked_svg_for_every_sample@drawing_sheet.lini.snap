@@ -31,7 +31,7 @@ input_file: samples/drawing_sheet.lini
     .lini .lini-title-block { stroke-width: 1; font-size: 11px; }
     .lini .lini-frame { fill: none; stroke: #444; stroke-width: 2; }
     .lini .lini-zone { color: rgba(0, 0, 0, 0.545); font-size: 9px; }
-    .lini .lini-tick { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
+    .lini .lini-tick { fill: none; stroke: #444; stroke-width: 1; }
     .lini .lini-marker { fill: #444; stroke: none; }
     .lini .lini-marker-dim { fill: black; }
   </style>
@@ -240,7 +240,7 @@ input_file: samples/drawing_sheet.lini
         <line x1="0" y1="236" x2="0" y2="295.5"/>
       </g>
       <g class="lini-node lini-tick lini-line" transform="translate(0,0)">
-        <line x1="-419.5" y1="0" x2="-320" y2="0"/>
+        <line x1="-380" y1="0" x2="-320" y2="0"/>
       </g>
       <g class="lini-node lini-tick lini-line" transform="translate(0,0)">
         <line x1="360" y1="0" x2="419.5" y2="0"/>

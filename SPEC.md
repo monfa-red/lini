@@ -792,7 +792,7 @@ the cascade ([SPEC 4](#4-selectors-cascade--specificity)) — every value here i
 | `\|title-block\|` | `\|table\|` | `font-size: 11; stroke-width: 1` | The ISO 7200 **title block** — a table the `\|page\|` seats flush inside its frame's bottom-right corner ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `\|frame\|` | `\|rect\|` | `fill: none; stroke: --stroke; stroke-width: 2` | A sheet's **frame** — the thick border a `\|page\|` generates at the ISO margins ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `\|zone\|` | `\|block\|` | `font-size: 9; color: --stroke-light` | A **zone reference** label (1, 2… / A, B…) a `\|page\|` generates in the margin band ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
-| `\|tick\|` | `\|line\|` | `stroke: --stroke-light; stroke-width: 1; fill: none` — needs `points:` | A zone **divider** / **centring mark** a `\|page\|` generates ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
+| `\|tick\|` | `\|line\|` | `stroke: --stroke; stroke-width: 1; fill: none` — needs `points:` | A zone **divider** / **centring mark** a `\|page\|` generates ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 
 The bare `|block|` is the base everything rectangular builds on — frameless, yet a real
 box (id, class, children, wirable, positionable): what you reach for to wrap text that
@@ -2650,7 +2650,9 @@ count per edge (A4 4 × 6, A3 8 × 6, A0 24 × 16) — numbered `1…` left-to-r
 top and bottom and lettered `A…` top-to-bottom along both sides, drawn as `|zone|`
 labels and `|tick|` dividers in the **reference band**: the 10 mm beside the frame
 on every side, so the references read alike all round and the filing margin's
-extra 10 mm stays truly empty; and the four centring marks. The
+extra 10 mm stays truly empty; and the four centring marks — each crossing the
+frame at an edge's midpoint (the middle divider, which would coincide, is not
+drawn; the left mark starts at its band, keeping the filing strip empty). The
 content area is the frame inset by 5 mm (`padding:` adds to it). A
 **`|title-block|`** child (ISO 7200 — a `|table|`, [SPEC 8](#8-templates)) is seated
 by **type**, flush inside the frame's bottom-right corner; its fields are ordinary
