@@ -87,7 +87,7 @@ pub enum NodeKind {
     Icon,
     Image,
     /// The sketch pen [SPEC 15.3] — a closed primitive folding `draw:` to a
-    /// path. Geometry lands per PLAN.md stage 2; until then layout reports it.
+    /// path. Geometry lands per DRAWING-0.16.md stage 2; until then layout reports it.
     Sketch,
 }
 

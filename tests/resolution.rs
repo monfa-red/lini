@@ -273,7 +273,7 @@ fn a_name_value_stays_a_bare_ident() {
 
 // ─────────────────────────── Drawing gates [SPEC 15, 20] ───────────────────────────
 //
-// Stage 1 (PLAN.md): the whole drawing vocabulary parses and resolves; the ops,
+// Stage 1 (DRAWING-0.16.md): the whole drawing vocabulary parses and resolves; the ops,
 // `tol:`, and the wider anchor set are gated to a `layout: drawing` scope; a
 // drawing never auto-creates. The engine itself lands in stage 3, so a valid
 // drawing file passes `check` (resolve) and errors only at full compile.

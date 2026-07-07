@@ -1,10 +1,10 @@
 # DRAWING-0.17 — sheets, turned parts & threads (design)
 
 The second drawing round, designed with Abbas on 2026-07-06 (this file is the
-record — the session brainstormed against SPEC 15 as built and PLAN.md's
+record — the session brainstormed against SPEC 15 as built and DRAWING-0.16.md's
 execution log). **Stage 0 amends SPEC 15; the amended spec is the contract**,
-exactly as SPEC 15 was for PLAN.md; this file holds the settled decisions, the
-build order, and the execution log. The quality bar is PLAN.md's, verbatim.
+exactly as SPEC 15 was for DRAWING-0.16.md; this file holds the settled decisions, the
+build order, and the execution log. The quality bar is DRAWING-0.16.md's, verbatim.
 
 Scope: the `|page|` sheet container, `|title-block|`, `|hidden|` geometry,
 `revolve:` with the edge-line law, and `thread:` on sketches and holes.
@@ -111,7 +111,7 @@ end view `|oval|` + `|hex|`, later hosted on an A4 `|page|` with a
 
 ## Stages
 
-Each stage ends green per PLAN.md's bar (fmt, test, clippy, snapshots
+Each stage ends green per DRAWING-0.16.md's bar (fmt, test, clippy, snapshots
 reviewed, new samples PNG-rendered via resvg and looked at); one purposeful
 commit per stage; append to the execution log.
 
@@ -165,7 +165,7 @@ commit per stage; append to the execution log.
 
 ## Execution log
 
-Append-only, per PLAN.md's rule.
+Append-only, per DRAWING-0.16.md's rule.
 
 - **2026-07-06 — stage 1 landed** (same session; all suites green — 735
   tests — clippy silent, fmt clean; shaft / tie bar / pump / barrel
@@ -342,7 +342,7 @@ Append-only, per PLAN.md's rule.
     broke its descendant drawings' link scoping ("'(o)' belongs in a
     'layout: drawing'") — the known lifted-prefix limitation. The sample
     and SPEC 24 example carry `|page#sheet|`; the real fix stays with the
-    deferred core-scoping session (PLAN.md's open thread).
+    deferred core-scoping session (DRAWING-0.16.md's open thread).
   - Samples: `drawing_sheet.lini` — SPEC 24's sheeted DIN 912,
     byte-for-byte. README's drawings section now names revolve, thread,
     and the sheet.

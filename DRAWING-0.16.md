@@ -1,4 +1,6 @@
-# PLAN — `layout: drawing` (SPEC 15)
+# DRAWING-0.16 — `layout: drawing` (SPEC 15)
+
+*(Renamed from `PLAN.md` — every drawing round is one versioned doc.)*
 
 The implementation plan for engineering drawings, against **SPEC.md as of commit
 `520e49c`** (drawings are SPEC 15; Part III is 16–24). SPEC 15 is the contract; this
