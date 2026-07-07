@@ -206,9 +206,11 @@ Append-only, per DRAWING-0.16.md's rule.
   drawn** (zone counts are even, so it always coincided with the centring
   mark — the doubled line is gone); the **left centring mark starts at its
   band** instead of the trimmed edge, so the filing strip is truly empty
-  end to end. The divider length stays the full 10 mm band — it *is* the
-  ISO margin (39.5 px = 10 mm × scale 4 − the half-stroke cap), not a
-  tunable.
+  end to end. The divider length is now **exactly the 10 mm band**
+  (40 px at scale 4): the old 39.5 was an over-conservative half-stroke
+  inset — butt caps never poke past their endpoint, so the geometry runs
+  the full band and only the bbox clamps to the sheet (the canvas stays
+  exact).
 - **2026-07-07 — post-release sheet polish** (Abbas's session-close round,
   against the Fusion `tie_bar.pdf` reference; all gates green, the A5 sheet
   re-inspected):

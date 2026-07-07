@@ -104,13 +104,22 @@ pub(super) fn finish(children: &mut [PlacedNode], sheet: Bbox, s: f64) {
                 .insert("points", ResolvedValue::List(vec![point(a), point(b)]));
             c.cx = 0.0;
             c.cy = 0.0;
-            c.bbox = Bbox {
+            // Butt caps end exactly at the endpoint, so a tick may run the
+            // full band to the trimmed edge; only the bbox (stroke inflated
+            // sideways) clamps to the sheet, keeping the canvas exact.
+            let b = Bbox {
                 min_x: a.0.min(b.0),
                 min_y: a.1.min(b.1),
                 max_x: a.0.max(b.0),
                 max_y: a.1.max(b.1),
             }
             .inflate(half);
+            c.bbox = Bbox {
+                min_x: b.min_x.max(x0),
+                min_y: b.min_y.max(y0),
+                max_x: b.max_x.min(x1),
+                max_y: b.max_y.min(y1),
+            };
         };
         match marker(&c.attrs) {
             Some(Marker::Frame) => {
@@ -124,11 +133,11 @@ pub(super) fn finish(children: &mut [PlacedNode], sheet: Bbox, s: f64) {
                 let (a, b) = match edge {
                     "top" => {
                         let x = x0 + (i as f64) * w / cols as f64;
-                        ((x, y0 + half), (x, fy0))
+                        ((x, y0), (x, fy0))
                     }
                     "bottom" => {
                         let x = x0 + (i as f64) * w / cols as f64;
-                        ((x, fy1), (x, y1 - half))
+                        ((x, fy1), (x, y1))
                     }
                     "left" => {
                         // The reference band is the 10 mm margin on every
@@ -140,20 +149,20 @@ pub(super) fn finish(children: &mut [PlacedNode], sheet: Bbox, s: f64) {
                     }
                     _ => {
                         let y = y0 + (i as f64) * h / rows as f64;
-                        ((fx1, y), (x1 - half, y))
+                        ((fx1, y), (x1, y))
                     }
                 };
                 set_line(c, a, b);
             }
             Some(Marker::Mark(edge)) => {
                 let (a, b) = match edge {
-                    "top" => ((0.0, y0 + half), (0.0, fy0 + MARK_INTO * s)),
-                    "bottom" => ((0.0, fy1 - MARK_INTO * s), (0.0, y1 - half)),
+                    "top" => ((0.0, y0), (0.0, fy0 + MARK_INTO * s)),
+                    "bottom" => ((0.0, fy1 - MARK_INTO * s), (0.0, y1)),
                     // The left mark starts at its reference band, not the
                     // trimmed edge — the filing strip stays truly empty,
                     // matching the dividers [SPEC 15.8].
                     "left" => ((fx0 - MARGIN * s, 0.0), (fx0 + MARK_INTO * s, 0.0)),
-                    _ => ((fx1 - MARK_INTO * s, 0.0), (x1 - half, 0.0)),
+                    _ => ((fx1 - MARK_INTO * s, 0.0), (x1, 0.0)),
                 };
                 set_line(c, a, b);
             }

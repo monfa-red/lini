@@ -161,13 +161,15 @@ pub(super) fn chrome_children(style: &[Decl], at: Span) -> Vec<Node> {
         vec![Value::Ident("frame".into())],
         None,
     )];
+    // Zone counts are even, so the middle divider always lands exactly on a
+    // centring mark — skip it, the mark serves (no doubled line).
     for (edge, n) in [("top", cols), ("bottom", cols)] {
-        for i in 1..n {
+        for i in (1..n).filter(|i| *i != n / 2) {
             out.push(tick(at, edge, i));
         }
     }
     for (edge, n) in [("left", rows), ("right", rows)] {
-        for i in 1..n {
+        for i in (1..n).filter(|i| *i != n / 2) {
             out.push(tick(at, edge, i));
         }
     }
