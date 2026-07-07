@@ -1,7 +1,8 @@
 //! The sketch pen [SPEC 15.3]: fold a `|sketch|`'s structured `draw:` items
-//! (kept as [`ResolvedValue::PenCall`] / [`PenSegment`] by resolve) into
-//! [`Subpath`]s, apply corner modifiers and `mirror:`, collect the authored
-//! `:segment`s, and emit the SVG `d` + geometry bbox.
+//! (kept as [`ResolvedValue::PenCall`] by resolve — a `:segment` always glues
+//! to a call, stations via `point():name`) into [`Subpath`]s, apply corner
+//! modifiers and `mirror:`, collect the authored `:segment`s, and emit the
+//! SVG `d` + geometry bbox.
 //!
 //! Errors follow SPEC 20 verbatim where a message is specified there.
 
@@ -76,7 +77,6 @@ pub fn fold(inst: &ResolvedInst, scale: f64) -> Result<Folded, Error> {
     for item in items {
         match item {
             ResolvedValue::PenCall { call, segment } => pen.call(call, segment.as_deref())?,
-            ResolvedValue::PenSegment(name) => pen.point_segment(name)?,
             _ => {
                 return Err(Error::at(
                     span,
@@ -237,20 +237,14 @@ impl Pen {
         Ok(())
     }
 
-    /// A freestanding `:segment` — the pen's current point; at a modifier corner
-    /// it records the theoretical sharp corner, in either order [SPEC 15.3].
-    fn point_segment(&mut self, name: &str) -> Result<(), Error> {
-        if self.start.is_none() && !self.just_closed {
-            return Err(self.err("the pen starts with move(x, y)"));
-        }
-        self.segment(name, Segment::Point(self.pos))
-    }
-
     fn call(&mut self, call: &ResolvedCall, segment: Option<&str>) -> Result<(), Error> {
         // Only the corner modifiers (and a name / new subpath) may follow a
         // close() — the pen returned to the seam [SPEC 15.3].
         if self.just_closed
-            && !matches!(call.name.as_str(), "fillet" | "chamfer" | "move" | "circle")
+            && !matches!(
+                call.name.as_str(),
+                "fillet" | "chamfer" | "move" | "circle" | "point"
+            )
         {
             return Err(self.err("after close(), start the next subpath with move()"));
         }
@@ -258,9 +252,9 @@ impl Pen {
             "move" => {
                 let [x, y] = self.nums::<2>(call, "'move' takes (x, y)")?;
                 if segment.is_some() {
-                    return Err(self.err(
-                        "'move' takes no segment — name its landing with a freestanding ':segment'",
-                    ));
+                    return Err(
+                        self.err("'move' takes no segment — name its landing with point():name")
+                    );
                 }
                 self.flush()?;
                 self.start = Some((x, y));
@@ -312,6 +306,23 @@ impl Pen {
                 if let Some(nm) = segment {
                     self.segment(nm, Segment::Edge(from, to))?;
                 }
+            }
+            "point" => {
+                // A station [SPEC 15.3]: record the pen's current point under
+                // the attached `:segment` — draws nothing, changes nothing;
+                // beside a pending `fillet` / `chamfer` (either order) the
+                // position is still the theoretical sharp corner, the point
+                // drafting measures.
+                self.nums::<0>(call, "'point()' takes no arguments")?;
+                if self.start.is_none() && !self.just_closed {
+                    return Err(self.err("the pen starts with move(x, y)"));
+                }
+                let Some(nm) = segment else {
+                    return Err(
+                        self.err("'point()' names the pen's position — attach a ':segment'")
+                    );
+                };
+                self.segment(nm, Segment::Point(self.pos))?;
             }
             "fillet" | "chamfer" => {
                 let msg = format!("'{}' modifies the corner between two segments", call.name);
@@ -636,6 +647,25 @@ mod tests {
     }
 
     #[test]
+    fn point_names_a_station_and_needs_its_segment() {
+        // `point():v` records the pen's current point — draws nothing, moves
+        // nothing [SPEC 15.3]; bare `point()` and a pre-move station error.
+        let f = folded("draw: move(-10, 0) right(20) point():v right(20) down(5);");
+        assert!(matches!(
+            f.segments.iter().find(|(n, _)| n == "v"),
+            Some((_, Segment::Point((10.0, 0.0))))
+        ));
+        assert_eq!(
+            fold_err("draw: move(0, 0) right(10) point() down(5);"),
+            "'point()' names the pen's position — attach a ':segment'"
+        );
+        assert_eq!(
+            fold_err("draw: point():v move(0, 0) right(10);"),
+            "the pen starts with move(x, y)"
+        );
+    }
+
+    #[test]
     fn a_rectangle_profile_folds_and_closes() {
         let f = folded("draw: move(0, 0) right(40) down(20) left(40) close();");
         assert_eq!(f.d, "M 0 0 L 40 0 L 40 20 L 0 20 Z");
@@ -659,7 +689,7 @@ mod tests {
 
     #[test]
     fn segments_collect_the_drawn_vocabulary() {
-        let f = folded("draw: move(0, 0) right(40):flat :station down(10) circle(4):bore;");
+        let f = folded("draw: move(0, 0) right(40):flat point():station down(10) circle(4):bore;");
         let get = |n: &str| {
             f.segments
                 .iter()

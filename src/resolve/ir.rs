@@ -210,8 +210,6 @@ pub enum ResolvedValue {
         call: ResolvedCall,
         segment: Option<String>,
     },
-    /// A freestanding `:segment` pen item — names the pen's current point.
-    PenSegment(String),
 }
 
 impl ResolvedValue {

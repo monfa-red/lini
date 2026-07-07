@@ -213,10 +213,9 @@ pub enum Value {
     /// number or a point at resolve.
     Expr(String),
     /// `right(50):segment` — a pen call naming its drawn segment; parsed only
-    /// inside a `draw:` value [SPEC 15.3, 21].
+    /// inside a `draw:` value [SPEC 15.3, 21]. A `:segment` always glues to a
+    /// call — a station is `point():name` [SPEC 15.3].
     NamedCall(Call, String),
-    /// A freestanding `:segment` — the pen's current point; `draw:` only.
-    PointName(String),
     /// A space-separated run inside **one call-argument slot** —
     /// `hatch(45 -45, 6)`'s angle group [SPEC 10.3]. Never nests.
     Group(Vec<Value>),

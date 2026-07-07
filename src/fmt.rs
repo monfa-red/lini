@@ -662,10 +662,6 @@ impl Emitter<'_> {
                 self.out.push(':');
                 self.out.push_str(name);
             }
-            Value::PointName(name) => {
-                self.out.push(':');
-                self.out.push_str(name);
-            }
             // A space-group in one call-arg slot (`hatch(45 -45, 6)`).
             Value::Group(items) => {
                 for (i, item) in items.iter().enumerate() {

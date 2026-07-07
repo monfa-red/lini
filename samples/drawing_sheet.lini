@@ -9,8 +9,8 @@
 
   |drawing#side| "DIN 912 — M8 × 40" { scale: 6; } [
     |sketch#screw| {
-      draw: move(0, 0) up(6.5) right(8):head :k down(2.5) right(12) :v
-            right(28):m8 chamfer(1) down(4);
+      draw: move(0, 0) up(6.5) right(8):head point():k down(2.5) right(12)
+            point():v right(28):m8 chamfer(1) down(4);
       revolve: x-axis;
       // a turned part
       thread: m8 1.25;

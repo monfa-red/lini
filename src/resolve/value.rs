@@ -154,7 +154,6 @@ fn resolve_pen(
                 call: fold_call_args(c, span, funcs)?,
                 segment: Some(segment.clone()),
             },
-            Value::PointName(name) => ResolvedValue::PenSegment(name.clone()),
             _ => {
                 return Err(Error::at(
                     span,
@@ -276,7 +275,7 @@ fn resolve_scalar(
             ResolvedValue::Tuple(out)
         }
         // Pen items are parsed only inside `draw:`, which resolves above.
-        Value::NamedCall(..) | Value::PointName(_) => {
+        Value::NamedCall(..) => {
             return Err(Error::at(
                 span,
                 "a ':segment' pen item belongs in a 'draw:' value",

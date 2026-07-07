@@ -2197,6 +2197,7 @@ stylesheet constant reads bare in the fence (`right(`w/2`)`,
 | `curve(dx1, dy1, dx2, dy2, dx, dy)` | a relative cubic bézier (the advanced 10 %) |
 | `fillet(r)` / `chamfer(c)` | **corner modifiers** between two segments — trim both legs (`chamfer` cuts `c` back along each; on a square corner, the 45° bevel) and join with a tangent arc / a straight bevel. They draw nothing alone and error anywhere but at a corner. |
 | `circle(r)` | a circle subpath centred on the current point; the point and heading are unchanged |
+| `point()` | record the pen's **current point** under its attached `:segment` — a station; draws nothing, changes nothing |
 | `close()` | close the current subpath. **A closed path is cyclic**: a modifier may sit on either side of `close()` — `fillet(3) close()` rounds the corner where the last segment meets the seam, `close() fillet(3)` the one where the seam meets the first segment. |
 
 **Coordinates.** The pen's frame keeps the core orientation — y grows **down**, like
@@ -2215,19 +2216,20 @@ semantics).
 #### `:segment` — the point sigil in the pen
 
 Anything the pen draws can carry a **segment name**, written with the point sigil
-([15.2](#152-anchors)) in two positions of one rule:
+([15.2](#152-anchors)) **glued to its call** — one rule, two readings:
 
-| Position | Names | Example |
+| On | Names | Example |
 |---|---|---|
-| **attached** — glued to a call | that call's drawn segment: an edge, an arc, a bevel, a circle, a `close()` seam | `right(50):neck`, `fillet(3):r1` |
-| **freestanding** — between calls | the pen's **current point** | `right(38):thread :m1 right(32)` — a station with no drawn edge |
+| a drawing call | that call's drawn segment: an edge, an arc, a bevel, a circle, a `close()` seam | `right(50):neck`, `fillet(3):r1` |
+| `point()` | the pen's **current point** | `right(38):thread point():m1 right(32)` — a station with no drawn edge |
 
 The names are **yours**, not vocabulary — `neck`, `r1`, `m1` above are examples. A
-freestanding `:segment` draws nothing and changes nothing; at a `fillet` / `chamfer`
-corner it records the **theoretical sharp corner** — the point drafting measures (the
-arc itself is named on the modifier), and the two may sit in either order. `move()`
-takes no segment — name its landing freestanding (`move(-90, 0) :origin`). A
-duplicate segment in one `draw:` is an error.
+`:segment` **always glues to a call**: a floating `:name` is an error — it would sit
+one space away from silently renaming the run instead of the point. `point()` draws
+nothing and changes nothing; beside a `fillet` / `chamfer` (either order) it records
+the **theoretical sharp corner** — the point drafting measures (the arc itself is
+named on the modifier). `move()` takes no segment — name its landing with `point()`
+(`move(-90, 0) point():origin`). A duplicate segment in one `draw:` is an error.
 
 #### `mirror:` — draw half, get the whole
 
@@ -3188,6 +3190,8 @@ Format: `filename:line:col: error: <message>` (LSP-compatible), compile-time, wi
 | `\|hole\|` / `\|pitch-circle\|` without `width:` | `'\|hole\|' requires 'width' — its diameter` |
 | Unknown pen call / arity | `unknown draw call 'X'` / `'arc' takes (dx, dy, r) or (r, deg)` |
 | `fillet` / `chamfer` off a corner | `'fillet' modifies the corner between two segments` |
+| Floating `:segment` | `a ':segment' glues to its call — name a station with point():v` |
+| Bare `point()` | `'point()' names the pen's position — attach a ':segment'` |
 | Arc radius too small | `arc radius N is smaller than half the chord` |
 | Bad `mirror:` item | `'mirror' takes x-axis, y-axis, or a bearing` |
 | Bad `break:` group | `'break' takes two stations 'a b' — a < b — and an optional x-axis / y-axis` |
@@ -3274,7 +3278,7 @@ endpoint    = ident { "." ident } [ ":" point ]
 point       = "top" | "bottom" | "left" | "right"    # + corners, center, authored segments
                                                      #   in a drawing scope (SPEC 15.2)
 pen_item    = call [ ":" ident ]                     # a draw: item — a pen call, optionally
-            | ":" ident                              #   naming its product / the pen point
+                                                     #   naming its product (point(): a station)
 
 label_block = "[" { text } "]"                       # canonical labels — styleable text leaves
 
@@ -3603,14 +3607,14 @@ sheeted screw** ([SPEC 15](#15-drawing)):
 
 |sketch#bar| {                                   // a 300 mm tie bar, drawn true
   draw: move(-150, 0) up(10) chamfer(1.5)
-        right(40):m20 :a right(260) chamfer(1.5) down(10);
+        right(40):m20 point():a right(260) chamfer(1.5) down(10);
   revolve: x-axis;                               // a turned part: axis + edge lines
   thread: m20 1.5;                               // minor line + thread-end line
   break: -80 60;                                 // cut the boring middle from the view
 }
 
 bar:left (-) bar:right { side: bottom }          // → 300 mm — true, across the break
-bar:left (-) bar:a     { side: top }             // → 40 mm — ':a' is a freestanding segment
+bar:left (-) bar:a     { side: top }             // → 40 mm — ':a' is a point() station
 bar:m20 (o) { side: left; tol: h6 }              // → ⌀20 h6 — doubled about the axis
 bar:m20 <- { side: top }                         // → M20×1.5 — the thread composes its spec
 ```
@@ -3671,8 +3675,8 @@ body:left (-) body:right { side: bottom }        // → 60
 
   |drawing#side| "DIN 912 — M8 × 40" { scale: 6; } [
     |sketch#screw| {
-      draw: move(0, 0) up(6.5) right(8):head :k down(2.5) right(12) :v
-            right(28):m8 chamfer(1) down(4);
+      draw: move(0, 0) up(6.5) right(8):head point():k down(2.5) right(12)
+            point():v right(28):m8 chamfer(1) down(4);
       revolve: x-axis;
       // a turned part
       thread: m8 1.25;

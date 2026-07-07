@@ -391,8 +391,8 @@ impl<'a> Parser<'a> {
                 let call = self.parse_call(name)?;
                 // In a pen, a glued `:segment` after the `)` names the call's drawn
                 // segment (`right(50):seat`, `fillet(3):r1`) [SPEC 15.3] — glued to
-                // the `)` itself: a **spaced** `:name` is a freestanding point
-                // (`right(12) :v`), parsed by the caller's next item.
+                // the `)` itself: a **spaced** `:name` is the floating-segment
+                // error below (a station is `point():v`).
                 if pen && self.glued_at(0) && self.at_glued_point_name() {
                     self.pos += 1; // ':'
                     let (point, _) = self.expect_ident()?;
@@ -406,11 +406,10 @@ impl<'a> Parser<'a> {
                 Ok(Value::Ident(name))
             };
         }
-        // In a pen, a freestanding `:segment` marks the current point [SPEC 15.3].
+        // A `:segment` always glues to its call [SPEC 15.3] — a floating one
+        // is one space away from silently renaming the wrong thing.
         if pen && self.at_glued_point_name() {
-            self.pos += 1; // ':'
-            let (point, _) = self.expect_ident()?;
-            return Ok(Value::PointName(point));
+            return Err(self.err("a ':segment' glues to its call — name a station with point():v"));
         }
         let v = match self.kind() {
             Some(TokKind::Number(n)) => Value::Number(*n),
@@ -1331,16 +1330,26 @@ mod tests {
 
     #[test]
     fn pen_items_parse_only_in_draw() {
-        let f = parse_ok("|sketch#s| { draw: move(-80, 0) right(50):seat :m1 close(); }\n");
+        let f = parse_ok("|sketch#s| { draw: move(-80, 0) right(50):seat point():m1 close(); }\n");
         let draw = &instance(&f, 0).style[0];
         assert_eq!(draw.name, "draw");
         let items = &draw.groups[0];
         assert!(matches!(&items[0], Value::Call(c) if c.name == "move"));
         assert!(matches!(&items[1], Value::NamedCall(c, n) if c.name == "right" && n == "seat"));
-        assert!(matches!(&items[2], Value::PointName(n) if n == "m1"));
+        assert!(matches!(&items[2], Value::NamedCall(c, n) if c.name == "point" && n == "m1"));
         assert!(matches!(&items[3], Value::Call(c) if c.name == "close"));
         // Outside a draw:, a freestanding `:` keeps the runaway-decl diagnostic.
         assert!(parse_err("|box| { padding: :x }\n").contains("a declaration ends with ';'"));
+    }
+
+    #[test]
+    fn a_floating_segment_errors() {
+        // One space must never flip meaning [SPEC 15.3]: a `:segment` glues to
+        // its call; a station is `point():v`.
+        assert!(
+            parse_err("|sketch#s| { draw: move(0, 0) right(12) :v down(5); }\n")
+                .contains("a ':segment' glues to its call — name a station with point():v")
+        );
     }
 
     #[test]

@@ -288,11 +288,11 @@ cat -> kitchen.bowl .loud
 fn draw_gets_its_own_paragraph_and_wraps_at_the_budget() {
     // The pen never shares a line with another declaration; calls flow to the
     // line budget and continuations align under the first call.
-    let src = "|sketch#bar| { draw: move(-150, 0) up(10) chamfer(1.5) right(40):thread :a right(260) chamfer(1.5) down(10); mirror: x-axis; }\n";
+    let src = "|sketch#bar| { draw: move(-150, 0) up(10) chamfer(1.5) right(40):thread point():a right(260) chamfer(1.5) down(10); mirror: x-axis; }\n";
     let out = fmt(src);
     assert_eq!(
         out,
-        "|sketch#bar| {\n  draw: move(-150, 0) up(10) chamfer(1.5) right(40):thread :a right(260)\n        chamfer(1.5) down(10);\n  mirror: x-axis;\n}\n"
+        "|sketch#bar| {\n  draw: move(-150, 0) up(10) chamfer(1.5) right(40):thread point():a right(260)\n        chamfer(1.5) down(10);\n  mirror: x-axis;\n}\n"
     );
     idempotent(src);
 }

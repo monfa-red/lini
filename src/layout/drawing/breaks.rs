@@ -658,7 +658,7 @@ mod tests {
         // `:mid` sits at x = 0, inside the cut — displayed it squashes into
         // the gap, but the dimension reads the model's 150.
         let l = laid(
-            "{ layout: drawing; scale: 1 }\n|sketch#bar| { draw: move(-150, 0) up(10) right(150):half :mid right(150) down(10); mirror: x-axis; break: -80 60 }\nbar:left (-) bar:mid { side: bottom }\n",
+            "{ layout: drawing; scale: 1 }\n|sketch#bar| { draw: move(-150, 0) up(10) right(150):half point():mid right(150) down(10); mirror: x-axis; break: -80 60 }\nbar:left (-) bar:mid { side: bottom }\n",
         );
         text_at(&l.nodes, "150");
     }

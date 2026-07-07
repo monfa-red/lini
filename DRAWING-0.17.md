@@ -200,6 +200,25 @@ Append-only, per DRAWING-0.16.md's rule.
     centre bore rides the `[ ]`, its redundant centerline removed by the
     cascade in the stylesheet). Tie bar matches SPEC 24 fully only after
     stage 2 adds `thread:`.
+- **2026-07-07 — `point():name` replaces the floating `:segment`; v0.17.0
+  cut** (Abbas's catch; all gates green — the samples' SVGs byte-identical,
+  zero snapshot churn, since `point()` changes no geometry). The old rule
+  made `right(12):v` (name the run) and `right(12) :v` (name the point)
+  differ by one invisible space — both valid, so a typo silently renamed
+  the wrong thing (the stage-3 parser fix was this seam's first bite). Now
+  **a `:segment` always glues to a call**: stations are `point():v` — a
+  pen call that draws nothing, changes nothing, keeps the sharp-corner
+  recording beside a pending `fillet`/`chamfer` (either order), and is
+  legal after `close()`; a floating `:name` is a loud parse error ("a
+  ':segment' glues to its call — name a station with point():v"), and
+  `move()`'s no-segment error now points at `point()`. The change
+  *deletes* a grammar form (`pen_item`'s bare `":" ident` branch;
+  `Value::PointName` / `ResolvedValue::PenSegment` removed end to end)
+  rather than adding one. `point` chose over `ref` — it is the language's
+  own word (the point sigil, "the pen's current point", `Segment::Point`).
+  Samples/SPEC/tests swept; SPEC 24 re-synced. **Cargo.toml bumped to
+  0.17.0** and the README status paragraph now tells the drawings story;
+  sections & details are DRAWING-0.18.md.
 - **2026-07-07 — ISO 129 heads: one arrowhead per sheet, larger** (Abbas's
   call; all gates green, barrel + leaders PNG-inspected against his CAD
   refs). Word leaders' `<-` now tips with the **same slender arrow** as

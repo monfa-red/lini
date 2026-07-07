@@ -198,7 +198,7 @@ mod tests {
     use crate::resolve::{NodeKind, ResolvedValue};
 
     /// The tie bar at scale 1: thread on the ⌀20 left run, chamfered ends.
-    const BAR: &str = "|sketch#bar| { draw: move(-150, 0) up(10) chamfer(1.5) right(40):m20 :a right(260) chamfer(1.5) down(10); revolve: x-axis; thread: m20 1.5 }\n";
+    const BAR: &str = "|sketch#bar| { draw: move(-150, 0) up(10) chamfer(1.5) right(40):m20 point():a right(260) chamfer(1.5) down(10); revolve: x-axis; thread: m20 1.5 }\n";
 
     fn lines_of(nodes: &[crate::layout::PlacedNode], id: &str, ty: &str) -> Vec<(P, P)> {
         by_id(nodes, id)
