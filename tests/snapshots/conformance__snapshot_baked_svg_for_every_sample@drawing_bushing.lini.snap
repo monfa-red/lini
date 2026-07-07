@@ -10,21 +10,23 @@ input_file: samples/drawing_bushing.lini
     .lini .lini-canvas { fill: white; }
     .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-poly { stroke-dasharray: none; }
+    .lini .lini-sketch { fill: white; stroke: black; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-dim-line { fill: none; stroke: #444; stroke-width: 1; }
-    .lini .lini-ext-line { fill: none; stroke: #747474; stroke-width: 1; }
+    .lini .lini-dim-line { fill: none; stroke: black; stroke-width: 1; }
+    .lini .lini-ext-line { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
-    .lini .lini-centerline { fill: none; stroke: #747474; stroke-width: 1; stroke-dasharray: 10,3,1,3; }
+    .lini .lini-centerline { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; stroke-dasharray: 10,3,1,3; }
     .lini .lini-steel { fill: url(#lini-hatch-1); }
     .lini .lini-marker { fill: #444; stroke: none; }
+    .lini .lini-marker-dim { fill: black; }
   </style>
   <defs>
     <pattern id="lini-hatch-1" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)"><line x1="3" y1="0" x2="3" y2="6" stroke="#444" stroke-width="0.75"/></pattern>
   </defs>
   <rect class="lini-canvas" x="-122.5" y="-75" width="282" height="171"/>
   <g class="lini-scene">
-    <g class="lini-node lini-steel lini-sketch" data-id="body" style="stroke: #444; stroke-width: 2" transform="translate(0,0)">
+    <g class="lini-node lini-steel lini-sketch" data-id="body" transform="translate(0,0)">
       <path d="M -90 -24 L 90 -24 L 90 -54 L -90 -54 Z M -90 24 L 90 24 L 90 54 L -90 54 Z" fill-rule="evenodd"/>
     </g>
     <g class="lini-node lini-rect lini-box lini-block" data-id="bore" style="stroke: none" transform="translate(0,0)">

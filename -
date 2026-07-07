@@ -1,30 +1,26 @@
----
-source: tests/conformance.rs
-assertion_line: 40
-expression: svg
-input_file: samples/drawing_tiebar.lini
----
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-506.5 -102.5 573 178" width="573" height="178" class="lini">
   <style>
-    .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
-    .lini .lini-canvas { fill: white; }
+    @layer lini.defaults {
+      :root, .lini { color-scheme: light dark; --lini-bg: light-dark(white, #1b1b1f); --lini-fg: light-dark(black, #e8e8ea); --lini-fill: light-dark(white, #26262b); --lini-font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; --lini-font-weight: normal; --lini-gray-deep: light-dark(#747474, #acacac); --lini-stroke: light-dark(#444, #9aa0a6); --lini-stroke-light: var(--lini-gray-deep); --lini-text-color: var(--lini-fg); }
+      .lini[data-theme="dark"], [data-theme="dark"] .lini { color-scheme: dark; }
+      .lini[data-theme="light"], [data-theme="light"] .lini { color-scheme: light; }
+    }
+    .lini { font-family: var(--lini-font-family); font-size: 15px; font-weight: var(--lini-font-weight); color: var(--lini-text-color); }
+    .lini .lini-canvas { fill: var(--lini-bg); }
     .lini .lini-poly { stroke-dasharray: none; }
-    .lini .lini-sketch { fill: white; stroke: black; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-dim-line { fill: none; stroke: black; stroke-width: 1; }
-    .lini .lini-ext-line { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
+    .lini .lini-line { fill: none; stroke: var(--lini-stroke); stroke-width: 2; stroke-dasharray: none; }
+    .lini .lini-dim-line { fill: none; stroke: var(--lini-stroke); stroke-width: 1; }
+    .lini .lini-ext-line { fill: none; stroke: var(--lini-stroke-light); stroke-width: 1; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
-    .lini .lini-centerline { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; stroke-dasharray: 10,3,1,3; }
-    .lini .lini-breakline { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
-    .lini .lini-shoulder { stroke: black; }
-    .lini .lini-threadline { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
-    .lini .lini-marker { fill: #444; stroke: none; }
-    .lini .lini-marker-dim { fill: black; }
+    .lini .lini-centerline { fill: none; stroke: var(--lini-stroke-light); stroke-width: 1; stroke-dasharray: 10,3,1,3; }
+    .lini .lini-breakline { fill: none; stroke: var(--lini-stroke-light); stroke-width: 1; }
+    .lini .lini-threadline { fill: none; stroke: var(--lini-stroke-light); stroke-width: 1; }
+    .lini .lini-marker { fill: var(--lini-stroke); stroke: none; }
   </style>
   <defs/>
   <rect class="lini-canvas" x="-506.5" y="-102.5" width="573" height="178"/>
   <g class="lini-scene">
-    <g class="lini-node lini-sketch" data-id="bar" transform="translate(0,0)">
+    <g class="lini-node lini-sketch" data-id="bar" style="fill: var(--lini-fill); stroke: var(--lini-stroke); stroke-width: 2" transform="translate(0,0)">
       <path d="M -228 -30 L 37.5 -30 L 42 -25.5 L 42 0 L 42 25.5 L 37.5 30 L -228 30 M -240 30 L -330 30 L -445.5 30 L -450 25.5 L -450 0 L -450 -25.5 L -445.5 -30 L -330 -30 L -240 -30" fill-rule="evenodd"/>
       <g class="lini-node lini-centerline lini-line" transform="translate(0,0)">
         <line x1="-454" y1="0" x2="46" y2="0"/>

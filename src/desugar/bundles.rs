@@ -79,11 +79,17 @@ pub fn primitive_bundle(kind: NodeKind) -> Vec<Decl> {
             b.push(n("skew", 15.0));
             b
         }
-        // Geometry-sized closed shapes: paint only, no box model. The sketch pen
-        // [SPEC 15.3] paints like them — object lines at the core weight 2.
-        Poly | Path | Sketch => vec![
+        // Geometry-sized closed shapes: paint only, no box model.
+        Poly | Path => vec![
             var("fill", "fill"),
             var("stroke", "stroke"),
+            n("stroke-width", 2.0),
+        ],
+        // The sketch pen [SPEC 15.3] paints like them, but its object lines
+        // read the full drafting tone — black on white [SPEC 10.1].
+        Sketch => vec![
+            var("fill", "fill"),
+            var("stroke", "stroke-dark"),
             n("stroke-width", 2.0),
         ],
         Line => vec![
@@ -203,7 +209,7 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
         "drawing" => vec![id("layout", "drawing"), n("padding", 0.0), n("scale", 4.0)],
         // …the round hole — `width:` (required) is its diameter; it punches by
         // paint order and draws its own centre marks [SPEC 15.4]…
-        "hole" => vec![var("fill", "bg"), var("stroke", "stroke")],
+        "hole" => vec![var("fill", "bg"), var("stroke", "stroke-dark")],
         // …and the dash-dot chrome types [SPEC 15.7]. `|breakline|` is the break
         // cut's generated zigzag / S edge — solid, annotation-weight.
         "centerline" => vec![
@@ -229,9 +235,13 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
         // real visible edge and keeps the |line| base's geometry weight.)
         "hidden" => vec![
             id("stroke-style", "dashed"),
+            var("stroke", "stroke-dark"),
             n("stroke-width", 1.0),
             id("fill", "none"),
         ],
+        // The revolve's shoulder lines are **real profile edges** [SPEC 15.3]
+        // — they complete the pen's outline, so they carry its tone.
+        "shoulder" => vec![var("stroke", "stroke-dark")],
         // A thread's ISO 6410 thin lines [SPEC 15.3/15.4]: the minor line
         // beside a dressed run, the ¾ arc on a round view — continuous, the
         // support tone, like extension lines.

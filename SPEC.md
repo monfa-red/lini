@@ -782,12 +782,12 @@ the cascade ([SPEC 4](#4-selectors-cascade--specificity)) — every value here i
 | `\|note\|` | `\|block\|` | `fill: --fill; stroke: --stroke; padding: 20; scale: 1` | A **note** — the folded-corner callout card, one type in every layout (see below). |
 | `\|balloon\|` | `\|oval\|` | `width: 16; fill: --fill; stroke: --stroke; font-size: 11; scale: 1` | An item **balloon** — the numbered circle an assembly leaders to a part ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `\|drawing\|` | `\|block\|` | `layout: drawing; padding: 0; scale: 4` | An engineering **drawing** — geometry on a datum, measured annotations ([SPEC 15](#15-drawing)). |
-| `\|hole\|` | `\|oval\|` | `fill: --bg; stroke: --stroke` — `width:` **required**, the diameter | A round **hole** — punches by paint order, draws its own centre marks ([SPEC 15.4](#154-features-holes--patterns)). |
+| `\|hole\|` | `\|oval\|` | `fill: --bg; stroke: --stroke-dark` — `width:` **required**, the diameter | A round **hole** — punches by paint order, draws its own centre marks ([SPEC 15.4](#154-features-holes--patterns)). |
 | `\|centerline\|` | `\|line\|` | `stroke-style: center; stroke: --stroke-light; stroke-width: 1; fill: none` — needs `points:` | The dash-dot axis / symmetry line ([SPEC 15.7](#157-leaders-notes--line-conventions)). |
 | `\|pitch-circle\|` | `\|oval\|` | `stroke-style: center; stroke: --stroke-light; stroke-width: 1; fill: none` — `width:` **required**, the diameter | The dash-dot bolt circle; round, so a `(o)` reads its PCD ([SPEC 15.7](#157-leaders-notes--line-conventions)). |
 | `\|breakline\|` | `\|line\|` | `stroke: --stroke-light; stroke-width: 1; fill: none` — needs `points:` | A break cut's edge — the thin jogged line a `break:` generates ([SPEC 15.3](#153-the-sketch-pen)); manual use is free. |
-| `\|hidden\|` | `\|sketch\|` | `stroke-style: dashed; stroke-width: 1; fill: none` — needs `draw:` | **Hidden edges** — interior geometry on its own dashed child, per the one-node-one-stroke-style law ([SPEC 15.7](#157-leaders-notes--line-conventions)). |
-| `\|shoulder\|` | `\|line\|` | `stroke: --stroke; stroke-width: 2; fill: none` — needs `points:` | A turned part's **shoulder line** — the geometry-weight edge a `revolve:` generates at every sharp diameter change ([SPEC 15.3](#153-the-sketch-pen)); manual use is free. |
+| `\|hidden\|` | `\|sketch\|` | `stroke-style: dashed; stroke: --stroke-dark; stroke-width: 1; fill: none` — needs `draw:` | **Hidden edges** — interior geometry on its own dashed child, per the one-node-one-stroke-style law ([SPEC 15.7](#157-leaders-notes--line-conventions)). |
+| `\|shoulder\|` | `\|line\|` | `stroke: --stroke-dark; stroke-width: 2; fill: none` — needs `points:` | A turned part's **shoulder line** — the geometry-weight edge a `revolve:` generates at every sharp diameter change ([SPEC 15.3](#153-the-sketch-pen)); manual use is free. |
 | `\|page\|` | `\|block\|` | `layout: flow; scale: 4; fill: --bg` — `sheet: a4` unless sized | An ISO 5457 drawing **sheet** — mm dimensions via `sheet:`, `scale:` px per mm; frame, zones, and centring marks as generated chrome ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `\|title-block\|` | `\|table\|` | `font-size: 11; stroke-width: 1` | The ISO 7200 **title block** — a table the `\|page\|` seats flush inside its frame's bottom-right corner ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `\|frame\|` | `\|rect\|` | `fill: none; stroke: --stroke; stroke-width: 2` | A sheet's **frame** — the thick border a `\|page\|` generates at the ISO margins ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
@@ -1138,7 +1138,8 @@ Each colour is a `light-dark(LIGHT, DARK)` value, so one SVG carries both modes:
 --lini-fg            light-dark(black, #e8e8ea)
 --lini-fill          light-dark(white, #26262b)
 --lini-stroke        light-dark(#444, #9aa0a6)
---lini-stroke-light  var(--lini-gray-deep)           the secondary line tone — drafting's thin support lines (centerlines, break lines, dimension extension lines)
+--lini-stroke-dark   light-dark(black, white)        the primary drafting tone — pen geometry, dimension/leader linework, and their heads read full black on white (the ISO print look)
+--lini-stroke-light  light-dark(#0000008b, #ffffffa3) the secondary line tone — drafting's thin support lines (centerlines, break lines, extension lines): full black/white at reduced alpha, so a support line crossing dark geometry blends toward it instead of greying it
 --lini-accent        light-dark(#0a84ff, #4aa3ff)
 --lini-accent-text   white                           text on an accent fill (e.g. a badge)
 --lini-muted         light-dark(#888, #9aa0a6)
@@ -2132,7 +2133,10 @@ line weight never leaks into a value or a mate. Geometry defaults to
 `stroke-width: 2` and a drawing's links to `1`, their text to `font-size: 12` (the
 caption size) — drawing-scope link defaults (like the scope's `clearance` /
 `routing`), below every user rule, so a plain `|-| { stroke-width: … }` restyles
-them — the drafting 2 : 1 line-weight contrast. `gap`, `align`, `justify`, and `direction` have no
+them — the drafting 2 : 1 line-weight contrast. Pen geometry, holes, shoulder
+lines, and the dimension/leader linework paint the full drafting tone
+(`--stroke-dark` — black on white); support lines the translucent
+`--stroke-light` ([SPEC 10.1](#101-visual-variables-live-themeable)). `gap`, `align`, `justify`, and `direction` have no
 role on a drawing container and are ignored.
 
 ### 15.2 Anchors
@@ -3675,7 +3679,7 @@ body:left (-) body:right { side: bottom }        // → 60
 
   |drawing#side| "DIN 912 — M8 × 40" { scale: 6; } [
     |sketch#screw| {
-      draw: move(0, 0) up(6.5) right(8):head point():k down(2.5) right(12)
+      draw: move(0, 0) up(6.5) chamfer(0.8) right(8):head down(2.5):k right(12)
             point():v right(28):m8 chamfer(1) down(4);
       revolve: x-axis;
       // a turned part
@@ -3702,6 +3706,7 @@ body:left (-) body:right { side: bottom }        // → 60
 
   |drawing#end| { scale: 6; } [
     |oval#od| { width: 13; height: 13; }
+    |oval| { width: 11.4; height: 11.4; }
     // the head, end-on
     |hex#socket| { width: 7; height: 6; }
 

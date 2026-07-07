@@ -64,7 +64,7 @@ impl Paint {
             raw: false,
         };
         Paint {
-            stroke: set.clone().unwrap_or_else(|| live("stroke")),
+            stroke: set.clone().unwrap_or_else(|| live("stroke-dark")),
             light: set.unwrap_or_else(|| live("stroke-light")),
             sw: attrs.number("stroke-width").unwrap_or(1.0),
             fs: attrs.number("font-size").unwrap_or(11.0),

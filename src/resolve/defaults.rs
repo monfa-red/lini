@@ -37,17 +37,23 @@ pub fn built_in_defaults() -> VarTable {
     set_visual(&mut t, "fg", light_dark(ident("black"), hex("e8e8ea")));
     set_visual(&mut t, "fill", light_dark(ident("white"), hex("26262b")));
     set_visual(&mut t, "stroke", light_dark(hex("444"), hex("9aa0a6")));
+    // The primary drafting line tone [SPEC 10.1]: pen geometry, dimension
+    // lines, and their arrowheads read full black on white (white on black
+    // in dark) — the ISO print look; support lines stay a step lighter.
+    set_visual(
+        &mut t,
+        "stroke-dark",
+        light_dark(ident("black"), ident("white")),
+    );
     // The secondary line tone [SPEC 10.1] — drafting's thin support lines
     // (centerlines, break lines, dimension extension lines) sit a step
-    // lighter than `--stroke`, so the geometry reads first. An alias into
-    // the palette's grey; overridable like any visual var.
+    // lighter than the geometry. Full black/white at reduced **alpha**
+    // (matching the old grey's value), so a support line crossing dark
+    // geometry blends toward black instead of greying it.
     set_visual(
         &mut t,
         "stroke-light",
-        ResolvedValue::LiveVar {
-            name: "gray-deep".into(),
-            raw: false,
-        },
+        light_dark(rgba(0.0, 0.0, 0.0, 0.545), rgba(255.0, 255.0, 255.0, 0.64)),
     );
     set_visual(&mut t, "accent", light_dark(hex("0a84ff"), hex("4aa3ff")));
     set_visual(&mut t, "accent-text", ident("white"));

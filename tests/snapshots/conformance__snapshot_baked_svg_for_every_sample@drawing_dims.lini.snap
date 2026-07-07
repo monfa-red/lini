@@ -12,13 +12,14 @@ input_file: samples/drawing_dims.lini
     .lini .lini-oval { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-poly { stroke-dasharray: none; }
     .lini .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-dim-line { fill: none; stroke: #444; stroke-width: 1; }
-    .lini .lini-ext-line { fill: none; stroke: #747474; stroke-width: 1; }
+    .lini .lini-dim-line { fill: none; stroke: black; stroke-width: 1; }
+    .lini .lini-ext-line { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
-    .lini .lini-hole { fill: white; stroke: #444; }
-    .lini .lini-centerline { fill: none; stroke: #747474; stroke-width: 1; stroke-dasharray: 10,3,1,3; }
+    .lini .lini-hole { fill: white; stroke: black; }
+    .lini .lini-centerline { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; stroke-dasharray: 10,3,1,3; }
     .lini .lini-marker { fill: #444; stroke: none; }
+    .lini .lini-marker-dim { fill: black; }
   </style>
   <defs/>
   <rect class="lini-canvas" x="-409.2096" y="-176.8995" width="730.2096" height="374.8995"/>

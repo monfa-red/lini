@@ -9,7 +9,7 @@
 
   |drawing#side| "DIN 912 — M8 × 40" { scale: 6; } [
     |sketch#screw| {
-      draw: move(0, 0) up(6.5) right(8):head point():k down(2.5) right(12)
+      draw: move(0, 0) up(6.5) chamfer(0.8) right(8):head down(2.5):k right(12)
             point():v right(28):m8 chamfer(1) down(4);
       revolve: x-axis;
       // a turned part
@@ -36,6 +36,7 @@
 
   |drawing#end| { scale: 6; } [
     |oval#od| { width: 13; height: 13; }
+    |oval| { width: 11.4; height: 11.4; }
     // the head, end-on
     |hex#socket| { width: 7; height: 6; }
 

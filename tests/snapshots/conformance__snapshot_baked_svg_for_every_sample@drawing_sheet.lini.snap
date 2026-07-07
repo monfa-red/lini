@@ -12,9 +12,10 @@ input_file: samples/drawing_sheet.lini
     .lini .lini-oval { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-hex { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-poly { stroke-dasharray: none; }
+    .lini .lini-sketch { fill: white; stroke: black; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-dim-line { fill: none; stroke: #444; stroke-width: 1; }
-    .lini .lini-ext-line { fill: none; stroke: #747474; stroke-width: 1; }
+    .lini .lini-dim-line { fill: none; stroke: black; stroke-width: 1; }
+    .lini .lini-ext-line { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
     .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
@@ -22,15 +23,17 @@ input_file: samples/drawing_sheet.lini
     .lini .lini-footnote { color: rgba(0, 0, 0, 0.5); font-size: 12px; }
     .lini .lini-table { fill: none; stroke: #444; stroke-width: 2; font-size: 14px; font-weight: normal; stroke-dasharray: none; }
     .lini .lini-header { fill: rgba(0, 0, 0, 0.06); font-weight: bold; }
-    .lini .lini-centerline { fill: none; stroke: #747474; stroke-width: 1; stroke-dasharray: 10,3,1,3; }
-    .lini .lini-hidden { fill: none; stroke-width: 1; stroke-dasharray: 4,3; }
-    .lini .lini-threadline { fill: none; stroke: #747474; stroke-width: 1; }
+    .lini .lini-centerline { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; stroke-dasharray: 10,3,1,3; }
+    .lini .lini-hidden { fill: none; stroke: black; stroke-width: 1; stroke-dasharray: 4,3; }
+    .lini .lini-shoulder { stroke: black; }
+    .lini .lini-threadline { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
     .lini .lini-page { fill: white; stroke-width: 0; }
     .lini .lini-title-block { stroke-width: 1; font-size: 11px; }
     .lini .lini-frame { fill: none; stroke: #444; stroke-width: 2; }
-    .lini .lini-zone { color: #747474; font-size: 9px; }
-    .lini .lini-tick { fill: none; stroke: #747474; stroke-width: 1; }
+    .lini .lini-zone { color: rgba(0, 0, 0, 0.545); font-size: 9px; }
+    .lini .lini-tick { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
     .lini .lini-marker { fill: #444; stroke: none; }
+    .lini .lini-marker-dim { fill: black; }
   </style>
   <defs/>
   <rect class="lini-canvas" x="-420" y="-296" width="840" height="592"/>
@@ -39,9 +42,9 @@ input_file: samples/drawing_sheet.lini
       <rect x="-420" y="-296" width="840" height="592" rx="0" ry="0"/>
       <g class="lini-node lini-drawing lini-block" data-id="side" transform="translate(-46,-13.5)">
         <rect x="-164.5" y="-74.5" width="329" height="149" rx="0" ry="0"/>
-        <g class="lini-node lini-sketch" data-id="screw" style="fill: white; stroke: #444; stroke-width: 2" transform="translate(-128,13.5)">
-          <path d="M 0 0 L 0 -39 L 48 -39 L 48 -24 L 120 -24 L 282 -24 L 288 -18 L 288 0 L 288 18 L 282 24 L 120 24 L 48 24 L 48 39 L 0 39 Z" fill-rule="evenodd"/>
-          <g class="lini-node lini-hidden lini-sketch" data-id="socket" style="stroke: #444" transform="translate(0,0)">
+        <g class="lini-node lini-sketch" data-id="screw" transform="translate(-128,13.5)">
+          <path d="M 0 0 L 0 -34.2 L 4.8 -39 L 48 -39 L 48 -24 L 120 -24 L 282 -24 L 288 -18 L 288 0 L 288 18 L 282 24 L 120 24 L 48 24 L 48 39 L 4.8 39 L 0 34.2 Z" fill-rule="evenodd"/>
+          <g class="lini-node lini-hidden lini-sketch" data-id="socket" transform="translate(0,0)">
             <path d="M 0 18 L 24 18 L 42 0 L 24 -18 L 0 -18 Z" fill-rule="evenodd"/>
             <g class="lini-node lini-centerline lini-line" transform="translate(0,0)">
               <line x1="-4" y1="0" x2="46" y2="0"/>
@@ -49,6 +52,9 @@ input_file: samples/drawing_sheet.lini
           </g>
           <g class="lini-node lini-centerline lini-line" transform="translate(0,0)">
             <line x1="-4" y1="0" x2="292" y2="0"/>
+          </g>
+          <g class="lini-node lini-shoulder lini-line" transform="translate(0,0)">
+            <line x1="4.8" y1="-39" x2="4.8" y2="39"/>
           </g>
           <g class="lini-node lini-shoulder lini-line" transform="translate(0,0)">
             <line x1="48" y1="-39" x2="48" y2="39"/>
@@ -86,7 +92,7 @@ input_file: samples/drawing_sheet.lini
           <line x1="0" y1="3" x2="0" y2="61"/>
         </g>
         <g class="lini-node lini-ext-line lini-line" transform="translate(-128,13.5)">
-          <line x1="48" y1="-36" x2="48" y2="61"/>
+          <line x1="48" y1="-28.5" x2="48" y2="61"/>
         </g>
         <g class="lini-node lini-dim-line lini-line" transform="translate(-128,13.5)">
           <line x1="2" y1="58" x2="46" y2="58"/>
@@ -99,7 +105,7 @@ input_file: samples/drawing_sheet.lini
         </g>
         <text class="lini-text" x="-104" y="63.5" style="font-weight: normal; font-size: 12px">8</text>
         <g class="lini-node lini-ext-line lini-line" transform="translate(-128,13.5)">
-          <line x1="48" y1="-36" x2="48" y2="61"/>
+          <line x1="48" y1="-28.5" x2="48" y2="61"/>
         </g>
         <g class="lini-node lini-ext-line lini-line" transform="translate(-128,13.5)">
           <line x1="288" y1="3" x2="288" y2="61"/>
@@ -146,6 +152,9 @@ input_file: samples/drawing_sheet.lini
         <rect x="-40" y="-50.5" width="80" height="101" rx="0" ry="0"/>
         <g class="lini-node lini-oval" data-id="od" transform="translate(0,-10.5)">
           <ellipse cx="0" cy="0" rx="39" ry="39"/>
+        </g>
+        <g class="lini-node lini-oval" transform="translate(0,-10.5)">
+          <ellipse cx="0" cy="0" rx="34.2" ry="34.2"/>
         </g>
         <g class="lini-node lini-hex" data-id="socket" transform="translate(0,-10.5)">
           <polygon points="-21,0 -10.5,-18 10.5,-18 21,0 10.5,18 -10.5,18"/>

@@ -276,6 +276,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
         NodeKind::Diamond,
         NodeKind::Poly,
         NodeKind::Path,
+        NodeKind::Sketch,
     ];
     for kind in CLOSED {
         if present.contains(kind.as_str()) {
@@ -302,7 +303,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
             class: "lini-dim-line".into(),
             props: vec![
                 ("fill".into(), "none".into()),
-                ("stroke".into(), live("stroke")),
+                ("stroke".into(), live("stroke-dark")),
                 ("stroke-width".into(), "1".into()),
             ],
         });
@@ -513,6 +514,17 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
                 ("stroke".into(), "none".into()),
             ],
         });
+    }
+    // The drafting heads read the geometry tone [SPEC 10.1]: the slender dim
+    // arrow and the datum triangle at full black/white, after `.lini-marker`
+    // so the variant wins the same-specificity tie.
+    for variant in ["marker-dim", "marker-datum"] {
+        if present.contains(variant) {
+            rules.push(Rule {
+                class: format!("lini-{variant}"),
+                props: vec![("fill".into(), live("stroke-dark"))],
+            });
+        }
     }
 
     // Inline chart labels [SPEC 14.8] take no pointer events, so hovering a labelled

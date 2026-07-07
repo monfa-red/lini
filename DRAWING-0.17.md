@@ -200,6 +200,27 @@ Append-only, per DRAWING-0.16.md's rule.
     centre bore rides the `[ ]`, its redundant centerline removed by the
     cascade in the stylesheet). Tie bar matches SPEC 24 fully only after
     stage 2 adds `thread:`.
+- **2026-07-07 — the ISO print tones** (Abbas's round; all gates green,
+  shaft + sheet PNG-inspected in both themes; 14 sample snapshots
+  re-accepted — paint only, no geometry moved):
+  - **`--lini-stroke-dark`** (`light-dark(black, white)`) — the primary
+    drafting tone: pen geometry (`|sketch|`), `|hidden|`, `|hole|` rims,
+    `|shoulder|` lines, dimension/leader linework (`.lini-dim-line`), and
+    the slender/datum heads (`.lini-marker-dim` / `-datum` variant rules)
+    all read full black on white. Centerlines, threadlines, extension
+    lines, breaklines, ticks, zones stay the lighter support tone.
+  - **`--lini-stroke-light` went translucent**: `light-dark(#0000008b,
+    #ffffffa3)` — the same perceived grey as the old `--gray-deep` alias,
+    but full black/white at alpha, so a support line crossing dark
+    geometry blends toward it instead of greying it (the shaft's ⌀18
+    extension lines over the profile were the test).
+  - **The inlines went with it**: `NodeKind::Sketch` joined the render's
+    CLOSED shape-rule set (`.lini-sketch` now states the pen's paint) and
+    `|hidden|` carries its stroke in its own bundle — the
+    `style="stroke: var(--lini-stroke)"` per-node inlines disappear;
+    `inline_paint_diff` already skips whatever the classes cover.
+  - Abbas's sheet edit (head chamfer, `:k` on the step face, the second
+    head circle) synced to SPEC 24.
 - **2026-07-07 — `point():name` replaces the floating `:segment`; v0.17.0
   cut** (Abbas's catch; all gates green — the samples' SVGs byte-identical,
   zero snapshot churn, since `point()` changes no geometry). The old rule

@@ -9,20 +9,23 @@ input_file: samples/drawing_shaft.lini
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
     .lini .lini-poly { stroke-dasharray: none; }
+    .lini .lini-sketch { fill: white; stroke: black; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-dim-line { fill: none; stroke: #444; stroke-width: 1; }
-    .lini .lini-ext-line { fill: none; stroke: #747474; stroke-width: 1; }
+    .lini .lini-dim-line { fill: none; stroke: black; stroke-width: 1; }
+    .lini .lini-ext-line { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
-    .lini .lini-centerline { fill: none; stroke: #747474; stroke-width: 1; stroke-dasharray: 10,3,1,3; }
-    .lini .lini-hidden { fill: none; stroke-width: 1; stroke-dasharray: 4,3; }
+    .lini .lini-centerline { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; stroke-dasharray: 10,3,1,3; }
+    .lini .lini-hidden { fill: none; stroke: black; stroke-width: 1; stroke-dasharray: 4,3; }
+    .lini .lini-shoulder { stroke: black; }
     .lini .lini-marker { fill: #444; stroke: none; }
+    .lini .lini-marker-dim { fill: black; }
   </style>
   <defs/>
   <rect class="lini-canvas" x="-236.5" y="-67.3912" width="441" height="145.3912"/>
   <g class="lini-scene">
-    <g class="lini-node lini-sketch" data-id="shaft" style="fill: white; stroke: #444; stroke-width: 2" transform="translate(0,0)">
+    <g class="lini-node lini-sketch" data-id="shaft" transform="translate(0,0)">
       <path d="M -180 0 L -180 -31.5 L -175.5 -36 L -30 -36 L -30 -27 L -12 -27 L -12 -36 L 78 -36 L 78 -33 A 9 9 0 0 0 87 -24 L 177 -24 L 180 -21 L 180 0 L 180 21 L 177 24 L 87 24 A 9 9 0 0 0 78 33 L 78 36 L -12 36 L -12 27 L -30 27 L -30 36 L -175.5 36 L -180 31.5 Z" fill-rule="evenodd"/>
-      <g class="lini-node lini-hidden lini-sketch" data-id="bore" style="stroke: #444" transform="translate(0,0)">
+      <g class="lini-node lini-hidden lini-sketch" data-id="bore" transform="translate(0,0)">
         <path d="M 180 7.5 L 144 7.5 L 129 0 L 144 -7.5 L 180 -7.5 Z" fill-rule="evenodd"/>
         <g class="lini-node lini-centerline lini-line" style="stroke: none" transform="translate(0,0)">
           <line x1="125" y1="0" x2="184" y2="0"/>
