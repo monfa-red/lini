@@ -131,8 +131,12 @@ pub(super) fn finish(children: &mut [PlacedNode], sheet: Bbox, s: f64) {
                         ((x, fy1), (x, y1 - half))
                     }
                     "left" => {
+                        // The reference band is the 10 mm margin on every
+                        // side — the filing margin's extra 10 mm stays truly
+                        // empty [SPEC 15.8], so the letters read alike all
+                        // round.
                         let y = y0 + (i as f64) * h / rows as f64;
-                        ((x0 + half, y), (fx0, y))
+                        ((fx0 - MARGIN * s, y), (fx0, y))
                     }
                     _ => {
                         let y = y0 + (i as f64) * h / rows as f64;
@@ -154,7 +158,10 @@ pub(super) fn finish(children: &mut [PlacedNode], sheet: Bbox, s: f64) {
                 let (cx, cy) = match edge {
                     "top" => (x0 + (i as f64 + 0.5) * w / cols as f64, (y0 + fy0) / 2.0),
                     "bottom" => (x0 + (i as f64 + 0.5) * w / cols as f64, (y1 + fy1) / 2.0),
-                    "left" => ((x0 + fx0) / 2.0, y0 + (i as f64 + 0.5) * h / rows as f64),
+                    "left" => (
+                        fx0 - MARGIN * s / 2.0,
+                        y0 + (i as f64 + 0.5) * h / rows as f64,
+                    ),
                     _ => ((x1 + fx1) / 2.0, y0 + (i as f64 + 0.5) * h / rows as f64),
                 };
                 c.cx = cx;
@@ -206,11 +213,11 @@ mod tests {
     fn bad_sheet_values_error_with_a_hint() {
         assert_eq!(
             compile_err("|page#p| { sheet: a9 }\n"),
-            "'sheet' takes a size a5…a0 and an optional portrait / landscape — did you mean 'a0'?"
+            "'sheet' takes a size — a5…a0 (ISO) or a…e (ANSI) — and an optional portrait / landscape — did you mean 'a0'?"
         );
         assert_eq!(
             compile_err("|page#p| { sheet: a4 portrai }\n"),
-            "'sheet' takes a size a5…a0 and an optional portrait / landscape — did you mean 'portrait'?"
+            "'sheet' takes a size — a5…a0 (ISO) or a…e (ANSI) — and an optional portrait / landscape — did you mean 'portrait'?"
         );
     }
 
@@ -259,6 +266,42 @@ mod tests {
         assert!(
             (bottom - (p.bbox.h() / 2.0 - MARGIN * s)).abs() < 1e-6,
             "flush bottom: {bottom}"
+        );
+    }
+
+    #[test]
+    fn ansi_sheets_are_the_same_sugar_in_other_millimetres() {
+        // ANSI B defaults landscape: 431.8 × 279.4 mm at 4 px/mm; the letter
+        // sizes ride the exact ISO mechanism [SPEC 15.8].
+        let l = laid("|page#p| { sheet: b }\n\"x\"\n");
+        let p = by_id(&l.nodes, "p");
+        assert_eq!((p.bbox.w(), p.bbox.h()), (431.8 * 4.0, 279.4 * 4.0));
+        let a = laid("|page#p| { sheet: a }\n\"x\"\n");
+        assert_eq!(
+            by_id(&a.nodes, "p").bbox.w(),
+            215.9 * 4.0,
+            "ANSI A portrait"
+        );
+    }
+
+    #[test]
+    fn the_left_reference_band_matches_the_other_sides() {
+        // The letters sit in the innermost 10 mm of the 20 mm filing margin —
+        // the extra 10 mm stays truly empty, so the band reads alike all
+        // round [SPEC 15.8].
+        let l = laid("|page#p| { sheet: a4 }\n\"x\"\n");
+        let p = by_id(&l.nodes, "p");
+        let s = 4.0;
+        let fx0 = -p.bbox.w() / 2.0 + FILING * s;
+        let left_zone = p
+            .children
+            .iter()
+            .find(|c| matches!(marker(&c.attrs), Some(Marker::Zone(e, _)) if e == "left"))
+            .expect("a left zone label");
+        assert!(
+            (left_zone.cx - (fx0 - MARGIN * s / 2.0)).abs() < 1e-9,
+            "letter centred in the 10 mm band beside the frame: {}",
+            left_zone.cx
         );
     }
 

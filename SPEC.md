@@ -2636,7 +2636,9 @@ drawing scope). **`sheet:`** names the trimmed size — `sheet: a3`,
 `sheet: a4 landscape` — pure sugar for `width` / `height` **in millimetres** (the
 orientation keyword swaps the pair; ISO defaults — A4 and A5 portrait, A3–A0
 landscape; a bare `|page|` is `a4`), so an explicit `width:` / `height:` overrides
-through the ordinary slot and a custom sheet still derives its zones. The page's
+through the ordinary slot and a custom sheet still derives its zones. The
+**ANSI/ASME Y14.1 letters** ride the same sugar in their own millimetres —
+`sheet: b` (`a`…`e`; `a` portrait, `b`–`e` landscape) — nothing else differs. The page's
 `scale:` is **pixels per millimetre**, default 4 — a `|drawing|`'s own default, so a
 default drawing on a default page draws **1 : 1 true**, and the drafting ratio is the
 drawing's scale over the page's (a 2 : 1 detail is `scale: 8`).
@@ -2646,7 +2648,9 @@ the thick `|frame|` at the margins (a 20 mm filing edge on the left, 10 mm
 elsewhere); the **zone grid** — divisions of ≈ 50 mm, rounded to the nearest even
 count per edge (A4 4 × 6, A3 8 × 6, A0 24 × 16) — numbered `1…` left-to-right along
 top and bottom and lettered `A…` top-to-bottom along both sides, drawn as `|zone|`
-labels and `|tick|` dividers in the margin band; and the four centring marks. The
+labels and `|tick|` dividers in the **reference band**: the 10 mm beside the frame
+on every side, so the references read alike all round and the filing margin's
+extra 10 mm stays truly empty; and the four centring marks. The
 content area is the frame inset by 5 mm (`padding:` adds to it). A
 **`|title-block|`** child (ISO 7200 — a `|table|`, [SPEC 8](#8-templates)) is seated
 by **type**, flush inside the frame's bottom-right corner; its fields are ordinary
@@ -2709,7 +2713,7 @@ properties are the core ones.
 | `mirror` | `\|sketch\|` | list of `x-axis` / `y-axis` / bearing | reflect + union, left to right |
 | `revolve` | `\|sketch\|` | `x-axis` / `y-axis` | a solid of revolution — fused fold + the `\|shoulder\|` lines; exclusive with `mirror:` ([15.3](#153-the-sketch-pen)) |
 | `thread` | `\|sketch\|` · `\|hole\|` / round geometry | `seg pitch` groups · `pitch` | ISO 6410 dressing — minor + thread-end lines; the ¾ arc ([15.3](#153-the-sketch-pen), [15.4](#154-features-holes--patterns)) |
-| `sheet` | `\|page\|` | `a5…a0 [portrait \| landscape]` | trimmed-size sugar → `width` / `height` in mm ([15.8](#158-assemblies-views-sheets--titles)) |
+| `sheet` | `\|page\|` | `a5…a0` / ANSI `a…e` `[portrait \| landscape]` | trimmed-size sugar → `width` / `height` in mm ([15.8](#158-assemblies-views-sheets--titles)) |
 | `break` | `\|sketch\|` | `a b [axis]` groups | cut the view between stations; longer axis default ([15.3](#153-the-sketch-pen)) |
 | `pattern` | any node | `grid(c, r, dx, dy)` / `radial(n, r)` | replicate about its position ([15.4](#154-features-holes--patterns)) |
 | `width` | `\|hole\|` `\|pitch-circle\|` | number | **required** — the diameter |
@@ -2841,7 +2845,7 @@ Read on the listed primitive; required where noted ([SPEC 7](#7-nodes)).
 | `mirror` | `\|sketch\|` | `x-axis` / `y-axis` / bearing list | reflect + union ([SPEC 15.3](#153-the-sketch-pen)). |
 | `revolve` | `\|sketch\|` | `x-axis` / `y-axis` | solid of revolution — fused fold + `\|shoulder\|` lines ([SPEC 15.3](#153-the-sketch-pen)). |
 | `thread` | `\|sketch\|` `\|hole\|` round geometry | `seg pitch, …` · `pitch` | ISO 6410 thread dressing ([SPEC 15.3](#153-the-sketch-pen), [SPEC 15.4](#154-features-holes--patterns)). |
-| `sheet` | `\|page\|` | `a5…a0 [portrait \| landscape]` | trimmed-size sugar → `width` / `height` in mm ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
+| `sheet` | `\|page\|` | `a5…a0` / ANSI `a…e` `[portrait \| landscape]` | trimmed-size sugar → `width` / `height` in mm ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `break` | `\|sketch\|` | `a b [axis]` groups | cut the view between stations ([SPEC 15.3](#153-the-sketch-pen)). |
 
 ### Grid, chart, pie, sequence & drawing properties
@@ -3222,7 +3226,7 @@ Format: `filename:line:col: error: <message>` (LSP-compatible), compile-time, wi
 | `thread:` segment off-axis / not straight | `'thread' runs along the axis — 'm8' must be a straight run parallel to it` |
 | Unknown `thread:` segment | `no segment 'm8' in this 'draw:'` + suggestions |
 | `thread:` on a non-round node | `'thread' dresses a '\|sketch\|' segment or a round feature` |
-| Bad `sheet:` | `'sheet' takes a size a5…a0 and an optional portrait / landscape` + did-you-mean |
+| Bad `sheet:` | `'sheet' takes a size — a5…a0 (ISO) or a…e (ANSI) — and an optional portrait / landscape` + did-you-mean |
 | `:segment` shadows a built-in point | `':left' is a built-in anchor — pick another name` |
 | Unknown `:segment` | `no segment ':step' on 'body'` + suggestions |
 | Duplicate `:segment` in one `draw:` | `':step' is already named in this 'draw:'` |

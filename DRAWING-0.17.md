@@ -200,6 +200,23 @@ Append-only, per DRAWING-0.16.md's rule.
     centre bore rides the `[ ]`, its redundant centerline removed by the
     cascade in the stylesheet). Tie bar matches SPEC 24 fully only after
     stage 2 adds `thread:`.
+- **2026-07-07 — post-release sheet polish** (Abbas's session-close round,
+  against the Fusion `tie_bar.pdf` reference; all gates green, the A5 sheet
+  re-inspected):
+  - **ANSI sheets** — `sheet: a…e` (ANSI/ASME Y14.1: A 215.9 × 279.4 …
+    E 863.6 × 1117.6; `a` portrait, `b`–`e` landscape) — pure sugar over
+    the exact ISO mechanism, only the millimetres differ; the SIZES table
+    grew a per-entry orientation default and the did-you-mean covers the
+    letters. `sheet: b` — nothing else changes.
+  - **The equal reference band** — the left zone letters/dividers sat
+    centred in the whole 20 mm filing margin, reading unlike the other
+    sides; they now occupy the innermost 10 mm beside the frame (the band
+    every side has), and the filing margin's extra 10 mm stays truly
+    empty — the Fusion look. Centring marks still run from the trimmed
+    edge, per ISO.
+  - The 0.18 title-block decision was checked against the Fusion block and
+    kept — it *is* that block; the plan gained "absent fields collapse"
+    so the default is minimal.
 - **2026-07-07 — the ISO print tones** (Abbas's round; all gates green,
   shaft + sheet PNG-inspected in both themes; 14 sample snapshots
   re-accepted — paint only, no geometry moved):

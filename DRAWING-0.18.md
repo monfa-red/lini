@@ -82,10 +82,12 @@ re-render, and the engine is re-entrant.
    (like `sheet:`): string-valued field properties on the template —
    `dept`, `reference`, `author`, `approved`, `doc-type`, `status`, `title`,
    `dwg`, `rev`, `date`, `sheet` — build the fixed nested grid from Abbas's
-   sheets (two header-band rows + the title / DWG-No. block, field captions
-   in the muted footer tone at ~7 px, values at 11). Any absent field leaves
-   its cell empty; a `|title-block|` with **no** field properties keeps
-   today's plain-table behaviour (fields as cells, fully custom). The logo
+   sheets (the Fusion/PicoFinity block in `tie_bar.pdf` is the reference
+   look: field captions in the muted footer tone at ~7 px over values at
+   11). **Absent fields collapse** — their rows/cells don't render, so the
+   default block is minimal (Title / DWG No. / Rev / Sheet suffice); a
+   `|title-block|` with **no** field properties keeps today's plain-table
+   behaviour (fields as cells, fully custom). The logo
    cell waits for local-image embedding (TODO) — out of scope here.
 8. **`fillet` / `chamfer` against an arc** — `corner.rs` grows the line↔arc
    and arc↔arc cases: the tangent circle of radius `r` against a line and a

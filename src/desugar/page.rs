@@ -12,14 +12,22 @@ use crate::error::Error;
 use crate::span::Span;
 use crate::syntax::ast::{Decl, Node, TextNode, Value};
 
-/// The trimmed ISO 216 sizes, portrait millimetres.
-const SIZES: &[(&str, f64, f64)] = &[
-    ("a0", 841.0, 1189.0),
-    ("a1", 594.0, 841.0),
-    ("a2", 420.0, 594.0),
-    ("a3", 297.0, 420.0),
-    ("a4", 210.0, 297.0),
-    ("a5", 148.0, 210.0),
+/// The trimmed sheet sizes, portrait millimetres, with each standard's
+/// default orientation: ISO 216 (A4/A5 portrait, A3–A0 landscape) and — pure
+/// sugar over the same mechanism, only the millimetres differ — the
+/// ANSI/ASME Y14.1 letters (`a` portrait, `b`–`e` landscape).
+const SIZES: &[(&str, f64, f64, bool)] = &[
+    ("a0", 841.0, 1189.0, true),
+    ("a1", 594.0, 841.0, true),
+    ("a2", 420.0, 594.0, true),
+    ("a3", 297.0, 420.0, true),
+    ("a4", 210.0, 297.0, false),
+    ("a5", 148.0, 210.0, false),
+    ("a", 215.9, 279.4, false),
+    ("b", 279.4, 431.8, true),
+    ("c", 431.8, 558.8, true),
+    ("d", 558.8, 863.6, true),
+    ("e", 863.6, 1117.6, true),
 ];
 
 /// The `|page|` bundle's default sheet — A4, ISO portrait.
@@ -33,8 +41,24 @@ pub(super) fn expand_sheet(style: &mut Vec<Decl>) -> Result<(), Error> {
     let d = &style[at];
     let (span, values) = (d.span, d.groups.first().cloned().unwrap_or_default());
     let bad = |got: &str| {
-        let mut msg = "'sheet' takes a size a5…a0 and an optional portrait / landscape".to_string();
-        let candidates = ["a0", "a1", "a2", "a3", "a4", "a5", "portrait", "landscape"];
+        let mut msg =
+            "'sheet' takes a size — a5…a0 (ISO) or a…e (ANSI) — and an optional portrait / landscape"
+                .to_string();
+        let candidates = [
+            "a0",
+            "a1",
+            "a2",
+            "a3",
+            "a4",
+            "a5",
+            "a",
+            "b",
+            "c",
+            "d",
+            "e",
+            "portrait",
+            "landscape",
+        ];
         if let Some(near) = candidates
             .iter()
             .filter(|c| edit_distance(got, c) <= 2)
@@ -44,27 +68,27 @@ pub(super) fn expand_sheet(style: &mut Vec<Decl>) -> Result<(), Error> {
         }
         Error::at(span, msg)
     };
-    let mut size: Option<(f64, f64)> = None;
+    let mut size: Option<(f64, f64, bool)> = None;
     let mut orient: Option<&str> = None;
     for v in &values {
         let Value::Ident(word) = v else {
             return Err(bad("…"));
         };
-        if let Some(&(_, w, h)) = SIZES.iter().find(|(n, ..)| n == word) {
-            size = Some((w, h));
+        if let Some(&(_, w, h, land)) = SIZES.iter().find(|(n, ..)| n == word) {
+            size = Some((w, h, land));
         } else if word == "portrait" || word == "landscape" {
             orient = Some(word);
         } else {
             return Err(bad(word));
         }
     }
-    let Some((pw, ph)) = size else {
+    let Some((pw, ph, default_landscape)) = size else {
         return Err(bad(""));
     };
-    // ISO defaults: A4 and A5 portrait, A3–A0 landscape [SPEC 15.8].
+    // Each standard's own default orientation [SPEC 15.8]; the keyword wins.
     let landscape = match orient {
         Some(o) => o == "landscape",
-        None => pw >= 297.0,
+        None => default_landscape,
     };
     let (w, h) = if landscape { (ph, pw) } else { (pw, ph) };
     let decl = |name: &str, v: f64| Decl {

@@ -228,7 +228,7 @@ input_file: samples/drawing_sheet.lini
         <line x1="210" y1="256" x2="210" y2="295.5"/>
       </g>
       <g class="lini-node lini-tick lini-line" transform="translate(0,0)">
-        <line x1="-419.5" y1="0" x2="-340" y2="0"/>
+        <line x1="-380" y1="0" x2="-340" y2="0"/>
       </g>
       <g class="lini-node lini-tick lini-line" transform="translate(0,0)">
         <line x1="380" y1="0" x2="419.5" y2="0"/>
@@ -277,11 +277,11 @@ input_file: samples/drawing_sheet.lini
         <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
         <text class="lini-text" x="0" y="0">4</text>
       </g>
-      <g class="lini-node lini-zone lini-block" transform="translate(-380,-148)">
+      <g class="lini-node lini-zone lini-block" transform="translate(-360,-148)">
         <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
         <text class="lini-text" x="0" y="0">A</text>
       </g>
-      <g class="lini-node lini-zone lini-block" transform="translate(-380,148)">
+      <g class="lini-node lini-zone lini-block" transform="translate(-360,148)">
         <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
         <text class="lini-text" x="0" y="0">B</text>
       </g>
