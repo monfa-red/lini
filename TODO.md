@@ -107,59 +107,16 @@ already has.
 
 ### Sections & details
 
-- **Cutting-plane chrome (2).** A `|cutting-plane| "A"` child on the source view:
-  the ISO line (thick ends, thin dash-dot middle), viewing-direction arrows,
-  letters at both ends. Anchored at a station (`at:` + axis), drawn from the
-  parent's sized geometry like `|centerline|` — same generated-chrome machinery.
-  *How:* a template row (`::line`, `stroke-style: center`) in
-  `desugar/{types,bundles}.rs`; its smart label is the letter. Layout fills
-  geometry in `drawing/chrome.rs::fill` from the parent's geometry box — the
-  line across it at `at:` (+ overhang), two short thick end strokes (a second
-  `|line|` child pair or inline `stroke-width` segments), arrow markers via
-  `prim::dim_marker`, letter text leaves beside the ends via `prim::text`.
-  Reuses the `chrome:` marker plumbing end to end; only the multi-part lowering
-  (line + arrows + letters from one chrome child) is new — follow `edges::fill`'s
-  seed-clone play, cloning typed pieces from the seed.
-- **Section title composition (2).** A view declaring `section: a` composes its
-  title — `A-A (1:1.5)` — from the letter and its scale over the page's
-  (`drawing scale ÷ page scale` is already the drafting ratio). Same for
-  `detail: c` → `C (1:1)`. *How:* in `desugar/mod.rs` where a drawing's smart
-  label lowers to the `|footnote|` (`labels::footnote_node`), a `section:` /
-  `detail:` decl with **no label** synthesizes one: uppercase the ident,
-  `A-A` vs `C`, then append the ratio at layout… the scale isn't known at
-  desugar — so lower a placeholder footnote carrying a `section:` attr and let
-  the drawing engine (`engine.rs`, where the title footnote is pinned) append
-  `" (1:1.5)"` from `own ÷ parent ctx.scale`, formatted via `compose::fmt`
-  (trim `1:1` to `1:1`, `1.5` decimals per the ≤2-dp law).
-- **Detail marker (1).** `|detail-circle| "C"` on the source view — the thin
-  circle over a region + the letter beside it. *How:* a template over `|oval|`
-  (`stroke: --stroke-light; stroke-width: 1; fill: none`, `width:` the ⌀,
-  smart label → a text leaf placed at the rim's upper-right). Not even chrome —
-  a plain part-frame child with `translate:`, like `|balloon|`; one template
-  row + a label-placement rule in the engine (letter at 45° on the rim,
-  `note-offset` out).
-- **Auto detail view (4).** The zoomed view *is* derivable — it's 2D: re-lay the
-  source drawing's geometry at the detail's scale, clip to the circle, skip the
-  source's annotations; the detail's own `[ ]` dims anchor into the re-laid
-  clones. The screw's C/D/E details are exactly this. *How:* a `|detail|`
-  template (`::drawing`) with `of: <source id>` + `at: x y` + `width:` (region ⌀,
-  source units). At engine dispatch, `drawing::layout_node` for a `|detail|`
-  resolves `of:` via `layout::node_at`, lays out the source's **geometry
-  children** again under its own `Ctx { scale: own }` (layout_inst is already
-  re-entrant — the same inst tree, a different ctx), shifts them by `−at × own`,
-  and wraps them in a clip: new `PlacedNode` field or attr `clip: circle r` that
-  `render/primitives.rs` emits as one `<clipPath>` in `<defs>` (id interned like
-  gradients in `render/paints.rs`) + `clip-path=` on the group. The detail's own
-  annotation links then lower against the re-laid kids — `annotate::Ctx.kids`
-  already takes whatever slice it's given, so anchors (`screw:r1 (o)`) resolve in
-  the clone for free. Source annotations are skipped by partitioning only
-  geometry (the engine's `is_sheet` / link split already separates them). The
-  border circle + letter reuse the detail-marker template. Risks: `break:` in
-  the source (clone rides it — positions are per-inst, fine) and id collisions
-  (the clone's kids are *placed* copies, never re-registered in the scene — only
-  the detail's own links may address them, which is the point).
+**Graduated to `DRAWING-0.18.md`** (the planned round): the `|cutting-plane|`
+chrome, composed `section:` / `detail:` titles, `|detail-circle|` markers, and
+the auto `|detail|` view.
 
 ### From the ramjet sheets
+
+(Physical-size emission and the `|title-block|` fields graduated to
+`DRAWING-0.18.md`, as did `fillet`/`chamfer` against arcs and the
+`.lini-dim-text` de-inlining.)
+
 
 - **Leader label follows the composed thread spec (1).** `bar:m10 <- "LH"` should
   read `M10×1.5 LH` — one-ended labels *follow* the value everywhere else
@@ -173,13 +130,6 @@ already has.
   leaf with a `prim::rect` sized `text width + 2×pad` (the `Stacked` text-box
   math in `dims.rs` already measures this), classes `lini-dim-line`; place at
   the landing.
-- **Physical-size emission (1–2).** A `|page|` knows its millimetres — emit
-  `width="210mm" height="148mm"` on the SVG for true-scale printing. *How:* the
-  root `finish` (layout/mod.rs) knows the lone-page case (same predicate as the
-  padding rule, moved to a shared helper); carry `physical: Option<(f64, f64)>`
-  mm on `LaidOut`, and `render` emits the `width`/`height` attrs beside the
-  viewBox (they don't affect on-screen scaling when a host sets CSS size).
-  Guard: only when the viewbox *is* the sheet (lone page, padding 0).
 - **Surface-finish symbol (3).** The Ra checkmark flag (`0.8` on a bent leader).
   *How:* SPEC 23's stated direction — glyphs as paths, like icons: a small
   built-in path set (`finish`, `finish-machined`, `finish-any`) drawn by a new
@@ -208,15 +158,6 @@ already has.
   top-view chrome is one/two extra circles (`chrome::fill` arm, concentric at
   the datum), lowered exactly as the ¾ arc; `pattern:` replicates per copy for
   free. Side-view forms stay authored (they're section geometry).
-- **Title-block fields (2–3).** The real ISO 7200 block is a fixed nested grid
-  (Dept / Created by / Approved / Doc type / status / Title / DWG No. / Rev /
-  Date / Sheet + a logo cell). *How:* keep `|title-block|` a table; add an
-  ISO 7200 **define body** in the template registry — intrinsic children
-  (`bodies` in desugar already materialize define bodies per instance) forming
-  the fixed grid, each field cell carrying an id (`dept`, `title`, `dwg`,
-  `rev`, `sheet`) so users fill them by path or by a `fields:`-style shorthand.
-  Smart fills (sheet count, view-scale list) read at the page's `finish`, where
-  both are known.
 - **Local / data-URI images (2).** `|image|` is external-URL only — a title-block
   logo needs `src: "./logo.svg"` embedded for a self-contained SVG. *How:* at
   render, a relative/`file:` src reads the file (svg → inline `<g>` or nested
@@ -260,12 +201,6 @@ already has.
   seat at `dim-offset` along the normal, `gap:` steers). The ISO-aligned text
   rotation machinery already handles arbitrary angles (the diametral line
   proves it).
-- **`fillet` / `chamfer` against an arc (3)** — the pen joins straight runs
-  only. *How:* `corner.rs` grows line↔arc and arc↔arc trim: solve the tangent
-  circle of radius `r` against a line and a circle (offset-curve intersection —
-  closed-form quadratics, no iteration); chamfer cuts back along each curve by
-  arclength. The pending-slot and cyclic plumbing is untouched — only
-  `apply_mod`'s geometry cases grow.
 - **Dim-line breaks / halos (3)** — where extension lines cross geometry (the
   spike's ⌀ stack wants it). *How:* render-side halo, not layout: extension /
   dim lines get `paint-order`-style masking — emit each `lini-ext-line` with a
