@@ -200,6 +200,18 @@ Append-only, per PLAN.md's rule.
     centre bore rides the `[ ]`, its redundant centerline removed by the
     cascade in the stylesheet). Tie bar matches SPEC 24 fully only after
     stage 2 adds `thread:`.
+- **2026-07-07 — the origin line rides the sheet centreline** (Abbas's catch
+  on his scale-6 sheet; all gates green, the render inspected: the screw's
+  axis, the end view's centre, and the sheet's centring marks share one
+  line). `align: origin` gained its **where-the-line-sits** rule, no new
+  value: given an explicit cross size the group **fits into**, the shared
+  line is the container's centre line (a small part rides the sheet's
+  centreline — the drafting norm for single-part sheets); an auto-sized or
+  overfull axis centres the group around the line instead, so a large
+  multi-view ensemble stays balanced — exactly the small-part / big-part
+  split Abbas described. One condition in `flex::origin_line`
+  (`2·max(|lo|,|hi|) ≤ avail`); SPEC 12 states it; the sheet sample's
+  title block now reads the honest `1.5:1` (scale 6 over the page's 4).
 - **2026-07-07 — anonymous containers are scope-transparent** (all gates
   green — 758 tests — clippy silent, fmt clean; the sheet sample rendered
   id-less and pixel-compared against the id-ed render). Closes the

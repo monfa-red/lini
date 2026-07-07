@@ -82,10 +82,11 @@ pub fn lay_out_flex(
     let main_extent = avail_main.map_or(packed, |a| a.max(packed));
     // Origin alignment fixes every child's cross position (origins on one
     // line), so the cross extent is that arrangement's union, not the widest
-    // child; the shared line then sits so the union stays centred.
-    let origin_line = (cross == Cross::Origin).then(|| origin_line(children, cross_dim));
+    // child — see `origin_line` for where the shared line sits.
+    let origin_line =
+        (cross == Cross::Origin).then(|| origin_line(children, cross_dim, avail_cross));
     let max_cross = match origin_line {
-        Some((_, union)) => union,
+        Some((_, extent)) => extent,
         None => children
             .iter()
             .map(|c| len(c, cross_dim))
@@ -184,11 +185,14 @@ fn align_cross(extent: f64, child: f64, cross: Cross) -> f64 {
     }
 }
 
-/// With every child's origin on one cross line, the group's union: returns
-/// `(line, extent)` — the line's coordinate that centres the union on the
-/// container, and the union's cross size. For all-ordinary children (origin =
-/// bbox centre) this degrades to plain `center`.
-fn origin_line(children: &[PlacedNode], cross_dim: Dim) -> (f64, f64) {
+/// With every child's origin on one cross line, where that line sits —
+/// returns `(line, extent)`. The group spans `[lo, hi]` about the line: given
+/// an explicit cross size it **fits into**, the line is the container's
+/// centre line — a small part's axis rides the sheet's centreline
+/// ([SPEC 15.8]); an auto-sized (or overfull) axis centres the group around
+/// the line instead, so a large ensemble stays balanced. For all-ordinary
+/// children (origin = bbox centre) both cases degrade to plain `center`.
+fn origin_line(children: &[PlacedNode], cross_dim: Dim, avail: Option<f64>) -> (f64, f64) {
     let (mut lo, mut hi) = (f64::INFINITY, f64::NEG_INFINITY);
     for c in children {
         let o = cross_origin(c, cross_dim);
@@ -198,6 +202,11 @@ fn origin_line(children: &[PlacedNode], cross_dim: Dim) -> (f64, f64) {
         };
         lo = lo.min(min - o);
         hi = hi.max(max - o);
+    }
+    if let Some(a) = avail
+        && 2.0 * lo.abs().max(hi.abs()) <= a
+    {
+        return (0.0, a);
     }
     (-(lo + hi) / 2.0, hi - lo)
 }
@@ -309,6 +318,32 @@ mod origin_tests {
         assert!(
             s.cy + s.bbox.max_y < plain.cy + plain.bbox.max_y - 5.0,
             "the profile's body rides above the shared line"
+        );
+    }
+
+    #[test]
+    fn with_room_the_origin_line_is_the_containers_centre() {
+        // An explicit cross size the group fits into pins the shared line to
+        // the container's centre — a small part's axis rides the sheet's
+        // centreline [SPEC 12/15.8]; view `a`'s bottom dim no longer drags it.
+        let l = laid(
+            "|row#views| { height: 200; align: origin } [\n  |drawing#a| { scale: 1 } [\n    |oval#c1| { width: 20; height: 20 }\n    c1:left (-) c1:right { side: bottom }\n  ]\n  |drawing#b| { scale: 1 } [ |oval#c2| { width: 30; height: 30 } ]\n]\n",
+        );
+        let a = by_id(&l.nodes, "a");
+        assert!(
+            (a.cy + a.origin.1).abs() < 1e-9,
+            "the shared line sits at the container centre: {}",
+            a.cy + a.origin.1
+        );
+        // Too little room: the group centres around the line instead.
+        let tight = laid(
+            "|row#views| { height: 30; align: origin } [\n  |drawing#a| { scale: 1 } [\n    |oval#c1| { width: 20; height: 20 }\n    c1:left (-) c1:right { side: bottom }\n  ]\n  |drawing#b| { scale: 1 } [ |oval#c2| { width: 30; height: 30 } ]\n]\n",
+        );
+        let a = by_id(&tight.nodes, "a");
+        assert!(
+            (a.cy + a.origin.1).abs() > 1.0,
+            "an overfull axis balances the ensemble: {}",
+            a.cy + a.origin.1
         );
     }
 

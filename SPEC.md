@@ -1521,11 +1521,15 @@ runs *across* it (cross axis). Both default `center`.
 **`align: origin` aligns what the boxes contain, not the boxes.** Every node has
 an **origin** — the bbox centre of an ordinary node, a `|sketch|`'s pen origin, a
 `pattern:`'s seed datum, a `|drawing|`'s datum ([SPEC 15.1](#151-the-container-the-datum--the-scale)) —
-and `origin` puts every child's origin on one shared cross-axis line (placed so the
-group still centres on the container). For ordinary children it *is* `center`; it
-differs exactly where a box is asymmetric about its origin — a view whose
-dimensions stack on one side — which is how a row of drawings shares one axis
-([SPEC 15.8](#158-assemblies-views-sheets--titles)). In a **grid**, both `align`
+and `origin` puts every child's origin on one shared cross-axis line, which is how
+a row of drawings shares one axis
+([SPEC 15.8](#158-assemblies-views-sheets--titles)). **Where the line sits:**
+given an explicit cross size the group fits into, it is the container's **centre
+line** — a small part's axis rides the sheet's centreline; on an auto-sized (or
+overfull) axis the group centres around the line instead, so a large ensemble
+stays balanced. For ordinary children it *is* `center`; it differs exactly where
+a box is asymmetric about its origin — a view whose dimensions stack on one
+side. In a **grid**, both `align`
 and `justify` accept it: the cell puts the child's origin on its track centre, so
 one row of cells shares a horizontal axis and one column a vertical one — the
 projection-sheet arrangement. In a flow, `justify: origin` has no meaning along
@@ -3660,7 +3664,7 @@ body:left (-) body:right { side: bottom }        // → 60
 |page| { sheet: a5 landscape; gap: 50; direction: row; align: origin; } [
   // the ISO sheet: frame, zones, marks — views share their axes datum-to-datum
 
-  |drawing#side| "DIN 912 — M8 × 40" [
+  |drawing#side| "DIN 912 — M8 × 40" { scale: 6; } [
     |sketch#screw| {
       draw: move(0, 0) up(6.5) right(8):head :k down(2.5) right(12) :v
             right(28):m8 chamfer(1) down(4);
@@ -3687,7 +3691,7 @@ body:left (-) body:right { side: bottom }        // → 60
     // → M8×1.25 — composed by the thread
   ]
 
-  |drawing#end| [
+  |drawing#end| { scale: 6; } [
     |oval#od| { width: 13; height: 13; }
     // the head, end-on
     |hex#socket| { width: 7; height: 6; }
@@ -3699,7 +3703,7 @@ body:left (-) body:right { side: bottom }        // → 60
 
   |title-block| { columns: 60 auto; } [
     "Part"  "DIN 912 — M8 × 40"
-    "Scale" "1:1"
+    "Scale" "1.5:1"
     "Units" "mm"
   ]
 ]
