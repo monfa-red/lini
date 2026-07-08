@@ -1,0 +1,52 @@
+// The injection screw (RJ-SCR-20-001) — the round's stress sheet [DRAWING-0.19]:
+// a revolved core (FEED / TRANSITION / METERING) with the flight root filleted
+// against the transition arc, a cutting plane A–A and its hatched section, a
+// 6:1 detail of the metering root, and an ISO 7200 field title block on A3.
+{
+  |steel::sketch| { fill: hatch(45, 4); }
+}
+
+|page#screw| { sheet: a3 landscape; padding: 8; } [
+
+  |drawing#side| "INJECTION SCREW" { scale: 2; unit: "mm"; } [
+    // The core: a shallow feed root rising through a transition arc to the
+    // deeper metering root — the flight-root fillets land against the arc.
+    |sketch#body| {
+      draw: move(-150, 0) up(8) right(100) point():z1 fillet(10) arc(40, 6, 60)
+            fillet(10) point():z2 right(90):meter chamfer(2) down(14);
+      revolve: x-axis; thread: meter 6;
+    }
+
+    |cutting-plane| "A" { at: 70; }
+    |detail-circle#c| "C" { width: 34; translate: 40 0; }
+
+    body:left (-) body:z1 { side: top; }
+    // FEED       → 100
+    body:z1 (-) body:z2 { side: top; }
+    // TRANSITION → 40
+    body:z2 (-) body:right { side: top; }
+    // METERING   → 90
+    body:left (-) body:right { side: bottom; }
+    // overall    → 230
+  ]
+
+  |drawing#sec| { section: a; scale: 2; } [
+    // A–A across a flight: the core disc + one flight land, hatched.
+    |steel#flight| {
+      draw: move(-30, -30) right(60) down(60) left(60) close()
+            move(-5, -46) right(10) down(16) left(10) close();
+    }
+    |centerline| { points: 0 -52, 0 52; }
+
+    flight:left (-) flight:right { side: bottom; }
+    // → 60, the core ⌀
+  ]
+
+  |detail#det| { of: c; scale: 6; } [
+    body:meter <- "root R10"
+  ]
+
+  |title-block| {
+    title: "Injection screw"; dwg: "RJ-SCR-20-001"; rev: "A"; sheet: "1/1"; date: "2026-07-08"; author: "AM";
+  }
+]

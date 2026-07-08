@@ -797,4 +797,23 @@ mod tests {
                 .contains("x-axis, y-axis, or a bearing")
         );
     }
+
+    #[test]
+    fn fillet_and_chamfer_take_a_curved_leg() {
+        // A fillet blends a line into an arc: its own arc + the drawn arc.
+        let f = folded("draw: move(-30, 0) right(30) fillet(6) arc(30, -30, 40);");
+        assert_eq!(f.d.matches(" A ").count(), 2, "line→arc fillet: {}", f.d);
+        // A chamfer cuts back along an arc — the arc survives (trimmed), the
+        // bevel is a straight run.
+        let g = folded("draw: move(0, -40) arc(30, 30, 40) chamfer(3) right(30);");
+        assert_eq!(
+            g.d.matches(" A ").count(),
+            1,
+            "arc chamfer keeps one arc: {}",
+            g.d
+        );
+        // Too large for its curved neighbour errors, never silently mis-draws.
+        let e = fold_err("draw: move(-4, 0) right(4) fillet(9) arc(6, -6, 8);");
+        assert!(e.contains("fit") || e.contains("large"), "got: {e}");
+    }
 }
