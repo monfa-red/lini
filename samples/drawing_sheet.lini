@@ -2,7 +2,8 @@
 // centring marks — hosting a DIN 912 socket cap screw. The side view is a
 // revolved profile with a thread: dressing and a |hidden| hex socket; the
 // end view is ordinary concentric geometry; the |title-block| seats itself
-// flush inside the frame's bottom-right corner, fields as plain cells.
+// flush inside the frame's bottom-right corner — its ISO 7200 field properties
+// build the grid, absent fields collapsing.
 
 |page| { sheet: a5 landscape; gap: 50; direction: row; align: origin; } [
   // the ISO sheet: frame, zones, marks — views share their axes datum-to-datum
@@ -45,9 +46,7 @@
 
   ]
 
-  |title-block| { columns: 60 auto; } [
-    "Part"  "DIN 912 — M8 × 40"
-    "Scale" "1.5:1"
-    "Units" "mm"
-  ]
+  |title-block| {
+    title: "Socket cap screw"; dwg: "DIN 912 — M8 × 40"; rev: "A"; sheet: "1/1"; date: "2026-07-08"; author: "AM";
+  }
 ]

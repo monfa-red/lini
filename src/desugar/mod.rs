@@ -15,6 +15,7 @@ mod drawing;
 mod labels;
 mod page;
 pub(crate) mod scene;
+mod titleblock;
 mod types;
 
 use crate::error::Error;
@@ -549,6 +550,15 @@ fn lower_node(
     // placeholder (like the generated chrome types).
     if in_drawing && info.chain.iter().any(|t| t == "cutting-plane") {
         style.push(decl("chrome", vec![Value::Ident("cutting-plane".into())]));
+    }
+    // A `|title-block|` with ISO 7200 field properties builds its grid
+    // [SPEC 15.8]; with none, its cells stay authored (the plain-table form).
+    // The generated cells are `|cell|` boxes, so the table auto-header skips
+    // them and the field grid stands as built.
+    if info.chain.iter().any(|t| t == "title-block") && titleblock::has_fields(&node.style) {
+        for cell in titleblock::expand_fields(&mut style, node.span) {
+            children.push(Child::Box(lower_node(&cell, types, bodies, false)?));
+        }
     }
     let mut kept_label = None;
     if let Some(label) = node.label.as_ref().filter(|l| !l.text.is_empty()) {

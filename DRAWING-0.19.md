@@ -172,6 +172,22 @@ commit per stage; append to the execution log.
 
 Append-only, per DRAWING-0.16.md's rule.
 
+- **2026-07-08 — stage 4 landed** (all gates green — 771 tests, clippy silent,
+  fmt clean; `drawing_sheet.lini` upgraded to fields and PNG-inspected: the ISO
+  7200 block reads Title / Dwg No. / Rev / Sheet / Date / Drawn, the absent
+  Approved cell collapsed). The `|title-block|` field grid:
+  - **`desugar/titleblock.rs`.** String-valued ISO 7200 field properties —
+    `title`, `dwg`, `rev`, `sheet`, `date`, `author`, `approved`, `dept`,
+    `reference`, `doc-type`, `status` — desugar (like `sheet:`) into a grid: the
+    title spans the three columns, the rest flow, each a **small muted caption
+    over its value** (`|cell|` is a column-flow block, so its two text leaves
+    stack). **Absent fields collapse** (no cell). The generated cells are
+    `|cell|` boxes, so the table's auto-header (`wrap_header_row`, which fires
+    only on an all-text first row) skips them and the field grid stands.
+  - **The plain-table form is untouched** — a `|title-block|` with no field
+    property keeps its authored cells (`has_fields` gates the expansion).
+  - `drawing_sheet.lini` and SPEC 24's sheeted DIN 912 both moved to the field
+    form; the drawing_sheet snapshot re-accepted.
 - **2026-07-08 — stage 3 landed** (all gates green — 769 tests, clippy silent,
   fmt clean; 11 drawing snapshots swept — the diff is **only** font inlines →
   class + the mm attrs, zero coordinate churn, so no geometry moved; the ring

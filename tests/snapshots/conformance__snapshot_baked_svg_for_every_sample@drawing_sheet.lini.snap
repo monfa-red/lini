@@ -23,7 +23,6 @@ input_file: samples/drawing_sheet.lini
     .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
     .lini .lini-footnote { color: rgba(0, 0, 0, 0.5); font-size: 12px; }
     .lini .lini-table { fill: none; stroke: #444; stroke-width: 2; font-size: 14px; font-weight: normal; stroke-dasharray: none; }
-    .lini .lini-header { fill: rgba(0, 0, 0, 0.06); font-weight: bold; }
     .lini .lini-centerline { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; stroke-dasharray: 10,3,1,3; }
     .lini .lini-hidden { fill: none; stroke: black; stroke-width: 1; stroke-dasharray: 4,3; }
     .lini .lini-shoulder { stroke: black; }
@@ -177,34 +176,41 @@ input_file: samples/drawing_sheet.lini
         </g>
         <text class="lini-text lini-dim-text" x="0" y="39.5">7</text>
       </g>
-      <g class="lini-node lini-title-block lini-table lini-group lini-block" transform="translate(283.9,223)">
-        <rect x="-95.6" y="-32.5" width="191.2" height="65" rx="0" ry="0"/>
-        <rect x="-35.6" y="-32.5" width="1" height="65" fill="#444" stroke="none"/>
-        <rect x="-95.6" y="-11.5" width="191.2" height="1" fill="#444" stroke="none"/>
-        <rect x="-95.6" y="10.5" width="191.2" height="1" fill="#444" stroke="none"/>
-        <g class="lini-node lini-header lini-cell lini-block" transform="translate(-65.6,-22)">
-          <rect x="-29" y="-9.5" width="58" height="19" rx="0" ry="0"/>
-          <text class="lini-text" x="0" y="0">Part</text>
+      <g class="lini-node lini-title-block lini-table lini-group lini-block" transform="translate(274.4,182.5)">
+        <rect x="-105.1" y="-73" width="210.2" height="146" rx="0" ry="0"/>
+        <rect x="25.1" y="-24.5" width="1" height="97.5" fill="#444" stroke="none"/>
+        <rect x="65.1" y="-24.5" width="1" height="97.5" fill="#444" stroke="none"/>
+        <rect x="-105.1" y="-25" width="210.2" height="1" fill="#444" stroke="none"/>
+        <rect x="-105.1" y="24" width="210.2" height="1" fill="#444" stroke="none"/>
+        <g class="lini-node lini-cell lini-block" transform="translate(0,-49)">
+          <rect x="-104.1" y="-23" width="208.2" height="46" rx="0" ry="0"/>
+          <text class="lini-text" x="0" y="-15.5" style="fill: rgba(0, 0, 0, 0.5); font-size: 7px">Title</text>
+          <text class="lini-text" x="0" y="13.5">Socket cap screw</text>
         </g>
-        <g class="lini-node lini-header lini-cell lini-block" transform="translate(30.5,-22)">
-          <rect x="-64.1" y="-9.5" width="128.2" height="19" rx="0" ry="0"/>
-          <text class="lini-text" x="0" y="0">DIN 912 — M8 × 40</text>
+        <g class="lini-node lini-cell lini-block" transform="translate(-40,0)">
+          <rect x="-64.1" y="-23" width="128.2" height="46" rx="0" ry="0"/>
+          <text class="lini-text" x="0" y="-15.5" style="fill: rgba(0, 0, 0, 0.5); font-size: 7px">Dwg No.</text>
+          <text class="lini-text" x="0" y="13.5">DIN 912 — M8 × 40</text>
         </g>
-        <g class="lini-node lini-cell lini-block" transform="translate(-65.6,0)">
-          <rect x="-29" y="-9.5" width="58" height="19" rx="0" ry="0"/>
-          <text class="lini-text" x="0" y="0">Scale</text>
+        <g class="lini-node lini-cell lini-block" transform="translate(45.6,0)">
+          <rect x="-18.5" y="-23" width="37" height="46" rx="0" ry="0"/>
+          <text class="lini-text" x="0" y="-15.5" style="fill: rgba(0, 0, 0, 0.5); font-size: 7px">Rev</text>
+          <text class="lini-text" x="0" y="13.5">A</text>
         </g>
-        <g class="lini-node lini-cell lini-block" transform="translate(30.5,0)">
-          <rect x="-64.1" y="-9.5" width="128.2" height="19" rx="0" ry="0"/>
-          <text class="lini-text" x="0" y="0">1.5:1</text>
+        <g class="lini-node lini-cell lini-block" transform="translate(85.6,0)">
+          <rect x="-18.5" y="-23" width="37" height="46" rx="0" ry="0"/>
+          <text class="lini-text" x="0" y="-15.5" style="fill: rgba(0, 0, 0, 0.5); font-size: 7px">Sheet</text>
+          <text class="lini-text" x="0" y="13.5">1/1</text>
         </g>
-        <g class="lini-node lini-cell lini-block" transform="translate(-65.6,22)">
-          <rect x="-29" y="-9.5" width="58" height="19" rx="0" ry="0"/>
-          <text class="lini-text" x="0" y="0">Units</text>
+        <g class="lini-node lini-cell lini-block" transform="translate(-40,49)">
+          <rect x="-64.1" y="-23" width="128.2" height="46" rx="0" ry="0"/>
+          <text class="lini-text" x="0" y="-15.5" style="fill: rgba(0, 0, 0, 0.5); font-size: 7px">Date</text>
+          <text class="lini-text" x="0" y="13.5">2026-07-08</text>
         </g>
-        <g class="lini-node lini-cell lini-block" transform="translate(30.5,22)">
-          <rect x="-64.1" y="-9.5" width="128.2" height="19" rx="0" ry="0"/>
-          <text class="lini-text" x="0" y="0">mm</text>
+        <g class="lini-node lini-cell lini-block" transform="translate(45.6,49)">
+          <rect x="-18.5" y="-23" width="37" height="46" rx="0" ry="0"/>
+          <text class="lini-text" x="0" y="-15.5" style="fill: rgba(0, 0, 0, 0.5); font-size: 7px">Drawn</text>
+          <text class="lini-text" x="0" y="13.5">AM</text>
         </g>
       </g>
       <g class="lini-node lini-frame lini-rect lini-box lini-block" transform="translate(20,0)">

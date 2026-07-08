@@ -3799,10 +3799,9 @@ body:left (-) body:right { side: bottom }        // → 60
 
   ]
 
-  |title-block| { columns: 60 auto; } [
-    "Part"  "DIN 912 — M8 × 40"
-    "Scale" "1.5:1"
-    "Units" "mm"
-  ]
+  |title-block| {
+    title: "Socket cap screw"; dwg: "DIN 912 — M8 × 40";
+    rev: "A"; sheet: "1/1"; date: "2026-07-08"; author: "AM";
+  }
 ]
 ```
