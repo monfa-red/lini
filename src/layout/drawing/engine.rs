@@ -31,6 +31,10 @@ pub(in crate::layout) fn layout_node(
         inst.span,
         inst.id.is_some(),
     )?;
+    // A composed section / detail title reads its ratio here [SPEC 15.8], where
+    // both the view's scale (`own`) and the enclosing page's (`ctx.scale`) are
+    // known.
+    fill_section_title(&mut children, own, ctx.scale);
 
     // Centre the drawn extent on the node's origin, so the container places in
     // a flow like any box (and a styled drawing's own rect backs its content).
@@ -70,9 +74,32 @@ pub(in crate::layout) fn layout_root(program: &Program) -> Result<(Vec<PlacedNod
         Span::empty(),
         true,
     )?;
+    fill_section_title(&mut children, own, own);
     let extent = flow_extent(&children);
     place_pinned(&mut children, extent)?;
     Ok((children, extent))
+}
+
+/// Fill a composed section / detail title [SPEC 15.8]: the placeholder
+/// `|footnote|` desugar seeded carries `section-title: <kind> <letter>`; here,
+/// where the view's scale (`own`) and the enclosing page's (`page`) are both
+/// known, compose the title (`A-A (1:1)`) and size the footnote to it. The
+/// text child inherits the footnote's font and colour (`--footer-color`), so
+/// `|drawing| |footnote| { … }` styles it like any title.
+fn fill_section_title(kids: &mut [PlacedNode], own: f64, page: f64) {
+    for k in kids.iter_mut() {
+        let Some(ResolvedValue::Tuple(m)) = k.attrs.get("section-title") else {
+            continue;
+        };
+        let [ResolvedValue::Ident(kind), ResolvedValue::Ident(letter)] = m.as_slice() else {
+            continue;
+        };
+        let title = super::compose::section_title(kind, letter, own, page);
+        let fs = k.attrs.number("font-size").unwrap_or(12.0);
+        let text = prim::text(&title, 0.0, 0.0, fs, None, false);
+        k.bbox = text.bbox;
+        k.children = vec![text];
+    }
 }
 
 /// The shared body: lay each child out (features, chrome, and patterns fold
@@ -102,7 +129,11 @@ fn lay_out(
     let geometry: Vec<usize> = kids
         .iter()
         .enumerate()
-        .filter(|(_, k)| !super::is_sheet(k.kind, &k.type_chain) && !anchors::is_pinned(&k.attrs))
+        .filter(|(_, k)| {
+            !super::is_sheet(k.kind, &k.type_chain)
+                && !anchors::is_pinned(&k.attrs)
+                && !super::chrome::is_chrome(&k.attrs)
+        })
         .map(|(i, _)| i)
         .collect();
     if geometry.is_empty() {
@@ -127,6 +158,13 @@ fn lay_out(
 
     place_features(&mut kids, own, None)?;
     mates::seat(&mut kids, geometry[0], &mates, path, own)?;
+    // The section chrome fills from the seated geometry's extent [SPEC 15.8]:
+    // the cutting-plane's ISO anatomy and the detail markers' rim letters.
+    let geo_extent = geometry.iter().fold(Bbox::empty(), |b, &i| {
+        b.union(kids[i].bbox.shifted(kids[i].cx, kids[i].cy))
+    });
+    super::section::fill_cutting_planes(&mut kids, geo_extent, own)?;
+    super::section::place_detail_labels(&mut kids);
     let mut lowered = annotate::lower(&kids, &annotations, path, own, unit)?;
     kids.append(&mut lowered);
     Ok(kids)

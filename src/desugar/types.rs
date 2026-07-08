@@ -68,6 +68,12 @@ pub const TEMPLATES: &[(&str, &str)] = &[
     ("hidden", "sketch"),
     ("shoulder", "line"),
     ("threadline", "line"),
+    // Sections & details [SPEC 15.8]: the authored cutting-plane line (chrome —
+    // its ISO anatomy fills from the view's extent), the detail-region marker,
+    // and the auto detail view (a `|drawing|` sourced from a marker via `of:`).
+    ("cutting-plane", "line"),
+    ("detail-circle", "oval"),
+    ("detail", "drawing"),
     // The sheet [SPEC 15.8]: the ISO page container, its seated title block,
     // and the generated furniture types (frame / zone references / ticks).
     ("page", "block"),

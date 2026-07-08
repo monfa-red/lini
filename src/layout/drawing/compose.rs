@@ -123,6 +123,32 @@ fn signed(v: f64) -> String {
     }
 }
 
+/// A composed section / detail view title [SPEC 15.8]: the uppercased letter —
+/// **doubled** for a section (`A-A`), single for a detail (`C`) — then the
+/// drafting ratio in parentheses. `own` is the view's scale, `page` the
+/// enclosing page's; a magnified view reads `2:1`, a reduced one `1:1.5`.
+pub(super) fn section_title(kind: &str, letter: &str, own: f64, page: f64) -> String {
+    let l = letter.to_uppercase();
+    let head = if kind == "detail" {
+        l
+    } else {
+        format!("{l}-{l}")
+    };
+    format!("{head} ({})", ratio(own, page))
+}
+
+/// The drafting scale ratio `own : page` [SPEC 15.8], normalised so one side is
+/// 1: an enlargement `r ≥ 1` reads `r:1`, a reduction `1:1/r`; each side at
+/// most 2 dp.
+fn ratio(own: f64, page: f64) -> String {
+    let r = own / page;
+    if r >= 1.0 {
+        format!("{}:1", fmt(r))
+    } else {
+        format!("1:{}", fmt(1.0 / r))
+    }
+}
+
 /// A measured value at drafting precision [SPEC 15.6]: at most 2 decimals,
 /// trailing zeros trimmed.
 pub(super) fn fmt(v: f64) -> String {

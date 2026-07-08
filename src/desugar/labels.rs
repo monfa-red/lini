@@ -40,6 +40,31 @@ pub(super) fn footnote_node(label: &TextNode) -> Node {
     }
 }
 
+/// A placeholder `|footnote|` for a composed section / detail title
+/// [SPEC 15.8]: a `section:` / `detail:` view with no authored label seeds this
+/// carrying `section-title: <kind> <letter>`; the drawing engine fills the text
+/// where it pins the title (the scale ratio is only known there).
+pub(super) fn section_footnote(kind: &str, letter: &str, span: Span) -> Node {
+    Node {
+        id: None,
+        ty: Some("footnote".to_string()),
+        label: None,
+        classes: Vec::new(),
+        style: vec![Decl {
+            name: "section-title".to_string(),
+            groups: vec![vec![
+                Value::Ident(kind.to_string()),
+                Value::Ident(letter.to_string()),
+            ]],
+            span,
+        }],
+        style_span: None,
+        children: Vec::new(),
+        links: Vec::new(),
+        span,
+    }
+}
+
 /// The `symbol: <name>` declaration an icon's smart label lowers to [SPEC 7].
 pub(super) fn symbol_decl(name: &str, span: Span) -> Decl {
     Decl {

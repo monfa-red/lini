@@ -172,6 +172,35 @@ commit per stage; append to the execution log.
 
 Append-only, per DRAWING-0.16.md's rule.
 
+- **2026-07-08 — stage 1 landed** (all gates green — 766 tests, clippy silent,
+  fmt clean; `drawing_ring.lini` PNG-rendered via resvg `--bake-vars` and
+  inspected). The section bookkeeping:
+  - **`|cutting-plane|` is authored chrome.** Desugar tags it `chrome:
+    cutting-plane` in a drawing scope (so `layout_inst` intercepts it as a
+    placeholder, and `chrome::placeholder` now keeps the label — the section
+    letter). A new `layout/drawing/section.rs` fills it from the seated
+    view's **geometry extent** (computed in `lay_out` after mates, chrome
+    excluded from the extent): the thin dash-dot chain line across the model +
+    overhang, thick end strokes, a slender viewing arrow (`dims::arrow`) at
+    each end, and the letter beside each. `at: N [axis]` stations it on the
+    longer axis by default; `facing:` turns the arrows (default `right` /
+    `down`), and `at:`-off-model / bad-`facing:` error per SPEC 20.
+  - **Composed titles.** `section:` / `detail:` on a labelless drawing seeds a
+    placeholder `|footnote|` (`section-title: <kind> <letter>`) at desugar; the
+    engine composes `A-A (1:1)` in `layout_node` where `own` and the enclosing
+    `ctx.scale` are both known (`compose::section_title` — the letter doubled
+    for a section, the `own ÷ page` ratio normalised to `2:1` / `1:1.5`).
+  - **`|detail-circle|`** is an ordinary round feature (added to `part_bbox`'s
+    width-is-diameter set, so a lone `width:` is a circle, not an ellipse); its
+    smart label moves out to the rim at 45° (`NOTE_OFFSET` past the rim).
+  - **Chrome tone.** The whole cutting-plane marker (line, thick ends, arrow
+    shafts, arrowheads) rides the cutting-plane's own `stroke` (default
+    `--stroke-light`), varying only weight — chain line at 1, thick ends at 2 —
+    so `|cutting-plane| { stroke: … }` restyles it whole; the letters read the
+    default text tone.
+  - Sample `drawing_ring.lini`: the cooling ring, front view (A–A plane,
+    marker-free ports, a `C` detail circle) + the authored hatched section
+    titled `A-A (1:1)` by composition. Conformance snapshot accepted.
 - **2026-07-08 — stage 0 landed** (SPEC only; no code, so no test gate — the
   contract for Abbas's review). SPEC amended per the ledger:
   - **15.8** grew a **Sections & details** block: `|cutting-plane|` (a `::line`

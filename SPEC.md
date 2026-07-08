@@ -3266,7 +3266,7 @@ Format: `filename:line:col: error: <message>` (LSP-compatible), compile-time, wi
 | Condition | Message |
 |---|---|
 | `\|sketch\|` without `draw:` | `'\|sketch\|' requires 'draw'` |
-| `\|hole\|` / `\|pitch-circle\|` without `width:` | `'\|hole\|' requires 'width' — its diameter` |
+| `\|hole\|` / `\|pitch-circle\|` / `\|detail-circle\|` without `width:` | `'\|hole\|' requires 'width' — its diameter` |
 | Unknown pen call / arity | `unknown draw call 'X'` / `'arc' takes (dx, dy, r) or (r, deg)` |
 | `fillet` / `chamfer` off a corner | `'fillet' modifies the corner between two segments` |
 | Floating `:segment` | `a ':segment' glues to its call — name a station with point():v` |

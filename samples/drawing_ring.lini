@@ -1,0 +1,41 @@
+// A cooling ring on an A5 sheet: the front view carries the A–A cutting plane
+// and marker-free ports; the section view A–A is authored (hatched walls) and
+// titled by composition — "A-A (1:1)", the view scale over the page's.
+{
+  |steel::sketch| { fill: hatch(45, 5); }
+}
+
+|page#ring| { sheet: a5 landscape; gap: 60; direction: row; align: origin; } [
+
+  |drawing#front| "COOLING RING" { scale: 4; } [
+    |oval#od| { width: 80; height: 80; fill: none; stroke: --stroke-dark; }
+    |oval#bore| { width: 34; height: 34; fill: --bg; stroke: --stroke-dark; }
+    |oval#port| {
+      width: 8; height: 8; fill: --bg; stroke: --stroke-dark; pattern: radial(6, 28);
+    }
+
+    |cutting-plane| "A" { at: 0; }
+    // a vertical plane through the centre, viewing right
+    |detail-circle#c| "C" { width: 15; translate: 0 -28; }
+    // a port, ringed for a detail view
+
+    od (o) { side: right; }
+    // ⌀80 — the diametral line, clear of the vertical A–A
+    bore (o) { side: left; }
+    // ⌀34
+  ]
+
+  |drawing#sec| { section: a; scale: 4; } [
+    |steel#wall| {
+      draw: move(-40, -8) right(23) down(16) left(23) close();
+      // the left ring wall
+      mirror: y-axis;
+      // → both walls (the bore between)
+    }
+    |centerline| { points: 0 -20, 0 20; }
+    // the revolve axis
+
+    wall:left (-) wall:right { side: bottom; }
+    // 80 across
+  ]
+]

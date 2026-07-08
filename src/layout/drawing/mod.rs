@@ -21,6 +21,7 @@ mod mates;
 mod outline;
 pub(crate) mod pen;
 mod round;
+mod section;
 mod threads;
 
 pub(super) use engine::{layout_node, layout_root};
@@ -126,7 +127,7 @@ pub(super) fn part_bbox(inst: &ResolvedInst, own: f64) -> Result<Bbox, Error> {
     if let Some(ty) = inst
         .type_chain
         .iter()
-        .find(|t| *t == "hole" || *t == "pitch-circle")
+        .find(|t| *t == "hole" || *t == "pitch-circle" || *t == "detail-circle")
         && !chrome::is_chrome(&inst.attrs)
     {
         let Some(w) = inst.attrs.number("width") else {
