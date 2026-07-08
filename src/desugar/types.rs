@@ -193,7 +193,7 @@ mod tests {
     use super::*;
 
     fn parse(src: &str) -> File {
-        crate::syntax::parser::parse(&crate::lexer::lex(src).expect("lex")).expect("parse")
+        crate::syntax::parser::parse(src, &crate::lexer::lex(src).expect("lex")).expect("parse")
     }
     fn chain(src: &str, name: &str) -> Vec<String> {
         let file = parse(src);

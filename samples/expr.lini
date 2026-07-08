@@ -1,11 +1,11 @@
-// Expressions & functions (SPEC §11.7): a backtick `…` is compile-time math, a
-// function computes a reusable number or point, and a parametric `points:` draws
-// a curve. Everything folds to literals at compile time.
+// Expressions & functions (SPEC §10.7): a (…) group is compile-time math, `=` binds
+// a reusable value or function (read in any expression), and a parametric `points:`
+// draws a curve. Everything folds to literals at compile time.
 {
   gap: 20; padding: 24;
-  scale(n) `90 * 1.2 ^ n`;
+  scale(n) = (90 * 1.2 ^ n);
   // a reusable size
-  wave(a, f) `(u * 320, a * sin(2 * pi * f * u))`;
+  wave(a, f) = (u * 320, a * sin(2 * pi * f * u));
   // a parametric point
 }
 
@@ -16,12 +16,12 @@
   width: scale(3); height: 40; fill: --teal-wash; stroke: --teal-ink;
 }
 |box#pad| "padding 8*2" {
-  padding: `8 * 2`; fill: --amber-wash; stroke: --amber-ink;
+  padding: (8 * 2); fill: --amber-wash; stroke: --amber-ink;
 }
 
-// A sine wave from a backtick expression, and the same curve named via wave().
+// A sine wave from a (…) expression, and the same curve named via wave().
 |line#sine| {
-  points: `(u * 320, 24 * sin(2 * pi * 3 * u))`; samples: 64; stroke: --sky-deep; stroke-width: 2;
+  points: (u * 320, 24 * sin(2 * pi * 3 * u)); samples: 64; stroke: --sky-deep; stroke-width: 2;
 }
 |line#named| {
   points: wave(18, 2); samples: 64; stroke: --rose-deep; stroke-width: 2;

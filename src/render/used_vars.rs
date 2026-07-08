@@ -127,7 +127,7 @@ mod tests {
 
     fn used(src: &str) -> BTreeSet<String> {
         let toks = crate::lexer::lex(src).expect("lex");
-        let file = crate::syntax::parser::parse(&toks).expect("parse");
+        let file = crate::syntax::parser::parse(src, &toks).expect("parse");
         let lowered = crate::desugar::desugar(&file).expect("desugar");
         let program = crate::resolve::resolve_with_theme(&lowered, &[]).expect("resolve");
         let laid = crate::layout::layout(&program).expect("layout");

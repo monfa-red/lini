@@ -218,7 +218,7 @@ pub(super) mod testutil {
 
     pub fn laid(src: &str) -> LaidOut {
         let toks = crate::lexer::lex(src).expect("lex");
-        let file = crate::syntax::parser::parse(&toks).expect("parse");
+        let file = crate::syntax::parser::parse(src, &toks).expect("parse");
         let lowered = crate::desugar::desugar(&file).expect("desugar");
         let program = crate::resolve::resolve_with_theme(&lowered, &[]).expect("resolve");
         crate::layout::layout(&program).expect("layout")
@@ -226,7 +226,7 @@ pub(super) mod testutil {
 
     pub fn layout_err(src: &str) -> String {
         let toks = crate::lexer::lex(src).expect("lex");
-        let file = crate::syntax::parser::parse(&toks).expect("parse");
+        let file = crate::syntax::parser::parse(src, &toks).expect("parse");
         let lowered = crate::desugar::desugar(&file).expect("desugar");
         let program = crate::resolve::resolve_with_theme(&lowered, &[]).expect("resolve");
         match crate::layout::layout(&program) {

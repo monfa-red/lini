@@ -778,7 +778,7 @@ mod tests {
 
     fn lay_out(src: &str) -> LaidOut {
         let tokens = crate::lexer::lex(src).expect("lex");
-        let file = crate::syntax::parser::parse(&tokens).expect("parse");
+        let file = crate::syntax::parser::parse(src, &tokens).expect("parse");
         let lowered = crate::desugar::desugar(&file).expect("desugar");
         let program = crate::resolve::resolve_with_theme(&lowered, &[]).expect("resolve");
         layout(&program).expect("layout")
@@ -902,7 +902,7 @@ mod tests {
 
     fn lay_out_err(src: &str) -> Error {
         let tokens = crate::lexer::lex(src).expect("lex");
-        let file = crate::syntax::parser::parse(&tokens).expect("parse");
+        let file = crate::syntax::parser::parse(src, &tokens).expect("parse");
         let lowered = crate::desugar::desugar(&file).expect("desugar");
         let program = crate::resolve::resolve_with_theme(&lowered, &[]).expect("resolve");
         match layout(&program) {
@@ -1101,8 +1101,9 @@ mod tests {
 
     #[test]
     fn grid_without_columns_is_an_error() {
-        let tokens = crate::lexer::lex("{ layout: grid; }\n|box#a|\n|box#b|\n").expect("lex");
-        let file = crate::syntax::parser::parse(&tokens).expect("parse");
+        let src = "{ layout: grid; }\n|box#a|\n|box#b|\n";
+        let tokens = crate::lexer::lex(src).expect("lex");
+        let file = crate::syntax::parser::parse(src, &tokens).expect("parse");
         let lowered = crate::desugar::desugar(&file).expect("desugar");
         let program = crate::resolve::resolve_with_theme(&lowered, &[]).expect("resolve");
         assert!(layout(&program).is_err());

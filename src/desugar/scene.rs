@@ -83,7 +83,7 @@ mod tests {
     use super::*;
 
     fn parse(src: &str) -> crate::syntax::ast::File {
-        crate::syntax::parser::parse(&crate::lexer::lex(src).expect("lex")).expect("parse")
+        crate::syntax::parser::parse(src, &crate::lexer::lex(src).expect("lex")).expect("parse")
     }
     fn auto_ids(src: &str) -> Vec<String> {
         let f = parse(src);

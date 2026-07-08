@@ -353,7 +353,7 @@ mod tests {
 
     fn svg_for(src: &str) -> String {
         let tokens = crate::lexer::lex(src).expect("lex");
-        let file = crate::syntax::parser::parse(&tokens).expect("parse");
+        let file = crate::syntax::parser::parse(src, &tokens).expect("parse");
         let lowered = crate::desugar::desugar(&file).expect("desugar");
         let program = crate::resolve::resolve_with_theme(&lowered, &[]).expect("resolve");
         let mut laid = crate::layout::layout(&program).expect("layout");

@@ -215,14 +215,14 @@ always an identifier — a keyword, a colour or `symbol` name, a `font-family`, 
 reference — so literal **text** is always quoted: a string-valued property (`title`,
 `href`, `src`, `path`) takes a `"…"` even with no spaces. The one hybrid is a name that
 may contain spaces — `font-family` — bare or quoted, quoted only when needed
-(`font-family: "SF Mono"`), as in CSS. Numbers and `` `…` `` expressions are bare too;
+(`font-family: "SF Mono"`), as in CSS. Numbers and `(…)` expressions are bare too;
 only text is quoted.
 
-**Expressions** — a backtick region `` `…` `` is a **compile-time math expression**:
+**Expressions** — a parenthesized region `(…)` is a **compile-time math expression**:
 operators and the math library, folded to a literal number (or a point) at compile
-time. It is the **only place operators appear** — outside it `-` is a link line and
-`<` / `>` are markers. Self-delimiting like a string, and may span lines
-([SPEC 10](#10-colour-variables--expressions)).
+time. Parentheses are the **only place operators appear** — outside them `-` is a link
+line or a sign and `<` / `>` are markers. A call's own parens count (`up(5 * r, 10)`);
+groups may span lines ([SPEC 10](#10-colour-variables--expressions)).
 
 **Numbers** — integer or decimal, optional sign, no units (px for lengths, degrees
 for angles, 0–1 for opacities/fractions). `10`, `-5`, `0.25`, `+3`. A trailing `%`
@@ -232,11 +232,11 @@ makes a **percentage** (`50%`), valid only in colour components.
 `shadow: 2 2 4 #0003`, `translate: 10 -4`, `columns: 80 140 80`. A **comma**
 separates list items and appears only where a property takes a list of groups
 (`points: 0 0, 10 10`). **Functions** use parentheses and sit in value position —
-`rgb(…)`, `hsl(…)`, `repeat(…)`, the math library, and any you define
-([SPEC 10](#10-colour-variables--expressions)); a call needs no backtick (only an operator does). A call's `(` **glues to
-its name** (`rgb(…)`, never `rgb (…)`) — a free-standing `(-)`, `(o)`, or `(<)` is a
-measuring op ([SPEC 15.6](#156-dimensions)), which is how `move(-2, 5)` and `pin (o)`
-never meet.
+`rgb(…)`, `hsl(…)`, `repeat(…)`, the math library, and any you bind
+([SPEC 10](#10-colour-variables--expressions)). A call's `(` **glues to its name**
+(`rgb(…)`, never `rgb (…)`); a free-standing `(…)` is a math group, and a free-standing
+`(-)`, `(o)`, or `(<)` a measuring op ([SPEC 15.6](#156-dimensions)) — which is how
+`move(-2, 5)`, `(8 * 2)`, and `pin (o)` never meet.
 
 **Colors** — `#fff`, `#f80c`, `#ffaa00`, `#ffaa00cc` (3/4/6/8 hex digits; the 4-
 and 8-digit forms carry alpha), CSS names (`red`, `cornflowerblue`), `rgb(…)`,
@@ -266,7 +266,7 @@ root's setup block, so it additionally holds the file-global definitions:
 |---|---|---|
 | Scene config | `layout: grid;` `routing: orthogonal;` | a declaration on the root — `clearance` / `routing` cascade to every link ([SPEC 9](#9-links)) |
 | Variable | `--brand: #f60;` | a themeable visual variable (colour / font) |
-| Function | `scale(n) …` | a reusable compute function — a backtick body ([SPEC 10](#10-colour-variables--expressions)) |
+| Binding | `my_r = 5;` `scale(n) = (…)` | a compile-time value / function, bound with `=` — read in any expression ([SPEC 10](#10-colour-variables--expressions)) |
 | Rule | `\|box\| { … }` | style every box (an element selector) |
 | Link rule | `\|-\| { stroke: #666; }` | style every link — the `\|-\|` selector ([SPEC 9](#9-links)) |
 | Descendant rule | `\|table\| \|box\| { … }` | style every box inside a table |
@@ -278,7 +278,7 @@ root's setup block, so it additionally holds the file-global definitions:
 {
   gap: 16;  fill: --bg;
   --brand: #ff6600;
-  scale(n) `100 * 1.2^n`;
+  scale(n) = (100 * 1.2^n);
   |box| { radius: 6; }
   |-| { stroke: #666; }
   .hot { stroke-width: 2; }
@@ -1277,8 +1277,8 @@ Alias a host var from CSS: `.lini { --lini-accent: var(--my-brand-blue); }`.
 
 Layout values — sizes, gaps, padding, `font-size`, `clearance` — are **not** `--name`
 variables: they bake (a runtime `var()` can't be measured at compile time). Set them
-with a literal, a rule (`gap: 30;`, `|box| { radius: 4 }`), or a backtick expression /
-function ([SPEC 10.7](#107-expressions--functions)).
+with a literal, a rule (`gap: 30;`, `|box| { radius: 4 }`), or a `(…)` expression /
+binding ([SPEC 10.7](#107-expressions--functions)).
 
 ### 10.5 Layout constants (baked)
 
@@ -1321,33 +1321,34 @@ runtime theming, but a self-contained SVG that renders anywhere.
 
 ### 10.7 Expressions & functions
 
-A **backtick expression** `` `…` `` holds compile-time math — folded to a literal (a
-number, or a point `(x, y)` for geometry) when the diagram compiles. It is the **only
-place operators appear**: outside a backtick `-` is a link, `<` / `>` are markers,
-`/` a comment, so the fence is what lets `*` mean "times". A value stays backtick-free
-until an operator does:
+A **parenthesized expression** `(…)` holds compile-time math — folded to a literal (a
+number, or a point `(x, y)` for geometry) when the diagram compiles. Parentheses are the
+**only place operators appear**: outside them `-` is a link or a number's sign, `<` / `>`
+are markers, `//` a comment, so the parens are what let `*` mean "times". A value stays
+paren-free until an operator does:
 
 ```
-{ scale(n) `100 * 1.2^n`; }   // a function (below)
+{ scale(n) = (100 * 1.2^n); }   // a binding (below)
 
 |box| {
   gap: 8;             // a literal
-  width: scale(3);    // a call — no operator, no backtick
-  padding: `8 * 2`;   // an operator → backtick (= 16)
+  width: scale(3);    // a call — no operator, no group
+  padding: (8 * 2);   // an operator → a group (= 16)
 }
 ```
 
-The rule is the same in every property — a chart's formula and a sketch's pen included.
-A signed number is not an operator, so `-2` is bare everywhere (`translate: -35 20`):
+**A call's own parens count**, so an operator inside a call's arguments needs no inner
+group — this is what makes math usable inline everywhere. A signed number is a sign, not
+an operator, so `-2` stays bare (`translate: -35 20`); to subtract, group it:
 
 ```
 fn:   ramp(1)               // a call — bare
-fn:   `x * 2`               // operators → fenced
+fn:   (x * 2)               // an operator → a group
 draw: move(-2, 5) up(8)     // calls and signed numbers — bare
-draw: right(`w / 2`)        // an operator argument → fence just that argument
+draw: right(w / 2)          // an operator in a call's own parens — no group
 ```
 
-Inside a backtick the language is small and total:
+Inside a group the language is small and total:
 
 - **Operators** `+ - * / ^` (`^` power, right-associative), unary `-`, grouping `( )`,
   comparisons `< <= > >= == !=`, the ternary `cond ? a : b`.
@@ -1356,38 +1357,38 @@ Inside a backtick the language is small and total:
   `name(args)`. (Colour / track builders like `rgb` / `repeat` make typed values, so
   they live in value position, never inside math.)
 - **Constants** `pi`, `e`; **scientific notation** `1e6`, `1.32e-6`; the sample
-  parameter `u` (geometry, below); and your **zero-parameter functions**, read bare
+  parameters `u` (geometry, below) and chart `x`; and your **bound names**, read bare
   (below). A bare name resolves: locals → the ambient (`u` / `x`) → `pi` / `e` → your
-  named constants.
-- **Locals** — `name = expr;` binds for the rest of the expression; the **final
-  expression is the value** (no keyword, no `return`). `=` binds, `==` compares. Values
-  are numbers and points — no strings, no loops.
+  bindings.
+- **Locals** — `name = expr;` binds for the rest of the group; the **final expression is
+  the value** (no keyword, no `return`). `=` binds, `==` compares. A top-level `,` makes
+  the value a **point**. Values are numbers and points — no strings, no loops.
 
 ```
-`r = 40; n = 6; 2 * pi * r / n`   // r, n are locals; the last line is the value
+(r = 40; n = 6; 2 * pi * r / n)   // r, n are locals; the last line is the value
 ```
 
-**Functions** are defined in the stylesheet — a name, a parameter list, and a backtick
-body, **juxtaposed** with no colon (which keeps a definition apart from a property:
-`scale: …` is a property, `scale(n) …` a function). A zero-parameter function is a
-**named constant**, and reads **bare inside a fence**, like `pi` — outside one, the
-call form stands (`width: w()`):
+**Bindings** are written in the stylesheet with `=` — a name bound to a value, for reuse
+in any expression. A **scalar** is `name = value`; a **function** adds a parameter list,
+`name(params) = value`. The value is **bare** when it is a literal, a name, or a call,
+and a **group** when it holds an operator, locals, or a point. `=` binds and reads
+compile-time (baked), where `:` sets a live property — the two never meet:
 
 ```
 {
-  scale(n)   `100 * 1.2^n`;
-  w()        `42`;                         // a named constant — bare `w` in any fence
-  wave(a, f) `(u*300, a*sin(2*pi*f*u))`;   // a parametric point
+  my_radius = 5;                          // a scalar — read bare as `my_radius`
+  scale(n)  = (100 * 1.2^n);              // a function
+  wave(a, f) = (u*300, a*sin(2*pi*f*u));  // a function returning a point
 }
-|sketch#part| { draw: move(`-w/2`, 0) right(`w`) up(`w/3`); }   // one number, reused
+|sketch#part| { draw: move(-my_radius, 0) right(2 * my_radius) up(my_radius); }
 ```
 
-Call a function anywhere a value goes — bare like `rgb(…)` / `repeat(…)`, or inside a
-backtick; only an operator forces the fence, never the call, and a computed argument is
-itself a backtick:
+Call a binding anywhere a value goes — bare like `rgb(…)` / `repeat(…)`, or inside a
+group; only an operator forces the group, never the call, and a computed argument rides
+the call's own parens:
 
 ```
-|box| { width: scale(3); padding: `scale(2) + 4`; columns: repeat(3, `80 * 2`) }
+|box| { width: scale(3); padding: (scale(2) + 4); columns: repeat(3, 80 * 2) }
 ```
 
 **Geometry.** `points:` (on `|line|` / `|poly|`) may be a **parametric expression in
@@ -1395,8 +1396,8 @@ itself a backtick:
 curves, waves, and spirals procedurally:
 
 ```
-|line| { points: `(u*300, 20*sin(2*pi*3*u))`; samples: 60 }   // a sine wave
-|line| { points: wave(20, 3); samples: 60 }                   // the same, named
+|line| { points: (u*300, 20*sin(2*pi*3*u)); samples: 60 }   // a sine wave
+|line| { points: wave(20, 3); samples: 60 }                 // the same, named
 ```
 
 Everything an expression touches **bakes** — a computed size, a sampled curve — so a
@@ -1829,7 +1830,7 @@ value form**; a comma is the discriminator:
 |---|---|---|
 | categorical | `data: 9 15 24 18 30` | **one group** → one value per category |
 | points | `data: 0 225, 60 225, 118 221` | **comma groups** → `x y` pairs (numeric x; scatter) |
-| formula | `fn:` `` `min(8/(x/100-1)^2, 2000)` `` | a backtick in `x`, sampled at `samples:` |
+| formula | `fn: min(8/(x/100-1)^2, 2000)` | an expression in `x`, sampled at `samples:` |
 
 A comma-less `data:` is always a value list (a single point cannot be written comma-less).
 A `|line|` / `|area|` needs ≥ 2 vertices; with categorical data the value count must match
@@ -1853,12 +1854,12 @@ Charts bind two ambient names — the same seam that injects `u` for parametric 
 **`x`** the x-axis data value (a whole-domain `fn:` uses it) and **`u`** a band-local clock
 `0 → 1` ([SPEC 14.5](#145-bands--annotations)). A `fn:` is therefore **not folded at resolve**
 (its `x` is unbound there) but held and **sampled at chart layout**, once the x-domain is
-fixed. Locals chain derivations in one backtick; a stylesheet function keeps twins DRY:
+fixed. Locals chain derivations in one group; a stylesheet function keeps twins DRY:
 
 ```
-{ ramp(s) `min(100, 25 + 1.572*(x/s) + 0.0142*(x/s)^2)`; }
+{ ramp(s) = min(100, 25 + 1.572*(x/s) + 0.0142*(x/s)^2); }
 |area| "Steel"    { fn: ramp(1) }
-|line| "Aluminum" { fn: `ramp(1/0.7)` }
+|line| "Aluminum" { fn: ramp(1/0.7) }
 ```
 
 **The formula ceiling.** `fn:` expresses a function of `x`, not a recurrence: a numeric
@@ -1913,8 +1914,8 @@ with no shading.
 |band| "Inject" { span: 1.4 3.1; axis: time; fill: --rose }
 ```
 
-**A series opts into segmentation** with a per-band `fn:` **list** — one backtick (or a
-bare constant) per band, evaluated in local `u`; a **single** `fn:` samples the whole
+**A series opts into segmentation** with a per-band `fn:` **list** — one `(…)` expression
+(or a bare constant) per band, evaluated in local `u`; a **single** `fn:` samples the whole
 domain in `x` and ignores bands. Consecutive segments connect end-to-start (the riser is
 drawn), so a jump is explicit. A per-band list whose length ≠ the band count is an error
 ([SPEC 20](#20-errors)) — never a silent truncation.
@@ -2186,9 +2187,8 @@ geometry.
 
 `draw:` is a left-to-right list of **bare calls** — ordinary value-position calls, no
 new value grammar beyond the `:segment` suffix; the value runs to its `;` and may span
-lines. An argument is a number, a call, or a backtick — operators stay fenced, and a
-stylesheet constant reads bare in the fence (`right(`w/2`)`,
-[SPEC 10.7](#107-expressions--functions)).
+lines. An argument is an expression — a number, a bound value, a call, or math inside the
+call's own parens (`right(w / 2)`, `up(5 * r)`, [SPEC 10.7](#107-expressions--functions)).
 
 | Call | Does |
 |---|---|
@@ -2862,7 +2862,7 @@ out of scope.
 | `gap` · `gap-fill` · `align` · `justify` · `padding` | flow, grid | — | see matrix | [SPEC 11](#11-the-layout-model), [SPEC 12](#12-flow--grid) |
 | `columns` · `rows` | grid | track list | — (`columns` required) | [SPEC 12](#12-flow--grid) |
 | `cell` · `span` | grid box child | `col row` / `cols rows` | `— / 1 1` | [SPEC 12](#12-flow--grid) |
-| `data` · `fn` | chart series | list / pairs / backtick | — | [SPEC 14.3](#143-data--formulas) |
+| `data` · `fn` | chart series | list / pairs / `(…)` expr | — | [SPEC 14.3](#143-data--formulas) |
 | `tags` | chart series | quoted-string list | — | [SPEC 14.3](#143-data--formulas) |
 | `curve` | `\|line\|` `\|area\|` | `linear`·`smooth`·`step` | `linear` | [SPEC 14.2](#142-series) |
 | `baseline` | `\|area\|` | number | axis zero | [SPEC 14.2](#142-series) |
@@ -3000,7 +3000,7 @@ depth > 16, a define shadowing a built-in) surface here.
 
 1. *Variables, functions & rules:* merge visual-var defaults ← `--theme` ←
    `--name: value`; build the function table; compile the stylesheet's class / id /
-   element / descendant rules. Backtick expressions and function calls fold to literal
+   element / descendant rules. Parenthesized expressions and function calls fold to literal
    numbers / points ([SPEC 10.7](#107-expressions--functions)).
 2. *Scene tree:* each box is a primitive wearing `.lini-*` (type) and user classes;
    layer properties per the [cascade](#4-selectors-cascade--specificity) — the worn
@@ -3258,12 +3258,12 @@ warning with a did-you-mean hint is deferred ([SPEC 23](#23-deferred)).
 ```
 file        = [ stylesheet ] { drawn }              # setup block, then drawn statements in source order
 stylesheet  = "{" { setup_item } "}"                # the root's setup block; omit when empty
-setup_item  = decl | vardecl | funcdef | rule | define | comment | newline
+setup_item  = decl | vardecl | binding | rule | define | comment | newline
 drawn       = node | text | link | comment | newline   # instances and links interleave; a sequence reads order as time (SPEC 13)
 
 decl        = ident ":" values ";"                  # ';' optional before '}'
 vardecl     = css_var ":" values ";"                # --name : value ;
-funcdef     = ident "(" [ ident { "," ident } ] ")" expr ";"       # scale(n) `…` ;
+binding     = ident [ "(" [ ident { "," ident } ] ")" ] "=" value ";"  # my_r = 5 ; scale(n) = (…) ;
 rule        = selector style                        # |box| { } , |table| |box| { } , .hot { } , #hero { }
 define      = "|" ident "::" ident "|" body         # name :: base, optional children
 
@@ -3294,10 +3294,12 @@ label_block = "[" { text } "]"                       # canonical labels — styl
 
 values      = value_group { "," value_group }        # comma only between list items
 value_group = value { value }                        # space-separated scalars
-value       = number | percent | string | hex | ident | css_var | call | expr
-call        = ident "(" [ value { "," value } ] ")"
+value       = number | percent | string | hex | ident | css_var | call | group
+call        = ident "(" [ expr { "," expr } ] ")"    # a call; each argument is an expr
+group       = "(" expr ")"                           # a math group — a number or point (SPEC 10.7)
 css_var     = "--" ident { "-" ident }
-expr        = "`" { char } "`"                       # a compile-time math expression (SPEC 10.7)
+expr        = { ident "=" expr ";" } value_expr [ "," value_expr ]  # locals, then a value or a point
+value_expr  = operators, math library, a ternary, calls, groups — the grammar of SPEC 10.7
 
 link_op     = [ start_marker ] line [ end_marker ]
 line        = "-" | "--" | "---" | "~"
@@ -3319,7 +3321,8 @@ comment     = "//" { not-newline } newline
 **Single-pass LL(1).** The stylesheet-first rule plus the bracket-and-bars vocabulary make
 one token of lookahead enough — the first token of every statement already tells its kind:
 in the stylesheet, `|…|` → a rule or (with an inner `::`) a define, `.name` → a class rule,
-`#name` → an id rule, `--name :` → a variable, `ident :` → a root declaration; after it, a
+`#name` → an id rule, `--name :` → a variable, `ident :` → a root declaration, `ident =`
+or `ident (…) =` → a binding; after it, a
 drawn statement is a `node` (`|…|`), `text` (`"…"`), or — when a bare `ident` is followed by
 a link-op, `&`, or a `.` path — a `link`. A **declaration** ends with `;` (its value may
 span lines); a **statement** ends at a newline or `;`.
@@ -3341,10 +3344,11 @@ decides — after the op, an ident is an endpoint; a string, `.`, `{`, `[`, or
 end-of-statement is the tail; the binary `(-)` and `||`
 require both ends), the widened endpoint `point` set in drawing scope, the `(-)`
 dimension-family `sel_unit` at a stylesheet statement head (a leading `(` there is
-unambiguous — calls appear only in value position), and the
+unambiguous — calls and groups appear only in value position), and the
 `pen_item` form inside a `draw:` value. A call's `(` **glues to its name**; a
-free-standing `(-)`, `(o)`, or `(<)` lexes as an op ([SPEC 2](#2-lexical-syntax)) — so
-`move(-2, 5)` is a call and `pin (o)` a dimension, with no ambiguity. The pen calls,
+free-standing `(…)` is a math group and a free-standing `(-)`, `(o)`, or `(<)` an op
+([SPEC 2](#2-lexical-syntax)) — so `move(-2, 5)` is a call, `(8 * 2)` a group, and
+`pin (o)` a dimension, with no ambiguity. The pen calls,
 `grid` / `radial`, and `hatch` are **call names**, contextual before `(` like `rgb` /
 `repeat` ([SPEC 22](#22-reserved-words)).
 
@@ -3390,9 +3394,10 @@ the round measuring op `(o)` (delimited by parens). A leading `+` not followed b
 starts a cardinality op, mirroring `-`. The digit `0` is **not** part of any operator — a
 hollow endpoint is `marker-end: circle`, never `-o`.
 
-Inside an expression ([SPEC 10.7](#107-expressions--functions)), `pi`, `e`, and the sample
-parameter `u` are keywords, and the math-function names (`sin`, `exp`, `min`, …) are
-reserved before `(` — all contextual to the expression, free as ids elsewhere.
+Inside a `(…)` expression ([SPEC 10.7](#107-expressions--functions)), `pi`, `e`, and the
+sample parameters `u` / `x` are keywords, and the math-function names (`sin`, `exp`,
+`min`, …) are reserved before `(` — all contextual to the expression, free as ids
+elsewhere. The backtick `` ` `` is unused and reserved.
 
 ---
 

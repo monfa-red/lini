@@ -333,7 +333,7 @@ mod tests {
     /// The layout-phase error message for a chart that resolves but won't lay out.
     fn layout_err(src: &str) -> String {
         let toks = crate::lexer::lex(src).expect("lex");
-        let file = crate::syntax::parser::parse(&toks).expect("parse");
+        let file = crate::syntax::parser::parse(src, &toks).expect("parse");
         let lowered = crate::desugar::desugar(&file).expect("desugar");
         let program = crate::resolve::resolve_with_theme(&lowered, &[]).expect("resolve");
         crate::layout::layout(&program)
@@ -492,7 +492,7 @@ mod tests {
 
     #[test]
     fn data_and_fn_together_error() {
-        let e = layout_err("|chart| { categories: \"a\" } [\n  |bars| { data: 1; fn: `2` }\n]\n");
+        let e = layout_err("|chart| { categories: \"a\" } [\n  |bars| { data: 1; fn: (2) }\n]\n");
         assert!(e.contains("not both"), "{e}");
     }
 
@@ -505,7 +505,7 @@ mod tests {
     #[test]
     fn a_fn_series_samples_a_curve_over_the_x_domain() {
         let s = svg(
-            "|chart| [\n  |axis| { side: bottom; range: 0 10 }\n  |axis| { side: left }\n  |line| { fn: `x*x`; samples: 12 }\n]\n",
+            "|chart| [\n  |axis| { side: bottom; range: 0 10 }\n  |axis| { side: left }\n  |line| { fn: (x*x); samples: 12 }\n]\n",
         );
         assert!(s.contains("<polyline"), "sampled fn polyline: {s}");
         // x² over 0..10 peaks at 100 → the value axis auto-fits to 100.
@@ -559,7 +559,7 @@ mod tests {
     #[test]
     fn a_fn_list_without_bands_reports_the_mismatch() {
         let e = layout_err(
-            "|chart| [\n  |axis| { side: bottom; range: 0 1 }\n  |axis| { side: left }\n  |line| { fn: `1` `2` }\n]\n",
+            "|chart| [\n  |axis| { side: bottom; range: 0 1 }\n  |axis| { side: left }\n  |line| { fn: (1) (2) }\n]\n",
         );
         assert!(e.contains("2 formulas"), "{e}");
         assert!(e.contains("0 bands"), "{e}");
@@ -594,7 +594,7 @@ mod tests {
     #[test]
     fn a_segmented_fn_draws_one_polyline_across_the_bands() {
         let s = svg(
-            "|chart| [\n  |axis| { side: bottom }\n  |axis| { side: left }\n  |band| { span: 0 1 }\n  |band| { span: 1 2 }\n  |line| { fn: `u` `1-u` }\n]\n",
+            "|chart| [\n  |axis| { side: bottom }\n  |axis| { side: left }\n  |band| { span: 0 1 }\n  |band| { span: 1 2 }\n  |line| { fn: (u) (1-u) }\n]\n",
         );
         assert!(s.contains("<polyline"), "segmented curve polyline: {s}");
     }
@@ -602,7 +602,7 @@ mod tests {
     #[test]
     fn a_fn_list_length_must_match_the_band_count() {
         let e = layout_err(
-            "|chart| [\n  |axis| { side: bottom }\n  |axis| { side: left }\n  |band| { span: 0 1 }\n  |line| { fn: `1` `2` `3` }\n]\n",
+            "|chart| [\n  |axis| { side: bottom }\n  |axis| { side: left }\n  |band| { span: 0 1 }\n  |line| { fn: (1) (2) (3) }\n]\n",
         );
         assert!(e.contains("3 formulas"), "{e}");
         assert!(e.contains("1 bands"), "{e}");
@@ -919,7 +919,7 @@ mod tests {
     #[test]
     fn tags_on_a_fn_series_error() {
         let e = layout_err(
-            "|chart| [\n  |axis| { side: bottom; range: 0 10 }\n  |axis| { side: left }\n  |line| { fn: `x`; tags: \"a\" \"b\" }\n]\n",
+            "|chart| [\n  |axis| { side: bottom; range: 0 10 }\n  |axis| { side: left }\n  |line| { fn: (x); tags: \"a\" \"b\" }\n]\n",
         );
         assert!(e.contains("needs explicit 'data'"), "{e}");
     }

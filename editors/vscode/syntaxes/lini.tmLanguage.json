@@ -6,6 +6,7 @@
     { "include": "#comment" },
     { "include": "#string" },
     { "include": "#var-declaration" },
+    { "include": "#binding" },
     { "include": "#property-declaration" },
     { "include": "#type-bars" },
     { "include": "#css-var" },
@@ -60,6 +61,17 @@
       "end": "(?=[;}])|$",
       "patterns": [{ "include": "#value-body" }]
     },
+    "binding": {
+      "comment": "An = binding (SPEC §10.7): name = value, or name(params) = value. The right-hand side is an expression, so it reads through #value-body.",
+      "begin": "([A-Za-z_][\\w-]*)\\s*(\\([A-Za-z_,\\s-]*\\))?\\s*(=)(?!=)",
+      "beginCaptures": {
+        "1": { "name": "entity.name.function.lini" },
+        "2": { "name": "variable.parameter.lini" },
+        "3": { "name": "keyword.operator.assignment.lini" }
+      },
+      "end": "(?=[;}])|$",
+      "patterns": [{ "include": "#value-body" }]
+    },
     "value-body": {
       "patterns": [
         { "include": "#comment" },
@@ -70,6 +82,11 @@
         { "include": "#number" },
         { "include": "#color-name" },
         { "include": "#value-keyword" },
+        {
+          "comment": "Math operators inside a (…) group or a call's arguments (SPEC §10.7).",
+          "match": "\\*|/|\\^|<=|>=|==|!=|<|>|\\?",
+          "name": "keyword.operator.arithmetic.lini"
+        },
         {
           "match": "[(),]",
           "name": "punctuation.separator.value.lini"
@@ -152,7 +169,8 @@
       "name": "constant.numeric.lini"
     },
     "function-call": {
-      "match": "(?<![\\w-])(rgb|rgba|hsl|repeat)(?=\\s*\\()",
+      "comment": "Any call in value position: the colour / track builders and the math library, pen calls, and bindings — all `name(` (SPEC §10.7).",
+      "match": "(?<![\\w-])[A-Za-z_][\\w-]*(?=\\s*\\()",
       "name": "support.function.lini"
     },
     "value-keyword": {

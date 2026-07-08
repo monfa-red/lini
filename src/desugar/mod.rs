@@ -751,7 +751,7 @@ mod tests {
 
     fn lower(src: &str) -> File {
         let toks = crate::lexer::lex(src).expect("lex");
-        let file = crate::syntax::parser::parse(&toks).expect("parse");
+        let file = crate::syntax::parser::parse(src, &toks).expect("parse");
         desugar(&file).expect("desugar")
     }
     fn root_box<'a>(f: &'a File, id: &str) -> &'a Node {

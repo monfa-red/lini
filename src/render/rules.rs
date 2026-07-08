@@ -669,7 +669,7 @@ mod tests {
 
     fn rules_for(src: &str) -> RuleSet {
         let tokens = crate::lexer::lex(src).expect("lex");
-        let file = crate::syntax::parser::parse(&tokens).expect("parse");
+        let file = crate::syntax::parser::parse(src, &tokens).expect("parse");
         let lowered = crate::desugar::desugar(&file).expect("desugar");
         let program = crate::resolve::resolve_with_theme(&lowered, &[]).expect("resolve");
         let laid = crate::layout::layout(&program).expect("layout");

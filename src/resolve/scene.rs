@@ -279,7 +279,7 @@ pub fn resolve_node(
 }
 
 /// Hold a `fn:` series formula unevaluated [SPEC 14.3]: each value in the
-/// single space-group is a backtick expression — or a bare constant — parsed now
+/// single space-group is a `(…)` expression — or a bare constant — parsed now
 /// (so a syntax error surfaces here, with this span) but **not** evaluated, since
 /// its `x` / `u` bind only at chart layout. A whole-domain `fn:` is one expression;
 /// a per-band list [SPEC 14.5] is several.
@@ -287,7 +287,7 @@ fn defer_fn(d: &Decl) -> Result<ResolvedValue, Error> {
     let [group] = d.groups.as_slice() else {
         return Err(Error::at(
             d.span,
-            "'fn' takes a backtick expression or a space-separated per-band list, not a comma list",
+            "'fn' takes an expression or a space-separated per-band list, not a comma list",
         ));
     };
     let mut exprs = Vec::with_capacity(group.len());
@@ -298,7 +298,7 @@ fn defer_fn(d: &Decl) -> Result<ResolvedValue, Error> {
             _ => {
                 return Err(Error::at(
                     d.span,
-                    "'fn' takes backtick expressions (or bare constants)",
+                    "'fn' takes expressions (or bare constants)",
                 ));
             }
         };
@@ -307,16 +307,16 @@ fn defer_fn(d: &Decl) -> Result<ResolvedValue, Error> {
     Ok(ResolvedValue::Deferred(exprs))
 }
 
-/// Sample a parametric `points:` into a vertex list [SPEC 10.7]: a backtick
-/// `` `(…u…)` `` or a named curve `wave(20, 3)` whose `u` sweeps 0→1 over
-/// `samples:` steps, each step evaluating to a point. Returns `None` for a literal
-/// points list or a constant expression — the normal fold handles those.
+/// Sample a parametric `points:` into a vertex list [SPEC 10.7]: a `(…u…)` group or
+/// a named curve `wave(20, 3)` whose `u` sweeps 0→1 over `samples:` steps, each step
+/// evaluating to a point. Returns `None` for a literal points list or a constant
+/// expression — the normal fold handles those.
 fn sample_points(
     d: &Decl,
     style: &[Decl],
     funcs: &FuncTable,
 ) -> Result<Option<ResolvedValue>, Error> {
-    // The value must be a single scalar: a backtick body or a call.
+    // The value must be a single scalar: a `(…)` group or a call.
     let src = match d.groups.as_slice() {
         [group] => match group.as_slice() {
             [Value::Expr(s)] => s.clone(),
@@ -358,7 +358,7 @@ fn sample_points(
 }
 
 /// A call as expression source (`wave(20, 3)`), so a named curve folds through the
-/// same engine as a backtick body. Numeric / expr / call args only (geometry).
+/// same engine as any expression. Numeric / expr / call args only (geometry).
 fn call_src(c: &Call) -> String {
     let args: Vec<String> = c.args.iter().map(value_src).collect();
     format!("{}({})", c.name, args.join(", "))

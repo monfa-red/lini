@@ -623,7 +623,7 @@ mod tests {
     /// real parse/desugar/resolve pipeline — the pen sees exactly what layout will.
     fn program(src: &str) -> Result<crate::resolve::Program, crate::error::Error> {
         let toks = crate::lexer::lex(src)?;
-        let file = crate::syntax::parser::parse(&toks)?;
+        let file = crate::syntax::parser::parse(src, &toks)?;
         let lowered = crate::desugar::desugar(&file)?;
         crate::resolve::resolve_with_theme(&lowered, &[])
     }

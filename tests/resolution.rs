@@ -363,11 +363,11 @@ fn note_is_a_core_template() {
 }
 
 #[test]
-fn named_constants_read_bare_in_fences() {
-    lini::check("{ w() `42`; }\n|box#x| { width: `w * 2`; padding: w() }\n")
-        .expect("a zero-arg function reads bare inside a fence");
-    // Recursion — bare or called — is the existing static cycle check's job:
-    // one mechanism, caught at function-table build, before any evaluation.
-    assert_resolve_error("{ a() `a`; }\n|box#x| { width: `a` }\n", "cycle");
-    assert_resolve_error("{ a() `b`; b() `a()`; }\n|box#x| { width: `a` }\n", "cycle");
+fn scalar_bindings_read_bare_in_groups() {
+    lini::check("{ w = 42; }\n|box#x| { width: (w * 2); padding: (w) }\n")
+        .expect("a scalar binding reads bare inside a group");
+    // Recursion — a binding referencing itself — is the existing static cycle check's
+    // job: one mechanism, caught at build, before any evaluation.
+    assert_resolve_error("{ a = (a); }\n|box#x| { width: (a) }\n", "cycle");
+    assert_resolve_error("{ a = (b); b = (a); }\n|box#x| { width: (a) }\n", "cycle");
 }

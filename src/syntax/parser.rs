@@ -12,9 +12,10 @@ use crate::error::Error;
 use crate::lexer::{TokKind, Token};
 use crate::span::Span;
 
-/// Parse a token stream into a [`File`].
-pub fn parse(tokens: &[Token]) -> Result<File, Error> {
-    Parser::new(tokens).parse_file()
+/// Parse a token stream into a [`File`]. `src` backs the raw slices a `(…)` group or
+/// operator-bearing argument keeps for [`crate::expr`] [SPEC 10.7].
+pub fn parse(src: &str, tokens: &[Token]) -> Result<File, Error> {
+    Parser::new(src, tokens).parse_file()
 }
 
 /// The shared head tail [SPEC 3/9]: a head label, worn classes, and the head's
@@ -41,13 +42,14 @@ enum Kind {
 }
 
 struct Parser<'a> {
+    src: &'a str,
     toks: &'a [Token],
     pos: usize,
 }
 
 impl<'a> Parser<'a> {
-    fn new(toks: &'a [Token]) -> Self {
-        Self { toks, pos: 0 }
+    fn new(src: &'a str, toks: &'a [Token]) -> Self {
+        Self { src, toks, pos: 0 }
     }
 
     // ───────────────────────── Cursor ─────────────────────────
@@ -189,8 +191,8 @@ impl<'a> Parser<'a> {
             ),
             Some(TokKind::Ident(_)) => match self.kind_at(1) {
                 Some(TokKind::Colon) => Ok(Kind::Decl),
-                // `name(params) `…`` is a function definition [SPEC 10.7].
-                Some(TokKind::LParen) => Ok(Kind::Func),
+                // `name = value` / `name(params) = value` is an `=` binding [SPEC 10.7].
+                Some(TokKind::Assign) | Some(TokKind::LParen) => Ok(Kind::Func),
                 _ => Err(self
                     .err("a type only appears in bars — write '|box| { }' to style every box")),
             },
@@ -298,7 +300,7 @@ impl<'a> Parser<'a> {
                 Kind::Decl => StyleItem::RootDecl(self.parse_decl()?),
                 Kind::Rule => StyleItem::Rule(self.parse_rule()?),
                 Kind::Define => StyleItem::Define(self.parse_define()?),
-                Kind::Func => StyleItem::Func(self.parse_funcdef()?),
+                Kind::Func => StyleItem::Func(self.parse_binding()?),
                 _ => unreachable!(),
             };
             items.push(item);
@@ -384,10 +386,11 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_value_in(&mut self, pen: bool) -> Result<Value, Error> {
-        // An ident may begin a call (`rgb(…)`, `repeat(…)`); handle separately.
+        // An ident glued to `(` begins a call (`rgb(…)`, `scale(3)`); a spaced
+        // `foo (…)` is the ident then a group (the call-glue rule, [SPEC 2]).
         if matches!(self.kind(), Some(TokKind::Ident(_))) {
             let (name, _) = self.expect_ident()?;
-            return if matches!(self.kind(), Some(TokKind::LParen)) {
+            return if matches!(self.kind(), Some(TokKind::LParen)) && self.glued_at(0) {
                 let call = self.parse_call(name)?;
                 // In a pen, a glued `:segment` after the `)` names the call's drawn
                 // segment (`right(50):seat`, `fillet(3):r1`) [SPEC 15.3] — glued to
@@ -405,6 +408,11 @@ impl<'a> Parser<'a> {
             } else {
                 Ok(Value::Ident(name))
             };
+        }
+        // A free-standing `(…)` is a math group [SPEC 10.7] — its inner text folds to
+        // a number or a point.
+        if matches!(self.kind(), Some(TokKind::LParen)) {
+            return Ok(Value::Expr(self.take_group()?));
         }
         // A `:segment` always glues to its call [SPEC 15.3] — a floating one
         // is one space away from silently renaming the wrong thing.
@@ -424,14 +432,43 @@ impl<'a> Parser<'a> {
                 Value::Hex(h)
             }
             Some(TokKind::RawCssVar(s)) => Value::Var(s.clone()),
-            Some(TokKind::Expr(s)) => Value::Expr(s.clone()),
             // A `:` in value position is the start of the next declaration — the
             // previous one ran on because it lacks a terminating `;` [SPEC 3/19].
             Some(TokKind::Colon) => return Err(self.err("a declaration ends with ';'")),
+            // A bare link op in a value: math belongs in a group [SPEC 10.7].
+            Some(TokKind::LinkOp(_)) => {
+                return Err(self.err("to compute here, wrap the math in a group — e.g. (a - b)"));
+            }
             _ => return Err(self.err("expected a value")),
         };
         self.pos += 1;
         Ok(v)
+    }
+
+    /// Consume a balanced `( … )` at the cursor and return its **inner** source, the
+    /// outer parens stripped [SPEC 10.7]. The lexer already balanced the parens, so
+    /// this counts token depth; the raw text goes to [`crate::expr`].
+    fn take_group(&mut self) -> Result<String, Error> {
+        let open = self.span();
+        self.pos += 1; // '('
+        let inner_start = open.end;
+        let mut depth = 1usize;
+        loop {
+            match self.kind() {
+                Some(TokKind::LParen) => depth += 1,
+                Some(TokKind::RParen) => {
+                    depth -= 1;
+                    if depth == 0 {
+                        let inner = self.src[inner_start..self.span().start].to_string();
+                        self.pos += 1; // ')'
+                        return Ok(inner);
+                    }
+                }
+                None => return Err(Error::at(open, "unterminated '(' group")),
+                _ => {}
+            }
+            self.pos += 1;
+        }
     }
 
     /// The cursor sits on a `:` immediately followed by a **glued** ident — the
@@ -458,9 +495,13 @@ impl<'a> Parser<'a> {
         Ok(Value::Call(Call { name, args }))
     }
 
-    /// One call-argument slot — usually a single value, but a slot may hold a
-    /// space-separated group (`hatch(45 -45, 6)`'s angles, [SPEC 10.3]).
+    /// One call-argument slot [SPEC 10.7]: an arg carrying a top-level operator is an
+    /// expression, captured raw (the call's own parens are its group); otherwise a
+    /// single value, or a space-separated group (`hatch(45 -45, 6)`'s angles, [SPEC 10.3]).
     fn parse_call_arg(&mut self) -> Result<Value, Error> {
+        if let Some(raw) = self.take_arg_expr() {
+            return Ok(Value::Expr(raw));
+        }
         let first = self.parse_value()?;
         if matches!(
             self.kind(),
@@ -476,6 +517,33 @@ impl<'a> Parser<'a> {
             group.push(self.parse_value()?);
         }
         Ok(Value::Group(group))
+    }
+
+    /// If the argument at the cursor carries a top-level math operator, advance to its
+    /// boundary (the next top-level `,` or the call's `)`) and return its raw source;
+    /// otherwise leave the cursor untouched and return `None` [SPEC 10.7].
+    fn take_arg_expr(&mut self) -> Option<String> {
+        let start_byte = self.span().start;
+        let mut depth = 0usize;
+        let mut has_op = false;
+        let mut i = self.pos;
+        while let Some(tok) = self.toks.get(i) {
+            match &tok.kind {
+                TokKind::LParen => depth += 1,
+                TokKind::RParen if depth == 0 => break,
+                TokKind::RParen => depth -= 1,
+                TokKind::Comma if depth == 0 => break,
+                k if depth == 0 && is_math_op(k) => has_op = true,
+                _ => {}
+            }
+            i += 1;
+        }
+        if !has_op {
+            return None;
+        }
+        let end_byte = self.toks[i - 1].span.end;
+        self.pos = i;
+        Some(self.src[start_byte..end_byte].to_string())
     }
 
     // ───────────────────────── Rules & defines ─────────────────────────
@@ -628,35 +696,51 @@ impl<'a> Parser<'a> {
         })
     }
 
-    /// `name(params) `body`;` — a compute function [SPEC 10.7]: a name, a
-    /// parameter list, and a backtick body, juxtaposed (no colon). The trailing
-    /// `;` is consumed by the caller's terminator, like a declaration.
-    fn parse_funcdef(&mut self) -> Result<FuncDef, Error> {
+    /// An `=` binding [SPEC 10.7]: `name = value` (a scalar) or `name(params) = value`
+    /// (a function). The right-hand value is captured as raw text for [`crate::expr`].
+    /// The trailing `;` is consumed by the caller's terminator, like a declaration.
+    fn parse_binding(&mut self) -> Result<FuncDef, Error> {
         let (name, start) = self.expect_ident()?;
-        self.expect(&TokKind::LParen, "'('")?;
         let mut params = Vec::new();
-        if !matches!(self.kind(), Some(TokKind::RParen)) {
-            params.push(self.expect_ident()?.0);
-            while self.eat(&TokKind::Comma) {
+        if self.eat(&TokKind::LParen) {
+            if !matches!(self.kind(), Some(TokKind::RParen)) {
                 params.push(self.expect_ident()?.0);
+                while self.eat(&TokKind::Comma) {
+                    params.push(self.expect_ident()?.0);
+                }
             }
+            self.expect(&TokKind::RParen, "')'")?;
         }
-        self.expect(&TokKind::RParen, "')'")?;
-        let body = match self.kind() {
-            Some(TokKind::Expr(s)) => s.clone(),
-            _ => {
-                return Err(self.err(
-                    "a function body is a backtick expression — e.g. scale(n) `100 * 1.2^n`",
-                ));
-            }
-        };
-        self.pos += 1;
+        self.expect(&TokKind::Assign, "'=' — a binding is 'name = value'")?;
+        let body = self.take_binding_body()?;
         Ok(FuncDef {
             name,
             params,
             body,
             span: Span::new(start.start, self.last_span().end),
         })
+    }
+
+    /// The right-hand side of a binding: a `(…)` group's inner text (so locals and a
+    /// point read as a body), or a bare literal / name / call up to the terminator.
+    fn take_binding_body(&mut self) -> Result<String, Error> {
+        if matches!(self.kind(), Some(TokKind::LParen)) {
+            return self.take_group();
+        }
+        let start_byte = self.span().start;
+        let mut end_byte = start_byte;
+        while !matches!(
+            self.kind(),
+            Some(TokKind::Semi) | Some(TokKind::Newline) | Some(TokKind::RBrace) | None
+        ) {
+            end_byte = self.span().end;
+            self.pos += 1;
+        }
+        let body = self.src[start_byte..end_byte].trim();
+        if body.is_empty() {
+            return Err(self.err("a binding needs a value — 'name = value'"));
+        }
+        Ok(body.to_string())
     }
 
     // ───────────────────────── Nodes ─────────────────────────
@@ -988,18 +1072,39 @@ fn is_hex_color(s: &str) -> bool {
     matches!(s.len(), 3 | 4 | 6 | 8) && s.bytes().all(|b| b.is_ascii_hexdigit())
 }
 
+/// A math-operator token — the tell that a value or call argument is an expression
+/// [SPEC 10.7], so the parser keeps its raw source for [`crate::expr`].
+fn is_math_op(k: &TokKind) -> bool {
+    matches!(
+        k,
+        TokKind::Plus
+            | TokKind::Minus
+            | TokKind::Star
+            | TokKind::Slash
+            | TokKind::Caret
+            | TokKind::Lt
+            | TokKind::Le
+            | TokKind::Gt
+            | TokKind::Ge
+            | TokKind::EqEq
+            | TokKind::Ne
+            | TokKind::Question
+            | TokKind::Assign
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     fn parse_ok(src: &str) -> File {
         let tokens = crate::lexer::lex(src).expect("lex");
-        parse(&tokens).expect("parse")
+        parse(src, &tokens).expect("parse")
     }
 
     fn parse_err(src: &str) -> String {
         let tokens = crate::lexer::lex(src).expect("lex");
-        match parse(&tokens) {
+        match parse(src, &tokens) {
             Ok(_) => panic!("expected a parse error for: {src}"),
             Err(e) => e.message,
         }
@@ -1453,6 +1558,23 @@ mod tests {
         assert_eq!(points.groups[0].len(), 2);
     }
 
+    #[test]
+    fn groups_and_expr_args_capture_raw() {
+        let f = parse_ok("|box#a| { padding: (8 * 2); width: gain(5 * r, 10) }\n");
+        let n = instance(&f, 0);
+        // A free-standing `(…)` group keeps its inner text, outer parens stripped.
+        assert!(matches!(&n.style[0].groups[0][0], Value::Expr(s) if s == "8 * 2"));
+        // A call keeps an operator-bearing argument raw; a plain argument stays a value.
+        match &n.style[1].groups[0][0] {
+            Value::Call(c) => {
+                assert_eq!(c.name, "gain");
+                assert!(matches!(&c.args[0], Value::Expr(s) if s == "5 * r"));
+                assert!(matches!(&c.args[1], Value::Number(v) if *v == 10.0));
+            }
+            other => panic!("expected a call, got {other:?}"),
+        }
+    }
+
     // ── Phase / context errors ──
 
     #[test]
@@ -1513,9 +1635,9 @@ mod tests {
     // ── Expressions & functions [SPEC 10.7] ──
 
     #[test]
-    fn funcdef_and_expr_values() {
+    fn binding_and_expr_values() {
         let f = parse_ok(
-            "{ scale(n) `100 * 1.2 ^ n`; }\n|box#a| { width: scale(3); padding: `8 * 2` }\n",
+            "{ scale(n) = (100 * 1.2 ^ n); my_r = 5; }\n|box#a| { width: scale(3); padding: (8 * 2) }\n",
         );
         match &f.stylesheet[0] {
             StyleItem::Func(fd) => {
@@ -1523,7 +1645,16 @@ mod tests {
                 assert_eq!(fd.params, vec!["n"]);
                 assert!(fd.body.contains("1.2"));
             }
-            _ => panic!("expected a funcdef"),
+            _ => panic!("expected a binding"),
+        }
+        // A scalar binding is a zero-parameter `FuncDef` [SPEC 10.7].
+        match &f.stylesheet[1] {
+            StyleItem::Func(fd) => {
+                assert_eq!(fd.name, "my_r");
+                assert!(fd.params.is_empty());
+                assert_eq!(fd.body, "5");
+            }
+            _ => panic!("expected a scalar binding"),
         }
         let n = instance(&f, 0);
         assert!(matches!(&n.style[0].groups[0][0], Value::Call(c) if c.name == "scale"));

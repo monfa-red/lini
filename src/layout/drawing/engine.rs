@@ -342,7 +342,7 @@ mod tests {
         // The chrome is a real child, so a descendant rule reaches it [SPEC 15.7].
         let src = "{ layout: drawing;\n  |sketch| |centerline| { stroke: none }\n}\n|sketch#s| { draw: move(-20, 0) up(8) right(40) down(8); mirror: x-axis }\n";
         let toks = crate::lexer::lex(src).expect("lex");
-        let file = crate::syntax::parser::parse(&toks).expect("parse");
+        let file = crate::syntax::parser::parse(src, &toks).expect("parse");
         let lowered = crate::desugar::desugar(&file).expect("desugar");
         let program = crate::resolve::resolve_with_theme(&lowered, &[]).expect("resolve");
         let laid = crate::layout::layout(&program).expect("layout");

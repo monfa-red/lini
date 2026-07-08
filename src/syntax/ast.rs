@@ -34,12 +34,14 @@ pub enum StyleItem {
     Rule(Rule),
     /// `|name::base| { style } [ children ]` — a new type from a base.
     Define(Define),
-    /// `name(params) `body`;` — a compute function [SPEC 10.7].
+    /// `name = value;` / `name(params) = value;` — an `=` binding [SPEC 10.7]: a
+    /// compile-time value or function, read in any expression.
     Func(FuncDef),
 }
 
-/// `name(params) `body`;` — a stylesheet function [SPEC 10.7]. The body is the
-/// raw backtick text, parsed by [`crate::expr`] at resolve.
+/// An `=` binding [SPEC 10.7] — a scalar (`params` empty, read bare like a constant)
+/// or a function. `body` is the raw right-hand text (a group's inner content, or the
+/// bare literal / name / call), parsed by [`crate::expr`] at resolve.
 #[derive(Debug, Clone)]
 pub struct FuncDef {
     pub name: String,
@@ -209,8 +211,9 @@ pub enum Value {
     Var(String),
     /// `rgb(…)`, `hsl(…)`, `repeat(…)`.
     Call(Call),
-    /// A backtick `` `…` `` compile-time expression body [SPEC 10.7], folded to a
-    /// number or a point at resolve.
+    /// A `(…)` math group's inner text (its outer parens stripped), or a call
+    /// argument that carries an operator [SPEC 10.7] — parsed by [`crate::expr`] and
+    /// folded to a number or a point at resolve.
     Expr(String),
     /// `right(50):segment` — a pen call naming its drawn segment; parsed only
     /// inside a `draw:` value [SPEC 15.3, 21]. A `:segment` always glues to a

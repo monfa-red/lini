@@ -409,7 +409,7 @@ mod tests {
     /// The layout-phase error message for a sequence that resolves but won't lay out.
     fn layout_err(src: &str) -> String {
         let toks = crate::lexer::lex(src).expect("lex");
-        let file = crate::syntax::parser::parse(&toks).expect("parse");
+        let file = crate::syntax::parser::parse(src, &toks).expect("parse");
         let lowered = crate::desugar::desugar(&file).expect("desugar");
         let program = crate::resolve::resolve_with_theme(&lowered, &[]).expect("resolve");
         crate::layout::layout(&program)
@@ -443,9 +443,9 @@ mod tests {
     #[test]
     fn participants_sit_in_a_row_left_to_right() {
         // Declaration order = left-to-right; distinct x centres prove the row layout.
-        let toks = crate::lexer::lex("|sequence#s| [\n  |box#a| \"A\"\n  |box#b| \"B\"\n]\n")
-            .expect("lex");
-        let file = crate::syntax::parser::parse(&toks).expect("parse");
+        let src = "|sequence#s| [\n  |box#a| \"A\"\n  |box#b| \"B\"\n]\n";
+        let toks = crate::lexer::lex(src).expect("lex");
+        let file = crate::syntax::parser::parse(src, &toks).expect("parse");
         let lowered = crate::desugar::desugar(&file).expect("desugar");
         let program = crate::resolve::resolve_with_theme(&lowered, &[]).expect("resolve");
         let laid = crate::layout::layout(&program).expect("layout");
@@ -518,7 +518,7 @@ mod tests {
     /// the id'd participant headers and the `Line` lifelines / arrows.
     fn bar_count(src: &str) -> usize {
         let toks = crate::lexer::lex(src).expect("lex");
-        let file = crate::syntax::parser::parse(&toks).expect("parse");
+        let file = crate::syntax::parser::parse(src, &toks).expect("parse");
         let lowered = crate::desugar::desugar(&file).expect("desugar");
         let program = crate::resolve::resolve_with_theme(&lowered, &[]).expect("resolve");
         let laid = crate::layout::layout(&program).expect("layout");

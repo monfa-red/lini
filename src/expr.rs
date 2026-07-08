@@ -1,13 +1,13 @@
-//! The backtick expression sub-language [SPEC 10.7] — a small, total compile-time
+//! The `(…)` expression sub-language [SPEC 10.7] — a small, total compile-time
 //! calculator with its own lexer, Pratt parser, and tree-walk evaluator. It is
-//! the **only** place operators live, so the main lexer never sees them: it
-//! captures a backtick region raw and hands the body here.
+//! the **only** place operators live: the main lexer captures a parenthesized
+//! region raw (its outer parens stripped) and hands the body here.
 //!
 //! Values are numbers and points (`(x, y)`, for geometry) — no strings, no loops.
-//! A body is `{ name = expr ; }* expr`: leading `name = expr;` bindings are locals
-//! (whole-body scope), and the final expression is the value. Functions defined in
-//! the stylesheet ([`FuncTable`]) are called by name; the math library, `pi` / `e`,
-//! and the ambient sample parameter `u` are built in.
+//! A body is `{ name = expr ; }* expr [ , expr ]`: leading `name = expr;` bindings are
+//! locals (whole-body scope), the final expression is the value, and a top-level `,`
+//! makes it a point. Functions defined in the stylesheet ([`FuncTable`]) are called by
+//! name; the math library, `pi` / `e`, and the ambient sample parameter `u` are built in.
 
 use std::collections::HashMap;
 
@@ -35,7 +35,7 @@ pub type Env = HashMap<String, Value>;
 
 // ─────────────────────────── AST ───────────────────────────
 
-/// A parsed backtick body: leading local bindings, then the value expression.
+/// A parsed expression body: leading local bindings, then the value expression.
 #[derive(Debug, Clone)]
 pub struct Expr {
     locals: Vec<(String, Node)>,
@@ -260,7 +260,13 @@ impl Parser {
             }
             locals.push((name, val));
         }
-        let value = self.parse_ternary()?;
+        let mut value = self.parse_ternary()?;
+        // A top-level `,` makes the value a point `(x, y)` — the group's own parens
+        // are stripped before it reaches here, so the comma is the point [SPEC 10.7].
+        if self.eat(&Tok::Comma) {
+            let second = self.parse_ternary()?;
+            value = Node::Point(Box::new(value), Box::new(second));
+        }
         if self.pos != self.toks.len() {
             return Err(ExprError::new("trailing tokens after the expression"));
         }
@@ -438,11 +444,22 @@ impl FuncTable {
 // ─────────────────────────── Evaluation ───────────────────────────
 
 impl Expr {
-    /// Parse a raw backtick body into an expression.
+    /// Parse a raw expression body (a group's inner text) into an expression.
     pub fn parse(src: &str) -> Result<Expr, ExprError> {
         let toks = lex(src)?;
         let mut p = Parser { toks, pos: 0 };
         p.parse_body()
+    }
+
+    /// Whether this reads without a `(…)` group — a lone number, name, or call
+    /// (optionally negated), with no locals, operators, ternary, or point [SPEC 10.7].
+    /// Drives the formatter's choice between `x = 5` and `x = (a + b)`.
+    pub fn is_atomic(&self) -> bool {
+        self.locals.is_empty()
+            && matches!(
+                self.value,
+                Node::Num(_) | Node::Var(_) | Node::Call(..) | Node::Neg(_)
+            )
     }
 
     /// Fold to a value against the ambient environment and the function table.

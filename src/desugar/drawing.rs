@@ -212,7 +212,7 @@ mod tests {
 
     fn lower(src: &str) -> crate::syntax::ast::File {
         let toks = crate::lexer::lex(src).expect("lex");
-        let file = crate::syntax::parser::parse(&toks).expect("parse");
+        let file = crate::syntax::parser::parse(src, &toks).expect("parse");
         crate::desugar::desugar(&file).expect("desugar")
     }
 
@@ -330,12 +330,12 @@ mod tests {
         ] {
             let src = format!("|sketch#s| {{ draw: {draw}; mirror: x-axis; }}\n");
             let toks = crate::lexer::lex(&src).expect("lex");
-            let file = crate::syntax::parser::parse(&toks).expect("parse");
+            let file = crate::syntax::parser::parse(&src, &toks).expect("parse");
             let lowered = crate::desugar::desugar(&file).expect("desugar");
             let program = crate::resolve::resolve_with_theme(&lowered, &[]).expect("resolve");
             let folded =
                 crate::layout::drawing::pen::fold(&program.scene.nodes[0], 1.0).expect("fold");
-            let parsed = crate::syntax::parser::parse(&toks).expect("parse");
+            let parsed = crate::syntax::parser::parse(&src, &toks).expect("parse");
             let style = match &parsed.instances[0] {
                 Child::Box(n) => &n.style,
                 _ => panic!("a box"),

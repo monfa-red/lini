@@ -30,7 +30,7 @@ Lini handles the fiddly part of a diagram — drawing the connectors — and lea
 - **Charts from data.** `layout: chart` plots bars, lines, areas, scatter, radar, and pie straight from numbers, working out the scales, ticks, and colours for you.
 - **Sequence diagrams.** `layout: sequence` reads your wires as time — participants across the top, messages top-to-bottom, with activation bars, `loop` / `opt` / `alt` frames, and notes, all from the links you already write.
 - **Engineering drawings.** `layout: drawing` turns profiles drawn with a pen (`draw: move(…) up(10) fillet(3) …`) into dimensioned sheets: parts mate against each other, and every dimension's value is **measured from the geometry** — mirror a half-profile, pattern a hole, break a long bar, and the numbers stay true.
-- **Small, and quick to learn.** `{ }` for style, `[ ]` for children, a few sigils, and `cat -> dog` is already a diagram. Backtick expressions add compile-time math, baked to literals.
+- **Small, and quick to learn.** `{ }` for style, `[ ]` for children, a few sigils, and `cat -> dog` is already a diagram. Parenthesized `(…)` expressions add compile-time math, baked to literals.
 - **One fast binary.** About 1.5 MB, no Node or browser, compiling a typical diagram in a couple of milliseconds — and byte-identically each run, so SVGs diff cleanly in CI. Hundreds of tests, property tests on the router included, keep it honest.
 - **Good colour for free.** Eleven OKLCH-tuned hues in five tiers, gradients at a flattering angle, and automatic dark mode — every colour a `light-dark()` variable, no hex to pick.
 

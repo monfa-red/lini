@@ -27,7 +27,7 @@ const MAX_LINE: usize = 80;
 
 pub fn format(src: &str) -> Result<String, Error> {
     let tokens = lexer::lex(src)?;
-    let file = parser::parse(&tokens)?;
+    let file = parser::parse(src, &tokens)?;
     let trivia = scan_trivia(src);
     let mut out = String::new();
     Emitter {
@@ -159,11 +159,25 @@ impl Emitter<'_> {
             StyleItem::Func(f) => {
                 self.indent(depth);
                 self.out.push_str(&f.name);
-                self.out.push('(');
-                self.out.push_str(&f.params.join(", "));
-                self.out.push_str(") `");
-                self.out.push_str(&f.body);
-                self.out.push_str("`;\n");
+                if !f.params.is_empty() {
+                    self.out.push('(');
+                    self.out.push_str(&f.params.join(", "));
+                    self.out.push(')');
+                }
+                self.out.push_str(" = ");
+                // A scalar / call / name reads bare; math, locals, or a point wants a
+                // group [SPEC 10.7].
+                let atomic = crate::expr::Expr::parse(&f.body)
+                    .map(|e| e.is_atomic())
+                    .unwrap_or(false);
+                if atomic {
+                    self.out.push_str(f.body.trim());
+                } else {
+                    self.out.push('(');
+                    self.out.push_str(f.body.trim());
+                    self.out.push(')');
+                }
+                self.out.push_str(";\n");
             }
         }
     }
@@ -646,14 +660,16 @@ impl Emitter<'_> {
                     if i > 0 {
                         self.out.push_str(", ");
                     }
-                    self.emit_value(arg);
+                    self.emit_arg(arg);
                 }
                 self.out.push(')');
             }
+            // A free-standing math group [SPEC 10.7] — the parens are the fence, so a
+            // direct value always wears them (a call argument sheds them, `emit_arg`).
             Value::Expr(s) => {
-                self.out.push('`');
-                self.out.push_str(s);
-                self.out.push('`');
+                self.out.push('(');
+                self.out.push_str(s.trim());
+                self.out.push(')');
             }
             // Pen items [SPEC 15.3]: the segment name glues to its call; a
             // freestanding point stands alone.
@@ -671,6 +687,15 @@ impl Emitter<'_> {
                     self.emit_value(item);
                 }
             }
+        }
+    }
+
+    /// One call argument: an expression argument is already inside the call's own
+    /// parens, so it sheds the group a direct value would wear [SPEC 10.7].
+    fn emit_arg(&mut self, v: &Value) {
+        match v {
+            Value::Expr(s) => self.out.push_str(s.trim()),
+            _ => self.emit_value(v),
         }
     }
 

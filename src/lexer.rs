@@ -14,13 +14,9 @@ pub enum TokKind {
     /// the two apart, so it emits one raw token [SPEC 2].
     Hash(String),
     RawCssVar(String), // CSS var name without leading '--'
-    /// A backtick `` `…` `` expression body, captured raw (multi-line); the
-    /// expression sub-language ([`crate::expr`]) parses it, so the main lexer never
-    /// sees its operators [SPEC 10.7].
-    Expr(String),
 
     Pipe,   // |
-    Colon,  // : (attr binding)
+    Colon,  // : (attr binding / ternary)
     DColon, // :: (define operator)
     Dot,    // . (style ref or endpoint side)
     Amp,    // &
@@ -32,6 +28,24 @@ pub enum TokKind {
     RParen,
     LBracket,
     RBracket,
+
+    // Math operators [SPEC 10.7] — lexed only inside a value's parens (an
+    // expression context, `paren_depth > 0`), except `=` / `==` / `!=`, which also
+    // bind names and compare. They exist so the parser can spot an expression and
+    // slice its raw source for [`crate::expr`], which re-lexes and folds it.
+    Assign,   // =
+    Plus,     // +
+    Minus,    // -
+    Star,     // *
+    Slash,    // /
+    Caret,    // ^
+    Lt,       // <
+    Le,       // <=
+    Gt,       // >
+    Ge,       // >=
+    EqEq,     // ==
+    Ne,       // !=
+    Question, // ?
 
     LinkOp(LinkOp),
     /// A drawing measuring op [SPEC 15.6] — `(-)` / `(o)` / `(<)`, lexed as one
@@ -117,6 +131,11 @@ impl<'a> Lexer<'a> {
                 b';' => self.push_punct(TokKind::Semi, 1),
                 b',' => self.push_punct(TokKind::Comma, 1),
                 b'&' => self.push_punct(TokKind::Amp, 1),
+                // `=` binds a name (`name = value`) and, in a group, a local; `==`
+                // and `!=` compare inside an expression [SPEC 10.7].
+                b'=' if self.peek(1) == Some(b'=') => self.push_punct(TokKind::EqEq, 2),
+                b'=' => self.push_punct(TokKind::Assign, 1),
+                b'!' if self.peek(1) == Some(b'=') => self.push_punct(TokKind::Ne, 2),
                 b'"' => self.lex_string()?,
                 // Single quotes are reserved, not strings [SPEC 2/21].
                 b'\'' => {
@@ -125,7 +144,6 @@ impl<'a> Lexer<'a> {
                         "single quotes are not strings — use \"…\"",
                     ));
                 }
-                b'`' => self.lex_expr()?,
                 b'#' => self.lex_hash()?,
                 b'.' => {
                     if self.peek(1).is_some_and(|c| c.is_ascii_digit()) {
@@ -155,10 +173,34 @@ impl<'a> Lexer<'a> {
                 {
                     self.lex_number()?;
                 }
+                // Inside a value's parens these are math operators [SPEC 10.7];
+                // outside, `< > + -` stay link / marker syntax. Signed numbers were
+                // caught above, so a `-` / `+` here is always the operator.
+                b'-' if self.paren_depth > 0 => self.push_punct(TokKind::Minus, 1),
+                b'+' if self.paren_depth > 0 => self.push_punct(TokKind::Plus, 1),
+                b'*' if self.paren_depth > 0 => self.push_punct(TokKind::Star, 1),
+                b'/' if self.paren_depth > 0 => self.push_punct(TokKind::Slash, 1),
+                b'^' if self.paren_depth > 0 => self.push_punct(TokKind::Caret, 1),
+                b'?' if self.paren_depth > 0 => self.push_punct(TokKind::Question, 1),
+                b'<' if self.paren_depth > 0 && self.peek(1) == Some(b'=') => {
+                    self.push_punct(TokKind::Le, 2)
+                }
+                b'<' if self.paren_depth > 0 => self.push_punct(TokKind::Lt, 1),
+                b'>' if self.paren_depth > 0 && self.peek(1) == Some(b'=') => {
+                    self.push_punct(TokKind::Ge, 2)
+                }
+                b'>' if self.paren_depth > 0 => self.push_punct(TokKind::Gt, 1),
                 // Link-op starts: any of these characters can begin a link op.
                 b'-' | b'~' | b'<' | b'>' | b'+' => self.lex_link_op()?,
                 // `*` is a link-op start marker only when followed by a line char.
                 b'*' if self.peek(1).is_some_and(is_link_line_start) => self.lex_link_op()?,
+                // A bare operator outside parens: math must sit in a group [SPEC 10.7].
+                b'*' | b'/' | b'^' => {
+                    return Err(Error::at(
+                        Span::new(self.i, self.i + 1),
+                        "math operators appear inside ( ) — e.g. padding: (8 * 2)",
+                    ));
+                }
                 d if d.is_ascii_digit() => self.lex_number()?,
                 c if is_ident_start(c) => self.lex_ident(),
                 _ => {
@@ -256,30 +298,6 @@ impl<'a> Lexer<'a> {
             Span::new(start, self.i),
             "unterminated string literal",
         ))
-    }
-
-    /// A backtick `` `…` `` region, captured raw (multi-line) — the expression
-    /// engine parses the body, so the main lexer never sees operators [SPEC 10.7].
-    fn lex_expr(&mut self) -> Result<(), Error> {
-        let start = self.i;
-        self.i += 1; // opening backtick
-        let body_start = self.i;
-        while self.i < self.bytes.len() && self.bytes[self.i] != b'`' {
-            self.i += 1;
-        }
-        if self.i >= self.bytes.len() {
-            return Err(Error::at(
-                Span::new(start, self.i),
-                "unterminated `…` expression",
-            ));
-        }
-        let body = self.src[body_start..self.i].to_string();
-        self.i += 1; // closing backtick
-        self.tokens.push(Token {
-            kind: TokKind::Expr(body),
-            span: Span::new(start, self.i),
-        });
-        Ok(())
     }
 
     fn lex_hash(&mut self) -> Result<(), Error> {
@@ -648,6 +666,42 @@ mod tests {
         );
         // …and a free-standing non-exact `(` stays a plain paren.
         assert_eq!(kinds("(-90)")[0], TokKind::LParen);
+    }
+
+    #[test]
+    fn operators_lex_inside_parens_and_links_outside() {
+        // Outside parens, `-` / `<` / `>` stay link / marker syntax [SPEC 10.7].
+        assert!(matches!(kinds("a -> b")[1], TokKind::LinkOp(_)));
+        // Inside a value's parens, they are math operators.
+        assert_eq!(
+            kinds("(8 * 2)"),
+            vec![
+                TokKind::LParen,
+                TokKind::Number(8.0),
+                TokKind::Star,
+                TokKind::Number(2.0),
+                TokKind::RParen,
+            ]
+        );
+        // A spaced `-` inside parens is subtraction; a glued `-2` stays a number.
+        assert_eq!(
+            kinds("(a - b, -2)"),
+            vec![
+                TokKind::LParen,
+                TokKind::Ident("a".into()),
+                TokKind::Minus,
+                TokKind::Ident("b".into()),
+                TokKind::Comma,
+                TokKind::Number(-2.0),
+                TokKind::RParen,
+            ]
+        );
+        // `=` binds a name at any depth; `<=` / `==` compare inside parens.
+        assert_eq!(kinds("x = 5")[1], TokKind::Assign);
+        assert_eq!(kinds("(a <= b)")[2], TokKind::Le);
+        // A bare operator outside parens asks for a group.
+        let err = lex("padding: 8 ^ 2").expect_err("bare ^ errors");
+        assert!(err.message.contains("inside ( )"), "{err:?}");
     }
 
     #[test]

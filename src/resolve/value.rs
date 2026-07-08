@@ -44,7 +44,7 @@ fn from_expr(v: ExprValue) -> ResolvedValue {
     }
 }
 
-/// Fold a backtick body to a value, in a plain (non-geometry) context.
+/// Fold an expression body to a value, in a plain (non-geometry) context.
 fn fold_expr(body: &str, span: Span, funcs: &FuncTable) -> Result<ExprValue, Error> {
     let expr = Expr::parse(body).map_err(|e| Error::at(span, e.0))?;
     expr.eval(&Env::new(), funcs)
@@ -66,10 +66,12 @@ fn fold_arg(v: &Value, span: Span, funcs: &FuncTable) -> Result<ExprValue, Error
     match v {
         Value::Number(n) => Ok(ExprValue::Number(*n)),
         Value::Expr(s) => fold_expr(s, span, funcs),
+        // A bare name is a binding / constant read like `pi` [SPEC 10.7].
+        Value::Ident(s) => fold_expr(s, span, funcs),
         Value::Call(c) if !is_builder(&c.name) => fold_call(c, span, funcs),
         _ => Err(Error::at(
             span,
-            "a computed argument must be a number, a `…` expression, or another compute call",
+            "a computed argument must be a number, an expression, a bound name, or a compute call",
         )),
     }
 }
@@ -131,7 +133,7 @@ pub fn resolve_property(
 
 /// A `draw:` value [SPEC 15.3]: one run of pen items — calls (optionally naming
 /// their segment) and freestanding `:segment` points — kept structured; only the
-/// call **arguments** fold (numbers, backticks, compute calls).
+/// call **arguments** fold (numbers, expressions, compute calls).
 fn resolve_pen(
     groups: &[Vec<Value>],
     span: Span,
@@ -264,7 +266,7 @@ fn resolve_scalar(
         // A colour / track builder stays a typed Call; any other call is compute.
         Value::Call(c) if is_builder(&c.name) => resolve_call(c, span, vars, funcs)?,
         Value::Call(c) => from_expr(fold_call(c, span, funcs)?),
-        // A backtick expression folds to a number / point [SPEC 10.7].
+        // A (…) expression folds to a number / point [SPEC 10.7].
         Value::Expr(s) => from_expr(fold_expr(s, span, funcs)?),
         // A space-group in one call-arg slot (`hatch(45 -45, 6)`) [SPEC 10.3].
         Value::Group(items) => {
@@ -397,7 +399,7 @@ mod tests {
     }
 
     #[test]
-    fn backtick_expression_folds_to_a_number() {
+    fn group_expression_folds_to_a_number() {
         let v = resolve(&[vec![Value::Expr("8 * 2".into())]]);
         assert!(matches!(v, ResolvedValue::Number(n) if n == 16.0));
     }

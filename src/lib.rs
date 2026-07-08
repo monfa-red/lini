@@ -27,7 +27,7 @@ pub use fmt::format as format_source;
 /// identically and is a fixed point of desugar.
 pub fn desugar_source(src: &str) -> Result<String, Error> {
     let tokens = lexer::lex(src)?;
-    let file = syntax::parser::parse(&tokens)?;
+    let file = syntax::parser::parse(src, &tokens)?;
     Ok(fmt::print_file(&desugar::desugar(&file)?))
 }
 pub use routing::{Rule, Severity, Violation};
@@ -92,7 +92,7 @@ fn finish_svg(laid_out: &layout::LaidOut, opts: &Options) -> String {
 /// resolve/layout/render.
 pub fn check_parse(src: &str) -> Result<(), Error> {
     let tokens = lexer::lex(src)?;
-    let _file = syntax::parser::parse(&tokens)?;
+    let _file = syntax::parser::parse(src, &tokens)?;
     Ok(())
 }
 
@@ -100,7 +100,7 @@ pub fn check_parse(src: &str) -> Result<(), Error> {
 /// Parse errors are surfaced as `Err`; missing lints just return an empty Vec.
 pub fn lint_str(src: &str) -> Result<Vec<Diagnostic>, Error> {
     let tokens = lexer::lex(src)?;
-    let file = syntax::parser::parse(&tokens)?;
+    let file = syntax::parser::parse(src, &tokens)?;
     Ok(lint::lint(&file))
 }
 
@@ -143,7 +143,7 @@ fn routing_diagnostics_of(violations: Vec<Violation>) -> Vec<Diagnostic> {
 
 fn resolve_pipeline(src: &str, opts: &Options) -> Result<resolve::Program, Error> {
     let tokens = lexer::lex(src)?;
-    let file = syntax::parser::parse(&tokens)?;
+    let file = syntax::parser::parse(src, &tokens)?;
     let lowered = desugar::desugar(&file)?;
     let theme = match &opts.theme_css {
         Some(css) => theme::extract_lini_vars(css),

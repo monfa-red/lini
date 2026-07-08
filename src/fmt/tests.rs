@@ -8,7 +8,7 @@ fn fmt(src: &str) -> String {
 fn reparses(src: &str) {
     let out = fmt(src);
     let toks = crate::lexer::lex(&out).expect("lex fmt output");
-    crate::syntax::parser::parse(&toks).expect("parse fmt output");
+    crate::syntax::parser::parse(src, &toks).expect("parse fmt output");
 }
 
 /// The core invariant: a second pass changes nothing.
@@ -107,6 +107,25 @@ fn function_value() {
     assert_eq!(
         fmt("{layout:grid;\ncolumns:repeat(3)}\n"),
         "{\n  layout: grid; columns: repeat(3);\n}\n"
+    );
+}
+
+#[test]
+fn bindings_and_group_expressions() {
+    // A scalar binding reads bare; a function's body is a group [SPEC 10.7].
+    assert_eq!(fmt("{my_r=5}\n"), "{\n  my_r = 5;\n}\n");
+    assert_eq!(
+        fmt("{scale(n)=(100 * 1.2 ^ n)}\n"),
+        "{\n  scale(n) = (100 * 1.2 ^ n);\n}\n"
+    );
+    // A direct group value wears its parens; a call argument sheds them (it is
+    // already inside the call's own parens).
+    assert_eq!(
+        fmt("|box#a| { padding: (8 * 2); width: gain(2 * n) }\n"),
+        "|box#a| { padding: (8 * 2); width: gain(2 * n); }\n"
+    );
+    idempotent(
+        "{ my_r = 5; scale(n) = (100 * 1.2 ^ n); }\n|box#a| { padding: (8 * 2); width: gain(2 * n) }\n",
     );
 }
 

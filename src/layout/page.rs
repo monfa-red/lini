@@ -198,7 +198,7 @@ mod tests {
 
     fn compile_err(src: &str) -> String {
         let toks = crate::lexer::lex(src).expect("lex");
-        let file = crate::syntax::parser::parse(&toks).expect("parse");
+        let file = crate::syntax::parser::parse(src, &toks).expect("parse");
         match crate::desugar::desugar(&file) {
             Ok(_) => panic!("expected an error"),
             Err(e) => e.message,

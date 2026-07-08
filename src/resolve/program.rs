@@ -544,14 +544,14 @@ mod tests {
 
     fn rv4(src: &str) -> Program {
         let toks = crate::lexer::lex(src).expect("lex");
-        let file = crate::syntax::parser::parse(&toks).expect("parse");
+        let file = crate::syntax::parser::parse(src, &toks).expect("parse");
         let lowered = crate::desugar::desugar(&file).expect("desugar");
         resolve(&lowered, &[]).expect("resolve")
     }
 
     fn rv4_err(src: &str) -> String {
         let toks = crate::lexer::lex(src).expect("lex");
-        let file = crate::syntax::parser::parse(&toks).expect("parse");
+        let file = crate::syntax::parser::parse(src, &toks).expect("parse");
         // The error may surface in desugar (unknown type, cycle) or in resolve.
         let result = crate::desugar::desugar(&file).and_then(|f| resolve(&f, &[]));
         match result {
@@ -583,8 +583,9 @@ mod tests {
         // Resolve `|block#x|` WITHOUT desugaring (input that bypassed the lowering):
         // a bare primitive with no `.lini-*` class carries no radius/padding/gap. The
         // defaults live only in the `.lini-*` classes desugar injects.
-        let toks = crate::lexer::lex("|block#x|\n").expect("lex");
-        let file = crate::syntax::parser::parse(&toks).expect("parse");
+        let src = "|block#x|\n";
+        let toks = crate::lexer::lex(src).expect("lex");
+        let file = crate::syntax::parser::parse(src, &toks).expect("parse");
         let p = resolve(&file, &[]).expect("resolve");
         let attrs = &p.scene.nodes[0].attrs;
         assert!(
