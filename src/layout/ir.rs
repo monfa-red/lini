@@ -34,6 +34,11 @@ pub struct LaidOut {
     /// carries the radius, rewritten to a `url(#lini-clip-N)` reference, one
     /// `<clipPath>` per distinct radius in `<defs>`. Empty unless a detail view.
     pub clips: Vec<f64>,
+    /// The true print size in **millimetres** [SPEC 15.8/17], when the drawn
+    /// content is only `|page|`s: render emits it as the SVG root's `width` /
+    /// `height` (the `viewBox` stays px), so a print measures its drawing
+    /// units. `None` for every non-sheet scene (the root sizes in pixels).
+    pub physical: Option<(f64, f64)>,
 }
 
 /// One distinct `hatch()` paint [SPEC 10.3]: line bearings (0 = up, clockwise

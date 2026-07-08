@@ -172,6 +172,25 @@ commit per stage; append to the execution log.
 
 Append-only, per DRAWING-0.16.md's rule.
 
+- **2026-07-08 — stage 3 landed** (all gates green — 769 tests, clippy silent,
+  fmt clean; 11 drawing snapshots swept — the diff is **only** font inlines →
+  class + the mm attrs, zero coordinate churn, so no geometry moved; the ring
+  re-inspected as pixel-identical). Sheet finish:
+  - **`.lini-dim-text`** (decision 5). Dimension / round / leader / callout text
+    (and the cutting-plane letters) build through a new `prim::dim_text` — a
+    `.lini-dim-text` leaf that inlines nothing at the default (12 px, normal);
+    only a size that differs (a `tol:` deviation at 0.7×, a restyled link) keeps
+    an inline `font-size`. Render states the rule once (`rules.rs`, gated on the
+    class being present, beside `.lini-dim-line`). Composed titles went further
+    — `prim::text_plain`, a bare leaf that **inherits** the footnote's font — so
+    the repeated `style="font-weight: normal; font-size: 12px"` is gone from
+    every sheet.
+  - **Physical-size emission** (decision 6). `LaidOut.physical: Option<(f64,
+    f64)>`, set by the root `finish` when the scene is **pages-only** (the
+    shared `pages_only` predicate): the viewBox extent over the page's
+    px-per-mm `scale:`. Render emits it as the SVG root's `width="210mm"
+    height="148mm"` (the viewBox stays px, so on-screen sizing is unchanged) —
+    true-scale prints. Closes SPEC 23's physical-size deferral.
 - **2026-07-08 — stage 2 landed** (all gates green — 768 tests, clippy silent,
   fmt clean; `drawing_detail.lini` PNG-rendered via resvg `--bake-vars` and
   inspected: the shaft's groove re-rendered at 4:1, clipped, ⌀18-dimensioned,

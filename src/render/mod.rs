@@ -25,13 +25,18 @@ pub fn render(laid_out: &LaidOut, opts: &Options) -> String {
     let vb = &laid_out.viewbox;
 
     use std::fmt::Write;
+    // A pages-only scene prints true-scale [SPEC 15.8]: real millimetres for
+    // `width` / `height` (the `viewBox` stays px, so on-screen sizing is
+    // unchanged). Every other scene sizes in pixels.
+    let size = match laid_out.physical {
+        Some((w, h)) => format!(r#"width="{}mm" height="{}mm""#, num(w), num(h)),
+        None => format!(r#"width="{}" height="{}""#, num(vb.w), num(vb.h)),
+    };
     writeln!(
         out,
-        r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="{} {} {} {}" width="{}" height="{}" class="lini">"#,
+        r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="{} {} {} {}" {size} class="lini">"#,
         num(vb.x),
         num(vb.y),
-        num(vb.w),
-        num(vb.h),
         num(vb.w),
         num(vb.h),
     )

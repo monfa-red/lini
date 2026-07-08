@@ -4,7 +4,7 @@ assertion_line: 40
 expression: svg
 input_file: samples/drawing_sheet.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-420 -296 840 592" width="840" height="592" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-420 -296 840 592" width="210mm" height="148mm" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
@@ -16,6 +16,7 @@ input_file: samples/drawing_sheet.lini
     .lini .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-dim-line { fill: none; stroke: black; stroke-width: 1; }
     .lini .lini-ext-line { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
+    .lini .lini-dim-text { font-size: 12px; font-weight: normal; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
     .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
@@ -87,7 +88,7 @@ input_file: samples/drawing_sheet.lini
         <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(-128,13.5)">
           <polygon points="-22.5,39 -24.5,27 -20.5,27"/>
         </g>
-        <text class="lini-text" x="-158.5" y="13.5" style="font-weight: normal; font-size: 12px" transform="rotate(-90 -158.5 13.5)">⌀13</text>
+        <text class="lini-text lini-dim-text" x="-158.5" y="13.5" transform="rotate(-90 -158.5 13.5)">⌀13</text>
         <g class="lini-node lini-ext-line lini-line" transform="translate(-128,13.5)">
           <line x1="0" y1="3" x2="0" y2="61"/>
         </g>
@@ -103,7 +104,7 @@ input_file: samples/drawing_sheet.lini
         <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(-128,13.5)">
           <polygon points="48,58 36,60 36,56"/>
         </g>
-        <text class="lini-text" x="-104" y="63.5" style="font-weight: normal; font-size: 12px">8</text>
+        <text class="lini-text lini-dim-text" x="-104" y="63.5">8</text>
         <g class="lini-node lini-ext-line lini-line" transform="translate(-128,13.5)">
           <line x1="48" y1="-28.5" x2="48" y2="61"/>
         </g>
@@ -119,7 +120,7 @@ input_file: samples/drawing_sheet.lini
         <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(-128,13.5)">
           <polygon points="288,58 276,60 276,56"/>
         </g>
-        <text class="lini-text" x="40" y="63.5" style="font-weight: normal; font-size: 12px">40</text>
+        <text class="lini-text lini-dim-text" x="40" y="63.5">40</text>
         <g class="lini-node lini-ext-line lini-line" transform="translate(-128,13.5)">
           <line x1="120" y1="-27" x2="120" y2="-77"/>
         </g>
@@ -135,14 +136,14 @@ input_file: samples/drawing_sheet.lini
         <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(-128,13.5)">
           <polygon points="288,-74 276,-72 276,-76"/>
         </g>
-        <text class="lini-text" x="76" y="-68.5" style="font-weight: normal; font-size: 12px">28</text>
+        <text class="lini-text lini-dim-text" x="76" y="-68.5">28</text>
         <g class="lini-node lini-dim-line lini-line" transform="translate(-128,13.5)">
           <polyline points="204,-26 204,-54 212,-54"/>
         </g>
         <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(-128,13.5)">
           <polygon points="204,-24 202,-36 206,-36"/>
         </g>
-        <text class="lini-text" x="111.2" y="-40.5" style="font-weight: normal; font-size: 12px">M8×1.25</text>
+        <text class="lini-text lini-dim-text" x="111.2" y="-40.5">M8×1.25</text>
         <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,84.5)">
           <rect x="-61.2" y="-6" width="122.4" height="12" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="0">DIN 912 — M8 × 40</text>
@@ -174,7 +175,7 @@ input_file: samples/drawing_sheet.lini
         <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,-10.5)">
           <polygon points="21,58 9,60 9,56"/>
         </g>
-        <text class="lini-text" x="0" y="39.5" style="font-weight: normal; font-size: 12px">7</text>
+        <text class="lini-text lini-dim-text" x="0" y="39.5">7</text>
       </g>
       <g class="lini-node lini-title-block lini-table lini-group lini-block" transform="translate(283.9,223)">
         <rect x="-95.6" y="-32.5" width="191.2" height="65" rx="0" ry="0"/>

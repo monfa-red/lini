@@ -13,6 +13,7 @@ input_file: samples/drawing_shaft.lini
     .lini .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-dim-line { fill: none; stroke: black; stroke-width: 1; }
     .lini .lini-ext-line { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
+    .lini .lini-dim-text { font-size: 12px; font-weight: normal; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-centerline { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; stroke-dasharray: 10,3,1,3; }
     .lini .lini-hidden { fill: none; stroke: black; stroke-width: 1; stroke-dasharray: 4,3; }
@@ -65,7 +66,7 @@ input_file: samples/drawing_shaft.lini
     <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,0)">
       <polygon points="180,55 168,57 168,53"/>
     </g>
-    <text class="lini-text" x="0" y="47" style="font-weight: normal; font-size: 12px">120 mm</text>
+    <text class="lini-text lini-dim-text" x="0" y="47">120 mm</text>
     <g class="lini-node lini-ext-line lini-line" transform="translate(0,0)">
       <line x1="-24" y1="-27" x2="-205.5" y2="-27"/>
     </g>
@@ -81,14 +82,14 @@ input_file: samples/drawing_shaft.lini
     <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,0)">
       <polygon points="-202.5,27 -204.5,15 -200.5,15"/>
     </g>
-    <text class="lini-text" x="-210.5" y="0" style="font-weight: normal; font-size: 12px" transform="rotate(-90 -210.5 0)">⌀18</text>
+    <text class="lini-text lini-dim-text" x="-210.5" y="0" transform="rotate(-90 -210.5 0)">⌀18</text>
     <g class="lini-node lini-dim-line lini-line" transform="translate(0,0)">
       <polyline points="82.5351,-27.2633 125.3047,-41.3912 133.3047,-41.3912"/>
     </g>
     <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,0)">
       <polygon points="80.636,-26.636 91.4032,-32.299 92.6578,-28.5008"/>
     </g>
-    <text class="lini-text" x="142.5047" y="-41.3912" style="font-weight: normal; font-size: 12px">R3</text>
+    <text class="lini-text lini-dim-text" x="142.5047" y="-41.3912">R3</text>
   </g>
   <g class="lini-links"/>
 </svg>

@@ -318,6 +318,18 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
             ],
         });
     }
+    // Annotation text reads at the caption size [SPEC 15.6/17]: stated once
+    // here, so no dimension / leader / callout leaf inlines it (only a `tol:`
+    // deviation or a restyled link overrides).
+    if present.contains("dim-text") {
+        rules.push(Rule {
+            class: "lini-dim-text".into(),
+            props: vec![
+                ("font-size".into(), "12px".into()),
+                ("font-weight".into(), "normal".into()),
+            ],
+        });
+    }
     if present.contains("text") {
         // A bare `<text class="lini-text">` [SPEC 17]. `fill: currentColor` ties
         // the glyph colour to the inherited `color`; `stroke: none` keeps a

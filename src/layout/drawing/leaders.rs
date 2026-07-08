@@ -345,7 +345,7 @@ fn texts_beside(texts: &[ResolvedText], at: P, sx: f64, fs: f64) -> Vec<PlacedNo
     for t in texts {
         let size = t.attrs.number("font-size").unwrap_or(fs);
         let w = approx_width(&t.text, size, 0.0);
-        let mut n = prim::text(&t.text, at.0 + sx * w / 2.0, y, size, None, false);
+        let mut n = prim::dim_text(&t.text, at.0 + sx * w / 2.0, y, size);
         for (k, v) in &t.attrs.map {
             match k.as_str() {
                 "translate" => {

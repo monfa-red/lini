@@ -4,7 +4,7 @@ assertion_line: 40
 expression: svg
 input_file: samples/drawing_ring.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-420 -296 840 592" width="840" height="592" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-420 -296 840 592" width="210mm" height="148mm" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
@@ -15,6 +15,7 @@ input_file: samples/drawing_ring.lini
     .lini .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-dim-line { fill: none; stroke: black; stroke-width: 1; }
     .lini .lini-ext-line { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
+    .lini .lini-dim-text { font-size: 12px; font-weight: normal; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
     .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
@@ -84,14 +85,14 @@ input_file: samples/drawing_ring.lini
           <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: rgba(0, 0, 0, 0.545)" transform="translate(0,0)">
             <polygon points="13,-167 1,-165 1,-169"/>
           </g>
-          <text class="lini-text" x="20" y="-167" style="font-weight: normal; font-size: 12px">A</text>
+          <text class="lini-text lini-dim-text" x="20" y="-167">A</text>
           <g class="lini-node lini-cutting-plane lini-line" style="stroke-dasharray: none" transform="translate(0,0)">
             <line x1="0" y1="167" x2="13" y2="167"/>
           </g>
           <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: rgba(0, 0, 0, 0.545)" transform="translate(0,0)">
             <polygon points="13,167 1,169 1,165"/>
           </g>
-          <text class="lini-text" x="20" y="167" style="font-weight: normal; font-size: 12px">A</text>
+          <text class="lini-text lini-dim-text" x="20" y="167">A</text>
         </g>
         <g class="lini-node lini-detail-circle lini-oval" data-id="c" transform="translate(0,-112)">
           <ellipse cx="0" cy="0" rx="30" ry="30"/>
@@ -106,7 +107,7 @@ input_file: samples/drawing_ring.lini
         <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,0)">
           <polygon points="-160,0 -172,2 -172,-2"/>
         </g>
-        <text class="lini-text" x="195.8" y="0" style="font-weight: normal; font-size: 12px">⌀80</text>
+        <text class="lini-text lini-dim-text" x="195.8" y="0">⌀80</text>
         <g class="lini-node lini-dim-line lini-line" transform="translate(0,0)">
           <polyline points="82,0 -175,0 -183,0"/>
         </g>
@@ -116,7 +117,7 @@ input_file: samples/drawing_ring.lini
         <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,0)">
           <polygon points="68,0 80,-2 80,2"/>
         </g>
-        <text class="lini-text" x="-195.8" y="0" style="font-weight: normal; font-size: 12px">⌀34</text>
+        <text class="lini-text lini-dim-text" x="-195.8" y="0">⌀34</text>
         <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,183)">
           <rect x="-43.2" y="-6" width="86.4" height="12" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="0">COOLING RING</text>
@@ -145,10 +146,10 @@ input_file: samples/drawing_ring.lini
         <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,-10.5)">
           <polygon points="160,98.5 148,100.5 148,96.5"/>
         </g>
-        <text class="lini-text" x="0" y="80" style="font-weight: normal; font-size: 12px">80</text>
+        <text class="lini-text lini-dim-text" x="0" y="80">80</text>
         <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,102)">
           <rect x="-31.4" y="-5" width="62.8" height="10" rx="0" ry="0"/>
-          <text class="lini-text" x="0" y="0" style="font-weight: normal; font-size: 12px">A-A (1:1)</text>
+          <text class="lini-text" x="0" y="0">A-A (1:1)</text>
         </g>
       </g>
       <g class="lini-node lini-frame lini-rect lini-box lini-block" transform="translate(20,0)">

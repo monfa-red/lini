@@ -250,6 +250,12 @@ fn finish(
     // comes from the `.lini-canvas` rule (`--lini-bg`). `none` → transparent.
     let canvas_fill = program.scene.attrs.get("fill").cloned();
 
+    // A pages-only scene prints true-scale [SPEC 15.8]: its `viewBox` is px, but
+    // the SVG's `width` / `height` carry the paper's real millimetres — the
+    // viewBox extent over the page's px-per-mm `scale:`. Same predicate as the
+    // hug-the-canvas padding default, so a lone sheet fills the SVG exactly.
+    let physical = pages_only(&nodes).map(|scale| (vb.w / scale, vb.h / scale));
+
     Ok(LaidOut {
         viewbox: vb,
         nodes,
@@ -262,7 +268,18 @@ fn finish(
         gradients: Vec::new(),
         hatches: Vec::new(),
         clips: Vec::new(),
+        physical,
     })
+}
+
+/// The px-per-mm `scale:` of a **pages-only** scene [SPEC 15.8] — every drawn
+/// top-level node a `|page|` — else `None`. The predicate the physical-size
+/// emission and the hug-the-canvas padding default share.
+fn pages_only(nodes: &[PlacedNode]) -> Option<f64> {
+    if nodes.is_empty() || !nodes.iter().all(|n| page::is_page(&n.type_chain)) {
+        return None;
+    }
+    Some(nodes[0].attrs.number("scale").unwrap_or(4.0))
 }
 
 /// Validate a laid-out scene's links against the routing contract (ROUTING.md):
@@ -936,6 +953,23 @@ mod tests {
         let l = lay_out("|box| { width: 100; height: 40; }\n");
         assert!((l.viewbox.w - 142.0).abs() < 0.01, "w={}", l.viewbox.w);
         assert!((l.viewbox.h - 82.0).abs() < 0.01, "h={}", l.viewbox.h);
+    }
+
+    #[test]
+    fn a_pages_only_scene_carries_its_physical_mm() {
+        // An A5-landscape sheet (210×148 mm) prints true-scale [SPEC 15.8]:
+        // the physical size is the viewBox over the page's px-per-mm scale.
+        let l = lay_out(
+            "|page| { sheet: a5 landscape } [ |drawing| { scale: 4 } [ |rect#r| { width: 10; height: 10 } ] ]\n",
+        );
+        let (w, h) = l.physical.expect("a pages-only scene prints true-scale");
+        assert!(
+            (w - 210.0).abs() < 0.5 && (h - 148.0).abs() < 0.5,
+            "{w}×{h} mm"
+        );
+        // A non-sheet scene sizes in pixels.
+        let d = lay_out("{ layout: drawing; scale: 1 }\n|rect#r| { width: 10; height: 10 }\n");
+        assert_eq!(d.physical, None);
     }
 
     // ── Captions: ordinary flow children [SPEC 8] ──

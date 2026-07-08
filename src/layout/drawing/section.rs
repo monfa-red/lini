@@ -145,7 +145,7 @@ fn fill_one(cp: &mut PlacedNode, geo: Bbox, scale: f64) -> Result<(), Error> {
         pieces.push(dims::arrow(tip, facing, &paint));
         if let Some(letter) = cp.label.clone() {
             let lp = (tip.0 + facing.0 * LETTER_GAP, tip.1 + facing.1 * LETTER_GAP);
-            pieces.push(prim::text(&letter, lp.0, lp.1, LETTER_SIZE, None, false));
+            pieces.push(prim::dim_text(&letter, lp.0, lp.1, LETTER_SIZE));
         }
     }
 
@@ -242,7 +242,7 @@ pub(in crate::layout) fn place_detail_labels(kids: &mut [PlacedNode]) {
 /// `|drawing| |footnote| { … }` styles a composed title like any authored one.
 pub(super) fn fill_footnote(foot: &mut PlacedNode, title: &str) {
     let fs = foot.attrs.number("font-size").unwrap_or(12.0);
-    let text = prim::text(title, 0.0, 0.0, fs, None, false);
+    let text = prim::text_plain(title, 0.0, 0.0, fs);
     foot.bbox = text.bbox;
     foot.children = vec![text];
 }

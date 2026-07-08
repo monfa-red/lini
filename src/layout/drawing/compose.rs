@@ -183,7 +183,7 @@ impl DimText {
     pub fn nodes(&self, centre: P, rot: f64, fs: f64) -> Vec<PlacedNode> {
         let place = |content: &str, local: P, size: f64| {
             let p = rotated(local, rot);
-            let mut n = prim::text(content, centre.0 + p.0, centre.1 + p.1, size, None, false);
+            let mut n = prim::dim_text(content, centre.0 + p.0, centre.1 + p.1, size);
             if rot != 0.0 {
                 n.rotation = rot;
                 n.attrs.insert("rotate", ResolvedValue::Number(rot));

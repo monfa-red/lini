@@ -15,6 +15,7 @@ input_file: samples/drawing_pump.lini
     .lini .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-dim-line { fill: none; stroke: black; stroke-width: 1; }
     .lini .lini-ext-line { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
+    .lini .lini-dim-text { font-size: 12px; font-weight: normal; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
     .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
@@ -79,7 +80,7 @@ input_file: samples/drawing_pump.lini
       <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(-100,44.25)">
         <polygon points="560,135 548,137 548,133"/>
       </g>
-      <text class="lini-text" x="0" y="171.25" style="font-weight: normal; font-size: 12px">230</text>
+      <text class="lini-text lini-dim-text" x="0" y="171.25">230</text>
       <g class="lini-node lini-dim-line lini-line" transform="translate(-100,44.25)">
         <line x1="-221.4623" y1="-184.5519" x2="-1.5364" y2="-1.2804"/>
         <circle class="lini-marker lini-marker-dot" cx="-1.7285" cy="-1.4404" r="2.25" style="fill: black"/>

@@ -14,6 +14,7 @@ input_file: samples/drawing_bushing.lini
     .lini .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-dim-line { fill: none; stroke: black; stroke-width: 1; }
     .lini .lini-ext-line { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
+    .lini .lini-dim-text { font-size: 12px; font-weight: normal; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
     .lini .lini-centerline { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; stroke-dasharray: 10,3,1,3; }
@@ -50,7 +51,7 @@ input_file: samples/drawing_bushing.lini
     <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,0)">
       <polygon points="120.5,24 122.5,36 118.5,36"/>
     </g>
-    <text class="lini-text" x="112.5" y="0" style="font-weight: normal; font-size: 12px" transform="rotate(-90 112.5 0)">⌀16</text>
+    <text class="lini-text lini-dim-text" x="112.5" y="0" transform="rotate(-90 112.5 0)">⌀16</text>
     <g class="lini-node lini-ext-line lini-line" transform="translate(0,0)">
       <line x1="3" y1="-54" x2="139.5" y2="-54"/>
     </g>
@@ -66,7 +67,7 @@ input_file: samples/drawing_bushing.lini
     <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,0)">
       <polygon points="136.5,54 134.5,42 138.5,42"/>
     </g>
-    <text class="lini-text" x="128.5" y="0" style="font-weight: normal; font-size: 12px" transform="rotate(-90 128.5 0)">⌀36</text>
+    <text class="lini-text lini-dim-text" x="128.5" y="0" transform="rotate(-90 128.5 0)">⌀36</text>
     <g class="lini-node lini-ext-line lini-line" transform="translate(0,0)">
       <line x1="-90" y1="3" x2="-90" y2="76"/>
     </g>
@@ -82,7 +83,7 @@ input_file: samples/drawing_bushing.lini
     <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,0)">
       <polygon points="90,73 78,75 78,71"/>
     </g>
-    <text class="lini-text" x="0" y="65" style="font-weight: normal; font-size: 12px">60</text>
+    <text class="lini-text lini-dim-text" x="0" y="65">60</text>
   </g>
   <g class="lini-links"/>
 </svg>

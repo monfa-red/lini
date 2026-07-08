@@ -303,6 +303,38 @@ pub fn text_classed(content: &str, cx: f64, cy: f64, size: f64, class: &str) -> 
     n
 }
 
+/// The caption size a drawing's annotation text reads at [SPEC 15.1] — the
+/// `.lini-dim-text` class states it, so no dim / leader / callout leaf inlines it.
+const DIM_TEXT_SIZE: f64 = 12.0;
+
+/// Dimension / leader / callout text [SPEC 15.6/17]: a `.lini-dim-text` leaf.
+/// The class states the font (12 px, normal weight), so a leaf at that default
+/// inlines nothing; only a size that differs — a `tol:` deviation stack, a
+/// restyled link — carries an inline `font-size` override (a statement's own
+/// text styling still inlines, [SPEC 17]).
+pub fn dim_text(content: &str, cx: f64, cy: f64, size: f64) -> PlacedNode {
+    let mut n = text_classed(content, cx, cy, size, "dim-text");
+    if (size - DIM_TEXT_SIZE).abs() > 1e-9 {
+        set(&mut n, "font-size", ResolvedValue::Number(size));
+    }
+    n
+}
+
+/// A plain text leaf that **inherits** its font from the enclosing `<g>` — no
+/// class, no inline [SPEC 17]. For text under a box that already states the font
+/// (a title `|footnote|`), so nothing is stated twice. `size` bounds the bbox.
+pub fn text_plain(content: &str, cx: f64, cy: f64, size: f64) -> PlacedNode {
+    let bbox = Bbox::centered(
+        approx_width(content, size, 0.0),
+        approx_height(content, size, 0.0),
+    );
+    let mut n = node(NodeKind::Text, bbox);
+    n.cx = cx;
+    n.cy = cy;
+    n.label = Some(content.to_string());
+    n
+}
+
 /// Text whose **right edge** sits at `right_x` (for value-axis labels): the node is
 /// anchored middle, so shift its centre left by half the measured width.
 pub fn text_right(
