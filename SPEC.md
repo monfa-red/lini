@@ -788,8 +788,11 @@ the cascade ([SPEC 4](#4-selectors-cascade--specificity)) — every value here i
 | `\|breakline\|` | `\|line\|` | `stroke: --stroke-light; stroke-width: 1; fill: none` — needs `points:` | A break cut's edge — the thin jogged line a `break:` generates ([SPEC 15.3](#153-the-sketch-pen)); manual use is free. |
 | `\|hidden\|` | `\|sketch\|` | `stroke-style: dashed; stroke: --stroke-dark; stroke-width: 1; fill: none` — needs `draw:` | **Hidden edges** — interior geometry on its own dashed child, per the one-node-one-stroke-style law ([SPEC 15.7](#157-leaders-notes--line-conventions)). |
 | `\|shoulder\|` | `\|line\|` | `stroke: --stroke-dark; stroke-width: 2; fill: none` — needs `points:` | A turned part's **shoulder line** — the geometry-weight edge a `revolve:` generates at every sharp diameter change ([SPEC 15.3](#153-the-sketch-pen)); manual use is free. |
+| `\|cutting-plane\|` | `\|line\|` | `stroke-style: center; stroke: --stroke-light; stroke-width: 1; fill: none` | The **cutting-plane** line — its label the section letter; `at:` stations it, `facing:` turns its arrows; lowers to the ISO plane, thick ends + viewing arrows ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
+| `\|detail-circle\|` | `\|oval\|` | `stroke: --stroke-light; stroke-width: 1; fill: none` — `width:` **required**, the region diameter | The **detail marker** — rings a region on the source view, its label the detail letter at the rim ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
+| `\|detail\|` | `\|drawing\|` | `of:` **required** — the region `\|detail-circle\|` | The **auto detail view** — re-renders the ringed region at its own `scale:`, clipped to the circle ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `\|page\|` | `\|block\|` | `layout: flow; scale: 4; fill: --bg` — `sheet: a4` unless sized | An ISO 5457 drawing **sheet** — mm dimensions via `sheet:`, `scale:` px per mm; frame, zones, and centring marks as generated chrome ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
-| `\|title-block\|` | `\|table\|` | `font-size: 11; stroke-width: 1` | The ISO 7200 **title block** — a table the `\|page\|` seats flush inside its frame's bottom-right corner ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
+| `\|title-block\|` | `\|table\|` | `font-size: 11; stroke-width: 1` | The ISO 7200 **title block** — a table the `\|page\|` seats flush inside its frame's bottom-right corner. **Field properties** (`title`, `dwg`, `rev`, `date`, `sheet`, `author`, …) build the standard grid, absent fields collapsing; plain cells stay a fully custom block ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `\|frame\|` | `\|rect\|` | `fill: none; stroke: --stroke; stroke-width: 2` | A sheet's **frame** — the thick border a `\|page\|` generates at the ISO margins ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `\|zone\|` | `\|block\|` | `font-size: 9; color: --stroke-light` | A **zone reference** label (1, 2… / A, B…) a `\|page\|` generates in the margin band ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `\|tick\|` | `\|line\|` | `stroke: --stroke; stroke-width: 1; fill: none` — needs `points:` | A zone **divider** / **centring mark** a `\|page\|` generates ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
@@ -2199,7 +2202,7 @@ call's own parens (`right(w / 2)`, `up(5 * r)`, [SPEC 10.7](#107-expressions--fu
 | `arc(dx, dy, r)` | the **minor** arc to a relative point; `r > 0` sweeps clockwise, `r < 0` counter-clockwise; `\|r\|` ≥ half the chord or it errors |
 | `arc(r, deg)` | a **tangent** arc: continue the current heading, sweeping `deg` on radius `r > 0` — `deg > 0` turns clockwise; the heading updates by `deg` |
 | `curve(dx1, dy1, dx2, dy2, dx, dy)` | a relative cubic bézier (the advanced 10 %) |
-| `fillet(r)` / `chamfer(c)` | **corner modifiers** between two segments — trim both legs (`chamfer` cuts `c` back along each; on a square corner, the 45° bevel) and join with a tangent arc / a straight bevel. They draw nothing alone and error anywhere but at a corner. |
+| `fillet(r)` / `chamfer(c)` | **corner modifiers** between two segments — a line or an **arc** on either side — trim both legs (`chamfer` cuts `c` back along each, **by arclength** on a curved leg; on a square corner, the 45° bevel) and join with a tangent arc / a straight bevel. They draw nothing alone and error anywhere but at a corner. |
 | `circle(r)` | a circle subpath centred on the current point; the point and heading are unchanged |
 | `point()` | record the pen's **current point** under its attached `:segment` — a station; draws nothing, changes nothing |
 | `close()` | close the current subpath. **A closed path is cyclic**: a modifier may sit on either side of `close()` — `fillet(3) close()` rounds the corner where the last segment meets the seam, `close() fillet(3)` the one where the seam meets the first segment. |
@@ -2588,7 +2591,7 @@ line, a spoke) and `|pitch-circle|` (an `|oval|`, `width:` its diameter — the 
 circle; being round, `bc (o)` reads its PCD). A manual `|pitch-circle|` covers what
 `pattern:` can't — unequally spaced holes still share one drawn circle.
 
-**Auto chrome — one mechanism, seven producers.** The lines drafting always draws are
+**Auto chrome — one mechanism, eight producers.** The lines drafting always draws are
 **generated children**, so the cascade styles or removes them with no dedicated knobs
 (`|sketch| |centerline| { stroke: none }`):
 
@@ -2599,6 +2602,7 @@ circle; being round, `bc (o)` reads its PCD). A manual `|pitch-circle|` covers w
 | a `thread:` ([15.3](#153-the-sketch-pen), [15.4](#154-features-holes--patterns)) | the thin minor line + the thread-end line; on a round view, the ¾ thread arc |
 | `pattern: radial` ([15.4](#154-features-holes--patterns)) | the `\|pitch-circle\|` through the copies |
 | a `\|hole\|` | its centre-mark crosshair |
+| a `\|cutting-plane\|` ([15.8](#158-assemblies-views-sheets--titles)) | its thick end strokes, the viewing-direction arrows, and the paired section letter |
 | a `break:` ([15.3](#153-the-sketch-pen)) | the `\|breakline\|` pair — thin, sharply jogged mid-span |
 | a `\|page\|` ([15.8](#158-assemblies-views-sheets--titles)) | the sheet chrome — the `\|frame\|`, the `\|zone\|` references, the `\|tick\|` dividers and centring marks |
 
@@ -2626,7 +2630,47 @@ Projection *lines* between views stay deferred ([SPEC 23](#23-deferred)).
 **A drawing's smart label is its title, placed *below*** — it lowers to a
 `|footnote|` (the bottom-centred caption template), because drafting titles sit
 under the view: `|drawing| "SECTION A-A"`; style every title with
-`|drawing| |footnote| { … }`.
+`|drawing| |footnote| { … }`. An authored label always wins; a bare `section:` /
+`detail:` **composes** one instead (**Sections & details**, below).
+
+**Sections & details.** lini is 2D: a **section's cut face is authored** — drawn with
+the pen and filled with `hatch()`, as the bushing is ([15.4](#154-features-holes--patterns)).
+Everything *about* it that is bookkeeping — the cutting plane, the letters, the title,
+the ratio — **composes** from what the engine already holds; a **detail view** needs no
+concession at all — it is a 2D re-render, and the engine is re-entrant.
+
+- **The cutting plane.** A `|cutting-plane|` is a chrome child of the view it cuts (a
+  `|line|`), its smart label the section **letter** — `|cutting-plane| "A"`. `at: N`
+  places it: the plane runs **perpendicular to** an axis at station `N`, the axis
+  defaulting to the model's longer one or named — `at: 40 y-axis` (`break:`'s
+  convention). It lowers to the ISO plane: a thin dash-dot line (`stroke-style: center`)
+  across the geometry and its overhang, **thick end strokes** just past each end, a
+  viewing-direction **arrow** (the slender dimension arrow) at each, and the letter
+  beside them. `facing: left | right | up | down` turns the arrows — default `right`
+  for a vertical plane, `down` for a horizontal one. The cascade styles or removes the
+  whole marker (`|cutting-plane| { stroke: none }`).
+- **Composed titles.** A view that declares `section: a` and carries **no label of its
+  own** synthesizes its title: the uppercased letter **doubled** — `A-A` — followed by
+  the drafting **ratio**, the view's own `scale:` over the enclosing page's (both
+  default 4, so a default view on a default page reads `1:1`), written `2:1` when
+  enlarged, `1:1.5` when reduced, at most 2 dp. `detail: c` titles `C (1:1)` the same
+  way — one letter, not doubled. The ratio is known only where the title seats — under
+  the view, on its sheet — so the text composes there. An **authored label always
+  wins**.
+- **The detail marker.** A `|detail-circle|` rings a region on the source view — a thin
+  outlined circle (`|oval|`, `--stroke-light`), `width:` its diameter, positioned with
+  `translate:` like any feature; its smart label is the **letter**, set just outside
+  the rim at 45°. It is an ordinary part-frame child, like a `|balloon|` — not
+  generated chrome, and the **single source of truth for the region** it names.
+- **The auto detail view.** A `|detail|` is a `|drawing|` whose `of:` names a
+  `|detail-circle|`: the view takes its **centre** and **diameter** from that marker and
+  its **letter** titles it (`C (1:1)`, composed as above), so only the magnifying
+  `scale:` is yours. The engine **re-lays the marker's host view** at the detail's scale
+  — a plain 2D re-render, no projection — keeping the **geometry** and **dropping the
+  source's annotations**, shifted to centre the region and **clipped to the circle**
+  ([SPEC 17](#17-svg-output)). The detail's own `[ ]` annotations dimension the re-laid
+  copies (by the ids the clones carry from the source); only the detail's own links may
+  reach them. A detail re-renders a **base** view — it cannot detail another `|detail|`.
 
 **The sheet.** `|page|` gives the multi-view story its walls: the trimmed ISO 5457
 sheet as a **template container**, not a layout — inside its frame it is an ordinary
@@ -2655,10 +2699,20 @@ frame at an edge's midpoint (the middle divider, which would coincide, is not
 drawn; the left mark starts at its band, keeping the filing strip empty). The
 content area is the frame inset by 5 mm (`padding:` adds to it). A
 **`|title-block|`** child (ISO 7200 — a `|table|`, [SPEC 8](#8-templates)) is seated
-by **type**, flush inside the frame's bottom-right corner; its fields are ordinary
-cells. A file whose drawn content is only pages **hugs them** — the paper is the
+by **type**, flush inside the frame's bottom-right corner. **String-valued field
+properties** — `title`, `dwg`, `rev`, `date`, `sheet`, `author`, `approved`, `dept`,
+`reference`, `doc-type`, `status` — desugar (like `sheet:`) into the fixed ISO grid:
+each a caption in the muted footer tone over its value, and **absent fields collapse**
+their cells, so the default block is minimal (Title / DWG No. / Rev / Sheet). In this
+form `title:` is the drawing's title field, not the `<title>` tooltip
+([SPEC 16](#16-property-ledger--support)), and `sheet:` the sheet number, not a page
+size. A `|title-block|` with **no** field property keeps the plain-table form — its
+cells fully authored. A file whose drawn content is only pages **hugs them** — the paper is the
 margin, so the root's `padding` defaults to 0 (your own `{ padding: … }` still
-wins) and the sheet runs edge to edge of the SVG.
+wins) and the sheet runs edge to edge of the SVG. That same predicate makes the
+sheet **true-scale in print**: the root emits `width` / `height` in real
+millimetres beside the `viewBox` (`width="210mm"` for an A4), so a print measures
+its drawing units, while on-screen CSS sizing is unaffected ([SPEC 17](#17-svg-output)).
 
 ```
 |page| { sheet: a4 } [
@@ -2722,6 +2776,11 @@ properties are the core ones.
 | `tol` | a dimension | `t` / `+u -l` / fit ident | tolerance text ([15.6](#156-dimensions)) |
 | `side` | a dimension / callout | side — or a corner (callouts, diametral dims) | stack side / text direction |
 | `gap` | a dimension / a mate | number | dim: its offset from the geometry. Mate: separation along the normal — **may be negative** |
+| `section` · `detail` | `\|drawing\|` | a letter ident | compose the view title — `A-A` (section, doubled) / `C (1:1)` (detail) ([15.8](#158-assemblies-views-sheets--titles)) |
+| `at` | `\|cutting-plane\|` | `N [x-axis \| y-axis]` | station of the section plane; longer-axis default ([15.8](#158-assemblies-views-sheets--titles)) |
+| `facing` | `\|cutting-plane\|` | `left`·`right`·`up`·`down` | viewing-arrow direction; by plane ([15.8](#158-assemblies-views-sheets--titles)) |
+| `of` | `\|detail\|` | path to a `\|detail-circle\|` | the detail's region source ([15.8](#158-assemblies-views-sheets--titles)) |
+| ISO 7200 fields | `\|title-block\|` | quoted string | `title` / `dwg` / `rev` / `date` / `sheet` / `author` / `approved` / `dept` / `reference` / `doc-type` / `status` — build the grid, absent collapse ([15.8](#158-assemblies-views-sheets--titles)) |
 
 `fill` accepts `hatch()` ([SPEC 10.3](#103-gradients)); `stroke-style` has `center` /
 `phantom` and `marker` has `datum` ([SPEC 7](#7-nodes)). `routing`, `clearance`,
@@ -2871,7 +2930,7 @@ out of scope.
 | `hole` | `\|pie\|` | `0` ≤ n < `1` | 0 | [SPEC 14.7](#147-direction-radial--pie) |
 | `legend` · `tooltip` | `\|chart\|` `\|pie\|`, series (`tooltip`) | see [SPEC 14](#14-charts) | auto · auto | [SPEC 14](#14-charts) |
 | `value` | `\|slice\|` `\|bubble\|` | number ≥ 0 | — | [SPEC 14](#14-charts) |
-| `at` | `\|mark\|` `\|bubble\|` | `V` / `X Y` | — | [SPEC 14.5](#145-bands--annotations) |
+| `at` | `\|mark\|` `\|bubble\|` · `\|cutting-plane\|` | `V` / `X Y` · `N [x-axis \| y-axis]` | — | [SPEC 14.5](#145-bands--annotations), [SPEC 15.8](#158-assemblies-views-sheets--titles) |
 | `side` · `range` · `scale` · `step` · `ticks` · `unit` · `gridlines` | `\|axis\|` | see [SPEC 14.4](#144-axes-scales--domain) | — | [SPEC 14.4](#144-axes-scales--domain) |
 | `over` · `left` · `right` | sequence `\|note\|` | id(s) | — | [SPEC 13](#13-sequence) |
 | `activation` | `\|sequence\|` | `auto` · `none` | `auto` | [SPEC 13](#13-sequence) |
@@ -2880,6 +2939,10 @@ out of scope.
 | `tol` | a dimension | `t` / `+u -l` / fit ident | — | [SPEC 15.6](#156-dimensions) |
 | `side` | a dimension / callout (also `\|axis\|`, above) | side · corner | by axis | [SPEC 15.6](#156-dimensions) |
 | `gap` | a dimension / a mate | number (a mate's may be < 0) | — | [SPEC 15.5](#155-mates), [SPEC 15.6](#156-dimensions) |
+| `facing` | `\|cutting-plane\|` | `left`·`right`·`up`·`down` | by plane | [SPEC 15.8](#158-assemblies-views-sheets--titles) |
+| `section` · `detail` | `\|drawing\|` | a letter ident | — | [SPEC 15.8](#158-assemblies-views-sheets--titles) |
+| `of` | `\|detail\|` | a `\|detail-circle\|` path | — | [SPEC 15.8](#158-assemblies-views-sheets--titles) |
+| ISO 7200 fields | `\|title-block\|` | quoted string | — | [SPEC 15.8](#158-assemblies-views-sheets--titles) |
 
 ### Link properties
 
@@ -2921,7 +2984,11 @@ text props. Its own properties:
 
 `viewBox` auto-sizes to content + the scene's `padding` (20 px by default) on every
 side. The `lini-canvas` backing rect paints the scene background (`--lini-bg`) over the
-viewBox; a root `fill:` overrides it (`none` = transparent).
+viewBox; a root `fill:` overrides it (`none` = transparent). When a file's drawn content
+is only `|page|`s ([SPEC 15.8](#158-assemblies-views-sheets--titles)), the root `width`
+and `height` carry the sheet's trimmed size in real **millimetres** rather than pixels,
+so a print is true-scale; the `viewBox` is unchanged, so on-screen layout and CSS sizing
+are not.
 
 **Paint compiles to CSS; geometry bakes.** Node and link paint defaults — and every
 rule — are stated once as class rules; only the classes actually used are emitted — and
@@ -2971,8 +3038,12 @@ sequence's lowered primitives ([SPEC 18](#18-compile-pipeline)) emit exactly lik
 text, and lines above — a chart's tooltip card is a `<g class="lini-chart-tip">`, a
 reserved styling hook. A drawing's dimension anatomy ([SPEC 15.6](#156-dimensions))
 lowers with its own hooks, paint stated once per class: `lini-dim-line` (dimension /
-leader linework), `lini-ext-line` (extension lines, `--lini-stroke-light`), and the
-slender arrowheads as `lini-marker lini-marker-dim`.
+leader linework), `lini-ext-line` (extension lines, `--lini-stroke-light`),
+`lini-dim-text` (annotation text — `font-size: 12; font-weight: normal`, so no
+dimension, leader, or callout leaf inlines its own size), and the slender arrowheads as
+`lini-marker lini-marker-dim`; these rules emit only when a sheet carries drawings. A
+`|detail|` view ([SPEC 15.8](#158-assemblies-views-sheets--titles)) clips to its region
+with one interned `<clipPath>` in `<defs>` and a `clip-path=` on its group.
 
 ---
 
@@ -3229,6 +3300,12 @@ Format: `filename:line:col: error: <message>` (LSP-compatible), compile-time, wi
 | Unknown `thread:` segment | `no segment 'm8' in this 'draw:'` + suggestions |
 | `thread:` on a non-round node | `'thread' dresses a '\|sketch\|' segment or a round feature` |
 | Bad `sheet:` | `'sheet' takes a size — a5…a0 (ISO) or a…e (ANSI) — and an optional portrait / landscape` + did-you-mean |
+| `\|detail\|` without `of:` | `a '\|detail\|' needs 'of' — the '\|detail-circle\|' it magnifies` |
+| `of:` finds no marker | `'of' finds no '\|detail-circle\|' 'X' at <scope>` + suggestions |
+| `of:` names a non-marker | `'of' names 'X', not a '\|detail-circle\|' — a detail's region is a marker` |
+| Detail of a detail | `a '\|detail\|' details a base view — 'of' can't name a marker inside another '\|detail\|'` |
+| `at:` off the model | `a 'cutting-plane' at N sits off the model` |
+| Bad `facing:` | `'facing' turns the arrows — left, right, up, or down` |
 | `:segment` shadows a built-in point | `':left' is a built-in anchor — pick another name` |
 | Unknown `:segment` | `no segment ':step' on 'body'` + suggestions |
 | Duplicate `:segment` in one `draw:` | `':step' is already named in this 'draw:'` |
@@ -3381,7 +3458,8 @@ expects them. The layout type names (`chart`, `pie`, `axis`, `band`, `mark`, `ba
 `bubble`, `slice`, `area`, `line`, and the sequence `loop`, `opt`, `alt`, `else`, `note`)
 are built-in types like `box` — protected from a define shadowing them, free as ids; so
 are the drawing types (`drawing`, `sketch`, `hole`, `centerline`, `pitch-circle`,
-`balloon`, `breakline` — [SPEC 15](#15-drawing)).
+`balloon`, `breakline`, `cutting-plane`, `detail-circle`, `detail` —
+[SPEC 15](#15-drawing)).
 Function names `rgb`, `rgba`, `hsl`, `repeat` are reserved only before `(` — as are
 `hatch`, `grid` / `radial` (in `pattern:`), and the pen calls (`move`, `left`, `right`,
 `up`, `down`, `line`, `angle`, `arc`, `curve`, `fillet`, `chamfer`, `circle`, `close`)
@@ -3474,22 +3552,20 @@ dividers / delays (`==` / `...`); and an `|actor|` stick-figure primitive (an ac
   `face *- "Ra 1.6"`.
 - **hole variants** — counterbore and countersink (threads are built — `thread:`,
   [SPEC 15.3](#153-the-sketch-pen), [SPEC 15.4](#154-features-holes--patterns)).
-- **view machinery** — projection lines between views, detail circles ("VIEW A"),
-  cutting-plane arrows (A–A), cross-view alignment; today, composed by hand.
+- **projection lines between views** — the thin lines auto-linking a feature across
+  orthographic views; today, composed by hand (cutting planes, detail circles, auto
+  detail views, composed titles, and cross-view alignment via `align: origin` are
+  built — [SPEC 15.8](#158-assemblies-views-sheets--titles)). A **detail of a detail**
+  is gated ([SPEC 20](#20-errors)) — a `\|detail\|` re-renders a base view.
 - **angled break lines** and a scope-level `break:` on the `\|drawing\|` itself; a
   `break:` station **through a `curve()`** (lines and arcs clip exactly today — move the
   stations off the cubic) and `break:` on non-sketch geometry (draw the profile with
   the pen).
-- **`fillet` / `chamfer` against a curved segment** — today the modifiers join two
-  straight runs (an arc is already tangent-friendly; draw it with the radius you
-  want).
 - **dim-line breaks / halos** where annotations cross geometry; the ASME
   text-in-a-broken-line diametral form and a horizontal-text knob (ISO aligned is the
   built-in).
 - an ambient **`w` / `h`** bound to a node's own size (circular against auto-sizing
   today — a named constant covers the workflow, [SPEC 10.7](#107-expressions--functions)).
-- **physical-size emission** — an SVG `width` / `height` in real mm for true-scale
-  prints.
 - **balloon auto-numbering and auto-BOM** from the scene's parts.
 - **`\|mark\|` / `\|note\|` in charts** — data-coordinate placement (`at:`).
 

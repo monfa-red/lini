@@ -1,4 +1,4 @@
-# DRAWING-0.18 — sections, details & sheet finish (design)
+# DRAWING-0.19 — sections, details & sheet finish (design)
 
 The third drawing round, planned with Abbas on 2026-07-07 against the shipped
 0.17 (sheets, revolve, thread) and his ramjet references
@@ -172,6 +172,43 @@ commit per stage; append to the execution log.
 
 Append-only, per DRAWING-0.16.md's rule.
 
+- **2026-07-08 — stage 0 landed** (SPEC only; no code, so no test gate — the
+  contract for Abbas's review). SPEC amended per the ledger:
+  - **15.8** grew a **Sections & details** block: `|cutting-plane|` (a `::line`
+    chrome child, its label the section letter; `at: N [axis]` on the
+    longer-axis-default station, `break:`'s convention; `facing:` turning the
+    ISO viewing arrows; the ISO plane — thin dash-dot across geometry +
+    overhang, thick ends, arrows, letters); the composed `section:` → `A-A
+    (ratio)` and `detail:` → `C (1:1)` titles (ratio = own scale ÷ enclosing
+    page's, both default 4; the seat is the existing title `|footnote|`, filled
+    where the ratio is known); `|detail-circle|` as the region's single source
+    of truth; `|detail|` re-laying its host view at `of:`'s marker — geometry
+    kept, source annotations dropped, shifted and clipped to the circle.
+  - **15.7** producer table grew to **eight** (the cutting-plane's ends /
+    arrows / letter). **15.3** corner modifiers gained the **arc** leg
+    (`chamfer` cuts back by arclength on a curve) — decision 8.
+  - **SPEC 8** gained three template rows (`|cutting-plane|`, `|detail-circle|`,
+    `|detail|`) and the `|title-block|` field note. **15.10 / SPEC 16** property
+    rows: `section` / `detail` (on `|drawing|`), `at` / `facing` (on
+    `|cutting-plane|`), `of` (on `|detail|`), the ISO 7200 fields (on
+    `|title-block|`). **SPEC 17** gained the `.lini-dim-text` rule, the
+    `<clipPath>`, and the physical-mm `width` / `height`. **SPEC 20** gained six
+    rows (`of:` missing / unknown / non-marker, detail-of-a-detail, `at:` off
+    the model, bad `facing:`). **SPEC 22** the three type names. **SPEC 23**
+    lost physical-size and fillet-vs-arc, and narrowed "view machinery" to just
+    projection lines.
+  - **The round is renamed 0.18 → 0.19**: v0.18.0 already shipped the post-0.17
+    sheet polish (ANSI sheets, the equal reference band, the ISO print tones),
+    so this "sections & details" round is 0.19 (the file name was already
+    0.19; the header lagged).
+  - Decisions surfaced while writing the contract, both settled here:
+    **`title:` on a filled `|title-block|` is the ISO title field**, not the
+    `<title>` tooltip (desugar consumes it into the grid, as `sheet:` on a page
+    is size sugar and on a title-block the sheet-number field); **a `|detail|`
+    of a `|detail|` is gated** (the re-lay stays one level — SPEC 20 +
+    SPEC 23). SPEC 24 stays untouched until the samples exist (per stage), as
+    in the 0.17 round.
+  - **Awaiting Abbas's spec review before Stage 1** (the plan's Stage 0 gate).
 - **2026-07-07 — plan written** (same session as the 0.17 finish rounds:
   ISO 129 arrowheads, `align: origin` + the centreline rule, the
   scope-transparency fix). Decisions 1–9 settled with Abbas; the marker-as-
