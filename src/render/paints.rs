@@ -53,6 +53,9 @@ struct Interner {
     gradients: Vec<GradientDef>,
     hatch_keys: Vec<String>,
     hatches: Vec<HatchDef>,
+    /// Distinct clip radii [SPEC 15.8], in encounter order — a detail view's
+    /// `clip:` circle is interned by radius, one `<clipPath>` per distinct one.
+    clips: Vec<f64>,
 }
 
 /// Intern every distinct gradient and hatch, rewrite each paint use-site to
@@ -75,13 +78,36 @@ pub(crate) fn lower(laid: &mut LaidOut) {
     }
     laid.gradients = it.gradients;
     laid.hatches = it.hatches;
+    laid.clips = it.clips;
 }
 
 fn lower_node(node: &mut PlacedNode, it: &mut Interner) {
     lower_attrs(&mut node.attrs, it);
+    lower_clip(&mut node.attrs, it);
     for child in &mut node.children {
         lower_node(child, it);
     }
+}
+
+/// A `|detail|`'s `clip:` circle [SPEC 15.8]: intern the radius and rewrite the
+/// attr to its `url(#lini-clip-N)` reference, exactly as the paints do.
+fn lower_clip(attrs: &mut AttrMap, it: &mut Interner) {
+    let Some(ResolvedValue::Number(r)) = attrs.get("clip") else {
+        return;
+    };
+    let r = *r;
+    let idx = it
+        .clips
+        .iter()
+        .position(|e| (e - r).abs() < 1e-9)
+        .unwrap_or_else(|| {
+            it.clips.push(r);
+            it.clips.len() - 1
+        });
+    attrs.insert(
+        "clip",
+        ResolvedValue::RawCss(format!("url(#lini-clip-{})", idx + 1)),
+    );
 }
 
 fn lower_attrs(attrs: &mut AttrMap, it: &mut Interner) {
@@ -166,6 +192,21 @@ fn hatch_key(h: &HatchDef) -> String {
 pub(crate) fn emit_defs(laid: &LaidOut, out: &mut String, opts: &Options) {
     emit_gradients(laid, out, opts);
     emit_hatches(laid, out, opts);
+    emit_clips(laid, out);
+}
+
+/// One `<clipPath>` per distinct detail-view clip radius [SPEC 15.8]: a circle
+/// at the group's own origin (the region centre the detail recentres to),
+/// `userSpaceOnUse` so it clips the placed geometry directly.
+fn emit_clips(laid: &LaidOut, out: &mut String) {
+    for (i, r) in laid.clips.iter().enumerate() {
+        let _ = writeln!(
+            out,
+            r#"    <clipPath id="lini-clip-{}" clipPathUnits="userSpaceOnUse"><circle r="{}"/></clipPath>"#,
+            i + 1,
+            num(*r)
+        );
+    }
 }
 
 /// The drafting hatch tile [SPEC 10.3]: a `pitch × pitch` square turned to

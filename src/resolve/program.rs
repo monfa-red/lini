@@ -427,9 +427,13 @@ fn link_scope_kind(
             _ => None,
         }
     };
+    let detail = scope_chain(nodes, scope)
+        .last()
+        .is_some_and(|c| c.type_chain.iter().any(|t| t == "detail"));
     links::LinkScope {
         drawing,
         flow_in_drawing,
+        detail,
     }
 }
 

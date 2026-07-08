@@ -65,6 +65,27 @@ pub(super) fn section_footnote(kind: &str, letter: &str, span: Span) -> Node {
     }
 }
 
+/// A placeholder title `|footnote|` for a `|detail|` auto view [SPEC 15.8]: its
+/// letter comes from the `of:` marker, known only at layout, so this carries a
+/// bare `detail-title` marker the drawing engine fills with `C (1:1)`.
+pub(super) fn detail_footnote(span: Span) -> Node {
+    Node {
+        id: None,
+        ty: Some("footnote".to_string()),
+        label: None,
+        classes: Vec::new(),
+        style: vec![Decl {
+            name: "detail-title".to_string(),
+            groups: vec![vec![Value::Ident("view".to_string())]],
+            span,
+        }],
+        style_span: None,
+        children: Vec::new(),
+        links: Vec::new(),
+        span,
+    }
+}
+
 /// The `symbol: <name>` declaration an icon's smart label lowers to [SPEC 7].
 pub(super) fn symbol_decl(name: &str, span: Span) -> Decl {
     Decl {

@@ -22,19 +22,24 @@ pub(in crate::layout) fn layout_node(
     ctx: Ctx,
 ) -> Result<PlacedNode, Error> {
     let own = effective_scale(&inst.attrs, ctx.scale, inst.span)?;
-    let mut children = lay_out(
-        &inst.children,
-        path,
-        program,
-        own,
-        unit_of(&inst.attrs),
-        inst.span,
-        inst.id.is_some(),
-    )?;
-    // A composed section / detail title reads its ratio here [SPEC 15.8], where
-    // both the view's scale (`own`) and the enclosing page's (`ctx.scale`) are
-    // known.
-    fill_section_title(&mut children, own, ctx.scale);
+    // A `|detail|` is a re-render, not an authored view [SPEC 15.8]: it re-lays
+    // the geometry its `of:` marker rings. Every other drawing lays out its own
+    // children and composes a `section:` / `detail:` title if it declared one.
+    let mut children = if inst.type_chain.iter().any(|t| t == "detail") {
+        super::section::layout_detail(inst, path, program, own, ctx.scale)?
+    } else {
+        let mut c = lay_out(
+            &inst.children,
+            path,
+            program,
+            own,
+            unit_of(&inst.attrs),
+            inst.span,
+            inst.id.is_some(),
+        )?;
+        fill_section_title(&mut c, own, ctx.scale);
+        c
+    };
 
     // Centre the drawn extent on the node's origin, so the container places in
     // a flow like any box (and a styled drawing's own rect backs its content).
@@ -95,10 +100,7 @@ fn fill_section_title(kids: &mut [PlacedNode], own: f64, page: f64) {
             continue;
         };
         let title = super::compose::section_title(kind, letter, own, page);
-        let fs = k.attrs.number("font-size").unwrap_or(12.0);
-        let text = prim::text(&title, 0.0, 0.0, fs, None, false);
-        k.bbox = text.bbox;
-        k.children = vec![text];
+        super::section::fill_footnote(k, &title);
     }
 }
 
@@ -165,7 +167,7 @@ fn lay_out(
     });
     super::section::fill_cutting_planes(&mut kids, geo_extent, own)?;
     super::section::place_detail_labels(&mut kids);
-    let mut lowered = annotate::lower(&kids, &annotations, path, own, unit)?;
+    let mut lowered = annotate::lower(&kids, &annotations, path, own, unit, None)?;
     kids.append(&mut lowered);
     Ok(kids)
 }

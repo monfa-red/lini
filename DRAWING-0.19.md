@@ -172,6 +172,38 @@ commit per stage; append to the execution log.
 
 Append-only, per DRAWING-0.16.md's rule.
 
+- **2026-07-08 — stage 2 landed** (all gates green — 768 tests, clippy silent,
+  fmt clean; `drawing_detail.lini` PNG-rendered via resvg `--bake-vars` and
+  inspected: the shaft's groove re-rendered at 4:1, clipped, ⌀18-dimensioned,
+  titled `C (4:1)`). The auto detail view:
+  - **`clip:` on the placed node → an interned `<clipPath>`.** A `Number(r)`
+    attr, rewritten to a `url(#lini-clip-N)` reference by `paints::lower` (the
+    same intern-and-rewrite pass as the gradients / hatches; `LaidOut.clips`
+    holds the radii), one `<clipPath clipPathUnits="userSpaceOnUse"><circle
+    r=…>` per distinct radius in `<defs>`, and render puts `clip-path=` on the
+    group. Zero struct churn — `clip:` rides `attrs` like `points:` / `chrome:`.
+  - **`|detail|` engine arm** (`section::layout_detail`): resolve `of:` to the
+    marker **by id** (like a chart's `axis:` — a dotted path isn't a value
+    form, SPEC 21; `find_marker` returns the marker + its host), take the
+    centre / diameter / letter, **re-lay the host's geometry children** through
+    the re-entrant `layout_inst` at the detail scale, shift by `−centre ×
+    scale`, wrap them in a clipped group, and lower the detail's own
+    annotations against those **clones** (extent = the region circle, so dims
+    hug it). The title composes `C (1:1)` from the marker's letter, seated in a
+    desugar-seeded `detail-title` footnote.
+  - **Resolve defers the detail's endpoints.** The clones exist only at layout,
+    so a new `LinkScope.detail` flag keeps a detail scope's annotation
+    endpoints as qualified paths (skipping the scene-index lookup); the anchor
+    walk lands them on the clones. The **lint's** auto-create-shadow pass
+    likewise gained the drawing-scope gate it lacked (it re-derived
+    auto-create without it), so a detail's `shaft:groove` no longer warns.
+  - **Decisions / deltas from the plan:** `of:` names the marker **by id**, not
+    a path (the design said "path"; a dotted path doesn't parse as a value —
+    SPEC 15.8 / 16 / 20 synced). A `|detail-circle|`'s letter is read from its
+    text child (an `|oval|`-based type carries the label there, not `label:`).
+    Detail-in-detail is gated (SPEC 20). `part_bbox` gained `detail-circle` so
+    a lone `width:` reads as a circle.
+  - Sample `drawing_detail.lini`; conformance snapshot accepted.
 - **2026-07-08 — stage 1 landed** (all gates green — 766 tests, clippy silent,
   fmt clean; `drawing_ring.lini` PNG-rendered via resvg `--bake-vars` and
   inspected). The section bookkeeping:

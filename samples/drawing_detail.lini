@@ -1,0 +1,22 @@
+// An auto detail view [SPEC 15.8]: `|detail-circle#c|` rings the shaft's groove
+// on the main view; `|detail#det| { of: c }` re-renders that region at 4:1
+// (its own scale 16 over the page's 4), clipped to the circle and titled
+// "C (4:1)" by composition — the ⌀18 dimensions the re-laid groove, not the
+// source.
+|page#sheet| { sheet: a5 landscape; gap: 40; direction: row; align: origin; } [
+
+  |drawing#main| "SHAFT" { scale: 4; unit: "mm"; } [
+    |sketch#shaft| {
+      draw: move(-60, 0) up(12) chamfer(1.5) right(50) down(3) right(6):groove
+            up(3) right(30) down(4) fillet(3):r1 right(34) chamfer(1) down(8);
+      revolve: x-axis;
+    }
+    |detail-circle#c| "C" { width: 26; translate: -7 0; }
+
+    shaft:left (-) shaft:right { side: bottom; }
+  ]
+
+  |detail#det| { of: c; scale: 16; } [
+    shaft:groove (o) { side: left; }
+  ]
+]

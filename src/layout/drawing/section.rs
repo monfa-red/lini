@@ -10,13 +10,14 @@
 //! feature; only its smart label moves out to the rim at 45°.
 
 use super::super::ir::{Bbox, PlacedNode};
-use super::super::prim;
+use super::super::{Ctx, child_path, layout_inst, prim};
 use super::annotate::{NOTE_OFFSET, Paint};
-use super::compose::fmt;
+use super::compose::{fmt, section_title};
 use super::dims;
 use super::geometry::P;
 use crate::error::Error;
-use crate::resolve::{NodeKind, ResolvedValue};
+use crate::resolve::NodeKind;
+use crate::resolve::{Program, ResolvedInst, ResolvedLink, ResolvedValue};
 
 // The cutting-plane anatomy — baked sheet constants [SPEC 10.5], never scaled.
 /// The chain line runs past the geometry by this on each end.
@@ -236,6 +237,160 @@ pub(in crate::layout) fn place_detail_labels(kids: &mut [PlacedNode]) {
     }
 }
 
+/// Set a placeholder title `|footnote|`'s text and size it [SPEC 15.8]. The
+/// text child inherits the footnote's font and colour (`--footer-color`), so
+/// `|drawing| |footnote| { … }` styles a composed title like any authored one.
+pub(super) fn fill_footnote(foot: &mut PlacedNode, title: &str) {
+    let fs = foot.attrs.number("font-size").unwrap_or(12.0);
+    let text = prim::text(title, 0.0, 0.0, fs, None, false);
+    foot.bbox = text.bbox;
+    foot.children = vec![text];
+}
+
+/// The auto detail view [SPEC 15.8]: `of:` names a `|detail-circle|`; the view
+/// re-lays that marker's **host geometry** at its own scale, shifts the region
+/// centre to the datum, clips to the circle, lowers its own annotations against
+/// the clones, and titles itself `C (1:1)` from the marker's letter. Returns
+/// the detail's children — the clipped clone group, the annotations, and the
+/// title; the caller (the drawing engine) sizes and places the container.
+pub(in crate::layout) fn layout_detail(
+    inst: &ResolvedInst,
+    path: &str,
+    program: &Program,
+    own: f64,
+    page: f64,
+) -> Result<Vec<PlacedNode>, Error> {
+    let Some(ResolvedValue::Ident(id)) = inst.attrs.get("of") else {
+        return Err(Error::at(
+            inst.span,
+            "a '|detail|' needs 'of' — the '|detail-circle|' it magnifies",
+        ));
+    };
+    let (marker, host) = find_marker(&program.scene.nodes, id, None)
+        .ok_or_else(|| Error::at(inst.span, format!("'of' finds no '|detail-circle|' '{id}'")))?;
+    if host.type_chain.iter().any(|t| t == "detail") {
+        return Err(Error::at(
+            inst.span,
+            "a '|detail|' details a base view — 'of' can't name a marker inside another '|detail|'",
+        ));
+    }
+    let center = translate_of(marker);
+    let diameter = marker.attrs.number("width").ok_or_else(|| {
+        Error::at(
+            marker.span,
+            "'|detail-circle|' requires 'width' — its diameter",
+        )
+    })?;
+    let r = diameter / 2.0 * own;
+    let letter = marker_letter(marker);
+
+    // Re-lay the host's geometry children at the detail scale — layout_inst is
+    // re-entrant, a different scale the whole trick — then shift the region
+    // centre onto the datum.
+    let ctx = Ctx {
+        scale: own,
+        drawing: true,
+    };
+    let mut clones = Vec::new();
+    for c in host.children.iter().filter(|c| is_relaid_geometry(c)) {
+        clones.push(layout_inst(c, &child_path(path, c), program, ctx)?);
+    }
+    super::place_features(&mut clones, own, None)?;
+    for c in &mut clones {
+        c.cx -= center.0 * own;
+        c.cy -= center.1 * own;
+    }
+
+    // The detail's own annotations, against the clones — dims stack outside the
+    // region **circle**, not the clipped-away part.
+    let circle = Bbox::centered(2.0 * r, 2.0 * r);
+    let links: Vec<&ResolvedLink> = if inst.id.is_some() {
+        program.links.iter().filter(|w| w.scope == path).collect()
+    } else {
+        Vec::new()
+    };
+    let unit = match inst.attrs.get("unit") {
+        Some(ResolvedValue::String(u)) => Some(u.as_str()),
+        _ => None,
+    };
+    let mut annotations = super::annotate::lower(&clones, &links, path, own, unit, Some(circle))?;
+
+    // Clip the clones to the region circle (one interned <clipPath> at render).
+    let mut clip_group = prim::group(clones, Vec::new(), circle);
+    clip_group.attrs.insert("clip", ResolvedValue::Number(r));
+
+    // The detail's own children (the placeholder title footnote), composed from
+    // the marker's letter.
+    let mut own_kids = Vec::new();
+    for c in &inst.children {
+        own_kids.push(layout_inst(c, &child_path(path, c), program, ctx)?);
+    }
+    let title = section_title("detail", &letter, own, page);
+    for k in own_kids
+        .iter_mut()
+        .filter(|k| k.attrs.get("detail-title").is_some())
+    {
+        fill_footnote(k, &title);
+    }
+
+    let mut kids = vec![clip_group];
+    kids.append(&mut annotations);
+    kids.append(&mut own_kids);
+    Ok(kids)
+}
+
+/// Find a `|detail-circle|` by id and its **host** (the enclosing node)
+/// [SPEC 15.8] — the marker's `of:` reference, matched like a chart's `axis:`.
+fn find_marker<'a>(
+    nodes: &'a [ResolvedInst],
+    id: &str,
+    parent: Option<&'a ResolvedInst>,
+) -> Option<(&'a ResolvedInst, &'a ResolvedInst)> {
+    for n in nodes {
+        if n.id.as_deref() == Some(id) && n.type_chain.iter().any(|t| t == "detail-circle") {
+            return parent.map(|p| (n, p));
+        }
+        if let Some(hit) = find_marker(&n.children, id, Some(n)) {
+            return Some(hit);
+        }
+    }
+    None
+}
+
+/// A host geometry child the detail re-renders [SPEC 15.8]: a real part — not
+/// sheet content, and not the authored markers (cutting planes, detail circles)
+/// that annotate the source. The source's annotations are links, not children,
+/// so they are already excluded.
+fn is_relaid_geometry(inst: &ResolvedInst) -> bool {
+    !super::is_sheet(inst.kind, &inst.type_chain)
+        && !inst
+            .type_chain
+            .iter()
+            .any(|t| t == "cutting-plane" || t == "detail-circle")
+}
+
+/// A `|detail-circle|`'s letter [SPEC 15.8] — its smart label, which an
+/// `|oval|`-based type carries as a text child (not `label:`).
+fn marker_letter(marker: &ResolvedInst) -> String {
+    marker
+        .children
+        .iter()
+        .find(|c| c.kind == NodeKind::Text)
+        .and_then(|c| c.label.clone())
+        .unwrap_or_default()
+}
+
+/// A node's `translate:` in drawing units — `(0, 0)` when absent.
+fn translate_of(inst: &ResolvedInst) -> (f64, f64) {
+    match inst.attrs.get("translate") {
+        Some(ResolvedValue::Tuple(t)) => (
+            t.first().and_then(ResolvedValue::as_number).unwrap_or(0.0),
+            t.get(1).and_then(ResolvedValue::as_number).unwrap_or(0.0),
+        ),
+        _ => (0.0, 0.0),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::super::testutil::{by_id, laid, layout_err, texts};
@@ -273,6 +428,40 @@ mod tests {
                 "{ layout: drawing; scale: 1 }\n|rect#plate| { width: 40; height: 40 }\n|cutting-plane| \"A\" { at: 0; facing: sideways }\n",
             ),
             "'facing' turns the arrows — left, right, up, or down"
+        );
+    }
+
+    #[test]
+    fn a_detail_view_re_lays_the_region_titles_and_clips_and_dims_the_clone() {
+        // A plate with a marker `c`; the detail magnifies it 2:1 (scale 8 over
+        // the page's 4) and dimensions the **clone** (40, pre-scale, deferred
+        // past resolve) — the source has no such dimension.
+        let l = laid(
+            "|page#p| { sheet: a5 landscape } [\n  |drawing#m| { scale: 4 } [\n    |rect#plate| { width: 40; height: 20 }\n    |detail-circle#c| \"C\" { width: 30 }\n  ]\n  |detail#d| { of: c; scale: 8 } [\n    plate:left (-) plate:right { side: bottom }\n  ]\n]\n",
+        );
+        let all = texts(&l.nodes);
+        assert!(
+            all.iter().any(|(t, ..)| t == "C (2:1)"),
+            "composed detail title: {all:?}"
+        );
+        assert!(
+            all.iter().any(|(t, ..)| t == "40"),
+            "the clone's dimension: {all:?}"
+        );
+        let d = by_id(&l.nodes, "d");
+        assert!(
+            d.children.iter().any(|c| c.attrs.get("clip").is_some()),
+            "the detail clips its geometry to the region circle"
+        );
+    }
+
+    #[test]
+    fn of_a_missing_marker_errors() {
+        assert!(
+            layout_err(
+                "|page#p| { sheet: a5 } [\n  |drawing#m| { scale: 4 } [ |rect#r| { width: 10; height: 10 } ]\n  |detail#d| { of: nope }\n]\n",
+            )
+            .contains("'of' finds no '|detail-circle|' 'nope'")
         );
     }
 

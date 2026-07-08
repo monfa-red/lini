@@ -29,6 +29,11 @@ pub struct LaidOut {
     /// collected exactly like the gradients: use-sites rewritten to
     /// `url(#lini-hatch-N)`, one `<pattern>` per distinct hatch in `<defs>`.
     pub hatches: Vec<HatchDef>,
+    /// Distinct clip radii [SPEC 15.8] — a `|detail|` view clips its geometry
+    /// to a circle. Collected post-layout like the paints: each `clip:` node
+    /// carries the radius, rewritten to a `url(#lini-clip-N)` reference, one
+    /// `<clipPath>` per distinct radius in `<defs>`. Empty unless a detail view.
+    pub clips: Vec<f64>,
 }
 
 /// One distinct `hatch()` paint [SPEC 10.3]: line bearings (0 = up, clockwise

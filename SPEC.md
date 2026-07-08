@@ -2777,7 +2777,7 @@ properties are the core ones.
 | `section` · `detail` | `\|drawing\|` | a letter ident | compose the view title — `A-A` (section, doubled) / `C (1:1)` (detail) ([15.8](#158-assemblies-views-sheets--titles)) |
 | `at` | `\|cutting-plane\|` | `N [x-axis \| y-axis]` | station of the section plane; longer-axis default ([15.8](#158-assemblies-views-sheets--titles)) |
 | `facing` | `\|cutting-plane\|` | `left`·`right`·`up`·`down` | viewing-arrow direction; by plane ([15.8](#158-assemblies-views-sheets--titles)) |
-| `of` | `\|detail\|` | path to a `\|detail-circle\|` | the detail's region source ([15.8](#158-assemblies-views-sheets--titles)) |
+| `of` | `\|detail\|` | a `\|detail-circle\|`'s id | the detail's region source — found by id, like a chart's `axis:` ([15.8](#158-assemblies-views-sheets--titles)) |
 | ISO 7200 fields | `\|title-block\|` | quoted string | `title` / `dwg` / `rev` / `date` / `sheet` / `author` / `approved` / `dept` / `reference` / `doc-type` / `status` — build the grid, absent collapse ([15.8](#158-assemblies-views-sheets--titles)) |
 
 `fill` accepts `hatch()` ([SPEC 10.3](#103-gradients)); `stroke-style` has `center` /
@@ -2939,7 +2939,7 @@ out of scope.
 | `gap` | a dimension / a mate | number (a mate's may be < 0) | — | [SPEC 15.5](#155-mates), [SPEC 15.6](#156-dimensions) |
 | `facing` | `\|cutting-plane\|` | `left`·`right`·`up`·`down` | by plane | [SPEC 15.8](#158-assemblies-views-sheets--titles) |
 | `section` · `detail` | `\|drawing\|` | a letter ident | — | [SPEC 15.8](#158-assemblies-views-sheets--titles) |
-| `of` | `\|detail\|` | a `\|detail-circle\|` path | — | [SPEC 15.8](#158-assemblies-views-sheets--titles) |
+| `of` | `\|detail\|` | a `\|detail-circle\|`'s id | — | [SPEC 15.8](#158-assemblies-views-sheets--titles) |
 | ISO 7200 fields | `\|title-block\|` | quoted string | — | [SPEC 15.8](#158-assemblies-views-sheets--titles) |
 
 ### Link properties
@@ -3299,8 +3299,7 @@ Format: `filename:line:col: error: <message>` (LSP-compatible), compile-time, wi
 | `thread:` on a non-round node | `'thread' dresses a '\|sketch\|' segment or a round feature` |
 | Bad `sheet:` | `'sheet' takes a size — a5…a0 (ISO) or a…e (ANSI) — and an optional portrait / landscape` + did-you-mean |
 | `\|detail\|` without `of:` | `a '\|detail\|' needs 'of' — the '\|detail-circle\|' it magnifies` |
-| `of:` finds no marker | `'of' finds no '\|detail-circle\|' 'X' at <scope>` + suggestions |
-| `of:` names a non-marker | `'of' names 'X', not a '\|detail-circle\|' — a detail's region is a marker` |
+| `of:` finds no marker | `'of' finds no '\|detail-circle\|' 'X'` (a non-marker id reads the same — `of:` finds only markers) |
 | Detail of a detail | `a '\|detail\|' details a base view — 'of' can't name a marker inside another '\|detail\|'` |
 | `at:` off the model | `a 'cutting-plane' at N sits off the model` |
 | Bad `facing:` | `'facing' turns the arrows — left, right, up, or down` |

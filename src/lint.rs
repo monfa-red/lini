@@ -81,7 +81,15 @@ fn lint_auto_create_shadows(file: &File, out: &mut Vec<Diagnostic>) {
     for c in &file.instances {
         collect_paths(c, &mut Vec::new(), &mut id_paths);
     }
-    shadow_scope(&file.instances, &file.links, &[], &id_paths, out);
+    let root_drawing = matches!(root_layout(&file.stylesheet), Some(l) if l == "drawing");
+    shadow_scope(
+        &file.instances,
+        &file.links,
+        &[],
+        &id_paths,
+        root_drawing,
+        out,
+    );
 }
 
 fn shadow_scope(
@@ -89,8 +97,31 @@ fn shadow_scope(
     links: &[Link],
     prefix: &[String],
     id_paths: &HashMap<String, Vec<String>>,
+    scope_is_drawing: bool,
     out: &mut Vec<Diagnostic>,
 ) {
+    // A drawing scope never auto-creates [SPEC 15] — its endpoints point at
+    // real (or, in a `|detail|`, re-laid) geometry, so a bare id there is a
+    // reference, not an invented box. Skip the shadow check for it.
+    if scope_is_drawing {
+        for c in children {
+            if let Child::Box(n) = c {
+                let mut sub = prefix.to_vec();
+                if let Some(id) = &n.id {
+                    sub.push(id.clone());
+                }
+                shadow_scope(
+                    &n.children,
+                    &n.links,
+                    &sub,
+                    id_paths,
+                    is_drawing_node(n),
+                    out,
+                );
+            }
+        }
+        return;
+    }
     let declared = declared_ids(children);
     let link_refs: Vec<&Link> = links.iter().collect();
     for (id, span) in auto_created_ids(&link_refs, &declared) {
@@ -118,8 +149,42 @@ fn shadow_scope(
             if let Some(id) = &n.id {
                 sub.push(id.clone());
             }
-            shadow_scope(&n.children, &n.links, &sub, id_paths, out);
+            shadow_scope(
+                &n.children,
+                &n.links,
+                &sub,
+                id_paths,
+                is_drawing_node(n),
+                out,
+            );
         }
+    }
+}
+
+/// Whether a node opens a drawing scope [SPEC 15] — a `|drawing|` / `|detail|`
+/// (or a define over one, caught by the type name) or an explicit
+/// `layout: drawing`. The lint's twin of desugar's `is_drawing_body`, on the
+/// raw AST (no resolved type chain) — so it reads the written type and style.
+fn is_drawing_node(n: &crate::syntax::ast::Node) -> bool {
+    matches!(n.ty.as_deref(), Some("drawing") | Some("detail"))
+        || n.style
+            .iter()
+            .any(|d| d.name == "layout" && decl_ident(d) == Some("drawing"))
+}
+
+fn root_layout(stylesheet: &[crate::syntax::ast::StyleItem]) -> Option<String> {
+    stylesheet.iter().find_map(|it| match it {
+        crate::syntax::ast::StyleItem::RootDecl(d) if d.name == "layout" => {
+            decl_ident(d).map(str::to_string)
+        }
+        _ => None,
+    })
+}
+
+fn decl_ident(d: &crate::syntax::ast::Decl) -> Option<&str> {
+    match d.groups.first().and_then(|g| g.first()) {
+        Some(crate::syntax::ast::Value::Ident(s)) => Some(s),
+        _ => None,
     }
 }
 

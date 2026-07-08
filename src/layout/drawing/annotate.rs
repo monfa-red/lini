@@ -112,11 +112,15 @@ pub(in crate::layout) fn lower(
     scope: &str,
     scale: f64,
     unit: Option<&str>,
+    extent: Option<Bbox>,
 ) -> Result<Vec<PlacedNode>, Error> {
     let ctx = Ctx {
         kids,
         scope,
-        extent: geometry_extent(kids),
+        // A `|detail|` stacks its dims outside the region **circle**, not the
+        // full re-laid part it clips away [SPEC 15.8]; every other scope reads
+        // its drawn geometry.
+        extent: extent.unwrap_or_else(|| geometry_extent(kids)),
         scale,
         unit,
     };

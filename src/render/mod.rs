@@ -58,7 +58,11 @@ pub fn render(laid_out: &LaidOut, opts: &Options) -> String {
     );
 
     let filters = FilterTable::collect(&laid_out.nodes, &laid_out.vars, opts);
-    if filters.is_empty() && laid_out.gradients.is_empty() && laid_out.hatches.is_empty() {
+    if filters.is_empty()
+        && laid_out.gradients.is_empty()
+        && laid_out.hatches.is_empty()
+        && laid_out.clips.is_empty()
+    {
         out.push_str("  <defs/>\n");
     } else {
         out.push_str("  <defs>\n");
@@ -218,11 +222,17 @@ fn render_node(
         Some(id) => format!(r#" data-id="{}""#, escape_xml(id)),
         None => String::new(),
     };
+    // A `|detail|` clips its geometry to the region circle [SPEC 15.8] — the
+    // `url(#…)` reference `paints::lower` interned.
+    let clip_attr = match n.attrs.get("clip") {
+        Some(crate::resolve::ResolvedValue::RawCss(u)) => format!(r#" clip-path="{u}""#),
+        _ => String::new(),
+    };
     let style_attr = node_style_attr(n, &class_list, ruleset, vars, opts);
     writeln!(
         out,
-        r#"{}<g class="{}"{}{}{}>"#,
-        indent, classes, id_attr, style_attr, transform
+        r#"{}<g class="{}"{}{}{}{}>"#,
+        indent, classes, id_attr, clip_attr, style_attr, transform
     )
     .unwrap();
 

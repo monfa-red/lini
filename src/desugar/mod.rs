@@ -582,14 +582,21 @@ fn lower_node(
         }
     }
     // A section / detail view with no authored label composes its title
-    // [SPEC 15.8]: seed a placeholder |footnote| carrying the letter; the engine
-    // fills the text where it pins the title (the scale ratio is known there).
-    if is_drawing
-        && node.label.as_ref().filter(|l| !l.text.is_empty()).is_none()
-        && let Some((kind, letter)) = section_title_marker(&node.style)
-    {
-        let foot = labels::section_footnote(kind, &letter, node.span);
-        children.insert(0, Child::Box(lower_node(&foot, types, bodies, false)?));
+    // [SPEC 15.8]: seed a placeholder |footnote| the engine fills where it pins
+    // the title (the scale ratio, and a |detail|'s letter, are known there). A
+    // `section:` / `detail:` declares the letter; a `|detail|` reads it from its
+    // `of:` marker.
+    if is_drawing && node.label.as_ref().filter(|l| !l.text.is_empty()).is_none() {
+        let foot = if let Some((kind, letter)) = section_title_marker(&node.style) {
+            Some(labels::section_footnote(kind, &letter, node.span))
+        } else if info.chain.iter().any(|t| t == "detail") {
+            Some(labels::detail_footnote(node.span))
+        } else {
+            None
+        };
+        if let Some(foot) = foot {
+            children.insert(0, Child::Box(lower_node(&foot, types, bodies, false)?));
+        }
     }
 
     // In an entity, header / footer cells span every column [SPEC 8]: the title above

@@ -37,6 +37,11 @@ pub const DIMENSION_CLASS: &str = "lini-dimension";
 pub struct LinkScope {
     pub drawing: bool,
     pub flow_in_drawing: Option<String>,
+    /// The scope is a `|detail|` view [SPEC 15.8]: its geometry is re-laid from
+    /// the source at layout, so its annotation endpoints are **deferred** —
+    /// kept as qualified paths and landed against the re-laid clones by the
+    /// anchor walk, not resolved in the scene index here.
+    pub detail: bool,
 }
 
 /// Resolve one link statement into one resolved link per cartesian pair.
@@ -180,9 +185,15 @@ pub fn resolve_link(
                 p.extend(ep.path.iter().cloned());
                 p
             };
-            let path = paths
-                .resolve(&qualified)
-                .ok_or_else(|| endpoint_error(&ep, paths, path_prefix, w.op, drawing_scope))?;
+            let path = if scope_kind.detail {
+                // Deferred: the clones exist only at layout [SPEC 15.8]; keep the
+                // qualified path for the anchor walk to land.
+                qualified.join(".")
+            } else {
+                paths
+                    .resolve(&qualified)
+                    .ok_or_else(|| endpoint_error(&ep, paths, path_prefix, w.op, drawing_scope))?
+            };
             let (side, point) = resolve_point(&ep, drawing_scope)?;
             endpoints.push(ResolvedEndpoint {
                 path,

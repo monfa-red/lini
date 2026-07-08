@@ -261,6 +261,7 @@ fn finish(
         canvas_fill,
         gradients: Vec::new(),
         hatches: Vec::new(),
+        clips: Vec::new(),
     })
 }
 
