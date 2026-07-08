@@ -226,10 +226,10 @@ fn render_node(
     )
     .unwrap();
 
-    // `title:` emits a `<title>` as the group's first child — an SVG tooltip
+    // `hint:` emits a `<title>` as the group's first child — an SVG tooltip
     // and the accessible name [SPEC 17].
-    if let Some(crate::resolve::ResolvedValue::String(title)) = n.attrs.get("title") {
-        writeln!(out, "{}  <title>{}</title>", indent, escape_xml(title)).unwrap();
+    if let Some(crate::resolve::ResolvedValue::String(hint)) = n.attrs.get("hint") {
+        writeln!(out, "{}  <title>{}</title>", indent, escape_xml(hint)).unwrap();
     }
 
     primitives::render_geometry(out, n, depth + 1, vars, ruleset, filters, opts);
@@ -401,8 +401,8 @@ mod tests {
     }
 
     #[test]
-    fn title_emits_a_title_child_on_the_node_g() {
-        let svg = svg_for("|box#x| { title: \"a tooltip\"; }\n");
+    fn hint_emits_a_title_child_on_the_node_g() {
+        let svg = svg_for("|box#x| { hint: \"a tooltip\"; }\n");
         assert!(svg.contains("<title>a tooltip</title>"), "{svg}");
     }
 

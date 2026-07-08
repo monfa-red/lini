@@ -171,7 +171,7 @@ fn vertex_markers(chart: &Chart, ser: &Series, pts: &[Plotted], out: &mut Vec<Pl
     for ((xd, yd), (xp, yp)) in pts {
         if in_domain(chart, ser, *xd, *yd) {
             let mut m = prim::marker(ser.marker, *xp, *yp, d, d, ser.color.clone());
-            prim::set_title(&mut m, dot_title(chart, ser, *xd, *yd));
+            prim::set_hint(&mut m, dot_title(chart, ser, *xd, *yd));
             out.push(m);
         }
     }
@@ -184,7 +184,7 @@ fn draw_dots(plot: &Plot, chart: &Chart, ser: &Series, out: &mut Vec<PlacedNode>
             continue;
         }
         let mut dot = prim::marker(ser.marker, xp, yp, w, h, ser.color.clone());
-        prim::set_title(&mut dot, dot_title(chart, ser, xd, yd));
+        prim::set_hint(&mut dot, dot_title(chart, ser, xd, yd));
         out.push(dot);
     }
 }

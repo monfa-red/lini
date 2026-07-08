@@ -191,7 +191,7 @@ fn emit_rect(
     if let Some((color, width)) = &ser.outline {
         prim::outline(&mut bar, color.clone(), *width);
     }
-    prim::set_title(&mut bar, title(category, ser.label.as_deref(), value));
+    prim::set_hint(&mut bar, title(category, ser.label.as_deref(), value));
     out.push(bar);
 }
 
@@ -222,7 +222,7 @@ fn emit_wedge(
     if let Some((color, width)) = &ser.outline {
         prim::outline(&mut wedge, color.clone(), *width);
     }
-    prim::set_title(&mut wedge, title(category, ser.label.as_deref(), value));
+    prim::set_hint(&mut wedge, title(category, ser.label.as_deref(), value));
     out.push(wedge);
 }
 

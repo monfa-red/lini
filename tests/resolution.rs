@@ -236,12 +236,12 @@ fn a_link_is_styled_with_the_ordinary_vocabulary() {
     );
 }
 
-// SPEC §2: a string-valued property (`title` / `href` / `src` / `path`) takes a
+// SPEC §2: a string-valued property (`hint` / `href` / `src` / `path`) takes a
 // quoted string — a bare word there is an identifier, so it is an error.
 #[test]
 fn unquoted_text_value_is_rejected() {
     for src in [
-        "|box#x| { title: hello }\n",
+        "|box#x| { hint: hello }\n",
         "|image#x| { src: photo; width: 40; height: 40 }\n",
         "|path#p| { path: data }\n",
     ] {
@@ -260,7 +260,7 @@ fn unquoted_text_value_in_a_rule_is_rejected() {
 
 #[test]
 fn quoted_text_value_resolves() {
-    lini::check("|box#x| { title: \"hello\" }\n").expect("a quoted title resolves");
+    lini::check("|box#x| { hint: \"hello\" }\n").expect("a quoted hint resolves");
 }
 
 #[test]

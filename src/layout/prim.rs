@@ -340,9 +340,9 @@ pub fn text_height(content: &str, size: f64) -> f64 {
 }
 
 /// Attach a native `<title>` — the baked-safe tooltip floor [SPEC 14.8],
-/// emitted by `render_node` on any node carrying a `title:`.
-pub fn set_title(n: &mut PlacedNode, title: String) {
-    n.attrs.insert("title", ResolvedValue::String(title));
+/// emitted by `render_node` on any node carrying a `hint:`.
+pub fn set_hint(n: &mut PlacedNode, hint: String) {
+    n.attrs.insert("hint", ResolvedValue::String(hint));
 }
 
 /// Draw a `stroke:` outline on a fill shape [SPEC 14.6]: replace the builder's

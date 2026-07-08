@@ -81,7 +81,7 @@ pub fn apply(kids: Vec<PlacedNode>, mode: Tooltip, w: f64, h: f64) -> Vec<Placed
     if mode == Tooltip::None {
         // The chart suppresses every label: drop the `<title>` floor the marks carry.
         for n in &mut kids {
-            n.attrs.remove("title");
+            n.attrs.remove("hint");
         }
         return kids;
     }
@@ -102,7 +102,7 @@ pub fn apply(kids: Vec<PlacedNode>, mode: Tooltip, w: f64, h: f64) -> Vec<Placed
 
 /// A titled mark's `<title>` text, cloned so the node can then be tagged.
 fn title_string(node: &PlacedNode) -> Option<String> {
-    match node.attrs.get("title") {
+    match node.attrs.get("hint") {
         Some(ResolvedValue::String(s)) => Some(s.clone()),
         _ => None,
     }

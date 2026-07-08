@@ -201,13 +201,23 @@ Append-only, per DRAWING-0.16.md's rule.
     sheet polish (ANSI sheets, the equal reference band, the ISO print tones),
     so this "sections & details" round is 0.19 (the file name was already
     0.19; the header lagged).
-  - Decisions surfaced while writing the contract, both settled here:
-    **`title:` on a filled `|title-block|` is the ISO title field**, not the
-    `<title>` tooltip (desugar consumes it into the grid, as `sheet:` on a page
-    is size sugar and on a title-block the sheet-number field); **a `|detail|`
-    of a `|detail|` is gated** (the re-lay stays one level — SPEC 20 +
-    SPEC 23). SPEC 24 stays untouched until the samples exist (per stage), as
-    in the 0.17 round.
+  - Decisions surfaced while writing the contract: **a `|detail|` of a
+    `|detail|` is gated** (the re-lay stays one level — SPEC 20 + SPEC 23);
+    **`sheet:` on a title-block is the sheet-number field**, distinct from a
+    page's size sugar. SPEC 24 stays untouched until the samples exist (per
+    stage), as in the 0.17 round.
+- **2026-07-08 — spec review: tooltip `title:` → `hint:`** (Abbas's call; all
+  gates green — 613 lib tests + integration suites, clippy silent, fmt clean;
+  `hint:`/`title:` behaviour confirmed end-to-end). The ISO 7200 field list
+  wants `title:` for the drawing's title, which collided with the universal
+  tooltip / accessible-name property. Rather than overload it in the
+  title-block scope, the **tooltip property is renamed `hint:`** and `title:`
+  is the title-block field cleanly. Landed as its own commit: the internal
+  attr key `title` → `hint` (one key feeds the `<title>` element — `set_hint`,
+  the render reader, the chart `<title>` floor in `tooltip.rs`), `hint` added
+  to `is_string_valued`, SPEC 2/16 + the box-only-property line updated, tests
+  swept. The **`<title>` element is unchanged**, so zero snapshot churn; a bare
+  `title:` on a plain box is now inert (freed for the field).
   - **Awaiting Abbas's spec review before Stage 1** (the plan's Stage 0 gate).
 - **2026-07-07 — plan written** (same session as the 0.17 finish rounds:
   ISO 129 arrowheads, `align: origin` + the centreline rule, the

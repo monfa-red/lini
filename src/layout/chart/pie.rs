@@ -46,7 +46,7 @@ pub fn layout_pie(inst: &ResolvedInst) -> Result<PlacedNode, Error> {
             if let Some((color, width)) = &s.outline {
                 prim::outline(&mut wedge, color.clone(), *width);
             }
-            prim::set_title(&mut wedge, slice_title(s, total));
+            prim::set_hint(&mut wedge, slice_title(s, total));
             kids.push(wedge);
         }
         a += span;

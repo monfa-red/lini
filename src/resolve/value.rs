@@ -205,7 +205,7 @@ fn is_string_valued(name: &str) -> bool {
     matches!(
         name,
         // Core text-valued props [SPEC 2]…
-        "title" | "href" | "src" | "path"
+        "title" | "hint" | "href" | "src" | "path"
         // …and the chart props that carry user text [SPEC 14.1]: tick / spoke
         // labels, the unit suffix, and a series' per-datum `tags`. Keyword chart props
         // (direction, scale, side, tooltip, …) stay bare identifiers.

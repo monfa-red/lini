@@ -213,7 +213,7 @@ Single quotes are **not** strings (reserved, [SPEC 22](#22-reserved-words)).
 **A bare word is an identifier, never a string.** In a value, an unquoted word is
 always an identifier — a keyword, a colour or `symbol` name, a `font-family`, or an id
 reference — so literal **text** is always quoted: a string-valued property (`title`,
-`href`, `src`, `path`) takes a `"…"` even with no spaces. The one hybrid is a name that
+`hint`, `href`, `src`, `path`) takes a `"…"` even with no spaces. The one hybrid is a name that
 may contain spaces — `font-family` — bare or quoted, quoted only when needed
 (`font-family: "SF Mono"`), as in CSS. Numbers and `(…)` expressions are bare too;
 only text is quoted.
@@ -398,7 +398,7 @@ text properties: `"X" { color: red; font-weight: bold; translate: 0 -6;
 rotate: 12 }`. Only text-valid properties apply (colour, every `font-*`, `opacity`,
 `letter-spacing`, `line-spacing`, `text-transform`, `text-decoration`, `translate`,
 `rotate`, `layer`); any other — `pin`, `padding`, `width`, a border, children, even
-`href` / `title` — needs a real box, so wrap the text in a `|block|`. Set on the
+`href` / `hint` — needs a real box, so wrap the text in a `|block|`. Set on the
 string the style applies to it directly; set on a containing box it cascades down
 ([SPEC 6](#6-paint-stroke--text)). A string in the **label** position is the one place it is
 not content but a shorthand for it, so it takes no style block — write it in `[ ]`
@@ -2704,10 +2704,8 @@ properties** — `title`, `dwg`, `rev`, `date`, `sheet`, `author`, `approved`, `
 `reference`, `doc-type`, `status` — desugar (like `sheet:`) into the fixed ISO grid:
 each a caption in the muted footer tone over its value, and **absent fields collapse**
 their cells, so the default block is minimal (Title / DWG No. / Rev / Sheet). In this
-form `title:` is the drawing's title field, not the `<title>` tooltip
-([SPEC 16](#16-property-ledger--support)), and `sheet:` the sheet number, not a page
-size. A `|title-block|` with **no** field property keeps the plain-table form — its
-cells fully authored. A file whose drawn content is only pages **hugs them** — the paper is the
+form `sheet:` is the sheet-number field, not a page's size sugar. A `|title-block|`
+with **no** field property keeps the plain-table form — its cells fully authored. A file whose drawn content is only pages **hugs them** — the paper is the
 margin, so the root's `padding` defaults to 0 (your own `{ padding: … }` still
 wins) and the sheet runs edge to edge of the SVG. That same predicate makes the
 sheet **true-scale in print**: the root emits `width` / `height` in real
@@ -2885,7 +2883,7 @@ Honoured on every drawn node, in every layout (a box; text takes the marked subs
 | Property | Value | Notes |
 |---|---|---|
 | `href` | quoted URL | wraps the node / link in `<a href>` — clickable. |
-| `title` | quoted string | emits a `<title>` child (tooltip + screen-reader name). |
+| `hint` | quoted string | emits a `<title>` child (tooltip + screen-reader name). |
 
 ### Type-owned properties
 
