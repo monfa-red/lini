@@ -3,8 +3,10 @@
 // draws a curve. Everything folds to literals at compile time.
 {
   gap: 20; padding: 24;
-  scale(n) = (90 * 1.2 ^ n);
-  // a reusable size
+  base = 90;
+  // a variable — a reusable value, read bare in any expression
+  scale(n) = (base * 1.2 ^ n);
+  // a reusable size, in terms of the variable
   wave(a, f) = (u * 320, a * sin(2 * pi * f * u));
   // a parametric point
 }
