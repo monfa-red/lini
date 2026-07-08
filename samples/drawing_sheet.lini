@@ -5,10 +5,10 @@
 // flush inside the frame's bottom-right corner — its ISO 7200 field properties
 // build the grid, absent fields collapsing.
 
-|page| { sheet: a5 landscape; gap: 50; direction: row; align: origin; } [
+|page| { sheet: a4 landscape; gap: 50; direction: row; align: origin; } [
   // the ISO sheet: frame, zones, marks — views share their axes datum-to-datum
 
-  |drawing#side| "DIN 912 — M8 × 40" { scale: 6; } [
+  |drawing#side| "DIN 912 — M8 × 40" { scale: 8; } [
     |sketch#screw| {
       draw: move(0, 0) up(6.5) chamfer(0.8) right(8):head down(2.5):k right(12)
             point():v right(28):m8 chamfer(1) down(4);
@@ -35,7 +35,7 @@
     // → M8×1.25 — composed by the thread
   ]
 
-  |drawing#end| { scale: 6; } [
+  |drawing#end| { scale: 8; } [
     |oval#od| { width: 13; height: 13; }
     |oval| { width: 11.4; height: 11.4; }
     // the head, end-on

@@ -280,10 +280,14 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
         // The ISO 7200 title block [SPEC 15.8]: a |table| the page seats flush
         // inside its frame's bottom-right corner — compact, thin-ruled, sharp.
         "title-block" => vec![
-            n("font-size", 11.0),
+            n("font-size", 15.0),
             n("stroke-width", 1.0),
             n("radius", 0.0),
         ],
+        // A title-block field caption [SPEC 15.8]: the muted footer tone, a step
+        // down from the value it labels. A type (not inline style), so its font
+        // states once as a `.lini-field` class rule.
+        "field" => vec![n("font-size", 10.0), var("color", "footer-color")],
         // …and the sheet's generated furniture: the thick border, the zone
         // reference labels, and the thin dividers / centring marks.
         "frame" => vec![

@@ -172,6 +172,30 @@ commit per stage; append to the execution log.
 
 Append-only, per DRAWING-0.16.md's rule.
 
+- **2026-07-08 — stage 5 landed + title-block polish** (all gates green — 772
+  tests, clippy silent, fmt clean; the screw and the sheeted title block
+  PNG-inspected). Two pieces:
+  - **`fillet` / `chamfer` against arcs** (decision 8). `corner.rs` now takes a
+    line **or an arc** on either leg: a fillet's centre is the intersection of
+    the legs' offset loci — a line offset parallel, an arc offset concentric
+    (line∩line / line∩circle / circle∩circle, one quadratic, no iteration) —
+    the tangent points its feet, the fillet arc's sweep matched to the leg's
+    heading (G1). A `chamfer` cuts back by **arclength** on a curved leg. A
+    `within_leg` fit check and a per-arc radius guard reject the over-large
+    case; the line↔line path is unchanged; a `curve()` still errors. Pen tests
+    cover line→arc, arc chamfer, and the miss.
+  - **`drawing_screw.lini`** — the injection screw on A3: a revolved core with
+    the flight root filleted against the transition arc, cutting plane A–A + a
+    hatched section, a detail, zone dims, a field title block. **Logged gaps
+    (not patched):** the 2D side view has no flight (helical — only the section
+    shows it), so the metering-root detail is sparse; the section is a
+    conventional authored representation, not a derived cut.
+  - **Title-block polish** (Abbas's review): the field captions were an inline
+    `style="…"` per cell — now a `|field|` type (block), so their muted 10 px
+    states **once** as a `.lini-field` class rule, like every other chrome type.
+    `.lini-title-block` went 11 → 15 px (the values / title read larger), the
+    field cells tightened (`padding: 2 6`), and the caption floor is 10 px (the
+    house minimum). `drawing_sheet.lini` is A4 at scale 8 (Abbas's edit).
 - **2026-07-08 — stage 4 landed** (all gates green — 771 tests, clippy silent,
   fmt clean; `drawing_sheet.lini` upgraded to fields and PNG-inspected: the ISO
   7200 block reads Title / Dwg No. / Rev / Sheet / Date / Drawn, the absent

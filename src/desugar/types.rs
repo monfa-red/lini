@@ -78,6 +78,7 @@ pub const TEMPLATES: &[(&str, &str)] = &[
     // and the generated furniture types (frame / zone references / ticks).
     ("page", "block"),
     ("title-block", "table"),
+    ("field", "block"),
     ("frame", "rect"),
     ("zone", "block"),
     ("tick", "line"),

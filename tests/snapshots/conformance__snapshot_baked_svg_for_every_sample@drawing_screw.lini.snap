@@ -28,7 +28,8 @@ input_file: samples/drawing_screw.lini
     .lini .lini-cutting-plane { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; stroke-dasharray: 10,3,1,3; }
     .lini .lini-detail-circle { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
     .lini .lini-page { fill: white; stroke-width: 0; }
-    .lini .lini-title-block { stroke-width: 1; font-size: 11px; }
+    .lini .lini-title-block { stroke-width: 1; font-size: 15px; }
+    .lini .lini-field { color: rgba(0, 0, 0, 0.5); font-size: 10px; }
     .lini .lini-frame { fill: none; stroke: #444; stroke-width: 2; }
     .lini .lini-zone { color: rgba(0, 0, 0, 0.545); font-size: 9px; }
     .lini .lini-tick { fill: none; stroke: #444; stroke-width: 1; }
@@ -218,41 +219,59 @@ input_file: samples/drawing_screw.lini
           <text class="lini-text" x="0" y="0">C (1.5:1)</text>
         </g>
       </g>
-      <g class="lini-node lini-title-block lini-table lini-group lini-block" transform="translate(707.6,480.5)">
-        <rect x="-91.9" y="-73" width="183.8" height="146" rx="0" ry="0"/>
-        <rect x="11.9" y="-24.5" width="1" height="97.5" fill="#444" stroke="none"/>
-        <rect x="51.9" y="-24.5" width="1" height="97.5" fill="#444" stroke="none"/>
-        <rect x="-91.9" y="-25" width="183.8" height="1" fill="#444" stroke="none"/>
-        <rect x="-91.9" y="24" width="183.8" height="1" fill="#444" stroke="none"/>
-        <g class="lini-node lini-cell lini-block" transform="translate(0,-49)">
-          <rect x="-90.9" y="-23" width="181.8" height="46" rx="0" ry="0"/>
-          <text class="lini-text" x="0" y="-15.5" style="fill: rgba(0, 0, 0, 0.5); font-size: 7px">Title</text>
-          <text class="lini-text" x="0" y="13.5">Injection screw</text>
+      <g class="lini-node lini-title-block lini-table lini-group lini-block" transform="translate(687,473)">
+        <rect x="-112.5" y="-80.5" width="225" height="161" rx="0" ry="0"/>
+        <rect x="18.5" y="-27" width="1" height="107.5" fill="#444" stroke="none"/>
+        <rect x="65.5" y="-27" width="1" height="107.5" fill="#444" stroke="none"/>
+        <rect x="-112.5" y="-27.5" width="225" height="1" fill="#444" stroke="none"/>
+        <rect x="-112.5" y="26.5" width="225" height="1" fill="#444" stroke="none"/>
+        <g class="lini-node lini-cell lini-block" transform="translate(0,-54)">
+          <rect x="-111.5" y="-25.5" width="223" height="51" rx="0" ry="0"/>
+          <g class="lini-node lini-field lini-block" transform="translate(0,-17.5)">
+            <rect x="-15" y="-5" width="30" height="10" rx="0" ry="0"/>
+            <text class="lini-text" x="0" y="0">Title</text>
+          </g>
+          <text class="lini-text" x="0" y="16">Injection screw</text>
         </g>
-        <g class="lini-node lini-cell lini-block" transform="translate(-40,0)">
-          <rect x="-50.9" y="-23" width="101.8" height="46" rx="0" ry="0"/>
-          <text class="lini-text" x="0" y="-15.5" style="fill: rgba(0, 0, 0, 0.5); font-size: 7px">Dwg No.</text>
-          <text class="lini-text" x="0" y="13.5">RJ-SCR-20-001</text>
+        <g class="lini-node lini-cell lini-block" transform="translate(-47,0)">
+          <rect x="-64.5" y="-25.5" width="129" height="51" rx="0" ry="0"/>
+          <g class="lini-node lini-field lini-block" transform="translate(0,-17.5)">
+            <rect x="-21" y="-5" width="42" height="10" rx="0" ry="0"/>
+            <text class="lini-text" x="0" y="0">Dwg No.</text>
+          </g>
+          <text class="lini-text" x="0" y="16">RJ-SCR-20-001</text>
         </g>
-        <g class="lini-node lini-cell lini-block" transform="translate(32.4,0)">
-          <rect x="-18.5" y="-23" width="37" height="46" rx="0" ry="0"/>
-          <text class="lini-text" x="0" y="-15.5" style="fill: rgba(0, 0, 0, 0.5); font-size: 7px">Rev</text>
-          <text class="lini-text" x="0" y="13.5">A</text>
+        <g class="lini-node lini-cell lini-block" transform="translate(42.5,0)">
+          <rect x="-22" y="-25.5" width="44" height="51" rx="0" ry="0"/>
+          <g class="lini-node lini-field lini-block" transform="translate(0,-17.5)">
+            <rect x="-9" y="-5" width="18" height="10" rx="0" ry="0"/>
+            <text class="lini-text" x="0" y="0">Rev</text>
+          </g>
+          <text class="lini-text" x="0" y="16">A</text>
         </g>
-        <g class="lini-node lini-cell lini-block" transform="translate(72.4,0)">
-          <rect x="-18.5" y="-23" width="37" height="46" rx="0" ry="0"/>
-          <text class="lini-text" x="0" y="-15.5" style="fill: rgba(0, 0, 0, 0.5); font-size: 7px">Sheet</text>
-          <text class="lini-text" x="0" y="13.5">1/1</text>
+        <g class="lini-node lini-cell lini-block" transform="translate(89.5,0)">
+          <rect x="-22" y="-25.5" width="44" height="51" rx="0" ry="0"/>
+          <g class="lini-node lini-field lini-block" transform="translate(0,-17.5)">
+            <rect x="-15" y="-5" width="30" height="10" rx="0" ry="0"/>
+            <text class="lini-text" x="0" y="0">Sheet</text>
+          </g>
+          <text class="lini-text" x="0" y="16">1/1</text>
         </g>
-        <g class="lini-node lini-cell lini-block" transform="translate(-40,49)">
-          <rect x="-50.9" y="-23" width="101.8" height="46" rx="0" ry="0"/>
-          <text class="lini-text" x="0" y="-15.5" style="fill: rgba(0, 0, 0, 0.5); font-size: 7px">Date</text>
-          <text class="lini-text" x="0" y="13.5">2026-07-08</text>
+        <g class="lini-node lini-cell lini-block" transform="translate(-47,54)">
+          <rect x="-64.5" y="-25.5" width="129" height="51" rx="0" ry="0"/>
+          <g class="lini-node lini-field lini-block" transform="translate(0,-17.5)">
+            <rect x="-12" y="-5" width="24" height="10" rx="0" ry="0"/>
+            <text class="lini-text" x="0" y="0">Date</text>
+          </g>
+          <text class="lini-text" x="0" y="16">2026-07-08</text>
         </g>
-        <g class="lini-node lini-cell lini-block" transform="translate(32.4,49)">
-          <rect x="-18.5" y="-23" width="37" height="46" rx="0" ry="0"/>
-          <text class="lini-text" x="0" y="-15.5" style="fill: rgba(0, 0, 0, 0.5); font-size: 7px">Drawn</text>
-          <text class="lini-text" x="0" y="13.5">AM</text>
+        <g class="lini-node lini-cell lini-block" transform="translate(42.5,54)">
+          <rect x="-22" y="-25.5" width="44" height="51" rx="0" ry="0"/>
+          <g class="lini-node lini-field lini-block" transform="translate(0,-17.5)">
+            <rect x="-15" y="-5" width="30" height="10" rx="0" ry="0"/>
+            <text class="lini-text" x="0" y="0">Drawn</text>
+          </g>
+          <text class="lini-text" x="0" y="16">AM</text>
         </g>
       </g>
       <g class="lini-node lini-frame lini-rect lini-box lini-block" transform="translate(20,0)">

@@ -26,8 +26,6 @@ const FIELDS: &[(&str, &str)] = &[
 
 /// The grid's column count — the title spans them all.
 const COLUMNS: usize = 3;
-/// The caption's size (the muted footer tone); the value keeps the block's font.
-const CAPTION_SIZE: f64 = 7.0;
 
 /// Whether a `|title-block|`'s style carries any ISO 7200 field.
 pub(super) fn has_fields(style: &[Decl]) -> bool {
@@ -71,10 +69,15 @@ fn field_value(style: &[Decl], key: &str) -> Option<String> {
     }
 }
 
-/// One field cell: a small, muted caption stacked over the value (a `|cell|` is
-/// a column-flow block, so its two text leaves stack). The title cell spans.
+/// One field cell: the muted caption stacked over the value (a `|cell|` is a
+/// column-flow block, so its two children stack). Tight vertical padding keeps
+/// the block compact. The title cell spans the columns.
 fn field_cell(caption: &str, value: &str, span_cols: Option<usize>, span: Span) -> Node {
-    let mut style = Vec::new();
+    let mut style = vec![Decl {
+        name: "padding".into(),
+        groups: vec![vec![Value::Number(2.0), Value::Number(6.0)]],
+        span,
+    }];
     if let Some(cols) = span_cols {
         style.push(Decl {
             name: "span".into(),
@@ -90,7 +93,7 @@ fn field_cell(caption: &str, value: &str, span_cols: Option<usize>, span: Span) 
         style,
         style_span: None,
         children: vec![
-            Child::Text(caption_text(caption, span)),
+            Child::Box(caption_field(caption, span)),
             Child::Text(text(value, span)),
         ],
         links: Vec::new(),
@@ -98,28 +101,23 @@ fn field_cell(caption: &str, value: &str, span_cols: Option<usize>, span: Span) 
     }
 }
 
-/// The muted field caption — small, in the footer tone.
-fn caption_text(s: &str, span: Span) -> TextNode {
-    TextNode {
-        text: s.to_string(),
-        style: vec![
-            Decl {
-                name: "font-size".into(),
-                groups: vec![vec![Value::Number(CAPTION_SIZE)]],
-                span,
-            },
-            Decl {
-                name: "color".into(),
-                groups: vec![vec![Value::Var("footer-color".into())]],
-                span,
-            },
-        ],
+/// The field caption — a `|field|` node, so its small muted font states once as
+/// the `.lini-field` class rule (not an inline style per caption).
+fn caption_field(s: &str, span: Span) -> Node {
+    Node {
+        id: None,
+        ty: Some("field".into()),
+        label: Some(text(s, span)),
+        classes: Vec::new(),
+        style: Vec::new(),
         style_span: None,
+        children: Vec::new(),
+        links: Vec::new(),
         span,
     }
 }
 
-/// A bare value leaf — inherits the block's font (11).
+/// A bare text leaf — inherits its box's font.
 fn text(s: &str, span: Span) -> TextNode {
     TextNode {
         text: s.to_string(),
