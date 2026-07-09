@@ -22,8 +22,8 @@ input_file: samples/drawing_ring.lini
     .lini .lini-footnote { color: rgba(0, 0, 0, 0.5); font-size: 12px; }
     .lini .lini-centerline { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; stroke-dasharray: 10,3,1,3; }
     .lini .lini-pitch-circle { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; stroke-dasharray: 10,3,1,3; }
-    .lini .lini-cutting-plane { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; stroke-dasharray: 10,3,1,3; }
-    .lini .lini-detail-circle { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
+    .lini .lini-plane { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; stroke-dasharray: 10,3,1,3; }
+    .lini .lini-magnifier { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
     .lini .lini-page { fill: white; stroke-width: 0; }
     .lini .lini-frame { fill: none; stroke: #444; stroke-width: 2; }
     .lini .lini-zone { color: rgba(0, 0, 0, 0.545); font-size: 9px; }
@@ -71,22 +71,22 @@ input_file: samples/drawing_ring.lini
             <ellipse cx="0" cy="0" rx="16" ry="16"/>
           </g>
         </g>
-        <g class="lini-node lini-cutting-plane lini-line" transform="translate(0,0)">
+        <g class="lini-node lini-plane lini-line" data-id="a" transform="translate(0,0)">
           <line x1="0" y1="-167" x2="0" y2="167"/>
-          <g class="lini-node lini-cutting-plane lini-line" style="stroke-width: 2; stroke-dasharray: none" transform="translate(0,0)">
+          <g class="lini-node lini-plane lini-line" data-id="a" style="stroke-width: 2; stroke-dasharray: none" transform="translate(0,0)">
             <line x1="0" y1="-167" x2="0" y2="-157"/>
           </g>
-          <g class="lini-node lini-cutting-plane lini-line" style="stroke-width: 2; stroke-dasharray: none" transform="translate(0,0)">
+          <g class="lini-node lini-plane lini-line" data-id="a" style="stroke-width: 2; stroke-dasharray: none" transform="translate(0,0)">
             <line x1="0" y1="167" x2="0" y2="157"/>
           </g>
-          <g class="lini-node lini-cutting-plane lini-line" style="stroke-dasharray: none" transform="translate(0,0)">
+          <g class="lini-node lini-plane lini-line" data-id="a" style="stroke-dasharray: none" transform="translate(0,0)">
             <line x1="0" y1="-167" x2="13" y2="-167"/>
           </g>
           <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: rgba(0, 0, 0, 0.545)" transform="translate(0,0)">
             <polygon points="13,-167 1,-165 1,-169"/>
           </g>
           <text class="lini-text lini-dim-text" x="20" y="-167">A</text>
-          <g class="lini-node lini-cutting-plane lini-line" style="stroke-dasharray: none" transform="translate(0,0)">
+          <g class="lini-node lini-plane lini-line" data-id="a" style="stroke-dasharray: none" transform="translate(0,0)">
             <line x1="0" y1="167" x2="13" y2="167"/>
           </g>
           <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: rgba(0, 0, 0, 0.545)" transform="translate(0,0)">
@@ -94,7 +94,7 @@ input_file: samples/drawing_ring.lini
           </g>
           <text class="lini-text lini-dim-text" x="20" y="167">A</text>
         </g>
-        <g class="lini-node lini-detail-circle lini-oval" data-id="c" transform="translate(0,-112)">
+        <g class="lini-node lini-magnifier lini-oval" data-id="c" transform="translate(0,-112)">
           <ellipse cx="0" cy="0" rx="30" ry="30"/>
           <text class="lini-text" x="31.4663" y="-31.4663">C</text>
         </g>

@@ -14,9 +14,9 @@
       width: 8; height: 8; fill: --bg; stroke: --stroke-dark; pattern: radial(6, 28);
     }
 
-    |cutting-plane| "A" { at: 0; }
+    |plane#a| "A" { at: 0; }
     // a vertical plane through the centre, viewing right
-    |detail-circle#c| "C" { width: 15; translate: 0 -28; }
+    |magnifier#c| "C" { width: 15; translate: 0 -28; }
     // a port, ringed for a detail view
 
     od (o) { side: right; }
@@ -25,7 +25,7 @@
     // ⌀34
   ]
 
-  |drawing#sec| { section: a; scale: 4; } [
+  |drawing#sec| { of: a; scale: 4; } [
     |steel#wall| {
       draw: move(-40, -8) right(23) down(16) left(23) close();
       // the left ring wall

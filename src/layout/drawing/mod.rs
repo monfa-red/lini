@@ -127,7 +127,7 @@ pub(super) fn part_bbox(inst: &ResolvedInst, own: f64) -> Result<Bbox, Error> {
     if let Some(ty) = inst
         .type_chain
         .iter()
-        .find(|t| *t == "hole" || *t == "pitch-circle" || *t == "detail-circle")
+        .find(|t| *t == "hole" || *t == "pitch-circle" || *t == "magnifier")
         && !chrome::is_chrome(&inst.attrs)
     {
         let Some(w) = inst.attrs.number("width") else {

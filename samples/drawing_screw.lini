@@ -17,8 +17,8 @@
       revolve: x-axis; thread: meter 6;
     }
 
-    |cutting-plane| "A" { at: 70; }
-    |detail-circle#c| "C" { width: 34; translate: 40 0; }
+    |plane#a| "A" { at: 70; }
+    |magnifier#c| "C" { width: 34; translate: 40 0; }
 
     body:left (-) body:z1 { side: top; }
     // FEED       → 100
@@ -30,7 +30,7 @@
     // overall    → 230
   ]
 
-  |drawing#sec| { section: a; scale: 2; } [
+  |drawing#sec| { of: a; scale: 2; } [
     // A–A across a flight: the core disc + one flight land, hatched.
     |steel#flight| {
       draw: move(-30, -30) right(60) down(60) left(60) close()
@@ -42,7 +42,7 @@
     // → 60, the core ⌀
   ]
 
-  |detail#det| { of: c; scale: 6; } [
+  |drawing#det| { of: c; scale: 6; } [
     body:meter <- "root R10"
   ]
 

@@ -1,12 +1,12 @@
-//! Sections & details [SPEC 15.8] — the cutting-plane's ISO anatomy and the
+//! Sections & details [SPEC 15.8] — the plane's ISO anatomy and the
 //! detail marker's rim label, composed from a seated view once its geometry
 //! extent is known.
 //!
-//! A `|cutting-plane|` is authored chrome: desugar marks it, layout intercepts
+//! A `|plane|` is authored chrome: desugar marks it, layout intercepts
 //! it as a placeholder, and here it fills from the view's box + `at:` /
 //! `facing:` into the ISO plane — a thin dash-dot line across the geometry and
 //! its overhang, thick end strokes, a viewing-direction arrow at each end, and
-//! the section letter beside them. A `|detail-circle|` is an ordinary round
+//! the section letter beside them. A `|magnifier|` is an ordinary round
 //! feature; only its smart label moves out to the rim at 45°.
 
 use super::super::ir::{Bbox, PlacedNode};
@@ -19,7 +19,7 @@ use crate::error::Error;
 use crate::resolve::NodeKind;
 use crate::resolve::{Program, ResolvedInst, ResolvedLink, ResolvedValue};
 
-// The cutting-plane anatomy — baked sheet constants [SPEC 10.5], never scaled.
+// The plane anatomy — baked sheet constants [SPEC 10.5], never scaled.
 /// The chain line runs past the geometry by this on each end.
 const OVERHANG: f64 = 6.0;
 /// The thick end stroke's length and (geometry) weight.
@@ -31,23 +31,23 @@ const ARROW_SHAFT: f64 = 13.0;
 const LETTER_GAP: f64 = 7.0;
 const LETTER_SIZE: f64 = 12.0;
 
-/// Fill every authored `|cutting-plane|` among a view's children from its
+/// Fill every authored `|plane|` among a view's children from its
 /// geometry box [SPEC 15.8]: the placeholder becomes the thin chain line and
 /// grows the thick ends, viewing arrows, and letters as its children.
-pub(in crate::layout) fn fill_cutting_planes(
+pub(in crate::layout) fn fill_planes(
     kids: &mut [PlacedNode],
     geo: Bbox,
     scale: f64,
 ) -> Result<(), Error> {
     for k in kids.iter_mut() {
-        if matches!(k.attrs.get("chrome"), Some(ResolvedValue::Ident(m)) if m == "cutting-plane") {
+        if matches!(k.attrs.get("chrome"), Some(ResolvedValue::Ident(m)) if m == "plane") {
             fill_one(k, geo, scale)?;
         }
     }
     Ok(())
 }
 
-/// The station and axis a `cutting-plane`'s `at:` places it on [SPEC 15.8]:
+/// The station and axis a `plane`'s `at:` places it on [SPEC 15.8]:
 /// `at: N` on the model's longer axis (`break:`'s convention), or `at: N axis`.
 fn read_at(cp: &PlacedNode, geo: Bbox) -> Result<(f64, P), Error> {
     let longer = if geo.w() >= geo.h() {
@@ -110,7 +110,7 @@ fn fill_one(cp: &mut PlacedNode, geo: Bbox, scale: f64) -> Result<(), Error> {
     if s < amin - 1e-6 || s > amax + 1e-6 {
         return Err(Error::at(
             cp.span,
-            format!("a 'cutting-plane' at {} sits off the model", fmt(n)),
+            format!("a 'plane' at {} sits off the model", fmt(n)),
         ));
     }
 
@@ -219,12 +219,12 @@ fn seg_bbox(a: P, b: P) -> Bbox {
     }
 }
 
-/// Move each `|detail-circle|`'s smart label out to the rim at 45° [SPEC 15.8]:
+/// Move each `|magnifier|`'s smart label out to the rim at 45° [SPEC 15.8]:
 /// the circle rings a region at the view scale, but the letter is sheet-space,
 /// set `NOTE_OFFSET` beyond the rim on the upper-right diagonal.
 pub(in crate::layout) fn place_detail_labels(kids: &mut [PlacedNode]) {
     for k in kids.iter_mut() {
-        if !k.type_chain.iter().any(|t| t == "detail-circle") {
+        if !k.type_chain.iter().any(|t| t == "magnifier") {
             continue;
         }
         // The rim (`r` already carries the view scale) plus the sheet-space
@@ -247,42 +247,77 @@ pub(super) fn fill_footnote(foot: &mut PlacedNode, title: &str) {
     foot.children = vec![text];
 }
 
-/// The auto detail view [SPEC 15.8]: `of:` names a `|detail-circle|`; the view
-/// re-lays that marker's **host geometry** at its own scale, shifts the region
-/// centre to the datum, clips to the circle, lowers its own annotations against
-/// the clones, and titles itself `C (1:1)` from the marker's letter. Returns
-/// the detail's children — the clipped clone group, the annotations, and the
-/// title; the caller (the drawing engine) sizes and places the container.
+/// A view sourced from a marker via `of:` [SPEC 15.8].
+pub(in crate::layout) enum OfView<'a> {
+    /// `of:` a `|plane|` — a **section**: the cut face is authored, and the
+    /// marker only composes the doubled `A-A` title.
+    Section { letter: String },
+    /// `of:` a `|magnifier|` — a **detail**: re-render the region it rings.
+    Detail {
+        marker: &'a ResolvedInst,
+        host: &'a ResolvedInst,
+        letter: String,
+    },
+}
+
+/// Resolve a drawing's `of:` to its marker [SPEC 15.8] — found by id, like a
+/// chart's `axis:`. `None` when absent; a `Section` for a `|plane|`, a `Detail`
+/// for a `|magnifier|`. A detail can't magnify a marker inside another sourced
+/// view (a nested detail / section).
+pub(in crate::layout) fn resolve_of<'a>(
+    inst: &ResolvedInst,
+    program: &'a Program,
+) -> Result<Option<OfView<'a>>, Error> {
+    let Some(ResolvedValue::Ident(id)) = inst.attrs.get("of") else {
+        return Ok(None);
+    };
+    let (marker, host) = find_marker(&program.scene.nodes, id, None)
+        .ok_or_else(|| Error::at(inst.span, format!("'of' finds no marker '{id}'")))?;
+    let letter = marker_letter(marker);
+    if marker.type_chain.iter().any(|t| t == "magnifier") {
+        if host.attrs.get("of").is_some() {
+            return Err(Error::at(
+                inst.span,
+                "a detail magnifies a base view — 'of' can't name a marker inside another sourced view",
+            ));
+        }
+        Ok(Some(OfView::Detail {
+            marker,
+            host,
+            letter,
+        }))
+    } else if marker.type_chain.iter().any(|t| t == "plane") {
+        Ok(Some(OfView::Section { letter }))
+    } else {
+        Err(Error::at(
+            inst.span,
+            format!("'of' names '{id}', not a '|plane|' or '|magnifier|'"),
+        ))
+    }
+}
+
+/// The auto detail view [SPEC 15.8]: re-lay the `|magnifier|`'s **host
+/// geometry** at the detail scale, shift the region centre to the datum, clip
+/// to the circle (drawing its boundary), lower the detail's own annotations
+/// against the clones, and title it `C (ratio)` from the marker's letter.
+/// Returns the detail's children; the engine sizes and places the container.
+#[allow(clippy::too_many_arguments)]
 pub(in crate::layout) fn layout_detail(
     inst: &ResolvedInst,
     path: &str,
     program: &Program,
     own: f64,
     page: f64,
+    marker: &ResolvedInst,
+    host: &ResolvedInst,
+    letter: &str,
 ) -> Result<Vec<PlacedNode>, Error> {
-    let Some(ResolvedValue::Ident(id)) = inst.attrs.get("of") else {
-        return Err(Error::at(
-            inst.span,
-            "a '|detail|' needs 'of' — the '|detail-circle|' it magnifies",
-        ));
-    };
-    let (marker, host) = find_marker(&program.scene.nodes, id, None)
-        .ok_or_else(|| Error::at(inst.span, format!("'of' finds no '|detail-circle|' '{id}'")))?;
-    if host.type_chain.iter().any(|t| t == "detail") {
-        return Err(Error::at(
-            inst.span,
-            "a '|detail|' details a base view — 'of' can't name a marker inside another '|detail|'",
-        ));
-    }
     let center = translate_of(marker);
-    let diameter = marker.attrs.number("width").ok_or_else(|| {
-        Error::at(
-            marker.span,
-            "'|detail-circle|' requires 'width' — its diameter",
-        )
-    })?;
+    let diameter = marker
+        .attrs
+        .number("width")
+        .ok_or_else(|| Error::at(marker.span, "'|magnifier|' requires 'width' — its diameter"))?;
     let r = diameter / 2.0 * own;
-    let letter = marker_letter(marker);
 
     // Re-lay the host's geometry children at the detail scale — layout_inst is
     // re-entrant, a different scale the whole trick — then shift the region
@@ -315,7 +350,8 @@ pub(in crate::layout) fn layout_detail(
     };
     let mut annotations = super::annotate::lower(&clones, &links, path, own, unit, Some(circle))?;
 
-    // Clip the clones to the region circle (one interned <clipPath> at render).
+    // Clip the clones to the region circle (one interned <clipPath> at render),
+    // then draw the boundary circle over it [SPEC 15.8].
     let mut clip_group = prim::group(clones, Vec::new(), circle);
     clip_group.attrs.insert("clip", ResolvedValue::Number(r));
 
@@ -325,29 +361,79 @@ pub(in crate::layout) fn layout_detail(
     for c in &inst.children {
         own_kids.push(layout_inst(c, &child_path(path, c), program, ctx)?);
     }
-    let title = section_title("detail", &letter, own, page);
-    for k in own_kids
-        .iter_mut()
-        .filter(|k| k.attrs.get("detail-title").is_some())
-    {
-        fill_footnote(k, &title);
-    }
+    fill_of_title(&mut own_kids, "detail", letter, own, page);
 
-    let mut kids = vec![clip_group];
+    let mut kids = vec![clip_group, boundary_circle(inst, r)];
     kids.append(&mut annotations);
     kids.append(&mut own_kids);
     Ok(kids)
 }
 
-/// Find a `|detail-circle|` by id and its **host** (the enclosing node)
-/// [SPEC 15.8] — the marker's `of:` reference, matched like a chart's `axis:`.
+/// Fill the `of-title` footnote a marker-sourced view seeded [SPEC 15.8]: a
+/// `|plane|` (kind `section`) reads `A-A`, a `|magnifier|` (kind `detail`) `C`,
+/// both with the drafting ratio.
+pub(in crate::layout) fn fill_of_title(
+    kids: &mut [PlacedNode],
+    kind: &str,
+    letter: &str,
+    own: f64,
+    page: f64,
+) {
+    let title = section_title(kind, letter, own, page);
+    for k in kids
+        .iter_mut()
+        .filter(|k| k.attrs.get("of-title").is_some())
+    {
+        fill_footnote(k, &title);
+    }
+}
+
+/// The detail's boundary circle [SPEC 15.8]: an unfilled ring at the clip
+/// radius, drawn over the clipped geometry. Default the geometry weight
+/// (`--stroke-dark`, width 2 — a `|drawing|` is frameless, so its default
+/// `stroke: none` is *not* the boundary's); an explicit `stroke:` / `stroke-width:`
+/// on the view restyles it (`{ of: c; stroke: red }` → a red ring).
+fn boundary_circle(inst: &ResolvedInst, r: f64) -> PlacedNode {
+    let dark = ResolvedValue::LiveVar {
+        name: "stroke-dark".into(),
+        raw: false,
+    };
+    let stroke = match inst.attrs.get("stroke") {
+        Some(ResolvedValue::Ident(s)) if s == "none" => dark,
+        Some(v) => v.clone(),
+        None => dark,
+    };
+    let width = inst
+        .attrs
+        .number("stroke-width")
+        .filter(|w| *w > 0.0)
+        .unwrap_or(2.0);
+    let mut c = prim::oval(
+        0.0,
+        0.0,
+        2.0 * r,
+        2.0 * r,
+        ResolvedValue::Ident("none".into()),
+    );
+    c.attrs.insert("stroke", stroke);
+    c.attrs.insert("stroke-width", ResolvedValue::Number(width));
+    c.attrs.insert("fill", ResolvedValue::Ident("none".into()));
+    c
+}
+
+/// Find a marker by id and its **host** (the enclosing node) [SPEC 15.8] — a
+/// `|plane|` or a `|magnifier|`, matched like a chart's `axis:`.
 fn find_marker<'a>(
     nodes: &'a [ResolvedInst],
     id: &str,
     parent: Option<&'a ResolvedInst>,
 ) -> Option<(&'a ResolvedInst, &'a ResolvedInst)> {
     for n in nodes {
-        if n.id.as_deref() == Some(id) && n.type_chain.iter().any(|t| t == "detail-circle") {
+        if n.id.as_deref() == Some(id)
+            && n.type_chain
+                .iter()
+                .any(|t| t == "magnifier" || t == "plane")
+        {
             return parent.map(|p| (n, p));
         }
         if let Some(hit) = find_marker(&n.children, id, Some(n)) {
@@ -366,17 +452,22 @@ fn is_relaid_geometry(inst: &ResolvedInst) -> bool {
         && !inst
             .type_chain
             .iter()
-            .any(|t| t == "cutting-plane" || t == "detail-circle")
+            .any(|t| t == "plane" || t == "magnifier")
 }
 
-/// A `|detail-circle|`'s letter [SPEC 15.8] — its smart label, which an
-/// `|oval|`-based type carries as a text child (not `label:`).
+/// A marker's letter [SPEC 15.8] — its smart label: a `|plane|` (a `|line|`)
+/// keeps it in `label`, an `|magnifier|` (an `|oval|`) as a text child.
 fn marker_letter(marker: &ResolvedInst) -> String {
     marker
-        .children
-        .iter()
-        .find(|c| c.kind == NodeKind::Text)
-        .and_then(|c| c.label.clone())
+        .label
+        .clone()
+        .or_else(|| {
+            marker
+                .children
+                .iter()
+                .find(|c| c.kind == NodeKind::Text)
+                .and_then(|c| c.label.clone())
+        })
         .unwrap_or_default()
 }
 
@@ -396,11 +487,11 @@ mod tests {
     use super::super::testutil::{by_id, laid, layout_err, texts};
 
     #[test]
-    fn a_cutting_plane_spans_the_view_and_names_its_ends() {
+    fn a_plane_spans_the_view_and_names_its_ends() {
         // A 120-wide plate; the plane A–A at the centre (longer axis x → a
         // vertical line), two letters, arrows facing right by default.
         let l = laid(
-            "{ layout: drawing; scale: 1 }\n|rect#plate| { width: 120; height: 40 }\n|cutting-plane| \"A\" { at: 0 }\n",
+            "{ layout: drawing; scale: 1 }\n|rect#plate| { width: 120; height: 40 }\n|plane| \"A\" { at: 0 }\n",
         );
         let cp = by_id(&l.nodes, "plate"); // the plane is a sibling; find its texts
         let _ = cp;
@@ -415,9 +506,9 @@ mod tests {
     fn at_off_the_model_errors() {
         assert_eq!(
             layout_err(
-                "{ layout: drawing; scale: 1 }\n|rect#plate| { width: 40; height: 40 }\n|cutting-plane| \"A\" { at: 90 }\n",
+                "{ layout: drawing; scale: 1 }\n|rect#plate| { width: 40; height: 40 }\n|plane| \"A\" { at: 90 }\n",
             ),
-            "a 'cutting-plane' at 90 sits off the model"
+            "a 'plane' at 90 sits off the model"
         );
     }
 
@@ -425,7 +516,7 @@ mod tests {
     fn bad_facing_errors() {
         assert_eq!(
             layout_err(
-                "{ layout: drawing; scale: 1 }\n|rect#plate| { width: 40; height: 40 }\n|cutting-plane| \"A\" { at: 0; facing: sideways }\n",
+                "{ layout: drawing; scale: 1 }\n|rect#plate| { width: 40; height: 40 }\n|plane| \"A\" { at: 0; facing: sideways }\n",
             ),
             "'facing' turns the arrows — left, right, up, or down"
         );
@@ -437,7 +528,7 @@ mod tests {
         // the page's 4) and dimensions the **clone** (40, pre-scale, deferred
         // past resolve) — the source has no such dimension.
         let l = laid(
-            "|page#p| { sheet: a5 landscape } [\n  |drawing#m| { scale: 4 } [\n    |rect#plate| { width: 40; height: 20 }\n    |detail-circle#c| \"C\" { width: 30 }\n  ]\n  |detail#d| { of: c; scale: 8 } [\n    plate:left (-) plate:right { side: bottom }\n  ]\n]\n",
+            "|page#p| { sheet: a5 landscape } [\n  |drawing#m| { scale: 4 } [\n    |rect#plate| { width: 40; height: 20 }\n    |magnifier#c| \"C\" { width: 30 }\n  ]\n  |drawing#d| { of: c; scale: 8 } [\n    plate:left (-) plate:right { side: bottom }\n  ]\n]\n",
         );
         let all = texts(&l.nodes);
         assert!(
@@ -459,16 +550,16 @@ mod tests {
     fn of_a_missing_marker_errors() {
         assert!(
             layout_err(
-                "|page#p| { sheet: a5 } [\n  |drawing#m| { scale: 4 } [ |rect#r| { width: 10; height: 10 } ]\n  |detail#d| { of: nope }\n]\n",
+                "|page#p| { sheet: a5 } [\n  |drawing#m| { scale: 4 } [ |rect#r| { width: 10; height: 10 } ]\n  |drawing#d| { of: nope }\n]\n",
             )
-            .contains("'of' finds no '|detail-circle|' 'nope'")
+            .contains("'of' finds no marker 'nope'")
         );
     }
 
     #[test]
     fn a_detail_circle_sets_its_letter_at_the_rim() {
         let l = laid(
-            "{ layout: drawing; scale: 1 }\n|rect#plate| { width: 60; height: 60 }\n|detail-circle#c| \"C\" { width: 20; translate: 15 0 }\n",
+            "{ layout: drawing; scale: 1 }\n|rect#plate| { width: 60; height: 60 }\n|magnifier#c| \"C\" { width: 20; translate: 15 0 }\n",
         );
         let c = by_id(&l.nodes, "c");
         let letter = c

@@ -31,7 +31,7 @@ pub(in crate::layout) fn placeholder(inst: &ResolvedInst) -> PlacedNode {
         kind: inst.kind,
         type_chain: inst.type_chain.clone(),
         applied_styles: inst.applied_styles.clone(),
-        // A |cutting-plane| carries its section letter here [SPEC 15.8]; other
+        // A |plane| carries its section letter here [SPEC 15.8]; other
         // chrome has no label, so this is `None` for them.
         label: inst.label.clone(),
         attrs: inst.attrs.clone(),

@@ -427,14 +427,26 @@ fn link_scope_kind(
             _ => None,
         }
     };
-    let detail = scope_chain(nodes, scope)
-        .last()
-        .is_some_and(|c| c.type_chain.iter().any(|t| t == "detail"));
+    // A detail scope [SPEC 15.8] — a `|drawing| { of: <magnifier> }` — re-lays
+    // its geometry from the source at layout, so its endpoints defer. A section
+    // (`of:` a `|plane|`) authors its geometry, so it resolves normally.
+    let detail = scope_chain(nodes, scope).last().is_some_and(
+        |c| matches!(c.attrs.get("of"), Some(ResolvedValue::Ident(id)) if is_magnifier(nodes, id)),
+    );
     links::LinkScope {
         drawing,
         flow_in_drawing,
         detail,
     }
+}
+
+/// Whether a node with id `id` anywhere in the scene is a `|magnifier|`
+/// [SPEC 15.8] — the `of:` reference a detail scope's deferral keys on.
+fn is_magnifier(nodes: &[ResolvedInst], id: &str) -> bool {
+    nodes.iter().any(|n| {
+        (n.id.as_deref() == Some(id) && n.type_chain.iter().any(|t| t == "magnifier"))
+            || is_magnifier(&n.children, id)
+    })
 }
 
 /// A link's scope inputs: its `base` layer — the baked defaults plus the nearest

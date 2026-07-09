@@ -40,42 +40,19 @@ pub(super) fn footnote_node(label: &TextNode) -> Node {
     }
 }
 
-/// A placeholder `|footnote|` for a composed section / detail title
-/// [SPEC 15.8]: a `section:` / `detail:` view with no authored label seeds this
-/// carrying `section-title: <kind> <letter>`; the drawing engine fills the text
-/// where it pins the title (the scale ratio is only known there).
-pub(super) fn section_footnote(kind: &str, letter: &str, span: Span) -> Node {
+/// A placeholder title `|footnote|` for a marker-sourced view [SPEC 15.8]: a
+/// `|drawing| { of: X }` with no authored label seeds this carrying a bare
+/// `of-title` marker. The letter (and doubled-or-not) come from X's kind, and
+/// the scale ratio from the seat — both known only at layout, so the drawing
+/// engine fills the text where it pins the title.
+pub(super) fn of_footnote(span: Span) -> Node {
     Node {
         id: None,
         ty: Some("footnote".to_string()),
         label: None,
         classes: Vec::new(),
         style: vec![Decl {
-            name: "section-title".to_string(),
-            groups: vec![vec![
-                Value::Ident(kind.to_string()),
-                Value::Ident(letter.to_string()),
-            ]],
-            span,
-        }],
-        style_span: None,
-        children: Vec::new(),
-        links: Vec::new(),
-        span,
-    }
-}
-
-/// A placeholder title `|footnote|` for a `|detail|` auto view [SPEC 15.8]: its
-/// letter comes from the `of:` marker, known only at layout, so this carries a
-/// bare `detail-title` marker the drawing engine fills with `C (1:1)`.
-pub(super) fn detail_footnote(span: Span) -> Node {
-    Node {
-        id: None,
-        ty: Some("footnote".to_string()),
-        label: None,
-        classes: Vec::new(),
-        style: vec![Decl {
-            name: "detail-title".to_string(),
+            name: "of-title".to_string(),
             groups: vec![vec![Value::Ident("view".to_string())]],
             span,
         }],

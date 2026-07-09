@@ -172,6 +172,31 @@ commit per stage; append to the execution log.
 
 Append-only, per DRAWING-0.16.md's rule.
 
+- **2026-07-09 — post-release review: unify on `of:`, rename markers, fix the
+  clip** (Abbas's review of the shipped syntax; all gates green — 772 tests,
+  clippy `-D warnings` silent, fmt clean; ring / detail / screw re-inspected).
+  The section / detail syntax was asymmetric — `of: c` referenced a real marker
+  while `section: a` was a free letter tied to nothing. Unified:
+  - **One property, one view type.** A section or detail view is now a plain
+    **`|drawing| { of: <marker> }`** — the `|detail|` type and the `section:` /
+    `detail:` free-string properties are gone. `of:` names a marker by id (like
+    a chart's `axis:`); the marker's **kind** dispatches: a `|plane|` → an
+    authored section titled `A-A`, a `|magnifier|` → a re-rendered detail titled
+    `C`. `resolve_of` returns the kind; the engine and the resolve deferral
+    (`LinkScope.detail` now keys on `of:` → a magnifier) follow.
+  - **Renames** (Abbas's pick): `|cutting-plane|` → **`|plane|`**,
+    `|detail-circle|` → **`|magnifier|`** — single words, and one fewer reserved
+    type (`detail` is free again).
+  - **The clip now bounds the extent** (a real bug): a detail's re-laid clones
+    ran off the region circle into the layout, stretching the sheet ~3×.
+    `accumulate_extent` stops at a `clip:` node, so the page collapses back and
+    the detail places compactly.
+  - **The detail draws its boundary circle** at the clip radius — geometry
+    weight by default (`--stroke-dark`, width 2; a `|drawing|`'s frameless
+    `stroke: none` is not the boundary's), restyled by `stroke:` /
+    `stroke-width:` on the view.
+  - SPEC 15.8 / 8 / 16 / 15.10 / 17 / 20 / 22 / 23 synced; the three drawing
+    samples moved to the new syntax; snapshots re-accepted.
 - **2026-07-08 — stage 5 landed + title-block polish** (all gates green — 772
   tests, clippy silent, fmt clean; the screw and the sheeted title block
   PNG-inspected). Two pieces:

@@ -166,7 +166,7 @@ fn shadow_scope(
 /// `layout: drawing`. The lint's twin of desugar's `is_drawing_body`, on the
 /// raw AST (no resolved type chain) — so it reads the written type and style.
 fn is_drawing_node(n: &crate::syntax::ast::Node) -> bool {
-    matches!(n.ty.as_deref(), Some("drawing") | Some("detail"))
+    n.ty.as_deref() == Some("drawing")
         || n.style
             .iter()
             .any(|d| d.name == "layout" && decl_ident(d) == Some("drawing"))

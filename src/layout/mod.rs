@@ -196,6 +196,12 @@ fn accumulate_extent(n: &PlacedNode, ox: f64, oy: f64, rot: f64, bbox: &mut Bbox
             max_y: wy + py,
         });
     }
+    // A clipped node bounds its children [SPEC 15.8] — a `|detail|`'s re-laid
+    // clones extend past the region circle but are cropped to it, so the
+    // node's own bbox (the circle) is the extent; don't descend into the crop.
+    if n.attrs.get("clip").is_some() {
+        return;
+    }
     for c in &n.children {
         accumulate_extent(c, wx, wy, total, bbox);
     }

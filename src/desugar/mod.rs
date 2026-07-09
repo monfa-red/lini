@@ -544,12 +544,12 @@ fn lower_node(
     } else {
         node.style.clone()
     };
-    // An authored |cutting-plane| in a drawing scope is chrome [SPEC 15.8]: its
+    // An authored |plane| in a drawing scope is chrome [SPEC 15.8]: its
     // ISO anatomy — thick ends, viewing arrows, the letter — fills from the
     // view's extent at layout, so mark it and layout intercepts it as a
     // placeholder (like the generated chrome types).
-    if in_drawing && info.chain.iter().any(|t| t == "cutting-plane") {
-        style.push(decl("chrome", vec![Value::Ident("cutting-plane".into())]));
+    if in_drawing && info.chain.iter().any(|t| t == "plane") {
+        style.push(decl("chrome", vec![Value::Ident("plane".into())]));
     }
     // A `|title-block|` with ISO 7200 field properties builds its grid
     // [SPEC 15.8]; with none, its cells stay authored (the plain-table form).
@@ -591,22 +591,16 @@ fn lower_node(
             kept_label = Some(label.clone());
         }
     }
-    // A section / detail view with no authored label composes its title
-    // [SPEC 15.8]: seed a placeholder |footnote| the engine fills where it pins
-    // the title (the scale ratio, and a |detail|'s letter, are known there). A
-    // `section:` / `detail:` declares the letter; a `|detail|` reads it from its
-    // `of:` marker.
-    if is_drawing && node.label.as_ref().filter(|l| !l.text.is_empty()).is_none() {
-        let foot = if let Some((kind, letter)) = section_title_marker(&node.style) {
-            Some(labels::section_footnote(kind, &letter, node.span))
-        } else if info.chain.iter().any(|t| t == "detail") {
-            Some(labels::detail_footnote(node.span))
-        } else {
-            None
-        };
-        if let Some(foot) = foot {
-            children.insert(0, Child::Box(lower_node(&foot, types, bodies, false)?));
-        }
+    // A view sourced from a marker (`of:`) with no authored label composes its
+    // title [SPEC 15.8]: seed a placeholder |footnote| the engine fills where it
+    // pins the title — the marker (a `|plane|` → `A-A`, a `|magnifier|` → `C`)
+    // and the scale ratio are both known there.
+    if is_drawing
+        && node.style.iter().any(|d| d.name == "of")
+        && node.label.as_ref().filter(|l| !l.text.is_empty()).is_none()
+    {
+        let foot = labels::of_footnote(node.span);
+        children.insert(0, Child::Box(lower_node(&foot, types, bodies, false)?));
     }
 
     // In an entity, header / footer cells span every column [SPEC 8]: the title above
@@ -742,19 +736,6 @@ fn mark_present(child: &Child, present: &mut BTreeSet<String>) {
 /// define over it) or an explicit `layout: drawing` on the instance [SPEC 15].
 fn is_drawing_body(chain: &[String], style: &[Decl]) -> bool {
     chain.iter().any(|t| t == "drawing") || root_layout(style) == Some("drawing")
-}
-
-/// A drawing's composed-title marker [SPEC 15.8]: `section: a` → `("section",
-/// "a")`, `detail: c` → `("detail", "c")` — the letter is the first value.
-fn section_title_marker(style: &[Decl]) -> Option<(&'static str, String)> {
-    for kind in ["section", "detail"] {
-        if let Some(d) = style.iter().find(|d| d.name == kind)
-            && let Some(Value::Ident(l)) = d.groups.first().and_then(|g| g.first())
-        {
-            return Some((kind, l.clone()));
-        }
-    }
-    None
 }
 
 /// Whether a node **seals** an enclosing drawing scope [SPEC 15.1]: it owns a

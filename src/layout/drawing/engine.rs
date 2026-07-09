@@ -22,23 +22,33 @@ pub(in crate::layout) fn layout_node(
     ctx: Ctx,
 ) -> Result<PlacedNode, Error> {
     let own = effective_scale(&inst.attrs, ctx.scale, inst.span)?;
-    // A `|detail|` is a re-render, not an authored view [SPEC 15.8]: it re-lays
-    // the geometry its `of:` marker rings. Every other drawing lays out its own
-    // children and composes a `section:` / `detail:` title if it declared one.
-    let mut children = if inst.type_chain.iter().any(|t| t == "detail") {
-        super::section::layout_detail(inst, path, program, own, ctx.scale)?
-    } else {
-        let mut c = lay_out(
-            &inst.children,
-            path,
-            program,
-            own,
-            unit_of(&inst.attrs),
-            inst.span,
-            inst.id.is_some(),
-        )?;
-        fill_section_title(&mut c, own, ctx.scale);
-        c
+    // `of:` sources the view from a marker [SPEC 15.8]. A `|magnifier|` re-lays
+    // the geometry it rings — a detail (a 2D re-render). A `|plane|` only names
+    // the cut: the section face is authored here, and the marker composes the
+    // `A-A` title. No `of:` — an ordinary drawing.
+    let mut children = match super::section::resolve_of(inst, program)? {
+        Some(super::section::OfView::Detail {
+            marker,
+            host,
+            letter,
+        }) => super::section::layout_detail(
+            inst, path, program, own, ctx.scale, marker, host, &letter,
+        )?,
+        of => {
+            let mut c = lay_out(
+                &inst.children,
+                path,
+                program,
+                own,
+                unit_of(&inst.attrs),
+                inst.span,
+                inst.id.is_some(),
+            )?;
+            if let Some(super::section::OfView::Section { letter }) = of {
+                super::section::fill_of_title(&mut c, "section", &letter, own, ctx.scale);
+            }
+            c
+        }
     };
 
     // Centre the drawn extent on the node's origin, so the container places in
@@ -79,29 +89,9 @@ pub(in crate::layout) fn layout_root(program: &Program) -> Result<(Vec<PlacedNod
         Span::empty(),
         true,
     )?;
-    fill_section_title(&mut children, own, own);
     let extent = flow_extent(&children);
     place_pinned(&mut children, extent)?;
     Ok((children, extent))
-}
-
-/// Fill a composed section / detail title [SPEC 15.8]: the placeholder
-/// `|footnote|` desugar seeded carries `section-title: <kind> <letter>`; here,
-/// where the view's scale (`own`) and the enclosing page's (`page`) are both
-/// known, compose the title (`A-A (1:1)`) and size the footnote to it. The
-/// text child inherits the footnote's font and colour (`--footer-color`), so
-/// `|drawing| |footnote| { … }` styles it like any title.
-fn fill_section_title(kids: &mut [PlacedNode], own: f64, page: f64) {
-    for k in kids.iter_mut() {
-        let Some(ResolvedValue::Tuple(m)) = k.attrs.get("section-title") else {
-            continue;
-        };
-        let [ResolvedValue::Ident(kind), ResolvedValue::Ident(letter)] = m.as_slice() else {
-            continue;
-        };
-        let title = super::compose::section_title(kind, letter, own, page);
-        super::section::fill_footnote(k, &title);
-    }
 }
 
 /// The shared body: lay each child out (features, chrome, and patterns fold
@@ -161,11 +151,11 @@ fn lay_out(
     place_features(&mut kids, own, None)?;
     mates::seat(&mut kids, geometry[0], &mates, path, own)?;
     // The section chrome fills from the seated geometry's extent [SPEC 15.8]:
-    // the cutting-plane's ISO anatomy and the detail markers' rim letters.
+    // the plane's ISO anatomy and the detail markers' rim letters.
     let geo_extent = geometry.iter().fold(Bbox::empty(), |b, &i| {
         b.union(kids[i].bbox.shifted(kids[i].cx, kids[i].cy))
     });
-    super::section::fill_cutting_planes(&mut kids, geo_extent, own)?;
+    super::section::fill_planes(&mut kids, geo_extent, own)?;
     super::section::place_detail_labels(&mut kids);
     let mut lowered = annotate::lower(&kids, &annotations, path, own, unit, None)?;
     kids.append(&mut lowered);

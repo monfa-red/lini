@@ -250,17 +250,17 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             n("stroke-width", 1.0),
             id("fill", "none"),
         ],
-        // Sections & details [SPEC 15.8]. The cutting-plane line is thin
+        // Sections & details [SPEC 15.8]. The plane line is thin
         // dash-dot chrome (its thick ends / arrows / letter fill from the
         // view); the detail marker a thin outlined circle, its letter set at
         // the rim.
-        "cutting-plane" => vec![
+        "plane" => vec![
             id("stroke-style", "center"),
             var("stroke", "stroke-light"),
             n("stroke-width", 1.0),
             id("fill", "none"),
         ],
-        "detail-circle" => vec![
+        "magnifier" => vec![
             var("stroke", "stroke-light"),
             n("stroke-width", 1.0),
             id("fill", "none"),
