@@ -3,7 +3,7 @@
 // (its own scale 16 over the page's 4), clipped to the circle and titled
 // "C (4:1)" by composition — the ⌀18 dimensions the re-laid groove, not the
 // source.
-|page#sheet| { sheet: a5 landscape; gap: 40; direction: row; align: origin; } [
+|page#sheet| { sheet: a4 landscape; gap: 40; direction: row; align: origin; } [
 
   |drawing#main| "SHAFT" { scale: 4; unit: "mm"; } [
     |sketch#shaft| {
@@ -11,12 +11,12 @@
             up(3) right(30) down(4) fillet(3):r1 right(34) chamfer(1) down(8);
       revolve: x-axis;
     }
-    |magnifier#c| "C" { width: 26; translate: -7 0; }
+    |magnifier#c| "C" { width: 30; translate: -7 0; }
 
-    shaft:left (-) shaft:right { side: bottom; }
+    shaft:left (-) shaft:right
   ]
 
-  |drawing#det| { of: c; scale: 16; } [
+  |drawing#det| { of: c; scale: 12; } [
     shaft:groove (o) { side: left; }
   ]
 ]
