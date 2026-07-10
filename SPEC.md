@@ -384,6 +384,13 @@ of creating one. A **path** endpoint (`kitchen.bowl`) is never auto-created: it 
 resolve to an existing node, or it is an error. If a same-named node exists elsewhere
 in the tree, the box is still created here and a warning names the other match.
 
+An auto-created id that is a **near-miss** of a name already known in its scope —
+edit distance ≤ 2, or equal ignoring case, against the declared *and* the
+previously auto-created names — **warns** toward the likely target: `cta -> bird`
+warns `did you mean 'cat'?` even in an all-implicit file. Distinct names stay
+silent, so legitimate mixed use (a sequence with one styled participant) draws no
+noise ([SPEC 20](#20-errors)).
+
 ### Declarations
 
 A declaration `key: value;` ([SPEC 2](#2-lexical-syntax)) lives only in a `{ }`
@@ -1694,7 +1701,7 @@ its frame, and the cascade styles a chart like any box.
 | `categories` | chart | quoted-string list — the x-axis (or spoke) labels | indices `1…N` |
 | `samples` | chart | integer — `fn:` sample count | `24` |
 | `hole` | pie | `0` ≤ n < `1` — inner-radius fraction (a donut) | `0` |
-| `legend` | both | `top` · `right` · `bottom` · `none` | auto (shown when ≥ 2 entries) |
+| `legend` | both | `top` · `right` · `bottom` · `none` ⌛ ([SPEC 23](#23-deferred)) | auto (shown when ≥ 2 entries) — built |
 | `tooltip` | both | `none` · `hover` · `auto` · `always` ([SPEC 14.8](#148-tooltips)) | `auto` |
 | `gap` | both | number — clear space between the plot and the title / legend outside it | `10` |
 
@@ -1860,7 +1867,8 @@ survives a `direction` flip unchanged:
 
 `at: V` (one value) is a line, `at: X Y` (two) a point; `marker: none` suppresses a point's
 dot, leaving the label — so there is no separate free-label node. Bands and marks render in
-**column** direction today; in `row` / `radial` they are deferred ([SPEC 23](#23-deferred)).
+`column` and `row` directions; in `radial` they are a **compile error** until built
+([SPEC 20](#20-errors), [SPEC 23](#23-deferred)) — never a silent drop.
 
 ### 14.6 Legend, title & colour
 
@@ -1891,10 +1899,12 @@ walk is **per slice** — the one place colour walks per datum rather than per s
 
 `direction` orients the chart — the same property a `flow` uses to pick its axis, plus
 `radial`: `column` (default, cartesian, bars grow up), `row` (cartesian, bars grow right),
-`radial` (polar, bars grow outward). **The flip never breaks a chart, because nothing is
-authored in screen coordinates** — `categories:`, series `data:`, and annotations bound to
-a *named* axis with `at:` / `span:` are all logical; `direction` only changes how that
-plane is projected. An explicit axis `side:` is a screen edge and is honoured as written.
+`radial` (polar, bars grow outward). **The flip is never silently lossy** — nothing is
+authored in screen coordinates (`categories:`, series `data:`, and annotations bound to
+a *named* axis with `at:` / `span:` are all logical), so `direction` only changes how
+that plane is projected, and what a direction cannot yet draw **errors** instead of
+vanishing (a radial band / mark — [SPEC 20](#20-errors)). An explicit axis `side:` is a
+screen edge and is honoured as written.
 
 **Radial** (`direction: radial`) projects the cartesian model into polar coordinates: the
 x (domain) axis bends into a ring (categories → evenly-spaced **spokes**, from the top,
@@ -2699,14 +2709,24 @@ property works where.**
 **A property applies everywhere by default; the exceptions are marked.** An exception is
 always one of two kinds: **type-owned** — a property a primitive requires or reads
 (`points` on `|line|`, `symbol` on `|icon|`, `skew` on `|slant|`) — or **layout-owned** — a
-property an engine interprets (`cell` on a grid, `over` on a sequence, `data` on a chart).
-An **unknown or misspelled** property is **silently ignored** — the engine reads properties
-by name and never rejects an unrecognised one (an unknown-property warning is deferred —
-[SPEC 23](#23-deferred)). A **wrong-context** property is usually ignored too (`cell:` off a grid
-simply has no effect), but a handful of **hard gates** do error: the sequence-placement props
-(`over` / `left` / `right` / `activation`) off a sequence, a box property on bare text, a grid
-without `columns`, a layout's own type names used outside it, and the drawing statements —
-the measuring ops, `||`, `tol:` — outside a `layout: drawing` ([SPEC 20](#20-errors)).
+property an engine interprets (`cell` on a grid, `place` on a sequence note, `data` on a
+chart).
+
+**Validation is strict where the wearer is known, lenient where a class is
+polymorphic** (messages in [SPEC 20](#20-errors)):
+
+- An **unknown property name** is an **error**, everywhere — even in a class rule;
+  no owner accepts it. The message suggests the nearest name.
+- A known property **misused where its wearer is statically known** — an instance's
+  own block, an element rule (`|box| { }`, `|-| { }`), an id rule, a descendant
+  rule's tail — is an **error** with a contextual correction: `points` on a `|box|`,
+  `cell:` off a grid, a box property on bare text, sequence placement off a
+  sequence, a layout's own type names used outside it, the drawing statements — the
+  measuring ops, `||`, `tol:` — outside a `layout: drawing`.
+- In a **`.class` rule** the CSS semantics hold: a property is **inert** on wearers
+  that can't use it; it **warns** only when it is dead for *every* wearer, and a
+  defined class no node wears warns too.
+- A **malformed value** (wrong arity, out of range) is an **error**, wearer-independent.
 
 **State marks** used below: **✓** built and honoured · **⌛** meaningful but not built, a
 candidate ([SPEC 23](#23-deferred)) · **—** not applicable.
@@ -3056,6 +3076,18 @@ Exit codes: 0 success · 1 parse/resolution error or `--check` reformat needed �
 ## 20. Errors
 
 Format: `filename:line:col: error: <message>` (LSP-compatible), compile-time, with a span.
+`--strict` promotes warnings to errors; `--no-warn` silences them ([SPEC 19](#19-cli)).
+
+**Properties & validation** ([SPEC 16](#16-property-ledger--support)'s strict/lenient rule)
+
+| Condition | Message |
+|---|---|
+| Unknown property name | `unknown property 'colr'; did you mean 'color'?` |
+| Misused property, wearer known | `'points' has no meaning on '\|box\|' — it is '\|line\|' / '\|poly\|' geometry` · `'cell' places a grid child — this box sits in a 'layout: flow'` |
+| Property dead for every wearer | `'.hot { cell: … }' reaches no grid child — inert on every wearer` (warning) |
+| Class defined, never worn | `class '.hot' is never worn` (warning) |
+| Malformed value | `'opacity' is a fraction 0..1` · `'translate' takes 'x y'` |
+| Legacy space-separated list | `'data' takes comma-separated values — 'data: 9, 15, 24'` ([SPEC 2](#2-lexical-syntax)) |
 
 **Identity, cascade & statements**
 
@@ -3090,6 +3122,7 @@ Format: `filename:line:col: error: <message>` (LSP-compatible), compile-time, wi
 |---|---|
 | Unknown endpoint (path) | `link endpoint 'X' not found at <scope>` + `; did you mean 'A', 'B'?` |
 | Auto-create shadows a node | `endpoint 'X' auto-created at <scope> — a node 'X' also exists at 'A.B.X'` (warning) |
+| Auto-create near-miss | `'cta' auto-creates a new box; did you mean 'cat'?` (warning — edit distance ≤ 2 or case-fold vs names known in scope, [SPEC 3](#implicit-nodes)) |
 | Chain mixes operators | `link chain mixes operators 'X' and 'Y'` |
 | Chain < 2 nodes | `link requires at least two endpoints` |
 | Bare `o` marker | `'-o' needs a max glyph — write '-o<', '-o+', or 'marker-end: circle'` |
@@ -3156,6 +3189,7 @@ Format: `filename:line:col: error: <message>` (LSP-compatible), compile-time, wi
 | `range:` bad / equal ends | `'range' takes two ends: 'a b', 'a auto', or 'auto b'` / `'range' needs distinct ends` |
 | `scale: log` over a non-positive domain | `a 'scale: log' axis needs a domain above 0` |
 | `side:` in `direction: radial` | `'side' has no meaning in a radial chart — it has one radius axis` |
+| `\|band\|` / `\|mark\|` in `direction: radial` | `a radial chart draws no bands / marks yet — remove it or change 'direction'` ([SPEC 23](#23-deferred)) |
 | `hole:` out of range | `'hole' is a fraction 0..1` |
 | Negative slice value / pie total zero | `a '\|slice\|' value must be ≥ 0` / `a pie's slice values sum to zero` |
 
@@ -3220,8 +3254,6 @@ Format: `filename:line:col: error: <message>` (LSP-compatible), compile-time, wi
 | Mate in a flow scope | `a '\|row\|' places its own children — mates seat a drawing's` |
 | Empty drawing | `a drawing needs at least one geometry child` |
 
-An **unknown property name** is not currently an error — it is silently ignored; a
-warning with a did-you-mean hint is deferred ([SPEC 23](#23-deferred)).
 
 ---
 
@@ -3402,8 +3434,6 @@ Named in the language, not built yet; the syntax is stable.
   is Phosphor duotone, behind a default-on `icons` cargo feature).
 - embedded font metrics — the monospace default keeps the estimate close; a proportional
   `font-family` override is approximate until then.
-- **an unknown-property warning + a "did you mean" property-name hint** — an unrecognised
-  property is silently ignored today ([SPEC 16](#16-property-ledger--support), [SPEC 20](#20-errors)).
 - `aria-label`.
 
 **Tables & entities**
@@ -3419,9 +3449,10 @@ dividers / delays (`==` / `...`); and an `|actor|` stick-figure primitive (an ac
 
 **Charts** ([SPEC 14](#14-charts))
 
-- **bands / marks in `row` and `radial` charts** — they render in `column` direction today.
-- a general per-axis `labels:` (explicit tick text for any axis) — `categories:` sets the
-  x-axis labels today.
+- `legend:` placement / suppression (`top` · `right` · `bottom` · `none`) — the auto
+  legend (≥ 2 entries) is built.
+- **bands / marks in `radial` charts** — a compile error today ([SPEC 20](#20-errors));
+  `column` and `row` are built.
 - **gauge** (a partial arc for one value); **stacked areas** (`bars: stacked` extended to
   `|area|`); polar-area **circular gridlines** and a configurable radial **start angle /
   direction** (the polygon web and top-clockwise are the defaults).
