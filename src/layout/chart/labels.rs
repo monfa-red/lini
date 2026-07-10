@@ -233,32 +233,7 @@ impl Rect {
 /// intersects iff the clipped parameter window `[t0, t1]` stays non-empty across all four
 /// edges. Lets a label reject any seat that would sit over a series line.
 fn seg_hits_rect(p0: (f64, f64), p1: (f64, f64), r: &Rect) -> bool {
-    let (dx, dy) = (p1.0 - p0.0, p1.1 - p0.1);
-    let edges = [
-        (-dx, p0.0 - r.x0),
-        (dx, r.x1 - p0.0),
-        (-dy, p0.1 - r.y0),
-        (dy, r.y1 - p0.1),
-    ];
-    let (mut t0, mut t1) = (0.0_f64, 1.0_f64);
-    for (p, q) in edges {
-        if p.abs() < 1e-9 {
-            if q < 0.0 {
-                return false; // parallel to this edge and wholly outside it
-            }
-        } else {
-            let t = q / p;
-            if p < 0.0 {
-                t0 = t0.max(t);
-            } else {
-                t1 = t1.min(t);
-            }
-            if t0 > t1 {
-                return false;
-            }
-        }
-    }
-    true
+    super::project::liang_barsky(p0, p1, (r.x0, r.y0), (r.x1, r.y1)).is_some()
 }
 
 #[cfg(test)]

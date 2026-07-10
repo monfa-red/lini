@@ -11,7 +11,7 @@ use super::super::{approx_height, approx_width, prim};
 use super::anchors::{self, Anchor, Spot, rotated};
 use super::annotate::{Ctx, NOTE_LANDING, NOTE_OFFSET, Paint, side_attr, side_unit};
 use super::compose::DimText;
-use super::geometry::{P, dist};
+use super::geometry::{P, dist, unit};
 use super::{dims, outline};
 use crate::error::Error;
 use crate::resolve::{MarkerKind, ResolvedLink, ResolvedText, ResolvedValue};
@@ -73,9 +73,7 @@ fn leader_line(
     let tip = exact
         .or_else(|| circle_tip(circle, elbow))
         .unwrap_or_else(|| {
-            let d = (aim.0 - elbow.0, aim.1 - elbow.1);
-            let len = dist(d, (0.0, 0.0)).max(1e-9);
-            let d = (d.0 / len, d.1 / len);
+            let d = unit((aim.0 - elbow.0, aim.1 - elbow.1));
             let o = anchor.to_local(elbow);
             match outline::raycast(anchor.node, o, rotated(d, -anchor.rot)) {
                 Some(t) => (elbow.0 + d.0 * t, elbow.1 + d.1 * t),
@@ -144,11 +142,7 @@ fn lower_measured(
     let mut line = leader_line(ctx, a, aim, dir, exact, circle);
     let tip = line.points[0];
     let elbow = line.points[1];
-    let to_tip = {
-        let d = (tip.0 - elbow.0, tip.1 - elbow.1);
-        let len = dist(d, (0.0, 0.0)).max(1e-9);
-        (d.0 / len, d.1 / len)
-    };
+    let to_tip = unit((tip.0 - elbow.0, tip.1 - elbow.1));
     let mut out = vec![dims::arrow(tip, to_tip, paint)];
     // A circle's ⌀ line runs along the diameter [SPEC 15.6]: through the
     // centre to the far rim, overshooting it, both arrowheads pressing the
@@ -240,11 +234,7 @@ pub(super) fn callout(ctx: &Ctx, w: &ResolvedLink) -> Result<Vec<PlacedNode>, Er
         // ISO 129: one arrowhead style per sheet — a word leader tips with
         // the same slender arrow as every dimension [SPEC 15.7].
         let tip = line.points[0];
-        let to_tip = {
-            let d = (tip.0 - line.points[1].0, tip.1 - line.points[1].1);
-            let len = dist(d, (0.0, 0.0)).max(1e-9);
-            (d.0 / len, d.1 / len)
-        };
+        let to_tip = unit((tip.0 - line.points[1].0, tip.1 - line.points[1].1));
         let trim = 2.0 * paint.sw;
         line.points[0] = (tip.0 - to_tip.0 * trim, tip.1 - to_tip.1 * trim);
         out.push(paint.dim(line.points.clone()));

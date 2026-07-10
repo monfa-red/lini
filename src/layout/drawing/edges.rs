@@ -12,7 +12,7 @@
 //! every line.
 
 use super::super::ir::{Bbox, PlacedNode};
-use super::geometry::{MirrorAxis, P, PathSeg, Subpath, arc_center};
+use super::geometry::{MirrorAxis, P, PathSeg, Subpath, arc_center, unit};
 use crate::resolve::ResolvedValue;
 
 /// Positional agreement finer than any drafting feature (px).
@@ -106,7 +106,7 @@ fn covered(subs: &[Subpath], u: P, perp: P, s: f64, m: f64) -> bool {
 /// The outgoing unit direction at a segment's end.
 fn dir_at_end(seg: &PathSeg) -> P {
     match *seg {
-        PathSeg::Line { from, to } => norm((to.0 - from.0, to.1 - from.1)),
+        PathSeg::Line { from, to } => unit((to.0 - from.0, to.1 - from.1)),
         PathSeg::Arc {
             from,
             to,
@@ -115,7 +115,7 @@ fn dir_at_end(seg: &PathSeg) -> P {
             sweep,
         } => arc_tangent(to, arc_center(from, to, r, large, sweep), sweep),
         PathSeg::Cubic { from, c1, c2, to } => {
-            norm(first_nonzero(&[(to, c2), (to, c1), (to, from)]))
+            unit(first_nonzero(&[(to, c2), (to, c1), (to, from)]))
         }
     }
 }
@@ -123,7 +123,7 @@ fn dir_at_end(seg: &PathSeg) -> P {
 /// The incoming unit direction at a segment's start.
 fn dir_at_start(seg: &PathSeg) -> P {
     match *seg {
-        PathSeg::Line { from, to } => norm((to.0 - from.0, to.1 - from.1)),
+        PathSeg::Line { from, to } => unit((to.0 - from.0, to.1 - from.1)),
         PathSeg::Arc {
             from,
             to,
@@ -132,7 +132,7 @@ fn dir_at_start(seg: &PathSeg) -> P {
             sweep,
         } => arc_tangent(from, arc_center(from, to, r, large, sweep), sweep),
         PathSeg::Cubic { from, c1, c2, to } => {
-            norm(first_nonzero(&[(c1, from), (c2, from), (to, from)]))
+            unit(first_nonzero(&[(c1, from), (c2, from), (to, from)]))
         }
     }
 }
@@ -141,7 +141,7 @@ fn dir_at_start(seg: &PathSeg) -> P {
 /// increasing angle (clockwise on screen, y down).
 fn arc_tangent(p: P, c: P, sweep: bool) -> P {
     let v = (p.0 - c.0, p.1 - c.1);
-    norm(if sweep { (-v.1, v.0) } else { (v.1, -v.0) })
+    unit(if sweep { (-v.1, v.0) } else { (v.1, -v.0) })
 }
 
 fn first_nonzero(pairs: &[(P, P)]) -> P {
@@ -152,15 +152,6 @@ fn first_nonzero(pairs: &[(P, P)]) -> P {
         }
     }
     (0.0, 0.0)
-}
-
-fn norm(v: P) -> P {
-    let len = v.0.hypot(v.1);
-    if len > 1e-12 {
-        (v.0 / len, v.1 / len)
-    } else {
-        v
-    }
 }
 
 /// Land spans on a chrome seed among a sketch's children — one clone per
@@ -182,13 +173,7 @@ pub(in crate::layout) fn fill(children: &mut Vec<PlacedNode>, marker: &str, span
         };
         line.attrs
             .insert("points", ResolvedValue::List(vec![point(a), point(b)]));
-        line.bbox = Bbox {
-            min_x: a.0.min(b.0),
-            min_y: a.1.min(b.1),
-            max_x: a.0.max(b.0),
-            max_y: a.1.max(b.1),
-        }
-        .inflate(half);
+        line.bbox = Bbox::from_points(&[a, b]).inflate(half);
         children.insert(at, line);
     }
 }

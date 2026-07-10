@@ -9,7 +9,7 @@ use super::Segment;
 use super::anchors::{self, Anchor, Spot, rotated};
 use super::annotate::{Ctx, Paint};
 use super::compose::{self, Glyph};
-use super::geometry::{P, dist, n as fmt_n, reflect_point};
+use super::geometry::{P, dist, n as fmt_n, reflect_point, unit};
 use crate::error::Error;
 use crate::resolve::ResolvedLink;
 
@@ -153,6 +153,5 @@ fn two_edges(w: &ResolvedLink) -> Error {
 }
 
 fn edge_dir(a: P, b: P) -> P {
-    let len = dist(a, b).max(1e-9);
-    ((b.0 - a.0) / len, (b.1 - a.1) / len)
+    unit((b.0 - a.0, b.1 - a.1))
 }

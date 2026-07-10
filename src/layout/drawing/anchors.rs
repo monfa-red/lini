@@ -11,7 +11,7 @@
 //! locates [SPEC 15.2/15.4].
 
 use super::super::ir::{Bbox, PlacedNode};
-use super::geometry::{MirrorAxis, P, dist};
+use super::geometry::{MirrorAxis, P, dist, unit};
 use super::{Segment, chrome};
 use crate::ast::Side;
 use crate::error::Error;
@@ -308,8 +308,7 @@ impl Anchor<'_> {
                 Side::Right => (1.0, 0.0),
             },
             Spot::Segment(Segment::Edge(a, b)) => {
-                let len = dist(*a, *b).max(1e-9);
-                let t = ((b.0 - a.0) / len, (b.1 - a.1) / len);
+                let t = unit((b.0 - a.0, b.1 - a.1));
                 // Outward = the **left of the pen's travel** [SPEC 15.5]: a
                 // profile drawn the natural way (material on the pen's right —
                 // axis, up, across, down) faces every edge outward, interior

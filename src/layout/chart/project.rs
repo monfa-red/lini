@@ -131,44 +131,44 @@ impl Plot {
         runs
     }
 
-    /// Liang–Barsky clip of one segment to the rect. Returns the clipped endpoints
-    /// and whether the segment reached its original end (the line continues there).
+    /// Liang–Barsky clip of one segment to the plot rect. Returns the clipped
+    /// endpoints and whether the segment reached its original end (the line
+    /// continues there).
     fn clip_segment(&self, p0: P, p1: P) -> Option<(P, P, bool)> {
-        let (mut t0, mut t1) = (0.0_f64, 1.0_f64);
-        let dx = p1.0 - p0.0;
-        let dy = p1.1 - p0.1;
-        let checks = [
-            (-dx, p0.0 - self.x0),
-            (dx, self.x1 - p0.0),
-            (-dy, p0.1 - self.y0),
-            (dy, self.y1 - p0.1),
-        ];
-        for (p, q) in checks {
-            if p.abs() < 1e-12 {
-                if q < 0.0 {
-                    return None; // parallel and outside
-                }
-            } else {
-                let r = q / p;
-                if p < 0.0 {
-                    if r > t1 {
-                        return None;
-                    }
-                    if r > t0 {
-                        t0 = r;
-                    }
-                } else {
-                    if r < t0 {
-                        return None;
-                    }
-                    if r < t1 {
-                        t1 = r;
-                    }
-                }
-            }
-        }
+        let (t0, t1) = liang_barsky(p0, p1, (self.x0, self.y0), (self.x1, self.y1))?;
+        let (dx, dy) = (p1.0 - p0.0, p1.1 - p0.1);
         let a = (p0.0 + t0 * dx, p0.1 + t0 * dy);
         let b = (p0.0 + t1 * dx, p0.1 + t1 * dy);
         Some((a, b, t1 == 1.0))
     }
+}
+
+/// Liang–Barsky: the parameter window `[t0, t1]` of segment `p0`→`p1` that lies
+/// inside the axis-aligned rect `[min, max]`, or `None` if the segment misses it
+/// (parallel-and-outside, or the window closes). `clip_segment` reads the
+/// clipped endpoints off it; label placement only asks `is_some()` [SPEC 14.9].
+pub(super) fn liang_barsky(p0: P, p1: P, min: P, max: P) -> Option<(f64, f64)> {
+    let (dx, dy) = (p1.0 - p0.0, p1.1 - p0.1);
+    let checks = [
+        (-dx, p0.0 - min.0),
+        (dx, max.0 - p0.0),
+        (-dy, p0.1 - min.1),
+        (dy, max.1 - p0.1),
+    ];
+    let (mut t0, mut t1) = (0.0_f64, 1.0_f64);
+    for (p, q) in checks {
+        if p.abs() < 1e-9 {
+            if q < 0.0 {
+                return None;
+            }
+        } else {
+            let t = q / p;
+            if p < 0.0 {
+                t0 = t0.max(t);
+            } else {
+                t1 = t1.min(t);
+            }
+        }
+    }
+    (t0 <= t1).then_some((t0, t1))
 }

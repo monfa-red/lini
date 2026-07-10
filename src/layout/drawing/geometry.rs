@@ -203,6 +203,14 @@ pub fn dist(a: P, b: P) -> f64 {
     (a.0 - b.0).hypot(a.1 - b.1)
 }
 
+/// `v` scaled to unit length. A near-zero vector divides by a 1e-9 floor
+/// rather than blowing up — the callers (leader aim, edge direction) clamp or
+/// raycast past the degenerate case.
+pub fn unit(v: P) -> P {
+    let len = v.0.hypot(v.1).max(1e-9);
+    (v.0 / len, v.1 / len)
+}
+
 /// A circular arc segment's centre — the SVG centre parameterization for the
 /// pen's `(r, large, sweep)` encoding. The centre sits off the chord midpoint
 /// along its perpendicular, on the side the flags pick: for a minor arc the
