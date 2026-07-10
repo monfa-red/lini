@@ -5,6 +5,7 @@
 
 use super::ir::{AttrMap, MarkerKind, Markers, ResolvedValue};
 use crate::error::Error;
+use crate::ledger::properties;
 use crate::span::Span;
 
 /// Collapse an ordered declaration list into a map: later entries win, marker
@@ -12,16 +13,12 @@ use crate::span::Span;
 pub fn collapse(ordered: &[(String, ResolvedValue)]) -> AttrMap {
     let mut map = AttrMap::new();
     for (name, value) in ordered {
-        if is_marker_attr(name) {
+        if properties::is_marker(name) {
             continue;
         }
         map.insert(name.clone(), value.clone());
     }
     map
-}
-
-pub fn is_marker_attr(name: &str) -> bool {
-    matches!(name, "marker" | "marker-start" | "marker-end")
 }
 
 /// Resolve the start/end marker from the ordered declarations, over the given

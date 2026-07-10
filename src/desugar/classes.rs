@@ -5,8 +5,8 @@
 //! derived last wins). Each present type name gets one
 //! `.lini-<name> { bundle + element-rule decls }` stylesheet rule.
 
-use super::bundles::{primitive_bundle, template_bundle};
 use super::types::{TEMPLATES, TypeInfo};
+use crate::ledger::defaults::{primitive_bundle, template_bundle};
 use crate::resolve::NodeKind;
 use crate::span::Span;
 use crate::syntax::ast::{Decl, Rule, SelUnit, Selector, Value};

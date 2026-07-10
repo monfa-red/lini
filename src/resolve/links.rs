@@ -18,6 +18,7 @@ use super::scene::{PathIndex, SceneCtx};
 use super::value::{resolve_groups, resolve_property};
 use crate::ast::{ChainOp, DrawOp, LineStyle, LinkMarker, Side};
 use crate::error::Error;
+use crate::ledger::properties;
 use crate::syntax::ast::{Endpoint, EndpointGroup, Link};
 
 /// The class every link wears [SPEC 9]: `|-|` lowers to it in desugar, so a link
@@ -155,7 +156,7 @@ pub fn resolve_link(
         let pos = along.get(i).copied().map_or(Along::Auto, Along::Fraction);
         let mut lattrs = link_text_attrs(&attrs);
         for d in &label.style {
-            if !super::scene::is_text_prop(&d.name) {
+            if !properties::is_text_valid(&d.name) {
                 return Err(Error::at(
                     d.span,
                     format!("'{}' needs a box — a link label is text", d.name),
@@ -404,9 +405,9 @@ fn collect_fractions(v: &ResolvedValue) -> Vec<f64> {
 /// restyles every label at once, exactly as a node's text inherits the node's.
 fn link_text_attrs(link_attrs: &AttrMap) -> AttrMap {
     let mut map = AttrMap::new();
-    for name in super::scene::INHERITED_TEXT {
+    for name in properties::inherited_text() {
         if let Some(v) = link_attrs.get(name) {
-            map.insert(*name, v.clone());
+            map.insert(name, v.clone());
         }
     }
     map

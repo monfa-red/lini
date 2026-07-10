@@ -13,27 +13,9 @@
 use super::ir::{ResolvedCall, ResolvedValue, VarTable};
 use crate::error::Error;
 use crate::expr::{self, Env, Expr, FuncTable, Value as ExprValue};
+use crate::ledger::properties;
 use crate::span::Span;
 use crate::syntax::ast::{Call, Value};
-
-/// The colour / track builders [SPEC 10.3, 12]: these make a typed value and stay
-/// a `Call` for the renderer / layout. Every other call is compute (a math builtin
-/// or a user function) and folds to a number via the expression engine.
-fn is_builder(name: &str) -> bool {
-    matches!(
-        name,
-        "oklch"
-            | "gradient"
-            | "linear-gradient"
-            | "radial-gradient"
-            | "rgb"
-            | "rgba"
-            | "hsl"
-            | "hsla"
-            | "repeat"
-            | "hatch"
-    )
-}
 
 fn from_expr(v: ExprValue) -> ResolvedValue {
     match v {
@@ -68,7 +50,7 @@ fn fold_arg(v: &Value, span: Span, funcs: &FuncTable) -> Result<ExprValue, Error
         Value::Expr(s) => fold_expr(s, span, funcs),
         // A bare name is a binding / constant read like `pi` [SPEC 10.7].
         Value::Ident(s) => fold_expr(s, span, funcs),
-        Value::Call(c) if !is_builder(&c.name) => fold_call(c, span, funcs),
+        Value::Call(c) if !properties::is_builder_call(&c.name) => fold_call(c, span, funcs),
         _ => Err(Error::at(
             span,
             "a computed argument must be a number, an expression, a bound name, or a compute call",
@@ -105,17 +87,16 @@ pub fn resolve_property(
     vars: &VarTable,
     funcs: &FuncTable,
 ) -> Result<ResolvedValue, Error> {
-    // Two properties keep their calls **structured** instead of folding them to
+    // Two shapes keep their calls **structured** instead of folding them to
     // numbers: `draw:` holds pen items for the sketch fold [SPEC 15.3], and
     // `pattern:` holds its `grid(…)` / `radial(…)` replication call [SPEC 15.4].
-    if name == "draw" {
-        return resolve_pen(groups, span, funcs);
-    }
-    if name == "pattern" {
-        return resolve_pattern(groups, span, funcs);
+    match properties::get(name).map(|p| &p.shape) {
+        Some(properties::Shape::Pen) => return resolve_pen(groups, span, funcs),
+        Some(properties::Shape::Pattern) => return resolve_pattern(groups, span, funcs),
+        _ => {}
     }
     let value = resolve_groups(groups, span, vars, funcs)?;
-    if is_string_valued(name) && has_bare_ident(&value) {
+    if properties::is_string_valued(name) && has_bare_ident(&value) {
         return Err(Error::at(
             span,
             format!("'{name}' takes a quoted string — write {name}: \"…\""),
@@ -198,21 +179,6 @@ fn fold_call_args(c: &Call, span: Span, funcs: &FuncTable) -> Result<ResolvedCal
     })
 }
 
-/// Properties whose value is literal **text** — free text, a URL, an SVG path — and
-/// so must be written quoted [SPEC 2]. A *name* value (`symbol`, `font-family`, a
-/// colour name) is a bare identifier instead, so it is not listed here.
-fn is_string_valued(name: &str) -> bool {
-    matches!(
-        name,
-        // Core text-valued props [SPEC 2]…
-        "title" | "hint" | "href" | "src" | "path"
-        // …and the chart props that carry user text [SPEC 14.1]: tick / spoke
-        // labels, the unit suffix, and a series' per-datum `tags`. Keyword chart props
-        // (direction, scale, side, tooltip, …) stay bare identifiers.
-        | "categories" | "labels" | "unit" | "tags"
-    )
-}
-
 /// Whether a resolved value is, or contains, a bare identifier (an unquoted word) —
 /// the test for a string-valued property given a non-string.
 fn has_bare_ident(value: &ResolvedValue) -> bool {
@@ -264,7 +230,9 @@ fn resolve_scalar(
             raw: false,
         },
         // A colour / track builder stays a typed Call; any other call is compute.
-        Value::Call(c) if is_builder(&c.name) => resolve_call(c, span, vars, funcs)?,
+        Value::Call(c) if properties::is_builder_call(&c.name) => {
+            resolve_call(c, span, vars, funcs)?
+        }
         Value::Call(c) => from_expr(fold_call(c, span, funcs)?),
         // A (…) expression folds to a number / point [SPEC 10.7].
         Value::Expr(s) => from_expr(fold_expr(s, span, funcs)?),

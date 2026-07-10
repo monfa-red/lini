@@ -9,7 +9,6 @@
 //! generated class defs. The pass is **idempotent**: every injection is an
 //! override-in-place merge, and an already-lowered node is passed through.
 
-pub(crate) mod bundles;
 mod chrome;
 mod classes;
 mod drawing;
@@ -17,15 +16,15 @@ mod labels;
 mod page;
 pub(crate) mod scene;
 mod titleblock;
-mod types;
+pub(crate) mod types;
 
 use crate::error::Error;
+use crate::ledger::defaults::root_defaults;
 use crate::resolve::NodeKind;
 use crate::span::Span;
 use crate::syntax::ast::{
     Child, Decl, File, Link, Node, Rule, SelUnit, Selector, StyleItem, TextNode, Value,
 };
-use bundles::root_defaults;
 use classes::{class_defs, is_lini_class, lini_class, merge_decls, worn_classes};
 use std::collections::{BTreeSet, HashMap};
 use types::{Types, is_template};
@@ -134,7 +133,8 @@ pub fn desugar(file: &File) -> Result<File, Error> {
     let mut stylesheet: Vec<StyleItem> = Vec::new();
     // The scene defaults, plus any root-engine defaults (a root `{ layout: sequence }` gets
     // the sequence `gap`), then the user's own decls on top.
-    let mut layout_defaults = bundles::root_layout_defaults(root_layout(&user_root));
+    let mut layout_defaults =
+        crate::ledger::defaults::root_layout_defaults(root_layout(&user_root));
     // A file whose drawn content is only `|page|` sheets hugs them — the
     // paper is the margin, so the root's padding defaults to 0 [SPEC 15.8];
     // the user's own padding still wins.
@@ -243,7 +243,7 @@ fn column_count(style: &[Decl], chain: &[String]) -> Option<usize> {
     }
     chain.iter().rev().find_map(|name| {
         let n = count_tracks(
-            bundles::template_bundle(name)
+            crate::ledger::defaults::template_bundle(name)
                 .iter()
                 .find(|d| d.name == "columns")?,
         );

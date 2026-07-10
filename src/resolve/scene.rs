@@ -10,30 +10,10 @@ use super::merge::{collapse, resolve_markers};
 use super::value::{resolve_groups, resolve_property};
 use crate::error::Error;
 use crate::expr::{self, Expr, FuncTable, Value as ExprValue};
+use crate::ledger::properties;
 use crate::span::Span;
 use crate::syntax::ast::{Call, Child, Decl, Link, Node, TextNode, Value};
 use std::collections::HashMap;
-
-/// Text properties that cascade to descendant text [SPEC 6]: nearest ancestor
-/// wins, a node's own value beats inherited.
-pub(super) const INHERITED_TEXT: &[&str] = &[
-    "font-family",
-    "font-size",
-    "font-weight",
-    "font-style",
-    "text-transform",
-    "text-decoration",
-    "text-shadow",
-    "letter-spacing",
-    "line-spacing",
-    "color",
-];
-
-/// The **baked-spacing** subset of [`INHERITED_TEXT`] [SPEC 6]: these change
-/// layout (compiled into glyph / line positions), so they are never emitted as
-/// live CSS. The rest — the live-CSS text props — are `INHERITED_TEXT` minus
-/// these.
-pub(super) const BAKED_TEXT: &[&str] = &["font-size", "letter-spacing", "line-spacing"];
 
 /// An internal link lifted from a body or define, with its host's dot-path
 /// prefix — resolved at program level once the whole tree (and its path index)
@@ -214,9 +194,9 @@ pub fn resolve_node(
 
     // Inherited text context for children: overlay this node's own text props.
     let mut child_text_ctx = text_ctx.clone();
-    for name in INHERITED_TEXT {
+    for name in properties::inherited_text() {
         if let Some(v) = attrs.get(name) {
-            child_text_ctx.insert(*name, v.clone());
+            child_text_ctx.insert(name, v.clone());
         }
     }
 
@@ -409,16 +389,16 @@ fn sample_count(style: &[Decl]) -> usize {
 /// `style=` on the `<text>`; `attrs` is the effective context for measurement.
 fn text_inst(t: &TextNode, ctx: &SceneCtx, text_ctx: &AttrMap) -> Result<ResolvedInst, Error> {
     let mut attrs = AttrMap::new();
-    for name in INHERITED_TEXT {
+    for name in properties::inherited_text() {
         if let Some(v) = text_ctx.get(name) {
-            attrs.insert(*name, v.clone());
+            attrs.insert(name, v.clone());
         }
     }
     // The text's own `{ }`: text-valid props only — a box property errors and
     // points at `|block|` [SPEC 3, 19].
     let mut own_style = AttrMap::new();
     for d in &t.style {
-        if !is_text_prop(&d.name) {
+        if !properties::is_text_valid(&d.name) {
             return Err(Error::at(
                 d.span,
                 format!("'{}' needs a box — wrap the text in '|block|'", d.name),
@@ -440,31 +420,6 @@ fn text_inst(t: &TextNode, ctx: &SceneCtx, text_ctx: &AttrMap) -> Result<Resolve
         children: Vec::new(),
         span: t.span,
     })
-}
-
-/// Properties valid on a bare text node [SPEC 3/6]: paint, every `font-*`, the
-/// baked spacings, the live-CSS text props, and the two transforms. Anything else
-/// (`pin`, `padding`, `width`, a border, `layout`, …) needs a box. Shared with the
-/// link-label path ([`super::links`]).
-pub(super) fn is_text_prop(name: &str) -> bool {
-    matches!(
-        name,
-        "color"
-            | "fill"
-            | "opacity"
-            | "font-family"
-            | "font-size"
-            | "font-weight"
-            | "font-style"
-            | "text-transform"
-            | "text-decoration"
-            | "text-shadow"
-            | "letter-spacing"
-            | "line-spacing"
-            | "translate"
-            | "rotate"
-            | "layer"
-    )
 }
 
 /// An `|icon|` must name a known `symbol` [SPEC 7]. Errors point at the node,

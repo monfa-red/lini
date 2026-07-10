@@ -17,6 +17,7 @@ use super::scene::{self, PathIndex, SceneCtx};
 use super::value::{resolve_groups, resolve_property};
 use crate::error::Error;
 use crate::expr::{Expr, FuncTable};
+use crate::ledger::properties;
 use crate::syntax::ast::{Decl, File, Rule, SelUnit, Selector, StyleItem, Value};
 use std::collections::{HashMap, HashSet};
 
@@ -47,9 +48,9 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
     // ── Root configuration + the text props it cascades ──
     let root_attrs = root_attrs(file, &vars, &funcs)?;
     let mut root_text_ctx = AttrMap::new();
-    for name in scene::INHERITED_TEXT {
+    for name in properties::inherited_text() {
         if let Some(v) = root_attrs.get(name) {
-            root_text_ctx.insert(*name, v.clone());
+            root_text_ctx.insert(name, v.clone());
         }
     }
 
@@ -297,13 +298,13 @@ fn root_attrs(file: &File, vars: &VarTable, funcs: &FuncTable) -> Result<AttrMap
 
 /// The baked link base [SPEC 10.5] — a link's lowest-specificity layer, below
 /// the scope cascade, class rules, and its own block. The values live in the one
-/// tuning home (`desugar::bundles`).
+/// tuning home (`ledger::defaults`).
 fn baked_link_defaults(
     vars: &VarTable,
     funcs: &FuncTable,
 ) -> Result<Vec<(String, ResolvedValue)>, Error> {
     let mut out = Vec::new();
-    for d in crate::desugar::bundles::link_defaults() {
+    for d in crate::ledger::defaults::link_defaults() {
         out.push((
             d.name.clone(),
             resolve_groups(&d.groups, d.span, vars, funcs)?,
@@ -311,12 +312,6 @@ fn baked_link_defaults(
     }
     Ok(out)
 }
-
-/// The scene-config properties a link takes from its scope [SPEC 9]: geometry, not
-/// paint, so they live on a container's own block and cascade nearest-wins — unlike
-/// the wire and label look, which come from `|-|` rules. `clearance` is respected
-/// between links *and* nodes; `routing` pairs with `layout`.
-const SCOPE_LINK_PROPS: &[&str] = &["clearance", "routing"];
 
 /// The container chain from the scene root down to `scope` (each segment an id),
 /// stopping at the first missing segment. **Anonymous containers are
@@ -448,7 +443,9 @@ fn is_magnifier(nodes: &[ResolvedInst], id: &str) -> bool {
 }
 
 /// A link's scope inputs: its `base` layer — the baked defaults plus the nearest
-/// scope's [`SCOPE_LINK_PROPS`] (root → container chain, nearest winning) — and the
+/// scope's config props (`clearance` / `routing` [SPEC 9], root → container
+/// chain, nearest winning; geometry, not paint, so they live on a container's
+/// own block — unlike the wire and label look, which come from `|-|` rules) — and the
 /// `ancestors` its descendant `|…| |-|` rules match against. A root-scope link
 /// passes `scope: &[]`.
 fn link_scope(
@@ -470,7 +467,7 @@ fn link_scope(
         // base-layer seat, so a plain `|-| { font-size: … }` still wins.
         base.push(("font-size".to_string(), ResolvedValue::Number(12.0)));
     }
-    for prop in SCOPE_LINK_PROPS {
+    for prop in properties::scope_link_props() {
         let nearest = chain
             .iter()
             .rev()
@@ -519,14 +516,11 @@ fn build_sheet_inputs(
     // `font-family` / `font-weight` / `color` override their themeable var when set
     // globally; the rest are live CSS with no default, present only when authored.
     // The baked-spacing props are layout (`font-size` is the baked root literal),
-    // so the live-CSS subset is `INHERITED_TEXT` minus `BAKED_TEXT`.
+    // so the live-CSS subset is the inherited text set minus the baked one.
     let mut root_text = AttrMap::new();
-    for name in scene::INHERITED_TEXT
-        .iter()
-        .filter(|n| !scene::BAKED_TEXT.contains(n))
-    {
+    for name in properties::inherited_text().filter(|n| !properties::is_baked_text(n)) {
         if let Some(v) = root_attrs.get(name) {
-            root_text.insert(*name, v.clone());
+            root_text.insert(name, v.clone());
         }
     }
     Ok(SheetInputs {

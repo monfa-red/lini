@@ -5,6 +5,7 @@ mod expr;
 mod fmt;
 mod icon;
 mod layout;
+mod ledger;
 mod lexer;
 mod lint;
 mod palette;
