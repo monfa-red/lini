@@ -30,7 +30,7 @@ for mechanical bulk edits (sample migration, test moves) and summaries.
 
 AUDIT R2. Independent items; do in any order, commit in small groups.
 
-- [ ] `[bugfix]` **fmt drops a table cell's style block** — silent data loss:
+- [x] `[bugfix]` **fmt drops a table cell's style block** — silent data loss:
   `"Apple" { color: --red-ink }` in a table `[ ]` compiles and renders, but
   `lini fmt` deletes the `{ }` when padding cells into aligned columns. Fix:
   a styled cell always re-emits its block; a row containing one exits the
@@ -38,32 +38,32 @@ AUDIT R2. Independent items; do in any order, commit in small groups.
   fmt semantic-preservation suite — and find why the existing
   `compile(fmt(src)) == compile(src)` sweep missed it (no sample covers the
   case?). Fix that hole in coverage, not just the bug.
-- [ ] `src/suggest.rs`: `edit_distance` (promote from `icon/mod.rs:86`),
+- [x] `src/suggest.rs`: `edit_distance` (promote from `icon/mod.rs:86`),
   `nearest(input, candidates, k)`, and one `did_you_mean(…)` message formatter.
   Migrate all six sites (`desugar/page.rs:103`, `icon/mod.rs:75-101`,
   `layout/drawing/anchors.rs:200`, `layout/drawing/threads.rs:171`,
   `layout/chart/model.rs:834`, `resolve/scene.rs:584`). Message wording may
   change → those specific error-message tests/snapshots re-bless `[output: errors]`.
-- [ ] `Bbox` gains `from_points`, `overlaps`, `contains`, and an
+- [x] `Bbox` gains `from_points`, `overlaps`, `contains`, and an
   `extent_of(nodes, filter)` that funnels through `accumulate_extent`
   (rotation-aware). Migrate the copies listed in AUDIT R2 (prim.rs, primitives.rs,
   breaks.rs, chart/model.rs, sequence/notes.rs, frames.rs, sequence/mod.rs
   `enclosing_bbox`, section.rs, pattern.rs, annotate.rs overlap checks,
   chart/labels.rs `Rect::hits`).
-- [ ] `geometry::unit()`; migrate the ~8 hand-rolled normalises.
+- [x] `geometry::unit()`; migrate the ~8 hand-rolled normalises.
   `liang_barsky()` shared by `chart/project.rs:136` and `chart/labels.rs:219`.
-- [ ] One `diameter_line()` + one fits-else-spill + one ISO text-rotation helper
+- [x] One `diameter_line()` + one fits-else-spill + one ISO text-rotation helper
   for the drawing round-seams (`leaders.rs:132` / `round.rs:239` / `dims.rs:141`
   / `compose.rs:183`); one shared `translate:`-reader (`anchors::translate`
   becomes the only one).
-- [ ] Render dedups: `dash_decl()` (rules.rs:119 ≡ :629); one `is_light_dark`;
+- [x] Render dedups: `dash_decl()` (rules.rs:119 ≡ :629); one `is_light_dark`;
   `intern_by_key()` replacing `FilterTable`/`Interner` twin engines; structural
   dedup keys replacing `{:?}` keys (paints.rs:41,186).
-- [ ] `desugar::chrome::node()` (drawing.rs:183 ≡ page.rs:246). One AST-shaped +
+- [x] `desugar::chrome::node()` (drawing.rs:183 ≡ page.rs:246). One AST-shaped +
   one IR-shaped drawing-scope predicate replacing the 6 copies.
-- [ ] `INHERITED_TEXT` single-sourced (kill the re-list at
+- [x] `INHERITED_TEXT` single-sourced (kill the re-list at
   `resolve/program.rs:524-532`). `Parser::span_from()` (~15 sites).
-- [ ] Deletions/renames: `defaults.rs:151 set_visual`; stale `resolve/mod.rs:5`
+- [x] Deletions/renames: `defaults.rs:151 set_visual`; stale `resolve/mod.rs:5`
   doc; `Value::Group`→`Value::Tuple`; `StyleItem::Func`→`Binding`; one-variant
   `Level` enum folded into a real severity enum (Error/Warning — Stage M2 adds
   codes).
@@ -117,19 +117,19 @@ scope for a pure dedup.
 
 AUDIT R1 + D1. The foundation for validation (H2), schema (beta), and docs.
 
-- [ ] Create `src/ledger/` — `properties.rs`: one row per property
+- [x] Create `src/ledger/` — `properties.rs`: one row per property
   (`name, owners, shape, default-ref, inherits, gate`), covering the ~80 known
   names incl. defaultless ones (`points`, `symbol`, `data`, `cell`, `of`, `at`,
   `tol`, `draw`, …); `defaults.rs`: `desugar/bundles.rs` moved verbatim (imports
   updated); `consts.rs`: created empty here, filled in R3.
-- [ ] Migrate the five classifiers to ledger lookups: `is_string_valued`,
+- [x] Migrate the five classifiers to ledger lookups: `is_string_valued`,
   `is_builder` (+ pen/pattern special-cases), `INHERITED_TEXT`/`is_text_prop`,
   `is_marker_attr`, `SCOPE_LINK_PROPS`. The 285 `.get()`/`.number()` read-sites
   do **not** change — the ledger validates and describes; reads stay direct.
-- [ ] Reconcile the `labels` collision now (data shape only): the ledger row for
+- [x] Reconcile the `labels` collision now (data shape only): the ledger row for
   `labels` must describe both today's uses so the 0.21 rename (M1) is a pure
   swap.
-- [ ] Cross-check the ledger against SPEC 16's tables — every discrepancy is
+- [x] Cross-check the ledger against SPEC 16's tables — every discrepancy is
   either a ledger bug or a SPEC bug; list them for Stage S1/S2.
 
 Acceptance: zero snapshot diffs; a unit test asserts every property name that
@@ -173,21 +173,21 @@ pass needs them whitelisted (they are absent from the ledger by design).
 
 AUDIT R3 + D8. Mostly `[pure]` moves; behavior alignments flagged.
 
-- [ ] `ledger/consts.rs` gathers the SPEC-10.5 chrome set from the 8 drawing
+- [x] `ledger/consts.rs` gathers the SPEC-10.5 chrome set from the 8 drawing
   files (annotate/compose/breaks/chrome/section/threads + markers datum + hatch
   metrics), the drawing-link literals from `resolve/program.rs:470,473`, and
   `DEFAULT_CLEARANCE = 16.0` (the three disagreeing fallbacks adopt it).
-- [ ] D8: dedupe the 4.0 `OVERHANG` (breaks/chrome); `section.rs`'s 6.0 becomes
+- [x] D8: dedupe the 4.0 `OVERHANG` (breaks/chrome); `section.rs`'s 6.0 becomes
   `PLANE_OVERHANG`. Align `annotate.rs:71`'s 11.0 text fallback with SPEC's 12
   `[output if reachable — check first]`.
-- [ ] Root font-size fallback reads the ledger default; A4 dims deduped;
+- [x] Root font-size fallback reads the ledger default; A4 dims deduped;
   `MAX_INHERITANCE_DEPTH` error text derives from the const.
-- [ ] `chart/metrics.rs`: resolve the `TITLE_SIZE` 13-vs-11 collision (rename,
+- [x] `chart/metrics.rs`: resolve the `TITLE_SIZE` 13-vs-11 collision (rename,
   values unchanged), single `LABEL_SIZE`, named area opacity, named tick target.
-- [ ] Name the marker ratios (markers.rs), text leading 1.2, and move the
+- [x] Name the marker ratios (markers.rs), text leading 1.2, and move the
   look-tunables (wavy, note fold, page margins) into `ledger/consts.rs`; leave
   algorithm-internal EPS/buffers/fmt-config local (AUDIT's judgment list).
-- [ ] `messages::LABEL_SIZE` → `pub(crate)`, referenced by `rules.rs:491`.
+- [x] `messages::LABEL_SIZE` → `pub(crate)`, referenced by `rules.rs:491`.
 
 Acceptance: zero snapshot diffs (except the 11→12 item if it proves reachable —
 then its own `[output]` commit); grep shows no duplicate literal for any
@@ -300,13 +300,13 @@ internals plus the R1 fmt / R6 leak bugfixes; the language is unchanged.
 
 ### Stage S1 — SPEC tightening (editorial, no semantic change)
 
-- [ ] Tighten SPEC.md's prose: dedupe restated rules (Part I is authoritative;
+- [x] Tighten SPEC.md's prose: dedupe restated rules (Part I is authoritative;
   Part II/III reference it), compress examples that repeat a point, keep every
   normative statement. Target: meaningfully shorter with zero information loss.
-- [ ] Verify losslessness: work section-by-section; a second pass (or an agent
+- [x] Verify losslessness: work section-by-section; a second pass (or an agent
   with the old text) diffs for dropped normative content; the R2 ledger
   cross-check list feeds errata fixes here.
-- [ ] Update stale cross-file claims found in the audit: SPEC 10.5's "one place"
+- [x] Update stale cross-file claims found in the audit: SPEC 10.5's "one place"
   wording (now true via `ledger/`), ROUTING.md's implementation-shape file map
   and the over-broad "every strategy is validated" line. (ROUTING.md's `curved`
   row is replaced in alpha.1, not now.)
@@ -347,27 +347,27 @@ the deleted 15.10 table). SPEC.md 3806 → 3603 lines / 225.4 → 215.6 KB (−5
 Write all breaking-change SPEC text before any migration code, per the repo's
 Stage-0 pattern. Sources: ROADMAP 3.1 (+ 3.4's row/radial items).
 
-- [ ] The comma law (SPEC 2 value grammar + every affected property's entry +
+- [x] The comma law (SPEC 2 value grammar + every affected property's entry +
   SPEC 21 grammar notes + migration examples). Include the pipeline clause and
   the `data: 10 20`-is-a-point consequence.
-- [ ] Property validation (SPEC 16 rewrite: the strict/lenient rule; SPEC 20 new
+- [x] Property validation (SPEC 16 rewrite: the strict/lenient rule; SPEC 20 new
   error/warning tables; SPEC 23 un-defers the warning).
-- [ ] Similarity-based implicit warning (SPEC 3 implicit nodes).
-- [ ] `max-width`/`text-wrap` + align-driven line alignment (SPEC 5/6/12; the
+- [x] Similarity-based implicit warning (SPEC 3 implicit nodes).
+- [x] `max-width`/`text-wrap` + align-driven line alignment (SPEC 5/6/12; the
   no-`text-align` rationale; wrapper-block escape).
-- [ ] scale/unit/density (SPEC 15.1 rewrite + 15.8 page + 10.5 constants + the
+- [x] scale/unit/density (SPEC 15.1 rewrite + 15.8 page + 10.5 constants + the
   desugar fold in SPEC 18; `unit:` value shape decision: ident enum `mm cm m in`,
   suffix display noted as `format:`'s future job).
-- [ ] `place:` (SPEC 13); renames (`labels:`, title-block fields + smart label,
+- [x] `place:` (SPEC 13); renames (`labels:`, title-block fields + smart label,
   SPEC 8/14/15.8); row bands/marks + radial error (SPEC 14.5/14.7, the "never
   silently lossy" wording); root-drawing/sequence routing fix (SPEC 11/15 notes).
-- [ ] The local-bug decisions (ROADMAP 3.1): chain ops mark **every hop** and
+- [x] The local-bug decisions (ROADMAP 3.1): chain ops mark **every hop** and
   chain expansion is a desugar job (SPEC 9 + SPEC 18; `a - b -> c` is the bare
   first-hop spelling); `|page|` direction defaults by orientation (SPEC 15.8);
   `stroke-style: wavy` link-only — delete the closed-primitive deferral
   (SPEC 7/16/23); SPEC 19's fmt paragraph notes a styled cell breaks its row
   out of the aligned grid.
-- [ ] Fonts (ROADMAP 3.7): SPEC 5's text-measurement paragraph rewritten
+- [x] Fonts (ROADMAP 3.7): SPEC 5's text-measurement paragraph rewritten
   (metrics tables, metrics-by-kind, no-kerning note, unknown-glyph fallback,
   cap-height centering); SPEC 6/10.1 — the two bundled families, the stack,
   override semantics (name changes, metrics stay by kind), the widened
@@ -375,7 +375,7 @@ Stage-0 pattern. Sources: ROADMAP 3.1 (+ 3.4's row/radial items).
   output modes; SPEC 19 — `--bake-vars` → `--static`, new `--embed-font`
   (browser-only note); SPEC 23 — the embedded-font-metrics deferral comes out,
   arbitrary 100–900 weights and kerning stay in.
-- [ ] SPEC 23 updated: remove what 0.21 builds, add the new deferrals from
+- [x] SPEC 23 updated: remove what 0.21 builds, add the new deferrals from
   ROADMAP 6.
 
 Acceptance: SPEC alone is sufficient to implement M1–M4; every example in SPEC
