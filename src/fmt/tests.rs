@@ -268,6 +268,20 @@ fn table_cells_align_into_columns() {
 }
 
 #[test]
+fn a_styled_table_cell_keeps_its_block_and_breaks_its_row_out() {
+    // [SPEC 19]: a cell's `{ }` must survive fmt (dropping it is silent data loss);
+    // its whole row leaves the alignment grid, while the plain rows stay aligned.
+    let out = "|table#t| { columns: 80 80; } [\n  \"A\"     \"Qty\"\n  \"Apple\" { color: red; } \"3\"\n  \"Mango\" \"5\"\n]\n";
+    assert_eq!(
+        fmt(
+            "|table#t|{columns:80 80}[\n\"A\" \"Qty\"\n\"Apple\"{color:red} \"3\"\n\"Mango\" \"5\"\n]\n"
+        ),
+        out
+    );
+    idempotent(out);
+}
+
+#[test]
 fn a_comment_between_style_and_children_lands_in_the_children() {
     // The style block ends at its own `}`; trivia after it belongs to the `[ ]`.
     assert_eq!(

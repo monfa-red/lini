@@ -1,0 +1,11 @@
+// A table cell may carry its own `{ }` style block for a colour or weight
+// [SPEC 8] — `"Apple" { color: --red-ink }`. It stays a bare text leaf (a box
+// child is only needed to place or link a cell). `fmt` re-emits the block and
+// lifts that row out of the aligned grid; the plain rows keep their columns.
+
+|table#stock| "Stock" { columns: 110 70 90; } [
+  "Item"  "Qty" "State"
+  "Apple" "12"  "fresh"
+  "Mango" "3"   "ripe"
+  "Lime" "0" "out" { color: --red-ink; font-weight: bold; }
+]

@@ -383,32 +383,42 @@ impl Emitter<'_> {
     }
 
     /// Emit bare-text cells as aligned rows: each column padded to its widest
-    /// cell, a single space between columns, `columns` cells per row.
+    /// cell, a single space between columns, `columns` cells per row. A cell that
+    /// carries a `{ }` style block re-emits it, and its whole row leaves the grid
+    /// (a block throws the widths off) — unstyled rows stay aligned [SPEC 19].
     fn emit_aligned_cells(&mut self, cells: &[Child], cols: usize, depth: usize) {
-        let texts: Vec<String> = cells
-            .iter()
-            .map(|c| match c {
-                Child::Text(t) => quoted(&t.text),
-                Child::Box(_) => String::new(),
-            })
-            .collect();
+        let styled = |c: &Child| matches!(c, Child::Text(t) if !t.style.is_empty());
+        let rows: Vec<&[Child]> = cells.chunks(cols).collect();
+        // Column widths come from the aligned (unstyled) rows only.
         let mut widths = vec![0usize; cols];
-        for (i, s) in texts.iter().enumerate() {
-            widths[i % cols] = widths[i % cols].max(s.len());
+        for row in rows.iter().filter(|r| !r.iter().any(styled)) {
+            for (col, c) in row.iter().enumerate() {
+                if let Child::Text(t) = c {
+                    widths[col] = widths[col].max(quoted(&t.text).len());
+                }
+            }
         }
-        for (i, s) in texts.iter().enumerate() {
-            let col = i % cols;
-            if col == 0 {
-                self.indent(depth);
-            } else {
-                self.out.push(' ');
+        for row in &rows {
+            let free = row.iter().any(styled);
+            for (col, c) in row.iter().enumerate() {
+                if col == 0 {
+                    self.indent(depth);
+                } else {
+                    self.out.push(' ');
+                }
+                let Child::Text(t) = c else { continue };
+                if free {
+                    self.cursor = t.span.start;
+                    self.emit_text_node(t, depth);
+                } else {
+                    let s = quoted(&t.text);
+                    self.out.push_str(&s);
+                    if col != row.len() - 1 {
+                        pad(self.out, widths[col] - s.len());
+                    }
+                }
             }
-            self.out.push_str(s);
-            if col == cols - 1 || i == texts.len() - 1 {
-                self.out.push('\n');
-            } else {
-                pad(self.out, widths[col] - s.len());
-            }
+            self.out.push('\n');
         }
         self.cursor = child_span(cells.last().unwrap()).end;
     }
