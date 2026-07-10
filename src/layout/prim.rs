@@ -284,7 +284,7 @@ pub fn text_classed(content: &str, cx: f64, cy: f64, size: f64, class: &str) -> 
 
 /// The caption size a drawing's annotation text reads at [SPEC 15.1] — the
 /// `.lini-dim-text` class states it, so no dim / leader / callout leaf inlines it.
-const DIM_TEXT_SIZE: f64 = 12.0;
+const DIM_TEXT_SIZE: f64 = crate::ledger::consts::DRAWING_LINK_FONT_SIZE;
 
 /// Dimension / leader / callout text [SPEC 15.6/17]: a `.lini-dim-text` leaf.
 /// The class states the font (12 px, normal weight), so a leaf at that default

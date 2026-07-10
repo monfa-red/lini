@@ -318,7 +318,13 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
         rules.push(Rule {
             class: "lini-dim-text".into(),
             props: vec![
-                ("font-size".into(), "12px".into()),
+                (
+                    "font-size".into(),
+                    format!(
+                        "{}px",
+                        super::values::num(crate::ledger::consts::DRAWING_LINK_FONT_SIZE)
+                    ),
+                ),
                 ("font-weight".into(), "normal".into()),
             ],
         });
