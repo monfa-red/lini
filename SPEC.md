@@ -1710,9 +1710,9 @@ an error, like `cell:` off a grid):
 | `\|bubble\|` | chart | one bubble at a point, sized by `value:` | one `\|oval\|` | `fill`, `stroke` |
 | `\|slice\|` | pie | one wedge | one `\|path\|` | `fill`, `stroke` |
 
-**Singular vs. plural is the cardinality.** `|line|` / `|area|` are **one** shape (singular);
-`|bars|` / `|dots|` are a **set** of marks, one per datum (plural). A `|slice|` is one wedge
-and a `|bubble|` one bubble (singular, per node).
+**Singular vs. plural is the cardinality**: `|line|` / `|area|` are **one** shape;
+`|bars|` / `|dots|` a **set** of marks, one per datum; a `|slice|` / `|bubble|` one
+each, per node.
 
 Inside a chart, `|line|` reads `data:` / `fn:` (data space); the standalone `|line|`
 primitive ([SPEC 7](#7-nodes)) reads `points:` (pixels) — the chart layout branches on which.
@@ -2147,13 +2147,12 @@ Anything the pen draws can carry a **segment name**, written with the point sigi
 | a drawing call | that call's drawn segment: an edge, an arc, a bevel, a circle, a `close()` seam | `right(50):neck`, `fillet(3):r1` |
 | `point()` | the pen's **current point** | `right(38):thread point():m1 right(32)` — a station with no drawn edge |
 
-The names are **yours**, not vocabulary — `neck`, `r1`, `m1` above are examples. A
-`:segment` **always glues to a call**: a floating `:name` is an error — it would sit
-one space away from silently renaming the run instead of the point. `point()` draws
-nothing and changes nothing; beside a `fillet` / `chamfer` (either order) it records
-the **theoretical sharp corner** — the point drafting measures (the arc itself is
-named on the modifier). `move()` takes no segment — name its landing with `point()`
-(`move(-90, 0) point():origin`). A duplicate segment in one `draw:` is an error.
+The names are **yours**, not vocabulary. A `:segment` **always glues to a call** — a
+floating `:name` is an error. `point()` draws nothing and changes nothing; beside a
+`fillet` / `chamfer` (either order) it records the **theoretical sharp corner** — the
+point drafting measures (the arc itself is named on the modifier). `move()` takes no
+segment — name its landing with `point()` (`move(-90, 0) point():origin`). A
+duplicate segment in one `draw:` is an error.
 
 #### `mirror:` — draw half, get the whole
 
@@ -2182,18 +2181,16 @@ so anchors, dimensions, and mates all see the whole part.
 
 `revolve: x-axis` (or `y-axis`) declares the profile a **solid of revolution** about
 that axis through the pen origin. It folds exactly as a fused `mirror:` on the same
-axis — draw the half, get the whole, plus the axis `|centerline|` — and adds what a
-lathe part's side view owes drafting: the **edge lines**. Every sharp circular edge —
-a shoulder, a groove lip, a chamfer's two edge circles — projects to a straight line
-across the diameter, so at every profile vertex where two segments meet with a
-**tangent break**, off the axis, a generated `|shoulder|` line (geometry weight — these
-are real visible edges, [SPEC 8](#8-templates)) runs perpendicular to the axis to
-the vertex's reflected twin; a span the profile already draws whole is skipped, and
-vertices sharing a station draw once, at the widest span. A `fillet()` joins
-tangent-continuously and generates **nothing**; a `chamfer()` keeps two sharp
-vertices and generates its two lines; a step completes itself — drafting's rule
-falls out of the geometry, with no per-call cases. Edge lines live in the sketch's
-frame, so they ride `break:` like features. A sketch takes `revolve:` **or**
+axis — draw the half, get the whole, plus the axis `|centerline|` — and adds the
+**edge lines** a lathe part's side view draws: at every profile vertex where two
+segments meet with a **tangent break**, off the axis, a generated `|shoulder|` line
+(geometry weight — real visible edges, [SPEC 8](#8-templates)) runs perpendicular to
+the axis to the vertex's reflected twin; a span the profile already draws whole is
+skipped, and vertices sharing a station draw once, at the widest span. So a
+`fillet()` joins tangent-continuously and generates **nothing**, a `chamfer()` keeps
+two sharp vertices and generates its two lines, a step completes itself — drafting's
+rule falls out of the geometry, with no per-call cases. Edge lines live in the
+sketch's frame, so they ride `break:` like features. A sketch takes `revolve:` **or**
 `mirror:`, never both; the unary `⌀` readings require a revolved profile
 ([15.6](#156-dimensions)).
 
@@ -2671,34 +2668,9 @@ render code. The **parser is scope-blind**: the ops and forms parse everywhere a
 *mean* drawing only in a drawing scope — elsewhere they error at resolve
 ([SPEC 20](#20-errors)).
 
-### 15.10 Properties
-
-New properties, and core ones reused with their core meaning; paint, text, and marker
-properties are the core ones.
-
-| Property | On | Value | Notes |
-|---|---|---|---|
-| `scale` | any node | number > 0 | px per drawing unit; nearest-wins; a `\|drawing\|` defaults to 4, other nodes to 1; position scales by the parent, shape by self ([15.1](#151-the-container-the-datum--the-scale)) |
-| `unit` | `\|drawing\|` | quoted string | suffix on auto-measured values only |
-| `draw` | `\|sketch\|` | pen calls + `:segment`s | **required** ([15.3](#153-the-sketch-pen)) |
-| `mirror` | `\|sketch\|` | list of `x-axis` / `y-axis` / bearing | reflect + union, left to right |
-| `revolve` | `\|sketch\|` | `x-axis` / `y-axis` | a solid of revolution — fused fold + the `\|shoulder\|` lines; exclusive with `mirror:` ([15.3](#153-the-sketch-pen)) |
-| `thread` | `\|sketch\|` · `\|hole\|` / round geometry | `seg pitch` groups · `pitch` | ISO 6410 dressing — minor + thread-end lines; the ¾ arc ([15.3](#153-the-sketch-pen), [15.4](#154-features-holes--patterns)) |
-| `sheet` | `\|page\|` | `a5…a0` / ANSI `a…e` `[portrait \| landscape]` | trimmed-size sugar → `width` / `height` in mm ([15.8](#158-assemblies-views-sheets--titles)) |
-| `break` | `\|sketch\|` | `a b [axis]` groups | cut the view between stations; longer axis default ([15.3](#153-the-sketch-pen)) |
-| `pattern` | any node | `grid(c, r, dx, dy)` / `radial(n, r)` | replicate about its position ([15.4](#154-features-holes--patterns)) |
-| `width` | `\|hole\|` `\|pitch-circle\|` | number | **required** — the diameter |
-| `tol` | a dimension | `t` / `+u -l` / fit ident | tolerance text ([15.6](#156-dimensions)) |
-| `side` | a dimension / callout | side — or a corner (callouts, diametral dims) | stack side / text direction |
-| `gap` | a dimension / a mate | number | dim: its offset from the geometry. Mate: separation along the normal — **may be negative** |
-| `of` | `\|drawing\|` | a marker's id | source the view from a `\|plane\|` (→ `A-A` section) or `\|magnifier\|` (→ `C` detail); found by id, like a chart's `axis:` ([15.8](#158-assemblies-views-sheets--titles)) |
-| `at` | `\|plane\|` | `N [x-axis \| y-axis]` | station of the section plane; longer-axis default ([15.8](#158-assemblies-views-sheets--titles)) |
-| `facing` | `\|plane\|` | `left`·`right`·`up`·`down` | viewing-arrow direction; by plane ([15.8](#158-assemblies-views-sheets--titles)) |
-| ISO 7200 fields | `\|title-block\|` | quoted string | `title` / `dwg` / `rev` / `date` / `sheet` / `author` / `approved` / `dept` / `reference` / `doc-type` / `status` — build the grid, absent collapse ([15.8](#158-assemblies-views-sheets--titles)) |
-
-`fill` accepts `hatch()` ([SPEC 10.3](#103-gradients)); `stroke-style` has `center` /
-`phantom` and `marker` has `datum` ([SPEC 7](#7-nodes)). `routing`, `clearance`,
-`along`, and the container `gap` / `align` / `justify` have no role in a drawing scope.
+The drawing property index — owners, value shapes, defaults — is the
+[Property Ledger](#16-property-ledger--support); each property's law lives in its
+subsection above.
 
 ---
 # Part III — Reference
@@ -3682,38 +3654,26 @@ body:left (-) body:right { side: bottom }        // → 60
     |sketch#screw| {
       draw: move(0, 0) up(6.5) chamfer(0.8) right(8):head down(2.5):k right(12)
             point():v right(28):m8 chamfer(1) down(4);
-      revolve: x-axis;
-      // a turned part
-      thread: m8 1.25;
-      // the threaded run
+      revolve: x-axis;                           // a turned part
+      thread: m8 1.25;                           // the threaded run
     } [
-      |hidden#socket| {
-        // the hex socket, dashed
+      |hidden#socket| {                          // the hex socket, dashed
         draw: move(0, 3) right(4) line(3, -3);
         mirror: x-axis;
       }
     ]
-    screw:head (o) { side: left; }
-    // → ⌀13
-    screw:left (-) screw:k { side: bottom; }
-    // → 8 — K, the head
-    screw:k (-) screw:right { side: bottom; }
-    // → 40 — L, under the head
-    screw:v (-) screw:right { side: top; }
-    // → 28 — the thread length
-    screw:m8 <- { side: top; }
-    // → M8×1.25 — composed by the thread
+    screw:head (o) { side: left; }               // → ⌀13
+    screw:left (-) screw:k { side: bottom; }     // → 8 — K, the head
+    screw:k (-) screw:right { side: bottom; }    // → 40 — L, under the head
+    screw:v (-) screw:right { side: top; }       // → 28 — the thread length
+    screw:m8 <- { side: top; }                   // → M8×1.25 — composed by the thread
   ]
 
   |drawing#end| { scale: 6; } [
     |oval#od| { width: 13; height: 13; }
-    |oval| { width: 11.4; height: 11.4; }
-    // the head, end-on
+    |oval| { width: 11.4; height: 11.4; }        // the head, end-on
     |hex#socket| { width: 7; height: 6; }
-
-    // the socket, visible here
-    socket:left (-) socket:right
-
+    socket:left (-) socket:right                 // the socket, visible here
   ]
 
   |title-block| {
