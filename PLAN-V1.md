@@ -83,7 +83,10 @@ mismatches error with counts in the message.
 dim `gap:`), painted-bounds row packing, linear-dimension inference +
 `project:`, boxed datum letters + datum identities, crossing halos, internal
 threads in sections, addressable pattern copies, fan leaders, `format:` on
-dimensions.
+dimensions. Plus one conformance bug from the old TODO: a bare leader's
+authored label must **follow** the composed thread spec (`bar:m10 <- "LH"`
+reads `M10×1.5 LH` — SPEC 15.6's one-ended follows rule; today a label
+suppresses the auto-compose).
 
 **SPEC amendment**: SPEC 15.6 rewrite (clearance, inference, `project:`,
 aligned dims un-deferred), 15.7 (datum frames, fan leaders, halos), 15.4
@@ -158,7 +161,7 @@ arrows), 17 (embedded-asset output), 19 (serve boundary note); SPEC 20 rows
 **Open questions**: the exact cross-view anchor spelling (a page-level link
 naming `view.anchor` on each side — confirm it stays outside drawing scopes and
 lowers to straight `|projection|` lines only); id-rewrite scheme for embedded
-SVGs; `--no-embed` escape hatch (TODO.md named one — keep?).
+SVGs; a `--no-embed` escape hatch (the old TODO proposed one — keep?).
 
 **Seams** (AUDIT): `emit_image` (`primitives.rs:465`) switches on the resolved
 form; asset bytes read at resolve for determinism; `dir_mode::resolve_in_root`
@@ -175,7 +178,7 @@ cascade.
 
 ## beta — tooling, schema & docs (feature-complete)
 
-**Scope** (ROADMAP 3.7): the generated machine-readable schema (from the
+**Scope** (ROADMAP 3.8): the generated machine-readable schema (from the
 ledger); structured JSON diagnostics with stable codes (D9 — serde-free);
 the compact generated reference; VS Code + Zed grammars (keyword lists
 generated from the ledger); README/docs refresh; `lini fmt` final canon pass.

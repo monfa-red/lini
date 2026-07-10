@@ -151,8 +151,9 @@ Plus small deletions: `defaults.rs:151 set_visual` (no-op wrapper), stale
   page MARGIN/FILING (judged look-tunable by the sweep).
 - Leave local: geometric EPS values, HTTP buffer sizes, fmt MAX_LINE/INDENT,
   routing's `cost.rs` (already correct and centralized — don't move it),
-  `AVG_CHAR_WIDTH_RATIO 0.6` (stays in `text.rs` but gains the FONT_EMBED.md
-  cross-reference comment; it must match the vendored font if embedding lands).
+  `AVG_CHAR_WIDTH_RATIO 0.6` (stays in `text.rs` untouched — the Stage M5 font
+  metrics supersede it; the bundled mono's advance is exactly 0.6em, asserted
+  in xtask).
 
 ### R4 — Render: one paint chokepoint, close the leak list `[output]` · M
 

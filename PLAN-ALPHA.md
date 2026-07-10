@@ -65,7 +65,7 @@ AUDIT R2. Independent items; do in any order, commit in small groups.
   `resolve/program.rs:524-532`). `Parser::span_from()` (~15 sites).
 - [ ] Deletions/renames: `defaults.rs:151 set_visual`; stale `resolve/mod.rs:5`
   doc; `Value::Group`→`Value::Tuple`; `StyleItem::Func`→`Binding`; one-variant
-  `Level` enum folded into a real severity enum (Error/Warning — Stage H2 adds
+  `Level` enum folded into a real severity enum (Error/Warning — Stage M2 adds
   codes).
 
 Acceptance: zero snapshot diffs (except re-blessed error-message tests); clippy
@@ -107,7 +107,7 @@ scope` (any-layout, not this predicate) stay; `angle::leg` (returns length),
 `threads::parallel` (normalise-then-dot), and routing's own `Rect` untouched.
 
 **Follow-ups** (deferred, both flagged in commits): the one-variant `Level` enum
-→ Error/Warning severity — deferred to **H2**, which actually constructs
+→ Error/Warning severity — deferred to **M2**, which actually constructs
 `Level::Error` (adding it now is a dead variant); and the render `{:?}` Debug
 dedup keys → derived-`PartialEq` structural keys — needs `PartialEq` on
 `ResolvedValue`, which cascades through `Expr` (the `Deferred` variant), out of
@@ -271,6 +271,14 @@ Stage-0 pattern. Sources: ROADMAP 3.1 (+ 3.4's row/radial items).
   `stroke-style: wavy` link-only — delete the closed-primitive deferral
   (SPEC 7/16/23); SPEC 19's fmt paragraph notes a styled cell breaks its row
   out of the aligned grid.
+- [ ] Fonts (ROADMAP 3.7): SPEC 5's text-measurement paragraph rewritten
+  (metrics tables, metrics-by-kind, no-kerning note, unknown-glyph fallback,
+  cap-height centering); SPEC 6/10.1 — the two bundled families, the stack,
+  override semantics (name changes, metrics stay by kind), the widened
+  `font-weight` set (`normal|medium|semibold|bold|400|500|600|700`); SPEC 17
+  output modes; SPEC 19 — `--bake-vars` → `--static`, new `--embed-font`
+  (browser-only note); SPEC 23 — the embedded-font-metrics deferral comes out,
+  arbitrary 100–900 weights and kerning stay in.
 - [ ] SPEC 23 updated: remove what 0.21 builds, add the new deferrals from
   ROADMAP 6.
 
@@ -360,7 +368,54 @@ Acceptance: default output unchanged (center = today); wrap sample renders
 correctly at light/dark; no measurement caller bypasses the new API.
 **Log:**
 
-### Stage M5 — hardening fixes + row bands/marks `[fixes]`
+### Stage M5 — fonts: real metrics, subsets & `--static` `[output]`
+
+ROADMAP 3.7. Raw statics live at `assets/fonts/raw/` (gitignored — four roman
+statics + OFL per family); OFL texts already in `LICENSES/`.
+
+- [ ] `xtask extract-fonts` (mirrors `extract-icons`): pin raw filenames +
+  sha256 with the download URL documented; generate **(a)** metrics tables —
+  per-glyph advances, ascent/descent/cap-height, upem, per family × weight
+  {400, 500, 600, 700} — as generated Rust, **always compiled in** (never
+  behind the feature: layout must not vary by build flags); assert the mono
+  advance is uniformly 0.6em at every weight; **(b)** subset TTFs — ASCII +
+  Latin-1 + Latin-Ext-A + General Punctuation + the drafting symbols lini
+  composes (`⌀ ° ± ×` …) — via the pure-Rust `subsetter` crate, OFL copyright
+  metadata kept, committed under `assets/fonts/`. **Budget ≤ 600KB total** —
+  trim charset first, weights second; record the real numbers in the Log.
+- [ ] `font` cargo feature (default-on, mirrors `icons`) gating the subset
+  *bytes* only; `--embed-font` / `--static` outlining error helpfully without
+  it; default name-only output works under `--no-default-features`.
+- [ ] Measurement: `text.rs` swaps the flat 0.6 ratio for table lookups —
+  width = Σ advances(kind, resolved weight) × size/upem + letter-spacing.
+  Kind = known-mono names + a "mono" substring heuristic, else proportional;
+  unknown-glyph fallback (wide for CJK ranges). Unit-test: mono widths equal
+  the old estimate exactly. Vertical centering moves to cap-height optical
+  centering `[output — the one full re-bless; visual pass over every sample,
+  light + dark]`.
+- [ ] `font-weight` widens to `normal|medium|semibold|bold|400|500|600|700`
+  (ledger row; SPEC landed in S2). Measurement reads the resolved weight.
+  The chrome bold→semibold retune is decided here **by eye** (layout-neutral
+  for mono — advances are weight-invariant).
+- [ ] Emission: the default stack leads with the bundled family names
+  (rules.rs, one place); `--embed-font` = base64 `@font-face` of the
+  family × weights actually used, under Lini-scoped family names;
+  `--static` renames `--bake-vars` (breaking, no alias) and adds text→path
+  outlining via `ttf-parser` on the subsets (glyph dedupe with
+  `<defs>`/`<use>`; italic = synthetic oblique).
+- [ ] Samples: one proportional sample (a Google Sans card diagram); re-verify
+  a text-heavy existing sample through `--static`. From this stage on, visual
+  PNG reviews render via `--static` so resvg needs no installed fonts.
+- [ ] Re-verify the pivotal constraint: resvg still ignores `@font-face`
+  (keeps `--embed-font` documented browser-only; last verified on resvg 0.47);
+  outlined PNGs pixel-stable across machines.
+
+Acceptance: existing mono sample *widths* byte-identical (the vertical
+re-bless is the only geometry delta, visually verified); payload under budget;
+`cargo test` green with **and without** `--no-default-features`.
+**Log:**
+
+### Stage M6 — hardening fixes + row bands/marks `[fixes]`
 
 - [ ] Root-drawing router: `layout/mod.rs:41-46` → `routing::route(…)`; root-
   sequence arm routes + extends message wires. Regression samples: a wire in a
@@ -391,7 +446,7 @@ visually correct; `lini fmt/desugar/serve/theme --help` outputs unchanged in
 substance.
 **Log:**
 
-### Stage M6 — release 0.21 → tag `1.0.0-alpha`
+### Stage M7 — release 0.21 → tag `1.0.0-alpha`
 
 - [ ] Full sweep: `cargo fmt` / `test` / `clippy`; `lini fmt` over every sample
   committed clean; desugar + laws oracles green; every sample rendered to PNG
@@ -414,8 +469,10 @@ R1 ──► R2 ──► R3        (suggest → ledger → consts)
 R4, R5, R6              (independent of R1–R3 except R5's Strategy matches; any order)
 S1 ──► S2               (tighten, then amend)
 S2 ──► M1 ──► M2 ──► M3 (amendment first; M2 needs M1's ledger shapes; M3 needs M2's errors)
-M4, M5 after S2         (independent of M1–M3; M4 before alpha.1 — mindmap topics want wrap)
-M6 last
+M4 ──► M5 after S2      (M4 rewrites text.rs's line API; M5's metrics swap the advance
+                         math inside it; M4 before alpha.1 — mindmap topics want wrap)
+M6 after S2             (independent fixes; any time in the M phase)
+M7 last
 ```
 
 R-stages and S1 can interleave with normal life; the M-phase is one continuous

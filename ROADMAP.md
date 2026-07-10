@@ -299,7 +299,60 @@ built (see 3.4); and four local fixes:
   cell, or anywhere on the page. BOM stays an ordinary `|table|`; no auto-BOM in
   1.0.
 
-### 3.7 AI and tooling readiness (beta)
+### 3.7 Fonts & text fidelity (the 0.21 round)
+
+Today text is measured as monospace (0.6em/char) but the SVG only *names* a
+system stack — a proportional override measures wrong, and resvg renders with
+whatever font it finds. v1 fixes both with two bundled families and real metrics.
+
+- **Two bundled families** (both SIL OFL 1.1): **Google Sans Code** (mono) and
+  **Google Sans** (proportional) — four **static** roman weights each
+  (Regular/Medium/SemiBold/Bold = 400/500/600/700). No variable fonts: the
+  3-axis Google Sans VF is 4.6MB and needs axis-pinning; the statics are exact
+  instances and the pure-Rust subsetter works on them directly.
+- **Metrics are always compiled in** — never feature-gated (layout must not
+  depend on build flags). `xtask extract-fonts` generates per-glyph advance
+  tables + ascent/descent/cap-height per family × weight from the raw statics
+  (a local download at `assets/fonts/raw/`, gitignored, filenames + sha256
+  pinned in xtask — the Phosphor precedent), plus **subset TTFs** (Latin +
+  Latin-1 + Latin-Ext-A + punctuation + the drafting symbols lini composes),
+  committed and gated behind a default-on `font` cargo feature. **Budget:
+  shipped font payload ≤ 600KB total** — trim charset first, weights second.
+- **Measurement**: width = Σ per-glyph advances at the compile-resolved weight;
+  no kerning/shaping in v1 (~1% error, documented). **Metrics follow the kind,
+  not the name**: a user `font-family` override changes only the emitted name;
+  the table is picked by kind (known-mono list + a "mono" substring heuristic →
+  mono, else proportional). Unknown glyphs fall back to a fixed advance (wide
+  for CJK ranges); out-of-charset text falls through to system fonts per-glyph
+  in browsers. The mono table is exactly 0.6em/char, so existing diagrams
+  measure identically. Vertical centering upgrades from font-size guesswork to
+  cap-height optical centering (one deliberate output change, re-blessed once).
+- **Weights**: `font-weight: normal | medium | semibold | bold | 400 | 500 |
+  600 | 700` (normal→400, bold→700). Arbitrary 100–900 stays deferred.
+  Measurement uses the compile-resolved weight; a runtime CSS override keeps
+  the compiled layout box — the same caveat as a family override. Whether
+  chrome (titles/headers) retunes from bold to semibold is decided in the
+  stage's visual pass (mono advances are weight-invariant, so it's
+  layout-neutral).
+- **The default stays monospace.** Proportional is one declaration away
+  (`font-family: "Google Sans"`), and the metrics flip costs existing diagrams
+  nothing.
+- **Three output modes** (the pivotal constraint, verified on resvg 0.47:
+  resvg/librsvg **ignore `@font-face`**):
+  - **default** — names only, zero bytes; the stack leads with the bundled
+    family names so installed/hosted copies engage.
+  - **`--embed-font`** — base64 `@font-face` of the family × weights actually
+    used (~100KB each). Browser-faithful, self-contained; documented as
+    browser-only. Embedded faces use Lini-scoped family names so they never
+    collide with a user's installed versions.
+  - **`--static`** — renames `--bake-vars`, no alias kept: bakes the vars *and*
+    outlines text to paths (glyphs deduped via `<defs>`/`<use>`; italic as
+    synthetic oblique). Faithful **everywhere** — including our own
+    resvg-rendered visual reviews, which should use it from this stage on.
+- License obligations: both OFL texts in `LICENSES/` (`google-sans`,
+  `google-sans-code`), copyright lines kept in the subsets.
+
+### 3.8 AI and tooling readiness (beta)
 
 - **Machine-readable schema** generated from the ledger (types, templates, roles,
   inheritance, properties, value shapes, defaults, owners, list-vs-tuple arity,
@@ -325,7 +378,7 @@ plan, then code + samples + snapshots + visual review together.
 
 | Version | Round | Contents |
 |---|---|---|
-| **0.21** (spills into 0.22 if needed) | Refactor + hardening + migration (`PLAN-ALPHA.md`) | AUDIT work packages (ledger, shared helpers, constants, render chokepoint, splits); SPEC tightening pass; then the breaking round: comma law, validation, similarity warning, wrap + line-align, scale/unit/density, `place:`, renames, root-drawing/sequence router fix, row bands/marks, radial band error. Ends: **syntax frozen**, tag `1.0.0-alpha`. |
+| **0.21** (spills into 0.22 if needed) | Refactor + hardening + migration (`PLAN-ALPHA.md`) | AUDIT work packages (ledger, shared helpers, constants, render chokepoint, splits); SPEC tightening pass; then the breaking round: comma law, validation, similarity warning, wrap + line-align, scale/unit/density, `place:`, renames, **fonts** (metrics, subsets, `--static`/`--embed-font` — 3.7), root-drawing/sequence router fix, row bands/marks, radial band error. Ends: **syntax frozen**, tag `1.0.0-alpha`. |
 | **1.0.0-alpha.1** | Tree & natural | `layout: tree`, `|topic|`, `|mindmap|`, desugar branch links, palette walk; `routing: natural`. |
 | **1.0.0-alpha.2** | Charts | per-datum paint + labels, time axes, the `format:` machinery + axes/tooltips. |
 | **1.0.0-alpha.3** | Drawing measurement | dimension clearance + bounds-derived packing, inference + `project:`, boxed datums + datum identities, halos, internal threads, pattern copy ids, fan leaders. |
@@ -362,6 +415,10 @@ distort the features above or reserve premature syntax:
   repeated-segment counting, baseline/ordinate dimension systems, auto-BOM,
   exploded mates, deeper sourced-view nesting, full orthographic/3D projection.
 - **Imports/modules/namespaces** for shared themes and part libraries.
-- **Core/rendering**: animation, native PNG/WebP export, oklch output flag,
-  embedded font metrics, numeric font weights, gradient text, non-rect radius,
-  richer accessibility metadata, `w`/`h` ambient in pen expressions.
+- **Core/rendering**: animation; native PNG/WebP export (design notes: rasterize
+  the `--static` SVG via resvg→tiny-skia, PNG encode built-in, WebP lossless via
+  `image-webp`, behind a `raster` feature; needs a `--scale`/`--width` knob; a
+  raster bakes one theme — auto dark/light is lost); oklch output flag;
+  arbitrary numeric font weights beyond the 400–700 set and kerning-aware
+  measurement (the 3.7 metrics ship without shaping); gradient text; non-rect
+  radius; richer accessibility metadata; `w`/`h` ambient in pen expressions.
