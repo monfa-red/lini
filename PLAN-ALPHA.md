@@ -255,6 +255,9 @@ AUDIT R4. The stage that ends the inline-style whack-a-mole.
 Acceptance: snapshot re-bless limited to the enumerated changes; resvg renders
 of `styles.lini`, `gap_fill.lini`, `sequence.lini`, one drawing sample — light +
 dark — visually checked.
+
+**Release checkpoint:** with the R phase complete, cut **0.20.1** — pure
+internals plus the R1 fmt / R6 leak bugfixes; the language is unchanged.
 **Log:**
 
 ---
@@ -322,6 +325,44 @@ already uses the new syntax.
 
 ## Phase M — the 0.21 breaking migration
 
+### Stage M0 — the sample garden `[output: snapshots renamed/regenerated]`
+
+Consolidate ~50 samples to ~25 **before** the M-phase migrations multiply the
+cost of each one (every sample gets hand-migrated at M1 and M3, re-blessed at
+M5, re-reviewed at M7). Samples are the showroom: every survivor is polished,
+idiomatic lini a learner can copy.
+
+- [ ] Keep as-is: `hello`, `hero`, `chart_hero`, `entity_hero`, `icons`,
+  `palette`, `sequence`, `shapes` (README asset sources), `links`,
+  `links_simple`/`links_medium`/`links_hard`, `pcb` (routing-oracle scenes),
+  `sketch`, `templates`, `layout`, `styles`, `expr`, `desugar`.
+- [ ] Merges — final judgment in-stage; each merged file must read as **one
+  coherent scene**, not a concatenation:
+  - `charts.lini` ← chart_bars + chart_lines + chart_points + chart_pie;
+    `chart_advanced.lini` ← chart_axes + chart_fn + chart_annotations +
+    chart_labels + chart_radial.
+  - `drawing_turned.lini` ← tiebar + shaft + barrel; `drawing_section.lini` ←
+    bushing + ring + detail; `drawing_assembly.lini` ← assembly + mate + pump
+    (**rework** — it reads as bad work today); `drawing_annotations.lini` ←
+    dims + dim_style + leaders (**rework**) + pattern + drawing.lini.
+    `drawing_sheet` and `drawing_screw` stay (the flagship + the stress bar).
+  - `paint.lini` ← gradient + gap_fill + themes; `text_tables.lini` ← text +
+    table_align + table_cell_style (**must keep a styled cell** — R1's
+    regression coverage; move its focused test's path).
+- [ ] Update every by-name test reference; snapshot set follows (deletes +
+  renames — regenerate, never hand-edit); conformance / oracle / fmt / laws
+  sweeps stay green; README images unchanged (all sources are keepers).
+- [ ] AGENTS.md: replace "One sample per feature in `samples/`" with the
+  cluster policy — *samples are the showroom; one sample per feature cluster;
+  extend an existing sample before adding a file.*
+- [ ] Finish with a PNG contact sheet (resvg, light + dark) of every surviving
+  sample for owner review — the gate is "code you'd want a stranger to learn
+  lini from."
+
+Acceptance: ~25 samples; all sweeps green; contact sheet reviewed; zero README
+asset drift.
+**Log:**
+
 ### Stage M1 — the comma law `[breaking]`
 
 AUDIT D7 + seam table. The parser is ready; this is the reader flip + migration.
@@ -380,6 +421,9 @@ false positives across samples; `cat -> dog -> bird` stays warning-free.
 Acceptance: all drawing samples render byte-stable after migration except where
 the amendment says otherwise; `lini desugar` shows folded scales; no `dwg`/
 `rev`/`tags`/`over` spelling remains anywhere in repo.
+
+**Release checkpoint:** M1–M3 land together, never separately — with them in,
+the breaking core is coherent: cut **0.21.0**.
 **Log:**
 
 ### Stage M4 — text wrap + line alignment `[feature]`
@@ -479,15 +523,17 @@ visually correct; `lini fmt/desugar/serve/theme --help` outputs unchanged in
 substance.
 **Log:**
 
-### Stage M7 — release 0.21 → tag `1.0.0-alpha`
+### Stage M7 — release 0.22 → tag `1.0.0-alpha`
 
 - [ ] Full sweep: `cargo fmt` / `test` / `clippy`; `lini fmt` over every sample
   committed clean; desugar + laws oracles green; every sample rendered to PNG
   and eyeballed (Sonnet agents render, Opus/main reviews), light + dark.
 - [ ] README + `lini theme`/CLI docs updated to the new syntax; AUDIT.md deleted
   (its stages landed); ROUTING-LOG.md entry for the routing-adjacent changes.
-- [ ] Version: release 0.21.0 (or 0.22.0 if the phase split), then tag
-  `1.0.0-alpha` on the same tree — the syntax-frozen marker PLAN-V1 builds on.
+- [ ] Version: release **0.22.0** (0.21.0 was cut at the M3 checkpoint), then
+  tag `1.0.0-alpha` on the same tree — the syntax-frozen marker PLAN-V1 builds
+  on. Each PLAN-V1 round then publishes its prerelease (`1.0.0-alpha.N`,
+  `beta.N`, `rc.N`) as part of its round-complete sweep.
 - [ ] Retro pass over this file: unfinished items either done or explicitly
   moved to PLAN-V1 rounds; Log lines complete.
 
@@ -501,11 +547,14 @@ substance.
 R1 ──► R2 ──► R3        (suggest → ledger → consts)
 R4, R5, R6              (independent of R1–R3 except R5's Strategy matches; any order)
 S1 ──► S2               (tighten, then amend)
+M0 before M1            (samples-only; halves every later migration — runnable
+                         any time after R1, suggested right after S2)
 S2 ──► M1 ──► M2 ──► M3 (amendment first; M2 needs M1's ledger shapes; M3 needs M2's errors)
 M4 ──► M5 after S2      (M4 rewrites text.rs's line API; M5's metrics swap the advance
                          math inside it; M4 before alpha.1 — mindmap topics want wrap)
 M6 after S2             (independent fixes; any time in the M phase)
-M7 last
+M7 last                 (releases: 0.20.1 after R6 · 0.21.0 after M3 · 0.22.0 + the
+                         1.0.0-alpha tag at M7)
 ```
 
 R-stages and S1 can interleave with normal life; the M-phase is one continuous

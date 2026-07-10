@@ -37,10 +37,11 @@ parent-over-subtree centring + radial sectors; `natural` =
 bundle filter (`request.rs:174`) + its own law checker; D4's exhaustive matches
 flag every touch site.
 
-**Samples**: an org chart (column tree, orthogonal), a rich mindmap (topics with
-icons/badges, cross-link, natural), a row tree. **Prototype the mindmap sample
-early** — natural-curve aesthetics are the round's real risk; iterate the curve
-fit against the rendered PNG before polishing the engine.
+**Samples** (cluster policy — extend before adding): one `tree.lini` holding an
+org chart (column, orthogonal) and a row tree in one scene, plus one
+README-worthy mindmap hero (rich topics, a cross-link, natural). **Prototype the
+mindmap early** — natural-curve aesthetics are the round's real risk; iterate
+the curve fit against the rendered PNG before polishing the engine.
 
 **Acceptance**: tree samples deterministic under the laws oracle where routed;
 mindmap reads well in light + dark (palette walk verified); `lini desugar` shows
@@ -68,8 +69,9 @@ ledger as an ordinary inherited property (lean yes).
 `read_data` is the single data reader post-M1; `format:` machinery is
 greenfield — put it beside the ledger so dims (alpha.3) consume the same engine.
 
-**Samples**: a time-series line chart; a bar chart with one highlighted datum
-(paint list); the labelled-scatter sample gains `labels:` (renamed in M3).
+**Samples** (cluster policy): extend `charts.lini` / `chart_advanced.lini` —
+a time-series line, a paint-list-highlighted bar, `labels:` on the scatter.
+No new files.
 
 **Acceptance**: tick text pinned by snapshots across zoom-y domains (minutes →
 years); paint lists verified against palette `auto` in light + dark; count
@@ -105,8 +107,9 @@ the fixed `DIM_OFFSET + k·DIM_PITCH` generator; D5 mask-based halos generalize
 a resolve-scene pass beside `id_seen`; fan leaders = allow `&` on one-ended
 leader ops in resolve + one text/multi-tip in `leaders::callout`.
 
-**Samples**: the ramjet-derived screw/spike sheets updated to exercise
-inference, copies (`plate.bolt.2`), fan leaders, halos; an aligned-dim sample.
+**Samples** (cluster policy): extend the drawing keepers — `drawing_screw` /
+`drawing_sheet` / `drawing_annotations` exercise inference, aligned dims,
+copies (`plate.bolt.2`), fan leaders, halos. No new files.
 
 **Acceptance**: every drawing sample re-rendered and inspected at 1:1 and a
 detail scale, light + dark, on-screen and at print size; the dim packer never
@@ -137,8 +140,9 @@ the link-label path is `TextNode`→`ResolvedText` end-to-end — widening it to
 carry child nodes is the round's L item; annotation seating runs after mates,
 outside the grounding graph.
 
-**Samples**: a fully-toleranced part (frames + finish + datums — the injection-
-screw bar); a seated finish-symbol sample.
+**Samples** (cluster policy): one new `drawing_gdt.lini` — a genuinely new
+cluster — holding the fully-toleranced part: frames, finish symbols (seated and
+leader forms), datums.
 
 **Acceptance**: frames render semantically valid or error — never plausible-
 wrong; glyph line weights match dimension linework at every view scale;
