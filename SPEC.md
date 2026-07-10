@@ -568,9 +568,15 @@ that grows with its `[ ]` text (a `32` floor) and needs a `symbol`; `|line|` / `
 without it. `|block|` carries `padding: 0`, so a bare block sizes to its content
 exactly.
 
-Text width uses one advance per character (≈ 0.6 em). The default font is monospace,
-so this is essentially exact; a proportional `font-family` override makes it
-approximate until embedded font metrics land ([SPEC 23](#23-deferred)).
+**Text is measured from real metrics.** Width = Σ per-glyph advances at the
+compile-resolved `font-weight`, read from the bundled metrics tables
+([SPEC 6](#6-paint-stroke--text)); no kerning or shaping (≈ 1 % of a line, the
+documented tolerance — [SPEC 23](#23-deferred)). **Metrics follow the kind, not
+the name**: a mono `font-family` — the bundled default, a known-mono name, or any
+name containing "mono" — measures on the mono table (exactly **0.6 em per glyph**,
+at every weight), every other family on the proportional table. An unknown glyph
+falls back to a fixed advance (wide for the CJK ranges). Vertical centering is
+**cap-height optical centering**, from the same tables.
 
 ---
 
@@ -608,6 +614,17 @@ The text family — `font-family`, `font-size`, `font-weight`, `font-style`,
 and it cascades down, or on a string's own block (`"x" { font-weight: bold }`) for
 that one text node. Body text defaults to `font-size` 15, `font-weight` `normal`;
 captions 12 and link labels 11 carry their own baked defaults.
+
+**Two bundled families** (both SIL OFL 1.1) carry the metrics ([SPEC 5](#5-the-box-model)):
+**Google Sans Code**, the mono default, and **Google Sans**, the proportional one
+declaration away (`font-family: "Google Sans"`) — four static roman weights each.
+A `font-family` **override changes only the emitted name**: measurement stays by
+kind (mono vs proportional), so a runtime CSS restyle keeps the compiled layout
+box. **`font-weight`** takes `normal | medium | semibold | bold | 400 | 500 | 600 |
+700` (`normal` = 400, `bold` = 700; arbitrary 100–900 is deferred —
+[SPEC 23](#23-deferred)); measurement reads the resolved weight (mono advances are
+weight-invariant). How fonts leave the compiler — names, embedded, outlined — is
+[SPEC 17](#17-svg-output)'s three output modes.
 
 **Line alignment rides `align` — there is no `text-align`.** A text leaf's lines —
 wrapped ([SPEC 5](#5-the-box-model)) or authored `\n` lines — align per its
@@ -1137,7 +1154,7 @@ Each colour is a `light-dark(LIGHT, DARK)` value, so one SVG carries both modes:
 --lini-icon-fill     light-dark(rgba(0,0,0,.16), rgba(255,255,255,.18))  the soft body behind a duotone icon
 --lini-caption-color light-dark(rgba(0,0,0,.5), rgba(255,255,255,.55))
 --lini-footer-color  light-dark(rgba(0,0,0,.5), rgba(255,255,255,.55))
---lini-font-family   ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace
+--lini-font-family   "Google Sans Code", ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace
 --lini-font-weight         normal
 --lini-caption-font-weight normal
 --lini-link-font-weight    normal
@@ -1146,18 +1163,20 @@ Each colour is a `light-dark(LIGHT, DARK)` value, so one SVG carries both modes:
 ```
 
 `--lini-bg` paints the scene background (the canvas rect), so the diagram is
-self-contained in either mode. The default font is a **monospace** stack: it reads
-crisp, and a fixed glyph advance keeps text-width estimation accurate without embedded
-font metrics ([SPEC 23](#23-deferred)). Body text, captions, and link labels are all
-`normal` weight by default.
+self-contained in either mode. The default stack leads with the bundled mono
+**Google Sans Code** ([SPEC 6](#6-paint-stroke--text)), so an installed or hosted
+copy engages even in name-only output; its fixed advance is what the mono metrics
+table measures, so a diagram measures identically in every output mode
+([SPEC 17](#17-svg-output)). Body text, captions, and link labels are all `normal`
+weight by default.
 
 **Dark/light is automatic.** The compiler emits `color-scheme: light dark` on `.lini`,
 so `light-dark()` follows the viewer's OS (`prefers-color-scheme`) — no script, no
 `@media`. A `data-theme="dark"` / `"light"` on the SVG or any ancestor forces a mode
 (it flips `color-scheme`, and its higher specificity beats the OS). All defaults sit in
 `@layer lini.defaults`, so unlayered host CSS still wins with no `!important`.
-`--bake-vars` freezes the light arm into literals for renderers without `light-dark()`
-([SPEC 10.6](#106---bake-vars)).
+`--static` freezes the light arm into literals for renderers without `light-dark()`
+([SPEC 10.6](#106---static)).
 
 ### 10.2 The colour palette
 
@@ -1291,12 +1310,14 @@ hatch-pitch 6    hatch line-width 0.75   break-gap 12     tol-stack 0.7
 center-mark-overhang 4    drawing link stroke-width 1   drawing link font-size 12
 ```
 
-### 10.6 `--bake-vars`
+### 10.6 `--static`
 
-Class rules and inline `style=` work everywhere, but CSS *variables* don't — resvg and
-librsvg fail `var()` in every position (browsers, even `<img>`-embedded, are fine).
-`--bake-vars` keeps the rules but inlines every `var(--lini-name)` as its literal: no
-runtime theming, but a self-contained SVG that renders anywhere.
+Class rules and inline `style=` work everywhere, but CSS *variables* don't — resvg
+and librsvg fail `var()` in every position (browsers, even `<img>`-embedded, are
+fine) — and neither honours `@font-face`. **`--static`** (the renamed `--bake-vars`
+— no alias) keeps the rules but inlines every `var(--lini-name)` as its literal
+**and outlines text to paths** ([SPEC 17](#17-svg-output)): no runtime theming, but
+a self-contained SVG that renders identically anywhere, installed fonts or none.
 
 ### 10.7 Expressions & functions
 
@@ -1420,7 +1441,7 @@ small, bounded addition ([Part III](#part-iii--reference) formalises each):
    arrange their children where they sit. `sequence` / `chart` / `pie` instead **read their
    whole subtree** and emit an ordinary primitive tree — `|block|`s, `|line|`s, `|path|`s,
    text — at baked coordinates ([SPEC 18](#18-compile-pipeline)). So the cascade, palette, theming,
-   gradients, `--bake-vars`, `fmt`, and determinism all apply to a chart or a sequence with
+   gradients, `--static`, `fmt`, and determinism all apply to a chart or a sequence with
    **no engine-specific render code** — a chart *is* a diagram once lowered.
 
 **The container is still a box.** An engine owns *where its children go*, but the
@@ -1986,7 +2007,7 @@ The two texts **complement**: the *inline* label is the datum's own text — a s
 point can read `Max` on the plot and `GLM-5.2: 75%` on hover, never competing.
 
 **The hover floor is always honest.** A labelled mark carries a native `<title>` — its
-accessible name, readable in any renderer and surviving `--bake-vars`. Over it, a live CSS
+accessible name, readable in any renderer and surviving `--static`. Over it, a live CSS
 `:hover` rule reveals a hidden `<g class="lini-chart-tip">` card built from primitives,
 positioned beside the point; the card is **live-only** (a baked SVG keeps the `<title>` and
 drops the `:hover`). Only `tooltip: none` strips the `<title>` too.
@@ -2742,7 +2763,7 @@ geometry must exist before it can be measured:
    draw-order override, like a chart's semantic order; `layer:` still wins).
 
 The output is an ordinary primitive subtree — theming, the palette, gradients,
-`--bake-vars`, `fmt`, and byte-for-byte determinism apply with no drawing-specific
+`--static`, `fmt`, and byte-for-byte determinism apply with no drawing-specific
 render code. The **parser is scope-blind**: the ops and forms parse everywhere and
 *mean* drawing only in a drawing scope — elsewhere they error at resolve
 ([SPEC 20](#20-errors)).
@@ -2835,7 +2856,7 @@ Honoured on every drawn node, in every layout (a box; text takes the marked subs
 |---|---|---|---|
 | `font-family` | ident · string · `--var` | `--font-family` | live |
 | `font-size` | number | 15 (link 11, caption 12) | baked |
-| `font-weight` | `normal` · `bold` | `normal` | live (numeric ⌛) |
+| `font-weight` | `normal`·`medium`·`semibold`·`bold`·`400`·`500`·`600`·`700` | `normal` | live — measured at the resolved weight ([SPEC 6](#6-paint-stroke--text)); arbitrary 100–900 ⌛ |
 | `font-style` | `normal` · `italic` · `oblique` | `normal` | live |
 | `text-transform` | `uppercase` · `lowercase` · `capitalize` · `none` | `none` | live |
 | `text-decoration` | `underline` · `overline` · `line-through` · `none` | `none` | live |
@@ -2979,6 +3000,17 @@ transforms — is always baked into attributes. Inherited text properties state 
 and cascade natively; a node's own text property emits on its `<g>` (or directly on the
 `<text>`) and inherits to its subtree.
 
+**Fonts — three output modes** ([SPEC 6](#6-paint-stroke--text)). By default the SVG
+carries **names only** — zero font bytes; the stack leads with the bundled family
+names, so an installed or hosted copy engages. **`--embed-font`** inlines a base64
+`@font-face` per family × weight actually used, under **Lini-scoped family names**
+(never colliding with a user's installed versions) — browser-faithful and
+**browser-only by design**: resvg and librsvg ignore `@font-face`. **`--static`**
+outlines text to paths — glyphs deduplicated through `<defs>` / `<use>`, italic as
+synthetic oblique — and bakes the variables ([SPEC 10.6](#106---static)): faithful
+in every renderer. Layout never varies by mode — measurement always reads the
+compiled-in metrics tables ([SPEC 5](#5-the-box-model)).
+
 **Box:**
 
 ```svg
@@ -3087,7 +3119,7 @@ their `along:` fractions (auto-distributed when unset).
 
 **Render.** Depth-first emit SVG per [SPEC 17](#17-svg-output): a box is a `<g>`, a string is a
 `<text>`. A lowered chart / sequence subtree renders as ordinary primitives — so theming,
-palette, gradients, `--bake-vars`, `fmt`, and byte-for-byte determinism apply with no
+palette, gradients, `--static`, `fmt`, and byte-for-byte determinism apply with no
 layout-specific render code.
 
 ---
@@ -3098,7 +3130,7 @@ layout-specific render code.
 lini [options] <input.lini>
 lini fmt [--check] [--stdout] <input.lini>
 lini desugar <input.lini>
-lini serve [--port N] [--bake-vars] [PATH]
+lini serve [--port N] [--static] [PATH]
 lini theme [NAME]
 ```
 
@@ -3109,7 +3141,8 @@ lini theme [NAME]
 | `--check` | Parse + resolve only — layout/render errors still surface on a full compile. |
 | `--theme NAME\|FILE\|A/B` | A built-in theme (`dark`, `high-contrast`, …), a CSS file of `--lini-*` overrides, or a light/dark pair (`light/dark`). |
 | `--no-warn` / `--strict` | Silence warnings / treat them as errors. |
-| `--bake-vars` | Inline `var()`s as literals (for non-browser renderers — [SPEC 10.6](#106---bake-vars)). |
+| `--static` | Inline `var()`s as literals **and** outline text to paths — self-contained for any renderer ([SPEC 10.6](#106---static), [SPEC 17](#17-svg-output)). |
+| `--embed-font` | Embed the used bundled family × weights as base64 `@font-face` — browser-only ([SPEC 17](#17-svg-output)). Both font flags need the default-on `font` build feature; name-only output never does. |
 | `--watch` | Recompile on every input change (requires `-o`). |
 | `-h`, `-V` | Help / version. |
 
@@ -3508,10 +3541,11 @@ Named in the language, not built yet; the syntax is stable.
   ([SPEC 7](#7-nodes)), so `o` never needs to stand alone.
 - **gradient fills on text** — gradients fill nodes today ([SPEC 10.3](#103-gradients)).
 - `radius` on non-rect primitives (hex / diamond / slant / poly).
-- numeric `font-weight` (`100…900`); a solid (`fill`-weight) icon variant (the built-in set
-  is Phosphor duotone, behind a default-on `icons` cargo feature).
-- embedded font metrics — the monospace default keeps the estimate close; a proportional
-  `font-family` override is approximate until then.
+- arbitrary numeric `font-weight` (100–900 beyond the built 400–700 set) and
+  **kerning-aware measurement** — the metrics ship without shaping (≈ 1 % on a
+  proportional line, [SPEC 5](#5-the-box-model)).
+- a solid (`fill`-weight) icon variant (the built-in set is Phosphor duotone,
+  behind a default-on `icons` cargo feature).
 - `aria-label`.
 
 **Tables & entities**
