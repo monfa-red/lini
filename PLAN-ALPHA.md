@@ -232,10 +232,10 @@ buffers / fmt-config / routing `cost.rs` / `AVG_CHAR_WIDTH_RATIO` per AUDIT.
 
 AUDIT R2 (expr) + R5 (parser). Medium risk — snapshots are the oracle.
 
-- [ ] Split `syntax/parser.rs` into `syntax/parser/{mod,values,nodes,links,decl,
+- [x] Split `syntax/parser.rs` into `syntax/parser/{mod,values,nodes,links,decl,
   selector,classify}.rs` per the AUDIT table — `values.rs` first (isolates the
   comma-law surface for M1); tests to `parser/tests.rs`.
-- [ ] expr consumes `&[Token]`: `take_group`/`take_arg_expr` hand a token slice;
+- [x] expr consumes `&[Token]`: `take_group`/`take_arg_expr` hand a token slice;
   delete expr's lexer (expr.rs:110-216) and `tok_str`; fold scientific notation
   into the one number scanner **gated to expression context** (SPEC: sci-notation
   is expression-only; preserve the ident-predicate divergence — `r-1` stays
@@ -243,7 +243,38 @@ AUDIT R2 (expr) + R5 (parser). Medium risk — snapshots are the oracle.
 
 Acceptance: zero snapshot diffs; `cargo test` including every expr fold test;
 parser files each < 500 production LOC.
-**Log:**
+**Log:** 2026-07-10 — **done**, 2 commits, all acceptance met (zero snapshot
+diffs — every suite green; fmt/clippy clean; parser production files 84–257 LOC,
+all < 500). Items landed:
+- expr lexer unified: `expr.rs`'s private lexer / `Tok` / `lex_number` / `push`
+  / `tok_str` (110-409) deleted; `Expr::parse` re-lexes through the main lexer's
+  new `lexer::lex_expr`, and the Pratt parser consumes `lexer::TokKind`
+  directly. Sci-notation folded into the one `lex_number` (gated `expr_mode`);
+  the ident-predicate divergence (`r-1` = subtraction) and the signed-number
+  divergence (`hatch(45 -45)` = two angles) are preserved by a lexer **mode**,
+  not a second lexer — `lex_expr` sets `expr_mode`, under which `-`/`+` are
+  operators, `-` isn't an ident char, and newlines are whitespace. The normal
+  pass is byte-for-byte unchanged (every gate is `expr_mode`-only), so
+  `Value::Expr(String)` / fmt / desugar are untouched.
+- parser split: `parser.rs` (1681 LOC) → `parser/{mod,classify,values,decl,
+  selector,nodes,links,tests}.rs`; each submodule an `impl Parser` block of
+  `pub(super)` methods, primitives + File driver + `Tail`/`Kind`/`BarsCtx` kept
+  in `mod.rs`. Faithful move verified by normalize-and-diff (only module
+  boilerplate + one fmt-reflowed signature differ) plus the snapshot oracle.
+
+**Deviation:** the expr item's literal "`take_group`/`take_arg_expr` hand a
+token slice" (⇒ `Value::Expr` carries tokens) is **infeasible as `[pure]`** —
+surfaced and approved before coding. Two reasons: (1) one uniform token stream
+can't yield both `hatch(45 -45)` (needs `-45` a signed number) and `(r-1)`
+(needs `-` an operator) — today's two lexers resolve this precisely by
+re-lexing the identified expression region, so handing the main pass's tokens
+would regress one case; (2) fmt and `lini desugar` emit `Value::Expr` as **raw
+source verbatim** and `print_file` has no `src`, so token-carrying `Value::Expr`
+would force canonical-spaced reconstruction — an `[output]` change plus a new
+parallel expr-printer. Re-lexing the isolated region via `lex_expr` achieves
+the AUDIT's actual goal ("kill the duplicate lexer + diverged number scanner;
+one scanner implements the semantic split") while staying `[pure]`. No
+follow-ups.
 
 ### Stage R5 — structural splits: layout, chart, desugar, resolve, routing
 
