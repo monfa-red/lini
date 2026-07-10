@@ -405,7 +405,11 @@ mod tests {
         rewrite(&mut a, &mut it);
         rewrite(&mut b, &mut it);
         rewrite(&mut c, &mut it);
-        assert_eq!(it.hatches.values().len(), 2, "45/6 dedups; 45/4 is distinct");
+        assert_eq!(
+            it.hatches.values().len(),
+            2,
+            "45/6 dedups; 45/4 is distinct"
+        );
         assert!(matches!(&a, ResolvedValue::RawCss(s) if s == "url(#lini-hatch-1)"));
         assert!(matches!(&b, ResolvedValue::RawCss(s) if s == "url(#lini-hatch-1)"));
         assert!(matches!(&c, ResolvedValue::RawCss(s) if s == "url(#lini-hatch-2)"));
@@ -418,7 +422,11 @@ mod tests {
         let mut b = grad("gradient", vec![hue("teal"), hue("sky")]);
         rewrite(&mut a, &mut it);
         rewrite(&mut b, &mut it);
-        assert_eq!(it.gradients.values().len(), 1, "identical gradients must dedup");
+        assert_eq!(
+            it.gradients.values().len(),
+            1,
+            "identical gradients must dedup"
+        );
         assert!(matches!(&a, ResolvedValue::RawCss(s) if s == "url(#lini-gradient-1)"));
         assert!(matches!(&b, ResolvedValue::RawCss(s) if s == "url(#lini-gradient-1)"));
     }

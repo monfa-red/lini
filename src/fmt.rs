@@ -156,7 +156,7 @@ impl Emitter<'_> {
             }
             StyleItem::Rule(r) => self.emit_rule(r, depth),
             StyleItem::Define(d) => self.emit_define(d, depth),
-            StyleItem::Func(f) => {
+            StyleItem::Binding(f) => {
                 self.indent(depth);
                 self.out.push_str(&f.name);
                 if !f.params.is_empty() {
@@ -689,7 +689,7 @@ impl Emitter<'_> {
                 self.out.push_str(name);
             }
             // A space-group in one call-arg slot (`hatch(45 -45, 6)`).
-            Value::Group(items) => {
+            Value::Tuple(items) => {
                 for (i, item) in items.iter().enumerate() {
                     if i > 0 {
                         self.out.push(' ');
@@ -762,7 +762,7 @@ fn style_item_span(item: &StyleItem) -> Span {
         StyleItem::RootDecl(d) | StyleItem::Var(d) => d.span,
         StyleItem::Rule(r) => r.span,
         StyleItem::Define(d) => d.span,
-        StyleItem::Func(f) => f.span,
+        StyleItem::Binding(f) => f.span,
     }
 }
 

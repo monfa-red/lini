@@ -269,7 +269,7 @@ fn resolve_scalar(
         // A (…) expression folds to a number / point [SPEC 10.7].
         Value::Expr(s) => from_expr(fold_expr(s, span, funcs)?),
         // A space-group in one call-arg slot (`hatch(45 -45, 6)`) [SPEC 10.3].
-        Value::Group(items) => {
+        Value::Tuple(items) => {
             let mut out = Vec::with_capacity(items.len());
             for item in items {
                 out.push(resolve_scalar(item, span, vars, funcs)?);

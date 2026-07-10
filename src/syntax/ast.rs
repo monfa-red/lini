@@ -36,7 +36,7 @@ pub enum StyleItem {
     Define(Define),
     /// `name = value;` / `name(params) = value;` — an `=` binding [SPEC 10.7]: a
     /// compile-time value or function, read in any expression.
-    Func(FuncDef),
+    Binding(FuncDef),
 }
 
 /// An `=` binding [SPEC 10.7] — a scalar (`params` empty, read bare like a constant)
@@ -221,7 +221,7 @@ pub enum Value {
     NamedCall(Call, String),
     /// A space-separated run inside **one call-argument slot** —
     /// `hatch(45 -45, 6)`'s angle group [SPEC 10.3]. Never nests.
-    Group(Vec<Value>),
+    Tuple(Vec<Value>),
 }
 
 #[derive(Debug, Clone)]

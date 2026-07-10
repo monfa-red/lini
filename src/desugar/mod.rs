@@ -53,7 +53,7 @@ pub fn desugar(file: &File) -> Result<File, Error> {
             StyleItem::RootDecl(d) => user_root.push(d.clone()),
             // Functions are compile-time [SPEC 10.7]; pass them through so resolve
             // can fold values against them.
-            StyleItem::Func(f) => user_funcs.push(f.clone()),
+            StyleItem::Binding(f) => user_funcs.push(f.clone()),
             StyleItem::Var(d) => user_vars.push(d.clone()),
             StyleItem::Define(d) => {
                 element_rules
@@ -153,7 +153,7 @@ pub fn desugar(file: &File) -> Result<File, Error> {
         stylesheet.push(StyleItem::Var(d));
     }
     for f in user_funcs {
-        stylesheet.push(StyleItem::Func(f));
+        stylesheet.push(StyleItem::Binding(f));
     }
     // The chart / sequence engines synthesize `|line|` / `|block|` shapes at layout
     // (with no source node), so their primitive class rules must exist even unworn —

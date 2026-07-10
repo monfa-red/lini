@@ -2,9 +2,10 @@
 //!
 //! The work splits by concept: [`value`] maps declaration values into
 //! `ResolvedValue`s, [`cascade`] is the stylesheet plus selector matching,
-//! [`types`] the define/template/primitive chain, [`scene`] the node tree, and
-//! [`links`] the link pass. [`program`] orchestrates them over the [`defaults`]
-//! table; [`merge`] folds resolved declarations and extracts markers.
+//! [`scene`] the node tree, and [`links`] the link pass (types, templates, and
+//! defines were already lowered by desugar, so resolve sees only primitives).
+//! [`program`] orchestrates them over the [`defaults`] table; [`merge`] folds
+//! resolved declarations and extracts markers; [`ir`] is the resolved form.
 
 mod cascade;
 mod defaults;

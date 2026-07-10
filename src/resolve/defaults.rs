@@ -33,104 +33,84 @@ pub fn built_in_defaults() -> VarTable {
     };
 
     // Visual vars — live at runtime, each colour a light-dark() pair [SPEC 10.1].
-    set_visual(&mut t, "bg", light_dark(ident("white"), hex("1b1b1f")));
-    set_visual(&mut t, "fg", light_dark(ident("black"), hex("e8e8ea")));
-    set_visual(&mut t, "fill", light_dark(ident("white"), hex("26262b")));
-    set_visual(&mut t, "stroke", light_dark(hex("444"), hex("9aa0a6")));
+    t.set("bg", light_dark(ident("white"), hex("1b1b1f")));
+    t.set("fg", light_dark(ident("black"), hex("e8e8ea")));
+    t.set("fill", light_dark(ident("white"), hex("26262b")));
+    t.set("stroke", light_dark(hex("444"), hex("9aa0a6")));
     // The primary drafting line tone [SPEC 10.1]: pen geometry, dimension
     // lines, and their arrowheads read full black on white (white on black
     // in dark) — the ISO print look; support lines stay a step lighter.
-    set_visual(
-        &mut t,
-        "stroke-dark",
-        light_dark(ident("black"), ident("white")),
-    );
+    t.set("stroke-dark", light_dark(ident("black"), ident("white")));
     // The secondary line tone [SPEC 10.1] — drafting's thin support lines
     // (centerlines, break lines, dimension extension lines) sit a step
     // lighter than the geometry. Full black/white at reduced **alpha**
     // (matching the old grey's value), so a support line crossing dark
     // geometry blends toward black instead of greying it.
-    set_visual(
-        &mut t,
+    t.set(
         "stroke-light",
         light_dark(rgba(0.0, 0.0, 0.0, 0.545), rgba(255.0, 255.0, 255.0, 0.64)),
     );
-    set_visual(&mut t, "accent", light_dark(hex("0a84ff"), hex("4aa3ff")));
-    set_visual(&mut t, "accent-text", ident("white"));
-    set_visual(&mut t, "muted", light_dark(hex("888"), hex("9aa0a6")));
-    set_visual(
-        &mut t,
-        "danger",
-        light_dark(ident("crimson"), hex("ff6b6b")),
-    );
-    set_visual(&mut t, "warn", light_dark(ident("orange"), hex("ffb454")));
-    set_visual(&mut t, "stray", light_dark(ident("crimson"), hex("ff6b6b")));
-    set_visual(
-        &mut t,
+    t.set("accent", light_dark(hex("0a84ff"), hex("4aa3ff")));
+    t.set("accent-text", ident("white"));
+    t.set("muted", light_dark(hex("888"), hex("9aa0a6")));
+    t.set("danger", light_dark(ident("crimson"), hex("ff6b6b")));
+    t.set("warn", light_dark(ident("orange"), hex("ffb454")));
+    t.set("stray", light_dark(ident("crimson"), hex("ff6b6b")));
+    t.set(
         "group-stroke",
         light_dark(rgba(0.0, 0.0, 0.0, 0.4), rgba(255.0, 255.0, 255.0, 0.4)),
     );
-    set_visual(
-        &mut t,
+    t.set(
         "group-fill",
         light_dark(rgba(0.0, 0.0, 0.0, 0.03), rgba(255.0, 255.0, 255.0, 0.05)),
     );
     // The table / entity header band [SPEC 8]: a touch stronger than group-fill so a
     // header row reads as a band; dark/light aware, tree-shaken in only when referenced.
-    set_visual(
-        &mut t,
+    t.set(
         "header-fill",
         light_dark(rgba(0.0, 0.0, 0.0, 0.06), rgba(255.0, 255.0, 255.0, 0.08)),
     );
     // A soft but visible grey so a duotone icon reads as two-tone by default
     // (heavier than the near-invisible group-fill).
-    set_visual(
-        &mut t,
+    t.set(
         "icon-fill",
         light_dark(rgba(0.0, 0.0, 0.0, 0.16), rgba(255.0, 255.0, 255.0, 0.18)),
     );
     // A faint line for chart gridlines [SPEC 14.4] — themeable and dark/light
     // aware like every role var, tree-shaken in only when a chart references it.
-    set_visual(
-        &mut t,
+    t.set(
         "grid",
         light_dark(rgba(0.0, 0.0, 0.0, 0.10), rgba(255.0, 255.0, 255.0, 0.14)),
     );
     // The rich chart tooltip card [SPEC 14.8]: a solid contrasting surface and its
     // text — inverted from the page so the card pops in either theme.
-    set_visual(&mut t, "tip-bg", light_dark(hex("333"), hex("e8e8ea")));
-    set_visual(&mut t, "tip-fg", light_dark(ident("white"), hex("1a1a1f")));
-    set_visual(
-        &mut t,
+    t.set("tip-bg", light_dark(hex("333"), hex("e8e8ea")));
+    t.set("tip-fg", light_dark(ident("white"), hex("1a1a1f")));
+    t.set(
         "caption-color",
         light_dark(rgba(0.0, 0.0, 0.0, 0.5), rgba(255.0, 255.0, 255.0, 0.55)),
     );
-    set_visual(
-        &mut t,
+    t.set(
         "footer-color",
         light_dark(rgba(0.0, 0.0, 0.0, 0.5), rgba(255.0, 255.0, 255.0, 0.55)),
     );
-    set_visual(
-        &mut t,
-        "font-family",
+    t.set("font-family",
         ResolvedValue::RawCss(
             "ui-monospace, \"SF Mono\", \"Cascadia Code\", \"JetBrains Mono\", Menlo, Consolas, \"Liberation Mono\", monospace"
                 .into(),
         ),
     );
-    set_visual(&mut t, "font-weight", ident("normal"));
-    set_visual(&mut t, "caption-font-weight", ident("normal"));
-    set_visual(&mut t, "link-font-weight", ident("normal"));
-    set_visual(
-        &mut t,
+    t.set("font-weight", ident("normal"));
+    t.set("caption-font-weight", ident("normal"));
+    t.set("link-font-weight", ident("normal"));
+    t.set(
         "text-color",
         ResolvedValue::LiveVar {
             name: "fg".into(),
             raw: false,
         },
     );
-    set_visual(
-        &mut t,
+    t.set(
         "shadow-color",
         light_dark(rgba(0.0, 0.0, 0.0, 0.2), rgba(0.0, 0.0, 0.0, 0.5)),
     );
@@ -146,8 +126,4 @@ pub fn built_in_defaults() -> VarTable {
     }
 
     t
-}
-
-fn set_visual(t: &mut VarTable, name: &str, v: ResolvedValue) {
-    t.set(name, v);
 }

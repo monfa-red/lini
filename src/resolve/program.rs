@@ -223,7 +223,7 @@ fn apply_var_decls(vars: &mut VarTable, file: &File, funcs: &FuncTable) -> Resul
 fn build_funcs(file: &File) -> Result<FuncTable, Error> {
     let mut parsed = Vec::new();
     for item in &file.stylesheet {
-        if let StyleItem::Func(f) = item {
+        if let StyleItem::Binding(f) = item {
             let body = Expr::parse(&f.body).map_err(|e| Error::at(f.span, e.0))?;
             parsed.push((f, body));
         }

@@ -382,7 +382,7 @@ fn value_src(v: &Value) -> String {
         Value::Hex(h) => format!("#{h}"),
         Value::Ident(s) => s.clone(),
         Value::Var(s) => format!("--{s}"),
-        Value::Group(items) => items.iter().map(value_src).collect::<Vec<_>>().join(" "),
+        Value::Tuple(items) => items.iter().map(value_src).collect::<Vec<_>>().join(" "),
         Value::NamedCall(c, name) => format!("{}:{name}", call_src(c)),
     }
 }

@@ -306,7 +306,7 @@ impl<'a> Parser<'a> {
                 Kind::Decl => StyleItem::RootDecl(self.parse_decl()?),
                 Kind::Rule => StyleItem::Rule(self.parse_rule()?),
                 Kind::Define => StyleItem::Define(self.parse_define()?),
-                Kind::Func => StyleItem::Func(self.parse_binding()?),
+                Kind::Func => StyleItem::Binding(self.parse_binding()?),
                 _ => unreachable!(),
             };
             items.push(item);
@@ -522,7 +522,7 @@ impl<'a> Parser<'a> {
         ) {
             group.push(self.parse_value()?);
         }
-        Ok(Value::Group(group))
+        Ok(Value::Tuple(group))
     }
 
     /// If the argument at the cursor carries a top-level math operator, advance to its
@@ -1471,7 +1471,7 @@ mod tests {
         let Value::Call(c) = &fill.groups[0][0] else {
             panic!("expected a call");
         };
-        assert!(matches!(&c.args[0], Value::Group(g) if g.len() == 2));
+        assert!(matches!(&c.args[0], Value::Tuple(g) if g.len() == 2));
         assert!(matches!(&c.args[1], Value::Number(n) if *n == 6.0));
     }
 
@@ -1646,7 +1646,7 @@ mod tests {
             "{ scale(n) = (100 * 1.2 ^ n); my_r = 5; }\n|box#a| { width: scale(3); padding: (8 * 2) }\n",
         );
         match &f.stylesheet[0] {
-            StyleItem::Func(fd) => {
+            StyleItem::Binding(fd) => {
                 assert_eq!(fd.name, "scale");
                 assert_eq!(fd.params, vec!["n"]);
                 assert!(fd.body.contains("1.2"));
@@ -1655,7 +1655,7 @@ mod tests {
         }
         // A scalar binding is a zero-parameter `FuncDef` [SPEC 10.7].
         match &f.stylesheet[1] {
-            StyleItem::Func(fd) => {
+            StyleItem::Binding(fd) => {
                 assert_eq!(fd.name, "my_r");
                 assert!(fd.params.is_empty());
                 assert_eq!(fd.body, "5");
