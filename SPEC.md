@@ -673,7 +673,7 @@ on the non-rect primitives (hex / diamond / slant / poly) is deferred ([SPEC 23]
 
 | Property | Forms | Effect |
 |---|---|---|
-| `stroke-style` | `solid` / `dashed` / `dotted` / `center` / `phantom` | Stroke pattern. Default `solid`. `center` (dash-dot) and `phantom` (dash-dot-dot) are the drafting line conventions — axes and alternate positions — valid on shapes and `\|line\|`s everywhere ([SPEC 15.7](#157-leaders-notes--line-conventions)); a link's set stays `solid` / `dashed` / `dotted` / `wavy` ([SPEC 9](#9-links)). (`wavy` on closed primitives is deferred — [SPEC 23](#23-deferred).) |
+| `stroke-style` | `solid` / `dashed` / `dotted` / `center` / `phantom` | Stroke pattern. Default `solid`. `center` (dash-dot) and `phantom` (dash-dot-dot) are the drafting line conventions — axes and alternate positions — valid on shapes and `\|line\|`s everywhere ([SPEC 15.7](#157-leaders-notes--line-conventions)); a link's set stays `solid` / `dashed` / `dotted` / `wavy` ([SPEC 9](#9-links)). `wavy` is **link-only by design** — a wire waves, an outline never does. |
 | `stack` | `N` / `dx dy` | Draw an offset duplicate behind the node. Scalar `N` = `N -N`. |
 | `rotate` | `N` degrees | Rotate around the bbox center ([SPEC 5](#5-the-box-model)). |
 | `shadow` | `N` / `dx dy` / `dx dy blur` / `dx dy blur color` | Drop shadow via SVG `<filter>`. Scalar `N` = offset `N N`, blur `N`; tint defaults to `--lini-shadow-color`. |
@@ -778,7 +778,7 @@ the cascade ([SPEC 4](#4-selectors-cascade--specificity)) — every value here i
 | `\|shoulder\|` | `\|line\|` | `stroke: --stroke-dark; stroke-width: 2; fill: none` — needs `points:` | A turned part's **shoulder line** — the geometry-weight edge a `revolve:` generates at every sharp diameter change ([SPEC 15.3](#153-the-sketch-pen)); manual use is free. |
 | `\|plane\|` | `\|line\|` | `stroke-style: center; stroke: --stroke-light; stroke-width: 1; fill: none` | The **section-plane** line on the source view — its label the section letter; `at:` stations it, `facing:` turns its arrows; a `\|drawing\| { of: }` sections it ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `\|magnifier\|` | `\|oval\|` | `stroke: --stroke-light; stroke-width: 1; fill: none` — `width:` **required**, the region diameter | The **detail marker** — rings a region on the source view, its label the detail letter at the rim; a `\|drawing\| { of: }` details it ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
-| `\|page\|` | `\|block\|` | `layout: flow; fill: --bg` — `sheet: a4` unless sized | An ISO 5457 drawing **sheet** — mm dimensions via `sheet:`; px per mm from the root `density:`; frame, zones, and centring marks as generated chrome ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
+| `\|page\|` | `\|block\|` | `layout: flow; fill: --bg` — `sheet: a4` unless sized; `direction` by orientation | An ISO 5457 drawing **sheet** — mm dimensions via `sheet:`; px per mm from the root `density:`; frame, zones, and centring marks as generated chrome ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `\|title-block\|` | `\|table\|` | `font-size: 11; stroke-width: 1` | The ISO 7200 **title block** — a table the `\|page\|` seats flush inside its frame's bottom-right corner. **Field properties** (`title`, `drawing-number`, `revision`, `date`, `sheet-number`, `author`, …) build the standard grid, absent fields collapsing; its **smart label is the `title` field**; plain cells stay a fully custom block ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `\|frame\|` | `\|rect\|` | `fill: none; stroke: --stroke; stroke-width: 2` | A sheet's **frame** — the thick border a `\|page\|` generates at the ISO margins ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `\|zone\|` | `\|block\|` | `font-size: 9; color: --stroke-light` | A **zone reference** label (1, 2… / A, B…) a `\|page\|` generates in the margin band ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
@@ -966,6 +966,12 @@ a -> b -> c & d      // chain + fan
 
 Mixing operators in one chain is a parse error. On a chain or fan, the label,
 class, and `{ }` apply to every link the statement expands to.
+
+**A chain marks every hop.** `a -> b -> c` is exactly `a -> b; b -> c` — desugar
+expands the chain ([SPEC 18](#18-compile-pipeline)), so each hop carries the
+operator's full markers and `lini desugar` shows the two links. A bare first hop
+is spelled with the bare line op: `a - b -> c`. (Fan-out `&` is not sugar — its
+shared trunk is routing geometry, [ROUTING.md](ROUTING.md).)
 
 ### Styling
 
@@ -2664,7 +2670,9 @@ orientation keyword swaps the pair; ISO defaults — A4 and A5 portrait, A3–A0
 landscape; a bare `|page|` is `a4`), so an explicit `width:` / `height:` overrides
 through the ordinary slot and a custom sheet still derives its zones. The
 **ANSI/ASME Y14.1 letters** ride the same sugar in their own millimetres —
-`sheet: b` (`a`…`e`; `a` portrait, `b`–`e` landscape) — nothing else differs. A page
+`sheet: b` (`a`…`e`; `a` portrait, `b`–`e` landscape) — nothing else differs. A
+page's `direction` defaults by **orientation** — landscape → `row`, portrait →
+`column` — so views flow with the paper; set it to override. A page
 carries **no `scale:`** of its own: the root's `density:` sets pixels per millimetre
 (default 4, screen-only — [15.1](#151-the-container-the-datum--the-scale)), a
 drawing's `scale:` is its drafting ratio directly, and so a default drawing on any
@@ -2817,7 +2825,7 @@ Honoured on every drawn node, in every layout (a box; text takes the marked subs
 | `opacity` | `0..1` | 1 |
 | `stroke` | colour · `none` · gradient | `--stroke` (`--group-stroke` on group) |
 | `stroke-width` | number | 2 (group / frame 1) |
-| `stroke-style` | `solid`·`dashed`·`dotted`·`wavy`·`center`·`phantom` | `solid` — `wavy` on links today (closed prims ⌛); `center` / `phantom` on shapes and `\|line\|`s ([SPEC 15.7](#157-leaders-notes--line-conventions)) |
+| `stroke-style` | `solid`·`dashed`·`dotted`·`wavy`·`center`·`phantom` | `solid` — `wavy` link-only by design; `center` / `phantom` on shapes and `\|line\|`s ([SPEC 15.7](#157-leaders-notes--line-conventions)) |
 | `radius` | number | 0 (block/rect) · 8 (box/group) — rect + polyline join; non-rect ⌛ |
 | `shadow` | `N` · `dx dy` · `dx dy blur` · `dx dy blur color` | off — tint `--shadow-color` |
 
@@ -3036,9 +3044,11 @@ per instance; the scene defaults (`layout`, `padding`, `gap`, `font-size`, `clea
 `routing`, `density`) settle on the root; a drawing scope's `scale:` (the ratio) ×
 `unit:` × the root `density:` fold into its one internal px-per-unit
 ([SPEC 15.1](#151-the-container-the-datum--the-scale)); the per-type smart label (text / caption / symbol / link
-label / chart title …), auto-`along:`, and link auto-create (an undeclared endpoint `x` →
-`|box#x| "x"`) become explicit. The pass is idempotent; type-system errors (cycle,
-depth > 16, a define shadowing a built-in) surface here.
+label / chart title …), auto-`along:`, chain expansion (`a -> b -> c` →
+`a -> b; b -> c`, auto-created ids included — fan-out `&` stays a resolve / routing
+concept), and link auto-create (an undeclared endpoint `x` → `|box#x| "x"`) become
+explicit. The pass is idempotent; type-system errors (cycle, depth > 16, a define
+shadowing a built-in) surface here.
 
 **Resolve** (top-to-bottom):
 
@@ -3113,7 +3123,9 @@ your own (`light-dark()` colours, the font commented out).
 **`lini fmt`** reformats to canonical style — 2-space indent, `key: value;`
 declarations grouped on one line, a style-only node collapsed onto its head line when it
 fits (`|box#api| { fill: red }`), a lone label trailing the head (`|box#api| "API"`),
-children one per line in `[ ]`, table cells padded into aligned columns, a `draw:`
+children one per line in `[ ]`, table cells padded into aligned columns — a styled
+cell (`"Apple" { color: --red-ink }`) keeps its block and its **row steps out of the
+aligned grid**; unstyled rows stay aligned — a `draw:`
 value broken before each `move()` and wrapped between calls at the column limit
 (continuations indented, so a profile reads as its subpaths), comments and
 blank lines preserved. `--check` exits 1 if it would change anything; `--stdout` writes
@@ -3494,8 +3506,6 @@ Named in the language, not built yet; the syntax is stable.
 - **a bare hollow-circle endpoint operator** — `o` spells zero only next to a max glyph
   (`-o<` / `-o+`); a standalone hollow endpoint is the paint `marker-end: circle`
   ([SPEC 7](#7-nodes)), so `o` never needs to stand alone.
-- `stroke-style: wavy` on **closed** primitives (`|line|` waves — it backs an async
-  sequence message; a hex / oval / rect outline does not yet).
 - **gradient fills on text** — gradients fill nodes today ([SPEC 10.3](#103-gradients)).
 - `radius` on non-rect primitives (hex / diamond / slant / poly).
 - numeric `font-weight` (`100…900`); a solid (`fill`-weight) icon variant (the built-in set
@@ -3685,7 +3695,7 @@ db      --> api     "record"
 **A drawing — a sheeted screw, two views sharing an axis** ([SPEC 15](#15-drawing)):
 
 ```
-|page| { sheet: a5 landscape; gap: 50; direction: row; align: origin; } [
+|page| { sheet: a5 landscape; gap: 50; align: origin; } [    // landscape → direction: row
   // the ISO sheet: frame, zones, marks — views share their axes datum-to-datum
 
   |drawing#side| "DIN 912 — M8 × 40" { scale: 1.5; } [
