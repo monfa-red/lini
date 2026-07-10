@@ -70,7 +70,48 @@ AUDIT R2. Independent items; do in any order, commit in small groups.
 
 Acceptance: zero snapshot diffs (except re-blessed error-message tests); clippy
 clean; grep proves no remaining Levenshtein/AABB/normalise copies.
-**Log:**
+**Log:** 2026-07-10 — **done**, 11 commits, all acceptance met (fmt/test/clippy
+clean; grep confirms one Levenshtein, one point-fold/overlap/normalise home, no
+twin intern engines). Items landed:
+- `[bugfix]` fmt styled-cell block drop — fixed (`emit_aligned_cells` row-aware,
+  reuses `emit_text_node`); coverage hole closed with a new `samples/
+  table_cell_style.lini` (now swept by fmt/oracle/conformance) + a focused unit test.
+- `suggest.rs` — `edit_distance` / `nearest` / `did_you_mean`; six sites migrated.
+  One `[output: errors]` re-bless: the `sheet:` hint adopts the shared
+  "; did you mean" clause (test assertion, not a snapshot).
+- `Bbox::from_points/overlaps/contains/extent_of` — migrated; `extent_of` also
+  dedups engine/annotate accumulate_extent loops + sequence/section child-unions.
+- `geometry::unit()` (9 sites incl. a follow-up grep sweep) + `liang_barsky()`
+  (chart clip/hit unified, epsilon reconciled to 1e-9).
+- `iso_text_angle()` (round + dims, −90 float-exact) + `anchors::translate` the
+  only `translate:` reader (dims, section).
+- render: `ResolvedValue::is_light_dark`, `rules::dash_value`, and one
+  `IdTable<K,V>` interner (paints gradients/hatches + FilterTable shadows).
+- `desugar::chrome::node()`; `resolve::is_drawing(attrs)` the one IR predicate
+  (layout dispatch + resolve link pass call it; resolve stays layout-independent).
+- `scene::BAKED_TEXT` single-sources the `.lini`-rule text subset off
+  INHERITED_TEXT; `Parser::span_from()` (9 sites).
+- renames: `Value::Group`→`Tuple`, `StyleItem::Func`→`Binding`; deleted the
+  no-op `set_visual`; fixed the stale resolve module doc.
+
+**Deviations** (genuinely-different slices kept, per AGENTS "keep only the
+genuinely-different slice"): `pattern.rs`'s carrier bbox NOT funneled through
+`extent_of` — the deep/rotation-aware path counts each copy's feature overhang
+and diffs drawing_pattern + drawing_dims (that is the AUDIT's "missing rotation
+awareness" latent-bug fix → an `[output]` change, out of a `[pure]` item); the
+two ⌀-line drawers and two fits-else-spill blocks left apart (divergent fit
+clearance 6.0 vs 8.0, leader-elbow vs centre framing); the AST-shaped
+drawing-scope checks (`lint::is_drawing_node` pre-define vs
+`desugar::is_drawing_body` post-define chain) and `owns_layout`/`seals_drawing_
+scope` (any-layout, not this predicate) stay; `angle::leg` (returns length),
+`threads::parallel` (normalise-then-dot), and routing's own `Rect` untouched.
+
+**Follow-ups** (deferred, both flagged in commits): the one-variant `Level` enum
+→ Error/Warning severity — deferred to **H2**, which actually constructs
+`Level::Error` (adding it now is a dead variant); and the render `{:?}` Debug
+dedup keys → derived-`PartialEq` structural keys — needs `PartialEq` on
+`ResolvedValue`, which cascades through `Expr` (the `Deferred` variant), out of
+scope for a pure dedup.
 
 ### Stage R2 — the ledger
 
