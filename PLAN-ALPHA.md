@@ -1,0 +1,381 @@
+# PLAN-ALPHA — refactor, hardening & the 0.21 breaking round
+
+Execution plan from today's `main` to the **`1.0.0-alpha` tag** (syntax frozen).
+Decisions live in `ROADMAP.md`; code findings and the `[pure]`/`[output]` tags are
+defined in `AUDIT.md`. This file is stages only.
+
+**How to run a stage (every session):**
+1. Re-orient: read `AGENTS.md`, this stage's section, its AUDIT references, and the
+   SPEC sections it touches; run `cargo test` to confirm a green start.
+2. Execute the stage. `[pure]` stages must end with **zero snapshot diffs** —
+   `cargo insta test` (or `cargo test`) proves it. `[output]`/`[breaking]` stages
+   re-bless snapshots deliberately, stating why in the commit message, and verify
+   visually: render affected samples to PNG with `resvg` (light **and** dark where
+   paint changed) and look at them.
+3. Finish: `cargo fmt`, `cargo test`, `cargo clippy` clean. One purposeful commit
+   per coherent chunk (stage = 1–3 commits). Leave a dated entry in the stage's
+   **Log** line below (done / deviations / follow-ups) so the next session
+   re-orients from this file alone.
+4. Stages are sized for one session with room left for fixes. If one runs long,
+   stop at a committed green point and note the remainder in the Log.
+
+Sub-agent policy: Opus for anything structural or judgment-bearing; Sonnet only
+for mechanical bulk edits (sample migration, test moves) and summaries.
+
+---
+
+## Phase R — refactor (all `[pure]` unless tagged)
+
+### Stage R1 — shared helpers: kill the small parallel implementations
+
+AUDIT R2. Independent items; do in any order, commit in small groups.
+
+- [ ] `[bugfix]` **fmt drops a table cell's style block** — silent data loss:
+  `"Apple" { color: --red-ink }` in a table `[ ]` compiles and renders, but
+  `lini fmt` deletes the `{ }` when padding cells into aligned columns. Fix:
+  a styled cell always re-emits its block; a row containing one exits the
+  alignment grid (unstyled rows stay aligned). Add a styled-cell case to the
+  fmt semantic-preservation suite — and find why the existing
+  `compile(fmt(src)) == compile(src)` sweep missed it (no sample covers the
+  case?). Fix that hole in coverage, not just the bug.
+- [ ] `src/suggest.rs`: `edit_distance` (promote from `icon/mod.rs:86`),
+  `nearest(input, candidates, k)`, and one `did_you_mean(…)` message formatter.
+  Migrate all six sites (`desugar/page.rs:103`, `icon/mod.rs:75-101`,
+  `layout/drawing/anchors.rs:200`, `layout/drawing/threads.rs:171`,
+  `layout/chart/model.rs:834`, `resolve/scene.rs:584`). Message wording may
+  change → those specific error-message tests/snapshots re-bless `[output: errors]`.
+- [ ] `Bbox` gains `from_points`, `overlaps`, `contains`, and an
+  `extent_of(nodes, filter)` that funnels through `accumulate_extent`
+  (rotation-aware). Migrate the copies listed in AUDIT R2 (prim.rs, primitives.rs,
+  breaks.rs, chart/model.rs, sequence/notes.rs, frames.rs, sequence/mod.rs
+  `enclosing_bbox`, section.rs, pattern.rs, annotate.rs overlap checks,
+  chart/labels.rs `Rect::hits`).
+- [ ] `geometry::unit()`; migrate the ~8 hand-rolled normalises.
+  `liang_barsky()` shared by `chart/project.rs:136` and `chart/labels.rs:219`.
+- [ ] One `diameter_line()` + one fits-else-spill + one ISO text-rotation helper
+  for the drawing round-seams (`leaders.rs:132` / `round.rs:239` / `dims.rs:141`
+  / `compose.rs:183`); one shared `translate:`-reader (`anchors::translate`
+  becomes the only one).
+- [ ] Render dedups: `dash_decl()` (rules.rs:119 ≡ :629); one `is_light_dark`;
+  `intern_by_key()` replacing `FilterTable`/`Interner` twin engines; structural
+  dedup keys replacing `{:?}` keys (paints.rs:41,186).
+- [ ] `desugar::chrome::node()` (drawing.rs:183 ≡ page.rs:246). One AST-shaped +
+  one IR-shaped drawing-scope predicate replacing the 6 copies.
+- [ ] `INHERITED_TEXT` single-sourced (kill the re-list at
+  `resolve/program.rs:524-532`). `Parser::span_from()` (~15 sites).
+- [ ] Deletions/renames: `defaults.rs:151 set_visual`; stale `resolve/mod.rs:5`
+  doc; `Value::Group`→`Value::Tuple`; `StyleItem::Func`→`Binding`; one-variant
+  `Level` enum folded into a real severity enum (Error/Warning — Stage H2 adds
+  codes).
+
+Acceptance: zero snapshot diffs (except re-blessed error-message tests); clippy
+clean; grep proves no remaining Levenshtein/AABB/normalise copies.
+**Log:**
+
+### Stage R2 — the ledger
+
+AUDIT R1 + D1. The foundation for validation (H2), schema (beta), and docs.
+
+- [ ] Create `src/ledger/` — `properties.rs`: one row per property
+  (`name, owners, shape, default-ref, inherits, gate`), covering the ~80 known
+  names incl. defaultless ones (`points`, `symbol`, `data`, `cell`, `of`, `at`,
+  `tol`, `draw`, …); `defaults.rs`: `desugar/bundles.rs` moved verbatim (imports
+  updated); `consts.rs`: created empty here, filled in R3.
+- [ ] Migrate the five classifiers to ledger lookups: `is_string_valued`,
+  `is_builder` (+ pen/pattern special-cases), `INHERITED_TEXT`/`is_text_prop`,
+  `is_marker_attr`, `SCOPE_LINK_PROPS`. The 285 `.get()`/`.number()` read-sites
+  do **not** change — the ledger validates and describes; reads stay direct.
+- [ ] Reconcile the `labels` collision now (data shape only): the ledger row for
+  `labels` must describe both today's uses so the 0.21 rename (M1) is a pure
+  swap.
+- [ ] Cross-check the ledger against SPEC 16's tables — every discrepancy is
+  either a ledger bug or a SPEC bug; list them for Stage S1/S2.
+
+Acceptance: zero snapshot diffs; a unit test asserts every property name that
+appears in `bundles`-moved defaults and in the five classifiers exists in the
+ledger; `lini desugar` output unchanged.
+**Log:**
+
+### Stage R3 — constants into one home
+
+AUDIT R3 + D8. Mostly `[pure]` moves; behavior alignments flagged.
+
+- [ ] `ledger/consts.rs` gathers the SPEC-10.5 chrome set from the 8 drawing
+  files (annotate/compose/breaks/chrome/section/threads + markers datum + hatch
+  metrics), the drawing-link literals from `resolve/program.rs:470,473`, and
+  `DEFAULT_CLEARANCE = 16.0` (the three disagreeing fallbacks adopt it).
+- [ ] D8: dedupe the 4.0 `OVERHANG` (breaks/chrome); `section.rs`'s 6.0 becomes
+  `PLANE_OVERHANG`. Align `annotate.rs:71`'s 11.0 text fallback with SPEC's 12
+  `[output if reachable — check first]`.
+- [ ] Root font-size fallback reads the ledger default; A4 dims deduped;
+  `MAX_INHERITANCE_DEPTH` error text derives from the const.
+- [ ] `chart/metrics.rs`: resolve the `TITLE_SIZE` 13-vs-11 collision (rename,
+  values unchanged), single `LABEL_SIZE`, named area opacity, named tick target.
+- [ ] Name the marker ratios (markers.rs), text leading 1.2, and move the
+  look-tunables (wavy, note fold, page margins) into `ledger/consts.rs`; leave
+  algorithm-internal EPS/buffers/fmt-config local (AUDIT's judgment list).
+- [ ] `messages::LABEL_SIZE` → `pub(crate)`, referenced by `rules.rs:491`.
+
+Acceptance: zero snapshot diffs (except the 11→12 item if it proves reachable —
+then its own `[output]` commit); grep shows no duplicate literal for any
+centralized constant.
+**Log:**
+
+### Stage R4 — front-end: parser split + one expression lexer
+
+AUDIT R2 (expr) + R5 (parser). Medium risk — snapshots are the oracle.
+
+- [ ] Split `syntax/parser.rs` into `syntax/parser/{mod,values,nodes,links,decl,
+  selector,classify}.rs` per the AUDIT table — `values.rs` first (isolates the
+  comma-law surface for M1); tests to `parser/tests.rs`.
+- [ ] expr consumes `&[Token]`: `take_group`/`take_arg_expr` hand a token slice;
+  delete expr's lexer (expr.rs:110-216) and `tok_str`; fold scientific notation
+  into the one number scanner **gated to expression context** (SPEC: sci-notation
+  is expression-only; preserve the ident-predicate divergence — `r-1` stays
+  subtraction in expressions).
+
+Acceptance: zero snapshot diffs; `cargo test` including every expr fold test;
+parser files each < 500 production LOC.
+**Log:**
+
+### Stage R5 — structural splits: layout, chart, desugar, resolve, routing
+
+AUDIT R5. Pure moves; big but mechanical. Split across two sessions if needed
+(5a: layout+drawing; 5b: chart+desugar+resolve+routing).
+
+- [ ] `layout/mod.rs` → `arrange.rs` + `frame.rs`; mod keeps dispatch +
+  `layout_inst`.
+- [ ] Drawing: `annotate.rs` → `rows.rs`/`paint.rs`; `breaks.rs` →
+  `viewmap.rs`/`clip.rs`; `section.rs` → `plane.rs`/`detail.rs`; `pen.rs` →
+  `pen/parse.rs`.
+- [ ] `chart/model.rs` → `chart/model/{types,build,series,axes,annot,paint}.rs`
+  (the one L split — `build()`'s shared state gets a small context struct); pie
+  bits join `pie.rs`; `chart/mod.rs` tests → `chart/tests.rs`, plot geometry →
+  `chart/frame.rs`, legend → `chart/legend.rs`.
+- [ ] `desugar/mod.rs` → `tables.rs` + smart-label ladder into `labels.rs`.
+- [ ] `resolve/program.rs` → `theme.rs` + `link_scope.rs`.
+- [ ] `routing/ortho/world.rs`: extract `build_worlds()` + `world_ladder()` from
+  `ortho/mod.rs:158-190` (also the `natural` seam, AUDIT). Convert every
+  `Strategy` `==`/`!=` to an exhaustive `match` (D4).
+- [ ] Adopt the test-LOC convention: big `#[cfg(test)]` blocks to sibling
+  `tests.rs` files wherever they dominate (engine.rs, annotate.rs, …).
+
+Acceptance: zero snapshot diffs; every production file ≲ 500 LOC except the
+AUDIT-sanctioned holdouts (`place.rs`); module docs updated.
+**Log:**
+
+### Stage R6 — render: one paint chokepoint `[output]`
+
+AUDIT R4. The stage that ends the inline-style whack-a-mole.
+
+- [ ] Route text-leaf styling through `inline_paint_diff` against
+  `.lini-text`/`.lini-link-label`/`.lini-sequence-message`; delete
+  `render_link_text`'s hand-rolled diff and unify with `text_style_attr`. This
+  *fixes* the dropped `text-shadow` on link labels — intentional output change.
+- [ ] `.lini-gutter { stroke: none }` rule (gated on gutters present); hoist
+  hatch `<pattern>` line paint onto one `<g>`; stray-glyph classes (optional).
+- [ ] Split `rules.rs` → model vs `stylesheet.rs` (`build()` into per-family
+  sub-builders) `[pure part]`.
+- [ ] Sweep: assert (grep/review) that no emit site writes paint attributes
+  outside the diff or a `.lini-*` rule; add a comment-contract at the chokepoint.
+
+Acceptance: snapshot re-bless limited to the enumerated changes; resvg renders
+of `styles.lini`, `gap_fill.lini`, `sequence.lini`, one drawing sample — light +
+dark — visually checked.
+**Log:**
+
+---
+
+## Phase S — SPEC work
+
+### Stage S1 — SPEC tightening (editorial, no semantic change)
+
+- [ ] Tighten SPEC.md's prose: dedupe restated rules (Part I is authoritative;
+  Part II/III reference it), compress examples that repeat a point, keep every
+  normative statement. Target: meaningfully shorter with zero information loss.
+- [ ] Verify losslessness: work section-by-section; a second pass (or an agent
+  with the old text) diffs for dropped normative content; the R2 ledger
+  cross-check list feeds errata fixes here.
+- [ ] Update stale cross-file claims found in the audit: SPEC 10.5's "one place"
+  wording (now true via `ledger/`), ROUTING.md's implementation-shape file map
+  and the over-broad "every strategy is validated" line. (ROUTING.md's `curved`
+  row is replaced in alpha.1, not now.)
+
+Acceptance: SPEC builds the same language — no sample, snapshot, or test changes;
+a re-read of sections 1–24 confirms every table survived.
+**Log:**
+
+### Stage S2 — the 0.21 SPEC amendment (Stage-0 of the breaking round)
+
+Write all breaking-change SPEC text before any migration code, per the repo's
+Stage-0 pattern. Sources: ROADMAP 3.1 (+ 3.4's row/radial items).
+
+- [ ] The comma law (SPEC 2 value grammar + every affected property's entry +
+  SPEC 21 grammar notes + migration examples). Include the pipeline clause and
+  the `data: 10 20`-is-a-point consequence.
+- [ ] Property validation (SPEC 16 rewrite: the strict/lenient rule; SPEC 20 new
+  error/warning tables; SPEC 23 un-defers the warning).
+- [ ] Similarity-based implicit warning (SPEC 3 implicit nodes).
+- [ ] `max-width`/`text-wrap` + align-driven line alignment (SPEC 5/6/12; the
+  no-`text-align` rationale; wrapper-block escape).
+- [ ] scale/unit/density (SPEC 15.1 rewrite + 15.8 page + 10.5 constants + the
+  desugar fold in SPEC 18; `unit:` value shape decision: ident enum `mm cm m in`,
+  suffix display noted as `format:`'s future job).
+- [ ] `place:` (SPEC 13); renames (`labels:`, title-block fields + smart label,
+  SPEC 8/14/15.8); row bands/marks + radial error (SPEC 14.5/14.7, the "never
+  silently lossy" wording); root-drawing/sequence routing fix (SPEC 11/15 notes).
+- [ ] The local-bug decisions (ROADMAP 3.1): chain ops mark **every hop** and
+  chain expansion is a desugar job (SPEC 9 + SPEC 18; `a - b -> c` is the bare
+  first-hop spelling); `|page|` direction defaults by orientation (SPEC 15.8);
+  `stroke-style: wavy` link-only — delete the closed-primitive deferral
+  (SPEC 7/16/23); SPEC 19's fmt paragraph notes a styled cell breaks its row
+  out of the aligned grid.
+- [ ] SPEC 23 updated: remove what 0.21 builds, add the new deferrals from
+  ROADMAP 6.
+
+Acceptance: SPEC alone is sufficient to implement M1–M4; every example in SPEC
+already uses the new syntax.
+**Log:**
+
+---
+
+## Phase M — the 0.21 breaking migration
+
+### Stage M1 — the comma law `[breaking]`
+
+AUDIT D7 + seam table. The parser is ready; this is the reader flip + migration.
+
+- [ ] `resolve/value.rs::resolve_groups` + `ResolvedValue` semantics per S2:
+  list-typed properties read across comma-groups; tuple-typed stay single-group.
+  Drive list-vs-tuple from the R2 ledger's `shape` column.
+- [ ] Flip the readers: chart `read_data` (list-of-scalars → categorical,
+  list-of-tuples → points), `categories`, `ticks`, `along`, grid `columns`/`rows`
+  (`desugar/mod.rs:237`), per-column `align`/`justify`, segmented `fn:`,
+  `thread:`/`break:` groups. Pipelines (`draw:`, `mirror:`) assert single-group.
+- [ ] Targeted legacy errors in each list reader ("`data` takes comma-separated
+  values — `data: 9, 15, 24`").
+- [ ] Migrate all ~49 samples by hand (Sonnet agents fine), re-bless snapshots,
+  spot-check `fmt` (`emit_decl` already prints the law; add a `data:` case to
+  `tests/fmt.rs`) and the desugar oracle.
+
+Acceptance: all tests green; `lini fmt --check` clean over samples; conformance
+PNGs of the chart samples visually identical to before (the law changes syntax,
+not pixels).
+**Log:**
+
+### Stage M2 — validation + the similarity warning `[diagnostics]`
+
+- [ ] The owner-aware pass (new `src/validate.rs` or grown `lint.rs`), reading
+  the ledger: unknown name → error + `suggest::nearest`; statically-known owner
+  misuse → error with contextual correction; class rules → inert / dead-warning /
+  unused-class warning; value-shape errors. Wire `--strict`/`--no-warn`.
+- [ ] Similarity implicit-node warning at `lint.rs:127` via `suggest::nearest`
+  (edit distance ≤ 2 or case-fold, vs declared + previously-created names in
+  scope). Remove nothing else — shadow warning stays.
+- [ ] Sweep the samples: fix any latent misuse the new pass finds (each is a
+  finding — list them in the Log).
+- [ ] Tests: one `insta` family per diagnostic; the CLI-binary `--strict`
+  exit-code test (AUDIT R6); update SPEC 20 table ↔ implemented messages 1:1.
+
+Acceptance: every diagnostic in SPEC 20's new tables demonstrably fires; no
+false positives across samples; `cat -> dog -> bird` stays warning-free.
+**Log:**
+
+### Stage M3 — scale/unit/density + `place:` + renames `[breaking]`
+
+- [ ] Desugar fold (AUDIT seam): `scale:` ratio × `unit:` mm-size × root density
+  (default 4) → the engine's internal px-per-unit; `|page|` loses `scale:`;
+  `unit:` becomes the inheriting ident enum; pixel-space outside drawing scopes
+  confirmed by test (`right(300)` = 300px in flow). Absurd-extent hint
+  diagnostic. Section/detail/view title ratios read the new `scale:` directly.
+- [ ] `place:` replaces `over`/`left`/`right` (desugar + resolve + sequence
+  engine + errors); old names become unknown-property errors (M2 catches them).
+- [ ] Renames: `tags:` → `labels:` (with the R2 reconciliation); title-block
+  field renames + smart-label-as-title (lowers to the generated spanning cell).
+- [ ] Migrate samples (drawing samples get ratio-form scales — e.g. old
+  `scale: 6` on a default page becomes `scale: 1.5`), re-bless, and **visually
+  verify every drawing sample at print scale** (resvg, mm sizes intact).
+
+Acceptance: all drawing samples render byte-stable after migration except where
+the amendment says otherwise; `lini desugar` shows folded scales; no `dwg`/
+`rev`/`tags`/`over` spelling remains anywhere in repo.
+**Log:**
+
+### Stage M4 — text wrap + line alignment `[feature]`
+
+- [ ] `text.rs`: line-list API (wrap at whitespace within `max-width`, grapheme
+  fallback), scalar API preserved as a wrapper; `leaf_bbox` sizes from lines;
+  render emits per-line positions.
+- [ ] One shared line-align resolver (nearest container's horizontal packing
+  knob; start/center/end; others read center) called by **both** flex and grid —
+  `grid::align_cell_content` becomes a caller (AUDIT's parallel-impl trap).
+- [ ] Errors: `nowrap` can't-fit; non-text child wider than `max-width`;
+  `width > max-width`. Wrapped sizes feed tracks/gutters/labels/routing
+  obstacles (bbox-driven — verify with a routed sample).
+- [ ] Samples: one wrap sample (a card grid with long labels); table alignment
+  samples re-verified; snapshots for wrap + align families.
+
+Acceptance: default output unchanged (center = today); wrap sample renders
+correctly at light/dark; no measurement caller bypasses the new API.
+**Log:**
+
+### Stage M5 — hardening fixes + row bands/marks `[fixes]`
+
+- [ ] Root-drawing router: `layout/mod.rs:41-46` → `routing::route(…)`; root-
+  sequence arm routes + extends message wires. Regression samples: a wire in a
+  nested `|row|` under each root layout.
+- [ ] Scoped note rules (`|sequence| |note|`, `|drawing| |note|`) move to desugar
+  as generated descendant rules; desugar snapshots re-bless; SVG byte-identical
+  (oracle test proves it).
+- [ ] Row-direction bands/marks: make `chart/annot.rs` direction-aware via
+  `Plot` helpers (AUDIT: the only column-hardwired file); radial band/mark →
+  compile error per S2. Sample: a row chart with a band + mark.
+- [ ] Chain markers per hop `[output]`: `a -> b -> c` draws two fully-marked
+  links; move chain expansion from resolve to **desugar** (`a -> b; b -> c`,
+  auto-created ids included — verified viable by hand-splitting). Fan-out
+  (`&`) is untouched — it stays a resolve/routing concept. Re-bless affected
+  snapshots; regression samples: `a -> b -> c`, `a <- b <-> c`, and a chain
+  mixed with a fan.
+- [ ] `|page|` direction defaults by orientation `[output]` (landscape → row,
+  portrait → column); re-verify the sheet samples visually.
+- [ ] Wavy-on-nodes: confirm no code path exists beyond links (render/wavy.rs
+  serves links only); delete any partial shape/drawing support found. SPEC-side
+  removal already landed in S2.
+- [ ] CLI cleanup: remove `--standalone`; unify the four hand-rolled subcommand
+  parsers under `clap::Subcommand`; serve dir-mode boundary generalized past
+  `.lini` (prep for alpha.5 images; file-mode boundary noted for that round).
+
+Acceptance: nested-wire samples route lawfully (laws oracle); row-chart sample
+visually correct; `lini fmt/desugar/serve/theme --help` outputs unchanged in
+substance.
+**Log:**
+
+### Stage M6 — release 0.21 → tag `1.0.0-alpha`
+
+- [ ] Full sweep: `cargo fmt` / `test` / `clippy`; `lini fmt` over every sample
+  committed clean; desugar + laws oracles green; every sample rendered to PNG
+  and eyeballed (Sonnet agents render, Opus/main reviews), light + dark.
+- [ ] README + `lini theme`/CLI docs updated to the new syntax; AUDIT.md deleted
+  (its stages landed); ROUTING-LOG.md entry for the routing-adjacent changes.
+- [ ] Version: release 0.21.0 (or 0.22.0 if the phase split), then tag
+  `1.0.0-alpha` on the same tree — the syntax-frozen marker PLAN-V1 builds on.
+- [ ] Retro pass over this file: unfinished items either done or explicitly
+  moved to PLAN-V1 rounds; Log lines complete.
+
+**Log:**
+
+---
+
+## Order & dependencies
+
+```
+R1 ──► R2 ──► R3        (suggest → ledger → consts)
+R4, R5, R6              (independent of R1–R3 except R5's Strategy matches; any order)
+S1 ──► S2               (tighten, then amend)
+S2 ──► M1 ──► M2 ──► M3 (amendment first; M2 needs M1's ledger shapes; M3 needs M2's errors)
+M4, M5 after S2         (independent of M1–M3; M4 before alpha.1 — mindmap topics want wrap)
+M6 last
+```
+
+R-stages and S1 can interleave with normal life; the M-phase is one continuous
+push — start it only when R2 (ledger) and S2 (amendment) are done.
