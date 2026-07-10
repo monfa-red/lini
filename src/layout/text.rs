@@ -5,6 +5,8 @@
 //! `letter-spacing` / `line-spacing` [SPEC 13] feed in here so the box grows to
 //! fit the baked spacing.
 
+use crate::ledger::consts::TEXT_LEADING;
+
 /// Average char width as a fraction of font size. The default font is
 /// **monospace**, where every glyph shares one advance (~0.6 em across Menlo /
 /// Consolas / Courier), so this linear estimate is essentially exact — no font
@@ -29,10 +31,6 @@ pub fn approx_width(text: &str, font_size: f64, letter_spacing: f64) -> f64 {
         .fold(0.0_f64, f64::max)
 }
 
-/// Per-line box for multi-line text: lines render ~1.2 em tall and abut at this
-/// leading [SPEC 5], so a multi-line block needs the full `n × 1.2` or its
-/// outer lines clip.
-const LINE_LEADING: f64 = 1.2;
 /// A single line's tight box — about one em, so the glyphs nearly fill it.
 /// `dominant-baseline:central` keeps them centred, so a snug box just hugs them:
 /// with `padding:0` the text almost touches the edges, no slack 1.2 halo.
@@ -48,7 +46,7 @@ pub fn approx_height(text: &str, font_size: f64, line_spacing: f64) -> f64 {
     if line_count == 1 {
         return SINGLE_LINE_EM * font_size;
     }
-    let leading = LINE_LEADING * font_size;
+    let leading = TEXT_LEADING * font_size;
     let step = (leading + line_spacing).abs();
     leading + (line_count as f64 - 1.0) * step
 }

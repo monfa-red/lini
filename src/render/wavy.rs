@@ -9,15 +9,9 @@
 
 use super::rounding::{Point, RoundedPath, Seg, round};
 use super::values::num;
+use crate::ledger::consts::{WAVY_AMPLITUDE, WAVY_WAVELENGTH};
 use std::f64::consts::TAU;
 use std::fmt::Write;
-
-/// Wave shape, in world units, tuned against the default clearance (16): the
-/// wavelength reads as a clear wiggle and the amplitude stays well under a
-/// corner's fillet radius, so the wave never touches itself on the inside of a
-/// turn. Exposed so the label cut can widen its mask to the wave's reach.
-const WAVELENGTH: f64 = 12.0;
-pub const AMPLITUDE: f64 = 1.4;
 
 /// Chord the arcs flatten to before sampling — fine enough that a fillet's
 /// finite-difference tangent stays smooth.
@@ -30,16 +24,16 @@ const FLATTEN_STEP: f64 = 1.5;
 pub fn wavy_d(pts: &[Point], targets: &[f64]) -> Option<String> {
     let line = Centerline::flatten(&round(pts, targets));
     let total = line.total();
-    if total < WAVELENGTH {
+    if total < WAVY_WAVELENGTH {
         return None;
     }
 
     // The amplitude ramps 0 → 1 → 0 over half a wavelength at each end, so the
     // link leaves each port flat — meeting its marker and the node edge head-on
     // — yet a short run still shows real wave between the ramps.
-    let taper = (WAVELENGTH / 2.0).min(total / 2.0);
-    let k = TAU / WAVELENGTH;
-    let steps = ((total / (WAVELENGTH / 4.0)).round() as usize).max(2);
+    let taper = (WAVY_WAVELENGTH / 2.0).min(total / 2.0);
+    let k = TAU / WAVY_WAVELENGTH;
+    let steps = ((total / (WAVY_WAVELENGTH / 4.0)).round() as usize).max(2);
 
     // One sampled point on the wave, with its unit tangent: the centreline
     // point pushed `offset` along the normal, the tangent tilted by how fast
@@ -48,8 +42,8 @@ pub fn wavy_d(pts: &[Point], targets: &[f64]) -> Option<String> {
         let (p, t) = line.at(s);
         let (env, denv) = envelope(s, total, taper);
         let phase = k * s;
-        let offset = env * AMPLITUDE * phase.sin();
-        let d_offset = denv * AMPLITUDE * phase.sin() + env * AMPLITUDE * k * phase.cos();
+        let offset = env * WAVY_AMPLITUDE * phase.sin();
+        let d_offset = denv * WAVY_AMPLITUDE * phase.sin() + env * WAVY_AMPLITUDE * k * phase.cos();
         let normal = (-t.1, t.0);
         let w = (p.0 + normal.0 * offset, p.1 + normal.1 * offset);
         let wt = unit((t.0 + normal.0 * d_offset, t.1 + normal.1 * d_offset));
@@ -220,8 +214,8 @@ mod tests {
         let pts = anchors(&d);
         let peak = pts.iter().map(|p| p.1.abs()).fold(0.0_f64, f64::max);
         // The mid-run reaches near full amplitude but never past it.
-        assert!(peak > AMPLITUDE * 0.8, "wave too shallow: {peak}");
-        assert!(peak <= AMPLITUDE + 1e-9, "wave overshoots: {peak}");
+        assert!(peak > WAVY_AMPLITUDE * 0.8, "wave too shallow: {peak}");
+        assert!(peak <= WAVY_AMPLITUDE + 1e-9, "wave overshoots: {peak}");
     }
 
     #[test]

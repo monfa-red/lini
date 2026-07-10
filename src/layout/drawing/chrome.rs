@@ -13,11 +13,8 @@
 
 use super::super::ir::{Bbox, PlacedNode};
 use super::geometry::bearing_dir;
+use crate::ledger::consts::{CENTER_MARK_OVERHANG, THREAD_DEPTH, THREAD_DEPTH_INTERNAL};
 use crate::resolve::{AttrMap, ResolvedInst, ResolvedValue};
-
-/// Centre marks and auto centerlines overhang the geometry they mark by this
-/// sheet-space constant [SPEC 10.5] — never scaled.
-const OVERHANG: f64 = 4.0;
 
 /// Whether a node is generated chrome — it carries the `chrome:` marker.
 pub(crate) fn is_chrome(attrs: &AttrMap) -> bool {
@@ -88,7 +85,7 @@ pub(in crate::layout) fn fill(children: &mut [PlacedNode], geometry: Bbox, scale
             lo = lo.min(t);
             hi = hi.max(t);
         }
-        let (lo, hi) = (lo - OVERHANG, hi + OVERHANG);
+        let (lo, hi) = (lo - CENTER_MARK_OVERHANG, hi + CENTER_MARK_OVERHANG);
         let (a, b) = ((d.0 * lo, d.1 * lo), (d.0 * hi, d.1 * hi));
         let point = |p: (f64, f64)| {
             ResolvedValue::Tuple(vec![ResolvedValue::Number(p.0), ResolvedValue::Number(p.1)])
@@ -113,12 +110,10 @@ pub(in crate::layout) fn fill(children: &mut [PlacedNode], geometry: Bbox, scale
 /// (a `|line|` can't arc — the kind flips, the old S-break play).
 fn thread_arc(c: &mut PlacedNode, geometry: Bbox, internal: bool, pitch: f64, scale: f64) {
     let r_drawn = geometry.w() / 2.0;
-    // Per-side thread heights: internal `H1 = 0.54125 × P` (drill to major),
-    // external `h3 = 0.61343 × P` (major to root) — ISO metric 60°.
     let r = if internal {
-        r_drawn + 0.54125 * pitch * scale
+        r_drawn + THREAD_DEPTH_INTERNAL * pitch * scale
     } else {
-        r_drawn - super::threads::THREAD_DEPTH * pitch * scale
+        r_drawn - THREAD_DEPTH * pitch * scale
     };
     if r <= 0.0 {
         return;

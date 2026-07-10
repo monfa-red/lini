@@ -12,12 +12,11 @@
 use super::ir::{Bbox, PlacedNode};
 use super::primitives;
 use crate::error::Error;
+use crate::ledger::consts::{SHEET_FILING, SHEET_MARGIN};
 use crate::resolve::{AttrMap, ResolvedValue};
 use crate::span::Span;
 
-/// ISO 5457 sheet anatomy, millimetres.
-const MARGIN: f64 = 10.0;
-const FILING: f64 = 20.0;
+/// The content area's inset from the frame line, mm [SPEC 15.8].
 const CONTENT_CLEAR: f64 = 5.0;
 /// A centring mark crosses the frame line into the drawing area by this much.
 const MARK_INTO: f64 = 5.0;
@@ -36,10 +35,10 @@ pub(super) fn padded_attrs(attrs: &AttrMap, scale: f64, span: Span) -> Result<At
     out.insert(
         "padding",
         ResolvedValue::Tuple(vec![
-            n(pad.top + (MARGIN + CONTENT_CLEAR) * scale),
-            n(pad.right + (MARGIN + CONTENT_CLEAR) * scale),
-            n(pad.bottom + (MARGIN + CONTENT_CLEAR) * scale),
-            n(pad.left + (FILING + CONTENT_CLEAR) * scale),
+            n(pad.top + (SHEET_MARGIN + CONTENT_CLEAR) * scale),
+            n(pad.right + (SHEET_MARGIN + CONTENT_CLEAR) * scale),
+            n(pad.bottom + (SHEET_MARGIN + CONTENT_CLEAR) * scale),
+            n(pad.left + (SHEET_FILING + CONTENT_CLEAR) * scale),
         ]),
     );
     Ok(out)
@@ -81,8 +80,8 @@ fn marker(attrs: &AttrMap) -> Option<Marker<'_>> {
 pub(super) fn finish(children: &mut [PlacedNode], sheet: Bbox, s: f64) {
     let (w, h) = (sheet.w(), sheet.h());
     let (x0, y0, x1, y1) = (-w / 2.0, -h / 2.0, w / 2.0, h / 2.0);
-    let (fx0, fy0) = (x0 + FILING * s, y0 + MARGIN * s);
-    let (fx1, fy1) = (x1 - MARGIN * s, y1 - MARGIN * s);
+    let (fx0, fy0) = (x0 + SHEET_FILING * s, y0 + SHEET_MARGIN * s);
+    let (fx1, fy1) = (x1 - SHEET_MARGIN * s, y1 - SHEET_MARGIN * s);
 
     // The zone divisions come from what desugar generated — labels per edge.
     let cells = |edge: &str| {
@@ -145,7 +144,7 @@ pub(super) fn finish(children: &mut [PlacedNode], sheet: Bbox, s: f64) {
                         // empty [SPEC 15.8], so the letters read alike all
                         // round.
                         let y = y0 + (i as f64) * h / rows as f64;
-                        ((fx0 - MARGIN * s, y), (fx0, y))
+                        ((fx0 - SHEET_MARGIN * s, y), (fx0, y))
                     }
                     _ => {
                         let y = y0 + (i as f64) * h / rows as f64;
@@ -161,7 +160,7 @@ pub(super) fn finish(children: &mut [PlacedNode], sheet: Bbox, s: f64) {
                     // The left mark starts at its reference band, not the
                     // trimmed edge — the filing strip stays truly empty,
                     // matching the dividers [SPEC 15.8].
-                    "left" => ((fx0 - MARGIN * s, 0.0), (fx0 + MARK_INTO * s, 0.0)),
+                    "left" => ((fx0 - SHEET_MARGIN * s, 0.0), (fx0 + MARK_INTO * s, 0.0)),
                     _ => ((fx1 - MARK_INTO * s, 0.0), (x1, 0.0)),
                 };
                 set_line(c, a, b);
@@ -171,7 +170,7 @@ pub(super) fn finish(children: &mut [PlacedNode], sheet: Bbox, s: f64) {
                     "top" => (x0 + (i as f64 + 0.5) * w / cols as f64, (y0 + fy0) / 2.0),
                     "bottom" => (x0 + (i as f64 + 0.5) * w / cols as f64, (y1 + fy1) / 2.0),
                     "left" => (
-                        fx0 - MARGIN * s / 2.0,
+                        fx0 - SHEET_MARGIN * s / 2.0,
                         y0 + (i as f64 + 0.5) * h / rows as f64,
                     ),
                     _ => ((x1 + fx1) / 2.0, y0 + (i as f64 + 0.5) * h / rows as f64),
@@ -183,8 +182,8 @@ pub(super) fn finish(children: &mut [PlacedNode], sheet: Bbox, s: f64) {
                 // Seat a pinned title block flush inside the frame corner —
                 // the pin put it on the sheet corner; the margins pull it in.
                 if c.type_chain.iter().any(|t| t == "title-block") {
-                    c.cx -= MARGIN * s;
-                    c.cy -= MARGIN * s;
+                    c.cx -= SHEET_MARGIN * s;
+                    c.cy -= SHEET_MARGIN * s;
                 }
             }
         }
@@ -245,8 +244,8 @@ mod tests {
             .expect("the frame");
         // Margins ×4 px/mm: filing 80 left, 40 elsewhere; half-stroke inflates.
         let s = 4.0;
-        assert!((frame.cx - (FILING - MARGIN) * s / 2.0).abs() < 1e-9);
-        assert!((frame.bbox.w() - (840.0 - (FILING + MARGIN) * s + 2.0)).abs() < 1e-9);
+        assert!((frame.cx - (SHEET_FILING - SHEET_MARGIN) * s / 2.0).abs() < 1e-9);
+        assert!((frame.bbox.w() - (840.0 - (SHEET_FILING + SHEET_MARGIN) * s + 2.0)).abs() < 1e-9);
         let zone = |edge: &str| {
             p.children
                 .iter()
@@ -272,11 +271,11 @@ mod tests {
         let right = tb.cx + tb.bbox.max_x;
         let bottom = tb.cy + tb.bbox.max_y;
         assert!(
-            (right - (p.bbox.w() / 2.0 - MARGIN * s)).abs() < 1e-6,
+            (right - (p.bbox.w() / 2.0 - SHEET_MARGIN * s)).abs() < 1e-6,
             "flush right: {right}"
         );
         assert!(
-            (bottom - (p.bbox.h() / 2.0 - MARGIN * s)).abs() < 1e-6,
+            (bottom - (p.bbox.h() / 2.0 - SHEET_MARGIN * s)).abs() < 1e-6,
             "flush bottom: {bottom}"
         );
     }
@@ -304,14 +303,14 @@ mod tests {
         let l = laid("|page#p| { sheet: a4 }\n\"x\"\n");
         let p = by_id(&l.nodes, "p");
         let s = 4.0;
-        let fx0 = -p.bbox.w() / 2.0 + FILING * s;
+        let fx0 = -p.bbox.w() / 2.0 + SHEET_FILING * s;
         let left_zone = p
             .children
             .iter()
             .find(|c| matches!(marker(&c.attrs), Some(Marker::Zone(e, _)) if e == "left"))
             .expect("a left zone label");
         assert!(
-            (left_zone.cx - (fx0 - MARGIN * s / 2.0)).abs() < 1e-9,
+            (left_zone.cx - (fx0 - SHEET_MARGIN * s / 2.0)).abs() < 1e-9,
             "letter centred in the 10 mm band beside the frame: {}",
             left_zone.cx
         );
@@ -340,7 +339,7 @@ mod tests {
         let l = laid("|page#p| { sheet: a4 } [ |box#card| \"hi\" ]\n");
         let card = by_id(&l.nodes, "card");
         let s = 4.0;
-        let expect = ((FILING + CONTENT_CLEAR) - (MARGIN + CONTENT_CLEAR)) * s / 2.0;
+        let expect = ((SHEET_FILING + CONTENT_CLEAR) - (SHEET_MARGIN + CONTENT_CLEAR)) * s / 2.0;
         assert!(
             (card.cx - expect).abs() < 1e-9,
             "content centre rides the asymmetric inset: {} vs {expect}",

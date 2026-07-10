@@ -11,25 +11,17 @@
 
 use super::super::ir::{Bbox, PlacedNode};
 use super::super::{Ctx, child_path, layout_inst, prim};
-use super::annotate::{NOTE_OFFSET, Paint};
+use super::annotate::Paint;
 use super::compose::{fmt, section_title};
 use super::dims;
 use super::geometry::P;
 use crate::error::Error;
+use crate::ledger::consts::{
+    NOTE_OFFSET, PLANE_ARROW_SHAFT, PLANE_LETTER_GAP, PLANE_LETTER_SIZE, PLANE_OVERHANG,
+    PLANE_THICK_END, PLANE_THICK_WIDTH,
+};
 use crate::resolve::NodeKind;
 use crate::resolve::{Program, ResolvedInst, ResolvedLink, ResolvedValue};
-
-// The plane anatomy — baked sheet constants [SPEC 10.5], never scaled.
-/// The chain line runs past the geometry by this on each end.
-const OVERHANG: f64 = 6.0;
-/// The thick end stroke's length and (geometry) weight.
-const THICK_END: f64 = 10.0;
-const THICK_WIDTH: f64 = 2.0;
-/// The viewing arrow's shaft, from the line end out along the sight line.
-const ARROW_SHAFT: f64 = 13.0;
-/// The section letter, just past each arrow.
-const LETTER_GAP: f64 = 7.0;
-const LETTER_SIZE: f64 = 12.0;
 
 /// Fill every authored `|plane|` among a view's children from its
 /// geometry box [SPEC 15.8]: the placeholder becomes the thin chain line and
@@ -116,8 +108,8 @@ fn fill_one(cp: &mut PlacedNode, geo: Bbox, scale: f64) -> Result<(), Error> {
 
     // The chain line spans the geometry across the axis, plus the overhang.
     let (mut lo, mut hi) = project(geo, line_dir);
-    lo -= OVERHANG;
-    hi += OVERHANG;
+    lo -= PLANE_OVERHANG;
+    hi += PLANE_OVERHANG;
     let at = |t: f64| (axis.0 * s + line_dir.0 * t, axis.1 * s + line_dir.1 * t);
     let (a, b) = (at(lo), at(hi));
     set_points(cp, a, b);
@@ -128,24 +120,27 @@ fn fill_one(cp: &mut PlacedNode, geo: Bbox, scale: f64) -> Result<(), Error> {
     pieces.push(thick_end(
         cp,
         a,
-        (line_dir.0 * THICK_END, line_dir.1 * THICK_END),
+        (line_dir.0 * PLANE_THICK_END, line_dir.1 * PLANE_THICK_END),
     ));
     pieces.push(thick_end(
         cp,
         b,
-        (-line_dir.0 * THICK_END, -line_dir.1 * THICK_END),
+        (-line_dir.0 * PLANE_THICK_END, -line_dir.1 * PLANE_THICK_END),
     ));
     // A viewing arrow (and the letter) at each end, along the sight line.
     for &end in &[a, b] {
         let tip = (
-            end.0 + facing.0 * ARROW_SHAFT,
-            end.1 + facing.1 * ARROW_SHAFT,
+            end.0 + facing.0 * PLANE_ARROW_SHAFT,
+            end.1 + facing.1 * PLANE_ARROW_SHAFT,
         );
         pieces.push(shaft(cp, end, tip));
         pieces.push(dims::arrow(tip, facing, &paint));
         if let Some(letter) = cp.label.clone() {
-            let lp = (tip.0 + facing.0 * LETTER_GAP, tip.1 + facing.1 * LETTER_GAP);
-            pieces.push(prim::dim_text(&letter, lp.0, lp.1, LETTER_SIZE));
+            let lp = (
+                tip.0 + facing.0 * PLANE_LETTER_GAP,
+                tip.1 + facing.1 * PLANE_LETTER_GAP,
+            );
+            pieces.push(prim::dim_text(&letter, lp.0, lp.1, PLANE_LETTER_SIZE));
         }
     }
 
@@ -184,7 +179,7 @@ fn thick_end(cp: &PlacedNode, from: P, d: P) -> PlacedNode {
     e.children.clear();
     e.attrs.remove("chrome");
     e.attrs
-        .insert("stroke-width", ResolvedValue::Number(THICK_WIDTH));
+        .insert("stroke-width", ResolvedValue::Number(PLANE_THICK_WIDTH));
     e.attrs
         .insert("stroke-style", ResolvedValue::Ident("solid".into()));
     set_points(&mut e, from, (from.0 + d.0, from.1 + d.1));

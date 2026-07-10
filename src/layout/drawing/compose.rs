@@ -10,6 +10,7 @@ use super::super::{approx_width, prim};
 use super::anchors::rotated;
 use super::geometry::P;
 use crate::error::Error;
+use crate::ledger::consts::TOL_STACK;
 use crate::resolve::{AttrMap, ResolvedValue};
 use crate::span::Span;
 
@@ -33,8 +34,6 @@ pub(super) struct DimText {
     pub devs: Option<(String, String)>,
 }
 
-/// Stacked deviations draw at this fraction of the dimension font [SPEC 10.5].
-const TOL_STACK: f64 = 0.7;
 /// Air between the main run and its deviation stack, px.
 const DEV_PAD: f64 = 2.0;
 

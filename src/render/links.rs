@@ -9,6 +9,7 @@ use super::values::{attr_or_var, escape_xml, format_value, num};
 use super::wavy;
 use crate::Options;
 use crate::layout::{RoutedLink, RoutedText, Stray, approx_height, approx_width};
+use crate::ledger::consts::DEFAULT_CLEARANCE;
 use crate::resolve::{AttrMap, MarkerKind, ResolvedValue, VarTable};
 use std::fmt::Write;
 
@@ -26,9 +27,9 @@ const LABEL_CUT_PAD_H: f64 = 0.3;
 const LABEL_CUT_PAD_V: f64 = 0.15;
 
 /// The link's corner-radius cap (ROUTING Model step 7): the link's resolved
-/// `clearance` (its cascaded default), else 0.
+/// `clearance` (its cascaded default).
 pub fn radius_cap(w: &RoutedLink) -> f64 {
-    w.attrs.number("clearance").unwrap_or(0.0)
+    w.attrs.number("clearance").unwrap_or(DEFAULT_CLEARANCE)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -105,7 +106,11 @@ pub fn render_link(
     // A label cuts the link out beneath it (a mask hole, not a painted halo) so
     // it reads cleanly over the link on any background. A wavy line swings
     // `AMPLITUDE` past the routed bbox, so the cut region grows to match.
-    let reach = if wavy { wavy::AMPLITUDE } else { 0.0 };
+    let reach = if wavy {
+        crate::ledger::consts::WAVY_AMPLITUDE
+    } else {
+        0.0
+    };
     let mask = label_mask(idx, &w.path, &w.texts, thickness, reach);
     let mask_attr = match &mask {
         Some((id, svg)) => {

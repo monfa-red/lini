@@ -4,6 +4,7 @@
 //! Visual `--lini-*` colours stay live `--var` references (render emits their
 //! defaults as `@layer` CSS).
 
+use super::consts;
 use crate::resolve::NodeKind;
 use crate::span::Span;
 use crate::syntax::ast::{Decl, Value};
@@ -274,8 +275,8 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             n("scale", 4.0),
             var("fill", "bg"),
             n("stroke-width", 0.0),
-            n("width", 210.0),
-            n("height", 297.0),
+            n("width", consts::A4.0),
+            n("height", consts::A4.1),
         ],
         // The ISO 7200 title block [SPEC 15.8]: a |table| the page seats flush
         // inside its frame's bottom-right corner — compact, thin-ruled, sharp.
@@ -400,7 +401,7 @@ pub fn root_defaults() -> Vec<Decl> {
         id("layout", "flow"),
         n("padding", 20.0),
         n("gap", 20.0),
-        n("font-size", 15.0),
+        n("font-size", consts::ROOT_FONT_SIZE),
     ]
 }
 
@@ -410,7 +411,7 @@ pub fn root_defaults() -> Vec<Decl> {
 pub fn link_defaults() -> Vec<Decl> {
     vec![
         n("stroke-width", 2.0),
-        n("clearance", 16.0),
+        n("clearance", consts::DEFAULT_CLEARANCE),
         n("font-size", 11.0),
     ]
 }

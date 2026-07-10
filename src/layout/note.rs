@@ -5,17 +5,15 @@
 
 use super::ir::PlacedNode;
 use super::prim;
+use crate::ledger::consts::{NOTE_FOLD_FRAC, NOTE_FOLD_MAX};
 use crate::resolve::{NodeKind, ResolvedValue};
-
-const FOLD_FRAC: f64 = 0.34;
-const FOLD_MAX: f64 = 15.0;
 
 /// Reshape a laid-out note box: the silhouette changes from a `Block` rect to a
 /// `Path`; the box's resolved `fill` / `stroke` (carried on its `<g>`) and its
 /// text child stay.
 pub(crate) fn fold(note: &mut PlacedNode) {
     let (w, h) = (note.bbox.w(), note.bbox.h());
-    let fold = (h * FOLD_FRAC).min(FOLD_MAX).min(w * 0.5);
+    let fold = (h * NOTE_FOLD_FRAC).min(NOTE_FOLD_MAX).min(w * 0.5);
     let (l, t, rg, b) = (-w / 2.0, -h / 2.0, w / 2.0, h / 2.0);
     let body = format!(
         "M {l} {t} L {} {t} L {rg} {} L {rg} {b} L {l} {b} Z",

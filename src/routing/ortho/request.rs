@@ -11,6 +11,7 @@ use super::rect::Rect;
 use super::scene::SceneIndex;
 use crate::ast::Side;
 use crate::error::Error;
+use crate::ledger::consts::DEFAULT_CLEARANCE;
 use crate::render::markers::marker_size;
 use crate::resolve::{AttrMap, MarkerKind, Markers, Program, Strategy};
 use crate::span::Span;
@@ -253,7 +254,7 @@ pub fn fan_groups(reqs: &[EdgeReq]) -> Fans {
 /// The one clearance number (ROUTING Vocabulary): the link's merged attrs,
 /// already carrying the cascaded link default.
 pub fn link_clearance(attrs: &AttrMap) -> f64 {
-    attrs.number("clearance").unwrap_or(0.0)
+    attrs.number("clearance").unwrap_or(DEFAULT_CLEARANCE)
 }
 
 #[cfg(test)]

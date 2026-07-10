@@ -9,11 +9,12 @@
 use super::super::ir::PlacedNode;
 use super::super::{approx_height, approx_width, prim};
 use super::anchors::{self, Anchor, Spot, rotated};
-use super::annotate::{Ctx, NOTE_LANDING, NOTE_OFFSET, Paint, side_attr, side_unit};
+use super::annotate::{Ctx, Paint, side_attr, side_unit};
 use super::compose::DimText;
 use super::geometry::{P, dist, unit};
 use super::{dims, outline};
 use crate::error::Error;
+use crate::ledger::consts::{ARROW_LEN, NOTE_LANDING, NOTE_OFFSET};
 use crate::resolve::{MarkerKind, ResolvedLink, ResolvedText, ResolvedValue};
 use crate::span::Span;
 
@@ -148,7 +149,7 @@ fn lower_measured(
     // rims inward from outside — never mistakable for a word leader.
     if let Some((c, _)) = circle {
         let far = (2.0 * c.0 - tip.0, 2.0 * c.1 - tip.1);
-        let over = super::annotate::ARROW_LEN * paint.sw + 2.0;
+        let over = ARROW_LEN * paint.sw + 2.0;
         line.points[0] = (far.0 + to_tip.0 * over, far.1 + to_tip.1 * over);
         out.push(dims::arrow(far, (-to_tip.0, -to_tip.1), paint));
     } else {

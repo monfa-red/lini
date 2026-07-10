@@ -13,13 +13,9 @@
 use super::super::ir::{Bbox, PlacedNode};
 use super::geometry::{self, P, PathSeg, Subpath, arc_center, dist, n};
 use crate::error::Error;
+use crate::ledger::consts::{BREAK_GAP, CENTER_MARK_OVERHANG};
 use crate::resolve::{ResolvedInst, ResolvedValue};
 use crate::span::Span;
-
-/// The sheet-space daylight a break leaves between the pieces [SPEC 10.5].
-const BREAK_GAP: f64 = 12.0;
-/// A break line overhangs the profile like the centerline chrome [SPEC 10.5].
-const OVERHANG: f64 = 4.0;
 
 const EPS: f64 = 1e-6;
 
@@ -543,19 +539,20 @@ fn jogged(cut: &CutEdge, pt: impl Fn(f64, f64) -> P) -> Vec<P> {
     let jog = (h * 0.28).min(9.0);
     let amp = (h * 0.2).min(4.5);
     vec![
-        pt(cut.t, cut.lo - OVERHANG),
+        pt(cut.t, cut.lo - CENTER_MARK_OVERHANG),
         pt(cut.t, m - jog),
         pt(cut.t + amp, m - jog * 0.15),
         pt(cut.t - amp, m + jog * 0.15),
         pt(cut.t, m + jog),
-        pt(cut.t, cut.hi + OVERHANG),
+        pt(cut.t, cut.hi + CENTER_MARK_OVERHANG),
     ]
 }
 
 #[cfg(test)]
 mod tests {
     use super::super::testutil::{by_id, laid, layout_err, text_at};
-    use super::{BREAK_GAP, ViewMap};
+    use super::ViewMap;
+    use crate::ledger::consts::BREAK_GAP;
     use crate::resolve::NodeKind;
 
     #[test]

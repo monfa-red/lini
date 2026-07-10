@@ -10,21 +10,10 @@ use super::geometry::P;
 use super::{angle, dims, leaders, round};
 use crate::ast::Side;
 use crate::error::Error;
+use crate::ledger::consts::{
+    DIM_OFFSET, DIM_PITCH, DRAWING_LINK_FONT_SIZE, DRAWING_LINK_STROKE_WIDTH, EXT_OVERSHOOT,
+};
 use crate::resolve::{AttrMap, LinkKind, MeasureOp, NodeKind, ResolvedLink, ResolvedValue};
-
-// The dimension / leader anatomy — baked sheet constants [SPEC 10.5], never
-// scaled by the view.
-pub(super) const DIM_OFFSET: f64 = 18.0;
-pub(super) const DIM_PITCH: f64 = 16.0;
-pub(super) const EXT_GAP: f64 = 3.0;
-pub(super) const EXT_OVERSHOOT: f64 = 3.0;
-/// The drafting-slender arrow, 3 : 1 [SPEC 15.6] — length × half-width, at
-/// stroke-width 1; both scale with the dim's `stroke-width` (drafting strokes
-/// stay 1–2, so the heads read at ISO 129's arrow-≈-text-height weight).
-pub(super) const ARROW_LEN: f64 = 12.0;
-pub(super) const ARROW_HALF: f64 = 2.0;
-pub(super) const NOTE_OFFSET: f64 = 14.0;
-pub(super) const NOTE_LANDING: f64 = 8.0;
 
 /// A dimension's measure axis [SPEC 15.6] — true aligned dims are deferred.
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -48,7 +37,7 @@ pub(super) struct Ctx<'a> {
 /// A link's resolved paint, read once per statement: the wire stroke (the
 /// `|-|` cascade), the support-line tone (`--stroke-light` unless the
 /// statement recolours, [SPEC 10.1]), its width (1 in a drawing — the scope
-/// default), and the label font (the link-label 11).
+/// default), and the annotation font (the caption 12, the same scope default).
 pub(super) struct Paint {
     pub stroke: ResolvedValue,
     pub light: ResolvedValue,
@@ -66,8 +55,10 @@ impl Paint {
         Paint {
             stroke: set.clone().unwrap_or_else(|| live("stroke-dark")),
             light: set.unwrap_or_else(|| live("stroke-light")),
-            sw: attrs.number("stroke-width").unwrap_or(1.0),
-            fs: attrs.number("font-size").unwrap_or(11.0),
+            sw: attrs
+                .number("stroke-width")
+                .unwrap_or(DRAWING_LINK_STROKE_WIDTH),
+            fs: attrs.number("font-size").unwrap_or(DRAWING_LINK_FONT_SIZE),
         }
     }
 
@@ -270,7 +261,7 @@ pub(super) fn side_attr(attrs: &AttrMap) -> Option<&str> {
 #[cfg(test)]
 mod tests {
     use super::super::testutil::{by_id, laid, layout_err, text_at, texts};
-    use super::{DIM_OFFSET, DIM_PITCH};
+    use crate::ledger::consts::{DIM_OFFSET, DIM_PITCH};
     use crate::resolve::{MarkerKind, NodeKind, ResolvedValue};
 
     // ── Linear dims & chains [SPEC 15.6] ──

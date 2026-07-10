@@ -161,7 +161,10 @@ impl Types {
         if depth > MAX_INHERITANCE_DEPTH {
             return Err(Error::at(
                 span,
-                format!("'{}' exceeds max inheritance depth (16)", name),
+                format!(
+                    "'{}' exceeds max inheritance depth ({})",
+                    name, MAX_INHERITANCE_DEPTH
+                ),
             ));
         }
         if visiting.iter().any(|n| n == name) {

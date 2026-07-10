@@ -7,13 +7,12 @@
 
 use super::super::ir::PlacedNode;
 use super::anchors::{self, Anchor, Spot};
-use super::annotate::{
-    ARROW_HALF, ARROW_LEN, Axis, Ctx, EXT_GAP, EXT_OVERSHOOT, Paint, Rows, side_attr,
-};
+use super::annotate::{Axis, Ctx, Paint, Rows, side_attr};
 use super::compose::{self, DimText, Glyph};
 use super::geometry::{P, iso_text_angle};
 use crate::ast::Side;
 use crate::error::Error;
+use crate::ledger::consts::{ARROW_HALF, ARROW_LEN, EXT_GAP, EXT_OVERSHOOT};
 use crate::resolve::{ResolvedLink, ResolvedText};
 use crate::span::Span;
 

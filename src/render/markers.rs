@@ -3,6 +3,7 @@
 //! Shared between inline `|line|` primitives and link rendering.
 
 use super::values::num;
+use crate::ledger::consts::DATUM_SIZE;
 use crate::resolve::{MarkerKind, Markers};
 use std::fmt::Write;
 
@@ -54,7 +55,7 @@ pub fn marker_size(thickness: f64) -> f64 {
 /// stroke like every head. Shared by the seated triangle (`leaders`) and the
 /// point-anchored fallback marker below — one formula.
 pub fn datum_size(thickness: f64) -> f64 {
-    11.0_f64.max(thickness * 5.5)
+    DATUM_SIZE.max(thickness * 5.5)
 }
 
 /// Dot radius as a fraction of the marker `size` — a touch fuller so the circle

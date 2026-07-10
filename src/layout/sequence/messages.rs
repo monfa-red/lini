@@ -10,6 +10,7 @@
 use crate::ast::LineStyle;
 use crate::layout::ir::{RoutedLink, RoutedText, SEQUENCE_MESSAGE_CLASS};
 use crate::layout::prim;
+use crate::ledger::consts::DEFAULT_CLEARANCE;
 use crate::resolve::{AttrMap, ResolvedLink};
 use crate::routing::straight;
 use std::collections::HashMap;
@@ -68,7 +69,10 @@ impl Pair<'_> {
     /// This message's `clearance` [SPEC 9] — drives the self-hook's size and corner
     /// radius, so the loop honours the same turn rule as a routed wire.
     fn clearance(&self) -> f64 {
-        self.link.attrs.number("clearance").unwrap_or(16.0)
+        self.link
+            .attrs
+            .number("clearance")
+            .unwrap_or(DEFAULT_CLEARANCE)
     }
     /// A self-hook's `(width, depth)`, from the message's `clearance` — the
     /// corner radius falls out of the render-time fillet pass.

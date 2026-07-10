@@ -10,12 +10,10 @@
 use super::geometry::{MirrorAxis, P, PathSeg, Subpath};
 use super::{Segment, breaks::ViewMap};
 use crate::error::Error;
+use crate::ledger::consts::THREAD_DEPTH;
 use crate::resolve::{ResolvedInst, ResolvedValue};
 use crate::span::Span;
 
-/// The ISO metric 60° thread depth per side, as a fraction of the pitch —
-/// external `d3 = d − 1.2269 × P` [SPEC 15.3].
-pub(super) const THREAD_DEPTH: f64 = 0.61343;
 /// Positional agreement, px — matches the edge-line law's.
 const EPS: f64 = 1e-3;
 

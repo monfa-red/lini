@@ -31,7 +31,7 @@ const SIZES: &[(&str, f64, f64, bool)] = &[
 ];
 
 /// The `|page|` bundle's default sheet — A4, ISO portrait.
-pub(super) const DEFAULT: (f64, f64) = (210.0, 297.0);
+pub(super) const DEFAULT: (f64, f64) = crate::ledger::consts::A4;
 
 /// Expand a `sheet:` declaration in place to `width` / `height` [SPEC 15.8].
 pub(super) fn expand_sheet(style: &mut Vec<Decl>) -> Result<(), Error> {

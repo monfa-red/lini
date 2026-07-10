@@ -17,7 +17,7 @@ use super::scene::{self, PathIndex, SceneCtx};
 use super::value::{resolve_groups, resolve_property};
 use crate::error::Error;
 use crate::expr::{Expr, FuncTable};
-use crate::ledger::properties;
+use crate::ledger::{consts, properties};
 use crate::syntax::ast::{Decl, File, Rule, SelUnit, Selector, StyleItem, Value};
 use std::collections::{HashMap, HashSet};
 
@@ -462,10 +462,16 @@ fn link_scope(
     // overrides it. The same immediate-scope predicate as the mate gate: a
     // `|row|` nested in a drawing owns ordinary routed links, weight 2.
     if scope_is_drawing(nodes, root_attrs, scope) {
-        base.push(("stroke-width".to_string(), ResolvedValue::Number(1.0)));
+        base.push((
+            "stroke-width".to_string(),
+            ResolvedValue::Number(consts::DRAWING_LINK_STROKE_WIDTH),
+        ));
         // …and its annotation text reads at the caption size, 12 — the same
         // base-layer seat, so a plain `|-| { font-size: … }` still wins.
-        base.push(("font-size".to_string(), ResolvedValue::Number(12.0)));
+        base.push((
+            "font-size".to_string(),
+            ResolvedValue::Number(consts::DRAWING_LINK_FONT_SIZE),
+        ));
     }
     for prop in properties::scope_link_props() {
         let nearest = chain
@@ -511,7 +517,9 @@ fn build_sheet_inputs(
     let mut link_defaults = base;
     link_defaults.extend(sheet.class_decls(links::LINK_CLASS));
     let link_defaults = collapse(&link_defaults);
-    let root_font_size = root_attrs.number("font-size").unwrap_or(15.0);
+    let root_font_size = root_attrs
+        .number("font-size")
+        .unwrap_or(consts::ROOT_FONT_SIZE);
     // Inherited-text props the global block set, for the `.lini` rule [SPEC 6].
     // `font-family` / `font-weight` / `color` override their themeable var when set
     // globally; the rest are live CSS with no default, present only when authored.

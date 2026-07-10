@@ -16,6 +16,7 @@ use super::intern::IdTable;
 use super::values::{format_value, num};
 use crate::Options;
 use crate::layout::{GradientDef, GradientKind, HatchDef, LaidOut, PlacedNode};
+use crate::ledger::consts::{HATCH_LINE_WIDTH, HATCH_PITCH};
 use crate::resolve::{AttrMap, ResolvedValue, VarTable};
 use std::fmt::Write;
 
@@ -153,7 +154,7 @@ fn parse_hatch(v: &ResolvedValue) -> Option<HatchDef> {
         .get(1)
         .and_then(ResolvedValue::as_number)
         .filter(|p| *p > 0.0)
-        .unwrap_or(6.0);
+        .unwrap_or(HATCH_PITCH);
     let color = c.args.get(2).cloned().unwrap_or(ResolvedValue::LiveVar {
         name: "stroke".into(),
         raw: false,
@@ -196,10 +197,11 @@ fn emit_clips(laid: &LaidOut, out: &mut String) {
 /// exactly that), holding one full-height line per family. A family at +90°
 /// from the first is the full-width line — the standard cross-hatch tiles
 /// exactly at any bearing; other offsets draw through the tile centre, best
-/// effort. Line width is fixed at 0.75 — a texture, not a stroke.
+/// effort. Line width is fixed — a texture, not a stroke.
 fn emit_hatches(laid: &LaidOut, out: &mut String, opts: &Options) {
     for (i, h) in laid.hatches.iter().enumerate() {
         let p = h.pitch;
+        let lw = num(HATCH_LINE_WIDTH);
         let color = format_value(&h.color, &laid.vars, opts);
         let paint = if opts.bake_vars {
             format!(r#"stroke="{color}""#)
@@ -214,7 +216,7 @@ fn emit_hatches(laid: &LaidOut, out: &mut String, opts: &Options) {
                 // The base family: a vertical line mid-tile (bearing 0 = up).
                 write!(
                     lines,
-                    r#"<line x1="{m}" y1="0" x2="{m}" y2="{p}" {paint} stroke-width="0.75"/>"#,
+                    r#"<line x1="{m}" y1="0" x2="{m}" y2="{p}" {paint} stroke-width="{lw}"/>"#,
                     m = num(p / 2.0),
                     p = num(p),
                 )
@@ -223,7 +225,7 @@ fn emit_hatches(laid: &LaidOut, out: &mut String, opts: &Options) {
                 // The perpendicular family — the cross-hatch, exact.
                 write!(
                     lines,
-                    r#"<line x1="0" y1="{m}" x2="{p}" y2="{m}" {paint} stroke-width="0.75"/>"#,
+                    r#"<line x1="0" y1="{m}" x2="{p}" y2="{m}" {paint} stroke-width="{lw}"/>"#,
                     m = num(p / 2.0),
                     p = num(p),
                 )
@@ -235,7 +237,7 @@ fn emit_hatches(laid: &LaidOut, out: &mut String, opts: &Options) {
                 let (dx, dy) = (rad.sin() * p, -rad.cos() * p);
                 write!(
                     lines,
-                    r#"<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" {paint} stroke-width="0.75"/>"#,
+                    r#"<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" {paint} stroke-width="{lw}"/>"#,
                     x1 = num(p / 2.0 - dx),
                     y1 = num(p / 2.0 - dy),
                     x2 = num(p / 2.0 + dx),

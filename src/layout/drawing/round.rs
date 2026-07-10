@@ -8,13 +8,14 @@
 
 use super::super::ir::PlacedNode;
 use super::anchors::{self, Anchor, Spot, rotated};
-use super::annotate::{ARROW_LEN, Axis, Ctx, Paint, Rows, side_attr, side_unit};
+use super::annotate::{Axis, Ctx, Paint, Rows, side_attr, side_unit};
 use super::compose::{self, DimText, Glyph};
 use super::dims::{Stacked, arrow, span_on, stack_side, stacked};
 use super::geometry::{P, iso_text_angle, reflect_point};
 use super::{Segment, leaders};
 use crate::ast::Side;
 use crate::error::Error;
+use crate::ledger::consts::ARROW_LEN;
 use crate::resolve::{ResolvedLink, ResolvedText};
 
 /// `(o)` — the round measure, unary; the feature picks the reading

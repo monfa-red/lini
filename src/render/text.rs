@@ -7,6 +7,7 @@
 //! — so it never reappears here.
 
 use super::values::{escape_xml, num};
+use crate::ledger::consts::TEXT_LEADING;
 use crate::resolve::AttrMap;
 use std::fmt::Write;
 
@@ -53,7 +54,7 @@ pub(crate) fn emit(
     // `line-spacing`, the block centred on (x, y) so `dominant-baseline: central`
     // still holds.
     let size = attrs.number("font-size").unwrap_or(0.0);
-    let spacing = size * 1.2 + attrs.number("line-spacing").unwrap_or(0.0);
+    let spacing = size * TEXT_LEADING + attrs.number("line-spacing").unwrap_or(0.0);
     let top = y - spacing * (lines.len() as f64 - 1.0) / 2.0;
     write!(
         out,
