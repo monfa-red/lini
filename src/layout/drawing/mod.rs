@@ -28,7 +28,7 @@ pub(super) use engine::{layout_node, layout_root};
 
 use super::ir::Bbox;
 use crate::error::Error;
-use crate::resolve::{AttrMap, Program, ResolvedInst, ResolvedValue};
+use crate::resolve::{Program, ResolvedInst};
 use geometry::P;
 
 /// A folded sketch's annotation geometry, carried on its placed node
@@ -86,17 +86,11 @@ impl Segment {
     }
 }
 
-/// `layout: drawing` [SPEC 15] — the drawing engine's dispatch check, the
-/// `is_sequence` twin.
-pub(crate) fn is_drawing(attrs: &AttrMap) -> bool {
-    matches!(attrs.get("layout"), Some(ResolvedValue::Ident(l)) if l == "drawing")
-}
-
 /// Whether the container at `scope` is a `layout: drawing` — its links are the
 /// engine's (dimensions, leaders, mates), so the router and the declared-edge
 /// count skip them, exactly as a sequence scope's messages are skipped.
 pub(crate) fn is_drawing_scope(program: &Program, scope: &str) -> bool {
-    super::scope_attrs(program, scope).is_some_and(is_drawing)
+    super::scope_attrs(program, scope).is_some_and(crate::resolve::is_drawing)
 }
 
 /// A scene-rooted endpoint path relative to its drawing scope (`""` = root).

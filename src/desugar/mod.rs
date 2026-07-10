@@ -10,6 +10,7 @@
 //! override-in-place merge, and an already-lowered node is passed through.
 
 pub(crate) mod bundles;
+mod chrome;
 mod classes;
 mod drawing;
 mod labels;

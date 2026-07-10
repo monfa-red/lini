@@ -9,7 +9,7 @@ use super::cascade::{NodeFacts, Stylesheet};
 use super::defaults;
 use super::ir::{
     AttrMap, Program, ResolvedCall, ResolvedInst, ResolvedScene, ResolvedValue, SheetInputs,
-    VarTable,
+    VarTable, is_drawing,
 };
 use super::links;
 use super::merge::collapse;
@@ -389,11 +389,10 @@ fn scoped_rules() -> Vec<Rule> {
 /// the root, for top-level links) resolved `layout: drawing`. Gates the drawing
 /// statements: the measuring ops, `||`, `tol:`, and the wider anchor set.
 fn scope_is_drawing(nodes: &[ResolvedInst], root_attrs: &AttrMap, scope: &[String]) -> bool {
-    let layout = match scope_chain(nodes, scope).last() {
-        Some(container) => container.attrs.get("layout"),
-        None => root_attrs.get("layout"),
-    };
-    matches!(layout, Some(ResolvedValue::Ident(l)) if l == "drawing")
+    let attrs = scope_chain(nodes, scope)
+        .last()
+        .map_or(root_attrs, |c| &c.attrs);
+    is_drawing(attrs)
 }
 
 /// A link scope's drawing classification [SPEC 15/20]: whether the immediate
@@ -410,7 +409,6 @@ fn link_scope_kind(
         None
     } else {
         let chain = scope_chain(nodes, scope);
-        let is_drawing = |attrs: &AttrMap| matches!(attrs.get("layout"), Some(ResolvedValue::Ident(l)) if l == "drawing");
         let enclosed = is_drawing(root_attrs)
             || chain
                 .iter()

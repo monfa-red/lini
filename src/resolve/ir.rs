@@ -178,6 +178,13 @@ impl AttrMap {
     }
 }
 
+/// Whether resolved `attrs` set `layout: drawing` [SPEC 15] — the one check for
+/// "this is a drawing scope," shared by the resolve link pass and the layout
+/// dispatch.
+pub fn is_drawing(attrs: &AttrMap) -> bool {
+    matches!(attrs.get("layout"), Some(ResolvedValue::Ident(l)) if l == "drawing")
+}
+
 #[derive(Clone, Debug)]
 pub enum ResolvedValue {
     Number(f64),

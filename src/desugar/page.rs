@@ -238,15 +238,5 @@ fn chrome(at: Span, ty: &str, marker: Vec<Value>, extra: Option<Decl>) -> Node {
         },
     ];
     style.extend(extra);
-    Node {
-        id: None,
-        ty: Some(ty.into()),
-        label: None,
-        classes: Vec::new(),
-        style,
-        style_span: None,
-        children: Vec::new(),
-        links: Vec::new(),
-        span: tail,
-    }
+    super::chrome::node(ty, style, tail)
 }

@@ -36,7 +36,7 @@ pub fn layout(program: &Program) -> Result<LaidOut, Error> {
     // its children datum-place, mates seat them, and its links never route —
     // intercepted before the generic per-child layout, which would flow-arrange
     // features and reject the chrome.
-    if drawing::is_drawing(&program.scene.attrs) {
+    if crate::resolve::is_drawing(&program.scene.attrs) {
         let (top_nodes, bbox) = drawing::layout_root(program)?;
         let links = routing::owned_links(&top_nodes);
         let routed = routing::Routing {
@@ -353,7 +353,7 @@ fn layout_inst(
         Some(chart::layout_pie(inst)?)
     } else if sequence::is_sequence(&inst.attrs) {
         Some(sequence::layout_node(inst, path, program)?)
-    } else if drawing::is_drawing(&inst.attrs) {
+    } else if crate::resolve::is_drawing(&inst.attrs) {
         Some(drawing::layout_node(inst, path, program, ctx)?)
     } else {
         None
