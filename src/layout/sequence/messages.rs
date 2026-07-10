@@ -16,9 +16,9 @@ use crate::routing::straight;
 use std::collections::HashMap;
 
 /// Sequence message-label size — larger than the generic 11px link label so the messages
-/// read comfortably on the time axis [SPEC 13]. Kept in sync with the `.lini-sequence-message`
-/// stylesheet rule ([`crate::render`]), which states the rendered size.
-const LABEL_SIZE: f64 = 13.0;
+/// read comfortably on the time axis [SPEC 13]. The `.lini-sequence-message` stylesheet
+/// rule ([`crate::render`]) states the rendered size from this constant.
+pub(crate) const LABEL_SIZE: f64 = 13.0;
 /// Clear space above the arrow for its label.
 const LABEL_RISE: f64 = 5.0;
 /// Clear space a label wants beyond its text when spacing participants.

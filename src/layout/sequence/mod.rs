@@ -14,7 +14,7 @@
 
 mod activations;
 mod frames;
-mod messages;
+pub(crate) mod messages;
 mod notes;
 
 use crate::error::Error;

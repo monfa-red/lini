@@ -479,9 +479,15 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
                 ("stroke".into(), "none".into()),
                 ("text-anchor".into(), "middle".into()),
                 ("dominant-baseline".into(), "central".into()),
-                // `messages::LABEL_SIZE` — larger than the wire label so messages read
-                // on the time axis; kept in sync with that constant.
-                ("font-size".into(), "13px".into()),
+                // Larger than the wire label so messages read on the time axis —
+                // the size layout measured with.
+                (
+                    "font-size".into(),
+                    format!(
+                        "{}px",
+                        super::values::num(crate::layout::sequence::messages::LABEL_SIZE)
+                    ),
+                ),
                 ("font-weight".into(), "normal".into()),
             ],
         });

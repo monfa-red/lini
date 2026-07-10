@@ -74,6 +74,18 @@ const CROW_DEPTH: f64 = 1.0; // foot convergence, back from the entity edge
 const CROW_SPREAD: f64 = 0.55; // foot half-spread, perpendicular to the line
 const BAR_HALF: f64 = 0.5; // the "one" bar's half-width
 const RING_R: f64 = 0.4; // the optionality ring's radius
+/// The optionality ring's centre, back from the tip in `marker_size` units —
+/// behind the lone bar (zero-or-one) / behind the crow's convergence
+/// (zero-or-many). Shared with [`open_back_extent`], which stops the line there.
+const RING_BACK_ONE: f64 = 1.5;
+const RING_BACK_MANY: f64 = 1.7;
+
+/// Filled-head half-spreads, in head-length units: the arrow's base and the
+/// datum triangle's base open half the length per side; the diamond is
+/// slightly slimmer so it reads level with the arrow.
+const ARROW_HALF_SPREAD: f64 = 0.5;
+const DATUM_HALF_SPREAD: f64 = 0.5;
+const DIAMOND_HALF_SPREAD: f64 = 0.425;
 
 /// How far a link's marker tip is pushed past the endpoint into the shape, so the
 /// head overlaps the border by a hair and reads as connected — constant at every
@@ -112,8 +124,8 @@ fn open_back_extent(kind: MarkerKind) -> f64 {
         MarkerKind::Crow | MarkerKind::OneOrMany => CROW_DEPTH,
         // Ring-capped: the line stops behind the ring; a stub (drawn by the marker)
         // carries the max glyph on to the entity.
-        MarkerKind::ZeroOrOne => 1.5 + RING_R,
-        MarkerKind::ZeroOrMany => 1.7 + RING_R,
+        MarkerKind::ZeroOrOne => RING_BACK_ONE + RING_R,
+        MarkerKind::ZeroOrMany => RING_BACK_MANY + RING_R,
         _ => CROW_DEPTH,
     }
 }
@@ -233,10 +245,10 @@ pub fn emit_marker(
         MarkerKind::Arrow => {
             let bx = tip.0 - ux * size;
             let by = tip.1 - uy * size;
-            let lx = bx + px * size * 0.5;
-            let ly = by + py * size * 0.5;
-            let rx = bx - px * size * 0.5;
-            let ry = by - py * size * 0.5;
+            let lx = bx + px * size * ARROW_HALF_SPREAD;
+            let ly = by + py * size * ARROW_HALF_SPREAD;
+            let rx = bx - px * size * ARROW_HALF_SPREAD;
+            let ry = by - py * size * ARROW_HALF_SPREAD;
             writeln!(
                 out,
                 r#"{}<polygon class="lini-marker lini-marker-arrow" points="{},{} {},{} {},{}"{}/>"#,
@@ -267,7 +279,7 @@ pub fn emit_marker(
         MarkerKind::Datum => {
             let ax = tip.0 - ux * size;
             let ay = tip.1 - uy * size;
-            let half = size * 0.5;
+            let half = size * DATUM_HALF_SPREAD;
             writeln!(
                 out,
                 r#"{}<polygon class="lini-marker lini-marker-datum" points="{},{} {},{} {},{}"{}/>"#,
@@ -283,10 +295,10 @@ pub fn emit_marker(
             let by = tip.1 - uy * size;
             let mx = (tip.0 + bx) / 2.0;
             let my = (tip.1 + by) / 2.0;
-            let lx = mx + px * size * 0.425;
-            let ly = my + py * size * 0.425;
-            let rx = mx - px * size * 0.425;
-            let ry = my - py * size * 0.425;
+            let lx = mx + px * size * DIAMOND_HALF_SPREAD;
+            let ly = my + py * size * DIAMOND_HALF_SPREAD;
+            let rx = mx - px * size * DIAMOND_HALF_SPREAD;
+            let ry = my - py * size * DIAMOND_HALF_SPREAD;
             writeln!(
                 out,
                 r#"{}<polygon class="lini-marker lini-marker-diamond" points="{},{} {},{} {},{} {},{}"{}/>"#,
@@ -317,8 +329,16 @@ pub fn emit_marker(
         // Ring caps the main line; a stub carries the "one" bar on to the entity, so
         // the max glyph connects while the line never crosses the ring ([SPEC 7]).
         MarkerKind::ZeroOrOne => {
-            open_ring(out, indent, tip, (ux, uy), size, 1.5);
-            open_stub(out, indent, tip, (ux, uy), size, 1.5 - RING_R, 0.0);
+            open_ring(out, indent, tip, (ux, uy), size, RING_BACK_ONE);
+            open_stub(
+                out,
+                indent,
+                tip,
+                (ux, uy),
+                size,
+                RING_BACK_ONE - RING_R,
+                0.0,
+            );
             open_path(out, indent, &bar_d(tip, (ux, uy), (px, py), size, 0.6));
         }
         MarkerKind::OneOrMany => {
@@ -328,8 +348,16 @@ pub fn emit_marker(
         // Ring caps the main line; a stub bridges it to the crow's convergence.
         MarkerKind::ZeroOrMany => {
             open_path(out, indent, &crow_d(tip, (ux, uy), (px, py), size));
-            open_ring(out, indent, tip, (ux, uy), size, 1.7);
-            open_stub(out, indent, tip, (ux, uy), size, 1.7 - RING_R, CROW_DEPTH);
+            open_ring(out, indent, tip, (ux, uy), size, RING_BACK_MANY);
+            open_stub(
+                out,
+                indent,
+                tip,
+                (ux, uy),
+                size,
+                RING_BACK_MANY - RING_R,
+                CROW_DEPTH,
+            );
         }
         MarkerKind::None => {}
     }
