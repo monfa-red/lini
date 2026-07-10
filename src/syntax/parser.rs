@@ -92,6 +92,12 @@ impl<'a> Parser<'a> {
             .unwrap_or_default()
     }
 
+    /// The span of a construct that opened at `start` and runs to the last
+    /// consumed token — the common "whole statement / node / block" span.
+    fn span_from(&self, start: Span) -> Span {
+        Span::new(start.start, self.last_span().end)
+    }
+
     /// Whether the token at `pos + n` is glued (no whitespace) to the one before
     /// it — how `a.b` (endpoint path) is told from `a .b` (a class).
     fn glued_at(&self, n: usize) -> bool {
@@ -259,7 +265,7 @@ impl<'a> Parser<'a> {
         if matches!(self.kind(), Some(TokKind::LBrace)) {
             let start = self.span();
             file.stylesheet = self.parse_stylesheet()?;
-            file.stylesheet_span = Span::new(start.start, self.last_span().end);
+            file.stylesheet_span = self.span_from(start);
             self.skip_newlines();
         }
         // Instances and links interleave, in source order [SPEC 3]: a
@@ -557,7 +563,7 @@ impl<'a> Parser<'a> {
         Ok(Rule {
             selector,
             decls,
-            span: Span::new(start.start, self.last_span().end),
+            span: self.span_from(start),
         })
     }
 
@@ -692,7 +698,7 @@ impl<'a> Parser<'a> {
             style_span,
             children,
             links,
-            span: Span::new(start.start, self.last_span().end),
+            span: self.span_from(start),
         })
     }
 
@@ -717,7 +723,7 @@ impl<'a> Parser<'a> {
             name,
             params,
             body,
-            span: Span::new(start.start, self.last_span().end),
+            span: self.span_from(start),
         })
     }
 
@@ -770,7 +776,7 @@ impl<'a> Parser<'a> {
             text,
             style,
             style_span,
-            span: Span::new(start.start, self.last_span().end),
+            span: self.span_from(start),
         })
     }
 
@@ -796,7 +802,7 @@ impl<'a> Parser<'a> {
             style_span,
             children,
             links,
-            span: Span::new(start.start, self.last_span().end),
+            span: self.span_from(start),
         })
     }
 
@@ -838,7 +844,7 @@ impl<'a> Parser<'a> {
             self.terminator()?;
         }
         self.expect(&TokKind::RBrace, "'}'")?;
-        Ok((decls, Span::new(start.start, self.last_span().end)))
+        Ok((decls, self.span_from(start)))
     }
 
     /// Consume an optional `[ children ]` block; absent → empty.
@@ -984,7 +990,7 @@ impl<'a> Parser<'a> {
             style_span,
             label,
             labels,
-            span: Span::new(start.start, self.last_span().end),
+            span: self.span_from(start),
         })
     }
 

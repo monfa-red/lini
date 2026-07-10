@@ -29,6 +29,12 @@ pub(super) const INHERITED_TEXT: &[&str] = &[
     "color",
 ];
 
+/// The **baked-spacing** subset of [`INHERITED_TEXT`] [SPEC 6]: these change
+/// layout (compiled into glyph / line positions), so they are never emitted as
+/// live CSS. The rest — the live-CSS text props — are `INHERITED_TEXT` minus
+/// these.
+pub(super) const BAKED_TEXT: &[&str] = &["font-size", "letter-spacing", "line-spacing"];
+
 /// An internal link lifted from a body or define, with its host's dot-path
 /// prefix — resolved at program level once the whole tree (and its path index)
 /// exists.

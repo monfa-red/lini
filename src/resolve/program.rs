@@ -520,18 +520,15 @@ fn build_sheet_inputs(
     // Inherited-text props the global block set, for the `.lini` rule [SPEC 6].
     // `font-family` / `font-weight` / `color` override their themeable var when set
     // globally; the rest are live CSS with no default, present only when authored.
+    // The baked-spacing props are layout (`font-size` is the baked root literal),
+    // so the live-CSS subset is `INHERITED_TEXT` minus `BAKED_TEXT`.
     let mut root_text = AttrMap::new();
-    for name in [
-        "font-family",
-        "font-weight",
-        "color",
-        "font-style",
-        "text-transform",
-        "text-decoration",
-        "text-shadow",
-    ] {
+    for name in scene::INHERITED_TEXT
+        .iter()
+        .filter(|n| !scene::BAKED_TEXT.contains(n))
+    {
         if let Some(v) = root_attrs.get(name) {
-            root_text.insert(name, v.clone());
+            root_text.insert(*name, v.clone());
         }
     }
     Ok(SheetInputs {
