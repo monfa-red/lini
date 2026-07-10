@@ -313,8 +313,9 @@ whatever font it finds. v1 fixes both with two bundled families and real metrics
 - **Metrics are always compiled in** — never feature-gated (layout must not
   depend on build flags). `xtask extract-fonts` generates per-glyph advance
   tables + ascent/descent/cap-height per family × weight from the raw statics
-  (a local download at `assets/fonts/raw/`, gitignored, filenames + sha256
-  pinned in xtask — the Phosphor precedent), plus **subset TTFs** (Latin +
+  (**committed** at `assets/fonts/raw/` so regeneration is reproducible even if
+  Google re-versions the download; cargo-package-excluded so the published
+  crate stays lean), plus **subset TTFs** (Latin +
   Latin-1 + Latin-Ext-A + punctuation + the drafting symbols lini composes),
   committed and gated behind a default-on `font` cargo feature. **Budget:
   shipped font payload ≤ 600KB total** — trim charset first, weights second.

@@ -11,6 +11,9 @@ documentation = "https://docs.rs/lini"
 readme = "README.md"
 keywords = ["diagram", "svg", "dsl", "diagrams-as-code", "graph"]
 categories = ["command-line-utilities", "visualization"]
+# Raw font sources are xtask input only (the committed subsets/metrics are the
+# shipped artifacts) — keep the ~8 MB out of the published crate.
+exclude = ["assets/fonts/raw"]
 
 [[bin]]
 name = "lini"

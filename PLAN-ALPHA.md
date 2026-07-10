@@ -370,11 +370,12 @@ correctly at light/dark; no measurement caller bypasses the new API.
 
 ### Stage M5 — fonts: real metrics, subsets & `--static` `[output]`
 
-ROADMAP 3.7. Raw statics live at `assets/fonts/raw/` (gitignored — four roman
-statics + OFL per family); OFL texts already in `LICENSES/`.
+ROADMAP 3.7. Raw statics are **committed** at `assets/fonts/raw/` (four roman
+statics + OFL per family; excluded from the cargo package); OFL texts in
+`LICENSES/`.
 
-- [ ] `xtask extract-fonts` (mirrors `extract-icons`): pin raw filenames +
-  sha256 with the download URL documented; generate **(a)** metrics tables —
+- [ ] `xtask extract-fonts` (mirrors `extract-icons`): read the committed raws
+  (filenames pinned in xtask); generate **(a)** metrics tables —
   per-glyph advances, ascent/descent/cap-height, upem, per family × weight
   {400, 500, 600, 700} — as generated Rust, **always compiled in** (never
   behind the feature: layout must not vary by build flags); assert the mono
