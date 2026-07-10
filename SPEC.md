@@ -3539,6 +3539,13 @@ Named in the language, not built yet; the syntax is stable.
 - **a bare hollow-circle endpoint operator** — `o` spells zero only next to a max glyph
   (`-o<` / `-o+`); a standalone hollow endpoint is the paint `marker-end: circle`
   ([SPEC 7](#7-nodes)), so `o` never needs to stand alone.
+- **`format:`** — value **presentation**, decided and additive: `auto` ·
+  `decimal N` · `significant N` · `scientific N` · `engineering N` · `percent N` ·
+  `fraction D`, plus date/time presets for time axes. Presentation only, never
+  measurement; inherits from the chart / drawing and is overridden per axis,
+  series, dimension rule, or one dimension; composes before `unit:`, tolerance,
+  the `⌀` / `R` / `°` glyphs, and pattern counts. Lands with its first consumers
+  (time axes, then dimensions).
 - **gradient fills on text** — gradients fill nodes today ([SPEC 10.3](#103-gradients)).
 - `radius` on non-rect primitives (hex / diamond / slant / poly).
 - arbitrary numeric `font-weight` (100–900 beyond the built 400–700 set) and
@@ -3573,8 +3580,10 @@ dividers / delays (`==` / `...`); and an `|actor|` stick-figure primitive (an ac
 - per-slice **explode**, **on-slice value / percent labels**, and a **centred total** in a
   donut hole; **per-segment styling** (a style list mirroring a segmented `fn:`).
 - **time scale** (date domains with calendar-aware ticks); **multi-ring pie / sunburst**;
-  **per-datum paint styling** (a parallel paint list over `data:` — today, overlay a
-  `|mark|`).
+  **per-datum paint styling** on repeated-mark series — a comma paint list over
+  `data:` (`fill: auto, auto, --red`, `auto` = the palette-derived paint; also
+  `stroke` / `opacity`; count must match; `|line|` / `|area|` reject list paint —
+  today, overlay a `|mark|`).
 
 **Drawings** ([SPEC 15](#15-drawing))
 
@@ -3617,6 +3626,11 @@ dividers / delays (`==` / `...`); and an `|actor|` stick-figure primitive (an ac
   today — a named constant covers the workflow, [SPEC 10.7](#107-expressions--functions)).
 - **balloon auto-numbering and auto-BOM** from the scene's parts.
 - **`\|mark\|` / `\|note\|` in charts** — data-coordinate placement (`at:`).
+
+**Beyond 1.0** — directions deliberately outside the release contract, listed so
+they reserve no premature syntax: automatic graph / DAG layout (multi-parent,
+cycles); imports / modules / namespaces for shared themes and part libraries;
+animation; native PNG / WebP export.
 
 ---
 
