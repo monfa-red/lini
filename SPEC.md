@@ -3459,6 +3459,11 @@ dividers / delays (`==` / `...`); and an `|actor|` stick-figure primitive (an ac
 
 ## 24. Examples
 
+One worked example per family; the full per-feature gallery is the repo's
+`samples/` directory (one tested `.lini` file per feature — tables and entities,
+gradients, icons, every chart kind, and the drawing set: tie bar with `break:`,
+bushing section, mated pump assembly, patterns, details, sheets).
+
 **A scene — grid, defines, groups, nested links:**
 
 ```
@@ -3493,24 +3498,6 @@ dividers / delays (`==` / `...`); and an `|actor|` stick-figure primitive (an ac
 cat:right -> kitchen.bowl:left "watches"
 kitchen.water -> closet .loud
 closet.outlet -> fridge.inlet "restocks"
-```
-
-**Table, entity, and shorthand:**
-
-```
-|table#basket| { columns: 80 140 80 } [
-  "Fruit" "Quantity" "Notes"
-  "Apple" "12"       "fresh"
-  "Mango" "3"        "ripe"
-]
-
-|entity#users|  "Users"  [ "id" "int"  "name" "varchar" ]
-|entity#orders| "Orders" [ "id" "int"  "user_id" "int" ]
-users -o< orders "places"    // zero-or-many — [min][max] = hollow ring + crow's foot
-
-cat -> dog -> bird           // 3 implicit boxes, 2 links
-fox & owl -> mouse           // fan-in
-frog ~> pond                 // wavy arrow
 ```
 
 **A sequence — a login flow:**
@@ -3576,75 +3563,7 @@ db      --> api     "record"
 ]
 ```
 
-**Drawings — a broken tie bar, a bushing in section, a mated assembly, and a
-sheeted screw** ([SPEC 15](#15-drawing)):
-
-```
-{ layout: drawing; scale: 3; unit: "mm" }
-
-|sketch#bar| {                                   // a 300 mm tie bar, drawn true
-  draw: move(-150, 0) up(10) chamfer(1.5)
-        right(40):m20 point():a right(260) chamfer(1.5) down(10);
-  revolve: x-axis;                               // a turned part: axis + edge lines
-  thread: m20 1.5;                               // minor line + thread-end line
-  break: -80 60;                                 // cut the boring middle from the view
-}
-
-bar:left (-) bar:right { side: bottom }          // → 300 mm — true, across the break
-bar:left (-) bar:a     { side: top }             // → 40 mm — ':a' is a point() station
-bar:m20 (o) { side: left; tol: h6 }              // → ⌀20 h6 — doubled about the axis
-bar:m20 <- { side: top }                         // → M20×1.5 — the thread composes its spec
-```
-
-```
-{
-  layout: drawing;  scale: 3;
-  |steel::sketch| { fill: hatch(45, 6) }
-}
-
-|steel#body| {
-  draw: move(-30, -8) right(60) up(10) left(60) close();    // the upper wall
-  mirror: x-axis;                                           // → both walls (duplicated)
-}
-|rect#bore| { width: 60; height: 16; fill: --bg; stroke: none }   // the bore punches
-|centerline| { points: -34 0, 34 0 }             // duplicated subpaths add no auto axis
-
-bore:top (o) { side: right }                     // → ⌀16 — written first, the inner row
-body:top (o) { side: right }                     // → ⌀36 — stacks outside it
-body:left (-) body:right { side: bottom }        // → 60
-```
-
-```
-{
-  gap: 24;
-  |steel::sketch| { fill: hatch(45, 6) }
-}
-
-|drawing#pump| "HAND PUMP — SECTION" [
-  |steel#barrel| {
-    draw: move(-90, 0) up(23) right(60) up(6) right(60) down(6) right(60) down(23);
-    revolve: x-axis;
-  }
-  |steel#nozzle| {
-    draw: move(0, 0) up(12) right(40) down(4) right(20) down(8);
-    revolve: x-axis;
-  }
-  nozzle:left || barrel:right { gap: -10 }       // pressed 10 into the barrel
-
-  barrel:left (-) nozzle:right { side: bottom }  // → the overall length, as seated
-
-  |balloon#b1| "1" { translate: -60 -50 }
-  |balloon#b2| "2" { translate: 100 -40 }
-  b1 -* barrel
-  b2 -* nozzle
-]
-
-|table#bom| { columns: 24 auto 30 } [
-  "#" "Part"   "Qty"
-  "1" "Barrel" "1"
-  "2" "Nozzle" "1"
-]
-```
+**A drawing — a sheeted screw, two views sharing an axis** ([SPEC 15](#15-drawing)):
 
 ```
 |page| { sheet: a5 landscape; gap: 50; direction: row; align: origin; } [
