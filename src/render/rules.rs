@@ -116,17 +116,10 @@ impl RuleSet {
                 decls.push((*css, formatted));
             }
         }
-        if attrs.get("stroke-style").is_some() {
-            let width = attrs.number("stroke-width").unwrap_or(0.0);
-            let dash = super::values::dasharray_value(attrs, width);
-            let value = if dash.is_empty() {
-                "none".to_string()
-            } else {
-                dash
-            };
-            if self.provided(classes, "stroke-dasharray") != Some(value.as_str()) {
-                decls.push(("stroke-dasharray", value));
-            }
+        if let Some(value) = dash_value(attrs)
+            && self.provided(classes, "stroke-dasharray") != Some(value.as_str())
+        {
+            decls.push(("stroke-dasharray", value));
         }
         decls
     }
@@ -614,6 +607,20 @@ pub fn effective_stroke(
     super::values::attr_or_var(&AttrMap::default(), "stroke", "stroke", vars, opts)
 }
 
+/// The `stroke-dasharray` value for `attrs` — `stroke-style` compiled jointly
+/// with `stroke-width` [SPEC 6] — or `None` when no `stroke-style` is set.
+/// `"none"` when the style resolves to a solid line (no dashes).
+fn dash_value(attrs: &AttrMap) -> Option<String> {
+    attrs.get("stroke-style")?;
+    let width = attrs.number("stroke-width").unwrap_or(0.0);
+    let dash = super::values::dasharray_value(attrs, width);
+    Some(if dash.is_empty() {
+        "none".to_string()
+    } else {
+        dash
+    })
+}
+
 /// The paint subset of an attr map, translated to CSS props. `stroke-style`
 /// compiles jointly with `stroke-width` into `stroke-dasharray`.
 pub fn paint_props(attrs: &AttrMap, vars: &VarTable, opts: &Options) -> Vec<(String, String)> {
@@ -626,17 +633,8 @@ pub fn paint_props(attrs: &AttrMap, vars: &VarTable, opts: &Options) -> Vec<(Str
             ));
         }
     }
-    if attrs.get("stroke-style").is_some() {
-        let width = attrs.number("stroke-width").unwrap_or(0.0);
-        let dash = super::values::dasharray_value(attrs, width);
-        out.push((
-            "stroke-dasharray".to_string(),
-            if dash.is_empty() {
-                "none".to_string()
-            } else {
-                dash
-            },
-        ));
+    if let Some(dash) = dash_value(attrs) {
+        out.push(("stroke-dasharray".to_string(), dash));
     }
     out
 }

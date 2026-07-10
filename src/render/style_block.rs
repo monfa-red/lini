@@ -6,7 +6,7 @@
 use super::rules::RuleSet;
 use super::values::format_value;
 use crate::Options;
-use crate::resolve::{ResolvedValue, VarTable};
+use crate::resolve::VarTable;
 use std::collections::BTreeSet;
 use std::fmt::Write;
 
@@ -37,7 +37,7 @@ pub fn emit(
             // toggles that force a mode by flipping it [SPEC 10.1].
             let adaptive = names
                 .iter()
-                .any(|n| is_light_dark(vars.entries.get(*n).unwrap()));
+                .any(|n| vars.entries.get(*n).unwrap().is_light_dark());
             out.push_str("    @layer lini.defaults {\n      :root, .lini {");
             if adaptive {
                 out.push_str(" color-scheme: light dark;");
@@ -80,10 +80,4 @@ pub fn emit(
         }
     }
     out.push_str("  </style>\n");
-}
-
-/// A colour with both light and dark arms — the signal that the document is
-/// adaptive and needs `color-scheme` + the `data-theme` toggles.
-fn is_light_dark(v: &ResolvedValue) -> bool {
-    matches!(v, ResolvedValue::Call(c) if c.name == "light-dark")
 }

@@ -228,6 +228,13 @@ impl ResolvedValue {
             _ => None,
         }
     }
+
+    /// A `light-dark(…)` colour — both a light and a dark arm [SPEC 10]: the
+    /// signal that the document is adaptive (needs `color-scheme` + the
+    /// `data-theme` toggles).
+    pub fn is_light_dark(&self) -> bool {
+        matches!(self, ResolvedValue::Call(c) if c.name == "light-dark")
+    }
 }
 
 #[derive(Clone, Debug)]

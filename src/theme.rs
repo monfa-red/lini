@@ -149,7 +149,7 @@ fn to_css(vars: &VarTable) -> String {
     let opts = Options::default();
     let mut names: Vec<&String> = vars.entries.keys().collect();
     names.sort();
-    let adaptive = vars.entries.values().any(is_light_dark);
+    let adaptive = vars.entries.values().any(ResolvedValue::is_light_dark);
     let mut out = String::new();
     out.push_str("/* lini theme — copy & edit. Colours; sizes are baked, not themeable. */\n");
     out.push_str(":root, .lini {\n");
@@ -168,10 +168,6 @@ fn to_css(vars: &VarTable) -> String {
     }
     out.push_str("}\n");
     out
-}
-
-fn is_light_dark(v: &ResolvedValue) -> bool {
-    matches!(v, ResolvedValue::Call(c) if c.name == "light-dark")
 }
 
 // ── Palette value constructors ──
