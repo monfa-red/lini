@@ -9,6 +9,7 @@
 //! nearest even count per edge.
 
 use crate::error::Error;
+use crate::ledger::consts::A4;
 use crate::span::Span;
 use crate::syntax::ast::{Decl, Node, TextNode, Value};
 
@@ -21,7 +22,7 @@ const SIZES: &[(&str, f64, f64, bool)] = &[
     ("a1", 594.0, 841.0, true),
     ("a2", 420.0, 594.0, true),
     ("a3", 297.0, 420.0, true),
-    ("a4", 210.0, 297.0, false),
+    ("a4", A4.0, A4.1, false),
     ("a5", 148.0, 210.0, false),
     ("a", 215.9, 279.4, false),
     ("b", 279.4, 431.8, true),
@@ -31,7 +32,7 @@ const SIZES: &[(&str, f64, f64, bool)] = &[
 ];
 
 /// The `|page|` bundle's default sheet — A4, ISO portrait.
-pub(super) const DEFAULT: (f64, f64) = crate::ledger::consts::A4;
+pub(super) const DEFAULT: (f64, f64) = A4;
 
 /// Expand a `sheet:` declaration in place to `width` / `height` [SPEC 15.8].
 pub(super) fn expand_sheet(style: &mut Vec<Decl>) -> Result<(), Error> {
