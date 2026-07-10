@@ -135,7 +135,39 @@ AUDIT R1 + D1. The foundation for validation (H2), schema (beta), and docs.
 Acceptance: zero snapshot diffs; a unit test asserts every property name that
 appears in `bundles`-moved defaults and in the five classifiers exists in the
 ledger; `lini desugar` output unchanged.
-**Log:**
+**Log:** 2026-07-10 — **done**, 1 commit, all acceptance met (zero snapshot
+diffs, `lini desugar` unchanged, fmt/test/clippy clean; ledger tests assert the
+legacy classifier sets fall out unchanged — membership and order — and every
+bundled default name has a row). `src/ledger/` = `properties.rs` (~90 rows:
+name, owners, shape, default-ref, inherit channel, text/baked flags, gate; plus
+`BUILDER_CALLS`), `defaults.rs` (bundles moved verbatim), `consts.rs` (empty,
+R3). All five classifiers are ledger lookups; the `draw:`/`pattern:`
+structured-call dispatch rides the shape column. `labels` reconciled: one row
+owns the axis use and the series use (today spelled `tags:`), same `List(Str)`
+shape → the 0.21 rename is a pure swap. The shape column states the 0.21
+comma-law target (list vs tuple) for M1 to read.
+
+**Deviations:** the module creation and classifier migration landed as one
+commit (the table is dead code without its readers — clippy-clean per commit).
+One diagnostics-only nuance: the ISO 7200 title-block fields are string-valued
+rows [SPEC 2/15.8], so a bare `dwg: x` now errors toward quoting instead of
+dying silently (no sample/test hit it; desugar consumes quoted fields before
+resolve).
+
+**SPEC 16 cross-check** (each a ledger-vs-SPEC discrepancy, for S1/S2):
+- `text-shadow` is honoured (inherited-text channel, text-valid, link labels)
+  but missing from SPEC 16's text table → S1 adds the row (live kind).
+- SPEC 16's padding row claims "Longhands `padding-top`/… accepted" — no reader
+  exists anywhere in the code → S1 drops the claim (or S2 decides to build it).
+- `legend:` is presented as honoured (SPEC 14.6/16 "positions or suppresses");
+  no code reads a `legend` attr — the legend is auto-only (≥ 2 entries) → S2:
+  mark ⌛ in SPEC 16 + defer in SPEC 23, or schedule the reader.
+- `sheet` is a homonym (`|page|` size sugar vs the quoted ISO 7200 field) but
+  SPEC 16 doesn't flag it the way it flags `scale`/`side`/`gap` → S1 wording.
+
+**Follow-ups:** desugar/layout write internal generated attrs (`chrome`,
+`clip`, `of-title`, `mount`) that are not user properties — M2's validation
+pass needs them whitelisted (they are absent from the ledger by design).
 
 ### Stage R3 — constants into one home
 
