@@ -360,8 +360,10 @@ A string is a **text node** — always a `<text>` leaf, never wrapped:
   self-delimiting, so no `;` is needed between them).
 - An empty `""` is suppressed (adds no text) — except as a **grid cell**, where it
   holds its track ([SPEC 12](#12-flow--grid)).
-- Multi-line text uses `\n`; the box sizes to the widest line, with a
-  `font-size × 1.2` leading between lines (plus any `line-spacing`).
+- Multi-line text uses `\n` (or wraps at `max-width` — [SPEC 5](#5-the-box-model));
+  the box sizes to the widest line, with a `font-size × 1.2` leading between lines
+  (plus any `line-spacing`), lines aligned by the container's packing knob
+  ([SPEC 6](#6-paint-stroke--text)).
 
 A string carries **no children** — text is a leaf, not a box — but where it is
 **content** (free-standing, or a child in a `[ ]`) it **may carry a style block** of
@@ -547,6 +549,18 @@ and the content sits within it; symmetric padding centres it, while an asymmetri
 `padding: t r b l` offsets it — `padding: 4 4 20 4` lifts the content toward the top,
 away from the larger bottom inset, exactly like CSS.
 
+### `max-width` — wrap to fit
+
+**`max-width: N`** caps a box's auto width; **`text-wrap: wrap | nowrap`** (default
+`wrap`) says whether text inside breaks into lines to honour the cap — both inert
+without a finite `max-width`. Wrapping prefers **whitespace** and falls back to
+breaking inside a word (grapheme boundaries), so the no-clip / no-spill law holds at
+any width. The wrapped size **is** the measured size — it feeds auto-sizing, grid
+tracks, gutters, spacing, link labels, and routing obstacles alike. Three errors
+keep it honest ([SPEC 20](#20-errors)): `nowrap` text that cannot fit the cap, a
+**non-text** child wider than `max-width` (only text wraps), and a `width` floor
+above the cap (`width > max-width` is invalid).
+
 Exceptions: a **text** node sizes to its glyphs (no padding), widened by
 `letter-spacing` and given `line-spacing` between `\n` lines; `|icon|` is a square
 that grows with its `[ ]` text (a `32` floor) and needs a `symbol`; `|line|` / `|poly|` /
@@ -594,6 +608,16 @@ The text family — `font-family`, `font-size`, `font-weight`, `font-style`,
 and it cascades down, or on a string's own block (`"x" { font-weight: bold }`) for
 that one text node. Body text defaults to `font-size` 15, `font-weight` `normal`;
 captions 12 and link labels 11 carry their own baked defaults.
+
+**Line alignment rides `align` — there is no `text-align`.** A text leaf's lines —
+wrapped ([SPEC 5](#5-the-box-model)) or authored `\n` lines — align per its
+**nearest container box's horizontal packing knob**: `align` in a `column` or grid
+context, `justify` in a `row`, mapped `start` / `center` / `end` (`stretch` /
+`evenly` / `origin` read as `center`). The knob reaches the lines even when the box
+has no slack to move children; every box is a container, so the box holding the
+text decides, and the default is `center` everywhere. Split intents wrap the text
+in its own `|block| { align: … }` — the table rule ([SPEC 12](#12-flow--grid))
+generalised to every box, which is why there is no second `text-align` knob.
 
 Two kinds of text property, split by whether they touch layout:
 
@@ -1512,6 +1536,7 @@ A cell that **fills** its track (`stretch`) then honours its **own** `align`/
 filled one slides its text to the aligned edge. This is what lets a `|table|` align a
 whole column — every table cell fills, and the column's `align` is carried onto the
 cells to place their text ([SPEC 8](#8-templates)); the core needs no notion of "table".
+The same knob aligns a multi-line text's *lines* ([SPEC 6](#6-paint-stroke--text)).
 
 Both layouts paint interior gutters with `gap-fill` ([SPEC 11](#11-the-layout-model)) and
 frame the whole with the container's own `stroke`.
@@ -2788,6 +2813,8 @@ Honoured on every drawn node, in every layout (a box; text takes the marked subs
 | Property | Value | Default | Notes |
 |---|---|---|---|
 | `width` · `height` | number · `auto` | `auto` | border-box; a **floor**. `\|image\|` needs both. |
+| `max-width` | number | — | caps an auto width; a `width` above it is invalid; text inside wraps to it ([SPEC 5](#5-the-box-model)). |
+| `text-wrap` | `wrap` · `nowrap` | `wrap` | whether text breaks to honour `max-width`; inert without one ([SPEC 5](#5-the-box-model)). |
 | `padding` | `N` · `v h` · `t r b l` | 0 (block) · 20 (box) | inner padding; places content. |
 | `pin` | `none` · `center` · edge · corner | `none` | out-of-flow anchor; a **box** property (not text). |
 | `translate` | `x y` | — | post-placement nudge; **any** node incl. text. |
@@ -3159,6 +3186,14 @@ Format: `filename:line:col: error: <message>` (LSP-compatible), compile-time, wi
 | Missing `columns` | `'layout: grid' requires 'columns'` |
 | Empty / bad track | `'columns' needs at least one track` / `a track is a size, 'auto', or repeat(…)` |
 | Grid out of range | `cell: 5 _ exceeds columns=3` |
+
+**Layout — wrap** ([SPEC 5](#5-the-box-model))
+
+| Condition | Message |
+|---|---|
+| `nowrap` text can't fit | `text cannot fit 'max-width: 80' without wrapping — widen it or drop 'text-wrap: nowrap'` |
+| Non-text child wider than the cap | `a child is wider than 'max-width: 80' — only text wraps` |
+| `width` above `max-width` | `'width: 200' exceeds 'max-width: 120'` |
 
 **Layout — sequence**
 
