@@ -7,6 +7,7 @@
 //! (they fall back to opaque black — a black shadow), so a live var here would
 //! break. The active theme still colours it; it just can't stay a live var.
 
+use super::intern::IdTable;
 use super::values::{format_value, num};
 use crate::Options;
 use crate::layout::PlacedNode;
@@ -92,12 +93,12 @@ fn key(s: &Shadow, vars: &VarTable, opts: &Options) -> String {
 /// Every distinct drop shadow in a scene, in first-appearance order — the
 /// order their `<filter>` ids are assigned, so output stays deterministic.
 pub struct FilterTable {
-    entries: Vec<(String, Shadow)>,
+    entries: IdTable<String, Shadow>,
 }
 
 impl FilterTable {
     pub fn collect(nodes: &[PlacedNode], vars: &VarTable, opts: &Options) -> Self {
-        let mut entries: Vec<(String, Shadow)> = Vec::new();
+        let mut entries = IdTable::new();
         collect_into(nodes, vars, opts, &mut entries);
         Self { entries }
     }
@@ -109,8 +110,7 @@ impl FilterTable {
     /// The `url(#…)` filter id for a node's shadow, if it has one.
     pub fn id_for(&self, n: &PlacedNode, vars: &VarTable, opts: &Options) -> Option<String> {
         let shadow = parse(n.attrs.get("shadow")?)?;
-        let k = key(&shadow, vars, opts);
-        let i = self.entries.iter().position(|(ek, _)| *ek == k)?;
+        let i = self.entries.index_of(&key(&shadow, vars, opts))?;
         Some(format!("lini-shadow-{}", i + 1))
     }
 
@@ -118,7 +118,7 @@ impl FilterTable {
     /// clipping. `feDropShadow` carries the offset, blur (`stdDeviation`), and
     /// tint in one primitive — resvg and browsers both render it.
     pub fn emit_defs(&self, out: &mut String, vars: &VarTable, opts: &Options) {
-        for (i, (_, s)) in self.entries.iter().enumerate() {
+        for (i, s) in self.entries.values().iter().enumerate() {
             writeln!(
                 out,
                 r#"    <filter id="lini-shadow-{}" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="{}" dy="{}" stdDeviation="{}" flood-color="{}"/></filter>"#,
@@ -137,16 +137,13 @@ fn collect_into(
     nodes: &[PlacedNode],
     vars: &VarTable,
     opts: &Options,
-    entries: &mut Vec<(String, Shadow)>,
+    entries: &mut IdTable<String, Shadow>,
 ) {
     for n in nodes {
         if let Some(v) = n.attrs.get("shadow")
             && let Some(shadow) = parse(v)
         {
-            let k = key(&shadow, vars, opts);
-            if !entries.iter().any(|(ek, _)| *ek == k) {
-                entries.push((k, shadow));
-            }
+            entries.intern(key(&shadow, vars, opts), || shadow);
         }
         collect_into(&n.children, vars, opts, entries);
     }

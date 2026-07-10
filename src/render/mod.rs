@@ -1,5 +1,6 @@
 mod filters;
 mod icon_fit;
+mod intern;
 mod links;
 pub(crate) mod markers; // `marker_size` is read by the router to reserve stub room
 mod paints;

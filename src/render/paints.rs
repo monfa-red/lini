@@ -12,6 +12,7 @@
 //! emits it verbatim everywhere (inline diff and class rules alike), and stores the
 //! definitions on the scene. `objectBoundingBox` units fit one def to any shape.
 
+use super::intern::IdTable;
 use super::values::{format_value, num};
 use crate::Options;
 use crate::layout::{GradientDef, GradientKind, HatchDef, LaidOut, PlacedNode};
@@ -46,15 +47,14 @@ fn key(g: &GradientDef) -> String {
     format!("{kind}|{:?}", g.stops)
 }
 
-/// The two interning tables, threaded through one walk.
+/// The interning tables, threaded through one walk.
 #[derive(Default)]
 struct Interner {
-    gradient_keys: Vec<String>,
-    gradients: Vec<GradientDef>,
-    hatch_keys: Vec<String>,
-    hatches: Vec<HatchDef>,
+    gradients: IdTable<String, GradientDef>,
+    hatches: IdTable<String, HatchDef>,
     /// Distinct clip radii [SPEC 15.8], in encounter order — a detail view's
-    /// `clip:` circle is interned by radius, one `<clipPath>` per distinct one.
+    /// `clip:` circle is interned by radius (a 1e-9 tolerance, so not the exact
+    /// key match the `IdTable` gives), one `<clipPath>` per distinct one.
     clips: Vec<f64>,
 }
 
@@ -76,8 +76,8 @@ pub(crate) fn lower(laid: &mut LaidOut) {
     if let Some(fill) = &mut laid.canvas_fill {
         rewrite(fill, &mut it);
     }
-    laid.gradients = it.gradients;
-    laid.hatches = it.hatches;
+    laid.gradients = it.gradients.into_values();
+    laid.hatches = it.hatches.into_values();
     laid.clips = it.clips;
 }
 
@@ -120,30 +120,12 @@ fn lower_attrs(attrs: &mut AttrMap, it: &mut Interner) {
 /// `url(#…)` reference.
 fn rewrite(value: &mut ResolvedValue, it: &mut Interner) {
     if let Some(g) = parse(value) {
-        let k = key(&g);
-        let idx = it
-            .gradient_keys
-            .iter()
-            .position(|e| *e == k)
-            .unwrap_or_else(|| {
-                it.gradient_keys.push(k);
-                it.gradients.push(g);
-                it.gradient_keys.len() - 1
-            });
+        let idx = it.gradients.intern(key(&g), || g);
         *value = ResolvedValue::RawCss(format!("url(#lini-gradient-{})", idx + 1));
         return;
     }
     if let Some(h) = parse_hatch(value) {
-        let k = hatch_key(&h);
-        let idx = it
-            .hatch_keys
-            .iter()
-            .position(|e| *e == k)
-            .unwrap_or_else(|| {
-                it.hatch_keys.push(k);
-                it.hatches.push(h);
-                it.hatch_keys.len() - 1
-            });
+        let idx = it.hatches.intern(hatch_key(&h), || h);
         *value = ResolvedValue::RawCss(format!("url(#lini-hatch-{})", idx + 1));
     }
 }
@@ -423,7 +405,7 @@ mod tests {
         rewrite(&mut a, &mut it);
         rewrite(&mut b, &mut it);
         rewrite(&mut c, &mut it);
-        assert_eq!(it.hatches.len(), 2, "45/6 dedups; 45/4 is distinct");
+        assert_eq!(it.hatches.values().len(), 2, "45/6 dedups; 45/4 is distinct");
         assert!(matches!(&a, ResolvedValue::RawCss(s) if s == "url(#lini-hatch-1)"));
         assert!(matches!(&b, ResolvedValue::RawCss(s) if s == "url(#lini-hatch-1)"));
         assert!(matches!(&c, ResolvedValue::RawCss(s) if s == "url(#lini-hatch-2)"));
@@ -436,7 +418,7 @@ mod tests {
         let mut b = grad("gradient", vec![hue("teal"), hue("sky")]);
         rewrite(&mut a, &mut it);
         rewrite(&mut b, &mut it);
-        assert_eq!(it.gradients.len(), 1, "identical gradients must dedup");
+        assert_eq!(it.gradients.values().len(), 1, "identical gradients must dedup");
         assert!(matches!(&a, ResolvedValue::RawCss(s) if s == "url(#lini-gradient-1)"));
         assert!(matches!(&b, ResolvedValue::RawCss(s) if s == "url(#lini-gradient-1)"));
     }
