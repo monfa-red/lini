@@ -1302,8 +1302,8 @@ Padding defaults to 20 — including the root, whose padding frames the whole sc
 SVG margin) — with `|block|` / `|row|` / `|column|` at 0 and a `|table|` at `4 8` (its
 cell inset). It doubles as the minimum size of an empty box (`2 × padding`; see
 [Auto-sizing](#5-the-box-model)). **Every baked default — these constants and
-the template bundles — lives in one place**, so the whole look is tuned from a single
-file.
+the template bundles — lives in one home** (the implementation's property
+ledger), so the whole look is tuned from one module.
 
 The drawing chrome ([SPEC 15](#15-drawing)) — sheet-space, never scaled:
 
@@ -2860,6 +2860,7 @@ Honoured on every drawn node, in every layout (a box; text takes the marked subs
 | `font-style` | `normal` · `italic` · `oblique` | `normal` | live |
 | `text-transform` | `uppercase` · `lowercase` · `capitalize` · `none` | `none` | live |
 | `text-decoration` | `underline` · `overline` · `line-through` · `none` | `none` | live |
+| `text-shadow` | `dx dy blur colour` | — | live (numbers gain `px`) |
 | `letter-spacing` | number | 0 | baked |
 | `line-spacing` | number | 0 | baked |
 
@@ -2868,7 +2869,7 @@ Honoured on every drawn node, in every layout (a box; text takes the marked subs
 | Property | Value | Default | Notes |
 |---|---|---|---|
 | `width` · `height` | number · `auto` | `auto` | border-box; a **floor**. `\|image\|` needs both. |
-| `padding` | `N` · `v h` · `t r b l` | 0 (block) · 20 (box) | inner padding; places content. Longhands `padding-top`/… accepted. |
+| `padding` | `N` · `v h` · `t r b l` | 0 (block) · 20 (box) | inner padding; places content. |
 | `pin` | `none` · `center` · edge · corner | `none` | out-of-flow anchor; a **box** property (not text). |
 | `translate` | `x y` | — | post-placement nudge; **any** node incl. text. |
 | `rotate` | degrees | 0 | turn about bbox centre; **any** node incl. text. |
@@ -2902,7 +2903,7 @@ Read on the listed primitive; required where noted ([SPEC 7](#7-nodes)).
 | `mirror` | `\|sketch\|` | `x-axis` / `y-axis` / bearing list | reflect + union ([SPEC 15.3](#153-the-sketch-pen)). |
 | `revolve` | `\|sketch\|` | `x-axis` / `y-axis` | solid of revolution — fused fold + `\|shoulder\|` lines ([SPEC 15.3](#153-the-sketch-pen)). |
 | `thread` | `\|sketch\|` `\|hole\|` round geometry | `seg pitch, …` · `pitch` | ISO 6410 thread dressing ([SPEC 15.3](#153-the-sketch-pen), [SPEC 15.4](#154-features-holes--patterns)). |
-| `sheet` | `\|page\|` | `a5…a0` / ANSI `a…e` `[portrait \| landscape]` | trimmed-size sugar → `width` / `height` in mm ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
+| `sheet` | `\|page\|` (homonym: an ISO 7200 field on `\|title-block\|`, below) | `a5…a0` / ANSI `a…e` `[portrait \| landscape]` | trimmed-size sugar → `width` / `height` in mm ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `break` | `\|sketch\|` | `a b [axis]` groups | cut the view between stations ([SPEC 15.3](#153-the-sketch-pen)). |
 
 ### Grid, chart, pie, sequence & drawing properties
