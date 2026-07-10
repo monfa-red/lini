@@ -62,15 +62,20 @@ pub struct Token {
 }
 
 pub fn lex(src: &str) -> Result<Vec<Token>, Error> {
-    let mut lexer = Lexer {
-        src,
-        bytes: src.as_bytes(),
-        i: 0,
-        paren_depth: 0,
-        tokens: Vec::new(),
-    };
-    lexer.run()?;
-    Ok(lexer.tokens)
+    Lexer::new(src, false).into_tokens()
+}
+
+/// Lex an isolated `(…)` expression body [SPEC 10.7] — the single tokenizer for
+/// [`crate::expr`], reached after the main parser has sliced a group or an
+/// operator-bearing argument. Expression mode is the "semantic split" the whole
+/// source can't carry in one pass: `-`/`+` are always operators (never a signed
+/// number, so `r-1` is subtraction), `-` is not an ident char, scientific
+/// notation is a number, and newlines are whitespace. Outside a math group the
+/// main pass keeps the opposite rules (`-45` a signed number, so `hatch(45 -45)`
+/// is two angles), so the two coexist only by lexing the expression region on its
+/// own here.
+pub fn lex_expr(src: &str) -> Result<Vec<Token>, Error> {
+    Lexer::new(src, true).into_tokens()
 }
 
 struct Lexer<'a> {
@@ -78,10 +83,34 @@ struct Lexer<'a> {
     bytes: &'a [u8],
     i: usize,
     paren_depth: usize,
+    /// Lexing an isolated expression body (`lex_expr`) rather than a whole source.
+    expr_mode: bool,
     tokens: Vec<Token>,
 }
 
 impl<'a> Lexer<'a> {
+    fn new(src: &'a str, expr_mode: bool) -> Self {
+        Lexer {
+            src,
+            bytes: src.as_bytes(),
+            i: 0,
+            paren_depth: 0,
+            expr_mode,
+            tokens: Vec::new(),
+        }
+    }
+
+    fn into_tokens(mut self) -> Result<Vec<Token>, Error> {
+        self.run()?;
+        Ok(self.tokens)
+    }
+
+    /// A math-operator context [SPEC 10.7]: inside a value's parens, or lexing a
+    /// bare expression body. Where `-`/`+`/`*`/`/`/`^`/comparisons are operators.
+    fn in_math(&self) -> bool {
+        self.paren_depth > 0 || self.expr_mode
+    }
+
     fn run(&mut self) -> Result<(), Error> {
         while self.i < self.bytes.len() {
             let c = self.bytes[self.i];
@@ -100,7 +129,11 @@ impl<'a> Lexer<'a> {
                     // intact.
                     let glued_call = self.i > 0 && is_ident_continue(self.bytes[self.i - 1]);
                     let rest = &self.bytes[self.i..];
-                    if !glued_call && rest.starts_with(b"(-)") {
+                    if self.expr_mode {
+                        // In a bare expression `(` only ever opens a sub-group.
+                        self.paren_depth += 1;
+                        self.push_punct(TokKind::LParen, 1);
+                    } else if !glued_call && rest.starts_with(b"(-)") {
                         self.push_punct(TokKind::DrawOp(DrawOp::Linear), 3);
                     } else if !glued_call && rest.starts_with(b"(o)") {
                         self.push_punct(TokKind::DrawOp(DrawOp::Round), 3);
@@ -154,42 +187,41 @@ impl<'a> Lexer<'a> {
                         self.push_punct(TokKind::Dot, 1);
                     }
                 }
-                // CSS var override `--name…` (defs line start or attr value).
-                b'-' if self.peek(1) == Some(b'-') && self.peek(2).is_some_and(is_ident_start) => {
+                // CSS var override `--name…` (defs line start or attr value). An
+                // expression has no vars, so there `--` is two operators.
+                b'-' if !self.expr_mode
+                    && self.peek(1) == Some(b'-')
+                    && self.peek(2).is_some_and(is_ident_start) =>
+                {
                     self.lex_raw_css_var()?;
                 }
-                // Signed number: `-5`, `-.5`, `+5`.
-                b'-' if self.peek(1).is_some_and(|c| c.is_ascii_digit())
-                    || (self.peek(1) == Some(b'.')
-                        && self.peek(2).is_some_and(|c| c.is_ascii_digit())) =>
+                // Signed number: `-5`, `-.5`, `+5`. In an expression a leading `-`/`+`
+                // is a unary operator instead (so `r-1` is subtraction), handled below.
+                b'-' | b'+'
+                    if !self.expr_mode
+                        && (self.peek(1).is_some_and(|c| c.is_ascii_digit())
+                            || (self.peek(1) == Some(b'.')
+                                && self.peek(2).is_some_and(|c| c.is_ascii_digit()))) =>
                 {
                     self.lex_number()?;
                 }
-                // Signed number `+5` / `+.5`; otherwise `+` starts a cardinality
-                // link op (`+-`, `+o-`, `++-`, [SPEC 9]) — mirror of the `-` rule.
-                b'+' if self.peek(1).is_some_and(|c| c.is_ascii_digit())
-                    || (self.peek(1) == Some(b'.')
-                        && self.peek(2).is_some_and(|c| c.is_ascii_digit())) =>
-                {
-                    self.lex_number()?;
-                }
-                // Inside a value's parens these are math operators [SPEC 10.7];
-                // outside, `< > + -` stay link / marker syntax. Signed numbers were
-                // caught above, so a `-` / `+` here is always the operator.
-                b'-' if self.paren_depth > 0 => self.push_punct(TokKind::Minus, 1),
-                b'+' if self.paren_depth > 0 => self.push_punct(TokKind::Plus, 1),
-                b'*' if self.paren_depth > 0 => self.push_punct(TokKind::Star, 1),
-                b'/' if self.paren_depth > 0 => self.push_punct(TokKind::Slash, 1),
-                b'^' if self.paren_depth > 0 => self.push_punct(TokKind::Caret, 1),
-                b'?' if self.paren_depth > 0 => self.push_punct(TokKind::Question, 1),
-                b'<' if self.paren_depth > 0 && self.peek(1) == Some(b'=') => {
+                // Inside a value's parens (or an expression) these are math operators
+                // [SPEC 10.7]; outside, `< > + -` stay link / marker syntax. Signed
+                // numbers were caught above, so a `-` / `+` here is always the operator.
+                b'-' if self.in_math() => self.push_punct(TokKind::Minus, 1),
+                b'+' if self.in_math() => self.push_punct(TokKind::Plus, 1),
+                b'*' if self.in_math() => self.push_punct(TokKind::Star, 1),
+                b'/' if self.in_math() => self.push_punct(TokKind::Slash, 1),
+                b'^' if self.in_math() => self.push_punct(TokKind::Caret, 1),
+                b'?' if self.in_math() => self.push_punct(TokKind::Question, 1),
+                b'<' if self.in_math() && self.peek(1) == Some(b'=') => {
                     self.push_punct(TokKind::Le, 2)
                 }
-                b'<' if self.paren_depth > 0 => self.push_punct(TokKind::Lt, 1),
-                b'>' if self.paren_depth > 0 && self.peek(1) == Some(b'=') => {
+                b'<' if self.in_math() => self.push_punct(TokKind::Lt, 1),
+                b'>' if self.in_math() && self.peek(1) == Some(b'=') => {
                     self.push_punct(TokKind::Ge, 2)
                 }
-                b'>' if self.paren_depth > 0 => self.push_punct(TokKind::Gt, 1),
+                b'>' if self.in_math() => self.push_punct(TokKind::Gt, 1),
                 // Link-op starts: any of these characters can begin a link op.
                 b'-' | b'~' | b'<' | b'>' | b'+' => self.lex_link_op()?,
                 // `*` is a link-op start marker only when followed by a line char.
@@ -235,7 +267,7 @@ impl<'a> Lexer<'a> {
                 break;
             }
         }
-        if self.paren_depth == 0 {
+        if self.paren_depth == 0 && !self.expr_mode {
             self.tokens.push(Token {
                 kind: TokKind::Newline,
                 span: Span::new(start, start + 1),
@@ -354,6 +386,23 @@ impl<'a> Lexer<'a> {
                 saw_digit = true;
             }
         }
+        // Scientific notation is expression-only [SPEC 10.7]: `1e6`, `1.5e-2`. Back
+        // off if no exponent digits follow (so a stray `e` stays an ident).
+        if self.expr_mode && self.i < self.bytes.len() && matches!(self.bytes[self.i], b'e' | b'E')
+        {
+            let save = self.i;
+            self.i += 1;
+            if matches!(self.peek(0), Some(b'+' | b'-')) {
+                self.i += 1;
+            }
+            if self.peek(0).is_some_and(|c| c.is_ascii_digit()) {
+                while self.i < self.bytes.len() && self.bytes[self.i].is_ascii_digit() {
+                    self.i += 1;
+                }
+            } else {
+                self.i = save;
+            }
+        }
 
         if !saw_digit {
             return Err(Error::at(
@@ -385,7 +434,11 @@ impl<'a> Lexer<'a> {
 
     fn lex_ident(&mut self) {
         let start = self.i;
-        while self.i < self.bytes.len() && is_ident_continue(self.bytes[self.i]) {
+        // In an expression `-` is subtraction, not part of a name, so `r-1` splits.
+        while self.i < self.bytes.len()
+            && is_ident_continue(self.bytes[self.i])
+            && !(self.expr_mode && self.bytes[self.i] == b'-')
+        {
             self.i += 1;
         }
         let name = self.src[start..self.i].to_string();

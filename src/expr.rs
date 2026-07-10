@@ -1,14 +1,18 @@
 //! The `(…)` expression sub-language [SPEC 10.7] — a small, total compile-time
-//! calculator with its own lexer, Pratt parser, and tree-walk evaluator. It is
-//! the **only** place operators live: the main lexer captures a parenthesized
-//! region raw (its outer parens stripped) and hands the body here.
+//! calculator: a Pratt parser and a tree-walk evaluator. It is the **only** place
+//! operators live: the main parser captures a parenthesized region raw (its outer
+//! parens stripped) and hands the body here to be re-lexed and folded.
 //!
 //! Values are numbers and points (`(x, y)`, for geometry) — no strings, no loops.
 //! A body is `{ name = expr ; }* expr [ , expr ]`: leading `name = expr;` bindings are
 //! locals (whole-body scope), the final expression is the value, and a top-level `,`
 //! makes it a point. Functions defined in the stylesheet ([`FuncTable`]) are called by
 //! name; the math library, `pi` / `e`, and the ambient sample parameter `u` are built in.
+//!
+//! Tokens come from the main [`crate::lexer`] in expression mode ([`lexer::lex_expr`]):
+//! there is no second lexer — the parser below is a Pratt parser over that one stream.
 
+use crate::lexer::{self, TokKind, Token};
 use std::collections::HashMap;
 
 /// A folded expression value [SPEC 10.7]: a number, or a point for geometry.
@@ -81,162 +85,28 @@ fn binop_bp(op: BinOp) -> u8 {
     }
 }
 
-// ─────────────────────────── Lexer ───────────────────────────
-
-#[derive(Debug, Clone, PartialEq)]
-enum Tok {
-    Num(f64),
-    Ident(String),
-    Plus,
-    Minus,
-    Star,
-    Slash,
-    Caret,
-    LParen,
-    RParen,
-    Comma,
-    Semi,
-    Assign, // =
-    Eq,     // ==
-    Ne,
-    Lt,
-    Le,
-    Gt,
-    Ge,
-    Question,
-    Colon,
-}
-
-fn lex(src: &str) -> Result<Vec<Tok>, ExprError> {
-    let b = src.as_bytes();
-    let mut i = 0;
-    let mut out = Vec::new();
-    while i < b.len() {
-        let c = b[i];
-        match c {
-            b' ' | b'\t' | b'\r' | b'\n' => i += 1,
-            b'+' => push(&mut out, &mut i, Tok::Plus),
-            b'*' => push(&mut out, &mut i, Tok::Star),
-            b'/' => push(&mut out, &mut i, Tok::Slash),
-            b'^' => push(&mut out, &mut i, Tok::Caret),
-            b'(' => push(&mut out, &mut i, Tok::LParen),
-            b')' => push(&mut out, &mut i, Tok::RParen),
-            b',' => push(&mut out, &mut i, Tok::Comma),
-            b';' => push(&mut out, &mut i, Tok::Semi),
-            b'?' => push(&mut out, &mut i, Tok::Question),
-            b':' => push(&mut out, &mut i, Tok::Colon),
-            b'-' => push(&mut out, &mut i, Tok::Minus),
-            b'=' => {
-                if b.get(i + 1) == Some(&b'=') {
-                    out.push(Tok::Eq);
-                    i += 2;
-                } else {
-                    push(&mut out, &mut i, Tok::Assign);
-                }
-            }
-            b'!' if b.get(i + 1) == Some(&b'=') => {
-                out.push(Tok::Ne);
-                i += 2;
-            }
-            b'<' => {
-                if b.get(i + 1) == Some(&b'=') {
-                    out.push(Tok::Le);
-                    i += 2;
-                } else {
-                    push(&mut out, &mut i, Tok::Lt);
-                }
-            }
-            b'>' => {
-                if b.get(i + 1) == Some(&b'=') {
-                    out.push(Tok::Ge);
-                    i += 2;
-                } else {
-                    push(&mut out, &mut i, Tok::Gt);
-                }
-            }
-            _ if c.is_ascii_digit()
-                || (c == b'.' && b.get(i + 1).is_some_and(u8::is_ascii_digit)) =>
-            {
-                out.push(lex_number(src, b, &mut i)?);
-            }
-            // Expression idents are alnum + `_` — no `-`, so `r-1` is subtraction.
-            _ if c.is_ascii_alphabetic() || c == b'_' => {
-                let start = i;
-                while i < b.len() && (b[i].is_ascii_alphanumeric() || b[i] == b'_') {
-                    i += 1;
-                }
-                out.push(Tok::Ident(src[start..i].to_string()));
-            }
-            other => {
-                return Err(ExprError::new(format!(
-                    "unexpected character '{}' in an expression",
-                    other as char
-                )));
-            }
-        }
-    }
-    Ok(out)
-}
-
-fn push(out: &mut Vec<Tok>, i: &mut usize, t: Tok) {
-    out.push(t);
-    *i += 1;
-}
-
-fn lex_number(src: &str, b: &[u8], i: &mut usize) -> Result<Tok, ExprError> {
-    let start = *i;
-    while *i < b.len() && b[*i].is_ascii_digit() {
-        *i += 1;
-    }
-    if *i < b.len() && b[*i] == b'.' {
-        *i += 1;
-        while *i < b.len() && b[*i].is_ascii_digit() {
-            *i += 1;
-        }
-    }
-    // Scientific notation: `1e6`, `1.32e-6`. Back off if no exponent digits.
-    if *i < b.len() && (b[*i] == b'e' || b[*i] == b'E') {
-        let save = *i;
-        *i += 1;
-        if *i < b.len() && (b[*i] == b'+' || b[*i] == b'-') {
-            *i += 1;
-        }
-        if *i < b.len() && b[*i].is_ascii_digit() {
-            while *i < b.len() && b[*i].is_ascii_digit() {
-                *i += 1;
-            }
-        } else {
-            *i = save;
-        }
-    }
-    let s = &src[start..*i];
-    s.parse()
-        .map(Tok::Num)
-        .map_err(|_| ExprError::new(format!("invalid number '{s}' in an expression")))
-}
-
 // ─────────────────────────── Parser ───────────────────────────
 
-struct Parser {
-    toks: Vec<Tok>,
+/// A Pratt parser over the main lexer's tokens (in expression mode). It never
+/// lexes — [`lex_expr`] already produced the stream; `src` backs the one
+/// unexpected-token message so no token-printer is needed.
+struct Parser<'a> {
+    src: &'a str,
+    toks: Vec<Token>,
     pos: usize,
 }
 
-impl Parser {
-    fn peek(&self) -> Option<&Tok> {
-        self.toks.get(self.pos)
+impl Parser<'_> {
+    fn kind(&self) -> Option<&TokKind> {
+        self.toks.get(self.pos).map(|t| &t.kind)
     }
 
-    fn next(&mut self) -> Option<Tok> {
-        let t = self.toks.get(self.pos).cloned();
-        if t.is_some() {
-            self.pos += 1;
-        }
-        t
+    fn kind_at(&self, n: usize) -> Option<&TokKind> {
+        self.toks.get(self.pos + n).map(|t| &t.kind)
     }
 
-    fn eat(&mut self, t: &Tok) -> bool {
-        if self.peek() == Some(t) {
+    fn eat(&mut self, k: &TokKind) -> bool {
+        if self.kind() == Some(k) {
             self.pos += 1;
             true
         } else {
@@ -247,15 +117,16 @@ impl Parser {
     /// `{ name = expr ; }* expr` — locals bind in order, the final expr is the value.
     fn parse_body(&mut self) -> Result<Expr, ExprError> {
         let mut locals = Vec::new();
-        while matches!(self.peek(), Some(Tok::Ident(_)))
-            && self.toks.get(self.pos + 1) == Some(&Tok::Assign)
+        while matches!(self.kind(), Some(TokKind::Ident(_)))
+            && matches!(self.kind_at(1), Some(TokKind::Assign))
         {
-            let Some(Tok::Ident(name)) = self.next() else {
-                unreachable!()
+            let name = match self.kind() {
+                Some(TokKind::Ident(s)) => s.clone(),
+                _ => unreachable!(),
             };
-            self.pos += 1; // '='
+            self.pos += 2; // ident '='
             let val = self.parse_ternary()?;
-            if !self.eat(&Tok::Semi) {
+            if !self.eat(&TokKind::Semi) {
                 return Err(ExprError::new("a local binding ends with ';'"));
             }
             locals.push((name, val));
@@ -263,7 +134,7 @@ impl Parser {
         let mut value = self.parse_ternary()?;
         // A top-level `,` makes the value a point `(x, y)` — the group's own parens
         // are stripped before it reaches here, so the comma is the point [SPEC 10.7].
-        if self.eat(&Tok::Comma) {
+        if self.eat(&TokKind::Comma) {
             let second = self.parse_ternary()?;
             value = Node::Point(Box::new(value), Box::new(second));
         }
@@ -275,9 +146,9 @@ impl Parser {
 
     fn parse_ternary(&mut self) -> Result<Node, ExprError> {
         let cond = self.parse_binary(0)?;
-        if self.eat(&Tok::Question) {
+        if self.eat(&TokKind::Question) {
             let a = self.parse_ternary()?;
-            if !self.eat(&Tok::Colon) {
+            if !self.eat(&TokKind::Colon) {
                 return Err(ExprError::new("a ternary 'cond ? a : b' needs ':'"));
             }
             let b = self.parse_ternary()?;
@@ -304,23 +175,23 @@ impl Parser {
     /// The infix operators handled by `parse_binary` — `^` is right-associative
     /// and binds tighter than unary `-`, so it lives in `parse_power`.
     fn peek_binop(&self) -> Option<BinOp> {
-        Some(match self.peek()? {
-            Tok::Plus => BinOp::Add,
-            Tok::Minus => BinOp::Sub,
-            Tok::Star => BinOp::Mul,
-            Tok::Slash => BinOp::Div,
-            Tok::Eq => BinOp::Eq,
-            Tok::Ne => BinOp::Ne,
-            Tok::Lt => BinOp::Lt,
-            Tok::Le => BinOp::Le,
-            Tok::Gt => BinOp::Gt,
-            Tok::Ge => BinOp::Ge,
+        Some(match self.kind()? {
+            TokKind::Plus => BinOp::Add,
+            TokKind::Minus => BinOp::Sub,
+            TokKind::Star => BinOp::Mul,
+            TokKind::Slash => BinOp::Div,
+            TokKind::EqEq => BinOp::Eq,
+            TokKind::Ne => BinOp::Ne,
+            TokKind::Lt => BinOp::Lt,
+            TokKind::Le => BinOp::Le,
+            TokKind::Gt => BinOp::Gt,
+            TokKind::Ge => BinOp::Ge,
             _ => return None,
         })
     }
 
     fn parse_unary(&mut self) -> Result<Node, ExprError> {
-        if self.eat(&Tok::Minus) {
+        if self.eat(&TokKind::Minus) {
             Ok(Node::Neg(Box::new(self.parse_unary()?)))
         } else {
             self.parse_power()
@@ -331,7 +202,7 @@ impl Parser {
     /// and is right-associative (`2^3^2` is `2^(3^2)`).
     fn parse_power(&mut self) -> Result<Node, ExprError> {
         let base = self.parse_atom()?;
-        if self.eat(&Tok::Caret) {
+        if self.eat(&TokKind::Caret) {
             let exp = self.parse_unary()?;
             Ok(Node::Bin(BinOp::Pow, Box::new(base), Box::new(exp)))
         } else {
@@ -340,18 +211,22 @@ impl Parser {
     }
 
     fn parse_atom(&mut self) -> Result<Node, ExprError> {
-        match self.next() {
-            Some(Tok::Num(n)) => Ok(Node::Num(n)),
-            Some(Tok::Ident(name)) => {
-                if self.eat(&Tok::LParen) {
+        let Some(tok) = self.toks.get(self.pos).cloned() else {
+            return Err(ExprError::new("unexpected end of an expression"));
+        };
+        self.pos += 1;
+        match tok.kind {
+            TokKind::Number(n) => Ok(Node::Num(n)),
+            TokKind::Ident(name) => {
+                if self.eat(&TokKind::LParen) {
                     let mut args = Vec::new();
-                    if !matches!(self.peek(), Some(Tok::RParen)) {
+                    if !matches!(self.kind(), Some(TokKind::RParen)) {
                         args.push(self.parse_ternary()?);
-                        while self.eat(&Tok::Comma) {
+                        while self.eat(&TokKind::Comma) {
                             args.push(self.parse_ternary()?);
                         }
                     }
-                    if !self.eat(&Tok::RParen) {
+                    if !self.eat(&TokKind::RParen) {
                         return Err(ExprError::new(format!("call to '{name}' needs ')'")));
                     }
                     Ok(Node::Call(name, args))
@@ -360,51 +235,25 @@ impl Parser {
                 }
             }
             // `( a )` groups; `( a , b )` is a point (for geometry).
-            Some(Tok::LParen) => {
+            TokKind::LParen => {
                 let first = self.parse_ternary()?;
-                if self.eat(&Tok::Comma) {
+                if self.eat(&TokKind::Comma) {
                     let second = self.parse_ternary()?;
-                    if !self.eat(&Tok::RParen) {
+                    if !self.eat(&TokKind::RParen) {
                         return Err(ExprError::new("a point '(x, y)' needs ')'"));
                     }
                     Ok(Node::Point(Box::new(first), Box::new(second)))
-                } else if self.eat(&Tok::RParen) {
+                } else if self.eat(&TokKind::RParen) {
                     Ok(first)
                 } else {
                     Err(ExprError::new("expected ',' or ')' after '('"))
                 }
             }
-            Some(t) => Err(ExprError::new(format!(
+            _ => Err(ExprError::new(format!(
                 "unexpected '{}' in an expression",
-                tok_str(&t)
+                &self.src[tok.span.start..tok.span.end]
             ))),
-            None => Err(ExprError::new("unexpected end of an expression")),
         }
-    }
-}
-
-fn tok_str(t: &Tok) -> String {
-    match t {
-        Tok::Num(n) => n.to_string(),
-        Tok::Ident(s) => s.clone(),
-        Tok::Plus => "+".into(),
-        Tok::Minus => "-".into(),
-        Tok::Star => "*".into(),
-        Tok::Slash => "/".into(),
-        Tok::Caret => "^".into(),
-        Tok::LParen => "(".into(),
-        Tok::RParen => ")".into(),
-        Tok::Comma => ",".into(),
-        Tok::Semi => ";".into(),
-        Tok::Assign => "=".into(),
-        Tok::Eq => "==".into(),
-        Tok::Ne => "!=".into(),
-        Tok::Lt => "<".into(),
-        Tok::Le => "<=".into(),
-        Tok::Gt => ">".into(),
-        Tok::Ge => ">=".into(),
-        Tok::Question => "?".into(),
-        Tok::Colon => ":".into(),
     }
 }
 
@@ -446,9 +295,8 @@ impl FuncTable {
 impl Expr {
     /// Parse a raw expression body (a group's inner text) into an expression.
     pub fn parse(src: &str) -> Result<Expr, ExprError> {
-        let toks = lex(src)?;
-        let mut p = Parser { toks, pos: 0 };
-        p.parse_body()
+        let toks = lexer::lex_expr(src).map_err(|e| ExprError(e.message))?;
+        Parser { src, toks, pos: 0 }.parse_body()
     }
 
     /// Whether this reads without a `(…)` group — a lone number, name, or call
