@@ -346,7 +346,47 @@ Stage-0 pattern. Sources: ROADMAP 3.1 (+ 3.4's row/radial items).
 
 Acceptance: SPEC alone is sufficient to implement M1–M4; every example in SPEC
 already uses the new syntax.
-**Log:**
+**Log:** 2026-07-10 — **done**, 7 commits, all items landed; every SPEC example
+uses the new syntax (swept: comma lists, `place:`, `labels:`, the title-block
+field names, ratio-form scales, `--static`; anchor/link integrity re-checked;
+tests untouched/green — SPEC-only stage). Per item:
+- Comma law: SPEC 2 states it once (comma = repeated items, space = one item's
+  components, pipelines fold space-separated, `data: 10 20` is one point);
+  SPEC 21 notes reader-enforced migration errors; SPEC 14.3's discriminator is
+  item width now.
+- Validation: SPEC 16's four-clause strict/lenient rule replaces
+  silently-ignored (hard gates fold into the strict clause); SPEC 20 gains the
+  Properties & validation table; the similarity warning is in SPEC 3 + 20;
+  SPEC 23 un-defers the warning. `legend:` honestly marked ⌛ (the R2
+  cross-check leftover decided: defer, not build).
+- Wrap/align: SPEC 5 `max-width`/`text-wrap` law block; SPEC 6 line-alignment
+  law (+ the no-`text-align` rationale, wrapper-block escape); SPEC 12 tie-in;
+  SPEC 16 rows; SPEC 20 the three errors.
+- scale/unit/density: SPEC 15.1 three-quantity model (`unit:` = ident enum
+  `mm cm m in`, suffix display noted as `format:`'s job); `|page|` loses
+  `scale:`; titles read the ratio directly; SPEC 18 states the desugar fold;
+  absurd-extent hint in SPEC 20; SPEC 8/10.5/16 rows updated.
+- `place:` + renames: one property replaces over/left/right; `tags:`→`labels:`
+  (the deferred per-axis tick text loses the colliding name); title-block
+  fields to full words (kills the `sheet` homonym) + smart-label-as-title;
+  SPEC 11/15 state nested ordinary scopes route their own links (M6's fix).
+- Local bugs: chain-marks-every-hop + desugar expansion (`a - b -> c` bare
+  first hop); `|page|` direction by orientation; `wavy` link-only by design
+  (deferral deleted); fmt styled-cell rule documented.
+- Fonts: SPEC 5 metrics measurement (kind-not-name, 0.6em mono invariant,
+  cap-height centering); SPEC 6 the two OFL families + widened `font-weight`;
+  SPEC 17 three output modes (embed browser-only, `--static` outlines);
+  `--bake-vars`→`--static` everywhere, `--embed-font` added (SPEC 10.6/19).
+- SPEC 23 sweep: built items out; `format:` entered as decided-additive;
+  per-datum paint in comma shape; beyond-1.0 tail (DAG, imports, animation,
+  raster) reserves no syntax.
+
+**Deviations:** none from ROADMAP; two judgment calls logged — the deferred
+per-axis tick text keeps no property name (avoids the new `labels:` collision;
+alpha.2 names it), and SPEC 23 gained a compact beyond-1.0 tail rather than
+per-item entries. Sonnet agents unused — all writing was judgment-bearing; the
+S1-style verification pass was replaced by targeted greps + anchor script since
+S2 is additive amendment, not lossless compression.
 
 ---
 
