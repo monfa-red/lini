@@ -5,24 +5,13 @@ control. One core — composable nodes, a CSS-driven cascade, compile-time layou
 drives a family of layouts (flow, grid, sequence, charts, and engineering drawings),
 and compiles to clean, themeable SVG.
 
-**Two brackets and one capsule carry the whole language.** `{ … }` is **style** —
-`key: value;` declarations, dash-case, space-separated, exactly like CSS. `[ … ]`
-is **content** — a node's children, in source order. `|…|` is **identity** — a
-node's type and id. A node is `|type#id| "label" .class { style } [ children ]`;
-every part but the bars is optional. Nothing styles outside a `{ }`; nothing is
-drawn outside the canvas.
-
-**Two node kinds, like HTML.** A **box** is a drawn node (`|block|`, `|box|`,
-`|oval|`, `|group|`, …) and may hold children; a **string** is text *content*
-inside or beside one. `"…"` is text, exactly as it sits inside an element on a web
-page — stylable in place (`"x" { color: red }`), but a leaf, never a box.
-
 This document is complete: an implementer can build a conforming engine from it
 alone. **Everything is defined once and reused** — a property, the cascade, colour,
-the expression engine all apply across every node and every layout, and a layout
-section states only what is *new* to that layout. **Charts, sequences, and drawings
-are layouts** ([Part II](#part-ii--layout)), peers of flow and grid over the same
-core. **Link routing** has its own contract — [ROUTING.md](ROUTING.md).
+the expression engine apply across every node and every layout. [Part I](#part-i--core)
+is the shared core and is **authoritative**; **charts, sequences, and drawings are
+layouts** ([Part II](#part-ii--layout)), peers of flow and grid over the same core,
+each section stating only what is *new* to it; [Part III](#part-iii--reference) is
+reference. **Link routing** has its own contract — [ROUTING.md](ROUTING.md).
 
 ---
 
@@ -114,44 +103,32 @@ statement is exactly one of the three:
 | **canvas** | instances — boxes (`\|type#id\|`) and text (`"…"`) | yes |
 | **links** | `a -> b` connections | yes |
 
-The "is this drawn or styled?" question never arises: **styling lives in the
-stylesheet block; drawing lives on the canvas.**
+**One character tells a statement's kind** — a leading `|` opens a node, a `"`
+text, a bare name a link, and inside the stylesheet a `.`/`#`/`|…|` opens a rule.
+No prescan, no ambiguity.
 
-**One character tells a statement's kind.** A leading `|` opens a node, a `"`
-opens text, a bare name opens a link, and inside the stylesheet a `.`/`#`/`|…|`
-opens a rule. There is no prescan, no ambiguity.
+**Two brackets and one capsule, one meaning each.** `|…|` is **identity** — a type
+and an optional `#id`, the *only* place a type lives (instance `|box#cat|`, rule
+`|box| { }`, define `|treat::box| { }`). `{ … }` is **style** — `key: value;`
+declarations, the *only* place styling lives. `[ … ]` is **content** — a node's
+children (boxes and text) and its internal links, in source order. A drawn node is
+`|type#id| "label" .class { style } [ children ]`, only the bars required; a link
+is the same tail on a different head: `a -> b "label" .class { style } [ labels ]`.
 
-**Two brackets and one capsule, one meaning each.**
+**Three sigils, one meaning each.** `|…|` is a **type** (with an optional `#id`),
+always in bars. `.name` is a **class** — a worn style bundle, defined `.hot { … }`,
+worn after the identity (`|box| .hot`, `a -> b .hot`), never inside the bars.
+`#name` is an **id** — declared in the bars (`|box#cat|`), selected as a rule
+(`#cat { … }`), referenced **bare** in a link (`cat -> b`). A name goes bare **only
+when referenced**, and the one thing you reference is an id; types and classes are
+never linked, so they are always sigil-marked.
 
-- `|…|` — **identity**: a type and an optional `#id`. The *only* place a type
-  lives — on an instance (`|box#cat|`), a rule (`|box| { }`), or a define
-  (`|treat::box| { }`).
-- `{ … }` — **style**: `key: value;` declarations. The *only* place styling lives.
-- `[ … ]` — **content**: a node's children (boxes and text) and its internal
-  links, in source order.
-
-A drawn node is `|type#id| "label" .class { style } [ children ]`. Only the bars
-are required; everything after is optional. A link is the same tail on a different
-head: `a -> b "label" .class { style } [ labels ]`.
-
-**Three sigils, one meaning each.**
-
-- `|…|` — a **type** (with an optional `#id`). Always in bars.
-- `.name` — a **class**: a worn style bundle. Defined `.hot { … }`, worn after the
-  identity (`|box| .hot`, `a -> b .hot`) — never inside the bars.
-- `#name` — an **id**: a node's unique name. Declared in the bars (`|box#cat|`),
-  selected as a rule (`#cat { … }`), referenced **bare** in a link (`cat -> b`).
-
-A name goes **bare only when referenced**, and the one thing you reference is an
-**id** (you link to it). Types and classes are never linked, so they are always
-sigil-marked.
-
-**Boxes and text.** A *box* has a type, an id, classes, a style block, and
-children. A *string* is text content — no identity or children, but it **may carry
-a style block** (`"x" { color: red; translate: 0 -6 }`). A string in a box's `[ ]`
-(or trailing the head as its label) is that box's text; a string on its own is a
-free-standing text node. Text is a leaf: to give it children, a border, padding, a
-`pin`, or a wirable id, put it in a box (a `|block|` is the minimal one) — exactly
+**Boxes and text, like HTML.** A *box* has identity, classes, a style block, and
+children. A *string* is text content — a leaf with no identity or children, though
+it may carry a style block (`"x" { color: red }`, [SPEC 3](#text-content)). A
+string in a box's `[ ]` (or trailing the head as its label) is that box's text; on
+its own it is a free-standing text node. To give text children, a border, padding,
+a `pin`, or a wirable id, wrap it in a box (`|block|` is the minimal one) — exactly
 like wrapping a web page's text in an element.
 
 **The file is the root container.** The stylesheet `{ }` is the root's own setup
@@ -163,18 +140,16 @@ rules like `|-| { stroke: … }` for link look; inheritable ones (`font-*`, `col
 
 **Render order is source order; the cascade is whole-file.** Instances draw in the
 order written (later on top, pinned children above the flow; `layer:` overrides),
-and every rule applies to every instance. Links are the one thing that needs no
-declaration: naming an id declared nowhere auto-creates it ([SPEC 3](#3-statements--the-label)).
+and every rule applies to every instance. Links need no declaration: naming an id
+declared nowhere auto-creates it ([SPEC 3](#implicit-nodes)).
 
-**Two kinds of variable.**
-
-- *Visual* values that don't affect layout — colours and the font family — are
-  exposed as live CSS variables (`--lini-fill`, `--lini-accent`, …) so a host page
-  can re-theme them, and each colour carries a built-in dark variant that follows
-  the viewer's OS or a `data-theme` toggle ([SPEC 10](#10-colour-variables--expressions)).
-- *Layout* values — sizes, gaps, paddings, widths, **and font size** — bake into
-  the SVG as literals. Text is measured at compile time, so its size can never be a
-  runtime `var()`; a standalone SVG always looks right.
+**Two kinds of variable.** *Visual* values that don't affect layout — colours and
+the font family — stay live CSS variables (`--lini-fill`, `--lini-accent`, …), so a
+host page can re-theme them; each colour carries a built-in dark variant following
+the viewer's OS or a `data-theme` toggle ([SPEC 10](#10-colour-variables--expressions)).
+*Layout* values — sizes, gaps, paddings, widths, **and font size** — bake into the
+SVG as literals: text is measured at compile time, so its size can never be a
+runtime `var()`, and a standalone SVG always looks right.
 
 ---
 
@@ -297,14 +272,9 @@ error.
 |type#id| [ "label" ] [ .class… ] [ { style } ] [ [ children ] ]
 ```
 
-The **bars are identity** — a type and an optional `#id`. The **`"label"`** is the
-node's name; the **`.class`es** are worn styling; the **`{ }`** is style; the
-**`[ ]`** is content. Only the bars are required; at least a type or an `#id` must
-sit inside them.
-
-A node's **type and id live in the bars**, its **classes follow** them:
-`|oval#cat|`, `|box| .hot` (a box with class `hot`), `|box| .hot.loud` (two
-classes), `|#cat|` (a default box with id `cat`).
+Only the bars are required — and at least a type or an `#id` must sit inside
+them. [SPEC 1](#1-mental-model) names the parts; classes **follow** the bars
+(`|box| .hot`, `|box| .hot.loud`), never sit inside them.
 
 ```
 |cyl#db| "Postgres" .primary { fill: #eef } [
@@ -335,14 +305,14 @@ A node has **no label unless you give it one** — a bare `|box#cat|` is an empt
 | `"X"` | the label "X" |
 | `""` | an empty string — nothing in flow, an empty cell in a grid ([SPEC 12](#12-flow--grid)) |
 
-A link to an *undeclared* name still draws a labelled box: `cat -> dog -> bird`
-desugars to three boxes labelled "cat"/"dog"/"bird" ([Implicit nodes](#implicit-nodes)). A multi-word label needs no `[ ]`: `|box#lb| "Load balancer"`; an
-*anonymous* labelled box needs no id: `|box| "Load balancer"`.
+A link to an *undeclared* name still draws a labelled box ([Implicit nodes](#implicit-nodes)).
+A multi-word label needs no `[ ]` (`|box#lb| "Load balancer"`); an *anonymous*
+labelled box needs no id (`|box| "Load balancer"`).
 
-**The label is smart — each type places it.** The same `"X"` does the most useful
-thing for the shape it sits on. This **one rule** is extended by every layout — a
-chart's label is its title, a series' its legend entry ([SPEC 14](#14-charts)) — so no type
-needs a hand-written caption or symbol:
+**The label is smart — each type places it**, and every layout extends the same
+rule (a chart's label is its title, a series' its legend entry — [SPEC 14](#14-charts)),
+so no type needs a hand-written caption or symbol. Give no label and a type
+places nothing:
 
 | `"X"` on | becomes |
 |---|---|
@@ -351,11 +321,6 @@ needs a hand-written caption or symbol:
 | `\|icon\|` / `\|sign\|` | its **symbol** — `\|icon\| "heart"` is `\|icon\| { symbol: heart }` |
 | a **link** | a label along the route ([SPEC 9](#9-links)) |
 | a `\|chart\|` / series / `\|axis\|` / participant / frame | its title / legend / axis title / header / guard ([SPEC 13](#13-sequence), [SPEC 14](#14-charts)) |
-
-Because a group's label is its caption, `|group#kitchen| "Kitchen" [ … ]` needs no
-hand-written `|caption|`; because an icon's label is its symbol, `|icon| "bell"`
-needs no `{ symbol: … }`. Give no label and a type places nothing — one rule, no
-per-type exception.
 
 **The label takes no style of its own.** The `{ }` after the head is the *node's*
 block, so a styled or nudged label rides the `[ ]` content form instead, where each
@@ -366,16 +331,15 @@ string is a leaf in its own right ([Text content](#text-content)):
 |box#api| [ "API" { translate: 0 -6 } ]   // a styled label, via content
 ```
 
-**The label and `[ ]` coexist.** The label is the node's one inline item, lowered by
-its type — a text or caption child prepended to the `[ ]`, or (for `|icon|`/`|sign|`)
-the `symbol` — and the `[ ]` holds the rest:
+**The label and `[ ]` coexist — one inline label only** (two or more strings go in
+the `[ ]`). The label is the node's one inline item, lowered by its type — a text
+or caption child prepended to the `[ ]`, or (for `|icon|`/`|sign|`) the `symbol` —
+and the `[ ]` holds the rest:
 
 ```
 |group#kitchen| "Kitchen" [ |box#bowl| "Bowl" ]   // caption + a child
 |icon| "bell" [ "3" ]                              // symbol + a text badge
 ```
-
-One inline label only — two or more strings go in the `[ ]`.
 
 ### Text content
 
@@ -395,14 +359,12 @@ A string is a **text node** — always a `<text>` leaf, never wrapped:
 A string carries **no children** — text is a leaf, not a box — but where it is
 **content** (free-standing, or a child in a `[ ]`) it **may carry a style block** of
 text properties: `"X" { color: red; font-weight: bold; translate: 0 -6;
-rotate: 12 }`. Only text-valid properties apply (colour, every `font-*`, `opacity`,
-`letter-spacing`, `line-spacing`, `text-transform`, `text-decoration`, `translate`,
-`rotate`, `layer`); any other — `pin`, `padding`, `width`, a border, children, even
-`href` / `hint` — needs a real box, so wrap the text in a `|block|`. Set on the
-string the style applies to it directly; set on a containing box it cascades down
-([SPEC 6](#6-paint-stroke--text)). A string in the **label** position is the one place it is
-not content but a shorthand for it, so it takes no style block — write it in `[ ]`
-to style it (above).
+rotate: 12 }`. Only text-valid properties apply (`color` / `fill`, every `font-*`,
+`opacity`, `letter-spacing`, `line-spacing`, `text-transform`, `text-decoration`,
+`text-shadow`, `translate`, `rotate`, `layer`); any other — `pin`, `padding`,
+`width`, a border, children, even `href` / `hint` — needs a real box, so wrap the
+text in a `|block|`. Set on the string the style applies to it directly; set on a
+containing box it cascades down ([SPEC 6](#6-paint-stroke--text)).
 
 ### Implicit nodes
 
@@ -417,9 +379,9 @@ in the tree, the box is still created here and a warning names the other match.
 
 ### Declarations
 
-A declaration `key: value;` lives only in a `{ }` style block — the stylesheet
-(configuring the root) or a node's own block. Property names are dash-case; values
-are space-separated and positional. A declaration **ends with `;`** — its value runs
+A declaration `key: value;` ([SPEC 2](#2-lexical-syntax)) lives only in a `{ }`
+style block — the stylesheet (configuring the root) or a node's own block. A
+declaration **ends with `;`** — its value runs
 to that `;` (or the block's closing `}`), so a value may span several lines (a long
 expression, a per-segment list); the `;` is optional only immediately before `}`. A
 bare `key: value` outside a `{ }` is an error. Every property, its value shape, and
@@ -449,22 +411,17 @@ drawing subtype the **dimension type `(-)`** ([SPEC 15.6](#156-dimensions)), a c
 
 A **descendant selector** matches a node (or link) whose ancestor chain contains each
 unit in order (not necessarily adjacent), exactly like CSS's descendant combinator.
-Every construct keeps its sigil — `|box|`, `|-|`, `(-)`, `.hot`, `#hero` — so a selector
-reads as a run of marked units; a bare word is never a selector. `|-|` and its
-dimension subtype `(-)` are selector-only: a link is drawn by an operator, never
-instantiated ([SPEC 9](#9-links)).
+Every construct keeps its sigil, so a selector reads as a run of marked units; a
+bare word is never a selector. `|-|` and its dimension subtype `(-)` are
+selector-only: a link is drawn by an operator, never instantiated ([SPEC 9](#9-links)).
 
 A type's class never glues into its bars (`|box.hot|` is rejected): a class is
 **worn**, not part of identity. To match boxes-with-a-class, style the class
 (`.hot { … }`); to match within one, use a descendant (`.hot |box|`).
 
 A **define** introduces a new type from a base: `|treat::box| { … }`. Its
-declarations are the type's defaults; an optional `[ ]` gives it intrinsic children
-(materialized per instance — see [SPEC 9](#9-links)).
-
-A **class** is defined by `.name { … }` and **worn** by writing it after the
-identity (`|box| .hot`) or after a link's endpoints (`a -> b .hot`) — the same
-`.class` slot on both, never inside the bars.
+declarations are the type's defaults (tier 1 below); an optional `[ ]` gives it
+intrinsic children (materialized per instance — see [SPEC 9](#9-links)).
 
 **Selecting vs. drawing is decided by the section, not the syntax.** `|box| .hot`
 in the stylesheet is a descendant *rule* (.hot inside a box); on the canvas it is
@@ -533,8 +490,7 @@ Every child is **in flow** by default — laid out by its container's `layout`
 | `top left` · `top right` · `bottom left` · `bottom right` | with its corner on that parent corner |
 
 The child's *own* matching point lands on the parent's, so it sits **flush**. The
-anchor is the parent's **drawn box** — border and padding included. Corners fall out
-of the value, so one switch covers every anchor.
+anchor is the parent's **drawn box** — border and padding included.
 
 A pinned child is an **overlay**. It **does not grow the parent** — a parent of only
 pinned children collapses to `2 × padding` — and it **paints above** the in-flow
@@ -555,9 +511,9 @@ center, `pin: center` + `translate: x y` lands a child's center at parent-local
 (x, y) — explicit coordinates with no node-size arithmetic.
 
 **`rotate: N`** turns a node N degrees about its bbox center, applied last as an SVG
-transform. Like `translate`, it works on **any** node, text included — so a link label
-or a stray string can be nudged or turned in place. `pin` (which needs a parent anchor
-and takes a child out of the flow) is a **box** job; to pin text, wrap it in a `|block|`.
+transform. Like `translate`, it works on **any** node, text included. `pin` (which
+needs a parent anchor and takes a child out of the flow) is a **box** job; to pin
+text, wrap it in a `|block|`.
 
 ### Auto-sizing
 
@@ -621,9 +577,8 @@ shapes and `|line|`s and `wavy` on links — [SPEC 7](#7-nodes)). There is no pa
 The text family — `font-family`, `font-size`, `font-weight`, `font-style`,
 `text-transform`, `text-decoration`, `letter-spacing`, `line-spacing`, and `color` —
 **inherits**: nearest ancestor wins, like CSS. Set it on a containing box (or the root)
-and it cascades down, or set it on a string's own block (`"x" { font-weight: bold }`)
-for that one text node. Style globally with `font-size:` etc. in the stylesheet, or
-scope it on a container. Body text defaults to `font-size` 15, `font-weight` `normal`;
+and it cascades down, or on a string's own block (`"x" { font-weight: bold }`) for
+that one text node. Body text defaults to `font-size` 15, `font-weight` `normal`;
 captions 12 and link labels 11 carry their own baked defaults.
 
 Two kinds of text property, split by whether they touch layout:
@@ -724,30 +679,25 @@ Setting the symbol twice — a label *and* `{ symbol: … }` — is an error; pi
 text label on an icon rides in the `[ ]` (`|icon| "bell" [ "3" ]`).
 
 Phosphor icons are **two-tone** (a soft fill behind a line), so an icon wears Lini's
-paint roles like any node: **`fill`** paints the body, **`stroke`** the line,
-**`stroke-width`** its weight. The defaults make the duotone read out of the box —
-`fill` a soft grey (`--icon-fill`), `stroke` the ink (`--stroke`, matching borders
-and wires), `stroke-width` 2. A single-tone line icon is `fill: none`; a hued duotone
-is `fill: --teal-wash; stroke: --teal-ink`, exactly like a card.
+paint roles like any node: **`fill`** the body (default the soft grey `--icon-fill`),
+**`stroke`** the line (default `--stroke`, matching borders and wires),
+**`stroke-width`** its weight (default 2). A single-tone line icon is `fill: none`.
 
 `stroke-width` is **counter-scaled**: an icon is authored on a 256-unit grid and fit
 to its box, and the stroke is divided by that scale (baked at compile time), so its
-line weight holds as the icon resizes and matches the diagram's other strokes.
+line weight holds as the icon resizes.
 
 An icon is a **square** that grows uniformly with its `[ ]` text (and `padding`): the
-side is a `32` floor (`icon-size`) over the text + padding on either axis, so an
-empty icon is 32×32 and a longer label scales the **whole icon up** — symbol and all
-— keeping its proportion (the symbol never distorts). For a larger stand-alone icon,
-reach for `|sign|` ([SPEC 8](#8-templates)).
+side is a `32` floor (`icon-size`) over the text + padding on either axis — an empty
+icon is 32×32; a longer label scales the **whole icon up**, symbol and all, never
+distorting it. For a larger stand-alone icon, reach for `|sign|` ([SPEC 8](#8-templates)).
 
-**`fit`** controls how the symbol fills that box. By default (`fit: auto`) an icon
-keeps Phosphor's authored framing — each glyph sits in the 256-grid with its own
-built-in margin, so different glyphs fill the box by different amounts and a row of
-mixed icons reads at an even weight. `fit: contain` scales the glyph's *own* bounds
-up until they meet the box (filling it — and `|sign|` defaults to it); `cover` scales
-until the box is covered (the glyph may overflow); `stretch` fits both axes (may
-distort). The counter-scaled `stroke-width` follows the resulting scale, so the line
-weight stays constant whichever `fit` you choose.
+**`fit`** controls how the symbol fills that box. `auto` (default) keeps Phosphor's
+authored framing — each glyph's built-in 256-grid margin — so a row of mixed icons
+reads at an even weight; `contain` scales the glyph's *own* bounds up to meet the
+box (`|sign|`'s default); `cover` scales until the box is covered (may overflow);
+`stretch` fits both axes (may distort). The counter-scaled `stroke-width` follows
+the resulting scale, so line weight is constant whichever `fit` you choose.
 
 A missing `symbol` errors like `|poly|` without `points`; an unknown one suggests the
 nearest name. Only the icons a diagram uses are embedded (a default-on `icons` feature,
@@ -801,9 +751,10 @@ box (id, class, children, wirable, positionable): what you reach for to wrap tex
 needs box behaviour.
 
 **Captions.** A `|caption|` is a small `|block|` **pinned** just above the group's
-top-left corner; a `|footnote|` is the same flipped to the bottom. Both are out-of-flow
-overlays, so they never push the content, and their place is fixed by the template,
-not by where they sit among the children. A group's **label is its caption** ([SPEC 3](#the-label)),
+top-left corner; a `|footnote|` is the same flipped to the bottom. Both are
+out-of-flow overlays — they never push the content, their place is fixed by the
+template, not by where they sit among the children, and a `row`-laid group carries
+its title just the same. A group's **label is its caption** ([SPEC 3](#the-label)),
 so the two forms are equal:
 
 ```
@@ -818,9 +769,8 @@ so the two forms are equal:
 ]
 ```
 
-Style every caption globally with `|caption| { font-size: 16; font-weight: bold }` —
-that targets captions without touching body text. Because a caption is pinned (not in
-flow), a group laid out as a `row` carries its title just the same.
+`|caption| { font-size: 16; font-weight: bold }` styles every caption without
+touching body text.
 
 **Notes.** A `|note|` is the callout card — a filled block with a folded top-right
 corner. It is **one type in every layout**: in a `sequence` it binds to lifelines with
@@ -828,7 +778,7 @@ corner. It is **one type in every layout**: in a `sequence` it binds to lifeline
 datum, usually wired by a leader ([SPEC 15.7](#157-leaders-notes--line-conventions)); in
 flow / grid it is an ordinary padded card. Built-in scoped rules — `|sequence| |note|`
 and `|drawing| |note|`, each `{ padding: 6 10; font-size: 13 }` — keep it compact where
-convention expects, exactly as `|table|` insets its `|cell|`s; override them like any rule.
+convention expects; override them like any rule.
 
 **Tables.** A `|table|` is sugar — a `group` that is a grid with `gap: 1` and
 `gap-fill: --stroke`, so the 1px gaps between cells paint as hairline rules
@@ -880,11 +830,11 @@ table) a `|header|` / `|footer|` cell spans the full width.
 |entity#users| "Users" [ "id" "int"  "name" "varchar" ]
 ```
 
-Relationships are ordinary links ([SPEC 9](#9-links)): `users -< orders` is one-to-many, `a >-< b`
-many-to-many, landing on the entity edge; the full cardinality set composes from `[min][max]`
-end-markers (`-o<` zero-or-many, `-+<` one-or-many, `-o+` zero-or-one, [SPEC 9](#9-links)). To anchor a wire to one **field**, give that cell an
-id (`|block#user_id| "user_id"`) and link the path (`orders.user_id -< users.id`). Keys are
-plain content (`"id" { font-weight: bold }`); an entity adds no grammar.
+Relationships are ordinary links with the ER cardinality operators ([SPEC 9](#9-links)):
+`users -< orders` is one-to-many, `a >-< b` many-to-many, landing on the entity
+edge. To anchor a wire to one **field**, give that cell an id
+(`|block#user_id| "user_id"`) and link the path (`orders.user_id -< users.id`).
+Keys are plain content (`"id" { font-weight: bold }`); an entity adds no grammar.
 
 Extend any template: `|panel::group| { stroke: --accent }`. Common nodes need no
 template:
@@ -906,8 +856,8 @@ operator draws it.
 A link is **styled like a node**: its type is `|-|` — a line in the identity capsule,
 the one selector that matches every link — so `stroke` is its wire and `color` /
 `font-*` its labels, the ordinary vocabulary ([SPEC 6](#6-paint-stroke--text)) with no
-parallel family. Only **`clearance`** and **`routing`** stay scene config — geometry,
-not paint — set on a container's `{ }` and cascading to its links.
+parallel family. Only **`clearance`** and **`routing`** stay scene config
+([Styling](#styling)).
 
 ### Operators
 
@@ -919,7 +869,6 @@ A link op is `[start_marker?][line][end_marker?]`, no spaces:
 | Start markers | `<` arrow · `>` crow · `*` dot · `<>` diamond · `+`/`o` ER cardinality (below) |
 | End markers | `>` arrow · `<` crow · `*` dot · `<>` diamond · `+`/`o` ER cardinality (below) |
 
-The line grows more broken as it lengthens — solid `-`, dashed `--`, dotted `---`.
 The same marker glyph differs by position (`<` is arrow at the start, crow at the
 end).
 
@@ -977,12 +926,8 @@ a & b -> c & d       // cartesian: 4 links
 a -> b -> c & d      // chain + fan
 ```
 
-Mixing operators in one chain is a parse error.
-
-A link's **class follows** its endpoints (`a -> b .loud`), exactly as a node's
-follows its identity (`|box| .loud`) — one `.class` slot, after the head, on both; a
-class never lives in the bars. On a chain or fan, the label, class, and `{ }` apply to
-every link the statement expands to.
+Mixing operators in one chain is a parse error. On a chain or fan, the label,
+class, and `{ }` apply to every link the statement expands to.
 
 ### Styling
 
@@ -1039,10 +984,8 @@ own `{ }` in the `[ ]` to nudge or turn it. The head label takes no style — th
 after a link's head is the *link's* — so a styled label rides the `[ ]`, exactly as a
 node's does. A label is an obstacle to nothing, and may slide along the link to keep
 clear of nodes and other labels; the link never moves for it. Link labels default to
-`font-size: 11`, `font-weight: normal`, and are tinted by the link's `color` — a link's
-text props cascade to its labels; set them via `|-| { font-size: 14; color: --blue }`
-to restyle every link's labels at once, on one link's `{ }` to restyle its labels, or
-on a label's own `{ }` to restyle one.
+`font-size: 11`, `font-weight: normal`; a link's text props cascade to its labels
+(`|-| { font-size: 14; color: --blue }` restyles every link's labels at once).
 
 ### Endpoints & scope
 
@@ -1104,23 +1047,19 @@ garden.outlet -> kitchen.inlet "carries"
 
 ### Routing
 
-Links route **orthogonally** by default — horizontal and vertical runs through the
-free space between nodes, corners rounded. The router picks entry/exit sides unless an
-explicit `:side` forces one. `clearance` (default 16) is the minimum gap every link
-keeps from nodes and from other links.
-
-`routing` selects the strategy for a scope and cascades like `clearance`: `orthogonal`
-(the default) routes by the contract below; `straight` draws each link as one segment
-between the bodies, trimmed to their boundaries — it avoids nothing and reports
-nothing; `curved` is named but deferred ([SPEC 23](#23-deferred)). It pairs with `layout` —
-`layout` places the nodes, `routing` routes the links between them — so a group can
-route its internals one way while the root routes another. Which subsystem realises a
-scope's links is the scope's **wiring strategy** ([SPEC 11](#11-the-layout-model)): the
-orthogonal (or `straight`) router for `flow` / `grid`, layout-time lowering for
+`routing` selects the strategy for a scope and cascades like `clearance`:
+`orthogonal` (the default) routes horizontal/vertical runs through the free space
+between nodes, corners rounded; `straight` draws each link as one segment between
+the bodies, trimmed to their boundaries — it avoids nothing and reports nothing;
+`curved` is named but deferred ([SPEC 23](#23-deferred)). `routing` pairs with
+`layout` — `layout` places the nodes, `routing` wires them — so a group can route
+its internals one way while the root routes another; which subsystem realises a
+scope's links is the scope's **wiring strategy** ([SPEC 11](#11-the-layout-model)):
+the orthogonal (or `straight`) router for `flow` / `grid`, layout-time lowering for
 `sequence`, `chart` / `pie`, and `drawing`.
 
-The full routing contract — clearance, spacing, crossings, fan-out, self-loops — lives
-in [`ROUTING.md`](ROUTING.md), the source of truth for routing.
+The full routing contract — clearance, spacing, crossings, fan-out, self-loops —
+lives in [`ROUTING.md`](ROUTING.md), the source of truth for routing.
 
 ---
 
@@ -1197,9 +1136,8 @@ which would invert in dark mode:
 | deep | `--teal-deep` | the strong tone — borders and strokes |
 | ink | `--teal-ink` | deepest and most saturated — text and emphasis (the high-contrast tone in dark mode) |
 
-`fill: --teal` lands a friendly pastel; the job-names hold across the dark flip, so
-`--teal-wash` is always the faint surface and `--teal-ink` always the high-contrast
-detail.
+The job-names hold across the dark flip — `--teal-wash` is always the faint
+surface, `--teal-ink` always the high-contrast detail:
 
 ```
 { |card::box| { fill: --teal-wash; stroke: --teal-ink } }   // a pretty card, one line
@@ -1207,13 +1145,11 @@ detail.
 ```
 
 The tiers are generated from one **OKLCH** seed per hue, so the ramp is perceptually
-even and the eleven read as a family. The same space is open to you — `fill: oklch(0.7,
-0.14, 200)` picks any colour directly ([SPEC 2](#2-lexical-syntax)). Names are conventional
-— every one is an ordinary colour word, so `--blue`, `--red`, `--green` are all there —
-with aliases for muscle memory: `--yellow → --amber`, `--pink → --rose`, `--indigo →
---purple`, `--cyan → --teal`. `red` stays clear for **danger**; `rose` is the warm pink
-you decorate with (its `wash` / `soft` tiers are your pinks), `green` is tuned to an
-emerald, and `lime` is the lemony one.
+even and the eleven read as a family; the same space is open directly —
+`fill: oklch(0.7, 0.14, 200)` ([SPEC 2](#2-lexical-syntax)). Aliases cover muscle
+memory: `--yellow → --amber`, `--pink → --rose`, `--indigo → --purple`,
+`--cyan → --teal`. `red` stays clear for **danger**; `rose` is the decorating pink,
+`green` an emerald, `lime` the lemony one.
 
 The palette is **tree-shaken** ([SPEC 17](#17-svg-output)): only the `--lini-*` variables a
 diagram references are emitted, so the full palette costs a three-box diagram nothing.
@@ -1235,10 +1171,6 @@ literal.
 |box#hero| { fill: gradient(--blue, --purple) }       // a single-family sheen
 |badge#tag| { fill: gradient(--rose, --amber, --sky) } // a three-colour pop
 ```
-
-The angle is the only "more syntax": `gradient(…)` is angle-less and always lands on a
-flattering 135°. OKLCH stops keep the midpoint clean
-rather than muddy.
 
 Each distinct gradient is emitted once as a `<linearGradient>` / `<radialGradient>` in
 `<defs>` and referenced by `url(#…)` — deduplicated and shared like the drop-shadow
@@ -1327,25 +1259,15 @@ A **parenthesized expression** `(…)` holds compile-time math — folded to a l
 number, or a point `(x, y)` for geometry) when the diagram compiles. Parentheses are the
 **only place operators appear**: outside them `-` is a link or a number's sign, `<` / `>`
 are markers, `//` a comment, so the parens are what let `*` mean "times". A value stays
-paren-free until an operator does:
+paren-free until an operator does. **A call's own parens count**, so an operator
+inside a call's arguments needs no inner group — what makes math usable inline
+everywhere; a signed number is a sign, not an operator, so `-2` stays bare
+(`translate: -35 20`) — to subtract, group it:
 
 ```
-{ scale(n) = (100 * 1.2^n); }   // a binding (below)
-
-|box| {
-  gap: 8;             // a literal
-  width: scale(3);    // a call — no operator, no group
-  padding: (8 * 2);   // an operator → a group (= 16)
-}
-```
-
-**A call's own parens count**, so an operator inside a call's arguments needs no inner
-group — this is what makes math usable inline everywhere. A signed number is a sign, not
-an operator, so `-2` stays bare (`translate: -35 20`); to subtract, group it:
-
-```
-fn:   ramp(1)               // a call — bare
-fn:   (x * 2)               // an operator → a group
+gap: 8;                     // a literal — bare
+width: scale(3);            // a call — bare, no group
+padding: (8 * 2);           // an operator → a group (= 16)
 draw: move(-2, 5) up(8)     // calls and signed numbers — bare
 draw: right(w / 2)          // an operator in a call's own parens — no group
 ```
@@ -1386,12 +1308,8 @@ compile-time (baked), where `:` sets a live property — the two never meet:
 ```
 
 Call a binding anywhere a value goes — bare like `rgb(…)` / `repeat(…)`, or inside a
-group; only an operator forces the group, never the call, and a computed argument rides
-the call's own parens:
-
-```
-|box| { width: scale(3); padding: (scale(2) + 4); columns: repeat(3, 80 * 2) }
-```
+group; a computed argument rides the call's own parens
+(`|box| { padding: (scale(2) + 4); columns: repeat(3, 80 * 2) }`).
 
 **Geometry.** `points:` (on `|line|` / `|poly|`) may be a **parametric expression in
 `u`** — `u` sweeps `0 → 1`, sampled at `samples:` points into a vertex list, drawing
