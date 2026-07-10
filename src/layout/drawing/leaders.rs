@@ -90,9 +90,8 @@ fn leader_line(
 /// The nearest rim point of an analytic circle toward the elbow.
 fn circle_tip(circle: Option<(P, f64)>, from: P) -> Option<P> {
     let (c, r) = circle?;
-    let v = (from.0 - c.0, from.1 - c.1);
-    let len = dist(v, (0.0, 0.0)).max(1e-9);
-    Some((c.0 + v.0 / len * r, c.1 + v.1 / len * r))
+    let u = unit((from.0 - c.0, from.1 - c.1));
+    Some((c.0 + u.0 * r, c.1 + u.1 * r))
 }
 
 /// A measured `(o)` leader (an `R` onto its arc, a `⌀` onto a rim): the
@@ -315,9 +314,7 @@ fn trim(anchor: &Anchor, p: P, other: P, marker: MarkerKind, full: f64) -> P {
     if !matches!(anchor.spot, Spot::Origin) || marker == MarkerKind::Dot {
         return p;
     }
-    let d = (other.0 - p.0, other.1 - p.1);
-    let len = dist(d, (0.0, 0.0)).max(1e-9);
-    let d = (d.0 / len, d.1 / len);
+    let d = unit((other.0 - p.0, other.1 - p.1));
     let o = anchor.to_local(p);
     match outline::raycast(anchor.node, o, rotated(d, -anchor.rot)) {
         Some(t) if t < full => (p.0 + d.0 * t, p.1 + d.1 * t),

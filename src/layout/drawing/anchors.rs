@@ -11,7 +11,7 @@
 //! locates [SPEC 15.2/15.4].
 
 use super::super::ir::{Bbox, PlacedNode};
-use super::geometry::{MirrorAxis, P, dist, unit};
+use super::geometry::{MirrorAxis, P, unit};
 use super::{Segment, chrome};
 use crate::ast::Side;
 use crate::error::Error;
@@ -325,8 +325,7 @@ impl Anchor<'_> {
     /// side (the edge along it). `None` for the point anchors.
     pub fn direction(&self) -> Option<P> {
         if let Spot::Segment(Segment::Edge(a, b)) = &self.spot {
-            let len = dist(*a, *b).max(1e-9);
-            return Some(rotated(((b.0 - a.0) / len, (b.1 - a.1) / len), self.rot));
+            return Some(rotated(unit((b.0 - a.0, b.1 - a.1)), self.rot));
         }
         if let Spot::Side(side) = &self.spot {
             let along = match side {
@@ -347,8 +346,7 @@ impl Anchor<'_> {
             && pts.len() >= 2
         {
             let (a, b) = (pts[0], pts[pts.len() - 1]);
-            let len = dist(a, b).max(1e-9);
-            return Some(rotated(((b.0 - a.0) / len, (b.1 - a.1) / len), self.rot));
+            return Some(rotated(unit((b.0 - a.0, b.1 - a.1)), self.rot));
         }
         None
     }
