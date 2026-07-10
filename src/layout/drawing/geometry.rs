@@ -211,6 +211,19 @@ pub fn unit(v: P) -> P {
     (v.0 / len, v.1 / len)
 }
 
+/// The ISO reading angle for text riding a line in direction `dir` [SPEC 15.6]:
+/// the line's own angle folded into [-90, 90) so the text reads from the
+/// bottom / right — a vertical line's text turns exactly −90.
+pub fn iso_text_angle(dir: P) -> f64 {
+    let mut theta = dir.1.atan2(dir.0).to_degrees();
+    if theta < -90.0 {
+        theta += 180.0;
+    } else if theta >= 90.0 {
+        theta -= 180.0;
+    }
+    theta
+}
+
 /// A circular arc segment's centre — the SVG centre parameterization for the
 /// pen's `(r, large, sweep)` encoding. The centre sits off the chord midpoint
 /// along its perpendicular, on the side the flags pick: for a minor arc the

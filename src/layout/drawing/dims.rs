@@ -11,7 +11,7 @@ use super::annotate::{
     ARROW_HALF, ARROW_LEN, Axis, Ctx, EXT_GAP, EXT_OVERSHOOT, Paint, Rows, side_attr,
 };
 use super::compose::{self, DimText, Glyph};
-use super::geometry::P;
+use super::geometry::{P, iso_text_angle};
 use crate::ast::Side;
 use crate::error::Error;
 use crate::resolve::{ResolvedLink, ResolvedText};
@@ -232,15 +232,16 @@ fn at_row(s: Stacked, p: &Plan, line_c: f64, paint: &Paint) -> Vec<PlacedNode> {
     // ISO-aligned text above the line: horizontal dims read from the bottom,
     // vertical ones from the right (turned −90°) [SPEC 15.6].
     let lift = fs / 2.0 + 2.0;
-    let (mut centre, mut rot) = match s.axis {
-        Axis::Horizontal => ((text_u, line_c - lift), 0.0),
-        Axis::Vertical => ((line_c - lift, text_u), -90.0),
+    let mut centre = match s.axis {
+        Axis::Horizontal => (text_u, line_c - lift),
+        Axis::Vertical => (line_c - lift, text_u),
     };
+    let mut rot = iso_text_angle(along);
     if let Some(t) = s.label {
         if let Some(r) = t.attrs.number("rotate") {
             rot = r;
         }
-        if let Ok(Some((dx, dy))) = translate_of(t) {
+        if let Ok(Some((dx, dy))) = super::super::anchors::translate(&t.attrs, Span::empty()) {
             centre = (centre.0 + dx, centre.1 + dy);
         }
     }
@@ -353,12 +354,4 @@ pub(super) fn span_on(a: P, b: P, axis: Axis) -> f64 {
 
 fn scale_p(p: P, k: f64) -> P {
     (p.0 * k, p.1 * k)
-}
-
-/// A styled label's `translate:` [SPEC 3].
-fn translate_of(t: &ResolvedText) -> Result<Option<(f64, f64)>, Error> {
-    match t.attrs.get("translate") {
-        None => Ok(None),
-        Some(v) => Ok(Some(super::super::as_pair(v, Span::empty())?)),
-    }
 }

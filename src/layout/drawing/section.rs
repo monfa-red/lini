@@ -308,7 +308,8 @@ pub(in crate::layout) fn layout_detail(
     host: &ResolvedInst,
     letter: &str,
 ) -> Result<Vec<PlacedNode>, Error> {
-    let center = translate_of(marker);
+    let center =
+        super::super::anchors::translate(&marker.attrs, marker.span)?.unwrap_or((0.0, 0.0));
     let diameter = marker
         .attrs
         .number("width")
@@ -465,17 +466,6 @@ fn marker_letter(marker: &ResolvedInst) -> String {
                 .and_then(|c| c.label.clone())
         })
         .unwrap_or_default()
-}
-
-/// A node's `translate:` in drawing units — `(0, 0)` when absent.
-fn translate_of(inst: &ResolvedInst) -> (f64, f64) {
-    match inst.attrs.get("translate") {
-        Some(ResolvedValue::Tuple(t)) => (
-            t.first().and_then(ResolvedValue::as_number).unwrap_or(0.0),
-            t.get(1).and_then(ResolvedValue::as_number).unwrap_or(0.0),
-        ),
-        _ => (0.0, 0.0),
-    }
 }
 
 #[cfg(test)]

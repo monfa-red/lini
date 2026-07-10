@@ -11,7 +11,7 @@ use super::anchors::{self, Anchor, Spot, rotated};
 use super::annotate::{ARROW_LEN, Axis, Ctx, Paint, Rows, side_attr, side_unit};
 use super::compose::{self, DimText, Glyph};
 use super::dims::{Stacked, arrow, span_on, stack_side, stacked};
-use super::geometry::{P, reflect_point};
+use super::geometry::{P, iso_text_angle, reflect_point};
 use super::{Segment, leaders};
 use crate::ast::Side;
 use crate::error::Error;
@@ -245,12 +245,7 @@ fn diametral(c: P, r: f64, dir: P, text: DimText, paint: &Paint) -> Vec<PlacedNo
     let fits = 2.0 * r >= 2.0 * arrow_len + tw + 8.0;
     // ISO alignment: turn with the line, reading from the bottom / right —
     // a vertical line turns its text −90, like a stacked vertical dim.
-    let mut theta = dir.1.atan2(dir.0).to_degrees();
-    if theta < -90.0 {
-        theta += 180.0;
-    } else if theta >= 90.0 {
-        theta -= 180.0;
-    }
+    let theta = iso_text_angle(dir);
     let (ts, tc) = theta.to_radians().sin_cos();
     let up = (ts, -tc);
     let lift = fs / 2.0 + 2.0;
