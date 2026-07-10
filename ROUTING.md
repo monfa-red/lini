@@ -24,8 +24,10 @@ diagram can never route two different ways.
 Every strategy consumes the same input (the placed scene, the expanded link
 requests) and produces the same output (polylines, a report, strays), sharing
 one spine — request expansion, markers, labels, stray drawing, render-time
-rounding, validation. Only geometry construction differs, so a new diagram
-family adds a strategy module, never a refactor.
+rounding. Only geometry construction differs, so a new diagram family adds a
+strategy module, never a refactor. **Validation is the orthogonal contract's
+alone**: the law checker judges orthogonal wires and skips `straight` ones —
+a straight wire is lawfully oblique and avoids nothing.
 
 **`straight`** is the trivial strategy: each link is one segment between two
 anchors its caller supplies (plus the rectangular self-hook), trimmed to the
@@ -250,13 +252,16 @@ src/routing/
   mod.rs        strategy dispatch, shared Routing result (links, report, strays)
   report.rs     violations, crossings, stray construction
   straight.rs   the straight strategy (sequence messages)
-  ortho/        the six-step model: scene index, channel graph,
-                search, placement, geometry, labels
-  validate.rs   the independent law checker — a test oracle, never a repair
+  ortho/        the six-step model — scene index (scene, rect), channel graph
+                (graph), requests/bundles (request), admission (admit, cost,
+                entry, ledger), search, placement (place, ladder, order,
+                pairwise), geometry, labels
+  validate.rs   the independent law checker (+ validate/excuse.rs) — a test
+                oracle over orthogonal wires, never a repair
 ```
 
 One Dijkstra per bundle over a graph of tens of cells, one linear placement
 sweep per channel: routing a busy diagram is microseconds, not seconds. The
-validator re-judges every sample against the four laws in CI; complex
-fixtures pin turn counts, crossing counts, and byte-identical reruns — no
-image reading in tests.
+validator re-judges every sample's orthogonal wires against the four laws in
+CI; complex fixtures pin turn counts, crossing counts, and byte-identical
+reruns — no image reading in tests.

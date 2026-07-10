@@ -3,9 +3,10 @@
 //! Every strategy consumes the placed scene and the expanded link requests
 //! and produces the same outputs — polylines, a report, strays — sharing one
 //! spine: request expansion, markers, labels, stray drawing, render-time
-//! rounding, validation. Only geometry construction differs. `orthogonal`
-//! (the default) is the six-step model in [`ortho`]; `straight` carries
-//! sequence messages; `curved` is deferred.
+//! rounding. Only geometry construction differs; validation ([`validate`])
+//! judges the orthogonal contract alone. `orthogonal` (the default) is the
+//! six-step model in [`ortho`]; `straight` carries sequence messages;
+//! `curved` is deferred.
 
 pub(crate) mod ortho;
 mod report;
