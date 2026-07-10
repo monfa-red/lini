@@ -192,7 +192,41 @@ AUDIT R3 + D8. Mostly `[pure]` moves; behavior alignments flagged.
 Acceptance: zero snapshot diffs (except the 11→12 item if it proves reachable —
 then its own `[output]` commit); grep shows no duplicate literal for any
 centralized constant.
-**Log:**
+**Log:** 2026-07-10 — **done**, 5 commits, all acceptance met (zero snapshot
+diffs throughout — every suite green after each commit; fmt/clippy clean; the
+sweep greps show each centralized value defined once, in `ledger/consts.rs` or
+`chart/metrics.rs`). Items landed:
+- `ledger/consts.rs` filled: dim/leader anatomy, TOL_STACK, BREAK_GAP, plane
+  anatomy (`PLANE_*`), thread depths, DATUM_SIZE, hatch pitch/line-width, the
+  drawing-link literals (`DRAWING_LINK_STROKE_WIDTH`/`_FONT_SIZE`),
+  DEFAULT_CLEARANCE, ROOT_FONT_SIZE, A4, and the look tunables (wavy shape,
+  note fold, sheet margins, TEXT_LEADING — layout + render leading now one
+  constant).
+- D8: the 4.0 twins unify as CENTER_MARK_OVERHANG; section's 6.0 is
+  PLANE_OVERHANG; chrome.rs's bare 0.54125 named THREAD_DEPTH_INTERNAL.
+  The `annotate.rs` 11.0 fallback proved **unreachable** (the drawing scope's
+  base layer always supplies font-size 12) — aligned to
+  DRAWING_LINK_FONT_SIZE inside the `[pure]` commit, zero diffs the proof.
+  Same story for the three clearance fallbacks (0/0/16 → DEFAULT_CLEARANCE).
+- Root font-size fallback + `root_defaults()` read ROOT_FONT_SIZE; A4 deduped
+  (desugar DEFAULT, the SIZES a4 row, the page bundle all read `consts::A4`);
+  the inheritance-depth error text derives from MAX_INHERITANCE_DEPTH.
+- `chart/metrics.rs` (per plan — chart constants live with the chart):
+  TITLE_SIZE 13 / AXIS_TITLE_SIZE 11 (axis.rs's colliding TITLE_SIZE renamed,
+  values unchanged), one LABEL_SIZE 11 (was ×4: mod/axis/annot/radial),
+  AREA_OPACITY 0.82, TICK_TARGET 5.
+- Marker ratios named in markers.rs beside the existing family: ARROW/DATUM/
+  DIAMOND_HALF_SPREAD, RING_BACK_ONE/MANY (shared by line-stop + drawn ring).
+- `messages::LABEL_SIZE` pub(crate); the `.lini-sequence-message` rule derives
+  its `13px` from it. Sweep bonus: prim::DIM_TEXT_SIZE and the
+  `.lini-dim-text` rule's `12px` also derive from DRAWING_LINK_FONT_SIZE.
+
+**Deviations:** none of substance. Left local by judgment (AUDIT's list +
+in-stage calls): chart `TITLE_SIZE * 1.2` title reserve (spacing, not text
+leading), the ER bar glyph offsets (one-off per marker arm), chart
+`labels.rs` SIZE 10 (data-label knob, not the tick LABEL_SIZE), the
+sequence-tab `12px` (a sequence choice, not the drawing caption), and EPS /
+buffers / fmt-config / routing `cost.rs` / `AVG_CHAR_WIDTH_RATIO` per AUDIT.
 
 ### Stage R4 — front-end: parser split + one expression lexer
 
