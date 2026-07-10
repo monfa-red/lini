@@ -203,10 +203,17 @@ groups may span lines ([SPEC 10](#10-colour-variables--expressions)).
 for angles, 0–1 for opacities/fractions). `10`, `-5`, `0.25`, `+3`. A trailing `%`
 makes a **percentage** (`50%`), valid only in colour components.
 
-**Values are space-separated and positional**, like CSS: `padding: 5 2 5 5`,
-`shadow: 2 2 4 #0003`, `translate: 10 -4`, `columns: 80 140 80`. A **comma**
-separates list items and appears only where a property takes a list of groups
-(`points: 0 0, 10 10`). **Functions** use parentheses and sit in value position —
+**The comma law — CSS's rule, stated once.** A **comma** separates repeated
+**list items**: `data: 2, 3, 4` · `columns: 80, 140, auto` · `points: 0 0, 10 10` ·
+`categories: "Q1", "Q2"` · `along: 0.2, 0.5, 0.8` · `align: start, center, end`.
+A **space** separates the components of **one** item, tuple, interval, or
+shorthand: `padding: 5 2 5 5` · `shadow: 2 2 4 #0003` · `translate: 10 -4` ·
+`range: 0 100` · `cell: 2 1` — and so `data: 10 20, 30 40` is two `x y` points,
+and a lone `data: 10 20` is **one point, never two values** (a value list is
+comma-separated: `data: 9, 15, 24`). A **pipeline** of calls that folds into one
+value stays space-separated, like CSS `transform` — `draw: move(0,0) up(8)
+fillet(2)`, and `mirror:`, whose items each reflect the union so far.
+**Functions** use parentheses and sit in value position —
 `rgb(…)`, `hsl(…)`, `repeat(…)`, the math library, and any you bind
 ([SPEC 10](#10-colour-variables--expressions)). A call's `(` **glues to its name**
 (`rgb(…)`, never `rgb (…)`); a free-standing `(…)` is a math group, and a free-standing
@@ -728,7 +735,7 @@ the cascade ([SPEC 4](#4-selectors-cascade--specificity)) — every value here i
 | `\|cell\|` | `\|block\|` | `padding: 4 8` | A **table cell** — a frameless `\|block\|` carrying the text-to-gutter inset. Body cells wrap in it; `\|header\|` / `\|footer\|` build on it. Style all cells with `\|cell\| { … }` or, per table, `\|table\| \|cell\| { … }`. |
 | `\|header\|` | `\|cell\|` | `fill: --header-fill; font-weight: bold` | A **header** cell — a filled, bold band (a `\|table\|`'s first row; an `\|entity\|`'s title spans them). |
 | `\|footer\|` | `\|cell\|` | `color: --footer-color` | A **footer** cell — muted text; opt-in on the last row. |
-| `\|entity\|` | `\|table\|` | `columns: auto auto` | An ER / database **entity** — a titled field list, rows left-aligned (see below). |
+| `\|entity\|` | `\|table\|` | `columns: auto, auto` | An ER / database **entity** — a titled field list, rows left-aligned (see below). |
 | `\|note\|` | `\|block\|` | `fill: --fill; stroke: --stroke; padding: 20; scale: 1` | A **note** — the folded-corner callout card, one type in every layout (see below). |
 | `\|balloon\|` | `\|oval\|` | `width: 16; fill: --fill; stroke: --stroke; font-size: 11; scale: 1` | An item **balloon** — the numbered circle an assembly leaders to a part ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `\|drawing\|` | `\|block\|` | `layout: drawing; padding: 0; scale: 4` | An engineering **drawing** — geometry on a datum, measured annotations ([SPEC 15](#15-drawing)). |
@@ -795,7 +802,7 @@ room. The outer frame is the group border, the inner rules the gap paint
 ([SPEC 12](#12-flow--grid)) and align the *cells' text*: since the cells already fill, the
 table's own `align`/`justify` are carried onto each cell — a `start`/`end` column's cells
 wear a `.lini-align-*` / `.lini-justify-*` class — and a filled cell places its text at
-that edge (`center` is the default). So `align: start center end` reads three columns
+that edge (`center` is the default). So `align: start, center, end` reads three columns
 left / centre / right, header band and body alike.
 
 A table's **first row becomes its header** — each cell wrapped as a `|header|`, a filled
@@ -806,7 +813,7 @@ and the column's alignment reach it ([SPEC 17](#17-svg-output)).
 
 ```
 |table#basket| {
-  columns: 80 140 80;
+  columns: 80, 140, 80;
 } [
   "Fruit" "Quantity" "Notes"   // the header row — filled + bold
   "Apple" "12"       "fresh"
@@ -823,7 +830,7 @@ colour or weight can take its own style block (`"Apple" { color: --red-ink }`).
 database card: its **label is its title** — a `|header|` spanning every column, centred
 over left-aligned `"field" "type"` rows (an entity's field rows read left by default; the
 title keeps its centred, full-span band). Add a column for a **key** gutter —
-`{ columns: auto auto auto }` gives `"PK"/"FK" "field" "type"`. In an entity (not a plain
+`{ columns: auto, auto, auto }` gives `"PK"/"FK" "field" "type"`. In an entity (not a plain
 table) a `|header|` / `|footer|` cell spans the full width.
 
 ```
@@ -970,12 +977,12 @@ rule, exactly as `columns:` is a grid's. One label trails the head (`a -> b
 
 | Property | Notes |
 |---|---|
-| `along` | A list of `0..1` fractions along the whole drawn route, one per label (`along: 0.2 0.5 0.8`). Omitted → auto-distribute across the hops, so one label avoids junctions and several spread out. |
+| `along` | A list of `0..1` fractions along the whole drawn route, one per label (`along: 0.2, 0.5, 0.8`). Omitted → auto-distribute across the hops, so one label avoids junctions and several spread out. |
 
 ```
 a -> b "watches"                                // the common case — one label, auto-placed
 a -> b "watches" .loud { stroke: red }          // + a class and wire colour
-a -> b { along: 0.3 0.7 } [ "near a" "near b" ] // two labels
+a -> b { along: 0.3, 0.7 } [ "near a" "near b" ] // two labels
 a -> b [ "watches" { translate: 0 -6 } ]        // a styled / nudged label
 ```
 
@@ -1468,7 +1475,7 @@ A grid is sized by its track lists:
 
 | Property | Notes |
 |---|---|
-| `columns` | **Required.** A track list — `columns: 80 140 80` (3 fixed), `columns: repeat(3)` (3 auto), or a mix (`auto 40 auto`). The list length is the column count. |
+| `columns` | **Required.** A track list — `columns: 80, 140, 80` (3 fixed), `columns: repeat(3)` (3 auto), or a mix (`auto, 40, auto`). The list length is the column count. |
 | `rows` | Optional. Same form. A floor, not a cap: extra children flow into implicit auto rows. Omitted → all rows implicit, count `⌈children / columns⌉`. |
 | `cell` | A **box** child's placement `column row`, 1-indexed (`cell: 2 1`). |
 | `span` | A **box** child's span `columns rows`, default `1 1` (`span: 2` = `2 1`). |
@@ -1487,7 +1494,7 @@ silently ignored (`span:` is also a chart band's extent — [SPEC 14](#14-charts
 
 **Per-column alignment.** On a grid, `align` (horizontal ↔) and `justify`
 (vertical ↕) accept a **list parallel to `columns`** (one value per track) or a
-scalar for all — so `align: start center end` aligns three columns in one
+scalar for all — so `align: start, center, end` aligns three columns in one
 declaration. Mind the axes: a grid follows **column-flow, not CSS grid**, so `align`
 is horizontal — the same knob that left-aligns text in a `direction: column` box.
 `stretch` fills the track; `start`/`center`/`end` pack the cell's box at natural
@@ -1743,16 +1750,17 @@ points, `|dots|` is terser.
 ### 14.3 Data & formulas
 
 A series' values come from `data:` (explicit) or `fn:` (computed) — never both. Both use
-the core value grammar (space within a group, comma between groups), so charts add **no
-value form**; a comma is the discriminator:
+the core comma law ([SPEC 2](#2-lexical-syntax)), so charts add **no value form**;
+the **item width** is the discriminator:
 
 | Source | Syntax | Meaning |
 |---|---|---|
-| categorical | `data: 9 15 24 18 30` | **one group** → one value per category |
-| points | `data: 0 225, 60 225, 118 221` | **comma groups** → `x y` pairs (numeric x; scatter) |
+| categorical | `data: 9, 15, 24, 18, 30` | scalar items → one value per category |
+| points | `data: 0 225, 60 225, 118 221` | `x y` items → points (numeric x; scatter) |
 | formula | `fn: min(8/(x/100-1)^2, 2000)` | an expression in `x`, sampled at `samples:` |
 
-A comma-less `data:` is always a value list (a single point cannot be written comma-less).
+Scalar and pair items never mix in one `data:` — `data: 10 20` is **one point**
+([SPEC 2](#2-lexical-syntax)); a legacy space list errors with the comma form.
 A `|line|` / `|area|` needs ≥ 2 vertices; with categorical data the value count must match
 the `categories:` count ([SPEC 20](#20-errors)).
 
@@ -1765,7 +1773,7 @@ error). A per-node mark (`|bubble|`, `|slice|`, `|mark|`) takes no `tags:` — i
 label *is* its point label.
 
 ```
-|line| "GLM-5.2" { data: 35 63, 42 72, 84 75; tags: "Non-Thinking" "High" "Max"; marker: circle }
+|line| "GLM-5.2" { data: 35 63, 42 72, 84 75; tags: "Non-Thinking", "High", "Max"; marker: circle }
 ```
 
 **Formulas are the core expression engine** ([SPEC 10.7](#107-expressions--functions)):
@@ -1835,7 +1843,8 @@ with no shading.
 ```
 
 **A series opts into segmentation** with a per-band `fn:` **list** — one `(…)` expression
-(or a bare constant) per band, evaluated in local `u`; a **single** `fn:` samples the whole
+(or a bare constant) per band, comma-separated (`fn: (u*10), 5, ramp(2)`), evaluated
+in local `u`; a **single** `fn:` samples the whole
 domain in `x` and ignores bands. Consecutive segments connect end-to-start (the riser is
 drawn), so a jump is explicit. A per-band list whose length ≠ the band count is an error
 ([SPEC 20](#20-errors)) — never a silent truncation.
@@ -3290,6 +3299,15 @@ drawn statement is a `node` (`|…|`), `text` (`"…"`), or — when a bare `ide
 a link-op, `&`, or a `.` path — a `link`. A **declaration** ends with `;` (its value may
 span lines); a **statement** ends at a newline or `;`.
 
+**The comma law rides `values`.** `value_group { "," value_group }` is the whole
+mechanism: a comma between repeated list items, a space between one item's
+components, pipelines (`draw:`, `mirror:`) one space-separated group
+([SPEC 2](#2-lexical-syntax)). The parser preserves the shape; each **list
+reader** enforces it with a targeted correction — a legacy space list errors as
+`` `data` takes comma-separated values — `data: 9, 15, 24` `` (so migrating a
+0.20 file is mechanical: `columns: 80 140 80` → `columns: 80, 140, 80`,
+`align: start, center, end` → `align: start, center, end`).
+
 **Adjacency tells a `.class` from a path; a `:` tells a side.** A space before the `.`
 makes it a worn class (`a .hot`), no space an endpoint path (`a.b`); the first class is
 spaced from the identity, the rest of the chain glues (`.hot.loud`); a `:` after an
@@ -3527,9 +3545,9 @@ db      --> api     "record"
 **Charts — bars, a formula with a band, and a pie:**
 
 ```
-|chart| "Cycle time (s)" { categories: "15 cm³" "30 cm³" "50 cm³" } [
-  |bars| "1.8 kW" { data: 9 15 24; fill: --sky }
-  |bars| "2.3 kW" { data: 7 13 20; fill: --amber }
+|chart| "Cycle time (s)" { categories: "15 cm³", "30 cm³", "50 cm³" } [
+  |bars| "1.8 kW" { data: 9, 15, 24; fill: --sky }
+  |bars| "2.3 kW" { data: 7, 13, 20; fill: --amber }
 ]
 
 |chart| "Injection profile" [
@@ -3550,16 +3568,16 @@ db      --> api     "record"
 **A radar (radial chart) and labelled scatter:**
 
 ```
-|chart| "Profiles" { direction: radial; categories: "Speed" "Range" "Armor" "Cost" "Stealth" } [
+|chart| "Profiles" { direction: radial; categories: "Speed", "Range", "Armor", "Cost", "Stealth" } [
   |axis| { range: 0 5 }
-  |line| "Scout"   { data: 5 4 2 3 5 }
-  |area| "Cruiser" { data: 3 3 5 4 2; fill: --teal }
+  |line| "Scout"   { data: 5, 4, 2, 3, 5 }
+  |area| "Cruiser" { data: 3, 3, 5, 4, 2; fill: --teal }
 ]
 
 |chart| "Effort vs. score" [
   |axis| "tokens (k)" { side: bottom }
   |axis| "score %"    { side: left }
-  |line| "GLM-5.2" { data: 35 63, 42 72, 84 75; tags: "Base" "High" "Max"; marker: circle; tooltip: always }
+  |line| "GLM-5.2" { data: 35 63, 42 72, 84 75; tags: "Base", "High", "Max"; marker: circle; tooltip: always }
 ]
 ```
 
