@@ -150,11 +150,7 @@ fn fill_one(cp: &mut PlacedNode, geo: Bbox, scale: f64) -> Result<(), Error> {
     }
 
     cp.label = None; // the letter is drawn; the line node itself carries no text
-    let mut bbox = seg_bbox(a, b);
-    for p in &pieces {
-        bbox = bbox.union(p.bbox.shifted(p.cx, p.cy));
-    }
-    cp.bbox = bbox;
+    cp.bbox = seg_bbox(a, b).union(Bbox::extent_of(&pieces, |_| true));
     cp.children = pieces;
     Ok(())
 }

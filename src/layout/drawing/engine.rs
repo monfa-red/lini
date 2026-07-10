@@ -174,16 +174,7 @@ fn unit_of(attrs: &crate::resolve::AttrMap) -> Option<&str> {
 /// The drawn extent of the in-flow children (pinned overlays never grow their
 /// parent — the core law; the canvas still includes them via `finish`).
 fn flow_extent(kids: &[PlacedNode]) -> Bbox {
-    let mut ext = Bbox {
-        min_x: f64::INFINITY,
-        min_y: f64::INFINITY,
-        max_x: f64::NEG_INFINITY,
-        max_y: f64::NEG_INFINITY,
-    };
-    for k in kids.iter().filter(|k| !anchors::is_pinned(&k.attrs)) {
-        super::super::accumulate_extent(k, 0.0, 0.0, 0.0, &mut ext);
-    }
-    ext
+    Bbox::extent_of(kids, |k| !anchors::is_pinned(&k.attrs))
 }
 
 /// Pin sheet chrome onto the finished box — the title `|footnote|` under the

@@ -53,27 +53,6 @@ pub fn rect(cx: f64, cy: f64, w: f64, h: f64, fill: ResolvedValue, opacity: f64)
     n
 }
 
-/// The bounding box of a point list (empty for no points).
-fn bounds(points: &[(f64, f64)]) -> Bbox {
-    if points.is_empty() {
-        return Bbox::empty();
-    }
-    points.iter().fold(
-        Bbox {
-            min_x: f64::INFINITY,
-            min_y: f64::INFINITY,
-            max_x: f64::NEG_INFINITY,
-            max_y: f64::NEG_INFINITY,
-        },
-        |b, &(x, y)| Bbox {
-            min_x: b.min_x.min(x),
-            min_y: b.min_y.min(y),
-            max_x: b.max_x.max(x),
-            max_y: b.max_y.max(y),
-        },
-    )
-}
-
 /// A `w`×`h` filled primitive centred at (cx, cy), stroke off and width 0 so the drawn
 /// shape matches the bbox exactly. The shared body of [`oval`] and [`marker`].
 fn filled(kind: NodeKind, cx: f64, cy: f64, w: f64, h: f64, fill: ResolvedValue) -> PlacedNode {
@@ -120,7 +99,7 @@ pub fn marker(
 /// statement inlines anything — exactly how link markers ride the sheet
 /// [SPEC 17].
 pub fn dim_marker(variant: &str, points: Vec<(f64, f64)>, fill: ResolvedValue) -> PlacedNode {
-    let bbox = bounds(&points);
+    let bbox = Bbox::from_points(&points);
     let pts = points
         .into_iter()
         .map(|(x, y)| {
@@ -138,7 +117,7 @@ pub fn dim_marker(variant: &str, points: Vec<(f64, f64)>, fill: ResolvedValue) -
 /// A filled polygon (an area's body) through `points`. Stroke off; `opacity` lets
 /// overlapping areas read through.
 pub fn poly(points: Vec<(f64, f64)>, fill: ResolvedValue, opacity: f64) -> PlacedNode {
-    let bbox = bounds(&points);
+    let bbox = Bbox::from_points(&points);
     let pts = points
         .into_iter()
         .map(|(x, y)| {
@@ -187,7 +166,7 @@ pub fn wedge(
 /// A polyline (a gridline or a line series) through `points`, with the given stroke
 /// colour and width.
 pub fn line(points: Vec<(f64, f64)>, stroke: ResolvedValue, width: f64) -> PlacedNode {
-    let bbox = bounds(&points);
+    let bbox = Bbox::from_points(&points);
     let pts = points
         .into_iter()
         .map(|(x, y)| {

@@ -227,10 +227,7 @@ fn lay_out(
 /// container is sized correctly. Mirrors how `finish` takes the true visual
 /// extent.
 fn enclosing_bbox(children: &[PlacedNode], wires: &[RoutedLink]) -> Bbox {
-    let mut ext = Bbox::empty();
-    for c in children {
-        ext = ext.union(c.bbox.shifted(c.cx, c.cy));
-    }
+    let mut ext = Bbox::extent_of(children, |_| true);
     for w in wires {
         for &(x, y) in &w.path {
             ext = ext.union(Bbox {

@@ -12,6 +12,7 @@ use super::marks;
 use super::model::{Chart, SeriesKind};
 use super::project::Plot;
 use crate::layout::PlacedNode;
+use crate::layout::ir::Bbox;
 use crate::layout::prim;
 use crate::resolve::{MarkerKind, ResolvedValue};
 
@@ -202,14 +203,29 @@ impl Rect {
         }
     }
 
+    fn bbox(&self) -> Bbox {
+        Bbox {
+            min_x: self.x0,
+            min_y: self.y0,
+            max_x: self.x1,
+            max_y: self.y1,
+        }
+    }
+
     /// Whether the box sits fully inside the plot rect (no spill over the axes / edge).
     fn within(&self, plot: &Plot) -> bool {
-        self.x0 >= plot.x0 && self.x1 <= plot.x1 && self.y0 >= plot.y0 && self.y1 <= plot.y1
+        Bbox {
+            min_x: plot.x0,
+            min_y: plot.y0,
+            max_x: plot.x1,
+            max_y: plot.y1,
+        }
+        .contains(self.bbox())
     }
 
     /// Whether two label boxes overlap.
     fn hits(&self, o: &Rect) -> bool {
-        self.x0 < o.x1 && o.x0 < self.x1 && self.y0 < o.y1 && o.y0 < self.y1
+        self.bbox().overlaps(o.bbox())
     }
 }
 

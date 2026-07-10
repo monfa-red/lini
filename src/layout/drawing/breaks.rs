@@ -529,7 +529,7 @@ pub(in crate::layout) fn fill_chrome(children: &mut [PlacedNode], cuts: &[CutEdg
                 .collect(),
         );
         c.attrs.insert("points", value);
-        c.bbox = bounds(&pts).inflate(half);
+        c.bbox = Bbox::from_points(&pts).inflate(half);
     }
 }
 
@@ -550,22 +550,6 @@ fn jogged(cut: &CutEdge, pt: impl Fn(f64, f64) -> P) -> Vec<P> {
         pt(cut.t, m + jog),
         pt(cut.t, cut.hi + OVERHANG),
     ]
-}
-
-fn bounds(pts: &[P]) -> Bbox {
-    let mut b = Bbox {
-        min_x: f64::INFINITY,
-        min_y: f64::INFINITY,
-        max_x: f64::NEG_INFINITY,
-        max_y: f64::NEG_INFINITY,
-    };
-    for p in pts {
-        b.min_x = b.min_x.min(p.0);
-        b.min_y = b.min_y.min(p.1);
-        b.max_x = b.max_x.max(p.0);
-        b.max_y = b.max_y.max(p.1);
-    }
-    b
 }
 
 #[cfg(test)]

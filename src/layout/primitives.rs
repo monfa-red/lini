@@ -48,14 +48,16 @@ pub fn leaf_bbox(inst: &ResolvedInst, scale: f64) -> Result<Bbox, Error> {
         // A label-less icon: an empty content box (the labelled case sizes the
         // same square from its laid-out label child — see `icon_square_bbox`).
         NodeKind::Icon => icon_square_bbox(inst, Bbox::empty(), scale),
-        NodeKind::Line => Ok(
-            bounding_box(&scaled_points(require_points(inst, "line", 2)?, scale))
-                .inflate(stroke_half(inst)),
-        ),
-        NodeKind::Poly => Ok(
-            bounding_box(&scaled_points(require_points(inst, "poly", 3)?, scale))
-                .inflate(stroke_half(inst)),
-        ),
+        NodeKind::Line => Ok(Bbox::from_points(&scaled_points(
+            require_points(inst, "line", 2)?,
+            scale,
+        ))
+        .inflate(stroke_half(inst))),
+        NodeKind::Poly => Ok(Bbox::from_points(&scaled_points(
+            require_points(inst, "poly", 3)?,
+            scale,
+        ))
+        .inflate(stroke_half(inst))),
         NodeKind::Image => {
             let (w, h) = image_dims(inst)?;
             Ok(Bbox::centered(w * scale, h * scale))
@@ -70,7 +72,7 @@ pub fn leaf_bbox(inst: &ResolvedInst, scale: f64) -> Result<Bbox, Error> {
             if pts.is_empty() {
                 return Ok(Bbox::empty());
             }
-            Ok(bounding_box(&pts).inflate(stroke_half(inst)))
+            Ok(Bbox::from_points(&pts).inflate(stroke_half(inst)))
         }
         // The pen [SPEC 15.3]: geometry-sized, like |path| — the fold is the one
         // source of truth (layout_inst intercepts sketches to keep the folded
@@ -215,22 +217,6 @@ fn image_dims(inst: &ResolvedInst) -> Result<(f64, f64), Error> {
             "'|image|' requires 'width' and 'height'",
         )),
     }
-}
-
-fn bounding_box(points: &[(f64, f64)]) -> Bbox {
-    let mut bb = Bbox {
-        min_x: f64::INFINITY,
-        min_y: f64::INFINITY,
-        max_x: f64::NEG_INFINITY,
-        max_y: f64::NEG_INFINITY,
-    };
-    for (x, y) in points {
-        bb.min_x = bb.min_x.min(*x);
-        bb.min_y = bb.min_y.min(*y);
-        bb.max_x = bb.max_x.max(*x);
-        bb.max_y = bb.max_y.max(*y);
-    }
-    bb
 }
 
 pub fn attr_points(

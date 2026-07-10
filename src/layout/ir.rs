@@ -269,4 +269,62 @@ impl Bbox {
             max_y: self.max_y + dy,
         }
     }
+
+    /// The bounding box of a point list; empty for no points.
+    pub fn from_points(points: &[(f64, f64)]) -> Self {
+        let mut b = Self {
+            min_x: f64::INFINITY,
+            min_y: f64::INFINITY,
+            max_x: f64::NEG_INFINITY,
+            max_y: f64::NEG_INFINITY,
+        };
+        for &(x, y) in points {
+            b.min_x = b.min_x.min(x);
+            b.min_y = b.min_y.min(y);
+            b.max_x = b.max_x.max(x);
+            b.max_y = b.max_y.max(y);
+        }
+        if b.min_x.is_finite() {
+            b
+        } else {
+            Self::empty()
+        }
+    }
+
+    /// Whether two boxes overlap; touching edges don't count.
+    pub fn overlaps(self, other: Bbox) -> bool {
+        self.min_x < other.max_x
+            && other.min_x < self.max_x
+            && self.min_y < other.max_y
+            && other.min_y < self.max_y
+    }
+
+    /// Whether `inner` sits fully within this box; edges may touch.
+    pub fn contains(self, inner: Bbox) -> bool {
+        inner.min_x >= self.min_x
+            && inner.max_x <= self.max_x
+            && inner.min_y >= self.min_y
+            && inner.max_y <= self.max_y
+    }
+
+    /// The true visual extent (world coords) of the `nodes` matching `filter`,
+    /// each read in its parent frame — rotation-aware and descending into
+    /// children via [`accumulate_extent`](super::accumulate_extent), so absolute
+    /// overlays and turned parts count. Empty when nothing matches.
+    pub fn extent_of(nodes: &[PlacedNode], filter: impl Fn(&PlacedNode) -> bool) -> Self {
+        let mut ext = Self {
+            min_x: f64::INFINITY,
+            min_y: f64::INFINITY,
+            max_x: f64::NEG_INFINITY,
+            max_y: f64::NEG_INFINITY,
+        };
+        for n in nodes.iter().filter(|n| filter(n)) {
+            super::accumulate_extent(n, 0.0, 0.0, 0.0, &mut ext);
+        }
+        if ext.min_x.is_finite() {
+            ext
+        } else {
+            Self::empty()
+        }
+    }
 }

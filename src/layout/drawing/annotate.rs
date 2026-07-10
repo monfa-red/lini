@@ -152,24 +152,9 @@ pub(in crate::layout) fn lower(
 /// geometry (chrome included — dims spring past centre marks), sheet content
 /// and pinned overlays excluded.
 fn geometry_extent(kids: &[PlacedNode]) -> Bbox {
-    let mut ext = Bbox {
-        min_x: f64::INFINITY,
-        min_y: f64::INFINITY,
-        max_x: f64::NEG_INFINITY,
-        max_y: f64::NEG_INFINITY,
-    };
-    for k in kids
-        .iter()
-        .filter(|k| !super::is_sheet(k.kind, &k.type_chain))
-        .filter(|k| !super::super::anchors::is_pinned(&k.attrs))
-    {
-        super::super::accumulate_extent(k, 0.0, 0.0, 0.0, &mut ext);
-    }
-    if ext.min_x.is_finite() {
-        ext
-    } else {
-        Bbox::empty()
-    }
+    Bbox::extent_of(kids, |k| {
+        !super::is_sheet(k.kind, &k.type_chain) && !super::super::anchors::is_pinned(&k.attrs)
+    })
 }
 
 /// The row packer [SPEC 15.6]: dims sharing a side pack into rows `DIM_PITCH`
@@ -197,16 +182,8 @@ impl Rows {
     /// Register a lowered statement's texts as boxes the packed rows dodge.
     fn obstruct_texts(&mut self, nodes: &[PlacedNode]) {
         for n in nodes.iter().filter(|n| n.kind == NodeKind::Text) {
-            let mut b = Bbox {
-                min_x: f64::INFINITY,
-                min_y: f64::INFINITY,
-                max_x: f64::NEG_INFINITY,
-                max_y: f64::NEG_INFINITY,
-            };
-            super::super::accumulate_extent(n, 0.0, 0.0, 0.0, &mut b);
-            if b.min_x.is_finite() {
-                self.obstacles.push(b);
-            }
+            self.obstacles
+                .push(Bbox::extent_of(std::slice::from_ref(n), |_| true));
         }
     }
 
@@ -261,12 +238,7 @@ impl Rows {
                 max_y: interval.1,
             },
         };
-        self.obstacles.iter().any(|o| {
-            o.max_x > band.min_x
-                && o.min_x < band.max_x
-                && o.max_y > band.min_y
-                && o.min_y < band.max_y
-        })
+        self.obstacles.iter().any(|o| o.overlaps(band))
     }
 }
 
