@@ -779,7 +779,7 @@ the cascade ([SPEC 4](#4-selectors-cascade--specificity)) — every value here i
 | `\|plane\|` | `\|line\|` | `stroke-style: center; stroke: --stroke-light; stroke-width: 1; fill: none` | The **section-plane** line on the source view — its label the section letter; `at:` stations it, `facing:` turns its arrows; a `\|drawing\| { of: }` sections it ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `\|magnifier\|` | `\|oval\|` | `stroke: --stroke-light; stroke-width: 1; fill: none` — `width:` **required**, the region diameter | The **detail marker** — rings a region on the source view, its label the detail letter at the rim; a `\|drawing\| { of: }` details it ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `\|page\|` | `\|block\|` | `layout: flow; fill: --bg` — `sheet: a4` unless sized | An ISO 5457 drawing **sheet** — mm dimensions via `sheet:`; px per mm from the root `density:`; frame, zones, and centring marks as generated chrome ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
-| `\|title-block\|` | `\|table\|` | `font-size: 11; stroke-width: 1` | The ISO 7200 **title block** — a table the `\|page\|` seats flush inside its frame's bottom-right corner. **Field properties** (`title`, `dwg`, `rev`, `date`, `sheet`, `author`, …) build the standard grid, absent fields collapsing; plain cells stay a fully custom block ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
+| `\|title-block\|` | `\|table\|` | `font-size: 11; stroke-width: 1` | The ISO 7200 **title block** — a table the `\|page\|` seats flush inside its frame's bottom-right corner. **Field properties** (`title`, `drawing-number`, `revision`, `date`, `sheet-number`, `author`, …) build the standard grid, absent fields collapsing; its **smart label is the `title` field**; plain cells stay a fully custom block ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `\|frame\|` | `\|rect\|` | `fill: none; stroke: --stroke; stroke-width: 2` | A sheet's **frame** — the thick border a `\|page\|` generates at the ISO margins ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `\|zone\|` | `\|block\|` | `font-size: 9; color: --stroke-light` | A **zone reference** label (1, 2… / A, B…) a `\|page\|` generates in the margin band ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `\|tick\|` | `\|line\|` | `stroke: --stroke; stroke-width: 1; fill: none` — needs `points:` | A zone **divider** / **centring mark** a `\|page\|` generates ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
@@ -812,7 +812,7 @@ touching body text.
 
 **Notes.** A `|note|` is the callout card — a filled block with a folded top-right
 corner. It is **one type in every layout**: in a `sequence` it binds to lifelines with
-`over:` / `left:` / `right:` ([SPEC 13](#13-sequence)); in a `drawing` it places at the
+`place:` ([SPEC 13](#13-sequence)); in a `drawing` it places at the
 datum, usually wired by a leader ([SPEC 15.7](#157-leaders-notes--line-conventions)); in
 flow / grid it is an ordinary padded card. Built-in scoped rules — `|sequence| |note|`
 and `|drawing| |note|`, each `{ padding: 6 10; font-size: 13 }` — keep it compact where
@@ -1405,7 +1405,9 @@ small, bounded addition ([Part III](#part-iii--reference) formalises each):
    time-row arrow; a `drawing` lowers each link to a dimension, leader, or mate
    ([SPEC 15](#15-drawing)); `chart` / `pie` have no links. One scope, one strategy — set by the
    scope's `layout` (with `routing:` selecting `orthogonal` vs `straight` for the routed
-   ones). A `sequence` message is thus the one place a link's *order* is its geometry, not a
+   ones), and it governs that scope's **own** links only — an ordinary `|row|` / `|grid|`
+   nested inside a sequence or drawing still hands its internal links to the router.
+   A `sequence` message is thus the one place a link's *order* is its geometry, not a
    routing problem.
 
 3. **A layout-owning engine lowers to primitives in the layout phase.** `flow` / `grid`
@@ -1667,11 +1669,12 @@ api --> user "done"
 ```
 
 A `|note|` is a callout placed at its time row (source order), bound to lifelines by
-**placement**: `{ over: api }` a box over one lifeline, `{ over: api db }` a box spanning
-those (and any between), `{ left: api }` / `{ right: api }` a box beside one. Its smart
-label is the text; a multi-line or styled note rides the `[ ]` like any box. `over` /
-`left` / `right` are valid only in a sequence. `par` and other fragments are deferred
-([SPEC 23](#23-deferred)).
+**`place:`** — a mode, then its lifeline id(s): `{ place: over api }` a box over one
+lifeline, `{ place: over api db }` a box spanning those (and any between),
+`{ place: left api }` / `{ place: right api }` a box beside one. **One mode per
+note.** Its smart label is the text; a multi-line or styled note rides the `[ ]`
+like any box. `place:` is valid only in a sequence. `par` and other fragments are
+deferred ([SPEC 23](#23-deferred)).
 
 ### Defaults
 
@@ -1797,16 +1800,17 @@ Scalar and pair items never mix in one `data:` — `data: 10 20` is **one point*
 A `|line|` / `|area|` needs ≥ 2 vertices; with categorical data the value count must match
 the `categories:` count ([SPEC 20](#20-errors)).
 
-**`tags:`** is the **per-datum** text — a quoted-string list parallel to `data:` (one tag
-per value or `x y` point), distinct from the series' one legend label. A tag rides with its
-datum: on the plot beside the point, or on hover when there's no room — the placement is
-`tooltip:`'s job ([SPEC 14.8](#148-tooltips)). Tag count must equal data count; `tags:` needs
-discrete `data:` (a sampled `fn:` has no authored points, so `tags:` with `fn:` is an
-error). A per-node mark (`|bubble|`, `|slice|`, `|mark|`) takes no `tags:` — its one smart
-label *is* its point label.
+**`labels:`** is the **per-datum** text — a quoted-string list parallel to `data:`
+(one entry per value or `x y` point), distinct from the series' one legend label
+(its smart label). An entry rides with its datum: on the plot beside the point, or
+on hover when there's no room — the placement is `tooltip:`'s job
+([SPEC 14.8](#148-tooltips)). The count must equal the data count; `labels:` needs
+discrete `data:` (a sampled `fn:` has no authored points, so `labels:` with `fn:` is
+an error). A per-node mark (`|bubble|`, `|slice|`, `|mark|`) takes no `labels:` —
+its one smart label *is* its point label.
 
 ```
-|line| "GLM-5.2" { data: 35 63, 42 72, 84 75; tags: "Non-Thinking", "High", "Max"; marker: circle }
+|line| "GLM-5.2" { data: 35 63, 42 72, 84 75; labels: "Non-Thinking", "High", "Max"; marker: circle }
 ```
 
 **Formulas are the core expression engine** ([SPEC 10.7](#107-expressions--functions)):
@@ -1857,8 +1861,9 @@ faint role variable charts add to the palette, themeable and dark/light-aware.
 (`range: 0 auto`); the two ends must be distinct ([SPEC 20](#20-errors)). Ticks are "nice" by
 default (1-2-5 × 10ⁿ); `step:` sets a spacing, `ticks:` an explicit list, `scale: log`
 decade ticks (domain above 0). Tick labels come from `categories:` (an x axis) or the
-formatted tick value + `unit:` (a value axis). Explicit per-axis tick text (a general
-`labels:`) is deferred — use `categories:` for the x axis ([SPEC 23](#23-deferred)).
+formatted tick value + `unit:` (a value axis). Explicit per-axis tick text is
+deferred — `categories:` covers the x axis today ([SPEC 23](#23-deferred));
+`labels:` is the **series'** per-datum text ([SPEC 14.3](#143-data--formulas)).
 
 ### 14.5 Bands & annotations
 
@@ -1904,7 +1909,7 @@ swatch **mirroring its paint** (fill and edge); on an `|axis|` → the **axis ti
 `|band|` → a **tick** tinted its `fill`; on a `|mark|` → the annotation's **label**. A
 legend appears automatically at ≥ 2 entries; `legend:` positions or suppresses it. **`gap:`**
 sets the plot-to-title/legend clearance (default 10; `gap: 0` ≈ touching). The chart sets its
-**chrome** — title and legend — in **bold**, while its **data text** — axis ticks, tags,
+**chrome** — title and legend — in **bold**, while its **data text** — axis ticks, per-datum labels,
 annotation labels — stays **normal** weight, so the numbers read quietly beneath the captions.
 
 **Colour.** Explicit `stroke:` / `fill:` wins. Otherwise series **walk the palette**
@@ -1971,7 +1976,7 @@ shows where. Hover is the only interactivity, with no script:
 | `always` | every label, forced | card + `<title>` | export — every label must read |
 
 The two texts **complement**: the *inline* label is the datum's own text — a series'
-`tags:` entry, or a per-node mark's smart label — while *hover* shows its **value**. So a
+`labels:` entry, or a per-node mark's smart label — while *hover* shows its **value**. So a
 point can read `Max` on the plot and `GLM-5.2: 75%` on hover, never competing.
 
 **The hover floor is always honest.** A labelled mark carries a native `<title>` — its
@@ -2026,9 +2031,11 @@ declarations, and links, and it lowers to primitives like any layout-owning engi
 Four properties of the model, each inherited from the core:
 
 - **A drawing scope owns its links** — the wiring strategy ([SPEC 11](#11-the-layout-model)).
-  The router never runs here; every link lowers at layout time to dimension or leader
-  primitives, or (for `||`) to a position. `routing:`, `clearance:`, and `along:` have
-  no role in a drawing.
+  The router never sees the drawing's own links; every one lowers at layout time to
+  dimension or leader primitives, or (for `||`) to a position. `routing:`,
+  `clearance:`, and `along:` have no role on them — but an ordinary container nested
+  in the drawing (a `|row|` of views, a `|table|`) still routes its **own** internal
+  links as usual ([SPEC 11](#11-the-layout-model)).
 - **No auto-create.** Unlike a diagram (`cat -> dog` invents boxes), a drawing never
   invents an endpoint: an annotation must point at real geometry. An unknown endpoint
   is an error with suggestions ([SPEC 20](#20-errors)).
@@ -2676,12 +2683,14 @@ drawn; the left mark starts at its band, keeping the filing strip empty). The
 content area is the frame inset by 5 mm (`padding:` adds to it). A
 **`|title-block|`** child (ISO 7200 — a `|table|`, [SPEC 8](#8-templates)) is seated
 by **type**, flush inside the frame's bottom-right corner. **String-valued field
-properties** — `title`, `dwg`, `rev`, `date`, `sheet`, `author`, `approved`, `dept`,
-`reference`, `doc-type`, `status` — desugar (like `sheet:`) into the fixed ISO grid:
-each a caption in the muted footer tone over its value, and **absent fields collapse**
-their cells, so the default block is minimal (Title / DWG No. / Rev / Sheet). In this
-form `sheet:` is the sheet-number field, not a page's size sugar. A `|title-block|`
-with **no** field property keeps the plain-table form — its cells fully authored. A file whose drawn content is only pages **hugs them** — the paper is the
+properties** — `title`, `drawing-number`, `revision`, `date`, `sheet-number`,
+`author`, `approved`, `department`, `reference`, `document-type`, `status` — desugar
+(like `sheet:`) into the fixed ISO grid: each a caption in the muted footer tone
+over its value, and **absent fields collapse** their cells, so the default block is
+minimal (Title / DWG No. / Rev / Sheet). The block's **smart label is its `title`
+field** — `|title-block| "Socket cap screw"` lowers to the same generated spanning
+cell; a label **or any field property** selects the structured-field mode, and a
+`|title-block|` with neither keeps the plain-table form — its cells fully authored. A file whose drawn content is only pages **hugs them** — the paper is the
 margin, so the root's `padding` defaults to 0 (your own `{ padding: … }` still
 wins) and the sheet runs edge to edge of the SVG. That same predicate makes the
 sheet **true-scale in print**: the root emits `width` / `height` in real
@@ -2867,7 +2876,7 @@ Read on the listed primitive; required where noted ([SPEC 7](#7-nodes)).
 | `mirror` | `\|sketch\|` | `x-axis` / `y-axis` / bearing list | reflect + union ([SPEC 15.3](#153-the-sketch-pen)). |
 | `revolve` | `\|sketch\|` | `x-axis` / `y-axis` | solid of revolution — fused fold + `\|shoulder\|` lines ([SPEC 15.3](#153-the-sketch-pen)). |
 | `thread` | `\|sketch\|` `\|hole\|` round geometry | `seg pitch, …` · `pitch` | ISO 6410 thread dressing ([SPEC 15.3](#153-the-sketch-pen), [SPEC 15.4](#154-features-holes--patterns)). |
-| `sheet` | `\|page\|` (homonym: an ISO 7200 field on `\|title-block\|`, below) | `a5…a0` / ANSI `a…e` `[portrait \| landscape]` | trimmed-size sugar → `width` / `height` in mm ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
+| `sheet` | `\|page\|` | `a5…a0` / ANSI `a…e` `[portrait \| landscape]` | trimmed-size sugar → `width` / `height` in mm ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `break` | `\|sketch\|` | `a b [axis]` groups | cut the view between stations ([SPEC 15.3](#153-the-sketch-pen)). |
 
 ### Grid, chart, pie, sequence & drawing properties
@@ -2883,7 +2892,7 @@ out of scope.
 | `columns` · `rows` | grid | track list | — (`columns` required) | [SPEC 12](#12-flow--grid) |
 | `cell` · `span` | grid box child | `col row` / `cols rows` | `— / 1 1` | [SPEC 12](#12-flow--grid) |
 | `data` · `fn` | chart series | list / pairs / `(…)` expr | — | [SPEC 14.3](#143-data--formulas) |
-| `tags` | chart series | quoted-string list | — | [SPEC 14.3](#143-data--formulas) |
+| `labels` | chart series | quoted-string list | — | [SPEC 14.3](#143-data--formulas) |
 | `curve` | `\|line\|` `\|area\|` | `linear`·`smooth`·`step` | `linear` | [SPEC 14.2](#142-series) |
 | `baseline` | `\|area\|` | number | axis zero | [SPEC 14.2](#142-series) |
 | `axis` | series, `\|mark\|`, `\|band\|` | an `\|axis\|` id | — | [SPEC 14.4](#144-axes-scales--domain) |
@@ -2893,7 +2902,7 @@ out of scope.
 | `value` | `\|slice\|` `\|bubble\|` | number ≥ 0 | — | [SPEC 14](#14-charts) |
 | `at` | `\|mark\|` `\|bubble\|` · `\|plane\|` | `V` / `X Y` · `N [x-axis \| y-axis]` | — | [SPEC 14.5](#145-bands--annotations), [SPEC 15.8](#158-assemblies-views-sheets--titles) |
 | `side` · `range` · `scale` · `step` · `ticks` · `unit` · `gridlines` | `\|axis\|` | see [SPEC 14.4](#144-axes-scales--domain) | — | [SPEC 14.4](#144-axes-scales--domain) |
-| `over` · `left` · `right` | sequence `\|note\|` | id(s) | — | [SPEC 13](#13-sequence) |
+| `place` | sequence `\|note\|` | `over` · `left` · `right`, then id(s) | — | [SPEC 13](#13-sequence) |
 | `activation` | `\|sequence\|` | `auto` · `none` | `auto` | [SPEC 13](#13-sequence) |
 | `scale` (homonym: an `\|axis\|`'s is `linear`·`log`) | any node | number > 0 | 1 | [SPEC 15.1](#151-the-container-the-datum--the-scale) |
 | `unit` (homonym: an `\|axis\|`'s is its quoted tick suffix) | drawing scopes · `\|axis\|` | `mm`·`cm`·`m`·`in` — inherits | `mm` | [SPEC 15.1](#151-the-container-the-datum--the-scale), [SPEC 14.4](#144-axes-scales--domain) |
@@ -3222,8 +3231,9 @@ Format: `filename:line:col: error: <message>` (LSP-compatible), compile-time, wi
 |---|---|
 | Sequence node outside a sequence | `'\|loop\|' belongs in a 'layout: sequence'` (same for `\|opt\|` / `\|alt\|`; a `\|note\|` is core — [SPEC 8](#8-templates)) |
 | `\|else\|` outside an `\|alt\|` | `'\|else\|' separates an '\|alt\|' — write it inside one` |
-| `\|note\|` in a sequence, no placement | `a sequence '\|note\|' needs 'over:', 'left:', or 'right:'` |
-| Sequence property off a sequence | `'over' is valid only in a 'layout: sequence'` (same for `left` / `right` / `activation`) |
+| `\|note\|` in a sequence, no placement | `a sequence '\|note\|' needs 'place:'` |
+| Bad `place:` | `'place' is a mode then its lifelines — 'place: over api db', 'place: left api'` |
+| Sequence property off a sequence | `'place' is valid only in a 'layout: sequence'` (same for `activation`) |
 
 **Layout — chart & pie**
 
@@ -3237,7 +3247,7 @@ Format: `filename:line:col: error: <message>` (LSP-compatible), compile-time, wi
 | `arrow` / `crow` marker on a series | `'marker: arrow' has no centred form on a chart — use dot, circle, or diamond` |
 | `fn:` list ≠ band count | `'fn' has N formulas but the chart has M bands` |
 | Data ≠ categories count | `series data has N values but the chart has M categories` |
-| `tags:` count ≠ data count / on `fn:` | `'tags' has N labels but the series has M data points` / `'tags' needs explicit 'data'` |
+| `labels:` count ≠ data count / on `fn:` | `'labels' has N entries but the series has M data points` / `'labels' needs explicit 'data'` |
 | `categories:` + an axis text | `set 'categories' or an axis's tick text, not both` |
 | `\|mark\|` without `axis:` / bad `at:` | `a '\|mark\|' needs 'axis:'` / `'at' takes one value (a line) or two (a point)` |
 | `\|bubble\|` missing `at:` / `value:` | `a '\|bubble\|' needs 'at:' (x y) and 'value:'` |
@@ -3511,6 +3521,8 @@ dividers / delays (`==` / `...`); and an `|actor|` stick-figure primitive (an ac
   legend (≥ 2 entries) is built.
 - **bands / marks in `radial` charts** — a compile error today ([SPEC 20](#20-errors));
   `column` and `row` are built.
+- explicit per-axis tick text — `categories:` covers the x axis today (the series'
+  per-datum text is `labels:`, [SPEC 14.3](#143-data--formulas)).
 - **gauge** (a partial arc for one value); **stacked areas** (`bars: stacked` extended to
   `|area|`); polar-area **circular gridlines** and a configurable radial **start angle /
   direction** (the polygon web and top-clockwise are the defaults).
@@ -3628,7 +3640,7 @@ db      --> api     "record"
   |else| "wrong"
   api     --> browser "401"
 ]
-|note| "rate-limited" { over: api db }
+|note| "rate-limited" { place: over api db }
 ```
 
 **Charts — bars, a formula with a band, and a pie:**
@@ -3666,7 +3678,7 @@ db      --> api     "record"
 |chart| "Effort vs. score" [
   |axis| "tokens (k)" { side: bottom }
   |axis| "score %"    { side: left }
-  |line| "GLM-5.2" { data: 35 63, 42 72, 84 75; tags: "Base", "High", "Max"; marker: circle; tooltip: always }
+  |line| "GLM-5.2" { data: 35 63, 42 72, 84 75; labels: "Base", "High", "Max"; marker: circle; tooltip: always }
 ]
 ```
 
@@ -3703,8 +3715,8 @@ db      --> api     "record"
   ]
 
   |title-block| {
-    title: "Socket cap screw"; dwg: "DIN 912 — M8 × 40";
-    rev: "A"; sheet: "1/1"; date: "2026-07-08"; author: "AM";
+    title: "Socket cap screw"; drawing-number: "DIN 912 — M8 × 40";
+    revision: "A"; sheet-number: "1/1"; date: "2026-07-08"; author: "AM";
   }
 ]
 ```
