@@ -2,6 +2,7 @@
 //! optional vertex markers), or one marker per datum. Both crop to the plot via the
 //! shared clip, and a line honours `curve: linear | step` and `stroke-style`.
 
+use super::metrics::AREA_OPACITY;
 use super::model::{Chart, Curve, Data, Series, SeriesKind};
 use super::palette::deepen;
 use super::project::{Dir, Plot};
@@ -107,7 +108,7 @@ fn draw_area(plot: &Plot, chart: &Chart, ser: &Series, out: &mut Vec<PlacedNode>
         .unwrap_or_else(|| deepen(&ser.color));
     // A filled radar fills the closed spoke polygon — there is no baseline ([SPEC 14.7]).
     if plot.is_radial() {
-        out.push(prim::poly(px.clone(), ser.color.clone(), 0.82));
+        out.push(prim::poly(px.clone(), ser.color.clone(), AREA_OPACITY));
         for run in line_runs(plot, &px, &ser.curve) {
             out.push(prim::line(run, edge.clone(), ser.thickness));
         }
@@ -140,7 +141,7 @@ fn draw_area(plot: &Plot, chart: &Chart, ser: &Series, out: &mut Vec<PlacedNode>
                 poly.push((fx, by));
             }
         }
-        out.push(prim::poly(poly, ser.color.clone(), 0.82));
+        out.push(prim::poly(poly, ser.color.clone(), AREA_OPACITY));
     }
     for run in plot.clip(&top) {
         out.push(prim::line(run, edge.clone(), ser.thickness));

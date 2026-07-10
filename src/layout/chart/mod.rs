@@ -18,6 +18,7 @@ mod bars;
 mod bubble;
 mod labels;
 mod marks;
+mod metrics;
 mod model;
 mod palette;
 mod pie;
@@ -32,12 +33,9 @@ pub(super) use pie::{is_pie, layout_pie};
 use crate::error::Error;
 use crate::layout::{Bbox, PlacedNode};
 use crate::resolve::{AttrMap, ResolvedInst, ResolvedValue};
+use metrics::{AXIS_TITLE_SIZE, LABEL_SIZE, TITLE_SIZE};
 use model::{Chart, Series, SeriesKind, Side};
 use project::{Dir, Plot};
-
-pub(super) const TITLE_SIZE: f64 = 13.0;
-const AXIS_TITLE_SIZE: f64 = 11.0;
-pub(super) const LABEL_SIZE: f64 = 11.0;
 
 /// Is this node a chart container [SPEC 14.1]? Detected by its `layout:` attr —
 /// the same key `read_layout_mode` owns — so a chart is intercepted before the generic

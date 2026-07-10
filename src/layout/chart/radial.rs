@@ -4,14 +4,13 @@
 //! spoke. The series reuse the cartesian builders through `Plot::project`; only these
 //! gridlines and labels are radial-specific.
 
+use super::metrics::LABEL_SIZE;
 use super::model::Chart;
 use super::project::Plot;
 use super::scale::{self, Scale};
 use crate::layout::PlacedNode;
 use crate::layout::prim;
 use crate::resolve::ResolvedValue;
-
-const LABEL_SIZE: f64 = 11.0;
 
 fn live(name: &str) -> ResolvedValue {
     ResolvedValue::LiveVar {

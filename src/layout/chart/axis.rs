@@ -2,15 +2,13 @@
 //! tick labels and axis titles. The primary value axis and a numeric x axis draw
 //! gridlines by default; `gridlines: none | colour` overrides per axis.
 
+use super::metrics::{AXIS_TITLE_SIZE, LABEL_SIZE};
 use super::model::{Chart, Grid, Side, ValueAxis};
 use super::project::{Dir, Plot};
 use super::scale::{self, Scale};
 use crate::layout::PlacedNode;
 use crate::layout::prim;
 use crate::resolve::ResolvedValue;
-
-const LABEL_SIZE: f64 = 11.0;
-const TITLE_SIZE: f64 = 11.0;
 
 fn live(name: &str) -> ResolvedValue {
     ResolvedValue::LiveVar {
@@ -62,12 +60,12 @@ pub fn labels(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
     }
     x_labels(plot, chart, out);
     if let Some(t) = &chart.x.title {
-        let y = plot.y1 + LABEL_SIZE * 1.4 + super::annot::x_band_row(chart) + TITLE_SIZE;
+        let y = plot.y1 + LABEL_SIZE * 1.4 + super::annot::x_band_row(chart) + AXIS_TITLE_SIZE;
         out.push(prim::text(
             t,
             (plot.x0 + plot.x1) / 2.0,
             y,
-            TITLE_SIZE,
+            AXIS_TITLE_SIZE,
             Some(muted()),
             false,
         ));
@@ -88,8 +86,8 @@ fn value_labels(plot: &Plot, axis: &ValueAxis, out: &mut Vec<PlacedNode>) {
     if let Some(title) = &axis.title {
         let y = plot.y0 - 6.0;
         let node = match axis.side {
-            Side::Right => prim::text_right(title, plot.x1, y, TITLE_SIZE, Some(muted())),
-            _ => prim::text_left(title, plot.x0, y, TITLE_SIZE, Some(muted())),
+            Side::Right => prim::text_right(title, plot.x1, y, AXIS_TITLE_SIZE, Some(muted())),
+            _ => prim::text_left(title, plot.x0, y, AXIS_TITLE_SIZE, Some(muted())),
         };
         out.push(node);
     }
@@ -169,8 +167,8 @@ fn row_labels(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
             out.push(prim::text(
                 title,
                 (plot.x0 + plot.x1) / 2.0,
-                plot.y1 + LABEL_SIZE * 1.4 + TITLE_SIZE,
-                TITLE_SIZE,
+                plot.y1 + LABEL_SIZE * 1.4 + AXIS_TITLE_SIZE,
+                AXIS_TITLE_SIZE,
                 Some(muted()),
                 false,
             ));

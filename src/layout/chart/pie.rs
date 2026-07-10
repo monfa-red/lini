@@ -3,9 +3,10 @@
 //! Like a chart, a pie owns its subtree and lowers to primitives (`prim::wedge`), reusing
 //! the chart's box, palette, legend, and `<title>` machinery — the renderer learns nothing.
 
+use super::metrics::{LABEL_SIZE, TITLE_SIZE};
 use super::model::{self, Slice};
 use super::scale::fmt_tick;
-use super::{LABEL_SIZE, TITLE_SIZE, chart_box, lay_out_legend, legend_reserve, title_reserve};
+use super::{chart_box, lay_out_legend, legend_reserve, title_reserve};
 use crate::error::Error;
 use crate::layout::PlacedNode;
 use crate::layout::prim;

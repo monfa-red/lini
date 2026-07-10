@@ -6,14 +6,13 @@
 
 use super::labels;
 use super::marks::marker_diameter;
+use super::metrics::LABEL_SIZE;
 use super::model::{AxisRef, Chart, Mark, MarkAt};
 use super::project::Plot;
 use super::tooltip::Tooltip;
 use crate::layout::PlacedNode;
 use crate::layout::prim;
 use crate::resolve::{MarkerKind, ResolvedValue};
-
-const LABEL_SIZE: f64 = 11.0;
 /// A band wash's opacity, so the data reads clearly over it.
 const SHADE: f64 = 0.15;
 /// A reference line's stroke width (heavier than a 1px gridline, to stand out).

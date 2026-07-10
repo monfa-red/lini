@@ -106,12 +106,12 @@ impl Scale {
     }
 }
 
-/// A "nice" tick step (1-2-5 × 10ⁿ) near `range / 5`.
+/// A "nice" tick step (1-2-5 × 10ⁿ) near `range / TICK_TARGET`.
 pub fn nice_step(range: f64) -> f64 {
     if range <= 0.0 || !range.is_finite() {
         return 1.0;
     }
-    let raw = range / 5.0;
+    let raw = range / super::metrics::TICK_TARGET;
     let mag = 10f64.powf(raw.log10().floor());
     let norm = raw / mag;
     let unit = if norm <= 1.0 {
