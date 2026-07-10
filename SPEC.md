@@ -769,7 +769,7 @@ the cascade ([SPEC 4](#4-selectors-cascade--specificity)) — every value here i
 | `\|entity\|` | `\|table\|` | `columns: auto, auto` | An ER / database **entity** — a titled field list, rows left-aligned (see below). |
 | `\|note\|` | `\|block\|` | `fill: --fill; stroke: --stroke; padding: 20; scale: 1` | A **note** — the folded-corner callout card, one type in every layout (see below). |
 | `\|balloon\|` | `\|oval\|` | `width: 16; fill: --fill; stroke: --stroke; font-size: 11; scale: 1` | An item **balloon** — the numbered circle an assembly leaders to a part ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
-| `\|drawing\|` | `\|block\|` | `layout: drawing; padding: 0; scale: 4` | An engineering **drawing** — geometry on a datum, measured annotations ([SPEC 15](#15-drawing)). |
+| `\|drawing\|` | `\|block\|` | `layout: drawing; padding: 0` | An engineering **drawing** — geometry on a datum, measured annotations; `scale:` is its drafting ratio, default 1 ([SPEC 15](#15-drawing)). |
 | `\|hole\|` | `\|oval\|` | `fill: --bg; stroke: --stroke-dark` — `width:` **required**, the diameter | A round **hole** — punches by paint order, draws its own centre marks ([SPEC 15.4](#154-features-holes--patterns)). |
 | `\|centerline\|` | `\|line\|` | `stroke-style: center; stroke: --stroke-light; stroke-width: 1; fill: none` — needs `points:` | The dash-dot axis / symmetry line ([SPEC 15.7](#157-leaders-notes--line-conventions)). |
 | `\|pitch-circle\|` | `\|oval\|` | `stroke-style: center; stroke: --stroke-light; stroke-width: 1; fill: none` — `width:` **required**, the diameter | The dash-dot bolt circle; round, so a `(o)` reads its PCD ([SPEC 15.7](#157-leaders-notes--line-conventions)). |
@@ -778,7 +778,7 @@ the cascade ([SPEC 4](#4-selectors-cascade--specificity)) — every value here i
 | `\|shoulder\|` | `\|line\|` | `stroke: --stroke-dark; stroke-width: 2; fill: none` — needs `points:` | A turned part's **shoulder line** — the geometry-weight edge a `revolve:` generates at every sharp diameter change ([SPEC 15.3](#153-the-sketch-pen)); manual use is free. |
 | `\|plane\|` | `\|line\|` | `stroke-style: center; stroke: --stroke-light; stroke-width: 1; fill: none` | The **section-plane** line on the source view — its label the section letter; `at:` stations it, `facing:` turns its arrows; a `\|drawing\| { of: }` sections it ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `\|magnifier\|` | `\|oval\|` | `stroke: --stroke-light; stroke-width: 1; fill: none` — `width:` **required**, the region diameter | The **detail marker** — rings a region on the source view, its label the detail letter at the rim; a `\|drawing\| { of: }` details it ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
-| `\|page\|` | `\|block\|` | `layout: flow; scale: 4; fill: --bg` — `sheet: a4` unless sized | An ISO 5457 drawing **sheet** — mm dimensions via `sheet:`, `scale:` px per mm; frame, zones, and centring marks as generated chrome ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
+| `\|page\|` | `\|block\|` | `layout: flow; fill: --bg` — `sheet: a4` unless sized | An ISO 5457 drawing **sheet** — mm dimensions via `sheet:`; px per mm from the root `density:`; frame, zones, and centring marks as generated chrome ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `\|title-block\|` | `\|table\|` | `font-size: 11; stroke-width: 1` | The ISO 7200 **title block** — a table the `\|page\|` seats flush inside its frame's bottom-right corner. **Field properties** (`title`, `dwg`, `rev`, `date`, `sheet`, `author`, …) build the standard grid, absent fields collapsing; plain cells stay a fully custom block ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `\|frame\|` | `\|rect\|` | `fill: none; stroke: --stroke; stroke-width: 2` | A sheet's **frame** — the thick border a `\|page\|` generates at the ISO margins ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `\|zone\|` | `\|block\|` | `font-size: 9; color: --stroke-light` | A **zone reference** label (1, 2… / A, B…) a `\|page\|` generates in the margin band ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
@@ -1261,6 +1261,7 @@ instance / link block:
 font-size 15     link-font-size 11   caption-font-size 12
 stroke-width 2   radius 8            gap 20                 padding 20
 clearance 16     icon-size 32        link-width 2           icon stroke-width 2
+density 4 (px per mm — the root's, screen only)   drawing scale 1 (the ratio)
 ```
 
 `font-size` is body text; link labels (11) and captions (12) carry their own baked
@@ -2067,17 +2068,34 @@ overlaps, punched holes, and cutaways compose with no boolean operations. The
 **ground** is the first-declared geometry child: mates resolve by walking outward from
 it ([15.5](#155-mates)); to reground, reorder the declarations.
 
-**Scale — drawing units are your millimetres.** Numbers in a drawing are **drawing
-units**; `scale:` is **pixels per unit**. A `|drawing|` (and a root
-`{ layout: drawing }`) defaults to **4** — roughly a millimetre per unit at screen
-resolution; every other node's `scale:` defaults to 1. Draw a 300 mm bar as
-`right(300)` at the default and it renders 1200 px wide while every dimension still
-reads `300` — **measured values are always pre-scale**. `unit: "mm"` appends a suffix
-to auto-measured **linear** values only — a `⌀` / `R` / `°` reading is symbol-speak,
-and drafting states units once, in the title block.
+**Scale — three quantities, two authored.** Numbers in a drawing are **drawing
+units**; three settings turn them into pixels and paper:
 
-`scale:` is an ordinary node property, nearest ancestor wins: on the drawing it is the
-view scale (a 2:1 detail view is a sibling drawing with `scale:` doubled,
+- **`scale:`** — the drafting **ratio**, per view. Default **1**; `scale: 2` reads
+  2 : 1, `scale: 0.5` reads 1 : 2, and the composed section / detail / view titles
+  read it directly ([15.8](#158-assemblies-views-sheets--titles)). Magnitude is
+  `scale:`'s job — a 5 m beam on an A4 is `scale: 0.02` (1 : 50), never a
+  resolution fudge.
+- **`unit:`** — the **physical size of one drawing unit**: `mm` (default), `cm`,
+  `m`, or `in`. Inherits nearest-wins (state it once, on the page); semantic only
+  in drawing scopes — a `|sketch|` in a flow diagram stays pixel-space
+  (`right(300)` is 300 px). Displaying a unit suffix on measured values is
+  presentation and arrives with `format:` ([SPEC 23](#23-deferred)); drafting
+  states units once, in the title block.
+- **density** — pixels per millimetre: `density: N` on the **root** only, default
+  **4**. Non-semantic — it sets screen/raster resolution and nothing else: print
+  stays true-scale regardless ([SPEC 17](#17-svg-output)), and no measured value,
+  mate, or title reads it.
+
+The engine's pixels-per-unit is always **derived** — `ratio × unit-in-mm × density`
+— never authored; desugar folds the three into that one number, so `lini desugar`
+shows it ([SPEC 18](#18-compile-pipeline)). Draw a 300 mm bar as `right(300)` at
+the defaults and it renders 1200 px wide while every dimension still reads `300` —
+**measured values are always pre-scale**; an absurd rendered extent draws a hint
+naming the likely `scale:` fix ([SPEC 20](#20-errors)).
+
+`scale:` is an ordinary node property, nearest ancestor wins: on the drawing it is
+the view's ratio (a 2 : 1 detail is a sibling drawing at `scale: 2`,
 [15.8](#158-assemblies-views-sheets--titles)); on any node it overrides — `scale: 1` opts a
 node out. One split makes it behave: a node's **position** (`translate:`) scales by its
 *parent's* scale, its **own shape** (`draw:`, `points:`, `width` / `height`,
@@ -2483,7 +2501,7 @@ the caption size — the scope pushes `font-size: 12` into the link base beside 
 `|-| { font-size: … }` still restyles it.
 
 ```
-{ layout: drawing; scale: 3; unit: "mm" }
+{ layout: drawing }                            // ratio 1, unit mm, density 4 — the defaults
 
 |sketch#body| {
   draw: move(-80, 0)
@@ -2491,7 +2509,7 @@ the caption size — the scope pushes `font-size: 12` into the link base beside 
   revolve: x-axis;                             // a turned part: half → whole, axis + edge lines
 }
 
-body:left (-) body:right { side: bottom }      // → 160 mm
+body:left (-) body:right { side: bottom }      // → 160
 body:neck (o) { side: left; tol: h6 }          // → ⌀28 h6 — the surface, doubled about the axis
 body:r1 (o)                                    // → R3 — the fillet knows its radius
 ```
@@ -2615,9 +2633,8 @@ chart's `axis:`); the marker's *kind* decides what the view captures:
 - **The section view** — `|drawing#sec| { of: a }`, `a` a `|plane|`. The face is
   **authored** (the hatched cut you draw); `of:` composes the title from the plane's
   letter — **doubled**, `A-A` — plus the drafting **ratio**: the view's own `scale:`
-  over the enclosing page's (both default 4, so a default view on a default page reads
-  `1:1`), written `2:1` enlarged, `1:1.5` reduced, ≤ 2 dp. The ratio is known only
-  where the title seats, so it composes there.
+  read directly (`1:1` at the default, `2:1` enlarged, `1:1.5` reduced, ≤ 2 dp —
+  [15.1](#151-the-container-the-datum--the-scale)).
 - **The detail view** — `|drawing#det| { of: c }`, `c` a `|magnifier|`. The view takes
   its **centre** and **diameter** from the marker and its **letter** titles it (`C
   (1:1)`, composed as above), so only the magnifying `scale:` is yours. The engine
@@ -2640,10 +2657,11 @@ orientation keyword swaps the pair; ISO defaults — A4 and A5 portrait, A3–A0
 landscape; a bare `|page|` is `a4`), so an explicit `width:` / `height:` overrides
 through the ordinary slot and a custom sheet still derives its zones. The
 **ANSI/ASME Y14.1 letters** ride the same sugar in their own millimetres —
-`sheet: b` (`a`…`e`; `a` portrait, `b`–`e` landscape) — nothing else differs. The page's
-`scale:` is **pixels per millimetre**, default 4 — a `|drawing|`'s own default, so a
-default drawing on a default page draws **1 : 1 true**, and the drafting ratio is the
-drawing's scale over the page's (a 2 : 1 detail is `scale: 8`).
+`sheet: b` (`a`…`e`; `a` portrait, `b`–`e` landscape) — nothing else differs. A page
+carries **no `scale:`** of its own: the root's `density:` sets pixels per millimetre
+(default 4, screen-only — [15.1](#151-the-container-the-datum--the-scale)), a
+drawing's `scale:` is its drafting ratio directly, and so a default drawing on any
+page draws **1 : 1 true** (a 2 : 1 detail is `scale: 2`).
 
 The ISO furniture is generated chrome ([15.7](#157-leaders-notes--line-conventions)):
 the thick `|frame|` at the margins (a 20 mm filing edge on the left, 10 mm
@@ -2672,8 +2690,8 @@ its drawing units, while on-screen CSS sizing is unaffected ([SPEC 17](#17-svg-o
 
 ```
 |page| { sheet: a4 } [
-  |drawing#side| "DIN 912 — M8 × 40" [ … ]        // 1 : 1 on the sheet
-  |drawing#detail| "DETAIL A" { scale: 8 } [ … ]   // a 2 : 1 view
+  |drawing#side| "DIN 912 — M8 × 40" [ … ]         // 1 : 1 on the sheet
+  |drawing#detail| "DETAIL A" { scale: 2 } [ … ]    // a 2 : 1 view
   |title-block| { columns: 60 auto } [
     "Title" "Socket cap screw"
     "Scale" "1:1"
@@ -2820,7 +2838,7 @@ Honoured on every drawn node, in every layout (a box; text takes the marked subs
 | `translate` | `x y` | — | post-placement nudge; **any** node incl. text. |
 | `rotate` | degrees | 0 | turn about bbox centre; **any** node incl. text. |
 | `layer` | integer | 0 (flow) · 1 (pinned) | paint order; ties → source order. |
-| `scale` | number > 0 | 1 (`\|drawing\|` / `\|page\|` 4) | px per drawing unit — nearest-wins; position scales by the parent, shape by self ([SPEC 15.1](#151-the-container-the-datum--the-scale)). |
+| `scale` | number > 0 | 1 | the drafting **ratio** (`2` = 2 : 1) — nearest-wins; position scales by the parent, shape by self ([SPEC 15.1](#151-the-container-the-datum--the-scale)). |
 | `pattern` | `grid(…)` · `radial(…)` | — | replicate about the node's position ([SPEC 15.4](#154-features-holes--patterns)). |
 
 **Media & accessibility** — any node (`href` also a link):
@@ -2878,7 +2896,8 @@ out of scope.
 | `over` · `left` · `right` | sequence `\|note\|` | id(s) | — | [SPEC 13](#13-sequence) |
 | `activation` | `\|sequence\|` | `auto` · `none` | `auto` | [SPEC 13](#13-sequence) |
 | `scale` (homonym: an `\|axis\|`'s is `linear`·`log`) | any node | number > 0 | 1 | [SPEC 15.1](#151-the-container-the-datum--the-scale) |
-| `unit` | `\|drawing\|`, `\|axis\|` | quoted string | — | [SPEC 15.1](#151-the-container-the-datum--the-scale), [SPEC 14.4](#144-axes-scales--domain) |
+| `unit` (homonym: an `\|axis\|`'s is its quoted tick suffix) | drawing scopes · `\|axis\|` | `mm`·`cm`·`m`·`in` — inherits | `mm` | [SPEC 15.1](#151-the-container-the-datum--the-scale), [SPEC 14.4](#144-axes-scales--domain) |
+| `density` | the root | number > 0 | 4 | px per mm, screen/raster only ([SPEC 15.1](#151-the-container-the-datum--the-scale)) |
 | `tol` | a dimension | `t` / `+u -l` / fit ident | — | [SPEC 15.6](#156-dimensions) |
 | `side` | a dimension / callout (also `\|axis\|`, above) | side · corner | by axis | [SPEC 15.6](#156-dimensions) |
 | `gap` | a dimension / a mate | number (a mate's may be < 0) | — | [SPEC 15.5](#155-mates), [SPEC 15.6](#156-dimensions) |
@@ -3005,7 +3024,9 @@ defaults and any `|type| { }` element rule fold into a generated `.lini-<type> {
 class; a `|table| |box| { }` descendant rule rewrites to `.lini-table .lini-box { }`, and
 `|-|` (the link type) to `.lini-link` — the class every link wears; define bodies inline
 per instance; the scene defaults (`layout`, `padding`, `gap`, `font-size`, `clearance`,
-`routing`) settle on the root; the per-type smart label (text / caption / symbol / link
+`routing`, `density`) settle on the root; a drawing scope's `scale:` (the ratio) ×
+`unit:` × the root `density:` fold into its one internal px-per-unit
+([SPEC 15.1](#151-the-container-the-datum--the-scale)); the per-type smart label (text / caption / symbol / link
 label / chart title …), auto-`along:`, and link auto-create (an undeclared endpoint `x` →
 `|box#x| "x"`) become explicit. The pass is idempotent; type-system errors (cycle,
 depth > 16, a define shadowing a built-in) surface here.
@@ -3285,6 +3306,8 @@ Format: `filename:line:col: error: <message>` (LSP-compatible), compile-time, wi
 | Bad `tol:` | `'tol' takes a number, '+upper -lower', or a fit ident` |
 | Bad `pattern:` | `'radial' needs count ≥ 2 and radius > 0` |
 | `scale:` ≤ 0 | `'scale' must be > 0` |
+| Absurd rendered extent | `the drawing renders 48000 px wide — 'scale:' is a ratio; a 5 m beam at 1:50 is 'scale: 0.02'` (hint) |
+| Bad `unit:` / `density:` off the root | `'unit' is mm, cm, m, or in` / `'density' is scene config — set it in the root block` |
 | Chain past a label | `a text callout ends its statement — chain before it` |
 | Mate in a flow scope | `a '\|row\|' places its own children — mates seat a drawing's` |
 | Empty drawing | `a drawing needs at least one geometry child` |
@@ -3653,7 +3676,7 @@ db      --> api     "record"
 |page| { sheet: a5 landscape; gap: 50; direction: row; align: origin; } [
   // the ISO sheet: frame, zones, marks — views share their axes datum-to-datum
 
-  |drawing#side| "DIN 912 — M8 × 40" { scale: 6; } [
+  |drawing#side| "DIN 912 — M8 × 40" { scale: 1.5; } [
     |sketch#screw| {
       draw: move(0, 0) up(6.5) chamfer(0.8) right(8):head down(2.5):k right(12)
             point():v right(28):m8 chamfer(1) down(4);
@@ -3672,7 +3695,7 @@ db      --> api     "record"
     screw:m8 <- { side: top; }                   // → M8×1.25 — composed by the thread
   ]
 
-  |drawing#end| { scale: 6; } [
+  |drawing#end| { scale: 1.5; } [
     |oval#od| { width: 13; height: 13; }
     |oval| { width: 11.4; height: 11.4; }        // the head, end-on
     |hex#socket| { width: 7; height: 6; }
