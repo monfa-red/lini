@@ -70,32 +70,10 @@ pub fn names() -> impl Iterator<Item = &'static str> {
     lines().iter().copied().map(name_of)
 }
 
-/// Up to three known names closest to `name` (edit distance ≤ 2), for a
-/// "did you mean …?" hint on an unknown symbol.
+/// Up to three known names closest to `name`, for a "did you mean …?" hint on
+/// an unknown symbol.
 pub fn suggest(name: &str) -> Vec<&'static str> {
-    let mut near: Vec<(usize, &'static str)> = names()
-        .map(|c| (edit_distance(c, name), c))
-        .filter(|&(d, _)| d <= 2)
-        .collect();
-    near.sort_unstable();
-    near.into_iter().take(3).map(|(_, c)| c).collect()
-}
-
-/// Levenshtein distance (two-row DP). Only ranks suggestions on the error path,
-/// so it need not be fast.
-fn edit_distance(a: &str, b: &str) -> usize {
-    let b: Vec<char> = b.chars().collect();
-    let mut prev: Vec<usize> = (0..=b.len()).collect();
-    let mut cur = vec![0usize; b.len() + 1];
-    for (i, ca) in a.chars().enumerate() {
-        cur[0] = i + 1;
-        for (j, &cb) in b.iter().enumerate() {
-            let sub = prev[j] + usize::from(ca != cb);
-            cur[j + 1] = sub.min(prev[j + 1] + 1).min(cur[j] + 1);
-        }
-        std::mem::swap(&mut prev, &mut cur);
-    }
-    prev[b.len()]
+    crate::suggest::nearest(name, names(), 3)
 }
 
 #[cfg(all(test, feature = "icons"))]

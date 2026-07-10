@@ -168,12 +168,8 @@ fn find_segment(name: &str, segments: &[(String, Segment)], span: Span) -> Resul
         return Ok(*seg);
     }
     let mut msg = format!("no segment '{name}' in this 'draw:'");
-    let mut near: Vec<&str> = segments.iter().map(|(n, _)| n.as_str()).collect();
-    near.sort_by_key(|n| usize::abs_diff(n.len(), name.len()));
-    let near: Vec<String> = near.iter().take(2).map(|n| format!("'{n}'")).collect();
-    if !near.is_empty() {
-        msg.push_str(&format!("; did you mean {}?", near.join(", ")));
-    }
+    let near = crate::suggest::nearest(name, segments.iter().map(|(n, _)| n.as_str()), 2);
+    msg.push_str(&crate::suggest::did_you_mean(&near));
     Err(Error::at(span, msg))
 }
 

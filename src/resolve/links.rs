@@ -456,9 +456,6 @@ fn endpoint_error(
         where_
     );
     let suggestions = paths.suggest(ep.path.last().expect("non-empty path"), scope);
-    if !suggestions.is_empty() {
-        let quoted: Vec<String> = suggestions.iter().map(|s| format!("'{}'", s)).collect();
-        msg.push_str(&format!("; did you mean {}?", quoted.join(", ")));
-    }
+    msg.push_str(&crate::suggest::did_you_mean(&suggestions));
     Error::at(ep.span, msg)
 }

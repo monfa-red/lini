@@ -833,13 +833,13 @@ fn axis_id(inst: &ResolvedInst) -> Option<&str> {
 /// series, band, and mark binding. Axes are chart-local (not in the global index),
 /// so the suggestion ranges over the chart's own `|axis|` ids.
 fn no_axis(id: &str, known: &[&str], span: Span) -> Error {
-    let listed: Vec<String> = known.iter().map(|s| format!("'{s}'")).collect();
-    let hint = if listed.is_empty() {
-        String::new()
-    } else {
-        format!("; did you mean {}?", listed.join(", "))
-    };
-    Error::at(span, format!("axis '{id}' not found{hint}"))
+    Error::at(
+        span,
+        format!(
+            "axis '{id}' not found{}",
+            crate::suggest::did_you_mean(known)
+        ),
+    )
 }
 
 /// Resolve a band / mark `axis:` id to the x axis or a value axis [SPEC 14.5].

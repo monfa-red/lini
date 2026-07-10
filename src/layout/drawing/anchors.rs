@@ -197,12 +197,12 @@ fn spot(node: &PlacedNode, ep: &ResolvedEndpoint, node_name: &str) -> Result<Spo
         .unwrap_or(&[]);
     let Some((_, segment)) = segments.iter().find(|(n, _)| n == point) else {
         let mut msg = format!("no segment ':{point}' on '{node_name}'");
-        let mut near: Vec<&str> = segments.iter().map(|(n, _)| n.as_str()).collect();
-        near.sort_by_key(|n| usize::abs_diff(n.len(), point.len()));
-        let near: Vec<String> = near.iter().take(2).map(|n| format!("':{n}'")).collect();
-        if !near.is_empty() {
-            msg.push_str(&format!("; did you mean {}?", near.join(", ")));
-        }
+        let near: Vec<String> =
+            crate::suggest::nearest(point, segments.iter().map(|(n, _)| n.as_str()), 2)
+                .iter()
+                .map(|n| format!(":{n}"))
+                .collect();
+        msg.push_str(&crate::suggest::did_you_mean(&near));
         return Err(Error::at(ep.span, msg));
     };
     let view = &node.sketch.as_ref().expect("segments imply a sketch").view;

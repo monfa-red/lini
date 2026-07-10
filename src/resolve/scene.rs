@@ -490,16 +490,10 @@ fn validate_icon(attrs: &AttrMap, span: Span) -> Result<(), Error> {
             "icon support is not built in — rebuild with the `icons` feature",
         ));
     }
-    let msg = match crate::icon::suggest(symbol).as_slice() {
-        [] => format!("unknown icon '{symbol}'"),
-        names => {
-            let quoted: Vec<String> = names.iter().map(|n| format!("'{n}'")).collect();
-            format!(
-                "unknown icon '{symbol}'; did you mean {}?",
-                quoted.join(", ")
-            )
-        }
-    };
+    let msg = format!(
+        "unknown icon '{symbol}'{}",
+        crate::suggest::did_you_mean(&crate::icon::suggest(symbol))
+    );
     Err(Error::at(span, msg))
 }
 

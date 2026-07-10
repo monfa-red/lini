@@ -225,11 +225,11 @@ mod tests {
     fn bad_sheet_values_error_with_a_hint() {
         assert_eq!(
             compile_err("|page#p| { sheet: a9 }\n"),
-            "'sheet' takes a size — a5…a0 (ISO) or a…e (ANSI) — and an optional portrait / landscape — did you mean 'a0'?"
+            "'sheet' takes a size — a5…a0 (ISO) or a…e (ANSI) — and an optional portrait / landscape; did you mean 'a0'?"
         );
         assert_eq!(
             compile_err("|page#p| { sheet: a4 portrai }\n"),
-            "'sheet' takes a size — a5…a0 (ISO) or a…e (ANSI) — and an optional portrait / landscape — did you mean 'portrait'?"
+            "'sheet' takes a size — a5…a0 (ISO) or a…e (ANSI) — and an optional portrait / landscape; did you mean 'portrait'?"
         );
     }
 

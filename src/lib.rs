@@ -13,6 +13,7 @@ mod resolve;
 mod routing;
 mod serve;
 mod span;
+mod suggest;
 mod syntax;
 mod theme;
 

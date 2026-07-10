@@ -59,13 +59,8 @@ pub(super) fn expand_sheet(style: &mut Vec<Decl>) -> Result<(), Error> {
             "portrait",
             "landscape",
         ];
-        if let Some(near) = candidates
-            .iter()
-            .filter(|c| edit_distance(got, c) <= 2)
-            .min_by_key(|c| edit_distance(got, c))
-        {
-            msg.push_str(&format!(" — did you mean '{near}'?"));
-        }
+        let near = crate::suggest::nearest(got, candidates, 1);
+        msg.push_str(&crate::suggest::did_you_mean(&near));
         Error::at(span, msg)
     };
     let mut size: Option<(f64, f64, bool)> = None;
@@ -98,21 +93,6 @@ pub(super) fn expand_sheet(style: &mut Vec<Decl>) -> Result<(), Error> {
     };
     style.splice(at..=at, [decl("width", w), decl("height", h)]);
     Ok(())
-}
-
-fn edit_distance(a: &str, b: &str) -> usize {
-    let (a, b): (Vec<char>, Vec<char>) = (a.chars().collect(), b.chars().collect());
-    let mut row: Vec<usize> = (0..=b.len()).collect();
-    for (i, ca) in a.iter().enumerate() {
-        let mut prev = row[0];
-        row[0] = i + 1;
-        for (j, cb) in b.iter().enumerate() {
-            let cur = row[j + 1];
-            row[j + 1] = (prev + usize::from(ca != cb)).min(row[j] + 1).min(cur + 1);
-            prev = cur;
-        }
-    }
-    row[b.len()]
 }
 
 /// The sheet dimensions the chrome derives from: the node's own `width` /
