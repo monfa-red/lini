@@ -279,7 +279,34 @@ internals plus the R1 fmt / R6 leak bugfixes; the language is unchanged.
 
 Acceptance: SPEC builds the same language — no sample, snapshot, or test changes;
 a re-read of sections 1–24 confirms every table survived.
-**Log:**
+**Log:** 2026-07-10 — **done**, 5 commits, all acceptance met (no sample /
+snapshot / test change — fmt/test/clippy clean; every table survived, verified
+mechanically: the only table deltas are the intentional +text-shadow row and
+the deleted 15.10 table). SPEC.md 3806 → 3603 lines / 225.4 → 215.6 KB (−5.3%).
+- Errata first (their own commit): the four R2 cross-check items — SPEC 16
+  gains the `text-shadow` row, loses the false padding-longhand claim, flags
+  the `sheet` homonym; SPEC 10.5's "one place" now points at the ledger.
+  `legend:` deliberately left for S2 (build-vs-defer decision).
+- Tighten, Part I: header model paras folded into SPEC 1; bullet lists →
+  prose; the class-follows rule states once (was 4×); SPEC 9's
+  clearance/routing scene-config law states once (was 3×); 10.7's example
+  blocks merged. One correction folded in: SPEC 3's text-valid list gains
+  `fill` + `text-shadow` (matches the ledger/code).
+- Tighten, Parts II–III: SPEC 15.10's property table deleted — every row was a
+  third statement (law in 15.x, index in SPEC 16); verified row by row before
+  and after. Micro-trims 14.2/15.3; SPEC 24 keeps one worked example per
+  family and points at `samples/` for the gallery (dropped blocks duplicated
+  SPEC 8/9/13/15.x examples + tested samples).
+- ROUTING.md: "validation" out of the shared-spine list (the checker judges
+  orthogonal wires only — matches validate.rs), stated explicitly; file map
+  updated to today's modules; `curved` row untouched per plan. The same
+  over-broad sentence in src/routing/mod.rs's doc fixed to match.
+- Losslessness verified: four Opus agents diffed old vs new per region
+  (Pre–4, 5–8, 9–10, 11–24 + ROUTING), each chasing the cross-references the
+  new text leans on and re-checking the 15.10 deletion row by row — all four
+  returned zero dropped/weakened normative statements. Anchor/link sets
+  checked mechanically (only `15.10 Properties` heading removed; nothing
+  links to it).
 
 ### Stage S2 — the 0.21 SPEC amendment (Stage-0 of the breaking round)
 
