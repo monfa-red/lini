@@ -434,7 +434,7 @@ fn a_bundle_compresses_uniformly_then_strays_exactly_at_capacity() {
 fn a_full_side_spills_to_other_sides_then_strays() {
     let src = |n: usize| {
         let mut s = String::from(
-            "{ layout: grid; columns: 40 200 40; rows: repeat(15, 34); gap: 10; clearance: 10 }\n\
+            "{ layout: grid; columns: 40, 200, 40; rows: repeat(15, 34); gap: 10; clearance: 10 }\n\
              |box#t| { cell: 2 8; width: 30; height: 30 }\n",
         );
         for i in 0..n {
@@ -497,7 +497,7 @@ fn crossings_appear_one_at_a_time_and_never_wrap() {
     let src = |rails: &[u32]| {
         let cols = rails.len() + 2;
         let mut s = format!(
-            "{{ layout: grid; columns: repeat({cols}, 60); rows: 160 60 160; \
+            "{{ layout: grid; columns: repeat({cols}, 60); rows: 160, 60, 160; \
              gap: 30; clearance: 10 }}\n\
              |box#a| {{ cell: 1 2; width: 60; height: 60 }}\n\
              |box#b| {{ cell: {cols} 2; width: 60; height: 60 }}\n"

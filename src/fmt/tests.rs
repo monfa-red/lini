@@ -197,8 +197,8 @@ fn link_line_ops() {
 #[test]
 fn link_class_and_labels_with_along() {
     assert_eq!(
-        fmt("a -> b {along:0.3 0.7}[ \"near a\" \"near b\" ]\n"),
-        "a -> b { along: 0.3 0.7; } [ \"near a\" \"near b\" ]\n"
+        fmt("a -> b {along:0.3, 0.7}[ \"near a\" \"near b\" ]\n"),
+        "a -> b { along: 0.3, 0.7; } [ \"near a\" \"near b\" ]\n"
     );
     assert_eq!(fmt("a -> b .loud\n"), "a -> b .loud\n");
     // A spaced link-class chain normalizes to glued, like a node's.
@@ -259,22 +259,33 @@ fn runs_of_blank_lines_collapse_to_one() {
 fn table_cells_align_into_columns() {
     // [SPEC 8/16]: a |table|'s bare-text cells align, each column padded to its
     // widest cell; the track list lives in the style block.
-    let out = "|table#t| { columns: 80 80; } [\n  \"A\"     \"Quantity\"\n  \"Apple\" \"3\"\n]\n";
+    let out = "|table#t| { columns: 80, 80; } [\n  \"A\"     \"Quantity\"\n  \"Apple\" \"3\"\n]\n";
     assert_eq!(
-        fmt("|table#t|{columns:80 80}[\n\"A\" \"Quantity\"\n\"Apple\" \"3\"\n]\n"),
+        fmt("|table#t|{columns:80, 80}[\n\"A\" \"Quantity\"\n\"Apple\" \"3\"\n]\n"),
         out
     );
     idempotent(out);
 }
 
 #[test]
+fn a_comma_data_list_prints_the_law() {
+    // [SPEC 2]: comma-groups re-emit comma-separated, spaces within a group —
+    // `data: 9, 15, 24` round-trips; point pairs keep their internal space.
+    idempotent("|chart#c| [\n  |bars| { data: 9, 15, 24; }\n  |dots| { data: 10 20, 30 40; }\n]\n");
+    assert_eq!(
+        fmt("|bars#b|{data:9,15,24}\n"),
+        "|bars#b| { data: 9, 15, 24; }\n"
+    );
+}
+
+#[test]
 fn a_styled_table_cell_keeps_its_block_and_breaks_its_row_out() {
     // [SPEC 19]: a cell's `{ }` must survive fmt (dropping it is silent data loss);
     // its whole row leaves the alignment grid, while the plain rows stay aligned.
-    let out = "|table#t| { columns: 80 80; } [\n  \"A\"     \"Qty\"\n  \"Apple\" { color: red; } \"3\"\n  \"Mango\" \"5\"\n]\n";
+    let out = "|table#t| { columns: 80, 80; } [\n  \"A\"     \"Qty\"\n  \"Apple\" { color: red; } \"3\"\n  \"Mango\" \"5\"\n]\n";
     assert_eq!(
         fmt(
-            "|table#t|{columns:80 80}[\n\"A\" \"Qty\"\n\"Apple\"{color:red} \"3\"\n\"Mango\" \"5\"\n]\n"
+            "|table#t|{columns:80, 80}[\n\"A\" \"Qty\"\n\"Apple\"{color:red} \"3\"\n\"Mango\" \"5\"\n]\n"
         ),
         out
     );

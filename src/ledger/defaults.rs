@@ -387,10 +387,15 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
         // spanning header (desugar) and its body cells default to left-aligned (in
         // `distribute_cell_alignment`, so the title header stays centred and filled).
         // Everything else is the |table| base.
-        "entity" => vec![decl(
-            "columns",
-            vec![Value::Ident("auto".into()), Value::Ident("auto".into())],
-        )],
+        // Comma-shaped groups: `columns` is a track **list** [SPEC 2].
+        "entity" => vec![Decl {
+            name: "columns".into(),
+            groups: vec![
+                vec![Value::Ident("auto".into())],
+                vec![Value::Ident("auto".into())],
+            ],
+            span: Span::empty(),
+        }],
         _ => Vec::new(),
     }
 }

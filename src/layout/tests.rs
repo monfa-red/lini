@@ -268,7 +268,7 @@ fn no_slack_means_no_distribution() {
 #[test]
 fn grid_fixed_columns_place_children_in_order() {
     let l = lay_out(
-        "{ layout: grid; columns: 80 80 80; gap: 0; }\n\
+        "{ layout: grid; columns: 80, 80, 80; gap: 0; }\n\
              |box#a| { width: 40; height: 40; }\n\
              |box#b| { width: 40; height: 40; }\n\
              |box#c| { width: 40; height: 40; }\n",
@@ -308,7 +308,7 @@ fn grid_cell_pins_placement() {
 #[test]
 fn grid_cell_fills_its_track_under_stretch() {
     let l = lay_out(
-        "{ layout: grid; columns: 120 120; gap: 0; }\n\
+        "{ layout: grid; columns: 120, 120; gap: 0; }\n\
              |box#a| { justify: stretch; align: stretch; }\n\
              |box#b|\n",
     );
@@ -325,7 +325,7 @@ fn grid_rows_track_list_is_a_floor_implicit_rows_overflow() {
     // children flow into implicit auto rows (CSS grid) rather than erroring.
     // Here 2 cols × 1 declared row track, 4 children → a second, implicit row.
     let l = lay_out(
-        "{ layout: grid; columns: 40 40; rows: auto; }\n\
+        "{ layout: grid; columns: 40, 40; rows: auto; }\n\
              |box#a| { width: 30; height: 30; }\n\
              |box#b| { width: 30; height: 30; }\n\
              |box#c| { width: 30; height: 30; }\n\
@@ -352,7 +352,7 @@ fn grid_without_columns_is_an_error() {
 
 #[test]
 fn table_fills_interior_gutters_no_frame() {
-    let l = lay_out("|table#t| { columns: 40 40 } [\n  \"a\" \"b\" \"c\" \"d\"\n]\n");
+    let l = lay_out("|table#t| { columns: 40, 40 } [\n  \"a\" \"b\" \"c\" \"d\"\n]\n");
     // The table's `gap-fill: --stroke` fills the interior gutters.
     assert!(!l.nodes[0].gutters.is_empty(), "table has interior gutters");
     // A plain group has no `gap-fill`, so no gutters.
@@ -367,8 +367,9 @@ fn table_fills_interior_gutters_no_frame() {
 fn grid_gutters_stay_within_the_content_box() {
     // Interior gutter rects must not overshoot the frame: every rect sits fully
     // inside the grid's own content box.
-    let l =
-        lay_out("|table#t| { columns: 40 40; gap: 20 } [\n  \"a\"\n  \"b\"\n  \"c\"\n  \"d\"\n]\n");
+    let l = lay_out(
+        "|table#t| { columns: 40, 40; gap: 20 } [\n  \"a\"\n  \"b\"\n  \"c\"\n  \"d\"\n]\n",
+    );
     let t = &l.nodes[0];
     let (hw, hh) = (t.bbox.w() / 2.0 + 0.01, t.bbox.h() / 2.0 + 0.01);
     for (cx, cy, w, h) in &t.gutters {
@@ -394,14 +395,14 @@ fn gap_fill_per_axis_selects_gutters() {
     // `gap: row col` [SPEC 11]: `4 0` paints row rules (horizontal gutters), `0 4`
     // column rules (vertical). A 2×2 grid has one interior boundary each way.
     let rows_only = lay_out(
-        "|grid#g| { columns: 40 40; gap: 4 0; gap-fill: --stroke } [\n  \"a\" \"b\"\n  \"c\" \"d\"\n]\n",
+        "|grid#g| { columns: 40, 40; gap: 4 0; gap-fill: --stroke } [\n  \"a\" \"b\"\n  \"c\" \"d\"\n]\n",
     );
     let (_, _, w, h) = rows_only.nodes[0].gutters[0];
     assert_eq!(rows_only.nodes[0].gutters.len(), 1, "row gap → one gutter");
     assert!(w > h, "horizontal gutter is wide: w={w} h={h}");
 
     let cols_only = lay_out(
-        "|grid#g| { columns: 40 40; gap: 0 4; gap-fill: --stroke } [\n  \"a\" \"b\"\n  \"c\" \"d\"\n]\n",
+        "|grid#g| { columns: 40, 40; gap: 0 4; gap-fill: --stroke } [\n  \"a\" \"b\"\n  \"c\" \"d\"\n]\n",
     );
     let (_, _, w2, h2) = cols_only.nodes[0].gutters[0];
     assert_eq!(cols_only.nodes[0].gutters.len(), 1, "col gap → one gutter");
@@ -501,7 +502,7 @@ fn a_patterned_box_in_a_flow_unions_its_copies() {
 
 #[test]
 fn a_filled_grid_cell_aligns_its_text_by_its_own_align() {
-    // A grid cell filled by the container's `align: stretch` then honours its
+    // A grid cell filled by the container's `align: stretch`, then, honours, its
     // own `align` (↔) to place its text [SPEC 12] — the generic rule tables use.
     let text_cx = |a: &str| {
         let src = format!(

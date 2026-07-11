@@ -42,6 +42,12 @@ pub(super) fn parse_mirror(v: &ResolvedValue, span: Span) -> Result<Vec<MirrorAx
         }
     };
     match v {
+        // `mirror:` is a pipeline — its items reflect the union so far, in one
+        // space-separated run [SPEC 2/15.3].
+        ResolvedValue::List(_) => Err(Error::at(
+            span,
+            "'mirror' is one space-separated run of reflections — 'mirror: x-axis 45'",
+        )),
         ResolvedValue::Tuple(items) => items.iter().map(one).collect(),
         item => Ok(vec![one(item)?]),
     }

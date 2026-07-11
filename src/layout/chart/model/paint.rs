@@ -78,16 +78,6 @@ pub(super) fn clone_grid(g: &Grid) -> Grid {
     }
 }
 
-pub(super) fn number_list(v: Option<&ResolvedValue>) -> Option<Vec<f64>> {
-    match v? {
-        ResolvedValue::Number(n) => Some(vec![*n]),
-        ResolvedValue::Tuple(items) | ResolvedValue::List(items) => {
-            items.iter().map(ResolvedValue::as_number).collect()
-        }
-        _ => None,
-    }
-}
-
 pub(super) fn numbers(items: &[ResolvedValue], span: Span) -> Result<Vec<f64>, Error> {
     items.iter().map(|it| number(it, span)).collect()
 }

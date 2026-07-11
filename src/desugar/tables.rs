@@ -5,7 +5,7 @@ use super::*;
 use crate::syntax::ast::TextNode;
 
 /// The grid column count for a table / entity node [SPEC 8]: its own `columns:` decl,
-/// else a bundle default in its chain (`entity` carries `columns: auto auto`). `None`
+/// else a bundle default in its chain (`entity` carries `columns: auto, auto`). `None`
 /// when undeterminable — the auto-header and title-span then no-op.
 pub(super) fn column_count(style: &[Decl], chain: &[String]) -> Option<usize> {
     if let Some(d) = style.iter().find(|d| d.name == "columns") {
@@ -107,14 +107,14 @@ pub(super) fn distribute_cell_alignment(
     table_style: &[Decl],
     cols: usize,
     is_entity: bool,
-) {
-    let h = per_column(table_style, "align", cols)
+) -> Result<(), Error> {
+    let h = per_column(table_style, "align", cols)?
         // An entity's field rows read left by default [SPEC 8]; the title header is
         // inserted *after* this pass, so it keeps its centred, full-span default.
         .or_else(|| is_entity.then(|| vec!["start".to_string(); cols]));
-    let v = per_column(table_style, "justify", cols);
+    let v = per_column(table_style, "justify", cols)?;
     if h.is_none() && v.is_none() {
-        return;
+        return Ok(());
     }
     for (i, child) in children.iter_mut().enumerate() {
         let Child::Box(cell) = child else { continue };
@@ -130,28 +130,38 @@ pub(super) fn distribute_cell_alignment(
             }
         }
     }
+    Ok(())
 }
 
-/// A table property's value as one keyword per column: a scalar repeats to every
-/// column, a list maps by position (a short list repeats its first). `None` when
-/// the property is absent or carries no keyword.
-fn per_column(style: &[Decl], name: &str, cols: usize) -> Option<Vec<String>> {
-    let d = style.iter().find(|d| d.name == name)?;
-    let vals: Vec<String> = d
-        .groups
-        .iter()
-        .flatten()
-        .filter_map(|v| match v {
-            Value::Ident(s) => Some(s.clone()),
-            _ => None,
-        })
-        .collect();
-    let first = vals.first()?.clone();
-    Some(
+/// A table property's value as one keyword per column — comma-separated
+/// [SPEC 2]: a scalar repeats to every column, a list maps by position (a short
+/// list repeats its first). `None` when the property is absent or carries no
+/// keyword; a space-separated legacy list is an error.
+fn per_column(style: &[Decl], name: &str, cols: usize) -> Result<Option<Vec<String>>, Error> {
+    let Some(d) = style.iter().find(|d| d.name == name) else {
+        return Ok(None);
+    };
+    let mut vals = Vec::new();
+    for g in &d.groups {
+        match g.as_slice() {
+            [Value::Ident(s)] => vals.push(s.clone()),
+            [_] => {}
+            _ => {
+                return Err(Error::at(
+                    d.span,
+                    format!("'{name}' takes comma-separated values — '{name}: start, center, end'"),
+                ));
+            }
+        }
+    }
+    let Some(first) = vals.first().cloned() else {
+        return Ok(None);
+    };
+    Ok(Some(
         (0..cols)
             .map(|c| vals.get(c).cloned().unwrap_or_else(|| first.clone()))
             .collect(),
-    )
+    ))
 }
 
 /// Auto-header a `|table|`'s first row [SPEC 8]: wrap the first `cols` children as
@@ -209,7 +219,7 @@ mod tests {
 
     #[test]
     fn table_first_row_becomes_header_cells() {
-        let f = lower("|table#t| { columns: 30 30 } [\n\"a\"\n\"b\"\n\"c\"\n\"d\"\n]\n");
+        let f = lower("|table#t| { columns: 30, 30 } [\n\"a\"\n\"b\"\n\"c\"\n\"d\"\n]\n");
         let t = root_box(&f, "t");
         // Row 0 (the first `cols` cells) are header boxes; body cells are `|block|`s.
         assert!(
@@ -244,7 +254,7 @@ mod tests {
         // The table's own `align` is consumed (dropped, so the bundle's `stretch`
         // fills the cells) and carried to each cell by column [SPEC 8].
         let f = lower(
-            "|table#t| { columns: 40 40; align: start end } [\n\"a\"\n\"b\"\n\"c\"\n\"d\"\n]\n",
+            "|table#t| { columns: 40, 40; align: start, end } [\n\"a\"\n\"b\"\n\"c\"\n\"d\"\n]\n",
         );
         let t = root_box(&f, "t");
         assert!(
@@ -272,7 +282,7 @@ mod tests {
         // Cells are `|cell|`s (which carry the padding); a table's caption is a plain
         // `|block|`, not a `|cell|` [SPEC 8], so it must not wear `.lini-cell` — else
         // its title text would be inset like a cell.
-        let f = lower("|table#t| \"Cap\" { columns: 30 30 } [\n\"a\"\n\"b\"\n\"c\"\n\"d\"\n]\n");
+        let f = lower("|table#t| \"Cap\" { columns: 30, 30 } [\n\"a\"\n\"b\"\n\"c\"\n\"d\"\n]\n");
         let t = root_box(&f, "t");
         let Child::Box(cap) = &t.children[0] else {
             panic!("the caption is a box");
@@ -292,7 +302,7 @@ mod tests {
 
     #[test]
     fn bare_grid_does_not_auto_header_or_wrap() {
-        let f = lower("|grid#g| { columns: 30 30 } [\n\"a\"\n\"b\"\n]\n");
+        let f = lower("|grid#g| { columns: 30, 30 } [\n\"a\"\n\"b\"\n]\n");
         let g = root_box(&f, "g");
         assert!(
             g.children.iter().all(|c| !is_header(c)),

@@ -16,23 +16,32 @@
       width: 8; height: 8; fill: --bg; stroke: --stroke-dark; pattern: radial(6, 28);
     }
 
-    |plane#a| "A" { at: 0; }                     // a vertical plane, viewing right
-    |magnifier#c| "C" { width: 15; translate: 0 -28; }   // a port, ringed for detail
+    |plane#a| "A" { at: 0; }
+    // a vertical plane, viewing right
+    |magnifier#c| "C" { width: 15; translate: 0 -28; }
+    // a port, ringed for detail
 
-    od (o) { side: right; }                      // ⌀80 — clear of the vertical A–A
-    bore (o) { side: left; }                     // ⌀34
+    od (o) { side: right; }
+    // ⌀80 — clear of the vertical A–A
+    bore (o) { side: left; }
+    // ⌀34
   ]
 
   |drawing#sec| { of: a; scale: 4; } [
     |steel#wall| {
-      draw: move(-40, -8) right(23) down(16) left(23) close();   // the left ring wall
-      mirror: y-axis;                            // → both walls (the bore between)
+      draw: move(-40, -8) right(23) down(16) left(23) close();
+      // the left ring wall
+      mirror: y-axis;
+      // → both walls (the bore between)
     }
-    |centerline| { points: 0 -20, 0 20; }        // the revolve axis
+    |centerline| { points: 0 -20, 0 20; }
+    // the revolve axis
 
-    wall:left (-) wall:right { side: bottom; }   // 80 across
+    wall:left (-) wall:right { side: bottom; }
+    // 80 across
   ]
 
-  |drawing#det| { of: c; scale: 12; }             // the ringed port, re-laid ×3
+  |drawing#det| { of: c; scale: 12; }
+  // the ringed port, re-laid ×3
 
 ]

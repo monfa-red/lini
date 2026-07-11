@@ -208,7 +208,16 @@ fn layout_inst(
         match inst.kind {
             NodeKind::Sketch => {}
             NodeKind::Oval => {
-                if !v.as_number().is_some_and(|p| p > 0.0) {
+                // `thread:` is list-shaped; the round pitch-only form is one
+                // bare number [SPEC 15.4].
+                let pitch = match v {
+                    ResolvedValue::List(items) => match items.as_slice() {
+                        [one] => one.as_number(),
+                        _ => None,
+                    },
+                    one => one.as_number(),
+                };
+                if !pitch.is_some_and(|p| p > 0.0) {
                     return Err(Error::at(
                         inst.span,
                         "'thread' takes a segment and its pitch — 'thread: m8 1.5'",

@@ -270,7 +270,10 @@ fn numeric_scale(
         None => (dmin, dmax, false),
     };
     let step = spec_src.and_then(|a| a.attrs.number("step"));
-    let explicit_ticks = spec_src.and_then(|a| number_list(a.attrs.get("ticks")));
+    let explicit_ticks = match spec_src {
+        Some(a) => read_ticks(&a.attrs, a.span)?,
+        None => None,
+    };
     let ticks = if let Some(t) = explicit_ticks {
         t
     } else if let Some(st) = step {
@@ -300,6 +303,29 @@ fn log_scale(lo: f64, hi: f64, has_range: bool, span: Span) -> Result<Scale, Err
     Ok(Scale::log(min, max))
 }
 
+/// An explicit `ticks:` list — comma-separated numbers [SPEC 2/14.4].
+fn read_ticks(attrs: &AttrMap, span: Span) -> Result<Option<Vec<f64>>, Error> {
+    let Some(v) = attrs.get("ticks") else {
+        return Ok(None);
+    };
+    let items = match v {
+        ResolvedValue::List(items) => items.as_slice(),
+        one => std::slice::from_ref(one),
+    };
+    items
+        .iter()
+        .map(|it| {
+            it.as_number().ok_or_else(|| {
+                Error::at(
+                    span,
+                    "'ticks' takes comma-separated numbers — 'ticks: 0, 50, 100'",
+                )
+            })
+        })
+        .collect::<Result<Vec<f64>, Error>>()
+        .map(Some)
+}
+
 fn axis_ticks(min: f64, max: f64, spec: &AxisSpec) -> Vec<f64> {
     if let Some(t) = &spec.ticks {
         t.clone()
@@ -319,7 +345,7 @@ pub(super) fn axis_spec(inst: &ResolvedInst, side: Side) -> Result<AxisSpec<'_>,
         grid: read_grid(inst)?,
         range: read_range(inst)?,
         step: inst.attrs.number("step"),
-        ticks: number_list(inst.attrs.get("ticks")),
+        ticks: read_ticks(&inst.attrs, inst.span)?,
         log: read_log(inst)?,
     })
 }

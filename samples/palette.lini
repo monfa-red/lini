@@ -11,7 +11,7 @@
 |block| "Lini palette — 11 hues × 5 tiers" { font-size: 18; }
 
 |group#board| {
-  layout: grid; columns: 56 82 82 82 82 82; gap: 5; fill: none; stroke: none;
+  layout: grid; columns: 56, 82, 82, 82, 82, 82; gap: 5; fill: none; stroke: none;
 } [
   |h| ""
   |h| "wash"

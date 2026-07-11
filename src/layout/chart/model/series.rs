@@ -187,32 +187,39 @@ fn points_from(xs: &[f64], ys: Vec<ExprValue>, span: Span) -> Result<Vec<(f64, f
     Ok(pts)
 }
 
-/// Categorical `data:` → values; comma-grouped `data:` → `x y` points. Bars are
-/// categorical only.
+/// `data:` reads across comma-groups [SPEC 2/14.3]: values (`data: 9, 15, 24`)
+/// → categorical, `x y` pairs (`data: 10 20, 30 40`) → points — so a lone
+/// `data: 10 20` is one point, never two values. Bars are categorical only.
 fn read_data(inst: &ResolvedInst, kind: &SeriesKind) -> Result<Data, Error> {
-    match inst.attrs.get("data") {
-        Some(ResolvedValue::Number(n)) => Ok(Data::Categorical(vec![*n])),
-        Some(ResolvedValue::Tuple(items)) => Ok(Data::Categorical(numbers(items, inst.span)?)),
-        Some(ResolvedValue::List(items)) => {
-            if matches!(kind, SeriesKind::Bars) {
+    let Some(ResolvedValue::List(items)) = inst.attrs.get("data") else {
+        return Err(Error::at(inst.span, "'data' must be a list of numbers"));
+    };
+    if items.iter().all(|it| it.as_number().is_some()) {
+        return Ok(Data::Categorical(numbers(items, inst.span)?));
+    }
+    let mut pts = Vec::with_capacity(items.len());
+    for it in items {
+        match it {
+            ResolvedValue::Tuple(pair) if pair.len() == 2 => {
+                pts.push((number(&pair[0], inst.span)?, number(&pair[1], inst.span)?));
+            }
+            // A longer space run is the pre-0.21 value list.
+            ResolvedValue::Tuple(_) => {
                 return Err(Error::at(
                     inst.span,
-                    "'|bars|' takes categorical data ('data: 9 15 24'), not 'x y' points",
+                    "'data' takes comma-separated values — 'data: 9, 15, 24'",
                 ));
             }
-            let mut pts = Vec::with_capacity(items.len());
-            for it in items {
-                match it {
-                    ResolvedValue::Tuple(pair) if pair.len() == 2 => {
-                        pts.push((number(&pair[0], inst.span)?, number(&pair[1], inst.span)?));
-                    }
-                    _ => return Err(Error::at(inst.span, "point data is 'x y' pairs")),
-                }
-            }
-            Ok(Data::Points(pts))
+            _ => return Err(Error::at(inst.span, "point data is 'x y' pairs")),
         }
-        _ => Err(Error::at(inst.span, "'data' must be a list of numbers")),
     }
+    if matches!(kind, SeriesKind::Bars) {
+        return Err(Error::at(
+            inst.span,
+            "'|bars|' takes categorical data ('data: 9, 15, 24'), not 'x y' points",
+        ));
+    }
+    Ok(Data::Points(pts))
 }
 
 /// Parse a series' `tags:` [SPEC 14.3]: a quoted-string list, one per datum,
@@ -224,7 +231,7 @@ fn read_tags(inst: &ResolvedInst, data: &Data) -> Result<Vec<String>, Error> {
         return Ok(Vec::new());
     };
     let mut tags = Vec::new();
-    collect_strings(v, &mut tags, inst.span)?;
+    collect_strings("tags", v, &mut tags, inst.span)?;
     let n = match data {
         Data::Categorical(values) => values.len(),
         Data::Points(p) => p.len(),
@@ -299,18 +306,25 @@ pub(super) fn chart_marker(inst: &ResolvedInst) -> Result<MarkerKind, Error> {
 }
 
 pub(super) fn collect_strings(
+    name: &str,
     v: &ResolvedValue,
     out: &mut Vec<String>,
     span: Span,
 ) -> Result<(), Error> {
-    match v {
-        ResolvedValue::String(s) => out.push(s.clone()),
-        ResolvedValue::Tuple(items) | ResolvedValue::List(items) => {
-            for it in items {
-                collect_strings(it, out, span)?;
-            }
+    let bad = || {
+        Error::at(
+            span,
+            format!("'{name}' takes comma-separated quoted strings — '{name}: \"a\", \"b\"'"),
+        )
+    };
+    let ResolvedValue::List(items) = v else {
+        return Err(bad());
+    };
+    for it in items {
+        match it {
+            ResolvedValue::String(s) => out.push(s.clone()),
+            _ => return Err(bad()),
         }
-        _ => return Err(Error::at(span, "'categories' is a list of quoted strings")),
     }
     Ok(())
 }

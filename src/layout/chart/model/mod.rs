@@ -29,5 +29,5 @@ pub(crate) use paint::{fill_color, fill_outline, label_of, live};
 // `use super::*`).
 use annot::{read_at, read_band, read_mark};
 use axes::{axis_id, axis_spec, bind_axis, build_value_axes, build_x_axis, lookup_axis, read_side};
-use paint::{clone_grid, muted, number, number_list, numbers, outline, real_color};
+use paint::{clone_grid, muted, number, numbers, outline, real_color};
 use series::{chart_marker, collect_strings, read_bubble, read_series, sample_formula};

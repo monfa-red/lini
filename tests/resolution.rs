@@ -371,3 +371,51 @@ fn scalar_bindings_read_bare_in_groups() {
     assert_resolve_error("{ a = (a); }\n|box#x| { width: (a) }\n", "cycle");
     assert_resolve_error("{ a = (b); b = (a); }\n|box#x| { width: (a) }\n", "cycle");
 }
+
+// ── The comma law [SPEC 2/20]: legacy space-separated lists error with the
+//    migration spelling at resolve (scalar-kind lists — strings, keywords,
+//    tracks); number lists are judged by their readers (see chart tests). ──
+
+#[test]
+fn err_legacy_space_categories() {
+    let err = lini::check("|chart#c| { categories: \"a\" \"b\" } [\n  |bars| { data: 1, 2 }\n]\n")
+        .expect_err("expected resolve error");
+    assert!(
+        err.to_string()
+            .contains("'categories' takes comma-separated values — 'categories: \"a\", \"b\"'"),
+        "{err}"
+    );
+}
+
+#[test]
+fn err_legacy_space_columns() {
+    let err = lini::check("{ layout: grid; columns: 80 140 auto; }\n|box#a|\n")
+        .expect_err("expected resolve error");
+    assert!(
+        err.to_string()
+            .contains("'columns' takes comma-separated values — 'columns: 80, 140, auto'"),
+        "{err}"
+    );
+}
+
+#[test]
+fn err_legacy_space_align() {
+    let err = lini::check("|table#t| { columns: 80, 80; align: start end; } [\n  \"a\" \"b\"\n]\n")
+        .expect_err("expected resolve error");
+    assert!(
+        err.to_string()
+            .contains("'align' takes comma-separated values — 'align: start, center, end'"),
+        "{err}"
+    );
+}
+
+#[test]
+fn err_legacy_space_along() {
+    let err = lini::check("|box#a|\n|box#b|\na -> b \"x\" { along: 0.2 0.8; }\n")
+        .expect_err("expected resolve error");
+    assert!(
+        err.to_string()
+            .contains("'along' takes comma-separated fractions — 'along: 0.2, 0.5, 0.8'"),
+        "{err}"
+    );
+}

@@ -54,7 +54,7 @@
     |badge| "NEW"
   ]
   // a table draws dividers and flows bare text into its tracks
-  |table#basket| { columns: 80 56 70; stroke: --gray-ink; } [
+  |table#basket| { columns: 80, 56, 70; stroke: --gray-ink; } [
     "Fruit" "Qty" "Note"
     "Apple" "12"  "fresh"
     "Mango" "3"   "ripe"

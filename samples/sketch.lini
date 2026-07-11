@@ -1,7 +1,7 @@
 // The sketch pen [SPEC 15.3] in an ordinary flow — profiles, corner modifiers,
 // mirrors, and the drafting line styles, all usable outside a drawing.
 {
-  direction: row;  gap: 48;  align: center;
+  direction: row; gap: 48; align: center;
 }
 
 // Chamfer + fillet + a punched bore (even-odd subpaths).
@@ -28,8 +28,8 @@
   stroke-width: 3; fill: none;
 }
 
-|column| { gap: 14 } [
-  |centerline#axis| { points: 0 0, 90 0 }
-  |line#ghost| { points: 0 0, 90 0; stroke-style: phantom; stroke-width: 1 }
+|column| { gap: 14; } [
+  |centerline#axis| { points: 0 0, 90 0; }
+  |line#ghost| { points: 0 0, 90 0; stroke-style: phantom; stroke-width: 1; }
   |note#memo| "folded corner"
 ]

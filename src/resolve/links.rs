@@ -19,6 +19,7 @@ use super::value::{resolve_groups, resolve_property};
 use crate::ast::{ChainOp, DrawOp, LineStyle, LinkMarker, Side};
 use crate::error::Error;
 use crate::ledger::properties;
+use crate::span::Span;
 use crate::syntax::ast::{Endpoint, EndpointGroup, Link};
 
 /// The class every link wears [SPEC 9]: `|-|` lowers to it in desugar, so a link
@@ -143,10 +144,10 @@ pub fn resolve_link(
     // `along:` distributes the labels along the drawn route [SPEC 9]: one
     // fraction (0..1) per label, in order; an absent fraction is `Auto` (the
     // router spreads it). It is a placement directive, not a paint attr.
-    let along: Vec<f64> = attrs
-        .get("along")
-        .map(collect_fractions)
-        .unwrap_or_default();
+    let along: Vec<f64> = match attrs.get("along") {
+        Some(v) => collect_fractions(v, w.span)?,
+        None => Vec::new(),
+    };
     attrs.map.remove("along");
 
     // Labels ride `along:`, each a styleable text leaf [SPEC 9]: the link's text
@@ -388,15 +389,23 @@ fn parse_routing(attrs: &AttrMap, span: crate::span::Span) -> Result<Strategy, E
     }
 }
 
-/// The `along:` value as a list of route fractions — one number, or a group.
-fn collect_fractions(v: &ResolvedValue) -> Vec<f64> {
-    match v {
-        ResolvedValue::Number(n) => vec![*n],
-        ResolvedValue::Tuple(xs) | ResolvedValue::List(xs) => {
-            xs.iter().filter_map(ResolvedValue::as_number).collect()
-        }
-        _ => Vec::new(),
-    }
+/// The `along:` value as a list of route fractions — comma-separated [SPEC 2/9].
+fn collect_fractions(v: &ResolvedValue, span: Span) -> Result<Vec<f64>, Error> {
+    let items = match v {
+        ResolvedValue::List(xs) => xs.as_slice(),
+        one => std::slice::from_ref(one),
+    };
+    items
+        .iter()
+        .map(|x| {
+            x.as_number().ok_or_else(|| {
+                Error::at(
+                    span,
+                    "'along' takes comma-separated fractions — 'along: 0.2, 0.5, 0.8'",
+                )
+            })
+        })
+        .collect()
 }
 
 /// A link's labels inherit its text context [SPEC 9]: every inheritable text prop

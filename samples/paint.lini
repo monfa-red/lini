@@ -40,7 +40,7 @@
   |box#c| "three" { fill: --sky-wash; stroke: --sky-ink; color: --sky-ink; }
 ]
 
-|grid#week| { columns: 80 80 80; gap: 8 0; gap-fill: --teal-ink; } [
+|grid#week| { columns: 80, 80, 80; gap: 8 0; gap-fill: --teal-ink; } [
   "Mon" "Tue" "Wed"
   "Thu" "Fri" "Sat"
 ]

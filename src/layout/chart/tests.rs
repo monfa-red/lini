@@ -18,7 +18,7 @@ fn layout_err(src: &str) -> String {
 #[test]
 fn bars_chart_lowers_to_axis_bars_legend_and_title() {
     let s = svg(
-        "|chart| \"T\" { categories: \"a\" \"b\" } [\n  |bars| \"S1\" { data: 3 6 }\n  |bars| \"S2\" { data: 4 2 }\n]\n",
+        "|chart| \"T\" { categories: \"a\", \"b\" } [\n  |bars| \"S1\" { data: 3, 6 }\n  |bars| \"S2\" { data: 4, 2 }\n]\n",
     );
     assert!(s.contains("lini-chart"), "chart container class: {s}");
     // Palette walk: series 0 rose, series 1 teal — red skipped. Bars fill with the
@@ -33,7 +33,7 @@ fn bars_chart_lowers_to_axis_bars_legend_and_title() {
 
 #[test]
 fn a_line_series_draws_a_polyline() {
-    let s = svg("|chart| { categories: \"a\" \"b\" \"c\" } [\n  |line| { data: 3 6 4 }\n]\n");
+    let s = svg("|chart| { categories: \"a\", \"b\", \"c\" } [\n  |line| { data: 3, 6, 4 }\n]\n");
     assert!(s.contains("<polyline"), "polyline: {s}");
 }
 
@@ -132,7 +132,7 @@ fn the_chart_gap_tunes_the_title_inset() {
 #[test]
 fn a_dual_axis_chart_binds_series_by_id() {
     let s = svg(
-        "|chart| { categories: \"a\" \"b\" } [\n  |axis#n| { side: left }\n  |axis#p| { side: right }\n  |bars| { data: 10 20; axis: n }\n  |line| { data: 4 9; axis: p }\n]\n",
+        "|chart| { categories: \"a\", \"b\" } [\n  |axis#n| { side: left }\n  |axis#p| { side: right }\n  |bars| { data: 10, 20; axis: n }\n  |line| { data: 4, 9; axis: p }\n]\n",
     );
     assert!(s.contains("<line "), "the 2-point line: {s}");
     // Each axis's domain comes from its bound series: bars 10/20 → a left axis to
@@ -158,7 +158,7 @@ fn empty_chart_errors() {
 
 #[test]
 fn data_count_must_match_categories() {
-    let e = layout_err("|chart| { categories: \"a\" \"b\" } [\n  |bars| { data: 1 2 3 }\n]\n");
+    let e = layout_err("|chart| { categories: \"a\", \"b\" } [\n  |bars| { data: 1, 2, 3 }\n]\n");
     assert!(e.contains("3 values but the chart has 2 categories"), "{e}");
 }
 
@@ -189,14 +189,14 @@ fn a_fn_series_samples_a_curve_over_the_x_domain() {
 
 #[test]
 fn an_area_series_fills_a_polygon() {
-    let s = svg("|chart| { categories: \"a\" \"b\" \"c\" } [\n  |area| { data: 3 6 4 }\n]\n");
+    let s = svg("|chart| { categories: \"a\", \"b\", \"c\" } [\n  |area| { data: 3, 6, 4 }\n]\n");
     assert!(s.contains("<polygon"), "area fill: {s}");
 }
 
 #[test]
 fn a_log_axis_draws_decade_ticks() {
     let s = svg(
-        "|chart| { categories: \"a\" \"b\" } [\n  |axis| { side: left; scale: log }\n  |bars| { data: 10 1000 }\n]\n",
+        "|chart| { categories: \"a\", \"b\" } [\n  |axis| { side: left; scale: log }\n  |bars| { data: 10, 1000 }\n]\n",
     );
     assert!(s.contains(">100</text>"), "decade tick: {s}");
     assert!(s.contains(">1000</text>"), "decade tick: {s}");
@@ -213,7 +213,7 @@ fn a_log_axis_over_a_non_positive_domain_errors() {
 #[test]
 fn a_smooth_curve_resamples_densely() {
     let s = svg(
-        "|chart| { categories: \"a\" \"b\" \"c\" \"d\" } [\n  |line| { data: 1 8 2 6; curve: smooth }\n]\n",
+        "|chart| { categories: \"a\", \"b\", \"c\", \"d\" } [\n  |line| { data: 1, 8, 2, 6; curve: smooth }\n]\n",
     );
     // The monotone cubic is resampled into a many-point polyline, not 4 segments.
     let pts = s
@@ -231,7 +231,7 @@ fn a_smooth_curve_resamples_densely() {
 #[test]
 fn a_fn_list_without_bands_reports_the_mismatch() {
     let e = layout_err(
-        "|chart| [\n  |axis| { side: bottom; range: 0 1 }\n  |axis| { side: left }\n  |line| { fn: (1) (2) }\n]\n",
+        "|chart| [\n  |axis| { side: bottom; range: 0 1 }\n  |axis| { side: left }\n  |line| { fn: (1), (2) }\n]\n",
     );
     assert!(e.contains("2 formulas"), "{e}");
     assert!(e.contains("0 bands"), "{e}");
@@ -240,7 +240,7 @@ fn a_fn_list_without_bands_reports_the_mismatch() {
 #[test]
 fn a_filled_band_shades_the_plot_and_labels_it() {
     let s = svg(
-        "|chart| { categories: \"a\" \"b\" } [\n  |bars| { data: 5 8 }\n  |band| \"zone\" { span: 0 1; fill: --amber }\n]\n",
+        "|chart| { categories: \"a\", \"b\" } [\n  |bars| { data: 5, 8 }\n  |band| \"zone\" { span: 0 1; fill: --amber }\n]\n",
     );
     // Amber is unused by the palette walk, so it is unambiguously the band.
     assert!(s.contains("var(--lini-amber)"), "band shade tint: {s}");
@@ -251,7 +251,7 @@ fn a_filled_band_shades_the_plot_and_labels_it() {
 #[test]
 fn an_unfilled_band_draws_a_divider_not_a_shade() {
     let s = svg(
-        "|chart| { categories: \"a\" \"b\" \"c\" } [\n  |bars| { data: 5 8 6 }\n  |band| \"L\" { span: 0 1 }\n  |band| \"R\" { span: 1 3 }\n]\n",
+        "|chart| { categories: \"a\", \"b\", \"c\" } [\n  |bars| { data: 5, 8, 6 }\n  |band| \"L\" { span: 0 1 }\n  |band| \"R\" { span: 1 3 }\n]\n",
     );
     assert!(
         s.contains(">L</text>") && s.contains(">R</text>"),
@@ -266,7 +266,7 @@ fn an_unfilled_band_draws_a_divider_not_a_shade() {
 #[test]
 fn a_segmented_fn_draws_one_polyline_across_the_bands() {
     let s = svg(
-        "|chart| [\n  |axis| { side: bottom }\n  |axis| { side: left }\n  |band| { span: 0 1 }\n  |band| { span: 1 2 }\n  |line| { fn: (u) (1-u) }\n]\n",
+        "|chart| [\n  |axis| { side: bottom }\n  |axis| { side: left }\n  |band| { span: 0 1 }\n  |band| { span: 1 2 }\n  |line| { fn: (u), (1-u) }\n]\n",
     );
     assert!(s.contains("<polyline"), "segmented curve polyline: {s}");
 }
@@ -274,7 +274,7 @@ fn a_segmented_fn_draws_one_polyline_across_the_bands() {
 #[test]
 fn a_fn_list_length_must_match_the_band_count() {
     let e = layout_err(
-        "|chart| [\n  |axis| { side: bottom }\n  |axis| { side: left }\n  |band| { span: 0 1 }\n  |line| { fn: (1) (2) (3) }\n]\n",
+        "|chart| [\n  |axis| { side: bottom }\n  |axis| { side: left }\n  |band| { span: 0 1 }\n  |line| { fn: (1), (2), (3) }\n]\n",
     );
     assert!(e.contains("3 formulas"), "{e}");
     assert!(e.contains("1 bands"), "{e}");
@@ -283,7 +283,7 @@ fn a_fn_list_length_must_match_the_band_count() {
 #[test]
 fn a_mark_draws_a_reference_line_with_its_label() {
     let s = svg(
-        "|chart| { categories: \"a\" \"b\" } [\n  |axis#v| { side: left }\n  |bars| { data: 5 8 }\n  |mark| \"max\" { at: 6; axis: v; stroke: --red }\n]\n",
+        "|chart| { categories: \"a\", \"b\" } [\n  |axis#v| { side: left }\n  |bars| { data: 5, 8 }\n  |mark| \"max\" { at: 6; axis: v; stroke: --red }\n]\n",
     );
     assert!(
         s.contains("var(--lini-red)"),
@@ -295,7 +295,7 @@ fn a_mark_draws_a_reference_line_with_its_label() {
 #[test]
 fn a_mark_point_draws_a_dot_and_a_label() {
     let s = svg(
-        "|chart| { categories: \"a\" \"b\" } [\n  |axis#v| { side: left }\n  |bars| { data: 5 8 }\n  |mark| \"pt\" { at: 1 6; axis: v }\n]\n",
+        "|chart| { categories: \"a\", \"b\" } [\n  |axis#v| { side: left }\n  |bars| { data: 5, 8 }\n  |mark| \"pt\" { at: 1 6; axis: v }\n]\n",
     );
     assert!(s.contains("<ellipse"), "the point's dot: {s}");
     assert!(s.contains(">pt</text>"), "the point's label: {s}");
@@ -304,7 +304,7 @@ fn a_mark_point_draws_a_dot_and_a_label() {
 #[test]
 fn marker_none_suppresses_the_point_dot() {
     let s = svg(
-        "|chart| { categories: \"a\" \"b\" } [\n  |axis#v| { side: left }\n  |bars| { data: 5 8 }\n  |mark| \"lbl\" { at: 1 6; axis: v; marker: none }\n]\n",
+        "|chart| { categories: \"a\", \"b\" } [\n  |axis#v| { side: left }\n  |bars| { data: 5, 8 }\n  |mark| \"lbl\" { at: 1 6; axis: v; marker: none }\n]\n",
     );
     assert!(s.contains(">lbl</text>"), "the label still draws: {s}");
     assert!(!s.contains("<ellipse"), "no dot when 'marker: none': {s}");
@@ -329,7 +329,7 @@ fn a_mark_at_takes_one_or_two_values() {
 #[test]
 fn stacked_bars_fit_the_per_category_sum() {
     let s = svg(
-        "|chart| { categories: \"a\" \"b\"; bars: stacked } [\n  |bars| { data: 3 4 }\n  |bars| { data: 5 6 }\n]\n",
+        "|chart| { categories: \"a\", \"b\"; bars: stacked } [\n  |bars| { data: 3, 4 }\n  |bars| { data: 5, 6 }\n]\n",
     );
     // Category b sums to 10, so the value axis reaches a 10 tick (grouped tops out
     // at 6). The 10 proves the stacked envelope drove the domain.
@@ -342,7 +342,7 @@ fn stacked_bars_fit_the_per_category_sum() {
 #[test]
 fn overlay_bars_are_translucent() {
     let s = svg(
-        "|chart| { categories: \"a\" \"b\"; bars: overlay } [\n  |bars| { data: 3 4 }\n  |bars| { data: 7 6 }\n]\n",
+        "|chart| { categories: \"a\", \"b\"; bars: overlay } [\n  |bars| { data: 3, 4 }\n  |bars| { data: 7, 6 }\n]\n",
     );
     assert!(s.contains("opacity"), "overlay bars carry an opacity: {s}");
 }
@@ -350,7 +350,7 @@ fn overlay_bars_are_translucent() {
 #[test]
 fn a_radial_line_draws_a_closed_radar_with_spoke_labels() {
     let s = svg(
-        "|chart| { direction: radial; categories: \"a\" \"b\" \"c\" } [\n  |axis| { range: 0 5 }\n  |line| { data: 5 3 4 }\n]\n",
+        "|chart| { direction: radial; categories: \"a\", \"b\", \"c\" } [\n  |axis| { range: 0 5 }\n  |line| { data: 5, 3, 4 }\n]\n",
     );
     assert!(s.contains("<polyline"), "the radar loop: {s}");
     assert!(s.contains(">a</text>"), "a spoke (category) label: {s}");
@@ -359,7 +359,7 @@ fn a_radial_line_draws_a_closed_radar_with_spoke_labels() {
 #[test]
 fn radial_bars_draw_wedge_polygons() {
     let s = svg(
-        "|chart| { direction: radial; categories: \"a\" \"b\" \"c\" } [\n  |axis| { range: 0 10 }\n  |bars| { data: 8 5 9 }\n]\n",
+        "|chart| { direction: radial; categories: \"a\", \"b\", \"c\" } [\n  |axis| { range: 0 10 }\n  |bars| { data: 8, 5, 9 }\n]\n",
     );
     assert!(s.contains("<polygon"), "wedge polygons: {s}");
 }
@@ -367,7 +367,7 @@ fn radial_bars_draw_wedge_polygons() {
 #[test]
 fn a_side_on_a_radial_axis_errors() {
     let e = layout_err(
-        "|chart| { direction: radial; categories: \"a\" \"b\" } [\n  |axis| { side: left; range: 0 5 }\n  |line| { data: 3 4 }\n]\n",
+        "|chart| { direction: radial; categories: \"a\", \"b\" } [\n  |axis| { side: left; range: 0 5 }\n  |line| { data: 3, 4 }\n]\n",
     );
     assert!(e.contains("radial"), "{e}");
 }
@@ -375,7 +375,7 @@ fn a_side_on_a_radial_axis_errors() {
 #[test]
 fn a_row_chart_lays_categories_left_and_values_below() {
     let s = svg(
-        "|chart| { direction: row; categories: \"a\" \"b\" } [\n  |axis| \"v\" { side: bottom }\n  |bars| { data: 5 10 }\n]\n",
+        "|chart| { direction: row; categories: \"a\", \"b\" } [\n  |axis| \"v\" { side: bottom }\n  |bars| { data: 5, 10 }\n]\n",
     );
     assert!(s.contains("<rect"), "horizontal bars: {s}");
     assert!(s.contains(">a</text>"), "a category label (left): {s}");
@@ -385,7 +385,7 @@ fn a_row_chart_lays_categories_left_and_values_below() {
 #[test]
 fn a_row_line_projects_through_the_same_builder() {
     let s = svg(
-        "|chart| { direction: row; categories: \"a\" \"b\" \"c\" } [\n  |line| { data: 3 6 4 }\n]\n",
+        "|chart| { direction: row; categories: \"a\", \"b\", \"c\" } [\n  |line| { data: 3, 6, 4 }\n]\n",
     );
     assert!(
         s.contains("<polyline"),
@@ -493,7 +493,7 @@ fn tags_draw_inline_labels_under_auto() {
     // A series' `tags:` show on the plot (default auto) as `.lini-chart-label` text,
     // over the hover card the value still rides.
     let s = svg(
-        "|chart| { categories: \"a\" \"b\" } [\n  |line| { data: 3 6; tags: \"lo\" \"hi\" }\n]\n",
+        "|chart| { categories: \"a\", \"b\" } [\n  |line| { data: 3, 6; tags: \"lo\", \"hi\" }\n]\n",
     );
     assert!(s.contains("lini-chart-label"), "inline label class: {s}");
     assert!(
@@ -511,7 +511,7 @@ fn tooltip_hover_keeps_tags_off_the_plot() {
     // `tooltip: hover` keeps the card (bars are hit targets) but draws no inline label,
     // even with tags.
     let s = svg(
-        "|chart| { categories: \"a\" \"b\"; tooltip: hover } [\n  |bars| { data: 3 6; tags: \"lo\" \"hi\" }\n]\n",
+        "|chart| { categories: \"a\", \"b\"; tooltip: hover } [\n  |bars| { data: 3, 6; tags: \"lo\", \"hi\" }\n]\n",
     );
     assert!(!s.contains("lini-chart-label"), "no inline label: {s}");
     assert!(s.contains("lini-chart-tip"), "the hover card stays: {s}");
@@ -521,7 +521,7 @@ fn tooltip_hover_keeps_tags_off_the_plot() {
 fn a_series_tooltip_overrides_the_chart_default() {
     // The chart says hover (no inline); the series opts back into always.
     let s = svg(
-        "|chart| { categories: \"a\" \"b\"; tooltip: hover } [\n  |line| { data: 3 6; tags: \"lo\" \"hi\"; tooltip: always }\n]\n",
+        "|chart| { categories: \"a\", \"b\"; tooltip: hover } [\n  |line| { data: 3, 6; tags: \"lo\", \"hi\"; tooltip: always }\n]\n",
     );
     assert!(
         s.contains("lini-chart-label"),
@@ -532,7 +532,7 @@ fn a_series_tooltip_overrides_the_chart_default() {
 #[test]
 fn an_arrow_marker_on_a_series_errors() {
     let e = layout_err(
-        "|chart| { categories: \"a\" \"b\" } [\n  |line| { data: 3 6; marker: arrow }\n]\n",
+        "|chart| { categories: \"a\", \"b\" } [\n  |line| { data: 3, 6; marker: arrow }\n]\n",
     );
     assert!(e.contains("no centred form"), "{e}");
     assert!(e.contains("dot, circle, or diamond"), "{e}");
@@ -542,16 +542,18 @@ fn an_arrow_marker_on_a_series_errors() {
 fn a_circle_marker_is_bigger_than_a_dot() {
     // A line vertex `circle` is a hover-sized point; `dot` stays small.
     let c =
-        svg("|chart| { categories: \"a\" \"b\" } [\n  |line| { data: 3 6; marker: circle }\n]\n");
-    let d = svg("|chart| { categories: \"a\" \"b\" } [\n  |line| { data: 3 6; marker: dot }\n]\n");
+        svg("|chart| { categories: \"a\", \"b\" } [\n  |line| { data: 3, 6; marker: circle }\n]\n");
+    let d =
+        svg("|chart| { categories: \"a\", \"b\" } [\n  |line| { data: 3, 6; marker: dot }\n]\n");
     assert!(c.contains("rx=\"5.5\""), "circle marker radius: {c}");
     assert!(d.contains("rx=\"2.5\""), "dot marker radius: {d}");
 }
 
 #[test]
 fn a_diamond_marker_draws_a_rhombus() {
-    let s =
-        svg("|chart| { categories: \"a\" \"b\" } [\n  |line| { data: 3 6; marker: diamond }\n]\n");
+    let s = svg(
+        "|chart| { categories: \"a\", \"b\" } [\n  |line| { data: 3, 6; marker: diamond }\n]\n",
+    );
     assert!(s.contains("<polygon"), "diamond marker is a polygon: {s}");
 }
 
@@ -560,7 +562,7 @@ fn data_text_is_normal_weight_chrome_is_bold() {
     // The diagram-wide default is bold; a chart keeps it for the title and legend but
     // states `normal` for its axis ticks (and tags) [SPEC 14.6].
     let s = svg(
-        "|chart| \"Cost\" { categories: \"a\" \"b\" } [\n  |bars| \"A\" { data: 5 8 }\n  |bars| \"B\" { data: 3 4 }\n]\n",
+        "|chart| \"Cost\" { categories: \"a\", \"b\" } [\n  |bars| \"A\" { data: 5, 8 }\n  |bars| \"B\" { data: 3, 4 }\n]\n",
     );
     assert!(
         s.contains("font-size: 13px; font-weight: bold\">Cost</text>"),
@@ -579,7 +581,7 @@ fn data_text_is_normal_weight_chrome_is_bold() {
 #[test]
 fn tags_count_must_match_the_data() {
     let e = layout_err(
-        "|chart| { categories: \"a\" \"b\" } [\n  |line| { data: 3 6; tags: \"only\" }\n]\n",
+        "|chart| { categories: \"a\", \"b\" } [\n  |line| { data: 3, 6; tags: \"only\" }\n]\n",
     );
     assert!(e.contains("1 labels but the series has 2"), "{e}");
 }
@@ -587,7 +589,26 @@ fn tags_count_must_match_the_data() {
 #[test]
 fn tags_on_a_fn_series_error() {
     let e = layout_err(
-        "|chart| [\n  |axis| { side: bottom; range: 0 10 }\n  |axis| { side: left }\n  |line| { fn: (x); tags: \"a\" \"b\" }\n]\n",
+        "|chart| [\n  |axis| { side: bottom; range: 0 10 }\n  |axis| { side: left }\n  |line| { fn: (x); tags: \"a\", \"b\" }\n]\n",
     );
     assert!(e.contains("needs explicit 'data'"), "{e}");
+}
+
+#[test]
+fn a_legacy_space_data_list_errors_with_the_comma_spelling() {
+    // The 0.21 comma law [SPEC 2/20]: `data: 9 15 24` is the pre-law spelling.
+    let e = layout_err("|chart| [\n  |bars| { data: 9 15 24 }\n]\n");
+    assert!(
+        e.contains("'data' takes comma-separated values — 'data: 9, 15, 24'"),
+        "{e}"
+    );
+}
+
+#[test]
+fn a_lone_space_pair_is_one_point_never_two_values() {
+    // `data: 10 20` [SPEC 2]: one `x y` point — it draws a dot, not two bars.
+    let s = svg("|chart| [\n  |axis| { side: bottom }\n  |dots| { data: 10 20 }\n]\n");
+    assert!(s.contains("lini-chart"), "{s}");
+    let e = layout_err("|chart| { categories: \"a\", \"b\" } [\n  |bars| { data: 10 20 }\n]\n");
+    assert!(e.contains("not 'x y' points"), "{e}");
 }

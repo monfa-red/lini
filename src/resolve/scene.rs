@@ -265,22 +265,22 @@ pub fn resolve_node(
 }
 
 /// Hold a `fn:` series formula unevaluated [SPEC 14.3]: each value in the
-/// single space-group is a `(…)` expression — or a bare constant — parsed now
-/// (so a syntax error surfaces here, with this span) but **not** evaluated, since
-/// its `x` / `u` bind only at chart layout. A whole-domain `fn:` is one expression;
-/// a per-band list [SPEC 14.5] is several.
+/// comma-group is a `(…)` expression — or a bare constant — parsed now (so a
+/// syntax error surfaces here, with this span) but **not** evaluated, since its
+/// `x` / `u` bind only at chart layout. A whole-domain `fn:` is one expression;
+/// a per-band list is comma-separated [SPEC 2/14.5]: `fn: (u*10), 5, (2*u)`.
 fn defer_fn(d: &Decl) -> Result<ResolvedValue, Error> {
-    let [group] = d.groups.as_slice() else {
-        return Err(Error::at(
-            d.span,
-            "'fn' takes an expression or a space-separated per-band list, not a comma list",
-        ));
-    };
-    let mut exprs = Vec::with_capacity(group.len());
-    for v in group {
-        let src = match v {
-            Value::Expr(s) => s.clone(),
-            Value::Number(n) => n.to_string(),
+    let mut exprs = Vec::with_capacity(d.groups.len());
+    for group in &d.groups {
+        let src = match group.as_slice() {
+            [Value::Expr(s)] => s.clone(),
+            [Value::Number(n)] => n.to_string(),
+            [_, _, ..] => {
+                return Err(Error::at(
+                    d.span,
+                    "'fn' segments are comma-separated — 'fn: (u*10), 5, (2*u)'",
+                ));
+            }
             _ => {
                 return Err(Error::at(
                     d.span,

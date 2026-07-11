@@ -172,7 +172,8 @@ pub fn lay_out_grid(
 fn parse_tracks(value: &ResolvedValue, span: Span) -> Result<Vec<Track>, Error> {
     let mut out = Vec::new();
     match value {
-        ResolvedValue::Tuple(items) => {
+        // The comma law [SPEC 2]: a track list is comma-separated.
+        ResolvedValue::List(items) => {
             for item in items {
                 push_track(&mut out, item, span)?;
             }
@@ -255,7 +256,7 @@ fn cumulative(sizes: &[f64], gap: f64) -> Vec<f64> {
 }
 
 fn stretch(attrs: &AttrMap, name: &str) -> bool {
-    matches!(attrs.get(name), Some(ResolvedValue::Ident(s)) if s == "stretch")
+    ident(attrs.get(name)) == Some("stretch")
 }
 
 /// A per-column alignment keyword for column `c` [SPEC 12]: a scalar `Ident`
@@ -264,10 +265,18 @@ fn stretch(attrs: &AttrMap, name: &str) -> bool {
 fn track_align<'a>(attrs: &'a AttrMap, name: &str, c: usize) -> Option<&'a str> {
     match attrs.get(name)? {
         ResolvedValue::Ident(s) => Some(s.as_str()),
-        ResolvedValue::Tuple(items) => match items.get(c)? {
-            ResolvedValue::Ident(s) => Some(s.as_str()),
-            _ => None,
-        },
+        // Comma-separated, one keyword per column; a single entry reads for all.
+        ResolvedValue::List(items) => {
+            let item = if items.len() == 1 {
+                &items[0]
+            } else {
+                items.get(c)?
+            };
+            match item {
+                ResolvedValue::Ident(s) => Some(s.as_str()),
+                _ => None,
+            }
+        }
         _ => None,
     }
 }
@@ -335,6 +344,11 @@ fn flush(far: bool, near_center: f64, far_center: f64) -> f64 {
 fn ident(v: Option<&ResolvedValue>) -> Option<&str> {
     match v {
         Some(ResolvedValue::Ident(s)) => Some(s.as_str()),
+        // A normalized one-keyword list (`align: start`) [SPEC 2].
+        Some(ResolvedValue::List(items)) => match items.as_slice() {
+            [ResolvedValue::Ident(s)] => Some(s.as_str()),
+            _ => None,
+        },
         _ => None,
     }
 }

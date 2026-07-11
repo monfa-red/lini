@@ -156,7 +156,7 @@ fn parse(v: &ResolvedValue, span: Span) -> Result<Vec<(String, f64)>, Error> {
     };
     match v {
         ResolvedValue::List(items) => items.iter().map(one).collect(),
-        item => Ok(vec![one(item)?]),
+        item => one(item).map(|t| vec![t]),
     }
 }
 

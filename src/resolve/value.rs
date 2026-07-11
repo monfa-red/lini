@@ -109,7 +109,39 @@ pub fn resolve_property(
             "'hatch' is a fill — 'stroke' takes a colour or gradient",
         ));
     }
-    Ok(value)
+    apply_comma_law(name, value, span)
+}
+
+/// The comma law [SPEC 2]: a list-shaped property (ledger `shape` column) reads
+/// across comma-groups. A single group normalizes to a one-item `List`, so every
+/// reader sees one shape — and a space-separated legacy list is rejected here
+/// with the migration spelling when the list's items are scalars by definition
+/// (strings, keywords, tracks). Number lists pass through: their readers decide,
+/// since `data:` / `points:` items are legitimately `x y` pairs [SPEC 14.3].
+fn apply_comma_law(name: &str, value: ResolvedValue, span: Span) -> Result<ResolvedValue, Error> {
+    use properties::{Kind, Shape};
+    let Some(Shape::List(kind)) = properties::get(name).map(|p| &p.shape) else {
+        return Ok(value);
+    };
+    let items = match value {
+        ResolvedValue::List(items) => items,
+        one => vec![one],
+    };
+    let example = match kind {
+        Kind::Str => Some("\"a\", \"b\""),
+        Kind::Ident => Some("start, center, end"),
+        Kind::Track => Some("80, 140, auto"),
+        _ => None,
+    };
+    if let Some(example) = example
+        && items.iter().any(|i| matches!(i, ResolvedValue::Tuple(_)))
+    {
+        return Err(Error::at(
+            span,
+            format!("'{name}' takes comma-separated values — '{name}: {example}'"),
+        ));
+    }
+    Ok(ResolvedValue::List(items))
 }
 
 /// A `draw:` value [SPEC 15.3]: one run of pen items — calls (optionally naming

@@ -262,7 +262,7 @@ mod tests {
     #[test]
     fn a_title_block_seats_flush_inside_the_frame_corner() {
         let l = laid(
-            "|page#p| { sheet: a4 landscape } [\n  |title-block#tb| { columns: 40 auto } [ \"Part\" \"X\" ]\n]\n",
+            "|page#p| { sheet: a4 landscape } [\n  |title-block#tb| { columns: 40, auto } [ \"Part\" \"X\" ]\n]\n",
         );
         let p = by_id(&l.nodes, "p");
         let tb = by_id(&l.nodes, "tb");

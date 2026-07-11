@@ -286,6 +286,6 @@ fn read_categories(attrs: &AttrMap, span: Span) -> Result<Option<Vec<String>>, E
         return Ok(None);
     };
     let mut out = Vec::new();
-    collect_strings(v, &mut out, span)?;
+    collect_strings("categories", v, &mut out, span)?;
     Ok(Some(out))
 }

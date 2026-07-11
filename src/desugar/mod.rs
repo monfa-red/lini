@@ -351,7 +351,7 @@ fn lower_node(
     if (is_table || is_entity)
         && let Some(cols) = cols
     {
-        distribute_cell_alignment(&mut children, &node.style, cols, is_entity);
+        distribute_cell_alignment(&mut children, &node.style, cols, is_entity)?;
     }
 
     // The smart label, lowered per type [SPEC 3/7] — the single shared lowering

@@ -268,6 +268,11 @@ fn parse_cross(attrs: &AttrMap) -> Cross {
 fn ident(v: Option<&ResolvedValue>) -> Option<&str> {
     match v {
         Some(ResolvedValue::Ident(s)) => Some(s.as_str()),
+        // A normalized one-keyword list (`align: start`) [SPEC 2].
+        Some(ResolvedValue::List(items)) => match items.as_slice() {
+            [ResolvedValue::Ident(s)] => Some(s.as_str()),
+            _ => None,
+        },
         _ => None,
     }
 }
@@ -363,7 +368,7 @@ mod origin_tests {
         // Both views sit in one grid row: `justify: origin` (the vertical
         // axis) puts each datum on its row's centre line [SPEC 12].
         let l = laid(
-            "|grid#g| { columns: auto auto; justify: origin } [\n  |drawing#a| { scale: 1 } [\n    |oval#c1| { width: 20; height: 20 }\n    c1:left (-) c1:right { side: bottom }\n  ]\n  |drawing#b| { scale: 1 } [ |oval#c2| { width: 30; height: 30 } ]\n]\n",
+            "|grid#g| { columns: auto, auto; justify: origin } [\n  |drawing#a| { scale: 1 } [\n    |oval#c1| { width: 20; height: 20 }\n    c1:left (-) c1:right { side: bottom }\n  ]\n  |drawing#b| { scale: 1 } [ |oval#c2| { width: 30; height: 30 } ]\n]\n",
         );
         let (a, b) = (origin_y(&l.nodes, "a"), origin_y(&l.nodes, "b"));
         assert!((a - b).abs() < 1e-9, "row shares the axis: {a} vs {b}");

@@ -1,30 +1,30 @@
 |block| { layout: grid; columns: repeat(2); gap: 25; padding: 5; } [
   |chart| "Revenue by quarter ($M)" {
-    width: 350; height: 240; categories: "Q1" "Q2" "Q3" "Q4";
+    width: 350; height: 240; categories: "Q1", "Q2", "Q3", "Q4";
   } [
-    |bars| "2023" { data: 12 19 15 25; fill: --orange-soft; }
-    |bars| "2024" { data: 18 24 22 31; fill: --sky-soft; }
+    |bars| "2023" { data: 12, 19, 15, 25; fill: --orange-soft; }
+    |bars| "2024" { data: 18, 24, 22, 31; fill: --sky-soft; }
   ]
   |chart| "Active users (k)" {
-    width: 350; height: 240; categories: "Jan" "Feb" "Mar" "Apr" "May" "Jun";
+    width: 350; height: 240; categories: "Jan", "Feb", "Mar", "Apr", "May", "Jun";
   } [
     |axis#ms| { side: left; }
     |mark| "Goal" { at: 48; axis: ms; stroke: --red; stroke-style: dashed; }
 
     |line| "web" {
-      data: 16 18 22 28 35 42; curve: smooth; marker: dot; stroke: --teal; tags: "" "UI change" "" "" "Redesign" "";
+      data: 16, 18, 22, 28, 35, 42; curve: smooth; marker: dot; stroke: --teal; tags: "", "UI change", "", "", "Redesign", "";
     }
     |line| "app" {
-      data: 8 14 20 30 42 58; curve: smooth; marker: dot; stroke: --purple;
+      data: 8, 14, 20, 30, 42, 58; curve: smooth; marker: dot; stroke: --purple;
     }
   ]
   |chart| "Profiles" {
-    width: 350; height: 240; direction: radial; categories: "Speed" "Range" "Armor" "Cost" "Stealth" "humor";
+    width: 350; height: 240; direction: radial; categories: "Speed", "Range", "Armor", "Cost", "Stealth", "humor";
   } [
     |axis| { range: 0 6; }
-    |area| "Cruiser" { data: 3 4 5 5 4 4; fill: --green-soft; }
-    |line| "Scout" { data: 5 4 3 4 5 5; stroke: --rose; }
-    |line| "Truck" { data: 4 5 3 3 4 5; stroke: --blue; }
+    |area| "Cruiser" { data: 3, 4, 5, 5, 4, 4; fill: --green-soft; }
+    |line| "Scout" { data: 5, 4, 3, 4, 5, 5; stroke: --rose; }
+    |line| "Truck" { data: 4, 5, 3, 3, 4, 5; stroke: --blue; }
 
   ]
   |chart| "Reactor temperature (°C)" { width: 340; height: 240; } [

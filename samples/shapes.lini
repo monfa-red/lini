@@ -71,7 +71,7 @@
   ]
 ]
 |tile| [
-  |table| { columns: 24 24 24; } [
+  |table| { columns: 24, 24, 24; } [
     "a" "b" "c"
     "d" "e" "f"
   ]

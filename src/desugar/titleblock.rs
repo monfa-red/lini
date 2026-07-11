@@ -49,7 +49,8 @@ pub(super) fn expand_fields(style: &mut Vec<Decl>, span: Span) -> Vec<Node> {
     if !style.iter().any(|d| d.name == "columns") {
         style.push(Decl {
             name: "columns".into(),
-            groups: vec![vec![Value::Ident("auto".into()); COLUMNS]],
+            // Comma-shaped groups: `columns` is a track **list** [SPEC 2].
+            groups: vec![vec![Value::Ident("auto".into())]; COLUMNS],
             span,
         });
     }
@@ -183,7 +184,7 @@ mod tests {
     #[test]
     fn no_field_keeps_the_plain_table_form() {
         let tb = title_block(
-            "|page#p| [\n  |drawing#v| [ |rect#r| { width: 10; height: 10 } ]\n  |title-block| { columns: 40 auto } [ \"Scale\" \"1:1\" ]\n]\n",
+            "|page#p| [\n  |drawing#v| [ |rect#r| { width: 10; height: 10 } ]\n  |title-block| { columns: 40, auto } [ \"Scale\" \"1:1\" ]\n]\n",
         );
         // The authored cells stand; no field grid is synthesized.
         assert_eq!(cells(&tb).len(), 2, "the two authored cells");

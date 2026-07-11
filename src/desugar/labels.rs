@@ -87,17 +87,18 @@ pub(super) fn lower_link(w: &Link) -> Link {
     let has_along = style.iter().any(|d| d.name == "along");
     if !labels.is_empty() && !has_along {
         let n = labels.len();
-        let fractions: Vec<Value> = (0..n)
+        // Comma-shaped groups: `along` is a fraction **list** [SPEC 2].
+        let fractions: Vec<Vec<Value>> = (0..n)
             .map(|i| {
                 let f = (i as f64 + 1.0) / (n as f64 + 1.0);
-                Value::Number((f * 100.0).round() / 100.0)
+                vec![Value::Number((f * 100.0).round() / 100.0)]
             })
             .collect();
         style.insert(
             0,
             Decl {
                 name: "along".to_string(),
-                groups: vec![fractions],
+                groups: fractions,
                 span: w.span,
             },
         );
