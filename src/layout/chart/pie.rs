@@ -4,13 +4,15 @@
 //! the chart's box, palette, legend, and `<title>` machinery — the renderer learns nothing.
 
 use super::metrics::{LABEL_SIZE, TITLE_SIZE};
-use super::model::{self, Slice};
+use super::model::{Pie, Slice, fill_color, fill_outline, label_of, live, read_gap, tag};
+use super::palette;
 use super::scale::fmt_tick;
 use super::{chart_box, lay_out_legend, legend_reserve, title_reserve};
 use crate::error::Error;
 use crate::layout::PlacedNode;
 use crate::layout::prim;
-use crate::resolve::{AttrMap, ResolvedInst, ResolvedValue};
+use crate::resolve::{AttrMap, NodeKind, ResolvedInst, ResolvedValue};
+use crate::span::Span;
 use std::f64::consts::TAU;
 
 /// Is this node a pie container [SPEC 14.1]? Detected by its `layout:` attr.
@@ -21,7 +23,7 @@ pub fn is_pie(attrs: &AttrMap) -> bool {
 /// Lay a pie out into one `PlacedNode`: the chart box carrying the slice wedges, title,
 /// and legend.
 pub fn layout_pie(inst: &ResolvedInst) -> Result<PlacedNode, Error> {
-    let pie = model::build_pie(inst)?;
+    let pie = build_pie(inst)?;
     // A pie is square [SPEC 14.1].
     let w = inst.attrs.number("width").unwrap_or(280.0);
     let h = inst.attrs.number("height").unwrap_or(280.0);
@@ -88,5 +90,72 @@ fn slice_title(s: &Slice, total: f64) -> String {
     match &s.label {
         Some(l) => format!("{l}: {v} ({pct}%)"),
         None => format!("{v} ({pct}%)"),
+    }
+}
+
+/// Parse a `layout: pie` into its slices [SPEC 14.7]. All pie validation [SPEC 20]
+/// lives here; the wedge geometry is the renderer's job. Reuses the chart's `tag`,
+/// `label_of`, the `fill:` / `outline:` paint readers, and the palette walk (per
+/// slice — [SPEC 14.6]).
+pub fn build_pie(inst: &ResolvedInst) -> Result<Pie, Error> {
+    let span = inst.span;
+    let hole = read_hole(&inst.attrs)?;
+    let mut title = None;
+    let mut slice_insts = Vec::new();
+    for child in &inst.children {
+        if child.kind == NodeKind::Text {
+            if title.is_none() {
+                title = child
+                    .label
+                    .as_deref()
+                    .filter(|t| !t.is_empty())
+                    .map(str::to_string);
+            }
+            continue;
+        }
+        match tag(child) {
+            Some("slice") => slice_insts.push(child),
+            _ => return Err(Error::at(child.span, "a pie's children are '|slice|' only")),
+        }
+    }
+    if slice_insts.is_empty() {
+        return Err(Error::at(span, "a pie needs at least one '|slice|'"));
+    }
+    let mut slices = Vec::with_capacity(slice_insts.len());
+    for (i, s) in slice_insts.iter().enumerate() {
+        let value = s
+            .attrs
+            .number("value")
+            .ok_or_else(|| Error::at(s.span, "a '|slice|' needs a 'value:'"))?;
+        if value < 0.0 {
+            return Err(Error::at(s.span, "a '|slice|' value must be ≥ 0"));
+        }
+        let color =
+            fill_color(&s.attrs).unwrap_or_else(|| live(&format!("{}-soft", palette::hue(i))));
+        let edge = fill_outline(&s.attrs, &color);
+        slices.push(Slice {
+            value,
+            label: label_of(s),
+            color,
+            outline: edge,
+        });
+    }
+    if slices.iter().map(|s| s.value).sum::<f64>() <= 0.0 {
+        return Err(Error::at(span, "a pie's slice values sum to zero"));
+    }
+    Ok(Pie {
+        slices,
+        title,
+        hole,
+        gap: read_gap(&inst.attrs),
+    })
+}
+
+/// A pie's `hole:` fraction [SPEC 14.7] — `0` a pie, `0 < n < 1` a donut.
+fn read_hole(attrs: &AttrMap) -> Result<f64, Error> {
+    match attrs.get("hole") {
+        None => Ok(0.0),
+        Some(ResolvedValue::Number(n)) if *n >= 0.0 && *n < 1.0 => Ok(*n),
+        _ => Err(Error::at(Span::empty(), "'hole' is a fraction 0..1")),
     }
 }
