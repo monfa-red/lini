@@ -62,12 +62,22 @@ pub fn render(laid_out: &LaidOut, opts: &Options) -> String {
         let polys: Vec<&[(f64, f64)]> = laid_out.links.iter().map(|w| &w.path[..]).collect();
         let caps: Vec<f64> = laid_out.links.iter().map(links::radius_cap).collect();
         let targets = links::fillet_targets(&polys, &caps);
+        // Every label's cut box, document-wide: a label knocks out *any* wire
+        // beneath it, not only its own (a fan sibling's arc can pass under a
+        // label seated on its twin) [SPEC 9/17].
+        let cuts: Vec<(f64, f64, f64, f64)> = laid_out
+            .links
+            .iter()
+            .flat_map(|w| &w.texts)
+            .map(links::cut_rect)
+            .collect();
         for (idx, (link, targets)) in laid_out.links.iter().zip(&targets).enumerate() {
             links::render_link(
                 &mut body,
                 idx,
                 link,
                 targets,
+                &cuts,
                 &laid_out.vars,
                 &ruleset,
                 opts,

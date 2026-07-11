@@ -38,6 +38,7 @@ pub fn render_link(
     idx: usize,
     w: &RoutedLink,
     targets: &[f64],
+    cuts: &[(f64, f64, f64, f64)],
     vars: &VarTable,
     ruleset: &RuleSet,
     opts: &Options,
@@ -111,7 +112,7 @@ pub fn render_link(
     } else {
         0.0
     };
-    let mask = label_mask(idx, &w.path, &w.texts, thickness, reach);
+    let mask = label_mask(idx, &w.path, cuts, thickness, reach);
     let mask_attr = match &mask {
         Some((id, svg)) => {
             writeln!(out, "      {svg}").unwrap();
@@ -382,23 +383,36 @@ fn overlap_tip(tip: (f64, f64), dir: (f64, f64)) -> (f64, f64) {
     )
 }
 
-/// A luminance mask that cuts the link path out under each of its labels — the
-/// background-independent replacement for a painted halo. White shows the path
-/// (over its stroked bounds); a black box per label punches a hole. An explicit
+/// One label's cut box — the rect the mask punches out beneath it, and the
+/// rect other wires test against. One computation, so a label cuts every
+/// wire identically.
+pub(super) fn cut_rect(t: &RoutedText) -> (f64, f64, f64, f64) {
+    let size = t.attrs.number("font-size").unwrap_or(0.0);
+    let ls = t.attrs.number("letter-spacing").unwrap_or(0.0);
+    let lsp = t.attrs.number("line-spacing").unwrap_or(0.0);
+    let font = crate::font::Font::of(&t.attrs);
+    let cw = approx_width(&t.content, font, size, ls) + size * LABEL_CUT_PAD_H * 2.0;
+    let ch = approx_height(&t.content, size, lsp) + size * LABEL_CUT_PAD_V * 2.0;
+    let (cx, cy) = t.position;
+    (cx - cw / 2.0, cy - ch / 2.0, cw, ch)
+}
+
+/// A luminance mask that cuts the link path out under **every** label box the
+/// path reaches — its own and any other statement's (a fan sibling's arc can
+/// sweep beneath a label seated on its twin) — the background-independent
+/// replacement for a painted halo. White shows the path (over its stroked
+/// bounds); a black box per label punches a hole; a box the path never enters
+/// is a mask no-op, so the padded-bbox filter only trims noise. An explicit
 /// `userSpaceOnUse` region is required, else a straight link's near-flat bbox
 /// would shrink the default region to nothing and hide the whole link. `None`
-/// when the link carries no labels.
+/// when no label box reaches the path.
 fn label_mask(
     idx: usize,
     path: &[(f64, f64)],
-    texts: &[RoutedText],
+    cuts: &[(f64, f64, f64, f64)],
     thickness: f64,
     reach: f64,
 ) -> Option<(String, String)> {
-    if texts.is_empty() {
-        return None;
-    }
-    let id = format!("lini-label-cut-{idx}");
     let pad = thickness / 2.0 + 1.0 + reach;
     let (mut x0, mut y0, mut x1, mut y1) = (f64::MAX, f64::MAX, f64::MIN, f64::MIN);
     for &(x, y) in path {
@@ -409,6 +423,16 @@ fn label_mask(
     }
     let (rx, ry) = (x0 - pad, y0 - pad);
     let (rw, rh) = (x1 - x0 + 2.0 * pad, y1 - y0 + 2.0 * pad);
+    let hits: Vec<&(f64, f64, f64, f64)> = cuts
+        .iter()
+        .filter(|(cx, cy, cw, ch)| {
+            cx + cw >= rx && *cx <= rx + rw && cy + ch >= ry && *cy <= ry + rh
+        })
+        .collect();
+    if hits.is_empty() {
+        return None;
+    }
+    let id = format!("lini-label-cut-{idx}");
     // The mask rects carry their fill/stroke via CSS (`.lini-cut-bg` /
     // `.lini-cut`), not inline — so the link's own `stroke` can't bleed into the
     // luminance mask, and the SVG stays free of per-label paint [SPEC 17].
@@ -423,21 +447,14 @@ fn label_mask(
         num(rw),
         num(rh),
     );
-    for t in texts {
-        let size = t.attrs.number("font-size").unwrap_or(0.0);
-        let ls = t.attrs.number("letter-spacing").unwrap_or(0.0);
-        let lsp = t.attrs.number("line-spacing").unwrap_or(0.0);
-        let font = crate::font::Font::of(&t.attrs);
-        let cw = approx_width(&t.content, font, size, ls) + size * LABEL_CUT_PAD_H * 2.0;
-        let ch = approx_height(&t.content, size, lsp) + size * LABEL_CUT_PAD_V * 2.0;
-        let (cx, cy) = t.position;
+    for (cx, cy, cw, ch) in hits {
         write!(
             m,
             r#"<rect class="lini-cut" x="{}" y="{}" width="{}" height="{}"/>"#,
-            num(cx - cw / 2.0),
-            num(cy - ch / 2.0),
-            num(cw),
-            num(ch),
+            num(*cx),
+            num(*cy),
+            num(*cw),
+            num(*ch),
         )
         .unwrap();
     }

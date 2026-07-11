@@ -396,7 +396,7 @@ input_file: samples/links.lini
   </g>
   <g class="lini-links">
     <g class="lini-link" data-from="rooms.garden.outlet" data-to="rooms.kitchen.inlet">
-      <mask id="lini-label-cut-0" maskUnits="userSpaceOnUse" x="-52.5" y="94" width="109.5" height="87"><rect class="lini-cut-bg" x="-52.5" y="94" width="109.5" height="87"/><rect class="lini-cut" x="-26.4" y="128.1" width="52.8" height="14.3"/></mask>
+      <mask id="lini-label-cut-0" maskUnits="userSpaceOnUse" x="-52.5" y="94" width="109.5" height="87"><rect class="lini-cut-bg" x="-52.5" y="94" width="109.5" height="87"/><rect class="lini-cut" x="-26.4" y="128.1" width="52.8" height="14.3"/><rect class="lini-cut" x="-35.8" y="112.1" width="39.6" height="14.3"/><rect class="lini-cut" x="-3.8" y="144.1" width="39.6" height="14.3"/></mask>
       <path d="M -50.5 179 L -32 179 A 32 32 0 0 0 0 147 L 0 128 A 32 32 0 0 1 32 96 L 51.5 96" mask="url(#lini-label-cut-0)"/>
       <polygon class="lini-marker lini-marker-arrow" points="55.5,96 46.5,100.5 46.5,91.5"/>
       <g class="lini-link-label">
@@ -426,7 +426,7 @@ input_file: samples/links.lini
       </g>
     </g>
     <g class="lini-link" data-from="rooms.garden.inlet" data-to="rooms.garden.outlet">
-      <mask id="lini-label-cut-2" maskUnits="userSpaceOnUse" x="-57" y="102" width="43" height="63"><rect class="lini-cut-bg" x="-57" y="102" width="43" height="63"/><rect class="lini-cut" x="-35.8" y="112.1" width="39.6" height="14.3"/></mask>
+      <mask id="lini-label-cut-2" maskUnits="userSpaceOnUse" x="-57" y="102" width="43" height="63"><rect class="lini-cut-bg" x="-57" y="102" width="43" height="63"/><rect class="lini-cut" x="-26.4" y="128.1" width="52.8" height="14.3"/><rect class="lini-cut" x="-35.8" y="112.1" width="39.6" height="14.3"/></mask>
       <path d="M -55 104 L -32 104 A 16 16 0 0 1 -16 120 L -16 147 A 16 16 0 0 1 -32 163 L -47 163" mask="url(#lini-label-cut-2)"/>
       <polygon class="lini-marker lini-marker-arrow" points="-51,163 -42,158.5 -42,167.5"/>
       <g class="lini-link-label">
@@ -438,7 +438,7 @@ input_file: samples/links.lini
       </g>
     </g>
     <g class="lini-link" data-from="rooms.kitchen.inlet" data-to="rooms.kitchen.outlet">
-      <mask id="lini-label-cut-3" maskUnits="userSpaceOnUse" x="14" y="110" width="43" height="63"><rect class="lini-cut-bg" x="14" y="110" width="43" height="63"/><rect class="lini-cut" x="-3.8" y="144.1" width="39.6" height="14.3"/></mask>
+      <mask id="lini-label-cut-3" maskUnits="userSpaceOnUse" x="14" y="110" width="43" height="63"><rect class="lini-cut-bg" x="14" y="110" width="43" height="63"/><rect class="lini-cut" x="-26.4" y="128.1" width="52.8" height="14.3"/><rect class="lini-cut" x="-3.8" y="144.1" width="39.6" height="14.3"/></mask>
       <path d="M 55 112 L 32 112 A 16 16 0 0 0 16 128 L 16 155 A 16 16 0 0 0 32 171 L 47 171" mask="url(#lini-label-cut-3)"/>
       <polygon class="lini-marker lini-marker-arrow" points="51,171 42,175.5 42,166.5"/>
       <g class="lini-link-label">
