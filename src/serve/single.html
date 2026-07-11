@@ -3,6 +3,15 @@
     <head>
         <meta charset="utf-8" />
         <title>lini — {{TITLE}}</title>
+        <!-- The bundled families as webfonts, so the live preview's name-only
+        SVG (`<text>`, no embedded bytes) renders on the exact faces layout
+        measured with [SPEC 6/17]. -->
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+        href="https://fonts.googleapis.com/css2?family=Google+Sans+Code:ital,wght,MONO@0,300..800,1;1,300..800,1&family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&display=swap"
+        rel="stylesheet"
+        />
         <style>
             * {
                 box-sizing: border-box;
