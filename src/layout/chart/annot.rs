@@ -189,7 +189,7 @@ fn ref_line(plot: &Plot, chart: &Chart, m: &Mark, v: f64, out: &mut Vec<PlacedNo
 /// (the primary axis if the mark binds the x axis). `marker: none` drops the dot. The
 /// label joins the shared placement pass [SPEC 14.8] — forced (a mark is a
 /// deliberate annotation, so its label is always placed, never dropped) yet registered, so
-/// a series' tags fan out around it. `tooltip: none` suppresses it.
+/// a series' labels fan out around it. `tooltip: none` suppresses it.
 fn point(
     plot: &Plot,
     chart: &Chart,

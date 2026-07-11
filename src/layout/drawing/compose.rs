@@ -2,7 +2,7 @@
 //! **op** the glyph (`⌀` / `R` / `°`), the **geometry** the number, the
 //! **label** the words (two-ended: replaces the number; one-ended: follows
 //! it), **`tol:`** the tolerance, **`pattern:`** the `N×` count prefix, and
-//! `unit:` its suffix on auto-measured linear values (a glyph reading is
+//! (`unit:` is the semantic quantity only — no per-value suffix; a glyph reading is
 //! symbol-speak — the SPEC 24 dims read `300 mm` but `⌀20 h6`).
 
 use super::super::ir::PlacedNode;
@@ -46,7 +46,6 @@ pub(super) fn compose(
     replaces: Option<&str>,
     follows: Option<&str>,
     attrs: &AttrMap,
-    unit: Option<&str>,
     span: Span,
 ) -> Result<DimText, Error> {
     let mut main = String::new();
@@ -56,17 +55,13 @@ pub(super) fn compose(
     match replaces {
         Some(label) => main.push_str(label),
         None => {
+            // A bare number: drafting states units once, in the title block —
+            // a per-value suffix arrives with `format:` [SPEC 15.1/23].
             match glyph {
                 Glyph::None => main.push_str(&fmt(value)),
                 Glyph::Dia => main.push_str(&format!("⌀{}", fmt(value))),
                 Glyph::R => main.push_str(&format!("R{}", fmt(value))),
                 Glyph::Deg => main.push_str(&format!("{}°", fmt(value))),
-            }
-            if glyph == Glyph::None
-                && let Some(u) = unit
-            {
-                main.push(' ');
-                main.push_str(u);
             }
         }
     }
@@ -124,23 +119,22 @@ fn signed(v: f64) -> String {
 
 /// A composed section / detail view title [SPEC 15.8]: the uppercased letter —
 /// **doubled** for a section (`A-A`), single for a detail (`C`) — then the
-/// drafting ratio in parentheses. `own` is the view's scale, `page` the
-/// enclosing page's; a magnified view reads `2:1`, a reduced one `1:1.5`.
-pub(super) fn section_title(kind: &str, letter: &str, own: f64, page: f64) -> String {
+/// drafting ratio in parentheses — the view's authored `scale:` (the ratio,
+/// default 1) read directly [SPEC 15.1/15.8]: a magnified view reads `2:1`,
+/// a reduced one `1:1.5`.
+pub(super) fn section_title(kind: &str, letter: &str, ratio: f64) -> String {
     let l = letter.to_uppercase();
     let head = if kind == "detail" {
         l
     } else {
         format!("{l}-{l}")
     };
-    format!("{head} ({})", ratio(own, page))
+    format!("{head} ({})", ratio_text(ratio))
 }
 
-/// The drafting scale ratio `own : page` [SPEC 15.8], normalised so one side is
-/// 1: an enlargement `r ≥ 1` reads `r:1`, a reduction `1:1/r`; each side at
-/// most 2 dp.
-fn ratio(own: f64, page: f64) -> String {
-    let r = own / page;
+/// A drafting ratio normalised so one side is 1 [SPEC 15.8]: an enlargement
+/// `r ≥ 1` reads `r:1`, a reduction `1:1/r`; each side at most 2 dp.
+fn ratio_text(r: f64) -> String {
     if r >= 1.0 {
         format!("{}:1", fmt(r))
     } else {

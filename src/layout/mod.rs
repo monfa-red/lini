@@ -110,14 +110,19 @@ impl Ctx {
     }
 }
 
-/// A node's effective `scale:` — its own when set (must be > 0, [SPEC 20]),
-/// else the inherited one.
+/// A node's effective multiplier: the desugar-folded `px-per-unit:` when
+/// present (a drawing scope / page — ratio × unit × density, [SPEC 15.1/18]),
+/// else its own `scale:` (sheet chrome pins 1), else the inherited one.
 pub(crate) fn effective_scale(
     attrs: &crate::resolve::AttrMap,
     inherited: f64,
     span: Span,
 ) -> Result<f64, Error> {
-    match attrs.get("scale") {
+    let own = match attrs.get("px-per-unit") {
+        Some(v) => Some(v),
+        None => attrs.get("scale"),
+    };
+    match own {
         None => Ok(inherited),
         Some(v) => match v.as_number() {
             Some(s) if s > 0.0 => Ok(s),
@@ -172,6 +177,50 @@ fn child_path(parent: &str, inst: &ResolvedInst) -> String {
 /// Validate a laid-out scene's links against the routing contract (ROUTING.md):
 /// the engine's own report (drawn crossings, impossible links), then the
 /// independent four-law check. Used by `lini::validate_str`.
+/// The absurd-extent hint [SPEC 15.1/20]: a drawing view rendering wider or
+/// taller than the threshold almost certainly authored a magnitude into
+/// `scale:` (a ratio) — say so, with the likely fix. Pages are bounded by
+/// their sheet and never hint.
+pub fn extent_hints(laid: &LaidOut, program: &Program) -> Vec<crate::error::Diagnostic> {
+    fn walk(nodes: &[PlacedNode], out: &mut Vec<crate::error::Diagnostic>) {
+        for n in nodes {
+            let is_drawing =
+                n.attrs.get("px-per-unit").is_some() && !n.type_chain.iter().any(|t| t == "page");
+            if is_drawing {
+                let (w, h) = (n.bbox.w(), n.bbox.h());
+                if w.max(h) > crate::ledger::consts::ABSURD_EXTENT_PX {
+                    let (extent, axis) = if w >= h { (w, "wide") } else { (h, "tall") };
+                    out.push(crate::error::Diagnostic::warn(
+                        n.span,
+                        format!(
+                            "the drawing renders {} px {axis} — 'scale:' is a ratio; a 5 m beam at 1:50 is 'scale: 0.02'",
+                            extent.round()
+                        ),
+                    ));
+                }
+            }
+            walk(&n.children, out);
+        }
+    }
+    let mut out = Vec::new();
+    // A `{ layout: drawing }` root is a view too — judge the whole canvas.
+    if program.scene.attrs.get("px-per-unit").is_some() {
+        let (w, h) = (laid.viewbox.w, laid.viewbox.h);
+        if w.max(h) > crate::ledger::consts::ABSURD_EXTENT_PX {
+            let (extent, axis) = if w >= h { (w, "wide") } else { (h, "tall") };
+            out.push(crate::error::Diagnostic::warn(
+                Span::empty(),
+                format!(
+                    "the drawing renders {} px {axis} — 'scale:' is a ratio; a 5 m beam at 1:50 is 'scale: 0.02'",
+                    extent.round()
+                ),
+            ));
+        }
+    }
+    walk(&laid.nodes, &mut out);
+    out
+}
+
 pub fn validate_routing(laid: &LaidOut) -> Vec<routing::Violation> {
     let mut out = laid.link_report.clone();
     out.extend(routing::validate_routing(

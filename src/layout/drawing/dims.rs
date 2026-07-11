@@ -69,7 +69,6 @@ pub(super) fn linear(
             label.map(|t| t.text.as_str()),
             None,
             &w.attrs,
-            ctx.unit,
             w.span,
         )?;
         let side = stack_side(&w.attrs, axis, corner_pull(&a, &b, axis), w.span)?;

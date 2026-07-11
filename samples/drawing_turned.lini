@@ -14,7 +14,7 @@
 
 // A 300 mm tie bar with chamfered ends: `thread:` composes the M20×1.5 spec
 // the bare leader calls out, and `break:` cuts the featureless middle.
-|drawing#tiebar-view| "TIE BAR" { scale: 3; unit: "mm"; } [
+|drawing#tiebar-view| "TIE BAR" { scale: 0.75; unit: mm; } [
   |sketch#bar| {
     draw: move(-150, 0) up(10) chamfer(1.5) right(40):m20 point():a right(260)
           chamfer(1.5) down(10);
@@ -33,7 +33,7 @@
 
 // A stepped shaft: the groove lips and chamfers draw their edge lines, the
 // filleted step root (tangent) draws none, and the centre bore is |hidden|.
-|drawing#shaft-view| "STEPPED SHAFT" { scale: 3; unit: "mm"; } [
+|drawing#shaft-view| "STEPPED SHAFT" { scale: 0.75; unit: mm; } [
   |sketch#shaft| {
     draw: move(-60, 0) up(12) chamfer(1.5) right(50) down(3) right(6):groove
           up(3) right(30) down(4) fillet(3):r1 right(34) chamfer(1) down(8);
@@ -57,7 +57,7 @@
 // The multi-section barrel — one named profile carries every value: stations
 // chain on one row, ⌀ fits stack at the left in source order, datum A sits on
 // the land, and the patterned M8 holes take a typed thread callout.
-|drawing#barrel-view| "BARREL" { scale: 2; } [
+|drawing#barrel-view| "BARREL" { scale: 0.5; } [
   |sketch#body| {
     draw: move(-242.5, 0) up(21) chamfer(1.5) right(38):m42 point():tl
           right(32):land up(1.5):sh1 right(14):port down(4):sh2 right(7):groove

@@ -763,3 +763,42 @@ fn link_label_supports_multiline_and_letter_spacing() {
         "baked letter-spacing: {label}"
     );
 }
+
+#[test]
+fn a_sketch_outside_a_drawing_scope_stays_pixel_space() {
+    // SPEC 15.1: `unit:` / density are semantic only in drawing scopes — a
+    // sketch in a flow diagram is pixels: `right(300)` spans exactly 300.
+    let l = lini::testing::route_sample(
+        "|sketch#s| { draw: move(0, 0) right(300) down(10) left(300) close(); stroke-width: 0 }\n",
+        16.0,
+    );
+    let (x0, _, x1, _) = lini::testing::node_rect(&l, "s").expect("sketch rect");
+    assert!(
+        (x1 - x0 - 300.0).abs() < 1e-6,
+        "pixel-space width: {}",
+        x1 - x0
+    );
+}
+
+#[test]
+fn an_absurd_drawing_extent_draws_the_ratio_hint() {
+    // A 5 m beam authored at ratio 1 [SPEC 20] — the hint names the fix.
+    let (_, diags) = lini::compile_str_checked(
+        "{ layout: drawing; unit: m }\n|rect#beam| { width: 5; height: 0.4 }\n",
+        &Options::default(),
+    )
+    .expect("compile");
+    assert!(
+        diags
+            .iter()
+            .any(|d| d.message.contains("'scale:' is a ratio")),
+        "{diags:?}"
+    );
+    // At the honest ratio the hint is silent.
+    let (_, diags) = lini::compile_str_checked(
+        "{ layout: drawing; unit: m; scale: 0.02 }\n|rect#beam| { width: 5; height: 0.4 }\n",
+        &Options::default(),
+    )
+    .expect("compile");
+    assert!(diags.is_empty(), "{diags:?}");
+}

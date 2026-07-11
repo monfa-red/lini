@@ -1,11 +1,11 @@
-//! Inline data labels [SPEC 14.8]: a series' `tags:` drawn on the plot beside their
+//! Inline data labels [SPEC 14.8]: a series' `labels:` drawn on the plot beside their
 //! points, positioned by one greedy, deterministic pass. Each label takes the first
 //! candidate offset that clears the labels already placed, stays inside the plot, and
 //! sits off the series lines; an `auto` label with nowhere to sit is dropped (its hover
 //! card still carries the tag), an `always` label is forced. Fast and order-stable —
 //! O(labels² + labels·segments) over the *sparse* data points, never the iterative
 //! relaxation links route with. This is the one home for "text beside a chart point";
-//! series tags feed it here, with bubbles / marks routed in next to them, so every point
+//! series labels feed it here, with bubbles / marks routed in next to them, so every point
 //! label is placed by the same rule.
 
 use super::marks;
@@ -50,13 +50,13 @@ pub(super) struct Inside {
 }
 
 /// Append the inline-label requests a chart's series raise [SPEC 14.8]: each
-/// `tags:` entry on a series whose `tooltip:` shows inline, anchored on the datum's pixel
+/// `labels:` entry on a series whose `tooltip:` shows inline, anchored on the datum's pixel
 /// point. Reuses `marks::samples`, so a tag sits on exactly the point its marker does.
 /// (`|bubble|` / `|mark|` push their own reqs as they lay out — the same `reqs` list, so
 /// every point label dedups against every other.)
 pub(super) fn collect_series(plot: &Plot, chart: &Chart, reqs: &mut Vec<Req>) {
     for ser in &chart.series {
-        if ser.tags.is_empty() || !ser.tooltip.inline() {
+        if ser.labels.is_empty() || !ser.tooltip.inline() {
             continue;
         }
         // The marker the tag must clear: a `|dots|`'s `width`, a line/area's vertex marker
@@ -68,7 +68,8 @@ pub(super) fn collect_series(plot: &Plot, chart: &Chart, reqs: &mut Vec<Req>) {
             }
             _ => 0.0,
         };
-        for (((xd, yd), (xp, yp)), tag) in marks::samples(plot, chart, ser).iter().zip(&ser.tags) {
+        for (((xd, yd), (xp, yp)), tag) in marks::samples(plot, chart, ser).iter().zip(&ser.labels)
+        {
             if tag.is_empty() || !marks::in_domain(chart, ser, *xd, *yd) {
                 continue;
             }

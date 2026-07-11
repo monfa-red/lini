@@ -12,7 +12,9 @@
 |box#pay| "Payments" { fill: --green-wash; stroke: --green-deep; padding: 18; }
 |slant#db| "Orders" { fill: --orange-wash; stroke: --orange-deep; padding: 18; }
 
-|note| "starts checkout" { over: user; fill: --rose-soft; stroke: --rose-deep; }
+|note| "starts checkout" {
+  place: over user; fill: --rose-soft; stroke: --rose-deep;
+}
 
 user -> shop "place order"
 shop -> pay "charge $42"

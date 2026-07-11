@@ -112,13 +112,11 @@ pub(in crate::layout) fn resolve_of<'a>(
 /// to the circle (drawing its boundary), lower the detail's own annotations
 /// against the clones, and title it `C (ratio)` from the marker's letter.
 /// Returns the detail's children; the engine sizes and places the container.
-#[allow(clippy::too_many_arguments)]
 pub(in crate::layout) fn layout_detail(
     inst: &ResolvedInst,
     path: &str,
     program: &Program,
     own: f64,
-    page: f64,
     marker: &ResolvedInst,
     host: &ResolvedInst,
     letter: &str,
@@ -156,11 +154,7 @@ pub(in crate::layout) fn layout_detail(
     } else {
         Vec::new()
     };
-    let unit = match inst.attrs.get("unit") {
-        Some(ResolvedValue::String(u)) => Some(u.as_str()),
-        _ => None,
-    };
-    let mut annotations = super::annotate::lower(&clones, &links, path, own, unit, Some(circle))?;
+    let mut annotations = super::annotate::lower(&clones, &links, path, own, Some(circle))?;
 
     // Clip the clones to the region circle (one interned <clipPath> at render),
     // then draw the boundary circle over it [SPEC 15.8].
@@ -173,7 +167,12 @@ pub(in crate::layout) fn layout_detail(
     for c in &inst.children {
         own_kids.push(layout_inst(c, &child_path(path, c), program, ctx)?);
     }
-    fill_of_title(&mut own_kids, "detail", letter, own, page);
+    fill_of_title(
+        &mut own_kids,
+        "detail",
+        letter,
+        inst.attrs.number("scale").unwrap_or(1.0),
+    );
 
     let mut kids = vec![clip_group, boundary_circle(inst, r)];
     kids.append(&mut annotations);
@@ -188,10 +187,9 @@ pub(in crate::layout) fn fill_of_title(
     kids: &mut [PlacedNode],
     kind: &str,
     letter: &str,
-    own: f64,
-    page: f64,
+    ratio: f64,
 ) {
-    let title = section_title(kind, letter, own, page);
+    let title = section_title(kind, letter, ratio);
     for k in kids
         .iter_mut()
         .filter(|k| k.attrs.get("of-title").is_some())

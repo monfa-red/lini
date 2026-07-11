@@ -216,7 +216,7 @@ mod tests {
 
     #[test]
     fn a_thread_draws_its_minors_and_end_line() {
-        let l = laid(&format!("{{ layout: drawing; scale: 1 }}\n{BAR}"));
+        let l = laid(&format!("{{ layout: drawing; density: 1 }}\n{BAR}"));
         // Two minor lines at ±(10 − 0.61343·1.5) ≈ ±9.08, spanning the drawn
         // run: from the chamfer's trim (−148.5) to the authored end (−110).
         let minors = lines_of(&l.nodes, "bar", "threadline");
@@ -245,7 +245,7 @@ mod tests {
     #[test]
     fn a_bare_leader_composes_the_thread_spec() {
         let l = laid(&format!(
-            "{{ layout: drawing; scale: 1 }}\n{BAR}bar:m20 <- {{ side: top }}\n"
+            "{{ layout: drawing; density: 1 }}\n{BAR}bar:m20 <- {{ side: top }}\n"
         ));
         assert!(
             texts(&l.nodes).iter().any(|(t, ..)| t == "M20×1.5"),
@@ -258,7 +258,7 @@ mod tests {
     fn a_bare_leader_off_a_thread_still_needs_its_text() {
         assert_eq!(
             layout_err(
-                "{ layout: drawing; scale: 1 }\n|rect#a| { width: 10 }\na <- { side: top }\n"
+                "{ layout: drawing; density: 1 }\n|rect#a| { width: 10 }\na <- { side: top }\n"
             ),
             "a leader needs its text — 'bolt <- \"THRU\"'"
         );
@@ -267,7 +267,7 @@ mod tests {
     #[test]
     fn a_hole_thread_draws_the_internal_arc_and_an_oval_the_external() {
         let l = laid(
-            "{ layout: drawing; scale: 2 }\n|rect#plate| { width: 60; height: 40 } [\n  |hole#tap| { width: 6.75; thread: 1 }\n]\n",
+            "{ layout: drawing; scale: 2; density: 1 }\n|rect#plate| { width: 60; height: 40 } [\n  |hole#tap| { width: 6.75; thread: 1 }\n]\n",
         );
         let arc = by_id(&l.nodes, "tap")
             .children
@@ -282,7 +282,7 @@ mod tests {
             arc.bbox.w() / 2.0
         );
         let ext = laid(
-            "{ layout: drawing; scale: 2 }\n|oval#stud| { width: 8; fill: none; thread: 1.25 }\n",
+            "{ layout: drawing; scale: 2; density: 1 }\n|oval#stud| { width: 8; fill: none; thread: 1.25 }\n",
         );
         let arc = by_id(&ext.nodes, "stud")
             .children
@@ -301,7 +301,7 @@ mod tests {
     fn thread_errors_follow_spec_20() {
         let sketch = |style: &str| {
             format!(
-                "{{ layout: drawing; scale: 1 }}\n|sketch#s| {{ draw: move(-20, 0) up(5) right(40):m8 down(5); {style} }}\n"
+                "{{ layout: drawing; density: 1 }}\n|sketch#s| {{ draw: move(-20, 0) up(5) right(40):m8 down(5); {style} }}\n"
             )
         };
         assert_eq!(
@@ -318,7 +318,7 @@ mod tests {
         );
         assert_eq!(
             layout_err(
-                "{ layout: drawing; scale: 1 }\n|sketch#s| { draw: move(-20, 0) up(5):wall right(40) down(5); revolve: x-axis; thread: wall 1.5 }\n"
+                "{ layout: drawing; density: 1 }\n|sketch#s| { draw: move(-20, 0) up(5):wall right(40) down(5); revolve: x-axis; thread: wall 1.5 }\n"
             ),
             "'thread' runs along the axis — 'wall' must be a straight run parallel to it"
         );

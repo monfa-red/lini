@@ -19,7 +19,7 @@
   // dimensions only — beats |-|, the more specific type
 }
 
-|drawing#plate-view| "COVER PLATE" { unit: "mm"; } [
+|drawing#plate-view| "COVER PLATE" { unit: mm; } [
   |rect#plate| { width: 150; height: 70; } [
     |hole#bolt| { width: 10; translate: -50 -15; pattern: grid(2, 2, 100, 30); }
     |hole#dowel| { width: 6; translate: 0 15; }
@@ -39,7 +39,7 @@
   // ⌀6 — the leader steered
 ]
 
-|drawing#bracket-view| "CLAMP BRACKET" { scale: 3; } [
+|drawing#bracket-view| "CLAMP BRACKET" { scale: 0.75; } [
   |sketch#bracket| {
     draw: move(-40, 30) right(80):base fillet(6):heel up(60):wall
           line(-80, 60):flank close();

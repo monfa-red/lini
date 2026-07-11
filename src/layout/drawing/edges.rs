@@ -210,7 +210,7 @@ mod tests {
         // A stepped shaft: ⌀20 → ⌀30 at x = -10, the step corners sharp on one
         // side, filleted on the other — only the sharp station draws.
         let l = laid(
-            "{ layout: drawing; scale: 1 }\n|sketch#s| { draw: move(-50, 0) up(10) right(40) up(5) right(60) fillet(4) down(15); revolve: x-axis }\n",
+            "{ layout: drawing; density: 1 }\n|sketch#s| { draw: move(-50, 0) up(10) right(40) up(5) right(60) fillet(4) down(15); revolve: x-axis }\n",
         );
         let lines = edge_lines(&l.nodes, "s");
         // The step at x = -10 has two sharp vertices (offsets 10 and 15) — one
@@ -227,7 +227,7 @@ mod tests {
         // that station); its small-end span coincides with the drawn end face
         // and is skipped [SPEC 15.3].
         let l = laid(
-            "{ layout: drawing; scale: 1 }\n|sketch#s| { draw: move(-50, 0) up(10) right(100) chamfer(2) down(10); revolve: x-axis }\n",
+            "{ layout: drawing; density: 1 }\n|sketch#s| { draw: move(-50, 0) up(10) right(100) chamfer(2) down(10); revolve: x-axis }\n",
         );
         let lines = edge_lines(&l.nodes, "s");
         assert_eq!(lines.len(), 1, "only the big-end circle: {lines:?}");
@@ -237,7 +237,7 @@ mod tests {
     #[test]
     fn a_groove_draws_both_lips_full_span() {
         let l = laid(
-            "{ layout: drawing; scale: 1 }\n|sketch#s| { draw: move(-50, 0) up(10) right(40) down(3) right(6) up(3) right(54) down(10); revolve: x-axis }\n",
+            "{ layout: drawing; density: 1 }\n|sketch#s| { draw: move(-50, 0) up(10) right(40) down(3) right(6) up(3) right(54) down(10); revolve: x-axis }\n",
         );
         let lines = edge_lines(&l.nodes, "s");
         let full: Vec<_> = lines
@@ -250,7 +250,7 @@ mod tests {
     #[test]
     fn edge_lines_scale_and_the_cascade_removes_them() {
         let l = laid(
-            "{ layout: drawing; scale: 2 }\n|sketch#s| { draw: move(-50, 0) up(10) right(40) up(5) right(60) down(15); revolve: x-axis }\n",
+            "{ layout: drawing; scale: 2; density: 1 }\n|sketch#s| { draw: move(-50, 0) up(10) right(40) up(5) right(60) down(15); revolve: x-axis }\n",
         );
         let lines = edge_lines(&l.nodes, "s");
         assert!(
@@ -293,7 +293,7 @@ mod tests {
         // The |hidden| template [SPEC 8]: interior geometry on its own dashed
         // child, dimensionable like any feature.
         let l = laid(
-            "{ layout: drawing; scale: 1 }\n|sketch#s| { draw: move(0, 0) up(10) right(40) down(10); revolve: x-axis } [\n  |hidden#socket| { draw: move(0, 3) right(4) line(3, -3); mirror: x-axis }\n]\n",
+            "{ layout: drawing; density: 1 }\n|sketch#s| { draw: move(0, 0) up(10) right(40) down(10); revolve: x-axis } [\n  |hidden#socket| { draw: move(0, 3) right(4) line(3, -3); mirror: x-axis }\n]\n",
         );
         let socket = by_id(&l.nodes, "socket");
         assert_eq!(socket.kind, crate::resolve::NodeKind::Sketch);

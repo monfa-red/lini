@@ -79,7 +79,8 @@ pub fn compile_str_checked(src: &str, opts: &Options) -> Result<(String, Vec<Dia
     let program = resolve_pipeline(src, opts)?;
     let mut laid_out = layout::layout(&program)?;
     render::lower_paints(&mut laid_out);
-    let diags = routing_diagnostics_of(layout::validate_routing(&laid_out));
+    let mut diags = layout::extent_hints(&laid_out, &program);
+    diags.extend(routing_diagnostics_of(layout::validate_routing(&laid_out)));
     Ok((finish_svg(&laid_out, opts), diags))
 }
 

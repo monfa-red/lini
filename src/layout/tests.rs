@@ -174,7 +174,7 @@ fn a_pages_only_scene_carries_its_physical_mm() {
         "{w}×{h} mm"
     );
     // A non-sheet scene sizes in pixels.
-    let d = lay_out("{ layout: drawing; scale: 1 }\n|rect#r| { width: 10; height: 10 }\n");
+    let d = lay_out("{ layout: drawing; density: 1 }\n|rect#r| { width: 10; height: 10 }\n");
     assert_eq!(d.physical, None);
 }
 

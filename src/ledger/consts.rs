@@ -84,3 +84,8 @@ pub(crate) const NOTE_FOLD_MAX: f64 = 15.0;
 /// on the left [SPEC 15.8].
 pub(crate) const SHEET_MARGIN: f64 = 10.0;
 pub(crate) const SHEET_FILING: f64 = 20.0;
+
+/// The absurd-rendered-extent hint threshold [SPEC 20]: a drawing wider or
+/// taller than this many px almost certainly authored a magnitude into
+/// `scale:` — the hint names the ratio fix.
+pub const ABSURD_EXTENT_PX: f64 = 10_000.0;

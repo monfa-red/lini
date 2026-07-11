@@ -29,7 +29,7 @@ use std::collections::{HashMap, HashSet};
 /// Attr names desugar/layout write internally (view chrome, detail clips, the
 /// sourced-view title, mate seating) — never user properties, but present when
 /// a lowered file (`lini desugar` output) is compiled back.
-const INTERNAL: &[&str] = &["chrome", "clip", "of-title", "mount"];
+const INTERNAL: &[&str] = &["chrome", "clip", "of-title", "mount", "px-per-unit"];
 
 pub fn validate(file: &File) -> Vec<Diagnostic> {
     // A broken type table (cycle, shadowing) is desugar's error to report.
@@ -307,13 +307,13 @@ impl<'a> Ctx<'a> {
                     ));
                 }
             }
-            "over" | "left" | "right" => {
+            "place" => {
                 if let Some(parent) = parent_layout
                     && *parent != "sequence"
                 {
                     out.push(Diagnostic::error(
                         d.span,
-                        format!("'{}' is valid only in a 'layout: sequence'", d.name),
+                        "'place' is valid only in a 'layout: sequence'",
                     ));
                 }
             }

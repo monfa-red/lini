@@ -116,7 +116,7 @@ Give a node `layout: chart` and it becomes a plot, drawn from data instead of pi
 ]
 ```
 
-`|bars|`, `|line|`, `|area|`, `|dots|`, and `|bubble|` share one x/value plane; `|slice|` makes a pie or donut. `direction: radial` bends the plane into a radar and `direction: row` lays it on its side, with no change to the data. A series reads either `data:` (plain numbers, or `x y` points) or `fn:` — a formula sampled over the domain, using the language's own compile-time math. Axes auto-fit or take a `range:`, run linear or `log`, and you declare an `|axis|` only when you want to say something; shade a zone with `|band|`, drop a threshold or callout with `|mark|`. Label individual points with `tags:` and they place themselves without colliding — on the plot where they fit, on hover where they don't (`tooltip: none | hover | auto | always`); size a point for hovering with `marker: circle`. The whole chart language is in [`SPEC.md` §14](https://github.com/monfa-red/lini/blob/main/SPEC.md#14-charts).
+`|bars|`, `|line|`, `|area|`, `|dots|`, and `|bubble|` share one x/value plane; `|slice|` makes a pie or donut. `direction: radial` bends the plane into a radar and `direction: row` lays it on its side, with no change to the data. A series reads either `data:` (plain numbers, or `x y` points) or `fn:` — a formula sampled over the domain, using the language's own compile-time math. Axes auto-fit or take a `range:`, run linear or `log`, and you declare an `|axis|` only when you want to say something; shade a zone with `|band|`, drop a threshold or callout with `|mark|`. Label individual points with `labels:` and they place themselves without colliding — on the plot where they fit, on hover where they don't (`tooltip: none | hover | auto | always`); size a point for hovering with `marker: circle`. The whole chart language is in [`SPEC.md` §14](https://github.com/monfa-red/lini/blob/main/SPEC.md#14-charts).
 
 ---
 
@@ -137,7 +137,7 @@ api --> user "200 + token"   // a return — dashed
 ]
 ```
 
-The operator picks the message: `->` a call, `-->` a return, `~>` async, and `a -> a` a self-message. A call opens an **activation bar** on its target and the matching return closes it — nesting stacks, automatically. Wrap a span of messages in `|loop|`, `|opt|`, or `|alt|` (with `|else|` compartments) to frame it, and a frame only groups — its messages still wire the outer participants. Drop a `|note| "…" { over: a }` (or `{ left: a }` / `{ right: a }`, or `over: a b` to span). The whole sequence language is §10 of [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md).
+The operator picks the message: `->` a call, `-->` a return, `~>` async, and `a -> a` a self-message. A call opens an **activation bar** on its target and the matching return closes it — nesting stacks, automatically. Wrap a span of messages in `|loop|`, `|opt|`, or `|alt|` (with `|else|` compartments) to frame it, and a frame only groups — its messages still wire the outer participants. Drop a `|note| "…" { place: over a }` (or `place: left a` / `place: right a`, or `place: over a b` to span). The whole sequence language is §10 of [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md).
 
 ---
 

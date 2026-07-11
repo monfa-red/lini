@@ -489,11 +489,11 @@ fn tooltip_none_drops_the_floor() {
 }
 
 #[test]
-fn tags_draw_inline_labels_under_auto() {
-    // A series' `tags:` show on the plot (default auto) as `.lini-chart-label` text,
+fn labels_draw_inline_under_auto() {
+    // A series' `labels:` show on the plot (default auto) as `.lini-chart-label` text,
     // over the hover card the value still rides.
     let s = svg(
-        "|chart| { categories: \"a\", \"b\" } [\n  |line| { data: 3, 6; tags: \"lo\", \"hi\" }\n]\n",
+        "|chart| { categories: \"a\", \"b\" } [\n  |line| { data: 3, 6; labels: \"lo\", \"hi\" }\n]\n",
     );
     assert!(s.contains("lini-chart-label"), "inline label class: {s}");
     assert!(
@@ -509,9 +509,9 @@ fn tags_draw_inline_labels_under_auto() {
 #[test]
 fn tooltip_hover_keeps_tags_off_the_plot() {
     // `tooltip: hover` keeps the card (bars are hit targets) but draws no inline label,
-    // even with tags.
+    // even with labels.
     let s = svg(
-        "|chart| { categories: \"a\", \"b\"; tooltip: hover } [\n  |bars| { data: 3, 6; tags: \"lo\", \"hi\" }\n]\n",
+        "|chart| { categories: \"a\", \"b\"; tooltip: hover } [\n  |bars| { data: 3, 6; labels: \"lo\", \"hi\" }\n]\n",
     );
     assert!(!s.contains("lini-chart-label"), "no inline label: {s}");
     assert!(s.contains("lini-chart-tip"), "the hover card stays: {s}");
@@ -521,7 +521,7 @@ fn tooltip_hover_keeps_tags_off_the_plot() {
 fn a_series_tooltip_overrides_the_chart_default() {
     // The chart says hover (no inline); the series opts back into always.
     let s = svg(
-        "|chart| { categories: \"a\", \"b\"; tooltip: hover } [\n  |line| { data: 3, 6; tags: \"lo\", \"hi\"; tooltip: always }\n]\n",
+        "|chart| { categories: \"a\", \"b\"; tooltip: hover } [\n  |line| { data: 3, 6; labels: \"lo\", \"hi\"; tooltip: always }\n]\n",
     );
     assert!(
         s.contains("lini-chart-label"),
@@ -560,7 +560,7 @@ fn a_diamond_marker_draws_a_rhombus() {
 #[test]
 fn data_text_is_normal_weight_chrome_is_bold() {
     // The diagram-wide default is bold; a chart keeps it for the title and legend but
-    // states `normal` for its axis ticks (and tags) [SPEC 14.6].
+    // states `normal` for its axis ticks (and labels) [SPEC 14.6].
     let s = svg(
         "|chart| \"Cost\" { categories: \"a\", \"b\" } [\n  |bars| \"A\" { data: 5, 8 }\n  |bars| \"B\" { data: 3, 4 }\n]\n",
     );
@@ -579,17 +579,17 @@ fn data_text_is_normal_weight_chrome_is_bold() {
 }
 
 #[test]
-fn tags_count_must_match_the_data() {
+fn labels_count_must_match_the_data() {
     let e = layout_err(
-        "|chart| { categories: \"a\", \"b\" } [\n  |line| { data: 3, 6; tags: \"only\" }\n]\n",
+        "|chart| { categories: \"a\", \"b\" } [\n  |line| { data: 3, 6; labels: \"only\" }\n]\n",
     );
-    assert!(e.contains("1 labels but the series has 2"), "{e}");
+    assert!(e.contains("1 entries but the series has 2"), "{e}");
 }
 
 #[test]
-fn tags_on_a_fn_series_error() {
+fn labels_on_a_fn_series_error() {
     let e = layout_err(
-        "|chart| [\n  |axis| { side: bottom; range: 0 10 }\n  |axis| { side: left }\n  |line| { fn: (x); tags: \"a\", \"b\" }\n]\n",
+        "|chart| [\n  |axis| { side: bottom; range: 0 10 }\n  |axis| { side: left }\n  |line| { fn: (x); labels: \"a\", \"b\" }\n]\n",
     );
     assert!(e.contains("needs explicit 'data'"), "{e}");
 }

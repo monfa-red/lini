@@ -332,7 +332,7 @@ mod origin_tests {
         // the container's centre — a small part's axis rides the sheet's
         // centreline [SPEC 12/15.8]; view `a`'s bottom dim no longer drags it.
         let l = laid(
-            "|row#views| { height: 200; align: origin } [\n  |drawing#a| { scale: 1 } [\n    |oval#c1| { width: 20; height: 20 }\n    c1:left (-) c1:right { side: bottom }\n  ]\n  |drawing#b| { scale: 1 } [ |oval#c2| { width: 30; height: 30 } ]\n]\n",
+            "|row#views| { height: 200; align: origin } [\n  |drawing#a| { scale: 0.25 } [\n    |oval#c1| { width: 20; height: 20 }\n    c1:left (-) c1:right { side: bottom }\n  ]\n  |drawing#b| { scale: 0.25 } [ |oval#c2| { width: 30; height: 30 } ]\n]\n",
         );
         let a = by_id(&l.nodes, "a");
         assert!(
@@ -342,7 +342,7 @@ mod origin_tests {
         );
         // Too little room: the group centres around the line instead.
         let tight = laid(
-            "|row#views| { height: 30; align: origin } [\n  |drawing#a| { scale: 1 } [\n    |oval#c1| { width: 20; height: 20 }\n    c1:left (-) c1:right { side: bottom }\n  ]\n  |drawing#b| { scale: 1 } [ |oval#c2| { width: 30; height: 30 } ]\n]\n",
+            "|row#views| { height: 30; align: origin } [\n  |drawing#a| { scale: 0.25 } [\n    |oval#c1| { width: 20; height: 20 }\n    c1:left (-) c1:right { side: bottom }\n  ]\n  |drawing#b| { scale: 0.25 } [ |oval#c2| { width: 30; height: 30 } ]\n]\n",
         );
         let a = by_id(&tight.nodes, "a");
         assert!(
@@ -368,7 +368,7 @@ mod origin_tests {
         // Both views sit in one grid row: `justify: origin` (the vertical
         // axis) puts each datum on its row's centre line [SPEC 12].
         let l = laid(
-            "|grid#g| { columns: auto, auto; justify: origin } [\n  |drawing#a| { scale: 1 } [\n    |oval#c1| { width: 20; height: 20 }\n    c1:left (-) c1:right { side: bottom }\n  ]\n  |drawing#b| { scale: 1 } [ |oval#c2| { width: 30; height: 30 } ]\n]\n",
+            "|grid#g| { columns: auto, auto; justify: origin } [\n  |drawing#a| { scale: 0.25 } [\n    |oval#c1| { width: 20; height: 20 }\n    c1:left (-) c1:right { side: bottom }\n  ]\n  |drawing#b| { scale: 0.25 } [ |oval#c2| { width: 30; height: 30 } ]\n]\n",
         );
         let (a, b) = (origin_y(&l.nodes, "a"), origin_y(&l.nodes, "b"));
         assert!((a - b).abs() < 1e-9, "row shares the axis: {a} vs {b}");

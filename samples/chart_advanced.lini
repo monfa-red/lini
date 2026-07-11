@@ -1,7 +1,7 @@
 // Advanced charting on one telemetry board [SPEC 14.4–14.7]: a log scale, a
 // reversed axis, dual axes binding series by id, `fn:` formulas (in x, and
 // parametric in u), shaded bands (indexed and on a named axis), a threshold
-// |mark|, per-point tags on x/y data, and the radial pair (radar, radial bars).
+// |mark|, per-point labels on x/y data, and the radial pair (radar, radial bars).
 {
   layout: grid; columns: repeat(2); gap: 24;
 }
@@ -67,13 +67,13 @@
   |axis| "Avg output tokens (k)" { side: bottom; }
   |axis| "Score (%)" { side: left; range: 45 80; }
   |line| "GLM-5.2" {
-    data: 35 63, 42 72, 84 75; tags: "Non-Thinking", "High", "Max"; marker: circle; stroke: --sky-deep;
+    data: 35 63, 42 72, 84 75; labels: "Non-Thinking", "High", "Max"; marker: circle; stroke: --sky-deep;
   }
   |line| "GLM-5.1" {
-    data: 32 52, 45 58; tags: "Non-Thinking", "Max"; marker: circle; stroke: --green-deep;
+    data: 32 52, 45 58; labels: "Non-Thinking", "Max"; marker: circle; stroke: --green-deep;
   }
   |line| "Opus 4.8" {
-    data: 22 71, 40 78; tags: "Low", "High"; marker: circle; stroke: --gray-deep;
+    data: 22 71, 40 78; labels: "Low", "High"; marker: circle; stroke: --gray-deep;
   }
 ]
 

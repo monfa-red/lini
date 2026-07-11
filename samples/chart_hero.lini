@@ -12,7 +12,7 @@
     |mark| "Goal" { at: 48; axis: ms; stroke: --red; stroke-style: dashed; }
 
     |line| "web" {
-      data: 16, 18, 22, 28, 35, 42; curve: smooth; marker: dot; stroke: --teal; tags: "", "UI change", "", "", "Redesign", "";
+      data: 16, 18, 22, 28, 35, 42; curve: smooth; marker: dot; stroke: --teal; labels: "", "UI change", "", "", "Redesign", "";
     }
     |line| "app" {
       data: 8, 14, 20, 30, 42, 58; curve: smooth; marker: dot; stroke: --purple;

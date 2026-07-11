@@ -14,6 +14,7 @@ mod classes;
 mod drawing;
 mod labels;
 mod page;
+mod scale;
 pub(crate) mod scene;
 mod tables;
 mod titleblock;
@@ -124,6 +125,10 @@ pub fn desugar(file: &File) -> Result<File, Error> {
             )?));
         }
     }
+
+    // ── The scale fold [SPEC 15.1/18]: drawing scopes and pages gain their
+    //    generated internal `px-per-unit:` from ratio × unit × density. ──
+    scale::fold(&mut instances, &mut user_root, root_drawing)?;
 
     // ── Present types = every `.lini-X` class worn anywhere. ──
     let mut present: BTreeSet<String> = BTreeSet::new();
@@ -385,17 +390,31 @@ fn lower_node(
     if in_drawing && info.chain.iter().any(|t| t == "plane") {
         style.push(decl("chrome", vec![Value::Ident("plane".into())]));
     }
+    // A `|title-block|`'s smart label is its `title` field [SPEC 15.8]: a
+    // label — like any field property — selects the structured-field mode.
+    let is_title_block = info.chain.iter().any(|t| t == "title-block");
+    let mut label = node.label.as_ref().filter(|l| !l.text.is_empty());
+    if is_title_block
+        && let Some(l) = label.take()
+        && !style.iter().any(|d| d.name == "title")
+    {
+        style.push(Decl {
+            name: "title".into(),
+            groups: vec![vec![Value::String(l.text.clone())]],
+            span: l.span,
+        });
+    }
     // A `|title-block|` with ISO 7200 field properties builds its grid
     // [SPEC 15.8]; with none, its cells stay authored (the plain-table form).
     // The generated cells are `|cell|` boxes, so the table auto-header skips
     // them and the field grid stands as built.
-    if info.chain.iter().any(|t| t == "title-block") && titleblock::has_fields(&node.style) {
+    if is_title_block && titleblock::has_fields(&style) {
         for cell in titleblock::expand_fields(&mut style, node.span) {
             children.push(Child::Box(lower_node(&cell, types, bodies, false)?));
         }
     }
     let mut kept_label = None;
-    if let Some(label) = node.label.as_ref().filter(|l| !l.text.is_empty()) {
+    if let Some(label) = label {
         if is_icon {
             if style.iter().any(|d| d.name == "symbol") {
                 return Err(Error::at(

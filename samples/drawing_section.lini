@@ -2,14 +2,14 @@
 // cutting plane and a detail ring; `|drawing| { of: a }` authors the section
 // (hatched walls, the bore reading between them), and `|drawing| { of: c }`
 // re-renders the ringed port clipped to the circle, titled "C (3:1)" by
-// composition — its scale 12 over the sheet's 4.
+// composition — its own drafting ratio, `scale: 3`.
 {
   |steel::sketch| { fill: hatch(45, 5); }
 }
 
 |page#sheet| { sheet: a4 landscape; gap: 24; direction: row; align: origin; } [
 
-  |drawing#front| "COOLING RING" { scale: 4; } [
+  |drawing#front| "COOLING RING" { scale: 1; } [
     |oval#od| { width: 80; height: 80; fill: none; stroke: --stroke-dark; }
     |oval#bore| { width: 34; height: 34; fill: --bg; stroke: --stroke-dark; }
     |oval#port| {
@@ -27,7 +27,7 @@
     // ⌀34
   ]
 
-  |drawing#sec| { of: a; scale: 4; } [
+  |drawing#sec| { of: a; scale: 1; } [
     |steel#wall| {
       draw: move(-40, -8) right(23) down(16) left(23) close();
       // the left ring wall
@@ -41,7 +41,7 @@
     // 80 across
   ]
 
-  |drawing#det| { of: c; scale: 12; }
+  |drawing#det| { of: c; scale: 3; }
   // the ringed port, re-laid ×3
 
 ]

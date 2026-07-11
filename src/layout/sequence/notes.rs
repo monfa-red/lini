@@ -1,6 +1,7 @@
 //! Notes [SPEC 13]: a `|note|` callout placed at its time row (source order), bound to
-//! lifelines by **placement** — `over` (one lifeline, or a span of them), `left`, or
-//! `right`. The box itself is laid out by the generic engine (so its text, padding, and
+//! lifelines by **`place:`** — a mode then its lifelines: `place: over api db`
+//! (one lifeline, or a span of them), `place: left api`, `place: right api`.
+//! The box itself is laid out by the generic engine (so its text, padding, and
 //! styling are reused — no parallel layout); this module only reads the placement and
 //! fixes the box's centre over the right lifelines at its row.
 
@@ -18,19 +19,31 @@ pub(super) enum Placement {
     Right(String),
 }
 
-/// The note's placement, read from its `over` / `left` / `right` attr (the box carries
-/// them through resolve). `None` if it names none — caught as an error upstream.
-pub(super) fn placement(attrs: &AttrMap) -> Option<Placement> {
-    if let Some(v) = attrs.get("over") {
-        return Some(Placement::Over(idents(v)));
+/// The note's placement, read from its `place:` attr (the box carries it
+/// through resolve): a mode ident then its lifeline id(s). `Ok(None)` when
+/// absent — caught as the missing-placement error upstream; a malformed value
+/// errors here [SPEC 20].
+pub(super) fn placement(
+    attrs: &AttrMap,
+    span: crate::span::Span,
+) -> Result<Option<Placement>, crate::error::Error> {
+    let Some(v) = attrs.get("place") else {
+        return Ok(None);
+    };
+    let bad = || {
+        crate::error::Error::at(
+            span,
+            "'place' is a mode then its lifelines — 'place: over api db', 'place: left api'",
+        )
+    };
+    let parts = idents(v);
+    let (mode, ids) = parts.split_first().ok_or_else(bad)?;
+    match (mode.as_str(), ids) {
+        ("over", [_, ..]) => Ok(Some(Placement::Over(ids.to_vec()))),
+        ("left", [id]) => Ok(Some(Placement::Left(id.clone()))),
+        ("right", [id]) => Ok(Some(Placement::Right(id.clone()))),
+        _ => Err(bad()),
     }
-    if let Some(v) = attrs.get("left") {
-        return first_ident(v).map(Placement::Left);
-    }
-    if let Some(v) = attrs.get("right") {
-        return first_ident(v).map(Placement::Right);
-    }
-    None
 }
 
 /// The note box's centre x for its placement: over the midpoint of the named lifelines, or
@@ -64,10 +77,6 @@ fn idents(v: &ResolvedValue) -> Vec<String> {
         }
         _ => Vec::new(),
     }
-}
-
-fn first_ident(v: &ResolvedValue) -> Option<String> {
-    idents(v).into_iter().next()
 }
 
 fn one_ident(v: &ResolvedValue) -> Option<String> {

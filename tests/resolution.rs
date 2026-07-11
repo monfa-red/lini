@@ -306,7 +306,7 @@ fn drawing_ops_need_a_drawing_scope() {
 #[test]
 fn a_drawing_scope_resolves_its_statements() {
     lini::check(concat!(
-        "{ layout: drawing; scale: 2; unit: \"mm\" }\n",
+        "{ layout: drawing; scale: 2; unit: mm }\n",
         "|rect#plate| { width: 120; height: 70 } [\n",
         "  |hole#pin| { width: 10; translate: -35 20; pattern: grid(2, 1, 70, 0) }\n",
         "]\n",

@@ -8,7 +8,7 @@
 
 |page#screw| { sheet: a3 landscape; padding: 8; } [
 
-  |drawing#side| "INJECTION SCREW" { scale: 2; unit: "mm"; } [
+  |drawing#side| "INJECTION SCREW" { scale: 0.5; unit: mm; } [
     // The core: a shallow feed root rising through a transition arc to the
     // deeper metering root — the flight-root fillets land against the arc.
     |sketch#body| {
@@ -30,7 +30,7 @@
     // overall    → 230
   ]
 
-  |drawing#sec| { of: a; scale: 2; } [
+  |drawing#sec| { of: a; scale: 0.5; } [
     // A–A across a flight: the core disc + one flight land, hatched.
     |steel#flight| {
       draw: move(-30, -30) right(60) down(60) left(60) close()
@@ -42,11 +42,11 @@
     // → 60, the core ⌀
   ]
 
-  |drawing#det| { of: c; scale: 6; } [
+  |drawing#det| { of: c; scale: 1.5; } [
     body:meter <- "root R10"
   ]
 
   |title-block| {
-    title: "Injection screw"; dwg: "RJ-SCR-20-001"; rev: "A"; sheet: "1/1"; date: "2026-07-08"; author: "AM";
+    title: "Injection screw"; drawing-number: "RJ-SCR-20-001"; revision: "A"; sheet-number: "1/1"; date: "2026-07-08"; author: "AM";
   }
 ]

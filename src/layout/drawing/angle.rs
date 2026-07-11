@@ -129,7 +129,6 @@ fn arc_between(
         None,
         w.texts.first().map(|t| t.text.as_str()),
         &w.attrs,
-        None,
         w.span,
     )?;
     let text_c = (

@@ -1,5 +1,5 @@
 // The chart family on one dashboard [SPEC 14]: grouped / stacked / horizontal
-// bars, line curves (linear, smooth, step) with markers and per-point tags,
+// bars, line curves (linear, smooth, step) with markers and per-point labels,
 // stacked areas, a scatter, bubbles sized by a third value, and the pie pair.
 {
   layout: grid; columns: repeat(2); gap: 24;
@@ -33,7 +33,7 @@
 
 |chart| "Latency (ms)" { categories: "p50", "p90", "p99", "p999"; } [
   |line| "v1" {
-    data: 15, 70, 150, 480; marker: circle; tags: "Low", "Medium", "High", "Max";
+    data: 15, 70, 150, 480; marker: circle; labels: "Low", "Medium", "High", "Max";
   }
   |line| "v2" { data: 12, 40, 100, 300; stroke-style: dashed; marker: circle; }
   |line| "goal" { data: 10, 30, 60, 150; stroke-style: dotted; }

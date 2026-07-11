@@ -41,9 +41,8 @@ fn pair(name: &str, a: f64, b: f64) -> Decl {
 pub(crate) fn root_layout_defaults(layout: Option<&str>) -> Vec<Decl> {
     match layout {
         Some("sequence") => vec![pair("gap", SEQ_GAP_ROW, SEQ_GAP_COL)],
-        // A drawing's units are millimetres at screen resolution: ~4 px/mm,
-        // so the view defaults to 4 [SPEC 15.1]; any authored scale wins.
-        Some("drawing") => vec![n("scale", 4.0)],
+        // A drawing root's px-per-unit is the desugar scale fold's job
+        // [SPEC 15.1/18] — ratio × unit × density, stamped per scope.
         _ => Vec::new(),
     }
 }
@@ -207,7 +206,9 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
         ],
         // Drawings [SPEC 15]: the container (frameless — the geometry and its
         // annotations are the content)…
-        "drawing" => vec![id("layout", "drawing"), n("padding", 0.0), n("scale", 4.0)],
+        // A drawing's px-per-unit is stamped by the desugar scale fold
+        // [SPEC 15.1/18]; its `scale:` is the drafting ratio, default 1.
+        "drawing" => vec![id("layout", "drawing"), n("padding", 0.0)],
         // …the round hole — `width:` (required) is its diameter; it punches by
         // paint order and draws its own centre marks [SPEC 15.4]…
         "hole" => vec![var("fill", "bg"), var("stroke", "stroke-dark")],
@@ -267,12 +268,11 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             id("fill", "none"),
         ],
         // The ISO 5457 sheet [SPEC 15.8]: mm dimensions (A4 portrait unless
-        // `sheet:` says otherwise) at px-per-mm `scale: 4` — a |drawing|'s own
-        // default, so a default drawing draws 1 : 1 true on the sheet. The
-        // trimmed sheet has no stroke of its own (the |frame| child draws the
-        // border), so its box is the exact trimmed size.
+        // `sheet:` says otherwise); its px-per-mm is the root `density:`,
+        // stamped by the desugar scale fold — a page carries no `scale:` of
+        // its own. The trimmed sheet has no stroke (the |frame| child draws
+        // the border), so its box is the exact trimmed size.
         "page" => vec![
-            n("scale", 4.0),
             var("fill", "bg"),
             n("stroke-width", 0.0),
             n("width", consts::A4.0),

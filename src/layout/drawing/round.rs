@@ -47,7 +47,6 @@ pub(super) fn lower(
             None,
             follows.map(|t| t.text.as_str()),
             &w.attrs,
-            ctx.unit,
             w.span,
         )
     };
@@ -214,7 +213,6 @@ fn station(
         None,
         follows.map(|t| t.text.as_str()),
         &w.attrs,
-        ctx.unit,
         w.span,
     )?;
     let side = stack_side(&w.attrs, axis, None, w.span)?;

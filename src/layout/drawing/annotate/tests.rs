@@ -10,7 +10,7 @@ fn a_chain_shares_one_row_and_the_next_dim_packs_outside() {
     // all fit their spans and share one row; the overall 150 overlaps
     // them and takes the next.
     let l = laid(
-        "{ layout: drawing; scale: 2 }\n|rect#plate| { width: 150; height: 40 }\n|hole#a| { width: 8; translate: -50 0 }\n|hole#b| { width: 8; translate: 10 0 }\nplate:left (-) a (-) b (-) plate:right { side: bottom }\nplate:left (-) plate:right { side: bottom }\n",
+        "{ layout: drawing; scale: 2; density: 1 }\n|rect#plate| { width: 150; height: 40 }\n|hole#a| { width: 8; translate: -50 0 }\n|hole#b| { width: 8; translate: 10 0 }\nplate:left (-) a (-) b (-) plate:right { side: bottom }\nplate:left (-) plate:right { side: bottom }\n",
     );
     let (_, y25, _) = text_at(&l.nodes, "25");
     let (_, y60, _) = text_at(&l.nodes, "60");
@@ -32,7 +32,7 @@ fn a_chain_shares_one_row_and_the_next_dim_packs_outside() {
 #[test]
 fn iso_text_turns_with_a_vertical_dim() {
     let l = laid(
-        "{ layout: drawing; scale: 1 }\n|rect#a| { width: 60; height: 40 }\na:top (-) a:bottom { side: right }\n",
+        "{ layout: drawing; density: 1 }\n|rect#a| { width: 60; height: 40 }\na:top (-) a:bottom { side: right }\n",
     );
     let (x, _, rot) = text_at(&l.nodes, "40");
     assert_eq!(rot, -90.0, "reads from the right");
@@ -46,7 +46,7 @@ fn a_narrow_span_flips_arrows_out_but_keeps_a_fitting_value_inside() {
     // reads between the extension lines: arrows flip out, value centred
     // inside — drafting's middle form [SPEC 15.6].
     let l = laid(
-        "{ layout: drawing; scale: 1 }\n|rect#a| { width: 20; height: 10 }\na:left (-) a:right { side: bottom }\n",
+        "{ layout: drawing; density: 1 }\n|rect#a| { width: 20; height: 10 }\na:left (-) a:right { side: bottom }\n",
     );
     let (x, _, _) = text_at(&l.nodes, "20");
     assert!(x.abs() < 1e-6, "value centred inside the span: x={x}");
@@ -57,7 +57,7 @@ fn a_span_too_tight_for_its_value_slides_the_text_past() {
     // A 10-wide span can't even hold "10" — the text slides rightward,
     // past the higher-u extension line.
     let l = laid(
-        "{ layout: drawing; scale: 1 }\n|rect#a| { width: 10; height: 8 }\na:left (-) a:right { side: bottom }\n",
+        "{ layout: drawing; density: 1 }\n|rect#a| { width: 10; height: 8 }\na:left (-) a:right { side: bottom }\n",
     );
     let (x, _, _) = text_at(&l.nodes, "10");
     assert!(x > 5.0, "text outside the span: x={x}");
@@ -66,7 +66,7 @@ fn a_span_too_tight_for_its_value_slides_the_text_past() {
 #[test]
 fn corner_anchors_on_one_edge_pull_the_dim_there() {
     let l = laid(
-        "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\n|rect#b| { width: 40; height: 20; translate: 70 0 }\na:top-left (-) b:top-right\n",
+        "{ layout: drawing; density: 1 }\n|rect#a| { width: 40; height: 20 }\n|rect#b| { width: 40; height: 20; translate: 70 0 }\na:top-left (-) b:top-right\n",
     );
     let (_, y, _) = text_at(&l.nodes, "110");
     let a = by_id(&l.nodes, "a");
@@ -76,7 +76,7 @@ fn corner_anchors_on_one_edge_pull_the_dim_there() {
 #[test]
 fn a_two_ended_label_replaces_the_number() {
     let l = laid(
-        "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\na:left (-) a:right \"180\"\n",
+        "{ layout: drawing; density: 1 }\n|rect#a| { width: 40; height: 20 }\na:left (-) a:right \"180\"\n",
     );
     text_at(&l.nodes, "180");
     assert!(
@@ -86,11 +86,14 @@ fn a_two_ended_label_replaces_the_number() {
 }
 
 #[test]
-fn unit_suffixes_linear_values_only() {
+fn measured_values_read_bare_pre_scale_numbers() {
+    // `unit:` is the semantic quantity only [SPEC 15.1]: no per-value suffix
+    // (drafting states units once, in the title block), and the value is
+    // pre-scale — 40 units at `unit: mm` reads `40`, whatever the density.
     let l = laid(
-        "{ layout: drawing; unit: \"mm\" }\n|rect#a| { width: 40; height: 20 }\n|hole#h| { width: 12 }\na:left (-) a:right { side: bottom }\nh (o)\n",
+        "{ layout: drawing; unit: mm }\n|rect#a| { width: 40; height: 20 }\n|hole#h| { width: 12 }\na:left (-) a:right { side: bottom }\nh (o)\n",
     );
-    text_at(&l.nodes, "40 mm");
+    text_at(&l.nodes, "40");
     text_at(&l.nodes, "⌀12");
 }
 
@@ -98,25 +101,25 @@ fn unit_suffixes_linear_values_only() {
 fn dim_errors_speak_spec() {
     assert_eq!(
         layout_err(
-            "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\n|rect#b| { width: 40; height: 20 }\na:left (-) b:top\n"
+            "{ layout: drawing; density: 1 }\n|rect#a| { width: 40; height: 20 }\n|rect#b| { width: 40; height: 20 }\na:left (-) b:top\n"
         ),
         "'a:left (-) b:top' mixes axes — anchor one axis"
     );
     assert_eq!(
         layout_err(
-            "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\na:left (-) a:right { side: left }\n"
+            "{ layout: drawing; density: 1 }\n|rect#a| { width: 40; height: 20 }\na:left (-) a:right { side: left }\n"
         ),
         "a horizontal dimension stacks on top or bottom"
     );
     assert_eq!(
         layout_err(
-            "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\na:top (-) a:bottom { side: top }\n"
+            "{ layout: drawing; density: 1 }\n|rect#a| { width: 40; height: 20 }\na:top (-) a:bottom { side: top }\n"
         ),
         "a vertical dimension stacks on left or right"
     );
     assert_eq!(
         layout_err(
-            "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\na:left (-) a:right { tol: \"x\" }\n"
+            "{ layout: drawing; density: 1 }\n|rect#a| { width: 40; height: 20 }\na:left (-) a:right { tol: \"x\" }\n"
         ),
         "'tol' takes a number, '+upper -lower', or a fit ident"
     );
@@ -127,18 +130,18 @@ fn dim_errors_speak_spec() {
 #[test]
 fn tol_composes_its_three_forms() {
     let sym = laid(
-        "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\na:left (-) a:right { tol: 0.1 }\n",
+        "{ layout: drawing; density: 1 }\n|rect#a| { width: 40; height: 20 }\na:left (-) a:right { tol: 0.1 }\n",
     );
     text_at(&sym.nodes, "40±0.1");
 
     let fit = laid(
-        "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\na:left (-) a:right { tol: H7 }\n",
+        "{ layout: drawing; density: 1 }\n|rect#a| { width: 40; height: 20 }\na:left (-) a:right { tol: H7 }\n",
     );
     text_at(&fit.nodes, "40 H7");
 
     // Stacked deviations: raised / lowered beside the value, 0.7 × font.
     let dev = laid(
-        "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\na:left (-) a:right { tol: +0.2 -0.05 }\n",
+        "{ layout: drawing; density: 1 }\n|rect#a| { width: 40; height: 20 }\na:left (-) a:right { tol: +0.2 -0.05 }\n",
     );
     let (_, yu, _) = text_at(&dev.nodes, "+0.2");
     let (_, yl, _) = text_at(&dev.nodes, "-0.05");
@@ -154,7 +157,7 @@ fn tol_composes_its_three_forms() {
 #[test]
 fn a_named_arc_reads_its_radius() {
     let l = laid(
-        "{ layout: drawing; scale: 2 }\n|sketch#s| { draw: move(0, 0) right(30) fillet(3):r1 up(20) left(30) down(20) close() }\ns:r1 (o)\n",
+        "{ layout: drawing; scale: 2; density: 1 }\n|sketch#s| { draw: move(0, 0) right(30) fillet(3):r1 up(20) left(30) down(20) close() }\ns:r1 (o)\n",
     );
     text_at(&l.nodes, "R3");
 }
@@ -162,7 +165,7 @@ fn a_named_arc_reads_its_radius() {
 #[test]
 fn a_circle_segment_reads_its_diameter() {
     let l = laid(
-        "{ layout: drawing; scale: 1 }\n|sketch#s| { draw: move(0, 0) right(40) up(20) left(40) close() move(20, -10) circle(5):c }\ns:c (o)\n",
+        "{ layout: drawing; density: 1 }\n|sketch#s| { draw: move(0, 0) right(40) up(20) left(40) close() move(20, -10) circle(5):c }\ns:c (o)\n",
     );
     text_at(&l.nodes, "⌀10");
 }
@@ -170,7 +173,7 @@ fn a_circle_segment_reads_its_diameter() {
 #[test]
 fn a_bare_round_node_leaders_its_diameter_with_the_copy_count() {
     let l = laid(
-        "{ layout: drawing; scale: 1 }\n|rect#plate| { width: 120; height: 60 } [\n  |hole#pin| { width: 10; translate: -35 0; pattern: grid(2, 1, 70, 0) }\n]\nplate.pin (o) \"H7\"\n",
+        "{ layout: drawing; density: 1 }\n|rect#plate| { width: 120; height: 60 } [\n  |hole#pin| { width: 10; translate: -35 0; pattern: grid(2, 1, 70, 0) }\n]\nplate.pin (o) \"H7\"\n",
     );
     text_at(&l.nodes, "2× ⌀10 H7");
 }
@@ -180,7 +183,7 @@ fn a_side_anchor_on_a_round_node_draws_the_diametral_line() {
     // The value doesn't fit inside ⌀16 — the line overruns the anchored
     // rim and the text spills upward, turned with the vertical line.
     let l = laid(
-        "{ layout: drawing; scale: 1 }\n|rect#plate| { width: 80; height: 40 }\n|hole#eye| { width: 16 }\neye:top (o)\n",
+        "{ layout: drawing; density: 1 }\n|rect#plate| { width: 80; height: 40 }\n|hole#eye| { width: 16 }\neye:top (o)\n",
     );
     let (_, y, rot) = text_at(&l.nodes, "⌀16");
     assert_eq!(rot, -90.0, "turned with the line");
@@ -190,7 +193,7 @@ fn a_side_anchor_on_a_round_node_draws_the_diametral_line() {
 #[test]
 fn a_side_anchor_on_any_node_spans_to_the_opposite_side() {
     let l = laid(
-        "{ layout: drawing; scale: 1 }\n|rect#bore| { width: 60; height: 16 }\nbore:top (o) { side: right }\n",
+        "{ layout: drawing; density: 1 }\n|rect#bore| { width: 60; height: 16 }\nbore:top (o) { side: right }\n",
     );
     let (x, _, _) = text_at(&l.nodes, "⌀16");
     assert!(x > 30.0, "stacked on the right: x={x}");
@@ -199,7 +202,7 @@ fn a_side_anchor_on_any_node_spans_to_the_opposite_side() {
 #[test]
 fn a_revolved_name_spans_its_station_across_the_axis() {
     let l = laid(
-        "{ layout: drawing; scale: 2 }\n|sketch#bar| { draw: move(-150, 0) up(10) right(40):thread right(260) down(10); revolve: x-axis }\nbar:thread (o) { side: left; tol: h6 }\n",
+        "{ layout: drawing; scale: 2; density: 1 }\n|sketch#bar| { draw: move(-150, 0) up(10) right(40):thread right(260) down(10); revolve: x-axis }\nbar:thread (o) { side: left; tol: h6 }\n",
     );
     text_at(&l.nodes, "⌀20 h6");
 }
@@ -210,7 +213,7 @@ fn a_station_diameter_requires_a_revolve() {
     // [SPEC 15.6] — the reading asks for the revolve.
     assert_eq!(
         layout_err(
-            "{ layout: drawing; scale: 2 }\n|sketch#bar| { draw: move(-150, 0) up(10) right(40):thread right(260) down(10); mirror: x-axis }\nbar:thread (o) { side: left }\n"
+            "{ layout: drawing; scale: 2; density: 1 }\n|sketch#bar| { draw: move(-150, 0) up(10) right(40):thread right(260) down(10); mirror: x-axis }\nbar:thread (o) { side: left }\n"
         ),
         "a station '⌀' reads a revolved profile — 'revolve: x-axis'"
     );
@@ -220,7 +223,7 @@ fn a_station_diameter_requires_a_revolve() {
 fn a_bare_round_measure_needs_an_axis() {
     assert_eq!(
         layout_err(
-            "{ layout: drawing; scale: 1 }\n|rect#block| { width: 40; height: 20 }\nblock (o)\n"
+            "{ layout: drawing; density: 1 }\n|rect#block| { width: 40; height: 20 }\nblock (o)\n"
         ),
         "'(o)' can't pick an axis on 'block' — anchor a side ('block:top (o)') or a segment"
     );
@@ -232,7 +235,7 @@ fn a_bare_round_measure_needs_an_axis() {
 fn an_angle_reads_two_edges_and_rides_its_arc() {
     // rise 120 over run 160 → atan = 36.87°.
     let l = laid(
-        "{ layout: drawing; scale: 2 }\n|sketch#g| { draw: move(-40, 30) right(80):base up(60) line(-80, 60):flank close() }\ng:flank (<) g:base\n",
+        "{ layout: drawing; scale: 2; density: 1 }\n|sketch#g| { draw: move(-40, 30) right(80):base up(60) line(-80, 60):flank close() }\ng:flank (<) g:base\n",
     );
     text_at(&l.nodes, "36.87°");
 }
@@ -242,7 +245,7 @@ fn a_unary_angle_measures_the_included_taper() {
     // A 10-in-40 taper mirrored about x: included angle = 2 · atan(10/40)
     // = 28.07°.
     let l = laid(
-        "{ layout: drawing; scale: 1 }\n|sketch#cone| { draw: move(0, 0) line(40, -10):taper; mirror: x-axis }\ncone:taper (<)\n",
+        "{ layout: drawing; density: 1 }\n|sketch#cone| { draw: move(0, 0) line(40, -10):taper; mirror: x-axis }\ncone:taper (<)\n",
     );
     text_at(&l.nodes, "28.07°");
 }
@@ -251,19 +254,19 @@ fn a_unary_angle_measures_the_included_taper() {
 fn angle_errors_speak_spec() {
     assert_eq!(
         layout_err(
-            "{ layout: drawing; scale: 1 }\n|oval#a| { width: 20; height: 20 }\n|oval#b| { width: 20; height: 20 }\na (<) b\n"
+            "{ layout: drawing; density: 1 }\n|oval#a| { width: 20; height: 20 }\n|oval#b| { width: 20; height: 20 }\na (<) b\n"
         ),
         "an angle reads two edges — a named segment, a '|line|', or a side"
     );
     assert_eq!(
         layout_err(
-            "{ layout: drawing; scale: 1 }\n|sketch#s| { draw: move(0, 0) line(40, -10):taper up(10) close() }\ns:taper (<)\n"
+            "{ layout: drawing; density: 1 }\n|sketch#s| { draw: move(0, 0) line(40, -10):taper up(10) close() }\ns:taper (<)\n"
         ),
         "'(<)' on ':taper' needs 'mirror:' — no twin to measure against"
     );
     assert_eq!(
         layout_err(
-            "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\n|rect#b| { width: 40; height: 20 }\na:top (<) b:bottom\n"
+            "{ layout: drawing; density: 1 }\n|rect#a| { width: 40; height: 20 }\n|rect#b| { width: 40; height: 20 }\na:top (<) b:bottom\n"
         ),
         "the angle's edges are parallel — they never meet"
     );
@@ -289,7 +292,7 @@ fn arrow_tip(nodes: &[crate::layout::PlacedNode]) -> (f64, f64) {
 #[test]
 fn a_leader_tip_ray_casts_onto_the_outline_with_a_landing_elbow() {
     let l = laid(
-        "{ layout: drawing; scale: 1 }\n|oval#disc| { width: 40; height: 40 }\ndisc:top-right <- \"THRU\"\n",
+        "{ layout: drawing; density: 1 }\n|oval#disc| { width: 40; height: 40 }\ndisc:top-right <- \"THRU\"\n",
     );
     let line = l
         .nodes
@@ -321,7 +324,7 @@ fn a_word_leader_tips_the_rim_of_a_patterned_hole() {
     // still look like a carrier (the pattern attr made it return None
     // and the tip fell back to the hole's centre).
     let l = laid(
-        "{ layout: drawing; scale: 1 }\n|rect#plate| { width: 120; height: 60 } [\n  |hole#pin| { width: 10; translate: -35 0; pattern: grid(2, 1, 70, 0) }\n]\nplate.pin <- \"THRU\" { side: top }\n",
+        "{ layout: drawing; density: 1 }\n|rect#plate| { width: 120; height: 60 } [\n  |hole#pin| { width: 10; translate: -35 0; pattern: grid(2, 1, 70, 0) }\n]\nplate.pin <- \"THRU\" { side: top }\n",
     );
     let tip = arrow_tip(&l.nodes);
     let d = ((tip.0 - -35.0).powi(2) + tip.1.powi(2)).sqrt();
@@ -333,7 +336,7 @@ fn a_circle_diameter_runs_across_with_both_arrows() {
     // The ⌀ line is a diameter, not a word leader [SPEC 15.6]: it crosses
     // the circle, overshoots the far rim, and presses both rims inward.
     let l = laid(
-        "{ layout: drawing; scale: 1 }\n|rect#plate| { width: 80; height: 40 }\n|hole#eye| { width: 12 }\neye (o)\n",
+        "{ layout: drawing; density: 1 }\n|rect#plate| { width: 80; height: 40 }\n|hole#eye| { width: 12 }\neye (o)\n",
     );
     let arrows: Vec<_> = l
         .nodes
@@ -359,7 +362,7 @@ fn a_circle_diameter_runs_across_with_both_arrows() {
 #[test]
 fn side_steers_a_leader() {
     let l = laid(
-        "{ layout: drawing; scale: 1 }\n|oval#disc| { width: 40; height: 40 }\ndisc <- \"A\" { side: left }\n",
+        "{ layout: drawing; density: 1 }\n|oval#disc| { width: 40; height: 40 }\ndisc <- \"A\" { side: left }\n",
     );
     let (tx, _, _) = text_at(&l.nodes, "A");
     assert!(tx < -20.0, "text left of the disc: {tx}");
@@ -371,7 +374,7 @@ fn the_datum_triangle_seats_on_the_surface() {
     // with the drawn edge (y = 15), its apex out along the surface
     // normal — never tilted by the leader's approach angle [SPEC 15.7].
     let l = laid(
-        "{ layout: drawing; scale: 1 }\n|rect#block| { width: 60; height: 30 }\nblock:bottom >- \"A\"\n",
+        "{ layout: drawing; density: 1 }\n|rect#block| { width: 60; height: 30 }\nblock:bottom >- \"A\"\n",
     );
     let tri = l
         .nodes
@@ -401,8 +404,9 @@ fn the_datum_triangle_seats_on_the_surface() {
         "straight off the surface: {lp:?}"
     );
     // A point-anchored datum keeps the core marker, oriented by the line.
-    let l =
-        laid("{ layout: drawing; scale: 1 }\n|oval#pin| { width: 20; height: 20 }\npin >- \"B\"\n");
+    let l = laid(
+        "{ layout: drawing; density: 1 }\n|oval#pin| { width: 20; height: 20 }\npin >- \"B\"\n",
+    );
     assert!(
         l.nodes
             .iter()
@@ -416,7 +420,7 @@ fn a_two_ended_arrow_trims_at_the_rim_and_dots_within() {
     // `b1 -* part`: the line springs from the balloon's rim (default
     // anchor → trimmed) and its dot lands at the part's origin (within).
     let l = laid(
-        "{ layout: drawing; scale: 1 }\n|rect#part| { width: 60; height: 30 }\n|balloon#b1| \"1\" { translate: 60 -40 }\nb1 -* part\n",
+        "{ layout: drawing; density: 1 }\n|rect#part| { width: 60; height: 30 }\n|balloon#b1| \"1\" { translate: 60 -40 }\nb1 -* part\n",
     );
     let line = l
         .nodes
@@ -442,7 +446,7 @@ fn a_leader_tip_lands_on_a_recessed_edge_not_the_box() {
     // geometry box (y = −75) — the floating-datum bug (`ray_line`'s
     // segment parameter accepted each segment's mirror about its start).
     let l = laid(
-        "{ layout: drawing; scale: 3 }\n|sketch#body| { draw: move(-80, 0) up(21) right(38):thread right(32):land up(4) right(90) down(25); mirror: x-axis }\nbody:thread <- \"M42\" { side: top }\nbody:land >- \"A\"\n",
+        "{ layout: drawing; scale: 3; density: 1 }\n|sketch#body| { draw: move(-80, 0) up(21) right(38):thread right(32):land up(4) right(90) down(25); mirror: x-axis }\nbody:thread <- \"M42\" { side: top }\nbody:land >- \"A\"\n",
     );
     let arrow_tip = arrow_tip(&l.nodes);
     assert!(
@@ -468,7 +472,7 @@ fn a_dim_row_clears_leader_texts() {
     // A callout's text registers as an obstacle: a dim stacked on the
     // same side seats its row past it, never on top of it [SPEC 15.6].
     let l = laid(
-        "{ layout: drawing; scale: 1 }\n|rect#bar| { width: 200; height: 30 }\nbar:top <- \"M42\"\nbar:left (-) bar:right { side: top }\n",
+        "{ layout: drawing; density: 1 }\n|rect#bar| { width: 200; height: 30 }\nbar:top <- \"M42\"\nbar:left (-) bar:right { side: top }\n",
     );
     let (_, ty, _) = text_at(&l.nodes, "M42");
     let (_, dy, _) = text_at(&l.nodes, "200");
@@ -485,7 +489,7 @@ fn dimension_anatomy_wears_its_classes() {
     // Paint states once per class: the dim line, the light extension
     // lines, the marker-classed arrowheads — no per-element inline style.
     let l = laid(
-        "{ layout: drawing; scale: 1 }\n|rect#a| { width: 60; height: 20 }\na:left (-) a:right { side: bottom }\n",
+        "{ layout: drawing; density: 1 }\n|rect#a| { width: 60; height: 20 }\na:left (-) a:right { side: bottom }\n",
     );
     let with_chain = |name: &str| {
         l.nodes
@@ -506,7 +510,7 @@ fn dimension_anatomy_wears_its_classes() {
     );
     // …until the statement recolours — then the whole dim follows.
     let red = laid(
-        "{ layout: drawing; scale: 1 }\n|rect#a| { width: 60; height: 20 }\na:left (-) a:right { side: bottom; stroke: red }\n",
+        "{ layout: drawing; density: 1 }\n|rect#a| { width: 60; height: 20 }\na:left (-) a:right { side: bottom; stroke: red }\n",
     );
     let ext = red
         .nodes
@@ -537,7 +541,7 @@ fn drawing_links_thin_to_stroke_width_1() {
     };
     assert_eq!(
         width_of(
-            "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\na:left (-) a:right\n"
+            "{ layout: drawing; density: 1 }\n|rect#a| { width: 40; height: 20 }\na:left (-) a:right\n"
         ),
         1.0,
         "the drawing-scope link default"
@@ -546,7 +550,7 @@ fn drawing_links_thin_to_stroke_width_1() {
     // And it is the *immediate* scope's default: a flow container nested
     // in a drawing owns ordinary routed links, weight 2.
     let l = laid(
-        "|drawing#d| { scale: 1 } [\n  |rect#part| { width: 40; height: 20 }\n  |row#legend| { translate: 0 60 } [\n    |box#a| \"a\"\n    |box#b| \"b\"\n    a -> b\n  ]\n]\n",
+        "|drawing#d| { scale: 0.25 } [\n  |rect#part| { width: 40; height: 20 }\n  |row#legend| { translate: 0 60 } [\n    |box#a| \"a\"\n    |box#b| \"b\"\n    a -> b\n  ]\n]\n",
     );
     let wire = l.links.first().expect("the routed flow link");
     assert!(

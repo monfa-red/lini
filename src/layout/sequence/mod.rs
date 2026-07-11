@@ -307,7 +307,7 @@ fn is_note(type_chain: &[String]) -> bool {
 
 /// The properties valid only in a sequence [SPEC 20]: a note's placement and the
 /// activation toggle.
-const SEQ_PROPS: &[&str] = &["over", "left", "right", "activation"];
+const SEQ_PROPS: &[&str] = &["place", "activation"];
 
 /// Validate sequence structure [SPEC 20], before layout: a frame / note / `|else|` belongs
 /// in a sequence (an `|else|` directly in an `|alt|`), a note needs a placement, and the
@@ -342,11 +342,8 @@ fn check_node(inst: &ResolvedInst, in_seq: bool, in_alt: bool) -> Result<(), Err
             "'|else|' separates an '|alt|' — write it inside one",
         ));
     }
-    if in_seq && is("note") && notes::placement(&inst.attrs).is_none() {
-        return Err(Error::at(
-            inst.span,
-            "a sequence '|note|' needs 'over:', 'left:', or 'right:'",
-        ));
+    if in_seq && is("note") && notes::placement(&inst.attrs, inst.span)?.is_none() {
+        return Err(Error::at(inst.span, "a sequence '|note|' needs 'place:'"));
     }
     if !seq_ctx {
         for p in SEQ_PROPS {
@@ -380,7 +377,9 @@ fn place_notes(
         .into_iter()
         .zip(note_y)
         .filter_map(|(mut n, &y)| {
-            let placement = notes::placement(&n.attrs)?;
+            // Validated when the note was collected; a malformed `place:`
+            // never reaches here.
+            let placement = notes::placement(&n.attrs, n.span).ok().flatten()?;
             n.cx = notes::centre_x(&placement, n.bbox.w(), lifeline_x)?;
             n.cy = y;
             // `translate: x y` nudges a note off its placement, so it can be positioned by
@@ -604,7 +603,7 @@ mod tests {
     #[test]
     fn a_note_renders_over_its_lifelines() {
         let s = svg(
-            "{ layout: sequence }\n|box#a| \"A\"\n|box#b| \"B\"\n|note| \"spanning\" { over: a b }\na -> b \"x\"\n",
+            "{ layout: sequence }\n|box#a| \"A\"\n|box#b| \"B\"\n|note| \"spanning\" { place: over a b }\na -> b \"x\"\n",
         );
         assert!(s.contains(">spanning</text>"), "the note text renders: {s}");
     }
@@ -628,7 +627,18 @@ mod tests {
     fn a_note_without_placement_errors() {
         assert!(
             layout_err("{ layout: sequence }\n|box#a| \"A\"\n|note| \"hi\"\n")
-                .contains("needs 'over:', 'left:', or 'right:'")
+                .contains("needs 'place:'")
+        );
+    }
+
+    #[test]
+    fn a_malformed_place_names_the_shape() {
+        // A mode then its lifelines [SPEC 13/20]: `left` takes exactly one.
+        assert!(
+            layout_err(
+                "{ layout: sequence }\n|box#a| \"A\"\n|box#b| \"B\"\n|note| \"hi\" { place: left a b }\na -> b \"x\"\n"
+            )
+            .contains("'place' is a mode then its lifelines")
         );
     }
 

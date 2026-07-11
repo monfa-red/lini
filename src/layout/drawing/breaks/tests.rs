@@ -28,7 +28,7 @@ fn a_break_compresses_the_view_and_the_dim_stays_true() {
     // 300 long, break −80..60: 140 removed, the gap left — 172 displayed;
     // the dimension still reads the unbroken 300 [SPEC 15.3].
     let l = laid(
-        "{ layout: drawing; scale: 1 }\n|sketch#bar| { draw: move(-150, 0) up(10) right(300) down(10); mirror: x-axis; break: -80 60 }\nbar:left (-) bar:right { side: bottom }\n",
+        "{ layout: drawing; density: 1 }\n|sketch#bar| { draw: move(-150, 0) up(10) right(300) down(10); mirror: x-axis; break: -80 60 }\nbar:left (-) bar:right { side: bottom }\n",
     );
     let bar = by_id(&l.nodes, "bar");
     assert!(
@@ -43,7 +43,7 @@ fn a_break_compresses_the_view_and_the_dim_stays_true() {
 fn break_defaults_to_the_longer_axis() {
     // A tall profile with unnamed stations cuts on y.
     let l = laid(
-        "{ layout: drawing; scale: 1 }\n|sketch#post| { draw: move(-10, -60) right(20) down(120) left(20) close(); break: -30 30 }\n",
+        "{ layout: drawing; density: 1 }\n|sketch#post| { draw: move(-10, -60) right(20) down(120) left(20) close(); break: -30 30 }\n",
     );
     let post = by_id(&l.nodes, "post");
     assert!(
@@ -59,7 +59,7 @@ fn every_cut_edge_draws_the_jogged_break_line() {
     // One convention [SPEC 15.7]: the thin line across the profile with
     // the sharp jog mid-span — a polyline pair per group.
     let l = laid(
-        "{ layout: drawing; scale: 1 }\n|sketch#plate| { draw: move(-100, -12) right(200) down(24) left(200) close(); break: -50 50 }\n",
+        "{ layout: drawing; density: 1 }\n|sketch#plate| { draw: move(-100, -12) right(200) down(24) left(200) close(); break: -50 50 }\n",
     );
     let cuts: Vec<_> = by_id(&l.nodes, "plate")
         .children
@@ -87,7 +87,7 @@ fn a_station_in_the_removed_span_still_measures_true() {
     // `:mid` sits at x = 0, inside the cut — displayed it squashes into
     // the gap, but the dimension reads the model's 150.
     let l = laid(
-        "{ layout: drawing; scale: 1 }\n|sketch#bar| { draw: move(-150, 0) up(10) right(150):half point():mid right(150) down(10); mirror: x-axis; break: -80 60 }\nbar:left (-) bar:mid { side: bottom }\n",
+        "{ layout: drawing; density: 1 }\n|sketch#bar| { draw: move(-150, 0) up(10) right(150):half point():mid right(150) down(10); mirror: x-axis; break: -80 60 }\nbar:left (-) bar:mid { side: bottom }\n",
     );
     text_at(&l.nodes, "150");
 }
@@ -97,7 +97,7 @@ fn a_revolved_station_span_reads_true_across_a_break() {
     // The ⌀ station reading reflects on the model, so a break never
     // narrows it [SPEC 15.6].
     let l = laid(
-        "{ layout: drawing; scale: 1 }\n|sketch#bar| { draw: move(-150, 0) up(10) right(40):thread right(260) down(10); revolve: x-axis; break: -80 60 }\nbar:thread (o) { side: left }\n",
+        "{ layout: drawing; density: 1 }\n|sketch#bar| { draw: move(-150, 0) up(10) right(40):thread right(260) down(10); revolve: x-axis; break: -80 60 }\nbar:thread (o) { side: left }\n",
     );
     text_at(&l.nodes, "⌀20");
 }
@@ -107,7 +107,7 @@ fn features_ride_the_broken_view_and_dims_to_them_stay_true() {
     // A hole at x = 100 sits past the cut: displayed it slides with the
     // far piece (100 − 140 + 12 = −28); a dim to it reads the model 250.
     let l = laid(
-        "{ layout: drawing; scale: 1 }\n|sketch#bar| { draw: move(-150, -15) right(300) down(30) left(300) close(); break: -80 60 } [\n  |hole#vent| { width: 10; translate: 100 0 }\n]\nbar:left (-) bar.vent { side: bottom }\n",
+        "{ layout: drawing; density: 1 }\n|sketch#bar| { draw: move(-150, -15) right(300) down(30) left(300) close(); break: -80 60 } [\n  |hole#vent| { width: 10; translate: 100 0 }\n]\nbar:left (-) bar.vent { side: bottom }\n",
     );
     let vent = by_id(&l.nodes, "vent");
     assert!(
@@ -124,7 +124,7 @@ fn pattern_copies_ride_the_broken_view_too() {
     // the broken frame — a patterned hole's far-side copies slide with
     // the far piece, not just the carrier [SPEC 15.3].
     let l = laid(
-        "{ layout: drawing; scale: 1 }\n|sketch#bar| { draw: move(-150, -15) right(300) down(30) left(300) close(); break: -30 30 } [\n  |hole#vent| { width: 10; translate: -120 0; pattern: grid(3, 1, 80, 0) }\n]\n",
+        "{ layout: drawing; density: 1 }\n|sketch#bar| { draw: move(-150, -15) right(300) down(30) left(300) close(); break: -30 30 } [\n  |hole#vent| { width: 10; translate: -120 0; pattern: grid(3, 1, 80, 0) }\n]\n",
     );
     let vent = by_id(&l.nodes, "vent");
     assert_eq!((vent.cx, vent.cy), (-120.0, 0.0), "the seed stays put");
@@ -143,31 +143,31 @@ fn pattern_copies_ride_the_broken_view_too() {
 fn break_errors_speak_spec() {
     assert_eq!(
         layout_err(
-            "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20; break: -5 5 }\n"
+            "{ layout: drawing; density: 1 }\n|rect#a| { width: 40; height: 20; break: -5 5 }\n"
         ),
         "'break' cuts a '|sketch|' — draw the profile with the pen"
     );
     assert_eq!(
         layout_err(
-            "{ layout: drawing; scale: 1 }\n|sketch#s| { draw: move(0, 0) right(40) down(20) left(40) close(); break: 30 10 }\n"
+            "{ layout: drawing; density: 1 }\n|sketch#s| { draw: move(0, 0) right(40) down(20) left(40) close(); break: 30 10 }\n"
         ),
         "'break' takes two stations 'a b' — a < b — and an optional x-axis / y-axis"
     );
     assert_eq!(
         layout_err(
-            "{ layout: drawing; scale: 1 }\n|sketch#s| { draw: move(0, 0) right(40) down(20) left(40) close(); break: 90 100 }\n"
+            "{ layout: drawing; density: 1 }\n|sketch#s| { draw: move(0, 0) right(40) down(20) left(40) close(); break: 90 100 }\n"
         ),
         "'break' at 90 misses the profile"
     );
     assert_eq!(
         layout_err(
-            "{ layout: drawing; scale: 1 }\n|sketch#s| { draw: move(0, 0) right(40) down(20) left(40) close(); break: 5 20, 15 35 }\n"
+            "{ layout: drawing; density: 1 }\n|sketch#s| { draw: move(0, 0) right(40) down(20) left(40) close(); break: 5 20, 15 35 }\n"
         ),
         "'break' spans overlap — merge them"
     );
     assert_eq!(
         layout_err(
-            "{ layout: drawing; scale: 1 }\n|sketch#s| { draw: move(0, 0) curve(20, -30, 40, 30, 60, 0) down(20) left(60) close(); break: 20 40 }\n"
+            "{ layout: drawing; density: 1 }\n|sketch#s| { draw: move(0, 0) curve(20, -30, 40, 30, 60, 0) down(20) left(60) close(); break: 20 40 }\n"
         ),
         "a 'break' can't cut a 'curve()' — move the stations"
     );
@@ -178,7 +178,7 @@ fn a_cut_through_an_arc_splits_it_clean() {
     // A half-round profile cut through its arc: both cut edges cross the
     // curve, the kept ends stay on the circle.
     let l = laid(
-        "{ layout: drawing; scale: 1 }\n|sketch#dome| { draw: move(-50, 0) arc(100, 0, 50) close(); break: -20 20 }\n",
+        "{ layout: drawing; density: 1 }\n|sketch#dome| { draw: move(-50, 0) arc(100, 0, 50) close(); break: -20 20 }\n",
     );
     let dome = by_id(&l.nodes, "dome");
     // 100 − 40 + 12 = 72 displayed.

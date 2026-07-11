@@ -9,7 +9,7 @@ use super::super::ir::{Bbox, PlacedNode};
 use super::super::{Ctx, anchors, child_path, effective_scale, layout_inst, prim, primitives};
 use super::{annotate, mates, place_features};
 use crate::error::Error;
-use crate::resolve::{LinkKind, Program, ResolvedInst, ResolvedLink, ResolvedValue};
+use crate::resolve::{LinkKind, Program, ResolvedInst, ResolvedLink};
 use crate::span::Span;
 
 /// A `|drawing|` **node**: lay out and seat its children, then size border-box
@@ -31,21 +31,18 @@ pub(in crate::layout) fn layout_node(
             marker,
             host,
             letter,
-        }) => super::section::layout_detail(
-            inst, path, program, own, ctx.scale, marker, host, &letter,
-        )?,
+        }) => super::section::layout_detail(inst, path, program, own, marker, host, &letter)?,
         of => {
             let mut c = lay_out(
                 &inst.children,
                 path,
                 program,
                 own,
-                unit_of(&inst.attrs),
                 inst.span,
                 inst.id.is_some(),
             )?;
             if let Some(super::section::OfView::Section { letter }) = of {
-                super::section::fill_of_title(&mut c, "section", &letter, own, ctx.scale);
+                super::section::fill_of_title(&mut c, "section", &letter, ratio_of(&inst.attrs));
             }
             c
         }
@@ -76,19 +73,11 @@ pub(in crate::layout) fn layout_node(
     Ok(placed)
 }
 
-/// A **root** drawing (`{ layout: drawing; scale: 1 }`): the file is the sheet. Children
+/// A **root** drawing (`{ layout: drawing; density: 1 }`): the file is the sheet. Children
 /// stay in scene coordinates — the root's padding frames them in `finish`.
 pub(in crate::layout) fn layout_root(program: &Program) -> Result<(Vec<PlacedNode>, Bbox), Error> {
     let own = effective_scale(&program.scene.attrs, 1.0, Span::empty())?;
-    let mut children = lay_out(
-        &program.scene.nodes,
-        "",
-        program,
-        own,
-        unit_of(&program.scene.attrs),
-        Span::empty(),
-        true,
-    )?;
+    let mut children = lay_out(&program.scene.nodes, "", program, own, Span::empty(), true)?;
     let extent = flow_extent(&children);
     place_pinned(&mut children, extent)?;
     Ok((children, extent))
@@ -105,7 +94,6 @@ fn lay_out(
     path: &str,
     program: &Program,
     own: f64,
-    unit: Option<&str>,
     span: Span,
     owns_links: bool,
 ) -> Result<Vec<PlacedNode>, Error> {
@@ -157,18 +145,16 @@ fn lay_out(
     });
     super::section::fill_planes(&mut kids, geo_extent, own)?;
     super::section::place_detail_labels(&mut kids);
-    let mut lowered = annotate::lower(&kids, &annotations, path, own, unit, None)?;
+    let mut lowered = annotate::lower(&kids, &annotations, path, own, None)?;
     kids.append(&mut lowered);
     Ok(kids)
 }
 
-/// The drawing's `unit:` — a suffix on auto-measured linear values
-/// [SPEC 15.1].
-fn unit_of(attrs: &crate::resolve::AttrMap) -> Option<&str> {
-    match attrs.get("unit") {
-        Some(ResolvedValue::String(u)) => Some(u),
-        _ => None,
-    }
+/// The view's drafting **ratio** — the authored `scale:` (default 1), read
+/// for the composed section / detail titles [SPEC 15.8]. The engine's
+/// multiplier is the folded `px-per-unit:` [SPEC 15.1], not this.
+fn ratio_of(attrs: &crate::resolve::AttrMap) -> f64 {
+    attrs.number("scale").unwrap_or(1.0)
 }
 
 /// The drawn extent of the in-flow children (pinned overlays never grow their

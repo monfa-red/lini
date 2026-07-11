@@ -7,7 +7,7 @@ use crate::resolve::NodeKind;
 #[test]
 fn primitives_stack_concentric_on_the_datum() {
     let l = laid(
-        "{ layout: drawing; scale: 1 }\n|oval#disc| { width: 60; height: 60 }\n|hole#bore| { width: 12 }\n",
+        "{ layout: drawing; density: 1 }\n|oval#disc| { width: 60; height: 60 }\n|hole#bore| { width: 12 }\n",
     );
     let (disc, bore) = (by_id(&l.nodes, "disc"), by_id(&l.nodes, "bore"));
     assert_eq!((disc.cx, disc.cy), (bore.cx, bore.cy), "origins coincide");
@@ -16,7 +16,7 @@ fn primitives_stack_concentric_on_the_datum() {
 #[test]
 fn translate_offsets_in_drawing_units_times_scale() {
     let l = laid(
-        "{ layout: drawing; scale: 2 }\n|rect#a| { width: 20; height: 10 }\n|rect#b| { width: 20; height: 10; translate: 30 5 }\n",
+        "{ layout: drawing; scale: 2; density: 1 }\n|rect#a| { width: 20; height: 10 }\n|rect#b| { width: 20; height: 10; translate: 30 5 }\n",
     );
     let (a, b) = (by_id(&l.nodes, "a"), by_id(&l.nodes, "b"));
     assert!((b.cx - a.cx - 60.0).abs() < 1e-9, "dx={}", b.cx - a.cx);
@@ -28,7 +28,7 @@ fn features_ride_in_the_part_rigid() {
     // The hole datum-places at the plate's origin + translate; mating the
     // plate moves the whole subtree (the feature's cx is parent-relative).
     let l = laid(
-        "{ layout: drawing; scale: 1 }\n|rect#base| { width: 40; height: 40 }\n|rect#plate| { width: 120; height: 70 } [\n  |hole#pin| { width: 10; translate: -35 20 }\n]\nplate:left || base:right\n",
+        "{ layout: drawing; density: 1 }\n|rect#base| { width: 40; height: 40 }\n|rect#plate| { width: 120; height: 70 } [\n  |hole#pin| { width: 10; translate: -35 20 }\n]\nplate:left || base:right\n",
     );
     let plate = by_id(&l.nodes, "plate");
     let pin = by_id(&plate.children, "pin");
@@ -40,7 +40,7 @@ fn features_ride_in_the_part_rigid() {
 #[test]
 fn a_drawing_needs_geometry() {
     assert_eq!(
-        layout_err("{ layout: drawing; scale: 1 }\n\"SECTION A-A\"\n"),
+        layout_err("{ layout: drawing; density: 1 }\n\"SECTION A-A\"\n"),
         "a drawing needs at least one geometry child"
     );
 }
@@ -48,7 +48,7 @@ fn a_drawing_needs_geometry() {
 #[test]
 fn a_hole_requires_width() {
     assert!(
-        layout_err("{ layout: drawing; scale: 1 }\n|hole#h|\n")
+        layout_err("{ layout: drawing; density: 1 }\n|hole#h|\n")
             .contains("'|hole|' requires 'width' — its diameter")
     );
 }
@@ -60,7 +60,7 @@ fn a_linear_dim_measures_the_seated_pre_scale_span() {
     // Two 20-wide rects, b mated flush to a's right at scale 2: the dim
     // reads the anchors after mates, in drawing units — 40, not 80 px.
     let l = laid(
-        "{ layout: drawing; scale: 2 }\n|rect#a| { width: 20; height: 20 }\n|rect#b| { width: 20; height: 20 }\nb:left || a:right\na:left (-) b:right { side: bottom }\n",
+        "{ layout: drawing; scale: 2; density: 1 }\n|rect#a| { width: 20; height: 20 }\n|rect#b| { width: 20; height: 20 }\nb:left || a:right\na:left (-) b:right { side: bottom }\n",
     );
     let texts: Vec<&PlacedNode> = l
         .nodes
@@ -131,7 +131,7 @@ fn the_title_gap_is_sheet_space_at_any_view_scale() {
 #[test]
 fn a_fused_mirror_generates_its_axis_centerline() {
     let l = laid(
-        "{ layout: drawing; scale: 1 }\n|sketch#body| { draw: move(-20, 0) up(8) right(40) down(8); mirror: x-axis }\n",
+        "{ layout: drawing; density: 1 }\n|sketch#body| { draw: move(-20, 0) up(8) right(40) down(8); mirror: x-axis }\n",
     );
     let body = by_id(&l.nodes, "body");
     let cl = body
@@ -147,7 +147,7 @@ fn a_fused_mirror_generates_its_axis_centerline() {
 #[test]
 fn a_closed_profile_mirror_generates_no_centerline() {
     let l = laid(
-        "{ layout: drawing; scale: 1 }\n|sketch#ears| { draw: move(0, -10) circle(3); mirror: x-axis }\n",
+        "{ layout: drawing; density: 1 }\n|sketch#ears| { draw: move(0, -10) circle(3); mirror: x-axis }\n",
     );
     let ears = by_id(&l.nodes, "ears");
     assert!(
@@ -182,7 +182,7 @@ fn the_cascade_styles_generated_chrome() {
 #[test]
 fn a_hole_draws_its_centre_marks() {
     let l = laid(
-        "{ layout: drawing; scale: 1 }\n|rect#p| { width: 40; height: 40 } [ |hole#h| { width: 10 } ]\n",
+        "{ layout: drawing; density: 1 }\n|rect#p| { width: 40; height: 40 } [ |hole#h| { width: 10 } ]\n",
     );
     let h = by_id(&l.nodes, "h");
     let marks: Vec<_> = h
@@ -201,7 +201,7 @@ fn a_hole_draws_its_centre_marks() {
 #[test]
 fn a_grid_pattern_replicates_marks_per_copy_seed_in_place() {
     let l = laid(
-        "{ layout: drawing; scale: 1 }\n|rect#plate| { width: 120; height: 70 } [\n  |hole#pin| { width: 10; translate: -35 -20; pattern: grid(2, 2, 70, 40) }\n]\n",
+        "{ layout: drawing; density: 1 }\n|rect#plate| { width: 120; height: 70 } [\n  |hole#pin| { width: 10; translate: -35 -20; pattern: grid(2, 2, 70, 40) }\n]\n",
     );
     let pin = by_id(&l.nodes, "pin");
     assert_eq!(
@@ -230,7 +230,7 @@ fn a_grid_pattern_replicates_marks_per_copy_seed_in_place() {
 #[test]
 fn a_radial_pattern_rings_its_pitch_circle() {
     let l = laid(
-        "{ layout: drawing; scale: 1 }\n|oval#flange| { width: 80; height: 80 }\n|hole#bolt| { width: 8; pattern: radial(6, 28) }\n",
+        "{ layout: drawing; density: 1 }\n|oval#flange| { width: 80; height: 80 }\n|hole#bolt| { width: 8; pattern: radial(6, 28) }\n",
     );
     let bolt = by_id(&l.nodes, "bolt");
     let ring = bolt
@@ -259,7 +259,7 @@ fn a_radial_pattern_rings_its_pitch_circle() {
 fn radial_pattern_validates_its_arguments() {
     assert!(
         layout_err(
-            "{ layout: drawing; scale: 1 }\n|hole#h| { width: 8; pattern: radial(1, 20) }\n"
+            "{ layout: drawing; density: 1 }\n|hole#h| { width: 8; pattern: radial(1, 20) }\n"
         )
         .contains("'radial' needs count ≥ 2 and radius > 0")
     );
@@ -270,7 +270,7 @@ fn radial_pattern_validates_its_arguments() {
 #[test]
 fn directed_mate_abuts_flush_and_gap_separates() {
     let flush = laid(
-        "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\n|rect#b| { width: 20; height: 20 }\nb:left || a:right\n",
+        "{ layout: drawing; density: 1 }\n|rect#a| { width: 40; height: 20 }\n|rect#b| { width: 20; height: 20 }\nb:left || a:right\n",
     );
     let b = by_id(&flush.nodes, "b");
     let a = by_id(&flush.nodes, "a");
@@ -281,7 +281,7 @@ fn directed_mate_abuts_flush_and_gap_separates() {
     );
 
     let gapped = laid(
-        "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\n|rect#b| { width: 20; height: 20 }\nb:left || a:right { gap: -6 }\n",
+        "{ layout: drawing; density: 1 }\n|rect#a| { width: 40; height: 20 }\n|rect#b| { width: 20; height: 20 }\nb:left || a:right { gap: -6 }\n",
     );
     let b = by_id(&gapped.nodes, "b");
     let a = by_id(&gapped.nodes, "a");
@@ -297,8 +297,8 @@ fn grounding_decides_who_moves_not_operator_order() {
     // `a` is first-declared — the ground — so `a:right || b:left` and
     // `b:left || a:right` both move `b` [SPEC 15.5].
     for src in [
-        "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\n|rect#b| { width: 20; height: 20 }\na:right || b:left\n",
-        "{ layout: drawing; scale: 1 }\n|rect#a| { width: 40; height: 20 }\n|rect#b| { width: 20; height: 20 }\nb:left || a:right\n",
+        "{ layout: drawing; density: 1 }\n|rect#a| { width: 40; height: 20 }\n|rect#b| { width: 20; height: 20 }\na:right || b:left\n",
+        "{ layout: drawing; density: 1 }\n|rect#a| { width: 40; height: 20 }\n|rect#b| { width: 20; height: 20 }\nb:left || a:right\n",
     ] {
         let l = laid(src);
         let (a, b) = (by_id(&l.nodes, "a"), by_id(&l.nodes, "b"));
@@ -313,7 +313,7 @@ fn grounding_decides_who_moves_not_operator_order() {
 #[test]
 fn a_point_mate_coincides_origins() {
     let l = laid(
-        "{ layout: drawing; scale: 1 }\n|oval#barrel| { width: 60; height: 60; translate: 10 5 }\n|oval#cap| { width: 30; height: 30 }\ncap || barrel\n",
+        "{ layout: drawing; density: 1 }\n|oval#barrel| { width: 60; height: 60; translate: 10 5 }\n|oval#cap| { width: 30; height: 30 }\ncap || barrel\n",
     );
     let (barrel, cap) = (by_id(&l.nodes, "barrel"), by_id(&l.nodes, "cap"));
     assert_eq!((cap.cx, cap.cy), (barrel.cx, barrel.cy), "concentric");
@@ -323,7 +323,7 @@ fn a_point_mate_coincides_origins() {
 fn a_named_edge_seats_a_part_against_an_interior_face() {
     // `:step` is a vertical face inside the profile; the ring seats on it.
     let l = laid(
-        "{ layout: drawing; scale: 1 }\n|sketch#housing| { draw: move(0, 0) up(20) right(30) down(10):step right(30) down(10) close() }\n|rect#ring| { width: 10; height: 8 }\nring:left || housing:step\n",
+        "{ layout: drawing; density: 1 }\n|sketch#housing| { draw: move(0, 0) up(20) right(30) down(10):step right(30) down(10) close() }\n|rect#ring| { width: 10; height: 8 }\nring:left || housing:step\n",
     );
     let ring = by_id(&l.nodes, "ring");
     let housing = by_id(&l.nodes, "housing");
@@ -341,7 +341,7 @@ fn a_named_edge_seats_a_part_against_an_interior_face() {
 fn islands_ground_their_own_first_node() {
     // Two unconnected pairs: each grounds its first-declared part.
     let l = laid(
-        "{ layout: drawing; scale: 1 }\n|rect#a| { width: 20; height: 20 }\n|rect#b| { width: 20; height: 20 }\n|rect#c| { width: 20; height: 20; translate: 0 60 }\n|rect#d| { width: 20; height: 20 }\na:right || b:left\nc:right || d:left\n",
+        "{ layout: drawing; density: 1 }\n|rect#a| { width: 20; height: 20 }\n|rect#b| { width: 20; height: 20 }\n|rect#c| { width: 20; height: 20; translate: 0 60 }\n|rect#d| { width: 20; height: 20 }\na:right || b:left\nc:right || d:left\n",
     );
     let (c, d) = (by_id(&l.nodes, "c"), by_id(&l.nodes, "d"));
     assert!(
@@ -359,7 +359,7 @@ fn rotate_then_mate_seats_the_rotated_anchor() {
     // A 90°-turned bar: its `:right` face now points down, parallel to the
     // base's `:top` — the mate stacks them.
     let l = laid(
-        "{ layout: drawing; scale: 1 }\n|rect#base| { width: 60; height: 20 }\n|rect#bar| { width: 40; height: 10; rotate: 90 }\nbar:right || base:top\n",
+        "{ layout: drawing; density: 1 }\n|rect#base| { width: 60; height: 20 }\n|rect#bar| { width: 40; height: 10; rotate: 90 }\nbar:right || base:top\n",
     );
     let (base, bar) = (by_id(&l.nodes, "base"), by_id(&l.nodes, "bar"));
     // base:top at y = −10; the bar's rotated right face must land there:
@@ -377,7 +377,7 @@ fn rotate_then_mate_seats_the_rotated_anchor() {
 #[test]
 fn mate_errors_speak_spec() {
     let over = layout_err(
-        "{ layout: drawing; scale: 1 }\n|rect#a| { width: 20; height: 20 }\n|rect#b| { width: 20; height: 20 }\na:right || b:left\na:left || b:right\n",
+        "{ layout: drawing; density: 1 }\n|rect#a| { width: 20; height: 20 }\n|rect#b| { width: 20; height: 20 }\na:right || b:left\na:left || b:right\n",
     );
     assert_eq!(
         over,
@@ -386,21 +386,21 @@ fn mate_errors_speak_spec() {
 
     assert_eq!(
         layout_err(
-            "{ layout: drawing; scale: 1 }\n|rect#a| { width: 20; height: 20 }\n|rect#b| { width: 20; height: 20 }\na:left || b:top\n"
+            "{ layout: drawing; density: 1 }\n|rect#a| { width: 20; height: 20 }\n|rect#b| { width: 20; height: 20 }\na:left || b:top\n"
         ),
         "mated anchors must face along one axis — 'a:left || b:top' has no shared normal"
     );
 
     assert_eq!(
         layout_err(
-            "{ layout: drawing; scale: 1 }\n|oval#a| { width: 20; height: 20 }\n|oval#b| { width: 20; height: 20 }\na || b { gap: 4 }\n"
+            "{ layout: drawing; density: 1 }\n|oval#a| { width: 20; height: 20 }\n|oval#b| { width: 20; height: 20 }\na || b { gap: 4 }\n"
         ),
         "a point mate coincides — 'gap' needs directed anchors (sides or named edges)"
     );
 
     assert_eq!(
         layout_err(
-            "{ layout: drawing; scale: 1 }\n|rect#plate| { width: 60; height: 40 } [\n  |hole#x| { width: 6; translate: -20 0 }\n  |hole#y| { width: 6; translate: 20 0 }\n]\nplate.x || plate.y\n"
+            "{ layout: drawing; density: 1 }\n|rect#plate| { width: 60; height: 40 } [\n  |hole#x| { width: 6; translate: -20 0 }\n  |hole#y| { width: 6; translate: 20 0 }\n]\nplate.x || plate.y\n"
         ),
         "'plate.x' and 'plate.y' are features of one part — a part is rigid"
     );
@@ -411,7 +411,7 @@ fn a_mate_rejects_sheet_content() {
     // A mate seats two geometry nodes [SPEC 15.5]; a note is sheet content.
     assert_eq!(
         layout_err(
-            "{ layout: drawing; scale: 1 }\n|rect#a| { width: 20; height: 20 }\n|note#n| \"x\"\na:right || n:left\n"
+            "{ layout: drawing; density: 1 }\n|rect#a| { width: 20; height: 20 }\n|note#n| \"x\"\na:right || n:left\n"
         ),
         "a mate seats geometry — '|note|' is sheet content"
     );
@@ -420,7 +420,7 @@ fn a_mate_rejects_sheet_content() {
 #[test]
 fn unknown_segment_suggests_names() {
     let msg = layout_err(
-        "{ layout: drawing; scale: 1 }\n|sketch#body| { draw: move(0, 0) up(10) right(20):neck down(10) close() }\n|rect#cap| { width: 8; height: 8 }\ncap:left || body:nek\n",
+        "{ layout: drawing; density: 1 }\n|sketch#body| { draw: move(0, 0) up(10) right(20):neck down(10) close() }\n|rect#cap| { width: 8; height: 8 }\ncap:left || body:nek\n",
     );
     assert!(msg.contains("no segment ':nek' on 'body'"), "{msg}");
     assert!(msg.contains("':neck'"), "suggests the near name: {msg}");
@@ -431,7 +431,7 @@ fn unknown_segment_suggests_names() {
 #[test]
 fn a_nested_drawing_is_one_rigid_body() {
     let l = laid(
-        "{ layout: drawing; scale: 1 }\n|rect#frame| { width: 30; height: 60 }\n|drawing#pump| [\n  |rect#casing| { width: 40; height: 40 }\n  |hole#inlet| { width: 8 }\n]\npump:left || frame:right { gap: 5 }\n",
+        "{ layout: drawing; density: 1 }\n|rect#frame| { width: 30; height: 60 }\n|drawing#pump| [\n  |rect#casing| { width: 40; height: 40 }\n  |hole#inlet| { width: 8 }\n]\npump:left || frame:right { gap: 5 }\n",
     );
     let (frame, pump) = (by_id(&l.nodes, "frame"), by_id(&l.nodes, "pump"));
     let pump_left = pump.cx + pump.bbox.min_x + 1.0; // geometry faces (stroke excluded)
@@ -453,7 +453,7 @@ fn an_anonymous_wrapper_keeps_its_drawings_scoped() {
     // The id-less |page| bug: a drawing inside an anonymous container must
     // still own its links — the scope walk descends through the wrapper.
     let l = laid(
-        "|group| [\n  |drawing#d| { scale: 1 } [\n    |rect#bar| { width: 60; height: 20 }\n    bar:left (-) bar:right { side: bottom }\n  ]\n]\n",
+        "|group| [\n  |drawing#d| { scale: 0.25 } [\n    |rect#bar| { width: 60; height: 20 }\n    bar:left (-) bar:right { side: bottom }\n  ]\n]\n",
     );
     super::super::testutil::text_at(&l.nodes, "60");
 }
@@ -463,7 +463,7 @@ fn a_dim_reaches_through_an_anonymous_wrapper() {
     // A feature inside an id-less sealed wrapper is addressable — the
     // anchor walk descends the wrapper's placed hops.
     let l = laid(
-        "{ layout: drawing; scale: 1 }\n|row| [ |rect#x| { width: 40; height: 10 } ]\nx:left (-) x:right { side: bottom }\n",
+        "{ layout: drawing; density: 1 }\n|row| [ |rect#x| { width: 40; height: 10 } ]\nx:left (-) x:right { side: bottom }\n",
     );
     super::super::testutil::text_at(&l.nodes, "40");
 }

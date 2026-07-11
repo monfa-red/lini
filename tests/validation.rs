@@ -86,8 +86,8 @@ fn cell_stays_silent_when_a_rule_could_set_the_layout() {
 #[test]
 fn sequence_placement_off_a_sequence_errors() {
     insta::assert_snapshot!(
-        diags("|row#r| [ |note#n| \"hi\" { over: a; } ]\n"),
-        @"test.lini:1:27: error: 'over' is valid only in a 'layout: sequence'"
+        diags("|row#r| [ |note#n| \"hi\" { place: over a; } ]\n"),
+        @"test.lini:1:27: error: 'place' is valid only in a 'layout: sequence'"
     );
 }
 
@@ -102,7 +102,7 @@ fn density_off_the_root_errors() {
 #[test]
 fn container_scoped_property_reads_on_a_matching_root() {
     // `unit:` is `|drawing|`-owned; a `layout: drawing` root is that scope.
-    assert_silent("{ layout: drawing; unit: \"mm\"; }\n|rect#p| { width: 40; height: 20; }\n");
+    assert_silent("{ layout: drawing; unit: mm; }\n|rect#p| { width: 40; height: 20; }\n");
 }
 
 // ── Class rules: CSS semantics — inert is fine, dead-everywhere warns ──

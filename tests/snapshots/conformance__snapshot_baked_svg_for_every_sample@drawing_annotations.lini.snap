@@ -99,7 +99,7 @@ input_file: samples/drawing_annotations.lini
       <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: #004496" transform="translate(44.1048,-10.5503)">
         <polygon points="-200,159 -212,161 -212,157"/>
       </g>
-      <text class="lini-text lini-dim-text" x="-205.8952" y="140.4497">25 mm</text>
+      <text class="lini-text lini-dim-text" x="-205.8952" y="140.4497">25</text>
       <g class="lini-node lini-ext-line lini-line" style="stroke: #004496" transform="translate(44.1048,-10.5503)">
         <line x1="-200" y1="-57" x2="-200" y2="162"/>
       </g>
@@ -115,7 +115,7 @@ input_file: samples/drawing_annotations.lini
       <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: #004496" transform="translate(44.1048,-10.5503)">
         <polygon points="300,159 288,161 288,157"/>
       </g>
-      <text class="lini-text lini-dim-text" x="94.1048" y="140.4497">125 mm</text>
+      <text class="lini-text lini-dim-text" x="94.1048" y="140.4497">125</text>
       <g class="lini-node lini-ext-line lini-line" style="stroke: #004496" transform="translate(44.1048,-10.5503)">
         <line x1="-300" y1="3" x2="-300" y2="178"/>
       </g>
@@ -131,7 +131,7 @@ input_file: samples/drawing_annotations.lini
       <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: #004496" transform="translate(44.1048,-10.5503)">
         <polygon points="300,175 288,177 288,173"/>
       </g>
-      <text class="lini-text lini-dim-text" x="44.1048" y="156.4497">150 mm</text>
+      <text class="lini-text lini-dim-text" x="44.1048" y="156.4497">150</text>
       <g class="lini-node lini-ext-line lini-line" style="stroke: #004496" transform="translate(44.1048,-10.5503)">
         <line x1="-3" y1="-140" x2="-322" y2="-140"/>
       </g>
@@ -147,7 +147,7 @@ input_file: samples/drawing_annotations.lini
       <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: #004496" transform="translate(44.1048,-10.5503)">
         <polygon points="-319,60 -321,48 -317,48"/>
       </g>
-      <text class="lini-text lini-dim-text" x="-282.8952" y="-50.5503" transform="rotate(-90 -282.8952 -50.5503)">50 mm</text>
+      <text class="lini-text lini-dim-text" x="-282.8952" y="-50.5503" transform="rotate(-90 -282.8952 -50.5503)">50</text>
       <g class="lini-node lini-ext-line lini-line" style="stroke: #004496" transform="translate(44.1048,-10.5503)">
         <line x1="-3" y1="-140" x2="-354" y2="-140"/>
       </g>
@@ -163,9 +163,9 @@ input_file: samples/drawing_annotations.lini
       <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: #004496" transform="translate(44.1048,-10.5503)">
         <polygon points="-351,140 -353,128 -349,128"/>
       </g>
-      <text class="lini-text lini-dim-text" x="-314.8952" y="3.0497" transform="rotate(-90 -314.8952 3.0497)">70 mm</text>
-      <text class="lini-text lini-dim-text" x="-319.5152" y="-29.5503" style="font-size: 8.4px" transform="rotate(-90 -319.5152 -29.5503)">+0.2</text>
-      <text class="lini-text lini-dim-text" x="-310.2752" y="-29.5503" style="font-size: 8.4px" transform="rotate(-90 -310.2752 -29.5503)">-0.05</text>
+      <text class="lini-text lini-dim-text" x="-314.8952" y="3.0497" transform="rotate(-90 -314.8952 3.0497)">70</text>
+      <text class="lini-text lini-dim-text" x="-319.5152" y="-18.7503" style="font-size: 8.4px" transform="rotate(-90 -319.5152 -18.7503)">+0.2</text>
+      <text class="lini-text lini-dim-text" x="-310.2752" y="-18.7503" style="font-size: 8.4px" transform="rotate(-90 -310.2752 -18.7503)">-0.05</text>
       <g class="lini-node lini-dim-line lini-line" style="stroke: #004496" transform="translate(44.1048,-10.5503)">
         <polyline points="-167.4339,-50.2302 -314.4096,-94.3229 -322.4096,-94.3229"/>
       </g>

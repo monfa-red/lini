@@ -104,7 +104,7 @@ input_file: samples/drawing_screw.lini
         <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(70,5.5)">
           <polygon points="-100,-64.5 -112,-62.5 -112,-66.5"/>
         </g>
-        <text class="lini-text lini-dim-text" x="-130" y="-67">100 mm</text>
+        <text class="lini-text lini-dim-text" x="-130" y="-67">100</text>
         <g class="lini-node lini-ext-line lini-line" transform="translate(70,5.5)">
           <line x1="-100" y1="-19" x2="-100" y2="-67.5"/>
         </g>
@@ -120,7 +120,7 @@ input_file: samples/drawing_screw.lini
         <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(70,5.5)">
           <polygon points="-20,-64.5 -32,-62.5 -32,-66.5"/>
         </g>
-        <text class="lini-text lini-dim-text" x="10" y="-67">40 mm</text>
+        <text class="lini-text lini-dim-text" x="10" y="-67">40</text>
         <g class="lini-node lini-ext-line lini-line" transform="translate(70,5.5)">
           <line x1="-20" y1="-7" x2="-20" y2="-67.5"/>
         </g>
@@ -136,7 +136,7 @@ input_file: samples/drawing_screw.lini
         <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(70,5.5)">
           <polygon points="160,-64.5 148,-62.5 148,-66.5"/>
         </g>
-        <text class="lini-text lini-dim-text" x="140" y="-67">90 mm</text>
+        <text class="lini-text lini-dim-text" x="140" y="-67">90</text>
         <g class="lini-node lini-ext-line lini-line" transform="translate(70,5.5)">
           <line x1="-300" y1="3" x2="-300" y2="67.5"/>
         </g>
@@ -152,7 +152,7 @@ input_file: samples/drawing_screw.lini
         <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(70,5.5)">
           <polygon points="160,64.5 148,66.5 148,62.5"/>
         </g>
-        <text class="lini-text lini-dim-text" x="0" y="62">230 mm</text>
+        <text class="lini-text lini-dim-text" x="0" y="62">230</text>
         <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,83)">
           <rect x="-54" y="-6" width="108" height="12" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="0">INJECTION SCREW</text>

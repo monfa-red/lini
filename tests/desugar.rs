@@ -114,3 +114,55 @@ fn desugar_is_idempotent() {
     let once = desugar_source(src).unwrap();
     assert_eq!(desugar_source(&once).unwrap(), once, "idempotent");
 }
+
+#[test]
+fn the_scale_fold_stamps_px_per_unit() {
+    // ratio × unit-mm × density → the engine's one internal number [SPEC 15.1/18].
+    let out = desugar_source("{ layout: drawing }\n|rect#r| { width: 10; height: 5 }\n").unwrap();
+    assert!(out.contains("px-per-unit: 4"), "defaults 1 × mm × 4: {out}");
+
+    let out = desugar_source(
+        "{ density: 8; }\n|drawing#v| { scale: 2; unit: cm; } [ |rect#r| { width: 4; height: 2 } ]\n",
+    )
+    .unwrap();
+    assert!(
+        out.contains("px-per-unit: 160"),
+        "2 × 10 mm × 8 px/mm: {out}"
+    );
+    // The authored ratio stays visible beside the fold — titles read it.
+    assert!(out.contains("scale: 2"), "{out}");
+}
+
+#[test]
+fn the_scale_fold_is_idempotent() {
+    let src = "{ density: 8; }\n|drawing#v| { scale: 2; unit: cm; } [ |rect#r| { width: 4; height: 2 } ]\n";
+    let once = desugar_source(src).unwrap();
+    let twice = desugar_source(&once).unwrap();
+    assert_eq!(once, twice, "re-desugar must not fold the fold");
+}
+
+#[test]
+fn a_page_folds_the_density_alone_and_rejects_its_own_scale() {
+    let out = desugar_source("|page#p| { sheet: a5 }\n").unwrap();
+    assert!(out.contains("px-per-unit: 4"), "paper mm × density: {out}");
+
+    let err = lini::check("|page#p| { sheet: a5; scale: 2 }\n").expect_err("page scale");
+    assert!(
+        err.to_string().contains("a '|page|' carries no 'scale:'"),
+        "{err}"
+    );
+}
+
+#[test]
+fn unit_is_an_ident_enum_and_density_positive() {
+    let err = lini::check("{ layout: drawing; unit: \"mm\" }\n|rect#r| { width: 4; height: 2 }\n")
+        .expect_err("quoted unit");
+    assert!(
+        err.to_string().contains("'unit' is mm, cm, m, or in"),
+        "{err}"
+    );
+
+    let err = lini::check("{ layout: drawing; density: 0 }\n|rect#r| { width: 4; height: 2 }\n")
+        .expect_err("zero density");
+    assert!(err.to_string().contains("'density' must be > 0"), "{err}");
+}

@@ -331,15 +331,9 @@ pub static PROPERTIES: &[Property] = &[
         DefaultRef::None,
         No,
     ),
-    // Homonym: `|page|` size sugar (`a4 landscape` [SPEC 15.8]) and the quoted
-    // ISO 7200 title-block field.
-    row(
-        "sheet",
-        &[Type("page"), Role("title-block")],
-        One(Kind::Any),
-        Engine,
-        No,
-    ),
+    // `|page|` size sugar (`a4 landscape` [SPEC 15.8]); the former ISO 7200
+    // field homonym is `sheet-number` now.
+    row("sheet", &[Type("page")], One(Kind::Any), Engine, No),
     row(
         "break",
         &[Type("sketch")],
@@ -422,20 +416,11 @@ pub static PROPERTIES: &[Property] = &[
         DefaultRef::None,
         No,
     ),
-    // `tags:` is 0.21-renamed to `labels:` (M3) — same List(Str) shape, so the
-    // rename is a pure swap; `labels` below already lists the series owner.
-    row(
-        "tags",
-        &[Role("series")],
-        List(Kind::Str),
-        DefaultRef::None,
-        No,
-    ),
-    // Today an `|axis|`'s category tick labels [SPEC 14.4]; after the 0.21
-    // rename also the series per-datum text now spelled `tags:`.
+    // The series' per-datum text [SPEC 14.3] (0.20's `tags:`); the deferred
+    // per-axis tick text keeps no property name (S2 — alpha.2 names it).
     row(
         "labels",
-        &[Type("axis"), Role("series")],
+        &[Role("series")],
         List(Kind::Str),
         DefaultRef::None,
         No,
@@ -517,37 +502,23 @@ pub static PROPERTIES: &[Property] = &[
         DefaultRef::None,
         No,
     ),
-    // Quoted today; 0.21 turns the drawing one into an inheriting ident enum (M3).
+    // Homonym: a drawing scope's unit is the ident enum `mm cm m in`
+    // (inherits nearest-wins, folded by desugar [SPEC 15.1]); an `|axis|`'s is
+    // its quoted tick suffix [SPEC 14.4] — each reader validates its own.
     row(
         "unit",
         &[Type("drawing"), Type("axis")],
-        One(Kind::Str),
+        One(Kind::Any),
         DefaultRef::None,
         No,
     ),
     row("gridlines", &[Type("axis")], One(Kind::Any), Engine, No),
     // ── Sequence [SPEC 13] — the placement props hard-gate off a sequence
-    //    [SPEC 16/20]; M3 replaces over/left/right with `place:`. ──
+    //    [SPEC 16/20]. ──
     row(
-        "over",
+        "place",
         &[Type("note")],
-        One(Kind::Ident),
-        DefaultRef::None,
-        No,
-    )
-    .hard(),
-    row(
-        "left",
-        &[Type("note")],
-        One(Kind::Ident),
-        DefaultRef::None,
-        No,
-    )
-    .hard(),
-    row(
-        "right",
-        &[Type("note")],
-        One(Kind::Ident),
+        One(Kind::Any),
         DefaultRef::None,
         No,
     )
@@ -587,14 +558,21 @@ pub static PROPERTIES: &[Property] = &[
         No,
     ),
     row(
-        "dwg",
+        "drawing-number",
         &[Role("title-block")],
         One(Kind::Str),
         DefaultRef::None,
         No,
     ),
     row(
-        "rev",
+        "revision",
+        &[Role("title-block")],
+        One(Kind::Str),
+        DefaultRef::None,
+        No,
+    ),
+    row(
+        "sheet-number",
         &[Role("title-block")],
         One(Kind::Str),
         DefaultRef::None,
@@ -622,7 +600,7 @@ pub static PROPERTIES: &[Property] = &[
         No,
     ),
     row(
-        "dept",
+        "department",
         &[Role("title-block")],
         One(Kind::Str),
         DefaultRef::None,
@@ -636,7 +614,7 @@ pub static PROPERTIES: &[Property] = &[
         No,
     ),
     row(
-        "doc-type",
+        "document-type",
         &[Role("title-block")],
         One(Kind::Str),
         DefaultRef::None,
@@ -857,7 +835,7 @@ mod tests {
             ["clearance", "routing"]
         );
         // resolve/value.rs is_string_valued. The ledger adds the ISO 7200
-        // fields (`dwg: x` now errors toward quoting instead of dying silently
+        // fields (`drawing-number: x` now errors toward quoting instead of dying silently
         // — they are SPEC-16 string-valued; desugar consumes the quoted ones
         // before resolve ever sees them).
         for name in [
@@ -868,8 +846,6 @@ mod tests {
             "path",
             "categories",
             "labels",
-            "unit",
-            "tags",
         ] {
             assert!(is_string_valued(name), "'{name}' lost string-valuedness");
         }
@@ -901,25 +877,20 @@ mod tests {
         }
     }
 
-    /// The `labels` reconciliation [Stage R2]: one row describes the axis use
-    /// and the series use (today spelled `tags:`), same shape — so the 0.21
-    /// rename is a pure swap.
+    /// The 0.21 rename [Stage M3]: `labels` is the series' per-datum text
+    /// (0.20's `tags:`, gone), and the deferred per-axis tick text keeps no
+    /// property name (S2).
     #[test]
-    fn labels_row_covers_both_uses() {
+    fn labels_is_the_series_per_datum_text() {
         let labels = get("labels").unwrap();
         assert!(matches!(labels.shape, List(Kind::Str)));
         assert!(
             labels
                 .owners
                 .iter()
-                .any(|o| matches!(o, Owner::Type("axis")))
-        );
-        assert!(
-            labels
-                .owners
-                .iter()
                 .any(|o| matches!(o, Owner::Role("series")))
         );
-        assert!(matches!(get("tags").unwrap().shape, List(Kind::Str)));
+        assert!(get("tags").is_none(), "'tags' was renamed to 'labels'");
+        assert!(get("over").is_none(), "'over' was replaced by 'place'");
     }
 }

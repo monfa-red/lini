@@ -125,9 +125,9 @@ pub struct Series {
     pub marker: MarkerKind,
     /// Per-datum label text [SPEC 14.3], parallel to the data — one tag per value /
     /// point, or empty. Drawn inline / on hover per [`tooltip`](Self::tooltip).
-    pub tags: Vec<String>,
+    pub labels: Vec<String>,
     /// How this series' labels present [SPEC 14.8] — the cascaded `tooltip:` (its
-    /// own, else the chart's). Governs whether the `tags` draw inline.
+    /// own, else the chart's). Governs whether the `labels` draw inline.
     pub tooltip: Tooltip,
     /// The tint for this series' inline tag labels [SPEC 14.8]: an explicit
     /// `color:`, else the muted role.

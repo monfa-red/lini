@@ -10,7 +10,7 @@
 //! builders) is a projector change, not a rewrite. `layout: pie` is the sibling layout
 //! (`pie.rs`). Labels present per `tooltip: none | hover | auto | always` (`tooltip.rs`):
 //! a native `<title>` floor + a live `:hover` card, and — for `auto` / `always` — inline
-//! `tags:` placed by one greedy pass (`labels.rs`).
+//! `labels:` placed by one greedy pass (`labels.rs`).
 
 mod annot;
 mod axis;
@@ -75,7 +75,7 @@ pub(super) fn layout_chart(
     // gridlines, labels, and annotations differ by direction.
     let mut kids = Vec::new();
     // Inline-label requests accrue as the marks lay out (bubbles, `|mark|` points), then
-    // join the series' `tags:` for one placement pass [SPEC 14.8].
+    // join the series' `labels:` for one placement pass [SPEC 14.8].
     let mut reqs = Vec::new();
     match plot.dir {
         Dir::Radial => radial::gridlines(&plot, &chart, &mut kids),
@@ -115,7 +115,7 @@ pub(super) fn layout_chart(
         lay_out_legend(&legend, h / 2.0 - LABEL_SIZE * 0.9, &mut kids);
     }
 
-    // Inline data labels [SPEC 14.8]: the series' `tags:` join the bubble / mark
+    // Inline data labels [SPEC 14.8]: the series' `labels:` join the bubble / mark
     // reqs gathered above, all placed by one greedy pass after the series / axes / title
     // so they sit above them and below the hover cards.
     labels::collect_series(&plot, &chart, &mut reqs);

@@ -1,4 +1,4 @@
-//! Reading each series' data, tags, and markers, and sampling deferred formulas.
+//! Reading each series' data, labels, and markers, and sampling deferred formulas.
 
 use super::*;
 
@@ -96,7 +96,7 @@ pub(super) fn read_series(
     } else {
         marker
     };
-    let tags = read_tags(inst, &data)?;
+    let labels = read_labels(inst, &data)?;
     let tooltip = super::tooltip::read_or(&inst.attrs, chart_tip)?;
     let tag_color = real_color(inst.attrs.get("color")).unwrap_or_else(muted);
     // `|bars|` default to a deep edge of their soft fill (the outlined look, [SPEC 14.6]); an
@@ -112,7 +112,7 @@ pub(super) fn read_series(
         color,
         axis,
         marker,
-        tags,
+        labels,
         tooltip,
         tag_color,
         curve: read_curve(&inst.attrs)?,
@@ -222,37 +222,37 @@ fn read_data(inst: &ResolvedInst, kind: &SeriesKind) -> Result<Data, Error> {
     Ok(Data::Points(pts))
 }
 
-/// Parse a series' `tags:` [SPEC 14.3]: a quoted-string list, one per datum,
+/// Parse a series' `labels:` [SPEC 14.3]: a quoted-string list, one per datum,
 /// validated against the data count. A `fn:` series has no authored points to label, so
-/// `tags:` on one is an error ([SPEC 20]). Reuses [`collect_strings`] (the `categories:`
-/// reader), so a tag list parses exactly like the chart's category list.
-fn read_tags(inst: &ResolvedInst, data: &Data) -> Result<Vec<String>, Error> {
-    let Some(v) = inst.attrs.get("tags") else {
+/// `labels:` on one is an error ([SPEC 20]). Reuses [`collect_strings`] (the `categories:`
+/// reader), so the list parses exactly like the chart's category list.
+fn read_labels(inst: &ResolvedInst, data: &Data) -> Result<Vec<String>, Error> {
+    let Some(v) = inst.attrs.get("labels") else {
         return Ok(Vec::new());
     };
-    let mut tags = Vec::new();
-    collect_strings("tags", v, &mut tags, inst.span)?;
+    let mut labels = Vec::new();
+    collect_strings("labels", v, &mut labels, inst.span)?;
     let n = match data {
         Data::Categorical(values) => values.len(),
         Data::Points(p) => p.len(),
         Data::Formula(_) => {
             return Err(Error::at(
                 inst.span,
-                "'tags' needs explicit 'data' — a sampled 'fn' has no points to label",
+                "'labels' needs explicit 'data' — a sampled 'fn' has no points to label",
             ));
         }
     };
-    if tags.len() != n {
+    if labels.len() != n {
         return Err(Error::at(
             inst.span,
             format!(
-                "'tags' has {} labels but the series has {} data points",
-                tags.len(),
+                "'labels' has {} entries but the series has {} data points",
+                labels.len(),
                 n
             ),
         ));
     }
-    Ok(tags)
+    Ok(labels)
 }
 
 fn read_curve(attrs: &AttrMap) -> Result<Curve, Error> {

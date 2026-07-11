@@ -2494,8 +2494,9 @@ error with a did-you-mean, kept for a future reading.
 **Auto-measure — the smart label.** A dimension with no label renders its **measured
 value**: the anchor distance projected on its axis, in drawing units, measured **after
 mates resolve** and on the **unbroken** model. Values round to at most 2 decimals,
-trailing zeros trimmed; `unit:` appends its suffix. The text composes from sources
-that each own one thing:
+trailing zeros trimmed — a bare number: drafting states units once, in the title
+block, and a per-value suffix arrives with `format:` ([SPEC 23](#23-deferred)).
+The text composes from sources that each own one thing:
 
 | Source | Owns | Example |
 |---|---|---|
@@ -2752,7 +2753,7 @@ geometry must exist before it can be measured:
 3. **Mates**: walk from the ground; rotate first, seat, the child's own translate
    after; flag cycles and over-constraints.
 4. **Measure** every annotation's anchors against the seated, unbroken geometry;
-   compose the texts (glyph + number / label + `tol:` + count + `unit:`).
+   compose the texts (glyph + number / label + `tol:` + count).
 5. **Annotate**: assign dims to sides and pack the rows in source order; auto-place
    callout texts outward; ray-cast leader tips; land the elbow.
 6. **Lower** to primitives at baked coordinates: sketch → `|path|`; hole → `|oval|` +
@@ -3362,6 +3363,8 @@ Format: `filename:line:col: error: <message>` (LSP-compatible), compile-time, wi
 | Bad `tol:` | `'tol' takes a number, '+upper -lower', or a fit ident` |
 | Bad `pattern:` | `'radial' needs count ≥ 2 and radius > 0` |
 | `scale:` ≤ 0 | `'scale' must be > 0` |
+| `scale:` on a `\|page\|` | `a '\|page\|' carries no 'scale:' — 'density:' sets its pixels per millimetre (root), a drawing's 'scale:' its drafting ratio` |
+| `density:` ≤ 0 | `'density' must be > 0` |
 | Absurd rendered extent | `the drawing renders 48000 px wide — 'scale:' is a ratio; a 5 m beam at 1:50 is 'scale: 0.02'` (hint) |
 | Bad `unit:` / `density:` off the root | `'unit' is mm, cm, m, or in` / `'density' is scene config — set it in the root block` |
 | Chain past a label | `a text callout ends its statement — chain before it` |

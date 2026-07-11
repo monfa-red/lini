@@ -76,7 +76,7 @@ input_file: samples/drawing_turned.lini
       <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(220,13.5)">
         <polygon points="42,52.5 30,54.5 30,50.5"/>
       </g>
-      <text class="lini-text lini-dim-text" x="16" y="58">300 mm</text>
+      <text class="lini-text lini-dim-text" x="16" y="58">300</text>
       <g class="lini-node lini-ext-line lini-line" transform="translate(220,13.5)">
         <line x1="-450" y1="-3" x2="-450" y2="-71.5"/>
       </g>
@@ -92,7 +92,7 @@ input_file: samples/drawing_turned.lini
       <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(220,13.5)">
         <polygon points="-330,-68.5 -342,-66.5 -342,-70.5"/>
       </g>
-      <text class="lini-text lini-dim-text" x="-170" y="-63">40 mm</text>
+      <text class="lini-text lini-dim-text" x="-170" y="-63">40</text>
       <g class="lini-node lini-ext-line lini-line" transform="translate(220,13.5)">
         <line x1="-393" y1="-30" x2="-475.5" y2="-30"/>
       </g>
@@ -165,7 +165,7 @@ input_file: samples/drawing_turned.lini
       <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(16,-5.3044)">
         <polygon points="180,55 168,57 168,53"/>
       </g>
-      <text class="lini-text lini-dim-text" x="16" y="41.6956">120 mm</text>
+      <text class="lini-text lini-dim-text" x="16" y="41.6956">120</text>
       <g class="lini-node lini-ext-line lini-line" transform="translate(16,-5.3044)">
         <line x1="-24" y1="-27" x2="-205.5" y2="-27"/>
       </g>

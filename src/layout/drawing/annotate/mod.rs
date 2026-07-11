@@ -30,15 +30,13 @@ pub(super) enum Axis {
 }
 
 /// What every lowering reads: the seated children, the scope, the geometry
-/// extent (what dims stack outside of, what leader texts clear), the view
-/// scale (measured values divide by it — always pre-scale [SPEC 15.1]), and
-/// the drawing's `unit:`.
+/// extent (what dims stack outside of, what leader texts clear), and the view
+/// scale (measured values divide by it — always pre-scale [SPEC 15.1]).
 pub(super) struct Ctx<'a> {
     pub kids: &'a [PlacedNode],
     pub scope: &'a str,
     pub extent: Bbox,
     pub scale: f64,
-    pub unit: Option<&'a str>,
 }
 
 /// A link's resolved paint, read once per statement: the wire stroke (the
@@ -109,7 +107,6 @@ pub(in crate::layout) fn lower(
     links: &[&ResolvedLink],
     scope: &str,
     scale: f64,
-    unit: Option<&str>,
     extent: Option<Bbox>,
 ) -> Result<Vec<PlacedNode>, Error> {
     let ctx = Ctx {
@@ -120,7 +117,6 @@ pub(in crate::layout) fn lower(
         // its drawn geometry.
         extent: extent.unwrap_or_else(|| geometry_extent(kids)),
         scale,
-        unit,
     };
     let mut rows = Rows::new(ctx.extent);
     let mut outs: Vec<Vec<PlacedNode>> = vec![Vec::new(); links.len()];

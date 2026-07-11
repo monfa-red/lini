@@ -12,15 +12,15 @@ use crate::syntax::ast::{Child, Decl, Node, TextNode, Value};
 /// spans the width; the rest flow into the grid.
 const FIELDS: &[(&str, &str)] = &[
     ("title", "Title"),
-    ("dwg", "Dwg No."),
-    ("rev", "Rev"),
-    ("sheet", "Sheet"),
+    ("drawing-number", "Dwg No."),
+    ("revision", "Rev"),
+    ("sheet-number", "Sheet"),
     ("date", "Date"),
     ("author", "Drawn"),
     ("approved", "Approved"),
-    ("dept", "Dept"),
+    ("department", "Dept"),
     ("reference", "Reference"),
-    ("doc-type", "Type"),
+    ("document-type", "Type"),
     ("status", "Status"),
 ];
 
@@ -165,7 +165,7 @@ mod tests {
     #[test]
     fn present_fields_become_cells_and_absent_collapse() {
         let tb = title_block(
-            "|page#p| [\n  |drawing#v| [ |rect#r| { width: 10; height: 10 } ]\n  |title-block| { title: \"T\"; dwg: \"D\"; rev: \"A\" }\n]\n",
+            "|page#p| [\n  |drawing#v| [ |rect#r| { width: 10; height: 10 } ]\n  |title-block| { title: \"T\"; drawing-number: \"D\"; revision: \"A\" }\n]\n",
         );
         // Three present fields → three cells (author, date, … absent: no cell).
         let cs = cells(&tb);
