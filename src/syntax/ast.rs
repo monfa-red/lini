@@ -154,7 +154,10 @@ pub struct TextNode {
 #[derive(Debug, Clone)]
 pub struct Link {
     pub chain: Vec<EndpointGroup>,
-    pub op: ChainOp,
+    /// One op per hop (`ops[i]` joins `chain[i]` → `chain[i+1]`); a one-ended
+    /// statement keeps its single op. Wire hops may differ (`a - b -> c`, the
+    /// bare-first-hop spelling [SPEC 9]); measures and mates chain one op.
+    pub ops: Vec<ChainOp>,
     pub classes: Vec<String>,
     pub style: Vec<Decl>,
     /// The `{ … }` style block's span, for the formatter's trivia; `None` when
@@ -171,6 +174,14 @@ pub struct Link {
 #[derive(Debug, Clone)]
 pub struct EndpointGroup {
     pub endpoints: Vec<Endpoint>,
+}
+
+impl Link {
+    /// The statement's (first) operator — every op when the chain is a
+    /// measure/mate (the parser enforces it), the first hop's otherwise.
+    pub fn op(&self) -> ChainOp {
+        self.ops[0]
+    }
 }
 
 #[derive(Debug, Clone)]

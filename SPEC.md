@@ -982,7 +982,8 @@ a & b -> c & d       // cartesian: 4 links
 a -> b -> c & d      // chain + fan
 ```
 
-Mixing operators in one chain is a parse error. On a chain or fan, the label,
+Each hop carries its own wire operator; mixing operator *kinds* — a wire op with
+a measure or mate — in one chain is a parse error. On a chain or fan, the label,
 class, and `{ }` apply to every link the statement expands to.
 
 **A chain marks every hop.** `a -> b -> c` is exactly `a -> b; b -> c` — desugar

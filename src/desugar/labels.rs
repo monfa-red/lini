@@ -3,6 +3,7 @@
 //! link's auto-distributed `along:` fractions are each a small, reusable
 //! transform [SPEC 3, 7, 9, 16].
 
+use crate::ast::ChainOp;
 use crate::span::Span;
 use crate::syntax::ast::{Decl, Link, Node, TextNode, Value};
 
@@ -76,6 +77,33 @@ pub(super) fn symbol_decl(name: &str, span: Span) -> Decl {
 /// the combined list feeds auto-`along:`. The output carries `label: None`, the
 /// full list in `labels`, and — when no `along:` was written — an even-fraction
 /// `along:` prepended to its style.
+/// Chain expansion [SPEC 9/18]: `a -> b -> c` is exactly `a -> b; b -> c` —
+/// each hop an independent link carrying the operator's full markers and the
+/// statement's label, classes, and `{ }` (they apply to every expanded link),
+/// with its own hop operator and the statement's span (the router groups a
+/// statement's wires by span, so hop labels and crossings stay per-statement).
+/// Only wire chains split: a measure chain shares one dim row and a mate
+/// seats pairs — their hop semantics belong to the drawing engine.
+pub(super) fn split_chain(w: &Link) -> Vec<Link> {
+    if w.chain.len() <= 2 || !matches!(w.op(), ChainOp::Wire(_)) {
+        return vec![w.clone()];
+    }
+    w.chain
+        .windows(2)
+        .enumerate()
+        .map(|(i, pair)| Link {
+            chain: pair.to_vec(),
+            ops: vec![w.ops[i]],
+            classes: w.classes.clone(),
+            style: w.style.clone(),
+            style_span: w.style_span,
+            label: w.label.clone(),
+            labels: w.labels.clone(),
+            span: w.span,
+        })
+        .collect()
+}
+
 pub(super) fn lower_link(w: &Link) -> Link {
     let mut labels = Vec::new();
     if let Some(head) = &w.label {
@@ -105,7 +133,7 @@ pub(super) fn lower_link(w: &Link) -> Link {
     }
     Link {
         chain: w.chain.clone(),
-        op: w.op,
+        ops: w.ops.clone(),
         classes: w.classes.clone(),
         style,
         style_span: w.style_span,

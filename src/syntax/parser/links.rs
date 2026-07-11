@@ -9,13 +9,21 @@ impl<'a> Parser<'a> {
         let start = self.span();
         let mut chain = vec![self.parse_endpoint_group()?];
         let op = self.expect_chain_op()?;
+        let mut ops = vec![op];
         // A statement may be one-ended — a leader or a unary measure toward its
         // text [SPEC 15.6/21]: after the op, an ident is an endpoint; anything
         // else is the tail. Which ops (and scopes) allow it is resolve's call.
         if matches!(self.kind(), Some(TokKind::Ident(_))) {
             chain.push(self.parse_endpoint_group()?);
             while let Some((next, width)) = self.peek_chain_op() {
-                if next != op {
+                // Wire hops may each carry their own op — `a - b -> c` is the
+                // bare-first-hop spelling [SPEC 9]; mixing operator *kinds*
+                // (or measure/mate ops) in one chain stays a parse error.
+                let compatible = match (op, next) {
+                    (ChainOp::Wire(_), ChainOp::Wire(_)) => true,
+                    _ => next == op,
+                };
+                if !compatible {
                     return Err(self.err(format!(
                         "link chain mixes operators '{}' and '{}'",
                         op.spelling(),
@@ -26,6 +34,7 @@ impl<'a> Parser<'a> {
                 if !matches!(self.kind(), Some(TokKind::Ident(_))) {
                     return Err(self.err("a text callout ends its statement — chain before it"));
                 }
+                ops.push(next);
                 chain.push(self.parse_endpoint_group()?);
             }
         }
@@ -45,7 +54,7 @@ impl<'a> Parser<'a> {
         };
         Ok(Link {
             chain,
-            op,
+            ops,
             classes,
             style,
             style_span,

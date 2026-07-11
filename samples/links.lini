@@ -71,3 +71,21 @@
 ]
 
 rooms.garden.outlet -> rooms.kitchen.inlet "carries"
+
+// A chain marks every hop [SPEC 9]: `a -> b -> c` is exactly `a -> b; b -> c`
+// (both arrows drawn), and each hop carries its own op — a bare first hop, a
+// bidirectional second (`tap <- probe <-> gauge`).
+|row#chains| { gap: 56; } [
+  |caption| "chains — every hop marked"
+  |box#relay| "relay"
+  |box#hub| "hub"
+  |box#sink| "sink"
+  relay -> hub -> sink
+]
+
+|row#hops| { gap: 56; } [
+  |box#tap| "tap"
+  |box#probe| "probe"
+  |box#gauge| "gauge"
+  tap <- probe <-> gauge
+]

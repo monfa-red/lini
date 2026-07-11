@@ -561,7 +561,7 @@ impl Emitter<'_> {
         for (i, group) in w.chain.iter().enumerate() {
             if i > 0 {
                 self.out.push(' ');
-                self.out.push_str(&w.op.spelling());
+                self.out.push_str(&w.ops[i - 1].spelling());
                 self.out.push(' ');
             }
             for (j, ep) in group.endpoints.iter().enumerate() {
@@ -575,7 +575,7 @@ impl Emitter<'_> {
         // its op after the single endpoint group, before the tail.
         if w.chain.len() == 1 {
             self.out.push(' ');
-            self.out.push_str(&w.op.spelling());
+            self.out.push_str(&w.op().spelling());
         }
         // The tail mirrors a node's order [SPEC 9]: head label, then classes,
         // then style, then the `[ ]` labels. A lone bare label trails the head

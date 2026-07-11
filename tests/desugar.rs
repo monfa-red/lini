@@ -166,3 +166,50 @@ fn unit_is_an_ident_enum_and_density_positive() {
         .expect_err("zero density");
     assert!(err.to_string().contains("'density' must be > 0"), "{err}");
 }
+
+#[test]
+fn a_wire_chain_expands_to_one_link_per_hop() {
+    // [SPEC 9/18]: `a -> b -> c` is exactly `a -> b; b -> c` — every hop
+    // carries the operator's full markers, and `lini desugar` shows both.
+    let out = desugar_source("|box#a|\n|box#b|\n|box#c|\na -> b -> c\n").unwrap();
+    assert!(out.contains("a -> b\n"), "{out}");
+    assert!(out.contains("b -> c\n"), "{out}");
+    assert!(!out.contains("a -> b -> c"), "{out}");
+    // The statement's label rides every hop [SPEC 9].
+    let out = desugar_source("|box#a|\n|box#b|\n|box#c|\na -> b -> c \"step\"\n").unwrap();
+    assert_eq!(out.matches("\"step\"").count(), 2, "{out}");
+}
+
+#[test]
+fn chain_hops_keep_their_own_operators() {
+    // The bare-first-hop spelling [SPEC 9]: `a - b -> c` — and a fan hop
+    // stays a fan (`&` is routing geometry, not sugar [SPEC 18]).
+    let out = desugar_source("|box#a|\n|box#b|\n|box#c|\na - b <-> c\n").unwrap();
+    assert!(out.contains("a - b\n"), "{out}");
+    assert!(out.contains("b <-> c\n"), "{out}");
+    let out = desugar_source("|box#a|\n|box#b|\n|box#c|\n|box#d|\na -> b -> c & d\n").unwrap();
+    assert!(out.contains("a -> b\n"), "{out}");
+    assert!(out.contains("b -> c & d\n"), "{out}");
+}
+
+#[test]
+fn a_chain_auto_creates_every_hops_endpoints_once() {
+    // Auto-created ids ride the expansion [SPEC 18]: the shared middle id is
+    // created once, at the root.
+    let out = desugar_source("x -> y -> z\n").unwrap();
+    for id in ["x", "y", "z"] {
+        assert_eq!(
+            out.matches(&format!("|block#{id}| ")).count(),
+            1,
+            "{id} created once: {out}"
+        );
+    }
+}
+
+#[test]
+fn mixing_op_kinds_in_a_chain_stays_a_parse_error() {
+    let e = desugar_source("|box#a|\n|box#b|\n|box#c|\na -> b (-) c\n")
+        .expect_err("mixed kinds error")
+        .to_string();
+    assert!(e.contains("mixes operators"), "{e}");
+}

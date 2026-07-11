@@ -40,7 +40,7 @@ fn lint_pinned_mates(file: &File, out: &mut Vec<Diagnostic>) {
                 _ => None,
             })
             .collect();
-        for w in links.iter().filter(|w| matches!(w.op, ChainOp::Mate)) {
+        for w in links.iter().filter(|w| matches!(w.op(), ChainOp::Mate)) {
             for ep in w.chain.iter().flat_map(|g| &g.endpoints) {
                 if let [first, ..] = ep.path.as_slice()
                     && pinned.contains(&first.as_str())

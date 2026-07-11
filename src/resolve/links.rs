@@ -71,7 +71,7 @@ pub fn resolve_link(
     // mate — a pure function of the operator (an explicit `marker:` restyles a
     // wire but never re-types it), so it is the same for every fan pair. A
     // **dimension** is any `Measure(_)`.
-    let kind = match w.op {
+    let kind = match w.op() {
         ChainOp::Wire(_) => LinkKind::Wire,
         ChainOp::Measure(DrawOp::Linear) => LinkKind::Measure(MeasureOp::Linear),
         ChainOp::Measure(DrawOp::Round) => LinkKind::Measure(MeasureOp::Round),
@@ -110,7 +110,7 @@ pub fn resolve_link(
     }
 
     // A measure / mate has no wire: no markers to derive, no line style to inject.
-    let markers = match w.op.wire() {
+    let markers = match w.op().wire() {
         Some(op) => resolve_markers(
             &ordered,
             MarkerKind::from_marker(op.start),
@@ -120,7 +120,7 @@ pub fn resolve_link(
         None => Markers::default(),
     };
     let mut attrs = collapse(&ordered);
-    if let Some(op) = w.op.wire() {
+    if let Some(op) = w.op().wire() {
         inject_line_style(&mut attrs, op.line);
     }
     if !drawing_scope && attrs.get("tol").is_some() {
@@ -194,7 +194,7 @@ pub fn resolve_link(
             } else {
                 paths
                     .resolve(&qualified)
-                    .ok_or_else(|| endpoint_error(&ep, paths, path_prefix, w.op, drawing_scope))?
+                    .ok_or_else(|| endpoint_error(&ep, paths, path_prefix, w.op(), drawing_scope))?
             };
             let (side, point) = resolve_point(&ep, drawing_scope)?;
             endpoints.push(ResolvedEndpoint {
@@ -208,7 +208,7 @@ pub fn resolve_link(
             endpoints,
             kind,
             scope: path_prefix.join("."),
-            line: w.op.wire().map_or(LineStyle::Solid, |op| op.line),
+            line: w.op().wire().map_or(LineStyle::Solid, |op| op.line),
             routing,
             attrs: attrs.clone(),
             applied_styles: w.classes.clone(),
@@ -231,7 +231,7 @@ pub fn resolve_link(
 fn validate_statement(w: &Link, scope: &LinkScope) -> Result<(), Error> {
     let drawing = scope.drawing;
     if !drawing {
-        match w.op {
+        match w.op() {
             ChainOp::Measure(d) => {
                 return Err(Error::at(
                     w.span,
@@ -259,11 +259,11 @@ fn validate_statement(w: &Link, scope: &LinkScope) -> Result<(), Error> {
         }
     }
     let labelled = w.label.is_some() || !w.labels.is_empty();
-    if matches!(w.op, ChainOp::Mate) && labelled {
+    if matches!(w.op(), ChainOp::Mate) && labelled {
         return Err(Error::at(w.span, "a mate takes no label"));
     }
     // `(o)` is unary-only [SPEC 15.6] — the circle pictures one round feature.
-    if matches!(w.op, ChainOp::Measure(crate::ast::DrawOp::Round)) && w.chain.len() > 1 {
+    if matches!(w.op(), ChainOp::Measure(crate::ast::DrawOp::Round)) && w.chain.len() > 1 {
         return Err(Error::at(
             w.span,
             "'(o)' measures one round feature — write 'a:top (o)' for a span",
@@ -274,7 +274,7 @@ fn validate_statement(w: &Link, scope: &LinkScope) -> Result<(), Error> {
     }
     // One-ended [SPEC 15.6/21]: a unary round / angle measure, or a leader toward
     // its text. The binary `(-)` (linear) needs two ends.
-    match w.op {
+    match w.op() {
         ChainOp::Measure(crate::ast::DrawOp::Linear) => {
             Err(Error::at(w.span, "a linear dimension measures two anchors"))
         }

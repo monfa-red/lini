@@ -54,5 +54,6 @@
   |box#api| "API"
   |cyl#db| "Postgres"
 
-  web -> api -> db "query"
+  web -> api
+  api -> db "query"
 ]

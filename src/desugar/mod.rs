@@ -185,7 +185,12 @@ pub fn desugar(file: &File) -> Result<File, Error> {
         stylesheet,
         stylesheet_span: Span::empty(),
         instances,
-        links: file.links.iter().map(labels::lower_link).collect(),
+        links: file
+            .links
+            .iter()
+            .flat_map(labels::split_chain)
+            .map(|w| labels::lower_link(&w))
+            .collect(),
     })
 }
 
@@ -481,13 +486,13 @@ fn lower_node(
         for name in &info.chain {
             if let Some((_, body)) = bodies.get(name) {
                 for w in body {
-                    links.push(labels::lower_link(w));
+                    links.extend(labels::split_chain(w).iter().map(labels::lower_link));
                 }
             }
         }
     }
     for w in &node.links {
-        links.push(labels::lower_link(w));
+        links.extend(labels::split_chain(w).iter().map(labels::lower_link));
     }
 
     // Auto-create undeclared body-link endpoints among this body's own children ([SPEC 3] —
