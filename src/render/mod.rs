@@ -8,6 +8,7 @@ mod primitives;
 mod rounding;
 mod rules;
 mod style_block;
+mod stylesheet;
 mod text;
 mod used_vars;
 pub(crate) mod values;
@@ -46,7 +47,7 @@ pub fn render(laid_out: &LaidOut, opts: &Options) -> String {
     // The stylesheet's structural rules state every paint default once; the
     // root `.lini` rule seeds the inherited text properties (font, size,
     // color) for the whole tree. Per-node differences ride `style=`.
-    let ruleset = rules::build(laid_out, opts);
+    let ruleset = stylesheet::build(laid_out, opts);
     let used = used_vars::referenced(laid_out, &ruleset);
     // One `:hover ~` reveal rule per tooltip card — live charts only.
     let tooltip_rules = if opts.bake_vars {
