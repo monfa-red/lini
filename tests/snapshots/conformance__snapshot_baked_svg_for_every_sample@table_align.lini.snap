@@ -9,6 +9,7 @@ input_file: samples/table_align.lini
     .lini .lini-canvas { fill: white; }
     .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
+    .lini .lini-gutter { stroke: none; }
     .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
     .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
     .lini .lini-table { fill: none; stroke: #444; stroke-width: 2; font-size: 14px; font-weight: normal; stroke-dasharray: none; }
@@ -19,11 +20,11 @@ input_file: samples/table_align.lini
   <g class="lini-scene">
     <g class="lini-node lini-table lini-group lini-block" data-id="invoice" transform="translate(0,0)">
       <rect x="-151" y="-49.5" width="302" height="99" rx="8" ry="8"/>
-      <rect x="-21" y="-49.5" width="1" height="99" fill="#444" stroke="none"/>
-      <rect x="50" y="-49.5" width="1" height="99" fill="#444" stroke="none"/>
-      <rect x="-151" y="-25.5" width="302" height="1" fill="#444" stroke="none"/>
-      <rect x="-151" y="-0.5" width="302" height="1" fill="#444" stroke="none"/>
-      <rect x="-151" y="24.5" width="302" height="1" fill="#444" stroke="none"/>
+      <rect class="lini-gutter" x="-21" y="-49.5" width="1" height="99" fill="#444"/>
+      <rect class="lini-gutter" x="50" y="-49.5" width="1" height="99" fill="#444"/>
+      <rect class="lini-gutter" x="-151" y="-25.5" width="302" height="1" fill="#444"/>
+      <rect class="lini-gutter" x="-151" y="-0.5" width="302" height="1" fill="#444"/>
+      <rect class="lini-gutter" x="-151" y="24.5" width="302" height="1" fill="#444"/>
       <g class="lini-node lini-header lini-cell lini-align-start lini-block" transform="translate(-86,-37.5)">
         <rect x="-64" y="-11" width="128" height="22" rx="0" ry="0"/>
         <text class="lini-text" x="-40.2" y="0">Item</text>

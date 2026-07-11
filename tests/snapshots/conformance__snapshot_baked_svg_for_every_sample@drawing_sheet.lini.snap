@@ -1,6 +1,5 @@
 ---
 source: tests/conformance.rs
-assertion_line: 40
 expression: svg
 input_file: samples/drawing_sheet.lini
 ---
@@ -18,6 +17,7 @@ input_file: samples/drawing_sheet.lini
     .lini .lini-ext-line { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
     .lini .lini-dim-text { font-size: 12px; font-weight: normal; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
+    .lini .lini-gutter { stroke: none; }
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
     .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
     .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
@@ -179,10 +179,10 @@ input_file: samples/drawing_sheet.lini
       </g>
       <g class="lini-node lini-title-block lini-table lini-group lini-block" transform="translate(423,299)">
         <rect x="-130.5" y="-80.5" width="261" height="161" rx="0" ry="0"/>
-        <rect x="36.5" y="-27" width="1" height="107.5" fill="#444" stroke="none"/>
-        <rect x="83.5" y="-27" width="1" height="107.5" fill="#444" stroke="none"/>
-        <rect x="-130.5" y="-27.5" width="261" height="1" fill="#444" stroke="none"/>
-        <rect x="-130.5" y="26.5" width="261" height="1" fill="#444" stroke="none"/>
+        <rect class="lini-gutter" x="36.5" y="-27" width="1" height="107.5" fill="#444"/>
+        <rect class="lini-gutter" x="83.5" y="-27" width="1" height="107.5" fill="#444"/>
+        <rect class="lini-gutter" x="-130.5" y="-27.5" width="261" height="1" fill="#444"/>
+        <rect class="lini-gutter" x="-130.5" y="26.5" width="261" height="1" fill="#444"/>
         <g class="lini-node lini-cell lini-block" transform="translate(0,-54)">
           <rect x="-129.5" y="-25.5" width="259" height="51" rx="0" ry="0"/>
           <g class="lini-node lini-field lini-block" transform="translate(0,-17.5)">

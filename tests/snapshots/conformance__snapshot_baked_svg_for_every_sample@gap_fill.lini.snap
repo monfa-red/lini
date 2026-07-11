@@ -9,6 +9,7 @@ input_file: samples/gap_fill.lini
     .lini .lini-canvas { fill: white; }
     .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
+    .lini .lini-gutter { stroke: none; }
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
   </style>
   <defs/>
@@ -16,8 +17,8 @@ input_file: samples/gap_fill.lini
   <g class="lini-scene">
     <g class="lini-node lini-row lini-block" data-id="bands" transform="translate(0,-37)">
       <rect x="-124.5" y="-28.5" width="249" height="57" rx="0" ry="0"/>
-      <rect x="-55.5" y="-28.5" width="12" height="57" fill="#7eddfd" stroke="none"/>
-      <rect x="25.5" y="-28.5" width="12" height="57" fill="#7eddfd" stroke="none"/>
+      <rect class="lini-gutter" x="-55.5" y="-28.5" width="12" height="57" fill="#7eddfd"/>
+      <rect class="lini-gutter" x="25.5" y="-28.5" width="12" height="57" fill="#7eddfd"/>
       <g class="lini-node lini-box lini-block" data-id="a" style="fill: #cff6ff; stroke: #00547e; color: #00547e" transform="translate(-90,0)">
         <rect x="-33.5" y="-27.5" width="67" height="55" rx="8" ry="8"/>
         <text class="lini-text" x="0" y="0">one</text>
@@ -33,7 +34,7 @@ input_file: samples/gap_fill.lini
     </g>
     <g class="lini-node lini-grid lini-block" data-id="week" transform="translate(0,46.5)">
       <rect x="-120" y="-19" width="240" height="38" rx="0" ry="0"/>
-      <rect x="-120" y="-4" width="240" height="8" fill="#005d56" stroke="none"/>
+      <rect class="lini-gutter" x="-120" y="-4" width="240" height="8" fill="#005d56"/>
       <text class="lini-text" x="-80" y="-11.5">Mon</text>
       <text class="lini-text" x="0" y="-11.5">Tue</text>
       <text class="lini-text" x="80" y="-11.5">Wed</text>

@@ -1,6 +1,5 @@
 ---
 source: tests/conformance.rs
-assertion_line: 40
 expression: svg
 input_file: samples/drawing_ring.lini
 ---
@@ -33,7 +32,7 @@ input_file: samples/drawing_ring.lini
     .lini .lini-marker-dim { fill: black; }
   </style>
   <defs>
-    <pattern id="lini-hatch-1" patternUnits="userSpaceOnUse" width="5" height="5" patternTransform="rotate(45)"><line x1="2.5" y1="0" x2="2.5" y2="5" stroke="#444" stroke-width="0.75"/></pattern>
+    <pattern id="lini-hatch-1" patternUnits="userSpaceOnUse" width="5" height="5" patternTransform="rotate(45)"><g stroke="#444" stroke-width="0.75"><line x1="2.5" y1="0" x2="2.5" y2="5"/></g></pattern>
   </defs>
   <rect class="lini-canvas" x="-420" y="-296" width="840" height="592"/>
   <g class="lini-scene">

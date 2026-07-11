@@ -167,6 +167,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
     let mut used_styles: BTreeSet<&str> = BTreeSet::new();
     let mut has_markers = false;
     let mut has_open = false;
+    let mut has_gutters = false;
     for node in &laid.nodes {
         collect(
             node,
@@ -174,6 +175,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
             &mut used_styles,
             &mut has_markers,
             &mut has_open,
+            &mut has_gutters,
         );
     }
     // Links carry styles too (same class surface as nodes), so a style used
@@ -374,6 +376,16 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
                 ("font-size".into(), "11px".into()),
                 ("font-weight".into(), "normal".into()),
             ],
+        });
+    }
+
+    // A `gap-fill` gutter rect states its fill inline (it varies per container) but
+    // never a stroke — the container's border can't bleed onto it [SPEC 11]. Stated
+    // once here, not `stroke="none"` on every gutter rect.
+    if has_gutters {
+        rules.push(Rule {
+            class: "lini-gutter".into(),
+            props: vec![("stroke".into(), "none".into())],
         });
     }
 
@@ -665,7 +677,9 @@ fn collect<'a>(
     used_styles: &mut BTreeSet<&'a str>,
     has_markers: &mut bool,
     has_open: &mut bool,
+    has_gutters: &mut bool,
 ) {
+    *has_gutters |= !node.gutters.is_empty();
     present.insert(node.kind.as_str());
     // An icon's optional label renders as a `lini-text`, so register the text
     // rule even though the label is not a separate Text node.
@@ -681,7 +695,14 @@ fn collect<'a>(
     *has_markers |= node.markers.start != MarkerKind::None || node.markers.end != MarkerKind::None;
     *has_open |= node.markers.start.is_open() || node.markers.end.is_open();
     for child in &node.children {
-        collect(child, present, used_styles, has_markers, has_open);
+        collect(
+            child,
+            present,
+            used_styles,
+            has_markers,
+            has_open,
+            has_gutters,
+        );
     }
 }
 

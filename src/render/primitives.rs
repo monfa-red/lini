@@ -61,9 +61,10 @@ pub fn render_geometry(
     // Interior gutters, each a `<rect>` filled with the container's resolved
     // `gap-fill` [SPEC 11] — drawn over the shape, interior only, so the outer
     // frame stays the container's own border and no edge is doubled. The rect
-    // states its own `stroke="none"`, so the container's border never bleeds onto
-    // it, and a filled rect (unlike a `<line>`) carries a gradient `gap-fill`.
-    // Layout emits gutters only when `gap-fill` is set, so it is always a real paint.
+    // wears `.lini-gutter` (`stroke: none`, stated once) so the container's border
+    // never bleeds onto it, and a filled rect (unlike a `<line>`) carries a
+    // gradient `gap-fill`. Layout emits gutters only when `gap-fill` is set, so it
+    // is always a real paint.
     if !n.gutters.is_empty() {
         let indent = "  ".repeat(depth);
         let fill = n
@@ -74,7 +75,7 @@ pub fn render_geometry(
         for (cx, cy, w, h) in &n.gutters {
             writeln!(
                 out,
-                r#"{}<rect x="{}" y="{}" width="{}" height="{}" fill="{}" stroke="none"/>"#,
+                r#"{}<rect class="lini-gutter" x="{}" y="{}" width="{}" height="{}" fill="{}"/>"#,
                 indent,
                 num(cx - w / 2.0),
                 num(cy - h / 2.0),

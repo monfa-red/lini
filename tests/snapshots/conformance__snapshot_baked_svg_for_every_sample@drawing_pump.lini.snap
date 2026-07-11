@@ -1,6 +1,5 @@
 ---
 source: tests/conformance.rs
-assertion_line: 40
 expression: svg
 input_file: samples/drawing_pump.lini
 ---
@@ -17,6 +16,7 @@ input_file: samples/drawing_pump.lini
     .lini .lini-ext-line { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
     .lini .lini-dim-text { font-size: 12px; font-weight: normal; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
+    .lini .lini-gutter { stroke: none; }
     .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
     .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
     .lini .lini-footnote { color: rgba(0, 0, 0, 0.5); font-size: 12px; }
@@ -30,7 +30,7 @@ input_file: samples/drawing_pump.lini
     .lini .lini-marker-dim { fill: black; }
   </style>
   <defs>
-    <pattern id="lini-hatch-1" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)"><line x1="3" y1="0" x2="3" y2="6" stroke="#444" stroke-width="0.75"/></pattern>
+    <pattern id="lini-hatch-1" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)"><g stroke="#444" stroke-width="0.75"><line x1="3" y1="0" x2="3" y2="6"/></g></pattern>
   </defs>
   <rect class="lini-canvas" x="-485.5" y="-253.25" width="971" height="506.5"/>
   <g class="lini-scene">
@@ -96,10 +96,10 @@ input_file: samples/drawing_pump.lini
     </g>
     <g class="lini-node lini-table lini-group lini-block" data-id="bom" transform="translate(0,195.25)">
       <rect x="-62.2" y="-37" width="124.4" height="74" rx="8" ry="8"/>
-      <rect x="-38.2" y="-37" width="1" height="74" fill="#444" stroke="none"/>
-      <rect x="31.2" y="-37" width="1" height="74" fill="#444" stroke="none"/>
-      <rect x="-62.2" y="-13" width="124.4" height="1" fill="#444" stroke="none"/>
-      <rect x="-62.2" y="12" width="124.4" height="1" fill="#444" stroke="none"/>
+      <rect class="lini-gutter" x="-38.2" y="-37" width="1" height="74" fill="#444"/>
+      <rect class="lini-gutter" x="31.2" y="-37" width="1" height="74" fill="#444"/>
+      <rect class="lini-gutter" x="-62.2" y="-13" width="124.4" height="1" fill="#444"/>
+      <rect class="lini-gutter" x="-62.2" y="12" width="124.4" height="1" fill="#444"/>
       <g class="lini-node lini-header lini-cell lini-block" transform="translate(-50.2,-25)">
         <rect x="-11" y="-11" width="22" height="22" rx="0" ry="0"/>
         <text class="lini-text" x="0" y="0">#</text>

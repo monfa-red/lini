@@ -122,7 +122,7 @@ fn gap_fill_accepts_a_gradient() {
         "gradient def emitted: {svg}"
     );
     assert!(
-        svg.contains(r#"fill="url(#lini-gradient-1)" stroke="none""#),
+        svg.contains(r#"class="lini-gutter""#) && svg.contains(r#"fill="url(#lini-gradient-1)""#),
         "the gutter rect fills with the gradient: {svg}"
     );
 }
