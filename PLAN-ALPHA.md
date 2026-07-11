@@ -721,7 +721,53 @@ the amendment says otherwise; `lini desugar` shows folded scales; no `dwg`/
 
 **Release checkpoint:** M1–M3 land together, never separately — with them in,
 the breaking core is coherent: cut **0.21.0**.
-**Log:**
+**Log:** 2026-07-11 — **done**, 1 commit, all acceptance met (15 suites +
+fmt + clippy clean; `lini desugar` shows the folded number beside the
+authored ratio; grep confirms no `dwg`/`rev`/`tags`/`over` property spelling
+in code, samples, SPEC, or README; drawing samples byte-stable except the
+enumerated dim-text change; print-scale mm attrs verified A4/A3). Items:
+- **The fold**: new `desugar/scale.rs` stamps a generated internal
+  `px-per-unit:` (ratio × unit-mm × density) on every drawing scope, and the
+  density alone on pages (`scale:` on a page errors); recomputed per pass —
+  desugar stays idempotent (pinned by test). `effective_scale` prefers the
+  stamp; the drawing/page bundles and the root-drawing default lose their
+  `scale: 4` (the fold owns it). Titles read the authored ratio directly;
+  pages-only mm emission reads the stamp. Absurd-extent hint lands
+  (`ABSURD_EXTENT_PX` in consts; root and nested views; silent at the honest
+  ratio — pinned both ways). Pixel-space outside drawing scopes pinned
+  (`right(300)` = 300 px in flow).
+- `unit:` = inheriting ident enum (`mm cm m in`, walked by the fold through
+  pages into views); the axis homonym keeps its quoted suffix, each reader
+  validating its own (ledger shape → `Any`).
+- **Suffix decision executed**: measured values read **bare pre-scale
+  numbers** — SPEC 15.1 (S2's decision: suffix display is `format:`'s future
+  job) contradicted leftovers in SPEC 15.6/15.9 ("unit: appends its suffix");
+  resolved per the S2 log, the two leftovers fixed as errata. This is the
+  one visible output change: three samples' dim texts lose " mm".
+- `place:` replaces over/left/right (ledger row, sequence reader with the
+  SPEC 20 mode error, M2 gate, tests); `tags:` → `labels:` (reader, messages
+  "'labels' has N entries…", ledger row now series-only per S2 — the
+  deferred axis tick text keeps no name — internal Series field renamed);
+  title-block fields to full words + `sheet-number` (the `sheet` homonym row
+  dies); the block's smart label lowers to its `title` field.
+- Samples migrated: view scales ÷4 (byte-stable — turned/annotations at
+  0.75/0.5, screw at 0.5/1.5, section/sheet land on clean 1/2/3), quoted
+  units → idents, `labels:`, `place:`, full-word fields; all fmt-canonical.
+  drawing_sheet + drawing_section pixel-identical to pre-M3; turned/
+  annotations/screw re-blessed for the suffix drop only, eyeballed light +
+  dark. Test snippets spell multiplier intent as `density: 1` + the ratio.
+
+**Deviations / interpretations** (flagged, none silent): (1) the fold applies
+to **authored decls** — a rule-borne `scale:` on a drawing stays an engine
+multiplier (AST-level pass; same static philosophy as M2); (2) sheet chrome
+(`|note|`/`|balloon|`/`|table|` bundles at `scale: 1`) keeps engine-multiplier
+semantics per SPEC 8/15.1's own "annotations are sheet chrome" — an *authored*
+node-level `scale:` inside a view folds as a ratio; (3) the 15.6/15.9-vs-15.1
+suffix contradiction resolved in 15.1's favour (see above) — flagged for
+owner review rather than pre-approved.
+
+**Release checkpoint note:** M1–M3 are in — **0.21.0 is ready to cut**
+(version bump + tag + push deferred to the owner, as with 0.20.1).
 
 ### Stage M4 — text wrap + line alignment `[feature]`
 
