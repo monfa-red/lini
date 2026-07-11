@@ -622,7 +622,29 @@ AUDIT D7 + seam table. The parser is ready; this is the reader flip + migration.
 Acceptance: all tests green; `lini fmt --check` clean over samples; conformance
 PNGs of the chart samples visually identical to before (the law changes syntax,
 not pixels).
-**Log:**
+**Log:** 2026-07-11 — **done**, 1 commit, all acceptance met (14 suites green;
+`lini fmt --check` clean over all 29 samples; charts + chart_advanced PNGs
+**pixel-identical** old→new via `cmp`; conformance snapshots needed **zero**
+re-bless — the SVG is byte-stable). The mechanism: `resolve_property` is the
+one chokepoint — it normalizes every list-shaped property (ledger `shape`
+column) to a `ResolvedValue::List` and centrally rejects legacy space lists
+for scalar-kind lists (Str/Ident/Track) with the targeted migration spelling;
+Number-kind lists pass through to their readers (`data:`/`points:` items are
+legitimately pairs — a lone `data: 10 20` is one point, on bars an error).
+Readers flipped: chart `read_data`/`collect_strings`/ticks, link `along`,
+segmented `fn:` (comma per-band), grid tracks + `track_align`/`ident`
+(flex + grid), desugar `per_column` (the table align/justify distributor —
+an AST-level reader the resolve chokepoint can't see, caught by test),
+threads/breaks groups, hole thread pitch; `mirror:`/`draw:` assert one
+space-separated pipeline run. Generated decls follow the law (entity
+`columns`, title-block columns, auto-`along`). Samples + test sources
+migrated by a quote/paren-aware script (its overreach into Rust comments was
+reverted surgically), then samples canonicalized with `lini fmt`.
+
+**Deviations:** none of substance. The plan's "re-bless snapshots" proved
+unnecessary — output is byte-identical, the stronger result. One pre-existing
+fmt nit surfaced (not introduced): `tol: +0.2 -0.05` canonicalizes to
+`tol: 0.2 -0.05` (same parsed value; semantic-preservation sweep guards it).
 
 ### Stage M2 — validation + the similarity warning `[diagnostics]`
 
