@@ -55,14 +55,14 @@ pub fn layout_pie(inst: &ResolvedInst) -> Result<PlacedNode, Error> {
         a += span;
     }
     if let Some(t) = &pie.title {
-        kids.push(prim::text(
+        // Same `.lini-chart-title` rule as a chart's [SPEC 14.6/17].
+        kids.push(prim::text_classed(
             t,
             0.0,
             -h / 2.0 + 8.0 + TITLE_SIZE * 0.7,
             TITLE_SIZE,
-            None,
-            true,
-            pie.font_kind,
+            "chart-title",
+            crate::font::Font::semibold(pie.font_kind),
         ));
     }
     if entries.len() >= 2 {

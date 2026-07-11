@@ -136,14 +136,14 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
                 "pin",
                 vec![Value::Ident("top".into()), Value::Ident("left".into())],
             ),
-            pair("translate", 0.0, -18.0),
+            pair("translate", 0.0, -20.0),
             var("color", "caption-color"),
             n("font-size", 12.0),
             var("font-weight", "caption-font-weight"),
         ],
         "footnote" => vec![
             id("pin", "bottom"),
-            pair("translate", 0.0, 17.0),
+            pair("translate", 0.0, 19.0),
             n("font-size", 12.0),
             var("color", "footer-color"),
         ],
@@ -380,7 +380,7 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
         // A table header cell [SPEC 8]: a `|cell|` with the fill band and `bold`
         // weight. It fills its track and takes its inset / text alignment from the
         // `|cell|` + `|table|` defaults. The cascade overrides via `|table| |header| { … }`.
-        "header" => vec![var("fill", "header-fill"), id("font-weight", "bold")],
+        "header" => vec![var("fill", "header-fill"), id("font-weight", "semibold")],
         // A table footer cell [SPEC 8]: a `|cell|`, muted text, no fill.
         "footer" => vec![var("color", "footer-color")],
         // An ER / database entity [SPEC 8]: a two-column table; its label lowers to a
@@ -541,7 +541,7 @@ mod tests {
         let h = template_bundle("header");
         assert!(!has(&h, "justify") && !has(&h, "align"));
         assert_eq!(var(&h, "fill").as_deref(), Some("header-fill"));
-        assert_eq!(ident(&h, "font-weight").as_deref(), Some("bold"));
+        assert_eq!(ident(&h, "font-weight").as_deref(), Some("semibold"));
         // The footer cell: muted text, no fill, no align of its own.
         let f = template_bundle("footer");
         assert!(!has(&f, "justify") && !has(&f, "align"));

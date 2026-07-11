@@ -20,7 +20,7 @@ mod frame;
 mod labels;
 mod legend;
 mod marks;
-mod metrics;
+pub(crate) mod metrics;
 mod model;
 mod palette;
 mod pie;
@@ -98,14 +98,15 @@ pub(super) fn layout_chart(
         }
     }
     if let Some(t) = &chart.title {
-        kids.push(prim::text(
+        // The title rides its own `.lini-chart-title` rule (14px semibold) —
+        // no inline font [SPEC 14.6/17].
+        kids.push(prim::text_classed(
             t,
             0.0,
             -h / 2.0 + 8.0 + TITLE_SIZE * 0.7,
             TITLE_SIZE,
-            None,
-            true,
-            chart.font_kind,
+            "chart-title",
+            crate::font::Font::semibold(chart.font_kind),
         ));
     }
     let legend = legend_entries(&chart);

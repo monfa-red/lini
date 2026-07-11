@@ -1,6 +1,6 @@
 mod anchors;
 mod arrange;
-mod chart;
+pub(crate) mod chart;
 pub(crate) mod drawing;
 mod flex;
 mod frame;

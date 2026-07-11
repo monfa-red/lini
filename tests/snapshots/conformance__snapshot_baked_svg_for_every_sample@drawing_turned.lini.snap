@@ -3,9 +3,9 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/drawing_turned.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-489.5 -275.6956 979 567.3912" width="979" height="567.3912" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-489.5 -275.6956 979 569.3912" width="979" height="569.3912" class="lini">
   <style>
-    .lini { font-family: "Google Sans Code", ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
+    .lini { font-family: "Google Sans Code", ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: 500; color: black; }
     .lini .lini-canvas { fill: white; }
     .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-oval { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
@@ -17,7 +17,7 @@ input_file: samples/drawing_turned.lini
     .lini .lini-ext-line { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
     .lini .lini-dim-text { font-size: 12px; font-weight: normal; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
-    .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
+    .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: 400; }
     .lini .lini-footnote { color: rgba(0, 0, 0, 0.5); font-size: 12px; }
     .lini .lini-hole { fill: white; stroke: black; }
     .lini .lini-centerline { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; stroke-dasharray: 10,3,1,3; }
@@ -60,7 +60,7 @@ input_file: samples/drawing_turned.lini
     <path id="lg0400-106" d="M285 188L164 308L916 1067L1036 947L285 188ZM916 188L164 947L285 1067L1036 308L916 188Z"/>
     <path id="lg0400-390" d="M185 -180L54 -107L1015 1612L1146 1539L185 -180ZM602 -32Q445 -32 326.5 59Q208 150 141.5 313.5Q75 477 75 697L75 735Q75 961 138.5 1124.5Q202 1288 319.5 1376Q437 1464 598 1464Q755 1464 873.5 1373.5Q992 1283 1058.5 1119Q1125 955 1125 735L1125 697Q1125 471 1062 308Q999 145 881.5 56.5Q764 -32 602 -32ZM596 134Q766 134 856.5 277.5Q947 421 947 690L947 746Q947 1021 863 1159.5Q779 1298 604 1298Q435 1298 344 1154Q253 1010 253 742L253 686Q253 409 337 271.5Q421 134 596 134Z"/>
   </defs>
-  <rect class="lini-canvas" x="-489.5" y="-275.6956" width="979" height="567.3912"/>
+  <rect class="lini-canvas" x="-489.5" y="-275.6956" width="979" height="569.3912"/>
   <g class="lini-scene">
     <g class="lini-node lini-drawing lini-block" data-id="tiebar-view" transform="translate(0,-185.6956)">
       <rect x="-266.5" y="-69" width="533" height="138" rx="0" ry="0"/>
@@ -167,7 +167,7 @@ input_file: samples/drawing_turned.lini
         <use href="#lg0400-18" transform="translate(-124 -30.704) scale(0.006 -0.006)"/>
         <use href="#lg0400-25" transform="translate(-116.8 -30.704) scale(0.006 -0.006)"/>
       </g>
-      <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,79)">
+      <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,81)">
         <rect x="-25.2" y="-6" width="50.4" height="12" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lg0400-56" transform="translate(-25.2 4.296) scale(0.006 -0.006)"/>
@@ -258,7 +258,7 @@ input_file: samples/drawing_turned.lini
         <use href="#lg0400-54" transform="translate(151.3047 -42.3996) scale(0.006 -0.006)"/>
         <use href="#lg0400-23" transform="translate(158.5047 -42.3996) scale(0.006 -0.006)"/>
       </g>
-      <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,62.6956)">
+      <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,64.6956)">
         <rect x="-46.8" y="-6" width="93.6" height="12" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lg0400-55" transform="translate(-46.8 4.296) scale(0.006 -0.006)"/>
@@ -544,7 +544,7 @@ input_file: samples/drawing_turned.lini
         <use href="#lg0400-41" transform="translate(159.4 -72.704) scale(0.006 -0.006)"/>
         <use href="#lg0400-52" transform="translate(166.6 -72.704) scale(0.006 -0.006)"/>
       </g>
-      <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,93)">
+      <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,95)">
         <rect x="-21.6" y="-6" width="43.2" height="12" rx="0" ry="0"/>
         <g class="lini-text">
           <use href="#lg0400-38" transform="translate(-21.6 4.296) scale(0.006 -0.006)"/>

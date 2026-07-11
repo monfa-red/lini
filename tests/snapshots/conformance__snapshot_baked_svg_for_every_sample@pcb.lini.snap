@@ -5,7 +5,7 @@ input_file: samples/pcb.lini
 ---
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-294 -245 588 490" width="588" height="490" class="lini">
   <style>
-    .lini { font-family: "Google Sans Code", ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 12px; font-weight: normal; color: black; }
+    .lini { font-family: "Google Sans Code", ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 12px; font-weight: 500; color: black; }
     .lini .lini-canvas { fill: white; }
     .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
@@ -19,149 +19,149 @@ input_file: samples/pcb.lini
   <defs>
     <linearGradient id="lini-gradient-1" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#3f98ff"/><stop offset="100%" stop-color="#9084ff"/></linearGradient>
     <linearGradient id="lini-gradient-2" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#005d26"/><stop offset="100%" stop-color="#005d56"/></linearGradient>
-    <path id="lg0400-0" d="M174 0L174 1432L1026 1432L1026 0L174 0ZM302 120L898 120L898 1312L302 1312L302 120Z"/>
-    <path id="lg0400-17" d="M155 533L155 719L1045 719L1045 533L155 533Z"/>
-    <path id="lg0400-37" d="M58 0L503 1432L700 1432L1143 0L947 0L642 1063L602 1218L596 1218L555 1063L252 0L58 0ZM254 369L306 536L892 536L945 369L254 369Z"/>
-    <path id="lg0400-38" d="M172 0L172 1432L618 1432Q805 1432 911 1338Q1017 1244 1017 1089L1017 1061Q1017 949 963.5 869Q910 789 811 752L811 745Q934 719 1004 628.5Q1074 538 1074 407L1074 379Q1074 265 1021.5 179.5Q969 94 874.5 47Q780 0 653 0L172 0ZM354 164L635 164Q755 164 820.5 226Q886 288 886 403L886 427Q886 542 819 604Q752 666 624 666L295 666L295 820L601 820Q711 820 770 875.5Q829 931 829 1034L829 1054Q829 1158 771 1213Q713 1268 601 1268L354 1268L354 164Z"/>
-    <path id="lg0400-39" d="M653 -32Q484 -32 359.5 57Q235 146 167.5 309.5Q100 473 100 697L100 735Q100 962 166 1125.5Q232 1289 354.5 1376.5Q477 1464 647 1464Q813 1464 930.5 1374Q1048 1284 1104 1112L932 1046Q889 1173 820 1230.5Q751 1288 643 1288Q474 1288 382 1146Q290 1004 290 740L290 692Q290 430 385.5 287Q481 144 656 144Q873 144 950 385L1123 321Q1068 149 947.5 58.5Q827 -32 653 -32Z"/>
-    <path id="lg0400-40" d="M140 0L140 1432L518 1432Q700 1432 829 1349Q958 1266 1027 1110Q1096 954 1096 735L1096 697Q1096 479 1027 322.5Q958 166 829 83Q700 0 518 0L140 0ZM324 174L512 174Q707 174 806.5 305Q906 436 906 692L906 740Q906 996 806.5 1127Q707 1258 512 1258L324 1258L324 174Z"/>
-    <path id="lg0400-41" d="M184 0L184 1432L994 1432L994 1258L370 1258L370 174L1010 174L1010 0L184 0ZM292 647L292 821L914 821L914 647L292 647Z"/>
-    <path id="lg0400-42" d="M184 0L184 1432L1010 1432L1010 1258L370 1258L370 0L184 0ZM292 624L292 798L950 798L950 624L292 624Z"/>
-    <path id="lg0400-44" d="M854 0L854 1432L1040 1432L1040 0L854 0ZM160 0L160 1432L346 1432L346 0L160 0ZM265 646L265 820L937 820L937 646L265 646Z"/>
-    <path id="lg0400-45" d="M506 91L506 1341L694 1341L694 91L506 91ZM178 0L178 176L1022 176L1022 0L178 0ZM178 1257L178 1432L1022 1432L1022 1257L178 1257Z"/>
-    <path id="lg0400-48" d="M198 0L198 1432L384 1432L384 176L1066 176L1066 0L198 0Z"/>
-    <path id="lg0400-49" d="M87 0L87 1432L267 1432L512 886L597 665L603 665L688 886L933 1432L1113 1432L1113 0L937 0L937 755L957 1127L951 1127L665 459L535 459L249 1127L243 1127L263 755L263 0L87 0Z"/>
-    <path id="lg0400-50" d="M108 0L108 1432L298 1432L920 340L925 340L904 671L904 1432L1092 1432L1092 0L928 0L279 1138L274 1138L296 806L296 0L108 0Z"/>
-    <path id="lg0400-51" d="M320.5 56.5Q203 145 139.5 308Q76 471 76 697L76 735Q76 961 139.5 1124Q203 1287 320.5 1375.5Q438 1464 600 1464Q762 1464 879.5 1375.5Q997 1287 1060.5 1124Q1124 961 1124 735L1124 697Q1124 471 1060.5 308Q997 145 879.5 56.5Q762 -32 600 -32Q438 -32 320.5 56.5ZM847.5 286Q934 428 934 692L934 740Q934 1002 846.5 1145Q759 1288 600 1288Q441 1288 353.5 1145Q266 1002 266 740L266 692Q266 428 353 286Q440 144 600.5 144Q761 144 847.5 286Z"/>
-    <path id="lg0400-52" d="M162 0L162 1432L614 1432Q748 1432 848 1377Q948 1322 1004 1222.5Q1060 1123 1060 991L1060 963Q1060 831 1004 732Q948 633 848 577.5Q748 522 614 522L267 522L267 694L609 694Q734 694 803 764Q872 834 872 959L872 997Q872 1122 803 1191Q734 1260 609 1260L346 1260L346 0L162 0Z"/>
-    <path id="lg0400-54" d="M160 0L160 1432L602 1432Q741 1432 843 1380Q945 1328 1001.5 1233Q1058 1138 1058 1010L1058 990Q1058 862 1001.5 767Q945 672 842.5 620Q740 568 602 568L264 568L264 734L598 734Q726 734 798 800Q870 866 870 982L870 1012Q870 1128 798 1194Q726 1260 598 1260L344 1260L344 0L160 0ZM935 0L540 643L744 643L1146 0L935 0Z"/>
-    <path id="lg0400-55" d="M641 -32Q509 -32 399.5 14Q290 60 211 147Q132 234 90 356L263 419Q310 283 405.5 213Q501 143 638 143Q769 143 842.5 201Q916 259 916 361L916 378Q916 463 859 520Q802 577 671 623L474 692Q171 798 171 1066L171 1073Q171 1190 227.5 1278Q284 1366 385.5 1415Q487 1464 620 1464Q799 1464 920.5 1384Q1042 1304 1098 1148L926 1083Q853 1289 621 1289Q502 1289 429.5 1233Q357 1177 357 1083L357 1071Q357 998 404 947.5Q451 897 554 861L751 792Q933 728 1017.5 627Q1102 526 1102 374L1102 366Q1102 246 1044 156.5Q986 67 882.5 17.5Q779 -32 641 -32Z"/>
-    <path id="lg0400-56" d="M507 0L507 1350L693 1350L693 0L507 0ZM108 1256L108 1432L1092 1432L1092 1256L108 1256Z"/>
-    <path id="lg0400-57" d="M360.5 28.5Q257 89 199.5 197Q142 305 142 447L142 1432L328 1432L328 458Q328 313 401 228.5Q474 144 600 144Q727 144 799.5 228.5Q872 313 872 458L872 1432L1058 1432L1058 447Q1058 305 1000.5 197Q943 89 840 28.5Q737 -32 600.5 -32Q464 -32 360.5 28.5Z"/>
-    <path id="lg0400-59" d="M224 0L31 1432L213 1432L336 303L342 303L395 594L529 1150L671 1150L805 594L858 303L864 303L985 1432L1169 1432L977 0L812 0L642 680L603 884L597 884L558 680L390 0L224 0Z"/>
+    <path id="lg0500-0" d="M174 0L174 1432L1026 1432L1026 0L174 0ZM302 120L898 120L898 1312L302 1312L302 120Z"/>
+    <path id="lg0500-17" d="M146 520L146 746L1054 746L1054 520L146 520Z"/>
+    <path id="lg0500-37" d="M44 0L489 1432L714 1432L1157 0L921 0L644 1004L601 1177L595 1177L553 1004L277 0L44 0ZM243 338L303 530L891 530L953 338L243 338Z"/>
+    <path id="lg0500-38" d="M158 0L158 1432L630 1432Q818 1432 926 1338Q1034 1244 1034 1087L1034 1062Q1034 950 980 870Q926 790 825 752L825 744Q950 716 1020.5 625.5Q1091 535 1091 404L1091 377Q1091 263 1037.5 178Q984 93 887.5 46.5Q791 0 660 0L158 0ZM380 192L634 192Q744 192 804 248Q864 304 864 408L864 430Q864 534 802.5 590.5Q741 647 625 647L318 647L318 831L598 831Q699 831 753 882Q807 933 807 1027L807 1045Q807 1140 753.5 1190Q700 1240 598 1240L380 1240L380 192Z"/>
+    <path id="lg0500-39" d="M654 -33Q483 -33 356.5 56.5Q230 146 161 309.5Q92 473 92 696L92 736Q92 961 159.5 1124.5Q227 1288 351.5 1376.5Q476 1465 647 1465Q819 1465 939 1371Q1059 1277 1112 1098L902 1026Q865 1143 803.5 1197Q742 1251 643 1251Q490 1251 406.5 1118.5Q323 986 323 741L323 691Q323 448 410.5 314.5Q498 181 656 181Q853 181 920 408L1130 337Q1078 159 955 63Q832 -33 654 -33Z"/>
+    <path id="lg0500-40" d="M132 0L132 1432L523 1432Q705 1432 834.5 1348.5Q964 1265 1034 1109Q1104 953 1104 736L1104 696Q1104 480 1034 323.5Q964 167 834.5 83.5Q705 0 523 0L132 0ZM357 212L518 212Q694 212 783.5 333Q873 454 873 691L873 741Q873 978 783.5 1099Q694 1220 518 1220L357 1220L357 212Z"/>
+    <path id="lg0500-41" d="M171 0L171 1432L1007 1432L1007 1221L397 1221L397 211L1023 211L1023 0L171 0ZM306 628L306 838L927 838L927 628L306 628Z"/>
+    <path id="lg0500-42" d="M171 0L171 1432L1023 1432L1023 1220L397 1220L397 0L171 0ZM306 595L306 806L963 806L963 595L306 595Z"/>
+    <path id="lg0500-44" d="M827 0L827 1432L1053 1432L1053 0L827 0ZM147 0L147 1432L373 1432L373 0L147 0ZM281 627L281 837L924 837L924 627L281 627Z"/>
+    <path id="lg0500-45" d="M486 107L486 1325L714 1325L714 107L486 107ZM166 0L166 214L1034 214L1034 0L166 0ZM166 1219L166 1432L1034 1432L1034 1219L166 1219Z"/>
+    <path id="lg0500-48" d="M186 0L186 1432L413 1432L413 214L1080 214L1080 0L186 0Z"/>
+    <path id="lg0500-49" d="M76 0L76 1432L297 1432L511 928L596 686L604 686L689 928L903 1432L1124 1432L1124 0L912 0L912 666L935 1066L927 1066L678 450L522 450L273 1066L265 1066L288 666L288 0L76 0Z"/>
+    <path id="lg0500-50" d="M95 0L95 1432L324 1432L894 404L900 404L880 734L880 1432L1105 1432L1105 0L902 0L305 1073L299 1073L320 742L320 0L95 0Z"/>
+    <path id="lg0500-51" d="M316 55Q197 143 133 306.5Q69 470 69 696L69 736Q69 963 133 1126Q197 1289 316 1377Q435 1465 600 1465Q765 1465 884 1377Q1003 1289 1067 1126Q1131 963 1131 736L1131 696Q1131 470 1067 306.5Q1003 143 884 55Q765 -33 600 -33Q435 -33 316 55ZM822 313Q899 445 899 691L899 741Q899 986 821.5 1118.5Q744 1251 600.5 1251Q457 1251 379 1118.5Q301 986 301 741L301 691Q301 445 378.5 313Q456 181 600.5 181Q745 181 822 313Z"/>
+    <path id="lg0500-52" d="M149 0L149 1432L605 1432Q748 1432 853 1376Q958 1320 1015.5 1218Q1073 1116 1073 979L1073 953Q1073 815 1015.5 713.5Q958 612 853 555.5Q748 499 605 499L278 499L278 707L600 707Q716 707 780.5 771Q845 835 845 948L845 984Q845 1098 780.5 1161.5Q716 1225 600 1225L374 1225L374 0L149 0Z"/>
+    <path id="lg0500-54" d="M145 0L145 1432L594 1432Q739 1432 845 1379Q951 1326 1009 1229Q1067 1132 1067 999L1067 981Q1067 849 1009 751.5Q951 654 845 601Q739 548 594 548L273 548L273 746L589 746Q706 746 772 805.5Q838 865 838 971L838 999Q838 1105 772 1165Q706 1225 589 1225L369 1225L369 0L145 0ZM896 0L517 637L765 637L1153 0L896 0Z"/>
+    <path id="lg0500-55" d="M642 -33Q504 -33 390.5 15.5Q277 64 197 154.5Q117 245 78 372L288 439Q329 311 419 244Q509 177 640 177Q756 177 821 228Q886 279 886 369L886 382Q886 458 834 509Q782 560 659 604L463 676Q160 786 160 1058L160 1064Q160 1184 218 1274Q276 1364 380 1414.5Q484 1465 621 1465Q806 1465 929.5 1381.5Q1053 1298 1108 1135L900 1065Q835 1255 622 1255Q515 1255 450.5 1206Q386 1157 386 1075L386 1065Q386 1000 428.5 955.5Q471 911 568 876L765 804Q945 738 1028.5 635.5Q1112 533 1112 379L1112 371Q1112 250 1053 159Q994 68 888.5 17.5Q783 -33 642 -33Z"/>
+    <path id="lg0500-56" d="M486 0L486 1328L714 1328L714 0L486 0ZM98 1218L98 1432L1102 1432L1102 1218L98 1218Z"/>
+    <path id="lg0500-57" d="M353 28.5Q247 90 188 199.5Q129 309 129 453L129 1432L355 1432L355 463Q355 333 420.5 257Q486 181 600 181Q715 181 780 257Q845 333 845 463L845 1432L1071 1432L1071 453Q1071 309 1012 199.5Q953 90 847.5 28.5Q742 -33 600.5 -33Q459 -33 353 28.5Z"/>
+    <path id="lg0500-59" d="M218 0L28 1432L244 1432L350 354L356 354L407 641L524 1150L676 1150L793 641L844 354L850 354L952 1432L1172 1432L983 0L790 0L642 627L603 845L597 845L558 627L411 0L218 0Z"/>
   </defs>
   <rect class="lini-canvas" x="-294" y="-245" width="588" height="490" style="fill: url(#lini-gradient-2)"/>
   <g class="lini-scene">
     <g class="lini-node lini-chip lini-box lini-block" data-id="mcu" style="fill: url(#lini-gradient-1); font-size: 24px" transform="translate(0,0)">
       <rect x="-90" y="-90" width="180" height="180" rx="5" ry="5"/>
       <g class="lini-text">
-        <use href="#lg0400-49" transform="translate(-21.6 8.592) scale(0.012 -0.012)"/>
-        <use href="#lg0400-39" transform="translate(-7.2 8.592) scale(0.012 -0.012)"/>
-        <use href="#lg0400-57" transform="translate(7.2 8.592) scale(0.012 -0.012)"/>
+        <use href="#lg0500-49" transform="translate(-21.6 8.592) scale(0.012 -0.012)"/>
+        <use href="#lg0500-39" transform="translate(-7.2 8.592) scale(0.012 -0.012)"/>
+        <use href="#lg0500-57" transform="translate(7.2 8.592) scale(0.012 -0.012)"/>
       </g>
     </g>
     <g class="lini-node lini-passive lini-box lini-block" data-id="c1" transform="translate(-220,-180)">
       <rect x="-27" y="-21" width="54" height="42" rx="2" ry="2"/>
       <g class="lini-text">
-        <use href="#lg0400-39" transform="translate(-3.6 4.296) scale(0.006 -0.006)"/>
+        <use href="#lg0500-39" transform="translate(-3.6 4.296) scale(0.006 -0.006)"/>
       </g>
     </g>
     <g class="lini-node lini-pad lini-box lini-block" data-id="usb" transform="translate(-55,-180)">
       <rect x="-75" y="-28" width="150" height="56" rx="8" ry="8"/>
       <g class="lini-text">
-        <use href="#lg0400-57" transform="translate(-18 4.296) scale(0.006 -0.006)"/>
-        <use href="#lg0400-55" transform="translate(-10.8 4.296) scale(0.006 -0.006)"/>
-        <use href="#lg0400-38" transform="translate(-3.6 4.296) scale(0.006 -0.006)"/>
-        <use href="#lg0400-17" transform="translate(3.6 4.296) scale(0.006 -0.006)"/>
-        <use href="#lg0400-39" transform="translate(10.8 4.296) scale(0.006 -0.006)"/>
+        <use href="#lg0500-57" transform="translate(-18 4.296) scale(0.006 -0.006)"/>
+        <use href="#lg0500-55" transform="translate(-10.8 4.296) scale(0.006 -0.006)"/>
+        <use href="#lg0500-38" transform="translate(-3.6 4.296) scale(0.006 -0.006)"/>
+        <use href="#lg0500-17" transform="translate(3.6 4.296) scale(0.006 -0.006)"/>
+        <use href="#lg0500-39" transform="translate(10.8 4.296) scale(0.006 -0.006)"/>
       </g>
     </g>
     <g class="lini-node lini-passive lini-box lini-block" data-id="r1" transform="translate(110,-180)">
       <rect x="-27" y="-21" width="54" height="42" rx="2" ry="2"/>
       <g class="lini-text">
-        <use href="#lg0400-54" transform="translate(-3.6 4.296) scale(0.006 -0.006)"/>
+        <use href="#lg0500-54" transform="translate(-3.6 4.296) scale(0.006 -0.006)"/>
       </g>
     </g>
     <g class="lini-node lini-chip lini-box lini-block" data-id="rf" style="fill: #9084ff" transform="translate(220,-180)">
       <rect x="-30" y="-30" width="60" height="60" rx="5" ry="5"/>
       <g class="lini-text">
-        <use href="#lg0400-54" transform="translate(-7.2 4.296) scale(0.006 -0.006)"/>
-        <use href="#lg0400-42" transform="translate(0 4.296) scale(0.006 -0.006)"/>
+        <use href="#lg0500-54" transform="translate(-7.2 4.296) scale(0.006 -0.006)"/>
+        <use href="#lg0500-42" transform="translate(0 4.296) scale(0.006 -0.006)"/>
       </g>
     </g>
     <g class="lini-node lini-chip lini-box lini-block" data-id="flash" style="fill: #9084ff" transform="translate(-220,-90)">
       <rect x="-30" y="-30" width="60" height="60" rx="5" ry="5"/>
       <g class="lini-text">
-        <use href="#lg0400-42" transform="translate(-18 4.296) scale(0.006 -0.006)"/>
-        <use href="#lg0400-48" transform="translate(-10.8 4.296) scale(0.006 -0.006)"/>
-        <use href="#lg0400-37" transform="translate(-3.6 4.296) scale(0.006 -0.006)"/>
-        <use href="#lg0400-55" transform="translate(3.6 4.296) scale(0.006 -0.006)"/>
-        <use href="#lg0400-44" transform="translate(10.8 4.296) scale(0.006 -0.006)"/>
+        <use href="#lg0500-42" transform="translate(-18 4.296) scale(0.006 -0.006)"/>
+        <use href="#lg0500-48" transform="translate(-10.8 4.296) scale(0.006 -0.006)"/>
+        <use href="#lg0500-37" transform="translate(-3.6 4.296) scale(0.006 -0.006)"/>
+        <use href="#lg0500-55" transform="translate(3.6 4.296) scale(0.006 -0.006)"/>
+        <use href="#lg0500-44" transform="translate(10.8 4.296) scale(0.006 -0.006)"/>
       </g>
     </g>
     <g class="lini-node lini-chip lini-box lini-block" data-id="pwr" style="fill: #e96490" transform="translate(-220,0)">
       <rect x="-30" y="-30" width="60" height="60" rx="5" ry="5"/>
       <g class="lini-text">
-        <use href="#lg0400-52" transform="translate(-10.8 4.296) scale(0.006 -0.006)"/>
-        <use href="#lg0400-59" transform="translate(-3.6 4.296) scale(0.006 -0.006)"/>
-        <use href="#lg0400-54" transform="translate(3.6 4.296) scale(0.006 -0.006)"/>
+        <use href="#lg0500-52" transform="translate(-10.8 4.296) scale(0.006 -0.006)"/>
+        <use href="#lg0500-59" transform="translate(-3.6 4.296) scale(0.006 -0.006)"/>
+        <use href="#lg0500-54" transform="translate(3.6 4.296) scale(0.006 -0.006)"/>
       </g>
     </g>
     <g class="lini-node lini-passive lini-box lini-block" data-id="c2" transform="translate(-220,90)">
       <rect x="-27" y="-21" width="54" height="42" rx="2" ry="2"/>
       <g class="lini-text">
-        <use href="#lg0400-39" transform="translate(-3.6 4.296) scale(0.006 -0.006)"/>
+        <use href="#lg0500-39" transform="translate(-3.6 4.296) scale(0.006 -0.006)"/>
       </g>
     </g>
     <g class="lini-node lini-passive lini-box lini-block" data-id="osc" transform="translate(220,-90)">
       <rect x="-27" y="-21" width="54" height="42" rx="2" ry="2"/>
       <g class="lini-text">
-        <use href="#lg0400-51" transform="translate(-10.8 4.296) scale(0.006 -0.006)"/>
-        <use href="#lg0400-55" transform="translate(-3.6 4.296) scale(0.006 -0.006)"/>
-        <use href="#lg0400-39" transform="translate(3.6 4.296) scale(0.006 -0.006)"/>
+        <use href="#lg0500-51" transform="translate(-10.8 4.296) scale(0.006 -0.006)"/>
+        <use href="#lg0500-55" transform="translate(-3.6 4.296) scale(0.006 -0.006)"/>
+        <use href="#lg0500-39" transform="translate(3.6 4.296) scale(0.006 -0.006)"/>
       </g>
     </g>
     <g class="lini-node lini-chip lini-box lini-block" data-id="motor" style="fill: #00ace2" transform="translate(220,0)">
       <rect x="-30" y="-30" width="60" height="60" rx="5" ry="5"/>
       <g class="lini-text">
-        <use href="#lg0400-49" transform="translate(-18 4.296) scale(0.006 -0.006)"/>
-        <use href="#lg0400-51" transform="translate(-10.8 4.296) scale(0.006 -0.006)"/>
-        <use href="#lg0400-56" transform="translate(-3.6 4.296) scale(0.006 -0.006)"/>
-        <use href="#lg0400-51" transform="translate(3.6 4.296) scale(0.006 -0.006)"/>
-        <use href="#lg0400-54" transform="translate(10.8 4.296) scale(0.006 -0.006)"/>
+        <use href="#lg0500-49" transform="translate(-18 4.296) scale(0.006 -0.006)"/>
+        <use href="#lg0500-51" transform="translate(-10.8 4.296) scale(0.006 -0.006)"/>
+        <use href="#lg0500-56" transform="translate(-3.6 4.296) scale(0.006 -0.006)"/>
+        <use href="#lg0500-51" transform="translate(3.6 4.296) scale(0.006 -0.006)"/>
+        <use href="#lg0500-54" transform="translate(10.8 4.296) scale(0.006 -0.006)"/>
       </g>
     </g>
     <g class="lini-node lini-passive lini-box lini-block" data-id="r2" transform="translate(220,90)">
       <rect x="-27" y="-21" width="54" height="42" rx="2" ry="2"/>
       <g class="lini-text">
-        <use href="#lg0400-54" transform="translate(-3.6 4.296) scale(0.006 -0.006)"/>
+        <use href="#lg0500-54" transform="translate(-3.6 4.296) scale(0.006 -0.006)"/>
       </g>
     </g>
     <g class="lini-node lini-passive lini-box lini-block" data-id="c3" transform="translate(-220,180)">
       <rect x="-27" y="-21" width="54" height="42" rx="2" ry="2"/>
       <g class="lini-text">
-        <use href="#lg0400-39" transform="translate(-3.6 4.296) scale(0.006 -0.006)"/>
+        <use href="#lg0500-39" transform="translate(-3.6 4.296) scale(0.006 -0.006)"/>
       </g>
     </g>
     <g class="lini-node lini-chip lini-box lini-block" data-id="adc" style="fill: #00b66e" transform="translate(-110,180)">
       <rect x="-30" y="-30" width="60" height="60" rx="5" ry="5"/>
       <g class="lini-text">
-        <use href="#lg0400-37" transform="translate(-10.8 4.296) scale(0.006 -0.006)"/>
-        <use href="#lg0400-40" transform="translate(-3.6 4.296) scale(0.006 -0.006)"/>
-        <use href="#lg0400-39" transform="translate(3.6 4.296) scale(0.006 -0.006)"/>
+        <use href="#lg0500-37" transform="translate(-10.8 4.296) scale(0.006 -0.006)"/>
+        <use href="#lg0500-40" transform="translate(-3.6 4.296) scale(0.006 -0.006)"/>
+        <use href="#lg0500-39" transform="translate(3.6 4.296) scale(0.006 -0.006)"/>
       </g>
     </g>
     <g class="lini-node lini-chip lini-box lini-block" data-id="sens" style="fill: #00b8ac" transform="translate(0,180)">
       <rect x="-30" y="-30" width="60" height="60" rx="5" ry="5"/>
       <g class="lini-text">
-        <use href="#lg0400-55" transform="translate(-14.4 4.296) scale(0.006 -0.006)"/>
-        <use href="#lg0400-41" transform="translate(-7.2 4.296) scale(0.006 -0.006)"/>
-        <use href="#lg0400-50" transform="translate(0 4.296) scale(0.006 -0.006)"/>
-        <use href="#lg0400-55" transform="translate(7.2 4.296) scale(0.006 -0.006)"/>
+        <use href="#lg0500-55" transform="translate(-14.4 4.296) scale(0.006 -0.006)"/>
+        <use href="#lg0500-41" transform="translate(-7.2 4.296) scale(0.006 -0.006)"/>
+        <use href="#lg0500-50" transform="translate(0 4.296) scale(0.006 -0.006)"/>
+        <use href="#lg0500-55" transform="translate(7.2 4.296) scale(0.006 -0.006)"/>
       </g>
     </g>
     <g class="lini-node lini-passive lini-box lini-block" data-id="r3" transform="translate(110,180)">
       <rect x="-27" y="-21" width="54" height="42" rx="2" ry="2"/>
       <g class="lini-text">
-        <use href="#lg0400-54" transform="translate(-3.6 4.296) scale(0.006 -0.006)"/>
+        <use href="#lg0500-54" transform="translate(-3.6 4.296) scale(0.006 -0.006)"/>
       </g>
     </g>
     <g class="lini-node lini-chip lini-box lini-block" data-id="imu" style="fill: #cb8b00; color: #6d3b00" transform="translate(220,180)">
       <rect x="-30" y="-30" width="60" height="60" rx="5" ry="5"/>
       <g class="lini-text">
-        <use href="#lg0400-45" transform="translate(-10.8 4.296) scale(0.006 -0.006)"/>
-        <use href="#lg0400-49" transform="translate(-3.6 4.296) scale(0.006 -0.006)"/>
-        <use href="#lg0400-57" transform="translate(3.6 4.296) scale(0.006 -0.006)"/>
+        <use href="#lg0500-45" transform="translate(-10.8 4.296) scale(0.006 -0.006)"/>
+        <use href="#lg0500-49" transform="translate(-3.6 4.296) scale(0.006 -0.006)"/>
+        <use href="#lg0500-57" transform="translate(3.6 4.296) scale(0.006 -0.006)"/>
       </g>
     </g>
   </g>

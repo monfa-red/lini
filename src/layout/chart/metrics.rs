@@ -2,7 +2,9 @@
 //! chart family shares, in one home.
 
 /// The chart title.
-pub(super) const TITLE_SIZE: f64 = 13.0;
+// `pub(crate)`: the `.lini-chart-title` rule derives its px from this, the
+// same one-source pattern as `messages::LABEL_SIZE` [SPEC 17].
+pub(crate) const TITLE_SIZE: f64 = 14.0;
 /// An axis title — a step under the chart title.
 pub(super) const AXIS_TITLE_SIZE: f64 = 11.0;
 /// Tick labels, legend entries, band / mark labels.

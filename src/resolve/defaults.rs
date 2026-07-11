@@ -103,9 +103,12 @@ pub fn built_in_defaults() -> VarTable {
                 .into(),
         ),
     );
-    t.set("font-weight", ident("normal"));
-    t.set("caption-font-weight", ident("normal"));
-    t.set("link-font-weight", ident("normal"));
+    // Node text sits at medium — the mono face reads a touch stronger without
+    // shouting (advances are weight-invariant, so layout is untouched);
+    // captions and link labels stay regular, stated numerically.
+    t.set("font-weight", ResolvedValue::Number(500.0));
+    t.set("caption-font-weight", ResolvedValue::Number(400.0));
+    t.set("link-font-weight", ResolvedValue::Number(400.0));
     t.set(
         "text-color",
         ResolvedValue::LiveVar {

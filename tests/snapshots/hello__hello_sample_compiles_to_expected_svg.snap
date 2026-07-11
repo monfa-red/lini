@@ -5,7 +5,7 @@ expression: svg
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-63.5 -48.5 127 97" width="127" height="97" class="lini">
   <style>
     @layer lini.defaults {
-      :root, .lini { color-scheme: light dark; --lini-bg: light-dark(white, #1b1b1f); --lini-fg: light-dark(black, #e8e8ea); --lini-fill: light-dark(white, #26262b); --lini-font-family: "Google Sans Code", ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; --lini-font-weight: normal; --lini-stroke: light-dark(#444, #9aa0a6); --lini-text-color: var(--lini-fg); }
+      :root, .lini { color-scheme: light dark; --lini-bg: light-dark(white, #1b1b1f); --lini-fg: light-dark(black, #e8e8ea); --lini-fill: light-dark(white, #26262b); --lini-font-family: "Google Sans Code", ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; --lini-font-weight: 500; --lini-stroke: light-dark(#444, #9aa0a6); --lini-text-color: var(--lini-fg); }
       .lini[data-theme="dark"], [data-theme="dark"] .lini { color-scheme: dark; }
       .lini[data-theme="light"], [data-theme="light"] .lini { color-scheme: light; }
     }

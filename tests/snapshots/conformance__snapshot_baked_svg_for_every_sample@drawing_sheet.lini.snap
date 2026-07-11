@@ -5,7 +5,7 @@ input_file: samples/drawing_sheet.lini
 ---
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-594 -420 1188 840" width="297mm" height="210mm" class="lini">
   <style>
-    .lini { font-family: "Google Sans Code", ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
+    .lini { font-family: "Google Sans Code", ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: 500; color: black; }
     .lini .lini-canvas { fill: white; }
     .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-oval { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
@@ -20,7 +20,7 @@ input_file: samples/drawing_sheet.lini
     .lini .lini-gutter { stroke: none; }
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
     .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
-    .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
+    .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: 400; }
     .lini .lini-footnote { color: rgba(0, 0, 0, 0.5); font-size: 12px; }
     .lini .lini-table { fill: none; stroke: #444; stroke-width: 2; font-size: 14px; font-weight: normal; stroke-dasharray: none; }
     .lini .lini-centerline { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; stroke-dasharray: 10,3,1,3; }
@@ -52,8 +52,6 @@ input_file: samples/drawing_sheet.lini
     <path id="lg0400-28" d="M361.5 21.5Q256 75 195.5 168Q135 261 135 379L135 393Q135 515 202.5 615.5Q270 716 383 760L383 765Q290 811 237 894.5Q184 978 184 1078L184 1088Q184 1198 237.5 1282.5Q291 1367 385 1415.5Q479 1464 600 1464Q721 1464 815 1415.5Q909 1367 962.5 1282.5Q1016 1198 1016 1088L1016 1078Q1016 977 963 894Q910 811 817 765L817 760Q930 716 997.5 615.5Q1065 515 1065 393L1065 379Q1065 261 1004.5 168Q944 75 839 21.5Q734 -32 600.5 -32Q467 -32 361.5 21.5ZM600 140Q723 140 801 211.5Q879 283 879 395L879 417Q879 530 801 601Q723 672 600 672Q477 672 399 601Q321 530 321 417L321 395Q321 283 399 211.5Q477 140 600 140ZM768 902Q832 961 832 1058L832 1078Q832 1174 768.5 1233Q705 1292 600 1292Q496 1292 432 1233Q368 1174 368 1078L368 1058Q368 962 432 902.5Q496 843 600 843Q704 843 768 902Z"/>
     <path id="lg0400-29" d="M601 1462Q741 1462 848 1400.5Q955 1339 1016 1230Q1077 1121 1077 980L1077 960Q1077 877 1055 796Q1033 715 985 627Q937 539 859 436L499 -44L345 68L621 409Q664 462 702 502Q740 542 783 580L778 587Q673 510 539 510Q419 510 325 570Q231 630 177 733.5Q123 837 123 968L123 988Q123 1126 184.5 1233Q246 1340 354 1401Q462 1462 601 1462ZM601 1284Q470 1284 390.5 1203.5Q311 1123 311 993L311 963Q311 832 390 751Q469 670 599 670Q730 670 809.5 751.5Q889 833 889 963L889 993Q889 1123 810 1203.5Q731 1284 601 1284Z"/>
     <path id="lg0400-37" d="M58 0L503 1432L700 1432L1143 0L947 0L642 1063L602 1218L596 1218L555 1063L252 0L58 0ZM254 369L306 536L892 536L945 369L254 369Z"/>
-    <path id="lg0400-38" d="M172 0L172 1432L618 1432Q805 1432 911 1338Q1017 1244 1017 1089L1017 1061Q1017 949 963.5 869Q910 789 811 752L811 745Q934 719 1004 628.5Q1074 538 1074 407L1074 379Q1074 265 1021.5 179.5Q969 94 874.5 47Q780 0 653 0L172 0ZM354 164L635 164Q755 164 820.5 226Q886 288 886 403L886 427Q886 542 819 604Q752 666 624 666L295 666L295 820L601 820Q711 820 770 875.5Q829 931 829 1034L829 1054Q829 1158 771 1213Q713 1268 601 1268L354 1268L354 164Z"/>
-    <path id="lg0400-39" d="M653 -32Q484 -32 359.5 57Q235 146 167.5 309.5Q100 473 100 697L100 735Q100 962 166 1125.5Q232 1289 354.5 1376.5Q477 1464 647 1464Q813 1464 930.5 1374Q1048 1284 1104 1112L932 1046Q889 1173 820 1230.5Q751 1288 643 1288Q474 1288 382 1146Q290 1004 290 740L290 692Q290 430 385.5 287Q481 144 656 144Q873 144 950 385L1123 321Q1068 149 947.5 58.5Q827 -32 653 -32Z"/>
     <path id="lg0400-40" d="M140 0L140 1432L518 1432Q700 1432 829 1349Q958 1266 1027 1110Q1096 954 1096 735L1096 697Q1096 479 1027 322.5Q958 166 829 83Q700 0 518 0L140 0ZM324 174L512 174Q707 174 806.5 305Q906 436 906 692L906 740Q906 996 806.5 1127Q707 1258 512 1258L324 1258L324 174Z"/>
     <path id="lg0400-45" d="M506 91L506 1341L694 1341L694 91L506 91ZM178 0L178 176L1022 176L1022 0L178 0ZM178 1257L178 1432L1022 1432L1022 1257L178 1257Z"/>
     <path id="lg0400-49" d="M87 0L87 1432L267 1432L512 886L597 665L603 665L688 886L933 1432L1113 1432L1113 0L937 0L937 755L957 1127L951 1127L665 459L535 459L249 1127L243 1127L263 755L263 0L87 0Z"/>
@@ -80,6 +78,17 @@ input_file: samples/drawing_sheet.lini
     <path id="lg0400-106" d="M285 188L164 308L916 1067L1036 947L285 188ZM916 188L164 947L285 1067L1036 308L916 188Z"/>
     <path id="lg0400-390" d="M185 -180L54 -107L1015 1612L1146 1539L185 -180ZM602 -32Q445 -32 326.5 59Q208 150 141.5 313.5Q75 477 75 697L75 735Q75 961 138.5 1124.5Q202 1288 319.5 1376Q437 1464 598 1464Q755 1464 873.5 1373.5Q992 1283 1058.5 1119Q1125 955 1125 735L1125 697Q1125 471 1062 308Q999 145 881.5 56.5Q764 -32 602 -32ZM596 134Q766 134 856.5 277.5Q947 421 947 690L947 746Q947 1021 863 1159.5Q779 1298 604 1298Q435 1298 344 1154Q253 1010 253 742L253 686Q253 409 337 271.5Q421 134 596 134Z"/>
     <path id="lg0400-672" d="M87 533L87 719L1113 719L1113 533L87 533Z"/>
+    <path id="lg0500-0" d="M174 0L174 1432L1026 1432L1026 0L174 0ZM302 120L898 120L898 1312L302 1312L302 120Z"/>
+    <path id="lg0500-21" d="M562 90L562 1154L234 981L133 1173L633 1432L790 1432L790 90L562 90ZM189 0L189 214L1123 214L1123 0L189 0Z"/>
+    <path id="lg0500-22" d="M138 0L138 195L631 746Q721 847 755.5 913Q790 979 790 1052L790 1061Q790 1147 741 1194.5Q692 1242 604 1242Q435 1242 347 1053L136 1144Q206 1300 330 1382.5Q454 1465 616 1465Q739 1465 831.5 1416.5Q924 1368 976 1281Q1028 1194 1028 1080L1028 1069Q1028 997 1006 930.5Q984 864 932 789.5Q880 715 789 615L432 222L432 213L1051 213L1051 0L138 0Z"/>
+    <path id="lg0500-23" d="M629 -32Q425 -32 286.5 68Q148 168 100 348L306 413Q337 301 417.5 241.5Q498 182 615 182Q724 182 790 238.5Q856 295 856 391L856 415Q856 516 787.5 572Q719 628 588 628L430 628L430 840L564 840Q681 840 747 894Q813 948 813 1044L813 1062Q813 1148 757.5 1199.5Q702 1251 603 1251Q507 1251 439 1202.5Q371 1154 340 1064L132 1133Q183 1289 311.5 1376.5Q440 1464 615 1464Q743 1464 839 1416.5Q935 1369 988.5 1284.5Q1042 1200 1042 1087L1042 1077Q1042 955 979.5 869.5Q917 784 796 747L796 741Q933 712 1008.5 616.5Q1084 521 1084 389L1084 372Q1084 254 1025.5 163Q967 72 864.5 20Q762 -32 629 -32Z"/>
+    <path id="lg0500-24" d="M693 0L693 430L703 473L703 1204L769 1124L697 1124L302 542L302 536L788 536L842 544L1124 544L1124 340L66 340L66 523L681 1432L915 1432L915 0L693 0Z"/>
+    <path id="lg0500-25" d="M599 -32Q476 -32 375 13.5Q274 59 202.5 144Q131 229 99 347L305 415Q336 303 411.5 242.5Q487 182 598 182Q720 182 792.5 253.5Q865 325 865 444L865 471Q865 585 797.5 653Q730 721 617 721Q540 721 476.5 690.5Q413 660 363 601L144 669L244 1432L1012 1432L1012 1222L415 1222L354 795L360 793Q423 856 504 888.5Q585 921 679 921Q802 921 895 864Q988 807 1040.5 704.5Q1093 602 1093 467L1093 450Q1093 305 1031.5 196.5Q970 88 859 28Q748 -32 599 -32Z"/>
+    <path id="lg0500-26" d="M599 -30Q456 -30 345.5 33Q235 96 172.5 206.5Q110 317 110 461L110 477Q110 564 132.5 647.5Q155 731 205.5 823Q256 915 338 1023L682 1481L869 1345L609 1029Q568 979 530.5 941.5Q493 904 450 869L455 861Q553 928 679 928Q800 928 892.5 868Q985 808 1037.5 705Q1090 602 1090 470L1090 453Q1090 312 1027 203Q964 94 853.5 32Q743 -30 599 -30ZM599 185Q719 185 790.5 258Q862 331 862 449L862 476Q862 595 791.5 668Q721 741 601 741Q481 741 409.5 668Q338 595 338 476L338 449Q338 331 409 258Q480 185 599 185Z"/>
+    <path id="lg0500-37" d="M44 0L489 1432L714 1432L1157 0L921 0L644 1004L601 1177L595 1177L553 1004L277 0L44 0ZM243 338L303 530L891 530L953 338L243 338Z"/>
+    <path id="lg0500-38" d="M158 0L158 1432L630 1432Q818 1432 926 1338Q1034 1244 1034 1087L1034 1062Q1034 950 980 870Q926 790 825 752L825 744Q950 716 1020.5 625.5Q1091 535 1091 404L1091 377Q1091 263 1037.5 178Q984 93 887.5 46.5Q791 0 660 0L158 0ZM380 192L634 192Q744 192 804 248Q864 304 864 408L864 430Q864 534 802.5 590.5Q741 647 625 647L318 647L318 831L598 831Q699 831 753 882Q807 933 807 1027L807 1045Q807 1140 753.5 1190Q700 1240 598 1240L380 1240L380 192Z"/>
+    <path id="lg0500-39" d="M654 -33Q483 -33 356.5 56.5Q230 146 161 309.5Q92 473 92 696L92 736Q92 961 159.5 1124.5Q227 1288 351.5 1376.5Q476 1465 647 1465Q819 1465 939 1371Q1059 1277 1112 1098L902 1026Q865 1143 803.5 1197Q742 1251 643 1251Q490 1251 406.5 1118.5Q323 986 323 741L323 691Q323 448 410.5 314.5Q498 181 656 181Q853 181 920 408L1130 337Q1078 159 955 63Q832 -33 654 -33Z"/>
+    <path id="lg0500-40" d="M132 0L132 1432L523 1432Q705 1432 834.5 1348.5Q964 1265 1034 1109Q1104 953 1104 736L1104 696Q1104 480 1034 323.5Q964 167 834.5 83.5Q705 0 523 0L132 0ZM357 212L518 212Q694 212 783.5 333Q873 454 873 691L873 741Q873 978 783.5 1099Q694 1220 518 1220L357 1220L357 212Z"/>
   </defs>
   <rect class="lini-canvas" x="-594" y="-420" width="1188" height="840"/>
   <g class="lini-scene">
@@ -208,7 +217,7 @@ input_file: samples/drawing_sheet.lini
           <use href="#lg0400-22" transform="translate(142 -49.204) scale(0.006 -0.006)"/>
           <use href="#lg0400-25" transform="translate(149.2 -49.204) scale(0.006 -0.006)"/>
         </g>
-        <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,97.5)">
+        <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,99.5)">
           <rect x="-61.2" y="-6" width="122.4" height="12" rx="0" ry="0"/>
           <g class="lini-text">
             <use href="#lg0400-40" transform="translate(-61.2 4.296) scale(0.006 -0.006)"/>
@@ -447,121 +456,121 @@ input_file: samples/drawing_sheet.lini
       <g class="lini-node lini-zone lini-block" transform="translate(-495,-400)">
         <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
         <g class="lini-text">
-          <use href="#lg0400-21" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
+          <use href="#lg0500-21" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
         </g>
       </g>
       <g class="lini-node lini-zone lini-block" transform="translate(-297,-400)">
         <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
         <g class="lini-text">
-          <use href="#lg0400-22" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
+          <use href="#lg0500-22" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
         </g>
       </g>
       <g class="lini-node lini-zone lini-block" transform="translate(-99,-400)">
         <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
         <g class="lini-text">
-          <use href="#lg0400-23" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
+          <use href="#lg0500-23" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
         </g>
       </g>
       <g class="lini-node lini-zone lini-block" transform="translate(99,-400)">
         <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
         <g class="lini-text">
-          <use href="#lg0400-24" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
+          <use href="#lg0500-24" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
         </g>
       </g>
       <g class="lini-node lini-zone lini-block" transform="translate(297,-400)">
         <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
         <g class="lini-text">
-          <use href="#lg0400-25" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
+          <use href="#lg0500-25" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
         </g>
       </g>
       <g class="lini-node lini-zone lini-block" transform="translate(495,-400)">
         <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
         <g class="lini-text">
-          <use href="#lg0400-26" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
+          <use href="#lg0500-26" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
         </g>
       </g>
       <g class="lini-node lini-zone lini-block" transform="translate(-495,400)">
         <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
         <g class="lini-text">
-          <use href="#lg0400-21" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
+          <use href="#lg0500-21" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
         </g>
       </g>
       <g class="lini-node lini-zone lini-block" transform="translate(-297,400)">
         <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
         <g class="lini-text">
-          <use href="#lg0400-22" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
+          <use href="#lg0500-22" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
         </g>
       </g>
       <g class="lini-node lini-zone lini-block" transform="translate(-99,400)">
         <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
         <g class="lini-text">
-          <use href="#lg0400-23" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
+          <use href="#lg0500-23" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
         </g>
       </g>
       <g class="lini-node lini-zone lini-block" transform="translate(99,400)">
         <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
         <g class="lini-text">
-          <use href="#lg0400-24" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
+          <use href="#lg0500-24" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
         </g>
       </g>
       <g class="lini-node lini-zone lini-block" transform="translate(297,400)">
         <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
         <g class="lini-text">
-          <use href="#lg0400-25" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
+          <use href="#lg0500-25" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
         </g>
       </g>
       <g class="lini-node lini-zone lini-block" transform="translate(495,400)">
         <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
         <g class="lini-text">
-          <use href="#lg0400-26" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
+          <use href="#lg0500-26" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
         </g>
       </g>
       <g class="lini-node lini-zone lini-block" transform="translate(-534,-315)">
         <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
         <g class="lini-text">
-          <use href="#lg0400-37" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
+          <use href="#lg0500-37" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
         </g>
       </g>
       <g class="lini-node lini-zone lini-block" transform="translate(-534,-105)">
         <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
         <g class="lini-text">
-          <use href="#lg0400-38" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
+          <use href="#lg0500-38" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
         </g>
       </g>
       <g class="lini-node lini-zone lini-block" transform="translate(-534,105)">
         <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
         <g class="lini-text">
-          <use href="#lg0400-39" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
+          <use href="#lg0500-39" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
         </g>
       </g>
       <g class="lini-node lini-zone lini-block" transform="translate(-534,315)">
         <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
         <g class="lini-text">
-          <use href="#lg0400-40" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
+          <use href="#lg0500-40" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
         </g>
       </g>
       <g class="lini-node lini-zone lini-block" transform="translate(574,-315)">
         <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
         <g class="lini-text">
-          <use href="#lg0400-37" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
+          <use href="#lg0500-37" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
         </g>
       </g>
       <g class="lini-node lini-zone lini-block" transform="translate(574,-105)">
         <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
         <g class="lini-text">
-          <use href="#lg0400-38" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
+          <use href="#lg0500-38" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
         </g>
       </g>
       <g class="lini-node lini-zone lini-block" transform="translate(574,105)">
         <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
         <g class="lini-text">
-          <use href="#lg0400-39" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
+          <use href="#lg0500-39" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
         </g>
       </g>
       <g class="lini-node lini-zone lini-block" transform="translate(574,315)">
         <rect x="-2.7" y="-4.5" width="5.4" height="9" rx="0" ry="0"/>
         <g class="lini-text">
-          <use href="#lg0400-40" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
+          <use href="#lg0500-40" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
         </g>
       </g>
     </g>

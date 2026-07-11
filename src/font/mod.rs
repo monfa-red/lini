@@ -192,10 +192,12 @@ impl Font {
 }
 
 /// `font-weight` → static index [SPEC 6]: `normal | medium | semibold | bold`
-/// or `400 | 500 | 600 | 700`; anything else (including the theme var's
-/// unresolved default) reads as regular.
+/// or `400 | 500 | 600 | 700`. **No value reads as medium** — mirroring the
+/// `--lini-font-weight: 500` default the `.lini` rule renders unweighted text
+/// at (`resolve/defaults.rs`); an unrecognized value reads as regular.
 fn weight_index(value: Option<&ResolvedValue>) -> usize {
     match value {
+        None => 1,
         Some(ResolvedValue::Ident(w)) => match w.as_str() {
             "medium" => 1,
             "semibold" => 2,

@@ -613,7 +613,7 @@ The text family — `font-family`, `font-size`, `font-weight`, `font-style`,
 `text-transform`, `text-decoration`, `letter-spacing`, `line-spacing`, and `color` —
 **inherits**: nearest ancestor wins, like CSS. Set it on a containing box (or the root)
 and it cascades down, or on a string's own block (`"x" { font-weight: bold }`) for
-that one text node. Body text defaults to `font-size` 15, `font-weight` `normal`;
+that one text node. Body text defaults to `font-size` 15, `font-weight` `500`;
 captions 12 and link labels 11 carry their own baked defaults.
 
 **Two bundled families** (both SIL OFL 1.1) carry the metrics ([SPEC 5](#5-the-box-model)):
@@ -773,8 +773,8 @@ the cascade ([SPEC 4](#4-selectors-cascade--specificity)) — every value here i
 | `\|box\|` | `\|block\|` | `fill: --fill; stroke: --stroke; stroke-width: 2; radius: 8; padding: 20` | The **default** node — a rounded, framed card. |
 | `\|rect\|` | `\|box\|` | `radius: 0` | A sharp-cornered box. |
 | `\|group\|` | `\|block\|` | `stroke: --group-stroke; stroke-style: dashed; stroke-width: 1; fill: --group-fill; radius: 8; padding: 20` | Dashed frame for a caption + children. |
-| `\|caption\|` | `\|block\|` | `pin: top left; translate: 0 -18; color: --caption-color; font-size: 12; font-weight: --caption-font-weight` | A title, pinned just above the group's top-left corner. |
-| `\|footnote\|` | `\|caption\|` | `pin: bottom; translate: 0 17; font-size: 12; color: --footer-color` | A caption flipped to a shape's bottom edge — a centred, muted footnote. |
+| `\|caption\|` | `\|block\|` | `pin: top left; translate: 0 -20; color: --caption-color; font-size: 12; font-weight: --caption-font-weight` | A title, pinned just above the group's top-left corner. |
+| `\|footnote\|` | `\|caption\|` | `pin: bottom; translate: 0 19; font-size: 12; color: --footer-color` | A caption flipped to a shape's bottom edge — a centred, muted footnote. |
 | `\|badge\|` | `\|block\|` | `pin: top right; translate: 6 -6; radius: 8; padding: 2 6; shadow: 2 3 3; fill: --accent; color: --accent-text; font-size: 11; font-weight: normal` | Corner pill — nudged out over the top-right corner, grows nothing. |
 | `\|row\|` | `\|block\|` | `direction: row` | Frameless wrapper — children in a row. |
 | `\|column\|` | `\|block\|` | `direction: column` | Frameless wrapper — children in a column. |
@@ -782,7 +782,7 @@ the cascade ([SPEC 4](#4-selectors-cascade--specificity)) — every value here i
 | `\|sign\|` | `\|icon\|` | `width: 64; height: 64; padding: 4; stroke-width: 2; fit: contain` | A larger icon as a stand-alone node, with room for a short label; `fit: contain` fills the box (unlike a bare `\|icon\|`). |
 | `\|table\|` | `\|group\|` | `layout: grid; align: stretch; justify: stretch; gap: 1; gap-fill: --stroke; padding: 0; fill: none; stroke: --stroke; stroke-width: 2; stroke-style: solid; font-size: 14; font-weight: normal; scale: 1` | Ruled grid (see below). |
 | `\|cell\|` | `\|block\|` | `padding: 4 8` | A **table cell** — a frameless `\|block\|` carrying the text-to-gutter inset. Body cells wrap in it; `\|header\|` / `\|footer\|` build on it. Style all cells with `\|cell\| { … }` or, per table, `\|table\| \|cell\| { … }`. |
-| `\|header\|` | `\|cell\|` | `fill: --header-fill; font-weight: bold` | A **header** cell — a filled, bold band (a `\|table\|`'s first row; an `\|entity\|`'s title spans them). |
+| `\|header\|` | `\|cell\|` | `fill: --header-fill; font-weight: semibold` | A **header** cell — a filled, semibold band (a `\|table\|`'s first row; an `\|entity\|`'s title spans them). |
 | `\|footer\|` | `\|cell\|` | `color: --footer-color` | A **footer** cell — muted text; opt-in on the last row. |
 | `\|entity\|` | `\|table\|` | `columns: auto, auto` | An ER / database **entity** — a titled field list, rows left-aligned (see below). |
 | `\|note\|` | `\|block\|` | `fill: --fill; stroke: --stroke; padding: 20; scale: 1` | A **note** — the folded-corner callout card, one type in every layout (see below). |
@@ -855,7 +855,7 @@ that edge (`center` is the default). So `align: start, center, end` reads three 
 left / centre / right, header band and body alike.
 
 A table's **first row becomes its header** — each cell wrapped as a `|header|`, a filled
-bold band; `|table| |header| { font-weight: normal; fill: none }` reverts it. A **footer**
+semibold band; `|table| |header| { font-weight: normal; fill: none }` reverts it. A **footer**
 is opt-in: wrap a last-row cell in `|footer|`. Every cell is a box now — header/footer
 carry a fill; a body cell is a frameless `|block|` wrapping its text, so the padding rule
 and the column's alignment reach it ([SPEC 17](#17-svg-output)).
@@ -1157,9 +1157,9 @@ Each colour is a `light-dark(LIGHT, DARK)` value, so one SVG carries both modes:
 --lini-caption-color light-dark(rgba(0,0,0,.5), rgba(255,255,255,.55))
 --lini-footer-color  light-dark(rgba(0,0,0,.5), rgba(255,255,255,.55))
 --lini-font-family   "Google Sans Code", ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace
---lini-font-weight         normal
---lini-caption-font-weight normal
---lini-link-font-weight    normal
+--lini-font-weight         500
+--lini-caption-font-weight 400
+--lini-link-font-weight    400
 --lini-text-color    var(--lini-fg)
 --lini-shadow-color  light-dark(rgba(0,0,0,.2), rgba(0,0,0,.5))
 ```

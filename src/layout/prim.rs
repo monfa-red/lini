@@ -245,7 +245,7 @@ pub fn text(
     kind: Kind,
 ) -> PlacedNode {
     let font = if bold {
-        Font::bold(kind)
+        Font::semibold(kind)
     } else {
         Font::regular(kind)
     };
@@ -264,7 +264,7 @@ pub fn text(
     set(
         &mut n,
         "font-weight",
-        ident(if bold { "bold" } else { "normal" }),
+        ident(if bold { "semibold" } else { "normal" }),
     );
     if let Some(c) = color {
         set(&mut n, "color", c);

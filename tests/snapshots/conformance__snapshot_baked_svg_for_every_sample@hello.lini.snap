@@ -5,29 +5,29 @@ input_file: samples/hello.lini
 ---
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-63.5 -48.5 127 97" width="127" height="97" class="lini">
   <style>
-    .lini { font-family: "Google Sans Code", ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
+    .lini { font-family: "Google Sans Code", ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: 500; color: black; }
     .lini .lini-canvas { fill: white; }
     .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
   </style>
   <defs>
-    <path id="lg0400-0" d="M174 0L174 1432L1026 1432L1026 0L174 0ZM302 120L898 120L898 1312L302 1312L302 120Z"/>
-    <path id="lg0400-73" d="M630 -32Q479 -32 366.5 35.5Q254 103 192 224.5Q130 346 130 509L130 547Q130 707 191.5 826.5Q253 946 364 1012.5Q475 1079 623 1079Q756 1079 854.5 1021.5Q953 964 1007.5 859.5Q1062 755 1062 615Q1062 577 1059.5 541.5Q1057 506 1052 472L243 472L243 617L882 617L882 621Q882 758 811.5 838.5Q741 919 621 919Q479 919 394.5 818.5Q310 718 310 542L310 514Q310 338 397.5 235Q485 132 635 132Q816 132 909 295L1055 202Q988 85 882 26.5Q776 -32 630 -32Z"/>
-    <path id="lg0400-76" d="M185 0L185 1460L366 1460L366 905L373 905Q497 1079 707 1079Q865 1079 955 975Q1045 871 1045 688L1045 0L864 0L864 660Q864 918 643 918Q518 918 442 832.5Q366 747 366 606L366 0L185 0Z"/>
-    <path id="lg0400-80" d="M782 -32Q616 -32 520.5 65.5Q425 163 425 334L425 1460L605 1460L605 353Q605 138 793 138Q846 138 891.5 158.5Q937 179 988 225L1092 88Q1027 27 950 -2.5Q873 -32 782 -32ZM116 1302L116 1460L520 1460L520 1302L116 1302Z"/>
-    <path id="lg0400-83" d="M345.5 36Q236 104 175 226.5Q114 349 114 510L114 537Q114 699 175 821Q236 943 345.5 1011Q455 1079 600 1079Q745 1079 854.5 1011Q964 943 1025 821Q1086 699 1086 537L1086 510Q1086 349 1025 226.5Q964 104 854.5 36Q745 -32 600 -32Q455 -32 345.5 36ZM820 237Q900 338 900 513L900 534Q900 710 820 810.5Q740 911 600.5 911Q461 911 380.5 810.5Q300 710 300 534L300 513Q300 338 380.5 237Q461 136 600.5 136Q740 136 820 237Z"/>
+    <path id="lg0500-0" d="M174 0L174 1432L1026 1432L1026 0L174 0ZM302 120L898 120L898 1312L302 1312L302 120Z"/>
+    <path id="lg0500-73" d="M630 -33Q475 -33 359 35Q243 103 179.5 225Q116 347 116 511L116 544Q116 705 179.5 826Q243 947 357.5 1014Q472 1081 624 1081Q760 1081 861.5 1023Q963 965 1019 858.5Q1075 752 1075 610Q1075 570 1072.5 534.5Q1070 499 1064 466L244 466L244 622L863 622L863 622Q863 748 798.5 821.5Q734 895 623 895Q490 895 411 800Q332 705 332 539L332 516Q332 351 413 254.5Q494 158 634 158Q803 158 885 314L1068 216Q1004 94 893 30.5Q782 -33 630 -33Z"/>
+    <path id="lg0500-76" d="M169 0L169 1460L391 1460L391 908L398 908Q522 1081 729 1081Q883 1081 971 979Q1059 877 1059 699L1059 0L837 0L837 658Q837 890 639 890Q527 890 459 813Q391 736 391 609L391 0L169 0Z"/>
+    <path id="lg0500-80" d="M785 -33Q607 -33 505.5 69.5Q404 172 404 353L404 1460L625 1460L625 373Q625 171 802 171Q852 171 894 190Q936 209 983 252L1105 89Q1038 27 959.5 -3Q881 -33 785 -33ZM101 1277L101 1460L544 1460L544 1277L101 1277Z"/>
+    <path id="lg0500-83" d="M340 36Q228 105 165 228Q102 351 102 512L102 537Q102 698 165 821Q228 944 340 1012.5Q452 1081 600 1081Q748 1081 860 1012.5Q972 944 1035 821Q1098 698 1098 537L1098 512Q1098 351 1035 228Q972 105 860 36Q748 -33 600 -33Q452 -33 340 36ZM800.5 261.5Q874 355 874 515L874 534Q874 695 800.5 788Q727 881 600.5 881Q474 881 400 788Q326 695 326 534L326 515Q326 355 400 261.5Q474 168 600.5 168Q727 168 800.5 261.5Z"/>
   </defs>
   <rect class="lini-canvas" x="-63.5" y="-48.5" width="127" height="97"/>
   <g class="lini-scene">
     <g class="lini-node lini-box lini-block" transform="translate(0,0)">
       <rect x="-42.5" y="-27.5" width="85" height="55" rx="8" ry="8"/>
       <g class="lini-text">
-        <use href="#lg0400-76" transform="translate(-22.5 5.37) scale(0.0075 -0.0075)"/>
-        <use href="#lg0400-73" transform="translate(-13.5 5.37) scale(0.0075 -0.0075)"/>
-        <use href="#lg0400-80" transform="translate(-4.5 5.37) scale(0.0075 -0.0075)"/>
-        <use href="#lg0400-80" transform="translate(4.5 5.37) scale(0.0075 -0.0075)"/>
-        <use href="#lg0400-83" transform="translate(13.5 5.37) scale(0.0075 -0.0075)"/>
+        <use href="#lg0500-76" transform="translate(-22.5 5.37) scale(0.0075 -0.0075)"/>
+        <use href="#lg0500-73" transform="translate(-13.5 5.37) scale(0.0075 -0.0075)"/>
+        <use href="#lg0500-80" transform="translate(-4.5 5.37) scale(0.0075 -0.0075)"/>
+        <use href="#lg0500-80" transform="translate(4.5 5.37) scale(0.0075 -0.0075)"/>
+        <use href="#lg0500-83" transform="translate(13.5 5.37) scale(0.0075 -0.0075)"/>
       </g>
     </g>
   </g>

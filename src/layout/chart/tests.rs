@@ -558,19 +558,26 @@ fn a_diamond_marker_draws_a_rhombus() {
 }
 
 #[test]
-fn data_text_is_normal_weight_chrome_is_bold() {
-    // The diagram-wide default is bold; a chart keeps it for the title and legend but
-    // states `normal` for its axis ticks (and labels) [SPEC 14.6].
+fn data_text_is_normal_weight_chrome_is_semibold() {
+    // Chrome reads semibold [SPEC 14.6]: the title through its own
+    // `.lini-chart-title` rule (14px/600, nothing inlined), the legend inline
+    // (semibold emits as CSS 600); data text — axis ticks, labels — states
+    // `normal` so the numbers never shout.
     let s = svg(
         "|chart| \"Cost\" { categories: \"a\", \"b\" } [\n  |bars| \"A\" { data: 5, 8 }\n  |bars| \"B\" { data: 3, 4 }\n]\n",
     );
     assert!(
-        s.contains("font-size: 13px; font-weight: bold\">Cost</text>"),
-        "title bold: {s}"
+        s.contains(".lini .lini-chart-title { font-size: 14px; font-weight: 600; }"),
+        "title rule: {s}"
     );
     assert!(
-        s.contains("font-size: 11px; font-weight: bold\">A</text>"),
-        "legend bold: {s}"
+        s.contains("<text class=\"lini-text lini-chart-title\" x=\"0\"")
+            && s.contains(">Cost</text>"),
+        "title classed, no inline font: {s}"
+    );
+    assert!(
+        s.contains("font-size: 11px; font-weight: 600\">A</text>"),
+        "legend semibold: {s}"
     );
     assert!(
         s.contains("font-size: 11px; font-weight: normal\">a</text>"),

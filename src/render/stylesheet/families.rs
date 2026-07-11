@@ -185,12 +185,26 @@ pub(super) fn build_sequence_text_rules(rules: &mut Vec<Rule>, present: &BTreeSe
     // Sequence tab / guard text [SPEC 13] takes its size / weight from these rules,
     // never an inline `style=`, so a diagram's many labels don't each repeat the font
     // props. (The message-label rule rides `has_seq_labels`, with the wire-label rules.)
+    if present.contains("chart-title") {
+        // A chart / pie title [SPEC 14.6]: stated once, so no title inlines
+        // its font; semibold — the chrome weight, a step under bold.
+        rules.push(Rule {
+            class: "lini-chart-title".into(),
+            props: vec![
+                (
+                    "font-size".into(),
+                    format!("{}px", num(crate::layout::chart::metrics::TITLE_SIZE)),
+                ),
+                ("font-weight".into(), "600".into()),
+            ],
+        });
+    }
     if present.contains("sequence-tab") {
         rules.push(Rule {
             class: "lini-sequence-tab".into(),
             props: vec![
                 ("font-size".into(), "12px".into()),
-                ("font-weight".into(), "bold".into()),
+                ("font-weight".into(), "600".into()),
             ],
         });
     }
