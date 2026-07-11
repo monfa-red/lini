@@ -953,7 +953,57 @@ by build flags, proven by the fonts-off suite run.
 Acceptance: nested-wire samples route lawfully (laws oracle); row-chart sample
 visually correct; `lini fmt/desugar/serve/theme --help` outputs unchanged in
 substance.
-**Log:**
+**Log:** 2026-07-11 — **done**, 7 commits, all acceptance met (nested-wire
+snippets route lawfully through the laws validator via the routes_str hook;
+the row chart rendered + eyeballed light and dark; all four subcommand helps
+verified same-substance; 15 suites + fmt + clippy clean). Items:
+- **Root routers**: both root arms call `routing::route(…)` — its request
+  pass already skips drawing/sequence scopes, so exactly the nested ordinary
+  wires route; the sequence arm extends the routed set with its lowered
+  messages. Fixing it exposed an older bug: the **label pass** walked all
+  program links while the request pass filtered, so statement numbering
+  drifted and a routed wire could wear an engine link's label — the ownership
+  filter is now one shared predicate (`request::is_routed`). Regression
+  **tests** rather than samples (deviation: no sample uses a root drawing and
+  the M0 garden stays curated; the laws validator runs on the snippets).
+- **Scoped note rules → desugar** `[pure]`: generated in
+  `classes::scoped_note_rules` (gated on a `|note|` present, skipped when the
+  re-desugared file already carries them — fixed point verified);
+  resolve's `scoped_rules()` deleted; SVG byte-identical.
+- **Row bands/marks**: annot.rs orients through the projector seam (`Plot::
+  domain_at`/`value_at`/`cross`, `project()` recomposed over them); point
+  marks land via the joint `project()`. Radial band/mark errors with SPEC
+  20's exact wording at model build. charts.lini's row chart gains the
+  band + mark (the one snapshot diff); unit tests pin row geometry + the
+  radial error.
+- **Chain marks every hop** `[output]`: expansion moved to desugar
+  (`split_chain`), each hop an independent 2-endpoint link sharing the
+  statement's span (the router/label passes group by span, so labels and
+  crossings stay statement-scoped). The AST carries per-hop ops (`Link.ops`)
+  — `a - b -> c` parses, mixing operator *kinds* stays the parse error
+  (SPEC 9's sentence narrowed accordingly — S2 had left it contradicting the
+  bare-first-hop spelling). Measure/mate chains don't split (shared dim row
+  is the drawing engine's). links.lini gains the chain rows; paint.lini's
+  chain became two statements (per-hop labels would double its one label).
+- **`|page|` direction by orientation** `[output]`: injected at the page
+  desugar hook off the post-`sheet:` authored dims; drawing_screw (a3
+  landscape, no authored direction) flips to row — eyeballed old/new, clearly
+  better; sheet/section drop their now-redundant `direction: row` and stay
+  byte-identical (the default proven).
+- **Wavy-on-nodes**: the audit found primitives.rs waves any wavy `|line|`
+  (the async-message vehicle, but reachable by authors) and closed shapes
+  dropped the value silently — both now a validation error ("'wavy' waves a
+  link's wire — …", SPEC 20 row added); the engine keeps its lowering
+  vehicle (generated at layout, never validated).
+- **CLI**: clap::Subcommand for fmt/serve/desugar/theme; `--standalone`
+  deleted; serve dir-mode **reads** generalized past `.lini` (canonical-root
+  boundary is the wall; content types cover images for alpha.5) while
+  **writes** stay `.lini`-gated.
+
+**Deviations:** regression coverage for the root routers is tests, not
+samples (above); the fan-mixed chain regression also rides desugar tests
+rather than a sample (links.lini shows the chain + mixed-op rows; a third
+crossing fan row read as clutter, not showroom material).
 
 ### Stage M7 — release 0.22 → tag `1.0.0-alpha`
 
