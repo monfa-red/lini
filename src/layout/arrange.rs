@@ -90,13 +90,21 @@ pub(super) fn lay_out_container_children(
         let mut flow_children: Vec<PlacedNode> =
             flow_indices.iter().map(|i| children[*i].clone()).collect();
         let bbox = match mode {
-            LayoutMode::Flow => flex::lay_out_flex(
-                flow_axis.expect("a flow has an axis"),
-                &mut flow_children,
-                container_attrs,
-                span,
-                avail,
-            )?,
+            LayoutMode::Flow => {
+                let axis = flow_axis.expect("a flow has an axis");
+                // The horizontal packing knob reaches a text leaf's lines
+                // [SPEC 6]: `justify` on a row's main axis, `align` on a
+                // column's cross axis.
+                let knob = match axis {
+                    Axis::Row => flex::ident(container_attrs.get("justify")),
+                    Axis::Column => flex::ident(container_attrs.get("align")),
+                };
+                let la = line_align_of(knob);
+                for c in flow_children.iter_mut() {
+                    stamp_line_align(c, la);
+                }
+                flex::lay_out_flex(axis, &mut flow_children, container_attrs, span, avail)?
+            }
             LayoutMode::Grid => {
                 let (bbox, rects) = grid::lay_out_grid(&mut flow_children, container_attrs, span)?;
                 gutters = rects;

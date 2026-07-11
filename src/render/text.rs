@@ -7,8 +7,9 @@
 //! — so it never reappears here.
 
 use super::values::{escape_xml, num};
+use crate::layout::approx_width;
 use crate::ledger::consts::TEXT_LEADING;
-use crate::resolve::AttrMap;
+use crate::resolve::{AttrMap, ResolvedValue};
 use std::fmt::Write;
 
 /// Emit a `<text class="{class}">` centred on `(x, y)` — its `text-anchor:
@@ -52,10 +53,25 @@ pub(crate) fn emit(
 
     // Multi-line [SPEC 5]: one tspan per line, leading `font-size × 1.2` plus
     // `line-spacing`, the block centred on (x, y) so `dominant-baseline: central`
-    // still holds.
+    // still holds. The layout-stamped `line-align` [SPEC 6] anchors each line
+    // to the block's edge: `text-anchor: middle` stands (the class rule), so a
+    // line's `x` is its own centre — computed through the one measurement API.
     let size = attrs.number("font-size").unwrap_or(0.0);
     let spacing = size * TEXT_LEADING + attrs.number("line-spacing").unwrap_or(0.0);
     let top = y - spacing * (lines.len() as f64 - 1.0) / 2.0;
+    let line_x: Box<dyn Fn(&str) -> f64> = match attrs.get("line-align") {
+        Some(ResolvedValue::Ident(a)) if a == "start" || a == "end" => {
+            let block = approx_width(content, size, ls);
+            if a == "start" {
+                let left = x - block / 2.0;
+                Box::new(move |line| left + approx_width(line, size, ls) / 2.0)
+            } else {
+                let right = x + block / 2.0;
+                Box::new(move |line| right - approx_width(line, size, ls) / 2.0)
+            }
+        }
+        _ => Box::new(move |_| x),
+    };
     write!(
         out,
         r#"{indent}<text class="{class}" x="{xs}" y="{ys}"{style}{xform}>"#
@@ -65,7 +81,8 @@ pub(crate) fn emit(
         if i == 0 {
             write!(
                 out,
-                r#"<tspan x="{xs}" y="{}"{}>{}</tspan>"#,
+                r#"<tspan x="{}" y="{}"{}>{}</tspan>"#,
+                num(line_x(line)),
                 num(top),
                 dx_attr(line, ls),
                 escape_xml(line)
@@ -74,7 +91,8 @@ pub(crate) fn emit(
         } else {
             write!(
                 out,
-                r#"<tspan x="{xs}" dy="{}"{}>{}</tspan>"#,
+                r#"<tspan x="{}" dy="{}"{}>{}</tspan>"#,
+                num(line_x(line)),
                 num(spacing),
                 dx_attr(line, ls),
                 escape_xml(line)

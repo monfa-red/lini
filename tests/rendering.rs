@@ -802,3 +802,78 @@ fn an_absurd_drawing_extent_draws_the_ratio_hint() {
     .expect("compile");
     assert!(diags.is_empty(), "{diags:?}");
 }
+
+// ── max-width / text-wrap + line alignment [SPEC 5/6] ──
+
+#[test]
+fn max_width_wraps_text_and_caps_the_auto_width() {
+    let l = lini::testing::route_sample(
+        "|box#card| \"A rather long label that should wrap\" { max-width: 160 }\n",
+        16.0,
+    );
+    let (x0, _, x1, _) = lini::testing::node_rect(&l, "card").expect("card");
+    assert!(
+        x1 - x0 <= 160.0 + 1e-6,
+        "the wrapped size is the measured size: {}",
+        x1 - x0
+    );
+}
+
+#[test]
+fn wrapped_boxes_feed_grid_tracks() {
+    // An auto track reads the wrapped width, not the unwrapped line [SPEC 5].
+    let l = lini::testing::route_sample(
+        "{ layout: grid; columns: auto, 40; }\n|box#a| \"a rather long wrapped label\" { max-width: 120 }\n|box#b| \"x\"\n",
+        16.0,
+    );
+    let (x0, _, x1, _) = lini::testing::node_rect(&l, "a").expect("a");
+    assert!(x1 - x0 <= 120.0 + 1e-6, "track fed the cap: {}", x1 - x0);
+}
+
+#[test]
+fn a_wrapped_box_is_a_routing_obstacle_at_its_wrapped_size() {
+    // The wire routes with the wrapped bbox as its obstacle — bbox-driven,
+    // no separate plumbing [SPEC 5]; the route exists and stays lawful.
+    let routes = lini::testing::routes_str(
+        "|box#a| \"go\"\n|box#mid| \"a rather long label that wraps down\" { max-width: 120 }\n|box#b| \"stop\"\na -> b\n",
+    )
+    .expect("routes");
+    assert_eq!(routes.len(), 1, "the wire drew");
+}
+
+#[test]
+fn line_alignment_rides_the_holding_boxes_knob() {
+    let opts = Options {
+        bake_vars: true,
+        ..Default::default()
+    };
+    // `align: start` on the box holding the text left-flushes its lines
+    // [SPEC 6]: the first (wider) line's centre sits right of the second's.
+    let svg = lini::compile_str_with(
+        "|block#t| { max-width: 120; align: start } [ \"wider line\\nshort\" ]\n",
+        &opts,
+    )
+    .expect("compile");
+    let xs: Vec<f64> = svg
+        .match_indices("<tspan x=\"")
+        .map(|(i, _)| {
+            let rest = &svg[i + 10..];
+            rest[..rest.find('"').unwrap()].parse().unwrap()
+        })
+        .collect();
+    assert_eq!(xs.len(), 2, "{svg}");
+    assert!(
+        xs[0] > xs[1],
+        "start-aligned: the wider line's centre sits right: {xs:?}"
+    );
+    // Default stays centred — both lines share one x (today's output).
+    let svg = lini::compile_str_with("|block#t| [ \"wider line\\nshort\" ]\n", &opts).expect("ok");
+    let xs: Vec<&str> = svg
+        .match_indices("<tspan x=\"")
+        .map(|(i, _)| {
+            let rest = &svg[i + 10..];
+            &rest[..rest.find('"').unwrap()]
+        })
+        .collect();
+    assert!(xs.windows(2).all(|w| w[0] == w[1]), "{svg}");
+}

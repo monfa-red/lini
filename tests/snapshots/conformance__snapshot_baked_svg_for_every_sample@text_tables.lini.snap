@@ -3,7 +3,7 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/text_tables.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-329 -246.5 658 493" width="658" height="493" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-329 -326.5 658 653" width="658" height="653" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
@@ -22,10 +22,10 @@ input_file: samples/text_tables.lini
     .lini .lini-marker { fill: #444; stroke: none; }
   </style>
   <defs/>
-  <rect class="lini-canvas" x="-329" y="-246.5" width="658" height="493"/>
+  <rect class="lini-canvas" x="-329" y="-326.5" width="658" height="653"/>
   <g class="lini-scene">
-    <text class="lini-text" x="0" y="-210.5" style="font-size: 20px; font-weight: bold">Styleable text, in place</text>
-    <g class="lini-node lini-row lini-block" data-id="styles" transform="translate(0,-166)">
+    <text class="lini-text" x="0" y="-290.5" style="font-size: 20px; font-weight: bold">Styleable text, in place</text>
+    <g class="lini-node lini-row lini-block" data-id="styles" transform="translate(0,-246)">
       <rect x="-185" y="-7.5" width="370" height="15" rx="0" ry="0"/>
       <text class="lini-text" x="-153.5" y="0">default</text>
       <text class="lini-text" x="-70" y="0" style="fill: #851618">coloured</text>
@@ -33,7 +33,7 @@ input_file: samples/text_tables.lini
       <text class="lini-text" x="61" y="0" style="font-style: italic">italic</text>
       <text class="lini-text" x="144.5" y="0" style="text-decoration: underline">underline</text>
     </g>
-    <g class="lini-node lini-row lini-block" data-id="tables" transform="translate(0,-80)">
+    <g class="lini-node lini-row lini-block" data-id="tables" transform="translate(0,-160)">
       <rect x="-302" y="-50.5" width="604" height="101" rx="0" ry="0"/>
       <g class="lini-node lini-table lini-group lini-block" data-id="invoice" transform="translate(-150,0)">
         <rect x="-151" y="-49.5" width="302" height="99" rx="8" ry="8"/>
@@ -156,31 +156,46 @@ input_file: samples/text_tables.lini
         </g>
       </g>
     </g>
-    <g class="lini-node lini-box lini-block" data-id="a" transform="translate(0,26)">
+    <g class="lini-node lini-grid lini-block" data-id="cards" transform="translate(0,-15.5)">
+      <rect x="-216.5" y="-66" width="433" height="132" rx="0" ry="0"/>
+      <g class="lini-node lini-box lini-block" data-id="c1" transform="translate(-159.5,0)">
+        <rect x="-56" y="-65" width="112" height="130" rx="8" ry="8"/>
+        <text class="lini-text" x="0" y="0"><tspan x="0" y="-36">Ship the</tspan><tspan x="-4.5" dy="18">release</tspan><tspan x="0" dy="18">notes to</tspan><tspan x="-13.5" dy="18">every</tspan><tspan x="0" dy="18">customer</tspan></text>
+      </g>
+      <g class="lini-node lini-box lini-block" data-id="c2" transform="translate(-13.5,0)">
+        <rect x="-74" y="-56" width="148" height="112" rx="8" ry="8"/>
+        <text class="lini-text" x="0" y="0"><tspan x="0" y="-27">Rotate the</tspan><tspan x="0" dy="18">signing keys</tspan><tspan x="0" dy="18">before the</tspan><tspan x="0" dy="18">audit window</tspan></text>
+      </g>
+      <g class="lini-node lini-box lini-block" data-id="c3" transform="translate(146,0)">
+        <rect x="-69.5" y="-65" width="139" height="130" rx="8" ry="8"/>
+        <text class="lini-text" x="0" y="0"><tspan x="18" y="-36">Archive</tspan><tspan x="4.5" dy="18">dashboards</tspan><tspan x="4.5" dy="18">nobody has</tspan><tspan x="0" dy="18">opened this</tspan><tspan x="18" dy="18">quarter</tspan></text>
+      </g>
+    </g>
+    <g class="lini-node lini-box lini-block" data-id="a" transform="translate(0,106)">
       <rect x="-42.5" y="-27.5" width="85" height="55" rx="8" ry="8"/>
       <text class="lini-text" x="0" y="0">Alpha</text>
     </g>
-    <g class="lini-node lini-box lini-block" data-id="b" transform="translate(0,109)">
+    <g class="lini-node lini-box lini-block" data-id="b" transform="translate(0,189)">
       <rect x="-38" y="-27.5" width="76" height="55" rx="8" ry="8"/>
       <text class="lini-text" x="0" y="0">Beta</text>
     </g>
-    <g class="lini-node lini-box lini-block" data-id="c" transform="translate(0,192)">
+    <g class="lini-node lini-box lini-block" data-id="c" transform="translate(0,272)">
       <rect x="-42.5" y="-27.5" width="85" height="55" rx="8" ry="8"/>
       <text class="lini-text" x="0" y="0">Gamma</text>
     </g>
   </g>
   <g class="lini-links">
     <g class="lini-link" data-from="a" data-to="b">
-      <mask id="lini-label-cut-0" maskUnits="userSpaceOnUse" x="37" y="24" width="24.5" height="79"><rect class="lini-cut-bg" x="37" y="24" width="24.5" height="79"/><rect class="lini-cut" x="9.1" y="57.95" width="100.8" height="15.6"/></mask>
-      <path d="M 43.5 26 L 43.5 26 A 16 16 0 0 1 59.5 42 L 59.5 85 A 16 16 0 0 1 43.5 101 L 42.5 101" mask="url(#lini-label-cut-0)"/>
-      <polygon class="lini-marker lini-marker-arrow" points="38.5,101 47.5,96.5 47.5,105.5" style="fill: #989898"/>
-      <text class="lini-link-label" x="59.5" y="65.75" style="fill: #005d56; font-weight: bold">styled by |-|</text>
+      <mask id="lini-label-cut-0" maskUnits="userSpaceOnUse" x="37" y="104" width="24.5" height="79"><rect class="lini-cut-bg" x="37" y="104" width="24.5" height="79"/><rect class="lini-cut" x="9.1" y="137.95" width="100.8" height="15.6"/></mask>
+      <path d="M 43.5 106 L 43.5 106 A 16 16 0 0 1 59.5 122 L 59.5 165 A 16 16 0 0 1 43.5 181 L 42.5 181" mask="url(#lini-label-cut-0)"/>
+      <polygon class="lini-marker lini-marker-arrow" points="38.5,181 47.5,176.5 47.5,185.5" style="fill: #989898"/>
+      <text class="lini-link-label" x="59.5" y="145.75" style="fill: #005d56; font-weight: bold">styled by |-|</text>
     </g>
     <g class="lini-link" data-from="b" data-to="c">
-      <mask id="lini-label-cut-1" maskUnits="userSpaceOnUse" x="37" y="115" width="24.5" height="79"><rect class="lini-cut-bg" x="37" y="115" width="24.5" height="79"/><rect class="lini-cut" x="1.9" y="138.45" width="115.2" height="15.6"/></mask>
-      <path d="M 39 117 L 43.5 117 A 16 16 0 0 1 59.5 133 L 59.5 179.5 A 12.5 12.5 0 0 1 47 192 L 47 192" mask="url(#lini-label-cut-1)"/>
-      <polygon class="lini-marker lini-marker-arrow" points="43,192 52,187.5 52,196.5" style="fill: #989898"/>
-      <text class="lini-link-label" x="59.5" y="146.25" style="fill: #851618; font-weight: bold; text-shadow: 1px 1px 2px #484848" transform="rotate(-6 59.5 146.25)">nudged &amp; turned</text>
+      <mask id="lini-label-cut-1" maskUnits="userSpaceOnUse" x="37" y="195" width="24.5" height="79"><rect class="lini-cut-bg" x="37" y="195" width="24.5" height="79"/><rect class="lini-cut" x="1.9" y="218.45" width="115.2" height="15.6"/></mask>
+      <path d="M 39 197 L 43.5 197 A 16 16 0 0 1 59.5 213 L 59.5 259.5 A 12.5 12.5 0 0 1 47 272 L 47 272" mask="url(#lini-label-cut-1)"/>
+      <polygon class="lini-marker lini-marker-arrow" points="43,272 52,267.5 52,276.5" style="fill: #989898"/>
+      <text class="lini-link-label" x="59.5" y="226.25" style="fill: #851618; font-weight: bold; text-shadow: 1px 1px 2px #484848" transform="rotate(-6 59.5 226.25)">nudged &amp; turned</text>
     </g>
   </g>
 </svg>

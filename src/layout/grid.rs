@@ -102,6 +102,9 @@ pub fn lay_out_grid(
         let col_v = track_align(attrs, "justify", p.col);
 
         let child = &mut children[p.child_index];
+        // The column's horizontal knob reaches a bare text cell's lines
+        // [SPEC 6] — the shared resolver, same as flex and the cell slide.
+        super::stamp_line_align(child, super::line_align_of(col_h));
         let is_box = child.kind != NodeKind::Text;
 
         // A box cell fills its track when the column — or the cell itself — is
@@ -300,11 +303,10 @@ fn pack(align: Option<&str>, lo: f64, hi: f64, size: f64) -> f64 {
 /// to move; anything else, or a centred cell, is left as-is. The leaf keeps its
 /// centred bbox, so `text-anchor: middle` still renders it flush.
 fn align_cell_content(cell: &mut PlacedNode, span: Span) -> Result<(), Error> {
-    let (h, v) = (
-        ident(cell.attrs.get("align")),
-        ident(cell.attrs.get("justify")),
-    );
-    if edge(h).is_none() && edge(v).is_none() {
+    use super::LineAlign;
+    let h = super::line_align_of(ident(cell.attrs.get("align")));
+    let v = super::line_align_of(ident(cell.attrs.get("justify")));
+    if h == LineAlign::Center && v == LineAlign::Center {
         return Ok(());
     }
     let pad = primitives::padding(&cell.attrs, span)?;
@@ -315,30 +317,21 @@ fn align_cell_content(cell: &mut PlacedNode, span: Span) -> Result<(), Error> {
     if leaf.kind != NodeKind::Text {
         return Ok(());
     }
-    // The leaf's centre when flush to the near / far content edge on each axis.
+    // The leaf's centre when flush to the near / far content edge on each
+    // axis — and the same knob aligns the leaf's own lines [SPEC 6].
+    super::stamp_line_align(leaf, h);
     let (lw, lh) = (leaf.bbox.w() / 2.0, leaf.bbox.h() / 2.0);
-    if let Some(dir) = edge(h) {
-        leaf.cx = flush(dir, -bw / 2.0 + pad.left + lw, bw / 2.0 - pad.right - lw);
+    match h {
+        LineAlign::Start => leaf.cx = -bw / 2.0 + pad.left + lw,
+        LineAlign::End => leaf.cx = bw / 2.0 - pad.right - lw,
+        LineAlign::Center => {}
     }
-    if let Some(dir) = edge(v) {
-        leaf.cy = flush(dir, -bh / 2.0 + pad.top + lh, bh / 2.0 - pad.bottom - lh);
+    match v {
+        LineAlign::Start => leaf.cy = -bh / 2.0 + pad.top + lh,
+        LineAlign::End => leaf.cy = bh / 2.0 - pad.bottom - lh,
+        LineAlign::Center => {}
     }
     Ok(())
-}
-
-/// `Some(false)` for `start`, `Some(true)` for `end`, `None` for anything else
-/// (`center` / unset / `stretch` — the leaf keeps its centred position).
-fn edge(align: Option<&str>) -> Option<bool> {
-    match align {
-        Some("start") => Some(false),
-        Some("end") => Some(true),
-        _ => None,
-    }
-}
-
-/// The near edge (`false`) or far edge (`true`).
-fn flush(far: bool, near_center: f64, far_center: f64) -> f64 {
-    if far { far_center } else { near_center }
 }
 
 fn ident(v: Option<&ResolvedValue>) -> Option<&str> {

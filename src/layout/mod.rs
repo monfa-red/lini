@@ -15,6 +15,7 @@ mod primitives; // primitive *sizing* (leaf/closed bbox) — distinct from `prim
 pub(crate) mod sequence;
 mod text;
 mod values;
+mod wrap;
 
 pub(crate) use anchors::is_pinned;
 pub use ir::*;
@@ -107,6 +108,42 @@ impl Ctx {
             scale: 1.0,
             drawing: false,
         }
+    }
+}
+
+/// Where a text leaf's lines align [SPEC 6]: the nearest container box's
+/// **horizontal packing knob** — `align` in a column / grid context, `justify`
+/// in a row — mapped `start` / `center` / `end`; everything else (`stretch`,
+/// `evenly`, `origin`, unset) reads `center`. The one resolver behind flex,
+/// grid tracks, and the table-cell slide.
+#[derive(Clone, Copy, PartialEq)]
+pub(crate) enum LineAlign {
+    Start,
+    Center,
+    End,
+}
+
+pub(crate) fn line_align_of(knob: Option<&str>) -> LineAlign {
+    match knob {
+        Some("start") => LineAlign::Start,
+        Some("end") => LineAlign::End,
+        _ => LineAlign::Center,
+    }
+}
+
+/// Carry a resolved line alignment onto a placed **text** leaf, for the
+/// renderer's per-line anchoring. Centre is the default — nothing to carry.
+pub(crate) fn stamp_line_align(child: &mut PlacedNode, align: LineAlign) {
+    let word = match align {
+        LineAlign::Center => return,
+        LineAlign::Start => "start",
+        LineAlign::End => "end",
+    };
+    if child.kind == NodeKind::Text {
+        child.attrs.insert(
+            "line-align",
+            crate::resolve::ResolvedValue::Ident(word.into()),
+        );
     }
 }
 
@@ -327,6 +364,11 @@ fn layout_inst(
     for c in &inst.children {
         children.push(layout_inst(c, &child_path(path, c), program, child_ctx)?);
     }
+
+    // `max-width` [SPEC 5]: wrap text children to the cap (re-measuring them)
+    // and reject what cannot honour it, before anything is arranged — the
+    // wrapped size is what tracks, gutters, and routing see.
+    wrap::apply_max_width(inst, &mut children, own, inst.span)?;
 
     // Determine this node's bbox + arrange children inside.
     let mut gutters: Vec<Gutter> = Vec::new();

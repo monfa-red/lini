@@ -51,6 +51,53 @@ pub fn approx_height(text: &str, font_size: f64, line_spacing: f64) -> f64 {
     leading + (line_count as f64 - 1.0) * step
 }
 
+/// Break text into lines that fit `max_w` [SPEC 5]: authored `\n` lines wrap
+/// independently, breaks prefer **whitespace**, and a word too wide for the
+/// cap alone breaks inside itself (at `char` boundaries — the practical
+/// grapheme approximation for the bundled charset) so the no-clip law holds
+/// at any width; a line never goes below one glyph. The scalar
+/// [`approx_width`] / [`approx_height`] measure the `\n`-joined result, so
+/// the wrapped size **is** the measured size.
+pub fn wrap(text: &str, font_size: f64, letter_spacing: f64, max_w: f64) -> Vec<String> {
+    let fits = |s: &str| approx_width(s, font_size, letter_spacing) <= max_w + 1e-9;
+    let mut out = Vec::new();
+    for raw in text.split('\n') {
+        let mut cur = String::new();
+        for word in raw.split_whitespace() {
+            let candidate = if cur.is_empty() {
+                word.to_string()
+            } else {
+                format!("{cur} {word}")
+            };
+            if fits(&candidate) {
+                cur = candidate;
+                continue;
+            }
+            if !cur.is_empty() {
+                out.push(std::mem::take(&mut cur));
+            }
+            // The word alone may still exceed the cap — hard-break it: each
+            // line takes the largest fitting prefix, floored at one glyph.
+            let mut rest: &str = word;
+            while !fits(rest) && rest.chars().count() > 1 {
+                let mut cut = rest.chars().next().map_or(1, char::len_utf8);
+                for (i, _) in rest.char_indices().skip(1) {
+                    if fits(&rest[..i]) {
+                        cut = i;
+                    } else {
+                        break;
+                    }
+                }
+                out.push(rest[..cut].to_string());
+                rest = &rest[cut..];
+            }
+            cur = rest.to_string();
+        }
+        out.push(cur);
+    }
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -91,6 +138,43 @@ mod tests {
         // 2 lines → 1 gap; +6 → 24 + 6 = 30. A single line has no gap.
         assert!((approx_height("a\nb", 10.0, 6.0) - 30.0).abs() < 0.01);
         assert!((approx_height("a", 10.0, 6.0) - approx_height("a", 10.0, 0.0)).abs() < 0.01);
+    }
+
+    #[test]
+    fn wrap_prefers_whitespace() {
+        // 10 px/char at size 10 × 0.6 = 6 px/char; 60 px fits 10 chars.
+        let lines = wrap("wrap me into some lines", 10.0, 0.0, 60.0);
+        assert_eq!(lines, ["wrap me", "into some", "lines"]);
+    }
+
+    #[test]
+    fn wrap_breaks_inside_an_oversized_word() {
+        // 5 chars fit; an 12-char word hard-breaks at glyph boundaries.
+        let lines = wrap("abcdefghijkl", 10.0, 0.0, 30.0);
+        assert_eq!(lines, ["abcde", "fghij", "kl"]);
+    }
+
+    #[test]
+    fn wrap_never_goes_below_one_glyph() {
+        // A cap below one glyph still emits one glyph per line — the no-clip
+        // law degrades, never divides by zero.
+        let lines = wrap("abc", 10.0, 0.0, 1.0);
+        assert_eq!(lines, ["a", "b", "c"]);
+    }
+
+    #[test]
+    fn wrap_respects_authored_newlines() {
+        let lines = wrap("one two\nthree", 10.0, 0.0, 30.0);
+        assert_eq!(lines, ["one", "two", "three"]);
+        // A blank authored line survives.
+        assert_eq!(wrap("a\n\nb", 10.0, 0.0, 60.0), ["a", "", "b"]);
+    }
+
+    #[test]
+    fn wrapped_size_is_the_measured_size() {
+        let joined = wrap("wrap me into some lines", 10.0, 0.0, 60.0).join("\n");
+        assert!(approx_width(&joined, 10.0, 0.0) <= 60.0);
+        assert!(approx_height(&joined, 10.0, 0.0) > approx_height("x", 10.0, 0.0));
     }
 
     #[test]

@@ -265,7 +265,7 @@ fn parse_cross(attrs: &AttrMap) -> Cross {
     }
 }
 
-fn ident(v: Option<&ResolvedValue>) -> Option<&str> {
+pub(super) fn ident(v: Option<&ResolvedValue>) -> Option<&str> {
     match v {
         Some(ResolvedValue::Ident(s)) => Some(s.as_str()),
         // A normalized one-keyword list (`align: start`) [SPEC 2].

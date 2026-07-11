@@ -205,6 +205,22 @@ pub static PROPERTIES: &[Property] = &[
     row("width", UNIVERSAL, One(Kind::Any), Engine, No),
     row("height", UNIVERSAL, One(Kind::Any), Engine, No),
     row("padding", UNIVERSAL, One(Kind::Number), Bundles, No),
+    // `max-width` caps an auto width; `text-wrap` says whether text inside
+    // breaks to honour it — inert without a cap [SPEC 5].
+    row(
+        "max-width",
+        UNIVERSAL,
+        One(Kind::Number),
+        DefaultRef::None,
+        No,
+    ),
+    row(
+        "text-wrap",
+        UNIVERSAL,
+        One(Kind::Ident),
+        DefaultRef::None,
+        No,
+    ),
     row("pin", UNIVERSAL, One(Kind::Ident), Engine, No),
     row(
         "translate",
