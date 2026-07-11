@@ -172,8 +172,9 @@ fn pair_key(r: &EdgeReq) -> PairKey {
 pub fn bundles(reqs: &[EdgeReq]) -> Vec<Bundle> {
     let mut out: Vec<(PairKey, Bundle)> = Vec::new();
     for (i, r) in reqs.iter().enumerate() {
-        if r.routing != Strategy::Orthogonal {
-            continue;
+        match r.routing {
+            Strategy::Orthogonal => {}
+            Strategy::Straight => continue,
         }
         if r.a_path == r.b_path {
             out.push((pair_key(r), Bundle { members: vec![i] }));

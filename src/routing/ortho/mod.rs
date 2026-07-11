@@ -17,6 +17,7 @@ pub(crate) mod rect;
 pub(crate) mod request;
 pub(crate) mod scene;
 pub(crate) mod search;
+mod world;
 
 use crate::ast::Side;
 use crate::layout::ir::{RoutedLink, Stray};
@@ -29,6 +30,7 @@ use ledger::Ledger;
 use rect::Rect;
 use request::{EdgeReq, End};
 use scene::SceneIndex;
+use world::{build_worlds, world_ladder};
 
 /// One routing world: a container's interior (`""` = the scene root) and its
 /// channel decomposition.
@@ -94,23 +96,6 @@ fn parent_path(p: &str) -> String {
     p.rfind('.').map(|i| p[..i].to_owned()).unwrap_or_default()
 }
 
-/// The worlds an edge may route in, innermost first: the endpoints' common
-/// container, then every transparent ancestor up to the scene root — a tight
-/// interior never walls in a link its ancestors would let out. Containment
-/// links stay inside their container.
-fn world_ladder(a: &str, b: &str) -> Vec<String> {
-    if SceneIndex::contains(a, b) || SceneIndex::contains(b, a) {
-        return vec![SceneIndex::world_of(a, b)];
-    }
-    let mut w = SceneIndex::world_of(a, b);
-    let mut out = vec![w.clone()];
-    while !w.is_empty() {
-        w = parent_path(&w);
-        out.push(w.clone());
-    }
-    out
-}
-
 /// Self-loop side resolution (ROUTING.md Special nodes): defaults
 /// right → top; a forced side wins and its free partner takes the default
 /// that stays adjacent; one shared side is invalid.
@@ -151,43 +136,24 @@ fn impossible(req: &EdgeReq, detail: &str) -> Violation {
 /// alongside, for that label pass.
 pub(crate) fn route(index: &SceneIndex, reqs: &[EdgeReq]) -> (Routing, Vec<usize>) {
     let mut routing = Routing::default();
-    let mine = |r: &&EdgeReq| r.routing == Strategy::Orthogonal;
-    if !reqs.iter().any(|r| r.routing == Strategy::Orthogonal) {
+    let mine = |r: &&EdgeReq| match r.routing {
+        Strategy::Orthogonal => true,
+        Strategy::Straight => false,
+    };
+    if !reqs.iter().any(|r| match r.routing {
+        Strategy::Orthogonal => true,
+        Strategy::Straight => false,
+    }) {
         return (routing, Vec::new());
     }
     // The diagram routes at the maximum clearance any link carries
-    // (ROUTING.md Vocabulary); the root world gets a canvas margin.
+    // (ROUTING.md Vocabulary); `build_worlds` spends it on keep-outs and the margin.
     let c = reqs
         .iter()
         .filter(mine)
         .map(|r| r.clearance)
         .fold(0.0_f64, f64::max);
-    let bounds = index.bounds().inflate(2.0 * c + 20.0);
-
-    let mut world_paths: Vec<String> = reqs
-        .iter()
-        .filter(mine)
-        .flat_map(|r| world_ladder(&r.a_path, &r.b_path))
-        .collect();
-    world_paths.sort();
-    world_paths.dedup();
-    let worlds: Vec<World> = world_paths
-        .into_iter()
-        .map(|path| {
-            let wb = if path.is_empty() {
-                bounds
-            } else {
-                index.rect(&path).expect("world body placed")
-            };
-            let keepouts: Vec<Rect> = index
-                .child_rects(&path)
-                .iter()
-                .map(|r| r.inflate(c))
-                .collect();
-            let graph = ChannelGraph::build(wb, &keepouts, path.is_empty());
-            World { path, graph }
-        })
-        .collect();
+    let worlds = build_worlds(index, reqs, c);
 
     let fans = request::fan_groups(reqs);
     let bundles = request::bundles(reqs);
@@ -404,8 +370,9 @@ pub(crate) fn route(index: &SceneIndex, reqs: &[EdgeReq]) -> (Routing, Vec<usize
 
     let mut req_of = Vec::new();
     for (i, req) in reqs.iter().enumerate() {
-        if req.routing != Strategy::Orthogonal {
-            continue;
+        match req.routing {
+            Strategy::Orthogonal => {}
+            Strategy::Straight => continue,
         }
         let Some(chain) = &chains[i] else {
             routing

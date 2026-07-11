@@ -33,7 +33,10 @@ const EPS: f64 = 1e-6;
 pub fn check(nodes: &[PlacedNode], links: &[RoutedLink], report: &[Violation]) -> Vec<Violation> {
     let links: Vec<&RoutedLink> = links
         .iter()
-        .filter(|w| w.strategy == Strategy::Orthogonal)
+        .filter(|w| match w.strategy {
+            Strategy::Orthogonal => true,
+            Strategy::Straight => false,
+        })
         .collect();
     if links.is_empty() {
         return Vec::new();

@@ -64,8 +64,9 @@ pub(crate) fn wire(
 /// nothing — this strategy has no report.
 pub(crate) fn route(reqs: &[EdgeReq], routing: &mut Routing, req_of: &mut Vec<usize>) {
     for (i, req) in reqs.iter().enumerate() {
-        if req.routing != Strategy::Straight {
-            continue;
+        match req.routing {
+            Strategy::Straight => {}
+            Strategy::Orthogonal => continue,
         }
         let path = if req.a_path == req.b_path {
             let r = req.a_rect;
