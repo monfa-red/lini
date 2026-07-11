@@ -196,6 +196,13 @@ generated at release.
 in CI (drift = test failure); every diagnostic carries a code; grammars
 highlight every sample correctly (spot-check in both editors).
 
+**Carried over from PLAN-ALPHA** (the M7 retro): the render `{:?}` Debug
+dedup keys → derived-`PartialEq` structural keys (needs `PartialEq` on
+`ResolvedValue`, cascading through `Expr` — R1 follow-up, fits the D9
+serde-free structuring work); deeper gate-driven validation reading the
+ledger's `gate` column (R2/M2 follow-up — rides schema generation, which
+walks the same rows).
+
 ---
 
 ## rc → 1.0.0

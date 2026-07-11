@@ -448,6 +448,24 @@ Executing sessions: append dated notes here — decisions the plan didn't
 anticipate, gotchas, deferred items, comparator cases that needed deepening,
 anything the next session must know. Keep entries terse.
 
+- **2026-07-11, the 0.21/0.22 round's routing-adjacent changes (PLAN-ALPHA
+  M6).** Three seams moved; the router core is untouched. (1) The root
+  `layout: drawing` / `layout: sequence` arms now call `routing::route(…)`
+  — nested ordinary scopes' wires used to vanish (the arms collected only
+  engine-owned links). (2) That exposed a label-pairing drift: the label
+  pass walked all program links while the request pass filtered
+  engine-owned ones, so statement numbering disagreed and a routed wire
+  could wear a sequence message's label. The ownership filter is one
+  shared predicate now — `ortho::request::is_routed` — used by both
+  passes; anything touching request/label statement grouping must go
+  through it. (3) Chain expansion moved to desugar (`a -> b -> c` →
+  `a -> b; b -> c`, per-hop ops in the AST): the router now only ever
+  sees 2-endpoint wire requests, but the hops share the statement's span,
+  so the span-keyed stmt/expansion grouping still treats them as one
+  statement — label distribution and per-statement crossing accounting
+  are unchanged by construction. Multi-endpoint requests still exist for
+  drawing measure chains only, which never reach the router.
+
 - **2026-07-04, the checker reads the wall-hugger's own channel (user bug
   batch 6).** The author's links_hard tuning (gap 34, two blues) tripped
   the clearance-9 sweep: four Separation flags, each "with room for full

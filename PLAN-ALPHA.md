@@ -545,11 +545,11 @@ cost of each one (every sample gets hand-migrated at M1 and M3, re-blessed at
 M5, re-reviewed at M7). Samples are the showroom: every survivor is polished,
 idiomatic lini a learner can copy.
 
-- [ ] Keep as-is: `hello`, `hero`, `chart_hero`, `entity_hero`, `icons`,
+- [x] Keep as-is: `hello`, `hero`, `chart_hero`, `entity_hero`, `icons`,
   `palette`, `sequence`, `shapes` (README asset sources), `links`,
   `links_simple`/`links_medium`/`links_hard`, `pcb` (routing-oracle scenes),
   `sketch`, `templates`, `layout`, `styles`, `expr`, `desugar`.
-- [ ] Merges — final judgment in-stage; each merged file must read as **one
+- [x] Merges — final judgment in-stage; each merged file must read as **one
   coherent scene**, not a concatenation:
   - `charts.lini` ← chart_bars + chart_lines + chart_points + chart_pie;
     `chart_advanced.lini` ← chart_axes + chart_fn + chart_annotations +
@@ -562,13 +562,13 @@ idiomatic lini a learner can copy.
   - `paint.lini` ← gradient + gap_fill + themes; `text_tables.lini` ← text +
     table_align + table_cell_style (**must keep a styled cell** — R1's
     regression coverage; move its focused test's path).
-- [ ] Update every by-name test reference; snapshot set follows (deletes +
+- [x] Update every by-name test reference; snapshot set follows (deletes +
   renames — regenerate, never hand-edit); conformance / oracle / fmt / laws
   sweeps stay green; README images unchanged (all sources are keepers).
-- [ ] AGENTS.md: replace "One sample per feature in `samples/`" with the
+- [x] AGENTS.md: replace "One sample per feature in `samples/`" with the
   cluster policy — *samples are the showroom; one sample per feature cluster;
   extend an existing sample before adding a file.*
-- [ ] Finish with a PNG contact sheet (resvg, light + dark) of every surviving
+- [x] Finish with a PNG contact sheet (resvg, light + dark) of every surviving
   sample for owner review — the gate is "code you'd want a stranger to learn
   lini from."
 
@@ -606,16 +606,16 @@ drawing_section's front view; grid pattern in drawing_annotations' plate).
 
 AUDIT D7 + seam table. The parser is ready; this is the reader flip + migration.
 
-- [ ] `resolve/value.rs::resolve_groups` + `ResolvedValue` semantics per S2:
+- [x] `resolve/value.rs::resolve_groups` + `ResolvedValue` semantics per S2:
   list-typed properties read across comma-groups; tuple-typed stay single-group.
   Drive list-vs-tuple from the R2 ledger's `shape` column.
-- [ ] Flip the readers: chart `read_data` (list-of-scalars → categorical,
+- [x] Flip the readers: chart `read_data` (list-of-scalars → categorical,
   list-of-tuples → points), `categories`, `ticks`, `along`, grid `columns`/`rows`
   (`desugar/mod.rs:237`), per-column `align`/`justify`, segmented `fn:`,
   `thread:`/`break:` groups. Pipelines (`draw:`, `mirror:`) assert single-group.
-- [ ] Targeted legacy errors in each list reader ("`data` takes comma-separated
+- [x] Targeted legacy errors in each list reader ("`data` takes comma-separated
   values — `data: 9, 15, 24`").
-- [ ] Migrate all ~49 samples by hand (Sonnet agents fine), re-bless snapshots,
+- [x] Migrate all ~49 samples by hand (Sonnet agents fine), re-bless snapshots,
   spot-check `fmt` (`emit_decl` already prints the law; add a `data:` case to
   `tests/fmt.rs`) and the desugar oracle.
 
@@ -648,16 +648,16 @@ fmt nit surfaced (not introduced): `tol: +0.2 -0.05` canonicalizes to
 
 ### Stage M2 — validation + the similarity warning `[diagnostics]`
 
-- [ ] The owner-aware pass (new `src/validate.rs` or grown `lint.rs`), reading
+- [x] The owner-aware pass (new `src/validate.rs` or grown `lint.rs`), reading
   the ledger: unknown name → error + `suggest::nearest`; statically-known owner
   misuse → error with contextual correction; class rules → inert / dead-warning /
   unused-class warning; value-shape errors. Wire `--strict`/`--no-warn`.
-- [ ] Similarity implicit-node warning at `lint.rs:127` via `suggest::nearest`
+- [x] Similarity implicit-node warning at `lint.rs:127` via `suggest::nearest`
   (edit distance ≤ 2 or case-fold, vs declared + previously-created names in
   scope). Remove nothing else — shadow warning stays.
-- [ ] Sweep the samples: fix any latent misuse the new pass finds (each is a
+- [x] Sweep the samples: fix any latent misuse the new pass finds (each is a
   finding — list them in the Log).
-- [ ] Tests: one `insta` family per diagnostic; the CLI-binary `--strict`
+- [x] Tests: one `insta` family per diagnostic; the CLI-binary `--strict`
   exit-code test (AUDIT R6); update SPEC 20 table ↔ implemented messages 1:1.
 
 Acceptance: every diagnostic in SPEC 20's new tables demonstrably fires; no
@@ -702,16 +702,16 @@ round with schema generation.
 
 ### Stage M3 — scale/unit/density + `place:` + renames `[breaking]`
 
-- [ ] Desugar fold (AUDIT seam): `scale:` ratio × `unit:` mm-size × root density
+- [x] Desugar fold (AUDIT seam): `scale:` ratio × `unit:` mm-size × root density
   (default 4) → the engine's internal px-per-unit; `|page|` loses `scale:`;
   `unit:` becomes the inheriting ident enum; pixel-space outside drawing scopes
   confirmed by test (`right(300)` = 300px in flow). Absurd-extent hint
   diagnostic. Section/detail/view title ratios read the new `scale:` directly.
-- [ ] `place:` replaces `over`/`left`/`right` (desugar + resolve + sequence
+- [x] `place:` replaces `over`/`left`/`right` (desugar + resolve + sequence
   engine + errors); old names become unknown-property errors (M2 catches them).
-- [ ] Renames: `tags:` → `labels:` (with the R2 reconciliation); title-block
+- [x] Renames: `tags:` → `labels:` (with the R2 reconciliation); title-block
   field renames + smart-label-as-title (lowers to the generated spanning cell).
-- [ ] Migrate samples (drawing samples get ratio-form scales — e.g. old
+- [x] Migrate samples (drawing samples get ratio-form scales — e.g. old
   `scale: 6` on a default page becomes `scale: 1.5`), re-bless, and **visually
   verify every drawing sample at print scale** (resvg, mm sizes intact).
 
@@ -771,16 +771,16 @@ owner review rather than pre-approved.
 
 ### Stage M4 — text wrap + line alignment `[feature]`
 
-- [ ] `text.rs`: line-list API (wrap at whitespace within `max-width`, grapheme
+- [x] `text.rs`: line-list API (wrap at whitespace within `max-width`, grapheme
   fallback), scalar API preserved as a wrapper; `leaf_bbox` sizes from lines;
   render emits per-line positions.
-- [ ] One shared line-align resolver (nearest container's horizontal packing
+- [x] One shared line-align resolver (nearest container's horizontal packing
   knob; start/center/end; others read center) called by **both** flex and grid —
   `grid::align_cell_content` becomes a caller (AUDIT's parallel-impl trap).
-- [ ] Errors: `nowrap` can't-fit; non-text child wider than `max-width`;
+- [x] Errors: `nowrap` can't-fit; non-text child wider than `max-width`;
   `width > max-width`. Wrapped sizes feed tracks/gutters/labels/routing
   obstacles (bbox-driven — verify with a routed sample).
-- [ ] Samples: one wrap sample (a card grid with long labels); table alignment
+- [x] Samples: one wrap sample (a card grid with long labels); table alignment
   samples re-verified; snapshots for wrap + align families.
 
 Acceptance: default output unchanged (center = today); wrap sample renders
@@ -824,7 +824,7 @@ ROADMAP 3.7. Raw statics are **committed** at `assets/fonts/raw/` (four roman
 statics + OFL per family; excluded from the cargo package); OFL texts in
 `LICENSES/`.
 
-- [ ] `xtask extract-fonts` (mirrors `extract-icons`): read the committed raws
+- [x] `xtask extract-fonts` (mirrors `extract-icons`): read the committed raws
   (filenames pinned in xtask); generate **(a)** metrics tables —
   per-glyph advances, ascent/descent/cap-height, upem, per family × weight
   {400, 500, 600, 700} — as generated Rust, **always compiled in** (never
@@ -834,30 +834,30 @@ statics + OFL per family; excluded from the cargo package); OFL texts in
   composes (`⌀ ° ± ×` …) — via the pure-Rust `subsetter` crate, OFL copyright
   metadata kept, committed under `assets/fonts/`. **Budget ≤ 600KB total** —
   trim charset first, weights second; record the real numbers in the Log.
-- [ ] `font` cargo feature (default-on, mirrors `icons`) gating the subset
+- [x] `font` cargo feature (default-on, mirrors `icons`) gating the subset
   *bytes* only; `--embed-font` / `--static` outlining error helpfully without
   it; default name-only output works under `--no-default-features`.
-- [ ] Measurement: `text.rs` swaps the flat 0.6 ratio for table lookups —
+- [x] Measurement: `text.rs` swaps the flat 0.6 ratio for table lookups —
   width = Σ advances(kind, resolved weight) × size/upem + letter-spacing.
   Kind = known-mono names + a "mono" substring heuristic, else proportional;
   unknown-glyph fallback (wide for CJK ranges). Unit-test: mono widths equal
   the old estimate exactly. Vertical centering moves to cap-height optical
   centering `[output — the one full re-bless; visual pass over every sample,
   light + dark]`.
-- [ ] `font-weight` widens to `normal|medium|semibold|bold|400|500|600|700`
+- [x] `font-weight` widens to `normal|medium|semibold|bold|400|500|600|700`
   (ledger row; SPEC landed in S2). Measurement reads the resolved weight.
   The chrome bold→semibold retune is decided here **by eye** (layout-neutral
   for mono — advances are weight-invariant).
-- [ ] Emission: the default stack leads with the bundled family names
+- [x] Emission: the default stack leads with the bundled family names
   (rules.rs, one place); `--embed-font` = base64 `@font-face` of the
   family × weights actually used, under Lini-scoped family names;
   `--static` renames `--bake-vars` (breaking, no alias) and adds text→path
   outlining via `ttf-parser` on the subsets (glyph dedupe with
   `<defs>`/`<use>`; italic = synthetic oblique).
-- [ ] Samples: one proportional sample (a Google Sans card diagram); re-verify
+- [x] Samples: one proportional sample (a Google Sans card diagram); re-verify
   a text-heavy existing sample through `--static`. From this stage on, visual
   PNG reviews render via `--static` so resvg needs no installed fonts.
-- [ ] Re-verify the pivotal constraint: resvg still ignores `@font-face`
+- [x] Re-verify the pivotal constraint: resvg still ignores `@font-face`
   (keeps `--embed-font` documented browser-only; last verified on resvg 0.47);
   outlined PNGs pixel-stable across machines.
 
@@ -926,27 +926,27 @@ by build flags, proven by the fonts-off suite run.
 
 ### Stage M6 — hardening fixes + row bands/marks `[fixes]`
 
-- [ ] Root-drawing router: `layout/mod.rs:41-46` → `routing::route(…)`; root-
+- [x] Root-drawing router: `layout/mod.rs:41-46` → `routing::route(…)`; root-
   sequence arm routes + extends message wires. Regression samples: a wire in a
   nested `|row|` under each root layout.
-- [ ] Scoped note rules (`|sequence| |note|`, `|drawing| |note|`) move to desugar
+- [x] Scoped note rules (`|sequence| |note|`, `|drawing| |note|`) move to desugar
   as generated descendant rules; desugar snapshots re-bless; SVG byte-identical
   (oracle test proves it).
-- [ ] Row-direction bands/marks: make `chart/annot.rs` direction-aware via
+- [x] Row-direction bands/marks: make `chart/annot.rs` direction-aware via
   `Plot` helpers (AUDIT: the only column-hardwired file); radial band/mark →
   compile error per S2. Sample: a row chart with a band + mark.
-- [ ] Chain markers per hop `[output]`: `a -> b -> c` draws two fully-marked
+- [x] Chain markers per hop `[output]`: `a -> b -> c` draws two fully-marked
   links; move chain expansion from resolve to **desugar** (`a -> b; b -> c`,
   auto-created ids included — verified viable by hand-splitting). Fan-out
   (`&`) is untouched — it stays a resolve/routing concept. Re-bless affected
   snapshots; regression samples: `a -> b -> c`, `a <- b <-> c`, and a chain
   mixed with a fan.
-- [ ] `|page|` direction defaults by orientation `[output]` (landscape → row,
+- [x] `|page|` direction defaults by orientation `[output]` (landscape → row,
   portrait → column); re-verify the sheet samples visually.
-- [ ] Wavy-on-nodes: confirm no code path exists beyond links (render/wavy.rs
+- [x] Wavy-on-nodes: confirm no code path exists beyond links (render/wavy.rs
   serves links only); delete any partial shape/drawing support found. SPEC-side
   removal already landed in S2.
-- [ ] CLI cleanup: remove `--standalone`; unify the four hand-rolled subcommand
+- [x] CLI cleanup: remove `--standalone`; unify the four hand-rolled subcommand
   parsers under `clap::Subcommand`; serve dir-mode boundary generalized past
   `.lini` (prep for alpha.5 images; file-mode boundary noted for that round).
 
@@ -1007,16 +1007,16 @@ crossing fan row read as clutter, not showroom material).
 
 ### Stage M7 — release 0.22 → tag `1.0.0-alpha`
 
-- [ ] Full sweep: `cargo fmt` / `test` / `clippy`; `lini fmt` over every sample
+- [x] Full sweep: `cargo fmt` / `test` / `clippy`; `lini fmt` over every sample
   committed clean; desugar + laws oracles green; every sample rendered to PNG
   and eyeballed (Sonnet agents render, Opus/main reviews), light + dark.
-- [ ] README + `lini theme`/CLI docs updated to the new syntax; AUDIT.md deleted
+- [x] README + `lini theme`/CLI docs updated to the new syntax; AUDIT.md deleted
   (its stages landed); ROUTING-LOG.md entry for the routing-adjacent changes.
-- [ ] Version: release **0.22.0** (0.21.0 was cut at the M3 checkpoint), then
+- [x] Version: release **0.22.0** (0.21.0 was cut at the M3 checkpoint), then
   tag `1.0.0-alpha` on the same tree — the syntax-frozen marker PLAN-V1 builds
   on. Each PLAN-V1 round then publishes its prerelease (`1.0.0-alpha.N`,
   `beta.N`, `rc.N`) as part of its round-complete sweep.
-- [ ] Retro pass over this file: unfinished items either done or explicitly
+- [x] Retro pass over this file: unfinished items either done or explicitly
   moved to PLAN-V1 rounds; Log lines complete.
 
 **Log:**

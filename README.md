@@ -71,7 +71,7 @@ Building from a clone instead? `cargo install --path .`
 |db#store|  "Postgres"
 
 api   -> queue "enqueue"
-queue -> store .loud "persist"            // a link wears one after its endpoints
+queue -> store "persist" .loud            // a link wears one after its label
 store ---> api "ack"                       // dotted arrow
 ```
 
@@ -110,9 +110,9 @@ Give a node `layout: chart` and it becomes a plot, drawn from data instead of pi
 <p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/charts.png" alt="Four Lini charts: grouped bars, smooth lines, a radar, and a banded area" width="700"></p>
 
 ```
-|chart| "Revenue ($M)" { categories: "Q1" "Q2" "Q3" "Q4" } [
-  |bars| "2023" { data: 12 19 15 25 }
-  |bars| "2024" { data: 18 24 22 31 }
+|chart| "Revenue ($M)" { categories: "Q1", "Q2", "Q3", "Q4" } [
+  |bars| "2023" { data: 12, 19, 15, 25 }
+  |bars| "2024" { data: 18, 24, 22, 31 }
 ]
 ```
 
@@ -148,7 +148,12 @@ Built-in **[Phosphor](https://phosphoricons.com/)** icons, drawn as inline SVG p
 <p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/icons.png" alt="Lini's built-in Phosphor icons and signs" width="520"></p>
 
 ```
-|icon| .teal { symbol: user }                            // two-tone, via a colour class
+{                                                        // colour classes…
+  .teal   { fill: --teal-wash; stroke: --teal-ink; }
+  .amber  { fill: --amber-wash; stroke: --amber-ink; }
+  .purple { fill: --purple-wash; stroke: --purple-ink; }
+}
+|icon| .teal { symbol: user }                            // …paint an icon two-tone
 |icon| { symbol: cloud; fill: none; stroke: --sky-deep } // single-tone line
 |icon| "bell" .amber [ "3" ]                             // symbol via the label, "3" a badge
 |sign#svc| "gear" .purple [ "Service" ]                  // larger, labelled, and linkable
@@ -246,7 +251,7 @@ lini theme dark > my-theme.css                        # print a theme as CSS to 
 
 `lini theme NAME` prints any as a ready-to-edit `--lini-*` file; `--static` flattens it to literals — and outlines text to paths — for non-browser renderers (resvg, librsvg) and email. Every `lini-*` class is a stable styling hook.
 
-The default font is a monospace stack (`ui-monospace, "SF Mono", …, monospace`): it reads crisp and keeps text sizing accurate. Swap it with `--lini-font-family` in the diagram, a theme, or the page's CSS.
+Text is set in **Google Sans Code** (SIL OFL), the bundled mono family lini also measures with — real per-glyph metrics, so boxes hug their text exactly. `font-family: "Google Sans"` swaps a scene onto the bundled proportional face, one declaration. The emitted SVG carries names only by default; `--embed-font` inlines the used weights for browsers, `--static` outlines text to paths so any renderer (resvg, email) is pixel-faithful with no font installed. Restyle live with `--lini-font-family` in a theme or the page's CSS — a rename keeps the compiled layout.
 
 ---
 
