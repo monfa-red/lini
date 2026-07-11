@@ -204,20 +204,25 @@ pub(in crate::layout) fn fill_of_title(
 /// `stroke: none` is *not* the boundary's); an explicit `stroke:` / `stroke-width:`
 /// on the view restyles it (`{ of: c; stroke: red }` → a red ring).
 fn boundary_circle(inst: &ResolvedInst, r: f64) -> PlacedNode {
-    let dark = ResolvedValue::LiveVar {
-        name: "stroke-dark".into(),
+    // The rim wears `.lini-magnifier` — it is the marker's other half, and one
+    // rule keeps the pair's paint in lockstep [SPEC 15.8]: the thin light
+    // stroke of a view boundary (ISO draws it thin — it is chrome, not part
+    // geometry), never the part stroke. An authored `stroke`/`stroke-width`
+    // on the detail still wins as an inline diff.
+    let light = ResolvedValue::LiveVar {
+        name: "stroke-light".into(),
         raw: false,
     };
     let stroke = match inst.attrs.get("stroke") {
-        Some(ResolvedValue::Ident(s)) if s == "none" => dark,
+        Some(ResolvedValue::Ident(s)) if s == "none" => light,
         Some(v) => v.clone(),
-        None => dark,
+        None => light,
     };
     let width = inst
         .attrs
         .number("stroke-width")
         .filter(|w| *w > 0.0)
-        .unwrap_or(2.0);
+        .unwrap_or(1.0);
     let mut c = prim::oval(
         0.0,
         0.0,
@@ -228,6 +233,7 @@ fn boundary_circle(inst: &ResolvedInst, r: f64) -> PlacedNode {
     c.attrs.insert("stroke", stroke);
     c.attrs.insert("stroke-width", ResolvedValue::Number(width));
     c.attrs.insert("fill", ResolvedValue::Ident("none".into()));
+    c.type_chain.push("magnifier".to_string());
     c
 }
 
