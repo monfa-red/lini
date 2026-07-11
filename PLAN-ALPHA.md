@@ -864,7 +864,65 @@ statics + OFL per family; excluded from the cargo package); OFL texts in
 Acceptance: existing mono sample *widths* byte-identical (the vertical
 re-bless is the only geometry delta, visually verified); payload under budget;
 `cargo test` green with **and without** `--no-default-features`.
-**Log:**
+**Log:** 2026-07-11 — **done**, 3 commits, all acceptance met (mono widths
+byte-identical — zero snapshot diffs on the measurement swap except the one
+enumerated fix; payload **453 KB** of the 600 KB budget — mono 4 × ~28 KB,
+prop 4 × ~84 KB, 432-char charset; suites green with fonts off via
+`--no-default-features --features icons` — the icons-off conformance failure
+predates M5, hero.lini needs icons). Items:
+- **`xtask extract-fonts`**: metrics tables (`src/font/metrics.rs`, always
+  compiled in) + subset TTFs from the committed raws. `subsetter` pinned at
+  **0.1** deliberately — 0.2 strips `cmap` (PDF-only scope), which would break
+  browser `@font-face`; and 0.1's verbatim-cmap flaw (dropped-coverage chars
+  → invisible zero-advance glyphs instead of system fallback) is fixed by
+  **rebuilding a minimal format-12 cmap** over exactly the kept charset, with
+  table + whole-font checksums recomputed and verified. OFL copyright/license
+  records verified retained. Mono 0.6 em invariant asserted in xtask **and**
+  unit tests (upem 2000, advance 1200, all four weights).
+- **Measurement**: `approx_width`/`wrap` take a `Font` (kind × weight);
+  uniform-advance lines (all mono text) use the historic closed form —
+  bit-exact, the fold only for proportional. Resolve stamps the effective
+  font on `ResolvedInst` (only resolve sees the inheritance chain); engines
+  thread kind through their carriers (`Chart`/`Pie.font_kind`, drawing
+  `Paint.font`) with per-run weights (legend + sequence tab measure bold,
+  mirroring their rules). One enumerated fix: styles.lini's `font-family:
+  serif` box now measures proportional (the ROADMAP headline fix),
+  re-blessed + eyeballed. `⌀` (U+2300, in neither face) measures and
+  outlines as its covered twin `Ø`.
+- **Cap-height centring `[output]`** (the one full re-bless): a baked
+  `dy="0.358em"` (both families cap at exactly 0.716 em) replaces
+  `dominant-baseline: central` — renderer-independent optical centring; the
+  three class rules drop the property. All 33 snapshots re-blessed; visual
+  pass over **every** sample light + dark (58 PNGs — keystones by me, the
+  rest by an Opus reviewer): zero anomalies.
+- **Weights**: `normal|medium|semibold|bold|400|500|600|700` — ledger row
+  ident-or-number; `medium`/`semibold` emit valid CSS (500/600) at the one
+  `css_value` chokepoint. Chrome decision **by eye: bold stays** (no
+  semibold retune).
+- **Emission**: default stack leads with "Google Sans Code"; `--static`
+  renames `--bake-vars` (no alias, CLI-test-pinned) **and outlines text** —
+  the one text emitter swaps `<text>` for `<use>`-deduped glyph path defs,
+  resolving each leaf's font through the CSS cascade (inline → class rules →
+  root), with `text-transform` baked into the glyph choice, decoration bands
+  from the face's own metrics, italic as per-glyph synthetic oblique;
+  `--embed-font` inlines used faces as base64 `@font-face` under Lini-scoped
+  names, every bundled-family stack led with the scoped twin. Both flags
+  error helpfully without the default-on `font` feature (subset *bytes* only
+  — metrics always compile in).
+- **Samples**: new `samples/cards.lini` (Google Sans card diagram — the
+  plan named this a new file; semibold/medium hierarchy, wrapped copy),
+  verified light + dark; styles + drawing_sheet re-verified through
+  `--static`. PNG reviews render via `--static` from this stage on.
+- **resvg re-verified** on 0.47.0: "The @font-face rule is not supported.
+  Skipped." — `--embed-font` stays browser-only; outlining is deterministic
+  (std float formatting), so static PNGs are machine-stable.
+
+**Deviations:** conformance snapshots now carry the outlined text (the suite
+compiles with `static_mode`, whose semantics grew per SPEC) — 26 re-blessed,
+and the suite skips under fonts-off like the icons skip; six rendering tests
+pinning `<text>`/tspan mechanics flipped to live mode (that path is now the
+live one). The plan's "always compiled in" metrics hold: layout never varies
+by build flags, proven by the fonts-off suite run.
 
 ### Stage M6 — hardening fixes + row bands/marks `[fixes]`
 
