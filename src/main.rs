@@ -1,4 +1,4 @@
-use clap::{Parser, error::ErrorKind};
+use clap::{Args, Parser, Subcommand, error::ErrorKind};
 use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
@@ -11,8 +11,56 @@ use std::time::{Duration, Instant};
     about = "Compile Lini diagrams to SVG",
     long_about = None,
     disable_help_flag = false,
+    args_conflicts_with_subcommands = true,
 )]
 struct Cli {
+    #[command(subcommand)]
+    command: Option<Command>,
+
+    /// The default (no-subcommand) invocation: compile a file to SVG.
+    #[command(flatten)]
+    compile: Option<CompileArgs>,
+}
+
+#[derive(Subcommand)]
+enum Command {
+    /// Reformat a file to canonical style in place
+    Fmt {
+        /// Input .lini file (use '-' for stdin → stdout)
+        input: String,
+        /// Exit 1 if reformatting would change the file. Write nothing.
+        #[arg(long = "check")]
+        check: bool,
+        /// Print formatted output to stdout instead of rewriting.
+        #[arg(long = "stdout")]
+        stdout: bool,
+    },
+    /// Serve a live preview (a file) or the playground (a directory)
+    Serve {
+        /// A .lini file (live-reload preview) or a directory (playground);
+        /// omitted → the current directory.
+        path: Option<String>,
+        /// Port to bind (default 7700).
+        #[arg(long = "port", default_value_t = 7700)]
+        port: u16,
+        /// Bake CSS variables and outline text (for non-browser renderers).
+        #[arg(long = "static")]
+        static_mode: bool,
+    },
+    /// Print a file lowered to primitives + .lini-* classes
+    Desugar {
+        /// Input .lini file (use '-' for stdin)
+        input: String,
+    },
+    /// List the built-in themes, or print one as a --lini-* CSS file
+    Theme {
+        /// A theme name to print; omitted → list them all.
+        name: Option<String>,
+    },
+}
+
+#[derive(Args)]
+struct CompileArgs {
     /// Input .lini file (use '-' for stdin)
     input: String,
 
@@ -23,10 +71,6 @@ struct Cli {
     /// Output wrapper: `svg` (default) or `html`.
     #[arg(long = "format", default_value = "svg")]
     format: String,
-
-    /// Force-embed the default `<style>` block — already the default; accepted for compatibility.
-    #[arg(long = "standalone")]
-    standalone: bool,
 
     /// Inline `var()`s as literals **and** outline text to paths —
     /// self-contained for any renderer (resvg, librsvg, raster converters).
@@ -61,21 +105,7 @@ struct Cli {
 }
 
 fn main() -> ExitCode {
-    let args: Vec<String> = std::env::args().collect();
-    if args.len() >= 2 && args[1] == "fmt" {
-        return run_fmt(&args[2..]);
-    }
-    if args.len() >= 2 && args[1] == "serve" {
-        return run_serve(&args[2..]);
-    }
-    if args.len() >= 2 && args[1] == "desugar" {
-        return run_desugar(&args[2..]);
-    }
-    if args.len() >= 2 && args[1] == "theme" {
-        return run_theme(&args[2..]);
-    }
-
-    let cli = match Cli::try_parse() {
+    let parsed = match Cli::try_parse() {
         Ok(c) => c,
         Err(e) => {
             // clap prints help/version to stdout and errors to stderr itself.
@@ -85,6 +115,27 @@ fn main() -> ExitCode {
                 _ => ExitCode::from(3),
             };
         }
+    };
+    let cli = match parsed.command {
+        Some(Command::Fmt {
+            input,
+            check,
+            stdout,
+        }) => return run_fmt(&input, check, stdout),
+        Some(Command::Serve {
+            path,
+            port,
+            static_mode,
+        }) => return run_serve(path, port, static_mode),
+        Some(Command::Desugar { input }) => return run_desugar(&input),
+        Some(Command::Theme { name }) => return run_theme(name.as_deref()),
+        None => match parsed.compile {
+            Some(c) => c,
+            None => {
+                eprintln!("error: an input file (or a subcommand) is required — see 'lini --help'");
+                return ExitCode::from(3);
+            }
+        },
     };
 
     // The two font flags need the subset bytes — the default-on `font`
@@ -104,10 +155,6 @@ fn main() -> ExitCode {
             return ExitCode::from(3);
         }
     };
-    // `--standalone` is explicitly the default and is therefore a no-op flag.
-    // Accept it for spec compliance.
-    let _ = cli.standalone;
-
     // Resolve `--theme` (a built-in name, a light/dark pair, or a file) to the
     // `--lini-*` CSS the resolver layers over the defaults.
     let theme_css = match &cli.theme {
@@ -236,61 +283,7 @@ fn watch_loop(input: &Path, output: &Path, opts: &lini::Options, check_only: boo
     }
 }
 
-fn run_serve(args: &[String]) -> ExitCode {
-    let mut port: u16 = 7700;
-    let mut static_mode = false;
-    let mut input: Option<String> = None;
-    let mut i = 0;
-    while i < args.len() {
-        let a = &args[i];
-        match a.as_str() {
-            "--port" => {
-                i += 1;
-                let p = match args.get(i) {
-                    Some(s) => s,
-                    None => {
-                        eprintln!("error: --port needs a value");
-                        return ExitCode::from(3);
-                    }
-                };
-                port = match p.parse() {
-                    Ok(n) => n,
-                    Err(_) => {
-                        eprintln!("error: --port: invalid number '{}'", p);
-                        return ExitCode::from(3);
-                    }
-                };
-            }
-            "--static" => static_mode = true,
-            "-h" | "--help" => {
-                println!("lini serve [PATH] [--port N] [--static]");
-                println!();
-                println!("  Serves a live preview at http://127.0.0.1:<port>/.");
-                println!();
-                println!("  PATH a .lini file   Preview that one file; reloads on every save.");
-                println!("  PATH a directory    Open the playground over its .lini files.");
-                println!("  PATH omitted        Playground over the current directory.");
-                println!();
-                println!("  --port N    Port to bind (default 7700).");
-                println!(
-                    "  --static    Bake CSS variables and outline text (for non-browser renderers)."
-                );
-                return ExitCode::SUCCESS;
-            }
-            flag if flag.starts_with("--") => {
-                eprintln!("error: unknown flag for `lini serve`: {}", flag);
-                return ExitCode::from(3);
-            }
-            other => {
-                if input.is_some() {
-                    eprintln!("error: `lini serve` takes one input file");
-                    return ExitCode::from(3);
-                }
-                input = Some(other.to_string());
-            }
-        }
-        i += 1;
-    }
+fn run_serve(input: Option<String>, port: u16, static_mode: bool) -> ExitCode {
     let target = match input {
         Some(p) => {
             let path = PathBuf::from(&p);
@@ -320,61 +313,10 @@ fn run_serve(args: &[String]) -> ExitCode {
         }
     }
 }
-
-fn run_fmt(args: &[String]) -> ExitCode {
-    let mut check = false;
-    let mut to_stdout = false;
-    let mut input: Option<String> = None;
-    for a in args {
-        match a.as_str() {
-            "--check" => check = true,
-            "--stdout" => to_stdout = true,
-            "-h" | "--help" => {
-                println!("lini fmt [--check] [--stdout] <input.lini>");
-                println!();
-                println!(
-                    "  --check   Exit 1 if reformatting would change the file. Write nothing."
-                );
-                println!("  --stdout  Print formatted output to stdout instead of rewriting.");
-                println!("  -         Read stdin → stdout.");
-                return ExitCode::SUCCESS;
-            }
-            flag if flag.starts_with("--") => {
-                eprintln!("error: unknown flag for `lini fmt`: {}", flag);
-                return ExitCode::from(3);
-            }
-            other => {
-                if input.is_some() {
-                    eprintln!("error: `lini fmt` takes one input file");
-                    return ExitCode::from(3);
-                }
-                input = Some(other.to_string());
-            }
-        }
-    }
-    let input_arg = match input {
-        Some(p) => p,
-        None => {
-            eprintln!("error: `lini fmt` requires an input file (or '-' for stdin)");
-            return ExitCode::from(3);
-        }
-    };
-
-    let (filename, source) = if input_arg == "-" {
-        let mut buf = String::new();
-        if let Err(e) = std::io::stdin().read_to_string(&mut buf) {
-            eprintln!("error: failed to read stdin: {}", e);
-            return ExitCode::from(2);
-        }
-        ("<stdin>".to_string(), buf)
-    } else {
-        match std::fs::read_to_string(&input_arg) {
-            Ok(s) => (input_arg.clone(), s),
-            Err(e) => {
-                eprintln!("error: {}: {}", input_arg, e);
-                return ExitCode::from(2);
-            }
-        }
+fn run_fmt(input_arg: &str, check: bool, to_stdout: bool) -> ExitCode {
+    let (filename, source) = match read_input(input_arg) {
+        Ok(fs) => fs,
+        Err(code) => return code,
     };
 
     let formatted = match lini::format_source(&source) {
@@ -396,7 +338,7 @@ fn run_fmt(args: &[String]) -> ExitCode {
     if input_arg == "-" || to_stdout {
         print!("{}", formatted);
     } else if formatted != source
-        && let Err(e) = std::fs::write(&input_arg, formatted.as_bytes())
+        && let Err(e) = std::fs::write(input_arg, formatted.as_bytes())
     {
         eprintln!("error: write {}: {}", input_arg, e);
         return ExitCode::from(2);
@@ -404,62 +346,30 @@ fn run_fmt(args: &[String]) -> ExitCode {
     ExitCode::SUCCESS
 }
 
-fn run_desugar(args: &[String]) -> ExitCode {
-    let mut input: Option<String> = None;
-    for a in args {
-        match a.as_str() {
-            "-h" | "--help" => {
-                println!("lini desugar <input.lini>");
-                println!();
-                println!("  Lower the file to primitives + .lini-* classes and print to stdout:");
-                println!("  templates/defines become a base node wearing a .lini-* class chain,");
-                println!("  each type's defaults become a generated .lini-<type> class, scene and");
-                println!(
-                    "  link defaults fill the global block, and labels/along become explicit."
-                );
-                println!(
-                    "  The engine's true input; re-renders identically. Use '-' to read stdin."
-                );
-                return ExitCode::SUCCESS;
-            }
-            flag if flag.starts_with('-') && flag != "-" => {
-                eprintln!("error: unknown flag for `lini desugar`: {}", flag);
-                return ExitCode::from(3);
-            }
-            other => {
-                if input.is_some() {
-                    eprintln!("error: `lini desugar` takes one input file");
-                    return ExitCode::from(3);
-                }
-                input = Some(other.to_string());
-            }
-        }
-    }
-    let input_arg = match input {
-        Some(p) => p,
-        None => {
-            eprintln!("error: `lini desugar` requires an input file (or '-' for stdin)");
-            return ExitCode::from(3);
-        }
-    };
-
-    let (filename, source) = if input_arg == "-" {
+/// Read a subcommand's input file — `-` is stdin (named `<stdin>` in errors).
+fn read_input(input_arg: &str) -> Result<(String, String), ExitCode> {
+    if input_arg == "-" {
         let mut buf = String::new();
         if let Err(e) = std::io::stdin().read_to_string(&mut buf) {
             eprintln!("error: failed to read stdin: {}", e);
-            return ExitCode::from(2);
+            return Err(ExitCode::from(2));
         }
-        ("<stdin>".to_string(), buf)
+        Ok(("<stdin>".to_string(), buf))
     } else {
-        match std::fs::read_to_string(&input_arg) {
-            Ok(s) => (input_arg.clone(), s),
+        match std::fs::read_to_string(input_arg) {
+            Ok(s) => Ok((input_arg.to_string(), s)),
             Err(e) => {
                 eprintln!("error: {}: {}", input_arg, e);
-                return ExitCode::from(2);
+                Err(ExitCode::from(2))
             }
         }
+    }
+}
+fn run_desugar(input_arg: &str) -> ExitCode {
+    let (filename, source) = match read_input(input_arg) {
+        Ok(fs) => fs,
+        Err(code) => return code,
     };
-
     match lini::desugar_source(&source) {
         Ok(s) => {
             print!("{}", s);
@@ -471,7 +381,6 @@ fn run_desugar(args: &[String]) -> ExitCode {
         }
     }
 }
-
 fn recompile(input: &Path, output: &Path, opts: &lini::Options, check_only: bool) {
     let start = Instant::now();
     let source = match std::fs::read_to_string(input) {
@@ -538,30 +447,7 @@ fn theme_names() -> String {
 
 /// `lini theme [NAME]` — list the built-in themes, or print one as `--lini-*`
 /// CSS for a user to copy [SPEC 17].
-fn run_theme(args: &[String]) -> ExitCode {
-    let mut name: Option<&str> = None;
-    for a in args {
-        match a.as_str() {
-            "-h" | "--help" => {
-                println!("lini theme [NAME]");
-                println!();
-                println!("  No NAME   List the built-in themes.");
-                println!("  NAME      Print that theme as a --lini-* CSS file (copy as a start).");
-                return ExitCode::SUCCESS;
-            }
-            flag if flag.starts_with('-') => {
-                eprintln!("error: unknown flag for `lini theme`: {}", flag);
-                return ExitCode::from(3);
-            }
-            other => {
-                if name.is_some() {
-                    eprintln!("error: `lini theme` takes one theme name");
-                    return ExitCode::from(3);
-                }
-                name = Some(other);
-            }
-        }
-    }
+fn run_theme(name: Option<&str>) -> ExitCode {
     match name {
         None => {
             for (n, desc) in lini::list_themes() {
