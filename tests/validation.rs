@@ -139,6 +139,19 @@ fn opacity_out_of_range_errors() {
 }
 
 #[test]
+fn wavy_on_a_node_errors() {
+    // `wavy` is link-only by design [SPEC 16]; a link keeps it.
+    insta::assert_snapshot!(
+        diags("|box#a| { stroke-style: wavy; }\n"),
+        @"test.lini:1:11: error: 'wavy' waves a link's wire — a shape's outline takes solid, dashed, dotted, center, or phantom"
+    );
+    assert_eq!(
+        diags("|box#a|\n|box#b|\na -> b { stroke-style: wavy; }\n"),
+        ""
+    );
+}
+
+#[test]
 fn translate_arity_errors() {
     insta::assert_snapshot!(
         diags("|box#a| { translate: 5; }\n"),

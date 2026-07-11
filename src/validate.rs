@@ -327,6 +327,18 @@ impl<'a> Ctx<'a> {
                     ));
                 }
             }
+            // `wavy` is link-only by design [SPEC 16] — a wire waves, an
+            // outline never does. (The async sequence message's wavy |line|
+            // is engine-lowered at layout, never authored, so it never
+            // passes here.)
+            "stroke-style" => {
+                if matches!(single_value(d), Some(Value::Ident(s)) if s == "wavy") {
+                    out.push(Diagnostic::error(
+                        d.span,
+                        "'wavy' waves a link's wire — a shape's outline takes solid, dashed, dotted, center, or phantom",
+                    ));
+                }
+            }
             _ => {}
         }
     }

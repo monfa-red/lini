@@ -3191,7 +3191,7 @@ Format: `filename:line:col: error: <message>` (LSP-compatible), compile-time, wi
 | Misused property, wearer known | `'points' has no meaning on '\|box\|' — it reads on '\|line\|' / '\|poly\|'` · `'cell' places a grid child — this box sits in a 'layout: flow'` |
 | Property dead for every wearer | `'.hot { cell: … }' is inert on every wearer` (warning) |
 | Class defined, never worn | `class '.hot' is never worn` (warning) |
-| Malformed value | `'opacity' is a fraction 0..1` · `'translate' takes 'x y'` · `'padding' takes one value, not a comma list` |
+| Malformed value | `'opacity' is a fraction 0..1` · `'translate' takes 'x y'` · `'padding' takes one value, not a comma list` · `'wavy' waves a link's wire — a shape's outline takes solid, dashed, dotted, center, or phantom` |
 | Legacy space-separated list | `'data' takes comma-separated values — 'data: 9, 15, 24'` ([SPEC 2](#2-lexical-syntax)) |
 
 **Identity, cascade & statements**
