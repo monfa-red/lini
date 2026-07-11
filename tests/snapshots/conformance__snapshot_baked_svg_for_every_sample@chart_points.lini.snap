@@ -61,16 +61,16 @@ input_file: samples/chart_points.lini
           <title>30, 12</title>
           <ellipse cx="0" cy="0" rx="3.5" ry="3.5"/>
         </g>
-        <text class="lini-text" x="-166.1" y="73.2" style="fill: #888; font-weight: normal; font-size: 11px">0</text>
-        <text class="lini-text" x="-169.4" y="28.4667" style="fill: #888; font-weight: normal; font-size: 11px">20</text>
-        <text class="lini-text" x="-169.4" y="-16.2667" style="fill: #888; font-weight: normal; font-size: 11px">40</text>
-        <text class="lini-text" x="-169.4" y="-61" style="fill: #888; font-weight: normal; font-size: 11px">60</text>
-        <text class="lini-text" x="-133.7" y="-67" style="fill: #888; font-weight: normal; font-size: 11px">share %</text>
-        <text class="lini-text" x="-135.1467" y="84.9" style="fill: #888; font-weight: normal; font-size: 11px">10</text>
-        <text class="lini-text" x="-26.88" y="84.9" style="fill: #888; font-weight: normal; font-size: 11px">20</text>
-        <text class="lini-text" x="81.3867" y="84.9" style="fill: #888; font-weight: normal; font-size: 11px">30</text>
-        <text class="lini-text" x="5.6" y="99.6" style="fill: #888; font-weight: normal; font-size: 11px">growth %</text>
-        <text class="lini-text" x="0" y="-92.9" style="font-weight: bold; font-size: 13px">Markets — scatter</text>
+        <text class="lini-text" x="-166.1" y="73.2" style="fill: #888; font-size: 11px; font-weight: normal">0</text>
+        <text class="lini-text" x="-169.4" y="28.4667" style="fill: #888; font-size: 11px; font-weight: normal">20</text>
+        <text class="lini-text" x="-169.4" y="-16.2667" style="fill: #888; font-size: 11px; font-weight: normal">40</text>
+        <text class="lini-text" x="-169.4" y="-61" style="fill: #888; font-size: 11px; font-weight: normal">60</text>
+        <text class="lini-text" x="-133.7" y="-67" style="fill: #888; font-size: 11px; font-weight: normal">share %</text>
+        <text class="lini-text" x="-135.1467" y="84.9" style="fill: #888; font-size: 11px; font-weight: normal">10</text>
+        <text class="lini-text" x="-26.88" y="84.9" style="fill: #888; font-size: 11px; font-weight: normal">20</text>
+        <text class="lini-text" x="81.3867" y="84.9" style="fill: #888; font-size: 11px; font-weight: normal">30</text>
+        <text class="lini-text" x="5.6" y="99.6" style="fill: #888; font-size: 11px; font-weight: normal">growth %</text>
+        <text class="lini-text" x="0" y="-92.9" style="font-size: 13px; font-weight: bold">Markets — scatter</text>
       </g>
       <g class="lini-node lini-chart lini-block" transform="translate(192,0)">
         <rect x="-179" y="-109" width="358" height="218" rx="0" ry="0"/>
@@ -114,21 +114,21 @@ input_file: samples/chart_points.lini
           <title>LatAm: 6</title>
           <ellipse cx="0" cy="0" rx="10.2906" ry="10.2906"/>
         </g>
-        <text class="lini-text" x="-166.1" y="73.2" style="fill: #888; font-weight: normal; font-size: 11px">0</text>
-        <text class="lini-text" x="-169.4" y="28.4667" style="fill: #888; font-weight: normal; font-size: 11px">20</text>
-        <text class="lini-text" x="-169.4" y="-16.2667" style="fill: #888; font-weight: normal; font-size: 11px">40</text>
-        <text class="lini-text" x="-169.4" y="-61" style="fill: #888; font-weight: normal; font-size: 11px">60</text>
-        <text class="lini-text" x="-133.7" y="-67" style="fill: #888; font-weight: normal; font-size: 11px">share %</text>
-        <text class="lini-text" x="-150.5538" y="84.9" style="fill: #888; font-weight: normal; font-size: 11px">10</text>
-        <text class="lini-text" x="-46.4513" y="84.9" style="fill: #888; font-weight: normal; font-size: 11px">20</text>
-        <text class="lini-text" x="57.6513" y="84.9" style="fill: #888; font-weight: normal; font-size: 11px">30</text>
-        <text class="lini-text" x="161.7538" y="84.9" style="fill: #888; font-weight: normal; font-size: 11px">40</text>
-        <text class="lini-text" x="5.6" y="99.6" style="fill: #888; font-weight: normal; font-size: 11px">growth %</text>
-        <text class="lini-text" x="0" y="-92.9" style="font-weight: bold; font-size: 13px">Markets — bubbles</text>
-        <text class="lini-text lini-chart-label" x="-129.7333" y="-16.2667" style="fill: white; font-weight: normal; font-size: 10px">EU</text>
-        <text class="lini-text lini-chart-label" x="5.6" y="-49.8167" style="fill: white; font-weight: normal; font-size: 10px">US</text>
-        <text class="lini-text lini-chart-label" x="140.9333" y="6.1" style="fill: white; font-weight: normal; font-size: 10px">APAC</text>
-        <text class="lini-text lini-chart-label" x="57.6513" y="17.3594" style="fill: #888; font-weight: normal; font-size: 10px">LatAm</text>
+        <text class="lini-text" x="-166.1" y="73.2" style="fill: #888; font-size: 11px; font-weight: normal">0</text>
+        <text class="lini-text" x="-169.4" y="28.4667" style="fill: #888; font-size: 11px; font-weight: normal">20</text>
+        <text class="lini-text" x="-169.4" y="-16.2667" style="fill: #888; font-size: 11px; font-weight: normal">40</text>
+        <text class="lini-text" x="-169.4" y="-61" style="fill: #888; font-size: 11px; font-weight: normal">60</text>
+        <text class="lini-text" x="-133.7" y="-67" style="fill: #888; font-size: 11px; font-weight: normal">share %</text>
+        <text class="lini-text" x="-150.5538" y="84.9" style="fill: #888; font-size: 11px; font-weight: normal">10</text>
+        <text class="lini-text" x="-46.4513" y="84.9" style="fill: #888; font-size: 11px; font-weight: normal">20</text>
+        <text class="lini-text" x="57.6513" y="84.9" style="fill: #888; font-size: 11px; font-weight: normal">30</text>
+        <text class="lini-text" x="161.7538" y="84.9" style="fill: #888; font-size: 11px; font-weight: normal">40</text>
+        <text class="lini-text" x="5.6" y="99.6" style="fill: #888; font-size: 11px; font-weight: normal">growth %</text>
+        <text class="lini-text" x="0" y="-92.9" style="font-size: 13px; font-weight: bold">Markets — bubbles</text>
+        <text class="lini-text lini-chart-label" x="-129.7333" y="-16.2667" style="fill: white; font-size: 10px; font-weight: normal">EU</text>
+        <text class="lini-text lini-chart-label" x="5.6" y="-49.8167" style="fill: white; font-size: 10px; font-weight: normal">US</text>
+        <text class="lini-text lini-chart-label" x="140.9333" y="6.1" style="fill: white; font-size: 10px; font-weight: normal">APAC</text>
+        <text class="lini-text lini-chart-label" x="57.6513" y="17.3594" style="fill: #888; font-size: 10px; font-weight: normal">LatAm</text>
       </g>
     </g>
   </g>

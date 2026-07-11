@@ -1,6 +1,5 @@
 ---
 source: tests/conformance.rs
-assertion_line: 40
 expression: svg
 input_file: samples/drawing_leaders.lini
 ---
@@ -77,12 +76,12 @@ input_file: samples/drawing_leaders.lini
     <g class="lini-node lini-marker lini-marker-datum lini-poly" transform="translate(0,0)">
       <polygon points="-5.5,90 5.5,90 0,101"/>
     </g>
-    <text class="lini-text lini-dim-text" x="13.6" y="117.5" style="font-size: 12px">A</text>
+    <text class="lini-text lini-dim-text" x="13.6" y="117.5">A</text>
     <g class="lini-node lini-dim-line lini-line" transform="translate(0,0)">
       <polyline points="-2,0 -135,0 -143,0"/>
       <circle class="lini-marker lini-marker-dot" cx="-2.25" cy="0" r="2.25" style="fill: black"/>
     </g>
-    <text class="lini-text lini-dim-text" x="-163" y="0" style="font-size: 12px">GRIND</text>
+    <text class="lini-text lini-dim-text" x="-163" y="0">GRIND</text>
     <g class="lini-node lini-dim-line lini-line" transform="translate(0,0)">
       <line x1="155.1057" y1="-81.9133" x2="120.7878" y2="-1.8383"/>
       <circle class="lini-marker lini-marker-dot" cx="120.8863" cy="-2.0681" r="2.25" style="fill: black"/>

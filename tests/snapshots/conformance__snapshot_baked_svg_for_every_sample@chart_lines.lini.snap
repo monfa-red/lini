@@ -96,37 +96,37 @@ input_file: samples/chart_lines.lini
           <title>Speed: p999: 40</title>
           <ellipse cx="0" cy="0" rx="5.5" ry="5.5"/>
         </g>
-        <text class="lini-text" x="-159.5" y="70.9" style="fill: #888; font-weight: normal; font-size: 11px">0</text>
-        <text class="lini-text" x="-166.1" y="41.44" style="fill: #888; font-weight: normal; font-size: 11px">100</text>
-        <text class="lini-text" x="-166.1" y="11.98" style="fill: #888; font-weight: normal; font-size: 11px">200</text>
-        <text class="lini-text" x="-166.1" y="-17.48" style="fill: #888; font-weight: normal; font-size: 11px">300</text>
-        <text class="lini-text" x="-166.1" y="-46.94" style="fill: #888; font-weight: normal; font-size: 11px">400</text>
-        <text class="lini-text" x="-166.1" y="-76.4" style="fill: #888; font-weight: normal; font-size: 11px">500</text>
-        <text class="lini-text" x="-110.425" y="82.6" style="fill: #888; font-weight: normal; font-size: 11px">p50</text>
-        <text class="lini-text" x="-30.875" y="82.6" style="fill: #888; font-weight: normal; font-size: 11px">p90</text>
-        <text class="lini-text" x="48.675" y="82.6" style="fill: #888; font-weight: normal; font-size: 11px">p99</text>
-        <text class="lini-text" x="128.225" y="82.6" style="fill: #888; font-weight: normal; font-size: 11px">p999</text>
-        <text class="lini-text" x="0" y="-92.9" style="font-weight: bold; font-size: 13px">Latency (ms)</text>
+        <text class="lini-text" x="-159.5" y="70.9" style="fill: #888; font-size: 11px; font-weight: normal">0</text>
+        <text class="lini-text" x="-166.1" y="41.44" style="fill: #888; font-size: 11px; font-weight: normal">100</text>
+        <text class="lini-text" x="-166.1" y="11.98" style="fill: #888; font-size: 11px; font-weight: normal">200</text>
+        <text class="lini-text" x="-166.1" y="-17.48" style="fill: #888; font-size: 11px; font-weight: normal">300</text>
+        <text class="lini-text" x="-166.1" y="-46.94" style="fill: #888; font-size: 11px; font-weight: normal">400</text>
+        <text class="lini-text" x="-166.1" y="-76.4" style="fill: #888; font-size: 11px; font-weight: normal">500</text>
+        <text class="lini-text" x="-110.425" y="82.6" style="fill: #888; font-size: 11px; font-weight: normal">p50</text>
+        <text class="lini-text" x="-30.875" y="82.6" style="fill: #888; font-size: 11px; font-weight: normal">p90</text>
+        <text class="lini-text" x="48.675" y="82.6" style="fill: #888; font-size: 11px; font-weight: normal">p99</text>
+        <text class="lini-text" x="128.225" y="82.6" style="fill: #888; font-size: 11px; font-weight: normal">p999</text>
+        <text class="lini-text" x="0" y="-92.9" style="font-size: 13px; font-weight: bold">Latency (ms)</text>
         <g class="lini-node lini-block" style="fill: #b8476e; stroke-width: 0" transform="translate(-64.2,100.1)">
           <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
         </g>
-        <text class="lini-text" x="-47.1" y="100.1" style="font-weight: bold; font-size: 11px">v1</text>
+        <text class="lini-text" x="-47.1" y="100.1" style="font-size: 11px; font-weight: bold">v1</text>
         <g class="lini-node lini-block" style="fill: #008e85; stroke-width: 0" transform="translate(-19,100.1)">
           <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
         </g>
-        <text class="lini-text" x="-1.9" y="100.1" style="font-weight: bold; font-size: 11px">v2</text>
+        <text class="lini-text" x="-1.9" y="100.1" style="font-size: 11px; font-weight: bold">v2</text>
         <g class="lini-node lini-block" style="fill: #9084ff; stroke-width: 0" transform="translate(26.2,100.1)">
           <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
         </g>
-        <text class="lini-text" x="53.2" y="100.1" style="font-weight: bold; font-size: 11px">Speed</text>
-        <text class="lini-text lini-chart-label" x="-110.425" y="48.981" style="fill: #888; font-weight: normal; font-size: 10px">Low</text>
-        <text class="lini-text lini-chart-label" x="-61.375" y="32.778" style="fill: #888; font-weight: normal; font-size: 10px">medium</text>
-        <text class="lini-text lini-chart-label" x="24.175" y="9.21" style="fill: #888; font-weight: normal; font-size: 10px">High</text>
-        <text class="lini-text lini-chart-label" x="149.725" y="-53.008" style="fill: #888; font-weight: normal; font-size: 10px">Max</text>
-        <text class="lini-text lini-chart-label" x="48.675" y="58.94" style="fill: #888; font-weight: normal; font-size: 10px">High</text>
-        <text class="lini-text lini-chart-label" x="128.225" y="-34.98" style="fill: #888; font-weight: normal; font-size: 10px">Max</text>
-        <text class="lini-text lini-chart-label" x="-110.425" y="-32.034" style="fill: #888; font-weight: normal; font-size: 10px">Cool</text>
-        <text class="lini-text lini-chart-label" x="-30.875" y="6.264" style="fill: #888; font-weight: normal; font-size: 10px">Warm</text>
+        <text class="lini-text" x="53.2" y="100.1" style="font-size: 11px; font-weight: bold">Speed</text>
+        <text class="lini-text lini-chart-label" x="-110.425" y="48.981" style="fill: #888; font-size: 10px; font-weight: normal">Low</text>
+        <text class="lini-text lini-chart-label" x="-61.375" y="32.778" style="fill: #888; font-size: 10px; font-weight: normal">medium</text>
+        <text class="lini-text lini-chart-label" x="24.175" y="9.21" style="fill: #888; font-size: 10px; font-weight: normal">High</text>
+        <text class="lini-text lini-chart-label" x="149.725" y="-53.008" style="fill: #888; font-size: 10px; font-weight: normal">Max</text>
+        <text class="lini-text lini-chart-label" x="48.675" y="58.94" style="fill: #888; font-size: 10px; font-weight: normal">High</text>
+        <text class="lini-text lini-chart-label" x="128.225" y="-34.98" style="fill: #888; font-size: 10px; font-weight: normal">Max</text>
+        <text class="lini-text lini-chart-label" x="-110.425" y="-32.034" style="fill: #888; font-size: 10px; font-weight: normal">Cool</text>
+        <text class="lini-text lini-chart-label" x="-30.875" y="6.264" style="fill: #888; font-size: 10px; font-weight: normal">Warm</text>
       </g>
       <g class="lini-node lini-chart lini-block" transform="translate(192,-122)">
         <rect x="-179" y="-109" width="358" height="218" rx="0" ry="0"/>
@@ -178,19 +178,19 @@ input_file: samples/chart_lines.lini
           <title>outdoor: 21h: 11</title>
           <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
         </g>
-        <text class="lini-text" x="-166.1" y="88.6" style="fill: #888; font-weight: normal; font-size: 11px">0</text>
-        <text class="lini-text" x="-166.1" y="55.6" style="fill: #888; font-weight: normal; font-size: 11px">5</text>
-        <text class="lini-text" x="-169.4" y="22.6" style="fill: #888; font-weight: normal; font-size: 11px">10</text>
-        <text class="lini-text" x="-169.4" y="-10.4" style="fill: #888; font-weight: normal; font-size: 11px">15</text>
-        <text class="lini-text" x="-169.4" y="-43.4" style="fill: #888; font-weight: normal; font-size: 11px">20</text>
-        <text class="lini-text" x="-169.4" y="-76.4" style="fill: #888; font-weight: normal; font-size: 11px">25</text>
-        <text class="lini-text" x="-129.7333" y="100.3" style="fill: #888; font-weight: normal; font-size: 11px">6h</text>
-        <text class="lini-text" x="-75.6" y="100.3" style="fill: #888; font-weight: normal; font-size: 11px">9h</text>
-        <text class="lini-text" x="-21.4667" y="100.3" style="fill: #888; font-weight: normal; font-size: 11px">12h</text>
-        <text class="lini-text" x="32.6667" y="100.3" style="fill: #888; font-weight: normal; font-size: 11px">15h</text>
-        <text class="lini-text" x="86.8" y="100.3" style="fill: #888; font-weight: normal; font-size: 11px">18h</text>
-        <text class="lini-text" x="140.9333" y="100.3" style="fill: #888; font-weight: normal; font-size: 11px">21h</text>
-        <text class="lini-text" x="0" y="-92.9" style="font-weight: bold; font-size: 13px">Temperature (°C)</text>
+        <text class="lini-text" x="-166.1" y="88.6" style="fill: #888; font-size: 11px; font-weight: normal">0</text>
+        <text class="lini-text" x="-166.1" y="55.6" style="fill: #888; font-size: 11px; font-weight: normal">5</text>
+        <text class="lini-text" x="-169.4" y="22.6" style="fill: #888; font-size: 11px; font-weight: normal">10</text>
+        <text class="lini-text" x="-169.4" y="-10.4" style="fill: #888; font-size: 11px; font-weight: normal">15</text>
+        <text class="lini-text" x="-169.4" y="-43.4" style="fill: #888; font-size: 11px; font-weight: normal">20</text>
+        <text class="lini-text" x="-169.4" y="-76.4" style="fill: #888; font-size: 11px; font-weight: normal">25</text>
+        <text class="lini-text" x="-129.7333" y="100.3" style="fill: #888; font-size: 11px; font-weight: normal">6h</text>
+        <text class="lini-text" x="-75.6" y="100.3" style="fill: #888; font-size: 11px; font-weight: normal">9h</text>
+        <text class="lini-text" x="-21.4667" y="100.3" style="fill: #888; font-size: 11px; font-weight: normal">12h</text>
+        <text class="lini-text" x="32.6667" y="100.3" style="fill: #888; font-size: 11px; font-weight: normal">15h</text>
+        <text class="lini-text" x="86.8" y="100.3" style="fill: #888; font-size: 11px; font-weight: normal">18h</text>
+        <text class="lini-text" x="140.9333" y="100.3" style="fill: #888; font-size: 11px; font-weight: normal">21h</text>
+        <text class="lini-text" x="0" y="-92.9" style="font-size: 13px; font-weight: bold">Temperature (°C)</text>
       </g>
       <g class="lini-node lini-chart lini-block" transform="translate(-192,122)">
         <rect x="-179" y="-109" width="358" height="218" rx="0" ry="0"/>
@@ -209,15 +209,15 @@ input_file: samples/chart_lines.lini
         <g class="lini-node lini-line" style="stroke: #b8476e" transform="translate(0,0)">
           <polyline points="-116.2,33.6 -35,33.6 -35,33.6 46.2,33.6 46.2,-43.4 127.4,-43.4 127.4,-43.4"/>
         </g>
-        <text class="lini-text" x="-166.1" y="88.6" style="fill: #888; font-weight: normal; font-size: 11px">0</text>
-        <text class="lini-text" x="-166.1" y="33.6" style="fill: #888; font-weight: normal; font-size: 11px">5</text>
-        <text class="lini-text" x="-169.4" y="-21.4" style="fill: #888; font-weight: normal; font-size: 11px">10</text>
-        <text class="lini-text" x="-169.4" y="-76.4" style="fill: #888; font-weight: normal; font-size: 11px">15</text>
-        <text class="lini-text" x="-116.2" y="100.3" style="fill: #888; font-weight: normal; font-size: 11px">0</text>
-        <text class="lini-text" x="-35" y="100.3" style="fill: #888; font-weight: normal; font-size: 11px">10</text>
-        <text class="lini-text" x="46.2" y="100.3" style="fill: #888; font-weight: normal; font-size: 11px">20</text>
-        <text class="lini-text" x="127.4" y="100.3" style="fill: #888; font-weight: normal; font-size: 11px">30</text>
-        <text class="lini-text" x="0" y="-92.9" style="font-weight: bold; font-size: 13px">Tier price ($)</text>
+        <text class="lini-text" x="-166.1" y="88.6" style="fill: #888; font-size: 11px; font-weight: normal">0</text>
+        <text class="lini-text" x="-166.1" y="33.6" style="fill: #888; font-size: 11px; font-weight: normal">5</text>
+        <text class="lini-text" x="-169.4" y="-21.4" style="fill: #888; font-size: 11px; font-weight: normal">10</text>
+        <text class="lini-text" x="-169.4" y="-76.4" style="fill: #888; font-size: 11px; font-weight: normal">15</text>
+        <text class="lini-text" x="-116.2" y="100.3" style="fill: #888; font-size: 11px; font-weight: normal">0</text>
+        <text class="lini-text" x="-35" y="100.3" style="fill: #888; font-size: 11px; font-weight: normal">10</text>
+        <text class="lini-text" x="46.2" y="100.3" style="fill: #888; font-size: 11px; font-weight: normal">20</text>
+        <text class="lini-text" x="127.4" y="100.3" style="fill: #888; font-size: 11px; font-weight: normal">30</text>
+        <text class="lini-text" x="0" y="-92.9" style="font-size: 13px; font-weight: bold">Tier price ($)</text>
       </g>
       <g class="lini-node lini-chart lini-block" transform="translate(192,122)">
         <rect x="-179" y="-109" width="358" height="218" rx="0" ry="0"/>
@@ -248,25 +248,25 @@ input_file: samples/chart_lines.lini
         <g class="lini-node lini-line" style="stroke: #008e85" transform="translate(0,0)">
           <polyline points="-124.32,52.4875 -59.36,37.7575 5.6,30.3925 70.56,15.6625 135.52,0.9325"/>
         </g>
-        <text class="lini-text" x="-166.1" y="70.9" style="fill: #888; font-weight: normal; font-size: 11px">0</text>
-        <text class="lini-text" x="-169.4" y="34.075" style="fill: #888; font-weight: normal; font-size: 11px">20</text>
-        <text class="lini-text" x="-169.4" y="-2.75" style="fill: #888; font-weight: normal; font-size: 11px">40</text>
-        <text class="lini-text" x="-169.4" y="-39.575" style="fill: #888; font-weight: normal; font-size: 11px">60</text>
-        <text class="lini-text" x="-169.4" y="-76.4" style="fill: #888; font-weight: normal; font-size: 11px">80</text>
-        <text class="lini-text" x="-124.32" y="82.6" style="fill: #888; font-weight: normal; font-size: 11px">Jan</text>
-        <text class="lini-text" x="-59.36" y="82.6" style="fill: #888; font-weight: normal; font-size: 11px">Feb</text>
-        <text class="lini-text" x="5.6" y="82.6" style="fill: #888; font-weight: normal; font-size: 11px">Mar</text>
-        <text class="lini-text" x="70.56" y="82.6" style="fill: #888; font-weight: normal; font-size: 11px">Apr</text>
-        <text class="lini-text" x="135.52" y="82.6" style="fill: #888; font-weight: normal; font-size: 11px">May</text>
-        <text class="lini-text" x="0" y="-92.9" style="font-weight: bold; font-size: 13px">Signups</text>
+        <text class="lini-text" x="-166.1" y="70.9" style="fill: #888; font-size: 11px; font-weight: normal">0</text>
+        <text class="lini-text" x="-169.4" y="34.075" style="fill: #888; font-size: 11px; font-weight: normal">20</text>
+        <text class="lini-text" x="-169.4" y="-2.75" style="fill: #888; font-size: 11px; font-weight: normal">40</text>
+        <text class="lini-text" x="-169.4" y="-39.575" style="fill: #888; font-size: 11px; font-weight: normal">60</text>
+        <text class="lini-text" x="-169.4" y="-76.4" style="fill: #888; font-size: 11px; font-weight: normal">80</text>
+        <text class="lini-text" x="-124.32" y="82.6" style="fill: #888; font-size: 11px; font-weight: normal">Jan</text>
+        <text class="lini-text" x="-59.36" y="82.6" style="fill: #888; font-size: 11px; font-weight: normal">Feb</text>
+        <text class="lini-text" x="5.6" y="82.6" style="fill: #888; font-size: 11px; font-weight: normal">Mar</text>
+        <text class="lini-text" x="70.56" y="82.6" style="fill: #888; font-size: 11px; font-weight: normal">Apr</text>
+        <text class="lini-text" x="135.52" y="82.6" style="fill: #888; font-size: 11px; font-weight: normal">May</text>
+        <text class="lini-text" x="0" y="-92.9" style="font-size: 13px; font-weight: bold">Signups</text>
         <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e; stroke-width: 1" transform="translate(-44.9,100.1)">
           <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
         </g>
-        <text class="lini-text" x="-21.2" y="100.1" style="font-weight: bold; font-size: 11px">free</text>
+        <text class="lini-text" x="-21.2" y="100.1" style="font-size: 11px; font-weight: bold">free</text>
         <g class="lini-node lini-block" style="fill: #79e3da; stroke: #008e85; stroke-width: 1" transform="translate(13.5,100.1)">
           <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
         </g>
-        <text class="lini-text" x="37.2" y="100.1" style="font-weight: bold; font-size: 11px">paid</text>
+        <text class="lini-text" x="37.2" y="100.1" style="font-size: 11px; font-weight: bold">paid</text>
       </g>
     </g>
   </g>

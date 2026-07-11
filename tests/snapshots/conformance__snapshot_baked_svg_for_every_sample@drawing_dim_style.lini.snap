@@ -1,6 +1,5 @@
 ---
 source: tests/conformance.rs
-assertion_line: 40
 expression: svg
 input_file: samples/drawing_dim_style.lini
 ---
@@ -47,7 +46,7 @@ input_file: samples/drawing_dim_style.lini
     <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: #851618" transform="translate(0,0)">
       <polygon points="-90,-45 -101.6276,-48.5777 -99.8387,-52.1554"/>
     </g>
-    <text class="lini-text lini-dim-text" x="-153.122" y="-51.761" style="font-size: 12px">CHAMFER 1.5</text>
+    <text class="lini-text lini-dim-text" x="-153.122" y="-51.761">CHAMFER 1.5</text>
   </g>
   <g class="lini-links"/>
 </svg>

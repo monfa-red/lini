@@ -19,7 +19,7 @@ input_file: samples/text.lini
   <defs/>
   <rect class="lini-canvas" x="-212" y="-182" width="424" height="364"/>
   <g class="lini-scene">
-    <text class="lini-text" x="0" y="-146" style="font-weight: bold; font-size: 20px">Styleable text, in place</text>
+    <text class="lini-text" x="0" y="-146" style="font-size: 20px; font-weight: bold">Styleable text, in place</text>
     <g class="lini-node lini-row lini-block" data-id="styles" transform="translate(0,-101.5)">
       <rect x="-185" y="-7.5" width="370" height="15" rx="0" ry="0"/>
       <text class="lini-text" x="-153.5" y="0">default</text>
@@ -52,7 +52,7 @@ input_file: samples/text.lini
       <mask id="lini-label-cut-1" maskUnits="userSpaceOnUse" x="37" y="50.5" width="24.5" height="79"><rect class="lini-cut-bg" x="37" y="50.5" width="24.5" height="79"/><rect class="lini-cut" x="1.9" y="73.95" width="115.2" height="15.6"/></mask>
       <path d="M 39 52.5 L 43.5 52.5 A 16 16 0 0 1 59.5 68.5 L 59.5 115 A 12.5 12.5 0 0 1 47 127.5 L 47 127.5" mask="url(#lini-label-cut-1)"/>
       <polygon class="lini-marker lini-marker-arrow" points="43,127.5 52,123 52,132" style="fill: #989898"/>
-      <text class="lini-link-label" x="59.5" y="81.75" style="fill: #851618; font-weight: bold" transform="rotate(-6 59.5 81.75)">nudged &amp; turned</text>
+      <text class="lini-link-label" x="59.5" y="81.75" style="fill: #851618; font-weight: bold; text-shadow: 1px 1px 2px #484848" transform="rotate(-6 59.5 81.75)">nudged &amp; turned</text>
     </g>
   </g>
 </svg>

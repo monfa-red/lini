@@ -58,25 +58,25 @@ input_file: samples/chart_radial.lini
         <g class="lini-node lini-line" style="stroke: #b8476e" transform="translate(0,0)">
           <polyline points="0,-92.4 73.3074,-19.869 22.6532,35.1295 -33.9799,50.7193 -91.6343,-25.8238 0,-92.4"/>
         </g>
-        <text class="lini-text" x="0" y="-102.3" style="fill: #888; font-weight: normal; font-size: 11px">Speed</text>
-        <text class="lini-text" x="101.0498" y="-28.8831" style="fill: #888; font-weight: normal; font-size: 11px">Range</text>
-        <text class="lini-text" x="62.4522" y="89.9081" style="fill: #888; font-weight: normal; font-size: 11px">Armor</text>
-        <text class="lini-text" x="-62.4522" y="89.9081" style="fill: #888; font-weight: normal; font-size: 11px">Cost</text>
-        <text class="lini-text" x="-101.0498" y="-28.8831" style="fill: #888; font-weight: normal; font-size: 11px">Stealth</text>
-        <text class="lini-text" x="6.3" y="-15.32" style="fill: #888; font-weight: normal; font-size: 11px">1</text>
-        <text class="lini-text" x="6.3" y="-34.59" style="fill: #888; font-weight: normal; font-size: 11px">2</text>
-        <text class="lini-text" x="6.3" y="-53.86" style="fill: #888; font-weight: normal; font-size: 11px">3</text>
-        <text class="lini-text" x="6.3" y="-73.13" style="fill: #888; font-weight: normal; font-size: 11px">4</text>
-        <text class="lini-text" x="6.3" y="-92.4" style="fill: #888; font-weight: normal; font-size: 11px">5</text>
-        <text class="lini-text" x="0" y="-122.9" style="font-weight: bold; font-size: 13px">Ship profiles</text>
+        <text class="lini-text" x="0" y="-102.3" style="fill: #888; font-size: 11px; font-weight: normal">Speed</text>
+        <text class="lini-text" x="101.0498" y="-28.8831" style="fill: #888; font-size: 11px; font-weight: normal">Range</text>
+        <text class="lini-text" x="62.4522" y="89.9081" style="fill: #888; font-size: 11px; font-weight: normal">Armor</text>
+        <text class="lini-text" x="-62.4522" y="89.9081" style="fill: #888; font-size: 11px; font-weight: normal">Cost</text>
+        <text class="lini-text" x="-101.0498" y="-28.8831" style="fill: #888; font-size: 11px; font-weight: normal">Stealth</text>
+        <text class="lini-text" x="6.3" y="-15.32" style="fill: #888; font-size: 11px; font-weight: normal">1</text>
+        <text class="lini-text" x="6.3" y="-34.59" style="fill: #888; font-size: 11px; font-weight: normal">2</text>
+        <text class="lini-text" x="6.3" y="-53.86" style="fill: #888; font-size: 11px; font-weight: normal">3</text>
+        <text class="lini-text" x="6.3" y="-73.13" style="fill: #888; font-size: 11px; font-weight: normal">4</text>
+        <text class="lini-text" x="6.3" y="-92.4" style="fill: #888; font-size: 11px; font-weight: normal">5</text>
+        <text class="lini-text" x="0" y="-122.9" style="font-size: 13px; font-weight: bold">Ship profiles</text>
         <g class="lini-node lini-block" style="fill: #b8476e; stroke-width: 0" transform="translate(-58.1,130.1)">
           <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
         </g>
-        <text class="lini-text" x="-31.1" y="130.1" style="font-weight: bold; font-size: 11px">Scout</text>
+        <text class="lini-text" x="-31.1" y="130.1" style="font-size: 11px; font-weight: bold">Scout</text>
         <g class="lini-node lini-block" style="fill: #00b8ac; stroke: #008e85; stroke-width: 1" transform="translate(6.9,130.1)">
           <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
         </g>
-        <text class="lini-text" x="40.5" y="130.1" style="font-weight: bold; font-size: 11px">Cruiser</text>
+        <text class="lini-text" x="40.5" y="130.1" style="font-size: 11px; font-weight: bold">Cruiser</text>
       </g>
       <g class="lini-node lini-chart lini-block" transform="translate(152,0)">
         <rect x="-139" y="-139" width="278" height="278" rx="0" ry="0"/>
@@ -144,19 +144,19 @@ input_file: samples/chart_radial.lini
           <title>Sun · steps: 55</title>
           <polygon points="-54.3509,-7.0435 -52.2899,-11.9698 -49.7836,-16.6851 -46.8533,-21.1492 -43.5239,-25.3242 -39.8237,-29.1744 -35.7843,-32.6671 -31.4402,-35.7726 0,12.8"/>
         </g>
-        <text class="lini-text" x="0" y="-102.3" style="fill: #888; font-weight: normal; font-size: 11px">Mon</text>
-        <text class="lini-text" x="89.9888" y="-58.9637" style="fill: #888; font-weight: normal; font-size: 11px">Tue</text>
-        <text class="lini-text" x="112.2142" y="38.4122" style="fill: #888; font-weight: normal; font-size: 11px">Wed</text>
-        <text class="lini-text" x="49.94" y="116.5015" style="fill: #888; font-weight: normal; font-size: 11px">Thu</text>
-        <text class="lini-text" x="-49.94" y="116.5015" style="fill: #888; font-weight: normal; font-size: 11px">Fri</text>
-        <text class="lini-text" x="-112.2142" y="38.4122" style="fill: #888; font-weight: normal; font-size: 11px">Sat</text>
-        <text class="lini-text" x="-89.9888" y="-58.9637" style="fill: #888; font-weight: normal; font-size: 11px">Sun</text>
-        <text class="lini-text" x="9.6" y="-8.24" style="fill: #888; font-weight: normal; font-size: 11px">20</text>
-        <text class="lini-text" x="9.6" y="-29.28" style="fill: #888; font-weight: normal; font-size: 11px">40</text>
-        <text class="lini-text" x="9.6" y="-50.32" style="fill: #888; font-weight: normal; font-size: 11px">60</text>
-        <text class="lini-text" x="9.6" y="-71.36" style="fill: #888; font-weight: normal; font-size: 11px">80</text>
-        <text class="lini-text" x="12.9" y="-92.4" style="fill: #888; font-weight: normal; font-size: 11px">100</text>
-        <text class="lini-text" x="0" y="-122.9" style="font-weight: bold; font-size: 13px">Goal completion %</text>
+        <text class="lini-text" x="0" y="-102.3" style="fill: #888; font-size: 11px; font-weight: normal">Mon</text>
+        <text class="lini-text" x="89.9888" y="-58.9637" style="fill: #888; font-size: 11px; font-weight: normal">Tue</text>
+        <text class="lini-text" x="112.2142" y="38.4122" style="fill: #888; font-size: 11px; font-weight: normal">Wed</text>
+        <text class="lini-text" x="49.94" y="116.5015" style="fill: #888; font-size: 11px; font-weight: normal">Thu</text>
+        <text class="lini-text" x="-49.94" y="116.5015" style="fill: #888; font-size: 11px; font-weight: normal">Fri</text>
+        <text class="lini-text" x="-112.2142" y="38.4122" style="fill: #888; font-size: 11px; font-weight: normal">Sat</text>
+        <text class="lini-text" x="-89.9888" y="-58.9637" style="fill: #888; font-size: 11px; font-weight: normal">Sun</text>
+        <text class="lini-text" x="9.6" y="-8.24" style="fill: #888; font-size: 11px; font-weight: normal">20</text>
+        <text class="lini-text" x="9.6" y="-29.28" style="fill: #888; font-size: 11px; font-weight: normal">40</text>
+        <text class="lini-text" x="9.6" y="-50.32" style="fill: #888; font-size: 11px; font-weight: normal">60</text>
+        <text class="lini-text" x="9.6" y="-71.36" style="fill: #888; font-size: 11px; font-weight: normal">80</text>
+        <text class="lini-text" x="12.9" y="-92.4" style="fill: #888; font-size: 11px; font-weight: normal">100</text>
+        <text class="lini-text" x="0" y="-122.9" style="font-size: 13px; font-weight: bold">Goal completion %</text>
       </g>
     </g>
   </g>

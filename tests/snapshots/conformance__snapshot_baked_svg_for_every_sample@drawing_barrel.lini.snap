@@ -1,6 +1,5 @@
 ---
 source: tests/conformance.rs
-assertion_line: 40
 expression: svg
 input_file: samples/drawing_barrel.lini
 ---
@@ -184,7 +183,7 @@ input_file: samples/drawing_barrel.lini
     <g class="lini-node lini-marker lini-marker-datum lini-poly" transform="translate(0,0)">
       <polygon points="-371.5,-42 -382.5,-42 -377,-53"/>
     </g>
-    <text class="lini-text lini-dim-text" x="-363.4" y="-68.5" style="font-size: 12px">A</text>
+    <text class="lini-text lini-dim-text" x="-363.4" y="-68.5">A</text>
     <g class="lini-node lini-ext-line lini-line" transform="translate(0,0)">
       <line x1="-380" y1="-42" x2="-510.5" y2="-42"/>
     </g>
@@ -239,7 +238,7 @@ input_file: samples/drawing_barrel.lini
     <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,0)">
       <polygon points="-90,-8 -92,-20 -88,-20"/>
     </g>
-    <text class="lini-text lini-dim-text" x="-29.6" y="-68.5" style="font-size: 12px">3× M8×1.25 ↧10</text>
+    <text class="lini-text lini-dim-text" x="-29.6" y="-68.5">3× M8×1.25 ↧10</text>
   </g>
   <g class="lini-links"/>
 </svg>

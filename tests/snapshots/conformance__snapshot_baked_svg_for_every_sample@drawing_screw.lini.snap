@@ -1,6 +1,5 @@
 ---
 source: tests/conformance.rs
-assertion_line: 40
 expression: svg
 input_file: samples/drawing_screw.lini
 ---
@@ -216,7 +215,7 @@ input_file: samples/drawing_screw.lini
         <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,10)">
           <polygon points="-30,-12 -32,-24 -28,-24"/>
         </g>
-        <text class="lini-text lini-dim-text" x="8.8" y="-106" style="font-size: 12px">root R10</text>
+        <text class="lini-text lini-dim-text" x="8.8" y="-106">root R10</text>
         <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,123)">
           <rect x="-31.4" y="-5" width="62.8" height="10" rx="0" ry="0"/>
           <text class="lini-text" x="0" y="0">C (1.5:1)</text>

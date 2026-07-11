@@ -76,35 +76,35 @@ input_file: samples/chart_labels.lini
         <title>Opus 4.8: 40, 78</title>
         <ellipse cx="0" cy="0" rx="5.5" ry="5.5"/>
       </g>
-      <text class="lini-text" x="-229.4" y="67.4286" style="fill: #888; font-weight: normal; font-size: 11px">50</text>
-      <text class="lini-text" x="-229.4" y="11.2857" style="fill: #888; font-weight: normal; font-size: 11px">60</text>
-      <text class="lini-text" x="-229.4" y="-44.8571" style="fill: #888; font-weight: normal; font-size: 11px">70</text>
-      <text class="lini-text" x="-229.4" y="-101" style="fill: #888; font-weight: normal; font-size: 11px">80</text>
-      <text class="lini-text" x="-187.1" y="-107" style="fill: #888; font-weight: normal; font-size: 11px">Score (%)</text>
-      <text class="lini-text" x="-87.6645" y="107.2" style="fill: #888; font-weight: normal; font-size: 11px">40</text>
-      <text class="lini-text" x="55.8194" y="107.2" style="fill: #888; font-weight: normal; font-size: 11px">60</text>
-      <text class="lini-text" x="199.3032" y="107.2" style="fill: #888; font-weight: normal; font-size: 11px">80</text>
-      <text class="lini-text" x="5.6" y="121.9" style="fill: #888; font-weight: normal; font-size: 11px">Avg output tokens (k)</text>
-      <text class="lini-text" x="0" y="-132.9" style="font-weight: bold; font-size: 13px">Agentic coding performance</text>
+      <text class="lini-text" x="-229.4" y="67.4286" style="fill: #888; font-size: 11px; font-weight: normal">50</text>
+      <text class="lini-text" x="-229.4" y="11.2857" style="fill: #888; font-size: 11px; font-weight: normal">60</text>
+      <text class="lini-text" x="-229.4" y="-44.8571" style="fill: #888; font-size: 11px; font-weight: normal">70</text>
+      <text class="lini-text" x="-229.4" y="-101" style="fill: #888; font-size: 11px; font-weight: normal">80</text>
+      <text class="lini-text" x="-187.1" y="-107" style="fill: #888; font-size: 11px; font-weight: normal">Score (%)</text>
+      <text class="lini-text" x="-87.6645" y="107.2" style="fill: #888; font-size: 11px; font-weight: normal">40</text>
+      <text class="lini-text" x="55.8194" y="107.2" style="fill: #888; font-size: 11px; font-weight: normal">60</text>
+      <text class="lini-text" x="199.3032" y="107.2" style="fill: #888; font-size: 11px; font-weight: normal">80</text>
+      <text class="lini-text" x="5.6" y="121.9" style="fill: #888; font-size: 11px; font-weight: normal">Avg output tokens (k)</text>
+      <text class="lini-text" x="0" y="-132.9" style="font-size: 13px; font-weight: bold">Agentic coding performance</text>
       <g class="lini-node lini-block" style="fill: #0085b3; stroke: #0085b3; stroke-width: 1" transform="translate(-107.1,140.1)">
         <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
       </g>
-      <text class="lini-text" x="-73.5" y="140.1" style="font-weight: bold; font-size: 11px">GLM-5.2</text>
+      <text class="lini-text" x="-73.5" y="140.1" style="font-size: 11px; font-weight: bold">GLM-5.2</text>
       <g class="lini-node lini-block" style="fill: #008d51; stroke: #008d51; stroke-width: 1" transform="translate(-28.9,140.1)">
         <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
       </g>
-      <text class="lini-text" x="4.7" y="140.1" style="font-weight: bold; font-size: 11px">GLM-5.1</text>
+      <text class="lini-text" x="4.7" y="140.1" style="font-size: 11px; font-weight: bold">GLM-5.1</text>
       <g class="lini-node lini-block" style="fill: #747474; stroke: #747474; stroke-width: 1" transform="translate(49.3,140.1)">
         <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
       </g>
-      <text class="lini-text" x="86.2" y="140.1" style="font-weight: bold; font-size: 11px">Opus 4.8</text>
-      <text class="lini-text lini-chart-label" x="-123.5355" y="11.9429" style="fill: #888; font-weight: normal; font-size: 10px">Non-Thinking</text>
-      <text class="lini-text lini-chart-label" x="-73.3161" y="-73.5857" style="fill: #888; font-weight: normal; font-size: 10px">High</text>
-      <text class="lini-text lini-chart-label" x="206.5" y="-90.4286" style="fill: #888; font-weight: normal; font-size: 10px">Max</text>
-      <text class="lini-text lini-chart-label" x="-145.0581" y="73.7" style="fill: #888; font-weight: normal; font-size: 10px">Non-Thinking</text>
-      <text class="lini-text lini-chart-label" x="-51.7935" y="5.0143" style="fill: #888; font-weight: normal; font-size: 10px">Max</text>
-      <text class="lini-text lini-chart-label" x="-195.3" y="-67.9714" style="fill: #888; font-weight: normal; font-size: 10px">Low</text>
-      <text class="lini-text lini-chart-label" x="-63.1645" y="-89.7714" style="fill: #888; font-weight: normal; font-size: 10px">High</text>
+      <text class="lini-text" x="86.2" y="140.1" style="font-size: 11px; font-weight: bold">Opus 4.8</text>
+      <text class="lini-text lini-chart-label" x="-123.5355" y="11.9429" style="fill: #888; font-size: 10px; font-weight: normal">Non-Thinking</text>
+      <text class="lini-text lini-chart-label" x="-73.3161" y="-73.5857" style="fill: #888; font-size: 10px; font-weight: normal">High</text>
+      <text class="lini-text lini-chart-label" x="206.5" y="-90.4286" style="fill: #888; font-size: 10px; font-weight: normal">Max</text>
+      <text class="lini-text lini-chart-label" x="-145.0581" y="73.7" style="fill: #888; font-size: 10px; font-weight: normal">Non-Thinking</text>
+      <text class="lini-text lini-chart-label" x="-51.7935" y="5.0143" style="fill: #888; font-size: 10px; font-weight: normal">Max</text>
+      <text class="lini-text lini-chart-label" x="-195.3" y="-67.9714" style="fill: #888; font-size: 10px; font-weight: normal">Low</text>
+      <text class="lini-text lini-chart-label" x="-63.1645" y="-89.7714" style="fill: #888; font-size: 10px; font-weight: normal">High</text>
     </g>
   </g>
   <g class="lini-links"/>

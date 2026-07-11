@@ -34,23 +34,23 @@ input_file: samples/chart_pie.lini
           <title>Referral: 12 (12%)</title>
           <polygon points="-75.5398,-76.4917 -67.6343,-83.2436 -59.1285,-89.2216 -50.0979,-94.3726 -40.6225,-98.6508 -30.7867,-102.0184 -20.6775,-104.4454 -10.3849,-105.9103 -0,-106.4 0,3.95"/>
         </g>
-        <text class="lini-text" x="0" y="-122.9" style="font-weight: bold; font-size: 13px">Traffic sources</text>
+        <text class="lini-text" x="0" y="-122.9" style="font-size: 13px; font-weight: bold">Traffic sources</text>
         <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e; stroke-width: 1" transform="translate(-136.3,130.1)">
           <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
         </g>
-        <text class="lini-text" x="-106" y="130.1" style="font-weight: bold; font-size: 11px">Search</text>
+        <text class="lini-text" x="-106" y="130.1" style="font-size: 11px; font-weight: bold">Search</text>
         <g class="lini-node lini-block" style="fill: #79e3da; stroke: #008e85; stroke-width: 1" transform="translate(-64.7,130.1)">
           <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
         </g>
-        <text class="lini-text" x="-34.4" y="130.1" style="font-weight: bold; font-size: 11px">Direct</text>
+        <text class="lini-text" x="-34.4" y="130.1" style="font-size: 11px; font-weight: bold">Direct</text>
         <g class="lini-node lini-block" style="fill: #ffbd8d; stroke: #b45700; stroke-width: 1" transform="translate(6.9,130.1)">
           <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
         </g>
-        <text class="lini-text" x="37.2" y="130.1" style="font-weight: bold; font-size: 11px">Social</text>
+        <text class="lini-text" x="37.2" y="130.1" style="font-size: 11px; font-weight: bold">Social</text>
         <g class="lini-node lini-block" style="fill: #7eddfd; stroke: #0085b3; stroke-width: 1" transform="translate(78.5,130.1)">
           <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
         </g>
-        <text class="lini-text" x="115.4" y="130.1" style="font-weight: bold; font-size: 11px">Referral</text>
+        <text class="lini-text" x="115.4" y="130.1" style="font-size: 11px; font-weight: bold">Referral</text>
       </g>
       <g class="lini-node lini-pie lini-block" transform="translate(152,0)">
         <rect x="-139" y="-139" width="278" height="278" rx="0" ry="0"/>
@@ -66,19 +66,19 @@ input_file: samples/chart_pie.lini
           <title>Direct: 30 (30%)</title>
           <polygon points="-104.9491,38.05 -107.6924,28.0221 -109.4799,17.7805 -110.2955,7.4162 -110.1322,-2.9789 -108.9914,-13.3125 -106.8832,-23.4929 -103.8262,-33.4297 -99.8477,-43.0347 -94.9829,-52.2227 -89.275,-60.9121 -82.7748,-69.0258 -75.5398,-76.4917 -67.6343,-83.2436 -59.1285,-89.2216 -50.0979,-94.3726 -40.6225,-98.6508 -30.7867,-102.0184 -20.6775,-104.4454 -10.3849,-105.9103 -0,-106.4 -0,-51.225 -5.1924,-50.9801 -10.3388,-50.2477 -15.3933,-49.0342 -20.3113,-47.3504 -25.0489,-45.2113 -29.5642,-42.6358 -33.8171,-39.6468 -37.7699,-36.2708 -41.3874,-32.5379 -44.6375,-28.4811 -47.4914,-24.1364 -49.9238,-19.5424 -51.9131,-14.7399 -53.4416,-9.7715 -54.4957,-4.6813 -55.0661,0.4855 -55.1478,5.6831 -54.7399,10.8653 -53.8462,15.9861 -52.4745,21"/>
         </g>
-        <text class="lini-text" x="0" y="-122.9" style="font-weight: bold; font-size: 13px">Spend</text>
+        <text class="lini-text" x="0" y="-122.9" style="font-size: 13px; font-weight: bold">Spend</text>
         <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e; stroke-width: 1" transform="translate(-74.1,130.1)">
           <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
         </g>
-        <text class="lini-text" x="-53.7" y="130.1" style="font-weight: bold; font-size: 11px">Ads</text>
+        <text class="lini-text" x="-53.7" y="130.1" style="font-size: 11px; font-weight: bold">Ads</text>
         <g class="lini-node lini-block" style="fill: #79e3da; stroke: #008e85; stroke-width: 1" transform="translate(-22.3,130.1)">
           <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
         </g>
-        <text class="lini-text" x="-1.9" y="130.1" style="font-weight: bold; font-size: 11px">SEO</text>
+        <text class="lini-text" x="-1.9" y="130.1" style="font-size: 11px; font-weight: bold">SEO</text>
         <g class="lini-node lini-block" style="fill: #ffbd8d; stroke: #b45700; stroke-width: 1" transform="translate(29.5,130.1)">
           <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
         </g>
-        <text class="lini-text" x="59.8" y="130.1" style="font-weight: bold; font-size: 11px">Direct</text>
+        <text class="lini-text" x="59.8" y="130.1" style="font-size: 11px; font-weight: bold">Direct</text>
       </g>
     </g>
   </g>

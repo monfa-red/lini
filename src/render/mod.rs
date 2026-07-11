@@ -111,24 +111,8 @@ pub fn render(laid_out: &LaidOut, opts: &Options) -> String {
         let polys: Vec<&[(f64, f64)]> = laid_out.links.iter().map(|w| &w.path[..]).collect();
         let caps: Vec<f64> = laid_out.links.iter().map(links::radius_cap).collect();
         let targets = links::fillet_targets(&polys, &caps);
-        // The link-label default font size (the `.lini-link-label` rule's value) —
-        // a label inlines its own size only when it differs from this.
-        let label_size = laid_out
-            .sheet
-            .link_defaults
-            .number("font-size")
-            .unwrap_or(11.0);
         for (idx, (link, targets)) in laid_out.links.iter().zip(&targets).enumerate() {
-            links::render_link(
-                &mut out,
-                idx,
-                link,
-                targets,
-                label_size,
-                &laid_out.vars,
-                &ruleset,
-                opts,
-            );
+            links::render_link(&mut out, idx, link, targets, &laid_out.vars, &ruleset, opts);
         }
         for air in &laid_out.strays {
             links::render_stray(&mut out, air, &laid_out.vars, opts);
@@ -176,7 +160,7 @@ fn render_node(
     // Text renders as a bare `<text class="lini-text">` at its placed position —
     // no wrapping `<g>` [SPEC 17]. Font and colour inherit from the enclosing box.
     if n.kind == NodeKind::Text {
-        render_text(out, n, depth, vars, opts);
+        render_text(out, n, depth, ruleset, vars, opts);
         return;
     }
     // `href:` wraps the whole node in an `<a href>` so the shape (and its
@@ -264,49 +248,58 @@ fn render_node(
 /// labels. `text-anchor: middle` + `dominant-baseline: central` (on `.lini-text`)
 /// centre it on (cx, cy); font and colour inherit from the enclosing box's `<g>`.
 /// Its own `{ }` paint/font rides `style=`; `translate` is folded into (cx, cy).
-fn render_text(out: &mut String, n: &PlacedNode, depth: usize, vars: &VarTable, opts: &Options) {
+fn render_text(
+    out: &mut String,
+    n: &PlacedNode,
+    depth: usize,
+    ruleset: &RuleSet,
+    vars: &VarTable,
+    opts: &Options,
+) {
     let indent = "  ".repeat(depth);
     let label = n.label.as_deref().unwrap_or("");
-    let style = text_style_attr(&n.own_style, vars, opts);
     // A text node's `type_chain` carries any extra class (e.g. a chart's `.lini-chart-label`
     // inline labels, [SPEC 14.8]); plain text has none, so this stays `lini-text`.
-    let mut class = String::from("lini-text");
-    for t in &n.type_chain {
-        class.push_str(" lini-");
-        class.push_str(t);
-    }
-    text::emit(out, &indent, &class, label, (n.cx, n.cy), &n.attrs, &style);
+    let mut classes = vec!["lini-text".to_string()];
+    classes.extend(n.type_chain.iter().map(|t| format!("lini-{t}")));
+    let style = text_paint_attr(&n.own_style, &classes, ruleset, vars, opts);
+    text::emit(
+        out,
+        &indent,
+        &classes.join(" "),
+        label,
+        (n.cx, n.cy),
+        &n.attrs,
+        &style,
+    );
 }
 
-/// The `style=` for a text node's own `{ }` [SPEC 3]: paint and font props ride
-/// CSS. `letter-spacing` / `line-spacing` / `translate` / `rotate` / `layer` are
-/// geometry or transforms, handled elsewhere, so they never appear here.
-fn text_style_attr(own: &AttrMap, vars: &VarTable, opts: &Options) -> String {
-    let mut decls: Vec<String> = Vec::new();
-    if let Some(v) = own.get("fill").or_else(|| own.get("color")) {
-        decls.push(format!("fill: {}", format_value(v, vars, opts)));
-    }
-    for prop in [
-        "font-family",
-        "font-weight",
-        "font-style",
-        "text-transform",
-        "text-decoration",
-        "text-shadow",
-        "opacity",
-    ] {
-        if let Some(v) = own.get(prop) {
-            decls.push(format!("{}: {}", prop, format_value(v, vars, opts)));
-        }
-    }
-    if let Some(v) = own.get("font-size") {
-        decls.push(format!("font-size: {}px", format_value(v, vars, opts)));
-    }
-    if decls.is_empty() {
-        String::new()
-    } else {
-        format!(r#" style="{}""#, decls.join("; "))
-    }
+/// The inline `style=` for a text leaf — a node's `<text>` or a link label — as
+/// the class-diff of its paint [SPEC 17], the same chokepoint a node `<g>` uses
+/// ([`node_style_attr`]). This is the **one** place text paint inlines, so no
+/// font/paint prop is ever hand-dropped (link labels used to silently lose
+/// `text-shadow` on their own hand-rolled path). `color` aliases `fill`
+/// (CSS-style); `css_value` adds the `px` / length units. Geometry
+/// (`letter-spacing`, `translate`, `rotate`, `layer`) is handled elsewhere and
+/// never rides here — it is not in `PAINT_PROPS`.
+pub(super) fn text_paint_attr(
+    own: &AttrMap,
+    classes: &[String],
+    ruleset: &RuleSet,
+    vars: &VarTable,
+    opts: &Options,
+) -> String {
+    let decls = ruleset.inline_paint_diff(
+        classes,
+        own,
+        |lini| match lini {
+            "fill" => own.get("fill").or_else(|| own.get("color")),
+            "color" => None,
+            _ => own.get(lini),
+        },
+        |lini, v| values::css_value(lini, v, vars, opts),
+    );
+    style_attr_from(&decls)
 }
 
 /// The node's paint, as the difference against what the stylesheet already

@@ -38,7 +38,6 @@ pub fn render_link(
     idx: usize,
     w: &RoutedLink,
     targets: &[f64],
-    label_size: f64,
     vars: &VarTable,
     ruleset: &RuleSet,
     opts: &Options,
@@ -166,7 +165,7 @@ pub fn render_link(
     }
 
     for t in &w.texts {
-        render_link_text(out, t, label_size, vars, opts);
+        render_link_text(out, t, ruleset, vars, opts);
     }
 
     out.push_str("    </g>\n");
@@ -449,46 +448,18 @@ fn label_mask(
 /// size) rides the label's own class (`t.class` — `.lini-link-label` on a diagram
 /// wire, `.lini-sequence-message` above a sequence arrow); only a label that
 /// overrides one of those inlines the difference via `style=`.
-fn render_link_text(out: &mut String, t: &RoutedText, wfs: f64, vars: &VarTable, opts: &Options) {
-    let mut style: Vec<String> = Vec::new();
-
-    // `wfs` is the link-label default (the `.lini-link-label` rule's size); inline
-    // the label's own size only when it differs.
-    let size = t.attrs.number("font-size").unwrap_or(wfs);
-    if (size - wfs).abs() > 1e-9 {
-        style.push(format!("font-size: {}px", num(size)));
-    }
-    if let Some(v) = t.attrs.get("fill").or_else(|| t.attrs.get("color")) {
-        style.push(format!("fill: {}", format_value(v, vars, opts)));
-    }
-    if t.attrs.get("font-family").is_some() {
-        let font = attr_or_var(&t.attrs, "font-family", "font-family", vars, opts);
-        if font
-            != attr_or_var(
-                &AttrMap::default(),
-                "font-family",
-                "font-family",
-                vars,
-                opts,
-            )
-        {
-            style.push(format!("font-family: {font}"));
-        }
-    }
-    if let Some(v) = t.attrs.get("font-weight") {
-        style.push(format!("font-weight: {}", format_value(v, vars, opts)));
-    }
-    for prop in ["font-style", "text-transform", "text-decoration", "opacity"] {
-        if let Some(v) = t.attrs.get(prop) {
-            style.push(format!("{}: {}", prop, format_value(v, vars, opts)));
-        }
-    }
-
-    let style_attr = if style.is_empty() {
-        String::new()
-    } else {
-        format!(r#" style="{}""#, style.join("; "))
-    };
+fn render_link_text(
+    out: &mut String,
+    t: &RoutedText,
+    ruleset: &RuleSet,
+    vars: &VarTable,
+    opts: &Options,
+) {
+    // A label's paint is the same class-diff a node's text leaf is [SPEC 17],
+    // against its own role rule (`.lini-link-label` / `.lini-sequence-message`) —
+    // so `text-shadow` and every other font/paint prop ride through, and the
+    // per-role default size states once in the sheet, not on each label.
+    let style_attr = super::text_paint_attr(&t.attrs, &[t.class.to_string()], ruleset, vars, opts);
     // The label rides its `along:` point already shifted by `translate` (folded in
     // at routing — `links::labels`), so the shared emitter handles only `rotate`,
     // multi-line, and `letter-spacing` — one code path with a node's text leaf.

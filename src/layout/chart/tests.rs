@@ -563,15 +563,15 @@ fn data_text_is_normal_weight_chrome_is_bold() {
         "|chart| \"Cost\" { categories: \"a\" \"b\" } [\n  |bars| \"A\" { data: 5 8 }\n  |bars| \"B\" { data: 3 4 }\n]\n",
     );
     assert!(
-        s.contains("font-weight: bold; font-size: 13px\">Cost</text>"),
+        s.contains("font-size: 13px; font-weight: bold\">Cost</text>"),
         "title bold: {s}"
     );
     assert!(
-        s.contains("font-weight: bold; font-size: 11px\">A</text>"),
+        s.contains("font-size: 11px; font-weight: bold\">A</text>"),
         "legend bold: {s}"
     );
     assert!(
-        s.contains("font-weight: normal; font-size: 11px\">a</text>"),
+        s.contains("font-size: 11px; font-weight: normal\">a</text>"),
         "axis tick normal: {s}"
     );
 }
