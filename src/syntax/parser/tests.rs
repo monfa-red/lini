@@ -207,7 +207,7 @@ fn point_of(ep: &Endpoint) -> Option<&str> {
 }
 
 fn wire_line(f: &File) -> crate::ast::LineStyle {
-    match f.links[0].op {
+    match f.links[0].op() {
         ChainOp::Wire(op) => op.line,
         other => panic!("expected a wire op, got {other:?}"),
     }
@@ -304,15 +304,18 @@ fn measuring_ops_parse_one_ended_and_binary() {
     // (the parser accepts unary; resolve gates arity per op).
     let f = parse_ok("pin (o)\n");
     assert_eq!(f.links[0].chain.len(), 1);
-    assert_eq!(f.links[0].op, ChainOp::Measure(crate::ast::DrawOp::Round));
+    assert_eq!(f.links[0].op(), ChainOp::Measure(crate::ast::DrawOp::Round));
     // `(-)` binary — the linear span between two anchors.
     let f = parse_ok("a:left (-) b:right\n");
     assert_eq!(f.links[0].chain.len(), 2);
-    assert_eq!(f.links[0].op, ChainOp::Measure(crate::ast::DrawOp::Linear));
+    assert_eq!(
+        f.links[0].op(),
+        ChainOp::Measure(crate::ast::DrawOp::Linear)
+    );
     // `(<)` binary — two line-like anchors.
     let f = parse_ok("body:flank (<) body:base\n");
     assert_eq!(f.links[0].chain.len(), 2);
-    assert_eq!(f.links[0].op, ChainOp::Measure(crate::ast::DrawOp::Angle));
+    assert_eq!(f.links[0].op(), ChainOp::Measure(crate::ast::DrawOp::Angle));
     // One-ended with a tail label.
     let f = parse_ok("bolt <- \"THRU\"\n");
     assert_eq!(f.links[0].chain.len(), 1);
@@ -325,7 +328,7 @@ fn measuring_ops_parse_one_ended_and_binary() {
 #[test]
 fn mate_is_two_adjacent_pipes_at_op_position() {
     let f = parse_ok("nozzle:left || barrel:right { gap: 4 }\n");
-    assert_eq!(f.links[0].op, ChainOp::Mate);
+    assert_eq!(f.links[0].op(), ChainOp::Mate);
     assert_eq!(f.links[0].chain.len(), 2);
     // Spaced pipes are not a mate — `a | b` stays an invalid statement.
     assert!(!parse_err("a | | b\n").is_empty());
@@ -373,8 +376,13 @@ fn call_arg_space_group() {
 }
 
 #[test]
-fn mixed_operators_error() {
-    assert!(parse_err("a -> b -- c\n").contains("mixes operators"));
+fn mixed_operators() {
+    // Wire hops each carry their own op [SPEC 9] — `a -> b -- c` parses, the
+    // dashed hop its own; mixing operator *kinds* stays a parse error.
+    let f = parse_ok("a -> b -- c\n");
+    assert_eq!(f.links[0].ops.len(), 2);
+    assert_ne!(f.links[0].ops[0], f.links[0].ops[1]);
+    assert!(parse_err("a -> b (-) c\n").contains("mixes operators"));
 }
 
 // ── Statement classification ──

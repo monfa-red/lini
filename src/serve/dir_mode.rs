@@ -56,8 +56,23 @@ fn serve_file(stream: &mut TcpStream, root: &Path, query: &str) -> std::io::Resu
         return http::write_response(stream, 400, "text/plain", b"invalid path\n");
     };
     match std::fs::read(&path) {
-        Ok(bytes) => http::write_response(stream, 200, "text/plain; charset=utf-8", &bytes),
+        Ok(bytes) => http::write_response(stream, 200, content_type(&path), &bytes),
         Err(_) => http::write_response(stream, 404, "text/plain", b"not found\n"),
+    }
+}
+
+/// The served content type by extension. Reads are not limited to `.lini` —
+/// the directory boundary is the security wall, and a scene will reference
+/// sibling images (`|image| { src: }`) once serve renders them (alpha.5).
+fn content_type(path: &Path) -> &'static str {
+    match path.extension().and_then(|e| e.to_str()) {
+        Some("svg") => "image/svg+xml",
+        Some("png") => "image/png",
+        Some("jpg") | Some("jpeg") => "image/jpeg",
+        Some("gif") => "image/gif",
+        Some("webp") => "image/webp",
+        Some("lini") => "text/plain; charset=utf-8",
+        _ => "application/octet-stream",
     }
 }
 
@@ -110,10 +125,14 @@ fn serve_save(
         return err_json(stream, 400, "missing path");
     };
     // `resolve_in_root` only resolves files that already exist, so Save can
-    // only ever overwrite a listed file — never create one (out of scope for v1).
+    // only ever overwrite a listed file — never create one (out of scope for
+    // v1) — and writes stay `.lini`-only (reads are the generalized side).
     let Some(path) = resolve_in_root(root, &rel) else {
         return err_json(stream, 400, "invalid path");
     };
+    if path.extension().and_then(|e| e.to_str()) != Some("lini") {
+        return err_json(stream, 400, "invalid path");
+    }
     match std::fs::write(&path, body) {
         Ok(()) => http::write_response(
             stream,
@@ -190,16 +209,14 @@ fn rel_to_slash(rel: &Path) -> String {
 }
 
 /// Resolve a caller-supplied relative path against `root`, returning the
-/// canonical path only if it is a `.lini` file that genuinely lives inside
-/// `root`. Rejects absolute paths, `..` traversal, the wrong extension, and
-/// (via canonicalization) symlink escapes.
+/// canonical path only if it genuinely lives inside `root`. Rejects absolute
+/// paths, `..` traversal, and (via canonicalization) symlink escapes — the
+/// directory is the boundary; what may be *written* is the save handler's
+/// stricter call.
 fn resolve_in_root(root: &Path, rel: &str) -> Option<PathBuf> {
     let decoded = http::percent_decode(rel);
     let rel = Path::new(&decoded);
     if rel.is_absolute() || rel.components().any(|c| c == Component::ParentDir) {
-        return None;
-    }
-    if rel.extension().and_then(|e| e.to_str()) != Some("lini") {
         return None;
     }
     let canon_root = root.canonicalize().ok()?;

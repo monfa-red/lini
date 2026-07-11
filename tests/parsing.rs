@@ -43,7 +43,9 @@ fn assert_parse_error(src: &str, expect_msg_substr: &str) {
 
 #[test]
 fn err_link_chain_mixes_operators() {
-    assert_parse_error("cat -> dog --> bird\n", "link chain mixes operators");
+    // Wire hops may differ (`cat -> dog --> bird` parses, each hop its own op
+    // [SPEC 9]); mixing operator *kinds* — a wire with a measure — errors.
+    assert_parse_error("cat -> dog (-) bird\n", "link chain mixes operators");
 }
 
 #[test]
