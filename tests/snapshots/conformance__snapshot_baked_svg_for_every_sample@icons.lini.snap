@@ -17,7 +17,7 @@ input_file: samples/icons.lini
     .lini .lini-cap { color: #747474; font-size: 11px; }
     .lini .lini-link { fill: none; stroke: #484848; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-link-dashed { stroke-dasharray: 6,4.5; }
-    .lini .lini-link-dotted { stroke-dasharray: 2,4; }
+    .lini .lini-link-dotted { stroke-dasharray: 2,3; }
     .lini .lini-marker { fill: #444; stroke: none; }
     .lini .lini-style-rose { fill: #ffe3ec; stroke: #811442; color: #811442; }
     .lini .lini-style-rose .lini-marker { fill: #811442; }

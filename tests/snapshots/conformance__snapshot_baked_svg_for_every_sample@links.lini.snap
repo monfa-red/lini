@@ -115,12 +115,12 @@ input_file: samples/links.lini
       </g>
       <g class="lini-node lini-line" style="stroke: #008d51" transform="translate(0,0)">
         <line x1="-76" y1="0" x2="76" y2="0"/>
-        <circle class="lini-marker lini-marker-dot" cx="-76.625" cy="0" r="3.375" style="fill: #008d51"/>
-        <circle class="lini-marker lini-marker-dot" cx="76.625" cy="0" r="3.375" style="fill: #008d51"/>
+        <circle class="lini-marker lini-marker-dot" cx="-76.0625" cy="0" r="3.9375" style="fill: #008d51"/>
+        <circle class="lini-marker lini-marker-dot" cx="76.0625" cy="0" r="3.9375" style="fill: #008d51"/>
       </g>
       <g class="lini-node lini-line" style="stroke: #6e62cc" transform="translate(0,22)">
         <line x1="-80" y1="0" x2="76" y2="0"/>
-        <polygon class="lini-marker lini-marker-diamond" points="80,0 75.5,3.825 71,0 75.5,-3.825" style="fill: #6e62cc"/>
+        <polygon class="lini-marker lini-marker-diamond" points="80,0 75.5,4.5 71,0 75.5,-4.5" style="fill: #6e62cc"/>
       </g>
       <g class="lini-node lini-caption lini-block" transform="translate(-74.8,-56)">
         <rect x="-25.2" y="-6" width="50.4" height="12" rx="0" ry="0"/>

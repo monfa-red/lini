@@ -677,7 +677,7 @@ input_file: samples/charts.lini
         <title>v2: p999: 300</title>
         <ellipse cx="0" cy="0" rx="5.5" ry="5.5"/>
       </g>
-      <g class="lini-node lini-line" style="stroke: #b45700; stroke-dasharray: 2,4" transform="translate(0,0)">
+      <g class="lini-node lini-line" style="stroke: #b45700; stroke-dasharray: 2,3" transform="translate(0,0)">
         <polyline points="-110.425,67.978 -30.875,62.134 48.675,53.368 128.225,27.07"/>
       </g>
       <g class="lini-text" style="fill: #888; font-size: 11px; font-weight: normal">

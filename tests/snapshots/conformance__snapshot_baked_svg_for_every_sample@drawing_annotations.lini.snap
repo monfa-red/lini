@@ -383,7 +383,7 @@ input_file: samples/drawing_annotations.lini
       </g>
       <g class="lini-node lini-dim-line lini-line" style="stroke: #484848" transform="translate(54.85,4)">
         <polyline points="-2,0 -135,0 -143,0"/>
-        <circle class="lini-marker lini-marker-dot" cx="-2.25" cy="0" r="2.25" style="fill: #484848"/>
+        <circle class="lini-marker lini-marker-dot" cx="-2.625" cy="0" r="2.625" style="fill: #484848"/>
       </g>
       <g class="lini-text lini-dim-text">
         <use href="#lg0400-43" transform="translate(-126.15 8.296) scale(0.006 -0.006)"/>
@@ -415,7 +415,7 @@ input_file: samples/drawing_annotations.lini
       </g>
       <g class="lini-node lini-dim-line lini-line" style="stroke: #484848" transform="translate(54.85,4)">
         <line x1="155.1057" y1="-81.9133" x2="120.7878" y2="-1.8383"/>
-        <circle class="lini-marker lini-marker-dot" cx="120.8863" cy="-2.0681" r="2.25" style="fill: #484848"/>
+        <circle class="lini-marker lini-marker-dot" cx="121.034" cy="-2.4128" r="2.625" style="fill: #484848"/>
       </g>
       <g class="lini-node lini-dim-line lini-line" style="stroke: #484848" transform="translate(54.85,4)">
         <line x1="-202.5" y1="-47.5" x2="-121.029" y2="88.285"/>

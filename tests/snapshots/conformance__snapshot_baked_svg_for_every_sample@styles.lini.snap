@@ -228,7 +228,7 @@ input_file: samples/styles.lini
           <use href="#lg0500-72" transform="translate(18 5.37) scale(0.0075 -0.0075)"/>
         </g>
       </g>
-      <g class="lini-node lini-box lini-block" style="stroke-dasharray: 2,4" transform="translate(-107.5,0)">
+      <g class="lini-node lini-box lini-block" style="stroke-dasharray: 2,3" transform="translate(-107.5,0)">
         <rect x="-47" y="-27.5" width="94" height="55" rx="6" ry="6"/>
         <g class="lini-text">
           <use href="#lg0500-72" transform="translate(-27 5.37) scale(0.0075 -0.0075)"/>

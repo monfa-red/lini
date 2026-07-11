@@ -148,15 +148,15 @@ input_file: samples/drawing_assembly.lini
       </g>
       <g class="lini-node lini-dim-line lini-line" transform="translate(39.9,64.25)">
         <line x1="-103.0584" y1="-222.4937" x2="-1.3908" y2="-117.4372"/>
-        <circle class="lini-marker lini-marker-dot" cx="-1.5647" cy="-117.6169" r="2.25" style="fill: black"/>
+        <circle class="lini-marker lini-marker-dot" cx="-1.8255" cy="-117.8863" r="2.625" style="fill: black"/>
       </g>
       <g class="lini-node lini-dim-line lini-line" transform="translate(39.9,64.25)">
         <line x1="440" y1="-174.5" x2="440" y2="-50"/>
-        <circle class="lini-marker lini-marker-dot" cx="440" cy="-50.25" r="2.25" style="fill: black"/>
+        <circle class="lini-marker lini-marker-dot" cx="440" cy="-50.625" r="2.625" style="fill: black"/>
       </g>
       <g class="lini-node lini-dim-line lini-line" transform="translate(39.9,64.25)">
         <line x1="-608.8151" y1="-177.6302" x2="-520.8944" y2="-1.7889"/>
-        <circle class="lini-marker lini-marker-dot" cx="-521.0062" cy="-2.0125" r="2.25" style="fill: black"/>
+        <circle class="lini-marker lini-marker-dot" cx="-521.1739" cy="-2.3479" r="2.625" style="fill: black"/>
       </g>
       <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,214.25)">
         <rect x="-68.4" y="-6" width="136.8" height="12" rx="0" ry="0"/>

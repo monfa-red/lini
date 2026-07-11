@@ -58,9 +58,9 @@ pub fn datum_size(thickness: f64) -> f64 {
     DATUM_SIZE.max(thickness * 5.5)
 }
 
-/// Dot radius as a fraction of the marker `size` — a touch fuller so the circle
-/// reads level with the arrow and diamond rather than undersized.
-const DOT_RADIUS: f64 = 0.375;
+/// Dot radius as a fraction of the marker `size` — a touch fuller so the dot
+/// reads level with the arrow head rather than undersized.
+const DOT_RADIUS: f64 = 0.4375;
 
 /// `circle` radius as a fraction of the marker `size` — a deliberately larger `dot`
 /// ([SPEC 7]), big enough to hover or read on a chart point. Same drawing as the dot,
@@ -85,7 +85,7 @@ const RING_BACK_MANY: f64 = 1.7;
 /// slightly slimmer so it reads level with the arrow.
 const ARROW_HALF_SPREAD: f64 = 0.5;
 const DATUM_HALF_SPREAD: f64 = 0.5;
-const DIAMOND_HALF_SPREAD: f64 = 0.425;
+const DIAMOND_HALF_SPREAD: f64 = 0.5;
 
 /// How far a link's marker tip is pushed past the endpoint into the shape, so the
 /// head overlaps the border by a hair and reads as connected — constant at every

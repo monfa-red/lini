@@ -184,7 +184,8 @@ pub fn dash_pattern(style: &str, width: f64) -> String {
             let unit = width + 1.0;
             format!("{},{}", num(unit * 2.0), num(unit * 1.5))
         }
-        "dotted" => format!("{},{}", num(width), num(width * 2.0)),
+        // Dot ≈ width, gap 1.5× — `2,3` at the link default, tight but readable.
+        "dotted" => format!("{},{}", num(width), num(width * 1.5)),
         // The drafting conventions [SPEC 15.7]: `center` is dash-dot (axes,
         // symmetry), `phantom` dash-dot-dot (alternate positions) — a long run,
         // then dot(s) sized to the stroke, gapped like `dashed`.
