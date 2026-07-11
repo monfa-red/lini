@@ -574,7 +574,33 @@ idiomatic lini a learner can copy.
 
 Acceptance: ~25 samples; all sweeps green; contact sheet reviewed; zero README
 asset drift.
-**Log:**
+**Log:** 2026-07-11 — **done**, 1 commit. 50 samples → **29** (21 keepers + 8
+merged scenes; the plan's own merge table lands at 29, its "~25" was the
+estimate). Every merged file written as one coherent scene and verified by
+render (light + dark PNGs eyeballed): charts = one analytics dashboard;
+chart_advanced = one telemetry board; drawing_turned = three revolved parts
+on one board; drawing_section = an A4 sheet (front + section A–A + detail C);
+drawing_assembly reworked (nested rigid body handle, dot-path mate into it,
+pressed fits with negative gaps, opposite hatch angles on adjacent parts,
+face-anchored balloons, BOM); drawing_annotations = one fixture's two parts
+carrying the full dim/leader vocabulary + the (-) selector; paint = gradients
++ gap-fill + themed group; text_tables keeps the styled cell (R1 coverage)
+and the link-label text-shadow (R6 coverage). Snapshots regenerated via
+`cargo insta test --accept --unreferenced=delete`; all sweeps green
+(parsing/conformance/fmt/oracle/laws are directory-driven — the only by-name
+refs are keepers). AGENTS.md swapped to the cluster policy. Contact sheet
+(light + dark) rendered and delivered for owner review.
+
+**Deviations:** in-stage judgment calls — drawing_section sits on **a4
+landscape, gap 24, scales 4/4/12** (a3 was sparse; 4/4/12 keeps the composed
+titles at clean 1:1 / 3:1 — the ratio composes over the page's default 4);
+the detail view is a **bare re-render** (`of: c` with no children): a `(o)`
+on the radially-patterned port dims at the pattern's ring centre — outside
+the clipped region — so the detail carries no dimension (the original
+drawing_detail dimensioned a sketch *station*, which the ring's oval
+geometry doesn't have). drawing.lini's washer and drawing_pattern's flange
+were folded as covered features (concentric stack + radial pattern live in
+drawing_section's front view; grid pattern in drawing_annotations' plate).
 
 ### Stage M1 — the comma law `[breaking]`
 
