@@ -509,14 +509,14 @@ input_file: samples/charts.lini
         <line x1="78.8667" y1="-76.4" x2="78.8667" y2="55.5"/>
       </g>
       <g class="lini-text" style="fill: #b8476e; font-size: 11px; font-weight: normal">
-        <use href="#lg0400-88" transform="translate(49.1667 -62.562) scale(0.0055 -0.0055)"/>
-        <use href="#lg0400-69" transform="translate(55.7667 -62.562) scale(0.0055 -0.0055)"/>
-        <use href="#lg0400-86" transform="translate(62.3667 -62.562) scale(0.0055 -0.0055)"/>
-        <use href="#lg0400-75" transform="translate(68.9667 -62.562) scale(0.0055 -0.0055)"/>
-        <use href="#lg0400-73" transform="translate(75.5667 -62.562) scale(0.0055 -0.0055)"/>
-        <use href="#lg0400-88" transform="translate(82.1667 -62.562) scale(0.0055 -0.0055)"/>
-        <use href="#lg0400-21" transform="translate(95.3667 -62.562) scale(0.0055 -0.0055)"/>
-        <use href="#lg0400-20" transform="translate(101.9667 -62.562) scale(0.0055 -0.0055)"/>
+        <use href="#lg0400-88" transform="translate(49.1667 49.538) scale(0.0055 -0.0055)"/>
+        <use href="#lg0400-69" transform="translate(55.7667 49.538) scale(0.0055 -0.0055)"/>
+        <use href="#lg0400-86" transform="translate(62.3667 49.538) scale(0.0055 -0.0055)"/>
+        <use href="#lg0400-75" transform="translate(68.9667 49.538) scale(0.0055 -0.0055)"/>
+        <use href="#lg0400-73" transform="translate(75.5667 49.538) scale(0.0055 -0.0055)"/>
+        <use href="#lg0400-88" transform="translate(82.1667 49.538) scale(0.0055 -0.0055)"/>
+        <use href="#lg0400-21" transform="translate(95.3667 49.538) scale(0.0055 -0.0055)"/>
+        <use href="#lg0400-20" transform="translate(101.9667 49.538) scale(0.0055 -0.0055)"/>
       </g>
       <g class="lini-text" style="fill: #888; font-size: 11px; font-weight: normal">
         <use href="#lg0400-20" transform="translate(-102.7 71.138) scale(0.0055 -0.0055)"/>

@@ -1019,7 +1019,36 @@ crossing fan row read as clutter, not showroom material).
 - [x] Retro pass over this file: unfinished items either done or explicitly
   moved to PLAN-V1 rounds; Log lines complete.
 
-**Log:**
+**Log:** 2026-07-11 — **done**, 2 commits. The full sweep: fmt/test/clippy
+clean (15 suites; also fonts-off via `--no-default-features --features
+icons`); `lini fmt --check` clean over all 30 samples; desugar + laws oracles
+green; every sample rendered light + dark through `--static` (60 PNGs — the
+new review path needs no installed fonts) and eyeballed: keystones by me, the
+full set by an Opus reviewer. The review surfaced **two fixes**, both landed:
+(1) a row chart's vertical `|mark|` label seated "just inside the top" — a
+column-chart rule; in a row the top lane always holds the first category's
+bars, so it now seats at the bottom end (the last category's, usually the
+shortest) — charts.lini's "target 10" reads clear; (2) drawing_turned's
+authored depth symbol `↧` (U+21A7) is in neither bundled face → tofu under
+`--static`; the callout spells "10 DEEP" until **alpha.4 (drafting symbols)**
+composes real symbol glyphs. A sample sweep confirmed every other non-ASCII
+char rendered is in the subset charset (the `→`/`─` hits are comments).
+- Docs: every README code block now compiles against 0.22 (verified by
+  compiling each fenced block — three had pre-comma-law lists, a
+  label-after-class link, undefined colour classes); the README font story
+  rewritten for the bundled families; `lini theme` output already derives
+  from the new defaults. AUDIT.md deleted (its packages all landed; the
+  PLAN logs are the record). ROUTING-LOG.md gains the routing-adjacent
+  entry (root arms route, `is_routed` shared predicate, why desugar-level
+  chain expansion leaves span-keyed statement grouping unchanged).
+- Version **0.22.0** committed; the deferred 0.20.1 / 0.21.0 checkpoint
+  releases were never cut by the owner, so this is the first version bump
+  of the round. The **`1.0.0-alpha` tag** is created locally on the same
+  tree — the syntax-frozen marker PLAN-V1 builds on. **Push of commits and
+  tag deferred to the owner**, per repo convention.
+- Retro: all stage checkboxes ticked per their logs; the two open
+  follow-ups (structural dedup keys via `PartialEq`; gate-driven
+  validation) moved to PLAN-V1's beta round explicitly.
 
 ---
 

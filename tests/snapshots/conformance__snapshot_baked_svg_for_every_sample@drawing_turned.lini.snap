@@ -31,6 +31,7 @@ input_file: samples/drawing_turned.lini
   </style>
   <defs>
     <path id="lg0400-0" d="M174 0L174 1432L1026 1432L1026 0L174 0ZM302 120L898 120L898 1312L302 1312L302 120Z"/>
+    <path id="lg0400-16" d="M494 -349L378 -271L616 49L615 -6Q570 -6 532.5 12.5Q495 31 473 65.5Q451 100 451 147Q451 212 495.5 257.5Q540 303 610 303Q682 303 729 258Q776 213 776 131Q776 83 756 35.5Q736 -12 699 -63L494 -349Z"/>
     <path id="lg0400-18" d="M599 -29Q530 -29 482.5 18Q435 65 435 135Q435 203 483 250Q531 297 599 297Q670 297 717 250Q764 203 764 135Q764 65 717 18Q670 -29 599 -29Z"/>
     <path id="lg0400-20" d="M197 405L142 562L1004 1028L1059 871L197 405ZM600 -32Q362 -32 230 156Q98 344 98 679L98 755Q98 1090 230 1277Q362 1464 600 1464Q839 1464 970.5 1277Q1102 1090 1102 755L1102 679Q1102 343 970.5 155.5Q839 -32 600 -32ZM600 138Q759 138 841.5 275.5Q924 413 924 678L924 756Q924 1034 841.5 1164Q759 1294 600 1294Q441 1294 358.5 1157.5Q276 1021 276 756L276 678Q276 400 358.5 269Q441 138 600 138Z"/>
     <path id="lg0400-21" d="M580 80L580 1197L235 1012L149 1171L641 1432L770 1432L770 80L580 80ZM206 0L206 180L1106 180L1106 0L206 0Z"/>
@@ -535,9 +536,13 @@ input_file: samples/drawing_turned.lini
         <use href="#lg0400-18" transform="translate(87.4 -72.704) scale(0.006 -0.006)"/>
         <use href="#lg0400-22" transform="translate(94.6 -72.704) scale(0.006 -0.006)"/>
         <use href="#lg0400-25" transform="translate(101.8 -72.704) scale(0.006 -0.006)"/>
-        <use href="#lg0400-0" transform="translate(116.2 -72.704) scale(0.006 -0.006)"/>
+        <use href="#lg0400-16" transform="translate(109 -72.704) scale(0.006 -0.006)"/>
         <use href="#lg0400-21" transform="translate(123.4 -72.704) scale(0.006 -0.006)"/>
         <use href="#lg0400-20" transform="translate(130.6 -72.704) scale(0.006 -0.006)"/>
+        <use href="#lg0400-40" transform="translate(145 -72.704) scale(0.006 -0.006)"/>
+        <use href="#lg0400-41" transform="translate(152.2 -72.704) scale(0.006 -0.006)"/>
+        <use href="#lg0400-41" transform="translate(159.4 -72.704) scale(0.006 -0.006)"/>
+        <use href="#lg0400-52" transform="translate(166.6 -72.704) scale(0.006 -0.006)"/>
       </g>
       <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,93)">
         <rect x="-21.6" y="-6" width="43.2" height="12" rx="0" ry="0"/>

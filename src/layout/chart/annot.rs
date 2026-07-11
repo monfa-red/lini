@@ -191,19 +191,18 @@ fn ref_line(plot: &Plot, chart: &Chart, m: &Mark, v: f64, out: &mut Vec<PlacedNo
     if let Some(text) = &m.label {
         let color = Some(m.color.clone());
         // The label follows the drawn line, not the axis identity: a vertical
-        // line takes it centred just inside the top; a horizontal one takes
-        // it at the left end, just above (clear of the data, which usually
-        // grows rightward).
+        // line takes it centred just inside the top — except in a row chart,
+        // where the top lane always holds the first category's bars, so it
+        // seats at the bottom end instead (the last category's, usually the
+        // shortest); a horizontal one takes it at the left end, just above
+        // (clear of the data, which usually grows rightward).
         let node = if horizontal {
-            prim::text(
-                text,
-                p,
-                plot.y0 + LABEL_SIZE * 0.9,
-                LABEL_SIZE,
-                color,
-                false,
-                chart.font_kind,
-            )
+            let y = if plot.dir == Dir::Row {
+                plot.y1 - LABEL_SIZE * 0.9
+            } else {
+                plot.y0 + LABEL_SIZE * 0.9
+            };
+            prim::text(text, p, y, LABEL_SIZE, color, false, chart.font_kind)
         } else {
             prim::text_left(
                 text,

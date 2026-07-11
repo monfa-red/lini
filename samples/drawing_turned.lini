@@ -86,6 +86,6 @@
   // → ⌀45 f7
   body:tube (o) { side: left; }
   // → ⌀50
-  body.m8 <- "3× M8×1.25 ↧10" { side: top; }
+  body.m8 <- "3× M8×1.25, 10 DEEP" { side: top; }
   // typed thread callout
 ]
