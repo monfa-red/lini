@@ -32,7 +32,6 @@ pub fn radius_cap(w: &RoutedLink) -> f64 {
     w.attrs.number("clearance").unwrap_or(DEFAULT_CLEARANCE)
 }
 
-#[allow(clippy::too_many_arguments)]
 pub fn render_link(
     out: &mut String,
     idx: usize,

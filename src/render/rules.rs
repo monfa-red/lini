@@ -94,6 +94,15 @@ impl RuleSet {
     /// `value_of` resolves a prop to its value (a node aliases text `color`→`fill`),
     /// `fmt` formats it (a node's `css_value` adds `px` to `font-size`; a link's
     /// `format_value` does not).
+    ///
+    /// **Paint contract.** Every *class-styled* element — a node `<g>`, a link
+    /// `<g>`, a text leaf (via `node_style_attr` / `text_paint_attr`) — states its
+    /// fill / stroke / font paint *only* through this diff. No renderer hand-writes
+    /// a paint declaration on such an element outside it (that whack-a-mole is what
+    /// this ended). The inline paints that remain in `render/` are all elements
+    /// that carry no class rule and so cannot diff against one: icon role groups,
+    /// drawing-chrome geometry, `<defs>` gradient / hatch bodies, the canvas-fill
+    /// override, a gutter rect's varying `fill`, and the marker / stray diagnostics.
     pub fn inline_paint_diff<'a>(
         &self,
         classes: &[String],
