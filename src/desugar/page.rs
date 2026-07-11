@@ -96,6 +96,27 @@ pub(super) fn expand_sheet(style: &mut Vec<Decl>) -> Result<(), Error> {
     Ok(())
 }
 
+/// The page's flow `direction` defaults by orientation [SPEC 15.8]:
+/// landscape → `row`, portrait (or square) → `column`. An authored
+/// `direction` or `layout` wins; like the chrome, this reads the authored
+/// dims (post-`sheet:` expansion) — a rule-set size is invisible here.
+pub(super) fn default_direction(style: &mut Vec<Decl>, at: Span) {
+    if style
+        .iter()
+        .any(|d| d.name == "direction" || d.name == "layout")
+    {
+        return;
+    }
+    let (w, h) = dims(style);
+    let dir = if w > h { "row" } else { "column" };
+    let tail = Span::new(at.end, at.end);
+    style.push(Decl {
+        name: "direction".into(),
+        groups: vec![vec![Value::Ident(dir.into())]],
+        span: tail,
+    });
+}
+
 /// The sheet dimensions the chrome derives from: the node's own `width` /
 /// `height` decls (post-`sheet:` expansion), else the bundle default. A
 /// rule-set size is invisible here — the same class-based limit frame

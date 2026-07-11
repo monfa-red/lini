@@ -92,7 +92,7 @@ input_file: samples/drawing_screw.lini
   <g class="lini-scene">
     <g class="lini-node lini-page lini-block" data-id="screw" transform="translate(0,0)">
       <rect x="-840" y="-594" width="1680" height="1188" rx="0" ry="0"/>
-      <g class="lini-node lini-drawing lini-block" data-id="side" transform="translate(20,-249)">
+      <g class="lini-node lini-drawing lini-block" data-id="side" transform="translate(-165,0)">
         <rect x="-234.5" y="-73" width="469" height="146" rx="0" ry="0"/>
         <g class="lini-node lini-sketch" data-id="body" transform="translate(70,5.5)">
           <path d="M -300 0 L -300 -16 L -101.879 -16 A 20 20 0 0 0 -98.291 -16.325 A 120 120 0 0 1 -23.974 -6.039 A 20 20 0 0 0 -15.176 -4 L 156 -4 L 160 0 L 160 24 L 160 -24 L 160 0 L 156 4 L -15.176 4 A 20 20 0 0 0 -23.974 6.039 A 120 120 0 0 1 -98.291 16.325 A 20 20 0 0 0 -101.879 16 L -300 16 Z" fill-rule="evenodd"/>
@@ -240,7 +240,7 @@ input_file: samples/drawing_screw.lini
           </g>
         </g>
       </g>
-      <g class="lini-node lini-drawing lini-block" data-id="sec" transform="translate(20,-39)">
+      <g class="lini-node lini-drawing lini-block" data-id="sec" transform="translate(152.5,0)">
         <rect x="-61" y="-115" width="122" height="230" rx="0" ry="0"/>
         <g class="lini-node lini-steel lini-sketch" data-id="flight" transform="translate(0,-10.5)">
           <path d="M -60 -60 L 60 -60 L 60 60 L -60 60 Z M -10 -92 L 10 -92 L 10 -60 L -10 -60 Z" fill-rule="evenodd"/>
@@ -281,7 +281,7 @@ input_file: samples/drawing_screw.lini
           </g>
         </g>
       </g>
-      <g class="lini-node lini-drawing lini-block" data-id="det" transform="translate(20,210)">
+      <g class="lini-node lini-drawing lini-block" data-id="det" transform="translate(337.5,0)">
         <rect x="-102" y="-112" width="204" height="224" rx="0" ry="0"/>
         <g class="lini-node lini-block" clip-path="url(#lini-clip-1)" transform="translate(0,10)">
           <rect x="-102" y="-102" width="204" height="204" rx="0" ry="0"/>

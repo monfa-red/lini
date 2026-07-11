@@ -390,16 +390,8 @@ input_file: samples/paint.lini
   </g>
   <g class="lini-links">
     <g class="lini-link" data-from="service.web" data-to="service.api">
-      <mask id="lini-label-cut-0" maskUnits="userSpaceOnUse" x="-62.7" y="176" width="32" height="71"><rect class="lini-cut-bg" x="-62.7" y="176" width="32" height="71"/><rect class="lini-cut" x="-80.5" y="204.35" width="39.6" height="14.3"/></mask>
-      <path d="M -32.7 178 L -44.7 178 A 16 16 0 0 0 -60.7 194 L -60.7 229 A 16 16 0 0 0 -44.7 245 L -36.2 245" mask="url(#lini-label-cut-0)"/>
+      <path d="M -32.7 178 L -44.7 178 A 16 16 0 0 0 -60.7 194 L -60.7 229 A 16 16 0 0 0 -44.7 245 L -36.2 245"/>
       <polygon class="lini-marker lini-marker-arrow" points="-32.2,245 -41.2,249.5 -41.2,240.5"/>
-      <g class="lini-link-label">
-        <use href="#lg0400-85" transform="translate(-77.2 215.438) scale(0.0055 -0.0055)"/>
-        <use href="#lg0400-89" transform="translate(-70.6 215.438) scale(0.0055 -0.0055)"/>
-        <use href="#lg0400-73" transform="translate(-64 215.438) scale(0.0055 -0.0055)"/>
-        <use href="#lg0400-86" transform="translate(-57.4 215.438) scale(0.0055 -0.0055)"/>
-        <use href="#lg0400-93" transform="translate(-50.8 215.438) scale(0.0055 -0.0055)"/>
-      </g>
     </g>
     <g class="lini-link" data-from="service.api" data-to="service.db">
       <mask id="lini-label-cut-1" maskUnits="userSpaceOnUse" x="30.7" y="243" width="41.75" height="71"><rect class="lini-cut-bg" x="30.7" y="243" width="41.75" height="71"/><rect class="lini-cut" x="50.65" y="261.6" width="39.6" height="14.3"/></mask>

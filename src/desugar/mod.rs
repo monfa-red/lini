@@ -319,6 +319,7 @@ fn lower_node(
     if is_page {
         let mut s = node.style.clone();
         page::expand_sheet(&mut s)?;
+        page::default_direction(&mut s, node.span);
         page_style = Some(s);
     }
     if !already && is_page {

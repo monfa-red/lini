@@ -7,7 +7,7 @@
   |steel::sketch| { fill: hatch(45, 5); }
 }
 
-|page#sheet| { sheet: a4 landscape; gap: 24; direction: row; align: origin; } [
+|page#sheet| { sheet: a4 landscape; gap: 24; align: origin; } [
 
   |drawing#front| "COOLING RING" { scale: 1; } [
     |oval#od| { width: 80; height: 80; fill: none; stroke: --stroke-dark; }

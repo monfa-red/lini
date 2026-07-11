@@ -5,7 +5,7 @@
 // flush inside the frame's bottom-right corner — its ISO 7200 field properties
 // build the grid, absent fields collapsing.
 
-|page| { sheet: a4 landscape; gap: 50; direction: row; align: origin; } [
+|page| { sheet: a4 landscape; gap: 50; align: origin; } [
   // the ISO sheet: frame, zones, marks — views share their axes datum-to-datum
 
   |drawing#side| "DIN 912 — M8 × 40" { scale: 2; } [
