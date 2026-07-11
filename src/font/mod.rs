@@ -166,7 +166,6 @@ impl Font {
     }
 
     /// Cap height in em — the optical centring anchor [SPEC 5].
-    #[allow(dead_code)] // reader lands with cap-height centring (M5)
     pub fn cap_height_em(&self) -> f64 {
         let face = self.face();
         face.cap_height as f64 / face.upem as f64

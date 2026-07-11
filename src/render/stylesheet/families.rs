@@ -155,14 +155,16 @@ pub(super) fn build_shape_rules(
     if present.contains("text") {
         // A bare `<text class="lini-text">` [SPEC 17]. `fill: currentColor` ties
         // the glyph colour to the inherited `color`; `stroke: none` keeps a
-        // container's stroke off the glyphs; the anchor pair centres it on (x, y).
+        // container's stroke off the glyphs; `text-anchor: middle` centres it
+        // on x. Vertical centring is a baked `dy` on the element — cap-height
+        // optical centring [SPEC 5], not `dominant-baseline` (renderers
+        // disagree on it; a baked offset is faithful everywhere).
         rules.push(Rule {
             class: "lini-text".into(),
             props: vec![
                 ("fill".into(), "currentColor".into()),
                 ("stroke".into(), "none".into()),
                 ("text-anchor".into(), "middle".into()),
-                ("dominant-baseline".into(), "central".into()),
             ],
         });
     }
@@ -337,7 +339,6 @@ pub(super) fn build_link_label_rules(
                 ("fill".into(), "currentColor".into()),
                 ("stroke".into(), "none".into()),
                 ("text-anchor".into(), "middle".into()),
-                ("dominant-baseline".into(), "central".into()),
                 ("font-size".into(), format!("{}px", num(wfs))),
                 ("font-weight".into(), live("link-font-weight", vars, opts)),
             ],
@@ -350,7 +351,6 @@ pub(super) fn build_link_label_rules(
                 ("fill".into(), "currentColor".into()),
                 ("stroke".into(), "none".into()),
                 ("text-anchor".into(), "middle".into()),
-                ("dominant-baseline".into(), "central".into()),
                 // Larger than the wire label so messages read on the time axis —
                 // the size layout measured with.
                 (

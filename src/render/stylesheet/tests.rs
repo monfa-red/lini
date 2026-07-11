@@ -101,7 +101,7 @@ fn link_label_rule_states_constants() {
     let css = emit_str(&rules_for("a -> b \"x\"\n"));
     assert!(
         css.contains(
-            ".lini .lini-link-label { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; font-size: 11px; font-weight: var(--lini-link-font-weight); }"
+            ".lini .lini-link-label { fill: currentColor; stroke: none; text-anchor: middle; font-size: 11px; font-weight: var(--lini-link-font-weight); }"
         ),
         "{}",
         css

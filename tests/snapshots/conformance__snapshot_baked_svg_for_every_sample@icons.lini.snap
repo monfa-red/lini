@@ -5,10 +5,10 @@ input_file: samples/icons.lini
 ---
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-278.1 -217 556.2 442" width="556.2" height="442" class="lini">
   <style>
-    .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
+    .lini { font-family: "Google Sans Code", ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
     .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
+    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
     .lini .lini-icon { fill: rgba(0, 0, 0, 0.16); stroke: #444; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
     .lini .lini-sign { stroke-width: 2; font-size: 12px; }
@@ -38,7 +38,7 @@ input_file: samples/icons.lini
   <g class="lini-scene">
     <g class="lini-node lini-lbl lini-block" transform="translate(0,-193.5)">
       <rect x="-19.5" y="-14.5" width="39" height="29" rx="0" ry="0"/>
-      <text class="lini-text" x="0" y="8">Icons</text>
+      <text class="lini-text" x="0" y="8" dy="0.358em">Icons</text>
     </g>
     <g class="lini-node lini-group lini-block" style="fill: none" transform="translate(0,-113.5)">
       <rect x="-249.6" y="-48" width="499.2" height="96" rx="8" ry="8"/>
@@ -56,7 +56,7 @@ input_file: samples/icons.lini
         </g>
         <g class="lini-node lini-cap lini-block" transform="translate(0,20.5)">
           <rect x="-23.1" y="-5.5" width="46.2" height="11" rx="0" ry="0"/>
-          <text class="lini-text" x="0" y="0">default</text>
+          <text class="lini-text" x="0" y="0" dy="0.358em">default</text>
         </g>
       </g>
       <g class="lini-node lini-tile lini-column lini-block" transform="translate(-111,0)">
@@ -73,7 +73,7 @@ input_file: samples/icons.lini
         </g>
         <g class="lini-node lini-cap lini-block" transform="translate(0,20.5)">
           <rect x="-26.4" y="-5.5" width="52.8" height="11" rx="0" ry="0"/>
-          <text class="lini-text" x="0" y="0">two-tone</text>
+          <text class="lini-text" x="0" y="0" dy="0.358em">two-tone</text>
         </g>
       </g>
       <g class="lini-node lini-tile lini-column lini-block" transform="translate(-25.6,0)">
@@ -87,7 +87,7 @@ input_file: samples/icons.lini
         </g>
         <g class="lini-node lini-cap lini-block" transform="translate(0,20.5)">
           <rect x="-13.2" y="-5.5" width="26.4" height="11" rx="0" ry="0"/>
-          <text class="lini-text" x="0" y="0">line</text>
+          <text class="lini-text" x="0" y="0" dy="0.358em">line</text>
         </g>
       </g>
       <g class="lini-node lini-tile lini-column lini-block" transform="translate(48.4,0)">
@@ -105,7 +105,7 @@ input_file: samples/icons.lini
         </g>
         <g class="lini-node lini-cap lini-block" transform="translate(0,20.5)">
           <rect x="-13.2" y="-5.5" width="26.4" height="11" rx="0" ry="0"/>
-          <text class="lini-text" x="0" y="0">user</text>
+          <text class="lini-text" x="0" y="0" dy="0.358em">user</text>
         </g>
       </g>
       <g class="lini-node lini-tile lini-column lini-block" transform="translate(130.5,0)">
@@ -120,11 +120,11 @@ input_file: samples/icons.lini
               <path d="M96,192a32,32,0,0,0,64,0"/>
             </g>
           </g>
-          <text class="lini-text" x="0" y="-2">3</text>
+          <text class="lini-text" x="0" y="-2" dy="0.358em">3</text>
         </g>
         <g class="lini-node lini-cap lini-block" transform="translate(0,20.5)">
           <rect x="-23.1" y="-5.5" width="46.2" height="11" rx="0" ry="0"/>
-          <text class="lini-text" x="0" y="0">+ label</text>
+          <text class="lini-text" x="0" y="0" dy="0.358em">+ label</text>
         </g>
       </g>
       <g class="lini-node lini-tile lini-column lini-block" transform="translate(212.6,0)">
@@ -141,13 +141,13 @@ input_file: samples/icons.lini
         </g>
         <g class="lini-node lini-cap lini-block" transform="translate(0,20.5)">
           <rect x="-13.2" y="-5.5" width="26.4" height="11" rx="0" ry="0"/>
-          <text class="lini-text" x="0" y="0">star</text>
+          <text class="lini-text" x="0" y="0" dy="0.358em">star</text>
         </g>
       </g>
     </g>
     <g class="lini-node lini-lbl lini-block" transform="translate(0,-33.5)">
       <rect x="-62.4" y="-14.5" width="124.8" height="29" rx="0" ry="0"/>
-      <text class="lini-text" x="0" y="8">Signs, fit: auto</text>
+      <text class="lini-text" x="0" y="8" dy="0.358em">Signs, fit: auto</text>
     </g>
     <g class="lini-node lini-row lini-block" data-id="a" transform="translate(0,31)">
       <rect x="-248" y="-32" width="496" height="64" rx="0" ry="0"/>
@@ -227,7 +227,7 @@ input_file: samples/icons.lini
     </g>
     <g class="lini-node lini-lbl lini-block" transform="translate(0,95.5)">
       <rect x="-46.8" y="-14.5" width="93.6" height="29" rx="0" ry="0"/>
-      <text class="lini-text" x="0" y="8">Signs + Text</text>
+      <text class="lini-text" x="0" y="8" dy="0.358em">Signs + Text</text>
     </g>
     <g class="lini-node lini-row lini-block" data-id="b" transform="translate(0,160)">
       <rect x="-248" y="-32" width="496" height="64" rx="0" ry="0"/>
@@ -240,7 +240,7 @@ input_file: samples/icons.lini
             <path d="M224,88V200.89a7.11,7.11,0,0,1-7.11,7.11H40a8,8,0,0,1-8-8V64a8,8,0,0,1,8-8H93.33a8,8,0,0,1,4.8,1.6L128,80h88A8,8,0,0,1,224,88Z"/>
           </g>
         </g>
-        <text class="lini-text" x="0" y="2">Folder</text>
+        <text class="lini-text" x="0" y="2" dy="0.358em">Folder</text>
       </g>
       <g class="lini-node lini-sign lini-icon lini-style-lime" data-id="auth" transform="translate(-108,0)">
         <g transform="scale(0.32) translate(-128 -124)">
@@ -254,7 +254,7 @@ input_file: samples/icons.lini
             <line x1="128" y1="48" x2="128" y2="24"/>
           </g>
         </g>
-        <text class="lini-text" x="0" y="-3">Canvas</text>
+        <text class="lini-text" x="0" y="-3" dy="0.358em">Canvas</text>
       </g>
       <g class="lini-node lini-sign lini-icon lini-style-purple" data-id="svc" transform="translate(0,0)">
         <g transform="scale(0.3077) translate(-128 -128)">
@@ -265,7 +265,7 @@ input_file: samples/icons.lini
             <path d="M54.46,201.54c-9.2-9.2-3.1-28.53-7.78-39.85C41.82,150,24,140.5,24,128s17.82-22,22.68-33.69C51.36,83,45.26,63.66,54.46,54.46S83,51.36,94.31,46.68C106.05,41.82,115.5,24,128,24S150,41.82,161.69,46.68c11.32,4.68,30.65-1.42,39.85,7.78s3.1,28.53,7.78,39.85C214.18,106.05,232,115.5,232,128S214.18,150,209.32,161.69c-4.68,11.32,1.42,30.65-7.78,39.85s-28.53,3.1-39.85,7.78C150,214.18,140.5,232,128,232s-22-17.82-33.69-22.68C83,204.64,63.66,210.74,54.46,201.54Z"/>
           </g>
         </g>
-        <text class="lini-text" x="0" y="0">Alert</text>
+        <text class="lini-text" x="0" y="0" dy="0.358em">Alert</text>
       </g>
       <g class="lini-node lini-sign lini-icon lini-style-rose" data-id="cpu" transform="translate(108,0)">
         <g transform="scale(0.2857) translate(-136 -128)">
@@ -277,7 +277,7 @@ input_file: samples/icons.lini
             <polyline points="200 112 248 80 248 176 200 144"/>
           </g>
         </g>
-        <text class="lini-text" x="-6" y="0">video</text>
+        <text class="lini-text" x="-6" y="0" dy="0.358em">video</text>
       </g>
       <g class="lini-node lini-sign lini-icon lini-style-amber" data-id="store" transform="translate(216,0)">
         <g transform="scale(0.3333) translate(-128 -128)">

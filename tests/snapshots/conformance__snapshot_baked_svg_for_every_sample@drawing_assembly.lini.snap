@@ -5,7 +5,7 @@ input_file: samples/drawing_assembly.lini
 ---
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-625.4 -285.75 1250.8 571.5" width="1250.8" height="571.5" class="lini">
   <style>
-    .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
+    .lini { font-family: "Google Sans Code", ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
     .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-oval { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
@@ -15,7 +15,7 @@ input_file: samples/drawing_assembly.lini
     .lini .lini-dim-line { fill: none; stroke: black; stroke-width: 1; }
     .lini .lini-ext-line { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
     .lini .lini-dim-text { font-size: 12px; font-weight: normal; }
-    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
+    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
     .lini .lini-gutter { stroke: none; }
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
     .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
@@ -70,15 +70,15 @@ input_file: samples/drawing_assembly.lini
       </g>
       <g class="lini-node lini-balloon lini-oval" data-id="b1" transform="translate(-80.1,-175.75)">
         <ellipse cx="0" cy="0" rx="23.3" ry="25.5"/>
-        <text class="lini-text" x="0" y="0">1</text>
+        <text class="lini-text" x="0" y="0" dy="0.358em">1</text>
       </g>
       <g class="lini-node lini-balloon lini-oval" data-id="b2" transform="translate(479.9,-135.75)">
         <ellipse cx="0" cy="0" rx="23.3" ry="25.5"/>
-        <text class="lini-text" x="0" y="0">2</text>
+        <text class="lini-text" x="0" y="0" dy="0.358em">2</text>
       </g>
       <g class="lini-node lini-balloon lini-oval" data-id="b3" transform="translate(-580.1,-135.75)">
         <ellipse cx="0" cy="0" rx="23.3" ry="25.5"/>
-        <text class="lini-text" x="0" y="0">3</text>
+        <text class="lini-text" x="0" y="0" dy="0.358em">3</text>
       </g>
       <g class="lini-node lini-ext-line lini-line" transform="translate(39.9,64.25)">
         <line x1="-360" y1="3" x2="-360" y2="138"/>
@@ -95,7 +95,7 @@ input_file: samples/drawing_assembly.lini
       <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(39.9,64.25)">
         <polygon points="560,135 548,137 548,133"/>
       </g>
-      <text class="lini-text lini-dim-text" x="139.9" y="191.25">230</text>
+      <text class="lini-text lini-dim-text" x="139.9" y="191.25" dy="0.358em">230</text>
       <g class="lini-node lini-dim-line lini-line" transform="translate(39.9,64.25)">
         <line x1="-103.0584" y1="-222.4937" x2="-1.3908" y2="-117.4372"/>
         <circle class="lini-marker lini-marker-dot" cx="-1.5647" cy="-117.6169" r="2.25" style="fill: black"/>
@@ -110,7 +110,7 @@ input_file: samples/drawing_assembly.lini
       </g>
       <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,212.25)">
         <rect x="-68.4" y="-6" width="136.8" height="12" rx="0" ry="0"/>
-        <text class="lini-text" x="0" y="0">HAND PUMP — SECTION</text>
+        <text class="lini-text" x="0" y="0" dy="0.358em">HAND PUMP — SECTION</text>
       </g>
     </g>
     <g class="lini-node lini-table lini-group lini-block" data-id="bom" transform="translate(0,215.25)">
@@ -122,51 +122,51 @@ input_file: samples/drawing_assembly.lini
       <rect class="lini-gutter" x="-62.2" y="24.5" width="124.4" height="1" fill="#444"/>
       <g class="lini-node lini-header lini-cell lini-block" transform="translate(-50.2,-37.5)">
         <rect x="-11" y="-11" width="22" height="22" rx="0" ry="0"/>
-        <text class="lini-text" x="0" y="0">#</text>
+        <text class="lini-text" x="0" y="0" dy="0.358em">#</text>
       </g>
       <g class="lini-node lini-header lini-cell lini-block" transform="translate(-3,-37.5)">
         <rect x="-33.2" y="-11" width="66.4" height="22" rx="0" ry="0"/>
-        <text class="lini-text" x="0" y="0">Part</text>
+        <text class="lini-text" x="0" y="0" dy="0.358em">Part</text>
       </g>
       <g class="lini-node lini-header lini-cell lini-block" transform="translate(47.2,-37.5)">
         <rect x="-14" y="-11" width="28" height="22" rx="0" ry="0"/>
-        <text class="lini-text" x="0" y="0">Qty</text>
+        <text class="lini-text" x="0" y="0" dy="0.358em">Qty</text>
       </g>
       <g class="lini-node lini-cell lini-block" transform="translate(-50.2,-12.5)">
         <rect x="-11" y="-11" width="22" height="22" rx="0" ry="0"/>
-        <text class="lini-text" x="0" y="0">1</text>
+        <text class="lini-text" x="0" y="0" dy="0.358em">1</text>
       </g>
       <g class="lini-node lini-cell lini-block" transform="translate(-3,-12.5)">
         <rect x="-33.2" y="-11" width="66.4" height="22" rx="0" ry="0"/>
-        <text class="lini-text" x="0" y="0">Barrel</text>
+        <text class="lini-text" x="0" y="0" dy="0.358em">Barrel</text>
       </g>
       <g class="lini-node lini-cell lini-block" transform="translate(47.2,-12.5)">
         <rect x="-14" y="-11" width="28" height="22" rx="0" ry="0"/>
-        <text class="lini-text" x="0" y="0">1</text>
+        <text class="lini-text" x="0" y="0" dy="0.358em">1</text>
       </g>
       <g class="lini-node lini-cell lini-block" transform="translate(-50.2,12.5)">
         <rect x="-11" y="-11" width="22" height="22" rx="0" ry="0"/>
-        <text class="lini-text" x="0" y="0">2</text>
+        <text class="lini-text" x="0" y="0" dy="0.358em">2</text>
       </g>
       <g class="lini-node lini-cell lini-block" transform="translate(-3,12.5)">
         <rect x="-33.2" y="-11" width="66.4" height="22" rx="0" ry="0"/>
-        <text class="lini-text" x="0" y="0">Nozzle</text>
+        <text class="lini-text" x="0" y="0" dy="0.358em">Nozzle</text>
       </g>
       <g class="lini-node lini-cell lini-block" transform="translate(47.2,12.5)">
         <rect x="-14" y="-11" width="28" height="22" rx="0" ry="0"/>
-        <text class="lini-text" x="0" y="0">1</text>
+        <text class="lini-text" x="0" y="0" dy="0.358em">1</text>
       </g>
       <g class="lini-node lini-cell lini-block" transform="translate(-50.2,37.5)">
         <rect x="-11" y="-11" width="22" height="22" rx="0" ry="0"/>
-        <text class="lini-text" x="0" y="0">3</text>
+        <text class="lini-text" x="0" y="0" dy="0.358em">3</text>
       </g>
       <g class="lini-node lini-cell lini-block" transform="translate(-3,37.5)">
         <rect x="-33.2" y="-11" width="66.4" height="22" rx="0" ry="0"/>
-        <text class="lini-text" x="0" y="0">Handle</text>
+        <text class="lini-text" x="0" y="0" dy="0.358em">Handle</text>
       </g>
       <g class="lini-node lini-cell lini-block" transform="translate(47.2,37.5)">
         <rect x="-14" y="-11" width="28" height="22" rx="0" ry="0"/>
-        <text class="lini-text" x="0" y="0">1</text>
+        <text class="lini-text" x="0" y="0" dy="0.358em">1</text>
       </g>
     </g>
   </g>

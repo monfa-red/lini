@@ -5,17 +5,17 @@ input_file: samples/links.lini
 ---
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-160 -332 320 664" width="320" height="664" class="lini">
   <style>
-    .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
+    .lini { font-family: "Google Sans Code", ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
     .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
+    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
     .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
     .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: normal; }
     .lini .lini-room { fill: #cdf9f4; stroke: #005d56; }
     .lini .lini-link { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-link-label { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; font-size: 11px; font-weight: normal; }
+    .lini .lini-link-label { fill: currentColor; stroke: none; text-anchor: middle; font-size: 11px; font-weight: normal; }
     .lini .lini-cut-bg { fill: white; stroke: none; }
     .lini .lini-cut { fill: black; stroke: none; }
     .lini .lini-marker { fill: #444; stroke: none; }
@@ -26,7 +26,7 @@ input_file: samples/links.lini
   <g class="lini-scene">
     <g class="lini-node lini-block" style="font-size: 18px; font-weight: bold" transform="translate(0,-298)">
       <rect x="-129.6" y="-9" width="259.2" height="18" rx="0" ry="0"/>
-      <text class="lini-text" x="0" y="0">Markers &amp; internal links</text>
+      <text class="lini-text" x="0" y="0" dy="0.358em">Markers &amp; internal links</text>
     </g>
     <g class="lini-node lini-group lini-block" data-id="ends" transform="translate(0,-208.5)">
       <rect x="-101" y="-43" width="202" height="86" rx="8" ry="8"/>
@@ -45,7 +45,7 @@ input_file: samples/links.lini
       </g>
       <g class="lini-node lini-caption lini-block" transform="translate(-74.8,-54)">
         <rect x="-25.2" y="-6" width="50.4" height="12" rx="0" ry="0"/>
-        <text class="lini-text" x="0" y="0">markers</text>
+        <text class="lini-text" x="0" y="0" dy="0.358em">markers</text>
       </g>
     </g>
     <g class="lini-node lini-group lini-block" data-id="cardinality" transform="translate(0,-52.5)">
@@ -82,22 +82,22 @@ input_file: samples/links.lini
       </g>
       <g class="lini-node lini-caption lini-block" transform="translate(-49.6,-87)">
         <rect x="-50.4" y="-6" width="100.8" height="12" rx="0" ry="0"/>
-        <text class="lini-text" x="0" y="0">ER cardinality</text>
+        <text class="lini-text" x="0" y="0" dy="0.358em">ER cardinality</text>
       </g>
     </g>
     <g class="lini-node lini-row lini-block" data-id="rel" transform="translate(0,90.5)">
       <rect x="-135" y="-29.5" width="270" height="59" rx="0" ry="0"/>
       <g class="lini-node lini-box lini-block" data-id="author" transform="translate(-87,1)">
         <rect x="-47" y="-27.5" width="94" height="55" rx="8" ry="8"/>
-        <text class="lini-text" x="0" y="0">Author</text>
+        <text class="lini-text" x="0" y="0" dy="0.358em">Author</text>
       </g>
       <g class="lini-node lini-box lini-block" data-id="book" transform="translate(96,1)">
         <rect x="-38" y="-27.5" width="76" height="55" rx="8" ry="8"/>
-        <text class="lini-text" x="0" y="0">Book</text>
+        <text class="lini-text" x="0" y="0" dy="0.358em">Book</text>
       </g>
       <g class="lini-node lini-caption lini-block" transform="translate(-11.6,-40.5)">
         <rect x="-122.4" y="-6" width="244.8" height="12" rx="0" ry="0"/>
-        <text class="lini-text" x="0" y="0">cardinality operators — either end</text>
+        <text class="lini-text" x="0" y="0" dy="0.358em">cardinality operators — either end</text>
       </g>
     </g>
     <g class="lini-node lini-row lini-block" data-id="rooms" transform="translate(0,232.5)">
@@ -106,30 +106,30 @@ input_file: samples/links.lini
         <rect x="-46.5" y="-74" width="93" height="148" rx="8" ry="8"/>
         <g class="lini-node lini-box lini-block" data-id="inlet" style="fill: #79e3da; stroke: #005d56; color: #005d56" transform="translate(0,-33.5)">
           <rect x="-29" y="-27.5" width="58" height="55" rx="8" ry="8"/>
-          <text class="lini-text" x="0" y="0">in</text>
+          <text class="lini-text" x="0" y="0" dy="0.358em">in</text>
         </g>
         <g class="lini-node lini-box lini-block" data-id="outlet" style="fill: #79e3da; stroke: #005d56; color: #005d56" transform="translate(0,33.5)">
           <rect x="-33.5" y="-27.5" width="67" height="55" rx="8" ry="8"/>
-          <text class="lini-text" x="0" y="0">out</text>
+          <text class="lini-text" x="0" y="0" dy="0.358em">out</text>
         </g>
         <g class="lini-node lini-caption lini-block" transform="translate(-23.9,-85)">
           <rect x="-21.6" y="-6" width="43.2" height="12" rx="0" ry="0"/>
-          <text class="lini-text" x="0" y="0">Garden</text>
+          <text class="lini-text" x="0" y="0" dy="0.358em">Garden</text>
         </g>
       </g>
       <g class="lini-node lini-room lini-group lini-block" data-id="kitchen" transform="translate(85,0)">
         <rect x="-46.5" y="-74" width="93" height="148" rx="8" ry="8"/>
         <g class="lini-node lini-box lini-block" data-id="inlet" style="fill: #79e3da; stroke: #005d56; color: #005d56" transform="translate(0,-33.5)">
           <rect x="-29" y="-27.5" width="58" height="55" rx="8" ry="8"/>
-          <text class="lini-text" x="0" y="0">in</text>
+          <text class="lini-text" x="0" y="0" dy="0.358em">in</text>
         </g>
         <g class="lini-node lini-box lini-block" data-id="outlet" style="fill: #79e3da; stroke: #005d56; color: #005d56" transform="translate(0,33.5)">
           <rect x="-33.5" y="-27.5" width="67" height="55" rx="8" ry="8"/>
-          <text class="lini-text" x="0" y="0">out</text>
+          <text class="lini-text" x="0" y="0" dy="0.358em">out</text>
         </g>
         <g class="lini-node lini-caption lini-block" transform="translate(-20.3,-85)">
           <rect x="-25.2" y="-6" width="50.4" height="12" rx="0" ry="0"/>
-          <text class="lini-text" x="0" y="0">Kitchen</text>
+          <text class="lini-text" x="0" y="0" dy="0.358em">Kitchen</text>
         </g>
       </g>
     </g>
@@ -139,7 +139,7 @@ input_file: samples/links.lini
       <mask id="lini-label-cut-0" maskUnits="userSpaceOnUse" x="-52.5" y="189" width="109.5" height="87"><rect class="lini-cut-bg" x="-52.5" y="189" width="109.5" height="87"/><rect class="lini-cut" x="-26.4" y="223.1" width="52.8" height="14.3"/></mask>
       <path d="M -50.5 274 L -32 274 A 32 32 0 0 0 0 242 L 0 223 A 32 32 0 0 1 32 191 L 51.5 191" mask="url(#lini-label-cut-0)"/>
       <polygon class="lini-marker lini-marker-arrow" points="55.5,191 46.5,195.5 46.5,186.5"/>
-      <text class="lini-link-label" x="0" y="230.25">carries</text>
+      <text class="lini-link-label" x="0" y="230.25" dy="0.358em">carries</text>
     </g>
     <g class="lini-link" data-from="rel.author" data-to="rel.book">
       <mask id="lini-label-cut-1" maskUnits="userSpaceOnUse" x="-41" y="89.5" width="100" height="4"><rect class="lini-cut-bg" x="-41" y="89.5" width="100" height="4"/><rect class="lini-cut" x="-14.1" y="84.35" width="46.2" height="14.3"/></mask>
@@ -148,19 +148,19 @@ input_file: samples/links.lini
       <path class="lini-marker lini-marker-open" d="M 57.5 96.45 L 48.5 91.5 L 57.5 86.55 M 57.5 91.5 L 48.5 91.5"/>
       <circle class="lini-marker lini-marker-open" cx="42.2" cy="91.5" r="3.6"/>
       <path class="lini-marker lini-marker-open" d="M 45.8 91.5 L 48.5 91.5"/>
-      <text class="lini-link-label" x="9" y="91.5">writes</text>
+      <text class="lini-link-label" x="9" y="91.5" dy="0.358em">writes</text>
     </g>
     <g class="lini-link" data-from="rooms.garden.inlet" data-to="rooms.garden.outlet">
       <mask id="lini-label-cut-2" maskUnits="userSpaceOnUse" x="-57" y="197" width="43" height="63"><rect class="lini-cut-bg" x="-57" y="197" width="43" height="63"/><rect class="lini-cut" x="-35.8" y="207.1" width="39.6" height="14.3"/></mask>
       <path d="M -55 199 L -32 199 A 16 16 0 0 1 -16 215 L -16 242 A 16 16 0 0 1 -32 258 L -47 258" mask="url(#lini-label-cut-2)"/>
       <polygon class="lini-marker lini-marker-arrow" points="-51,258 -42,253.5 -42,262.5"/>
-      <text class="lini-link-label" x="-16" y="214.25">flows</text>
+      <text class="lini-link-label" x="-16" y="214.25" dy="0.358em">flows</text>
     </g>
     <g class="lini-link" data-from="rooms.kitchen.inlet" data-to="rooms.kitchen.outlet">
       <mask id="lini-label-cut-3" maskUnits="userSpaceOnUse" x="14" y="205" width="43" height="63"><rect class="lini-cut-bg" x="14" y="205" width="43" height="63"/><rect class="lini-cut" x="-3.8" y="239.1" width="39.6" height="14.3"/></mask>
       <path d="M 55 207 L 32 207 A 16 16 0 0 0 16 223 L 16 250 A 16 16 0 0 0 32 266 L 47 266" mask="url(#lini-label-cut-3)"/>
       <polygon class="lini-marker lini-marker-arrow" points="51,266 42,270.5 42,261.5"/>
-      <text class="lini-link-label" x="16" y="246.25">flows</text>
+      <text class="lini-link-label" x="16" y="246.25" dy="0.358em">flows</text>
     </g>
   </g>
 </svg>

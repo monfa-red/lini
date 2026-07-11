@@ -5,13 +5,13 @@ input_file: samples/chart_advanced.lini
 ---
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-452 -688 904 1376" width="904" height="1376" class="lini">
   <style>
-    .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
+    .lini { font-family: "Google Sans Code", ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
     .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-oval { stroke-dasharray: none; }
     .lini .lini-poly { stroke-dasharray: none; }
     .lini .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
+    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
     .lini .lini-chart-label { pointer-events: none; }
   </style>
   <defs/>
@@ -83,28 +83,28 @@ input_file: samples/chart_advanced.lini
         <title>ent: 45000</title>
         <rect x="-23.1704" y="-68.6121" width="46.3408" height="137.2241" rx="2" ry="2"/>
       </g>
-      <text class="lini-text" x="-139.7" y="88.6" style="fill: #888; font-size: 11px; font-weight: normal">1</text>
-      <text class="lini-text" x="-139.7" y="79.5932" style="fill: #888; font-size: 11px; font-weight: normal">2</text>
-      <text class="lini-text" x="-139.7" y="67.6868" style="fill: #888; font-size: 11px; font-weight: normal">5</text>
-      <text class="lini-text" x="-143" y="58.68" style="fill: #888; font-size: 11px; font-weight: normal">10</text>
-      <text class="lini-text" x="-143" y="49.6732" style="fill: #888; font-size: 11px; font-weight: normal">20</text>
-      <text class="lini-text" x="-143" y="37.7668" style="fill: #888; font-size: 11px; font-weight: normal">50</text>
-      <text class="lini-text" x="-146.3" y="28.76" style="fill: #888; font-size: 11px; font-weight: normal">100</text>
-      <text class="lini-text" x="-146.3" y="19.7532" style="fill: #888; font-size: 11px; font-weight: normal">200</text>
-      <text class="lini-text" x="-146.3" y="7.8468" style="fill: #888; font-size: 11px; font-weight: normal">500</text>
-      <text class="lini-text" x="-149.6" y="-1.16" style="fill: #888; font-size: 11px; font-weight: normal">1000</text>
-      <text class="lini-text" x="-149.6" y="-10.1668" style="fill: #888; font-size: 11px; font-weight: normal">2000</text>
-      <text class="lini-text" x="-149.6" y="-22.0732" style="fill: #888; font-size: 11px; font-weight: normal">5000</text>
-      <text class="lini-text" x="-152.9" y="-31.08" style="fill: #888; font-size: 11px; font-weight: normal">10000</text>
-      <text class="lini-text" x="-152.9" y="-40.0868" style="fill: #888; font-size: 11px; font-weight: normal">20000</text>
-      <text class="lini-text" x="-152.9" y="-51.9932" style="fill: #888; font-size: 11px; font-weight: normal">50000</text>
-      <text class="lini-text" x="-156.2" y="-61" style="fill: #888; font-size: 11px; font-weight: normal">100000</text>
-      <text class="lini-text" x="-113.9" y="-67" style="fill: #888; font-size: 11px; font-weight: normal">req/s</text>
-      <text class="lini-text" x="-93.1" y="100.3" style="fill: #888; font-size: 11px; font-weight: normal">free</text>
-      <text class="lini-text" x="-18.5" y="100.3" style="fill: #888; font-size: 11px; font-weight: normal">pro</text>
-      <text class="lini-text" x="56.1" y="100.3" style="fill: #888; font-size: 11px; font-weight: normal">team</text>
-      <text class="lini-text" x="130.7" y="100.3" style="fill: #888; font-size: 11px; font-weight: normal">ent</text>
-      <text class="lini-text" x="0" y="-92.9" style="font-size: 13px; font-weight: bold">Requests by tier</text>
+      <text class="lini-text" x="-139.7" y="88.6" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">1</text>
+      <text class="lini-text" x="-139.7" y="79.5932" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">2</text>
+      <text class="lini-text" x="-139.7" y="67.6868" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">5</text>
+      <text class="lini-text" x="-143" y="58.68" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">10</text>
+      <text class="lini-text" x="-143" y="49.6732" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">20</text>
+      <text class="lini-text" x="-143" y="37.7668" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">50</text>
+      <text class="lini-text" x="-146.3" y="28.76" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">100</text>
+      <text class="lini-text" x="-146.3" y="19.7532" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">200</text>
+      <text class="lini-text" x="-146.3" y="7.8468" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">500</text>
+      <text class="lini-text" x="-149.6" y="-1.16" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">1000</text>
+      <text class="lini-text" x="-149.6" y="-10.1668" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">2000</text>
+      <text class="lini-text" x="-149.6" y="-22.0732" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">5000</text>
+      <text class="lini-text" x="-152.9" y="-31.08" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">10000</text>
+      <text class="lini-text" x="-152.9" y="-40.0868" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">20000</text>
+      <text class="lini-text" x="-152.9" y="-51.9932" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">50000</text>
+      <text class="lini-text" x="-156.2" y="-61" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">100000</text>
+      <text class="lini-text" x="-113.9" y="-67" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">req/s</text>
+      <text class="lini-text" x="-93.1" y="100.3" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">free</text>
+      <text class="lini-text" x="-18.5" y="100.3" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">pro</text>
+      <text class="lini-text" x="56.1" y="100.3" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">team</text>
+      <text class="lini-text" x="130.7" y="100.3" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">ent</text>
+      <text class="lini-text" x="0" y="-92.9" dy="0.358em" style="font-size: 13px; font-weight: bold">Requests by tier</text>
     </g>
     <g class="lini-node lini-chart lini-block" transform="translate(192,-558)">
       <rect x="-179" y="-109" width="358" height="218" rx="0" ry="0"/>
@@ -139,16 +139,16 @@ input_file: samples/chart_advanced.lini
         <title>team: Q4: 2</title>
         <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
       </g>
-      <text class="lini-text" x="-172.7" y="-39.6286" style="fill: #888; font-size: 11px; font-weight: normal">2</text>
-      <text class="lini-text" x="-172.7" y="3.1143" style="fill: #888; font-size: 11px; font-weight: normal">4</text>
-      <text class="lini-text" x="-172.7" y="45.8571" style="fill: #888; font-size: 11px; font-weight: normal">6</text>
-      <text class="lini-text" x="-172.7" y="88.6" style="fill: #888; font-size: 11px; font-weight: normal">8</text>
-      <text class="lini-text" x="-150.2" y="-67" style="fill: #888; font-size: 11px; font-weight: normal">rank</text>
-      <text class="lini-text" x="-121.975" y="100.3" style="fill: #888; font-size: 11px; font-weight: normal">Q1</text>
-      <text class="lini-text" x="-39.125" y="100.3" style="fill: #888; font-size: 11px; font-weight: normal">Q2</text>
-      <text class="lini-text" x="43.725" y="100.3" style="fill: #888; font-size: 11px; font-weight: normal">Q3</text>
-      <text class="lini-text" x="126.575" y="100.3" style="fill: #888; font-size: 11px; font-weight: normal">Q4</text>
-      <text class="lini-text" x="0" y="-92.9" style="font-size: 13px; font-weight: bold">League rank</text>
+      <text class="lini-text" x="-172.7" y="-39.6286" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">2</text>
+      <text class="lini-text" x="-172.7" y="3.1143" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">4</text>
+      <text class="lini-text" x="-172.7" y="45.8571" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">6</text>
+      <text class="lini-text" x="-172.7" y="88.6" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">8</text>
+      <text class="lini-text" x="-150.2" y="-67" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">rank</text>
+      <text class="lini-text" x="-121.975" y="100.3" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">Q1</text>
+      <text class="lini-text" x="-39.125" y="100.3" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">Q2</text>
+      <text class="lini-text" x="43.725" y="100.3" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">Q3</text>
+      <text class="lini-text" x="126.575" y="100.3" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">Q4</text>
+      <text class="lini-text" x="0" y="-92.9" dy="0.358em" style="font-size: 13px; font-weight: bold">League rank</text>
     </g>
     <g class="lini-node lini-chart lini-block" transform="translate(-252,-314)">
       <rect x="-179" y="-109" width="358" height="218" rx="0" ry="0"/>
@@ -199,31 +199,31 @@ input_file: samples/chart_advanced.lini
         <title>error %: thu: 0.4</title>
         <ellipse cx="0" cy="0" rx="2.5" ry="2.5"/>
       </g>
-      <text class="lini-text" x="-152.9" y="70.9" style="fill: #888; font-size: 11px; font-weight: normal">0</text>
-      <text class="lini-text" x="-159.5" y="26.9333" style="fill: #888; font-size: 11px; font-weight: normal">500</text>
-      <text class="lini-text" x="-162.8" y="-17.0333" style="fill: #888; font-size: 11px; font-weight: normal">1000</text>
-      <text class="lini-text" x="-162.8" y="-61" style="fill: #888; font-size: 11px; font-weight: normal">1500</text>
-      <text class="lini-text" x="-117.2" y="-67" style="fill: #888; font-size: 11px; font-weight: normal">requests</text>
-      <text class="lini-text" x="162.8" y="70.9" style="fill: #888; font-size: 11px; font-weight: normal">0%</text>
-      <text class="lini-text" x="162.8" y="44.52" style="fill: #888; font-size: 11px; font-weight: normal">2%</text>
-      <text class="lini-text" x="162.8" y="18.14" style="fill: #888; font-size: 11px; font-weight: normal">4%</text>
-      <text class="lini-text" x="162.8" y="-8.24" style="fill: #888; font-size: 11px; font-weight: normal">6%</text>
-      <text class="lini-text" x="162.8" y="-34.62" style="fill: #888; font-size: 11px; font-weight: normal">8%</text>
-      <text class="lini-text" x="166.1" y="-61" style="fill: #888; font-size: 11px; font-weight: normal">10%</text>
-      <text class="lini-text" x="133.7" y="-67" style="fill: #888; font-size: 11px; font-weight: normal">error</text>
-      <text class="lini-text" x="-106.875" y="82.6" style="fill: #888; font-size: 11px; font-weight: normal">mon</text>
-      <text class="lini-text" x="-33.425" y="82.6" style="fill: #888; font-size: 11px; font-weight: normal">tue</text>
-      <text class="lini-text" x="40.025" y="82.6" style="fill: #888; font-size: 11px; font-weight: normal">wed</text>
-      <text class="lini-text" x="113.475" y="82.6" style="fill: #888; font-size: 11px; font-weight: normal">thu</text>
-      <text class="lini-text" x="0" y="-92.9" style="font-size: 13px; font-weight: bold">Throughput vs error</text>
+      <text class="lini-text" x="-152.9" y="70.9" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">0</text>
+      <text class="lini-text" x="-159.5" y="26.9333" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">500</text>
+      <text class="lini-text" x="-162.8" y="-17.0333" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">1000</text>
+      <text class="lini-text" x="-162.8" y="-61" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">1500</text>
+      <text class="lini-text" x="-117.2" y="-67" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">requests</text>
+      <text class="lini-text" x="162.8" y="70.9" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">0%</text>
+      <text class="lini-text" x="162.8" y="44.52" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">2%</text>
+      <text class="lini-text" x="162.8" y="18.14" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">4%</text>
+      <text class="lini-text" x="162.8" y="-8.24" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">6%</text>
+      <text class="lini-text" x="162.8" y="-34.62" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">8%</text>
+      <text class="lini-text" x="166.1" y="-61" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">10%</text>
+      <text class="lini-text" x="133.7" y="-67" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">error</text>
+      <text class="lini-text" x="-106.875" y="82.6" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">mon</text>
+      <text class="lini-text" x="-33.425" y="82.6" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">tue</text>
+      <text class="lini-text" x="40.025" y="82.6" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">wed</text>
+      <text class="lini-text" x="113.475" y="82.6" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">thu</text>
+      <text class="lini-text" x="0" y="-92.9" dy="0.358em" style="font-size: 13px; font-weight: bold">Throughput vs error</text>
       <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e; stroke-width: 1" transform="translate(-68,100.1)">
         <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
       </g>
-      <text class="lini-text" x="-31.1" y="100.1" style="font-size: 11px; font-weight: bold">requests</text>
+      <text class="lini-text" x="-31.1" y="100.1" dy="0.358em" style="font-size: 11px; font-weight: bold">requests</text>
       <g class="lini-node lini-block" style="fill: #008e85; stroke-width: 0" transform="translate(16.8,100.1)">
         <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
       </g>
-      <text class="lini-text" x="50.4" y="100.1" style="font-size: 11px; font-weight: bold">error %</text>
+      <text class="lini-text" x="50.4" y="100.1" dy="0.358em" style="font-size: 11px; font-weight: bold">error %</text>
     </g>
     <g class="lini-node lini-chart lini-block" transform="translate(192,-314)">
       <rect x="-179" y="-109" width="358" height="218" rx="0" ry="0"/>
@@ -254,30 +254,30 @@ input_file: samples/chart_advanced.lini
       <g class="lini-node lini-line" style="stroke: #008e85; stroke-dasharray: 6,4.5" transform="translate(0,0)">
         <polyline points="-143.6,55.5 -131.9739,51.2452 -120.3478,46.9904 -108.7217,42.7357 -97.0957,38.4809 -85.4696,34.2261 -73.8435,29.9713 -62.2174,25.7165 -50.5913,21.4617 -38.9652,17.207 -27.3391,12.9522 -15.713,8.6974 -4.087,4.4426 7.5391,0.1878 19.1652,-4.067 30.7913,-8.3217 42.4174,-12.5765 54.0435,-16.8313 65.6696,-21.0861 77.2957,-25.3409 88.9217,-29.5957 100.5478,-33.8504 112.1739,-38.1052 123.8,-42.36"/>
       </g>
-      <text class="lini-text" x="-152.9" y="55.5" style="fill: #888; font-size: 11px; font-weight: normal">0</text>
-      <text class="lini-text" x="-159.5" y="2.5455" style="fill: #888; font-size: 11px; font-weight: normal">500</text>
-      <text class="lini-text" x="-162.8" y="-50.4091" style="fill: #888; font-size: 11px; font-weight: normal">1000</text>
-      <text class="lini-text" x="-97.4" y="-67" style="fill: #888; font-size: 11px; font-weight: normal">Pressure (bar)</text>
-      <text class="lini-text" x="149.6" y="55.5" style="fill: #888; font-size: 11px; font-weight: normal">0cm³/s</text>
-      <text class="lini-text" x="152.9" y="32.2" style="fill: #888; font-size: 11px; font-weight: normal">10cm³/s</text>
-      <text class="lini-text" x="152.9" y="8.9" style="fill: #888; font-size: 11px; font-weight: normal">20cm³/s</text>
-      <text class="lini-text" x="152.9" y="-14.4" style="fill: #888; font-size: 11px; font-weight: normal">30cm³/s</text>
-      <text class="lini-text" x="152.9" y="-37.7" style="fill: #888; font-size: 11px; font-weight: normal">40cm³/s</text>
-      <text class="lini-text" x="152.9" y="-61" style="fill: #888; font-size: 11px; font-weight: normal">50cm³/s</text>
-      <text class="lini-text" x="110.6" y="-67" style="fill: #888; font-size: 11px; font-weight: normal">Flow</text>
-      <text class="lini-text" x="-143.6" y="67.2" style="fill: #888; font-size: 11px; font-weight: normal">0</text>
-      <text class="lini-text" x="-43.0737" y="67.2" style="fill: #888; font-size: 11px; font-weight: normal">50</text>
-      <text class="lini-text" x="57.4526" y="67.2" style="fill: #888; font-size: 11px; font-weight: normal">100</text>
-      <text class="lini-text" x="-9.9" y="81.9" style="fill: #888; font-size: 11px; font-weight: normal">Speed (mm/s)</text>
-      <text class="lini-text" x="0" y="-92.9" style="font-size: 13px; font-weight: bold">Injection profile</text>
+      <text class="lini-text" x="-152.9" y="55.5" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">0</text>
+      <text class="lini-text" x="-159.5" y="2.5455" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">500</text>
+      <text class="lini-text" x="-162.8" y="-50.4091" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">1000</text>
+      <text class="lini-text" x="-97.4" y="-67" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">Pressure (bar)</text>
+      <text class="lini-text" x="149.6" y="55.5" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">0cm³/s</text>
+      <text class="lini-text" x="152.9" y="32.2" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">10cm³/s</text>
+      <text class="lini-text" x="152.9" y="8.9" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">20cm³/s</text>
+      <text class="lini-text" x="152.9" y="-14.4" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">30cm³/s</text>
+      <text class="lini-text" x="152.9" y="-37.7" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">40cm³/s</text>
+      <text class="lini-text" x="152.9" y="-61" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">50cm³/s</text>
+      <text class="lini-text" x="110.6" y="-67" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">Flow</text>
+      <text class="lini-text" x="-143.6" y="67.2" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">0</text>
+      <text class="lini-text" x="-43.0737" y="67.2" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">50</text>
+      <text class="lini-text" x="57.4526" y="67.2" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">100</text>
+      <text class="lini-text" x="-9.9" y="81.9" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">Speed (mm/s)</text>
+      <text class="lini-text" x="0" y="-92.9" dy="0.358em" style="font-size: 13px; font-weight: bold">Injection profile</text>
       <g class="lini-node lini-block" style="fill: #00b8ac; stroke: #008e85; stroke-width: 1" transform="translate(-58.1,100.1)">
         <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
       </g>
-      <text class="lini-text" x="-21.2" y="100.1" style="font-size: 11px; font-weight: bold">Pressure</text>
+      <text class="lini-text" x="-21.2" y="100.1" dy="0.358em" style="font-size: 11px; font-weight: bold">Pressure</text>
       <g class="lini-node lini-block" style="fill: #008e85; stroke-width: 0" transform="translate(26.7,100.1)">
         <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
       </g>
-      <text class="lini-text" x="50.4" y="100.1" style="font-size: 11px; font-weight: bold">Flow</text>
+      <text class="lini-text" x="50.4" y="100.1" dy="0.358em" style="font-size: 11px; font-weight: bold">Flow</text>
     </g>
     <g class="lini-node lini-chart lini-block" transform="translate(-252,-70)">
       <rect x="-179" y="-109" width="358" height="218" rx="0" ry="0"/>
@@ -320,20 +320,20 @@ input_file: samples/chart_advanced.lini
       <g class="lini-node lini-line" style="stroke: #b8476e" transform="translate(0,0)">
         <polyline points="-163.4,58.8736 -159.4447,58.8736 -155.4893,58.8736 -151.534,58.8736 -147.5787,58.8736 -143.6234,58.8736 -139.668,58.8736 -135.7127,58.8736 -131.7574,58.8736 -127.802,58.8733 -123.8467,58.8704 -119.8914,58.8485 -115.9361,58.7199 -111.9807,58.15 -108.0254,56.2541 -104.0701,51.5804 -100.1147,43.257 -96.1594,33.156 -92.2041,26.301 -88.2488,27.1451 -84.2934,35.1039 -80.3381,45.1782 -76.3828,52.8049 -72.4275,56.8054 -72.4275,20.62 -67.6246,17.9775 -62.8217,14.9557 -58.0188,11.772 -53.2159,8.4783 -48.413,5.1004 -43.6101,1.6538 -38.8072,-1.851 -34.0043,-5.4063 -29.2014,-9.0065 -24.3985,-12.647 -19.5956,-16.3242 -14.7927,-20.0349 -9.9898,-23.7768 -5.1869,-27.5476 -0.384,-31.3454 4.4189,-35.1686 9.2218,-39.0159 14.0247,-42.8858 18.8276,-46.7774 23.6305,-50.6894 28.4334,-54.6211 33.2363,-58.5715 38.0392,-62.54 38.0392,48.34 43.6897,48.34 49.3402,48.34 54.9906,48.34 60.6411,48.34 66.2916,48.34 71.942,48.34 77.5925,48.34 83.243,48.34 88.8934,48.34 94.5439,48.34 100.1944,48.34 105.8448,48.34 111.4953,48.34 117.1458,48.34 122.7962,48.34 128.4467,48.34 134.0972,48.34 139.7477,48.34 145.3981,48.34 151.0486,48.34 156.6991,48.34 162.3495,48.34 168,48.34"/>
       </g>
-      <text class="lini-text" x="-172.7" y="62.2" style="fill: #888; font-size: 11px; font-weight: normal">0</text>
-      <text class="lini-text" x="-172.7" y="34.48" style="fill: #888; font-size: 11px; font-weight: normal">1</text>
-      <text class="lini-text" x="-172.7" y="6.76" style="fill: #888; font-size: 11px; font-weight: normal">2</text>
-      <text class="lini-text" x="-172.7" y="-20.96" style="fill: #888; font-size: 11px; font-weight: normal">3</text>
-      <text class="lini-text" x="-172.7" y="-48.68" style="fill: #888; font-size: 11px; font-weight: normal">4</text>
-      <text class="lini-text" x="-172.7" y="-76.4" style="fill: #888; font-size: 11px; font-weight: normal">5</text>
-      <text class="lini-text" x="-163.4" y="73.9" style="fill: #888; font-size: 11px; font-weight: normal">0</text>
-      <text class="lini-text" x="-33.4392" y="73.9" style="fill: #888; font-size: 11px; font-weight: normal">2</text>
-      <text class="lini-text" x="96.5216" y="73.9" style="fill: #888; font-size: 11px; font-weight: normal">4</text>
-      <text class="lini-text" x="2.3" y="99.6" style="fill: #888; font-size: 11px; font-weight: normal">phase</text>
-      <text class="lini-text" x="-117.9137" y="84.9" style="fill: #00ace2; font-size: 11px; font-weight: normal">Close</text>
-      <text class="lini-text" x="-17.1941" y="84.9" style="fill: #e96490; font-size: 11px; font-weight: normal">Inject</text>
-      <text class="lini-text" x="103.0196" y="84.9" style="fill: #cb8b00; font-size: 11px; font-weight: normal">Hold</text>
-      <text class="lini-text" x="0" y="-92.9" style="font-size: 13px; font-weight: bold">Motor draw (A)</text>
+      <text class="lini-text" x="-172.7" y="62.2" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">0</text>
+      <text class="lini-text" x="-172.7" y="34.48" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">1</text>
+      <text class="lini-text" x="-172.7" y="6.76" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">2</text>
+      <text class="lini-text" x="-172.7" y="-20.96" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">3</text>
+      <text class="lini-text" x="-172.7" y="-48.68" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">4</text>
+      <text class="lini-text" x="-172.7" y="-76.4" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">5</text>
+      <text class="lini-text" x="-163.4" y="73.9" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">0</text>
+      <text class="lini-text" x="-33.4392" y="73.9" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">2</text>
+      <text class="lini-text" x="96.5216" y="73.9" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">4</text>
+      <text class="lini-text" x="2.3" y="99.6" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">phase</text>
+      <text class="lini-text" x="-117.9137" y="84.9" dy="0.358em" style="fill: #00ace2; font-size: 11px; font-weight: normal">Close</text>
+      <text class="lini-text" x="-17.1941" y="84.9" dy="0.358em" style="fill: #e96490; font-size: 11px; font-weight: normal">Inject</text>
+      <text class="lini-text" x="103.0196" y="84.9" dy="0.358em" style="fill: #cb8b00; font-size: 11px; font-weight: normal">Hold</text>
+      <text class="lini-text" x="0" y="-92.9" dy="0.358em" style="font-size: 13px; font-weight: bold">Motor draw (A)</text>
     </g>
     <g class="lini-node lini-chart lini-block" transform="translate(192,-70)">
       <rect x="-179" y="-109" width="358" height="218" rx="0" ry="0"/>
@@ -379,21 +379,21 @@ input_file: samples/chart_advanced.lini
       <g class="lini-node lini-line" style="stroke: #b8476e" transform="translate(0,0)">
         <polyline points="-44.1333,-30.2 8.9,-39.44 61.9333,12.92 114.9667,43.72"/>
       </g>
-      <text class="lini-text" x="-159.5" y="62.2" style="fill: #888; font-size: 11px; font-weight: normal">0</text>
-      <text class="lini-text" x="-166.1" y="31.4" style="fill: #888; font-size: 11px; font-weight: normal">100</text>
-      <text class="lini-text" x="-166.1" y="0.6" style="fill: #888; font-size: 11px; font-weight: normal">200</text>
-      <text class="lini-text" x="-166.1" y="-30.2" style="fill: #888; font-size: 11px; font-weight: normal">300</text>
-      <text class="lini-text" x="-166.1" y="-61" style="fill: #888; font-size: 11px; font-weight: normal">400</text>
-      <text class="lini-text" x="-143.6" y="-67" style="fill: #888; font-size: 11px; font-weight: normal">°C</text>
-      <text class="lini-text" x="-150.2" y="73.9" style="fill: #888; font-size: 11px; font-weight: normal">0</text>
-      <text class="lini-text" x="-44.1333" y="73.9" style="fill: #888; font-size: 11px; font-weight: normal">2</text>
-      <text class="lini-text" x="61.9333" y="73.9" style="fill: #888; font-size: 11px; font-weight: normal">4</text>
-      <text class="lini-text" x="168" y="73.9" style="fill: #888; font-size: 11px; font-weight: normal">6</text>
-      <text class="lini-text" x="8.9" y="99.6" style="fill: #888; font-size: 11px; font-weight: normal">min</text>
-      <text class="lini-text" x="-110.425" y="84.9" style="fill: #00ace2; font-size: 11px; font-weight: normal">Warm</text>
-      <text class="lini-text" x="-17.6167" y="84.9" style="fill: #cb8b00; font-size: 11px; font-weight: normal">Hold</text>
-      <text class="lini-text" x="101.7083" y="84.9" style="fill: #00b8ac; font-size: 11px; font-weight: normal">Cool</text>
-      <text class="lini-text" x="0" y="-92.9" style="font-size: 13px; font-weight: bold">Reactor warm-up</text>
+      <text class="lini-text" x="-159.5" y="62.2" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">0</text>
+      <text class="lini-text" x="-166.1" y="31.4" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">100</text>
+      <text class="lini-text" x="-166.1" y="0.6" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">200</text>
+      <text class="lini-text" x="-166.1" y="-30.2" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">300</text>
+      <text class="lini-text" x="-166.1" y="-61" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">400</text>
+      <text class="lini-text" x="-143.6" y="-67" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">°C</text>
+      <text class="lini-text" x="-150.2" y="73.9" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">0</text>
+      <text class="lini-text" x="-44.1333" y="73.9" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">2</text>
+      <text class="lini-text" x="61.9333" y="73.9" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">4</text>
+      <text class="lini-text" x="168" y="73.9" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">6</text>
+      <text class="lini-text" x="8.9" y="99.6" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">min</text>
+      <text class="lini-text" x="-110.425" y="84.9" dy="0.358em" style="fill: #00ace2; font-size: 11px; font-weight: normal">Warm</text>
+      <text class="lini-text" x="-17.6167" y="84.9" dy="0.358em" style="fill: #cb8b00; font-size: 11px; font-weight: normal">Hold</text>
+      <text class="lini-text" x="101.7083" y="84.9" dy="0.358em" style="fill: #00b8ac; font-size: 11px; font-weight: normal">Cool</text>
+      <text class="lini-text" x="0" y="-92.9" dy="0.358em" style="font-size: 13px; font-weight: bold">Reactor warm-up</text>
     </g>
     <g class="lini-node lini-chart lini-block" transform="translate(-252,214)">
       <rect x="-179" y="-109" width="358" height="218" rx="0" ry="0"/>
@@ -428,16 +428,16 @@ input_file: samples/chart_advanced.lini
       <g class="lini-node lini-line" style="stroke: #ef675e; stroke-width: 1.5; stroke-dasharray: 5,3.75" transform="translate(0,0)">
         <line x1="-150.2" y1="-48.9" x2="168" y2="-48.9"/>
       </g>
-      <text class="lini-text" x="-124.1" y="-55.5" style="fill: #ef675e; font-size: 11px; font-weight: normal">SLO 250</text>
-      <text class="lini-text" x="-159.5" y="88.6" style="fill: #888; font-size: 11px; font-weight: normal">0</text>
-      <text class="lini-text" x="-166.1" y="33.6" style="fill: #888; font-size: 11px; font-weight: normal">100</text>
-      <text class="lini-text" x="-166.1" y="-21.4" style="fill: #888; font-size: 11px; font-weight: normal">200</text>
-      <text class="lini-text" x="-166.1" y="-76.4" style="fill: #888; font-size: 11px; font-weight: normal">300</text>
-      <text class="lini-text" x="-110.425" y="100.3" style="fill: #888; font-size: 11px; font-weight: normal">p50</text>
-      <text class="lini-text" x="-30.875" y="100.3" style="fill: #888; font-size: 11px; font-weight: normal">p90</text>
-      <text class="lini-text" x="48.675" y="100.3" style="fill: #888; font-size: 11px; font-weight: normal">p99</text>
-      <text class="lini-text" x="128.225" y="100.3" style="fill: #888; font-size: 11px; font-weight: normal">p999</text>
-      <text class="lini-text" x="0" y="-92.9" style="font-size: 13px; font-weight: bold">API latency (ms)</text>
+      <text class="lini-text" x="-124.1" y="-55.5" dy="0.358em" style="fill: #ef675e; font-size: 11px; font-weight: normal">SLO 250</text>
+      <text class="lini-text" x="-159.5" y="88.6" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">0</text>
+      <text class="lini-text" x="-166.1" y="33.6" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">100</text>
+      <text class="lini-text" x="-166.1" y="-21.4" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">200</text>
+      <text class="lini-text" x="-166.1" y="-76.4" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">300</text>
+      <text class="lini-text" x="-110.425" y="100.3" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">p50</text>
+      <text class="lini-text" x="-30.875" y="100.3" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">p90</text>
+      <text class="lini-text" x="48.675" y="100.3" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">p99</text>
+      <text class="lini-text" x="128.225" y="100.3" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">p999</text>
+      <text class="lini-text" x="0" y="-92.9" dy="0.358em" style="font-size: 13px; font-weight: bold">API latency (ms)</text>
     </g>
     <g class="lini-node lini-chart lini-block" transform="translate(192,214)">
       <rect x="-239" y="-149" width="478" height="298" rx="0" ry="0"/>
@@ -499,35 +499,35 @@ input_file: samples/chart_advanced.lini
         <title>Opus 4.8: 40, 78</title>
         <ellipse cx="0" cy="0" rx="5.5" ry="5.5"/>
       </g>
-      <text class="lini-text" x="-229.4" y="67.4286" style="fill: #888; font-size: 11px; font-weight: normal">50</text>
-      <text class="lini-text" x="-229.4" y="11.2857" style="fill: #888; font-size: 11px; font-weight: normal">60</text>
-      <text class="lini-text" x="-229.4" y="-44.8571" style="fill: #888; font-size: 11px; font-weight: normal">70</text>
-      <text class="lini-text" x="-229.4" y="-101" style="fill: #888; font-size: 11px; font-weight: normal">80</text>
-      <text class="lini-text" x="-187.1" y="-107" style="fill: #888; font-size: 11px; font-weight: normal">Score (%)</text>
-      <text class="lini-text" x="-87.6645" y="107.2" style="fill: #888; font-size: 11px; font-weight: normal">40</text>
-      <text class="lini-text" x="55.8194" y="107.2" style="fill: #888; font-size: 11px; font-weight: normal">60</text>
-      <text class="lini-text" x="199.3032" y="107.2" style="fill: #888; font-size: 11px; font-weight: normal">80</text>
-      <text class="lini-text" x="5.6" y="121.9" style="fill: #888; font-size: 11px; font-weight: normal">Avg output tokens (k)</text>
-      <text class="lini-text" x="0" y="-132.9" style="font-size: 13px; font-weight: bold">Agentic coding performance</text>
+      <text class="lini-text" x="-229.4" y="67.4286" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">50</text>
+      <text class="lini-text" x="-229.4" y="11.2857" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">60</text>
+      <text class="lini-text" x="-229.4" y="-44.8571" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">70</text>
+      <text class="lini-text" x="-229.4" y="-101" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">80</text>
+      <text class="lini-text" x="-187.1" y="-107" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">Score (%)</text>
+      <text class="lini-text" x="-87.6645" y="107.2" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">40</text>
+      <text class="lini-text" x="55.8194" y="107.2" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">60</text>
+      <text class="lini-text" x="199.3032" y="107.2" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">80</text>
+      <text class="lini-text" x="5.6" y="121.9" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">Avg output tokens (k)</text>
+      <text class="lini-text" x="0" y="-132.9" dy="0.358em" style="font-size: 13px; font-weight: bold">Agentic coding performance</text>
       <g class="lini-node lini-block" style="fill: #0085b3; stroke: #0085b3; stroke-width: 1" transform="translate(-107.1,140.1)">
         <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
       </g>
-      <text class="lini-text" x="-73.5" y="140.1" style="font-size: 11px; font-weight: bold">GLM-5.2</text>
+      <text class="lini-text" x="-73.5" y="140.1" dy="0.358em" style="font-size: 11px; font-weight: bold">GLM-5.2</text>
       <g class="lini-node lini-block" style="fill: #008d51; stroke: #008d51; stroke-width: 1" transform="translate(-28.9,140.1)">
         <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
       </g>
-      <text class="lini-text" x="4.7" y="140.1" style="font-size: 11px; font-weight: bold">GLM-5.1</text>
+      <text class="lini-text" x="4.7" y="140.1" dy="0.358em" style="font-size: 11px; font-weight: bold">GLM-5.1</text>
       <g class="lini-node lini-block" style="fill: #747474; stroke: #747474; stroke-width: 1" transform="translate(49.3,140.1)">
         <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
       </g>
-      <text class="lini-text" x="86.2" y="140.1" style="font-size: 11px; font-weight: bold">Opus 4.8</text>
-      <text class="lini-text lini-chart-label" x="-123.5355" y="11.9429" style="fill: #888; font-size: 10px; font-weight: normal">Non-Thinking</text>
-      <text class="lini-text lini-chart-label" x="-73.3161" y="-73.5857" style="fill: #888; font-size: 10px; font-weight: normal">High</text>
-      <text class="lini-text lini-chart-label" x="206.5" y="-90.4286" style="fill: #888; font-size: 10px; font-weight: normal">Max</text>
-      <text class="lini-text lini-chart-label" x="-145.0581" y="73.7" style="fill: #888; font-size: 10px; font-weight: normal">Non-Thinking</text>
-      <text class="lini-text lini-chart-label" x="-51.7935" y="5.0143" style="fill: #888; font-size: 10px; font-weight: normal">Max</text>
-      <text class="lini-text lini-chart-label" x="-195.3" y="-67.9714" style="fill: #888; font-size: 10px; font-weight: normal">Low</text>
-      <text class="lini-text lini-chart-label" x="-63.1645" y="-89.7714" style="fill: #888; font-size: 10px; font-weight: normal">High</text>
+      <text class="lini-text" x="86.2" y="140.1" dy="0.358em" style="font-size: 11px; font-weight: bold">Opus 4.8</text>
+      <text class="lini-text lini-chart-label" x="-123.5355" y="11.9429" dy="0.358em" style="fill: #888; font-size: 10px; font-weight: normal">Non-Thinking</text>
+      <text class="lini-text lini-chart-label" x="-73.3161" y="-73.5857" dy="0.358em" style="fill: #888; font-size: 10px; font-weight: normal">High</text>
+      <text class="lini-text lini-chart-label" x="206.5" y="-90.4286" dy="0.358em" style="fill: #888; font-size: 10px; font-weight: normal">Max</text>
+      <text class="lini-text lini-chart-label" x="-145.0581" y="73.7" dy="0.358em" style="fill: #888; font-size: 10px; font-weight: normal">Non-Thinking</text>
+      <text class="lini-text lini-chart-label" x="-51.7935" y="5.0143" dy="0.358em" style="fill: #888; font-size: 10px; font-weight: normal">Max</text>
+      <text class="lini-text lini-chart-label" x="-195.3" y="-67.9714" dy="0.358em" style="fill: #888; font-size: 10px; font-weight: normal">Low</text>
+      <text class="lini-text lini-chart-label" x="-63.1645" y="-89.7714" dy="0.358em" style="fill: #888; font-size: 10px; font-weight: normal">High</text>
     </g>
     <g class="lini-node lini-chart lini-block" transform="translate(-252,528)">
       <rect x="-139" y="-139" width="278" height="278" rx="0" ry="0"/>
@@ -570,25 +570,25 @@ input_file: samples/chart_advanced.lini
       <g class="lini-node lini-line" style="stroke: #b8476e" transform="translate(0,0)">
         <polyline points="0,-92.4 73.3074,-19.869 22.6532,35.1295 -33.9799,50.7193 -91.6343,-25.8238 0,-92.4"/>
       </g>
-      <text class="lini-text" x="0" y="-102.3" style="fill: #888; font-size: 11px; font-weight: normal">Speed</text>
-      <text class="lini-text" x="101.0498" y="-28.8831" style="fill: #888; font-size: 11px; font-weight: normal">Range</text>
-      <text class="lini-text" x="62.4522" y="89.9081" style="fill: #888; font-size: 11px; font-weight: normal">Armor</text>
-      <text class="lini-text" x="-62.4522" y="89.9081" style="fill: #888; font-size: 11px; font-weight: normal">Cost</text>
-      <text class="lini-text" x="-101.0498" y="-28.8831" style="fill: #888; font-size: 11px; font-weight: normal">Stealth</text>
-      <text class="lini-text" x="6.3" y="-15.32" style="fill: #888; font-size: 11px; font-weight: normal">1</text>
-      <text class="lini-text" x="6.3" y="-34.59" style="fill: #888; font-size: 11px; font-weight: normal">2</text>
-      <text class="lini-text" x="6.3" y="-53.86" style="fill: #888; font-size: 11px; font-weight: normal">3</text>
-      <text class="lini-text" x="6.3" y="-73.13" style="fill: #888; font-size: 11px; font-weight: normal">4</text>
-      <text class="lini-text" x="6.3" y="-92.4" style="fill: #888; font-size: 11px; font-weight: normal">5</text>
-      <text class="lini-text" x="0" y="-122.9" style="font-size: 13px; font-weight: bold">Ship profiles</text>
+      <text class="lini-text" x="0" y="-102.3" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">Speed</text>
+      <text class="lini-text" x="101.0498" y="-28.8831" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">Range</text>
+      <text class="lini-text" x="62.4522" y="89.9081" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">Armor</text>
+      <text class="lini-text" x="-62.4522" y="89.9081" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">Cost</text>
+      <text class="lini-text" x="-101.0498" y="-28.8831" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">Stealth</text>
+      <text class="lini-text" x="6.3" y="-15.32" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">1</text>
+      <text class="lini-text" x="6.3" y="-34.59" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">2</text>
+      <text class="lini-text" x="6.3" y="-53.86" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">3</text>
+      <text class="lini-text" x="6.3" y="-73.13" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">4</text>
+      <text class="lini-text" x="6.3" y="-92.4" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">5</text>
+      <text class="lini-text" x="0" y="-122.9" dy="0.358em" style="font-size: 13px; font-weight: bold">Ship profiles</text>
       <g class="lini-node lini-block" style="fill: #b8476e; stroke-width: 0" transform="translate(-58.1,130.1)">
         <rect x="-5.5" y="-5.5" width="11" height="11" rx="2" ry="2"/>
       </g>
-      <text class="lini-text" x="-31.1" y="130.1" style="font-size: 11px; font-weight: bold">Scout</text>
+      <text class="lini-text" x="-31.1" y="130.1" dy="0.358em" style="font-size: 11px; font-weight: bold">Scout</text>
       <g class="lini-node lini-block" style="fill: #00b8ac; stroke: #008e85; stroke-width: 1" transform="translate(6.9,130.1)">
         <rect x="-5" y="-5" width="10" height="10" rx="2" ry="2"/>
       </g>
-      <text class="lini-text" x="40.5" y="130.1" style="font-size: 11px; font-weight: bold">Cruiser</text>
+      <text class="lini-text" x="40.5" y="130.1" dy="0.358em" style="font-size: 11px; font-weight: bold">Cruiser</text>
     </g>
     <g class="lini-node lini-chart lini-block" transform="translate(192,528)">
       <rect x="-139" y="-139" width="278" height="278" rx="0" ry="0"/>
@@ -656,19 +656,19 @@ input_file: samples/chart_advanced.lini
         <title>Sun · steps: 55</title>
         <polygon points="-54.3509,-7.0435 -52.2899,-11.9698 -49.7836,-16.6851 -46.8533,-21.1492 -43.5239,-25.3242 -39.8237,-29.1744 -35.7843,-32.6671 -31.4402,-35.7726 0,12.8"/>
       </g>
-      <text class="lini-text" x="0" y="-102.3" style="fill: #888; font-size: 11px; font-weight: normal">Mon</text>
-      <text class="lini-text" x="89.9888" y="-58.9637" style="fill: #888; font-size: 11px; font-weight: normal">Tue</text>
-      <text class="lini-text" x="112.2142" y="38.4122" style="fill: #888; font-size: 11px; font-weight: normal">Wed</text>
-      <text class="lini-text" x="49.94" y="116.5015" style="fill: #888; font-size: 11px; font-weight: normal">Thu</text>
-      <text class="lini-text" x="-49.94" y="116.5015" style="fill: #888; font-size: 11px; font-weight: normal">Fri</text>
-      <text class="lini-text" x="-112.2142" y="38.4122" style="fill: #888; font-size: 11px; font-weight: normal">Sat</text>
-      <text class="lini-text" x="-89.9888" y="-58.9637" style="fill: #888; font-size: 11px; font-weight: normal">Sun</text>
-      <text class="lini-text" x="9.6" y="-8.24" style="fill: #888; font-size: 11px; font-weight: normal">20</text>
-      <text class="lini-text" x="9.6" y="-29.28" style="fill: #888; font-size: 11px; font-weight: normal">40</text>
-      <text class="lini-text" x="9.6" y="-50.32" style="fill: #888; font-size: 11px; font-weight: normal">60</text>
-      <text class="lini-text" x="9.6" y="-71.36" style="fill: #888; font-size: 11px; font-weight: normal">80</text>
-      <text class="lini-text" x="12.9" y="-92.4" style="fill: #888; font-size: 11px; font-weight: normal">100</text>
-      <text class="lini-text" x="0" y="-122.9" style="font-size: 13px; font-weight: bold">Goal completion %</text>
+      <text class="lini-text" x="0" y="-102.3" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">Mon</text>
+      <text class="lini-text" x="89.9888" y="-58.9637" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">Tue</text>
+      <text class="lini-text" x="112.2142" y="38.4122" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">Wed</text>
+      <text class="lini-text" x="49.94" y="116.5015" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">Thu</text>
+      <text class="lini-text" x="-49.94" y="116.5015" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">Fri</text>
+      <text class="lini-text" x="-112.2142" y="38.4122" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">Sat</text>
+      <text class="lini-text" x="-89.9888" y="-58.9637" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">Sun</text>
+      <text class="lini-text" x="9.6" y="-8.24" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">20</text>
+      <text class="lini-text" x="9.6" y="-29.28" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">40</text>
+      <text class="lini-text" x="9.6" y="-50.32" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">60</text>
+      <text class="lini-text" x="9.6" y="-71.36" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">80</text>
+      <text class="lini-text" x="12.9" y="-92.4" dy="0.358em" style="fill: #888; font-size: 11px; font-weight: normal">100</text>
+      <text class="lini-text" x="0" y="-122.9" dy="0.358em" style="font-size: 13px; font-weight: bold">Goal completion %</text>
     </g>
   </g>
   <g class="lini-links"/>

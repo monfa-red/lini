@@ -5,11 +5,11 @@ input_file: samples/paint.lini
 ---
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-277.5 -386 555 772" width="555" height="772" class="lini">
   <style>
-    .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 13px; font-weight: normal; color: black; }
+    .lini { font-family: "Google Sans Code", ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 13px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
     .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-cyl { fill: white; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
+    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
     .lini .lini-gutter { stroke: none; }
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
     .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
@@ -17,7 +17,7 @@ input_file: samples/paint.lini
     .lini .lini-badge { fill: #0a84ff; color: white; font-size: 11px; font-weight: normal; }
     .lini .lini-card { stroke: none; color: white; }
     .lini .lini-link { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-link-label { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; font-size: 11px; font-weight: normal; }
+    .lini .lini-link-label { fill: currentColor; stroke: none; text-anchor: middle; font-size: 11px; font-weight: normal; }
     .lini .lini-cut-bg { fill: white; stroke: none; }
     .lini .lini-cut { fill: black; stroke: none; }
     .lini .lini-marker { fill: #444; stroke: none; }
@@ -33,38 +33,38 @@ input_file: samples/paint.lini
   </defs>
   <rect class="lini-canvas" x="-277.5" y="-386" width="555" height="772"/>
   <g class="lini-scene">
-    <text class="lini-text" x="0" y="-351" style="font-size: 18px; font-weight: bold">Paint — gradients, gutters, themes</text>
+    <text class="lini-text" x="0" y="-351" dy="0.358em" style="font-size: 18px; font-weight: bold">Paint — gradients, gutters, themes</text>
     <g class="lini-node lini-row lini-block" data-id="r1" transform="translate(0,-279)">
       <rect x="-250" y="-36" width="500" height="72" rx="0" ry="0"/>
       <g class="lini-node lini-card lini-box lini-block" style="fill: url(#lini-gradient-1)" transform="translate(-129,0)">
         <rect x="-120" y="-35" width="240" height="70" rx="8" ry="8"/>
-        <text class="lini-text" x="0" y="0">gradient(--teal, --blue)</text>
+        <text class="lini-text" x="0" y="0" dy="0.358em">gradient(--teal, --blue)</text>
       </g>
       <g class="lini-node lini-card lini-box lini-block" style="fill: url(#lini-gradient-2)" transform="translate(129,0)">
         <rect x="-120" y="-35" width="240" height="70" rx="8" ry="8"/>
-        <text class="lini-text" x="0" y="0">three stops, auto-angled</text>
+        <text class="lini-text" x="0" y="0" dy="0.358em">three stops, auto-angled</text>
       </g>
     </g>
     <g class="lini-node lini-row lini-block" data-id="r2" transform="translate(0,-179)">
       <rect x="-250" y="-36" width="500" height="72" rx="0" ry="0"/>
       <g class="lini-node lini-card lini-box lini-block" style="fill: url(#lini-gradient-3)" transform="translate(-129,0)">
         <rect x="-120" y="-35" width="240" height="70" rx="8" ry="8"/>
-        <text class="lini-text" x="0" y="0">linear-gradient(90, …)</text>
+        <text class="lini-text" x="0" y="0" dy="0.358em">linear-gradient(90, …)</text>
       </g>
       <g class="lini-node lini-card lini-box lini-block" style="fill: url(#lini-gradient-4)" transform="translate(129,0)">
         <rect x="-120" y="-35" width="240" height="70" rx="8" ry="8"/>
-        <text class="lini-text" x="0" y="0">radial-gradient(…)</text>
+        <text class="lini-text" x="0" y="0" dy="0.358em">radial-gradient(…)</text>
       </g>
     </g>
     <g class="lini-node lini-row lini-block" data-id="r3" transform="translate(0,-78.5)">
       <rect x="-250.5" y="-36.5" width="501" height="73" rx="0" ry="0"/>
       <g class="lini-node lini-card lini-box lini-block" style="fill: #eeeeee; stroke: url(#lini-gradient-5); stroke-width: 3; color: #484848" transform="translate(-129,0)">
         <rect x="-120" y="-35" width="240" height="70" rx="8" ry="8"/>
-        <text class="lini-text" x="0" y="0">gradient on stroke</text>
+        <text class="lini-text" x="0" y="0" dy="0.358em">gradient on stroke</text>
       </g>
       <g class="lini-node lini-card lini-box lini-block" style="fill: url(#lini-gradient-6)" transform="translate(129.5,0)">
         <rect x="-120" y="-35" width="240" height="70" rx="8" ry="8"/>
-        <text class="lini-text" x="0" y="0">oklch stops</text>
+        <text class="lini-text" x="0" y="0" dy="0.358em">oklch stops</text>
       </g>
     </g>
     <g class="lini-node lini-row lini-block" data-id="bands" transform="translate(0,13.5)">
@@ -73,51 +73,51 @@ input_file: samples/paint.lini
       <rect class="lini-gutter" x="24.9" y="-27.5" width="12" height="55" fill="#7eddfd"/>
       <g class="lini-node lini-box lini-block" data-id="a" style="fill: #cff6ff; stroke: #00547e; color: #00547e" transform="translate(-85.2,0)">
         <rect x="-31.7" y="-26.5" width="63.4" height="53" rx="8" ry="8"/>
-        <text class="lini-text" x="0" y="0">one</text>
+        <text class="lini-text" x="0" y="0" dy="0.358em">one</text>
       </g>
       <g class="lini-node lini-box lini-block" data-id="b" style="fill: #cff6ff; stroke: #00547e; color: #00547e" transform="translate(-7.8,0)">
         <rect x="-31.7" y="-26.5" width="63.4" height="53" rx="8" ry="8"/>
-        <text class="lini-text" x="0" y="0">two</text>
+        <text class="lini-text" x="0" y="0" dy="0.358em">two</text>
       </g>
       <g class="lini-node lini-box lini-block" data-id="c" style="fill: #cff6ff; stroke: #00547e; color: #00547e" transform="translate(77.4,0)">
         <rect x="-39.5" y="-26.5" width="79" height="53" rx="8" ry="8"/>
-        <text class="lini-text" x="0" y="0">three</text>
+        <text class="lini-text" x="0" y="0" dy="0.358em">three</text>
       </g>
     </g>
     <g class="lini-node lini-grid lini-block" data-id="week" transform="translate(0,86)">
       <rect x="-120" y="-17" width="240" height="34" rx="0" ry="0"/>
       <rect class="lini-gutter" x="-120" y="-4" width="240" height="8" fill="#005d56"/>
-      <text class="lini-text" x="-80" y="-10.5">Mon</text>
-      <text class="lini-text" x="0" y="-10.5">Tue</text>
-      <text class="lini-text" x="80" y="-10.5">Wed</text>
-      <text class="lini-text" x="-80" y="10.5">Thu</text>
-      <text class="lini-text" x="0" y="10.5">Fri</text>
-      <text class="lini-text" x="80" y="10.5">Sat</text>
+      <text class="lini-text" x="-80" y="-10.5" dy="0.358em">Mon</text>
+      <text class="lini-text" x="0" y="-10.5" dy="0.358em">Tue</text>
+      <text class="lini-text" x="80" y="-10.5" dy="0.358em">Wed</text>
+      <text class="lini-text" x="-80" y="10.5" dy="0.358em">Thu</text>
+      <text class="lini-text" x="0" y="10.5" dy="0.358em">Fri</text>
+      <text class="lini-text" x="80" y="10.5" dy="0.358em">Sat</text>
     </g>
     <g class="lini-node lini-group lini-block" data-id="service" transform="translate(0,245)">
       <rect x="-72.2" y="-114.5" width="144.4" height="229" rx="8" ry="8"/>
       <g class="lini-node lini-box lini-block" data-id="web" transform="translate(0,-67)">
         <rect x="-31.7" y="-26.5" width="63.4" height="53" rx="8" ry="8"/>
-        <text class="lini-text" x="0" y="0">Web</text>
+        <text class="lini-text" x="0" y="0" dy="0.358em">Web</text>
         <g class="lini-node lini-badge lini-block" transform="translate(24.1,-24)">
           <g filter="url(#lini-shadow-1)">
             <rect x="-12.6" y="-7.5" width="25.2" height="15" rx="8" ry="8"/>
           </g>
-          <text class="lini-text" x="0" y="0">v2</text>
+          <text class="lini-text" x="0" y="0" dy="0.358em">v2</text>
         </g>
       </g>
       <g class="lini-node lini-box lini-block" data-id="api" transform="translate(0,0)">
         <rect x="-31.7" y="-26.5" width="63.4" height="53" rx="8" ry="8"/>
-        <text class="lini-text" x="0" y="0">API</text>
+        <text class="lini-text" x="0" y="0" dy="0.358em">API</text>
       </g>
       <g class="lini-node lini-cyl" data-id="db" transform="translate(0,67)">
         <path d="M -51.2 -21.2 L -51.2 21.2 A 51.2 5.3 0 0 0 51.2 21.2 L 51.2 -21.2 A 51.2 5.3 0 0 0 -51.2 -21.2 Z"/>
         <ellipse cx="0" cy="-21.2" rx="51.2" ry="5.3"/>
-        <text class="lini-text" x="0" y="1.65">Postgres</text>
+        <text class="lini-text" x="0" y="1.65" dy="0.358em">Postgres</text>
       </g>
       <g class="lini-node lini-caption lini-block" transform="translate(-46,-125.5)">
         <rect x="-25.2" y="-6" width="50.4" height="12" rx="0" ry="0"/>
-        <text class="lini-text" x="0" y="0">Service</text>
+        <text class="lini-text" x="0" y="0" dy="0.358em">Service</text>
       </g>
     </g>
   </g>
@@ -129,7 +129,7 @@ input_file: samples/paint.lini
       <mask id="lini-label-cut-1" maskUnits="userSpaceOnUse" x="30.7" y="243" width="41.75" height="71"><rect class="lini-cut-bg" x="30.7" y="243" width="41.75" height="71"/><rect class="lini-cut" x="32.9" y="237.85" width="39.6" height="14.3"/></mask>
       <path d="M 32.7 245 L 54.45 245 A 16 16 0 0 1 70.45 261 L 70.45 297.25 A 14.75 14.75 0 0 1 55.7 312 L 55.7 312" mask="url(#lini-label-cut-1)"/>
       <polygon class="lini-marker lini-marker-arrow" points="51.7,312 60.7,307.5 60.7,316.5"/>
-      <text class="lini-link-label" x="52.7" y="245">query</text>
+      <text class="lini-link-label" x="52.7" y="245" dy="0.358em">query</text>
     </g>
   </g>
 </svg>

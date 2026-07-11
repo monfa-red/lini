@@ -5,11 +5,11 @@ input_file: samples/expr.lini
 ---
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-185 -189.4273 370 378.8546" width="370" height="378.8546" class="lini">
   <style>
-    .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
+    .lini { font-family: "Google Sans Code", ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
     .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-line { fill: none; stroke: #444; stroke-width: 2; stroke-dasharray: none; }
-    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; dominant-baseline: central; }
+    .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
   </style>
   <defs/>
@@ -17,15 +17,15 @@ input_file: samples/expr.lini
   <g class="lini-scene">
     <g class="lini-node lini-box lini-block" data-id="a" style="fill: #cdf9f4; stroke: #005d56" transform="translate(0,-136.9273)">
       <rect x="-56" y="-27.5" width="112" height="55" rx="8" ry="8"/>
-      <text class="lini-text" x="0" y="0">scale(0)</text>
+      <text class="lini-text" x="0" y="0" dy="0.358em">scale(0)</text>
     </g>
     <g class="lini-node lini-box lini-block" data-id="b" style="fill: #cdf9f4; stroke: #005d56" transform="translate(0,-59.9273)">
       <rect x="-77.76" y="-27.5" width="155.52" height="55" rx="8" ry="8"/>
-      <text class="lini-text" x="0" y="0">scale(3)</text>
+      <text class="lini-text" x="0" y="0" dy="0.358em">scale(3)</text>
     </g>
     <g class="lini-node lini-box lini-block" data-id="pad" style="fill: #feedca; stroke: #6d3b00" transform="translate(0,13.0727)">
       <rect x="-65.5" y="-23.5" width="131" height="47" rx="8" ry="8"/>
-      <text class="lini-text" x="0" y="0">padding 8*2</text>
+      <text class="lini-text" x="0" y="0" dy="0.358em">padding 8*2</text>
     </g>
     <g class="lini-node lini-line" data-id="sine" style="stroke: #0085b3" transform="translate(-160,82.5056)">
       <polyline points="0,0 5.0794,7.0741 10.1587,13.5197 15.2381,18.764 20.3175,22.341 25.3968,23.9329 30.4762,23.3983 35.5556,20.7846 40.6349,16.3241 45.7143,10.4132 50.7937,3.577 55.873,-3.577 60.9524,-10.4132 66.0317,-16.3241 71.1111,-20.7846 76.1905,-23.3983 81.2698,-23.9329 86.3492,-22.341 91.4286,-18.764 96.5079,-13.5197 101.5873,-7.0741 106.6667,-0 111.746,7.0741 116.8254,13.5197 121.9048,18.764 126.9841,22.341 132.0635,23.9329 137.1429,23.3983 142.2222,20.7846 147.3016,16.3241 152.381,10.4132 157.4603,3.577 162.5397,-3.577 167.619,-10.4132 172.6984,-16.3241 177.7778,-20.7846 182.8571,-23.3983 187.9365,-23.9329 193.0159,-22.341 198.0952,-18.764 203.1746,-13.5197 208.254,-7.0741 213.3333,-0 218.4127,7.0741 223.4921,13.5197 228.5714,18.764 233.6508,22.341 238.7302,23.9329 243.8095,23.3983 248.8889,20.7846 253.9683,16.3241 259.0476,10.4132 264.127,3.577 269.2063,-3.577 274.2857,-10.4132 279.3651,-16.3241 284.4444,-20.7846 289.5238,-23.3983 294.6032,-23.9329 299.6825,-22.341 304.7619,-18.764 309.8413,-13.5197 314.9206,-7.0741 320,-0"/>

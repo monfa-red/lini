@@ -94,9 +94,12 @@ pub fn built_in_defaults() -> VarTable {
         "footer-color",
         light_dark(rgba(0.0, 0.0, 0.0, 0.5), rgba(255.0, 255.0, 255.0, 0.55)),
     );
+    // The stack leads with the bundled mono family [SPEC 6/17]: an installed
+    // or hosted Google Sans Code engages (matching the compiled metrics
+    // exactly), and the system monos behind it share the 0.6 em advance.
     t.set("font-family",
         ResolvedValue::RawCss(
-            "ui-monospace, \"SF Mono\", \"Cascadia Code\", \"JetBrains Mono\", Menlo, Consolas, \"Liberation Mono\", monospace"
+            "\"Google Sans Code\", ui-monospace, \"SF Mono\", \"Cascadia Code\", \"JetBrains Mono\", Menlo, Consolas, \"Liberation Mono\", monospace"
                 .into(),
         ),
     );

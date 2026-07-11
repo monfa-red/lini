@@ -246,7 +246,7 @@ fn render_node(
 
 /// A text node: a bare `<text class="lini-text">` at its placed centre
 /// [SPEC 13], via the shared text emitter ([`text::emit`]) that also draws link
-/// labels. `text-anchor: middle` + `dominant-baseline: central` (on `.lini-text`)
+/// labels. `text-anchor: middle` (on `.lini-text`) + the baked cap-height `dy`
 /// centre it on (cx, cy); font and colour inherit from the enclosing box's `<g>`.
 /// Its own `{ }` paint/font rides `style=`; `translate` is folded into (cx, cy).
 fn render_text(

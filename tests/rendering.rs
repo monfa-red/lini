@@ -599,7 +599,7 @@ fn icon_label_inherits_font_size_no_inline() {
     // from the .lini rule, like any text, at any icon size (never scaled).
     let svg = render_live("|icon#x| { symbol: bell; width: 96; height: 96 } [ \"3\" ]\n");
     assert!(
-        svg.contains(r#"<text class="lini-text" x="0" y="0">3</text>"#),
+        svg.contains(r#"<text class="lini-text" x="0" y="0" dy="0.358em">3</text>"#),
         "{svg}"
     );
     assert!(svg.contains("font-size: 15px"), "{svg}");

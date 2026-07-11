@@ -60,7 +60,7 @@ fn line_width(line: &str, font: Font, font_size: f64, letter_spacing: f64) -> f6
 }
 
 /// A single line's tight box — about one em, so the glyphs nearly fill it.
-/// `dominant-baseline:central` keeps them centred, so a snug box just hugs them:
+/// The baked cap-height `dy` keeps them centred, so a snug box just hugs them:
 /// with `padding:0` the text almost touches the edges, no slack 1.2 halo.
 const SINGLE_LINE_EM: f64 = 1.0;
 
