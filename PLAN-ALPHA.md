@@ -349,15 +349,15 @@ each verified by me before commit. Every new file carries a `//!` doc. Items:
 
 AUDIT R4. The stage that ends the inline-style whack-a-mole.
 
-- [ ] Route text-leaf styling through `inline_paint_diff` against
+- [x] Route text-leaf styling through `inline_paint_diff` against
   `.lini-text`/`.lini-link-label`/`.lini-sequence-message`; delete
   `render_link_text`'s hand-rolled diff and unify with `text_style_attr`. This
   *fixes* the dropped `text-shadow` on link labels — intentional output change.
-- [ ] `.lini-gutter { stroke: none }` rule (gated on gutters present); hoist
+- [x] `.lini-gutter { stroke: none }` rule (gated on gutters present); hoist
   hatch `<pattern>` line paint onto one `<g>`; stray-glyph classes (optional).
-- [ ] Split `rules.rs` → model vs `stylesheet.rs` (`build()` into per-family
+- [x] Split `rules.rs` → model vs `stylesheet.rs` (`build()` into per-family
   sub-builders) `[pure part]`.
-- [ ] Sweep: assert (grep/review) that no emit site writes paint attributes
+- [x] Sweep: assert (grep/review) that no emit site writes paint attributes
   outside the diff or a `.lini-*` rule; add a comment-contract at the chokepoint.
 
 Acceptance: snapshot re-bless limited to the enumerated changes; resvg renders
@@ -366,7 +366,45 @@ dark — visually checked.
 
 **Release checkpoint:** with the R phase complete, cut **0.20.1** — pure
 internals plus the R1 fmt / R6 leak bugfixes; the language is unchanged.
-**Log:**
+**Log:** 2026-07-11 — **done**, 4 commits, all acceptance met (re-bless limited
+to the enumerated changes — 25 samples, every diff categorized; fmt/test/clippy
+clean). Items:
+- **Chokepoint `[output]`** (the headline): deleted `text_style_attr` and
+  `render_link_text`'s hand-rolled diffs; both node text and link labels now
+  route through one shared `text_paint_attr` → `inline_paint_diff`, diffing
+  against the leaf's own base class. Fixes the dropped `text-shadow` on link
+  labels; `label_size` is gone (the per-role size states once in the sheet rule,
+  which also fixes sequence messages over-inlining `font-size`). 15 snapshots
+  re-blessed — font props reorder to `PAINT_PROPS` order (charts/text), redundant
+  `font-size: 12px` drops from drawing dim text (`.lini-dim-text` provides it),
+  and text.lini's link label gains `text-shadow` (coverage added — the one label
+  that exercises the fix). Render-neutral proven: drawing_leaders + chart_labels
+  render **pixel-identical** old→new (resvg); text.lini eyeballed light + dark.
+- **Leak `[output]`**: gutter rects drop per-rect `stroke="none"` for a
+  `.lini-gutter { stroke: none }` rule (gated via a `has_gutters` walk); hatch
+  `<pattern>` lines drop per-line paint for one wrapping `<g>`. 11 snapshots
+  re-blessed, every one a gutter or hatch change; gap_fill + drawing_bushing/
+  _sheet + table_cell_style all **pixel-identical** old→new; gap_fill eyeballed.
+- **`[pure]` split**: `rules.rs` (858) → model (183: Rule/RuleSet + queries) +
+  `stylesheet/{mod (144), families (497), tests}.rs`; `build()` decomposed into
+  ten per-family sub-builders in the exact original push order (`live` lifted
+  closure→fn). Zero snapshot diffs prove byte-identical output.
+- **Sweep**: grep-confirmed no node/link/text element emits paint outside the
+  diff; the paint contract is documented at `inline_paint_diff` (the remaining
+  inline paints are class-less structural elements — icon roles, drawing chrome,
+  `<defs>`, canvas override, gutter fill, marker/stray). Dropped a stale
+  `#[allow(too_many_arguments)]` (render_link is 7 args after `label_size` went).
+
+**Deviations:** `stylesheet` landed as a **directory** (`stylesheet/`), not a
+flat `stylesheet.rs` — `build()` alone is 460 lines, so a flat file can't meet
+< 500 with its helpers; a directory is the house pattern (matches
+`resolve/program/`, `chart/model/`). The **stray-glyph classes** item was marked
+optional (AUDIT "low priority") and left as-is — the stray's diagnostic paint is
+a class-less one-off, correctly in the sweep's sanctioned-exception list.
+
+**Release checkpoint:** R phase (R1–R6) is now complete — **0.20.1 is ready to
+cut** (pure internals + the R1 fmt / R6 leak bugfixes; language unchanged).
+Deferred to the owner (version bump + tag + push).
 
 ---
 
