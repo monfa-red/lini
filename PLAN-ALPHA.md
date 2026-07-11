@@ -281,26 +281,69 @@ follow-ups.
 AUDIT R5. Pure moves; big but mechanical. Split across two sessions if needed
 (5a: layout+drawing; 5b: chart+desugar+resolve+routing).
 
-- [ ] `layout/mod.rs` → `arrange.rs` + `frame.rs`; mod keeps dispatch +
+- [x] `layout/mod.rs` → `arrange.rs` + `frame.rs`; mod keeps dispatch +
   `layout_inst`.
-- [ ] Drawing: `annotate.rs` → `rows.rs`/`paint.rs`; `breaks.rs` →
+- [x] Drawing: `annotate.rs` → `rows.rs`/`paint.rs`; `breaks.rs` →
   `viewmap.rs`/`clip.rs`; `section.rs` → `plane.rs`/`detail.rs`; `pen.rs` →
   `pen/parse.rs`.
-- [ ] `chart/model.rs` → `chart/model/{types,build,series,axes,annot,paint}.rs`
+- [x] `chart/model.rs` → `chart/model/{types,build,series,axes,annot,paint}.rs`
   (the one L split — `build()`'s shared state gets a small context struct); pie
   bits join `pie.rs`; `chart/mod.rs` tests → `chart/tests.rs`, plot geometry →
   `chart/frame.rs`, legend → `chart/legend.rs`.
-- [ ] `desugar/mod.rs` → `tables.rs` + smart-label ladder into `labels.rs`.
-- [ ] `resolve/program.rs` → `theme.rs` + `link_scope.rs`.
-- [ ] `routing/ortho/world.rs`: extract `build_worlds()` + `world_ladder()` from
+- [x] `desugar/mod.rs` → `tables.rs` + smart-label ladder into `labels.rs`.
+- [x] `resolve/program.rs` → `theme.rs` + `link_scope.rs`.
+- [x] `routing/ortho/world.rs`: extract `build_worlds()` + `world_ladder()` from
   `ortho/mod.rs:158-190` (also the `natural` seam, AUDIT). Convert every
   `Strategy` `==`/`!=` to an exhaustive `match` (D4).
-- [ ] Adopt the test-LOC convention: big `#[cfg(test)]` blocks to sibling
+- [x] Adopt the test-LOC convention: big `#[cfg(test)]` blocks to sibling
   `tests.rs` files wherever they dominate (engine.rs, annotate.rs, …).
 
 Acceptance: zero snapshot diffs; every production file ≲ 500 LOC except the
 AUDIT-sanctioned holdouts (`place.rs`); module docs updated.
-**Log:**
+**Log:** 2026-07-10 — **done**, 9 commits, every split a `[pure]` move proved by
+the snapshot oracle (zero diffs after each) + a per-file normalize-and-diff (only
+module boilerplate / rustfmt reflow / re-export lines differ) + clippy/fmt clean.
+Driven by fresh Opus sub-agents per module (one Sonnet for the engine test move),
+each verified by me before commit. Every new file carries a `//!` doc. Items:
+- `resolve/program.rs` (889) → `program/{mod,theme,link_scope,tests}.rs` (clean
+  seam; the two halves never cross-call). `mod link_scope` shadows `fn
+  link_scope` → three qualified `link_scope::link_scope(...)` call sites.
+- `desugar/mod.rs`: table lowering → new `tables.rs` (307). **See deviation** —
+  the label ladder was already in `labels.rs`, so `mod.rs` lands at 608.
+- Drawing: `pen.rs`→`pen/{mod,parse}`, `breaks.rs`→`breaks/{mod,viewmap,clip,
+  tests}`, `section.rs`→`section/{mod,plane,tests}`, `annotate.rs`→`annotate/
+  {mod,rows,tests}`. `engine.rs`→`engine/{mod,tests}` (test-LOC convention).
+- `layout/mod.rs` (1329) → `mod` (425, dispatch/`layout_inst`) + `arrange` (260)
+  + `frame` (129) + `tests`; `accumulate_extent` re-exported for `ir.rs`.
+- `routing`: `ortho/world.rs` = moved `world_ladder` + extracted `build_worlds
+  (index, reqs, c)`; D4 — all six `Strategy` ==/!= → exhaustive `match` over
+  {Orthogonal, Straight} (7th inside `build_worlds`), proven exhaustive (a third
+  variant breaks compilation at every site; `ir.rs` left pristine).
+- `chart/model.rs` (1473) → `model/{mod,types,build,series,axes,annot,paint}.rs`
+  + pie helpers to `pie.rs`; `chart/mod.rs` (924) → `mod` (137) + `frame` (124)
+  + `legend` (77) + `tests` (593).
+
+**Deviations** (all flagged in commits; oracle-neutral):
+1. **No context struct** for `chart::build` — the code already threads its state
+   through explicit params to standalone helpers (verified by reading `build`),
+   so a straight function-group move is correct and lower-risk; adding a struct
+   would be unneeded churn ("trust a correct model").
+2. **`section`/`annotate` split only their clean half** (`plane.rs`, `rows.rs`);
+   the `detail`/`Paint` halves use `super`-relative module paths that break one
+   level deeper and can't move verbatim. Both files were already < 500 production
+   and every resulting file is < 500, so the LOC goal holds; `detail.rs`/
+   `paint.rs` were not separately created.
+3. **`desugar/mod.rs` stays at 608** (over ≲ 500). The plan's two prescribed
+   extractions were tables **and** the smart-label ladder → `labels.rs`, but the
+   ladder was already extracted in an earlier stage, so tables-only leaves the
+   driver (`desugar` 151) + `lower_node` (274) dispatch. A clean follow-up move
+   (`lower_node` → `lower.rs`) would land it ~334 — **held for the owner's call**
+   (unplanned extra file vs. accept 608, which is in line with the many other
+   >500 non-target files: fmt 867, scene 605, grid 543, …).
+
+**Minor** (not blocking; noted for a later polish pass): the six `model` helpers
+`pie.rs` reuses are `pub(crate)` (a `pub(super)` item can't re-export up to
+`chart` — E0364); `pub(in crate::layout::chart)` would be tighter.
 
 ### Stage R6 — render: one paint chokepoint `[output]`
 
