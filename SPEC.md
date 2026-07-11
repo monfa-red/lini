@@ -387,11 +387,12 @@ resolve to an existing node, or it is an error. If a same-named node exists else
 in the tree, the box is still created here and a warning names the other match.
 
 An auto-created id that is a **near-miss** of a name already known in its scope —
-edit distance ≤ 2, or equal ignoring case, against the declared *and* the
-previously auto-created names — **warns** toward the likely target: `cta -> bird`
-warns `did you mean 'cat'?` even in an all-implicit file. Distinct names stay
-silent, so legitimate mixed use (a sequence with one styled participant) draws no
-noise ([SPEC 20](#20-errors)).
+a small typo (edit distance ≤ 2, and shorter than the id itself), or equal
+ignoring case, against the declared *and* the previously auto-created names —
+**warns** toward the likely target: `cta -> bird` warns `did you mean 'cat'?`
+even in an all-implicit file. Distinct names stay silent — short ids (`a -> b`)
+and numbered siblings (`server -> server2`) are families, not typos — so
+legitimate mixed use draws no noise ([SPEC 20](#20-errors)).
 
 ### Declarations
 
@@ -3185,10 +3186,10 @@ Format: `filename:line:col: error: <message>` (LSP-compatible), compile-time, wi
 | Condition | Message |
 |---|---|
 | Unknown property name | `unknown property 'colr'; did you mean 'color'?` |
-| Misused property, wearer known | `'points' has no meaning on '\|box\|' — it is '\|line\|' / '\|poly\|' geometry` · `'cell' places a grid child — this box sits in a 'layout: flow'` |
-| Property dead for every wearer | `'.hot { cell: … }' reaches no grid child — inert on every wearer` (warning) |
+| Misused property, wearer known | `'points' has no meaning on '\|box\|' — it reads on '\|line\|' / '\|poly\|'` · `'cell' places a grid child — this box sits in a 'layout: flow'` |
+| Property dead for every wearer | `'.hot { cell: … }' is inert on every wearer` (warning) |
 | Class defined, never worn | `class '.hot' is never worn` (warning) |
-| Malformed value | `'opacity' is a fraction 0..1` · `'translate' takes 'x y'` |
+| Malformed value | `'opacity' is a fraction 0..1` · `'translate' takes 'x y'` · `'padding' takes one value, not a comma list` |
 | Legacy space-separated list | `'data' takes comma-separated values — 'data: 9, 15, 24'` ([SPEC 2](#2-lexical-syntax)) |
 
 **Identity, cascade & statements**

@@ -153,14 +153,23 @@ fn main() -> ExitCode {
         };
     }
 
+    // Lint + the property validation pass [SPEC 16/20]: error-level
+    // diagnostics always print and fail the compile; warnings print unless
+    // `--no-warn` and fail only under `--strict`.
     let mut warnings_were_emitted = false;
-    if !cli.no_warn
-        && let Ok(diags) = lini::lint_str(&source)
-    {
+    let mut validation_failed = false;
+    if let Ok(diags) = lini::lint_str(&source) {
         for d in &diags {
-            eprintln!("{}", d.display_with_source(&source, &filename));
+            let is_error = d.level == lini::Level::Error;
+            if is_error || !cli.no_warn {
+                eprintln!("{}", d.display_with_source(&source, &filename));
+            }
+            validation_failed |= is_error;
+            warnings_were_emitted |= !is_error && !cli.no_warn;
         }
-        warnings_were_emitted |= !diags.is_empty();
+    }
+    if validation_failed {
+        return ExitCode::from(1);
     }
 
     // Compile and collect the routing relaxations in one layout pass — the link

@@ -77,6 +77,8 @@ pub struct Diagnostic {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Level {
+    /// A hard diagnostic [SPEC 16/20] — the CLI fails on it like a compile error.
+    Error,
     Warning,
 }
 
@@ -84,6 +86,14 @@ impl Diagnostic {
     pub fn warn(span: Span, message: impl Into<String>) -> Self {
         Self {
             level: Level::Warning,
+            message: message.into(),
+            span,
+        }
+    }
+
+    pub fn error(span: Span, message: impl Into<String>) -> Self {
+        Self {
+            level: Level::Error,
             message: message.into(),
             span,
         }
@@ -112,6 +122,7 @@ impl<'a> fmt::Display for DiagnosticDisplay<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let (line, col) = line_col(self.source, self.diag.span.start);
         let kind = match self.diag.level {
+            Level::Error => "error",
             Level::Warning => "warning",
         };
         write!(

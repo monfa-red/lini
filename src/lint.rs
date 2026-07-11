@@ -2,11 +2,13 @@
 //! [SPEC 20]. It runs on the parsed file and reuses the desugar auto-create gate
 //! so its view of what will be created matches the real lowering.
 //!
-//! Three warnings live here:
+//! Four warnings live here:
 //! - **link labels split** — a link carries a head label *and* a `[ ]` of labels;
 //!   they read better kept together.
 //! - **auto-create shadows a node** — a bare link endpoint is auto-created in its
 //!   scope while a same-named node already exists elsewhere in the tree.
+//! - **auto-create near-miss** — an auto-created endpoint is a small typo (or a
+//!   case slip) of a name already known in its scope [SPEC 3/20].
 //! - **`pin:` on a mated child** — a mate seats the part, so its `pin:` is
 //!   ignored [SPEC 15.5].
 
@@ -124,6 +126,9 @@ fn shadow_scope(
     }
     let declared = declared_ids(children);
     let link_refs: Vec<&Link> = links.iter().collect();
+    // Sorted so near-miss tie-breaks are deterministic (declared_ids is a set).
+    let mut known: Vec<String> = declared.iter().cloned().collect();
+    known.sort();
     for (id, span) in auto_created_ids(&link_refs, &declared) {
         let here = join_path(prefix, &id);
         if let Some(other) = id_paths
@@ -142,6 +147,18 @@ fn shadow_scope(
                 ),
             ));
         }
+        // The near-miss warning [SPEC 3/20]: an auto-created id one small typo
+        // (or a case slip) away from a name already known in this scope —
+        // declared or previously auto-created — likely meant that name. The
+        // typo distance must be shorter than the id itself, so tiny distinct
+        // ids (`a -> b`) stay silent.
+        if let Some(target) = near_miss(&id, known.iter().map(String::as_str)) {
+            out.push(Diagnostic::warn(
+                span,
+                format!("'{id}' auto-creates a new box; did you mean '{target}'?"),
+            ));
+        }
+        known.push(id);
     }
     for c in children {
         if let Child::Box(n) = c {
@@ -161,12 +178,31 @@ fn shadow_scope(
     }
 }
 
+/// The known name an auto-created id near-misses [SPEC 3]: equal ignoring
+/// case, or within the `suggest` typo distance (≤ 2) — additionally required
+/// to be shorter than the id, so short distinct names never collide, and
+/// never against a numbered sibling (`server` / `server2` is a family, not a
+/// typo).
+fn near_miss<'a>(id: &str, known: impl Iterator<Item = &'a str> + Clone) -> Option<&'a str> {
+    if let Some(fold) = known.clone().find(|k| k.eq_ignore_ascii_case(id)) {
+        return Some(fold);
+    }
+    let stem = |s: &str| s.trim_end_matches(|c: char| c.is_ascii_digit()).len();
+    let candidates = known.filter(|k| id[..stem(id)] != k[..stem(k)]);
+    let near = crate::suggest::nearest(id, candidates, 1);
+    near.first()
+        .filter(|k| crate::suggest::edit_distance(id, k) < id.chars().count())
+        .copied()
+}
+
 /// Whether a node opens a drawing scope [SPEC 15] — a `|drawing|` / `|detail|`
 /// (or a define over one, caught by the type name) or an explicit
 /// `layout: drawing`. The lint's twin of desugar's `is_drawing_body`, on the
 /// raw AST (no resolved type chain) — so it reads the written type and style.
 fn is_drawing_node(n: &crate::syntax::ast::Node) -> bool {
     n.ty.as_deref() == Some("drawing")
+        // A lowered instance (`lini desugar` output) wears its type as a class.
+        || n.classes.iter().any(|c| c == "lini-drawing")
         || n.style
             .iter()
             .any(|d| d.name == "layout" && decl_ident(d) == Some("drawing"))

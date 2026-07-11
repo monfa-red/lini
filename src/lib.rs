@@ -17,6 +17,7 @@ mod span;
 mod suggest;
 mod syntax;
 mod theme;
+mod validate;
 
 pub use error::{Diagnostic, Error, Level};
 pub use fmt::format as format_source;
@@ -103,7 +104,9 @@ pub fn check_parse(src: &str) -> Result<(), Error> {
 pub fn lint_str(src: &str) -> Result<Vec<Diagnostic>, Error> {
     let tokens = lexer::lex(src)?;
     let file = syntax::parser::parse(src, &tokens)?;
-    Ok(lint::lint(&file))
+    let mut out = validate::validate(&file);
+    out.extend(lint::lint(&file));
+    Ok(out)
 }
 
 /// Lex, parse, and resolve. Verifies semantic correctness without running

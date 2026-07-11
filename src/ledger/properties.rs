@@ -9,10 +9,8 @@ use std::collections::HashMap;
 use std::sync::OnceLock;
 
 /// Where a property is honoured [SPEC 16]. A name may have several owners;
-/// homonyms (`sheet` on `|page|` vs the ISO 7200 field) list each.
-// The payloads are data for the M2 validation pass; until it lands only the
-// tests read them.
-#[allow(dead_code)]
+/// homonyms (`sheet` on `|page|` vs the ISO 7200 field) list each. The M2
+/// validation pass ([`crate::validate`]) is the consumer.
 #[derive(Debug)]
 pub enum Owner {
     /// Every drawn node, in every layout.
@@ -101,8 +99,8 @@ pub enum Gate {
 /// One property row. `text` marks the subset valid on a bare text leaf's own
 /// `{ }` [SPEC 3]; `baked` the baked-spacing text props that compile into
 /// glyph / line positions and are never live CSS [SPEC 6].
-// `owners`, `default`, and `gate` are data for the R3 consts move and the M2
-// validation pass; until those land only the tests read them.
+// `default` and `gate` are data for schema generation and later validation
+// depth; today the tests pin them.
 #[allow(dead_code)]
 #[derive(Debug)]
 pub struct Property {
@@ -288,23 +286,25 @@ pub static PROPERTIES: &[Property] = &[
         DefaultRef::None,
         No,
     ),
+    // Markers read on `|line|`s and links [SPEC 7], and on a chart's series
+    // and `|mark|` points (the centred forms, [SPEC 14.2/14.5]).
     row(
         "marker",
-        &[Type("line"), Link],
+        &[Type("line"), Type("mark"), Role("series"), Link],
         One(Kind::Marker),
         Engine,
         No,
     ),
     row(
         "marker-start",
-        &[Type("line"), Link],
+        &[Type("line"), Type("mark"), Role("series"), Link],
         One(Kind::Marker),
         Engine,
         No,
     ),
     row(
         "marker-end",
-        &[Type("line"), Link],
+        &[Type("line"), Type("mark"), Role("series"), Link],
         One(Kind::Marker),
         Engine,
         No,
@@ -649,6 +649,8 @@ pub static PROPERTIES: &[Property] = &[
         DefaultRef::None,
         No,
     ),
+    // The root's px-per-mm for sheets [SPEC 15.1] — scene config only.
+    row("density", &[Root], One(Kind::Number), Engine, No),
     // ── Links [SPEC 9] — clearance before routing (the scope-config order). ──
     row(
         "clearance",
