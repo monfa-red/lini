@@ -11,7 +11,7 @@ fn html_format_wraps_svg_in_html_doc() {
         "|box| \"x\"\n",
         &Options {
             format: OutputFormat::Html,
-            bake_vars: true,
+            static_mode: true,
             ..Default::default()
         },
     )
@@ -27,7 +27,7 @@ fn baked_output_inlines_every_var_but_keeps_shape_rules() {
     let svg = lini::compile_str_with(
         "|box| \"x\" { fill: --accent }\n",
         &Options {
-            bake_vars: true,
+            static_mode: true,
             ..Default::default()
         },
     )
@@ -70,7 +70,7 @@ fn theme_overrides_visual_var_visible_in_baked_output() {
         "|box| \"x\" { fill: --accent }\n",
         &Options {
             theme_css: Some("--lini-accent: hotpink;".to_string()),
-            bake_vars: true,
+            static_mode: true,
             ..Default::default()
         },
     )
@@ -144,4 +144,66 @@ fn extract_viewbox_w(svg: &str) -> f64 {
         .next()
         .unwrap();
     vb.split_whitespace().nth(2).unwrap().parse().unwrap()
+}
+
+#[cfg(feature = "font")]
+#[test]
+fn static_output_outlines_text_to_glyph_uses() {
+    // `--static` [SPEC 17/19]: text leaves become `<use>` references to
+    // deduped glyph paths in `<defs>` — no `<text>` element survives, so the
+    // file renders identically with no font installed.
+    let svg = lini::compile_str_with(
+        "|box| \"hi\"\n",
+        &Options {
+            static_mode: true,
+            ..Default::default()
+        },
+    )
+    .expect("compile");
+    assert!(!svg.contains("<text"), "no live text under --static: {svg}");
+    assert!(
+        svg.contains("<use href=\"#lg0400-") && svg.contains("<path id=\"lg0400-"),
+        "glyph defs + uses: {svg}"
+    );
+}
+
+#[cfg(feature = "font")]
+#[test]
+fn embed_font_inlines_used_faces_under_scoped_names() {
+    // `--embed-font` [SPEC 17]: a base64 @font-face per used face, under the
+    // Lini-scoped family name, and the stack leads with that name so the
+    // embedded bytes win over an installed copy.
+    let svg = lini::compile_str_with(
+        "|box| \"hi\"\n",
+        &Options {
+            embed_font: true,
+            ..Default::default()
+        },
+    )
+    .expect("compile");
+    assert!(
+        svg.contains("@font-face { font-family: \"Lini Sans Code\"; font-weight: 400;"),
+        "{}",
+        &svg[..800]
+    );
+    assert!(svg.contains("src: url(data:font/ttf;base64,"), "base64 src");
+    assert!(
+        svg.contains("--lini-font-family: \"Lini Sans Code\", \"Google Sans Code\","),
+        "the stack leads with the scoped name"
+    );
+    // Text stays live `<text>` — embedding never outlines.
+    assert!(svg.contains("<text"), "{svg}");
+}
+
+#[test]
+fn bake_vars_flag_is_gone_without_alias() {
+    // `--static` renames `--bake-vars` with no alias kept [SPEC 19] — clap
+    // rejects the old spelling as unknown (exit 3).
+    let status = Command::new(env!("CARGO_BIN_EXE_lini"))
+        .args(["--bake-vars", "/nonexistent.lini"])
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()
+        .expect("spawn lini");
+    assert_eq!(status.code(), Some(3));
 }

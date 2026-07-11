@@ -1,0 +1,40 @@
+// Proportional type [SPEC 5, 6]: `font-family: "Google Sans"` swaps the scene
+// onto the bundled proportional family — measured from its real per-glyph
+// metrics, so boxes hug their text exactly as in mono. The widened weight set
+// (`medium`, `semibold`, and the numeric 400–700) grades the hierarchy, and
+// `max-width` wraps body copy at its true rendered width.
+
+{
+  font-family: "Google Sans"; gap: 24; padding: 26;
+}
+
+"Pick a plan" { font-size: 22; font-weight: semibold; }
+
+|row#plans| { gap: 20; align: start; } [
+  |box#starter| { max-width: 190; radius: 12; padding: 18; align: start; } [
+    "Starter" { font-size: 17; font-weight: semibold; }
+    "Free" { font-size: 15; font-weight: medium; color: --teal-ink; }
+    "For side projects and weekend experiments. One seat, community support." {
+      font-size: 13;
+    }
+  ]
+  |box#team| {
+    max-width: 190; radius: 12; padding: 18; align: start; fill: --teal-wash;
+  } [
+    "Team" { font-size: 17; font-weight: semibold; }
+    "$12 / seat" { font-size: 15; font-weight: medium; color: --teal-ink; }
+    "Shared workspaces, review flows, and priority support for growing groups." {
+      font-size: 13;
+    }
+  ]
+  |box#scale| { max-width: 190; radius: 12; padding: 18; align: start; } [
+    "Scale" { font-size: 17; font-weight: semibold; }
+    "Custom" { font-size: 15; font-weight: medium; color: --teal-ink; }
+    "Dedicated infrastructure, audit logs, and a human who answers the phone." {
+      font-size: 13;
+    }
+  ]
+]
+
+plans.starter -> plans.team "grow"
+plans.team -> plans.scale "scale up"

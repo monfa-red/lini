@@ -3,6 +3,7 @@
 //! rules ([SPEC 17] — paint rides CSS, geometry bakes; unlayered so renderers
 //! that skip `@layer` still parse them).
 
+use super::fonts::{self, FontSink};
 use super::rules::RuleSet;
 use super::values::format_value;
 use crate::Options;
@@ -17,12 +18,19 @@ pub fn emit(
     used: &BTreeSet<String>,
     opts: &Options,
     tooltip_cards: usize,
+    embed: Option<&FontSink>,
 ) {
     out.push_str("  <style>\n");
 
-    // `--bake-vars` inlines every value (the rules below carry literals), so the
+    // `--embed-font` [SPEC 17]: the used faces inline first, so the rules
+    // below can already resolve against them.
+    if let Some(sink) = embed {
+        fonts::emit_font_faces(out, sink);
+    }
+
+    // `--static` inlines every value (the rules below carry literals), so the
     // themeable `@layer` block is only emitted when vars stay live.
-    if !opts.bake_vars {
+    if !opts.static_mode {
         // Tree-shake: emit only the vars the document references [SPEC 10.2/16],
         // so the built-in palette never bloats a diagram that doesn't use it.
         let mut names: Vec<&String> = vars
@@ -44,13 +52,13 @@ pub fn emit(
             }
             for name in &names {
                 let value = vars.entries.get(*name).unwrap();
-                write!(
-                    out,
-                    " --lini-{}: {};",
-                    name,
-                    format_value(value, vars, opts)
-                )
-                .unwrap();
+                let mut css = format_value(value, vars, opts);
+                // Under `--embed-font` the default stack leads with the
+                // embedded face's Lini-scoped name [SPEC 17].
+                if opts.embed_font && *name == "font-family" {
+                    css = fonts::lead_with_scoped(&css);
+                }
+                write!(out, " --lini-{}: {};", name, css).unwrap();
             }
             out.push_str(" }\n");
             if adaptive {
@@ -68,7 +76,7 @@ pub fn emit(
     rules.emit(out);
     // The rich chart tooltip [SPEC 14.8]: cards are hidden in a top layer; hovering
     // a mark (`.lini-hit-N`) reveals its `.lini-tip-N` card, a later sibling, so no other
-    // mark can paint over it. Live-only — `--bake-vars` drops the cards and these rules.
+    // mark can paint over it. Live-only — `--static` drops the cards and these rules.
     if tooltip_cards > 0 {
         out.push_str("    .lini .lini-chart-tip { visibility: hidden; pointer-events: none; }\n");
         for i in 0..tooltip_cards {

@@ -289,6 +289,7 @@ version = "0.20.0"
 dependencies = [
  "clap",
  "insta",
+ "ttf-parser",
 ]
 
 [[package]]

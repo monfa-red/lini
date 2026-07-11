@@ -18,6 +18,16 @@ input_file: samples/desugar.lini
   </style>
   <defs>
     <filter id="lini-shadow-1" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="rgba(0, 0, 0, 0.2)"/></filter>
+    <path id="lg0400-0" d="M174 0L174 1432L1026 1432L1026 0L174 0ZM302 120L898 120L898 1312L302 1312L302 120Z"/>
+    <path id="lg0400-22" d="M150 0L150 172L647 732Q745 842 782.5 915Q820 988 820 1068L820 1078Q820 1174 764.5 1227.5Q709 1281 609 1281Q422 1281 320 1075L150 1157Q224 1309 342.5 1386.5Q461 1464 614 1464Q733 1464 823 1416Q913 1368 963.5 1282Q1014 1196 1014 1083L1014 1071Q1014 1000 992 934Q970 868 919 793.5Q868 719 779 620L387 184L387 176L1036 176L1036 0L150 0Z"/>
+    <path id="lg0400-37" d="M58 0L503 1432L700 1432L1143 0L947 0L642 1063L602 1218L596 1218L555 1063L252 0L58 0ZM254 369L306 536L892 536L945 369L254 369Z"/>
+    <path id="lg0400-45" d="M506 91L506 1341L694 1341L694 91L506 91ZM178 0L178 176L1022 176L1022 0L178 0ZM178 1257L178 1432L1022 1432L1022 1257L178 1257Z"/>
+    <path id="lg0400-47" d="M922 0L341 719L341 725L903 1432L1127 1432L526 690L526 766L1150 0L922 0ZM160 0L160 1432L346 1432L346 0L160 0Z"/>
+    <path id="lg0400-51" d="M320.5 56.5Q203 145 139.5 308Q76 471 76 697L76 735Q76 961 139.5 1124Q203 1287 320.5 1375.5Q438 1464 600 1464Q762 1464 879.5 1375.5Q997 1287 1060.5 1124Q1124 961 1124 735L1124 697Q1124 471 1060.5 308Q997 145 879.5 56.5Q762 -32 600 -32Q438 -32 320.5 56.5ZM847.5 286Q934 428 934 692L934 740Q934 1002 846.5 1145Q759 1288 600 1288Q441 1288 353.5 1145Q266 1002 266 740L266 692Q266 428 353 286Q440 144 600.5 144Q761 144 847.5 286Z"/>
+    <path id="lg0400-52" d="M162 0L162 1432L614 1432Q748 1432 848 1377Q948 1322 1004 1222.5Q1060 1123 1060 991L1060 963Q1060 831 1004 732Q948 633 848 577.5Q748 522 614 522L267 522L267 694L609 694Q734 694 803 764Q872 834 872 959L872 997Q872 1122 803 1191Q734 1260 609 1260L346 1260L346 0L162 0Z"/>
+    <path id="lg0400-70" d="M653 -32Q544 -32 459.5 22Q375 76 327 172L320 172L320 0L152 0L152 1460L334 1460L334 892L340 892Q394 980 475.5 1029.5Q557 1079 666 1079Q790 1079 882 1012Q974 945 1025 824Q1076 703 1076 541L1076 506Q1076 345 1023 224Q970 103 875 35.5Q780 -32 653 -32ZM613 132Q742 132 816 233Q890 334 890 510L890 537Q890 714 816.5 814.5Q743 915 613 915Q483 915 405 812.5Q327 710 327 536L327 512Q327 339 405 235.5Q483 132 613 132Z"/>
+    <path id="lg0400-72" d="M555 -31Q428 -31 330.5 36.5Q233 104 178.5 225.5Q124 347 124 507L124 542Q124 704 177 824.5Q230 945 325.5 1011.5Q421 1078 547 1078Q653 1078 731.5 1029.5Q810 981 860 894L866 894L866 1460L1048 1460L1048 0L880 0L880 172L873 172Q826 77 744 23Q662 -31 555 -31ZM592 133Q720 133 796.5 236Q873 339 873 512L873 536Q873 709 797 811.5Q721 914 592 914Q461 914 385.5 814Q310 714 310 537L310 511Q310 336 386 234.5Q462 133 592 133Z"/>
+    <path id="lg0400-90" d="M506 0L110 1047L306 1047L529 432L600 196L607 196L677 432L896 1047L1090 1047L694 0L506 0Z"/>
   </defs>
   <rect class="lini-canvas" x="-115.5" y="-86.5" width="231" height="155.5"/>
   <g class="lini-scene">
@@ -25,23 +35,36 @@ input_file: samples/desugar.lini
       <rect x="-50" y="-48.5" width="100" height="97" rx="8" ry="8"/>
       <g class="lini-node lini-chip lini-box lini-block" data-id="health" transform="translate(0,0)">
         <rect x="-29" y="-27.5" width="58" height="55" rx="12" ry="12"/>
-        <text class="lini-text" x="0" y="0" dy="0.358em">OK</text>
+        <g class="lini-text">
+          <use href="#lg0400-51" transform="translate(-9 5.37) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-47" transform="translate(0 5.37) scale(0.0075 -0.0075)"/>
+        </g>
       </g>
       <g class="lini-node lini-caption lini-block" transform="translate(-38.2,-59.5)">
         <rect x="-10.8" y="-6" width="21.6" height="12" rx="0" ry="0"/>
-        <text class="lini-text" x="0" y="0" dy="0.358em">API</text>
+        <g class="lini-text">
+          <use href="#lg0400-37" transform="translate(-10.8 4.296) scale(0.006 -0.006)"/>
+          <use href="#lg0400-52" transform="translate(-3.6 4.296) scale(0.006 -0.006)"/>
+          <use href="#lg0400-45" transform="translate(3.6 4.296) scale(0.006 -0.006)"/>
+        </g>
       </g>
       <g class="lini-node lini-badge lini-block" transform="translate(42.4,-46)">
         <g filter="url(#lini-shadow-1)">
           <rect x="-12.6" y="-7.5" width="25.2" height="15" rx="8" ry="8"/>
         </g>
-        <text class="lini-text" x="0" y="0" dy="0.358em">v2</text>
+        <g class="lini-text">
+          <use href="#lg0400-90" transform="translate(-6.6 3.938) scale(0.0055 -0.0055)"/>
+          <use href="#lg0400-22" transform="translate(0 3.938) scale(0.0055 -0.0055)"/>
+        </g>
       </g>
     </g>
     <g class="lini-node lini-cyl" data-id="db" transform="translate(65.5,0)">
       <path d="M -29 -22 L -29 22 A 29 5.5 0 0 0 29 22 L 29 -22 A 29 5.5 0 0 0 -29 -22 Z"/>
       <ellipse cx="0" cy="-22" rx="29" ry="5.5"/>
-      <text class="lini-text" x="0" y="1.71" dy="0.358em">db</text>
+      <g class="lini-text">
+        <use href="#lg0400-72" transform="translate(-9 7.08) scale(0.0075 -0.0075)"/>
+        <use href="#lg0400-70" transform="translate(0 7.08) scale(0.0075 -0.0075)"/>
+      </g>
     </g>
   </g>
   <g class="lini-links"/>

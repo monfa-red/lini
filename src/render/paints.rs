@@ -7,7 +7,7 @@
 //! reference.
 //!
 //! [`lower`] runs once, post-layout, over the owned scene: it dedups structurally
-//! (so it needs no `--bake-vars` context — only the def emission formats stops),
+//! (so it needs no `--static` context — only the def emission formats stops),
 //! rewrites each gradient paint to `RawCss("url(#…)")` so the ordinary formatter
 //! emits it verbatim everywhere (inline diff and class rules alike), and stores the
 //! definitions on the scene. `objectBoundingBox` units fit one def to any shape.
@@ -203,7 +203,7 @@ fn emit_hatches(laid: &LaidOut, out: &mut String, opts: &Options) {
         let p = h.pitch;
         let lw = num(HATCH_LINE_WIDTH);
         let color = format_value(&h.color, &laid.vars, opts);
-        let paint = if opts.bake_vars {
+        let paint = if opts.static_mode {
             format!(r#"stroke="{color}""#)
         } else {
             format!(r#"style="stroke: {color}""#)
@@ -298,7 +298,7 @@ fn stops_svg(g: &GradientDef, vars: &VarTable, opts: &Options) -> String {
             i as f64 / (n as f64 - 1.0) * 100.0
         };
         let color = format_value(stop, vars, opts);
-        if opts.bake_vars {
+        if opts.static_mode {
             write!(
                 out,
                 r#"<stop offset="{}%" stop-color="{}"/>"#,

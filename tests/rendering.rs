@@ -8,7 +8,7 @@ fn render_baked(src: &str) -> String {
     lini::compile_str_with(
         src,
         &Options {
-            bake_vars: true,
+            static_mode: true,
             ..Default::default()
         },
     )
@@ -86,7 +86,7 @@ fn live_mode_emits_var_refs_for_visual_attrs() {
 fn multiline_label_emits_one_tspan_per_line() {
     // SPEC §6: `\n` splits a label across lines (spacing size × 1.2). Layout
     // already sizes the bbox for N lines; render lays them out as tspans.
-    let svg = render_baked("|box#n| \"one\\ntwo\"\n");
+    let svg = render_live("|box#n| \"one\\ntwo\"\n");
     assert_eq!(
         svg.matches("<tspan").count(),
         2,
@@ -131,7 +131,7 @@ fn gap_fill_accepts_a_gradient() {
 fn letter_spacing_bakes_a_dx_list_never_css() {
     // SPEC §10: letter-spacing compiles into a per-glyph `dx` list (geometry),
     // never a CSS property. "abc" → two 5px gaps.
-    let svg = render_baked("|box| \"abc\" { letter-spacing: 5 }\n");
+    let svg = render_live("|box| \"abc\" { letter-spacing: 5 }\n");
     assert!(svg.contains(r#"dx="0 5 5""#), "{}", svg);
     assert!(
         !svg.contains("letter-spacing"),
@@ -144,7 +144,7 @@ fn letter_spacing_bakes_a_dx_list_never_css() {
 fn line_spacing_widens_the_tspan_leading_never_css() {
     // SPEC §10: line-spacing adds to the leading between `\n` lines (font-size 15
     // → 18, +10 = 28), via the tspan `dy` — never a CSS property.
-    let svg = render_baked("|box| \"one\\ntwo\" { line-spacing: 10 }\n");
+    let svg = render_live("|box| \"one\\ntwo\" { line-spacing: 10 }\n");
     assert!(svg.contains(r#"dy="28""#), "{}", svg);
     assert!(
         !svg.contains("line-spacing"),
@@ -385,7 +385,7 @@ fn hero_renders_in_both_modes() {
     let baked = lini::compile_str_with(
         &src,
         &Options {
-            bake_vars: true,
+            static_mode: true,
             ..Default::default()
         },
     )
@@ -735,7 +735,7 @@ fn link_label_translate_is_applied_once() {
     // render, doubling the nudge on a link label vs a node's text (SPEC §6/§9).
     // The shared text emitter applies it once. Both ends sit at y=0, so a clean
     // -10 nudge must land the label at exactly y="-10".
-    let svg = render_baked(
+    let svg = render_live(
         "{ direction: row; gap: 120 }\n|box#a|\n|box#b|\na -> b [ \"L\" { translate: 0 -10 } ]\n",
     );
     let tag = svg
@@ -751,7 +751,7 @@ fn link_label_supports_multiline_and_letter_spacing() {
     // A link label is an ordinary styleable text leaf (SPEC §3/§9), so the same
     // multi-line `\n` tspans and baked `letter-spacing` dx a node's text gets must
     // reach it too — the two render through one path.
-    let svg = render_baked("|box#a|\n|box#b|\na -> b [ \"AB\\nCD\" { letter-spacing: 5 } ]\n");
+    let svg = render_live("|box#a|\n|box#b|\na -> b [ \"AB\\nCD\" { letter-spacing: 5 } ]\n");
     let label = svg
         .split(r#"<text class="lini-link-label""#)
         .nth(1)
@@ -843,17 +843,10 @@ fn a_wrapped_box_is_a_routing_obstacle_at_its_wrapped_size() {
 
 #[test]
 fn line_alignment_rides_the_holding_boxes_knob() {
-    let opts = Options {
-        bake_vars: true,
-        ..Default::default()
-    };
     // `align: start` on the box holding the text left-flushes its lines
     // [SPEC 6]: the first (wider) line's centre sits right of the second's.
-    let svg = lini::compile_str_with(
-        "|block#t| { max-width: 120; align: start } [ \"wider line\\nshort\" ]\n",
-        &opts,
-    )
-    .expect("compile");
+    let svg =
+        render_live("|block#t| { max-width: 120; align: start } [ \"wider line\\nshort\" ]\n");
     let xs: Vec<f64> = svg
         .match_indices("<tspan x=\"")
         .map(|(i, _)| {
@@ -867,7 +860,7 @@ fn line_alignment_rides_the_holding_boxes_knob() {
         "start-aligned: the wider line's centre sits right: {xs:?}"
     );
     // Default stays centred — both lines share one x (today's output).
-    let svg = lini::compile_str_with("|block#t| [ \"wider line\\nshort\" ]\n", &opts).expect("ok");
+    let svg = render_live("|block#t| [ \"wider line\\nshort\" ]\n");
     let xs: Vec<&str> = svg
         .match_indices("<tspan x=\"")
         .map(|(i, _)| {

@@ -35,6 +35,12 @@ pub fn desugar_source(src: &str) -> Result<String, Error> {
     Ok(fmt::print_file(&desugar::desugar(&file)?))
 }
 pub use routing::{Rule, Severity, Violation};
+
+/// Whether the bundled font subsets were compiled in (the default-on `font`
+/// feature) — the gate for `--embed-font` / `--static` outlining [SPEC 19].
+pub fn font_support() -> bool {
+    font::ENABLED
+}
 pub use serve::{ServeTarget, serve};
 pub use theme::{builtin_css, extract_lini_vars, list_themes, pair_css};
 
@@ -43,11 +49,19 @@ pub use theme::{builtin_css, extract_lini_vars, list_themes, pair_css};
 /// future versions may add knobs.
 #[derive(Clone, Debug, Default)]
 pub struct Options {
-    /// Emit `var()` values inline as their resolved literal so renderers
-    /// without CSS-variable support (resvg, librsvg, image converters) still
-    /// display the diagram correctly. The structural class rules stay; only the
-    /// `@layer` variable defaults are dropped (their values are inlined).
-    pub bake_vars: bool,
+    /// `--static` [SPEC 10.6/17/19]: emit `var()` values inline as their
+    /// resolved literal **and** outline text to paths — self-contained for
+    /// renderers without CSS-variable or font support (resvg, librsvg, image
+    /// converters). The structural class rules stay; only the `@layer`
+    /// variable defaults are dropped (their values are inlined). Outlining
+    /// needs the default-on `font` feature; without it the vars still bake
+    /// and text stays name-only `<text>`.
+    pub static_mode: bool,
+    /// `--embed-font` [SPEC 17]: inline a base64 `@font-face` per bundled
+    /// family × weight actually used, under Lini-scoped family names.
+    /// Browser-only by design (resvg/librsvg ignore `@font-face`); needs the
+    /// `font` feature.
+    pub embed_font: bool,
     /// Output wrapper format.
     pub format: OutputFormat,
     /// Raw CSS text whose `--lini-*` declarations override built-in defaults

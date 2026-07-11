@@ -1,4 +1,5 @@
 mod filters;
+mod fonts;
 mod icon_fit;
 mod intern;
 mod links;
@@ -23,10 +24,63 @@ use rules::RuleSet;
 use values::{escape_xml, format_value, num};
 
 pub fn render(laid_out: &LaidOut, opts: &Options) -> String {
-    let mut out = String::with_capacity(2048);
     let vb = &laid_out.viewbox;
 
     use std::fmt::Write;
+
+    // The stylesheet's structural rules state every paint default once; the
+    // root `.lini` rule seeds the inherited text properties (font, size,
+    // color) for the whole tree. Per-node differences ride `style=`.
+    let ruleset = stylesheet::build(laid_out, opts);
+    let filters = FilterTable::collect(&laid_out.nodes, &laid_out.vars, opts);
+
+    // The scene + link body renders first, into its own buffer: the one text
+    // emitter registers every face (and, under `--static`, glyph) it uses in
+    // the sink, and the `<style>` / `<defs>` blocks below then carry exactly
+    // that set [SPEC 17].
+    let sink = fonts::FontSink::new(laid_out);
+    let mut body = String::with_capacity(2048);
+    body.push_str("  <g class=\"lini-scene\">\n");
+    for node in in_layer_order(&laid_out.nodes) {
+        render_node(
+            &mut body,
+            node,
+            2,
+            &laid_out.vars,
+            &ruleset,
+            &filters,
+            opts,
+            &sink,
+        );
+    }
+    body.push_str("  </g>\n");
+
+    if laid_out.links.is_empty() && laid_out.strays.is_empty() {
+        body.push_str("  <g class=\"lini-links\"/>\n");
+    } else {
+        body.push_str("  <g class=\"lini-links\">\n");
+        let polys: Vec<&[(f64, f64)]> = laid_out.links.iter().map(|w| &w.path[..]).collect();
+        let caps: Vec<f64> = laid_out.links.iter().map(links::radius_cap).collect();
+        let targets = links::fillet_targets(&polys, &caps);
+        for (idx, (link, targets)) in laid_out.links.iter().zip(&targets).enumerate() {
+            links::render_link(
+                &mut body,
+                idx,
+                link,
+                targets,
+                &laid_out.vars,
+                &ruleset,
+                opts,
+                &sink,
+            );
+        }
+        for air in &laid_out.strays {
+            links::render_stray(&mut body, air, &laid_out.vars, opts);
+        }
+        body.push_str("  </g>\n");
+    }
+
+    let mut out = String::with_capacity(2048 + body.len());
     // A pages-only scene prints true-scale [SPEC 15.8]: real millimetres for
     // `width` / `height` (the `viewBox` stays px, so on-screen sizing is
     // unchanged). Every other scene sizes in pixels.
@@ -44,13 +98,9 @@ pub fn render(laid_out: &LaidOut, opts: &Options) -> String {
     )
     .unwrap();
 
-    // The stylesheet's structural rules state every paint default once; the
-    // root `.lini` rule seeds the inherited text properties (font, size,
-    // color) for the whole tree. Per-node differences ride `style=`.
-    let ruleset = stylesheet::build(laid_out, opts);
     let used = used_vars::referenced(laid_out, &ruleset);
     // One `:hover ~` reveal rule per tooltip card — live charts only.
-    let tooltip_rules = if opts.bake_vars {
+    let tooltip_rules = if opts.static_mode {
         0
     } else {
         tooltip_count(&laid_out.nodes)
@@ -62,19 +112,24 @@ pub fn render(laid_out: &LaidOut, opts: &Options) -> String {
         &used,
         opts,
         tooltip_rules,
+        if opts.embed_font { Some(&sink) } else { None },
     );
 
-    let filters = FilterTable::collect(&laid_out.nodes, &laid_out.vars, opts);
+    let glyphs = opts.static_mode && fonts::has_glyphs(&sink);
     if filters.is_empty()
         && laid_out.gradients.is_empty()
         && laid_out.hatches.is_empty()
         && laid_out.clips.is_empty()
+        && !glyphs
     {
         out.push_str("  <defs/>\n");
     } else {
         out.push_str("  <defs>\n");
         filters.emit_defs(&mut out, &laid_out.vars, opts);
         paints::emit_defs(laid_out, &mut out, opts);
+        if glyphs {
+            fonts::emit_glyph_defs(&mut out, &sink);
+        }
         out.push_str("  </defs>\n");
     }
 
@@ -99,28 +154,7 @@ pub fn render(laid_out: &LaidOut, opts: &Options) -> String {
     )
     .unwrap();
 
-    out.push_str("  <g class=\"lini-scene\">\n");
-    for node in in_layer_order(&laid_out.nodes) {
-        render_node(&mut out, node, 2, &laid_out.vars, &ruleset, &filters, opts);
-    }
-    out.push_str("  </g>\n");
-
-    if laid_out.links.is_empty() && laid_out.strays.is_empty() {
-        out.push_str("  <g class=\"lini-links\"/>\n");
-    } else {
-        out.push_str("  <g class=\"lini-links\">\n");
-        let polys: Vec<&[(f64, f64)]> = laid_out.links.iter().map(|w| &w.path[..]).collect();
-        let caps: Vec<f64> = laid_out.links.iter().map(links::radius_cap).collect();
-        let targets = links::fillet_targets(&polys, &caps);
-        for (idx, (link, targets)) in laid_out.links.iter().zip(&targets).enumerate() {
-            links::render_link(&mut out, idx, link, targets, &laid_out.vars, &ruleset, opts);
-        }
-        for air in &laid_out.strays {
-            links::render_stray(&mut out, air, &laid_out.vars, opts);
-        }
-        out.push_str("  </g>\n");
-    }
-
+    out.push_str(&body);
     out.push_str("</svg>\n");
     out
 }
@@ -143,6 +177,7 @@ fn tooltip_count(nodes: &[PlacedNode]) -> usize {
     max.map_or(0, |m| m + 1)
 }
 
+#[allow(clippy::too_many_arguments)] // the recursive walk threads every emission context
 fn render_node(
     out: &mut String,
     n: &PlacedNode,
@@ -151,17 +186,18 @@ fn render_node(
     ruleset: &RuleSet,
     filters: &FilterTable,
     opts: &Options,
+    sink: &fonts::FontSink,
 ) {
     use std::fmt::Write;
     // The rich chart tooltip card is live-only [SPEC 14.8]: a baked SVG keeps the
     // `<title>` floor and drops the `:hover` card, so skip it (and its subtree) here.
-    if opts.bake_vars && n.type_chain.iter().any(|t| t == "chart-tip") {
+    if opts.static_mode && n.type_chain.iter().any(|t| t == "chart-tip") {
         return;
     }
     // Text renders as a bare `<text class="lini-text">` at its placed position —
     // no wrapping `<g>` [SPEC 17]. Font and colour inherit from the enclosing box.
     if n.kind == NodeKind::Text {
-        render_text(out, n, depth, ruleset, vars, opts);
+        render_text(out, n, depth, ruleset, vars, opts, sink);
         return;
     }
     // `href:` wraps the whole node in an `<a href>` so the shape (and its
@@ -186,7 +222,8 @@ fn render_node(
     // The tooltip `hit-N` class is a live-only hover hook [SPEC 14.8]: strip it when
     // baking so a data mark renders exactly as it would with tooltips off.
     let stripped;
-    let chain: &[String] = if opts.bake_vars && n.type_chain.iter().any(|t| t.starts_with("hit-")) {
+    let chain: &[String] = if opts.static_mode && n.type_chain.iter().any(|t| t.starts_with("hit-"))
+    {
         stripped = n
             .type_chain
             .iter()
@@ -235,7 +272,7 @@ fn render_node(
 
     primitives::render_geometry(out, n, depth + 1, vars, ruleset, filters, opts);
     for child in in_layer_order(&n.children) {
-        render_node(out, child, depth + 1, vars, ruleset, filters, opts);
+        render_node(out, child, depth + 1, vars, ruleset, filters, opts, sink);
     }
 
     writeln!(out, "{}</g>", indent).unwrap();
@@ -256,6 +293,7 @@ fn render_text(
     ruleset: &RuleSet,
     vars: &VarTable,
     opts: &Options,
+    sink: &fonts::FontSink,
 ) {
     let indent = "  ".repeat(depth);
     let label = n.label.as_deref().unwrap_or("");
@@ -267,11 +305,14 @@ fn render_text(
     text::emit(
         out,
         &indent,
-        &classes.join(" "),
+        &classes,
         label,
         (n.cx, n.cy),
         &n.attrs,
         &style,
+        ruleset,
+        opts,
+        sink,
     );
 }
 

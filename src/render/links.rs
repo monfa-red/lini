@@ -32,6 +32,7 @@ pub fn radius_cap(w: &RoutedLink) -> f64 {
     w.attrs.number("clearance").unwrap_or(DEFAULT_CLEARANCE)
 }
 
+#[allow(clippy::too_many_arguments)] // one link's full emission context
 pub fn render_link(
     out: &mut String,
     idx: usize,
@@ -40,6 +41,7 @@ pub fn render_link(
     vars: &VarTable,
     ruleset: &RuleSet,
     opts: &Options,
+    sink: &super::fonts::FontSink,
 ) {
     if w.path.len() < 2 {
         return;
@@ -164,7 +166,7 @@ pub fn render_link(
     }
 
     for t in &w.texts {
-        render_link_text(out, t, ruleset, vars, opts);
+        render_link_text(out, t, ruleset, vars, opts, sink);
     }
 
     out.push_str("    </g>\n");
@@ -454,23 +456,28 @@ fn render_link_text(
     ruleset: &RuleSet,
     vars: &VarTable,
     opts: &Options,
+    sink: &super::fonts::FontSink,
 ) {
     // A label's paint is the same class-diff a node's text leaf is [SPEC 17],
     // against its own role rule (`.lini-link-label` / `.lini-sequence-message`) —
     // so `text-shadow` and every other font/paint prop ride through, and the
     // per-role default size states once in the sheet, not on each label.
-    let style_attr = super::text_paint_attr(&t.attrs, &[t.class.to_string()], ruleset, vars, opts);
+    let classes = vec![t.class.to_string()];
+    let style_attr = super::text_paint_attr(&t.attrs, &classes, ruleset, vars, opts);
     // The label rides its `along:` point already shifted by `translate` (folded in
     // at routing — `links::labels`), so the shared emitter handles only `rotate`,
     // multi-line, and `letter-spacing` — one code path with a node's text leaf.
     super::text::emit(
         out,
         "      ",
-        t.class,
+        &classes,
         &t.content,
         t.position,
         &t.attrs,
         &style_attr,
+        ruleset,
+        opts,
+        sink,
     );
 }
 

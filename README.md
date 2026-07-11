@@ -220,7 +220,7 @@ Entities lay out in **any** container today — `grid`, `flow`, or free-position
 - **Five tiers per hue** — `wash` (palest, for backgrounds), `soft`, the bare name (the everyday pastel), `deep` (the strong tone, for borders and strokes), and `ink` (for text and emphasis). The names hold across the dark flip: `--teal-ink` is the high-contrast tone in *both* modes, where a `light`/`dark` name would invert.
 - **OKLCH under the hood**, so the ramp is perceptually even and the eleven read as a family. Pick any colour the same way — `fill: oklch(0.7, 0.14, 200)` — and conventional names still land (`--yellow` → amber, `--pink` → rose).
 - **Gradients** — `gradient(--rose, --sky)` blends two hues at a flattering angle (any two look good); add stops for a multi-colour wash, `linear-gradient(135, …)` for a custom angle, or `radial-gradient(…)`. Works on **fill and stroke**.
-- **Everything flips and bakes.** Hues and gradient stops are `light-dark()` variables, so a colour follows dark/light like the rest and freezes to a literal under `--bake-vars`. Only the colours a diagram uses are emitted, so a big palette never bloats a small file.
+- **Everything flips and bakes.** Hues and gradient stops are `light-dark()` variables, so a colour follows dark/light like the rest and freezes to a literal under `--static`. Only the colours a diagram uses are emitted, so a big palette never bloats a small file.
 
 ---
 
@@ -240,11 +240,11 @@ Geometry is always baked in, so a theme only ever changes colour — layout neve
 
 ```bash
 lini diagram.lini --theme dark -o dark.svg            # pin the dark palette
-lini diagram.lini --theme high-contrast --bake-vars   # a fixed look, inlined for resvg / email
+lini diagram.lini --theme high-contrast --static      # a fixed look, inlined for resvg / email
 lini theme dark > my-theme.css                        # print a theme as CSS to copy & edit
 ```
 
-`lini theme NAME` prints any as a ready-to-edit `--lini-*` file; `--bake-vars` flattens it to literals for non-browser renderers (resvg, librsvg) and email. Every `lini-*` class is a stable styling hook.
+`lini theme NAME` prints any as a ready-to-edit `--lini-*` file; `--static` flattens it to literals — and outlines text to paths — for non-browser renderers (resvg, librsvg) and email. Every `lini-*` class is a stable styling hook.
 
 The default font is a monospace stack (`ui-monospace, "SF Mono", …, monospace`): it reads crisp and keeps text sizing accurate. Swap it with `--lini-font-family` in the diagram, a theme, or the page's CSS.
 
@@ -255,7 +255,7 @@ The default font is a monospace stack (`ui-monospace, "SF Mono", …, monospace`
 ```
 lini [options] <input.lini>
 lini fmt     [--check] [--stdout] <input.lini>
-lini serve   [--port N] [--bake-vars] [PATH]
+lini serve   [--port N] [--static] [PATH]
 lini desugar <input.lini>
 lini theme   [NAME]
 ```
@@ -264,7 +264,8 @@ lini theme   [NAME]
 |---|---|
 | `-o, --output FILE` | Output path (default: stdout). |
 | `--format svg\|html` | Raw SVG (default), or wrapped in a minimal HTML page. |
-| `--bake-vars` | Inline `var()` references — for resvg, librsvg, raster, email. |
+| `--static` | Inline `var()` references and outline text to paths — for resvg, librsvg, raster, email. |
+| `--embed-font` | Embed the used bundled font weights as base64 `@font-face` — browser-only. |
 | `--theme NAME\|FILE` | A built-in theme (`dark`, `high-contrast`, …), a CSS file, or a `light/dark` pair. |
 | `--check` | Parse and validate only. |
 | `--watch` | Recompile on every change (with `-o`). |
@@ -290,7 +291,7 @@ Syntax highlighting, a draggable split, and light/dark themes (it follows your s
 
 ## Performance
 
-Measured end-to-end on a modern laptop, including process startup (`--bake-vars`, output discarded):
+Measured end-to-end on a modern laptop, including process startup (`--static`, output discarded):
 
 | Diagram | Time |
 |---|---|

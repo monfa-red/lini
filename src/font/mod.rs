@@ -64,7 +64,7 @@ const KNOWN_MONO: &[&str] = &[
 
 /// Glyphs neither bundled face covers, measured and outlined as a covered
 /// typographic twin: the ISO diameter sign becomes the slashed O.
-const SUBSTITUTES: &[(char, char)] = &[('⌀', 'Ø')];
+pub(crate) const SUBSTITUTES: &[(char, char)] = &[('⌀', 'Ø')];
 
 /// Advance for a glyph outside the charset (or missing from the face), in em:
 /// the historic flat estimate, doubled for the wide CJK ranges [SPEC 5].
@@ -127,6 +127,20 @@ impl Font {
         Font { kind, weight: 3 }
     }
 
+    pub fn medium(kind: Kind) -> Font {
+        Font { kind, weight: 1 }
+    }
+
+    pub fn semibold(kind: Kind) -> Font {
+        Font { kind, weight: 2 }
+    }
+
+    /// The same weight on another kind — for cascade resolution, where the
+    /// family and the weight arrive from different tiers.
+    pub fn with_kind(self, kind: Kind) -> Font {
+        Font { kind, ..self }
+    }
+
     /// Resolve the measurement font off a node's effective attrs — the
     /// inherited `font-family` picks the kind, `font-weight` the static
     /// [SPEC 6]. The one constructor every measurement caller shares.
@@ -172,7 +186,6 @@ impl Font {
     }
 
     /// The numeric CSS weight (400/500/600/700).
-    #[allow(dead_code)] // reader lands with `--embed-font` / `--static` (M5)
     pub fn weight(&self) -> u16 {
         [400, 500, 600, 700][self.weight]
     }
@@ -215,12 +228,10 @@ fn charset_index(ch: char) -> Option<usize> {
 /// Whether the subset TTF bytes are compiled in (the default-on `font`
 /// feature). Name-only output never needs them; `--embed-font` / `--static`
 /// error helpfully without them [SPEC 19].
-#[allow(dead_code)] // reader lands with `--embed-font` / `--static` (M5)
 pub const ENABLED: bool = cfg!(feature = "font");
 
 /// The subset TTF for a family × weight — `--embed-font` inlines it,
 /// `--static` outlines from it.
-#[allow(dead_code)] // reader lands with `--embed-font` / `--static` (M5)
 #[cfg(feature = "font")]
 pub fn subset_bytes(kind: Kind, weight: u16) -> &'static [u8] {
     let w = match weight {

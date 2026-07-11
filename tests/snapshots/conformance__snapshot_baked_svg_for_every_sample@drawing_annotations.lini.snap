@@ -28,7 +28,44 @@ input_file: samples/drawing_annotations.lini
     .lini .lini-marker-dim { fill: black; }
     .lini .lini-marker-datum { fill: black; }
   </style>
-  <defs/>
+  <defs>
+    <path id="lg0400-0" d="M174 0L174 1432L1026 1432L1026 0L174 0ZM302 120L898 120L898 1312L302 1312L302 120Z"/>
+    <path id="lg0400-15" d="M510 164L510 1086L690 1086L690 164L510 164ZM140 541L140 711L1060 711L1060 541L140 541Z"/>
+    <path id="lg0400-17" d="M155 533L155 719L1045 719L1045 533L155 533Z"/>
+    <path id="lg0400-18" d="M599 -29Q530 -29 482.5 18Q435 65 435 135Q435 203 483 250Q531 297 599 297Q670 297 717 250Q764 203 764 135Q764 65 717 18Q670 -29 599 -29Z"/>
+    <path id="lg0400-20" d="M197 405L142 562L1004 1028L1059 871L197 405ZM600 -32Q362 -32 230 156Q98 344 98 679L98 755Q98 1090 230 1277Q362 1464 600 1464Q839 1464 970.5 1277Q1102 1090 1102 755L1102 679Q1102 343 970.5 155.5Q839 -32 600 -32ZM600 138Q759 138 841.5 275.5Q924 413 924 678L924 756Q924 1034 841.5 1164Q759 1294 600 1294Q441 1294 358.5 1157.5Q276 1021 276 756L276 678Q276 400 358.5 269Q441 138 600 138Z"/>
+    <path id="lg0400-21" d="M580 80L580 1197L235 1012L149 1171L641 1432L770 1432L770 80L580 80ZM206 0L206 180L1106 180L1106 0L206 0Z"/>
+    <path id="lg0400-22" d="M150 0L150 172L647 732Q745 842 782.5 915Q820 988 820 1068L820 1078Q820 1174 764.5 1227.5Q709 1281 609 1281Q422 1281 320 1075L150 1157Q224 1309 342.5 1386.5Q461 1464 614 1464Q733 1464 823 1416Q913 1368 963.5 1282Q1014 1196 1014 1083L1014 1071Q1014 1000 992 934Q970 868 919 793.5Q868 719 779 620L387 184L387 176L1036 176L1036 0L150 0Z"/>
+    <path id="lg0400-23" d="M622 -31Q428 -31 293.5 67.5Q159 166 113 339L285 391Q317 273 403 209Q489 145 613 145Q734 145 807.5 209.5Q881 274 881 380L881 406Q881 521 803.5 585Q726 649 583 649L439 649L439 825L563 825Q692 825 765.5 886.5Q839 948 839 1056L839 1075Q839 1172 777 1230Q715 1288 608 1288Q502 1288 427 1234.5Q352 1181 317 1081L145 1138Q198 1292 322 1377.5Q446 1463 614 1463Q737 1463 830 1415.5Q923 1368 975 1283Q1027 1198 1027 1085L1027 1075Q1027 953 966 869.5Q905 786 786 749L786 743Q918 715 993 619.5Q1068 524 1068 391L1068 372Q1068 255 1010.5 164Q953 73 852.5 21Q752 -31 622 -31Z"/>
+    <path id="lg0400-24" d="M714 0L714 426L720 466L720 1257L798 1166L715 1166L282 529L282 524L792 524L838 528L1114 528L1114 358L76 358L76 510L702 1432L898 1432L898 0L714 0Z"/>
+    <path id="lg0400-25" d="M601 -31Q480 -31 382 13.5Q284 58 214.5 141.5Q145 225 112 342L284 395Q318 274 398.5 209.5Q479 145 599 145Q734 145 813.5 224.5Q893 304 893 437L893 467Q893 592 820 665.5Q747 739 624 739Q541 739 473.5 706.5Q406 674 350 609L156 669L257 1432L1002 1432L1002 1255L404 1255L337 785L342 783Q404 846 486.5 879.5Q569 913 664 913Q788 913 881.5 856Q975 799 1027.5 697.5Q1080 596 1080 462L1080 442Q1080 299 1020.5 192.5Q961 86 853.5 27.5Q746 -31 601 -31Z"/>
+    <path id="lg0400-26" d="M599 -30Q460 -30 352.5 32Q245 94 184 202.5Q123 311 123 452L123 472Q123 555 145 636Q167 717 215.5 805Q264 893 341 996L701 1476L855 1364L579 1023Q536 970 498 930Q460 890 417 852L422 845Q527 922 661 922Q782 922 875.5 862Q969 802 1023 698.5Q1077 595 1077 464L1077 444Q1077 306 1015.5 199Q954 92 846.5 31Q739 -30 599 -30ZM599 148Q730 148 809.5 228.5Q889 309 889 439L889 469Q889 600 810.5 681Q732 762 601 762Q471 762 391 681Q311 600 311 469L311 439Q311 309 390 228.5Q469 148 599 148Z"/>
+    <path id="lg0400-27" d="M426 -32L254 48L845 1247L845 1252L136 1252L136 1432L1064 1432L1064 1273L426 -32Z"/>
+    <path id="lg0400-28" d="M361.5 21.5Q256 75 195.5 168Q135 261 135 379L135 393Q135 515 202.5 615.5Q270 716 383 760L383 765Q290 811 237 894.5Q184 978 184 1078L184 1088Q184 1198 237.5 1282.5Q291 1367 385 1415.5Q479 1464 600 1464Q721 1464 815 1415.5Q909 1367 962.5 1282.5Q1016 1198 1016 1088L1016 1078Q1016 977 963 894Q910 811 817 765L817 760Q930 716 997.5 615.5Q1065 515 1065 393L1065 379Q1065 261 1004.5 168Q944 75 839 21.5Q734 -32 600.5 -32Q467 -32 361.5 21.5ZM600 140Q723 140 801 211.5Q879 283 879 395L879 417Q879 530 801 601Q723 672 600 672Q477 672 399 601Q321 530 321 417L321 395Q321 283 399 211.5Q477 140 600 140ZM768 902Q832 961 832 1058L832 1078Q832 1174 768.5 1233Q705 1292 600 1292Q496 1292 432 1233Q368 1174 368 1078L368 1058Q368 962 432 902.5Q496 843 600 843Q704 843 768 902Z"/>
+    <path id="lg0400-37" d="M58 0L503 1432L700 1432L1143 0L947 0L642 1063L602 1218L596 1218L555 1063L252 0L58 0ZM254 369L306 536L892 536L945 369L254 369Z"/>
+    <path id="lg0400-38" d="M172 0L172 1432L618 1432Q805 1432 911 1338Q1017 1244 1017 1089L1017 1061Q1017 949 963.5 869Q910 789 811 752L811 745Q934 719 1004 628.5Q1074 538 1074 407L1074 379Q1074 265 1021.5 179.5Q969 94 874.5 47Q780 0 653 0L172 0ZM354 164L635 164Q755 164 820.5 226Q886 288 886 403L886 427Q886 542 819 604Q752 666 624 666L295 666L295 820L601 820Q711 820 770 875.5Q829 931 829 1034L829 1054Q829 1158 771 1213Q713 1268 601 1268L354 1268L354 164Z"/>
+    <path id="lg0400-39" d="M653 -32Q484 -32 359.5 57Q235 146 167.5 309.5Q100 473 100 697L100 735Q100 962 166 1125.5Q232 1289 354.5 1376.5Q477 1464 647 1464Q813 1464 930.5 1374Q1048 1284 1104 1112L932 1046Q889 1173 820 1230.5Q751 1288 643 1288Q474 1288 382 1146Q290 1004 290 740L290 692Q290 430 385.5 287Q481 144 656 144Q873 144 950 385L1123 321Q1068 149 947.5 58.5Q827 -32 653 -32Z"/>
+    <path id="lg0400-40" d="M140 0L140 1432L518 1432Q700 1432 829 1349Q958 1266 1027 1110Q1096 954 1096 735L1096 697Q1096 479 1027 322.5Q958 166 829 83Q700 0 518 0L140 0ZM324 174L512 174Q707 174 806.5 305Q906 436 906 692L906 740Q906 996 806.5 1127Q707 1258 512 1258L324 1258L324 174Z"/>
+    <path id="lg0400-41" d="M184 0L184 1432L994 1432L994 1258L370 1258L370 174L1010 174L1010 0L184 0ZM292 647L292 821L914 821L914 647L292 647Z"/>
+    <path id="lg0400-42" d="M184 0L184 1432L1010 1432L1010 1258L370 1258L370 0L184 0ZM292 624L292 798L950 798L950 624L292 624Z"/>
+    <path id="lg0400-43" d="M646 -32Q471 -32 345.5 54.5Q220 141 153 303Q86 465 86 692L86 726Q86 958 153 1123Q220 1288 345.5 1376Q471 1464 647 1464Q813 1464 929 1384.5Q1045 1305 1103 1153L935 1078Q896 1184 825.5 1236Q755 1288 651 1288Q470 1288 372 1143Q274 998 274 731L274 687Q274 425 370.5 284.5Q467 144 647 144Q799 144 878.5 248.5Q958 353 958 553L958 606L627 606L627 779L1138 779L1138 570Q1138 285 1008.5 126.5Q879 -32 646 -32Z"/>
+    <path id="lg0400-44" d="M854 0L854 1432L1040 1432L1040 0L854 0ZM160 0L160 1432L346 1432L346 0L160 0ZM265 646L265 820L937 820L937 646L265 646Z"/>
+    <path id="lg0400-45" d="M506 91L506 1341L694 1341L694 91L506 91ZM178 0L178 176L1022 176L1022 0L178 0ZM178 1257L178 1432L1022 1432L1022 1257L178 1257Z"/>
+    <path id="lg0400-47" d="M922 0L341 719L341 725L903 1432L1127 1432L526 690L526 766L1150 0L922 0ZM160 0L160 1432L346 1432L346 0L160 0Z"/>
+    <path id="lg0400-48" d="M198 0L198 1432L384 1432L384 176L1066 176L1066 0L198 0Z"/>
+    <path id="lg0400-49" d="M87 0L87 1432L267 1432L512 886L597 665L603 665L688 886L933 1432L1113 1432L1113 0L937 0L937 755L957 1127L951 1127L665 459L535 459L249 1127L243 1127L263 755L263 0L87 0Z"/>
+    <path id="lg0400-50" d="M108 0L108 1432L298 1432L920 340L925 340L904 671L904 1432L1092 1432L1092 0L928 0L279 1138L274 1138L296 806L296 0L108 0Z"/>
+    <path id="lg0400-51" d="M320.5 56.5Q203 145 139.5 308Q76 471 76 697L76 735Q76 961 139.5 1124Q203 1287 320.5 1375.5Q438 1464 600 1464Q762 1464 879.5 1375.5Q997 1287 1060.5 1124Q1124 961 1124 735L1124 697Q1124 471 1060.5 308Q997 145 879.5 56.5Q762 -32 600 -32Q438 -32 320.5 56.5ZM847.5 286Q934 428 934 692L934 740Q934 1002 846.5 1145Q759 1288 600 1288Q441 1288 353.5 1145Q266 1002 266 740L266 692Q266 428 353 286Q440 144 600.5 144Q761 144 847.5 286Z"/>
+    <path id="lg0400-52" d="M162 0L162 1432L614 1432Q748 1432 848 1377Q948 1322 1004 1222.5Q1060 1123 1060 991L1060 963Q1060 831 1004 732Q948 633 848 577.5Q748 522 614 522L267 522L267 694L609 694Q734 694 803 764Q872 834 872 959L872 997Q872 1122 803 1191Q734 1260 609 1260L346 1260L346 0L162 0Z"/>
+    <path id="lg0400-54" d="M160 0L160 1432L602 1432Q741 1432 843 1380Q945 1328 1001.5 1233Q1058 1138 1058 1010L1058 990Q1058 862 1001.5 767Q945 672 842.5 620Q740 568 602 568L264 568L264 734L598 734Q726 734 798 800Q870 866 870 982L870 1012Q870 1128 798 1194Q726 1260 598 1260L344 1260L344 0L160 0ZM935 0L540 643L744 643L1146 0L935 0Z"/>
+    <path id="lg0400-55" d="M641 -32Q509 -32 399.5 14Q290 60 211 147Q132 234 90 356L263 419Q310 283 405.5 213Q501 143 638 143Q769 143 842.5 201Q916 259 916 361L916 378Q916 463 859 520Q802 577 671 623L474 692Q171 798 171 1066L171 1073Q171 1190 227.5 1278Q284 1366 385.5 1415Q487 1464 620 1464Q799 1464 920.5 1384Q1042 1304 1098 1148L926 1083Q853 1289 621 1289Q502 1289 429.5 1233Q357 1177 357 1083L357 1071Q357 998 404 947.5Q451 897 554 861L751 792Q933 728 1017.5 627Q1102 526 1102 374L1102 366Q1102 246 1044 156.5Q986 67 882.5 17.5Q779 -32 641 -32Z"/>
+    <path id="lg0400-56" d="M507 0L507 1350L693 1350L693 0L507 0ZM108 1256L108 1432L1092 1432L1092 1256L108 1256Z"/>
+    <path id="lg0400-57" d="M360.5 28.5Q257 89 199.5 197Q142 305 142 447L142 1432L328 1432L328 458Q328 313 401 228.5Q474 144 600 144Q727 144 799.5 228.5Q872 313 872 458L872 1432L1058 1432L1058 447Q1058 305 1000.5 197Q943 89 840 28.5Q737 -32 600.5 -32Q464 -32 360.5 28.5Z"/>
+    <path id="lg0400-58" d="M507 0L60 1432L256 1432L563 389L599 215L605 215L642 389L946 1432L1140 1432L693 0L507 0Z"/>
+    <path id="lg0400-106" d="M285 188L164 308L916 1067L1036 947L285 188ZM916 188L164 947L285 1067L1036 308L916 188Z"/>
+    <path id="lg0400-390" d="M185 -180L54 -107L1015 1612L1146 1539L185 -180ZM602 -32Q445 -32 326.5 59Q208 150 141.5 313.5Q75 477 75 697L75 735Q75 961 138.5 1124.5Q202 1288 319.5 1376Q437 1464 598 1464Q755 1464 873.5 1373.5Q992 1283 1058.5 1119Q1125 955 1125 735L1125 697Q1125 471 1062 308Q999 145 881.5 56.5Q764 -32 602 -32ZM596 134Q766 134 856.5 277.5Q947 421 947 690L947 746Q947 1021 863 1159.5Q779 1298 604 1298Q435 1298 344 1154Q253 1010 253 742L253 686Q253 409 337 271.5Q421 134 596 134Z"/>
+    <path id="lg0400-681" d="M387.5 837Q310 881 265 957Q220 1033 220 1128Q220 1224 265 1299.5Q310 1375 387.5 1419Q465 1463 562.5 1463Q660 1463 737 1419Q814 1375 859 1299.5Q904 1224 904 1128Q904 1033 859 957Q814 881 737 837Q660 793 562.5 793Q465 793 387.5 837ZM688.5 998Q738 1049 738 1128Q738 1208 688.5 1258.5Q639 1309 562 1309Q485 1309 435.5 1258.5Q386 1208 386 1128Q386 1049 435.5 998Q485 947 562 947Q639 947 688.5 998Z"/>
+  </defs>
   <rect class="lini-canvas" x="-366.1048" y="-344.9497" width="732.2096" height="705.8995"/>
   <g class="lini-scene">
     <g class="lini-node lini-drawing lini-block" data-id="plate-view" transform="translate(0,-156.5)">
@@ -99,7 +136,10 @@ input_file: samples/drawing_annotations.lini
       <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: #004496" transform="translate(44.1048,-10.5503)">
         <polygon points="-200,159 -212,161 -212,157"/>
       </g>
-      <text class="lini-text lini-dim-text" x="-205.8952" y="140.4497" dy="0.358em">25</text>
+      <g class="lini-text lini-dim-text">
+        <use href="#lg0400-22" transform="translate(-213.0952 144.7457) scale(0.006 -0.006)"/>
+        <use href="#lg0400-25" transform="translate(-205.8952 144.7457) scale(0.006 -0.006)"/>
+      </g>
       <g class="lini-node lini-ext-line lini-line" style="stroke: #004496" transform="translate(44.1048,-10.5503)">
         <line x1="-200" y1="-57" x2="-200" y2="162"/>
       </g>
@@ -115,7 +155,11 @@ input_file: samples/drawing_annotations.lini
       <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: #004496" transform="translate(44.1048,-10.5503)">
         <polygon points="300,159 288,161 288,157"/>
       </g>
-      <text class="lini-text lini-dim-text" x="94.1048" y="140.4497" dy="0.358em">125</text>
+      <g class="lini-text lini-dim-text">
+        <use href="#lg0400-21" transform="translate(83.3048 144.7457) scale(0.006 -0.006)"/>
+        <use href="#lg0400-22" transform="translate(90.5048 144.7457) scale(0.006 -0.006)"/>
+        <use href="#lg0400-25" transform="translate(97.7048 144.7457) scale(0.006 -0.006)"/>
+      </g>
       <g class="lini-node lini-ext-line lini-line" style="stroke: #004496" transform="translate(44.1048,-10.5503)">
         <line x1="-300" y1="3" x2="-300" y2="178"/>
       </g>
@@ -131,7 +175,11 @@ input_file: samples/drawing_annotations.lini
       <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: #004496" transform="translate(44.1048,-10.5503)">
         <polygon points="300,175 288,177 288,173"/>
       </g>
-      <text class="lini-text lini-dim-text" x="44.1048" y="156.4497" dy="0.358em">150</text>
+      <g class="lini-text lini-dim-text">
+        <use href="#lg0400-21" transform="translate(33.3048 160.7457) scale(0.006 -0.006)"/>
+        <use href="#lg0400-25" transform="translate(40.5048 160.7457) scale(0.006 -0.006)"/>
+        <use href="#lg0400-20" transform="translate(47.7048 160.7457) scale(0.006 -0.006)"/>
+      </g>
       <g class="lini-node lini-ext-line lini-line" style="stroke: #004496" transform="translate(44.1048,-10.5503)">
         <line x1="-3" y1="-140" x2="-322" y2="-140"/>
       </g>
@@ -147,7 +195,10 @@ input_file: samples/drawing_annotations.lini
       <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: #004496" transform="translate(44.1048,-10.5503)">
         <polygon points="-319,60 -321,48 -317,48"/>
       </g>
-      <text class="lini-text lini-dim-text" x="-282.8952" y="-50.5503" dy="0.358em" transform="rotate(-90 -282.8952 -50.5503)">50</text>
+      <g class="lini-text lini-dim-text" transform="rotate(-90 -282.8952 -50.5503)">
+        <use href="#lg0400-25" transform="translate(-290.0952 -46.2543) scale(0.006 -0.006)"/>
+        <use href="#lg0400-20" transform="translate(-282.8952 -46.2543) scale(0.006 -0.006)"/>
+      </g>
       <g class="lini-node lini-ext-line lini-line" style="stroke: #004496" transform="translate(44.1048,-10.5503)">
         <line x1="-3" y1="-140" x2="-354" y2="-140"/>
       </g>
@@ -163,9 +214,23 @@ input_file: samples/drawing_annotations.lini
       <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: #004496" transform="translate(44.1048,-10.5503)">
         <polygon points="-351,140 -353,128 -349,128"/>
       </g>
-      <text class="lini-text lini-dim-text" x="-314.8952" y="3.0497" dy="0.358em" transform="rotate(-90 -314.8952 3.0497)">70</text>
-      <text class="lini-text lini-dim-text" x="-319.5152" y="-18.7503" dy="0.358em" style="font-size: 8.4px" transform="rotate(-90 -319.5152 -18.7503)">+0.2</text>
-      <text class="lini-text lini-dim-text" x="-310.2752" y="-18.7503" dy="0.358em" style="font-size: 8.4px" transform="rotate(-90 -310.2752 -18.7503)">-0.05</text>
+      <g class="lini-text lini-dim-text" transform="rotate(-90 -314.8952 3.0497)">
+        <use href="#lg0400-27" transform="translate(-322.0952 7.3457) scale(0.006 -0.006)"/>
+        <use href="#lg0400-20" transform="translate(-314.8952 7.3457) scale(0.006 -0.006)"/>
+      </g>
+      <g class="lini-text lini-dim-text" style="font-size: 8.4px" transform="rotate(-90 -319.5152 -18.7503)">
+        <use href="#lg0400-15" transform="translate(-329.5952 -15.7431) scale(0.0042 -0.0042)"/>
+        <use href="#lg0400-20" transform="translate(-324.5552 -15.7431) scale(0.0042 -0.0042)"/>
+        <use href="#lg0400-18" transform="translate(-319.5152 -15.7431) scale(0.0042 -0.0042)"/>
+        <use href="#lg0400-22" transform="translate(-314.4752 -15.7431) scale(0.0042 -0.0042)"/>
+      </g>
+      <g class="lini-text lini-dim-text" style="font-size: 8.4px" transform="rotate(-90 -310.2752 -18.7503)">
+        <use href="#lg0400-17" transform="translate(-322.8752 -15.7431) scale(0.0042 -0.0042)"/>
+        <use href="#lg0400-20" transform="translate(-317.8352 -15.7431) scale(0.0042 -0.0042)"/>
+        <use href="#lg0400-18" transform="translate(-312.7952 -15.7431) scale(0.0042 -0.0042)"/>
+        <use href="#lg0400-20" transform="translate(-307.7552 -15.7431) scale(0.0042 -0.0042)"/>
+        <use href="#lg0400-25" transform="translate(-302.7152 -15.7431) scale(0.0042 -0.0042)"/>
+      </g>
       <g class="lini-node lini-dim-line lini-line" style="stroke: #004496" transform="translate(44.1048,-10.5503)">
         <polyline points="-167.4339,-50.2302 -314.4096,-94.3229 -322.4096,-94.3229"/>
       </g>
@@ -175,7 +240,15 @@ input_file: samples/drawing_annotations.lini
       <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: #004496" transform="translate(44.1048,-10.5503)">
         <polygon points="-180.8435,-54.253 -168.7749,-52.7205 -169.9243,-48.8892"/>
       </g>
-      <text class="lini-text lini-dim-text" x="-312.7048" y="-104.8731" dy="0.358em">4× ⌀10 H7</text>
+      <g class="lini-text lini-dim-text">
+        <use href="#lg0400-24" transform="translate(-345.1048 -100.5771) scale(0.006 -0.006)"/>
+        <use href="#lg0400-106" transform="translate(-337.9048 -100.5771) scale(0.006 -0.006)"/>
+        <use href="#lg0400-390" transform="translate(-323.5048 -100.5771) scale(0.006 -0.006)"/>
+        <use href="#lg0400-21" transform="translate(-316.3048 -100.5771) scale(0.006 -0.006)"/>
+        <use href="#lg0400-20" transform="translate(-309.1048 -100.5771) scale(0.006 -0.006)"/>
+        <use href="#lg0400-44" transform="translate(-294.7048 -100.5771) scale(0.006 -0.006)"/>
+        <use href="#lg0400-27" transform="translate(-287.5048 -100.5771) scale(0.006 -0.006)"/>
+      </g>
       <g class="lini-node lini-dim-line lini-line" style="stroke: #004496" transform="translate(44.1048,-10.5503)">
         <polyline points="-18.3848,78.3848 210.8995,-150.8995 218.8995,-150.8995"/>
       </g>
@@ -185,10 +258,24 @@ input_file: samples/drawing_annotations.lini
       <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: #004496" transform="translate(44.1048,-10.5503)">
         <polygon points="-8.4853,68.4853 -15.5563,78.3848 -18.3848,75.5563"/>
       </g>
-      <text class="lini-text lini-dim-text" x="272.2043" y="-161.4497" dy="0.358em">⌀6</text>
+      <g class="lini-text lini-dim-text">
+        <use href="#lg0400-390" transform="translate(265.0043 -157.1537) scale(0.006 -0.006)"/>
+        <use href="#lg0400-26" transform="translate(272.2043 -157.1537) scale(0.006 -0.006)"/>
+      </g>
       <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,177.4497)">
         <rect x="-39.6" y="-6" width="79.2" height="12" rx="0" ry="0"/>
-        <text class="lini-text" x="0" y="0" dy="0.358em">COVER PLATE</text>
+        <g class="lini-text">
+          <use href="#lg0400-39" transform="translate(-39.6 4.296) scale(0.006 -0.006)"/>
+          <use href="#lg0400-51" transform="translate(-32.4 4.296) scale(0.006 -0.006)"/>
+          <use href="#lg0400-58" transform="translate(-25.2 4.296) scale(0.006 -0.006)"/>
+          <use href="#lg0400-41" transform="translate(-18 4.296) scale(0.006 -0.006)"/>
+          <use href="#lg0400-54" transform="translate(-10.8 4.296) scale(0.006 -0.006)"/>
+          <use href="#lg0400-52" transform="translate(3.6 4.296) scale(0.006 -0.006)"/>
+          <use href="#lg0400-48" transform="translate(10.8 4.296) scale(0.006 -0.006)"/>
+          <use href="#lg0400-37" transform="translate(18 4.296) scale(0.006 -0.006)"/>
+          <use href="#lg0400-56" transform="translate(25.2 4.296) scale(0.006 -0.006)"/>
+          <use href="#lg0400-41" transform="translate(32.4 4.296) scale(0.006 -0.006)"/>
+        </g>
       </g>
     </g>
     <g class="lini-node lini-drawing lini-block" data-id="bracket-view" transform="translate(0,196.4497)">
@@ -207,26 +294,57 @@ input_file: samples/drawing_annotations.lini
       </g>
       <g class="lini-node lini-balloon lini-oval" data-id="b1" transform="translate(219.85,-101)">
         <ellipse cx="0" cy="0" rx="23.3" ry="25.5"/>
-        <text class="lini-text" x="0" y="0" dy="0.358em">1</text>
+        <g class="lini-text">
+          <use href="#lg0400-21" transform="translate(-3.3 3.938) scale(0.0055 -0.0055)"/>
+        </g>
       </g>
       <g class="lini-node lini-note lini-path" data-id="hint" style="stroke-width: 2; font-size: 13px" transform="translate(-155.15,-56)">
         <path d="M -89 -13.5 L 79.82 -13.5 L 89 -4.3199999999999985 L 89 13.5 L -89 13.5 Z"/>
         <g class="lini-node lini-path" style="fill: #444; stroke: none; stroke-width: 0" transform="translate(0,0)">
           <path d="M 79.82 -13.5 L 89 -4.3199999999999985 L 79.82 -4.3199999999999985 Z"/>
         </g>
-        <text class="lini-text" x="0" y="0" dy="0.358em">DEBURR AFTER MILLING</text>
+        <g class="lini-text">
+          <use href="#lg0400-40" transform="translate(-78 4.654) scale(0.0065 -0.0065)"/>
+          <use href="#lg0400-41" transform="translate(-70.2 4.654) scale(0.0065 -0.0065)"/>
+          <use href="#lg0400-38" transform="translate(-62.4 4.654) scale(0.0065 -0.0065)"/>
+          <use href="#lg0400-57" transform="translate(-54.6 4.654) scale(0.0065 -0.0065)"/>
+          <use href="#lg0400-54" transform="translate(-46.8 4.654) scale(0.0065 -0.0065)"/>
+          <use href="#lg0400-54" transform="translate(-39 4.654) scale(0.0065 -0.0065)"/>
+          <use href="#lg0400-37" transform="translate(-23.4 4.654) scale(0.0065 -0.0065)"/>
+          <use href="#lg0400-42" transform="translate(-15.6 4.654) scale(0.0065 -0.0065)"/>
+          <use href="#lg0400-56" transform="translate(-7.8 4.654) scale(0.0065 -0.0065)"/>
+          <use href="#lg0400-41" transform="translate(-0 4.654) scale(0.0065 -0.0065)"/>
+          <use href="#lg0400-54" transform="translate(7.8 4.654) scale(0.0065 -0.0065)"/>
+          <use href="#lg0400-49" transform="translate(23.4 4.654) scale(0.0065 -0.0065)"/>
+          <use href="#lg0400-45" transform="translate(31.2 4.654) scale(0.0065 -0.0065)"/>
+          <use href="#lg0400-48" transform="translate(39 4.654) scale(0.0065 -0.0065)"/>
+          <use href="#lg0400-48" transform="translate(46.8 4.654) scale(0.0065 -0.0065)"/>
+          <use href="#lg0400-45" transform="translate(54.6 4.654) scale(0.0065 -0.0065)"/>
+          <use href="#lg0400-50" transform="translate(62.4 4.654) scale(0.0065 -0.0065)"/>
+          <use href="#lg0400-43" transform="translate(70.2 4.654) scale(0.0065 -0.0065)"/>
+        </g>
       </g>
       <g class="lini-node lini-dim-line lini-path" style="stroke: #004496" transform="translate(54.85,4)">
         <path d="M -88 66 A 40 40 0 0 1 -80 90"/>
       </g>
-      <text class="lini-text lini-dim-text" x="-15.8185" y="77.5562" dy="0.358em">36.87°</text>
+      <g class="lini-text lini-dim-text">
+        <use href="#lg0400-23" transform="translate(-37.4185 81.8522) scale(0.006 -0.006)"/>
+        <use href="#lg0400-26" transform="translate(-30.2185 81.8522) scale(0.006 -0.006)"/>
+        <use href="#lg0400-18" transform="translate(-23.0185 81.8522) scale(0.006 -0.006)"/>
+        <use href="#lg0400-28" transform="translate(-15.8185 81.8522) scale(0.006 -0.006)"/>
+        <use href="#lg0400-27" transform="translate(-8.6185 81.8522) scale(0.006 -0.006)"/>
+        <use href="#lg0400-681" transform="translate(-1.4185 81.8522) scale(0.006 -0.006)"/>
+      </g>
       <g class="lini-node lini-dim-line lini-line" style="stroke: #004496" transform="translate(54.85,4)">
         <polyline points="116.3367,85.9161 132.2618,97.6769 140.2618,97.6769"/>
       </g>
       <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: #004496" transform="translate(54.85,4)">
         <polygon points="114.7279,84.7279 125.569,90.2479 123.1928,93.4656"/>
       </g>
-      <text class="lini-text lini-dim-text" x="204.3118" y="101.6769" dy="0.358em">R6</text>
+      <g class="lini-text lini-dim-text">
+        <use href="#lg0400-54" transform="translate(197.1118 105.9729) scale(0.006 -0.006)"/>
+        <use href="#lg0400-26" transform="translate(204.3118 105.9729) scale(0.006 -0.006)"/>
+      </g>
       <g class="lini-node lini-dim-line lini-line" style="stroke: #004496" transform="translate(54.85,4)">
         <line x1="60" y1="97" x2="60" y2="21.4"/>
       </g>
@@ -236,26 +354,52 @@ input_file: samples/drawing_annotations.lini
       <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: #004496" transform="translate(54.85,4)">
         <polygon points="60,99 58,87 62,87"/>
       </g>
-      <text class="lini-text lini-dim-text" x="106.85" y="40.2" dy="0.358em" transform="rotate(-90 106.85 40.2)">⌀16</text>
+      <g class="lini-text lini-dim-text" transform="rotate(-90 106.85 40.2)">
+        <use href="#lg0400-390" transform="translate(96.05 44.496) scale(0.006 -0.006)"/>
+        <use href="#lg0400-21" transform="translate(103.25 44.496) scale(0.006 -0.006)"/>
+        <use href="#lg0400-26" transform="translate(110.45 44.496) scale(0.006 -0.006)"/>
+      </g>
       <g class="lini-node lini-dim-line lini-line" style="stroke: #484848" transform="translate(54.85,4)">
         <polyline points="0,101 0,117.5 8,117.5"/>
       </g>
       <g class="lini-node lini-marker lini-marker-datum lini-poly" style="fill: #484848" transform="translate(54.85,4)">
         <polygon points="-5.5,90 5.5,90 0,101"/>
       </g>
-      <text class="lini-text lini-dim-text" x="68.45" y="121.5" dy="0.358em">A</text>
+      <g class="lini-text lini-dim-text">
+        <use href="#lg0400-37" transform="translate(64.85 125.796) scale(0.006 -0.006)"/>
+      </g>
       <g class="lini-node lini-dim-line lini-line" style="stroke: #484848" transform="translate(54.85,4)">
         <polyline points="-2,0 -135,0 -143,0"/>
         <circle class="lini-marker lini-marker-dot" cx="-2.25" cy="0" r="2.25" style="fill: #484848"/>
       </g>
-      <text class="lini-text lini-dim-text" x="-108.15" y="4" dy="0.358em">GRIND</text>
+      <g class="lini-text lini-dim-text">
+        <use href="#lg0400-43" transform="translate(-126.15 8.296) scale(0.006 -0.006)"/>
+        <use href="#lg0400-54" transform="translate(-118.95 8.296) scale(0.006 -0.006)"/>
+        <use href="#lg0400-45" transform="translate(-111.75 8.296) scale(0.006 -0.006)"/>
+        <use href="#lg0400-50" transform="translate(-104.55 8.296) scale(0.006 -0.006)"/>
+        <use href="#lg0400-40" transform="translate(-97.35 8.296) scale(0.006 -0.006)"/>
+      </g>
       <g class="lini-node lini-dim-line lini-line" style="stroke: #484848" transform="translate(54.85,4)">
         <polyline points="-1.6,-1.2 -132.2,-99.15 -140.2,-99.15"/>
       </g>
       <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: #484848" transform="translate(54.85,4)">
         <polygon points="-0,0 -10.8,-5.6 -8.4,-8.8"/>
       </g>
-      <text class="lini-text lini-dim-text" x="-141.35" y="-95.15" dy="0.358em">BREAK EDGES 0.5</text>
+      <g class="lini-text lini-dim-text">
+        <use href="#lg0400-38" transform="translate(-195.35 -90.854) scale(0.006 -0.006)"/>
+        <use href="#lg0400-54" transform="translate(-188.15 -90.854) scale(0.006 -0.006)"/>
+        <use href="#lg0400-41" transform="translate(-180.95 -90.854) scale(0.006 -0.006)"/>
+        <use href="#lg0400-37" transform="translate(-173.75 -90.854) scale(0.006 -0.006)"/>
+        <use href="#lg0400-47" transform="translate(-166.55 -90.854) scale(0.006 -0.006)"/>
+        <use href="#lg0400-41" transform="translate(-152.15 -90.854) scale(0.006 -0.006)"/>
+        <use href="#lg0400-40" transform="translate(-144.95 -90.854) scale(0.006 -0.006)"/>
+        <use href="#lg0400-43" transform="translate(-137.75 -90.854) scale(0.006 -0.006)"/>
+        <use href="#lg0400-41" transform="translate(-130.55 -90.854) scale(0.006 -0.006)"/>
+        <use href="#lg0400-55" transform="translate(-123.35 -90.854) scale(0.006 -0.006)"/>
+        <use href="#lg0400-20" transform="translate(-108.95 -90.854) scale(0.006 -0.006)"/>
+        <use href="#lg0400-18" transform="translate(-101.75 -90.854) scale(0.006 -0.006)"/>
+        <use href="#lg0400-25" transform="translate(-94.55 -90.854) scale(0.006 -0.006)"/>
+      </g>
       <g class="lini-node lini-dim-line lini-line" style="stroke: #484848" transform="translate(54.85,4)">
         <line x1="155.1057" y1="-81.9133" x2="120.7878" y2="-1.8383"/>
         <circle class="lini-marker lini-marker-dot" cx="120.8863" cy="-2.0681" r="2.25" style="fill: #484848"/>
@@ -266,7 +410,20 @@ input_file: samples/drawing_annotations.lini
       </g>
       <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,137.5)">
         <rect x="-46.8" y="-6" width="93.6" height="12" rx="0" ry="0"/>
-        <text class="lini-text" x="0" y="0" dy="0.358em">CLAMP BRACKET</text>
+        <g class="lini-text">
+          <use href="#lg0400-39" transform="translate(-46.8 4.296) scale(0.006 -0.006)"/>
+          <use href="#lg0400-48" transform="translate(-39.6 4.296) scale(0.006 -0.006)"/>
+          <use href="#lg0400-37" transform="translate(-32.4 4.296) scale(0.006 -0.006)"/>
+          <use href="#lg0400-49" transform="translate(-25.2 4.296) scale(0.006 -0.006)"/>
+          <use href="#lg0400-52" transform="translate(-18 4.296) scale(0.006 -0.006)"/>
+          <use href="#lg0400-38" transform="translate(-3.6 4.296) scale(0.006 -0.006)"/>
+          <use href="#lg0400-54" transform="translate(3.6 4.296) scale(0.006 -0.006)"/>
+          <use href="#lg0400-37" transform="translate(10.8 4.296) scale(0.006 -0.006)"/>
+          <use href="#lg0400-39" transform="translate(18 4.296) scale(0.006 -0.006)"/>
+          <use href="#lg0400-47" transform="translate(25.2 4.296) scale(0.006 -0.006)"/>
+          <use href="#lg0400-41" transform="translate(32.4 4.296) scale(0.006 -0.006)"/>
+          <use href="#lg0400-56" transform="translate(39.6 4.296) scale(0.006 -0.006)"/>
+        </g>
       </g>
     </g>
   </g>

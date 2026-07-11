@@ -28,7 +28,7 @@ pub fn format_value(value: &ResolvedValue, vars: &VarTable, opts: &Options) -> S
         ResolvedValue::Call(c) => {
             // Baked output carries no `light-dark()`; freeze its light arm so a
             // standalone file renders correctly [SPEC 10.6].
-            if opts.bake_vars && c.name == "light-dark" && !c.args.is_empty() {
+            if opts.static_mode && c.name == "light-dark" && !c.args.is_empty() {
                 format_value(&c.args[0], vars, opts)
             } else {
                 format_call(c, vars, opts)
@@ -44,10 +44,10 @@ pub fn format_value(value: &ResolvedValue, vars: &VarTable, opts: &Options) -> S
             unreachable!("a draw: pen item folds to a path at layout, never rendered")
         }
         ResolvedValue::LiveVar { name, raw } => {
-            // `--bake-vars` inlines each var to a literal so renderers without
+            // `--static` inlines each var to a literal so renderers without
             // `var()` support (and standalone SVG files) draw correctly;
             // otherwise the reference stays live.
-            if opts.bake_vars {
+            if opts.static_mode {
                 if *raw {
                     // Raw CSS vars cannot be baked — we don't know their value.
                     format!("var(--{})", name)
@@ -77,6 +77,18 @@ pub fn css_value(prop: &str, value: &ResolvedValue, vars: &VarTable, opts: &Opti
     match prop {
         "font-size" => format!("{}px", format_value(value, vars, opts)),
         "text-shadow" => px_lengths(value, vars, opts),
+        // The widened weight names [SPEC 6] are lini vocabulary, not CSS —
+        // emit their numeric equivalents (`normal` / `bold` are valid CSS).
+        "font-weight" => match value {
+            ResolvedValue::Ident(w) if w == "medium" => "500".into(),
+            ResolvedValue::Ident(w) if w == "semibold" => "600".into(),
+            _ => format_value(value, vars, opts),
+        },
+        // Under `--embed-font`, a bundled family leads with its embedded
+        // Lini-scoped twin; the authored name stays as the fallback [SPEC 17].
+        "font-family" if opts.embed_font => {
+            super::fonts::lead_with_scoped(&format_value(value, vars, opts))
+        }
         _ => format_value(value, vars, opts),
     }
 }
@@ -102,7 +114,7 @@ fn px_lengths(value: &ResolvedValue, vars: &VarTable, opts: &Options) -> String 
 }
 
 /// An attribute formatted for SVG, falling back to the lini CSS variable named
-/// `var_name` when unset. Going through `format_value` means `--bake-vars`
+/// `var_name` when unset. Going through `format_value` means `--static`
 /// correctly resolves the fallback to a literal rather than leaving a `var()`
 /// string.
 pub fn attr_or_var(

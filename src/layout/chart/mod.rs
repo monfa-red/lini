@@ -1,6 +1,6 @@
 //! `layout: chart` [SPEC 14] — a container that reads all its children, fixes a
 //! shared data→pixel scale, and **lowers to primitive `PlacedNode`s**. The renderer,
-//! cascade, palette, theming, and `--bake-vars` are all reused unchanged; the chart
+//! cascade, palette, theming, and `--static` are all reused unchanged; the chart
 //! adds only the scale-and-place algorithm here.
 //!
 //! `|bars|` / `|line|` / `|dots|` / `|area|` / `|bubble|` over a categorical band or a

@@ -6,7 +6,7 @@ use lini::{Options, OutputFormat};
 
 fn svg(src: &str) -> String {
     let opts = Options {
-        bake_vars: true,
+        static_mode: true,
         format: OutputFormat::Svg,
         ..Default::default()
     };

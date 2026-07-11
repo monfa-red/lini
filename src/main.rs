@@ -28,11 +28,15 @@ struct Cli {
     #[arg(long = "standalone")]
     standalone: bool,
 
-    /// Emit `var()` values inline as their resolved literal. Necessary for
-    /// renderers without CSS-variable support (resvg, librsvg, raster
-    /// converters).
-    #[arg(long = "bake-vars")]
-    bake_vars: bool,
+    /// Inline `var()`s as literals **and** outline text to paths —
+    /// self-contained for any renderer (resvg, librsvg, raster converters).
+    #[arg(long = "static")]
+    static_mode: bool,
+
+    /// Embed the used bundled font family × weights as base64 `@font-face` —
+    /// browser-only (resvg/librsvg ignore `@font-face`).
+    #[arg(long = "embed-font")]
+    embed_font: bool,
 
     /// Parse and validate only — no layout, no render.
     #[arg(long = "check")]
@@ -83,6 +87,15 @@ fn main() -> ExitCode {
         }
     };
 
+    // The two font flags need the subset bytes — the default-on `font`
+    // feature [SPEC 19]. Name-only output never does.
+    if (cli.static_mode || cli.embed_font) && !lini::font_support() {
+        eprintln!(
+            "error: --static and --embed-font need the bundled fonts — rebuild with the `font` feature (on by default)"
+        );
+        return ExitCode::from(3);
+    }
+
     let format = match cli.format.as_str() {
         "svg" => lini::OutputFormat::Svg,
         "html" => lini::OutputFormat::Html,
@@ -112,7 +125,8 @@ fn main() -> ExitCode {
             return ExitCode::from(3);
         }
         let opts = lini::Options {
-            bake_vars: cli.bake_vars,
+            static_mode: cli.static_mode,
+            embed_font: cli.embed_font,
             format,
             theme_css,
         };
@@ -138,7 +152,8 @@ fn main() -> ExitCode {
     };
 
     let opts = lini::Options {
-        bake_vars: cli.bake_vars,
+        static_mode: cli.static_mode,
+        embed_font: cli.embed_font,
         format,
         theme_css,
     };
@@ -223,7 +238,7 @@ fn watch_loop(input: &Path, output: &Path, opts: &lini::Options, check_only: boo
 
 fn run_serve(args: &[String]) -> ExitCode {
     let mut port: u16 = 7700;
-    let mut bake_vars = false;
+    let mut static_mode = false;
     let mut input: Option<String> = None;
     let mut i = 0;
     while i < args.len() {
@@ -246,9 +261,9 @@ fn run_serve(args: &[String]) -> ExitCode {
                     }
                 };
             }
-            "--bake-vars" => bake_vars = true,
+            "--static" => static_mode = true,
             "-h" | "--help" => {
-                println!("lini serve [PATH] [--port N] [--bake-vars]");
+                println!("lini serve [PATH] [--port N] [--static]");
                 println!();
                 println!("  Serves a live preview at http://127.0.0.1:<port>/.");
                 println!();
@@ -258,7 +273,7 @@ fn run_serve(args: &[String]) -> ExitCode {
                 println!();
                 println!("  --port N    Port to bind (default 7700).");
                 println!(
-                    "  --bake-vars Bake CSS variables as literals (for non-browser renderers)."
+                    "  --static    Bake CSS variables and outline text (for non-browser renderers)."
                 );
                 return ExitCode::SUCCESS;
             }
@@ -294,7 +309,7 @@ fn run_serve(args: &[String]) -> ExitCode {
         }
     };
     let opts = lini::Options {
-        bake_vars,
+        static_mode,
         ..Default::default()
     };
     match lini::serve(target, port, opts) {

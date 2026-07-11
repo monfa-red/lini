@@ -29,7 +29,7 @@ fn formatted_output_resolves_identically() {
     // Formatting must not change semantics. Compile the original sample,
     // compile the formatted version, and require identical SVG output.
     let opts = lini::Options {
-        bake_vars: true,
+        static_mode: true,
         ..Default::default()
     };
     let samples_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("samples");

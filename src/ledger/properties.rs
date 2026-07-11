@@ -182,7 +182,8 @@ pub static PROPERTIES: &[Property] = &[
     row("font-size", UNIVERSAL, One(Kind::Number), Bundles, Text)
         .text()
         .baked(),
-    row("font-weight", UNIVERSAL, One(Kind::Ident), Bundles, Text).text(),
+    // `normal|medium|semibold|bold` or `400|500|600|700` [SPEC 6] — ident or number.
+    row("font-weight", UNIVERSAL, One(Kind::Any), Bundles, Text).text(),
     row("font-style", UNIVERSAL, One(Kind::Ident), Engine, Text).text(),
     row("text-transform", UNIVERSAL, One(Kind::Ident), Engine, Text).text(),
     row("text-decoration", UNIVERSAL, One(Kind::Ident), Engine, Text).text(),

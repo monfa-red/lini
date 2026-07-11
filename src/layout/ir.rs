@@ -13,7 +13,7 @@ pub struct LaidOut {
     /// them.
     pub strays: Vec<Stray>,
     /// Resolved CSS variables — carried through to render so the `<style>`
-    /// block and `--bake-vars` mode can both read them.
+    /// block and `--static` mode can both read them.
     pub vars: VarTable,
     /// Defs-block stylesheet inputs [SPEC 17] — the renderer states these
     /// as class rules and diffs node attrs against them.

@@ -1,5 +1,5 @@
 //! Conformance suite — every `samples/*.lini` file is compiled with
-//! `--bake-vars` and its SVG output snapshotted via `insta`. Changes that
+//! `--static` and its SVG output snapshotted via `insta`. Changes that
 //! shift any sample's output surface as a snapshot diff, surfacing
 //! regressions across all SPEC features at once.
 //!
@@ -16,8 +16,14 @@ const LINK_SAMPLES: &[&str] = &["links_simple.lini", "links_medium.lini", "links
 
 #[test]
 fn snapshot_baked_svg_for_every_sample() {
+    // The snapshots carry `--static` **outlined** text [SPEC 17]; without the
+    // `font` feature outlining is inert (text stays `<text>`), so there is
+    // nothing meaningful to compare — same policy as the icons skip below.
+    if !cfg!(feature = "font") {
+        return;
+    }
     let opts = Options {
-        bake_vars: true,
+        static_mode: true,
         format: OutputFormat::Svg,
         ..Default::default()
     };

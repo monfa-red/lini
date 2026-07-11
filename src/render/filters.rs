@@ -72,7 +72,7 @@ fn parse(value: &ResolvedValue) -> Option<Shadow> {
 /// arm, the same colour the theme resolves to.
 fn flood_literal(color: &ResolvedValue, vars: &VarTable, opts: &Options) -> String {
     let literal = Options {
-        bake_vars: true,
+        static_mode: true,
         ..opts.clone()
     };
     format_value(color, vars, &literal)
