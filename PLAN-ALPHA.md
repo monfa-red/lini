@@ -785,7 +785,38 @@ owner review rather than pre-approved.
 
 Acceptance: default output unchanged (center = today); wrap sample renders
 correctly at light/dark; no measurement caller bypasses the new API.
-**Log:**
+**Log:** 2026-07-11 — **done**, 1 commit, all acceptance met (15 suites +
+fmt + clippy clean; **zero snapshot diffs** except the deliberately extended
+sample — default output is byte-identical, centre = today; the card grid
+eyeballed light + dark; every width/height reader still funnels through
+`text::approx_*`, with `text::wrap` beside them the one line-breaker and
+render's per-line anchoring computed through the same API). Items:
+- `text::wrap` (whitespace-preferred, in-word char-boundary fallback, ≥ 1
+  glyph per line, authored `\n` lines wrap independently, blank lines
+  survive); the scalar APIs stand over the `\n`-joined result, so **the
+  wrapped size is the measured size**.
+- New `layout/wrap.rs` pass: after children lay out, before the container
+  arranges — rewrites text leaves' labels with the breaks and re-measures;
+  render's existing per-line `<tspan>` path emits the positions. Wrapped
+  sizes demonstrably feed auto width, grid tracks, and routing obstacles
+  (route test). The three SPEC 20 errors land verbatim; pinned overlays are
+  exempt from the cap (they never grow the parent). Ledger gains the
+  `max-width` / `text-wrap` rows — missing since R2 (cross-check find).
+- One shared line-align resolver (`layout::line_align_of` + the stamp):
+  flex (row → `justify`, column → `align`), grid tracks (per column), and
+  `grid::align_cell_content` — now a caller for its own slide as well, per
+  the AUDIT parallel-impl trap. Non-centre resolutions ride a
+  layout-generated `line-align` attr; `render/text.rs` anchors each line.
+- Sample: `text_tables.lini` gains the wrapped card grid (start / centre /
+  end flush visible); its tables re-verify the align families and its links
+  re-judge the wrapped card as an obstacle under the laws sweep.
+
+**Deviations:** none of substance. The plan's "line-list API" landed as
+`wrap() -> Vec<String>` + the unchanged scalar measurements over the joined
+lines (one measurement home, no parallel line-metrics struct); in-word
+breaks use `char` boundaries until M5's real metrics (comment flags it);
+the wrap sample extends `text_tables.lini` per the M0 cluster policy rather
+than adding a file.
 
 ### Stage M5 — fonts: real metrics, subsets & `--static` `[output]`
 
