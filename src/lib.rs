@@ -3,6 +3,7 @@ mod desugar;
 mod error;
 mod expr;
 mod fmt;
+mod font;
 mod icon;
 mod layout;
 mod ledger;

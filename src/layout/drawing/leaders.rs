@@ -158,9 +158,9 @@ fn lower_measured(
         line.points[0] = (tip.0 - to_tip.0 * trim, tip.1 - to_tip.1 * trim);
     }
     out.insert(0, paint.dim(line.points.clone()));
-    let tw = text.width(paint.fs);
+    let tw = text.width(paint.fs, paint.font);
     let centre = (line.text_at.0 + line.sx * tw / 2.0, line.text_at.1);
-    out.extend(text.nodes(centre, 0.0, paint.fs));
+    out.extend(text.nodes(centre, 0.0, paint.fs, paint.font));
     out
 }
 
@@ -332,8 +332,9 @@ fn texts_beside(texts: &[ResolvedText], at: P, sx: f64, fs: f64) -> Vec<PlacedNo
     let mut y = at.1;
     for t in texts {
         let size = t.attrs.number("font-size").unwrap_or(fs);
-        let w = approx_width(&t.text, size, 0.0);
-        let mut n = prim::dim_text(&t.text, at.0 + sx * w / 2.0, y, size);
+        let font = crate::font::Font::of(&t.attrs);
+        let w = approx_width(&t.text, font, size, 0.0);
+        let mut n = prim::dim_text(&t.text, at.0 + sx * w / 2.0, y, size, font.kind);
         for (k, v) in &t.attrs.map {
             match k.as_str() {
                 "translate" => {

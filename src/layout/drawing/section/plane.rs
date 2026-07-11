@@ -119,7 +119,13 @@ fn fill_one(cp: &mut PlacedNode, geo: Bbox, scale: f64) -> Result<(), Error> {
                 tip.0 + facing.0 * PLANE_LETTER_GAP,
                 tip.1 + facing.1 * PLANE_LETTER_GAP,
             );
-            pieces.push(prim::dim_text(&letter, lp.0, lp.1, PLANE_LETTER_SIZE));
+            pieces.push(prim::dim_text(
+                &letter,
+                lp.0,
+                lp.1,
+                PLANE_LETTER_SIZE,
+                paint.font.kind,
+            ));
         }
     }
 

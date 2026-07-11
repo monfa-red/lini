@@ -159,13 +159,14 @@ pub(super) fn fmt(v: f64) -> String {
 
 impl DimText {
     /// The drawn width of the whole run — main plus the deviation stack.
-    pub fn width(&self, fs: f64) -> f64 {
-        let main = approx_width(&self.main, fs, 0.0);
+    pub fn width(&self, fs: f64, font: crate::font::Font) -> f64 {
+        let main = approx_width(&self.main, font, fs, 0.0);
         match &self.devs {
             None => main,
             Some((u, l)) => {
                 let dfs = fs * TOL_STACK;
-                main + DEV_PAD + approx_width(u, dfs, 0.0).max(approx_width(l, dfs, 0.0))
+                main + DEV_PAD
+                    + approx_width(u, font, dfs, 0.0).max(approx_width(l, font, dfs, 0.0))
             }
         }
     }
@@ -173,10 +174,10 @@ impl DimText {
     /// Lower to text nodes centred on `centre`, turned by `rot` (ISO-aligned
     /// text rotates with its dimension line [SPEC 15.6]). Deviations sit
     /// raised / lowered after the main run, in the rotated frame.
-    pub fn nodes(&self, centre: P, rot: f64, fs: f64) -> Vec<PlacedNode> {
+    pub fn nodes(&self, centre: P, rot: f64, fs: f64, font: crate::font::Font) -> Vec<PlacedNode> {
         let place = |content: &str, local: P, size: f64| {
             let p = rotated(local, rot);
-            let mut n = prim::dim_text(content, centre.0 + p.0, centre.1 + p.1, size);
+            let mut n = prim::dim_text(content, centre.0 + p.0, centre.1 + p.1, size, font.kind);
             if rot != 0.0 {
                 n.rotation = rot;
                 n.attrs.insert("rotate", ResolvedValue::Number(rot));
@@ -187,8 +188,8 @@ impl DimText {
             return vec![place(&self.main, (0.0, 0.0), fs)];
         };
         let dfs = fs * TOL_STACK;
-        let wm = approx_width(&self.main, fs, 0.0);
-        let wd = approx_width(u, dfs, 0.0).max(approx_width(l, dfs, 0.0));
+        let wm = approx_width(&self.main, font, fs, 0.0);
+        let wd = approx_width(u, font, dfs, 0.0).max(approx_width(l, font, dfs, 0.0));
         let total = wm + DEV_PAD + wd;
         let dev_x = total / 2.0 - wd / 2.0;
         vec![

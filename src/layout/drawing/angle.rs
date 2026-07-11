@@ -135,7 +135,7 @@ fn arc_between(
         i.0 + ub.0 * (r + paint.fs / 2.0 + 6.0),
         i.1 + ub.1 * (r + paint.fs / 2.0 + 6.0),
     );
-    out.extend(text.nodes(text_c, 0.0, paint.fs));
+    out.extend(text.nodes(text_c, 0.0, paint.fs, paint.font));
     Ok(out)
 }
 

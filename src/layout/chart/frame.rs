@@ -64,7 +64,7 @@ fn domain_gutter(chart: &Chart) -> f64 {
         .x
         .labels
         .iter()
-        .map(|l| prim::text_width(l, LABEL_SIZE))
+        .map(|l| prim::text_width(l, LABEL_SIZE, crate::font::Font::regular(chart.font_kind)))
         .fold(0.0_f64, f64::max);
     if maxw > 0.0 { maxw + 8.0 } else { 0.0 }
 }
@@ -101,7 +101,11 @@ fn side_gutter(chart: &Chart, right: bool) -> f64 {
     {
         any = true;
         for &t in axis.scale.ticks() {
-            maxw = maxw.max(prim::text_width(&scale::label(t, &axis.unit), LABEL_SIZE));
+            maxw = maxw.max(prim::text_width(
+                &scale::label(t, &axis.unit),
+                LABEL_SIZE,
+                crate::font::Font::regular(chart.font_kind),
+            ));
         }
     }
     if any { maxw + 10.0 } else { 0.0 }

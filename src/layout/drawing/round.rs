@@ -240,7 +240,7 @@ fn diametral(c: P, r: f64, dir: P, text: DimText, paint: &Paint) -> Vec<PlacedNo
     let rim_a = (c.0 + dir.0 * r, c.1 + dir.1 * r);
     let rim_b = (c.0 - dir.0 * r, c.1 - dir.1 * r);
     let arrow_len = ARROW_LEN * sw;
-    let tw = text.width(fs);
+    let tw = text.width(fs, paint.font);
     let fits = 2.0 * r >= 2.0 * arrow_len + tw + 8.0;
     // ISO alignment: turn with the line, reading from the bottom / right —
     // a vertical line turns its text −90, like a stacked vertical dim.
@@ -268,7 +268,12 @@ fn diametral(c: P, r: f64, dir: P, text: DimText, paint: &Paint) -> Vec<PlacedNo
     out.push(paint.dim(vec![(rim_b.0 + dir.0 * trim, rim_b.1 + dir.1 * trim), end]));
     out.push(arrow(rim_a, dir, paint));
     out.push(arrow(rim_b, (-dir.0, -dir.1), paint));
-    out.extend(text.nodes((text_c.0 + up.0 * lift, text_c.1 + up.1 * lift), theta, fs));
+    out.extend(text.nodes(
+        (text_c.0 + up.0 * lift, text_c.1 + up.1 * lift),
+        theta,
+        fs,
+        paint.font,
+    ));
     out
 }
 

@@ -119,8 +119,16 @@ pub fn band_ticks(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
                 LABEL_SIZE,
                 color,
                 false,
+                chart.font_kind,
             ),
-            AxisRef::Value(_) => prim::text_right(label, plot.x0 - 6.0, mid, LABEL_SIZE, color),
+            AxisRef::Value(_) => prim::text_right(
+                label,
+                plot.x0 - 6.0,
+                mid,
+                LABEL_SIZE,
+                color,
+                chart.font_kind,
+            ),
         };
         out.push(node);
     }
@@ -174,12 +182,18 @@ fn ref_line(plot: &Plot, chart: &Chart, m: &Mark, v: f64, out: &mut Vec<PlacedNo
                 LABEL_SIZE,
                 color,
                 false,
+                chart.font_kind,
             ),
             // A horizontal line: the label at the left end, just above the line (clear
             // of the data, which usually grows to the right).
-            AxisRef::Value(_) => {
-                prim::text_left(text, plot.x0 + 3.0, p - LABEL_SIZE * 0.6, LABEL_SIZE, color)
-            }
+            AxisRef::Value(_) => prim::text_left(
+                text,
+                plot.x0 + 3.0,
+                p - LABEL_SIZE * 0.6,
+                LABEL_SIZE,
+                color,
+                chart.font_kind,
+            ),
         };
         out.push(node);
     }

@@ -64,6 +64,12 @@ pub struct ResolvedInst {
     /// per-node diff is computed at render) and for unstyled text. `attrs` stays
     /// the effective text context (inherited ∪ own) for layout measurement.
     pub own_style: AttrMap,
+    /// The effective measurement font [SPEC 5] — kind × weight off the
+    /// inherited text context ∪ this node's own props, stamped here because
+    /// only resolve sees the full inheritance chain. A text leaf measures its
+    /// label with it; an engine scope (chart/sequence/drawing) measures its
+    /// generated chrome with the kind, each run's own weight.
+    pub font: crate::font::Font,
     pub markers: Markers,
     pub children: Vec<ResolvedInst>,
     pub span: Span,

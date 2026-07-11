@@ -117,8 +117,13 @@ impl Pair<'_> {
         LABEL_SIZE
     }
     fn label_width(&self) -> f64 {
-        self.label()
-            .map_or(0.0, |l| prim::text_width(l, self.label_size()))
+        self.label().map_or(0.0, |l| {
+            prim::text_width(
+                l,
+                self.label_size(),
+                crate::font::Font::of(&self.link.attrs),
+            )
+        })
     }
     /// This message's kind: a self-message (`a -> a`) regardless of operator, else by
     /// the operator's line (`~>` async · `-->` return · `->` / other call).

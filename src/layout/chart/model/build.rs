@@ -159,6 +159,7 @@ pub fn build(inst: &ResolvedInst, funcs: &FuncTable) -> Result<Chart, Error> {
         dir,
         gap: read_gap(&inst.attrs),
         tooltip: chart_tip,
+        font_kind: inst.font.kind,
     })
 }
 

@@ -27,10 +27,15 @@ path = "src/lib.rs"
 clap = { version = "4.6", features = ["derive"] }
 
 [features]
-default = ["icons"]
+default = ["icons", "font"]
 # Embed the Phosphor icon set (assets/phosphor-duotone.txt). On by default;
 # `--no-default-features` drops it for a lean binary (then `|icon|` errors).
 icons = []
+# Embed the bundled font subsets (assets/fonts/subset/) for `--embed-font` /
+# `--static` text outlining. On by default; the metrics tables are always
+# compiled in regardless — layout never varies by build flags — so dropping
+# this only loses the two font flags, never measurement.
+font = []
 
 [dev-dependencies]
 insta = { version = "1.47", features = ["glob"] }

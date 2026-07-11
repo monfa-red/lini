@@ -425,7 +425,8 @@ fn label_mask(
         let size = t.attrs.number("font-size").unwrap_or(0.0);
         let ls = t.attrs.number("letter-spacing").unwrap_or(0.0);
         let lsp = t.attrs.number("line-spacing").unwrap_or(0.0);
-        let cw = approx_width(&t.content, size, ls) + size * LABEL_CUT_PAD_H * 2.0;
+        let font = crate::font::Font::of(&t.attrs);
+        let cw = approx_width(&t.content, font, size, ls) + size * LABEL_CUT_PAD_H * 2.0;
         let ch = approx_height(&t.content, size, lsp) + size * LABEL_CUT_PAD_V * 2.0;
         let (cx, cy) = t.position;
         write!(

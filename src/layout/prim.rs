@@ -5,6 +5,7 @@
 //! (`emit_rect` / `emit_line` / the text path) draw them unchanged. (Distinct from
 //! `layout::primitives`, which *sizes* primitives.)
 
+use crate::font::{Font, Kind};
 use crate::layout::{Bbox, PlacedNode, approx_height, approx_width};
 use crate::resolve::{AttrMap, MarkerKind, Markers, NodeKind, ResolvedInst, ResolvedValue};
 use crate::span::Span;
@@ -241,9 +242,15 @@ pub fn text(
     size: f64,
     color: Option<ResolvedValue>,
     bold: bool,
+    kind: Kind,
 ) -> PlacedNode {
+    let font = if bold {
+        Font::bold(kind)
+    } else {
+        Font::regular(kind)
+    };
     let bbox = Bbox::centered(
-        approx_width(content, size, 0.0),
+        approx_width(content, font, size, 0.0),
         approx_height(content, size, 0.0),
     );
     let mut n = node(NodeKind::Text, bbox);
@@ -269,9 +276,16 @@ pub fn text(
 /// inline `style=` — for a sequence message label and the like, mirroring how a link label
 /// rides `.lini-link-label`. `size` only bounds the bbox (so the engine measures the label);
 /// the class states the rendered font. Centred at (cx, cy); `.lini-text` gives the anchors.
-pub fn text_classed(content: &str, cx: f64, cy: f64, size: f64, class: &str) -> PlacedNode {
+pub fn text_classed(
+    content: &str,
+    cx: f64,
+    cy: f64,
+    size: f64,
+    class: &str,
+    font: Font,
+) -> PlacedNode {
     let bbox = Bbox::centered(
-        approx_width(content, size, 0.0),
+        approx_width(content, font, size, 0.0),
         approx_height(content, size, 0.0),
     );
     let mut n = node(NodeKind::Text, bbox);
@@ -291,8 +305,8 @@ const DIM_TEXT_SIZE: f64 = crate::ledger::consts::DRAWING_LINK_FONT_SIZE;
 /// inlines nothing; only a size that differs — a `tol:` deviation stack, a
 /// restyled link — carries an inline `font-size` override (a statement's own
 /// text styling still inlines, [SPEC 17]).
-pub fn dim_text(content: &str, cx: f64, cy: f64, size: f64) -> PlacedNode {
-    let mut n = text_classed(content, cx, cy, size, "dim-text");
+pub fn dim_text(content: &str, cx: f64, cy: f64, size: f64, kind: Kind) -> PlacedNode {
+    let mut n = text_classed(content, cx, cy, size, "dim-text", Font::regular(kind));
     if (size - DIM_TEXT_SIZE).abs() > 1e-9 {
         set(&mut n, "font-size", ResolvedValue::Number(size));
     }
@@ -302,9 +316,9 @@ pub fn dim_text(content: &str, cx: f64, cy: f64, size: f64) -> PlacedNode {
 /// A plain text leaf that **inherits** its font from the enclosing `<g>` — no
 /// class, no inline [SPEC 17]. For text under a box that already states the font
 /// (a title `|footnote|`), so nothing is stated twice. `size` bounds the bbox.
-pub fn text_plain(content: &str, cx: f64, cy: f64, size: f64) -> PlacedNode {
+pub fn text_plain(content: &str, cx: f64, cy: f64, size: f64, kind: Kind) -> PlacedNode {
     let bbox = Bbox::centered(
-        approx_width(content, size, 0.0),
+        approx_width(content, Font::regular(kind), size, 0.0),
         approx_height(content, size, 0.0),
     );
     let mut n = node(NodeKind::Text, bbox);
@@ -322,9 +336,10 @@ pub fn text_right(
     cy: f64,
     size: f64,
     color: Option<ResolvedValue>,
+    kind: Kind,
 ) -> PlacedNode {
-    let cx = right_x - text_width(content, size) / 2.0;
-    text(content, cx, cy, size, color, false)
+    let cx = right_x - text_width(content, size, Font::regular(kind)) / 2.0;
+    text(content, cx, cy, size, color, false, kind)
 }
 
 /// Text whose **left edge** sits at `left_x` (for a right-side value axis).
@@ -334,15 +349,16 @@ pub fn text_left(
     cy: f64,
     size: f64,
     color: Option<ResolvedValue>,
+    kind: Kind,
 ) -> PlacedNode {
-    let cx = left_x + text_width(content, size) / 2.0;
-    text(content, cx, cy, size, color, false)
+    let cx = left_x + text_width(content, size, Font::regular(kind)) / 2.0;
+    text(content, cx, cy, size, color, false, kind)
 }
 
 /// The drawn width of a centred label, for laying out legends and right-aligned
 /// ticks (compile-time text measurement, [SPEC 5]).
-pub fn text_width(content: &str, size: f64) -> f64 {
-    approx_width(content, size, 0.0)
+pub fn text_width(content: &str, size: f64, font: Font) -> f64 {
+    approx_width(content, font, size, 0.0)
 }
 
 /// The drawn height of a label, for collision-testing inline labels [SPEC 14.8].

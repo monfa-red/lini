@@ -144,7 +144,7 @@ fn plan(s: &Stacked, paint: &Paint) -> Plan {
     let (ua, ub) = (u(s.a), u(s.b));
     let (u_lo, u_hi) = (ua.min(ub), ua.max(ub));
     let arrow_len = ARROW_LEN * paint.sw;
-    let tw = s.text.width(paint.fs);
+    let tw = s.text.width(paint.fs, paint.font);
     let stub = 2.0;
     let span = u_hi - u_lo;
     let fits = span >= 2.0 * arrow_len + tw + 6.0;
@@ -243,7 +243,7 @@ fn at_row(s: Stacked, p: &Plan, line_c: f64, paint: &Paint) -> Vec<PlacedNode> {
             centre = (centre.0 + dx, centre.1 + dy);
         }
     }
-    out.extend(s.text.nodes(centre, rot, fs));
+    out.extend(s.text.nodes(centre, rot, fs, paint.font));
     out
 }
 

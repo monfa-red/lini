@@ -1,11 +1,13 @@
-//! Repo automation — the `cargo xtask …` pattern (std-only, never published).
+//! Repo automation — the `cargo xtask …` pattern (never published).
 //! Run via the alias in `.cargo/config.toml`.
 //!
 //! Commands:
 //!   extract-icons <dir>   Regenerate `assets/phosphor-duotone.txt` from a folder
 //!                         of Phosphor *duotone* SVGs (e.g. `<core>/raw/duotone`).
-//!
-//! Future home for `embed-font` and similar asset tooling.
+//!   extract-fonts         Regenerate `src/font/metrics.rs` + the subset TTFs
+//!                         under `assets/fonts/subset/` from the committed raws.
+
+mod fonts;
 
 use std::collections::{BTreeMap, HashSet};
 use std::fs;
@@ -19,7 +21,8 @@ fn main() -> ExitCode {
             Some(dir) => extract_icons(dir),
             None => usage("extract-icons <dir-of-duotone-svgs>"),
         },
-        _ => usage("<command>   (commands: extract-icons)"),
+        Some("extract-fonts") => fonts::extract_fonts(),
+        _ => usage("<command>   (commands: extract-icons, extract-fonts)"),
     }
 }
 

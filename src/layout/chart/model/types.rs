@@ -184,6 +184,9 @@ pub struct Chart {
     /// The chart-level label presentation [SPEC 14.8], default `auto` — the hover
     /// card driver and each series' `tooltip:` fallback.
     pub tooltip: Tooltip,
+    /// The scope's measurement kind [SPEC 5] — every generated chart text
+    /// (ticks, labels, title, legend) measures on it; weight is per-run.
+    pub font_kind: crate::font::Kind,
 }
 
 /// One wedge of a `layout: pie` [SPEC 14.7]: its magnitude, legend label, and
@@ -206,6 +209,8 @@ pub struct Pie {
     /// The clear space between the pie and its title / legend [SPEC 14.6], from the
     /// resolved `gap:` (default 10 via the `.lini-pie` class).
     pub gap: f64,
+    /// The scope's measurement kind [SPEC 5], as on [`Chart`].
+    pub font_kind: crate::font::Kind,
 }
 
 /// One end of a `range:` window: a fixed number, or `auto` (fit from data).

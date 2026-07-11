@@ -38,10 +38,11 @@ pub fn leaf_bbox(inst: &ResolvedInst, scale: f64) -> Result<Bbox, Error> {
         NodeKind::Text => {
             let size = font_size(inst);
             let label = inst.label.as_deref().unwrap_or("");
+            let font = inst.font;
             let ls = inst.attrs.number("letter-spacing").unwrap_or(0.0);
             let lsp = inst.attrs.number("line-spacing").unwrap_or(0.0);
             Ok(Bbox::centered(
-                text::approx_width(label, size, ls),
+                text::approx_width(label, font, size, ls),
                 text::approx_height(label, size, lsp),
             ))
         }

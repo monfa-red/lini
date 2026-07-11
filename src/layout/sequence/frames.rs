@@ -284,7 +284,14 @@ pub(super) fn draw(
         for (el, &ey) in fr.elses.iter().zip(&g.else_ys) {
             behind.push(divider(fr.inst, left, right, ey));
             if let Some(text) = guard(el) {
-                front.push(guard_text(text, left, ey + size, size, color.clone()));
+                front.push(guard_text(
+                    text,
+                    left,
+                    ey + size,
+                    size,
+                    color.clone(),
+                    crate::font::Font::regular(fr.inst.font.kind),
+                ));
             }
         }
     }
@@ -371,7 +378,9 @@ fn frame_color(inst: &ResolvedInst) -> Option<ResolvedValue> {
 /// UML fragment label), with the frame's guard (`[cond]`) just to its right.
 fn tab(frame: &Frame, left: f64, top: f64) -> Vec<PlacedNode> {
     let size = text_size(frame.inst);
-    let tab_w = prim::text_width(frame.keyword, size) + 14.0;
+    let kind = frame.inst.font.kind;
+    // Bold, mirroring the `.lini-sequence-tab` rule's stated weight.
+    let tab_w = prim::text_width(frame.keyword, size, crate::font::Font::bold(kind)) + 14.0;
     let r = frame
         .inst
         .attrs
@@ -409,6 +418,7 @@ fn tab(frame: &Frame, left: f64, top: f64) -> Vec<PlacedNode> {
             top + hw + TAB_H / 2.0,
             size,
             "sequence-tab",
+            crate::font::Font::bold(kind),
         ),
     ];
     if let Some(g) = guard(frame.inst) {
@@ -419,6 +429,7 @@ fn tab(frame: &Frame, left: f64, top: f64) -> Vec<PlacedNode> {
             top + TAB_H / 2.0 + 1.0,
             size,
             color,
+            crate::font::Font::regular(kind),
         ));
     }
     out
@@ -456,10 +467,17 @@ fn divider(inst: &ResolvedInst, left: f64, right: f64, y: f64) -> PlacedNode {
 /// A guard label `[cond]`, left edge at `x` — the condition on a frame or compartment. Its
 /// size / weight ride the `.lini-sequence-guard` stylesheet rule (not inline); only the
 /// frame's text `color` is inlined, since it varies per fragment.
-fn guard_text(text: &str, x: f64, cy: f64, size: f64, color: Option<ResolvedValue>) -> PlacedNode {
+fn guard_text(
+    text: &str,
+    x: f64,
+    cy: f64,
+    size: f64,
+    color: Option<ResolvedValue>,
+    font: crate::font::Font,
+) -> PlacedNode {
     let label = format!("[{text}]");
-    let cx = x + prim::text_width(&label, size) / 2.0;
-    let mut n = prim::text_classed(&label, cx, cy, size, "sequence-guard");
+    let cx = x + prim::text_width(&label, size, font) / 2.0;
+    let mut n = prim::text_classed(&label, cx, cy, size, "sequence-guard", font);
     if let Some(c) = color {
         n.attrs.insert("color", c.clone());
         n.own_style.insert("color", c);

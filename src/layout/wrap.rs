@@ -69,12 +69,13 @@ pub(super) fn apply_max_width(
         let Some(label) = child.label.clone() else {
             continue;
         };
+        let font = crate::font::Font::of(&child.attrs);
         let size = child.attrs.number("font-size").unwrap_or(15.0);
         let ls = child.attrs.number("letter-spacing").unwrap_or(0.0);
         let lsp = child.attrs.number("line-spacing").unwrap_or(0.0);
-        let wrapped = text::wrap(&label, size, ls, avail).join("\n");
+        let wrapped = text::wrap(&label, font, size, ls, avail).join("\n");
         child.bbox = Bbox::centered(
-            text::approx_width(&wrapped, size, ls),
+            text::approx_width(&wrapped, font, size, ls),
             text::approx_height(&wrapped, size, lsp),
         );
         child.label = Some(wrapped);

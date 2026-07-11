@@ -111,11 +111,16 @@ pub(super) fn series_lines(plot: &Plot, chart: &Chart) -> Vec<Seg> {
 /// the plot; failing that, an `always` label keeps the first in-plot offset (else its
 /// preferred one) while an `auto` label is dropped to its hover card. Deterministic —
 /// source order in, the same candidate order each time.
-pub(super) fn place(reqs: &[Req], plot: &Plot, lines: &[Seg]) -> Vec<PlacedNode> {
+pub(super) fn place(
+    reqs: &[Req],
+    plot: &Plot,
+    lines: &[Seg],
+    kind: crate::font::Kind,
+) -> Vec<PlacedNode> {
     let mut placed: Vec<Rect> = Vec::new();
     let mut out = Vec::new();
     for req in reqs {
-        let w = prim::text_width(&req.text, SIZE);
+        let w = prim::text_width(&req.text, SIZE, crate::font::Font::regular(kind));
         let h = prim::text_height(&req.text, SIZE);
         // Seats to try, in order, each with the tint it would wear: a bubble's inside seat
         // first (when the text fits), then the offsets beside the point.
@@ -157,7 +162,15 @@ pub(super) fn place(reqs: &[Req], plot: &Plot, lines: &[Seg]) -> Vec<PlacedNode>
             continue;
         };
         placed.push(Rect::around(center, w, h));
-        let mut t = prim::text(&req.text, center.0, center.1, SIZE, Some(color), false);
+        let mut t = prim::text(
+            &req.text,
+            center.0,
+            center.1,
+            SIZE,
+            Some(color),
+            false,
+            kind,
+        );
         t.type_chain.push("chart-label".to_string());
         out.push(t);
     }

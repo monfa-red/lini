@@ -73,11 +73,12 @@ pub(super) fn finish(
         bbox.max_y = bbox.max_y.max(y);
     }
     for t in routing.links.iter().flat_map(|w| &w.texts) {
+        let font = crate::font::Font::of(&t.attrs);
         let size = t.attrs.number("font-size").unwrap_or(0.0);
         let ls = t.attrs.number("letter-spacing").unwrap_or(0.0);
         let lsp = t.attrs.number("line-spacing").unwrap_or(0.0);
         let (hw, hh) = (
-            text::approx_width(&t.content, size, ls) / 2.0,
+            text::approx_width(&t.content, font, size, ls) / 2.0,
             text::approx_height(&t.content, size, lsp) / 2.0,
         );
         bbox.min_x = bbox.min_x.min(t.position.0 - hw);

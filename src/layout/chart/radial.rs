@@ -77,6 +77,7 @@ pub fn labels(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
             LABEL_SIZE,
             Some(muted.clone()),
             false,
+            chart.font_kind,
         ));
     }
     for &t in vs.ticks() {
@@ -91,6 +92,7 @@ pub fn labels(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
             cy - r,
             LABEL_SIZE,
             Some(muted.clone()),
+            chart.font_kind,
         ));
     }
 }

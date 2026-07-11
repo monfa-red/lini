@@ -61,13 +61,14 @@ pub(crate) fn emit(
     let top = y - spacing * (lines.len() as f64 - 1.0) / 2.0;
     let line_x: Box<dyn Fn(&str) -> f64> = match attrs.get("line-align") {
         Some(ResolvedValue::Ident(a)) if a == "start" || a == "end" => {
-            let block = approx_width(content, size, ls);
+            let font = crate::font::Font::of(attrs);
+            let block = approx_width(content, font, size, ls);
             if a == "start" {
                 let left = x - block / 2.0;
-                Box::new(move |line| left + approx_width(line, size, ls) / 2.0)
+                Box::new(move |line| left + approx_width(line, font, size, ls) / 2.0)
             } else {
                 let right = x + block / 2.0;
-                Box::new(move |line| right - approx_width(line, size, ls) / 2.0)
+                Box::new(move |line| right - approx_width(line, font, size, ls) / 2.0)
             }
         }
         _ => Box::new(move |_| x),

@@ -3,7 +3,7 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/styles.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-455.5 -288.75 911 577.5" width="911" height="577.5" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-447.7975 -288.75 895.595 577.5" width="895.595" height="577.5" class="lini">
   <style>
     .lini { font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: normal; color: black; }
     .lini .lini-canvas { fill: white; }
@@ -23,7 +23,7 @@ input_file: samples/styles.lini
   <defs>
     <filter id="lini-shadow-1" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="2" dy="3" stdDeviation="5" flood-color="rgba(0, 0, 0, 0.2)"/></filter>
   </defs>
-  <rect class="lini-canvas" x="-455.5" y="-288.75" width="911" height="577.5"/>
+  <rect class="lini-canvas" x="-447.7975" y="-288.75" width="895.595" height="577.5"/>
   <g class="lini-scene">
     <g class="lini-node lini-block" style="font-size: 18px; font-weight: bold" transform="translate(0,-252.75)">
       <rect x="-32.4" y="-9" width="64.8" height="18" rx="0" ry="0"/>
@@ -112,40 +112,40 @@ input_file: samples/styles.lini
       </g>
     </g>
     <g class="lini-node lini-group lini-block" data-id="text" transform="translate(0,197.25)">
-      <rect x="-429" y="-65" width="858" height="130" rx="8" ry="8"/>
-      <g class="lini-node lini-box lini-block" style="font-style: italic" transform="translate(-361,0)">
+      <rect x="-421.2975" y="-65" width="842.595" height="130" rx="8" ry="8"/>
+      <g class="lini-node lini-box lini-block" style="font-style: italic" transform="translate(-353.2975,0)">
         <rect x="-47" y="-27.5" width="94" height="55" rx="6" ry="6"/>
         <text class="lini-text" x="0" y="0">italic</text>
       </g>
       <g class="lini-node lini-box lini-block" style="font-family: serif" transform="translate(-255.5,0)">
-        <rect x="-42.5" y="-27.5" width="85" height="55" rx="6" ry="6"/>
+        <rect x="-34.7975" y="-27.5" width="69.595" height="55" rx="6" ry="6"/>
         <text class="lini-text" x="0" y="0">serif</text>
       </g>
-      <g class="lini-node lini-box lini-block" style="color: hsl(280, 55%, 50%)" transform="translate(-163.5,0)">
+      <g class="lini-node lini-box lini-block" style="color: hsl(280, 55%, 50%)" transform="translate(-171.2025,0)">
         <rect x="-33.5" y="-27.5" width="67" height="55" rx="6" ry="6"/>
         <text class="lini-text" x="0" y="0">hsl</text>
       </g>
-      <g class="lini-node lini-box lini-block" style="text-transform: uppercase" transform="translate(-71.5,0)">
+      <g class="lini-node lini-box lini-block" style="text-transform: uppercase" transform="translate(-79.2025,0)">
         <rect x="-42.5" y="-27.5" width="85" height="55" rx="6" ry="6"/>
         <text class="lini-text" x="0" y="0">upper</text>
       </g>
-      <g class="lini-node lini-box lini-block" style="text-decoration: underline" transform="translate(29.5,0)">
+      <g class="lini-node lini-box lini-block" style="text-decoration: underline" transform="translate(21.7975,0)">
         <rect x="-42.5" y="-27.5" width="85" height="55" rx="6" ry="6"/>
         <text class="lini-text" x="0" y="0">under</text>
       </g>
-      <g class="lini-node lini-box lini-block" style="text-shadow: 1px 1px 2px #484848" transform="translate(135,0)">
+      <g class="lini-node lini-box lini-block" style="text-shadow: 1px 1px 2px #484848" transform="translate(127.2975,0)">
         <rect x="-47" y="-27.5" width="94" height="55" rx="6" ry="6"/>
         <text class="lini-text" x="0" y="0">shadow</text>
       </g>
-      <g class="lini-node lini-box lini-block" transform="translate(252.5,0)">
+      <g class="lini-node lini-box lini-block" transform="translate(244.7975,0)">
         <rect x="-54.5" y="-27.5" width="109" height="55" rx="6" ry="6"/>
         <text class="lini-text" x="0" y="0" dx="0 3 3 3 3 3">spaced</text>
       </g>
-      <g class="lini-node lini-box lini-block" transform="translate(365.5,0)">
+      <g class="lini-node lini-box lini-block" transform="translate(357.7975,0)">
         <rect x="-42.5" y="-44" width="85" height="88" rx="6" ry="6"/>
         <text class="lini-text" x="0" y="0"><tspan x="0" y="-15">two</tspan><tspan x="0" dy="30">lines</tspan></text>
       </g>
-      <g class="lini-node lini-caption lini-block" transform="translate(-392,-76)">
+      <g class="lini-node lini-caption lini-block" transform="translate(-384.2975,-76)">
         <rect x="-36" y="-6" width="72" height="12" rx="0" ry="0"/>
         <text class="lini-text" x="0" y="0">typography</text>
       </g>

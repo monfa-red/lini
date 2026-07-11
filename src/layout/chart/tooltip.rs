@@ -76,7 +76,13 @@ pub fn read_or(attrs: &AttrMap, default: Tooltip) -> Result<Tooltip, Error> {
 /// `.lini-hit-N:hover ~ .lini-tip-N` rule (the mark stays the hover target, so a nested
 /// label still triggers it). The index class is render-stripped when baking, so baked
 /// output is unchanged.
-pub fn apply(kids: Vec<PlacedNode>, mode: Tooltip, w: f64, h: f64) -> Vec<PlacedNode> {
+pub fn apply(
+    kids: Vec<PlacedNode>,
+    mode: Tooltip,
+    w: f64,
+    h: f64,
+    kind: crate::font::Kind,
+) -> Vec<PlacedNode> {
     let mut kids = kids;
     if mode == Tooltip::None {
         // The chart suppresses every label: drop the `<title>` floor the marks carry.
@@ -93,7 +99,7 @@ pub fn apply(kids: Vec<PlacedNode>, mode: Tooltip, w: f64, h: f64) -> Vec<Placed
         };
         let i = cards.len();
         let (ax, ay) = anchor(node);
-        cards.push(make_card(&text, ax, ay, i, w, h));
+        cards.push(make_card(&text, ax, ay, i, w, h, kind));
         node.type_chain.push(format!("hit-{i}"));
     }
     kids.extend(cards);
@@ -119,14 +125,22 @@ fn anchor(node: &PlacedNode) -> (f64, f64) {
 
 /// Card `index`'s `.lini-chart-tip` / `.lini-tip-{index}` group: a solid rounded box + its
 /// text, up-right of `(ax, ay)` and clamped inside the chart box.
-fn make_card(text: &str, ax: f64, ay: f64, index: usize, w: f64, h: f64) -> PlacedNode {
-    let cw = prim::text_width(text, SIZE) + PAD * 2.0;
+fn make_card(
+    text: &str,
+    ax: f64,
+    ay: f64,
+    index: usize,
+    w: f64,
+    h: f64,
+    kind: crate::font::Kind,
+) -> PlacedNode {
+    let cw = prim::text_width(text, SIZE, crate::font::Font::regular(kind)) + PAD * 2.0;
     let ch = SIZE + PAD * 2.0;
     let cx = (ax + GAP + cw / 2.0).clamp(-w / 2.0 + cw / 2.0, w / 2.0 - cw / 2.0);
     let cy = (ay - GAP - ch / 2.0).clamp(-h / 2.0 + ch / 2.0, h / 2.0 - ch / 2.0);
     let mut bg = prim::rect(cx, cy, cw, ch, live("tip-bg"), 1.0);
     prim::round(&mut bg, 3.0);
-    let txt = prim::text(text, cx, cy, SIZE, Some(live("tip-fg")), false);
+    let txt = prim::text(text, cx, cy, SIZE, Some(live("tip-fg")), false, kind);
     let bbox = Bbox {
         min_x: cx - cw / 2.0,
         min_y: cy - ch / 2.0,

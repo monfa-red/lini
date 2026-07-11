@@ -108,11 +108,17 @@ pub(super) fn layout_chart(
             TITLE_SIZE,
             None,
             true,
+            chart.font_kind,
         ));
     }
     let legend = legend_entries(&chart);
     if legend.len() >= 2 {
-        lay_out_legend(&legend, h / 2.0 - LABEL_SIZE * 0.9, &mut kids);
+        lay_out_legend(
+            &legend,
+            h / 2.0 - LABEL_SIZE * 0.9,
+            chart.font_kind,
+            &mut kids,
+        );
     }
 
     // Inline data labels [SPEC 14.8]: the series' `labels:` join the bubble / mark
@@ -120,9 +126,9 @@ pub(super) fn layout_chart(
     // so they sit above them and below the hover cards.
     labels::collect_series(&plot, &chart, &mut reqs);
     let lines = labels::series_lines(&plot, &chart);
-    kids.extend(labels::place(&reqs, &plot, &lines));
+    kids.extend(labels::place(&reqs, &plot, &lines, chart.font_kind));
 
-    let kids = tooltip::apply(kids, chart.tooltip, w, h);
+    let kids = tooltip::apply(kids, chart.tooltip, w, h, chart.font_kind);
     Ok(chart_box(inst, w, h, kids))
 }
 

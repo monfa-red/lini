@@ -62,12 +62,24 @@ pub fn layout_pie(inst: &ResolvedInst) -> Result<PlacedNode, Error> {
             TITLE_SIZE,
             None,
             true,
+            pie.font_kind,
         ));
     }
     if entries.len() >= 2 {
-        lay_out_legend(&entries, h / 2.0 - LABEL_SIZE * 0.9, &mut kids);
+        lay_out_legend(
+            &entries,
+            h / 2.0 - LABEL_SIZE * 0.9,
+            pie.font_kind,
+            &mut kids,
+        );
     }
-    let kids = super::tooltip::apply(kids, super::tooltip::read(&inst.attrs)?, w, h);
+    let kids = super::tooltip::apply(
+        kids,
+        super::tooltip::read(&inst.attrs)?,
+        w,
+        h,
+        pie.font_kind,
+    );
     Ok(chart_box(inst, w, h, kids))
 }
 
@@ -148,6 +160,7 @@ pub fn build_pie(inst: &ResolvedInst) -> Result<Pie, Error> {
         title,
         hole,
         gap: read_gap(&inst.attrs),
+        font_kind: inst.font.kind,
     })
 }
 

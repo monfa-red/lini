@@ -56,7 +56,7 @@ pub fn labels(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
         return row_labels(plot, chart, out);
     }
     for axis in &chart.values {
-        value_labels(plot, axis, out);
+        value_labels(plot, axis, chart.font_kind, out);
     }
     x_labels(plot, chart, out);
     if let Some(t) = &chart.x.title {
@@ -68,17 +68,20 @@ pub fn labels(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
             AXIS_TITLE_SIZE,
             Some(muted()),
             false,
+            chart.font_kind,
         ));
     }
 }
 
-fn value_labels(plot: &Plot, axis: &ValueAxis, out: &mut Vec<PlacedNode>) {
+fn value_labels(plot: &Plot, axis: &ValueAxis, kind: crate::font::Kind, out: &mut Vec<PlacedNode>) {
     for &t in axis.scale.ticks() {
         let y = plot.y_at(&axis.scale, t);
         let label = scale::label(t, &axis.unit);
         let node = match axis.side {
-            Side::Right => prim::text_left(&label, plot.x1 + 6.0, y, LABEL_SIZE, Some(muted())),
-            _ => prim::text_right(&label, plot.x0 - 6.0, y, LABEL_SIZE, Some(muted())),
+            Side::Right => {
+                prim::text_left(&label, plot.x1 + 6.0, y, LABEL_SIZE, Some(muted()), kind)
+            }
+            _ => prim::text_right(&label, plot.x0 - 6.0, y, LABEL_SIZE, Some(muted()), kind),
         };
         out.push(node);
     }
@@ -86,8 +89,10 @@ fn value_labels(plot: &Plot, axis: &ValueAxis, out: &mut Vec<PlacedNode>) {
     if let Some(title) = &axis.title {
         let y = plot.y0 - 6.0;
         let node = match axis.side {
-            Side::Right => prim::text_right(title, plot.x1, y, AXIS_TITLE_SIZE, Some(muted())),
-            _ => prim::text_left(title, plot.x0, y, AXIS_TITLE_SIZE, Some(muted())),
+            Side::Right => {
+                prim::text_right(title, plot.x1, y, AXIS_TITLE_SIZE, Some(muted()), kind)
+            }
+            _ => prim::text_left(title, plot.x0, y, AXIS_TITLE_SIZE, Some(muted()), kind),
         };
         out.push(node);
     }
@@ -111,6 +116,7 @@ fn x_labels(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
                     LABEL_SIZE,
                     Some(muted()),
                     false,
+                    chart.font_kind,
                 ));
             }
         }
@@ -125,6 +131,7 @@ fn x_labels(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
                     LABEL_SIZE,
                     Some(muted()),
                     false,
+                    chart.font_kind,
                 ));
             }
         }
@@ -161,6 +168,7 @@ fn row_labels(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
                 LABEL_SIZE,
                 Some(muted()),
                 false,
+                chart.font_kind,
             ));
         }
         if let Some(title) = &axis.title {
@@ -171,6 +179,7 @@ fn row_labels(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
                 AXIS_TITLE_SIZE,
                 Some(muted()),
                 false,
+                chart.font_kind,
             ));
         }
     }
@@ -189,6 +198,7 @@ fn row_labels(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
                 y,
                 LABEL_SIZE,
                 Some(muted()),
+                chart.font_kind,
             ));
         }
     }

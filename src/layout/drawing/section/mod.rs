@@ -53,7 +53,7 @@ pub(in crate::layout) fn place_detail_labels(kids: &mut [PlacedNode]) {
 /// `|drawing| |footnote| { … }` styles a composed title like any authored one.
 pub(super) fn fill_footnote(foot: &mut PlacedNode, title: &str) {
     let fs = foot.attrs.number("font-size").unwrap_or(12.0);
-    let text = prim::text_plain(title, 0.0, 0.0, fs);
+    let text = prim::text_plain(title, 0.0, 0.0, fs, crate::font::Font::of(&foot.attrs).kind);
     foot.bbox = text.bbox;
     foot.children = vec![text];
 }

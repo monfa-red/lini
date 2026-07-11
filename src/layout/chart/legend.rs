@@ -45,13 +45,18 @@ fn swatch_edge(s: &Series) -> Option<ResolvedValue> {
 }
 
 /// A centred row of swatch + label entries at vertical `cy`. Shared by chart and pie.
-pub(super) fn lay_out_legend(entries: &[LegendEntry], cy: f64, out: &mut Vec<PlacedNode>) {
+pub(super) fn lay_out_legend(
+    entries: &[LegendEntry],
+    cy: f64,
+    kind: crate::font::Kind,
+    out: &mut Vec<PlacedNode>,
+) {
     const SW: f64 = 11.0; // swatch side
     const GAP: f64 = 5.0; // swatch → label
     const ITEM_GAP: f64 = 16.0; // entry → entry
     let widths: Vec<f64> = entries
         .iter()
-        .map(|(l, _, _)| prim::text_width(l, LABEL_SIZE))
+        .map(|(l, _, _)| prim::text_width(l, LABEL_SIZE, crate::font::Font::bold(kind)))
         .collect();
     let per: f64 = widths.iter().map(|w| SW + GAP + w).sum();
     let total = per + ITEM_GAP * widths.len().saturating_sub(1) as f64;
@@ -71,6 +76,7 @@ pub(super) fn lay_out_legend(entries: &[LegendEntry], cy: f64, out: &mut Vec<Pla
             LABEL_SIZE,
             None,
             true,
+            kind,
         ));
         x += SW + GAP + tw + ITEM_GAP;
     }

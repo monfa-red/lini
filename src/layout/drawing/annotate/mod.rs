@@ -48,6 +48,9 @@ pub(super) struct Paint {
     pub light: ResolvedValue,
     pub sw: f64,
     pub fs: f64,
+    /// The measurement font for the annotation text [SPEC 5] — the statement's
+    /// resolved kind × weight (the scope default is mono regular).
+    pub font: crate::font::Font,
 }
 
 impl Paint {
@@ -64,6 +67,7 @@ impl Paint {
                 .number("stroke-width")
                 .unwrap_or(DRAWING_LINK_STROKE_WIDTH),
             fs: attrs.number("font-size").unwrap_or(DRAWING_LINK_FONT_SIZE),
+            font: crate::font::Font::of(attrs),
         }
     }
 

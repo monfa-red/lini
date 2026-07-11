@@ -256,6 +256,7 @@ pub fn resolve_node(
         // this is `None` for them; a geometry primitive keeps its label (a chart
         // reads a `|line|` series' legend name from it). Render ignores it on a shape.
         label: node.label.as_ref().map(|t| t.text.clone()),
+        font: crate::font::Font::of(&child_text_ctx),
         attrs,
         own_style: AttrMap::new(),
         markers,
@@ -414,6 +415,7 @@ fn text_inst(t: &TextNode, ctx: &SceneCtx, text_ctx: &AttrMap) -> Result<Resolve
         type_chain: Vec::new(),
         applied_styles: Vec::new(),
         label: Some(t.text.clone()),
+        font: crate::font::Font::of(&attrs),
         attrs,
         own_style,
         markers: Markers::default(),

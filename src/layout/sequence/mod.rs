@@ -240,7 +240,7 @@ fn enclosing_bbox(children: &[PlacedNode], wires: &[RoutedLink]) -> Bbox {
         for t in &w.texts {
             let size = t.attrs.number("font-size").unwrap_or(0.0);
             let (hw, hh) = (
-                prim::text_width(&t.content, size) / 2.0,
+                prim::text_width(&t.content, size, crate::font::Font::of(&t.attrs)) / 2.0,
                 crate::layout::approx_height(&t.content, size, 0.0) / 2.0,
             );
             ext = ext.union(Bbox {
