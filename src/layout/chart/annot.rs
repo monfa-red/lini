@@ -8,7 +8,7 @@ use super::labels;
 use super::marks::marker_diameter;
 use super::metrics::LABEL_SIZE;
 use super::model::{AxisRef, Chart, Mark, MarkAt};
-use super::project::Plot;
+use super::project::{Dir, Plot};
 use super::tooltip::Tooltip;
 use crate::layout::PlacedNode;
 use crate::layout::prim;
@@ -18,15 +18,27 @@ const SHADE: f64 = 0.15;
 /// A reference line's stroke width (heavier than a 1px gridline, to stand out).
 const LINE_W: f64 = 1.5;
 
-/// The pixel coordinate of value `v` measured on `axis` — an x-pixel on the domain
-/// axis, a y-pixel on a value axis — clamped into the drawn domain (crop, [SPEC 14.4]).
+/// The pixel coordinate of value `v` measured on `axis`, clamped into the
+/// drawn domain (crop, [SPEC 14.4]) — along whichever screen axis it runs in
+/// this direction ([SPEC 14.5/14.7]: bands and marks survive a `direction`
+/// flip through the same projector seam the series use).
 fn axis_px(plot: &Plot, chart: &Chart, axis: &AxisRef, v: f64) -> f64 {
     match axis {
-        AxisRef::X => plot.x_at(&chart.x.scale, chart.x.scale.clamp(v)),
+        AxisRef::X => plot.domain_at(&chart.x.scale, chart.x.scale.clamp(v)),
         AxisRef::Value(i) => {
             let s = &chart.values[*i].scale;
-            plot.y_at(s, s.clamp(v))
+            plot.value_at(s, s.clamp(v))
         }
+    }
+}
+
+/// Whether `axis` runs along the screen x in this direction — the domain in a
+/// column chart, a value axis in a row. Everything an annotation draws
+/// (shades, dividers, reference lines, tick seats) orients off this.
+fn runs_horizontal(plot: &Plot, axis: &AxisRef) -> bool {
+    match axis {
+        AxisRef::X => plot.dir != Dir::Row,
+        AxisRef::Value(_) => plot.dir == Dir::Row,
     }
 }
 
@@ -56,23 +68,24 @@ pub fn band_shades(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
 
 /// A filled band: a faint wash over the span × the full perpendicular plot extent.
 fn shade(plot: &Plot, axis: &AxisRef, p0: f64, p1: f64, fill: ResolvedValue) -> PlacedNode {
-    match axis {
-        AxisRef::X => prim::rect(
+    if runs_horizontal(plot, axis) {
+        prim::rect(
             (p0 + p1) / 2.0,
             (plot.y0 + plot.y1) / 2.0,
             (p1 - p0).abs(),
             plot.h(),
             fill,
             SHADE,
-        ),
-        AxisRef::Value(_) => prim::rect(
+        )
+    } else {
+        prim::rect(
             (plot.x0 + plot.x1) / 2.0,
             (p0 + p1) / 2.0,
             plot.w(),
             (p1 - p0).abs(),
             fill,
             SHADE,
-        ),
+        )
     }
 }
 
@@ -87,20 +100,18 @@ fn dividers(
     drawn: &mut Vec<f64>,
     out: &mut Vec<PlacedNode>,
 ) {
+    let horizontal = runs_horizontal(plot, axis);
     for p in [p0, p1] {
-        let edge = match axis {
-            AxisRef::X => near(p, plot.x0) || near(p, plot.x1),
-            AxisRef::Value(_) => near(p, plot.y0) || near(p, plot.y1),
+        let edge = if horizontal {
+            near(p, plot.x0) || near(p, plot.x1)
+        } else {
+            near(p, plot.y0) || near(p, plot.y1)
         };
         if edge || drawn.iter().any(|&q| near(q, p)) {
             continue;
         }
         drawn.push(p);
-        let pts = match axis {
-            AxisRef::X => vec![(p, plot.y0), (p, plot.y1)],
-            AxisRef::Value(_) => vec![(plot.x0, p), (plot.x1, p)],
-        };
-        out.push(prim::line(pts, color.clone(), 1.0));
+        out.push(prim::line(plot.cross(horizontal, p), color.clone(), 1.0));
     }
 }
 
@@ -111,8 +122,11 @@ pub fn band_ticks(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
         let Some(label) = &b.label else { continue };
         let mid = axis_px(plot, chart, &b.axis, (b.span.0 + b.span.1) / 2.0);
         let color = Some(b.tick.clone());
-        let node = match &b.axis {
-            AxisRef::X => prim::text(
+        // A horizontal-running axis seats its band names a row under the plot
+        // (clear of the tick labels); a vertical one seats them in the left
+        // gutter — whichever axis that is in this direction.
+        let node = if runs_horizontal(plot, &b.axis) {
+            prim::text(
                 label,
                 mid,
                 plot.y1 + 4.0 + LABEL_SIZE * 1.7,
@@ -120,28 +134,34 @@ pub fn band_ticks(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
                 color,
                 false,
                 chart.font_kind,
-            ),
-            AxisRef::Value(_) => prim::text_right(
+            )
+        } else {
+            prim::text_right(
                 label,
                 plot.x0 - 6.0,
                 mid,
                 LABEL_SIZE,
                 color,
                 chart.font_kind,
-            ),
+            )
         };
         out.push(node);
     }
 }
 
-/// The extra bottom gutter an x-bound band's tick row needs (its labels sit a row below
-/// the x labels), or 0 when no x band is labelled. Shared by the plot-rect inset and the
-/// x-axis-title placement so the three rows stack without overlap.
+/// The extra bottom gutter a band tick row needs (band names sit a row below
+/// the tick labels when their axis runs horizontally), or 0 when none is
+/// labelled. Shared by the plot-rect inset and the axis-title placement so
+/// the rows stack without overlap.
 pub fn x_band_row(chart: &Chart) -> f64 {
+    let horizontal = |axis: &AxisRef| match axis {
+        AxisRef::X => chart.dir != Dir::Row,
+        AxisRef::Value(_) => chart.dir == Dir::Row,
+    };
     let labelled = chart
         .bands
         .iter()
-        .any(|b| matches!(b.axis, AxisRef::X) && b.label.is_some());
+        .any(|b| horizontal(&b.axis) && b.label.is_some());
     if labelled { LABEL_SIZE } else { 0.0 }
 }
 
@@ -162,20 +182,20 @@ fn ref_line(plot: &Plot, chart: &Chart, m: &Mark, v: f64, out: &mut Vec<PlacedNo
         return; // off-plot — cropped
     }
     let p = axis_px(plot, chart, &m.axis, v);
-    let pts = match &m.axis {
-        AxisRef::X => vec![(p, plot.y0), (p, plot.y1)],
-        AxisRef::Value(_) => vec![(plot.x0, p), (plot.x1, p)],
-    };
-    let mut ln = prim::line(pts, m.color.clone(), LINE_W);
+    let horizontal = runs_horizontal(plot, &m.axis);
+    let mut ln = prim::line(plot.cross(horizontal, p), m.color.clone(), LINE_W);
     if let Some(ss) = &m.stroke_style {
         ln.attrs.insert("stroke-style", ss.clone());
     }
     out.push(ln);
     if let Some(text) = &m.label {
         let color = Some(m.color.clone());
-        let node = match &m.axis {
-            // A vertical line: the label centred just inside the top.
-            AxisRef::X => prim::text(
+        // The label follows the drawn line, not the axis identity: a vertical
+        // line takes it centred just inside the top; a horizontal one takes
+        // it at the left end, just above (clear of the data, which usually
+        // grows rightward).
+        let node = if horizontal {
+            prim::text(
                 text,
                 p,
                 plot.y0 + LABEL_SIZE * 0.9,
@@ -183,17 +203,16 @@ fn ref_line(plot: &Plot, chart: &Chart, m: &Mark, v: f64, out: &mut Vec<PlacedNo
                 color,
                 false,
                 chart.font_kind,
-            ),
-            // A horizontal line: the label at the left end, just above the line (clear
-            // of the data, which usually grows to the right).
-            AxisRef::Value(_) => prim::text_left(
+            )
+        } else {
+            prim::text_left(
                 text,
                 plot.x0 + 3.0,
                 p - LABEL_SIZE * 0.6,
                 LABEL_SIZE,
                 color,
                 chart.font_kind,
-            ),
+            )
         };
         out.push(node);
     }
@@ -220,8 +239,9 @@ fn point(
     if !chart.x.scale.contains(x) || !chart.values[vi].scale.contains(y) {
         return;
     }
-    let xp = plot.x_at(&chart.x.scale, x);
-    let yp = plot.y_at(&chart.values[vi].scale, y);
+    // The joint projector — a point mark lands exactly where a datum would,
+    // in any direction [SPEC 14.7].
+    let (xp, yp) = plot.project(&chart.x.scale, x, &chart.values[vi].scale, y);
     let radius = if m.marker != MarkerKind::None {
         let d = marker_diameter(m.marker, 2.0);
         out.push(prim::marker(m.marker, xp, yp, d, d, m.color.clone()));

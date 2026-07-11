@@ -612,3 +612,56 @@ fn a_lone_space_pair_is_one_point_never_two_values() {
     let e = layout_err("|chart| { categories: \"a\", \"b\" } [\n  |bars| { data: 10 20 }\n]\n");
     assert!(e.contains("not 'x y' points"), "{e}");
 }
+
+#[test]
+fn row_bands_and_marks_flip_with_the_direction() {
+    // [SPEC 14.5/14.7]: in a row chart the value axis runs along the bottom, so
+    // a value-bound band shades a vertical strip and a value-bound mark draws a
+    // vertical dashed line — same declarations, flipped projection.
+    let s = svg(
+        "|chart| { direction: row; categories: \"a\", \"b\" } [\n  |axis#v| { side: bottom; range: 0 20 }\n  |bars| { data: 12, 8 }\n  |band| \"hot\" { span: 10 15; axis: v; fill: --amber }\n  |mark| \"target\" { at: 10; axis: v; stroke-style: dashed }\n]\n",
+    );
+    // The band's wash: full plot height, x-span 10..15 — a rect taller than wide.
+    let band = s.find("opacity: 0.15").expect("the band wash");
+    let after = &s[band..];
+    let rect = &after[..after.find("/>").unwrap()];
+    let dim = |k: &str| {
+        let i = rect.find(k).unwrap() + k.len() + 2;
+        rect[i..i + rect[i..].find('"').unwrap()]
+            .parse::<f64>()
+            .unwrap()
+    };
+    assert!(
+        dim("height") > dim("width"),
+        "a row value-band is a vertical strip: {rect}"
+    );
+    // The mark's reference line: vertical (both endpoints share one x).
+    let mark = s.find("stroke-dasharray: 5").expect("the dashed mark line");
+    let after = &s[mark..];
+    let line = &after[after.find("<line ").unwrap()..];
+    let line = &line[..line.find("/>").unwrap()];
+    let coord = |k: &str| {
+        let i = line.find(k).unwrap() + k.len() + 2;
+        line[i..i + line[i..].find('"').unwrap()]
+            .parse::<f64>()
+            .unwrap()
+    };
+    assert!(
+        (coord("x1") - coord("x2")).abs() < 1e-9 && coord("y1") != coord("y2"),
+        "vertical reference line: {line}"
+    );
+    assert!(s.contains(">target<"), "the mark label draws: {s}");
+    assert!(s.contains(">hot<"), "the band tick draws: {s}");
+}
+
+#[test]
+fn radial_bands_and_marks_error() {
+    // The flip is never silently lossy [SPEC 14.7/20].
+    let e = layout_err(
+        "|chart| { direction: radial; categories: \"a\", \"b\", \"c\" } [\n  |line| { data: 1, 2, 3 }\n  |mark| \"x\" { at: 2 }\n]\n",
+    );
+    assert!(
+        e.contains("a radial chart draws no bands / marks yet — remove it or change 'direction'"),
+        "{e}"
+    );
+}

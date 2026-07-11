@@ -157,13 +157,15 @@ pub fn scoped_note_rules(present: &BTreeSet<String>, user_rules: &[Rule]) -> Vec
         .filter(|r| {
             // Already carried by a (re-desugared) file? Match the two-class
             // selector shape — `SelUnit` has no `PartialEq` to lean on.
-            !user_rules.iter().any(|u| match u.selector.units.as_slice() {
-                [SelUnit::Class(a), SelUnit::Class(b)] => {
-                    matches!(r.selector.units.as_slice(),
+            !user_rules
+                .iter()
+                .any(|u| match u.selector.units.as_slice() {
+                    [SelUnit::Class(a), SelUnit::Class(b)] => {
+                        matches!(r.selector.units.as_slice(),
                         [SelUnit::Class(x), SelUnit::Class(y)] if a == x && b == y)
-                }
-                _ => false,
-            })
+                    }
+                    _ => false,
+                })
         })
         .collect()
 }

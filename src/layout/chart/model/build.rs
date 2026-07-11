@@ -93,7 +93,17 @@ pub fn build(inst: &ResolvedInst, funcs: &FuncTable) -> Result<Chart, Error> {
     }
 
     // Bands and marks bind to an axis by id (the x axis or a value axis), so resolve
-    // them while both id sources are in scope.
+    // them while both id sources are in scope. A radial chart draws neither —
+    // the flip is never silently lossy [SPEC 14.5/14.7/20], so it errors here
+    // rather than vanish (building them is deferred, [SPEC 23]).
+    if dir == Dir::Radial
+        && let Some(inst) = band_insts.iter().chain(&mark_insts).next()
+    {
+        return Err(Error::at(
+            inst.span,
+            "a radial chart draws no bands / marks yet — remove it or change 'direction'",
+        ));
+    }
     let x_id = x_inst.and_then(|a| a.id.as_deref());
     let bands: Vec<Band> = band_insts
         .iter()

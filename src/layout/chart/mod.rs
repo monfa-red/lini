@@ -79,11 +79,10 @@ pub(super) fn layout_chart(
     let mut reqs = Vec::new();
     match plot.dir {
         Dir::Radial => radial::gridlines(&plot, &chart, &mut kids),
-        Dir::Column => {
+        Dir::Column | Dir::Row => {
             annot::band_shades(&plot, &chart, &mut kids);
             axis::gridlines(&plot, &chart, &mut kids);
         }
-        Dir::Row => axis::gridlines(&plot, &chart, &mut kids),
     }
     marks::areas(&plot, &chart, &mut kids);
     bars::lay_out(&plot, &chart, &mut kids);
@@ -92,9 +91,7 @@ pub(super) fn layout_chart(
     bubble::lay_out(&plot, &chart, &mut kids, &mut reqs);
     match plot.dir {
         Dir::Radial => radial::labels(&plot, &chart, &mut kids),
-        // Bands / annotations are column-oriented today; in a row they are deferred.
-        Dir::Row => axis::labels(&plot, &chart, &mut kids),
-        Dir::Column => {
+        Dir::Column | Dir::Row => {
             annot::marks(&plot, &chart, &mut kids, &mut reqs);
             axis::labels(&plot, &chart, &mut kids);
             annot::band_ticks(&plot, &chart, &mut kids);

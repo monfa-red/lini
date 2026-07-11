@@ -45,12 +45,9 @@ impl Plot {
     /// `|line|` / `|area|` / `|dots|` builders — only the projector differs.
     pub fn project(&self, x: &Scale, xv: f64, value: &Scale, v: f64) -> P {
         match self.dir {
-            Dir::Column => (self.x_at(x, xv), self.y_at(value, v)),
+            Dir::Column => (self.domain_at(x, xv), self.value_at(value, v)),
             // Row: the value runs left→right, the domain top→bottom down the left.
-            Dir::Row => (
-                self.x0 + value.frac(v) * self.w(),
-                self.y0 + x.frac(xv) * self.h(),
-            ),
+            Dir::Row => (self.value_at(value, v), self.domain_at(x, xv)),
             // Radial: the domain is a spoke angle (from the top, clockwise), the value a
             // radius from the centre.
             Dir::Radial => {
@@ -84,6 +81,35 @@ impl Plot {
             _ => 1.0,
         };
         TAU * xv / n.max(1.0)
+    }
+
+    /// The pixel of domain coordinate `v` along whichever screen axis the
+    /// domain runs in this direction — x in a column chart, y down the left
+    /// in a row [SPEC 14.7]. Cartesian only.
+    pub fn domain_at(&self, x: &Scale, v: f64) -> f64 {
+        match self.dir {
+            Dir::Row => self.y0 + x.frac(v) * self.h(),
+            _ => self.x_at(x, v),
+        }
+    }
+
+    /// The pixel of `v` on a value scale along its screen axis — y in a
+    /// column chart (larger values up), x in a row (larger values right).
+    pub fn value_at(&self, s: &Scale, v: f64) -> f64 {
+        match self.dir {
+            Dir::Row => self.x0 + s.frac(v) * self.w(),
+            _ => self.y_at(s, v),
+        }
+    }
+
+    /// The full-plot segment crossing pixel `p` of an axis: a vertical line
+    /// when the axis runs horizontally, a horizontal one otherwise.
+    pub fn cross(&self, axis_horizontal: bool, p: f64) -> Vec<P> {
+        if axis_horizontal {
+            vec![(p, self.y0), (p, self.y1)]
+        } else {
+            vec![(self.x0, p), (self.x1, p)]
+        }
     }
 
     /// The x pixel of domain coordinate `v` on `x` (a band index, or a numeric x).
