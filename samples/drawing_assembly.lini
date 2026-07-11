@@ -1,19 +1,50 @@
-// Assemblies [SPEC 15.8]: an assembly is a drawing whose children mate — and
-// drawings nest. Each sub-view is one rigid body from outside (its own parts,
-// features, and chrome sealed in its [ ]); mates reach in where both ends are
-// visible by dot-path.
+// Assemblies [SPEC 15.5, 15.8]: an assembly is a drawing whose children mate.
+// `||` seats parts without drawing anything — directed anchors abut along
+// their shared normal, `gap:` apart, and only a mate's gap may go negative:
+// the nozzle is pressed 10 into the barrel. A child |drawing| is one rigid
+// body from outside (its parts and mates sealed in its [ ]); the outer mate
+// reaches its rod by dot-path where both ends are visible. Item balloons wire
+// with `-*`, the overall length is measured as seated, and the parts list is
+// an ordinary |table| beside the view.
 
-{ layout: drawing }
+{
+  gap: 24;
+  |steel::sketch| { fill: hatch(45, 6) }
+}
 
-|drawing#motor| [
-  |rect#frame|  { width: 50; height: 40 }
-  |rect#shaft|  { width: 24; height: 8 }
-  shaft:left || frame:right
+|drawing#pump| "HAND PUMP — SECTION" [
+  |steel#barrel| {
+    draw: move(-90, 0) up(23) right(60) up(6) right(60) down(6) right(60) down(23);
+    revolve: x-axis;
+  }
+  |steel#nozzle| {
+    draw: move(0, 0) up(12) right(40) down(4) right(20) down(8);
+    revolve: x-axis;
+    fill: hatch(135, 6);                         // adjacent parts hatch opposite ways
+  }
+
+  |drawing#handle| [                             // one rigid body: rod + grip
+    |rect#rod|  { width: 60; height: 8; fill: --bg }
+    |rect#grip| { width: 10; height: 36 }
+    grip:right || rod:left
+  ]
+
+  nozzle:left || barrel:right { gap: -10 }       // pressed 10 into the barrel
+  handle.rod:right || barrel:left { gap: -25 }   // the rod rides 25 in, --bg reading as insertion
+
+  barrel:left (-) nozzle:right { side: bottom }  // → the overall length, as seated
+
+  |balloon#b1| "1" { translate: -30 -60 }
+  |balloon#b2| "2" { translate: 110 -50 }
+  |balloon#b3| "3" { translate: -155 -50 }
+  b1 -* barrel:top
+  b2 -* nozzle:top
+  b3 -* handle.grip
 ]
 
-|drawing#pump| [
-  |oval#casing| { width: 44; height: 44 }
-  |hole#gland|  { width: 10 }
+|table#bom| { columns: 24 auto 30 } [
+  "#" "Part"   "Qty"
+  "1" "Barrel" "1"
+  "2" "Nozzle" "1"
+  "3" "Handle" "1"
 ]
-
-pump:left || motor:right { gap: 4 }

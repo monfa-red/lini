@@ -1,0 +1,46 @@
+// Text & tables [SPEC 3, 8, 9, 12]: a bare "…" is a <text> leaf that carries
+// its own text style in place — never wrapped; a table's `align` reads one
+// value per column, reaching the header band and every body cell; a cell may
+// carry its own `{ }` block ("Lime" below — fmt keeps the block and lifts that
+// row out of the aligned grid); and a link's [ ] labels are the same styleable
+// leaves — `|-|` dresses them all at once, one label overriding in place.
+
+{
+  gap: 26; padding: 26;
+  |-| { stroke: --gray; color: --teal-ink; font-size: 12; font-weight: bold; }
+}
+
+"Styleable text, in place" { font-size: 20; font-weight: bold; }
+
+|row#styles| { gap: 16; } [
+  "default"
+  "coloured" { color: --red-ink; }
+  "bold" { font-weight: bold; }
+  "italic" { font-style: italic; }
+  "underline" { text-decoration: underline; }
+]
+
+|row#tables| { gap: 26; } [
+  |table#invoice| "Invoice" { columns: 130 70 100; align: start center end; } [
+    "Item"      "Qty" "Price"
+    "Keyboard"  "2"   "$120.00"
+    "Monitor"   "1"   "$340.00"
+    "USB cable" "5"   "$9.50"
+  ]
+
+  |table#stock| "Stock" { columns: 110 70 90; } [
+    "Item"  "Qty" "State"
+    "Apple" "12"  "fresh"
+    "Mango" "3"   "ripe"
+    "Lime" "0" "out" { color: --red-ink; font-weight: bold; }
+  ]
+]
+
+|box#a| "Alpha"
+|box#b| "Beta"
+|box#c| "Gamma"
+
+a -> b "styled by |-|"
+// wears the global label look — teal, bold, 12
+b -> c [ "nudged & turned" { translate: 0 -10; rotate: -6; color: --red-ink; text-shadow: 1 1 2 --gray-ink; } ]
+// one label overrides — text-shadow rides the label leaf, like any text prop

@@ -1,0 +1,91 @@
+// Advanced charting on one telemetry board [SPEC 14.4–14.7]: a log scale, a
+// reversed axis, dual axes binding series by id, `fn:` formulas (in x, and
+// parametric in u), shaded bands (indexed and on a named axis), a threshold
+// |mark|, per-point tags on x/y data, and the radial pair (radar, radial bars).
+{ layout: grid; columns: repeat(2); gap: 24; }
+
+|chart| "Requests by tier" { categories: "free" "pro" "team" "ent"; } [
+  |axis| "req/s" { side: left; scale: log; }
+  |bars| { data: 5 80 1200 45000; }
+]
+
+|chart| "League rank" { categories: "Q1" "Q2" "Q3" "Q4"; } [
+  |axis| "rank" { side: left; range: 8 1; }
+  |line| "team" { data: 6 4 5 2; marker: dot; }
+]
+
+|chart| "Throughput vs error" { categories: "mon" "tue" "wed" "thu"; } [
+  |axis#req| "requests" { side: left; }
+  |axis#err| "error" { side: right; range: 0 10; unit: "%"; }
+  |bars| "requests" { data: 820 932 901 1090; axis: req; }
+  |line| "error %" { data: 2.1 0.8 1.5 0.4; axis: err; marker: dot; }
+]
+
+|chart| "Injection profile" [
+  |axis#bar| "Pressure (bar)" { side: left; range: 0 1100; }
+  |axis#flow| "Flow" {
+    side: right; range: 0 50; gridlines: none; unit: "cm³/s";
+  }
+  |axis#x| "Speed (mm/s)" { side: bottom; range: 0 133; }
+  |area| "Pressure" {
+    axis: bar; fn: (x <= 93 ? 1000 : 1000 - 319*((x-93)/40)); fill: --teal;
+  }
+  |line| "Flow" { axis: flow; fn: (x*42/133); stroke-style: dashed; }
+]
+
+|chart| "Motor draw (A)" [
+  |axis| "phase" { side: bottom; }
+  |axis| { side: left; }
+  |band| "Close" { span: 0 1.4; fill: --sky; }
+  |band| "Inject" { span: 1.4 3.1; fill: --rose; }
+  |band| "Hold" { span: 3.1 5.1; fill: --amber; }
+  |line| "draw" {
+    stroke: --rose-deep; fn: (0.12 + 1.2*exp(-((u-0.8)/0.12)^2)) (1.5 + 3.0*u^1.1) 0.5;
+  }
+]
+
+|chart| "Reactor warm-up" [
+  |axis#t| "min" { side: bottom; range: 0 6; }
+  |axis| "°C" { side: left; }
+  |band| "Warm" { span: 0 1.5; axis: t; fill: --sky; }
+  |band| "Hold" { span: 1.5 3.5; axis: t; fill: --amber; }
+  |band| "Cool" { span: 3.5 6; axis: t; fill: --teal; }
+  |line| "core" {
+    data: 0 20, 1 90, 2 300, 3 330, 4 160, 5 60; stroke: --rose-deep;
+  }
+]
+
+|chart| "API latency (ms)" { categories: "p50" "p90" "p99" "p999"; } [
+  |axis#ms| { side: left; }
+  |bars| "v2" { data: 12 40 80 300; }
+  |mark| "SLO 250" { at: 250; axis: ms; stroke: --red; stroke-style: dashed; }
+]
+
+|chart| "Agentic coding performance" { width: 480; height: 300; } [
+  |axis| "Avg output tokens (k)" { side: bottom; }
+  |axis| "Score (%)" { side: left; range: 45 80; }
+  |line| "GLM-5.2" {
+    data: 35 63, 42 72, 84 75; tags: "Non-Thinking" "High" "Max"; marker: circle; stroke: --sky-deep;
+  }
+  |line| "GLM-5.1" {
+    data: 32 52, 45 58; tags: "Non-Thinking" "Max"; marker: circle; stroke: --green-deep;
+  }
+  |line| "Opus 4.8" {
+    data: 22 71, 40 78; tags: "Low" "High"; marker: circle; stroke: --gray-deep;
+  }
+]
+
+|chart| "Ship profiles" {
+  direction: radial; categories: "Speed" "Range" "Armor" "Cost" "Stealth";
+} [
+  |axis| { range: 0 5; }
+  |line| "Scout" { data: 5 4 2 3 5; }
+  |area| "Cruiser" { data: 3 3 5 4 2; fill: --teal; }
+]
+
+|chart| "Goal completion %" {
+  direction: radial; categories: "Mon" "Tue" "Wed" "Thu" "Fri" "Sat" "Sun";
+} [
+  |axis| { range: 0 100; }
+  |bars| "steps" { data: 80 65 90 70 95 40 55; }
+]

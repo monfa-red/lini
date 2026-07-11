@@ -1,0 +1,72 @@
+// Turned parts [SPEC 15.3]: three revolved half-profiles on one board. The
+// edge-line law draws every sharp diameter change to its axis twin (shoulders,
+// groove lips, chamfer edges) while tangent fillets draw none; `thread:` adds
+// the ISO minor and thread-end lines; `break:` folds a boring middle out of
+// the view with the measured length still true across it; interior geometry
+// rides a dashed |hidden| child; and a station `⌀` reads the revolved surface
+// doubled about the axis.
+
+{
+  gap: 48;
+  |hidden| |centerline| { stroke: none }         // a bore's axis — the shaft's serves
+}
+
+// A 300 mm tie bar with chamfered ends: `thread:` composes the M20×1.5 spec
+// the bare leader calls out, and `break:` cuts the featureless middle.
+|drawing#tiebar-view| "TIE BAR" { scale: 3; unit: "mm"; } [
+  |sketch#bar| {
+    draw: move(-150, 0) up(10) chamfer(1.5)
+          right(40):m20 point():a right(260) chamfer(1.5) down(10);
+    revolve: x-axis;
+    thread: m20 1.5;
+    break: -80 60;
+  }
+
+  bar:left (-) bar:right { side: bottom }        // → 300 mm — true, across the break
+  bar:left (-) bar:a     { side: top }           // → 40 mm — ':a' is a point() station
+  bar:m20 (o) { side: left; tol: h6 }            // → ⌀20 h6 — doubled about the axis
+  bar:m20 <- { side: top }                       // → M20×1.5 — the thread composes its spec
+]
+
+// A stepped shaft: the groove lips and chamfers draw their edge lines, the
+// filleted step root (tangent) draws none, and the centre bore is |hidden|.
+|drawing#shaft-view| "STEPPED SHAFT" { scale: 3; unit: "mm"; } [
+  |sketch#shaft| {
+    draw: move(-60, 0) up(12) chamfer(1.5) right(50) down(3) right(6):groove up(3)
+          right(30) down(4) fillet(3):r1 right(34) chamfer(1) down(8);
+    revolve: x-axis;
+  } [
+    |hidden#bore| {                              // a ⌀5 centre bore, 12 deep
+      draw: move(60, 2.5) left(12) line(-5, -2.5);
+      mirror: x-axis;
+    }
+  ]
+
+  shaft:left (-) shaft:right { side: bottom }    // → 120 mm
+  shaft:groove (o) { side: left }                // → ⌀18 — the groove root
+  shaft:r1 (o)                                   // → R3 — the step fillet
+]
+
+// The multi-section barrel — one named profile carries every value: stations
+// chain on one row, ⌀ fits stack at the left in source order, datum A sits on
+// the land, and the patterned M8 holes take a typed thread callout.
+|drawing#barrel-view| "BARREL" { scale: 2; } [
+  |sketch#body| {
+    draw: move(-242.5, 0) up(21) chamfer(1.5) right(38):m42 point():tl right(32):land
+          up(1.5):sh1 right(14):port down(4):sh2 right(7):groove up(4):sh3
+          right(10):collar up(2.5) right(384):tube chamfer(1.5) down(25);
+    revolve: x-axis; thread: m42 1.5; break: 90 165;
+  } [
+    |hole#m8| { width: 8; translate: -45 0; pattern: grid(3, 1, 115, 0); thread: 1.25; }
+  ]
+
+  body:left (-) body:tl { side: bottom; }        // → 38 — ':tl' is a point() station
+  body:sh1 (-) body:sh2 (-) body:sh3 { side: bottom; }   // → 14 · 7 — a chain seats one row
+  body:left (-) body:right { side: bottom; }     // → 485 — true, across the break
+  body:m42 <- { side: top; }                     // → M42×1.5
+  body:land >- "A"                               // datum A on the ⌀42 land
+  body:land (o) { tol: h6; side: left; }         // → ⌀42 h6
+  body:collar (o) { tol: f7; side: left; }       // → ⌀45 f7
+  body:tube (o) { side: left; }                  // → ⌀50
+  body.m8 <- "3× M8×1.25 ↧10" { side: top; }     // typed thread callout
+]

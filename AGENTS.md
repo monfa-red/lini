@@ -39,7 +39,8 @@ How to work in this repo.
 
 ## Testing
 - `insta` snapshot tests for any output-shaped code.
-- One sample per feature in `samples/`.
+- Samples are the showroom; one sample per feature **cluster** — extend an
+  existing sample before adding a file.
 - Verify SVG visually — render to PNG with `resvg` and read it; don't make the user spot-check.
 
 ## Git
