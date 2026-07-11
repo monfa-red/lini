@@ -123,6 +123,51 @@ pub(super) fn merge_decls(mut base: Vec<Decl>, extra: &[Decl]) -> Vec<Decl> {
     base
 }
 
+/// The engine-supplied note-card compaction [SPEC 8/13/15.7]: a `|note|`
+/// inside a `|sequence|` / `|drawing|` scope tightens to drafting proportions
+/// (`padding: 6 10; font-size: 13`). Generated descendant rules — `lini
+/// desugar` shows the engine's true input — positioned before the user rules,
+/// so any user rule of equal specificity wins by source order. A rule the
+/// (re-desugared) file already carries is not re-generated: desugar stays a
+/// fixed point.
+pub fn scoped_note_rules(present: &BTreeSet<String>, user_rules: &[Rule]) -> Vec<Rule> {
+    if !present.contains("note") {
+        return Vec::new();
+    }
+    let number = |name: &str, ns: &[f64]| Decl {
+        name: name.to_string(),
+        groups: vec![ns.iter().map(|n| Value::Number(*n)).collect()],
+        span: Span::empty(),
+    };
+    ["sequence", "drawing"]
+        .iter()
+        .map(|scope| Rule {
+            selector: Selector {
+                units: vec![
+                    SelUnit::Class(format!("lini-{scope}")),
+                    SelUnit::Class("lini-note".to_string()),
+                ],
+            },
+            decls: vec![
+                number("padding", &[6.0, 10.0]),
+                number("font-size", &[13.0]),
+            ],
+            span: Span::empty(),
+        })
+        .filter(|r| {
+            // Already carried by a (re-desugared) file? Match the two-class
+            // selector shape — `SelUnit` has no `PartialEq` to lean on.
+            !user_rules.iter().any(|u| match u.selector.units.as_slice() {
+                [SelUnit::Class(a), SelUnit::Class(b)] => {
+                    matches!(r.selector.units.as_slice(),
+                        [SelUnit::Class(x), SelUnit::Class(y)] if a == x && b == y)
+                }
+                _ => false,
+            })
+        })
+        .collect()
+}
+
 fn class_rule(name: &str, decls: Vec<Decl>) -> Rule {
     Rule {
         selector: Selector {

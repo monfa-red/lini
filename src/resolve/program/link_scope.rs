@@ -62,33 +62,6 @@ fn inst_facts(inst: &ResolvedInst) -> NodeFacts {
     }
 }
 
-/// The built-in scoped rules [SPEC 8]: `|sequence| |note|` and `|drawing| |note|`
-/// compact the core note card where drafting convention expects. Ordinary
-/// descendant rules at the lowest source position, so any user rule of equal
-/// specificity wins — the `|table| |cell|` mechanism, engine-supplied.
-pub(super) fn scoped_rules() -> Vec<Rule> {
-    use crate::span::Span;
-    let number = |name: &str, ns: &[f64]| Decl {
-        name: name.to_string(),
-        groups: vec![ns.iter().map(|n| Value::Number(*n)).collect()],
-        span: Span::empty(),
-    };
-    let compact = |scope: &str| Rule {
-        selector: Selector {
-            units: vec![
-                SelUnit::Class(format!("lini-{scope}")),
-                SelUnit::Class("lini-note".to_string()),
-            ],
-        },
-        decls: vec![
-            number("padding", &[6.0, 10.0]),
-            number("font-size", &[13.0]),
-        ],
-        span: Span::empty(),
-    };
-    vec![compact("sequence"), compact("drawing")]
-}
-
 /// Whether a link's scope is a drawing [SPEC 15] — its immediate container (or
 /// the root, for top-level links) resolved `layout: drawing`. Gates the drawing
 /// statements: the measuring ops, `||`, `tol:`, and the wider anchor set.

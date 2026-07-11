@@ -174,6 +174,9 @@ pub fn desugar(file: &File) -> Result<File, Error> {
     for r in class_defs(&present, &element_rules, &extra_order, synthesizes_shapes) {
         stylesheet.push(StyleItem::Rule(r));
     }
+    for r in classes::scoped_note_rules(&present, &user_rules) {
+        stylesheet.push(StyleItem::Rule(r));
+    }
     for r in user_rules {
         stylesheet.push(StyleItem::Rule(r));
     }

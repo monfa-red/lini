@@ -18,13 +18,13 @@ use super::value::{resolve_groups, resolve_property};
 use crate::error::Error;
 use crate::expr::{Expr, FuncTable};
 use crate::ledger::{consts, properties};
-use crate::syntax::ast::{Decl, File, Rule, SelUnit, Selector, StyleItem, Value};
+use crate::syntax::ast::{Decl, File, Rule, SelUnit, StyleItem};
 use std::collections::{HashMap, HashSet};
 
 mod link_scope;
 mod theme;
 
-use link_scope::{baked_link_defaults, link_scope_kind, scoped_rules};
+use link_scope::{baked_link_defaults, link_scope_kind};
 use theme::{apply_theme, apply_var_decls, build_funcs};
 
 #[cfg(test)]
@@ -41,16 +41,16 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
     let funcs = build_funcs(file)?;
     apply_var_decls(&mut vars, file, &funcs)?;
 
-    // ── Stylesheet: the built-in scoped rules (lowest, overridable like any
-    //    rule — [SPEC 8]), then the desugared file's rules (generated `.lini-*`
-    //    type classes, descendant + user-class rules) ──
-    let scoped = scoped_rules();
-    let rules: Vec<&Rule> = scoped
+    // ── Stylesheet: the desugared file's rules (generated `.lini-*` type
+    //    classes, engine-supplied scoped rules, descendant + user-class
+    //    rules) — desugar owns every generated rule [SPEC 8/18]. ──
+    let rules: Vec<&Rule> = file
+        .stylesheet
         .iter()
-        .chain(file.stylesheet.iter().filter_map(|it| match it {
+        .filter_map(|it| match it {
             StyleItem::Rule(r) => Some(r),
             _ => None,
-        }))
+        })
         .collect();
     let sheet = Stylesheet::build(&rules, &vars, &funcs)?;
 
