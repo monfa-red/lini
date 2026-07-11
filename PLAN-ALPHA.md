@@ -662,7 +662,43 @@ fmt nit surfaced (not introduced): `tol: +0.2 -0.05` canonicalizes to
 
 Acceptance: every diagnostic in SPEC 20's new tables demonstrably fires; no
 false positives across samples; `cat -> dog -> bird` stays warning-free.
-**Log:**
+**Log:** 2026-07-11 — **done**, 1 commit, all acceptance met (every SPEC 20
+validation diagnostic fires in `tests/validation.rs` — one inline-insta case
+per diagnostic, exact CLI rendering pinned; the 29 samples **and their
+`lini desugar` forms** sweep clean — zero diagnostics; `cat -> dog -> bird`
+silent, pinned by test; 15 suites + fmt + clippy clean). Items:
+- New `src/validate.rs` (lint.rs stays advisory-only): unknown name → error +
+  ledger-driven did-you-mean; wearer-known misuse → contextual error
+  (type-/role-owned, root-only config; `cell`/`span` gated on the static
+  parent layout, sequence placement on a sequence — any stylesheet rule
+  injecting `layout:` stands the static checks down); class rules warn only
+  dead-on-every-wearer + never-worn; static value shapes (`opacity` 0..1,
+  `translate` 'x y', comma list on a one-value property). Exposed through
+  `lint_str` (one parse, one diagnostics stream).
+- Similarity warning at the lint auto-create loop via `suggest::nearest`,
+  vs declared + previously-created names; case-fold unconditional; shadow
+  warning untouched.
+- `Level::Error` lands (the R1-deferred severity variant); CLI: error
+  diagnostics always print + exit 1, `--no-warn` silences warnings only,
+  `--strict` promotes them — the AUDIT R6 CLI-binary exit-code test included.
+- SPEC 20 ↔ messages reconciled 1:1 (misuse wording → "it reads on …", the
+  inert-class message shortened, the one-value comma message added); SPEC 3's
+  near-miss law gains the noise guards below.
+- Sample sweep findings: **none** — no latent misuse in the M0 garden; the
+  sweep instead surfaced three infrastructure gaps, all fixed: the ledger
+  lacked a `density` row and the `marker*` rows lacked their chart owners
+  (`|mark|`, series) — cross-check finding; and desugared files needed their
+  worn `.lini-*` classes folded into the wearer's chain (+ the lint
+  drawing-scope skip reading `.lini-drawing`) to round-trip warning-free.
+
+**Deviations** (all toward "no false positives", logged as SPEC 3 wording
+updates): the near-miss typo distance must additionally be **shorter than the
+id** (so `a -> b` stays silent) and **numbered siblings are exempt**
+(`server`/`server2` is a family, not a typo). Generated `.lini-*` classes are
+exempt from the class-rule warnings (compiler-authored, worn implicitly at
+resolve). The ledger's `gate` column stays data — the hard-gated props are
+enforced by the named checks; deeper gate-driven validation can ride a later
+round with schema generation.
 
 ### Stage M3 — scale/unit/density + `place:` + renames `[breaking]`
 
