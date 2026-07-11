@@ -336,10 +336,10 @@ each verified by me before commit. Every new file carries a `//!` doc. Items:
 3. **`desugar/mod.rs` stays at 608** (over ≲ 500). The plan's two prescribed
    extractions were tables **and** the smart-label ladder → `labels.rs`, but the
    ladder was already extracted in an earlier stage, so tables-only leaves the
-   driver (`desugar` 151) + `lower_node` (274) dispatch. A clean follow-up move
-   (`lower_node` → `lower.rs`) would land it ~334 — **held for the owner's call**
-   (unplanned extra file vs. accept 608, which is in line with the many other
-   >500 non-target files: fmt 867, scene 605, grid 543, …).
+   driver (`desugar` 151) + `lower_node` (274) dispatch. A `lower_node` → `lower.rs`
+   move would land it ~334, but the **owner chose to accept 608** — it's the
+   cohesive driver, in line with the many other >500 non-target files (fmt 867,
+   scene 605, grid 543, …). Not a holdout to revisit.
 
 **Minor** (not blocking; noted for a later polish pass): the six `model` helpers
 `pie.rs` reuses are `pub(crate)` (a `pub(super)` item can't re-export up to
