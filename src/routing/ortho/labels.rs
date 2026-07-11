@@ -36,6 +36,11 @@ pub fn place(
     let mut stmt_ids: Vec<Span> = Vec::new();
     let mut expansions: Vec<usize> = Vec::new();
     for w in &program.links {
+        // The same ownership filter the request pass ran — the statement
+        // numbering here must mirror it exactly (see `request::is_routed`).
+        if !super::request::is_routed(program, w) {
+            continue;
+        }
         let stmt = match stmt_ids.iter().position(|s| *s == w.span) {
             Some(i) => i,
             None => {

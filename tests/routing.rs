@@ -685,3 +685,47 @@ fn uncontended_fan_ports_take_their_side_centres() {
         );
     }
 }
+
+// ── Root-layout scopes: nested ordinary wires route [SPEC 11/13/15, M6] ──
+
+#[test]
+fn a_nested_row_under_a_root_drawing_routes_its_wire() {
+    // The root drawing owns its own links (measures, mates), but a nested
+    // ordinary scope's wires belong to the router — they used to vanish.
+    let r = routes_str(
+        "{ layout: drawing; }\n\
+         |sketch#part| { draw: move(0, 0) right(60) down(30) left(60) close(); }\n\
+         |row#legend| { translate: 0 80; gap: 30; } [\n\
+           |box#a| \"A\"\n  |box#b| \"B\"\n  a -> b\n]\n",
+    )
+    .expect("compiles");
+    assert_eq!(r.len(), 1, "the nested wire routes: {r:?}");
+    assert_eq!(r[0].0, ("legend.a".to_string(), "legend.b".to_string()));
+}
+
+#[test]
+fn a_nested_row_under_a_root_sequence_routes_its_wire_with_its_own_label() {
+    // Routes, and wears its *own* label: the label pass must filter
+    // program links exactly like the request pass, or the sequence message's
+    // label lands on the routed wire (request::is_routed).
+    let src = "{ layout: sequence; }\n\
+         |box#a| \"A\"\n|box#b| \"B\"\na -> b \"hello\"\n\
+         |row#legend| { gap: 20; } [\n\
+           |box#x| \"X\"\n  |box#y| \"Y\"\n  x -> y \"wired\"\n]\n";
+    let r = routes_str(src).expect("compiles");
+    // Both draw: the engine-lowered message and the routed nested wire.
+    assert!(
+        r.iter()
+            .any(|(ep, _)| ep == &("legend.x".to_string(), "legend.y".to_string())),
+        "the nested wire routes: {r:?}"
+    );
+    let svg = lini::compile_str(src).expect("compile");
+    let link = svg
+        .find("data-from=\"legend.x\"")
+        .expect("the routed link group");
+    let group = &svg[link..link + svg[link..].find("</g>").unwrap()];
+    assert!(
+        group.contains("wired") && !group.contains("hello"),
+        "the routed wire wears its own label: {group}"
+    );
+}

@@ -68,20 +68,25 @@ impl EdgeReq {
     }
 }
 
+/// Whether the router owns this link [SPEC 9/13/15]: a sequence scope's
+/// messages are drawn by the sequence layout, which owns *where* (column x,
+/// row y) and lowers each wire through the `straight` strategy itself — they
+/// are never requests; the router likewise only ever routes wires, and a
+/// drawing scope owns *all* its links — measures, mates, and its annotation
+/// arrows alike. The label pass must walk `program.links` with **this same
+/// filter** or its statement numbering drifts off the requests' and labels
+/// land on the wrong wire.
+pub fn is_routed(program: &Program, w: &crate::resolve::ResolvedLink) -> bool {
+    w.kind == crate::resolve::LinkKind::Wire
+        && !crate::layout::sequence::is_sequence_scope(program, &w.scope)
+        && !crate::layout::drawing::is_drawing_scope(program, &w.scope)
+}
+
 pub fn requests(program: &Program, index: &SceneIndex) -> Result<Vec<EdgeReq>, Error> {
     let mut out = Vec::new();
     let mut stmt_ids: Vec<Span> = Vec::new();
     for w in &program.links {
-        // A sequence scope's messages are drawn by the sequence layout, which
-        // owns *where* (column x, row y) and lowers each wire through the
-        // `straight` strategy itself [SPEC 13] — they are never requests. The
-        // router likewise only ever routes wires, and a drawing scope owns
-        // *all* its links — measures, mates, and its annotation arrows alike
-        // [SPEC 15].
-        if w.kind != crate::resolve::LinkKind::Wire
-            || crate::layout::sequence::is_sequence_scope(program, &w.scope)
-            || crate::layout::drawing::is_drawing_scope(program, &w.scope)
-        {
+        if !is_routed(program, w) {
             continue;
         }
         let stmt = match stmt_ids.iter().position(|s| *s == w.span) {

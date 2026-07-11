@@ -39,16 +39,15 @@ pub fn layout(program: &Program) -> Result<LaidOut, Error> {
     sequence::validate(program)?;
 
     // A root drawing (`{ layout: drawing }`, [SPEC 15]) owns the whole scene:
-    // its children datum-place, mates seat them, and its links never route —
-    // intercepted before the generic per-child layout, which would flow-arrange
-    // features and reject the chrome.
+    // its children datum-place, mates seat them, and its drawing-scope links
+    // never route — intercepted before the generic per-child layout, which
+    // would flow-arrange features and reject the chrome. A nested *ordinary*
+    // scope (a `|row|` of blocks on the sheet) still routes its own wires
+    // [SPEC 11/15]: the router's request pass skips drawing/sequence scopes,
+    // so the full route sees exactly those.
     if crate::resolve::is_drawing(&program.scene.attrs) {
         let (top_nodes, bbox) = drawing::layout_root(program)?;
-        let links = routing::owned_links(&top_nodes);
-        let routed = routing::Routing {
-            links,
-            ..Default::default()
-        };
+        let routed = routing::route(program, &top_nodes)?;
         return finish(program, top_nodes, bbox, routed);
     }
 
@@ -67,12 +66,12 @@ pub fn layout(program: &Program) -> Result<LaidOut, Error> {
     // arranges the participants and lowers its messages through the `straight`
     // strategy itself, bypassing the generic arrange and the orthogonal router.
     if sequence::is_sequence(&program.scene.attrs) {
-        let (bbox, mut links) = sequence::layout_root(&mut top_nodes, program)?;
-        links.extend(routing::owned_links(&top_nodes));
-        let routed = routing::Routing {
-            links,
-            ..Default::default()
-        };
+        let (bbox, links) = sequence::layout_root(&mut top_nodes, program)?;
+        // Nested ordinary scopes route their own wires [SPEC 11/13]; the
+        // request pass skips the sequence's own messages, which the engine
+        // lowered above — extend the routed set with them.
+        let mut routed = routing::route(program, &top_nodes)?;
+        routed.links.extend(links);
         return finish(program, top_nodes, bbox, routed);
     }
 
