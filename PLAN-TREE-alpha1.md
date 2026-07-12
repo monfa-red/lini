@@ -233,21 +233,38 @@ relied on flat ids; SPEC 9's no-search law stands.
 
 ### Stage 2 — bilateral
 
-- [ ] Bilateral placement in `layout/tree.rs`: the split rule (first
+- [x] Bilateral placement in `layout/tree.rs`: the split rule (first
   ⌈n/2⌉ right, rest left, declaration order both sides), `side:` override
   read per first-level topic; each half is the row-tree layout mirrored;
   root centred between the halves' spans; `gap` semantics unchanged
   (generation = horizontal, sibling = vertical).
-- [ ] Branch-link sides for bilateral: right-half links parent `right` →
+- [x] Branch-link sides for bilateral: right-half links parent `right` →
   child `left`, mirrored on the left half (root emits from both sides).
-- [ ] `side:` validation per decision 2 (top/bottom in bilateral errors;
+- [x] `side:` validation per decision 2 (top/bottom in bilateral errors;
   any `side:` on a topic in row/column errors), SPEC 20 rows.
-- [ ] Extend `samples/tree.lini` with a small bilateral tree (still
+- [x] Extend `samples/tree.lini` with a small bilateral tree (still
   orthogonal routing — proves bilateral is independent of `natural`).
 
 Acceptance: bilateral sample balanced and readable light + dark; `side:`
 override demonstrably moves a branch; error rows fire; laws sweep green.
-**Log:**
+**Log:** 2026-07-12 — **done**, 1 commit (`ef6afe0`, Opus agent; owner
+re-verified: probes, gates, PNGs light + dark). The split rule +
+mirrored halves land in `desugar/tree.rs` (`build_bilateral` — first
+⌈n/2⌉ right, rest left; inline `side:` read and **consumed**; each half
+re-expressed as a generated `.lini-side-{left,right}` class) and
+`layout/tree.rs` (`place_bilateral` reuses `assign` with a sign-flipped
+band array — a mirror, not a reimplementation; root centred between the
+halves). The root emits one fan per non-empty half with mirrored forced
+sides. Both SPEC 20 `side:` errors fire verbatim; a deeper bilateral
+`side:` reuses the one-growth-direction message (judgment call, in
+SPEC's spirit — first-level `left|right` is the only legal form).
+`direction` validation is per-engine (no central table): `bilateral`
+off a tree errors in each engine's reader exactly as `radial` off a
+chart does. tree.lini gains the 5-branch bilateral scene with a
+`side: left` override; only its snapshot changed. **Noted edge**: a
+rule-borne `side:` (`#a { side: right }`) is inert — the split reads
+the authored inline decl only, the M3 scale-fold precedent; SPEC's
+examples are inline.
 
 ### Stage 3 — `natural`: the strategy + the curve prototype
 
@@ -344,25 +361,25 @@ shows `1.0.0-alpha.1`.
 Independent of the tree work; may land any time before the Stage 5
 release sweep (whose version bump then carries it).
 
-- [ ] SPEC amendment first, tight: SPEC 3 (Text content — a string takes
+- [x] SPEC amendment first, tight: SPEC 3 (Text content — a string takes
   a class chain like any node tail; text-valid properties apply, others
   inert per the class law), SPEC 4 (worn classes reach text leaves,
   tier 3), SPEC 21 grammar (`text_stmt = string [ classes ] [ block ]`),
   SPEC 16 note if any, SPEC 20 unchanged (no new errors — inertness is
   the law).
-- [ ] Parser: the string statement head accepts the worn-class chain
+- [x] Parser: the string statement head accepts the worn-class chain
   (spaced off the string, glued within — the node-tail rule); fmt prints
   it canonically; desugar carries classes on text leaves (user classes
   emit as `.lini-style-*` on the `<text>` beside `.lini-text`).
-- [ ] Resolve: text leaves walk the class tier of the cascade (today:
+- [x] Resolve: text leaves walk the class tier of the cascade (today:
   inline block + inheritance only); the text-valid filter is the same
   one the inline block uses — worn-class non-text props are inert, not
   errors.
-- [ ] Tests: parser/fmt round-trip, cascade (class vs inline precedence,
+- [x] Tests: parser/fmt round-trip, cascade (class vs inline precedence,
   inert non-text prop), render snapshot (class hook on `<text>`),
   validation (class-dead-on-every-wearer warning still correct when the
   only wearer is text and the prop is text-valid).
-- [ ] `cards.lini` cleanup: the `|block|` wrappers drop — titles/briefs
+- [x] `cards.lini` cleanup: the `|block|` wrappers drop — titles/briefs
   become bare classed strings under the cards' `max-width` (re-bless +
   eyeball light/dark; a long title now wraps instead of erroring).
 
@@ -370,7 +387,28 @@ Acceptance: `"Starter" .card-title` styles the text; every existing
 sample byte-identical except cards; `lini fmt` round-trips the new form;
 a worn class's box-only property is silently inert on text, exactly as
 on any non-wearing node.
-**Log:**
+**Log:** 2026-07-12 — **done**, 3 commits in an isolated worktree
+(`e69371d`/`4d08a31`/`2a36f48`, Opus agent) merged as `8d987e2`; SPEC
+amendment (`e929675`) written first, inline by the owner. `TextNode`
+gained `classes`; content-position strings (statements, `[ ]` children,
+link `[ ]` labels — one shared `parse_text_node`) take the tail;
+head-label classes stay owner-bound structurally (`parse_tail` fills
+the owner's chain — no grammar ambiguity). Resolve inserts tier 3 via
+one shared `apply_text_classes` (factored `user_class_decls` out of
+`node_layers` — node and text read one source); classes merge before
+layout, so class-borne `font-size` measures. Render: `lini-style-*`
+beside `lini-text`; validation counts text wearers. fmt: a classed cell
+breaks its aligned row via the shared `is_plain_text`, the styled-cell
+rule. cards.lini drops its wrappers — bare classed strings under the
+cards' `max-width`; a long title now wraps instead of erroring; only
+cards' snapshot changed (byte-identity everywhere else). **Deviation
+adopted**: link `[ ]` labels wired too (`ResolvedText.applied_styles`
+threaded to `render_link_text`) — SPEC 3 lists them as content
+position, and parsed-but-unwired would drop a class silently. Merge
+note: one conflict in `resolve/links.rs` (Stage 1's `resolve_ladder`
+closure × the label-class insertion) — resolved by grafting
+`apply_text_classes` into the closure's label loop; 886 tests green
+post-merge; classed text inside a bilateral tree smoke-verified.
 
 ---
 
