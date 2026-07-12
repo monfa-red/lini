@@ -11,9 +11,9 @@
     |topic#coo| "COO" [
       |topic#ops| "Operations"
       |topic#qa| "Quality"
+      ops --- qa
     ]
   ]
-  qa --- ops
 ]
 
 |column#decision| "Review flow" { layout: tree; direction: row; } [

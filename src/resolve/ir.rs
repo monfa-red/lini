@@ -46,6 +46,7 @@ pub struct ResolvedScene {
 
 /// A resolved node or primitive instance. `id` is `Some` iff the source used a
 /// named scene node (`cat |treat| …`); anonymous primitives have `id == None`.
+#[derive(Clone)]
 pub struct ResolvedInst {
     pub id: Option<String>,
     pub kind: NodeKind,

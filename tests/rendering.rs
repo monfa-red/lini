@@ -870,3 +870,31 @@ fn line_alignment_rides_the_holding_boxes_knob() {
         .collect();
     assert!(xs.windows(2).all(|w| w[0] == w[1]), "{svg}");
 }
+
+#[test]
+fn a_scoped_link_rule_dashes_only_its_scope_branch_fans() {
+    // A tree's branch links are ordinary `|-|` wires resolving in the scope that
+    // contains the parent topic, so a descendant rule `#cto |-|` styles exactly
+    // the fans written inside `#cto`'s body (the `be → api` arm) and no others
+    // [SPEC 12].
+    let src = "{\n  #cto |-| { stroke-style: dashed; }\n}\n\
+        |column#o| { layout: tree } [\n\
+          |topic#ceo| \"CEO\" [\n\
+            |topic#cto| \"CTO\" [\n\
+              |topic#be| \"Backend\" [ |topic#api| \"API\" ]\n\
+              |topic#fe| \"Frontend\"\n\
+            ]\n\
+            |topic#coo| \"COO\"\n\
+          ]\n\
+        ]\n";
+    let svg = render_live(src);
+    let dashed: Vec<&str> = svg
+        .lines()
+        .filter(|l| l.contains("lini-link-dashed") && l.contains("data-to="))
+        .collect();
+    assert_eq!(dashed.len(), 1, "exactly one dashed fan: {dashed:?}");
+    assert!(
+        dashed[0].contains(r#"data-to="o.ceo.cto.be.api""#),
+        "the be→api arm inside #cto's body is dashed: {dashed:?}"
+    );
+}

@@ -1,20 +1,21 @@
-//! Tree lowering [SPEC 12]: the structure a `layout: tree` scope authors with
-//! `|topic|` nesting becomes a **flat** set of topics + generated branch links.
+//! Tree lowering [SPEC 12]: a `layout: tree` scope authors a rooted hierarchy
+//! with `|topic|` nesting; this pass keeps that nesting and adds the generated
+//! branch links + depth classes.
 //!
-//! Authoring nests topics (a direct `|topic|`-derived child is a branch); this
-//! pass **flattens** each tree scope's topic subtree into a pre-order list of
-//! direct children, wears each topic its depth class `.lini-level-N` (root 0),
-//! and generates one unmarked `|-|` branch link per parent→child edge with the
+//! Topic nesting is preserved through the whole front half (scoped ids, sealed
+//! bodies, dot-paths all stay true to SPEC 9). For each topic that has
+//! topic-children, one unmarked `|-|` **fan** is generated **in the scope that
+//! contains the parent topic** — the root topic's fan in the tree scope
+//! (`ceo:bottom - ceo.cto:top & ceo.coo:top`), a deeper topic's fan inside its
+//! parent's body (`cto:bottom - cto.backend:top & cto.frontend:top`) — with the
 //! direction's forced sides (`column`: `bottom` → `top`; `row`: `right` →
-//! `left`). Flattening makes the branch links **ordinary sibling wires** the
-//! orthogonal router routes in the scope's world — a nested card never contains
-//! its child, so string-path containment must not imply it. The tree engine
-//! reconstructs the hierarchy from the flat list's level classes + source order
-//! ([`crate::layout::tree`]).
+//! `left`). The endpoints are dotted from the fan's own scope so they resolve by
+//! the ordinary path-walk. Every topic also wears its depth class
+//! `.lini-level-N` (root 0), and an anonymous topic gets a deterministic minted
+//! id `lini-topic-N` (1-based among its scope's topic children).
 //!
-//! The pass is a fixed point: a re-desugared (already-flat, already-levelled)
-//! scope is left untouched, and a branch link the scope already carries is not
-//! regenerated.
+//! The pass is a fixed point: an already-levelled scope regenerates nothing, and
+//! a fan the scope already carries is not duplicated.
 
 use super::classes::lini_class;
 use super::types::Types;
@@ -57,9 +58,9 @@ fn growth_of(style: &[Decl]) -> Growth {
 
 // ───────────────────────── structure validation ─────────────────────────
 
-/// Structure errors [SPEC 20], on the parsed (still-nested) AST — before the
-/// flatten below erases the nesting the root count reads. Runs pre-desugar, the
-/// `lint::is_drawing_node` precedent (written type + style, no cascade).
+/// Structure errors [SPEC 20], on the parsed (still-nested) AST. Runs
+/// pre-desugar, the `lint::is_drawing_node` precedent (written type + style, no
+/// cascade).
 pub(crate) fn validate(file: &File) -> Result<(), Error> {
     // A broken type table is desugar's error to report; skip here.
     let Ok(types) = Types::build(file) else {
@@ -98,9 +99,7 @@ fn check(child: &Child, in_tree: bool, types: &Types) -> Result<(), Error> {
 }
 
 /// A tree scope holds exactly one root topic [SPEC 20]: none or a second errors.
-/// Counts *root* topics — direct topic children not wearing a deeper level class
-/// — so it reads the same on a re-desugared (already-flattened) scope, where
-/// every topic is a direct child but only one is level 0.
+/// Counts *root* topics — direct topic children of the scope.
 fn check_root_count(children: &[Child], scope_span: Span) -> Result<(), Error> {
     let mut roots = children.iter().filter_map(|c| match c {
         Child::Box(n)
@@ -131,8 +130,8 @@ fn check_root_count(children: &[Child], scope_span: Span) -> Result<(), Error> {
     Ok(())
 }
 
-/// Whether a (re-desugared) topic wears a level class deeper than 0 — a lifted
-/// branch, not a root.
+/// Whether a (re-desugared) topic wears a level class deeper than 0 — never true
+/// for a direct child of the tree scope, kept as a guard for the lowered form.
 fn wears_deeper_level(n: &Node) -> bool {
     n.classes
         .iter()
@@ -155,102 +154,105 @@ fn is_topic_node(n: &Node) -> bool {
     matches!(n.ty.as_deref(), Some(t) if t == "topic" || t.ends_with("::topic"))
 }
 
-// ───────────────────────── flatten + generate ─────────────────────────
+// ───────────────────────── build the tree ─────────────────────────
 
 /// Whether a scope's style opens a tree [SPEC 12] — the gate `lower_node` reads
-/// to flatten a node scope and the desugar root reads for the scene scope.
+/// and the desugar root reads for the scene scope.
 pub(crate) fn is_tree_scope(style: &[Decl]) -> bool {
     is_tree_style(style)
 }
 
-/// Flatten a `layout: tree` scope's topic subtree into a depth-classed pre-order
-/// flat list, appending one branch link per edge to `links` [SPEC 12]. Called
-/// from `lower_node` (a node tree) and the desugar root (a scene tree), **before
-/// that scope's auto-create**, so a branch / cross-link endpoint sees the lifted
-/// topics as declared siblings. Idempotent: an already-flat, already-levelled
-/// scope is left as-is, and a branch link the scope already carries is not
-/// regenerated.
-pub(crate) fn flatten(children: &mut Vec<Child>, links: &mut Vec<Link>, style: &[Decl]) {
-    flatten_scope(children, links, growth_of(style));
-}
-
-/// Replace a tree scope's root-topic subtree with a pre-order flat list of
-/// topics, each depth-classed, and append one branch link per edge to `links`.
-/// Idempotent: an already-flattened scope (its topics wear level classes) is
-/// left as-is.
-fn flatten_scope(children: &mut Vec<Child>, links: &mut Vec<Link>, g: Growth) {
+/// Build a `layout: tree` scope: mint ids for anonymous topics, wear each topic
+/// its depth class, and generate one branch fan per parent into the scope that
+/// contains the parent [SPEC 12]. Called from `lower_node` (a node tree) and the
+/// desugar root (a scene tree) on the lowered, still-nested topics. Idempotent:
+/// an already-levelled scope regenerates nothing.
+pub(crate) fn build_tree(children: &mut [Child], links: &mut Vec<Link>, style: &[Decl]) {
     let already = children
         .iter()
-        .any(|c| matches!(c, Child::Box(n) if has_level_class(n)));
+        .any(|c| matches!(c, Child::Box(n) if is_topic(n) && has_level_class(n)));
     if already {
         return;
     }
-    let mut flat: Vec<Node> = Vec::new();
-    let mut kept: Vec<Child> = Vec::new();
-    for c in std::mem::take(children) {
-        match c {
-            Child::Box(n) if is_topic(&n) => flatten_topic(n, 0, links, g, &mut flat),
-            other => kept.push(other),
+    build_scope(children, links, 0, growth_of(style));
+}
+
+/// For one scope (its direct `children` and its own `links`): mint anonymous
+/// topic ids, stamp each topic's level class, generate the fan for every topic
+/// that has topic-children into `links`, then recurse into each topic's body
+/// (its children a generation deeper, their fans landing in the topic's links).
+fn build_scope(children: &mut [Child], links: &mut Vec<Link>, level: usize, g: Growth) {
+    mint_ids(children);
+    let mut fans: Vec<Link> = Vec::new();
+    for c in children.iter_mut() {
+        let Child::Box(t) = c else { continue };
+        if !is_topic(t) {
+            continue;
         }
+        t.classes.push(lini_class(&format!("level-{level}")));
+        // Mint the children now so the fan can name them (the recursion below
+        // re-mints them idempotently).
+        mint_ids(&mut t.children);
+        let kids: Vec<String> = t
+            .children
+            .iter()
+            .filter_map(|cc| match cc {
+                Child::Box(k) if is_topic(k) => k.id.clone(),
+                _ => None,
+            })
+            .collect();
+        if let Some(pid) = t.id.clone()
+            && !kids.is_empty()
+        {
+            let link = branch_fan(&pid, &kids, g, t.span);
+            if !links.iter().chain(fans.iter()).any(|l| same_link(l, &link)) {
+                fans.push(link);
+            }
+        }
+        build_scope(&mut t.children, &mut t.links, level + 1, g);
     }
-    kept.extend(flat.into_iter().map(Child::Box));
-    *children = kept;
-    // Order the scope's links by span so the lowered order matches the
-    // fmt-printed (span-sorted) desugar output — desugar transparency, so the
-    // router's declaration-order tie-break is the same whether the source or its
-    // lowering is compiled. Stable: branch fans carry their parent's span
-    // (distinct, source order), authored links their own.
+    links.extend(fans);
+    // Order by span so the lowered order matches the fmt-printed (span-sorted)
+    // desugar output — desugar transparency; the router's declaration-order
+    // tie-break is the same whether source or its lowering is compiled.
     links.sort_by_key(|l| l.span.start);
 }
 
-/// Depth-class `topic`, split off its topic children (its content stays), emit
-/// one branch **fan** for its edges, then recurse pre-order.
-fn flatten_topic(
-    mut topic: Node,
-    level: usize,
-    links: &mut Vec<Link>,
-    g: Growth,
-    flat: &mut Vec<Node>,
-) {
-    topic.classes.push(lini_class(&format!("level-{level}")));
-    let mut branches: Vec<Node> = Vec::new();
-    let mut content: Vec<Child> = Vec::new();
-    for c in std::mem::take(&mut topic.children) {
-        match c {
-            Child::Box(n) if is_topic(&n) => branches.push(n),
-            other => content.push(other),
-        }
-    }
-    topic.children = content;
-    if let Some(pid) = topic.id.clone() {
-        let child_ids: Vec<String> = branches.iter().filter_map(|c| c.id.clone()).collect();
-        if !child_ids.is_empty() {
-            let link = branch_fan(&pid, &child_ids, g, topic.span);
-            if !links.iter().any(|l| same_link(l, &link)) {
-                links.push(link);
+/// Mint deterministic `lini-topic-N` ids for a scope's anonymous topic children
+/// (1-based among the scope's topics) [SPEC 12]. Idempotent: an already-id'd
+/// topic keeps its id.
+fn mint_ids(children: &mut [Child]) {
+    let mut nth = 0usize;
+    for c in children.iter_mut() {
+        if let Child::Box(t) = c
+            && is_topic(t)
+        {
+            nth += 1;
+            if t.id.is_none() {
+                t.id = Some(format!("lini-topic-{nth}"));
             }
         }
     }
-    flat.push(topic);
-    for ch in branches {
-        flatten_topic(ch, level + 1, links, g, flat);
-    }
 }
 
-/// One unmarked `|-|` branch fan `parent:side - c1:side & c2:side …` [SPEC 12].
-/// A single statement so the children share the parent's port — the classic
-/// single-trunk tree connector, and the only form that lands on a narrow side
-/// (a row tree's parent right edge). It carries the parent's span so the lowered
-/// link order is stable across the desugar round-trip.
+/// One unmarked `|-|` branch fan `parent:side - parent.c1:side & parent.c2:side …`
+/// [SPEC 12], generated in the scope that contains `parent`: the parent is a bare
+/// sibling id there, each child a dotted path into it. A single statement so the
+/// children share the parent's port — the classic single-trunk tree connector. It
+/// carries the parent's span so the lowered link order is stable across the
+/// desugar round-trip.
 fn branch_fan(parent: &str, children: &[String], g: Growth, span: Span) -> Link {
     let (ps, cs) = g.sides();
     Link {
         chain: vec![
             EndpointGroup {
-                endpoints: vec![endpoint(parent, ps)],
+                endpoints: vec![endpoint(vec![parent.to_string()], ps)],
             },
             EndpointGroup {
-                endpoints: children.iter().map(|c| endpoint(c, cs)).collect(),
+                endpoints: children
+                    .iter()
+                    .map(|c| endpoint(vec![parent.to_string(), c.clone()], cs))
+                    .collect(),
             },
         ],
         ops: vec![ChainOp::Wire(LinkOp {
@@ -267,9 +269,9 @@ fn branch_fan(parent: &str, children: &[String], g: Growth, span: Span) -> Link 
     }
 }
 
-fn endpoint(id: &str, side: &str) -> Endpoint {
+fn endpoint(path: Vec<String>, side: &str) -> Endpoint {
     Endpoint {
-        path: vec![id.to_string()],
+        path,
         point: Some(PointRef {
             name: side.to_string(),
             span: Span::empty(),

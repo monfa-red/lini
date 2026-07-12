@@ -287,3 +287,28 @@ fn a_well_formed_tree_is_silent() {
     assert!(lini::check(src).is_ok(), "a valid tree should compile");
     assert_silent(src);
 }
+
+#[test]
+fn scoped_topic_ids_stay_legal_across_sealed_bodies() {
+    // Topic nesting is preserved, so two `#note`s in different topic bodies are
+    // distinct by their dot-path — no duplicate-id error [SPEC 9/12].
+    let src = "{ layout: tree; }\n\
+        |topic#root| \"R\" [\n\
+          |topic#a| \"A\" [ |topic#note| \"n1\" ]\n\
+          |topic#b| \"B\" [ |topic#note| \"n2\" ]\n\
+        ]\n";
+    assert!(
+        lini::check(src).is_ok(),
+        "scoped duplicate ids should compile"
+    );
+}
+
+#[test]
+fn an_authored_id_may_not_begin_lini() {
+    // The `lini-` prefix is reserved for generated names, mirroring the
+    // `.lini-*` class reservation [SPEC 20/22].
+    insta::assert_snapshot!(
+        lini::check("|box#lini-foo|\n").expect_err("reserved id prefix").message,
+        @"an id may not begin 'lini-' — the prefix is reserved for generated names"
+    );
+}

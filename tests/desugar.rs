@@ -215,9 +215,10 @@ fn mixing_op_kinds_in_a_chain_stays_a_parse_error() {
 }
 
 #[test]
-fn a_tree_flattens_topics_wears_level_classes_and_fans_branches() {
-    // Nested topics flatten to depth-classed direct children; each parent's
-    // edges become one branch fan on the parent's port [SPEC 12].
+fn a_tree_keeps_topic_nesting_wears_level_classes_and_fans_branches() {
+    // Topic nesting is preserved; each topic wears its depth class, and each
+    // parent's edges become one dotted branch fan on the parent's port,
+    // generated in the scope that contains the parent [SPEC 12].
     let out = desugar_source(
         "|column#o| { layout: tree } [\n  |topic#a| \"A\" [\n    |topic#b| \"B\"\n    |topic#c| \"C\"\n  ]\n]\n",
     )
@@ -234,9 +235,10 @@ fn a_tree_flattens_topics_wears_level_classes_and_fans_branches() {
         out.contains("|block#c| .lini-topic.lini-block.lini-level-1"),
         "{out}"
     );
-    // One fan per parent, with the column direction's forced sides.
+    // One fan per parent, endpoints dotted from the parent's scope, with the
+    // column direction's forced sides.
     assert!(
-        out.contains("a:bottom - b:top & c:top"),
+        out.contains("a:bottom - a.b:top & a.c:top"),
         "branch fan: {out}"
     );
     // The default gap is injected (the generic 20 is unroutable at clearance 16).
@@ -252,7 +254,7 @@ fn a_row_tree_fans_on_the_right_side() {
     )
     .unwrap();
     assert!(
-        out.contains("a:right - b:left"),
+        out.contains("a:right - a.b:left"),
         "row fan on right side: {out}"
     );
 }

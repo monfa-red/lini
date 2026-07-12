@@ -52,6 +52,17 @@ pub fn layout(program: &Program) -> Result<LaidOut, Error> {
         return finish(program, top_nodes, bbox, routed);
     }
 
+    // A root `{ layout: tree }` scene ([SPEC 12]) is the tree container: it
+    // arranges its topics as generations (each topic's card sized from its own
+    // content), then the router routes the branch links like any wires —
+    // intercepted before the generic per-child layout, which would fold a
+    // topic's branches into its own box.
+    if tree::is_tree(&program.scene.attrs) {
+        let (top_nodes, bbox) = tree::layout_root(program)?;
+        let routed = routing::route(program, &top_nodes)?;
+        return finish(program, top_nodes, bbox, routed);
+    }
+
     let ctx = Ctx {
         scale: effective_scale(&program.scene.attrs, 1.0, Span::empty())?,
         drawing: false,

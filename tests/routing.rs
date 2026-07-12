@@ -729,3 +729,30 @@ fn a_nested_row_under_a_root_sequence_routes_its_wire_with_its_own_label() {
         "the routed wire wears its own label: {group}"
     );
 }
+
+/// A tree of **anonymous** topics [SPEC 12]: desugar mints deterministic
+/// `lini-topic-N` ids and generates one branch fan per parent, and the scene
+/// routes every branch wire — silent wire loss (a fan naming an unminted child)
+/// is the bug this pins.
+#[test]
+fn anonymous_topics_mint_ids_and_wire_up() {
+    let src = "{ layout: tree; }\n\
+        |topic| \"Root\" [\n\
+          |topic| \"Goals\" [\n\
+            |topic| \"Q3\"\n\
+          ]\n\
+          |topic| \"Risks\"\n\
+        ]\n";
+    let out = lini::desugar_source(src).expect("desugar");
+    assert!(out.contains("#lini-topic-1"), "minted ids: {out}");
+    // The branch fans are present, endpoints dotted from each parent's scope.
+    assert!(
+        out.contains(
+            "lini-topic-1:bottom - lini-topic-1.lini-topic-1:top & lini-topic-1.lini-topic-2:top"
+        ),
+        "root fan: {out}"
+    );
+    // Three routed wires: Root→Goals, Root→Risks, Goals→Q3.
+    let routes = routes(src);
+    assert_eq!(routes.len(), 3, "three branch wires drawn: {routes:?}");
+}

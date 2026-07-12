@@ -1,14 +1,16 @@
 //! `layout: tree` [SPEC 12] — a rooted hierarchy laid out in generations.
 //!
-//! Desugar has already **flattened** the scope: every topic is a direct child
-//! wearing its depth class `.lini-level-N` (root 0), and the parent→child edges
-//! are ordinary sibling `|-|` links the orthogonal router draws
-//! ([`crate::desugar::tree`]). This engine reconstructs the hierarchy from the
-//! flat list's levels + source order, lays each topic's card out with its own
-//! content (never grown by its branches), places the cards by generation, and
-//! emits them **flat** — the container's direct placed children — so the routing
-//! scene index stays honest (no ancestor rect that fails to contain a
-//! descendant) and the branch links route as sibling wires.
+//! Desugar keeps the topic **nesting** (scoped ids, sealed bodies, dot-paths)
+//! and generates the parent→child branch links as ordinary `|-|` wires
+//! ([`crate::desugar::tree`]). This engine reads that nested topic tree, lays
+//! each topic's **card** from its own non-topic content only (branches never
+//! grow the card), places the cards by generation, and emits them **nested** —
+//! each topic a placed child of its parent, its card box its own extent, its
+//! subtree overhanging (the drawing-features precedent). The routing scene index
+//! then sees a topic's keep-out as its own card (never its subtree's hull), the
+//! dot-paths address the placed nodes unchanged, and the branch links route as
+//! ordinary side-by-side wires once the containment special case is gated on
+//! geometry ([`crate::routing::ortho::scene::SceneIndex::geo_contains`]).
 //!
 //! `direction` picks the growth axis (`column` down — the org chart — or `row`
 //! rightward); `gap: g s` is the generation distance then the sibling
@@ -20,6 +22,7 @@ use super::ir::{Bbox, PlacedNode};
 use super::{Ctx, child_path, layout_inst, prim, primitives};
 use crate::error::Error;
 use crate::resolve::{AttrMap, Program, ResolvedInst, ResolvedValue};
+use crate::span::Span;
 
 /// Is this node a tree container [SPEC 12]? Detected by its `layout:` attr — the
 /// same key the chart / sequence dispatch reads, so it is intercepted before the
@@ -37,13 +40,13 @@ fn growth(attrs: &AttrMap) -> Axis {
     }
 }
 
-/// Whether a placed child is a topic (structural node) rather than the
-/// container's own content — the flattened form wears `lini-topic`.
-fn is_topic(n: &PlacedNode) -> bool {
-    n.type_chain.iter().any(|t| t == "topic")
+/// Whether a resolved instance is a topic (a structural node) rather than the
+/// container's own content — the type chain wears `topic`.
+fn is_topic_inst(inst: &ResolvedInst) -> bool {
+    inst.type_chain.iter().any(|t| t == "topic")
 }
 
-/// A topic's depth from its `.lini-level-N` class (desugar-generated); root 0.
+/// A topic card's depth from its `.lini-level-N` class (desugar-generated); root 0.
 fn level_of(n: &PlacedNode) -> usize {
     n.type_chain
         .iter()
@@ -52,57 +55,114 @@ fn level_of(n: &PlacedNode) -> usize {
 }
 
 /// A `|tree|` **node** [SPEC 12]: lay each topic's card out with its content,
-/// place the generations, and return the container carrying the flat topic set.
+/// place the generations, and return the container carrying the nested topics.
 pub(super) fn layout_node(
     inst: &ResolvedInst,
     path: &str,
     program: &Program,
 ) -> Result<PlacedNode, Error> {
+    let (children, bbox) = arrange(&inst.attrs, &inst.children, path, program, inst.span)?;
+    Ok(prim::container(inst, bbox, children))
+}
+
+/// A root `{ layout: tree }` scene [SPEC 12]: the scene itself is the tree
+/// container. The router routes its branch links after (they are ordinary
+/// wires) — the caller wires that up like any scene.
+pub(super) fn layout_root(program: &Program) -> Result<(Vec<PlacedNode>, Bbox), Error> {
+    arrange(
+        &program.scene.attrs,
+        &program.scene.nodes,
+        "",
+        program,
+        Span::empty(),
+    )
+}
+
+/// The tree arrangement shared by the node and root entries: flatten the nested
+/// topics into cards (each sized from its own content only), place the
+/// generations, re-nest, and seat the scope's non-topic content around the
+/// finished cluster. Returns the placed children and the padded bbox.
+fn arrange(
+    attrs: &AttrMap,
+    inst_children: &[ResolvedInst],
+    path: &str,
+    program: &Program,
+    span: Span,
+) -> Result<(Vec<PlacedNode>, Bbox), Error> {
     // A tree's interior is sheet-space [SPEC 15.1] — topics never inherit an
     // enclosing drawing's view scale.
+    let axis = growth(attrs);
+    // `gap: generation sibling` [SPEC 12]; a scalar sets both. `primitives::gap`
+    // reads the two values in order — first is the generation distance.
+    let (generation, sibling) = primitives::gap(attrs, span)?;
+
+    // Flatten the nested topics into a pre-order card list (each card sized from
+    // its own content only), keeping the container's non-topic content aside.
     let mut cards: Vec<PlacedNode> = Vec::new();
     let mut content: Vec<PlacedNode> = Vec::new();
-    for c in &inst.children {
-        let placed = layout_inst(c, &child_path(path, c), program, Ctx::sheet())?;
-        if is_topic(&placed) {
-            cards.push(placed);
+    for c in inst_children {
+        if is_topic_inst(c) {
+            flatten_cards(c, &child_path(path, c), program, &mut cards)?;
         } else {
-            content.push(placed);
+            content.push(layout_inst(c, &child_path(path, c), program, Ctx::sheet())?);
         }
     }
 
-    let axis = growth(&inst.attrs);
-    // `gap: generation sibling` [SPEC 12]; a scalar sets both. `primitives::gap`
-    // reads the two values in order — first is the generation distance.
-    let (generation, sibling) = primitives::gap(&inst.attrs, inst.span)?;
-
-    place_generations(&mut cards, axis, generation, sibling);
+    // Place every card (post-order packing), then re-nest so each topic is a
+    // placed child of its parent with its card its own overhang box.
+    let (nodes, roots) = place_generations(&mut cards, axis, generation, sibling);
+    let mut children = nest(cards, &nodes, &roots);
 
     // Content (a caption / free text) is not part of the tree structure: pin an
     // out-of-flow overlay onto the finished cluster, stack any flow content
     // above it — the honest minimum (SPEC does not specify container content).
-    let cluster = union_of(&cards);
-    let mut children = cards;
+    let cluster = union_all(&children);
     place_content(&mut children, content, cluster, axis, sibling)?;
 
-    let pad = primitives::padding(&inst.attrs, inst.span)?;
-    let body = union_of(&children);
+    let pad = primitives::padding(attrs, span)?;
+    let body = union_all(&children);
     let bbox = body.expand(pad.top, pad.right, pad.bottom, pad.left);
-    Ok(prim::container(inst, bbox, children))
+    Ok((children, bbox))
 }
 
-/// The union of the placed nodes' bboxes, each in the container's frame
-/// (shifted by its `cx`/`cy`). Empty when there are none.
-fn union_of(nodes: &[PlacedNode]) -> Bbox {
-    let mut it = nodes.iter();
-    let Some(first) = it.next() else {
-        return Bbox::empty();
-    };
-    let mut b = first.bbox.shifted(first.cx, first.cy);
-    for n in it {
-        b = b.union(n.bbox.shifted(n.cx, n.cy));
+/// Recursively push each topic's card (pre-order), sizing the card from its
+/// non-topic content only — the branches are laid out as their own cards.
+fn flatten_cards(
+    inst: &ResolvedInst,
+    path: &str,
+    program: &Program,
+    cards: &mut Vec<PlacedNode>,
+) -> Result<(), Error> {
+    cards.push(layout_card(inst, path, program)?);
+    for c in &inst.children {
+        if is_topic_inst(c) {
+            flatten_cards(c, &child_path(path, c), program, cards)?;
+        }
     }
-    b
+    Ok(())
+}
+
+/// One topic's card [SPEC 12]: the topic laid out with its **non-topic** content
+/// only. Reuse the generic layout on a copy sans branches — one mechanism, so the
+/// card sizes exactly like any block (padding, radius, wrap, the label leaf).
+fn layout_card(inst: &ResolvedInst, path: &str, program: &Program) -> Result<PlacedNode, Error> {
+    let mut card = inst.clone();
+    card.children.retain(|c| !is_topic_inst(c));
+    layout_inst(&card, path, program, Ctx::sheet())
+}
+
+/// Recursive union of a placed subtree's card boxes, in the container's frame.
+fn union_all(nodes: &[PlacedNode]) -> Bbox {
+    fn go(nodes: &[PlacedNode], ox: f64, oy: f64, acc: &mut Bbox) {
+        for n in nodes {
+            let (x, y) = (ox + n.cx, oy + n.cy);
+            *acc = acc.union(n.bbox.shifted(x, y));
+            go(&n.children, x, y, acc);
+        }
+    }
+    let mut acc = Bbox::empty();
+    go(nodes, 0.0, 0.0, &mut acc);
+    acc
 }
 
 /// One reconstructed topic: which card it is, its children (indices into this
@@ -116,10 +176,24 @@ struct Node {
 /// Reconstruct the hierarchy from level classes + source order and place every
 /// card: generations one `generation` gap apart along the main axis (a level's
 /// cards share a line), siblings packed `sibling` apart across it, each parent
-/// centred over its subtree's cross span [SPEC 12].
-fn place_generations(cards: &mut [PlacedNode], axis: Axis, generation: f64, sibling: f64) {
+/// centred over its subtree's cross span [SPEC 12]. Card positions are absolute
+/// in the container frame; the returned tree drives the re-nesting.
+fn place_generations(
+    cards: &mut [PlacedNode],
+    axis: Axis,
+    generation: f64,
+    sibling: f64,
+) -> (Vec<Node>, Vec<usize>) {
+    let mut nodes: Vec<Node> = (0..cards.len())
+        .map(|card| Node {
+            card,
+            children: Vec::new(),
+            subtree_cross: 0.0,
+        })
+        .collect();
+    let mut roots: Vec<usize> = Vec::new();
     if cards.is_empty() {
-        return;
+        return (nodes, roots);
     }
     // Card extents along the two axes.
     let main = |c: &PlacedNode| match axis {
@@ -132,17 +206,9 @@ fn place_generations(cards: &mut [PlacedNode], axis: Axis, generation: f64, sibl
     };
 
     // Rebuild the tree: a topic at level L is a child of the most recent topic
-    // at level L-1 (inverting desugar's pre-order flatten).
+    // at level L-1 (inverting the pre-order flatten).
     let levels: Vec<usize> = cards.iter().map(level_of).collect();
-    let mut nodes: Vec<Node> = (0..cards.len())
-        .map(|card| Node {
-            card,
-            children: Vec::new(),
-            subtree_cross: 0.0,
-        })
-        .collect();
     let mut stack: Vec<usize> = Vec::new();
-    let mut roots: Vec<usize> = Vec::new();
     for (i, &lvl) in levels.iter().enumerate() {
         stack.truncate(lvl);
         match stack.last() {
@@ -255,6 +321,27 @@ fn place_generations(cards: &mut [PlacedNode], axis: Axis, generation: f64, sibl
         );
         cursor += span + sibling;
     }
+    (nodes, roots)
+}
+
+/// Re-nest the placed cards into a hierarchy [SPEC 12]: each topic becomes a
+/// placed child of its parent, its `cx`/`cy` made relative to the parent's
+/// centre so the scene index accumulates absolute positions unchanged. A card
+/// keeps its own content children; its subtopics overhang its card box.
+fn nest(cards: Vec<PlacedNode>, nodes: &[Node], roots: &[usize]) -> Vec<PlacedNode> {
+    fn build(i: usize, nodes: &[Node], slots: &mut [Option<PlacedNode>]) -> PlacedNode {
+        let mut me = slots[nodes[i].card].take().expect("card placed once");
+        let (mx, my) = (me.cx, me.cy);
+        for &k in &nodes[i].children {
+            let mut child = build(k, nodes, slots);
+            child.cx -= mx;
+            child.cy -= my;
+            me.children.push(child);
+        }
+        me
+    }
+    let mut slots: Vec<Option<PlacedNode>> = cards.into_iter().map(Some).collect();
+    roots.iter().map(|&r| build(r, nodes, &mut slots)).collect()
 }
 
 /// Seat the container's own (non-topic) content around the finished tree

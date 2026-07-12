@@ -111,12 +111,12 @@ pub fn desugar(file: &File) -> Result<File, Error> {
     for child in &file.instances {
         instances.push(lower_child(child, &types, &bodies, root_drawing)?);
     }
-    // A root `{ layout: tree }` scene flattens its own topic nesting [SPEC 12],
-    // like a node tree does in `lower_node` — before auto-create below. Its gap
-    // default rides `root_layout_defaults`, not `ensure_gap`.
+    // A root `{ layout: tree }` scene builds its own topic tree [SPEC 12], like a
+    // node tree does in `lower_node` — before auto-create below. Its gap default
+    // rides `root_layout_defaults`, not `ensure_gap`.
     let mut root_branch_links: Vec<Link> = Vec::new();
     if tree::is_tree_scope(&user_root) {
-        tree::flatten(&mut instances, &mut root_branch_links, &user_root);
+        tree::build_tree(&mut instances, &mut root_branch_links, &user_root);
     }
     // A drawing scope never auto-creates [SPEC 15]: an annotation must point at
     // real geometry, so an unknown endpoint stays unknown and errors at resolve.
@@ -280,6 +280,20 @@ fn lower_node(
     // unrecoverable from the now-primitive type).
     let already = NodeKind::parse(ty).is_some()
         && node.classes.iter().any(|c| *c == lini_class(kind.as_str()));
+
+    // An authored id may not begin `lini-` — the prefix is reserved for
+    // generated names [SPEC 20/22], mirroring the `.lini-*` class reservation.
+    // Only first-lowering nodes are checked: a re-desugared node (`already`)
+    // carries the compiler's own minted `lini-topic-N` ids, which must round-trip.
+    if !already
+        && let Some(id) = &node.id
+        && id.starts_with("lini-")
+    {
+        return Err(Error::at(
+            node.span,
+            "an id may not begin 'lini-' — the prefix is reserved for generated names",
+        ));
+    }
 
     let classes = if already {
         node.classes.clone()
@@ -505,13 +519,13 @@ fn lower_node(
         links.extend(labels::split_chain(w).iter().map(labels::lower_link));
     }
 
-    // Flatten a `layout: tree` scope's topic nesting into a depth-classed flat
-    // list + generated branch links [SPEC 12], **before** this body's
-    // auto-create so a branch / cross-link endpoint sees the lifted topics as
-    // declared siblings, and before the paint cascade so the level classes are worn.
+    // Build a `layout: tree` scope [SPEC 12]: mint anonymous topic ids, wear the
+    // depth classes, and generate the branch fans — **before** this body's
+    // auto-create so a branch / cross-link endpoint sees the topics as declared,
+    // and before the paint cascade so the level classes are worn.
     if !already && tree::is_tree_scope(&style) {
         tree::ensure_gap(&mut style);
-        tree::flatten(&mut children, &mut links, &style);
+        tree::build_tree(&mut children, &mut links, &style);
     }
 
     // Auto-create undeclared body-link endpoints among this body's own children ([SPEC 3] —
