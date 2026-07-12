@@ -463,3 +463,17 @@ post-merge; classed text inside a bilateral tree smoke-verified.
 Executing sessions: append dated notes here — decisions the plan didn't
 anticipate, gotchas, deferred items, anything the next session must know.
 Keep entries terse.
+
+- 2026-07-12 (Stage 5 core, Fable agent): preset + walk + ramp + rect rider
+  landed (`5715906`/`880d051`/`8e7ec1a`); hero sample / README / release
+  sweep remain (owner). The plan didn't anticipate the **root-arm routing**
+  problem: per-branch tinted arms are separate statements, and separate
+  same-port links can't all enter one small card side ("side entry closed").
+  Solved at the fan mechanism (`5715906`): a node's forced-port wires into
+  its **own descendants** with distinct far ends fan across statements —
+  the containment gate keeps pcb's parallel duplicates and sibling wires
+  byte-identical (a first blanket rule broke pcb; rejected). Ramp numbers
+  in `ledger/defaults.rs` (`MINDMAP_ROOT_FONT 18` semibold / `BRANCH 15` /
+  `LEAF 13`, `MAX_WIDTH 160`) — retune by eye in the visual pass. A
+  mindmap's inline `direction:` hoists to its generated scope; a generated
+  `lini-*` class on a link renders bare (was `lini-style-lini-hue-*`).
