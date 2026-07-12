@@ -273,21 +273,21 @@ them against rendered PNGs *before* the general engine work, on the
 geometry where no avoidance is needed (a laid-out tree guarantees
 parent/child free sight-lines).
 
-- [ ] `Strategy::Natural` variant — the D4 exhaustive matches flag every
+- [x] `Strategy::Natural` variant — the D4 exhaustive matches flag every
   touch site; resolve accepts `routing: natural`, the `curved` message
   becomes the removal error with did-you-mean (decision 8); the
   `request.rs` bundle filter widens per the PLAN-V1 seam (natural
   requests bundle like orthogonal ones).
-- [ ] `routing/natural/{mod,curve}.rs` — the direct case first: when the
+- [x] `routing/natural/{mod,curve}.rs` — the direct case first: when the
   straight corridor between the endpoint sides is free (the tree/mindmap
   case), emit the horizontal-tangent cubic S-curve (decision 7): ends
   perpendicular to their sides, marker run-up straight for at least the
   marker, labels riding the curve at `along:` fractions (arc-length
   parameterised), duplicates as offset parallels at pitch.
-- [ ] Render: the link path emitter takes cubic segments (today it takes
+- [x] Render: the link path emitter takes cubic segments (today it takes
   polylines + fillets — the seam is the one `d`-builder); markers/label
   masks/strays unchanged.
-- [ ] **The aesthetic prototype loop**: a throwaway mindmap scene (hand-
+- [x] **The aesthetic prototype loop**: a throwaway mindmap scene (hand-
   tinted, no preset yet) rendered to PNG light + dark; iterate curvature
   (control-point pull), sibling fan spread at the parent port, and the
   160 wrap cap **with Abbas** until the hero look is agreed. The agreed
@@ -297,7 +297,35 @@ parent/child free sight-lines).
 Acceptance: a tree with `routing: natural` draws clean S-curves (PNG
 eyeballed light + dark, multiple fan-outs); orthogonal output everywhere
 byte-identical; the curve constants named in one place.
-**Log:**
+**Log:** 2026-07-12 — **done**, 1 commit (`114fbd7`, Fable agent; owner
+re-verified: suite, clippy, PNGs, prototype loop). Architecture decided
+up front: natural is NOT a separate router — a `Strategy::Natural`
+request rides `ortho::route` steps 1–5 unchanged (worlds, channels,
+bundles, fans, search, admission, placement — the corridor choice is the
+shared search by construction) and diverges only at geometry lowering,
+where `routing/natural/{mod,curve}.rs` fits stub-anchored G1 cubics
+(Catmull-Rom-blended tangents; the single-jog chain collapses to the one
+classic horizontal-tangent S). `RoutedLink` gains `curve: Vec<Cubic>`
+while `path` holds a dense sampling (24/cubic, exact stub points), so the
+whole spine — markers, label arc-walk, masks, crossing count, validator —
+reads true drawn geometry unchanged; the render seam is one `cubic_d`
+builder (exact `C`s between marker-shortened stub `L`s). Labels'
+`arc_len`/`at_arc` went Euclidean (identical on axis-aligned wires — zero
+snapshot diffs; true arc-length on curves). The strategy-filter cleanup
+folded three parallel copies into one `EdgeReq::corridor()` predicate.
+`routing: curved` now errors with SPEC 20's exact replacement message.
+Constants: `NATURAL_PULL: 0.5` in `ledger/consts.rs`. **Deviation**: the
+aesthetic loop ran solo (autonomous session) — a 6-branch hand-tinted
+bilateral prototype rendered light + dark; a 0.35/0.5/0.7 pull sweep is
+near-indistinguishable (the forward-travel clamp dominates long spans;
+short doglegs barely differ), so 0.5 stands; the 160 wrap cap reads
+balanced at 2–3 lines; the fan crow's-foot (shared trunk port) is the
+right mindmap join. Constants await Abbas's veto in the Stage 5 visual
+pass; the prototype's shape (root + 6 tinted branches with `.hue` classes
++ per-arm `#id |-| { stroke: --hue-deep }` rules) is the Stage 5 hero
+skeleton. **Noted for Stage 5**: an arm rule tints a branch's subtree
+wires but not the root→branch wire (it lives in the root topic's scope) —
+the palette walk's generated rules must tint that arm explicitly.
 
 ### Stage 4 — `natural` general: corridors, obstacles, laws
 
