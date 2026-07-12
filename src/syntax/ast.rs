@@ -132,6 +132,15 @@ pub enum Child {
     Text(TextNode),
 }
 
+impl Child {
+    pub fn span(&self) -> Span {
+        match self {
+            Child::Box(n) => n.span,
+            Child::Text(t) => t.span,
+        }
+    }
+}
+
 /// Text content `"…"` [SPEC 3] — a label, a cell, a link label. A leaf: no id,
 /// type, classes, or children, but it **may carry a style block** of text-only
 /// properties (`"x" { color: red; translate: 0 -6 }`).

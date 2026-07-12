@@ -266,3 +266,16 @@ fn a_tree_is_a_desugar_fixed_point() {
     let twice = desugar_source(&once).unwrap();
     assert_eq!(once, twice, "re-desugaring the lowered tree changes it");
 }
+
+#[test]
+fn a_root_tree_is_a_byte_fixed_point() {
+    // The generated root fan's span seats past the instances, so fmt's
+    // phase split prints identically on first lowering and re-lowering.
+    let src = "{ layout: tree; }\n|topic#r| \"R\" [\n  |topic#a| \"A\"\n  |topic#b| \"B\"\n]\n";
+    let once = desugar_source(src).unwrap();
+    let twice = desugar_source(&once).unwrap();
+    assert_eq!(
+        once, twice,
+        "re-desugaring the lowered root tree changes it"
+    );
+}

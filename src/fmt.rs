@@ -253,13 +253,13 @@ impl Emitter<'_> {
         items.extend(children.iter().map(Item::Child));
         items.extend(links.iter().map(Item::Link));
         items.sort_by_key(|it| match it {
-            Item::Child(c) => child_span(c).start,
+            Item::Child(c) => c.span().start,
             Item::Link(w) => w.span.start,
         });
         for it in items {
             let (start, end) = match &it {
                 Item::Child(c) => {
-                    let s = child_span(c);
+                    let s = c.span();
                     (s.start, s.end)
                 }
                 Item::Link(w) => (w.span.start, w.span.end),
@@ -374,8 +374,8 @@ impl Emitter<'_> {
         if cells.is_empty() || !cells.iter().all(|c| matches!(c, Child::Text(_))) {
             return None;
         }
-        let start = child_span(&cells[0]).start;
-        let end = child_span(cells.last().unwrap()).end;
+        let start = cells[0].span().start;
+        let end = cells.last().unwrap().span().end;
         if self.has_trivia_between(start, end) {
             return None;
         }
@@ -420,7 +420,7 @@ impl Emitter<'_> {
             }
             self.out.push('\n');
         }
-        self.cursor = child_span(cells.last().unwrap()).end;
+        self.cursor = cells.last().unwrap().span().end;
     }
 
     /// Emit a run of declarations grouped onto as few lines as the source's
@@ -796,20 +796,13 @@ fn pad(out: &mut String, n: usize) {
     }
 }
 
-fn child_span(c: &Child) -> Span {
-    match c {
-        Child::Box(n) => n.span,
-        Child::Text(t) => t.span,
-    }
-}
-
 /// Whether a scope's instances and links are cleanly **phased** — every instance
 /// before every link, the conventional case the formatter separates with a blank
 /// line. A `layout: sequence` interleaves them (`false`), so they merge with no
 /// split. One side empty is trivially phased.
 fn phased(instances: &[Child], links: &[Link]) -> bool {
     match (
-        instances.iter().map(|c| child_span(c).start).max(),
+        instances.iter().map(|c| c.span().start).max(),
         links.iter().map(|w| w.span.start).min(),
     ) {
         (Some(last_instance), Some(first_link)) => last_instance < first_link,

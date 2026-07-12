@@ -117,6 +117,18 @@ pub fn desugar(file: &File) -> Result<File, Error> {
     let mut root_branch_links: Vec<Link> = Vec::new();
     if tree::is_tree_scope(&user_root) {
         tree::build_tree(&mut instances, &mut root_branch_links, &user_root);
+        // The generated fan prints *after* the instances, so it must sort (and
+        // phase-split, in fmt) as if written there — seat its span past the last
+        // instance, so `lini desugar` is byte-idempotent from the first pass.
+        let end = instances.iter().map(|c| c.span().end).max();
+        if let Some(end) = end {
+            for (i, l) in root_branch_links.iter_mut().enumerate() {
+                l.span = Span {
+                    start: end + i,
+                    end: end + i,
+                };
+            }
+        }
     }
     // A drawing scope never auto-creates [SPEC 15]: an annotation must point at
     // real geometry, so an unknown endpoint stays unknown and errors at resolve.
