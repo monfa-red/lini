@@ -65,6 +65,7 @@ pub fn auto_box(id: &str, span: Span) -> Node {
         ty: Some("box".to_string()),
         label: Some(TextNode {
             text: id.to_string(),
+            classes: Vec::new(),
             style: Vec::new(),
             style_span: None,
             span,

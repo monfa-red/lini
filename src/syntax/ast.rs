@@ -133,11 +133,19 @@ pub enum Child {
 }
 
 /// Text content `"…"` [SPEC 3] — a label, a cell, a link label. A leaf: no id,
-/// type, classes, or children, but it **may carry a style block** of text-only
-/// properties (`"x" { color: red; translate: 0 -6 }`).
+/// type, or children, but in **content position** (a free-standing statement, a
+/// `[ ]` child, a link `[ ]` label) it takes the node tail — it **may wear
+/// classes and carry a style block** of text-only properties (`"Starter"
+/// .card-title`, `"x" { color: red; translate: 0 -6 }`). A head label carries
+/// neither (its classes belong to the owning node / link), so both are empty
+/// there.
 #[derive(Debug, Clone)]
 pub struct TextNode {
     pub text: String,
+    /// `"x" .hot` — worn classes [SPEC 3/4], tier 3 on the text leaf: text-valid
+    /// declarations land, the rest are inert (the class-polymorphism law). Empty
+    /// on a head label and a bare string.
+    pub classes: Vec<String>,
     /// `"x" { … }` — the text node's own style (text-valid props only); empty
     /// when bare.
     pub style: Vec<Decl>,

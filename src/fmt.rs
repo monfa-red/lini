@@ -320,7 +320,7 @@ impl Emitter<'_> {
             let text_only = !body.is_empty()
                 && body
                     .iter()
-                    .all(|c| matches!(c, Child::Text(t) if t.style.is_empty()));
+                    .all(|c| matches!(c, Child::Text(t) if is_plain_text(t)));
             if text_only
                 && !self.has_trivia_between(self.cursor, end)
                 && self.try_inline_text(body, end)
@@ -387,7 +387,9 @@ impl Emitter<'_> {
     /// carries a `{ }` style block re-emits it, and its whole row leaves the grid
     /// (a block throws the widths off) — unstyled rows stay aligned [SPEC 19].
     fn emit_aligned_cells(&mut self, cells: &[Child], cols: usize, depth: usize) {
-        let styled = |c: &Child| matches!(c, Child::Text(t) if !t.style.is_empty());
+        // A cell that carries a `{ }` block **or** a worn class throws the
+        // column widths off, so its whole row breaks out of the grid [SPEC 19].
+        let styled = |c: &Child| matches!(c, Child::Text(t) if !is_plain_text(t));
         let rows: Vec<&[Child]> = cells.chunks(cols).collect();
         // Column widths come from the aligned (unstyled) rows only.
         let mut widths = vec![0usize; cols];
@@ -607,9 +609,14 @@ impl Emitter<'_> {
         }
     }
 
-    /// A text leaf `"…"` with its optional `{ }` style block [SPEC 3].
+    /// A text leaf `"…"` with its optional worn classes and `{ }` style block
+    /// [SPEC 3] — the node tail on a string head (`"Starter" .card-title { … }`).
     fn emit_text_node(&mut self, t: &TextNode, depth: usize) {
         self.emit_string(&t.text);
+        if !t.classes.is_empty() {
+            self.out.push(' ');
+            self.out.push_str(&class_str(&t.classes));
+        }
         if !t.style.is_empty() {
             let end = t.style_span.map_or(t.span.end, |s| s.end);
             self.emit_style_block(&t.style, end, depth, false);
@@ -778,6 +785,13 @@ fn identity_bars(node: &Node) -> String {
     }
     s.push('|');
     s
+}
+
+/// A bare text leaf — no worn class, no `{ }` block. Such a cell aligns in a
+/// table grid and packs inline (`[ "a" "b" ]`); a classed or styled one breaks
+/// out [SPEC 19].
+fn is_plain_text(t: &TextNode) -> bool {
+    t.classes.is_empty() && t.style.is_empty()
 }
 
 /// The `.class` chain (`.a.b`), or empty when the node wears none.

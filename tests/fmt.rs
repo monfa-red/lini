@@ -103,6 +103,24 @@ fn fmt_canonicalizes_numeric_forms() {
 }
 
 #[test]
+fn fmt_round_trips_a_classed_text_leaf() {
+    // A string in content position wears its class chain canonically, spaced off
+    // the string then glued, ahead of its `{ }` block [SPEC 3].
+    let src = "{ .card-title { font-size: 17; } }\n\"Starter\" .card-title { color: red }\n";
+    let formatted = lini::format_source(src).expect("fmt");
+    assert!(
+        formatted.contains("\"Starter\" .card-title { color: red; }"),
+        "expected canonical classed text, got:\n{}",
+        formatted
+    );
+    // Idempotent.
+    assert_eq!(
+        formatted,
+        lini::format_source(&formatted).expect("fmt pass 2")
+    );
+}
+
+#[test]
 fn fmt_normalizes_value_group_spacing() {
     // v4 values are space-separated within a group, comma between groups.
     let src = "|line#dim| {points:0 0,10 10}\n";

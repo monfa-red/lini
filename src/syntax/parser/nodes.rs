@@ -15,9 +15,11 @@ impl<'a> Parser<'a> {
         }
     }
 
-    /// A text node `"…"` with an optional `{ … }` style block [SPEC 3] — a `{`
-    /// glued-or-spaced right after the string is its own text style; otherwise it
-    /// is bare. (Strings are self-delimiting, so a following `"` is the next node.)
+    /// A text node `"…"` in content position [SPEC 3] — the node tail on a
+    /// string head: an optional worn-class chain (spaced off the string, glued
+    /// within — `"x" .hot.loud`), then an optional `{ … }` text style. Absent
+    /// both, it is bare. (Strings are self-delimiting, so a following `"` is the
+    /// next node.)
     pub(super) fn parse_text_node(&mut self) -> Result<TextNode, Error> {
         let text = match self.kind() {
             Some(TokKind::String(s)) => s.clone(),
@@ -25,9 +27,11 @@ impl<'a> Parser<'a> {
         };
         let start = self.span();
         self.pos += 1;
+        let classes = self.parse_classes()?;
         let (style, style_span) = self.opt_style()?;
         Ok(TextNode {
             text,
+            classes,
             style,
             style_span,
             span: self.span_from(start),
@@ -154,6 +158,7 @@ impl<'a> Parser<'a> {
             }
             Some(TextNode {
                 text,
+                classes: Vec::new(),
                 style: Vec::new(),
                 style_span: None,
                 span,
