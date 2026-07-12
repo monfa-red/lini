@@ -52,6 +52,16 @@ pub enum End {
     B,
 }
 
+impl End {
+    /// The far end.
+    pub fn other(self) -> End {
+        match self {
+            End::A => End::B,
+            End::B => End::A,
+        }
+    }
+}
+
 impl EdgeReq {
     /// Whether this request routes through the corridor model — ROUTING.md's
     /// six steps. `natural` rides the same worlds, channels, bundles, and
@@ -245,6 +255,55 @@ pub fn fan_groups(reqs: &[EdgeReq]) -> Fans {
             }
         }
     }
+    // Cross-statement port sharing [SPEC 12/8]: a node's wires **into its own
+    // descendants**, forced onto one port (same path, same explicit side) with
+    // pairwise-distinct far ends, are one fan across statements — the
+    // crow's-foot a mindmap's per-branch root arms form (each arm its own
+    // statement so it wears its own hue class). The containment gate keeps
+    // ordinary same-port wires as they are — a link into one's own descendant
+    // is that node's internal affair, the same judgment the cascade and the
+    // world ladder already apply — and a repeated far end keeps the
+    // parallel-rails contract (duplicates separate at pitch, the pcb look).
+    let mut buckets: Vec<((End, String, Side), Vec<usize>)> = Vec::new();
+    for (g, key) in keys.iter().enumerate() {
+        let (_, _, end, ref path, side) = *key;
+        let Some(side) = side else { continue };
+        let bkey = (end, path.clone(), side);
+        match buckets.iter_mut().find(|(k, _)| *k == bkey) {
+            Some((_, gs)) => gs.push(g),
+            None => buckets.push((bkey, vec![g])),
+        }
+    }
+    for ((end, near, _), gs) in buckets {
+        if gs.len() < 2 {
+            continue;
+        }
+        let far = end.other();
+        let prefix = format!("{near}.");
+        let mut far_paths: Vec<&str> = Vec::new();
+        let mut fans = true;
+        for &g in &gs {
+            for &i in &groups[g] {
+                let p = reqs[i].path(far);
+                fans &= p.starts_with(&prefix) && !far_paths.contains(&p);
+                far_paths.push(p);
+            }
+        }
+        if !fans {
+            continue;
+        }
+        let (host, rest) = gs.split_first().expect("non-empty bucket");
+        for &g in rest {
+            for i in std::mem::take(&mut groups[g]) {
+                groups[*host].push(i);
+                let slot = of[i]
+                    .iter_mut()
+                    .find(|(og, oe)| *og == g && *oe == end)
+                    .expect("end registered");
+                slot.0 = *host;
+            }
+        }
+    }
     // Only shared ends are fans; singleton "groups" dissolve.
     let mut remap: Vec<Option<usize>> = Vec::with_capacity(groups.len());
     let mut kept: Vec<Vec<usize>> = Vec::new();
@@ -346,6 +405,35 @@ mod tests {
         assert_eq!(fans.group_at(1, End::A), Some(0));
         assert_eq!(fans.group_at(0, End::B), None);
         assert_eq!(fans.group_at(2, End::A), None);
+    }
+
+    #[test]
+    fn forced_containment_arms_fan_across_statements() {
+        // r:right → r.a / r.b / r.c, three statements (a mindmap's tinted root
+        // arms): one crow's-foot. A sibling wire forced to the same port
+        // (x → nowhere inside r) and duplicates (two arms to r.a) stay out.
+        let arm = |stmt: usize, to: &str| {
+            let mut r = req(stmt, 0, 0, "r", to);
+            r.side_a = Some(Side::Right);
+            r
+        };
+        let reqs = vec![arm(0, "r.a"), arm(1, "r.b"), arm(2, "r.c")];
+        let fans = fan_groups(&reqs);
+        assert_eq!(fans.groups, vec![vec![0, 1, 2]]);
+        for i in 0..3 {
+            assert_eq!(fans.group_at(i, End::A), Some(0));
+        }
+        // A non-descendant far end blocks the whole family (conservative).
+        let mut sibling = req(3, 0, 0, "r", "x");
+        sibling.side_a = Some(Side::Right);
+        let reqs = vec![arm(0, "r.a"), arm(1, "r.b"), sibling];
+        assert!(fan_groups(&reqs).groups.is_empty());
+        // A repeated far end keeps the parallel-rails contract.
+        let reqs = vec![arm(0, "r.a"), arm(1, "r.a")];
+        assert!(fan_groups(&reqs).groups.is_empty());
+        // An unforced end never fans across statements.
+        let reqs = vec![req(0, 0, 0, "r", "r.a"), req(1, 0, 0, "r", "r.b")];
+        assert!(fan_groups(&reqs).groups.is_empty());
     }
 
     #[test]
