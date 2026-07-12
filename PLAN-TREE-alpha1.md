@@ -371,27 +371,27 @@ fan, and self-link PNGs eyeballed.
 
 ### Stage 5 — `|mindmap|`, the hero & release
 
-- [ ] `|mindmap|` bundle (the chart-preset precedent: the layout preset is
+- [x] `|mindmap|` bundle (the chart-preset precedent: the layout preset is
   the whole bundle): `layout: tree; direction: bilateral; routing:
   natural`, visible root topic; the depth ramp as generated `.lini-level-N`
   rules (root large/semibold, level-1 medium, level-2+ small — by eye in
   the visual pass); `max-width: 160` on topics.
-- [ ] The palette walk at desugar (decision 5): next `HUES` entry per
+- [x] The palette walk at desugar (decision 5): next `HUES` entry per
   first-level branch in declaration order (red and grey skipped, wrap past
   nine), lowered as generated rules tinting the subtree — `wash` fill,
   `deep` stroke **and branch wires**, `ink` text; the root stays neutral;
   explicit author paint wins (the generated rules sit below the authored
   tiers); cross-links stay neutral. Deterministic; `lini desugar` shows
   the rules; dark mode free via the tiers.
-- [ ] Sample: new `samples/mindmap.lini` — the README-worthy hero (rich
+- [x] Sample: new `samples/mindmap.lini` — the README-worthy hero (rich
   topics with icons/badges, one authored cross-link, wrapped labels),
   grown from the Stage 3 prototype.
-- [ ] **Zero-size rect fix** (the rider): an empty box emits no degenerate
+- [x] **Zero-size rect fix** (the rider): an empty box emits no degenerate
   `<rect width="0" height="0"/>` (palette.lini line 28 today) — guard at
   the rect emitter; re-bless the one snapshot.
-- [ ] README: the mindmap bullet + hero image (`assets/`), tree/mindmap in
+- [x] README: the mindmap bullet + hero image (`assets/`), tree/mindmap in
   the tour; docs cross-check (SPEC 24 example if the family warrants one).
-- [ ] Release sweep (the M7 shape): fmt/test/clippy; `lini fmt --check`
+- [x] Release sweep (the M7 shape): fmt/test/clippy; `lini fmt --check`
   over samples; desugar + laws oracles; every **new/changed** sample
   rendered light + dark via `--static` and eyeballed; version
   `1.0.0-alpha.1`, publish + tag (push deferred to Abbas); PLAN-V1's
@@ -400,7 +400,39 @@ fan, and self-link PNGs eyeballed.
 Acceptance: the mindmap hero reads well light + dark (palette walk
 verified); `cat -> dog` diagrams unchanged; all suites green; crates.io
 shows `1.0.0-alpha.1`.
-**Log:**
+**Log:** 2026-07-12 — **done**; core 4 commits (Fable agent:
+`5715906`/`880d051`/`8e7ec1a`/`0368970`), face + release by the owner
+(`b99e7be` hero sample, `3320e34` README/SPEC 24, release commit below).
+The preset seats at desugar (injects only absent decls — authored config
+wins); the walk emits one rule shape for cards and wires alike
+(`.lini-mindmap .lini-hue-X`), each root arm its own generated one-child
+fan wearing the branch's hue class — which surfaced the round's one
+unanticipated router change: `fan_groups` gained a **containment gate**
+(a node's forced-port wires into its own descendants with distinct far
+ends fan across statements) after a blanket cross-statement rule broke
+pcb.lini's parallel rails and was rejected; every existing snapshot
+stayed byte-identical. Ramp constants in `ledger/defaults.rs`
+(`MINDMAP_ROOT_FONT 18` semibold / `BRANCH 15` / `LEAF 13`,
+`MINDMAP_MAX_WIDTH 160`) — owner-eyeballed on the hero, kept. Rider: the
+empty-box zero-rect guard sits at the rect emitter; only palette.lini's
+snapshot re-blessed. Hero: `samples/mindmap.lini` grown from the Stage 3
+prototype (six walked branches, hue-matched 18px icons — explicit author
+paint, the honest channel — one neutral dotted cross-link at
+`along: 0.82`); README gains the Trees & mindmaps tour section +
+`assets/mindmap.png` (2×), Status advanced to alpha.1; SPEC 24 gains the
+tree/mindmap worked example (compile-checked). Sweep: 914 tests,
+fmt/clippy/`lini fmt` clean over samples; palette + hero eyeballed light
++ dark; local tag `v1.0.0-alpha.1`; `cargo publish` was blocked by the
+session's permission gate (dry-run verified clean), so publish and the
+push are deferred to Abbas — everything else is release-ready.
+**Retro:** the round's two risks (curve aesthetics, corridor legality)
+both dissolved by *reusing* the orthogonal model — natural as steps 1–5 +
+a different lowering was the single best call, made in Stage 3 and paid
+off through Stage 5; the one real surprise was structural (root fans
+across generated statements), caught only because generated arms are
+ordinary requests the pcb suite also exercises. Known gap logged for its
+own session: anonymous containers have no routing world (path-keyed
+worlds), pre-existing, loud in de-id'd trees.
 
 ### Stage 6 — rider: classes on text (decision 13)
 

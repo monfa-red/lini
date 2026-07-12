@@ -16,9 +16,10 @@ review, docs, and `ROADMAP.md`'s ladder row all agree.
 
 ## alpha.1 — tree, mindmap & natural routing
 
-**Round entered 2026-07-11** — design settled and staged in `PLAN-TREE-alpha1.md`
-(the decisions ledger supersedes the open questions below; `radial` became
-`bilateral` in the design review).
+**Round entered 2026-07-11, shipped 2026-07-12 as `1.0.0-alpha.1`** — design
+settled and staged in `PLAN-TREE-alpha1.md` (the decisions ledger supersedes the
+open questions below; `radial` became `bilateral` in the design review; the
+stage Logs there are the round's record).
 
 **Scope** (ROADMAP 3.2, 3.3): `layout: tree` (row/column/bilateral), `|topic|`,
 single-root rule, desugar-generated branch links resolving in the parent topic's
