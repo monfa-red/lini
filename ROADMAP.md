@@ -160,27 +160,38 @@ built (see 3.4); and four local fixes:
 
 ### 3.2 Tree layout and mindmaps
 
-- **`layout: tree`** with `direction: row | column | radial`. Rooted parent/child
-  structure; source order = sibling order; no multi-parent/cyclic layout (that's
-  the deferred DAG engine). `gap`: generation distance × sibling separation
-  (transposed by direction; radial = ring distance × tangential minimum — sectors
-  may widen, never overlap).
+*(Amended in the alpha.1 design review, 2026-07-11 — `radial` renamed
+`bilateral`: a chart's `radial` is truly circular, and the mindmap arrangement
+every tool actually draws is bilateral; `radial` stays unclaimed for a possible
+true ring tree post-1.0. Full decisions ledger: `TREE-alpha1.md`.)*
+
+- **`layout: tree`** with `direction: row | column | bilateral`. Rooted
+  parent/child structure; source order = sibling order; no multi-parent/cyclic
+  layout (that's the deferred DAG engine). `gap`: generation distance × sibling
+  separation (transposed by direction). **Bilateral** = root centred, the first
+  ⌈n/2⌉ first-level topics right top-to-bottom, the rest left; a first-level
+  `side: left | right` overrides.
 - **`|topic|`** (over `|block|`) separates structure from content: a direct
   `|topic|`-derived child is a branch; every other child is the topic's own visual
   content (icons, badges, tables, charts). Custom structural types derive from it
   (`|person::topic|`). `|topic|` outside a tree errors; a tree needs **exactly one
-  root topic** (forest = error now; relaxing later is non-breaking).
+  root topic** (forest = error now; relaxing later is non-breaking). Topics are
+  boxed at every depth and wear generated `.lini-level-N` classes — the one hook
+  for the mindmap ramp and user tier-restyling alike.
 - **Branch links are generated at desugar** (AUDIT D2) as ordinary unmarked `|-|`
   links **resolving in the parent topic's scope** — so `#syntax |-| { stroke: … }`
   styles one subtree's branches, `lini desugar` shows them, and the router routes
-  them like any wire. Authored cross-links remain legal and never alter the tree.
-- **`|mindmap|`** preset: a visible root topic, `layout: tree; direction: radial;
-  routing: natural` — plus the **palette walk**: each first-level branch takes the
-  next hue (declaration order, skipping red) and tints its subtree at the outlined
-  tiers — `wash` fill, `deep` stroke and branch links, `ink` text; the root stays
-  neutral; explicit paint wins. Deterministic, themeable, dark-mode-free. Plain
-  `layout: tree` stays neutral (org charts read monochrome); its default routing is
-  the global `orthogonal` (elbow connectors).
+  them like any wire. Authored cross-links remain legal, never alter the tree,
+  and keep the neutral link default (the walk never tints them).
+- **`|mindmap|`** preset: a visible root topic, `layout: tree; direction:
+  bilateral; routing: natural` — plus the **palette walk**: each first-level
+  branch takes the next hue (declaration order, red and grey skipped) and tints
+  its subtree at the outlined tiers — `wash` fill, `deep` stroke and branch
+  links, `ink` text; the root stays neutral; explicit paint wins. Deterministic,
+  themeable, dark-mode-free. A depth ramp (root largest, deeper smaller) and
+  `max-width: 160` topic wrap ride the preset. Plain `layout: tree` stays
+  neutral (org charts read monochrome); its default routing is the global
+  `orthogonal` (elbow connectors).
 
 ### 3.3 Routing
 
