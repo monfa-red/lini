@@ -14,6 +14,7 @@ mod prim; // PlacedNode *builders* for lowered primitives (charts, sequences)
 mod primitives; // primitive *sizing* (leaf/closed bbox) — distinct from `prim`
 pub(crate) mod sequence;
 mod text;
+pub(crate) mod tree;
 mod values;
 mod wrap;
 
@@ -328,6 +329,8 @@ fn layout_inst(
         Some(chart::layout_pie(inst)?)
     } else if sequence::is_sequence(&inst.attrs) {
         Some(sequence::layout_node(inst, path, program)?)
+    } else if tree::is_tree(&inst.attrs) {
+        Some(tree::layout_node(inst, path, program)?)
     } else if crate::resolve::is_drawing(&inst.attrs) {
         Some(drawing::layout_node(inst, path, program, ctx)?)
     } else {

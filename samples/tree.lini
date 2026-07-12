@@ -1,0 +1,26 @@
+{
+  gap: 64;
+}
+
+|column#org| "Organisation" { layout: tree; } [
+  |topic#ceo| "CEO" [
+    |topic#cto| "CTO" [
+      |topic#backend| "Backend"
+      |topic#frontend| "Frontend"
+    ]
+    |topic#coo| "COO" [
+      |topic#ops| "Operations"
+      |topic#qa| "Quality"
+    ]
+  ]
+  qa --- ops
+]
+
+|column#decision| "Review flow" { layout: tree; direction: row; } [
+  |topic#request| "Request" [
+    |topic#triage| "Triage" [
+      |topic#approve| "Approve"
+      |topic#reject| "Reject"
+    ]
+  ]
+]
