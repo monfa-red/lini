@@ -1,0 +1,49 @@
+// The mindmap preset [SPEC 8/12]: `|mindmap|` is the visible root topic and
+// bundles `layout: tree; direction: bilateral; routing: natural`, the palette
+// walk (one hue per first-level branch — red and grey skipped), the
+// `.lini-level-N` depth ramp, and `max-width: 160` topic wrap. Branch wires
+// are desugar-generated; the dotted cross-link is authored and stays neutral.
+
+|mindmap#product| "Product Vision" [
+  |topic#ship| "Shipping cadence" [
+    |icon| {
+      symbol: rocket; width: 18; height: 18; fill: none; stroke: --rose-deep;
+    }
+    |topic| "Weekly release train"
+    |topic#flags| "Feature flags gate the risky work"
+  ]
+  |topic#build| "Build quality" [
+    |icon| {
+      symbol: seal; width: 18; height: 18; fill: none; stroke: --orange-deep;
+    }
+    |topic| "Snapshot tests on every output"
+    |topic| "Zero clippy debt" [
+      |topic| "CI enforces fmt"
+    ]
+  ]
+  |topic#learn| "Learning loop" [
+    |topic| "Dogfood the tool daily"
+    |topic#interviews| "User interviews every sprint"
+  ]
+  |topic#plan| "Planning" [
+    |icon| {
+      symbol: presentation; width: 18; height: 18; fill: none; stroke: --lime-deep;
+    }
+    |topic| "One-page specs before code"
+    |topic| "Stages sized for one session"
+    |topic| "Decisions ledger — never relitigate"
+  ]
+  |topic#team| "Team" [
+    |topic| "Small and senior"
+    |topic| "Ownership over process"
+  ]
+  |topic#care| "Customer care" [
+    |icon| {
+      symbol: heart; width: 18; height: 18; fill: none; stroke: --teal-deep;
+    }
+    |topic| "Support rotations"
+    |topic| "Bug fixes beat features"
+  ]
+
+  ship.flags --- learn.interviews "confirms" { along: 0.82; }
+]
