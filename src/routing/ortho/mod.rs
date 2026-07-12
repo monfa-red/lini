@@ -193,15 +193,15 @@ pub(crate) fn route(index: &SceneIndex, reqs: &[EdgeReq]) -> (Routing, Vec<usize
             k
         };
 
-        let a_contains_b = SceneIndex::contains(&rep.a_path, &rep.b_path);
-        let b_contains_a = SceneIndex::contains(&rep.b_path, &rep.a_path);
+        let a_contains_b = index.geo_contains(&rep.a_path, &rep.b_path);
+        let b_contains_a = index.geo_contains(&rep.b_path, &rep.a_path);
         let solids = index.solid_rects_for([&rep.a_path, &rep.b_path]);
         let base: Vec<Rect> = solids.iter().map(|r| r.inflate(c)).collect();
 
         // Innermost world first; a transparent ancestor lets the link route
         // one world up when the inner one has no legal route.
         let mut picked = None;
-        for wpath in world_ladder(&rep.a_path, &rep.b_path) {
+        for wpath in world_ladder(index, &rep.a_path, &rep.b_path) {
             let w = worlds
                 .iter()
                 .position(|x| x.path == wpath)

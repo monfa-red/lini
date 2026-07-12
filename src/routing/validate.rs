@@ -210,7 +210,10 @@ fn clearance(index: &SceneIndex, links: &[&RoutedLink], c: f64, out: &mut Vec<Vi
             } else {
                 &w.seg_from
             };
-            if SceneIndex::contains(body, partner) {
+            // A geometric containment link runs inside its outer endpoint by
+            // design (ROUTING.md Special nodes); a tree branch merely nested by
+            // path is an ordinary wire and keeps clearance from its endpoints.
+            if index.geo_contains(body, partner) {
                 continue;
             }
             let Some(rect) = index.rect(body) else {

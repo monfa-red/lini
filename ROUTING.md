@@ -250,9 +250,12 @@ them:
   an adjacent side. Defaults right → top; forced sides win; both ends forced
   onto one side is an error.
 - **Bidirectional** (`a <-> b`): one link, a marker at each end.
-- **Containment** (one endpoint inside the other): the link runs *inside* the
-  parent — from the inner node's side to the parent's **inner** side, the
-  parent's other children solid.
+- **Containment** (one endpoint **geometrically** inside the other): the link
+  runs *inside* the parent — from the inner node's side to the parent's
+  **inner** side, the parent's other children solid. The trigger is geometry,
+  not path ancestry: everywhere but a tree, nesting implies enclosure, but a
+  tree's branch child is a path-descendant placed *beside* its parent, so it is
+  an ordinary side-by-side wire, not a containment link.
 
 ---
 

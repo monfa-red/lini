@@ -5,13 +5,15 @@ use super::*;
 
 /// The worlds an edge may route in, innermost first: the endpoints' common
 /// container, then every transparent ancestor up to the scene root — a tight
-/// interior never walls in a link its ancestors would let out. Containment
-/// links stay inside their container.
-pub(super) fn world_ladder(a: &str, b: &str) -> Vec<String> {
-    if SceneIndex::contains(a, b) || SceneIndex::contains(b, a) {
+/// interior never walls in a link its ancestors would let out. A **geometric**
+/// containment link (the inner endpoint actually inside the outer) stays inside
+/// its container; a mere path-descendant placed beside its ancestor (a tree's
+/// branch) climbs the ancestor ladder like an ordinary sibling wire.
+pub(super) fn world_ladder(index: &SceneIndex, a: &str, b: &str) -> Vec<String> {
+    if index.geo_contains(a, b) || index.geo_contains(b, a) {
         return vec![SceneIndex::world_of(a, b)];
     }
-    let mut w = SceneIndex::world_of(a, b);
+    let mut w = SceneIndex::common_world(a, b);
     let mut out = vec![w.clone()];
     while !w.is_empty() {
         w = parent_path(&w);
@@ -35,7 +37,7 @@ pub(super) fn build_worlds(index: &SceneIndex, reqs: &[EdgeReq], c: f64) -> Vec<
     let mut world_paths: Vec<String> = reqs
         .iter()
         .filter(mine)
-        .flat_map(|r| world_ladder(&r.a_path, &r.b_path))
+        .flat_map(|r| world_ladder(index, &r.a_path, &r.b_path))
         .collect();
     world_paths.sort();
     world_paths.dedup();

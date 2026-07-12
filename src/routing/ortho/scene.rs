@@ -115,6 +115,21 @@ impl SceneIndex {
             && inner.as_bytes()[outer.len()] == b'.'
     }
 
+    /// Whether `outer` **geometrically** contains `inner`: path ancestry AND its
+    /// placed rect actually enclosing the inner rect. Everywhere but a tree,
+    /// nesting implies geometric containment — but a tree's branch child is a
+    /// path descendant placed *beside* its parent, so its parent does not
+    /// enclose it, and the containment special case (world truncation, the
+    /// inward port flip) must not fire for it. The conservative gate:
+    /// prefix AND geometry.
+    pub fn geo_contains(&self, outer: &str, inner: &str) -> bool {
+        Self::contains(outer, inner)
+            && match (self.rect(outer), self.rect(inner)) {
+                (Some(o), Some(i)) => o.x0 <= i.x0 && o.y0 <= i.y0 && o.x1 >= i.x1 && o.y1 >= i.y1,
+                _ => false,
+            }
+    }
+
     /// The routing world of a link `a → b`: the innermost container whose
     /// interior holds both ends (`""` = the scene root). An endpoint that is
     /// itself the container maps to its own interior (containment links).
@@ -125,6 +140,14 @@ impl SceneIndex {
         if Self::contains(b, a) {
             return b.to_owned();
         }
+        Self::common_world(a, b)
+    }
+
+    /// The innermost shared *ancestor* container of two endpoints (`""` = the
+    /// scene root) — the world logic without the containment early-return, so a
+    /// path-descendant that its ancestor does not geometrically enclose (a
+    /// tree's branch) routes in the ancestor's world, not its parent's.
+    pub(super) fn common_world(a: &str, b: &str) -> String {
         let mut world = String::new();
         for (sa, sb) in a.split('.').zip(b.split('.')) {
             if sa != sb {
