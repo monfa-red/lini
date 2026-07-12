@@ -154,20 +154,22 @@ pub fn scoped_note_rules(present: &BTreeSet<String>, user_rules: &[Rule]) -> Vec
             ],
             span: Span::empty(),
         })
-        .filter(|r| {
-            // Already carried by a (re-desugared) file? Match the two-class
-            // selector shape — `SelUnit` has no `PartialEq` to lean on.
-            !user_rules
-                .iter()
-                .any(|u| match u.selector.units.as_slice() {
-                    [SelUnit::Class(a), SelUnit::Class(b)] => {
-                        matches!(r.selector.units.as_slice(),
-                        [SelUnit::Class(x), SelUnit::Class(y)] if a == x && b == y)
-                    }
-                    _ => false,
-                })
+        .filter(|r| match r.selector.units.as_slice() {
+            [SelUnit::Class(a), SelUnit::Class(b)] => !has_two_class_rule(user_rules, a, b),
+            _ => true,
         })
         .collect()
+}
+
+/// Whether `user_rules` already carries a rule whose selector is exactly
+/// `.a .b` — the fixed-point guard for generated two-class descendant rules
+/// (a re-desugared file is not re-decorated). `SelUnit` has no `PartialEq`
+/// to lean on, so the shape is matched by hand.
+pub(super) fn has_two_class_rule(user_rules: &[Rule], a: &str, b: &str) -> bool {
+    user_rules.iter().any(|u| {
+        matches!(u.selector.units.as_slice(),
+            [SelUnit::Class(x), SelUnit::Class(y)] if x == a && y == b)
+    })
 }
 
 fn class_rule(name: &str, decls: Vec<Decl>) -> Rule {

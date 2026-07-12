@@ -23,6 +23,17 @@ pub(crate) const SEQ_GAP_COL: f64 = 32.0;
 pub(crate) const TREE_GAP_GEN: f64 = 64.0;
 pub(crate) const TREE_GAP_SIB: f64 = 48.0;
 
+/// The `|mindmap|` depth ramp + wrap cap [SPEC 8] — one obvious table, retuned
+/// by eye. The root tier rides the `.lini-mindmap` bundle (the node *is* the
+/// root topic); levels 1 and 2+ ride the generated `.lini-mindmap .lini-level-N`
+/// rules ([`crate::desugar::tree::mindmap_rules`]).
+pub(crate) const MINDMAP_ROOT_FONT: f64 = 18.0;
+pub(crate) const MINDMAP_BRANCH_FONT: f64 = 15.0;
+pub(crate) const MINDMAP_LEAF_FONT: f64 = 13.0;
+/// The topic wrap cap [SPEC 8]: a long label wraps into a card instead of
+/// stretching an arm.
+pub(crate) const MINDMAP_MAX_WIDTH: f64 = 160.0;
+
 fn decl(name: &str, values: Vec<Value>) -> Decl {
     Decl {
         name: name.into(),
@@ -213,6 +224,17 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             n("stroke-width", 2.0),
             n("radius", 8.0),
             pair("padding", 8.0, 14.0),
+        ],
+        // The mindmap root card [SPEC 8]: the node **is** the visible root
+        // topic, so its bundle carries the ramp's root tier and the wrap cap.
+        // The scope trio (`layout: tree; direction: bilateral; routing:
+        // natural`) is not paint — desugar seats the node in a generated tree
+        // scope and lowers `routing: natural` as a generated rule, both shown
+        // by `lini desugar` ([`crate::desugar::tree`]).
+        "mindmap" => vec![
+            n("max-width", MINDMAP_MAX_WIDTH),
+            n("font-size", MINDMAP_ROOT_FONT),
+            id("font-weight", "semibold"),
         ],
         // The assembly balloon [SPEC 8, 15.8]: a numbered circle a leader points
         // from; sheet-space like all annotation chrome.

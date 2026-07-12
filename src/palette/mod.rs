@@ -161,6 +161,16 @@ pub fn palette_vars() -> Vec<(String, ResolvedValue)> {
     out
 }
 
+/// The mindmap palette walk's hue order [SPEC 8/12]: the [`HUES`] table order
+/// with **red and grey skipped** — red reads as danger, grey as neutral chrome —
+/// leaving nine hues; the walk wraps past them. One source for the hue names, so
+/// the walk can never drift from the palette.
+pub(crate) fn walk_hues() -> impl Iterator<Item = &'static str> {
+    HUES.iter()
+        .filter(|h| h.name != "red" && h.chroma != 0.0)
+        .map(|h| h.name)
+}
+
 fn light_dark(light: ResolvedValue, dark: ResolvedValue) -> ResolvedValue {
     ResolvedValue::Call(ResolvedCall {
         name: "light-dark".into(),

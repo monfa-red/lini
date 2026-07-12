@@ -324,3 +324,107 @@ fn a_root_tree_is_a_byte_fixed_point() {
         "re-desugaring the lowered root tree changes it"
     );
 }
+
+#[test]
+fn a_mindmap_seats_its_scene_and_lowers_the_preset() {
+    // The |mindmap| preset [SPEC 8]: the node is the visible root topic; its
+    // scene becomes the generated tree scope (`layout: tree; direction:
+    // bilateral; routing: natural`), and the three garnishes lower as ordinary
+    // rules — the wrap cap + weight reset, the depth ramp, and the palette
+    // walk's tints — all visible in `lini desugar`.
+    let out = desugar_source(
+        "|mindmap#m| \"M\" [\n  |topic#a| \"A\" [ |topic#a1| \"A1\" ]\n  |topic#b| \"B\"\n  |topic| \"C\"\n]\n",
+    )
+    .unwrap();
+    for decl in [
+        "layout: tree;",
+        "direction: bilateral;",
+        "routing: natural;",
+    ] {
+        assert!(out.contains(decl), "scope trio on the root: {decl}: {out}");
+    }
+    assert!(
+        out.contains(".lini-mindmap .lini-topic { max-width: 160; font-weight: normal; }"),
+        "wrap cap + weight reset: {out}"
+    );
+    assert!(
+        out.contains(".lini-mindmap .lini-level-1 { font-size: 15; }")
+            && out.contains(".lini-mindmap .lini-level-2 { font-size: 13; }"),
+        "the depth ramp: {out}"
+    );
+    assert!(
+        out.contains(".lini-mindmap .lini-hue-rose {")
+            && out.contains("fill: --rose-wash; stroke: --rose-deep; color: --rose-ink;"),
+        "a hue tint at the tiers: {out}"
+    );
+    // The root stays neutral — level 0, no hue class.
+    assert!(
+        out.contains("|block#m| .lini-mindmap.lini-topic.lini-block.lini-level-0 ["),
+        "neutral root: {out}"
+    );
+    // Per-branch tinted root arms (declaration order: a rose, b orange, the
+    // anonymous branch amber on the left half), and the subtree wire wears its
+    // branch's hue.
+    assert!(out.contains("m:right - m.a:left .lini-hue-rose"), "{out}");
+    assert!(out.contains("m:right - m.b:left .lini-hue-orange"), "{out}");
+    assert!(
+        out.contains("m:left - m.lini-topic-3:right .lini-hue-amber"),
+        "anonymous branch arm: {out}"
+    );
+    assert!(
+        out.contains("a:right - a.a1:left .lini-hue-rose"),
+        "subtree wire tinted: {out}"
+    );
+}
+
+#[test]
+fn the_palette_walk_skips_red_and_grey_and_wraps_past_nine() {
+    // Ten branches: the walk order is the HUES table with red and grey
+    // skipped — rose orange amber lime green teal sky blue purple — and the
+    // tenth branch wraps back to rose [SPEC 8].
+    let branches: String = (1..=10)
+        .map(|i| format!("  |topic#b{i}| \"B{i}\"\n"))
+        .collect();
+    let out = desugar_source(&format!("|mindmap#m| \"M\" [\n{branches}]\n")).unwrap();
+    let order = [
+        "rose", "orange", "amber", "lime", "green", "teal", "sky", "blue", "purple", "rose",
+    ];
+    for (i, hue) in order.iter().enumerate() {
+        assert!(
+            out.contains(&format!(
+                "|block#b{}| .lini-topic.lini-block.lini-side-",
+                i + 1
+            )) && out.contains(&format!(
+                ".lini-level-1.lini-hue-{hue} [\n    \"B{}\"",
+                i + 1
+            )),
+            "branch {} wears {hue}: {out}",
+            i + 1
+        );
+    }
+    assert!(
+        !out.contains("hue-red") && !out.contains("hue-gray"),
+        "red and grey never assigned: {out}"
+    );
+}
+
+#[test]
+fn a_mindmap_is_a_desugar_fixed_point() {
+    let src = "|mindmap#m| \"M\" [\n  |topic#a| \"A\" [ |topic| \"A1\" ]\n  |topic#b| \"B\" { side: left }\n  |topic| \"C\"\n]\n";
+    let once = desugar_source(src).unwrap();
+    let twice = desugar_source(&once).unwrap();
+    assert_eq!(once, twice, "re-desugaring the lowered mindmap changes it");
+}
+
+#[test]
+fn a_mindmap_hoists_its_own_direction_to_the_scope() {
+    // `|mindmap| { direction: row }` steers the generated tree scope, not the
+    // root card's own content [SPEC 8]; authored scene config still wins.
+    let out =
+        desugar_source("|mindmap#m| \"M\" { direction: row } [\n  |topic#a| \"A\"\n]\n").unwrap();
+    assert!(out.contains("direction: row;"), "hoisted: {out}");
+    assert!(
+        out.contains("m:right - m.a:left .lini-hue-rose"),
+        "a row mindmap fans rightward, arm tinted: {out}"
+    );
+}

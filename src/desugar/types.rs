@@ -58,9 +58,12 @@ pub const TEMPLATES: &[(&str, &str)] = &[
     ("note", "block"),
     ("balloon", "oval"),
     // Trees [SPEC 12]: the structural topic node — a compact framed card over
-    // |block|; custom structural types derive from it (`|person::topic|`). The
-    // |mindmap| preset (`layout: tree; direction: bilateral; …`) is Stage 5.
+    // |block|; custom structural types derive from it (`|person::topic|`) — and
+    // the |mindmap| preset over it: the node is the visible root topic; desugar
+    // seats it in a generated `layout: tree; direction: bilateral` scope and
+    // lowers the palette walk / depth ramp as rules ([`super::tree`]).
     ("topic", "block"),
+    ("mindmap", "topic"),
     // Drawings [SPEC 15]: the container layout, the round feature, the
     // centerline chrome types, hidden interior geometry, and the revolve's
     // shoulder-line chrome (|sketch| is a primitive, not a template).

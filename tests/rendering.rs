@@ -1042,3 +1042,145 @@ fn natural_routing_renders_cubics_deterministically() {
     }
     assert_eq!(svg, render_live(src), "byte-identical rerun");
 }
+
+/// The Stage-5 mindmap scene the palette-walk render tests share: three named
+/// branches (one with a subtopic), an anonymous branch, and a cross-link.
+const MINDMAP: &str = "|mindmap#m| \"Plan\" [\n\
+      |topic#a| \"Alpha\" [ |topic#a1| \"Deep\" ]\n\
+      |topic#b| \"Beta\"\n\
+      |topic#c| \"Gamma\"\n\
+      |topic| \"Delta\"\n\
+      a.a1 --- c\n\
+    ]\n";
+
+#[test]
+fn the_palette_walk_tints_cards_and_wires_and_leaves_root_and_cross_links_neutral() {
+    let svg = render_live(MINDMAP);
+    // The root topic is neutral: level-0, no hue class, no hue paint.
+    let root = svg
+        .lines()
+        .find(|l| l.contains("data-id=\"m\""))
+        .expect("root node");
+    assert!(root.contains("lini-level-0"), "level hook: {root}");
+    assert!(!root.contains("lini-hue-"), "root neutral: {root}");
+    // Branch cards tint at the tiers (wash fill, deep stroke, ink text) and
+    // wear their level hook.
+    let a = svg
+        .lines()
+        .find(|l| l.contains("data-id=\"a\""))
+        .expect("branch a");
+    for want in [
+        "lini-level-1",
+        "lini-hue-rose",
+        "fill: var(--lini-rose-wash)",
+        "stroke: var(--lini-rose-deep)",
+        "color: var(--lini-rose-ink)",
+    ] {
+        assert!(a.contains(want), "{want}: {a}");
+    }
+    // Every branch wire tints — the root arm (written in the scene scope) and
+    // the subtree wire alike, one generated rule each [SPEC 8].
+    for (to, hue) in [
+        ("data-to=\"m.a\"", "rose"),
+        ("data-to=\"m.b\"", "orange"),
+        ("data-to=\"m.c\"", "amber"),
+        ("data-to=\"m.lini-topic-4\"", "lime"),
+        ("data-to=\"m.a.a1\"", "rose"),
+    ] {
+        let wire = svg
+            .lines()
+            .find(|l| l.contains("lini-link") && l.contains(to))
+            .unwrap_or_else(|| panic!("wire {to}"));
+        assert!(
+            wire.contains(&format!("lini-hue-{hue}"))
+                && wire.contains(&format!("stroke: var(--lini-{hue}-deep)")),
+            "{to} wears {hue}: {wire}"
+        );
+    }
+    // The authored cross-link keeps the neutral link default.
+    let cross = svg
+        .lines()
+        .find(|l| l.contains("data-from=\"m.a.a1\"") && l.contains("data-to=\"m.c\""))
+        .expect("cross-link");
+    assert!(
+        !cross.contains("lini-hue-") && !cross.contains("stroke: var(--lini-"),
+        "cross-link neutral: {cross}"
+    );
+}
+
+#[test]
+fn authored_paint_beats_the_palette_walk() {
+    // Explicit author paint wins: the generated tints are descendant rules, so
+    // an inline block (and any user id/class rule) sits above them [SPEC 4/8].
+    let src = "{ #b { stroke: --purple-deep; } }\n\
+        |mindmap#m| \"Plan\" [\n\
+          |topic#a| \"Alpha\" { fill: --amber-wash; }\n\
+          |topic#b| \"Beta\"\n\
+        ]\n";
+    let svg = render_live(src);
+    let a = svg
+        .lines()
+        .find(|l| l.contains("data-id=\"a\""))
+        .expect("branch a");
+    assert!(
+        a.contains("fill: var(--lini-amber-wash)"),
+        "inline fill wins over the rose wash: {a}"
+    );
+    assert!(
+        a.contains("stroke: var(--lini-rose-deep)"),
+        "untouched channels keep the walk: {a}"
+    );
+    let b = svg
+        .lines()
+        .find(|l| l.contains("data-id=\"b\""))
+        .expect("branch b");
+    assert!(
+        b.contains("stroke: var(--lini-purple-deep)"),
+        "an id rule beats the generated descendant tint: {b}"
+    );
+}
+
+#[test]
+fn a_mindmap_compiles_transparent_to_its_desugar() {
+    // The oracle law holds off-samples too: compiling the lowered mindmap —
+    // seated scope, tinted per-branch arms, garnish rules — byte-matches
+    // compiling the source (fan grouping included).
+    let lowered = lini::desugar_source(MINDMAP).expect("desugar");
+    assert_eq!(
+        render_baked(MINDMAP),
+        render_baked(&lowered),
+        "compile(src) != compile(desugar(src))"
+    );
+}
+
+#[test]
+fn mindmap_root_arms_share_one_trunk_port_per_side() {
+    // Per-branch root arms are separate statements so each wears its own hue,
+    // yet they form one crow's-foot per side: a node's forced-port wires into
+    // its own descendants fan across statements (the containment gate).
+    let svg = render_live(MINDMAP);
+    let mut starts: Vec<(String, String)> = Vec::new();
+    for l in svg.lines() {
+        if !l.contains("data-from=\"m\"") {
+            continue;
+        }
+        let path = svg
+            .lines()
+            .skip_while(|x| *x != l)
+            .find(|x| x.trim_start().starts_with("<path d=\""))
+            .expect("wire path");
+        let d = path.trim_start().strip_prefix("<path d=\"M ").unwrap();
+        let xy: Vec<&str> = d.split(' ').take(2).collect();
+        let to = &l[l.find("data-to=\"").unwrap() + 9..];
+        starts.push((xy.join(" "), to[..to.find('"').unwrap()].to_string()));
+    }
+    assert_eq!(starts.len(), 4, "four root arms: {starts:?}");
+    let mut ports: Vec<&str> = starts.iter().map(|(p, _)| p.as_str()).collect();
+    ports.sort_unstable();
+    ports.dedup();
+    assert_eq!(
+        ports.len(),
+        2,
+        "one shared port per side, not one per arm: {starts:?}"
+    );
+}

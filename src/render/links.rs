@@ -62,7 +62,15 @@ pub fn render_link(
     {
         link_classes.push(format!("lini-link-{s}"));
     }
-    link_classes.extend(w.applied_styles.iter().map(|s| format!("lini-style-{}", s)));
+    // A generated `lini-*` class (a mindmap fan's hue) rides bare, exactly as a
+    // node wears its generated classes; a user `.style` rides `lini-style-*`.
+    link_classes.extend(w.applied_styles.iter().map(|s| {
+        if s.starts_with("lini-") {
+            s.clone()
+        } else {
+            format!("lini-style-{}", s)
+        }
+    }));
     // A link's `<g>` paint is the same class-diff a node's is [SPEC 17] — one
     // shared computation; a link never aliases `color` and formats with plain
     // `format_value`.

@@ -17,14 +17,17 @@
 //! The pass is a fixed point: an already-levelled scope regenerates nothing, and
 //! a fan the scope already carries is not duplicated.
 
-use super::classes::lini_class;
+use super::classes::{has_two_class_rule, lini_class};
 use super::types::Types;
 use crate::ast::{ChainOp, LineStyle, LinkMarker, LinkOp};
 use crate::error::Error;
+use crate::ledger::defaults::{MINDMAP_BRANCH_FONT, MINDMAP_LEAF_FONT, MINDMAP_MAX_WIDTH};
 use crate::span::Span;
 use crate::syntax::ast::{
-    Child, Decl, Endpoint, EndpointGroup, File, Link, Node, PointRef, StyleItem, Value,
+    Child, Decl, Endpoint, EndpointGroup, File, Link, Node, PointRef, Rule, SelUnit, Selector,
+    StyleItem, Value,
 };
+use std::collections::BTreeSet;
 
 /// A branch's outward growth [SPEC 12] — the direction its fan leaves the
 /// parent. `column`/`row` are whole-tree; a `bilateral` tree splits into a
@@ -90,6 +93,14 @@ impl Half {
             Half::Left => "side-left",
         }
     }
+
+    /// The half's outward growth.
+    fn growth(self) -> Growth {
+        match self {
+            Half::Right => Growth::BiRight,
+            Half::Left => Growth::BiLeft,
+        }
+    }
 }
 
 // ───────────────────────── structure validation ─────────────────────────
@@ -130,7 +141,11 @@ fn check(child: &Child, ctx: Option<TreeCtx>, types: &Types) -> Result<(), Error
         return Ok(());
     };
     let topic = is_topic_ast(n, types);
-    if topic && ctx.is_none() {
+    // A `|mindmap|` is its own root topic [SPEC 8]: outside a tree it opens
+    // one (desugar seats it in a generated tree scope), so it is legal
+    // anywhere; inside a tree it is an ordinary topic.
+    let mindmap = topic && is_mindmap_ast(n, types);
+    if topic && !mindmap && ctx.is_none() {
         return Err(Error::at(
             n.span,
             "'|topic|' builds a tree — it belongs in a 'layout: tree'",
@@ -143,8 +158,9 @@ fn check(child: &Child, ctx: Option<TreeCtx>, types: &Types) -> Result<(), Error
     if tree {
         check_root_count(&n.children, n.span)?;
     }
-    // A tree container opens depth 0; a topic deepens its own context; anything
-    // else drops out of the tree.
+    // A tree container opens depth 0; a topic deepens its own context (a
+    // stand-alone mindmap *is* depth 0, so its topic children are first-level
+    // branches); anything else drops out of the tree.
     let child_ctx = if tree {
         Some(TreeCtx {
             dir: dir_of(&n.style),
@@ -154,6 +170,11 @@ fn check(child: &Child, ctx: Option<TreeCtx>, types: &Types) -> Result<(), Error
         Some(TreeCtx {
             dir: c.dir,
             depth: c.depth + 1,
+        })
+    } else if mindmap {
+        Some(TreeCtx {
+            dir: mindmap_dir_of(&n.style),
+            depth: 1,
         })
     } else {
         None
@@ -247,6 +268,30 @@ fn is_topic_ast(n: &Node, types: &Types) -> bool {
         .unwrap_or(false)
 }
 
+/// Whether the node's written type resolves through `mindmap` [SPEC 8].
+fn is_mindmap_ast(n: &Node, types: &Types) -> bool {
+    let ty = n.ty.as_deref().unwrap_or("box");
+    types
+        .resolve(ty, n.span)
+        .map(|i| i.chain.iter().any(|c| c == "mindmap"))
+        .unwrap_or(false)
+}
+
+/// A stand-alone mindmap's growth for `side:` validation — its inline
+/// `direction:` if authored, else the preset's `bilateral` [SPEC 8].
+fn mindmap_dir_of(style: &[Decl]) -> Dir {
+    match style
+        .iter()
+        .rev()
+        .find(|d| d.name == "direction")
+        .and_then(decl_ident)
+    {
+        Some("row") => Dir::Row,
+        Some("column") => Dir::Column,
+        _ => Dir::Bilateral,
+    }
+}
+
 /// The bare-name test for the root count (no `Types` in scope): a written
 /// `|topic|`, or a `|x::topic|` whose base is spelled `topic`.
 fn is_topic_node(n: &Node) -> bool {
@@ -265,7 +310,8 @@ pub(crate) fn is_tree_scope(style: &[Decl]) -> bool {
 /// its depth class, and generate one branch fan per parent into the scope that
 /// contains the parent [SPEC 12]. Called from `lower_node` (a node tree) and the
 /// desugar root (a scene tree) on the lowered, still-nested topics. Idempotent:
-/// an already-levelled scope regenerates nothing.
+/// an already-levelled scope regenerates nothing. A root topic that is a
+/// `|mindmap|` additionally runs the palette walk [SPEC 8].
 pub(crate) fn build_tree(children: &mut [Child], links: &mut Vec<Link>, style: &[Decl]) {
     let already = children
         .iter()
@@ -275,20 +321,27 @@ pub(crate) fn build_tree(children: &mut [Child], links: &mut Vec<Link>, style: &
     }
     match dir_of(style) {
         Dir::Bilateral => build_bilateral(children, links),
-        Dir::Row => build_scope(children, links, 0, Growth::Row),
-        Dir::Column => build_scope(children, links, 0, Growth::Column),
+        Dir::Row => build_scope(children, links, 0, Growth::Row, None),
+        Dir::Column => build_scope(children, links, 0, Growth::Column, None),
     }
 }
 
 /// For one scope (its direct `children` and its own `links`): mint anonymous
-/// topic ids and process each topic with the scope-wide growth `g`.
-fn build_scope(children: &mut [Child], links: &mut Vec<Link>, level: usize, g: Growth) {
+/// topic ids and process each topic with the scope-wide growth `g`. `hue` is
+/// the enclosing branch's palette class, `None` outside a mindmap.
+fn build_scope(
+    children: &mut [Child],
+    links: &mut Vec<Link>,
+    level: usize,
+    g: Growth,
+    hue: Option<&str>,
+) {
     mint_ids(children);
     for c in children.iter_mut() {
         if let Child::Box(t) = c
             && is_topic(t)
         {
-            build_topic(t, links, level, g);
+            build_topic(t, links, level, g, hue);
         }
     }
     // Order by span so the lowered order matches the fmt-printed (span-sorted)
@@ -297,12 +350,21 @@ fn build_scope(children: &mut [Child], links: &mut Vec<Link>, level: usize, g: G
     links.sort_by_key(|l| l.span.start);
 }
 
-/// One topic `t` growing with `g`: stamp its level class, generate its fan into
-/// the scope's `links`, and recurse into its body a generation deeper (its
-/// children's fans landing in the topic's own links). Shared by the uniform
-/// (`row`/`column`) scope walk and the per-half bilateral walk — one mechanism.
-fn build_topic(t: &mut Node, links: &mut Vec<Link>, level: usize, g: Growth) {
+/// One topic `t` growing with `g`: stamp its level (and branch hue) class,
+/// generate its fan into the scope's `links` — the fan wearing the hue too, so
+/// one generated `.lini-mindmap .lini-hue-*` rule tints cards and wires alike —
+/// and recurse into its body a generation deeper (its children's fans landing
+/// in the topic's own links). Shared by the uniform (`row`/`column`) scope walk
+/// and the per-half bilateral walk — one mechanism. A root-level `|mindmap|`
+/// routes to [`build_mindmap_root`] instead.
+fn build_topic(t: &mut Node, links: &mut Vec<Link>, level: usize, g: Growth, hue: Option<&str>) {
+    if level == 0 && is_mindmap(t) {
+        return build_mindmap_root(t, links, g);
+    }
     t.classes.push(lini_class(&format!("level-{level}")));
+    if let Some(h) = hue {
+        t.classes.push(h.to_string());
+    }
     // Mint the children now so the fan can name them (the recursion below
     // re-mints them idempotently).
     mint_ids(&mut t.children);
@@ -317,9 +379,58 @@ fn build_topic(t: &mut Node, links: &mut Vec<Link>, level: usize, g: Growth) {
     if let Some(pid) = t.id.clone()
         && !kids.is_empty()
     {
-        push_unique(links, branch_fan(&pid, &kids, g, t.span));
+        let mut fan = branch_fan(&pid, &kids, g, t.span);
+        if let Some(h) = hue {
+            fan.classes.push(h.to_string());
+        }
+        push_unique(links, fan);
     }
-    build_scope(&mut t.children, &mut t.links, level + 1, g);
+    build_scope(&mut t.children, &mut t.links, level + 1, g, hue);
+}
+
+/// The palette walk [SPEC 8]: hue classes in declaration order per first-level
+/// branch — the palette's hue order, red and grey skipped, wrapping past nine.
+fn walk_hue(pos: usize) -> String {
+    let hues: Vec<&str> = crate::palette::walk_hues().collect();
+    lini_class(&format!("hue-{}", hues[pos % hues.len()]))
+}
+
+/// A mindmap root in a `row`/`column` tree [SPEC 8]: the root stays neutral;
+/// each first-level branch takes the next hue and its **own** root arm (a
+/// one-child fan wearing the hue, spanned to the branch so declaration order
+/// holds), since arms of one shared fan could not be tinted apart — the root
+/// port fans no trunk, each tinted arm lands its own port. The bilateral twin
+/// lives in [`build_bilateral`].
+fn build_mindmap_root(t: &mut Node, links: &mut Vec<Link>, g: Growth) {
+    t.classes.push(lini_class("level-0"));
+    mint_ids(&mut t.children);
+    let first: Vec<usize> = topic_positions(&t.children);
+    let pid = t.id.clone();
+    for (pos, &idx) in first.iter().enumerate() {
+        let hue = walk_hue(pos);
+        let Child::Box(k) = &mut t.children[idx] else {
+            continue;
+        };
+        if let (Some(pid), Some(kid)) = (&pid, k.id.clone()) {
+            let mut arm = branch_fan(pid, &[kid], g, k.span);
+            arm.classes.push(hue.clone());
+            push_unique(links, arm);
+        }
+        build_topic(k, &mut t.links, 1, g, Some(&hue));
+    }
+    t.links.sort_by_key(|l| l.span.start);
+}
+
+/// First-level topic positions (indices into a root's children).
+fn topic_positions(children: &[Child]) -> Vec<usize> {
+    children
+        .iter()
+        .enumerate()
+        .filter_map(|(i, cc)| match cc {
+            Child::Box(k) if is_topic(k) => Some(i),
+            _ => None,
+        })
+        .collect()
 }
 
 /// A bilateral tree [SPEC 12]: the single root fans to both sides. Its
@@ -335,19 +446,12 @@ fn build_bilateral(children: &mut [Child], links: &mut Vec<Link>) {
         if !is_topic(root) {
             continue;
         }
+        let mindmap = is_mindmap(root);
         root.classes.push(lini_class("level-0"));
         mint_ids(&mut root.children);
 
         // First-level topic positions (indices into the root's children).
-        let first: Vec<usize> = root
-            .children
-            .iter()
-            .enumerate()
-            .filter_map(|(i, cc)| match cc {
-                Child::Box(k) if is_topic(k) => Some(i),
-                _ => None,
-            })
-            .collect();
+        let first: Vec<usize> = topic_positions(&root.children);
         let n = first.len();
         // Base split, then per-topic `side:` override (read + consume) and the
         // generated half class the engine places on.
@@ -364,58 +468,62 @@ fn build_bilateral(children: &mut [Child], links: &mut Vec<Link>) {
             let Child::Box(k) = &mut root.children[idx] else {
                 continue;
             };
-            if let Some(s) = take_side(&mut k.style) {
+            // Read + consume the authored `side:` [SPEC 12] — the half is
+            // re-expressed as a generated class, so the raw property never
+            // reaches resolve.
+            if let Some(s) = take_ident(&mut k.style, "side") {
                 halves[pos] = if s == "left" { Half::Left } else { Half::Right };
             }
             k.classes.push(lini_class(halves[pos].class()));
         }
 
-        // The root emits both sides — one fan per non-empty half.
+        // The root emits both sides — one fan per non-empty half. A mindmap
+        // root instead emits one **tinted arm per branch** [SPEC 8] (arms of a
+        // shared fan could not be tinted apart), each spanned to its branch so
+        // declaration order holds — the row/column twin is
+        // [`build_mindmap_root`].
         if let Some(pid) = root.id.clone() {
-            for (half, g) in [(Half::Right, Growth::BiRight), (Half::Left, Growth::BiLeft)] {
-                let kids: Vec<String> = first
-                    .iter()
-                    .zip(&halves)
-                    .filter(|&(_, &h)| h == half)
-                    .filter_map(|(&i, _)| match &root.children[i] {
-                        Child::Box(k) => k.id.clone(),
-                        _ => None,
-                    })
-                    .collect();
-                if !kids.is_empty() {
-                    push_unique(links, branch_fan(&pid, &kids, g, root.span));
+            if mindmap {
+                for (pos, &idx) in first.iter().enumerate() {
+                    let Child::Box(k) = &root.children[idx] else {
+                        continue;
+                    };
+                    if let Some(kid) = k.id.clone() {
+                        let mut arm = branch_fan(&pid, &[kid], halves[pos].growth(), k.span);
+                        arm.classes.push(walk_hue(pos));
+                        push_unique(links, arm);
+                    }
+                }
+            } else {
+                for (half, g) in [(Half::Right, Growth::BiRight), (Half::Left, Growth::BiLeft)] {
+                    let kids: Vec<String> = first
+                        .iter()
+                        .zip(&halves)
+                        .filter(|&(_, &h)| h == half)
+                        .filter_map(|(&i, _)| match &root.children[i] {
+                            Child::Box(k) => k.id.clone(),
+                            _ => None,
+                        })
+                        .collect();
+                    if !kids.is_empty() {
+                        push_unique(links, branch_fan(&pid, &kids, g, root.span));
+                    }
                 }
             }
         }
 
-        // Each first-level subtree grows uniformly in its half's orientation.
+        // Each first-level subtree grows uniformly in its half's orientation —
+        // in a mindmap, carrying its branch hue down [SPEC 8].
         for (pos, &idx) in first.iter().enumerate() {
-            let g = match halves[pos] {
-                Half::Right => Growth::BiRight,
-                Half::Left => Growth::BiLeft,
-            };
+            let hue = mindmap.then(|| walk_hue(pos));
             let Child::Box(k) = &mut root.children[idx] else {
                 continue;
             };
-            build_topic(k, &mut root.links, 1, g);
+            build_topic(k, &mut root.links, 1, halves[pos].growth(), hue.as_deref());
         }
         root.links.sort_by_key(|l| l.span.start);
     }
     links.sort_by_key(|l| l.span.start);
-}
-
-/// Read and remove a topic's inline `side:` (the last wins) [SPEC 12] — the
-/// half is re-expressed as a generated class, so the raw property never reaches
-/// resolve.
-fn take_side(style: &mut Vec<Decl>) -> Option<String> {
-    let val = style
-        .iter()
-        .rev()
-        .find(|d| d.name == "side")
-        .and_then(decl_ident)
-        .map(str::to_string);
-    style.retain(|d| d.name != "side");
-    val
 }
 
 /// Push a generated link unless the scope already carries an identical one —
@@ -502,10 +610,161 @@ fn same_link(a: &Link, b: &Link) -> bool {
         })
 }
 
+// ───────────────────────── the |mindmap| seat & rules ─────────────────────────
+
+/// Seat a stand-alone `|mindmap|` [SPEC 8]: the node is the visible root topic,
+/// so the scope that contains it becomes the tree scope — `layout: tree` unless
+/// the scope authors a layout, the mindmap's own inline `direction:` hoisted
+/// (consumed; default `bilateral`) unless the scope authors one, and `routing:
+/// natural` unless authored. Every injected decl prints in `lini desugar`, and
+/// the absence gates make authored config win and re-desugar a fixed point.
+/// Called on the scene root's decls and on a non-topic node's style (a topic's
+/// body belongs to the enclosing tree, where a nested mindmap is an ordinary
+/// topic).
+pub(crate) fn seat_mindmap(style: &mut Vec<Decl>, children: &mut [Child]) {
+    let Some(mm) = children.iter_mut().find_map(|c| match c {
+        Child::Box(n) if is_mindmap(n) => Some(n),
+        _ => None,
+    }) else {
+        return;
+    };
+    if !style.iter().any(|d| d.name == "layout") {
+        style.push(ident_decl("layout", "tree"));
+    }
+    // An authored non-tree layout wins outright — the mindmap stays a card.
+    if !is_tree_style(style) {
+        return;
+    }
+    if !style.iter().any(|d| d.name == "direction") {
+        let dir = take_ident(&mut mm.style, "direction").unwrap_or_else(|| "bilateral".into());
+        style.push(ident_decl("direction", &dir));
+    }
+    if !style.iter().any(|d| d.name == "routing") {
+        style.push(ident_decl("routing", "natural"));
+    }
+}
+
+/// The `|mindmap|` garnish rules [SPEC 8], generated beside the scoped note
+/// rules — each an ordinary `.lini-mindmap .lini-*` descendant rule, so it
+/// sits below the authored class/id/inline tiers and `lini desugar` shows it;
+/// a rule the (re-desugared) file already carries is not re-generated. Three
+/// garnishes: the topic wrap cap + the root-weight reset, the depth ramp per
+/// present level, and the palette walk's tint per present hue (`wash` fill,
+/// `deep` stroke — cards and their branch wires wear the same hue class —
+/// `ink` text; dark mode rides the tiers' `light-dark()` pairs).
+pub(crate) fn mindmap_rules(present: &BTreeSet<String>, user_rules: &[Rule]) -> Vec<Rule> {
+    if !present.contains("mindmap") {
+        return Vec::new();
+    }
+    let mut out: Vec<Rule> = Vec::new();
+    let mut push = |class: &str, decls: Vec<Decl>| {
+        if !has_two_class_rule(user_rules, "lini-mindmap", class) {
+            out.push(Rule {
+                selector: Selector {
+                    units: vec![
+                        SelUnit::Class("lini-mindmap".to_string()),
+                        SelUnit::Class(class.to_string()),
+                    ],
+                },
+                decls,
+                span: Span::empty(),
+            });
+        }
+    };
+    // Branch topics wrap at the cap and shed the root card's inherited
+    // semibold; the root itself is no descendant, so its bundle tier stands.
+    push(
+        "lini-topic",
+        vec![
+            number_decl("max-width", MINDMAP_MAX_WIDTH),
+            ident_decl("font-weight", "normal"),
+        ],
+    );
+    // The depth ramp [SPEC 8]: level 1 medium, level 2+ small, one rule per
+    // level the scene actually wears (root 0 rides the |mindmap| bundle).
+    let mut levels: Vec<usize> = present
+        .iter()
+        .filter_map(|p| p.strip_prefix("level-")?.parse().ok())
+        .filter(|&n| n >= 1)
+        .collect();
+    levels.sort_unstable();
+    for n in levels {
+        let size = if n == 1 {
+            MINDMAP_BRANCH_FONT
+        } else {
+            MINDMAP_LEAF_FONT
+        };
+        push(
+            &format!("lini-level-{n}"),
+            vec![number_decl("font-size", size)],
+        );
+    }
+    // The palette walk's tints, in walk order for the hues actually assigned.
+    for hue in crate::palette::walk_hues() {
+        if present.contains(&format!("hue-{hue}")) {
+            push(
+                &format!("lini-hue-{hue}"),
+                vec![
+                    var_decl("fill", &format!("{hue}-wash")),
+                    var_decl("stroke", &format!("{hue}-deep")),
+                    var_decl("color", &format!("{hue}-ink")),
+                ],
+            );
+        }
+    }
+    out
+}
+
+/// Read (the last wins) and remove a `name:` ident from a style block — shared
+/// by the `side:` consume (re-expressed as a half class) and [`seat_mindmap`]'s
+/// `direction:` hoist (moved to the generated tree scope instead of steering
+/// the root card's own content).
+fn take_ident(style: &mut Vec<Decl>, name: &str) -> Option<String> {
+    let val = style
+        .iter()
+        .rev()
+        .find(|d| d.name == name)
+        .and_then(decl_ident)
+        .map(str::to_string);
+    if val.is_some() {
+        style.retain(|d| d.name != name);
+    }
+    val
+}
+
+fn ident_decl(name: &str, v: &str) -> Decl {
+    Decl {
+        name: name.into(),
+        groups: vec![vec![Value::Ident(v.into())]],
+        span: Span::empty(),
+    }
+}
+
+fn number_decl(name: &str, v: f64) -> Decl {
+    Decl {
+        name: name.into(),
+        groups: vec![vec![Value::Number(v)]],
+        span: Span::empty(),
+    }
+}
+
+fn var_decl(name: &str, v: &str) -> Decl {
+    Decl {
+        name: name.into(),
+        groups: vec![vec![Value::Var(v.into())]],
+        span: Span::empty(),
+    }
+}
+
 // ───────────────────────── shared helpers ─────────────────────────
 
 fn is_topic(n: &Node) -> bool {
     n.classes.iter().any(|c| c == "lini-topic")
+}
+
+/// Whether a (lowered) node wears the `|mindmap|` type class [SPEC 8].
+fn is_mindmap(n: &Node) -> bool {
+    n.classes.iter().any(|c| c == "lini-mindmap")
 }
 
 fn has_level_class(n: &Node) -> bool {

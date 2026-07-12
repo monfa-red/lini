@@ -111,6 +111,11 @@ pub fn desugar(file: &File) -> Result<File, Error> {
     for child in &file.instances {
         instances.push(lower_child(child, &types, &bodies, root_drawing)?);
     }
+    // A scene owned by a stand-alone `|mindmap|` seats it first [SPEC 8]: the
+    // root decls become its generated tree scope (`layout: tree; direction:
+    // bilateral; routing: natural`, authored decls winning), so the tree build
+    // below runs unchanged.
+    tree::seat_mindmap(&mut user_root, &mut instances);
     // A root `{ layout: tree }` scene builds its own topic tree [SPEC 12], like a
     // node tree does in `lower_node` — before auto-create below. Its gap default
     // rides `root_layout_defaults`, not `ensure_gap`.
@@ -195,6 +200,9 @@ pub fn desugar(file: &File) -> Result<File, Error> {
         stylesheet.push(StyleItem::Rule(r));
     }
     for r in classes::scoped_note_rules(&present, &user_rules) {
+        stylesheet.push(StyleItem::Rule(r));
+    }
+    for r in tree::mindmap_rules(&present, &user_rules) {
         stylesheet.push(StyleItem::Rule(r));
     }
     for r in user_rules {
@@ -531,6 +539,12 @@ fn lower_node(
         links.extend(labels::split_chain(w).iter().map(labels::lower_link));
     }
 
+    // Seat a stand-alone `|mindmap|` child [SPEC 8]: this body becomes its
+    // generated tree scope — never inside a topic, whose body belongs to the
+    // enclosing tree (a nested mindmap is an ordinary topic there).
+    if !already && !classes.iter().any(|c| c == "lini-topic") {
+        tree::seat_mindmap(&mut style, &mut children);
+    }
     // Build a `layout: tree` scope [SPEC 12]: mint anonymous topic ids, wear the
     // depth classes, and generate the branch fans — **before** this body's
     // auto-create so a branch / cross-link endpoint sees the topics as declared,
