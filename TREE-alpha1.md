@@ -88,7 +88,7 @@ fmt/test/clippy clean, a **Log** line here.
 Write all round law before any code, per the Stage-0 pattern. The SPEC
 alone must suffice to implement Stages 1–5.
 
-- [ ] New SPEC Part II section **Tree** (between 12 Flow & Grid and 13
+- [x] New SPEC Part II section **Tree** (between 12 Flow & Grid and 13
   Sequence, renumbering or as 12b — pick what keeps anchors stable): the
   engine (rooted structure from `|topic|` nesting, source order = sibling
   order, parent-over-subtree centring), `direction: row | column |
@@ -97,27 +97,27 @@ alone must suffice to implement Stages 1–5.
   the single-root and topic-outside-tree errors, branch-link generation and
   scope (decision 9), `.lini-level-N` classes, wiring-strategy row (tree =
   router-routed, like flow/grid).
-- [ ] SPEC 8 template rows: `|topic|` (base `|block|`; the structural
+- [x] SPEC 8 template rows: `|topic|` (base `|block|`; the structural
   type; custom structural types derive from it — `|person::topic|`) and
   `|mindmap|` (the preset: visible root topic, `layout: tree; direction:
   bilateral; routing: natural`, the palette walk, the depth ramp,
   `max-width: 160` on topics).
-- [ ] SPEC 9/11: `natural` joins the strategy row (`orthogonal` default /
+- [x] SPEC 9/11: `natural` joins the strategy row (`orthogonal` default /
   `natural` / `straight`); the layout-model table gains the tree row;
   SPEC 16 ledger rows (`layout: tree`, `direction: bilateral`, `side` on
   topics, `routing: natural`); SPEC 20 error rows (topic outside tree,
   forest, `side:` misuse per direction, `routing: curved` removal message);
   SPEC 23: the `curved` deferral comes out (replaced by `natural`, built).
-- [ ] ROUTING.md: replace the `curved` row with `natural`'s contract
+- [x] ROUTING.md: replace the `curved` row with `natural`'s contract
   (decision 8 — corridor via the shared search, curve fit, which laws bind
   a curved wire and how: tangent-normal contact, clearance, separated
   duplicates, honest strays; crossings need not be square-on), refresh the
   implementation-shape map (`routing/natural/{mod,corridor,curve}.rs`),
   tighten the "validation is the orthogonal contract's alone" claim to
   name what the natural checker judges instead.
-- [ ] ROADMAP sync: 3.2/3.3 wording updated to `bilateral` (+ a line
+- [x] ROADMAP sync: 3.2/3.3 wording updated to `bilateral` (+ a line
   noting the rename and why); the ladder row for alpha.1 confirmed.
-- [ ] **README accuracy pass** (its own commit; the crates.io face):
+- [x] **README accuracy pass** (its own commit; the crates.io face):
   Status section rewritten for 1.0.0-alpha.0 (not "v0.20"; drawings are
   through sections/sheets/details, not "work in progress"), the sequence
   pointer fixed to §13, the entities section's `layout: auto` promise
@@ -128,7 +128,19 @@ alone must suffice to implement Stages 1–5.
 Acceptance: SPEC/ROUTING.md alone sufficient to implement Stages 1–5;
 anchors and cross-references intact (the S1 anchor-script check); every
 example in the new text uses shipped syntax; `cargo test` untouched.
-**Log:**
+**Log:** 2026-07-11 — **done**, 4 commits (SPEC, ROUTING, ROADMAP/PLAN-V1,
+README), all acceptance met (anchor script: zero broken anchors; tests
+untouched — the one conformance failure during the stage was Abbas's own
+in-flight `cards.lini` restyle, staged in his editor, left alone). Decisions
+executed in place: the Tree section lives **inside SPEC 12** — retitled
+"Flow, Grid & Tree" — so 13/14/15 keep their numbers (code comments and
+error messages cite them); all 13 `#12-flow--grid` anchors retargeted.
+`|topic|` defaults set at `padding: 8 14` (a compact card; Stage 3's visual
+pass may retune — flagged, not silent). SPEC 20's routing row now states the
+**new** `curved`-replacement message while `resolve/links.rs` still emits the
+old deferral text — reconciled in Stage 3 when `Strategy::Natural` lands (the
+S2 precedent: SPEC leads code inside a round). SPEC 23's beyond-1.0 tail
+gains ring-radial + forest trees so the bilateral rename reserves nothing.
 
 ### Stage 1 — the tree engine: `|topic|`, row/column, branch links
 
