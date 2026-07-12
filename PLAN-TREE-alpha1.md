@@ -156,21 +156,21 @@ gains ring-radial + forest trees so the bilateral rename reserves nothing.
 The structural half — no bilateral, no curves, no preset yet. An org
 chart must come out whole.
 
-- [ ] Ledger rows: `layout` accepts `tree`; `topic`/`mindmap` template
+- [x] Ledger rows: `layout` accepts `tree`; `topic`/`mindmap` template
   names; `side` gains its topic owner (it already exists for endpoints);
   validation wiring so M2's owner-aware pass covers the new rows.
-- [ ] `|topic|` template bundle (over `|block|` — framed like a card:
+- [x] `|topic|` template bundle (over `|block|` — framed like a card:
   reuse `|box|`'s paint tier as the topic default so a bare topic reads);
   resolve-side structure checks: `|topic|` (or a topic-derived type)
   outside a `layout: tree` scope errors; a tree scope with zero or ≥ 2
   root topics errors (SPEC 20 wording).
-- [ ] Desugar branch links (D2, beside `classes.rs`'s generated-rule
+- [x] Desugar branch links (D2, beside `classes.rs`'s generated-rule
   precedent): for each topic, one unmarked `|-|` link parent → child per
   topic-derived child, generated **in the parent topic's scope** (sealed-
   body law holds; `lini desugar` shows them; re-desugar is a fixed point —
   the scoped-note-rules pattern). Depth computed in the same walk wears
   `.lini-level-N` on every topic.
-- [ ] `layout/tree.rs` — the engine: `is_tree(attrs)` beside the other
+- [x] `layout/tree.rs` — the engine: `is_tree(attrs)` beside the other
   predicates in `layout_inst`'s dispatch; **flow/grid stay untouched**.
   Tree is router-routed (arranges in place, hands links to the router —
   the flow/grid row of the SPEC 11 table, not a lowering engine).
@@ -182,11 +182,11 @@ chart must come out whole.
   only if the dispatch genuinely wants it — the existing predicate
   dispatch is the house shape, and a trait that only tree implements is
   a parallel mechanism.
-- [ ] Orthogonal routing over trees just works (branch links are ordinary
+- [x] Orthogonal routing over trees just works (branch links are ordinary
   requests; forced sides by direction: column = parent `bottom` → child
   `top`, row = parent `right` → child `left` — stamped on the generated
   links at desugar so the router needs no tree knowledge).
-- [ ] Sample: new `samples/tree.lini` — an org chart (column, orthogonal)
+- [x] Sample: new `samples/tree.lini` — an org chart (column, orthogonal)
   and a row tree in one scene (the cluster policy: one file for the plain-
   tree cluster). Snapshots (conformance + desugar oracle showing branch
   links); laws sweep green over the routed tree.
@@ -195,7 +195,41 @@ Acceptance: org chart renders correctly light + dark (PNG eyeballed);
 `lini desugar samples/tree.lini` shows every branch link in its scope;
 the structure errors fire with SPEC 20's wording; zero diffs outside the
 new sample.
-**Log:**
+**Log:** 2026-07-12 — **done**, 6 commits over two passes plus an owner
+SPEC-errata commit; fmt/test/clippy clean throughout; org chart + row
+tree + anonymous tree eyeballed light + dark; every non-tree snapshot
+byte-identical. The first pass (`20fcf0d`/`e9ded02`, Opus) FLATTENED
+topic nesting at desugar to dodge the router's containment case — owner
+verification caught the price (anonymous topics silently lost their
+wires; scoped ids collided across arms; `#id |-|` arm styling matched
+nothing) and Abbas rejected it. The second pass (**Option B**,
+`ae03ef0`/`d01dd54`/`e5ee3a2`/`bb975fd`) keeps nesting through the whole
+front half and fixes the failure modes at their sources:
+- Router: the containment special case gates on **geometry, not path
+  prefix** — new `SceneIndex::geo_contains` (prefix AND placed-rect
+  enclosure) feeds `world_ladder`, the inward port flips, and the
+  validator's containment skip; a mere path-descendant climbs the world
+  ladder like any wire.
+- Desugar: anonymous topics mint deterministic per-scope
+  `lini-topic-N` ids (authored `lini-*` ids now error — the reservation
+  extended to ids); one unmarked **fan per parent** in the scope
+  containing it, dotted endpoints, forced sides per direction;
+  byte-idempotent including root trees (`Child::span()` unified; the
+  root fan's span seats past the instances).
+- Resolve: the **containment-cascade law** — a link into a node's own
+  descendant cascades as if written in that node — so `#cto |-| { }`
+  styles exactly cto's arm (pinned non-vacuously in tests/rendering.rs
+  after the first arm test proved vacuous); inheritance (clearance /
+  routing) deliberately keeps the written scope's channel.
+- Engine: nested-input placement (generations / sibling packing /
+  centring), each card sized from non-topic content only, placed nested
+  with overhang (a topic's keep-out is its own card); root
+  `{ layout: tree }` scenes lay out (new `layout_root` arm).
+Deviations adopted into SPEC as errata (`8d7e0b3`): fan-per-parent,
+minted ids + id-prefix reservation, tree default `gap: 64 48`, the
+SPEC 4 cascade-law sentence. Sample note: the org chart's cross-link
+moved inside `coo`'s body (`ops --- qa`) — the tree-scope spelling had
+relied on flat ids; SPEC 9's no-search law stands.
 
 ### Stage 2 — bilateral
 
