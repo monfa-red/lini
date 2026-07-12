@@ -78,6 +78,15 @@ fmt/test/clippy clean, a **Log** line here.
     connectors (the scope's default `routing: orthogonal`).
 12. **This round only.** alpha.2+ explode into their own docs at entry
     (the PLAN-V1 pattern); nothing here reserves syntax for them.
+13. **Classes on text** (rider, added 2026-07-12): a string may wear a
+    class chain — `"Starter" .card-title` — the node tail on a string
+    head. No new mechanism: the worn-class cascade tier applies to the
+    text leaf, text-valid properties land, anything else is **inert**
+    per the class-polymorphism law (M2's lenient clause). Additive
+    grammar, so the freeze permits it. Kills the `|block|`-wrapper-only-
+    for-styling pattern, which also restores a parent's `max-width` wrap
+    over those strings (a box child stays opaque to the cap — that hard
+    error is the honest contract and does not change).
 
 ---
 
@@ -294,6 +303,39 @@ untouched; a stray still draws honest.
 Acceptance: the mindmap hero reads well light + dark (palette walk
 verified); `cat -> dog` diagrams unchanged; all suites green; crates.io
 shows `1.0.0-alpha.1`.
+**Log:**
+
+### Stage 6 — rider: classes on text (decision 13)
+
+Independent of the tree work; may land any time before the Stage 5
+release sweep (whose version bump then carries it).
+
+- [ ] SPEC amendment first, tight: SPEC 3 (Text content — a string takes
+  a class chain like any node tail; text-valid properties apply, others
+  inert per the class law), SPEC 4 (worn classes reach text leaves,
+  tier 3), SPEC 21 grammar (`text_stmt = string [ classes ] [ block ]`),
+  SPEC 16 note if any, SPEC 20 unchanged (no new errors — inertness is
+  the law).
+- [ ] Parser: the string statement head accepts the worn-class chain
+  (spaced off the string, glued within — the node-tail rule); fmt prints
+  it canonically; desugar carries classes on text leaves (user classes
+  emit as `.lini-style-*` on the `<text>` beside `.lini-text`).
+- [ ] Resolve: text leaves walk the class tier of the cascade (today:
+  inline block + inheritance only); the text-valid filter is the same
+  one the inline block uses — worn-class non-text props are inert, not
+  errors.
+- [ ] Tests: parser/fmt round-trip, cascade (class vs inline precedence,
+  inert non-text prop), render snapshot (class hook on `<text>`),
+  validation (class-dead-on-every-wearer warning still correct when the
+  only wearer is text and the prop is text-valid).
+- [ ] `cards.lini` cleanup: the `|block|` wrappers drop — titles/briefs
+  become bare classed strings under the cards' `max-width` (re-bless +
+  eyeball light/dark; a long title now wraps instead of erroring).
+
+Acceptance: `"Starter" .card-title` styles the text; every existing
+sample byte-identical except cards; `lini fmt` round-trips the new form;
+a worn class's box-only property is silently inert on text, exactly as
+on any non-wearing node.
 **Log:**
 
 ---
