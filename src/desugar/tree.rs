@@ -26,12 +26,16 @@ use crate::syntax::ast::{
     Child, Decl, Endpoint, EndpointGroup, File, Link, Node, PointRef, StyleItem, Value,
 };
 
-/// A tree's growth axis [SPEC 12] — only `row`/`column` drive Stage 1; a
-/// `bilateral` value flows through as `column` here (the split is Stage 2).
+/// A branch's outward growth [SPEC 12] — the direction its fan leaves the
+/// parent. `column`/`row` are whole-tree; a `bilateral` tree splits into a
+/// right half (`BiRight`, growing rightward like `row`) and a mirrored left
+/// half (`BiLeft`).
 #[derive(Clone, Copy)]
 enum Growth {
     Column,
     Row,
+    BiRight,
+    BiLeft,
 }
 
 impl Growth {
@@ -39,20 +43,52 @@ impl Growth {
     fn sides(self) -> (&'static str, &'static str) {
         match self {
             Growth::Column => ("bottom", "top"),
-            Growth::Row => ("right", "left"),
+            Growth::Row | Growth::BiRight => ("right", "left"),
+            Growth::BiLeft => ("left", "right"),
         }
     }
 }
 
-fn growth_of(style: &[Decl]) -> Growth {
-    match style
-        .iter()
-        .rev()
-        .find(|d| d.name == "direction")
-        .and_then(decl_ident)
-    {
-        Some("row") => Growth::Row,
-        _ => Growth::Column,
+/// A tree's declared growth [SPEC 12], default `column`.
+#[derive(Clone, Copy, PartialEq)]
+enum Dir {
+    Column,
+    Row,
+    Bilateral,
+}
+
+fn dir_of(style: &[Decl]) -> Dir {
+    dir_from(
+        style
+            .iter()
+            .rev()
+            .find(|d| d.name == "direction")
+            .and_then(decl_ident),
+    )
+}
+
+fn dir_from(ident: Option<&str>) -> Dir {
+    match ident {
+        Some("row") => Dir::Row,
+        Some("bilateral") => Dir::Bilateral,
+        _ => Dir::Column,
+    }
+}
+
+/// Which bilateral half a first-level topic fills [SPEC 12].
+#[derive(Clone, Copy, PartialEq)]
+enum Half {
+    Right,
+    Left,
+}
+
+impl Half {
+    /// The generated marker class the engine reads to place the half.
+    fn class(self) -> &'static str {
+        match self {
+            Half::Right => "side-right",
+            Half::Left => "side-left",
+        }
     }
 }
 
@@ -70,32 +106,95 @@ pub(crate) fn validate(file: &File) -> Result<(), Error> {
     if root_tree {
         check_root_count(&file.instances, Span::empty())?;
     }
+    // The scene's own topic children are the root (depth 0) of a root tree.
+    let ctx = root_tree.then(|| TreeCtx {
+        dir: root_direction(&file.stylesheet),
+        depth: 0,
+    });
     for c in &file.instances {
-        check(c, root_tree, &types)?;
+        check(c, ctx, &types)?;
     }
     Ok(())
 }
 
-fn check(child: &Child, in_tree: bool, types: &Types) -> Result<(), Error> {
+/// A topic's tree context: the enclosing tree's direction and this topic's
+/// depth (root 0, first-level 1) — enough to judge a `side:` [SPEC 12/20].
+#[derive(Clone, Copy)]
+struct TreeCtx {
+    dir: Dir,
+    depth: usize,
+}
+
+fn check(child: &Child, ctx: Option<TreeCtx>, types: &Types) -> Result<(), Error> {
     let Child::Box(n) = child else {
         return Ok(());
     };
     let topic = is_topic_ast(n, types);
-    if topic && !in_tree {
+    if topic && ctx.is_none() {
         return Err(Error::at(
             n.span,
             "'|topic|' builds a tree — it belongs in a 'layout: tree'",
         ));
     }
+    if let (true, Some(c)) = (topic, ctx) {
+        check_side(n, c)?;
+    }
     let tree = is_tree_style(&n.style);
     if tree {
         check_root_count(&n.children, n.span)?;
     }
-    let child_in_tree = tree || (topic && in_tree);
+    // A tree container opens depth 0; a topic deepens its own context; anything
+    // else drops out of the tree.
+    let child_ctx = if tree {
+        Some(TreeCtx {
+            dir: dir_of(&n.style),
+            depth: 0,
+        })
+    } else if let (true, Some(c)) = (topic, ctx) {
+        Some(TreeCtx {
+            dir: c.dir,
+            depth: c.depth + 1,
+        })
+    } else {
+        None
+    };
     for c in &n.children {
-        check(c, child_in_tree, types)?;
+        check(c, child_ctx, types)?;
     }
     Ok(())
+}
+
+/// `side:` is a bilateral first-level half-picker [SPEC 12/20]: `left`/`right`
+/// on a first-level topic (the override) is legal; `top`/`bottom` there, a
+/// `side:` on a deeper bilateral topic, or any `side:` under `row`/`column`
+/// errors.
+fn check_side(n: &Node, c: TreeCtx) -> Result<(), Error> {
+    let Some(val) = n
+        .style
+        .iter()
+        .rev()
+        .find(|d| d.name == "side")
+        .and_then(decl_ident)
+    else {
+        return Ok(());
+    };
+    match c.dir {
+        Dir::Row | Dir::Column => Err(Error::at(
+            n.span,
+            "'side' picks a bilateral branch's half — this tree has one growth direction",
+        )),
+        Dir::Bilateral => match val {
+            "left" | "right" if c.depth == 1 => Ok(()),
+            "left" | "right" => Err(Error::at(
+                n.span,
+                "'side' picks a bilateral branch's half — this tree has one growth direction",
+            )),
+            _ => Err(Error::at(
+                n.span,
+                "a bilateral tree grows left and right — 'side' takes left or right",
+            )),
+        },
+    }
 }
 
 /// A tree scope holds exactly one root topic [SPEC 20]: none or a second errors.
@@ -174,48 +273,157 @@ pub(crate) fn build_tree(children: &mut [Child], links: &mut Vec<Link>, style: &
     if already {
         return;
     }
-    build_scope(children, links, 0, growth_of(style));
+    match dir_of(style) {
+        Dir::Bilateral => build_bilateral(children, links),
+        Dir::Row => build_scope(children, links, 0, Growth::Row),
+        Dir::Column => build_scope(children, links, 0, Growth::Column),
+    }
 }
 
 /// For one scope (its direct `children` and its own `links`): mint anonymous
-/// topic ids, stamp each topic's level class, generate the fan for every topic
-/// that has topic-children into `links`, then recurse into each topic's body
-/// (its children a generation deeper, their fans landing in the topic's links).
+/// topic ids and process each topic with the scope-wide growth `g`.
 fn build_scope(children: &mut [Child], links: &mut Vec<Link>, level: usize, g: Growth) {
     mint_ids(children);
-    let mut fans: Vec<Link> = Vec::new();
     for c in children.iter_mut() {
-        let Child::Box(t) = c else { continue };
-        if !is_topic(t) {
-            continue;
-        }
-        t.classes.push(lini_class(&format!("level-{level}")));
-        // Mint the children now so the fan can name them (the recursion below
-        // re-mints them idempotently).
-        mint_ids(&mut t.children);
-        let kids: Vec<String> = t
-            .children
-            .iter()
-            .filter_map(|cc| match cc {
-                Child::Box(k) if is_topic(k) => k.id.clone(),
-                _ => None,
-            })
-            .collect();
-        if let Some(pid) = t.id.clone()
-            && !kids.is_empty()
+        if let Child::Box(t) = c
+            && is_topic(t)
         {
-            let link = branch_fan(&pid, &kids, g, t.span);
-            if !links.iter().chain(fans.iter()).any(|l| same_link(l, &link)) {
-                fans.push(link);
-            }
+            build_topic(t, links, level, g);
         }
-        build_scope(&mut t.children, &mut t.links, level + 1, g);
     }
-    links.extend(fans);
     // Order by span so the lowered order matches the fmt-printed (span-sorted)
     // desugar output — desugar transparency; the router's declaration-order
     // tie-break is the same whether source or its lowering is compiled.
     links.sort_by_key(|l| l.span.start);
+}
+
+/// One topic `t` growing with `g`: stamp its level class, generate its fan into
+/// the scope's `links`, and recurse into its body a generation deeper (its
+/// children's fans landing in the topic's own links). Shared by the uniform
+/// (`row`/`column`) scope walk and the per-half bilateral walk — one mechanism.
+fn build_topic(t: &mut Node, links: &mut Vec<Link>, level: usize, g: Growth) {
+    t.classes.push(lini_class(&format!("level-{level}")));
+    // Mint the children now so the fan can name them (the recursion below
+    // re-mints them idempotently).
+    mint_ids(&mut t.children);
+    let kids: Vec<String> = t
+        .children
+        .iter()
+        .filter_map(|cc| match cc {
+            Child::Box(k) if is_topic(k) => k.id.clone(),
+            _ => None,
+        })
+        .collect();
+    if let Some(pid) = t.id.clone()
+        && !kids.is_empty()
+    {
+        push_unique(links, branch_fan(&pid, &kids, g, t.span));
+    }
+    build_scope(&mut t.children, &mut t.links, level + 1, g);
+}
+
+/// A bilateral tree [SPEC 12]: the single root fans to both sides. Its
+/// first-level topics split — the first ⌈n/2⌉ (declaration order) right, the
+/// rest left, an authored `side: left|right` overriding its half — and each
+/// half then grows as a `row` tree (the left mirrored). The root emits one fan
+/// per non-empty half; each first-level subtree carries its half's orientation
+/// down.
+fn build_bilateral(children: &mut [Child], links: &mut Vec<Link>) {
+    mint_ids(children);
+    for c in children.iter_mut() {
+        let Child::Box(root) = c else { continue };
+        if !is_topic(root) {
+            continue;
+        }
+        root.classes.push(lini_class("level-0"));
+        mint_ids(&mut root.children);
+
+        // First-level topic positions (indices into the root's children).
+        let first: Vec<usize> = root
+            .children
+            .iter()
+            .enumerate()
+            .filter_map(|(i, cc)| match cc {
+                Child::Box(k) if is_topic(k) => Some(i),
+                _ => None,
+            })
+            .collect();
+        let n = first.len();
+        // Base split, then per-topic `side:` override (read + consume) and the
+        // generated half class the engine places on.
+        let mut halves: Vec<Half> = (0..n)
+            .map(|i| {
+                if i < n.div_ceil(2) {
+                    Half::Right
+                } else {
+                    Half::Left
+                }
+            })
+            .collect();
+        for (pos, &idx) in first.iter().enumerate() {
+            let Child::Box(k) = &mut root.children[idx] else {
+                continue;
+            };
+            if let Some(s) = take_side(&mut k.style) {
+                halves[pos] = if s == "left" { Half::Left } else { Half::Right };
+            }
+            k.classes.push(lini_class(halves[pos].class()));
+        }
+
+        // The root emits both sides — one fan per non-empty half.
+        if let Some(pid) = root.id.clone() {
+            for (half, g) in [(Half::Right, Growth::BiRight), (Half::Left, Growth::BiLeft)] {
+                let kids: Vec<String> = first
+                    .iter()
+                    .zip(&halves)
+                    .filter(|&(_, &h)| h == half)
+                    .filter_map(|(&i, _)| match &root.children[i] {
+                        Child::Box(k) => k.id.clone(),
+                        _ => None,
+                    })
+                    .collect();
+                if !kids.is_empty() {
+                    push_unique(links, branch_fan(&pid, &kids, g, root.span));
+                }
+            }
+        }
+
+        // Each first-level subtree grows uniformly in its half's orientation.
+        for (pos, &idx) in first.iter().enumerate() {
+            let g = match halves[pos] {
+                Half::Right => Growth::BiRight,
+                Half::Left => Growth::BiLeft,
+            };
+            let Child::Box(k) = &mut root.children[idx] else {
+                continue;
+            };
+            build_topic(k, &mut root.links, 1, g);
+        }
+        root.links.sort_by_key(|l| l.span.start);
+    }
+    links.sort_by_key(|l| l.span.start);
+}
+
+/// Read and remove a topic's inline `side:` (the last wins) [SPEC 12] — the
+/// half is re-expressed as a generated class, so the raw property never reaches
+/// resolve.
+fn take_side(style: &mut Vec<Decl>) -> Option<String> {
+    let val = style
+        .iter()
+        .rev()
+        .find(|d| d.name == "side")
+        .and_then(decl_ident)
+        .map(str::to_string);
+    style.retain(|d| d.name != "side");
+    val
+}
+
+/// Push a generated link unless the scope already carries an identical one —
+/// the fixed-point guard.
+fn push_unique(links: &mut Vec<Link>, link: Link) {
+    if !links.iter().any(|l| same_link(l, &link)) {
+        links.push(link);
+    }
 }
 
 /// Mint deterministic `lini-topic-N` ids for a scope's anonymous topic children
@@ -338,4 +546,11 @@ fn root_layout(stylesheet: &[StyleItem]) -> Option<&str> {
         StyleItem::RootDecl(d) if d.name == "layout" => decl_ident(d),
         _ => None,
     })
+}
+
+fn root_direction(stylesheet: &[StyleItem]) -> Dir {
+    dir_from(stylesheet.iter().rev().find_map(|it| match it {
+        StyleItem::RootDecl(d) if d.name == "direction" => decl_ident(d),
+        _ => None,
+    }))
 }

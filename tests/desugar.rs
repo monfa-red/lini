@@ -260,6 +260,51 @@ fn a_row_tree_fans_on_the_right_side() {
 }
 
 #[test]
+fn a_bilateral_tree_splits_the_first_level_and_fans_both_sides() {
+    // First ⌈n/2⌉ first-level topics fill the right, the rest the left; an
+    // authored `side:` overrides its half; the root emits one fan per half with
+    // mirrored sides, and each half grows on that side [SPEC 12].
+    let out = desugar_source(
+        "|column#o| { layout: tree; direction: bilateral } [\n  |topic#r| \"R\" [\n    |topic#a| \"A\" [ |topic#a1| \"A1\" ]\n    |topic#b| \"B\"\n    |topic#c| \"C\"\n    |topic#d| \"D\" { side: right }\n  ]\n]\n",
+    )
+    .unwrap();
+    // n = 4: a,b default right, c,d default left; d overridden back to right.
+    assert!(
+        out.contains("|block#a| .lini-topic.lini-block.lini-side-right.lini-level-1"),
+        "a right: {out}"
+    );
+    assert!(
+        out.contains("|block#c| .lini-topic.lini-block.lini-side-left.lini-level-1"),
+        "c left: {out}"
+    );
+    assert!(
+        out.contains("|block#d| .lini-topic.lini-block.lini-side-right.lini-level-1"),
+        "d overridden right: {out}"
+    );
+    // The authored `side:` is consumed — no raw property survives to resolve.
+    assert!(!out.contains("side:"), "side consumed: {out}");
+    // The root's two fans, mirrored per half.
+    assert!(
+        out.contains("r:right - r.a:left & r.b:left & r.d:left"),
+        "right fan: {out}"
+    );
+    assert!(out.contains("r:left - r.c:right"), "left fan: {out}");
+    // A deeper right-half subtree keeps the right orientation.
+    assert!(out.contains("a:right - a.a1:left"), "deep right fan: {out}");
+}
+
+#[test]
+fn a_bilateral_tree_is_a_desugar_fixed_point() {
+    let src = "|column#o| { layout: tree; direction: bilateral } [\n  |topic#r| \"R\" [\n    |topic#a| \"A\"\n    |topic#b| \"B\"\n    |topic#c| \"C\" { side: right }\n  ]\n]\n";
+    let once = desugar_source(src).unwrap();
+    let twice = desugar_source(&once).unwrap();
+    assert_eq!(
+        once, twice,
+        "re-desugaring the lowered bilateral tree changes it"
+    );
+}
+
+#[test]
 fn a_tree_is_a_desugar_fixed_point() {
     let src = "|column#o| { layout: tree } [\n  |topic#a| \"A\" [\n    |topic#b| \"B\"\n    |topic#c| \"C\"\n  ]\n]\n";
     let once = desugar_source(src).unwrap();

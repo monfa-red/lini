@@ -88,6 +88,71 @@ fn a_row_tree_grows_rightward() {
 }
 
 #[test]
+fn a_bilateral_tree_splits_first_half_right_rest_left() {
+    // n = 3: ⌈3/2⌉ = 2 right (a, b), 1 left (c). Right cards sit right of the
+    // root, the left card left of it; the root centres between them.
+    let nodes = laid(
+        "|column#o| { layout: tree; direction: bilateral } [\n  |topic#r| \"R\" [\n    |topic#a| \"A\"\n    |topic#b| \"B\"\n    |topic#c| \"C\"\n  ]\n]\n",
+    );
+    let (rx, _) = centre(&nodes, "r");
+    let (ax, _) = centre(&nodes, "a");
+    let (bx, _) = centre(&nodes, "b");
+    let (cx, _) = centre(&nodes, "c");
+    assert!(ax > rx && bx > rx, "a/b right of root: {rx} vs {ax}/{bx}");
+    assert!(cx < rx, "c left of root: {cx} vs {rx}");
+    // The two right subtrees share a generation column.
+    assert!((ax - bx).abs() < 1e-6, "a/b share the right column");
+}
+
+#[test]
+fn a_bilateral_even_split_is_balanced() {
+    // n = 4: a, b right; c, d left.
+    let nodes = laid(
+        "|column#o| { layout: tree; direction: bilateral } [\n  |topic#r| \"R\" [\n    |topic#a| \"A\"\n    |topic#b| \"B\"\n    |topic#c| \"C\"\n    |topic#d| \"D\"\n  ]\n]\n",
+    );
+    let (rx, _) = centre(&nodes, "r");
+    for id in ["a", "b"] {
+        assert!(centre(&nodes, id).0 > rx, "{id} right of root");
+    }
+    for id in ["c", "d"] {
+        assert!(centre(&nodes, id).0 < rx, "{id} left of root");
+    }
+}
+
+#[test]
+fn a_bilateral_side_override_moves_a_branch() {
+    // n = 3 defaults a, b right and c left; `side: left` on b sends it left
+    // while a stays right — the override moves exactly one branch.
+    let nodes = laid(
+        "|column#o| { layout: tree; direction: bilateral } [\n  |topic#r| \"R\" [\n    |topic#a| \"A\"\n    |topic#b| \"B\" { side: left }\n    |topic#c| \"C\"\n  ]\n]\n",
+    );
+    let (rx, _) = centre(&nodes, "r");
+    assert!(centre(&nodes, "a").0 > rx, "a stays right");
+    assert!(centre(&nodes, "b").0 < rx, "b overridden to the left");
+    assert!(centre(&nodes, "c").0 < rx, "c stays left");
+}
+
+#[test]
+fn a_bilateral_half_mirrors_a_deeper_generation() {
+    // A right subtree grows further right with depth; a left one further left.
+    let nodes = laid(
+        "|column#o| { layout: tree; direction: bilateral } [\n  |topic#r| \"R\" [\n    |topic#a| \"A\" [ |topic#ax| \"AX\" ]\n    |topic#c| \"C\" { side: left } [ |topic#cx| \"CX\" ]\n  ]\n]\n",
+    );
+    let (rx, _) = centre(&nodes, "r");
+    let (ax, _) = centre(&nodes, "a");
+    let (axx, _) = centre(&nodes, "ax");
+    let (cx, _) = centre(&nodes, "c");
+    let (cxx, _) = centre(&nodes, "cx");
+    assert!(axx > ax && ax > rx, "right generation grows rightward");
+    assert!(cxx < cx && cx < rx, "left generation grows leftward");
+    // The two second-generation cards mirror about the root by one gap band.
+    assert!(
+        (axx - rx) > 0.0 && (rx - cxx) > 0.0,
+        "symmetric outward growth"
+    );
+}
+
+#[test]
 fn a_deeper_subtree_packs_without_overlap() {
     // b has two children; d/e widen b's subtree so a stays centred over the
     // whole span, and the two leaves never overlap.

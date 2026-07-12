@@ -24,3 +24,24 @@
     ]
   ]
 ]
+
+|column#launch| { layout: tree; direction: bilateral; } [
+  |topic#plan| "Launch" [
+    |topic#product| "Product" [
+      |topic#mvp| "MVP"
+      |topic#docs| "Docs"
+    ]
+    |topic#market| "Marketing" [
+      |topic#site| "Site"
+    ]
+    |topic#sales| "Sales" { side: left; } [
+      |topic#leads| "Leads"
+    ]
+    |topic#ops| "Ops" [
+      |topic#legal| "Legal"
+    ]
+    |topic#team| "Team" [
+      |topic#hire| "Hiring"
+    ]
+  ]
+]

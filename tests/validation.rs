@@ -282,6 +282,50 @@ fn a_tree_with_two_roots_errors_on_the_second() {
 }
 
 #[test]
+fn a_bilateral_top_side_errors() {
+    // `top`/`bottom` has no meaning in a left/right split [SPEC 12/20].
+    insta::assert_snapshot!(
+        tree_err(
+            "|column#o| { layout: tree; direction: bilateral } [\n  |topic#r| \"R\" [\n    |topic#a| \"A\" { side: top }\n  ]\n]\n"
+        ),
+        @"a bilateral tree grows left and right — 'side' takes left or right"
+    );
+}
+
+#[test]
+fn a_side_on_a_row_tree_errors() {
+    // `side:` picks a bilateral half; a one-direction tree has none [SPEC 12/20].
+    insta::assert_snapshot!(
+        tree_err(
+            "|column#o| { layout: tree; direction: row } [\n  |topic#r| \"R\" [\n    |topic#a| \"A\" { side: left }\n  ]\n]\n"
+        ),
+        @"'side' picks a bilateral branch's half — this tree has one growth direction"
+    );
+}
+
+#[test]
+fn a_deeper_bilateral_side_errors() {
+    // The override is a first-level topic's; a deeper `side:` cannot repick its
+    // half [SPEC 12/20].
+    insta::assert_snapshot!(
+        tree_err(
+            "|column#o| { layout: tree; direction: bilateral } [\n  |topic#r| \"R\" [\n    |topic#a| \"A\" [ |topic#b| \"B\" { side: left } ]\n  ]\n]\n"
+        ),
+        @"'side' picks a bilateral branch's half — this tree has one growth direction"
+    );
+}
+
+#[test]
+fn a_first_level_bilateral_side_override_is_silent() {
+    let src = "|column#o| { layout: tree; direction: bilateral } [\n  |topic#r| \"R\" [\n    |topic#a| \"A\" { side: left }\n    |topic#b| \"B\"\n  ]\n]\n";
+    assert!(
+        lini::check(src).is_ok(),
+        "a first-level side override should compile"
+    );
+    assert_silent(src);
+}
+
+#[test]
 fn a_well_formed_tree_is_silent() {
     let src = "|column#o| { layout: tree } [\n  |topic#a| \"A\" [\n    |topic#b| \"B\"\n  ]\n]\n";
     assert!(lini::check(src).is_ok(), "a valid tree should compile");
