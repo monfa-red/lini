@@ -70,6 +70,26 @@ pub(crate) fn cross(a: &[(f64, f64)], b: &[(f64, f64)]) -> Option<(f64, f64)> {
     (hx0 < x && x < hx1 && vy0 < y && y < vy1).then_some((x, y))
 }
 
+/// The transversal intersection of two segments of **any** orientation —
+/// the natural strategy's oblique crossings (ROUTING.md The natural
+/// strategy: crossings need not be square-on). The same reading as
+/// [`cross`] freed of the axis-aligned assumption: strictly interior on
+/// both segments; parallels, touches, and collinear overlaps are contact.
+/// Orthogonal pairs keep [`cross`] (comparisons, not cross products) so
+/// their counts stay byte-identical.
+pub(crate) fn cross_oblique(a: &[(f64, f64)], b: &[(f64, f64)]) -> Option<(f64, f64)> {
+    let r = (a[1].0 - a[0].0, a[1].1 - a[0].1);
+    let s = (b[1].0 - b[0].0, b[1].1 - b[0].1);
+    let den = r.0 * s.1 - r.1 * s.0;
+    if den == 0.0 {
+        return None;
+    }
+    let qp = (b[0].0 - a[0].0, b[0].1 - a[0].1);
+    let t = (qp.0 * s.1 - qp.1 * s.0) / den;
+    let u = (qp.0 * r.1 - qp.1 * r.0) / den;
+    (t > 0.0 && t < 1.0 && u > 0.0 && u < 1.0).then(|| (a[0].0 + t * r.0, a[0].1 + t * r.1))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -80,6 +100,21 @@ mod tests {
         let v = [(4.0, 0.0), (4.0, 10.0)];
         assert_eq!(cross(&h, &v), Some((4.0, 5.0)));
         assert_eq!(cross(&v, &h), Some((4.0, 5.0)));
+    }
+
+    #[test]
+    fn oblique_pairs_cross_at_the_meet() {
+        let a = [(0.0, 0.0), (10.0, 10.0)];
+        let b = [(0.0, 10.0), (10.0, 0.0)];
+        assert_eq!(cross_oblique(&a, &b), Some((5.0, 5.0)));
+        // Agreement with `cross` on a transversal orthogonal pair.
+        let h = [(0.0, 5.0), (10.0, 5.0)];
+        let v = [(4.0, 0.0), (4.0, 10.0)];
+        assert_eq!(cross_oblique(&h, &v), cross(&h, &v));
+        // Touches, parallels, and collinear overlaps are contact.
+        assert_eq!(cross_oblique(&a, &[(10.0, 10.0), (20.0, 0.0)]), None);
+        assert_eq!(cross_oblique(&a, &[(1.0, 0.0), (11.0, 10.0)]), None);
+        assert_eq!(cross_oblique(&a, &[(5.0, 5.0), (20.0, 20.0)]), None);
     }
 
     #[test]

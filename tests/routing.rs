@@ -756,3 +756,176 @@ fn anonymous_topics_mint_ids_and_wire_up() {
     let routes = routes(src);
     assert_eq!(routes.len(), 3, "three branch wires drawn: {routes:?}");
 }
+
+// ── The natural strategy: corridors, obstacles, laws (ROUTING.md The natural strategy) ──
+
+/// Law breaches above counted output and honest strays — what the natural
+/// arm (and the four laws) must keep silent on.
+fn breaches(src: &str) -> Vec<lini::Violation> {
+    report(src)
+        .into_iter()
+        .filter(|v| v.severity != Severity::Info && v.rule != Rule::Impossible)
+        .collect()
+}
+
+#[test]
+fn a_natural_wire_dodges_an_obstacle_inside_its_corridor() {
+    // A wall between the endpoints forces the dogleg corridor; the curve
+    // rides it — every sample keeps clearance from the wall — and the
+    // natural law arm passes the scene.
+    let src = "{ direction: row; gap: 60; clearance: 10; routing: natural }\n\
+               |box#a| { width: 60; height: 60 }\n\
+               |box#wall| { width: 60; height: 200 }\n\
+               |box#b| { width: 60; height: 60 }\n\
+               a -> b\n";
+    let found = breaches(src);
+    assert!(found.is_empty(), "{found:?}");
+    // And at every knob value the natural arm stays silent (the laws.rs
+    // sweep pattern, on the obstacle corridor).
+    for c in [6.0, 10.0, 16.0] {
+        let swept = lini::testing::laws(&route_sample(src, c));
+        let found: Vec<_> = swept
+            .iter()
+            .filter(|v| v.severity != Severity::Info && v.rule != Rule::Impossible)
+            .collect();
+        assert!(found.is_empty(), "at clearance {c}: {found:?}");
+    }
+    let r = routes(src);
+    let p = path(&r, "a", "b");
+    let laid = route_sample(src, 10.0);
+    let (x0, y0, x1, y1) = node_rect(&laid, "wall").expect("wall placed");
+    for s in p.windows(2) {
+        let dx = (x0 - s[0].0.max(s[1].0))
+            .max(s[0].0.min(s[1].0) - x1)
+            .max(0.0);
+        let dy = (y0 - s[0].1.max(s[1].1))
+            .max(s[0].1.min(s[1].1) - y1)
+            .max(0.0);
+        assert!(
+            (dx * dx + dy * dy).sqrt() >= 10.0 - 1e-6,
+            "sample window {s:?} inside the wall's clearance"
+        );
+    }
+    // It actually dodges: the ports are level with the wall, so some sample
+    // clears the wall's top or bottom edge.
+    assert!(
+        p.iter().any(|q| q.1 < y0 || q.1 > y1),
+        "the curve never left the blocked straight line: {p:?}"
+    );
+}
+
+#[test]
+fn a_natural_bundle_draws_two_separated_parallel_curves() {
+    let src = "{ direction: row; gap: 80; clearance: 10; routing: natural }\n\
+               |box#a| { width: 60; height: 60 }\n\
+               |box#b| { width: 60; height: 60 }\n\
+               a -> b\n\
+               a -> b\n";
+    let found = breaches(src);
+    assert!(found.is_empty(), "{found:?}");
+    let r = routes(src);
+    let rails = paths(&r, "a", "b");
+    assert_eq!(rails.len(), 2, "both members drawn");
+    assert_ne!(
+        rails[0], rails[1],
+        "members ride their own placed ordinates"
+    );
+    // Adjacent rails at pitch: no two sample windows pinch below clearance.
+    let mut min = f64::INFINITY;
+    for sa in rails[0].windows(2) {
+        for sb in rails[1].windows(2) {
+            let (ax0, ax1) = (sa[0].0.min(sa[1].0), sa[0].0.max(sa[1].0));
+            let (ay0, ay1) = (sa[0].1.min(sa[1].1), sa[0].1.max(sa[1].1));
+            let (bx0, bx1) = (sb[0].0.min(sb[1].0), sb[0].0.max(sb[1].0));
+            let (by0, by1) = (sb[0].1.min(sb[1].1), sb[0].1.max(sb[1].1));
+            let dx = (bx0 - ax1).max(ax0 - bx1).max(0.0);
+            let dy = (by0 - ay1).max(ay0 - by1).max(0.0);
+            min = min.min((dx * dx + dy * dy).sqrt());
+        }
+    }
+    assert!(min >= 10.0 - 1e-6, "rails pinch to {min}");
+}
+
+#[test]
+fn a_natural_fan_shares_its_trunk_stub_exactly() {
+    // `a -> b & c`: the trunk — the shared port and stub — is one drawn
+    // line; past the tip the siblings split smoothly, each a lawful wire.
+    let src = "{ layout: grid; columns: repeat(2, 80); rows: repeat(2, 80); gap: 40; \
+                 clearance: 10; routing: natural }\n\
+               |box#a| { cell: 1 1; span: 1 2; width: 60; height: 60 }\n\
+               |box#b| { cell: 2 1; width: 60; height: 60 }\n\
+               |box#c| { cell: 2 2; width: 60; height: 60 }\n\
+               a -> b & c\n";
+    let found = breaches(src);
+    assert!(found.is_empty(), "{found:?}");
+    let r = routes(src);
+    let (to_b, to_c) = (path(&r, "a", "b"), path(&r, "a", "c"));
+    assert_eq!(to_b[0], to_c[0], "one shared port");
+    assert_eq!(to_b[1], to_c[1], "one shared stub tip — the trunk is exact");
+    assert_ne!(to_b.last(), to_c.last(), "siblings split to their own ends");
+}
+
+#[test]
+fn a_natural_self_link_draws_a_smooth_hook() {
+    let src = "{ direction: row; gap: 60; clearance: 10; routing: natural }\n\
+               |box#a| { width: 80; height: 60 }\n\
+               a -> a\n";
+    let found = breaches(src);
+    assert!(found.is_empty(), "{found:?}");
+    let r = routes(src);
+    let p = path(&r, "a", "a");
+    let laid = route_sample(src, 10.0);
+    let (x0, y0, x1, _) = node_rect(&laid, "a").expect("a placed");
+    // Default sides right → top (ROUTING.md Special nodes).
+    assert_eq!(p[0].0, x1, "leaves the right side");
+    assert_eq!(p.last().unwrap().1, y0, "returns to the top side");
+    // A smooth hook, not a rounded rectangle: dense curve samples between
+    // the stubs, and never a doubling-back kink sharper than a right angle.
+    assert!(p.len() > 10, "sampled curve: {p:?}");
+    for w in p.windows(3) {
+        let u = (w[1].0 - w[0].0, w[1].1 - w[0].1);
+        let v = (w[2].0 - w[1].0, w[2].1 - w[1].1);
+        assert!(
+            u.0 * v.0 + u.1 * v.1 >= 0.0,
+            "kink at {:?} in the hook",
+            w[1]
+        );
+    }
+    let _ = x0;
+}
+
+#[test]
+fn natural_wires_cross_obliquely_and_the_report_counts_it() {
+    // Two natural wires forced across each other: the crossing is oblique
+    // (no square-on law for natural), counted once by the generic
+    // intersection — and the checker reconciles it, so the scene stays
+    // breach-free. The uneven widths keep the meet off the sample grid —
+    // a crossing exactly on a shared sample point is a touch, not counted,
+    // by engine and checker alike.
+    let src = "{ layout: grid; columns: repeat(3, 60); rows: repeat(3, 70); gap: 30; \
+                 clearance: 10; routing: natural }\n\
+               |box#n| { cell: 2 1; width: 60; height: 60 }\n\
+               |box#a| { cell: 1 2; width: 60; height: 50 }\n\
+               |box#b| { cell: 3 2; width: 80; height: 60 }\n\
+               |box#s| { cell: 2 3; width: 60; height: 80 }\n\
+               n -> s\n\
+               a -> b\n";
+    let found = breaches(src);
+    assert!(found.is_empty(), "{found:?}");
+    assert_eq!(crossings(src), 1, "one oblique crossing, reported");
+}
+
+#[test]
+fn a_natural_obstacle_scene_renders_byte_identically() {
+    let src = "{ direction: row; gap: 60; clearance: 10; routing: natural }\n\
+               |box#a| { width: 60; height: 60 }\n\
+               |box#wall| { width: 60; height: 200 }\n\
+               |box#b| { width: 60; height: 60 }\n\
+               a -> b\n";
+    let svg = lini::compile_str(src).expect("compiles");
+    let routes = routes_str(src).expect("routes");
+    for _ in 0..2 {
+        assert_eq!(lini::compile_str(src).expect("recompile"), svg);
+        assert_eq!(routes_str(src).expect("reroute"), routes);
+    }
+}

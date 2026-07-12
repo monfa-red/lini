@@ -387,7 +387,7 @@ pub(crate) fn route(index: &SceneIndex, reqs: &[EdgeReq]) -> (Routing, Vec<usize
         // lowers to cubics plus their dense sampling as the shared `path`.
         let (path, curve) = match req.routing {
             Strategy::Orthogonal => (geometry::polyline(chain), Vec::new()),
-            Strategy::Natural => super::natural::lower(chain, req.stub_a, req.stub_b),
+            Strategy::Natural => super::natural::lower(index, req, chain, c),
             Strategy::Straight => unreachable!("straight requests never build chains"),
         };
         routing.links.push(RoutedLink {
@@ -409,12 +409,22 @@ pub(crate) fn route(index: &SceneIndex, reqs: &[EdgeReq]) -> (Routing, Vec<usize
     }
 
     // The exact crossing count over the final polylines — the estimate's
-    // ground truth, counted once and reported as normal output.
+    // ground truth, counted once and reported as normal output. A pair
+    // involving a natural wire crosses obliquely (its samples are not
+    // axis-aligned), so it counts by generic transversal intersection;
+    // orthogonal pairs keep the square-on primitive, byte-identical.
     for i in 0..routing.links.len() {
         for j in i + 1..routing.links.len() {
+            let hit = if routing.links[i].strategy == Strategy::Natural
+                || routing.links[j].strategy == Strategy::Natural
+            {
+                crate::routing::cross_oblique
+            } else {
+                cross
+            };
             for sa in routing.links[i].path.windows(2) {
                 for sb in routing.links[j].path.windows(2) {
-                    if let Some(at) = cross(sa, sb) {
+                    if let Some(at) = hit(sa, sb) {
                         let name = |k: usize| {
                             let r = &reqs[req_of[k]];
                             format!("{} -> {}", r.a_path, r.b_path)

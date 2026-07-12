@@ -301,27 +301,45 @@ byte-identical; the curve constants named in one place.
 
 ### Stage 4 — `natural` general: corridors, obstacles, laws
 
-- [ ] `routing/natural/corridor.rs`: reuse the orthogonal search end-to-
+- [x] `routing/natural/corridor.rs`: reuse the orthogonal search end-to-
   end (`build_worlds`, channels, admission, Law-3 cost) to pick the
   corridor; then fit the curve inside it — spline through the corridor's
   cell sequence honouring keep-out clearance (sampled), tangent-normal at
   both ends, never tighter than the corridor allows. A link the search
   cannot route is the same honest stray.
-- [ ] The shared spine holds: forced sides, markers, labels (slide along
+- [x] The shared spine holds: forced sides, markers, labels (slide along
   the drawn curve), bundles (parallel offset curves), fans (shared trunk
   until the split), self-links (a smooth hook), reports, determinism
   (byte-identical reruns pinned).
-- [ ] The natural law checker (`routing/validate` gains a natural arm,
+- [x] The natural law checker (`routing/validate` gains a natural arm,
   per the ROUTING.md Stage-0 wording): endpoint contact + perpendicularity,
   sampled clearance from keep-outs, duplicate separation; the orthogonal-
   only laws (square-on crossings) explicitly skipped.
-- [ ] Flow/grid scenes accept `routing: natural` (tests: a dogleg-forcing
+- [x] Flow/grid scenes accept `routing: natural` (tests: a dogleg-forcing
   obstacle scene, a bundle, a fan, a self-link); tree/mindmap unaffected.
 
 Acceptance: natural obstacle scenes lawful under the new checker;
 deterministic reruns byte-identical; orthogonal and straight outputs
 untouched; a stray still draws honest.
-**Log:**
+**Log:** 2026-07-12 — **done**, 1 commit (Fable agent). Corridor
+tightening (`natural/corridor.rs`): a clean fit passes through untouched
+(the Stage-3 trees byte-identical); on a sampled clearance breach the
+spline re-anchors through the polyline's corners, then only the offending
+spans' handles halve toward their chords, a final round snapping them —
+a zero-handle span *is* its polyline piece, legal by construction. The
+checker gains its natural arm (`validate/natural.rs`): the shared landing
+judgment plus the straight marker stub, sampled clearance through the
+router's own `Keepouts` offence predicate (one mechanism, one metric —
+`box_dist` now lives in `ortho/rect.rs`), duplicate pitch-floor
+separation with the fan-trunk excuse; run/track and square-crossing laws
+explicitly skipped. Crossing counts widen to generic segment intersection
+for pairs involving a natural wire (`cross_oblique`; orthogonal pairs keep
+`cross`, reports byte-identical), reconciled by the checker the same way;
+testkit `declared_edges`/`drawn_edges` count natural. Six routing tests —
+obstacle dodge (plus a clearance mini-sweep), bundle rails, exact fan
+trunk, smooth self-hook, oblique crossing counted+reconciled, byte-
+identical reruns — plus corridor/checker unit tests; obstacle, bundle,
+fan, and self-link PNGs eyeballed.
 
 ### Stage 5 — `|mindmap|`, the hero & release
 

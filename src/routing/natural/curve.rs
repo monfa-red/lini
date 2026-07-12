@@ -10,11 +10,13 @@
 
 use crate::ledger::consts::NATURAL_PULL;
 
-type Pt = (f64, f64);
+pub(crate) type Pt = (f64, f64);
 
 /// Samples per cubic in the shared `path` polyline — dense enough that the
-/// label arc-walk and mask bbox read the drawn curve faithfully.
-const SAMPLES: usize = 24;
+/// label arc-walk and mask bbox read the drawn curve faithfully. The
+/// tightening pass and the law checker sample at the same density, so what
+/// one judges is exactly what the other drew.
+pub(crate) const SAMPLES: usize = 24;
 
 fn sub(a: Pt, b: Pt) -> Pt {
     (a.0 - b.0, a.1 - b.1)
@@ -45,7 +47,7 @@ fn unit(a: Pt) -> Pt {
     }
 }
 
-fn bezier(c: &[Pt; 4], t: f64) -> Pt {
+pub(crate) fn bezier(c: &[Pt; 4], t: f64) -> Pt {
     let u = 1.0 - t;
     let (b0, b1, b2, b3) = (u * u * u, 3.0 * u * u * t, 3.0 * u * t * t, t * t * t);
     (
@@ -73,16 +75,21 @@ fn span(p0: Pt, t0: Pt, p1: Pt, t1: Pt) -> [Pt; 4] {
     ]
 }
 
-/// Fit the drawn natural geometry along a placed chain's polyline: the exact
-/// cubics between the two stub tips, and the dense sampled path (port and
-/// stub points exact, `SAMPLES` points per cubic).
-pub(crate) fn fit(poly: &[Pt], stub_a: f64, stub_b: f64) -> (Vec<Pt>, Vec<[Pt; 4]>) {
+/// The stub geometry of a chain's polyline: the two tip points and the unit
+/// leave directions (each pointing off its body, along its own end segment).
+pub(crate) struct Stubs {
+    pub a: Pt,
+    pub b: Pt,
+    pub da: Pt,
+    pub db: Pt,
+}
+
+/// Stub tips on a polyline. Stubs stay on their own end segment; two stubs
+/// sharing one segment (the straight pair) split it rather than cross.
+pub(crate) fn stubs(poly: &[Pt], stub_a: f64, stub_b: f64) -> Stubs {
     let last = poly.len() - 1;
-    let (pa, pb) = (poly[0], poly[last]);
     let da = unit(sub(poly[1], poly[0]));
     let db = unit(sub(poly[last - 1], poly[last]));
-    // Stubs stay on their own end segment; two stubs sharing one segment
-    // (the straight pair) split it rather than cross.
     let (la, lb) = (
         len(sub(poly[1], poly[0])),
         len(sub(poly[last], poly[last - 1])),
@@ -92,28 +99,18 @@ pub(crate) fn fit(poly: &[Pt], stub_a: f64, stub_b: f64) -> (Vec<Pt>, Vec<[Pt; 4
     } else {
         (stub_a.min(la), stub_b.min(lb))
     };
-    let sa = add(pa, mul(da, sa_len));
-    let sb = add(pb, mul(db, sb_len));
+    Stubs {
+        a: add(poly[0], mul(da, sa_len)),
+        b: add(poly[last], mul(db, sb_len)),
+        da,
+        db,
+    }
+}
 
-    // Knots: the stub tips and each interior segment's midpoint. Tangents
-    // are the forced end directions at the tips and Catmull-Rom blends
-    // (toward the neighbouring knots) inside — a midpoint knot eases along
-    // the overall travel instead of snapping to its own segment's axis, the
-    // classic mindmap S rather than a ballooned zig.
-    let mut knots: Vec<Pt> = vec![sa];
-    for i in 1..last.saturating_sub(1) {
-        knots.push(mul(add(poly[i], poly[i + 1]), 0.5));
-    }
-    knots.push(sb);
-    // The canonical single-jog case (decision 7 — the tree dogleg, and the
-    // straight pair): one cubic between the stubs absorbs the whole offset,
-    // the classic horizontal-tangent S. It applies whenever both forced
-    // tangents advance toward the far stub; a doubling-back jog (a U) keeps
-    // its midpoint knot so the curve follows the chain the search chose.
-    let d = sub(sb, sa);
-    if knots.len() == 3 && dot(d, da) > 0.0 && dot(d, mul(db, -1.0)) > 0.0 {
-        knots.remove(1);
-    }
+/// The G1 cubic chain through `knots`: the forced leave directions at the two
+/// tips (perpendicular arrival), Catmull-Rom blends (toward the neighbouring
+/// knots) inside; repeated knots drop their degenerate span.
+pub(crate) fn spans(knots: &[Pt], da: Pt, db: Pt) -> Vec<[Pt; 4]> {
     let tangent = |i: usize| {
         if i == 0 {
             da
@@ -123,17 +120,28 @@ pub(crate) fn fit(poly: &[Pt], stub_a: f64, stub_b: f64) -> (Vec<Pt>, Vec<[Pt; 4
             unit(sub(knots[i + 1], knots[i - 1]))
         }
     };
-
-    let curve: Vec<[Pt; 4]> = (0..knots.len() - 1)
+    (0..knots.len() - 1)
         .filter(|&i| knots[i] != knots[i + 1])
         .map(|i| span(knots[i], tangent(i), knots[i + 1], tangent(i + 1)))
-        .collect();
+        .collect()
+}
 
+/// One span's dense sampling — its start point plus `SAMPLES` steps to its
+/// end. What the tightening pass and the law checker both judge.
+pub(crate) fn sample_span(c: &[Pt; 4]) -> Vec<Pt> {
+    std::iter::once(c[0])
+        .chain((1..=SAMPLES).map(|j| bezier(c, j as f64 / SAMPLES as f64)))
+        .collect()
+}
+
+/// The shared `path` polyline of a fitted curve: port, stub tip, `SAMPLES`
+/// points per cubic, port — port and stub points exact.
+pub(crate) fn sample(pa: Pt, sa: Pt, pb: Pt, curve: &[[Pt; 4]]) -> Vec<Pt> {
     let mut path = vec![pa];
     if sa != pa {
         path.push(sa);
     }
-    for c in &curve {
+    for c in curve {
         for j in 1..=SAMPLES {
             path.push(bezier(c, j as f64 / SAMPLES as f64));
         }
@@ -141,7 +149,35 @@ pub(crate) fn fit(poly: &[Pt], stub_a: f64, stub_b: f64) -> (Vec<Pt>, Vec<[Pt; 4
     if *path.last().expect("non-empty") != pb {
         path.push(pb);
     }
-    (path, curve)
+    path
+}
+
+/// Fit the drawn natural geometry along a placed chain's polyline: the exact
+/// cubics between the two stub tips, and the dense sampled path (port and
+/// stub points exact, `SAMPLES` points per cubic).
+pub(crate) fn fit(poly: &[Pt], stub_a: f64, stub_b: f64) -> (Vec<Pt>, Vec<[Pt; 4]>) {
+    let last = poly.len() - 1;
+    let s = stubs(poly, stub_a, stub_b);
+
+    // Knots: the stub tips and each interior segment's midpoint. A midpoint
+    // knot eases along the overall travel instead of snapping to its own
+    // segment's axis — the classic mindmap S rather than a ballooned zig.
+    let mut knots: Vec<Pt> = vec![s.a];
+    for i in 1..last.saturating_sub(1) {
+        knots.push(mul(add(poly[i], poly[i + 1]), 0.5));
+    }
+    knots.push(s.b);
+    // The canonical single-jog case (decision 7 — the tree dogleg, and the
+    // straight pair): one cubic between the stubs absorbs the whole offset,
+    // the classic horizontal-tangent S. It applies whenever both forced
+    // tangents advance toward the far stub; a doubling-back jog (a U) keeps
+    // its midpoint knot so the curve follows the chain the search chose.
+    let d = sub(s.b, s.a);
+    if knots.len() == 3 && dot(d, s.da) > 0.0 && dot(d, mul(s.db, -1.0)) > 0.0 {
+        knots.remove(1);
+    }
+    let curve = spans(&knots, s.da, s.db);
+    (sample(poly[0], s.a, poly[last], &curve), curve)
 }
 
 #[cfg(test)]

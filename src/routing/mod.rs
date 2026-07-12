@@ -14,10 +14,10 @@ mod report;
 pub(crate) mod straight;
 mod validate;
 
+pub use report::{Rule, Severity, Violation};
 /// The transversal-crossing primitive, shared with the renderer's fillet
 /// pass (a crossing must never land mid-arc).
-pub(crate) use report::cross;
-pub use report::{Rule, Severity, Violation};
+pub(crate) use report::{cross, cross_oblique};
 
 use crate::error::Error;
 use crate::layout::ir::{PlacedNode, RoutedLink, Stray};

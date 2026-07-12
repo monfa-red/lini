@@ -10,16 +10,18 @@
 //! fall below half the clearance. Crossings reconcile against the report
 //! both ways — every drawn crossing named, every named crossing drawn.
 //!
-//! Only orthogonal wires are judged: the four laws are the orthogonal
-//! contract, and a `straight` wire is lawfully oblique and avoids nothing.
-//! Anything found here is an engine bug (`Severity::Warning`); the checker
-//! exists to catch it in CI, never to repair the routing.
+//! Orthogonal wires are judged against the four laws; a `natural` wire is
+//! judged by its own arm ([`natural`]) — contact, sampled clearance,
+//! duplicate separation — per ROUTING.md The natural strategy; a `straight`
+//! wire is lawfully oblique, avoids nothing, and is skipped. Anything found
+//! here is an engine bug (`Severity::Warning`); the checker exists to catch
+//! it in CI, never to repair the routing.
 
 use super::ortho::cost::min_pitch;
-use super::ortho::rect::Rect;
+use super::ortho::rect::{Rect, box_dist, rect_box, seg_box};
 use super::ortho::request::link_clearance;
 use super::ortho::scene::SceneIndex;
-use super::report::{Rule, Severity, Violation, cross};
+use super::report::{Rule, Severity, Violation, cross, cross_oblique};
 use crate::ast::Side;
 use crate::layout::ir::{PlacedNode, RoutedLink};
 use crate::resolve::Strategy;
@@ -27,37 +29,70 @@ use crate::span::Span;
 use std::collections::BTreeMap;
 
 mod excuse;
+mod natural;
 
 const EPS: f64 = 1e-6;
 
 pub fn check(nodes: &[PlacedNode], links: &[RoutedLink], report: &[Violation]) -> Vec<Violation> {
-    let links: Vec<&RoutedLink> = links
+    let judged: Vec<&RoutedLink> = links
         .iter()
         .filter(|w| match w.strategy {
-            Strategy::Orthogonal => true,
-            // A natural wire is judged by its own arm — contact, sampled
-            // clearance, duplicate separation — which lands with Stage 4
-            // (PLAN-TREE-alpha1); skipped until then.
-            Strategy::Natural => false,
+            Strategy::Orthogonal | Strategy::Natural => true,
             Strategy::Straight => false,
         })
         .collect();
-    if links.is_empty() {
+    if judged.is_empty() {
         return Vec::new();
     }
     // The diagram routes at the maximum clearance any link carries
     // (ROUTING.md Vocabulary), so every link is judged at that number.
-    let c = links
+    let c = judged
         .iter()
         .map(|w| link_clearance(&w.attrs))
         .fold(0.0_f64, f64::max);
+    let ortho: Vec<&RoutedLink> = strategy_of(&judged, Strategy::Orthogonal);
+    let nat: Vec<&RoutedLink> = strategy_of(&judged, Strategy::Natural);
     let index = SceneIndex::build(nodes);
     let mut out = Vec::new();
-    contact(&index, &links, c, &mut out);
-    clearance(&index, &links, c, &mut out);
-    separation(&index, &links, c, report, &mut out);
-    self_crossing(&links, &mut out);
+    contact(&index, &ortho, c, &mut out);
+    clearance(&index, &ortho, c, &mut out);
+    let mut drawn = separation(&index, &ortho, c, &mut out);
+    self_crossing(&ortho, &mut out);
+    natural::check(&index, &nat, c, &mut out);
+    // Crossings involving a natural wire are lawfully oblique — counted for
+    // the report reconciliation with the same generic intersection the
+    // engine counts them with, never judged square-on.
+    oblique_crossings(&judged, &mut drawn);
+    reconcile(&judged, &drawn, report, &mut out);
     out
+}
+
+fn strategy_of<'a>(links: &[&'a RoutedLink], s: Strategy) -> Vec<&'a RoutedLink> {
+    links.iter().filter(|w| w.strategy == s).copied().collect()
+}
+
+/// Every drawn transversal crossing of pairs involving a natural wire —
+/// the oblique mirror of the map [`separation`] collects for orthogonal
+/// pairs, feeding the same [`reconcile`].
+fn oblique_crossings(
+    links: &[&RoutedLink],
+    drawn: &mut BTreeMap<(String, String), Vec<(f64, f64)>>,
+) {
+    for i in 0..links.len() {
+        for j in i + 1..links.len() {
+            let (a, b) = (links[i], links[j]);
+            if a.strategy != Strategy::Natural && b.strategy != Strategy::Natural {
+                continue;
+            }
+            for sa in a.path.windows(2) {
+                for sb in b.path.windows(2) {
+                    if let Some(at) = cross_oblique(sa, sb) {
+                        drawn.entry(pair_key(a, b)).or_default().push(at);
+                    }
+                }
+            }
+        }
+    }
 }
 
 fn name(w: &RoutedLink) -> String {
@@ -72,26 +107,6 @@ fn breach(rule: Rule, w: &RoutedLink, detail: String) -> Violation {
         detail,
         span: w.decl_span,
     }
-}
-
-/// Distance between two axis-aligned boxes; segments degenerate to boxes.
-fn box_dist(a: (f64, f64, f64, f64), b: (f64, f64, f64, f64)) -> f64 {
-    let dx = (b.0 - a.2).max(a.0 - b.2).max(0.0);
-    let dy = (b.1 - a.3).max(a.1 - b.3).max(0.0);
-    (dx * dx + dy * dy).sqrt()
-}
-
-fn seg_box(s: &[(f64, f64)]) -> (f64, f64, f64, f64) {
-    (
-        s[0].0.min(s[1].0),
-        s[0].1.min(s[1].1),
-        s[0].0.max(s[1].0),
-        s[0].1.max(s[1].1),
-    )
-}
-
-fn rect_box(r: Rect) -> (f64, f64, f64, f64) {
-    (r.x0, r.y0, r.x1, r.y1)
 }
 
 /// Which side the port lands on — or why the landing is illegal (Law 2:
@@ -160,22 +175,28 @@ fn contact(index: &SceneIndex, links: &[&RoutedLink], c: f64, out: &mut Vec<Viol
         {
             out.push(breach(Rule::Contact, w, format!("diagonal segment {s:?}")));
         }
-        for (path, port, inward) in ends(w) {
-            let Some(rect) = index.rect(path) else {
-                out.push(breach(
-                    Rule::Contact,
-                    w,
-                    format!("endpoint '{path}' has no placed body"),
-                ));
-                continue;
-            };
-            if let Err(why) = landing(rect, port, inward, c) {
-                out.push(breach(
-                    Rule::Contact,
-                    w,
-                    format!("{why} at {port:?} on '{path}'"),
-                ));
-            }
+        contact_ends(index, w, c, out);
+    }
+}
+
+/// The two landings of one drawn wire — the contact judgment both arms
+/// share (the natural arm skips only the orthogonal-polyline scan above).
+fn contact_ends(index: &SceneIndex, w: &RoutedLink, c: f64, out: &mut Vec<Violation>) {
+    for (path, port, inward) in ends(w) {
+        let Some(rect) = index.rect(path) else {
+            out.push(breach(
+                Rule::Contact,
+                w,
+                format!("endpoint '{path}' has no placed body"),
+            ));
+            continue;
+        };
+        if let Err(why) = landing(rect, port, inward, c) {
+            out.push(breach(
+                Rule::Contact,
+                w,
+                format!("{why} at {port:?} on '{path}'"),
+            ));
         }
     }
 }
@@ -241,9 +262,17 @@ fn clearance(index: &SceneIndex, links: &[&RoutedLink], c: f64, out: &mut Vec<Vi
     }
 }
 
+/// Whether two drawn wires are siblings of one fan — sharers of a trunk.
+fn fan_pair(a: &RoutedLink, b: &RoutedLink) -> bool {
+    [a.fan_from, a.fan_to]
+        .iter()
+        .flatten()
+        .any(|g| [b.fan_from, b.fan_to].contains(&Some(*g)))
+}
+
 /// Law 1 (link–link) and Law 3's promise, pairwise: every segment pair of
 /// two links keeps clearance, except the sanctioned contacts — transversal
-/// crossings (reconciled against the report) and fan-sibling trunks (one
+/// crossings (returned for [`reconcile`]) and fan-sibling trunks (one
 /// drawn line until the split). A gap below clearance stands only on a
 /// scarcity excuse ([`excused`]); a gap below half the clearance never
 /// stands (the relief valve's floor).
@@ -251,17 +280,13 @@ fn separation(
     index: &SceneIndex,
     links: &[&RoutedLink],
     c: f64,
-    report: &[Violation],
     out: &mut Vec<Violation>,
-) {
+) -> BTreeMap<(String, String), Vec<(f64, f64)>> {
     let mut drawn: BTreeMap<(String, String), Vec<(f64, f64)>> = BTreeMap::new();
     for i in 0..links.len() {
         for j in i + 1..links.len() {
             let (a, b) = (links[i], links[j]);
-            let fan_pair = [a.fan_from, a.fan_to]
-                .iter()
-                .flatten()
-                .any(|g| [b.fan_from, b.fan_to].contains(&Some(*g)));
+            let fan_pair = fan_pair(a, b);
             let mut offence: Option<String> = None;
             for (sk, sa) in a.path.windows(2).enumerate() {
                 for (tk, sb) in b.path.windows(2).enumerate() {
@@ -302,7 +327,7 @@ fn separation(
             }
         }
     }
-    reconcile(links, &drawn, report, out);
+    drawn
 }
 
 /// Fan-sibling contact that is the shared trunk rather than a braid: an
@@ -435,7 +460,7 @@ mod tests {
     use crate::layout::ir::Bbox;
     use crate::resolve::{AttrMap, Markers, NodeKind, ResolvedValue};
 
-    fn sized(id: &str, cx: f64, cy: f64, w: f64, h: f64) -> PlacedNode {
+    pub(super) fn sized(id: &str, cx: f64, cy: f64, w: f64, h: f64) -> PlacedNode {
         PlacedNode {
             id: Some(id.to_owned()),
             kind: NodeKind::Block,
@@ -458,11 +483,11 @@ mod tests {
         }
     }
 
-    fn body(id: &str, cx: f64, cy: f64) -> PlacedNode {
+    pub(super) fn body(id: &str, cx: f64, cy: f64) -> PlacedNode {
         sized(id, cx, cy, 40.0, 40.0)
     }
 
-    fn link(from: &str, to: &str, path: Vec<(f64, f64)>) -> RoutedLink {
+    pub(super) fn link(from: &str, to: &str, path: Vec<(f64, f64)>) -> RoutedLink {
         let mut attrs = AttrMap::default();
         attrs.insert("clearance", ResolvedValue::Number(8.0));
         RoutedLink {
@@ -483,12 +508,12 @@ mod tests {
         }
     }
 
-    fn rules(violations: &[Violation]) -> Vec<Rule> {
+    pub(super) fn rules(violations: &[Violation]) -> Vec<Rule> {
         violations.iter().map(|v| v.rule).collect()
     }
 
     /// a at origin, b to the right, both 40×40.
-    fn pair() -> Vec<PlacedNode> {
+    pub(super) fn pair() -> Vec<PlacedNode> {
         vec![body("a", 0.0, 0.0), body("b", 200.0, 0.0)]
     }
 

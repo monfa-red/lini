@@ -38,6 +38,31 @@ impl Rect {
     }
 }
 
+/// Distance between two axis-aligned boxes (as `(x0, y0, x1, y1)`);
+/// segments degenerate to boxes. The one clearance metric the law checker
+/// and the natural tightening pass share — a wire one judges legal, the
+/// other does too.
+pub(crate) fn box_dist(a: (f64, f64, f64, f64), b: (f64, f64, f64, f64)) -> f64 {
+    let dx = (b.0 - a.2).max(a.0 - b.2).max(0.0);
+    let dy = (b.1 - a.3).max(a.1 - b.3).max(0.0);
+    (dx * dx + dy * dy).sqrt()
+}
+
+/// A two-point segment's bounding box.
+pub(crate) fn seg_box(s: &[(f64, f64)]) -> (f64, f64, f64, f64) {
+    (
+        s[0].0.min(s[1].0),
+        s[0].1.min(s[1].1),
+        s[0].0.max(s[1].0),
+        s[0].1.max(s[1].1),
+    )
+}
+
+/// A [`Rect`] as the tuple `box_dist` consumes.
+pub(crate) fn rect_box(r: Rect) -> (f64, f64, f64, f64) {
+    (r.x0, r.y0, r.x1, r.y1)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

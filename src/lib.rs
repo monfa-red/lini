@@ -223,8 +223,9 @@ pub mod testing {
         layout::layout(&prog).expect("layout")
     }
 
-    /// The number of routable edges the source declares (fans/chains already expanded
-    /// at resolve into one `ResolvedLink` per edge-chain). Sequence-scope messages are
+    /// The number of routable corridor edges (orthogonal and natural) the source
+    /// declares (fans/chains already expanded at resolve into one `ResolvedLink`
+    /// per edge-chain). Sequence-scope messages are
     /// **not** routable — the sequence layout draws them as time-row arrows [SPEC 13],
     /// so the router never sees them — and a drawing scope's links belong to its own
     /// engine [SPEC 15]; both are excluded here, mirroring `routing::ortho::request`.
@@ -233,8 +234,10 @@ pub mod testing {
         prog.links
             .iter()
             .filter(|w| {
-                w.routing == crate::resolve::Strategy::Orthogonal
-                    && !layout::sequence::is_sequence_scope(&prog, &w.scope)
+                matches!(
+                    w.routing,
+                    crate::resolve::Strategy::Orthogonal | crate::resolve::Strategy::Natural
+                ) && !layout::sequence::is_sequence_scope(&prog, &w.scope)
                     && !layout::drawing::is_drawing_scope(&prog, &w.scope)
             })
             .map(|w| w.endpoints.len().saturating_sub(1))
@@ -246,14 +249,19 @@ pub mod testing {
         layout::validate_routing(laid)
     }
 
-    /// Drawn links that answer to `declared_edges`: what the orthogonal
-    /// strategy drew. Straight wires stay out on both sides of the count —
+    /// Drawn links that answer to `declared_edges`: what the corridor
+    /// strategies (orthogonal and natural) drew. Straight wires stay out on both sides of the count —
     /// a sequence's messages are the layout's own, and a `routing: straight`
     /// pair whose trim leaves nothing lawfully draws nothing.
     pub fn drawn_edges(laid: &LaidOut) -> usize {
         laid.links
             .iter()
-            .filter(|w| w.strategy == crate::resolve::Strategy::Orthogonal)
+            .filter(|w| {
+                matches!(
+                    w.strategy,
+                    crate::resolve::Strategy::Orthogonal | crate::resolve::Strategy::Natural
+                )
+            })
             .count()
     }
 }
