@@ -3,7 +3,7 @@ source: tests/conformance.rs
 expression: svg
 input_file: samples/cards.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-301.951 -136.2 603.902 293.9" width="603.902" height="293.9" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-305.951 -134.2 611.902 289.9" width="611.902" height="289.9" class="lini">
   <style>
     .lini { font-family: "Google Sans"; font-size: 15px; font-weight: 500; color: black; }
     .lini .lini-canvas { fill: white; }
@@ -15,6 +15,8 @@ input_file: samples/cards.lini
     .lini .lini-cut-bg { fill: white; stroke: none; }
     .lini .lini-cut { fill: black; stroke: none; }
     .lini .lini-marker { fill: #444; stroke: none; }
+    .lini .lini-style-card-title { font-size: 17px; font-weight: bold; }
+    .lini .lini-style-card-brief { color: #008e85; font-size: 15px; font-weight: 500; }
   </style>
   <defs>
     <path id="lg1400-0" d="M79 0L79 716L501 716L501 0L79 0ZM143 60L437 60L437 656L143 656L143 60Z"/>
@@ -66,310 +68,332 @@ input_file: samples/cards.lini
     <path id="lg1500-1876" d="M278 -15Q239 -15 200.5 -3Q162 9 128 32.5Q94 56 68 92.5Q42 129 29 178L123 217Q133 181 155 150.5Q177 120 209 101.5Q241 83 278 83Q313 83 342 95.5Q371 108 388.5 131.5Q406 155 406 187Q406 215 392.5 236.5Q379 258 353.5 276Q328 294 290 310L242 331Q202 347 168 368Q134 389 109 414.5Q84 440 70 472Q56 504 56 542Q56 593 82.5 636Q109 679 158 705Q207 731 274 731Q343 731 388.5 708Q434 685 460 652Q486 619 495 587L403 547Q397 567 381.5 587Q366 607 339.5 620.5Q313 634 275 634Q225 634 192 608Q159 582 159 542Q159 517 172 496.5Q185 476 211 459Q237 442 275 425L307 410Q364 385 410 355.5Q456 326 483 286.5Q510 247 510 189Q510 136 490 97.5Q470 59 436.5 34.5Q403 10 362 -2.5Q321 -15 278 -15ZM243 -90L243 806L323 806L323 -90L243 -90Z"/>
     <path id="lg1600-0" d="M81 0L81 716L506 716L506 0L81 0ZM145 60L442 60L442 656L145 656L145 60Z"/>
     <path id="lg1600-119" d="M80 0L80 716L330 716Q396 716 450 688Q504 660 536 610Q568 560 568 494Q568 428 536 377.5Q504 327 450 298.5Q396 270 330 270L148 270L148 386L333 386Q370 386 395.5 401.5Q421 417 434 441.5Q447 466 447 494Q447 521 434 545Q421 569 395.5 584.5Q370 600 333 600L203 600L203 0L80 0Z"/>
-    <path id="lg1600-126" d="M292 -16Q234 -16 181 6.5Q128 29 88.5 74Q49 119 30 185L145 230Q160 175 197.5 137.5Q235 100 294 100Q325 100 352 111Q379 122 396 143Q413 164 413 195Q413 225 398.5 245.5Q384 266 352.5 284Q321 302 269 321L225 337Q196 348 166 364.5Q136 381 111.5 405Q87 429 72 460.5Q57 492 57 534Q57 589 85.5 634Q114 679 165.5 705.5Q217 732 284 732Q355 732 401.5 707.5Q448 683 474.5 648.5Q501 614 512 582L403 536Q397 556 382.5 575.5Q368 595 344 607Q320 619 286 619Q256 619 231 608.5Q206 598 191.5 579.5Q177 561 177 536Q177 501 206.5 477Q236 453 297 433L343 418Q379 405 413.5 388Q448 371 475.5 345Q503 319 519 283Q535 247 535 197Q535 142 513 101.5Q491 61 455.5 35Q420 9 377 -3.5Q334 -16 292 -16Z"/>
-    <path id="lg1600-132" d="M222 0L222 652L345 652L345 0L222 0ZM22 600L22 716L545 716L545 600L22 600Z"/>
     <path id="lg1600-177" d="M222 -16Q167 -16 125 5.5Q83 27 59 66Q35 105 35 155Q35 209 63 247.5Q91 286 138 306.5Q185 327 243 327Q274 327 300.5 323Q327 319 347.5 313Q368 307 380 301L380 325Q380 371 346.5 399.5Q313 428 258 428Q220 428 186 411Q152 394 130 365L51 427Q75 458 107 480.5Q139 503 179 514.5Q219 526 262 526Q376 526 436.5 471.5Q497 417 497 316L497 0L380 0L380 57L373 57Q360 38 338 21.5Q316 5 287 -5.5Q258 -16 222 -16ZM247 79Q288 79 318 97.5Q348 116 364 146.5Q380 177 380 211Q358 224 328.5 231Q299 238 267 238Q205 238 180 214Q155 190 155 155Q155 122 179 100.5Q203 79 247 79Z"/>
     <path id="lg1600-203" d="M300 -16Q223 -16 163 19Q103 54 69 115.5Q35 177 35 255Q35 334 69 395Q103 456 163 491Q223 526 300 526Q386 526 445.5 489Q505 452 531 386L422 340Q405 378 374 396.5Q343 415 299 415Q259 415 226 395.5Q193 376 173.5 340Q154 304 154 255Q154 206 173.5 170Q193 134 226 114Q259 94 299 94Q346 94 377.5 115Q409 136 427 173L534 126Q505 63 445.5 23.5Q386 -16 300 -16Z"/>
-    <path id="lg1600-213" d="M299 -16Q222 -16 162.5 19Q103 54 69 115Q35 176 35 254Q35 327 68 389Q101 451 159 488.5Q217 526 293 526Q374 526 429.5 491.5Q485 457 514 398.5Q543 340 543 267Q543 254 542 243.5Q541 233 540 228L102 228L102 315L426 315Q425 333 416.5 352.5Q408 372 391 389Q374 406 350 416.5Q326 427 294 427Q253 427 220 405.5Q187 384 169 346.5Q151 309 151 258Q151 203 171.5 165.5Q192 128 226 109Q260 90 301 90Q350 90 383.5 112Q417 134 436 167L533 119Q498 58 440.5 21Q383 -16 299 -16Z"/>
     <path id="lg1600-241" d="M63 0L63 510L182 510L182 0L63 0ZM123 576Q90 576 67 599Q44 622 44 655Q44 687 67 710Q90 733 123 733Q155 733 178 710Q201 687 201 655Q201 622 178 599Q155 576 123 576Z"/>
     <path id="lg1600-256" d="M63 0L63 716L182 716L182 0L63 0ZM128 106L128 255L385 510L532 510L532 503L128 106ZM399 0L224 275L307 356L541 7L541 0L399 0Z"/>
     <path id="lg1600-259" d="M63 0L63 716L182 716L182 0L63 0Z"/>
-    <path id="lg1600-264" d="M63 0L63 510L175 510L175 443L182 443Q198 467 221 486Q244 505 274 515.5Q304 526 338 526Q394 526 434 499.5Q474 473 491 434Q514 472 557 499Q600 526 663 526Q752 526 796 471.5Q840 417 840 328L840 0L722 0L722 307Q722 362 697 388.5Q672 415 629 415Q594 415 567.5 395.5Q541 376 526.5 342.5Q512 309 512 265L512 0L392 0L392 306Q392 362 367 388.5Q342 415 296 415Q262 415 236 395.5Q210 376 196 342Q182 308 182 264L182 0L63 0Z"/>
     <path id="lg1600-265" d="M63 0L63 510L175 510L175 443L182 443Q204 480 247 503Q290 526 340 526Q434 526 481.5 469.5Q529 413 529 320L529 0L409 0L409 304Q409 360 381 387.5Q353 415 306 415Q269 415 241 394.5Q213 374 197.5 340.5Q182 307 182 267L182 0L63 0Z"/>
     <path id="lg1600-296" d="M63 -216L63 510L175 510L175 444L182 444Q195 465 217.5 484Q240 503 271 514.5Q302 526 340 526Q410 526 465.5 491.5Q521 457 553.5 396Q586 335 586 255Q586 175 553.5 114Q521 53 465.5 18.5Q410 -16 340 -16Q284 -16 243 8.5Q202 33 182 65L175 65L182 -7L182 -216L63 -216ZM321 94Q360 94 393 113.5Q426 133 446.5 169.5Q467 206 467 255Q467 305 446.5 340.5Q426 376 393 395.5Q360 415 321 415Q283 415 249.5 395.5Q216 376 195.5 340Q175 304 175 255Q175 206 195.5 170Q216 134 249.5 114Q283 94 321 94Z"/>
-    <path id="lg1600-299" d="M63 0L63 510L175 510L175 438L182 438Q194 464 216 483Q238 502 267.5 513.5Q297 525 329 525Q350 525 365.5 522Q381 519 392 514L392 393Q373 401 353 406Q333 411 311 411Q272 411 243 391.5Q214 372 198 338Q182 304 182 262L182 0L63 0Z"/>
-    <path id="lg1600-310" d="M25 407L25 510L119 510L119 407L25 407ZM276 -8Q201 -8 157.5 35.5Q114 79 114 156L114 654L233 654L233 179Q233 140 249 122Q265 104 299 104Q315 104 329 108.5Q343 113 362 125L362 8Q341 0 320 -4Q299 -8 276 -8ZM229 407L229 510L359 510L359 407L229 407Z"/>
+    <path id="lg1700-0" d="M82 0L82 716L508 716L508 0L82 0ZM146 60L444 60L444 656L146 656L146 60Z"/>
+    <path id="lg1700-126" d="M297 -16Q236 -16 182.5 7Q129 30 89.5 75.5Q50 121 30 187L157 237Q171 184 206 148Q241 112 298 112Q326 112 351 121.5Q376 131 391.5 150Q407 169 407 197Q407 224 394 243.5Q381 263 350.5 280.5Q320 298 268 317L224 333Q195 344 165.5 360.5Q136 377 111.5 401.5Q87 426 72 458Q57 490 57 531Q57 587 86 632.5Q115 678 167 705Q219 732 288 732Q360 732 407 707.5Q454 683 480.5 648Q507 613 518 580L399 530Q393 550 379 568Q365 586 343 597Q321 608 290 608Q261 608 238 598.5Q215 589 202 572.5Q189 556 189 534Q189 502 216.5 479Q244 456 305 436L350 421Q388 408 422.5 390.5Q457 373 484 347Q511 321 526.5 285Q542 249 542 199Q542 144 520 103Q498 62 462 36Q426 10 382.5 -3Q339 -16 297 -16Z"/>
+    <path id="lg1700-132" d="M222 0L222 648L357 648L357 0L222 0ZM22 588L22 716L557 716L557 588L22 588Z"/>
+    <path id="lg1700-177" d="M220 -16Q166 -16 124.5 5.5Q83 27 59 66Q35 105 35 156Q35 209 62.5 247Q90 285 136.5 306Q183 327 240 327Q271 327 296.5 323.5Q322 320 342 315Q362 310 375 304L375 326Q375 367 344 393.5Q313 420 259 420Q223 420 189.5 403.5Q156 387 134 360L50 426Q75 458 108 480.5Q141 503 181 514.5Q221 526 265 526Q382 526 443 472Q504 418 504 314L504 0L375 0L375 52L367 52Q353 34 332 18.5Q311 3 283 -6.5Q255 -16 220 -16ZM251 86Q291 86 318.5 103.5Q346 121 360.5 149Q375 177 375 208Q353 219 325 225.5Q297 232 268 232Q210 232 188 210Q166 188 166 156Q166 126 187.5 106Q209 86 251 86Z"/>
+    <path id="lg1700-203" d="M303 -16Q225 -16 164.5 18.5Q104 53 69.5 114.5Q35 176 35 255Q35 334 69.5 395Q104 456 164.5 491Q225 526 303 526Q388 526 449 490Q510 454 537 386L417 336Q401 371 372 387.5Q343 404 303 404Q264 404 233 385.5Q202 367 184 334Q166 301 166 255Q166 209 184 175.5Q202 142 233 123.5Q264 105 303 105Q347 105 376 124.5Q405 144 423 178L540 126Q510 62 449 23Q388 -16 303 -16Z"/>
+    <path id="lg1700-213" d="M302 -16Q225 -16 164.5 19Q104 54 69.5 115Q35 176 35 254Q35 327 69 389Q103 451 162 488.5Q221 526 297 526Q379 526 435 491Q491 456 520 397.5Q549 339 549 268Q549 252 548 240.5Q547 229 546 224L108 224L108 317L423 317Q422 334 413 352Q404 370 388 385Q372 400 349.5 409.5Q327 419 298 419Q260 419 228.5 399Q197 379 179 343.5Q161 308 161 259Q161 208 180 172.5Q199 137 231.5 118.5Q264 100 304 100Q351 100 383 120.5Q415 141 433 172L539 120Q503 57 445 20.5Q387 -16 302 -16Z"/>
+    <path id="lg1700-259" d="M63 0L63 716L194 716L194 0L63 0Z"/>
+    <path id="lg1700-264" d="M63 0L63 510L186 510L186 446L194 446Q210 470 233 488Q256 506 285.5 516Q315 526 349 526Q405 526 444.5 500Q484 474 500 436Q523 473 565.5 499.5Q608 526 671 526Q760 526 804.5 472Q849 418 849 328L849 0L719 0L719 304Q719 353 696 378.5Q673 404 634 404Q600 404 574.5 385.5Q549 367 535.5 334Q522 301 522 257L522 0L391 0L391 304Q391 353 367.5 378.5Q344 404 301 404Q269 404 244.5 385.5Q220 367 207 334Q194 301 194 257L194 0L63 0Z"/>
+    <path id="lg1700-299" d="M63 0L63 510L186 510L186 442L194 442Q207 466 228.5 484.5Q250 503 279 514Q308 525 341 525Q361 525 377 522Q393 519 405 514L405 383Q384 391 363.5 396.5Q343 402 320 402Q281 402 252.5 382.5Q224 363 209 329.5Q194 296 194 254L194 0L63 0Z"/>
+    <path id="lg1700-310" d="M25 398L25 510L119 510L119 398L25 398ZM283 -8Q204 -8 159 37.5Q114 83 114 163L114 654L245 654L245 187Q245 150 260 132.5Q275 115 309 115Q325 115 339 119.5Q353 124 374 137L374 9Q352 1 329.5 -3.5Q307 -8 283 -8ZM240 398L240 510L370 510L370 398L240 398Z"/>
   </defs>
-  <rect class="lini-canvas" x="-301.951" y="-136.2" width="603.902" height="293.9"/>
+  <rect class="lini-canvas" x="-305.951" y="-134.2" width="611.902" height="289.9"/>
   <g class="lini-scene">
-    <g class="lini-text" style="font-size: 22px; font-weight: 600">
-      <use href="#lg1600-119" transform="translate(-54.703 -91.324) scale(0.022 -0.022)"/>
-      <use href="#lg1600-241" transform="translate(-41.525 -91.324) scale(0.022 -0.022)"/>
-      <use href="#lg1600-203" transform="translate(-36.135 -91.324) scale(0.022 -0.022)"/>
-      <use href="#lg1600-256" transform="translate(-23.815 -91.324) scale(0.022 -0.022)"/>
-      <use href="#lg1600-177" transform="translate(-6.721 -91.324) scale(0.022 -0.022)"/>
-      <use href="#lg1600-296" transform="translate(10.571 -91.324) scale(0.022 -0.022)"/>
-      <use href="#lg1600-259" transform="translate(24.233 -91.324) scale(0.022 -0.022)"/>
-      <use href="#lg1600-177" transform="translate(29.623 -91.324) scale(0.022 -0.022)"/>
-      <use href="#lg1600-265" transform="translate(41.789 -91.324) scale(0.022 -0.022)"/>
+    <g class="lini-text" style="font-size: 24px; font-weight: 600">
+      <use href="#lg1600-119" transform="translate(-59.676 -87.608) scale(0.024 -0.024)"/>
+      <use href="#lg1600-241" transform="translate(-45.3 -87.608) scale(0.024 -0.024)"/>
+      <use href="#lg1600-203" transform="translate(-39.42 -87.608) scale(0.024 -0.024)"/>
+      <use href="#lg1600-256" transform="translate(-25.98 -87.608) scale(0.024 -0.024)"/>
+      <use href="#lg1600-177" transform="translate(-7.332 -87.608) scale(0.024 -0.024)"/>
+      <use href="#lg1600-296" transform="translate(11.532 -87.608) scale(0.024 -0.024)"/>
+      <use href="#lg1600-259" transform="translate(26.436 -87.608) scale(0.024 -0.024)"/>
+      <use href="#lg1600-177" transform="translate(32.316 -87.608) scale(0.024 -0.024)"/>
+      <use href="#lg1600-265" transform="translate(45.588 -87.608) scale(0.024 -0.024)"/>
     </g>
-    <g class="lini-node lini-row lini-block" data-id="plans" transform="translate(0,23)">
-      <rect x="-274.951" y="-86.2" width="549.902" height="172.4" rx="0" ry="0"/>
-      <g class="lini-node lini-box lini-block" data-id="starter" transform="translate(-187.4865,0)">
-        <rect x="-86.4645" y="-85.2" width="172.929" height="170.4" rx="12" ry="12"/>
-        <g class="lini-text" style="font-size: 17px; font-weight: 600">
-          <use href="#lg1600-126" transform="translate(-68.4645 -52.614) scale(0.017 -0.017)"/>
-          <use href="#lg1600-310" transform="translate(-58.6895 -52.614) scale(0.017 -0.017)"/>
-          <use href="#lg1600-177" transform="translate(-51.8555 -52.614) scale(0.017 -0.017)"/>
-          <use href="#lg1600-299" transform="translate(-42.4545 -52.614) scale(0.017 -0.017)"/>
-          <use href="#lg1600-310" transform="translate(-35.5185 -52.614) scale(0.017 -0.017)"/>
-          <use href="#lg1600-213" transform="translate(-28.6845 -52.614) scale(0.017 -0.017)"/>
-          <use href="#lg1600-299" transform="translate(-18.8585 -52.614) scale(0.017 -0.017)"/>
+    <g class="lini-node lini-row lini-block" data-id="plans" transform="translate(0,24)">
+      <rect x="-278.951" y="-83.2" width="557.902" height="166.4" rx="0" ry="0"/>
+      <g class="lini-node lini-box lini-block" data-id="starter" transform="translate(-191.4865,0)">
+        <rect x="-86.4645" y="-82.2" width="172.929" height="164.4" rx="12" ry="12"/>
+        <g class="lini-node lini-block lini-style-card-title" transform="translate(-38.5815,-54.7)">
+          <rect x="-28.883" y="-8.5" width="57.766" height="17" rx="0" ry="0"/>
+          <g class="lini-text">
+            <use href="#lg1700-126" transform="translate(-28.883 6.086) scale(0.017 -0.017)"/>
+            <use href="#lg1700-310" transform="translate(-18.989 6.086) scale(0.017 -0.017)"/>
+            <use href="#lg1700-177" transform="translate(-11.934 6.086) scale(0.017 -0.017)"/>
+            <use href="#lg1700-299" transform="translate(-2.414 6.086) scale(0.017 -0.017)"/>
+            <use href="#lg1700-310" transform="translate(4.743 6.086) scale(0.017 -0.017)"/>
+            <use href="#lg1700-213" transform="translate(11.798 6.086) scale(0.017 -0.017)"/>
+            <use href="#lg1700-299" transform="translate(21.726 6.086) scale(0.017 -0.017)"/>
+          </g>
         </g>
-        <g class="lini-text" style="fill: #005d56; font-size: 15px; font-weight: 500">
-          <use href="#lg1500-56" transform="translate(-68.4645 -17.33) scale(0.015 -0.015)"/>
-          <use href="#lg1500-299" transform="translate(-60.2145 -17.33) scale(0.015 -0.015)"/>
-          <use href="#lg1500-213" transform="translate(-54.2895 -17.33) scale(0.015 -0.015)"/>
-          <use href="#lg1500-213" transform="translate(-45.7095 -17.33) scale(0.015 -0.015)"/>
+        <g class="lini-node lini-block lini-style-card-brief" transform="translate(-51.797,-21.7)">
+          <rect x="-15.6675" y="-7.5" width="31.335" height="15" rx="0" ry="0"/>
+          <g class="lini-text">
+            <use href="#lg1500-56" transform="translate(-15.6675 5.37) scale(0.015 -0.015)"/>
+            <use href="#lg1500-299" transform="translate(-7.4175 5.37) scale(0.015 -0.015)"/>
+            <use href="#lg1500-213" transform="translate(-1.4925 5.37) scale(0.015 -0.015)"/>
+            <use href="#lg1500-213" transform="translate(7.0875 5.37) scale(0.015 -0.015)"/>
+          </g>
         </g>
         <g class="lini-text" style="font-size: 13px">
-          <use href="#lg1500-56" transform="translate(-68.4645 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-271" transform="translate(-61.3145 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-299" transform="translate(-53.4755 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-303" transform="translate(-45.3115 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-241" transform="translate(-38.9805 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-209" transform="translate(-35.9515 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-213" transform="translate(-27.9695 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-296" transform="translate(-17.5045 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-299" transform="translate(-9.5225 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-271" transform="translate(-4.3875 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-253" transform="translate(3.4515 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-213" transform="translate(6.4805 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-203" transform="translate(13.9165 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-310" transform="translate(21.1055 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-303" transform="translate(26.1625 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-177" transform="translate(35.5225 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-265" transform="translate(42.6075 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-209" transform="translate(50.1215 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-335" transform="translate(-68.4645 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-213" transform="translate(-58.0255 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-213" transform="translate(-50.5895 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-256" transform="translate(-43.1535 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-213" transform="translate(-36.2635 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-265" transform="translate(-28.8275 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-209" transform="translate(-21.3135 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-213" transform="translate(-10.3025 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-340" transform="translate(-2.8665 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-296" transform="translate(3.5945 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-213" transform="translate(11.5765 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-299" transform="translate(19.0125 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-241" transform="translate(24.1475 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-264" transform="translate(27.1765 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-213" transform="translate(38.7465 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-265" transform="translate(46.1825 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-310" transform="translate(53.6965 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-303" transform="translate(58.7535 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-1779" transform="translate(65.0845 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-94" transform="translate(-68.4645 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-265" transform="translate(-57.6745 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-213" transform="translate(-50.1605 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-303" transform="translate(-39.6955 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-213" transform="translate(-33.3645 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-177" transform="translate(-25.9285 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-310" transform="translate(-18.8435 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-1780" transform="translate(-13.7865 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-203" transform="translate(-7.3775 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-271" transform="translate(-0.1885 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-264" transform="translate(7.6505 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-264" transform="translate(19.2205 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-315" transform="translate(30.7905 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-265" transform="translate(38.3045 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-241" transform="translate(45.8185 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-310" transform="translate(48.8475 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-341" transform="translate(53.9045 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-303" transform="translate(-68.4645 64.054) scale(0.013 -0.013)"/>
-          <use href="#lg1500-315" transform="translate(-62.1335 64.054) scale(0.013 -0.013)"/>
-          <use href="#lg1500-296" transform="translate(-54.6195 64.054) scale(0.013 -0.013)"/>
-          <use href="#lg1500-296" transform="translate(-46.6375 64.054) scale(0.013 -0.013)"/>
-          <use href="#lg1500-271" transform="translate(-38.6555 64.054) scale(0.013 -0.013)"/>
-          <use href="#lg1500-299" transform="translate(-30.8165 64.054) scale(0.013 -0.013)"/>
-          <use href="#lg1500-310" transform="translate(-25.6815 64.054) scale(0.013 -0.013)"/>
-          <use href="#lg1500-1779" transform="translate(-20.6245 64.054) scale(0.013 -0.013)"/>
+          <use href="#lg1500-56" transform="translate(-68.4645 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-271" transform="translate(-61.3145 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-299" transform="translate(-53.4755 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-303" transform="translate(-45.3115 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-241" transform="translate(-38.9805 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-209" transform="translate(-35.9515 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-213" transform="translate(-27.9695 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-296" transform="translate(-17.5045 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-299" transform="translate(-9.5225 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-271" transform="translate(-4.3875 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-253" transform="translate(3.4515 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-213" transform="translate(6.4805 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-203" transform="translate(13.9165 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-310" transform="translate(21.1055 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-303" transform="translate(26.1625 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-177" transform="translate(35.5225 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-265" transform="translate(42.6075 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-209" transform="translate(50.1215 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-335" transform="translate(-68.4645 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-213" transform="translate(-58.0255 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-213" transform="translate(-50.5895 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-256" transform="translate(-43.1535 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-213" transform="translate(-36.2635 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-265" transform="translate(-28.8275 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-209" transform="translate(-21.3135 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-213" transform="translate(-10.3025 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-340" transform="translate(-2.8665 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-296" transform="translate(3.5945 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-213" transform="translate(11.5765 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-299" transform="translate(19.0125 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-241" transform="translate(24.1475 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-264" transform="translate(27.1765 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-213" transform="translate(38.7465 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-265" transform="translate(46.1825 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-310" transform="translate(53.6965 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-303" transform="translate(58.7535 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-1779" transform="translate(65.0845 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-94" transform="translate(-68.4645 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-265" transform="translate(-57.6745 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-213" transform="translate(-50.1605 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-303" transform="translate(-39.6955 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-213" transform="translate(-33.3645 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-177" transform="translate(-25.9285 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-310" transform="translate(-18.8435 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-1780" transform="translate(-13.7865 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-203" transform="translate(-7.3775 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-271" transform="translate(-0.1885 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-264" transform="translate(7.6505 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-264" transform="translate(19.2205 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-315" transform="translate(30.7905 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-265" transform="translate(38.3045 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-241" transform="translate(45.8185 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-310" transform="translate(48.8475 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-341" transform="translate(53.9045 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-303" transform="translate(-68.4645 61.054) scale(0.013 -0.013)"/>
+          <use href="#lg1500-315" transform="translate(-62.1335 61.054) scale(0.013 -0.013)"/>
+          <use href="#lg1500-296" transform="translate(-54.6195 61.054) scale(0.013 -0.013)"/>
+          <use href="#lg1500-296" transform="translate(-46.6375 61.054) scale(0.013 -0.013)"/>
+          <use href="#lg1500-271" transform="translate(-38.6555 61.054) scale(0.013 -0.013)"/>
+          <use href="#lg1500-299" transform="translate(-30.8165 61.054) scale(0.013 -0.013)"/>
+          <use href="#lg1500-310" transform="translate(-25.6815 61.054) scale(0.013 -0.013)"/>
+          <use href="#lg1500-1779" transform="translate(-20.6245 61.054) scale(0.013 -0.013)"/>
         </g>
       </g>
       <g class="lini-node lini-box lini-block" data-id="team" style="fill: #cdf9f4" transform="translate(-0.2015,0)">
-        <rect x="-78.8205" y="-85.2" width="157.641" height="170.4" rx="12" ry="12"/>
-        <g class="lini-text" style="font-size: 17px; font-weight: 600">
-          <use href="#lg1600-132" transform="translate(-60.8205 -52.614) scale(0.017 -0.017)"/>
-          <use href="#lg1600-213" transform="translate(-51.1815 -52.614) scale(0.017 -0.017)"/>
-          <use href="#lg1600-177" transform="translate(-41.3555 -52.614) scale(0.017 -0.017)"/>
-          <use href="#lg1600-264" transform="translate(-31.9545 -52.614) scale(0.017 -0.017)"/>
+        <rect x="-78.8205" y="-82.2" width="157.641" height="164.4" rx="12" ry="12"/>
+        <g class="lini-node lini-block lini-style-card-title" transform="translate(-37.457,-54.7)">
+          <rect x="-22.3635" y="-8.5" width="44.727" height="17" rx="0" ry="0"/>
+          <g class="lini-text">
+            <use href="#lg1700-132" transform="translate(-22.3635 6.086) scale(0.017 -0.017)"/>
+            <use href="#lg1700-213" transform="translate(-12.5205 6.086) scale(0.017 -0.017)"/>
+            <use href="#lg1700-177" transform="translate(-2.5925 6.086) scale(0.017 -0.017)"/>
+            <use href="#lg1700-264" transform="translate(6.9275 6.086) scale(0.017 -0.017)"/>
+          </g>
         </g>
-        <g class="lini-text" style="fill: #005d56; font-size: 15px; font-weight: 500">
-          <use href="#lg1500-1876" transform="translate(-60.8205 -17.33) scale(0.015 -0.015)"/>
-          <use href="#lg1500-1653" transform="translate(-52.4955 -17.33) scale(0.015 -0.015)"/>
-          <use href="#lg1500-1654" transform="translate(-45.8205 -17.33) scale(0.015 -0.015)"/>
-          <use href="#lg1500-1800" transform="translate(-34.2405 -17.33) scale(0.015 -0.015)"/>
-          <use href="#lg1500-303" transform="translate(-25.9005 -17.33) scale(0.015 -0.015)"/>
-          <use href="#lg1500-213" transform="translate(-18.5955 -17.33) scale(0.015 -0.015)"/>
-          <use href="#lg1500-177" transform="translate(-10.0155 -17.33) scale(0.015 -0.015)"/>
-          <use href="#lg1500-310" transform="translate(-1.8405 -17.33) scale(0.015 -0.015)"/>
+        <g class="lini-node lini-block lini-style-card-brief" transform="translate(-27.413,-21.7)">
+          <rect x="-32.4075" y="-7.5" width="64.815" height="15" rx="0" ry="0"/>
+          <g class="lini-text">
+            <use href="#lg1500-1876" transform="translate(-32.4075 5.37) scale(0.015 -0.015)"/>
+            <use href="#lg1500-1653" transform="translate(-24.0825 5.37) scale(0.015 -0.015)"/>
+            <use href="#lg1500-1654" transform="translate(-17.4075 5.37) scale(0.015 -0.015)"/>
+            <use href="#lg1500-1800" transform="translate(-5.8275 5.37) scale(0.015 -0.015)"/>
+            <use href="#lg1500-303" transform="translate(2.5125 5.37) scale(0.015 -0.015)"/>
+            <use href="#lg1500-213" transform="translate(9.8175 5.37) scale(0.015 -0.015)"/>
+            <use href="#lg1500-177" transform="translate(18.3975 5.37) scale(0.015 -0.015)"/>
+            <use href="#lg1500-310" transform="translate(26.5725 5.37) scale(0.015 -0.015)"/>
+          </g>
         </g>
         <g class="lini-text" style="font-size: 13px">
-          <use href="#lg1500-126" transform="translate(-60.8205 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-238" transform="translate(-53.4365 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-177" transform="translate(-45.8835 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-299" transform="translate(-38.7985 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-213" transform="translate(-33.6635 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-209" transform="translate(-26.2275 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-335" transform="translate(-15.2165 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-271" transform="translate(-4.7775 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-299" transform="translate(3.0615 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-256" transform="translate(8.1965 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-303" transform="translate(15.0865 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-296" transform="translate(21.4175 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-177" transform="translate(29.3995 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-203" transform="translate(36.4845 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-213" transform="translate(43.6735 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-303" transform="translate(51.1095 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-1780" transform="translate(57.4405 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-299" transform="translate(-60.8205 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-213" transform="translate(-55.6855 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-334" transform="translate(-48.2495 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-241" transform="translate(-41.2295 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-213" transform="translate(-38.2005 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-335" transform="translate(-30.7645 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-232" transform="translate(-17.2965 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-259" transform="translate(-12.3955 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-271" transform="translate(-9.3665 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-335" transform="translate(-1.5275 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-303" transform="translate(8.9115 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-1780" transform="translate(15.2425 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-177" transform="translate(21.6515 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-265" transform="translate(28.7365 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-209" transform="translate(36.2505 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-296" transform="translate(-60.8205 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-299" transform="translate(-52.8385 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-241" transform="translate(-47.7035 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-271" transform="translate(-44.6745 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-299" transform="translate(-36.8355 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-241" transform="translate(-31.7005 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-310" transform="translate(-28.6715 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-341" transform="translate(-23.6145 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-303" transform="translate(-13.5785 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-315" transform="translate(-7.2475 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-296" transform="translate(0.2665 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-296" transform="translate(8.2485 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-271" transform="translate(16.2305 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-299" transform="translate(24.0695 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-310" transform="translate(29.2045 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-232" transform="translate(37.2905 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-271" transform="translate(42.1915 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-299" transform="translate(50.0305 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-233" transform="translate(-60.8205 64.054) scale(0.013 -0.013)"/>
-          <use href="#lg1500-299" transform="translate(-52.9165 64.054) scale(0.013 -0.013)"/>
-          <use href="#lg1500-271" transform="translate(-47.7815 64.054) scale(0.013 -0.013)"/>
-          <use href="#lg1500-335" transform="translate(-39.9425 64.054) scale(0.013 -0.013)"/>
-          <use href="#lg1500-241" transform="translate(-29.5035 64.054) scale(0.013 -0.013)"/>
-          <use href="#lg1500-265" transform="translate(-26.4745 64.054) scale(0.013 -0.013)"/>
-          <use href="#lg1500-233" transform="translate(-18.9605 64.054) scale(0.013 -0.013)"/>
-          <use href="#lg1500-233" transform="translate(-8.0275 64.054) scale(0.013 -0.013)"/>
-          <use href="#lg1500-299" transform="translate(-0.1235 64.054) scale(0.013 -0.013)"/>
-          <use href="#lg1500-271" transform="translate(5.0115 64.054) scale(0.013 -0.013)"/>
-          <use href="#lg1500-315" transform="translate(12.8505 64.054) scale(0.013 -0.013)"/>
-          <use href="#lg1500-296" transform="translate(20.3645 64.054) scale(0.013 -0.013)"/>
-          <use href="#lg1500-303" transform="translate(28.3465 64.054) scale(0.013 -0.013)"/>
-          <use href="#lg1500-1779" transform="translate(34.6775 64.054) scale(0.013 -0.013)"/>
+          <use href="#lg1500-126" transform="translate(-60.8205 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-238" transform="translate(-53.4365 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-177" transform="translate(-45.8835 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-299" transform="translate(-38.7985 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-213" transform="translate(-33.6635 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-209" transform="translate(-26.2275 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-335" transform="translate(-15.2165 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-271" transform="translate(-4.7775 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-299" transform="translate(3.0615 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-256" transform="translate(8.1965 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-303" transform="translate(15.0865 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-296" transform="translate(21.4175 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-177" transform="translate(29.3995 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-203" transform="translate(36.4845 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-213" transform="translate(43.6735 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-303" transform="translate(51.1095 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-1780" transform="translate(57.4405 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-299" transform="translate(-60.8205 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-213" transform="translate(-55.6855 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-334" transform="translate(-48.2495 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-241" transform="translate(-41.2295 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-213" transform="translate(-38.2005 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-335" transform="translate(-30.7645 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-232" transform="translate(-17.2965 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-259" transform="translate(-12.3955 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-271" transform="translate(-9.3665 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-335" transform="translate(-1.5275 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-303" transform="translate(8.9115 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-1780" transform="translate(15.2425 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-177" transform="translate(21.6515 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-265" transform="translate(28.7365 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-209" transform="translate(36.2505 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-296" transform="translate(-60.8205 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-299" transform="translate(-52.8385 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-241" transform="translate(-47.7035 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-271" transform="translate(-44.6745 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-299" transform="translate(-36.8355 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-241" transform="translate(-31.7005 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-310" transform="translate(-28.6715 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-341" transform="translate(-23.6145 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-303" transform="translate(-13.5785 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-315" transform="translate(-7.2475 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-296" transform="translate(0.2665 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-296" transform="translate(8.2485 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-271" transform="translate(16.2305 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-299" transform="translate(24.0695 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-310" transform="translate(29.2045 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-232" transform="translate(37.2905 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-271" transform="translate(42.1915 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-299" transform="translate(50.0305 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-233" transform="translate(-60.8205 61.054) scale(0.013 -0.013)"/>
+          <use href="#lg1500-299" transform="translate(-52.9165 61.054) scale(0.013 -0.013)"/>
+          <use href="#lg1500-271" transform="translate(-47.7815 61.054) scale(0.013 -0.013)"/>
+          <use href="#lg1500-335" transform="translate(-39.9425 61.054) scale(0.013 -0.013)"/>
+          <use href="#lg1500-241" transform="translate(-29.5035 61.054) scale(0.013 -0.013)"/>
+          <use href="#lg1500-265" transform="translate(-26.4745 61.054) scale(0.013 -0.013)"/>
+          <use href="#lg1500-233" transform="translate(-18.9605 61.054) scale(0.013 -0.013)"/>
+          <use href="#lg1500-233" transform="translate(-8.0275 61.054) scale(0.013 -0.013)"/>
+          <use href="#lg1500-299" transform="translate(-0.1235 61.054) scale(0.013 -0.013)"/>
+          <use href="#lg1500-271" transform="translate(5.0115 61.054) scale(0.013 -0.013)"/>
+          <use href="#lg1500-315" transform="translate(12.8505 61.054) scale(0.013 -0.013)"/>
+          <use href="#lg1500-296" transform="translate(20.3645 61.054) scale(0.013 -0.013)"/>
+          <use href="#lg1500-303" transform="translate(28.3465 61.054) scale(0.013 -0.013)"/>
+          <use href="#lg1500-1779" transform="translate(34.6775 61.054) scale(0.013 -0.013)"/>
         </g>
       </g>
-      <g class="lini-node lini-box lini-block" data-id="scale" transform="translate(187.285,0)">
-        <rect x="-86.666" y="-85.2" width="173.332" height="170.4" rx="12" ry="12"/>
-        <g class="lini-text" style="font-size: 17px; font-weight: 600">
-          <use href="#lg1600-126" transform="translate(-68.666 -52.614) scale(0.017 -0.017)"/>
-          <use href="#lg1600-203" transform="translate(-58.891 -52.614) scale(0.017 -0.017)"/>
-          <use href="#lg1600-177" transform="translate(-49.371 -52.614) scale(0.017 -0.017)"/>
-          <use href="#lg1600-259" transform="translate(-39.97 -52.614) scale(0.017 -0.017)"/>
-          <use href="#lg1600-213" transform="translate(-35.805 -52.614) scale(0.017 -0.017)"/>
+      <g class="lini-node lini-box lini-block" data-id="scale" transform="translate(191.285,0)">
+        <rect x="-86.666" y="-82.2" width="173.332" height="164.4" rx="12" ry="12"/>
+        <g class="lini-node lini-block lini-style-card-title" transform="translate(-45.991,-54.7)">
+          <rect x="-21.675" y="-8.5" width="43.35" height="17" rx="0" ry="0"/>
+          <g class="lini-text">
+            <use href="#lg1700-126" transform="translate(-21.675 6.086) scale(0.017 -0.017)"/>
+            <use href="#lg1700-203" transform="translate(-11.781 6.086) scale(0.017 -0.017)"/>
+            <use href="#lg1700-177" transform="translate(-2.142 6.086) scale(0.017 -0.017)"/>
+            <use href="#lg1700-259" transform="translate(7.378 6.086) scale(0.017 -0.017)"/>
+            <use href="#lg1700-213" transform="translate(11.747 6.086) scale(0.017 -0.017)"/>
+          </g>
         </g>
-        <g class="lini-text" style="fill: #005d56; font-size: 15px; font-weight: 500">
-          <use href="#lg1500-28" transform="translate(-68.666 -17.33) scale(0.015 -0.015)"/>
-          <use href="#lg1500-315" transform="translate(-57.566 -17.33) scale(0.015 -0.015)"/>
-          <use href="#lg1500-303" transform="translate(-48.896 -17.33) scale(0.015 -0.015)"/>
-          <use href="#lg1500-310" transform="translate(-41.591 -17.33) scale(0.015 -0.015)"/>
-          <use href="#lg1500-271" transform="translate(-35.756 -17.33) scale(0.015 -0.015)"/>
-          <use href="#lg1500-264" transform="translate(-26.711 -17.33) scale(0.015 -0.015)"/>
+        <g class="lini-node lini-block lini-style-card-brief" transform="translate(-40.0135,-21.7)">
+          <rect x="-27.6525" y="-7.5" width="55.305" height="15" rx="0" ry="0"/>
+          <g class="lini-text">
+            <use href="#lg1500-28" transform="translate(-27.6525 5.37) scale(0.015 -0.015)"/>
+            <use href="#lg1500-315" transform="translate(-16.5525 5.37) scale(0.015 -0.015)"/>
+            <use href="#lg1500-303" transform="translate(-7.8825 5.37) scale(0.015 -0.015)"/>
+            <use href="#lg1500-310" transform="translate(-0.5775 5.37) scale(0.015 -0.015)"/>
+            <use href="#lg1500-271" transform="translate(5.2575 5.37) scale(0.015 -0.015)"/>
+            <use href="#lg1500-264" transform="translate(14.3025 5.37) scale(0.015 -0.015)"/>
+          </g>
         </g>
         <g class="lini-text" style="font-size: 13px">
-          <use href="#lg1500-34" transform="translate(-68.666 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-213" transform="translate(-59.332 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-209" transform="translate(-51.896 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-241" transform="translate(-43.914 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-203" transform="translate(-40.885 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-177" transform="translate(-33.696 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-310" transform="translate(-26.611 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-213" transform="translate(-21.554 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-209" transform="translate(-14.118 17.254) scale(0.013 -0.013)"/>
-          <use href="#lg1500-241" transform="translate(-68.666 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-265" transform="translate(-65.637 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-232" transform="translate(-58.123 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-299" transform="translate(-53.222 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-177" transform="translate(-48.087 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-303" transform="translate(-41.002 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-310" transform="translate(-34.671 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-299" transform="translate(-29.614 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-315" transform="translate(-24.479 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-203" transform="translate(-16.965 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-310" transform="translate(-9.776 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-315" transform="translate(-4.719 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-299" transform="translate(2.795 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-213" transform="translate(7.93 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-1780" transform="translate(15.366 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-177" transform="translate(21.775 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-315" transform="translate(28.86 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-209" transform="translate(36.374 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-241" transform="translate(44.356 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-310" transform="translate(47.385 32.854) scale(0.013 -0.013)"/>
-          <use href="#lg1500-259" transform="translate(-68.666 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-271" transform="translate(-65.637 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-233" transform="translate(-57.798 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-303" transform="translate(-49.894 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-1780" transform="translate(-43.563 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-177" transform="translate(-37.154 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-265" transform="translate(-30.069 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-209" transform="translate(-22.555 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-177" transform="translate(-11.544 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-238" transform="translate(-1.43 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-315" transform="translate(6.123 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-264" transform="translate(13.637 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-177" transform="translate(25.207 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-265" transform="translate(32.292 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-335" transform="translate(42.835 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-238" transform="translate(53.274 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-271" transform="translate(60.827 48.454) scale(0.013 -0.013)"/>
-          <use href="#lg1500-177" transform="translate(-68.666 64.054) scale(0.013 -0.013)"/>
-          <use href="#lg1500-265" transform="translate(-61.581 64.054) scale(0.013 -0.013)"/>
-          <use href="#lg1500-303" transform="translate(-54.067 64.054) scale(0.013 -0.013)"/>
-          <use href="#lg1500-335" transform="translate(-47.736 64.054) scale(0.013 -0.013)"/>
-          <use href="#lg1500-213" transform="translate(-37.297 64.054) scale(0.013 -0.013)"/>
-          <use href="#lg1500-299" transform="translate(-29.861 64.054) scale(0.013 -0.013)"/>
-          <use href="#lg1500-303" transform="translate(-24.726 64.054) scale(0.013 -0.013)"/>
-          <use href="#lg1500-310" transform="translate(-15.366 64.054) scale(0.013 -0.013)"/>
-          <use href="#lg1500-238" transform="translate(-10.309 64.054) scale(0.013 -0.013)"/>
-          <use href="#lg1500-213" transform="translate(-2.756 64.054) scale(0.013 -0.013)"/>
-          <use href="#lg1500-296" transform="translate(7.709 64.054) scale(0.013 -0.013)"/>
-          <use href="#lg1500-238" transform="translate(15.691 64.054) scale(0.013 -0.013)"/>
-          <use href="#lg1500-271" transform="translate(23.244 64.054) scale(0.013 -0.013)"/>
-          <use href="#lg1500-265" transform="translate(31.083 64.054) scale(0.013 -0.013)"/>
-          <use href="#lg1500-213" transform="translate(38.597 64.054) scale(0.013 -0.013)"/>
-          <use href="#lg1500-1779" transform="translate(46.033 64.054) scale(0.013 -0.013)"/>
+          <use href="#lg1500-34" transform="translate(-68.666 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-213" transform="translate(-59.332 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-209" transform="translate(-51.896 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-241" transform="translate(-43.914 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-203" transform="translate(-40.885 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-177" transform="translate(-33.696 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-310" transform="translate(-26.611 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-213" transform="translate(-21.554 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-209" transform="translate(-14.118 14.254) scale(0.013 -0.013)"/>
+          <use href="#lg1500-241" transform="translate(-68.666 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-265" transform="translate(-65.637 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-232" transform="translate(-58.123 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-299" transform="translate(-53.222 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-177" transform="translate(-48.087 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-303" transform="translate(-41.002 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-310" transform="translate(-34.671 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-299" transform="translate(-29.614 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-315" transform="translate(-24.479 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-203" transform="translate(-16.965 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-310" transform="translate(-9.776 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-315" transform="translate(-4.719 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-299" transform="translate(2.795 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-213" transform="translate(7.93 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-1780" transform="translate(15.366 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-177" transform="translate(21.775 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-315" transform="translate(28.86 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-209" transform="translate(36.374 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-241" transform="translate(44.356 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-310" transform="translate(47.385 29.854) scale(0.013 -0.013)"/>
+          <use href="#lg1500-259" transform="translate(-68.666 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-271" transform="translate(-65.637 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-233" transform="translate(-57.798 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-303" transform="translate(-49.894 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-1780" transform="translate(-43.563 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-177" transform="translate(-37.154 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-265" transform="translate(-30.069 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-209" transform="translate(-22.555 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-177" transform="translate(-11.544 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-238" transform="translate(-1.43 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-315" transform="translate(6.123 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-264" transform="translate(13.637 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-177" transform="translate(25.207 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-265" transform="translate(32.292 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-335" transform="translate(42.835 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-238" transform="translate(53.274 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-271" transform="translate(60.827 45.454) scale(0.013 -0.013)"/>
+          <use href="#lg1500-177" transform="translate(-68.666 61.054) scale(0.013 -0.013)"/>
+          <use href="#lg1500-265" transform="translate(-61.581 61.054) scale(0.013 -0.013)"/>
+          <use href="#lg1500-303" transform="translate(-54.067 61.054) scale(0.013 -0.013)"/>
+          <use href="#lg1500-335" transform="translate(-47.736 61.054) scale(0.013 -0.013)"/>
+          <use href="#lg1500-213" transform="translate(-37.297 61.054) scale(0.013 -0.013)"/>
+          <use href="#lg1500-299" transform="translate(-29.861 61.054) scale(0.013 -0.013)"/>
+          <use href="#lg1500-303" transform="translate(-24.726 61.054) scale(0.013 -0.013)"/>
+          <use href="#lg1500-310" transform="translate(-15.366 61.054) scale(0.013 -0.013)"/>
+          <use href="#lg1500-238" transform="translate(-10.309 61.054) scale(0.013 -0.013)"/>
+          <use href="#lg1500-213" transform="translate(-2.756 61.054) scale(0.013 -0.013)"/>
+          <use href="#lg1500-296" transform="translate(7.709 61.054) scale(0.013 -0.013)"/>
+          <use href="#lg1500-238" transform="translate(15.691 61.054) scale(0.013 -0.013)"/>
+          <use href="#lg1500-271" transform="translate(23.244 61.054) scale(0.013 -0.013)"/>
+          <use href="#lg1500-265" transform="translate(31.083 61.054) scale(0.013 -0.013)"/>
+          <use href="#lg1500-213" transform="translate(38.597 61.054) scale(0.013 -0.013)"/>
+          <use href="#lg1500-1779" transform="translate(46.033 61.054) scale(0.013 -0.013)"/>
         </g>
       </g>
     </g>
   </g>
   <g class="lini-links">
     <g class="lini-link" data-from="plans.starter" data-to="plans.team">
-      <mask id="lini-label-cut-0" maskUnits="userSpaceOnUse" x="-189.4865" y="107.2" width="183.285" height="21"><rect class="lini-cut-bg" x="-189.4865" y="107.2" width="183.285" height="21"/><rect class="lini-cut" x="-114.344" y="119.05" width="33" height="14.3"/></mask>
-      <path d="M -187.4865 109.2 L -187.4865 110.2 A 16 16 0 0 0 -171.4865 126.2 L -21.7015 126.2 A 13.5 13.5 0 0 0 -8.2015 112.7 L -8.2015 112.7" mask="url(#lini-label-cut-0)"/>
-      <polygon class="lini-marker lini-marker-arrow" points="-8.2015,108.7 -3.7015,117.7 -12.7015,117.7"/>
+      <mask id="lini-label-cut-0" maskUnits="userSpaceOnUse" x="-193.4865" y="105.2" width="187.285" height="21"><rect class="lini-cut-bg" x="-193.4865" y="105.2" width="187.285" height="21"/><rect class="lini-cut" x="-116.344" y="117.05" width="33" height="14.3"/></mask>
+      <path d="M -191.4865 107.2 L -191.4865 108.2 A 16 16 0 0 0 -175.4865 124.2 L -21.7015 124.2 A 13.5 13.5 0 0 0 -8.2015 110.7 L -8.2015 110.7" mask="url(#lini-label-cut-0)"/>
+      <polygon class="lini-marker lini-marker-arrow" points="-8.2015,106.7 -3.7015,115.7 -12.7015,115.7"/>
       <g class="lini-link-label">
-        <use href="#lg1400-233" transform="translate(-110.681 130.138) scale(0.011 -0.011)"/>
-        <use href="#lg1400-299" transform="translate(-104.136 130.138) scale(0.011 -0.011)"/>
-        <use href="#lg1400-271" transform="translate(-100.066 130.138) scale(0.011 -0.011)"/>
-        <use href="#lg1400-335" transform="translate(-93.532 130.138) scale(0.011 -0.011)"/>
+        <use href="#lg1400-233" transform="translate(-112.681 128.138) scale(0.011 -0.011)"/>
+        <use href="#lg1400-299" transform="translate(-106.136 128.138) scale(0.011 -0.011)"/>
+        <use href="#lg1400-271" transform="translate(-102.066 128.138) scale(0.011 -0.011)"/>
+        <use href="#lg1400-335" transform="translate(-95.532 128.138) scale(0.011 -0.011)"/>
       </g>
     </g>
     <g class="lini-link" data-from="plans.team" data-to="plans.scale">
-      <mask id="lini-label-cut-1" maskUnits="userSpaceOnUse" x="5.7985" y="107.2" width="183.4865" height="21"><rect class="lini-cut-bg" x="5.7985" y="107.2" width="183.4865" height="21"/><rect class="lini-cut" x="67.8417" y="119.05" width="59.4" height="14.3"/></mask>
-      <path d="M 7.7985 109.2 L 7.7985 110.2 A 16 16 0 0 0 23.7985 126.2 L 173.785 126.2 A 13.5 13.5 0 0 0 187.285 112.7 L 187.285 112.7" mask="url(#lini-label-cut-1)"/>
-      <polygon class="lini-marker lini-marker-arrow" points="187.285,108.7 191.785,117.7 182.785,117.7"/>
+      <mask id="lini-label-cut-1" maskUnits="userSpaceOnUse" x="5.7985" y="105.2" width="187.4865" height="21"><rect class="lini-cut-bg" x="5.7985" y="105.2" width="187.4865" height="21"/><rect class="lini-cut" x="69.8417" y="117.05" width="59.4" height="14.3"/></mask>
+      <path d="M 7.7985 107.2 L 7.7985 108.2 A 16 16 0 0 0 23.7985 124.2 L 177.785 124.2 A 13.5 13.5 0 0 0 191.285 110.7 L 191.285 110.7" mask="url(#lini-label-cut-1)"/>
+      <polygon class="lini-marker lini-marker-arrow" points="191.285,106.7 195.785,115.7 186.785,115.7"/>
       <g class="lini-link-label">
-        <use href="#lg1400-303" transform="translate(77.1752 130.138) scale(0.011 -0.011)"/>
-        <use href="#lg1400-203" transform="translate(82.3562 130.138) scale(0.011 -0.011)"/>
-        <use href="#lg1400-177" transform="translate(88.2962 130.138) scale(0.011 -0.011)"/>
-        <use href="#lg1400-259" transform="translate(94.1372 130.138) scale(0.011 -0.011)"/>
-        <use href="#lg1400-213" transform="translate(96.4362 130.138) scale(0.011 -0.011)"/>
-        <use href="#lg1400-315" transform="translate(105.1592 130.138) scale(0.011 -0.011)"/>
-        <use href="#lg1400-296" transform="translate(111.3082 130.138) scale(0.011 -0.011)"/>
+        <use href="#lg1400-303" transform="translate(79.1752 128.138) scale(0.011 -0.011)"/>
+        <use href="#lg1400-203" transform="translate(84.3562 128.138) scale(0.011 -0.011)"/>
+        <use href="#lg1400-177" transform="translate(90.2962 128.138) scale(0.011 -0.011)"/>
+        <use href="#lg1400-259" transform="translate(96.1372 128.138) scale(0.011 -0.011)"/>
+        <use href="#lg1400-213" transform="translate(98.4362 128.138) scale(0.011 -0.011)"/>
+        <use href="#lg1400-315" transform="translate(107.1592 128.138) scale(0.011 -0.011)"/>
+        <use href="#lg1400-296" transform="translate(113.3082 128.138) scale(0.011 -0.011)"/>
       </g>
     </g>
   </g>

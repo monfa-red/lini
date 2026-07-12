@@ -6,14 +6,18 @@
 
 {
   font-family: "Google Sans"; gap: 24; padding: 26;
+  |box| { gap: 15; }
+  .card-title { font-size: 17; font-weight: bold; }
+  .card-brief { font-size: 15; font-weight: medium; color: --teal-deep; }
+
 }
 
-"Pick a plan" { font-size: 22; font-weight: semibold; }
+"Pick a plan" { font-size: 24; font-weight: semibold; }
 
-|row#plans| { gap: 20; align: start; } [
+|row#plans| { gap: 24; align: start; } [
   |box#starter| { max-width: 190; radius: 12; padding: 18; align: start; } [
-    "Starter" { font-size: 17; font-weight: semibold; }
-    "Free" { font-size: 15; font-weight: medium; color: --teal-ink; }
+    |block| "Starter" .card-title
+    |block| "Free" .card-brief
     "For side projects and weekend experiments. One seat, community support." {
       font-size: 13;
     }
@@ -21,15 +25,15 @@
   |box#team| {
     max-width: 190; radius: 12; padding: 18; align: start; fill: --teal-wash;
   } [
-    "Team" { font-size: 17; font-weight: semibold; }
-    "$12 / seat" { font-size: 15; font-weight: medium; color: --teal-ink; }
+    |block| "Team" .card-title
+    |block| "$12 / seat" .card-brief
     "Shared workspaces, review flows, and priority support for growing groups." {
       font-size: 13;
     }
   ]
   |box#scale| { max-width: 190; radius: 12; padding: 18; align: start; } [
-    "Scale" { font-size: 17; font-weight: semibold; }
-    "Custom" { font-size: 15; font-weight: medium; color: --teal-ink; }
+    |block| "Scale" .card-title
+    |block| "Custom" .card-brief
     "Dedicated infrastructure, audit logs, and a human who answers the phone." {
       font-size: 13;
     }
