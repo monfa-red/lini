@@ -18,22 +18,51 @@ diagram can never route two different ways.
 | Strategy | Status | Shape |
 |---|---|---|
 | `orthogonal` | the default — specified below | horizontal/vertical runs, corners rounded at render time |
+| `natural` | specified below — lands with alpha.1 | obstacle-aware smooth curves: a legal corridor, then a curve inside it |
 | `straight` | built — sequence messages | one segment between caller-supplied anchors |
-| `curved` | deferred | a spline between endpoint sides |
 
 Every strategy consumes the same input (the placed scene, the expanded link
-requests) and produces the same output (polylines, a report, strays), sharing
-one spine — request expansion, markers, labels, stray drawing, render-time
-rounding. Only geometry construction differs, so a new diagram family adds a
-strategy module, never a refactor. **Validation is the orthogonal contract's
-alone**: the law checker judges orthogonal wires and skips `straight` ones —
-a straight wire is lawfully oblique and avoids nothing.
+requests) and produces the same output (drawn wires, a report, strays), sharing
+one spine — request expansion, markers, labels, stray drawing. Only geometry
+construction differs, so a new diagram family adds a strategy module, never a
+refactor. **Validation is per strategy**: the law checker judges orthogonal
+wires against the four laws; a `natural` wire is judged by its own arm
+(§The natural strategy); `straight` wires are skipped — lawfully oblique,
+avoiding nothing.
 
 **`straight`** is the trivial strategy: each link is one segment between two
 anchors its caller supplies (plus the rectangular self-hook), trimmed to the
 endpoint bodies. It avoids nothing; markers and labels ride it like any wire.
 A `layout: sequence` scope routes its messages through `straight` — sequence
 layout owns *where* (column x, row y), the strategy owns the wire.
+
+## The natural strategy
+
+`natural` draws **smooth curves through free space** — the mindmap's branch
+look, available to any routed scope. It is corridor-first: steps 1–4 of the
+orthogonal model run unchanged (keep-outs, worlds, channels, requests,
+search with admission — one corridor choice, priced by the Law-3 cost), and
+only steps 5–6 differ: instead of placed runs and rounded polylines, the
+route lowers to a G1-continuous cubic spline fitted **inside the chosen
+corridor** — never a rounded illegal straight line. Constraints:
+
+- **Contact holds exactly**: each end meets its side perpendicular
+  (tangent-normal), inside the port window, straight for at least its marker.
+  On a laid-out tree this yields the classic horizontal-tangent S-curve.
+- **Clearance holds sampled**: the curve stays ≥ `clearance` from every
+  keep-out along its length; where a corridor cannot bend that gently the
+  curve tightens toward the corridor's polyline rather than leave it.
+- **Crossings need not be square-on** — two curves may cross obliquely, still
+  point contact, counted in the report like any crossing.
+- **Duplicates** draw as offset parallels at pitch; a **fan** shares one
+  trunk curve to the split; a **self-loop** is a smooth hook; forced sides,
+  labels (arc-length `along:`, sliding), bundles, and **strays** ride the
+  shared spine unchanged.
+- **Determinism** is Law 4 verbatim; there are no tension / curvature knobs.
+
+The natural checker judges contact (perpendicular arrival, window, marker
+stub), sampled clearance, and duplicate separation; the run/track and
+square-crossing laws are orthogonal-only.
 
 The rest of this document is the `orthogonal` contract.
 
@@ -256,8 +285,10 @@ src/routing/
                 (graph), requests/bundles (request), admission (admit, cost,
                 entry, ledger), search, placement (place, ladder, order,
                 pairwise), geometry, labels
+  natural/      the natural strategy — corridor choice over the shared search
+                (corridor), curve fit (curve)
   validate.rs   the independent law checker (+ validate/excuse.rs) — a test
-                oracle over orthogonal wires, never a repair
+                oracle over orthogonal and natural wires, never a repair
 ```
 
 One Dijkstra per bundle over a graph of tens of cells, one linear placement
