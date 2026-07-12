@@ -137,7 +137,7 @@ api --> user "200 + token"   // a return — dashed
 ]
 ```
 
-The operator picks the message: `->` a call, `-->` a return, `~>` async, and `a -> a` a self-message. A call opens an **activation bar** on its target and the matching return closes it — nesting stacks, automatically. Wrap a span of messages in `|loop|`, `|opt|`, or `|alt|` (with `|else|` compartments) to frame it, and a frame only groups — its messages still wire the outer participants. Drop a `|note| "…" { place: over a }` (or `place: left a` / `place: right a`, or `place: over a b` to span). The whole sequence language is §10 of [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md).
+The operator picks the message: `->` a call, `-->` a return, `~>` async, and `a -> a` a self-message. A call opens an **activation bar** on its target and the matching return closes it — nesting stacks, automatically. Wrap a span of messages in `|loop|`, `|opt|`, or `|alt|` (with `|else|` compartments) to frame it, and a frame only groups — its messages still wire the outer participants. Drop a `|note| "…" { place: over a }` (or `place: left a` / `place: right a`, or `place: over a b` to span). The whole sequence language is [`SPEC.md` §13](https://github.com/monfa-red/lini/blob/main/SPEC.md#13-sequence).
 
 ---
 
@@ -194,13 +194,11 @@ An `|entity|` is an ER / database card — a titled field list built on `|table|
 
 Each end-marker composes `[min][max]` — an optionality ring `o` (zero) or bar `+` (one) hugs the line, the crow `<` (many) or a bar `+` (one) sits at the entity — and it works on **either end** (`a +-< b` is one-to-many). Colour an entity like any node (`stroke: --blue-ink; fill: --blue-wash`), or leave it in the default palette.
 
-Entities lay out in **any** container today — `grid`, `flow`, or free-positioned with `pin` / `translate` (as above). They'll pair best with **`layout: auto`**, an automatic graph layout on the roadmap.
+Entities lay out in **any** container today — `grid`, `flow`, or free-positioned with `pin` / `translate` (as above). They'll pair best with the automatic graph layout on the post-1.0 roadmap.
 
 ---
 
 ## Engineering drawings
-
-> **Work in progress** — the language is specified; the engine is landing incrementally.
 
 `layout: drawing` turns a profile drawn with a pen (`draw: move(…) up(10) fillet(3) …`) into a **dimensioned technical sheet**: parts *mate* against each other, holes and patterns punch through, a half-profile *revolves* into a turned part (every shoulder drawing its edge line), a `thread:` dresses a surface with the ISO minor lines and composes its own `M20×1.5` callout, a long bar *breaks* to fit — and every dimension's value is **measured from the geometry**, so the numbers stay true when the model changes. Dimensions live in the `( )` bracket — `(-)` a linear span, `(o)` a diameter or radius, `(<)` an angle — with leaders, datums, and hatched sections annotating the rest. An ISO 5457 `|page|` (frame, zone references, seated `|title-block|`) hosts the views at true millimetre scale. It lowers to plain SVG like every other layout. See [`SPEC.md` §15](https://github.com/monfa-red/lini/blob/main/SPEC.md#15-drawing).
 
@@ -337,7 +335,7 @@ Parsing is recursive-descent over an LL(1) grammar; resolve applies CSS-like spe
 
 ## Status
 
-**v0.20.** The language (the box/text model in [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md)) is stable, and the pipeline is complete and tested: links route and render, layout and theming work, charts plot from data ([`SPEC.md` §14](https://github.com/monfa-red/lini/blob/main/SPEC.md#14-charts)), sequence diagrams read the wires as time ([§13](https://github.com/monfa-red/lini/blob/main/SPEC.md#13-sequence)), ER entities wire with crow's-foot cardinality ([§8](https://github.com/monfa-red/lini/blob/main/SPEC.md#8-templates)), and the formatter and dev server ship in the same binary. Engineering drawings ([§15](https://github.com/monfa-red/lini/blob/main/SPEC.md#15-drawing)) are built through the sheet: turned profiles (`revolve:`, `thread:`, hidden geometry), measured dimensions with ISO arrowheads, the ISO 5457 `|page|` with its ISO 7200 title block, and now **sections and detail views** — a `|cutting-plane|` and its composed `A-A` section title, `|detail-circle|` markers with auto `|detail|` views (re-rendered, clipped, dimensioned), fillets and chamfers against arcs, and true-scale physical-mm output.
+**1.0.0-alpha — the syntax freeze.** The language in [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md) is frozen for the 1.0 line: everything from here to 1.0 is additive, and the pipeline is complete and tested. Links route and render, layout and theming work, charts plot from data ([§14](https://github.com/monfa-red/lini/blob/main/SPEC.md#14-charts)), sequence diagrams read the wires as time ([§13](https://github.com/monfa-red/lini/blob/main/SPEC.md#13-sequence)), ER entities wire with crow's-foot cardinality ([§8](https://github.com/monfa-red/lini/blob/main/SPEC.md#8-templates)), and the formatter and dev server ship in the same binary. Engineering drawings ([§15](https://github.com/monfa-red/lini/blob/main/SPEC.md#15-drawing)) are built through the sheet: turned profiles (`revolve:`, `thread:`, hidden geometry), measured dimensions with ISO arrowheads, sections and detail views with composed titles (`A-A`, `C (2:1)`), fillets and chamfers against arcs, and the ISO 5457 `|page|` with its ISO 7200 title block at true physical scale. The alpha rounds ahead add tree and mindmap layouts with natural curved routing, richer charts, and deeper drawing measurement — the ladder is in [`ROADMAP.md`](https://github.com/monfa-red/lini/blob/main/ROADMAP.md).
 
 ## Development
 
