@@ -141,6 +141,28 @@ The operator picks the message: `->` a call, `-->` a return, `~>` async, and `a 
 
 ---
 
+## Trees & mindmaps
+
+Give a scope `layout: tree` and **nesting becomes hierarchy**: every `|topic|` child is a branch, source order is sibling order, and the branch wires are generated for you — an org chart is just nested topics under `direction: column`. `direction: bilateral` fans the first-level topics right and left around a centred root, and `|mindmap|` presets the whole look: bilateral layout, **`routing: natural`** smooth curves, a colour walk that tints each first-level branch from the built-in palette (dark mode included), and a depth ramp on the type sizes.
+
+<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/mindmap.png" alt="A Lini mindmap: a centred root with six colour-tinted branches on smooth curves, light mode" width="700"></p>
+
+```
+|mindmap#product| "Product Vision" [
+  |topic#ship| "Shipping cadence" [
+    |topic| "Weekly release train"
+    |topic| "Feature flags gate the risky work"
+  ]
+  |topic#team| "Team" [               // side: left | right overrides the split
+    |topic| "Small and senior"
+  ]
+]
+```
+
+Branch wires are ordinary generated links — `lini desugar` shows them, `#ship |-| { stroke-style: dashed }` styles one arm, and an authored cross-link between branches stays neutral. Plain `layout: tree` keeps the neutral org-chart look with elbow connectors; `routing: natural` is a scope setting like any other, so any flow or grid can route obstacle-aware curves instead of orthogonal runs. The tree engine is [`SPEC.md` §12](https://github.com/monfa-red/lini/blob/main/SPEC.md#12-flow-grid--tree).
+
+---
+
 ## Icons
 
 Built-in **[Phosphor](https://phosphoricons.com/)** icons, drawn as inline SVG paths — no icon font, no external files. `|icon| { symbol: heart }` paints like any node: `fill` is the body, `stroke` the line, `stroke-width` counter-scaled so the weight stays even at any size. `|sign|` is a larger preset and an ordinary node — it carries a label, wears a colour class, and wires up like a box.
@@ -335,7 +357,7 @@ Parsing is recursive-descent over an LL(1) grammar; resolve applies CSS-like spe
 
 ## Status
 
-**1.0.0-alpha — the syntax freeze.** The language in [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md) is frozen for the 1.0 line: everything from here to 1.0 is additive, and the pipeline is complete and tested. Links route and render, layout and theming work, charts plot from data ([§14](https://github.com/monfa-red/lini/blob/main/SPEC.md#14-charts)), sequence diagrams read the wires as time ([§13](https://github.com/monfa-red/lini/blob/main/SPEC.md#13-sequence)), ER entities wire with crow's-foot cardinality ([§8](https://github.com/monfa-red/lini/blob/main/SPEC.md#8-templates)), and the formatter and dev server ship in the same binary. Engineering drawings ([§15](https://github.com/monfa-red/lini/blob/main/SPEC.md#15-drawing)) are built through the sheet: turned profiles (`revolve:`, `thread:`, hidden geometry), measured dimensions with ISO arrowheads, sections and detail views with composed titles (`A-A`, `C (2:1)`), fillets and chamfers against arcs, and the ISO 5457 `|page|` with its ISO 7200 title block at true physical scale. The alpha rounds ahead add tree and mindmap layouts with natural curved routing, richer charts, and deeper drawing measurement — the ladder is in [`ROADMAP.md`](https://github.com/monfa-red/lini/blob/main/ROADMAP.md).
+**1.0.0-alpha — the syntax freeze.** The language in [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md) is frozen for the 1.0 line: everything from here to 1.0 is additive, and the pipeline is complete and tested. Links route and render, layout and theming work, charts plot from data ([§14](https://github.com/monfa-red/lini/blob/main/SPEC.md#14-charts)), sequence diagrams read the wires as time ([§13](https://github.com/monfa-red/lini/blob/main/SPEC.md#13-sequence)), ER entities wire with crow's-foot cardinality ([§8](https://github.com/monfa-red/lini/blob/main/SPEC.md#8-templates)), and the formatter and dev server ship in the same binary. Engineering drawings ([§15](https://github.com/monfa-red/lini/blob/main/SPEC.md#15-drawing)) are built through the sheet: turned profiles (`revolve:`, `thread:`, hidden geometry), measured dimensions with ISO arrowheads, sections and detail views with composed titles (`A-A`, `C (2:1)`), fillets and chamfers against arcs, and the ISO 5457 `|page|` with its ISO 7200 title block at true physical scale. **1.0.0-alpha.1** adds tree and mindmap layouts ([§12](https://github.com/monfa-red/lini/blob/main/SPEC.md#12-flow-grid--tree)) with `routing: natural` obstacle-aware curves. The alpha rounds ahead add richer charts and deeper drawing measurement — the ladder is in [`ROADMAP.md`](https://github.com/monfa-red/lini/blob/main/ROADMAP.md).
 
 ## Development
 

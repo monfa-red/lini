@@ -3776,6 +3776,26 @@ kitchen.water -> closet .loud
 closet.outlet -> fridge.inlet "restocks"
 ```
 
+**A tree and a mindmap** ([SPEC 12](#12-flow-grid--tree)):
+
+```
+|column| "Org" { layout: tree; } [        // plain tree: neutral, orthogonal
+  |topic#ceo| "CEO" [
+    |topic#cto| "CTO" [ |topic| "Backend"; |topic| "Frontend" ]
+    |topic#coo| "COO" [ |topic| "Ops" ]
+  ]
+]
+
+|mindmap#plan| "Launch" [                 // preset: bilateral, natural curves,
+  |topic#product| "Product" [             // palette walk, depth ramp, 160 wrap
+    |topic| "MVP"; |topic| "Docs"
+  ]
+  |topic#sales| "Sales" { side: left; } [ // overrides the ⌈n/2⌉ split
+    |topic| "Leads"
+  ]
+]
+```
+
 **A sequence — a login flow:**
 
 ```
