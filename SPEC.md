@@ -2,8 +2,8 @@
 
 Pretty diagrams, charts, and technical drawings from plain text, with fine-grained
 control. One core — composable nodes, a CSS-driven cascade, compile-time layout —
-drives a family of layouts (flow, grid, sequence, charts, and engineering drawings),
-and compiles to clean, themeable SVG.
+drives a family of layouts (flow, grid, tree, sequence, charts, and engineering
+drawings), and compiles to clean, themeable SVG.
 
 This document is complete: an implementer can build a conforming engine from it
 alone. **Everything is defined once and reused** — a property, the cascade, colour,
@@ -28,7 +28,7 @@ reference. **Link routing** has its own contract — [ROUTING.md](ROUTING.md).
 
 ### Part II — Layout
 
-11 [The Layout Model](#11-the-layout-model) · 12 [Flow & Grid](#12-flow--grid) ·
+11 [The Layout Model](#11-the-layout-model) · 12 [Flow, Grid & Tree](#12-flow-grid--tree) ·
 13 [Sequence](#13-sequence) · 14 [Charts](#14-charts) · 15 [Drawing](#15-drawing)
 
 ### Part III — Reference
@@ -310,7 +310,7 @@ A node has **no label unless you give it one** — a bare `|box#cat|` is an empt
 |---|---|
 | no string at all | nothing — an empty box |
 | `"X"` | the label "X" |
-| `""` | an empty string — nothing in flow, an empty cell in a grid ([SPEC 12](#12-flow--grid)) |
+| `""` | an empty string — nothing in flow, an empty cell in a grid ([SPEC 12](#12-flow-grid--tree)) |
 
 A link to an *undeclared* name still draws a labelled box ([Implicit nodes](#implicit-nodes)).
 A multi-word label needs no `[ ]` (`|box#lb| "Load balancer"`); an *anonymous*
@@ -359,7 +359,7 @@ A string is a **text node** — always a `<text>` leaf, never wrapped:
 - Several strings are several text nodes — `"a" "b" "c"` is three (a string is
   self-delimiting, so no `;` is needed between them).
 - An empty `""` is suppressed (adds no text) — except as a **grid cell**, where it
-  holds its track ([SPEC 12](#12-flow--grid)).
+  holds its track ([SPEC 12](#12-flow-grid--tree)).
 - Multi-line text uses `\n` (or wraps at `max-width` — [SPEC 5](#5-the-box-model));
   the box sizes to the widest line, with a `font-size × 1.2` leading between lines
   (plus any `line-spacing`), lines aligned by the container's packing knob
@@ -634,7 +634,7 @@ context, `justify` in a `row`, mapped `start` / `center` / `end` (`stretch` /
 `evenly` / `origin` read as `center`). The knob reaches the lines even when the box
 has no slack to move children; every box is a container, so the box holding the
 text decides, and the default is `center` everywhere. Split intents wrap the text
-in its own `|block| { align: … }` — the table rule ([SPEC 12](#12-flow--grid))
+in its own `|block| { align: … }` — the table rule ([SPEC 12](#12-flow-grid--tree))
 generalised to every box, which is why there is no second `text-align` knob.
 
 Two kinds of text property, split by whether they touch layout:
@@ -785,6 +785,8 @@ the cascade ([SPEC 4](#4-selectors-cascade--specificity)) — every value here i
 | `\|header\|` | `\|cell\|` | `fill: --header-fill; font-weight: semibold` | A **header** cell — a filled, semibold band (a `\|table\|`'s first row; an `\|entity\|`'s title spans them). |
 | `\|footer\|` | `\|cell\|` | `color: --footer-color` | A **footer** cell — muted text; opt-in on the last row. |
 | `\|entity\|` | `\|table\|` | `columns: auto, auto` | An ER / database **entity** — a titled field list, rows left-aligned (see below). |
+| `\|topic\|` | `\|block\|` | `fill: --fill; stroke: --stroke; stroke-width: 2; radius: 8; padding: 8 14` | A tree's **structural** node — topic nesting is the hierarchy, anything else in its `[ ]` is the topic's own content ([SPEC 12](#12-flow-grid--tree)); custom structural types derive from it (`\|person::topic\|`). Tree-only. |
+| `\|mindmap\|` | `\|topic\|` | `layout: tree; direction: bilateral; routing: natural` — plus the palette walk, the depth ramp, and `max-width: 160` on topics (see below) | A **mindmap** — the node is the visible **root topic**, its `[ ]` topics the first-level branches ([SPEC 12](#12-flow-grid--tree)). |
 | `\|note\|` | `\|block\|` | `fill: --fill; stroke: --stroke; padding: 20; scale: 1` | A **note** — the folded-corner callout card, one type in every layout (see below). |
 | `\|balloon\|` | `\|oval\|` | `width: 16; fill: --fill; stroke: --stroke; font-size: 11; scale: 1` | An item **balloon** — the numbered circle an assembly leaders to a part ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `\|drawing\|` | `\|block\|` | `layout: drawing; padding: 0` | An engineering **drawing** — geometry on a datum, measured annotations; `scale:` is its drafting ratio, default 1 ([SPEC 15](#15-drawing)). |
@@ -836,9 +838,24 @@ flow / grid it is an ordinary padded card. Built-in scoped rules — `|sequence|
 and `|drawing| |note|`, each `{ padding: 6 10; font-size: 13 }` — keep it compact where
 convention expects; override them like any rule.
 
+**Topics & mindmaps.** A `|topic|` is the tree's structural node
+([SPEC 12](#12-flow-grid--tree)), a compact card whose label is its centred
+text. `|mindmap|` is the visible root topic owning the scene — `layout: tree;
+direction: bilateral; routing: natural` — plus three deterministic garnishes,
+each lowered at desugar as ordinary generated rules (visible in `lini
+desugar`, overridable like any rule): the **palette walk** — each first-level
+branch takes the next hue ([SPEC 10.2](#102-the-colour-palette)) in
+declaration order, red and grey skipped, and tints its subtree at the tiers
+(`wash` fill, `deep` stroke **and branch wires**, `ink` text; the root stays
+neutral, explicit paint wins, cross-links stay neutral, dark mode free); the
+**depth ramp** — `.lini-level-N` rules size the tiers (root largest, level 1
+medium, deeper small); and **topic wrap** — `max-width: 160`, so a long label
+wraps into a card instead of stretching an arm. A plain `layout: tree`
+carries none of these — org charts read monochrome.
+
 **Tables.** A `|table|` is sugar — a `group` that is a grid with `gap: 1` and
 `gap-fill: --stroke`, so the 1px gaps between cells paint as hairline rules
-([SPEC 12](#12-flow--grid)). Each body cell wraps in a `|cell|`, the type that
+([SPEC 12](#12-flow-grid--tree)). Each body cell wraps in a `|cell|`, the type that
 carries the text-to-gutter inset (`padding: 4 8`); `|header|` / `|footer|` build on
 `|cell|`, so every cell — but not the caption, a plain `|block|` — is inset. Style all
 cells with `|cell| { … }`, or per table with `|table| |cell| { … }`, exactly as you
@@ -848,7 +865,7 @@ room. The outer frame is the group border, the inner rules the gap paint
 ([SPEC 11](#11-the-layout-model)); no edge is doubled. A table's label is its caption.
 
 **Column alignment.** `align` (↔) / `justify` (↕) on the table read per column
-([SPEC 12](#12-flow--grid)) and align the *cells' text*: since the cells already fill, the
+([SPEC 12](#12-flow-grid--tree)) and align the *cells' text*: since the cells already fill, the
 table's own `align`/`justify` are carried onto each cell — a `start`/`end` column's cells
 wear a `.lini-align-*` / `.lini-justify-*` class — and a filled cell places its text at
 that edge (`center` is the default). So `align: start, center, end` reads three columns
@@ -1112,14 +1129,17 @@ garden.outlet -> kitchen.inlet "carries"
 
 `routing` selects the strategy for a scope and cascades like `clearance`:
 `orthogonal` (the default) routes horizontal/vertical runs through the free space
-between nodes, corners rounded; `straight` draws each link as one segment between
-the bodies, trimmed to their boundaries — it avoids nothing and reports nothing;
-`curved` is named but deferred ([SPEC 23](#23-deferred)). `routing` pairs with
+between nodes, corners rounded; `natural` fits obstacle-aware **smooth curves** —
+a legal corridor through the same free space, then a curve inside it, tangent-
+normal at both ends ([ROUTING.md](ROUTING.md)); `straight` draws each link as one
+segment between the bodies, trimmed to their boundaries — it avoids nothing and
+reports nothing. (`curved` was **replaced** by `natural`, not aliased —
+[SPEC 20](#20-errors).) `routing` pairs with
 `layout` — `layout` places the nodes, `routing` wires them — so a group can route
 its internals one way while the root routes another; which subsystem realises a
 scope's links is the scope's **wiring strategy** ([SPEC 11](#11-the-layout-model)):
-the orthogonal (or `straight`) router for `flow` / `grid`, layout-time lowering for
-`sequence`, `chart` / `pie`, and `drawing`.
+the router (any of the three strategies) for `flow` / `grid` / `tree`, layout-time
+lowering for `sequence`, `chart` / `pie`, and `drawing`.
 
 The full routing contract — clearance, spacing, crossings, fan-out, self-loops —
 lives in [`ROUTING.md`](ROUTING.md), the source of truth for routing.
@@ -1409,6 +1429,7 @@ properties. This part is the family; each section states just its delta.
 |---|---|---|---|---|
 | `flow` *(default)* | 1D flex | boxes / text in a row or column | orthogonal router | no — arranges in place |
 | `grid` | 2D grid | boxes / text in tracks | orthogonal router | no — arranges in place |
+| `tree` | rooted hierarchy | topics in generations ([SPEC 12](#12-flow-grid--tree)) | router (orthogonal / natural) | no — arranges in place |
 | `sequence` | time axis | participants + messages + frames + notes ([SPEC 13](#13-sequence)) | layout-time time-rows | yes |
 | `chart` | data plane | series + axes + bands + marks ([SPEC 14](#14-charts)) | layout-time data→pixels | yes |
 | `pie` | part-to-whole | slices ([SPEC 14](#14-charts)) | layout-time value→angle | yes |
@@ -1429,8 +1450,8 @@ small, bounded addition ([Part III](#part-iii--reference) formalises each):
    type places its `"X"` — is inherited by every layout (title, legend, axis title, header,
    guard; [SPEC 13](#13-sequence), [SPEC 14](#14-charts)). No layout invents a label syntax.
 
-2. **The wiring strategy realises a scope's links.** `flow` / `grid` hand their links to
-   the router ([SPEC 9](#9-links), [ROUTING.md](ROUTING.md)); `sequence` lowers each message to a
+2. **The wiring strategy realises a scope's links.** `flow` / `grid` / `tree` hand their
+   links to the router ([SPEC 9](#9-links), [ROUTING.md](ROUTING.md)); `sequence` lowers each message to a
    time-row arrow; a `drawing` lowers each link to a dimension, leader, or mate
    ([SPEC 15](#15-drawing)); `chart` / `pie` have no links. One scope, one strategy — set by the
    scope's `layout` (with `routing:` selecting `orthogonal` vs `straight` for the routed
@@ -1456,21 +1477,23 @@ a sequence, or a pie can carry a background, a frame, or a link like any `|box|`
 | Property | Role | Where it acts |
 |---|---|---|
 | `layout` | picks the engine (above) | any container |
-| `direction` | orient a flow — `row` / `column` (default `column`); a chart adds `radial` | `flow`, `chart` |
+| `direction` | orient a flow — `row` / `column` (default `column`); a chart adds `radial`, a tree `bilateral` ([SPEC 12](#12-flow-grid--tree)) | `flow`, `chart`, `tree` |
 | `gap` | space between children — `N` both axes, `row col` per axis, `≥ 0` | all (semantics per engine — below) |
 | `gap-fill` | paint the interior gutters (below) | `flow`, `grid` |
 | `padding` | inner padding; frames and places the content ([SPEC 5](#5-the-box-model)) | `flow`, `grid` |
-| `align` / `justify` | cross / main-axis packing ([SPEC 12](#12-flow--grid)) | `flow`, `grid` |
-| `columns` / `rows` / `cell` / `span` | grid tracks & placement ([SPEC 12](#12-flow--grid)) | `grid` |
+| `align` / `justify` | cross / main-axis packing ([SPEC 12](#12-flow-grid--tree)) | `flow`, `grid` |
+| `columns` / `rows` / `cell` / `span` | grid tracks & placement ([SPEC 12](#12-flow-grid--tree)) | `grid` |
 | `fill` … `href` | the container box's own paint (above) | any container |
 
 `gap` is honoured everywhere but **means what the engine needs**: inter-child spacing in
-flow / grid, the plot-to-title/legend gutter in a chart / pie (default 10), and the
-message pitch / participant spacing in a sequence (default 32); a drawing places by
-datum and ignores it (its dims and mates read a scoped `gap:` of their own —
-[SPEC 15](#15-drawing)). `direction`, `align`, `justify`, `gap-fill`, and `padding`
-are the **flow / grid arranger's** knobs — a `sequence`, `chart` / `pie`, or `drawing`
-container places its own children and ignores them.
+flow / grid, generation distance × sibling separation in a tree
+([SPEC 12](#12-flow-grid--tree)), the plot-to-title/legend gutter in a chart / pie
+(default 10), and the message pitch / participant spacing in a sequence (default 32); a
+drawing places by datum and ignores it (its dims and mates read a scoped `gap:` of
+their own — [SPEC 15](#15-drawing)). `direction`, `align`, `justify`, `gap-fill`, and
+`padding` are the **flow / grid arranger's** knobs — a `sequence`, `chart` / `pie`, or
+`drawing` container places its own children and ignores them, and a `tree` reads
+`direction` and `gap` alone.
 
 **Nested boxes are unaffected.** These knobs govern a container *engine*'s placement of
 its own children; an ordinary box **nested inside any layout** still lays out its own
@@ -1489,10 +1512,11 @@ makes `|table|` plain `grid + gap: 1 + gap-fill: --stroke`, not a magic type ([S
 
 ---
 
-## 12. Flow & Grid
+## 12. Flow, Grid & Tree
 
-The two **router-routed** layouts: they arrange boxes and text in place, then hand
-their links to the router ([SPEC 9](#9-links)). `flow` is 1D flex, `grid` is 2D.
+The **router-routed** layouts: they arrange boxes and text in place, then hand
+their links to the router ([SPEC 9](#9-links)). `flow` is 1D flex, `grid` is 2D,
+`tree` a rooted hierarchy.
 
 ### Flex — `align` / `justify`
 
@@ -1572,6 +1596,45 @@ The same knob aligns a multi-line text's *lines* ([SPEC 6](#6-paint-stroke--text
 
 Both layouts paint interior gutters with `gap-fill` ([SPEC 11](#11-the-layout-model)) and
 frame the whole with the container's own `stroke`.
+
+### Tree — rooted structure
+
+`layout: tree` arranges a rooted hierarchy. **Structure is `|topic|` nesting**
+([SPEC 8](#8-templates)): a direct `|topic|`-derived child is a **branch**,
+every other child the topic's own content; custom structural types derive from
+it (`|person::topic|`). The scope holds **exactly one root topic** (none or two
+errors; a forest may relax later), and `|topic|` outside a tree scope errors
+([SPEC 20](#20-errors)).
+
+| `direction:` | Growth | The look |
+|---|---|---|
+| `column` *(default)* | down from the root | org chart |
+| `row` | rightward from the root | logic tree / outline |
+| `bilateral` | both sides, horizontally | mindmap |
+
+Placement is post-order: each subtree packs its children at the cross-axis
+`gap` (sibling separation), the parent centred over its subtree's span one
+main-axis `gap` (generation distance) away; subtrees never overlap.
+**`bilateral`** splits the first level — the first ⌈n/2⌉ first-level topics
+fill the **right** side top-to-bottom in declaration order, the rest the
+**left** (each half the `row` layout, the left mirrored, the root centred
+between them); a first-level **`side: left | right`** overrides its half.
+`top` / `bottom` there, or any `side:` on a `row` / `column` topic, is an
+error — there is no vertical bilateral; growing downward is `column`.
+
+**Branch links are generated, and ordinary.** Desugar adds one unmarked `|-|`
+link per branch, **resolving in the parent topic's scope** — `#syntax |-| { }`
+restyles one arm, `lini desugar` shows them, the scope's `routing` draws them
+like any wire — with the direction's forced sides (`column`: `bottom` → `top`;
+`row`: `right` → `left`; `bilateral` mirrors per half, the root emitting both
+sides). Authored cross-links stay legal, never alter the tree, and keep the
+neutral link default. Every topic also wears a generated **`.lini-level-N`**
+class (root 0), so one rule restyles a tier (`.lini-level-2 { font-size: 12 }`).
+
+The engine reads `direction` and `gap` alone (`gap: g s` — generation, then
+sibling; a scalar sets both). A plain tree is neutral — uniform topics, elbow
+connectors from the default `routing: orthogonal`; the mindmap look is the
+`|mindmap|` preset ([SPEC 8](#8-templates)).
 
 ---
 ## 13. Sequence
@@ -1902,7 +1965,7 @@ Both are children placed in **data** coordinates; the model gives them for free.
 A **`|band|`** partitions an axis and drives three things from one declaration: a
 background **shade**, a **tick** (its smart label), and the **segment boundaries** every
 series shares. `span: a b` is its data range on its bound `axis:` (the grid `span:`, now
-valid on a chart band too — [SPEC 12](#12-flow--grid)); `fill: none` makes it a divider + label
+valid on a chart band too — [SPEC 12](#12-flow-grid--tree)); `fill: none` makes it a divider + label
 with no shading.
 
 ```
@@ -2636,7 +2699,7 @@ A multi-view sheet is ordinary layout: drawings in a `|row|` / `|grid|`, each vi
 own scope and `scale:` (a 2 : 1 detail still dims true,
 [15.1](#151-the-container-the-datum--the-scale)). There is no `|view|` type and no
 projection engine; views **share their axes with `align: origin`**
-([SPEC 12](#12-flow--grid)) — a drawing's origin is its datum, so a row of views
+([SPEC 12](#12-flow-grid--tree)) — a drawing's origin is its datum, so a row of views
 lines up datum-to-datum however their dimensions stack, and a grid with
 `align: origin; justify: origin` is the first- / third-angle arrangement.
 Projection *lines* between views stay deferred ([SPEC 23](#23-deferred)).
@@ -2820,16 +2883,16 @@ candidate ([SPEC 23](#23-deferred)) · **—** not applicable.
 The high-signal grid: which **container / layout** property each engine honours. (Paint,
 text, and box-model properties are universal to every node — the tables that follow.)
 
-| Property | `flow` | `grid` | `sequence` | `chart` | `pie` | `drawing` |
-|---|---|---|---|---|---|---|
-| `direction` | ✓ `row`/`column` | — | — | ✓ `+radial` | — | — |
-| `gap` | ✓ spacing | ✓ spacing | ✓ pitch / spacing | ✓ plot gutter | ✓ plot gutter | — (dims / mates read their own — [SPEC 15](#15-drawing)) |
-| `gap-fill` | ✓ | ✓ | ✓ᵇ | — | — | — |
-| `padding` | ✓ | ✓ | ✓ᵇ | — | — | ✓ frames the sheet |
-| `align` / `justify` | ✓ | ✓ per-column | ✓ᵇ | — | — | — |
-| `width` / `height` | ✓ (slack) | ✓ (slack) | — content-sized | ✓ box size | ✓ box size | ✓ a floor |
-| `columns` / `rows` / `cell` / `span` | — | ✓ | — | — (`span`→band) | — | — |
-| container paint (`fill` `stroke` `radius` `shadow` `opacity` `href`) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Property | `flow` | `grid` | `tree` | `sequence` | `chart` | `pie` | `drawing` |
+|---|---|---|---|---|---|---|---|
+| `direction` | ✓ `row`/`column` | — | ✓ `+bilateral` | — | ✓ `+radial` | — | — |
+| `gap` | ✓ spacing | ✓ spacing | ✓ generation × sibling | ✓ pitch / spacing | ✓ plot gutter | ✓ plot gutter | — (dims / mates read their own — [SPEC 15](#15-drawing)) |
+| `gap-fill` | ✓ | ✓ | — | ✓ᵇ | — | — | — |
+| `padding` | ✓ | ✓ | ✓ | ✓ᵇ | — | — | ✓ frames the sheet |
+| `align` / `justify` | ✓ | ✓ per-column | — | ✓ᵇ | — | — | — |
+| `width` / `height` | ✓ (slack) | ✓ (slack) | ✓ a floor | — content-sized | ✓ box size | ✓ box size | ✓ a floor |
+| `columns` / `rows` / `cell` / `span` | — | ✓ | — | — | — (`span`→band) | — | — |
+| container paint (`fill` `stroke` `radius` `shadow` `opacity` `href`) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 **✓ᵇ** — honoured on the participant / frame **boxes' own content** (they are ordinary
 boxes), but *not* by the sequence engine's placement of them on the time axis
@@ -2911,18 +2974,18 @@ Read on the listed primitive; required where noted ([SPEC 7](#7-nodes)).
 | `sheet` | `\|page\|` | `a5…a0` / ANSI `a…e` `[portrait \| landscape]` | trimmed-size sugar → `width` / `height` in mm ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `break` | `\|sketch\|` | `a b [axis]` groups | cut the view between stations ([SPEC 15.3](#153-the-sketch-pen)). |
 
-### Grid, chart, pie, sequence & drawing properties
+### Grid, tree, chart, pie, sequence & drawing properties
 
 Layout-owned — an error only where a hard gate exists ([SPEC 20](#20-errors)); otherwise inert
 out of scope.
 
 | Property | Owner | Value | Default | Ref |
 |---|---|---|---|---|
-| `layout` | any container | `flow`·`grid`·`sequence`·`chart`·`pie`·`drawing` | `flow` | [SPEC 11](#11-the-layout-model) |
-| `direction` | flow, chart | `row`·`column`·`radial` | `column` | [SPEC 11](#11-the-layout-model) |
-| `gap` · `gap-fill` · `align` · `justify` · `padding` | flow, grid | — | see matrix | [SPEC 11](#11-the-layout-model), [SPEC 12](#12-flow--grid) |
-| `columns` · `rows` | grid | track list | — (`columns` required) | [SPEC 12](#12-flow--grid) |
-| `cell` · `span` | grid box child | `col row` / `cols rows` | `— / 1 1` | [SPEC 12](#12-flow--grid) |
+| `layout` | any container | `flow`·`grid`·`tree`·`sequence`·`chart`·`pie`·`drawing` | `flow` | [SPEC 11](#11-the-layout-model) |
+| `direction` | flow, chart, tree | `row`·`column` · `radial` (chart) · `bilateral` (tree) | `column` | [SPEC 11](#11-the-layout-model) |
+| `gap` · `gap-fill` · `align` · `justify` · `padding` | flow, grid | — | see matrix | [SPEC 11](#11-the-layout-model), [SPEC 12](#12-flow-grid--tree) |
+| `columns` · `rows` | grid | track list | — (`columns` required) | [SPEC 12](#12-flow-grid--tree) |
+| `cell` · `span` | grid box child | `col row` / `cols rows` | `— / 1 1` | [SPEC 12](#12-flow-grid--tree) |
 | `data` · `fn` | chart series | list / pairs / `(…)` expr | — | [SPEC 14.3](#143-data--formulas) |
 | `labels` | chart series | quoted-string list | — | [SPEC 14.3](#143-data--formulas) |
 | `curve` | `\|line\|` `\|area\|` | `linear`·`smooth`·`step` | `linear` | [SPEC 14.2](#142-series) |
@@ -2934,6 +2997,7 @@ out of scope.
 | `value` | `\|slice\|` `\|bubble\|` | number ≥ 0 | — | [SPEC 14](#14-charts) |
 | `at` | `\|mark\|` `\|bubble\|` · `\|plane\|` | `V` / `X Y` · `N [x-axis \| y-axis]` | — | [SPEC 14.5](#145-bands--annotations), [SPEC 15.8](#158-assemblies-views-sheets--titles) |
 | `side` · `range` · `scale` · `step` · `ticks` · `unit` · `gridlines` | `\|axis\|` | see [SPEC 14.4](#144-axes-scales--domain) | — | [SPEC 14.4](#144-axes-scales--domain) |
+| `side` (homonym: also an `\|axis\|`'s / a dimension's, below) | first-level `\|topic\|`, `bilateral` | `left` · `right` | the split rule | [SPEC 12](#12-flow-grid--tree) |
 | `place` | sequence `\|note\|` | `over` · `left` · `right`, then id(s) | — | [SPEC 13](#13-sequence) |
 | `activation` | `\|sequence\|` | `auto` · `none` | `auto` | [SPEC 13](#13-sequence) |
 | `scale` (homonym: an `\|axis\|`'s is `linear`·`log`) | any node | number > 0 | 1 | [SPEC 15.1](#151-the-container-the-datum--the-scale) |
@@ -2954,7 +3018,7 @@ text props. Its own properties:
 | Property | Value | Default | Notes |
 |---|---|---|---|
 | `clearance` | number | 16 | min gap from nodes and links. **Scene config** — cascades. |
-| `routing` | `orthogonal` · `straight` | `orthogonal` | wiring strategy; scene config, cascades. `curved` ⌛. |
+| `routing` | `orthogonal` · `natural` · `straight` | `orthogonal` | wiring strategy; scene config, cascades ([ROUTING.md](ROUTING.md)). |
 | `along` | fraction list | auto | label positions along the route. |
 | `marker` · `marker-start` · `marker-end` | marker | from the operator | endpoint glyphs ([SPEC 7](#7-nodes)). |
 
@@ -3081,8 +3145,9 @@ per instance; the scene defaults (`layout`, `padding`, `gap`, `font-size`, `clea
 ([SPEC 15.1](#151-the-container-the-datum--the-scale)); the per-type smart label (text / caption / symbol / link
 label / chart title …), auto-`along:`, chain expansion (`a -> b -> c` →
 `a -> b; b -> c`, auto-created ids included — fan-out `&` stays a resolve / routing
-concept), and link auto-create (an undeclared endpoint `x` → `|box#x| "x"`) become
-explicit. The pass is idempotent; type-system errors (cycle, depth > 16, a define
+concept), a tree's branch links, `.lini-level-N` classes, and a mindmap's
+palette-walk rules ([SPEC 12](#12-flow-grid--tree)), and link auto-create (an
+undeclared endpoint `x` → `|box#x| "x"`) become explicit. The pass is idempotent; type-system errors (cycle, depth > 16, a define
 shadowing a built-in) surface here.
 
 **Resolve** (top-to-bottom):
@@ -3235,7 +3300,7 @@ Format: `filename:line:col: error: <message>` (LSP-compatible), compile-time, wi
 | `->` in the stylesheet | `'->' draws a link on the canvas — style every link with '\|-\| { stroke: … }' in a '{ }' block` |
 | `\|-\|` / `\|link\|` as an instance | `a link is drawn by an operator — '\|-\|' only styles links (write 'a -> b')` / `links are drawn by operators, not the '\|link\|' type` |
 | `\|node\|` as instance | `'node' is the umbrella concept — write '\|block\|' for the bare box` |
-| Deferred routing | `routing: 'orthogonal' and 'straight' are built; 'curved' is deferred (SPEC 23)` |
+| Unknown routing strategy | `routing takes orthogonal, natural, or straight — 'curved' was replaced by 'natural'` |
 | Unknown side | `':X' is not a side — use top, bottom, left, or right` |
 | Link labels split | `keep a link's labels together — write 'a -> b [ "x" "y" ]'` (warning) |
 
@@ -3272,6 +3337,16 @@ Format: `filename:line:col: error: <message>` (LSP-compatible), compile-time, wi
 | `nowrap` text can't fit | `text cannot fit 'max-width: 80' without wrapping — widen it or drop 'text-wrap: nowrap'` |
 | Non-text child wider than the cap | `a child is wider than 'max-width: 80' — only text wraps` |
 | `width` above `max-width` | `'width: 200' exceeds 'max-width: 120'` |
+
+**Layout — tree** ([SPEC 12](#12-flow-grid--tree))
+
+| Condition | Message |
+|---|---|
+| `\|topic\|` outside a tree | `'\|topic\|' builds a tree — it belongs in a 'layout: tree'` |
+| No root topic | `a tree needs exactly one root '\|topic\|'` |
+| A second root topic | `a tree has one root — '\|topic\|' 'X' is a second` |
+| `side:` top/bottom in `bilateral` | `a bilateral tree grows left and right — 'side' takes left or right` |
+| `side:` in `row` / `column` | `'side' picks a bilateral branch's half — this tree has one growth direction` |
 
 **Layout — sequence**
 
@@ -3505,11 +3580,13 @@ The side names **`top`, `bottom`, `left`, `right`** are **not** reserved — the
 keywords only after an endpoint's `:` (`a:left`), so a node may be named `|box#left|`.
 Single quotes (`'`) are reserved and are not strings.
 
-Value keywords are **contextual**, not reserved as ids — `flow`, `grid`, `sequence`,
-`chart`, `pie`, `row`, `column`, `radial`, `start`, `center`, `end`, `stretch`, `evenly`,
-`none`, `auto`, `orthogonal`, `straight` mean their keyword only after the property that
+Value keywords are **contextual**, not reserved as ids — `flow`, `grid`, `tree`,
+`sequence`, `chart`, `pie`, `row`, `column`, `radial`, `bilateral`, `start`, `center`,
+`end`, `stretch`, `evenly`, `none`, `auto`, `orthogonal`, `natural`, `straight` mean
+their keyword only after the property that
 expects them. The layout type names (`chart`, `pie`, `axis`, `band`, `mark`, `bars`, `dots`,
-`bubble`, `slice`, `area`, `line`, and the sequence `loop`, `opt`, `alt`, `else`, `note`)
+`bubble`, `slice`, `area`, `line`, the tree `topic`, `mindmap`, and the sequence
+`loop`, `opt`, `alt`, `else`, `note`)
 are built-in types like `box` — protected from a define shadowing them, free as ids; so
 are the drawing types (`drawing`, `sketch`, `hole`, `centerline`, `pitch-circle`,
 `balloon`, `breakline`, `plane`, `magnifier` —
@@ -3539,8 +3616,6 @@ Named in the language, not built yet; the syntax is stable.
 
 **Core**
 
-- `routing: curved` — the curved link strategy ([SPEC 9](#9-links); `orthogonal` and `straight`
-  are built).
 - **a bare hollow-circle endpoint operator** — `o` spells zero only next to a max glyph
   (`-o<` / `-o+`); a standalone hollow endpoint is the paint `marker-end: circle`
   ([SPEC 7](#7-nodes)), so `o` never needs to stand alone.
@@ -3634,8 +3709,9 @@ dividers / delays (`==` / `...`); and an `|actor|` stick-figure primitive (an ac
 
 **Beyond 1.0** — directions deliberately outside the release contract, listed so
 they reserve no premature syntax: automatic graph / DAG layout (multi-parent,
-cycles); imports / modules / namespaces for shared themes and part libraries;
-animation; native PNG / WebP export.
+cycles); a true ring-radial tree and forest (multi-root) trees
+([SPEC 12](#12-flow-grid--tree)); imports / modules / namespaces for shared
+themes and part libraries; animation; native PNG / WebP export.
 
 ---
 
