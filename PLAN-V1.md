@@ -6,7 +6,7 @@ Everything here is **additive** — no breaking changes past the alpha tag.
 
 This file holds each round's **contract**: scope, SPEC-amendment checklist, open
 questions to settle in that round's SPEC pass, seams, samples, acceptance. At
-round entry, write the round's own detailed stage doc (`TREE-alpha1.md`,
+round entry, write the round's own detailed stage doc (`PLAN-TREE-alpha1.md`,
 `CHART-alpha2.md`, … — the DRAWING-0.1x pattern): Stage 0 is always the SPEC
 amendment, then bounded coding stages sized like PLAN-ALPHA's, each with a Log
 line. A round is complete only when contract, code, samples, snapshots, visual
@@ -16,7 +16,7 @@ review, docs, and `ROADMAP.md`'s ladder row all agree.
 
 ## alpha.1 — tree, mindmap & natural routing
 
-**Round entered 2026-07-11** — design settled and staged in `TREE-alpha1.md`
+**Round entered 2026-07-11** — design settled and staged in `PLAN-TREE-alpha1.md`
 (the decisions ledger supersedes the open questions below; `radial` became
 `bilateral` in the design review).
 

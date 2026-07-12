@@ -163,7 +163,7 @@ built (see 3.4); and four local fixes:
 *(Amended in the alpha.1 design review, 2026-07-11 — `radial` renamed
 `bilateral`: a chart's `radial` is truly circular, and the mindmap arrangement
 every tool actually draws is bilateral; `radial` stays unclaimed for a possible
-true ring tree post-1.0. Full decisions ledger: `TREE-alpha1.md`.)*
+true ring tree post-1.0. Full decisions ledger: `PLAN-TREE-alpha1.md`.)*
 
 - **`layout: tree`** with `direction: row | column | bilateral`. Rooted
   parent/child structure; source order = sibling order; no multi-parent/cyclic
