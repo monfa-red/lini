@@ -83,7 +83,6 @@ input_file: samples/palette.lini
     <g class="lini-node lini-group lini-block" data-id="board" style="fill: none; stroke: none" transform="translate(0,-13.25)">
       <rect x="-265.5" y="-253" width="531" height="506" rx="8" ry="8"/>
       <g class="lini-node lini-h lini-block" transform="translate(-217.5,-225.5)">
-        <rect x="0" y="0" width="0" height="0" rx="0" ry="0"/>
       </g>
       <g class="lini-node lini-h lini-block" transform="translate(-143.5,-225.5)">
         <rect x="-15.6" y="-6.5" width="31.2" height="13" rx="0" ry="0"/>
