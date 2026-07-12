@@ -165,9 +165,20 @@ pub(super) fn link_scope(
             base.push((prop.to_string(), v.clone()));
         }
     }
-    // The file is the root container [SPEC 1]: a root engine's synthetic fact
-    // heads the chain, so `|drawing| |-|` reaches a root drawing's links.
+    (base, link_ancestors(nodes, root_attrs, scope))
+}
+
+/// The ancestor facts a link's descendant `|…| |-|` rules match against, for the
+/// container chain down to `scope` — the root's synthetic fact (the file is the
+/// root container [SPEC 1], so `|drawing| |-|` reaches a root drawing's links)
+/// then each container's identity. Shared by [`link_scope`] (the written scope)
+/// and the containment-link cascade (the outer endpoint's chain, [SPEC 9]).
+pub(super) fn link_ancestors(
+    nodes: &[ResolvedInst],
+    root_attrs: &AttrMap,
+    scope: &[String],
+) -> Vec<NodeFacts> {
     let mut ancestors: Vec<NodeFacts> = scene::root_facts(root_attrs).into_iter().collect();
-    ancestors.extend(chain.iter().map(|n| inst_facts(n)));
-    (base, ancestors)
+    ancestors.extend(scope_chain(nodes, scope).iter().map(|n| inst_facts(n)));
+    ancestors
 }

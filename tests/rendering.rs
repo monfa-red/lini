@@ -871,30 +871,72 @@ fn line_alignment_rides_the_holding_boxes_knob() {
     assert!(xs.windows(2).all(|w| w[0] == w[1]), "{svg}");
 }
 
+/// The drawn link lines of an SVG, split into (dashed, solid) `data-to` targets.
+fn link_targets(svg: &str) -> (Vec<&str>, Vec<&str>) {
+    let (mut dashed, mut solid) = (Vec::new(), Vec::new());
+    for l in svg.lines() {
+        let Some(at) = l.find("data-to=\"") else {
+            continue;
+        };
+        let to = &l[at + 9..at + 9 + l[at + 9..].find('"').unwrap()];
+        if l.contains("lini-link-dashed") {
+            dashed.push(to);
+        } else if l.contains("lini-link") {
+            solid.push(to);
+        }
+    }
+    (dashed, solid)
+}
+
 #[test]
-fn a_scoped_link_rule_dashes_only_its_scope_branch_fans() {
-    // A tree's branch links are ordinary `|-|` wires resolving in the scope that
-    // contains the parent topic, so a descendant rule `#cto |-|` styles exactly
-    // the fans written inside `#cto`'s body (the `be → api` arm) and no others
-    // [SPEC 12].
-    let src = "{\n  #cto |-| { stroke-style: dashed; }\n}\n\
-        |column#o| { layout: tree } [\n\
-          |topic#ceo| \"CEO\" [\n\
-            |topic#cto| \"CTO\" [\n\
-              |topic#be| \"Backend\" [ |topic#api| \"API\" ]\n\
-              |topic#fe| \"Frontend\"\n\
-            ]\n\
-            |topic#coo| \"COO\"\n\
+fn a_scoped_link_rule_dashes_exactly_one_arm() {
+    // A containment-shaped link (endpoints X and X.path) cascades as if written
+    // in X [SPEC 9/12], so `#cto |-|` reaches cto's OWN spokes — the fan
+    // `cto:bottom - cto.be & cto.fe` is textually written in ceo's body, but its
+    // outer endpoint is cto — and no other arm. ceo's and coo's spokes stay
+    // solid.
+    let src = "{\n  layout: tree;\n  #cto |-| { stroke-style: dashed; }\n}\n\
+        |topic#ceo| \"CEO\" [\n\
+          |topic#cto| \"CTO\" [\n\
+            |topic#be| \"BE\"\n\
+            |topic#fe| \"FE\"\n\
+          ]\n\
+          |topic#coo| \"COO\" [\n\
+            |topic#ops| \"Ops\"\n\
           ]\n\
         ]\n";
     let svg = render_live(src);
-    let dashed: Vec<&str> = svg
-        .lines()
-        .filter(|l| l.contains("lini-link-dashed") && l.contains("data-to="))
-        .collect();
-    assert_eq!(dashed.len(), 1, "exactly one dashed fan: {dashed:?}");
-    assert!(
-        dashed[0].contains(r#"data-to="o.ceo.cto.be.api""#),
-        "the be→api arm inside #cto's body is dashed: {dashed:?}"
+    let (dashed, solid) = link_targets(&svg);
+    assert_eq!(
+        dashed,
+        ["ceo.cto.be", "ceo.cto.fe"],
+        "exactly cto's two spokes dash"
     );
+    assert_eq!(
+        solid,
+        ["ceo.cto", "ceo.coo", "ceo.coo.ops"],
+        "ceo's and coo's spokes stay solid"
+    );
+}
+
+#[test]
+fn the_arm_rule_reaches_the_whole_subtree() {
+    // With grandchildren under be, `#cto |-|` dashes the whole arm: cto's own
+    // spokes AND be's fan (every chain passes through cto) [SPEC 9/12].
+    let src = "{\n  layout: tree;\n  #cto |-| { stroke-style: dashed; }\n}\n\
+        |topic#ceo| \"CEO\" [\n\
+          |topic#cto| \"CTO\" [\n\
+            |topic#be| \"BE\" [ |topic#api| \"API\" ]\n\
+            |topic#fe| \"FE\"\n\
+          ]\n\
+          |topic#coo| \"COO\"\n\
+        ]\n";
+    let svg = render_live(src);
+    let (dashed, solid) = link_targets(&svg);
+    assert_eq!(
+        dashed,
+        ["ceo.cto.be", "ceo.cto.fe", "ceo.cto.be.api"],
+        "the whole cto arm dashes"
+    );
+    assert_eq!(solid, ["ceo.cto", "ceo.coo"], "other spokes stay solid");
 }

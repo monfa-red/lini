@@ -49,7 +49,11 @@ pub struct LinkScope {
 /// Resolve one link statement into one resolved link per cartesian pair.
 /// `path_prefix` scopes a lifted internal link to its host instance;
 /// `scope_ancestors` is that scope's container chain (for descendant rules);
-/// `base` is the baked link defaults plus the scope's `clearance`/`routing`.
+/// `base` is the baked link defaults plus the scope's `clearance`/`routing`;
+/// `ancestors_for` gives the container chain down to an arbitrary resolved
+/// path — the containment-link cascade below reads the **outer endpoint's**
+/// chain instead of the written scope's.
+#[allow(clippy::too_many_arguments)]
 pub fn resolve_link(
     w: &Link,
     ctx: &SceneCtx,
@@ -58,6 +62,7 @@ pub fn resolve_link(
     scope_ancestors: &[NodeFacts],
     base: &[(String, ResolvedValue)],
     scope_kind: &LinkScope,
+    ancestors_for: &dyn Fn(&[String]) -> Vec<NodeFacts>,
 ) -> Result<Vec<ResolvedLink>, Error> {
     for class in &w.classes {
         if !ctx.sheet.defines_class(class) {
@@ -95,85 +100,98 @@ pub fn resolve_link(
     // `clearance`/`routing`, the `|-|` element rule (the type tier) then the more
     // specific `(-)` dimension rule, the descendant / worn-class rules, then the
     // link's own block. `stroke` is the wire, `font-*` / `color` the labels — the
-    // same vocabulary a node uses.
-    let mut ordered: Vec<(String, ResolvedValue)> = base.to_vec();
-    ordered.extend(ctx.sheet.class_decls(LINK_CLASS));
-    if is_dim {
-        ordered.extend(ctx.sheet.class_decls(DIMENSION_CLASS));
-    }
-    ordered.extend(ctx.sheet.node_layers(scope_ancestors, &link_facts));
-    for d in &w.style {
-        ordered.push((
-            d.name.clone(),
-            resolve_property(&d.name, &d.groups, d.span, ctx.vars, ctx.funcs)?,
-        ));
-    }
-
-    // A measure / mate has no wire: no markers to derive, no line style to inject.
-    let markers = match w.op().wire() {
-        Some(op) => resolve_markers(
-            &ordered,
-            MarkerKind::from_marker(op.start),
-            MarkerKind::from_marker(op.end),
-            w.span,
-        )?,
-        None => Markers::default(),
-    };
-    let mut attrs = collapse(&ordered);
-    if let Some(op) = w.op().wire() {
-        inject_line_style(&mut attrs, op.line);
-    }
-    if !drawing_scope && attrs.get("tol").is_some() {
-        return Err(Error::at(
-            w.span,
-            "'tol' composes a dimension's text — it belongs in a 'layout: drawing'",
-        ));
-    }
-    // The drafting dash conventions are shape / |line| values [SPEC 7]; a
-    // link's set stays the core four.
-    if matches!(attrs.get("stroke-style"), Some(ResolvedValue::Ident(s)) if s == "center" || s == "phantom")
-    {
-        return Err(Error::at(
-            w.span,
-            "a link's stroke-style is solid, dashed, dotted, or wavy",
-        ));
-    }
-    let routing = parse_routing(&attrs, w.span)?;
-    attrs.map.remove("routing");
-
-    // `along:` distributes the labels along the drawn route [SPEC 9]: one
-    // fraction (0..1) per label, in order; an absent fraction is `Auto` (the
-    // router spreads it). It is a placement directive, not a paint attr.
-    let along: Vec<f64> = match attrs.get("along") {
-        Some(v) => collect_fractions(v, w.span)?,
-        None => Vec::new(),
-    };
-    attrs.map.remove("along");
-
-    // Labels ride `along:`, each a styleable text leaf [SPEC 9]: the link's text
-    // baseline (font-size) overlaid with the label's own `{ }` (text-valid props).
-    let mut texts: Vec<ResolvedText> = Vec::new();
-    for (i, label) in w.labels.iter().enumerate() {
-        let pos = along.get(i).copied().map_or(Along::Auto, Along::Fraction);
-        let mut lattrs = link_text_attrs(&attrs);
-        for d in &label.style {
-            if !properties::is_text_valid(&d.name) {
-                return Err(Error::at(
-                    d.span,
-                    format!("'{}' needs a box — a link label is text", d.name),
-                ));
-            }
-            lattrs.insert(
-                d.name.as_str(),
-                resolve_groups(&d.groups, d.span, ctx.vars, ctx.funcs)?,
-            );
+    // same vocabulary a node uses. One ladder per ancestor chain: the written
+    // scope's by default, the outer endpoint's for a containment-shaped pair.
+    let resolve_ladder = |ancestors: &[NodeFacts]| -> Result<Ladder, Error> {
+        let mut ordered: Vec<(String, ResolvedValue)> = base.to_vec();
+        ordered.extend(ctx.sheet.class_decls(LINK_CLASS));
+        if is_dim {
+            ordered.extend(ctx.sheet.class_decls(DIMENSION_CLASS));
         }
-        texts.push(ResolvedText {
-            text: label.text.clone(),
-            along: pos,
-            attrs: lattrs,
-        });
-    }
+        ordered.extend(ctx.sheet.node_layers(ancestors, &link_facts));
+        for d in &w.style {
+            ordered.push((
+                d.name.clone(),
+                resolve_property(&d.name, &d.groups, d.span, ctx.vars, ctx.funcs)?,
+            ));
+        }
+
+        // A measure / mate has no wire: no markers to derive, no line style to inject.
+        let markers = match w.op().wire() {
+            Some(op) => resolve_markers(
+                &ordered,
+                MarkerKind::from_marker(op.start),
+                MarkerKind::from_marker(op.end),
+                w.span,
+            )?,
+            None => Markers::default(),
+        };
+        let mut attrs = collapse(&ordered);
+        if let Some(op) = w.op().wire() {
+            inject_line_style(&mut attrs, op.line);
+        }
+        if !drawing_scope && attrs.get("tol").is_some() {
+            return Err(Error::at(
+                w.span,
+                "'tol' composes a dimension's text — it belongs in a 'layout: drawing'",
+            ));
+        }
+        // The drafting dash conventions are shape / |line| values [SPEC 7]; a
+        // link's set stays the core four.
+        if matches!(attrs.get("stroke-style"), Some(ResolvedValue::Ident(s)) if s == "center" || s == "phantom")
+        {
+            return Err(Error::at(
+                w.span,
+                "a link's stroke-style is solid, dashed, dotted, or wavy",
+            ));
+        }
+        let routing = parse_routing(&attrs, w.span)?;
+        attrs.map.remove("routing");
+
+        // `along:` distributes the labels along the drawn route [SPEC 9]: one
+        // fraction (0..1) per label, in order; an absent fraction is `Auto` (the
+        // router spreads it). It is a placement directive, not a paint attr.
+        let along: Vec<f64> = match attrs.get("along") {
+            Some(v) => collect_fractions(v, w.span)?,
+            None => Vec::new(),
+        };
+        attrs.map.remove("along");
+
+        // Labels ride `along:`, each a styleable text leaf [SPEC 9]: the link's text
+        // baseline (font-size) overlaid with the label's own `{ }` (text-valid props).
+        let mut texts: Vec<ResolvedText> = Vec::new();
+        for (i, label) in w.labels.iter().enumerate() {
+            let pos = along.get(i).copied().map_or(Along::Auto, Along::Fraction);
+            let mut lattrs = link_text_attrs(&attrs);
+            for d in &label.style {
+                if !properties::is_text_valid(&d.name) {
+                    return Err(Error::at(
+                        d.span,
+                        format!("'{}' needs a box — a link label is text", d.name),
+                    ));
+                }
+                lattrs.insert(
+                    d.name.as_str(),
+                    resolve_groups(&d.groups, d.span, ctx.vars, ctx.funcs)?,
+                );
+            }
+            texts.push(ResolvedText {
+                text: label.text.clone(),
+                along: pos,
+                attrs: lattrs,
+            });
+        }
+        Ok(Ladder {
+            attrs,
+            markers,
+            routing,
+            texts,
+        })
+    };
+    let scoped = resolve_ladder(scope_ancestors)?;
+    // Containment ladders by outer path — a fan's siblings share the outer, so
+    // each chain resolves once.
+    let mut inner_ladders: Vec<(String, Ladder)> = Vec::new();
 
     // Cartesian fan expansion: one resolved link per endpoint sequence.
     let mut out = Vec::new();
@@ -204,18 +222,41 @@ pub fn resolve_link(
                 span: ep.span,
             });
         }
+        // A containment-shaped pair — one endpoint's resolved path a strict
+        // prefix of the other's — **cascades as if written in the outer
+        // endpoint X** [SPEC 9/12]: a link from a node into its own descendant
+        // is that node's internal affair (ROUTING.md routes it inside the
+        // parent), so `#x |-| { }` reaches it wherever the statement was
+        // textually written — a tree's generated branch fans included. Only the
+        // descendant-rule chain switches; the inherited config (`clearance` /
+        // `routing`, in `base`) keeps the written scope's.
+        let ladder = match containment_outer(&endpoints) {
+            Some(outer) => {
+                let at = match inner_ladders.iter().position(|(p, _)| p == outer) {
+                    Some(i) => i,
+                    None => {
+                        let segs: Vec<String> = outer.split('.').map(str::to_string).collect();
+                        let ladder = resolve_ladder(&ancestors_for(&segs))?;
+                        inner_ladders.push((outer.to_string(), ladder));
+                        inner_ladders.len() - 1
+                    }
+                };
+                &inner_ladders[at].1
+            }
+            None => &scoped,
+        };
         out.push(ResolvedLink {
             endpoints,
             kind,
             scope: path_prefix.join("."),
             line: w.op().wire().map_or(LineStyle::Solid, |op| op.line),
-            routing,
-            attrs: attrs.clone(),
+            routing: ladder.routing,
+            attrs: ladder.attrs.clone(),
             applied_styles: w.classes.clone(),
-            markers: markers.clone(),
+            markers: ladder.markers.clone(),
             // A fan's single written label rides one sibling, not each.
             texts: if fan_index == 0 {
-                texts.clone()
+                ladder.texts.clone()
             } else {
                 Vec::new()
             },
@@ -223,6 +264,33 @@ pub fn resolve_link(
         });
     }
     Ok(out)
+}
+
+/// One resolved cascade ladder's outputs — the pieces that depend on the
+/// ancestor chain the descendant rules match against.
+struct Ladder {
+    attrs: AttrMap,
+    markers: Markers,
+    routing: Strategy,
+    texts: Vec<ResolvedText>,
+}
+
+/// The outer endpoint of a containment-shaped pair: exactly two endpoints, one
+/// resolved path a strict (dot-bounded) prefix of the other. `None` otherwise.
+fn containment_outer(endpoints: &[ResolvedEndpoint]) -> Option<&str> {
+    let [a, b] = endpoints else { return None };
+    let strict = |outer: &str, inner: &str| {
+        inner.len() > outer.len()
+            && inner.starts_with(outer)
+            && inner.as_bytes()[outer.len()] == b'.'
+    };
+    if strict(&a.path, &b.path) {
+        Some(&a.path)
+    } else if strict(&b.path, &a.path) {
+        Some(&b.path)
+    } else {
+        None
+    }
 }
 
 /// The statement-shape gates [SPEC 15, 20]: the drawing ops need a drawing

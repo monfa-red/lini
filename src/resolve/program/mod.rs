@@ -87,6 +87,10 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
     //    a base of the baked defaults plus the scope's `clearance` / `routing`, and
     //    matches descendant rules against the scope's container chain. ──
     let baked = baked_link_defaults(&vars, &funcs)?;
+    // The containment-link cascade [SPEC 9]: a link whose endpoints are X and
+    // X.path cascades its descendant rules as if written in X — this lookup
+    // gives `resolve_link` X's container chain by resolved path.
+    let ancestors_for = |segs: &[String]| link_scope::link_ancestors(&nodes, &root_attrs, segs);
     let mut link_list = Vec::new();
     for w in &file.links {
         let (base, ancestors) = link_scope::link_scope(&baked, &nodes, &root_attrs, &[]);
@@ -99,13 +103,21 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
             &ancestors,
             &base,
             &kind,
+            &ancestors_for,
         )?);
     }
     for lw in &lifted {
         let (base, ancestors) = link_scope::link_scope(&baked, &nodes, &root_attrs, &lw.prefix);
         let kind = link_scope_kind(&nodes, &root_attrs, &lw.prefix);
         link_list.extend(links::resolve_link(
-            &lw.link, &ctx, &index, &lw.prefix, &ancestors, &base, &kind,
+            &lw.link,
+            &ctx,
+            &index,
+            &lw.prefix,
+            &ancestors,
+            &base,
+            &kind,
+            &ancestors_for,
         )?);
     }
 
