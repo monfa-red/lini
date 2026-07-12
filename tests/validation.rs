@@ -121,6 +121,23 @@ fn a_class_usable_by_one_wearer_is_silent() {
 }
 
 #[test]
+fn a_text_valid_class_worn_only_by_text_is_live() {
+    // A text leaf is a wearer [SPEC 3]: a text-valid property is live on it, so
+    // the class is neither dead nor never-worn.
+    assert_silent("{ .card-title { font-size: 17; } }\n\"Starter\" .card-title\n");
+}
+
+#[test]
+fn a_box_only_class_worn_only_by_text_warns_dead() {
+    // The class-polymorphism law: `padding` is inert on the only wearer (text),
+    // so it warns dead-on-every-wearer.
+    insta::assert_snapshot!(
+        diags("{ .card { padding: 40; } }\n\"Starter\" .card\n"),
+        @"test.lini:1:11: warning: '.card { padding: … }' is inert on every wearer"
+    );
+}
+
+#[test]
 fn a_never_worn_class_warns() {
     insta::assert_snapshot!(
         diags("{ .hot { fill: red; } }\n|box#a|\n"),

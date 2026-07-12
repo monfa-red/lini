@@ -384,10 +384,11 @@ fn sample_count(style: &[Decl]) -> usize {
 }
 
 /// A resolved text node [SPEC 3/6]: content carrying the text properties
-/// inherited from its container, overlaid with its own `{ }` style (text-valid
-/// props only). `Text` is internal — never a user `|type|`, only the kind of a
-/// string node (a label, a cell, canvas text). The own style renders as a
-/// `style=` on the `<text>`; `attrs` is the effective context for measurement.
+/// inherited from its container, its worn classes' text-valid declarations
+/// (tier 3), then its own `{ }` style (text-valid props only, highest). `Text`
+/// is internal — never a user `|type|`, only the kind of a string node (a label,
+/// a cell, canvas text). The own style renders as a `style=` on the `<text>`;
+/// `attrs` is the effective context for measurement.
 fn text_inst(t: &TextNode, ctx: &SceneCtx, text_ctx: &AttrMap) -> Result<ResolvedInst, Error> {
     let mut attrs = AttrMap::new();
     for name in properties::inherited_text() {
@@ -395,6 +396,8 @@ fn text_inst(t: &TextNode, ctx: &SceneCtx, text_ctx: &AttrMap) -> Result<Resolve
             attrs.insert(name, v.clone());
         }
     }
+    // Tier 3 [SPEC 4]: worn classes, below the leaf's own block.
+    let (type_chain, applied_styles) = apply_text_classes(&t.classes, &mut attrs, ctx, t.span)?;
     // The text's own `{ }`: text-valid props only — a box property errors and
     // points at `|block|` [SPEC 3, 19].
     let mut own_style = AttrMap::new();
@@ -412,8 +415,8 @@ fn text_inst(t: &TextNode, ctx: &SceneCtx, text_ctx: &AttrMap) -> Result<Resolve
     Ok(ResolvedInst {
         id: None,
         kind: NodeKind::Text,
-        type_chain: Vec::new(),
-        applied_styles: Vec::new(),
+        type_chain,
+        applied_styles,
         label: Some(t.text.clone()),
         font: crate::font::Font::of(&attrs),
         attrs,
@@ -422,6 +425,40 @@ fn text_inst(t: &TextNode, ctx: &SceneCtx, text_ctx: &AttrMap) -> Result<Resolve
         children: Vec::new(),
         span: t.span,
     })
+}
+
+/// Apply a text leaf's worn classes [SPEC 3/4] — the tier-3 cascade layer shared
+/// by a node's text and a link's label, so the two never drift. Splits the worn
+/// chain (`.lini-*` → the render type chain, the rest → user classes, each of
+/// which must be defined), then overlays the **user** classes' **text-valid**
+/// declarations onto `attrs` in definition order; a non-text-valid class
+/// declaration is inert — the class-polymorphism law — never an error. Returns
+/// `(type_chain, applied_styles)` for the `<text>` element's classes.
+pub(super) fn apply_text_classes(
+    classes: &[String],
+    attrs: &mut AttrMap,
+    ctx: &SceneCtx,
+    span: Span,
+) -> Result<(Vec<String>, Vec<String>), Error> {
+    let mut type_chain = Vec::new();
+    let mut applied_styles = Vec::new();
+    for c in classes {
+        if let Some(name) = c.strip_prefix("lini-") {
+            if c != "lini-text" {
+                type_chain.push(name.to_string());
+            }
+        } else if ctx.sheet.defines_class(c) {
+            applied_styles.push(c.clone());
+        } else {
+            return Err(Error::at(span, format!("unknown class '.{}'", c)));
+        }
+    }
+    for (name, v) in ctx.sheet.user_class_decls(classes) {
+        if properties::is_text_valid(&name) {
+            attrs.insert(name.as_str(), v);
+        }
+    }
+    Ok((type_chain, applied_styles))
 }
 
 /// An `|icon|` must name a known `symbol` [SPEC 7]. Errors point at the node,

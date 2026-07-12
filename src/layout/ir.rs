@@ -124,6 +124,10 @@ pub struct RoutedText {
     /// heading above the arrow). One shared rule per role, so the size states once
     /// and the two coexist in one file [SPEC 9/13].
     pub class: &'static str,
+    /// Worn user classes on a link `[ ]` label [SPEC 3] — joined as
+    /// `lini-style-*` beside `class`. Empty for an unclassed label and generated
+    /// chrome (sequence messages).
+    pub applied_styles: Vec<String>,
 }
 
 /// The default label class: a diagram link label riding on the wire.

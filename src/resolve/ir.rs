@@ -432,6 +432,10 @@ pub struct ResolvedText {
     pub text: String,
     pub along: Along,
     pub attrs: AttrMap,
+    /// Worn user classes on a link `[ ]` label [SPEC 3] — emitted as
+    /// `lini-style-*` on the `<text>`, exactly as a node's text leaf. Empty for
+    /// an unclassed label and generated chrome.
+    pub applied_styles: Vec<String>,
 }
 
 /// Where a label rides its link [SPEC 9]: `Auto` distributes it along the

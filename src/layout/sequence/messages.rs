@@ -108,6 +108,7 @@ impl Pair<'_> {
             tangent: (1.0, 0.0),
             attrs: AttrMap::new(),
             class: SEQUENCE_MESSAGE_CLASS,
+            applied_styles: Vec::new(),
         })
     }
     /// The label's font size — the sequence default ([`LABEL_SIZE`]), used to measure the

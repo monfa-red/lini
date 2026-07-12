@@ -156,6 +156,14 @@ pub fn resolve_link(
     for (i, label) in w.labels.iter().enumerate() {
         let pos = along.get(i).copied().map_or(Along::Auto, Along::Fraction);
         let mut lattrs = link_text_attrs(&attrs);
+        // Tier 3 [SPEC 4]: the label's worn classes, below its own block — the
+        // same leaf resolution a node's text runs.
+        let (_, applied_styles) = crate::resolve::scene::apply_text_classes(
+            &label.classes,
+            &mut lattrs,
+            ctx,
+            label.span,
+        )?;
         for d in &label.style {
             if !properties::is_text_valid(&d.name) {
                 return Err(Error::at(
@@ -172,6 +180,7 @@ pub fn resolve_link(
             text: label.text.clone(),
             along: pos,
             attrs: lattrs,
+            applied_styles,
         });
     }
 
