@@ -470,7 +470,9 @@ by **later wins** (source order). The tiers, low to high:
 A link walks the **same ladder** — its type is `|-|`, its ancestors are its scope's
 container chain, it has no id: the baked link base plus the scope's `clearance` /
 `routing` (tier 0), the `|-|` element rule (type), descendant `|…| |-|` and worn-class
-rules, then the link's own block ([SPEC 9](#9-links)). A **dimension** is a link
+rules, then the link's own block ([SPEC 9](#9-links)). One exception: a link into a
+node's **own descendant** (`x → x.path` — containment, or a tree's branch fan) cascades
+**as if written in `x`** — its ancestor chain is `x`'s own, so `#x |-| { }` reaches it. A **dimension** is a link
 subtype — type chain `|-|` → `(-)` — so a `(-) { }` rule beats `|-| { }` for
 dimensions (the more-specific type, tier 1) ([SPEC 15.6](#156-dimensions)).
 
@@ -1628,17 +1630,24 @@ between them); a first-level **`side: left | right`** overrides its half.
 `top` / `bottom` there, or any `side:` on a `row` / `column` topic, is an
 error — there is no vertical bilateral; growing downward is `column`.
 
-**Branch links are generated, and ordinary.** Desugar adds one unmarked `|-|`
-link per branch, **resolving in the parent topic's scope** — `#syntax |-| { }`
-restyles one arm, `lini desugar` shows them, the scope's `routing` draws them
-like any wire — with the direction's forced sides (`column`: `bottom` → `top`;
-`row`: `right` → `left`; `bilateral` mirrors per half, the root emitting both
-sides). Authored cross-links stay legal, never alter the tree, and keep the
-neutral link default. Every topic also wears a generated **`.lini-level-N`**
-class (root 0), so one rule restyles a tier (`.lini-level-2 { font-size: 12 }`).
+**Branch links are generated, and ordinary.** Desugar adds one unmarked **fan
+per parent** — `ceo:bottom - ceo.cto:top & ceo.coo:top` — written in the scope
+that contains the parent, with the direction's forced sides (`column`:
+`bottom` → `top`; `row`: `right` → `left`; `bilateral` mirrors per half, the
+root emitting both sides). `lini desugar` shows them; the scope's `routing`
+draws them like any wire; and a link into one's own descendant cascades as if
+written in that node ([SPEC 4](#4-selectors-cascade--specificity)), so
+`#cto |-| { }` restyles exactly cto's arm. An **anonymous** topic gets a
+deterministic minted id — `lini-topic-N`, 1-based among its scope's topics —
+so its wires exist; an authored id is used as-is, and may not begin `lini-`
+([SPEC 22](#22-reserved-words)). Authored cross-links stay legal, never alter
+the tree, and keep the neutral link default. Every topic also wears a
+generated **`.lini-level-N`** class (root 0), so one rule restyles a tier
+(`.lini-level-2 { font-size: 12 }`).
 
 The engine reads `direction` and `gap` alone (`gap: g s` — generation, then
-sibling; a scalar sets both). A plain tree is neutral — uniform topics, elbow
+sibling; a scalar sets both; a tree scope defaults `gap: 64 48`, room to route
+at the default `clearance`). A plain tree is neutral — uniform topics, elbow
 connectors from the default `routing: orthogonal`; the mindmap look is the
 `|mindmap|` preset ([SPEC 8](#8-templates)).
 
@@ -3276,6 +3285,7 @@ Format: `filename:line:col: error: <message>` (LSP-compatible), compile-time, wi
 | Define shadows builtin | `'X' shadows a built-in type` |
 | Empty bars | `'\| \|' needs a type or an '#id'` |
 | Invalid id | `'#123' is not a valid id — an id starts with a letter or '_'` |
+| Reserved id prefix | `an id may not begin 'lini-' — the prefix is reserved for generated names` |
 | Class inside the bars | `a class follows the bars — write '\|box\| .hot', not '\|box.hot\|'` |
 | Symbol set twice | `an icon's symbol is its label or 'symbol:', not both` |
 | Text carries children | `text content takes no '[ ]' — wrap it in '\|block\|' to give it children` |
@@ -3579,9 +3589,10 @@ names are free as ids and ids are free as type names** — `|block#oval|` is fin
   is an error), and a **define** may not take one of these (its generated `.lini-<name>`
   would collide with a built-in SVG class — `|-|` lowers to the reserved `.lini-link`).
 
-The **`.lini-*` class prefix** is reserved: desugar generates the type classes
-(`.lini-block`, `.lini-box`, `.lini-<define>`), so a user class may not begin `lini-`.
-User classes are emitted `.lini-style-<name>`.
+The **`lini-` prefix** is reserved for generated names: desugar generates the type
+classes (`.lini-block`, `.lini-box`, `.lini-<define>`) and mints ids
+(`#lini-topic-N` — [SPEC 12](#12-flow-grid--tree)), so a user class or an authored id
+may not begin `lini-`. User classes are emitted `.lini-style-<name>`.
 
 The side names **`top`, `bottom`, `left`, `right`** are **not** reserved — they are
 keywords only after an endpoint's `:` (`a:left`), so a node may be named `|box#left|`.
