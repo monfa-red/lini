@@ -213,3 +213,54 @@ fn mixing_op_kinds_in_a_chain_stays_a_parse_error() {
         .to_string();
     assert!(e.contains("mixes operators"), "{e}");
 }
+
+#[test]
+fn a_tree_flattens_topics_wears_level_classes_and_fans_branches() {
+    // Nested topics flatten to depth-classed direct children; each parent's
+    // edges become one branch fan on the parent's port [SPEC 12].
+    let out = desugar_source(
+        "|column#o| { layout: tree } [\n  |topic#a| \"A\" [\n    |topic#b| \"B\"\n    |topic#c| \"C\"\n  ]\n]\n",
+    )
+    .unwrap();
+    assert!(
+        out.contains("|block#a| .lini-topic.lini-block.lini-level-0"),
+        "{out}"
+    );
+    assert!(
+        out.contains("|block#b| .lini-topic.lini-block.lini-level-1"),
+        "{out}"
+    );
+    assert!(
+        out.contains("|block#c| .lini-topic.lini-block.lini-level-1"),
+        "{out}"
+    );
+    // One fan per parent, with the column direction's forced sides.
+    assert!(
+        out.contains("a:bottom - b:top & c:top"),
+        "branch fan: {out}"
+    );
+    // The default gap is injected (the generic 20 is unroutable at clearance 16).
+    assert!(out.contains("gap: 64 48"), "{out}");
+    // The topic template is a generated class.
+    assert!(out.contains(".lini-topic {"), "{out}");
+}
+
+#[test]
+fn a_row_tree_fans_on_the_right_side() {
+    let out = desugar_source(
+        "|column#o| { layout: tree; direction: row } [\n  |topic#a| \"A\" [\n    |topic#b| \"B\"\n  ]\n]\n",
+    )
+    .unwrap();
+    assert!(
+        out.contains("a:right - b:left"),
+        "row fan on right side: {out}"
+    );
+}
+
+#[test]
+fn a_tree_is_a_desugar_fixed_point() {
+    let src = "|column#o| { layout: tree } [\n  |topic#a| \"A\" [\n    |topic#b| \"B\"\n    |topic#c| \"C\"\n  ]\n]\n";
+    let once = desugar_source(src).unwrap();
+    let twice = desugar_source(&once).unwrap();
+    assert_eq!(once, twice, "re-desugaring the lowered tree changes it");
+}

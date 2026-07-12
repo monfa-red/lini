@@ -165,6 +165,9 @@ fn routing_diagnostics_of(violations: Vec<Violation>) -> Vec<Diagnostic> {
 fn resolve_pipeline(src: &str, opts: &Options) -> Result<resolve::Program, Error> {
     let tokens = lexer::lex(src)?;
     let file = syntax::parser::parse(src, &tokens)?;
+    // Tree structure errors [SPEC 20] read the still-nested AST — before desugar
+    // flattens each `layout: tree` scope's topic hierarchy [SPEC 12].
+    desugar::tree::validate(&file)?;
     let lowered = desugar::desugar(&file)?;
     let theme = match &opts.theme_css {
         Some(css) => theme::extract_lini_vars(css),

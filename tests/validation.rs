@@ -248,3 +248,42 @@ fn strict_turns_warnings_into_exit_1_and_no_warn_silences() {
     assert_eq!(code, Some(1), "validation errors always fail: {err}");
     assert!(err.contains("unknown property 'colr'"), "{err}");
 }
+
+// ── Tree structure errors [SPEC 12/20] — hard compile errors on the nested AST ──
+
+fn tree_err(src: &str) -> String {
+    lini::check(src)
+        .expect_err("expected a tree structure error")
+        .message
+}
+
+#[test]
+fn topic_outside_a_tree_errors() {
+    insta::assert_snapshot!(
+        tree_err("|box#b| [\n  |topic#a| \"A\"\n]\n"),
+        @"'|topic|' builds a tree — it belongs in a 'layout: tree'"
+    );
+}
+
+#[test]
+fn a_tree_with_no_root_topic_errors() {
+    insta::assert_snapshot!(
+        tree_err("|column#o| { layout: tree } [\n  |box#x|\n]\n"),
+        @"a tree needs exactly one root '|topic|'"
+    );
+}
+
+#[test]
+fn a_tree_with_two_roots_errors_on_the_second() {
+    insta::assert_snapshot!(
+        tree_err("|column#o| { layout: tree } [\n  |topic#a| \"A\"\n  |topic#b| \"B\"\n]\n"),
+        @"a tree has one root — '|topic|' 'B' is a second"
+    );
+}
+
+#[test]
+fn a_well_formed_tree_is_silent() {
+    let src = "|column#o| { layout: tree } [\n  |topic#a| \"A\" [\n    |topic#b| \"B\"\n  ]\n]\n";
+    assert!(lini::check(src).is_ok(), "a valid tree should compile");
+    assert_silent(src);
+}

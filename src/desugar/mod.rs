@@ -18,6 +18,7 @@ mod scale;
 pub(crate) mod scene;
 mod tables;
 mod titleblock;
+pub(crate) mod tree;
 pub(crate) mod types;
 
 use crate::error::Error;
@@ -110,6 +111,13 @@ pub fn desugar(file: &File) -> Result<File, Error> {
     for child in &file.instances {
         instances.push(lower_child(child, &types, &bodies, root_drawing)?);
     }
+    // A root `{ layout: tree }` scene flattens its own topic nesting [SPEC 12],
+    // like a node tree does in `lower_node` — before auto-create below. Its gap
+    // default rides `root_layout_defaults`, not `ensure_gap`.
+    let mut root_branch_links: Vec<Link> = Vec::new();
+    if tree::is_tree_scope(&user_root) {
+        tree::flatten(&mut instances, &mut root_branch_links, &user_root);
+    }
     // A drawing scope never auto-creates [SPEC 15]: an annotation must point at
     // real geometry, so an unknown endpoint stays unknown and errors at resolve.
     if !root_drawing {
@@ -188,6 +196,7 @@ pub fn desugar(file: &File) -> Result<File, Error> {
         links: file
             .links
             .iter()
+            .chain(&root_branch_links)
             .flat_map(labels::split_chain)
             .map(|w| labels::lower_link(&w))
             .collect(),
@@ -494,6 +503,15 @@ fn lower_node(
     }
     for w in &node.links {
         links.extend(labels::split_chain(w).iter().map(labels::lower_link));
+    }
+
+    // Flatten a `layout: tree` scope's topic nesting into a depth-classed flat
+    // list + generated branch links [SPEC 12], **before** this body's
+    // auto-create so a branch / cross-link endpoint sees the lifted topics as
+    // declared siblings, and before the paint cascade so the level classes are worn.
+    if !already && tree::is_tree_scope(&style) {
+        tree::ensure_gap(&mut style);
+        tree::flatten(&mut children, &mut links, &style);
     }
 
     // Auto-create undeclared body-link endpoints among this body's own children ([SPEC 3] —

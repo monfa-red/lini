@@ -57,6 +57,10 @@ pub const TEMPLATES: &[(&str, &str)] = &[
     // and plain diagrams alike) and the assembly balloon.
     ("note", "block"),
     ("balloon", "oval"),
+    // Trees [SPEC 12]: the structural topic node — a compact framed card over
+    // |block|; custom structural types derive from it (`|person::topic|`). The
+    // |mindmap| preset (`layout: tree; direction: bilateral; …`) is Stage 5.
+    ("topic", "block"),
     // Drawings [SPEC 15]: the container layout, the round feature, the
     // centerline chrome types, hidden interior geometry, and the revolve's
     // shoulder-line chrome (|sketch| is a primitive, not a template).

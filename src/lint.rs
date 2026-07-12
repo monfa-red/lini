@@ -83,13 +83,14 @@ fn lint_auto_create_shadows(file: &File, out: &mut Vec<Diagnostic>) {
     for c in &file.instances {
         collect_paths(c, &mut Vec::new(), &mut id_paths);
     }
-    let root_drawing = matches!(root_layout(&file.stylesheet), Some(l) if l == "drawing");
+    let root_opaque =
+        matches!(root_layout(&file.stylesheet), Some(l) if l == "drawing" || l == "tree");
     shadow_scope(
         &file.instances,
         &file.links,
         &[],
         &id_paths,
-        root_drawing,
+        root_opaque,
         out,
     );
 }
@@ -99,13 +100,14 @@ fn shadow_scope(
     links: &[Link],
     prefix: &[String],
     id_paths: &HashMap<String, Vec<String>>,
-    scope_is_drawing: bool,
+    scope_is_opaque: bool,
     out: &mut Vec<Diagnostic>,
 ) {
-    // A drawing scope never auto-creates [SPEC 15] — its endpoints point at
-    // real (or, in a `|detail|`, re-laid) geometry, so a bare id there is a
-    // reference, not an invented box. Skip the shadow check for it.
-    if scope_is_drawing {
+    // A drawing scope never auto-creates [SPEC 15], and a tree scope's links
+    // resolve against its **flattened** topics [SPEC 12] — so in both the
+    // pre-desugar (nested) view here, a bare id is a reference, not an invented
+    // box. Skip the shadow check for these opaque scopes.
+    if scope_is_opaque {
         for c in children {
             if let Child::Box(n) = c {
                 let mut sub = prefix.to_vec();
@@ -117,7 +119,7 @@ fn shadow_scope(
                     &n.links,
                     &sub,
                     id_paths,
-                    is_drawing_node(n),
+                    is_opaque_node(n),
                     out,
                 );
             }
@@ -171,7 +173,7 @@ fn shadow_scope(
                 &n.links,
                 &sub,
                 id_paths,
-                is_drawing_node(n),
+                is_opaque_node(n),
                 out,
             );
         }
@@ -206,6 +208,16 @@ fn is_drawing_node(n: &crate::syntax::ast::Node) -> bool {
         || n.style
             .iter()
             .any(|d| d.name == "layout" && decl_ident(d) == Some("drawing"))
+}
+
+/// A scope whose bare link endpoints the shadow/auto-create lint must not judge
+/// pre-desugar: a drawing (never auto-creates) or a tree (its links resolve
+/// against the flattened topics, not this nested view) [SPEC 12/15].
+fn is_opaque_node(n: &crate::syntax::ast::Node) -> bool {
+    is_drawing_node(n)
+        || n.style
+            .iter()
+            .any(|d| d.name == "layout" && decl_ident(d) == Some("tree"))
 }
 
 fn root_layout(stylesheet: &[crate::syntax::ast::StyleItem]) -> Option<String> {

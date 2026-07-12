@@ -15,6 +15,14 @@ use crate::syntax::ast::{Decl, Value};
 pub(crate) const SEQ_GAP_ROW: f64 = 32.0;
 pub(crate) const SEQ_GAP_COL: f64 = 32.0;
 
+/// A tree's default `gap: generation sibling` [SPEC 12] — the generation
+/// distance and sibling separation. Wider than the generic `20`: an org chart
+/// breathes, and its branch connectors need room to clear the cards at the
+/// default link clearance (the SPEC's plain `20` is unroutable there). Injected
+/// on a `layout: tree` scope that authors no `gap`; the user's own `gap` wins.
+pub(crate) const TREE_GAP_GEN: f64 = 64.0;
+pub(crate) const TREE_GAP_SIB: f64 = 48.0;
+
 fn decl(name: &str, values: Vec<Value>) -> Decl {
     Decl {
         name: name.into(),
@@ -41,6 +49,7 @@ fn pair(name: &str, a: f64, b: f64) -> Decl {
 pub(crate) fn root_layout_defaults(layout: Option<&str>) -> Vec<Decl> {
     match layout {
         Some("sequence") => vec![pair("gap", SEQ_GAP_ROW, SEQ_GAP_COL)],
+        Some("tree") => vec![pair("gap", TREE_GAP_GEN, TREE_GAP_SIB)],
         // A drawing root's px-per-unit is the desugar scale fold's job
         // [SPEC 15.1/18] — ratio × unit × density, stamped per scope.
         _ => Vec::new(),
@@ -194,6 +203,16 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             var("stroke", "stroke"),
             n("padding", 20.0),
             n("scale", 1.0),
+        ],
+        // The tree's structural node [SPEC 12/8]: a compact framed card over the
+        // bare |block| base — like |box|'s paint tier so a bare topic reads, at a
+        // tighter card padding. The tree engine reads topic nesting for structure.
+        "topic" => vec![
+            var("fill", "fill"),
+            var("stroke", "stroke"),
+            n("stroke-width", 2.0),
+            n("radius", 8.0),
+            pair("padding", 8.0, 14.0),
         ],
         // The assembly balloon [SPEC 8, 15.8]: a numbered circle a leader points
         // from; sheet-space like all annotation chrome.

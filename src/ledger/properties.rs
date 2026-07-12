@@ -362,7 +362,7 @@ pub static PROPERTIES: &[Property] = &[
     row("layout", UNIVERSAL, One(Kind::Ident), Bundles, No),
     row(
         "direction",
-        &[Layout("flow"), Layout("chart")],
+        &[Layout("flow"), Layout("chart"), Layout("tree")],
         One(Kind::Ident),
         Engine,
         No,
@@ -375,6 +375,7 @@ pub static PROPERTIES: &[Property] = &[
             Layout("sequence"),
             Layout("chart"),
             Layout("pie"),
+            Layout("tree"),
             Role("dimension"),
             Role("mate"),
         ],
@@ -489,11 +490,11 @@ pub static PROPERTIES: &[Property] = &[
         DefaultRef::None,
         No,
     ),
-    // Homonym: an `|axis|`'s side [SPEC 14.4] and a dimension's / callout's
-    // seat [SPEC 15.6].
+    // Homonym: an `|axis|`'s side [SPEC 14.4], a dimension's / callout's seat
+    // [SPEC 15.6], and a first-level `|topic|`'s bilateral half [SPEC 12].
     row(
         "side",
-        &[Type("axis"), Role("dimension")],
+        &[Type("axis"), Type("topic"), Role("dimension")],
         One(Kind::Ident),
         Engine,
         No,
