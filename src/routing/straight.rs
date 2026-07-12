@@ -43,6 +43,7 @@ pub(crate) fn wire(
 ) -> RoutedLink {
     RoutedLink {
         path,
+        curve: Vec::new(),
         strategy: Strategy::Straight,
         markers,
         attrs: attrs.clone(),
@@ -66,7 +67,7 @@ pub(crate) fn route(reqs: &[EdgeReq], routing: &mut Routing, req_of: &mut Vec<us
     for (i, req) in reqs.iter().enumerate() {
         match req.routing {
             Strategy::Straight => {}
-            Strategy::Orthogonal => continue,
+            Strategy::Orthogonal | Strategy::Natural => continue,
         }
         let path = if req.a_path == req.b_path {
             let r = req.a_rect;

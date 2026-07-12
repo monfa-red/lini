@@ -169,9 +169,12 @@ fn distribute_auto(texts: &[ResolvedText], lens: &[f64], total: f64) -> Vec<f64>
         .collect()
 }
 
+/// Euclidean length — identical to the L1 read on an axis-aligned orthogonal
+/// wire, and the true arc-length parameterisation over a natural wire's
+/// sampled curve. One mechanism for every strategy.
 fn arc_len(poly: &[(f64, f64)]) -> f64 {
     poly.windows(2)
-        .map(|s| (s[1].0 - s[0].0).abs() + (s[1].1 - s[0].1).abs())
+        .map(|s| (s[1].0 - s[0].0).hypot(s[1].1 - s[0].1))
         .sum()
 }
 
@@ -194,7 +197,7 @@ fn at_arc(
         let n = poly.len().saturating_sub(1);
         for (j, seg) in poly.windows(2).enumerate() {
             let (dx, dy) = (seg[1].0 - seg[0].0, seg[1].1 - seg[0].1);
-            let l = dx.abs() + dy.abs();
+            let l = dx.hypot(dy);
             if l <= 0.0 {
                 continue;
             }

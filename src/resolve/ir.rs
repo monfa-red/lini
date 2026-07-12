@@ -360,11 +360,12 @@ impl MarkerKind {
 }
 
 /// A link's wiring strategy ([SPEC 9], ROUTING.md Strategies): `routing:`
-/// cascades from the scope like `clearance`. `curved` is deferred and never
-/// resolves.
+/// cascades from the scope like `clearance`. `curved` was removed, replaced
+/// by `natural` — smooth curves over the shared corridor search.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Strategy {
     Orthogonal,
+    Natural,
     Straight,
 }
 

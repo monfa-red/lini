@@ -28,15 +28,11 @@ pub(super) fn world_ladder(index: &SceneIndex, a: &str, b: &str) -> Vec<String> 
 /// the scene plus its canvas margin; an interior world is its own placed body.
 /// Keep-outs are the world's direct children inflated by clearance `c`.
 pub(super) fn build_worlds(index: &SceneIndex, reqs: &[EdgeReq], c: f64) -> Vec<World> {
-    let mine = |r: &&EdgeReq| match r.routing {
-        Strategy::Orthogonal => true,
-        Strategy::Straight => false,
-    };
     let bounds = index.bounds().inflate(2.0 * c + 20.0);
 
     let mut world_paths: Vec<String> = reqs
         .iter()
-        .filter(mine)
+        .filter(|r| r.corridor())
         .flat_map(|r| world_ladder(index, &r.a_path, &r.b_path))
         .collect();
     world_paths.sort();

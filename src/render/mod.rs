@@ -59,7 +59,14 @@ pub fn render(laid_out: &LaidOut, opts: &Options) -> String {
         body.push_str("  <g class=\"lini-links\"/>\n");
     } else {
         body.push_str("  <g class=\"lini-links\">\n");
-        let polys: Vec<&[(f64, f64)]> = laid_out.links.iter().map(|w| &w.path[..]).collect();
+        // The fillet pass is orthogonal-contract machinery (concentric
+        // nesting, square crossing caps): a natural wire's cubics never round
+        // through it, so its sampled path stays out entirely.
+        let polys: Vec<&[(f64, f64)]> = laid_out
+            .links
+            .iter()
+            .map(|w| if w.curve.is_empty() { &w.path[..] } else { &[] })
+            .collect();
         let caps: Vec<f64> = laid_out.links.iter().map(links::radius_cap).collect();
         let targets = links::fillet_targets(&polys, &caps);
         // Every label's cut box, document-wide: a label knocks out *any* wire

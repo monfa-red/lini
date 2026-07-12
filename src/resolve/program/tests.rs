@@ -238,9 +238,15 @@ fn clearance_cascades_from_a_container_block() {
 }
 
 #[test]
-fn deferred_routing_is_rejected() {
-    assert!(rv4_err("{ routing: curved }\na -> b\n").contains("'curved' is deferred"));
+fn removed_routing_is_rejected() {
+    // `curved` was replaced by `natural`, not aliased — SPEC 20's exact row.
+    assert_eq!(
+        rv4_err("{ routing: curved }\na -> b\n"),
+        "routing takes orthogonal, natural, or straight — 'curved' was replaced by 'natural'"
+    );
     rv4("{ routing: orthogonal }\na -> b\n"); // the built modes are accepted
+    let p = rv4("{ routing: natural }\na -> b\n");
+    assert_eq!(p.links[0].routing, crate::resolve::Strategy::Natural);
     let p = rv4("{ routing: straight }\na -> b\n");
     assert_eq!(p.links[0].routing, crate::resolve::Strategy::Straight);
 }

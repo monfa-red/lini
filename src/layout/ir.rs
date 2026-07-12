@@ -80,10 +80,21 @@ pub struct Stray {
     pub data_to: String,
 }
 
+/// One cubic Bézier segment: start, two control points, end.
+pub type Cubic = [(f64, f64); 4];
+
 /// One routed link: its path polyline plus what render needs.
 #[derive(Clone)]
 pub struct RoutedLink {
+    /// The drawn geometry every shared consumer reads — marker anchors, the
+    /// label arc-walk, masks, crossing counts. For a `natural` wire this is a
+    /// dense polyline *sampling* of the drawn curve (the straight stubs
+    /// exact), so the spine needs no strategy knowledge.
     pub path: Vec<(f64, f64)>,
+    /// The exact cubic segments a `natural` wire draws between its straight
+    /// end stubs, in order; empty for every other strategy (the renderer's
+    /// one `d`-builder seam).
+    pub curve: Vec<Cubic>,
     /// The strategy that drew this wire. The independent law checker judges
     /// orthogonal wires only — a `straight` wire is lawfully oblique and
     /// avoids nothing (ROUTING Strategies).

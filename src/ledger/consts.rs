@@ -77,6 +77,11 @@ pub(crate) const TEXT_LEADING: f64 = 1.2;
 /// the inside of a turn (the label cut widens its mask by the amplitude).
 pub(crate) const WAVY_WAVELENGTH: f64 = 12.0;
 pub(crate) const WAVY_AMPLITUDE: f64 = 1.4;
+/// A `natural` curve's control-point pull (ROUTING.md The natural strategy):
+/// the fraction of each spline span's chord used as the tangent handle
+/// length. One number, no user-facing knob — tuned by eye against rendered
+/// mindmaps.
+pub(crate) const NATURAL_PULL: f64 = 0.5;
 /// The note dog-ear [SPEC 8]: fold size as a height fraction, capped.
 pub(crate) const NOTE_FOLD_FRAC: f64 = 0.34;
 pub(crate) const NOTE_FOLD_MAX: f64 = 15.0;

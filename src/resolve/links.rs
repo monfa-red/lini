@@ -452,16 +452,17 @@ fn inject_line_style(attrs: &mut AttrMap, line: LineStyle) {
     }
 }
 
-/// The resolved wiring strategy [SPEC 9]: `orthogonal` (the default) and
-/// `straight` are built; `curved` is named but deferred.
+/// The resolved wiring strategy [SPEC 9]: `orthogonal` (the default),
+/// `natural`, and `straight`; `curved` was replaced by `natural` [SPEC 20].
 fn parse_routing(attrs: &AttrMap, span: crate::span::Span) -> Result<Strategy, Error> {
     match attrs.get("routing") {
         None => Ok(Strategy::Orthogonal),
         Some(ResolvedValue::Ident(r)) if r == "orthogonal" => Ok(Strategy::Orthogonal),
+        Some(ResolvedValue::Ident(r)) if r == "natural" => Ok(Strategy::Natural),
         Some(ResolvedValue::Ident(r)) if r == "straight" => Ok(Strategy::Straight),
         Some(_) => Err(Error::at(
             span,
-            "routing: 'orthogonal' and 'straight' are built; 'curved' is deferred (SPEC 23)",
+            "routing takes orthogonal, natural, or straight — 'curved' was replaced by 'natural'",
         )),
     }
 }

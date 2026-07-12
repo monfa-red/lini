@@ -53,6 +53,17 @@ pub enum End {
 }
 
 impl EdgeReq {
+    /// Whether this request routes through the corridor model — ROUTING.md's
+    /// six steps. `natural` rides the same worlds, channels, bundles, and
+    /// search as `orthogonal` and diverges only at geometry lowering
+    /// (ROUTING.md The natural strategy); `straight` avoids nothing.
+    pub fn corridor(&self) -> bool {
+        match self.routing {
+            Strategy::Orthogonal | Strategy::Natural => true,
+            Strategy::Straight => false,
+        }
+    }
+
     pub fn path(&self, end: End) -> &str {
         match end {
             End::A => &self.a_path,
@@ -172,14 +183,14 @@ fn pair_key(r: &EdgeReq) -> PairKey {
 }
 
 /// Bundles in declaration order of their first member; members in declaration
-/// order within. Self-loops never bundle, and only orthogonal requests enter —
-/// a `routing: straight` wire is one trimmed segment, never a rail.
+/// order within. Self-loops never bundle, and only corridor requests
+/// (orthogonal and natural) enter — a `routing: straight` wire is one trimmed
+/// segment, never a rail.
 pub fn bundles(reqs: &[EdgeReq]) -> Vec<Bundle> {
     let mut out: Vec<(PairKey, Bundle)> = Vec::new();
     for (i, r) in reqs.iter().enumerate() {
-        match r.routing {
-            Strategy::Orthogonal => {}
-            Strategy::Straight => continue,
+        if !r.corridor() {
+            continue;
         }
         if r.a_path == r.b_path {
             out.push((pair_key(r), Bundle { members: vec![i] }));

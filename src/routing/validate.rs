@@ -35,6 +35,10 @@ pub fn check(nodes: &[PlacedNode], links: &[RoutedLink], report: &[Violation]) -
         .iter()
         .filter(|w| match w.strategy {
             Strategy::Orthogonal => true,
+            // A natural wire is judged by its own arm — contact, sampled
+            // clearance, duplicate separation — which lands with Stage 4
+            // (PLAN-TREE-alpha1); skipped until then.
+            Strategy::Natural => false,
             Strategy::Straight => false,
         })
         .collect();
@@ -463,6 +467,7 @@ mod tests {
         attrs.insert("clearance", ResolvedValue::Number(8.0));
         RoutedLink {
             path,
+            curve: Vec::new(),
             strategy: Strategy::Orthogonal,
             markers: Markers::default(),
             attrs,

@@ -1017,3 +1017,28 @@ fn the_arm_rule_reaches_the_whole_subtree() {
     );
     assert_eq!(solid, ["ceo.cto", "ceo.coo"], "other spokes stay solid");
 }
+
+#[test]
+fn natural_routing_renders_cubics_deterministically() {
+    // A row tree with `routing: natural` [SPEC 9]: every branch wire draws as
+    // straight stubs plus exact cubic segments — `C` commands in the link
+    // path `d` — and reruns are byte-identical (ROUTING.md Law 4).
+    let src = "{ layout: tree; direction: row; routing: natural }\n\
+        |topic#root| \"Root\" [\n\
+          |topic#a| \"Alpha\"\n\
+          |topic#b| \"Beta\"\n\
+          |topic#c| \"Gamma\"\n\
+        ]\n";
+    let svg = render_live(src);
+    let wires: Vec<&str> = svg
+        .lines()
+        .skip_while(|l| !l.contains("lini-links"))
+        .filter(|l| l.trim_start().starts_with("<path d=\""))
+        .collect();
+    assert_eq!(wires.len(), 3, "three branch wires");
+    for w in &wires {
+        assert!(w.contains(" C "), "a natural wire draws cubics: {w}");
+        assert!(!w.contains(" A "), "no render-time fillet arcs: {w}");
+    }
+    assert_eq!(svg, render_live(src), "byte-identical rerun");
+}

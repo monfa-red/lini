@@ -126,31 +126,25 @@ fn impossible(req: &EdgeReq, detail: &str) -> Violation {
     }
 }
 
-/// Route the orthogonal requests over the placed scene — the six steps, in
-/// order, one decision each: worlds and their channel graphs, bundles in
-/// declaration order through the weighted search (committing to the ledger as
-/// they win), placement over all chains at once, then geometry and the
-/// crossing report. Requests of other strategies pass through untouched —
+/// Route the corridor requests (orthogonal and natural) over the placed scene
+/// — the six steps, in order, one decision each: worlds and their channel
+/// graphs, bundles in declaration order through the weighted search
+/// (committing to the ledger as they win), placement over all chains at once,
+/// then geometry and the crossing report. Requests of other strategies pass
+/// through untouched —
 /// their strategies and the shared label pass live with the dispatch
 /// ([`crate::routing::route`]). Returns the drawn links' request indices
 /// alongside, for that label pass.
 pub(crate) fn route(index: &SceneIndex, reqs: &[EdgeReq]) -> (Routing, Vec<usize>) {
     let mut routing = Routing::default();
-    let mine = |r: &&EdgeReq| match r.routing {
-        Strategy::Orthogonal => true,
-        Strategy::Straight => false,
-    };
-    if !reqs.iter().any(|r| match r.routing {
-        Strategy::Orthogonal => true,
-        Strategy::Straight => false,
-    }) {
+    if !reqs.iter().any(EdgeReq::corridor) {
         return (routing, Vec::new());
     }
     // The diagram routes at the maximum clearance any link carries
     // (ROUTING.md Vocabulary); `build_worlds` spends it on keep-outs and the margin.
     let c = reqs
         .iter()
-        .filter(mine)
+        .filter(|r| r.corridor())
         .map(|r| r.clearance)
         .fold(0.0_f64, f64::max);
     let worlds = build_worlds(index, reqs, c);
@@ -370,9 +364,8 @@ pub(crate) fn route(index: &SceneIndex, reqs: &[EdgeReq]) -> (Routing, Vec<usize
 
     let mut req_of = Vec::new();
     for (i, req) in reqs.iter().enumerate() {
-        match req.routing {
-            Strategy::Orthogonal => {}
-            Strategy::Straight => continue,
+        if !req.corridor() {
+            continue;
         }
         let Some(chain) = &chains[i] else {
             routing
@@ -389,9 +382,18 @@ pub(crate) fn route(index: &SceneIndex, reqs: &[EdgeReq]) -> (Routing, Vec<usize
             continue;
         };
         req_of.push(i);
+        // The one divergence between the corridor strategies: an orthogonal
+        // chain lowers to a polyline (render-time fillets); a natural chain
+        // lowers to cubics plus their dense sampling as the shared `path`.
+        let (path, curve) = match req.routing {
+            Strategy::Orthogonal => (geometry::polyline(chain), Vec::new()),
+            Strategy::Natural => super::natural::lower(chain, req.stub_a, req.stub_b),
+            Strategy::Straight => unreachable!("straight requests never build chains"),
+        };
         routing.links.push(RoutedLink {
-            path: geometry::polyline(chain),
-            strategy: Strategy::Orthogonal,
+            path,
+            curve,
+            strategy: req.routing,
             markers: req.markers.clone(),
             attrs: req.attrs.clone(),
             applied_styles: req.applied_styles.clone(),

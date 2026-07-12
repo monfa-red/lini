@@ -122,12 +122,22 @@ pub fn render_link(
     };
 
     // Stop the drawn line where the marker body will sit so the stroke never
-    // pokes past it (and never leaves a gap before a dot).
+    // pokes past it (and never leaves a gap before a dot). A natural wire's
+    // ends are its straight stubs (`path[0] → path[1]` is the whole first
+    // stub), so the same pull-back lands inside them.
     let drawn = shorten_for_markers(&w.path, &w.markers, thickness, MARKER_OVERLAP);
-    let d = wavy
-        .then(|| wavy::wavy_d(&drawn, targets))
-        .flatten()
-        .unwrap_or_else(|| rounded_d(&drawn, targets));
+    let d = if w.curve.is_empty() {
+        wavy.then(|| wavy::wavy_d(&drawn, targets))
+            .flatten()
+            .unwrap_or_else(|| rounded_d(&drawn, targets))
+    } else if wavy {
+        // Wavy natural: the least-code honest fallback — the wave rides the
+        // dense sampled polyline (no fillets; the samples already curve).
+        let flat = vec![0.0; drawn.len().saturating_sub(2)];
+        wavy::wavy_d(&drawn, &flat).unwrap_or_else(|| cubic_d(&drawn, &w.curve))
+    } else {
+        cubic_d(&drawn, &w.curve)
+    };
     writeln!(out, r#"      <path d="{d}"{mask_attr}/>"#).unwrap();
 
     // The marker colour: filled heads inherit it from CSS (the `.lini-marker`
@@ -238,6 +248,37 @@ pub fn render_stray(out: &mut String, a: &Stray, vars: &VarTable, opts: &Options
 /// eats a neighbouring arc or a marker pull-back (ROUTING Model step 7).
 fn rounded_d(pts: &[(f64, f64)], targets: &[f64]) -> String {
     super::rounding::path_d(pts, targets)
+}
+
+/// The `d` for a natural wire: the marker-shortened straight stubs as line
+/// commands around the **exact** cubic segments — the drawn curve, not its
+/// sampling; the fillet pass never touches a curve. `drawn` is the sampled
+/// path after the marker pull-back, so its first/last points are the stub
+/// ends where the stroke stops.
+fn cubic_d(drawn: &[(f64, f64)], curve: &[[(f64, f64); 4]]) -> String {
+    let (start, end) = (drawn[0], *drawn.last().expect("drawn path"));
+    let (sa, sb) = (curve[0][0], curve[curve.len() - 1][3]);
+    let mut d = format!("M {} {}", num(start.0), num(start.1));
+    if start != sa {
+        write!(d, " L {} {}", num(sa.0), num(sa.1)).unwrap();
+    }
+    for c in curve {
+        write!(
+            d,
+            " C {} {} {} {} {} {}",
+            num(c[1].0),
+            num(c[1].1),
+            num(c[2].0),
+            num(c[2].1),
+            num(c[3].0),
+            num(c[3].1),
+        )
+        .unwrap();
+    }
+    if end != sb {
+        write!(d, " L {} {}", num(end.0), num(end.1)).unwrap();
+    }
+    d
 }
 
 /// One interior corner of one polyline, keyed for nesting: the turn's
