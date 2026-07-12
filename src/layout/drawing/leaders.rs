@@ -178,6 +178,7 @@ pub(super) fn callout(ctx: &Ctx, w: &ResolvedLink) -> Result<Vec<PlacedNode>, Er
                 text,
                 along: crate::resolve::Along::Auto,
                 attrs: crate::resolve::AttrMap::default(),
+                applied_styles: Vec::new(),
             }),
             None => {
                 return Err(Error::at(

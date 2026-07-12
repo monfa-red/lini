@@ -16,8 +16,8 @@
 
 |row#plans| { gap: 24; align: start; } [
   |box#starter| { max-width: 190; radius: 12; padding: 18; align: start; } [
-    |block| "Starter" .card-title
-    |block| "Free" .card-brief
+    "Starter" .card-title
+    "Free" .card-brief
     "For side projects and weekend experiments. One seat, community support." {
       font-size: 13;
     }
@@ -25,15 +25,15 @@
   |box#team| {
     max-width: 190; radius: 12; padding: 18; align: start; fill: --teal-wash;
   } [
-    |block| "Team" .card-title
-    |block| "$12 / seat" .card-brief
+    "Team" .card-title
+    "$12 / seat" .card-brief
     "Shared workspaces, review flows, and priority support for growing groups." {
       font-size: 13;
     }
   ]
   |box#scale| { max-width: 190; radius: 12; padding: 18; align: start; } [
-    |block| "Scale" .card-title
-    |block| "Custom" .card-brief
+    "Scale" .card-title
+    "Custom" .card-brief
     "Dedicated infrastructure, audit logs, and a human who answers the phone." {
       font-size: 13;
     }

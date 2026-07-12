@@ -413,6 +413,39 @@ fn text_node_takes_a_style_block() {
 }
 
 #[test]
+fn text_node_takes_a_worn_class_chain() {
+    let f = parse_ok("\"Starter\" .card-title.loud { color: red }\n");
+    match &f.instances[0] {
+        Child::Text(t) => {
+            assert_eq!(t.text, "Starter");
+            assert_eq!(t.classes, vec!["card-title", "loud"]);
+            assert_eq!(t.style.len(), 1);
+        }
+        _ => panic!("classed text"),
+    }
+}
+
+#[test]
+fn text_class_rides_the_content_slot_not_the_head_label() {
+    // `|box#api| "API" .hot` — the class after a head label is the *node's*, and
+    // the lowered label leaf stays classless (the head-label disambiguation).
+    let f = parse_ok("|box#api| \"API\" .hot\n");
+    let n = instance(&f, 0);
+    assert_eq!(n.classes, vec!["hot"]);
+    assert_eq!(n.label.as_ref().unwrap().classes, Vec::<String>::new());
+}
+
+#[test]
+fn a_link_bracket_label_takes_a_class() {
+    // A link `[ ]` label is content position, so it wears classes; the head-label
+    // class stays the link's (`a -> b "x" .loud`).
+    let f = parse_ok("a -> b [ \"grow\" .loud ]\n");
+    let w = &f.links[0];
+    assert!(w.classes.is_empty());
+    assert_eq!(w.labels[0].classes, vec!["loud"]);
+}
+
+#[test]
 fn three_phases() {
     let f = parse_ok(
         "{\n  layout: grid;\n  |box| { radius: 6; }\n  .hot { stroke-width: 2; }\n}\n\

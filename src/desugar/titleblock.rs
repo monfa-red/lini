@@ -122,6 +122,7 @@ fn caption_field(s: &str, span: Span) -> Node {
 fn text(s: &str, span: Span) -> TextNode {
     TextNode {
         text: s.to_string(),
+        classes: Vec::new(),
         style: Vec::new(),
         style_span: None,
         span,

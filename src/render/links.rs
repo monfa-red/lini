@@ -479,7 +479,8 @@ fn render_link_text(
     // against its own role rule (`.lini-link-label` / `.lini-sequence-message`) —
     // so `text-shadow` and every other font/paint prop ride through, and the
     // per-role default size states once in the sheet, not on each label.
-    let classes = vec![t.class.to_string()];
+    let mut classes = vec![t.class.to_string()];
+    classes.extend(t.applied_styles.iter().map(|s| format!("lini-style-{s}")));
     let style_attr = super::text_paint_attr(&t.attrs, &classes, ruleset, vars, opts);
     // The label rides its `along:` point already shifted by `translate` (folded in
     // at routing — `links::labels`), so the shared emitter handles only `rotate`,

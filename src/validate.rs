@@ -401,7 +401,14 @@ impl<'a> Ctx<'a> {
     fn check_unworn_classes(&self, file: &File, out: &mut Vec<Diagnostic>) {
         let mut node_wearers: HashMap<&str, Vec<(String, Vec<String>)>> = HashMap::new();
         let mut link_wearers: HashSet<&str> = HashSet::new();
-        collect_wearers(file, self.types, &mut node_wearers, &mut link_wearers);
+        let mut text_wearers: HashSet<&str> = HashSet::new();
+        collect_wearers(
+            file,
+            self.types,
+            &mut node_wearers,
+            &mut link_wearers,
+            &mut text_wearers,
+        );
 
         for item in &file.stylesheet {
             let StyleItem::Rule(r) = item else { continue };
@@ -415,7 +422,8 @@ impl<'a> Ctx<'a> {
             }
             let nodes = node_wearers.get(name.as_str());
             let on_links = link_wearers.contains(name.as_str());
-            if nodes.is_none() && !on_links {
+            let on_text = text_wearers.contains(name.as_str());
+            if nodes.is_none() && !on_links && !on_text {
                 out.push(Diagnostic::warn(
                     r.span,
                     format!("class '.{name}' is never worn"),
@@ -423,7 +431,8 @@ impl<'a> Ctx<'a> {
                 continue;
             }
             // CSS semantics: a property inert on one wearer is fine; dead on
-            // every wearer it warns.
+            // every wearer it warns. A text leaf accepts any text-valid property
+            // [SPEC 3] — the class-polymorphism law makes it live there.
             for d in &r.decls {
                 let Some(prop) = properties::get(&d.name) else {
                     continue; // unknown-name already reported
@@ -433,7 +442,8 @@ impl<'a> Ctx<'a> {
                         .any(|(kind, chain)| node_accepts(prop, kind, chain, None))
                 });
                 let link_ok = on_links && link_accepts(prop);
-                if !node_ok && !link_ok {
+                let text_ok = on_text && properties::is_text_valid(&d.name);
+                if !node_ok && !link_ok && !text_ok {
                     out.push(Diagnostic::warn(
                         d.span,
                         format!("'.{name} {{ {}: … }}' is inert on every wearer", d.name),
@@ -576,6 +586,7 @@ fn collect_wearers<'a>(
     types: &Types,
     nodes: &mut HashMap<&'a str, Vec<(String, Vec<String>)>>,
     links: &mut HashSet<&'a str>,
+    texts: &mut HashSet<&'a str>,
 ) {
     fn walk_children<'a>(
         children: &'a [Child],
@@ -583,9 +594,19 @@ fn collect_wearers<'a>(
         types: &Types,
         nodes: &mut HashMap<&'a str, Vec<(String, Vec<String>)>>,
         links: &mut HashSet<&'a str>,
+        texts: &mut HashSet<&'a str>,
     ) {
         for c in children {
-            let Child::Box(n) = c else { continue };
+            let n = match c {
+                Child::Box(n) => n,
+                // A bare text leaf wears its classes as a text wearer [SPEC 3].
+                Child::Text(t) => {
+                    for class in &t.classes {
+                        texts.insert(class.as_str());
+                    }
+                    continue;
+                }
+            };
             if !n.classes.is_empty()
                 && let Ok(info) = self_resolve(types, n)
             {
@@ -597,11 +618,17 @@ fn collect_wearers<'a>(
                         .push((info.0.clone(), chain.clone()));
                 }
             }
-            walk_children(&n.children, &n.links, types, nodes, links);
+            walk_children(&n.children, &n.links, types, nodes, links, texts);
         }
         for w in child_links {
             for class in &w.classes {
                 links.insert(class.as_str());
+            }
+            // A link `[ ]` label is a text leaf and wears its classes there.
+            for label in &w.labels {
+                for class in &label.classes {
+                    texts.insert(class.as_str());
+                }
             }
         }
     }
@@ -612,10 +639,10 @@ fn collect_wearers<'a>(
             .map(|i| (i.kind.as_str().to_string(), i.chain))
             .map_err(|_| ())
     }
-    walk_children(&file.instances, &file.links, types, nodes, links);
+    walk_children(&file.instances, &file.links, types, nodes, links, texts);
     for item in &file.stylesheet {
         if let StyleItem::Define(d) = item {
-            walk_children(&d.children, &d.links, types, nodes, links);
+            walk_children(&d.children, &d.links, types, nodes, links, texts);
         }
     }
 }

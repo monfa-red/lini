@@ -309,8 +309,11 @@ fn render_text(
     let label = n.label.as_deref().unwrap_or("");
     // A text node's `type_chain` carries any extra class (e.g. a chart's `.lini-chart-label`
     // inline labels, [SPEC 14.8]); plain text has none, so this stays `lini-text`.
+    // A worn user class joins as `lini-style-*` [SPEC 17], its live declarations
+    // riding the stylesheet rule exactly as a node's do.
     let mut classes = vec!["lini-text".to_string()];
     classes.extend(n.type_chain.iter().map(|t| format!("lini-{t}")));
+    classes.extend(n.applied_styles.iter().map(|s| format!("lini-style-{s}")));
     let style = text_paint_attr(&n.own_style, &classes, ruleset, vars, opts);
     text::emit(
         out,

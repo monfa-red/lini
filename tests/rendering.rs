@@ -518,6 +518,83 @@ fn icon_renders_phosphor_paths_counter_scaled() {
     assert!(svg.contains(r#"<path d="M"#), "{svg}");
 }
 
+// ── Classes on text [SPEC 3/4/17] ──
+
+#[test]
+fn worn_class_joins_lini_text_on_the_text_element() {
+    // The worn class emits as `lini-style-*` beside `lini-text`, and its live
+    // declarations ride the stylesheet rule exactly as a node class does.
+    let svg = render_live("{ .quiet { color: --teal-deep; } }\n\"hi\" .quiet\n");
+    assert!(
+        svg.contains(r#"<text class="lini-text lini-style-quiet""#),
+        "class hook on <text>: {svg}"
+    );
+    assert!(
+        svg.contains(".lini .lini-style-quiet { color: var(--lini-teal-deep); }"),
+        "class rule carries its live decls: {svg}"
+    );
+}
+
+#[test]
+fn a_class_font_size_grows_the_text_leaf() {
+    // A baked property (`font-size`) on a worn class must reach measurement, so
+    // the leaf's box — and the scene's height — grow.
+    let plain = render_live("\"Grows\"\n");
+    let big = render_live("{ .big { font-size: 40; } }\n\"Grows\" .big\n");
+    let h = |svg: &str| {
+        svg.split("height=\"")
+            .nth(1)
+            .and_then(|s| s.split('"').next())
+            .and_then(|s| s.parse::<f64>().ok())
+            .expect("height")
+    };
+    assert!(
+        h(&big) > h(&plain) + 10.0,
+        "font-size class should grow the leaf: {} vs {}",
+        h(&big),
+        h(&plain)
+    );
+}
+
+#[test]
+fn a_worn_class_beats_the_inherited_context_on_text() {
+    // Tier 3 sits above inheritance: the box paints its text red, but the leaf's
+    // worn class repaints it — the class rule rides the `<text>`, winning in CSS.
+    let svg = render_live(
+        "{ .blue { color: --teal-deep; } }\n|box#b| { color: --red; } [ \"child\" .blue ]\n",
+    );
+    assert!(
+        svg.contains(r#"<text class="lini-text lini-style-blue""#),
+        "the class rides the text over the inherited color: {svg}"
+    );
+}
+
+#[test]
+fn own_block_beats_a_worn_class_on_text() {
+    // The leaf's own `{ }` is tier 5, above the class (tier 3): its `font-size`
+    // inlines and wins.
+    let svg = render_live("{ .big { font-size: 40; } }\n\"x\" .big { font-size: 10 }\n");
+    assert!(
+        svg.contains(r#"style="font-size: 10px""#),
+        "own block overrides the class: {svg}"
+    );
+}
+
+#[test]
+fn a_box_property_in_a_class_is_inert_on_text_never_an_error() {
+    // The class-polymorphism law: a non-text-valid class declaration is inert on
+    // a text wearer — it compiles, and never rides the text's inline style.
+    let svg = render_live("{ .card { padding: 40; color: --red; } }\n\"x\" .card\n");
+    assert!(
+        svg.contains(r#"<text class="lini-text lini-style-card""#),
+        "class still hooks: {svg}"
+    );
+    assert!(
+        !svg.contains("padding"),
+        "padding is inert on text, never emitted: {svg}"
+    );
+}
+
 #[cfg(feature = "icons")]
 #[test]
 fn icon_two_tone_paints_body_fill_and_line_stroke() {

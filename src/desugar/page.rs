@@ -224,6 +224,7 @@ fn zone(at: Span, edge: &str, i: usize, label: String) -> Node {
     );
     n.label = Some(TextNode {
         text: label,
+        classes: Vec::new(),
         style: Vec::new(),
         style_span: None,
         span: tail,

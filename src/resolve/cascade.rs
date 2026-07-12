@@ -86,6 +86,23 @@ impl Stylesheet {
         out
     }
 
+    /// The tier-3 layer [SPEC 4]: the single user-class rules a wearer wears, in
+    /// definition (source) order. Shared by a node's cascade and a text leaf's —
+    /// the one place worn user classes turn into declarations, so the node and
+    /// text sides never drift.
+    pub fn user_class_decls(&self, classes: &[String]) -> Vec<(String, ResolvedValue)> {
+        let mut out = Vec::new();
+        for rule in &self.rules {
+            if let [SelUnit::Class(c)] = rule.selector.as_slice()
+                && !c.starts_with("lini-")
+                && classes.iter().any(|x| x == c)
+            {
+                out.extend(rule.decls.iter().cloned());
+            }
+        }
+        out
+    }
+
     /// The descendant (tier 2), user-class (tier 3), then id (tier 4) declaration
     /// layers matching a node, flattened in cascade order — most-specific last
     /// [SPEC 4]. A worn `.lini-*` class is the type tier (1), looked up via
@@ -104,14 +121,7 @@ impl Stylesheet {
             }
         }
         // Tier 3: single user-class rules the node wears, definition order.
-        for rule in &self.rules {
-            if let [SelUnit::Class(c)] = rule.selector.as_slice()
-                && !c.starts_with("lini-")
-                && node.classes.iter().any(|x| x == c)
-            {
-                out.extend(rule.decls.iter().cloned());
-            }
-        }
+        out.extend(self.user_class_decls(&node.classes));
         // Tier 4: single id rules (`#hero`, `|table#main|`), source order.
         for rule in &self.rules {
             if selector_is_id(&rule.selector) && selector_matches(&rule.selector, ancestors, node) {

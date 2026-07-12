@@ -131,6 +131,7 @@ pub fn place(
                 tangent,
                 attrs: t.attrs.clone(),
                 class: crate::layout::ir::LINK_LABEL_CLASS,
+                applied_styles: t.applied_styles.clone(),
             });
         }
     }
