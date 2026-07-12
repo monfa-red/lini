@@ -125,7 +125,8 @@ never linked, so they are always sigil-marked.
 
 **Boxes and text, like HTML.** A *box* has identity, classes, a style block, and
 children. A *string* is text content — a leaf with no identity or children, though
-it may carry a style block (`"x" { color: red }`, [SPEC 3](#text-content)). A
+it may wear classes and carry a style block (`"x" .quiet { color: red }`,
+[SPEC 3](#text-content)). A
 string in a box's `[ ]` (or trailing the head as its label) is that box's text; on
 its own it is a free-standing text node. To give text children, a border, padding,
 a `pin`, or a wirable id, wrap it in a box (`|block|` is the minimal one) — exactly
@@ -173,7 +174,7 @@ says otherwise:
 | `#id` | Inside the bars it names the node's id; at a rule's head it is an **id selector** (`#cat { }`). A `#` followed by hex digits in a *value* is a colour (`#f80`); the two never meet — one heads a statement or sits in bars, the other is a value. |
 | `key: value` | `:` separates name and value; surrounding space optional, canonical is one space after (`radius: 5`). |
 | `a:side` | A `:` after a link endpoint forces a side (`a:left`). Distinct from the declaration `:` by position — it follows an endpoint, never opens a value. |
-| `.name` (class) | At a rule head it is a class **selector** / definition (`.hot { … }`). On an instance or link it is a **worn class**, following the identity — **spaced** off it (`\|box\| .hot`, `a -> b .loud`), the rest of the chain **glued** (`.hot.loud`). |
+| `.name` (class) | At a rule head it is a class **selector** / definition (`.hot { … }`). On an instance, link, or text leaf it is a **worn class**, following the identity — **spaced** off it (`\|box\| .hot`, `a -> b .loud`, `"x" .quiet`), the rest of the chain **glued** (`.hot.loud`). |
 | `id.child` | **No space** — an endpoint path into a child (`kitchen.bowl`). |
 | `--name` | A variable, in a value or at a statement start to declare one. |
 | link op | `[marker?] line [marker?]`, glued, no internal space (`->`, `--->`, `<->`). |
@@ -329,9 +330,9 @@ places nothing:
 | a **link** | a label along the route ([SPEC 9](#9-links)) |
 | a `\|chart\|` / series / `\|axis\|` / participant / frame | its title / legend / axis title / header / guard ([SPEC 13](#13-sequence), [SPEC 14](#14-charts)) |
 
-**The label takes no style of its own.** The `{ }` after the head is the *node's*
-block, so a styled or nudged label rides the `[ ]` content form instead, where each
-string is a leaf in its own right ([Text content](#text-content)):
+**The label takes no style of its own.** The `{ }` and classes after the head are
+the *node's*, so a styled, classed, or nudged label rides the `[ ]` content form
+instead, where each string is a leaf in its own right ([Text content](#text-content)):
 
 ```
 |box#api| "API" .hot { fill: red }        // label + class + the node's own style
@@ -366,14 +367,18 @@ A string is a **text node** — always a `<text>` leaf, never wrapped:
   ([SPEC 6](#6-paint-stroke--text)).
 
 A string carries **no children** — text is a leaf, not a box — but where it is
-**content** (free-standing, or a child in a `[ ]`) it **may carry a style block** of
-text properties: `"X" { color: red; font-weight: bold; translate: 0 -6;
-rotate: 12 }`. Only text-valid properties apply (`color` / `fill`, every `font-*`,
-`opacity`, `letter-spacing`, `line-spacing`, `text-transform`, `text-decoration`,
-`text-shadow`, `translate`, `rotate`, `layer`); any other — `pin`, `padding`,
-`width`, a border, children, even `href` / `hint` — needs a real box, so wrap the
-text in a `|block|`. Set on the string the style applies to it directly; set on a
-containing box it cascades down ([SPEC 6](#6-paint-stroke--text)).
+**content** (free-standing, or a child in a `[ ]`) it takes the node tail: it
+**may wear classes and carry a style block** of text properties —
+`"Starter" .card-title`, `"X" { color: red; font-weight: bold; translate: 0 -6;
+rotate: 12 }`. In its own block only text-valid properties apply (`color` /
+`fill`, every `font-*`, `opacity`, `letter-spacing`, `line-spacing`,
+`text-transform`, `text-decoration`, `text-shadow`, `translate`, `rotate`,
+`layer`); any other — `pin`, `padding`, `width`, a border, children, even
+`href` / `hint` — needs a real box, so wrap the text in a `|block|`. A **worn
+class** is looser, per the class law ([SPEC 4](#4-selectors-cascade--specificity)):
+its text-valid declarations land, the rest are inert on the text wearer. Set on
+the string the style applies to it directly; set on a containing box it cascades
+down ([SPEC 6](#6-paint-stroke--text)).
 
 ### Implicit nodes
 
@@ -456,7 +461,8 @@ by **later wins** (source order). The tiers, low to high:
    defaults live — [SPEC 8](#8-templates).)
 2. **Descendant rules** — `|table| |box| { }`, `.sidebar |box| { }`, matched against
    the ancestor chain.
-3. **Class rules** — `.hot { }`, worn via `|box| .hot` on the node.
+3. **Class rules** — `.hot { }`, worn via `|box| .hot` on the node (a text
+   leaf wears them the same way — `"x" .hot`, [SPEC 3](#text-content)).
 4. **Id rule** — `#hero { }`, the node's own id.
 5. **The instance's own block** — `|box#client| { fill: white }` — the most specific,
    beats everything above.
@@ -1060,7 +1066,7 @@ a -> b [ "watches" { translate: 0 -6 } ]        // a styled / nudged label
 ```
 
 Each label is an ordinary **styleable text leaf** ([SPEC 3](#3-statements--the-label)): give it its
-own `{ }` in the `[ ]` to nudge or turn it. The head label takes no style — the `{ }`
+own `{ }` (or a worn class) in the `[ ]` to nudge or turn it. The head label takes no style — the `{ }`
 after a link's head is the *link's* — so a styled label rides the `[ ]`, exactly as a
 node's does. A label is an obstacle to nothing, and may slide along the link to keep
 clear of nodes and other labels; the link never moves for it. Link labels default to
@@ -3093,7 +3099,8 @@ inherits, down to `lini-block`); `lini-style-{name}` (per worn class). With rota
 the transform becomes `translate(X,Y) rotate(N)`.
 
 **Text** emits a bare `<text class="lini-text">…</text>` at its placed position — no
-wrapping `<g>`. A table's cells are `|block|`s wrapping their text, so each renders as a
+wrapping `<g>`; a worn class joins it (`class="lini-text lini-style-quiet"`). A table's
+cells are `|block|`s wrapping their text, so each renders as a
 `<g class="lini-block …"><text>…</text></g>`; the header and any `|footer|` cells carry
 a fill, a body cell is frameless ([SPEC 8](#8-templates)). Text's font and colour come by
 inheritance from the enclosing `<g>`; a string's own style block emits as a `style="…"`
@@ -3465,7 +3472,7 @@ rule        = selector style                        # |box| { } , |table| |box| 
 define      = "|" ident "::" ident "|" body         # name :: base, optional children
 
 node        = ident_bars [ string ] [ classes ] [ style ] [ children ]
-text        = string [ style ]                      # bare content; a styleable leaf, never a box
+text        = string [ classes ] [ style ]          # bare content; a styleable leaf, never a box
 ident_bars  = "|" ( type [ "#" ident ] | "#" ident ) "|"   # |type| , |type#id| , |#id|
 type        = ident
 classes     = "." ident { "." ident }               # a worn class chain — .hot, .hot.loud
