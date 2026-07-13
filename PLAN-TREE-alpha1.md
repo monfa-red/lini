@@ -509,3 +509,24 @@ Keep entries terse.
   `LEAF 13`, `MAX_WIDTH 160`) — retune by eye in the visual pass. A
   mindmap's inline `direction:` hoists to its generated scope; a generated
   `lini-*` class on a link renders bare (was `lini-style-lini-hue-*`).
+
+- 2026-07-12 (post-release audit, owner + session): **`routing: natural`
+  holds only on uncontended scenes.** On `links_medium`/`links_hard` with
+  `routing: natural` forced scene-wide: duplicate curves pinch below the
+  half-clearance floor (medium, 3 separation warnings), and hard shows
+  kinked near-polyline "curves" (the corridor tightener converging to its
+  fallback), meandering long arcs, braided approaches, and one contact
+  breach (a stub shorter than its marker run-up). Render time measured
+  **identical** to orthogonal (~0.83s vs ~0.81s, links_hard) — the
+  reported slowness needs a repro. Verdict: the Stage 3/4 natural is
+  sound as the mindmap's branch look and honest under its checker, but
+  the general-case contract needs its own design round with real laws
+  (curve-space placement, not polyline lowering + tightening) — planned
+  as a separate session. Alpha.1 ships with natural fit for trees; the
+  laws sweep covers only the scenes samples exercise.
+- 2026-07-12: **anonymous-container routing gap** (pre-existing, loud on
+  de-id'd trees): worlds are dot-path-keyed, so an anonymous container's
+  interior is never a routing world — its wires stray or orbit outside.
+  Fix direction settled (structural worlds keyed on scene-node identity,
+  replacing the path ladder — not minted ids); its own session, before
+  the natural rethink (both strategies share worlds).
