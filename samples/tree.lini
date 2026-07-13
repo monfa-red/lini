@@ -2,7 +2,7 @@
   gap: 64;
 }
 
-|column#org| "Organisation" { layout: tree; } [
+|column| "Organisation" { layout: tree; } [
   |topic#ceo| "CEO" [
     |topic#cto| "CTO" [
       |topic#backend| "Backend"
@@ -16,7 +16,7 @@
   ]
 ]
 
-|column#decision| "Review flow" { layout: tree; direction: row; } [
+|column| "Review flow" { layout: tree; direction: row; } [
   |topic#request| "Request" [
     |topic#triage| "Triage" [
       |topic#approve| "Approve"
@@ -25,7 +25,7 @@
   ]
 ]
 
-|column#launch| { layout: tree; direction: bilateral; } [
+|column| { layout: tree; direction: bilateral; } [
   |topic#plan| "Launch" [
     |topic#product| "Product" [
       |topic#mvp| "MVP"

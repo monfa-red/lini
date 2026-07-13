@@ -224,6 +224,9 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             n("stroke-width", 2.0),
             n("radius", 8.0),
             pair("padding", 8.0, 14.0),
+            // A topic's children are card content (a title's icon/badge), not
+            // arranged nodes — tighter than the block default 20.
+            n("gap", 12.0),
         ],
         // The mindmap root card [SPEC 8]: the node **is** the visible root
         // topic, so its bundle carries the ramp's root tier and the wrap cap.

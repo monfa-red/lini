@@ -57,7 +57,7 @@ input_file: samples/tree.lini
   </defs>
   <rect class="lini-canvas" x="-380.5" y="-383.5" width="761" height="767"/>
   <g class="lini-scene">
-    <g class="lini-node lini-column lini-block" data-id="org" transform="translate(-276,-284)">
+    <g class="lini-node lini-column lini-block" transform="translate(-276,-284)">
       <rect x="-275" y="-144" width="550" height="288" rx="0" ry="0"/>
       <g class="lini-node lini-topic lini-level-0 lini-block" data-id="ceo" transform="translate(276,0)">
         <rect x="-27.5" y="-15.5" width="55" height="31" rx="8" ry="8"/>
@@ -150,7 +150,7 @@ input_file: samples/tree.lini
         <use href="#lg0500-82" transform="translate(321 -66.63) scale(0.0075 -0.0075)"/>
       </g>
     </g>
-    <g class="lini-node lini-column lini-block" data-id="decision" transform="translate(-79,-9.5)">
+    <g class="lini-node lini-column lini-block" transform="translate(-79,-9.5)">
       <rect x="-271.5" y="-56" width="543" height="112" rx="0" ry="0"/>
       <g class="lini-node lini-topic lini-level-0 lini-block" data-id="request" transform="translate(0,57)">
         <rect x="-45.5" y="-15.5" width="91" height="31" rx="8" ry="8"/>
@@ -211,7 +211,7 @@ input_file: samples/tree.lini
         <use href="#lg0500-91" transform="translate(-103.5 62.37) scale(0.0075 -0.0075)"/>
       </g>
     </g>
-    <g class="lini-node lini-column lini-block" data-id="launch" transform="translate(4.5,266)">
+    <g class="lini-node lini-column lini-block" transform="translate(4.5,266)">
       <rect x="-359.5" y="-96.5" width="719" height="193" rx="0" ry="0"/>
       <g class="lini-node lini-topic lini-level-0 lini-block" data-id="plan" transform="translate(0,0)">
         <rect x="-41" y="-15.5" width="82" height="31" rx="8" ry="8"/>
@@ -337,67 +337,67 @@ input_file: samples/tree.lini
     </g>
   </g>
   <g class="lini-links">
-    <g class="lini-link" data-from="org.ceo" data-to="org.ceo.cto">
+    <g class="lini-link" data-from="ceo" data-to="ceo.cto">
       <path d="M 0 -267.5 L 0 -259.5 A 16 16 0 0 1 -16 -243.5 L -138.5 -243.5 A 16 16 0 0 0 -154.5 -227.5 L -154.5 -203.5"/>
     </g>
-    <g class="lini-link" data-from="org.ceo" data-to="org.ceo.coo">
+    <g class="lini-link" data-from="ceo" data-to="ceo.coo">
       <path d="M 0 -267.5 L 0 -243.5 A 16 16 0 0 0 16 -227.5 L 129.5 -227.5 A 16 16 0 0 1 145.5 -211.5 L 145.5 -203.5"/>
     </g>
-    <g class="lini-link" data-from="org.ceo.cto" data-to="org.ceo.cto.backend">
+    <g class="lini-link" data-from="ceo.cto" data-to="ceo.cto.backend">
       <path d="M -154.5 -170.5 L -154.5 -162.5 A 16 16 0 0 1 -170.5 -146.5 L -213.5 -146.5 A 16 16 0 0 0 -229.5 -130.5 L -229.5 -106.5"/>
     </g>
-    <g class="lini-link" data-from="org.ceo.cto" data-to="org.ceo.cto.frontend">
+    <g class="lini-link" data-from="ceo.cto" data-to="ceo.cto.frontend">
       <path d="M -154.5 -170.5 L -154.5 -146.5 A 16 16 0 0 0 -138.5 -130.5 L -100 -130.5 A 16 16 0 0 1 -84 -114.5 L -84 -106.5"/>
     </g>
-    <g class="lini-link" data-from="org.ceo.coo" data-to="org.ceo.coo.ops">
+    <g class="lini-link" data-from="ceo.coo" data-to="ceo.coo.ops">
       <path d="M 145.5 -170.5 L 145.5 -162.5 A 16 16 0 0 1 129.5 -146.5 L 91 -146.5 A 16 16 0 0 0 75 -130.5 L 75 -106.5"/>
     </g>
-    <g class="lini-link" data-from="org.ceo.coo" data-to="org.ceo.coo.qa">
+    <g class="lini-link" data-from="ceo.coo" data-to="ceo.coo.qa">
       <path d="M 145.5 -170.5 L 145.5 -146.5 A 16 16 0 0 0 161.5 -130.5 L 213.5 -130.5 A 16 16 0 0 1 229.5 -114.5 L 229.5 -106.5"/>
     </g>
-    <g class="lini-link lini-link-dotted" data-from="org.ceo.coo.ops" data-to="org.ceo.coo.qa">
+    <g class="lini-link lini-link-dotted" data-from="ceo.coo.ops" data-to="ceo.coo.qa">
       <path d="M 135 -90 L 183 -90"/>
     </g>
-    <g class="lini-link" data-from="decision.request" data-to="decision.request.triage">
+    <g class="lini-link" data-from="request" data-to="request.triage">
       <path d="M -32.5 47.5 L 31.5 47.5"/>
     </g>
-    <g class="lini-link" data-from="decision.request.triage" data-to="decision.request.triage.approve">
+    <g class="lini-link" data-from="request.triage" data-to="request.triage.approve">
       <path d="M 115.5 47.5 L 124.625 47.5 A 16 16 0 0 0 140.625 31.5 L 140.625 23 A 16 16 0 0 1 156.625 7 L 179.5 7"/>
     </g>
-    <g class="lini-link" data-from="decision.request.triage" data-to="decision.request.triage.reject">
+    <g class="lini-link" data-from="request.triage" data-to="request.triage.reject">
       <path d="M 115.5 47.5 L 140.625 47.5 A 16 16 0 0 1 156.625 63.5 L 156.625 72 A 16 16 0 0 0 172.625 88 L 184 88"/>
     </g>
-    <g class="lini-link" data-from="launch.plan" data-to="launch.plan.product">
+    <g class="lini-link" data-from="plan" data-to="plan.product">
       <path d="M 46.5 266 L 72.75 266 A 16 16 0 0 0 88.75 250 L 88.75 241.5 A 16 16 0 0 1 104.75 225.5 L 119.5 225.5"/>
     </g>
-    <g class="lini-link" data-from="launch.plan" data-to="launch.plan.market">
+    <g class="lini-link" data-from="plan" data-to="plan.market">
       <path d="M 46.5 266 L 56.75 266 A 16 16 0 0 1 72.75 282 L 72.75 331 A 16 16 0 0 0 88.75 347 L 110.5 347"/>
     </g>
-    <g class="lini-link" data-from="launch.plan" data-to="launch.plan.sales">
+    <g class="lini-link" data-from="plan" data-to="plan.sales">
       <path d="M -37.5 266 L -55.625 266 A 16 16 0 0 1 -71.625 250 L -71.625 201 A 16 16 0 0 0 -87.625 185 L -119.5 185"/>
     </g>
-    <g class="lini-link" data-from="launch.plan" data-to="launch.plan.ops">
+    <g class="lini-link" data-from="plan" data-to="plan.ops">
       <path d="M -37.5 266 L -128.5 266"/>
     </g>
-    <g class="lini-link" data-from="launch.plan" data-to="launch.plan.team">
+    <g class="lini-link" data-from="plan" data-to="plan.team">
       <path d="M -37.5 266 L -71.625 266 A 16 16 0 0 0 -87.625 282 L -87.625 331 A 16 16 0 0 1 -103.625 347 L -124 347"/>
     </g>
-    <g class="lini-link" data-from="launch.plan.product" data-to="launch.plan.product.mvp">
+    <g class="lini-link" data-from="plan.product" data-to="plan.product.mvp">
       <path d="M 212.5 225.5 L 246.625 225.5 A 16 16 0 0 0 262.625 209.5 L 262.625 201 A 16 16 0 0 1 278.625 185 L 299 185"/>
     </g>
-    <g class="lini-link" data-from="launch.plan.product" data-to="launch.plan.product.docs">
+    <g class="lini-link" data-from="plan.product" data-to="plan.product.docs">
       <path d="M 212.5 225.5 L 230.625 225.5 A 16 16 0 0 1 246.625 241.5 L 246.625 250 A 16 16 0 0 0 262.625 266 L 294.5 266"/>
     </g>
-    <g class="lini-link" data-from="launch.plan.market" data-to="launch.plan.market.site">
+    <g class="lini-link" data-from="plan.market" data-to="plan.market.site">
       <path d="M 221.5 347 L 294.5 347"/>
     </g>
-    <g class="lini-link" data-from="launch.plan.sales" data-to="launch.plan.sales.leads">
+    <g class="lini-link" data-from="plan.sales" data-to="plan.sales.leads">
       <path d="M -194.5 185 L -281 185"/>
     </g>
-    <g class="lini-link" data-from="launch.plan.ops" data-to="launch.plan.ops.legal">
+    <g class="lini-link" data-from="plan.ops" data-to="plan.ops.legal">
       <path d="M -185.5 266 L -281 266"/>
     </g>
-    <g class="lini-link" data-from="launch.plan.team" data-to="launch.plan.team.hire">
+    <g class="lini-link" data-from="plan.team" data-to="plan.team.hire">
       <path d="M -190 347 L -276.5 347"/>
     </g>
   </g>

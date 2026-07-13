@@ -75,7 +75,7 @@ input_file: samples/mindmap.lini
   </defs>
   <rect class="lini-canvas" x="-522.6" y="-354.9" width="1256.2" height="709.8"/>
   <g class="lini-scene">
-    <g class="lini-node lini-mindmap lini-topic lini-level-0 lini-block" data-id="product" transform="translate(0,0)">
+    <g class="lini-node lini-mindmap lini-topic lini-level-0 lini-block" data-id="lini-topic-1" transform="translate(0,0)">
       <rect x="-51.8" y="-29.6" width="103.6" height="59.2" rx="8" ry="8"/>
       <g class="lini-text">
         <use href="#lg0600-52" transform="translate(-37.8 -4.356) scale(0.009 -0.009)"/>
@@ -93,25 +93,25 @@ input_file: samples/mindmap.lini
         <use href="#lg0600-82" transform="translate(21.6 17.244) scale(0.009 -0.009)"/>
       </g>
       <g class="lini-node lini-topic lini-side-right lini-level-1 lini-hue-rose lini-block" data-id="ship" style="fill: #ffe3ec; stroke: #b8476e; color: #811442; font-size: 15px; font-weight: normal" transform="translate(190.3,-185.3)">
-        <rect x="-50" y="-45" width="100" height="90" rx="8" ry="8"/>
+        <rect x="-50" y="-41" width="100" height="82" rx="8" ry="8"/>
         <g class="lini-text">
-          <use href="#lg0400-55" transform="translate(-36 -22.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-76" transform="translate(-27 -22.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-77" transform="translate(-18 -22.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-84" transform="translate(-9 -22.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-84" transform="translate(0 -22.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-77" transform="translate(9 -22.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-82" transform="translate(18 -22.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-75" transform="translate(27 -22.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-71" transform="translate(-31.5 -4.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-69" transform="translate(-22.5 -4.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-72" transform="translate(-13.5 -4.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-73" transform="translate(-4.5 -4.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-82" transform="translate(4.5 -4.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-71" transform="translate(13.5 -4.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-73" transform="translate(22.5 -4.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-55" transform="translate(-36 -18.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-76" transform="translate(-27 -18.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-77" transform="translate(-18 -18.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-84" transform="translate(-9 -18.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-84" transform="translate(0 -18.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-77" transform="translate(9 -18.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-82" transform="translate(18 -18.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-75" transform="translate(27 -18.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-71" transform="translate(-31.5 -0.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-69" transform="translate(-22.5 -0.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-72" transform="translate(-13.5 -0.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-73" transform="translate(-4.5 -0.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-82" transform="translate(4.5 -0.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-71" transform="translate(13.5 -0.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-73" transform="translate(22.5 -0.63) scale(0.0075 -0.0075)"/>
         </g>
-        <g class="lini-node lini-icon" style="fill: none; stroke: #b8476e" transform="translate(0,28)">
+        <g class="lini-node lini-icon" style="fill: none; stroke: #b8476e" transform="translate(0,24)">
           <g transform="scale(0.0703) translate(-128 -128)">
             <g fill="none" stroke="#b8476e" stroke-width="28.4444" stroke-linecap="round" stroke-linejoin="round">
               <line x1="144" y1="224" x2="112" y2="224"/>
@@ -182,22 +182,22 @@ input_file: samples/mindmap.lini
         </g>
       </g>
       <g class="lini-node lini-topic lini-side-right lini-level-1 lini-hue-orange lini-block" data-id="build" style="fill: #ffe8d2; stroke: #b45700; color: #7e2800; font-size: 15px; font-weight: normal" transform="translate(190.3,7.8)">
-        <rect x="-72.5" y="-34.5" width="145" height="69" rx="8" ry="8"/>
+        <rect x="-72.5" y="-30.5" width="145" height="61" rx="8" ry="8"/>
         <g class="lini-text">
-          <use href="#lg0400-38" transform="translate(-58.5 -13.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-89" transform="translate(-49.5 -13.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-77" transform="translate(-40.5 -13.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-80" transform="translate(-31.5 -13.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-72" transform="translate(-22.5 -13.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-85" transform="translate(-4.5 -13.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-89" transform="translate(4.5 -13.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-69" transform="translate(13.5 -13.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-80" transform="translate(22.5 -13.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-77" transform="translate(31.5 -13.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-88" transform="translate(40.5 -13.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-93" transform="translate(49.5 -13.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-38" transform="translate(-58.5 -9.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-89" transform="translate(-49.5 -9.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-77" transform="translate(-40.5 -9.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-80" transform="translate(-31.5 -9.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-72" transform="translate(-22.5 -9.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-85" transform="translate(-4.5 -9.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-89" transform="translate(4.5 -9.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-69" transform="translate(13.5 -9.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-80" transform="translate(22.5 -9.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-77" transform="translate(31.5 -9.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-88" transform="translate(40.5 -9.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-93" transform="translate(49.5 -9.63) scale(0.0075 -0.0075)"/>
         </g>
-        <g class="lini-node lini-icon" style="fill: none; stroke: #b45700" transform="translate(0,17.5)">
+        <g class="lini-node lini-icon" style="fill: none; stroke: #b45700" transform="translate(0,13.5)">
           <g transform="scale(0.0703) translate(-128 -128)">
             <g fill="none" stroke="#b45700" stroke-width="28.4444" stroke-linecap="round" stroke-linejoin="round">
               <path d="M54.46,201.54c-9.2-9.2-3.1-28.53-7.78-39.85C41.82,150,24,140.5,24,128s17.82-22,22.68-33.69C51.36,83,45.26,63.66,54.46,54.46S83,51.36,94.31,46.68C106.05,41.82,115.5,24,128,24S150,41.82,161.69,46.68c11.32,4.68,30.65-1.42,39.85,7.78s3.1,28.53,7.78,39.85C214.18,106.05,232,115.5,232,128S214.18,150,209.32,161.69c-4.68,11.32,1.42,30.65-7.78,39.85s-28.53,3.1-39.85,7.78C150,214.18,140.5,232,128,232s-22-17.82-33.69-22.68C83,204.64,63.66,210.74,54.46,201.54Z"/>
@@ -345,18 +345,18 @@ input_file: samples/mindmap.lini
         </g>
       </g>
       <g class="lini-node lini-topic lini-side-left lini-level-1 lini-hue-lime lini-block" data-id="plan" style="fill: #e8f4d3; stroke: #628200; color: #385300; font-size: 15px; font-weight: normal" transform="translate(-190.3,-185.3)">
-        <rect x="-50" y="-34.5" width="100" height="69" rx="8" ry="8"/>
+        <rect x="-50" y="-30.5" width="100" height="61" rx="8" ry="8"/>
         <g class="lini-text">
-          <use href="#lg0400-52" transform="translate(-36 -13.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-80" transform="translate(-27 -13.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-69" transform="translate(-18 -13.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-82" transform="translate(-9 -13.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-82" transform="translate(0 -13.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-77" transform="translate(9 -13.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-82" transform="translate(18 -13.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-75" transform="translate(27 -13.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-52" transform="translate(-36 -9.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-80" transform="translate(-27 -9.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-69" transform="translate(-18 -9.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-82" transform="translate(-9 -9.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-82" transform="translate(0 -9.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-77" transform="translate(9 -9.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-82" transform="translate(18 -9.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-75" transform="translate(27 -9.63) scale(0.0075 -0.0075)"/>
         </g>
-        <g class="lini-node lini-icon" style="fill: none; stroke: #628200" transform="translate(0,17.5)">
+        <g class="lini-node lini-icon" style="fill: none; stroke: #628200" transform="translate(0,13.5)">
           <g transform="scale(0.0703) translate(-128 -128)">
             <g fill="none" stroke="#628200" stroke-width="28.4444" stroke-linecap="round" stroke-linejoin="round">
               <rect x="32" y="48" width="192" height="136" rx="8"/>
@@ -514,22 +514,22 @@ input_file: samples/mindmap.lini
         </g>
       </g>
       <g class="lini-node lini-topic lini-side-left lini-level-1 lini-hue-teal lini-block" data-id="care" style="fill: #cdf9f4; stroke: #008e85; color: #005d56; font-size: 15px; font-weight: normal" transform="translate(-190.3,241.7)">
-        <rect x="-72.5" y="-34.5" width="145" height="69" rx="8" ry="8"/>
+        <rect x="-72.5" y="-30.5" width="145" height="61" rx="8" ry="8"/>
         <g class="lini-text">
-          <use href="#lg0400-39" transform="translate(-58.5 -13.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-89" transform="translate(-49.5 -13.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-87" transform="translate(-40.5 -13.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-88" transform="translate(-31.5 -13.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-83" transform="translate(-22.5 -13.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-81" transform="translate(-13.5 -13.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-73" transform="translate(-4.5 -13.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-86" transform="translate(4.5 -13.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-71" transform="translate(22.5 -13.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-69" transform="translate(31.5 -13.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-86" transform="translate(40.5 -13.63) scale(0.0075 -0.0075)"/>
-          <use href="#lg0400-73" transform="translate(49.5 -13.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-39" transform="translate(-58.5 -9.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-89" transform="translate(-49.5 -9.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-87" transform="translate(-40.5 -9.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-88" transform="translate(-31.5 -9.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-83" transform="translate(-22.5 -9.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-81" transform="translate(-13.5 -9.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-73" transform="translate(-4.5 -9.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-86" transform="translate(4.5 -9.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-71" transform="translate(22.5 -9.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-69" transform="translate(31.5 -9.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-86" transform="translate(40.5 -9.63) scale(0.0075 -0.0075)"/>
+          <use href="#lg0400-73" transform="translate(49.5 -9.63) scale(0.0075 -0.0075)"/>
         </g>
-        <g class="lini-node lini-icon" style="fill: none; stroke: #008e85" transform="translate(0,17.5)">
+        <g class="lini-node lini-icon" style="fill: none; stroke: #008e85" transform="translate(0,13.5)">
           <g transform="scale(0.0703) translate(-128 -128)">
             <g fill="none" stroke="#008e85" stroke-width="28.4444" stroke-linecap="round" stroke-linejoin="round">
               <path d="M128,224S24,168,24,102A54,54,0,0,1,78,48c22.59,0,41.94,12.31,50,32,8.06-19.69,27.41-32,50-32a54,54,0,0,1,54,54C232,168,128,224,128,224Z"/>
@@ -586,64 +586,64 @@ input_file: samples/mindmap.lini
     </g>
   </g>
   <g class="lini-links">
-    <g class="lini-link lini-hue-rose" style="stroke: #b8476e" data-from="product" data-to="product.ship">
+    <g class="lini-link lini-hue-rose" style="stroke: #b8476e" data-from="lini-topic-1" data-to="lini-topic-1.ship">
       <path d="M 52.8 0 L 68.8 0 C 123.3 0 68.8 -185.3 123.3 -185.3 L 139.3 -185.3"/>
     </g>
-    <g class="lini-link lini-hue-orange" style="stroke: #b45700" data-from="product" data-to="product.build">
+    <g class="lini-link lini-hue-orange" style="stroke: #b45700" data-from="lini-topic-1" data-to="lini-topic-1.build">
       <path d="M 52.8 0 L 68.8 0 C 84.8 0 84.8 0 100.8 0 L 116.8 0"/>
     </g>
-    <g class="lini-link lini-hue-amber" style="stroke: #9f6900" data-from="product" data-to="product.learn">
+    <g class="lini-link lini-hue-amber" style="stroke: #9f6900" data-from="lini-topic-1" data-to="lini-topic-1.learn">
       <path d="M 52.8 0 L 68.8 0 C 100.8 0 68.8 193.1 100.8 193.1 L 116.8 193.1"/>
     </g>
-    <g class="lini-link lini-hue-lime" style="stroke: #628200" data-from="product" data-to="product.plan">
+    <g class="lini-link lini-hue-lime" style="stroke: #628200" data-from="lini-topic-1" data-to="lini-topic-1.plan">
       <path d="M -52.8 0 L -68.8 0 C -123.3 0 -68.8 -185.3 -123.3 -185.3 L -139.3 -185.3"/>
     </g>
-    <g class="lini-link lini-hue-green" style="stroke: #008d51" data-from="product" data-to="product.team">
+    <g class="lini-link lini-hue-green" style="stroke: #008d51" data-from="lini-topic-1" data-to="lini-topic-1.team">
       <path d="M -52.8 0 L -68.8 0 C -114.7271 0 -95.3729 56.4 -141.3 56.4 L -157.3 56.4"/>
     </g>
-    <g class="lini-link lini-hue-teal" style="stroke: #008e85" data-from="product" data-to="product.care">
+    <g class="lini-link lini-hue-teal" style="stroke: #008e85" data-from="lini-topic-1" data-to="lini-topic-1.care">
       <path d="M -52.8 0 L -68.8 0 C -100.8 0 -68.8 241.7 -100.8 241.7 L -116.8 241.7"/>
     </g>
-    <g class="lini-link lini-hue-rose" style="stroke: #b8476e" data-from="product.ship" data-to="product.ship.lini-topic-1">
+    <g class="lini-link lini-hue-rose" style="stroke: #b8476e" data-from="lini-topic-1.ship" data-to="lini-topic-1.ship.lini-topic-1">
       <path d="M 241.3 -185.3 L 257.3 -185.3 C 299.3186 -185.3 277.5814 -241.7 319.6 -241.7 L 335.6 -241.7"/>
     </g>
-    <g class="lini-link lini-hue-rose" style="stroke: #b8476e" data-from="product.ship" data-to="product.ship.flags">
+    <g class="lini-link lini-hue-rose" style="stroke: #b8476e" data-from="lini-topic-1.ship" data-to="lini-topic-1.ship.flags">
       <path d="M 241.3 -185.3 L 257.3 -185.3 C 296.8071 -185.3 280.0929 -136.7 319.6 -136.7 L 335.6 -136.7"/>
     </g>
-    <g class="lini-link lini-hue-orange" style="stroke: #b45700" data-from="product.build" data-to="product.build.lini-topic-1">
+    <g class="lini-link lini-hue-orange" style="stroke: #b45700" data-from="lini-topic-1.build" data-to="lini-topic-1.build.lini-topic-1">
       <path d="M 263.8 7.8 L 279.8 7.8 C 306.4883 7.8 289.0117 -31.7 315.7 -31.7 L 331.7 -31.7"/>
     </g>
-    <g class="lini-link lini-hue-orange" style="stroke: #b45700" data-from="product.build" data-to="product.build.lini-topic-2">
+    <g class="lini-link lini-hue-orange" style="stroke: #b45700" data-from="lini-topic-1.build" data-to="lini-topic-1.build.lini-topic-2">
       <path d="M 263.8 7.8 L 279.8 7.8 C 308.8945 7.8 282.7055 56.4 311.8 56.4 L 327.8 56.4"/>
     </g>
-    <g class="lini-link lini-hue-amber" style="stroke: #9f6900" data-from="product.learn" data-to="product.learn.lini-topic-1">
+    <g class="lini-link lini-hue-amber" style="stroke: #9f6900" data-from="lini-topic-1.learn" data-to="lini-topic-1.learn.lini-topic-1">
       <path d="M 263.8 193.1 L 279.8 193.1 C 308.8945 193.1 282.7055 144.5 311.8 144.5 L 327.8 144.5"/>
     </g>
-    <g class="lini-link lini-hue-amber" style="stroke: #9f6900" data-from="product.learn" data-to="product.learn.interviews">
+    <g class="lini-link lini-hue-amber" style="stroke: #9f6900" data-from="lini-topic-1.learn" data-to="lini-topic-1.learn.interviews">
       <path d="M 263.8 193.1 L 279.8 193.1 C 310.0108 193.1 285.4892 241.7 315.7 241.7 L 331.7 241.7"/>
     </g>
-    <g class="lini-link lini-hue-lime" style="stroke: #628200" data-from="product.plan" data-to="product.plan.lini-topic-1">
+    <g class="lini-link lini-hue-lime" style="stroke: #628200" data-from="lini-topic-1.plan" data-to="lini-topic-1.plan.lini-topic-1">
       <path d="M -241.3 -185.3 L -257.3 -185.3 C -318.3457 -185.3 -258.5543 -290.3 -319.6 -290.3 L -335.6 -290.3"/>
     </g>
-    <g class="lini-link lini-hue-lime" style="stroke: #628200" data-from="product.plan" data-to="product.plan.lini-topic-2">
+    <g class="lini-link lini-hue-lime" style="stroke: #628200" data-from="lini-topic-1.plan" data-to="lini-topic-1.plan.lini-topic-2">
       <path d="M -241.3 -185.3 L -257.3 -185.3 C -284.55 -185.3 -284.55 -185.3 -311.8 -185.3 L -327.8 -185.3"/>
     </g>
-    <g class="lini-link lini-hue-lime" style="stroke: #628200" data-from="product.plan" data-to="product.plan.lini-topic-3">
+    <g class="lini-link lini-hue-lime" style="stroke: #628200" data-from="lini-topic-1.plan" data-to="lini-topic-1.plan.lini-topic-3">
       <path d="M -241.3 -185.3 L -257.3 -185.3 C -311.8 -185.3 -257.3 -88.1 -311.8 -88.1 L -327.8 -88.1"/>
     </g>
-    <g class="lini-link lini-hue-green" style="stroke: #008d51" data-from="product.team" data-to="product.team.lini-topic-1">
+    <g class="lini-link lini-hue-green" style="stroke: #008d51" data-from="lini-topic-1.team" data-to="lini-topic-1.team.lini-topic-1">
       <path d="M -223.3 56.4 L -239.3 56.4 C -282.9412 56.4 -268.1588 7.8 -311.8 7.8 L -327.8 7.8"/>
     </g>
-    <g class="lini-link lini-hue-green" style="stroke: #008d51" data-from="product.team" data-to="product.team.lini-topic-2">
+    <g class="lini-link lini-hue-green" style="stroke: #008d51" data-from="lini-topic-1.team" data-to="lini-topic-1.team.lini-topic-2">
       <path d="M -223.3 56.4 L -239.3 56.4 C -284.0447 56.4 -274.8553 95.9 -319.6 95.9 L -335.6 95.9"/>
     </g>
-    <g class="lini-link lini-hue-teal" style="stroke: #008e85" data-from="product.care" data-to="product.care.lini-topic-1">
+    <g class="lini-link lini-hue-teal" style="stroke: #008e85" data-from="lini-topic-1.care" data-to="lini-topic-1.care.lini-topic-1">
       <path d="M -263.8 241.7 L -279.8 241.7 C -318.1355 241.7 -300.7645 193.1 -339.1 193.1 L -355.1 193.1"/>
     </g>
-    <g class="lini-link lini-hue-teal" style="stroke: #008e85" data-from="product.care" data-to="product.care.lini-topic-2">
+    <g class="lini-link lini-hue-teal" style="stroke: #008e85" data-from="lini-topic-1.care" data-to="lini-topic-1.care.lini-topic-2">
       <path d="M -263.8 241.7 L -279.8 241.7 C -311.2086 241.7 -288.1914 290.3 -319.6 290.3 L -335.6 290.3"/>
     </g>
-    <g class="lini-link lini-link-dotted" data-from="product.ship.flags" data-to="product.learn.interviews">
+    <g class="lini-link lini-link-dotted" data-from="lini-topic-1.ship.flags" data-to="lini-topic-1.learn.interviews">
       <mask id="lini-label-cut-19" maskUnits="userSpaceOnUse" x="472.8" y="-138.7" width="44.0483" height="382.4"><rect class="lini-cut-bg" x="472.8" y="-138.7" width="44.0483" height="382.4"/><rect class="lini-cut" x="482.4296" y="179.875" width="59.4" height="14.3"/></mask>
       <path d="M 474.8 -136.7 L 490.8 -136.7 C 514.6 -136.7 513.6174 -42.8405 514.6 52.5 C 515.5803 147.6168 514.6 241.7 494.7 241.7 L 478.7 241.7" mask="url(#lini-label-cut-19)"/>
       <g class="lini-link-label">
@@ -657,7 +657,7 @@ input_file: samples/mindmap.lini
         <use href="#lg0400-87" transform="translate(531.9296 190.963) scale(0.0055 -0.0055)"/>
       </g>
     </g>
-    <g class="lini-link lini-hue-orange" style="stroke: #b45700" data-from="product.build.lini-topic-2" data-to="product.build.lini-topic-2.lini-topic-1">
+    <g class="lini-link lini-hue-orange" style="stroke: #b45700" data-from="lini-topic-1.build.lini-topic-2" data-to="lini-topic-1.build.lini-topic-2.lini-topic-1">
       <path d="M 482.6 56.4 L 498.6 56.4 C 514.6 56.4 514.6 56.4 530.6 56.4 L 546.6 56.4"/>
     </g>
   </g>
