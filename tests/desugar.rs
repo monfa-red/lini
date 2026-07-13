@@ -417,6 +417,20 @@ fn a_mindmap_is_a_desugar_fixed_point() {
 }
 
 #[test]
+fn a_mindmap_hoists_its_own_routing_to_the_scope() {
+    // `|mindmap| { routing: orthogonal }` must govern the WHOLE tree — the
+    // root's arms live in the generated scope, not the root card's body, so a
+    // routing left on the node would split the tree across two strategies.
+    let out = desugar_source("|mindmap#m| \"M\" { routing: orthogonal } [\n  |topic#a| \"A\"\n]\n")
+        .unwrap();
+    assert!(out.contains("routing: orthogonal;"), "hoisted: {out}");
+    assert!(
+        !out.contains("routing: natural"),
+        "the preset does not fight the authored value: {out}"
+    );
+}
+
+#[test]
 fn a_mindmap_hoists_its_own_direction_to_the_scope() {
     // `|mindmap| { direction: row }` steers the generated tree scope, not the
     // root card's own content [SPEC 8]; authored scene config still wins.

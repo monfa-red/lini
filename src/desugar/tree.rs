@@ -640,7 +640,11 @@ pub(crate) fn seat_mindmap(style: &mut Vec<Decl>, children: &mut [Child]) {
         style.push(ident_decl("direction", &dir));
     }
     if !style.iter().any(|d| d.name == "routing") {
-        style.push(ident_decl("routing", "natural"));
+        // Hoisted (consumed) like `direction:` — the root's arms live in THIS
+        // scope, so a routing left on the node would govern only its body's
+        // fans and split the tree across two strategies.
+        let r = take_ident(&mut mm.style, "routing").unwrap_or_else(|| "natural".into());
+        style.push(ident_decl("routing", &r));
     }
 }
 
