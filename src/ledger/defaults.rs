@@ -77,7 +77,9 @@ pub fn primitive_bundle(kind: NodeKind) -> Vec<Decl> {
             var("stroke", "stroke"),
             n("stroke-width", 2.0),
             n("padding", 20.0),
-            n("gap", 20.0),
+            // A shape's children are card content (an icon beside a label),
+            // not arranged nodes — tighter than the container default 20.
+            n("gap", 12.0),
         ]
     };
     match kind {
