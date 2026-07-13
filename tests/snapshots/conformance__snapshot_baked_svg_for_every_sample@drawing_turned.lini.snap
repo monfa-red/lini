@@ -28,6 +28,7 @@ input_file: samples/drawing_turned.lini
     .lini .lini-marker { fill: #444; stroke: none; }
     .lini .lini-marker-dim { fill: black; }
     .lini .lini-marker-datum { fill: black; }
+    .lini .lini-hidden .lini-centerline { stroke: none; }
   </style>
   <defs>
     <path id="lg0400-0" d="M174 0L174 1432L1026 1432L1026 0L174 0ZM302 120L898 120L898 1312L302 1312L302 120Z"/>
@@ -185,7 +186,7 @@ input_file: samples/drawing_turned.lini
         <path d="M -180 0 L -180 -31.5 L -175.5 -36 L -30 -36 L -30 -27 L -12 -27 L -12 -36 L 78 -36 L 78 -33 A 9 9 0 0 0 87 -24 L 177 -24 L 180 -21 L 180 0 L 180 21 L 177 24 L 87 24 A 9 9 0 0 0 78 33 L 78 36 L -12 36 L -12 27 L -30 27 L -30 36 L -175.5 36 L -180 31.5 Z" fill-rule="evenodd"/>
         <g class="lini-node lini-hidden lini-sketch" data-id="bore" transform="translate(0,0)">
           <path d="M 180 7.5 L 144 7.5 L 129 0 L 144 -7.5 L 180 -7.5 Z" fill-rule="evenodd"/>
-          <g class="lini-node lini-centerline lini-line" style="stroke: none" transform="translate(0,0)">
+          <g class="lini-node lini-centerline lini-line" transform="translate(0,0)">
             <line x1="125" y1="0" x2="184" y2="0"/>
           </g>
         </g>

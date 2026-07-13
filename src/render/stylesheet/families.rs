@@ -509,3 +509,59 @@ fn live(name: &str, vars: &VarTable, opts: &Options) -> String {
         opts,
     )
 }
+
+/// Two-class descendant rules (the generated mindmap garnish and scoped
+/// engine rules among them), stated as real CSS so a reused look never
+/// inlines on every wearer [SPEC 17]. Node `<g>`s nest as the scene tree, so
+/// `.outer .inner` matches them natively; wires render flat under the
+/// `.lini-links` layer, so a rule whose inner class a link wears also emits a
+/// `.lini-links .inner` companion (resolve already enforced the outer scoping
+/// — generated inner classes exist only inside their scope). The class-diff
+/// credits both through the same composite match ([`super::super::rules::RuleSet::provided`]).
+pub(super) fn build_descendant_rules(
+    rules: &mut Vec<Rule>,
+    laid: &LaidOut,
+    present: &BTreeSet<&str>,
+    vars: &VarTable,
+    opts: &Options,
+) {
+    // `present` holds bare generated-class names (sans `lini-`); a user class
+    // rides `lini-style-*` on its wearers and is checked against that spelling.
+    let node_wears = |class: &str| match class.strip_prefix("lini-") {
+        Some(bare) => present.contains(bare),
+        None => false,
+    };
+    let link_wears = |inner: &str| {
+        laid.links.iter().any(|w| {
+            w.applied_styles
+                .iter()
+                .any(|s| s == inner || format!("lini-style-{s}") == inner)
+        })
+    };
+    for (outer, inner, attrs) in &laid.sheet.descendant_rules {
+        let props = paint_props(attrs, vars, opts);
+        if props.is_empty() {
+            continue;
+        }
+        if node_wears(outer) && node_wears(inner) {
+            rules.push(Rule {
+                class: format!("{outer} .{inner}"),
+                props: props.clone(),
+            });
+        }
+        if link_wears(inner) {
+            // A wire strokes, never fills: the companion keeps the wire-paint
+            // whitelist, or the card tint's wash would flood the path.
+            let wire_props: Vec<(String, String)> = props
+                .into_iter()
+                .filter(|(p, _)| super::super::rules::LINK_WIRE_PAINT.contains(&p.as_str()))
+                .collect();
+            if !wire_props.is_empty() {
+                rules.push(Rule {
+                    class: format!("lini-links .{inner}"),
+                    props: wire_props,
+                });
+            }
+        }
+    }
+}

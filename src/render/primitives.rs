@@ -322,7 +322,7 @@ fn emit_line(
     // descendant rule), so only a direct inline `stroke:` inlines it; the crow
     // states the cascade-resolved colour regardless.
     let classes = class_list(n.kind.as_str(), &n.type_chain, &n.applied_styles);
-    let color = effective_stroke(&n.attrs, &classes, ruleset, vars, opts);
+    let color = effective_stroke(&n.attrs, &classes, &[], ruleset, vars, opts);
     let paint = super::markers::MarkerPaint {
         color: &color,
         inline: ruleset.marker_fill(&classes) != Some(color.as_str()),

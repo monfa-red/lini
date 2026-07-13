@@ -46,6 +46,7 @@ pub fn render(laid_out: &LaidOut, opts: &Options) -> String {
             &mut body,
             node,
             2,
+            &[],
             &laid_out.vars,
             &ruleset,
             &filters,
@@ -199,6 +200,7 @@ fn render_node(
     out: &mut String,
     n: &PlacedNode,
     depth: usize,
+    ancestors: &[String],
     vars: &VarTable,
     ruleset: &RuleSet,
     filters: &FilterTable,
@@ -214,7 +216,7 @@ fn render_node(
     // Text renders as a bare `<text class="lini-text">` at its placed position —
     // no wrapping `<g>` [SPEC 17]. Font and colour inherit from the enclosing box.
     if n.kind == NodeKind::Text {
-        render_text(out, n, depth, ruleset, vars, opts, sink);
+        render_text(out, n, depth, ancestors, ruleset, vars, opts, sink);
         return;
     }
     // `href:` wraps the whole node in an `<a href>` so the shape (and its
@@ -273,7 +275,7 @@ fn render_node(
         Some(crate::resolve::ResolvedValue::RawCss(u)) => format!(r#" clip-path="{u}""#),
         _ => String::new(),
     };
-    let style_attr = node_style_attr(n, &class_list, ruleset, vars, opts);
+    let style_attr = node_style_attr(n, &class_list, ancestors, ruleset, vars, opts);
     writeln!(
         out,
         r#"{}<g class="{}"{}{}{}{}>"#,
@@ -288,8 +290,22 @@ fn render_node(
     }
 
     primitives::render_geometry(out, n, depth + 1, vars, ruleset, filters, opts);
+    // Children's DOM ancestor chain grows by this node's classes — what the
+    // emitted descendant CSS actually matches against.
+    let mut child_ancestors = ancestors.to_vec();
+    child_ancestors.extend(class_list.iter().cloned());
     for child in in_layer_order(&n.children) {
-        render_node(out, child, depth + 1, vars, ruleset, filters, opts, sink);
+        render_node(
+            out,
+            child,
+            depth + 1,
+            &child_ancestors,
+            vars,
+            ruleset,
+            filters,
+            opts,
+            sink,
+        );
     }
 
     writeln!(out, "{}</g>", indent).unwrap();
@@ -303,10 +319,12 @@ fn render_node(
 /// labels. `text-anchor: middle` (on `.lini-text`) + the baked cap-height `dy`
 /// centre it on (cx, cy); font and colour inherit from the enclosing box's `<g>`.
 /// Its own `{ }` paint/font rides `style=`; `translate` is folded into (cx, cy).
+#[allow(clippy::too_many_arguments)] // the recursive walk threads every emission context
 fn render_text(
     out: &mut String,
     n: &PlacedNode,
     depth: usize,
+    ancestors: &[String],
     ruleset: &RuleSet,
     vars: &VarTable,
     opts: &Options,
@@ -321,7 +339,7 @@ fn render_text(
     let mut classes = vec!["lini-text".to_string()];
     classes.extend(n.type_chain.iter().map(|t| format!("lini-{t}")));
     classes.extend(n.applied_styles.iter().map(|s| format!("lini-style-{s}")));
-    let style = text_paint_attr(&n.own_style, &classes, ruleset, vars, opts);
+    let style = text_paint_attr(&n.own_style, &classes, ancestors, ruleset, vars, opts);
     text::emit(
         out,
         &indent,
@@ -347,12 +365,14 @@ fn render_text(
 pub(super) fn text_paint_attr(
     own: &AttrMap,
     classes: &[String],
+    ancestors: &[String],
     ruleset: &RuleSet,
     vars: &VarTable,
     opts: &Options,
 ) -> String {
     let decls = ruleset.inline_paint_diff(
         classes,
+        ancestors,
         own,
         |lini| match lini {
             "fill" => own.get("fill").or_else(|| own.get("color")),
@@ -370,12 +390,14 @@ pub(super) fn text_paint_attr(
 fn node_style_attr(
     n: &PlacedNode,
     classes: &[String],
+    ancestors: &[String],
     ruleset: &RuleSet,
     vars: &VarTable,
     opts: &Options,
 ) -> String {
     let decls = ruleset.inline_paint_diff(
         classes,
+        ancestors,
         &n.attrs,
         // On |text|, `color` is an alias for `fill` (CSS-style); the shape rule's
         // `currentColor` keeps SVG inheritance working when neither is set.

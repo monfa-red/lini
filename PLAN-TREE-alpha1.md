@@ -547,3 +547,21 @@ Keep entries terse.
   id-dependence (unchanged, by law): a `|drawing|`/`|sequence|` scope
   OWNER still wants an id (engine scope filters are id-path keyed) —
   SPEC 9 already says so.
+
+- 2026-07-13 (post-release, owner): **reused style rides a rule** — the
+  generated mindmap garnish (hue walk, ramp, topic reset) was baking
+  inline per wearer, leaving `.lini-hue-*` as dead classes (44 `style=`
+  attrs on the hero, now 4 — the hand-tinted icons). Fixed at the SPEC 17
+  chokepoint: `SheetInputs.descendant_rules` carries two-class rules to
+  render, `build_descendant_rules` emits them as real CSS (presence-
+  gated; wires get a `.lini-links .inner` companion restricted to the
+  shared `LINK_WIRE_PAINT` whitelist — an unfiltered companion flooded
+  the path with wash fill, caught on the PNG), and the class-diff is
+  ancestor-aware (`provided(classes, ancestors)`, DOM chain threaded
+  through the node walk; descendant beats single-class, mirroring CSS
+  specificity). Riders: topic weight floor `normal` → `medium` (the box
+  text baseline); drawing/sketch scoped rules ride the same emission
+  (their inline decls dropped too). The AGENTS.md rule now states it.
+  **Known remaining inliner: charts** — 84× identical tick-label styles,
+  49× gridlines, ~11× per-series paint in charts.lini — the chart
+  engine's own emission path; fold into the alpha.2 Charts round.

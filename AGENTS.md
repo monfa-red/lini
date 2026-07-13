@@ -33,6 +33,12 @@ How to work in this repo.
 - **No parallel implementations.** When two places do the same job — a node's text leaf and a link's label, the node and link sides of a sugar rule — they call **one** shared function; never copy logic (whole or in part) between them. Divergent copies drift: a fix lands in one path and the other silently rots (translate worked on one text, broke on the other). Factor the shared part out and reuse it; keep only the genuinely-different slice per caller.
 - **Modular: one concept per file.** Split a module past ~500 LOC.
 - Standard idioms over clever code; don't fight `rustfmt` / `clippy`.
+- **Reused style rides a rule, never inline.** Anything stated once and
+  worn many times — a generated class (hue walk, depth ramp), engine
+  chrome, a template look — emits **one CSS rule** and a class on each
+  wearer; `style=` is only ever the *diff* an element authors against its
+  rules ([SPEC 17]'s class-diff). A dead class on an element whose look
+  was inlined is the smell: the rule exists, emit it.
 - **Trust a correct model.** Don't special-case a principled formula's output to nudge one case to taste — fix the model, or accept the result.
 - Nothing beyond the task — no extra features, validation, or comments (comments only for the non-obvious *why*).
 - Cosmetics last: pure-looks polish goes in a final pass.

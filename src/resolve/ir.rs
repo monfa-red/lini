@@ -26,6 +26,12 @@ pub struct SheetInputs {
     /// Single-class rules in source order: `lini-<type>` (generated type classes,
     /// emitted verbatim) and user classes (emitted `lini-style-<name>`).
     pub class_rules: Vec<(String, AttrMap)>,
+    /// Two-class descendant rules `(outer, inner, attrs)` in source order — the
+    /// generated mindmap garnish and scoped engine rules among them. Resolve
+    /// bakes them into node attrs for layout; render also states their paint as
+    /// real CSS and diffs matching elements against it, so a reused look rides
+    /// one rule instead of inlining on every wearer [SPEC 17].
+    pub descendant_rules: Vec<(String, String, AttrMap)>,
     /// The link layer's defaults (the `.lini-link` rule).
     pub link_defaults: AttrMap,
     /// The root container's `font-size` — the inherited-text baseline for `.lini`

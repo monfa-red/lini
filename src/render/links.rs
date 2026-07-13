@@ -74,8 +74,12 @@ pub fn render_link(
     // A link's `<g>` paint is the same class-diff a node's is [SPEC 17] — one
     // shared computation; a link never aliases `color` and formats with plain
     // `format_value`.
+    // A wire's one DOM ancestor layer: descendant rules reach it through the
+    // `.lini-links .inner` companion.
+    let link_ancestors = ["lini-links".to_string()];
     let mut decls = ruleset.inline_paint_diff(
         &link_classes,
+        &link_ancestors,
         &w.attrs,
         |lini| w.attrs.get(lini),
         |_lini, v| format_value(v, vars, opts),
@@ -83,12 +87,7 @@ pub fn render_link(
     // The `<g>` carries only **wire** paint; its labels own their text (font / colour),
     // stated once by the label's own class — so text props never inline on the link
     // (once per label × diagram), and no stray `font-size` rides the `<g>` [SPEC 9].
-    decls.retain(|(k, _)| {
-        matches!(
-            *k,
-            "stroke" | "stroke-width" | "stroke-dasharray" | "opacity"
-        )
-    });
+    decls.retain(|(k, _)| super::rules::LINK_WIRE_PAINT.contains(k));
     let style_attr = super::style_attr_from(&decls);
 
     // `href:` makes the link clickable, mirroring a node's `<a href>` wrap.
@@ -152,7 +151,14 @@ pub fn render_link(
     // base or a `.lini-style-* .lini-marker` descendant rule), so they inline it
     // only for a direct inline `stroke:`. The crow inlines the cascade-resolved
     // colour regardless (it is stroked, no fill rule reaches it).
-    let marker_color = effective_stroke(&w.attrs, &link_classes, ruleset, vars, opts);
+    let marker_color = effective_stroke(
+        &w.attrs,
+        &link_classes,
+        &link_ancestors,
+        ruleset,
+        vars,
+        opts,
+    );
     let paint = MarkerPaint {
         color: &marker_color,
         inline: ruleset.marker_fill(&link_classes) != Some(marker_color.as_str()),
@@ -530,7 +536,14 @@ fn render_link_text(
     // per-role default size states once in the sheet, not on each label.
     let mut classes = vec![t.class.to_string()];
     classes.extend(t.applied_styles.iter().map(|s| format!("lini-style-{s}")));
-    let style_attr = super::text_paint_attr(&t.attrs, &classes, ruleset, vars, opts);
+    let style_attr = super::text_paint_attr(
+        &t.attrs,
+        &classes,
+        &["lini-links".to_string()],
+        ruleset,
+        vars,
+        opts,
+    );
     // The label rides its `along:` point already shifted by `translate` (folded in
     // at routing — `links::labels`), so the shared emitter handles only `rotate`,
     // multi-line, and `letter-spacing` — one code path with a node's text leaf.

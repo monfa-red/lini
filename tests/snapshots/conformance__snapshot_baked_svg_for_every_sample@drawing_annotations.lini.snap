@@ -27,6 +27,7 @@ input_file: samples/drawing_annotations.lini
     .lini .lini-marker { fill: #444; stroke: none; }
     .lini .lini-marker-dim { fill: black; }
     .lini .lini-marker-datum { fill: black; }
+    .lini .lini-drawing .lini-note { font-size: 13px; }
   </style>
   <defs>
     <path id="lg0400-0" d="M174 0L174 1432L1026 1432L1026 0L174 0ZM302 120L898 120L898 1312L302 1312L302 120Z"/>
@@ -311,7 +312,7 @@ input_file: samples/drawing_annotations.lini
           <use href="#lg0500-21" transform="translate(-3.3 3.938) scale(0.0055 -0.0055)"/>
         </g>
       </g>
-      <g class="lini-node lini-note lini-path" data-id="hint" style="stroke-width: 2; font-size: 13px" transform="translate(-155.15,-56)">
+      <g class="lini-node lini-note lini-path" data-id="hint" style="stroke-width: 2" transform="translate(-155.15,-56)">
         <path d="M -89 -13.5 L 79.82 -13.5 L 89 -4.3199999999999985 L 89 13.5 L -89 13.5 Z"/>
         <g class="lini-node lini-path" style="fill: #444; stroke: none; stroke-width: 0" transform="translate(0,0)">
           <path d="M 79.82 -13.5 L 89 -4.3199999999999985 L 79.82 -4.3199999999999985 Z"/>

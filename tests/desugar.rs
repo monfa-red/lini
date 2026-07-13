@@ -344,7 +344,7 @@ fn a_mindmap_seats_its_scene_and_lowers_the_preset() {
         assert!(out.contains(decl), "scope trio on the root: {decl}: {out}");
     }
     assert!(
-        out.contains(".lini-mindmap .lini-topic { max-width: 160; font-weight: normal; }"),
+        out.contains(".lini-mindmap .lini-topic { max-width: 160; font-weight: medium; }"),
         "wrap cap + weight reset: {out}"
     );
     assert!(

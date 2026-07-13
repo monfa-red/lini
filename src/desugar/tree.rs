@@ -676,12 +676,13 @@ pub(crate) fn mindmap_rules(present: &BTreeSet<String>, user_rules: &[Rule]) -> 
         }
     };
     // Branch topics wrap at the cap and shed the root card's inherited
-    // semibold; the root itself is no descendant, so its bundle tier stands.
+    // semibold down to medium — the box text baseline (500), the mindmap's
+    // floor; the root itself is no descendant, so its bundle tier stands.
     push(
         "lini-topic",
         vec![
             number_decl("max-width", MINDMAP_MAX_WIDTH),
-            ident_decl("font-weight", "normal"),
+            ident_decl("font-weight", "medium"),
         ],
     );
     // The depth ramp [SPEC 8]: level 1 medium, level 2+ small, one rule per

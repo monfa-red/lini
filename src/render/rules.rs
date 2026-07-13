@@ -29,6 +29,11 @@ pub const PAINT_PROPS: &[(&str, &str)] = &[
     ("text-shadow", "text-shadow"),
 ];
 
+/// The paint a link's wire `<g>` may carry [SPEC 9/17]: a wire strokes, never
+/// fills, and its labels own their text paint — shared by the inline diff's
+/// retain and the `.lini-links` companion rules, so the two can never drift.
+pub const LINK_WIRE_PAINT: &[&str] = &["stroke", "stroke-width", "stroke-dasharray", "opacity"];
+
 pub struct Rule {
     /// The single class the selector keys on (`lini` = the root rule).
     pub class: String,
@@ -65,22 +70,31 @@ impl RuleSet {
         }
     }
 
-    /// The value the sheet provides for an element carrying `classes` —
-    /// later rules win on the tie, exactly the CSS cascade for equal
-    /// single-class specificity. The root `.lini` rule is deliberately
+    /// The value the sheet provides for an element carrying `classes` under
+    /// DOM ancestors carrying `ancestors` — later rules win on the tie within
+    /// a specificity, and a matching descendant rule (`"outer .inner"`, one
+    /// more class) beats every single-class rule, exactly the CSS cascade the
+    /// emitted `<style>` computes. The root `.lini` rule is deliberately
     /// excluded: its props (`font-*`, `color`) are *inherited*, so a nested
     /// element's effective value comes from its nearest ancestor, not the
     /// root — diffing against the root would drop a reset-to-default that an
     /// overriding ancestor then overrides (the node must state its own value
     /// to win, exactly as `font-weight` already does by never being on root).
-    pub fn provided(&self, classes: &[String], prop: &str) -> Option<&str> {
+    pub fn provided(&self, classes: &[String], ancestors: &[String], prop: &str) -> Option<&str> {
         let mut hit = None;
-        for rule in &self.rules {
-            if !classes.contains(&rule.class) {
-                continue;
-            }
-            if let Some((_, v)) = rule.props.iter().find(|(p, _)| p == prop) {
-                hit = Some(v.as_str());
+        for descendant in [false, true] {
+            for rule in &self.rules {
+                let matches = match rule.class.split_once(" .") {
+                    Some((outer, inner)) => {
+                        descendant
+                            && classes.iter().any(|c| c == inner)
+                            && ancestors.iter().any(|c| c == outer)
+                    }
+                    None => !descendant && classes.contains(&rule.class),
+                };
+                if matches && let Some((_, v)) = rule.props.iter().find(|(p, _)| p == prop) {
+                    hit = Some(v.as_str());
+                }
             }
         }
         hit
@@ -106,6 +120,7 @@ impl RuleSet {
     pub fn inline_paint_diff<'a>(
         &self,
         classes: &[String],
+        ancestors: &[String],
         attrs: &AttrMap,
         value_of: impl Fn(&str) -> Option<&'a ResolvedValue>,
         fmt: impl Fn(&str, &ResolvedValue) -> String,
@@ -114,12 +129,12 @@ impl RuleSet {
         for (lini, css) in PAINT_PROPS {
             let Some(v) = value_of(lini) else { continue };
             let formatted = fmt(lini, v);
-            if self.provided(classes, css) != Some(formatted.as_str()) {
+            if self.provided(classes, ancestors, css) != Some(formatted.as_str()) {
                 decls.push((*css, formatted));
             }
         }
         if let Some(value) = dash_value(attrs)
-            && self.provided(classes, "stroke-dasharray") != Some(value.as_str())
+            && self.provided(classes, ancestors, "stroke-dasharray") != Some(value.as_str())
         {
             decls.push(("stroke-dasharray", value));
         }
@@ -156,6 +171,7 @@ impl RuleSet {
 pub fn effective_stroke(
     attrs: &AttrMap,
     classes: &[String],
+    ancestors: &[String],
     set: &RuleSet,
     vars: &VarTable,
     opts: &Options,
@@ -163,7 +179,7 @@ pub fn effective_stroke(
     if let Some(v) = attrs.get("stroke") {
         return format_value(v, vars, opts);
     }
-    if let Some(v) = set.provided(classes, "stroke") {
+    if let Some(v) = set.provided(classes, ancestors, "stroke") {
         return v.to_string();
     }
     super::values::attr_or_var(&AttrMap::default(), "stroke", "stroke", vars, opts)

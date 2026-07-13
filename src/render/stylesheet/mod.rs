@@ -84,6 +84,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
     );
     families::build_marker_rules(&mut rules, &present, has_markers, vars, opts);
     families::build_style_class_rules(&mut rules, laid, &used_styles, has_markers, vars, opts);
+    families::build_descendant_rules(&mut rules, laid, &present, vars, opts);
     families::build_open_marker_rule(&mut rules, has_open);
 
     rules.retain(|r| !r.props.is_empty());

@@ -1069,15 +1069,19 @@ fn the_palette_walk_tints_cards_and_wires_and_leaves_root_and_cross_links_neutra
         .lines()
         .find(|l| l.contains("data-id=\"a\""))
         .expect("branch a");
-    for want in [
-        "lini-level-1",
-        "lini-hue-rose",
-        "fill: var(--lini-rose-wash)",
-        "stroke: var(--lini-rose-deep)",
-        "color: var(--lini-rose-ink)",
-    ] {
+    for want in ["lini-level-1", "lini-hue-rose"] {
         assert!(a.contains(want), "{want}: {a}");
     }
+    // The tint rides the emitted CSS rule, never inline on each wearer
+    // [SPEC 17] — the card's `<g>` carries the classes and no hue paint.
+    assert!(!a.contains("style="), "card free of inline paint: {a}");
+    assert!(
+        svg.contains(
+            ".lini .lini-mindmap .lini-hue-rose { fill: var(--lini-rose-wash); \
+             stroke: var(--lini-rose-deep); color: var(--lini-rose-ink); }"
+        ),
+        "the hue rule is real CSS: {svg}"
+    );
     // Every branch wire tints — the root arm (written in the scene scope) and
     // the subtree wire alike, one generated rule each [SPEC 8].
     for (to, hue) in [
@@ -1091,10 +1095,14 @@ fn the_palette_walk_tints_cards_and_wires_and_leaves_root_and_cross_links_neutra
             .lines()
             .find(|l| l.contains("lini-link") && l.contains(to))
             .unwrap_or_else(|| panic!("wire {to}"));
+        assert!(wire.contains(&format!("lini-hue-{hue}")), "{to}: {wire}");
         assert!(
-            wire.contains(&format!("lini-hue-{hue}"))
-                && wire.contains(&format!("stroke: var(--lini-{hue}-deep)")),
-            "{to} wears {hue}: {wire}"
+            !wire.contains("stroke:"),
+            "the wire's tint rides the .lini-links companion rule: {wire}"
+        );
+        assert!(
+            svg.contains(&format!(".lini .lini-links .lini-hue-{hue}")),
+            "companion rule for {hue}: {svg}"
         );
     }
     // The authored cross-link keeps the neutral link default.
@@ -1126,9 +1134,11 @@ fn authored_paint_beats_the_palette_walk() {
         a.contains("fill: var(--lini-amber-wash)"),
         "inline fill wins over the rose wash: {a}"
     );
+    // The untouched channels keep the walk *through the CSS rule* — the diff
+    // inlines only the authored difference, never the rule's own values.
     assert!(
-        a.contains("stroke: var(--lini-rose-deep)"),
-        "untouched channels keep the walk: {a}"
+        !a.contains("stroke:"),
+        "the walk's stroke rides the hue rule, not the wearer: {a}"
     );
     let b = svg
         .lines()

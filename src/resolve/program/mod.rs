@@ -168,11 +168,22 @@ fn build_sheet_inputs(
     sheet: &Stylesheet,
 ) -> Result<SheetInputs, Error> {
     let mut class_rules = Vec::new();
+    let mut descendant_rules = Vec::new();
     for item in &file.stylesheet {
-        if let StyleItem::Rule(r) = item
-            && let [SelUnit::Class(c)] = r.selector.units.as_slice()
-        {
-            class_rules.push((c.clone(), decls_attrmap(&r.decls, vars, funcs)?));
+        if let StyleItem::Rule(r) = item {
+            match r.selector.units.as_slice() {
+                [SelUnit::Class(c)] => {
+                    class_rules.push((c.clone(), decls_attrmap(&r.decls, vars, funcs)?));
+                }
+                [SelUnit::Class(a), SelUnit::Class(b)] => {
+                    descendant_rules.push((
+                        a.clone(),
+                        b.clone(),
+                        decls_attrmap(&r.decls, vars, funcs)?,
+                    ));
+                }
+                _ => {}
+            }
         }
     }
     // The `.lini-link` rule's defaults: a root-scope link — the baked base plus the
@@ -198,6 +209,7 @@ fn build_sheet_inputs(
     }
     Ok(SheetInputs {
         class_rules,
+        descendant_rules,
         link_defaults,
         root_font_size,
         root_text,

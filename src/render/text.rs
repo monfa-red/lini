@@ -33,7 +33,7 @@ fn effective_font(
 ) -> (Font, f64) {
     let kind = match attrs.get("font-family") {
         Some(v) => Kind::of_family(Some(v)),
-        None => match ruleset.provided(classes, "font-family") {
+        None => match ruleset.provided(classes, &[], "font-family") {
             Some(css) => Kind::of_family(Some(&ResolvedValue::RawCss(css.into()))),
             None => sink.root_font.kind,
         },
@@ -42,7 +42,7 @@ fn effective_font(
         Font::of(attrs).with_kind(kind)
     } else {
         match ruleset
-            .provided(classes, "font-weight")
+            .provided(classes, &[], "font-weight")
             .map(str::trim)
             .unwrap_or("")
         {
@@ -57,7 +57,7 @@ fn effective_font(
         .number("font-size")
         .or_else(|| {
             ruleset
-                .provided(classes, "font-size")
+                .provided(classes, &[], "font-size")
                 .and_then(|v| v.trim().trim_end_matches("px").parse().ok())
         })
         .unwrap_or(sink.root_size);
