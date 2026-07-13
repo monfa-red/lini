@@ -2,6 +2,7 @@
 //! chain it matches descendant rules against, and the drawing-scope predicates.
 
 use super::*;
+use scene::ScopeStep;
 
 // ─────────────────────────── Render inputs ───────────────────────────
 
@@ -22,14 +23,13 @@ pub(super) fn baked_link_defaults(
     Ok(out)
 }
 
-/// The container chain from the scene root down to `scope` (each segment an id),
-/// stopping at the first missing segment. **Anonymous containers are
-/// scope-transparent** [SPEC 9] — a segment may sit inside an id-less wrapper
-/// (an unnamed `|page|`, a `|group|`): the walk descends through it and keeps
-/// the wrapper in the chain, so its facts still match descendant rules and its
-/// config still cascades. The root is not a node, so it is absent —
-/// [`link_scope`] folds it in for the config cascade, and a bare `|-|` matches
-/// every link with no ancestor needed.
+/// The container chain from the scene root down to `scope` (each segment an
+/// id), stopping at the first missing segment — the **by-resolved-path**
+/// lookup the containment-link cascade uses ([`link_ancestors`]). A segment
+/// may sit inside an id-less wrapper (an unnamed `|page|`, a `|group|`): the
+/// walk descends through it and keeps the wrapper in the chain. A link's own
+/// written chain never comes from here — the scene walk records it exactly
+/// ([`ScopeStep`]), anonymous wrappers included.
 fn scope_chain<'a>(nodes: &'a [ResolvedInst], scope: &[String]) -> Vec<&'a ResolvedInst> {
     let mut out = Vec::new();
     let mut cur = nodes;
@@ -65,10 +65,8 @@ fn inst_facts(inst: &ResolvedInst) -> NodeFacts {
 /// Whether a link's scope is a drawing [SPEC 15] — its immediate container (or
 /// the root, for top-level links) resolved `layout: drawing`. Gates the drawing
 /// statements: the measuring ops, `||`, `tol:`, and the wider anchor set.
-fn scope_is_drawing(nodes: &[ResolvedInst], root_attrs: &AttrMap, scope: &[String]) -> bool {
-    let attrs = scope_chain(nodes, scope)
-        .last()
-        .map_or(root_attrs, |c| &c.attrs);
+fn scope_is_drawing(chain: &[ScopeStep], root_attrs: &AttrMap) -> bool {
+    let attrs = chain.last().map_or(root_attrs, |s| &s.attrs);
     is_drawing(attrs)
 }
 
@@ -79,34 +77,27 @@ fn scope_is_drawing(nodes: &[ResolvedInst], root_attrs: &AttrMap, scope: &[Strin
 pub(super) fn link_scope_kind(
     nodes: &[ResolvedInst],
     root_attrs: &AttrMap,
-    scope: &[String],
+    chain: &[ScopeStep],
 ) -> links::LinkScope {
-    let drawing = scope_is_drawing(nodes, root_attrs, scope);
+    let drawing = scope_is_drawing(chain, root_attrs);
     let flow_in_drawing = if drawing {
         None
     } else {
-        let chain = scope_chain(nodes, scope);
         let enclosed = is_drawing(root_attrs)
             || chain
                 .iter()
                 .take(chain.len().saturating_sub(1))
-                .any(|c| is_drawing(&c.attrs));
+                .any(|s| is_drawing(&s.attrs));
         match (enclosed, chain.last()) {
-            (true, Some(container)) => Some(
-                container
-                    .type_chain
-                    .first()
-                    .cloned()
-                    .unwrap_or_else(|| container.kind.as_str().to_string()),
-            ),
+            (true, Some(container)) => Some(container.display_type.clone()),
             _ => None,
         }
     };
     // A detail scope [SPEC 15.8] — a `|drawing| { of: <magnifier> }` — re-lays
     // its geometry from the source at layout, so its endpoints defer. A section
     // (`of:` a `|plane|`) authors its geometry, so it resolves normally.
-    let detail = scope_chain(nodes, scope).last().is_some_and(
-        |c| matches!(c.attrs.get("of"), Some(ResolvedValue::Ident(id)) if is_magnifier(nodes, id)),
+    let detail = chain.last().is_some_and(
+        |s| matches!(s.attrs.get("of"), Some(ResolvedValue::Ident(id)) if is_magnifier(nodes, id.as_str())),
     );
     links::LinkScope {
         drawing,
@@ -128,22 +119,22 @@ fn is_magnifier(nodes: &[ResolvedInst], id: &str) -> bool {
 /// scope's config props (`clearance` / `routing` [SPEC 9], root → container
 /// chain, nearest winning; geometry, not paint, so they live on a container's
 /// own block — unlike the wire and label look, which come from `|-|` rules) — and the
-/// `ancestors` its descendant `|…| |-|` rules match against. A root-scope link
-/// passes `scope: &[]`.
+/// `ancestors` its descendant `|…| |-|` rules match against. The chain is the
+/// link's **written** container chain, anonymous wrappers included — config on
+/// a bare `|column|` cascades exactly as on a named one. A root-scope link
+/// passes an empty chain.
 pub(super) fn link_scope(
     baked: &[(String, ResolvedValue)],
-    nodes: &[ResolvedInst],
     root_attrs: &AttrMap,
-    scope: &[String],
+    chain: &[ScopeStep],
 ) -> (Vec<(String, ResolvedValue)>, Vec<NodeFacts>) {
-    let chain = scope_chain(nodes, scope);
     let mut base = baked.to_vec();
     // The drafting line-weight contrast [SPEC 15.1]: geometry keeps stroke 2,
     // a drawing's links thin to 1. A **scope default**, not a rule — it rides
     // the base layer below every user rule, so a plain `|-| { stroke-width: … }`
     // overrides it. The same immediate-scope predicate as the mate gate: a
     // `|row|` nested in a drawing owns ordinary routed links, weight 2.
-    if scope_is_drawing(nodes, root_attrs, scope) {
+    if scope_is_drawing(chain, root_attrs) {
         base.push((
             "stroke-width".to_string(),
             ResolvedValue::Number(consts::DRAWING_LINK_STROKE_WIDTH),
@@ -159,13 +150,15 @@ pub(super) fn link_scope(
         let nearest = chain
             .iter()
             .rev()
-            .find_map(|n| n.attrs.get(prop))
+            .find_map(|s| s.attrs.get(prop))
             .or_else(|| root_attrs.get(prop));
         if let Some(v) = nearest {
             base.push((prop.to_string(), v.clone()));
         }
     }
-    (base, link_ancestors(nodes, root_attrs, scope))
+    let mut ancestors: Vec<NodeFacts> = scene::root_facts(root_attrs).into_iter().collect();
+    ancestors.extend(chain.iter().map(|s| s.facts.clone()));
+    (base, ancestors)
 }
 
 /// The ancestor facts a link's descendant `|…| |-|` rules match against, for the

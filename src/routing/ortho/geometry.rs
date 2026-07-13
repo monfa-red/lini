@@ -369,10 +369,7 @@ mod tests {
         let mut chains = vec![Some(chain(
             &graph, 0, &ledger, &r.cells, se, ge, ends, 0, 1, C,
         ))];
-        let worlds = [World {
-            path: String::new(),
-            graph,
-        }];
+        let worlds = [World { key: None, graph }];
         place(&worlds, &mut chains, C);
         polyline(chains[0].as_ref().unwrap())
     }

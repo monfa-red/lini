@@ -929,3 +929,56 @@ fn a_natural_obstacle_scene_renders_byte_identically() {
         assert_eq!(routes_str(src).expect("reroute"), routes);
     }
 }
+
+#[test]
+fn an_anonymous_container_routes_exactly_like_a_named_one() {
+    // Worlds are keyed by scene-node identity, never by path (ROUTING.md
+    // Model step 1): stripping a container's id must not move a single
+    // wire. Pre-fix, the anonymous interior was no world at all and its
+    // wires strayed or orbited outside.
+    let named = "|column#g| { gap: 40; padding: 20 } [\n\
+                   |box#a| \"A\"\n\
+                   |box#b| \"B\"\n\
+                   a -> b\n\
+                 ]\n";
+    let anon = named.replace("|column#g|", "|column|");
+    // Paths differ by the id prefix; the drawn geometry must not.
+    let geo = |r: Routes| r.into_iter().map(|(_, p)| p).collect::<Vec<_>>();
+    assert_eq!(geo(routes(named)), geo(routes(&anon)));
+}
+
+#[test]
+fn a_tree_in_an_anonymous_container_draws_every_branch_wire() {
+    // The de-id'd org chart: generated branch links route in the anonymous
+    // column's interior — four wires drawn, zero strays.
+    let src = "|column| \"Org\" { layout: tree; } [\n\
+                 |topic#ceo| \"CEO\" [\n\
+                   |topic#cto| \"CTO\" [ |topic#be| \"BE\"; |topic#fe| \"FE\" ]\n\
+                 ]\n\
+               ]\n";
+    let drawn = routes(src);
+    for (from, to) in [
+        ("ceo", "ceo.cto"),
+        ("ceo.cto", "ceo.cto.be"),
+        ("ceo.cto", "ceo.cto.fe"),
+    ] {
+        assert_eq!(paths(&drawn, from, to).len(), 1, "{from} -> {to} drawn");
+    }
+    let laid = route_sample(src, 12.0);
+    assert!(laid.strays.is_empty(), "no strays in an anonymous tree");
+}
+
+#[test]
+fn natural_routes_inside_an_anonymous_container() {
+    // Both strategies share worlds: the mindmap look survives a bare
+    // `|column|` wrapper.
+    let src = "|column| { layout: tree; direction: row; routing: natural } [\n\
+                 |topic#root| \"R\" [ |topic#one| \"1\"; |topic#two| \"2\" ]\n\
+               ]\n";
+    let laid = route_sample(src, 12.0);
+    assert!(laid.strays.is_empty(), "no strays");
+    assert!(
+        laid.links.iter().any(|l| !l.curve.is_empty()),
+        "branch wire drawn as a curve"
+    );
+}

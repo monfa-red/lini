@@ -576,7 +576,7 @@ mod tests {
 
     fn world(bounds: Rect, keepouts: &[Rect]) -> World {
         World {
-            path: String::new(),
+            key: None,
             graph: ChannelGraph::build(bounds, keepouts, false),
         }
     }

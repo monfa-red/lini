@@ -63,36 +63,29 @@ pub(super) fn excused(
     // world's children, collapsed, exactly as model step 2 builds it —
     // retried one world up while the contested spot lies outside its
     // channels (a link may have routed up the ladder).
-    let mut world = common_world(
-        &SceneIndex::world_of(&wa.seg_from, &wa.seg_to),
-        &SceneIndex::world_of(&wb.seg_from, &wb.seg_to),
+    let mut world = index.common_ancestor_world(
+        index.world_of(&wa.seg_from, &wa.seg_to),
+        index.world_of(&wb.seg_from, &wb.seg_to),
     );
     let graph = loop {
-        let bounds = if world.is_empty() {
-            index.bounds().inflate(2.0 * c + 20.0)
-        } else {
-            match index.rect(&world) {
-                Some(r) => r,
-                None => return true,
-            }
-        };
+        let bounds = index
+            .world_rect(world)
+            .unwrap_or_else(|| index.bounds().inflate(2.0 * c + 20.0));
         let keepouts: Vec<Rect> = index
-            .child_rects(&world)
+            .child_rects(world)
             .iter()
             .map(|r| r.inflate(c))
             .collect();
-        let graph = ChannelGraph::build(bounds, &keepouts, world.is_empty());
+        let graph = ChannelGraph::build(bounds, &keepouts, world.is_none());
         if channel_at(&graph, axis, mid_t, mid_ord).is_some() {
             break graph;
         }
-        if world.is_empty() {
+        let Some(up) = index.parent_world(world) else {
             // The contested spot lies inside every world's keep-outs — a
             // clearance breach reports it; nothing to judge here.
             return true;
-        }
-        world = world
-            .rfind('.')
-            .map_or(String::new(), |i| world[..i].to_owned());
+        };
+        world = up;
     };
 
     // Wire nodes: every parallel segment of every link, with its drawn
@@ -244,21 +237,6 @@ pub(super) fn excused(
         reach[j] = x;
     }
     false
-}
-
-/// The innermost container shared by two world paths (`""` = the root).
-fn common_world(a: &str, b: &str) -> String {
-    let mut out = String::new();
-    for (x, y) in a.split('.').zip(b.split('.')) {
-        if x != y || x.is_empty() {
-            break;
-        }
-        if !out.is_empty() {
-            out.push('.');
-        }
-        out.push_str(x);
-    }
-    out
 }
 
 /// The channel of `axis` containing the point `(travel, ordinate)`.

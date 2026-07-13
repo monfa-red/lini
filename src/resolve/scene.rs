@@ -21,6 +21,21 @@ use std::collections::HashMap;
 pub struct LiftedLink {
     pub link: Link,
     pub prefix: Vec<String>,
+    /// The real container chain enclosing the link's written position, root →
+    /// innermost — **every** container, anonymous ones included (sequence
+    /// frames excepted: scope-transparent [SPEC 13]). The id-segment `prefix`
+    /// cannot name an anonymous wrapper, so scope config (`clearance` /
+    /// `routing`) and descendant-rule facts read this chain instead.
+    pub chain: Vec<ScopeStep>,
+}
+
+/// One container on a link's written chain: its selector identity, resolved
+/// attrs (the scope-config source), and display type (drawing diagnostics).
+#[derive(Clone)]
+pub struct ScopeStep {
+    pub facts: NodeFacts,
+    pub attrs: AttrMap,
+    pub display_type: String,
 }
 
 /// Everything node resolution reads but does not mutate.
@@ -45,12 +60,14 @@ pub fn resolve_instances(
     // |note|`, `|drawing| |note|` — [SPEC 8]) reaches a root-scoped child exactly
     // as it reaches one inside a `|sequence|` / `|drawing|` node.
     let mut ancestors: Vec<NodeFacts> = root_facts(root_attrs).into_iter().collect();
+    let mut steps: Vec<ScopeStep> = Vec::new();
     let mut nodes = Vec::with_capacity(instances.len());
     for child in instances {
         nodes.push(resolve_child(
             child,
             ctx,
             &mut ancestors,
+            &mut steps,
             &[],
             text_ctx,
             id_seen,
@@ -82,13 +99,23 @@ fn resolve_child(
     child: &Child,
     ctx: &SceneCtx,
     ancestors: &mut Vec<NodeFacts>,
+    steps: &mut Vec<ScopeStep>,
     path_prefix: &[String],
     text_ctx: &AttrMap,
     id_seen: &mut HashMap<String, Span>,
     lifted: &mut Vec<LiftedLink>,
 ) -> Result<ResolvedInst, Error> {
     match child {
-        Child::Box(n) => resolve_node(n, ctx, ancestors, path_prefix, text_ctx, id_seen, lifted),
+        Child::Box(n) => resolve_node(
+            n,
+            ctx,
+            ancestors,
+            steps,
+            path_prefix,
+            text_ctx,
+            id_seen,
+            lifted,
+        ),
         Child::Text(t) => text_inst(t, ctx, text_ctx),
     }
 }
@@ -101,6 +128,7 @@ pub fn resolve_node(
     node: &Node,
     ctx: &SceneCtx,
     ancestors: &mut Vec<NodeFacts>,
+    steps: &mut Vec<ScopeStep>,
     path_prefix: &[String],
     text_ctx: &AttrMap,
     id_seen: &mut HashMap<String, Span>,
@@ -211,12 +239,28 @@ pub fn resolve_node(
         child_prefix.push(id.clone());
     }
 
+    // This node's chain step: pushed before its body links lift, so the chain
+    // holds the link's real written position — anonymous containers included.
+    // Sequence frames stay scope-transparent [SPEC 13], mirroring the prefix.
+    let own_step = (!is_frame_type(&type_chain)).then(|| ScopeStep {
+        facts: facts.clone(),
+        attrs: attrs.clone(),
+        display_type: type_chain
+            .first()
+            .cloned()
+            .unwrap_or_else(|| kind.as_str().to_string()),
+    });
+    if let Some(step) = own_step.clone() {
+        steps.push(step);
+    }
+
     // Internal links lift to program level (define bodies are inlined by desugar,
     // so the node's own `[ ]` holds them already).
     for w in &node.links {
         lifted.push(LiftedLink {
             link: w.clone(),
             prefix: child_prefix.clone(),
+            chain: steps.clone(),
         });
     }
 
@@ -238,6 +282,7 @@ pub fn resolve_node(
             child,
             ctx,
             ancestors,
+            steps,
             &child_prefix,
             &child_text_ctx,
             id_seen,
@@ -245,6 +290,9 @@ pub fn resolve_node(
         )?);
     }
     ancestors.pop();
+    if own_step.is_some() {
+        steps.pop();
+    }
     drop_blank_text(&mut children, &attrs);
 
     Ok(ResolvedInst {

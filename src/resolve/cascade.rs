@@ -140,6 +140,7 @@ fn selector_is_id(sel: &[SelUnit]) -> bool {
 
 /// The identity a selector matches against: the node's worn classes (the `.lini-*`
 /// type chain and its user classes) and its id.
+#[derive(Clone)]
 pub struct NodeFacts {
     pub classes: Vec<String>,
     pub id: Option<String>,

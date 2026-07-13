@@ -93,7 +93,7 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
     let ancestors_for = |segs: &[String]| link_scope::link_ancestors(&nodes, &root_attrs, segs);
     let mut link_list = Vec::new();
     for w in &file.links {
-        let (base, ancestors) = link_scope::link_scope(&baked, &nodes, &root_attrs, &[]);
+        let (base, ancestors) = link_scope::link_scope(&baked, &root_attrs, &[]);
         let kind = link_scope_kind(&nodes, &root_attrs, &[]);
         link_list.extend(links::resolve_link(
             w,
@@ -107,8 +107,8 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
         )?);
     }
     for lw in &lifted {
-        let (base, ancestors) = link_scope::link_scope(&baked, &nodes, &root_attrs, &lw.prefix);
-        let kind = link_scope_kind(&nodes, &root_attrs, &lw.prefix);
+        let (base, ancestors) = link_scope::link_scope(&baked, &root_attrs, &lw.chain);
+        let kind = link_scope_kind(&nodes, &root_attrs, &lw.chain);
         link_list.extend(links::resolve_link(
             &lw.link,
             &ctx,
@@ -178,7 +178,7 @@ fn build_sheet_inputs(
     // The `.lini-link` rule's defaults: a root-scope link — the baked base plus the
     // scope config, then the root `|-|` element rule [SPEC 9, 16]. Its paint states
     // the `.lini-link` CSS rule; a link that differs inlines the difference.
-    let (base, _) = link_scope::link_scope(baked, &[], root_attrs, &[]);
+    let (base, _) = link_scope::link_scope(baked, root_attrs, &[]);
     let mut link_defaults = base;
     link_defaults.extend(sheet.class_decls(links::LINK_CLASS));
     let link_defaults = collapse(&link_defaults);

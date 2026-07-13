@@ -1107,7 +1107,11 @@ children belong to its parent's scope (ids stay unique across it), a dot-path
 never names it, and its own `[ ]` links resolve in the parent's scope. Name a
 container to give it a scope of its own — a scope-owning body (a `|drawing|`'s
 mates, a `|sequence|`'s messages) therefore wants an id. A sequence frame is
-transparent the same way ([SPEC 13](#13-sequence)).
+transparent the same way ([SPEC 13](#13-sequence)). Scope-transparency is
+about **names**, not geometry: the router sees the container itself, so links
+route inside an anonymous group exactly as inside a named one, and its scene
+config (`clearance:`, `routing:`) cascades onto the links written in it
+([ROUTING.md](ROUTING.md) Model step 1).
 
 ### Internal links in a body
 

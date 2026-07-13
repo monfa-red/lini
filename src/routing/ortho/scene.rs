@@ -26,8 +26,17 @@ pub struct SceneNode {
     /// would wall off free space beside a narrow caption).
     pub overflow: Vec<Rect>,
     pub kind: NodeKind,
+    /// The enclosing scene node (`None` for a top-level node). Containment
+    /// and worlds walk this chain — **structure, not paths** — so an
+    /// anonymous container is as real a container as a named one.
+    parent: Option<usize>,
     children: Vec<usize>,
 }
+
+/// A routing world's identity: a container's scene-node index, or `None` for
+/// the scene root. Node indices are assigned in build (walk) order, so keys
+/// are deterministic — Law 4 holds.
+pub type WorldKey = Option<usize>;
 
 pub struct SceneIndex {
     nodes: Vec<SceneNode>,
@@ -43,13 +52,20 @@ impl SceneIndex {
             by_path: BTreeMap::new(),
         };
         for r in roots {
-            let i = idx.walk(r, "", 0.0, 0.0);
+            let i = idx.walk(r, "", None, 0.0, 0.0);
             idx.roots.push(i);
         }
         idx
     }
 
-    fn walk(&mut self, n: &PlacedNode, prefix: &str, ox: f64, oy: f64) -> usize {
+    fn walk(
+        &mut self,
+        n: &PlacedNode,
+        prefix: &str,
+        parent: Option<usize>,
+        ox: f64,
+        oy: f64,
+    ) -> usize {
         let (cx, cy) = (ox + n.cx, oy + n.cy);
         let rect = Rect::new(
             n.bbox.min_x + cx,
@@ -68,6 +84,7 @@ impl SceneIndex {
             rect,
             overflow: Vec::new(),
             kind,
+            parent,
             children: Vec::new(),
         });
         if kind == NodeKind::Body {
@@ -77,7 +94,7 @@ impl SceneIndex {
             r.x0 >= outer.x0 && r.y0 >= outer.y0 && r.x1 <= outer.x1 && r.y1 <= outer.y1
         };
         for c in &n.children {
-            let ci = self.walk(c, &path, cx, cy);
+            let ci = self.walk(c, &path, Some(i), cx, cy);
             self.nodes[i].children.push(ci);
             let pokes: Vec<Rect> = std::iter::once(self.nodes[ci].rect)
                 .chain(self.nodes[ci].overflow.iter().copied())
@@ -107,67 +124,110 @@ impl SceneIndex {
         })
     }
 
-    /// Whether the body at `outer` strictly contains the body at `inner`,
-    /// by dot-path ancestry.
-    pub fn contains(outer: &str, inner: &str) -> bool {
-        inner.len() > outer.len()
-            && inner.starts_with(outer)
-            && inner.as_bytes()[outer.len()] == b'.'
+    /// A body's scene-node index by full dot-path.
+    pub(crate) fn node_of(&self, path: &str) -> Option<usize> {
+        self.by_path.get(path).copied()
     }
 
-    /// Whether `outer` **geometrically** contains `inner`: path ancestry AND its
-    /// placed rect actually enclosing the inner rect. Everywhere but a tree,
-    /// nesting implies geometric containment — but a tree's branch child is a
-    /// path descendant placed *beside* its parent, so its parent does not
+    /// The enclosing container of a world (`None` = the scene root's world).
+    /// The root world has no parent.
+    pub(crate) fn parent_world(&self, key: WorldKey) -> Option<WorldKey> {
+        key.map(|i| self.nodes[i].parent)
+    }
+
+    /// Whether the scene node `outer` is a strict structural ancestor of
+    /// `inner` — named or anonymous; containment is the placed tree's, never
+    /// the path string's.
+    fn is_ancestor(&self, outer: usize, inner: usize) -> bool {
+        let mut p = self.nodes[inner].parent;
+        while let Some(i) = p {
+            if i == outer {
+                return true;
+            }
+            p = self.nodes[i].parent;
+        }
+        false
+    }
+
+    /// Whether `outer` **geometrically** contains `inner`: structural ancestry
+    /// AND its placed rect actually enclosing the inner rect. Everywhere but a
+    /// tree, nesting implies geometric containment — but a tree's branch child
+    /// is a descendant placed *beside* its parent, so its parent does not
     /// enclose it, and the containment special case (world truncation, the
     /// inward port flip) must not fire for it. The conservative gate:
-    /// prefix AND geometry.
+    /// ancestry AND geometry.
     pub fn geo_contains(&self, outer: &str, inner: &str) -> bool {
-        Self::contains(outer, inner)
-            && match (self.rect(outer), self.rect(inner)) {
-                (Some(o), Some(i)) => o.x0 <= i.x0 && o.y0 <= i.y0 && o.x1 >= i.x1 && o.y1 >= i.y1,
-                _ => false,
+        match (self.node_of(outer), self.node_of(inner)) {
+            (Some(o), Some(i)) => {
+                self.is_ancestor(o, i) && {
+                    let (or, ir) = (self.nodes[o].rect, self.nodes[i].rect);
+                    or.x0 <= ir.x0 && or.y0 <= ir.y0 && or.x1 >= ir.x1 && or.y1 >= ir.y1
+                }
             }
+            _ => false,
+        }
     }
 
     /// The routing world of a link `a → b`: the innermost container whose
-    /// interior holds both ends (`""` = the scene root). An endpoint that is
+    /// interior holds both ends (`None` = the scene root). An endpoint that is
     /// itself the container maps to its own interior (containment links).
-    pub fn world_of(a: &str, b: &str) -> String {
-        if Self::contains(a, b) {
-            return a.to_owned();
+    pub(crate) fn world_of(&self, a: &str, b: &str) -> WorldKey {
+        let (na, nb) = match (self.node_of(a), self.node_of(b)) {
+            (Some(na), Some(nb)) => (na, nb),
+            _ => return None,
+        };
+        if self.is_ancestor(na, nb) {
+            return Some(na);
         }
-        if Self::contains(b, a) {
-            return b.to_owned();
+        if self.is_ancestor(nb, na) {
+            return Some(nb);
         }
-        Self::common_world(a, b)
+        self.common_world(a, b)
     }
 
-    /// The innermost shared *ancestor* container of two endpoints (`""` = the
-    /// scene root) — the world logic without the containment early-return, so a
-    /// path-descendant that its ancestor does not geometrically enclose (a
-    /// tree's branch) routes in the ancestor's world, not its parent's.
-    pub(super) fn common_world(a: &str, b: &str) -> String {
-        let mut world = String::new();
-        for (sa, sb) in a.split('.').zip(b.split('.')) {
-            if sa != sb {
-                break;
+    /// The innermost world equal to or enclosing both given worlds (`None` =
+    /// the scene root) — the validator's shared-graph pick when two wires
+    /// routed in different worlds.
+    pub(crate) fn common_ancestor_world(&self, a: WorldKey, b: WorldKey) -> WorldKey {
+        let mut w = a;
+        loop {
+            let holds_b = match (w, b) {
+                (None, _) => true,
+                (Some(x), Some(y)) => x == y || self.is_ancestor(x, y),
+                (Some(_), None) => false,
+            };
+            if holds_b {
+                return w;
             }
-            if !world.is_empty() {
-                world.push('.');
-            }
-            world.push_str(sa);
+            w = self.parent_world(w).expect("Some(_) has a parent world");
         }
-        // The innermost shared *segment* may be the endpoints' own parent only
-        // if it is a proper ancestor of both; equal full paths never reach here
-        // (self-loops are handled before worlds).
-        if world == a || world == b {
-            match world.rfind('.') {
-                Some(i) => world.truncate(i),
-                None => world.clear(),
+    }
+
+    /// The innermost shared *ancestor* container of two endpoints (`None` =
+    /// the scene root) — the world logic without the containment early-return,
+    /// so a descendant its ancestor does not geometrically enclose (a tree's
+    /// branch) routes in the ancestor's world, not its parent's. Anonymous
+    /// ancestors count: their interiors are worlds like any container's.
+    pub(super) fn common_world(&self, a: &str, b: &str) -> WorldKey {
+        let (na, nb) = match (self.node_of(a), self.node_of(b)) {
+            (Some(na), Some(nb)) => (na, nb),
+            _ => return None,
+        };
+        let mut p = self.nodes[na].parent;
+        while let Some(i) = p {
+            if i == nb {
+                // The shared ancestor is the endpoint itself only on a
+                // containment pair — handled by the caller; its world is one
+                // container up (equal full paths never reach here: self-loops
+                // are handled before worlds).
+                return self.nodes[i].parent;
             }
+            if self.is_ancestor(i, nb) {
+                return Some(i);
+            }
+            p = self.nodes[i].parent;
         }
-        world
+        None
     }
 
     /// Every visually solid rect — labels, and bodies without body
@@ -187,17 +247,19 @@ impl SceneIndex {
             .collect()
     }
 
-    /// Direct-child rects of the body at `path` (`""` = the scene roots) —
+    /// A world's own placed body (`None` for the scene root, which spans the
+    /// canvas instead).
+    pub(crate) fn world_rect(&self, key: WorldKey) -> Option<Rect> {
+        key.map(|i| self.nodes[i].rect)
+    }
+
+    /// Direct-child rects of a world's container (`None` = the scene roots) —
     /// the keep-out set of that interior: bodies collapse their subtrees
     /// (rect plus drawn overflow), anonymous labels count as nodes.
-    pub fn child_rects(&self, path: &str) -> Vec<Rect> {
-        let ids: &[usize] = if path.is_empty() {
-            &self.roots
-        } else {
-            match self.by_path.get(path) {
-                Some(&i) => &self.nodes[i].children,
-                None => &[],
-            }
+    pub fn child_rects(&self, world: WorldKey) -> Vec<Rect> {
+        let ids: &[usize] = match world {
+            None => &self.roots,
+            Some(i) => &self.nodes[i].children,
         };
         ids.iter()
             .flat_map(|&i| {
@@ -318,39 +380,68 @@ mod tests {
     }
 
     #[test]
-    fn containment_follows_dot_path_ancestry() {
-        assert!(SceneIndex::contains("garden", "garden.dog"));
-        assert!(SceneIndex::contains("a.b", "a.b.c.d"));
-        assert!(!SceneIndex::contains("garden", "garden"));
-        assert!(!SceneIndex::contains("garden", "gardenia.dog"));
+    fn world_is_the_innermost_shared_container() {
+        // garden{dog} + bird added beside dog for the sibling case.
+        let mut roots = scene();
+        roots[1]
+            .children
+            .push(rect_node("bird", -20.0, 5.0, 20.0, 10.0));
+        let idx = SceneIndex::build(&roots);
+        let key = |p: &str| idx.node_of(p);
+        assert_eq!(idx.world_of("cat", "garden.dog"), None);
+        assert_eq!(
+            idx.world_of("garden.dog", "garden.bird"),
+            key("garden"),
+            "siblings route in their parent's interior"
+        );
+        // Containment: the container endpoint's own interior, both ways.
+        assert_eq!(idx.world_of("garden", "garden.dog"), key("garden"));
+        assert_eq!(idx.world_of("garden.dog", "garden"), key("garden"));
+        // The shared-ancestor pick the validator uses.
+        assert_eq!(idx.common_ancestor_world(key("garden"), None), None);
+        assert_eq!(
+            idx.common_ancestor_world(key("garden"), key("garden")),
+            key("garden")
+        );
     }
 
     #[test]
-    fn world_is_the_innermost_shared_container() {
-        assert_eq!(SceneIndex::world_of("cat", "garden.dog"), "");
-        assert_eq!(SceneIndex::world_of("kitchen.bowl", "garden.dog"), "");
-        assert_eq!(SceneIndex::world_of("garden.dog", "garden.bird"), "garden");
-        assert_eq!(SceneIndex::world_of("a.b.x", "a.b.y"), "a.b");
-        assert_eq!(SceneIndex::world_of("garden", "garden.dog"), "garden");
-        assert_eq!(SceneIndex::world_of("garden.dog", "garden"), "garden");
-        assert_eq!(SceneIndex::world_of("x.y", "x.yz"), "x");
+    fn an_anonymous_container_is_a_world_like_a_named_one() {
+        // column{ a, b } with no id: a and b keep root-level paths, yet their
+        // common world is the column's interior — structure, not strings.
+        let a = rect_node("a", -15.0, 0.0, 20.0, 10.0);
+        let b = rect_node("b", 15.0, 0.0, 20.0, 10.0);
+        let column = node(None, NodeKind::Block, 0.0, 0.0, 80.0, 40.0, vec![a, b]);
+        let idx = SceneIndex::build(&[column]);
+        let world = idx.common_world("a", "b");
+        assert!(world.is_some(), "the anonymous interior is a world");
+        assert_eq!(
+            idx.world_rect(world),
+            Some(Rect::new(-40.0, -20.0, 40.0, 20.0))
+        );
+        assert_eq!(idx.child_rects(world).len(), 2);
+        // The ladder above it is the scene root.
+        assert_eq!(idx.parent_world(world), Some(None));
+        // geo_contains sees through the anonymous level too: the column is
+        // nobody's endpoint, but a's world chain still reaches the root.
+        assert!(!idx.geo_contains("a", "b"));
     }
 
     #[test]
     fn child_rects_lists_one_collapsed_rect_per_direct_child() {
         let idx = SceneIndex::build(&scene());
         assert_eq!(
-            idx.child_rects(""),
+            idx.child_rects(None),
             vec![
                 Rect::new(-20.0, -10.0, 20.0, 10.0),
                 Rect::new(60.0, 20.0, 140.0, 80.0),
             ]
         );
         assert_eq!(
-            idx.child_rects("garden"),
+            idx.child_rects(idx.node_of("garden")),
             vec![Rect::new(95.0, 50.0, 125.0, 60.0)]
         );
-        assert_eq!(idx.child_rects("garden.dog"), Vec::new());
+        assert_eq!(idx.child_rects(idx.node_of("garden.dog")), Vec::new());
     }
 
     #[test]

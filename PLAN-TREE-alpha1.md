@@ -527,6 +527,23 @@ Keep entries terse.
 - 2026-07-12: **anonymous-container routing gap** (pre-existing, loud on
   de-id'd trees): worlds are dot-path-keyed, so an anonymous container's
   interior is never a routing world — its wires stray or orbit outside.
-  Fix direction settled (structural worlds keyed on scene-node identity,
-  replacing the path ladder — not minted ids); its own session, before
-  the natural rethink (both strategies share worlds).
+  **Fixed same day** (owner, inline): worlds re-keyed on scene-node
+  identity (`WorldKey = Option<usize>`, `SceneNode.parent` chain) —
+  `world_ladder`/`world_of`/`common_world`/`geo_contains` walk structure,
+  never path strings; the validator's excuse climb rides the same keys
+  (`common_ancestor_world`); the string fns are gone, not shadowed. The
+  fix exposed a **second leak of the same disease at resolve**: a link's
+  scope is an id-segment vector, so scope config (`clearance`/`routing`)
+  on an anonymous wrapper never reached the links written in it — fixed
+  by recording the link's real written chain at lift (`LiftedLink.chain:
+  Vec<ScopeStep>`, snapshotted by the scene walk, frames excepted per the
+  SPEC 13 transparency law) and pointing `link_scope`/`link_scope_kind`
+  at it; the id-segment `scope_chain` now serves only the by-path
+  containment cascade. Pinned: anon == named byte-identical geometry, the
+  de-id'd tree draws whole, natural curves inside a bare `|column|`
+  (tests/routing.rs ×3 + scene.rs unit tests). ROUTING.md Model step 1 +
+  SPEC 9's anonymity clause state the contract: an id is for addressing,
+  not for routing. 917 tests green, snapshots untouched. Remaining known
+  id-dependence (unchanged, by law): a `|drawing|`/`|sequence|` scope
+  OWNER still wants an id (engine scope filters are id-path keyed) —
+  SPEC 9 already says so.

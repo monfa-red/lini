@@ -32,10 +32,11 @@ use request::{EdgeReq, End};
 use scene::SceneIndex;
 use world::{build_worlds, world_ladder};
 
-/// One routing world: a container's interior (`""` = the scene root) and its
-/// channel decomposition.
+/// One routing world: a container's interior (`None` = the scene root) and
+/// its channel decomposition. The key is the container's scene-node identity
+/// ([`scene::WorldKey`]) — anonymous containers are worlds too.
 pub(crate) struct World {
-    pub path: String,
+    pub key: scene::WorldKey,
     pub graph: ChannelGraph,
 }
 
@@ -91,10 +92,6 @@ impl EndInfo {
 /// ROUTING.md Impossible layouts — the stray reasons, one per failure shape.
 const NO_ROUTE: &str = "no legal route: every side entry or channel is closed at this layout";
 const ONE_SIDE_LOOP: &str = "self-loop with both ends forced onto one side";
-
-fn parent_path(p: &str) -> String {
-    p.rfind('.').map(|i| p[..i].to_owned()).unwrap_or_default()
-}
 
 /// Self-loop side resolution (ROUTING.md Special nodes): defaults
 /// right → top; a forced side wins and its free partner takes the default
@@ -195,10 +192,10 @@ pub(crate) fn route(index: &SceneIndex, reqs: &[EdgeReq]) -> (Routing, Vec<usize
         // Innermost world first; a transparent ancestor lets the link route
         // one world up when the inner one has no legal route.
         let mut picked = None;
-        for wpath in world_ladder(index, &rep.a_path, &rep.b_path) {
+        for wkey in world_ladder(index, &rep.a_path, &rep.b_path) {
             let w = worlds
                 .iter()
-                .position(|x| x.path == wpath)
+                .position(|x| x.key == wkey)
                 .expect("world built");
             let graph = &worlds[w].graph;
             let end_entries = |path: &str,

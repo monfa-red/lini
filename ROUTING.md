@@ -155,7 +155,10 @@ Six steps. Each decides once; none revisits an earlier step's answer.
    both endpoints — its **world** — with that world's other children solid
    and the endpoints' ancestor groups transparent; if the inner world has no
    route, the link retries one world up, to the root (a tight interior never
-   walls in a link its ancestors would let out).
+   walls in a link its ancestors would let out). A world is the container
+   **itself**, never its name: an anonymous group's interior is a world (and
+   its `clearance` / `routing` config cascades) exactly as a named one's —
+   an id is for addressing, not for routing.
 
 2. **Channels.** Per world, the free space — bounds plus canvas margin, minus
    keep-outs — decomposes by sweep into H- and V-channels, cells, and
