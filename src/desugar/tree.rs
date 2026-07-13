@@ -21,7 +21,9 @@ use super::classes::{has_two_class_rule, lini_class};
 use super::types::Types;
 use crate::ast::{ChainOp, LineStyle, LinkMarker, LinkOp};
 use crate::error::Error;
-use crate::ledger::defaults::{MINDMAP_BRANCH_FONT, MINDMAP_LEAF_FONT, MINDMAP_MAX_WIDTH};
+use crate::ledger::defaults::{
+    MINDMAP_BRANCH_FONT, MINDMAP_LEAF_FONT, MINDMAP_MAX_WIDTH, MINDMAP_SUB_FONT,
+};
 use crate::span::Span;
 use crate::syntax::ast::{
     Child, Decl, Endpoint, EndpointGroup, File, Link, Node, PointRef, Rule, SelUnit, Selector,
@@ -685,7 +687,7 @@ pub(crate) fn mindmap_rules(present: &BTreeSet<String>, user_rules: &[Rule]) -> 
             ident_decl("font-weight", "medium"),
         ],
     );
-    // The depth ramp [SPEC 8]: level 1 medium, level 2+ small, one rule per
+    // The depth ramp [SPEC 8]: 15 / 14 / 13 down the generations, one rule per
     // level the scene actually wears (root 0 rides the |mindmap| bundle).
     let mut levels: Vec<usize> = present
         .iter()
@@ -694,10 +696,10 @@ pub(crate) fn mindmap_rules(present: &BTreeSet<String>, user_rules: &[Rule]) -> 
         .collect();
     levels.sort_unstable();
     for n in levels {
-        let size = if n == 1 {
-            MINDMAP_BRANCH_FONT
-        } else {
-            MINDMAP_LEAF_FONT
+        let size = match n {
+            1 => MINDMAP_BRANCH_FONT,
+            2 => MINDMAP_SUB_FONT,
+            _ => MINDMAP_LEAF_FONT,
         };
         push(
             &format!("lini-level-{n}"),

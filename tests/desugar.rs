@@ -349,7 +349,7 @@ fn a_mindmap_seats_its_scene_and_lowers_the_preset() {
     );
     assert!(
         out.contains(".lini-mindmap .lini-level-1 { font-size: 15; }")
-            && out.contains(".lini-mindmap .lini-level-2 { font-size: 13; }"),
+            && out.contains(".lini-mindmap .lini-level-2 { font-size: 14; }"),
         "the depth ramp: {out}"
     );
     assert!(

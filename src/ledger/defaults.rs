@@ -27,8 +27,9 @@ pub(crate) const TREE_GAP_SIB: f64 = 48.0;
 /// by eye. The root tier rides the `.lini-mindmap` bundle (the node *is* the
 /// root topic); levels 1 and 2+ ride the generated `.lini-mindmap .lini-level-N`
 /// rules ([`crate::desugar::tree::mindmap_rules`]).
-pub(crate) const MINDMAP_ROOT_FONT: f64 = 18.0;
+pub(crate) const MINDMAP_ROOT_FONT: f64 = 17.0;
 pub(crate) const MINDMAP_BRANCH_FONT: f64 = 15.0;
+pub(crate) const MINDMAP_SUB_FONT: f64 = 14.0;
 pub(crate) const MINDMAP_LEAF_FONT: f64 = 13.0;
 /// The topic wrap cap [SPEC 8]: a long label wraps into a card instead of
 /// stretching an arm.

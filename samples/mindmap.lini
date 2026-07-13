@@ -4,7 +4,7 @@
 // `.lini-level-N` depth ramp, and `max-width: 160` topic wrap. Branch wires
 // are desugar-generated; the dotted cross-link is authored and stays neutral.
 
-|mindmap| "Product Vision" [
+|mindmap| "Product Vision" { padding: 16; } [
   |topic#ship| "Shipping cadence" [
     |icon| {
       symbol: rocket; width: 18; height: 18; fill: none; stroke: --rose-deep;
@@ -18,7 +18,7 @@
     }
     |topic| "Snapshot tests on every output"
     |topic| "Zero clippy debt" [
-      |topic| "CI enforces fmt"
+      |topic| "CI fmt"
     ]
   ]
   |topic#learn| "Learning loop" [
