@@ -448,6 +448,16 @@ Executing sessions: append dated notes here — decisions the plan didn't
 anticipate, gotchas, deferred items, comparator cases that needed deepening,
 anything the next session must know. Keep entries terse.
 
+- **2026-07-17 (later still), the handle floor.** Diagonal connections
+  and dodge entries elbowed: the forward-travel clamp collapses a handle
+  whenever a span's chord runs nearly perpendicular to its tangent.
+  Handles now floor at half the pull — crossing is lawful, sharpness is
+  not — links_hard-natural's n2 → e1 landings and the hub detours sweep;
+  the mindmap moved by a hair on its steepest arms (re-blessed, still
+  warning-free). Also that pass: a dodge via seats at a full clearance
+  (2 × margin) so a deliberate pass-by reads as passing, not grazing —
+  the confirms-arc-hugging-CI-fmt report.
+
 - **2026-07-17 (later), natural v2 smoothness pass (owner feedback).**
   The first cut still read busy: 16 px stubs made every wire "run
   straight then turn", multi-body via weaves slalomed, and far-projection

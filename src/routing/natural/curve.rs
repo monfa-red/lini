@@ -59,13 +59,19 @@ pub(crate) fn bezier(c: &[Pt; 4], t: f64) -> Pt {
 /// One cubic span between knots with prescribed unit tangents: handles pull
 /// `NATURAL_PULL` of the chord along each tangent, each clamped to the travel
 /// toward the far knot along its own tangent so the curve never overshoots a
-/// short offset (monotone along the end directions).
+/// short offset — but never below half the pull: a chord running nearly
+/// perpendicular to its tangent (a diagonal connection, a dodge entry) must
+/// sweep out, not elbow. Crossing is lawful; sharpness is not.
 fn span(p0: Pt, t0: Pt, p1: Pt, t1: Pt) -> [Pt; 4] {
     let d = sub(p1, p0);
     let pull = NATURAL_PULL * len(d);
     let clamp = |t: Pt| {
         let travel = dot(d, t);
-        if travel > 0.0 { pull.min(travel) } else { pull }
+        if travel > 0.0 {
+            pull.min(travel).max(pull / 2.0)
+        } else {
+            pull
+        }
     };
     [
         p0,
