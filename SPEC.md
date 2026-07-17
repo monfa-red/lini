@@ -1141,9 +1141,9 @@ garden.outlet -> kitchen.inlet "carries"
 
 `routing` selects the strategy for a scope and cascades like `clearance`:
 `orthogonal` (the default) routes horizontal/vertical runs through the free space
-between nodes, corners rounded; `natural` fits obstacle-aware **smooth curves** —
-a legal corridor through the same free space, then a curve inside it, tangent-
-normal at both ends ([ROUTING.md](ROUTING.md)); `straight` draws each link as one
+between nodes, corners rounded; `natural` fits direct **smooth curves** —
+tangent-normal at both ends, bending gently around what they would hit, free to
+cross ([ROUTING.md](ROUTING.md)); `straight` draws each link as one
 segment between the bodies, trimmed to their boundaries — it avoids nothing and
 reports nothing. (`curved` was **replaced** by `natural`, not aliased —
 [SPEC 20](#20-errors).) `routing` pairs with

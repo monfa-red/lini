@@ -18,7 +18,7 @@ diagram can never route two different ways.
 | Strategy | Status | Shape |
 |---|---|---|
 | `orthogonal` | the default — specified below | horizontal/vertical runs, corners rounded at render time |
-| `natural` | specified below — lands with alpha.1 | obstacle-aware smooth curves: a legal corridor, then a curve inside it |
+| `natural` | specified below — replaces the alpha.1 corridor-first build | direct smooth curves: straight stubs, one spline, gentle dodges — crossings free |
 | `straight` | built — sequence messages | one segment between caller-supplied anchors |
 
 Every strategy consumes the same input (the placed scene, the expanded link
@@ -38,31 +38,77 @@ layout owns *where* (column x, row y), the strategy owns the wire.
 
 ## The natural strategy
 
-`natural` draws **smooth curves through free space** — the mindmap's branch
-look, available to any routed scope. It is corridor-first: steps 1–4 of the
-orthogonal model run unchanged (keep-outs, worlds, channels, requests,
-search with admission — one corridor choice, priced by the Law-3 cost), and
-only steps 5–6 differ: instead of placed runs and rounded polylines, the
-route lowers to a G1-continuous cubic spline fitted **inside the chosen
-corridor** — never a rounded illegal straight line. Constraints:
+`natural` draws **direct smooth curves** — the mindmap's branch look,
+available to any routed scope. Where `orthogonal` is the drafting table,
+`natural` is the freehand pen: a wire is one smooth stroke from side to
+side, bending only for what it would otherwise hit. It is **curve-first**:
+no channels, no search, no capacity, no ledger — once sides and ports are
+fixed, a wire's geometry reads only the placed scene and its own endpoints,
+never another wire's route. Its laws are fewer and looser than the
+orthogonal four — branches and simple diagrams want freedom, not
+guarantees; a scene that needs guarantees routes `orthogonal` — but they
+are judged the same way, on the output alone:
 
-- **Contact holds exactly**: each end meets its side perpendicular
-  (tangent-normal), inside the port window, straight for at least its marker.
-  On a laid-out tree this yields the classic horizontal-tangent S-curve.
-- **Clearance holds sampled**: the curve stays ≥ `clearance` from every
-  keep-out along its length; where a corridor cannot bend that gently the
-  curve tightens toward the corridor's polyline rather than leave it.
-- **Crossings need not be square-on** — two curves may cross obliquely, still
-  point contact, counted in the report like any crossing.
-- **Duplicates** draw as offset parallels at pitch; a **fan** shares one
-  trunk curve to the split; a **self-loop** is a smooth hook; forced sides,
-  labels (arc-length `along:`, sliding), bundles, and **strays** ride the
-  shared spine unchanged.
-- **Determinism** is Law 4 verbatim; there are no tension / curvature knobs.
+1. **Contact** — orthogonal Law 2, shared verbatim: every end lands on a
+   side, perpendicular, inside the port window, straight for at least its
+   marker. Landings sharing a side sit ≥ pitch apart, ordered along the
+   side as their far ends lie — no braiding at the mouth. On a laid-out
+   tree this yields the classic horizontal-tangent S-curve.
+2. **Smoothness** — a wire is its two straight stubs joined by one
+   G1-continuous cubic spline: no corner at any point, ever. Natural
+   geometry is born a curve, never lowered from a polyline, so an
+   orthogonal elbow cannot show through by construction.
+3. **Directness** — when both ends' sides face the chord (stub tip to stub
+   tip) — every heuristic side does, and so do a tree's stamped sides —
+   the curve's projection onto that chord advances monotonically: a
+   natural wire never doubles back, never orbits. A side forced *away*
+   from the chord may swing out exactly as far as its turn-around
+   requires; a self-loop is a smooth hook.
+4. **Respect** — the only obstacle law. From every solid body in its world
+   the wire keeps ≥ **margin** — `clearance / 2`, natural's one derived
+   number — or the wire-body pair is named in the report (`--strict`
+   errors). Between wires there is no law: crossings are free at any angle
+   (point contact, counted in the report like any crossing); only
+   duplicates — parallel rails at pitch riding one shape — and a fan's
+   shared trunk bind wires to each other.
+5. **Determinism** — Law 4 verbatim: byte-identical reruns; ties break on
+   the fixed side rank, then declaration order. No tension or curvature
+   knobs.
 
-The natural checker judges contact (perpendicular arrival, window, marker
-stub), sampled clearance, and duplicate separation; the run/track and
-square-crossing laws are orthogonal-only.
+The model is three decide-once steps on the shared spine (worlds and
+transparency exactly as orthogonal step 1, requests as step 3; steps 2, 4
+and 5 — channels, search, placement — do not exist here):
+
+- **Sides.** A forced side wins (trees and mindmaps stamp theirs at
+  desugar; a containment link takes the parent's inner side). Otherwise
+  each end takes the permitted side that most faces the other end — the
+  outward normal with the greatest dot product against the chord — ties
+  on side rank.
+- **Ports.** Per node side, before any curve exists: each landing prefers
+  its far end's projection onto the side, clamped into the port window,
+  and the side's landings spread at ≥ pitch by the same bounded ladder
+  placement uses, compressing toward margin only when the window is
+  short. A fan's shared end is one landing. Ports never read curve
+  geometry, so every wire then fits independently — natural needs no
+  committed-route order.
+- **Fit & dodge.** The wire fits as the direct spline: stub tangents
+  normal to their sides, handles pulled toward the far end
+  (`NATURAL_PULL`). Sampled against the world's solid bodies inflated by
+  margin, the first offending body inserts a **via** beside its nearest
+  inflated corner, on the chord side that deviates less (tie: side rank);
+  the spline refits through its vias and the pass repeats, at most
+  `DODGE_ROUNDS` times. Whatever still offends **draws anyway** and is
+  reported: **natural never strays** — a natural wire always draws, worst
+  case straight through the body it names.
+
+Markers, labels (arc-length `along:`, sliding), bundles, fans, self-loops,
+and the report ride the shared spine unchanged. The natural checker judges
+contact (perpendicular arrival, window, marker stub), knot smoothness,
+chord-facing directness, respect-or-reported, and duplicate separation; the
+run/track, capacity, and square-crossing laws are orthogonal-only, and a
+natural scope produces no strays to check. `NATURAL_PULL`, `DODGE_ROUNDS`,
+and the margin rule are part of this contract, defined in one place in
+code.
 
 The rest of this document is the `orthogonal` contract.
 
@@ -291,14 +337,16 @@ src/routing/
                 (graph), requests/bundles (request), admission (admit, cost,
                 entry, ledger), search, placement (place, ladder, order,
                 pairwise), geometry, labels
-  natural/      the natural strategy — corridor choice over the shared search
-                (corridor), curve fit (curve)
+  natural/      the natural strategy — sides & ports (port), the direct
+                spline fit and via dodges (curve, dodge)
   validate.rs   the independent law checker (+ validate/excuse.rs) — a test
                 oracle over orthogonal and natural wires, never a repair
 ```
 
 One Dijkstra per bundle over a graph of tens of cells, one linear placement
-sweep per channel: routing a busy diagram is microseconds, not seconds. The
-validator re-judges every sample's orthogonal wires against the four laws in
-CI; complex fixtures pin turn counts, crossing counts, and byte-identical
-reruns — no image reading in tests.
+sweep per channel: routing a busy diagram is microseconds, not seconds. A
+natural scope skips even that — no graph, no search; each wire is one fit
+plus a few sampled dodge rounds, so a mindmap routes in the time it takes
+to fit its splines. The validator re-judges every sample's orthogonal wires
+against the four laws in CI; complex fixtures pin turn counts, crossing
+counts, and byte-identical reruns — no image reading in tests.
