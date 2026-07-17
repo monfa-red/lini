@@ -109,10 +109,14 @@ and 5 — channels, search, placement — do not exist here):
   grazing; the law's floor stays margin) at the corner nearest the chord,
   on the chord side that deviates less (ties toward one fixed side),
   widening to that side's corner *pair* on a repeat, pushed out one
-  margin per further round, at most `DODGE_ROUNDS` rounds. The first fit that offends nothing is the wire; a second body
-  under the detour, or the budget spent, and the wire draws its direct
-  fit instead and is reported: **natural never strays** — a natural wire
-  always draws, worst case smoothly through the bodies it names.
+  margin per further round, at most `DODGE_ROUNDS` rounds. The first fit
+  that offends nothing **and lands clean** is the wire — a detour that
+  bends the approach nearly parallel to a landing side would hook around
+  at the port, and a dodge may not manufacture an arrival the direct fit
+  didn't have. A second body under the detour, a hooked landing, or the
+  budget spent, and the wire draws its direct fit instead and is
+  reported: **natural never strays** — a natural wire always draws, worst
+  case smoothly through the bodies it names.
 
 Markers, labels (arc-length `along:`, sliding), fans, self-loops, and the
 report ride the shared spine unchanged — the crossing count is

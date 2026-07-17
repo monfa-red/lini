@@ -81,6 +81,32 @@ fn span(p0: Pt, t0: Pt, p1: Pt, t1: Pt) -> [Pt; 4] {
     ]
 }
 
+/// An end span advancing less than this fraction of its length along its
+/// forced tangent is a **wrench**: the curve arrives nearly parallel to the
+/// side it must land perpendicular on and has to hook around at the port. A
+/// sweeping rise (a C arc, a wall arch) advances 0.2–0.4 — well clear.
+const HOOK_RATIO: f64 = 0.1;
+
+/// Whether a fitted chain **hooks** at a port (see [`HOOK_RATIO`]). The
+/// direct fit never hooks on heuristic sides (they maximise the travel); a
+/// dodge can manufacture a hooked arrival by bending the approach parallel
+/// to the landing side, and the dodge policy rejects it for the smooth
+/// direct fit instead.
+pub(crate) fn hooky(curve: &[[Pt; 4]]) -> bool {
+    let end = |c: &[Pt; 4], handle: Pt| {
+        let t = unit(handle);
+        if t == (0.0, 0.0) {
+            return false;
+        }
+        let d = sub(c[3], c[0]);
+        dot(d, t) < HOOK_RATIO * len(d) - 1e-9
+    };
+    let (Some(first), Some(last)) = (curve.first(), curve.last()) else {
+        return false;
+    };
+    end(first, sub(first[1], first[0])) || end(last, sub(last[3], last[2]))
+}
+
 /// The G1 cubic chain through `knots`: the forced leave directions at the two
 /// tips (perpendicular arrival), Catmull-Rom blends (toward the neighbouring
 /// knots) inside. Repeated knots dedupe **before** the tangents are read —

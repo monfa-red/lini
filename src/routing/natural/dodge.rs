@@ -151,6 +151,9 @@ pub(crate) fn dodge(
         let fitted = refit(&vias);
         let off = offences(&fitted, keep);
         if off.is_empty() {
+            if curve::hooky(&fitted.1) {
+                break; // the detour wrenches a landing: cross smoothly instead
+            }
             return (fitted, off);
         }
         if off.iter().any(|(b, _)| *b != target) {

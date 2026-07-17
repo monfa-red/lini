@@ -448,6 +448,20 @@ Executing sessions: append dated notes here — decisions the plan didn't
 anticipate, gotchas, deferred items, comparator cases that needed deepening,
 anything the next session must know. Keep entries terse.
 
+- **2026-07-17, the hooked-landing gate (owner: n2 → e1 still elbowed).**
+  The handle floor treated the symptom; the disease was the dodge
+  reshaping a wire's approach — a via can turn the final span nearly
+  parallel to the landing side, and a perpendicular port then demands a
+  hook no handle length can soften. New acceptance term in the dodge
+  policy: a detour must also **land clean** (`curve::hooky` — an end
+  span advancing < `HOOK_RATIO` (0.1) of its length along its forced
+  tangent is a wrench); a hooked dodge falls back to the smooth direct
+  fit + report, same as a second body. First cut tied the gate to the
+  floor threshold (0.25) and wrongly rejected the mindmap's C arc
+  (ratio 0.24) — a sweep is 0.2–0.4, a wrench ~0.02; 0.1 separates
+  them. links_hard's n2 → e1 pair now draws two parallel diagonal S
+  curves straight into e1.top; mindmap byte-identical.
+
 - **2026-07-17 (later still), the handle floor.** Diagonal connections
   and dodge entries elbowed: the forward-travel clamp collapses a handle
   whenever a span's chord runs nearly perpendicular to its tangent.
