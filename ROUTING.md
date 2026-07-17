@@ -67,17 +67,22 @@ are judged the same way, on the output alone:
    monotonically: a natural wire never doubles back, never orbits. A
    dodge swings exactly as wide as its vias require, a side forced
    *away* from the chord as far as its turn-around requires; a self-loop
-   is a smooth hook (both ends forced onto one side draws the same-side
-   loop — natural has no stray to fall back on).
+   is a smooth round loop by the same machinery (both ends forced onto
+   one side draws the same-side loop — natural has no stray to fall back
+   on).
 4. **Respect** — the only obstacle law, and smoothness outranks it. From
    every solid body in its world the wire keeps ≥ **margin** —
    `clearance / 2`, natural's one derived number — or the wire-body pair
-   is named in the report (`--strict` errors). A wire earns **one gentle
-   detour or none**: it may bend around the first body its direct fit
-   offends, and only if that clears it entirely; otherwise it draws the
-   smooth direct curve straight through and reports every body it
-   crosses — never a weave. Between wires there is no law: crossings are
-   free at any angle (point contact, counted in the report like any
+   is named in the report (`--strict` errors). A wire is excused from its
+   **own** endpoints' keep-outs only near its ports (the stub plus two
+   margins — the leave itself), so even a self-loop's mid-flight respects
+   its own body: a self-loop is not a special case but a wire whose
+   direct fit hugs its own corner and whose sweep rounds it. A wire earns
+   **one gentle detour or none**: it may bend around the first body its
+   direct fit offends, and only if that clears it entirely; otherwise it
+   draws the smooth direct curve straight through and reports every body
+   it crosses — never a weave. Between wires there is no law: crossings
+   are free at any angle (point contact, counted in the report like any
    crossing); only duplicates — parallel rails at pitch riding one shape —
    and a fan's shared trunk bind wires to each other.
 5. **Determinism** — Law 4 verbatim: byte-identical reruns; ties break on

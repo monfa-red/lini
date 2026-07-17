@@ -19,7 +19,7 @@ use crate::resolve::Strategy;
 use crate::routing::ortho::cost::min_pitch;
 use crate::routing::ortho::request::{self, EdgeReq, End};
 use crate::routing::ortho::scene::SceneIndex;
-use crate::routing::{Routing, Rule, Severity, Violation, straight};
+use crate::routing::{Routing, Rule, Severity, Violation};
 
 /// The unmarked stub: a hair of perpendicular contact, visually the curve
 /// starting at the port.
@@ -72,32 +72,18 @@ pub(crate) fn route(
         let tip =
             |l: &port::Landing, s: f64| (l.port.0 + l.normal.0 * s, l.port.1 + l.normal.1 * s);
         let tips = (tip(&la, sa), tip(&lb, sb));
-        let ((path, cubics), offences) = if req.a_path == req.b_path {
-            // The self-loop hook: one via out past the two sides' shared
-            // corner, along the normals' bisector — local by construction,
-            // so it neither dodges nor reports.
-            let reach = sa.max(sb).max(straight::HOOK_MIN);
-            let mid = ((tips.0.0 + tips.1.0) / 2.0, (tips.0.1 + tips.1.1) / 2.0);
-            let bis = {
-                let (x, y) = (la.normal.0 + lb.normal.0, la.normal.1 + lb.normal.1);
-                let l = x.hypot(y);
-                // Opposite forced sides have no bisector; swing sideways.
-                if l <= 0.0 {
-                    (-la.normal.1, la.normal.0)
-                } else {
-                    (x / l, y / l)
-                }
-            };
-            let via = (mid.0 + bis.0 * reach, mid.1 + bis.1 * reach);
-            (refit(&[(via, None)]), Vec::new())
-        } else {
-            let keep = dodge::Keepouts::build(
-                index,
-                [(&req.a_path, req.a_rect), (&req.b_path, req.b_rect)],
-                m,
-            );
-            dodge::dodge(&keep, tips, refit)
-        };
+        // One pipeline for every wire, self-loops included: the direct fit
+        // hugs its own corner, its own body offends past the ports' excuse
+        // zones, and the ordinary stadium sweep rounds it.
+        let keep = dodge::Keepouts::build(
+            index,
+            [
+                (&req.a_path, req.a_rect, la.port, sa),
+                (&req.b_path, req.b_rect, lb.port, sb),
+            ],
+            m,
+        );
+        let ((path, cubics), offences) = dodge::dodge(&keep, tips, refit);
         for (body, d) in offences {
             routing.report.push(Violation {
                 rule: Rule::Clearance,

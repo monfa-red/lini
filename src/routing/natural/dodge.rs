@@ -24,70 +24,112 @@ const EPS: f64 = 1e-6;
 pub(crate) struct Keepouts {
     /// Every solid body in the wire's world (uninflated; judged at margin).
     solids: Vec<Rect>,
-    /// The link's own endpoint bodies. Excused only where the wire lawfully
-    /// leaves them — each end's own span, the orthogonal law's
-    /// own-end-segment excuse. `None` when that endpoint geometrically
-    /// contains its partner (a containment link runs inside it by design).
-    ends: [Option<Rect>; 2],
-    /// A self-loop's two ends are one body: either end's excuse covers it.
-    self_loop: bool,
+    /// The link's own endpoint bodies, each with its port and its excuse
+    /// radius: a wire is excused from its own endpoint's keep-out only
+    /// **near that port** (within the stub plus two margins — the leave
+    /// itself), so even a self-loop's mid-flight respects its own body.
+    /// `None` when that endpoint geometrically contains its partner (a
+    /// containment link runs inside it by design).
+    ends: [Option<(Rect, Pt, f64)>; 2],
     margin: f64,
 }
 
 impl Keepouts {
-    pub(crate) fn build(index: &SceneIndex, ends: [(&str, Rect); 2], margin: f64) -> Keepouts {
-        let [(a, ra), (b, rb)] = ends;
-        let own =
-            |path: &str, partner: &str, r: Rect| (!index.geo_contains(path, partner)).then_some(r);
+    pub(crate) fn build(
+        index: &SceneIndex,
+        ends: [(&str, Rect, Pt, f64); 2],
+        margin: f64,
+    ) -> Keepouts {
+        let [(a, ra, pa, sa), (b, rb, pb, sb)] = ends;
+        let own = |path: &str, partner: &str, r: Rect, port: Pt, stub: f64| {
+            (!index.geo_contains(path, partner)).then_some((r, port, stub + 2.0 * margin))
+        };
         Keepouts {
             solids: index.solid_rects_for([a, b]),
-            ends: [own(a, b, ra), own(b, a, rb)],
-            self_loop: a == b,
+            ends: [own(a, b, ra, pa, sa), own(b, a, rb, pb, sb)],
             margin,
         }
     }
 
     /// The first offence along a sampled piece of wire: the sample window,
-    /// the rect it violates, and their distance. `excused` marks the end
-    /// bodies this piece may lawfully enter (its own perpendicular leave).
-    pub(crate) fn offence(&self, pts: &[Pt], excused: [bool; 2]) -> Option<([Pt; 2], Rect, f64)> {
-        for r in self.bounds(excused) {
-            for s in pts.windows(2) {
-                let d = box_dist(seg_box(s), rect_box(*r));
-                if d < self.margin - EPS {
-                    return Some(([s[0], s[1]], *r, d));
+    /// the rect it violates, and their distance. An own end body is judged
+    /// like any solid except inside its ports' excuse zones (a self-loop's
+    /// two zones both cover its one body).
+    pub(crate) fn offence(&self, pts: &[Pt]) -> Option<([Pt; 2], Rect, f64)> {
+        let hit = |r: &Rect, w: &[Pt]| {
+            let d = box_dist(seg_box(w), rect_box(*r));
+            (d < self.margin - EPS).then_some(d)
+        };
+        for r in &self.solids {
+            for w in pts.windows(2) {
+                if let Some(d) = hit(r, w) {
+                    return Some(([w[0], w[1]], *r, d));
+                }
+            }
+        }
+        for (r, _, _) in self.ends.iter().flatten() {
+            for w in pts.windows(2) {
+                if self.excused(*r, w) {
+                    continue;
+                }
+                if let Some(d) = hit(r, w) {
+                    return Some(([w[0], w[1]], *r, d));
                 }
             }
         }
         None
     }
 
-    /// The bodies a piece is judged against: every solid, plus each own end
-    /// body its excuse does not cover.
-    fn bounds(&self, excused: [bool; 2]) -> impl Iterator<Item = &Rect> {
-        let excused = if self.self_loop {
-            [excused[0] || excused[1]; 2]
-        } else {
-            excused
-        };
-        self.solids.iter().chain(
+    /// Whether a sample window sits in an own body's excuse zone — near
+    /// any of that body's own ports (a self-loop's two zones both cover
+    /// its one body).
+    fn excused(&self, r: Rect, w: &[Pt]) -> bool {
+        let near = |p: Pt| {
             self.ends
                 .iter()
-                .zip(excused)
-                .filter(|(_, e)| !e)
-                .filter_map(|(r, _)| r.as_ref()),
-        )
+                .flatten()
+                .any(|(er, port, radius)| *er == r && (p.0 - port.0).hypot(p.1 - port.1) <= *radius)
+        };
+        near(w[0]) || near(w[1])
+    }
+
+    /// Every distinct body a set of sampled pieces offends, with its
+    /// closest distance — the same judgment as [`Keepouts::offence`],
+    /// collected per body rather than first-hit.
+    fn offenders(&self, pieces: &[Vec<Pt>]) -> Vec<(Rect, f64)> {
+        let mut out: Vec<(Rect, f64)> = Vec::new();
+        let mut push = |r: Rect, d: f64| match out.iter_mut().find(|(b, _)| *b == r) {
+            Some((_, min)) => *min = min.min(d),
+            None => out.push((r, d)),
+        };
+        for pts in pieces {
+            for w in pts.windows(2) {
+                for r in &self.solids {
+                    let d = box_dist(seg_box(w), rect_box(*r));
+                    if d < self.margin - EPS {
+                        push(*r, d);
+                    }
+                }
+                for (r, _, _) in self.ends.iter().flatten() {
+                    if self.excused(*r, w) {
+                        continue;
+                    }
+                    let d = box_dist(seg_box(w), rect_box(*r));
+                    if d < self.margin - EPS {
+                        push(*r, d);
+                    }
+                }
+            }
+        }
+        out
     }
 }
 
-/// The first body a fitted curve offends, span by span in curve order —
-/// each end's own body excused at its own end span.
+/// The first body a fitted curve offends, span by span in curve order.
 fn first_offender(curve: &[[Pt; 4]], keep: &Keepouts) -> Option<Rect> {
-    let last = curve.len().saturating_sub(1);
-    curve.iter().enumerate().find_map(|(i, c)| {
-        keep.offence(&curve::sample_span(c), [i == 0, i == last])
-            .map(|(_, r, _)| r)
-    })
+    curve
+        .iter()
+        .find_map(|c| keep.offence(&curve::sample_span(c)).map(|(_, r, _)| r))
 }
 
 /// A body's detour vias at an escalation level: the detour rides the chord
@@ -186,37 +228,21 @@ pub(crate) fn dodge(
 }
 
 /// Every distinct body a drawn wire offends, with its closest distance —
-/// the stubs judged with their own-end excuse, the curve span by span. All
-/// offending bodies are collected, not the first: a wire that crosses
-/// smoothly names everything it crosses.
+/// stubs and curve spans alike (a stub off a fixed port cannot dodge, but
+/// its offence is still named). All offending bodies are collected, not
+/// the first: a wire that crosses smoothly names everything it crosses.
 fn offences(fitted: &Fitted, keep: &Keepouts) -> Vec<(Rect, f64)> {
     let (path, curve) = fitted;
-    let mut out: Vec<(Rect, f64)> = Vec::new();
     let n = path.len();
-    let mut pieces: Vec<(Vec<Pt>, [bool; 2])> = Vec::new();
+    let mut pieces: Vec<Vec<Pt>> = Vec::new();
     if n >= 2 {
-        pieces.push((vec![path[0], path[1]], [true, false]));
-        pieces.push((vec![path[n - 2], path[n - 1]], [false, true]));
+        pieces.push(vec![path[0], path[1]]);
+        pieces.push(vec![path[n - 2], path[n - 1]]);
     }
-    let last = curve.len().saturating_sub(1);
-    for (i, c) in curve.iter().enumerate() {
-        pieces.push((curve::sample_span(c), [i == 0, i == last]));
+    for c in curve {
+        pieces.push(curve::sample_span(c));
     }
-    for (pts, excused) in &pieces {
-        for r in keep.bounds(*excused) {
-            let d = pts
-                .windows(2)
-                .map(|s| box_dist(seg_box(s), rect_box(*r)))
-                .fold(f64::INFINITY, f64::min);
-            if d < keep.margin - EPS {
-                match out.iter_mut().find(|(b, _)| b == r) {
-                    Some((_, min)) => *min = min.min(d),
-                    None => out.push((*r, d)),
-                }
-            }
-        }
-    }
-    out
+    keep.offenders(&pieces)
 }
 
 #[cfg(test)]
@@ -228,7 +254,6 @@ mod tests {
         Keepouts {
             solids,
             ends: [None, None],
-            self_loop: false,
             margin,
         }
     }

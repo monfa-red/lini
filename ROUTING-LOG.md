@@ -448,6 +448,21 @@ Executing sessions: append dated notes here — decisions the plan didn't
 anticipate, gotchas, deferred items, comparator cases that needed deepening,
 anything the next session must know. Keep entries terse.
 
+- **2026-07-17, self-loops through the general pipeline (owner: the ant
+  loop curled into its own corner).** The self-loop was the last special
+  case — a hand-placed hook via, no dodging — and its via landed on the
+  node's corner once the stubs shrank to nubs. Root cause was deeper:
+  the own-body excuse was span-granular, and a self-loop's both spans
+  are end spans, so its own body was never judged at all. The excuse is
+  now **port-proximity**: a wire is excused from its own endpoint's
+  keep-out only within `stub + 2·margin` of that port (`Keepouts` ends
+  carry `(rect, port, radius)`; the `self_loop` flag and the span-flag
+  plumbing died, and the checker reads ports/stubs off the drawn path).
+  A self-loop's mid-flight now offends its own corner like any obstacle
+  and the ordinary stadium sweep rounds it — the special-case arm in the
+  driver is deleted whole. links_simple-natural's ant loop draws a round
+  arc with real air; mindmap byte-identical; suite green.
+
 - **2026-07-17, the stadium sweep (owner: water → roof rounded garden in
   three sharp turns).** The corner-pair detour was polygonal — out, along
   the face, back in, with Catmull tangents wobbling at the vias. The

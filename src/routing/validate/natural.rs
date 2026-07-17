@@ -214,19 +214,24 @@ fn respect(
         let (Some(ra), Some(rb)) = (index.rect(&w.seg_from), index.rect(&w.seg_to)) else {
             continue; // contact already flagged the missing body
         };
-        let keep = Keepouts::build(index, [(&w.seg_from, ra), (&w.seg_to, rb)], m);
+        // Ports and stub lengths read off the drawn geometry — the same
+        // port-proximity excuse the engine dodges with.
         let n = w.path.len();
-        let pieces =
-            std::iter::once((vec![w.path[0], w.path[1]], [true, false]))
-                .chain(std::iter::once((
-                    vec![w.path[n - 2], w.path[n - 1]],
-                    [false, true],
-                )))
-                .chain(w.curve.iter().enumerate().map(|(i, cubic)| {
-                    (curve::sample_span(cubic), [i == 0, i == w.curve.len() - 1])
-                }));
-        for (pts, exc) in pieces {
-            if let Some((s, r, d)) = keep.offence(&pts, exc) {
+        let (pa, pb) = (w.path[0], w.path[n - 1]);
+        let stub = |a: (f64, f64), b: (f64, f64)| (a.0 - b.0).hypot(a.1 - b.1);
+        let keep = Keepouts::build(
+            index,
+            [
+                (&w.seg_from, ra, pa, stub(w.path[1], pa)),
+                (&w.seg_to, rb, pb, stub(w.path[n - 2], pb)),
+            ],
+            m,
+        );
+        let pieces = std::iter::once(vec![w.path[0], w.path[1]])
+            .chain(std::iter::once(vec![w.path[n - 2], w.path[n - 1]]))
+            .chain(w.curve.iter().map(curve::sample_span));
+        for pts in pieces {
+            if let Some((s, r, d)) = keep.offence(&pts) {
                 out.push(breach(
                     Rule::Clearance,
                     w,
