@@ -58,7 +58,7 @@ pub fn check(nodes: &[PlacedNode], links: &[RoutedLink], report: &[Violation]) -
     clearance(&index, &ortho, c, &mut out);
     let mut drawn = separation(&index, &ortho, c, &mut out);
     self_crossing(&ortho, &mut out);
-    natural::check(&index, &nat, c, &mut out);
+    natural::check(&index, &nat, c, report, &mut out);
     // Crossings involving a natural wire are lawfully oblique — counted for
     // the report reconciliation with the same generic intersection the
     // engine counts them with, never judged square-on.

@@ -22,7 +22,7 @@ mod world;
 use crate::ast::Side;
 use crate::layout::ir::{RoutedLink, Stray};
 use crate::resolve::Strategy;
-use crate::routing::{Routing, Rule, Severity, Violation, cross};
+use crate::routing::{Routing, Rule, Severity, Violation};
 
 use entry::Entry;
 use graph::{Axis, ChannelGraph};
@@ -95,8 +95,9 @@ const ONE_SIDE_LOOP: &str = "self-loop with both ends forced onto one side";
 
 /// Self-loop side resolution (ROUTING.md Special nodes): defaults
 /// right → top; a forced side wins and its free partner takes the default
-/// that stays adjacent; one shared side is invalid.
-fn self_loop_sides(a: Option<Side>, b: Option<Side>) -> Option<(Side, Side)> {
+/// that stays adjacent; one shared side is invalid (natural draws it
+/// anyway — its same-side loop is a lawful smooth curve).
+pub(crate) fn self_loop_sides(a: Option<Side>, b: Option<Side>) -> Option<(Side, Side)> {
     let partner = |s: Side| {
         if s == Side::Top {
             Side::Right
@@ -123,30 +124,29 @@ fn impossible(req: &EdgeReq, detail: &str) -> Violation {
     }
 }
 
-/// Route the corridor requests (orthogonal and natural) over the placed scene
-/// — the six steps, in order, one decision each: worlds and their channel
-/// graphs, bundles in declaration order through the weighted search
-/// (committing to the ledger as they win), placement over all chains at once,
-/// then geometry and the crossing report. Requests of other strategies pass
-/// through untouched —
-/// their strategies and the shared label pass live with the dispatch
+/// Route the orthogonal requests over the placed scene — the six steps, in
+/// order, one decision each: worlds and their channel graphs, bundles in
+/// declaration order through the weighted search (committing to the ledger
+/// as they win), placement over all chains at once, then geometry. Requests
+/// of other strategies pass through untouched — their drivers, the shared
+/// label pass, and the crossing report live with the dispatch
 /// ([`crate::routing::route`]). Returns the drawn links' request indices
 /// alongside, for that label pass.
 pub(crate) fn route(index: &SceneIndex, reqs: &[EdgeReq]) -> (Routing, Vec<usize>) {
     let mut routing = Routing::default();
-    if !reqs.iter().any(EdgeReq::corridor) {
+    if !reqs.iter().any(|r| r.routing == Strategy::Orthogonal) {
         return (routing, Vec::new());
     }
     // The diagram routes at the maximum clearance any link carries
     // (ROUTING.md Vocabulary); `build_worlds` spends it on keep-outs and the margin.
     let c = reqs
         .iter()
-        .filter(|r| r.corridor())
+        .filter(|r| r.routing == Strategy::Orthogonal)
         .map(|r| r.clearance)
         .fold(0.0_f64, f64::max);
     let worlds = build_worlds(index, reqs, c);
 
-    let fans = request::fan_groups(reqs);
+    let fans = request::fan_groups(reqs, Strategy::Orthogonal);
     let bundles = request::bundles(reqs);
     let mut fan_pick: Vec<Option<Side>> = vec![None; fans.groups.len()];
     let mut ledger = Ledger::new(c);
@@ -361,7 +361,7 @@ pub(crate) fn route(index: &SceneIndex, reqs: &[EdgeReq]) -> (Routing, Vec<usize
 
     let mut req_of = Vec::new();
     for (i, req) in reqs.iter().enumerate() {
-        if !req.corridor() {
+        if req.routing != Strategy::Orthogonal {
             continue;
         }
         let Some(chain) = &chains[i] else {
@@ -379,17 +379,9 @@ pub(crate) fn route(index: &SceneIndex, reqs: &[EdgeReq]) -> (Routing, Vec<usize
             continue;
         };
         req_of.push(i);
-        // The one divergence between the corridor strategies: an orthogonal
-        // chain lowers to a polyline (render-time fillets); a natural chain
-        // lowers to cubics plus their dense sampling as the shared `path`.
-        let (path, curve) = match req.routing {
-            Strategy::Orthogonal => (geometry::polyline(chain), Vec::new()),
-            Strategy::Natural => super::natural::lower(index, req, chain, c),
-            Strategy::Straight => unreachable!("straight requests never build chains"),
-        };
         routing.links.push(RoutedLink {
-            path,
-            curve,
+            path: geometry::polyline(chain),
+            curve: Vec::new(),
             strategy: req.routing,
             markers: req.markers.clone(),
             attrs: req.attrs.clone(),
@@ -403,40 +395,6 @@ pub(crate) fn route(index: &SceneIndex, reqs: &[EdgeReq]) -> (Routing, Vec<usize
             fan_from: fans.group_at(i, End::A).map(|g| g as u32),
             fan_to: fans.group_at(i, End::B).map(|g| g as u32),
         });
-    }
-
-    // The exact crossing count over the final polylines — the estimate's
-    // ground truth, counted once and reported as normal output. A pair
-    // involving a natural wire crosses obliquely (its samples are not
-    // axis-aligned), so it counts by generic transversal intersection;
-    // orthogonal pairs keep the square-on primitive, byte-identical.
-    for i in 0..routing.links.len() {
-        for j in i + 1..routing.links.len() {
-            let hit = if routing.links[i].strategy == Strategy::Natural
-                || routing.links[j].strategy == Strategy::Natural
-            {
-                crate::routing::cross_oblique
-            } else {
-                cross
-            };
-            for sa in routing.links[i].path.windows(2) {
-                for sb in routing.links[j].path.windows(2) {
-                    if let Some(at) = hit(sa, sb) {
-                        let name = |k: usize| {
-                            let r = &reqs[req_of[k]];
-                            format!("{} -> {}", r.a_path, r.b_path)
-                        };
-                        routing.report.push(Violation {
-                            rule: Rule::Crossing,
-                            severity: Severity::Info,
-                            links: vec![name(i), name(j)],
-                            detail: format!("forced crossing at ({}, {})", at.0, at.1),
-                            span: reqs[req_of[j]].span,
-                        });
-                    }
-                }
-            }
-        }
     }
 
     (routing, req_of)

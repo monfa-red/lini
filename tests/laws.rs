@@ -156,3 +156,20 @@ fn routing_pcb_ten_times_stays_fast() {
         "10 debug compiles took {took:?}, budget 30 s"
     );
 }
+
+/// Natural's own tripwire: no channels, no search, no ledger — a mindmap is
+/// spline fits, so ten debug compiles must stay well under the corridor
+/// budget (the corridor-first build spent ~3 s per compile here).
+#[test]
+fn routing_mindmap_ten_times_stays_fast() {
+    let src = read(std::path::Path::new("samples/mindmap.lini"));
+    let start = std::time::Instant::now();
+    for _ in 0..10 {
+        lini::compile_str(&src).expect("compile mindmap");
+    }
+    let took = start.elapsed();
+    assert!(
+        took.as_secs_f64() < 10.0,
+        "10 debug compiles took {took:?}, budget 10 s"
+    );
+}

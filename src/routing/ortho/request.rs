@@ -63,17 +63,6 @@ impl End {
 }
 
 impl EdgeReq {
-    /// Whether this request routes through the corridor model — ROUTING.md's
-    /// six steps. `natural` rides the same worlds, channels, bundles, and
-    /// search as `orthogonal` and diverges only at geometry lowering
-    /// (ROUTING.md The natural strategy); `straight` avoids nothing.
-    pub fn corridor(&self) -> bool {
-        match self.routing {
-            Strategy::Orthogonal | Strategy::Natural => true,
-            Strategy::Straight => false,
-        }
-    }
-
     pub fn path(&self, end: End) -> &str {
         match end {
             End::A => &self.a_path,
@@ -193,13 +182,13 @@ fn pair_key(r: &EdgeReq) -> PairKey {
 }
 
 /// Bundles in declaration order of their first member; members in declaration
-/// order within. Self-loops never bundle, and only corridor requests
-/// (orthogonal and natural) enter — a `routing: straight` wire is one trimmed
-/// segment, never a rail.
+/// order within. Self-loops never bundle, and only orthogonal requests enter
+/// — a `routing: straight` wire is one trimmed segment, and a natural
+/// duplicate needs no route sharing (its port ladder alone makes the rails).
 pub fn bundles(reqs: &[EdgeReq]) -> Vec<Bundle> {
     let mut out: Vec<(PairKey, Bundle)> = Vec::new();
     for (i, r) in reqs.iter().enumerate() {
-        if !r.corridor() {
+        if r.routing != Strategy::Orthogonal {
             continue;
         }
         if r.a_path == r.b_path {
@@ -218,9 +207,10 @@ pub fn bundles(reqs: &[EdgeReq]) -> Vec<Bundle> {
     out.into_iter().map(|(_, b)| b).collect()
 }
 
-/// Fan groups: requests of one statement sharing a segment endpoint share that
-/// end's port and stub. `groups[g]` lists members in expansion order;
-/// the per-request entry holds `(group, end)` for each fanned end.
+/// Fan groups: requests of one statement (and one strategy — each driver
+/// groups its own) sharing a segment endpoint share that end's port and
+/// stub. `groups[g]` lists members in expansion order; the per-request entry
+/// holds `(group, end)` for each fanned end.
 pub struct Fans {
     pub groups: Vec<Vec<usize>>,
     pub of: Vec<Vec<(usize, End)>>,
@@ -235,11 +225,14 @@ impl Fans {
     }
 }
 
-pub fn fan_groups(reqs: &[EdgeReq]) -> Fans {
+pub fn fan_groups(reqs: &[EdgeReq], strategy: Strategy) -> Fans {
     let mut groups: Vec<Vec<usize>> = Vec::new();
     let mut of: Vec<Vec<(usize, End)>> = vec![Vec::new(); reqs.len()];
     let mut keys: Vec<(usize, usize, End, String, Option<Side>)> = Vec::new();
     for (i, r) in reqs.iter().enumerate() {
+        if r.routing != strategy {
+            continue;
+        }
         for end in [End::A, End::B] {
             let key = (r.stmt, r.seg, end, r.path(end).to_owned(), r.side(end));
             match keys.iter().position(|k| *k == key) {
@@ -399,7 +392,7 @@ mod tests {
             req(0, 0, 1, "a", "c"),
             req(1, 0, 0, "a", "d"),
         ];
-        let fans = fan_groups(&reqs);
+        let fans = fan_groups(&reqs, Strategy::Orthogonal);
         assert_eq!(fans.groups, vec![vec![0, 1]]);
         assert_eq!(fans.group_at(0, End::A), Some(0));
         assert_eq!(fans.group_at(1, End::A), Some(0));
@@ -418,7 +411,7 @@ mod tests {
             r
         };
         let reqs = vec![arm(0, "r.a"), arm(1, "r.b"), arm(2, "r.c")];
-        let fans = fan_groups(&reqs);
+        let fans = fan_groups(&reqs, Strategy::Orthogonal);
         assert_eq!(fans.groups, vec![vec![0, 1, 2]]);
         for i in 0..3 {
             assert_eq!(fans.group_at(i, End::A), Some(0));
@@ -427,20 +420,20 @@ mod tests {
         let mut sibling = req(3, 0, 0, "r", "x");
         sibling.side_a = Some(Side::Right);
         let reqs = vec![arm(0, "r.a"), arm(1, "r.b"), sibling];
-        assert!(fan_groups(&reqs).groups.is_empty());
+        assert!(fan_groups(&reqs, Strategy::Orthogonal).groups.is_empty());
         // A repeated far end keeps the parallel-rails contract.
         let reqs = vec![arm(0, "r.a"), arm(1, "r.a")];
-        assert!(fan_groups(&reqs).groups.is_empty());
+        assert!(fan_groups(&reqs, Strategy::Orthogonal).groups.is_empty());
         // An unforced end never fans across statements.
         let reqs = vec![req(0, 0, 0, "r", "r.a"), req(1, 0, 0, "r", "r.b")];
-        assert!(fan_groups(&reqs).groups.is_empty());
+        assert!(fan_groups(&reqs, Strategy::Orthogonal).groups.is_empty());
     }
 
     #[test]
     fn fan_in_groups_the_shared_target() {
         // fox & owl -> mouse.
         let reqs = vec![req(0, 0, 0, "fox", "mouse"), req(0, 0, 1, "owl", "mouse")];
-        let fans = fan_groups(&reqs);
+        let fans = fan_groups(&reqs, Strategy::Orthogonal);
         assert_eq!(fans.groups, vec![vec![0, 1]]);
         assert_eq!(fans.group_at(0, End::B), Some(0));
         assert_eq!(fans.group_at(1, End::B), Some(0));
@@ -450,7 +443,7 @@ mod tests {
     fn chain_segments_do_not_fan() {
         // a -> b -> c: two segments of one statement share `b` but not a seg index.
         let reqs = vec![req(0, 0, 0, "a", "b"), req(0, 1, 0, "b", "c")];
-        let fans = fan_groups(&reqs);
+        let fans = fan_groups(&reqs, Strategy::Orthogonal);
         assert!(fans.groups.is_empty());
     }
 }

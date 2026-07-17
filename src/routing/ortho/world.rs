@@ -23,7 +23,7 @@ pub(super) fn world_ladder(index: &SceneIndex, a: &str, b: &str) -> Vec<WorldKey
     out
 }
 
-/// Build every routing world once: the distinct containers the corridor
+/// Build every routing world once: the distinct containers the orthogonal
 /// requests reach (each request's `world_ladder`, sorted and deduped), each
 /// decomposed into its channel graph. The root world (`None`) spans `bounds` —
 /// the scene plus its canvas margin; an interior world is its own placed body.
@@ -33,7 +33,7 @@ pub(super) fn build_worlds(index: &SceneIndex, reqs: &[EdgeReq], c: f64) -> Vec<
 
     let mut keys: Vec<WorldKey> = reqs
         .iter()
-        .filter(|r| r.corridor())
+        .filter(|r| r.routing == crate::resolve::Strategy::Orthogonal)
         .flat_map(|r| world_ladder(index, &r.a_path, &r.b_path))
         .collect();
     keys.sort_unstable();

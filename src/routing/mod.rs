@@ -2,11 +2,11 @@
 //!
 //! Every strategy consumes the placed scene and the expanded link requests
 //! and produces the same outputs — polylines, a report, strays — sharing one
-//! spine: request expansion, markers, labels, stray drawing, render-time
-//! rounding. Only geometry construction differs; validation ([`validate`]) is
-//! per strategy. `orthogonal` (the default) is the six-step model in
-//! [`ortho`]; `natural` rides that model's corridor choice and lowers to
-//! cubic splines in [`natural`]; `straight` carries sequence messages.
+//! spine: request expansion, markers, labels, the crossing report, stray
+//! drawing, render-time rounding. Only geometry construction differs;
+//! validation ([`validate`]) is per strategy. `orthogonal` (the default) is
+//! the six-step model in [`ortho`]; `natural` fits direct splines with via
+//! dodges in [`natural`]; `straight` carries sequence messages.
 
 pub(crate) mod natural;
 pub(crate) mod ortho;
@@ -35,20 +35,63 @@ pub struct Routing {
 
 /// Route every link of the scene over the finished, immutable layout: expand
 /// the requests once, hand each strategy its own, then run the shared spine —
-/// declaration order, the label pass, and the wires containers drew
-/// themselves (a sequence's messages, already lowered through `straight`).
+/// declaration order, the label pass, the crossing report, and the wires
+/// containers drew themselves (a sequence's messages, already lowered
+/// through `straight`).
 pub fn route(program: &Program, nodes: &[PlacedNode]) -> Result<Routing, Error> {
     let index = ortho::scene::SceneIndex::build(nodes);
     let reqs = ortho::request::requests(program, &index)?;
     let (mut routing, mut req_of) = ortho::route(&index, &reqs);
+    natural::route(&index, &reqs, &mut routing, &mut req_of);
     straight::route(&reqs, &mut routing, &mut req_of);
     let mut drawn: Vec<(usize, RoutedLink)> =
         req_of.drain(..).zip(routing.links.drain(..)).collect();
     drawn.sort_by_key(|&(i, _)| i);
     (req_of, routing.links) = drawn.into_iter().unzip();
     ortho::labels::place(&mut routing.links, &req_of, &reqs, program, &index);
+    crossings(&routing.links, &mut routing.report);
     routing.links.extend(owned_links(nodes));
     Ok(routing)
+}
+
+/// The exact crossing count over the drawn wires — the spine's shared
+/// report, every strategy pair except `straight` (which avoids nothing and
+/// reports nothing). A pair involving a natural wire crosses obliquely (its
+/// samples are not axis-aligned), so it counts by generic transversal
+/// intersection; orthogonal pairs keep the square-on primitive.
+fn crossings(links: &[RoutedLink], report: &mut Vec<Violation>) {
+    use crate::resolve::Strategy;
+    let name = |w: &RoutedLink| format!("{} -> {}", w.seg_from, w.seg_to);
+    for i in 0..links.len() {
+        if links[i].strategy == Strategy::Straight {
+            continue;
+        }
+        for j in i + 1..links.len() {
+            if links[j].strategy == Strategy::Straight {
+                continue;
+            }
+            let hit = if links[i].strategy == Strategy::Natural
+                || links[j].strategy == Strategy::Natural
+            {
+                cross_oblique
+            } else {
+                cross
+            };
+            for sa in links[i].path.windows(2) {
+                for sb in links[j].path.windows(2) {
+                    if let Some(at) = hit(sa, sb) {
+                        report.push(Violation {
+                            rule: Rule::Crossing,
+                            severity: Severity::Info,
+                            links: vec![name(&links[i]), name(&links[j])],
+                            detail: format!("forced crossing at ({}, {})", at.0, at.1),
+                            span: links[j].decl_span,
+                        });
+                    }
+                }
+            }
+        }
+    }
 }
 
 /// The links containers drew themselves — a sequence's messages, stored on

@@ -769,10 +769,10 @@ fn breaches(src: &str) -> Vec<lini::Violation> {
 }
 
 #[test]
-fn a_natural_wire_dodges_an_obstacle_inside_its_corridor() {
-    // A wall between the endpoints forces the dogleg corridor; the curve
-    // rides it — every sample keeps clearance from the wall — and the
-    // natural law arm passes the scene.
+fn a_natural_wire_dodges_an_obstacle_at_margin() {
+    // A wall between the endpoints: the direct fit would pierce it, so the
+    // dodge threads vias around it — every sample keeps the natural margin
+    // (clearance / 2) from the wall — and the natural law arm passes.
     let src = "{ direction: row; gap: 60; clearance: 10; routing: natural }\n\
                |box#a| { width: 60; height: 60 }\n\
                |box#wall| { width: 60; height: 200 }\n\
@@ -802,8 +802,8 @@ fn a_natural_wire_dodges_an_obstacle_inside_its_corridor() {
             .max(s[0].1.min(s[1].1) - y1)
             .max(0.0);
         assert!(
-            (dx * dx + dy * dy).sqrt() >= 10.0 - 1e-6,
-            "sample window {s:?} inside the wall's clearance"
+            (dx * dx + dy * dy).sqrt() >= 5.0 - 1e-6,
+            "sample window {s:?} inside the wall's margin"
         );
     }
     // It actually dodges: the ports are level with the wall, so some sample
