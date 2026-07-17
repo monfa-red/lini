@@ -104,11 +104,12 @@ and 5 — channels, search, placement — do not exist here):
   unmarked), handles pulled toward the far end (`NATURAL_PULL`), clamped
   to the forward travel so a short offset never overshoots. Sampled
   against the world's solid bodies inflated by margin, the **first**
-  offending body — and only it — gets the detour: a via at its inflated
-  corner nearest the chord, on the chord side that deviates less (ties
-  toward one fixed side), widening to that side's corner *pair* on a
-  repeat, pushed out one margin per further round, at most `DODGE_ROUNDS`
-  rounds. The first fit that offends nothing is the wire; a second body
+  offending body — and only it — gets the detour: a via seated a full
+  clearance off the body (a deliberate pass-by reads as passing, not
+  grazing; the law's floor stays margin) at the corner nearest the chord,
+  on the chord side that deviates less (ties toward one fixed side),
+  widening to that side's corner *pair* on a repeat, pushed out one
+  margin per further round, at most `DODGE_ROUNDS` rounds. The first fit that offends nothing is the wire; a second body
   under the detour, or the budget spent, and the wire draws its direct
   fit instead and is reported: **natural never strays** — a natural wire
   always draws, worst case smoothly through the bodies it names.

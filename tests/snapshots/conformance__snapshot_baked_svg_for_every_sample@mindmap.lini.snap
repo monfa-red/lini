@@ -661,17 +661,17 @@ input_file: samples/mindmap.lini
       <path d="M -263.7 257.4 L -265.7 257.4 C -306.3254 257.4 -289.2746 307.2 -329.9 307.2 L -331.9 307.2"/>
     </g>
     <g class="lini-link lini-link-dotted" data-from="lini-topic-1.ship.flags" data-to="lini-topic-1.learn.interviews">
-      <mask id="lini-label-cut-19" maskUnits="userSpaceOnUse" x="477.5" y="-151.4" width="60.937" height="410.8"><rect class="lini-cut-bg" x="477.5" y="-151.4" width="60.937" height="410.8"/><rect class="lini-cut" x="490.8814" y="188.3802" width="59.4" height="14.3"/></mask>
-      <path d="M 479.5 -149.4 L 481.5 -149.4 C 531.7 -149.4 512.8873 -62.9041 531.7 26.7 C 538.1724 57.5279 537.8596 58.8081 531.7 89.7 C 514.698 174.9687 531.7 257.4 485.7 257.4 L 483.7 257.4" mask="url(#lini-label-cut-19)"/>
+      <mask id="lini-label-cut-19" maskUnits="userSpaceOnUse" x="477.5" y="-151.4" width="56.4588" height="410.8"><rect class="lini-cut-bg" x="477.5" y="-151.4" width="56.4588" height="410.8"/><rect class="lini-cut" x="495.2505" y="188.4799" width="59.4" height="14.3"/></mask>
+      <path d="M 479.5 -149.4 L 481.5 -149.4 C 531.7 -149.4 530.7548 -64.8528 531.7 26.7 C 532.9143 144.3144 531.7 257.4 485.7 257.4 L 483.7 257.4" mask="url(#lini-label-cut-19)"/>
       <g class="lini-link-label">
-        <use href="#lg0400-71" transform="translate(494.1814 199.4682) scale(0.0055 -0.0055)"/>
-        <use href="#lg0400-83" transform="translate(500.7814 199.4682) scale(0.0055 -0.0055)"/>
-        <use href="#lg0400-82" transform="translate(507.3814 199.4682) scale(0.0055 -0.0055)"/>
-        <use href="#lg0400-74" transform="translate(513.9814 199.4682) scale(0.0055 -0.0055)"/>
-        <use href="#lg0400-77" transform="translate(520.5814 199.4682) scale(0.0055 -0.0055)"/>
-        <use href="#lg0400-86" transform="translate(527.1814 199.4682) scale(0.0055 -0.0055)"/>
-        <use href="#lg0400-81" transform="translate(533.7814 199.4682) scale(0.0055 -0.0055)"/>
-        <use href="#lg0400-87" transform="translate(540.3814 199.4682) scale(0.0055 -0.0055)"/>
+        <use href="#lg0400-71" transform="translate(498.5505 199.5679) scale(0.0055 -0.0055)"/>
+        <use href="#lg0400-83" transform="translate(505.1505 199.5679) scale(0.0055 -0.0055)"/>
+        <use href="#lg0400-82" transform="translate(511.7505 199.5679) scale(0.0055 -0.0055)"/>
+        <use href="#lg0400-74" transform="translate(518.3505 199.5679) scale(0.0055 -0.0055)"/>
+        <use href="#lg0400-77" transform="translate(524.9505 199.5679) scale(0.0055 -0.0055)"/>
+        <use href="#lg0400-86" transform="translate(531.5505 199.5679) scale(0.0055 -0.0055)"/>
+        <use href="#lg0400-81" transform="translate(538.1505 199.5679) scale(0.0055 -0.0055)"/>
+        <use href="#lg0400-87" transform="translate(544.7505 199.5679) scale(0.0055 -0.0055)"/>
       </g>
     </g>
     <g class="lini-link lini-hue-orange" data-from="lini-topic-1.build.lini-topic-2" data-to="lini-topic-1.build.lini-topic-2.lini-topic-1">

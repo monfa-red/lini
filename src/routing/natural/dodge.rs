@@ -92,9 +92,11 @@ fn first_offender(curve: &[[Pt; 4]], keep: &Keepouts) -> Option<Rect> {
 /// A body's via corners at an escalation level: the detour rides the chord
 /// side whose corners deviate less (ties toward the negative side — fixed,
 /// Law 4's spirit); on that side, the two corners nearest the chord, ordered
-/// along it — entering corner first.
+/// along it — entering corner first. The via **seats** a full clearance
+/// (2 × margin) off the body — the law's floor stays margin, but a
+/// deliberate pass-by should read as passing, not grazing.
 fn corners_for(body: Rect, chord: (Pt, Pt), margin: f64, level: usize) -> [Pt; 2] {
-    let r = body.inflate(margin * (1.0 + level as f64));
+    let r = body.inflate(margin * (2.0 + level as f64));
     let d = {
         let (dx, dy) = (chord.1.0 - chord.0.0, chord.1.1 - chord.0.1);
         let l = dx.hypot(dy);
