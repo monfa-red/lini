@@ -66,7 +66,7 @@ pub(crate) fn route(
             }
         };
         let (sa, sb) = (stub(req.markers.start), stub(req.markers.end));
-        let refit = |vias: &[curve::Pt]| {
+        let refit = |vias: &[(curve::Pt, Option<curve::Pt>)]| {
             curve::direct(la.port, la.normal, sa, lb.port, lb.normal, sb, vias)
         };
         let tip =
@@ -89,7 +89,7 @@ pub(crate) fn route(
                 }
             };
             let via = (mid.0 + bis.0 * reach, mid.1 + bis.1 * reach);
-            (refit(&[via]), Vec::new())
+            (refit(&[(via, None)]), Vec::new())
         } else {
             let keep = dodge::Keepouts::build(
                 index,

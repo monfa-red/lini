@@ -107,25 +107,22 @@ pub(crate) fn hooky(curve: &[[Pt; 4]]) -> bool {
     end(first, sub(first[1], first[0])) || end(last, sub(last[3], last[2]))
 }
 
-/// The G1 cubic chain through `knots`: the forced leave directions at the two
-/// tips (perpendicular arrival), Catmull-Rom blends (toward the neighbouring
-/// knots) inside. Repeated knots dedupe **before** the tangents are read —
-/// blending across a kept duplicate would give the joint two different
-/// tangents, a kink.
-pub(crate) fn spans(knots: &[Pt], da: Pt, db: Pt) -> Vec<[Pt; 4]> {
-    let mut knots: Vec<Pt> = knots.to_vec();
-    knots.dedup();
+/// The G1 cubic chain through knots, each knot carrying an optional
+/// **forced tangent** (its travel direction along the curve — the ends
+/// always force theirs, a detour via forces the face it glides along);
+/// `None` blends Catmull-Rom toward the neighbouring knots. Repeated knots
+/// dedupe **before** the tangents are read — blending across a kept
+/// duplicate would give the joint two different tangents, a kink.
+pub(crate) fn spans(knots: &[(Pt, Option<Pt>)]) -> Vec<[Pt; 4]> {
+    let mut knots: Vec<(Pt, Option<Pt>)> = knots.to_vec();
+    knots.dedup_by(|b, a| b.0 == a.0);
     let tangent = |i: usize| {
-        if i == 0 {
-            da
-        } else if i == knots.len() - 1 {
-            mul(db, -1.0)
-        } else {
-            unit(sub(knots[i + 1], knots[i - 1]))
-        }
+        knots[i]
+            .1
+            .unwrap_or_else(|| unit(sub(knots[(i + 1).min(knots.len() - 1)].0, knots[i - 1].0)))
     };
     (0..knots.len().saturating_sub(1))
-        .map(|i| span(knots[i], tangent(i), knots[i + 1], tangent(i + 1)))
+        .map(|i| span(knots[i].0, tangent(i), knots[i + 1].0, tangent(i + 1)))
         .collect()
 }
 
@@ -156,11 +153,20 @@ pub(crate) fn sample(pa: Pt, sa: Pt, pb: Pt, curve: &[[Pt; 4]]) -> Vec<Pt> {
 }
 
 /// The direct fit: ports `pa`/`pb`, unit leave normals `na`/`nb`, stub
-/// lengths `sa`/`sb`, and the dodge vias (already in chord order) as interior
-/// knots. Facing stubs split the gap between the port planes rather than
-/// cross (the ports may sit closer than two stubs). Returns the dense
-/// sampled path and the exact cubics between the stub tips.
-pub(crate) fn direct(pa: Pt, na: Pt, sa: f64, pb: Pt, nb: Pt, sb: f64, vias: &[Pt]) -> Fitted {
+/// lengths `sa`/`sb`, and the dodge vias (already in chord order, each with
+/// an optional forced tangent) as interior knots. Facing stubs split the
+/// gap between the port planes rather than cross (the ports may sit closer
+/// than two stubs). Returns the dense sampled path and the exact cubics
+/// between the stub tips.
+pub(crate) fn direct(
+    pa: Pt,
+    na: Pt,
+    sa: f64,
+    pb: Pt,
+    nb: Pt,
+    sb: f64,
+    vias: &[(Pt, Option<Pt>)],
+) -> Fitted {
     let (mut sa, mut sb) = (sa, sb);
     if dot(na, nb) < -0.5 {
         let avail = dot(sub(pb, pa), na);
@@ -172,10 +178,10 @@ pub(crate) fn direct(pa: Pt, na: Pt, sa: f64, pb: Pt, nb: Pt, sb: f64, vias: &[P
     let ta = add(pa, mul(na, sa));
     let tb = add(pb, mul(nb, sb));
     let mut knots = Vec::with_capacity(vias.len() + 2);
-    knots.push(ta);
+    knots.push((ta, Some(na)));
     knots.extend_from_slice(vias);
-    knots.push(tb);
-    let curve = spans(&knots, na, nb);
+    knots.push((tb, Some(mul(nb, -1.0))));
+    let curve = spans(&knots);
     (sample(pa, ta, pb, &curve), curve)
 }
 
@@ -267,7 +273,7 @@ mod tests {
             (160.0, 30.0),
             (-1.0, 0.0),
             10.0,
-            &[via],
+            &[(via, None)],
         );
         assert_eq!(curve.len(), 2);
         assert_eq!(curve[0][3], via, "the via is a knot");

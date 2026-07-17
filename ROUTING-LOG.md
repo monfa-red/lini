@@ -448,6 +448,25 @@ Executing sessions: append dated notes here — decisions the plan didn't
 anticipate, gotchas, deferred items, comparator cases that needed deepening,
 anything the next session must know. Keep entries terse.
 
+- **2026-07-17, the stadium sweep (owner: water → roof rounded garden in
+  three sharp turns).** The corner-pair detour was polygonal — out, along
+  the face, back in, with Catmull tangents wobbling at the vias. The
+  spline gained per-knot **forced tangents** (`spans` takes
+  `(Pt, Option<Pt>)` knots; ends force their normals as before) and the
+  detour became one **stadium sweep**: the two vias carry tangents along
+  the face, so entry is one S, the face a straight glide, exit one S. A
+  single-apex variant was tried first and failed geometry: one interior
+  knot cannot round a wide body crossed off-centre (the tail beelines to
+  the port and cuts the exit corner — needed apex depths past any
+  budget). Also fixed on the way: the grazed one-sided body (all four
+  corners on one chord side) panicked the corner filter — the detour
+  side is now simply the chord side with the smaller worst deviation
+  (the empty side for a graze: bow away, don't orbit), vias from the
+  two corners nearest it. Known softness: duplicate rails can split
+  when one member's sweep clears and its twin's doesn't (different
+  ports → different verdicts) — both halves stay smooth; revisit only
+  if it reads badly in practice.
+
 - **2026-07-17, the hooked-landing gate (owner: n2 → e1 still elbowed).**
   The handle floor treated the symptom; the disease was the dodge
   reshaping a wire's approach — a via can turn the final span nearly

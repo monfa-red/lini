@@ -1,13 +1,14 @@
 //! The natural strategy's obstacle half (ROUTING.md The natural strategy,
-//! Respect) — **one gentle detour or none**: sample the direct fit against
-//! the world's solid bodies inflated by **margin** (`clearance / 2`); the
-//! first offending body gets the detour — its margin-inflated corner
-//! nearest the chord, widening to that side's corner *pair* on a repeat,
-//! pushed out one margin per further round, at most [`DODGE_ROUNDS`]
-//! rounds. The dodge stands only when it clears the wire **entirely**; a
-//! second body in the way, or the budget spent, and the wire draws its
-//! smooth direct fit instead and names every body it crosses — smoothness
-//! before avoidance, and natural never strays.
+//! Respect) — **one gentle detour or none**, and a detour is **one
+//! stadium sweep**: sample the direct fit against the world's solid bodies
+//! inflated by **margin** (`clearance / 2`); the first offending body gets
+//! the via pair of [`vias_for`] — its two near corners pushed out a full
+//! clearance, each with a forced face tangent, deepened per round until
+//! the sweep clears, at most [`DODGE_ROUNDS`] rounds. The dodge stands
+//! only when it clears the wire **entirely** and lands clean; a second
+//! body in the way, a hooked landing, or the budget spent, and the wire
+//! draws its smooth direct fit instead and names every body it crosses —
+//! smoothness before avoidance, and natural never strays.
 
 use super::curve::{self, Fitted, Pt};
 use crate::ledger::consts::DODGE_ROUNDS;
@@ -89,14 +90,14 @@ fn first_offender(curve: &[[Pt; 4]], keep: &Keepouts) -> Option<Rect> {
     })
 }
 
-/// A body's via corners at an escalation level: the detour rides the chord
+/// A body's detour vias at an escalation level: the detour rides the chord
 /// side whose corners deviate less (ties toward the negative side — fixed,
-/// Law 4's spirit); on that side, the two corners nearest the chord, ordered
-/// along it — entering corner first. The via **seats** a full clearance
-/// (2 × margin) off the body — the law's floor stays margin, but a
-/// deliberate pass-by should read as passing, not grazing.
-fn corners_for(body: Rect, chord: (Pt, Pt), margin: f64, level: usize) -> [Pt; 2] {
-    let r = body.inflate(margin * (2.0 + level as f64));
+/// Law 4's spirit). Two vias sit past the body's two corners on that side,
+/// pushed out a full clearance (deepened by a clearance per round), each
+/// carrying a **forced tangent along the face** — the curve enters as one
+/// S, glides the face straight, and exits as one S: a stadium sweep, never
+/// a face-hugging polygon and never a Catmull wobble.
+fn vias_for(body: Rect, chord: (Pt, Pt), margin: f64, level: usize) -> [(Pt, Option<Pt>); 2] {
     let d = {
         let (dx, dy) = (chord.1.0 - chord.0.0, chord.1.1 - chord.0.1);
         let l = dx.hypot(dy);
@@ -106,37 +107,59 @@ fn corners_for(body: Rect, chord: (Pt, Pt), margin: f64, level: usize) -> [Pt; 2
             (dx / l, dy / l)
         }
     };
-    let s = |c: &Pt| d.0 * (c.1 - chord.0.1) - d.1 * (c.0 - chord.0.0);
-    let along = |c: &Pt| d.0 * (c.0 - chord.0.0) + d.1 * (c.1 - chord.0.1);
-    let cs = [(r.x0, r.y0), (r.x1, r.y0), (r.x0, r.y1), (r.x1, r.y1)];
-    let (neg, pos): (Vec<Pt>, Vec<Pt>) = cs.into_iter().partition(|c| s(c) < 0.0);
-    let dev = |side: &[Pt]| side.iter().map(|c| s(c).abs()).fold(0.0_f64, f64::max);
-    let mut side = if pos.is_empty() || (!neg.is_empty() && dev(&neg) <= dev(&pos)) {
-        neg
-    } else {
-        pos
+    let s = |c: (f64, f64)| d.0 * (c.1 - chord.0.1) - d.1 * (c.0 - chord.0.0);
+    let along = |c: (f64, f64)| d.0 * (c.0 - chord.0.0) + d.1 * (c.1 - chord.0.1);
+    let cs = [
+        (body.x0, body.y0),
+        (body.x1, body.y0),
+        (body.x0, body.y1),
+        (body.x1, body.y1),
+    ];
+    let dev = |sign: f64| {
+        cs.iter()
+            .map(|&c| s(c) * sign)
+            .fold(f64::NEG_INFINITY, f64::max)
     };
-    side.sort_by(|a, b| {
-        s(a).abs()
-            .total_cmp(&s(b).abs())
-            .then(along(a).total_cmp(&along(b)))
-    });
-    let mut pair = [side[0], *side.get(1).unwrap_or(&side[0])];
-    pair.sort_by(|a, b| along(a).total_cmp(&along(b)));
-    pair
+    // The detour side is the chord side with the smaller worst deviation:
+    // for a straddled body the cheaper way around, for a grazed one-sided
+    // body the empty side — the curve bows away rather than orbits.
+    let sign = if dev(-1.0) <= dev(1.0) { -1.0 } else { 1.0 };
+    // The outward perpendicular on the detour side, and the face direction
+    // the curve glides along (the chord's shadow on the face).
+    let p = (-d.1 * sign, d.0 * sign);
+    let f = {
+        let (fx, fy) = (
+            d.0 - p.0 * (d.0 * p.0 + d.1 * p.1),
+            d.1 - p.1 * (d.0 * p.0 + d.1 * p.1),
+        );
+        let l = fx.hypot(fy);
+        if l <= 0.0 { d } else { (fx / l, fy / l) }
+    };
+    let out = margin * 2.0 * (1.0 + level as f64);
+    // The two corners nearest the detour side (its own face when straddled,
+    // the near face when grazed), ordered along the chord, pushed out.
+    let mut near = cs;
+    near.sort_by(|a, b| (s(*b) * sign).total_cmp(&(s(*a) * sign)));
+    let mut pair = [near[0], near[1]];
+    pair.sort_by(|a, b| along(*a).total_cmp(&along(*b)));
+    let (c0, c1) = (pair[0], pair[1]);
+    [
+        ((c0.0 + p.0 * out, c0.1 + p.1 * out), Some(f)),
+        ((c1.0 + p.0 * out, c1.1 + p.1 * out), Some(f)),
+    ]
 }
 
 /// Fit-and-dodge, all-or-nothing: fit the direct spline; if it offends,
-/// detour around the **first** offending body only — corner, then corner
-/// pair, then pushed out per round. The first fit that offends nothing is
-/// the wire. A foreign body under the detour, or the budget spent, falls
-/// back to the direct fit, returned with every `(body, distance)` it
-/// offends for the report (stubs included — a stub off a fixed port cannot
-/// dodge, but its offence is still named).
+/// sweep around the **first** offending body only — the stadium via pair,
+/// pushed out per round. The first fit that offends nothing and lands
+/// clean is the wire. A foreign body under the detour, a hooked landing,
+/// or the budget spent falls back to the direct fit, returned with every
+/// `(body, distance)` it offends for the report (stubs included — a stub
+/// off a fixed port cannot dodge, but its offence is still named).
 pub(crate) fn dodge(
     keep: &Keepouts,
     chord: (Pt, Pt),
-    refit: impl Fn(&[Pt]) -> Fitted,
+    refit: impl Fn(&[(Pt, Option<Pt>)]) -> Fitted,
 ) -> (Fitted, Vec<(Rect, f64)>) {
     let pure = refit(&[]);
     let Some(target) = first_offender(&pure.1, keep) else {
@@ -144,10 +167,8 @@ pub(crate) fn dodge(
         let left = offences(&pure, keep);
         return (pure, left);
     };
-    let (mut pair, mut level) = (false, 0);
-    for _ in 0..DODGE_ROUNDS {
-        let cs = corners_for(target, chord, keep.margin, level);
-        let vias = if pair { cs.to_vec() } else { vec![cs[0]] };
+    for level in 0..DODGE_ROUNDS {
+        let vias = vias_for(target, chord, keep.margin, level);
         let fitted = refit(&vias);
         let off = offences(&fitted, keep);
         if off.is_empty() {
@@ -158,11 +179,6 @@ pub(crate) fn dodge(
         }
         if off.iter().any(|(b, _)| *b != target) {
             break; // a second body: cross smoothly instead of weaving
-        }
-        if pair {
-            level += 1;
-        } else {
-            pair = true;
         }
     }
     let left = offences(&pure, keep);
@@ -217,7 +233,7 @@ mod tests {
         }
     }
 
-    fn fit_between(vias: &[Pt]) -> Fitted {
+    fn fit_between(vias: &[(Pt, Option<Pt>)]) -> Fitted {
         direct(
             (0.0, 50.0),
             (1.0, 0.0),

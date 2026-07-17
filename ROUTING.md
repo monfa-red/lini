@@ -104,19 +104,20 @@ and 5 — channels, search, placement — do not exist here):
   unmarked), handles pulled toward the far end (`NATURAL_PULL`), clamped
   to the forward travel so a short offset never overshoots. Sampled
   against the world's solid bodies inflated by margin, the **first**
-  offending body — and only it — gets the detour: a via seated a full
-  clearance off the body (a deliberate pass-by reads as passing, not
-  grazing; the law's floor stays margin) at the corner nearest the chord,
-  on the chord side that deviates less (ties toward one fixed side),
-  widening to that side's corner *pair* on a repeat, pushed out one
-  margin per further round, at most `DODGE_ROUNDS` rounds. The first fit
-  that offends nothing **and lands clean** is the wire — a detour that
-  bends the approach nearly parallel to a landing side would hook around
-  at the port, and a dodge may not manufacture an arrival the direct fit
-  didn't have. A second body under the detour, a hooked landing, or the
-  budget spent, and the wire draws its direct fit instead and is
-  reported: **natural never strays** — a natural wire always draws, worst
-  case smoothly through the bodies it names.
+  offending body — and only it — gets the detour, and the detour is one
+  **stadium sweep**: the body's two corners nearest the detour side (the
+  chord side that deviates less, ties toward one fixed side) push out a
+  full clearance as vias, each carrying a forced tangent **along the
+  face** — the curve enters as one S, glides the face, and exits as one
+  S, never a face-hugging polygon — deepening one clearance per round,
+  at most `DODGE_ROUNDS` rounds. The first fit that offends nothing
+  **and lands clean** is the wire — a detour that bends the approach
+  nearly parallel to a landing side would hook around at the port, and a
+  dodge may not manufacture an arrival the direct fit didn't have. A
+  second body under the detour, a hooked landing, or the budget spent,
+  and the wire draws its direct fit instead and is reported: **natural
+  never strays** — a natural wire always draws, worst case smoothly
+  through the bodies it names.
 
 Markers, labels (arc-length `along:`, sliding), fans, self-loops, and the
 report ride the shared spine unchanged — the crossing count is
