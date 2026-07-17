@@ -82,10 +82,11 @@ pub(crate) const WAVY_AMPLITUDE: f64 = 1.4;
 /// length. One number, no user-facing knob — tuned by eye against rendered
 /// mindmaps.
 pub(crate) const NATURAL_PULL: f64 = 0.5;
-/// A `natural` wire's dodge budget (ROUTING.md The natural strategy): via
-/// insertions before an offending body draws through and is reported. Part
-/// of the routing contract, like the Law-3 cost constants.
-pub(crate) const DODGE_ROUNDS: usize = 12;
+/// A `natural` wire's dodge budget (ROUTING.md The natural strategy):
+/// escalation rounds on the one body a wire may detour before it falls
+/// back to its smooth direct fit and reports what it crosses. Part of the
+/// routing contract, like the Law-3 cost constants.
+pub(crate) const DODGE_ROUNDS: usize = 6;
 /// The note dog-ear [SPEC 8]: fold size as a height fraction, capped.
 pub(crate) const NOTE_FOLD_FRAC: f64 = 0.34;
 pub(crate) const NOTE_FOLD_MAX: f64 = 15.0;

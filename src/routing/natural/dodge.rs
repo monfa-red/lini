@@ -1,12 +1,13 @@
 //! The natural strategy's obstacle half (ROUTING.md The natural strategy,
-//! Respect): sample the fitted curve against the world's solid bodies
-//! inflated by **margin** (`clearance / 2`); the first offending body
-//! inserts a **via** — its margin-inflated corner nearest the chord. A body
-//! that keeps offending widens to that side's corner *pair* (the curve
-//! rides straight across its face), then pushes the pair out one margin per
-//! round. The spline refits through all vias in chord order, at most
-//! [`DODGE_ROUNDS`] rounds. Whatever still offends **draws anyway** and is
-//! returned for the report: natural never strays.
+//! Respect) — **one gentle detour or none**: sample the direct fit against
+//! the world's solid bodies inflated by **margin** (`clearance / 2`); the
+//! first offending body gets the detour — its margin-inflated corner
+//! nearest the chord, widening to that side's corner *pair* on a repeat,
+//! pushed out one margin per further round, at most [`DODGE_ROUNDS`]
+//! rounds. The dodge stands only when it clears the wire **entirely**; a
+//! second body in the way, or the budget spent, and the wire draws its
+//! smooth direct fit instead and names every body it crosses — smoothness
+//! before avoidance, and natural never strays.
 
 use super::curve::{self, Fitted, Pt};
 use crate::ledger::consts::DODGE_ROUNDS;
@@ -49,19 +50,7 @@ impl Keepouts {
     /// the rect it violates, and their distance. `excused` marks the end
     /// bodies this piece may lawfully enter (its own perpendicular leave).
     pub(crate) fn offence(&self, pts: &[Pt], excused: [bool; 2]) -> Option<([Pt; 2], Rect, f64)> {
-        let excused = if self.self_loop {
-            [excused[0] || excused[1]; 2]
-        } else {
-            excused
-        };
-        let bound = self.solids.iter().chain(
-            self.ends
-                .iter()
-                .zip(excused)
-                .filter(|(_, e)| !e)
-                .filter_map(|(r, _)| r.as_ref()),
-        );
-        for r in bound {
+        for r in self.bounds(excused) {
             for s in pts.windows(2) {
                 let d = box_dist(seg_box(s), rect_box(*r));
                 if d < self.margin - EPS {
@@ -70,6 +59,23 @@ impl Keepouts {
             }
         }
         None
+    }
+
+    /// The bodies a piece is judged against: every solid, plus each own end
+    /// body its excuse does not cover.
+    fn bounds(&self, excused: [bool; 2]) -> impl Iterator<Item = &Rect> {
+        let excused = if self.self_loop {
+            [excused[0] || excused[1]; 2]
+        } else {
+            excused
+        };
+        self.solids.iter().chain(
+            self.ends
+                .iter()
+                .zip(excused)
+                .filter(|(_, e)| !e)
+                .filter_map(|(r, _)| r.as_ref()),
+        )
     }
 }
 
@@ -81,14 +87,6 @@ fn first_offender(curve: &[[Pt; 4]], keep: &Keepouts) -> Option<Rect> {
         keep.offence(&curve::sample_span(c), [i == 0, i == last])
             .map(|(_, r, _)| r)
     })
-}
-
-/// One offending body's dodge state: single nearest corner first, the
-/// side's corner pair on a repeat, pushed out one margin per further round.
-struct BodyPlan {
-    body: Rect,
-    pair: bool,
-    level: usize,
 }
 
 /// A body's via corners at an escalation level: the detour rides the chord
@@ -126,112 +124,75 @@ fn corners_for(body: Rect, chord: (Pt, Pt), margin: f64, level: usize) -> [Pt; 2
     pair
 }
 
-/// Fit-and-dodge: `refit` fits the wire through a via list (chord order);
-/// the loop feeds it offending bodies' vias for up to [`DODGE_ROUNDS`]
-/// rounds. Returns the final geometry and whatever still offends —
-/// `(body, distance)` pairs for the report, stubs included (a stub off a
-/// fixed port cannot dodge, but its offence is still named).
+/// Fit-and-dodge, all-or-nothing: fit the direct spline; if it offends,
+/// detour around the **first** offending body only — corner, then corner
+/// pair, then pushed out per round. The first fit that offends nothing is
+/// the wire. A foreign body under the detour, or the budget spent, falls
+/// back to the direct fit, returned with every `(body, distance)` it
+/// offends for the report (stubs included — a stub off a fixed port cannot
+/// dodge, but its offence is still named).
 pub(crate) fn dodge(
     keep: &Keepouts,
     chord: (Pt, Pt),
     refit: impl Fn(&[Pt]) -> Fitted,
 ) -> (Fitted, Vec<(Rect, f64)>) {
-    let along = |p: &Pt| {
-        let (dx, dy) = (chord.1.0 - chord.0.0, chord.1.1 - chord.0.1);
-        dx * (p.0 - chord.0.0) + dy * (p.1 - chord.0.1)
+    let pure = refit(&[]);
+    let Some(target) = first_offender(&pure.1, keep) else {
+        // The curve is clean; a stub may still graze something unfixable.
+        let left = offences(&pure, keep);
+        return (pure, left);
     };
-    let mut plan: Vec<BodyPlan> = Vec::new();
-    let mut fitted = refit(&[]);
+    let (mut pair, mut level) = (false, 0);
     for _ in 0..DODGE_ROUNDS {
-        let Some(body) = first_offender(&fitted.1, keep) else {
-            break;
-        };
-        match plan.iter_mut().find(|e| e.body == body) {
-            None => plan.push(BodyPlan {
-                body,
-                pair: false,
-                level: 0,
-            }),
-            Some(e) if !e.pair => e.pair = true,
-            Some(e) => e.level += 1,
+        let cs = corners_for(target, chord, keep.margin, level);
+        let vias = if pair { cs.to_vec() } else { vec![cs[0]] };
+        let fitted = refit(&vias);
+        let off = offences(&fitted, keep);
+        if off.is_empty() {
+            return (fitted, off);
         }
-        let mut vias: Vec<Pt> = plan
-            .iter()
-            .flat_map(|e| {
-                let cs = corners_for(e.body, chord, keep.margin, e.level);
-                if e.pair { cs.to_vec() } else { vec![cs[0]] }
-            })
-            .collect();
-        vias.sort_by(|a, b| along(a).total_cmp(&along(b)));
-        // Two bodies wanting vias in the same spot merge to one knot — a
-        // pair of near-coincident knots would kink the blend between them.
-        vias.dedup_by(|b, a| (b.0 - a.0).hypot(b.1 - a.1) < keep.margin);
-        envelope(&mut vias, chord);
-        fitted = refit(&vias);
-    }
-    let leftover = offences(&fitted, keep);
-    (fitted, leftover)
-}
-
-/// Envelope prune: an interior via that dips back toward the chord, below
-/// the line of its same-side neighbours, wiggles the detour without
-/// clearing anything its neighbours don't already clear — drop it, to a
-/// fixpoint. Slaloms (sign changes) are untouched.
-fn envelope(vias: &mut Vec<Pt>, chord: (Pt, Pt)) {
-    let (dx, dy) = (chord.1.0 - chord.0.0, chord.1.1 - chord.0.1);
-    let l = dx.hypot(dy);
-    let d = if l <= 0.0 {
-        (1.0, 0.0)
-    } else {
-        (dx / l, dy / l)
-    };
-    let s = |c: &Pt| d.0 * (c.1 - chord.0.1) - d.1 * (c.0 - chord.0.0);
-    let along = |c: &Pt| d.0 * (c.0 - chord.0.0) + d.1 * (c.1 - chord.0.1);
-    loop {
-        let dip = (1..vias.len().saturating_sub(1)).find(|&i| {
-            let (sp, si, sn) = (s(&vias[i - 1]), s(&vias[i]), s(&vias[i + 1]));
-            if sp.signum() != si.signum() || si.signum() != sn.signum() {
-                return false;
-            }
-            let (tp, ti, tn) = (along(&vias[i - 1]), along(&vias[i]), along(&vias[i + 1]));
-            if tn - tp <= 0.0 {
-                return false;
-            }
-            let at = sp + (sn - sp) * (ti - tp) / (tn - tp);
-            si.abs() < at.abs() - EPS
-        });
-        match dip {
-            Some(i) => {
-                vias.remove(i);
-            }
-            None => break,
+        if off.iter().any(|(b, _)| *b != target) {
+            break; // a second body: cross smoothly instead of weaving
+        }
+        if pair {
+            level += 1;
+        } else {
+            pair = true;
         }
     }
+    let left = offences(&pure, keep);
+    (pure, left)
 }
 
-/// Every distinct body a drawn wire still offends, with its closest
-/// distance — the stubs judged with their own-end excuse, the curve span by
-/// span.
+/// Every distinct body a drawn wire offends, with its closest distance —
+/// the stubs judged with their own-end excuse, the curve span by span. All
+/// offending bodies are collected, not the first: a wire that crosses
+/// smoothly names everything it crosses.
 fn offences(fitted: &Fitted, keep: &Keepouts) -> Vec<(Rect, f64)> {
     let (path, curve) = fitted;
     let mut out: Vec<(Rect, f64)> = Vec::new();
-    let mut push = |r: Rect, d: f64| match out.iter_mut().find(|(b, _)| *b == r) {
-        Some((_, min)) => *min = min.min(d),
-        None => out.push((r, d)),
-    };
     let n = path.len();
+    let mut pieces: Vec<(Vec<Pt>, [bool; 2])> = Vec::new();
     if n >= 2 {
-        if let Some((_, r, d)) = keep.offence(&[path[0], path[1]], [true, false]) {
-            push(r, d);
-        }
-        if let Some((_, r, d)) = keep.offence(&[path[n - 2], path[n - 1]], [false, true]) {
-            push(r, d);
-        }
+        pieces.push((vec![path[0], path[1]], [true, false]));
+        pieces.push((vec![path[n - 2], path[n - 1]], [false, true]));
     }
     let last = curve.len().saturating_sub(1);
     for (i, c) in curve.iter().enumerate() {
-        if let Some((_, r, d)) = keep.offence(&curve::sample_span(c), [i == 0, i == last]) {
-            push(r, d);
+        pieces.push((curve::sample_span(c), [i == 0, i == last]));
+    }
+    for (pts, excused) in &pieces {
+        for r in keep.bounds(*excused) {
+            let d = pts
+                .windows(2)
+                .map(|s| box_dist(seg_box(s), rect_box(*r)))
+                .fold(f64::INFINITY, f64::min);
+            if d < keep.margin - EPS {
+                match out.iter_mut().find(|(b, _)| b == r) {
+                    Some((_, min)) => *min = min.min(d),
+                    None => out.push((*r, d)),
+                }
+            }
         }
     }
     out
@@ -271,6 +232,21 @@ mod tests {
         let (fitted, left) = dodge(&k, CHORD, fit_between);
         assert_eq!(fitted, fit_between(&[]));
         assert!(left.is_empty());
+    }
+
+    #[test]
+    fn a_second_body_crosses_smoothly_instead_of_weaving() {
+        // Two staggered bodies on the chord: dodging the first drops the
+        // curve onto the second — smoothness wins, the wire draws its
+        // direct fit (one straight cubic) and names both bodies.
+        let (b1, b2) = (
+            Rect::new(60.0, 30.0, 100.0, 70.0),
+            Rect::new(120.0, 10.0, 160.0, 55.0),
+        );
+        let k = keep(vec![b1, b2], 8.0);
+        let ((_, curve), left) = dodge(&k, CHORD, fit_between);
+        assert_eq!(fit_between(&[]).1, curve, "the direct fit stands");
+        assert_eq!(left.len(), 2, "both bodies named: {left:?}");
     }
 
     #[test]

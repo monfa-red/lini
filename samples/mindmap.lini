@@ -45,5 +45,5 @@
     |topic| "Bug fixes beat features"
   ]
 
-  ship.flags --- learn.interviews "confirms" { along: 0.82; }
+  ship.flags:right --- learn.interviews:right "confirms" { along: 0.82; }
 ]

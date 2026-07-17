@@ -604,78 +604,78 @@ input_file: samples/mindmap.lini
   </g>
   <g class="lini-links">
     <g class="lini-link lini-hue-rose" data-from="lini-topic-1" data-to="lini-topic-1.ship">
-      <path d="M 52.7 5.6 L 68.7 5.6 C 123.2 5.6 68.7 -173.2 123.2 -173.2 L 139.2 -173.2"/>
+      <path d="M 52.7 0 L 54.7 0 C 137.2 0 54.7 -199.2 137.2 -199.2 L 139.2 -199.2"/>
     </g>
     <g class="lini-link lini-hue-orange" data-from="lini-topic-1" data-to="lini-topic-1.build">
-      <path d="M 52.7 5.6 L 68.7 5.6 C 84.9432 5.6 84.4568 0 100.7 0 L 116.7 0"/>
+      <path d="M 52.7 0 L 54.7 0 C 84.9926 0 84.4074 8.4 114.7 8.4 L 116.7 8.4"/>
     </g>
     <g class="lini-link lini-hue-amber" data-from="lini-topic-1" data-to="lini-topic-1.learn">
-      <path d="M 52.7 5.6 L 68.7 5.6 C 100.7 5.6 68.7 207.1 100.7 207.1 L 116.7 207.1"/>
+      <path d="M 52.7 0 L 54.7 0 C 114.7 0 54.7 207.6 114.7 207.6 L 116.7 207.6"/>
     </g>
     <g class="lini-link lini-hue-lime" data-from="lini-topic-1" data-to="lini-topic-1.plan">
-      <path d="M -52.7 21.4 L -68.7 21.4 C -123.2 21.4 -68.7 -183.7 -123.2 -183.7 L -139.2 -183.7"/>
+      <path d="M -52.7 0 L -54.7 0 C -137.2 0 -54.7 -199.2 -137.2 -199.2 L -139.2 -199.2"/>
     </g>
     <g class="lini-link lini-hue-green" data-from="lini-topic-1" data-to="lini-topic-1.team">
-      <path d="M -52.7 21.4 L -68.7 21.4 C -109.2399 21.4 -100.6601 57.7 -141.2 57.7 L -157.2 57.7"/>
+      <path d="M -52.7 0 L -54.7 0 C -112.7678 0 -97.1322 58.2 -155.2 58.2 L -157.2 58.2"/>
     </g>
     <g class="lini-link lini-hue-teal" data-from="lini-topic-1" data-to="lini-topic-1.care">
-      <path d="M -52.7 21.4 L -68.7 21.4 C -100.7 21.4 -68.7 241.9 -100.7 241.9 L -116.7 241.9"/>
+      <path d="M -52.7 0 L -54.7 0 C -114.7 0 -54.7 257.4 -114.7 257.4 L -116.7 257.4"/>
     </g>
     <g class="lini-link lini-hue-rose" data-from="lini-topic-1.ship" data-to="lini-topic-1.ship.lini-topic-1">
-      <path d="M 241.2 -203.4 L 257.2 -203.4 C 293.9401 -203.4 279.1599 -247.6 315.9 -247.6 L 331.9 -247.6"/>
+      <path d="M 241.2 -199.2 L 243.2 -199.2 C 295.4114 -199.2 277.6886 -257.4 329.9 -257.4 L 331.9 -257.4"/>
     </g>
     <g class="lini-link lini-hue-rose" data-from="lini-topic-1.ship" data-to="lini-topic-1.ship.flags">
-      <path d="M 241.2 -203.4 L 257.2 -203.4 C 291.5778 -203.4 281.5222 -167.6 315.9 -167.6 L 331.9 -167.6"/>
+      <path d="M 241.2 -199.2 L 243.2 -199.2 C 293.1923 -199.2 279.9077 -149.4 329.9 -149.4 L 331.9 -149.4"/>
     </g>
     <g class="lini-link lini-hue-orange" data-from="lini-topic-1.build" data-to="lini-topic-1.build.lini-topic-1">
-      <path d="M 263.7 8.4 L 279.7 8.4 C 305.3125 8.4 286.0875 -31.6 311.7 -31.6 L 327.7 -31.6"/>
+      <path d="M 263.7 8.4 L 265.7 8.4 C 304.6873 8.4 286.7127 -41.4 325.7 -41.4 L 327.7 -41.4"/>
     </g>
     <g class="lini-link lini-hue-orange" data-from="lini-topic-1.build" data-to="lini-topic-1.build.lini-topic-2">
-      <path d="M 263.7 8.4 L 279.7 8.4 C 311.2493 8.4 296.9507 48.4 328.5 48.4 L 344.5 48.4"/>
+      <path d="M 263.7 8.4 L 265.7 8.4 C 311.4665 8.4 296.7335 58.2 342.5 58.2 L 344.5 58.2"/>
     </g>
     <g class="lini-link lini-hue-amber" data-from="lini-topic-1.learn" data-to="lini-topic-1.learn.lini-topic-1">
-      <path d="M 263.7 207.6 L 279.7 207.6 C 311.2493 207.6 296.9507 167.6 328.5 167.6 L 344.5 167.6"/>
+      <path d="M 263.7 207.6 L 265.7 207.6 C 311.4665 207.6 296.7335 157.8 342.5 157.8 L 344.5 157.8"/>
     </g>
     <g class="lini-link lini-hue-amber" data-from="lini-topic-1.learn" data-to="lini-topic-1.learn.interviews">
-      <path d="M 263.7 207.6 L 279.7 207.6 C 305.3125 207.6 286.0875 247.6 311.7 247.6 L 327.7 247.6"/>
+      <path d="M 263.7 207.6 L 265.7 207.6 C 304.6873 207.6 286.7127 257.4 325.7 257.4 L 327.7 257.4"/>
     </g>
     <g class="lini-link lini-hue-lime" data-from="lini-topic-1.plan" data-to="lini-topic-1.plan.lini-topic-1">
-      <path d="M -241.2 -204.8 L -257.2 -204.8 C -312.0189 -204.8 -261.0811 -297.4 -315.9 -297.4 L -331.9 -297.4"/>
+      <path d="M -241.2 -199.2 L -243.2 -199.2 C -312.4475 -199.2 -260.6525 -307.2 -329.9 -307.2 L -331.9 -307.2"/>
     </g>
     <g class="lini-link lini-hue-lime" data-from="lini-topic-1.plan" data-to="lini-topic-1.plan.lini-topic-2">
-      <path d="M -241.2 -204.8 L -257.2 -204.8 C -284.5935 -204.8 -284.3065 -199.2 -311.7 -199.2 L -327.7 -199.2"/>
+      <path d="M -241.2 -199.2 L -243.2 -199.2 C -284.6633 -199.2 -284.2367 -207.6 -325.7 -207.6 L -327.7 -207.6"/>
     </g>
     <g class="lini-link lini-hue-lime" data-from="lini-topic-1.plan" data-to="lini-topic-1.plan.lini-topic-3">
-      <path d="M -241.2 -204.8 L -257.2 -204.8 C -309.6754 -204.8 -263.4246 -117.8 -315.9 -117.8 L -331.9 -117.8"/>
+      <path d="M -241.2 -199.2 L -243.2 -199.2 C -309.2247 -199.2 -263.8753 -99.6 -329.9 -99.6 L -331.9 -99.6"/>
     </g>
     <g class="lini-link lini-hue-green" data-from="lini-topic-1.team" data-to="lini-topic-1.team.lini-topic-1">
-      <path d="M -223.2 58.2 L -239.2 58.2 C -291.9856 58.2 -284.1144 18.2 -336.9 18.2 L -352.9 18.2"/>
+      <path d="M -223.2 58.2 L -225.2 58.2 C -292.8028 58.2 -283.2972 8.4 -350.9 8.4 L -352.9 8.4"/>
     </g>
     <g class="lini-link lini-hue-green" data-from="lini-topic-1.team" data-to="lini-topic-1.team.lini-topic-2">
-      <path d="M -223.2 58.2 L -239.2 58.2 C -282.4518 58.2 -272.6482 98.2 -315.9 98.2 L -331.9 98.2"/>
+      <path d="M -223.2 58.2 L -225.2 58.2 C -283.1701 58.2 -271.9299 108 -329.9 108 L -331.9 108"/>
     </g>
     <g class="lini-link lini-hue-teal" data-from="lini-topic-1.care" data-to="lini-topic-1.care.lini-topic-1">
-      <path d="M -263.7 257.4 L -279.7 257.4 C -314.5993 257.4 -302.0007 217.4 -336.9 217.4 L -352.9 217.4"/>
+      <path d="M -263.7 257.4 L -265.7 257.4 C -315.0434 257.4 -301.5566 207.6 -350.9 207.6 L -352.9 207.6"/>
     </g>
     <g class="lini-link lini-hue-teal" data-from="lini-topic-1.care" data-to="lini-topic-1.care.lini-topic-2">
-      <path d="M -263.7 257.4 L -279.7 257.4 C -306.6742 257.4 -288.9258 297.4 -315.9 297.4 L -331.9 297.4"/>
+      <path d="M -263.7 257.4 L -265.7 257.4 C -306.3254 257.4 -289.2746 307.2 -329.9 307.2 L -331.9 307.2"/>
     </g>
     <g class="lini-link lini-link-dotted" data-from="lini-topic-1.ship.flags" data-to="lini-topic-1.learn.interviews">
-      <mask id="lini-label-cut-19" maskUnits="userSpaceOnUse" x="403.7" y="-117.2" width="100.7543" height="350.8"><rect class="lini-cut-bg" x="403.7" y="-117.2" width="100.7543" height="350.8"/><rect class="lini-cut" x="439.6757" y="193.0602" width="59.4" height="14.3"/></mask>
-      <path d="M 405.7 -115.2 L 405.7 -99.2 C 405.7 -75.2 461.1432 -107.7466 491.7 -75.2 C 514.8351 -50.5584 493.8241 -41.3332 491.7 -7.6 C 485.4185 92.156 510.8372 98.3303 474.9 191.6 C 461.733 225.7729 405.7 191.6 405.7 215.6 L 405.7 231.6" mask="url(#lini-label-cut-19)"/>
+      <mask id="lini-label-cut-19" maskUnits="userSpaceOnUse" x="477.5" y="-151.4" width="60.937" height="410.8"><rect class="lini-cut-bg" x="477.5" y="-151.4" width="60.937" height="410.8"/><rect class="lini-cut" x="490.8814" y="188.3802" width="59.4" height="14.3"/></mask>
+      <path d="M 479.5 -149.4 L 481.5 -149.4 C 531.7 -149.4 512.8873 -62.9041 531.7 26.7 C 538.1724 57.5279 537.8596 58.8081 531.7 89.7 C 514.698 174.9687 531.7 257.4 485.7 257.4 L 483.7 257.4" mask="url(#lini-label-cut-19)"/>
       <g class="lini-link-label">
-        <use href="#lg0400-71" transform="translate(442.9757 204.1482) scale(0.0055 -0.0055)"/>
-        <use href="#lg0400-83" transform="translate(449.5757 204.1482) scale(0.0055 -0.0055)"/>
-        <use href="#lg0400-82" transform="translate(456.1757 204.1482) scale(0.0055 -0.0055)"/>
-        <use href="#lg0400-74" transform="translate(462.7757 204.1482) scale(0.0055 -0.0055)"/>
-        <use href="#lg0400-77" transform="translate(469.3757 204.1482) scale(0.0055 -0.0055)"/>
-        <use href="#lg0400-86" transform="translate(475.9757 204.1482) scale(0.0055 -0.0055)"/>
-        <use href="#lg0400-81" transform="translate(482.5757 204.1482) scale(0.0055 -0.0055)"/>
-        <use href="#lg0400-87" transform="translate(489.1757 204.1482) scale(0.0055 -0.0055)"/>
+        <use href="#lg0400-71" transform="translate(494.1814 199.4682) scale(0.0055 -0.0055)"/>
+        <use href="#lg0400-83" transform="translate(500.7814 199.4682) scale(0.0055 -0.0055)"/>
+        <use href="#lg0400-82" transform="translate(507.3814 199.4682) scale(0.0055 -0.0055)"/>
+        <use href="#lg0400-74" transform="translate(513.9814 199.4682) scale(0.0055 -0.0055)"/>
+        <use href="#lg0400-77" transform="translate(520.5814 199.4682) scale(0.0055 -0.0055)"/>
+        <use href="#lg0400-86" transform="translate(527.1814 199.4682) scale(0.0055 -0.0055)"/>
+        <use href="#lg0400-81" transform="translate(533.7814 199.4682) scale(0.0055 -0.0055)"/>
+        <use href="#lg0400-87" transform="translate(540.3814 199.4682) scale(0.0055 -0.0055)"/>
       </g>
     </g>
     <g class="lini-link lini-hue-orange" data-from="lini-topic-1.build.lini-topic-2" data-to="lini-topic-1.build.lini-topic-2.lini-topic-1">
-      <path d="M 466.9 58.2 L 482.9 58.2 C 507.3 58.2 507.3 58.2 531.7 58.2 L 547.7 58.2"/>
+      <path d="M 466.9 58.2 L 468.9 58.2 C 507.3 58.2 507.3 58.2 545.7 58.2 L 547.7 58.2"/>
     </g>
   </g>
 </svg>

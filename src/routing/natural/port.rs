@@ -4,10 +4,11 @@
 //! mindmaps stamp theirs; self-loops resolve through the shared
 //! [`self_loop_sides`]); otherwise an end takes the side that most faces the
 //! other end — a fan, the side facing its members' mean. Per node side,
-//! every landing prefers its far end's centre projected onto the side and
-//! the side's landings spread at ≥ pitch by the same bounded [`ladder`]
-//! placement uses, inside the port window (the side minus `clearance`
-//! corner margins, its centre point when too short).
+//! the landings spread at ≥ pitch **around the side's centre** by the same
+//! bounded [`ladder`] placement uses — a natural wire meets the middle of
+//! a side and its S absorbs the offset — inside the port window (the side
+//! minus `clearance` corner margins, its centre point when too short),
+//! ordered along the side as their far ends lie.
 
 use super::curve::Pt;
 use crate::ast::Side;
@@ -206,9 +207,10 @@ pub(crate) fn landings(
             .unwrap_or_else(|| facing_side(slot.rect, slot.mean_far()));
     }
 
-    // Spread each node side's slots at pitch inside the window, ordered by
-    // preference (where the far ends lie) then declaration — no braiding at
-    // the mouth.
+    // Spread each node side's slots at pitch **around the side's centre** —
+    // a natural wire meets the middle of a side, the S absorbs the offset —
+    // ordered along the side as their far ends lie, then by declaration, so
+    // wires never braid at the mouth.
     let mut ords: Vec<f64> = vec![0.0; slots.len()];
     let mut keys: Vec<(String, u8)> = slots
         .iter()
@@ -228,16 +230,14 @@ pub(crate) fn landings(
         });
         let first = &slots[group[0]];
         let win = window(first.rect, first.side, c);
+        let centre = (win.0 + win.1) / 2.0;
         let n = group.len();
         let pitch = if n > 1 {
             c.min((win.1 - win.0) / (n - 1) as f64)
         } else {
             c
         };
-        let prefs: Vec<f64> = group
-            .iter()
-            .map(|&s| pref_of(slots[s].side, slots[s].mean_far()))
-            .collect();
+        let prefs = vec![centre; n];
         let bounds: Vec<(f64, f64)> = vec![win; n];
         let seps = vec![pitch; n.saturating_sub(1)];
         for (&s, ord) in group.iter().zip(ladder(&prefs, &bounds, &seps)) {

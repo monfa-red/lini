@@ -448,6 +448,24 @@ Executing sessions: append dated notes here — decisions the plan didn't
 anticipate, gotchas, deferred items, comparator cases that needed deepening,
 anything the next session must know. Keep entries terse.
 
+- **2026-07-17 (later), natural v2 smoothness pass (owner feedback).**
+  The first cut still read busy: 16 px stubs made every wire "run
+  straight then turn", multi-body via weaves slalomed, and far-projection
+  ports wandered off the side centres. Three inversions, smoothness now
+  outranking avoidance: (1) **ports sit at the side centre** — landings
+  spread around it at pitch, ordered by far ends (order only, position no
+  longer pulled); (2) **the stub is the marker's run-up alone** (`NUB` =
+  2 px when unmarked) — the curve begins at the port; ortho keeps its
+  clearance-length stubs, the seam is natural's driver, not `EdgeReq`;
+  (3) **one gentle detour or none** — dodge targets only the direct
+  fit's first offender and stands only if it clears the wire entirely;
+  a second body or a spent budget falls back to the smooth direct fit +
+  reports (the envelope prune and via merge died with the weaves;
+  `DODGE_ROUNDS` back to 6). mindmap.lini's cross-link would now draw
+  straight through its column — the sample forces `:right` on both ends
+  and gets the clean outside arc (zero warnings, laws green). Mindmap
+  snapshot re-blessed; light + dark + links_medium-natural eyeballed.
+
 - **2026-07-17, natural v2 — curve-first (PLAN-NATURAL).** The alpha.1
   corridor-first natural is deleted whole: the ROUTING.md natural section
   is now its own five-law contract (contact, smoothness, directness,

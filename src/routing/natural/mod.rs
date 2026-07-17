@@ -21,6 +21,10 @@ use crate::routing::ortho::request::{self, EdgeReq, End};
 use crate::routing::ortho::scene::SceneIndex;
 use crate::routing::{Routing, Rule, Severity, Violation, straight};
 
+/// The unmarked stub: a hair of perpendicular contact, visually the curve
+/// starting at the port.
+const NUB: f64 = 2.0;
+
 /// Route every natural request over the placed scene, appending drawn wires
 /// and their request indices (the label pass's key) like the other strategy
 /// drivers. Reports each unresolved body offence as a Clearance warning —
@@ -50,19 +54,29 @@ pub(crate) fn route(
             continue;
         }
         let [la, lb] = lands[i].expect("natural landing");
+        // A natural stub exists for its marker alone: the marker's run-up
+        // when one is worn, a hair otherwise — the curve begins at the
+        // port, so a wire never runs straight and then turns.
+        let thickness = req.attrs.number("stroke-width").unwrap_or(0.0);
+        let stub = |kind: crate::resolve::MarkerKind| {
+            if kind == crate::resolve::MarkerKind::None {
+                NUB
+            } else {
+                crate::render::markers::marker_size(thickness)
+            }
+        };
+        let (sa, sb) = (stub(req.markers.start), stub(req.markers.end));
         let refit = |vias: &[curve::Pt]| {
-            curve::direct(
-                la.port, la.normal, req.stub_a, lb.port, lb.normal, req.stub_b, vias,
-            )
+            curve::direct(la.port, la.normal, sa, lb.port, lb.normal, sb, vias)
         };
         let tip =
             |l: &port::Landing, s: f64| (l.port.0 + l.normal.0 * s, l.port.1 + l.normal.1 * s);
-        let tips = (tip(&la, req.stub_a), tip(&lb, req.stub_b));
+        let tips = (tip(&la, sa), tip(&lb, sb));
         let ((path, cubics), offences) = if req.a_path == req.b_path {
             // The self-loop hook: one via out past the two sides' shared
             // corner, along the normals' bisector — local by construction,
             // so it neither dodges nor reports.
-            let reach = req.stub_a.max(req.stub_b).max(straight::HOOK_MIN);
+            let reach = sa.max(sb).max(straight::HOOK_MIN);
             let mid = ((tips.0.0 + tips.1.0) / 2.0, (tips.0.1 + tips.1.1) / 2.0);
             let bis = {
                 let (x, y) = (la.normal.0 + lb.normal.0, la.normal.1 + lb.normal.1);

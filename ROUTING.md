@@ -51,7 +51,10 @@ are judged the same way, on the output alone:
 
 1. **Contact** — orthogonal Law 2, shared verbatim: every end lands on a
    side, perpendicular, inside the port window, straight for at least its
-   marker. Landings sharing a side sit ≥ pitch apart, ordered along the
+   marker — and no longer: the stub exists for the marker alone (a hair
+   when unmarked), so the curve begins at the port and a wire never runs
+   straight and then turns. A lone landing takes the **side's centre**;
+   landings sharing a side spread around it at ≥ pitch, ordered along the
    side as their far ends lie — no braiding at the mouth. On a laid-out
    tree this yields the classic horizontal-tangent S-curve.
 2. **Smoothness** — a wire is its two straight stubs joined by one
@@ -66,13 +69,17 @@ are judged the same way, on the output alone:
    *away* from the chord as far as its turn-around requires; a self-loop
    is a smooth hook (both ends forced onto one side draws the same-side
    loop — natural has no stray to fall back on).
-4. **Respect** — the only obstacle law. From every solid body in its world
-   the wire keeps ≥ **margin** — `clearance / 2`, natural's one derived
-   number — or the wire-body pair is named in the report (`--strict`
-   errors). Between wires there is no law: crossings are free at any angle
-   (point contact, counted in the report like any crossing); only
-   duplicates — parallel rails at pitch riding one shape — and a fan's
-   shared trunk bind wires to each other.
+4. **Respect** — the only obstacle law, and smoothness outranks it. From
+   every solid body in its world the wire keeps ≥ **margin** —
+   `clearance / 2`, natural's one derived number — or the wire-body pair
+   is named in the report (`--strict` errors). A wire earns **one gentle
+   detour or none**: it may bend around the first body its direct fit
+   offends, and only if that clears it entirely; otherwise it draws the
+   smooth direct curve straight through and reports every body it
+   crosses — never a weave. Between wires there is no law: crossings are
+   free at any angle (point contact, counted in the report like any
+   crossing); only duplicates — parallel rails at pitch riding one shape —
+   and a fan's shared trunk bind wires to each other.
 5. **Determinism** — Law 4 verbatim: byte-identical reruns; ties break on
    the fixed side rank, then declaration order. No tension or curvature
    knobs.
@@ -86,26 +93,25 @@ and 5 — channels, search, placement — do not exist here):
   each end takes the permitted side that most faces the other end — the
   outward normal with the greatest dot product against the chord — ties
   on side rank.
-- **Ports.** Per node side, before any curve exists: each landing prefers
-  its far end's centre projected onto the side (a fan: its members'
-  mean), clamped into the port window, and the side's landings spread at
-  ≥ pitch by the same bounded ladder placement uses, compressing evenly
-  when the window cannot hold them. A fan's shared end is one landing.
-  Ports never read curve geometry, so every wire then fits independently
-  — natural needs no committed-route order.
+- **Ports.** Per node side, before any curve exists: the side's landings
+  spread around its **centre** at ≥ pitch by the same bounded ladder
+  placement uses (compressing evenly when the window cannot hold them),
+  ordered along the side by where their far ends lie. A fan's shared end
+  is one landing. Ports never read curve geometry, so every wire then
+  fits independently — natural needs no committed-route order.
 - **Fit & dodge.** The wire fits as the direct spline: stub tangents
-  normal to their sides, handles pulled toward the far end
-  (`NATURAL_PULL`), clamped to the forward travel so a short offset never
-  overshoots. Sampled against the world's solid bodies inflated by
-  margin, the first offending body inserts a **via** — its inflated
+  normal to their sides (the stub is the marker's run-up, a hair when
+  unmarked), handles pulled toward the far end (`NATURAL_PULL`), clamped
+  to the forward travel so a short offset never overshoots. Sampled
+  against the world's solid bodies inflated by margin, the **first**
+  offending body — and only it — gets the detour: a via at its inflated
   corner nearest the chord, on the chord side that deviates less (ties
-  toward one fixed side); a body that keeps offending widens to that
-  side's corner *pair*, then pushes the pair out one margin per round —
-  at most `DODGE_ROUNDS` rounds, vias in chord order, near-coincident
-  vias merged, and same-side dips pruned to the envelope so a detour
-  never wiggles. Whatever still offends **draws anyway** and is
-  reported: **natural never strays** — a natural wire always draws, worst
-  case straight through the body it names.
+  toward one fixed side), widening to that side's corner *pair* on a
+  repeat, pushed out one margin per further round, at most `DODGE_ROUNDS`
+  rounds. The first fit that offends nothing is the wire; a second body
+  under the detour, or the budget spent, and the wire draws its direct
+  fit instead and is reported: **natural never strays** — a natural wire
+  always draws, worst case smoothly through the bodies it names.
 
 Markers, labels (arc-length `along:`, sliding), fans, self-loops, and the
 report ride the shared spine unchanged — the crossing count is
