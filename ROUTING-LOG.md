@@ -448,6 +448,33 @@ Executing sessions: append dated notes here — decisions the plan didn't
 anticipate, gotchas, deferred items, comparator cases that needed deepening,
 anything the next session must know. Keep entries terse.
 
+- **2026-07-17, natural v2 — curve-first (PLAN-NATURAL).** The alpha.1
+  corridor-first natural is deleted whole: the ROUTING.md natural section
+  is now its own five-law contract (contact, smoothness, directness,
+  respect, determinism) and `natural::route` a sibling driver — sides by
+  facing, ports laddered per node side before any curve, then per wire an
+  independent direct spline with bounded via dodges
+  (`natural/{port,curve,dodge}.rs`; `corridor.rs` and the `EdgeReq::
+  corridor()` seam gone; the crossing report moved to the
+  `routing::route` spine). Numbers: mindmap.lini 2.9 s debug → 29 ms
+  (the profile had shown 99 % of the corridor build's time in
+  `cheapest`/`tracks_left`); every non-mindmap snapshot byte-identical.
+  Decisions the plan didn't anticipate: (a) a wide body needs its corner
+  *pair* on repeat offence — a single escalating via lets the arrival
+  tangent sag into the far corner; (b) near-coincident vias from two
+  bodies merge and same-side dips prune to the envelope (both fix real
+  kinks/wiggles found on natural-forced links_medium/links_hard); (c)
+  `spans()` dedupes knots *before* reading tangents — the old
+  filter-after left a G1 kink at a dropped duplicate; (d) the checker's
+  directness law binds only undodged fits (a lawful arch over a tall
+  wall swings past its own takeoff); (e) `DODGE_ROUNDS` landed at 12 —
+  6 starved the mindmap cross-link's weave past three cards; (f) a
+  same-side forced self-loop draws (natural has no stray), and natural
+  duplicates need no bundle machinery — the port ladder alone makes the
+  rails. Known softness, accepted: duplicates that dodge differently can
+  pinch a hair under the floor mid-flight (checker flags it; only on
+  forced-natural contended scenes, not samples).
+
 - **2026-07-11, the 0.21/0.22 round's routing-adjacent changes (PLAN-ALPHA
   M6).** Three seams moved; the router core is untouched. (1) The root
   `layout: drawing` / `layout: sequence` arms now call `routing::route(…)`

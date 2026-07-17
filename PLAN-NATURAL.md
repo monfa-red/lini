@@ -36,7 +36,7 @@ clippy && cargo test` before every commit; never "Co-Authored-By";
 pushing is Abbas's call.
 
 Constants (ledger/consts.rs, beside `NATURAL_PULL: 0.5`):
-`DODGE_ROUNDS: usize = 6`; margin = `clearance / 2` (derive via
+`DODGE_ROUNDS: usize = 12` (6 in the first cut; see the log); margin = `clearance / 2` (derive via
 `ortho::cost::min_pitch` — the same number, one definition).
 
 ## Fixed vocabulary (the contract between stages)
@@ -116,8 +116,8 @@ pub(crate) fn dodge(base: (Vec<Pt>, Vec<[Pt; 4]>), keep: &Keepouts,
 
 ### Stage 1 — the plan + contract touch-up
 
-- [ ] Commit this file.
-- [ ] ROUTING.md micro-edits found while planning: port spread
+- [x] Commit this file.
+- [x] ROUTING.md micro-edits found while planning: port spread
   "compressing toward margin only when the window is short" →
   "compressing evenly when the window cannot hold them" (short windows
   have no floor — natural never strays); note the crossing report is
@@ -125,7 +125,7 @@ pub(crate) fn dodge(base: (Vec<Pt>, Vec<[Pt; 4]>), keep: &Keepouts,
 
 ### Stage 2 — engine swap (one commit; the tree must stay green)
 
-- [ ] `natural/port.rs`: `Landing`, `landings()` — side scoring,
+- [x] `natural/port.rs`: `Landing`, `landings()` — side scoring,
   windows (port from the entry.rs window shape, no graph, no blocker
   clipping), per-side ladder spread; self-loop sides via
   `self_loop_sides` (make it `pub(crate)`, move to `natural/port.rs`?
@@ -135,63 +135,74 @@ pub(crate) fn dodge(base: (Vec<Pt>, Vec<[Pt; 4]>), keep: &Keepouts,
   two duplicates ladder at pitch on both sides; fan landing at the
   members' mean; forced side wins; short side collapses to centre;
   containment lands inside; determinism (rerun equality).
-- [ ] `natural/curve.rs`: add `direct()` (tips = port + normal·stub,
+- [x] `natural/curve.rs`: add `direct()` (tips = port + normal·stub,
   knots = tips + vias, `spans` with forced end tangents, `sample`);
   delete `fit`/`stubs` and their polyline tests; port the aligned-pair
   and S-curve tests onto `direct` (the classic S must come out
   byte-identical in shape: horizontal tangents, symmetric midpoint).
-- [ ] `natural/dodge.rs`: Keepouts moved from corridor.rs (offence
+- [x] `natural/dodge.rs`: Keepouts moved from corridor.rs (offence
   unchanged); `dodge()` — the via loop of decision 5, returning the
   final geometry plus the unresolved `(body, dist)` offences.
   corridor.rs deleted. Unit tests: clean fit passes through untouched;
   a straddling body forces one via and clears at margin; an
   undodgeable wall reports and still draws; determinism.
-- [ ] `natural/mod.rs`: the driver — filter Natural requests, c = their
+- [x] `natural/mod.rs`: the driver — filter Natural requests, c = their
   max clearance, margin = min_pitch(c); fans via `fan_groups` gaining a
   strategy predicate (ortho passes Orthogonal, natural Natural);
   `landings()`; per request: knots → `direct` → `dodge` → RoutedLink
   (path/curve/markers/attrs as today), offences → Rule::Clearance
   Warnings; self-loop hook (tips + one out-corner via, no dodging).
-- [ ] The split: `EdgeReq::corridor()` dies; `ortho::route` filters
+- [x] The split: `EdgeReq::corridor()` dies; `ortho::route` filters
   `Strategy::Orthogonal` (its Natural lowering arm and the
   `natural::lower` seam die); `bundles()` keeps its
   orthogonal-only filter explicitly; `routing::route` calls
   `natural::route` beside `straight::route`; the crossing count moves
   to `routing::route` per decision 7.
-- [ ] `validate/natural.rs`: rework per decision 8; `validate.rs::check`
+- [x] `validate/natural.rs`: rework per decision 8; `validate.rs::check`
   threads `report` into the natural arm for the respect excuse.
-- [ ] tests/routing.rs natural block: obstacle test now expects a
+- [x] tests/routing.rs natural block: obstacle test now expects a
   margin-clearing dodge (or a report — assert one of the two, and that
   the wire drew); bundle test asserts port pitch on both sides; fan
   trunk, self-hook, oblique crossing, rerun determinism, anon-world
   trees — updated expectations, same coverage. Perf tripwire: 10 debug
   compiles of samples/mindmap.lini < 10 s.
-- [ ] `cargo fmt && cargo clippy && cargo test`; commit
+- [x] `cargo fmt && cargo clippy && cargo test`; commit
   (`routing: natural v2 — direct splines, via dodges, no search`).
 
 ### Stage 3 — visual + snapshots + samples
 
-- [ ] Render tree.lini (unchanged — orthogonal), mindmap.lini, and
+- [x] Render tree.lini (unchanged — orthogonal), mindmap.lini, and
   natural-forced links_medium/links_hard scratch copies to PNG, light +
   dark, and **read them**: mindmap S-curves smooth at every port (no
   rounded elbows), fans centred, links_medium crossing-happy but
   smooth, no kinks anywhere.
-- [ ] Re-bless the mindmap snapshot (ports move off the old placement);
+- [x] Re-bless the mindmap snapshot (ports move off the old placement);
   regenerate README's mindmap asset if the hero drifted visibly.
-- [ ] Timing sanity: mindmap.lini debug ≪ 0.5 s, release ≪ 20 ms;
+- [x] Timing sanity: mindmap.lini debug ≪ 0.5 s, release ≪ 20 ms;
   laws sweep green.
-- [ ] Commit (`mindmap rides natural v2; snapshots re-blessed`).
+- [x] Commit (`mindmap rides natural v2; snapshots re-blessed`).
 
 ### Stage 4 — docs & close-out
 
-- [ ] ROUTING-LOG.md gains the v2 entry (what died, why, the numbers);
+- [x] ROUTING-LOG.md gains the v2 entry (what died, why, the numbers);
   ROUTING.md wording synced with what was actually built (constants'
   names, the spine-owned crossing note); Stage 1's micro-edits if
   deferred.
-- [ ] Full gate: `cargo fmt --all -- --check && cargo clippy &&
+- [x] Full gate: `cargo fmt --all -- --check && cargo clippy &&
   cargo test`; commit. Pushing stays with Abbas.
 
 ## Execution log
 
 Executing sessions: append dated notes — decisions the plan didn't
 anticipate, gotchas, the next session's starting points. Terse.
+
+- 2026-07-17 — **all stages done in one session** (owner + Fable, inline).
+  Stages 2–4 landed as `3b096d9` + the docs commit; deviations and the
+  full retro live in ROUTING-LOG.md's 2026-07-17 entry (corner pairs on
+  repeat offence, via merge + envelope prune, spans() dedupe-first,
+  directness scoped to undodged fits, DODGE_ROUNDS 12, same-side
+  self-loops draw). mindmap 2.9 s → 29 ms debug; snapshots: only mindmap
+  re-blessed; README mindmap asset regenerated at 2x. Stage 3's
+  links_medium/links_hard natural-forced PNGs eyeballed light + dark —
+  crossing-happy but smooth, honest Clearance warnings on the packed
+  chords.

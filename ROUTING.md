@@ -60,10 +60,12 @@ are judged the same way, on the output alone:
    orthogonal elbow cannot show through by construction.
 3. **Directness** — when both ends' sides face the chord (stub tip to stub
    tip) — every heuristic side does, and so do a tree's stamped sides —
-   the curve's projection onto that chord advances monotonically: a
-   natural wire never doubles back, never orbits. A side forced *away*
-   from the chord may swing out exactly as far as its turn-around
-   requires; a self-loop is a smooth hook.
+   the undodged curve's projection onto that chord advances
+   monotonically: a natural wire never doubles back, never orbits. A
+   dodge swings exactly as wide as its vias require, a side forced
+   *away* from the chord as far as its turn-around requires; a self-loop
+   is a smooth hook (both ends forced onto one side draws the same-side
+   loop — natural has no stray to fall back on).
 4. **Respect** — the only obstacle law. From every solid body in its world
    the wire keeps ≥ **margin** — `clearance / 2`, natural's one derived
    number — or the wire-body pair is named in the report (`--strict`
@@ -85,30 +87,37 @@ and 5 — channels, search, placement — do not exist here):
   outward normal with the greatest dot product against the chord — ties
   on side rank.
 - **Ports.** Per node side, before any curve exists: each landing prefers
-  its far end's projection onto the side, clamped into the port window,
-  and the side's landings spread at ≥ pitch by the same bounded ladder
-  placement uses, compressing toward margin only when the window is
-  short. A fan's shared end is one landing. Ports never read curve
-  geometry, so every wire then fits independently — natural needs no
-  committed-route order.
+  its far end's centre projected onto the side (a fan: its members'
+  mean), clamped into the port window, and the side's landings spread at
+  ≥ pitch by the same bounded ladder placement uses, compressing evenly
+  when the window cannot hold them. A fan's shared end is one landing.
+  Ports never read curve geometry, so every wire then fits independently
+  — natural needs no committed-route order.
 - **Fit & dodge.** The wire fits as the direct spline: stub tangents
   normal to their sides, handles pulled toward the far end
-  (`NATURAL_PULL`). Sampled against the world's solid bodies inflated by
-  margin, the first offending body inserts a **via** beside its nearest
-  inflated corner, on the chord side that deviates less (tie: side rank);
-  the spline refits through its vias and the pass repeats, at most
-  `DODGE_ROUNDS` times. Whatever still offends **draws anyway** and is
+  (`NATURAL_PULL`), clamped to the forward travel so a short offset never
+  overshoots. Sampled against the world's solid bodies inflated by
+  margin, the first offending body inserts a **via** — its inflated
+  corner nearest the chord, on the chord side that deviates less (ties
+  toward one fixed side); a body that keeps offending widens to that
+  side's corner *pair*, then pushes the pair out one margin per round —
+  at most `DODGE_ROUNDS` rounds, vias in chord order, near-coincident
+  vias merged, and same-side dips pruned to the envelope so a detour
+  never wiggles. Whatever still offends **draws anyway** and is
   reported: **natural never strays** — a natural wire always draws, worst
   case straight through the body it names.
 
-Markers, labels (arc-length `along:`, sliding), bundles, fans, self-loops,
-and the report ride the shared spine unchanged. The natural checker judges
-contact (perpendicular arrival, window, marker stub), knot smoothness,
-chord-facing directness, respect-or-reported, and duplicate separation; the
-run/track, capacity, and square-crossing laws are orthogonal-only, and a
-natural scope produces no strays to check. `NATURAL_PULL`, `DODGE_ROUNDS`,
-and the margin rule are part of this contract, defined in one place in
-code.
+Markers, labels (arc-length `along:`, sliding), fans, self-loops, and the
+report ride the shared spine unchanged — the crossing count is
+spine-owned, over every drawn wire of every avoiding strategy. Duplicates
+need no bundle machinery here: the port ladder alone spreads them into
+parallel rails. The natural checker judges contact (perpendicular arrival,
+window, marker stub), knot smoothness, chord-facing directness (undodged
+fits), respect — ≥ margin or named in the engine's own report — and
+duplicate separation; the run/track, capacity, and square-crossing laws
+are orthogonal-only, and a natural scope produces no strays to check.
+`NATURAL_PULL`, `DODGE_ROUNDS`, and the margin rule are part of this
+contract, defined in one place in code.
 
 The rest of this document is the `orthogonal` contract.
 
