@@ -196,20 +196,30 @@ consumer it reads `Auto` (CSS-inertness), authored on one it errors.
 
 ### Stage 2 — per-datum paint
 
-- [ ] `layout/chart/model/paint.rs` + `series.rs`: `fill:`/`stroke:`/
+- [x] `layout/chart/model/paint.rs` + `series.rs`: `fill:`/`stroke:`/
   `opacity:` list reading on `|bars|`/`|dots|` (comma law; single value =
   today's path, untouched); the `auto` sentinel resolves per datum
   through the existing walk + `fill_outline` deep-edge rules; count
   mismatch and line/area list errors (SPEC 20 wording).
-- [ ] Legend swatch keeps the base paint (decision 6); per-datum `<title>`
+- [x] Legend swatch keeps the base paint (decision 6); per-datum `<title>`
   / tooltip text unchanged.
-- [ ] Sample: `charts.lini` (or `chart_advanced.lini` — whichever cluster
+- [x] Sample: `charts.lini` (or `chart_advanced.lini` — whichever cluster
   fits) gains one paint-list-highlighted bar series; snapshots; PNG
   eyeballed light + dark (the highlight must read in both).
 
 Acceptance: unlisted series byte-identical; the highlighted-bar sample
 reads in light + dark; both error rows fire with counts in the message.
-**Log:**
+**Log:** 2026-07-18 — **done**, one commit (`58d764d`); 955 tests, clippy
+clean; only the charts.lini snapshot re-blessed (the sample gained the
+red deploy-stage highlight), PNGs eyeballed light + dark. Deviations
+adopted: with a fill list and no authored stroke, each datum's default
+deep edge deepens its **own** fill (the single-value law per datum —
+SPEC 14.6 errata'd); a list needs explicit `data:` (the `labels:`
+precedent, errata'd); the validator's static arm carries the
+|line|/|area| pointed message while the model stays the semantic
+authority (the library compile path skips lint); per-datum lists via
+class rules still hit the static One-shape error — a conscious limit,
+additive to lift later.
 
 ### Stage 3 — time axes; alpha.2 closes
 
