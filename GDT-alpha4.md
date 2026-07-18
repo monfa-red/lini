@@ -277,7 +277,8 @@ at dimension-linework weight, glyphs legible, merge correct.
 
 Acceptance: a dim row never overlaps a seated bundle; `a || sf` ≡
 `sf || a`; geometry mates byte-identical to alpha.3.
-**Log:** 2026-07-18 — **done**, one commit; 1039 tests, clippy clean.
+**Log:** 2026-07-18 — **done**, one commit (`14d7668`); 1039 tests,
+clippy clean.
 One `||` machinery, two arms: `mates::seat` classifies each chain hop
 by its ends (`sheet_node` — the sheet test grown tree-aware over one
 `SheetView` trait, so a `|column|` of sheet content is a **bundle**:
