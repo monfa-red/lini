@@ -311,7 +311,8 @@ untouched.
 Acceptance: no dim row overlaps any painted annotation across all drawing
 samples (oracle-style check if cheap — PLAN-V1's ask); cascade proven
 (drawing default, family rule, per-dim override each pinned).
-**Log:** 2026-07-18 — **done**, one commit. **Dim clearance default = 4**,
+**Log:** 2026-07-18 — **done**, one commit (`00df2c8`).
+**Dim clearance default = 4**,
 pushed into the drawing link base beside stroke-width 1 / font-size 12
 (`consts::DIM_CLEARANCE`): a row's band is its own non-spring ink — value
 text (reach `fs + 2` off the line), arrows, overshoot — and a first bottom
