@@ -195,7 +195,8 @@ Anchor sweep: 519 refs, zero broken; 995 tests untouched.
 
 Acceptance: glyph line weight matches dimension linework at 1:1 and at
 a scaled view; the three variants read correctly; errors fire.
-**Log:** 2026-07-18 — **done**, one commit; 1005 tests, clippy clean.
+**Log:** 2026-07-18 — **done**, one commit (`608a3fe`); 1005 tests,
+clippy clean.
 The registry is `src/glyph/` (a static sorted table reusing
 `icon::Role`, fragments on a 100-unit grid, vee anatomy exported as
 constants); emission generalizes the icon machinery at render — a
