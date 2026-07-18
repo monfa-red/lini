@@ -8,6 +8,9 @@
 // cell); `|datum|` is the framed letter as a node, joining the scope's datum
 // alphabet exactly as `>-` does. `datums:` must name declared letters — a
 // frame renders semantically valid or errors, never plausible-wrong.
+// Stage 3: `||` with an annotation end is a **seat** [SPEC 15.5] — flush on
+// the face after mates, `gap:` along the normal, `translate:` the lateral
+// nudge; a `|column|` bundle seats as one and the dim rows stand off it.
 
 |drawing#bracket-view| "MOUNTING BRACKET" { unit: mm } [
   |rect#plate| { width: 140; height: 60 } [
@@ -18,9 +21,11 @@
   plate:top (-) plate:bottom { side: right }
   plate.pin (o)
 
-  // Standing on the face: the vee's tip is the node's datum, so `translate:`
-  // sets it down exactly on the top edge.
-  |surface-finish#milled| "Ra 1.6" { symbol: machined; translate: -20 -30 }
+  // Seated: `||` stands the vee's tip flush on the top face — after mates,
+  // both axes — and `translate:` slides it along the face. The cast finish
+  // shows the plain placement: the tip is the node's datum, set down by hand.
+  |surface-finish#milled| "Ra 1.6" { symbol: machined; translate: -20 0 }
+  milled || plate:top
   |surface-finish#cast| "Ra 6.3" { translate: 42 -30 }
 
   // Leader-wired: the same placed node, reached from the bore's rim.
@@ -48,4 +53,13 @@
     |control| "position" { tol: 0.4; zone: diameter; datums: A, B }
     |control| "position" { tol: 0.1; zone: diameter; datums: A }
   ]
+
+  // A seated bundle [SPEC 15.5]: the `|column|` of finish over frame is
+  // sheet content — it seats as one, its facing side 6 of daylight off the
+  // right face, and the vertical dimension row packs past its union box.
+  |column#stack| { gap: 4 } [
+    |surface-finish| "Ra 3.2" { symbol: machined }
+    |feature-control| "flatness" { tol: 0.2 }
+  ]
+  stack || plate:right { gap: 6 }
 ]

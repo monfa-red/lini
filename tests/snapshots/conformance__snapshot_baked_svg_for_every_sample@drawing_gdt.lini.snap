@@ -220,6 +220,45 @@ input_file: samples/drawing_gdt.lini
           <use href="#lg0400-37" transform="translate(13.8 13.296) scale(0.006 -0.006)"/>
         </g>
       </g>
+      <g class="lini-node lini-column lini-block" data-id="stack" transform="translate(316.086,65.5)">
+        <rect x="-38.886" y="-35" width="77.772" height="70" rx="0" ry="0"/>
+        <g class="lini-node lini-surface-finish lini-path" transform="translate(-28.086,13)">
+          <g class="lini-node lini-drafting-glyph lini-icon" style="fill: none; stroke: black; stroke-width: 1" transform="translate(5.04,-18)">
+            <g transform="scale(0.36) translate(-44 -50)">
+              <g fill="none" stroke="black" stroke-width="2.7778" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M 4 55 L 30 100 L 87.7 0 M 4 55 L 56 55"/>
+              </g>
+            </g>
+          </g>
+          <g class="lini-text lini-dim-text">
+            <use href="#lg0400-54" transform="translate(23.772 -37.704) scale(0.006 -0.006)"/>
+            <use href="#lg0400-69" transform="translate(30.972 -37.704) scale(0.006 -0.006)"/>
+            <use href="#lg0400-23" transform="translate(45.372 -37.704) scale(0.006 -0.006)"/>
+            <use href="#lg0400-18" transform="translate(52.572 -37.704) scale(0.006 -0.006)"/>
+            <use href="#lg0400-22" transform="translate(59.772 -37.704) scale(0.006 -0.006)"/>
+          </g>
+        </g>
+        <g class="lini-node lini-feature-control lini-path" transform="translate(0,26)">
+          <g class="lini-node lini-block" style="fill: white; stroke: black; stroke-width: 1" transform="translate(-13.8,0)">
+            <rect x="-8.5" y="-8.5" width="17" height="17" rx="0" ry="0"/>
+          </g>
+          <g class="lini-node lini-drafting-glyph lini-icon" style="fill: none; stroke: black; stroke-width: 1" transform="translate(-13.8,0)">
+            <g transform="scale(0.12) translate(-50 -50)">
+              <g fill="none" stroke="black" stroke-width="8.3333" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M 20 68 L 42 32 L 84 32 L 62 68 Z"/>
+              </g>
+            </g>
+          </g>
+          <g class="lini-node lini-block" style="fill: white; stroke: black; stroke-width: 1" transform="translate(9,0)">
+            <rect x="-13.3" y="-8.5" width="26.6" height="17" rx="0" ry="0"/>
+          </g>
+          <g class="lini-text lini-dim-text">
+            <use href="#lg0400-20" transform="translate(-1.8 4.296) scale(0.006 -0.006)"/>
+            <use href="#lg0400-18" transform="translate(5.4 4.296) scale(0.006 -0.006)"/>
+            <use href="#lg0400-22" transform="translate(12.6 4.296) scale(0.006 -0.006)"/>
+          </g>
+        </g>
+      </g>
       <g class="lini-node lini-ext-line lini-line" transform="translate(-26.8,65.5)">
         <line x1="-280" y1="3" x2="-280" y2="165"/>
       </g>
@@ -241,23 +280,23 @@ input_file: samples/drawing_gdt.lini
         <use href="#lg0400-20" transform="translate(-23.2 223.796) scale(0.006 -0.006)"/>
       </g>
       <g class="lini-node lini-ext-line lini-line" transform="translate(-26.8,65.5)">
-        <line x1="3" y1="-120" x2="302" y2="-120"/>
+        <line x1="3" y1="-120" x2="403.772" y2="-120"/>
       </g>
       <g class="lini-node lini-ext-line lini-line" transform="translate(-26.8,65.5)">
-        <line x1="3" y1="120" x2="302" y2="120"/>
+        <line x1="3" y1="120" x2="403.772" y2="120"/>
       </g>
       <g class="lini-node lini-dim-line lini-line" transform="translate(-26.8,65.5)">
-        <line x1="299" y1="-118" x2="299" y2="118"/>
+        <line x1="400.772" y1="-118" x2="400.772" y2="118"/>
       </g>
       <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(-26.8,65.5)">
-        <polygon points="299,-120 301,-108 297,-108"/>
+        <polygon points="400.772,-120 402.772,-108 398.772,-108"/>
       </g>
       <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(-26.8,65.5)">
-        <polygon points="299,120 297,108 301,108"/>
+        <polygon points="400.772,120 398.772,108 402.772,108"/>
       </g>
-      <g class="lini-text lini-dim-text" transform="rotate(-90 264.2 65.5)">
-        <use href="#lg0400-26" transform="translate(257 69.796) scale(0.006 -0.006)"/>
-        <use href="#lg0400-20" transform="translate(264.2 69.796) scale(0.006 -0.006)"/>
+      <g class="lini-text lini-dim-text" transform="rotate(-90 365.972 65.5)">
+        <use href="#lg0400-26" transform="translate(358.772 69.796) scale(0.006 -0.006)"/>
+        <use href="#lg0400-20" transform="translate(365.972 69.796) scale(0.006 -0.006)"/>
       </g>
       <g class="lini-node lini-dim-line lini-line" transform="translate(-26.8,65.5)">
         <mask id="lini-halo-bracket-view-0" maskUnits="userSpaceOnUse" x="-304.5" y="-1.5" width="164" height="3"><rect class="lini-cut-bg" x="-304.5" y="-1.5" width="164" height="3"/><polyline class="lini-halo" fill="none" stroke-width="3" points="-277,0 -283,0"/></mask>

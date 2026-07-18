@@ -38,9 +38,7 @@ pub(super) fn apply(ctx: &Ctx, nodes: &mut [PlacedNode]) {
         .kids
         .iter()
         .filter(|k| {
-            !super::is_sheet(k.kind, &k.type_chain)
-                && !super::super::anchors::is_pinned(&k.attrs)
-                && drawn(k)
+            !super::sheet_node(*k) && !super::super::anchors::is_pinned(&k.attrs) && drawn(k)
         })
         .collect();
     if geometry.is_empty() {

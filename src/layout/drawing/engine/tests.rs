@@ -406,14 +406,188 @@ fn mate_errors_speak_spec() {
     );
 }
 
+// ── Seats [SPEC 15.5] — `||` with a sheet-content end ──
+
+const SEAT_PART: &str = "{ layout: drawing; density: 1 }\n|rect#a| { width: 80; height: 40 }\n";
+
+/// A placed node's geometry box edge / midpoint in world coordinates —
+/// stroke excluded, the anchor law [SPEC 15.1].
+fn gbox(n: &PlacedNode) -> (f64, f64, f64, f64) {
+    let half = n.attrs.number("stroke-width").unwrap_or(0.0) / 2.0;
+    (
+        n.cx + n.bbox.min_x + half,
+        n.cy + n.bbox.min_y + half,
+        n.cx + n.bbox.max_x - half,
+        n.cy + n.bbox.max_y - half,
+    )
+}
+
 #[test]
-fn a_mate_rejects_sheet_content() {
-    // A mate seats two geometry nodes [SPEC 15.5]; a note is sheet content.
+fn a_finish_seats_its_vee_tip_on_the_face() {
+    // The vee tip is the node's origin — flush contact, both axes.
+    let l = laid(&format!(
+        "{SEAT_PART}|surface-finish#sf| \"Ra 1.6\"\nsf || a:top\n"
+    ));
+    let sf = by_id(&l.nodes, "sf");
+    assert!(
+        (sf.cx, sf.cy) == (0.0, -20.0),
+        "tip on the face: {:?}",
+        (sf.cx, sf.cy)
+    );
+}
+
+#[test]
+fn everything_else_seats_its_facing_side_on_all_four_faces() {
+    for side in ["top", "bottom", "left", "right"] {
+        let l = laid(&format!("{SEAT_PART}|note#n| \"x\"\nn || a:{side}\n"));
+        let n = by_id(&l.nodes, "n");
+        let (x0, y0, x1, y1) = gbox(n);
+        let (mx, my) = ((x0 + x1) / 2.0, (y0 + y1) / 2.0);
+        // The facing side's midpoint lands on the face's midpoint.
+        let (px, py) = match side {
+            "top" => (mx, y1),
+            "bottom" => (mx, y0),
+            "left" => (x1, my),
+            _ => (x0, my),
+        };
+        let face = match side {
+            "top" => (0.0, -20.0),
+            "bottom" => (0.0, 20.0),
+            "left" => (-40.0, 0.0),
+            _ => (40.0, 0.0),
+        };
+        assert!(
+            (px - face.0).abs() < 1e-6 && (py - face.1).abs() < 1e-6,
+            "{side}: seat point ({px}, {py}) vs face {face:?}"
+        );
+    }
+}
+
+#[test]
+fn a_seat_lands_on_a_named_edge() {
+    // `:step` is an interior vertical face (outward +x): the note's left
+    // side seats on its midpoint (30, −15).
+    let l = laid(
+        "{ layout: drawing; density: 1 }\n|sketch#housing| { draw: move(0, 0) up(20) right(30) down(10):step right(30) down(10) close() }\n|note#n| \"x\"\nn || housing:step\n",
+    );
+    let n = by_id(&l.nodes, "n");
+    let (x0, y0, _, y1) = gbox(n);
+    assert!((x0 - 30.0).abs() < 1e-6, "left face on the step: {x0}");
+    assert!(
+        ((y0 + y1) / 2.0 + 15.0).abs() < 1e-6,
+        "mid on the edge midpoint"
+    );
+}
+
+#[test]
+fn seat_gap_offsets_along_the_outward_normal() {
+    let l = laid(&format!(
+        "{SEAT_PART}|surface-finish#sf| \"Ra 1.6\"\nsf || a:top {{ gap: 5 }}\n"
+    ));
+    let sf = by_id(&l.nodes, "sf");
+    assert!(
+        (sf.cy + 25.0).abs() < 1e-6,
+        "5 of daylight above: {}",
+        sf.cy
+    );
+}
+
+#[test]
+fn rotate_turns_the_annotation_before_the_seat() {
+    // At `rotate: 90` the note's local **right** side faces the top face's
+    // normal — the rotated anchor aligns [SPEC 15.5].
+    let l = laid(&format!(
+        "{SEAT_PART}|note#n| \"x\" {{ rotate: 90 }}\nn || a:top\n"
+    ));
+    let n = by_id(&l.nodes, "n");
+    let half = n.attrs.number("stroke-width").unwrap_or(0.0) / 2.0;
+    let my = (n.bbox.min_y + n.bbox.max_y) / 2.0;
+    let gx = n.bbox.max_x - half;
+    // to_world of the right side's midpoint under 90°: (cx − my, cy + gx).
+    assert!((n.cx - my).abs() < 1e-6, "on the face's x: {}", n.cx);
+    assert!((n.cy + gx + 20.0).abs() < 1e-6, "stands on y −20: {}", n.cy);
+}
+
+#[test]
+fn translate_nudges_after_the_seat() {
+    let l = laid(&format!(
+        "{SEAT_PART}|surface-finish#sf| \"Ra 1.6\" {{ translate: 12 3 }}\nsf || a:top\n"
+    ));
+    let sf = by_id(&l.nodes, "sf");
+    assert!(
+        (sf.cx - 12.0).abs() < 1e-6 && (sf.cy + 17.0).abs() < 1e-6,
+        "flush + nudge: {:?}",
+        (sf.cx, sf.cy)
+    );
+}
+
+#[test]
+fn operand_order_is_irrelevant_for_a_seat() {
+    let at = |src: &str| {
+        let l = laid(src);
+        let sf = by_id(&l.nodes, "sf");
+        (sf.cx, sf.cy)
+    };
     assert_eq!(
-        layout_err(
-            "{ layout: drawing; density: 1 }\n|rect#a| { width: 20; height: 20 }\n|note#n| \"x\"\na:right || n:left\n"
-        ),
-        "a mate seats geometry — '|note|' is sheet content"
+        at(&format!(
+            "{SEAT_PART}|surface-finish#sf| \"Ra 1.6\"\nsf || a:top\n"
+        )),
+        at(&format!(
+            "{SEAT_PART}|surface-finish#sf| \"Ra 1.6\"\na:top || sf\n"
+        )),
+    );
+}
+
+#[test]
+fn an_explicit_anchor_overrides_the_type_default() {
+    // `n:top` — the note hangs below the face instead of standing on it.
+    let l = laid(&format!("{SEAT_PART}|note#n| \"x\"\nn:top || a:top\n"));
+    let n = by_id(&l.nodes, "n");
+    let (x0, y0, x1, _) = gbox(n);
+    assert!((y0 + 20.0).abs() < 1e-6, "top edge on the face: {y0}");
+    assert!(((x0 + x1) / 2.0).abs() < 1e-6, "centred on the face");
+}
+
+#[test]
+fn a_bundle_seats_whole_and_a_dim_packs_past_its_union_box() {
+    // The `|column|` of finish + frame is sheet content [SPEC 15.5]: it
+    // seats as one on the right face, and the vertical dim row stands off
+    // its union box — never threads it.
+    let l = laid(&format!(
+        "{SEAT_PART}|column#stack| [\n  |surface-finish| \"Ra 3.2\" {{ symbol: machined }}\n  |feature-control| \"flatness\" {{ tol: 0.2 }}\n]\nstack || a:right {{ gap: 6 }}\na:top (-) a:bottom {{ side: right }}\n"
+    ));
+    let stack = by_id(&l.nodes, "stack");
+    let (x0, _, x1, y1) = gbox(stack);
+    assert!((x0 - 46.0).abs() < 1e-6, "facing side 6 off the face: {x0}");
+    let (vx, _, _) = super::super::testutil::text_at(&l.nodes, "40");
+    assert!(
+        vx > x1,
+        "dim value at x {vx} inside the bundle (right {x1}, bottom {y1})"
+    );
+}
+
+#[test]
+fn seat_errors_speak_spec() {
+    // A point target supplies no face.
+    assert_eq!(
+        layout_err(&format!(
+            "{SEAT_PART}|surface-finish#sf| \"Ra 1.6\"\nsf || a\n"
+        )),
+        "a seat needs a face — anchor a side or a named edge ('sf || a:top')"
+    );
+    // Two annotations seat nothing.
+    assert_eq!(
+        layout_err(&format!(
+            "{SEAT_PART}|surface-finish#sf| \"Ra 1.6\"\n|note#n1| \"x\"\nsf || n1\n"
+        )),
+        "a seat stands an annotation on geometry — 'sf || n1' seats nothing"
+    );
+    // One seat per annotation.
+    assert_eq!(
+        layout_err(&format!(
+            "{SEAT_PART}|surface-finish#sf| \"Ra 1.6\"\nsf || a:top\nsf || a:bottom\n"
+        )),
+        "'sf' is already seated"
     );
 }
 

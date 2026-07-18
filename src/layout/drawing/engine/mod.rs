@@ -110,7 +110,7 @@ fn lay_out(
         .iter()
         .enumerate()
         .filter(|(_, k)| {
-            !super::is_sheet(k.kind, &k.type_chain)
+            !super::sheet_node(*k)
                 && !anchors::is_pinned(&k.attrs)
                 && !super::chrome::is_chrome(&k.attrs)
         })
@@ -137,7 +137,9 @@ fn lay_out(
         links.iter().partition(|w| w.kind == LinkKind::Mate);
 
     place_features(&mut kids, own, None)?;
-    mates::seat(&mut kids, geometry[0], &mates, path, own)?;
+    // The `||` statements: the mate walk, then the seats — the returned
+    // seated annotations register as packer obstacles [SPEC 15.5/15.6].
+    let seated = mates::seat(&mut kids, geometry[0], &mates, path, own)?;
     // The section chrome fills from the seated geometry's extent [SPEC 15.8]:
     // the plane's ISO anatomy and the detail markers' rim letters.
     let geo_extent = geometry.iter().fold(Bbox::empty(), |b, &i| {
@@ -145,7 +147,7 @@ fn lay_out(
     });
     super::section::fill_planes(&mut kids, geo_extent, own)?;
     super::section::place_detail_labels(&mut kids);
-    let mut lowered = annotate::lower(&kids, &annotations, path, own, None)?;
+    let mut lowered = annotate::lower(&kids, &annotations, path, own, None, &seated)?;
     kids.append(&mut lowered);
     Ok(kids)
 }

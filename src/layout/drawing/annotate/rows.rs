@@ -66,13 +66,13 @@ impl Rows {
         self.painted.push(bbox);
     }
 
-    /// Register a lowered statement's texts — and a datum's framed box, whose
-    /// linework reaches past its letter [SPEC 15.7] — as painted bounds the
-    /// rows clear.
+    /// Register a lowered statement's texts — and any annotation-obstacle
+    /// linework it drew, e.g. a datum's framed box reaching past its letter
+    /// [SPEC 15.7] — as painted bounds the rows clear.
     pub(super) fn obstruct_texts(&mut self, nodes: &[PlacedNode]) {
         for n in nodes
             .iter()
-            .filter(|n| n.kind == NodeKind::Text || n.type_chain.iter().any(|t| t == "datum-frame"))
+            .filter(|n| n.kind == NodeKind::Text || annotation_obstacle(n))
         {
             self.painted
                 .push(Bbox::extent_of(std::slice::from_ref(n), |_| true));

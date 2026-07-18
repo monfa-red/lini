@@ -267,12 +267,7 @@ impl Anchor<'_> {
         match &self.spot {
             Spot::Origin => (0.0, 0.0),
             Spot::Center => (cx, cy),
-            Spot::Side(side) => match side {
-                Side::Top => (cx, g.min_y),
-                Side::Bottom => (cx, g.max_y),
-                Side::Left => (g.min_x, cy),
-                Side::Right => (g.max_x, cy),
-            },
+            Spot::Side(side) => side_mid(&g, *side),
             Spot::Corner((dx, dy)) => (
                 if *dx < 0.0 { g.min_x } else { g.max_x },
                 if *dy < 0.0 { g.min_y } else { g.max_y },
@@ -326,12 +321,7 @@ impl Anchor<'_> {
     /// dimension's axis. `None` for the point anchors.
     pub fn outward(&self) -> Option<P> {
         let local = match &self.spot {
-            Spot::Side(side) => match side {
-                Side::Top => (0.0, -1.0),
-                Side::Bottom => (0.0, 1.0),
-                Side::Left => (-1.0, 0.0),
-                Side::Right => (1.0, 0.0),
-            },
+            Spot::Side(side) => side_out(*side),
             Spot::Segment(Segment::Edge(a, b)) => {
                 let t = unit((b.0 - a.0, b.1 - a.1));
                 // Outward = the **left of the pen's travel** [SPEC 15.5]: a
@@ -343,6 +333,24 @@ impl Anchor<'_> {
             _ => return None,
         };
         Some(rotated(local, self.rot))
+    }
+
+    /// A seat's default **facing side** [SPEC 15.5]: the bbox side whose
+    /// outward — read after the node's `rotate:` — most opposes the target
+    /// face's `normal`; its midpoint in the drawing frame is where the
+    /// annotation touches down.
+    pub fn facing_side_point(&self, normal: P) -> P {
+        let facing = [Side::Top, Side::Bottom, Side::Left, Side::Right]
+            .into_iter()
+            .min_by(|a, b| {
+                let along = |s: Side| {
+                    let o = rotated(side_out(s), self.rot);
+                    o.0 * normal.0 + o.1 * normal.1
+                };
+                along(*a).total_cmp(&along(*b))
+            })
+            .expect("four sides");
+        self.to_world(side_mid(&self.geometry_box(), facing))
     }
 
     /// A line-like anchor's unit direction in the drawing frame — what the
@@ -456,6 +464,27 @@ pub(super) fn spell(ep: &ResolvedEndpoint, scope: &str) -> String {
         s.push_str(p);
     }
     s
+}
+
+/// A side's midpoint on a local box — its representative point [SPEC 15.2].
+fn side_mid(g: &Bbox, side: Side) -> P {
+    let (cx, cy) = ((g.min_x + g.max_x) / 2.0, (g.min_y + g.max_y) / 2.0);
+    match side {
+        Side::Top => (cx, g.min_y),
+        Side::Bottom => (cx, g.max_y),
+        Side::Left => (g.min_x, cy),
+        Side::Right => (g.max_x, cy),
+    }
+}
+
+/// A side's outward unit normal, node-local.
+fn side_out(side: Side) -> P {
+    match side {
+        Side::Top => (0.0, -1.0),
+        Side::Bottom => (0.0, 1.0),
+        Side::Left => (-1.0, 0.0),
+        Side::Right => (1.0, 0.0),
+    }
 }
 
 pub(super) fn rotated(p: P, deg: f64) -> P {

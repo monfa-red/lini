@@ -119,6 +119,58 @@ pub(super) fn is_sheet(kind: crate::resolve::NodeKind, type_chain: &[String]) ->
         })
 }
 
+/// The tree surface the sheet test walks — the resolved and the placed tree
+/// carry the same shape, and the engine asks the question of both.
+pub(in crate::layout) trait SheetView: Sized {
+    fn kind(&self) -> crate::resolve::NodeKind;
+    fn types(&self) -> &[String];
+    fn attrs(&self) -> &crate::resolve::AttrMap;
+    fn kids(&self) -> &[Self];
+}
+
+impl SheetView for ResolvedInst {
+    fn kind(&self) -> crate::resolve::NodeKind {
+        self.kind
+    }
+    fn types(&self) -> &[String] {
+        &self.type_chain
+    }
+    fn attrs(&self) -> &crate::resolve::AttrMap {
+        &self.attrs
+    }
+    fn kids(&self) -> &[Self] {
+        &self.children
+    }
+}
+
+impl SheetView for super::PlacedNode {
+    fn kind(&self) -> crate::resolve::NodeKind {
+        self.kind
+    }
+    fn types(&self) -> &[String] {
+        &self.type_chain
+    }
+    fn attrs(&self) -> &crate::resolve::AttrMap {
+        &self.attrs
+    }
+    fn kids(&self) -> &[Self] {
+        &self.children
+    }
+}
+
+/// A **bundle** [SPEC 15.5]: a layout-owning wrapper whose children are all
+/// sheet content (a `|column|` of finish over frame) — sheet like its
+/// children, so it seats whole, never grounds a mate, and reports one union
+/// extent to the packer.
+pub(in crate::layout) fn is_bundle<T: SheetView>(n: &T) -> bool {
+    super::owns_layout(n.attrs()) && !n.kids().is_empty() && n.kids().iter().all(sheet_node)
+}
+
+/// Sheet content, tree-aware: a sheet leaf or a bundle of them [SPEC 15/15.5].
+pub(in crate::layout) fn sheet_node<T: SheetView>(n: &T) -> bool {
+    is_sheet(n.kind(), n.types()) || is_bundle(n)
+}
+
 /// A part's own bbox in a drawing scope [SPEC 15.4]: `|hole|` / `|pitch-circle|`
 /// are round — `width:` (required) is the diameter — and every other shape
 /// sizes as a leaf: a part's features never grow it, they overhang.

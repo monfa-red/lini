@@ -1,17 +1,22 @@
-//! Mates [SPEC 15.5] — `a:anchor || b:anchor` seats parts after datum
-//! placement, walking outward from the **ground** (the first-declared geometry
-//! child): each mate translates the side not yet connected to the ground,
-//! whole and rigid. Directed anchors (sides, named edges) must face along one
-//! axis and seat flush, `gap:` apart along the shared normal (negative =
-//! inserted); point anchors coincide. A part's `rotate:` turned its anchors
-//! already; its own `translate:` re-applies **after** the seat — the universal
-//! post-placement nudge, here a lateral slide along the face.
+//! Mates & seats [SPEC 15.5] — one `||` machinery, two semantic arms split by
+//! what the ends are. **Geometry ↔ geometry is a mate**: after datum
+//! placement the walk moves outward from the **ground** (the first-declared
+//! geometry child), each mate translating the side not yet connected, whole
+//! and rigid; directed anchors (sides, named edges) must face along one axis
+//! and seat flush, `gap:` apart along the shared normal (negative =
+//! inserted); point anchors coincide. **A sheet-content end makes it a
+//! seat**: the annotation always moves — after every mate, outside the
+//! grounding graph — its seat anchor landing on the target face's point,
+//! both axes. Either arm: `rotate:` turned the anchors already; the mover's
+//! own `translate:` re-applies **after** — the universal post-placement
+//! nudge.
 
 use super::super::ir::PlacedNode;
 use super::anchors;
 use super::geometry::P;
 use crate::error::Error;
 use crate::resolve::{ResolvedEndpoint, ResolvedLink};
+use crate::span::Span;
 use std::collections::HashMap;
 
 /// A mate-side anchor, reduced to what the seat needs — plain data, so the
@@ -31,22 +36,43 @@ fn hit(kids: &[PlacedNode], scope: &str, ep: &ResolvedEndpoint) -> Result<Hit, E
     })
 }
 
+/// Run a scope's `||` statements: the mate walk, then the seats — returning
+/// the seated annotation children, in seat order, for the packer's
+/// annotation-obstacle registration [SPEC 15.5/15.6].
 pub(super) fn seat(
     kids: &mut [PlacedNode],
     ground: usize,
     mates: &[&ResolvedLink],
     scope: &str,
     scale: f64,
-) -> Result<(), Error> {
-    // A chain (`a || b || c`) is one mate per hop, in source order.
+) -> Result<Vec<usize>, Error> {
+    // A chain (`a || b || c`) is one statement per hop, in source order; each
+    // hop classifies by its ends [SPEC 15.5]: geometry ↔ geometry is a mate,
+    // a sheet-content end makes it a seat, two sheet ends seat nothing.
     let mut pending: Vec<(&ResolvedLink, usize)> = Vec::new();
+    let mut seats: Vec<(&ResolvedLink, usize)> = Vec::new();
     for w in mates {
         for i in 0..w.endpoints.len() - 1 {
-            pending.push((w, i));
+            let (ea, eb) = (&w.endpoints[i], &w.endpoints[i + 1]);
+            let a = hit(kids, scope, ea)?;
+            let b = hit(kids, scope, eb)?;
+            match (
+                super::sheet_node(&kids[a.child]),
+                super::sheet_node(&kids[b.child]),
+            ) {
+                (false, false) => pending.push((w, i)),
+                (true, true) => {
+                    return Err(Error::at(
+                        w.span,
+                        format!(
+                            "a seat stands an annotation on geometry — '{}' seats nothing",
+                            spell_pair(ea, eb, scope)
+                        ),
+                    ));
+                }
+                _ => seats.push((w, i)),
+            }
         }
-    }
-    if pending.is_empty() {
-        return Ok(());
     }
 
     // Who is positioned, and by which mate (the ground by none) — the walk's
@@ -63,18 +89,6 @@ pub(super) fn seat(
             let (ea, eb) = (&w.endpoints[hop], &w.endpoints[hop + 1]);
             let a = hit(kids, scope, ea)?;
             let b = hit(kids, scope, eb)?;
-            // A mate seats two **geometry** nodes [SPEC 15.5] — sheet content
-            // (a note, a balloon, the title) is placed by its own rules.
-            for hit in [&a, &b] {
-                let k = &kids[hit.child];
-                if super::is_sheet(k.kind, &k.type_chain) {
-                    let ty = k.type_chain.first().map(String::as_str).unwrap_or("text");
-                    return Err(Error::at(
-                        w.span,
-                        format!("a mate seats geometry — '|{ty}|' is sheet content"),
-                    ));
-                }
-            }
             if a.child == b.child {
                 return Err(Error::at(
                     w.span,
@@ -140,7 +154,80 @@ pub(super) fn seat(
             seq += 1;
         }
     }
-    Ok(())
+
+    // Seats run **after** every mate, outside the grounding graph [SPEC 15.5]:
+    // the annotation always moves, never grounds anything, and seats once.
+    let mut placed: HashMap<usize, Span> = HashMap::new();
+    let mut order = Vec::with_capacity(seats.len());
+    for (w, hop) in seats {
+        order.push(place_seat(kids, scope, scale, w, hop, &mut placed)?);
+    }
+    Ok(order)
+}
+
+/// Seat one annotation on a face [SPEC 15.5], returning the moved child. The
+/// **seat anchor** — the endpoint's own, or the type default: a
+/// `|surface-finish|`'s vee **tip**, everything else's **facing side** —
+/// lands on the target's representative point, both axes (a seat places; a
+/// mate aligns). `gap:` offsets along the target's outward normal, positive
+/// = daylight; `rotate:` already turned the annotation, so the rotated
+/// anchor aligns; its own `translate:` re-applies after — the lateral nudge.
+fn place_seat(
+    kids: &mut [PlacedNode],
+    scope: &str,
+    scale: f64,
+    w: &ResolvedLink,
+    hop: usize,
+    placed: &mut HashMap<usize, Span>,
+) -> Result<usize, Error> {
+    let (ea, eb) = (&w.endpoints[hop], &w.endpoints[hop + 1]);
+    let a = anchors::resolve(kids, scope, ea, "seat")?;
+    let b = anchors::resolve(kids, scope, eb, "seat")?;
+    // Operand order is irrelevant — the sheet-content end is the annotation.
+    let (ann_ep, geo_ep, ann, geo) = if super::sheet_node(&kids[a.child]) {
+        (ea, eb, a, b)
+    } else {
+        (eb, ea, b, a)
+    };
+    if let Some(prev) = placed.get(&ann.child) {
+        let who = kids[ann.child]
+            .id
+            .clone()
+            .unwrap_or_else(|| rel(ann_ep, scope).to_string());
+        return Err(Error::at(w.span, format!("'{who}' is already seated")).with_related(*prev));
+    }
+    // The target supplies the face [SPEC 15.5] — a point target has no
+    // outward to seat along.
+    let Some(n) = geo.outward() else {
+        return Err(Error::at(
+            w.span,
+            format!(
+                "a seat needs a face — anchor a side or a named edge ('{} || {}:top')",
+                rel(ann_ep, scope),
+                rel(geo_ep, scope)
+            ),
+        ));
+    };
+    let gap = gap_attr(w)?.unwrap_or(0.0) * scale;
+    let face = geo.point();
+    let target = (face.0 + n.0 * gap, face.1 + n.1 * gap);
+    let explicit = ann_ep.side.is_some() || ann_ep.point.is_some();
+    let tip = super::symbols::drafting_type(&ann.node.type_chain) == Some("surface-finish");
+    let seat_pt = if explicit || tip {
+        // The endpoint's own anchor — or the finish default, the vee tip,
+        // which *is* the node's origin (the bare endpoint's point).
+        ann.point()
+    } else {
+        ann.facing_side_point(n)
+    };
+    let child = ann.child;
+    let t = super::super::anchors::translate(&kids[child].attrs, w.span)?
+        .map(|(x, y)| (x * scale, y * scale))
+        .unwrap_or((0.0, 0.0));
+    kids[child].cx += target.0 - (seat_pt.0 - t.0);
+    kids[child].cy += target.1 - (seat_pt.1 - t.1);
+    placed.insert(child, w.span);
+    Ok(child)
 }
 
 /// The translation that seats `mover` against `fixed` [SPEC 15.5]. The seat is
@@ -155,13 +242,7 @@ fn delta(
     w: &ResolvedLink,
     scale: f64,
 ) -> Result<P, Error> {
-    let gap = match w.attrs.get("gap") {
-        None => None,
-        Some(v) => Some(
-            v.as_number()
-                .ok_or_else(|| Error::at(w.span, "a mate's 'gap' is a number"))?,
-        ),
-    };
+    let gap = gap_attr(w)?;
     let t = super::super::anchors::translate(&kids[mover.child].attrs, w.span)?
         .map(|(x, y)| (x * scale, y * scale))
         .unwrap_or((0.0, 0.0));
@@ -194,6 +275,18 @@ fn delta(
             w.span,
             format!("mated anchors must face along one axis — '{pair}' has no shared normal"),
         )),
+    }
+}
+
+/// The statement's `gap:` — the signed separation along the normal
+/// [SPEC 15.5], one law for the mate and the seat arms.
+fn gap_attr(w: &ResolvedLink) -> Result<Option<f64>, Error> {
+    match w.attrs.get("gap") {
+        None => Ok(None),
+        Some(v) => v
+            .as_number()
+            .map(Some)
+            .ok_or_else(|| Error::at(w.span, "a mate's 'gap' is a number")),
     }
 }
 

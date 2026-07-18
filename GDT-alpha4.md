@@ -259,25 +259,47 @@ at dimension-linework weight, glyphs legible, merge correct.
 
 ### Stage 3 — `||` annotation seating
 
-- [ ] Resolve/layout split (decision 8): a `||` statement with a
+- [x] Resolve/layout split (decision 8): a `||` statement with a
   sheet-content end classifies as a **seat** — collected apart from
   mates, run after them, outside the grounding graph; operand order
   irrelevant; both-annotation and double-seat errors; the
   mate-on-sheet-content error replaced by the seat semantics.
-- [ ] The seat itself (decision 9): directed-target check; type-defined
+- [x] The seat itself (decision 9): directed-target check; type-defined
   default seat anchors (vee tip / facing side) with explicit-anchor
   override; flush contact both axes; `gap:` along the normal;
   rotate-before / translate-after (the mate law reused, not copied).
-- [ ] The packer channel (decision 10): seated annotations — a bundle
+- [x] The packer channel (decision 10): seated annotations — a bundle
   as **one** union bbox — register painted bounds before dims pack; the
   `datum-frame` class generalizes to the one annotation-obstacle class.
-- [ ] Tests: seats on all four sides + a named edge, a rotated seat, a
+- [x] Tests: seats on all four sides + a named edge, a rotated seat, a
   `gap:` seat, a bundle seat with a dim packing past it (the no-overlap
   oracle), symmetric operand order, every error; PNG light + dark.
 
 Acceptance: a dim row never overlaps a seated bundle; `a || sf` ≡
 `sf || a`; geometry mates byte-identical to alpha.3.
-**Log:**
+**Log:** 2026-07-18 — **done**, one commit; 1039 tests, clippy clean.
+One `||` machinery, two arms: `mates::seat` classifies each chain hop
+by its ends (`sheet_node` — the sheet test grown tree-aware over one
+`SheetView` trait, so a `|column|` of sheet content is a **bundle**:
+sheet everywhere, never a ground, one union bbox), runs the mate walk
+untouched, then places the seats — the target's outward read
+post-mates, the seat anchor the endpoint's own or the type default
+(the finish tip *is* the node origin, so the bare endpoint already
+reads it; everything else `Anchor::facing_side_point`, the rotated
+bbox side opposing the normal), `gap:` along the normal through the
+mate's shared `gap_attr`, the mover's `translate:` re-applied after.
+The seated children return to the engine and register with the packer
+beside the placed drafting symbols, the datum-frame special case
+folded into the one `annotation_obstacle` class; a bundle stays in the
+drawing scope (`is_bundle` propagates the layout ctx through the
+wrapper), so its drafting children lower in place. One snapshot
+re-blessed — `drawing_gdt.lini`'s own: the milled finish now seats via
+`||`, and the sample gains the seated finish + flatness `|column|`
+bundle standing `gap: 6` off the right face, the vertical dim row
+packed past its union box. PNGs read light + dark at zoom 2 + 4: the
+vee tip flush on the top face, the bundle clear of the face and the
+dim, nothing overlapping. Geometry mates byte-identical — every other
+snapshot untouched.
 
 ### Stage 4 — annotation nodes in link `[ ]`; the sample; alpha.4 closes
 

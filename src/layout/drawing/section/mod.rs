@@ -154,7 +154,7 @@ pub(in crate::layout) fn layout_detail(
     } else {
         Vec::new()
     };
-    let mut annotations = super::annotate::lower(&clones, &links, path, own, Some(circle))?;
+    let mut annotations = super::annotate::lower(&clones, &links, path, own, Some(circle), &[])?;
 
     // Clip the clones to the region circle (one interned <clipPath> at render),
     // then draw the boundary circle over it [SPEC 15.8].
@@ -264,7 +264,7 @@ fn find_marker<'a>(
 /// that annotate the source. The source's annotations are links, not children,
 /// so they are already excluded.
 fn is_relaid_geometry(inst: &ResolvedInst) -> bool {
-    !super::is_sheet(inst.kind, &inst.type_chain)
+    !super::sheet_node(inst)
         && !inst
             .type_chain
             .iter()

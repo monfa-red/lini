@@ -112,6 +112,7 @@ pub(in crate::layout) fn lower(
     scope: &str,
     scale: f64,
     extent: Option<Bbox>,
+    seated: &[usize],
 ) -> Result<Vec<PlacedNode>, Error> {
     let ctx = Ctx {
         kids,
@@ -123,11 +124,11 @@ pub(in crate::layout) fn lower(
         scale,
     };
     let mut rows = Rows::new(ctx.extent);
-    // Placed drafting symbols are packing obstacles [SPEC 15.6/15.9]: their
-    // painted bounds register before anything packs, through the same channel
-    // as the datum frame — a dim row stands off a finish symbol.
-    for k in kids {
-        if super::symbols::drafting_type(&k.type_chain).is_some() {
+    // Annotation obstacles [SPEC 15.5/15.6/15.9]: placed drafting symbols and
+    // **seated** annotations — a bundle one union box — register their
+    // painted bounds before anything packs, so a dim row stands off them.
+    for (i, k) in kids.iter().enumerate() {
+        if annotation_obstacle(k) || seated.contains(&i) {
             rows.obstruct(k.bbox.shifted(k.cx, k.cy));
         }
     }
@@ -176,8 +177,16 @@ pub(in crate::layout) fn lower(
 /// and pinned overlays excluded.
 fn geometry_extent(kids: &[PlacedNode]) -> Bbox {
     Bbox::extent_of(kids, |k| {
-        !super::is_sheet(k.kind, &k.type_chain) && !super::super::anchors::is_pinned(&k.attrs)
+        !super::sheet_node(k) && !super::super::anchors::is_pinned(&k.attrs)
     })
+}
+
+/// The **annotation-obstacle class** [SPEC 15.6/15.9]: a node whose painted
+/// box dimension rows must clear — a drafting symbol, or framed annotation
+/// linework (the `>-` leader's datum box).
+pub(super) fn annotation_obstacle(n: &PlacedNode) -> bool {
+    super::symbols::drafting_type(&n.type_chain).is_some()
+        || n.type_chain.iter().any(|t| t == "datum-frame")
 }
 /// A side / corner name as its outward unit vector — a leader's `side:`
 /// direction, a diametral dim's line [SPEC 15.6/15.7].

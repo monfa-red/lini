@@ -380,7 +380,10 @@ fn layout_inst(
         ctx.drawing && !owns_layout(&inst.attrs) && !drawing::is_sheet(inst.kind, &inst.type_chain);
     let child_ctx = Ctx {
         scale: own,
-        drawing: part,
+        // A **bundle** — a layout-owning wrapper of sheet content — stays in
+        // the drawing scope [SPEC 15.5]: its drafting children lower here,
+        // and the seat moves it whole.
+        drawing: part || (ctx.drawing && drawing::is_bundle(inst)),
     };
 
     // Recurse into children first.
