@@ -432,8 +432,8 @@ text, nothing overlaps (oracle green). 983 tests, fmt + clippy clean.
 Acceptance: halos break linework over hatching in both themes; no halo
 touches an arrowhead/text/frame; internal callouts read the internal
 spec; `bar:m10 <- "LH"` renders `M10×1.5 LH`.
-**Log:** 2026-07-18 — **done**, one commit (a takeover: the first
-session died mid-stage; its tree finished and verified). Halos bake at
+**Log:** 2026-07-18 — **done**, one commit (`d6d4b9b`; a takeover: the
+first session died mid-stage; its tree finished and verified). Halos bake at
 layout (`halo.rs`, one pass after every statement lowers): each dim /
 ext / leader line's crossings against **geometry only** (chrome, text,
 other annotations never cast) become cut sub-polylines in a `halo` attr
