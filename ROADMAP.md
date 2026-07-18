@@ -394,7 +394,7 @@ plan, then code + samples + snapshots + visual review together.
 | **1.0.0-alpha.1** ✓ (2026-07-12) | Tree & natural | `layout: tree`, `|topic|`, `|mindmap|`, desugar branch links, palette walk; `routing: natural`. |
 | **1.0.0-alpha.2** ✓ (2026-07-18, released with the drawing half below as one `1.0.0-alpha.2`) | Charts (`CHART-DRAW-alpha23.md`, combined round) | per-datum paint + labels, time axes, the `format:` machinery + axes/tooltips. |
 | **1.0.0-alpha.3** ✓ (2026-07-18, shipped inside `1.0.0-alpha.2` — versions renumber: the alpha.4 round releases as `1.0.0-alpha.3`) | Drawing measurement (`CHART-DRAW-alpha23.md`, combined round) | dimension clearance + bounds-derived packing, inference + `project:`, boxed datums + datum identities, halos, internal threads, pattern copy ids, fan leaders. |
-| **1.0.0-alpha.4** | Drafting symbols | symbol registry, `|surface-finish|`, `|feature-control|`, `||` annotation seating, annotation nodes in link `[ ]`, `format:` on dimensions. |
+| **1.0.0-alpha.4** (releases as `1.0.0-alpha.3` — the renumber above) | Drafting symbols (`GDT-alpha4.md`) | glyph registry, `|surface-finish|`, `|feature-control|` + `|control|`, `|datum|`, `||` annotation seating, annotation nodes in link `[ ]` (`format:` on dimensions shipped with alpha.3). |
 | **1.0.0-alpha.5** | Sheet & views | local images, title-block finish, projection construction links (+ view arrows if cheap). |
 | **1.0.0-beta.x** | Tooling & docs | schema, structured diagnostics, generated reference, editor grammars, README/docs refresh. Feature-complete. |
 | **1.0.0-rc.x** | Stabilize | bug fixes only; every sample re-verified visually; the stability contract (section 2) goes into SPEC. |

@@ -86,7 +86,7 @@ pub(in crate::layout) fn layout_root(program: &Program) -> Result<(Vec<PlacedNod
 /// The shared body: lay each child out (features, chrome, and patterns fold
 /// inside `layout_inst` under the drawing context), place origins on the
 /// datum, seat the mates, then lower every other link — dimensions, leaders,
-/// annotation arrows — against the seated geometry [SPEC 15.9]. The
+/// annotation arrows — against the seated geometry [SPEC 15.10]. The
 /// annotations append after the children, so they paint above the geometry
 /// (`layer:` still wins) and size into the drawing's bbox.
 fn lay_out(
@@ -124,7 +124,7 @@ fn lay_out(
     }
 
     // The scope's links, in source order: mates seat parts first, and the
-    // annotations measure the seated result [SPEC 15.9]. An **anonymous**
+    // annotations measure the seated result [SPEC 15.10]. An **anonymous**
     // drawing node is scope-transparent [SPEC 9]: its path is its parent's and
     // its links resolved there — consuming by path would steal the parent's.
     let mut links: Vec<&ResolvedLink> = if owns_links {

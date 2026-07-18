@@ -131,6 +131,10 @@ overlaps painted annotations (add an oracle-style check if cheap).
 
 ## alpha.4 — drafting symbols & annotation composition
 
+**Round entered 2026-07-18, staged in `GDT-alpha4.md`** (its decisions
+ledger supersedes the open questions below; the ladder renumbered — the
+round releases as `1.0.0-alpha.3`).
+
 **Scope** (ROADMAP 3.5, second half): the shared drafting-symbol path registry;
 `|surface-finish|`; `|feature-control|` + `|control|` rows (full common
 characteristic set, validated `datums:` against declared letters); `||`

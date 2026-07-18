@@ -806,6 +806,10 @@ the cascade ([SPEC 4](#4-selectors-cascade--specificity)) — every value here i
 | `\|shoulder\|` | `\|line\|` | `stroke: --stroke-dark; stroke-width: 2; fill: none` — needs `points:` | A turned part's **shoulder line** — the geometry-weight edge a `revolve:` generates at every sharp diameter change ([SPEC 15.3](#153-the-sketch-pen)); manual use is free. |
 | `\|plane\|` | `\|line\|` | `stroke-style: center; stroke: --stroke-light; stroke-width: 1; fill: none` | The **section-plane** line on the source view — its label the section letter; `at:` stations it, `facing:` turns its arrows; a `\|drawing\| { of: }` sections it ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `\|magnifier\|` | `\|oval\|` | `stroke: --stroke-light; stroke-width: 1; fill: none` — `width:` **required**, the region diameter | The **detail marker** — rings a region on the source view, its label the detail letter at the rim; a `\|drawing\| { of: }` details it ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
+| `\|surface-finish\|` | `\|block\|` | `symbol: basic; stroke: --stroke-dark; stroke-width: 1; fill: none; font-size: 12; scale: 1` | The ISO 1302 surface-**texture** symbol — its label the textual indication, `symbol:` the vee variant; drawing-scope ([SPEC 15.9](#159-drafting-symbols--annotation-composition)). |
+| `\|feature-control\|` | `\|block\|` | `stroke: --stroke-dark; stroke-width: 1; fill: --bg; font-size: 12; scale: 1` | The GD&T **frame** — characteristic, tolerance, datums in ruled compartments; rows via `\|control\|`; drawing-scope ([SPEC 15.9](#159-drafting-symbols--annotation-composition)). |
+| `\|control\|` | `\|block\|` | — | One **frame row** — its label the characteristic; a `\|feature-control\|` child only ([SPEC 15.9](#159-drafting-symbols--annotation-composition)). |
+| `\|datum\|` | `\|block\|` | `stroke: --stroke-dark; stroke-width: 1; fill: --bg; font-size: 12; scale: 1` | The framed **datum letter** as a node — its label the letter, an identity like `>-`'s; drawing-scope ([SPEC 15.7](#157-leaders-notes--line-conventions), [SPEC 15.9](#159-drafting-symbols--annotation-composition)). |
 | `\|page\|` | `\|block\|` | `layout: flow; fill: --bg` — `sheet: a4` unless sized; `direction` by orientation | An ISO 5457 drawing **sheet** — mm dimensions via `sheet:`; px per mm from the root `density:`; frame, zones, and centring marks as generated chrome ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `\|title-block\|` | `\|table\|` | `font-size: 11; stroke-width: 1` | The ISO 7200 **title block** — a table the `\|page\|` seats flush inside its frame's bottom-right corner. **Field properties** (`title`, `drawing-number`, `revision`, `date`, `sheet-number`, `author`, …) build the standard grid, absent fields collapsing; its **smart label is the `title` field**; plain cells stay a fully custom block ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `\|frame\|` | `\|rect\|` | `fill: none; stroke: --stroke; stroke-width: 2` | A sheet's **frame** — the thick border a `\|page\|` generates at the ISO margins ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
@@ -994,7 +998,8 @@ endpoints op endpoints [op endpoints …] [ "label" ] [ .class… ] [ { style } 
 
 The tail is the **node tail** (`"label" .class { style } [ … ]`); only the head differs
 — endpoints + operators, versus bars — and a link's `[ ]` holds only labels (text),
-where a node's holds children.
+where a node's holds children (a drawing's dimensions and leaders alone may also
+carry annotation nodes there — [SPEC 15.9](#159-drafting-symbols--annotation-composition)).
 
 `endpoints` is one or more endpoints joined by `&`:
 
@@ -2165,9 +2170,9 @@ declarations, and links, and it lowers to primitives like any layout-owning engi
 |---|---|---|
 | a box (`\|sketch\|`, `\|rect\|`, `\|oval\|`, `\|hole\|`, …) | **geometry** — a part or a feature | its outline and fill, at the shared datum |
 | a link with a measuring op — `(-)` `(o)` `(<)` — or a leader op — `<-` `*-` `>-` | an **annotation** | extension lines, arrows, text ([15.6](#156-dimensions), [15.7](#157-leaders-notes--line-conventions)) |
-| a link with `\|\|` | a **mate** — a positioning relationship | nothing — it seats a part ([15.5](#155-mates)) |
+| a link with `\|\|` | a **mate** — or, with a sheet-content end, a **seat** | nothing — it positions a part or an annotation ([15.5](#155-mates--seating)) |
 | any other two-ended link (`->`, `<->`, `-->`, `-*`, …) | a straight **annotation arrow** | one segment, markers per the op |
-| `"…"`, `\|note\|`, `\|balloon\|`, `\|table\|`, … | sheet content | per its own type, sheet-space ([15.1](#151-the-container-the-datum--the-scale)) |
+| `"…"`, `\|note\|`, `\|balloon\|`, `\|table\|`, `\|surface-finish\|`, `\|feature-control\|`, `\|datum\|`, … | sheet content | per its own type, sheet-space ([15.1](#151-the-container-the-datum--the-scale), [15.9](#159-drafting-symbols--annotation-composition)) |
 
 Four properties of the model, each inherited from the core:
 
@@ -2195,7 +2200,7 @@ semantics need a drawing scope:
 
 | Global — works everywhere | Drawing-scope only |
 |---|---|
-| `\|sketch\|` + `draw:` / `mirror:` / `revolve:` / `thread:` / `break:`; `pattern:`; `scale:`; `hatch()` fills; `stroke-style: center` / `phantom`; `\|note\|` / `\|balloon\|` / `\|hidden\|`; the `\|page\|` sheet | the measuring ops (`(-)` linear, `(o)` round, `(<)` angle), the leader ops, `\|\|`, `tol:`, dim `side:` / `project:`, auto-measure, `unit:`, datum placement, the chrome (centre marks, auto centerlines, dimension packing) |
+| `\|sketch\|` + `draw:` / `mirror:` / `revolve:` / `thread:` / `break:`; `pattern:`; `scale:`; `hatch()` fills; `stroke-style: center` / `phantom`; `\|note\|` / `\|balloon\|` / `\|hidden\|`; the `\|page\|` sheet | the measuring ops (`(-)` linear, `(o)` round, `(<)` angle), the leader ops, `\|\|`, `tol:`, dim `side:` / `project:`, auto-measure, `unit:`, datum placement, the drafting-symbol types (`\|surface-finish\|` / `\|feature-control\|` / `\|control\|` / `\|datum\|`, [15.9](#159-drafting-symbols--annotation-composition)), the chrome (centre marks, auto centerlines, dimension packing) |
 
 Outside a drawing a `\|sketch\|` is just a shape; its authored `:segment`s are declared
 but dormant (a routed link landing on one is deferred — [SPEC 23](#23-deferred)).
@@ -2215,7 +2220,7 @@ their drawn relationship. `translate: x y` offsets a child from the datum — th
 universal nudge, unchanged. Children paint in **source order** (later on top), so
 overlaps, punched holes, and cutaways compose with no boolean operations. The
 **ground** is the first-declared geometry child: mates resolve by walking outward from
-it ([15.5](#155-mates)); to reground, reorder the declarations.
+it ([15.5](#155-mates--seating)); to reground, reorder the declarations.
 
 **Scale — three quantities, two authored.** Numbers in a drawing are **drawing
 units**; three settings turn them into pixels and paper:
@@ -2253,7 +2258,8 @@ true size. What never scales, at any setting: text (`font-size` is compile-measu
 per core), `stroke-width`, markers, hatch pitch, every dimension / leader constant
 ([SPEC 10.5](#105-layout-constants-baked)), and a **pinned** overlay's `translate:` —
 a pin-relative nudge is chrome anatomy (a badge's offset, the title's gap), not a
-position in the drawing. The `|note|` / `|balloon|` / `|table|`
+position in the drawing. The `|note|` / `|balloon|` / `|table|` / `|surface-finish|` /
+`|feature-control|` / `|datum|`
 templates carry `scale: 1` ([SPEC 8](#8-templates)) — annotations are sheet chrome — and
 a define inherits its base's side (`|steel::sketch|` scales, `|finish::note|` doesn't).
 
@@ -2527,10 +2533,11 @@ support, just bundled geometry and paint:
 }
 ```
 
-### 15.5 Mates
+### 15.5 Mates & seating
 
-`a:anchor || b:anchor` seats two geometry nodes — `||`, the parallel bars of GD&T: it
-moves a part and **draws nothing**, so it can never be confused with an annotation.
+`a:anchor || b:anchor` seats one node against another — `||`, the parallel bars of
+GD&T: it moves a part — or, with a sheet-content end, an **annotation** (seating,
+below) — and **draws nothing**, so it can never be confused with an annotation line.
 Grammatically one more link op ([SPEC 21](#21-grammar)); chains and fans parse as
 usual; a mate takes **no label** and no markers.
 
@@ -2568,6 +2575,38 @@ piston:left || bore:left { gap: -6 }     // negative gap — inserted 6 deep
   decided every position, the same over-constraint error. Dot-paths reach into parts
   (`pump.shaft:right || frame:left`), moving the scope-level child that contains the
   moving anchor.
+
+**`||` with a sheet-content end is a seat.** The operator generalizes to annotation
+**seating** — same syntax, split by what the ends are:
+
+| Ends | Reads | Who moves |
+|---|---|---|
+| geometry `\|\|` geometry | a **mate** | the grounding walk above |
+| annotation `\|\|` geometry | a **seat** | the annotation, always — either operand order |
+| annotation `\|\|` annotation | error | seat annotations on geometry ([SPEC 20](#20-errors)) |
+
+- **Seats run after mates**, outside the grounding graph: every part is already
+  seated when annotations place, and a seat never grounds, moves geometry, or
+  over-constrains anything. One seat per annotation — a second errors.
+- **The target supplies the face**: the geometry anchor must be **directed** — a
+  side or a named edge; a point target errors ([SPEC 20](#20-errors)).
+- **A seat places; a mate aligns.** The annotation's **seat anchor** — its own
+  endpoint anchor, or the type's default (the table) — lands **on** the target
+  anchor's representative point, both axes: flush contact (the annotation had no
+  position of its own worth keeping). `gap:` offsets along the target's outward
+  normal, positive = daylight (the mate's signed law); `rotate:` turns the
+  annotation **before** the seat — the rotated anchor aligns, so `rotate: -90`
+  stands a symbol on a vertical face; `translate:` nudges **after**, the lateral
+  slide along the face.
+- **Bundles seat as one.** A wrapper (a `|column|` of finish symbol over frame) is
+  sheet content like its children: it seats whole — interior laid out as usual —
+  and reports **one painted extent** to the dimension packer
+  ([15.6](#156-dimensions)), so rows stand off the bundle, never thread it.
+
+| Annotation | Default seat anchor |
+|---|---|
+| `\|surface-finish\|` | the symbol's **tip** — the vee stands on the face ([15.9](#159-drafting-symbols--annotation-composition)) |
+| everything else — `\|feature-control\|`, `\|datum\|`, `\|note\|`, `\|balloon\|`, a bundle | the **facing side** — the bbox side whose outward opposes the target's normal, read after `rotate:` |
 
 ### 15.6 Dimensions
 
@@ -2680,8 +2719,10 @@ with the line and reads from the bottom or from the right, overridable like any 
 (the styled-label form + `rotate:`). A span too narrow for text + arrows flips its
 arrows outside the extension lines; the value stays centred **inside** while it still
 fits there, and only a span too tight even for the bare text slides it past the
-nearer one. A packed row also clears every callout's text — leaders and angles
-register as obstacles before dims seat. Dimensions
+nearer one. A packed row also clears every callout's text — leaders, angles, and
+every **seated or carried annotation node** register as obstacles before dims
+seat, each statement one painted box, a bundle's the union of its children
+([15.5](#155-mates--seating), [15.9](#159-drafting-symbols--annotation-composition)). Dimensions
 are links, styled per core ([SPEC 9](#9-links)); a drawing's annotation text reads at
 the caption size — the scope pushes `font-size: 12` into the link base beside its
 `stroke-width: 1` ([15.1](#151-the-container-the-datum--the-scale)), so a plain
@@ -2737,9 +2778,10 @@ bolt <- [ "R3 TYP" { translate: 30 -24 } ]  // a styled / nudged text — the co
   standard **framed box**, riding the leader's text seat at the landing —
   sheet-space and obstacle-registered like any callout text
   ([15.6](#156-dimensions)). Letters collect per drawing scope — a duplicate errors
-  ([SPEC 20](#20-errors)); referenced elsewhere the letter is written bare (a
-  feature-control `datums:` validating against the set is deferred —
-  [SPEC 23](#23-deferred)).
+  ([SPEC 20](#20-errors)); referenced elsewhere the letter is written bare — a
+  `|feature-control|`'s `datums:` validates against the set, and the `|datum|`
+  node states the same identity in node form
+  ([15.9](#159-drafting-symbols--annotation-composition)).
 - **Text placement.** The text auto-places **outward**: a **directed** feature's
   leader leaves straight off its face — along the surface normal — while a point
   feature's runs along the ray from the drawing's datum through it; either way just
@@ -2911,7 +2953,106 @@ its drawing units, while on-screen CSS sizing is unaffected ([SPEC 17](#17-svg-o
 ]
 ```
 
-### 15.9 Lowering
+### 15.9 Drafting symbols & annotation composition
+
+GD&T rides three node templates over one shared **drafting-glyph set** — the
+characteristic symbols, the modifier circles (Ⓜ Ⓛ Ⓕ Ⓣ Ⓟ), the finish vees —
+drawn as paths like icons but sized in **natural units**, never fit to a box: a
+glyph's height follows the annotation `font-size`, its line weight the
+statement's `stroke-width`, so every symbol reads at dimension-linework weight
+beside every value, at every view scale. All three types are **sheet content**
+(`scale: 1` — [15.1](#151-the-container-the-datum--the-scale)) and drawing-scope
+only ([SPEC 20](#20-errors)). Three attachments, all ordinary: place one with
+`translate:`, **seat** it on a face with `||`
+([15.5](#155-mates--seating)), wire it with a leader (`body:seat <- sf` — the
+same node either way), or carry it in an annotation's `[ ]` (below).
+
+**`|surface-finish|`** — the ISO 1302 surface-texture symbol. Its smart label is
+the **textual indication** (`|surface-finish| "Ra 1.6"`), riding the symbol's
+long leg; `symbol:` picks the variant:
+
+| `symbol:` | Draws | Means |
+|---|---|---|
+| `basic` (default) | the bare vee | any process |
+| `machined` | vee + bar | material removal required |
+| `prohibited` | vee + circle | removal prohibited |
+
+Seated, the vee's tip stands on the face (the type's seat anchor,
+[15.5](#155-mates--seating)); `rotate:` turns it for a vertical face.
+
+**`|feature-control|`** — the GD&T frame. The common single frame carries its
+properties directly; a **composite / combined** frame holds `|control|`
+children, one row each (mixing the two forms errors). The **smart label names
+the characteristic** — the frame's in one-row form, each `|control|`'s
+otherwise; longhand `characteristic:`; setting both errors. The set is
+**ISO 1101's fourteen** (ASME Y14.5-2018 dropped `concentricity` / `symmetry`;
+lini's drafting lineage is ISO and both validate):
+
+| Group | Characteristics | `datums:` |
+|---|---|---|
+| form | `straightness` · `flatness` · `circularity` · `cylindricity` | forbidden |
+| profile | `profile-line` · `profile-surface` | optional |
+| orientation | `angularity` · `perpendicularity` · `parallelism` | required |
+| location | `position` (optional) · `concentricity` · `symmetry` (required) | — |
+| runout | `circular-runout` · `total-runout` | required |
+
+The row properties, each owning one compartment slot:
+
+- **`tol:`** — the tolerance **zone width**, required: a number > 0 (the
+  deviation / fit forms are a dimension's — [15.6](#156-dimensions)).
+- **`zone: diameter | spherical`** — the ⌀ / S⌀ zone prefix; legal only where
+  the zone is axial — `position`, `straightness`, `perpendicularity`,
+  `parallelism`, `angularity`, `concentricity`.
+- **`material: maximum | least`** — Ⓜ / Ⓛ after the value; legal on the
+  feature-of-size controls — `position`, the orientation three, `straightness`.
+- **`datums: A, B maximum, C`** — primary → tertiary, at most three; each a
+  **bare letter** declared in the scope (`>-` or `|datum|`,
+  [15.7](#157-leaders-notes--line-conventions)) with an optional per-datum
+  `maximum` / `least`; an unknown letter errors naming the declared set.
+- **`modifiers:`** — ordered extras after the material modifier:
+  `projected N` (Ⓟ plus the projection length), `free-state` (Ⓕ),
+  `tangent-plane` (Ⓣ).
+
+Any combination outside these rules — the table's forbidden / required cells,
+an unknown characteristic — is an **error** with a correction
+([SPEC 20](#20-errors)): a frame renders semantically valid or not at all,
+never plausible-looking and wrong. Adjacent `|control|` rows sharing one
+characteristic **merge its symbol compartment** — the composite frame; rows
+with different characteristics stack as a combined frame, in source order.
+
+**`|datum|`** — the framed datum letter as a **node**: its smart label the
+letter, joining the scope's identity set exactly as `>-` does
+([15.7](#157-leaders-notes--line-conventions) — a duplicate errors across both
+forms), one frame anatomy shared with the leader's box. Standalone it seats or
+wires like any annotation; carried in a dimension's `[ ]` it states the
+feature-of-size **axis datum** — the measured feature's axis is the datum
+feature.
+
+**Annotation nodes on a dimension or leader.** A drawing link's `[ ]` may carry
+these **nodes** beside its text labels: each stacks at the statement's **text
+seat** — under the dim value or callout lines, in source order — rides the row
+like the text does, and registers its painted bounds with the packer
+([15.6](#156-dimensions)), so no row overlaps a carried frame. Strings keep
+their label semantics (replace / follows, [15.6](#156-dimensions)); a node is
+never a label. **Core routed links stay text-only** — the grammar is
+scope-blind ([SPEC 21](#21-grammar)), and a node in a `[ ]` outside a drawing
+scope errors at resolve ([SPEC 20](#20-errors)).
+
+```
+{ layout: drawing }
+
+|sketch#body| { draw: …; revolve: x-axis }
+body:seat >- "A"                                     // datum A, the leader form
+
+|surface-finish#sf| "Ra 1.6" { symbol: machined }
+sf || body:top                                       // the vee stands on the face
+
+body:mid (o) { tol: h6 } [                           // a frame rides the dimension
+  |feature-control| "circular-runout" { tol: 0.05; datums: A }
+]
+```
+
+### 15.10 Lowering
 
 `layout: drawing` resolves in the **layout** phase ([SPEC 18](#18-compile-pipeline)) —
 geometry must exist before it can be measured:
@@ -2994,7 +3135,7 @@ text, and box-model properties are universal to every node — the tables that f
 | Property | `flow` | `grid` | `tree` | `sequence` | `chart` | `pie` | `drawing` |
 |---|---|---|---|---|---|---|---|
 | `direction` | ✓ `row`/`column` | — | ✓ `+bilateral` | — | ✓ `+radial` | — | — |
-| `gap` | ✓ spacing | ✓ spacing | ✓ generation × sibling | ✓ pitch / spacing | ✓ plot gutter | ✓ plot gutter | — (a mate reads its own — [SPEC 15.5](#155-mates)) |
+| `gap` | ✓ spacing | ✓ spacing | ✓ generation × sibling | ✓ pitch / spacing | ✓ plot gutter | ✓ plot gutter | — (a mate reads its own — [SPEC 15.5](#155-mates--seating)) |
 | `gap-fill` | ✓ | ✓ | — | ✓ᵇ | — | — | — |
 | `padding` | ✓ | ✓ | ✓ | ✓ᵇ | — | — | ✓ frames the sheet |
 | `align` / `justify` | ✓ | ✓ per-column | — | ✓ᵇ | — | — | — |
@@ -3070,7 +3211,7 @@ Read on the listed primitive; required where noted ([SPEC 7](#7-nodes)).
 | `samples` | `\|line\|` `\|poly\|`, chart `fn:` | integer | sample count (geometry; chart default 24). |
 | `path` | `\|path\|` | quoted SVG path | **required**; native top-left coords. |
 | `src` | `\|image\|` | quoted URL | **required**. |
-| `symbol` | `\|icon\|` | ident | Phosphor name; **required** (or via the label). |
+| `symbol` | `\|icon\|` · `\|surface-finish\|` | ident | Phosphor name, **required** (or via the label) · the finish vee variant — `basic`·`machined`·`prohibited`, default `basic` ([SPEC 15.9](#159-drafting-symbols--annotation-composition)). |
 | `fit` | `\|icon\|` `\|image\|` | `auto` · `contain` · `cover` · `stretch` | maps content into the box (size unchanged); `auto` default, `\|sign\|` `contain`. |
 | `skew` | `\|slant\|` | degrees `(-89,89)` | 15. |
 | `stack` | closed primitives | `N` · `dx dy` | offset duplicate behind. |
@@ -3112,10 +3253,15 @@ out of scope.
 | `scale` (homonym: an `\|axis\|`'s is `linear`·`log`·`time`) | any node | number > 0 | 1 | [SPEC 15.1](#151-the-container-the-datum--the-scale) |
 | `unit` (homonym: an `\|axis\|`'s is its quoted tick suffix) | drawing scopes · `\|axis\|` | `mm`·`cm`·`m`·`in` — inherits | `mm` | [SPEC 15.1](#151-the-container-the-datum--the-scale), [SPEC 14.4](#144-axes-scales--domain) |
 | `density` | the root | number > 0 | 4 | px per mm, screen/raster only ([SPEC 15.1](#151-the-container-the-datum--the-scale)) |
-| `tol` | a dimension | `t` / `+u -l` / fit ident | — | [SPEC 15.6](#156-dimensions) |
+| `tol` | a dimension · a control row | `t` / `+u -l` / fit ident · number > 0 (a frame's zone width) | — | [SPEC 15.6](#156-dimensions), [SPEC 15.9](#159-drafting-symbols--annotation-composition) |
+| `characteristic` | a control row (`\|control\|`, or a one-row `\|feature-control\|`) | the ISO 1101 ident set | — (the smart label) | [SPEC 15.9](#159-drafting-symbols--annotation-composition) |
+| `zone` | a control row | `diameter` · `spherical` | — | [SPEC 15.9](#159-drafting-symbols--annotation-composition) |
+| `material` | a control row | `maximum` · `least` | — | [SPEC 15.9](#159-drafting-symbols--annotation-composition) |
+| `datums` | a control row | letters, each + optional `maximum` / `least` — ≤ 3 | — | [SPEC 15.9](#159-drafting-symbols--annotation-composition) |
+| `modifiers` | a control row | `projected N` · `free-state` · `tangent-plane` list | — | [SPEC 15.9](#159-drafting-symbols--annotation-composition) |
 | `side` | a dimension / callout (also `\|axis\|`, above) | side · corner · `left` / `right` along an aligned span | by axis | [SPEC 15.6](#156-dimensions) |
 | `project` | a `(-)` dimension | `horizontal` · `vertical` · `aligned` | inferred | [SPEC 15.6](#156-dimensions) |
-| `gap` | a mate | signed number — separation along the normal (a dimension stands off by `clearance` — [SPEC 20](#20-errors)) | — | [SPEC 15.5](#155-mates) |
+| `gap` | a mate | signed number — separation along the normal (a dimension stands off by `clearance` — [SPEC 20](#20-errors)) | — | [SPEC 15.5](#155-mates--seating) |
 | `facing` | `\|plane\|` | `left`·`right`·`up`·`down` | by plane | [SPEC 15.8](#158-assemblies-views-sheets--titles) |
 | `of` | `\|drawing\|` | a `\|plane\|` / `\|magnifier\|` id | — | [SPEC 15.8](#158-assemblies-views-sheets--titles) |
 | ISO 7200 fields | `\|title-block\|` | quoted string | — | [SPEC 15.8](#158-assemblies-views-sheets--titles) |
@@ -3289,7 +3435,7 @@ and walks its scope's messages / frames / notes in source order, emitting lifeli
 frames, and notes — **consuming those messages**, so the router never sees them; a chart
 fixes its shared scale and lowers series / axes / bands / annotations at baked pixels; a
 drawing folds its geometry, seats its mates, measures, and lowers its annotations the same
-way ([SPEC 15.9](#159-lowering)).
+way ([SPEC 15.10](#1510-lowering)).
 
 **Route links.** Per [`ROUTING.md`](ROUTING.md) — orthogonal, clearance-respecting,
 deterministic — over every link **except** those a `sequence` or `drawing` scope already drew.
@@ -3427,7 +3573,7 @@ Format: `filename:line:col: error: <message>` (LSP-compatible), compile-time, wi
 | Single-quoted string | `single quotes are not strings — use "…"` |
 | Unquoted text value | `'title' takes a quoted string — write title: "…"` |
 | Invalid `pin` value | `'pin' expects none, center, an edge (top/bottom/left/right), or a corner (e.g. 'top right')` |
-| Negative container `gap` | `a container's 'gap' must be ≥ 0` — a **mate's** `gap:` may go negative ([SPEC 15.5](#155-mates)) |
+| Negative container `gap` | `a container's 'gap' must be ≥ 0` — a **mate's** `gap:` may go negative ([SPEC 15.5](#155-mates--seating)) |
 | `skew` out of range | `skew: N must be in (-89, 89)` |
 | Unknown name in an expression | `unknown name 'foo' in an expression` |
 | Function arity | `'scale' takes 1 argument, got 2` |
@@ -3546,7 +3692,6 @@ Format: `filename:line:col: error: <message>` (LSP-compatible), compile-time, wi
 | Unknown `:segment` | `no segment ':step' on 'body'` + suggestions |
 | Duplicate `:segment` in one `draw:` | `':step' is already named in this 'draw:'` |
 | Label on a mate | `a mate takes no label` |
-| Mate on sheet content | `a mate seats geometry — '\|note\|' is sheet content` |
 | `gap:` on a point mate | `a point mate coincides — 'gap' needs directed anchors (sides or named edges)` |
 | Non-parallel mate directions | `mated anchors must face along one axis — 'a:left \|\| b:top' has no shared normal` |
 | Over-constrained mate | `mate over-constrains 'X' — already positioned via 'A \|\| B'` |
@@ -3555,6 +3700,24 @@ Format: `filename:line:col: error: <message>` (LSP-compatible), compile-time, wi
 | `project:` vs a directed anchor | `'project: vertical' conflicts with 'a:left' — the directed anchor reads horizontal` |
 | Unknown copy index | `no copy 'bolt.5' — the pattern places 4` |
 | Duplicate datum letter | `datum 'A' is already placed (previously at L:C)` |
+| Drafting type outside a drawing | `'\|feature-control\|' annotates a drawing — it belongs in a 'layout: drawing'` (same for `\|surface-finish\|`, `\|control\|`, `\|datum\|`) |
+| Unknown characteristic | `unknown characteristic 'flatnes'; did you mean 'flatness'?` |
+| Characteristic set twice | `a control's characteristic is its label or 'characteristic:', not both` |
+| Unknown finish variant | `'symbol' picks the vee — basic, machined, or prohibited` |
+| Control row without `tol:` | `a control row needs 'tol' — its zone width` |
+| Mixed frame forms | `a frame is one row or '\|control\|' rows — not both` |
+| `\|control\|` outside a frame | `'\|control\|' is a '\|feature-control\|' row` |
+| `datums:` on a form control | `'flatness' is a form control — it takes no datum` |
+| Missing required datum | `'circular-runout' measures against a datum — name one in 'datums:'` |
+| Unknown datum reference | `no datum 'D' in this drawing — declared: A, B` |
+| Too many datums | `'datums' orders primary, secondary, tertiary — three at most` |
+| `zone:` off an axial control | `'zone: diameter' has no meaning on 'flatness' — its zone is a width, not an axis` |
+| `material:` off a feature-of-size control | `'material' modifies a feature-of-size control — position, orientation, or straightness` |
+| Unknown modifier | `'modifiers' takes projected N, free-state, or tangent-plane` |
+| Point-target seat | `a seat needs a face — anchor a side or a named edge ('sf \|\| plate:top')` |
+| Seat with no geometry end | `a seat stands an annotation on geometry — 'sf \|\| n1' seats nothing` |
+| Annotation seated twice | `'sf' is already seated (previously at L:C)` |
+| Annotation node on a routed link | `a routed link's '[ ]' holds text labels — annotation nodes ride a drawing's dimensions and leaders` |
 | `&` fan on a measuring op / mate | `'&' fans one-ended leaders — chain dimensions instead ('a (-) b (-) c')` |
 | `gap:` on a dimension | `a dimension stands off by 'clearance' — 'gap' is a mate's separation` |
 | `side:` off-axis | `a horizontal dimension stacks on top or bottom` / `a vertical dimension stacks on left or right` |
@@ -3612,7 +3775,9 @@ point       = "top" | "bottom" | "left" | "right"    # + corners, center, author
 pen_item    = call [ ":" ident ]                     # a draw: item — a pen call, optionally
                                                      #   naming its product (point(): a station)
 
-label_block = "[" { text } "]"                       # canonical labels — styleable text leaves
+label_block = "[" { text | node } "]"                # canonical labels — styleable text leaves;
+                                                     #   a node among them is a drawing
+                                                     #   annotation (SPEC 15.9)
 
 values      = value_group { "," value_group }        # comma only between list items
 value_group = value { value }                        # space-separated scalars
@@ -3677,8 +3842,11 @@ require both ends), the widened endpoint `point` set in drawing scope, the numer
 **copy `index`** in an endpoint path (`plate.bolt.2` — the lexer glues `.` + digits
 in endpoint position only, so `1.5` in value position stays a number), the `(-)`
 dimension-family `sel_unit` at a stylesheet statement head (a leading `(` there is
-unambiguous — calls and groups appear only in value position), and the
-`pen_item` form inside a `draw:` value. A call's `(` **glues to its name**; a
+unambiguous — calls and groups appear only in value position), the annotation
+**node** among a `label_block`'s labels (parsed everywhere, *meaning* only on a
+drawing's dimensions and leaders — a core routed link's `[ ]` stays text-only and
+a node there errors at resolve, [SPEC 15.9](#159-drafting-symbols--annotation-composition)),
+and the `pen_item` form inside a `draw:` value. A call's `(` **glues to its name**; a
 free-standing `(…)` is a math group and a free-standing `(-)`, `(o)`, or `(<)` an op
 ([SPEC 2](#2-lexical-syntax)) — so `move(-2, 5)` is a call, `(8 * 2)` a group, and
 `pin (o)` a dimension, with no ambiguity. The pen calls,
@@ -3798,11 +3966,6 @@ dividers / delays (`==` / `...`); and an `|actor|` stick-figure primitive (an ac
   [ROUTING.md](ROUTING.md) contract extension (ports and Law 2 are side-based).
 - **repeated-segment counting** — one `:segment` on several corners auto-prefixing `4× R3`,
   as `pattern:` does for features; today, type it.
-- **GD&T** — feature-control frames and surface finish: note types over
-  `\|table\|` / `\|note\|` with a built-in glyph set named by ident, drawn as paths like
-  icons — the designed direction, no new grammar; a frame's `datums:` will validate
-  against the scope's datum identities. Today: boxed datums (`body:seat >- "A"`,
-  [SPEC 15.7](#157-leaders-notes--line-conventions)), `face *- "Ra 1.6"`.
 - **hole variants** — counterbore and countersink (threads are built — `thread:`,
   [SPEC 15.3](#153-the-sketch-pen), [SPEC 15.4](#154-features-holes--patterns)).
 - **projection lines between views** — the thin lines auto-linking a feature across

@@ -125,12 +125,12 @@ fmt/test/clippy clean, a **Log** line here.
 Write all law before any code. The SPEC alone must suffice to implement
 Stages 1–4.
 
-- [ ] SPEC 15.5 → **Mates & seating**: the `||` semantics table
+- [x] SPEC 15.5 → **Mates & seating**: the `||` semantics table
   (mate / seat / error), the seat law (decisions 8–9 — after mates,
   outside grounding, directed target, flush + `gap:`, rotate-before /
   translate-after, the seat-anchor defaults table, one seat per
   annotation, bundles whole); the anchor rename swept everywhere.
-- [ ] New **SPEC 15.9 — Drafting symbols & annotation composition**
+- [x] New **SPEC 15.9 — Drafting symbols & annotation composition**
   (Lowering renumbers to 15.10): the natural-units glyph law
   (decision 2); `|surface-finish|` (decision 3 — variants table,
   indication label, seat + leader forms); `|feature-control|` /
@@ -138,20 +138,20 @@ Stages 1–4.
   ISO/ASME note, row properties, the validity table, composite
   merging); `|datum|` (decision 12); annotation nodes in `[ ]`
   (decision 11 — text-seat stacking, obstacles, core links text-only).
-- [ ] Surrounding drawing law squared: the §15 child-role and
+- [x] Surrounding drawing law squared: the §15 child-role and
   drawing-scope tables gain the annotation types and the seat reading;
   15.1's sheet-chrome (`scale: 1`) list; 15.6's packer sentence (seated
   and carried annotations register painted bounds before dims pack);
   15.7's datum bullet (validated now; the `|datum|` node form).
-- [ ] SPEC 8: four template rows (`|surface-finish|`,
+- [x] SPEC 8: four template rows (`|surface-finish|`,
   `|feature-control|`, `|control|`, `|datum|`). SPEC 16: `symbol`
   gains its finish owner (homonym noted), `tol` widens to a control
   row's zone width, new `characteristic` / `zone` / `material` /
   `datums` / `modifiers` rows.
-- [ ] SPEC 21: `label_block = "[" { text | node } "]"` + the
+- [x] SPEC 21: `label_block = "[" { text | node } "]"` + the
   drawing-extends prose; SPEC 9's "a link's `[ ]` holds only labels"
   sentence squared with a 15.9 pointer.
-- [ ] SPEC 20 rows: unknown characteristic (did-you-mean),
+- [x] SPEC 20 rows: unknown characteristic (did-you-mean),
   characteristic set twice, missing `tol:`, `datums:` on a form
   control, missing required datum, unknown datum reference (naming the
   declared set), > 3 datums, `zone:` / `material:` misuse, unknown
@@ -159,15 +159,23 @@ Stages 1–4.
   frame, annotation type outside a drawing, point-target seat, seat
   with no geometry end (replacing the mate-on-sheet-content row),
   annotation seated twice, node label outside a drawing scope.
-- [ ] SPEC 23 prunes: the GD&T deferred bullet dies.
-- [ ] Sync: ROADMAP's ladder row points here (and drops the
+- [x] SPEC 23 prunes: the GD&T deferred bullet dies.
+- [x] Sync: ROADMAP's ladder row points here (and drops the
   already-shipped `format:` item); PLAN-V1's alpha.4 contract gains its
-  round-entered note; alpha.5's `15.8` citation follows the renumber;
-  code/sample comments citing SPEC 15.9 follow it too.
+  round-entered note; code comments citing SPEC 15.9 follow the
+  Lowering renumber.
 
 Acceptance: SPEC alone sufficient for Stages 1–4; anchors intact;
 examples use this round's settled syntax; `cargo test` untouched.
-**Log:**
+**Log:** 2026-07-18 — **done**, one commit (SPEC + ROADMAP/PLAN-V1 + this
+doc). Settled in the pass: the new section lands as **15.9** with only
+Lowering renumbering to 15.10 — assemblies keep 15.8, so the ~90 code
+comments citing it stay true (three 15.9 citations swept); seat contact
+is **both axes** (a seat places; a mate aligns one axis); a seat's
+`gap:` reads along the target's outward normal, positive = daylight;
+the finish vee's indication rides the long leg; the old
+mate-on-sheet-content error row dissolved into the seat semantics.
+Anchor sweep: 519 refs, zero broken; 995 tests untouched.
 
 ### Stage 1 — the drafting-glyph registry & `|surface-finish|`
 

@@ -105,7 +105,7 @@ impl Paint {
 /// its row on top of a callout ([SPEC 15.6]). Dims then pack in source
 /// order; the output keeps source order regardless. The returned nodes
 /// append after the geometry children, so annotations paint above it
-/// (`layer:` still wins) and the drawing's bbox includes them [SPEC 15.9].
+/// (`layer:` still wins) and the drawing's bbox includes them [SPEC 15.10].
 pub(in crate::layout) fn lower(
     kids: &[PlacedNode],
     links: &[&ResolvedLink],
