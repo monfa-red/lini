@@ -259,6 +259,17 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
         // …the round hole — `width:` (required) is its diameter; it punches by
         // paint order and draws its own centre marks [SPEC 15.4]…
         "hole" => vec![var("fill", "bg"), var("stroke", "stroke-dark")],
+        // The ISO 1302 surface-texture symbol [SPEC 15.9]: dimension-linework
+        // paint at the annotation font, sheet-space like every drafting
+        // symbol; `symbol:` picks the vee variant.
+        "surface-finish" => vec![
+            id("symbol", "basic"),
+            var("stroke", "stroke-dark"),
+            n("stroke-width", 1.0),
+            id("fill", "none"),
+            n("font-size", 12.0),
+            n("scale", 1.0),
+        ],
         // …and the dash-dot chrome types [SPEC 15.7]. `|breakline|` is the break
         // cut's generated zigzag / S edge — solid, annotation-weight.
         "centerline" => vec![

@@ -273,6 +273,8 @@ pub fn resolve_node(
         validate_icon(&attrs, node.span)?;
     } else if kind == NodeKind::Image {
         validate_fit(&attrs, node.span)?;
+    } else if type_chain.iter().any(|t| t == "surface-finish") {
+        validate_finish(&attrs, node.span)?;
     }
 
     ancestors.push(facts);
@@ -543,6 +545,23 @@ fn validate_icon(attrs: &AttrMap, span: Span) -> Result<(), Error> {
         crate::suggest::did_you_mean(&crate::icon::suggest(symbol))
     );
     Err(Error::at(span, msg))
+}
+
+/// On `|surface-finish|` the `symbol` homonym picks the ISO 1302 vee variant
+/// [SPEC 15.9/16] — anything else errors here, at the node.
+fn validate_finish(attrs: &AttrMap, span: Span) -> Result<(), Error> {
+    match attrs.get("symbol") {
+        None => Ok(()),
+        Some(ResolvedValue::Ident(s))
+            if matches!(s.as_str(), "basic" | "machined" | "prohibited") =>
+        {
+            Ok(())
+        }
+        Some(_) => Err(Error::at(
+            span,
+            "'symbol' picks the vee — basic, machined, or prohibited",
+        )),
+    }
 }
 
 /// `fit` [SPEC 7] accepts only the four object-fit keywords — used by `|icon|`

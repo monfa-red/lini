@@ -359,6 +359,17 @@ fn layout_inst(
     if ctx.drawing && drawing::chrome::is_chrome(&inst.attrs) {
         return Ok(drawing::chrome::placeholder(inst));
     }
+    // A drafting symbol lowers off the glyph registry [SPEC 15.9] —
+    // drawing-scope only ([SPEC 20]).
+    if let Some(ty) = drawing::symbols::drafting_type(&inst.type_chain) {
+        if !ctx.drawing {
+            return Err(Error::at(
+                inst.span,
+                format!("'|{ty}|' annotates a drawing — it belongs in a 'layout: drawing'"),
+            ));
+        }
+        return drawing::symbols::layout_node(inst);
+    }
 
     let own = effective_scale(&inst.attrs, ctx.scale, inst.span)?;
     // In a drawing scope a shape's `[ ]` children are its **features** — they

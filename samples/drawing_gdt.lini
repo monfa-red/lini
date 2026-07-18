@@ -1,0 +1,28 @@
+// GD&T — drafting symbols [SPEC 15.9], the alpha.4 cluster (Stage 1: the
+// ISO 1302 surface-texture symbol; feature-control frames and |datum| nodes
+// follow). The vees come off the shared drafting-glyph registry in natural
+// units — glyph height follows the annotation font, line weight the
+// statement's stroke — so a symbol reads at dimension-linework weight beside
+// every value, at any view scale. `symbol:` picks the variant: `basic` any
+// process, `machined` removal required, `prohibited` removal prohibited; the
+// smart label is the textual indication, riding the long leg. A two-ended
+// leader (`face <- sf`) wires the same placed node.
+
+|drawing#bracket-view| "MOUNTING BRACKET" { unit: mm } [
+  |rect#plate| { width: 140; height: 60 } [
+    |hole#pin| { width: 12; translate: -45 0 }
+  ]
+
+  plate:left (-) plate:right { side: bottom }
+  plate:top (-) plate:bottom { side: right }
+  plate.pin (o)
+
+  // Standing on the face: the vee's tip is the node's datum, so `translate:`
+  // sets it down exactly on the top edge.
+  |surface-finish#milled| "Ra 1.6" { symbol: machined; translate: -20 -30 }
+  |surface-finish#cast| "Ra 6.3" { translate: 42 -30 }
+
+  // Leader-wired: the same placed node, reached from the bore's rim.
+  |surface-finish#bore| "Ra 0.8" { symbol: prohibited; translate: -95 -78 }
+  plate.pin <- bore
+]

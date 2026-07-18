@@ -179,23 +179,41 @@ Anchor sweep: 519 refs, zero broken; 995 tests untouched.
 
 ### Stage 1 — the drafting-glyph registry & `|surface-finish|`
 
-- [ ] The glyph registry (beside `src/icon/` — the lookup/suggest shape
+- [x] The glyph registry (beside `src/icon/` — the lookup/suggest shape
   reused): path data for the fourteen characteristics, the modifier
   circles (Ⓜ Ⓛ Ⓕ Ⓣ Ⓟ), and the three finish vees; **natural-units
   emission** — height from the annotation `font-size`, stroke from the
   statement's `stroke-width` (decision 2), never fit-to-box.
-- [ ] `|surface-finish|` (decision 3): the template + drawing-scope
+- [x] `|surface-finish|` (decision 3): the template + drawing-scope
   gate; smart label = the indication (longhand none — the label is the
   text); `symbol:` variant validation; lowering to vee + indication at
   the text seat; ordinary placement (`translate:`) and the two-ended
   leader form both render the one node.
-- [ ] Tests: registry units (every glyph resolves, natural-units
+- [x] Tests: registry units (every glyph resolves, natural-units
   scaling), snapshots (three variants, a leader-wired finish), the
   outside-drawing and unknown-variant errors; PNG light + dark.
 
 Acceptance: glyph line weight matches dimension linework at 1:1 and at
 a scaled view; the three variants read correctly; errors fire.
-**Log:**
+**Log:** 2026-07-18 — **done**, one commit; 1005 tests, clippy clean.
+The registry is `src/glyph/` (a static sorted table reusing
+`icon::Role`, fragments on a 100-unit grid, vee anatomy exported as
+constants); emission generalizes the icon machinery at render — a
+`drafting-glyph`-classed `Icon` node reuses `emit_role_group` with a
+**height-derived** scale (`bbox.h / GRID`) and a counter-scaled stroke,
+so the linework weighs exactly the statement's `stroke-width`. The
+lowering (`layout/drawing/symbols.rs`) puts the vee **tip at the node's
+local origin** (Stage 3's seat anchor for free); the shell is a
+path-less `Path` node — identity and bbox with no drawn box. Placed
+symbols register as packer obstacles through a `Rows::obstruct` painted
+box (the datum-frame channel; Stage 3 folds both into the one
+annotation-obstacle class). Snapshots: the new `drawing_gdt.lini`
+conformance snap (three vees + a leader-wired finish), one validation
+snap re-blessed (`symbol`'s misuse message now names both owners —
+the SPEC 16 homonym). PNGs read light + dark at zoom 2 + 4: vee
+proportions per ISO 1302 (bar and crotch circle correct), indication
+riding the long leg, glyph weight matching dimension linework at 1:1
+and at a `scale: 2` view.
 
 ### Stage 2 — `|feature-control|`, `|control|` & `|datum|`
 

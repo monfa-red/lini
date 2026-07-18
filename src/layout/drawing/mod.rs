@@ -23,6 +23,7 @@ mod outline;
 pub(crate) mod pen;
 mod round;
 mod section;
+pub(crate) mod symbols;
 pub(crate) mod threads;
 
 pub(super) use engine::{layout_node, layout_root};
@@ -104,9 +105,11 @@ pub(super) fn rel_path<'a>(path: &'a str, scope: &str) -> &'a str {
 }
 
 /// Sheet content [SPEC 15]: placed and styled per its own type, never a part —
-/// text, notes, balloons, the title footnote (tables seal via `layout: grid`).
+/// text, notes, balloons, drafting symbols, the title footnote (tables seal
+/// via `layout: grid`).
 pub(super) fn is_sheet(kind: crate::resolve::NodeKind, type_chain: &[String]) -> bool {
     kind == crate::resolve::NodeKind::Text
+        || symbols::drafting_type(type_chain).is_some()
         || type_chain.iter().any(|t| {
             matches!(
                 t.as_str(),

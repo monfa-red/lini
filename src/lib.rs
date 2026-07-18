@@ -4,6 +4,7 @@ mod error;
 mod expr;
 mod fmt;
 mod font;
+mod glyph;
 mod icon;
 mod layout;
 mod ledger;

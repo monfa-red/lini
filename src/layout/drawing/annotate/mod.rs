@@ -123,6 +123,14 @@ pub(in crate::layout) fn lower(
         scale,
     };
     let mut rows = Rows::new(ctx.extent);
+    // Placed drafting symbols are packing obstacles [SPEC 15.6/15.9]: their
+    // painted bounds register before anything packs, through the same channel
+    // as the datum frame — a dim row stands off a finish symbol.
+    for k in kids {
+        if super::symbols::drafting_type(&k.type_chain).is_some() {
+            rows.obstruct(k.bbox.shifted(k.cx, k.cy));
+        }
+    }
     let mut outs: Vec<Vec<PlacedNode>> = vec![Vec::new(); links.len()];
     // A dimension takes no `gap:` — it stands off by `clearance` [SPEC 15.6];
     // `gap` is a mate's signed separation [SPEC 15.5/20].

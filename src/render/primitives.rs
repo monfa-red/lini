@@ -125,6 +125,9 @@ fn emit_shape(
         NodeKind::Line => emit_line(out, n, &indent, vars, ruleset, opts, thickness),
         NodeKind::Poly => emit_poly(out, n, &indent),
         NodeKind::Path => emit_path(out, n, &indent),
+        NodeKind::Icon if n.type_chain.iter().any(|t| t == "drafting-glyph") => {
+            emit_drafting_glyph(out, n, &indent, vars, opts)
+        }
         NodeKind::Icon => emit_icon(out, n, &indent, vars, opts),
         NodeKind::Image => emit_image(out, n, &indent),
         NodeKind::Sketch => emit_sketch(out, n, &indent),
@@ -512,6 +515,57 @@ fn emit_icon(out: &mut String, n: &PlacedNode, indent: &str, vars: &VarTable, op
     // shared text emitter via the normal child recursion — so it inherits the
     // colour / `font-size`, never scales with the glyph, and honours `translate` /
     // `rotate` / styling exactly like any node's text.
+}
+
+/// A drafting glyph [SPEC 15.9] — registry paths through the same role groups
+/// as an icon, but in **natural units**: layout sized the bbox off the
+/// annotation font, so the scale is height-derived (`h / GRID`, uniform),
+/// never fit-to-box; the stroke counter-scales so the linework weighs exactly
+/// the statement's `stroke-width` — dimension-linework weight at every size.
+fn emit_drafting_glyph(
+    out: &mut String,
+    n: &PlacedNode,
+    indent: &str,
+    vars: &VarTable,
+    opts: &Options,
+) {
+    let Some(ResolvedValue::Ident(name) | ResolvedValue::String(name)) = n.attrs.get("symbol")
+    else {
+        return;
+    };
+    let Some(g) = crate::glyph::lookup(name) else {
+        return;
+    };
+    let s = n.bbox.h() / crate::glyph::GRID;
+    let ink = attr_or_var(&n.attrs, "stroke", "stroke-dark", vars, opts);
+    let sw = n.attrs.number("stroke-width").unwrap_or(1.0) / s;
+    writeln!(
+        out,
+        r#"{indent}<g transform="scale({}) translate({} {})">"#,
+        num(s),
+        num(-g.width / 2.0),
+        num(-crate::glyph::GRID / 2.0),
+    )
+    .unwrap();
+    use crate::icon::Role;
+    emit_role_group(
+        out,
+        indent,
+        g.frags,
+        |r| matches!(r, Role::Line | Role::Both),
+        &format!(
+            r#"fill="none" stroke="{ink}" stroke-width="{}" stroke-linecap="round" stroke-linejoin="round""#,
+            num(sw)
+        ),
+    );
+    emit_role_group(
+        out,
+        indent,
+        g.frags,
+        |r| r == Role::Solid,
+        &format!(r#"fill="{ink}" stroke="none""#),
+    );
+    writeln!(out, "{indent}</g>").unwrap();
 }
 
 /// Emit the fragments whose role matches `want`, wrapped in one inheriting paint

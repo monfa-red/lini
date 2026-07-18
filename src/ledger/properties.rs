@@ -281,9 +281,11 @@ pub static PROPERTIES: &[Property] = &[
         DefaultRef::None,
         No,
     ),
+    // `symbol` is a homonym [SPEC 16]: the icon's Phosphor name, and the
+    // finish vee variant on `|surface-finish|` ([SPEC 15.9]).
     row(
         "symbol",
-        &[Type("icon")],
+        &[Type("icon"), Type("surface-finish")],
         One(Kind::Ident),
         DefaultRef::None,
         No,

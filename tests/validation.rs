@@ -49,7 +49,7 @@ fn type_owned_property_on_the_wrong_type_errors() {
 fn misuse_errors_in_an_element_rule_too() {
     insta::assert_snapshot!(
         diags("{ |box| { symbol: heart; } }\n|box#a|\n"),
-        @"test.lini:1:11: error: 'symbol' has no meaning on '|box|' — it reads on '|icon|'"
+        @"test.lini:1:11: error: 'symbol' has no meaning on '|box|' — it reads on '|icon|' / '|surface-finish|'"
     );
 }
 

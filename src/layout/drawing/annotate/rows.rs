@@ -60,6 +60,12 @@ impl Rows {
         }
     }
 
+    /// Register one painted box the rows must clear — a placed drafting
+    /// symbol's bounds [SPEC 15.9].
+    pub(in crate::layout::drawing) fn obstruct(&mut self, bbox: Bbox) {
+        self.painted.push(bbox);
+    }
+
     /// Register a lowered statement's texts — and a datum's framed box, whose
     /// linework reaches past its letter [SPEC 15.7] — as painted bounds the
     /// rows clear.

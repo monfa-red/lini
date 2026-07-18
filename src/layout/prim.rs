@@ -195,6 +195,32 @@ pub fn path(d: String, fill: ResolvedValue, bbox: Bbox) -> PlacedNode {
     n
 }
 
+/// A drafting glyph [SPEC 15.9]: an `Icon`-kind leaf classed `drafting-glyph`,
+/// so the render emitter draws the named registry paths — in **natural
+/// units**: the bbox height *is* the glyph height (the caller derives it from
+/// the annotation font), and `sw` is the statement's stroke width, emitted
+/// unscaled so the linework weighs exactly like the dimension lines beside it.
+pub fn glyph(
+    symbol: &str,
+    cx: f64,
+    cy: f64,
+    w: f64,
+    h: f64,
+    stroke: ResolvedValue,
+    sw: f64,
+) -> PlacedNode {
+    let mut n = node(NodeKind::Icon, Bbox::centered(w, h));
+    n.cx = cx;
+    n.cy = cy;
+    n.type_chain = vec!["drafting-glyph".into()];
+    n.attrs
+        .insert("symbol", ResolvedValue::Ident(symbol.into()));
+    n.attrs.insert("stroke", stroke);
+    n.attrs.insert("stroke-width", ResolvedValue::Number(sw));
+    n.attrs.insert("fill", ident("none"));
+    n
+}
+
 /// A transparent group wrapping `children` (e.g. a tooltip card's box + text), tagged
 /// with `type_chain` so it carries `.lini-{name}` classes. `bbox` is its absolute bounds
 /// (the children are positioned absolutely; the group keeps `cx`/`cy` at the origin).
