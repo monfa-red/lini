@@ -71,6 +71,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
     families::build_shape_rules(&mut rules, laid, &present, vars, opts);
     families::build_sequence_text_rules(&mut rules, &present);
     families::build_gutter_rule(&mut rules, has_gutters);
+    families::build_halo_rules(&mut rules, present.contains("halo"), has_labels);
     families::build_template_rules(&mut rules, laid, &present, vars, opts);
     families::build_link_rules(&mut rules, laid, vars, opts);
     families::build_link_label_rules(
@@ -116,6 +117,11 @@ fn collect<'a>(
 ) {
     *has_gutters |= !node.gutters.is_empty();
     present.insert(node.kind.as_str());
+    // A line with baked crossing-halo cuts registers the `halo` chrome type,
+    // so its base cut paint and any `|halo|` user rule emit [SPEC 15.7].
+    if node.attrs.get("halo").is_some() {
+        present.insert("halo");
+    }
     // An icon's optional label renders as a `lini-text`, so register the text
     // rule even though the label is not a separate Text node.
     if node.kind == NodeKind::Icon && node.label.is_some() {

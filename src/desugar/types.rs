@@ -75,6 +75,9 @@ pub const TEMPLATES: &[(&str, &str)] = &[
     ("hidden", "sketch"),
     ("shoulder", "line"),
     ("threadline", "line"),
+    // The crossing-halo knockouts [SPEC 15.7] — generated mask cuts, no
+    // instances; registered so the `|halo|` chrome rule runs the cascade.
+    ("halo", "line"),
     // Sections & details [SPEC 15.8]: the authored plane line (chrome — its ISO
     // anatomy fills from the view's extent) and the magnifier region marker. A
     // section or detail **view** is a plain `|drawing| { of: <marker> }` — no

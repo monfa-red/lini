@@ -1,13 +1,17 @@
 // Sourced views [SPEC 15.8] on an A4 sheet: the front view carries the A–A
 // cutting plane and a detail ring; `|drawing| { of: a }` authors the section
-// (hatched walls, the bore reading between them), and `|drawing| { of: c }`
-// re-renders the ringed port clipped to the circle, titled "C (3:1)" by
-// composition — its own drafting ratio, `scale: 3`.
+// (hatched walls, the bore reading between them, a cross-drilled drain whose
+// dimension and leader **break** where they cross the hatched wall — the
+// crossing halos [SPEC 15.7]), and `|drawing| { of: c }` re-renders the
+// ringed port clipped to the circle, titled "C (3:1)" by composition — its
+// own drafting ratio, `scale: 3`. The tapped bush shows an internal thread
+// [SPEC 15.3]: the bore drawn as an inner even-odd subpath, the thin line at
+// the major out by 0.5413 × pitch, the bare leader composing `M12×2`.
 {
   |steel::sketch| { fill: hatch(45, 5); }
 }
 
-|page#sheet| { sheet: a4 landscape; gap: 24; align: origin; } [
+|page#sheet| { sheet: a4 landscape; gap: 14; align: origin; } [
 
   |drawing#front| "COOLING RING" { scale: 1; } [
     |oval#od| { width: 80; height: 80; fill: none; stroke: --stroke-dark; }
@@ -33,15 +37,34 @@
       // the left ring wall
       mirror: y-axis;
       // → both walls (the bore between)
-    }
+    } [
+      |hole#drain| { width: 4; translate: -28.5 0; }
+      // a cross-drilled drain, mid-wall
+    ]
     |centerline| { points: 0 -20, 0 20; }
     // the revolve axis
 
     wall:left (-) wall:right { side: bottom; }
     // 80 across
+    wall:left (-) wall.drain { side: top; }
+    // → 11.5 — the drain's extension line breaks
+    // where it crosses the hatched wall [SPEC 15.7]
+    wall.drain (o)
+    // → ⌀4 — the leader breaks over the wall's outer edge
   ]
 
   |drawing#det| { of: c; scale: 3; }
   // the ringed port, re-laid ×3
+
+  |drawing#bush| "TAPPED BUSH" { scale: 1; } [
+    |steel#body| {
+      draw: move(-15, -12) right(30) down(7.0825) left(30):m12 close();
+      // one wall of the revolved sleeve — the run is the drilled bore
+      revolve: x-axis; thread: m12 2;
+      // internal: the thin line marks the major, out by 0.5413 × pitch
+    }
+    body:m12 <- { side: top; }
+    // → M12×2 — composed from the drilled ⌀9.835 + 2 × 0.5413 × pitch
+  ]
 
 ]

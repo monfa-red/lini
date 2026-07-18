@@ -415,24 +415,55 @@ text, nothing overlaps (oracle green). 983 tests, fmt + clippy clean.
 
 ### Stage 7 — halos, internal threads & the follows bug
 
-- [ ] Halos: mask-based knockouts generalizing `label_mask` (decision 12)
+- [x] Halos: mask-based knockouts generalizing `label_mask` (decision 12)
   — applied to dim/extension/leader linework over geometry; the
   exclusion set (arrowheads, text, frames, contact) proven by
   construction, not clipping fixes; one cascade hook; margin constant in
   the baked table.
-- [ ] Internal threads: the even-odd inner-subpath sense flip
+- [x] Internal threads: the even-odd inner-subpath sense flip
   (decision 13) in `threads.rs`; callouts compose the internal spec.
-- [ ] The follows bug (decision 14): a one-ended leader's authored label
+- [x] The follows bug (decision 14): a one-ended leader's authored label
   follows the composed thread spec; conformance test from SPEC 15.6's
   own example.
-- [ ] Samples: hatching-crossed dims in `drawing_section` show the halo;
+- [x] Samples: hatching-crossed dims in `drawing_section` show the halo;
   an internal thread in the section sample; snapshots + PNG light +
   dark (the mask must hold in dark mode — the halo's whole reason).
 
 Acceptance: halos break linework over hatching in both themes; no halo
 touches an arrowhead/text/frame; internal callouts read the internal
 spec; `bar:m10 <- "LH"` renders `M10×1.5 LH`.
-**Log:**
+**Log:** 2026-07-18 — **done**, one commit (a takeover: the first
+session died mid-stage; its tree finished and verified). Halos bake at
+layout (`halo.rs`, one pass after every statement lowers): each dim /
+ext / leader line's crossings against **geometry only** (chrome, text,
+other annotations never cast) become cut sub-polylines in a `halo` attr
++ document-unique `halo-id`; the render folds them into a
+`userSpaceOnUse` knockout mask on the line element **alone** —
+arrowheads, text, and frames are separate nodes the mask can't touch,
+and `knockout.rs` is the one mechanism `label_mask` now rides too. The
+dead session's two fixes confirmed in: a cut's exclusion reach is its
+own ink (`sw/2`, no margin re-inflation) against the lowered marker
+boxes, and a **lone** endpoint graze is a corner touch, not a crossing
+(a twin graze at one station is a true vertex crossing) — pinned by the
+collinear-extension test. The `|halo|` hook needed one desugar fix:
+`class_defs` gates on instances, and halo's wearers are render-generated
+mask shapes, so an authored `|halo|` rule alone now forces the class def
+(the render still emits it only when a crossing baked, after the black
+default so the user rule wins). Internal sense: an even-odd parity probe
+just inside the run toward the axis (air = internal), the thin line
+**out** by 0.54125 × pitch, `ThreadSpec` composing the major once where
+the dressing draws — the callout and the follows merge (spec leads,
+authored words trail; `>-` letters compose nothing) both read it.
+Deviation: drawing_screw's detail note moved off `body:meter` (the
+follows law would compose the flight spec into it) onto `body:z2`, and
+the C magnifier moved to the root fillet it names — the dead session
+left z2 outside the ring, blowing the leader across the sheet. Six
+sample snapshots re-blessed (verified halo/thread-shaped first). PNGs
+light + dark read: breaks hold over hatching in both themes (A–A's ⌀4
+leg and drain ext line), arrows/text/frames untouched, the bush's thin
+major inside the walls with `M12×2` composed; the bush leader's tip
+presses the outer surface — the established press law, noted, not
+fought. 989 tests (+6), fmt + clippy clean.
 
 ### Stage 8 — `format:` on dimensions; alpha.3 closes
 

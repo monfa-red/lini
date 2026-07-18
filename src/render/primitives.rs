@@ -282,6 +282,14 @@ fn emit_line(
     // the arrowhead; the markers still ride the true endpoints (below).
     let drawn = super::markers::shorten_for_markers(&points, &n.markers, thickness, 0.0);
 
+    // Crossing halos [SPEC 15.7]: the layout-baked cuts fold into a knockout
+    // mask on the drawn line alone — arrowheads and text are separate
+    // elements the mask never reaches.
+    let mask_attr = match halo_mask(out, n, indent, &points, thickness) {
+        Some(id) => format!(r#" mask="url(#{id})""#),
+        None => String::new(),
+    };
+
     // A `stroke-style: wavy` line rides an undulating centreline (reusing the link
     // wave) rather than a dash pattern — an async sequence message [SPEC 13], or an
     // explicit wavy `|line|`. `wavy_d` returns `None` below one wavelength, falling
@@ -292,29 +300,37 @@ fn emit_line(
     // hook bends exactly like a routed wire [SPEC 13], and any `|line|` may round.
     let radius = n.attrs.number("radius").unwrap_or(0.0);
     if let Some(d) = wavy.then(|| super::wavy::wavy_d(&drawn, &[])).flatten() {
-        writeln!(out, r#"{indent}<path d="{d}" fill="none"/>"#).unwrap();
+        writeln!(out, r#"{indent}<path d="{d}" fill="none"{mask_attr}/>"#).unwrap();
     } else if drawn.len() == 2 {
         let (from, to) = (drawn[0], drawn[1]);
         writeln!(
             out,
-            r#"{}<line x1="{}" y1="{}" x2="{}" y2="{}"/>"#,
+            r#"{}<line x1="{}" y1="{}" x2="{}" y2="{}"{}/>"#,
             indent,
             num(from.0),
             num(from.1),
             num(to.0),
             num(to.1),
+            mask_attr,
         )
         .unwrap();
     } else if radius > 0.5 {
         let targets = vec![radius; drawn.len() - 2];
         let d = super::rounding::path_d(&drawn, &targets);
-        writeln!(out, r#"{indent}<path d="{d}" fill="none"/>"#).unwrap();
+        writeln!(out, r#"{indent}<path d="{d}" fill="none"{mask_attr}/>"#).unwrap();
     } else {
         let pts: Vec<String> = drawn
             .iter()
             .map(|(x, y)| format!("{},{}", num(*x), num(*y)))
             .collect();
-        writeln!(out, r#"{}<polyline points="{}"/>"#, indent, pts.join(" ")).unwrap();
+        writeln!(
+            out,
+            r#"{}<polyline points="{}"{}/>"#,
+            indent,
+            pts.join(" "),
+            mask_attr
+        )
+        .unwrap();
     }
 
     // Markers at the first and last points. Their fill follows the line's
@@ -344,6 +360,56 @@ fn emit_line(
     {
         super::markers::emit_marker(out, indent, n.markers.end, tip, dir, &paint);
     }
+}
+
+/// Emit a line's crossing-halo knockout mask [SPEC 15.7], returning its id.
+/// The cuts were baked by the drawing layout (`halo` — cut polylines along
+/// the line — plus the document-unique `halo-id`); each lowers to a
+/// `.lini-halo` mask stroke wide enough to sever the line, so the `|halo|`
+/// chrome rule restyles or removes every break in one place.
+fn halo_mask(
+    out: &mut String,
+    n: &PlacedNode,
+    indent: &str,
+    points: &[(f64, f64)],
+    thickness: f64,
+) -> Option<String> {
+    let ResolvedValue::List(cuts) = n.attrs.get("halo")? else {
+        return None;
+    };
+    let ResolvedValue::String(id) = n.attrs.get("halo-id")? else {
+        return None;
+    };
+    let pad = thickness / 2.0 + 1.0;
+    let (mut x0, mut y0, mut x1, mut y1) = (f64::MAX, f64::MAX, f64::MIN, f64::MIN);
+    for &(x, y) in points {
+        x0 = x0.min(x);
+        y0 = y0.min(y);
+        x1 = x1.max(x);
+        y1 = y1.max(y);
+    }
+    let region = (x0 - pad, y0 - pad, x1 - x0 + 2.0 * pad, y1 - y0 + 2.0 * pad);
+    let mut m = super::knockout::open(id, region);
+    for cut in cuts {
+        let ResolvedValue::List(pts) = cut else {
+            continue;
+        };
+        let chain: Vec<(f64, f64)> = pts
+            .iter()
+            .filter_map(|p| {
+                let ResolvedValue::Tuple(xy) = p else {
+                    return None;
+                };
+                Some((xy.first()?.as_number()?, xy.get(1)?.as_number()?))
+            })
+            .collect();
+        if chain.len() >= 2 {
+            super::knockout::cut_polyline(&mut m, &chain, thickness + 2.0);
+        }
+    }
+    super::knockout::close(&mut m);
+    writeln!(out, "{indent}{m}").unwrap();
+    Some(id.clone())
 }
 
 fn emit_poly(out: &mut String, n: &PlacedNode, indent: &str) {

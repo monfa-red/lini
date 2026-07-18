@@ -156,7 +156,11 @@ pub(in crate::layout) fn lower(
         rows.obstruct_texts(&nodes);
         outs[i] = nodes;
     }
-    Ok(outs.into_iter().flatten().collect())
+    let mut out: Vec<PlacedNode> = outs.into_iter().flatten().collect();
+    // Crossing halos [SPEC 15.7]: break the lowered linework where it crosses
+    // the drawn geometry — after every statement is placed, one pass.
+    super::halo::apply(&ctx, &mut out);
+    Ok(out)
 }
 
 /// The extent dimensions stack outside of and leader texts clear: the drawn

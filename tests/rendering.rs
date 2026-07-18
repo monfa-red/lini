@@ -1399,3 +1399,29 @@ fn time_axis_date_preset_and_range_and_hover() {
     );
     assert!(svg.contains("S: Jun 1 2026, 09:30, 2"), "{svg}");
 }
+
+#[test]
+fn a_halo_rule_restyles_the_crossing_knockouts() {
+    // A crossed extension line bakes halo cuts; the render folds them into a
+    // knockout mask whose `.lini-halo` stroke defaults black [SPEC 15.7].
+    let src = "{ layout: drawing; density: 1 }\n|rect#plate| { width: 100; height: 40 }\n|hole#h| { width: 8 }\nplate:left (-) h { side: top }\n";
+    let svg = render_baked(src);
+    assert!(
+        svg.contains(r##"mask="url(#lini-halo-"##),
+        "the line wears its mask: {svg}"
+    );
+    assert!(svg.contains(".lini-halo { stroke: black; }"), "{svg}");
+    // The `|halo|` chrome hook: a user rule lands *after* the default in the
+    // cascade, so `stroke: none` removes every crossing break scope-wide.
+    let themed = render_baked(&format!(
+        "{{ layout: drawing; density: 1;\n  |halo| {{ stroke: none }}\n}}\n{}",
+        &src[32..]
+    ));
+    let black = themed
+        .find(".lini-halo { stroke: black; }")
+        .expect("the default cut paint");
+    let none = themed
+        .find(".lini-halo { stroke: none; }")
+        .expect("the user rule");
+    assert!(black < none, "the user rule overrides: {themed}");
+}

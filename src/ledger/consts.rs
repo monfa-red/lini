@@ -24,6 +24,10 @@ pub(crate) const TOL_STACK: f64 = 0.7;
 /// The GD&T datum triangle's side [SPEC 15.7] — a chunkier symbol than an
 /// arrow, with a floor so it never vanishes on thin leaders.
 pub(crate) const DATUM_SIZE: f64 = 11.0;
+/// A crossing halo's clearance each side of the crossed geometry line
+/// [SPEC 15.7] — the sheet-space knockout that breaks annotation linework
+/// where it crosses geometry (2 = the drawing linework width doubled).
+pub(crate) const HALO_MARGIN: f64 = 2.0;
 
 // ── Break and centerline chrome [SPEC 15.5].
 /// The sheet-space daylight a break leaves between the pieces.

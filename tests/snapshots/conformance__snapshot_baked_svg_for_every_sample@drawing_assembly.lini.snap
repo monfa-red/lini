@@ -17,6 +17,8 @@ input_file: samples/drawing_assembly.lini
     .lini .lini-dim-text { font-size: 12px; font-weight: normal; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
     .lini .lini-gutter { stroke: none; }
+    .lini .lini-cut-bg { fill: white; stroke: none; }
+    .lini .lini-halo { stroke: black; }
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
     .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
     .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: 400; }
@@ -127,7 +129,8 @@ input_file: samples/drawing_assembly.lini
         </g>
       </g>
       <g class="lini-node lini-ext-line lini-line" transform="translate(39.9,64.25)">
-        <line x1="-360" y1="3" x2="-360" y2="138"/>
+        <mask id="lini-halo-pump-0" maskUnits="userSpaceOnUse" x="-361.5" y="1.5" width="3" height="138"><rect class="lini-cut-bg" x="-361.5" y="1.5" width="3" height="138"/><polyline class="lini-halo" fill="none" stroke-width="3" points="-360,13 -360,19"/><polyline class="lini-halo" fill="none" stroke-width="3" points="-360,70 -360,76"/></mask>
+        <line x1="-360" y1="3" x2="-360" y2="138" mask="url(#lini-halo-pump-0)"/>
       </g>
       <g class="lini-node lini-ext-line lini-line" transform="translate(39.9,64.25)">
         <line x1="560" y1="3" x2="560" y2="138"/>
@@ -155,7 +158,8 @@ input_file: samples/drawing_assembly.lini
         <circle class="lini-marker lini-marker-dot" cx="440" cy="-50.625" r="2.625" style="fill: black"/>
       </g>
       <g class="lini-node lini-dim-line lini-line" transform="translate(39.9,64.25)">
-        <line x1="-608.8151" y1="-177.6302" x2="-520.8944" y2="-1.7889"/>
+        <mask id="lini-halo-pump-1" maskUnits="userSpaceOnUse" x="-610.3151" y="-179.1302" width="91.8151" height="180.6302"><rect class="lini-cut-bg" x="-610.3151" y="-179.1302" width="91.8151" height="180.6302"/><polyline class="lini-halo" fill="none" stroke-width="3" points="-544,-48 -537,-34"/></mask>
+        <line x1="-608.8151" y1="-177.6302" x2="-520.8944" y2="-1.7889" mask="url(#lini-halo-pump-1)"/>
         <circle class="lini-marker lini-marker-dot" cx="-521.1739" cy="-2.3479" r="2.625" style="fill: black"/>
       </g>
       <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,214.25)">

@@ -491,29 +491,11 @@ fn label_mask(
     // The mask rects carry their fill/stroke via CSS (`.lini-cut-bg` /
     // `.lini-cut`), not inline — so the link's own `stroke` can't bleed into the
     // luminance mask, and the SVG stays free of per-label paint [SPEC 17].
-    let mut m = format!(
-        r#"<mask id="{id}" maskUnits="userSpaceOnUse" x="{}" y="{}" width="{}" height="{}"><rect class="lini-cut-bg" x="{}" y="{}" width="{}" height="{}"/>"#,
-        num(rx),
-        num(ry),
-        num(rw),
-        num(rh),
-        num(rx),
-        num(ry),
-        num(rw),
-        num(rh),
-    );
-    for (cx, cy, cw, ch) in hits {
-        write!(
-            m,
-            r#"<rect class="lini-cut" x="{}" y="{}" width="{}" height="{}"/>"#,
-            num(*cx),
-            num(*cy),
-            num(*cw),
-            num(*ch),
-        )
-        .unwrap();
+    let mut m = super::knockout::open(&id, (rx, ry, rw, rh));
+    for cut in hits {
+        super::knockout::cut_rect(&mut m, *cut);
     }
-    m.push_str("</mask>");
+    super::knockout::close(&mut m);
     Some((id, m))
 }
 

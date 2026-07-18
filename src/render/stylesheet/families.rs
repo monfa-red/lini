@@ -380,13 +380,7 @@ pub(super) fn build_link_label_rules(
         // so the link's own `stroke` can't bleed into the luminance mask, and the
         // SVG stays free of per-label paint attrs [SPEC 17]. White shows the
         // link, a black box per label punches the hole.
-        rules.push(Rule {
-            class: "lini-cut-bg".into(),
-            props: vec![
-                ("fill".into(), "white".into()),
-                ("stroke".into(), "none".into()),
-            ],
-        });
+        rules.push(cut_bg_rule());
         rules.push(Rule {
             class: "lini-cut".into(),
             props: vec![
@@ -395,6 +389,36 @@ pub(super) fn build_link_label_rules(
             ],
         });
     }
+}
+
+/// The knockout mask's white ground [SPEC 17] — stated once whichever
+/// consumer (label cut, crossing halo) needs it first.
+fn cut_bg_rule() -> Rule {
+    Rule {
+        class: "lini-cut-bg".into(),
+        props: vec![
+            ("fill".into(), "white".into()),
+            ("stroke".into(), "none".into()),
+        ],
+    }
+}
+
+/// The crossing-halo cut paint [SPEC 15.7]: the black `.lini-halo` mask
+/// stroke, emitted **before** the template rules so a `|halo|` user rule
+/// overrides it (`|halo| { stroke: none }` removes every crossing break
+/// scope-wide, like all chrome). Without link labels the white ground rides
+/// here too; with them it keeps its established seat beside `.lini-cut`.
+pub(super) fn build_halo_rules(rules: &mut Vec<Rule>, has_halos: bool, has_labels: bool) {
+    if !has_halos {
+        return;
+    }
+    if !has_labels {
+        rules.push(cut_bg_rule());
+    }
+    rules.push(Rule {
+        class: "lini-halo".into(),
+        props: vec![("stroke".into(), "black".into())],
+    });
 }
 
 /// The base marker paint (`.lini-marker`), the drafting-head variants, and the

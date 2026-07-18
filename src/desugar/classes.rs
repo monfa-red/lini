@@ -68,7 +68,12 @@ pub fn class_defs(
         emit(kind.as_str(), primitive_bundle(kind), synthesized);
     }
     for (name, _) in TEMPLATES {
-        emit(name, template_bundle(name), false);
+        // `halo` never has desugar-visible instances — its knockout shapes are
+        // render-generated mask cuts [SPEC 15.7] — so an authored `|halo|`
+        // rule alone forces the class def; the render still emits it only
+        // when a crossing actually baked.
+        let generated_only = *name == "halo" && element_rules.contains_key(*name);
+        emit(name, template_bundle(name), generated_only);
     }
     let mut seen = HashSet::new();
     for name in extra_order {

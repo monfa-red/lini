@@ -18,7 +18,7 @@
     }
 
     |plane#a| "A" { at: 70; }
-    |magnifier#c| "C" { width: 34; translate: 40 0; }
+    |magnifier#c| "C" { width: 34; translate: -10 0; }
 
     body:left (-) body:z1 { side: top; }
     // FEED       → 100
@@ -44,7 +44,9 @@
   ]
 
   |drawing#det| { of: c; scale: 1.5; } [
-    body:meter <- "root R10"
+    body:z2 <- "root R10"
+    // the fillet's station — on body:meter the note would follow the
+    // composed flight spec, per the one-ended label law [SPEC 15.6]
   ]
 
   |title-block| {

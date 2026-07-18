@@ -58,8 +58,8 @@ pub struct Folded {
     pub edges: Vec<(P, P)>,
     /// A `thread:`'s minor-line spans — the `|threadline|` chrome [SPEC 15.3].
     pub threads: Vec<(P, P)>,
-    /// `(segment, pitch)` per `thread:` group — the smart leader's source.
-    pub thread_specs: Vec<(String, f64)>,
+    /// The composed spec per `thread:` group — the smart leader's source.
+    pub thread_specs: Vec<super::threads::ThreadSpec>,
 }
 
 /// Fold a `|sketch|`'s `draw:` (+ `mirror:`) into its geometry, at the node's

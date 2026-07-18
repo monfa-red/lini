@@ -17,6 +17,8 @@ input_file: samples/drawing_screw.lini
     .lini .lini-dim-text { font-size: 12px; font-weight: normal; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
     .lini .lini-gutter { stroke: none; }
+    .lini .lini-cut-bg { fill: white; stroke: none; }
+    .lini .lini-halo { stroke: black; }
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
     .lini .lini-group { fill: rgba(0, 0, 0, 0.03); stroke: rgba(0, 0, 0, 0.4); stroke-width: 1; stroke-dasharray: 4,3; }
     .lini .lini-caption { color: rgba(0, 0, 0, 0.5); font-size: 12px; font-weight: 400; }
@@ -150,7 +152,7 @@ input_file: samples/drawing_screw.lini
             <use href="#lg0400-37" transform="translate(156.4 44.796) scale(0.006 -0.006)"/>
           </g>
         </g>
-        <g class="lini-node lini-magnifier lini-oval" data-id="c" transform="translate(150,-0.5)">
+        <g class="lini-node lini-magnifier lini-oval" data-id="c" transform="translate(50,-0.5)">
           <ellipse cx="0" cy="0" rx="34" ry="34"/>
           <g class="lini-text">
             <use href="#lg0500-39" transform="translate(29.7947 -28.9247) scale(0.0075 -0.0075)"/>
@@ -180,7 +182,8 @@ input_file: samples/drawing_screw.lini
           <line x1="-100" y1="-19" x2="-100" y2="-55.5"/>
         </g>
         <g class="lini-node lini-ext-line lini-line" transform="translate(70,-0.5)">
-          <line x1="-20" y1="-7" x2="-20" y2="-55.5"/>
+          <mask id="lini-halo-screw.side-0" maskUnits="userSpaceOnUse" x="-21.5" y="-57" width="3" height="51.5"><rect class="lini-cut-bg" x="-21.5" y="-57" width="3" height="51.5"/><polyline class="lini-halo" fill="none" stroke-width="3" points="-20,-31.5 -20,-36.5"/></mask>
+          <line x1="-20" y1="-7" x2="-20" y2="-55.5" mask="url(#lini-halo-screw.side-0)"/>
         </g>
         <g class="lini-node lini-dim-line lini-line" transform="translate(70,-0.5)">
           <line x1="-98" y1="-52.5" x2="-22" y2="-52.5"/>
@@ -196,7 +199,8 @@ input_file: samples/drawing_screw.lini
           <use href="#lg0400-20" transform="translate(10 -56.704) scale(0.006 -0.006)"/>
         </g>
         <g class="lini-node lini-ext-line lini-line" transform="translate(70,-0.5)">
-          <line x1="-20" y1="-7" x2="-20" y2="-55.5"/>
+          <mask id="lini-halo-screw.side-1" maskUnits="userSpaceOnUse" x="-21.5" y="-57" width="3" height="51.5"><rect class="lini-cut-bg" x="-21.5" y="-57" width="3" height="51.5"/><polyline class="lini-halo" fill="none" stroke-width="3" points="-20,-31.5 -20,-36.5"/></mask>
+          <line x1="-20" y1="-7" x2="-20" y2="-55.5" mask="url(#lini-halo-screw.side-1)"/>
         </g>
         <g class="lini-node lini-ext-line lini-line" transform="translate(70,-0.5)">
           <line x1="160" y1="-3" x2="160" y2="-55.5"/>
@@ -299,7 +303,7 @@ input_file: samples/drawing_screw.lini
         <rect x="-102" y="-112" width="204" height="224" rx="0" ry="0"/>
         <g class="lini-node lini-block" clip-path="url(#lini-clip-1)" transform="translate(0,10)">
           <rect x="-102" y="-102" width="204" height="204" rx="0" ry="0"/>
-          <g class="lini-node lini-sketch" data-id="body" transform="translate(-240,0)">
+          <g class="lini-node lini-sketch" data-id="body" transform="translate(60,0)">
             <path d="M -900 0 L -900 -48 L -305.638 -48 A 60 60 0 0 0 -294.872 -48.974 A 360 360 0 0 1 -71.921 -18.117 A 60 60 0 0 0 -45.528 -12 L 468 -12 L 480 0 L 480 72 L 480 -72 L 480 0 L 468 12 L -45.528 12 A 60 60 0 0 0 -71.921 18.117 A 360 360 0 0 1 -294.872 48.974 A 60 60 0 0 0 -305.638 48 L -900 48 Z" fill-rule="evenodd"/>
             <g class="lini-node lini-centerline lini-line" transform="translate(0,0)">
               <line x1="-904" y1="0" x2="484" y2="0"/>
@@ -319,19 +323,19 @@ input_file: samples/drawing_screw.lini
           <ellipse cx="0" cy="0" rx="101" ry="101"/>
         </g>
         <g class="lini-node lini-dim-line lini-line" transform="translate(0,10)">
-          <polyline points="-30,-14 -30,-116 -22,-116"/>
+          <polyline points="0,-15.7715 0,-116 8,-116"/>
         </g>
         <g class="lini-node lini-marker lini-marker-dim lini-poly" transform="translate(0,10)">
-          <polygon points="-30,-12 -32,-24 -28,-24"/>
+          <polygon points="0,-13.7715 -2,-25.7715 2,-25.7715"/>
         </g>
         <g class="lini-text lini-dim-text">
-          <use href="#lg0400-86" transform="translate(-20 -101.704) scale(0.006 -0.006)"/>
-          <use href="#lg0400-83" transform="translate(-12.8 -101.704) scale(0.006 -0.006)"/>
-          <use href="#lg0400-83" transform="translate(-5.6 -101.704) scale(0.006 -0.006)"/>
-          <use href="#lg0400-88" transform="translate(1.6 -101.704) scale(0.006 -0.006)"/>
-          <use href="#lg0400-54" transform="translate(16 -101.704) scale(0.006 -0.006)"/>
-          <use href="#lg0400-21" transform="translate(23.2 -101.704) scale(0.006 -0.006)"/>
-          <use href="#lg0400-20" transform="translate(30.4 -101.704) scale(0.006 -0.006)"/>
+          <use href="#lg0400-86" transform="translate(10 -101.704) scale(0.006 -0.006)"/>
+          <use href="#lg0400-83" transform="translate(17.2 -101.704) scale(0.006 -0.006)"/>
+          <use href="#lg0400-83" transform="translate(24.4 -101.704) scale(0.006 -0.006)"/>
+          <use href="#lg0400-88" transform="translate(31.6 -101.704) scale(0.006 -0.006)"/>
+          <use href="#lg0400-54" transform="translate(46 -101.704) scale(0.006 -0.006)"/>
+          <use href="#lg0400-21" transform="translate(53.2 -101.704) scale(0.006 -0.006)"/>
+          <use href="#lg0400-20" transform="translate(60.4 -101.704) scale(0.006 -0.006)"/>
         </g>
         <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,125)">
           <rect x="-31.4" y="-5" width="62.8" height="10" rx="0" ry="0"/>

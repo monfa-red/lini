@@ -1,32 +1,49 @@
 //! `thread:` — dress a threaded surface [SPEC 15.3]. The numbers live once:
-//! the surface gives the major `⌀`, the property the pitch, and the chrome
-//! follows — the thin **minor line** offset into the material by the ISO 60°
-//! thread depth (0.6134 × pitch), running the segment's drawn extent (a
-//! `chamfer()`'s trim already ends it); the **thread-end line**, geometry
-//! weight across the full diameter, at an end where the surface continues
-//! collinearly past the run (where the profile turns, the geometry already
-//! ends the thread). Both are doubled about the revolve axis.
+//! the surface gives the `⌀`, the property the pitch, and the chrome
+//! follows — the thin line offset **into the material** by the ISO 60°
+//! thread depth, running the segment's drawn extent (a `chamfer()`'s trim
+//! already ends it); the **thread-end line**, geometry weight across the
+//! full diameter, at an end where the surface continues collinearly past
+//! the run (where the profile turns, the geometry already ends the thread).
+//! Both are doubled about the revolve axis. The subpath sets the sense: on
+//! an outer profile the run is the major and the line marks the minor, in
+//! by 0.6134 × pitch; on an inner (even-odd hole) subpath the thread is
+//! internal — the run is the drilled minor and the line marks the major,
+//! out by 0.5413 × pitch, the round view's numbers [SPEC 15.4].
 
 use super::geometry::{MirrorAxis, P, PathSeg, Subpath};
-use super::{Segment, breaks::ViewMap};
+use super::{Segment, breaks::ViewMap, outline};
 use crate::error::Error;
-use crate::ledger::consts::THREAD_DEPTH;
+use crate::ledger::consts::{THREAD_DEPTH, THREAD_DEPTH_INTERNAL};
 use crate::resolve::{ResolvedInst, ResolvedValue};
 use crate::span::Span;
 
 /// Positional agreement, px — matches the edge-line law's.
 const EPS: f64 = 1e-3;
 
+/// One `thread:` group's composed numbers [SPEC 15.3] — the surface gives
+/// the major `⌀`, the property the pitch, and the callout reads them here:
+/// the numbers live once, computed where the dressing is drawn.
+#[derive(Debug, Clone)]
+pub struct ThreadSpec {
+    pub name: String,
+    /// The pitch, drawing units.
+    pub pitch: f64,
+    /// The major `⌀`, drawing units — the drawn run on an external thread;
+    /// drilled minor + 2 × 0.5413 × pitch on an internal one [SPEC 15.3/15.4].
+    pub major: f64,
+}
+
 /// A dressed profile's thread chrome, in displayed (scaled, break-mapped)
 /// coordinates, plus the specs the smart leader composes from.
 pub(super) struct Dressing {
-    /// The minor-line spans — the `|threadline|` chrome's geometry.
+    /// The thin-line spans — the `|threadline|` chrome's geometry: the minor
+    /// beside an external run, the major beside an internal one [SPEC 15.3].
     pub minors: Vec<(P, P)>,
     /// The thread-end lines — real edges, joining the `|shoulder|` spans.
     pub ends: Vec<(P, P)>,
-    /// `(segment name, pitch)` per group, pitch in drawing units — the
-    /// bare leader reads these [SPEC 15.7].
-    pub specs: Vec<(String, f64)>,
+    /// The composed spec per group — the bare leader reads these [SPEC 15.7].
+    pub specs: Vec<ThreadSpec>,
 }
 
 /// Parse and dress every `thread:` group against the folded profile.
@@ -66,7 +83,6 @@ pub(super) fn dress(
                 ));
             }
         };
-        out.specs.push((name, pitch));
 
         let u = axis.dir();
         let perp = (-u.1, u.0);
@@ -107,18 +123,47 @@ pub(super) fn dress(
         }
         let (t0, t1) = drawn.unwrap_or((lo, hi));
 
-        // The minor line, offset toward the axis by the thread depth, on
-        // both sides of it — the revolve's doubling.
-        let depth = THREAD_DEPTH * pitch * scale;
-        let minor = level - level.signum() * depth;
+        // The subpath sets the sense [SPEC 15.3]: even-odd over the folded
+        // profile at a probe just inside the run toward the axis — material
+        // there and the run is the major (external; the line marks the minor,
+        // in by 0.6134 × pitch); bore air there and the thread is internal
+        // (the run is the drilled minor; the line marks the major, out by
+        // 0.5413 × pitch — the round view's numbers, [SPEC 15.4]).
+        let internal = {
+            let delta = (THREAD_DEPTH * pitch * scale * 0.5).min(level.abs() * 0.5);
+            let toward_axis = level - level.signum() * delta;
+            let mid = (t0 + t1) / 2.0;
+            let probe = (
+                u.0 * mid + perp.0 * toward_axis,
+                u.1 * mid + perp.1 * toward_axis,
+            );
+            !inside(probe, subs)
+        };
+        out.specs.push(ThreadSpec {
+            name,
+            pitch,
+            major: if internal {
+                2.0 * level.abs() / scale + 2.0 * THREAD_DEPTH_INTERNAL * pitch
+            } else {
+                2.0 * level.abs() / scale
+            },
+        });
+
+        // The thin line, offset into the material by the thread depth, on
+        // both sides of the axis — the revolve's doubling.
+        let thin = if internal {
+            level + level.signum() * THREAD_DEPTH_INTERNAL * pitch * scale
+        } else {
+            level - level.signum() * THREAD_DEPTH * pitch * scale
+        };
         let line = |o: f64| -> (P, P) {
             (
                 (u.0 * t0 + perp.0 * o, u.1 * t0 + perp.1 * o),
                 (u.0 * t1 + perp.0 * o, u.1 * t1 + perp.1 * o),
             )
         };
-        out.minors.push(line(minor));
-        out.minors.push(line(-minor));
+        out.minors.push(line(thin));
+        out.minors.push(line(-thin));
 
         // The thread-end line where the surface continues past the run.
         let radius = level.abs();
@@ -169,6 +214,19 @@ fn find_segment(name: &str, segments: &[(String, Segment)], span: Span) -> Resul
     let near = crate::suggest::nearest(name, segments.iter().map(|(n, _)| n.as_str()), 2);
     msg.push_str(&crate::suggest::did_you_mean(&near));
     Err(Error::at(span, msg))
+}
+
+/// Even-odd containment over the folded profile [SPEC 15.3] — the crossing
+/// parity of an oblique ray (dodging the axis-aligned edges and their
+/// vertices) through every subpath segment, the same intersection code the
+/// outline raycast runs.
+fn inside(p: P, subs: &[Subpath]) -> bool {
+    let d = (0.7343, 0.6788);
+    let mut hits = Vec::new();
+    for seg in subs.iter().flat_map(|s| s.segs.iter()) {
+        outline::seg_crossings(p, d, seg, &mut hits);
+    }
+    hits.len() % 2 == 1
 }
 
 fn parallel(a: P, b: P, axis: MirrorAxis) -> bool {
@@ -250,6 +308,52 @@ mod tests {
         assert!(
             texts(&l.nodes).iter().any(|(t, ..)| t == "M20×1.5"),
             "composed spec: {:?}",
+            texts(&l.nodes)
+        );
+    }
+
+    #[test]
+    fn an_authored_label_follows_the_composed_spec() {
+        // SPEC 15.6's one-ended label law on a thread: the words trail the
+        // composed value — `bar:m20 <- "LH"` reads `M20×1.5 LH` [SPEC 15.3].
+        let l = laid(&format!(
+            "{{ layout: drawing; density: 1 }}\n{BAR}bar:m20 <- \"LH\" {{ side: top }}\n"
+        ));
+        assert!(
+            texts(&l.nodes).iter().any(|(t, ..)| t == "M20×1.5 LH"),
+            "the label follows the spec: {:?}",
+            texts(&l.nodes)
+        );
+        // A `>-` letter is a datum identity, never a label — nothing composes.
+        let d = laid(&format!(
+            "{{ layout: drawing; density: 1 }}\n{BAR}bar:m20 >- \"A\" {{ side: top }}\n"
+        ));
+        let dt = texts(&d.nodes);
+        assert!(
+            dt.iter().any(|(t, ..)| t == "A") && dt.iter().all(|(t, ..)| !t.contains("M20×1.5")),
+            "a datum letter composes nothing: {dt:?}"
+        );
+    }
+
+    #[test]
+    fn an_inner_subpath_flips_the_thread_sense() {
+        // The tapped bush [SPEC 15.3]: one wall of the revolved sleeve, the
+        // bore between the doubled copies — the probe toward the axis lands
+        // in air, so the run is the drilled minor (level 4.9175) and the
+        // thin line marks the **major**, out by 0.54125 × pitch: level 6.
+        let l = laid(
+            "{ layout: drawing; density: 1 }\n|sketch#bush| { draw: move(-15, -12) right(30) down(7.0825) left(30):m12 close(); revolve: x-axis; thread: m12 2 }\nbush:m12 <- { side: top }\n",
+        );
+        let thins = lines_of(&l.nodes, "bush", "threadline");
+        assert_eq!(thins.len(), 2, "{thins:?}");
+        for (a, b) in &thins {
+            assert!((a.0 - -15.0).abs() < 1e-6 && (b.0 - 15.0).abs() < 1e-6);
+            assert!((a.1.abs() - 6.0).abs() < 1e-3, "major level: {}", a.1);
+        }
+        // The callout composes from the same numbers: 9.835 + 2 × 1.0825 → ⌀12.
+        assert!(
+            texts(&l.nodes).iter().any(|(t, ..)| t == "M12×2"),
+            "internal spec: {:?}",
             texts(&l.nodes)
         );
     }

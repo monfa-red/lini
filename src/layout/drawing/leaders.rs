@@ -173,29 +173,51 @@ fn lower_measured(
 pub(super) fn callout(ctx: &Ctx, w: &ResolvedLink) -> Result<Vec<PlacedNode>, Error> {
     let paint = Paint::of(&w.attrs);
     let a = anchors::resolve(ctx.kids, ctx.scope, &w.endpoints[0], "leader")?;
-    // A bare `<-` composes its spec from a threaded segment — `M⌀×pitch`,
-    // the numbers living once [SPEC 15.7]; anything else still needs its word.
-    let composed = if w.texts.is_empty() {
-        match thread_spec(ctx, &a, &w.endpoints[0]) {
-            Some(text) => Some(ResolvedText {
-                text,
-                along: crate::resolve::Along::Auto,
-                attrs: crate::resolve::AttrMap::default(),
-                applied_styles: Vec::new(),
-            }),
-            None => {
-                return Err(Error::at(
-                    w.span,
-                    "a leader needs its text — 'bolt <- \"THRU\"'",
-                ));
-            }
+    // A callout on a threaded segment composes its spec — `M⌀×pitch`, the
+    // numbers living once [SPEC 15.7]. A bare `<-` reads the spec alone; an
+    // authored label **follows** it, per the one-ended label law [SPEC 15.6]
+    // (`bar:m20 <- "LH"` reads `M20×1.5 LH`). A `>-` letter is a datum
+    // identity, never a label — it composes nothing. Anything unthreaded
+    // still needs its word.
+    let spec = (w.markers.start != MarkerKind::Crow)
+        .then(|| thread_spec(&a, &w.endpoints[0]))
+        .flatten();
+    let composed = match (&spec, w.texts.is_empty()) {
+        (_, false) => None,
+        (Some(text), true) => Some(ResolvedText {
+            text: text.clone(),
+            along: crate::resolve::Along::Auto,
+            attrs: crate::resolve::AttrMap::default(),
+            applied_styles: Vec::new(),
+        }),
+        (None, true) => {
+            return Err(Error::at(
+                w.span,
+                "a leader needs its text — 'bolt <- \"THRU\"'",
+            ));
         }
-    } else {
-        None
     };
-    let texts: &[ResolvedText] = match &composed {
-        Some(t) => std::slice::from_ref(t),
-        None => &w.texts,
+    // The follows merge: the spec leads, the authored words trail on the
+    // first line; further lines stack unchanged.
+    let followed: Vec<ResolvedText>;
+    let texts: &[ResolvedText] = match (&composed, &spec) {
+        (Some(t), _) => std::slice::from_ref(t),
+        (None, Some(spec)) => {
+            followed = w
+                .texts
+                .iter()
+                .enumerate()
+                .map(|(i, t)| {
+                    let mut t = t.clone();
+                    if i == 0 {
+                        t.text = format!("{spec} {}", t.text);
+                    }
+                    t
+                })
+                .collect();
+            &followed
+        }
+        (None, None) => &w.texts,
     };
     let dir = side_attr(&w.attrs).and_then(side_unit);
     let line = leader_line(ctx, &a, a.point(), dir, None, None);
@@ -367,24 +389,18 @@ fn datum_box(texts: &[ResolvedText], landing: P, sx: f64, paint: &Paint) -> Vec<
     out
 }
 
-/// The `M⌀×pitch` spec of a threaded segment [SPEC 15.7]: the anchored
-/// sketch's `thread:` names the segment, its drawn level doubles to the
-/// major `⌀` about the revolve axis — re-cut the bar and the callout follows.
-fn thread_spec(ctx: &Ctx, a: &Anchor, ep: &crate::resolve::ResolvedEndpoint) -> Option<String> {
+/// The `M⌀×pitch` spec of a threaded segment [SPEC 15.7]: the dressing
+/// composed the numbers once where it drew the thin lines — external reads
+/// the run's own `⌀`, internal the major out from the drilled minor
+/// [SPEC 15.3] — re-cut the bar and the callout follows.
+fn thread_spec(a: &Anchor, ep: &crate::resolve::ResolvedEndpoint) -> Option<String> {
     let name = ep.point.as_ref()?;
     let geo = a.node.sketch.as_ref()?;
-    let (_, pitch) = geo.threads.iter().find(|(n, _)| n == name)?;
-    let axis = geo.mirrors.first()?;
-    let Spot::Segment(super::Segment::Edge(p, _)) = &a.spot else {
-        return None;
-    };
-    let u = axis.dir();
-    let level = p.0 * -u.1 + p.1 * u.0;
-    let dia = 2.0 * level.abs() / ctx.scale;
+    let spec = geo.threads.iter().find(|t| &t.name == name)?;
     Some(format!(
         "M{}×{}",
-        super::compose::fmt(dia),
-        super::compose::fmt(*pitch)
+        super::compose::fmt(spec.major),
+        super::compose::fmt(spec.pitch)
     ))
 }
 
