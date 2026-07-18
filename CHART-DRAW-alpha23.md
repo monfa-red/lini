@@ -347,7 +347,7 @@ oracle — across every drawing sample no two annotation texts overlap.
 
 Acceptance: all four inference rules pinned (incl. the `(<)` suggestion);
 copy dims measure model truth; aligned text reads bottom/right per ISO.
-**Log:** 2026-07-18 — **done**, one commit. The lexer glues `.`+digits
+**Log:** 2026-07-18 — **done**, one commit (`e659de3`). The lexer glues `.`+digits
 only after a glued ident (so `1.5` / `.5` stay numbers everywhere); the
 index rides `Endpoint`/`ResolvedEndpoint` as its own field and the anchor
 walk steps into the placed copy like any hop — `break:` unwinding rides
