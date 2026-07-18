@@ -5,7 +5,9 @@
 // composes the tolerance, a patterned hole's `(o)` counts its copies, and
 // `side:` steers a row or a leader (a corner side aims it). Leaders: tips
 // ray-cast onto the drawn outline and land past a horizontal elbow — `<-`
-// arrow, `*-` dot (within a face), `>-` the filled datum triangle; `(<)` arcs
+// arrow, `*-` dot (within a face), `>-` the filled datum triangle with its
+// letter in the framed datum box; a `&` fan shares one note across
+// independent legs; `(<)` arcs
 // the angle between two edges; `(o)` reads a fillet's radius; a `|balloon|`
 // wires with `-*` and a `|note|` with an ordinary arrow. The `(-)` selector —
 // the |-| subtype — dresses dimensions alone, so they part company from the
@@ -39,6 +41,8 @@
   // 4× ⌀10 H7 — the copies counted
   plate.dowel (o) { side: top-right; }
   // ⌀6 — the leader steered
+  plate.bolt.2 & plate.bolt.4 <- "2× CSK 90°"
+  // a fan: one note, a ray-cast leg onto each copy
 ]
 
 |drawing#bracket-view| "CLAMP BRACKET" { scale: 0.75; } [

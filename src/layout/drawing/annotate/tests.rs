@@ -842,3 +842,94 @@ fn drawing_links_thin_to_stroke_width_1() {
         "a user '|-|' rule wins over the scope default"
     );
 }
+
+// ── Datum boxes & fan leaders [SPEC 15.7] ──
+
+/// Every node (self + descendants, world frame) whose type chain carries
+/// `class`, as world bboxes.
+fn boxes_classed(nodes: &[crate::layout::PlacedNode], class: &str) -> Vec<crate::layout::ir::Bbox> {
+    fn walk(
+        nodes: &[crate::layout::PlacedNode],
+        ox: f64,
+        oy: f64,
+        class: &str,
+        out: &mut Vec<crate::layout::ir::Bbox>,
+    ) {
+        for n in nodes {
+            if n.type_chain.iter().any(|t| t == class) {
+                out.push(
+                    crate::layout::ir::Bbox::extent_of(std::slice::from_ref(n), |_| true)
+                        .shifted(ox, oy),
+                );
+            }
+            walk(&n.children, ox + n.cx, oy + n.cy, class, out);
+        }
+    }
+    let mut out = Vec::new();
+    walk(nodes, 0.0, 0.0, class, &mut out);
+    out
+}
+
+#[test]
+fn a_datum_letter_seats_in_a_framed_box_the_rows_stand_off() {
+    // The letter lowers to the standard framed box at the landing
+    // [SPEC 15.7], registered as painted bounds — a dim row whose span
+    // crosses it packs past the frame, not just the letter.
+    let geometry = "|rect#a| { width: 80; height: 20 }\n";
+    let dim = "a:left (-) a:right { side: bottom }\n";
+    let bare = text_at(
+        &laid(&format!(
+            "{{ layout: drawing; density: 1 }}\n{geometry}{dim}"
+        ))
+        .nodes,
+        "80",
+    )
+    .1;
+    let l = laid(&format!(
+        "{{ layout: drawing; density: 1 }}\n{geometry}a:bottom >- \"A\"\n{dim}"
+    ));
+    let frames = boxes_classed(&l.nodes, "datum-frame");
+    assert_eq!(frames.len(), 1, "one framed box");
+    let frame = frames[0];
+    // The frame squares around the letter and meets the leader's landing.
+    let (lx, ly, _) = text_at(&l.nodes, "A");
+    assert!(
+        frame.min_x < lx && lx < frame.max_x && frame.min_y < ly && ly < frame.max_y,
+        "the letter sits inside its frame"
+    );
+    let (_, dim_y, _) = text_at(&l.nodes, "80");
+    assert!(
+        dim_y > frame.max_y,
+        "the row packs past the frame: text y {dim_y} vs frame bottom {}",
+        frame.max_y
+    );
+    assert!(
+        dim_y > bare + 15.0,
+        "the box moved the row: {dim_y} vs bare {bare}"
+    );
+}
+
+#[test]
+fn a_fan_leader_shares_one_note_across_independent_legs() {
+    // `a & b <- "2× R5"`: one text, one landing (the first endpoint
+    // steers), a ray-cast leg per feature [SPEC 15.7].
+    let l = laid(
+        "{ layout: drawing; density: 1 }\n|rect#a| { width: 40; height: 20; translate: -40 0 }\n|rect#b| { width: 40; height: 20; translate: 40 0 }\na & b <- \"2× R5\"\n",
+    );
+    let (_, _, _) = text_at(&l.nodes, "2× R5"); // exactly one text
+    let arrows = boxes_classed(&l.nodes, "marker-dim");
+    assert_eq!(arrows.len(), 2, "a leg tips each feature");
+    let lines: Vec<_> = boxes_classed(&l.nodes, "dim-line");
+    assert_eq!(lines.len(), 2, "the steering leg + one fan leg");
+}
+
+#[test]
+fn an_unroutable_fan_leg_is_reported() {
+    // The text lands left (steered by `a`); `b:right` faces away — the ray
+    // from the shared landing strikes b's near face first, so the leg
+    // cannot reach its anchor [SPEC 15.7]. Reported, never dropped.
+    let e = layout_err(
+        "{ layout: drawing; density: 1 }\n|rect#a| { width: 40; height: 20; translate: -60 0 }\n|rect#b| { width: 40; height: 20; translate: 60 0 }\na & b:right <- \"X\"\n",
+    );
+    assert!(e.contains("a fan leg cannot reach 'b:right'"), "got: {e}");
+}

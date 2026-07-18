@@ -92,9 +92,11 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
     // gives `resolve_link` X's container chain by resolved path.
     let ancestors_for = |segs: &[String]| link_scope::link_ancestors(&nodes, &root_attrs, segs);
     let mut link_list = Vec::new();
+    let mut datum_seen = HashMap::new();
     for w in &file.links {
         let (base, ancestors) = link_scope::link_scope(&baked, &root_attrs, &[]);
         let kind = link_scope_kind(&nodes, &root_attrs, &[]);
+        collect_datum_letter(w, &[], &kind, &mut datum_seen)?;
         link_list.extend(links::resolve_link(
             w,
             &ctx,
@@ -109,6 +111,7 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
     for lw in &lifted {
         let (base, ancestors) = link_scope::link_scope(&baked, &root_attrs, &lw.chain);
         let kind = link_scope_kind(&nodes, &root_attrs, &lw.chain);
+        collect_datum_letter(&lw.link, &lw.prefix, &kind, &mut datum_seen)?;
         link_list.extend(links::resolve_link(
             &lw.link,
             &ctx,
@@ -135,6 +138,41 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
         // every borrow of it above (scene ctx, sheet inputs) has ended by here.
         funcs,
     })
+}
+
+/// Collect a `>-` statement's datum letter [SPEC 15.7]: letters are
+/// **identities**, gathered per drawing scope beside the id pass — a
+/// duplicate errors with the first placement (alpha.4's feature-control
+/// `datums:` will validate references against this set). The identity keys
+/// on the **operator** — a `marker: crow` restyles a wire, never re-types it
+/// [SPEC 9] — and on the scope prefix: a drawing statement's scope is always
+/// the drawing itself (the mate/measure gate pins links to the immediate
+/// container), so sibling drawings each carry their own alphabet.
+fn collect_datum_letter(
+    w: &crate::syntax::ast::Link,
+    prefix: &[String],
+    scope: &links::LinkScope,
+    seen: &mut HashMap<(String, String), crate::span::Span>,
+) -> Result<(), Error> {
+    use crate::ast::{ChainOp, LinkMarker};
+    let datum_leader = matches!(w.op(), ChainOp::Wire(op)
+        if op.start == LinkMarker::Crow && op.end == LinkMarker::None);
+    if !scope.drawing || !datum_leader || w.chain.len() != 1 {
+        return Ok(());
+    }
+    let Some(letter) = w.labels.first() else {
+        return Ok(()); // the empty-leader gate reports this one
+    };
+    let key = (prefix.join("."), letter.text.clone());
+    if let Some(prev) = seen.get(&key) {
+        return Err(Error::at(
+            letter.span,
+            format!("datum '{}' is already placed", letter.text),
+        )
+        .with_related(*prev));
+    }
+    seen.insert(key, letter.span);
+    Ok(())
 }
 
 // ─────────────────────────── Root config ───────────────────────────

@@ -166,7 +166,10 @@ fn lower_measured(
 
 /// A one-ended callout [SPEC 15.7]: `<-` arrow · `*-` dot · `>-` the datum
 /// triangle (the scope reinterprets the crow op); the text is the link's
-/// label, lowered to bare leaves.
+/// label, lowered to bare leaves — or, for `>-`, seated in the standard
+/// framed datum box. A `&` fan keeps one text and landing (the first
+/// endpoint steers, `side:` overrides) with an independent leg from the
+/// shared elbow to each further feature.
 pub(super) fn callout(ctx: &Ctx, w: &ResolvedLink) -> Result<Vec<PlacedNode>, Error> {
     let paint = Paint::of(&w.attrs);
     let a = anchors::resolve(ctx.kids, ctx.scope, &w.endpoints[0], "leader")?;
@@ -195,22 +198,46 @@ pub(super) fn callout(ctx: &Ctx, w: &ResolvedLink) -> Result<Vec<PlacedNode>, Er
         None => &w.texts,
     };
     let dir = side_attr(&w.attrs).and_then(side_unit);
-    let mut line = leader_line(ctx, &a, a.point(), dir, None, None);
+    let line = leader_line(ctx, &a, a.point(), dir, None, None);
+    let elbow = line.points[1];
+    let landing = line.points[2];
 
-    // `>-` is the crow op elsewhere — on a drawing's datum leader it lowers
-    // to the filled GD&T triangle [SPEC 15.7]. On a directed feature the
-    // triangle **seats on the surface**: base flush with the drawn edge,
-    // apex out along the surface normal — the leader meets the apex at
-    // whatever angle it arrives, never tilting the symbol.
+    let mut out = leg(&a, w.markers.start, line.points.clone(), &paint);
+    // Fan legs [SPEC 15.7]: each further endpoint casts its own ray from the
+    // shared elbow — the trunk (elbow → landing → text) is shared, nothing
+    // else; an unroutable leg is an error, never a silent drop.
+    for ep in &w.endpoints[1..] {
+        let b = anchors::resolve(ctx.kids, ctx.scope, ep, "leader")?;
+        let tip = fan_tip(ctx, &b, elbow, w.markers.start, ep)?;
+        out.extend(leg(&b, w.markers.start, vec![tip, elbow], &paint));
+    }
+    if w.markers.start == MarkerKind::Crow {
+        out.extend(datum_box(texts, landing, line.sx, &paint));
+    } else {
+        out.extend(texts_beside(texts, line.text_at, line.sx, paint.fs));
+    }
+    Ok(out)
+}
+
+/// One leader leg's linework and tip, `points[0]` the tip and `points[1]`
+/// the vertex it leaves toward — shared by the steering leg (tip → elbow →
+/// landing) and a fan's extra legs (tip → elbow) [SPEC 15.7].
+///
+/// `>-` is the crow op elsewhere — on a drawing's datum leader it lowers to
+/// the filled GD&T triangle. On a directed feature the triangle **seats on
+/// the surface**: base flush with the drawn edge, apex out along the surface
+/// normal — the leg meets the apex at whatever angle it arrives, never
+/// tilting the symbol.
+fn leg(a: &Anchor, marker: MarkerKind, mut points: Vec<P>, paint: &Paint) -> Vec<PlacedNode> {
     let mut out = Vec::new();
-    if w.markers.start == MarkerKind::Crow
+    if marker == MarkerKind::Crow
         && let Some(n) = a.outward()
     {
-        let tip = line.points[0];
-        // The surface sets the triangle's axis; the leader sets its sign —
-        // the apex meets the leader, which approaches from outside the
-        // material (an edge authored the other way round flips `outward`).
-        let to_elbow = (line.points[1].0 - tip.0, line.points[1].1 - tip.1);
+        let tip = points[0];
+        // The surface sets the triangle's axis; the leg sets its sign — the
+        // apex meets the leg, which approaches from outside the material (an
+        // edge authored the other way round flips `outward`).
+        let to_elbow = (points[1].0 - tip.0, points[1].1 - tip.1);
         let n = if n.0 * to_elbow.0 + n.1 * to_elbow.1 < 0.0 {
             (-n.0, -n.1)
         } else {
@@ -220,8 +247,8 @@ pub(super) fn callout(ctx: &Ctx, w: &ResolvedLink) -> Result<Vec<PlacedNode>, Er
         let half = size * 0.5;
         let t = (-n.1, n.0);
         let apex = (tip.0 + n.0 * size, tip.1 + n.1 * size);
-        line.points[0] = apex;
-        out.push(paint.dim(line.points.clone()));
+        points[0] = apex;
+        out.push(paint.dim(points));
         out.push(prim::dim_marker(
             "datum",
             vec![
@@ -231,27 +258,113 @@ pub(super) fn callout(ctx: &Ctx, w: &ResolvedLink) -> Result<Vec<PlacedNode>, Er
             ],
             paint.stroke.clone(),
         ));
-    } else if w.markers.start == MarkerKind::Arrow {
+    } else if marker == MarkerKind::Arrow {
         // ISO 129: one arrowhead style per sheet — a word leader tips with
         // the same slender arrow as every dimension [SPEC 15.7].
-        let tip = line.points[0];
-        let to_tip = unit((tip.0 - line.points[1].0, tip.1 - line.points[1].1));
+        let tip = points[0];
+        let to_tip = unit((tip.0 - points[1].0, tip.1 - points[1].1));
         let trim = 2.0 * paint.sw;
-        line.points[0] = (tip.0 - to_tip.0 * trim, tip.1 - to_tip.1 * trim);
-        out.push(paint.dim(line.points.clone()));
-        out.push(dims::arrow(tip, to_tip, &paint));
+        points[0] = (tip.0 - to_tip.0 * trim, tip.1 - to_tip.1 * trim);
+        out.push(paint.dim(points));
+        out.push(dims::arrow(tip, to_tip, paint));
     } else {
-        let mut node = paint.dim(line.points.clone());
-        node.markers.start = match w.markers.start {
+        let mut node = paint.dim(points);
+        node.markers.start = match marker {
             // A point-anchored datum has no surface normal — the core marker
-            // orients along the leader, today's fallback.
+            // orients along the leg, today's fallback.
             MarkerKind::Crow => MarkerKind::Datum,
             m => m,
         };
         out.push(node);
     }
-    out.extend(texts_beside(texts, line.text_at, line.sx, paint.fs));
-    Ok(out)
+    out
+}
+
+/// A fan leg's landing point [SPEC 15.7]: an independent ray from the shared
+/// elbow toward the endpoint's feature. A `*-` dot lands **within** the face
+/// — the anchor point itself; the outline tips cast onto the drawn outline.
+/// A leg that cannot land is an **error**, never a silent drop: a degenerate
+/// ray, a default anchor whose outline the ray misses, or an explicitly
+/// anchored point occluded by its own outline (the near face struck first).
+fn fan_tip(
+    ctx: &Ctx,
+    b: &Anchor,
+    elbow: P,
+    marker: MarkerKind,
+    ep: &crate::resolve::ResolvedEndpoint,
+) -> Result<P, Error> {
+    let name = anchors::spell(ep, ctx.scope);
+    let aim = b.point();
+    let full = dist(elbow, aim);
+    if full < 1e-6 {
+        return Err(Error::at(
+            ep.span,
+            format!("a fan leg onto '{name}' cannot land — it coincides with the fan's landing"),
+        ));
+    }
+    if marker == MarkerKind::Dot {
+        return Ok(aim);
+    }
+    let d = ((aim.0 - elbow.0) / full, (aim.1 - elbow.1) / full);
+    let o = b.to_local(elbow);
+    let explicit = !matches!(b.spot, Spot::Origin);
+    match outline::raycast(b.node, o, rotated(d, -b.rot)) {
+        // A default anchor lands on the first outline the ray strikes; an
+        // explicit one must be reachable — a nearer strike means the anchored
+        // face turns away from the shared landing.
+        Some(t) if !explicit || t >= full - 1.0 => Ok((elbow.0 + d.0 * t, elbow.1 + d.1 * t)),
+        Some(_) => Err(Error::at(
+            ep.span,
+            format!(
+                "a fan leg cannot reach '{name}' — its own outline blocks the way; anchor the near face or steer the fan with 'side:'"
+            ),
+        )),
+        None if explicit => Ok(aim),
+        None => Err(Error::at(
+            ep.span,
+            format!(
+                "a fan leg onto '{name}' finds no outline to land on — anchor a point or a side"
+            ),
+        )),
+    }
+}
+
+/// The standard framed datum box [SPEC 15.7]: the letter seated in a square
+/// frame riding the leader's text seat at the landing, linework in the
+/// dimension stroke. The frame is classed `datum-frame` so the row packer
+/// registers the box itself as painted bounds (`Rows::obstruct_texts`) — a
+/// dim row stands off the frame, not just the letter inside it.
+fn datum_box(texts: &[ResolvedText], landing: P, sx: f64, paint: &Paint) -> Vec<PlacedNode> {
+    let letter = &texts[0];
+    let size = letter.attrs.number("font-size").unwrap_or(paint.fs);
+    let font = crate::font::Font::of(&letter.attrs);
+    let tw = approx_width(&letter.text, font, size, 0.0);
+    let h = size + 6.0;
+    let w = h.max(tw + 6.0);
+    // The letter centres in the frame, whose near edge meets the landing;
+    // its own `translate` nudge carries the frame along.
+    let mut out = texts_beside(
+        std::slice::from_ref(letter),
+        (landing.0 + sx * (w - tw) / 2.0, landing.1),
+        sx,
+        paint.fs,
+    );
+    let c = (out[0].cx, out[0].cy);
+    let (x0, x1) = (c.0 - w / 2.0, c.0 + w / 2.0);
+    let (y0, y1) = (c.1 - h / 2.0, c.1 + h / 2.0);
+    let mut frame = paint.dim(vec![(x0, y0), (x1, y0), (x1, y1), (x0, y1), (x0, y0)]);
+    frame.type_chain.push("datum-frame".into());
+    out.push(frame);
+    // Any further authored lines stack below the box, the usual leaf rules.
+    if texts.len() > 1 {
+        out.extend(texts_beside(
+            &texts[1..],
+            (landing.0, y1 + 3.0 + paint.fs / 2.0),
+            sx,
+            paint.fs,
+        ));
+    }
+    out
 }
 
 /// The `M⌀×pitch` spec of a threaded segment [SPEC 15.7]: the anchored

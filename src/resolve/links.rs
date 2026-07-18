@@ -208,9 +208,18 @@ pub fn resolve_link(
     // each chain resolves once.
     let mut inner_ladders: Vec<(String, Ladder)> = Vec::new();
 
-    // Cartesian fan expansion: one resolved link per endpoint sequence.
+    // Cartesian fan expansion: one resolved link per endpoint sequence — except
+    // a **one-ended leader's** `&` fan, which stays one link carrying every
+    // endpoint: one text and landing, an independent leg per feature
+    // [SPEC 15.7] (the misuse gate above already bounced measures and mates).
+    let one_ended = w.chain.len() == 1;
+    let chains = if one_ended {
+        vec![w.chain[0].endpoints.clone()]
+    } else {
+        expand_chain(&w.chain)
+    };
     let mut out = Vec::new();
-    for (fan_index, chain) in expand_chain(&w.chain).into_iter().enumerate() {
+    for (fan_index, chain) in chains.into_iter().enumerate() {
         let mut endpoints = Vec::with_capacity(chain.len());
         for ep in chain {
             let qualified: Vec<String> = if path_prefix.is_empty() {
@@ -254,7 +263,10 @@ pub fn resolve_link(
         // textually written — a tree's generated branch fans included. Only the
         // descendant-rule chain switches; the inherited config (`clearance` /
         // `routing`, in `base`) keeps the written scope's.
-        let ladder = match containment_outer(&endpoints) {
+        let ladder = match (!one_ended)
+            .then(|| containment_outer(&endpoints))
+            .flatten()
+        {
             Some(outer) => {
                 let at = match inner_ladders.iter().position(|(p, _)| p == outer) {
                     Some(i) => i,
@@ -284,6 +296,7 @@ pub fn resolve_link(
             } else {
                 Vec::new()
             },
+            one_ended,
             span: w.span,
         });
     }
@@ -349,6 +362,17 @@ fn validate_statement(w: &Link, scope: &LinkScope) -> Result<(), Error> {
             }
             ChainOp::Wire(_) => {}
         }
+    }
+    // `&` fans one-ended leaders (one note, a leg per feature) and the core
+    // two-ended wire ops [SPEC 9, 15.7]; a measure or mate never fans — a
+    // span chain is the drafting form [SPEC 20].
+    if matches!(w.op(), ChainOp::Measure(_) | ChainOp::Mate)
+        && w.chain.iter().any(|g| g.endpoints.len() > 1)
+    {
+        return Err(Error::at(
+            w.span,
+            "'&' fans one-ended leaders — chain dimensions instead ('a (-) b (-) c')",
+        ));
     }
     let labelled = w.label.is_some() || !w.labels.is_empty();
     if matches!(w.op(), ChainOp::Mate) && labelled {

@@ -439,6 +439,10 @@ impl Anchor<'_> {
 /// how mates and dimensions spell an endpoint in an error.
 pub(super) fn spell(ep: &ResolvedEndpoint, scope: &str) -> String {
     let mut s = super::rel_path(&ep.path, scope).to_string();
+    if let Some(k) = ep.copy {
+        s.push('.');
+        s.push_str(&k.to_string());
+    }
     if let Some(side) = ep.side {
         s.push(':');
         s.push_str(match side {

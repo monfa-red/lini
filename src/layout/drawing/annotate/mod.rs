@@ -137,7 +137,10 @@ pub(in crate::layout) fn lower(
     for (i, w) in links.iter().enumerate() {
         let nodes = match w.kind {
             LinkKind::Measure(MeasureOp::Angle) => angle::lower(&ctx, w)?,
-            LinkKind::Wire if w.endpoints.len() == 1 => leaders::callout(&ctx, w)?,
+            // A one-ended statement is a callout — a `&` fan keeps every
+            // endpoint on the one link [SPEC 15.7], so the shape, not the
+            // endpoint count, decides.
+            LinkKind::Wire if w.one_ended => leaders::callout(&ctx, w)?,
             LinkKind::Wire => leaders::arrows(&ctx, w)?,
             _ => continue,
         };

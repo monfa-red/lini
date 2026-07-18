@@ -348,3 +348,40 @@ fn a_copy_index_leaks_no_ids_and_needs_a_drawing() {
         "a numeric path segment picks a pattern copy — it belongs in a 'layout: drawing'"
     );
 }
+
+#[test]
+fn a_duplicate_datum_letter_errors_per_drawing_scope() {
+    // Letters are identities, collected per drawing scope [SPEC 15.7/20].
+    let geometry = "|rect#a| { width: 40; height: 20 }\n|rect#b| { width: 40; height: 20 }\n";
+    let e = rv4_err(&format!(
+        "{{ layout: drawing }}\n{geometry}a:bottom >- \"A\"\nb:bottom >- \"A\"\n"
+    ));
+    assert_eq!(e, "datum 'A' is already placed");
+    // Sibling drawings each carry their own alphabet.
+    let one = "|drawing#v| [ |rect#a| { width: 40; height: 20 }\n  a:bottom >- \"A\" ]\n";
+    let two = "|drawing#w| [ |rect#a| { width: 40; height: 20 }\n  a:bottom >- \"A\" ]\n";
+    rv4(&format!("{one}{two}"));
+}
+
+#[test]
+fn a_one_ended_fan_stays_one_link_and_measures_never_fan() {
+    // `&` on a one-ended leader keeps one link — one text, every endpoint
+    // [SPEC 15.7]; on a measure or mate it errors [SPEC 20].
+    let geometry = "|rect#a| { width: 40; height: 20 }\n|rect#b| { width: 40; height: 20 }\n";
+    let p = rv4(&format!(
+        "{{ layout: drawing }}\n{geometry}a & b <- \"2× R5\"\n"
+    ));
+    let fan: Vec<_> = p.links.iter().filter(|w| w.one_ended).collect();
+    assert_eq!(fan.len(), 1);
+    assert_eq!(fan[0].endpoints.len(), 2);
+    assert_eq!(fan[0].texts.len(), 1);
+    let misuse = "'&' fans one-ended leaders — chain dimensions instead ('a (-) b (-) c')";
+    let e = rv4_err(&format!(
+        "{{ layout: drawing }}\n{geometry}|rect#c| {{ width: 40; height: 20 }}\na & b (-) c\n"
+    ));
+    assert_eq!(e, misuse);
+    let e = rv4_err(&format!(
+        "{{ layout: drawing }}\n{geometry}|rect#c| {{ width: 40; height: 20 }}\na:right & b:right || c:left\n"
+    ));
+    assert_eq!(e, misuse);
+}

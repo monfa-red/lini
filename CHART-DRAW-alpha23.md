@@ -375,20 +375,43 @@ springs perpendicular to the span, nothing overlaps (oracle green).
 
 ### Stage 6 — datum identities & fan leaders
 
-- [ ] Datum letters: a resolve-scene pass beside `id_seen` collects `>-`
+- [x] Datum letters: a resolve-scene pass beside `id_seen` collects `>-`
   letters per drawing scope (duplicate errors); the letter lowers to the
   framed box at the leader landing, obstacle-registered for Stage 4's
   packer.
-- [ ] Fan leaders: resolve allows `&` on one-ended leader ops; one
+- [x] Fan leaders: resolve allows `&` on one-ended leader ops; one
   text/landing steered by the first endpoint (`side:` overrides);
   independent ray-cast legs; unroutable legs reported.
-- [ ] Samples: a datum + fan leader in the drawing keepers; snapshots +
+- [x] Samples: a datum + fan leader in the drawing keepers; snapshots +
   PNG pass.
 
 Acceptance: datum boxes framed per the standard look, never overlapping
 (packer obstacle proven); fan legs land on both features; duplicate
 letter and misuse errors fire.
-**Log:**
+**Log:** 2026-07-18 — **done**, one commit. The statement's shape rides
+`ResolvedLink.one_ended`: a `&` fan on a one-ended leader stays **one**
+link carrying every endpoint (expansion skipped, containment cascade
+skipped), so the annotate dispatch keys the shape, not the endpoint
+count. Datum identity keys the **operator** per scope prefix (a drawing
+statement's scope is always the drawing itself — the immediate-container
+gate), collected beside the link loops with `id_seen`'s related-span
+error shape; `marker: crow` stays a restyle. The framed box: square
+`fs + 6`, near edge meeting the leader's landing, letter centred (its
+`translate` carries the frame), linework `paint.dim` classed
+`datum-frame` — and `Rows::obstruct_texts` registers that class, so the
+packer stands off the **frame**, not just the letter (pinned: a bottom
+row packs past the box). Fan legs: the tip-decoration block factored
+into one `leg()` (singles byte-identical); extra legs are elbow-tipped
+two-point lines off the shared trunk. Unroutable = a degenerate ray, a
+default anchor whose ray misses the outline, or an explicit anchor
+**occluded by its own outline** (the near face struck first) — reported
+with the spelled endpoint (`anchors::spell`, which gained the copy
+index). Samples: drawing_annotations gained `plate.bolt.2 &
+plate.bolt.4 <- "2× CSK 90°"`; the existing `>-` letters there and in
+drawing_turned re-blessed into frames — exactly 2 snapshots. PNGs light
++ dark read: boxes framed and clear (bracket's A under the base,
+barrel's A beside the M42 callout), fan legs arrow both copies, one
+text, nothing overlaps (oracle green). 983 tests, fmt + clippy clean.
 
 ### Stage 7 — halos, internal threads & the follows bug
 

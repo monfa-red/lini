@@ -421,6 +421,12 @@ pub struct ResolvedLink {
     /// Link labels (label sugar + body `|text|`s), placed onto the drawn
     /// route by the router's label pass (ROUTING Model step 7).
     pub texts: Vec<ResolvedText>,
+    /// The statement was written one-ended (one endpoint group, the text as
+    /// its far end) — a drawing's callout / unary-measure shape [SPEC 15.6/
+    /// 15.7]. A one-ended `&` fan keeps **all** its endpoints on this one
+    /// link (one text, one landing, a leg each), so the endpoint count alone
+    /// can no longer tell a callout from a two-ended annotation arrow.
+    pub one_ended: bool,
     pub span: Span,
 }
 
