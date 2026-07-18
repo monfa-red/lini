@@ -223,26 +223,35 @@ additive to lift later.
 
 ### Stage 3 — time axes; alpha.2 closes
 
-- [ ] Date parsing: ISO-8601 (`YYYY-MM-DD`, optional `THH:MM[:SS]`,
+- [x] Date parsing: ISO-8601 (`YYYY-MM-DD`, optional `THH:MM[:SS]`,
   optional `Z`/`±HH:MM`) → epoch seconds `f64`; in-house civil-date math
   (days-from-civil + inverse), unit-tested against known dates (epoch,
   leap years, century rules).
-- [ ] `Scale::Time` in `layout/chart/scale.rs`: domain fixing from
+- [x] `Scale::Time` in `layout/chart/scale.rs`: domain fixing from
   date-literal data/range, calendar tick generation (auto unit from span;
   calendar `step:` override), tick labels via `format::render_time`
   (auto preset follows the tick unit; explicit preset wins).
-- [ ] Series/axis plumbing: quoted x-values in `data:` points feed the
+- [x] Series/axis plumbing: quoted x-values in `data:` points feed the
   time domain; mixed date/numeric errors; `range:` and `ticks:` accept
   the same literals; tooltips show the formatted instant.
-- [ ] Samples: a time-series line in `charts.lini`/`chart_advanced.lini`
+- [x] Samples: a time-series line in `charts.lini`/`chart_advanced.lini`
   (cluster policy — no new file); snapshot matrix pinning tick text
   across zoom-y domains (minutes → hours → days → months → years).
-- [ ] Visual pass: PNG light + dark; alpha.2 ladder row confirmed; bump
+- [x] Visual pass: PNG light + dark; alpha.2 ladder row confirmed; bump
   `1.0.0-alpha.2`, tag (push deferred to Abbas).
 
 Acceptance: tick text pinned across the domain matrix; calendar `step:`
 honored; date errors carry spans; determinism (rerun equality) holds.
-**Log:**
+**Log:** 2026-07-18 — **done**, one commit (`f059ce5`) + the bump; 964
+tests, clippy clean. The matrix pins minutes → decades (weeks tick on
+Mondays; multi-year steps land on step multiples). Deviations adopted:
+the time-series sample went to `chart_advanced.lini` (charts.lini had
+taken Stage 2's paint bar); an explicit **numeric** family on a time
+axis renders the epoch number honestly (explicit wins over the date
+reading); hover text is the full instant (`Mar 4 2026, 09:30`) with an
+authored date preset winning there too; `scale: time` on a value axis
+errors ("the x (domain) axis is the time axis — a value axis is
+numeric"). **`1.0.0-alpha.2` tagged locally — push deferred to Abbas.**
 
 ---
 
