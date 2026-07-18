@@ -1297,3 +1297,105 @@ fn per_datum_fill_list_reaches_dots() {
     let svg = render_live("|chart| [\n|dots| { data: 1 2, 3 4; fill: --blue-ink, auto }\n]\n");
     assert!(svg.contains("--lini-blue-ink"), "{svg}");
 }
+
+// ── Time axes [SPEC 14.3/14.4, CHART-DRAW Stage 3] ──
+
+/// The x-axis tick labels of a compiled chart, in document order: muted tick
+/// text nodes, minus the value-axis ticks (small numbers — the test data keeps
+/// its values < 1900 so year ticks stay).
+fn x_tick_texts(svg: &str) -> Vec<String> {
+    svg.match_indices("var(--lini-muted); font-size: 11px; font-weight: normal\">")
+        .map(|(i, m)| {
+            let rest = &svg[i + m.len()..];
+            rest[..rest.find('<').unwrap_or(0)].to_string()
+        })
+        .filter(|t| t.parse::<f64>().map(|n| n >= 1900.0).unwrap_or(true))
+        .collect()
+}
+
+#[test]
+fn time_ticks_across_zoomy_domains() {
+    // One chart per span — minutes → hours → days → months → years; the tick
+    // text (unit choice + calendar boundaries + rendering) is pinned whole.
+    let spans = [
+        ("minutes", "2026-03-04T09:07", "2026-03-04T09:26"),
+        ("hours", "2026-03-04T03:12", "2026-03-04T21:40"),
+        ("days", "2026-03-04", "2026-03-09T12:00"),
+        ("weeks", "2026-03-04", "2026-04-20"),
+        ("months", "2026-01-15", "2026-11-02"),
+        ("years", "2019-06-01", "2026-02-01"),
+        ("decades", "1985-01-01", "2026-01-01"),
+    ];
+    let mut out = String::new();
+    for (name, a, b) in spans {
+        let src = format!("|chart| [\n|line| {{ data: \"{a}\" 1, \"{b}\" 2 }}\n]\n");
+        let svg = render_live(&src);
+        out.push_str(&format!("{name}: {}\n", x_tick_texts(&svg).join(" | ")));
+    }
+    insta::assert_snapshot!(out);
+}
+
+#[test]
+fn calendar_step_overrides_the_auto_unit() {
+    let svg = render_live(
+        "|chart| [\n|axis#t| { side: bottom; step: 2 month }\n|line| { data: \"2026-01-10\" 1, \"2026-07-20\" 2 }\n]\n",
+    );
+    let ticks = x_tick_texts(&svg);
+    assert!(
+        ticks.iter().any(|t| t == "Feb 2026") && ticks.iter().any(|t| t == "Apr 2026"),
+        "{ticks:?}"
+    );
+    assert!(!ticks.iter().any(|t| t == "Mar 2026"), "{ticks:?}");
+}
+
+#[test]
+fn time_axis_error_rows() {
+    // Numeric step on a time axis.
+    let err = lini::compile_str(
+        "|chart| [\n|axis| { side: bottom; step: 5 }\n|line| { data: \"2026-01-01\" 1, \"2026-06-01\" 2 }\n]\n",
+    )
+    .unwrap_err();
+    assert!(err.to_string().contains("steps by calendar"), "got: {err}");
+    // Mixed date/numeric series.
+    let err = lini::compile_str(
+        "|chart| [\n|line| { data: \"2026-01-01\" 1, \"2026-06-01\" 2 }\n|dots| { data: 3 4, 5 6 }\n]\n",
+    )
+    .unwrap_err();
+    assert!(
+        err.to_string().contains("mixes dates and numbers"),
+        "got: {err}"
+    );
+    // An invalid date carries the literal.
+    let err =
+        lini::compile_str("|chart| [\n|line| { data: \"2026-13-01\" 1, \"2026-06-01\" 2 }\n]\n")
+            .unwrap_err();
+    assert!(
+        err.to_string().contains("'2026-13-01' is not a date"),
+        "got: {err}"
+    );
+    // scale: time belongs to the x axis.
+    let err = lini::compile_str(
+        "|chart| [\n|axis| { side: left; scale: time }\n|bars| { data: 1, 2 }\n]\n",
+    )
+    .unwrap_err();
+    assert!(
+        err.to_string().contains("a value axis is numeric"),
+        "got: {err}"
+    );
+}
+
+#[test]
+fn time_axis_date_preset_and_range_and_hover() {
+    let svg = render_live(
+        "|chart| [\n|axis#t| { side: bottom; format: year; range: \"2024-01-01\" \"2027-01-01\" }\n|line| \"S\" { data: \"2024-06-01\" 1, \"2026-06-01\" 2; marker: circle }\n]\n",
+    );
+    let ticks = x_tick_texts(&svg);
+    assert!(ticks.iter().any(|t| t == "2025"), "{ticks:?}");
+    // The authored date preset wins everywhere — ticks and hover alike.
+    assert!(svg.contains("S: 2026, 2"), "{svg}");
+    // Without a preset, hover shows the full instant.
+    let svg = render_live(
+        "|chart| [\n|line| \"S\" { data: \"2026-01-01\" 1, \"2026-06-01T09:30\" 2; marker: circle }\n]\n",
+    );
+    assert!(svg.contains("S: Jun 1 2026, 09:30, 2"), "{svg}");
+}

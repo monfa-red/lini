@@ -1,0 +1,11 @@
+---
+source: tests/rendering.rs
+expression: out
+---
+minutes: 09:10 | 09:15 | 09:20 | 09:25
+hours: 06:00 | 12:00 | 18:00
+days: Mar 4 | Mar 6 | Mar 8
+weeks: Mar 16 | Mar 30 | Apr 13
+months: Feb 2026 | Apr 2026 | Jun 2026 | Aug 2026 | Oct 2026
+years: 2020 | 2022 | 2024 | 2026
+decades: 1990 | 2000 | 2010 | 2020

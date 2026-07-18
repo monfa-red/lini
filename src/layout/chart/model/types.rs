@@ -156,6 +156,9 @@ pub struct Series {
     /// repeated-mark series; empty elsewhere. The base `color` / `outline`
     /// stay the legend swatch and the unlisted fallback.
     pub per_datum: PerDatum,
+    /// Whether this series' point x-values are dates (epoch seconds) — the
+    /// x axis becomes a time axis [SPEC 14.3/14.4].
+    pub time_x: bool,
 }
 
 /// Resolved per-datum paint [SPEC 14.6]: `None` per property means "no list —

@@ -68,10 +68,42 @@ pub(super) fn build_x_axis(
         Some(a) => (label_of(a), read_unit(a)?, read_grid(a)?),
         None => (None, None, Grid::Default),
     };
-    let fmt = match x_inst {
-        Some(a) => numeric_fmt(a, chart_fmt)?,
-        None => format::numeric(chart_fmt),
+    let time = series.iter().any(|s| s.time_x)
+        || x_inst.map(read_scale_kind).transpose()? == Some(ScaleKind::Time);
+    // On a time axis a date preset is at home; numeric axes keep the gate.
+    let fmt = match (x_inst, time) {
+        (Some(a), true) => format::read_or(&a.attrs, chart_fmt, a.span)?,
+        (Some(a), false) => numeric_fmt(a, chart_fmt)?,
+        (None, true) => chart_fmt,
+        (None, false) => format::numeric(chart_fmt),
     };
+    if time {
+        let numeric_pts = series
+            .iter()
+            .any(|s| !s.time_x && matches!(s.data, Data::Points(_)));
+        if numeric_pts || !bubbles.is_empty() {
+            return Err(Error::at(
+                span,
+                "the x axis mixes dates and numbers — one domain, one kind",
+            ));
+        }
+        let xs: Vec<f64> = series
+            .iter()
+            .flat_map(|s| match &s.data {
+                Data::Points(p) => p.iter().map(|(x, _)| *x).collect::<Vec<_>>(),
+                _ => Vec::new(),
+            })
+            .collect();
+        let scale = time_scale(&xs, x_inst)?;
+        return Ok(XAxis {
+            scale,
+            labels: Vec::new(),
+            title,
+            unit,
+            grid,
+            fmt,
+        });
+    }
     // Categorical when categories are set or every series is categorical; numeric when
     // the data is points / a formula / bubbles, or a bottom axis fixes a range.
     let any_numeric = !bubbles.is_empty()
@@ -293,6 +325,149 @@ fn numeric_scale(
     Ok(Scale::linear(min, max, rev, ticks))
 }
 
+/// The time x scale [SPEC 14.4]: domain from date x-values and/or a date
+/// `range:`, calendar ticks (auto ladder, or a calendar `step:`, or explicit
+/// date `ticks:`), reversal when the range runs high→low.
+fn time_scale(xs: &[f64], x_inst: Option<&ResolvedInst>) -> Result<Scale, Error> {
+    let range = x_inst.map(read_time_range).transpose()?.flatten();
+    let data_min = xs.iter().copied().fold(f64::INFINITY, f64::min);
+    let data_max = xs.iter().copied().fold(f64::NEG_INFINITY, f64::max);
+    let (dmin, dmax) = if xs.is_empty() {
+        (0.0, 86_400.0)
+    } else {
+        (data_min, data_max)
+    };
+    let (min, max, rev) = match range {
+        Some((a, b)) => {
+            let lo = end(&a, dmin);
+            let hi = end(&b, dmax);
+            (lo.min(hi), lo.max(hi), lo > hi)
+        }
+        None => (dmin, dmax, false),
+    };
+    let step = match x_inst {
+        Some(a) => read_cal_step(a)?,
+        None => None,
+    };
+    let explicit = match x_inst {
+        Some(a) => read_time_ticks(a)?,
+        None => None,
+    };
+    Ok(match explicit {
+        Some(ticks) => {
+            // Authored tick instants; their reading unit still follows the span.
+            let (_, unit) = scale::time_ticks(min, max, step);
+            Scale::Time {
+                min,
+                max,
+                rev,
+                ticks,
+                unit,
+            }
+        }
+        None => Scale::time(min, max, rev, step),
+    })
+}
+
+/// A time axis's `range:` — two ends, each a quoted date or `auto`; a plain
+/// number is the mixed-domain error [SPEC 14.4/20].
+fn read_time_range(inst: &ResolvedInst) -> Result<Option<(End, End)>, Error> {
+    let Some(v) = inst.attrs.get("range") else {
+        return Ok(None);
+    };
+    let ResolvedValue::Tuple(items) = v else {
+        return Err(Error::at(
+            inst.span,
+            "'range' takes two ends: 'a b', 'a auto', or 'auto b'",
+        ));
+    };
+    if items.len() != 2 {
+        return Err(Error::at(
+            inst.span,
+            "'range' takes two ends: 'a b', 'a auto', or 'auto b'",
+        ));
+    }
+    let read = |v: &ResolvedValue| -> Result<End, Error> {
+        match v {
+            ResolvedValue::String(text) => date_secs(text, inst.span).map(End::Num),
+            ResolvedValue::Ident(s) if s == "auto" => Ok(End::Auto),
+            _ => Err(Error::at(
+                inst.span,
+                "the x axis mixes dates and numbers — one domain, one kind",
+            )),
+        }
+    };
+    Ok(Some((read(&items[0])?, read(&items[1])?)))
+}
+
+/// A time axis's explicit `ticks:` — comma-separated quoted dates.
+fn read_time_ticks(inst: &ResolvedInst) -> Result<Option<Vec<f64>>, Error> {
+    let Some(v) = inst.attrs.get("ticks") else {
+        return Ok(None);
+    };
+    let items = match v {
+        ResolvedValue::List(items) => items.as_slice(),
+        one => std::slice::from_ref(one),
+    };
+    items
+        .iter()
+        .map(|it| match it {
+            ResolvedValue::String(text) => date_secs(text, inst.span),
+            _ => Err(Error::at(
+                inst.span,
+                "the x axis mixes dates and numbers — one domain, one kind",
+            )),
+        })
+        .collect::<Result<Vec<f64>, Error>>()
+        .map(Some)
+}
+
+/// A calendar `step:` [SPEC 14.4] — a unit ident with an optional count
+/// (`step: month`, `step: 2 week`); a plain number points at the calendar form.
+fn read_cal_step(inst: &ResolvedInst) -> Result<Option<(scale::CalUnit, u32)>, Error> {
+    const CAL: &str = "a time axis steps by calendar — 'step: month', 'step: 2 week'";
+    let unit = |s: &str| -> Option<scale::CalUnit> {
+        Some(match s {
+            "minute" => scale::CalUnit::Minute,
+            "hour" => scale::CalUnit::Hour,
+            "day" => scale::CalUnit::Day,
+            "week" => scale::CalUnit::Week,
+            "month" => scale::CalUnit::Month,
+            "year" => scale::CalUnit::Year,
+            _ => return None,
+        })
+    };
+    match inst.attrs.get("step") {
+        None => Ok(None),
+        Some(ResolvedValue::Ident(s)) => match unit(s) {
+            Some(u) => Ok(Some((u, 1))),
+            None => Err(Error::at(inst.span, CAL)),
+        },
+        Some(ResolvedValue::Tuple(items)) => match items.as_slice() {
+            [ResolvedValue::Number(n), ResolvedValue::Ident(s)]
+                if n.fract() == 0.0 && (1.0..=1000.0).contains(n) =>
+            {
+                match unit(s) {
+                    Some(u) => Ok(Some((u, *n as u32))),
+                    None => Err(Error::at(inst.span, CAL)),
+                }
+            }
+            _ => Err(Error::at(inst.span, CAL)),
+        },
+        Some(_) => Err(Error::at(inst.span, CAL)),
+    }
+}
+
+/// A quoted date literal to epoch seconds, with the SPEC 20 message.
+fn date_secs(text: &str, span: Span) -> Result<f64, Error> {
+    date::parse(text).ok_or_else(|| {
+        Error::at(
+            span,
+            format!("'{text}' is not a date — ISO-8601: '2026-01-31', optionally 'T09:30' and 'Z'"),
+        )
+    })
+}
+
 /// A log scale over a positive domain [SPEC 14.4]: the data domain is rounded
 /// out to whole decades unless an explicit `range:` fixes it. A non-positive domain
 /// is an error.
@@ -350,6 +525,12 @@ pub(super) fn axis_spec(
     side: Side,
     chart_fmt: Format,
 ) -> Result<AxisSpec<'_>, Error> {
+    if read_scale_kind(inst)? == ScaleKind::Time {
+        return Err(Error::at(
+            inst.span,
+            "the x (domain) axis is the time axis — a value axis is numeric",
+        ));
+    }
     Ok(AxisSpec {
         id: inst.id.as_deref(),
         side,
@@ -374,15 +555,26 @@ pub(super) fn numeric_fmt(inst: &ResolvedInst, chart_fmt: Format) -> Result<Form
     Ok(format::numeric(f))
 }
 
-/// Whether an axis is `scale: log` [SPEC 14.4]; `scale:` accepts only
-/// `linear` / `log`.
-fn read_log(inst: &ResolvedInst) -> Result<bool, Error> {
+/// An axis's `scale:` kind [SPEC 14.4]: `linear` (default), `log`, or `time`.
+#[derive(PartialEq, Clone, Copy)]
+pub(super) enum ScaleKind {
+    Linear,
+    Log,
+    Time,
+}
+
+pub(super) fn read_scale_kind(inst: &ResolvedInst) -> Result<ScaleKind, Error> {
     match inst.attrs.get("scale") {
-        None => Ok(false),
-        Some(ResolvedValue::Ident(s)) if s == "linear" => Ok(false),
-        Some(ResolvedValue::Ident(s)) if s == "log" => Ok(true),
-        _ => Err(Error::at(inst.span, "'scale' is linear or log")),
+        None => Ok(ScaleKind::Linear),
+        Some(ResolvedValue::Ident(s)) if s == "linear" => Ok(ScaleKind::Linear),
+        Some(ResolvedValue::Ident(s)) if s == "log" => Ok(ScaleKind::Log),
+        Some(ResolvedValue::Ident(s)) if s == "time" => Ok(ScaleKind::Time),
+        _ => Err(Error::at(inst.span, "'scale' is linear, log, or time")),
     }
+}
+
+fn read_log(inst: &ResolvedInst) -> Result<bool, Error> {
+    Ok(read_scale_kind(inst)? == ScaleKind::Log)
 }
 
 // ───────────────────────────── attribute readers ─────────────────────────────

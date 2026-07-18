@@ -9,6 +9,7 @@ use super::project::{Dir, Plot};
 use super::scale::Scale;
 use crate::layout::PlacedNode;
 use crate::layout::prim;
+use crate::ledger::date;
 use crate::ledger::format;
 use crate::resolve::MarkerKind;
 use crate::resolve::ResolvedValue;
@@ -216,12 +217,16 @@ fn dot_title(chart: &Chart, ser: &Series, x: f64, y: f64) -> String {
             (Some(c), Scale::Band { .. }) => format!("{c}: {}", format::render(y, ser.fmt)),
             _ => format::render(y, ser.fmt),
         },
-        // Points (incl. a sampled formula): the x,y pair.
-        _ => format!(
-            "{}, {}",
-            format::render(x, chart.x.fmt),
-            format::render(y, ser.fmt)
-        ),
+        // Points (incl. a sampled formula): the x,y pair — a time x reads as
+        // its full instant (an explicit date preset wins) [SPEC 14.8].
+        _ => {
+            let xs = match (&chart.x.scale, chart.x.fmt) {
+                (Scale::Time { .. }, format::Format::Date(p)) => date::render(x, p),
+                (Scale::Time { .. }, _) => date::render_full(x),
+                _ => format::render(x, chart.x.fmt),
+            };
+            format!("{xs}, {}", format::render(y, ser.fmt))
+        }
     };
     if name.is_empty() {
         value

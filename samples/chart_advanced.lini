@@ -63,6 +63,18 @@
   |mark| "SLO 250" { at: 250; axis: ms; stroke: --red; stroke-style: dashed; }
 ]
 
+// A time axis [SPEC 14.4]: ISO dates in `data:`, calendar ticks on month
+// boundaries (the authored `step:`), hover shows each point's full instant.
+|chart| "Weekly active users (k)" [
+  |axis#when| { side: bottom; step: month; }
+  |axis| "users" { side: left; }
+  |line| "wau" {
+    data: "2026-01-05" 12, "2026-02-02" 15, "2026-03-02" 21,
+          "2026-04-06" 28, "2026-05-04" 34, "2026-06-01" 45;
+    marker: dot; stroke: --sky-deep;
+  }
+]
+
 |chart| "Agentic coding performance" { width: 480; height: 300; } [
   |axis| "Avg output tokens (k)" { side: bottom; }
   |axis| "Score (%)" { side: left; range: 45 80; }

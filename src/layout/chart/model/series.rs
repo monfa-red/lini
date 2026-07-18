@@ -44,7 +44,7 @@ pub(super) fn read_series(
     };
     let has_data = inst.attrs.get("data").is_some();
     let has_fn = matches!(inst.attrs.get("fn"), Some(ResolvedValue::Deferred(_)));
-    let data = match (has_data, has_fn) {
+    let (data, time_x) = match (has_data, has_fn) {
         (true, true) => {
             return Err(Error::at(
                 inst.span,
@@ -53,7 +53,7 @@ pub(super) fn read_series(
         }
         (false, false) => return Err(Error::at(inst.span, "a series needs 'data' or 'fn'")),
         (false, true) => match inst.attrs.get("fn") {
-            Some(ResolvedValue::Deferred(exprs)) => Data::Formula(exprs.clone()),
+            Some(ResolvedValue::Deferred(exprs)) => (Data::Formula(exprs.clone()), false),
             _ => return Err(Error::at(inst.span, "a series needs 'data' or 'fn'")),
         },
         (true, false) => read_data(inst, &kind)?,
@@ -138,6 +138,7 @@ pub(super) fn read_series(
         baseline: inst.attrs.number("baseline"),
         fmt: axes::numeric_fmt(inst, chart_fmt)?,
         per_datum,
+        time_x,
     })
 }
 
@@ -157,7 +158,9 @@ pub(super) fn sample_formula(
     let n = samples.max(2);
     if exprs.len() == 1 {
         let (min, max) = match x {
-            Scale::Linear { min, max, .. } | Scale::Log { min, max, .. } => (*min, *max),
+            Scale::Linear { min, max, .. }
+            | Scale::Log { min, max, .. }
+            | Scale::Time { min, max, .. } => (*min, *max),
             Scale::Band { .. } => {
                 return Err(Error::at(span, "a 'fn:' series needs a numeric x axis"));
             }
@@ -205,19 +208,37 @@ fn points_from(xs: &[f64], ys: Vec<ExprValue>, span: Span) -> Result<Vec<(f64, f
 
 /// `data:` reads across comma-groups [SPEC 2/14.3]: values (`data: 9, 15, 24`)
 /// → categorical, `x y` pairs (`data: 10 20, 30 40`) → points — so a lone
-/// `data: 10 20` is one point, never two values. Bars are categorical only.
-fn read_data(inst: &ResolvedInst, kind: &SeriesKind) -> Result<Data, Error> {
+/// `data: 10 20` is one point, never two values. A point's x may be a quoted
+/// ISO-8601 date (epoch seconds — the second return); dates and numbers never
+/// mix in one domain [SPEC 14.3/20]. Bars are categorical only.
+fn read_data(inst: &ResolvedInst, kind: &SeriesKind) -> Result<(Data, bool), Error> {
     let Some(ResolvedValue::List(items)) = inst.attrs.get("data") else {
         return Err(Error::at(inst.span, "'data' must be a list of numbers"));
     };
     if items.iter().all(|it| it.as_number().is_some()) {
-        return Ok(Data::Categorical(numbers(items, inst.span)?));
+        return Ok((Data::Categorical(numbers(items, inst.span)?), false));
     }
     let mut pts = Vec::with_capacity(items.len());
+    let mut dates = 0usize;
     for it in items {
         match it {
             ResolvedValue::Tuple(pair) if pair.len() == 2 => {
-                pts.push((number(&pair[0], inst.span)?, number(&pair[1], inst.span)?));
+                let x = match &pair[0] {
+                    ResolvedValue::String(text) => {
+                        dates += 1;
+                        date::parse(text).ok_or_else(|| {
+                            Error::at(
+                                inst.span,
+                                format!(
+                                    "'{text}' is not a date — ISO-8601: '2026-01-31', \
+                                     optionally 'T09:30' and 'Z'"
+                                ),
+                            )
+                        })?
+                    }
+                    v => number(v, inst.span)?,
+                };
+                pts.push((x, number(&pair[1], inst.span)?));
             }
             // A longer space run is the pre-0.21 value list.
             ResolvedValue::Tuple(_) => {
@@ -229,13 +250,19 @@ fn read_data(inst: &ResolvedInst, kind: &SeriesKind) -> Result<Data, Error> {
             _ => return Err(Error::at(inst.span, "point data is 'x y' pairs")),
         }
     }
+    if dates > 0 && dates < pts.len() {
+        return Err(Error::at(
+            inst.span,
+            "'data' mixes dates and numbers — one domain, one kind",
+        ));
+    }
     if matches!(kind, SeriesKind::Bars) {
         return Err(Error::at(
             inst.span,
             "'|bars|' takes categorical data ('data: 9, 15, 24'), not 'x y' points",
         ));
     }
-    Ok(Data::Points(pts))
+    Ok((Data::Points(pts), dates > 0))
 }
 
 /// Parse a series' `labels:` [SPEC 14.3]: a quoted-string list, one per datum,
