@@ -370,7 +370,7 @@ input_file: samples/charts.lini
         <title>build · v2: 63</title>
         <rect x="-16.1828" y="-22.0107" width="32.3656" height="44.0215" rx="2" ry="2"/>
       </g>
-      <g class="lini-node lini-block" style="fill: #ffb2c9; stroke: #b8476e" transform="translate(-10.192,14.6515)">
+      <g class="lini-node lini-block" style="fill: #ffb5ac; stroke: #bc4943" transform="translate(-10.192,14.6515)">
         <title>test · v1: 154</title>
         <rect x="-16.1828" y="-55.2485" width="32.3656" height="110.497" rx="2" ry="2"/>
       </g>

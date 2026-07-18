@@ -152,6 +152,49 @@ pub struct Series {
     /// This series' value presentation [SPEC 16] — its own `format:`, else the
     /// chart's (numeric reading). Formats its hover / `<title>` values.
     pub fmt: Format,
+    /// Per-datum paint lists [SPEC 14.6] — resolved one entry per datum on a
+    /// repeated-mark series; empty elsewhere. The base `color` / `outline`
+    /// stay the legend swatch and the unlisted fallback.
+    pub per_datum: PerDatum,
+}
+
+/// Resolved per-datum paint [SPEC 14.6]: `None` per property means "no list —
+/// use the series base"; inside a `stroke:` list, a `None` entry is that
+/// datum's `none` (no outline); inside `opacity:`, its `auto` (the mode's).
+#[derive(Default)]
+pub struct PerDatum {
+    pub fills: Option<Vec<ResolvedValue>>,
+    pub outlines: Option<Vec<Option<(ResolvedValue, f64)>>>,
+    pub opacities: Option<Vec<Option<f64>>>,
+}
+
+impl Series {
+    /// Datum `i`'s fill — its list entry, else the series colour.
+    pub fn fill_at(&self, i: usize) -> ResolvedValue {
+        self.per_datum
+            .fills
+            .as_ref()
+            .and_then(|v| v.get(i))
+            .cloned()
+            .unwrap_or_else(|| self.color.clone())
+    }
+
+    /// Datum `i`'s outline — its list entry, else the series outline.
+    pub fn outline_at(&self, i: usize) -> Option<(ResolvedValue, f64)> {
+        match self.per_datum.outlines.as_ref().and_then(|v| v.get(i)) {
+            Some(o) => o.clone(),
+            None => self.outline.clone(),
+        }
+    }
+
+    /// Datum `i`'s opacity — its list entry, else `base` (the bar mode's).
+    pub fn opacity_at(&self, i: usize, base: f64) -> f64 {
+        self.per_datum
+            .opacities
+            .as_ref()
+            .and_then(|v| v.get(i).copied().flatten())
+            .unwrap_or(base)
+    }
 }
 
 pub struct ValueAxis {

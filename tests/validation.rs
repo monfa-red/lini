@@ -390,3 +390,18 @@ fn format_off_a_chart_owner_errors() {
 fn format_on_an_axis_is_silent() {
     assert_silent("|chart| [\n|axis| { format: decimal 2 }\n|bars| { data: 1, 2 }\n]\n");
 }
+
+// ── Per-datum paint lists [SPEC 14.6, CHART-DRAW Stage 2] ──
+
+#[test]
+fn paint_list_on_a_series_is_silent_but_box_and_line_still_error() {
+    assert_silent("|chart| [\n|bars| { data: 1, 2; fill: auto, --red }\n]\n");
+    insta::assert_snapshot!(
+        diags("|box#a| { fill: red, blue; }\n"),
+        @"test.lini:1:11: error: 'fill' takes one value, not a comma list"
+    );
+    insta::assert_snapshot!(
+        diags("|chart| [\n|line| { data: 1, 2; stroke: red, blue }\n]\n"),
+        @"test.lini:2:22: error: a '|line|' is one shape with one paint — per-datum lists read on '|bars|' / '|dots|'"
+    );
+}

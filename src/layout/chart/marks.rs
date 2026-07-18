@@ -11,6 +11,7 @@ use crate::layout::PlacedNode;
 use crate::layout::prim;
 use crate::ledger::format;
 use crate::resolve::MarkerKind;
+use crate::resolve::ResolvedValue;
 
 /// One datum's data-space coordinate paired with its pixel coordinate.
 pub(super) type Plotted = ((f64, f64), (f64, f64));
@@ -181,11 +182,23 @@ fn vertex_markers(chart: &Chart, ser: &Series, pts: &[Plotted], out: &mut Vec<Pl
 
 fn draw_dots(plot: &Plot, chart: &Chart, ser: &Series, out: &mut Vec<PlacedNode>) {
     let (w, h) = ser.dot;
-    for ((xd, yd), (xp, yp)) in samples(plot, chart, ser) {
+    for (i, ((xd, yd), (xp, yp))) in samples(plot, chart, ser).into_iter().enumerate() {
         if !in_domain(chart, ser, xd, yd) {
             continue;
         }
-        let mut dot = prim::marker(ser.marker, xp, yp, w, h, ser.color.clone());
+        // Paint per datum `i` [SPEC 14.6]: the series base unless listed.
+        let mut dot = prim::marker(ser.marker, xp, yp, w, h, ser.fill_at(i));
+        if let Some(Some((color, width))) = ser.per_datum.outlines.as_ref().and_then(|v| v.get(i)) {
+            prim::outline(&mut dot, color.clone(), *width);
+        }
+        if let Some(op) = ser
+            .per_datum
+            .opacities
+            .as_ref()
+            .and_then(|v| v.get(i).copied().flatten())
+        {
+            dot.attrs.insert("opacity", ResolvedValue::Number(op));
+        }
         prim::set_hint(&mut dot, dot_title(chart, ser, xd, yd));
         out.push(dot);
     }

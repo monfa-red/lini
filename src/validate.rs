@@ -262,7 +262,7 @@ impl<'a> Ctx<'a> {
             ));
             return;
         };
-        self.check_value(d, prop, out);
+        self.check_value(d, prop, wearer, out);
         let Wearer::Node {
             shown,
             kind,
@@ -365,8 +365,44 @@ impl<'a> Ctx<'a> {
 
     // ── Value shapes the ledger can judge statically [SPEC 20] ──
 
-    fn check_value(&self, d: &Decl, prop: &Property, out: &mut Vec<Diagnostic>) {
+    fn check_value(&self, d: &Decl, prop: &Property, wearer: &Wearer, out: &mut Vec<Diagnostic>) {
         if matches!(prop.shape, Shape::One(_)) && d.groups.len() > 1 {
+            // Per-datum paint [SPEC 14.6]: `fill`/`stroke`/`opacity` read comma
+            // lists on a repeated-mark series (the series reader validates the
+            // count); a one-shape series (`|line|` / `|area|` in a chart) gets
+            // the pointed message, everything else the general shape error.
+            let paint = matches!(d.name.as_str(), "fill" | "stroke" | "opacity");
+            if let (
+                true,
+                Wearer::Node {
+                    chain,
+                    kind,
+                    parent_layout,
+                    ..
+                },
+            ) = (paint, wearer)
+            {
+                if chain.iter().any(|c| c == "bars" || c == "dots") {
+                    return;
+                }
+                if *parent_layout == Some("chart")
+                    && (*kind == "line" || chain.iter().any(|c| c == "line" || c == "area"))
+                {
+                    out.push(Diagnostic::error(
+                        d.span,
+                        format!(
+                            "a '|{}|' is one shape with one paint — per-datum lists \
+                             read on '|bars|' / '|dots|'",
+                            if chain.iter().any(|c| c == "area") {
+                                "area"
+                            } else {
+                                "line"
+                            },
+                        ),
+                    ));
+                    return;
+                }
+            }
             out.push(Diagnostic::error(
                 d.span,
                 format!("'{}' takes one value, not a comma list", d.name),

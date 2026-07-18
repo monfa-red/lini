@@ -86,3 +86,134 @@ pub(super) fn number(v: &ResolvedValue, span: Span) -> Result<f64, Error> {
     v.as_number()
         .ok_or_else(|| Error::at(span, "'data' values must be numbers"))
 }
+
+/// Per-datum paint lists [SPEC 14.6] on a repeated-mark series: comma-listed
+/// `fill:` / `stroke:` / `opacity:`, one item per authored datum. `auto` is
+/// the paint the datum gets anyway — the series' derived fill, the deep edge
+/// of that datum's own fill, the bar mode's opacity. The one-shape series
+/// (`|line|` / `|area|`) were rejected at validation; counts must match.
+pub(super) fn paint_lists(
+    inst: &ResolvedInst,
+    kind: &SeriesKind,
+    base: &ResolvedValue,
+    data: &Data,
+) -> Result<PerDatum, Error> {
+    let mut out = PerDatum::default();
+    let get = |k| match inst.attrs.get(k) {
+        Some(ResolvedValue::List(items)) => Some(items.as_slice()),
+        _ => None,
+    };
+    let (fill, stroke, opacity) = (get("fill"), get("stroke"), get("opacity"));
+    if fill.is_none() && stroke.is_none() && opacity.is_none() {
+        return Ok(out);
+    }
+    if !matches!(kind, SeriesKind::Bars | SeriesKind::Dots) {
+        // The validator's static arm says the same at lint; this is the
+        // semantic authority, so a library compile can't slip past it.
+        let shown = if matches!(kind, SeriesKind::Area) {
+            "area"
+        } else {
+            "line"
+        };
+        return Err(Error::at(
+            inst.span,
+            format!(
+                "a '|{shown}|' is one shape with one paint — per-datum lists \
+                 read on '|bars|' / '|dots|'"
+            ),
+        ));
+    }
+    let count = match data {
+        Data::Categorical(v) => v.len(),
+        Data::Points(p) => p.len(),
+        Data::Formula(_) => {
+            return Err(Error::at(
+                inst.span,
+                "a per-datum paint list needs explicit 'data' — a sampled 'fn' \
+                 has no authored data points",
+            ));
+        }
+    };
+    let counted = |name: &str, items: &[ResolvedValue]| -> Result<(), Error> {
+        if items.len() == count {
+            Ok(())
+        } else {
+            Err(Error::at(
+                inst.span,
+                format!(
+                    "'{name}' lists {} paints but the series has {count} data points",
+                    items.len()
+                ),
+            ))
+        }
+    };
+    if let Some(items) = fill {
+        counted("fill", items)?;
+        out.fills = Some(
+            items
+                .iter()
+                .map(|it| match it {
+                    ResolvedValue::Ident(s) if s == "auto" => base.clone(),
+                    other => other.clone(),
+                })
+                .collect(),
+        );
+    }
+    let stroke_default = matches!(
+        inst.attrs.get("stroke"),
+        None | Some(ResolvedValue::Ident(_))
+    ) && !matches!(inst.attrs.get("stroke"), Some(ResolvedValue::Ident(s)) if s == "none");
+    if stroke.is_none()
+        && stroke_default
+        && let Some(fills) = &out.fills
+    {
+        // No stroke authored: the default deep edge deepens each datum's own
+        // fill — the single-value "explicit fill still gains a deep edge of
+        // it" law, per datum.
+        let width = inst.attrs.number("stroke-width").unwrap_or(1.5);
+        out.outlines = Some(
+            fills
+                .iter()
+                .map(|f| Some((palette::deepen(f), width)))
+                .collect(),
+        );
+    }
+    if let Some(items) = stroke {
+        counted("stroke", items)?;
+        let width = inst.attrs.number("stroke-width").unwrap_or(1.5);
+        let fill_at = |i: usize| -> ResolvedValue {
+            out.fills
+                .as_ref()
+                .and_then(|v| v.get(i))
+                .cloned()
+                .unwrap_or_else(|| base.clone())
+        };
+        out.outlines = Some(
+            items
+                .iter()
+                .enumerate()
+                .map(|(i, it)| match it {
+                    ResolvedValue::Ident(s) if s == "none" => None,
+                    ResolvedValue::Ident(s) if s == "auto" => {
+                        Some((palette::deepen(&fill_at(i)), width))
+                    }
+                    other => Some((other.clone(), width)),
+                })
+                .collect(),
+        );
+    }
+    if let Some(items) = opacity {
+        counted("opacity", items)?;
+        out.opacities = Some(
+            items
+                .iter()
+                .map(|it| match it {
+                    ResolvedValue::Ident(s) if s == "auto" => Ok(None),
+                    ResolvedValue::Number(n) if (0.0..=1.0).contains(n) => Ok(Some(*n)),
+                    _ => Err(Error::at(inst.span, "'opacity' is a fraction 0..1")),
+                })
+                .collect::<Result<_, Error>>()?,
+        );
+    }
+    Ok(out)
+}

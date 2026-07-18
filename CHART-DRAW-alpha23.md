@@ -164,28 +164,35 @@ text — no `week` preset). Anchor sweep: zero broken; 933 tests untouched.
 
 ### Stage 1 — the `format:` engine, on ticks & tooltips
 
-- [ ] `src/ledger/format.rs`: the `Format` value (decision 2 families),
+- [x] `src/ledger/format.rs`: the `Format` value (decision 2 families),
   the value-shape parser (comma law: `format:` is one item — family +
   args space-separated), `render(f64, &Format) -> String` with exact,
   deterministic formatting (no locale, `.` decimal point, minus sign
   `-`); `fraction D` via the raised/lowered stack (decision 5) — the
   composed runs surface so consumers can stack them.
-- [ ] Ledger registration: `format` as an inherited property; owner
+- [x] Ledger registration: `format` as an inherited property; owner
   validation rows (chart scope, `|axis|`, series). Drawing owners arrive
   in Stage 8 — until then a `format:` on a statically-known drawing owner
   **errors** per the owner rule (not yet an owner — the same law as any
   misplaced property; no special case).
-- [ ] Chart consumption: value-axis tick text routes through `render`
+- [x] Chart consumption: value-axis tick text routes through `render`
   (today's `fmt` in `scale.rs` becomes `format::render(v, &Format::Auto)`
   — byte-identical default output, snapshot-proven); tooltip value text
   the same; `unit:` still appends after.
-- [ ] Unit tests per family (boundaries: zero, negatives, rounding ties,
+- [x] Unit tests per family (boundaries: zero, negatives, rounding ties,
   engineering exponent snapping, percent scaling, fraction rounding);
   snapshot: a chart with `format: percent 1` on its value axis.
 
 Acceptance: default output byte-identical everywhere (`Auto` = today's
 trim rule); every family unit-tested; `format:` inherits chart → axis.
-**Log:**
+**Log:** 2026-07-18 — **done**, one commit (`3dcbb7b`); 948 tests, clippy
+clean, zero snapshot churn (Auto pinned byte-identical incl. the historic
+`-0` trim quirk). Deviations: the fraction's plain-text reading is flat
+(`1 3/8`) — the font subset has no super/subscript digits, so the
+raised/lowered arrangement is the dimension typography's job in Stage 8,
+fed from the same `fraction_parts`; exponentials read `1.23e4`. The
+date-preset gate is asymmetric by design: inherited onto a numeric
+consumer it reads `Auto` (CSS-inertness), authored on one it errors.
 
 ### Stage 2 — per-datum paint
 

@@ -95,6 +95,7 @@ fn column_bars(plot: &Plot, chart: &Chart, bars: &[&Series], n: usize, out: &mut
                 bar_w * 0.9,
                 (y0 - y1).abs(),
                 ser,
+                i,
                 value,
                 cat,
                 op,
@@ -124,6 +125,7 @@ fn row_bars(plot: &Plot, chart: &Chart, bars: &[&Series], n: usize, out: &mut Ve
                 (x1 - x0).abs(),
                 bar_h * 0.9,
                 ser,
+                i,
                 value,
                 cat,
                 op,
@@ -150,6 +152,7 @@ fn radial_bars(plot: &Plot, chart: &Chart, bars: &[&Series], n: usize, out: &mut
                 plot,
                 chart,
                 ser,
+                i,
                 lo,
                 hi,
                 a_lo,
@@ -171,7 +174,8 @@ fn datum(ser: &Series, i: usize) -> Option<f64> {
     }
 }
 
-/// A rectangular bar centred at (cx, cy) with the datum's `<title>`. Skips a flat bar.
+/// A rectangular bar centred at (cx, cy) with the datum's `<title>`. Skips a flat
+/// bar. Paint is per datum `i` [SPEC 14.6] — the series base unless listed.
 #[allow(clippy::too_many_arguments)]
 fn emit_rect(
     cx: f64,
@@ -179,6 +183,7 @@ fn emit_rect(
     w: f64,
     h: f64,
     ser: &Series,
+    i: usize,
     value: f64,
     category: Option<&String>,
     opacity: f64,
@@ -187,10 +192,10 @@ fn emit_rect(
     if w.min(h) <= 0.0 {
         return;
     }
-    let mut bar = prim::rect(cx, cy, w, h, ser.color.clone(), opacity);
+    let mut bar = prim::rect(cx, cy, w, h, ser.fill_at(i), ser.opacity_at(i, opacity));
     prim::round(&mut bar, ser.radius);
-    if let Some((color, width)) = &ser.outline {
-        prim::outline(&mut bar, color.clone(), *width);
+    if let Some((color, width)) = ser.outline_at(i) {
+        prim::outline(&mut bar, color, width);
     }
     prim::set_hint(
         &mut bar,
@@ -206,6 +211,7 @@ fn emit_wedge(
     plot: &Plot,
     chart: &Chart,
     ser: &Series,
+    i: usize,
     lo: f64,
     hi: f64,
     a_lo: f64,
@@ -222,9 +228,18 @@ fn emit_wedge(
     if (r1 - r0).abs() < 0.5 {
         return;
     }
-    let mut wedge = prim::wedge(cx, cy, r0, r1, a_lo, a_hi, ser.color.clone(), opacity);
-    if let Some((color, width)) = &ser.outline {
-        prim::outline(&mut wedge, color.clone(), *width);
+    let mut wedge = prim::wedge(
+        cx,
+        cy,
+        r0,
+        r1,
+        a_lo,
+        a_hi,
+        ser.fill_at(i),
+        ser.opacity_at(i, opacity),
+    );
+    if let Some((color, width)) = ser.outline_at(i) {
+        prim::outline(&mut wedge, color, width);
     }
     prim::set_hint(
         &mut wedge,

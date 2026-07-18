@@ -2059,8 +2059,10 @@ walk is **per slice** — the one place colour walks per datum rather than per s
 **Per-datum paint** rides the comma law on the repeated-mark series — `|bars|` /
 `|dots|` only: `fill:` / `stroke:` / `opacity:` take a comma list, one item per datum,
 where **`auto`** is the paint that datum would get anyway (the walk, the deep-edge rule) —
-`fill: auto, auto, --red, auto` highlights one bar. The count must equal the data count
-([SPEC 20](#20-errors)); the legend swatch keeps the series' base paint. A list on
+`fill: auto, auto, --red, auto` highlights one bar, and with no authored stroke each
+datum's default deep edge deepens its **own** fill. The count must equal the count of
+**explicit `data:`** (a sampled `fn:` has no authored data — [SPEC 20](#20-errors));
+the legend swatch keeps the series' base paint. A list on
 `|line|` / `|area|` is an error — one shape has one paint, no ambiguous interpolation;
 `|slice|` / `|bubble|` / `|mark|` are already per-node.
 

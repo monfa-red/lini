@@ -19,7 +19,8 @@
 ]
 
 |chart| "Deploy time (s)" { categories: "build", "test", "ship"; } [
-  |bars| "v1" { data: 96, 154, 41; }
+  // Per-datum paint [SPEC 14.6]: the slow stage flagged red, the rest auto.
+  |bars| "v1" { data: 96, 154, 41; fill: auto, --red-soft, auto; }
   |bars| "v2" { data: 63, 117, 38; }
 ]
 

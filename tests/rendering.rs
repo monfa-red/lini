@@ -1235,3 +1235,65 @@ fn format_bad_value_errors_with_the_usage() {
         "got: {err}"
     );
 }
+
+// ── Per-datum paint [SPEC 14.6, CHART-DRAW Stage 2] ──
+
+#[test]
+fn per_datum_fill_list_highlights_one_bar() {
+    let svg =
+        render_live("|chart| [\n|bars| { data: 9, 15, 24; fill: auto, auto, --red-soft }\n]\n");
+    // Two bars keep the palette walk's first hue, the third takes the listed paint.
+    assert_eq!(svg.matches("var(--lini-rose-soft)").count(), 2, "{svg}");
+    assert!(
+        svg.contains("var(--lini-red-deep)"),
+        "the listed fill deepens its own edge:\n{svg}"
+    );
+    assert!(svg.contains("--lini-red-soft"), "{svg}");
+}
+
+#[test]
+fn per_datum_stroke_auto_deepens_each_datums_own_fill() {
+    let svg = render_live(
+        "|chart| [\n|bars| { data: 9, 15; fill: auto, --red-soft; stroke: auto, auto }\n]\n",
+    );
+    // Each datum's edge is the deep tier of its *own* fill.
+    assert!(svg.contains("--lini-rose-deep"), "{svg}");
+    assert!(svg.contains("--lini-red-deep"), "{svg}");
+}
+
+#[test]
+fn per_datum_list_count_mismatch_errors_with_both_counts() {
+    let err = lini::compile_str("|chart| [\n|bars| { data: 9, 15, 24; fill: auto, --red }\n]\n")
+        .unwrap_err();
+    assert!(
+        err.to_string()
+            .contains("'fill' lists 2 paints but the series has 3 data points"),
+        "got: {err}"
+    );
+}
+
+#[test]
+fn per_datum_list_on_a_line_errors() {
+    let err =
+        lini::compile_str("|chart| [\n|line| { data: 9, 15; stroke: red, blue }\n]\n").unwrap_err();
+    assert!(
+        err.to_string().contains("one shape with one paint"),
+        "got: {err}"
+    );
+}
+
+#[test]
+fn per_datum_list_with_fn_errors() {
+    let err =
+        lini::compile_str("|chart| [\n|bars| { fn: (x); fill: auto, --red }\n]\n").unwrap_err();
+    assert!(
+        err.to_string().contains("needs explicit 'data'"),
+        "got: {err}"
+    );
+}
+
+#[test]
+fn per_datum_fill_list_reaches_dots() {
+    let svg = render_live("|chart| [\n|dots| { data: 1 2, 3 4; fill: --blue-ink, auto }\n]\n");
+    assert!(svg.contains("--lini-blue-ink"), "{svg}");
+}

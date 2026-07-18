@@ -70,8 +70,13 @@ pub(super) fn read_series(
     // is a separate outline (read into `outline` below), never the body — so a stroke on
     // a bar no longer leaks into its fill. No explicit paint → walk the palette at the
     // role's tier (a line the deep stroke, dots the ink, a bar the base fill).
-    let fill = fill_color(&inst.attrs);
-    let stroke = real_color(inst.attrs.get("stroke"));
+    // A comma list is per-datum paint [SPEC 14.6], not the series base — the
+    // base derivation (and the legend swatch) reads as if the key were unset.
+    let listed = |k: &str| matches!(inst.attrs.get(k), Some(ResolvedValue::List(_)));
+    let fill = (!listed("fill")).then(|| fill_color(&inst.attrs)).flatten();
+    let stroke = (!listed("stroke"))
+        .then(|| real_color(inst.attrs.get("stroke")))
+        .flatten();
     let color = match kind {
         SeriesKind::Bars | SeriesKind::Area => fill,
         SeriesKind::Line => stroke.or(fill),
@@ -103,9 +108,17 @@ pub(super) fn read_series(
     // `|bars|` default to a deep edge of their soft fill (the outlined look, [SPEC 14.6]); an
     // `|area|` reads its explicit `stroke` here and otherwise deepens its fill at draw.
     let edge = match kind {
+        SeriesKind::Bars if listed("stroke") => {
+            // The listed stroke rides `per_datum`; the base edge is the default
+            // deep tier (what an unset stroke gives).
+            let width = inst.attrs.number("stroke-width").unwrap_or(1.5);
+            Some((palette::deepen(&color), width))
+        }
         SeriesKind::Bars => fill_outline(&inst.attrs, &color),
+        _ if listed("stroke") => None,
         _ => outline(&inst.attrs),
     };
+    let per_datum = paint_lists(inst, &kind, &color, &data)?;
     Ok(Series {
         kind,
         data,
@@ -124,6 +137,7 @@ pub(super) fn read_series(
         dot: (dot_w, dot_h),
         baseline: inst.attrs.number("baseline"),
         fmt: axes::numeric_fmt(inst, chart_fmt)?,
+        per_datum,
     })
 }
 
