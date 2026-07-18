@@ -154,7 +154,8 @@ pub(in crate::layout) fn layout_detail(
     } else {
         Vec::new()
     };
-    let mut annotations = super::annotate::lower(&clones, &links, path, own, Some(circle), &[])?;
+    let mut annotations =
+        super::annotate::lower(&clones, &links, path, own, Some(circle), &[], program)?;
 
     // Clip the clones to the region circle (one interned <clipPath> at render),
     // then draw the boundary circle over it [SPEC 15.8].

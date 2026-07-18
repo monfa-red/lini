@@ -184,18 +184,25 @@ impl<'a> Parser<'a> {
         })
     }
 
-    /// A link's `[ "label"… ]` content block [SPEC 9] — labels are styleable
+    /// A link's `[ "label"… ]` content block [SPEC 9/21] — labels are styleable
     /// text leaves, newline-separated; the canonical form of the trailing sugar.
-    pub(super) fn parse_label_block(&mut self) -> Result<Vec<TextNode>, Error> {
+    /// A **node** among them parses everywhere (the grammar is scope-blind) and
+    /// means a carried drawing annotation — elsewhere it errors at resolve
+    /// [SPEC 15.9].
+    pub(super) fn parse_label_block(&mut self) -> Result<Vec<LabelItem>, Error> {
         self.expect(&TokKind::LBracket, "'['")?;
         self.skip_newlines();
         let mut labels = Vec::new();
-        while matches!(self.kind(), Some(TokKind::String(_))) {
-            labels.push(self.parse_text_node()?);
+        loop {
+            match self.kind() {
+                Some(TokKind::String(_)) => labels.push(LabelItem::Text(self.parse_text_node()?)),
+                Some(TokKind::Pipe) => labels.push(LabelItem::Node(self.parse_node()?)),
+                _ => break,
+            }
             self.skip_newlines();
         }
         if !matches!(self.kind(), Some(TokKind::RBracket)) {
-            return Err(self.err("a link's '[ ]' holds only labels (text)"));
+            return Err(self.err("a link's '[ ]' holds labels (text) and annotation nodes"));
         }
         self.pos += 1; // ']'
         Ok(labels)

@@ -147,7 +147,7 @@ fn lay_out(
     });
     super::section::fill_planes(&mut kids, geo_extent, own)?;
     super::section::place_detail_labels(&mut kids);
-    let mut lowered = annotate::lower(&kids, &annotations, path, own, None, &seated)?;
+    let mut lowered = annotate::lower(&kids, &annotations, path, own, None, &seated, program)?;
     kids.append(&mut lowered);
     Ok(kids)
 }

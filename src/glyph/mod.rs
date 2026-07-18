@@ -14,6 +14,19 @@ use crate::icon::Role;
 /// `height / GRID`, uniformly — height-derived, never fit-to-box.
 pub const GRID: f64 = 100.0;
 
+/// The drafting-symbol type a node's `.lini-*` chain wears, if any — the one
+/// list behind the [SPEC 20] drawing-scope gate, the carried-`[ ]` gate at
+/// resolve, and the layout lowering dispatch [SPEC 15.9].
+pub fn drafting_type(chain: &[String]) -> Option<&'static str> {
+    chain.iter().find_map(|t| match t.as_str() {
+        "surface-finish" => Some("surface-finish"),
+        "feature-control" => Some("feature-control"),
+        "control" => Some("control"),
+        "datum" => Some("datum"),
+        _ => None,
+    })
+}
+
 /// The finish vee's anatomy on the grid [SPEC 15.9]: the tip (the point that
 /// stands on the surface) at x `FINISH_TIP_X`, y `GRID`; the long leg's apex
 /// at x `FINISH_APEX_X`, y `0` — the indication rides there. Legs run 30° off

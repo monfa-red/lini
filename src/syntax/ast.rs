@@ -183,9 +183,19 @@ pub struct Link {
     /// The smart-label head string (`a -> b "watches"`), unstyled; desugar
     /// concatenates it ahead of `labels` for `along:`. `None` when absent.
     pub label: Option<TextNode>,
-    /// The `[ ]` label leaves (styleable).
-    pub labels: Vec<TextNode>,
+    /// The `[ ]` content, in source order: text labels, and — on a drawing's
+    /// dimensions and leaders [SPEC 15.9/21] — carried annotation nodes.
+    pub labels: Vec<LabelItem>,
     pub span: Span,
+}
+
+/// One `[ ]` item on a link [SPEC 21]: a styleable text label, or an
+/// annotation **node** — parsed everywhere, meaningful only on a drawing's
+/// dimensions and leaders (a node is never a label, [SPEC 15.9]).
+#[derive(Debug, Clone)]
+pub enum LabelItem {
+    Text(TextNode),
+    Node(Node),
 }
 
 #[derive(Debug, Clone)]
@@ -198,6 +208,24 @@ impl Link {
     /// measure/mate (the parser enforces it), the first hop's otherwise.
     pub fn op(&self) -> ChainOp {
         self.ops[0]
+    }
+
+    /// The `[ ]` **text** labels, in source order — what every label consumer
+    /// reads; carried nodes are never labels [SPEC 15.9].
+    pub fn label_texts(&self) -> impl Iterator<Item = &TextNode> {
+        self.labels.iter().filter_map(|it| match it {
+            LabelItem::Text(t) => Some(t),
+            LabelItem::Node(_) => None,
+        })
+    }
+
+    /// The annotation **nodes** carried in the `[ ]`, in source order
+    /// [SPEC 15.9].
+    pub fn label_nodes(&self) -> impl Iterator<Item = &Node> {
+        self.labels.iter().filter_map(|it| match it {
+            LabelItem::Text(_) => None,
+            LabelItem::Node(n) => Some(n),
+        })
     }
 }
 

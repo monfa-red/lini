@@ -12,17 +12,9 @@ use crate::glyph::{FINISH_APEX_X, FINISH_TIP_X, GRID};
 use crate::ledger::consts::DRAWING_LINK_FONT_SIZE;
 use crate::resolve::{NodeKind, Program, ResolvedInst, ResolvedValue};
 
-/// The drafting-symbol type a node wears, if any — the [SPEC 20]
-/// drawing-scope gate and the lowering dispatch key on one list.
-pub(in crate::layout) fn drafting_type(chain: &[String]) -> Option<&'static str> {
-    chain.iter().find_map(|t| match t.as_str() {
-        "surface-finish" => Some("surface-finish"),
-        "feature-control" => Some("feature-control"),
-        "control" => Some("control"),
-        "datum" => Some("datum"),
-        _ => None,
-    })
-}
+/// The drafting-symbol type a node wears, if any — one list, owned by the
+/// glyph registry (resolve's carried-`[ ]` gate reads it too).
+pub(in crate::layout) use crate::glyph::drafting_type;
 
 /// The node's annotation paint [SPEC 15.9]: the font its glyphs and texts
 /// size by, the statement's stroke and width its linework draws at — the
@@ -143,6 +135,47 @@ fn layout_finish(inst: &ResolvedInst) -> Result<PlacedNode, Error> {
     let mut shell = prim::container(inst, bbox, children);
     shell.kind = NodeKind::Path;
     Ok(shell)
+}
+
+/// The stacking gap between a statement's text seat and its carried
+/// annotations, and between stacked annotations [SPEC 15.9].
+const CARRIED_GAP: f64 = 3.0;
+
+/// A statement's carried `[ ]` annotation nodes [SPEC 15.9], lowered off the
+/// registry and stacked at the **text seat** — under the dim value / callout
+/// lines, in source order, centred on the seat. `placed` is the statement's
+/// own lowered ink, already seated (a row dim's texts sit on their packed
+/// row), so the stack rides the row for free; each placed box registers as a
+/// packing obstacle through its drafting type chain (`obstruct_texts`).
+pub(super) fn stack_carried(
+    ctx: &super::annotate::Ctx,
+    w: &crate::resolve::ResolvedLink,
+    placed: &[PlacedNode],
+) -> Result<Vec<PlacedNode>, Error> {
+    if w.carried.is_empty() {
+        return Ok(Vec::new());
+    }
+    let texted = placed.iter().any(|n| n.kind == NodeKind::Text);
+    let seat = Bbox::extent_of(placed, |n| !texted || n.kind == NodeKind::Text);
+    let cx = (seat.min_x + seat.max_x) / 2.0;
+    let mut y = seat.max_y + CARRIED_GAP;
+    let mut out = Vec::new();
+    for inst in &w.carried {
+        let ty = crate::glyph::drafting_type(&inst.type_chain)
+            .expect("resolve admits only drafting types into a '[ ]'");
+        let mut n = layout_node(inst, ty, ctx.scope, ctx.program)?;
+        let b = n.bbox.shifted(n.cx, n.cy);
+        n.cx += cx - (b.min_x + b.max_x) / 2.0;
+        n.cy += y - b.min_y;
+        // The author's `translate:` nudges the stacked seat, the mover's law.
+        if let Ok(Some((dx, dy))) = super::super::anchors::translate(&inst.attrs, inst.span) {
+            n.cx += dx;
+            n.cy += dy;
+        }
+        y += (b.max_y - b.min_y) + CARRIED_GAP;
+        out.push(n);
+    }
+    Ok(out)
 }
 
 /// A path-less `Path` shell around a symbol's lowered children [SPEC 15.9]:

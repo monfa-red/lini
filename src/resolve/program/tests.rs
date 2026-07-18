@@ -385,3 +385,64 @@ fn a_one_ended_fan_stays_one_link_and_measures_never_fan() {
     ));
     assert_eq!(e, misuse);
 }
+
+#[test]
+fn a_carried_annotation_node_resolves_onto_its_link() {
+    // [SPEC 15.9]: the node resolves like a scene child and rides
+    // `ResolvedLink::carried`; the string beside it stays an ordinary label.
+    let p = rv4(
+        "{ layout: drawing }\n|rect#a| { width: 40; height: 20 }\na:bottom >- \"A\"\na:left (-) a:right [\n  \"W\"\n  |feature-control| \"flatness\" { tol: 0.1 }\n]\n",
+    );
+    let dim = p
+        .links
+        .iter()
+        .find(|w| matches!(w.kind, crate::resolve::LinkKind::Measure(_)))
+        .expect("the dimension resolved");
+    assert_eq!(dim.carried.len(), 1);
+    assert!(
+        dim.carried[0]
+            .type_chain
+            .iter()
+            .any(|t| t == "feature-control")
+    );
+    assert_eq!(dim.texts.len(), 1);
+}
+
+#[test]
+fn a_node_label_outside_a_drawing_errors() {
+    // Core routed links stay text-only [SPEC 15.9/20/21].
+    let e = rv4_err("|box#a|\n|box#b|\na -> b [ |feature-control| \"flatness\" { tol: 0.1 } ]\n");
+    assert_eq!(
+        e,
+        "a routed link's '[ ]' holds text labels — annotation nodes ride a drawing's dimensions and leaders"
+    );
+}
+
+#[test]
+fn a_carried_node_must_be_a_drafting_annotation() {
+    let e = rv4_err(
+        "{ layout: drawing }\n|rect#a| { width: 40; height: 20 }\na:left (-) a:right [ |note| \"x\" ]\n",
+    );
+    assert_eq!(
+        e,
+        "a link's '[ ]' carries drafting annotations — '|surface-finish|', '|feature-control|', or '|datum|'"
+    );
+}
+
+#[test]
+fn a_carried_datum_letter_joins_the_scope_alphabet() {
+    // A `|datum|` in a dimension's `[ ]` is the identity form [SPEC 15.9] —
+    // one alphabet across `>-`, placed nodes, and carried nodes.
+    let e = rv4_err(
+        "{ layout: drawing }\n|rect#a| { width: 40; height: 20 }\na:bottom >- \"A\"\na:left (-) a:right [ |datum| \"A\" ]\n",
+    );
+    assert_eq!(e, "datum 'A' is already placed");
+}
+
+#[test]
+fn a_mate_rejects_a_carried_node() {
+    let e = rv4_err(
+        "{ layout: drawing }\n|rect#a| { width: 40; height: 20 }\n|rect#b| { width: 40; height: 20 }\na:right || b:left [ |datum| \"A\" ]\n",
+    );
+    assert_eq!(e, "a mate takes no label");
+}

@@ -426,6 +426,10 @@ pub struct ResolvedLink {
     /// Link labels (label sugar + body `|text|`s), placed onto the drawn
     /// route by the router's label pass (ROUTING Model step 7).
     pub texts: Vec<ResolvedText>,
+    /// Annotation nodes carried in a drawing link's `[ ]` [SPEC 15.9] —
+    /// resolved like scene children, lowered at the statement's text seat.
+    /// Always empty outside a drawing scope (a node there errors at resolve).
+    pub carried: Vec<ResolvedInst>,
     /// The statement was written one-ended (one endpoint group, the text as
     /// its far end) — a drawing's callout / unary-measure shape [SPEC 15.6/
     /// 15.7]. A one-ended `&` fan keeps **all** its endpoints on this one

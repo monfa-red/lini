@@ -30,13 +30,16 @@ pub(super) enum Axis {
 }
 
 /// What every lowering reads: the seated children, the scope, the geometry
-/// extent (what dims stack outside of, what leader texts clear), and the view
-/// scale (measured values divide by it — always pre-scale [SPEC 15.1]).
+/// extent (what dims stack outside of, what leader texts clear), the view
+/// scale (measured values divide by it — always pre-scale [SPEC 15.1]), and
+/// the program (carried frames validate `datums:` against its letter sets
+/// [SPEC 15.9]).
 pub(super) struct Ctx<'a> {
     pub kids: &'a [PlacedNode],
     pub scope: &'a str,
     pub extent: Bbox,
     pub scale: f64,
+    pub program: &'a crate::resolve::Program,
 }
 
 /// A link's resolved paint, read once per statement: the wire stroke (the
@@ -106,6 +109,7 @@ impl Paint {
 /// order; the output keeps source order regardless. The returned nodes
 /// append after the geometry children, so annotations paint above it
 /// (`layer:` still wins) and the drawing's bbox includes them [SPEC 15.10].
+#[allow(clippy::too_many_arguments)]
 pub(in crate::layout) fn lower(
     kids: &[PlacedNode],
     links: &[&ResolvedLink],
@@ -113,6 +117,7 @@ pub(in crate::layout) fn lower(
     scale: f64,
     extent: Option<Bbox>,
     seated: &[usize],
+    program: &crate::resolve::Program,
 ) -> Result<Vec<PlacedNode>, Error> {
     let ctx = Ctx {
         kids,
@@ -122,6 +127,7 @@ pub(in crate::layout) fn lower(
         // its drawn geometry.
         extent: extent.unwrap_or_else(|| geometry_extent(kids)),
         scale,
+        program,
     };
     let mut rows = Rows::new(ctx.extent);
     // Annotation obstacles [SPEC 15.5/15.6/15.9]: placed drafting symbols and
@@ -144,7 +150,7 @@ pub(in crate::layout) fn lower(
         }
     }
     for (i, w) in links.iter().enumerate() {
-        let nodes = match w.kind {
+        let mut nodes = match w.kind {
             LinkKind::Measure(MeasureOp::Angle) => angle::lower(&ctx, w)?,
             // A one-ended statement is a callout — a `&` fan keeps every
             // endpoint on the one link [SPEC 15.7], so the shape, not the
@@ -153,15 +159,17 @@ pub(in crate::layout) fn lower(
             LinkKind::Wire => leaders::arrows(&ctx, w)?,
             _ => continue,
         };
+        nodes.extend(super::symbols::stack_carried(&ctx, w, &nodes)?);
         rows.obstruct_texts(&nodes);
         outs[i] = nodes;
     }
     for (i, w) in links.iter().enumerate() {
-        let nodes = match w.kind {
+        let mut nodes = match w.kind {
             LinkKind::Measure(MeasureOp::Linear) => dims::linear(&ctx, w, &mut rows)?,
             LinkKind::Measure(MeasureOp::Round) => round::lower(&ctx, w, &mut rows)?,
             _ => continue,
         };
+        nodes.extend(super::symbols::stack_carried(&ctx, w, &nodes)?);
         rows.obstruct_texts(&nodes);
         outs[i] = nodes;
     }

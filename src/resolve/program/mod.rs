@@ -105,6 +105,8 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
         let (base, ancestors) = link_scope::link_scope(&baked, &root_attrs, &[]);
         let kind = link_scope_kind(&nodes, &root_attrs, &[]);
         collect_datum_letter(w, &[], &kind, &mut datums)?;
+        let carried = resolve_carried(w, &ctx, &kind, &ancestors, &[], &root_text_ctx, &[])?;
+        collect_datum_nodes(&carried, "", kind.drawing.then_some(""), &mut datums)?;
         link_list.extend(links::resolve_link(
             w,
             &ctx,
@@ -114,12 +116,29 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
             &base,
             &kind,
             &ancestors_for,
+            carried,
         )?);
     }
     for lw in &lifted {
         let (base, ancestors) = link_scope::link_scope(&baked, &root_attrs, &lw.chain);
         let kind = link_scope_kind(&nodes, &root_attrs, &lw.chain);
         collect_datum_letter(&lw.link, &lw.prefix, &kind, &mut datums)?;
+        let carried = resolve_carried(
+            &lw.link,
+            &ctx,
+            &kind,
+            &ancestors,
+            &lw.chain,
+            &root_text_ctx,
+            &lw.prefix,
+        )?;
+        let scope = lw.prefix.join(".");
+        collect_datum_nodes(
+            &carried,
+            &scope,
+            kind.drawing.then_some(scope.as_str()),
+            &mut datums,
+        )?;
         link_list.extend(links::resolve_link(
             &lw.link,
             &ctx,
@@ -129,6 +148,7 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
             &base,
             &kind,
             &ancestors_for,
+            carried,
         )?);
     }
 
@@ -213,6 +233,67 @@ fn collect_datum_nodes(
     Ok(())
 }
 
+/// Resolve a link statement's carried `[ ]` annotation nodes [SPEC 15.9]
+/// through the ordinary node path — the same cascade, template classes, and
+/// text inheritance a scene child gets, in the link's written scope. Only a
+/// drawing's dimensions and leaders may carry nodes: outside a drawing scope a
+/// node label errors ([SPEC 20]), and a carried node must be a drafting
+/// annotation type.
+fn resolve_carried(
+    w: &crate::syntax::ast::Link,
+    ctx: &SceneCtx,
+    kind: &links::LinkScope,
+    ancestors: &[NodeFacts],
+    chain: &[scene::ScopeStep],
+    root_text_ctx: &AttrMap,
+    prefix: &[String],
+) -> Result<Vec<ResolvedInst>, Error> {
+    let mut out = Vec::new();
+    for n in w.label_nodes() {
+        if !kind.drawing {
+            return Err(Error::at(
+                n.span,
+                "a routed link's '[ ]' holds text labels — annotation nodes ride a drawing's dimensions and leaders",
+            ));
+        }
+        // The scope's inherited text context, rebuilt from the written chain —
+        // exactly what a child of the innermost container would see.
+        let mut text_ctx = root_text_ctx.clone();
+        for step in chain {
+            for name in properties::inherited_text() {
+                if let Some(v) = step.attrs.get(name) {
+                    text_ctx.insert(name, v.clone());
+                }
+            }
+        }
+        let mut walk = ancestors.to_vec();
+        let mut steps = Vec::new();
+        let mut ids = HashMap::new();
+        let mut lifted = Vec::new();
+        let inst = scene::resolve_node(
+            n,
+            ctx,
+            &mut walk,
+            &mut steps,
+            prefix,
+            &text_ctx,
+            &mut ids,
+            &mut lifted,
+        )?;
+        if !lifted.is_empty() {
+            return Err(Error::at(n.span, "a carried annotation takes no links"));
+        }
+        if crate::glyph::drafting_type(&inst.type_chain).is_none() {
+            return Err(Error::at(
+                n.span,
+                "a link's '[ ]' carries drafting annotations — '|surface-finish|', '|feature-control|', or '|datum|'",
+            ));
+        }
+        out.push(inst);
+    }
+    Ok(out)
+}
+
 /// Collect a `>-` statement's datum letter [SPEC 15.7]: letters are
 /// **identities**, gathered per drawing scope beside the id pass — a
 /// duplicate errors with the first placement, and a feature-control frame's
@@ -234,7 +315,7 @@ fn collect_datum_letter(
     if !scope.drawing || !datum_leader || w.chain.len() != 1 {
         return Ok(());
     }
-    let Some(letter) = w.labels.first() else {
+    let Some(letter) = w.label_texts().next() else {
         return Ok(()); // the empty-leader gate reports this one
     };
     datums.place(&prefix.join("."), &letter.text, letter.span)

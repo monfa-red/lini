@@ -370,3 +370,24 @@ fn mates_and_measures_format_like_links() {
     );
     idempotent(src);
 }
+
+#[test]
+fn a_carried_annotation_node_rides_the_label_block_multi_line() {
+    // A `[ ]` holding a node goes multi-line [SPEC 15.9/21]; texts and nodes
+    // keep source order, and the round-trip is idempotent.
+    let src = "a:left (-) a:right [ \"W\" |feature-control| \"flatness\" { tol: 0.1 } ]\n";
+    let out = fmt(src);
+    assert_eq!(
+        out,
+        "a:left (-) a:right [\n  \"W\"\n  |feature-control| \"flatness\" { tol: 0.1; }\n]\n"
+    );
+    idempotent(src);
+    reparses(src);
+}
+
+#[test]
+fn a_text_only_label_block_stays_inline() {
+    let src = "a -> b [ \"x\" \"y\" ]\n";
+    assert_eq!(fmt(src), "a -> b [ \"x\" \"y\" ]\n");
+    idempotent(src);
+}

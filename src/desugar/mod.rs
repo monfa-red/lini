@@ -155,10 +155,23 @@ pub fn desugar(file: &File) -> Result<File, Error> {
     //    generated internal `px-per-unit:` from ratio × unit × density. ──
     scale::fold(&mut instances, &mut user_root, root_drawing)?;
 
+    // ── Root links, lowered before the present walk: a carried `[ ]`
+    //    annotation node [SPEC 15.9] wears its `.lini-*` chain like any child
+    //    and its class defs must emit. ──
+    let mut links = Vec::new();
+    for w in file.links.iter().chain(&root_branch_links) {
+        for hop in labels::split_chain(w) {
+            links.push(labels::lower_link(&hop, &types, &bodies, root_drawing)?);
+        }
+    }
+
     // ── Present types = every `.lini-X` class worn anywhere. ──
     let mut present: BTreeSet<String> = BTreeSet::new();
     for c in &instances {
         mark_present(c, &mut present);
+    }
+    for w in &links {
+        mark_present_link(w, &mut present);
     }
 
     // ── Assemble the new stylesheet (a canonical order, so re-desugar is stable):
@@ -213,13 +226,7 @@ pub fn desugar(file: &File) -> Result<File, Error> {
         stylesheet,
         stylesheet_span: Span::empty(),
         instances,
-        links: file
-            .links
-            .iter()
-            .chain(&root_branch_links)
-            .flat_map(labels::split_chain)
-            .map(|w| labels::lower_link(&w))
-            .collect(),
+        links,
     })
 }
 
@@ -530,13 +537,17 @@ fn lower_node(
         for name in &info.chain {
             if let Some((_, body)) = bodies.get(name) {
                 for w in body {
-                    links.extend(labels::split_chain(w).iter().map(labels::lower_link));
+                    for hop in labels::split_chain(w) {
+                        links.push(labels::lower_link(&hop, types, bodies, child_in_drawing)?);
+                    }
                 }
             }
         }
     }
     for w in &node.links {
-        links.extend(labels::split_chain(w).iter().map(labels::lower_link));
+        for hop in labels::split_chain(w) {
+            links.push(labels::lower_link(&hop, types, bodies, child_in_drawing)?);
+        }
     }
 
     // Seat a stand-alone `|mindmap|` child [SPEC 8]: this body becomes its
@@ -640,14 +651,29 @@ fn rewrite_selector(rule: &Rule, types: &Types) -> Result<Rule, Error> {
 /// for which class defs to emit).
 fn mark_present(child: &Child, present: &mut BTreeSet<String>) {
     if let Child::Box(n) = child {
-        for c in &n.classes {
-            if let Some(x) = c.strip_prefix("lini-") {
-                present.insert(x.to_string());
-            }
+        mark_present_node(n, present);
+    }
+}
+
+fn mark_present_node(n: &Node, present: &mut BTreeSet<String>) {
+    for c in &n.classes {
+        if let Some(x) = c.strip_prefix("lini-") {
+            present.insert(x.to_string());
         }
-        for ch in &n.children {
-            mark_present(ch, present);
-        }
+    }
+    for ch in &n.children {
+        mark_present(ch, present);
+    }
+    for w in &n.links {
+        mark_present_link(w, present);
+    }
+}
+
+/// A link's carried `[ ]` annotation nodes wear `.lini-*` chains like any
+/// child [SPEC 15.9] — their class defs must emit too.
+fn mark_present_link(w: &Link, present: &mut BTreeSet<String>) {
+    for n in w.label_nodes() {
+        mark_present_node(n, present);
     }
 }
 

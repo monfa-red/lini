@@ -304,24 +304,57 @@ snapshot untouched.
 
 ### Stage 4 — annotation nodes in link `[ ]`; the sample; alpha.4 closes
 
-- [ ] The deep widening (decision 11): `label_block` accepts nodes
+- [x] The deep widening (decision 11): `label_block` accepts nodes
   (parser stays scope-blind); the link content path carries annotation
   nodes beside `ResolvedText` end-to-end (AST → desugar → resolve →
   layout); a node label outside a drawing scope errors; `fmt` preserves
   node labels in `[ ]`.
-- [ ] Drawing lowering: carried nodes stack at the statement's text
+- [x] Drawing lowering: carried nodes stack at the statement's text
   seat in source order, ride the row, and register as packing
   obstacles; a `|datum|` in a dimension's `[ ]` states the axis datum
   (decision 12).
-- [ ] `samples/drawing_gdt.lini` — the genuinely new cluster: the fully
+- [x] `samples/drawing_gdt.lini` — the genuinely new cluster: the fully
   toleranced part — `>-` and `|datum|` datums, finish symbols seated
   and leader-wired, a seated frame, a frame carried on a dimension, a
   composite frame; snapshots.
 - [ ] The round-closing visual pass (ROADMAP §5): every drawing sample
   at 1:1 + a detail scale, light + dark, screen + print size; ladder
   row confirmed; bump `1.0.0-alpha.3`, tag (push deferred to Abbas).
+  *(Visual pass done — see the Log; the bump + tag stay with the main
+  session.)*
 
 Acceptance: carried nodes register as obstacles (the no-overlap oracle
 green across all drawing samples); a core link carrying a node errors;
 the sample reads in both themes; the tag is cut.
-**Log:**
+**Log:** 2026-07-18 — **done**, one commit; 1053 tests (+14), clippy
+clean; one snapshot re-blessed (`drawing_gdt.lini`'s own).
+The widening is **one label path, no fork**: `Link.labels` becomes
+`Vec<LabelItem>` (`Text` | `Node`, source order kept — `label_texts()` /
+`label_nodes()` the two views), the parser's `label_block` takes `|…|`
+heads through the ordinary node parser, desugar's `lower_link` lowers
+carried nodes through the one `lower_node` (auto-`along:` counts texts
+only; the present-types walk now visits link labels, so carried
+`.lini-*` class defs emit), and resolve runs each carried node through
+`scene::resolve_node` with the link's written scope — same cascade,
+same text inheritance — onto `ResolvedLink::carried`; carried `|datum|`
+letters join the alphabet through the **same** `collect_datum_nodes`
+walk the scene uses. Strings stayed byte-identical (every pre-stage
+snapshot untouched). `drafting_type` moved to `crate::glyph` — one
+list for the layout dispatch and resolve's carried gate (a non-drafting
+node in a `[ ]` errors; a routed link's node errors with the SPEC 20
+row; a mate rejects `[ ]` content of either kind). The lowering is one
+`symbols::stack_carried` call in `annotate::lower`, after every
+statement kind alike: the stack seats under the union of the
+statement's lowered texts (dim value, callout lines — below the dim
+line, the classic frame-under-value look), centred, `translate:` the
+nudge, and registers as a packing obstacle through the drafting type
+chain (`obstruct_texts` already reads it) — a later row packs past a
+carried frame, pinned by test. `fmt` prints a node-bearing `[ ]`
+multi-line (text-only blocks stay inline, byte-identical) and
+round-trips idempotently; `lini desugar` stays a fixed point. Visual
+pass: all nine drawing-family samples (gdt, screw, sheet, annotations,
+section, turned, assembly, pcb, sketch) light + dark at zoom 2, gdt
+also zoom 4 — every sheet reads clean in both themes, glyphs at
+linework weight, no overlaps; one **pre-existing** note logged: the
+`pcb` sample's authored board colours invert to a bright mint field
+under the dark theme (sample-authored vars, untouched this round).

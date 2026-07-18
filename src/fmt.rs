@@ -10,8 +10,8 @@ use crate::error::Error;
 use crate::lexer;
 use crate::span::Span;
 use crate::syntax::ast::{
-    Child, Decl, Define, Endpoint, File, Link, Node, Rule, SelUnit, Selector, StyleItem, TextNode,
-    Value,
+    Child, Decl, Define, Endpoint, File, LabelItem, Link, Node, Rule, SelUnit, Selector, StyleItem,
+    TextNode, Value,
 };
 use crate::syntax::parser;
 
@@ -581,10 +581,13 @@ impl Emitter<'_> {
         }
         // The tail mirrors a node's order [SPEC 9]: head label, then classes,
         // then style, then the `[ ]` labels. A lone bare label trails the head
-        // (`a -> b "x"`); two or more, or a styled one, ride the `[ ]`.
-        let all: Vec<&TextNode> = w.label.iter().chain(w.labels.iter()).collect();
-        let styled = all.iter().any(|t| !t.style.is_empty());
-        let head_label = (self.terse && all.len() == 1 && !styled).then(|| all[0]);
+        // (`a -> b "x"`); two or more, a styled one, or a carried annotation
+        // node [SPEC 15.9] ride the `[ ]`.
+        let texts: Vec<&TextNode> = w.label.iter().chain(w.label_texts()).collect();
+        let has_nodes = w.label_nodes().next().is_some();
+        let styled = texts.iter().any(|t| !t.style.is_empty());
+        let head_label =
+            (self.terse && !has_nodes && texts.len() == 1 && !styled).then(|| texts[0]);
         if let Some(label) = head_label {
             self.out.push(' ');
             self.emit_text_node(label, depth);
@@ -597,9 +600,33 @@ impl Emitter<'_> {
             let end = w.style_span.map_or(w.span.end, |s| s.end);
             self.emit_style_block(&w.style, end, depth, false);
         }
-        if head_label.is_none() && !all.is_empty() {
+        if head_label.is_some() || (texts.is_empty() && !has_nodes) {
+            return;
+        }
+        if has_nodes {
+            // A `[ ]` holding a node goes multi-line, like a node body — the
+            // head label folds in ahead of the items, source order kept.
+            self.out.push_str(" [\n");
+            if let Some(label) = &w.label {
+                self.indent(depth + 1);
+                self.emit_text_node(label, depth + 1);
+                self.out.push('\n');
+            }
+            for item in &w.labels {
+                match item {
+                    LabelItem::Text(t) => {
+                        self.indent(depth + 1);
+                        self.emit_text_node(t, depth + 1);
+                    }
+                    LabelItem::Node(n) => self.emit_node(n, depth + 1),
+                }
+                self.out.push('\n');
+            }
+            self.indent(depth);
+            self.out.push(']');
+        } else {
             self.out.push_str(" [ ");
-            for (i, label) in all.iter().enumerate() {
+            for (i, label) in texts.iter().enumerate() {
                 if i > 0 {
                     self.out.push(' ');
                 }

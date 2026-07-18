@@ -63,6 +63,7 @@ pub fn resolve_link(
     base: &[(String, ResolvedValue)],
     scope_kind: &LinkScope,
     ancestors_for: &dyn Fn(&[String]) -> Vec<NodeFacts>,
+    carried: Vec<crate::resolve::ResolvedInst>,
 ) -> Result<Vec<ResolvedLink>, Error> {
     for class in &w.classes {
         if !ctx.sheet.defines_class(class) {
@@ -165,8 +166,10 @@ pub fn resolve_link(
 
         // Labels ride `along:`, each a styleable text leaf [SPEC 9]: the link's text
         // baseline (font-size) overlaid with the label's own `{ }` (text-valid props).
+        // Carried annotation nodes are not labels [SPEC 15.9] — they resolved
+        // through the node path already and ride `ResolvedLink::carried`.
         let mut texts: Vec<ResolvedText> = Vec::new();
-        for (i, label) in w.labels.iter().enumerate() {
+        for (i, label) in w.label_texts().enumerate() {
             let pos = along.get(i).copied().map_or(Along::Auto, Along::Fraction);
             let mut lattrs = link_text_attrs(&attrs);
             // Tier 3 [SPEC 4]: the label's worn classes, below its own block — the
@@ -219,6 +222,7 @@ pub fn resolve_link(
         expand_chain(&w.chain)
     };
     let mut out = Vec::new();
+    let mut carried = carried;
     for (fan_index, chain) in chains.into_iter().enumerate() {
         let mut endpoints = Vec::with_capacity(chain.len());
         for ep in chain {
@@ -296,6 +300,7 @@ pub fn resolve_link(
             } else {
                 Vec::new()
             },
+            carried: std::mem::take(&mut carried),
             one_ended,
             span: w.span,
         });
@@ -374,8 +379,10 @@ fn validate_statement(w: &Link, scope: &LinkScope) -> Result<(), Error> {
             "'&' fans one-ended leaders — chain dimensions instead ('a (-) b (-) c')",
         ));
     }
-    let labelled = w.label.is_some() || !w.labels.is_empty();
-    if matches!(w.op(), ChainOp::Mate) && labelled {
+    // A leader's text is its **text** labels; a carried node is never a label
+    // [SPEC 15.9] — but a mate rejects either kind of `[ ]` content.
+    let labelled = w.label.is_some() || w.label_texts().next().is_some();
+    if matches!(w.op(), ChainOp::Mate) && (labelled || !w.labels.is_empty()) {
         return Err(Error::at(w.span, "a mate takes no label"));
     }
     // `(o)` is unary-only [SPEC 15.6] — the circle pictures one round feature.

@@ -4,8 +4,9 @@
 //! transform [SPEC 3, 7, 9, 16].
 
 use crate::ast::ChainOp;
+use crate::error::Error;
 use crate::span::Span;
-use crate::syntax::ast::{Decl, Link, Node, TextNode, Value};
+use crate::syntax::ast::{Decl, LabelItem, Link, Node, TextNode, Value};
 
 /// A `|caption|` node carrying a group/table's smart-label text [SPEC 3/8]: the
 /// container's label lowers to this, then through the normal node path (so it
@@ -104,17 +105,32 @@ pub(super) fn split_chain(w: &Link) -> Vec<Link> {
         .collect()
 }
 
-pub(super) fn lower_link(w: &Link) -> Link {
+pub(super) fn lower_link(
+    w: &Link,
+    types: &super::Types,
+    bodies: &super::Bodies,
+    in_drawing: bool,
+) -> Result<Link, Error> {
     let mut labels = Vec::new();
     if let Some(head) = &w.label {
-        labels.push(head.clone());
+        labels.push(LabelItem::Text(head.clone()));
     }
-    labels.extend(w.labels.iter().cloned());
+    // Carried annotation nodes lower through the one node path (template →
+    // primitive + `.lini-*`) in place [SPEC 15.9]; a node is never a label.
+    for item in &w.labels {
+        labels.push(match item {
+            LabelItem::Text(t) => LabelItem::Text(t.clone()),
+            LabelItem::Node(n) => LabelItem::Node(super::lower_node(n, types, bodies, in_drawing)?),
+        });
+    }
 
     let mut style = w.style.clone();
     let has_along = style.iter().any(|d| d.name == "along");
-    if !labels.is_empty() && !has_along {
-        let n = labels.len();
+    let n = labels
+        .iter()
+        .filter(|it| matches!(it, LabelItem::Text(_)))
+        .count();
+    if n > 0 && !has_along {
         // Comma-shaped groups: `along` is a fraction **list** [SPEC 2].
         let fractions: Vec<Vec<Value>> = (0..n)
             .map(|i| {
@@ -131,7 +147,7 @@ pub(super) fn lower_link(w: &Link) -> Link {
             },
         );
     }
-    Link {
+    Ok(Link {
         chain: w.chain.clone(),
         ops: w.ops.clone(),
         classes: w.classes.clone(),
@@ -140,5 +156,5 @@ pub(super) fn lower_link(w: &Link) -> Link {
         label: None,
         labels,
         span: w.span,
-    }
+    })
 }

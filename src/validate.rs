@@ -22,7 +22,7 @@ use crate::error::Diagnostic;
 use crate::ledger::properties::{self, Inherit, Owner, Property, Shape};
 use crate::suggest;
 use crate::syntax::ast::{
-    Child, Decl, Define, File, Link, Node, Rule, SelUnit, StyleItem, TextNode, Value,
+    Child, Decl, Define, File, LabelItem, Link, Node, Rule, SelUnit, StyleItem, TextNode, Value,
 };
 use std::collections::{HashMap, HashSet};
 
@@ -57,7 +57,7 @@ pub fn validate(file: &File) -> Vec<Diagnostic> {
         ctx.check_child(c, Some(root_layout.as_str()), &mut out);
     }
     for w in &file.links {
-        ctx.check_link(w, &mut out);
+        ctx.check_link(w, Some(root_layout.as_str()), &mut out);
     }
     out
 }
@@ -160,7 +160,7 @@ impl<'a> Ctx<'a> {
             self.check_child(c, own_layout.as_deref(), out);
         }
         for w in &n.links {
-            self.check_link(w, out);
+            self.check_link(w, own_layout.as_deref(), out);
         }
     }
 
@@ -170,12 +170,17 @@ impl<'a> Ctx<'a> {
         }
     }
 
-    fn check_link(&self, w: &Link, out: &mut Vec<Diagnostic>) {
+    fn check_link(&self, w: &Link, parent_layout: Option<&str>, out: &mut Vec<Diagnostic>) {
         for d in &w.style {
             self.check_decl(d, &Wearer::Link, out);
         }
-        for label in &w.labels {
-            self.check_text(label, out);
+        for item in &w.labels {
+            match item {
+                LabelItem::Text(t) => self.check_text(t, out),
+                // A carried annotation node [SPEC 15.9] validates like a child
+                // of the link's scope.
+                LabelItem::Node(n) => self.check_node(n, parent_layout, out),
+            }
         }
     }
 
@@ -240,7 +245,7 @@ impl<'a> Ctx<'a> {
             self.check_child(c, None, out);
         }
         for w in &def.links {
-            self.check_link(w, out);
+            self.check_link(w, None, out);
         }
     }
 
@@ -660,10 +665,29 @@ fn collect_wearers<'a>(
             for class in &w.classes {
                 links.insert(class.as_str());
             }
-            // A link `[ ]` label is a text leaf and wears its classes there.
-            for label in &w.labels {
-                for class in &label.classes {
-                    texts.insert(class.as_str());
+            // A link `[ ]` label is a text leaf and wears its classes there;
+            // a carried annotation node wears them like any node [SPEC 15.9].
+            for item in &w.labels {
+                match item {
+                    LabelItem::Text(label) => {
+                        for class in &label.classes {
+                            texts.insert(class.as_str());
+                        }
+                    }
+                    LabelItem::Node(n) => {
+                        if !n.classes.is_empty()
+                            && let Ok(info) = self_resolve(types, n)
+                        {
+                            let chain = with_worn_types(&info.1, &n.classes);
+                            for class in &n.classes {
+                                nodes
+                                    .entry(class.as_str())
+                                    .or_default()
+                                    .push((info.0.clone(), chain.clone()));
+                            }
+                        }
+                        walk_children(&n.children, &n.links, types, nodes, links, texts);
+                    }
                 }
             }
         }

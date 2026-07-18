@@ -1016,3 +1016,74 @@ fn an_unroutable_fan_leg_is_reported() {
     );
     assert!(e.contains("a fan leg cannot reach 'b:right'"), "got: {e}");
 }
+
+// ── Carried annotation nodes [SPEC 15.9] ──
+
+#[test]
+fn a_carried_frame_stacks_under_the_dim_value_and_rides_its_row() {
+    // A `[ ]` frame lowers at the statement's text seat: under the value,
+    // centred on it, below the dim line on the packed row [SPEC 15.9].
+    let l = laid(
+        "{ layout: drawing; density: 1 }\n|rect#p| { width: 120; height: 40 }\np:bottom >- \"A\"\np:left (-) p:right { side: bottom } [\n  |feature-control#fcf| \"flatness\" { tol: 0.2 }\n]\n",
+    );
+    let (tx, ty, _) = text_at(&l.nodes, "120");
+    let f = by_id(&l.nodes, "fcf");
+    let fb = crate::layout::ir::Bbox::extent_of(std::slice::from_ref(f), |_| true);
+    assert!(
+        fb.min_y > ty,
+        "the frame stacks under the value: {fb:?} vs {ty}"
+    );
+    let fcx = (fb.min_x + fb.max_x) / 2.0;
+    assert!((fcx - tx).abs() < 0.5, "centred on the seat: {fcx} vs {tx}");
+}
+
+#[test]
+fn a_later_row_packs_past_a_carried_frame() {
+    // The carried box registers as a packing obstacle — the next dim on the
+    // same side seats its row past it, never on top [SPEC 15.6/15.9].
+    let l = laid(
+        "{ layout: drawing; density: 1 }\n|rect#p| { width: 120; height: 40 } [\n  |hole#h| { width: 10; translate: -30 0 }\n]\np:left (-) p:right { side: bottom } [\n  |feature-control#fcf| \"flatness\" { tol: 0.2 }\n]\np:left (-) p.h:center { side: bottom }\n",
+    );
+    let f = by_id(&l.nodes, "fcf");
+    let fb = crate::layout::ir::Bbox::extent_of(std::slice::from_ref(f), |_| true);
+    let (_, ty2, _) = text_at(&l.nodes, "30");
+    assert!(
+        ty2 > fb.max_y,
+        "the second row cleared the frame: text at {ty2}, frame to {}",
+        fb.max_y
+    );
+}
+
+#[test]
+fn a_carried_frame_rides_a_round_leader_under_its_value() {
+    let l = laid(
+        "{ layout: drawing; density: 1 }\n|rect#p| { width: 120; height: 40 } [\n  |hole#h| { width: 10 }\n]\np:bottom >- \"A\"\np.h (o) [\n  |feature-control#fcf| \"position\" { tol: 0.1; zone: diameter; datums: A }\n]\n",
+    );
+    let (tx, ty, _) = text_at(&l.nodes, "⌀10");
+    let f = by_id(&l.nodes, "fcf");
+    let fb = crate::layout::ir::Bbox::extent_of(std::slice::from_ref(f), |_| true);
+    assert!(fb.min_y > ty, "under the callout line: {fb:?} vs {ty}");
+    let fcx = (fb.min_x + fb.max_x) / 2.0;
+    assert!((fcx - tx).abs() < 0.5, "centred on the seat: {fcx} vs {tx}");
+}
+
+#[test]
+fn a_carried_datum_states_the_axis_and_feeds_the_alphabet() {
+    // `|datum| "B"` in a dimension's `[ ]` lowers the framed letter at the
+    // seat and joins the identity set — a frame may reference it [SPEC 15.9].
+    let l = laid(
+        "{ layout: drawing; density: 1 }\n|rect#p| { width: 120; height: 40 }\np:left (-) p:right { side: bottom } [ |datum#axis| \"B\" ]\n|feature-control#fr| \"perpendicularity\" { tol: 0.1; datums: B; translate: 0 -60 }\n",
+    );
+    let d = by_id(&l.nodes, "axis");
+    let db = crate::layout::ir::Bbox::extent_of(std::slice::from_ref(d), |_| true);
+    let (_, ty, _) = text_at(&l.nodes, "120");
+    assert!(db.min_y > ty, "the framed letter stacks under the value");
+}
+
+#[test]
+fn a_carried_frame_validates_datums_against_the_scope() {
+    let e = layout_err(
+        "{ layout: drawing; density: 1 }\n|rect#p| { width: 120; height: 40 }\np:bottom >- \"A\"\np:left (-) p:right [ |feature-control| \"position\" { tol: 0.1; datums: Z } ]\n",
+    );
+    assert_eq!(e, "no datum 'Z' in this drawing — declared: A");
+}

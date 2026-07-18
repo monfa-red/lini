@@ -265,7 +265,32 @@ fn link_head_label_and_bracket_labels_coexist() {
 fn link_two_bracket_labels() {
     let f = parse_ok("a -> b [ \"x\" \"y\" ]\n");
     assert_eq!(f.links[0].labels.len(), 2);
-    assert_eq!(f.links[0].labels[0].text, "x");
+    assert_eq!(f.links[0].label_texts().next().unwrap().text, "x");
+}
+
+#[test]
+fn a_label_block_carries_annotation_nodes_beside_texts() {
+    // `label_block = "[" { text | node } "]"` [SPEC 21] — scope-blind; the
+    // node keeps its place in source order and is never a label [SPEC 15.9].
+    let f = parse_ok("a (-) b [ \"W\" |feature-control| \"flatness\" { tol: 0.1 } ]\n");
+    let w = &f.links[0];
+    assert_eq!(w.labels.len(), 2);
+    assert_eq!(w.label_texts().count(), 1);
+    let n = w.label_nodes().next().unwrap();
+    assert_eq!(n.ty.as_deref(), Some("feature-control"));
+    assert_eq!(n.label.as_ref().map(|t| t.text.as_str()), Some("flatness"));
+    assert!(matches!(
+        w.labels[0],
+        crate::syntax::ast::LabelItem::Text(_)
+    ));
+}
+
+#[test]
+fn a_label_block_node_takes_a_body() {
+    // A carried composite frame holds its `|control|` rows like any node.
+    let f = parse_ok("a (o) [ |feature-control| [\n  |control| \"position\" { tol: 0.4 }\n] ]\n");
+    let n = f.links[0].label_nodes().next().unwrap();
+    assert_eq!(n.children.len(), 1);
 }
 
 #[test]
@@ -461,7 +486,7 @@ fn a_link_bracket_label_takes_a_class() {
     let f = parse_ok("a -> b [ \"grow\" .loud ]\n");
     let w = &f.links[0];
     assert!(w.classes.is_empty());
-    assert_eq!(w.labels[0].classes, vec!["loud"]);
+    assert_eq!(w.label_texts().next().unwrap().classes, vec!["loud"]);
 }
 
 #[test]
