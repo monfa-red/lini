@@ -85,7 +85,7 @@ pub fn labels(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
         if r < 1.0 {
             continue; // skip the centre tick — it would pile on the pole
         }
-        let label = scale::label(t, &chart.values[0].unit);
+        let label = scale::label(t, chart.values[0].fmt, &chart.values[0].unit);
         out.push(prim::text_left(
             &label,
             cx + 3.0,

@@ -1194,3 +1194,44 @@ fn mindmap_root_arms_share_one_trunk_port_per_side() {
         "one shared port per side, not one per arm: {starts:?}"
     );
 }
+
+// ── `format:` on ticks & tooltips [SPEC 14.4/16, CHART-DRAW Stage 1] ──
+
+#[test]
+fn format_percent_formats_value_axis_ticks() {
+    let svg = render_live(
+        "|chart| [\n|axis| { side: left; range: 0 1; format: percent 0 }\n|bars| { data: 0.25, 0.5, 1 }\n]\n",
+    );
+    assert!(svg.contains(">100%<"), "formatted tick missing:\n{svg}");
+    assert!(svg.contains(">20%<"), "formatted tick missing:\n{svg}");
+}
+
+#[test]
+fn format_inherits_from_the_chart_and_reaches_titles() {
+    // Chart-level `format:` defaults the axis ticks and the bar `<title>` values.
+    let svg = render_live("|chart| { format: decimal 1 } [ |bars| \"S\" { data: 2, 4 } ]\n");
+    assert!(svg.contains(">4.0<"), "formatted tick missing:\n{svg}");
+    assert!(svg.contains("S: 4.0"), "formatted title missing:\n{svg}");
+}
+
+#[test]
+fn format_date_preset_errors_off_a_time_axis() {
+    let err = lini::compile_str(
+        "|chart| [\n|axis| { side: left; format: month }\n|bars| { data: 1, 2 }\n]\n",
+    )
+    .unwrap_err();
+    assert!(
+        err.to_string().contains("a date preset reads a time axis"),
+        "got: {err}"
+    );
+}
+
+#[test]
+fn format_bad_value_errors_with_the_usage() {
+    let err =
+        lini::compile_str("|chart| { format: decimals } [ |bars| { data: 1 } ]\n").unwrap_err();
+    assert!(
+        err.to_string().contains("'format' takes auto"),
+        "got: {err}"
+    );
+}

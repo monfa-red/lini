@@ -33,6 +33,7 @@ pub(super) fn read_series(
     value_specs: &[AxisSpec],
     categories: &Option<Vec<String>>,
     chart_tip: Tooltip,
+    chart_fmt: Format,
     _chart_span: Span,
 ) -> Result<Series, Error> {
     let kind = match tag(inst) {
@@ -122,6 +123,7 @@ pub(super) fn read_series(
         radius: inst.attrs.number("radius").unwrap_or(0.0),
         dot: (dot_w, dot_h),
         baseline: inst.attrs.number("baseline"),
+        fmt: axes::numeric_fmt(inst, chart_fmt)?,
     })
 }
 

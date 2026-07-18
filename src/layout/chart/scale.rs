@@ -2,6 +2,8 @@
 //! numeric **linear** domain. One type for x and value axes, so the projection and
 //! every tick renderer speak one scale. (`log` follows in a later step.)
 
+use crate::ledger::format::{self, Format};
+
 /// A position scale along one axis.
 pub enum Scale {
     /// `n` evenly-spaced category slots; a datum's coordinate is its 0-based index.
@@ -183,29 +185,21 @@ fn decade_ticks(min: f64, max: f64) -> Vec<f64> {
     out
 }
 
-/// A tick label: the formatted value with an optional unit suffix [SPEC 14.4].
-pub fn label(value: f64, unit: &Option<String>) -> String {
-    let mut s = fmt_tick(value);
+/// A tick label: the value under its axis's `format:` [SPEC 14.4/16], with an
+/// optional unit suffix appended after (the compose order [SPEC 16]).
+pub fn label(value: f64, fmt: Format, unit: &Option<String>) -> String {
+    let mut s = format::render(value, fmt);
     if let Some(u) = unit {
         s.push_str(u);
     }
     s
 }
 
-/// Format a tick / data value as a clean label: integers stay integers, decimals
-/// trim trailing zeros. (A value's *display* string is chart content, distinct from
-/// the SVG coordinate formatting render owns.)
+/// A value's `auto` display string [SPEC 16] — the format engine's default
+/// reading. (Chart content, distinct from the SVG coordinate formatting render
+/// owns.)
 pub fn fmt_tick(n: f64) -> String {
-    if n.is_finite() && n == n.trunc() && n.abs() < 1e15 {
-        return (n as i64).to_string();
-    }
-    let s = format!("{:.4}", n);
-    let t = s.trim_end_matches('0').trim_end_matches('.');
-    if t.is_empty() || t == "-" {
-        "0".to_string()
-    } else {
-        t.to_string()
-    }
+    format::auto(n)
 }
 
 #[cfg(test)]

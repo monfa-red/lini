@@ -7,9 +7,10 @@
 
 use super::model::{BarMode, Chart, Data, Series, SeriesKind};
 use super::project::{Dir, Plot};
-use super::scale::{Scale, fmt_tick};
+use super::scale::Scale;
 use crate::layout::PlacedNode;
 use crate::layout::prim;
+use crate::ledger::format;
 use std::f64::consts::TAU;
 
 /// The bar group's share of a category slot (~14% padding each side).
@@ -191,7 +192,10 @@ fn emit_rect(
     if let Some((color, width)) = &ser.outline {
         prim::outline(&mut bar, color.clone(), *width);
     }
-    prim::set_hint(&mut bar, title(category, ser.label.as_deref(), value));
+    prim::set_hint(
+        &mut bar,
+        title(category, ser.label.as_deref(), value, ser.fmt),
+    );
     out.push(bar);
 }
 
@@ -222,13 +226,17 @@ fn emit_wedge(
     if let Some((color, width)) = &ser.outline {
         prim::outline(&mut wedge, color.clone(), *width);
     }
-    prim::set_hint(&mut wedge, title(category, ser.label.as_deref(), value));
+    prim::set_hint(
+        &mut wedge,
+        title(category, ser.label.as_deref(), value, ser.fmt),
+    );
     out.push(wedge);
 }
 
-/// The `<title>` text for a bar: category and/or series name, then the value.
-fn title(category: Option<&String>, name: Option<&str>, value: f64) -> String {
-    let v = fmt_tick(value);
+/// The `<title>` text for a bar: category and/or series name, then the value
+/// under the series' `format:` [SPEC 16].
+fn title(category: Option<&String>, name: Option<&str>, value: f64, fmt: format::Format) -> String {
+    let v = format::render(value, fmt);
     match (category.map(String::as_str), name) {
         (Some(c), Some(n)) => format!("{c} · {n}: {v}"),
         (Some(c), None) => format!("{c}: {v}"),

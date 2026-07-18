@@ -149,6 +149,9 @@ pub struct Series {
     /// An `|area|`'s fill target [SPEC 16] — the axis zero / range floor by
     /// default.
     pub baseline: Option<f64>,
+    /// This series' value presentation [SPEC 16] — its own `format:`, else the
+    /// chart's (numeric reading). Formats its hover / `<title>` values.
+    pub fmt: Format,
 }
 
 pub struct ValueAxis {
@@ -158,6 +161,8 @@ pub struct ValueAxis {
     pub unit: Option<String>,
     pub grid: Grid,
     pub primary: bool,
+    /// Tick presentation [SPEC 14.4/16] — the axis's `format:`, else the chart's.
+    pub fmt: Format,
 }
 
 pub struct XAxis {
@@ -166,6 +171,9 @@ pub struct XAxis {
     pub title: Option<String>,
     pub unit: Option<String>,
     pub grid: Grid,
+    /// Tick presentation [SPEC 14.4/16] for a numeric x; a band's category
+    /// labels are text, so it says nothing there.
+    pub fmt: Format,
 }
 
 pub struct Chart {
@@ -187,6 +195,9 @@ pub struct Chart {
     /// The scope's measurement kind [SPEC 5] — every generated chart text
     /// (ticks, labels, title, legend) measures on it; weight is per-run.
     pub font_kind: crate::font::Kind,
+    /// The chart-level `format:` [SPEC 16] — the axes' and series' fallback,
+    /// and the presentation for marks / bubbles (numeric reading).
+    pub fmt: Format,
 }
 
 /// One wedge of a `layout: pie` [SPEC 14.7]: its magnitude, legend label, and
@@ -211,6 +222,8 @@ pub struct Pie {
     pub gap: f64,
     /// The scope's measurement kind [SPEC 5], as on [`Chart`].
     pub font_kind: crate::font::Kind,
+    /// The pie's `format:` [SPEC 16] — slice-value presentation.
+    pub fmt: Format,
 }
 
 /// One end of a `range:` window: a fixed number, or `auto` (fit from data).
@@ -230,4 +243,5 @@ pub(super) struct AxisSpec<'a> {
     pub(super) step: Option<f64>,
     pub(super) ticks: Option<Vec<f64>>,
     pub(super) log: bool,
+    pub(super) fmt: Format,
 }

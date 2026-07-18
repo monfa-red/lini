@@ -7,9 +7,9 @@
 use super::labels;
 use super::model::{Bubble, Chart};
 use super::project::Plot;
-use super::scale::fmt_tick;
 use crate::layout::PlacedNode;
 use crate::layout::prim;
+use crate::ledger::format;
 use crate::resolve::ResolvedValue;
 
 /// The largest bubble's radius, as a fraction of the smaller plot dimension.
@@ -37,7 +37,7 @@ pub fn lay_out(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>, reqs: &mut
         if let Some((color, width)) = &b.outline {
             prim::outline(&mut bubble, color.clone(), *width);
         }
-        prim::set_hint(&mut bubble, bubble_title(b));
+        prim::set_hint(&mut bubble, bubble_title(b, chart.fmt));
         out.push(bubble);
         // The label joins the shared pass [SPEC 14.8]: its `inside` seat centres it
         // on the bubble when the text fits (the on-fill tint), else it sits beside (muted);
@@ -69,9 +69,10 @@ fn muted() -> ResolvedValue {
     }
 }
 
-/// A bubble's `<title>` — its name and value (the area metric).
-fn bubble_title(b: &Bubble) -> String {
-    let v = fmt_tick(b.value);
+/// A bubble's `<title>` — its name and value (the area metric) under the
+/// chart's `format:` [SPEC 16].
+fn bubble_title(b: &Bubble, fmt: format::Format) -> String {
+    let v = format::render(b.value, fmt);
     match &b.label {
         Some(l) => format!("{l}: {v}"),
         None => v,

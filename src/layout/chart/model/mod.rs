@@ -8,6 +8,7 @@ use super::scale::{self, Scale};
 use super::tooltip::{self, Tooltip};
 use crate::error::Error;
 use crate::expr::{self, Expr, FuncTable, Value as ExprValue};
+use crate::ledger::format::{self, Format};
 use crate::resolve::{AttrMap, MarkerKind, NodeKind, ResolvedInst, ResolvedValue};
 use crate::span::Span;
 

@@ -373,3 +373,20 @@ fn an_authored_id_may_not_begin_lini() {
         @"an id may not begin 'lini-' — the prefix is reserved for generated names"
     );
 }
+
+// ── `format:` ownership [SPEC 16, CHART-DRAW Stage 1] ──
+
+#[test]
+fn format_off_a_chart_owner_errors() {
+    insta::assert_snapshot!(
+        diags("|box#a| { format: decimal 2; }\n"),
+        @r"
+    test.lini:1:11: error: 'format' has no meaning on '|box|' — it reads on '|chart|' / '|pie|' / '|axis|' / a chart series
+    "
+    );
+}
+
+#[test]
+fn format_on_an_axis_is_silent() {
+    assert_silent("|chart| [\n|axis| { format: decimal 2 }\n|bars| { data: 1, 2 }\n]\n");
+}

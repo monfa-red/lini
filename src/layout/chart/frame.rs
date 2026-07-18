@@ -102,7 +102,7 @@ fn side_gutter(chart: &Chart, right: bool) -> f64 {
         any = true;
         for &t in axis.scale.ticks() {
             maxw = maxw.max(prim::text_width(
-                &scale::label(t, &axis.unit),
+                &scale::label(t, axis.fmt, &axis.unit),
                 LABEL_SIZE,
                 crate::font::Font::regular(chart.font_kind),
             ));

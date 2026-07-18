@@ -531,6 +531,16 @@ pub static PROPERTIES: &[Property] = &[
         No,
     ),
     row("gridlines", &[Type("axis")], One(Kind::Any), Engine, No),
+    // Value presentation [SPEC 16] — parsed by `ledger::format`; the cascade
+    // (chart → axis / series) runs engine-side like `tooltip:`. Dimension /
+    // drawing-scope owners land with the drawing half [CHART-DRAW Stage 8].
+    row(
+        "format",
+        &[Type("chart"), Type("pie"), Type("axis"), Role("series")],
+        One(Kind::Any),
+        Engine,
+        No,
+    ),
     // ── Sequence [SPEC 13] — the placement props hard-gate off a sequence
     //    [SPEC 16/20]. ──
     row(

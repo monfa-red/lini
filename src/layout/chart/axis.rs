@@ -76,7 +76,7 @@ pub fn labels(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
 fn value_labels(plot: &Plot, axis: &ValueAxis, kind: crate::font::Kind, out: &mut Vec<PlacedNode>) {
     for &t in axis.scale.ticks() {
         let y = plot.y_at(&axis.scale, t);
-        let label = scale::label(t, &axis.unit);
+        let label = scale::label(t, axis.fmt, &axis.unit);
         let node = match axis.side {
             Side::Right => {
                 prim::text_left(&label, plot.x1 + 6.0, y, LABEL_SIZE, Some(muted()), kind)
@@ -123,7 +123,7 @@ fn x_labels(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
         // Numeric x (linear or log): a label at each tick value.
         _ => {
             for &t in chart.x.scale.ticks() {
-                let label = scale::label(t, &chart.x.unit);
+                let label = scale::label(t, chart.x.fmt, &chart.x.unit);
                 out.push(prim::text(
                     &label,
                     plot.x_at(&chart.x.scale, t),
@@ -162,7 +162,7 @@ fn row_labels(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {
         for &t in axis.scale.ticks() {
             let x = plot.x0 + axis.scale.frac(t) * plot.w();
             out.push(prim::text(
-                &scale::label(t, &axis.unit),
+                &scale::label(t, axis.fmt, &axis.unit),
                 x,
                 plot.y1 + 4.0 + LABEL_SIZE * 0.7,
                 LABEL_SIZE,

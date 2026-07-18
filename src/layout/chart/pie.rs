@@ -11,6 +11,7 @@ use super::{chart_box, lay_out_legend, legend_reserve, title_reserve};
 use crate::error::Error;
 use crate::layout::PlacedNode;
 use crate::layout::prim;
+use crate::ledger::format;
 use crate::resolve::{AttrMap, NodeKind, ResolvedInst, ResolvedValue};
 use crate::span::Span;
 use std::f64::consts::TAU;
@@ -49,7 +50,7 @@ pub fn layout_pie(inst: &ResolvedInst) -> Result<PlacedNode, Error> {
             if let Some((color, width)) = &s.outline {
                 prim::outline(&mut wedge, color.clone(), *width);
             }
-            prim::set_hint(&mut wedge, slice_title(s, total));
+            prim::set_hint(&mut wedge, slice_title(s, total, pie.fmt));
             kids.push(wedge);
         }
         a += span;
@@ -95,10 +96,12 @@ fn legend_entries(slices: &[Slice]) -> Vec<super::LegendEntry> {
         .collect()
 }
 
-/// A slice's `<title>` [SPEC 14.8]: its name, value, and percent of the total.
-fn slice_title(s: &Slice, total: f64) -> String {
+/// A slice's `<title>` [SPEC 14.8]: its name, value (under the pie's
+/// `format:` [SPEC 16]), and percent of the total (always the auto reading —
+/// the share is chart chrome, not the value).
+fn slice_title(s: &Slice, total: f64, fmt: format::Format) -> String {
     let pct = fmt_tick((s.value / total * 100.0).round());
-    let v = fmt_tick(s.value);
+    let v = format::render(s.value, fmt);
     match &s.label {
         Some(l) => format!("{l}: {v} ({pct}%)"),
         None => format!("{v} ({pct}%)"),
@@ -155,12 +158,18 @@ pub fn build_pie(inst: &ResolvedInst) -> Result<Pie, Error> {
     if slices.iter().map(|s| s.value).sum::<f64>() <= 0.0 {
         return Err(Error::at(span, "a pie's slice values sum to zero"));
     }
+    // A pie has no time axis, so an authored date preset errors [SPEC 16].
+    let fmt = format::read_or(&inst.attrs, format::Format::Auto, span)?;
+    if matches!(fmt, format::Format::Date(_)) {
+        return Err(Error::at(span, "a date preset reads a time axis"));
+    }
     Ok(Pie {
         slices,
         title,
         hole,
         gap: read_gap(&inst.attrs),
         font_kind: inst.font.kind,
+        fmt,
     })
 }
 

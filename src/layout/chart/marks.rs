@@ -6,9 +6,10 @@ use super::metrics::AREA_OPACITY;
 use super::model::{Chart, Curve, Data, Series, SeriesKind};
 use super::palette::deepen;
 use super::project::{Dir, Plot};
-use super::scale::{Scale, fmt_tick};
+use super::scale::Scale;
 use crate::layout::PlacedNode;
 use crate::layout::prim;
+use crate::ledger::format;
 use crate::resolve::MarkerKind;
 
 /// One datum's data-space coordinate paired with its pixel coordinate.
@@ -199,11 +200,15 @@ fn dot_title(chart: &Chart, ser: &Series, x: f64, y: f64) -> String {
     let name = ser.label.as_deref().unwrap_or("");
     let value = match &ser.data {
         Data::Categorical(_) => match (chart.x.labels.get(x as usize), &chart.x.scale) {
-            (Some(c), Scale::Band { .. }) => format!("{c}: {}", fmt_tick(y)),
-            _ => fmt_tick(y),
+            (Some(c), Scale::Band { .. }) => format!("{c}: {}", format::render(y, ser.fmt)),
+            _ => format::render(y, ser.fmt),
         },
         // Points (incl. a sampled formula): the x,y pair.
-        _ => format!("{}, {}", fmt_tick(x), fmt_tick(y)),
+        _ => format!(
+            "{}, {}",
+            format::render(x, chart.x.fmt),
+            format::render(y, ser.fmt)
+        ),
     };
     if name.is_empty() {
         value

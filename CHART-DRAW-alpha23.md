@@ -133,32 +133,34 @@ fmt/test/clippy clean, a **Log** line here.
 Write all chart-half law before any code. The SPEC alone must suffice to
 implement Stages 1–3.
 
-- [ ] SPEC 14.4: `scale` gains `time`; date literals in `range:`/`ticks:`;
+- [x] SPEC 14.4: `scale` gains `time`; date literals in `range:`/`ticks:`;
   calendar `step:` (unit idents, optional count, numeric-step error); tick
   presentation via `format:` (auto follows the tick unit); the
   mixed-domain and invalid-date error rows referenced.
-- [ ] SPEC 14.3: quoted ISO-8601 x-values in `data:` points (`data:
+- [x] SPEC 14.3: quoted ISO-8601 x-values in `data:` points (`data:
   "2026-01-01" 18, …`) — the item-width discriminator unchanged; bare
   date vs offset semantics (decision 3).
-- [ ] SPEC 14.6: per-datum paint lists (decision 6) — the comma law on
+- [x] SPEC 14.6: per-datum paint lists (decision 6) — the comma law on
   repeated-mark series, `auto`, the count law, the legend-swatch rule.
-- [ ] A `format:` entry in SPEC 16's ledger section: families, arguments,
+- [x] A `format:` entry in SPEC 16's ledger section: families, arguments,
   inheritance, owners (chart scope, axis, series; dimensions noted as
   Stage-8/15.6 territory), presentation-only law, compose order
   (decision 2).
-- [ ] SPEC 20 rows: paint-list count mismatch (both counts in the
+- [x] SPEC 20 rows: paint-list count mismatch (both counts in the
   message), list paint on `|line|`/`|area|`, mixed date/numeric domain,
   invalid date literal, numeric `step:` on a time axis, invalid `format:`
   arguments.
-- [ ] SPEC 23 prunes: time axes and `format:` come out of deferred; 15.6's
+- [x] SPEC 23 prunes: time axes and `format:` come out of deferred; 15.6's
   "a per-value suffix arrives with `format:`" pointer updated to cite the
   ledger entry (suffixes themselves are `unit:`'s job, unchanged).
-- [ ] ROADMAP/PLAN-V1 sync: ladder rows point here; alpha.2/alpha.3
+- [x] ROADMAP/PLAN-V1 sync: ladder rows point here; alpha.2/alpha.3
   contract sections gain their round-entered note.
 
 Acceptance: SPEC alone sufficient for Stages 1–3; anchors intact; every
 example uses shipped syntax; `cargo test` untouched.
-**Log:**
+**Log:** 2026-07-18 — **done**, one commit (`6e22b08`). Date presets
+settled as `year · month · day · hour · minute` (week ticks render day
+text — no `week` preset). Anchor sweep: zero broken; 933 tests untouched.
 
 ### Stage 1 — the `format:` engine, on ticks & tooltips
 

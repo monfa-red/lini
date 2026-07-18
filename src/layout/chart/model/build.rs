@@ -19,6 +19,7 @@ pub fn build(inst: &ResolvedInst, funcs: &FuncTable) -> Result<Chart, Error> {
     let samples = sample_count(&inst.attrs);
     let bars = read_bars(&inst.attrs)?;
     let chart_tip = super::tooltip::read(&inst.attrs)?;
+    let chart_fmt = format::read_or(&inst.attrs, Format::Auto, span)?;
     let (series_insts, axis_insts, band_insts, mark_insts, bubble_insts, title) = partition(inst)?;
     if series_insts.is_empty() && bubble_insts.is_empty() {
         return Err(Error::at(span, "a chart needs at least one series"));
@@ -47,15 +48,15 @@ pub fn build(inst: &ResolvedInst, funcs: &FuncTable) -> Result<Chart, Error> {
                         "'side' has no meaning in a radial chart — it has one radius axis",
                     ));
                 }
-                value_specs.push(axis_spec(ax, Side::Left)?);
+                value_specs.push(axis_spec(ax, Side::Left, chart_fmt)?);
             }
             Dir::Row => match side {
                 Some(Side::Left | Side::Right) => x_inst = Some(ax),
-                _ => value_specs.push(axis_spec(ax, side.unwrap_or(Side::Bottom))?),
+                _ => value_specs.push(axis_spec(ax, side.unwrap_or(Side::Bottom), chart_fmt)?),
             },
             Dir::Column => match side {
                 Some(Side::Bottom | Side::Top) => x_inst = Some(ax),
-                _ => value_specs.push(axis_spec(ax, side.unwrap_or(Side::Left))?),
+                _ => value_specs.push(axis_spec(ax, side.unwrap_or(Side::Left), chart_fmt)?),
             },
         }
     }
@@ -76,6 +77,7 @@ pub fn build(inst: &ResolvedInst, funcs: &FuncTable) -> Result<Chart, Error> {
             step: None,
             ticks: None,
             log: false,
+            fmt: format::numeric(chart_fmt),
         });
     }
 
@@ -88,6 +90,7 @@ pub fn build(inst: &ResolvedInst, funcs: &FuncTable) -> Result<Chart, Error> {
             &value_specs,
             &categories,
             chart_tip,
+            chart_fmt,
             span,
         )?);
     }
@@ -127,7 +130,15 @@ pub fn build(inst: &ResolvedInst, funcs: &FuncTable) -> Result<Chart, Error> {
 
     // The x scale: a band for categorical data (categories or indices), or a numeric
     // domain when the data is points / a formula / a bottom axis range / bands / bubbles.
-    let x = build_x_axis(x_inst, &categories, &series, &segments, &bubbles, span)?;
+    let x = build_x_axis(
+        x_inst,
+        &categories,
+        &series,
+        &segments,
+        &bubbles,
+        chart_fmt,
+        span,
+    )?;
 
     // Sample any deferred `fn:` over the now-fixed x-domain → concrete points
     // [SPEC 14.3]; after this, every series carries data feeding the value axes.
@@ -170,6 +181,7 @@ pub fn build(inst: &ResolvedInst, funcs: &FuncTable) -> Result<Chart, Error> {
         gap: read_gap(&inst.attrs),
         tooltip: chart_tip,
         font_kind: inst.font.kind,
+        fmt: format::numeric(chart_fmt),
     })
 }
 

@@ -61,11 +61,16 @@ pub(super) fn build_x_axis(
     series: &[Series],
     segments: &[(f64, f64)],
     bubbles: &[Bubble],
+    chart_fmt: Format,
     span: Span,
 ) -> Result<XAxis, Error> {
     let (title, unit, grid) = match x_inst {
         Some(a) => (label_of(a), read_unit(a)?, read_grid(a)?),
         None => (None, None, Grid::Default),
+    };
+    let fmt = match x_inst {
+        Some(a) => numeric_fmt(a, chart_fmt)?,
+        None => format::numeric(chart_fmt),
     };
     // Categorical when categories are set or every series is categorical; numeric when
     // the data is points / a formula / bubbles, or a bottom axis fixes a range.
@@ -80,6 +85,7 @@ pub(super) fn build_x_axis(
             title,
             unit,
             grid,
+            fmt,
         });
     }
     if !any_numeric {
@@ -103,6 +109,7 @@ pub(super) fn build_x_axis(
             title,
             unit,
             grid,
+            fmt,
         });
     }
     // Numeric x: domain from a bottom axis `range:`, else the union of point x's (a
@@ -138,6 +145,7 @@ pub(super) fn build_x_axis(
         title,
         unit,
         grid,
+        fmt,
     })
 }
 
@@ -198,6 +206,7 @@ pub(super) fn build_value_axes(
             unit: spec.unit.clone(),
             grid: clone_grid(&spec.grid),
             primary: i == 0,
+            fmt: spec.fmt,
         });
     }
     Ok(out)
@@ -336,7 +345,11 @@ fn axis_ticks(min: f64, max: f64, spec: &AxisSpec) -> Vec<f64> {
     }
 }
 
-pub(super) fn axis_spec(inst: &ResolvedInst, side: Side) -> Result<AxisSpec<'_>, Error> {
+pub(super) fn axis_spec(
+    inst: &ResolvedInst,
+    side: Side,
+    chart_fmt: Format,
+) -> Result<AxisSpec<'_>, Error> {
     Ok(AxisSpec {
         id: inst.id.as_deref(),
         side,
@@ -347,7 +360,18 @@ pub(super) fn axis_spec(inst: &ResolvedInst, side: Side) -> Result<AxisSpec<'_>,
         step: inst.attrs.number("step"),
         ticks: read_ticks(&inst.attrs, inst.span)?,
         log: read_log(inst)?,
+        fmt: numeric_fmt(inst, chart_fmt)?,
     })
+}
+
+/// A numeric consumer's `format:` [SPEC 16]: its own (a date preset authored
+/// here errors — it reads a time axis), else the chart's numeric reading.
+pub(super) fn numeric_fmt(inst: &ResolvedInst, chart_fmt: Format) -> Result<Format, Error> {
+    let f = format::read_or(&inst.attrs, format::numeric(chart_fmt), inst.span)?;
+    if matches!(f, Format::Date(_)) && inst.attrs.get("format").is_some() {
+        return Err(Error::at(inst.span, "a date preset reads a time axis"));
+    }
+    Ok(format::numeric(f))
 }
 
 /// Whether an axis is `scale: log` [SPEC 14.4]; `scale:` accepts only
