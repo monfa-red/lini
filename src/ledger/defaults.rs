@@ -270,6 +270,17 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             n("font-size", 12.0),
             n("scale", 1.0),
         ],
+        // The GD&T frame and the framed datum letter [SPEC 15.9]: annotation
+        // linework, the annotation font, a `--bg` back so the boxed cells
+        // mask whatever they ride (`|control|` rows carry no bundle — the
+        // frame paints them).
+        "feature-control" | "datum" => vec![
+            var("stroke", "stroke-dark"),
+            n("stroke-width", 1.0),
+            var("fill", "bg"),
+            n("font-size", 12.0),
+            n("scale", 1.0),
+        ],
         // …and the dash-dot chrome types [SPEC 15.7]. `|breakline|` is the break
         // cut's generated zigzag / S edge — solid, annotation-weight.
         "centerline" => vec![

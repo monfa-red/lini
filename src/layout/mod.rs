@@ -368,7 +368,7 @@ fn layout_inst(
                 format!("'|{ty}|' annotates a drawing — it belongs in a 'layout: drawing'"),
             ));
         }
-        return drawing::symbols::layout_node(inst);
+        return drawing::symbols::layout_node(inst, ty, path, program);
     }
 
     let own = effective_scale(&inst.attrs, ctx.scale, inst.span)?;

@@ -1,47 +1,89 @@
 //! Drafting symbols [SPEC 15.9] — the annotation node types drawn from the
 //! glyph registry (`crate::glyph`), sheet content in every sense: sized in
 //! natural units off the annotation `font-size` and the statement's
-//! `stroke-width`, never the view scale. `|surface-finish|` lowers here; the
-//! frame types (`|feature-control|` / `|control|` / `|datum|`) land with
-//! GDT-alpha4 Stage 2.
+//! `stroke-width`, never the view scale. `|surface-finish|` and the shared
+//! framed-letter anatomy lower here; the GD&T frame (`|feature-control|` /
+//! `|control|`) lowers in [`super::frames`].
 
-use super::super::ir::PlacedNode;
+use super::super::ir::{Bbox, PlacedNode};
 use super::super::{approx_height, approx_width, prim};
 use crate::error::Error;
 use crate::glyph::{FINISH_APEX_X, FINISH_TIP_X, GRID};
 use crate::ledger::consts::DRAWING_LINK_FONT_SIZE;
-use crate::resolve::{NodeKind, ResolvedInst, ResolvedValue};
+use crate::resolve::{NodeKind, Program, ResolvedInst, ResolvedValue};
 
 /// The drafting-symbol type a node wears, if any — the [SPEC 20]
 /// drawing-scope gate and the lowering dispatch key on one list.
 pub(in crate::layout) fn drafting_type(chain: &[String]) -> Option<&'static str> {
     chain.iter().find_map(|t| match t.as_str() {
         "surface-finish" => Some("surface-finish"),
+        "feature-control" => Some("feature-control"),
+        "control" => Some("control"),
+        "datum" => Some("datum"),
         _ => None,
     })
+}
+
+/// The node's annotation paint [SPEC 15.9]: the font its glyphs and texts
+/// size by, the statement's stroke and width its linework draws at — the
+/// scope defaults unless the node restyles.
+pub(super) struct SymbolPaint {
+    pub fs: f64,
+    pub sw: f64,
+    pub stroke: ResolvedValue,
+}
+
+impl SymbolPaint {
+    pub(super) fn of(inst: &ResolvedInst) -> SymbolPaint {
+        SymbolPaint {
+            fs: inst
+                .attrs
+                .number("font-size")
+                .unwrap_or(DRAWING_LINK_FONT_SIZE),
+            sw: inst.attrs.number("stroke-width").unwrap_or(1.0),
+            stroke: inst
+                .attrs
+                .get("stroke")
+                .cloned()
+                .unwrap_or(ResolvedValue::LiveVar {
+                    name: "stroke-dark".into(),
+                    raw: false,
+                }),
+        }
+    }
+}
+
+/// Lower a drafting-symbol node, dispatched on its type. `path` / `program`
+/// give the frame types their drawing scope — `datums:` validates against
+/// the scope's collected letters [SPEC 15.9].
+pub(in crate::layout) fn layout_node(
+    inst: &ResolvedInst,
+    ty: &str,
+    path: &str,
+    program: &Program,
+) -> Result<PlacedNode, Error> {
+    match ty {
+        "feature-control" => super::frames::layout_frame(inst, path, program),
+        "datum" => super::frames::layout_datum(inst),
+        // A row template reaching layout on its own sits outside a frame —
+        // the frame lowering consumes its `|control|` children [SPEC 20].
+        "control" => Err(Error::at(
+            inst.span,
+            "'|control|' is a '|feature-control|' row",
+        )),
+        _ => layout_finish(inst),
+    }
 }
 
 /// The finish vee's height as a multiple of the annotation font [SPEC 15.9]:
 /// ISO 1302 draws the long leg at 3× the lettering height (h₂ = 3h).
 const FINISH_HEIGHT_EM: f64 = 3.0;
 
-/// Lower a drafting-symbol node — today always `|surface-finish|`. The vee's
-/// **tip is the node's local origin** (the datum the node places by, and
-/// Stage 3's seat anchor); the indication rides the long leg's apex.
-pub(in crate::layout) fn layout_node(inst: &ResolvedInst) -> Result<PlacedNode, Error> {
-    let fs = inst
-        .attrs
-        .number("font-size")
-        .unwrap_or(DRAWING_LINK_FONT_SIZE);
-    let sw = inst.attrs.number("stroke-width").unwrap_or(1.0);
-    let stroke = inst
-        .attrs
-        .get("stroke")
-        .cloned()
-        .unwrap_or(ResolvedValue::LiveVar {
-            name: "stroke-dark".into(),
-            raw: false,
-        });
+/// Lower a `|surface-finish|`. The vee's **tip is the node's local origin**
+/// (the datum the node places by, and Stage 3's seat anchor); the indication
+/// rides the long leg's apex.
+fn layout_finish(inst: &ResolvedInst) -> Result<PlacedNode, Error> {
+    let SymbolPaint { fs, sw, stroke } = SymbolPaint::of(inst);
     let variant = match inst.attrs.get("symbol") {
         Some(ResolvedValue::Ident(s)) => s.as_str(),
         _ => "basic",
@@ -101,6 +143,50 @@ pub(in crate::layout) fn layout_node(inst: &ResolvedInst) -> Result<PlacedNode, 
     let mut shell = prim::container(inst, bbox, children);
     shell.kind = NodeKind::Path;
     Ok(shell)
+}
+
+/// A path-less `Path` shell around a symbol's lowered children [SPEC 15.9]:
+/// the node's identity, classes, and attrs with no drawn box of its own —
+/// the one shell every drafting symbol wears.
+pub(super) fn shell(inst: &ResolvedInst, bbox: Bbox, children: Vec<PlacedNode>) -> PlacedNode {
+    let mut shell = prim::container(inst, bbox, children);
+    shell.kind = NodeKind::Path;
+    shell
+}
+
+/// The framed datum letter's **one anatomy** [SPEC 15.7/15.9], shared by the
+/// `>-` leader's box and the `|datum|` node: a square frame growing along the
+/// letter ([`framed_letter_size`]), drawn as the closed outline below at the
+/// annotation stroke, the letter centred. Each caller supplies its own paint
+/// channel (the link's, the node's) and its own text leaf.
+pub(in crate::layout::drawing) fn framed_letter_size(
+    letter: &str,
+    font: crate::font::Font,
+    size: f64,
+) -> (f64, f64) {
+    let h = size + 6.0;
+    (h.max(approx_width(letter, font, size, 0.0) + 6.0), h)
+}
+
+/// The datum frame's closed outline, centred on `c` — classed `datum-frame`
+/// so the row packer registers the box itself as painted bounds
+/// ([`super::annotate::Rows`]).
+pub(in crate::layout::drawing) fn datum_frame_box(
+    c: (f64, f64),
+    w: f64,
+    h: f64,
+    stroke: ResolvedValue,
+    sw: f64,
+) -> PlacedNode {
+    let (x0, x1) = (c.0 - w / 2.0, c.0 + w / 2.0);
+    let (y0, y1) = (c.1 - h / 2.0, c.1 + h / 2.0);
+    let mut frame = prim::line(
+        vec![(x0, y0), (x1, y0), (x1, y1), (x0, y1), (x0, y0)],
+        stroke,
+        sw,
+    );
+    frame.type_chain = vec!["dim-line".into(), "datum-frame".into()];
+    frame
 }
 
 #[cfg(test)]

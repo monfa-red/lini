@@ -78,10 +78,14 @@ pub const TEMPLATES: &[(&str, &str)] = &[
     // The crossing-halo knockouts [SPEC 15.7] — generated mask cuts, no
     // instances; registered so the `|halo|` chrome rule runs the cascade.
     ("halo", "line"),
-    // Drafting symbols [SPEC 15.9]: the ISO 1302 surface-texture symbol —
-    // its label the textual indication, `symbol:` the vee variant;
-    // drawing-scope only (the frame types land with GDT-alpha4 Stage 2).
+    // Drafting symbols [SPEC 15.9], drawing-scope only: the ISO 1302
+    // surface-texture symbol (label = the textual indication, `symbol:` the
+    // vee variant), the GD&T frame with its `|control|` rows, and the framed
+    // datum letter as a node.
     ("surface-finish", "block"),
+    ("feature-control", "block"),
+    ("control", "block"),
+    ("datum", "block"),
     // Sections & details [SPEC 15.8]: the authored plane line (chrome — its ISO
     // anatomy fills from the view's extent) and the magnifier region marker. A
     // section or detail **view** is a plain `|drawing| { of: <marker> }` — no

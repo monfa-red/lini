@@ -218,25 +218,43 @@ and at a `scale: 2` view.
 
 ### Stage 2 — `|feature-control|`, `|control|` & `|datum|`
 
-- [ ] The frame model (decisions 5, 7): one-row sugar vs `|control|`
+- [x] The frame model (decisions 5, 7): one-row sugar vs `|control|`
   rows (mixing errors), characteristic from label or `characteristic:`
   (twice errors), compartment layout at font-derived sizes — symbol,
   zone-prefixed tolerance + material + modifiers, datum compartments
   with per-datum modifiers; composite merging of a shared symbol
   compartment.
-- [ ] Validation (decisions 4–6): the validity table enforced with
+- [x] Validation (decisions 4–6): the validity table enforced with
   did-you-means; `datums:` checked against the resolve-collected letter
   set (surfaced from resolve to layout), unknown references naming the
   declared letters; every new SPEC 20 row wired.
-- [ ] `|datum|` (decision 12): the framed-letter node sharing the `>-`
+- [x] `|datum|` (decision 12): the framed-letter node sharing the `>-`
   box's lowering; its letter joins the identity collection (duplicates
   error across both forms).
-- [ ] Tests: a snapshot matrix (single row, composite, modifiers,
+- [x] Tests: a snapshot matrix (single row, composite, modifiers,
   datum'd), one test per error row; PNG light + dark.
 
 Acceptance: frames render semantically valid or error — never
 plausible-wrong; unknown datum references name the scope's letters.
-**Log:**
+**Log:** 2026-07-18 — **done**, one commit; 1030 tests, clippy clean.
+The frame lowers in `layout/drawing/frames.rs` as **purpose-built
+compartments**, not `|table|` cells (a frame's cells are font-derived
+squares holding natural-units glyphs and merged symbol spans — grid
+tracks fight all three): per-cell `--bg`-backed rects bordered at the
+statement's `stroke-width`, glyph/text items centred inside, adjacent
+same-characteristic rows merging one symbol cell. The validity table
+lives beside the fourteen (group / datum-rule / axial /
+feature-of-size per row); every SPEC 20 row has a pinned test. Datum
+letters surface on `Program.datums` (scope path → declaration-ordered
+letters); resolve now also walks nodes so `|datum|` joins the `>-`
+alphabet (one `DatumTable`, duplicates error across forms), and the
+`>-` box's anatomy is shared, not copied
+(`symbols::framed_letter_size` / `datum_frame_box`). Frames register
+as packer obstacles through the Stage 1 drafting-symbol channel; the
+one re-blessed snapshot is `drawing_gdt.lini`'s own (the sample gains
+the datum pair, a leader-wired ⌀-zone Ⓜ position frame, and a
+composite frame). PNGs read light + dark at zoom 2 + 4: cell borders
+at dimension-linework weight, glyphs legible, merge correct.
 
 ### Stage 3 — `||` annotation seating
 

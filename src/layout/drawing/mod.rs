@@ -15,6 +15,7 @@ mod corner;
 mod dims;
 pub(crate) mod edges;
 mod engine;
+mod frames;
 pub(crate) mod geometry;
 mod halo;
 mod leaders;

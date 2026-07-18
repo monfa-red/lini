@@ -570,14 +570,54 @@ pub static PROPERTIES: &[Property] = &[
     )
     .hard(),
     // ── Drawing [SPEC 15] ──
+    // `tol` is a homonym [SPEC 16]: a dimension's tolerance forms, and a
+    // control row's zone width (a number > 0) on `|feature-control|` /
+    // `|control|` ([SPEC 15.9]).
     row(
         "tol",
-        &[Role("dimension")],
+        &[Role("dimension"), Type("feature-control"), Type("control")],
         One(Kind::Any),
         DefaultRef::None,
         No,
     )
     .hard(),
+    // The GD&T control-row properties [SPEC 15.9] — each owns one frame
+    // compartment slot; the validity table is enforced at the frame lowering.
+    row(
+        "characteristic",
+        &[Type("feature-control"), Type("control")],
+        One(Kind::Ident),
+        DefaultRef::None,
+        No,
+    ),
+    row(
+        "zone",
+        &[Type("feature-control"), Type("control")],
+        One(Kind::Ident),
+        DefaultRef::None,
+        No,
+    ),
+    row(
+        "material",
+        &[Type("feature-control"), Type("control")],
+        One(Kind::Ident),
+        DefaultRef::None,
+        No,
+    ),
+    row(
+        "datums",
+        &[Type("feature-control"), Type("control")],
+        List(Kind::Any),
+        DefaultRef::None,
+        No,
+    ),
+    row(
+        "modifiers",
+        &[Type("feature-control"), Type("control")],
+        List(Kind::Any),
+        DefaultRef::None,
+        No,
+    ),
     // A `(-)` dimension's axis override [SPEC 15.6] — `horizontal` /
     // `vertical` / `aligned`; must agree with a directed anchor.
     row(

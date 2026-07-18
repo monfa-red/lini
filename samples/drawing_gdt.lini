@@ -1,12 +1,13 @@
-// GD&T — drafting symbols [SPEC 15.9], the alpha.4 cluster (Stage 1: the
-// ISO 1302 surface-texture symbol; feature-control frames and |datum| nodes
-// follow). The vees come off the shared drafting-glyph registry in natural
-// units — glyph height follows the annotation font, line weight the
-// statement's stroke — so a symbol reads at dimension-linework weight beside
-// every value, at any view scale. `symbol:` picks the variant: `basic` any
-// process, `machined` removal required, `prohibited` removal prohibited; the
-// smart label is the textual indication, riding the long leg. A two-ended
-// leader (`face <- sf`) wires the same placed node.
+// GD&T — drafting symbols [SPEC 15.9], the alpha.4 cluster. Stage 1: the
+// ISO 1302 surface-texture symbol off the shared drafting-glyph registry in
+// natural units — glyph height follows the annotation font, line weight the
+// statement's stroke, at any view scale. Stage 2: `|feature-control|` frames
+// — the characteristic glyph, the zone-prefixed tolerance with its material
+// modifier, the datum references, each in a bordered compartment; `|control|`
+// rows compose a composite frame (a shared characteristic merges its symbol
+// cell); `|datum|` is the framed letter as a node, joining the scope's datum
+// alphabet exactly as `>-` does. `datums:` must name declared letters — a
+// frame renders semantically valid or errors, never plausible-wrong.
 
 |drawing#bracket-view| "MOUNTING BRACKET" { unit: mm } [
   |rect#plate| { width: 140; height: 60 } [
@@ -25,4 +26,26 @@
   // Leader-wired: the same placed node, reached from the bore's rim.
   |surface-finish#bore| "Ra 0.8" { symbol: prohibited; translate: -95 -78 }
   plate.pin <- bore
+
+  // The datum alphabet, both forms: the `>-` leader plants A on the mounting
+  // face; the `|datum|` node names the bore axis B, wired to its feature.
+  plate:bottom >- "A"
+  |datum#axis| "B" { translate: -45 55 }
+  plate.pin <- axis
+
+  // The bore's location: a ⌀ position zone at maximum material, primary
+  // against the face, secondary against the axis — the frame leader-wired
+  // to the feature it controls.
+  |feature-control#locate| "position" {
+    tol: 0.1; zone: diameter; material: maximum; datums: A, B;
+    translate: -45 -85
+  }
+  plate.pin <- locate
+
+  // A composite frame: the pattern located to the datums, then refined
+  // feature-to-feature — adjacent rows share the position symbol cell.
+  |feature-control#refine| { translate: 100 45 } [
+    |control| "position" { tol: 0.4; zone: diameter; datums: A, B }
+    |control| "position" { tol: 0.1; zone: diameter; datums: A }
+  ]
 ]

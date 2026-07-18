@@ -92,11 +92,19 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
     // gives `resolve_link` X's container chain by resolved path.
     let ancestors_for = |segs: &[String]| link_scope::link_ancestors(&nodes, &root_attrs, segs);
     let mut link_list = Vec::new();
-    let mut datum_seen = HashMap::new();
+    let mut datums = DatumTable::default();
+    // `|datum|` nodes join the identity set first [SPEC 15.9] — one alphabet
+    // per drawing scope, shared with the `>-` leader form below.
+    collect_datum_nodes(
+        &nodes,
+        "",
+        is_drawing(&root_attrs).then_some(""),
+        &mut datums,
+    )?;
     for w in &file.links {
         let (base, ancestors) = link_scope::link_scope(&baked, &root_attrs, &[]);
         let kind = link_scope_kind(&nodes, &root_attrs, &[]);
-        collect_datum_letter(w, &[], &kind, &mut datum_seen)?;
+        collect_datum_letter(w, &[], &kind, &mut datums)?;
         link_list.extend(links::resolve_link(
             w,
             &ctx,
@@ -111,7 +119,7 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
     for lw in &lifted {
         let (base, ancestors) = link_scope::link_scope(&baked, &root_attrs, &lw.chain);
         let kind = link_scope_kind(&nodes, &root_attrs, &lw.chain);
-        collect_datum_letter(&lw.link, &lw.prefix, &kind, &mut datum_seen)?;
+        collect_datum_letter(&lw.link, &lw.prefix, &kind, &mut datums)?;
         link_list.extend(links::resolve_link(
             &lw.link,
             &ctx,
@@ -137,22 +145,88 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
         // Carried to the layout phase for deferred `fn:` sampling [SPEC 14.3];
         // every borrow of it above (scene ctx, sheet inputs) has ended by here.
         funcs,
+        datums: datums.letters,
     })
+}
+
+/// The per-scope datum identity set under construction [SPEC 15.7/15.9]:
+/// `letters` in declaration order (surfaced on [`Program`] for the layout
+/// phase's `datums:` validation), `seen` the duplicate gate across both
+/// declaration forms — a letter is placed once, by `>-` or `|datum|`.
+#[derive(Default)]
+struct DatumTable {
+    letters: HashMap<String, Vec<String>>,
+    seen: HashMap<(String, String), crate::span::Span>,
+}
+
+impl DatumTable {
+    fn place(&mut self, scope: &str, letter: &str, span: crate::span::Span) -> Result<(), Error> {
+        let key = (scope.to_string(), letter.to_string());
+        if let Some(prev) = self.seen.get(&key) {
+            return Err(
+                Error::at(span, format!("datum '{letter}' is already placed")).with_related(*prev),
+            );
+        }
+        self.seen.insert(key, span);
+        self.letters
+            .entry(scope.to_string())
+            .or_default()
+            .push(letter.to_string());
+        Ok(())
+    }
+}
+
+/// Collect every `|datum|` node's letter [SPEC 15.9] — the framed letter as a
+/// node, joining its drawing scope's identity set exactly as `>-` does.
+/// `scope` is the nearest enclosing drawing's path (`None` outside one — the
+/// node itself errors at layout, so nothing collects); an anonymous drawing
+/// is path-transparent, mirroring the link prefix convention.
+fn collect_datum_nodes(
+    insts: &[ResolvedInst],
+    path: &str,
+    scope: Option<&str>,
+    datums: &mut DatumTable,
+) -> Result<(), Error> {
+    for inst in insts {
+        let child_path = match (&inst.id, path) {
+            (None, _) => path.to_string(),
+            (Some(id), "") => id.clone(),
+            (Some(id), _) => format!("{path}.{id}"),
+        };
+        let child_scope = if is_drawing(&inst.attrs) {
+            Some(child_path.as_str())
+        } else {
+            scope
+        };
+        if let Some(s) = child_scope
+            && inst.type_chain.iter().any(|t| t == "datum")
+            && let Some(letter) = inst
+                .children
+                .iter()
+                .find(|c| c.kind == super::NodeKind::Text)
+                .and_then(|c| c.label.as_deref())
+        {
+            datums.place(s, letter, inst.span)?;
+        }
+        collect_datum_nodes(&inst.children, &child_path, child_scope, datums)?;
+    }
+    Ok(())
 }
 
 /// Collect a `>-` statement's datum letter [SPEC 15.7]: letters are
 /// **identities**, gathered per drawing scope beside the id pass — a
-/// duplicate errors with the first placement (alpha.4's feature-control
-/// `datums:` will validate references against this set). The identity keys
-/// on the **operator** — a `marker: crow` restyles a wire, never re-types it
-/// [SPEC 9] — and on the scope prefix: a drawing statement's scope is always
-/// the drawing itself (the mate/measure gate pins links to the immediate
-/// container), so sibling drawings each carry their own alphabet.
+/// duplicate errors with the first placement, and a feature-control frame's
+/// `datums:` validates its references against the set at layout [SPEC 15.9].
+/// The identity keys on the **operator** — a `marker: crow` restyles a wire,
+/// never re-types it [SPEC 9] — and on the scope prefix: a drawing
+/// statement's scope is always the drawing itself (the mate/measure gate
+/// pins links to the immediate container), so sibling drawings each carry
+/// their own alphabet.
 fn collect_datum_letter(
     w: &crate::syntax::ast::Link,
     prefix: &[String],
     scope: &links::LinkScope,
-    seen: &mut HashMap<(String, String), crate::span::Span>,
+    datums: &mut DatumTable,
 ) -> Result<(), Error> {
     use crate::ast::{ChainOp, LinkMarker};
     let datum_leader = matches!(w.op(), ChainOp::Wire(op)
@@ -163,16 +237,7 @@ fn collect_datum_letter(
     let Some(letter) = w.labels.first() else {
         return Ok(()); // the empty-leader gate reports this one
     };
-    let key = (prefix.join("."), letter.text.clone());
-    if let Some(prev) = seen.get(&key) {
-        return Err(Error::at(
-            letter.span,
-            format!("datum '{}' is already placed", letter.text),
-        )
-        .with_related(*prev));
-    }
-    seen.insert(key, letter.span);
-    Ok(())
+    datums.place(&prefix.join("."), &letter.text, letter.span)
 }
 
 // ─────────────────────────── Root config ───────────────────────────

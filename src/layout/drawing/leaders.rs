@@ -353,16 +353,14 @@ fn fan_tip(
 
 /// The standard framed datum box [SPEC 15.7]: the letter seated in a square
 /// frame riding the leader's text seat at the landing, linework in the
-/// dimension stroke. The frame is classed `datum-frame` so the row packer
-/// registers the box itself as painted bounds (`Rows::obstruct_texts`) — a
-/// dim row stands off the frame, not just the letter inside it.
+/// dimension stroke — the one framed-letter anatomy the `|datum|` node
+/// shares (`symbols::framed_letter_size` / `datum_frame_box` [SPEC 15.9]).
 fn datum_box(texts: &[ResolvedText], landing: P, sx: f64, paint: &Paint) -> Vec<PlacedNode> {
     let letter = &texts[0];
     let size = letter.attrs.number("font-size").unwrap_or(paint.fs);
     let font = crate::font::Font::of(&letter.attrs);
     let tw = approx_width(&letter.text, font, size, 0.0);
-    let h = size + 6.0;
-    let w = h.max(tw + 6.0);
+    let (w, h) = super::symbols::framed_letter_size(&letter.text, font, size);
     // The letter centres in the frame, whose near edge meets the landing;
     // its own `translate` nudge carries the frame along.
     let mut out = texts_beside(
@@ -372,16 +370,18 @@ fn datum_box(texts: &[ResolvedText], landing: P, sx: f64, paint: &Paint) -> Vec<
         paint.fs,
     );
     let c = (out[0].cx, out[0].cy);
-    let (x0, x1) = (c.0 - w / 2.0, c.0 + w / 2.0);
-    let (y0, y1) = (c.1 - h / 2.0, c.1 + h / 2.0);
-    let mut frame = paint.dim(vec![(x0, y0), (x1, y0), (x1, y1), (x0, y1), (x0, y0)]);
-    frame.type_chain.push("datum-frame".into());
-    out.push(frame);
+    out.push(super::symbols::datum_frame_box(
+        c,
+        w,
+        h,
+        paint.stroke.clone(),
+        paint.sw,
+    ));
     // Any further authored lines stack below the box, the usual leaf rules.
     if texts.len() > 1 {
         out.extend(texts_beside(
             &texts[1..],
-            (landing.0, y1 + 3.0 + paint.fs / 2.0),
+            (landing.0, c.1 + h / 2.0 + 3.0 + paint.fs / 2.0),
             sx,
             paint.fs,
         ));

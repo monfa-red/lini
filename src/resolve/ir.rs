@@ -13,6 +13,11 @@ pub struct Program {
     /// sample a deferred `fn:` once its x-domain is fixed [SPEC 14.3]. Built at
     /// resolve; only the chart layout reads it.
     pub funcs: FuncTable,
+    /// Each drawing scope's declared datum letters [SPEC 15.7/15.9], in
+    /// declaration order, keyed by the scope's dot-path (`""` = root) — the
+    /// identity set `>-` statements and `|datum|` nodes join at resolve. A
+    /// `|feature-control|`'s `datums:` validates against it at layout.
+    pub datums: HashMap<String, Vec<String>>,
 }
 
 /// The render inputs the rules builder restates as CSS class rules — paint rides
