@@ -326,8 +326,8 @@ snapshot untouched.
 Acceptance: carried nodes register as obstacles (the no-overlap oracle
 green across all drawing samples); a core link carrying a node errors;
 the sample reads in both themes; the tag is cut.
-**Log:** 2026-07-18 — **done**, one commit; 1053 tests (+14), clippy
-clean; one snapshot re-blessed (`drawing_gdt.lini`'s own).
+**Log:** 2026-07-18 — **done**, one commit (`dbbe168`); 1053 tests
+(+14), clippy clean; one snapshot re-blessed (`drawing_gdt.lini`'s own).
 The widening is **one label path, no fork**: `Link.labels` becomes
 `Vec<LabelItem>` (`Text` | `Node`, source order kept — `label_texts()` /
 `label_nodes()` the two views), the parser's `label_block` takes `|…|`
