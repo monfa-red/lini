@@ -179,7 +179,15 @@ impl<'a> Lexer<'a> {
                 }
                 b'#' => self.lex_hash()?,
                 b'.' => {
-                    if self.peek(1).is_some_and(|c| c.is_ascii_digit()) {
+                    if self.glued_copy_index() {
+                        // Endpoint position [SPEC 15.4/21]: a `.` glued to an
+                        // ident and followed by digits is a path dot + a copy
+                        // index (`plate.bolt.2`), so `1.5` in value position
+                        // stays a number (its dot glues to a digit, not an
+                        // ident) and `opacity: .5` stays a fraction.
+                        self.push_punct(TokKind::Dot, 1);
+                        self.lex_copy_index();
+                    } else if self.peek(1).is_some_and(|c| c.is_ascii_digit()) {
                         self.lex_number()?;
                     } else {
                         // `.` is a path / class / side separator; `..` is two of
@@ -430,6 +438,32 @@ impl<'a> Lexer<'a> {
             span: Span::new(start, self.i),
         });
         Ok(())
+    }
+
+    /// Whether the `.` at the cursor opens a pattern-copy index [SPEC 15.4]:
+    /// glued to a just-lexed ident (an endpoint path) and followed by a digit,
+    /// outside any math context. Everywhere else `.`+digit stays a number.
+    fn glued_copy_index(&self) -> bool {
+        !self.in_math()
+            && self.peek(1).is_some_and(|c| c.is_ascii_digit())
+            && self
+                .tokens
+                .last()
+                .is_some_and(|t| matches!(t.kind, TokKind::Ident(_)) && t.span.end == self.i)
+    }
+
+    /// The copy index's digit run — a bare integer (never a decimal: a second
+    /// glued `.` is another path dot, and the index is always last).
+    fn lex_copy_index(&mut self) {
+        let start = self.i;
+        while self.i < self.bytes.len() && self.bytes[self.i].is_ascii_digit() {
+            self.i += 1;
+        }
+        let value: f64 = self.src[start..self.i].parse().expect("a digit run");
+        self.tokens.push(Token {
+            kind: TokKind::Number(value),
+            span: Span::new(start, self.i),
+        });
     }
 
     fn lex_ident(&mut self) {
@@ -755,6 +789,40 @@ mod tests {
         // A bare operator outside parens asks for a group.
         let err = lex("padding: 8 ^ 2").expect_err("bare ^ errors");
         assert!(err.message.contains("inside ( )"), "{err:?}");
+    }
+
+    #[test]
+    fn a_glued_dot_digit_run_is_a_copy_index_only_after_an_ident() {
+        // Endpoint position [SPEC 15.4/21]: `plate.bolt.2` is a path with a
+        // numeric copy segment…
+        assert_eq!(
+            kinds("plate.bolt.2"),
+            vec![
+                TokKind::Ident("plate".into()),
+                TokKind::Dot,
+                TokKind::Ident("bolt".into()),
+                TokKind::Dot,
+                TokKind::Number(2.0),
+            ]
+        );
+        // …with a `:point` still free to follow…
+        assert_eq!(
+            kinds("bolt.2:top"),
+            vec![
+                TokKind::Ident("bolt".into()),
+                TokKind::Dot,
+                TokKind::Number(2.0),
+                TokKind::Colon,
+                TokKind::Ident("top".into()),
+            ]
+        );
+        // …while `.`+digit anywhere else keeps its number reading.
+        assert_eq!(kinds("1.5"), vec![TokKind::Number(1.5)]);
+        assert_eq!(kinds(".5"), vec![TokKind::Number(0.5)]);
+        assert_eq!(
+            kinds("a .5"),
+            vec![TokKind::Ident("a".into()), TokKind::Number(0.5)]
+        );
     }
 
     #[test]

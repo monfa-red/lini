@@ -22,8 +22,9 @@
 
     body:left (-) body:z1 { side: top; }
     // FEED       → 100
-    body:z1 (-) body:z2 { side: top; }
-    // TRANSITION → 40
+    body:z1 (-) body:z2 { side: top; project: horizontal; }
+    // TRANSITION → 40 — projected flat: two point() stations
+    // 6 apart in rise would otherwise read the aligned 40.45
     body:z2 (-) body:right { side: top; }
     // METERING   → 90
     body:left (-) body:right { side: bottom; }

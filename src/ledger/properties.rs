@@ -568,6 +568,16 @@ pub static PROPERTIES: &[Property] = &[
         No,
     )
     .hard(),
+    // A `(-)` dimension's axis override [SPEC 15.6] — `horizontal` /
+    // `vertical` / `aligned`; must agree with a directed anchor.
+    row(
+        "project",
+        &[Role("dimension")],
+        One(Kind::Ident),
+        DefaultRef::None,
+        No,
+    )
+    .hard(),
     row("facing", &[Type("plane")], One(Kind::Ident), Engine, No),
     row(
         "of",

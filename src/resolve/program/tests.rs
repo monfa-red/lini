@@ -332,3 +332,19 @@ fn body_link_endpoint_not_found_suggests() {
     let e = rv4_err("|group#g| [\n  |box#x|\n  g.y -> x\n]\n");
     assert!(e.contains("not found"), "got: {e}");
 }
+
+#[test]
+fn a_copy_index_leaks_no_ids_and_needs_a_drawing() {
+    // `bolt.2` without its carrier path stays an unknown endpoint
+    // [SPEC 15.4] — copies leak no ids into the scope.
+    let e = rv4_err(
+        "{ layout: drawing }\n|rect#plate| { width: 120; height: 60 } [\n  |hole#bolt| { width: 10; translate: -35 0; pattern: grid(2, 2, 70, 30) }\n]\nplate:left (-) bolt.2\n",
+    );
+    assert!(e.contains("endpoint 'bolt.2' not found"), "got: {e}");
+    // The numeric segment is drawing grammar [SPEC 21].
+    let e = rv4_err("|box#a|\n|box#b|\na.2 -> b\n");
+    assert_eq!(
+        e,
+        "a numeric path segment picks a pattern copy — it belongs in a 'layout: drawing'"
+    );
+}

@@ -29,6 +29,8 @@
   // 25 · 125 — a chain, one row
   plate:left (-) plate:right { side: bottom; }
   // 150 — the outer row
+  plate.bolt.1 (-) plate.bolt.2 { side: top; }
+  // 100 — the bolt pitch, copy to copy (grid copies row-major)
   plate:top (-) plate.dowel { side: left; }
   // 50 — to the dowel's centre
   plate:top (-) plate:bottom { side: left; tol: 0.2 -0.05; }
@@ -50,11 +52,13 @@
   // → 36.87° — the flank's rise off the base
   bracket:heel (o)
   // → R6 — the fillet knows its radius
+  bracket:bottom-left (-) bracket:top-right
+  // → 100 — two point anchors read the true aligned span up the flank
   eye:top (o)
   // → ⌀16 — the diametral line through the eye
   bracket:base >- "A"
   // datum A on the base face
-  bracket:flank *- "GRIND" { side: left; }
+  bracket:wall *- "GRIND" { side: right; }
   // a dot lands within the face
   bracket:top-left <- "BREAK EDGES 0.5"
   // an arrow leader onto the corner

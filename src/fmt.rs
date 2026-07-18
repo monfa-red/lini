@@ -625,6 +625,10 @@ impl Emitter<'_> {
 
     fn emit_endpoint(&mut self, ep: &Endpoint) {
         self.out.push_str(&ep.path.join("."));
+        if let Some(copy) = ep.copy {
+            self.out.push('.');
+            self.out.push_str(&copy.to_string());
+        }
         if let Some(point) = &ep.point {
             self.out.push(':');
             self.out.push_str(&point.name);

@@ -427,6 +427,9 @@ pub struct ResolvedLink {
 pub struct ResolvedEndpoint {
     /// Fully-qualified dot-path from scene root (e.g. `garden.outlet`).
     pub path: String,
+    /// A 1-based pattern-copy index [SPEC 15.4] — `plate.bolt.2`; the anchor
+    /// walk steps into the placed copy. Drawing scope only.
+    pub copy: Option<usize>,
     pub side: Option<Side>,
     /// A drawing-scope anchor beyond the four sides [SPEC 15.2] — a corner,
     /// `center`, or a sketch-authored segment; `None` everywhere else (the router

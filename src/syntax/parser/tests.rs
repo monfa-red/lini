@@ -299,6 +299,25 @@ fn endpoint_point_is_raw_at_parse() {
 }
 
 #[test]
+fn a_numeric_segment_is_the_copy_index_and_ends_the_path() {
+    // `plate.bolt.2` — the 1-based pattern-copy index [SPEC 15.4/21]; only a
+    // `:point` may follow it.
+    let f = parse_ok("plate.bolt.2 -> a\n");
+    let ep = &f.links[0].chain[0].endpoints[0];
+    assert_eq!(ep.path, vec!["plate", "bolt"]);
+    assert_eq!(ep.copy, Some(2));
+    let f = parse_ok("plate.bolt.2:top -> a\n");
+    let ep = &f.links[0].chain[0].endpoints[0];
+    assert_eq!(ep.copy, Some(2));
+    assert_eq!(point_of(ep), Some("top"));
+    let e = parse_err("plate.bolt.2.pin -> a\n");
+    assert!(
+        e.contains("the copy index ends an endpoint path"),
+        "got: {e}"
+    );
+}
+
+#[test]
 fn measuring_ops_parse_one_ended_and_binary() {
     // `pin (o)` — a unary round measure toward its tail [SPEC 15.6/21]
     // (the parser accepts unary; resolve gates arity per op).

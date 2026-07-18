@@ -590,6 +590,7 @@ fn branch_fan(parent: &str, children: &[String], g: Growth, span: Span) -> Link 
 fn endpoint(path: Vec<String>, side: &str) -> Endpoint {
     Endpoint {
         path,
+        copy: None,
         point: Some(PointRef {
             name: side.to_string(),
             span: Span::empty(),

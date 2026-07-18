@@ -120,9 +120,9 @@ pub(super) fn resolve<'a>(
     }
     for seg in segs {
         // Under a `pattern:` carrier the children are its (id-less) copies —
-        // per-copy addressing stays deferred [SPEC 15.4/23], so the walk never
-        // descends into them; that is also the only placed divergence from the
-        // source tree the path resolved against.
+        // a copy is picked by its numeric index (`ep.copy`, below), never by
+        // id, so the walk won't descend into them; that is also the only
+        // placed divergence from the source tree the path resolved against.
         let more = (node.attrs.get("pattern").is_none())
             .then(|| descend(&node.children, seg))
             .flatten()
@@ -130,7 +130,7 @@ pub(super) fn resolve<'a>(
                 Error::at(
                     ep.span,
                     format!(
-                        "'{rel}' sits inside a 'pattern:' — per-copy features are deferred (SPEC 23)"
+                        "'{rel}' sits inside a 'pattern:' — a copy is addressed by its index (SPEC 15.4)"
                     ),
                 )
             })?;
@@ -140,6 +140,31 @@ pub(super) fn resolve<'a>(
     }
 
     let last = rel.rsplit('.').next().expect("non-empty");
+
+    // The numeric copy segment [SPEC 15.4]: 1-based over the placed copies —
+    // grid copies row-major from the seed, radial clockwise from bearing 0,
+    // exactly the order `pattern::expand` placed them. The hop rides `step`,
+    // so a broken ancestor's view still unwinds to the model position.
+    if let Some(k) = ep.copy {
+        if node.attrs.get("pattern").is_none() {
+            return Err(Error::at(
+                ep.span,
+                format!("'{last}' has no 'pattern:' — a numeric segment picks a pattern copy"),
+            ));
+        }
+        let copies: Vec<&PlacedNode> = node
+            .children
+            .iter()
+            .filter(|c| !chrome::is_chrome(&c.attrs))
+            .collect();
+        if k == 0 || k > copies.len() {
+            return Err(Error::at(
+                ep.span,
+                format!("no copy '{last}.{k}' — the pattern places {}", copies.len()),
+            ));
+        }
+        step(&mut node, copies[k - 1], &mut view);
+    }
     let spot = spot(node, ep, last)?;
     Ok(Anchor {
         child,

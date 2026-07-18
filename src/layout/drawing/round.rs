@@ -10,7 +10,7 @@ use super::super::ir::PlacedNode;
 use super::anchors::{self, Anchor, Spot, rotated};
 use super::annotate::{Axis, Ctx, Paint, Rows, side_attr, side_unit};
 use super::compose::{self, DimText, Glyph};
-use super::dims::{Stacked, arrow, dim_clearance, span_on, stack_side, stacked};
+use super::dims::{Frame, Seat, Stacked, arrow, dim_clearance, span_on, stack_side, stacked};
 use super::geometry::{P, iso_text_angle, reflect_point};
 use super::{Segment, leaders};
 use crate::ast::Side;
@@ -218,11 +218,11 @@ fn station(
     let side = stack_side(&w.attrs, axis, None, w.span)?;
     Ok(stacked(
         Stacked {
-            axis,
+            frame: Frame::axis(axis),
             a: s.disp.0,
             b: s.disp.1,
             text,
-            side,
+            seat: Seat::Row(side),
             clearance: dim_clearance(&w.attrs),
             label: follows,
         },

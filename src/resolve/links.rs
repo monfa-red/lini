@@ -136,6 +136,12 @@ pub fn resolve_link(
                 "'tol' composes a dimension's text — it belongs in a 'layout: drawing'",
             ));
         }
+        if !drawing_scope && attrs.get("project").is_some() {
+            return Err(Error::at(
+                w.span,
+                "'project' picks a dimension's axis — it belongs in a 'layout: drawing'",
+            ));
+        }
         // The drafting dash conventions are shape / |line| values [SPEC 7]; a
         // link's set stays the core four.
         if matches!(attrs.get("stroke-style"), Some(ResolvedValue::Ident(s)) if s == "center" || s == "phantom")
@@ -223,9 +229,18 @@ pub fn resolve_link(
                     .resolve(&qualified)
                     .ok_or_else(|| endpoint_error(&ep, paths, path_prefix, w.op(), drawing_scope))?
             };
+            // The numeric copy segment is drawing grammar [SPEC 15.4/21] —
+            // like the wider point set, it exists only in a drawing scope.
+            if ep.copy.is_some() && !drawing_scope {
+                return Err(Error::at(
+                    ep.span,
+                    "a numeric path segment picks a pattern copy — it belongs in a 'layout: drawing'",
+                ));
+            }
             let (side, point) = resolve_point(&ep, drawing_scope)?;
             endpoints.push(ResolvedEndpoint {
                 path,
+                copy: ep.copy,
                 side,
                 point,
                 span: ep.span,
@@ -538,11 +553,14 @@ fn endpoint_error(
         (ChainOp::Mate, true) => "mate",
         (_, true) => "dimension",
     };
-    let mut msg = format!(
-        "{noun} endpoint '{}' not found {}",
-        ep.path.join("."),
-        where_
-    );
+    // A copy index rides the spelling (`bolt.2`) — copies leak no ids, so the
+    // carrierless form is exactly this unknown-endpoint error [SPEC 15.4].
+    let mut spelled = ep.path.join(".");
+    if let Some(k) = ep.copy {
+        spelled.push('.');
+        spelled.push_str(&k.to_string());
+    }
+    let mut msg = format!("{noun} endpoint '{spelled}' not found {where_}");
     let suggestions = paths.suggest(ep.path.last().expect("non-empty path"), scope);
     msg.push_str(&crate::suggest::did_you_mean(&suggestions));
     Error::at(ep.span, msg)

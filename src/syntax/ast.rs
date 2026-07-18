@@ -204,6 +204,9 @@ impl Link {
 #[derive(Debug, Clone)]
 pub struct Endpoint {
     pub path: Vec<String>,
+    /// A trailing 1-based pattern-copy index [SPEC 15.4/21] —
+    /// `plate.bolt.2` picks the second placed copy; drawing scope only.
+    pub copy: Option<usize>,
     /// The `:point` after the path [SPEC 9, 15.2] — raw at parse: a side, a
     /// corner, `center`, or an authored name; resolve validates it per scope.
     pub point: Option<PointRef>,

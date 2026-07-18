@@ -332,22 +332,46 @@ oracle — across every drawing sample no two annotation texts overlap.
 
 ### Stage 5 — inference, `project:` & pattern copy ids
 
-- [ ] Front-end: lexer `.`+digit glue + `parse_endpoint` numeric segments
+- [x] Front-end: lexer `.`+digit glue + `parse_endpoint` numeric segments
   (decision 9); resolve maps copy indices to placed copies (grid
   row-major, radial clockwise), unknown index errors with the count.
-- [ ] `drawing/dims.rs` + `compose`: inference rules + `project:`
+- [x] `drawing/dims.rs` + `compose`: inference rules + `project:`
   (decision 8); aligned dims (rotated extension/dim lines, ISO-aligned
   text via the existing rotate machinery); away-from-centre side default.
-- [ ] Dims measure true model positions on the unbroken model; `break:`
+- [x] Dims measure true model positions on the unbroken model; `break:`
   interplay pinned (a dim across a break reads the true span; the
   breakline stays).
-- [ ] Samples: `drawing_screw`/`drawing_sheet`/`drawing_annotations` gain
+- [x] Samples: `drawing_screw`/`drawing_sheet`/`drawing_annotations` gain
   an aligned dim, a `project:` override, and a `plate.bolt.2`-style
   copy-addressed dim (extend, no new files); snapshots + PNG pass.
 
 Acceptance: all four inference rules pinned (incl. the `(<)` suggestion);
 copy dims measure model truth; aligned text reads bottom/right per ISO.
-**Log:**
+**Log:** 2026-07-18 — **done**, one commit. The lexer glues `.`+digits
+only after a glued ident (so `1.5` / `.5` stay numbers everywhere); the
+index rides `Endpoint`/`ResolvedEndpoint` as its own field and the anchor
+walk steps into the placed copy like any hop — `break:` unwinding rides
+`step` for free, no new mechanism. Dims generalized to a **measure
+frame** (`u` along the line, `n` across, −n = ISO-above): H/V frames are
+exact unit vectors, so every packed row stays byte-identical, and the
+aligned path reuses `plan`/`at_row` whole — no parallel anatomy. Aligned
+seat: `clearance` + band ink off the span's outer anchor (the top/left
+row look); away-from-centre tie (a right triangle's hypotenuse runs
+through its bbox centre) falls to the ISO-above side. Deviations: the
+inferred axis is the directed anchor's **exact** normal (a slanted face
+reads along it — the dominant-axis snap died); the non-parallel-directed
+error uses the perpendicular wording for any angle; aligned dims don't
+row-pack (rows are "dims sharing a side" — obstacle-aware aligned
+packing can land additively later). Samples: drawing_screw's z1–z2 hop
+now **needs** its `project: horizontal` (the honest 40 vs the aligned
+40.45 — the showroom override), drawing_annotations gained the bolt-pitch
+copy dim (`plate.bolt.1 (-) plate.bolt.2` → 100, top row) and the
+hypotenuse aligned dim (→ 100 riding the flank); GRIND moved to the wall
+(its flank ray struck the new aligned value dead-centre). Only the
+annotations snapshot re-blessed (screw stayed byte-identical under
+`project:`). PNGs light + dark read: aligned text bottom/right per ISO,
+springs perpendicular to the span, nothing overlaps (oracle green).
+978 tests, fmt + clippy clean.
 
 ### Stage 6 — datum identities & fan leaders
 

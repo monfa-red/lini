@@ -221,7 +221,7 @@ fn dim_errors_speak_spec() {
         layout_err(
             "{ layout: drawing; density: 1 }\n|rect#a| { width: 40; height: 20 }\n|rect#b| { width: 40; height: 20 }\na:left (-) b:top\n"
         ),
-        "'a:left (-) b:top' mixes axes — anchor one axis"
+        "'a:left (-) b:top' — perpendicular faces have no shared normal; the angle between edges is '(<)'"
     );
     assert_eq!(
         layout_err(
@@ -240,6 +240,164 @@ fn dim_errors_speak_spec() {
             "{ layout: drawing; density: 1 }\n|rect#a| { width: 40; height: 20 }\na:left (-) a:right { tol: \"x\" }\n"
         ),
         "'tol' takes a number, '+upper -lower', or a fit ident"
+    );
+}
+
+// ── Axis inference, `project:` & aligned dims [SPEC 15.6] ──
+
+#[test]
+fn two_point_anchors_read_the_true_aligned_distance() {
+    // A 80 × 60 right triangle: corner anchors are point anchors, so the dim
+    // reads the aligned 100 along the hypotenuse, ISO text turned with it.
+    let l = laid(
+        "{ layout: drawing; density: 1 }\n|sketch#t| { draw: move(0, 0) right(80) up(60) close() }\nt:bottom-left (-) t:top-right\n",
+    );
+    let (x, y, rot) = text_at(&l.nodes, "100");
+    assert!((rot - -36.87).abs() < 0.01, "turned with the span: {rot}");
+    // The hypotenuse runs bottom-left → top-right; its midpoint ties with the
+    // bbox centre, so the dim falls to the ISO-above side — up-left, outside
+    // the material.
+    let t = by_id(&l.nodes, "t");
+    let mid = (t.cx + 40.0, t.cy - 30.0);
+    assert!(
+        0.6 * (x - mid.0) + 0.8 * (y - mid.1) < -10.0,
+        "stands off the up-left side: ({x}, {y}) vs {mid:?}"
+    );
+}
+
+#[test]
+fn a_point_and_a_directed_anchor_read_along_the_normal() {
+    // `plate:left` directs the axis horizontal; the diagonal hole offset
+    // projects flat — 75 + 10, never the aligned distance.
+    let l = laid(
+        "{ layout: drawing; density: 1 }\n|rect#plate| { width: 150; height: 70 }\n|hole#h| { width: 10; translate: 10 15 }\nplate:left (-) h { side: bottom }\n",
+    );
+    text_at(&l.nodes, "85");
+}
+
+#[test]
+fn project_overrides_the_point_readings() {
+    let base = "{ layout: drawing; density: 1 }\n|sketch#t| { draw: move(0, 0) right(80) up(60) close() }\n";
+    let h = laid(&format!(
+        "{base}t:bottom-left (-) t:top-right {{ project: horizontal }}\n"
+    ));
+    text_at(&h.nodes, "80");
+    let v = laid(&format!(
+        "{base}t:bottom-left (-) t:top-right {{ project: vertical }}\n"
+    ));
+    text_at(&v.nodes, "60");
+    // `aligned` confirms the default point reading.
+    let a = laid(&format!(
+        "{base}t:bottom-left (-) t:top-right {{ project: aligned }}\n"
+    ));
+    text_at(&a.nodes, "100");
+}
+
+#[test]
+fn project_and_axis_errors_speak_spec() {
+    // `project:` must agree with a directed anchor [SPEC 20].
+    assert_eq!(
+        layout_err(
+            "{ layout: drawing; density: 1 }\n|rect#a| { width: 40; height: 20 }\na:left (-) a:right { project: vertical }\n"
+        ),
+        "'project: vertical' conflicts with 'a:left' — the directed anchor reads horizontal"
+    );
+    assert_eq!(
+        layout_err(
+            "{ layout: drawing; density: 1 }\n|rect#a| { width: 40; height: 20 }\na:left (-) a:right { project: sideways }\n"
+        ),
+        "'project' takes horizontal, vertical, or aligned"
+    );
+    // An agreeing override is a no-op, not a conflict.
+    let l = laid(
+        "{ layout: drawing; density: 1 }\n|rect#a| { width: 40; height: 20 }\na:left (-) a:right { project: horizontal }\n",
+    );
+    text_at(&l.nodes, "40");
+}
+
+#[test]
+fn an_aligned_dim_takes_side_left_or_right_along_its_span() {
+    // Walking bottom-left → top-right (up-right), the walker's left is the
+    // up-left side, right the down-right side.
+    let base = "{ layout: drawing; density: 1 }\n|sketch#t| { draw: move(0, 0) right(80) up(60) close() }\n";
+    let left = laid(&format!(
+        "{base}t:bottom-left (-) t:top-right {{ side: left }}\n"
+    ));
+    let right = laid(&format!(
+        "{base}t:bottom-left (-) t:top-right {{ side: right }}\n"
+    ));
+    let t = by_id(&left.nodes, "t");
+    let mid = (t.cx + 40.0, t.cy - 30.0);
+    let side_of = |l: &crate::layout::LaidOut| {
+        let (x, y, _) = text_at(&l.nodes, "100");
+        0.6 * (x - mid.0) + 0.8 * (y - mid.1)
+    };
+    assert!(side_of(&left) < 0.0, "left = the up-left side");
+    assert!(side_of(&right) > 0.0, "right = the down-right side");
+    assert_eq!(
+        layout_err(&format!(
+            "{base}t:bottom-left (-) t:top-right {{ side: top }}\n"
+        )),
+        "an aligned dimension sits left or right of its span — read along it, first anchor to second"
+    );
+}
+
+// ── Pattern-copy addressing [SPEC 15.4] ──
+
+#[test]
+fn a_copy_index_measures_that_copy_grid_row_major_radial_clockwise() {
+    // Grid(2, 2, 100, 30) from the seed at (−50, −15): row-major, so copy 2
+    // is (50, −15) and copy 3 is (−50, 15).
+    let grid = "{ layout: drawing; density: 1 }\n|rect#plate| { width: 150; height: 70 } [\n  |hole#bolt| { width: 10; translate: -50 -15; pattern: grid(2, 2, 100, 30) }\n]\n";
+    let l = laid(&format!(
+        "{grid}plate:left (-) plate.bolt.2 {{ side: bottom }}\n"
+    ));
+    text_at(&l.nodes, "125");
+    let l = laid(&format!(
+        "{grid}plate:top (-) plate.bolt.3 {{ side: left }}\n"
+    ));
+    text_at(&l.nodes, "50");
+    // Radial copies run clockwise from bearing 0 — copy 2 sits at 90°, the
+    // ring's right; no `N×` prefix on an indexed copy.
+    let l = laid(
+        "{ layout: drawing; density: 1 }\n|rect#plate| { width: 120; height: 80 } [\n  |hole#b| { width: 8; pattern: radial(4, 25) }\n]\nplate:left (-) plate.b.2 { side: bottom }\n",
+    );
+    text_at(&l.nodes, "85");
+}
+
+#[test]
+fn copy_index_errors_carry_the_count() {
+    let grid = "{ layout: drawing; density: 1 }\n|rect#plate| { width: 150; height: 70 } [\n  |hole#bolt| { width: 10; translate: -50 -15; pattern: grid(2, 2, 100, 30) }\n]\n";
+    assert_eq!(
+        layout_err(&format!("{grid}plate:left (-) plate.bolt.5\n")),
+        "no copy 'bolt.5' — the pattern places 4"
+    );
+    // 1-based: copy 0 is the same unknown-index error.
+    assert_eq!(
+        layout_err(&format!("{grid}plate:left (-) plate.bolt.0\n")),
+        "no copy 'bolt.0' — the pattern places 4"
+    );
+    // An index needs a pattern to pick from.
+    assert_eq!(
+        layout_err(
+            "{ layout: drawing; density: 1 }\n|rect#plate| { width: 150; height: 70 } [\n  |hole#d| { width: 6 }\n]\nplate:left (-) plate.d.2\n"
+        ),
+        "'d' has no 'pattern:' — a numeric segment picks a pattern copy"
+    );
+}
+
+#[test]
+fn a_copy_dim_measures_model_truth_through_a_break() {
+    // Copies at model x −80 / 0 / 80 on a broken bar: the dim to copy 3
+    // still reads the true 180, while the displayed drawing is compressed.
+    let src = "{ layout: drawing; density: 1 }\n|sketch#bar| { draw: move(-100, 0) up(10) right(200) down(10); revolve: x-axis; break: 20 60 } [\n  |hole#m| { width: 8; translate: -80 0; pattern: grid(3, 1, 80, 0) }\n]\nbar:left (-) bar.m.3 { side: bottom }\n";
+    let l = laid(src);
+    text_at(&l.nodes, "180");
+    let bar = by_id(&l.nodes, "bar");
+    assert!(
+        bar.bbox.w() < 180.0,
+        "the displayed bar is compressed: {}",
+        bar.bbox.w()
     );
 }
 

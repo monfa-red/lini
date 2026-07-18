@@ -76,10 +76,23 @@ impl<'a> Parser<'a> {
         let (first, first_span) = self.expect_ident()?;
         let mut path = vec![first];
         let mut end = first_span;
+        let mut copy = None;
         while matches!(self.kind(), Some(TokKind::Dot)) && self.glued_at(0) {
             self.pos += 1; // '.'
             if !self.glued_at(0) {
                 return Err(self.err("endpoint '.' must have no whitespace after it"));
+            }
+            // A numeric segment is the 1-based pattern-copy index
+            // [SPEC 15.4/21] — it ends the path (only `:point` may follow).
+            if let Some(TokKind::Number(n)) = self.kind() {
+                let (n, span) = (*n, self.span());
+                copy = Some(n as usize);
+                end = span;
+                self.pos += 1;
+                if matches!(self.kind(), Some(TokKind::Dot)) && self.glued_at(0) {
+                    return Err(self.err("the copy index ends an endpoint path"));
+                }
+                break;
             }
             let (seg, seg_span) = self.expect_ident()?;
             path.push(seg);
@@ -101,6 +114,7 @@ impl<'a> Parser<'a> {
         };
         Ok(Endpoint {
             path,
+            copy,
             point,
             span: Span::new(first_span.start, end.end),
         })
