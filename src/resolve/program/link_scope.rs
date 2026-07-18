@@ -145,6 +145,13 @@ pub(super) fn link_scope(
             "font-size".to_string(),
             ResolvedValue::Number(consts::DRAWING_LINK_FONT_SIZE),
         ));
+        // …and its dimensions stand off by the sheet clearance [SPEC 15.6],
+        // not the routing 16 — the scope's config (below) and every user rule
+        // still override it.
+        base.push((
+            "clearance".to_string(),
+            ResolvedValue::Number(consts::DIM_CLEARANCE),
+        ));
     }
     for prop in properties::scope_link_props() {
         let nearest = chain

@@ -367,6 +367,7 @@ pub static PROPERTIES: &[Property] = &[
         Engine,
         No,
     ),
+    // A dimension takes no `gap:` — it stands off by `clearance` [SPEC 15.6/20].
     row(
         "gap",
         &[
@@ -376,7 +377,6 @@ pub static PROPERTIES: &[Property] = &[
             Layout("chart"),
             Layout("pie"),
             Layout("tree"),
-            Role("dimension"),
             Role("mate"),
         ],
         One(Kind::Number),
@@ -657,10 +657,12 @@ pub static PROPERTIES: &[Property] = &[
     ),
     // The root's px-per-mm for sheets [SPEC 15.1] — scene config only.
     row("density", &[Root], One(Kind::Number), Engine, No),
-    // ── Links [SPEC 9] — clearance before routing (the scope-config order). ──
+    // ── Links [SPEC 9] — clearance before routing (the scope-config order).
+    //    On a dimension, `clearance` is the packing stand-off minimum
+    //    [SPEC 15.6]. ──
     row(
         "clearance",
-        &[Link, Root],
+        &[Link, Root, Role("dimension")],
         One(Kind::Number),
         Bundles,
         ScopeLink,

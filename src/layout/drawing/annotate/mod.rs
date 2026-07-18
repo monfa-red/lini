@@ -11,7 +11,7 @@ use super::{angle, dims, leaders, round};
 use crate::ast::Side;
 use crate::error::Error;
 use crate::ledger::consts::{
-    DIM_OFFSET, DIM_PITCH, DRAWING_LINK_FONT_SIZE, DRAWING_LINK_STROKE_WIDTH, EXT_OVERSHOOT,
+    ARROW_HALF, DRAWING_LINK_FONT_SIZE, DRAWING_LINK_STROKE_WIDTH, EXT_OVERSHOOT,
 };
 use crate::resolve::{AttrMap, LinkKind, MeasureOp, NodeKind, ResolvedLink, ResolvedValue};
 
@@ -124,6 +124,16 @@ pub(in crate::layout) fn lower(
     };
     let mut rows = Rows::new(ctx.extent);
     let mut outs: Vec<Vec<PlacedNode>> = vec![Vec::new(); links.len()];
+    // A dimension takes no `gap:` — it stands off by `clearance` [SPEC 15.6];
+    // `gap` is a mate's signed separation [SPEC 15.5/20].
+    for w in links {
+        if matches!(w.kind, LinkKind::Measure(_)) && w.attrs.get("gap").is_some() {
+            return Err(Error::at(
+                w.span,
+                "a dimension stands off by 'clearance' — 'gap' is a mate's separation",
+            ));
+        }
+    }
     for (i, w) in links.iter().enumerate() {
         let nodes = match w.kind {
             LinkKind::Measure(MeasureOp::Angle) => angle::lower(&ctx, w)?,

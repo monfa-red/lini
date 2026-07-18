@@ -78,7 +78,7 @@ pub(super) fn linear(
             b: pb,
             text,
             side,
-            gap: w.attrs.number("gap"),
+            clearance: dim_clearance(&w.attrs),
             label,
         });
     }
@@ -95,7 +95,7 @@ pub(super) fn linear(
             .map(|p| p.interval)
             .reduce(|u, iv| (u.0.min(iv.0), u.1.max(iv.1)))
             .expect("hops non-empty");
-        let line_c = rows.seat(hops[0].side, union, hops[0].gap);
+        let line_c = rows.seat(hops[0].side, union, hops[0].clearance, paint.fs, paint.sw);
         for (h, p) in hops.into_iter().zip(plans) {
             out.extend(at_row(h, &p, line_c, &paint));
         }
@@ -116,7 +116,9 @@ pub(super) struct Stacked<'a> {
     pub b: P,
     pub text: DimText,
     pub side: Side,
-    pub gap: Option<f64>,
+    /// The dim's resolved stand-off minimum [SPEC 15.6] — the cascade's value
+    /// (drawing default → `(-)` rule → class → the dim's block).
+    pub clearance: f64,
     /// The authored label, if any — its `translate:` / `rotate:` override the
     /// auto text placement (the styled-label form).
     pub label: Option<&'a ResolvedText>,
@@ -124,8 +126,17 @@ pub(super) struct Stacked<'a> {
 
 pub(super) fn stacked(s: Stacked, rows: &mut Rows, paint: &Paint) -> Vec<PlacedNode> {
     let p = plan(&s, paint);
-    let line_c = rows.seat(s.side, p.interval, s.gap);
+    let line_c = rows.seat(s.side, p.interval, s.clearance, paint.fs, paint.sw);
     at_row(s, &p, line_c, paint)
+}
+
+/// A dimension's resolved `clearance` [SPEC 15.6]: the ordinary cascade — the
+/// drawing scope's base default rides the link attrs, so the fallback here
+/// only restates it.
+pub(super) fn dim_clearance(attrs: &crate::resolve::AttrMap) -> f64 {
+    attrs
+        .number("clearance")
+        .unwrap_or(crate::ledger::consts::DIM_CLEARANCE)
 }
 
 /// A dim's row footprint before seating: the packed interval (text included),

@@ -299,19 +299,35 @@ untouched.
 
 ### Stage 4 — dimension `clearance` & painted-bounds packing
 
-- [ ] Ledger: `clearance` gains its dimension owner (the property exists —
+- [x] Ledger: `clearance` gains its dimension owner (the property exists —
   routing's); dim `gap:` removed with the SPEC 20 pointer error.
-- [ ] `drawing` dim packing: `Rows` offsets derive from painted annotation
+- [x] `drawing` dim packing: `Rows` offsets derive from painted annotation
   bounds + clearance (decision 7); `DIM_OFFSET`/`DIM_PITCH` die;
   per-dimension `clearance` honored independently; `translate` untouched.
-- [ ] Existing drawing samples re-blessed **once**, deliberately (offsets
+- [x] Existing drawing samples re-blessed **once**, deliberately (offsets
   move); PNG diff eyeballed — rows must sit tighter/looser only where
   bounds say so, never overlap.
 
 Acceptance: no dim row overlaps any painted annotation across all drawing
 samples (oracle-style check if cheap — PLAN-V1's ask); cascade proven
 (drawing default, family rule, per-dim override each pinned).
-**Log:**
+**Log:** 2026-07-18 — **done**, one commit. **Dim clearance default = 4**,
+pushed into the drawing link base beside stroke-width 1 / font-size 12
+(`consts::DIM_CLEARANCE`): a row's band is its own non-spring ink — value
+text (reach `fs + 2` off the line), arrows, overshoot — and a first bottom
+row's text standing 4 off the geometry puts its dim line at the old fixed
+18, so simple drawings hold their look; SPEC 10.5/16 record the number.
+Honest drifts: row-to-row opens 16 → 21 (the old pitch let a row's
+overshoot poke 1px into the next value — bands may no longer touch), and
+top/left rows tuck closer (their text rides outward, so bounds allow it).
+Re-blessed exactly 4 snapshots — drawing_annotations, drawing_screw,
+drawing_sheet, drawing_turned (section / assembly / sketch byte-identical);
+all four rendered light + dark and read: rows clear, chains tip-to-tip,
+nothing overlaps. Pinned: the cascade (scope config, `(-)` rule, per-dim
+block — each moves the row; a widened dim leaves its sibling seated at the
+default), the `gap:`-on-a-dim pointer error (`(-)` and `(o)`), and the
+oracle — across every drawing sample no two annotation texts overlap.
+967 tests, fmt + clippy clean.
 
 ### Stage 5 — inference, `project:` & pattern copy ids
 

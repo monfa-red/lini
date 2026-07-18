@@ -10,7 +10,7 @@ use super::super::ir::PlacedNode;
 use super::anchors::{self, Anchor, Spot, rotated};
 use super::annotate::{Axis, Ctx, Paint, Rows, side_attr, side_unit};
 use super::compose::{self, DimText, Glyph};
-use super::dims::{Stacked, arrow, span_on, stack_side, stacked};
+use super::dims::{Stacked, arrow, dim_clearance, span_on, stack_side, stacked};
 use super::geometry::{P, iso_text_angle, reflect_point};
 use super::{Segment, leaders};
 use crate::ast::Side;
@@ -223,7 +223,7 @@ fn station(
             b: s.disp.1,
             text,
             side,
-            gap: w.attrs.number("gap"),
+            clearance: dim_clearance(&w.attrs),
             label: follows,
         },
         rows,

@@ -1,6 +1,12 @@
 use super::super::testutil::{by_id, laid, layout_err, text_at, texts};
-use crate::ledger::consts::{DIM_OFFSET, DIM_PITCH};
+use crate::ledger::consts::DIM_CLEARANCE;
 use crate::resolve::{MarkerKind, NodeKind, ResolvedValue};
+
+/// A bottom row's painted band [SPEC 15.6]: text reach `fs + 2` above the
+/// line, extension overshoot 3 below — what a next row stands `clearance`
+/// off.
+const BAND_NEG: f64 = 14.0;
+const BAND_POS: f64 = 3.0;
 
 // ── Linear dims & chains [SPEC 15.6] ──
 
@@ -8,7 +14,7 @@ use crate::resolve::{MarkerKind, NodeKind, ResolvedValue};
 fn a_chain_shares_one_row_and_the_next_dim_packs_outside() {
     // Plate −75..75, holes at −50 and 10, at 2 px/unit: hops 25 · 60 · 65
     // all fit their spans and share one row; the overall 150 overlaps
-    // them and takes the next.
+    // them and stands `clearance` off their band.
     let l = laid(
         "{ layout: drawing; scale: 2; density: 1 }\n|rect#plate| { width: 150; height: 40 }\n|hole#a| { width: 8; translate: -50 0 }\n|hole#b| { width: 8; translate: 10 0 }\nplate:left (-) a (-) b (-) plate:right { side: bottom }\nplate:left (-) plate:right { side: bottom }\n",
     );
@@ -20,13 +26,125 @@ fn a_chain_shares_one_row_and_the_next_dim_packs_outside() {
         (y25 - y60).abs() < 1e-6 && (y60 - y65).abs() < 1e-6,
         "hops share the row: {y25} / {y60} / {y65}"
     );
+    // The next row's text reach clears the first band by the clearance:
+    // line-to-line = band + clearance + text reach.
+    let pitch = BAND_POS + DIM_CLEARANCE + BAND_NEG;
     assert!(
-        (y150 - y60 - DIM_PITCH).abs() < 0.01,
-        "the 150 packs one pitch out: {y150} vs {y60}"
+        (y150 - y60 - pitch).abs() < 0.01,
+        "the 150 stands clearance off the first band: {y150} vs {y60}"
     );
-    // First row sits DIM_OFFSET past the plate's paint extent (41 + 18),
-    // text lifted 7.5 above the line.
-    assert!((y60 - (41.0 + DIM_OFFSET - 7.5)).abs() < 0.6, "y60={y60}");
+    // First row: value text `clearance` off the plate's paint extent (41),
+    // the line `BAND_NEG` past that — text centre lifted 8, half-height ~6.
+    assert!(
+        (y60 - (41.0 + DIM_CLEARANCE + BAND_NEG - 7.5)).abs() < 0.6,
+        "y60={y60}"
+    );
+}
+
+#[test]
+fn clearance_cascades_and_a_per_dim_value_is_honored_independently() {
+    let first_row_y = |src: &str| text_at(&laid(src).nodes, "40").1;
+    let geometry = "|rect#a| { width: 40; height: 20 }\n";
+    let dim = "a:left (-) a:right { side: bottom }\n";
+    // The drawing default: text stands DIM_CLEARANCE off the extent (y = 11).
+    let base = first_row_y(&format!(
+        "{{ layout: drawing; density: 1 }}\n{geometry}{dim}"
+    ));
+    // The scope's own `clearance:` (scene config) moves the row out…
+    let scoped = first_row_y(&format!(
+        "{{ layout: drawing; density: 1; clearance: 10 }}\n{geometry}{dim}"
+    ));
+    // …so does a `(-)` family rule…
+    let ruled = first_row_y(&format!(
+        "{{ layout: drawing; density: 1;\n  (-) {{ clearance: 10 }}\n}}\n{geometry}{dim}"
+    ));
+    // …and the dim's own block.
+    let owned = first_row_y(&format!(
+        "{{ layout: drawing; density: 1 }}\n{geometry}a:left (-) a:right {{ side: bottom; clearance: 10 }}\n"
+    ));
+    assert!((base - (11.0 + DIM_CLEARANCE + BAND_NEG - 7.5)).abs() < 0.6);
+    for (who, y) in [("scope", scoped), ("rule", ruled), ("block", owned)] {
+        assert!(
+            (y - base - (10.0 - DIM_CLEARANCE)).abs() < 0.01,
+            "{who} clearance moves the row: {y} vs {base}"
+        );
+    }
+    // Independent: a widened dim leaves its sibling at the default seat, and
+    // the sibling's second row stands off the widened band it packs past.
+    let two = laid(
+        "{ layout: drawing; density: 1 }\n|rect#a| { width: 40; height: 20 }\na:left (-) a:right { side: bottom; clearance: 10 }\na:left (-) a:right { side: bottom }\n",
+    );
+    let rows: Vec<f64> = texts(&two.nodes)
+        .iter()
+        .filter(|(t, ..)| t == "40")
+        .map(|(_, _, y, _)| *y)
+        .collect();
+    assert!(
+        (rows[0] - (11.0 + 10.0 + BAND_NEG - 7.5)).abs() < 0.6,
+        "the widened dim stands 10 off: {rows:?}"
+    );
+    assert!(
+        (rows[1] - rows[0] - (BAND_POS + DIM_CLEARANCE + BAND_NEG)).abs() < 0.01,
+        "the default dim packs its own clearance off the first band: {rows:?}"
+    );
+}
+
+#[test]
+fn no_annotation_text_lands_on_another_across_the_drawing_samples() {
+    // The packing oracle [SPEC 15.6]: a row stands `clearance` off everything
+    // painted, so no dim value may overlap any other annotation text —
+    // another row's, a callout's, an angle's — in any drawing sample.
+    use crate::layout::ir::Bbox;
+    fn collect(nodes: &[crate::layout::PlacedNode], ox: f64, oy: f64, out: &mut Vec<Bbox>) {
+        for n in nodes {
+            if n.type_chain.iter().any(|t| t == "dim-text") {
+                out.push(Bbox::extent_of(std::slice::from_ref(n), |_| true).shifted(ox, oy));
+            }
+            collect(&n.children, ox + n.cx, oy + n.cy, out);
+        }
+    }
+    let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("samples");
+    let mut seen = 0;
+    for entry in std::fs::read_dir(&dir).unwrap() {
+        let path = entry.unwrap().path();
+        if path.extension().and_then(|e| e.to_str()) != Some("lini") {
+            continue;
+        }
+        let src = std::fs::read_to_string(&path).unwrap();
+        if !src.contains("drawing") {
+            continue;
+        }
+        let mut boxes = Vec::new();
+        collect(&laid(&src).nodes, 0.0, 0.0, &mut boxes);
+        seen += 1;
+        for (i, a) in boxes.iter().enumerate() {
+            for b in &boxes[i + 1..] {
+                assert!(
+                    !a.inflate(-0.5).overlaps(b.inflate(-0.5)),
+                    "{}: annotation texts overlap: {a:?} vs {b:?}",
+                    path.display()
+                );
+            }
+        }
+    }
+    assert!(seen >= 6, "the drawing samples compiled: {seen}");
+}
+
+#[test]
+fn gap_on_a_dimension_points_at_clearance() {
+    assert_eq!(
+        layout_err(
+            "{ layout: drawing; density: 1 }\n|rect#a| { width: 40; height: 20 }\na:left (-) a:right { gap: 30 }\n"
+        ),
+        "a dimension stands off by 'clearance' — 'gap' is a mate's separation"
+    );
+    // The `(o)` reading is a dimension too.
+    assert_eq!(
+        layout_err(
+            "{ layout: drawing; density: 1 }\n|hole#h| { width: 12 }\nh:top (o) { gap: 30 }\n"
+        ),
+        "a dimension stands off by 'clearance' — 'gap' is a mate's separation"
+    );
 }
 
 #[test]

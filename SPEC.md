@@ -1338,6 +1338,7 @@ ledger), so the whole look is tuned from one module.
 The drawing chrome ([SPEC 15](#15-drawing)) — sheet-space, never scaled:
 
 ```
+dim clearance 4 (the drawing scope's link default)
 dim-ext-gap 3    dim-ext-overshoot 3     halo-margin 2
 dim-arrow 12 × 4      datum-triangle 11   note-offset 14   note-landing 8
 hatch-pitch 6    hatch line-width 0.75   break-gap 12     tol-stack 0.7
@@ -3126,7 +3127,7 @@ text props. Its own properties:
 
 | Property | Value | Default | Notes |
 |---|---|---|---|
-| `clearance` | number | 16 | min gap from nodes and links; a dimension's packing stand-off ([SPEC 15.6](#156-dimensions)). **Scene config** — cascades. |
+| `clearance` | number | 16 (a drawing's dimensions: 4) | min gap from nodes and links; a dimension's packing stand-off ([SPEC 15.6](#156-dimensions)). **Scene config** — cascades. |
 | `routing` | `orthogonal` · `natural` · `straight` | `orthogonal` | wiring strategy; scene config, cascades ([ROUTING.md](ROUTING.md)). |
 | `along` | fraction list | auto | label positions along the route. |
 | `marker` · `marker-start` · `marker-end` | marker | from the operator | endpoint glyphs ([SPEC 7](#7-nodes)). |
