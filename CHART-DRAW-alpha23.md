@@ -262,29 +262,40 @@ numeric"). **`1.0.0-alpha.2` tagged locally — push deferred to Abbas.**
 Write all drawing-half law before any code. The SPEC alone must suffice
 to implement Stages 4–8.
 
-- [ ] SPEC 15.6 rewrite: `clearance` cascade replacing dim `gap:`
+- [x] SPEC 15.6 rewrite: `clearance` cascade replacing dim `gap:`
   (decision 7 — minimum-not-coordinate, bounds-derived packing);
   linear-dimension inference + `project:` (decision 8), aligned dims
   un-deferred, the away-from-centre default with "centre" defined; the
   concise side override wording relative to endpoint order; `format:` on
   dimensions (compose order vs `unit:`/`tol:`/glyphs — the machinery
   cites Stage 1's ledger entry).
-- [ ] SPEC 15.7: boxed datum frames + datum identities (decision 10), fan
+- [x] SPEC 15.7: boxed datum frames + datum identities (decision 10), fan
   leaders (decision 11), crossing halos (decision 12 — margin constant
   named in SPEC 10.5's baked table).
-- [ ] SPEC 15.4: pattern copy addressing (decision 9); SPEC 15.3:
+- [x] SPEC 15.4: pattern copy addressing (decision 9); SPEC 15.3:
   internal-thread sense (decision 13); SPEC 21: the endpoint grammar
   gains the numeric segment; SPEC 15.6's follows rule confirmed against
   the thread-spec compose (decision 14).
-- [ ] SPEC 20 rows: perpendicular-directed pair (suggest `(<)`), unknown
+- [x] SPEC 20 rows: perpendicular-directed pair (suggest `(<)`), unknown
   copy index (with the copy count), duplicate datum letter, fan-leader
   misuse (`&` on two-ended ops unchanged), `project:` vs directed-anchor
   conflict, numeric `gap:` on a dimension (points at `clearance`).
-- [ ] SPEC 23 prunes: aligned dims, fan leaders out of deferred.
+- [x] SPEC 23 prunes: aligned dims, fan leaders out of deferred.
 
 Acceptance: SPEC alone sufficient for Stages 4–8; anchors intact;
 examples use shipped syntax; `cargo test` untouched.
-**Log:**
+**Log:** 2026-07-18 — **done**, one commit (SPEC + this doc). Settled:
+an aligned dim defaults away from the geometry centre — the bbox centre
+of the scope's geometry union — with `side: left | right` read along
+the span, first anchor → second (the walker's left); `halo-margin 2`
+joins the baked table (2× the drawing linework width — Stage 7 tunes it
+by eye) while `dim-offset`/`dim-pitch` leave it (rows now derive from
+painted bounds + `clearance`); copy anchors read through `break:` per
+the existing displayed-vs-true law; the internal-thread thin line sits
+0.5413 × pitch into the material (the round view's numbers); 15.3's
+"a label overrides" corrected to the follows law (`bar:m20 <- "LH"` →
+`M20×1.5 LH`). Anchor sweep: zero broken (486 targets); 964 tests
+untouched.
 
 ### Stage 4 — dimension `clearance` & painted-bounds packing
 
