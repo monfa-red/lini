@@ -480,7 +480,7 @@ fought. 989 tests (+6), fmt + clippy clean.
 
 Acceptance: unformatted dims byte-identical; formatted dim composes in
 the documented order; the full visual pass logged.
-**Log:** 2026-07-18 — **done**, one commit. `format` joined the
+**Log:** 2026-07-18 — **done**, one commit (`e559273`). `format` joined the
 scope-link channel (the same ledger seat as `clearance`), so drawing
 scope → `(-)` rule → class → the dim's block arrives in the link's merged
 attrs and compose reads it itself — no signature change, and the `(<)`
