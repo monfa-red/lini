@@ -374,16 +374,14 @@ fn an_authored_id_may_not_begin_lini() {
     );
 }
 
-// ── `format:` ownership [SPEC 16, CHART-DRAW Stage 1] ──
+// ── `format:` ownership [SPEC 16, CHART-DRAW Stages 1 + 8] ──
 
 #[test]
-fn format_off_a_chart_owner_errors() {
-    insta::assert_snapshot!(
-        diags("|box#a| { format: decimal 2; }\n"),
-        @r"
-    test.lini:1:11: error: 'format' has no meaning on '|box|' — it reads on '|chart|' / '|pie|' / '|axis|' / a chart series
-    "
-    );
+fn format_is_inherited_scope_config() {
+    // Stage 8 gave `format` its drawing owners and the scope-link cascade
+    // (drawing scope → `(-)` rule → class → the dim's block) — like
+    // `clearance`, it reads as scope config on any container.
+    assert_silent("|box#a| { format: decimal 2; }\n");
 }
 
 #[test]

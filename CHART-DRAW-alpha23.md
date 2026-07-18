@@ -467,17 +467,47 @@ fought. 989 tests (+6), fmt + clippy clean.
 
 ### Stage 8 — `format:` on dimensions; alpha.3 closes
 
-- [ ] Ledger: `format`'s drawing owners (drawing scope, dim family rules,
+- [x] Ledger: `format`'s drawing owners (drawing scope, dim family rules,
   the dimension's block); `compose::compose` routes the measured number
   through `format::render` before `tol:`/glyphs/`pattern:` (decision 2's
   compose order); the auto default stays today's ≤ 2-decimals trim —
   byte-identical unformatted output.
-- [ ] Sample: one `format: decimal 2` (or `fraction 8` — the showroom
+- [x] Sample: one `format: decimal 2` (or `fraction 8` — the showroom
   pick) dim in the keepers; snapshots.
-- [ ] Full drawing visual pass (ROADMAP §5): every drawing sample at 1:1
+- [x] Full drawing visual pass (ROADMAP §5): every drawing sample at 1:1
   + a detail scale, light + dark, screen + print size.
 - [ ] Ladder row confirmed; bump `1.0.0-alpha.3`, tag (push deferred).
 
 Acceptance: unformatted dims byte-identical; formatted dim composes in
 the documented order; the full visual pass logged.
-**Log:**
+**Log:** 2026-07-18 — **done**, one commit. `format` joined the
+scope-link channel (the same ledger seat as `clearance`), so drawing
+scope → `(-)` rule → class → the dim's block arrives in the link's merged
+attrs and compose reads it itself — no signature change, and the `(<)`
+angle and `(o)` rounds format uniformly. The flip side, adopted
+deliberately: the Stage 1 misuse error dissolves — `format:` on any
+container is now silent scope config (the validation test flipped to pin
+it). The Auto hook: dims' auto **is** SPEC 15.6's ≤ 2-dp trim, so the
+Auto arm keeps `fmt` — a 2-dp pre-round fed to the 4-dp `auto` renderer
+was proven byte-divergent above ~1e12 (double ulp), so the drafting rule
+stays the one owner of dim-auto; explicit families render exact through
+`format::render`. Zero snapshot churn from unformatted dims (pinned:
+40.456 → `40.46`). The `fraction D` stack rides `DimText` as
+raised/lowered runs (numerator 0.7×, full-size slash, lowered
+denominator, 1 px pad after a leading run); a `tail` carries `°` /
+follows / appended `tol:` after the stack; `fraction` + stacked
+`tol: +u -l` errors honestly ("'tol: +upper -lower' stacks where
+'format: fraction' already stacks"). A date preset reaching a dim errors
+with the chart's own words — the scope-link merge erases provenance, so
+the dim gate is symmetric where the chart's is authored-only (deviation,
+noted). Sample: drawing_screw's overall → `230.00` (`format: decimal 2`)
+— the round's one re-blessed snapshot. Visual pass (all 8 drawing
+samples, 1:1 + zoom-4 details, light + dark): screw, sheet, turned,
+annotations, assembly, pcb, sketch **clean** — rows clear, halos break
+over hatching in both themes, datum boxes framed, aligned dims read per
+ISO, threads correct (internal thin lines in the bush walls, M12×2
+composed). Pre-existing, logged not fixed: drawing_section's TAPPED BUSH
+view and its callout cross the sheet's right inner border (byte-identical
+since Stage 7); pcb's dark render keeps its authored `--green-ink`
+gradient, which flips bright — authored paint, not chrome. 995 tests
+(+6), fmt + clippy clean.

@@ -27,8 +27,8 @@
     // 6 apart in rise would otherwise read the aligned 40.45
     body:z2 (-) body:right { side: top; }
     // METERING   → 90
-    body:left (-) body:right { side: bottom; }
-    // overall    → 230
+    body:left (-) body:right { side: bottom; format: decimal 2; }
+    // overall    → 230.00 — drafting precision stated on the number alone
   ]
 
   |drawing#sec| { of: a; scale: 0.5; } [

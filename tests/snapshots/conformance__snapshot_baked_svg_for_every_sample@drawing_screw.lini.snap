@@ -234,9 +234,12 @@ input_file: samples/drawing_screw.lini
           <polygon points="160,64.5 148,66.5 148,62.5"/>
         </g>
         <g class="lini-text lini-dim-text">
-          <use href="#lg0400-22" transform="translate(-10.8 60.296) scale(0.006 -0.006)"/>
-          <use href="#lg0400-23" transform="translate(-3.6 60.296) scale(0.006 -0.006)"/>
-          <use href="#lg0400-20" transform="translate(3.6 60.296) scale(0.006 -0.006)"/>
+          <use href="#lg0400-22" transform="translate(-21.6 60.296) scale(0.006 -0.006)"/>
+          <use href="#lg0400-23" transform="translate(-14.4 60.296) scale(0.006 -0.006)"/>
+          <use href="#lg0400-20" transform="translate(-7.2 60.296) scale(0.006 -0.006)"/>
+          <use href="#lg0400-18" transform="translate(-0 60.296) scale(0.006 -0.006)"/>
+          <use href="#lg0400-20" transform="translate(7.2 60.296) scale(0.006 -0.006)"/>
+          <use href="#lg0400-20" transform="translate(14.4 60.296) scale(0.006 -0.006)"/>
         </g>
         <g class="lini-node lini-footnote lini-caption lini-block" transform="translate(0,79)">
           <rect x="-54" y="-6" width="108" height="12" rx="0" ry="0"/>

@@ -11,6 +11,7 @@ use super::anchors::rotated;
 use super::geometry::P;
 use crate::error::Error;
 use crate::ledger::consts::TOL_STACK;
+use crate::ledger::format::{self, Format};
 use crate::resolve::{AttrMap, ResolvedValue};
 use crate::span::Span;
 
@@ -27,17 +28,27 @@ pub(super) enum Glyph {
     Deg,
 }
 
-/// A composed dimension text: the main run, plus the raised / lowered
-/// deviation pair of a `tol: +u -l` (drawn at 0.7 × font [SPEC 15.6]).
+/// A composed dimension text: the main run, an optional `fraction D` drafting
+/// stack (raised numerator, slash, lowered denominator — the same raised /
+/// lowered machinery as `tol:` deviations [SPEC 15.6]) with the runs that
+/// compose after it in `tail`, plus the deviation pair of a `tol: +u -l`
+/// (drawn at 0.7 × font [SPEC 15.6]).
 pub(super) struct DimText {
     pub main: String,
+    pub frac: Option<(String, String)>,
+    pub tail: String,
     pub devs: Option<(String, String)>,
 }
 
 /// Air between the main run and its deviation stack, px.
 const DEV_PAD: f64 = 2.0;
 
-/// Compose one dimension's text from its sources [SPEC 15.6].
+/// Air between a leading run and the fraction stack's numerator, px.
+const FRAC_PAD: f64 = 1.0;
+
+/// Compose one dimension's text from its sources [SPEC 15.6]. `format:`
+/// shapes the **number** only — the glyph, the label's words, `tol:`, and the
+/// `N×` count compose around the formatted number.
 #[allow(clippy::too_many_arguments)]
 pub(super) fn compose(
     glyph: Glyph,
@@ -48,7 +59,13 @@ pub(super) fn compose(
     attrs: &AttrMap,
     span: Span,
 ) -> Result<DimText, Error> {
+    let f = format::read_or(attrs, Format::Auto, span)?;
+    // A dimension is never a date — the chart consumers' gate [SPEC 16].
+    if matches!(f, Format::Date(_)) {
+        return Err(Error::at(span, "a date preset reads a time axis"));
+    }
     let mut main = String::new();
+    let mut frac = None;
     if let Some(n) = count {
         main.push_str(&format!("{n}× "));
     }
@@ -56,21 +73,70 @@ pub(super) fn compose(
         Some(label) => main.push_str(label),
         None => {
             // A bare number: drafting states units once, in the title block —
-            // a per-value suffix arrives with `format:` [SPEC 15.1/23].
+            // the presentation is `format:`'s [SPEC 15.6/16].
             match glyph {
-                Glyph::None => main.push_str(&fmt(value)),
-                Glyph::Dia => main.push_str(&format!("⌀{}", fmt(value))),
-                Glyph::R => main.push_str(&format!("R{}", fmt(value))),
-                Glyph::Deg => main.push_str(&format!("{}°", fmt(value))),
+                Glyph::Dia => main.push('⌀'),
+                Glyph::R => main.push('R'),
+                Glyph::None | Glyph::Deg => {}
+            }
+            match f {
+                Format::Fraction(den) => match format::fraction_parts(value, den) {
+                    // A whole reading stays a plain number.
+                    (.., 0, _) => main.push_str(&format::render(value, f)),
+                    (neg, whole, num, d) => {
+                        if neg {
+                            main.push('-');
+                        }
+                        if whole > 0 {
+                            main.push_str(&whole.to_string());
+                        }
+                        frac = Some((num.to_string(), d.to_string()));
+                    }
+                },
+                _ => main.push_str(&number(value, f)),
             }
         }
     }
-    if let Some(label) = follows {
-        main.push(' ');
-        main.push_str(label);
+    // The runs after the number land after the stack when one is standing.
+    let mut tail = String::new();
+    {
+        let dest = if frac.is_some() { &mut tail } else { &mut main };
+        if glyph == Glyph::Deg && replaces.is_none() {
+            dest.push('°');
+        }
+        if let Some(label) = follows {
+            dest.push(' ');
+            dest.push_str(label);
+        }
     }
-    let devs = tol(&mut main, attrs, span)?;
-    Ok(DimText { main, devs })
+    let devs = tol(
+        if frac.is_some() { &mut tail } else { &mut main },
+        attrs,
+        span,
+    )?;
+    if devs.is_some() && frac.is_some() {
+        return Err(Error::at(
+            span,
+            "'tol: +upper -lower' stacks where 'format: fraction' already stacks — \
+             use a numeric 'tol' or a decimal format",
+        ));
+    }
+    Ok(DimText {
+        main,
+        frac,
+        tail,
+        devs,
+    })
+}
+
+/// The measured number under the cascaded `format:` [SPEC 15.6]: `auto` is
+/// the drafting precision rule ([`fmt`], ≤ 2 decimals) — an explicit family
+/// renders the exact value through the one engine.
+fn number(v: f64, f: Format) -> String {
+    match f {
+        Format::Auto | Format::Date(_) => fmt(v),
+        f => format::render(v, f),
+    }
 }
 
 /// `tol:` [SPEC 15.6] — a number (`±0.1`, appended), `+upper -lower` (the
@@ -158,9 +224,36 @@ pub(super) fn fmt(v: f64) -> String {
 }
 
 impl DimText {
-    /// The drawn width of the whole run — main plus the deviation stack.
+    /// The fraction stack's runs, left to right: `(content, size factor,
+    /// raise factor)` — numerator raised, slash full-size, denominator
+    /// lowered, then the tail (`°`, a following label, an appended `tol:`).
+    fn frac_runs(&self) -> Vec<(&str, f64, f64)> {
+        let Some((num, den)) = &self.frac else {
+            return Vec::new();
+        };
+        let mut runs = vec![
+            (num.as_str(), TOL_STACK, -0.55),
+            ("/", 1.0, 0.0),
+            (den.as_str(), TOL_STACK, 0.55),
+        ];
+        if !self.tail.is_empty() {
+            runs.push((self.tail.as_str(), 1.0, 0.0));
+        }
+        runs
+    }
+
+    /// The drawn width of the whole run — main plus the fraction stack plus
+    /// the deviation stack.
     pub fn width(&self, fs: f64, font: crate::font::Font) -> f64 {
-        let main = approx_width(&self.main, font, fs, 0.0);
+        let mut main = approx_width(&self.main, font, fs, 0.0);
+        if self.frac.is_some() {
+            if !self.main.is_empty() {
+                main += FRAC_PAD;
+            }
+            for (t, k, _) in self.frac_runs() {
+                main += approx_width(t, font, fs * k, 0.0);
+            }
+        }
         match &self.devs {
             None => main,
             Some((u, l)) => {
@@ -172,8 +265,9 @@ impl DimText {
     }
 
     /// Lower to text nodes centred on `centre`, turned by `rot` (ISO-aligned
-    /// text rotates with its dimension line [SPEC 15.6]). Deviations sit
-    /// raised / lowered after the main run, in the rotated frame.
+    /// text rotates with its dimension line [SPEC 15.6]). The fraction stack's
+    /// raised / lowered runs follow the main run; deviations sit raised /
+    /// lowered after everything, in the rotated frame.
     pub fn nodes(&self, centre: P, rot: f64, fs: f64, font: crate::font::Font) -> Vec<PlacedNode> {
         let place = |content: &str, local: P, size: f64| {
             let p = rotated(local, rot);
@@ -184,6 +278,23 @@ impl DimText {
             }
             n
         };
+        if self.frac.is_some() {
+            // The drafting stack (devs never join it — compose errors).
+            let total = self.width(fs, font);
+            let mut x = -total / 2.0;
+            let mut out = Vec::new();
+            if !self.main.is_empty() {
+                let wm = approx_width(&self.main, font, fs, 0.0);
+                out.push(place(&self.main, (x + wm / 2.0, 0.0), fs));
+                x += wm + FRAC_PAD;
+            }
+            for (t, k, raise) in self.frac_runs() {
+                let w = approx_width(t, font, fs * k, 0.0);
+                out.push(place(t, (x + w / 2.0, fs * TOL_STACK * raise), fs * k));
+                x += w;
+            }
+            return out;
+        }
         let Some((u, l)) = &self.devs else {
             return vec![place(&self.main, (0.0, 0.0), fs)];
         };

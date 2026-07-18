@@ -531,15 +531,23 @@ pub static PROPERTIES: &[Property] = &[
         No,
     ),
     row("gridlines", &[Type("axis")], One(Kind::Any), Engine, No),
-    // Value presentation [SPEC 16] — parsed by `ledger::format`; the cascade
-    // (chart → axis / series) runs engine-side like `tooltip:`. Dimension /
-    // drawing-scope owners land with the drawing half [CHART-DRAW Stage 8].
+    // Value presentation [SPEC 16] — parsed by `ledger::format`. Two cascade
+    // legs, one property: chart → axis / series runs engine-side like
+    // `tooltip:`; drawing scope → `(-)` rule → class → the dimension's block
+    // rides the scope-link channel, exactly as `clearance` does [SPEC 15.6].
     row(
         "format",
-        &[Type("chart"), Type("pie"), Type("axis"), Role("series")],
+        &[
+            Type("chart"),
+            Type("pie"),
+            Type("axis"),
+            Role("series"),
+            Type("drawing"),
+            Role("dimension"),
+        ],
         One(Kind::Any),
         Engine,
-        No,
+        ScopeLink,
     ),
     // ── Sequence [SPEC 13] — the placement props hard-gate off a sequence
     //    [SPEC 16/20]. ──
@@ -869,10 +877,11 @@ mod tests {
             assert!(is_marker(name));
         }
         assert!(!is_marker("stroke"));
-        // resolve/program.rs SCOPE_LINK_PROPS (order included).
+        // resolve/program.rs SCOPE_LINK_PROPS (order included; `format` joined
+        // with its drawing owners [CHART-DRAW Stage 8]).
         assert_eq!(
             scope_link_props().collect::<Vec<_>>(),
-            ["clearance", "routing"]
+            ["format", "clearance", "routing"]
         );
         // resolve/value.rs is_string_valued. The ledger adds the ISO 7200
         // fields (`drawing-number: x` now errors toward quoting instead of dying silently

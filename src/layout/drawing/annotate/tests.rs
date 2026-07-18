@@ -428,6 +428,89 @@ fn tol_composes_its_three_forms() {
     );
 }
 
+// ── `format:` on dimensions [SPEC 15.6/16, CHART-DRAW Stage 8] ──
+
+#[test]
+fn an_unformatted_dim_keeps_the_drafting_two_decimal_trim() {
+    // The `auto` default is the historic ≤ 2-decimals trim, byte-identical.
+    let l = laid(
+        "{ layout: drawing; density: 1 }\n|rect#a| { width: 40.456; height: 20 }\na:left (-) a:right { side: bottom }\n",
+    );
+    text_at(&l.nodes, "40.46");
+}
+
+#[test]
+fn format_shapes_the_number_and_the_rest_composes_around_it() {
+    // Decision 2's order: `N×` count + `⌀` glyph + formatted number +
+    // following label + `tol:` — `format:` touches the number alone.
+    let l = laid(
+        "{ layout: drawing; density: 1 }\n|rect#plate| { width: 120; height: 60 } [\n  |hole#pin| { width: 10; translate: -35 0; pattern: grid(2, 1, 70, 0) }\n]\nplate.pin (o) \"H7\" { format: decimal 1; tol: 0.1 }\n",
+    );
+    text_at(&l.nodes, "2× ⌀10.0 H7±0.1");
+}
+
+#[test]
+fn format_cascades_scope_rule_and_the_dims_block() {
+    let geometry = "|rect#a| { width: 40; height: 20 }\n";
+    let dim = "a:left (-) a:right { side: bottom }\n";
+    // The drawing scope's config…
+    let scoped = laid(&format!(
+        "{{ layout: drawing; density: 1; format: decimal 1 }}\n{geometry}{dim}"
+    ));
+    text_at(&scoped.nodes, "40.0");
+    // …a `(-)` family rule…
+    let ruled = laid(&format!(
+        "{{ layout: drawing; density: 1;\n  (-) {{ format: decimal 1 }}\n}}\n{geometry}{dim}"
+    ));
+    text_at(&ruled.nodes, "40.0");
+    // …and the dim's own block wins over the rule.
+    let owned = laid(&format!(
+        "{{ layout: drawing; density: 1;\n  (-) {{ format: decimal 1 }}\n}}\n{geometry}a:left (-) a:right {{ side: bottom; format: decimal 3 }}\n"
+    ));
+    text_at(&owned.nodes, "40.000");
+}
+
+#[test]
+fn a_fraction_dim_stacks_numerator_over_denominator() {
+    // `fraction D` rides the raised / lowered run machinery [SPEC 15.6]:
+    // whole leading, raised numerator, slash, lowered denominator.
+    let l = laid(
+        "{ layout: drawing; density: 1 }\n|rect#a| { width: 40.375; height: 20 }\na:left (-) a:right { side: bottom; format: fraction 8 }\n",
+    );
+    let (xw, yw, _) = text_at(&l.nodes, "40");
+    let (xn, yn, _) = text_at(&l.nodes, "3");
+    let (xs, ys, _) = text_at(&l.nodes, "/");
+    let (xd, yd, _) = text_at(&l.nodes, "8");
+    assert!(
+        xw < xn && xn < xs && xs < xd,
+        "runs read left to right: {xw} / {xn} / {xs} / {xd}"
+    );
+    assert!(
+        yn < yw && yn < ys && yd > yw && yd > ys,
+        "numerator raised, denominator lowered: {yn} / {yw} / {ys} / {yd}"
+    );
+}
+
+#[test]
+fn a_date_preset_on_a_dimension_errors() {
+    assert_eq!(
+        layout_err(
+            "{ layout: drawing; density: 1 }\n|rect#a| { width: 40; height: 20 }\na:left (-) a:right { format: month }\n"
+        ),
+        "a date preset reads a time axis"
+    );
+}
+
+#[test]
+fn a_fraction_stack_cannot_hold_stacked_deviations() {
+    assert_eq!(
+        layout_err(
+            "{ layout: drawing; density: 1 }\n|rect#a| { width: 40.375; height: 20 }\na:left (-) a:right { format: fraction 8; tol: +0.2 -0.05 }\n"
+        ),
+        "'tol: +upper -lower' stacks where 'format: fraction' already stacks — use a numeric 'tol' or a decimal format"
+    );
+}
+
 // ── The `(o)` readings [SPEC 15.6] ──
 
 #[test]
