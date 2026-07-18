@@ -476,7 +476,7 @@ fought. 989 tests (+6), fmt + clippy clean.
   pick) dim in the keepers; snapshots.
 - [x] Full drawing visual pass (ROADMAP §5): every drawing sample at 1:1
   + a detail scale, light + dark, screen + print size.
-- [ ] Ladder row confirmed; bump `1.0.0-alpha.3`, tag (push deferred).
+- [x] Ladder row confirmed; bump `1.0.0-alpha.3`, tag (push deferred).
 
 Acceptance: unformatted dims byte-identical; formatted dim composes in
 the documented order; the full visual pass logged.
