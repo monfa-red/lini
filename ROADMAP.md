@@ -392,8 +392,8 @@ plan, then code + samples + snapshots + visual review together.
 |---|---|---|
 | **0.21** (spills into 0.22 if needed) | Refactor + hardening + migration (`PLAN-ALPHA.md`) | AUDIT work packages (ledger, shared helpers, constants, render chokepoint, splits); SPEC tightening pass; sample consolidation (~50 → ~25, the showroom bar); then the breaking round: comma law, validation, similarity warning, wrap + line-align, scale/unit/density, `place:`, renames, **fonts** (metrics, subsets, `--static`/`--embed-font` — 3.7), root-drawing/sequence router fix, row bands/marks, radial band error. Intermediate releases: 0.20.1 after the refactor phase, 0.21.0 with the breaking core, 0.22.0 at the freeze. Ends: **syntax frozen**, tag `1.0.0-alpha`. |
 | **1.0.0-alpha.1** ✓ (2026-07-12) | Tree & natural | `layout: tree`, `|topic|`, `|mindmap|`, desugar branch links, palette walk; `routing: natural`. |
-| **1.0.0-alpha.2** | Charts | per-datum paint + labels, time axes, the `format:` machinery + axes/tooltips. |
-| **1.0.0-alpha.3** | Drawing measurement | dimension clearance + bounds-derived packing, inference + `project:`, boxed datums + datum identities, halos, internal threads, pattern copy ids, fan leaders. |
+| **1.0.0-alpha.2** | Charts (`CHART-DRAW-alpha23.md`, combined round) | per-datum paint + labels, time axes, the `format:` machinery + axes/tooltips. |
+| **1.0.0-alpha.3** | Drawing measurement (`CHART-DRAW-alpha23.md`, combined round) | dimension clearance + bounds-derived packing, inference + `project:`, boxed datums + datum identities, halos, internal threads, pattern copy ids, fan leaders. |
 | **1.0.0-alpha.4** | Drafting symbols | symbol registry, `|surface-finish|`, `|feature-control|`, `||` annotation seating, annotation nodes in link `[ ]`, `format:` on dimensions. |
 | **1.0.0-alpha.5** | Sheet & views | local images, title-block finish, projection construction links (+ view arrows if cheap). |
 | **1.0.0-beta.x** | Tooling & docs | schema, structured diagnostics, generated reference, editor grammars, README/docs refresh. Feature-complete. |

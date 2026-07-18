@@ -1911,6 +1911,14 @@ Scalar and pair items never mix in one `data:` — `data: 10 20` is **one point*
 A `|line|` / `|area|` needs ≥ 2 vertices; with categorical data the value count must match
 the `categories:` count ([SPEC 20](#20-errors)).
 
+A point's x may be a **date** — a quoted ISO-8601 literal: `data: "2026-01-01" 18,
+"2026-02-01" 25`. `YYYY-MM-DD`, optionally `THH:MM[:SS]`, optionally `Z` / `±HH:MM`;
+a bare date is date-only (midnight UTC), an offset keeps its instant, and rendering is
+timezone-independent (all math in UTC). Date x-values make the x axis a **time axis**
+([SPEC 14.4](#144-axes-scales--domain)); dates and plain numbers never mix in one domain,
+and an invalid date is an error ([SPEC 20](#20-errors)). Time-only literals don't exist —
+a numeric axis covers them.
+
 **`labels:`** is the **per-datum** text — a quoted-string list parallel to `data:`
 (one entry per value or `x y` point), distinct from the series' one legend label
 (its smart label). An entry rides with its datum: on the plot beside the point, or
@@ -1951,9 +1959,10 @@ charts declare none — an axis is written only to *say* something.
 | Property | Value | Notes |
 |---|---|---|
 | `side` | `bottom` · `left` · `right` · `top` | cartesian only; several on one side stack outward in **source order** |
-| `range` | `a b` (each end a number or `auto`) | the data window — and crop, and reverse (below) |
-| `scale` | `linear` · `log` | `log` emits decade ticks labelled 1-2-5; its domain must be above 0 |
-| `step` / `ticks` | number / list | tick spacing, or explicit ticks; omitted → nice ticks |
+| `range` | `a b` (each end a number, a quoted date, or `auto`) | the data window — and crop, and reverse (below) |
+| `scale` | `linear` · `log` · `time` | `log` emits decade ticks labelled 1-2-5; its domain must be above 0. `time` reads date literals (below) |
+| `step` / `ticks` | number / list · calendar (time) | tick spacing, or explicit ticks; omitted → nice ticks |
+| `format` | family + args ([SPEC 16](#16-property-ledger--support)) | tick-value presentation; inherits from the chart |
 | `unit` | `"%"` | a quoted suffix appended to tick labels (and tooltips) |
 | `gridlines` | `none` · *colour* | this axis's gridlines: `none`, or a colour (a colour turns them on) |
 | `stroke` / `color` / `font-size` | core | `stroke` tints the axis line + ticks, `color` the labels + title |
@@ -1972,9 +1981,19 @@ faint role variable charts add to the palette, themeable and dark/light-aware.
 (`range: 0 auto`); the two ends must be distinct ([SPEC 20](#20-errors)). Ticks are "nice" by
 default (1-2-5 × 10ⁿ); `step:` sets a spacing, `ticks:` an explicit list, `scale: log`
 decade ticks (domain above 0). Tick labels come from `categories:` (an x axis) or the
-formatted tick value + `unit:` (a value axis). Explicit per-axis tick text is
+formatted tick value + `unit:` (a value axis) — `format:` sets the value's presentation
+([SPEC 16](#16-property-ledger--support)). Explicit per-axis tick text is
 deferred — `categories:` covers the x axis today ([SPEC 23](#23-deferred));
 `labels:` is the **series'** per-datum text ([SPEC 14.3](#143-data--formulas)).
+
+**`scale: time`** — a numeric domain in epoch seconds, set by date literals in `data:`
+([SPEC 14.3](#143-data--formulas)); `range:` and `ticks:` read the same literals. Ticks are
+**calendar-aware**: auto picks the boundary unit from the span (years → months → weeks →
+days → hours → minutes) and lands on calendar boundaries; **`step:`** takes a calendar
+interval — a unit ident with an optional count (`step: month`, `step: 2 week`) — and a
+plain number errors, pointing at the calendar form ([SPEC 20](#20-errors)). Tick text
+follows the tick unit (years read `2026`, months `Jan 2026`, days `Mar 4`, finer
+`04:30`); an explicit `format:` date preset wins ([SPEC 16](#16-property-ledger--support)).
 
 ### 14.5 Bands & annotations
 
@@ -2036,6 +2055,14 @@ Each series takes its hue at the tier the role wants — **the outlined look**: 
 none` removes it — a flat fill); a line takes the `deep` stroke, dots the `ink`. An
 explicit `fill:` keeps its colour and still gains a deep edge of it. In `layout: pie` the
 walk is **per slice** — the one place colour walks per datum rather than per series.
+
+**Per-datum paint** rides the comma law on the repeated-mark series — `|bars|` /
+`|dots|` only: `fill:` / `stroke:` / `opacity:` take a comma list, one item per datum,
+where **`auto`** is the paint that datum would get anyway (the walk, the deep-edge rule) —
+`fill: auto, auto, --red, auto` highlights one bar. The count must equal the data count
+([SPEC 20](#20-errors)); the legend swatch keeps the series' base paint. A list on
+`|line|` / `|area|` is an error — one shape has one paint, no ambiguous interpolation;
+`|slice|` / `|bubble|` / `|mark|` are already per-node.
 
 ### 14.7 Direction, radial & pie
 
@@ -2198,8 +2225,8 @@ units**; three settings turn them into pixels and paper:
   `m`, or `in`. Inherits nearest-wins (state it once, on the page); semantic only
   in drawing scopes — a `|sketch|` in a flow diagram stays pixel-space
   (`right(300)` is 300 px). Displaying a unit suffix on measured values is
-  presentation and arrives with `format:` ([SPEC 23](#23-deferred)); drafting
-  states units once, in the title block.
+  presentation — `format:`'s territory ([SPEC 16](#16-property-ledger--support));
+  drafting states units once, in the title block.
 - **density** — pixels per millimetre: `density: N` on the **root** only, default
   **4**. Non-semantic — it sets screen/raster resolution and nothing else: print
   stays true-scale regardless ([SPEC 17](#17-svg-output)), and no measured value,
@@ -2578,7 +2605,7 @@ error with a did-you-mean, kept for a future reading.
 value**: the anchor distance projected on its axis, in drawing units, measured **after
 mates resolve** and on the **unbroken** model. Values round to at most 2 decimals,
 trailing zeros trimmed — a bare number: drafting states units once, in the title
-block, and a per-value suffix arrives with `format:` ([SPEC 23](#23-deferred)).
+block, and a per-value suffix is `format:`'s job ([SPEC 16](#16-property-ledger--support)).
 The text composes from sources that each own one thing:
 
 | Source | Owns | Example |
@@ -3016,10 +3043,11 @@ out of scope.
 | `value` | `\|slice\|` `\|bubble\|` | number ≥ 0 | — | [SPEC 14](#14-charts) |
 | `at` | `\|mark\|` `\|bubble\|` · `\|plane\|` | `V` / `X Y` · `N [x-axis \| y-axis]` | — | [SPEC 14.5](#145-bands--annotations), [SPEC 15.8](#158-assemblies-views-sheets--titles) |
 | `side` · `range` · `scale` · `step` · `ticks` · `unit` · `gridlines` | `\|axis\|` | see [SPEC 14.4](#144-axes-scales--domain) | — | [SPEC 14.4](#144-axes-scales--domain) |
+| `format` | chart / drawing scope · `\|axis\|` · series · a dimension — **inherits** | `auto` · `decimal N` · `significant N` · `scientific N` · `engineering N` · `percent N` · `fraction D` · date preset (`year`·`month`·`day`·`hour`·`minute`) | `auto` | presentation only, never measurement; composes before `unit:`, `tol:`, the `⌀`/`R`/`°` glyphs, and `N×` counts ([SPEC 14.4](#144-axes-scales--domain), [SPEC 15.6](#156-dimensions)) |
 | `side` (homonym: also an `\|axis\|`'s / a dimension's, below) | first-level `\|topic\|`, `bilateral` | `left` · `right` | the split rule | [SPEC 12](#12-flow-grid--tree) |
 | `place` | sequence `\|note\|` | `over` · `left` · `right`, then id(s) | — | [SPEC 13](#13-sequence) |
 | `activation` | `\|sequence\|` | `auto` · `none` | `auto` | [SPEC 13](#13-sequence) |
-| `scale` (homonym: an `\|axis\|`'s is `linear`·`log`) | any node | number > 0 | 1 | [SPEC 15.1](#151-the-container-the-datum--the-scale) |
+| `scale` (homonym: an `\|axis\|`'s is `linear`·`log`·`time`) | any node | number > 0 | 1 | [SPEC 15.1](#151-the-container-the-datum--the-scale) |
 | `unit` (homonym: an `\|axis\|`'s is its quoted tick suffix) | drawing scopes · `\|axis\|` | `mm`·`cm`·`m`·`in` — inherits | `mm` | [SPEC 15.1](#151-the-container-the-datum--the-scale), [SPEC 14.4](#144-axes-scales--domain) |
 | `density` | the root | number > 0 | 4 | px per mm, screen/raster only ([SPEC 15.1](#151-the-container-the-datum--the-scale)) |
 | `tol` | a dimension | `t` / `+u -l` / fit ident | — | [SPEC 15.6](#156-dimensions) |
@@ -3398,6 +3426,12 @@ Format: `filename:line:col: error: <message>` (LSP-compatible), compile-time, wi
 | Unknown `axis:` id | `axis 'X' not found` + `; did you mean 'Y'?` |
 | `range:` bad / equal ends | `'range' takes two ends: 'a b', 'a auto', or 'auto b'` / `'range' needs distinct ends` |
 | `scale: log` over a non-positive domain | `a 'scale: log' axis needs a domain above 0` |
+| Paint list count ≠ data count | `'fill' lists N paints but the series has M data points` |
+| Paint list on `\|line\|` / `\|area\|` | `a '\|line\|' is one shape with one paint — per-datum lists read on '\|bars\|' / '\|dots\|'` |
+| Mixed date / numeric domain | `axis 'X' mixes dates and numbers — one domain, one kind` |
+| Invalid date literal | `'2026-13-01' is not a date — ISO-8601: '2026-01-31', optionally 'T09:30' and 'Z'` |
+| Numeric `step:` on a time axis | `a time axis steps by calendar — 'step: month', 'step: 2 week'` |
+| Bad `format:` value | `'format' takes auto, decimal N, significant N, scientific N, engineering N, percent N, fraction D, or a date preset` |
 | `side:` in `direction: radial` | `'side' has no meaning in a radial chart — it has one radius axis` |
 | `\|band\|` / `\|mark\|` in `direction: radial` | `a radial chart draws no bands / marks yet — remove it or change 'direction'` ([SPEC 23](#23-deferred)) |
 | `hole:` out of range | `'hole' is a fraction 0..1` |
@@ -3641,13 +3675,6 @@ Named in the language, not built yet; the syntax is stable.
 - **a bare hollow-circle endpoint operator** — `o` spells zero only next to a max glyph
   (`-o<` / `-o+`); a standalone hollow endpoint is the paint `marker-end: circle`
   ([SPEC 7](#7-nodes)), so `o` never needs to stand alone.
-- **`format:`** — value **presentation**, decided and additive: `auto` ·
-  `decimal N` · `significant N` · `scientific N` · `engineering N` · `percent N` ·
-  `fraction D`, plus date/time presets for time axes. Presentation only, never
-  measurement; inherits from the chart / drawing and is overridden per axis,
-  series, dimension rule, or one dimension; composes before `unit:`, tolerance,
-  the `⌀` / `R` / `°` glyphs, and pattern counts. Lands with its first consumers
-  (time axes, then dimensions).
 - **gradient fills on text** — gradients fill nodes today ([SPEC 10.3](#103-gradients)).
 - `radius` on non-rect primitives (hex / diamond / slant / poly).
 - arbitrary numeric `font-weight` (100–900 beyond the built 400–700 set) and
@@ -3681,11 +3708,7 @@ dividers / delays (`==` / `...`); and an `|actor|` stick-figure primitive (an ac
   direction** (the polygon web and top-clockwise are the defaults).
 - per-slice **explode**, **on-slice value / percent labels**, and a **centred total** in a
   donut hole; **per-segment styling** (a style list mirroring a segmented `fn:`).
-- **time scale** (date domains with calendar-aware ticks); **multi-ring pie / sunburst**;
-  **per-datum paint styling** on repeated-mark series — a comma paint list over
-  `data:` (`fill: auto, auto, --red`, `auto` = the palette-derived paint; also
-  `stroke` / `opacity`; count must match; `|line|` / `|area|` reject list paint —
-  today, overlay a `|mark|`).
+- **multi-ring pie / sunburst**.
 
 **Drawings** ([SPEC 15](#15-drawing))
 

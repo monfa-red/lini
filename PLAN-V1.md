@@ -56,6 +56,10 @@ branch links; `|topic|` outside tree and forest-roots error per SPEC.
 
 ## alpha.2 — charts: labels, per-datum paint, time, format
 
+**Round entered 2026-07-18, combined with alpha.3 in `CHART-DRAW-alpha23.md`**
+(one plan, two tags — its decisions ledger supersedes the open questions
+below; `labels:` and tooltips had already landed in 0.21).
+
 **Scope** (ROADMAP 3.4 + the `format:` machinery): per-datum `fill`/`stroke`/
 `opacity` lists on `|bars|`/`|dots|` with `auto`; per-datum `labels:`;
 `scale: time` axes (ISO-8601 quoted literals in `data:`/`range:`,
@@ -85,6 +89,9 @@ mismatches error with counts in the message.
 ---
 
 ## alpha.3 — drawing measurement
+
+**Round entered 2026-07-18, combined with alpha.2 in `CHART-DRAW-alpha23.md`**
+(one plan, two tags; the drawing half's SPEC pass is that plan's Stage 0b).
 
 **Scope** (ROADMAP 3.5, first half): dimension `clearance` (cascade, replaces
 dim `gap:`), painted-bounds row packing, linear-dimension inference +
