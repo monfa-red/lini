@@ -388,7 +388,7 @@ springs perpendicular to the span, nothing overlaps (oracle green).
 Acceptance: datum boxes framed per the standard look, never overlapping
 (packer obstacle proven); fan legs land on both features; duplicate
 letter and misuse errors fire.
-**Log:** 2026-07-18 — **done**, one commit. The statement's shape rides
+**Log:** 2026-07-18 — **done**, one commit (`ce7014c`). The statement's shape rides
 `ResolvedLink.one_ended`: a `&` fan on a one-ended leader stays **one**
 link carrying every endpoint (expansion skipped, containment cascade
 skipped), so the annotate dispatch keys the shape, not the endpoint
