@@ -236,7 +236,8 @@ and at a `scale: 2` view.
 
 Acceptance: frames render semantically valid or error — never
 plausible-wrong; unknown datum references name the scope's letters.
-**Log:** 2026-07-18 — **done**, one commit; 1030 tests, clippy clean.
+**Log:** 2026-07-18 — **done**, one commit (`40183be`); 1030 tests,
+clippy clean.
 The frame lowers in `layout/drawing/frames.rs` as **purpose-built
 compartments**, not `|table|` cells (a frame's cells are font-derived
 squares holding natural-units glyphs and merged symbol spans — grid
