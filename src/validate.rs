@@ -404,17 +404,14 @@ impl<'a> Ctx<'a> {
                 if *parent_layout == Some("chart")
                     && (*kind == "line" || chain.iter().any(|c| c == "line" || c == "area"))
                 {
+                    let shape = if chain.iter().any(|c| c == "area") {
+                        "area"
+                    } else {
+                        "line"
+                    };
                     out.push(Diagnostic::error(
                         d.span,
-                        format!(
-                            "a '|{}|' is one shape with one paint — per-datum lists \
-                             read on '|bars|' / '|dots|'",
-                            if chain.iter().any(|c| c == "area") {
-                                "area"
-                            } else {
-                                "line"
-                            },
-                        ),
+                        crate::ledger::format::one_shape_paint(shape),
                     ));
                     return;
                 }

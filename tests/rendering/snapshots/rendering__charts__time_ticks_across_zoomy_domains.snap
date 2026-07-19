@@ -1,5 +1,5 @@
 ---
-source: tests/rendering.rs
+source: tests/rendering/charts.rs
 expression: out
 ---
 minutes: 09:10 | 09:15 | 09:20 | 09:25

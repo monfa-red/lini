@@ -61,9 +61,7 @@ pub(super) fn compose(
 ) -> Result<DimText, Error> {
     let f = format::read_or(attrs, Format::Auto, span)?;
     // A dimension is never a date — the chart consumers' gate [SPEC 16].
-    if matches!(f, Format::Date(_)) {
-        return Err(Error::at(span, "a date preset reads a time axis"));
-    }
+    format::reject_date(f, span)?;
     let mut main = String::new();
     let mut frac = None;
     if let Some(n) = count {

@@ -6,6 +6,7 @@
 //! the cards and strips the hooks when baking). One post-pass over the lowered nodes does
 //! all three modes.
 
+use super::tint::live;
 use crate::error::Error;
 use crate::layout::prim;
 use crate::layout::{Bbox, PlacedNode};
@@ -149,11 +150,4 @@ fn make_card(
     };
     let classes = vec!["chart-tip".to_string(), format!("tip-{index}")];
     prim::group(vec![bg, txt], classes, bbox)
-}
-
-fn live(name: &str) -> ResolvedValue {
-    ResolvedValue::LiveVar {
-        name: name.into(),
-        raw: false,
-    }
 }

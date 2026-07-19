@@ -260,14 +260,7 @@ pub(crate) fn scope_attrs<'a>(
 /// containers, which are scope-transparent [SPEC 9]. Used by the scope
 /// detectors and the sequence engine.
 pub(super) fn node_at<'a>(program: &'a Program, path: &str) -> Option<&'a ResolvedInst> {
-    let mut nodes = &program.scene.nodes;
-    let mut found = None;
-    for seg in path.split('.') {
-        let inst = crate::resolve::scene::find_in_scope(nodes, seg, &mut Vec::new())?;
-        found = Some(inst);
-        nodes = &inst.children;
-    }
-    found
+    crate::resolve::scene::walk_scope(&program.scene.nodes, path.split('.'))
 }
 
 /// A child's dot-path under `parent`. **Anonymous children are

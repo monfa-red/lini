@@ -6,20 +6,10 @@ use super::metrics::{AXIS_TITLE_SIZE, LABEL_SIZE};
 use super::model::{Chart, Grid, Side, ValueAxis};
 use super::project::{Dir, Plot};
 use super::scale::{self, Scale};
+use super::tint::{live, muted};
 use crate::layout::PlacedNode;
 use crate::layout::prim;
 use crate::resolve::ResolvedValue;
-
-fn live(name: &str) -> ResolvedValue {
-    ResolvedValue::LiveVar {
-        name: name.into(),
-        raw: false,
-    }
-}
-
-fn muted() -> ResolvedValue {
-    live("muted")
-}
 
 /// All gridlines, drawn first so the data sits over them.
 pub fn gridlines(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>) {

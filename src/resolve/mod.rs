@@ -15,7 +15,7 @@ mod links;
 mod merge;
 mod program;
 pub(crate) mod scene;
-mod value;
+pub(crate) mod value;
 
 pub use assets::AssetEnv;
 pub use defaults::built_in_defaults;

@@ -7,6 +7,7 @@
 use super::labels;
 use super::model::{Bubble, Chart};
 use super::project::Plot;
+use super::tint::muted;
 use crate::layout::PlacedNode;
 use crate::layout::prim;
 use crate::ledger::format;
@@ -58,14 +59,6 @@ pub fn lay_out(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>, reqs: &mut
                 }),
             });
         }
-    }
-}
-
-/// The muted role tint a bubble label takes when it sits *beside* the bubble.
-fn muted() -> ResolvedValue {
-    ResolvedValue::LiveVar {
-        name: "muted".into(),
-        raw: false,
     }
 }
 

@@ -38,8 +38,24 @@ pub(super) fn outline(attrs: &AttrMap) -> Option<(ResolvedValue, f64)> {
 /// from an explicit `none` (→ no edge). Shared by `|bars|` (here) and `|slice|`
 /// ([`build_pie`]), so the default edge derives in one place.
 pub(crate) fn fill_outline(attrs: &AttrMap, fill: &ResolvedValue) -> Option<(ResolvedValue, f64)> {
-    let width = attrs.number("stroke-width").unwrap_or(1.5);
-    match attrs.get("stroke") {
+    edge_from(
+        attrs.get("stroke"),
+        fill,
+        attrs.number("stroke-width").unwrap_or(1.5),
+    )
+}
+
+/// The outlined-look edge [SPEC 14.6] as one table: `stroke: none` → no edge;
+/// `stroke: auto` (or a bare role var / unset) → a **deep** edge of the `fill`; an
+/// explicit colour → that colour at `width`. The single-value [`fill_outline`] passes
+/// the node's stroke; [`paint_lists`] passes each datum's stroke and own fill — the
+/// edge derives here in one place.
+fn edge_from(
+    stroke: Option<&ResolvedValue>,
+    fill: &ResolvedValue,
+    width: f64,
+) -> Option<(ResolvedValue, f64)> {
+    match stroke {
         Some(ResolvedValue::Ident(s)) if s == "none" => None,
         Some(ResolvedValue::Ident(s)) if s == "auto" => Some((palette::deepen(fill), width)),
         other => match real_color(other) {
@@ -56,18 +72,6 @@ pub(super) fn real_color(v: Option<&ResolvedValue>) -> Option<ResolvedValue> {
         Some(other) => Some(other.clone()),
         None => None,
     }
-}
-
-pub(crate) fn live(name: &str) -> ResolvedValue {
-    ResolvedValue::LiveVar {
-        name: name.to_string(),
-        raw: false,
-    }
-}
-
-/// The muted role tint — a band tick / mark accent's default when unpainted.
-pub(super) fn muted() -> ResolvedValue {
-    live("muted")
 }
 
 pub(super) fn clone_grid(g: &Grid) -> Grid {
@@ -115,13 +119,7 @@ pub(super) fn paint_lists(
         } else {
             "line"
         };
-        return Err(Error::at(
-            inst.span,
-            format!(
-                "a '|{shown}|' is one shape with one paint — per-datum lists \
-                 read on '|bars|' / '|dots|'"
-            ),
-        ));
+        return Err(Error::at(inst.span, format::one_shape_paint(shown)));
     }
     let count = match data {
         Data::Categorical(v) => v.len(),
@@ -159,10 +157,11 @@ pub(super) fn paint_lists(
                 .collect(),
         );
     }
-    let stroke_default = matches!(
-        inst.attrs.get("stroke"),
-        None | Some(ResolvedValue::Ident(_))
-    ) && !matches!(inst.attrs.get("stroke"), Some(ResolvedValue::Ident(s)) if s == "none");
+    let stroke_default = match inst.attrs.get("stroke") {
+        None => true,
+        Some(ResolvedValue::Ident(s)) => s != "none",
+        _ => false,
+    };
     if stroke.is_none()
         && stroke_default
         && let Some(fills) = &out.fills
@@ -192,13 +191,7 @@ pub(super) fn paint_lists(
             items
                 .iter()
                 .enumerate()
-                .map(|(i, it)| match it {
-                    ResolvedValue::Ident(s) if s == "none" => None,
-                    ResolvedValue::Ident(s) if s == "auto" => {
-                        Some((palette::deepen(&fill_at(i)), width))
-                    }
-                    other => Some((other.clone(), width)),
-                })
+                .map(|(i, it)| edge_from(Some(it), &fill_at(i), width))
                 .collect(),
         );
     }

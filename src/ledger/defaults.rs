@@ -5,7 +5,8 @@
 //! defaults as `@layer` CSS).
 
 use super::consts;
-use crate::resolve::NodeKind;
+use crate::expr::FuncTable;
+use crate::resolve::{AttrMap, NodeKind, VarTable};
 use crate::span::Span;
 use crate::syntax::ast::{Decl, Value};
 
@@ -475,6 +476,25 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
         }],
         _ => Vec::new(),
     }
+}
+
+/// The generated projection line's default paint [SPEC 8/15.8] as a resolved
+/// [`AttrMap`], read by the render layer's `.lini-projection` default emitter.
+/// Its tone/weight has **one** home — `template_bundle("projection")` — resolved
+/// here (its values are static: a live `--var`, a number, an ident, so empty
+/// var/func tables suffice), never restated as literals in render.
+pub fn projection_default_attrs() -> AttrMap {
+    let mut attrs = AttrMap::new();
+    let resolved = crate::resolve::value::resolve_bundle(
+        &template_bundle("projection"),
+        &VarTable::new(),
+        &FuncTable::new(),
+    )
+    .expect("the projection default bundle is static and always resolves");
+    for (name, value) in resolved {
+        attrs.insert(name, value);
+    }
+    attrs
 }
 
 /// Scene/root config defaults — prepended to the global block (user decls override).

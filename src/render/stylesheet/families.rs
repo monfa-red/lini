@@ -12,6 +12,31 @@ use crate::layout::LaidOut;
 use crate::resolve::{AttrMap, NodeKind, ResolvedValue, VarTable};
 use std::collections::{BTreeSet, HashMap};
 
+/// Emit a generated class's default paint [SPEC 17] — the look for a class the
+/// engine synthesises (the projection line, the crossing halo and its white
+/// ground, the dimension chrome, the drafting heads) with no desugar-visible
+/// instance to fold a bundle into. One guard for all six: emit only when the
+/// class is `present` (something wears it) **and** no authored `|class| { }` rule
+/// already forced it into `class_rules` (where `build_template_rules` then dresses
+/// it). This replaces three prose-coupled guards — scan-for-authored,
+/// rely-on-emission-order, and the `has_labels` dedup flag — so cascade order
+/// stops being the mechanism that lets an authored rule win.
+fn emit_generated_default(
+    rules: &mut Vec<Rule>,
+    laid: &LaidOut,
+    class: &str,
+    present: bool,
+    props: Vec<(String, String)>,
+) {
+    let authored = laid.sheet.class_rules.iter().any(|(n, _)| n == class);
+    if present && !authored {
+        rules.push(Rule {
+            class: class.into(),
+            props,
+        });
+    }
+}
+
 /// The root inherited-text baseline (`.lini`) and the scene background plate
 /// (`.lini-canvas`).
 pub(super) fn build_frame_rules(
@@ -117,41 +142,44 @@ pub(super) fn build_shape_rules(
     // once: dimension / leader linework at the drafting thin weight, and the
     // extension lines a step lighter (`--lini-stroke-light`) so the geometry
     // reads first. After the shape rules, so they win the same-specificity tie.
-    if present.contains("dim-line") {
-        rules.push(Rule {
-            class: "lini-dim-line".into(),
-            props: vec![
-                ("fill".into(), "none".into()),
-                ("stroke".into(), live("stroke-dark", vars, opts)),
-                ("stroke-width".into(), "1".into()),
-            ],
-        });
-    }
-    if present.contains("ext-line") {
-        rules.push(Rule {
-            class: "lini-ext-line".into(),
-            props: vec![
-                ("fill".into(), "none".into()),
-                ("stroke".into(), live("stroke-light", vars, opts)),
-                ("stroke-width".into(), "1".into()),
-            ],
-        });
-    }
+    emit_generated_default(
+        rules,
+        laid,
+        "lini-dim-line",
+        present.contains("dim-line"),
+        vec![
+            ("fill".into(), "none".into()),
+            ("stroke".into(), live("stroke-dark", vars, opts)),
+            ("stroke-width".into(), "1".into()),
+        ],
+    );
+    emit_generated_default(
+        rules,
+        laid,
+        "lini-ext-line",
+        present.contains("ext-line"),
+        vec![
+            ("fill".into(), "none".into()),
+            ("stroke".into(), live("stroke-light", vars, opts)),
+            ("stroke-width".into(), "1".into()),
+        ],
+    );
     // Annotation text reads at the caption size [SPEC 15.6/17]: stated once
     // here, so no dimension / leader / callout leaf inlines it (only a `tol:`
     // deviation or a restyled link overrides).
-    if present.contains("dim-text") {
-        rules.push(Rule {
-            class: "lini-dim-text".into(),
-            props: vec![
-                (
-                    "font-size".into(),
-                    format!("{}px", num(crate::ledger::consts::DRAWING_LINK_FONT_SIZE)),
-                ),
-                ("font-weight".into(), "normal".into()),
-            ],
-        });
-    }
+    emit_generated_default(
+        rules,
+        laid,
+        "lini-dim-text",
+        present.contains("dim-text"),
+        vec![
+            (
+                "font-size".into(),
+                format!("{}px", num(crate::ledger::consts::DRAWING_LINK_FONT_SIZE)),
+            ),
+            ("font-weight".into(), "normal".into()),
+        ],
+    );
     if present.contains("text") {
         // A bare `<text class="lini-text">` [SPEC 17]. `fill: currentColor` ties
         // the glyph colour to the inherited `color`; `stroke: none` keeps a
@@ -263,7 +291,8 @@ pub(super) fn build_template_rules(
 /// emitted here when a line baked, exactly as the halo's cut rule is — **unless**
 /// an authored `|projection| { }` rule already forced it present at desugar, in
 /// which case that (template default merged with the override) rides
-/// `build_template_rules`. The props mirror `template_bundle("projection")`.
+/// `build_template_rules`. Its paint has one home — `template_bundle("projection")`,
+/// resolved by `projection_default_attrs` — never restated here.
 pub(super) fn build_projection_rule(
     rules: &mut Vec<Rule>,
     laid: &LaidOut,
@@ -271,23 +300,12 @@ pub(super) fn build_projection_rule(
     vars: &VarTable,
     opts: &Options,
 ) {
-    if !present
-        || laid
-            .sheet
-            .class_rules
-            .iter()
-            .any(|(n, _)| n == "lini-projection")
-    {
-        return;
-    }
-    rules.push(Rule {
-        class: "lini-projection".into(),
-        props: vec![
-            ("fill".into(), "none".into()),
-            ("stroke".into(), live("stroke-light", vars, opts)),
-            ("stroke-width".into(), "1".into()),
-        ],
-    });
+    let props = paint_props(
+        &crate::ledger::defaults::projection_default_attrs(),
+        vars,
+        opts,
+    );
+    emit_generated_default(rules, laid, "lini-projection", present, props);
 }
 
 /// The `|link|` defaults (`.lini-link`) and the per-operator dash styles.
@@ -408,56 +426,66 @@ pub(super) fn build_link_label_rules(
             ],
         });
     }
-    if has_labels {
-        // The label cut's mask rects state their fill/stroke as CSS, not inline —
-        // so the link's own `stroke` can't bleed into the luminance mask, and the
-        // SVG stays free of per-label paint attrs [SPEC 17]. White shows the
-        // link, a black box per label punches the hole.
-        rules.push(cut_bg_rule());
-        rules.push(Rule {
-            class: "lini-cut".into(),
-            props: vec![
-                ("fill".into(), "black".into()),
-                ("stroke".into(), "none".into()),
-            ],
-        });
-    }
-}
-
-/// The knockout mask's white ground [SPEC 17] — stated once whichever
-/// consumer (label cut, crossing halo) needs it first.
-fn cut_bg_rule() -> Rule {
-    Rule {
-        class: "lini-cut-bg".into(),
-        props: vec![
-            ("fill".into(), "white".into()),
+    // The label cut's mask rects state their fill/stroke as CSS, not inline — so
+    // the link's own `stroke` can't bleed into the luminance mask, and the SVG
+    // stays free of per-label paint attrs [SPEC 17]. White shows the link, a black
+    // box per label punches the hole. When labels exist the white ground seats
+    // here beside `.lini-cut` (the halo path defers it via its `present` flag).
+    emit_generated_default(rules, laid, "lini-cut-bg", has_labels, cut_bg_props());
+    emit_generated_default(
+        rules,
+        laid,
+        "lini-cut",
+        has_labels,
+        vec![
+            ("fill".into(), "black".into()),
             ("stroke".into(), "none".into()),
         ],
-    }
+    );
 }
 
-/// The crossing-halo cut paint [SPEC 15.7]: the black `.lini-halo` mask
-/// stroke, emitted **before** the template rules so a `|halo|` user rule
-/// overrides it (`|halo| { stroke: none }` removes every crossing break
-/// scope-wide, like all chrome). Without link labels the white ground rides
-/// here too; with them it keeps its established seat beside `.lini-cut`.
-pub(super) fn build_halo_rules(rules: &mut Vec<Rule>, has_halos: bool, has_labels: bool) {
-    if !has_halos {
-        return;
-    }
-    if !has_labels {
-        rules.push(cut_bg_rule());
-    }
-    rules.push(Rule {
-        class: "lini-halo".into(),
-        props: vec![("stroke".into(), "black".into())],
-    });
+/// The knockout mask's white ground paint [SPEC 17] — one home for the `.lini-cut-bg`
+/// props, shared by the label-cut and crossing-halo consumers.
+fn cut_bg_props() -> Vec<(String, String)> {
+    vec![
+        ("fill".into(), "white".into()),
+        ("stroke".into(), "none".into()),
+    ]
+}
+
+/// The crossing-halo cut paint [SPEC 15.7]: the black `.lini-halo` mask stroke.
+/// An authored `|halo| { stroke: none }` removes every crossing break scope-wide
+/// (like all chrome) by suppressing this default — the `emit_generated_default`
+/// ¬authored guard, no longer cascade order. Without link labels the white ground
+/// rides here too; with them it keeps its seat beside `.lini-cut` (deferred via
+/// the `present` flag).
+pub(super) fn build_halo_rules(
+    rules: &mut Vec<Rule>,
+    laid: &LaidOut,
+    has_halos: bool,
+    has_labels: bool,
+) {
+    emit_generated_default(
+        rules,
+        laid,
+        "lini-cut-bg",
+        has_halos && !has_labels,
+        cut_bg_props(),
+    );
+    emit_generated_default(
+        rules,
+        laid,
+        "lini-halo",
+        has_halos,
+        vec![("stroke".into(), "black".into())],
+    );
 }
 
 /// The base marker paint (`.lini-marker`), the drafting-head variants, and the
 /// chart-label pointer-events rule.
 pub(super) fn build_marker_rules(
     rules: &mut Vec<Rule>,
+    laid: &LaidOut,
     present: &BTreeSet<&str>,
     has_markers: bool,
     vars: &VarTable,
@@ -480,12 +508,13 @@ pub(super) fn build_marker_rules(
     // arrow and the datum triangle at full black/white, after `.lini-marker`
     // so the variant wins the same-specificity tie.
     for variant in ["marker-dim", "marker-datum"] {
-        if present.contains(variant) {
-            rules.push(Rule {
-                class: format!("lini-{variant}"),
-                props: vec![("fill".into(), live("stroke-dark", vars, opts))],
-            });
-        }
+        emit_generated_default(
+            rules,
+            laid,
+            &format!("lini-{variant}"),
+            present.contains(variant),
+            vec![("fill".into(), live("stroke-dark", vars, opts))],
+        );
     }
 
     // Inline chart labels [SPEC 14.8] take no pointer events, so hovering a labelled
