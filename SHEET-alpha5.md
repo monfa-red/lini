@@ -229,7 +229,8 @@ fmt/clippy/test clean.
 Acceptance: a field block with authored cells renders fields first,
 authored cells where placed, or errors on overlap — never silent
 stacking; the pcb board reads in both themes.
-**Log:** 2026-07-19 — **done**. The finish rides the one grid: desugar
+**Log:** 2026-07-19 — **done** (`e7841a2`). The finish rides the one
+grid: desugar
 inserts the generated field cells **ahead** of the authored children
 (`desugar/mod.rs`), each stamped with an internal `field: "<caption>"`
 marker (`titleblock.rs`; `field` joins validate's INTERNAL list for the
