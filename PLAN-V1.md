@@ -203,6 +203,14 @@ cascade.
 
 ## beta — tooling, schema & docs (feature-complete)
 
+**Round entered 2026-07-19, staged in `BETA-tooling.md`** (its decisions
+ledger supersedes the open questions below — the round absorbs the full
+pre-beta audit pile before publishing the schema, and releases as
+`v1.0.0-beta.1` when Stage 4 closes; the open questions settled: lean
+versioned JSON schema in-repo with a CI drift check, diagnostic codes
+`L`/`P`/`R`/`V`/`Y`/`T` + a 3-digit number, the reference generated and
+committed).
+
 **Scope** (ROADMAP 3.8): the generated machine-readable schema (from the
 ledger); structured JSON diagnostics with stable codes (D9 — serde-free);
 the compact generated reference; VS Code + Zed grammars (keyword lists
