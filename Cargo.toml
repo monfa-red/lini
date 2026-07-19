@@ -1,6 +1,6 @@
 [package]
 name = "lini"
-version = "1.0.0-alpha.4"
+version = "1.0.0-beta.1"
 edition = "2024"
 rust-version = "1.88"
 description = "Pretty diagrams, charts, and technical drawings from plain text, with fine-grained control. Compiles to clean, themeable SVG."

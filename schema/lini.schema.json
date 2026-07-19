@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "crate": "lini",
-  "crateVersion": "1.0.0-alpha.4",
+  "crateVersion": "1.0.0-beta.1",
   "generator": "cargo xtask gen-schema",
   "enums": {
     "kinds": {

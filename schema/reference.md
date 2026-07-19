@@ -1,6 +1,6 @@
 # Lini property reference
 
-Generated from the property ledger by `cargo xtask gen-schema` — **do not edit**. Schema v1, lini 1.0.0-alpha.4. The machine-readable form, with one compiled example per property, is `lini.schema.json`.
+Generated from the property ledger by `cargo xtask gen-schema` — **do not edit**. Schema v1, lini 1.0.0-beta.1. The machine-readable form, with one compiled example per property, is `lini.schema.json`.
 
 ## Primitives
 
