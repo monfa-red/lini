@@ -47,6 +47,13 @@
 
   ]
 
+  // projection construction lines [SPEC 15.8]: the one legalized cross-view
+  // form — an unmarked '-' between anchors dot-pathing into different views,
+  // lowered to straight |projection| chrome after align: origin lines the
+  // datums up. They carry the head ⌀13 from the side view to the end view.
+  side.screw:head - end.od:top
+  side.screw:bottom - end.od:bottom
+
   |title-block| {
     title: "Socket cap screw"; drawing-number: "DIN 912 — M8 × 40"; revision: "A"; sheet-number: "1/1"; date: "2026-07-08"; author: "AM";
   } [

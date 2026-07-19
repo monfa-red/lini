@@ -1,9 +1,10 @@
 ---
 source: tests/conformance.rs
+assertion_line: 48
 expression: svg
 input_file: samples/drawing_sheet.lini
 ---
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-594 -420 1188 840" width="297mm" height="210mm" class="lini">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-594 -420 1188 840" width="1188" height="840" class="lini">
   <style>
     .lini { font-family: "Google Sans Code", ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; font-weight: 500; color: black; }
     .lini .lini-canvas { fill: white; }
@@ -35,6 +36,7 @@ input_file: samples/drawing_sheet.lini
     .lini .lini-frame { fill: none; stroke: #444; stroke-width: 2; }
     .lini .lini-zone { color: rgba(0, 0, 0, 0.545); font-size: 9px; }
     .lini .lini-tick { fill: none; stroke: #444; stroke-width: 1; }
+    .lini .lini-projection { fill: none; stroke: rgba(0, 0, 0, 0.545); stroke-width: 1; }
     .lini .lini-marker { fill: #444; stroke: none; }
     .lini .lini-marker-dim { fill: black; }
   </style>
@@ -591,6 +593,12 @@ input_file: samples/drawing_sheet.lini
           <use href="#lg0500-40" transform="translate(-2.7 3.222) scale(0.0045 -0.0045)"/>
         </g>
       </g>
+    </g>
+    <g class="lini-node lini-projection lini-line" transform="translate(0,0)">
+      <line x1="-209" y1="-52" x2="252.5" y2="-52"/>
+    </g>
+    <g class="lini-node lini-projection lini-line" transform="translate(0,0)">
+      <line x1="-49" y1="52" x2="252.5" y2="52"/>
     </g>
   </g>
   <g class="lini-links"/>

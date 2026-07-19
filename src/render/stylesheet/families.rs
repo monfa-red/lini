@@ -257,6 +257,39 @@ pub(super) fn build_template_rules(
     }
 }
 
+/// The generated projection line's default paint [SPEC 8/15.8] — the thin
+/// support-tone `|projection|` line a sheet's cross-view link lowers to. It has
+/// no desugar-visible instance (it is generated at layout), so its class def is
+/// emitted here when a line baked, exactly as the halo's cut rule is — **unless**
+/// an authored `|projection| { }` rule already forced it present at desugar, in
+/// which case that (template default merged with the override) rides
+/// `build_template_rules`. The props mirror `template_bundle("projection")`.
+pub(super) fn build_projection_rule(
+    rules: &mut Vec<Rule>,
+    laid: &LaidOut,
+    present: bool,
+    vars: &VarTable,
+    opts: &Options,
+) {
+    if !present
+        || laid
+            .sheet
+            .class_rules
+            .iter()
+            .any(|(n, _)| n == "lini-projection")
+    {
+        return;
+    }
+    rules.push(Rule {
+        class: "lini-projection".into(),
+        props: vec![
+            ("fill".into(), "none".into()),
+            ("stroke".into(), live("stroke-light", vars, opts)),
+            ("stroke-width".into(), "1".into()),
+        ],
+    });
+}
+
 /// The `|link|` defaults (`.lini-link`) and the per-operator dash styles.
 pub(super) fn build_link_rules(
     rules: &mut Vec<Rule>,

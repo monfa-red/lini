@@ -108,6 +108,22 @@ pub fn resolve_with_env(
     // X.path cascades its descendant rules as if written in X — this lookup
     // gives `resolve_link` X's container chain by resolved path.
     let ancestors_for = |segs: &[String]| link_scope::link_ancestors(&nodes, &root_attrs, segs);
+    // The outermost drawing a resolved endpoint path dot-paths *inside* — the
+    // "view" a sheet's projection link ties [SPEC 15.8]. `None` when the path is
+    // a view itself or reaches no drawing; the sealed-body crack is only a
+    // strict descendant.
+    let enclosing_view = |path: &str| -> Option<String> {
+        let segs: Vec<&str> = path.split('.').collect();
+        for end in 1..segs.len() {
+            let prefix = &segs[..end];
+            if let Some(inst) = inst_at_path(&nodes, prefix)
+                && is_drawing(&inst.attrs)
+            {
+                return Some(prefix.join("."));
+            }
+        }
+        None
+    };
     let mut link_list = Vec::new();
     let mut datums = DatumTable::default();
     // `|datum|` nodes join the identity set first [SPEC 15.9] — one alphabet
@@ -133,6 +149,7 @@ pub fn resolve_with_env(
             &base,
             &kind,
             &ancestors_for,
+            &enclosing_view,
             carried,
         )?);
     }
@@ -165,6 +182,7 @@ pub fn resolve_with_env(
             &base,
             &kind,
             &ancestors_for,
+            &enclosing_view,
             carried,
         )?);
     }
@@ -184,6 +202,20 @@ pub fn resolve_with_env(
         funcs,
         datums: datums.letters,
     })
+}
+
+/// The resolved instance at a dot-path (each segment an id), descending through
+/// **anonymous** scope-transparent containers [SPEC 9] — the projection-link
+/// view lookup. `None` at any missing segment.
+fn inst_at_path<'a>(nodes: &'a [ResolvedInst], segs: &[&str]) -> Option<&'a ResolvedInst> {
+    let mut cur = nodes;
+    let mut found = None;
+    for seg in segs {
+        let inst = scene::find_in_scope(cur, seg, &mut Vec::new())?;
+        found = Some(inst);
+        cur = &inst.children;
+    }
+    found
 }
 
 /// The per-scope datum identity set under construction [SPEC 15.7/15.9]:

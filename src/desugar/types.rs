@@ -92,6 +92,9 @@ pub const TEMPLATES: &[(&str, &str)] = &[
     // dedicated type; the marker's kind decides whether it re-renders.
     ("plane", "line"),
     ("magnifier", "oval"),
+    // A sheet's projection construction line [SPEC 15.8] — generated at layout
+    // from a cross-view link, or authored freely; chrome like the centerlines.
+    ("projection", "line"),
     // The sheet [SPEC 15.8]: the ISO page container, its seated title block,
     // and the generated furniture types (frame / zone references / ticks).
     ("page", "block"),

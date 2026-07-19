@@ -96,6 +96,18 @@ pub(crate) fn is_drawing_scope(program: &Program, scope: &str) -> bool {
     super::scope_attrs(program, scope).is_some_and(crate::resolve::is_drawing)
 }
 
+/// A projection link's endpoint anchor in **scene** coordinates [SPEC 15.8]:
+/// the anchor walk descends the placed tree from the scene root (through the
+/// scope-transparent `|page|`), so the accumulated origin lands the point in
+/// sheet space — where the straight `|projection|` line is drawn, after the
+/// views have placed.
+pub(crate) fn project_anchor(
+    nodes: &[super::PlacedNode],
+    ep: &crate::resolve::ResolvedEndpoint,
+) -> Result<P, Error> {
+    Ok(anchors::resolve(nodes, "", ep, "projection")?.point())
+}
+
 /// A scene-rooted endpoint path relative to its drawing scope (`""` = root).
 /// Resolve always qualifies endpoints under their scope, so the prefix is
 /// exact — shared by the anchor walk and the mate error spellings.

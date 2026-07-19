@@ -355,6 +355,51 @@ fn drawing_statement_shapes_are_gated() {
     );
 }
 
+/// The sheet-scope **projection construction link** [SPEC 15.8]: the one
+/// legalized cross-view anchor form, and each misuse row [SPEC 20].
+#[test]
+fn projection_link_classification_and_error_rows() {
+    // Two views on a sheet plus an off-view note; the trailing statement varies.
+    let sheet = |stmt: &str| {
+        format!(
+            "|page| {{ align: origin }} [\n\
+            \x20 |drawing#a| {{ scale: 2 }} [\n\
+            \x20   |oval#c| {{ width: 13; height: 13 }}\n\
+            \x20   |oval#c2| {{ width: 8; height: 8; translate: 0 10 }}\n\
+            \x20 ]\n\
+            \x20 |drawing#b| {{ scale: 2 }} [ |oval#d| {{ width: 13; height: 13 }} ]\n\
+            \x20 |box#note| \"n\"\n\
+            \x20 {stmt}\n\
+            ]\n"
+        )
+    };
+    // The legalized form resolves — unmarked `-`, ends in two different views,
+    // the full anchor vocabulary (a bbox side and a `center`) outside a drawing.
+    lini::check(&sheet("a.c:top - b.d:top")).expect("projection link resolves");
+    lini::check(&sheet("a.c:center - b.d:center")).expect("center anchor legal on a projection");
+    // The four SPEC 20 rows.
+    assert_resolve_error(
+        &sheet("a.c:top <-> b.d:top"),
+        "a projection line is unmarked",
+    );
+    assert_resolve_error(
+        &sheet("a.c:top - a.c2:top"),
+        "a projection link ties two views — both ends read 'a'",
+    );
+    assert_resolve_error(&sheet("a.c:top - note"), "'note' is not in a drawing view");
+    assert_resolve_error(
+        &sheet("a.c:left (-) b.d:right"),
+        "a cross-view correspondence is a construction link",
+    );
+    assert_resolve_error(
+        &sheet("a.c || b.d"),
+        "a cross-view correspondence is a construction link",
+    );
+    // Anchoring the views' own bbox sides (never reaching inside) is an
+    // ordinary sheet wire, not a projection — it routes and resolves.
+    lini::check(&sheet("a:top - b:top")).expect("a plain view-to-view wire is not a projection");
+}
+
 #[test]
 fn note_is_a_core_template() {
     // Legal anywhere now [SPEC 8]; a sequence still requires its placement.

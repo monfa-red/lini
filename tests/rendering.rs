@@ -1553,3 +1553,37 @@ fn embedded_output_is_byte_identical_across_runs() {
         assert_eq!(render_assets(&src, None).expect("recompile"), first);
     }
 }
+
+#[test]
+fn projection_line_chrome_rides_one_rule_and_removes_via_the_cascade() {
+    let sheet = |rule: &str| {
+        format!(
+            "{rule}|page| {{ align: origin; gap: 40 }} [\n  \
+            |drawing#a| {{ scale: 2 }} [ |oval#c| {{ width: 13; height: 13 }} ]\n  \
+            |drawing#b| {{ scale: 2 }} [ |oval#d| {{ width: 13; height: 13 }} ]\n  \
+            a.c:top - b.d:top\n]\n"
+        )
+    };
+    // The generated line wears the type class and its paint rides one rule —
+    // never inlined on the element [SPEC 8/15.8/17].
+    let svg = lini::compile_str(&sheet("")).expect("compile");
+    assert!(
+        svg.contains(
+            ".lini-projection { fill: none; stroke: var(--lini-stroke-light); stroke-width: 1; }"
+        ),
+        "the projection default rides one rule: {svg}"
+    );
+    assert!(
+        svg.contains(
+            r#"<g class="lini-node lini-projection lini-line" transform="translate(0,0)">"#
+        ),
+        "the projection line carries the class and no inline paint: {svg}"
+    );
+    // `|projection| { stroke: none }` removes it scope-wide via the cascade.
+    let removed =
+        lini::compile_str(&sheet("{ |projection| { stroke: none } }\n")).expect("compile");
+    assert!(
+        removed.contains(".lini-projection { fill: none; stroke: none; stroke-width: 1; }"),
+        "the cascade removes the projection line: {removed}"
+    );
+}

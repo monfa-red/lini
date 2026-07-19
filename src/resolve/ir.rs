@@ -436,6 +436,12 @@ pub struct ResolvedLink {
     /// link (one text, one landing, a leg each), so the endpoint count alone
     /// can no longer tell a callout from a two-ended annotation arrow.
     pub one_ended: bool,
+    /// A sheet-scope **projection construction link** [SPEC 15.8]: the one
+    /// legalized cross-view anchor form (unmarked `-`, each end dot-pathing into
+    /// a different view). The router never sees it — layout lowers it to one
+    /// straight `|projection|` chrome line between the two resolved anchors,
+    /// after `align: origin` has placed the views.
+    pub projection: bool,
     pub span: Span,
 }
 

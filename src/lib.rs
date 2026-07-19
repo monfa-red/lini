@@ -286,6 +286,62 @@ pub mod testing {
         layout::validate_routing(laid)
     }
 
+    /// Lay out a source string (with options) — the probe hook for geometric
+    /// assertions on a full scene.
+    pub fn layout_sample(src: &str, opts: &Options) -> LaidOut {
+        let prog = super::resolve_pipeline(src, opts).expect("resolve");
+        layout::layout(&prog).expect("layout")
+    }
+
+    /// The no-spill oracle [SPEC 15.8]: any `|page|` content — a view, its
+    /// annotations, a note, the title block — whose painted bbox crosses the
+    /// sheet's inner `|frame|`. Generated furniture (the frame, zones, ticks,
+    /// centring marks — the margin chrome) is excluded; a flush-seated title
+    /// block sits *on* the frame line, so a small tolerance admits it. An empty
+    /// result means every view is packed inside its walls.
+    pub fn frame_overflow(laid: &LaidOut) -> Vec<String> {
+        use crate::layout::ir::PlacedNode;
+        const EPS: f64 = 2.0;
+        fn abs(n: &PlacedNode, ox: f64, oy: f64) -> (f64, f64, f64, f64) {
+            let (cx, cy) = (ox + n.cx, oy + n.cy);
+            (
+                cx + n.bbox.min_x,
+                cy + n.bbox.min_y,
+                cx + n.bbox.max_x,
+                cy + n.bbox.max_y,
+            )
+        }
+        fn walk(nodes: &[PlacedNode], ox: f64, oy: f64, out: &mut Vec<String>) {
+            for n in nodes {
+                let (cx, cy) = (ox + n.cx, oy + n.cy);
+                if n.type_chain.iter().any(|t| t == "page")
+                    && let Some(frame) = n
+                        .children
+                        .iter()
+                        .find(|c| c.type_chain.iter().any(|t| t == "frame"))
+                {
+                    let (fx0, fy0, fx1, fy1) = abs(frame, cx, cy);
+                    for c in &n.children {
+                        if c.attrs.get("chrome").is_some() {
+                            continue;
+                        }
+                        let (x0, y0, x1, y1) = abs(c, cx, cy);
+                        if x0 < fx0 - EPS || x1 > fx1 + EPS || y0 < fy0 - EPS || y1 > fy1 + EPS {
+                            out.push(format!(
+                                "{}: [{x0:.1},{y0:.1},{x1:.1},{y1:.1}] crosses frame [{fx0:.1},{fy0:.1},{fx1:.1},{fy1:.1}]",
+                                c.id.clone().unwrap_or_else(|| format!("<{:?}>", c.kind))
+                            ));
+                        }
+                    }
+                }
+                walk(&n.children, cx, cy, out);
+            }
+        }
+        let mut out = Vec::new();
+        walk(&laid.nodes, 0.0, 0.0, &mut out);
+        out
+    }
+
     /// Drawn links that answer to `declared_edges`: what the corridor
     /// strategies (orthogonal and natural) drew. Straight wires stay out on both sides of the count —
     /// a sequence's messages are the layout's own, and a `routing: straight`

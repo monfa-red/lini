@@ -254,29 +254,77 @@ fmt/clippy/test clean.
 
 ### Stage 3 — projection links; the frame rider; alpha.5 closes
 
-- [ ] Resolve (decision 7): a sheet-scope link classifies as a
+- [x] Resolve (decision 7): a sheet-scope link classifies as a
   **projection link** when both ends resolve through different drawing
   children — full 15.2 anchor vocabulary legal on its endpoints, the
   one exception; the error set wired (marked op, one-view ends,
   non-drawing end, cross-view dim / mate unchanged as errors).
-- [ ] Layout (decision 8): after the page places its views, each end's
+- [x] Layout (decision 8): after the page places its views, each end's
   anchor point maps to sheet space and the link lowers to one straight
   `|projection|` line — never routed, never an obstacle to dims (it is
   chrome, not annotation); `|projection| { }` restyles / removes.
-- [ ] The frame rider (decision 10): diagnose which mechanism owns view
+- [x] The frame rider (decision 10): diagnose which mechanism owns view
   extents vs the page frame (view painted bounds vs the content area);
   fix in that owner so a view's paint — annotations included — never
   crosses the frame silently; `drawing_section` re-blessed to a legal
   sheet.
-- [ ] Sample: the DIN-912 sheet (`drawing_sheet.lini`) gains projection
+- [x] Sample: the DIN-912 sheet (`drawing_sheet.lini`) gains projection
   lines tying the side view's stations to the end view's diameters;
   snapshot + `lini desugar` fixed point.
-- [ ] The round-closing visual pass (ROADMAP §5): every drawing-family
-  sample light + dark at screen + print size; ladder row confirmed;
-  bump `1.0.0-alpha.4`, tag `v1.0.0-alpha.4` (push deferred to Abbas).
+- [x] The round-closing visual pass (ROADMAP §5): every drawing-family
+  sample light + dark rendered and read; per-sample verdicts in the Log.
+  (Ladder row / bump `1.0.0-alpha.4` / tag `v1.0.0-alpha.4` left to the
+  main session — push stays with Abbas.)
 
 Acceptance: projection lines land on the anchors views were aligned by,
 style / remove via the cascade; a cross-view dimension still errors; no
 view paint crosses the sheet frame across the page samples (oracle);
 the tag is cut.
-**Log:**
+**Log:** 2026-07-19 — **done** (code; bump + tag pending the main
+session). **Resolve:** `try_projection` (`resolve/links.rs`) runs ahead
+of the statement gates — sheet scope only (not a drawing, a
+drawing-nested flow, or a detail), resolving each end's path + its
+**enclosing view** (the outermost drawing a resolved path dot-paths
+*strictly inside*, computed by an `enclosing_view` closure over the node
+tree in `program/mod.rs`). Touching a view routes the classification: a
+marked op / measure / mate errors per its SPEC 20 row, both ends in one
+view or a non-view end errors, and the unmarked `-` between two different
+views builds a `projection: true` `ResolvedLink` (new field) whose ends
+carry the full 15.2 vocabulary via `resolve_point(_, true)` — the sealed
+body's one crack. **Style** rides `projection_attrs`: the `|line|` base,
+the `|projection|` template default + any `|projection| { }` rule, the
+scope's descendant/id layers, then the link's own block — the exact node
+cascade, reusing `class_decls`/`node_layers`, so the generated line and
+an authored `|projection|` look identical. **Layout:** `lower_projections`
+(`layout/mod.rs`) runs after routing on the placed sheet — `project_anchor`
+walks the anchor from the scene root (through the transparent `|page|`) so
+the point lands in sheet space, and each link appends one two-point
+`|projection|` `PlacedNode` (kind Line, `type_chain ["projection"]`); the
+router never sees it (`is_routed` excludes `projection`). **Chrome plumbing:**
+`("projection","line")` joins the template table + `template_bundle`; its
+class def force-emits at desugar when a `|projection| { }` rule exists
+(the halo precedent) and `build_projection_rule` emits the default at
+render when a line baked with no such rule — so the paint always rides one
+`.lini-projection` rule, never inlined. **Frame rider — diagnosis:** *not*
+a packing/bbox bug. A view's `flow_extent` already unions its lowered
+annotations, and the page arrange spaces the views by those full bboxes
+(gap 14 sits between them); `drawing_section`'s four views simply total
+~1133 px wide against A4-landscape's 1028 px content area, so the centred
+row spilled ~52 px past each frame — **content too wide, a sample fix**.
+Bumped `drawing_section` to **A3 landscape**; it now sits well inside the
+frame (verified light + dark). Added the `no_view_or_annotation_crosses_the_sheet_frame`
+oracle (`tests/oracle.rs` + `testing::frame_overflow`) over every `|page|`
+sample — it catches the A4 spill (front + bush) and passes on A3, guarding
+the rider from returning. **Sample:** `drawing_sheet` gains
+`side.screw:head - end.od:top` and `side.screw:bottom - end.od:bottom`,
+two horizontal construction lines carrying the ⌀13 head across to the end
+view. **Visual pass** (zoom 2, light + dark): sheet — projection lines
+read as thin support-tone construction lines, everything in frame; section
+— A3, all four views clear of the frame; screw / turned / annotations /
+assembly / gdt / sketch — unchanged, clean; pcb — the Stage 2 soft-tier
+board still reads mint (light) / green (dark). No defects this round;
+none pre-existing. **Tests** 1077 → **1082** (+5: the classification +
+four error rows, the lowering geometry, the cascade restyle, the render
+rule/removal, the frame oracle); two conformance snapshots re-blessed
+(`drawing_sheet` — the two lines + `.lini-projection` rule; `drawing_section`
+— A4→A3). fmt / clippy / test clean.

@@ -68,11 +68,15 @@ pub fn class_defs(
         emit(kind.as_str(), primitive_bundle(kind), synthesized);
     }
     for (name, _) in TEMPLATES {
-        // `halo` never has desugar-visible instances — its knockout shapes are
-        // render-generated mask cuts [SPEC 15.7] — so an authored `|halo|`
-        // rule alone forces the class def; the render still emits it only
-        // when a crossing actually baked.
-        let generated_only = *name == "halo" && element_rules.contains_key(*name);
+        // `halo` / `projection` never have desugar-visible instances — the
+        // halo's knockout shapes are render-generated mask cuts [SPEC 15.7],
+        // the projection line is generated at layout from a cross-view link
+        // [SPEC 15.8] — so an authored `|halo|` / `|projection|` rule alone
+        // forces the class def (the render / resolve cascade wants the merged
+        // default+user rule); without one the render emits it when a shape
+        // actually bakes.
+        let generated_only =
+            matches!(*name, "halo" | "projection") && element_rules.contains_key(*name);
         emit(name, template_bundle(name), generated_only);
     }
     let mut seen = HashSet::new();

@@ -99,7 +99,70 @@ pub fn layout(program: &Program) -> Result<LaidOut, Error> {
 
     // Route links once the nodes are placed.
     let routed = routing::route(program, &top_nodes)?;
+    // Lower the sheet's projection construction links [SPEC 15.8]: after the
+    // views have placed (and `align: origin` lined them up), each ties two
+    // resolved anchors with one straight `|projection|` chrome line, in sheet
+    // space — never routed, never a packing obstacle.
+    lower_projections(program, &mut top_nodes)?;
     finish(program, top_nodes, bbox, routed)
+}
+
+/// Append one straight `|projection|` chrome line per sheet-scope projection
+/// link [SPEC 15.8], between its two anchors in scene coordinates. The views
+/// are already placed, so this only reads their geometry; the lines sit within
+/// the views' extent, so they never grow the canvas.
+fn lower_projections(program: &Program, nodes: &mut Vec<PlacedNode>) -> Result<(), Error> {
+    let mut lines = Vec::new();
+    for w in &program.links {
+        if !w.projection {
+            continue;
+        }
+        let a = drawing::project_anchor(nodes, &w.endpoints[0])?;
+        let b = drawing::project_anchor(nodes, &w.endpoints[1])?;
+        lines.push(projection_line(w, a, b));
+    }
+    nodes.append(&mut lines);
+    Ok(())
+}
+
+/// The generated `|projection|` line node: a two-point `|line|` wearing the
+/// projection type, its paint the cascade the link resolved [SPEC 8/15.8], its
+/// points the two anchors in scene space (so `cx`/`cy` stay zero).
+fn projection_line(w: &crate::resolve::ResolvedLink, a: (f64, f64), b: (f64, f64)) -> PlacedNode {
+    use crate::resolve::ResolvedValue;
+    let mut attrs = w.attrs.clone();
+    let point = |p: (f64, f64)| {
+        ResolvedValue::Tuple(vec![ResolvedValue::Number(p.0), ResolvedValue::Number(p.1)])
+    };
+    attrs.insert("points", ResolvedValue::List(vec![point(a), point(b)]));
+    let half = attrs.number("stroke-width").unwrap_or(0.0) / 2.0;
+    let bbox = Bbox {
+        min_x: a.0.min(b.0),
+        min_y: a.1.min(b.1),
+        max_x: a.0.max(b.0),
+        max_y: a.1.max(b.1),
+    }
+    .inflate(half);
+    PlacedNode {
+        id: None,
+        kind: NodeKind::Line,
+        type_chain: vec!["projection".to_string()],
+        applied_styles: w.applied_styles.clone(),
+        label: None,
+        attrs,
+        own_style: crate::resolve::AttrMap::new(),
+        markers: crate::resolve::Markers::default(),
+        cx: 0.0,
+        cy: 0.0,
+        bbox,
+        rotation: 0.0,
+        children: Vec::new(),
+        gutters: Vec::new(),
+        links: Vec::new(),
+        sketch: None,
+        origin: (0.0, 0.0),
+        span: w.span,
+    }
 }
 
 /// The layout context a node inherits [SPEC 15]: the parent's effective

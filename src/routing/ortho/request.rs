@@ -88,6 +88,7 @@ impl EdgeReq {
 /// land on the wrong wire.
 pub fn is_routed(program: &Program, w: &crate::resolve::ResolvedLink) -> bool {
     w.kind == crate::resolve::LinkKind::Wire
+        && !w.projection
         && !crate::layout::sequence::is_sequence_scope(program, &w.scope)
         && !crate::layout::drawing::is_drawing_scope(program, &w.scope)
 }

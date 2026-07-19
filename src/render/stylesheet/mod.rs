@@ -73,6 +73,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
     families::build_gutter_rule(&mut rules, has_gutters);
     families::build_halo_rules(&mut rules, present.contains("halo"), has_labels);
     families::build_template_rules(&mut rules, laid, &present, vars, opts);
+    families::build_projection_rule(&mut rules, laid, present.contains("projection"), vars, opts);
     families::build_link_rules(&mut rules, laid, vars, opts);
     families::build_link_label_rules(
         &mut rules,

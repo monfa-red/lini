@@ -1,4 +1,4 @@
-// Sourced views [SPEC 15.8] on an A4 sheet: the front view carries the A–A
+// Sourced views [SPEC 15.8] on an A3 sheet: the front view carries the A–A
 // cutting plane and a detail ring; `|drawing| { of: a }` authors the section
 // (hatched walls, the bore reading between them, a cross-drilled drain whose
 // dimension and leader **break** where they cross the hatched wall — the
@@ -11,7 +11,7 @@
   |steel::sketch| { fill: hatch(45, 5); }
 }
 
-|page#sheet| { sheet: a4 landscape; gap: 14; align: origin; } [
+|page#sheet| { sheet: a3 landscape; gap: 14; align: origin; } [
 
   |drawing#front| "COOLING RING" { scale: 1; } [
     |oval#od| { width: 80; height: 80; fill: none; stroke: --stroke-dark; }

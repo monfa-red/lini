@@ -194,6 +194,7 @@ pub(super) fn finish(children: &mut [PlacedNode], sheet: Bbox, s: f64) {
 mod tests {
     use super::super::drawing::testutil::{by_id, laid, texts};
     use super::*;
+    use crate::resolve::NodeKind;
 
     fn compile_err(src: &str) -> String {
         let toks = crate::lexer::lex(src).expect("lex");
@@ -330,6 +331,67 @@ mod tests {
         );
         let padded = laid("{ padding: 12 }\n|page#p| { sheet: a4 landscape }\n");
         assert_eq!(padded.viewbox.w, 1188.0 + 24.0, "the user's padding wins");
+    }
+
+    fn projection_lines(l: &super::super::LaidOut) -> Vec<&PlacedNode> {
+        l.nodes
+            .iter()
+            .filter(|n| n.type_chain.iter().any(|t| t == "projection"))
+            .collect()
+    }
+
+    fn line_points(n: &PlacedNode) -> Vec<(f64, f64)> {
+        match n.attrs.get("points") {
+            Some(ResolvedValue::List(items)) => items
+                .iter()
+                .map(|p| match p {
+                    ResolvedValue::Tuple(xy) => {
+                        (xy[0].as_number().unwrap(), xy[1].as_number().unwrap())
+                    }
+                    other => panic!("point: {other:?}"),
+                })
+                .collect(),
+            other => panic!("points: {other:?}"),
+        }
+    }
+
+    // Two ⌀13 views one above the other on a sheet, datums aligned by
+    // `align: origin`, tied at their tops [SPEC 15.8].
+    const TWO_VIEWS: &str = "|page| { direction: row; align: origin; gap: 40 } [\n  \
+        |drawing#a| { scale: 2 } [ |oval#c| { width: 13; height: 13 } ]\n  \
+        |drawing#b| { scale: 2 } [ |oval#d| { width: 13; height: 13 } ]\n  \
+        a.c:top - b.d:top\n]\n";
+
+    #[test]
+    fn a_projection_link_lowers_to_one_straight_line_on_the_aligned_anchors() {
+        let l = laid(TWO_VIEWS);
+        let proj = projection_lines(&l);
+        assert_eq!(proj.len(), 1, "one projection line");
+        let p = proj[0];
+        assert_eq!(p.kind, NodeKind::Line);
+        let pts = line_points(p);
+        assert_eq!(pts.len(), 2, "a straight two-point line");
+        // `align: origin` levels the datums, so the two `:top` anchors — ⌀13 at
+        // scale 2, 13 px above each datum — share a y: the line is horizontal.
+        assert!(
+            (pts[0].1 - pts[1].1).abs() < 1e-6,
+            "the projection line is horizontal: {pts:?}"
+        );
+        // …and spans the gap between the stacked views (distinct x).
+        assert!(
+            (pts[0].0 - pts[1].0).abs() > 1.0,
+            "the line spans between the two views: {pts:?}"
+        );
+    }
+
+    #[test]
+    fn a_projection_line_restyles_through_the_cascade() {
+        // A `|projection| { }` rule reaches the generated line, scope-wide.
+        let l = laid(&format!(
+            "{{ |projection| {{ stroke-width: 3 }} }}\n{TWO_VIEWS}"
+        ));
+        let p = projection_lines(&l);
+        assert_eq!(p[0].attrs.number("stroke-width"), Some(3.0));
     }
 
     #[test]

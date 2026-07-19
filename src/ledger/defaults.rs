@@ -336,6 +336,14 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             n("stroke-width", 1.0),
             id("fill", "none"),
         ],
+        // A projection construction line [SPEC 15.8]: the thin support-tone line a
+        // sheet's cross-view link generates between two views' anchors — styleable
+        // / removable scope-wide (`|projection| { stroke: none }`), like all chrome.
+        "projection" => vec![
+            var("stroke", "stroke-light"),
+            n("stroke-width", 1.0),
+            id("fill", "none"),
+        ],
         // The ISO 5457 sheet [SPEC 15.8]: mm dimensions (A4 portrait unless
         // `sheet:` says otherwise); its px-per-mm is the root `density:`,
         // stamped by the desugar scale fold — a page carries no `scale:` of
