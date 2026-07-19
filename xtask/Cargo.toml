@@ -10,5 +10,6 @@ name = "xtask"
 path = "src/main.rs"
 
 [dependencies]
+lini = { path = ".." }
 subsetter = "0.1.1"
 ttf-parser = "0.25"

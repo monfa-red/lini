@@ -12,5 +12,6 @@
 pub(crate) mod consts;
 pub(crate) mod date;
 pub(crate) mod defaults;
+pub(crate) mod examples;
 pub(crate) mod format;
 pub(crate) mod properties;

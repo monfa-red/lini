@@ -55,6 +55,21 @@ pub(crate) fn print_file(file: &File) -> String {
     out
 }
 
+/// The canonical value string of a declaration (no name, no `;`) — the one
+/// value renderer schema generation reuses to print the ledger's default
+/// bundles [SPEC 16], so a default reads exactly as an author would write it.
+pub(crate) fn print_decl_value(decl: &Decl) -> String {
+    let mut out = String::new();
+    Emitter {
+        trivia: &[],
+        cursor: 0,
+        out: &mut out,
+        terse: false,
+    }
+    .emit_groups(&decl.groups);
+    out
+}
+
 struct Emitter<'a> {
     trivia: &'a [TriviaToken],
     cursor: usize,
@@ -670,7 +685,13 @@ impl Emitter<'_> {
         }
         self.out.push_str(&decl.name);
         self.out.push_str(": ");
-        for (i, group) in decl.groups.iter().enumerate() {
+        self.emit_groups(&decl.groups);
+        self.out.push(';');
+    }
+
+    /// The value side of a declaration — comma-joined groups, space-joined values.
+    fn emit_groups(&mut self, groups: &[Vec<Value>]) {
+        for (i, group) in groups.iter().enumerate() {
             if i > 0 {
                 self.out.push_str(", ");
             }
@@ -681,7 +702,6 @@ impl Emitter<'_> {
                 self.emit_value(v);
             }
         }
-        self.out.push(';');
     }
 
     fn emit_value(&mut self, v: &Value) {

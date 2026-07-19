@@ -309,21 +309,21 @@ The ledger becomes a published contract. One lean versioned JSON schema
 generated from the ledger, committed in-repo, guarded byte-identical; the
 compact reference the same.
 
-- [ ] **The schema generator** (`xtask` or a `--emit-schema` path): walks
+- [x] **The schema generator** (`xtask` or a `--emit-schema` path): walks
   `PROPERTIES` + the type/template/role tables and emits one JSON file —
   types, templates, roles, inheritance channels (both `format` legs per
   decision 4), properties, value shapes (`Shape`/`Kind`, list-vs-tuple
   arity), defaults (resolved from the bundles — the single tuning home),
   owners, layout/routing compatibility, required/exclusive sets,
   **deferred flags** (decision 5), and one example each.
-- [ ] **One versioned file, committed**: `schema/lini.json` (or the
+- [x] **One versioned file, committed**: `schema/lini.json` (or the
   chosen path), carrying a schema version; regenerated deterministically.
-- [ ] **CI drift check**: a test regenerates the schema and asserts it is
+- [x] **CI drift check**: a test regenerates the schema and asserts it is
   **byte-identical** to the committed file — a stale checkout fails.
-- [ ] **The compact reference**: generated from the same ledger, committed
+- [x] **The compact reference**: generated from the same ledger, committed
   in-repo, the same byte-drift test — the tools/AI lookup ROADMAP 3.8
   names.
-- [ ] **No drift by construction**: the generator reads the same ledger
+- [x] **No drift by construction**: the generator reads the same ledger
   validation reads; a new property appears in the schema the moment it
   has a row, or the drift test fails.
 
@@ -331,7 +331,37 @@ Acceptance: schema + reference regenerate byte-identically from the ledger
 (drift = test failure); every property is described with its real
 owners/shape/default/inherit/deferred; the `format` dual cascade reads
 truthfully; fmt/clippy/test clean.
-**Log:** _(filled at close)_
+**Log:** 2026-07-19 — **done**. The ledger is a published contract:
+`cargo xtask gen-schema` (xtask now depends on `lini`, following the
+`extract-fonts` precedent) writes two committed artifacts under `schema/`,
+both **generated from the ledger and nothing else** — no prose parsed, no
+timestamp, so a regeneration is byte-identical. **`schema/lini.schema.json`**
+(one lean file, `schemaVersion: 1` + the crate version off `CARGO_PKG_VERSION`,
+stable field order) carries: an `enums` self-description (the eight `Kind`s,
+four `Shape`s, four `Inherit` channels, two `Gate`s, six owner kinds); the
+`layouts` / `roles` named across the owner column; `builderCalls`; the 13
+**primitives** and 56 **templates**, each with its resolved default bundle
+(primitive kind + base→derived chain) printed through the one canonical
+value renderer (`fmt::print_decl_value`, factored out of `emit_decl` — no
+parallel printer); the `sceneDefaults` / `linkDefaults` bundles; and all
+**103 properties** — owners (structured), shape + scalar kind (list-vs-tuple
+arity off `Shape`), `default` ref, `inherit`, `gate`, `text`/`baked`/
+`deferred`, a `dualChannel` flag derived from the data
+(`inherit == ScopeLink && has_node_owner()` — true for **`format`** alone,
+both legs stated by owners × ScopeLink per decision 4), and one **compiled
+example each**. **`schema/reference.md`** is the compact human mirror — dense
+Markdown tables off the same walk. Serde-free throughout: a 60-line JSON
+value + deterministic pretty-printer (`schema/json.rs`, ordered objects, never
+a `HashMap`). **Examples ride the ledger** (`src/ledger/examples.rs`, keyed by
+name, order-tracks `PROPERTIES`) and a test **compiles every one** through
+`compile_str` (drawing/chart/sequence snippets in their owning container, the
+two `|image|` ones resolving `assets/logo.svg` against `samples/` like the
+conformance suite) — an example cannot rot into invalid syntax. **Drift check**
+(`tests/schema.rs`): regenerate both artifacts in memory, assert byte-equality
+with the committed files — a stale checkout fails CI. Coverage + orphan +
+`only_format_is_dual_channel` pinned as unit tests beside the generator. Gate:
+fmt `--check` / clippy `--all-targets -D warnings` / test clean; **1084 → 1089
+tests** (+5: 2 unit, 3 integration), zero snapshot churn.
 
 ### Stage 3 — structured diagnostics + the two carried-over items
 

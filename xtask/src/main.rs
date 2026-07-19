@@ -6,6 +6,9 @@
 //!                         of Phosphor *duotone* SVGs (e.g. `<core>/raw/duotone`).
 //!   extract-fonts         Regenerate `src/font/metrics.rs` + the subset TTFs
 //!                         under `assets/fonts/subset/` from the committed raws.
+//!   gen-schema            Regenerate `schema/lini.schema.json` + `schema/reference.md`
+//!                         from the property ledger (guarded byte-identical by
+//!                         `tests/schema.rs`).
 
 mod fonts;
 
@@ -22,8 +25,30 @@ fn main() -> ExitCode {
             None => usage("extract-icons <dir-of-duotone-svgs>"),
         },
         Some("extract-fonts") => fonts::extract_fonts(),
-        _ => usage("<command>   (commands: extract-icons, extract-fonts)"),
+        Some("gen-schema") => gen_schema(),
+        _ => usage("<command>   (commands: extract-icons, extract-fonts, gen-schema)"),
     }
+}
+
+/// Write the two ledger-generated artifacts into `schema/`.
+fn gen_schema() -> ExitCode {
+    let dir = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .expect("workspace root")
+        .join("schema");
+    if let Err(e) = fs::create_dir_all(&dir) {
+        eprintln!("cannot create {}: {e}", dir.display());
+        return ExitCode::FAILURE;
+    }
+    for (file, body) in [
+        ("lini.schema.json", lini::schema_json()),
+        ("reference.md", lini::reference_md()),
+    ] {
+        let dest = dir.join(file);
+        fs::write(&dest, body).expect("write schema artifact");
+        eprintln!("wrote {}", dest.display());
+    }
+    ExitCode::SUCCESS
 }
 
 fn usage(msg: &str) -> ExitCode {

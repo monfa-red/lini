@@ -1,0 +1,3080 @@
+{
+  "schemaVersion": 1,
+  "crate": "lini",
+  "crateVersion": "1.0.0-alpha.4",
+  "generator": "cargo xtask gen-schema",
+  "enums": {
+    "kinds": {
+      "number": "a bare number",
+      "ident": "a keyword identifier",
+      "string": "quoted text — a bare word errors",
+      "colour": "a flat colour or --var, no gradient",
+      "paint": "colour, none, or a gradient",
+      "marker": "a marker glyph name (rides Markers, not the attr map)",
+      "track": "a grid track — auto, a number, or repeat(...)",
+      "any": "a positional or mixed form the property's own reader validates"
+    },
+    "shapes": {
+      "one": "one comma-group — a scalar or a space-separated tuple",
+      "list": "a comma-separated list of groups",
+      "pen": "a draw: pen run — structured calls + :segment points",
+      "pattern": "one grid(...) / radial(...) replication call"
+    },
+    "inherit": {
+      "no": "does not flow down the tree",
+      "text": "the resolve text channel — nearest ancestor wins",
+      "scope-link": "scene config a link takes from its scope; a dual-channel row (format) is also engine-read on its chart owners",
+      "engine": "nearest-wins inside a layout engine, not resolve"
+    },
+    "gate": {
+      "lenient": "inert out of scope",
+      "hard": "errors out of scope"
+    },
+    "ownerKinds": {
+      "universal": "every drawn node, in every layout",
+      "root": "the root's scene config (the stylesheet block)",
+      "link": "a link's own property",
+      "type": "read on this primitive or template",
+      "layout": "interpreted by this layout engine",
+      "role": "a layout role that is not one type"
+    }
+  },
+  "layouts": [
+    "flow",
+    "grid",
+    "sequence",
+    "chart",
+    "tree",
+    "pie"
+  ],
+  "roles": [
+    "closed",
+    "series",
+    "mate",
+    "dimension",
+    "title-block"
+  ],
+  "builderCalls": [
+    "oklch",
+    "gradient",
+    "linear-gradient",
+    "radial-gradient",
+    "rgb",
+    "rgba",
+    "hsl",
+    "hsla",
+    "repeat",
+    "hatch"
+  ],
+  "primitives": [
+    {
+      "name": "block",
+      "defaults": {
+        "fill": "none",
+        "stroke": "none",
+        "stroke-width": "2",
+        "padding": "0",
+        "gap": "20"
+      }
+    },
+    {
+      "name": "oval",
+      "defaults": {
+        "fill": "--fill",
+        "stroke": "--stroke",
+        "stroke-width": "2",
+        "padding": "20",
+        "gap": "12"
+      }
+    },
+    {
+      "name": "hex",
+      "defaults": {
+        "fill": "--fill",
+        "stroke": "--stroke",
+        "stroke-width": "2",
+        "padding": "20",
+        "gap": "12"
+      }
+    },
+    {
+      "name": "slant",
+      "defaults": {
+        "fill": "--fill",
+        "stroke": "--stroke",
+        "stroke-width": "2",
+        "padding": "20",
+        "gap": "12",
+        "skew": "15"
+      }
+    },
+    {
+      "name": "cyl",
+      "defaults": {
+        "fill": "--fill",
+        "stroke": "--stroke",
+        "stroke-width": "2",
+        "padding": "20",
+        "gap": "12"
+      }
+    },
+    {
+      "name": "diamond",
+      "defaults": {
+        "fill": "--fill",
+        "stroke": "--stroke",
+        "stroke-width": "2",
+        "padding": "20",
+        "gap": "12"
+      }
+    },
+    {
+      "name": "poly",
+      "defaults": {
+        "fill": "--fill",
+        "stroke": "--stroke",
+        "stroke-width": "2"
+      }
+    },
+    {
+      "name": "path",
+      "defaults": {
+        "fill": "--fill",
+        "stroke": "--stroke",
+        "stroke-width": "2"
+      }
+    },
+    {
+      "name": "text",
+      "defaults": {}
+    },
+    {
+      "name": "line",
+      "defaults": {
+        "fill": "none",
+        "stroke": "--stroke",
+        "stroke-width": "2"
+      }
+    },
+    {
+      "name": "icon",
+      "defaults": {
+        "fill": "--icon-fill",
+        "stroke": "--stroke",
+        "stroke-width": "2",
+        "width": "32",
+        "height": "32"
+      }
+    },
+    {
+      "name": "image",
+      "defaults": {}
+    },
+    {
+      "name": "sketch",
+      "defaults": {
+        "fill": "--fill",
+        "stroke": "--stroke-dark",
+        "stroke-width": "2"
+      }
+    }
+  ],
+  "templates": [
+    {
+      "name": "box",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "box"
+      ],
+      "defaults": {
+        "fill": "--fill",
+        "stroke": "--stroke",
+        "stroke-width": "2",
+        "padding": "20",
+        "radius": "8"
+      }
+    },
+    {
+      "name": "rect",
+      "primitive": "block",
+      "base": "box",
+      "chain": [
+        "box",
+        "rect"
+      ],
+      "defaults": {
+        "radius": "0"
+      }
+    },
+    {
+      "name": "group",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "group"
+      ],
+      "defaults": {
+        "stroke": "--group-stroke",
+        "stroke-style": "dashed",
+        "stroke-width": "1",
+        "fill": "--group-fill",
+        "radius": "8",
+        "padding": "20"
+      }
+    },
+    {
+      "name": "caption",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "caption"
+      ],
+      "defaults": {
+        "pin": "top left",
+        "translate": "0 -20",
+        "color": "--caption-color",
+        "font-size": "12",
+        "font-weight": "--caption-font-weight"
+      }
+    },
+    {
+      "name": "footnote",
+      "primitive": "block",
+      "base": "caption",
+      "chain": [
+        "caption",
+        "footnote"
+      ],
+      "defaults": {
+        "pin": "bottom",
+        "translate": "0 19",
+        "font-size": "12",
+        "color": "--footer-color"
+      }
+    },
+    {
+      "name": "badge",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "badge"
+      ],
+      "defaults": {
+        "pin": "top right",
+        "translate": "6 -6",
+        "radius": "8",
+        "padding": "2 6",
+        "shadow": "2 3 3",
+        "fill": "--accent",
+        "color": "--accent-text",
+        "font-size": "11",
+        "font-weight": "normal"
+      }
+    },
+    {
+      "name": "row",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "row"
+      ],
+      "defaults": {
+        "direction": "row"
+      }
+    },
+    {
+      "name": "column",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "column"
+      ],
+      "defaults": {
+        "direction": "column"
+      }
+    },
+    {
+      "name": "grid",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "grid"
+      ],
+      "defaults": {
+        "layout": "grid"
+      }
+    },
+    {
+      "name": "table",
+      "primitive": "block",
+      "base": "group",
+      "chain": [
+        "group",
+        "table"
+      ],
+      "defaults": {
+        "layout": "grid",
+        "align": "stretch",
+        "justify": "stretch",
+        "gap": "1",
+        "gap-fill": "--stroke",
+        "padding": "0",
+        "fill": "none",
+        "stroke": "--stroke",
+        "stroke-width": "2",
+        "stroke-style": "solid",
+        "font-size": "14",
+        "font-weight": "normal",
+        "scale": "1"
+      }
+    },
+    {
+      "name": "cell",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "cell"
+      ],
+      "defaults": {
+        "padding": "4 8"
+      }
+    },
+    {
+      "name": "header",
+      "primitive": "block",
+      "base": "cell",
+      "chain": [
+        "cell",
+        "header"
+      ],
+      "defaults": {
+        "fill": "--header-fill",
+        "font-weight": "semibold"
+      }
+    },
+    {
+      "name": "footer",
+      "primitive": "block",
+      "base": "cell",
+      "chain": [
+        "cell",
+        "footer"
+      ],
+      "defaults": {
+        "color": "--footer-color"
+      }
+    },
+    {
+      "name": "entity",
+      "primitive": "block",
+      "base": "table",
+      "chain": [
+        "group",
+        "table",
+        "entity"
+      ],
+      "defaults": {
+        "columns": "auto, auto"
+      }
+    },
+    {
+      "name": "sign",
+      "primitive": "icon",
+      "base": "icon",
+      "chain": [
+        "sign"
+      ],
+      "defaults": {
+        "width": "64",
+        "height": "64",
+        "padding": "4",
+        "stroke-width": "2",
+        "fit": "contain"
+      }
+    },
+    {
+      "name": "chart",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "chart"
+      ],
+      "defaults": {
+        "layout": "chart",
+        "gap": "10"
+      }
+    },
+    {
+      "name": "pie",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "pie"
+      ],
+      "defaults": {
+        "layout": "pie",
+        "gap": "10"
+      }
+    },
+    {
+      "name": "area",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "area"
+      ],
+      "defaults": {}
+    },
+    {
+      "name": "bars",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "bars"
+      ],
+      "defaults": {
+        "radius": "2",
+        "stroke": "auto"
+      }
+    },
+    {
+      "name": "dots",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "dots"
+      ],
+      "defaults": {}
+    },
+    {
+      "name": "bubble",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "bubble"
+      ],
+      "defaults": {}
+    },
+    {
+      "name": "slice",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "slice"
+      ],
+      "defaults": {
+        "stroke": "auto"
+      }
+    },
+    {
+      "name": "axis",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "axis"
+      ],
+      "defaults": {}
+    },
+    {
+      "name": "band",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "band"
+      ],
+      "defaults": {}
+    },
+    {
+      "name": "mark",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "mark"
+      ],
+      "defaults": {
+        "marker": "dot"
+      }
+    },
+    {
+      "name": "sequence",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "sequence"
+      ],
+      "defaults": {
+        "layout": "sequence",
+        "gap": "32 32"
+      }
+    },
+    {
+      "name": "loop",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "loop"
+      ],
+      "defaults": {
+        "fill": "none",
+        "stroke": "--group-stroke",
+        "stroke-style": "dashed",
+        "stroke-width": "1",
+        "radius": "4",
+        "padding": "24",
+        "font-size": "12"
+      }
+    },
+    {
+      "name": "opt",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "opt"
+      ],
+      "defaults": {
+        "fill": "none",
+        "stroke": "--group-stroke",
+        "stroke-style": "dashed",
+        "stroke-width": "1",
+        "radius": "4",
+        "padding": "24",
+        "font-size": "12"
+      }
+    },
+    {
+      "name": "alt",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "alt"
+      ],
+      "defaults": {
+        "fill": "none",
+        "stroke": "--group-stroke",
+        "stroke-style": "dashed",
+        "stroke-width": "1",
+        "radius": "4",
+        "padding": "24",
+        "font-size": "12"
+      }
+    },
+    {
+      "name": "else",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "else"
+      ],
+      "defaults": {
+        "fill": "none",
+        "stroke": "--group-stroke",
+        "stroke-style": "dashed",
+        "stroke-width": "1",
+        "font-size": "12"
+      }
+    },
+    {
+      "name": "note",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "note"
+      ],
+      "defaults": {
+        "fill": "--fill",
+        "stroke": "--stroke",
+        "padding": "20",
+        "scale": "1"
+      }
+    },
+    {
+      "name": "balloon",
+      "primitive": "oval",
+      "base": "oval",
+      "chain": [
+        "balloon"
+      ],
+      "defaults": {
+        "width": "16",
+        "fill": "--fill",
+        "stroke": "--stroke",
+        "font-size": "11",
+        "scale": "1"
+      }
+    },
+    {
+      "name": "topic",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "topic"
+      ],
+      "defaults": {
+        "fill": "--fill",
+        "stroke": "--stroke",
+        "stroke-width": "2",
+        "radius": "8",
+        "padding": "8 14",
+        "gap": "12"
+      }
+    },
+    {
+      "name": "mindmap",
+      "primitive": "block",
+      "base": "topic",
+      "chain": [
+        "topic",
+        "mindmap"
+      ],
+      "defaults": {
+        "max-width": "160",
+        "font-size": "17",
+        "font-weight": "semibold"
+      }
+    },
+    {
+      "name": "drawing",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "drawing"
+      ],
+      "defaults": {
+        "layout": "drawing",
+        "padding": "0"
+      }
+    },
+    {
+      "name": "hole",
+      "primitive": "oval",
+      "base": "oval",
+      "chain": [
+        "hole"
+      ],
+      "defaults": {
+        "fill": "--bg",
+        "stroke": "--stroke-dark"
+      }
+    },
+    {
+      "name": "centerline",
+      "primitive": "line",
+      "base": "line",
+      "chain": [
+        "centerline"
+      ],
+      "defaults": {
+        "stroke-style": "center",
+        "stroke": "--stroke-light",
+        "stroke-width": "1",
+        "fill": "none"
+      }
+    },
+    {
+      "name": "pitch-circle",
+      "primitive": "oval",
+      "base": "oval",
+      "chain": [
+        "pitch-circle"
+      ],
+      "defaults": {
+        "stroke-style": "center",
+        "stroke": "--stroke-light",
+        "stroke-width": "1",
+        "fill": "none"
+      }
+    },
+    {
+      "name": "breakline",
+      "primitive": "line",
+      "base": "line",
+      "chain": [
+        "breakline"
+      ],
+      "defaults": {
+        "stroke": "--stroke-light",
+        "stroke-width": "1",
+        "fill": "none"
+      }
+    },
+    {
+      "name": "hidden",
+      "primitive": "sketch",
+      "base": "sketch",
+      "chain": [
+        "hidden"
+      ],
+      "defaults": {
+        "stroke-style": "dashed",
+        "stroke": "--stroke-dark",
+        "stroke-width": "1",
+        "fill": "none"
+      }
+    },
+    {
+      "name": "shoulder",
+      "primitive": "line",
+      "base": "line",
+      "chain": [
+        "shoulder"
+      ],
+      "defaults": {
+        "stroke": "--stroke-dark"
+      }
+    },
+    {
+      "name": "threadline",
+      "primitive": "line",
+      "base": "line",
+      "chain": [
+        "threadline"
+      ],
+      "defaults": {
+        "stroke": "--stroke-light",
+        "stroke-width": "1",
+        "fill": "none"
+      }
+    },
+    {
+      "name": "halo",
+      "primitive": "line",
+      "base": "line",
+      "chain": [
+        "halo"
+      ],
+      "defaults": {}
+    },
+    {
+      "name": "surface-finish",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "surface-finish"
+      ],
+      "defaults": {
+        "symbol": "basic",
+        "stroke": "--stroke-dark",
+        "stroke-width": "1",
+        "fill": "none",
+        "font-size": "12",
+        "scale": "1"
+      }
+    },
+    {
+      "name": "feature-control",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "feature-control"
+      ],
+      "defaults": {
+        "stroke": "--stroke-dark",
+        "stroke-width": "1",
+        "fill": "--bg",
+        "font-size": "12",
+        "scale": "1"
+      }
+    },
+    {
+      "name": "control",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "control"
+      ],
+      "defaults": {}
+    },
+    {
+      "name": "datum",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "datum"
+      ],
+      "defaults": {
+        "stroke": "--stroke-dark",
+        "stroke-width": "1",
+        "fill": "--bg",
+        "font-size": "12",
+        "scale": "1"
+      }
+    },
+    {
+      "name": "plane",
+      "primitive": "line",
+      "base": "line",
+      "chain": [
+        "plane"
+      ],
+      "defaults": {
+        "stroke-style": "center",
+        "stroke": "--stroke-light",
+        "stroke-width": "1",
+        "fill": "none"
+      }
+    },
+    {
+      "name": "magnifier",
+      "primitive": "oval",
+      "base": "oval",
+      "chain": [
+        "magnifier"
+      ],
+      "defaults": {
+        "stroke": "--stroke-light",
+        "stroke-width": "1",
+        "fill": "none"
+      }
+    },
+    {
+      "name": "projection",
+      "primitive": "line",
+      "base": "line",
+      "chain": [
+        "projection"
+      ],
+      "defaults": {
+        "stroke": "--stroke-light",
+        "stroke-width": "1",
+        "fill": "none"
+      }
+    },
+    {
+      "name": "page",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "page"
+      ],
+      "defaults": {
+        "fill": "--bg",
+        "stroke-width": "0",
+        "width": "210",
+        "height": "297"
+      }
+    },
+    {
+      "name": "title-block",
+      "primitive": "block",
+      "base": "table",
+      "chain": [
+        "group",
+        "table",
+        "title-block"
+      ],
+      "defaults": {
+        "font-size": "15",
+        "stroke-width": "1",
+        "radius": "0"
+      }
+    },
+    {
+      "name": "field",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "field"
+      ],
+      "defaults": {
+        "font-size": "10",
+        "color": "--footer-color"
+      }
+    },
+    {
+      "name": "frame",
+      "primitive": "block",
+      "base": "rect",
+      "chain": [
+        "box",
+        "rect",
+        "frame"
+      ],
+      "defaults": {
+        "fill": "none",
+        "stroke": "--stroke",
+        "stroke-width": "2"
+      }
+    },
+    {
+      "name": "zone",
+      "primitive": "block",
+      "base": "block",
+      "chain": [
+        "zone"
+      ],
+      "defaults": {
+        "font-size": "9",
+        "color": "--stroke-light"
+      }
+    },
+    {
+      "name": "tick",
+      "primitive": "line",
+      "base": "line",
+      "chain": [
+        "tick"
+      ],
+      "defaults": {
+        "stroke": "--stroke",
+        "stroke-width": "1",
+        "fill": "none"
+      }
+    }
+  ],
+  "sceneDefaults": {
+    "layout": "flow",
+    "padding": "20",
+    "gap": "20",
+    "font-size": "15"
+  },
+  "linkDefaults": {
+    "stroke-width": "2",
+    "clearance": "16",
+    "font-size": "11"
+  },
+  "properties": [
+    {
+      "name": "fill",
+      "owners": [
+        {
+          "kind": "universal"
+        }
+      ],
+      "shape": "one",
+      "kind": "paint",
+      "default": "bundles",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": true,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|box| \"leaf\" { fill: --sky-soft; }"
+    },
+    {
+      "name": "opacity",
+      "owners": [
+        {
+          "kind": "universal"
+        }
+      ],
+      "shape": "one",
+      "kind": "number",
+      "default": "engine",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": true,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|box| \"faint\" { opacity: 0.5; }"
+    },
+    {
+      "name": "stroke",
+      "owners": [
+        {
+          "kind": "universal"
+        }
+      ],
+      "shape": "one",
+      "kind": "paint",
+      "default": "bundles",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|box| \"edge\" { stroke: --sky-deep; }"
+    },
+    {
+      "name": "stroke-width",
+      "owners": [
+        {
+          "kind": "universal"
+        }
+      ],
+      "shape": "one",
+      "kind": "number",
+      "default": "bundles",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|box| \"bold\" { stroke-width: 3; }"
+    },
+    {
+      "name": "stroke-style",
+      "owners": [
+        {
+          "kind": "universal"
+        }
+      ],
+      "shape": "one",
+      "kind": "ident",
+      "default": "bundles",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|box| \"dashed\" { stroke-style: dashed; }"
+    },
+    {
+      "name": "radius",
+      "owners": [
+        {
+          "kind": "universal"
+        }
+      ],
+      "shape": "one",
+      "kind": "number",
+      "default": "bundles",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|box| \"round\" { radius: 12; }"
+    },
+    {
+      "name": "shadow",
+      "owners": [
+        {
+          "kind": "universal"
+        }
+      ],
+      "shape": "one",
+      "kind": "any",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|box| \"lifted\" { shadow: 2 3 5; }"
+    },
+    {
+      "name": "gap-fill",
+      "owners": [
+        {
+          "kind": "layout",
+          "name": "flow"
+        },
+        {
+          "kind": "layout",
+          "name": "grid"
+        },
+        {
+          "kind": "layout",
+          "name": "sequence"
+        }
+      ],
+      "shape": "one",
+      "kind": "paint",
+      "default": "bundles",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|row| { gap: 1; gap-fill: --sky-soft; } [\n  |box| \"a\"\n  |box| \"b\"\n]"
+    },
+    {
+      "name": "font-family",
+      "owners": [
+        {
+          "kind": "universal"
+        }
+      ],
+      "shape": "one",
+      "kind": "any",
+      "default": "engine",
+      "inherit": "text",
+      "gate": "lenient",
+      "text": true,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|box| \"serif\" { font-family: \"Georgia\"; }"
+    },
+    {
+      "name": "font-size",
+      "owners": [
+        {
+          "kind": "universal"
+        }
+      ],
+      "shape": "one",
+      "kind": "number",
+      "default": "bundles",
+      "inherit": "text",
+      "gate": "lenient",
+      "text": true,
+      "baked": true,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|box| \"big\" { font-size: 20; }"
+    },
+    {
+      "name": "font-weight",
+      "owners": [
+        {
+          "kind": "universal"
+        }
+      ],
+      "shape": "one",
+      "kind": "any",
+      "default": "bundles",
+      "inherit": "text",
+      "gate": "lenient",
+      "text": true,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|box| \"heavy\" { font-weight: bold; }"
+    },
+    {
+      "name": "font-style",
+      "owners": [
+        {
+          "kind": "universal"
+        }
+      ],
+      "shape": "one",
+      "kind": "ident",
+      "default": "engine",
+      "inherit": "text",
+      "gate": "lenient",
+      "text": true,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|box| \"slanted\" { font-style: italic; }"
+    },
+    {
+      "name": "text-transform",
+      "owners": [
+        {
+          "kind": "universal"
+        }
+      ],
+      "shape": "one",
+      "kind": "ident",
+      "default": "engine",
+      "inherit": "text",
+      "gate": "lenient",
+      "text": true,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|box| \"loud\" { text-transform: uppercase; }"
+    },
+    {
+      "name": "text-decoration",
+      "owners": [
+        {
+          "kind": "universal"
+        }
+      ],
+      "shape": "one",
+      "kind": "ident",
+      "default": "engine",
+      "inherit": "text",
+      "gate": "lenient",
+      "text": true,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|box| \"link\" { text-decoration: underline; }"
+    },
+    {
+      "name": "text-shadow",
+      "owners": [
+        {
+          "kind": "universal"
+        }
+      ],
+      "shape": "one",
+      "kind": "any",
+      "default": "none",
+      "inherit": "text",
+      "gate": "lenient",
+      "text": true,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|box| \"glow\" { text-shadow: 1 1 2 --gray-ink; }"
+    },
+    {
+      "name": "letter-spacing",
+      "owners": [
+        {
+          "kind": "universal"
+        }
+      ],
+      "shape": "one",
+      "kind": "number",
+      "default": "engine",
+      "inherit": "text",
+      "gate": "lenient",
+      "text": true,
+      "baked": true,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|box| \"S P A C E D\" { letter-spacing: 3; }"
+    },
+    {
+      "name": "line-spacing",
+      "owners": [
+        {
+          "kind": "universal"
+        }
+      ],
+      "shape": "one",
+      "kind": "number",
+      "default": "engine",
+      "inherit": "text",
+      "gate": "lenient",
+      "text": true,
+      "baked": true,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|box| \"two\\nlines\" { line-spacing: 12; }"
+    },
+    {
+      "name": "color",
+      "owners": [
+        {
+          "kind": "universal"
+        }
+      ],
+      "shape": "one",
+      "kind": "colour",
+      "default": "engine",
+      "inherit": "text",
+      "gate": "lenient",
+      "text": true,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|box| \"tinted\" { color: --sky-ink; }"
+    },
+    {
+      "name": "width",
+      "owners": [
+        {
+          "kind": "universal"
+        }
+      ],
+      "shape": "one",
+      "kind": "any",
+      "default": "engine",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|box| \"wide\" { width: 120; }"
+    },
+    {
+      "name": "height",
+      "owners": [
+        {
+          "kind": "universal"
+        }
+      ],
+      "shape": "one",
+      "kind": "any",
+      "default": "engine",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|box| \"tall\" { height: 80; }"
+    },
+    {
+      "name": "padding",
+      "owners": [
+        {
+          "kind": "universal"
+        }
+      ],
+      "shape": "one",
+      "kind": "number",
+      "default": "bundles",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|box| \"roomy\" { padding: 18; }"
+    },
+    {
+      "name": "max-width",
+      "owners": [
+        {
+          "kind": "universal"
+        }
+      ],
+      "shape": "one",
+      "kind": "number",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|box| \"a longer run of body copy that wraps\" { max-width: 120; }"
+    },
+    {
+      "name": "text-wrap",
+      "owners": [
+        {
+          "kind": "universal"
+        }
+      ],
+      "shape": "one",
+      "kind": "ident",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|box| \"one line\" { max-width: 200; text-wrap: nowrap; }"
+    },
+    {
+      "name": "pin",
+      "owners": [
+        {
+          "kind": "universal"
+        }
+      ],
+      "shape": "one",
+      "kind": "ident",
+      "default": "engine",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|box| \"card\" { width: 120; height: 80; } [\n  |box| \"tag\" { pin: top; }\n]"
+    },
+    {
+      "name": "translate",
+      "owners": [
+        {
+          "kind": "universal"
+        }
+      ],
+      "shape": "one",
+      "kind": "number",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": true,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|box| \"nudged\" { translate: 10 -4; }"
+    },
+    {
+      "name": "rotate",
+      "owners": [
+        {
+          "kind": "universal"
+        }
+      ],
+      "shape": "one",
+      "kind": "number",
+      "default": "engine",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": true,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|box| \"tilted\" { rotate: -8; }"
+    },
+    {
+      "name": "layer",
+      "owners": [
+        {
+          "kind": "universal"
+        }
+      ],
+      "shape": "one",
+      "kind": "number",
+      "default": "engine",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": true,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|box| \"front\" { layer: 2; }"
+    },
+    {
+      "name": "scale",
+      "owners": [
+        {
+          "kind": "universal"
+        },
+        {
+          "kind": "type",
+          "name": "axis"
+        }
+      ],
+      "shape": "one",
+      "kind": "any",
+      "default": "bundles",
+      "inherit": "engine",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|box| \"scaled\" { scale: 2; }"
+    },
+    {
+      "name": "pattern",
+      "owners": [
+        {
+          "kind": "universal"
+        }
+      ],
+      "shape": "pattern",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|drawing| [\n  |rect#p| { width: 80; height: 40; } [\n    |hole#b| { width: 8; translate: -20 0; pattern: grid(2, 1, 40, 0); }\n  ]\n]"
+    },
+    {
+      "name": "href",
+      "owners": [
+        {
+          "kind": "universal"
+        },
+        {
+          "kind": "link"
+        }
+      ],
+      "shape": "one",
+      "kind": "string",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|box| \"docs\" { href: \"https://example.com\"; }"
+    },
+    {
+      "name": "hint",
+      "owners": [
+        {
+          "kind": "universal"
+        }
+      ],
+      "shape": "one",
+      "kind": "string",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|box| \"help\" { hint: \"the accessible label\"; }"
+    },
+    {
+      "name": "points",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "line"
+        },
+        {
+          "kind": "type",
+          "name": "poly"
+        }
+      ],
+      "shape": "list",
+      "kind": "number",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|line| { points: 0 0, 60 20; }"
+    },
+    {
+      "name": "samples",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "line"
+        },
+        {
+          "kind": "type",
+          "name": "poly"
+        },
+        {
+          "kind": "type",
+          "name": "chart"
+        }
+      ],
+      "shape": "one",
+      "kind": "number",
+      "default": "engine",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|line| { points: (u * 120, sin(u * 6) * 20); samples: 48; }"
+    },
+    {
+      "name": "path",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "path"
+        }
+      ],
+      "shape": "one",
+      "kind": "string",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|path| { path: \"M0 0 L60 0 L30 40 Z\"; }"
+    },
+    {
+      "name": "src",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "image"
+        }
+      ],
+      "shape": "one",
+      "kind": "string",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|image| { src: \"assets/logo.svg\"; width: 40; height: 40; }"
+    },
+    {
+      "name": "symbol",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "icon"
+        },
+        {
+          "kind": "type",
+          "name": "surface-finish"
+        }
+      ],
+      "shape": "one",
+      "kind": "ident",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|drawing| [\n  |rect| { width: 40; height: 24; }\n  |surface-finish| \"Ra 1.6\" { symbol: machined; }\n]"
+    },
+    {
+      "name": "fit",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "icon"
+        },
+        {
+          "kind": "type",
+          "name": "image"
+        }
+      ],
+      "shape": "one",
+      "kind": "ident",
+      "default": "bundles",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|image| { src: \"assets/logo.svg\"; width: 60; height: 40; fit: contain; }"
+    },
+    {
+      "name": "skew",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "slant"
+        }
+      ],
+      "shape": "one",
+      "kind": "number",
+      "default": "bundles",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|slant| \"lean\" { skew: 20; }"
+    },
+    {
+      "name": "stack",
+      "owners": [
+        {
+          "kind": "role",
+          "name": "closed"
+        }
+      ],
+      "shape": "one",
+      "kind": "number",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|box| \"deck\" { stack: 4; }"
+    },
+    {
+      "name": "marker",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "line"
+        },
+        {
+          "kind": "type",
+          "name": "mark"
+        },
+        {
+          "kind": "role",
+          "name": "series"
+        },
+        {
+          "kind": "link"
+        }
+      ],
+      "shape": "one",
+      "kind": "marker",
+      "default": "engine",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|line| { points: -60 0, 60 0; marker: dot; }"
+    },
+    {
+      "name": "marker-start",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "line"
+        },
+        {
+          "kind": "type",
+          "name": "mark"
+        },
+        {
+          "kind": "role",
+          "name": "series"
+        },
+        {
+          "kind": "link"
+        }
+      ],
+      "shape": "one",
+      "kind": "marker",
+      "default": "engine",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|line| { points: -60 0, 60 0; marker-start: dot; }"
+    },
+    {
+      "name": "marker-end",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "line"
+        },
+        {
+          "kind": "type",
+          "name": "mark"
+        },
+        {
+          "kind": "role",
+          "name": "series"
+        },
+        {
+          "kind": "link"
+        }
+      ],
+      "shape": "one",
+      "kind": "marker",
+      "default": "engine",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|line| { points: -60 0, 60 0; marker-end: arrow; }"
+    },
+    {
+      "name": "draw",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "sketch"
+        }
+      ],
+      "shape": "pen",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|sketch| { draw: move(0, 0) right(40) down(20) close(); }"
+    },
+    {
+      "name": "mirror",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "sketch"
+        }
+      ],
+      "shape": "one",
+      "kind": "any",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|sketch| { draw: move(-30, 0) up(8) right(30); mirror: x-axis; }"
+    },
+    {
+      "name": "revolve",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "sketch"
+        }
+      ],
+      "shape": "one",
+      "kind": "ident",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|drawing| [\n  |sketch| { draw: move(-20, 0) up(10) right(40) down(10); revolve: x-axis; }\n]"
+    },
+    {
+      "name": "thread",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "sketch"
+        },
+        {
+          "kind": "type",
+          "name": "hole"
+        }
+      ],
+      "shape": "list",
+      "kind": "any",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|drawing| [\n  |rect| { width: 60; height: 40; } [\n    |hole| { width: 8; thread: 1.25; }\n  ]\n]"
+    },
+    {
+      "name": "sheet",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "page"
+        }
+      ],
+      "shape": "one",
+      "kind": "any",
+      "default": "engine",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|page| { sheet: a4 landscape; }"
+    },
+    {
+      "name": "break",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "sketch"
+        }
+      ],
+      "shape": "list",
+      "kind": "any",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|drawing| [\n  |sketch| { draw: move(-80, 0) up(8) right(160) down(8); revolve: x-axis; break: -20 20; }\n]"
+    },
+    {
+      "name": "layout",
+      "owners": [
+        {
+          "kind": "universal"
+        }
+      ],
+      "shape": "one",
+      "kind": "ident",
+      "default": "bundles",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|box| { layout: grid; columns: repeat(2); } [\n  |box| \"a\"\n  |box| \"b\"\n]"
+    },
+    {
+      "name": "direction",
+      "owners": [
+        {
+          "kind": "layout",
+          "name": "flow"
+        },
+        {
+          "kind": "layout",
+          "name": "chart"
+        },
+        {
+          "kind": "layout",
+          "name": "tree"
+        }
+      ],
+      "shape": "one",
+      "kind": "ident",
+      "default": "engine",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|box| { layout: flow; direction: column; } [\n  |box| \"a\"\n  |box| \"b\"\n]"
+    },
+    {
+      "name": "gap",
+      "owners": [
+        {
+          "kind": "layout",
+          "name": "flow"
+        },
+        {
+          "kind": "layout",
+          "name": "grid"
+        },
+        {
+          "kind": "layout",
+          "name": "sequence"
+        },
+        {
+          "kind": "layout",
+          "name": "chart"
+        },
+        {
+          "kind": "layout",
+          "name": "pie"
+        },
+        {
+          "kind": "layout",
+          "name": "tree"
+        },
+        {
+          "kind": "role",
+          "name": "mate"
+        }
+      ],
+      "shape": "one",
+      "kind": "number",
+      "default": "bundles",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|row| { gap: 24; } [\n  |box| \"a\"\n  |box| \"b\"\n]"
+    },
+    {
+      "name": "align",
+      "owners": [
+        {
+          "kind": "layout",
+          "name": "flow"
+        },
+        {
+          "kind": "layout",
+          "name": "grid"
+        }
+      ],
+      "shape": "list",
+      "kind": "ident",
+      "default": "bundles",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|row| { gap: 12; align: center; } [\n  |box| \"a\"\n  |box| \"tall\\nbox\"\n]"
+    },
+    {
+      "name": "justify",
+      "owners": [
+        {
+          "kind": "layout",
+          "name": "flow"
+        },
+        {
+          "kind": "layout",
+          "name": "grid"
+        }
+      ],
+      "shape": "list",
+      "kind": "ident",
+      "default": "bundles",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|row| { gap: 12; justify: center; } [\n  |box| \"a\"\n  |box| \"b\"\n]"
+    },
+    {
+      "name": "columns",
+      "owners": [
+        {
+          "kind": "layout",
+          "name": "grid"
+        }
+      ],
+      "shape": "list",
+      "kind": "track",
+      "default": "bundles",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|box| { layout: grid; columns: 40, auto; } [\n  |box| \"a\"\n  |box| \"b\"\n]"
+    },
+    {
+      "name": "rows",
+      "owners": [
+        {
+          "kind": "layout",
+          "name": "grid"
+        }
+      ],
+      "shape": "list",
+      "kind": "track",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|box| { layout: grid; columns: repeat(2); rows: 40, auto; } [\n  |box| \"a\"\n  |box| \"b\"\n  |box| \"c\"\n  |box| \"d\"\n]"
+    },
+    {
+      "name": "cell",
+      "owners": [
+        {
+          "kind": "layout",
+          "name": "grid"
+        }
+      ],
+      "shape": "one",
+      "kind": "number",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|box| { layout: grid; columns: repeat(2); } [\n  |box| \"placed\" { cell: 1 2; }\n]"
+    },
+    {
+      "name": "span",
+      "owners": [
+        {
+          "kind": "layout",
+          "name": "grid"
+        },
+        {
+          "kind": "type",
+          "name": "band"
+        }
+      ],
+      "shape": "one",
+      "kind": "number",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|box| { layout: grid; columns: repeat(2); } [\n  |box| \"wide\" { span: 2; }\n]"
+    },
+    {
+      "name": "data",
+      "owners": [
+        {
+          "kind": "role",
+          "name": "series"
+        }
+      ],
+      "shape": "list",
+      "kind": "number",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|chart| { categories: \"a\", \"b\", \"c\"; } [\n  |bars| { data: 4, 8, 6; }\n]"
+    },
+    {
+      "name": "fn",
+      "owners": [
+        {
+          "kind": "role",
+          "name": "series"
+        }
+      ],
+      "shape": "list",
+      "kind": "any",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|chart| [\n  |axis| { side: bottom; range: 0 10; }\n  |axis| { side: left; }\n  |line| { fn: (x * x); }\n]"
+    },
+    {
+      "name": "labels",
+      "owners": [
+        {
+          "kind": "role",
+          "name": "series"
+        }
+      ],
+      "shape": "list",
+      "kind": "string",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|chart| { categories: \"a\", \"b\"; } [\n  |line| { data: 4, 8; labels: \"lo\", \"hi\"; marker: dot; }\n]"
+    },
+    {
+      "name": "curve",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "line"
+        },
+        {
+          "kind": "type",
+          "name": "area"
+        }
+      ],
+      "shape": "one",
+      "kind": "ident",
+      "default": "engine",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|chart| { categories: \"a\", \"b\", \"c\"; } [\n  |line| { data: 4, 8, 6; curve: smooth; }\n]"
+    },
+    {
+      "name": "baseline",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "area"
+        }
+      ],
+      "shape": "one",
+      "kind": "number",
+      "default": "engine",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|chart| { categories: \"a\", \"b\", \"c\"; } [\n  |area| { data: 4, 8, 6; baseline: 2; }\n]"
+    },
+    {
+      "name": "axis",
+      "owners": [
+        {
+          "kind": "role",
+          "name": "series"
+        },
+        {
+          "kind": "type",
+          "name": "mark"
+        },
+        {
+          "kind": "type",
+          "name": "band"
+        }
+      ],
+      "shape": "one",
+      "kind": "ident",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|chart| { categories: \"a\", \"b\"; } [\n  |axis#y| { side: left; }\n  |bars| { data: 4, 8; axis: y; }\n]"
+    },
+    {
+      "name": "bars",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "chart"
+        }
+      ],
+      "shape": "one",
+      "kind": "ident",
+      "default": "engine",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|chart| { categories: \"a\", \"b\"; bars: stacked; } [\n  |bars| \"one\" { data: 4, 8; }\n  |bars| \"two\" { data: 3, 6; }\n]"
+    },
+    {
+      "name": "categories",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "chart"
+        }
+      ],
+      "shape": "list",
+      "kind": "string",
+      "default": "engine",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|chart| { categories: \"Jan\", \"Feb\", \"Mar\"; } [\n  |bars| { data: 4, 8, 6; }\n]"
+    },
+    {
+      "name": "hole",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "pie"
+        }
+      ],
+      "shape": "one",
+      "kind": "number",
+      "default": "engine",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|pie| { hole: 0.5; } [\n  |slice| { value: 3; }\n  |slice| { value: 7; }\n]"
+    },
+    {
+      "name": "legend",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "chart"
+        },
+        {
+          "kind": "type",
+          "name": "pie"
+        }
+      ],
+      "shape": "one",
+      "kind": "any",
+      "default": "engine",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": true,
+      "dualChannel": false,
+      "example": "|chart| { categories: \"a\", \"b\"; legend: bottom; } [\n  |bars| \"one\" { data: 4, 8; }\n  |bars| \"two\" { data: 3, 6; }\n]"
+    },
+    {
+      "name": "tooltip",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "chart"
+        },
+        {
+          "kind": "type",
+          "name": "pie"
+        },
+        {
+          "kind": "role",
+          "name": "series"
+        }
+      ],
+      "shape": "one",
+      "kind": "any",
+      "default": "engine",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|chart| { categories: \"a\", \"b\"; tooltip: always; } [\n  |bars| { data: 4, 8; }\n]"
+    },
+    {
+      "name": "value",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "slice"
+        },
+        {
+          "kind": "type",
+          "name": "bubble"
+        }
+      ],
+      "shape": "one",
+      "kind": "number",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|pie| [\n  |slice| \"a\" { value: 3; }\n  |slice| \"b\" { value: 7; }\n]"
+    },
+    {
+      "name": "at",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "mark"
+        },
+        {
+          "kind": "type",
+          "name": "bubble"
+        },
+        {
+          "kind": "type",
+          "name": "plane"
+        }
+      ],
+      "shape": "one",
+      "kind": "any",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|chart| { categories: \"a\", \"b\"; } [\n  |axis#y| { side: left; }\n  |bars| { data: 4, 8; }\n  |mark| \"target\" { at: 6; axis: y; }\n]"
+    },
+    {
+      "name": "side",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "axis"
+        },
+        {
+          "kind": "type",
+          "name": "topic"
+        },
+        {
+          "kind": "role",
+          "name": "dimension"
+        }
+      ],
+      "shape": "one",
+      "kind": "ident",
+      "default": "engine",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|chart| { categories: \"a\", \"b\"; } [\n  |axis| { side: bottom; }\n  |bars| { data: 4, 8; }\n]"
+    },
+    {
+      "name": "range",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "axis"
+        }
+      ],
+      "shape": "one",
+      "kind": "number",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|chart| { categories: \"a\", \"b\"; } [\n  |axis| { side: left; range: 0 100; }\n  |bars| { data: 40, 80; }\n]"
+    },
+    {
+      "name": "step",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "axis"
+        }
+      ],
+      "shape": "one",
+      "kind": "number",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|chart| { categories: \"a\", \"b\", \"c\"; } [\n  |axis| { side: left; range: 0 90; step: 30; }\n  |bars| { data: 40, 80, 60; }\n]"
+    },
+    {
+      "name": "ticks",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "axis"
+        }
+      ],
+      "shape": "list",
+      "kind": "number",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|chart| { categories: \"a\", \"b\"; } [\n  |axis| { side: left; ticks: 0, 25, 50, 75, 100; }\n  |bars| { data: 40, 80; }\n]"
+    },
+    {
+      "name": "unit",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "drawing"
+        },
+        {
+          "kind": "type",
+          "name": "axis"
+        }
+      ],
+      "shape": "one",
+      "kind": "any",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|chart| { categories: \"a\", \"b\"; } [\n  |axis| { side: left; unit: \"%\"; }\n  |bars| { data: 40, 80; }\n]"
+    },
+    {
+      "name": "gridlines",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "axis"
+        }
+      ],
+      "shape": "one",
+      "kind": "any",
+      "default": "engine",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|chart| { categories: \"a\", \"b\"; } [\n  |axis| { side: left; gridlines: none; }\n  |bars| { data: 40, 80; }\n]"
+    },
+    {
+      "name": "format",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "chart"
+        },
+        {
+          "kind": "type",
+          "name": "pie"
+        },
+        {
+          "kind": "type",
+          "name": "axis"
+        },
+        {
+          "kind": "role",
+          "name": "series"
+        },
+        {
+          "kind": "type",
+          "name": "drawing"
+        },
+        {
+          "kind": "role",
+          "name": "dimension"
+        }
+      ],
+      "shape": "one",
+      "kind": "any",
+      "default": "engine",
+      "inherit": "scope-link",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": true,
+      "example": "|chart| { categories: \"a\", \"b\"; format: decimal 1; } [\n  |bars| { data: 4, 8; }\n]"
+    },
+    {
+      "name": "place",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "note"
+        }
+      ],
+      "shape": "one",
+      "kind": "any",
+      "default": "none",
+      "inherit": "no",
+      "gate": "hard",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "{ layout: sequence; }\n\n|box#a| \"A\"\n|box#b| \"B\"\n|note| \"annotates\" { place: over a; }\na -> b \"msg\""
+    },
+    {
+      "name": "activation",
+      "owners": [
+        {
+          "kind": "layout",
+          "name": "sequence"
+        }
+      ],
+      "shape": "one",
+      "kind": "ident",
+      "default": "engine",
+      "inherit": "no",
+      "gate": "hard",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "{ layout: sequence; activation: none; }\n\n|box#a| \"A\"\n|box#b| \"B\"\na -> b \"msg\""
+    },
+    {
+      "name": "tol",
+      "owners": [
+        {
+          "kind": "role",
+          "name": "dimension"
+        },
+        {
+          "kind": "type",
+          "name": "feature-control"
+        },
+        {
+          "kind": "type",
+          "name": "control"
+        }
+      ],
+      "shape": "one",
+      "kind": "any",
+      "default": "none",
+      "inherit": "no",
+      "gate": "hard",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|drawing| [\n  |rect#p| { width: 60; height: 40; }\n  p:top (-) p:bottom { side: left; tol: 0.2 -0.05; }\n]"
+    },
+    {
+      "name": "characteristic",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "feature-control"
+        },
+        {
+          "kind": "type",
+          "name": "control"
+        }
+      ],
+      "shape": "one",
+      "kind": "ident",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|drawing| [\n  |rect| { width: 40; height: 24; }\n  |feature-control| { characteristic: flatness; tol: 0.2; }\n]"
+    },
+    {
+      "name": "zone",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "feature-control"
+        },
+        {
+          "kind": "type",
+          "name": "control"
+        }
+      ],
+      "shape": "one",
+      "kind": "ident",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|drawing| [\n  |rect| { width: 40; height: 24; }\n  |feature-control| \"position\" { tol: 0.1; zone: diameter; }\n]"
+    },
+    {
+      "name": "material",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "feature-control"
+        },
+        {
+          "kind": "type",
+          "name": "control"
+        }
+      ],
+      "shape": "one",
+      "kind": "ident",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|drawing| [\n  |rect| { width: 40; height: 24; }\n  |feature-control| \"position\" { tol: 0.1; material: maximum; }\n]"
+    },
+    {
+      "name": "datums",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "feature-control"
+        },
+        {
+          "kind": "type",
+          "name": "control"
+        }
+      ],
+      "shape": "list",
+      "kind": "any",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|drawing| [\n  |rect#p| { width: 80; height: 50; }\n  p:bottom >- \"A\"\n  p:top >- \"B\"\n  |feature-control| \"position\" { tol: 0.1; datums: A, B; translate: 0 44; }\n]"
+    },
+    {
+      "name": "modifiers",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "feature-control"
+        },
+        {
+          "kind": "type",
+          "name": "control"
+        }
+      ],
+      "shape": "list",
+      "kind": "any",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|drawing| [\n  |rect| { width: 40; height: 24; }\n  |feature-control| \"position\" { tol: 0.1; modifiers: projected 20; }\n]"
+    },
+    {
+      "name": "project",
+      "owners": [
+        {
+          "kind": "role",
+          "name": "dimension"
+        }
+      ],
+      "shape": "one",
+      "kind": "ident",
+      "default": "none",
+      "inherit": "no",
+      "gate": "hard",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|drawing| [\n  |rect#p| { width: 80; height: 40; }\n  p:top-left (-) p:top-right { side: top; project: horizontal; }\n]"
+    },
+    {
+      "name": "facing",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "plane"
+        }
+      ],
+      "shape": "one",
+      "kind": "ident",
+      "default": "engine",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|drawing| [\n  |oval#od| { width: 60; height: 60; fill: none; stroke: --stroke-dark; }\n  |plane#a| \"A\" { at: 0; facing: right; }\n]"
+    },
+    {
+      "name": "of",
+      "owners": [
+        {
+          "kind": "type",
+          "name": "drawing"
+        }
+      ],
+      "shape": "one",
+      "kind": "ident",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|page| { align: origin; } [\n  |drawing#front| [\n    |oval#od| { width: 60; height: 60; fill: none; stroke: --stroke-dark; }\n    |magnifier#c| \"C\" { width: 24; }\n  ]\n  |drawing#det| { of: c; }\n]"
+    },
+    {
+      "name": "title",
+      "owners": [
+        {
+          "kind": "role",
+          "name": "title-block"
+        }
+      ],
+      "shape": "one",
+      "kind": "string",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|page| [\n  |title-block| { title: \"Socket cap screw\"; }\n]"
+    },
+    {
+      "name": "drawing-number",
+      "owners": [
+        {
+          "kind": "role",
+          "name": "title-block"
+        }
+      ],
+      "shape": "one",
+      "kind": "string",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|page| [\n  |title-block| { drawing-number: \"DIN 912 — M8 × 40\"; }\n]"
+    },
+    {
+      "name": "revision",
+      "owners": [
+        {
+          "kind": "role",
+          "name": "title-block"
+        }
+      ],
+      "shape": "one",
+      "kind": "string",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|page| [\n  |title-block| { revision: \"A\"; }\n]"
+    },
+    {
+      "name": "sheet-number",
+      "owners": [
+        {
+          "kind": "role",
+          "name": "title-block"
+        }
+      ],
+      "shape": "one",
+      "kind": "string",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|page| [\n  |title-block| { sheet-number: \"1/1\"; }\n]"
+    },
+    {
+      "name": "date",
+      "owners": [
+        {
+          "kind": "role",
+          "name": "title-block"
+        }
+      ],
+      "shape": "one",
+      "kind": "string",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|page| [\n  |title-block| { date: \"2026-07-08\"; }\n]"
+    },
+    {
+      "name": "author",
+      "owners": [
+        {
+          "kind": "role",
+          "name": "title-block"
+        }
+      ],
+      "shape": "one",
+      "kind": "string",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|page| [\n  |title-block| { author: \"AM\"; }\n]"
+    },
+    {
+      "name": "approved",
+      "owners": [
+        {
+          "kind": "role",
+          "name": "title-block"
+        }
+      ],
+      "shape": "one",
+      "kind": "string",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|page| [\n  |title-block| { approved: \"RB\"; }\n]"
+    },
+    {
+      "name": "department",
+      "owners": [
+        {
+          "kind": "role",
+          "name": "title-block"
+        }
+      ],
+      "shape": "one",
+      "kind": "string",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|page| [\n  |title-block| { department: \"Engineering\"; }\n]"
+    },
+    {
+      "name": "reference",
+      "owners": [
+        {
+          "kind": "role",
+          "name": "title-block"
+        }
+      ],
+      "shape": "one",
+      "kind": "string",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|page| [\n  |title-block| { reference: \"REF-001\"; }\n]"
+    },
+    {
+      "name": "document-type",
+      "owners": [
+        {
+          "kind": "role",
+          "name": "title-block"
+        }
+      ],
+      "shape": "one",
+      "kind": "string",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|page| [\n  |title-block| { document-type: \"Drawing\"; }\n]"
+    },
+    {
+      "name": "status",
+      "owners": [
+        {
+          "kind": "role",
+          "name": "title-block"
+        }
+      ],
+      "shape": "one",
+      "kind": "string",
+      "default": "none",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|page| [\n  |title-block| { status: \"Released\"; }\n]"
+    },
+    {
+      "name": "density",
+      "owners": [
+        {
+          "kind": "root"
+        }
+      ],
+      "shape": "one",
+      "kind": "number",
+      "default": "engine",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "{ density: 4; }\n\n|drawing| [\n  |rect| { width: 40; height: 20; }\n]"
+    },
+    {
+      "name": "clearance",
+      "owners": [
+        {
+          "kind": "link"
+        },
+        {
+          "kind": "root"
+        },
+        {
+          "kind": "role",
+          "name": "dimension"
+        }
+      ],
+      "shape": "one",
+      "kind": "number",
+      "default": "bundles",
+      "inherit": "scope-link",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|box#a| \"A\"\n|box#b| \"B\"\na -> b { clearance: 24; }"
+    },
+    {
+      "name": "routing",
+      "owners": [
+        {
+          "kind": "link"
+        },
+        {
+          "kind": "root"
+        }
+      ],
+      "shape": "one",
+      "kind": "ident",
+      "default": "engine",
+      "inherit": "scope-link",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|box#a| \"A\"\n|box#b| \"B\"\na -> b { routing: orthogonal; }"
+    },
+    {
+      "name": "along",
+      "owners": [
+        {
+          "kind": "link"
+        }
+      ],
+      "shape": "list",
+      "kind": "number",
+      "default": "engine",
+      "inherit": "no",
+      "gate": "lenient",
+      "text": false,
+      "baked": false,
+      "deferred": false,
+      "dualChannel": false,
+      "example": "|box#a| \"A\"\n|box#b| \"B\"\na -> b \"mid\" { along: 0.35; }"
+    }
+  ]
+}

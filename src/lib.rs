@@ -14,6 +14,7 @@ mod palette;
 mod render;
 mod resolve;
 mod routing;
+mod schema;
 mod serve;
 mod span;
 mod suggest;
@@ -23,6 +24,13 @@ mod validate;
 
 pub use error::{Diagnostic, Error, Level};
 pub use fmt::format as format_source;
+
+/// The generated, ledger-backed tooling contract [ROADMAP 3.8]: the
+/// machine-readable JSON schema and its compact Markdown mirror, plus the
+/// compiled per-property examples the schema embeds. `cargo xtask gen-schema`
+/// writes the two files; `tests/schema.rs` guards them byte-identical.
+pub use ledger::examples::EXAMPLES as schema_examples;
+pub use schema::{reference_md, schema_json};
 
 /// Lower a source file's sugar to primitives + `.lini-*` classes and print canonical
 /// `.lini` — what `lini desugar` shows: every typed instance becomes a `|primitive|`
