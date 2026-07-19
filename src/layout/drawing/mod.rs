@@ -268,20 +268,29 @@ pub(super) mod testutil {
     use super::super::{LaidOut, PlacedNode};
     use crate::resolve::NodeKind;
 
+    /// Resolve with the samples dir as the asset base [SPEC 7], so the sample
+    /// sweeps here compile files that embed local images; inline sources are
+    /// unaffected (they carry none).
+    fn resolved(lowered: &crate::syntax::ast::File) -> crate::resolve::Program {
+        let env = crate::resolve::AssetEnv {
+            base_dir: Some("samples".into()),
+            root: None,
+        };
+        crate::resolve::resolve_with_env(lowered, &[], env).expect("resolve")
+    }
+
     pub fn laid(src: &str) -> LaidOut {
         let toks = crate::lexer::lex(src).expect("lex");
         let file = crate::syntax::parser::parse(src, &toks).expect("parse");
         let lowered = crate::desugar::desugar(&file).expect("desugar");
-        let program = crate::resolve::resolve_with_theme(&lowered, &[]).expect("resolve");
-        crate::layout::layout(&program).expect("layout")
+        crate::layout::layout(&resolved(&lowered)).expect("layout")
     }
 
     pub fn layout_err(src: &str) -> String {
         let toks = crate::lexer::lex(src).expect("lex");
         let file = crate::syntax::parser::parse(src, &toks).expect("parse");
         let lowered = crate::desugar::desugar(&file).expect("desugar");
-        let program = crate::resolve::resolve_with_theme(&lowered, &[]).expect("resolve");
-        match crate::layout::layout(&program) {
+        match crate::layout::layout(&resolved(&lowered)) {
             Ok(_) => panic!("expected a layout error"),
             Err(e) => e.message,
         }

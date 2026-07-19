@@ -406,6 +406,20 @@ input_file: samples/drawing_sheet.lini
           </g>
         </g>
       </g>
+      <g class="lini-node lini-image" transform="translate(-482,-328)">
+        <svg x="-24" y="-24" width="48" height="48" viewBox="0 0 48 48">
+  <defs>
+    <linearGradient id="lini-a1-g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4f8bd8"/>
+      <stop offset="1" stop-color="#7fd8c8"/>
+    </linearGradient>
+    <circle id="lini-a1-dot" r="4"/>
+  </defs>
+  <rect x="4" y="4" width="40" height="40" rx="10" fill="url(#lini-a1-g)"/>
+  <use href="#lini-a1-dot" x="17" y="24" fill="#fff"/>
+  <use href="#lini-a1-dot" x="31" y="24" fill="#fff"/>
+        </svg>
+      </g>
       <g class="lini-node lini-frame lini-rect lini-box lini-block" transform="translate(20,0)">
         <rect x="-534" y="-380" width="1068" height="760" rx="0" ry="0"/>
       </g>

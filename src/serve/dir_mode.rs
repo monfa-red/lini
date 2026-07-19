@@ -36,7 +36,7 @@ pub(super) fn handle(
         }
         ("GET", "/api/files") => serve_list(stream, root),
         ("GET", "/api/file") => serve_file(stream, root, &req.query),
-        ("POST", "/compile") => serve_compile(stream, &req.body, &state.opts),
+        ("POST", "/compile") => serve_compile(stream, req, state),
         ("POST", "/save") => serve_save(stream, root, &req.query, &req.body),
         ("GET", "/favicon.ico") => http::write_response(stream, 204, "text/plain", b""),
         _ => http::write_response(stream, 404, "text/plain", b"not found\n"),
@@ -76,8 +76,26 @@ fn content_type(path: &Path) -> &'static str {
     }
 }
 
-fn serve_compile(stream: &mut TcpStream, body: &[u8], opts: &Options) -> std::io::Result<()> {
-    let src = String::from_utf8_lossy(body);
+fn serve_compile(
+    stream: &mut TcpStream,
+    req: &http::Request,
+    state: &State,
+) -> std::io::Result<()> {
+    let root = root(state);
+    // Image assets resolve from the compiling file's directory, confined to
+    // the served root [SPEC 7/19] — the same boundary as the file list. An
+    // unsaved buffer (no `path`) anchors at the root itself.
+    let base_dir = http::query_param(&req.query, "path")
+        .and_then(|rel| resolve_in_root(root, &rel))
+        .and_then(|p| p.parent().map(Path::to_path_buf))
+        .unwrap_or_else(|| root.to_path_buf());
+    let opts = Options {
+        base_dir: Some(base_dir),
+        asset_root: Some(root.to_path_buf()),
+        ..state.opts.clone()
+    };
+    let opts = &opts;
+    let src = String::from_utf8_lossy(&req.body);
     let name = "playground.lini";
     let lints = crate::lint_str(&src).unwrap_or_default();
     // Best-effort extras, present whenever the source parses: render also
@@ -239,17 +257,19 @@ mod tests {
     }
 
     #[test]
-    fn resolve_accepts_an_in_root_lini_file() {
+    fn resolve_accepts_in_root_files_assets_included() {
+        // The boundary generalized past `.lini` [SPEC 19]: served assets
+        // (a scene's images) resolve under the same wall.
         assert!(resolve_in_root(Path::new("samples"), "hello.lini").is_some());
+        assert!(resolve_in_root(Path::new("samples"), "assets/logo.svg").is_some());
     }
 
     #[test]
-    fn resolve_rejects_traversal_absolute_and_non_lini() {
+    fn resolve_rejects_traversal_absolute_and_missing() {
         let root = Path::new("samples");
         assert!(resolve_in_root(root, "../Cargo.toml").is_none()); // traversal
         assert!(resolve_in_root(root, "../samples/hello.lini").is_none()); // traversal even if it lands back inside
         assert!(resolve_in_root(root, "/etc/hosts").is_none()); // absolute
-        assert!(resolve_in_root(root, "hello.txt").is_none()); // wrong extension
         assert!(resolve_in_root(root, "nope.lini").is_none()); // does not exist
     }
 }

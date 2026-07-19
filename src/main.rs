@@ -165,6 +165,12 @@ fn main() -> ExitCode {
         None => None,
     };
 
+    // Local image paths resolve against the source file's directory [SPEC 7];
+    // stdin has none. A plain CLI compile is unbounded — no asset root [SPEC 19].
+    let base_dir = (cli.input != "-")
+        .then(|| Path::new(&cli.input).parent().map(Path::to_path_buf))
+        .flatten();
+
     if cli.watch {
         let out_path = cli.output.clone().expect("clap enforces -o with --watch");
         if cli.input == "-" {
@@ -176,6 +182,8 @@ fn main() -> ExitCode {
             embed_font: cli.embed_font,
             format,
             theme_css,
+            base_dir,
+            ..Default::default()
         };
         return watch_loop(Path::new(&cli.input), &out_path, &opts, cli.check);
     }
@@ -203,6 +211,8 @@ fn main() -> ExitCode {
         embed_font: cli.embed_font,
         format,
         theme_css,
+        base_dir,
+        ..Default::default()
     };
 
     if cli.check {

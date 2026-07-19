@@ -43,6 +43,9 @@ pub struct SceneCtx<'a> {
     pub sheet: &'a Stylesheet,
     pub vars: &'a VarTable,
     pub funcs: &'a crate::expr::FuncTable,
+    /// The image-asset environment + document-order counter [SPEC 7/17] —
+    /// interior-mutable, so the shared ctx stays read-only everywhere else.
+    pub assets: &'a super::assets::AssetState,
 }
 
 /// Resolve the top-level instances into scene nodes, collecting lifted internal
@@ -208,7 +211,7 @@ pub fn resolve_node(
     }
 
     let markers = resolve_markers(&ordered, MarkerKind::None, MarkerKind::None, node.span)?;
-    let attrs = collapse(&ordered);
+    let mut attrs = collapse(&ordered);
 
     if kind == NodeKind::Slant
         && let Some(skew) = attrs.number("skew")
@@ -273,6 +276,15 @@ pub fn resolve_node(
         validate_icon(&attrs, node.span)?;
     } else if kind == NodeKind::Image {
         validate_fit(&attrs, node.span)?;
+        // A local `src:` reads its bytes now — the one read [SPEC 7] — erring
+        // at the `src:` declaration when the node wrote one.
+        let src_span = node
+            .style
+            .iter()
+            .find(|d| d.name == "src")
+            .map(|d| d.span)
+            .unwrap_or(node.span);
+        super::assets::embed_image(&mut attrs, ctx.assets, src_span)?;
     } else if type_chain.iter().any(|t| t == "surface-finish") {
         validate_finish(&attrs, node.span)?;
     }

@@ -28,11 +28,13 @@ fn fmt_every_sample_is_idempotent() {
 fn formatted_output_resolves_identically() {
     // Formatting must not change semantics. Compile the original sample,
     // compile the formatted version, and require identical SVG output.
+    let samples_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("samples");
     let opts = lini::Options {
         static_mode: true,
+        // Samples resolve their image assets against their own dir [SPEC 7].
+        base_dir: Some(samples_dir.clone()),
         ..Default::default()
     };
-    let samples_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("samples");
     let mut failures = Vec::new();
     for entry in std::fs::read_dir(&samples_dir).expect("read samples dir") {
         let path = entry.expect("readdir").path();

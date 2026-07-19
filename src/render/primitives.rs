@@ -588,13 +588,10 @@ fn emit_role_group(
 }
 
 fn emit_image(out: &mut String, n: &PlacedNode, indent: &str) {
-    let href = match n.attrs.get("src") {
-        Some(crate::resolve::ResolvedValue::String(s)) => s.clone(),
-        _ => return,
-    };
     // Image dimensions come from its bbox (driven by `width`/`height`). `fit` maps
     // to `preserveAspectRatio` [SPEC 13]; `auto`/`contain` is the SVG default
-    // (`xMidYMid meet`), so only `cover`/`stretch` need stating.
+    // (`xMidYMid meet`), so only `cover`/`stretch` need stating — the same
+    // mapping for a URL `<image>` and an embedded asset's nested `<svg>`.
     let w = n.bbox.w();
     let h = n.bbox.h();
     let par = match super::icon_fit::Fit::of(&n.attrs) {
@@ -602,11 +599,44 @@ fn emit_image(out: &mut String, n: &PlacedNode, indent: &str) {
         super::icon_fit::Fit::Stretch => r#" preserveAspectRatio="none""#,
         _ => "",
     };
+    use crate::resolve::ResolvedValue;
+    // An embedded SVG asset [SPEC 17]: resolve already rewrote its ids and
+    // internal references (`lini-aN-`); render maps it into the node box as a
+    // nested `<svg>` — its kept root attrs (viewBox, paints) emitted verbatim.
+    if let Some(ResolvedValue::String(inner)) = n.attrs.get("embed-svg") {
+        let extra = match n.attrs.get("embed-attrs") {
+            Some(ResolvedValue::String(a)) if !a.is_empty() => format!(" {a}"),
+            _ => String::new(),
+        };
+        writeln!(
+            out,
+            r#"{}<svg x="{}" y="{}" width="{}" height="{}"{}{}>"#,
+            indent,
+            num(-w / 2.0),
+            num(-h / 2.0),
+            num(w),
+            num(h),
+            par,
+            extra,
+        )
+        .unwrap();
+        let inner = inner.trim_matches('\n');
+        if !inner.is_empty() {
+            out.push_str(inner);
+            out.push('\n');
+        }
+        writeln!(out, "{indent}</svg>").unwrap();
+        return;
+    }
+    let href = match n.attrs.get("src") {
+        Some(ResolvedValue::String(s)) => s,
+        _ => return,
+    };
     writeln!(
         out,
         r#"{}<image href="{}" x="{}" y="{}" width="{}" height="{}"{}/>"#,
         indent,
-        escape_xml(&href),
+        escape_xml(href),
         num(-w / 2.0),
         num(-h / 2.0),
         num(w),

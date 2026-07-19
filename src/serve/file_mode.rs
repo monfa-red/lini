@@ -70,7 +70,15 @@ fn serve_svg(stream: &mut TcpStream, state: &State) -> std::io::Result<()> {
             return http::write_response(stream, 200, "text/plain; charset=utf-8", msg.as_bytes());
         }
     };
-    match crate::compile_str_with(&src, &state.opts) {
+    // A file target's asset root is its own directory [SPEC 19]: image paths
+    // resolve there and may not escape it.
+    let dir = path.parent().unwrap_or(Path::new(".")).to_path_buf();
+    let opts = crate::Options {
+        base_dir: Some(dir.clone()),
+        asset_root: Some(dir),
+        ..state.opts.clone()
+    };
+    match crate::compile_str_with(&src, &opts) {
         Ok(svg) => http::write_response(stream, 200, "image/svg+xml", svg.as_bytes()),
         Err(e) => {
             let filename = path.display().to_string();

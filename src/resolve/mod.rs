@@ -7,6 +7,7 @@
 //! [`program`] orchestrates them over the [`defaults`] table; [`merge`] folds
 //! resolved declarations and extracts markers; [`ir`] is the resolved form.
 
+pub(crate) mod assets;
 mod cascade;
 mod defaults;
 mod ir;
@@ -16,6 +17,9 @@ mod program;
 pub(crate) mod scene;
 mod value;
 
+pub use assets::AssetEnv;
 pub use defaults::built_in_defaults;
 pub use ir::*;
+#[cfg_attr(not(test), allow(unused_imports))]
 pub use program::resolve as resolve_with_theme;
+pub use program::resolve_with_env;

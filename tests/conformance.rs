@@ -22,13 +22,15 @@ fn snapshot_baked_svg_for_every_sample() {
     if !cfg!(feature = "font") {
         return;
     }
+    let samples_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("samples");
     let opts = Options {
         static_mode: true,
         format: OutputFormat::Svg,
+        // Samples resolve their image assets against their own dir [SPEC 7].
+        base_dir: Some(samples_dir.clone()),
         ..Default::default()
     };
 
-    let samples_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("samples");
     insta::glob!(samples_dir, "*.lini", |path| {
         let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
         if LINK_SAMPLES.contains(&name) {

@@ -6,9 +6,17 @@
 //! and turning the one routing knob (`clearance`) can shrink the drawable
 //! set but never produce illegal geometry.
 
-use lini::testing::{declared_edges, drawn_edges, laws, route_sample, routes_str};
-use lini::{Rule, Severity};
+use lini::testing::{declared_edges_with, drawn_edges, laws, route_sample_with, routes_str_with};
+use lini::{Options, Rule, Severity};
 use std::path::PathBuf;
+
+/// Samples resolve their image assets against their own directory [SPEC 7].
+fn sample_opts() -> Options {
+    Options {
+        base_dir: Some(PathBuf::from("samples")),
+        ..Default::default()
+    }
+}
 
 /// The clearance sweep: the knob's native span, dense enough to cross every
 /// sample's capacity boundaries.
@@ -51,7 +59,8 @@ fn every_sample_satisfies_the_laws() {
     for path in sample_paths() {
         let src = read(&path);
         let found = breaches(
-            lini::validate_str(&src).unwrap_or_else(|e| panic!("validate {}: {e}", path.display())),
+            lini::validate_str_with(&src, &sample_opts())
+                .unwrap_or_else(|e| panic!("validate {}: {e}", path.display())),
         );
         assert!(
             found.is_empty(),
@@ -69,7 +78,7 @@ fn every_sample_satisfies_the_laws() {
 fn impossible_links_are_exactly_the_known_capacity_truths() {
     for path in sample_paths() {
         let src = read(&path);
-        let impossible = lini::validate_str(&src)
+        let impossible = lini::validate_str_with(&src, &sample_opts())
             .unwrap_or_else(|e| panic!("validate {}: {e}", path.display()))
             .into_iter()
             .filter(|v| v.rule == Rule::Impossible)
@@ -83,18 +92,18 @@ fn impossible_links_are_exactly_the_known_capacity_truths() {
 fn every_sample_compiles_and_routes_byte_identically() {
     for path in sample_paths() {
         let src = read(&path);
-        let svg =
-            lini::compile_str(&src).unwrap_or_else(|e| panic!("compile {}: {e}", path.display()));
-        let routes = routes_str(&src).expect("routes");
+        let svg = lini::compile_str_with(&src, &sample_opts())
+            .unwrap_or_else(|e| panic!("compile {}: {e}", path.display()));
+        let routes = routes_str_with(&src, &sample_opts()).expect("routes");
         for _ in 0..2 {
             assert_eq!(
-                lini::compile_str(&src).expect("recompile"),
+                lini::compile_str_with(&src, &sample_opts()).expect("recompile"),
                 svg,
                 "{}: compile is not deterministic",
                 path.display()
             );
             assert_eq!(
-                routes_str(&src).expect("reroute"),
+                routes_str_with(&src, &sample_opts()).expect("reroute"),
                 routes,
                 "{}: routing is not deterministic",
                 path.display()
@@ -117,9 +126,9 @@ fn every_sample_compiles_and_routes_byte_identically() {
 fn every_sample_holds_the_laws_at_every_clearance() {
     for path in sample_paths() {
         let src = read(&path);
-        let declared = declared_edges(&src);
+        let declared = declared_edges_with(&src, &sample_opts());
         for c in CLEARANCES {
-            let laid = route_sample(&src, c);
+            let laid = route_sample_with(&src, &sample_opts(), c);
             let report = laws(&laid);
             let impossible = report.iter().filter(|v| v.rule == Rule::Impossible).count();
             let found = breaches(report);
@@ -148,7 +157,7 @@ fn routing_pcb_ten_times_stays_fast() {
     let src = read(std::path::Path::new("samples/pcb.lini"));
     let start = std::time::Instant::now();
     for _ in 0..10 {
-        lini::compile_str(&src).expect("compile pcb");
+        lini::compile_str_with(&src, &sample_opts()).expect("compile pcb");
     }
     let took = start.elapsed();
     assert!(
@@ -165,7 +174,7 @@ fn routing_mindmap_ten_times_stays_fast() {
     let src = read(std::path::Path::new("samples/mindmap.lini"));
     let start = std::time::Instant::now();
     for _ in 0..10 {
-        lini::compile_str(&src).expect("compile mindmap");
+        lini::compile_str_with(&src, &sample_opts()).expect("compile mindmap");
     }
     let took = start.elapsed();
     assert!(

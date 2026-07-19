@@ -491,7 +491,11 @@
         ).text();
       }
       async function compile(source) {
-        const r = await fetch("/compile", { method: "POST", body: source });
+        // The file's path anchors relative image src: paths server-side.
+        const q = currentPath
+          ? "?path=" + encodeURIComponent(currentPath)
+          : "";
+        const r = await fetch("/compile" + q, { method: "POST", body: source });
         return await r.json(); // { ok, svg?, error?, diagnostics, formatted?, desugared? }
       }
       async function saveFile(path, source) {

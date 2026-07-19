@@ -49,4 +49,7 @@
   |title-block| {
     title: "Socket cap screw"; drawing-number: "DIN 912 — M8 × 40"; revision: "A"; sheet-number: "1/1"; date: "2026-07-08"; author: "AM";
   }
+
+  // the maker's mark — a local SVG, embedded id-isolated at compile [SPEC 7]
+  |image| { src: "assets/logo.svg"; width: 12; height: 12; pin: top left; translate: 88 68; }
 ]

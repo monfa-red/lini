@@ -30,8 +30,21 @@ use theme::{apply_theme, apply_var_decls, build_funcs};
 #[cfg(test)]
 mod tests;
 
-/// Resolve a parsed file into a [`Program`].
+/// Resolve a parsed file into a [`Program`] with no asset environment — local
+/// image paths resolve as written and unbounded [SPEC 7]. The unit tests'
+/// convenience entry; the compile pipeline enters through [`resolve_with_env`].
+#[cfg_attr(not(test), allow(dead_code))]
 pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error> {
+    resolve_with_env(file, theme, super::assets::AssetEnv::default())
+}
+
+/// Resolve a parsed file into a [`Program`], reading local image assets
+/// through `env` [SPEC 7/19].
+pub fn resolve_with_env(
+    file: &File,
+    theme: &[(String, String)],
+    env: super::assets::AssetEnv,
+) -> Result<Program, Error> {
     // ── Variables: built-in visual-var defaults ← theme ← `--name` decls ──
     let mut vars = defaults::built_in_defaults();
     apply_theme(&mut vars, theme);
@@ -65,10 +78,14 @@ pub fn resolve(file: &File, theme: &[(String, String)]) -> Result<Program, Error
 
     // ── Scene tree (types/templates/defines, labels, and auto-create were all
     //    lowered by desugar — resolve only sees primitives + classes) ──
+    // Image assets read at resolve — the one read [SPEC 7]; the counter
+    // numbers embedded assets in document order for the id prefix [SPEC 17].
+    let assets = super::assets::AssetState::new(env);
     let ctx = SceneCtx {
         sheet: &sheet,
         vars: &vars,
         funcs: &funcs,
+        assets: &assets,
     };
     let mut id_seen = HashMap::new();
     let mut lifted = Vec::new();

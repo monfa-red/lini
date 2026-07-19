@@ -162,31 +162,53 @@ untouched.
 
 ### Stage 1 — local image embedding
 
-- [ ] Resolve-time assets: an `|image|` whose `src:` is neither a URL
+- [x] Resolve-time assets: an `|image|` whose `src:` is neither a URL
   nor a `data:` URI resolves against the source file's directory; the
   bytes load at resolve (the one read — layout and render reuse them),
   classified SVG / raster by content; missing / unreadable paths error
   with the `src:` span (decision 2).
-- [ ] The embed (decision 3): `emit_image` switches on the resolved
+- [x] The embed (decision 3): `emit_image` switches on the resolved
   form — nested `<svg>` mapped into the node box (`fit:` honored, as
   today's `preserveAspectRatio` mapping) with the `lini-aN-` id
   rewrite; raster as a base64 data-URI `<image>`; authored URLs / data
   URIs byte-identical to today.
-- [ ] Boundaries (decision 5): `dir_mode::resolve_in_root` generalizes
+- [x] Boundaries (decision 5): `dir_mode::resolve_in_root` generalizes
   past `.lini` for asset reads; the compile carries an optional asset
   root — serve dir mode passes the served root, serve file mode the
   file's directory, the CLI none; an escape errors naming the path.
-- [ ] Assets: a small repo logo (`samples/assets/`) — an SVG with
+- [x] Assets: a small repo logo (`samples/assets/`) — an SVG with
   internal ids/refs (gradient + `use`) to exercise the rewrite, plus a
   tiny raster; `samples/drawing_sheet.lini` gains the SVG logo as a
   page child (its title-block cell seat lands in Stage 2).
-- [ ] Tests: id-rewrite units (id, `url(#…)`, `href` forms; two assets
+- [x] Tests: id-rewrite units (id, `url(#…)`, `href` forms; two assets
   don't collide); snapshot the embedded output; **byte-identical across
   two runs**; the missing-path and escape-root errors; PNG light + dark.
 
 Acceptance: embedded output renders in resvg and a browser, byte-identical
 across runs; a traversal attempt errors; remote-URL output unchanged.
-**Log:**
+**Log:** 2026-07-19 — **done**. The asset pass lives in
+`resolve/assets.rs`: `embed_image` runs at the scene walk's `|image|`
+branch (span = the `src:` decl), pass-through for `http(s)://`/`data:`,
+else read → boundary-check → classify by content (SVG root sniff / magic
+bytes); an SVG asset folds to `embed-svg` + `embed-attrs` attrs (the
+sketch-`path` precedent) — placement attrs dropped, `viewBox`
+synthesized from width×height when absent — and `emit_image` nests it;
+rasters rewrite `src` to a data URI through the **one** base64 (fonts'
+copy deduped into `assets::base64`). `Options` gained
+`base_dir`/`asset_root`: CLI sets base from the input's directory (root
+none — unbounded), serve dir mode anchors at the posted file's parent
+inside the served root (playground compile now sends `?path=`), file
+mode roots at its own directory. `resolve_in_root` was already
+`.lini`-free on the read side; its test now proves an asset resolves.
+Sample: `samples/assets/logo.svg` (gradient + two `use` refs) pinned
+top-left inside `drawing_sheet`'s frame + `assets/mark.png` (85-byte
+checker). Sample-sweeping suites (laws/oracle/fmt/conformance/
+resolution + the drawing testutil) pass `base_dir: samples/` — testing
+hooks gained `_with` variants; the three `fit:` unit tests now use a URL
+src. One snapshot re-blessed (`drawing_sheet` — the logo). PNGs light +
+dark verified in resvg: gradient + `use` dots render, nothing drifted.
+Tests 1055 → **1073** (12 rewrite units + 7 integration, −1 dedup);
+fmt/clippy/test clean.
 
 ### Stage 2 — title-block authored cells; the pcb rider
 

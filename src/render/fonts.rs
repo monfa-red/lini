@@ -234,33 +234,9 @@ mod enabled {
         }
     }
 
-    /// Plain base64 (RFC 4648, padded) — a data: URL needs nothing more, and
-    /// a dependency would be heavier than the 20 lines.
-    fn base64(data: &[u8]) -> String {
-        const TBL: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-        let mut out = String::with_capacity(data.len().div_ceil(3) * 4);
-        for chunk in data.chunks(3) {
-            let b = [
-                chunk[0],
-                *chunk.get(1).unwrap_or(&0),
-                *chunk.get(2).unwrap_or(&0),
-            ];
-            let n = u32::from_be_bytes([0, b[0], b[1], b[2]]);
-            out.push(TBL[(n >> 18) as usize & 63] as char);
-            out.push(TBL[(n >> 12) as usize & 63] as char);
-            out.push(if chunk.len() > 1 {
-                TBL[(n >> 6) as usize & 63] as char
-            } else {
-                '='
-            });
-            out.push(if chunk.len() > 2 {
-                TBL[n as usize & 63] as char
-            } else {
-                '='
-            });
-        }
-        out
-    }
+    // Base64 is the asset embedder's (`resolve::assets::base64`) — the one
+    // encoder for every data: URL [SPEC 17].
+    use crate::resolve::assets::base64;
 
     /// The advance-scaled `x` positions each glyph of `line` starts at, when
     /// the run is centred on `cx` — the exact mirror of the measurement fold
@@ -305,13 +281,6 @@ mod enabled {
             let f = Font::default();
             assert_eq!(glyph_id(f, '⌀'), glyph_id(f, 'Ø'));
             assert_ne!(glyph_id(f, 'Ø'), 0);
-        }
-
-        #[test]
-        fn base64_matches_reference() {
-            assert_eq!(base64(b"Man"), "TWFu");
-            assert_eq!(base64(b"Ma"), "TWE=");
-            assert_eq!(base64(b"M"), "TQ==");
         }
 
         #[test]

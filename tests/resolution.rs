@@ -17,7 +17,12 @@ fn all_samples_resolve() {
         if !cfg!(feature = "icons") && src.contains("|icon|") {
             continue;
         }
-        if let Err(e) = lini::check(&src) {
+        // Samples resolve their image assets against their own dir [SPEC 7].
+        let opts = lini::Options {
+            base_dir: path.parent().map(std::path::Path::to_path_buf),
+            ..Default::default()
+        };
+        if let Err(e) = lini::check_with(&src, &opts) {
             let name = path.file_name().unwrap().to_string_lossy().into_owned();
             failures.push(format!("{}: {}", name, e));
         }

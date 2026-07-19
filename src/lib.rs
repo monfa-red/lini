@@ -68,6 +68,13 @@ pub struct Options {
     /// Raw CSS text whose `--lini-*` declarations override built-in defaults
     /// before the `defaults {}` block. `extract_lini_vars` does the parse.
     pub theme_css: Option<String>,
+    /// The source file's directory — where a local `|image| src:` path
+    /// resolves [SPEC 7]. `None` (stdin) resolves paths as written.
+    pub base_dir: Option<std::path::PathBuf>,
+    /// The serve traversal boundary [SPEC 19]: asset reads are confined to
+    /// this root — an escape is a compile error. `None` (the plain CLI) is
+    /// unbounded: you compile your own file.
+    pub asset_root: Option<std::path::PathBuf>,
 }
 
 #[derive(Default, Clone, Copy, Debug, PartialEq, Eq)]
@@ -141,7 +148,13 @@ pub fn check_with(src: &str, opts: &Options) -> Result<(), Error> {
 /// contract in ROUTING.md. Returns the violations found (empty = clean). Parse
 /// and resolve errors surface as `Err`.
 pub fn validate_str(src: &str) -> Result<Vec<Violation>, Error> {
-    let program = resolve_pipeline(src, &Options::default())?;
+    validate_str_with(src, &Options::default())
+}
+
+/// [`validate_str`] with options — a sample sweeping suite passes `base_dir`
+/// so file-relative image assets resolve [SPEC 7].
+pub fn validate_str_with(src: &str, opts: &Options) -> Result<Vec<Violation>, Error> {
+    let program = resolve_pipeline(src, opts)?;
     let laid_out = layout::layout(&program)?;
     Ok(layout::validate_routing(&laid_out))
 }
@@ -174,7 +187,11 @@ fn resolve_pipeline(src: &str, opts: &Options) -> Result<resolve::Program, Error
         Some(css) => theme::extract_lini_vars(css),
         None => Vec::new(),
     };
-    resolve::resolve_with_theme(&lowered, &theme)
+    let env = resolve::AssetEnv {
+        base_dir: opts.base_dir.clone(),
+        root: opts.asset_root.clone(),
+    };
+    resolve::resolve_with_env(&lowered, &theme, env)
 }
 
 fn wrap_html(svg: &str) -> String {
@@ -204,7 +221,16 @@ pub mod testing {
     /// then each drawn link's `(seg_from, seg_to)` and path.
     #[allow(clippy::type_complexity)]
     pub fn routes_str(src: &str) -> Result<Vec<((String, String), Vec<(f64, f64)>)>, crate::Error> {
-        let program = super::resolve_pipeline(src, &Options::default())?;
+        routes_str_with(src, &Options::default())
+    }
+
+    /// [`routes_str`] with options (`base_dir` for sample sweeps [SPEC 7]).
+    #[allow(clippy::type_complexity)]
+    pub fn routes_str_with(
+        src: &str,
+        opts: &Options,
+    ) -> Result<Vec<((String, String), Vec<(f64, f64)>)>, crate::Error> {
+        let program = super::resolve_pipeline(src, opts)?;
         let laid = layout::layout(&program)?;
         Ok(laid
             .links
@@ -216,7 +242,12 @@ pub mod testing {
     /// Compile `src` to a laid-out scene with `clearance` forced on every link,
     /// overriding whatever the source set.
     pub fn route_sample(src: &str, clearance: f64) -> LaidOut {
-        let mut prog = super::resolve_pipeline(src, &Options::default()).expect("resolve");
+        route_sample_with(src, &Options::default(), clearance)
+    }
+
+    /// [`route_sample`] with options (`base_dir` for sample sweeps [SPEC 7]).
+    pub fn route_sample_with(src: &str, opts: &Options, clearance: f64) -> LaidOut {
+        let mut prog = super::resolve_pipeline(src, opts).expect("resolve");
         for w in &mut prog.links {
             w.attrs
                 .insert("clearance", ResolvedValue::Number(clearance));
@@ -231,7 +262,12 @@ pub mod testing {
     /// so the router never sees them — and a drawing scope's links belong to its own
     /// engine [SPEC 15]; both are excluded here, mirroring `routing::ortho::request`.
     pub fn declared_edges(src: &str) -> usize {
-        let prog = super::resolve_pipeline(src, &Options::default()).expect("resolve");
+        declared_edges_with(src, &Options::default())
+    }
+
+    /// [`declared_edges`] with options (`base_dir` for sample sweeps [SPEC 7]).
+    pub fn declared_edges_with(src: &str, opts: &Options) -> usize {
+        let prog = super::resolve_pipeline(src, opts).expect("resolve");
         prog.links
             .iter()
             .filter(|w| {
