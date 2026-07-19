@@ -280,7 +280,7 @@ Acceptance: projection lines land on the anchors views were aligned by,
 style / remove via the cascade; a cross-view dimension still errors; no
 view paint crosses the sheet frame across the page samples (oracle);
 the tag is cut.
-**Log:** 2026-07-19 — **done** (code; bump + tag pending the main
+**Log:** 2026-07-19 — **done** (`de17f86`; bump + tag pending the main
 session). **Resolve:** `try_projection` (`resolve/links.rs`) runs ahead
 of the statement gates — sheet scope only (not a drawing, a
 drawing-nested flow, or a detail), resolving each end's path + its
