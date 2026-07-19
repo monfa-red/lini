@@ -1587,8 +1587,11 @@ count; a `cell:` pins one explicitly and the rest flow around it. Bare-text cell
 pure auto-flow — `cell:` / `span:` apply to **box** children only (a text
 node has no block to carry them). A grid is positional, so an empty `""` cell is
 **kept** — it holds its track and keeps the cells after it aligned (in flow, an
-empty `""` is dropped). `cell:` / `span:` are read only on a grid; off a grid they are
-silently ignored (`span:` is also a chart band's extent — [SPEC 14](#14-charts)).
+empty `""` is dropped). `cell:` / `span:` are read only on a grid; off a grid — where the
+container's layout is statically known to be something else — they are an **error**
+([SPEC 16](#16-property-ledger--support)'s strict rule, [SPEC 20](#20-errors): `'cell' places a
+grid child — this box sits in a 'layout: flow'`). The one exception is `span:` on a chart
+`|band|`, which reads it as the band's extent ([SPEC 14](#14-charts)).
 
 **Per-column alignment.** On a grid, `align` (horizontal ↔) and `justify`
 (vertical ↕) accept a **list parallel to `columns`** (one value per track) or a
@@ -2033,7 +2036,7 @@ swatch **mirroring its paint** (fill and edge); on an `|axis|` → the **axis ti
 `|band|` → a **tick** tinted its `fill`; on a `|mark|` → the annotation's **label**. A
 legend appears automatically at ≥ 2 entries; `legend:` positions or suppresses it. **`gap:`**
 sets the plot-to-title/legend clearance (default 10; `gap: 0` ≈ touching). The chart sets its
-**chrome** — title and legend — in **bold**, while its **data text** — axis ticks, per-datum labels,
+**chrome** — title and legend — in **semibold**, while its **data text** — axis ticks, per-datum labels,
 annotation labels — stays **normal** weight, so the numbers read quietly beneath the captions.
 
 **Colour.** Explicit `stroke:` / `fill:` wins. Otherwise series **walk the palette**
@@ -3169,7 +3172,7 @@ Honoured on every drawn node, in every layout (a box; text takes the marked subs
 |---|---|---|---|
 | `font-family` | ident · string · `--var` | `--font-family` | live |
 | `font-size` | number | 15 (link 11, caption 12) | baked |
-| `font-weight` | `normal`·`medium`·`semibold`·`bold`·`400`·`500`·`600`·`700` | `normal` | live — measured at the resolved weight ([SPEC 6](#6-paint-stroke--text)); arbitrary 100–900 ⌛ |
+| `font-weight` | `normal`·`medium`·`semibold`·`bold`·`400`·`500`·`600`·`700` | `medium` (500, `--font-weight`) | live — measured at the resolved weight ([SPEC 6](#6-paint-stroke--text)); arbitrary 100–900 ⌛ |
 | `font-style` | `normal` · `italic` · `oblique` | `normal` | live |
 | `text-transform` | `uppercase` · `lowercase` · `capitalize` · `none` | `none` | live |
 | `text-decoration` | `underline` · `overline` · `line-through` · `none` | `none` | live |

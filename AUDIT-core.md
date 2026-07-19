@@ -48,20 +48,14 @@ from the bundle).
 
 ---
 
-## Finding 3 — Ledger `format` row's single `Inherit` cell can't express its dual cascade; two self-flagged dead/aspirational rows  · M · **beta-relevant**
+## Finding 3 — Ledger `format`/`legend`/`text-shadow` rows  · **consumed by beta Stage 0** (`BETA-tooling.md`)
 
-**Locations**
-- `src/ledger/properties.rs:540-553` — `format` owns `chart/pie/axis/series` (read engine-side, like `tooltip`) **and** `drawing/dimension` (rides the scope-link channel), but `inherit` is a single `ScopeLink` cell. `scope_link_props()` (`properties.rs:802`) therefore treats `format` as scope-link **globally**; only the drawing leg actually uses that channel (`resolve/program/link_scope.rs:156-165`).
-- `src/validate.rs:544-548` — `node_accepts` returns `true` for *any* `inherit != No`, so `format:` validates as accepted on **every** node (inert, and the misuse message never fires, on a flow `|box|`).
-- Same table, self-flagged: `text-shadow` "honoured but missing from SPEC 16" (`properties.rs:180`); `legend` "SPEC 16 marks honoured; no reader exists yet" (`properties.rs:466`) — an aspirational row with no behavior behind it.
-
-**Violated law:** ledger-is-the-source-of-truth drift. The module header (`properties.rs:5-6`)
-names **schema generation** as the next consumer; it will read `inherit=ScopeLink` for `format`
-and mis-describe the chart behavior, and will publish a `legend` property that does nothing.
-
-**Fix (before schema gen reads the table):** make `inherit` owner-scoped (or split `format`
-into its two legs) so the generated schema is truthful; resolve `legend`/`text-shadow` against
-SPEC 16 (add the reader or drop/annotate the row). This is the one seam beta will actually read.
+Reconciled in the beta round's Stage 0: `format` is a documented **dual-channel** row
+(owners × `Inherit::ScopeLink`; validation now reads the owners for a scope-link property
+with node owners, so `format:` errors on a plain `|box|` instead of validating inert);
+`legend` gained a `deferred` marking (the auto-legend is built, the placement reader is
+SPEC 23); `text-shadow`'s stale "missing from SPEC 16" note dropped (it rides the Universal
+Text table). The schema now reads a truthful table by construction.
 
 ---
 
@@ -126,14 +120,13 @@ two callers differ only in how they produce the segment list.
 parallel implementations" laws are visibly followed across resolve, render, and validate, and
 the parallel-implementation instances that remain are few and small (Findings 1, 2, 5). The one
 seam that is *not* yet beta-clean is the ledger itself — and the ledger is precisely what beta's
-schema generation is documented to read next (`properties.rs:5`). Before schema gen turns the
-ledger into a published contract, do these three:
+schema generation is documented to read next (`properties.rs:5`). Finding 3 (the ledger seam) is
+**consumed by beta Stage 0**; before schema gen turns the ledger into a published contract, the
+two remaining pre-schema items are:
 
-1. **Finding 3** — reconcile the `format`/`legend`/`text-shadow` rows so the generated schema is
-   truthful (the `format` dual-cascade `Inherit` cell, the reader-less `legend` row).
-2. **Finding 1** — de-duplicate the projection default so the ledger/bundles stay the single
+1. **Finding 1** — de-duplicate the projection default so the ledger/bundles stay the single
    tuning home (schema will derive defaults from bundles — a rotted render copy would leak).
-3. **Finding 2** — unify the generated-default emit path so "which class defs exist and why" is
+2. **Finding 2** — unify the generated-default emit path so "which class defs exist and why" is
    one mechanism validation and schema can reason about, not three prose-coupled ones.
 
 Findings 4–5 are healthy-hygiene cleanups that can ride any later pass.

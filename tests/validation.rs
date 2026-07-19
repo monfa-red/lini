@@ -377,11 +377,19 @@ fn an_authored_id_may_not_begin_lini() {
 // ── `format:` ownership [SPEC 16, CHART-DRAW Stages 1 + 8] ──
 
 #[test]
-fn format_is_inherited_scope_config() {
-    // Stage 8 gave `format` its drawing owners and the scope-link cascade
-    // (drawing scope → `(-)` rule → class → the dim's block) — like
-    // `clearance`, it reads as scope config on any container.
-    assert_silent("|box#a| { format: decimal 2; }\n");
+fn format_reads_on_its_owners_not_a_plain_box() {
+    // `format` is a dual-channel property [SPEC 16, beta Stage 0]: engine-read
+    // on the chart leg, scope-link on the drawing leg (drawing scope → `(-)`
+    // rule → class → the dim's block). It reads on those owners — a drawing
+    // scope carries it as config — but a plain box cannot mean it, so it errors
+    // (no silent inert). Unlike `clearance`, it is not universal scene config.
+    assert_silent(
+        "|drawing| { format: decimal 2 } [\n|sketch| { draw: move(0,0) right(10) down(10) }\n]\n",
+    );
+    insta::assert_snapshot!(
+        diags("|box#a| { format: decimal 2; }\n"),
+        @"test.lini:1:11: error: 'format' has no meaning on '|box|' — it reads on '|chart|' / '|pie|' / '|axis|' / a chart series / '|drawing|' / a '(-)' dimension"
+    );
 }
 
 #[test]

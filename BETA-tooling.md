@@ -150,7 +150,42 @@ Acceptance: SPEC and code agree on the three errata; the `format` row is
 truthful for the schema; anchors intact (every `](#…)` resolves);
 `cargo fmt && cargo clippy --all-targets -- -D warnings && cargo test`
 clean, re-pins deliberate, snapshot churn zero.
-**Log:** _(filled at close)_
+**Log:** 2026-07-19 — **done**. **Three SPEC errata**, in place: SPEC 16's
+`font-weight` default `normal` → **`medium` (500, `--font-weight`)**
+(matches SPEC 10.1 and `--lini-font-weight`); SPEC 12's off-grid
+`cell`/`span` "silently ignored" → the strict-rule error wording (SPEC
+16/20 — an error where the container is a known non-grid, the
+`span`-on-a-`|band|` exception kept — the validator already errors here,
+`validate.rs:302`); SPEC 14.6 chart chrome "bold" → **"semibold"**
+(`Font::semibold` = 600). **Ledger reconciliation** (`properties.rs`):
+`format` is now a **documented dual-channel row** — the doc comment names
+both legs (chart engine-read like `tooltip:`, drawing scope-link like
+`clearance`), the row keeps its owners + its one resolve channel
+`Inherit::ScopeLink`, and a new `Property::has_node_owner()` lets
+validation read the **owners** for a scope-link property that has node
+owners, so `format:` validates on a chart / axis / drawing scope and now
+**errors** on a plain box (`'format' has no meaning on '|box|' — it reads
+on '|chart|' / '|pie|' / '|axis|' / a chart series / '|drawing|' / a '(-)'
+dimension`) — the audit's "misuse message never fires" defect closed —
+while `clearance` / `routing` (no node owner) stay universal scene config.
+`node_accepts` + `check_root_decl` share the one gate
+(`inherit != No && !has_node_owner`). The ledger gains a `deferred`
+const-builder flag; **`legend`** wears it (the auto-legend is built; the
+placement reader is SPEC 23) — a first-class schema field (ROADMAP 3.8).
+**`text-shadow`**'s stale "missing from SPEC 16" note dropped (it rides
+the Universal Text table, SPEC 16 line 3176). **Tests re-pinned
+deliberately:** the old `format_is_inherited_scope_config` (which pinned
+the inert-on-a-box **bug** as silent) became
+`format_reads_on_its_owners_not_a_plain_box` (drawing-scope silent, box
+errors); two new ledger tests (`legend_is_the_only_deferred_row`,
+`format_is_a_dual_channel_row`); `scope_link_props()` unchanged
+(`format, clearance, routing`). **AUDIT consumption:** `AUDIT-core.md`
+Finding 3 replaced by a "consumed by beta Stage 0" tombstone, its Verdict
+list dropped to the two remaining pre-schema items (Findings 1, 2);
+Findings 4–5 and the drawing/charts audits left for Stage 1. Anchor
+sweep: 537 refs, zero broken. Tests **1082 → 1084** (+2 net; one re-pin,
+zero snapshot churn); fmt / clippy (`--all-targets -D warnings`) / test
+clean.
 
 ### Stage 1 — hardening: consume the audit pile
 

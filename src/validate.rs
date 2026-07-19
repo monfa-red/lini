@@ -359,7 +359,10 @@ impl<'a> Ctx<'a> {
     /// Root-block misuse: the root accepts scene config (universal, root,
     /// layout-owned for its own layout) — never a type-/role-owned property.
     fn check_root_decl(&self, d: &Decl, prop: &Property, out: &mut Vec<Diagnostic>) {
-        if prop.inherit != Inherit::No {
+        // Inheriting scene config (text props, `clearance`/`routing`) is valid
+        // on the root; a scope-link property with node owners (`format`) is
+        // judged against the root's layout, like any owned property.
+        if prop.inherit != Inherit::No && !prop.has_node_owner() {
             return;
         }
         let ok = prop.owners.iter().any(|o| match o {
@@ -542,8 +545,12 @@ fn container_layout(t: &str) -> Option<&'static str> {
 
 /// Whether a node wearer can use the property at all [SPEC 16].
 fn node_accepts(prop: &Property, kind: &str, chain: &[String], own_layout: Option<&str>) -> bool {
-    // The inheriting channels reach every node (text props, scope link config).
-    if prop.inherit != Inherit::No {
+    // The inheriting channels reach every node — text props cascade to every
+    // node, pure scene config (`clearance`/`routing`) is valid on any
+    // container. But a scope-link property that *also* has node owners
+    // (`format`: chart / axis / series / drawing) is validated by those owners,
+    // not blanket-accepted — so it errors on a wearer it can't mean anything on.
+    if prop.inherit != Inherit::No && !prop.has_node_owner() {
         return true;
     }
     prop.owners.iter().any(|o| match o {

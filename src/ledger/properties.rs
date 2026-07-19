@@ -98,7 +98,9 @@ pub enum Gate {
 
 /// One property row. `text` marks the subset valid on a bare text leaf's own
 /// `{ }` [SPEC 3]; `baked` the baked-spacing text props that compile into
-/// glyph / line positions and are never live CSS [SPEC 6].
+/// glyph / line positions and are never live CSS [SPEC 6]; `deferred` a row
+/// honoured only in part — its full reader is deferred ([SPEC 23]), so the
+/// generated schema surfaces it as a deferred flag.
 // `default` and `gate` are data for schema generation and later validation
 // depth; today the tests pin them.
 #[allow(dead_code)]
@@ -112,6 +114,7 @@ pub struct Property {
     pub text: bool,
     pub baked: bool,
     pub gate: Gate,
+    pub deferred: bool,
 }
 
 const fn row(
@@ -130,6 +133,7 @@ const fn row(
         text: false,
         baked: false,
         gate: Gate::Lenient,
+        deferred: false,
     }
 }
 
@@ -148,6 +152,24 @@ impl Property {
     const fn hard(mut self) -> Self {
         self.gate = Gate::Hard;
         self
+    }
+    /// Mark a partly-honoured row whose full reader is deferred [SPEC 23].
+    const fn deferred(mut self) -> Self {
+        self.deferred = true;
+        self
+    }
+
+    /// Whether the row carries a **node** owner (a type/role a node can be, or
+    /// `Universal`) beyond any link/scene-config role. `format` does
+    /// (chart/axis/series/drawing); pure scene config (`clearance`/`routing`)
+    /// does not. Validation reads the owners for the former, so a scope-link
+    /// property is not blanket-accepted on every node by its inherit channel
+    /// [SPEC 16].
+    pub fn has_node_owner(&self) -> bool {
+        self.owners.iter().any(|o| {
+            matches!(o, Owner::Universal | Owner::Type(_))
+                || matches!(o, Owner::Role(r) if *r != "dimension" && *r != "mate")
+        })
     }
 }
 
@@ -177,7 +199,7 @@ pub static PROPERTIES: &[Property] = &[
         No,
     ),
     // ── Text [SPEC 6] — the `Inherit::Text` rows, in the channel's order.
-    //    `text-shadow` is honoured but missing from SPEC 16 (cross-check, S1). ──
+    //    (`text-shadow` rides the Universal Text table in SPEC 16.) ──
     row("font-family", UNIVERSAL, One(Kind::Any), Engine, Text).text(),
     row("font-size", UNIVERSAL, One(Kind::Number), Bundles, Text)
         .text()
@@ -463,14 +485,18 @@ pub static PROPERTIES: &[Property] = &[
     row("bars", &[Type("chart")], One(Kind::Ident), Engine, No),
     row("categories", &[Type("chart")], List(Kind::Str), Engine, No),
     row("hole", &[Type("pie")], One(Kind::Number), Engine, No),
-    // SPEC 16 marks `legend:` honoured; no reader exists yet (cross-check, S1/S2).
+    // The auto-legend (≥ 2 entries) is built [SPEC 14.6]; the `legend:`
+    // placement / suppression reader is deferred [SPEC 23], so the row is
+    // marked `deferred` — the schema states it truthfully. Building the reader
+    // is a later minor's work.
     row(
         "legend",
         &[Type("chart"), Type("pie")],
         One(Kind::Any),
         Engine,
         No,
-    ),
+    )
+    .deferred(),
     row(
         "tooltip",
         &[Type("chart"), Type("pie"), Role("series")],
@@ -533,10 +559,19 @@ pub static PROPERTIES: &[Property] = &[
         No,
     ),
     row("gridlines", &[Type("axis")], One(Kind::Any), Engine, No),
-    // Value presentation [SPEC 16] — parsed by `ledger::format`. Two cascade
-    // legs, one property: chart → axis / series runs engine-side like
-    // `tooltip:`; drawing scope → `(-)` rule → class → the dimension's block
-    // rides the scope-link channel, exactly as `clearance` does [SPEC 15.6].
+    // Value presentation [SPEC 16] — parsed by `ledger::format`. A dual-channel
+    // row: two genuinely different cascades over one property.
+    //   • chart leg (chart / pie / axis / series): **engine-read** — the chart
+    //     threads its own `format:` down as the axes' and series' fallback,
+    //     exactly as `tooltip:` is read per-node. No resolve channel.
+    //   • drawing leg (drawing scope / dimension): rides the **scope-link**
+    //     channel — drawing scope → `(-)` rule → class → the dimension's block,
+    //     exactly as `clearance` does [SPEC 15.6].
+    // The row's single resolve channel is therefore `ScopeLink` (the only leg
+    // that uses one). Validation reads the **owners** — not the inherit channel
+    // — for a scope-link property that has node owners, so `format:` is accepted
+    // on its owners and errors on a plain box; schema generation reads both legs
+    // off `owners × ScopeLink` by construction (no per-owner-inherit split).
     row(
         "format",
         &[
@@ -983,5 +1018,52 @@ mod tests {
         );
         assert!(get("tags").is_none(), "'tags' was renamed to 'labels'");
         assert!(get("over").is_none(), "'over' was replaced by 'place'");
+    }
+
+    /// Beta Stage 0 reconciliation: the `legend` row is marked deferred (its
+    /// placement/suppression reader is [SPEC 23], only the auto-legend is
+    /// built); nothing else is.
+    #[test]
+    fn legend_is_the_only_deferred_row() {
+        assert!(get("legend").unwrap().deferred);
+        assert_eq!(
+            PROPERTIES
+                .iter()
+                .filter(|p| p.deferred)
+                .map(|p| p.name)
+                .collect::<Vec<_>>(),
+            ["legend"]
+        );
+    }
+
+    /// Beta Stage 0 reconciliation: `format`'s dual cascade reads honestly.
+    /// Its single resolve channel is `ScopeLink` (the drawing leg), it keeps
+    /// both legs' owners, and it is a scope-link property with node owners — so
+    /// validation reads its owners, not the blanket inherit channel. Pure
+    /// scene config (`clearance`/`routing`) has no node owner.
+    #[test]
+    fn format_is_a_dual_channel_row() {
+        let format = get("format").unwrap();
+        assert_eq!(format.inherit, Inherit::ScopeLink);
+        // the chart leg and the drawing leg both present in the owners.
+        for owner in ["chart", "pie", "axis", "drawing"] {
+            assert!(
+                format
+                    .owners
+                    .iter()
+                    .any(|o| matches!(o, Owner::Type(t) if *t == owner)),
+                "'format' lost its '{owner}' owner"
+            );
+        }
+        assert!(
+            format
+                .owners
+                .iter()
+                .any(|o| matches!(o, Owner::Role("series") | Owner::Role("dimension")))
+        );
+        // has_node_owner distinguishes format (node owners) from pure config.
+        assert!(format.has_node_owner());
+        assert!(!get("clearance").unwrap().has_node_owner());
+        assert!(!get("routing").unwrap().has_node_owner());
     }
 }
