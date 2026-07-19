@@ -195,7 +195,7 @@ headline; everything else is shared-helper consolidation, file splits,
 and pure subtraction. Ranked, headline first. Deletes the three audit
 files when done.
 
-- [ ] **Aligned dims through the row packer** (`AUDIT-drawing` #1, the
+- [x] **Aligned dims through the row packer** (`AUDIT-drawing` #1, the
   L): generalize `Rows`/`Band` to seat along an arbitrary `Frame` (today
   hard-keyed to `Side` in `line_at`/`band_box`/`past`) and route aligned
   dims through it, so `Band`, obstacle registration, and inter-row
@@ -204,43 +204,43 @@ files when done.
   register with `Rows`. SPEC 15.6's one seating law along the frame's own
   cross axis. Snapshot-verify the drawing samples (aligned dims move to
   the packed offset).
-- [ ] **Shared helpers, drawing** (`AUDIT-drawing` #2/#3/#4/#7/#8): one
+- [x] **Shared helpers, drawing** (`AUDIT-drawing` #2/#3/#4/#7/#8): one
   `PlacedNode::geometry_box` (stroke-excluded box, 2 fns + 7 inline);
   `Bbox::center` (open-coded 13×); `Frame::text_seat` (ISO text-on-a-line,
   re-derived in `round::diametral`); `geometry::project(bbox, dir)`
   (corner-projection, 3×); `Side::name` / `Side::outward` (scattered
   `Side`→str/vector).
-- [ ] **Shared helpers, charts** (`AUDIT-charts` F1/F2/F3/F5/F6): one home
+- [x] **Shared helpers, charts** (`AUDIT-charts` F1/F2/F3/F5/F6): one home
   for `live`/`muted` (`chart/tint.rs`, 5 copies); one generic each for
   `read_range`/`read_time_range` and `read_ticks`/`read_time_ticks`;
   `edge_from` for the none/auto/deepen edge rule (+ the double-`matches!`
   `stroke_default` cleaned); `resolve_domain` for the triplicated
   domain-from-`range` block; `format::reject_date` + a shared paint-list
   message const.
-- [ ] **Shared helpers / dedup, core** (`AUDIT-core` #1/#2/#5): the
+- [x] **Shared helpers / dedup, core** (`AUDIT-core` #1/#2/#5): the
   projection default reads `template_bundle("projection")` through
   `paint_props`, not restated literals; one `emit_generated_default`
   helper unifies the six present-gated default emitters (three divergent
   guards today); one `find_in_scope`-based id-path walk shared by
   `inst_at_path` and `node_at`.
-- [ ] **The geometry-class predicate** (`AUDIT-drawing` #6): a small
+- [x] **The geometry-class predicate** (`AUDIT-drawing` #6): a small
   `is_geometry(n)` base for the `!sheet_node && !is_pinned` slice the six
   callers repeat, each layering only its genuine extra (halo's line-type
   exclusion, section's marker exclusion).
-- [ ] **File splits over ~500 LOC** (`AUDIT-core` #4, `AUDIT-drawing` #5,
+- [x] **File splits over ~500 LOC** (`AUDIT-core` #4, `AUDIT-drawing` #5,
   `AUDIT-charts` F4): `tests/rendering.rs` (1589, by theme — highest
   value); `src/ledger/properties.rs` tests → sibling; `resolve/links.rs`
   projection slice → `resolve/links/projection.rs`; `dims.rs` (`Frame` →
   geometry; the aligned seat folds into #1); `leaders.rs` →
   `skeleton.rs` + dispatchers; `model/axes.rs` (653) → `axes/read.rs`
   (lands the F2/F5 dedup naturally).
-- [ ] **Dead / vestigial** (`AUDIT-drawing` #9, `AUDIT-charts` F7): the
+- [x] **Dead / vestigial** (`AUDIT-drawing` #9, `AUDIT-charts` F7): the
   stale "true aligned dims are deferred" comment (`annotate/mod.rs:25`);
   `round::spill_dir`'s dead `a` param; `geometry::geometry_bbox` /
   `plane::seg_bbox` folded onto `Bbox::from_points`; `fmt_tick` deleted
   (call `format::auto` in `pie.rs`). `AUDIT-charts` F8 (`auto` `-0`) and
   F9/F10 (notes only) recorded as no-change decisions.
-- [ ] Delete `AUDIT-core.md`, `AUDIT-drawing.md`, `AUDIT-charts.md` — the
+- [x] Delete `AUDIT-core.md`, `AUDIT-drawing.md`, `AUDIT-charts.md` — the
   pile is consumed.
 
 Acceptance: the aligned-dim packer never overlaps painted annotations
@@ -249,7 +249,58 @@ implementation and missing-helper folded to one home; no file over the
 ~500 ceiling in the touched trees; fmt/clippy/test clean; snapshot churn
 only where the packer legitimately moves an aligned dim (re-blessed with
 a PNG check, light + dark).
-**Log:** _(filled at close)_
+**Log:** 2026-07-19 — **done**; the audit pile is consumed and the three
+files deleted. **The headline** (`AUDIT-drawing` #1): the row packer is
+generalized to a **`SeatLine`** — a `Frame` (u along the row, n across)
+plus an outward sign and a **base** cross coordinate — with **one seating
+loop** for every dim. A side row's seat line is the axis frame outward off
+the extent's edge (byte-identical to the old `line_at`/`band_box`/`past`
+arithmetic — zero churn on every axis-row sample); an **aligned** dim's is
+its own span frame outward on the away side, based on the span's outermost
+anchor. The band is computed in frame terms (`neg` = fs + 2 toward the ISO
+"above", `pos` = overshoot/arrow by outward sign), the probe is an
+oriented band rectangle tested against painted boxes by **separating
+axes** (exactly `Bbox::overlaps` when the frame is an axis), and the
+seated band registers as its world AABB — so aligned dims now clear
+callouts/symbols/earlier rows and later rows clear them.
+`aligned_line_c` / `Seat::Line` (the re-derived band) are deleted;
+`SeatLine::away`, `stack_side`, `corner_pull` live beside the packer. One
+deliberate re-bless: `drawing_annotations` (the hypotenuse dim stands
+~1.3 farther out, honestly clearing a registered obstacle) — PNG-verified
+light + dark, otherwise pixel-identical; a new test pins that two
+identical aligned dims pack distinct rows (they used to overprint). The
+oracle passes on the re-routed path. **Drawing sweep** (#2–#9):
+`Bbox::center()` (13 folds); `half_stroke`/`geometry_box` (2 fns + 7
+inline); `geometry::proj`/`project` (chrome, section plane, and the
+packer share it — `breaks/clip.rs` left: its fold is a scalar min/max
+over a cubic's hull, not a corner projection); `Frame::text_seat` (dims'
+`value_texts` + `round::diametral`); `is_geometry(n)` (the
+`!sheet_node && !is_pinned` base under engine/halo/annotate —
+`section::is_relaid_geometry` keeps its own slice: it reads a
+`ResolvedInst`, pre-placement); `Side::name`/`outward` on the enum;
+dead code out (stale aligned-dims comment, `spill_dir`'s param,
+`geometry_bbox`/`seg_bbox` onto `Bbox::from_points`). Splits: `Frame` →
+`geometry.rs`, seat policy → `annotate/rows.rs`, `leaders` →
+`leaders/{mod,skeleton}.rs` — dims 453, leaders 442+133, all under the
+ceiling. **Charts sweep** (F1–F7, worktree agent): `chart/tint.rs` the
+one `live`/`muted` home (5 copies deleted); generic `read_range`/
+`read_ticks` taking the per-value reader (messages byte-identical);
+`edge_from` owns the none/auto/explicit/unset edge table (the
+double-`matches!` gone); `resolve_domain` (3 blocks); shared
+`format::reject_date` + the paint-list message const; `fmt_tick` deleted
+(−1 test); `model/axes.rs` → `axes/read.rs`. **Skips recorded as
+no-change decisions:** F8 (`auto`'s `-0` byte-pin kept deliberately),
+F9/F10 (notes only). **Core sweep** (Findings 1/2/4/5, worktree agent):
+the projection default resolves `template_bundle("projection")` through
+the shared bundle path (literals gone); one `emit_generated_default`
+guard (present ∧ ¬authored — emission order no longer load-bearing);
+`tests/rendering.rs` → `tests/rendering/{main,text,shapes,paint,links,
+charts,assets}.rs`; `properties.rs` tests → `properties/tests.rs`;
+`resolve/links.rs` projection slice → `links/projection.rs`; one
+`walk_scope` id-path walk under `inst_at_path`/`node_at`. Slices merged
+clean (charts `1a7e28b`, core `77e7ff9`, drawing `5f28aab` + `5c4f495`).
+Gate: fmt `--check` / clippy `--all-targets -D warnings` / test clean;
+**1084 tests** (+1 aligned-packer pin, −1 `fmt_tick`), zero `.snap.new`.
 
 ### Stage 2 — the generated schema + compact reference + CI drift
 
