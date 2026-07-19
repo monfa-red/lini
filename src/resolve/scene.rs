@@ -8,7 +8,7 @@ use super::cascade::{NodeFacts, Stylesheet};
 use super::ir::{AttrMap, MarkerKind, Markers, NodeKind, ResolvedInst, ResolvedValue, VarTable};
 use super::merge::{collapse, resolve_markers};
 use super::value::{resolve_groups, resolve_property};
-use crate::error::Error;
+use crate::error::{Code, Error};
 use crate::expr::{self, Expr, FuncTable, Value as ExprValue};
 use crate::ledger::properties;
 use crate::span::Span;
@@ -140,8 +140,9 @@ pub fn resolve_node(
     let type_name = node.ty.as_deref().unwrap_or("box");
     // Post-desugar the type is always a primitive; anything else means the input
     // bypassed desugar (the "dumb core" guard).
-    let kind = NodeKind::parse(type_name)
-        .ok_or_else(|| Error::at(node.span, format!("unknown type '{}'", type_name)))?;
+    let kind = NodeKind::parse(type_name).ok_or_else(|| {
+        Error::at(node.span, format!("unknown type '{}'", type_name)).code(Code::UNKNOWN_TYPE)
+    })?;
 
     // Split the worn classes: `.lini-*` are the type tier (the primitive plus the
     // render type_chain), user classes are tier 3 (and must be defined).
@@ -155,7 +156,8 @@ pub fn resolve_node(
             }
         } else {
             if !ctx.sheet.defines_class(c) {
-                return Err(Error::at(node.span, format!("unknown class '.{}'", c)));
+                return Err(Error::at(node.span, format!("unknown class '.{}'", c))
+                    .code(Code::UNKNOWN_CLASS));
             }
             applied_styles.push(c.clone());
         }
@@ -167,7 +169,9 @@ pub fn resolve_node(
     if let Some(id) = &node.id {
         let full = join_path(path_prefix, id);
         if let Some(prev) = id_seen.get(&full) {
-            return Err(Error::at(node.span, format!("duplicate id '{}'", id)).with_related(*prev));
+            return Err(Error::at(node.span, format!("duplicate id '{}'", id))
+                .with_related(*prev)
+                .code(Code::DUPLICATE_ID));
         }
         id_seen.insert(full, node.span);
     }
@@ -512,7 +516,9 @@ pub(super) fn apply_text_classes(
         } else if ctx.sheet.defines_class(c) {
             applied_styles.push(c.clone());
         } else {
-            return Err(Error::at(span, format!("unknown class '.{}'", c)));
+            return Err(
+                Error::at(span, format!("unknown class '.{}'", c)).code(Code::UNKNOWN_CLASS)
+            );
         }
     }
     for (name, v) in ctx.sheet.user_class_decls(classes) {

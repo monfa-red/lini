@@ -11,7 +11,7 @@
 //! these are visual vars only [SPEC 10.2], never layout numbers.
 
 use super::ir::{ResolvedCall, ResolvedValue, VarTable};
-use crate::error::Error;
+use crate::error::{Code, Error};
 use crate::expr::{self, Env, Expr, FuncTable, Value as ExprValue};
 use crate::ledger::properties;
 use crate::span::Span;
@@ -139,7 +139,8 @@ fn apply_comma_law(name: &str, value: ResolvedValue, span: Span) -> Result<Resol
         return Err(Error::at(
             span,
             format!("'{name}' takes comma-separated values — '{name}: {example}'"),
-        ));
+        )
+        .code(Code::LEGACY_LIST));
     }
     Ok(ResolvedValue::List(items))
 }

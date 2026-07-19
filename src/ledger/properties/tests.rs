@@ -224,3 +224,21 @@ fn format_is_a_dual_channel_row() {
     assert!(!get("clearance").unwrap().has_node_owner());
     assert!(!get("routing").unwrap().has_node_owner());
 }
+
+/// Beta Stage 3 (decision 10): the hard-gate set is the ledger's single source
+/// of truth for gate-driven validation. `cell`/`span` are now marked hard (the
+/// SPEC 12 off-grid error); `place`/`activation` gate at validate, `tol`/
+/// `project` at drawing layout. Renumbering the gate churns this pin.
+#[test]
+fn hard_gated_rows_are_the_pinned_set() {
+    let mut hard: Vec<&str> = PROPERTIES
+        .iter()
+        .filter(|p| matches!(p.gate, Gate::Hard))
+        .map(|p| p.name)
+        .collect();
+    hard.sort_unstable();
+    assert_eq!(
+        hard,
+        ["activation", "cell", "place", "project", "span", "tol"]
+    );
+}

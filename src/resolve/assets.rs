@@ -8,7 +8,7 @@
 //! to the served root [SPEC 19].
 
 use super::ir::{AttrMap, ResolvedValue};
-use crate::error::Error;
+use crate::error::{Code, Error};
 use crate::span::Span;
 use std::cell::Cell;
 use std::collections::BTreeSet;
@@ -70,10 +70,10 @@ pub fn embed_image(attrs: &mut AttrMap, state: &AssetState, span: Span) -> Resul
             .canonicalize()
             .is_ok_and(|canon_root| canon.starts_with(canon_root))
     {
-        return Err(Error::at(
-            span,
-            format!("'{src}' resolves outside the served root"),
-        ));
+        return Err(
+            Error::at(span, format!("'{src}' resolves outside the served root"))
+                .code(Code::ASSET_ESCAPES_ROOT),
+        );
     }
     let bytes = std::fs::read(&full).map_err(|e| {
         let why = match e.kind() {
@@ -81,7 +81,7 @@ pub fn embed_image(attrs: &mut AttrMap, state: &AssetState, span: Span) -> Resul
             std::io::ErrorKind::PermissionDenied => "permission denied".to_string(),
             _ => e.to_string(),
         };
-        Error::at(span, format!("cannot read image '{src}' — {why}"))
+        Error::at(span, format!("cannot read image '{src}' — {why}")).code(Code::ASSET_NOT_FOUND)
     })?;
 
     let n = state.counter.get() + 1;
@@ -89,8 +89,10 @@ pub fn embed_image(attrs: &mut AttrMap, state: &AssetState, span: Span) -> Resul
 
     if let Some(text) = sniff_svg(&bytes) {
         let prefix = format!("lini-a{n}-");
-        let (root_attrs, inner) = rewrite_svg(text, &prefix)
-            .map_err(|why| Error::at(span, format!("cannot read image '{src}' — {why}")))?;
+        let (root_attrs, inner) = rewrite_svg(text, &prefix).map_err(|why| {
+            Error::at(span, format!("cannot read image '{src}' — {why}"))
+                .code(Code::ASSET_NOT_FOUND)
+        })?;
         attrs.remove("src");
         attrs.insert("embed-attrs", ResolvedValue::String(root_attrs));
         attrs.insert("embed-svg", ResolvedValue::String(inner));
@@ -104,7 +106,8 @@ pub fn embed_image(attrs: &mut AttrMap, state: &AssetState, span: Span) -> Resul
     Err(Error::at(
         span,
         format!("cannot read image '{src}' — not an SVG or raster (PNG/JPEG/GIF/WebP)"),
-    ))
+    )
+    .code(Code::ASSET_NOT_FOUND))
 }
 
 /// The authored non-embedded forms [SPEC 7]: HTTP(S) URLs and `data:` URIs

@@ -1,6 +1,7 @@
 //! Declarations, `--var`s, `=` bindings, and `|name::base|` defines.
 
 use super::*;
+use crate::error::Code;
 
 impl<'a> Parser<'a> {
     // ───────────────────────── Declarations ─────────────────────────
@@ -12,7 +13,9 @@ impl<'a> Parser<'a> {
     pub(super) fn parse_decl(&mut self) -> Result<Decl, Error> {
         let (name, start) = self.expect_ident()?;
         if !self.eat(&TokKind::Colon) {
-            return Err(self.err(format!("expected ':' after '{}'", name)));
+            return Err(self
+                .err(format!("expected ':' after '{}'", name))
+                .code(Code::EXPECTED_TOKEN));
         }
         let pen = name == "draw";
         let (groups, end) = self.parse_values_in(pen)?;
@@ -28,11 +31,13 @@ impl<'a> Parser<'a> {
         let start = self.span();
         let name = match self.kind() {
             Some(TokKind::RawCssVar(s)) => s.clone(),
-            _ => return Err(self.err("expected '--name'")),
+            _ => return Err(self.err("expected '--name'").code(Code::EXPECTED_TOKEN)),
         };
         self.pos += 1;
         if !self.eat(&TokKind::Colon) {
-            return Err(self.err(format!("expected ':' after '--{}'", name)));
+            return Err(self
+                .err(format!("expected ':' after '--{}'", name))
+                .code(Code::EXPECTED_TOKEN));
         }
         let (groups, end) = self.parse_values()?;
         Ok(Decl {

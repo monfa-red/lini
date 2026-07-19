@@ -1,0 +1,64 @@
+---
+source: tests/diagnostics.rs
+assertion_line: 17
+expression: json(src)
+---
+{
+  "file": "test.lini",
+  "diagnostics": [
+    {
+      "code": "V001",
+      "family": "unknown-property",
+      "severity": "error",
+      "message": "unknown property 'colr'; did you mean 'color'?",
+      "span": {
+        "start": 10,
+        "end": 19,
+        "line": 1,
+        "col": 11,
+        "endLine": 1,
+        "endCol": 20
+      },
+      "suggestion": {
+        "span": {
+          "start": 10,
+          "end": 14,
+          "line": 1,
+          "col": 11,
+          "endLine": 1,
+          "endCol": 15
+        },
+        "replacement": "color",
+        "applicability": "machine-applicable"
+      }
+    },
+    {
+      "code": "V005",
+      "family": "malformed-value",
+      "severity": "error",
+      "message": "'opacity' is a fraction 0..1",
+      "span": {
+        "start": 21,
+        "end": 31,
+        "line": 1,
+        "col": 22,
+        "endLine": 1,
+        "endCol": 32
+      }
+    },
+    {
+      "code": "V006",
+      "family": "off-grid-placement",
+      "severity": "error",
+      "message": "'cell' places a grid child — this box sits in a 'layout: flow'",
+      "span": {
+        "start": 55,
+        "end": 62,
+        "line": 2,
+        "col": 21,
+        "endLine": 2,
+        "endCol": 28
+      }
+    }
+  ]
+}

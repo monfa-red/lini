@@ -1,6 +1,7 @@
 //! Values, calls, groups, and expression capture [SPEC 10.7].
 
 use super::*;
+use crate::error::Code;
 
 impl<'a> Parser<'a> {
     /// Comma-separated value groups; each group is a space-separated sequence. A
@@ -93,7 +94,7 @@ impl<'a> Parser<'a> {
             Some(TokKind::LinkOp(_)) => {
                 return Err(self.err("to compute here, wrap the math in a group — e.g. (a - b)"));
             }
-            _ => return Err(self.err("expected a value")),
+            _ => return Err(self.err("expected a value").code(Code::EXPECTED_TOKEN)),
         };
         self.pos += 1;
         Ok(v)
@@ -144,7 +145,7 @@ impl<'a> Parser<'a> {
             }
         }
         if !self.eat(&TokKind::RParen) {
-            return Err(self.err("expected ')'"));
+            return Err(self.err("expected ')'").code(Code::EXPECTED_TOKEN));
         }
         Ok(Value::Call(Call { name, args }))
     }

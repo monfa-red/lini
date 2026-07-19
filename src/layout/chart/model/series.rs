@@ -1,6 +1,7 @@
 //! Reading each series' data, labels, and markers, and sampling deferred formulas.
 
 use super::*;
+use crate::error::Code;
 
 /// Parse a `|bubble|` [SPEC 14.2]: a labelled point `at: x y`, its `value` (area
 /// size), the bound value axis, and its colour (explicit `fill`/`stroke`, else palette).
@@ -46,15 +47,23 @@ pub(super) fn read_series(
     let has_fn = matches!(inst.attrs.get("fn"), Some(ResolvedValue::Deferred(_)));
     let (data, time_x) = match (has_data, has_fn) {
         (true, true) => {
-            return Err(Error::at(
-                inst.span,
-                "a series takes 'data' or 'fn', not both",
-            ));
+            return Err(
+                Error::at(inst.span, "a series takes 'data' or 'fn', not both")
+                    .code(Code::CHART_DATA),
+            );
         }
-        (false, false) => return Err(Error::at(inst.span, "a series needs 'data' or 'fn'")),
+        (false, false) => {
+            return Err(
+                Error::at(inst.span, "a series needs 'data' or 'fn'").code(Code::CHART_DATA)
+            );
+        }
         (false, true) => match inst.attrs.get("fn") {
             Some(ResolvedValue::Deferred(exprs)) => (Data::Formula(exprs.clone()), false),
-            _ => return Err(Error::at(inst.span, "a series needs 'data' or 'fn'")),
+            _ => {
+                return Err(
+                    Error::at(inst.span, "a series needs 'data' or 'fn'").code(Code::CHART_DATA)
+                );
+            }
         },
         (true, false) => read_data(inst, &kind)?,
     };
@@ -213,7 +222,7 @@ fn points_from(xs: &[f64], ys: Vec<ExprValue>, span: Span) -> Result<Vec<(f64, f
 /// mix in one domain [SPEC 14.3/20]. Bars are categorical only.
 fn read_data(inst: &ResolvedInst, kind: &SeriesKind) -> Result<(Data, bool), Error> {
     let Some(ResolvedValue::List(items)) = inst.attrs.get("data") else {
-        return Err(Error::at(inst.span, "'data' must be a list of numbers"));
+        return Err(Error::at(inst.span, "'data' must be a list of numbers").code(Code::CHART_DATA));
     };
     if items.iter().all(|it| it.as_number().is_some()) {
         return Ok((Data::Categorical(numbers(items, inst.span)?), false));
@@ -245,22 +254,29 @@ fn read_data(inst: &ResolvedInst, kind: &SeriesKind) -> Result<(Data, bool), Err
                 return Err(Error::at(
                     inst.span,
                     "'data' takes comma-separated values — 'data: 9, 15, 24'",
-                ));
+                )
+                .code(Code::CHART_DATA));
             }
-            _ => return Err(Error::at(inst.span, "point data is 'x y' pairs")),
+            _ => {
+                return Err(
+                    Error::at(inst.span, "point data is 'x y' pairs").code(Code::CHART_DATA)
+                );
+            }
         }
     }
     if dates > 0 && dates < pts.len() {
         return Err(Error::at(
             inst.span,
             "'data' mixes dates and numbers — one domain, one kind",
-        ));
+        )
+        .code(Code::CHART_DATA));
     }
     if matches!(kind, SeriesKind::Bars) {
         return Err(Error::at(
             inst.span,
             "'|bars|' takes categorical data ('data: 9, 15, 24'), not 'x y' points",
-        ));
+        )
+        .code(Code::CHART_DATA));
     }
     Ok((Data::Points(pts), dates > 0))
 }
@@ -293,7 +309,8 @@ fn read_labels(inst: &ResolvedInst, data: &Data) -> Result<Vec<String>, Error> {
                 labels.len(),
                 n
             ),
-        ));
+        )
+        .code(Code::CHART_DATA));
     }
     Ok(labels)
 }

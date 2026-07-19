@@ -14,7 +14,7 @@ use super::compose::{self, DimText, Glyph};
 use super::geometry::{Frame, P, dist, unit};
 use super::symbols::CarriedStack;
 use crate::ast::Side;
-use crate::error::Error;
+use crate::error::{Code, Error};
 use crate::ledger::consts::{ARROW_HALF, ARROW_LEN, EXT_GAP, EXT_OVERSHOOT};
 use crate::resolve::{AttrMap, ResolvedLink, ResolvedText, ResolvedValue};
 use crate::span::Span;
@@ -86,7 +86,8 @@ pub(super) fn linear(
                                 spell(ep),
                                 reading(n)
                             ),
-                        ));
+                        )
+                        .code(Code::PROJECT_AXIS));
                     }
                 }
                 (n, false)

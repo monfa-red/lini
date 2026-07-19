@@ -10,7 +10,7 @@
 use super::ir::Bbox;
 use super::text;
 use super::values::{as_pair, expand_box_value};
-use crate::error::Error;
+use crate::error::{Code, Error};
 use crate::resolve::{AttrMap, NodeKind, ResolvedInst, ResolvedValue};
 use crate::span::Span;
 
@@ -67,7 +67,9 @@ pub fn leaf_bbox(inst: &ResolvedInst, scale: f64) -> Result<Bbox, Error> {
         // `path:` is not in the shape set `scale:` multiplies ([SPEC 15.10]).
         NodeKind::Path => {
             let Some(ResolvedValue::String(d)) = inst.attrs.get("path") else {
-                return Err(Error::at(inst.span, "'|path|' requires 'path'"));
+                return Err(
+                    Error::at(inst.span, "'|path|' requires 'path'").code(Code::MISSING_REQUIRED)
+                );
             };
             let pts = super::path_bbox::extent_points(d);
             if pts.is_empty() {
@@ -199,13 +201,15 @@ fn stroke_half(inst: &ResolvedInst) -> f64 {
 }
 
 fn require_points(inst: &ResolvedInst, name: &str, min: usize) -> Result<Vec<(f64, f64)>, Error> {
-    let points = attr_points(&inst.attrs, "points", inst.span)?
-        .ok_or_else(|| Error::at(inst.span, format!("'|{}|' requires 'points'", name)))?;
+    let points = attr_points(&inst.attrs, "points", inst.span)?.ok_or_else(|| {
+        Error::at(inst.span, format!("'|{}|' requires 'points'", name)).code(Code::MISSING_REQUIRED)
+    })?;
     if points.len() < min {
         return Err(Error::at(
             inst.span,
             format!("'|{}|' requires at least {} points", name, min),
-        ));
+        )
+        .code(Code::MISSING_REQUIRED));
     }
     Ok(points)
 }
@@ -213,10 +217,10 @@ fn require_points(inst: &ResolvedInst, name: &str, min: usize) -> Result<Vec<(f6
 fn image_dims(inst: &ResolvedInst) -> Result<(f64, f64), Error> {
     match (inst.attrs.number("width"), inst.attrs.number("height")) {
         (Some(w), Some(h)) => Ok((w, h)),
-        _ => Err(Error::at(
-            inst.span,
-            "'|image|' requires 'width' and 'height'",
-        )),
+        _ => Err(
+            Error::at(inst.span, "'|image|' requires 'width' and 'height'")
+                .code(Code::MISSING_REQUIRED),
+        ),
     }
 }
 

@@ -40,13 +40,13 @@ pub type Env = HashMap<String, Value>;
 // ─────────────────────────── AST ───────────────────────────
 
 /// A parsed expression body: leading local bindings, then the value expression.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Expr {
     locals: Vec<(String, Node)>,
     value: Node,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 enum Node {
     Num(f64),
     /// A bare name — a local, a param, an ambient (`u`), a constant (`pi` / `e`),

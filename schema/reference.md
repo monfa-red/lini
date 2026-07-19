@@ -140,8 +140,8 @@ Shape is `form:kind` (see `enums` in the JSON). Flags: `text` valid on a bare te
 | `justify` | flow (layout), grid (layout) | `list:ident` | `bundles` | — | — |
 | `columns` | grid (layout) | `list:track` | `bundles` | — | — |
 | `rows` | grid (layout) | `list:track` | `none` | — | — |
-| `cell` | grid (layout) | `one:number` | `none` | — | — |
-| `span` | grid (layout), \|band\| | `one:number` | `none` | — | — |
+| `cell` | grid (layout) | `one:number` | `none` | — | hard-gate |
+| `span` | grid (layout), \|band\| | `one:number` | `none` | — | hard-gate |
 | `data` | series (role) | `list:number` | `none` | — | — |
 | `fn` | series (role) | `list:any` | `none` | — | — |
 | `labels` | series (role) | `list:string` | `none` | — | — |

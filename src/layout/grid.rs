@@ -14,7 +14,7 @@
 use super::ir::{Bbox, Gutter, PlacedNode};
 use super::primitives;
 use super::values::as_pair;
-use crate::error::Error;
+use crate::error::{Code, Error};
 use crate::resolve::{AttrMap, NodeKind, ResolvedValue};
 use crate::span::Span;
 
@@ -36,7 +36,11 @@ pub fn lay_out_grid(
 
     let col_tracks = match attrs.get("columns") {
         Some(v) => parse_tracks(v, span)?,
-        None => return Err(Error::at(span, "'layout: grid' requires 'columns'")),
+        None => {
+            return Err(
+                Error::at(span, "'layout: grid' requires 'columns'").code(Code::MISSING_REQUIRED)
+            );
+        }
     };
     let cols = col_tracks.len();
     if cols == 0 {

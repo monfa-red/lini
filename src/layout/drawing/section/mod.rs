@@ -15,7 +15,7 @@ use super::annotate::Paint;
 use super::compose::{fmt, section_title};
 use super::dims;
 use super::geometry::P;
-use crate::error::Error;
+use crate::error::{Code, Error};
 use crate::ledger::consts::{
     NOTE_OFFSET, PLANE_ARROW_SHAFT, PLANE_LETTER_GAP, PLANE_LETTER_SIZE, PLANE_OVERHANG,
     PLANE_THICK_END, PLANE_THICK_WIDTH,
@@ -123,10 +123,10 @@ pub(in crate::layout) fn layout_detail(
 ) -> Result<Vec<PlacedNode>, Error> {
     let center =
         super::super::anchors::translate(&marker.attrs, marker.span)?.unwrap_or((0.0, 0.0));
-    let diameter = marker
-        .attrs
-        .number("width")
-        .ok_or_else(|| Error::at(marker.span, "'|magnifier|' requires 'width' — its diameter"))?;
+    let diameter = marker.attrs.number("width").ok_or_else(|| {
+        Error::at(marker.span, "'|magnifier|' requires 'width' — its diameter")
+            .code(Code::MISSING_REQUIRED)
+    })?;
     let r = diameter / 2.0 * own;
 
     // Re-lay the host's geometry children at the detail scale — layout_inst is

@@ -21,7 +21,7 @@ mod titleblock;
 pub(crate) mod tree;
 pub(crate) mod types;
 
-use crate::error::Error;
+use crate::error::{Code, Error};
 use crate::ledger::defaults::root_defaults;
 use crate::resolve::NodeKind;
 use crate::span::Span;
@@ -319,7 +319,8 @@ fn lower_node(
         return Err(Error::at(
             node.span,
             "an id may not begin 'lini-' — the prefix is reserved for generated names",
-        ));
+        )
+        .code(Code::RESERVED_ID));
     }
 
     let classes = if already {
@@ -625,7 +626,8 @@ fn rewrite_selector(rule: &Rule, types: &Types) -> Result<Rule, Error> {
                     return Err(Error::at(
                         rule.span,
                         format!("unknown type '{}' in selector", name),
-                    ));
+                    )
+                    .code(Code::UNKNOWN_TYPE));
                 };
                 match id {
                     Some(_) => units.push(SelUnit::Type {

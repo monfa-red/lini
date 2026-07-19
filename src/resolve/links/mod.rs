@@ -19,7 +19,7 @@ use super::merge::{collapse, resolve_markers};
 use super::scene::{PathIndex, SceneCtx};
 use super::value::{resolve_groups, resolve_property};
 use crate::ast::{ChainOp, DrawOp, LineStyle, LinkMarker, Side};
-use crate::error::Error;
+use crate::error::{Code, Error};
 use crate::ledger::properties;
 use crate::span::Span;
 use crate::syntax::ast::{Endpoint, EndpointGroup, Link};
@@ -70,7 +70,9 @@ pub fn resolve_link(
 ) -> Result<Vec<ResolvedLink>, Error> {
     for class in &w.classes {
         if !ctx.sheet.defines_class(class) {
-            return Err(Error::at(w.span, format!("unknown class '.{}'", class)));
+            return Err(
+                Error::at(w.span, format!("unknown class '.{}'", class)).code(Code::UNKNOWN_CLASS)
+            );
         }
     }
     let drawing_scope = scope_kind.drawing;
@@ -424,7 +426,8 @@ fn validate_statement(w: &Link, scope: &LinkScope) -> Result<(), Error> {
         ChainOp::Mate => Err(Error::at(w.span, "a mate seats two parts")),
         ChainOp::Wire(op) => {
             if !drawing {
-                return Err(Error::at(w.span, "link requires at least two endpoints"));
+                return Err(Error::at(w.span, "link requires at least two endpoints")
+                    .code(Code::CHAIN_TOO_SHORT));
             }
             let leader_tip = matches!(
                 op.start,
@@ -451,7 +454,8 @@ fn validate_statement(w: &Link, scope: &LinkScope) -> Result<(), Error> {
             }
             // A two-marker op (`<->`, `*-*`, …) is a plain annotation arrow here
             // [SPEC 15], not a dimension — it needs two ends like any link.
-            Err(Error::at(w.span, "link requires at least two endpoints"))
+            Err(Error::at(w.span, "link requires at least two endpoints")
+                .code(Code::CHAIN_TOO_SHORT))
         }
     }
 }
@@ -493,7 +497,8 @@ fn resolve_point(ep: &Endpoint, drawing: bool) -> Result<(Option<Side>, Option<S
                 "':{}' is not a side — use top, bottom, left, or right",
                 p.name
             ),
-        ))
+        )
+        .code(Code::UNKNOWN_SIDE))
     }
 }
 
@@ -528,7 +533,8 @@ fn parse_routing(attrs: &AttrMap, span: crate::span::Span) -> Result<Strategy, E
         Some(_) => Err(Error::at(
             span,
             "routing takes orthogonal, natural, or straight — 'curved' was replaced by 'natural'",
-        )),
+        )
+        .code(Code::UNKNOWN_STRATEGY)),
     }
 }
 
@@ -546,6 +552,7 @@ fn collect_fractions(v: &ResolvedValue, span: Span) -> Result<Vec<f64>, Error> {
                     span,
                     "'along' takes comma-separated fractions — 'along: 0.2, 0.5, 0.8'",
                 )
+                .code(Code::LEGACY_LIST)
             })
         })
         .collect()
@@ -613,5 +620,5 @@ fn endpoint_error(
     let mut msg = format!("{noun} endpoint '{spelled}' not found {where_}");
     let suggestions = paths.suggest(ep.path.last().expect("non-empty path"), scope);
     msg.push_str(&crate::suggest::did_you_mean(&suggestions));
-    Error::at(ep.span, msg)
+    Error::at(ep.span, msg).code(Code::UNKNOWN_ENDPOINT)
 }

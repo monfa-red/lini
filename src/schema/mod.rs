@@ -11,7 +11,7 @@
 //! `cargo xtask gen-schema` writes both; `tests/schema.rs` regenerates them in
 //! memory and asserts byte-equality with the committed files.
 
-mod json;
+use crate::json::{self, J};
 
 use crate::desugar::types::{TEMPLATES, template_base};
 use crate::ledger::defaults::{link_defaults, primitive_bundle, root_defaults, template_bundle};
@@ -21,7 +21,6 @@ use crate::ledger::properties::{
 };
 use crate::resolve::NodeKind;
 use crate::syntax::ast::Decl;
-use json::J;
 
 /// The schema-format version — bumped only when the JSON's *shape* changes, not
 /// when a property row does (that rides the crate version and the drift check).

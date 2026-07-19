@@ -429,20 +429,24 @@ pub static PROPERTIES: &[Property] = &[
         DefaultRef::None,
         No,
     ),
+    // `cell`/`span` hard-gate off a grid [SPEC 12/16, decision 3] — off-grid is
+    // an error, not silently inert (the `span`-on-a-`|band|` exception aside).
     row(
         "cell",
         &[Layout("grid")],
         One(Kind::Number),
         DefaultRef::None,
         No,
-    ),
+    )
+    .hard(),
     row(
         "span",
         &[Layout("grid"), Type("band")],
         One(Kind::Number),
         DefaultRef::None,
         No,
-    ),
+    )
+    .hard(),
     // ── Charts [SPEC 14] ──
     row(
         "data",

@@ -1,0 +1,9 @@
+---
+source: tests/diagnostics.rs
+assertion_line: 23
+expression: "json(\"|box#a| \\\"hi\\\"\\n\")"
+---
+{
+  "file": "test.lini",
+  "diagnostics": []
+}

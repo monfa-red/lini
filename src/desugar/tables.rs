@@ -2,6 +2,7 @@
 //! auto-header and body-cell wrapping, and per-column align/justify distribution.
 
 use super::*;
+use crate::error::Code;
 use crate::syntax::ast::TextNode;
 
 /// The grid column count for a table / entity node [SPEC 8]: its own `columns:` decl,
@@ -150,7 +151,8 @@ fn per_column(style: &[Decl], name: &str, cols: usize) -> Result<Option<Vec<Stri
                 return Err(Error::at(
                     d.span,
                     format!("'{name}' takes comma-separated values — '{name}: start, center, end'"),
-                ));
+                )
+                .code(Code::LEGACY_LIST));
             }
         }
     }

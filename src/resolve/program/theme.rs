@@ -2,6 +2,7 @@
 //! folded into the var and function tables.
 
 use super::*;
+use crate::error::Code;
 
 // ─────────────────────────── Variables ───────────────────────────
 
@@ -155,7 +156,8 @@ fn detect_cycle(
         return Err(Error::at(
             crate::span::Span::empty(),
             format!("cycle in '{}'", stack.join(" → ")),
-        ));
+        )
+        .code(Code::INHERIT_CYCLE));
     }
     stack.push(name.to_string());
     if let Some(refs) = graph.get(name) {

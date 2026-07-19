@@ -13,7 +13,7 @@ use super::geometry::{
     self, MirrorAxis, P, PathSeg, Subpath, arc_mid, bearing_dir, dir_bearing, dist, geometry_bbox,
     rotate_about, to_d,
 };
-use crate::error::Error;
+use crate::error::{Code, Error};
 use crate::resolve::{ResolvedCall, ResolvedInst, ResolvedValue};
 use crate::span::Span;
 
@@ -69,7 +69,7 @@ pub struct Folded {
 pub fn fold(inst: &ResolvedInst, scale: f64) -> Result<Folded, Error> {
     let span = inst.span;
     let Some(draw) = inst.attrs.get("draw") else {
-        return Err(Error::at(span, "'|sketch|' requires 'draw'"));
+        return Err(Error::at(span, "'|sketch|' requires 'draw'").code(Code::MISSING_REQUIRED));
     };
     let items: Vec<&ResolvedValue> = match draw {
         ResolvedValue::Tuple(items) => items.iter().collect(),

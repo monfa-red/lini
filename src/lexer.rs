@@ -1,5 +1,5 @@
 use crate::ast::{DrawOp, LineStyle, LinkMarker, LinkOp};
-use crate::error::Error;
+use crate::error::{Code, Error};
 use crate::span::Span;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -247,7 +247,8 @@ impl<'a> Lexer<'a> {
                     return Err(Error::at(
                         Span::new(self.i, self.i + 1),
                         format!("unexpected character {:?}", c as char),
-                    ));
+                    )
+                    .code(Code::UNEXPECTED_CHAR));
                 }
             }
         }
@@ -313,6 +314,7 @@ impl<'a> Lexer<'a> {
                 self.i += 1;
                 let next = self.bytes.get(self.i).copied().ok_or_else(|| {
                     Error::at(Span::new(esc_start, self.i), "unterminated escape sequence")
+                        .code(Code::BAD_ESCAPE)
                 })?;
                 match next {
                     b'"' => value.push('"'),
@@ -323,7 +325,8 @@ impl<'a> Lexer<'a> {
                         return Err(Error::at(
                             Span::new(esc_start, self.i + 1),
                             format!("invalid escape sequence '\\{}'", other as char),
-                        ));
+                        )
+                        .code(Code::BAD_ESCAPE));
                     }
                 }
                 self.i += 1;
@@ -334,10 +337,10 @@ impl<'a> Lexer<'a> {
             self.i += ch.len_utf8();
         }
 
-        Err(Error::at(
-            Span::new(start, self.i),
-            "unterminated string literal",
-        ))
+        Err(
+            Error::at(Span::new(start, self.i), "unterminated string literal")
+                .code(Code::UNTERMINATED_STRING),
+        )
     }
 
     fn lex_hash(&mut self) -> Result<(), Error> {
@@ -413,10 +416,10 @@ impl<'a> Lexer<'a> {
         }
 
         if !saw_digit {
-            return Err(Error::at(
-                Span::new(start, self.i),
-                "invalid number literal",
-            ));
+            return Err(
+                Error::at(Span::new(start, self.i), "invalid number literal")
+                    .code(Code::BAD_NUMBER),
+            );
         }
 
         let text = &self.src[start..self.i];
@@ -425,6 +428,7 @@ impl<'a> Lexer<'a> {
                 Span::new(start, self.i),
                 format!("invalid number literal '{}'", text),
             )
+            .code(Code::BAD_NUMBER)
         })?;
         // A trailing `%` makes it a percentage (color components, [SPEC 2]).
         let kind = if self.i < self.bytes.len() && self.bytes[self.i] == b'%' {

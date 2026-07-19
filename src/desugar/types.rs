@@ -3,7 +3,7 @@
 //! each chain name into a `.lini-<name>` class. Cycles, depth > 16, and shadowing a
 //! built-in are errors.
 
-use crate::error::Error;
+use crate::error::{Code, Error};
 use crate::resolve::NodeKind;
 use crate::span::Span;
 use crate::syntax::ast::{Define, File, StyleItem};
@@ -144,10 +144,10 @@ impl Types {
         let mut defines = HashMap::new();
         for d in file.stylesheet.iter().filter_map(as_define) {
             if is_builtin_type(&d.name) {
-                return Err(Error::at(
-                    d.span,
-                    format!("'{}' shadows a built-in type", d.name),
-                ));
+                return Err(
+                    Error::at(d.span, format!("'{}' shadows a built-in type", d.name))
+                        .code(Code::SHADOWS_BUILTIN),
+                );
             }
             if defines.insert(d.name.clone(), d.base.clone()).is_some() {
                 return Err(Error::at(d.span, format!("duplicate type '{}'", d.name)));
@@ -186,13 +186,15 @@ impl Types {
                     "'{}' exceeds max inheritance depth ({})",
                     name, MAX_INHERITANCE_DEPTH
                 ),
-            ));
+            )
+            .code(Code::INHERIT_DEPTH));
         }
         if visiting.iter().any(|n| n == name) {
             return Err(Error::at(
                 span,
                 format!("cycle in '{} -> {}'", visiting.join(" -> "), name),
-            ));
+            )
+            .code(Code::INHERIT_CYCLE));
         }
         if let Some(kind) = NodeKind::parse(name) {
             return Ok(TypeInfo {
@@ -203,7 +205,9 @@ impl Types {
         let base = template_base(name)
             .map(str::to_string)
             .or_else(|| self.defines.get(name).cloned())
-            .ok_or_else(|| Error::at(span, format!("unknown type '{}'", name)))?;
+            .ok_or_else(|| {
+                Error::at(span, format!("unknown type '{}'", name)).code(Code::UNKNOWN_TYPE)
+            })?;
         visiting.push(name.to_string());
         let mut info = self.walk(&base, span, visiting, depth + 1)?;
         visiting.pop();

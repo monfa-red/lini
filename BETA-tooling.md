@@ -369,30 +369,69 @@ Every diagnostic gains a stable code and a machine-readable form; the
 render dedup keys and gate-driven validation land alongside the
 structuring work.
 
-- [ ] **Stable codes** (decision 7): assign `L`/`P`/`R`/`V`/`Y`/`T` +
+- [x] **Stable codes** (decision 7): assign `L`/`P`/`R`/`V`/`Y`/`T` +
   3-digit codes across the diagnostic sites; a central registry pins each
   code to its site (a test asserts uniqueness and that no code moves).
-- [ ] **The structured record**: code, severity, span, related span,
+- [x] **The structured record**: code, severity, span, related span,
   suggestions, and safe **machine-applicable** replacements (an edit a
   tool can apply verbatim); the human LSP-style output stays the default.
-- [ ] **JSON output mode, serde-free** (decision 9, AUDIT D9): a
+- [x] **JSON output mode, serde-free** (decision 9, AUDIT D9): a
   `--diagnostics json` (or the chosen flag) hand-writes the structured
   record; snapshot the JSON for a diagnostic per family.
-- [ ] **Derived-`PartialEq` dedup keys** (decision 10): the render
+- [x] **Derived-`PartialEq` dedup keys** (decision 10): the render
   `{:?}` Debug dedup keys become structural — derive `PartialEq` on
   `ResolvedValue`, cascading through `Expr`; the dedup reads the typed
   key, not a formatted string.
-- [ ] **Gate-driven validation** (decision 10): the validator reads the
+- [x] **Gate-driven validation** (decision 10): the validator reads the
   ledger's `gate` column for the hard-gated properties, replacing any
   hand-kept list — one mechanism, the same rows schema generation walks.
-- [ ] Tests: code uniqueness + stability; JSON snapshots per family; the
+- [x] Tests: code uniqueness + stability; JSON snapshots per family; the
   dedup key equality; the gate-driven hard-error set matches the ledger's
   `Gate::Hard` rows.
 
 Acceptance: every emitted diagnostic carries a stable code; the JSON mode
 round-trips a machine-applicable fix; the dedup keys are structural (no
 `{:?}`); hard gates are ledger-driven; fmt/clippy/test clean.
-**Log:** _(filled at close)_
+**Log:** 2026-07-19 — **done**. **Stable codes** (decision 7): a `Code` catalog
+(`src/error/codes.rs`) — a `Phase` letter (`L`/`P`/`R`/`V`/`Y`/`T`, plus an `E`
+sentinel) + a 3-digit number, declared once in a `catalog!` macro table so the
+numbers live in **one home** and construction sites name a **const**, never a
+literal (no hand-numbering drift). `Error`/`Diagnostic` gained `code` (+
+`suggestion`, + `related` on `Diagnostic`); the phase letter is stamped **for
+free at the phase boundary** (`in_phase` / `stamp_phase` in the lib pipelines) —
+a fresh diagnostic carries `Code::UNSPECIFIED` and the boundary fills the
+phase's generic `x000`, so **nothing is ever codeless** and a new error family
+opts into a stable number by adding one row. 45 codes catalogued and **every one
+wired** to its site across all six phases (validate + the SPEC-20 property
+families, resolve identity/link/asset/projection, layout missing-required /
+chart-data / project-axis / drawing-measure, the lex/parse structural set, the
+routing law checker); phase = **where detected** (so `reserved-id` / `unknown
+-side` / `legacy-list`, detected in desugar/resolve, are R codes, not P/T).
+**The structured record**: code + severity + span + related span + a
+**machine-applicable** replacement (span + verbatim text) where honestly
+derivable — the did-you-mean name over the misspelled token's span
+(`unknown-property` → replace `colr` with `color`); the human LSP-style output
+is **unchanged byte-for-byte** (codes ride the structured form only, zero
+snapshot churn). **`--json`** (SPEC 19 row added) emits one serde-free document
+`{ file, diagnostics: [...] }` via the **shared** `crate::json` printer (promoted
+out of `schema/`, one mechanism, decision 9) — the whole pass assembly lives in
+`lini::diagnostics_json`; exit 1 on any error. **Carried-over pair** (decision
+10): the render `{:?}` dedup keys are now **structural** — `PartialEq` derived on
+`ResolvedValue` cascading through `Expr`/`Node`, and `GradientDef`/`HatchDef` are
+their own `IdTable` keys (no formatted string) — output byte-identical (every
+rendering/conformance snapshot unchanged). **Gate-driven validation**: the
+validator reads the ledger's `Gate::Hard` column (`cell`/`span` now marked
+`.hard()` per SPEC 12) instead of a hand-kept name list — the statically
+-judgeable gates (cell/span/place/activation) fire at validate, `tol`/`project`
+at drawing layout; a pinning test fixes the hard set `{activation, cell, place,
+project, span, tol}` and schema regenerated (the cell/span `hard-gate` flag — the
+only schema drift). SPEC 20 gains a stable-codes paragraph. **Tests:** code
+uniqueness + family uniqueness + per-phase generic + a `catalog` snapshot pinning
+each code→family (renumber = CI fail); `--json` shape snapshots per family; the
+machine-applicable fix applied by span → recompiles clean; a no-unclassified
+sweep; the hard-gate pin. Gate: fmt `--check` / clippy `--all-targets -D
+warnings` / test clean; **1089 → 1098 tests** (+9), zero snapshot churn outside
+the two new `--json` snapshots + the catalog pin. Landed `PENDING`.
 
 ### Stage 4 — editor grammars, docs refresh, `fmt` canon & round close
 

@@ -1,6 +1,7 @@
 //! Links: endpoint chains, fan groups, and chain operators [SPEC 9].
 
 use super::*;
+use crate::error::Code;
 
 impl<'a> Parser<'a> {
     // ───────────────────────── Links ─────────────────────────
@@ -137,7 +138,9 @@ impl<'a> Parser<'a> {
                 self.pos += width;
                 Ok(op)
             }
-            None => Err(self.err("expected a link operator")),
+            None => Err(self
+                .err("expected a link operator")
+                .code(Code::EXPECTED_TOKEN)),
         }
     }
 }

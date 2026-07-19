@@ -4,6 +4,7 @@
 //! through (`projection_attrs`).
 
 use super::*;
+use crate::error::Code;
 
 /// Classify a **projection construction link** [SPEC 15.8] — the one legalized
 /// cross-view anchor form. Returns `None` for any ordinary link (drawing-scope,
@@ -66,7 +67,8 @@ pub(super) fn try_projection(
                 return Err(Error::at(
                     w.span,
                     "a projection line is unmarked — write 'side.screw:head - end.od:top'",
-                ));
+                )
+                .code(Code::PROJECTION));
             }
         }
     }
@@ -80,6 +82,7 @@ pub(super) fn try_projection(
                 ep.path.join(".")
             ),
         )
+        .code(Code::PROJECTION)
     };
     let [(ea, pa, va), (eb, pb, vb)] = resolved.as_slice() else {
         // A chain of view anchors is still not a dimension: name the first end
@@ -91,14 +94,16 @@ pub(super) fn try_projection(
         return Err(Error::at(
             w.span,
             format!("a projection link ties two views — both ends read '{first}'"),
-        ));
+        )
+        .code(Code::PROJECTION));
     };
     match (va, vb) {
         (Some(a), Some(b)) if a == b => {
             return Err(Error::at(
                 w.span,
                 format!("a projection link ties two views — both ends read '{a}'"),
-            ));
+            )
+            .code(Code::PROJECTION));
         }
         (None, _) => return Err(off_view(ea)),
         (_, None) => return Err(off_view(eb)),

@@ -203,7 +203,7 @@ pub fn is_drawing(attrs: &AttrMap) -> bool {
     matches!(attrs.get("layout"), Some(ResolvedValue::Ident(l)) if l == "drawing")
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum ResolvedValue {
     Number(f64),
     /// A percentage — `50%`, only valid inside a colour [SPEC 2].
@@ -255,7 +255,7 @@ impl ResolvedValue {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ResolvedCall {
     pub name: String,
     pub args: Vec<ResolvedValue>,

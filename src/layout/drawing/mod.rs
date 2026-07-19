@@ -30,7 +30,7 @@ pub(crate) mod threads;
 pub(super) use engine::{layout_node, layout_root};
 
 use super::ir::Bbox;
-use crate::error::Error;
+use crate::error::{Code, Error};
 use crate::resolve::{Program, ResolvedInst};
 use geometry::P;
 
@@ -216,7 +216,8 @@ pub(super) fn part_bbox(inst: &ResolvedInst, own: f64) -> Result<Bbox, Error> {
             return Err(Error::at(
                 inst.span,
                 format!("'|{ty}|' requires 'width' — its diameter"),
-            ));
+            )
+            .code(Code::MISSING_REQUIRED));
         };
         let sw = inst.attrs.number("stroke-width").unwrap_or(0.0);
         return Ok(Bbox::centered(w * own, w * own).inflate(sw / 2.0));

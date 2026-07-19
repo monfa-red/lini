@@ -45,7 +45,7 @@ pub struct LaidOut {
 /// — the drawing convention), the sheet-space pitch (never scaled), and the
 /// line colour (an ordinary paint — themes, flips, bakes). Line width is
 /// fixed at 0.75: a texture, not a stroke.
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct HatchDef {
     pub angles: Vec<f64>,
     pub pitch: f64,
@@ -55,13 +55,13 @@ pub struct HatchDef {
 /// A distinct gradient paint [SPEC 10.3]: a kind plus its colour stops, evenly
 /// spaced. Twin of the drop-shadow filter — collected, deduplicated, and emitted
 /// once into `<defs>`; the stops stay `ResolvedValue`s so they flip and bake.
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct GradientDef {
     pub kind: GradientKind,
     pub stops: Vec<ResolvedValue>,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 pub enum GradientKind {
     /// Linear, at the given CSS-style angle in degrees (`gradient()` defaults 135).
     Linear(f64),

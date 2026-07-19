@@ -86,6 +86,12 @@ struct CompileArgs {
     #[arg(long = "check")]
     check: bool,
 
+    /// Emit diagnostics as a JSON document (stable codes, spans, and
+    /// machine-applicable fixes) instead of SVG — the tooling/LSP form
+    /// [SPEC 19/20]. Exit 1 if any error-level diagnostic fired.
+    #[arg(long = "json")]
+    json: bool,
+
     /// A theme: a built-in name (`dark`, `high-contrast`, …), a CSS file of `--lini-*`
     /// overrides, or a light/dark pair (`light/dark`). See `lini theme`.
     #[arg(long = "theme", value_name = "NAME|FILE|A/B")]
@@ -214,6 +220,16 @@ fn main() -> ExitCode {
         base_dir,
         ..Default::default()
     };
+
+    if cli.json {
+        let (doc, had_error) = lini::diagnostics_json(&source, &opts, &filename);
+        print!("{}", doc);
+        return if had_error {
+            ExitCode::from(1)
+        } else {
+            ExitCode::SUCCESS
+        };
+    }
 
     if cli.check {
         return match lini::check_with(&source, &opts) {

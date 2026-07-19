@@ -38,21 +38,14 @@ fn parse(v: &ResolvedValue) -> Option<GradientDef> {
     (stops.len() >= 2).then_some(GradientDef { kind, stops })
 }
 
-/// A structural dedup key (bake-independent): kind + angle + the stops. Two paint
-/// sites with the same gradient share one definition.
-fn key(g: &GradientDef) -> String {
-    let kind = match g.kind {
-        GradientKind::Linear(a) => format!("L{}", num(a)),
-        GradientKind::Radial => "R".to_string(),
-    };
-    format!("{kind}|{:?}", g.stops)
-}
-
-/// The interning tables, threaded through one walk.
+/// The interning tables, threaded through one walk. Each def is its own dedup
+/// key — a **structural** match through derived `PartialEq` (bake-independent),
+/// not a `{:?}` string [decision 10]. Two paint sites with the same gradient
+/// (or hatch) share one definition.
 #[derive(Default)]
 struct Interner {
-    gradients: IdTable<String, GradientDef>,
-    hatches: IdTable<String, HatchDef>,
+    gradients: IdTable<GradientDef, GradientDef>,
+    hatches: IdTable<HatchDef, HatchDef>,
     /// Distinct clip radii [SPEC 15.8], in encounter order — a detail view's
     /// `clip:` circle is interned by radius (a 1e-9 tolerance, so not the exact
     /// key match the `IdTable` gives), one `<clipPath>` per distinct one.
@@ -121,12 +114,12 @@ fn lower_attrs(attrs: &mut AttrMap, it: &mut Interner) {
 /// `url(#…)` reference.
 fn rewrite(value: &mut ResolvedValue, it: &mut Interner) {
     if let Some(g) = parse(value) {
-        let idx = it.gradients.intern(key(&g), || g);
+        let idx = it.gradients.intern(g.clone(), || g);
         *value = ResolvedValue::RawCss(format!("url(#lini-gradient-{})", idx + 1));
         return;
     }
     if let Some(h) = parse_hatch(value) {
-        let idx = it.hatches.intern(hatch_key(&h), || h);
+        let idx = it.hatches.intern(h.clone(), || h);
         *value = ResolvedValue::RawCss(format!("url(#lini-hatch-{})", idx + 1));
     }
 }
@@ -164,10 +157,6 @@ fn parse_hatch(v: &ResolvedValue) -> Option<HatchDef> {
         pitch,
         color,
     })
-}
-
-fn hatch_key(h: &HatchDef) -> String {
-    format!("{:?}|{}|{:?}", h.angles, num(h.pitch), h.color)
 }
 
 /// Emit every collected paint def — gradients, then hatch `<pattern>`s — in

@@ -18,8 +18,9 @@
 //! internally are whitelisted for the lowered-form round-trip.
 
 use crate::desugar::types::{self, Types};
-use crate::error::Diagnostic;
-use crate::ledger::properties::{self, Inherit, Owner, Property, Shape};
+use crate::error::{Code, Diagnostic};
+use crate::ledger::properties::{self, Gate, Inherit, Owner, Property, Shape};
+use crate::span::Span;
 use crate::suggest;
 use crate::syntax::ast::{
     Child, Decl, Define, File, LabelItem, Link, Node, Rule, SelUnit, StyleItem, TextNode, Value,
@@ -265,14 +266,22 @@ impl<'a> Ctx<'a> {
         }
         let Some(prop) = properties::get(&d.name) else {
             let near = suggest::nearest(&d.name, properties::PROPERTIES.iter().map(|p| p.name), 1);
-            out.push(Diagnostic::error(
+            let mut diag = Diagnostic::error(
                 d.span,
                 format!(
                     "unknown property '{}'{}",
                     d.name,
                     suggest::did_you_mean(&near)
                 ),
-            ));
+            )
+            .code(Code::UNKNOWN_PROPERTY);
+            // The name is a machine-applicable replacement — it heads the decl,
+            // so its span is derivable [ROADMAP 3.8].
+            if let [best] = near.as_slice() {
+                let name_span = Span::new(d.span.start, d.span.start + d.name.len());
+                diag = diag.suggest(name_span, *best);
+            }
+            out.push(diag);
             return;
         };
         self.check_value(d, prop, wearer, out);
@@ -290,15 +299,34 @@ impl<'a> Ctx<'a> {
             return;
         };
         if !node_accepts(prop, kind, chain, *own_layout) {
-            out.push(Diagnostic::error(
-                d.span,
-                misuse_message(&d.name, shown, prop),
-            ));
+            out.push(
+                Diagnostic::error(d.span, misuse_message(&d.name, shown, prop))
+                    .code(Code::MISUSED_PROPERTY),
+            );
             return;
         }
-        // Layout-owned placement props, gated on the statically-known context
-        // [SPEC 16]: `cell`/`span` need a grid parent; the sequence placement
-        // props need a sequence [SPEC 20].
+        // `wavy` is link-only by design [SPEC 16] — a wire waves, an outline
+        // never does. A value check, wearer-independent; not a context gate.
+        // (The async sequence message's wavy |line| is engine-lowered at
+        // layout, never authored, so it never passes here.)
+        if d.name == "stroke-style"
+            && matches!(single_value(d), Some(Value::Ident(s)) if s == "wavy")
+        {
+            out.push(
+                Diagnostic::error(
+                    d.span,
+                    "'wavy' waves a link's wire — a shape's outline takes solid, dashed, dotted, center, or phantom",
+                )
+                .code(Code::WAVY_OUTLINE),
+            );
+        }
+        // Layout-owned placement props hard-error out of context only where the
+        // ledger marks a hard gate [SPEC 16, decision 10] — otherwise inert. The
+        // statically-judgeable gates read the known container context here;
+        // `tol`/`project` gate later, at drawing layout.
+        if !matches!(prop.gate, Gate::Hard) {
+            return;
+        }
         match d.name.as_str() {
             "cell" | "span" => {
                 let is_band = chain.iter().any(|c| c == "band");
@@ -311,45 +339,39 @@ impl<'a> Ctx<'a> {
                     } else {
                         "spans grid tracks"
                     };
-                    out.push(Diagnostic::error(
-                        d.span,
-                        format!(
-                            "'{}' {verb} — this box sits in a 'layout: {parent}'",
-                            d.name
-                        ),
-                    ));
+                    out.push(
+                        Diagnostic::error(
+                            d.span,
+                            format!(
+                                "'{}' {verb} — this box sits in a 'layout: {parent}'",
+                                d.name
+                            ),
+                        )
+                        .code(Code::OFF_GRID_PLACEMENT),
+                    );
                 }
             }
             "place" => {
                 if let Some(parent) = parent_layout
                     && *parent != "sequence"
                 {
-                    out.push(Diagnostic::error(
-                        d.span,
-                        "'place' is valid only in a 'layout: sequence'",
-                    ));
+                    out.push(
+                        Diagnostic::error(d.span, "'place' is valid only in a 'layout: sequence'")
+                            .code(Code::PLACE_OUTSIDE_SEQUENCE),
+                    );
                 }
             }
             "activation" => {
                 if let Some(own) = own_layout
                     && *own != "sequence"
                 {
-                    out.push(Diagnostic::error(
-                        d.span,
-                        "'activation' is valid only in a 'layout: sequence'",
-                    ));
-                }
-            }
-            // `wavy` is link-only by design [SPEC 16] — a wire waves, an
-            // outline never does. (The async sequence message's wavy |line|
-            // is engine-lowered at layout, never authored, so it never
-            // passes here.)
-            "stroke-style" => {
-                if matches!(single_value(d), Some(Value::Ident(s)) if s == "wavy") {
-                    out.push(Diagnostic::error(
-                        d.span,
-                        "'wavy' waves a link's wire — a shape's outline takes solid, dashed, dotted, center, or phantom",
-                    ));
+                    out.push(
+                        Diagnostic::error(
+                            d.span,
+                            "'activation' is valid only in a 'layout: sequence'",
+                        )
+                        .code(Code::ACTIVATION_OUTSIDE_SEQUENCE),
+                    );
                 }
             }
             _ => {}
@@ -372,10 +394,10 @@ impl<'a> Ctx<'a> {
             Owner::Role(_) => false,
         });
         if !ok {
-            out.push(Diagnostic::error(
-                d.span,
-                misuse_message(&d.name, "the root block", prop),
-            ));
+            out.push(
+                Diagnostic::error(d.span, misuse_message(&d.name, "the root block", prop))
+                    .code(Code::MISUSED_PROPERTY),
+            );
         }
     }
 
@@ -409,24 +431,30 @@ impl<'a> Ctx<'a> {
                     } else {
                         "line"
                     };
-                    out.push(Diagnostic::error(
-                        d.span,
-                        crate::ledger::format::one_shape_paint(shape),
-                    ));
+                    out.push(
+                        Diagnostic::error(d.span, crate::ledger::format::one_shape_paint(shape))
+                            .code(Code::MALFORMED_VALUE),
+                    );
                     return;
                 }
             }
-            out.push(Diagnostic::error(
-                d.span,
-                format!("'{}' takes one value, not a comma list", d.name),
-            ));
+            out.push(
+                Diagnostic::error(
+                    d.span,
+                    format!("'{}' takes one value, not a comma list", d.name),
+                )
+                .code(Code::MALFORMED_VALUE),
+            );
         }
         match d.name.as_str() {
             "opacity" => {
                 if let Some(Value::Number(n)) = single_value(d)
                     && !(0.0..=1.0).contains(n)
                 {
-                    out.push(Diagnostic::error(d.span, "'opacity' is a fraction 0..1"));
+                    out.push(
+                        Diagnostic::error(d.span, "'opacity' is a fraction 0..1")
+                            .code(Code::MALFORMED_VALUE),
+                    );
                 }
             }
             "translate" => {
@@ -438,7 +466,10 @@ impl<'a> Ctx<'a> {
                     _ => false,
                 };
                 if bad {
-                    out.push(Diagnostic::error(d.span, "'translate' takes 'x y'"));
+                    out.push(
+                        Diagnostic::error(d.span, "'translate' takes 'x y'")
+                            .code(Code::MALFORMED_VALUE),
+                    );
                 }
             }
             _ => {}
@@ -473,10 +504,10 @@ impl<'a> Ctx<'a> {
             let on_links = link_wearers.contains(name.as_str());
             let on_text = text_wearers.contains(name.as_str());
             if nodes.is_none() && !on_links && !on_text {
-                out.push(Diagnostic::warn(
-                    r.span,
-                    format!("class '.{name}' is never worn"),
-                ));
+                out.push(
+                    Diagnostic::warn(r.span, format!("class '.{name}' is never worn"))
+                        .code(Code::CLASS_NEVER_WORN),
+                );
                 continue;
             }
             // CSS semantics: a property inert on one wearer is fine; dead on
@@ -493,10 +524,13 @@ impl<'a> Ctx<'a> {
                 let link_ok = on_links && link_accepts(prop);
                 let text_ok = on_text && properties::is_text_valid(&d.name);
                 if !node_ok && !link_ok && !text_ok {
-                    out.push(Diagnostic::warn(
-                        d.span,
-                        format!("'.{name} {{ {}: … }}' is inert on every wearer", d.name),
-                    ));
+                    out.push(
+                        Diagnostic::warn(
+                            d.span,
+                            format!("'.{name} {{ {}: … }}' is inert on every wearer", d.name),
+                        )
+                        .code(Code::INERT_EVERY_WEARER),
+                    );
                 }
             }
         }

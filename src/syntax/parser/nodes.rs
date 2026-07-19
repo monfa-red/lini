@@ -1,6 +1,7 @@
 //! Nodes and text nodes: identity tail, style blocks, and child bodies.
 
 use super::*;
+use crate::error::Code;
 
 impl<'a> Parser<'a> {
     // ───────────────────────── Nodes ─────────────────────────
@@ -23,7 +24,7 @@ impl<'a> Parser<'a> {
     pub(super) fn parse_text_node(&mut self) -> Result<TextNode, Error> {
         let text = match self.kind() {
             Some(TokKind::String(s)) => s.clone(),
-            _ => return Err(self.err("expected a string")),
+            _ => return Err(self.err("expected a string").code(Code::EXPECTED_TOKEN)),
         };
         let start = self.span();
         self.pos += 1;

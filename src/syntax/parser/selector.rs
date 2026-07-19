@@ -1,6 +1,7 @@
 //! Rule selectors and the shared `|type#id|` identity parse.
 
 use super::*;
+use crate::error::Code;
 
 impl<'a> Parser<'a> {
     // ───────────────────────── Rules & defines ─────────────────────────
@@ -93,7 +94,11 @@ impl<'a> Parser<'a> {
                 (Some(name), id)
             }
             Some(TokKind::Dot) => return Err(self.glued_class_err(ctx)),
-            _ => return Err(self.err("'| |' needs a type or an '#id'")),
+            _ => {
+                return Err(self
+                    .err("'| |' needs a type or an '#id'")
+                    .code(Code::EMPTY_BARS));
+            }
         };
         if let Some(t) = &ty {
             if t == "link" {
@@ -114,13 +119,14 @@ impl<'a> Parser<'a> {
     pub(super) fn parse_hash_id(&mut self) -> Result<String, Error> {
         let (run, span) = match self.kind() {
             Some(TokKind::Hash(s)) => (s.clone(), self.span()),
-            _ => return Err(self.err("expected an '#id'")),
+            _ => return Err(self.err("expected an '#id'").code(Code::EXPECTED_TOKEN)),
         };
         if !is_ident(&run) {
             return Err(Error::at(
                 span,
                 format!("'#{run}' is not a valid id — an id starts with a letter or '_'"),
-            ));
+            )
+            .code(Code::INVALID_ID));
         }
         self.pos += 1;
         Ok(run)

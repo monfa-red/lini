@@ -8,7 +8,7 @@
 
 use super::ast::*;
 use crate::ast::{ChainOp, DrawOp, LineStyle, LinkMarker, LinkOp};
-use crate::error::Error;
+use crate::error::{Code, Error};
 use crate::lexer::{TokKind, Token};
 use crate::span::Span;
 
@@ -134,7 +134,9 @@ impl<'a> Parser<'a> {
         if self.eat(k) {
             Ok(())
         } else {
-            Err(self.err(format!("expected {}", what)))
+            Err(self
+                .err(format!("expected {}", what))
+                .code(Code::EXPECTED_TOKEN))
         }
     }
 
@@ -151,7 +153,7 @@ impl<'a> Parser<'a> {
     fn expect_ident(&mut self) -> Result<(String, Span), Error> {
         let name = match self.kind() {
             Some(TokKind::Ident(s)) => s.clone(),
-            _ => return Err(self.err("expected identifier")),
+            _ => return Err(self.err("expected identifier").code(Code::EXPECTED_TOKEN)),
         };
         let span = self.span();
         self.pos += 1;
@@ -172,7 +174,9 @@ impl<'a> Parser<'a> {
         ) {
             Ok(())
         } else {
-            Err(self.err("expected a newline, ';', or a closing bracket"))
+            Err(self
+                .err("expected a newline, ';', or a closing bracket")
+                .code(Code::EXPECTED_TOKEN))
         }
     }
 
@@ -207,14 +211,18 @@ impl<'a> Parser<'a> {
             match self.classify_body() {
                 Kind::Node => file.instances.push(self.parse_child()?),
                 Kind::Link => file.links.push(self.parse_link()?),
-                Kind::Decl => return Err(self.err("a declaration belongs in a '{ }' block")),
+                Kind::Decl => {
+                    return Err(self
+                        .err("a declaration belongs in a '{ }' block")
+                        .code(Code::DECL_OUTSIDE_BLOCK));
+                }
                 Kind::Var => {
                     return Err(self.err("variables are declared in the stylesheet '{ }'"));
                 }
                 _ if matches!(self.kind(), Some(TokKind::LBrace)) => {
-                    return Err(
-                        self.err("the stylesheet '{ }' must come first, before any instance")
-                    );
+                    return Err(self
+                        .err("the stylesheet '{ }' must come first, before any instance")
+                        .code(Code::STYLESHEET_ORDER));
                 }
                 _ => {
                     return Err(self.err(

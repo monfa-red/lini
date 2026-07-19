@@ -6,6 +6,7 @@ mod fmt;
 mod font;
 mod glyph;
 mod icon;
+mod json;
 mod layout;
 mod ledger;
 mod lexer;
@@ -22,6 +23,7 @@ mod syntax;
 mod theme;
 mod validate;
 
+use error::Phase;
 pub use error::{Diagnostic, Error, Level};
 pub use fmt::format as format_source;
 
@@ -39,9 +41,9 @@ pub use schema::{reference_md, schema_json};
 /// `along:` become explicit. Comments are dropped. The lowered form re-renders
 /// identically and is a fixed point of desugar.
 pub fn desugar_source(src: &str) -> Result<String, Error> {
-    let tokens = lexer::lex(src)?;
-    let file = syntax::parser::parse(src, &tokens)?;
-    Ok(fmt::print_file(&desugar::desugar(&file)?))
+    let file = parse_stage(src)?;
+    let lowered = desugar::desugar(&file).map_err(|e| e.in_phase(Phase::Resolve))?;
+    Ok(fmt::print_file(&lowered))
 }
 pub use routing::{Rule, Severity, Violation};
 
@@ -98,7 +100,7 @@ pub fn compile_str(src: &str) -> Result<String, Error> {
 
 pub fn compile_str_with(src: &str, opts: &Options) -> Result<String, Error> {
     let program = resolve_pipeline(src, opts)?;
-    let mut laid_out = layout::layout(&program)?;
+    let mut laid_out = layout_stage(&program)?;
     render::lower_paints(&mut laid_out);
     Ok(finish_svg(&laid_out, opts))
 }
@@ -108,11 +110,58 @@ pub fn compile_str_with(src: &str, opts: &Options) -> Result<String, Error> {
 /// to warn); routing through here runs the link router once instead of twice.
 pub fn compile_str_checked(src: &str, opts: &Options) -> Result<(String, Vec<Diagnostic>), Error> {
     let program = resolve_pipeline(src, opts)?;
-    let mut laid_out = layout::layout(&program)?;
+    let mut laid_out = layout_stage(&program)?;
     render::lower_paints(&mut laid_out);
-    let mut diags = layout::extent_hints(&laid_out, &program);
+    let mut diags = error::stamp_phase(layout::extent_hints(&laid_out, &program), Phase::Layout);
     diags.extend(routing_diagnostics_of(layout::validate_routing(&laid_out)));
     Ok((finish_svg(&laid_out, opts), diags))
+}
+
+/// The full diagnostic set for a source, as one serde-free JSON document
+/// [ROADMAP 3.8, decision 9] — the `--json` CLI form. Runs the same passes the
+/// default compile does (validation, then layout + routing when validation is
+/// clean), collecting every diagnostic — errors, warnings, and a fatal
+/// compile error — each with its stable code, span, related span, and any
+/// machine-applicable replacement. Returns the document plus whether any
+/// **error**-level diagnostic fired (the caller's exit code).
+pub fn diagnostics_json(src: &str, opts: &Options, filename: &str) -> (String, bool) {
+    let mut items = Vec::new();
+    let mut had_error = false;
+
+    // The property/lint pass [SPEC 16/20] — surfaces on the raw parse. A parse
+    // or lex error here is fatal and stops the pipeline, exactly as the default
+    // CLI path returns early.
+    match lint_str(src) {
+        Ok(diags) => {
+            for d in &diags {
+                had_error |= d.level == Level::Error;
+                items.push(d.to_json(src));
+            }
+        }
+        Err(e) => {
+            items.push(e.to_json(src));
+            return (error::diagnostics_document(items, filename), true);
+        }
+    }
+
+    // Validation errors stop the compile [SPEC 19] — mirror that: only route on
+    // a clean validation, so layout never runs on a rejected file.
+    if !had_error {
+        match compile_str_checked(src, opts) {
+            Ok((_, route_diags)) => {
+                for d in &route_diags {
+                    had_error |= d.level == Level::Error;
+                    items.push(d.to_json(src));
+                }
+            }
+            Err(e) => {
+                items.push(e.to_json(src));
+                had_error = true;
+            }
+        }
+    }
+
+    (error::diagnostics_document(items, filename), had_error)
 }
 
 fn finish_svg(laid_out: &layout::LaidOut, opts: &Options) -> String {
@@ -126,19 +175,17 @@ fn finish_svg(laid_out: &layout::LaidOut, opts: &Options) -> String {
 /// Lex and parse only — verifies syntactic correctness without running
 /// resolve/layout/render.
 pub fn check_parse(src: &str) -> Result<(), Error> {
-    let tokens = lexer::lex(src)?;
-    let _file = syntax::parser::parse(src, &tokens)?;
+    let _file = parse_stage(src)?;
     Ok(())
 }
 
 /// Lex, parse, and run the lint pass. Returns warnings (no errors).
 /// Parse errors are surfaced as `Err`; missing lints just return an empty Vec.
 pub fn lint_str(src: &str) -> Result<Vec<Diagnostic>, Error> {
-    let tokens = lexer::lex(src)?;
-    let file = syntax::parser::parse(src, &tokens)?;
+    let file = parse_stage(src)?;
     let mut out = validate::validate(&file);
     out.extend(lint::lint(&file));
-    Ok(out)
+    Ok(error::stamp_phase(out, Phase::Validate))
 }
 
 /// Lex, parse, and resolve. Verifies semantic correctness without running
@@ -163,7 +210,7 @@ pub fn validate_str(src: &str) -> Result<Vec<Violation>, Error> {
 /// so file-relative image assets resolve [SPEC 7].
 pub fn validate_str_with(src: &str, opts: &Options) -> Result<Vec<Violation>, Error> {
     let program = resolve_pipeline(src, opts)?;
-    let laid_out = layout::layout(&program)?;
+    let laid_out = layout_stage(&program)?;
     Ok(layout::validate_routing(&laid_out))
 }
 
@@ -176,21 +223,25 @@ fn routing_diagnostics_of(violations: Vec<Violation>) -> Vec<Diagnostic> {
         .into_iter()
         .filter(|v| v.severity != Severity::Info)
         .map(|v| {
+            let code = match v.rule {
+                Rule::Impossible => error::Code::IMPOSSIBLE_LINK,
+                _ => error::Code::LAW_BREACH,
+            };
             Diagnostic::warn(
                 v.span,
                 format!("{} ({}): {}", v.rule.id(), v.links.join(", "), v.detail),
             )
+            .code(code)
         })
         .collect()
 }
 
 fn resolve_pipeline(src: &str, opts: &Options) -> Result<resolve::Program, Error> {
-    let tokens = lexer::lex(src)?;
-    let file = syntax::parser::parse(src, &tokens)?;
+    let file = parse_stage(src)?;
     // Tree structure errors [SPEC 20] read the still-nested AST — before desugar
     // flattens each `layout: tree` scope's topic hierarchy [SPEC 12].
-    desugar::tree::validate(&file)?;
-    let lowered = desugar::desugar(&file)?;
+    desugar::tree::validate(&file).map_err(|e| e.in_phase(Phase::Resolve))?;
+    let lowered = desugar::desugar(&file).map_err(|e| e.in_phase(Phase::Resolve))?;
     let theme = match &opts.theme_css {
         Some(css) => theme::extract_lini_vars(css),
         None => Vec::new(),
@@ -199,7 +250,19 @@ fn resolve_pipeline(src: &str, opts: &Options) -> Result<resolve::Program, Error
         base_dir: opts.base_dir.clone(),
         root: opts.asset_root.clone(),
     };
-    resolve::resolve_with_env(&lowered, &theme, env)
+    resolve::resolve_with_env(&lowered, &theme, env).map_err(|e| e.in_phase(Phase::Resolve))
+}
+
+/// Lex + parse, each stamped with its phase code at the boundary — the single
+/// funnel every pipeline shares [decision 7].
+fn parse_stage(src: &str) -> Result<syntax::ast::File, Error> {
+    let tokens = lexer::lex(src).map_err(|e| e.in_phase(Phase::Lex))?;
+    syntax::parser::parse(src, &tokens).map_err(|e| e.in_phase(Phase::Parse))
+}
+
+/// Lay out a resolved program, stamping any layout error with its phase code.
+fn layout_stage(program: &resolve::Program) -> Result<layout::LaidOut, Error> {
+    layout::layout(program).map_err(|e| e.in_phase(Phase::Layout))
 }
 
 fn wrap_html(svg: &str) -> String {

@@ -9,7 +9,7 @@ use super::super::ir::PlacedNode;
 use super::super::{approx_width, prim};
 use super::anchors::rotated;
 use super::geometry::P;
-use crate::error::Error;
+use crate::error::{Code, Error};
 use crate::ledger::consts::TOL_STACK;
 use crate::ledger::format::{self, Format};
 use crate::resolve::{AttrMap, ResolvedValue};
@@ -117,7 +117,8 @@ pub(super) fn compose(
             span,
             "'tol: +upper -lower' stacks where 'format: fraction' already stacks — \
              use a numeric 'tol' or a decimal format",
-        ));
+        )
+        .code(Code::DRAWING_MEASURE));
     }
     Ok(DimText {
         main,
@@ -145,6 +146,7 @@ fn tol(main: &mut String, attrs: &AttrMap, span: Span) -> Result<Option<(String,
             span,
             "'tol' takes a number, '+upper -lower', or a fit ident",
         )
+        .code(Code::DRAWING_MEASURE)
     };
     match attrs.get("tol") {
         None => Ok(None),
