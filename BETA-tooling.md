@@ -361,7 +361,7 @@ conformance suite) — an example cannot rot into invalid syntax. **Drift check*
 with the committed files — a stale checkout fails CI. Coverage + orphan +
 `only_format_is_dual_channel` pinned as unit tests beside the generator. Gate:
 fmt `--check` / clippy `--all-targets -D warnings` / test clean; **1084 → 1089
-tests** (+5: 2 unit, 3 integration), zero snapshot churn.
+tests** (+5: 2 unit, 3 integration), zero snapshot churn. Landed `a46c151`.
 
 ### Stage 3 — structured diagnostics + the two carried-over items
 
