@@ -115,8 +115,7 @@ children (boxes and text) and its internal links, in source order. A drawn node 
 `|type#id| "label" .class { style } [ children ]`, only the bars required; a link
 is the same tail on a different head: `a -> b "label" .class { style } [ labels ]`.
 
-**Three sigils, one meaning each.** `|…|` is a **type** (with an optional `#id`),
-always in bars. `.name` is a **class** — a worn style bundle, defined `.hot { … }`,
+**Three sigils, one meaning each.** `|…|` is identity, above. `.name` is a **class** — a worn style bundle, defined `.hot { … }`,
 worn after the identity (`|box| .hot`, `a -> b .hot`), never inside the bars.
 `#name` is an **id** — declared in the bars (`|box#cat|`), selected as a rule
 (`#cat { … }`), referenced **bare** in a link (`cat -> b`). A name goes bare **only
@@ -194,11 +193,10 @@ may contain spaces — `font-family` — bare or quoted, quoted only when needed
 (`font-family: "SF Mono"`), as in CSS. Numbers and `(…)` expressions are bare too;
 only text is quoted.
 
-**Expressions** — a parenthesized region `(…)` is a **compile-time math expression**:
-operators and the math library, folded to a literal number (or a point) at compile
-time. Parentheses are the **only place operators appear** — outside them `-` is a link
-line or a sign and `<` / `>` are markers. A call's own parens count (`up(5 * r, 10)`);
-groups may span lines ([SPEC 10](#10-colour-variables--expressions)).
+**Expressions** — a parenthesized region `(…)` is a **compile-time math expression**,
+folded to a literal number (or a point); parentheses are the **only place operators
+appear**, a call's own parens count (`up(5 * r, 10)`), and groups may span lines
+([SPEC 10.7](#107-expressions--functions)).
 
 **Numbers** — integer or decimal, optional sign, no units (px for lengths, degrees
 for angles, 0–1 for opacities/fractions). `10`, `-5`, `0.25`, `+3`. A trailing `%`
@@ -293,9 +291,7 @@ them. [SPEC 1](#1-mental-model) names the parts; classes **follow** the bars
 | Form | Effect |
 |---|---|
 | `\|box#cat\|` | a box, id `cat` (empty — no label). |
-| `\|treat#cat\|` | type `treat`, id `cat`. |
-| `\|treat#cat\| "Friendly cat"` | + label "Friendly cat". |
-| `\|treat#cat\| { fill: red }` | + a style block. |
+| `\|treat#cat\| "Friendly cat"` | type `treat`, id `cat`, label "Friendly cat". |
 | `\|box#cat\| ""` | same as `\|box#cat\|` — `""` is just an empty string. |
 | `\|box#cat\| .bold.loud { padding: 5 }` | type + id + classes + own style. |
 | `\|group#garden\| { … } [ … ]` | container with style and a body. |
@@ -401,13 +397,11 @@ legitimate mixed use draws no noise ([SPEC 20](#20-errors)).
 
 ### Declarations
 
-A declaration `key: value;` ([SPEC 2](#2-lexical-syntax)) lives only in a `{ }`
-style block — the stylesheet (configuring the root) or a node's own block. A
-declaration **ends with `;`** — its value runs
-to that `;` (or the block's closing `}`), so a value may span several lines (a long
-expression, a per-segment list); the `;` is optional only immediately before `}`. A
-bare `key: value` outside a `{ }` is an error. Every property, its value shape, and
-where it applies is in the [Property Ledger](#16-property-ledger--support).
+A declaration `key: value;` lives only in a `{ }` style block — the stylesheet
+(configuring the root) or a node's own block — and **ends with `;`**, so a value may
+span lines ([SPEC 2](#2-lexical-syntax)); the `;` is optional only immediately before
+`}`. A bare `key: value` outside a `{ }` is an error. Every property, its value shape,
+and where it applies is in the [Property Ledger](#16-property-ledger--support).
 
 ---
 
@@ -447,8 +441,7 @@ intrinsic children (materialized per instance — see [SPEC 9](#9-links)).
 
 **Selecting vs. drawing is decided by the section, not the syntax.** `|box| .hot`
 in the stylesheet is a descendant *rule* (.hot inside a box); on the canvas it is
-an *instance* (a box wearing .hot). One reads as a selector, the other draws —
-because rules live in the stylesheet and instances on the canvas.
+an *instance* (a box wearing .hot).
 
 ### The cascade
 
@@ -514,8 +507,7 @@ Every child is **in flow** by default — laid out by its container's `layout`
 | `top` · `bottom` · `left` · `right` | flush against that parent edge |
 | `top left` · `top right` · `bottom left` · `bottom right` | with its corner on that parent corner |
 
-The child's *own* matching point lands on the parent's, so it sits **flush**. The
-anchor is the parent's **drawn box** — border and padding included.
+The anchor is the parent's **drawn box** — border and padding included.
 
 A pinned child is an **overlay**. It **does not grow the parent** — a parent of only
 pinned children collapses to `2 × padding` — and it **paints above** the in-flow
@@ -567,8 +559,7 @@ breaking inside a word (grapheme boundaries), so the no-clip / no-spill law hold
 any width. The wrapped size **is** the measured size — it feeds auto-sizing, grid
 tracks, gutters, spacing, link labels, and routing obstacles alike. Three errors
 keep it honest ([SPEC 20](#20-errors)): `nowrap` text that cannot fit the cap, a
-**non-text** child wider than `max-width` (only text wraps), and a `width` floor
-above the cap (`width > max-width` is invalid).
+**non-text** child wider than the cap (only text wraps), and a `width` floor above it.
 
 Exceptions: a **text** node sizes to its glyphs (no padding), widened by
 `letter-spacing` and given `line-spacing` between `\n` lines; `|icon|` is a square
@@ -649,9 +640,8 @@ Two kinds of text property, split by whether they touch layout:
 
 - **Baked spacing** — `letter-spacing`, `line-spacing`, and `font-size` — changes
   **layout** (the text box grows to fit the wider glyphs or taller block) and compiles
-  into the glyph and line positions, never emitted as a style. `font-size` can never be
-  a runtime `var()` — text is measured at compile time. `letter-spacing` / `line-spacing`
-  default to 0, so text is unaffected until set.
+  into the glyph and line positions, never emitted as a style ([SPEC 1](#1-mental-model)).
+  `letter-spacing` / `line-spacing` default to 0, so text is unaffected until set.
 - **Live CSS** — `font-style`, `text-transform`, `text-decoration` — does *not* touch
   layout: it rides the class / `<g>` / `.lini` rule and a host page can override it. Set
   any in the global block to style the whole scene.
@@ -739,8 +729,7 @@ property names it — or, as the [smart label](#the-label), the string does (`|i
 |icon#tag| "bell" [ "3" ]                              // symbol bell, "3" rides as text
 ```
 
-Setting the symbol twice — a label *and* `{ symbol: … }` — is an error; pick one. A
-text label on an icon rides in the `[ ]` (`|icon| "bell" [ "3" ]`).
+Setting the symbol twice — a label *and* `{ symbol: … }` — is an error; pick one.
 
 Phosphor icons are **two-tone** (a soft fill behind a line), so an icon wears Lini's
 paint roles like any node: **`fill`** the body (default the soft grey `--icon-fill`),
@@ -888,8 +877,7 @@ carries the text-to-gutter inset (`padding: 4 8`); `|header|` / `|footer|` build
 cells with `|cell| { … }`, or per table with `|table| |cell| { … }`, exactly as you
 style headers with `|table| |header| { … }`. The table sets `align: stretch;
 justify: stretch`, so **every cell fills its track** — backgrounds fill and text has
-room. The outer frame is the group border, the inner rules the gap paint
-([SPEC 11](#11-the-layout-model)); no edge is doubled. A table's label is its caption.
+room. A table's label is its caption.
 
 **Column alignment.** `align` (↔) / `justify` (↕) on the table read per column
 ([SPEC 12](#12-flow-grid--tree)) and align the *cells' text*: since the cells already fill, the
@@ -1039,9 +1027,7 @@ shared trunk is routing geometry, [ROUTING.md](ROUTING.md).)
 
 ### Styling
 
-**`stroke` is the wire; `color` / `font-*` the labels** — the same `stroke` paints a
-node's outline and a link's wire ([SPEC 6](#6-paint-stroke--text)), so a class carrying it
-dresses either:
+The wire and label vocabulary ([SPEC 6](#6-paint-stroke--text)):
 
 | Property | Type | Default | Role |
 |---|---|---|---|
@@ -1064,8 +1050,7 @@ overrides — the same cascade a node walks ([SPEC 4](#4-selectors-cascade--spec
 a -> b .flow "hi" { stroke: red; stroke-style: dashed }    // one link overrides
 ```
 
-`|-|` is **selector-only**: a link is drawn by an operator, so `|-|` never appears as an
-instance ([SPEC 20](#20-errors)). `clearance` (default 16) and `routing` (default
+`clearance` (default 16) and `routing` (default
 `orthogonal`) are **scene config** — geometry, not paint — set on a container's `{ }`,
 cascading to that scope's links, nearest winning; `marker*` come from the operator and
 override per link.
@@ -1087,9 +1072,8 @@ a -> b { along: 0.3, 0.7 } [ "near a" "near b" ] // two labels
 a -> b [ "watches" { translate: 0 -6 } ]        // a styled / nudged label
 ```
 
-Each label is an ordinary **styleable text leaf** ([SPEC 3](#3-statements--the-label)): give it its
-own `{ }` (or a worn class) in the `[ ]` to nudge or turn it. The head label takes no style — the `{ }`
-after a link's head is the *link's* — so a styled label rides the `[ ]`, exactly as a
+Each label is an ordinary **styleable text leaf**; the head label takes no style
+([SPEC 3](#3-statements--the-label)) — a styled label rides the `[ ]`, exactly as a
 node's does. A label is an obstacle to nothing, and may slide along the link to keep
 clear of nodes and other labels; the link never moves for it. Link labels default to
 `font-size: 11`, `font-weight: normal`; a link's text props cascade to its labels
@@ -1165,13 +1149,10 @@ between nodes, corners rounded; `natural` fits direct **smooth curves** —
 tangent-normal at both ends, bending gently around what they would hit, free to
 cross ([ROUTING.md](ROUTING.md)); `straight` draws each link as one
 segment between the bodies, trimmed to their boundaries — it avoids nothing and
-reports nothing. (`curved` was **replaced** by `natural`, not aliased —
-[SPEC 20](#20-errors).) `routing` pairs with
+reports nothing. `routing` pairs with
 `layout` — `layout` places the nodes, `routing` wires them — so a group can route
 its internals one way while the root routes another; which subsystem realises a
-scope's links is the scope's **wiring strategy** ([SPEC 11](#11-the-layout-model)):
-the router (any of the three strategies) for `flow` / `grid` / `tree`, layout-time
-lowering for `sequence`, `chart` / `pie`, and `drawing`.
+scope's links is the scope's **wiring strategy** ([SPEC 11](#11-the-layout-model)).
 
 The full routing contract — clearance, spacing, crossings, fan-out, self-loops —
 lives in [`ROUTING.md`](ROUTING.md), the source of truth for routing.
@@ -1218,11 +1199,9 @@ Each colour is a `light-dark(LIGHT, DARK)` value, so one SVG carries both modes:
 
 `--lini-bg` paints the scene background (the canvas rect), so the diagram is
 self-contained in either mode. The default stack leads with the bundled mono
-**Google Sans Code** ([SPEC 6](#6-paint-stroke--text)), so an installed or hosted
-copy engages even in name-only output; its fixed advance is what the mono metrics
-table measures, so a diagram measures identically in every output mode
-([SPEC 17](#17-svg-output)). Body text, captions, and link labels are all `normal`
-weight by default.
+**Google Sans Code** ([SPEC 6](#6-paint-stroke--text)); its fixed advance is what
+the mono metrics table measures, so a diagram measures identically in every output
+mode ([SPEC 17](#17-svg-output)).
 
 **Dark/light is automatic.** The compiler emits `color-scheme: light dark` on `.lini`,
 so `light-dark()` follows the viewer's OS (`prefers-color-scheme`) — no script, no
@@ -1268,8 +1247,8 @@ memory: `--yellow → --amber`, `--pink → --rose`, `--indigo → --purple`,
 `--cyan → --teal`. `red` stays clear for **danger**; `rose` is the decorating pink,
 `green` an emerald, `lime` the lemony one.
 
-The palette is **tree-shaken** ([SPEC 17](#17-svg-output)): only the `--lini-*` variables a
-diagram references are emitted, so the full palette costs a three-box diagram nothing.
+The palette is **tree-shaken** — only referenced variables are emitted
+([SPEC 17](#17-svg-output)).
 
 ### 10.3 Gradients
 
@@ -1369,8 +1348,8 @@ center-mark-overhang 4    drawing link stroke-width 1   drawing link font-size 1
 
 Class rules and inline `style=` work everywhere, but CSS *variables* don't — resvg
 and librsvg fail `var()` in every position (browsers, even `<img>`-embedded, are
-fine) — and neither honours `@font-face`. **`--static`** (the renamed `--bake-vars`
-— no alias) keeps the rules but inlines every `var(--lini-name)` as its literal
+fine) — and neither honours `@font-face`. **`--static`**
+keeps the rules but inlines every `var(--lini-name)` as its literal
 **and outlines text to paths** ([SPEC 17](#17-svg-output)): no runtime theming, but
 a self-contained SVG that renders identically anywhere, installed fonts or none.
 
@@ -1469,10 +1448,9 @@ properties. This part is the family; each section states just its delta.
 | `drawing` | datum / geometry | geometry + annotations + mates ([SPEC 15](#15-drawing)) | layout-time dims / leaders | yes |
 
 **Defaults.** Every container — the root included — defaults to `layout: flow` with
-`direction: column` and `gap: 20`. The default `|box|` pads its content by 20; so does
-the root, and its padding is the margin that frames the whole rendered scene — links and
-labels included — out to the SVG edge. The frameless `|block|` / `|row|` / `|column|`
-pad by 0 ([SPEC 8](#8-templates)).
+`direction: column` and `gap: 20`; padding defaults per [SPEC 10.5](#105-layout-constants-baked),
+the root's framing the whole rendered scene — links and labels included — out to the
+SVG edge.
 
 ### Three seams every engine plugs into
 
@@ -1627,9 +1605,6 @@ whole column — every table cell fills, and the column's `align` is carried ont
 cells to place their text ([SPEC 8](#8-templates)); the core needs no notion of "table".
 The same knob aligns a multi-line text's *lines* ([SPEC 6](#6-paint-stroke--text)).
 
-Both layouts paint interior gutters with `gap-fill` ([SPEC 11](#11-the-layout-model)) and
-frame the whole with the container's own `stroke`.
-
 ### Tree — rooted structure
 
 `layout: tree` arranges a rooted hierarchy. **Structure is `|topic|` nesting**
@@ -1702,9 +1677,8 @@ chart's closed series set):
 | `\|else\|` | separator | a guarded compartment divider inside an `\|alt\|` |
 | `\|note\|` | note | a callout over / beside lifelines |
 
-**Nodes and links interleave in source order** — the body's "children before links"
-ordering ([SPEC 21](#21-grammar)) relaxes to *source order preserved*, so a frame (a node) sits
-among the messages (links) around it.
+**Nodes and links interleave in source order** ([SPEC 9](#internal-links-in-a-body)),
+so a frame (a node) sits among the messages (links) around it.
 
 **One scope.** Every message resolves its endpoints against the **sequence's
 participants**, whatever frame it sits in: a frame's `[ ]` groups messages for layout but
@@ -1812,8 +1786,8 @@ deferred ([SPEC 23](#23-deferred)).
 
 The five sequence types are bundles over `|block|`, tuned to read with no styling; the
 cascade overrides any of it, and they reuse the scene's role variables — no new ones.
-(`|note|` is the **core** template, [SPEC 8](#8-templates), compacted here by the
-built-in `|sequence| |note| { padding: 6 10; font-size: 13 }` rule.)
+(`|note|` is the **core** template, compacted here by its built-in scoped rule —
+[SPEC 8](#8-templates).)
 
 | Type | Defaults over `\|block\|` |
 |---|---|
@@ -1891,7 +1865,6 @@ each, per node.
 
 Inside a chart, `|line|` reads `data:` / `fn:` (data space); the standalone `|line|`
 primitive ([SPEC 7](#7-nodes)) reads `points:` (pixels) — the chart layout branches on which.
-A chart line is *a line*, so the name is reused, not duplicated.
 
 **A line carries markers at every datum**, reusing the core `marker:` family generalised
 from line *ends* to every vertex: `|line| { marker: circle }` shows a marker at each point.
@@ -2023,7 +1996,7 @@ Both are children placed in **data** coordinates; the model gives them for free.
 
 A **`|band|`** partitions an axis and drives three things from one declaration: a
 background **shade**, a **tick** (its smart label), and the **segment boundaries** every
-series shares. `span: a b` is its data range on its bound `axis:` (the grid `span:`, now
+series shares. `span: a b` is its data range on its bound `axis:` (the grid `span:`,
 valid on a chart band too — [SPEC 12](#12-flow-grid--tree)); `fill: none` makes it a divider + label
 with no shading.
 
@@ -2191,13 +2164,10 @@ declarations, and links, and it lowers to primitives like any layout-owning engi
 
 Four properties of the model, each inherited from the core:
 
-- **A drawing scope owns its links** — the wiring strategy ([SPEC 11](#11-the-layout-model)).
-  The router never sees the drawing's own links; every one lowers at layout time to
-  dimension or leader primitives, or (for `||`) to a position. `routing:` and
-  `along:` have no role on them — `clearance:` reads as a dimension's stand-off
-  minimum ([15.6](#156-dimensions)) — but an ordinary container nested
-  in the drawing (a `|row|` of views, a `|table|`) still routes its **own** internal
-  links as usual ([SPEC 11](#11-the-layout-model)).
+- **A drawing scope owns its links** — the wiring strategy ([SPEC 11](#11-the-layout-model)):
+  the router never sees them; every one lowers at layout time to dimension or leader
+  primitives, or (for `||`) to a position. `routing:` and `along:` have no role on
+  them; `clearance:` reads as a dimension's stand-off minimum ([15.6](#156-dimensions)).
 - **No auto-create.** Unlike a diagram (`cat -> dog` invents boxes), a drawing never
   invents an endpoint: an annotation must point at real geometry. An unknown endpoint
   is an error with suggestions ([SPEC 20](#20-errors)).
@@ -2323,11 +2293,9 @@ point  = center                                            (the default)
   additionally carries its **direction**, which sets a dimension's axis and feeds the
   angular op ([15.6](#156-dimensions)).
 - Dot-paths walk into children as everywhere (`pump.body:right`), resolve in the
-  statement's scope, and never search ([SPEC 9](#9-links)). A **grid**-patterned node's
-  position is its **seed** copy; a **radial**-patterned node's is its ring **centre**
-  ([15.4](#154-features-holes--patterns)) — each the point drafting locates. Its other
-  anchors read **one copy's geometry** about that datum — the copy is the feature, the
-  pattern only places it — and a numeric segment picks a copy outright:
+  statement's scope, and never search ([SPEC 9](#9-links)). A patterned node's position
+  is its **seed** copy (grid) or ring **centre** (radial), its other anchors read one
+  copy's geometry about that datum, and a numeric segment picks a copy outright —
   `plate.bolt.2` ([15.4](#154-features-holes--patterns)).
 - **The anchor aims; the outline lands.** A leader's tip is a ray from its text toward
   the anchor's representative point, stopped at the ray's *first crossing of the drawn
@@ -2739,10 +2707,8 @@ nearer one. A packed row also clears every callout's text — leaders, angles, a
 every **seated or carried annotation node** register as obstacles before dims
 seat, each statement one painted box, a bundle's the union of its children
 ([15.5](#155-mates--seating), [15.9](#159-drafting-symbols--annotation-composition)). Dimensions
-are links, styled per core ([SPEC 9](#9-links)); a drawing's annotation text reads at
-the caption size — the scope pushes `font-size: 12` into the link base beside its
-`stroke-width: 1` ([15.1](#151-the-container-the-datum--the-scale)), so a plain
-`|-| { font-size: … }` still restyles it.
+are links, styled per core ([SPEC 9](#9-links)) at the drawing scope's link defaults
+([15.1](#151-the-container-the-datum--the-scale)).
 
 ```
 { layout: drawing }                            // ratio 1, unit mm, density 4 — the defaults
@@ -2974,9 +2940,7 @@ generated field's slot errors, naming the field ([SPEC 20](#20-errors)). There i
 page. A file whose drawn content is only pages **hugs them** — the paper is the
 margin, so the root's `padding` defaults to 0 (your own `{ padding: … }` still
 wins) and the sheet runs edge to edge of the SVG. That same predicate makes the
-sheet **true-scale in print**: the root emits `width` / `height` in real
-millimetres beside the `viewBox` (`width="210mm"` for an A4), so a print measures
-its drawing units, while on-screen CSS sizing is unaffected ([SPEC 17](#17-svg-output)).
+sheet **true-scale in print** ([SPEC 17](#17-svg-output)).
 
 ```
 |page| { sheet: a4 } [
@@ -3113,9 +3077,8 @@ geometry must exist before it can be measured:
    geometry in source order and annotations **above** all of it (the drawing's one
    draw-order override, like a chart's semantic order; `layer:` still wins).
 
-The output is an ordinary primitive subtree — theming, the palette, gradients,
-`--static`, `fmt`, and byte-for-byte determinism apply with no drawing-specific
-render code. The **parser is scope-blind**: the ops and forms parse everywhere and
+The output is an ordinary primitive subtree ([SPEC 11](#11-the-layout-model),
+seam 3). The **parser is scope-blind**: the ops and forms parse everywhere and
 *mean* drawing only in a drawing scope — elsewhere they error at resolve
 ([SPEC 20](#20-errors)).
 
@@ -3152,9 +3115,8 @@ polymorphic** (messages in [SPEC 20](#20-errors)):
 - A known property **misused where its wearer is statically known** — an instance's
   own block, an element rule (`|box| { }`, `|-| { }`), an id rule, a descendant
   rule's tail — is an **error** with a contextual correction: `points` on a `|box|`,
-  `cell:` off a grid, a box property on bare text, sequence placement off a
-  sequence, a layout's own type names used outside it, the drawing statements — the
-  measuring ops, `||`, `tol:` — outside a `layout: drawing`.
+  `cell:` off a grid, a box property on bare text, a layout's own surface used
+  outside it ([SPEC 20](#20-errors)).
 - In a **`.class` rule** the CSS semantics hold: a property is **inert** on wearers
   that can't use it; it **warns** only when it is dead for *every* wearer, and a
   defined class no node wears warns too.
@@ -3459,13 +3421,11 @@ shadowing a built-in) surface here.
    element / descendant rules. Parenthesized expressions and function calls fold to literal
    numbers / points ([SPEC 10.7](#107-expressions--functions)).
 2. *Scene tree:* each box is a primitive wearing `.lini-*` (type) and user classes;
-   layer properties per the [cascade](#4-selectors-cascade--specificity) — the worn
-   `.lini-*` classes as the type tier, then descendant, class, id rules, and the instance
-   block; lift internal links; build the path index.
+   layer properties per the [cascade](#4-selectors-cascade--specificity); lift internal
+   links; build the path index.
 3. *Links:* resolve endpoints by scoped path walk with suggestion errors; merge link
-   properties through the node cascade — the baked base plus the scope's `clearance` /
-   `routing`, the `|-|` element rule, descendant `|…| |-|` and class rules, then the
-   link's own block; cartesian-expand fan groups into one resolved link per pair; the
+   properties through the link's ladder ([SPEC 4](#4-selectors-cascade--specificity));
+   cartesian-expand fan groups into one resolved link per pair; the
    operator's line sets `stroke-style` unless overridden.
 
 **Layout** (bottom-up): leaf bbox from `width`/`height` or defaults (text → its glyphs;
@@ -3473,14 +3433,10 @@ box → content + `padding`; + half-`stroke-width` per side); arrange flow child
 `layout` / `direction` honouring `align`/`justify`/`stretch`/`evenly` when there is slack; pin
 out-of-flow children to their parent anchor (the parent never grows for them); compute
 gutters; apply `padding`; apply each node's `translate`; `rotate` last. A **layout-owning**
-container — `sequence` ([SPEC 13](#13-sequence)), `chart` / `pie` ([SPEC 14](#14-charts)), and
-`drawing` ([SPEC 15](#15-drawing)) — instead
-reads its whole subtree here and lowers it to primitives: a sequence places participants
-and walks its scope's messages / frames / notes in source order, emitting lifelines, arrows,
-frames, and notes — **consuming those messages**, so the router never sees them; a chart
-fixes its shared scale and lowers series / axes / bands / annotations at baked pixels; a
-drawing folds its geometry, seats its mates, measures, and lowers its annotations the same
-way ([SPEC 15.10](#1510-lowering)).
+container — `sequence` ([SPEC 13](#13-sequence)), `chart` / `pie`
+([SPEC 14.9](#149-lowering)), and `drawing` ([SPEC 15.10](#1510-lowering)) — instead
+reads its whole subtree here and lowers it to primitives, **consuming its own links**,
+so the router never sees them.
 
 **Route links.** Per [`ROUTING.md`](ROUTING.md) — orthogonal, clearance-respecting,
 deterministic — over every link **except** those a `sequence` or `drawing` scope already drew.
@@ -3488,9 +3444,8 @@ Place markers (sized `max(5, stroke-width × 4)`, tip on the endpoint) and link 
 their `along:` fractions (auto-distributed when unset).
 
 **Render.** Depth-first emit SVG per [SPEC 17](#17-svg-output): a box is a `<g>`, a string is a
-`<text>`. A lowered chart / sequence subtree renders as ordinary primitives — so theming,
-palette, gradients, `--static`, `fmt`, and byte-for-byte determinism apply with no
-layout-specific render code.
+`<text>`. A lowered chart / sequence subtree renders as ordinary primitives
+([SPEC 11](#11-the-layout-model), seam 3).
 
 ---
 
@@ -3874,9 +3829,7 @@ mechanism: a comma between repeated list items, a space between one item's
 components, pipelines (`draw:`, `mirror:`) one space-separated group
 ([SPEC 2](#2-lexical-syntax)). The parser preserves the shape; each **list
 reader** enforces it with a targeted correction — a legacy space list errors as
-`` `data` takes comma-separated values — `data: 9, 15, 24` `` (so migrating a
-0.20 file is mechanical: `columns: 80 140 80` → `columns: 80, 140, 80`,
-`align: start, center, end` → `align: start, center, end`).
+`` `data` takes comma-separated values — `data: 9, 15, 24` ``.
 
 **Adjacency tells a `.class` from a path; a `:` tells a side.** A space before the `.`
 makes it a worn class (`a .hot`), no space an endpoint path (`a.b`); the first class is
@@ -3903,8 +3856,7 @@ drawing's dimensions and leaders — a core routed link's `[ ]` stays text-only 
 a node there errors at resolve, [SPEC 15.9](#159-drafting-symbols--annotation-composition)),
 and the `pen_item` form inside a `draw:` value. A call's `(` **glues to its name**; a
 free-standing `(…)` is a math group and a free-standing `(-)`, `(o)`, or `(<)` an op
-([SPEC 2](#2-lexical-syntax)) — so `move(-2, 5)` is a call, `(8 * 2)` a group, and
-`pin (o)` a dimension, with no ambiguity. The pen calls,
+([SPEC 2](#2-lexical-syntax)). The pen calls,
 `grid` / `radial`, and `hatch` are **call names**, contextual before `(` like `rgb` /
 `repeat` ([SPEC 22](#22-reserved-words)).
 
@@ -3967,9 +3919,8 @@ Named in the language, not built yet; the syntax is stable.
 
 **Core**
 
-- **a bare hollow-circle endpoint operator** — `o` spells zero only next to a max glyph
-  (`-o<` / `-o+`); a standalone hollow endpoint is the paint `marker-end: circle`
-  ([SPEC 7](#7-nodes)), so `o` never needs to stand alone.
+- **a bare hollow-circle endpoint operator** — today a standalone hollow endpoint is
+  the paint `marker-end: circle` ([SPEC 7](#7-nodes), [SPEC 22](#22-reserved-words)).
 - **gradient fills on text** — gradients fill nodes today ([SPEC 10.3](#103-gradients)).
 - `radius` on non-rect primitives (hex / diamond / slant / poly).
 - arbitrary numeric `font-weight` (100–900 beyond the built 400–700 set) and
