@@ -688,7 +688,7 @@ empty `|oval|`) make a circle.
 | `\|path\|` | `path` | Raw SVG path. **Native top-left coords.** |
 | `\|line\|` | `points` | 2+ points. Markers via `marker*:`. |
 | `\|icon\|` | `symbol` | A **Phosphor** icon — `symbol:` (or the label) names it; paints two-tone like a box (`fill` body, `stroke` line, counter-scaled `stroke-width`). A square that grows with its `[ ]` text (`32` floor); `\|sign\|` is the larger preset. See [Icons](#icons). |
-| `\|image\|` | `src`, `width`, `height` | `<image href="…">`. External URLs only; both dimensions required. `fit` maps it into the box — `auto` (default, letterbox), `contain`, `cover`, or `stretch`. |
+| `\|image\|` | `src`, `width`, `height` | A picture — `src:` a URL, a data URI, or a **local path**; local files **embed** (see [Images](#images)); both dimensions required. `fit` maps it into the box — `auto` (default, letterbox), `contain`, `cover`, or `stretch`. |
 | `\|sketch\|` | `draw` | A **pen** that folds to a path — profiles drawn call by call, with named points and edges, mirroring, and view breaks ([SPEC 15.3](#153-the-sketch-pen)). Closed-primitive paint; bbox from the geometry. |
 
 **`radius`** rounds a rectangle's corners — `|box|` defaults to 8, `|block|` / `|rect|`
@@ -767,6 +767,20 @@ A missing `symbol` errors like `|poly|` without `points`; an unknown one suggest
 nearest name. Only the icons a diagram uses are embedded (a default-on `icons` feature,
 [SPEC 23](#23-deferred)).
 
+### Images
+
+`|image|`'s `src:` takes an **HTTP(S) URL**, a **`data:` URI**, or a **local path**,
+resolved against the source `.lini` file's directory. A local file's bytes are read
+once, at resolve — a missing or unreadable path errors at the `src:` span — and
+**embedded** in the output ([SPEC 17](#17-svg-output)): SVG as a nested, id-isolated
+`<svg>`; raster (PNG / JPEG / GIF / WebP) as a base64 data URI. Embedding is the one
+behavior for a path (there is no opt-out — a self-contained SVG is the output
+contract) and is **deterministic from the bytes**: the same file and assets give
+byte-identical output on every run. The compiler never touches the network — URLs and
+authored data URIs pass through untouched, so a URL is the authored non-embedded
+form. Under `lini serve`, assets resolve inside the served root only
+([SPEC 19](#19-cli)).
+
 ---
 
 ## 8. Templates
@@ -806,6 +820,7 @@ the cascade ([SPEC 4](#4-selectors-cascade--specificity)) — every value here i
 | `\|shoulder\|` | `\|line\|` | `stroke: --stroke-dark; stroke-width: 2; fill: none` — needs `points:` | A turned part's **shoulder line** — the geometry-weight edge a `revolve:` generates at every sharp diameter change ([SPEC 15.3](#153-the-sketch-pen)); manual use is free. |
 | `\|plane\|` | `\|line\|` | `stroke-style: center; stroke: --stroke-light; stroke-width: 1; fill: none` | The **section-plane** line on the source view — its label the section letter; `at:` stations it, `facing:` turns its arrows; a `\|drawing\| { of: }` sections it ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `\|magnifier\|` | `\|oval\|` | `stroke: --stroke-light; stroke-width: 1; fill: none` — `width:` **required**, the region diameter | The **detail marker** — rings a region on the source view, its label the detail letter at the rim; a `\|drawing\| { of: }` details it ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
+| `\|projection\|` | `\|line\|` | `stroke: --stroke-light; stroke-width: 1; fill: none` — needs `points:` | A **projection construction line** — the straight thin line a sheet's cross-view link generates ([SPEC 15.8](#158-assemblies-views-sheets--titles)); manual use is free. |
 | `\|surface-finish\|` | `\|block\|` | `symbol: basic; stroke: --stroke-dark; stroke-width: 1; fill: none; font-size: 12; scale: 1` | The ISO 1302 surface-**texture** symbol — its label the textual indication, `symbol:` the vee variant; drawing-scope ([SPEC 15.9](#159-drafting-symbols--annotation-composition)). |
 | `\|feature-control\|` | `\|block\|` | `stroke: --stroke-dark; stroke-width: 1; fill: --bg; font-size: 12; scale: 1` | The GD&T **frame** — characteristic, tolerance, datums in ruled compartments; rows via `\|control\|`; drawing-scope ([SPEC 15.9](#159-drafting-symbols--annotation-composition)). |
 | `\|control\|` | `\|block\|` | — | One **frame row** — its label the characteristic; a `\|feature-control\|` child only ([SPEC 15.9](#159-drafting-symbols--annotation-composition)). |
@@ -2295,7 +2310,8 @@ point  = center                                            (the default)
   a side is that side's midpoint, a corner the bbox corner, `center` its centre.
   Corners glue **vertical word first**, matching `pin`'s vocabulary (`pin: top left` →
   `:top-left`); the reversed order errors with a did-you-mean. Corners and `:center`
-  are drawing-scope only — elsewhere the core four sides stand.
+  are drawing-scope only — elsewhere the core four sides stand, with one exception:
+  a sheet's **projection link** ([15.8](#158-assemblies-views-sheets--titles)).
 - A `|sketch|` **authors** its own **segments** with the point sigil in `draw:`
   ([15.3](#153-the-sketch-pen)) — declared in the pen, selected on an endpoint, the
   same declare / select symmetry as `#id`. Built-in names win (`:left` cannot be
@@ -2816,7 +2832,7 @@ over hatching and in every theme. Never over arrowheads, text, frames, or the
 contact region (a tip, a landing) — the crossing alone. The generated `|halo|`
 chrome rule restyles or removes them scope-wide (`|halo| { … }`), like all chrome.
 
-**Auto chrome — one mechanism, nine producers.** The lines drafting always draws are
+**Auto chrome — one mechanism, ten producers.** The lines drafting always draws are
 **generated children**, so the cascade styles or removes them with no dedicated knobs
 (`|sketch| |centerline| { stroke: none }`):
 
@@ -2831,6 +2847,7 @@ chrome rule restyles or removes them scope-wide (`|halo| { … }`), like all chr
 | a `break:` ([15.3](#153-the-sketch-pen)) | the `\|breakline\|` pair — thin, sharply jogged mid-span |
 | a `\|page\|` ([15.8](#158-assemblies-views-sheets--titles)) | the sheet chrome — the `\|frame\|`, the `\|zone\|` references, the `\|tick\|` dividers and centring marks |
 | annotation linework crossing geometry | its `\|halo\|` knockouts — the understroke break, above |
+| a sheet's **projection link** ([15.8](#158-assemblies-views-sheets--titles)) | its straight `\|projection\|` construction line |
 
 ### 15.8 Assemblies, views, sheets & titles
 
@@ -2852,12 +2869,26 @@ projection engine; views **share their axes with `align: origin`**
 ([SPEC 12](#12-flow-grid--tree)) — a drawing's origin is its datum, so a row of views
 lines up datum-to-datum however their dimensions stack, and a grid with
 `align: origin; justify: origin` is the first- / third-angle arrangement.
-Projection *lines* between views stay deferred ([SPEC 23](#23-deferred)).
 **A drawing's smart label is its title, placed *below*** — it lowers to a
 `|footnote|` (the bottom-centred caption template), because drafting titles sit
 under the view: `|drawing| "SECTION A-A"`; style every title with
 `|drawing| |footnote| { … }`. An authored label always wins; a view sourced from a
 marker with **`of:`** composes one instead (**Sections & details**, below).
+
+**Projection construction links.** The thin lines tying a feature across views are
+**authored** correspondences, never inferred (no projection engine): in the sheet's
+scope — outside every drawing, where both views are visible — the **unmarked `-` op**
+between two anchors that dot-path into **different** views draws one **straight** thin
+line: `side.screw:head - end.od:top`. On such a link — and only there — the full
+drawing anchor vocabulary ([15.2](#152-anchors)) is legal outside a drawing scope,
+the **one** exception to sealed bodies. It lowers at layout, after `align: origin`
+and every seat have placed the views — never routed, never a packing obstacle — as
+generated **`|projection|`** chrome
+([15.7](#157-leaders-notes--line-conventions)): `|projection| { … }` restyles or
+removes projection lines scope-wide. Everything else stands: a marked op, a
+dimension, or a mate across views errors ([SPEC 20](#20-errors)) — a construction
+line relates views; it never measures or seats. View-letter arrows (`of:` an arrow
+marker) are beyond 1.0 ([SPEC 23](#23-deferred)).
 
 **Sections & details.** lini is 2D: a **section's cut face is authored** — drawn with
 the pen and filled with `hatch()`, as the bushing is ([15.4](#154-features-holes--patterns))
@@ -2935,7 +2966,12 @@ over its value, and **absent fields collapse** their cells, so the default block
 minimal (Title / DWG No. / Rev / Sheet). The block's **smart label is its `title`
 field** — `|title-block| "Socket cap screw"` lowers to the same generated spanning
 cell; a label **or any field property** selects the structured-field mode, and a
-`|title-block|` with neither keeps the plain-table form — its cells fully authored. A file whose drawn content is only pages **hugs them** — the paper is the
+`|title-block|` with neither keeps the plain-table form — its cells fully authored.
+In field mode, authored children remain **ordinary cells after the generated ones**,
+in the same grid — `cell:` / `span:` honoured; an authored cell landing on a
+generated field's slot errors, naming the field ([SPEC 20](#20-errors)). There is no
+`logo:` — a logo is an `|image|` in a cell ([SPEC 7](#7-nodes)), or anywhere on the
+page. A file whose drawn content is only pages **hugs them** — the paper is the
 margin, so the root's `padding` defaults to 0 (your own `{ padding: … }` still
 wins) and the sheet runs edge to edge of the SVG. That same predicate makes the
 sheet **true-scale in print**: the root emits `width` / `height` in real
@@ -3210,7 +3246,7 @@ Read on the listed primitive; required where noted ([SPEC 7](#7-nodes)).
 | `points` | `\|line\|` `\|poly\|` | `x y, …` · parametric `u` expr | vertex list; **required**. |
 | `samples` | `\|line\|` `\|poly\|`, chart `fn:` | integer | sample count (geometry; chart default 24). |
 | `path` | `\|path\|` | quoted SVG path | **required**; native top-left coords. |
-| `src` | `\|image\|` | quoted URL | **required**. |
+| `src` | `\|image\|` | quoted URL / data URI / local path | **required**; a local file embeds ([SPEC 7](#7-nodes)). |
 | `symbol` | `\|icon\|` · `\|surface-finish\|` | ident | Phosphor name, **required** (or via the label) · the finish vee variant — `basic`·`machined`·`prohibited`, default `basic` ([SPEC 15.9](#159-drafting-symbols--annotation-composition)). |
 | `fit` | `\|icon\|` `\|image\|` | `auto` · `contain` · `cover` · `stretch` | maps content into the box (size unchanged); `auto` default, `\|sign\|` `contain`. |
 | `skew` | `\|slant\|` | degrees `(-89,89)` | 15. |
@@ -3333,6 +3369,15 @@ outlines text to paths — glyphs deduplicated through `<defs>` / `<use>`, itali
 synthetic oblique — and bakes the variables ([SPEC 10.6](#106---static)): faithful
 in every renderer. Layout never varies by mode — measurement always reads the
 compiled-in metrics tables ([SPEC 5](#5-the-box-model)).
+
+**Embedded assets.** A local `|image|` ([SPEC 7](#7-nodes)) emits its resolved form:
+an SVG asset nests as a child `<svg>` mapped into the node box (`fit:` sets its
+`preserveAspectRatio`) — with **every id prefixed `lini-aN-`** (N the image's
+1-based document order) and every internal reference rewritten to match (`url(#…)`
+in attributes and inline `style`, fragment `href` / `xlink:href`), since nesting
+alone does not isolate ids; a raster asset emits
+`<image href="data:…;base64,…"/>`. Authored URLs and data URIs emit unchanged.
+Embedding is deterministic from the asset bytes.
 
 **Box:**
 
@@ -3474,7 +3519,10 @@ lini theme [NAME]
 `lini -` reads stdin (filename `<stdin>` in errors). **`lini serve`** runs a local live
 preview (default port 7700): a `.lini` file live-reloads that one file; a directory (or
 no path → the current directory) opens the **playground** — pick, edit, and render any
-`.lini` file beneath it in the browser. **`lini theme`** lists the built-in themes;
+`.lini` file beneath it in the browser. A served compile reads **image assets**
+([SPEC 7](#7-nodes)) under the same boundary that confines the file list: the served
+root — a file target's root is its directory — and an asset path escaping it is a
+compile error; a plain `lini` compile is unbounded (you compile your own file). **`lini theme`** lists the built-in themes;
 **`lini theme NAME`** prints one as a `--lini-*` CSS file — a ready starting point for
 your own (`light-dark()` colours, the font commented out).
 
@@ -3579,6 +3627,8 @@ Format: `filename:line:col: error: <message>` (LSP-compatible), compile-time, wi
 | Function arity | `'scale' takes 1 argument, got 2` |
 | Spaced call paren | `a call's '(' glues to its name — write 'rgb(…)'` |
 | `hatch()` off `fill` | `'hatch' is a fill — 'stroke' takes a colour or gradient` |
+| Unreadable image path | `cannot read image './logo.svg' — no such file` ([SPEC 7](#7-nodes)) |
+| Asset escapes the served root | `'../secret.svg' resolves outside the served root` ([SPEC 19](#19-cli)) |
 
 **Layout — grid**
 
@@ -3688,6 +3738,11 @@ Format: `filename:line:col: error: <message>` (LSP-compatible), compile-time, wi
 | Detail of a sourced view | `a detail magnifies a base view — 'of' can't name a marker inside another sourced view` |
 | `at:` off the model | `a 'plane' at N sits off the model` |
 | Bad `facing:` | `'facing' turns the arrows — left, right, up, or down` |
+| Marked projection op | `a projection line is unmarked — write 'side.screw:head - end.od:top'` |
+| Projection ends in one view | `a projection link ties two views — both ends read 'side'` |
+| Projection end off a view | `a projection link ties drawing anchors — 'notes' is not in a drawing view` |
+| Cross-view dimension / mate | `a dimension reads one view — a cross-view correspondence is a construction link ('a - b')` |
+| Authored cell on a generated field | `cell 2 1 is taken by the generated 'Rev' field — place it after the fields` |
 | `:segment` shadows a built-in point | `':left' is a built-in anchor — pick another name` |
 | Unknown `:segment` | `no segment ':step' on 'body'` + suggestions |
 | Duplicate `:segment` in one `draw:` | `':step' is already named in this 'draw:'` |
@@ -3968,11 +4023,9 @@ dividers / delays (`==` / `...`); and an `|actor|` stick-figure primitive (an ac
   as `pattern:` does for features; today, type it.
 - **hole variants** — counterbore and countersink (threads are built — `thread:`,
   [SPEC 15.3](#153-the-sketch-pen), [SPEC 15.4](#154-features-holes--patterns)).
-- **projection lines between views** — the thin lines auto-linking a feature across
-  orthographic views; today, composed by hand (section planes, magnifiers, auto detail
-  views, composed titles, and cross-view alignment via `align: origin` are built —
-  [SPEC 15.8](#158-assemblies-views-sheets--titles)). Nesting a sourced view — a detail
-  of a marker inside another detail / section — is gated ([SPEC 20](#20-errors)).
+- **deeper sourced-view nesting** — a detail of a marker inside another detail /
+  section is gated ([SPEC 20](#20-errors)); projection construction links between
+  views are built ([SPEC 15.8](#158-assemblies-views-sheets--titles)).
 - **angled break lines** and a scope-level `break:` on the `\|drawing\|` itself; a
   `break:` station **through a `curve()`** (lines and arcs clip exactly today — move the
   stations off the cubic) and `break:` on non-sketch geometry (draw the profile with
@@ -3988,8 +4041,11 @@ dividers / delays (`==` / `...`); and an `|actor|` stick-figure primitive (an ac
 **Beyond 1.0** — directions deliberately outside the release contract, listed so
 they reserve no premature syntax: automatic graph / DAG layout (multi-parent,
 cycles); a true ring-radial tree and forest (multi-root) trees
-([SPEC 12](#12-flow-grid--tree)); imports / modules / namespaces for shared
-themes and part libraries; animation; native PNG / WebP export.
+([SPEC 12](#12-flow-grid--tree)); **view-letter arrows** on sheets (`of:` an arrow
+marker composing "VIEW A (2:1)" — an arrow defines no capture, so it is title sugar
+over a view's smart label; construction links are built,
+[SPEC 15.8](#158-assemblies-views-sheets--titles)); imports / modules / namespaces
+for shared themes and part libraries; animation; native PNG / WebP export.
 
 ---
 

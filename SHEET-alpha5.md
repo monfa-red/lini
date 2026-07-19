@@ -112,39 +112,53 @@ fmt/test/clippy clean, a **Log** line here.
 Write all law before any code. The SPEC alone must suffice to implement
 Stages 1–3.
 
-- [ ] SPEC 7: the `|image|` row's "External URLs only" dies; a new
+- [x] SPEC 7: the `|image|` row's "External URLs only" dies; a new
   **Images** subsection (beside Icons) states the source law
   (decision 2 — path resolution, resolve-time bytes, the error, the
   pass-through forms, determinism, no network) and points at SPEC 17
   for the embedded output.
-- [ ] SPEC 15.8: the "projection lines stay deferred" sentence is
+- [x] SPEC 15.8: the "projection lines stay deferred" sentence is
   replaced by the **projection construction link** law (decisions 7–8
   — the sheet-scope form, the unmarked op, the one-exception anchor
   reading, straight lowering, the chrome hook, the error set); the
   title-block paragraph gains the authored-cells law (decision 6).
-- [ ] Surrounding law squared: 15.2's "drawing-scope only" sentence
+- [x] Surrounding law squared: 15.2's "drawing-scope only" sentence
   gains its one exception (a sheet's projection link); 15.7's
   auto-chrome table gains the tenth producer; SPEC 8 gains the
   `|projection|` template row.
-- [ ] SPEC 17: the **embedded assets** law — nested `<svg>` with the
+- [x] SPEC 17: the **embedded assets** law — nested `<svg>` with the
   `lini-aN-` rewrite (decision 3), raster data URIs, authored URLs
   unchanged, byte-determinism.
-- [ ] SPEC 19: the serve boundary note (decision 5 — dir root
+- [x] SPEC 19: the serve boundary note (decision 5 — dir root
   generalized past `.lini`, file mode's directory root, CLI unbounded).
-- [ ] SPEC 16: `src` widens to URL / data URI / local path.
-- [ ] SPEC 20 rows: unreadable asset; asset escaping the served root;
+- [x] SPEC 16: `src` widens to URL / data URI / local path.
+- [x] SPEC 20 rows: unreadable asset; asset escaping the served root;
   marked projection op; cross-view dimension / mate; projection link
   with both ends in one view; projection endpoint outside a drawing;
   authored title-block cell on a generated field's slot.
-- [ ] SPEC 23: the projection-lines deferred bullet dies (built);
+- [x] SPEC 23: the projection-lines deferred bullet dies (built);
   **view arrows** join the beyond-1.0 list (decision 9), and ROADMAP 6
   gains the same line.
-- [ ] Sync: ROADMAP's ladder row points here; PLAN-V1's alpha.5
+- [x] Sync: ROADMAP's ladder row points here; PLAN-V1's alpha.5
   contract gains its round-entered note.
 
 Acceptance: SPEC alone sufficient for Stages 1–3; anchors intact (every
 `](#…)` resolves); `cargo test` untouched (1055).
-**Log:**
+**Log:** 2026-07-19 — **done**, one commit (SPEC + ROADMAP/PLAN-V1 + this
+doc). Settled in the pass: the projection paragraph lands in 15.8 between
+the multi-view story and Sections & details — the deferred sentence dies,
+15.2 gains its one-exception clause, 15.7's producer table goes to ten,
+SPEC 8 gains the `|projection|` row (`--stroke-light`, weight 1, manual
+use free); the image law splits **source** (a new SPEC 7 Images
+subsection — resolution, resolve-time bytes, no network, no opt-out)
+from **output** (SPEC 17 embedded assets — the `lini-aN-` rewrite over
+`id`, `url(#…)`, and fragment `href`s); the serve boundary rides the
+existing root sentence in SPEC 19 (file mode's root = its directory,
+plain CLI unbounded); seven SPEC 20 rows (two asset, four projection,
+one title-block overlap); SPEC 23's projection bullet became the
+nesting-gated remnant and view-letter arrows joined beyond-1.0 there
+and in ROADMAP 6. Anchor sweep: 536 refs, zero broken; 1055 tests
+untouched.
 
 ### Stage 1 — local image embedding
 

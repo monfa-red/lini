@@ -168,6 +168,11 @@ annotation nodes register as packing obstacles (no overlaps).
 
 ## alpha.5 — images, title blocks & projection assistance
 
+**Round entered 2026-07-19, staged in `SHEET-alpha5.md`** (its decisions
+ledger supersedes the open questions below; the ladder renumbered — the
+round releases as `1.0.0-alpha.4`; view arrows were settled deferred to
+ROADMAP 6).
+
 **Scope** (ROADMAP 3.5 end + 3.6): local image embedding (nested `<svg>` +
 id-rewrite, raster data URIs, serve boundaries); title-block polish per the M3
 renames; cross-view construction links (`|projection|` chrome; the legalized
