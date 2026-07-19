@@ -56,4 +56,4 @@ How to work in this repo.
 - Defer pushing to `main` to the user.
 
 ## Re-orient (fresh session)
-Read `SPEC.md` (the language) and `ROUTING.md` (the routing contract), then skim `git log` and run `cargo test`. Plans live in the repo root (e.g. `SYNTAX-0.10.md`), never in a `docs/` folder.
+Read `SPEC.md` (the language) and `ROUTING.md` (the routing contract), then skim `git log` and run `cargo test`. Active plans live in the repo root; completed round docs archive to `plans/` (never a `docs/` folder).

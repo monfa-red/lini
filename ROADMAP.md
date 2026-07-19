@@ -8,9 +8,8 @@ files it points to.
 | File | Role |
 |---|---|
 | `SPEC.md` | The law. Amended per round (each round's Stage 0), tightened once before 0.21. |
-| `AUDIT.md` | Codebase findings + refactor decisions (2026-07-10). Feeds PLAN-ALPHA; deleted when its stages land. |
-| `PLAN-ALPHA.md` | Detailed, session-sized stages: refactor → SPEC tightening → the 0.21 breaking round. Ends with the syntax frozen at `1.0.0-alpha`. |
 | `PLAN-V1.md` | The alpha/beta/rc rounds — contract + acceptance per round; each round explodes into its own detailed plan doc at entry (the DRAWING-0.1x pattern). |
+| `plans/` | Completed round docs and logs (PLAN-ALPHA, the DRAWING-0.1x logs, each alpha round's stage doc, ROUTING-LOG) — the decisions ledgers and execution history. Active plans live in the repo root until their round closes. |
 
 Lini is unreleased: no backward compatibility is owed. Every breaking change lands
 **once, coherently, in 0.21** — SPEC, implementation, formatter, samples, snapshots,
