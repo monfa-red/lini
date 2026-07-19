@@ -6,12 +6,13 @@
 //! the axis. Span readings lower through `dims::stacked`, leaders through
 //! `leaders::measured*`.
 
-use super::super::ir::PlacedNode;
+use super::super::ir::{Bbox, PlacedNode};
 use super::anchors::{self, Anchor, Spot, rotated};
 use super::annotate::{Axis, Ctx, Paint, Rows, side_attr, side_unit};
 use super::compose::{self, DimText, Glyph};
 use super::dims::{Frame, Seat, Stacked, arrow, dim_clearance, span_on, stack_side, stacked};
-use super::geometry::{P, iso_text_angle, reflect_point};
+use super::geometry::{P, dist, iso_text_angle, reflect_point};
+use super::symbols::CarriedStack;
 use super::{Segment, leaders};
 use crate::ast::Side;
 use crate::error::Error;
@@ -24,6 +25,7 @@ pub(super) fn lower(
     ctx: &Ctx,
     w: &ResolvedLink,
     rows: &mut Rows,
+    stack: &CarriedStack,
 ) -> Result<Vec<PlacedNode>, Error> {
     let paint = Paint::of(&w.attrs);
     let ep = &w.endpoints[0];
@@ -64,6 +66,7 @@ pub(super) fn lower(
                 &w.attrs,
                 text,
                 &paint,
+                stack,
                 w.span,
             ))
         }
@@ -72,7 +75,7 @@ pub(super) fn lower(
             let text = compose(Glyph::Dia, 2.0 * r / ctx.scale)?;
             let c = a.to_world(*center);
             Ok(leaders::measured_circle(
-                ctx, &a, c, *r, &w.attrs, text, &paint, w.span,
+                ctx, &a, c, *r, &w.attrs, text, &paint, stack, w.span,
             ))
         }
         // A revolved `:segment` — the station's span across the axis, stacked.
@@ -101,6 +104,7 @@ pub(super) fn lower(
                 ctx,
                 w,
                 rows,
+                stack,
                 &paint,
                 span2(&a, a.map_local(m), a.map_local(twin)),
                 count,
@@ -115,7 +119,15 @@ pub(super) fn lower(
                     rotated(side_unit(side_name(*side)).expect("a side"), a.rot)
                 });
                 let text = compose(Glyph::Dia, d / ctx.scale)?;
-                return Ok(diametral(centre_of(&a), d / 2.0, dir, text, &paint));
+                return Ok(diametral(
+                    centre_of(&a),
+                    d / 2.0,
+                    dir,
+                    text,
+                    &paint,
+                    ctx.extent,
+                    stack,
+                ));
             }
             let g = a.geometry_box();
             let (cx, cy) = ((g.min_x + g.max_x) / 2.0, (g.min_y + g.max_y) / 2.0);
@@ -123,7 +135,16 @@ pub(super) fn lower(
                 Side::Top | Side::Bottom => ((cx, g.min_y), (cx, g.max_y)),
                 Side::Left | Side::Right => ((g.min_x, cy), (g.max_x, cy)),
             };
-            station(ctx, w, rows, &paint, span2(&a, la, lb), count, follows)
+            station(
+                ctx,
+                w,
+                rows,
+                stack,
+                &paint,
+                span2(&a, la, lb),
+                count,
+                follows,
+            )
         }
         Spot::Corner(diag) => {
             let Some(d) = a.round_diameter() else {
@@ -131,7 +152,15 @@ pub(super) fn lower(
             };
             let dir = spill_dir(&w.attrs, &a).unwrap_or_else(|| rotated(*diag, a.rot));
             let text = compose(Glyph::Dia, d / ctx.scale)?;
-            Ok(diametral(centre_of(&a), d / 2.0, dir, text, &paint))
+            Ok(diametral(
+                centre_of(&a),
+                d / 2.0,
+                dir,
+                text,
+                &paint,
+                ctx.extent,
+                stack,
+            ))
         }
         // Bare: a round node reads its ⌀ onto the rim; a revolved sketch its
         // full span across the axis; anything else can't pick an axis.
@@ -147,6 +176,7 @@ pub(super) fn lower(
                     &w.attrs,
                     text,
                     &paint,
+                    stack,
                     w.span,
                 ));
             }
@@ -168,7 +198,16 @@ pub(super) fn lower(
             } else {
                 ((g.min_x, cy), (g.max_x, cy))
             };
-            station(ctx, w, rows, &paint, span2(&a, la, lb), count, follows)
+            station(
+                ctx,
+                w,
+                rows,
+                stack,
+                &paint,
+                span2(&a, la, lb),
+                count,
+                follows,
+            )
         }
     }
 }
@@ -191,10 +230,12 @@ struct Span2 {
 /// A ⌀-read span between two world points, stacked like a linear dim — the
 /// station and opposite-side readings share it. Drawn at the displayed
 /// points; the value reads the model pair [SPEC 15.3].
+#[allow(clippy::too_many_arguments)]
 fn station(
     ctx: &Ctx,
     w: &ResolvedLink,
     rows: &mut Rows,
+    stack: &CarriedStack,
     paint: &Paint,
     s: Span2,
     count: Option<usize>,
@@ -228,53 +269,90 @@ fn station(
         },
         rows,
         paint,
+        stack,
     ))
 }
 
 /// The diametral line [SPEC 15.6]: through a round node's centre along the
 /// anchored direction, arrows out against the rims; the value rides the line
 /// when it fits inside, else the line overruns the **anchored** rim and
-/// carries the text there. Deterministic, no solver.
-fn diametral(c: P, r: f64, dir: P, text: DimText, paint: &Paint) -> Vec<PlacedNode> {
+/// carries the text there. A carrying statement fits only when its whole
+/// block — value plus carried stack — sits inside the circle, and a spilled
+/// block clears the drawn geometry [SPEC 15.9]. Deterministic, no solver.
+fn diametral(
+    c: P,
+    r: f64,
+    dir: P,
+    text: DimText,
+    paint: &Paint,
+    extent: Bbox,
+    stack: &CarriedStack,
+) -> Vec<PlacedNode> {
     let (fs, sw) = (paint.fs, paint.sw);
     let rim_a = (c.0 + dir.0 * r, c.1 + dir.1 * r);
     let rim_b = (c.0 - dir.0 * r, c.1 - dir.1 * r);
     let arrow_len = ARROW_LEN * sw;
     let tw = text.width(fs, paint.font);
-    let fits = 2.0 * r >= 2.0 * arrow_len + tw + 8.0;
     // ISO alignment: turn with the line, reading from the bottom / right —
     // a vertical line turns its text −90, like a stacked vertical dim.
     let theta = iso_text_angle(dir);
     let (ts, tc) = theta.to_radians().sin_cos();
     let up = (ts, -tc);
     let lift = fs / 2.0 + 2.0;
+    let fits = 2.0 * r >= 2.0 * arrow_len + tw + 8.0
+        && (stack.is_empty() || {
+            let probe = text.nodes(
+                (c.0 + up.0 * lift, c.1 + up.1 * lift),
+                theta,
+                fs,
+                paint.font,
+            );
+            let seat = super::symbols::seat_of(&probe);
+            let block = stack.box_below(seat).map_or(seat, |b| b.union(seat));
+            [
+                (block.min_x, block.min_y),
+                (block.max_x, block.min_y),
+                (block.min_x, block.max_y),
+                (block.max_x, block.max_y),
+            ]
+            .iter()
+            .all(|&p| dist(p, c) <= r)
+        });
 
-    let mut out = Vec::new();
-    let (end, text_c) = if fits {
-        // Stopped short of both tips, like every dim line.
-        let trim = 2.0 * sw;
-        ((rim_a.0 - dir.0 * trim, rim_a.1 - dir.1 * trim), c)
-    } else {
-        let over = 4.0 + tw + 4.0;
-        (
-            (rim_a.0 + dir.0 * over, rim_a.1 + dir.1 * over),
+    let build = |extra: f64| {
+        let mut out = Vec::new();
+        let (end, text_c) = if fits {
+            // Stopped short of both tips, like every dim line.
+            let trim = 2.0 * sw;
+            ((rim_a.0 - dir.0 * trim, rim_a.1 - dir.1 * trim), c)
+        } else {
+            let over = 4.0 + tw + 4.0 + extra;
             (
-                rim_a.0 + dir.0 * (4.0 + tw / 2.0),
-                rim_a.1 + dir.1 * (4.0 + tw / 2.0),
-            ),
-        )
+                (rim_a.0 + dir.0 * over, rim_a.1 + dir.1 * over),
+                (
+                    rim_a.0 + dir.0 * (4.0 + tw / 2.0 + extra),
+                    rim_a.1 + dir.1 * (4.0 + tw / 2.0 + extra),
+                ),
+            )
+        };
+        let trim = 2.0 * sw;
+        out.push(paint.dim(vec![(rim_b.0 + dir.0 * trim, rim_b.1 + dir.1 * trim), end]));
+        out.push(arrow(rim_a, dir, paint));
+        out.push(arrow(rim_b, (-dir.0, -dir.1), paint));
+        out.extend(text.nodes(
+            (text_c.0 + up.0 * lift, text_c.1 + up.1 * lift),
+            theta,
+            fs,
+            paint.font,
+        ));
+        out
     };
-    let trim = 2.0 * sw;
-    out.push(paint.dim(vec![(rim_b.0 + dir.0 * trim, rim_b.1 + dir.1 * trim), end]));
-    out.push(arrow(rim_a, dir, paint));
-    out.push(arrow(rim_b, (-dir.0, -dir.1), paint));
-    out.extend(text.nodes(
-        (text_c.0 + up.0 * lift, text_c.1 + up.1 * lift),
-        theta,
-        fs,
-        paint.font,
-    ));
-    out
+    let out = build(0.0);
+    if fits {
+        return out;
+    }
+    let push = leaders::carried_push(&out, stack, dir, extent);
+    if push > 1e-9 { build(push) } else { out }
 }
 
 /// An explicit `side:` (side **or corner**) as the diametral spill direction.

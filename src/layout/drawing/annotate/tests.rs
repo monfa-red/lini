@@ -131,6 +131,86 @@ fn no_annotation_text_lands_on_another_across_the_drawing_samples() {
 }
 
 #[test]
+fn no_carried_annotation_lands_on_the_drawn_geometry_across_the_samples() {
+    // The carrying statement's own clearing [SPEC 15.6/15.9]: what a
+    // statement paints below its text — its carried stack — is part of its
+    // own painted band / leader block, so no carried box may cross the drawn
+    // geometry in any drawing sample.
+    use crate::layout::ir::Bbox;
+    fn check(nodes: &[crate::layout::PlacedNode], path: &std::path::Path, seen: &mut usize) {
+        for n in nodes {
+            let carried: Vec<Bbox> = n
+                .children
+                .iter()
+                .filter(|c| c.type_chain.iter().any(|t| t == "carried"))
+                .map(|c| c.bbox.shifted(c.cx, c.cy))
+                .collect();
+            if !carried.is_empty() {
+                let geo = super::drawn_geometry(&n.children);
+                for b in &carried {
+                    *seen += 1;
+                    assert!(
+                        !b.overlaps(geo),
+                        "{}: a carried annotation {b:?} crosses the drawn geometry {geo:?}",
+                        path.display()
+                    );
+                }
+            }
+            check(&n.children, path, seen);
+        }
+    }
+    let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("samples");
+    let mut seen = 0;
+    for entry in std::fs::read_dir(&dir).unwrap() {
+        let path = entry.unwrap().path();
+        if path.extension().and_then(|e| e.to_str()) != Some("lini") {
+            continue;
+        }
+        let src = std::fs::read_to_string(&path).unwrap();
+        if !src.contains("drawing") {
+            continue;
+        }
+        check(&laid(&src).nodes, &path, &mut seen);
+    }
+    assert!(seen >= 2, "the carried statements compiled: {seen}");
+}
+
+#[test]
+fn a_carrying_dim_row_stands_off_for_its_own_stack() {
+    // The pinned before / after [SPEC 15.9]: bare, a right row's value
+    // stands `BAND_NEG` off the line; carrying a datum frame centred under
+    // it, the band deepens to the frame's reach — text lift (fs/2 + 2) plus
+    // half the frame — and the row seats exactly that much farther out.
+    let base = "{ layout: drawing; density: 1 }\n|rect#a| { width: 40; height: 20 }\n";
+    let plain = laid(&format!("{base}a:top (-) a:bottom {{ side: right }}\n"));
+    let carrying = laid(&format!(
+        "{base}a:top (-) a:bottom {{ side: right }} [ |datum| \"D\" ]\n"
+    ));
+    let (x0, ..) = text_at(&plain.nodes, "20");
+    let (x1, ..) = text_at(&carrying.nodes, "20");
+    // Bare: value centre = extent edge (21) + clearance + BAND_NEG − lift.
+    assert!(
+        (x0 - (21.0 + DIM_CLEARANCE + BAND_NEG - 8.0)).abs() < 0.6,
+        "x0={x0}"
+    );
+    fn carried_box(nodes: &[crate::layout::PlacedNode]) -> Option<crate::layout::ir::Bbox> {
+        nodes.iter().find_map(|n| {
+            if n.type_chain.iter().any(|t| t == "carried") {
+                Some(n.bbox.shifted(n.cx, n.cy))
+            } else {
+                carried_box(&n.children)
+            }
+        })
+    }
+    let frame = carried_box(&carrying.nodes).expect("the carried datum frame");
+    let expected = (8.0 + frame.w() / 2.0) - BAND_NEG;
+    assert!(
+        (x1 - x0 - expected).abs() < 1e-6,
+        "carried row offset: {x0} -> {x1}, expected +{expected}"
+    );
+}
+
+#[test]
 fn gap_on_a_dimension_points_at_clearance() {
     assert_eq!(
         layout_err(

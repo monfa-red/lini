@@ -358,3 +358,24 @@ also zoom 4 — every sheet reads clean in both themes, glyphs at
 linework weight, no overlaps; one **pre-existing** note logged: the
 `pcb` sample's authored board colours invert to a bright mint field
 under the dark theme (sample-authored vars, untouched this round).
+
+**Follow-up:** 2026-07-19 — owner review found the carrying statement
+ignored its **own** stack: the statement placed first, then
+`stack_carried` hung the frame at the text seat — later statements
+cleared it, the carrier itself didn't (`drawing_gdt.lini`: the
+`plate.pin (o)` position frame under the plate's left outline). Fixed
+per SPEC 15.6's painted-bounds law with **one measure**:
+`symbols::CarriedStack` lowers the carried nodes before placement,
+its one seat-relative box (`box_below`) feeds the statement's own
+clearing — `Rows::seat` folds it into the row band + interval (probed
+via the shared `value_texts` at a zero line), a leader/callout pushes
+its elbow out along the exit (`carried_push`), a diametral's fits test
+takes the whole block and its spill clears the extent — and the same
+lowered nodes then seat (`CarriedStack::seat`). Carried shells wear a
+`carried` type; new oracle: no carried box crosses the drawn geometry
+across the drawing samples, plus a pinned before/after for a carrying
+dim's row offset. Uncarried statements byte-identical (only the gdt
+snap re-blessed); 1055 tests (+2), fmt/clippy clean. The flush-seat
+sample polish rides along per ISO 1302: the `|column|` vee stands
+touching the frame's top edge at `gap: 0`, the stack seats flush on
+the face without `gap:`.

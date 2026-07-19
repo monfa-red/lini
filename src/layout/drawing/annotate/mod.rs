@@ -150,26 +150,38 @@ pub(in crate::layout) fn lower(
         }
     }
     for (i, w) in links.iter().enumerate() {
+        if !matches!(w.kind, LinkKind::Measure(MeasureOp::Angle) | LinkKind::Wire) {
+            continue;
+        }
+        // The carried stack lowers **first** [SPEC 15.9]: its one measured
+        // box is part of the statement's own clearing, and the same lowered
+        // nodes seat at the text seat once the ink is placed.
+        let stack = super::symbols::CarriedStack::lower(&ctx, w)?;
         let mut nodes = match w.kind {
             LinkKind::Measure(MeasureOp::Angle) => angle::lower(&ctx, w)?,
             // A one-ended statement is a callout — a `&` fan keeps every
             // endpoint on the one link [SPEC 15.7], so the shape, not the
             // endpoint count, decides.
-            LinkKind::Wire if w.one_ended => leaders::callout(&ctx, w)?,
-            LinkKind::Wire => leaders::arrows(&ctx, w)?,
-            _ => continue,
+            LinkKind::Wire if w.one_ended => leaders::callout(&ctx, w, &stack)?,
+            _ => leaders::arrows(&ctx, w)?,
         };
-        nodes.extend(super::symbols::stack_carried(&ctx, w, &nodes)?);
+        nodes.extend(stack.seat(&nodes));
         rows.obstruct_texts(&nodes);
         outs[i] = nodes;
     }
     for (i, w) in links.iter().enumerate() {
+        if !matches!(
+            w.kind,
+            LinkKind::Measure(MeasureOp::Linear | MeasureOp::Round)
+        ) {
+            continue;
+        }
+        let stack = super::symbols::CarriedStack::lower(&ctx, w)?;
         let mut nodes = match w.kind {
-            LinkKind::Measure(MeasureOp::Linear) => dims::linear(&ctx, w, &mut rows)?,
-            LinkKind::Measure(MeasureOp::Round) => round::lower(&ctx, w, &mut rows)?,
-            _ => continue,
+            LinkKind::Measure(MeasureOp::Linear) => dims::linear(&ctx, w, &mut rows, &stack)?,
+            _ => round::lower(&ctx, w, &mut rows, &stack)?,
         };
-        nodes.extend(super::symbols::stack_carried(&ctx, w, &nodes)?);
+        nodes.extend(stack.seat(&nodes));
         rows.obstruct_texts(&nodes);
         outs[i] = nodes;
     }
@@ -186,6 +198,22 @@ pub(in crate::layout) fn lower(
 fn geometry_extent(kids: &[PlacedNode]) -> Bbox {
     Bbox::extent_of(kids, |k| {
         !super::sheet_node(k) && !super::super::anchors::is_pinned(&k.attrs)
+    })
+}
+
+/// The drawn-geometry extent of an already-annotated drawing's children —
+/// [`geometry_extent`] re-read after lowering: the same sheet / pinned
+/// exclusions, minus the annotation ink the lowering appended (dim and
+/// extension lines, arrow markers). The overlap oracle's ground truth.
+#[cfg(test)]
+fn drawn_geometry(kids: &[PlacedNode]) -> Bbox {
+    Bbox::extent_of(kids, |k| {
+        !super::sheet_node(k)
+            && !super::super::anchors::is_pinned(&k.attrs)
+            && !k
+                .type_chain
+                .iter()
+                .any(|t| t == "dim-line" || t == "ext-line" || t == "marker")
     })
 }
 

@@ -7,11 +7,12 @@
 //! The axis is inferred from the anchors (directed normal / true aligned
 //! span) with `project:` the override. The `(o)` readings live in `round`.
 
-use super::super::ir::PlacedNode;
+use super::super::ir::{Bbox, PlacedNode};
 use super::anchors::{self, Anchor, Spot};
 use super::annotate::{Axis, Ctx, Paint, Rows, side_attr};
 use super::compose::{self, DimText, Glyph};
 use super::geometry::{P, dist, iso_text_angle, unit};
+use super::symbols::CarriedStack;
 use crate::ast::Side;
 use crate::error::Error;
 use crate::ledger::consts::{ARROW_HALF, ARROW_LEN, EXT_GAP, EXT_OVERSHOOT};
@@ -31,6 +32,7 @@ pub(super) fn linear(
     ctx: &Ctx,
     w: &ResolvedLink,
     rows: &mut Rows,
+    stack: &CarriedStack,
 ) -> Result<Vec<PlacedNode>, Error> {
     let paint = Paint::of(&w.attrs);
     let mut hops = Vec::new();
@@ -172,13 +174,14 @@ pub(super) fn linear(
         let Seat::Row(side) = hops[0].seat else {
             unreachable!("one_row is row-seated");
         };
-        let line_c = rows.seat(side, union, hops[0].clearance, paint.fs, paint.sw);
+        let carried = carried_band(hops.iter().zip(&plans), &paint, stack);
+        let line_c = rows.seat(side, union, hops[0].clearance, paint.fs, paint.sw, carried);
         for (h, p) in hops.into_iter().zip(plans) {
             out.extend(at_row(h, &p, line_c, &paint));
         }
     } else {
         for h in hops {
-            out.extend(stacked(h, rows, &paint));
+            out.extend(stacked(h, rows, &paint, stack));
         }
     }
     Ok(out)
@@ -261,13 +264,41 @@ pub(super) struct Stacked<'a> {
     pub label: Option<&'a ResolvedText>,
 }
 
-pub(super) fn stacked(s: Stacked, rows: &mut Rows, paint: &Paint) -> Vec<PlacedNode> {
+pub(super) fn stacked(
+    s: Stacked,
+    rows: &mut Rows,
+    paint: &Paint,
+    stack: &CarriedStack,
+) -> Vec<PlacedNode> {
     let p = plan(&s, paint);
     let line_c = match s.seat {
-        Seat::Row(side) => rows.seat(side, p.interval, s.clearance, paint.fs, paint.sw),
+        Seat::Row(side) => {
+            let carried = carried_band(std::iter::once((&s, &p)), paint, stack);
+            rows.seat(side, p.interval, s.clearance, paint.fs, paint.sw, carried)
+        }
         Seat::Line(c) => c,
     };
     at_row(s, &p, line_c, paint)
+}
+
+/// A carrying statement's painted box relative to its row line [SPEC 15.9]:
+/// the value texts probed at a **zero line** (the seat's offset from the line
+/// is constant), the stack's one measured box hung below them — what
+/// `Rows::seat` folds into the band, and exactly where `CarriedStack::seat`
+/// will put the stack once the row is real.
+fn carried_band<'a>(
+    hops: impl Iterator<Item = (&'a Stacked<'a>, &'a Plan)>,
+    paint: &Paint,
+    stack: &CarriedStack,
+) -> Option<Bbox> {
+    if stack.is_empty() {
+        return None;
+    }
+    let probe: Vec<PlacedNode> = hops
+        .flat_map(|(s, p)| value_texts(s, p, 0.0, paint))
+        .collect();
+    let seat = super::symbols::seat_of(&probe);
+    Some(stack.box_below(seat)?.union(seat))
 }
 
 /// A dimension's resolved `clearance` [SPEC 15.6]: the ordinary cascade — the
@@ -429,13 +460,13 @@ fn plan(s: &Stacked, paint: &Paint) -> Plan {
 
 /// Lower one dim's anatomy onto its seated line.
 fn at_row(s: Stacked, p: &Plan, line_c: f64, paint: &Paint) -> Vec<PlacedNode> {
-    let (fs, sw) = (paint.fs, paint.sw);
+    let sw = paint.sw;
     let f = s.frame;
     let (ua, ub) = (f.u(s.a), f.u(s.b));
     let (u_lo, u_hi) = (ua.min(ub), ua.max(ub));
     let arrow_len = ARROW_LEN * sw;
     let stub = 2.0;
-    let (fits, text_u) = (p.fits, p.text_u);
+    let fits = p.fits;
 
     let mut out = Vec::new();
     // Extension lines spring from the anchor points exactly [SPEC 15.2],
@@ -464,11 +495,19 @@ fn at_row(s: Stacked, p: &Plan, line_c: f64, paint: &Paint) -> Vec<PlacedNode> {
     let flip = if fits { -1.0 } else { 1.0 };
     out.push(arrow(f.pt(u_lo, line_c), scale_p(along, flip), paint));
     out.push(arrow(f.pt(u_hi, line_c), scale_p(along, -flip), paint));
-    // ISO-aligned text above the line: it turns with the line and reads from
-    // the bottom / right — the frame's −n is that "above" [SPEC 15.6].
-    let lift = fs / 2.0 + 2.0;
-    let mut centre = f.pt(text_u, line_c - lift);
-    let mut rot = iso_text_angle(along);
+    out.extend(value_texts(&s, p, line_c, paint));
+    out
+}
+
+/// The dim's ISO-aligned value texts above the line [SPEC 15.6]: turned with
+/// the line, reading from the bottom / right (the frame's −n is that
+/// "above"), the authored label's `translate:` / `rotate:` overriding. The
+/// one placement the row's carried-band probe (at a zero line) and the
+/// lowered row share.
+fn value_texts(s: &Stacked, p: &Plan, line_c: f64, paint: &Paint) -> Vec<PlacedNode> {
+    let lift = paint.fs / 2.0 + 2.0;
+    let mut centre = s.frame.pt(p.text_u, line_c - lift);
+    let mut rot = iso_text_angle(s.frame.u);
     if let Some(t) = s.label {
         if let Some(r) = t.attrs.number("rotate") {
             rot = r;
@@ -477,8 +516,7 @@ fn at_row(s: Stacked, p: &Plan, line_c: f64, paint: &Paint) -> Vec<PlacedNode> {
             centre = (centre.0 + dx, centre.1 + dy);
         }
     }
-    out.extend(s.text.nodes(centre, rot, fs, paint.font));
-    out
+    s.text.nodes(centre, rot, paint.fs, paint.font)
 }
 
 /// The drafting-slender arrowhead [SPEC 15.6]: ≈ 3 : 1, filled with the dim's

@@ -15,56 +15,61 @@
 // at the text seat, under the value, riding the row as a packing obstacle; a
 // carried `|datum|` states the measured feature's axis datum.
 
-|drawing#bracket-view| "MOUNTING BRACKET" { unit: mm } [
-  |rect#plate| { width: 140; height: 60 } [
-    |hole#pin| { width: 12; translate: -45 0 }
+|drawing#bracket-view| "MOUNTING BRACKET" { unit: mm; } [
+  |rect#plate| { width: 140; height: 60; } [
+    |hole#pin| { width: 12; translate: -45 0; }
   ]
 
-  plate:left (-) plate:right { side: bottom }
+  plate:left (-) plate:right { side: bottom; }
 
   // A carried `|datum|` [SPEC 15.9]: the height reads as a feature of size,
   // and the framed letter under its value makes the mid-plane datum C.
-  plate:top (-) plate:bottom { side: right } [ |datum| "C" ]
+  plate:top (-) plate:bottom { side: right; } [
+    |datum| "C"
+  ]
 
   // A carried frame: the bore's size and its location tolerance read as one
   // statement — the ⌀ position zone at maximum material stacks under the
   // value, rides the leader's text seat, and packs as an obstacle.
   plate.pin (o) [
-    |feature-control| "position" { tol: 0.1; zone: diameter; material: maximum; datums: A, B }
+    |feature-control| "position" {
+      tol: 0.1; zone: diameter; material: maximum; datums: A, B;
+    }
   ]
 
   // Seated: `||` stands the vee's tip flush on the top face — after mates,
   // both axes — and `translate:` slides it along the face. The cast finish
   // shows the plain placement: the tip is the node's datum, set down by hand.
-  |surface-finish#milled| "Ra 1.6" { symbol: machined; translate: -20 0 }
+  |surface-finish#milled| "Ra 1.6" { symbol: machined; }
   milled || plate:top
-  |surface-finish#cast| "Ra 6.3" { translate: 42 -30 }
+  |surface-finish#cast| "Ra 6.3" { translate: 42 -30; }
 
   // Leader-wired: the same placed node, reached from the bore's rim.
-  |surface-finish#bore| "Ra 0.8" { symbol: prohibited; translate: -130 -105 }
+  |surface-finish#bore| "Ra 0.8" { symbol: prohibited; translate: -30 -40; }
   plate.pin <- bore
 
   // The datum alphabet, both forms: the `>-` leader plants A on the mounting
   // face; the `|datum|` node names the bore axis B, wired to its feature.
   plate:bottom >- "A"
-  |datum#axis| "B" { translate: -45 55 }
+  |datum#axis| "B" { translate: -45 16; }
   plate.pin <- axis
 
   // A composite frame, leader-wired to the feature it controls: the pattern
   // located to the datums, then refined feature-to-feature — adjacent rows
   // share the position symbol cell.
-  |feature-control#refine| { translate: -55 -85 } [
-    |control| "position" { tol: 0.4; zone: diameter; datums: A, B }
-    |control| "position" { tol: 0.1; zone: diameter; datums: A }
+  |feature-control#refine| { translate: -60 -45; } [
+    |control| "position" { tol: 0.4; zone: diameter; datums: A, B; }
+    |control| "position" { tol: 0.1; zone: diameter; datums: A; }
   ]
   plate.pin <- refine
 
   // A seated bundle [SPEC 15.5]: the `|column|` of finish over frame is
-  // sheet content — it seats as one, its facing side 6 of daylight off the
-  // right face, and the vertical dimension row packs past its union box.
-  |column#stack| { gap: 4 } [
-    |surface-finish| "Ra 3.2" { symbol: machined }
-    |feature-control| "flatness" { tol: 0.2 }
+  // sheet content — the vee stands touching the frame's top edge (ISO 1302),
+  // the stack seats as one, flush on the right face, and the vertical
+  // dimension row packs past its union box.
+  |column#stack| { gap: 0; } [
+    |surface-finish| "Ra 3.2" { symbol: machined; }
+    |feature-control| "flatness" { tol: 0.2; }
   ]
-  stack || plate:right { gap: 6 }
+  stack || plate:right
 ]

@@ -6,12 +6,13 @@
 //! Any other two-ended op draws a **straight annotation line**, markers per
 //! the op, ends trimmed to the outlines they spring from.
 
-use super::super::ir::PlacedNode;
+use super::super::ir::{Bbox, PlacedNode};
 use super::super::{approx_height, approx_width, prim};
 use super::anchors::{self, Anchor, Spot, rotated};
 use super::annotate::{Ctx, Paint, side_attr, side_unit};
 use super::compose::DimText;
 use super::geometry::{P, dist, unit};
+use super::symbols::CarriedStack;
 use super::{dims, outline};
 use crate::error::Error;
 use crate::ledger::consts::{ARROW_LEN, NOTE_LANDING, NOTE_OFFSET};
@@ -19,20 +20,24 @@ use crate::resolve::{MarkerKind, ResolvedLink, ResolvedText, ResolvedValue};
 use crate::span::Span;
 
 /// A leader's drawn skeleton: tip → elbow → landing, plus where its text
-/// starts (just past the landing, on the `sx` side).
+/// starts (just past the landing, on the `sx` side) and the direction it
+/// left the feature along.
 struct LeaderLine {
     points: Vec<P>,
     text_at: P,
     sx: f64,
+    u: P,
 }
 
 /// Build the leader skeleton toward `aim` (world). The text direction is
 /// `side:`'s; else a **directed** feature's surface normal (the leader
 /// leaves a face straight off it, then the elbow — the drafting default); a
 /// point feature's is the ray from the drawing's **datum** through it. The
-/// text clears the geometry union by `NOTE_OFFSET` [SPEC 15.7]. The tip:
-/// `exact` lands as given (an arc's own point); `circle` intersects
-/// analytically; otherwise the ray casts onto the node's drawn outline.
+/// text clears the geometry union by `NOTE_OFFSET` [SPEC 15.7]; `extra`
+/// pushes the elbow farther out along the exit — a carrying statement's
+/// stack clearing [SPEC 15.9]. The tip: `exact` lands as given (an arc's own
+/// point); `circle` intersects analytically; otherwise the ray casts onto
+/// the node's drawn outline.
 fn leader_line(
     ctx: &Ctx,
     anchor: &Anchor,
@@ -40,6 +45,7 @@ fn leader_line(
     dir_override: Option<P>,
     exact: Option<P>,
     circle: Option<(P, f64)>,
+    extra: f64,
 ) -> LeaderLine {
     let u = dir_override
         .or_else(|| {
@@ -66,8 +72,8 @@ fn leader_line(
         });
     let t_exit = outline::exit_box(aim, u, ctx.extent);
     let elbow = (
-        aim.0 + u.0 * (t_exit + NOTE_OFFSET),
-        aim.1 + u.1 * (t_exit + NOTE_OFFSET),
+        aim.0 + u.0 * (t_exit + NOTE_OFFSET + extra),
+        aim.1 + u.1 * (t_exit + NOTE_OFFSET + extra),
     );
     let sx = if u.0 < 0.0 { -1.0 } else { 1.0 };
     let landing = (elbow.0 + sx * NOTE_LANDING, elbow.1);
@@ -85,7 +91,46 @@ fn leader_line(
         points: vec![tip, elbow, landing],
         text_at: (landing.0 + sx * 2.0, landing.1),
         sx,
+        u,
     }
+}
+
+/// A carrying statement clears the geometry for its **whole block**
+/// [SPEC 15.9]: the text seat plus the carried stack's one measured box must
+/// stand `NOTE_OFFSET` off `obstacle` along `dir` — the extra push past the
+/// uncarried placement; 0 when nothing is carried or it already stands clear.
+pub(super) fn carried_push(
+    nodes: &[PlacedNode],
+    stack: &CarriedStack,
+    dir: P,
+    obstacle: Bbox,
+) -> f64 {
+    let seat = super::symbols::seat_of(nodes);
+    let Some(below) = stack.box_below(seat) else {
+        return 0.0;
+    };
+    clear_along(seat.union(below), dir, obstacle, NOTE_OFFSET)
+}
+
+/// The distance along unit `dir` that carries `b` past `obstacle`, standing
+/// `margin` off it — clearing either axis separates the boxes, so the
+/// cheaper feasible axis wins; 0 when already clear.
+fn clear_along(b: Bbox, dir: P, obstacle: Bbox, margin: f64) -> f64 {
+    let o = obstacle.inflate(margin);
+    if !b.overlaps(o) {
+        return 0.0;
+    }
+    let past = |lo: f64, hi: f64, o_lo: f64, o_hi: f64, d: f64| {
+        if d < -1e-9 {
+            (hi - o_lo) / -d
+        } else if d > 1e-9 {
+            (o_hi - lo) / d
+        } else {
+            f64::INFINITY
+        }
+    };
+    past(b.min_x, b.max_x, o.min_x, o.max_x, dir.0)
+        .min(past(b.min_y, b.max_y, o.min_y, o.max_y, dir.1))
 }
 
 /// The nearest rim point of an analytic circle toward the elbow.
@@ -107,9 +152,10 @@ pub(super) fn measured(
     attrs: &crate::resolve::AttrMap,
     text: DimText,
     paint: &Paint,
+    stack: &CarriedStack,
     _span: Span,
 ) -> Vec<PlacedNode> {
-    lower_measured(ctx, a, aim, exact, None, attrs, text, paint)
+    lower_measured(ctx, a, aim, exact, None, attrs, text, paint, stack)
 }
 
 /// A measured `⌀` leader onto an analytic circle's rim.
@@ -122,9 +168,10 @@ pub(super) fn measured_circle(
     attrs: &crate::resolve::AttrMap,
     text: DimText,
     paint: &Paint,
+    stack: &CarriedStack,
     _span: Span,
 ) -> Vec<PlacedNode> {
-    lower_measured(ctx, a, c, None, Some((c, r)), attrs, text, paint)
+    lower_measured(ctx, a, c, None, Some((c, r)), attrs, text, paint, stack)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -137,31 +184,39 @@ fn lower_measured(
     attrs: &crate::resolve::AttrMap,
     text: DimText,
     paint: &Paint,
+    stack: &CarriedStack,
 ) -> Vec<PlacedNode> {
     let dir = side_attr(attrs).and_then(side_unit);
-    let mut line = leader_line(ctx, a, aim, dir, exact, circle);
-    let tip = line.points[0];
-    let elbow = line.points[1];
-    let to_tip = unit((tip.0 - elbow.0, tip.1 - elbow.1));
-    let mut out = vec![dims::arrow(tip, to_tip, paint)];
-    // A circle's ⌀ line runs along the diameter [SPEC 15.6]: through the
-    // centre to the far rim, overshooting it, both arrowheads pressing the
-    // rims inward from outside — never mistakable for a word leader.
-    if let Some((c, _)) = circle {
-        let far = (2.0 * c.0 - tip.0, 2.0 * c.1 - tip.1);
-        let over = ARROW_LEN * paint.sw + 2.0;
-        line.points[0] = (far.0 + to_tip.0 * over, far.1 + to_tip.1 * over);
-        out.push(dims::arrow(far, (-to_tip.0, -to_tip.1), paint));
-    } else {
-        // The line stops short of the arrow tip, like every dim line.
-        let trim = 2.0 * paint.sw;
-        line.points[0] = (tip.0 - to_tip.0 * trim, tip.1 - to_tip.1 * trim);
-    }
-    out.insert(0, paint.dim(line.points.clone()));
-    let tw = text.width(paint.fs, paint.font);
-    let centre = (line.text_at.0 + line.sx * tw / 2.0, line.text_at.1);
-    out.extend(text.nodes(centre, 0.0, paint.fs, paint.font));
-    out
+    let build = |extra: f64| -> (Vec<PlacedNode>, P) {
+        let mut line = leader_line(ctx, a, aim, dir, exact, circle, extra);
+        let tip = line.points[0];
+        let elbow = line.points[1];
+        let to_tip = unit((tip.0 - elbow.0, tip.1 - elbow.1));
+        let mut out = vec![dims::arrow(tip, to_tip, paint)];
+        // A circle's ⌀ line runs along the diameter [SPEC 15.6]: through the
+        // centre to the far rim, overshooting it, both arrowheads pressing the
+        // rims inward from outside — never mistakable for a word leader.
+        if let Some((c, _)) = circle {
+            let far = (2.0 * c.0 - tip.0, 2.0 * c.1 - tip.1);
+            let over = ARROW_LEN * paint.sw + 2.0;
+            line.points[0] = (far.0 + to_tip.0 * over, far.1 + to_tip.1 * over);
+            out.push(dims::arrow(far, (-to_tip.0, -to_tip.1), paint));
+        } else {
+            // The line stops short of the arrow tip, like every dim line.
+            let trim = 2.0 * paint.sw;
+            line.points[0] = (tip.0 - to_tip.0 * trim, tip.1 - to_tip.1 * trim);
+        }
+        out.insert(0, paint.dim(line.points.clone()));
+        let tw = text.width(paint.fs, paint.font);
+        let centre = (line.text_at.0 + line.sx * tw / 2.0, line.text_at.1);
+        out.extend(text.nodes(centre, 0.0, paint.fs, paint.font));
+        (out, line.u)
+    };
+    // A carrying statement clears for text **and** stack [SPEC 15.9]: the
+    // block's measured box pushes the elbow farther along the exit.
+    let (out, u) = build(0.0);
+    let push = carried_push(&out, stack, u, ctx.extent);
+    if push > 1e-9 { build(push).0 } else { out }
 }
 
 /// A one-ended callout [SPEC 15.7]: `<-` arrow · `*-` dot · `>-` the datum
@@ -170,7 +225,11 @@ fn lower_measured(
 /// framed datum box. A `&` fan keeps one text and landing (the first
 /// endpoint steers, `side:` overrides) with an independent leg from the
 /// shared elbow to each further feature.
-pub(super) fn callout(ctx: &Ctx, w: &ResolvedLink) -> Result<Vec<PlacedNode>, Error> {
+pub(super) fn callout(
+    ctx: &Ctx,
+    w: &ResolvedLink,
+    stack: &CarriedStack,
+) -> Result<Vec<PlacedNode>, Error> {
     let paint = Paint::of(&w.attrs);
     let a = anchors::resolve(ctx.kids, ctx.scope, &w.endpoints[0], "leader")?;
     // A callout on a threaded segment composes its spec — `M⌀×pitch`, the
@@ -220,25 +279,32 @@ pub(super) fn callout(ctx: &Ctx, w: &ResolvedLink) -> Result<Vec<PlacedNode>, Er
         (None, None) => &w.texts,
     };
     let dir = side_attr(&w.attrs).and_then(side_unit);
-    let line = leader_line(ctx, &a, a.point(), dir, None, None);
-    let elbow = line.points[1];
-    let landing = line.points[2];
+    let build = |extra: f64| -> Result<(Vec<PlacedNode>, P), Error> {
+        let line = leader_line(ctx, &a, a.point(), dir, None, None, extra);
+        let elbow = line.points[1];
+        let landing = line.points[2];
 
-    let mut out = leg(&a, w.markers.start, line.points.clone(), &paint);
-    // Fan legs [SPEC 15.7]: each further endpoint casts its own ray from the
-    // shared elbow — the trunk (elbow → landing → text) is shared, nothing
-    // else; an unroutable leg is an error, never a silent drop.
-    for ep in &w.endpoints[1..] {
-        let b = anchors::resolve(ctx.kids, ctx.scope, ep, "leader")?;
-        let tip = fan_tip(ctx, &b, elbow, w.markers.start, ep)?;
-        out.extend(leg(&b, w.markers.start, vec![tip, elbow], &paint));
-    }
-    if w.markers.start == MarkerKind::Crow {
-        out.extend(datum_box(texts, landing, line.sx, &paint));
-    } else {
-        out.extend(texts_beside(texts, line.text_at, line.sx, paint.fs));
-    }
-    Ok(out)
+        let mut out = leg(&a, w.markers.start, line.points.clone(), &paint);
+        // Fan legs [SPEC 15.7]: each further endpoint casts its own ray from
+        // the shared elbow — the trunk (elbow → landing → text) is shared,
+        // nothing else; an unroutable leg is an error, never a silent drop.
+        for ep in &w.endpoints[1..] {
+            let b = anchors::resolve(ctx.kids, ctx.scope, ep, "leader")?;
+            let tip = fan_tip(ctx, &b, elbow, w.markers.start, ep)?;
+            out.extend(leg(&b, w.markers.start, vec![tip, elbow], &paint));
+        }
+        if w.markers.start == MarkerKind::Crow {
+            out.extend(datum_box(texts, landing, line.sx, &paint));
+        } else {
+            out.extend(texts_beside(texts, line.text_at, line.sx, paint.fs));
+        }
+        Ok((out, line.u))
+    };
+    // A carrying statement clears for text **and** stack [SPEC 15.9]: the
+    // block's measured box pushes the elbow farther along the exit.
+    let (out, u) = build(0.0)?;
+    let push = carried_push(&out, stack, u, ctx.extent);
+    Ok(if push > 1e-9 { build(push)?.0 } else { out })
 }
 
 /// One leader leg's linework and tip, `points[0]` the tip and `points[1]`

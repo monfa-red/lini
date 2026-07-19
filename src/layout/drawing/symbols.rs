@@ -141,41 +141,92 @@ fn layout_finish(inst: &ResolvedInst) -> Result<PlacedNode, Error> {
 /// annotations, and between stacked annotations [SPEC 15.9].
 const CARRIED_GAP: f64 = 3.0;
 
-/// A statement's carried `[ ]` annotation nodes [SPEC 15.9], lowered off the
-/// registry and stacked at the **text seat** — under the dim value / callout
-/// lines, in source order, centred on the seat. `placed` is the statement's
-/// own lowered ink, already seated (a row dim's texts sit on their packed
-/// row), so the stack rides the row for free; each placed box registers as a
-/// packing obstacle through its drafting type chain (`obstruct_texts`).
-pub(super) fn stack_carried(
-    ctx: &super::annotate::Ctx,
-    w: &crate::resolve::ResolvedLink,
-    placed: &[PlacedNode],
-) -> Result<Vec<PlacedNode>, Error> {
-    if w.carried.is_empty() {
-        return Ok(Vec::new());
-    }
-    let texted = placed.iter().any(|n| n.kind == NodeKind::Text);
-    let seat = Bbox::extent_of(placed, |n| !texted || n.kind == NodeKind::Text);
-    let cx = (seat.min_x + seat.max_x) / 2.0;
-    let mut y = seat.max_y + CARRIED_GAP;
-    let mut out = Vec::new();
-    for inst in &w.carried {
-        let ty = crate::glyph::drafting_type(&inst.type_chain)
-            .expect("resolve admits only drafting types into a '[ ]'");
-        let mut n = layout_node(inst, ty, ctx.scope, ctx.program)?;
-        let b = n.bbox.shifted(n.cx, n.cy);
-        n.cx += cx - (b.min_x + b.max_x) / 2.0;
-        n.cy += y - b.min_y;
-        // The author's `translate:` nudges the stacked seat, the mover's law.
-        if let Ok(Some((dx, dy))) = super::super::anchors::translate(&inst.attrs, inst.span) {
+/// A statement's carried `[ ]` annotation stack [SPEC 15.9], lowered off the
+/// registry **before** the statement places — the lowered boxes don't depend
+/// on the seat, so their one measured extent feeds the carrying statement's
+/// own clearing (the row band, the leader push), and the same lowered nodes
+/// then seat under the text: one measure, never two that can drift.
+pub(super) struct CarriedStack {
+    /// The lowered nodes in seat-relative coordinates: x centred on the
+    /// seat's middle, y growing down from the seat box's bottom edge.
+    nodes: Vec<PlacedNode>,
+    /// Their union box in that frame — `None` when nothing is carried.
+    rel: Option<Bbox>,
+}
+
+impl CarriedStack {
+    /// Lower a statement's carried nodes [SPEC 15.9] — under the seat, in
+    /// source order, centred; the author's `translate:` nudges the stacked
+    /// seat (the mover's law) and rides the measured box.
+    pub(super) fn lower(
+        ctx: &super::annotate::Ctx,
+        w: &crate::resolve::ResolvedLink,
+    ) -> Result<CarriedStack, Error> {
+        let mut nodes = Vec::new();
+        let mut rel: Option<Bbox> = None;
+        let mut y = CARRIED_GAP;
+        for inst in &w.carried {
+            let ty = crate::glyph::drafting_type(&inst.type_chain)
+                .expect("resolve admits only drafting types into a '[ ]'");
+            let mut n = layout_node(inst, ty, ctx.scope, ctx.program)?;
+            n.type_chain.push("carried".into());
+            let b = n.bbox.shifted(n.cx, n.cy);
+            let (mut dx, mut dy) = (-(b.min_x + b.max_x) / 2.0, y - b.min_y);
+            if let Ok(Some((nx, ny))) = super::super::anchors::translate(&inst.attrs, inst.span) {
+                dx += nx;
+                dy += ny;
+            }
             n.cx += dx;
             n.cy += dy;
+            let placed = b.shifted(dx, dy);
+            rel = Some(rel.map_or(placed, |r| r.union(placed)));
+            y += (b.max_y - b.min_y) + CARRIED_GAP;
+            nodes.push(n);
         }
-        y += (b.max_y - b.min_y) + CARRIED_GAP;
-        out.push(n);
+        Ok(CarriedStack { nodes, rel })
     }
-    Ok(out)
+
+    pub(super) fn is_empty(&self) -> bool {
+        self.nodes.is_empty()
+    }
+
+    /// The stack's world box hung below a text seat — the one measured extent
+    /// both the pre-placement clearing and the seating read.
+    pub(super) fn box_below(&self, seat: Bbox) -> Option<Bbox> {
+        Some(
+            self.rel?
+                .shifted((seat.min_x + seat.max_x) / 2.0, seat.max_y),
+        )
+    }
+
+    /// Seat the lowered stack at the statement's placed **text seat**
+    /// [SPEC 15.9]: under the dim value / callout lines. `placed` is the
+    /// statement's own lowered ink, already seated (a row dim's texts sit on
+    /// their packed row), so the stack rides the row for free; each box
+    /// registers as a packing obstacle through its type chain
+    /// (`obstruct_texts`).
+    pub(super) fn seat(self, placed: &[PlacedNode]) -> Vec<PlacedNode> {
+        if self.nodes.is_empty() {
+            return Vec::new();
+        }
+        let seat = seat_of(placed);
+        let (cx, y) = ((seat.min_x + seat.max_x) / 2.0, seat.max_y);
+        self.nodes
+            .into_iter()
+            .map(|mut n| {
+                n.cx += cx;
+                n.cy += y;
+                n
+            })
+            .collect()
+    }
+}
+
+/// A statement's **text seat** [SPEC 15.9]: the union box of its text ink —
+/// or, textless, of everything it painted.
+pub(super) fn seat_of(placed: &[PlacedNode]) -> Bbox {
+    let texted = placed.iter().any(|n| n.kind == NodeKind::Text);
+    Bbox::extent_of(placed, |n| !texted || n.kind == NodeKind::Text)
 }
 
 /// A path-less `Path` shell around a symbol's lowered children [SPEC 15.9]:

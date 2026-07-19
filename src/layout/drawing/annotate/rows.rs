@@ -81,7 +81,11 @@ impl Rows {
 
     /// Seat a dim occupying `interval` on `side`, standing at least
     /// `clearance` off everything already painted; returns the dimension
-    /// line's world coordinate along the stack axis.
+    /// line's world coordinate along the stack axis. `carried` is the
+    /// statement's own carried-stack box, **relative to a zero line**
+    /// [SPEC 15.9]: it deepens the band and widens the interval, so the row
+    /// seats where what it itself paints below its text already clears
+    /// everything painted — and later rows clear it in turn.
     pub fn seat(
         &mut self,
         side: Side,
@@ -89,8 +93,19 @@ impl Rows {
         clearance: f64,
         fs: f64,
         sw: f64,
+        carried: Option<Bbox>,
     ) -> f64 {
-        let band = Band::of(side, fs, sw);
+        let mut band = Band::of(side, fs, sw);
+        let mut interval = interval;
+        if let Some(c) = carried {
+            let (cross, along) = match side {
+                Side::Top | Side::Bottom => ((c.min_y, c.max_y), (c.min_x, c.max_x)),
+                Side::Left | Side::Right => ((c.min_x, c.max_x), (c.min_y, c.max_y)),
+            };
+            band.neg = band.neg.max(-cross.0);
+            band.pos = band.pos.max(cross.1);
+            interval = (interval.0.min(along.0), interval.1.max(along.1));
+        }
         // Innermost candidate: the band's nearest ink `clearance` off the
         // geometry extent's edge.
         let mut off = clearance + band.inner(side);
