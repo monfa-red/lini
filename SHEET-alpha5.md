@@ -186,7 +186,7 @@ untouched.
 
 Acceptance: embedded output renders in resvg and a browser, byte-identical
 across runs; a traversal attempt errors; remote-URL output unchanged.
-**Log:** 2026-07-19 — **done**. The asset pass lives in
+**Log:** 2026-07-19 — **done** (`9bd8846`). The asset pass lives in
 `resolve/assets.rs`: `embed_image` runs at the scene walk's `|image|`
 branch (span = the `src:` decl), pass-through for `http(s)://`/`data:`,
 else read → boundary-check → classify by content (SVG root sniff / magic
