@@ -20,9 +20,10 @@ mod rows;
 #[cfg(test)]
 mod tests;
 
-pub(super) use rows::Rows;
+pub(super) use rows::{Rows, SeatLine};
 
-/// A dimension's measure axis [SPEC 15.6] — true aligned dims are deferred.
+/// A dimension's row axis [SPEC 15.6] — an aligned dim's frame carries its
+/// own axes instead ([`crate::layout::drawing::dims::Frame`]).
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub(super) enum Axis {
     Horizontal,

@@ -414,24 +414,24 @@ input_file: samples/drawing_annotations.lini
         <use href="#lg0400-26" transform="translate(204.3118 104.4729) scale(0.006 -0.006)"/>
       </g>
       <g class="lini-node lini-ext-line lini-line" style="stroke: #004496" transform="translate(54.85,2.5)">
-        <line x1="-121.8" y1="87.6" x2="-125.4" y2="82.8"/>
+        <line x1="-121.8" y1="87.6" x2="-126.1897" y2="81.7471"/>
       </g>
       <g class="lini-node lini-ext-line lini-line" style="stroke: #004496" transform="translate(54.85,2.5)">
-        <line x1="118.2" y1="-92.4" x2="114.6" y2="-97.2"/>
+        <line x1="118.2" y1="-92.4" x2="113.8103" y2="-98.2529"/>
       </g>
       <g class="lini-node lini-dim-line lini-line" style="stroke: #004496" transform="translate(54.85,2.5)">
-        <line x1="-122" y1="84" x2="114.8" y2="-93.6"/>
+        <line x1="-122.7897" y1="82.9471" x2="114.0103" y2="-94.6529"/>
       </g>
       <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: #004496" transform="translate(54.85,2.5)">
-        <polygon points="-123.6,85.2 -115.2,76.4 -112.8,79.6"/>
+        <polygon points="-124.3897,84.1471 -115.9897,75.3471 -113.5897,78.5471"/>
       </g>
       <g class="lini-node lini-marker lini-marker-dim lini-poly" style="fill: #004496" transform="translate(54.85,2.5)">
-        <polygon points="116.4,-94.8 108,-86 105.6,-89.2"/>
+        <polygon points="115.6103,-95.8529 107.2103,-87.0529 104.8103,-90.2529"/>
       </g>
-      <g class="lini-text lini-dim-text" transform="rotate(-36.8699 46.45 -8.7)">
-        <use href="#lg0400-21" transform="translate(35.65 -4.404) scale(0.006 -0.006)"/>
-        <use href="#lg0400-20" transform="translate(42.85 -4.404) scale(0.006 -0.006)"/>
-        <use href="#lg0400-20" transform="translate(50.05 -4.404) scale(0.006 -0.006)"/>
+      <g class="lini-text lini-dim-text" transform="rotate(-36.8699 45.6603 -9.7529)">
+        <use href="#lg0400-21" transform="translate(34.8603 -5.4569) scale(0.006 -0.006)"/>
+        <use href="#lg0400-20" transform="translate(42.0603 -5.4569) scale(0.006 -0.006)"/>
+        <use href="#lg0400-20" transform="translate(49.2603 -5.4569) scale(0.006 -0.006)"/>
       </g>
       <g class="lini-node lini-dim-line lini-line" style="stroke: #004496" transform="translate(54.85,2.5)">
         <line x1="60" y1="97" x2="60" y2="21.4"/>

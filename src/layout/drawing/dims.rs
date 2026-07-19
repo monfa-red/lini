@@ -9,7 +9,7 @@
 
 use super::super::ir::{Bbox, PlacedNode};
 use super::anchors::{self, Anchor, Spot};
-use super::annotate::{Axis, Ctx, Paint, Rows, side_attr};
+use super::annotate::{Axis, Ctx, Paint, Rows, SeatLine, side_attr};
 use super::compose::{self, DimText, Glyph};
 use super::geometry::{P, dist, iso_text_angle, unit};
 use super::symbols::CarriedStack;
@@ -121,8 +121,8 @@ pub(super) fn linear(
         )?;
         let clearance = dim_clearance(&w.attrs);
         // Seat: horizontal / vertical dims pack into side rows; an aligned
-        // dim stands off its own span, on the side facing away from the
-        // geometry centre — the extent's bbox centre [SPEC 15.6].
+        // dim packs along its own span's normal, on the side facing away
+        // from the geometry centre — the extent's bbox centre [SPEC 15.6].
         let (frame, seat) = match axis_of(u) {
             Some(axis) => {
                 let side = stack_side(&w.attrs, axis, corner_pull(&a, &b, axis), w.span)?;
@@ -141,8 +141,7 @@ pub(super) fn linear(
                     frame.n,
                     w.span,
                 )?;
-                let line_c = aligned_line_c(&frame, pa, pb, away_pos, clearance, &paint);
-                (frame, Seat::Line(line_c))
+                (frame, Seat::Aligned(away_pos))
             }
         };
         hops.push(Stacked {
@@ -159,7 +158,7 @@ pub(super) fn linear(
     let mut out = Vec::new();
     let row_key = |h: &Stacked| match h.seat {
         Seat::Row(side) => Some((side, h.frame)),
-        Seat::Line(_) => None,
+        Seat::Aligned(_) => None,
     };
     let one_row = hops.len() > 1
         && row_key(&hops[0]).is_some()
@@ -175,7 +174,13 @@ pub(super) fn linear(
             unreachable!("one_row is row-seated");
         };
         let carried = carried_band(hops.iter().zip(&plans), &paint, stack);
-        let line_c = rows.seat(side, union, hops[0].clearance, paint.fs, paint.sw, carried);
+        let line_c = rows.seat(
+            rows.side_line(side),
+            union,
+            hops[0].clearance,
+            &paint,
+            carried,
+        );
         for (h, p) in hops.into_iter().zip(plans) {
             out.extend(at_row(h, &p, line_c, &paint));
         }
@@ -224,27 +229,29 @@ impl Frame {
     }
 
     /// The coordinate along the dim line.
-    fn u(&self, p: P) -> f64 {
+    pub(super) fn u(&self, p: P) -> f64 {
         p.0 * self.u.0 + p.1 * self.u.1
     }
 
     /// The coordinate across the dim line.
-    fn cross(&self, p: P) -> f64 {
+    pub(super) fn cross(&self, p: P) -> f64 {
         p.0 * self.n.0 + p.1 * self.n.1
     }
 
     /// Frame coordinates back to the drawing plane.
-    fn pt(&self, u: f64, c: f64) -> P {
+    pub(super) fn pt(&self, u: f64, c: f64) -> P {
         (u * self.u.0 + c * self.n.0, u * self.u.1 + c * self.n.1)
     }
 }
 
 /// Where a dim's line seats [SPEC 15.6]: a packed side row (horizontal /
-/// vertical), or — aligned — a precomputed cross coordinate off its own span.
+/// vertical), or — aligned — packed along its own span's normal, on the
+/// away side (`true` = the frame's +n side). Both route through the one
+/// row packer.
 #[derive(Clone, Copy, PartialEq)]
 pub(super) enum Seat {
     Row(Side),
-    Line(f64),
+    Aligned(bool),
 }
 
 /// One stacked dimension: extension lines springing from the anchors, the
@@ -271,13 +278,12 @@ pub(super) fn stacked(
     stack: &CarriedStack,
 ) -> Vec<PlacedNode> {
     let p = plan(&s, paint);
-    let line_c = match s.seat {
-        Seat::Row(side) => {
-            let carried = carried_band(std::iter::once((&s, &p)), paint, stack);
-            rows.seat(side, p.interval, s.clearance, paint.fs, paint.sw, carried)
-        }
-        Seat::Line(c) => c,
+    let carried = carried_band(std::iter::once((&s, &p)), paint, stack);
+    let at = match s.seat {
+        Seat::Row(side) => rows.side_line(side),
+        Seat::Aligned(away_pos) => SeatLine::span(s.frame, away_pos, (s.a, s.b)),
     };
+    let line_c = rows.seat(at, p.interval, s.clearance, paint, carried);
     at_row(s, &p, line_c, paint)
 }
 
@@ -400,19 +406,6 @@ fn aligned_away(
     // A tie (a right triangle's hypotenuse runs exactly through its bbox
     // centre) falls to the ISO-above side (−n) — outside the common taper.
     Ok(v.0 * n.0 + v.1 * n.1 > 1e-9)
-}
-
-/// The aligned dim line's cross coordinate: the outermost anchor on the away
-/// side, stood off by `clearance` plus the band ink facing back at the span —
-/// the text reach on the +n side (text rides above, toward the span), the
-/// arrow spread on the −n side — mirroring the row packer's band [SPEC 15.6].
-fn aligned_line_c(frame: &Frame, a: P, b: P, away_pos: bool, clearance: f64, paint: &Paint) -> f64 {
-    let (na, nb) = (frame.cross(a), frame.cross(b));
-    if away_pos {
-        na.max(nb) + clearance + paint.fs + 2.0
-    } else {
-        na.min(nb) - clearance - ARROW_HALF * paint.sw
-    }
 }
 
 /// A dim's row footprint before seating: the packed interval (text included),

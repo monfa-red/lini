@@ -90,6 +90,43 @@ fn clearance_cascades_and_a_per_dim_value_is_honored_independently() {
 }
 
 #[test]
+fn aligned_dims_pack_through_the_one_row_packer() {
+    // Aligned dims seat through `Rows` like side rows [SPEC 15.6]: the bare
+    // seat stands `clearance` off the span's outermost anchor, and a second
+    // identical dim packs outside the first's registered band instead of
+    // overprinting it.
+    let base = "{ layout: drawing; density: 1 }\n|rect#a| { width: 40; height: 30 }\n";
+    let dim = "a:bottom-left (-) a:top-right\n";
+    // 3-4-5: the diagonal reads 50; the away (tie) side is up-left, so the
+    // outward coordinate is −(0.6 x + 0.8 y), zero on the span itself.
+    let o = |x: f64, y: f64| -(0.6 * x + 0.8 * y);
+    let one = laid(&format!("{base}{dim}"));
+    let (x, y, rot) = text_at(&one.nodes, "50");
+    // Bare stand-off: clearance (4) + arrow spread (2) to the line, the text
+    // centre lifted fs/2 + 2 above it — 14 out from the span.
+    assert!(
+        (o(x, y) - 14.0).abs() < 0.75,
+        "bare aligned seat: {}",
+        o(x, y)
+    );
+    assert!(
+        (rot + 36.8699).abs() < 0.01,
+        "ISO-turned with the span: {rot}"
+    );
+    let two = laid(&format!("{base}{dim}{dim}"));
+    let rows: Vec<f64> = texts(&two.nodes)
+        .iter()
+        .filter(|(t, ..)| t == "50")
+        .map(|(_, x, y, _)| o(*x, *y))
+        .collect();
+    assert_eq!(rows.len(), 2, "both aligned dims placed");
+    assert!(
+        rows[1] - rows[0] >= BAND_NEG + DIM_CLEARANCE - 0.01,
+        "the second aligned dim packs outside the first's band: {rows:?}"
+    );
+}
+
+#[test]
 fn no_annotation_text_lands_on_another_across_the_drawing_samples() {
     // The packing oracle [SPEC 15.6]: a row stands `clearance` off everything
     // painted, so no dim value may overlap any other annotation text —
