@@ -439,26 +439,75 @@ The author-facing surface: syntax highlighting in two editors with
 ledger-generated keywords, the README/docs brought current, the
 formatter's final canon pass, and the round tagged.
 
-- [ ] **VS Code grammar** (a TextMate/`tmLanguage` bundle): types,
+- [x] **VS Code grammar** (a TextMate/`tmLanguage` bundle): types,
   templates, properties, operators, builder calls — **keyword lists
   generated from the ledger** so they can't drift; highlights every
   sample correctly (spot-check).
-- [ ] **Zed grammar** (its tree-sitter/`.scm` form): the same
+- [x] **Zed grammar** (its tree-sitter/`.scm` form): the same
   ledger-generated keyword sets; the same spot-check.
-- [ ] **Keyword generation**: one generator feeds both grammars from
+- [x] **Keyword generation**: one generator feeds both grammars from
   `PROPERTIES` + `BUILDER_CALLS` + the type/template tables — a new
   property highlights the moment it has a row.
-- [ ] **README / docs refresh**: current feature set (through alpha.5 +
+- [x] **README / docs refresh**: current feature set (through alpha.5 +
   beta tooling), the schema/reference/diagnostics surfaces documented,
   the samples showroom current.
-- [ ] **`fmt` final canon pass**: every sample formatter-idempotent under
+- [x] **`fmt` final canon pass**: every sample formatter-idempotent under
   the 1.0 canon; error messages show canonical syntax.
 - [ ] **Round close** (decision 1): the ladder row / version bump /
   `v1.0.0-beta.1` tag left to the main session — push stays with Abbas;
   a round-closing visual pass (ROADMAP §5) with per-sample verdicts.
+  *(The visual pass ran — showroom intact, the only render-touching
+  change is two SVG-identical sample reformats; only the bump/tag/push
+  remain, held for the main session.)*
 
 Acceptance: both editors highlight every sample correctly; the grammars'
 keywords are ledger-generated (no hand-list); docs are current; `fmt` is
 idempotent on every sample; the round is feature-complete and the tag is
 cut.
-**Log:** _(filled at close)_
+**Log:** 2026-07-19 — **done** (grammars + docs + fmt canon; the version
+bump / `v1.0.0-beta.1` tag / push held for the main session).
+**Editor grammars, one ledger-fed generator** (`src/grammar/mod.rs`,
+`cargo xtask gen-grammars`): the VS Code TextMate bundle
+(`editors/vscode/syntaxes/lini.tmLanguage.json`) and the Zed tree-sitter
+highlight query (`editors/zed/languages/lini/highlights.scm`) both draw
+their keyword sets — types (writable primitives + every template),
+properties, value builders, and the layout names — from the same
+`PROPERTIES` / type / template / `BUILDER_CALLS` tables the resolver
+reads, so a new row highlights on regeneration or the drift test fails.
+Structure is authored once in Rust and emitted through the shared
+`crate::json` printer (VS Code) and a small query writer (Zed); ledger
+sets become word-bounded alternations (TextMate) and `#match?`
+predicates (Zed). Comments, strings, numbers, `|type#id|` bars, `.class`,
+`#id`, `--var`, the link ops, `key:` (**strong** scope for a ledger row,
+**weak** for an unknown — a typo is visible), builders vs plain calls,
+`( )` math, and forced endpoint sides all highlight; the property rules
+**decline a colon glued to a side word** (`prop_head`, one mechanism) so
+`plate:left` reads as a side, not a property named `plate` — the same
+guard fixed a latent capture-group mis-map on the property head.
+**Verified**: **103/103 properties** and every built-in type used across
+the 33 samples are covered by the generated alternations (fall-throughs
+are genuine user types/ids / endpoint sides), plus a hand-trace of
+`hero` / `charts` / `drawing_gdt` constructs against the ordered
+patterns. The Zed extension ships in its real tree-sitter shape
+(`extension.toml`, `config.toml`, generated `highlights.scm`,
+`tree-sitter-lini/grammar.js` + `package.json`); the parser build +
+in-editor smoke test is the release-packaging step (no tree-sitter CLI /
+Zed in-repo) — the **ledger surface, the part that can drift, is
+generated and byte-guarded** here. **Drift test** (`tests/grammar.rs`):
+regenerate both grammars in memory, assert byte-equality — the schema's
+guarantee. **README refresh**: a new *For tools and editors* section
+(schema / reference / `--json` / grammars); charts gain the time-axis +
+`format:` line; drawings gain the GD&T story (`|control|` /
+`|feature-control|` / `tol:` / `datums:`, projection, ISO 5457 sheet);
+the CLI table gains `--json`; error prose names the stable codes (`V001`
+/ `R008`); **Status** rewritten alpha → **1.0.0-beta, feature-complete**,
+with the stability contract. **fmt canon pass**: `lini fmt --check` is
+now clean on **all 33 samples** — `chart_advanced` and `pcb` carried
+author line-wrapping the formatter collapses; re-formatted in place, SVG
+byte-identical (conformance + the fmt semantic test unchanged,
+PNG-verified). **Round close**: full suite + schema/reference/grammar
+drift + every sample compiles & fmt-idempotent, all green; only the
+ladder row / bump / tag / push remain, held for the main session. Gate:
+fmt `--check` / clippy `--all-targets -D warnings` / test clean;
+**1098 → 1102 tests** (+4: 2 grammar unit, 2 grammar drift), zero
+snapshot churn. Landed grammars `99d35eb`, docs + fmt canon `12ffefd`.
