@@ -1,0 +1,13 @@
+name = "Lini"
+grammar = "lini"
+path_suffixes = ["lini"]
+line_comments = ["// "]
+autoclose_before = ";,]})"
+brackets = [
+  { start = "{", end = "}", close = true, newline = true },
+  { start = "[", end = "]", close = true, newline = true },
+  { start = "(", end = ")", close = true, newline = false },
+  { start = "\"", end = "\"", close = true, newline = false },
+  { start = "|", end = "|", close = false, newline = false },
+]
+word_characters = ["-", "_"]

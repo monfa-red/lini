@@ -1,0 +1,15 @@
+id = "lini"
+name = "Lini"
+description = "Syntax highlighting for the Lini diagram language"
+version = "0.1.0"
+schema_version = 1
+authors = ["lini"]
+repository = "https://github.com/monfa-red/lini"
+
+# The tree-sitter grammar source lives in-repo under `tree-sitter-lini/`. Zed
+# fetches a grammar from a git ref; point it at this repo and the grammar subdir.
+# Set `commit` to the published tag before release.
+[grammars.lini]
+repository = "https://github.com/monfa-red/lini"
+path = "editors/zed/tree-sitter-lini"
+commit = "REPLACE_WITH_RELEASE_COMMIT"

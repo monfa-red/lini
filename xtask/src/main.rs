@@ -9,6 +9,8 @@
 //!   gen-schema            Regenerate `schema/lini.schema.json` + `schema/reference.md`
 //!                         from the property ledger (guarded byte-identical by
 //!                         `tests/schema.rs`).
+//!   gen-grammars          Regenerate the VS Code + Zed editor grammars from the
+//!                         same ledger (guarded byte-identical by `tests/grammar.rs`).
 
 mod fonts;
 
@@ -26,7 +28,10 @@ fn main() -> ExitCode {
         },
         Some("extract-fonts") => fonts::extract_fonts(),
         Some("gen-schema") => gen_schema(),
-        _ => usage("<command>   (commands: extract-icons, extract-fonts, gen-schema)"),
+        Some("gen-grammars") => gen_grammars(),
+        _ => {
+            usage("<command>   (commands: extract-icons, extract-fonts, gen-schema, gen-grammars)")
+        }
     }
 }
 
@@ -46,6 +51,34 @@ fn gen_schema() -> ExitCode {
     ] {
         let dest = dir.join(file);
         fs::write(&dest, body).expect("write schema artifact");
+        eprintln!("wrote {}", dest.display());
+    }
+    ExitCode::SUCCESS
+}
+
+/// Write the ledger-generated editor grammars into `editors/`.
+fn gen_grammars() -> ExitCode {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .expect("workspace root");
+    for (rel, body) in [
+        (
+            "editors/vscode/syntaxes/lini.tmLanguage.json",
+            lini::vscode_grammar(),
+        ),
+        (
+            "editors/zed/languages/lini/highlights.scm",
+            lini::zed_highlights(),
+        ),
+    ] {
+        let dest = root.join(rel);
+        if let Some(parent) = dest.parent() {
+            if let Err(e) = fs::create_dir_all(parent) {
+                eprintln!("cannot create {}: {e}", parent.display());
+                return ExitCode::FAILURE;
+            }
+        }
+        fs::write(&dest, body).expect("write grammar artifact");
         eprintln!("wrote {}", dest.display());
     }
     ExitCode::SUCCESS

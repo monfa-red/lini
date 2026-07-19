@@ -1,0 +1,34 @@
+{
+  "name": "tree-sitter-lini",
+  "version": "0.1.0",
+  "description": "Tree-sitter grammar for the Lini diagram language",
+  "license": "MIT",
+  "keywords": ["tree-sitter", "lini"],
+  "main": "bindings/node",
+  "dependencies": {
+    "node-addon-api": "^7.0.0",
+    "node-gyp-build": "^4.6.0"
+  },
+  "peerDependencies": {
+    "tree-sitter": "^0.21.0"
+  },
+  "peerDependenciesMeta": {
+    "tree-sitter": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "tree-sitter-cli": "^0.22.0"
+  },
+  "scripts": {
+    "generate": "tree-sitter generate",
+    "test": "tree-sitter test"
+  },
+  "tree-sitter": [
+    {
+      "scope": "source.lini",
+      "file-types": ["lini"],
+      "highlights": ["../languages/lini/highlights.scm"]
+    }
+  ]
+}

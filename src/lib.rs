@@ -5,6 +5,7 @@ mod expr;
 mod fmt;
 mod font;
 mod glyph;
+mod grammar;
 mod icon;
 mod json;
 mod layout;
@@ -33,6 +34,12 @@ pub use fmt::format as format_source;
 /// writes the two files; `tests/schema.rs` guards them byte-identical.
 pub use ledger::examples::EXAMPLES as schema_examples;
 pub use schema::{reference_md, schema_json};
+
+/// The generated editor grammars [ROADMAP 3.8, Stage 4]: the VS Code TextMate
+/// bundle and the Zed tree-sitter highlight query, keyword lists fed from the
+/// same ledger. `cargo xtask gen-grammars` writes them; `tests/grammar.rs`
+/// guards them byte-identical.
+pub use grammar::{vscode_grammar, zed_highlights};
 
 /// Lower a source file's sugar to primitives + `.lini-*` classes and print canonical
 /// `.lini` — what `lini desugar` shows: every typed instance becomes a `|primitive|`
