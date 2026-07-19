@@ -186,6 +186,25 @@ pub(in crate::layout) fn sheet_node<T: SheetView>(n: &T) -> bool {
 /// A part's own bbox in a drawing scope [SPEC 15.4]: `|hole|` / `|pitch-circle|`
 /// are round — `width:` (required) is the diameter — and every other shape
 /// sizes as a leaf: a part's features never grow it, they overhang.
+/// Half a node's stroke width — the paint reach either side of its drawn
+/// geometry.
+fn half_stroke(attrs: &crate::resolve::AttrMap) -> f64 {
+    attrs.number("stroke-width").unwrap_or(0.0) / 2.0
+}
+
+/// A placed node's drawn shape, stroke excluded — the box anchors, default
+/// outlines, and pinned placement read [SPEC 15.1].
+fn geometry_box(n: &super::ir::PlacedNode) -> Bbox {
+    n.bbox.inflate(-half_stroke(&n.attrs))
+}
+
+/// The drawn-geometry base class [SPEC 15.1/15.6]: a scope child that is
+/// real drawn geometry — not sheet content, not a pinned overlay. Callers
+/// layer only their genuine extras (chrome, annotation ink, line types).
+fn is_geometry(n: &super::ir::PlacedNode) -> bool {
+    !sheet_node(n) && !super::anchors::is_pinned(&n.attrs)
+}
+
 pub(super) fn part_bbox(inst: &ResolvedInst, own: f64) -> Result<Bbox, Error> {
     if let Some(ty) = inst
         .type_chain

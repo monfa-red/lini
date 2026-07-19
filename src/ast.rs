@@ -32,6 +32,26 @@ impl Side {
             Side::Left => 3,
         }
     }
+
+    /// The side's spelling — `parse`'s inverse.
+    pub fn name(self) -> &'static str {
+        match self {
+            Side::Top => "top",
+            Side::Bottom => "bottom",
+            Side::Left => "left",
+            Side::Right => "right",
+        }
+    }
+
+    /// The side's outward unit normal (y down).
+    pub fn outward(self) -> (f64, f64) {
+        match self {
+            Side::Top => (0.0, -1.0),
+            Side::Bottom => (0.0, 1.0),
+            Side::Left => (-1.0, 0.0),
+            Side::Right => (1.0, 0.0),
+        }
+    }
 }
 
 // ─────────────────────────── Link ops ───────────────────────────

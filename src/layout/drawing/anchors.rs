@@ -254,16 +254,14 @@ impl Anchor<'_> {
     /// The node's geometry bbox, local — the drawn shape, stroke excluded
     /// [SPEC 15.1]; one copy's shape for a patterned node.
     pub fn geometry_box(&self) -> Bbox {
-        let f = self.feature();
-        let half = f.attrs.number("stroke-width").unwrap_or(0.0) / 2.0;
-        f.bbox.inflate(-half)
+        super::geometry_box(self.feature())
     }
 
     /// The representative point, node-local [SPEC 15.2]: a point is itself, an
     /// edge or arc its midpoint, a bbox name its bbox point.
     pub fn local_point(&self) -> P {
         let g = self.geometry_box();
-        let (cx, cy) = ((g.min_x + g.max_x) / 2.0, (g.min_y + g.max_y) / 2.0);
+        let (cx, cy) = g.center();
         match &self.spot {
             Spot::Origin => (0.0, 0.0),
             Spot::Center => (cx, cy),
@@ -321,7 +319,7 @@ impl Anchor<'_> {
     /// dimension's axis. `None` for the point anchors.
     pub fn outward(&self) -> Option<P> {
         let local = match &self.spot {
-            Spot::Side(side) => side_out(*side),
+            Spot::Side(side) => side.outward(),
             Spot::Segment(Segment::Edge(a, b)) => {
                 let t = unit((b.0 - a.0, b.1 - a.1));
                 // Outward = the **left of the pen's travel** [SPEC 15.5]: a
@@ -344,7 +342,7 @@ impl Anchor<'_> {
             .into_iter()
             .min_by(|a, b| {
                 let along = |s: Side| {
-                    let o = rotated(side_out(s), self.rot);
+                    let o = rotated(s.outward(), self.rot);
                     o.0 * normal.0 + o.1 * normal.1
                 };
                 along(*a).total_cmp(&along(*b))
@@ -453,12 +451,7 @@ pub(super) fn spell(ep: &ResolvedEndpoint, scope: &str) -> String {
     }
     if let Some(side) = ep.side {
         s.push(':');
-        s.push_str(match side {
-            Side::Top => "top",
-            Side::Bottom => "bottom",
-            Side::Left => "left",
-            Side::Right => "right",
-        });
+        s.push_str(side.name());
     } else if let Some(p) = &ep.point {
         s.push(':');
         s.push_str(p);
@@ -468,22 +461,12 @@ pub(super) fn spell(ep: &ResolvedEndpoint, scope: &str) -> String {
 
 /// A side's midpoint on a local box — its representative point [SPEC 15.2].
 fn side_mid(g: &Bbox, side: Side) -> P {
-    let (cx, cy) = ((g.min_x + g.max_x) / 2.0, (g.min_y + g.max_y) / 2.0);
+    let (cx, cy) = g.center();
     match side {
         Side::Top => (cx, g.min_y),
         Side::Bottom => (cx, g.max_y),
         Side::Left => (g.min_x, cy),
         Side::Right => (g.max_x, cy),
-    }
-}
-
-/// A side's outward unit normal, node-local.
-fn side_out(side: Side) -> P {
-    match side {
-        Side::Top => (0.0, -1.0),
-        Side::Bottom => (0.0, 1.0),
-        Side::Left => (-1.0, 0.0),
-        Side::Right => (1.0, 0.0),
     }
 }
 

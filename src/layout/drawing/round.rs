@@ -8,10 +8,12 @@
 
 use super::super::ir::{Bbox, PlacedNode};
 use super::anchors::{self, Anchor, Spot, rotated};
+use super::annotate::stack_side;
 use super::annotate::{Axis, Ctx, Paint, Rows, side_attr, side_unit};
 use super::compose::{self, DimText, Glyph};
-use super::dims::{Frame, Seat, Stacked, arrow, dim_clearance, span_on, stack_side, stacked};
-use super::geometry::{P, dist, iso_text_angle, reflect_point};
+use super::dims::{Seat, Stacked, arrow, dim_clearance, span_on, stacked};
+use super::geometry::Frame;
+use super::geometry::{P, dist, reflect_point};
 use super::symbols::CarriedStack;
 use super::{Segment, leaders};
 use crate::ast::Side;
@@ -115,9 +117,7 @@ pub(super) fn lower(
         // to the opposite side — ⌀-read, stacked — on anything else.
         Spot::Side(side) => {
             if let Some(d) = a.round_diameter() {
-                let dir = spill_dir(&w.attrs, &a).unwrap_or_else(|| {
-                    rotated(side_unit(side_name(*side)).expect("a side"), a.rot)
-                });
+                let dir = spill_dir(&w.attrs).unwrap_or_else(|| rotated(side.outward(), a.rot));
                 let text = compose(Glyph::Dia, d / ctx.scale)?;
                 return Ok(diametral(
                     centre_of(&a),
@@ -130,7 +130,7 @@ pub(super) fn lower(
                 ));
             }
             let g = a.geometry_box();
-            let (cx, cy) = ((g.min_x + g.max_x) / 2.0, (g.min_y + g.max_y) / 2.0);
+            let (cx, cy) = g.center();
             let (la, lb) = match side {
                 Side::Top | Side::Bottom => ((cx, g.min_y), (cx, g.max_y)),
                 Side::Left | Side::Right => ((g.min_x, cy), (g.max_x, cy)),
@@ -150,7 +150,7 @@ pub(super) fn lower(
             let Some(d) = a.round_diameter() else {
                 return Err(no_axis());
             };
-            let dir = spill_dir(&w.attrs, &a).unwrap_or_else(|| rotated(*diag, a.rot));
+            let dir = spill_dir(&w.attrs).unwrap_or_else(|| rotated(*diag, a.rot));
             let text = compose(Glyph::Dia, d / ctx.scale)?;
             Ok(diametral(
                 centre_of(&a),
@@ -188,7 +188,7 @@ pub(super) fn lower(
                 ));
             }
             let g = a.geometry_box();
-            let (cx, cy) = ((g.min_x + g.max_x) / 2.0, (g.min_y + g.max_y) / 2.0);
+            let (cx, cy) = g.center();
             let perp = {
                 let d = axis.dir();
                 (-d.1, d.0)
@@ -293,20 +293,13 @@ fn diametral(
     let rim_b = (c.0 - dir.0 * r, c.1 - dir.1 * r);
     let arrow_len = ARROW_LEN * sw;
     let tw = text.width(fs, paint.font);
-    // ISO alignment: turn with the line, reading from the bottom / right —
-    // a vertical line turns its text −90, like a stacked vertical dim.
-    let theta = iso_text_angle(dir);
-    let (ts, tc) = theta.to_radians().sin_cos();
-    let up = (ts, -tc);
-    let lift = fs / 2.0 + 2.0;
+    // ISO alignment [SPEC 15.6]: the one text seat dims use — turned with
+    // the line, reading from the bottom / right, lifted toward its "above".
+    let frame = Frame::of(dir);
     let fits = 2.0 * r >= 2.0 * arrow_len + tw + 8.0
         && (stack.is_empty() || {
-            let probe = text.nodes(
-                (c.0 + up.0 * lift, c.1 + up.1 * lift),
-                theta,
-                fs,
-                paint.font,
-            );
+            let (at, theta) = frame.text_seat(c, fs);
+            let probe = text.nodes(at, theta, fs, paint.font);
             let seat = super::symbols::seat_of(&probe);
             let block = stack.box_below(seat).map_or(seat, |b| b.union(seat));
             [
@@ -339,12 +332,8 @@ fn diametral(
         out.push(paint.dim(vec![(rim_b.0 + dir.0 * trim, rim_b.1 + dir.1 * trim), end]));
         out.push(arrow(rim_a, dir, paint));
         out.push(arrow(rim_b, (-dir.0, -dir.1), paint));
-        out.extend(text.nodes(
-            (text_c.0 + up.0 * lift, text_c.1 + up.1 * lift),
-            theta,
-            fs,
-            paint.font,
-        ));
+        let (at, theta) = frame.text_seat(text_c, fs);
+        out.extend(text.nodes(at, theta, fs, paint.font));
         out
     };
     let out = build(0.0);
@@ -356,22 +345,12 @@ fn diametral(
 }
 
 /// An explicit `side:` (side **or corner**) as the diametral spill direction.
-fn spill_dir(attrs: &crate::resolve::AttrMap, a: &Anchor) -> Option<P> {
-    let _ = a;
+fn spill_dir(attrs: &crate::resolve::AttrMap) -> Option<P> {
     side_attr(attrs).and_then(side_unit)
 }
 
 /// The round feature's centre, world.
 fn centre_of(a: &Anchor) -> P {
     let g = a.geometry_box();
-    a.to_world(((g.min_x + g.max_x) / 2.0, (g.min_y + g.max_y) / 2.0))
-}
-
-fn side_name(side: Side) -> &'static str {
-    match side {
-        Side::Top => "top",
-        Side::Bottom => "bottom",
-        Side::Left => "left",
-        Side::Right => "right",
-    }
+    a.to_world(g.center())
 }

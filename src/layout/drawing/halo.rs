@@ -37,9 +37,7 @@ pub(super) fn apply(ctx: &Ctx, nodes: &mut [PlacedNode]) {
     let geometry: Vec<&PlacedNode> = ctx
         .kids
         .iter()
-        .filter(|k| {
-            !super::sheet_node(*k) && !super::super::anchors::is_pinned(&k.attrs) && drawn(k)
-        })
+        .filter(|k| super::is_geometry(k) && drawn(k))
         .collect();
     if geometry.is_empty() {
         return;

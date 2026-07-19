@@ -1150,7 +1150,7 @@ fn a_carried_frame_stacks_under_the_dim_value_and_rides_its_row() {
         fb.min_y > ty,
         "the frame stacks under the value: {fb:?} vs {ty}"
     );
-    let fcx = (fb.min_x + fb.max_x) / 2.0;
+    let fcx = fb.center().0;
     assert!((fcx - tx).abs() < 0.5, "centred on the seat: {fcx} vs {tx}");
 }
 
@@ -1180,7 +1180,7 @@ fn a_carried_frame_rides_a_round_leader_under_its_value() {
     let f = by_id(&l.nodes, "fcf");
     let fb = crate::layout::ir::Bbox::extent_of(std::slice::from_ref(f), |_| true);
     assert!(fb.min_y > ty, "under the callout line: {fb:?} vs {ty}");
-    let fcx = (fb.min_x + fb.max_x) / 2.0;
+    let fcx = fb.center().0;
     assert!((fcx - tx).abs() < 0.5, "centred on the seat: {fcx} vs {tx}");
 }
 

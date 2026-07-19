@@ -51,10 +51,7 @@ pub(in crate::layout) fn layout_node(
     // Centre the drawn extent on the node's origin, so the container places in
     // a flow like any box (and a styled drawing's own rect backs its content).
     let extent = flow_extent(&children);
-    let (sx, sy) = (
-        (extent.min_x + extent.max_x) / 2.0,
-        (extent.min_y + extent.max_y) / 2.0,
-    );
+    let (sx, sy) = extent.center();
     for c in children
         .iter_mut()
         .filter(|c| !anchors::is_pinned(&c.attrs))
@@ -63,7 +60,7 @@ pub(in crate::layout) fn layout_node(
         c.cy -= sy;
     }
     let bbox = primitives::closed_bbox(inst, extent, own)?;
-    let half = inst.attrs.number("stroke-width").unwrap_or(0.0) / 2.0;
+    let half = super::half_stroke(&inst.attrs);
     place_pinned(&mut children, bbox.inflate(-half))?;
     let mut placed = prim::container(inst, bbox, children);
     // The recentre moved the datum off the node's local zero — record where
@@ -109,11 +106,7 @@ fn lay_out(
     let geometry: Vec<usize> = kids
         .iter()
         .enumerate()
-        .filter(|(_, k)| {
-            !super::sheet_node(*k)
-                && !anchors::is_pinned(&k.attrs)
-                && !super::chrome::is_chrome(&k.attrs)
-        })
+        .filter(|(_, k)| super::is_geometry(k) && !super::chrome::is_chrome(&k.attrs))
         .map(|(i, _)| i)
         .collect();
     if geometry.is_empty() {

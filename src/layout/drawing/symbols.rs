@@ -171,7 +171,7 @@ impl CarriedStack {
             let mut n = layout_node(inst, ty, ctx.scope, ctx.program)?;
             n.type_chain.push("carried".into());
             let b = n.bbox.shifted(n.cx, n.cy);
-            let (mut dx, mut dy) = (-(b.min_x + b.max_x) / 2.0, y - b.min_y);
+            let (mut dx, mut dy) = (-b.center().0, y - b.min_y);
             if let Ok(Some((nx, ny))) = super::super::anchors::translate(&inst.attrs, inst.span) {
                 dx += nx;
                 dy += ny;
@@ -193,10 +193,7 @@ impl CarriedStack {
     /// The stack's world box hung below a text seat — the one measured extent
     /// both the pre-placement clearing and the seating read.
     pub(super) fn box_below(&self, seat: Bbox) -> Option<Bbox> {
-        Some(
-            self.rel?
-                .shifted((seat.min_x + seat.max_x) / 2.0, seat.max_y),
-        )
+        Some(self.rel?.shifted(seat.center().0, seat.max_y))
     }
 
     /// Seat the lowered stack at the statement's placed **text seat**
@@ -210,7 +207,7 @@ impl CarriedStack {
             return Vec::new();
         }
         let seat = seat_of(placed);
-        let (cx, y) = ((seat.min_x + seat.max_x) / 2.0, seat.max_y);
+        let (cx, y) = (seat.center().0, seat.max_y);
         self.nodes
             .into_iter()
             .map(|mut n| {

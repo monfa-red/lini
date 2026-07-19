@@ -1,6 +1,7 @@
 //! The cutting-plane geometry [SPEC 15.8]: fill each authored `|plane|` from the view's box + `at:` / `facing:` into the ISO chain line, thick ends, viewing arrows, and letters.
 
 use super::*;
+use crate::layout::drawing::geometry::project;
 
 /// Fill every authored `|plane|` among a view's children from its
 /// geometry box [SPEC 15.8]: the placeholder becomes the thin chain line and
@@ -130,31 +131,15 @@ fn fill_one(cp: &mut PlacedNode, geo: Bbox, scale: f64) -> Result<(), Error> {
     }
 
     cp.label = None; // the letter is drawn; the line node itself carries no text
-    cp.bbox = seg_bbox(a, b).union(Bbox::extent_of(&pieces, |_| true));
+    cp.bbox = Bbox::from_points(&[a, b]).union(Bbox::extent_of(&pieces, |_| true));
     cp.children = pieces;
     Ok(())
-}
-
-/// The `[min, max]` projection of a box's corners onto a unit direction.
-fn project(geo: Bbox, dir: P) -> (f64, f64) {
-    let corners = [
-        (geo.min_x, geo.min_y),
-        (geo.max_x, geo.min_y),
-        (geo.min_x, geo.max_y),
-        (geo.max_x, geo.max_y),
-    ];
-    corners
-        .iter()
-        .fold((f64::INFINITY, f64::NEG_INFINITY), |(lo, hi), c| {
-            let t = c.0 * dir.0 + c.1 * dir.1;
-            (lo.min(t), hi.max(t))
-        })
 }
 
 fn set_points(n: &mut PlacedNode, a: P, b: P) {
     n.attrs
         .insert("points", ResolvedValue::List(vec![point(a), point(b)]));
-    n.bbox = seg_bbox(a, b);
+    n.bbox = Bbox::from_points(&[a, b]);
 }
 
 /// A thick, solid end stroke — a clone of the plane line (its cascade style),
@@ -184,13 +169,4 @@ fn shaft(cp: &PlacedNode, a: P, b: P) -> PlacedNode {
 
 fn point(p: P) -> ResolvedValue {
     ResolvedValue::Tuple(vec![ResolvedValue::Number(p.0), ResolvedValue::Number(p.1)])
-}
-
-fn seg_bbox(a: P, b: P) -> Bbox {
-    Bbox {
-        min_x: a.0.min(b.0),
-        min_y: a.1.min(b.1),
-        max_x: a.0.max(b.0),
-        max_y: a.1.max(b.1),
-    }
 }

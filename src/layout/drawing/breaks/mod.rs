@@ -159,7 +159,7 @@ pub(in crate::layout) fn fill_chrome(children: &mut [PlacedNode], cuts: &[CutEdg
         let Some(cut) = cuts.get(*idx as usize) else {
             continue;
         };
-        let half = c.attrs.number("stroke-width").unwrap_or(0.0) / 2.0;
+        let half = super::half_stroke(&c.attrs);
         let pt = |t: f64, s: f64| if cut.horizontal { (s, t) } else { (t, s) };
         let pts = jogged(cut, pt);
         let value = ResolvedValue::List(

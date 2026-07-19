@@ -8,10 +8,10 @@
 //! span) with `project:` the override. The `(o)` readings live in `round`.
 
 use super::super::ir::{Bbox, PlacedNode};
-use super::anchors::{self, Anchor, Spot};
-use super::annotate::{Axis, Ctx, Paint, Rows, SeatLine, side_attr};
+use super::anchors;
+use super::annotate::{Axis, Ctx, Paint, Rows, SeatLine, corner_pull, stack_side};
 use super::compose::{self, DimText, Glyph};
-use super::geometry::{P, dist, iso_text_angle, unit};
+use super::geometry::{Frame, P, dist, unit};
 use super::symbols::CarriedStack;
 use crate::ast::Side;
 use crate::error::Error;
@@ -130,14 +130,11 @@ pub(super) fn linear(
             }
             None => {
                 let frame = Frame::of(u);
-                let away_pos = aligned_away(
+                let away_pos = SeatLine::away(
                     &w.attrs,
                     span_dir.unwrap_or(u),
                     ((pa.0 + pb.0) / 2.0, (pa.1 + pb.1) / 2.0),
-                    (
-                        (ctx.extent.min_x + ctx.extent.max_x) / 2.0,
-                        (ctx.extent.min_y + ctx.extent.max_y) / 2.0,
-                    ),
+                    ctx.extent.center(),
                     frame.n,
                     w.span,
                 )?;
@@ -190,58 +187,6 @@ pub(super) fn linear(
         }
     }
     Ok(out)
-}
-
-/// The dim's measure frame [SPEC 15.6]: `u` runs along the dim line (the
-/// measure direction), `n` across it — oriented so **−n is the ISO reading's
-/// "above the line"** (text lifts toward −n, whatever the angle).
-#[derive(Clone, Copy, PartialEq)]
-pub(super) struct Frame {
-    pub u: P,
-    pub n: P,
-}
-
-impl Frame {
-    /// The two row axes — exact unit vectors, so the packed paths stay
-    /// byte-identical to the axis-matched arithmetic.
-    pub fn axis(axis: Axis) -> Frame {
-        match axis {
-            Axis::Horizontal => Frame {
-                u: (1.0, 0.0),
-                n: (0.0, 1.0),
-            },
-            Axis::Vertical => Frame {
-                u: (0.0, 1.0),
-                n: (1.0, 0.0),
-            },
-        }
-    }
-
-    /// An aligned frame along `dir` — folded to the ISO reading direction, so
-    /// the text and its "above" side are order-independent.
-    pub fn of(dir: P) -> Frame {
-        let theta = iso_text_angle(dir);
-        let (s, c) = theta.to_radians().sin_cos();
-        Frame {
-            u: (c, s),
-            n: (-s, c),
-        }
-    }
-
-    /// The coordinate along the dim line.
-    pub(super) fn u(&self, p: P) -> f64 {
-        p.0 * self.u.0 + p.1 * self.u.1
-    }
-
-    /// The coordinate across the dim line.
-    pub(super) fn cross(&self, p: P) -> f64 {
-        p.0 * self.n.0 + p.1 * self.n.1
-    }
-
-    /// Frame coordinates back to the drawing plane.
-    pub(super) fn pt(&self, u: f64, c: f64) -> P {
-        (u * self.u.0 + c * self.n.0, u * self.u.1 + c * self.n.1)
-    }
 }
 
 /// Where a dim's line seats [SPEC 15.6]: a packed side row (horizontal /
@@ -376,38 +321,6 @@ fn axis_of(u: P) -> Option<Axis> {
     }
 }
 
-/// An aligned dim's stand-off side [SPEC 15.6]: `side: left | right` read
-/// along the span, first anchor → second (the walker's left); the default
-/// faces **away from the geometry centre**. Returns whether the dim line
-/// sits on the frame's +n side.
-fn aligned_away(
-    attrs: &AttrMap,
-    span_dir: P,
-    mid: P,
-    centre: P,
-    n: P,
-    span: Span,
-) -> Result<bool, Error> {
-    if let Some(name) = side_attr(attrs) {
-        // Walker's left with y down: facing along `d`, left is (d.1, -d.0).
-        let dir = match name {
-            "left" => (span_dir.1, -span_dir.0),
-            "right" => (-span_dir.1, span_dir.0),
-            _ => {
-                return Err(Error::at(
-                    span,
-                    "an aligned dimension sits left or right of its span — read along it, first anchor to second",
-                ));
-            }
-        };
-        return Ok(dir.0 * n.0 + dir.1 * n.1 > 0.0);
-    }
-    let v = (mid.0 - centre.0, mid.1 - centre.1);
-    // A tie (a right triangle's hypotenuse runs exactly through its bbox
-    // centre) falls to the ISO-above side (−n) — outside the common taper.
-    Ok(v.0 * n.0 + v.1 * n.1 > 1e-9)
-}
-
 /// A dim's row footprint before seating: the packed interval (text included),
 /// where the text sits along the line, and whether it fits inside the span.
 struct Plan {
@@ -498,9 +411,7 @@ fn at_row(s: Stacked, p: &Plan, line_c: f64, paint: &Paint) -> Vec<PlacedNode> {
 /// one placement the row's carried-band probe (at a zero line) and the
 /// lowered row share.
 fn value_texts(s: &Stacked, p: &Plan, line_c: f64, paint: &Paint) -> Vec<PlacedNode> {
-    let lift = paint.fs / 2.0 + 2.0;
-    let mut centre = s.frame.pt(p.text_u, line_c - lift);
-    let mut rot = iso_text_angle(s.frame.u);
+    let (mut centre, mut rot) = s.frame.text_seat(s.frame.pt(p.text_u, line_c), paint.fs);
     if let Some(t) = s.label {
         if let Some(r) = t.attrs.number("rotate") {
             rot = r;
@@ -527,73 +438,6 @@ pub(super) fn arrow(tip: P, dir: P, paint: &Paint) -> PlacedNode {
         ],
         paint.stroke.clone(),
     )
-}
-
-/// The stacking side [SPEC 15.6]: explicit `side:` (validated against the
-/// axis), a corner pull, or the axis default — bottom / right.
-pub(super) fn stack_side(
-    attrs: &AttrMap,
-    axis: Axis,
-    pull: Option<Side>,
-    span: Span,
-) -> Result<Side, Error> {
-    let valid = |s: Side| match axis {
-        Axis::Horizontal => matches!(s, Side::Top | Side::Bottom),
-        Axis::Vertical => matches!(s, Side::Left | Side::Right),
-    };
-    let off_axis = || {
-        Error::at(
-            span,
-            match axis {
-                Axis::Horizontal => "a horizontal dimension stacks on top or bottom",
-                Axis::Vertical => "a vertical dimension stacks on left or right",
-            },
-        )
-    };
-    if let Some(name) = side_attr(attrs) {
-        let side = Side::parse(name).ok_or_else(off_axis)?;
-        if !valid(side) {
-            return Err(off_axis());
-        }
-        return Ok(side);
-    }
-    if let Some(side) = pull.filter(|s| valid(*s)) {
-        return Ok(side);
-    }
-    Ok(match axis {
-        Axis::Horizontal => Side::Bottom,
-        Axis::Vertical => Side::Right,
-    })
-}
-
-/// Corner anchors both on one edge pull the dim there [SPEC 15.6]:
-/// `a:top-left (-) b:top-right` stacks on top.
-fn corner_pull(a: &Anchor, b: &Anchor, axis: Axis) -> Option<Side> {
-    let edge = |anchor: &Anchor| -> Option<Side> {
-        let Spot::Corner((dx, dy)) = anchor.spot else {
-            return None;
-        };
-        Some(match axis {
-            Axis::Horizontal => {
-                if dy < 0.0 {
-                    Side::Top
-                } else {
-                    Side::Bottom
-                }
-            }
-            Axis::Vertical => {
-                if dx < 0.0 {
-                    Side::Left
-                } else {
-                    Side::Right
-                }
-            }
-        })
-    };
-    match (edge(a), edge(b)) {
-        (Some(x), Some(y)) if x == y => Some(x),
-        _ => None,
-    }
 }
 
 /// The span projected on the dim's axis, px.

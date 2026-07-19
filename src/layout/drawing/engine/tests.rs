@@ -413,12 +413,12 @@ const SEAT_PART: &str = "{ layout: drawing; density: 1 }\n|rect#a| { width: 80; 
 /// A placed node's geometry box edge / midpoint in world coordinates —
 /// stroke excluded, the anchor law [SPEC 15.1].
 fn gbox(n: &PlacedNode) -> (f64, f64, f64, f64) {
-    let half = n.attrs.number("stroke-width").unwrap_or(0.0) / 2.0;
+    let g = super::super::geometry_box(n);
     (
-        n.cx + n.bbox.min_x + half,
-        n.cy + n.bbox.min_y + half,
-        n.cx + n.bbox.max_x - half,
-        n.cy + n.bbox.max_y - half,
+        n.cx + g.min_x,
+        n.cy + g.min_y,
+        n.cx + g.max_x,
+        n.cy + g.max_y,
     )
 }
 
@@ -500,9 +500,8 @@ fn rotate_turns_the_annotation_before_the_seat() {
         "{SEAT_PART}|note#n| \"x\" {{ rotate: 90 }}\nn || a:top\n"
     ));
     let n = by_id(&l.nodes, "n");
-    let half = n.attrs.number("stroke-width").unwrap_or(0.0) / 2.0;
-    let my = (n.bbox.min_y + n.bbox.max_y) / 2.0;
-    let gx = n.bbox.max_x - half;
+    let my = n.bbox.center().1;
+    let gx = super::super::geometry_box(n).max_x;
     // to_world of the right side's midpoint under 90°: (cx − my, cy + gx).
     assert!((n.cx - my).abs() < 1e-6, "on the face's x: {}", n.cx);
     assert!((n.cy + gx + 20.0).abs() < 1e-6, "stands on y −20: {}", n.cy);

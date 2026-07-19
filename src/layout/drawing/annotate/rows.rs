@@ -6,9 +6,10 @@
 //! anchor — both along a [`SeatLine`], the row's frame plus its outward
 //! direction and base.
 
-use super::super::dims::Frame;
-use super::super::geometry::P;
+use super::super::anchors::{Anchor, Spot};
+use super::super::geometry::{Frame, P, proj, project};
 use super::*;
+use crate::span::Span;
 
 /// The row packer [SPEC 15.6]: dims sharing a side pack into rows, each — in
 /// source order — seating at the innermost offset where its painted band
@@ -63,6 +64,38 @@ impl SeatLine {
         SeatLine { frame, sgn, base }
     }
 
+    /// An aligned dim's stand-off side [SPEC 15.6]: `side: left | right` read
+    /// along the span, first anchor → second (the walker's left); the default
+    /// faces **away from the geometry centre**. Returns whether the dim line
+    /// sits on the frame's +n side.
+    pub(in crate::layout::drawing) fn away(
+        attrs: &AttrMap,
+        span_dir: P,
+        mid: P,
+        centre: P,
+        n: P,
+        span: Span,
+    ) -> Result<bool, Error> {
+        if let Some(name) = side_attr(attrs) {
+            // Walker's left with y down: facing along `d`, left is (d.1, -d.0).
+            let dir = match name {
+                "left" => (span_dir.1, -span_dir.0),
+                "right" => (-span_dir.1, span_dir.0),
+                _ => {
+                    return Err(Error::at(
+                        span,
+                        "an aligned dimension sits left or right of its span — read along it, first anchor to second",
+                    ));
+                }
+            };
+            return Ok(dir.0 * n.0 + dir.1 * n.1 > 0.0);
+        }
+        let v = (mid.0 - centre.0, mid.1 - centre.1);
+        // A tie (a right triangle's hypotenuse runs exactly through its bbox
+        // centre) falls to the ISO-above side (−n) — outside the common taper.
+        Ok(v.0 * n.0 + v.1 * n.1 > 1e-9)
+    }
+
     /// The dim line's world cross coordinate at `off` outward from base.
     fn line(&self, off: f64) -> f64 {
         self.sgn * (self.base + off)
@@ -83,31 +116,10 @@ impl SeatLine {
     /// The offset that stands a band's innermost ink `clearance` beyond a
     /// painted box's outer edge (the band reach is added by the caller).
     fn past(&self, p: Bbox, clearance: f64) -> f64 {
-        let outermost = corners(p)
-            .iter()
-            .map(|&c| self.sgn * self.frame.cross(c))
-            .fold(f64::NEG_INFINITY, f64::max);
+        let (lo, hi) = project(p, self.frame.n);
+        let outermost = if self.sgn > 0.0 { hi } else { -lo };
         clearance + outermost - self.base
     }
-}
-
-/// An axis-aligned box's four corners.
-fn corners(b: Bbox) -> [P; 4] {
-    [
-        (b.min_x, b.min_y),
-        (b.max_x, b.min_y),
-        (b.max_x, b.max_y),
-        (b.min_x, b.max_y),
-    ]
-}
-
-/// A point set's projection span on a unit axis.
-fn proj(pts: &[P], axis: P) -> (f64, f64) {
-    pts.iter()
-        .map(|p| p.0 * axis.0 + p.1 * axis.1)
-        .fold((f64::INFINITY, f64::NEG_INFINITY), |(lo, hi), v| {
-            (lo.min(v), hi.max(v))
-        })
 }
 
 /// A row's painted band across the stack axis, relative to its dim line
@@ -176,12 +188,11 @@ impl BandRect {
     /// at both ends, exactly [`Bbox::overlaps`] when the frame is an axis.
     fn overlaps(&self, b: Bbox) -> bool {
         let mine = self.corners();
-        let theirs = corners(b);
         [(1.0, 0.0), (0.0, 1.0), self.frame.u, self.frame.n]
             .iter()
             .all(|&axis| {
                 let (a0, a1) = proj(&mine, axis);
-                let (b0, b1) = proj(&theirs, axis);
+                let (b0, b1) = project(b, axis);
                 a0 < b1 && b0 < a1
             })
     }
@@ -243,7 +254,7 @@ impl Rows {
         let mut band = Band::of(at.sgn, paint.fs, paint.sw);
         let mut interval = interval;
         if let Some(c) = carried {
-            let (cross, along) = (proj(&corners(c), at.frame.n), proj(&corners(c), at.frame.u));
+            let (cross, along) = (project(c, at.frame.n), project(c, at.frame.u));
             band.neg = band.neg.max(-cross.0);
             band.pos = band.pos.max(cross.1);
             interval = (interval.0.min(along.0), interval.1.max(along.1));
@@ -270,5 +281,72 @@ impl Rows {
         }
         self.painted.push(at.band_rect(off, interval, &band).aabb());
         at.line(off)
+    }
+}
+
+/// The stacking side [SPEC 15.6]: explicit `side:` (validated against the
+/// axis), a corner pull, or the axis default — bottom / right.
+pub(in crate::layout::drawing) fn stack_side(
+    attrs: &AttrMap,
+    axis: Axis,
+    pull: Option<Side>,
+    span: Span,
+) -> Result<Side, Error> {
+    let valid = |s: Side| match axis {
+        Axis::Horizontal => matches!(s, Side::Top | Side::Bottom),
+        Axis::Vertical => matches!(s, Side::Left | Side::Right),
+    };
+    let off_axis = || {
+        Error::at(
+            span,
+            match axis {
+                Axis::Horizontal => "a horizontal dimension stacks on top or bottom",
+                Axis::Vertical => "a vertical dimension stacks on left or right",
+            },
+        )
+    };
+    if let Some(name) = side_attr(attrs) {
+        let side = Side::parse(name).ok_or_else(off_axis)?;
+        if !valid(side) {
+            return Err(off_axis());
+        }
+        return Ok(side);
+    }
+    if let Some(side) = pull.filter(|s| valid(*s)) {
+        return Ok(side);
+    }
+    Ok(match axis {
+        Axis::Horizontal => Side::Bottom,
+        Axis::Vertical => Side::Right,
+    })
+}
+
+/// Corner anchors both on one edge pull the dim there [SPEC 15.6]:
+/// `a:top-left (-) b:top-right` stacks on top.
+pub(in crate::layout::drawing) fn corner_pull(a: &Anchor, b: &Anchor, axis: Axis) -> Option<Side> {
+    let edge = |anchor: &Anchor| -> Option<Side> {
+        let Spot::Corner((dx, dy)) = anchor.spot else {
+            return None;
+        };
+        Some(match axis {
+            Axis::Horizontal => {
+                if dy < 0.0 {
+                    Side::Top
+                } else {
+                    Side::Bottom
+                }
+            }
+            Axis::Vertical => {
+                if dx < 0.0 {
+                    Side::Left
+                } else {
+                    Side::Right
+                }
+            }
+        })
+    };
+    match (edge(a), edge(b)) {
+        (Some(x), Some(y)) if x == y => Some(x),
+        _ => None,
     }
 }

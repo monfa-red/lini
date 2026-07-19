@@ -73,18 +73,7 @@ pub(in crate::layout) fn fill(children: &mut [PlacedNode], geometry: Bbox, scale
             _ => continue,
         };
         let d = bearing_dir(bearing);
-        let corners = [
-            (geometry.min_x, geometry.min_y),
-            (geometry.max_x, geometry.min_y),
-            (geometry.min_x, geometry.max_y),
-            (geometry.max_x, geometry.max_y),
-        ];
-        let (mut lo, mut hi) = (f64::INFINITY, f64::NEG_INFINITY);
-        for (x, y) in corners {
-            let t = x * d.0 + y * d.1;
-            lo = lo.min(t);
-            hi = hi.max(t);
-        }
+        let (lo, hi) = super::geometry::project(geometry, d);
         let (lo, hi) = (lo - CENTER_MARK_OVERHANG, hi + CENTER_MARK_OVERHANG);
         let (a, b) = ((d.0 * lo, d.1 * lo), (d.0 * hi, d.1 * hi));
         let point = |p: (f64, f64)| {
@@ -92,14 +81,8 @@ pub(in crate::layout) fn fill(children: &mut [PlacedNode], geometry: Bbox, scale
         };
         c.attrs
             .insert("points", ResolvedValue::List(vec![point(a), point(b)]));
-        let half = c.attrs.number("stroke-width").unwrap_or(0.0) / 2.0;
-        c.bbox = Bbox {
-            min_x: a.0.min(b.0),
-            min_y: a.1.min(b.1),
-            max_x: a.0.max(b.0),
-            max_y: a.1.max(b.1),
-        }
-        .inflate(half);
+        let half = super::half_stroke(&c.attrs);
+        c.bbox = Bbox::from_points(&[a, b]).inflate(half);
     }
 }
 
@@ -132,6 +115,6 @@ fn thread_arc(c: &mut PlacedNode, geometry: Bbox, internal: bool, pitch: f64, sc
         )),
     );
     c.kind = crate::resolve::NodeKind::Path;
-    let half = c.attrs.number("stroke-width").unwrap_or(0.0) / 2.0;
+    let half = super::half_stroke(&c.attrs);
     c.bbox = Bbox::centered(2.0 * r, 2.0 * r).inflate(half);
 }

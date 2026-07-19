@@ -126,12 +126,7 @@ pub(super) fn seg_crossings(o: P, d: P, seg: &PathSeg, out: &mut Vec<Hit>) {
     }
 }
 
-/// The node's drawn shape, stroke excluded — the box the default outlines
-/// (rect, ellipse) are read from [SPEC 15.1].
-fn geometry_box(node: &PlacedNode) -> Bbox {
-    let half = node.attrs.number("stroke-width").unwrap_or(0.0) / 2.0;
-    node.bbox.inflate(-half)
-}
+use super::geometry_box;
 
 const EPS: f64 = 1e-6;
 
@@ -203,7 +198,7 @@ fn ray_circle(o: P, d: P, c: P, r: f64) -> Vec<f64> {
 /// Ray × ellipse inscribed in `g` — scaled into the unit circle; the tangent
 /// scales back out.
 fn ellipse_crossings(o: P, d: P, g: Bbox, out: &mut Vec<Hit>) {
-    let (cx, cy) = ((g.min_x + g.max_x) / 2.0, (g.min_y + g.max_y) / 2.0);
+    let (cx, cy) = g.center();
     let (rx, ry) = ((g.w() / 2.0).max(1e-9), (g.h() / 2.0).max(1e-9));
     let so = ((o.0 - cx) / rx, (o.1 - cy) / ry);
     let sd = (d.0 / rx, d.1 / ry);

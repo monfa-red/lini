@@ -165,7 +165,7 @@ pub(in crate::layout) fn fill(children: &mut Vec<PlacedNode>, marker: &str, span
         return;
     };
     let seed = children.remove(at);
-    let half = seed.attrs.number("stroke-width").unwrap_or(0.0) / 2.0;
+    let half = super::half_stroke(&seed.attrs);
     for &(a, b) in spans.iter().rev() {
         let mut line = seed.clone();
         let point = |p: P| {

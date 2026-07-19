@@ -20,7 +20,7 @@ mod rows;
 #[cfg(test)]
 mod tests;
 
-pub(super) use rows::{Rows, SeatLine};
+pub(super) use rows::{Rows, SeatLine, corner_pull, stack_side};
 
 /// A dimension's row axis [SPEC 15.6] — an aligned dim's frame carries its
 /// own axes instead ([`crate::layout::drawing::dims::Frame`]).
@@ -197,9 +197,7 @@ pub(in crate::layout) fn lower(
 /// geometry (chrome included — dims spring past centre marks), sheet content
 /// and pinned overlays excluded.
 fn geometry_extent(kids: &[PlacedNode]) -> Bbox {
-    Bbox::extent_of(kids, |k| {
-        !super::sheet_node(k) && !super::super::anchors::is_pinned(&k.attrs)
-    })
+    Bbox::extent_of(kids, super::is_geometry)
 }
 
 /// The drawn-geometry extent of an already-annotated drawing's children —
@@ -209,8 +207,7 @@ fn geometry_extent(kids: &[PlacedNode]) -> Bbox {
 #[cfg(test)]
 fn drawn_geometry(kids: &[PlacedNode]) -> Bbox {
     Bbox::extent_of(kids, |k| {
-        !super::sheet_node(k)
-            && !super::super::anchors::is_pinned(&k.attrs)
+        super::is_geometry(k)
             && !k
                 .type_chain
                 .iter()

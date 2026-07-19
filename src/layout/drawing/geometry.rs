@@ -4,6 +4,7 @@
 
 use super::super::ir::Bbox;
 use super::super::path_bbox;
+use super::annotate::Axis;
 
 pub type P = (f64, f64);
 
@@ -358,24 +359,93 @@ pub fn to_d(subs: &[Subpath]) -> String {
 /// The drawn geometry's bbox — the path extent, **stroke excluded** (the
 /// measurement box, [SPEC 15.1]); layout inflates it for paint.
 pub fn geometry_bbox(d: &str) -> Bbox {
-    let pts = path_bbox::extent_points(d);
-    let mut it = pts.iter();
-    let Some(&(x, y)) = it.next() else {
-        return Bbox::empty();
-    };
-    let mut b = Bbox {
-        min_x: x,
-        min_y: y,
-        max_x: x,
-        max_y: y,
-    };
-    for &(x, y) in it {
-        b.min_x = b.min_x.min(x);
-        b.min_y = b.min_y.min(y);
-        b.max_x = b.max_x.max(x);
-        b.max_y = b.max_y.max(y);
+    Bbox::from_points(&path_bbox::extent_points(d))
+}
+
+/// The `[min, max]` projection of a point set onto a unit direction.
+pub fn proj(pts: &[P], dir: P) -> (f64, f64) {
+    pts.iter()
+        .fold((f64::INFINITY, f64::NEG_INFINITY), |(lo, hi), c| {
+            let t = c.0 * dir.0 + c.1 * dir.1;
+            (lo.min(t), hi.max(t))
+        })
+}
+
+/// The `[min, max]` projection of a box's corners onto a unit direction.
+pub fn project(geo: Bbox, dir: P) -> (f64, f64) {
+    proj(
+        &[
+            (geo.min_x, geo.min_y),
+            (geo.max_x, geo.min_y),
+            (geo.min_x, geo.max_y),
+            (geo.max_x, geo.max_y),
+        ],
+        dir,
+    )
+}
+
+/// The dim's measure frame [SPEC 15.6]: `u` runs along the dim line (the
+/// measure direction), `n` across it — oriented so **−n is the ISO reading's
+/// "above the line"** (text lifts toward −n, whatever the angle).
+#[derive(Clone, Copy, PartialEq)]
+pub struct Frame {
+    pub u: P,
+    pub n: P,
+}
+
+impl Frame {
+    /// The two row axes — exact unit vectors, so the packed paths stay
+    /// byte-identical to the axis-matched arithmetic.
+    pub(in crate::layout::drawing) fn axis(axis: Axis) -> Frame {
+        match axis {
+            Axis::Horizontal => Frame {
+                u: (1.0, 0.0),
+                n: (0.0, 1.0),
+            },
+            Axis::Vertical => Frame {
+                u: (0.0, 1.0),
+                n: (1.0, 0.0),
+            },
+        }
     }
-    b
+
+    /// An aligned frame along `dir` — folded to the ISO reading direction, so
+    /// the text and its "above" side are order-independent.
+    pub fn of(dir: P) -> Frame {
+        let theta = iso_text_angle(dir);
+        let (s, c) = theta.to_radians().sin_cos();
+        Frame {
+            u: (c, s),
+            n: (-s, c),
+        }
+    }
+
+    /// The coordinate along the dim line.
+    pub fn u(&self, p: P) -> f64 {
+        p.0 * self.u.0 + p.1 * self.u.1
+    }
+
+    /// The coordinate across the dim line.
+    pub fn cross(&self, p: P) -> f64 {
+        p.0 * self.n.0 + p.1 * self.n.1
+    }
+
+    /// Frame coordinates back to the drawing plane.
+    pub fn pt(&self, u: f64, c: f64) -> P {
+        (u * self.u.0 + c * self.n.0, u * self.u.1 + c * self.n.1)
+    }
+
+    /// The ISO text seat above a point on a line along `u` [SPEC 15.6]: the
+    /// value's centre lifted `fs/2 + 2` toward the reading's "above" (−n),
+    /// turned with the line — the one placement dims and the diametral line
+    /// share.
+    pub fn text_seat(&self, at: P, fs: f64) -> (P, f64) {
+        let lift = fs / 2.0 + 2.0;
+        (
+            (at.0 - self.n.0 * lift, at.1 - self.n.1 * lift),
+            iso_text_angle(self.u),
+        )
+    }
 }
 
 /// Deterministic coordinate formatting: at most 3 decimals, trailing zeros
