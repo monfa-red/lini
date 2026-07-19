@@ -4,9 +4,9 @@
 //! the chart's box, palette, legend, and `<title>` machinery — the renderer learns nothing.
 
 use super::metrics::{LABEL_SIZE, TITLE_SIZE};
-use super::model::{Pie, Slice, fill_color, fill_outline, label_of, live, read_gap, tag};
+use super::model::{Pie, Slice, fill_color, fill_outline, label_of, read_gap, tag};
 use super::palette;
-use super::scale::fmt_tick;
+use super::tint::live;
 use super::{chart_box, lay_out_legend, legend_reserve, title_reserve};
 use crate::error::Error;
 use crate::layout::PlacedNode;
@@ -100,7 +100,7 @@ fn legend_entries(slices: &[Slice]) -> Vec<super::LegendEntry> {
 /// `format:` [SPEC 16]), and percent of the total (always the auto reading —
 /// the share is chart chrome, not the value).
 fn slice_title(s: &Slice, total: f64, fmt: format::Format) -> String {
-    let pct = fmt_tick((s.value / total * 100.0).round());
+    let pct = format::auto((s.value / total * 100.0).round());
     let v = format::render(s.value, fmt);
     match &s.label {
         Some(l) => format!("{l}: {v} ({pct}%)"),
@@ -160,9 +160,7 @@ pub fn build_pie(inst: &ResolvedInst) -> Result<Pie, Error> {
     }
     // A pie has no time axis, so an authored date preset errors [SPEC 16].
     let fmt = format::read_or(&inst.attrs, format::Format::Auto, span)?;
-    if matches!(fmt, format::Format::Date(_)) {
-        return Err(Error::at(span, "a date preset reads a time axis"));
-    }
+    format::reject_date(fmt, span)?;
     Ok(Pie {
         slices,
         title,

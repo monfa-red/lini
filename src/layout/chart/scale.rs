@@ -228,13 +228,6 @@ pub fn label(scale: &Scale, value: f64, fmt: Format, unit: &Option<String>) -> S
     s
 }
 
-/// A value's `auto` display string [SPEC 16] — the format engine's default
-/// reading. (Chart content, distinct from the SVG coordinate formatting render
-/// owns.)
-pub fn fmt_tick(n: f64) -> String {
-    format::auto(n)
-}
-
 /// A calendar tick interval's unit [SPEC 14.4] — the `step:` idents.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CalUnit {
@@ -414,12 +407,5 @@ mod tests {
         let dn = Scale::linear(0.0, 10.0, true, vec![]);
         assert!((up.frac(2.5) - 0.25).abs() < 1e-9);
         assert!((dn.frac(2.5) - 0.75).abs() < 1e-9);
-    }
-
-    #[test]
-    fn fmt_tick_trims_trailing_zeros() {
-        assert_eq!(fmt_tick(5.0), "5");
-        assert_eq!(fmt_tick(2.5), "2.5");
-        assert_eq!(fmt_tick(0.0), "0");
     }
 }

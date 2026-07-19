@@ -28,6 +28,7 @@ use super::prim;
 mod project;
 mod radial;
 mod scale;
+mod tint;
 mod tooltip;
 
 pub(super) use pie::{is_pie, layout_pie};

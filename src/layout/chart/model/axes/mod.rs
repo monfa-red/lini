@@ -1,6 +1,12 @@
-//! The x (domain) and value axes: binding, sides, ranges, scales, and ticks.
+//! The x (domain) and value axes: binding, sides, and scale construction. The
+//! per-attribute parsing (`range:` / `ticks:` / `step:` / `side:` / …) lives in
+//! [`read`].
 
 use super::*;
+
+mod read;
+use read::*;
+pub(crate) use read::{numeric_fmt, read_side};
 
 /// Bind a series to a value axis by its `axis:` id, defaulting to the first value
 /// axis. An unknown id reports the chart's own axis ids [SPEC 20].
@@ -259,14 +265,13 @@ fn value_scale(vals: &[f64], has_bars: bool, spec: &AxisSpec) -> Result<Scale, E
         let hi = spec.range.as_ref().map_or(dmax, |(_, b)| end(b, dmax));
         return log_scale(lo, hi, spec.range.is_some(), Span::empty());
     }
-    let (min, max, rev) = match &spec.range {
-        Some((a, b)) => {
-            let lo = end(a, dmin);
-            let hi = end(b, dmax);
-            if (lo - hi).abs() < f64::EPSILON {
+    let (min, max, rev) = match spec.range.as_ref() {
+        Some(range) => {
+            let (min, max, rev) = resolve_domain(vals, Some(range), (0.0, 1.0));
+            if (min - max).abs() < f64::EPSILON {
                 return Err(Error::at(Span::empty(), "'range' needs distinct ends"));
             }
-            (lo.min(hi), lo.max(hi), lo > hi)
+            (min, max, rev)
         }
         None => {
             let lo = if has_bars || dmin >= 0.0 {
@@ -289,27 +294,20 @@ fn numeric_scale(
     range: Option<(End, End)>,
     spec_src: Option<&ResolvedInst>,
 ) -> Result<Scale, Error> {
-    let data_min = xs.iter().copied().fold(f64::INFINITY, f64::min);
-    let data_max = xs.iter().copied().fold(f64::NEG_INFINITY, f64::max);
-    let (dmin, dmax) = if xs.is_empty() {
-        (0.0, 1.0)
-    } else {
-        (data_min, data_max)
-    };
     if spec_src.is_some_and(|a| read_log(a).unwrap_or(false)) {
+        let data_min = xs.iter().copied().fold(f64::INFINITY, f64::min);
+        let data_max = xs.iter().copied().fold(f64::NEG_INFINITY, f64::max);
+        let (dmin, dmax) = if xs.is_empty() {
+            (0.0, 1.0)
+        } else {
+            (data_min, data_max)
+        };
         let lo = range.as_ref().map_or(dmin, |(a, _)| end(a, dmin));
         let hi = range.as_ref().map_or(dmax, |(_, b)| end(b, dmax));
         let span = spec_src.map_or(Span::empty(), |a| a.span);
         return log_scale(lo, hi, range.is_some(), span);
     }
-    let (min, max, rev) = match range {
-        Some((a, b)) => {
-            let lo = end(&a, dmin);
-            let hi = end(&b, dmax);
-            (lo.min(hi), lo.max(hi), lo > hi)
-        }
-        None => (dmin, dmax, false),
-    };
+    let (min, max, rev) = resolve_domain(xs, range.as_ref(), (0.0, 1.0));
     let step = spec_src.and_then(|a| a.attrs.number("step"));
     let explicit_ticks = match spec_src {
         Some(a) => read_ticks(&a.attrs, a.span)?,
@@ -330,21 +328,7 @@ fn numeric_scale(
 /// date `ticks:`), reversal when the range runs high→low.
 fn time_scale(xs: &[f64], x_inst: Option<&ResolvedInst>) -> Result<Scale, Error> {
     let range = x_inst.map(read_time_range).transpose()?.flatten();
-    let data_min = xs.iter().copied().fold(f64::INFINITY, f64::min);
-    let data_max = xs.iter().copied().fold(f64::NEG_INFINITY, f64::max);
-    let (dmin, dmax) = if xs.is_empty() {
-        (0.0, 86_400.0)
-    } else {
-        (data_min, data_max)
-    };
-    let (min, max, rev) = match range {
-        Some((a, b)) => {
-            let lo = end(&a, dmin);
-            let hi = end(&b, dmax);
-            (lo.min(hi), lo.max(hi), lo > hi)
-        }
-        None => (dmin, dmax, false),
-    };
+    let (min, max, rev) = resolve_domain(xs, range.as_ref(), (0.0, 86_400.0));
     let step = match x_inst {
         Some(a) => read_cal_step(a)?,
         None => None,
@@ -369,105 +353,6 @@ fn time_scale(xs: &[f64], x_inst: Option<&ResolvedInst>) -> Result<Scale, Error>
     })
 }
 
-/// A time axis's `range:` — two ends, each a quoted date or `auto`; a plain
-/// number is the mixed-domain error [SPEC 14.4/20].
-fn read_time_range(inst: &ResolvedInst) -> Result<Option<(End, End)>, Error> {
-    let Some(v) = inst.attrs.get("range") else {
-        return Ok(None);
-    };
-    let ResolvedValue::Tuple(items) = v else {
-        return Err(Error::at(
-            inst.span,
-            "'range' takes two ends: 'a b', 'a auto', or 'auto b'",
-        ));
-    };
-    if items.len() != 2 {
-        return Err(Error::at(
-            inst.span,
-            "'range' takes two ends: 'a b', 'a auto', or 'auto b'",
-        ));
-    }
-    let read = |v: &ResolvedValue| -> Result<End, Error> {
-        match v {
-            ResolvedValue::String(text) => date_secs(text, inst.span).map(End::Num),
-            ResolvedValue::Ident(s) if s == "auto" => Ok(End::Auto),
-            _ => Err(Error::at(
-                inst.span,
-                "the x axis mixes dates and numbers — one domain, one kind",
-            )),
-        }
-    };
-    Ok(Some((read(&items[0])?, read(&items[1])?)))
-}
-
-/// A time axis's explicit `ticks:` — comma-separated quoted dates.
-fn read_time_ticks(inst: &ResolvedInst) -> Result<Option<Vec<f64>>, Error> {
-    let Some(v) = inst.attrs.get("ticks") else {
-        return Ok(None);
-    };
-    let items = match v {
-        ResolvedValue::List(items) => items.as_slice(),
-        one => std::slice::from_ref(one),
-    };
-    items
-        .iter()
-        .map(|it| match it {
-            ResolvedValue::String(text) => date_secs(text, inst.span),
-            _ => Err(Error::at(
-                inst.span,
-                "the x axis mixes dates and numbers — one domain, one kind",
-            )),
-        })
-        .collect::<Result<Vec<f64>, Error>>()
-        .map(Some)
-}
-
-/// A calendar `step:` [SPEC 14.4] — a unit ident with an optional count
-/// (`step: month`, `step: 2 week`); a plain number points at the calendar form.
-fn read_cal_step(inst: &ResolvedInst) -> Result<Option<(scale::CalUnit, u32)>, Error> {
-    const CAL: &str = "a time axis steps by calendar — 'step: month', 'step: 2 week'";
-    let unit = |s: &str| -> Option<scale::CalUnit> {
-        Some(match s {
-            "minute" => scale::CalUnit::Minute,
-            "hour" => scale::CalUnit::Hour,
-            "day" => scale::CalUnit::Day,
-            "week" => scale::CalUnit::Week,
-            "month" => scale::CalUnit::Month,
-            "year" => scale::CalUnit::Year,
-            _ => return None,
-        })
-    };
-    match inst.attrs.get("step") {
-        None => Ok(None),
-        Some(ResolvedValue::Ident(s)) => match unit(s) {
-            Some(u) => Ok(Some((u, 1))),
-            None => Err(Error::at(inst.span, CAL)),
-        },
-        Some(ResolvedValue::Tuple(items)) => match items.as_slice() {
-            [ResolvedValue::Number(n), ResolvedValue::Ident(s)]
-                if n.fract() == 0.0 && (1.0..=1000.0).contains(n) =>
-            {
-                match unit(s) {
-                    Some(u) => Ok(Some((u, *n as u32))),
-                    None => Err(Error::at(inst.span, CAL)),
-                }
-            }
-            _ => Err(Error::at(inst.span, CAL)),
-        },
-        Some(_) => Err(Error::at(inst.span, CAL)),
-    }
-}
-
-/// A quoted date literal to epoch seconds, with the SPEC 20 message.
-fn date_secs(text: &str, span: Span) -> Result<f64, Error> {
-    date::parse(text).ok_or_else(|| {
-        Error::at(
-            span,
-            format!("'{text}' is not a date — ISO-8601: '2026-01-31', optionally 'T09:30' and 'Z'"),
-        )
-    })
-}
-
 /// A log scale over a positive domain [SPEC 14.4]: the data domain is rounded
 /// out to whole decades unless an explicit `range:` fixes it. A non-positive domain
 /// is an error.
@@ -485,29 +370,6 @@ fn log_scale(lo: f64, hi: f64, has_range: bool, span: Span) -> Result<Scale, Err
         (10f64.powf(a.log10().floor()), 10f64.powf(b.log10().ceil()))
     };
     Ok(Scale::log(min, max))
-}
-
-/// An explicit `ticks:` list — comma-separated numbers [SPEC 2/14.4].
-fn read_ticks(attrs: &AttrMap, span: Span) -> Result<Option<Vec<f64>>, Error> {
-    let Some(v) = attrs.get("ticks") else {
-        return Ok(None);
-    };
-    let items = match v {
-        ResolvedValue::List(items) => items.as_slice(),
-        one => std::slice::from_ref(one),
-    };
-    items
-        .iter()
-        .map(|it| {
-            it.as_number().ok_or_else(|| {
-                Error::at(
-                    span,
-                    "'ticks' takes comma-separated numbers — 'ticks: 0, 50, 100'",
-                )
-            })
-        })
-        .collect::<Result<Vec<f64>, Error>>()
-        .map(Some)
 }
 
 fn axis_ticks(min: f64, max: f64, spec: &AxisSpec) -> Vec<f64> {
@@ -543,111 +405,4 @@ pub(super) fn axis_spec(
         log: read_log(inst)?,
         fmt: numeric_fmt(inst, chart_fmt)?,
     })
-}
-
-/// A numeric consumer's `format:` [SPEC 16]: its own (a date preset authored
-/// here errors — it reads a time axis), else the chart's numeric reading.
-pub(super) fn numeric_fmt(inst: &ResolvedInst, chart_fmt: Format) -> Result<Format, Error> {
-    let f = format::read_or(&inst.attrs, format::numeric(chart_fmt), inst.span)?;
-    if matches!(f, Format::Date(_)) && inst.attrs.get("format").is_some() {
-        return Err(Error::at(inst.span, "a date preset reads a time axis"));
-    }
-    Ok(format::numeric(f))
-}
-
-/// An axis's `scale:` kind [SPEC 14.4]: `linear` (default), `log`, or `time`.
-#[derive(PartialEq, Clone, Copy)]
-pub(super) enum ScaleKind {
-    Linear,
-    Log,
-    Time,
-}
-
-pub(super) fn read_scale_kind(inst: &ResolvedInst) -> Result<ScaleKind, Error> {
-    match inst.attrs.get("scale") {
-        None => Ok(ScaleKind::Linear),
-        Some(ResolvedValue::Ident(s)) if s == "linear" => Ok(ScaleKind::Linear),
-        Some(ResolvedValue::Ident(s)) if s == "log" => Ok(ScaleKind::Log),
-        Some(ResolvedValue::Ident(s)) if s == "time" => Ok(ScaleKind::Time),
-        _ => Err(Error::at(inst.span, "'scale' is linear, log, or time")),
-    }
-}
-
-fn read_log(inst: &ResolvedInst) -> Result<bool, Error> {
-    Ok(read_scale_kind(inst)? == ScaleKind::Log)
-}
-
-// ───────────────────────────── attribute readers ─────────────────────────────
-
-pub(super) fn read_side(inst: &ResolvedInst) -> Result<Option<Side>, Error> {
-    match inst.attrs.get("side") {
-        None => Ok(None),
-        Some(ResolvedValue::Ident(s)) => match s.as_str() {
-            "bottom" => Ok(Some(Side::Bottom)),
-            "top" => Ok(Some(Side::Top)),
-            "left" => Ok(Some(Side::Left)),
-            "right" => Ok(Some(Side::Right)),
-            _ => Err(Error::at(
-                inst.span,
-                "'side' is bottom, top, left, or right",
-            )),
-        },
-        _ => Err(Error::at(
-            inst.span,
-            "'side' is bottom, top, left, or right",
-        )),
-    }
-}
-
-fn read_grid(inst: &ResolvedInst) -> Result<Grid, Error> {
-    match inst.attrs.get("gridlines") {
-        None => Ok(Grid::Default),
-        Some(ResolvedValue::Ident(s)) if s == "none" => Ok(Grid::Off),
-        Some(v) => Ok(Grid::Color(v.clone())),
-    }
-}
-
-fn read_range(inst: &ResolvedInst) -> Result<Option<(End, End)>, Error> {
-    let Some(v) = inst.attrs.get("range") else {
-        return Ok(None);
-    };
-    let ResolvedValue::Tuple(items) = v else {
-        return Err(Error::at(
-            inst.span,
-            "'range' takes two ends: 'a b', 'a auto', or 'auto b'",
-        ));
-    };
-    if items.len() != 2 {
-        return Err(Error::at(
-            inst.span,
-            "'range' takes two ends: 'a b', 'a auto', or 'auto b'",
-        ));
-    }
-    Ok(Some((
-        read_end(&items[0], inst.span)?,
-        read_end(&items[1], inst.span)?,
-    )))
-}
-
-fn read_end(v: &ResolvedValue, span: Span) -> Result<End, Error> {
-    match v {
-        ResolvedValue::Number(n) => Ok(End::Num(*n)),
-        ResolvedValue::Ident(s) if s == "auto" => Ok(End::Auto),
-        _ => Err(Error::at(span, "a 'range' end is a number or 'auto'")),
-    }
-}
-
-fn end(e: &End, auto: f64) -> f64 {
-    match e {
-        End::Num(n) => *n,
-        End::Auto => auto,
-    }
-}
-
-fn read_unit(inst: &ResolvedInst) -> Result<Option<String>, Error> {
-    match inst.attrs.get("unit") {
-        None => Ok(None),
-        Some(ResolvedValue::String(s)) => Ok(Some(s.clone())),
-        _ => Err(Error::at(inst.span, "'unit' is a quoted string")),
-    }
 }

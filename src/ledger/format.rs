@@ -65,6 +65,26 @@ pub fn numeric(f: Format) -> Format {
     }
 }
 
+/// The date-preset gate [SPEC 16]: a date preset speaks only to a time axis, so
+/// authored on a numeric consumer it errors. Shared by the chart's numeric axes,
+/// `pie`, and the drawing's dimension text.
+pub fn reject_date(f: Format, span: Span) -> Result<(), Error> {
+    if matches!(f, Format::Date(_)) {
+        return Err(Error::at(span, "a date preset reads a time axis"));
+    }
+    Ok(())
+}
+
+/// The SPEC 20 message when a one-shape series (`|line|` / `|area|`) carries a
+/// per-datum paint list. Shared by the validator (lint) and the model (the
+/// semantic authority), so a library compile can't slip past a matching text.
+pub fn one_shape_paint(shape: &str) -> String {
+    format!(
+        "a '|{shape}|' is one shape with one paint — per-datum lists \
+         read on '|bars|' / '|dots|'"
+    )
+}
+
 fn parse(v: &ResolvedValue, span: Span) -> Result<Format, Error> {
     let err = |msg: &str| Err(Error::at(span, msg));
     match v {

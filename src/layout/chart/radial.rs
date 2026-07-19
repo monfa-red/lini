@@ -8,16 +8,9 @@ use super::metrics::LABEL_SIZE;
 use super::model::Chart;
 use super::project::Plot;
 use super::scale::{self, Scale};
+use super::tint::live;
 use crate::layout::PlacedNode;
 use crate::layout::prim;
-use crate::resolve::ResolvedValue;
-
-fn live(name: &str) -> ResolvedValue {
-    ResolvedValue::LiveVar {
-        name: name.into(),
-        raw: false,
-    }
-}
 
 /// The web (concentric polygons through the spokes at each radius tick) and the spokes
 /// (centre → rim at each domain position), drawn first so the data sits over them.
