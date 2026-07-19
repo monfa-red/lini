@@ -298,7 +298,8 @@ guard (present ∧ ¬authored — emission order no longer load-bearing);
 charts,assets}.rs`; `properties.rs` tests → `properties/tests.rs`;
 `resolve/links.rs` projection slice → `links/projection.rs`; one
 `walk_scope` id-path walk under `inst_at_path`/`node_at`. Slices merged
-clean (charts `1a7e28b`, core `77e7ff9`, drawing `5f28aab` + `5c4f495`).
+clean (charts `1a7e28b`, core `77e7ff9`, drawing `5f28aab` + `5c4f495`,
+merge `8f29c17`, close `d806799`).
 Gate: fmt `--check` / clippy `--all-targets -D warnings` / test clean;
 **1084 tests** (+1 aligned-packer pin, −1 `fmt_tick`), zero `.snap.new`.
 
