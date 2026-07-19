@@ -212,24 +212,44 @@ fmt/clippy/test clean.
 
 ### Stage 2 — title-block authored cells; the pcb rider
 
-- [ ] The finish (decision 6): a field-mode `|title-block|`'s generated
+- [x] The finish (decision 6): a field-mode `|title-block|`'s generated
   cells lead, authored children follow as ordinary cells in the same
   grid — `cell:` / `span:` honored against the generated rows; an
   authored cell landing on a generated field's slot errors naming the
   field; the plain-table form is untouched.
-- [ ] The showroom seat: `drawing_sheet`'s logo moves into a
+- [x] The showroom seat: `drawing_sheet`'s logo moves into a
   title-block cell — the embedded-logo title block the round promised;
   `drawing_screw`'s block untouched (the field-only form stays
   represented).
-- [ ] The pcb rider (decision 11): the board's paint re-authored to
+- [x] The pcb rider (decision 11): the board's paint re-authored to
   read in both themes, character kept; verified light + dark.
-- [ ] Tests: authored-after-generated snapshot (cells, spans), the
+- [x] Tests: authored-after-generated snapshot (cells, spans), the
   overlap error, fmt idempotent on the mixed block; PNG light + dark.
 
 Acceptance: a field block with authored cells renders fields first,
 authored cells where placed, or errors on overlap — never silent
 stacking; the pcb board reads in both themes.
-**Log:**
+**Log:** 2026-07-19 — **done**. The finish rides the one grid: desugar
+inserts the generated field cells **ahead** of the authored children
+(`desugar/mod.rs`), each stamped with an internal `field: "<caption>"`
+marker (`titleblock.rs`; `field` joins validate's INTERNAL list for the
+lowered round-trip — desugar stays a fixed point), and the grid's own
+placement loop errors when a **pinned** cell covers a `field`-marked
+slot, naming it per SPEC 20 (`cell 2 2 is taken by the generated 'Rev'
+field — place it after the fields`); unpinned authored children flow via
+`next_open` into the remaining slots, plain grids keep their
+silent-overlap freedom, and the plain-table form is untouched. Sample:
+`drawing_sheet`'s logo left the page flow for `cell: 3 3` — the free
+slot beside Drawn — sized 12 × 12; `drawing_screw` untouched and its
+render verified **byte-identical**. The pcb rider: the board is
+`gradient(--green-soft, --teal-soft)` (soft-tier surfaces flip light
+mint / dark green) and the passives' raw hexes became `--gray-ink` /
+`--gray-wash` — copper amber traces and white silkscreen stand. Tests
+1073 → **1077** (placement + span-overlap + overlap-error in layout,
+generated-lead order in desugar); two conformance snapshots re-blessed
+(`drawing_sheet`, `pcb`); PNGs light + dark read in resvg: fields
+aligned, the logo seated, the board a proper PCB in both themes;
+fmt/clippy/test clean.
 
 ### Stage 3 — projection links; the frame rider; alpha.5 closes
 

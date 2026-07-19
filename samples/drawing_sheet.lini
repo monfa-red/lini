@@ -3,7 +3,8 @@
 // revolved profile with a thread: dressing and a |hidden| hex socket; the
 // end view is ordinary concentric geometry; the |title-block| seats itself
 // flush inside the frame's bottom-right corner — its ISO 7200 field properties
-// build the grid, absent fields collapsing.
+// build the grid, absent fields collapsing, and an authored |image| cell
+// carries the maker's mark after the generated fields.
 
 |page| { sheet: a4 landscape; gap: 50; align: origin; } [
   // the ISO sheet: frame, zones, marks — views share their axes datum-to-datum
@@ -48,8 +49,9 @@
 
   |title-block| {
     title: "Socket cap screw"; drawing-number: "DIN 912 — M8 × 40"; revision: "A"; sheet-number: "1/1"; date: "2026-07-08"; author: "AM";
-  }
-
-  // the maker's mark — a local SVG, embedded id-isolated at compile [SPEC 7]
-  |image| { src: "assets/logo.svg"; width: 12; height: 12; pin: top left; translate: 88 68; }
+  } [
+    // the maker's mark — a local SVG, embedded id-isolated at compile [SPEC 7],
+    // seated as an ordinary cell after the generated fields [SPEC 15.8]
+    |image| { src: "assets/logo.svg"; cell: 3 3; width: 12; height: 12; }
+  ]
 ]

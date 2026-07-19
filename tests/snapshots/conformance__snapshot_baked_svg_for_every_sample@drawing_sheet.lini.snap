@@ -405,9 +405,8 @@ input_file: samples/drawing_sheet.lini
             <use href="#lg0400-49" transform="translate(0 21.37) scale(0.0075 -0.0075)"/>
           </g>
         </g>
-      </g>
-      <g class="lini-node lini-image" transform="translate(-482,-328)">
-        <svg x="-24" y="-24" width="48" height="48" viewBox="0 0 48 48">
+        <g class="lini-node lini-image" transform="translate(107.5,54)">
+          <svg x="-6" y="-6" width="12" height="12" viewBox="0 0 48 48">
   <defs>
     <linearGradient id="lini-a1-g" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#4f8bd8"/>
@@ -418,7 +417,8 @@ input_file: samples/drawing_sheet.lini
   <rect x="4" y="4" width="40" height="40" rx="10" fill="url(#lini-a1-g)"/>
   <use href="#lini-a1-dot" x="17" y="24" fill="#fff"/>
   <use href="#lini-a1-dot" x="31" y="24" fill="#fff"/>
-        </svg>
+          </svg>
+        </g>
       </g>
       <g class="lini-node lini-frame lini-rect lini-box lini-block" transform="translate(20,0)">
         <rect x="-534" y="-380" width="1068" height="760" rx="0" ry="0"/>

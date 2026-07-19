@@ -27,9 +27,17 @@ use crate::syntax::ast::{
 use std::collections::{HashMap, HashSet};
 
 /// Attr names desugar/layout write internally (view chrome, detail clips, the
-/// sourced-view title, mate seating) — never user properties, but present when
-/// a lowered file (`lini desugar` output) is compiled back.
-const INTERNAL: &[&str] = &["chrome", "clip", "of-title", "mount", "px-per-unit"];
+/// sourced-view title, mate seating, title-block field markers) — never user
+/// properties, but present when a lowered file (`lini desugar` output) is
+/// compiled back.
+const INTERNAL: &[&str] = &[
+    "chrome",
+    "clip",
+    "of-title",
+    "mount",
+    "px-per-unit",
+    "field",
+];
 
 pub fn validate(file: &File) -> Vec<Diagnostic> {
     // A broken type table (cycle, shadowing) is desugar's error to report.

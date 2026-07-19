@@ -74,11 +74,20 @@ fn field_value(style: &[Decl], key: &str) -> Option<String> {
 /// column-flow block, so its two children stack). Tight vertical padding keeps
 /// the block compact. The title cell spans the columns.
 fn field_cell(caption: &str, value: &str, span_cols: Option<usize>, span: Span) -> Node {
-    let mut style = vec![Decl {
-        name: "padding".into(),
-        groups: vec![vec![Value::Number(2.0), Value::Number(6.0)]],
-        span,
-    }];
+    let mut style = vec![
+        Decl {
+            name: "padding".into(),
+            groups: vec![vec![Value::Number(2.0), Value::Number(6.0)]],
+            span,
+        },
+        // The internal `field` marker [SPEC 15.8]: the grid names this cell when
+        // an authored `cell:` lands on its slot ([SPEC 20]'s overlap row).
+        Decl {
+            name: "field".into(),
+            groups: vec![vec![Value::String(caption.into())]],
+            span,
+        },
+    ];
     if let Some(cols) = span_cols {
         style.push(Decl {
             name: "span".into(),
@@ -180,6 +189,26 @@ mod tests {
             tb.style.iter().any(|d| d.name == "columns"),
             "the grid gets columns"
         );
+    }
+
+    #[test]
+    fn authored_children_follow_the_generated_cells() {
+        let tb = title_block(
+            "|page#p| [\n  |drawing#v| [ |rect#r| { width: 10; height: 10 } ]\n  |title-block| { title: \"T\"; revision: \"A\" } [ \"Scale 1:1\" ]\n]\n",
+        );
+        // Generated cells lead — each marked with its `field` caption — and the
+        // authored cell follows as an ordinary cell in the same grid.
+        let cs = cells(&tb);
+        assert_eq!(cs.len(), 3, "two field cells + one authored");
+        let field_of = |n: &super::Node| {
+            n.style
+                .iter()
+                .find(|d| d.name == "field")
+                .map(|d| d.groups[0][0].clone())
+        };
+        assert!(field_of(cs[0]).is_some(), "the title cell leads");
+        assert!(field_of(cs[1]).is_some(), "the Rev cell second");
+        assert!(field_of(cs[2]).is_none(), "the authored cell follows");
     }
 
     #[test]

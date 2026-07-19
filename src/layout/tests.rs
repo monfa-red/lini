@@ -305,6 +305,91 @@ fn grid_cell_pins_placement() {
     );
 }
 
+// ── Title block: authored cells after the generated fields [SPEC 15.8] ──
+
+/// The `|title-block|` node inside a laid-out page.
+fn find_title_block(nodes: &[PlacedNode]) -> &PlacedNode {
+    fn walk(nodes: &[PlacedNode]) -> Option<&PlacedNode> {
+        nodes.iter().find_map(|n| {
+            if n.type_chain.iter().any(|t| t == "title-block") {
+                Some(n)
+            } else {
+                walk(&n.children)
+            }
+        })
+    }
+    walk(nodes).expect("a title block")
+}
+
+#[test]
+fn title_block_authored_cells_follow_the_generated_fields() {
+    let l = lay_out(
+        "|page| { sheet: a4 landscape } [\n\
+           |drawing#v| [ |rect#r| { width: 10; height: 10 } ]\n\
+           |title-block| { title: \"T\"; drawing-number: \"D\"; revision: \"A\";\n\
+             sheet-number: \"1/1\"; date: \"2026\"; author: \"AM\"; } [\n\
+             |box#logo| { cell: 3 3; width: 8; height: 8; }\n\
+             |box#note| { span: 2 1; width: 8; height: 8; }\n\
+           ]\n\
+         ]\n",
+    );
+    let tb = find_title_block(&l.nodes);
+    let by_id = |id: &str| {
+        tb.children
+            .iter()
+            .find(|c| c.id.as_deref() == Some(id))
+            .expect(id)
+    };
+    let date = tb
+        .children
+        .iter()
+        .find(|c| matches!(c.attrs.get("field"), Some(ResolvedValue::String(s)) if s == "Date"))
+        .expect("the Date field cell");
+    // `cell: 3 3` seats the logo in the fields' last free slot: the Date row
+    // (row 3), right of the Author column.
+    let logo = by_id("logo");
+    assert!((logo.cy - date.cy).abs() < 1e-6, "logo shares the Date row");
+    assert!(logo.cx > date.cx, "logo right of Date (column 3)");
+    // The unaddressed 2-wide note can't fit a remaining slot: it flows into
+    // the next row, below every generated field.
+    let note = by_id("note");
+    assert!(note.cy > date.cy, "note flows below the generated rows");
+}
+
+#[test]
+fn title_block_authored_cell_on_a_generated_field_errors() {
+    let err = lay_out_err(
+        "|page| { sheet: a4 landscape } [\n\
+           |drawing#v| [ |rect#r| { width: 10; height: 10 } ]\n\
+           |title-block| { title: \"T\"; drawing-number: \"D\"; revision: \"A\"; } [\n\
+             |box#x| { cell: 2 2; width: 8; height: 8; }\n\
+           ]\n\
+         ]\n",
+    );
+    assert!(
+        err.to_string()
+            .contains("cell 2 2 is taken by the generated 'Rev' field — place it after the fields"),
+        "{err}"
+    );
+}
+
+#[test]
+fn title_block_authored_span_crossing_a_field_errors() {
+    // Pinned beside the fields but spanning left onto the 'Rev' slot.
+    let err = lay_out_err(
+        "|page| { sheet: a4 landscape } [\n\
+           |drawing#v| [ |rect#r| { width: 10; height: 10 } ]\n\
+           |title-block| { title: \"T\"; drawing-number: \"D\"; revision: \"A\"; } [\n\
+             |box#x| { cell: 2 2; span: 2 1; width: 8; height: 8; }\n\
+           ]\n\
+         ]\n",
+    );
+    assert!(
+        err.to_string().contains("is taken by the generated"),
+        "{err}"
+    );
+}
+
 #[test]
 fn grid_cell_fills_its_track_under_stretch() {
     let l = lay_out(

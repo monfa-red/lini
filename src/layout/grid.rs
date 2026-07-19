@@ -52,7 +52,8 @@ pub fn lay_out_grid(
     let mut placements: Vec<Placement> = Vec::with_capacity(children.len());
     for (i, child) in children.iter().enumerate() {
         let (cs, rs) = read_span(&child.attrs, child.span)?;
-        let (col, row) = match read_cell(&child.attrs, child.span)? {
+        let pinned = read_cell(&child.attrs, child.span)?;
+        let (col, row) = match pinned {
             Some((c, r)) => (c - 1, r - 1),
             None => grid.next_open(cs, rs),
         };
@@ -60,6 +61,31 @@ pub fn lay_out_grid(
             return Err(Error::at(
                 child.span,
                 format!("cell: {} _ exceeds columns={}", col + 1, cols),
+            ));
+        }
+        // An authored `cell:` landing on a generated title-block field's slot
+        // errors, naming the field [SPEC 15.8 / SPEC 20]. Only generated field
+        // cells carry the internal `field` marker, so plain grids keep their
+        // silent-overlap freedom.
+        if pinned.is_some()
+            && let Some(cap) = (0..rs)
+                .flat_map(|dr| (0..cs).map(move |dc| (row + dr, col + dc)))
+                .filter_map(|(r, c)| grid.owner_at(r, c))
+                .find_map(
+                    |who| match children[placements[who].child_index].attrs.get("field") {
+                        Some(ResolvedValue::String(s)) => Some(s.clone()),
+                        _ => None,
+                    },
+                )
+        {
+            return Err(Error::at(
+                child.span,
+                format!(
+                    "cell {} {} is taken by the generated '{}' field — place it after the fields",
+                    col + 1,
+                    row + 1,
+                    cap
+                ),
             ));
         }
         grid.occupy(row, col, cs, rs, placements.len());
@@ -382,6 +408,11 @@ impl Occupancy {
             self.occ.push(vec![false; self.cols]);
             self.owner.push(vec![None; self.cols]);
         }
+    }
+
+    /// The placement index occupying a slot, when one does.
+    fn owner_at(&self, row: usize, col: usize) -> Option<usize> {
+        self.owner.get(row).and_then(|r| r.get(col)).copied()?
     }
 
     fn is_free(&self, row: usize, col: usize, cs: usize, rs: usize) -> bool {

@@ -466,10 +466,15 @@ fn lower_node(
     // A `|title-block|` with ISO 7200 field properties builds its grid
     // [SPEC 15.8]; with none, its cells stay authored (the plain-table form).
     // The generated cells are `|cell|` boxes, so the table auto-header skips
-    // them and the field grid stands as built.
+    // them and the field grid stands as built. Generated cells **lead**:
+    // authored children follow as ordinary cells in the same grid, flowing
+    // into the remaining slots (or pinned by their own `cell:` / `span:`).
     if is_title_block && titleblock::has_fields(&style) {
-        for cell in titleblock::expand_fields(&mut style, node.span) {
-            children.push(Child::Box(lower_node(&cell, types, bodies, false)?));
+        for (i, cell) in titleblock::expand_fields(&mut style, node.span)
+            .into_iter()
+            .enumerate()
+        {
+            children.insert(i, Child::Box(lower_node(&cell, types, bodies, false)?));
         }
     }
     let mut kept_label = None;

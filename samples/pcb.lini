@@ -1,8 +1,8 @@
 // A cute, unreal little PCB: a central MCU, peripherals, dark passives, and lots
 // of parallel copper traces. Not functional — a pretty demo of parallel routing.
 {
-  fill: gradient(--green-ink, --teal-ink);
-  // the board
+  // the board — soft-tier surfaces flip with the theme (light mint / dark green)
+  fill: gradient(--green-soft, --teal-soft);
   layout: grid; columns: repeat(5, 80); rows: repeat(5, 60); gap: 30; padding: 34; font-size: 12;
 
   |chip::box| {
@@ -12,7 +12,7 @@
     width: 150; height: 56; stroke: none; fill: --amber-soft; color: --amber-ink;
   }
   |passive::box| {
-    width: 54; height: 42; stroke: none; fill: #222428; color: #c9ced6; radius: 2; padding: 0;
+    width: 54; height: 42; stroke: none; fill: --gray-ink; color: --gray-wash; radius: 2; padding: 0;
   }
 
   clearance: 10;

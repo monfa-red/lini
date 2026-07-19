@@ -12,13 +12,13 @@ input_file: samples/pcb.lini
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
     .lini .lini-chip { stroke: none; color: white; }
     .lini .lini-pad { fill: #eec978; stroke: none; color: #6d3b00; }
-    .lini .lini-passive { fill: #222428; stroke: none; color: #c9ced6; }
+    .lini .lini-passive { fill: #484848; stroke: none; color: #eeeeee; }
     .lini .lini-link { fill: none; stroke: #cb8b00; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-marker { fill: #444; stroke: none; }
   </style>
   <defs>
     <linearGradient id="lini-gradient-1" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#3f98ff"/><stop offset="100%" stop-color="#9084ff"/></linearGradient>
-    <linearGradient id="lini-gradient-2" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#005d26"/><stop offset="100%" stop-color="#005d56"/></linearGradient>
+    <linearGradient id="lini-gradient-2" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#94e2b5"/><stop offset="100%" stop-color="#79e3da"/></linearGradient>
     <path id="lg0500-0" d="M174 0L174 1432L1026 1432L1026 0L174 0ZM302 120L898 120L898 1312L302 1312L302 120Z"/>
     <path id="lg0500-17" d="M146 520L146 746L1054 746L1054 520L146 520Z"/>
     <path id="lg0500-37" d="M44 0L489 1432L714 1432L1157 0L921 0L644 1004L601 1177L595 1177L553 1004L277 0L44 0ZM243 338L303 530L891 530L953 338L243 338Z"/>
