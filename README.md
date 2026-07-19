@@ -116,7 +116,7 @@ Give a node `layout: chart` and it becomes a plot, drawn from data instead of pi
 ]
 ```
 
-`|bars|`, `|line|`, `|area|`, `|dots|`, and `|bubble|` share one x/value plane; `|slice|` makes a pie or donut. `direction: radial` bends the plane into a radar and `direction: row` lays it on its side, with no change to the data. A series reads either `data:` (plain numbers, or `x y` points) or `fn:` — a formula sampled over the domain, using the language's own compile-time math. Axes auto-fit or take a `range:`, run linear or `log`, and you declare an `|axis|` only when you want to say something; shade a zone with `|band|`, drop a threshold or callout with `|mark|`. Label individual points with `labels:` and they place themselves without colliding — on the plot where they fit, on hover where they don't (`tooltip: none | hover | auto | always`); size a point for hovering with `marker: circle`. The whole chart language is in [`SPEC.md` §14](https://github.com/monfa-red/lini/blob/main/SPEC.md#14-charts).
+`|bars|`, `|line|`, `|area|`, `|dots|`, and `|bubble|` share one x/value plane; `|slice|` makes a pie or donut. `direction: radial` bends the plane into a radar and `direction: row` lays it on its side, with no change to the data. A series reads either `data:` (plain numbers, or `x y` points) or `fn:` — a formula sampled over the domain, using the language's own compile-time math. Axes auto-fit or take a `range:`, run linear or `log`, and a **time axis** falls out of date-valued points (`data: "2026-01-05" 12, …`) — `format:` shapes the tick labels, cascading from the chart down. You declare an `|axis|` only when you want to say something; shade a zone with `|band|`, drop a threshold or callout with `|mark|`. Label individual points with `labels:` and they place themselves without colliding — on the plot where they fit, on hover where they don't (`tooltip: none | hover | auto | always`); size a point for hovering with `marker: circle`. The whole chart language is in [`SPEC.md` §14](https://github.com/monfa-red/lini/blob/main/SPEC.md#14-charts).
 
 ---
 
@@ -222,7 +222,7 @@ Entities lay out in **any** container today — `grid`, `flow`, or free-position
 
 ## Engineering drawings
 
-`layout: drawing` turns a profile drawn with a pen (`draw: move(…) up(10) fillet(3) …`) into a **dimensioned technical sheet**: parts *mate* against each other, holes and patterns punch through, a half-profile *revolves* into a turned part (every shoulder drawing its edge line), a `thread:` dresses a surface with the ISO minor lines and composes its own `M20×1.5` callout, a long bar *breaks* to fit — and every dimension's value is **measured from the geometry**, so the numbers stay true when the model changes. Dimensions live in the `( )` bracket — `(-)` a linear span, `(o)` a diameter or radius, `(<)` an angle — with leaders, datums, and hatched sections annotating the rest. An ISO 5457 `|page|` (frame, zone references, seated `|title-block|`) hosts the views at true millimetre scale. It lowers to plain SVG like every other layout. See [`SPEC.md` §15](https://github.com/monfa-red/lini/blob/main/SPEC.md#15-drawing).
+`layout: drawing` turns a profile drawn with a pen (`draw: move(…) up(10) fillet(3) …`) into a **dimensioned technical sheet**: parts *mate* against each other, holes and patterns punch through, a half-profile *revolves* into a turned part (every shoulder drawing its edge line), a `thread:` dresses a surface with the ISO minor lines and composes its own `M20×1.5` callout, a long bar *breaks* to fit — and every dimension's value is **measured from the geometry**, so the numbers stay true when the model changes. Dimensions live in the `( )` bracket — `(-)` a linear span, `(o)` a diameter or radius, `(<)` an angle — with leaders, datums (`>-`), and hatched sections annotating the rest. **GD&T** is first-class: a `|control|` frame carries `tol:` / `zone:` / `datums:` with the ISO modifier glyphs, `|feature-control|` states a form tolerance, and `|surface-finish|` and datum triangles plant against the geometry. Cross-views project from one another (`projection`, shared axes), and an ISO 5457 `|page|` (frame, zone references, seated ISO 7200 `|title-block|`) hosts the views at true millimetre scale. It lowers to plain SVG like every other layout. See [`SPEC.md` §15](https://github.com/monfa-red/lini/blob/main/SPEC.md#15-drawing).
 
 ---
 
@@ -293,10 +293,11 @@ lini theme   [NAME]
 | `--embed-font` | Embed the used bundled font weights as base64 `@font-face` — browser-only. |
 | `--theme NAME\|FILE` | A built-in theme (`dark`, `high-contrast`, …), a CSS file, or a `light/dark` pair. |
 | `--check` | Parse and validate only. |
+| `--json` | Emit diagnostics as a JSON document — stable codes, spans, and machine-applicable fixes — for editors and CI. |
 | `--watch` | Recompile on every change (with `-o`). |
 | `--no-warn` / `--strict` | Silence lint warnings, or promote them to errors. |
 
-Errors are LSP-formatted (`file:line:col: error: …`) and suggest fixes: an unknown endpoint asks *did you mean `kitchen.counter.bowl`?*. `lini serve` runs a live preview at `localhost:7700` — a single file, or a folder as a [playground](#playground); `lini desugar` prints a file with its sugar expanded, for teaching and debugging.
+Errors are LSP-formatted (`file:line:col: error: …`), carry a **stable code** (`V001` unknown-property, `R008` unknown-endpoint, …), and suggest fixes: an unknown endpoint asks *did you mean `kitchen.counter.bowl`?*, and `--json` hands a tool the exact edit to apply. `lini serve` runs a live preview at `localhost:7700` — a single file, or a folder as a [playground](#playground); `lini desugar` prints a file with its sugar expanded, for teaching and debugging.
 
 ---
 
@@ -355,9 +356,21 @@ Parsing is recursive-descent over an LL(1) grammar; resolve applies CSS-like spe
 
 ---
 
+## For tools and editors
+
+The whole language is published as a **machine-readable contract, generated from the same property ledger the compiler reads** — so it can't drift from the code:
+
+- **[`schema/lini.schema.json`](https://github.com/monfa-red/lini/blob/main/schema/lini.schema.json)** — every primitive, template, role, and property, with owners, value shape (list-vs-tuple arity), resolved default, inheritance channel, deferred flags, and one compiled example each. [`schema/reference.md`](https://github.com/monfa-red/lini/blob/main/schema/reference.md) is the compact human mirror.
+- **`lini … --json`** — diagnostics as a JSON document: stable codes, severity, spans, and machine-applicable fixes an editor can apply verbatim.
+- **Editor grammars** — VS Code (TextMate) and Zed syntax highlighting under [`editors/`](https://github.com/monfa-red/lini/tree/main/editors), keyword lists generated from the ledger so a new type or property highlights the moment it lands; `lini serve` highlights in the browser too.
+
+A CI drift test regenerates the schema, reference, and grammars and asserts byte-equality, so a stale checkout fails rather than shipping.
+
+---
+
 ## Status
 
-**1.0.0-alpha — the syntax freeze.** The language in [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md) is frozen for the 1.0 line: everything from here to 1.0 is additive, and the pipeline is complete and tested. Links route and render, layout and theming work, charts plot from data ([§14](https://github.com/monfa-red/lini/blob/main/SPEC.md#14-charts)), sequence diagrams read the wires as time ([§13](https://github.com/monfa-red/lini/blob/main/SPEC.md#13-sequence)), ER entities wire with crow's-foot cardinality ([§8](https://github.com/monfa-red/lini/blob/main/SPEC.md#8-templates)), and the formatter and dev server ship in the same binary. Engineering drawings ([§15](https://github.com/monfa-red/lini/blob/main/SPEC.md#15-drawing)) are built through the sheet: turned profiles (`revolve:`, `thread:`, hidden geometry), measured dimensions with ISO arrowheads, sections and detail views with composed titles (`A-A`, `C (2:1)`), fillets and chamfers against arcs, and the ISO 5457 `|page|` with its ISO 7200 title block at true physical scale. **1.0.0-alpha.1** adds tree and mindmap layouts ([§12](https://github.com/monfa-red/lini/blob/main/SPEC.md#12-flow-grid--tree)) with `routing: natural` obstacle-aware curves. The alpha rounds ahead add richer charts and deeper drawing measurement — the ladder is in [`ROADMAP.md`](https://github.com/monfa-red/lini/blob/main/ROADMAP.md).
+**1.0.0-beta — feature-complete for 1.0.** The language in [`SPEC.md`](https://github.com/monfa-red/lini/blob/main/SPEC.md) is frozen and the [stability contract](https://github.com/monfa-red/lini/blob/main/ROADMAP.md) holds: syntax, property names, value shapes, defaults, [diagnostic codes](#for-tools-and-editors), and the theming surface (`--lini-*` vars, `.lini-*` classes, the SVG structure) don't break before a 2.0 — growth is additive. The pipeline is complete and tested end to end: links route and render, every layout — flow / grid / [tree & mindmap](https://github.com/monfa-red/lini/blob/main/SPEC.md#12-flow-grid--tree) with `routing: natural`, [charts](https://github.com/monfa-red/lini/blob/main/SPEC.md#14-charts) (bars/line/area/scatter/radar/pie, time axes), [sequences](https://github.com/monfa-red/lini/blob/main/SPEC.md#13-sequence), and [engineering drawings](https://github.com/monfa-red/lini/blob/main/SPEC.md#15-drawing) (measured dimensions, GD&T, turned parts, ISO 5457 sheets) — lowers to the same primitives, so theming, baking, and diffing work everywhere. The formatter, dev server, machine-readable schema, and structured diagnostics ship in the one binary. What remains before 1.0 is soak and polish — the ladder is in [`ROADMAP.md`](https://github.com/monfa-red/lini/blob/main/ROADMAP.md).
 
 ## Development
 

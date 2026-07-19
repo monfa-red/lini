@@ -2,8 +2,7 @@
 // of parallel copper traces. Not functional — a pretty demo of parallel routing.
 {
   // the board — soft-tier surfaces flip with the theme (light mint / dark green)
-  fill: gradient(--green-soft, --teal-soft);
-  layout: grid; columns: repeat(5, 80); rows: repeat(5, 60); gap: 30; padding: 34; font-size: 12;
+  fill: gradient(--green-soft, --teal-soft); layout: grid; columns: repeat(5, 80); rows: repeat(5, 60); gap: 30; padding: 34; font-size: 12;
 
   |chip::box| {
     width: 60; height: 60; stroke: none; radius: 5; color: white; padding: 0;
