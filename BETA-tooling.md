@@ -431,7 +431,7 @@ each code→family (renumber = CI fail); `--json` shape snapshots per family; th
 machine-applicable fix applied by span → recompiles clean; a no-unclassified
 sweep; the hard-gate pin. Gate: fmt `--check` / clippy `--all-targets -D
 warnings` / test clean; **1089 → 1098 tests** (+9), zero snapshot churn outside
-the two new `--json` snapshots + the catalog pin. Landed `PENDING`.
+the two new `--json` snapshots + the catalog pin. Landed `1bbb407`.
 
 ### Stage 4 — editor grammars, docs refresh, `fmt` canon & round close
 
