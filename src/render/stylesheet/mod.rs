@@ -71,7 +71,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
     families::build_shape_rules(&mut rules, laid, &present, vars, opts);
     families::build_sequence_text_rules(&mut rules, &present);
     families::build_gutter_rule(&mut rules, has_gutters);
-    families::build_halo_rules(&mut rules, present.contains("halo"), has_labels);
+    families::build_halo_rules(&mut rules, laid, present.contains("halo"), has_labels);
     families::build_template_rules(&mut rules, laid, &present, vars, opts);
     families::build_projection_rule(&mut rules, laid, present.contains("projection"), vars, opts);
     families::build_link_rules(&mut rules, laid, vars, opts);
@@ -84,7 +84,7 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
         vars,
         opts,
     );
-    families::build_marker_rules(&mut rules, &present, has_markers, vars, opts);
+    families::build_marker_rules(&mut rules, laid, &present, has_markers, vars, opts);
     families::build_style_class_rules(&mut rules, laid, &used_styles, has_markers, vars, opts);
     families::build_descendant_rules(&mut rules, laid, &present, vars, opts);
     families::build_open_marker_rule(&mut rules, has_open);

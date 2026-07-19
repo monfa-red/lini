@@ -208,14 +208,7 @@ pub fn resolve_with_env(
 /// **anonymous** scope-transparent containers [SPEC 9] — the projection-link
 /// view lookup. `None` at any missing segment.
 fn inst_at_path<'a>(nodes: &'a [ResolvedInst], segs: &[&str]) -> Option<&'a ResolvedInst> {
-    let mut cur = nodes;
-    let mut found = None;
-    for seg in segs {
-        let inst = scene::find_in_scope(cur, seg, &mut Vec::new())?;
-        found = Some(inst);
-        cur = &inst.children;
-    }
-    found
+    scene::walk_scope(nodes, segs.iter().copied())
 }
 
 /// The per-scope datum identity set under construction [SPEC 15.7/15.9]:

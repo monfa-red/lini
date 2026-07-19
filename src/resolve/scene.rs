@@ -709,6 +709,26 @@ pub(crate) fn find_in_scope<'a>(
     None
 }
 
+/// Walk an id-path through the scene, one [`find_in_scope`] hop per segment,
+/// descending into each hit's children — the shared engine behind both the
+/// resolve-side projection lookup (`inst_at_path`) and the layout-side scope
+/// walk (`node_at`), which differ only in how they produce the segments. No
+/// segments (or a segment that misses) yields `None`.
+pub(crate) fn walk_scope<I>(nodes: &[ResolvedInst], segs: I) -> Option<&ResolvedInst>
+where
+    I: IntoIterator,
+    I::Item: AsRef<str>,
+{
+    let mut cur = nodes;
+    let mut found = None;
+    for seg in segs {
+        let inst = find_in_scope(cur, seg.as_ref(), &mut Vec::new())?;
+        found = Some(inst);
+        cur = &inst.children;
+    }
+    found
+}
+
 fn walk_paths(n: &ResolvedInst, stack: &mut Vec<String>, out: &mut Vec<String>) {
     if let Some(id) = &n.id {
         stack.push(id.clone());

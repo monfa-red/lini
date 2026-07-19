@@ -144,6 +144,26 @@ fn apply_comma_law(name: &str, value: ResolvedValue, span: Span) -> Result<Resol
     Ok(ResolvedValue::List(items))
 }
 
+/// Resolve a built-in default bundle ([`crate::ledger::defaults`]) to its
+/// name → value pairs — one loop over [`resolve_property`], shared by the link
+/// projection cascade and the render-layer generated default (which resolves a
+/// static bundle with empty tables).
+pub fn resolve_bundle(
+    decls: &[crate::syntax::ast::Decl],
+    vars: &VarTable,
+    funcs: &FuncTable,
+) -> Result<Vec<(String, ResolvedValue)>, Error> {
+    decls
+        .iter()
+        .map(|d| {
+            Ok((
+                d.name.clone(),
+                resolve_property(&d.name, &d.groups, d.span, vars, funcs)?,
+            ))
+        })
+        .collect()
+}
+
 /// A `draw:` value [SPEC 15.3]: one run of pen items — calls (optionally naming
 /// their segment) and freestanding `:segment` points — kept structured; only the
 /// call **arguments** fold (numbers, expressions, compute calls).
