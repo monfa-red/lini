@@ -3,7 +3,7 @@ name = "Lini"
 description = "Syntax highlighting for the Lini diagram language"
 version = "0.1.0"
 schema_version = 1
-authors = ["lini"]
+authors = ["Abbas Monfared"]
 repository = "https://github.com/monfa-red/lini"
 
 # The tree-sitter grammar source lives in-repo under `tree-sitter-lini/`. Zed
