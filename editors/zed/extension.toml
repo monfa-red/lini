@@ -12,4 +12,4 @@ repository = "https://github.com/monfa-red/lini"
 [grammars.lini]
 repository = "https://github.com/monfa-red/lini"
 path = "editors/zed/tree-sitter-lini"
-commit = "REPLACE_WITH_RELEASE_COMMIT"
+commit = "155410df859c08aef14c023b1c0f5eccd77e09e1"
