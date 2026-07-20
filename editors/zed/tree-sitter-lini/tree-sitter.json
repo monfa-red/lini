@@ -1,0 +1,20 @@
+{
+  "grammars": [
+    {
+      "name": "lini",
+      "camelcase": "Lini",
+      "scope": "source.lini",
+      "path": ".",
+      "file-types": ["lini"],
+      "highlights": ["../languages/lini/highlights.scm"]
+    }
+  ],
+  "metadata": {
+    "version": "0.1.0",
+    "description": "Syntax highlighting grammar for the Lini diagram language",
+    "authors": [{ "name": "lini" }],
+    "links": {
+      "repository": "https://github.com/monfa-red/lini"
+    }
+  }
+}
