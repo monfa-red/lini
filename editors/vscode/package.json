@@ -1,17 +1,44 @@
 {
   "name": "lini",
   "displayName": "Lini",
-  "description": "Syntax highlighting for the Lini diagram language",
+  "description": "Syntax highlighting for Lini \u2014 a text-to-diagram language for diagrams, charts, and technical drawings that compiles to SVG",
   "version": "0.1.0",
-  "publisher": "lini",
-  "engines": { "vscode": "^1.70.0" },
-  "categories": ["Programming Languages"],
+  "publisher": "monfa-red",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/monfa-red/lini",
+    "directory": "editors/vscode"
+  },
+  "homepage": "https://github.com/monfa-red/lini",
+  "bugs": {
+    "url": "https://github.com/monfa-red/lini/issues"
+  },
+  "keywords": [
+    "lini",
+    "diagram",
+    "diagrams-as-code",
+    "chart",
+    "svg",
+    "technical-drawing"
+  ],
+  "engines": {
+    "vscode": "^1.70.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
   "contributes": {
     "languages": [
       {
         "id": "lini",
-        "aliases": ["Lini", "lini"],
-        "extensions": [".lini"],
+        "aliases": [
+          "Lini",
+          "lini"
+        ],
+        "extensions": [
+          ".lini"
+        ],
         "configuration": "./language-configuration.json"
       }
     ],

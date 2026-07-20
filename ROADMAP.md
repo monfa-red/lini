@@ -427,6 +427,12 @@ distort the features above or reserve premature syntax:
   exploded mates, deeper sourced-view nesting, view-letter arrows
   (`of: <arrow>` — title sugar; construction links shipped in alpha.5),
   full orthographic/3D projection.
+- **A language server** (`lini lsp`): live diagnostics off the `--json`
+  surface, quick-fixes from the machine-applicable replacements,
+  **autocomplete** (properties, value keywords, templates, id references —
+  the data is the generated schema); hover docs from the reference are
+  nice-to-have. Both editor extensions grow the small client shim. Decide
+  whether the serde-free rule bends for JSON-RPC (`lsp-server`/`lsp-types`).
 - **Imports/modules/namespaces** for shared themes and part libraries.
 - **Core/rendering**: animation; native PNG/WebP export (design notes: rasterize
   the `--static` SVG via resvg→tiny-skia, PNG encode built-in, WebP lossless via
