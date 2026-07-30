@@ -1,6 +1,6 @@
 # PCB Schematics — brainstorm notes (beta 2 candidate)
 
-Session notes, 2026-07-29/30 (nine rounds). **Nothing here is decided** — this is
+Session notes, 2026-07-29/30 (ten rounds). **Nothing here is decided** — this is
 the state of the brainstorm. Reference schematic: a KiCad A5 page (TMC2300
 stepper driver — `even-Z.pdf`, U7 + passives + connector + net labels +
 gnd/power symbols + grouped regions + title block).
@@ -425,6 +425,37 @@ U7.DIAG - "NSTDBY"
 Honest cost: satellite seating is one real placement pass the scope owns — a
 step past "thin", but the drawing-annotation pattern reapplied, not
 auto-placement; anchors never move.
+
+## Round 10 — the positioning ladder (seating direction & overrides)
+
+- **Seating direction is terminator-driven, never random.** A label symbol
+  carries a natural direction — `gnd`/`earth`/`chassis` seat **below**,
+  `power` **above**, `nc` at the pin, text labels **outward along the pin
+  normal**. A satellite chain reads its terminator: `U7.VS - |C| - |gnd|`
+  grows down (cap below the wire, gnd below the cap — the reference sheet's
+  own convention, baked); `- |vm|` grows up; part-terminated chains run along
+  the pin normal.
+- **Pin positioning = the KiCad symbol-editor workflow, existing vocabulary**:
+  `side:` picks the side, declaration order is the order along it,
+  `translate:` slides a pin along its side for odd cases.
+- **The override ladder** — all existing semantics:
+
+  | Layer | Anchors (3+ pins / placed) | Satellites (labels, unplaced 1–2-pin) |
+  |---|---|---|
+  | auto | grid auto-flow | chain-seats at its pin, direction from terminator |
+  | coarse | `cell:` — the imaginary grid | `cell:` **converts to an anchor** |
+  | fine | `translate:` nudge from the cell | `translate:` nudge **from the seat** |
+
+- **Translate stays the core law** (SPEC 5): a post-placement nudge from
+  wherever the node was placed, never a coordinate. A satellite's translate
+  is therefore **pin-relative and robust** — move the chip, the nudge travels
+  along. Rejected: translate-only placement from the scene centre (breaks the
+  nudge law; centre-relative coordinates are the fragile kind). Auto-flowed
+  anchors whose origin must not drift get a pinned `cell:` — same answer as
+  every lini grid today.
+- **"Satellite" is a placement role, not a type** — any label or unplaced
+  1–2-pin part. The parts stay "discretes"; the drawings they wear stay
+  "symbols".
 
 ## What's left
 
