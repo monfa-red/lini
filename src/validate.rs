@@ -1,4 +1,4 @@
-//! The owner-aware property validation pass [SPEC 18/21], reading the ledger.
+//! The owner-aware property validation pass [SPEC 17/21], reading the ledger.
 //! Strict where the wearer is statically known, lenient where a class is
 //! polymorphic:
 //!

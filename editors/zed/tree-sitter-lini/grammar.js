@@ -54,7 +54,7 @@ module.exports = grammar({
     define_op: (_) => "::",
 
     // |type#id|, |type::base|, |#id|, a bare |type|, or the link selector |-|
-    // (SPEC 21's `|-|` sel_unit — a lone `-` between the bars).
+    // (SPEC 22's `|-|` sel_unit — a lone `-` between the bars).
     type_bars: ($) =>
       seq(
         "|",
@@ -116,7 +116,7 @@ module.exports = grammar({
     // highlighting than the four cardinal words (SPEC 15.2 / task note).
     side: (_) => token(seq(":", /[A-Za-z_][\w-]*/)),
 
-    // A link / ER / draw operator, glued, no internal space (SPEC 21): optional
+    // A link / ER / draw operator, glued, no internal space (SPEC 22): optional
     // markers (`< > * <>` and ER cardinality `o +`) around a line (`- -- --- ~`)
     // or the mate op `||`.
     link_op: (_) => token(/[<>*o+]*(---|--|-|~|\|\|)[<>*o+]*/),

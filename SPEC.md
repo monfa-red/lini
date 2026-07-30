@@ -825,8 +825,8 @@ the cascade ([SPEC 4](#4-selectors-cascade--specificity)) — every value here i
 | `\|zone\|` | `\|block\|` | `font-size: 9; color: --stroke-light` | A **zone reference** label (1, 2… / A, B…) a `\|page\|` generates in the margin band ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `\|tick\|` | `\|line\|` | `stroke: --stroke; stroke-width: 1; fill: none` — needs `points:` | A zone **divider** / **centring mark** a `\|page\|` generates ([SPEC 15.8](#158-assemblies-views-sheets--titles)). |
 | `\|schematic\|` | `\|block\|` | `layout: schematic` | A circuit sheet's scope ([SPEC 16](#16-schematic)). |
-| `\|component\|` | `\|block\|` | `fill: --component-fill; stroke: --component-stroke; stroke-width: 1.5; radius: 0; padding: 8` | The generic pin-bearing part — IC, module, relay; ref prefix U ([SPEC 16.2](#162-components--pins)). |
-| `\|pin\|` | `\|block\|` | `side: left` — name inside, `number:` outside, stub outward | A component **terminal** — the wire lands on its stub tip ([SPEC 16.2](#162-components--pins)). |
+| `\|component\|` | `\|block\|` | `fill: --component-fill; stroke: --component-stroke; stroke-width: 1.5; radius: 0; padding: 8; prefix: "U"` | The generic pin-bearing part — IC, module, relay; ref prefix U ([SPEC 16.2](#162-components--pins)). |
+| `\|pin\|` | `\|block\|` | name inside, `number:` outside, stub outward — no `side:` default (the bilateral split, [SPEC 16.2](#162-components--pins)) | A component **terminal** — the wire lands on its stub tip. |
 | `\|label\|` | `\|block\|` | `shape: plain; font-size: 11; color: --label-ink` | The **net tag** — text, a symbol (`gnd`, `power`, …), or both; its own terminal ([SPEC 16.4](#164-labels)). |
 | `\|junction\|` | `\|oval\|` | `fill: --wire; stroke: none` — generated chrome | The connection **dot** where ≥ 3 wire ends meet ([SPEC 16.5](#165-wires)). |
 | `\|J\|` | `\|component\|` | `prefix: "J"` — pins nameless, `pins: N` generates them | The **connector** ([SPEC 16.2](#162-components--pins)). |
@@ -1532,7 +1532,9 @@ small, bounded addition ([Part III](#part-iii--reference) formalises each):
    ([SPEC 15](#15-drawing)); `chart` / `pie` have no links. One scope, one strategy — set by the
    scope's `layout` (with `routing:` selecting `orthogonal` vs `straight` for the routed
    ones), and it governs that scope's **own** links only — an ordinary `|row|` / `|grid|`
-   nested inside a sequence or drawing still hands its internal links to the router.
+   nested inside a sequence or drawing still hands its internal links to the router
+   (a schematic is the one scope whose *link laws* also reach links written in its
+   nested ordinary containers — placement never cascades, [SPEC 16](#16-schematic)).
    A `sequence` message is thus the one place a link's *order* is its geometry, not a
    routing problem.
 
@@ -2816,7 +2818,8 @@ bolt <- [ "R3 TYP" { translate: 30 -24 } ]  // a styled / nudged text — the co
   a word leader's `<-` tips with the **same drafting-slender arrow** as every
   dimension; `*-`'s dot and the datum triangle keep their own shapes. A one-ended callout with no text is an
   error; a one-ended `->` / `-*` errors the other way — a leader points *back* at its
-  feature. A label-terminated statement is single-hop — chain before the text
+  feature (a schematic scope reads that same statement shape as a label wire —
+  [SPEC 16.5](#165-wires)). A label-terminated statement is single-hop — chain before the text
   ([SPEC 21](#21-errors)).
 - **A fan shares one note.** `a & b <- "2× R5"` — `&` on a one-ended leader op keeps
   **one** text and one landing (the **first** endpoint steers the auto placement;
@@ -3171,7 +3174,7 @@ by role:
 
 | Child | Is | Drawn |
 |---|---|---|
-| `\|component\|`, a discrete (`\|R\|`, `\|C\|`, …), any 3+-pin part, or anything explicitly placed | an **anchor** | on the scope's track grid |
+| a 3+-pin part (`\|component\|`, `\|opamp\|`, `\|J\|`, `\|Q\|`), or anything explicitly placed (`cell:` / `translate:`) | an **anchor** | on the scope's track grid |
 | a `\|label\|`, or an *unplaced* 1–2-pin part | a **satellite** | seated at the pin its wire touches |
 | a link (`a - b`) | a **wire** | routed orthogonally, square-cornered, junction-dotted |
 | a one-ended link with text or a capsule (`U7.DIAG - "NSTDBY"`, `c24.p2 - \|gnd\|`) | a **label wire** | a stub to a seated `\|label\|` |
@@ -3227,7 +3230,7 @@ never as a paint transform; any other angle is an error
 
 ```
 |component#U7| "TMC2300-LA-T" [
-  |pin#VS| { number: 18 };  |pin#STEP| { number: 4 }          // default side: left
+  |pin#VS| { number: 18 };  |pin#STEP| { number: 4 }          // auto — the bilateral split
   |pin#nstdby| "VIO/NSTDBY" { side: right; number: 11 }
 ]
 U7.VS - c24.p1 "VM"
@@ -3249,11 +3252,15 @@ be ids (`"VIO/NSTDBY"`, `"1.8VOUT"`). `number:` draws the pin number outside,
 beside the **stub** — the short lead the pin extends outward; the wire lands
 on the stub tip, departing outward along the pin's side. Pin anatomy — stub,
 name, number — folds into the **component's own** routing obstacle, and a
-pin's `translate:` slides it along its side. A single-pin component is legal
-(a test point, a mounting pad); an unwired part needs no id at all.
+pin's `translate:` slides it along its side — a cross-axis component is an
+error (a pin lives on its side). A single-pin component is legal
+(a test point, a mounting pad); an unwired part needs no id at all. `|pin|`
+the type and `pin:` the out-of-flow property ([SPEC 5](#5-the-box-model)) are
+one word in two roles — never ambiguous: a type lives in bars, a property
+before a `:`.
 
 **The id is the reference designator.** A component or discrete displays its
-id verbatim (`#U7` reads "U7"). An **anonymous** discrete **mints a display
+id verbatim (`#U7` reads "U7"). An **anonymous** part **mints a display
 ref** — prefix from its type (`|R|` → R1, R2…, IEEE 315), `prefix:`
 overriding (`|ic::component| { prefix: "IC" }` mints IC1…), declaration
 order, skipping authored names. A minted ref is **display-only, never an
@@ -3382,8 +3389,9 @@ emitted the scoped look rules; the engine then **seats** satellites
 (pin-relative, auto-posed), computes **cluster** extents, sizes and fills
 the **tracks**, absolutizes satellites, and hands every wire — with its
 fixed ports — to the router. Junction dots are read off the routed geometry
-and emitted as `|junction|` chrome; the scope's links are otherwise ordinary
-routed links, and the output is an ordinary primitive subtree.
+and emitted as `|junction|` chrome. The scope's links stay ordinary routed
+links and its children arrange in place — no subtree is consumed; only the
+generated chrome (rails, readouts, tags, junctions) is new.
 
 ---
 # Part III — Reference
@@ -3508,7 +3516,7 @@ Read on the listed primitive; required where noted ([SPEC 7](#7-nodes)).
 | `samples` | `\|line\|` `\|poly\|`, chart `fn:` | integer | sample count (geometry; chart default 24). |
 | `path` | `\|path\|` | quoted SVG path | **required**; native top-left coords. |
 | `src` | `\|image\|` | quoted URL / data URI / local path | **required**; a local file embeds ([SPEC 7](#7-nodes)). |
-| `symbol` | `\|icon\|` · `\|surface-finish\|` | ident | Phosphor name, **required** (or via the label) · the finish vee variant — `basic`·`machined`·`prohibited`, default `basic` ([SPEC 15.9](#159-drafting-symbols--annotation-composition)). |
+| `symbol` | `\|icon\|` · `\|surface-finish\|` · `\|label\|` · the discretes | ident | Phosphor name, **required** (or via the label) · the finish vee variant — `basic`·`machined`·`prohibited`, default `basic` ([SPEC 15.9](#159-drafting-symbols--annotation-composition)) · a schematic symbol / variant ([SPEC 16.3](#163-discretes), [SPEC 16.4](#164-labels)). |
 | `fit` | `\|icon\|` `\|image\|` | `auto` · `contain` · `cover` · `stretch` | maps content into the box (size unchanged); `auto` default, `\|sign\|` `contain`. |
 | `skew` | `\|slant\|` | degrees `(-89,89)` | 15. |
 | `stack` | closed primitives | `N` · `dx dy` | offset duplicate behind. |
@@ -3527,11 +3535,11 @@ out of scope.
 
 | Property | Owner | Value | Default | Ref |
 |---|---|---|---|---|
-| `layout` | any container | `flow`·`grid`·`tree`·`sequence`·`chart`·`pie`·`drawing` | `flow` | [SPEC 11](#11-the-layout-model) |
+| `layout` | any container | `flow`·`grid`·`tree`·`sequence`·`chart`·`pie`·`drawing`·`schematic` | `flow` | [SPEC 11](#11-the-layout-model) |
 | `direction` | flow, chart, tree | `row`·`column` · `radial` (chart) · `bilateral` (tree) | `column` | [SPEC 11](#11-the-layout-model) |
 | `gap` · `gap-fill` · `align` · `justify` · `padding` | flow, grid | — | see matrix | [SPEC 11](#11-the-layout-model), [SPEC 12](#12-flow-grid--tree) |
-| `columns` · `rows` | grid | track list | — (`columns` required) | [SPEC 12](#12-flow-grid--tree) |
-| `cell` · `span` | grid box child | `col row` / `cols rows` | `— / 1 1` | [SPEC 12](#12-flow-grid--tree) |
+| `columns` · `rows` | grid · schematic (`columns` — its own ordinal tracks, [SPEC 16.1](#161-placement--anchors--satellites)) | track list | — (`columns` required on a grid) | [SPEC 12](#12-flow-grid--tree) |
+| `cell` · `span` | grid or schematic box child (`cell` — ordinal on a schematic) | `col row` / `cols rows` | `— / 1 1` | [SPEC 12](#12-flow-grid--tree) |
 | `data` · `fn` | chart series | list / pairs / `(…)` expr | — | [SPEC 14.3](#143-data--formulas) |
 | `labels` | chart series | quoted-string list | — | [SPEC 14.3](#143-data--formulas) |
 | `curve` | `\|line\|` `\|area\|` | `linear`·`smooth`·`step` | `linear` | [SPEC 14.2](#142-series) |
@@ -3563,7 +3571,7 @@ out of scope.
 | `of` | `\|drawing\|` | a `\|plane\|` / `\|magnifier\|` id | — | [SPEC 15.8](#158-assemblies-views-sheets--titles) |
 | ISO 7200 fields | `\|title-block\|` | quoted string | — | [SPEC 15.8](#158-assemblies-views-sheets--titles) |
 | `number` | `\|pin\|` | integer | — | [SPEC 16.2](#162-components--pins) |
-| `prefix` | `\|component\|` lineage, the discretes | quoted string | the type name | [SPEC 16.2](#162-components--pins) |
+| `prefix` | `\|component\|` lineage, the discretes | quoted string | the type name (`\|component\|`: `"U"`) | [SPEC 16.2](#162-components--pins) |
 | `shape` | `\|label\|` | `plain`·`left`·`right`·`both`·`round` | `plain` — a label wire's marker sets it | [SPEC 16.4](#164-labels), [SPEC 16.5](#165-wires) |
 | `pins` | `\|J\|` | integer ≥ 1 | — | [SPEC 16.2](#162-components--pins) |
 | `side` (homonym) | `\|pin\|` | `left`·`right`·`top`·`bottom` | the bilateral split | [SPEC 16.2](#162-components--pins) |
@@ -4079,6 +4087,7 @@ machine-applicable replacement where one exists.
 | Dot-path into a label | `a label is its own terminal — it has no pins` |
 | Unknown schematic `symbol:` | `unknown symbol 'gnb'; did you mean 'gnd'?` |
 | Bad `shape:` / `pins:` / `number:` | `'shape' takes plain, left, right, both, or round` · `'pins' takes a count ≥ 1` · `'number' takes an integer` |
+| Satellite chain with no placed end | `'C7' has no placed end — its chain falls back to the flow` (warning) |
 
 
 ---

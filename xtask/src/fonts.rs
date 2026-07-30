@@ -178,7 +178,7 @@ pub fn extract_fonts() -> ExitCode {
 /// glyph — rendering *invisibly* in a browser instead of falling through to
 /// the next font in the stack. Rebuild a minimal format-12 `cmap` covering
 /// exactly the kept charset: everything else misses the cmap, and per-glyph
-/// system fallback works as [SPEC 17] promises.
+/// system fallback works as [SPEC 18] promises.
 fn rebuild_cmap(font: &[u8], mappings: &[(u32, u16)]) -> Vec<u8> {
     // Coalesce (codepoint, gid) pairs into format-12 groups: consecutive
     // codepoints with consecutive glyph ids share a group.

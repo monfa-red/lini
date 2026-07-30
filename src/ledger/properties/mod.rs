@@ -148,7 +148,7 @@ impl Property {
         self.baked = true;
         self
     }
-    /// Mark a hard out-of-scope gate [SPEC 18/21].
+    /// Mark a hard out-of-scope gate [SPEC 17/21].
     const fn hard(mut self) -> Self {
         self.gate = Gate::Hard;
         self
@@ -591,7 +591,7 @@ pub static PROPERTIES: &[Property] = &[
         ScopeLink,
     ),
     // ── Sequence [SPEC 13] — the placement props hard-gate off a sequence
-    //    [SPEC 18/21]. ──
+    //    [SPEC 17/21]. ──
     row(
         "place",
         &[Type("note")],

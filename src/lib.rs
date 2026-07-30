@@ -135,7 +135,7 @@ pub fn diagnostics_json(src: &str, opts: &Options, filename: &str) -> (String, b
     let mut items = Vec::new();
     let mut had_error = false;
 
-    // The property/lint pass [SPEC 18/21] — surfaces on the raw parse. A parse
+    // The property/lint pass [SPEC 17/21] — surfaces on the raw parse. A parse
     // or lex error here is fatal and stops the pipeline, exactly as the default
     // CLI path returns early.
     match lint_str(src) {

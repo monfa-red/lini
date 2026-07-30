@@ -142,7 +142,7 @@ pub struct Diagnostic {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Level {
-    /// A hard diagnostic [SPEC 18/21] — the CLI fails on it like a compile error.
+    /// A hard diagnostic [SPEC 17/21] — the CLI fails on it like a compile error.
     Error,
     Warning,
 }

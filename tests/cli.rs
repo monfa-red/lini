@@ -149,7 +149,7 @@ fn extract_viewbox_w(svg: &str) -> f64 {
 #[cfg(feature = "font")]
 #[test]
 fn static_output_outlines_text_to_glyph_uses() {
-    // `--static` [SPEC 18/19]: text leaves become `<use>` references to
+    // `--static` [SPEC 18/20]: text leaves become `<use>` references to
     // deduped glyph paths in `<defs>` — no `<text>` element survives, so the
     // file renders identically with no font installed.
     let svg = lini::compile_str_with(

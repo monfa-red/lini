@@ -145,7 +145,7 @@ scope kills implicit auto-create; `U7.DIAG - "NSTDBY"` mints a label.
 the planning session; recorded here so every later phase can trust it.
 
 **Tasks**
-- [ ] New Part II section **16. Schematic** — full family: the scope, roles
+- [x] New Part II section **16. Schematic** — full family: the scope, roles
       (anchor/satellite), `|component|`/`|pin|` (bilateral split, `side:`,
       order, pin `translate:` slide, `number:`, name label override, id
       readouts, minted display refs never endpoints), discretes table
@@ -164,9 +164,9 @@ the planning session; recorded here so every later phase can trust it.
       smart-label placement (component: above; discrete: beside;
       deterministic; translate overrides), scoped defaults + role
       variables (wire, part fill/outline, label, pin-number muted, scene).
-- [ ] Core amendments: SPEC 3/9 (capsule endpoints — declaration in
+- [x] Core amendments: SPEC 3/9 (capsule endpoints — declaration in
       endpoint position, no tail, either end, fans/chains, drawing-scope
-      ban), SPEC 21-era grammar section (endpoint rule gains the capsule
+      ban), SPEC 22 grammar section (endpoint rule gains the capsule
       alternative while **keeping** `[ "." index ]`; one-ended op list
       gains the schematic arm; first-token law relaxed by one token for a
       statement-head capsule), SPEC 15.7 (the "a leader points back"
@@ -177,16 +177,55 @@ the planning session; recorded here so every later phase can trust it.
       mid-wire tags…; **remove or rewrite** the routed-anchors row —
       Phase 1 builds the contract but not the flow/grid `a -> b:port`
       surface, so the row is *narrowed*, not deleted).
-- [ ] **Renumber**: Part III 16-24 → 17-25; every `[SPEC N]` cross-ref +
+- [x] **Renumber**: Part III 16-24 → 17-25; every `[SPEC N]` cross-ref +
       anchor fragment in SPEC.md; `AGENTS.md` ("[SPEC 17]'s class-diff" →
       18); grep ROADMAP.md, README.md, and `src/`+`tests/` comments for
       `SPEC 1[6-9]|SPEC 2[0-4]` and fix.
-- [ ] Self-check: ToC matches, no dangling anchors (grep `](#`), the four
+- [x] Self-check: ToC matches, no dangling anchors (grep `](#`), the four
       SPEC-16-adjacent laws read against rounds 1-13 of the brainstorm.
 
 ### Execution log
 
+- 2026-07-30 — Phase 0 executed in the planning session (commit c94cd2a):
+  SPEC 16 landed with the core amendments (§1 §3 §8 §9 §10.1 §10.5 §11 §17
+  §19 §21 §22 §23 §24); Part III renumbered 17–25 across SPEC, AGENTS,
+  ROADMAP, BETA-tooling, and src/tests comments; grammar + schema artifacts
+  regenerated; ROADMAP gained the beta-2 row. cargo fmt/test/clippy green.
+- 2026-07-30 — Final Opus audit (5 blocking, 11 minor) verified and applied:
+  anchor-role table corrected (anchors = 3+-pin or explicitly placed —
+  discretes are satellites when unplaced); `|pin|` lost its `side: left`
+  template default (it would have killed the bilateral split — a template
+  default is a cascade Decl, so "without a side:" would never hold); ledger
+  rows extended (`layout` value list gains `schematic`; `columns`/`cell`
+  owners; `symbol` owners gain `|label|` + discretes); `|component|` carries
+  `prefix: "U"`; "anonymous discrete" → "anonymous part"; §15.7 gained the
+  schematic pointer; the `|pin|`/`pin:` homonym stated; §16.7 reworded
+  (arranges in place, no subtree consumed); §11 seam 2 parenthetical
+  (link laws reach nested scopes, placement never cascades); §21 gained the
+  no-placed-end warning row; pin `translate:` cross-axis is an error.
+  Renumber-script defects repaired: compound `[SPEC A/B]` refs were
+  double-bumped (now `17/21`, `20/21`, `18/20`, `21/23`);
+  `editors/zed/tree-sitter-lini/grammar.js` (→ SPEC 22) and
+  `xtask/src/fonts.rs` (→ SPEC 18) were missed; the pre-existing wrong ref
+  in `grammar/mod.rs` ("sides free as ids") now points at SPEC 23.
+
 ### Carry-over notes
+
+- Baked schematic constants chosen (SPEC 10.5 — Phase 6 tunes them
+  visually): pin-pitch 20, pin-stub 12, label-seat 10, junction radius 3,
+  scope clearance 8 (pin-pitch must stay ≥ min pitch), wire stroke-width
+  1.5, corner-radius 0. Role vars (SPEC 10.1, placeholder values — visual
+  pass tunes): `--lini-wire`, `--lini-component-fill`,
+  `--lini-component-stroke`, `--lini-label-ink`, `--lini-pin-number`,
+  `--lini-sheet`.
+- Phase 1 must title its ROUTING.md section exactly **"Fixed ports"** —
+  SPEC 16.5 and SPEC 24 already cite it by that name.
+- A pin's `translate:` reads its along-side component only; a cross-axis
+  component errors (SPEC 16.2) — build in Phase 3/4.
+- SPEC 16's role table now defines anchors as *3+-pin or explicitly
+  placed* — an unplaced 2-pin authored `|component|` (a jumper) is a
+  satellite; keep Phase 4's classifier on pin arity + placement, never on
+  the type.
 
 ---
 

@@ -88,7 +88,7 @@ struct CompileArgs {
 
     /// Emit diagnostics as a JSON document (stable codes, spans, and
     /// machine-applicable fixes) instead of SVG — the tooling/LSP form
-    /// [SPEC 20/20]. Exit 1 if any error-level diagnostic fired.
+    /// [SPEC 20/21]. Exit 1 if any error-level diagnostic fired.
     #[arg(long = "json")]
     json: bool,
 
@@ -241,7 +241,7 @@ fn main() -> ExitCode {
         };
     }
 
-    // Lint + the property validation pass [SPEC 18/21]: error-level
+    // Lint + the property validation pass [SPEC 17/21]: error-level
     // diagnostics always print and fail the compile; warnings print unless
     // `--no-warn` and fail only under `--strict`.
     let mut warnings_were_emitted = false;

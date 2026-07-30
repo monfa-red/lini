@@ -549,7 +549,7 @@ pub fn vscode_grammar() -> String {
                 (
                     "comment",
                     J::s(
-                        "A forced side on a link endpoint (a:left); sides are free as ids elsewhere (SPEC 19).",
+                        "A forced side on a link endpoint (a:left); sides are free as ids elsewhere (SPEC 23).",
                     ),
                 ),
                 (

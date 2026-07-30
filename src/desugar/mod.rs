@@ -309,7 +309,7 @@ fn lower_node(
         && node.classes.iter().any(|c| *c == lini_class(kind.as_str()));
 
     // An authored id may not begin `lini-` — the prefix is reserved for
-    // generated names [SPEC 21/22], mirroring the `.lini-*` class reservation.
+    // generated names [SPEC 21/23], mirroring the `.lini-*` class reservation.
     // Only first-lowering nodes are checked: a re-desugared node (`already`)
     // carries the compiler's own minted `lini-topic-N` ids, which must round-trip.
     if !already
