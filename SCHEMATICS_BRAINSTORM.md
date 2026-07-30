@@ -1,6 +1,6 @@
 # PCB Schematics — brainstorm notes (beta 2 candidate)
 
-Session notes, 2026-07-29/30 (five rounds). **Nothing here is decided** — this is
+Session notes, 2026-07-29/30 (six rounds). **Nothing here is decided** — this is
 the state of the brainstorm. Reference schematic: a KiCad A5 page (TMC2300
 stepper driver — `even-Z.pdf`, U7 + passives + connector + net labels +
 gnd/power symbols + grouped regions + title block).
@@ -262,6 +262,32 @@ connectivity is honest lini: connection is a shared endpoint or a fan `&`
   variant, `bt1.plus`/`bt1.minus`); symmetric parts stay `p1`/`p2`.
 - `|BT|` confirmed — IEEE 315 / KiCad both use BT; BATT is colloquial
   (`prefix:` covers taste).
+
+## Settled in round 6 — wiring edge cases
+
+- **Pinless wiring, 2-pin parts only**: a wire to a 2-pin part without a pin
+  path takes the **next free pin in the type's pin order** (p1→p2, a→k,
+  plus→minus) — deterministic, source order. Chaining *through* a 2-pin part
+  reads **in series**: `vm - |R| - |LED| - |gnd|` is a series circuit in one
+  line. A pinless wire to a 3+-pin part (`|Q|`, `|component|`) errors with a
+  suggestion — no honest guess among many pins. Dangling pins are legal
+  (`|R| -> a` lands p1, p2 stays open).
+- **Marker gate**: in a schematic scope an op's *marker* part is legal only on
+  a label wire terminating in a **text-form** `|label|` (markers shape the
+  tag). A marked wire between parts, or a marker aimed at a symbol-form label
+  (`|gnd|` has no tag), errors with a correction. The op's *line* part stays
+  free everywhere — a dashed run (`--`) is just `stroke-style` (the PDF's
+  COMM⌁RTX wire).
+- **Shaped tag on a pin-to-pin wire = two statements**, no new mechanism:
+  `U1.p1 -* "My Label"` (tag seated at the pin) + `U1.p1 - U2.p2` (the wire) —
+  structurally KiCad's model (a label attaches at a point of the net). A label
+  wire's stub may collapse to ~zero when the tag seats adjacent; **label wires
+  never produce junction dots** — only real wire tees (`&` fans) do. Plain
+  text labels keep the core form (`U1.p1 - U2.p2 "My Label"`). Mid-wire tags,
+  if ever needed, are reserved as a `|label|` node riding the link's `[ ]` at
+  an `along:` fraction (the drawing annotation-node seam) — deferred.
+- Label defines stay lowercase (`|gnd|`, `|vm|`) — uppercase is for ref
+  families.
 
 ## What's left
 
