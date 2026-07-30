@@ -1,6 +1,6 @@
 # PCB Schematics — brainstorm notes (beta 2 candidate)
 
-Session notes, 2026-07-29/30 (ten rounds). **Nothing here is decided** — this is
+Session notes, 2026-07-29/30 (eleven rounds). **Nothing here is decided** — this is
 the state of the brainstorm. Reference schematic: a KiCad A5 page (TMC2300
 stepper driver — `even-Z.pdf`, U7 + passives + connector + net labels +
 gnd/power symbols + grouped regions + title block).
@@ -456,6 +456,34 @@ auto-placement; anchors never move.
 - **"Satellite" is a placement role, not a type** — any label or unplaced
   1–2-pin part. The parts stay "discretes"; the drawings they wear stay
   "symbols".
+
+## Round 11 — the cluster move: the auto-grid dissolves
+
+- **Seated satellites join their anchor's bbox** (drawing precedent: a
+  drawing's bbox is the union of children *and annotations*). Seat satellites
+  first, pin-relative; the anchor's cell auto-sizes to the whole cluster
+  (chip + caps + gnds + labels); grid tracks size to cells as grids already
+  do. Nobody adds a column *for* a satellite — satellites consume **space**,
+  not **cells**.
+- **Anchors: default one row** — side by side in declaration order (the
+  common habit); `columns:` optional to wrap; `cell:` for explicit placement.
+- **Cell indices are ordinal, not distance**: `cell: 9 5` creates tracks up
+  to 9×5 but **empty tracks collapse entirely** (9 ≈ max+1). Distance-meaning
+  would inject invisible whitespace — no silent anything; spacing is the job
+  of `gap`, clusters, and clearance. Sparse indices (10, 20, 30…) are safe
+  ordering room.
+- **Between two placed anchors** (`u1.p1 - |R| - u2.p1`): the chain has no
+  outward direction, so its satellites **distribute along the straight line
+  between the two pins** (midpoint / even fractions — `along:`
+  auto-distribution applied to placement), oriented to the line's dominant
+  axis, before routing. Chains: two placed ends → distribute; one → grow by
+  terminator; none → flow fallback + warning.
+- **Seating override rides `side:`** (the dimension precedent — which side an
+  annotation stacks on): label types carry defaults (`gnd`/`earth`/`chassis`
+  → `bottom`, `power` → `top`, text → `auto` = outward along the pin normal);
+  any instance overrides; the terminator's `side:` steers its whole chain.
+  The styling levers: pin position (start), terminator `side:` (end),
+  everything else falls in the middle; `translate:` last.
 
 ## What's left
 
