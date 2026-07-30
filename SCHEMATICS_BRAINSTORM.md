@@ -13,7 +13,7 @@ gnd/power symbols + grouped regions + title block).
 | Title block (Title / Rev / Id / Date / company) | `|title-block|` (ISO 7200) |
 | The captioned blue region boxes ("Stepper Driver") | `|group|` + caption; restyle via a scoped rule |
 | Wires | the orthogonal router, unchanged |
-| Net name on a wire | the link label — `u7.VS - c24.p1 "VM"` works today |
+| Net name on a wire | the link label — `U7.VS - c24.p1 "VM"` works today |
 | One-ended op + trailing text | drawing leaders (`bolt <- "THRU"`) — the net-label statement shape |
 | Colours (dark-red outline, green wire, beige page…) | role variables + theme, the drawing precedent (`--stroke-dark`/`--stroke-light`) |
 | Symbol glyphs drawn at text-relative size | the 15.9 drafting-glyph registry (natural units, not box-fit) |
@@ -54,7 +54,7 @@ placement is what schematics-for-showing want.
   |pin#VS| { number: 18 };  |pin#STEP| { number: 4 }         // default side: left
   |pin#nstdby| "VIO/NSTDBY" { side: right; number: 11 }
 ]
-u7.VS - c24.p1 "VM"
+U7.VS - c24.p1 "VM"
 ```
 
 - **Schematic identity is displayed** (round-2 correction). A declared node's id
@@ -70,7 +70,7 @@ u7.VS - c24.p1 "VM"
   display-only, never endpoints** — inserting a part would renumber and
   silently re-wire otherwise. Don't care → free numbering; wire it → name it.
 - **No authored rails.** Desugar generates per-side rails as *anonymous*
-  containers — already scope-transparent, so `u7.VS` resolves with no rail in
+  containers — already scope-transparent, so `U7.VS` resolves with no rail in
   the path.
 - **Pin sides, auto with override**: no `side:` → the bilateral split (first
   ⌈n/2⌉ left, rest right, declaration order — the mindmap rule). `side:`
@@ -86,24 +86,44 @@ u7.VS - c24.p1 "VM"
   roles) — never ambiguous (bars vs before-`:`); `scale`/`side`/`unit` are
   property/property precedents.
 
-### 3. Discretes: glyph types
+### 3. Discretes: glyph types (round 4 — settled shape)
 
-Two-terminal glyph nodes (natural-units machinery), generated pins `p1`/`p2`
-(`c24.p1` works; wires must land on terminals). Smart label = the value; ref
-readout from the id / minted; orient with `rotate:`.
+Glyph nodes (natural-units machinery), generated pins (wires must land on
+terminals). Smart label = the value; ref readout from the id / minted; orient
+with `rotate:`. **Uppercase short types only** (full words dropped — the type
+*is* the ref family; precedent for short types: `|cyl|`, `|hex|`).
 
-Naming — two candidates, pick one (no aliases):
+**Minting rule**: mint prefix = the type name; `prefix:` (a string property,
+read only at minting) overrides — `|ic::component| { prefix: "IC" }` mints
+IC1, IC2… An authored id wins outright. Prefixes follow IEEE 315 / ASME
+Y14.44; `|component|` (any generic pin-bearing box — IC, module, relay) mints
+U. `|J|` ships as a built-in define over `|component|` — prefix J, pins
+nameless (numbers only): the connector.
 
-- **Uppercase short set (lean)**: `|R|` `|C|` `|L|` `|D|` `|LED|` `|Y|`
-  (crystal) `|J|` (connector) — the type *is* the ref family exactly as sheets
-  write it, so minted refs need no name→prefix table (`|R| "10k"` → R1).
-  Precedent for short types: `|cyl|`, `|hex|`. `|component|` stays a word
-  (prefix U).
-- **Full words**: `|resistor|`, `|capacitor|`, … — more lini-wordy; needs a
-  name→prefix table for minting.
+**Variants ride `symbol:`** — the property that answers "which glyph" on
+`|icon|` and `|label|` — one mechanism for every variant family; the variant
+also sets the generated pin ids where they're semantic:
 
-Open: IEC vs ANSI resistor body (default + variant knob or theme-level);
-polarized capacitor.
+| Type | Mints | Pins | `symbol:` variants |
+|---|---|---|---|
+| `\|R\|` | R1… | p1 p2 | (variable/pot — defer?) |
+| `\|C\|` | C1… | p1 p2 | `polarized` |
+| `\|L\|` | L1… | p1 p2 | — |
+| `\|D\|` | D1… | a k | `zener` · `tvs` · `schottky` |
+| `\|LED\|` | LED1… | a k | — (`prefix: "D"` for purists) |
+| `\|Q\|` | Q1… | b c e / g d s | `npn` (default) · `pnp` · `nfet` · `pfet` |
+| `\|Y\|` | Y1… | p1 p2 | — |
+| `\|F\|` | F1… | p1 p2 | — |
+| `\|FB\|` | FB1… | p1 p2 | — |
+| `\|SW\|` | SW1… | p1 p2 | `toggle` (default) · `push` |
+| `\|BT\|` | BT1… | plus minus | `cell` · `battery` |
+
+Earth / chassis / antenna are **not** discretes — they're `|label|` glyphs
+(`symbol: earth | chassis | antenna`), the terminator family with gnd/power/nc.
+
+**Standard: IEC only** — lini's drafting lineage is already ISO (SPEC 15.9).
+Never per-type variants (`|R_ANSI|`): a sheet never mixes standards, so ANSI,
+if ever, is one scope-level knob swapping the whole glyph family. Deferred.
 
 ### 4. Net labels, power, gnd: `|label|` + two statement forms
 
@@ -117,8 +137,8 @@ text: `|vm::label| { symbol: power } [ "VM" ]`.
 shape, reinterpreted by the scope:
 
 ```
-u7.DIAG - "NSTDBY"      // one-ended wire + text → a tag, seated at the pin
-u7.STEP -> "STEP"       // marker picks the tag shape (output)
+U7.DIAG - "NSTDBY"      // one-ended wire + text → a tag, seated at the pin
+U7.STEP -> "STEP"       // marker picks the tag shape (output)
 ```
 
 Marker → shape: `-` plain, `->` output, `-<` input, `-<>` bidirectional, `-*`
@@ -132,8 +152,8 @@ an endpoint position after an op may hold an identity capsule:
 
 ```
 c24.p2 - |gnd|                   // fresh anonymous gnd at the open end
-u7.VS  - |vm|                    // fresh VM power flag (define carries "VM")
-u7.VCP - |nc|                    // no-connect ✕ — another terminator glyph
+U7.VS  - |vm|                    // fresh VM power flag (define carries "VM")
+U7.VCP - |nc|                    // no-connect ✕ — another terminator glyph
 cat -> |cyl#db|                  // any diagram: typed declare-and-link
 cat -> |cyl#db| "watches" { … }  // tail = the LINK's, as with a bare endpoint
 ```
@@ -200,20 +220,30 @@ connectivity is honest lini: connection is a shared endpoint or a fan `&`
 - ROADMAP needs a **beta 2 row** (currently beta.1 → rc). Syntax isn't frozen
   until v1, so schematic gets first-class naming.
 
+## Settled in round 4
+
+- **Inline instantiation blessed, as a global law**: a routed-link endpoint is
+  a bare `id`, a `|type|`, or a `|type#id|`; a capsule always instantiates
+  inline and never takes a tail (no label/class/style/children — the tail is
+  the link's). Drawing scopes keep rejecting it (no-invention law). A fan into
+  a capsule = one instance; its trunk merge is a junction dot.
+- **Discretes: uppercase short types only**; the table above, `symbol:`
+  variants, type-name minting with `prefix:` override, IEC-only glyphs.
+- **Connectors resolved**: `|J|` = built-in define over `|component|`.
+- Ids are displayed verbatim and case-sensitive — `|component#U7|` shows "U7"
+  and is wired as `U7.VS` (not `u7.VS`).
+
 ## Open questions (next session)
 
-1. **Bless inline instantiation as a core feature?** (bars-only endpoints,
-   `a -> |cyl#db|` everywhere; the schematic glyph terminators are its best
-   customer.) Fallback: labels always explicit nodes. Sub-choice: anonymous
-   mid-chain capsules — allow or terminal-only.
-2. **Discrete naming**: uppercase short set (`|R|`, `|C|`…) vs full words.
-3. **Minted refs**: accept display-only minting (never endpoints)?
-4. Marker → shape table; how `-<` reads (crow elsewhere).
-5. Nested-scope semantics: wires written inside a `|grid|` used for placement
+1. **Minted refs**: accept display-only minting (never endpoints)?
+2. Marker → shape table; how `-<` reads (crow elsewhere).
+3. Nested-scope semantics: wires written inside a `|grid|` used for placement
    belong to that grid's scope — do label wires / junction dots reach them?
    Likely cascade, like `routing:`.
-6. Connector pins show numbers only (J3) — suppress the name readout via a
-   `|connector|`/`|J|` whose pins default nameless?
-7. Junction form: generated `|junction|` chrome child, styleable by rule (the
+4. Junction form: generated `|junction|` chrome child, styleable by rule (the
    `|halo|` pattern — lean) vs a marker on the wire.
-8. Glyph set for `|label|` (gnd, earth, chassis, power, antenna, nc, …).
+5. Glyph set for `|label|` (gnd, earth, chassis, power, antenna, nc, …).
+6. Anonymous mid-chain capsules (`a -> |cyl| -> c`) — allow via minted internal
+   handle, or terminal-only.
+7. Polar pin-id detail: semantic ids (`a`/`k`, `b c e`, `plus minus`) vs
+   uniform `p1`/`p2` + aliases.
