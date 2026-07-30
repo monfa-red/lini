@@ -1,8 +1,8 @@
 # PCB Schematics — brainstorm notes (beta 2 candidate)
 
-Session notes, 2026-07-29. **Nothing here is decided** — this is the state of the
-brainstorm, to continue on another machine. Reference schematic: a KiCad A5 page
-(TMC2300 stepper driver — `even-Z.pdf`, U7 + passives + connector + net labels +
+Session notes, 2026-07-29/30 (two rounds). **Nothing here is decided** — this is
+the state of the brainstorm. Reference schematic: a KiCad A5 page (TMC2300
+stepper driver — `even-Z.pdf`, U7 + passives + connector + net labels +
 gnd/power symbols + grouped regions + title block).
 
 ## What already exists — reuse, don't build
@@ -14,40 +14,40 @@ gnd/power symbols + grouped regions + title block).
 | The captioned blue region boxes ("Stepper Driver") | `|group|` + caption; restyle via a scoped rule |
 | Wires | the orthogonal router, unchanged |
 | Net name on a wire | the link label — `u7.VS - c24.p1 "VM"` works today |
+| One-ended op + trailing text | drawing leaders (`bolt <- "THRU"`) — the net-label statement shape |
 | Colours (dark-red outline, green wire, beige page…) | role variables + theme, the drawing precedent (`--stroke-dark`/`--stroke-light`) |
 | Symbol glyphs drawn at text-relative size | the 15.9 drafting-glyph registry (natural units, not box-fit) |
 | Custom power flags, part libraries | defines (`|vm::label| { … } [ "VM" ]` — intrinsic children materialize per instance) |
+| Minted ids for anonymous nodes | `lini-topic-N` — the precedent for minted refs |
 
-## Decisions leaned into during the session
+## Vocabulary
+
+The industry pair is **component** (the part) / **symbol** (its drawing); KiCad
+collapses both into "symbol". Lini keeps the full pair: `|component|` is the
+instance, `symbol:` picks a drawing — the same meaning it already has on
+`|icon|`. "Symbol" always answers *which glyph*.
+
+## Decisions leaned into
 
 ### 1. Architecture: a thin scope — `layout: schematic`
 
 Chosen over pure sugar and over a full lowering engine. Placement stays
 flow/grid-like (parts are placed manually — grid, translate); **the router keeps
-the wires** (unlike sequence/drawing, which consume their links). The scope exists
-to gate reinterpretations and own the small extras, exactly as drawing reinterprets
-`>-` and auto-places callouts:
+the wires** (unlike sequence/drawing, which consume their links). The scope
+gates reinterpretations and owns the small extras, as drawing reinterprets `>-`
+and auto-places callouts:
 
-- legalizes label-terminated wires (below) and marker→label-shape mapping;
+- legalizes label wires (below) and the marker → label-shape mapping;
 - auto-seats a label just off its pin (drawing's `note-offset` precedent);
-- draws junction dots at fan (`&`) trunk splits — generated chrome, styleable/removable
-  like `|halo|`;
-- scoped rules give the schematic look (group caption style, wire colour, …).
+- draws junction dots at fan (`&`) trunk splits — generated chrome;
+- scoped rules give the schematic look.
 
-Why not pure sugar (the `|table|` model): labels would have no owner — every net
-label/gnd hand-placed, no one-ended wires, no junction home. Kills text-to-diagram.
-Why not a lowering engine: fights "the orthogonal router should do the wiring",
-and manual placement is what schematics-for-showing want anyway.
+Why not pure sugar (the `|table|` model): labels would have no owner — every
+gnd/net label hand-placed, no one-ended wires, no junction home. Why not a
+lowering engine: fights "the orthogonal router should do the wiring", and manual
+placement is what schematics-for-showing want.
 
-Open detail: how schematic-ness reaches links written inside a *nested* `|grid|`
-of parts — cascade like `routing:`/`clearance:` (scene config), or nearest
-layout-owning ancestor. Needs a SPEC answer.
-
-### 2. The symbol type: `|component|` + `|pin|`
-
-`|symbol|` stays icon vocabulary; `|part|` too generic (drawings use the word);
-`|component|` is the universal EE term and only appears a few times per sheet
-(discretes get their own types).
+### 2. `|component|` + `|pin|`
 
 ```
 |component#U7| "TMC2300-LA-T" [
@@ -57,113 +57,139 @@ layout-owning ancestor. Needs a SPEC answer.
 u7.VS - c24.p1 "VM"
 ```
 
+- **Schematic identity is displayed** (round-2 correction). A declared node's id
+  is never its label (SPEC 3 — only auto-create labels from the id), so "label
+  defaults to id" is out. Instead the type's **lowering draws the id as chrome**
+  — the ref designator on a component/discrete, the pin name on a pin — the way
+  a `|hole|` draws its centre marks. Desugar-visible, label untouched. The
+  label keeps one job: the **value / part name**; on a pin it overrides the
+  displayed name for strings that can't be ids (`"VIO/NSTDBY"`, `"1.8VOUT"`).
+- **Minted refs** for auto-numbering: an anonymous discrete displays `R1`, `R2`…
+  — prefix from the type, declaration order, authored ids win, minting skips
+  taken names (the `lini-topic-N` precedent). Safety law: **minted refs are
+  display-only, never endpoints** — inserting a part would renumber and
+  silently re-wire otherwise. Don't care → free numbering; wire it → name it.
 - **No authored rails.** Desugar generates per-side rails as *anonymous*
-  containers — anonymous containers are already scope-transparent, so `u7.VS`
-  resolves with no rail segment in the path. The mechanism exists today.
+  containers — already scope-transparent, so `u7.VS` resolves with no rail in
+  the path.
 - **Pin sides, auto with override**: no `side:` → the bilateral split (first
-  ⌈n/2⌉ pins left, rest right, declaration order — the mindmap rule reused).
-  `side: left|right|top|bottom` overrides. Deterministic, no routing feedback.
-- **Pin smart label = the pin name**, defaulting to the id when omitted
-  (`|pin#VS|` reads "VS" — the implicit-node labelling rule reused); the label
-  form covers names that can't be ids (`"VIO/NSTDBY"`, `"1.8VOUT"`). `number:`
-  optional, drawn outside beside the stub.
-- **Pin anatomy** (name inside the body, number outside, stub line outward, wire
-  lands on the stub tip) is the pin type's lowering; stub length etc. are baked
-  schematic constants, like drawing's dim constants.
-- **Reference designator**: the id is displayed as the ref (`#U7` shows "U7"),
-  mirroring name-from-id. Open: an override/suppress knob (`ref:`? `""`?).
-- `|pin|` is lini's first type/property homonym with `pin:` — grammatically safe
-  (types live in bars, properties before `:`), same spirit as `scale`/`side`/`unit`.
-- Open: connector-style pins that show numbers only (J3) — per-pin `""` labels
-  are verbose ×N; maybe a `|connector|` derivative whose pins default nameless.
+  ⌈n/2⌉ left, rest right, declaration order — the mindmap rule). `side:`
+  overrides.
+- **Pin routing law**: a pin's connection point is its stub tip; departure is
+  fixed outward along its side. `:side` on a pin endpoint is an **error** — the
+  pin desugars to a forced-side endpoint the router already honours.
+- **Pin anatomy** (name inside, `number:` outside, stub outward) is the pin
+  type's lowering; stub length etc. are baked schematic constants.
+- Single-pin components are legal (test point, J3's MP pad); an unwired part
+  needs no id at all.
+- `|pin|` + `pin:` is lini's first **type/property homonym** (one word, two
+  roles) — never ambiguous (bars vs before-`:`); `scale`/`side`/`unit` are
+  property/property precedents.
 
 ### 3. Discretes: glyph types
 
-`|resistor|`, `|capacitor|`, `|inductor|`, `|diode|`, `|led|`, `|crystal|` (set
-open) — two-terminal glyph nodes drawn in natural units via the drafting-glyph
-machinery, each with **generated pins `p1`/`p2`** (`c24.p1` works). Smart label =
-the value (`|resistor#R18| "470m"`); ref from the id as above; orient with
-`rotate:`. Open: IEC vs ANSI resistor body (pick one default; variant knob or
-theme-level).
+Two-terminal glyph nodes (natural-units machinery), generated pins `p1`/`p2`
+(`c24.p1` works; wires must land on terminals). Smart label = the value; ref
+readout from the id / minted; orient with `rotate:`.
 
-### 4. Net labels, power, gnd: `|label|` + inline wire termination
+Naming — two candidates, pick one (no aliases):
 
-`|label|` (the name is free) is icon-shaped: smart label = the net text drawn in
-the tag outline; **`symbol:`** — the property icons already wear — swaps in a
-glyph from a small schematic glyph set (`gnd`, `earth`, `chassis`, `power`,
-`antenna`, `nc`, …). Text alone = net label; glyph alone = gnd; glyph + text =
-power flag. Power nets are defines with intrinsic text:
+- **Uppercase short set (lean)**: `|R|` `|C|` `|L|` `|D|` `|LED|` `|Y|`
+  (crystal) `|J|` (connector) — the type *is* the ref family exactly as sheets
+  write it, so minted refs need no name→prefix table (`|R| "10k"` → R1).
+  Precedent for short types: `|cyl|`, `|hex|`. `|component|` stays a word
+  (prefix U).
+- **Full words**: `|resistor|`, `|capacitor|`, … — more lini-wordy; needs a
+  name→prefix table for minting.
+
+Open: IEC vs ANSI resistor body (default + variant knob or theme-level);
+polarized capacitor.
+
+### 4. Net labels, power, gnd: `|label|` + two statement forms
+
+`|label|` (the name is free) is icon-shaped: smart label = the net text in the
+tag outline; `symbol:` swaps in a glyph from the schematic glyph set (`gnd`,
+`earth`, `chassis`, `power`, `antenna`, `nc`, …). Text alone = net label; glyph
+alone = gnd; glyph + text = power flag. Power nets are defines with intrinsic
+text: `|vm::label| { symbol: power } [ "VM" ]`.
+
+**Form 1 — text labels need no new grammar**: the drawing-leader statement
+shape, reinterpreted by the scope:
 
 ```
-{ |vm::label| { symbol: power } [ "VM" ] }
+u7.DIAG - "NSTDBY"      // one-ended wire + text → a tag, seated at the pin
+u7.STEP -> "STEP"       // marker picks the tag shape (output)
 ```
 
-**The key proposal — a schematic wire may terminate in an inline node:**
+Marker → shape: `-` plain, `->` output, `-<` input, `-<>` bidirectional, `-*`
+the round one (exact table is SPEC-pass detail; sequence-reinterprets-`->`
+precedent). Also covers no-connect if desired, or see form 2.
+
+**Form 2 — inline instantiation, proposed as a *core-wide* feature** (round-2
+resolution of the `- |gnd|` consistency worry — generalize rather than
+special-case): anywhere in lini, an endpoint position may hold bars:
 
 ```
-c24.p2 - |gnd|          // fresh anonymous gnd, seated at the open end
+c24.p2 - |gnd|          // fresh anonymous gnd at the open end
 u7.VS  - |vm|           // fresh VM power flag
-u7.DIAG - "NSTDBY"      // sugar for  - |label| "NSTDBY"
 u7.VCP - |nc|           // no-connect ✕ — just another terminator glyph
+cat -> |cyl| "DB"       // …and in any diagram: typed declare-and-link
 ```
 
-Why not bare `- GND` (the first instinct): "a bare name is always a referenced
-id" is load-bearing, and a shared id would silently collide five gnd triangles
-into one node with five wires. `- |gnd|` costs the same keystrokes, keeps bars =
-identity, and each mention mints a fresh instance. Parser stays LL(1): after the
-op, `|` opens the inline node, an ident is an endpoint. Precedent for nodes
-riding a link: drawing's annotation nodes in a dimension's `[ ]`.
+Desugar **hoists** the inline node to a declaration in the enclosing scope +
+the link — pure sugar, strictly more consistent than today's box-only implicit
+auto-create (it's *typed* auto-create). LL(1): after an op, `|` opens a node,
+an ident is an endpoint. **Binding law**: the inline form takes bars + an
+optional label only; any classes / `{ }` / `[ ]` after it belong to the link —
+a styled node uses the declared form.
 
-- Desugars to a generated seated `|label|` — visible in `lini desugar`; the
-  explicit node form (`|label#step2| "STEP"` + a normal wire) remains for
-  stretched, styled, or multi-wire labels.
-- **Marker → tag shape** (user's idea, liked): the op's end marker picks the
-  net-label shape — `-` plain, `->` output, `-<` input, `-<>` bidirectional,
-  `-*` the round one — the scope reinterpreting markers exactly as sequence
-  reinterprets `->`. Exact glyph table is SPEC-pass detail.
-- Restriction to state in SPEC: inline termination is single-hop, terminal-end
-  only (no chains through it; fan `&` behaviour needs a ruling — probably one
-  shared label, like fan leaders share one text, or just an error).
+The explicit node form (`|label#step2| "STEP"` + a normal wire) remains for
+stretched, styled, or shared labels; both sugars lower to it, desugar-visible.
 
-Rejected alternatives, for the record: `{ flag: gnd }` per use (un-lini,
-verbose); link-property-only labels (no node to stretch or share); auto-create
-type-swap in scope (`x - GND` creating a label named GND — shared-id collision
-above).
+Rejected alternatives, for the record: bare `- GND` (a shared id would collide
+five gnd triangles into one node — "bare = referenced id" is load-bearing);
+`{ flag: gnd }` per use (verbose, un-lini); a new sigil like `(gnd)` (parens
+already mean math + measuring ops, and bars already mean "an instance of a
+type" — a second mechanism for the same concept); auto-create type-swap in
+scope (same shared-id collision).
 
 ### 5. Look & theme
 
-New role variables (dark/light pairs, tree-shaken like the palette): component
-fill (pale yellow), component outline (dark red), wire (green), label (teal),
-pin number (muted), page background (beige). Schematic types carry defaults
-referencing them, so the classic look is default *inside the scope* and a theme
-retunes it. `|schematic|` template = `|block|` + `layout: schematic` (+ maybe the
-bg fill).
+New role variables (dark/light pairs, tree-shaken): component fill (pale
+yellow), component outline (dark red), wire (green), label (teal), pin number
+(muted), page background (beige). Schematic types carry defaults referencing
+them — classic look by default inside the scope, retunable by theme.
+`|schematic|` template = `|block|` + `layout: schematic`.
 
-## Explicitly out of scope (this is for *showing*, not netlisting)
+## Explicitly out of scope (for *showing*, not netlisting)
 
 Hierarchical sheets/labels, ERC, netlist export, buses (thick wires — defer),
-pin electrical types (input/output arrows on pins), auto part placement,
-wire-drag semantics. Wire connectivity is honest lini: connection is a shared
-endpoint or a fan `&` (junction dot); crossings are just crossings.
+pin electrical types (input/output pin glyphs), auto part placement. Wire
+connectivity is honest lini: connection is a shared endpoint or a fan `&`
+(junction dot); crossings are just crossings.
 
 ## SPEC & release integration
 
 - SPEC gets a new Part II section (a peer of Sequence/Charts/Drawing), written
-  as if from day one — full refactor, not a patch: templates into SPEC 8 or the
-  new section, properties into the ledger (16), the inline-termination grammar
-  into 21 (drawing-style scoped extension), new type names into 22, errors into
-  20, the glyph registry shared with 15.9.
-- ROADMAP needs a **beta 2 row** (currently beta.1 → rc): this feature lands
-  after beta.1 tooling, before rc. Syntax isn't frozen until v1, so schematic
-  gets first-class naming.
+  as if from day one — full refactor: templates, ledger (16), grammar (21 — the
+  inline-instantiation form, if blessed, lands in the *core* link grammar),
+  reserved words (22), errors (20), the glyph registry shared with 15.9.
+- ROADMAP needs a **beta 2 row** (currently beta.1 → rc). Syntax isn't frozen
+  until v1, so schematic gets first-class naming.
 
 ## Open questions (next session)
 
-1. Bless or reject **inline wire termination** — the one grammar extension.
-   Fallback: labels always explicit nodes (ids + two statements per gnd).
-2. Marker→shape table; how `-<` reads (crow elsewhere).
-3. Nested-scope semantics (cascade vs nearest-owner).
-4. Connector pins (number-only), ref override, IEC/ANSI variants.
-5. Junction dot form: generated `|junction|` chrome type vs a marker.
-6. Discrete set for beta 2 (R, C, polarized C?, L, D, LED, crystal, …).
-7. Glyph set for `|label|` (gnd, earth, chassis, power, antenna, nc, …).
+1. **Bless inline instantiation as a core feature?** (`a -> |cyl| "DB"`
+   everywhere; the schematic glyph terminators are just its best customer.)
+   Fallback: labels always explicit nodes.
+2. **Discrete naming**: uppercase short set (`|R|`, `|C|`…) vs full words.
+3. **Minted refs**: accept display-only minting (never endpoints)?
+4. Marker → shape table; how `-<` reads (crow elsewhere).
+5. Nested-scope semantics: wires written inside a `|grid|` used for placement
+   belong to that grid's scope — do label wires / junction dots reach them?
+   Likely cascade, like `routing:`.
+6. Connector pins show numbers only (J3) — suppress the name readout via a
+   `|connector|`/`|J|` whose pins default nameless?
+7. Junction form: generated `|junction|` chrome child, styleable by rule (the
+   `|halo|` pattern — lean) vs a marker on the wire.
+8. Glyph set for `|label|` (gnd, earth, chassis, power, antenna, nc, …).
