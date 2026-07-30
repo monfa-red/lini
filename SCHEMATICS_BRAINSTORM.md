@@ -127,21 +127,44 @@ precedent). Also covers no-connect if desired, or see form 2.
 
 **Form 2 — inline instantiation, proposed as a *core-wide* feature** (round-2
 resolution of the `- |gnd|` consistency worry — generalize rather than
-special-case): anywhere in lini, an endpoint position may hold bars:
+special-case; round-3 tightening — **bars only, no tail**): anywhere in lini,
+an endpoint position after an op may hold an identity capsule:
 
 ```
-c24.p2 - |gnd|          // fresh anonymous gnd at the open end
-u7.VS  - |vm|           // fresh VM power flag
-u7.VCP - |nc|           // no-connect ✕ — just another terminator glyph
-cat -> |cyl| "DB"       // …and in any diagram: typed declare-and-link
+c24.p2 - |gnd|                   // fresh anonymous gnd at the open end
+u7.VS  - |vm|                    // fresh VM power flag (define carries "VM")
+u7.VCP - |nc|                    // no-connect ✕ — another terminator glyph
+cat -> |cyl#db|                  // any diagram: typed declare-and-link
+cat -> |cyl#db| "watches" { … }  // tail = the LINK's, as with a bare endpoint
 ```
 
 Desugar **hoists** the inline node to a declaration in the enclosing scope +
-the link — pure sugar, strictly more consistent than today's box-only implicit
-auto-create (it's *typed* auto-create). LL(1): after an op, `|` opens a node,
-an ident is an endpoint. **Binding law**: the inline form takes bars + an
-optional label only; any classes / `{ }` / `[ ]` after it belong to the link —
-a styled node uses the declared form.
+the link — pure sugar, *typed* auto-create. No new binding rule is needed;
+two existing laws do all the work:
+
+- **A statement's tail belongs to its head.** `a -> b "x" .hot { }` already
+  labels/classes/styles the link, never `b` — an endpoint owns nothing. So the
+  capsule takes no label, class, style, or children; everything after it is the
+  link's. `a -> |cyl| "DB"` is therefore unambiguous: "DB" is the link label.
+  The node's label/style live where they always do — a normal declaration, a
+  define's intrinsic children (`|vm::label| { symbol: power } [ "VM" ]`), or
+  an id + id rule (`a -> |cyl#db|` … `#db { fill: red }`).
+- **The first token tells the statement's kind**, so bars at statement *head*
+  stay a node declaration — inline identity is legal only after an op, never
+  as the source end (`|box| "L" { } -> …` cannot exist). LL(1) holds: after an
+  op, `|` opens a capsule, an ident is an endpoint.
+
+Gates and edges: **drawing scopes reject it** ("a drawing never invents an
+endpoint" — the existing law); sequence allows it (a typed participant).
+Chaining through a capsule works when it has an id (declared, then referenced
+by the next hop); anonymous mid-chain — lean allow via minted internal handle,
+could gate terminal-only. A fan into a capsule is **one** instance (one
+declaration); per-wire grounds are separate statements. Declaring an id twice
+is the ordinary duplicate-id error. Cost accepted: label + wire in one line
+for a one-off node doesn't exist — two statements, lini's normal price.
+
+Rejected on the way here: bars + optional inline label (ambiguous — whose
+"DB"?); the full inline node tail (two `{ }` owners in one statement, mess).
 
 The explicit node form (`|label#step2| "STEP"` + a normal wire) remains for
 stretched, styled, or shared labels; both sugars lower to it, desugar-visible.
@@ -179,9 +202,10 @@ connectivity is honest lini: connection is a shared endpoint or a fan `&`
 
 ## Open questions (next session)
 
-1. **Bless inline instantiation as a core feature?** (`a -> |cyl| "DB"`
-   everywhere; the schematic glyph terminators are just its best customer.)
-   Fallback: labels always explicit nodes.
+1. **Bless inline instantiation as a core feature?** (bars-only endpoints,
+   `a -> |cyl#db|` everywhere; the schematic glyph terminators are its best
+   customer.) Fallback: labels always explicit nodes. Sub-choice: anonymous
+   mid-chain capsules — allow or terminal-only.
 2. **Discrete naming**: uppercase short set (`|R|`, `|C|`…) vs full words.
 3. **Minted refs**: accept display-only minting (never endpoints)?
 4. Marker → shape table; how `-<` reads (crow elsewhere).
