@@ -1,6 +1,6 @@
 # PCB Schematics — brainstorm notes (beta 2 candidate)
 
-Session notes, 2026-07-29/30 (twelve rounds). **Nothing here is decided** — this is
+Session notes, 2026-07-29/30 (thirteen rounds). **Nothing here is decided** — this is
 the state of the brainstorm. Reference schematic: a KiCad A5 page (TMC2300
 stepper driver — `even-Z.pdf`, U7 + passives + connector + net labels +
 gnd/power symbols + grouped regions + title block).
@@ -500,6 +500,28 @@ auto-placement; anchors never move.
 - **What `side: bottom` means is the dimension precedent, verbatim**: "I sit
   below the thing I annotate" (a dim below the geometry; a label below its
   pin) — never the node's own side. The SPEC states it by pointing at dims.
+
+## Round 13 — rotation replaces label `side:` (supersedes rounds 10 & 12 on this point)
+
+- **Conventions bake into authored symbol geometry, not a rules table**: gnd
+  is *drawn* with its connection point at the top → unrotated it hangs below;
+  power's is at the bottom → it stands above. Trust a correct model.
+- **Satellites auto-pose to face their anchor**: the seat pass picks the
+  90°-step pose whose connection geometry faces the pin/wire (deterministic
+  tie-break) — text labels flip to read outward on either side, a cap in a
+  downward chain stands vertical.
+- **Explicit `rotate: 0|90|180|270` forces the pose** (the KiCad "R" key);
+  seat direction *derives* from the rotated connection point. Four-position
+  gnd is legal. Non-90° rotation on a connection-bearing part errors
+  (round 8's law).
+- **Lowering nuance**: rotating a label re-lays its anatomy — the tag turns,
+  the **text stays upright** (never transform-mirrored); ref/value text on
+  rotated discretes likewise.
+- Label `side:` is dead — orientation was already owned by `rotate:`; a
+  second mechanism for one family is what lini kills. `side:` survives only
+  where it lived (pins, dimensions, axes); `:side` stays banned on all
+  terminals. Every satellite has exactly two knobs, both core: `rotate:`
+  (pose) and `translate:` (nudge).
 
 ## What's left
 
