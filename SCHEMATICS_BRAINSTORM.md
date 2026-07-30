@@ -1,6 +1,6 @@
 # PCB Schematics — brainstorm notes (beta 2 candidate)
 
-Session notes, 2026-07-29/30 (eight rounds). **Nothing here is decided** — this is
+Session notes, 2026-07-29/30 (nine rounds). **Nothing here is decided** — this is
 the state of the brainstorm. Reference schematic: a KiCad A5 page (TMC2300
 stepper driver — `even-Z.pdf`, U7 + passives + connector + net labels +
 gnd/power symbols + grouped regions + title block).
@@ -376,6 +376,55 @@ connectivity is honest lini: connection is a shared endpoint or a fan `&`
 - Listed-and-deferred: pot (RV), transformer (T), relay (K), motor (M),
   speaker (LS), logic gates, crossing hop-over arcs.
 - QoL: **`pins: N`** on `|J|` — generates N numbered pins (`J3` in one line).
+
+## Round 9 — placement (the blocker) & routing dress
+
+### Agreed
+
+- **Duplicates error in scope**: `a - b` twice is meaningless in a schematic.
+  `a - b; c - b` merges into the implicit fan (round 8) — one trunk, one dot.
+- **Junction/fan needs no new strategy** — the same orthogonal router wearing
+  scoped dress: (1) **corner radius → 0** (square elbows; the render-time
+  rounding radius becomes a scoped constant), (2) **junction dots** as
+  generated chrome at every computed ≥3-meet read off the routed geometry,
+  (3) the duplicates error. Laws, search, channels untouched.
+- **`|opamp|` and `|V|` / `|I|` are in** (op-amp: mints U, pins
+  `out`/`inp`/`inn`, power pins hidden by default; sources: SPICE prefixes,
+  2-pin, `symbol: dc | ac`).
+
+### PROPOSED — the anchor + satellite placement model (pending verdict)
+
+The reference sheet's own structure: every passive sits *beside the pin it
+serves* (C24/C25 off VS, C26 by NSTDBY, R18/R19 by BRA/BRB, each gnd below
+its cap). Real schematics = a few placed **anchors** + **satellites clinging
+to pins**. Deterministic version, reusing drawing's annotation-placement
+pattern:
+
+- **Anchors** — multi-pin parts (3+ pins), or anything explicitly placed —
+  go on the scope's **grid**: `layout: schematic` is grid-like, `cell:` is
+  the "imaginary grid" (coarse, no translate), auto-flow when you don't care.
+- **Satellites** — labels and *unplaced 1–2-pin parts* — **seat at the pin
+  their wire touches**: outward along the pin's direction at a baked
+  wire-length constant; a chain seats outward link by link; several satellite
+  groups on one pin stack in statement order; the satellite orients so its
+  entry pin faces its anchor. Seated satellites register as router obstacles
+  (drawing's annotation-obstacle precedent). `cell:` / `translate:` opts out.
+- A chain with **no placed end** falls back to flow with a warning (lean).
+- This restores the capsule's usefulness: `- |C| "100n" - |gnd|` seats where
+  its wire is — the original intent.
+
+```
+{ layout: schematic }
+|component#U7| "TMC2300-LA-T" [ …pins… ]        // the anchor
+U7.VS  - |C#C24| "22u" - |gnd|                   // C24 seats beside VS, gnd below
+U7.VS  - |vm|                                    // power flag above the pin
+U7.BRA - |R#R18| "470m" - U7.BRB                 // R18 between the pins
+U7.DIAG - "NSTDBY"
+```
+
+Honest cost: satellite seating is one real placement pass the scope owns — a
+step past "thin", but the drawing-annotation pattern reapplied, not
+auto-placement; anchors never move.
 
 ## What's left
 
