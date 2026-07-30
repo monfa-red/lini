@@ -1,6 +1,6 @@
 # PCB Schematics — brainstorm notes (beta 2 candidate)
 
-Session notes, 2026-07-29/30 (seven rounds). **Nothing here is decided** — this is
+Session notes, 2026-07-29/30 (eight rounds). **Nothing here is decided** — this is
 the state of the brainstorm. Reference schematic: a KiCad A5 page (TMC2300
 stepper driver — `even-Z.pdf`, U7 + passives + connector + net labels +
 gnd/power symbols + grouped regions + title block).
@@ -314,6 +314,68 @@ connectivity is honest lini: connection is a shared endpoint or a fan `&`
   desugar over `|component|` or a shared pin-bearing base with a symbol body
   is a SPEC-pass lowering detail; the pins are real generated `|pin|` children
   either way.
+
+## Round 8 — adversarial review (ROUTING.md read end to end)
+
+### Load-bearing findings — must be solved in the plan/SPEC
+
+1. **Fixed-port routing is THE structural work item.** ROUTING.md's port model
+   is "ports fall out of placement" (the ladder spreads landings along a
+   side); a pin is the opposite — a **fixed** port at an exact ordinate.
+   SPEC 23 already defers exactly this ("routed links to authored anchors —
+   needs a ROUTING.md contract extension; ports and Law 2 are side-based").
+   Schematics force building it: fixed ports, Law 2 amended (land *at the
+   port*, perpendicular; the corner-margin rule waived for pins — end pins sit
+   near corners), placement's no-braid logic coping with preassigned ports.
+2. **Rotation**: `rotate:` is an SVG transform applied *after* routing
+   (SPEC 5) — a rotated part would swing away from its wires. Fix: schematic
+   parts read `rotate:` in **90° steps at lowering time** (pins re-side,
+   geometry re-lays, then routing sees the truth); arbitrary angles error on
+   pin-bearing parts.
+3. **Series placement**: `vm - |R| - |LED| - |gnd|` wires correctly but the
+   thin scope places hoisted parts by *flow*, not "on the wire". Saving
+   grace: hoisted declarations are **consecutive flow siblings** — usually
+   adjacent. Accepted for beta 2 (documented); wire-seating is a possible
+   later refinement (note: a chain of all-capsules has no anchor to seat
+   against, so it can never be the only mechanism).
+4. **Same-pin tees**: two separate statements landing on one pin have no
+   contract answer (ports are unique today). Fix: same-pin landings collapse
+   into an **implicit fan at the port** (shared segment); junction law
+   generalizes to "**a dot wherever ≥3 wire ends meet at a point**" (trunk
+   splits and pin tees alike), label stubs excluded.
+5. **Implicit auto-create dies in the scope** (drawing precedent):
+   `U7.DIAG - NSTDBY` (forgotten quotes) must not mint a box — error with
+   "did you mean `- \"NSTDBY\"` (a net label)?".
+6. **Chain-through + explicit pin**: core expansion would share `.k` between
+   hops (a tee at the cathode). Scoped fix: chaining through a 2-pin part is
+   a **pass-through** — named (or next-free) pin = entry, the other = exit.
+   `vm - |D|.k - x` is the reversed diode, as intended.
+
+### Determinism details to pin in the SPEC (solvable, not vague-able)
+
+- Label auto-seat when the pin also carries wires — deterministic dodge
+  offset (perpendicular first, then along the side; translate overrides).
+- Mixing explicit `side:` pins with the bilateral auto-split — autos split
+  over the remainder.
+- Ref/value smart-label placement per type (component: above; discrete:
+  beside; deterministic, translate overrides).
+- **`shape:`** property on `|label|` (plain · left · right · both · round);
+  the wire op's marker is sugar setting it — exact precedent: the op's line
+  part sets `stroke-style`. A *declared* label can therefore carry any shape.
+- Pin chrome (stub, `number:`, name) folds into the **component's own
+  obstacle** — never free-floating text obstacles (they'd choke 20 px pin
+  pitch at default clearance).
+- Schematic scope link defaults, like drawing's: smaller `clearance`
+  (drawing uses 4), `stroke-width` ~1.5, wire colour role.
+
+### Missing popular parts — user to decide
+
+- **`|opamp|`** (mints U; pins `out` / `inp` / `inn`, power pins hidden by
+  default) — huge in book schematics. **`|V|` / `|I|`** sources (SPICE
+  prefixes, 2-pin, `symbol: dc | ac`) — circuit-theory teaching diagrams.
+- Listed-and-deferred: pot (RV), transformer (T), relay (K), motor (M),
+  speaker (LS), logic gates, crossing hop-over arcs.
+- QoL: **`pins: N`** on `|J|` — generates N numbered pins (`J3` in one line).
 
 ## What's left
 
