@@ -1,6 +1,6 @@
 # PCB Schematics — brainstorm notes (beta 2 candidate)
 
-Session notes, 2026-07-29/30 (six rounds). **Nothing here is decided** — this is
+Session notes, 2026-07-29/30 (seven rounds). **Nothing here is decided** — this is
 the state of the brainstorm. Reference schematic: a KiCad A5 page (TMC2300
 stepper driver — `even-Z.pdf`, U7 + passives + connector + net labels +
 gnd/power symbols + grouped regions + title block).
@@ -288,6 +288,32 @@ connectivity is honest lini: connection is a shared endpoint or a fan `&`
   an `along:` fraction (the drawing annotation-node seam) — deferred.
 - Label defines stay lowercase (`|gnd|`, `|vm|`) — uppercase is for ref
   families.
+
+## Settled in round 7 — capsule endpoint anatomy & the arity rule
+
+- **A capsule composes with endpoint anatomy.** Two different tails: the
+  *statement* tail (label/class/style — the link's; a capsule never takes it)
+  vs the *endpoint* anatomy (`.path`, `:side` — the endpoint's). A capsule
+  stands where the leading id segment would, the rest composes:
+  `endpoint = (id | capsule) { "." ident } [ ":" side ]`.
+  So `|cyl|:left -> a` (core, forced side) and `vm - |D|.k - x` (schematic,
+  cathode-first — **the polarity answer**) are both legal. `|component#U9|.p4`
+  parses but errors at resolve — an inline component has no authored pins (a
+  capsule can't carry `[ ]`); discretes' pins are *generated*, so they exist
+  the moment the instance does. In a schematic, `:side` never selects a pin —
+  sides aren't terminals.
+- **Pinless wiring gates on pin arity, never on a type list** — any
+  pin-bearing part, authored or generated: **1 pin** → lands on it; **2 pins**
+  → next free in the type's pin order (chain-through = series; both taken →
+  error "name one"); **3+ pins** → error with a suggestion. `|Q| -> a` errors
+  because Q has three pins, not because it's Q; a 2-pin authored `|component|`
+  (a jumper) chains in series like an `|R|`.
+- **Components have pins; a label is its own terminal.** A wire lands on the
+  label's attachment point — no `|gnd|.p1`, no dot-path into a label, ever. An
+  id'd label may take several wires (a star into one tag). Whether discretes
+  desugar over `|component|` or a shared pin-bearing base with a symbol body
+  is a SPEC-pass lowering detail; the pins are real generated `|pin|` children
+  either way.
 
 ## What's left
 
