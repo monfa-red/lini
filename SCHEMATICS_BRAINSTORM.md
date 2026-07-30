@@ -1,6 +1,6 @@
 # PCB Schematics — brainstorm notes (beta 2 candidate)
 
-Session notes, 2026-07-29/30 (eleven rounds). **Nothing here is decided** — this is
+Session notes, 2026-07-29/30 (twelve rounds). **Nothing here is decided** — this is
 the state of the brainstorm. Reference schematic: a KiCad A5 page (TMC2300
 stepper driver — `even-Z.pdf`, U7 + passives + connector + net labels +
 gnd/power symbols + grouped regions + title block).
@@ -484,6 +484,22 @@ auto-placement; anchors never move.
   any instance overrides; the terminator's `side:` steers its whole chain.
   The styling levers: pin position (start), terminator `side:` (end),
   everything else falls in the middle; `translate:` last.
+
+## Round 12 — satellite positioning closure & the terminal-side symmetry
+
+- **Arbitrary satellite positions need nothing new**: `cell:` promotes a
+  satellite to an anchor (its own cell, anywhere — including an empty
+  region); `translate:` nudges from the seat. Empty columns can't help
+  satellites (they consume space, not cells) and don't need to.
+- **`:side` never applies to terminals — pins or labels.** Round 2 already
+  errors `:side` on a pin endpoint (a terminal owns its connection geometry);
+  round 7 made a label its own terminal; so `|gnd|:top` — legal-looking via
+  capsule anatomy — is an **error**, not a second spelling of seating
+  (`:top` ≈ `side: bottom` inverted would be an alias, and it reads wrong).
+  The one seating knob is **`side:` on the label**.
+- **What `side: bottom` means is the dimension precedent, verbatim**: "I sit
+  below the thing I annotate" (a dim below the geometry; a label below its
+  pin) — never the node's own side. The SPEC states it by pointing at dims.
 
 ## What's left
 
