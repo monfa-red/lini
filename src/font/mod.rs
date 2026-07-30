@@ -229,7 +229,7 @@ fn charset_index(ch: char) -> Option<usize> {
 
 /// Whether the subset TTF bytes are compiled in (the default-on `font`
 /// feature). Name-only output never needs them; `--embed-font` / `--static`
-/// error helpfully without them [SPEC 19].
+/// error helpfully without them [SPEC 20].
 pub const ENABLED: bool = cfg!(feature = "font");
 
 /// The subset TTF for a family × weight — `--embed-font` inlines it,

@@ -229,7 +229,7 @@ fn apply_text_transform(content: &str, attrs: &AttrMap) -> String {
     }
 }
 
-/// The `--static` twin of the `<text>` path [SPEC 17]: each line becomes
+/// The `--static` twin of the `<text>` path [SPEC 18]: each line becomes
 /// `<use>` references to deduped glyph paths in `<defs>` (font units, y-up —
 /// the per-use `scale(s, -s)` flips and sizes them), positioned by the same
 /// measurement fold layout reserved room with. `text-transform` bakes into

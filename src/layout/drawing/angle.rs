@@ -139,7 +139,7 @@ fn arc_between(
     Ok(out)
 }
 
-/// A line-like anchor's direction, or the SPEC 20 error.
+/// A line-like anchor's direction, or the SPEC 21 error.
 fn line_dir(a: &Anchor, w: &ResolvedLink) -> Result<P, Error> {
     a.direction().ok_or_else(|| two_edges(w))
 }

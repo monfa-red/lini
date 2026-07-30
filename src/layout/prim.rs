@@ -76,7 +76,7 @@ pub fn oval(cx: f64, cy: f64, w: f64, h: f64, fill: ResolvedValue) -> PlacedNode
 /// sizes it (a line vertex by the kind, a `|dots|` by its `width`). The **one** place a
 /// chart point marker is built — line/area vertices, `|dots|`, and `|mark|` points all
 /// route through it, so dot/circle/diamond never diverge. `arrow` / `crow` never reach
-/// here (rejected at parse, [SPEC 20]); any non-diamond draws round.
+/// here (rejected at parse, [SPEC 21]); any non-diamond draws round.
 pub fn marker(
     kind: MarkerKind,
     cx: f64,
@@ -98,7 +98,7 @@ pub fn marker(
 /// `lini-marker lini-marker-{variant}`, so the shared `.lini-marker` rule
 /// paints it (fill = the link stroke, stroke off) and only a recoloured
 /// statement inlines anything — exactly how link markers ride the sheet
-/// [SPEC 17].
+/// [SPEC 18].
 pub fn dim_marker(variant: &str, points: Vec<(f64, f64)>, fill: ResolvedValue) -> PlacedNode {
     let bbox = Bbox::from_points(&points);
     let pts = points
@@ -330,7 +330,7 @@ const DIM_TEXT_SIZE: f64 = crate::ledger::consts::DRAWING_LINK_FONT_SIZE;
 /// The class states the font (12 px, normal weight), so a leaf at that default
 /// inlines nothing; only a size that differs — a `tol:` deviation stack, a
 /// restyled link — carries an inline `font-size` override (a statement's own
-/// text styling still inlines, [SPEC 17]).
+/// text styling still inlines, [SPEC 18]).
 pub fn dim_text(content: &str, cx: f64, cy: f64, size: f64, kind: Kind) -> PlacedNode {
     let mut n = text_classed(content, cx, cy, size, "dim-text", Font::regular(kind));
     if (size - DIM_TEXT_SIZE).abs() > 1e-9 {
@@ -340,7 +340,7 @@ pub fn dim_text(content: &str, cx: f64, cy: f64, size: f64, kind: Kind) -> Place
 }
 
 /// A plain text leaf that **inherits** its font from the enclosing `<g>` — no
-/// class, no inline [SPEC 17]. For text under a box that already states the font
+/// class, no inline [SPEC 18]. For text under a box that already states the font
 /// (a title `|footnote|`), so nothing is stated twice. `size` bounds the bbox.
 pub fn text_plain(content: &str, cx: f64, cy: f64, size: f64, kind: Kind) -> PlacedNode {
     let bbox = Bbox::centered(

@@ -1,4 +1,4 @@
-//! Canonical source formatter [SPEC 19]. Parses to the AST and re-emits a
+//! Canonical source formatter [SPEC 20]. Parses to the AST and re-emits a
 //! normalized form: the three phases in order (the stylesheet `{ }`, then the
 //! instances, then the links), `{ }` style blocks and `[ ]` child lists, bar-wrapped
 //! type selectors and `|name::base|` defines, 2-space indent, space-separated value
@@ -57,7 +57,7 @@ pub(crate) fn print_file(file: &File) -> String {
 
 /// The canonical value string of a declaration (no name, no `;`) — the one
 /// value renderer schema generation reuses to print the ledger's default
-/// bundles [SPEC 16], so a default reads exactly as an author would write it.
+/// bundles [SPEC 17], so a default reads exactly as an author would write it.
 pub(crate) fn print_decl_value(decl: &Decl) -> String {
     let mut out = String::new();
     Emitter {
@@ -400,10 +400,10 @@ impl Emitter<'_> {
     /// Emit bare-text cells as aligned rows: each column padded to its widest
     /// cell, a single space between columns, `columns` cells per row. A cell that
     /// carries a `{ }` style block re-emits it, and its whole row leaves the grid
-    /// (a block throws the widths off) — unstyled rows stay aligned [SPEC 19].
+    /// (a block throws the widths off) — unstyled rows stay aligned [SPEC 20].
     fn emit_aligned_cells(&mut self, cells: &[Child], cols: usize, depth: usize) {
         // A cell that carries a `{ }` block **or** a worn class throws the
-        // column widths off, so its whole row breaks out of the grid [SPEC 19].
+        // column widths off, so its whole row breaks out of the grid [SPEC 20].
         let styled = |c: &Child| matches!(c, Child::Text(t) if !is_plain_text(t));
         let rows: Vec<&[Child]> = cells.chunks(cols).collect();
         // Column widths come from the aligned (unstyled) rows only.
@@ -441,7 +441,7 @@ impl Emitter<'_> {
     }
 
     /// Emit a run of declarations grouped onto as few lines as the source's
-    /// trivia allows [SPEC 19]: consecutive decls with nothing between them
+    /// trivia allows [SPEC 20]: consecutive decls with nothing between them
     /// share one line, and a comment or blank line starts a fresh one.
     fn emit_grouped_decls(&mut self, decls: &[&Decl], depth: usize) {
         let mut mid_line = false;
@@ -475,7 +475,7 @@ impl Emitter<'_> {
         }
     }
 
-    /// The canonical `draw:` layout [SPEC 19]: pen calls flow to the line
+    /// The canonical `draw:` layout [SPEC 20]: pen calls flow to the line
     /// budget, every `move()` after the first starts a new subpath line, and
     /// continuations indent to align under the first call.
     fn emit_draw_decl(&mut self, d: &Decl, depth: usize) {
@@ -539,7 +539,7 @@ impl Emitter<'_> {
         if self.has_trivia_between(self.cursor, end) {
             return false;
         }
-        // A multi-subpath pen always breaks — one line per `move()` [SPEC 19].
+        // A multi-subpath pen always breaks — one line per `move()` [SPEC 20].
         let multi_subpath = |d: &Decl| {
             d.name == "draw"
                 && d.groups
@@ -840,7 +840,7 @@ fn identity_bars(node: &Node) -> String {
 
 /// A bare text leaf — no worn class, no `{ }` block. Such a cell aligns in a
 /// table grid and packs inline (`[ "a" "b" ]`); a classed or styled one breaks
-/// out [SPEC 19].
+/// out [SPEC 20].
 fn is_plain_text(t: &TextNode) -> bool {
     t.classes.is_empty() && t.style.is_empty()
 }

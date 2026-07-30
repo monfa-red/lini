@@ -1,4 +1,4 @@
-//! The property-validation pass and the lint warnings [SPEC 16/20]: one insta
+//! The property-validation pass and the lint warnings [SPEC 18/21]: one insta
 //! family per diagnostic, snapshotting the exact CLI-rendered message, plus
 //! the silent cases that gate false positives.
 
@@ -157,7 +157,7 @@ fn opacity_out_of_range_errors() {
 
 #[test]
 fn wavy_on_a_node_errors() {
-    // `wavy` is link-only by design [SPEC 16]; a link keeps it.
+    // `wavy` is link-only by design [SPEC 17]; a link keeps it.
     insta::assert_snapshot!(
         diags("|box#a| { stroke-style: wavy; }\n"),
         @"test.lini:1:11: error: 'wavy' waves a link's wire — a shape's outline takes solid, dashed, dotted, center, or phantom"
@@ -367,18 +367,18 @@ fn scoped_topic_ids_stay_legal_across_sealed_bodies() {
 #[test]
 fn an_authored_id_may_not_begin_lini() {
     // The `lini-` prefix is reserved for generated names, mirroring the
-    // `.lini-*` class reservation [SPEC 20/22].
+    // `.lini-*` class reservation [SPEC 21/22].
     insta::assert_snapshot!(
         lini::check("|box#lini-foo|\n").expect_err("reserved id prefix").message,
         @"an id may not begin 'lini-' — the prefix is reserved for generated names"
     );
 }
 
-// ── `format:` ownership [SPEC 16, CHART-DRAW Stages 1 + 8] ──
+// ── `format:` ownership [SPEC 17, CHART-DRAW Stages 1 + 8] ──
 
 #[test]
 fn format_reads_on_its_owners_not_a_plain_box() {
-    // `format` is a dual-channel property [SPEC 16, beta Stage 0]: engine-read
+    // `format` is a dual-channel property [SPEC 17, beta Stage 0]: engine-read
     // on the chart leg, scope-link on the drawing leg (drawing scope → `(-)`
     // rule → class → the dim's block). It reads on those owners — a drawing
     // scope carries it as config — but a plain box cannot mean it, so it errors

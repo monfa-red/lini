@@ -2,10 +2,10 @@
 //! the source file's directory and its bytes are read **once, here** — so
 //! layout and render stay pure and the output is deterministic from the bytes.
 //! An SVG asset is rewritten for embedding (every id prefixed `lini-aN-`, every
-//! internal reference following — [SPEC 17]); a raster folds to a base64 data
+//! internal reference following — [SPEC 18]); a raster folds to a base64 data
 //! URI. HTTP(S) URLs and authored `data:` URIs pass through untouched — the
 //! compiler never touches the network. Under `lini serve` reads are confined
-//! to the served root [SPEC 19].
+//! to the served root [SPEC 20].
 
 use super::ir::{AttrMap, ResolvedValue};
 use crate::error::{Code, Error};
@@ -26,7 +26,7 @@ pub struct AssetEnv {
 }
 
 /// Per-compile asset state: the environment plus the 1-based document-order
-/// counter behind the `lini-aN-` id prefix [SPEC 17].
+/// counter behind the `lini-aN-` id prefix [SPEC 18].
 pub struct AssetState {
     env: AssetEnv,
     counter: Cell<usize>,
@@ -60,7 +60,7 @@ pub fn embed_image(attrs: &mut AttrMap, state: &AssetState, span: Span) -> Resul
         Some(base) => base.join(&src),
         None => PathBuf::from(&src),
     };
-    // The serve boundary [SPEC 19]: canonicalize (resolving symlinks) and
+    // The serve boundary [SPEC 20]: canonicalize (resolving symlinks) and
     // require the asset inside the served root. Checked before the read — a
     // file outside the boundary is never opened. A path that cannot
     // canonicalize does not exist, which is the read error's domain.
@@ -152,7 +152,7 @@ fn sniff_svg(bytes: &[u8]) -> Option<&str> {
     Some(text)
 }
 
-// ───────────────────────── The id rewrite [SPEC 17] ─────────────────────────
+// ───────────────────────── The id rewrite [SPEC 18] ─────────────────────────
 
 /// One scanned piece the rewriter cares about: an attribute value (quote-free
 /// range) or a character-data run between tags (`<style>` text and CDATA
@@ -321,7 +321,7 @@ fn root_svg(text: &str) -> Option<(Range<usize>, bool)> {
     Some((i..i + j + 1, self_closing))
 }
 
-/// Rewrite an SVG asset for embedding [SPEC 17]: every declared `id` gains
+/// Rewrite an SVG asset for embedding [SPEC 18]: every declared `id` gains
 /// `prefix`, and every internal reference follows — `url(#…)` in attributes,
 /// inline `style`, and `<style>` text; fragment `href` / `xlink:href`.
 /// Returns `(root attributes to keep, rewritten inner markup)`: the asset's
@@ -339,7 +339,7 @@ fn rewrite_svg(text: &str, prefix: &str) -> Result<(String, String), String> {
         }
         tag.end..close
     };
-    // Every id the asset declares, root tag included [SPEC 17]. Only
+    // Every id the asset declares, root tag included [SPEC 18]. Only
     // references to these rewrite — an external fragment stays as authored.
     let ids: BTreeSet<&str> = scan(text)
         .iter()
@@ -476,7 +476,7 @@ fn css_length(v: &str) -> Option<&str> {
 
 /// Plain base64 (RFC 4648, padded) — a data: URL needs nothing more, and a
 /// dependency would be heavier than the 20 lines. Shared with the font
-/// embedder [SPEC 17].
+/// embedder [SPEC 18].
 pub(crate) fn base64(data: &[u8]) -> String {
     const TBL: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     let mut out = String::with_capacity(data.len().div_ceil(3) * 4);

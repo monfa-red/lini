@@ -71,7 +71,7 @@ pub fn render_link(
             format!("lini-style-{}", s)
         }
     }));
-    // A link's `<g>` paint is the same class-diff a node's is [SPEC 17] — one
+    // A link's `<g>` paint is the same class-diff a node's is [SPEC 18] — one
     // shared computation; a link never aliases `color` and formats with plain
     // `format_value`.
     // A wire's one DOM ancestor layer: descendant rules reach it through the
@@ -490,7 +490,7 @@ fn label_mask(
     let id = format!("lini-label-cut-{idx}");
     // The mask rects carry their fill/stroke via CSS (`.lini-cut-bg` /
     // `.lini-cut`), not inline — so the link's own `stroke` can't bleed into the
-    // luminance mask, and the SVG stays free of per-label paint [SPEC 17].
+    // luminance mask, and the SVG stays free of per-label paint [SPEC 18].
     let mut m = super::knockout::open(&id, (rx, ry, rw, rh));
     for cut in hits {
         super::knockout::cut_rect(&mut m, *cut);
@@ -512,7 +512,7 @@ fn render_link_text(
     opts: &Options,
     sink: &super::fonts::FontSink,
 ) {
-    // A label's paint is the same class-diff a node's text leaf is [SPEC 17],
+    // A label's paint is the same class-diff a node's text leaf is [SPEC 18],
     // against its own role rule (`.lini-link-label` / `.lini-sequence-message`) —
     // so `text-shadow` and every other font/paint prop ride through, and the
     // per-role default size states once in the sheet, not on each label.

@@ -48,13 +48,13 @@ stage's end: fmt/test/clippy clean, a **Log** line here.
    diagnostics, and grammars are built on the cleaned ledger, never
    alongside an un-reconciled one.
 3. **The three SPEC errata match the code** (Stage 0, in place):
-   - **SPEC 16 `font-weight` default** row reads `normal`; the code
+   - **SPEC 17 `font-weight` default** row reads `normal`; the code
      default is `--lini-font-weight` = **500** (SPEC 10.1). The row's
      default becomes **medium / 500**.
    - **SPEC 12 off-grid `cell` / `span`** reads "silently ignored"; the
      validator **errors** where the container is a statically-known
-     non-grid (SPEC 16's strict rule, SPEC 20's row). The prose becomes
-     the strict-rule error wording, reconciled with SPEC 16/20 (the
+     non-grid (SPEC 17's strict rule, SPEC 21's row). The prose becomes
+     the strict-rule error wording, reconciled with SPEC 18/21 (the
      `span`-on-a-chart-`|band|` exception kept).
    - **SPEC 14.6 chart chrome** reads "bold"; the code sets title and
      legend **semibold** (`Font::semibold`, emits `600`). "bold" →
@@ -77,13 +77,13 @@ stage's end: fmt/test/clippy clean, a **Log** line here.
    semantics — no per-owner-inherit split, no prose-only truth.
 5. **`legend` gains a `deferred` marking.** The row is honoured only as
    the auto-legend (≥ 2 entries); its placement/suppression reader is
-   deferred (SPEC 23, SPEC 14 marks it `⌛`). Building the reader is
+   deferred (SPEC 24, SPEC 14 marks it `⌛`). Building the reader is
    **not** beta's job. The ledger gains a `deferred` flag (the
    `text`/`baked`/`hard` const-builder convention) and `legend` wears it
    — which is also a first-class schema field (ROADMAP 3.8 lists
    "deferred flags"), so the generated schema states it truthfully.
-6. **`text-shadow` is present in SPEC 16.** The row's stale comment
-   claims it is missing; SPEC 16's Text table already lists it (Stage 0
+6. **`text-shadow` is present in SPEC 17.** The row's stale comment
+   claims it is missing; SPEC 17's Text table already lists it (Stage 0
    drops the stale note — reconciliation, no SPEC change).
 7. **Diagnostic codes: phase prefix + number** (Stage 3). Each
    diagnostic carries a stable code — a **phase letter** then a 3-digit
@@ -120,10 +120,10 @@ SPEC errata to match the code; the `format` / `legend` / `text-shadow`
 rows reconciled (the one seam schema generation will read next). No
 feature, no new syntax.
 
-- [x] **SPEC 16 `font-weight` default** `normal` → **`medium`** (500),
+- [x] **SPEC 17 `font-weight` default** `normal` → **`medium`** (500),
   matching `--lini-font-weight` (SPEC 10.1) and the code.
 - [x] **SPEC 12 off-grid `cell` / `span`** "silently ignored" → the
-  strict-rule error wording (SPEC 16/20 — errors where the container is a
+  strict-rule error wording (SPEC 18/21 — errors where the container is a
   known non-grid; the `span`-on-a-`|band|` exception preserved).
 - [x] **SPEC 14.6 chart chrome** "bold" → **"semibold"** (title + legend;
   `Font::semibold` = 600).
@@ -136,7 +136,7 @@ feature, no new syntax.
 - [x] **`legend` deferred** (decision 5): the ledger gains a `deferred`
   const-builder flag; `legend` wears it; the schema-facing accessor
   lands with a pinning test.
-- [x] **`text-shadow`** (decision 6): the stale "missing from SPEC 16"
+- [x] **`text-shadow`** (decision 6): the stale "missing from SPEC 17"
   note dropped (it is present in the Text table).
 - [x] Tests pin the new truths: `format` accepted on its owners / rejected
   on a flow box; `clearance` / `routing` still universal; `legend`
@@ -150,7 +150,7 @@ Acceptance: SPEC and code agree on the three errata; the `format` row is
 truthful for the schema; anchors intact (every `](#…)` resolves);
 `cargo fmt && cargo clippy --all-targets -- -D warnings && cargo test`
 clean, re-pins deliberate, snapshot churn zero.
-**Log:** 2026-07-19 — **done**. **Three SPEC errata**, in place: SPEC 16's
+**Log:** 2026-07-19 — **done**. **Three SPEC errata**, in place: SPEC 17's
 `font-weight` default `normal` → **`medium` (500, `--font-weight`)**
 (matches SPEC 10.1 and `--lini-font-weight`); SPEC 12's off-grid
 `cell`/`span` "silently ignored" → the strict-rule error wording (SPEC
@@ -171,9 +171,9 @@ while `clearance` / `routing` (no node owner) stay universal scene config.
 `node_accepts` + `check_root_decl` share the one gate
 (`inherit != No && !has_node_owner`). The ledger gains a `deferred`
 const-builder flag; **`legend`** wears it (the auto-legend is built; the
-placement reader is SPEC 23) — a first-class schema field (ROADMAP 3.8).
-**`text-shadow`**'s stale "missing from SPEC 16" note dropped (it rides
-the Universal Text table, SPEC 16 line 3176). **Tests re-pinned
+placement reader is SPEC 24) — a first-class schema field (ROADMAP 3.8).
+**`text-shadow`**'s stale "missing from SPEC 17" note dropped (it rides
+the Universal Text table, SPEC 17 line 3176). **Tests re-pinned
 deliberately:** the old `format_is_inherited_scope_config` (which pinned
 the inert-on-a-box **bug** as silent) became
 `format_reads_on_its_owners_not_a_plain_box` (drawing-scope silent, box
@@ -412,7 +412,7 @@ routing law checker); phase = **where detected** (so `reserved-id` / `unknown
 derivable — the did-you-mean name over the misspelled token's span
 (`unknown-property` → replace `colr` with `color`); the human LSP-style output
 is **unchanged byte-for-byte** (codes ride the structured form only, zero
-snapshot churn). **`--json`** (SPEC 19 row added) emits one serde-free document
+snapshot churn). **`--json`** (SPEC 20 row added) emits one serde-free document
 `{ file, diagnostics: [...] }` via the **shared** `crate::json` printer (promoted
 out of `schema/`, one mechanism, decision 9) — the whole pass assembly lives in
 `lini::diagnostics_json`; exit 1 on any error. **Carried-over pair** (decision
@@ -425,7 +425,7 @@ validator reads the ledger's `Gate::Hard` column (`cell`/`span` now marked
 -judgeable gates (cell/span/place/activation) fire at validate, `tol`/`project`
 at drawing layout; a pinning test fixes the hard set `{activation, cell, place,
 project, span, tol}` and schema regenerated (the cell/span `hard-gate` flag — the
-only schema drift). SPEC 20 gains a stable-codes paragraph. **Tests:** code
+only schema drift). SPEC 21 gains a stable-codes paragraph. **Tests:** code
 uniqueness + family uniqueness + per-phase generic + a `catalog` snapshot pinning
 each code→family (renumber = CI fail); `--json` shape snapshots per family; the
 machine-applicable fix applied by span → recompiles clean; a no-unclassified

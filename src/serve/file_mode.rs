@@ -70,7 +70,7 @@ fn serve_svg(stream: &mut TcpStream, state: &State) -> std::io::Result<()> {
             return http::write_response(stream, 200, "text/plain; charset=utf-8", msg.as_bytes());
         }
     };
-    // A file target's asset root is its own directory [SPEC 19]: image paths
+    // A file target's asset root is its own directory [SPEC 20]: image paths
     // resolve there and may not escape it.
     let dir = path.parent().unwrap_or(Path::new(".")).to_path_buf();
     let opts = crate::Options {

@@ -76,7 +76,7 @@ impl Paint {
     }
 
     /// A dimension / leader polyline in this link's stroke — classed
-    /// `lini-dim-line`, so the default paint rides the sheet [SPEC 17].
+    /// `lini-dim-line`, so the default paint rides the sheet [SPEC 18].
     pub fn dim(&self, points: Vec<P>) -> PlacedNode {
         let mut n = super::super::prim::line(points, self.stroke.clone(), self.sw);
         n.type_chain = vec!["dim-line".into()];

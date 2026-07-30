@@ -15,7 +15,7 @@ use crate::icon::Role;
 pub const GRID: f64 = 100.0;
 
 /// The drafting-symbol type a node's `.lini-*` chain wears, if any — the one
-/// list behind the [SPEC 20] drawing-scope gate, the carried-`[ ]` gate at
+/// list behind the [SPEC 21] drawing-scope gate, the carried-`[ ]` gate at
 /// resolve, and the layout lowering dispatch [SPEC 15.9].
 pub fn drafting_type(chain: &[String]) -> Option<&'static str> {
     chain.iter().find_map(|t| match t.as_str() {

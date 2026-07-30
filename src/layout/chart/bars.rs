@@ -249,7 +249,7 @@ fn emit_wedge(
 }
 
 /// The `<title>` text for a bar: category and/or series name, then the value
-/// under the series' `format:` [SPEC 16].
+/// under the series' `format:` [SPEC 17].
 fn title(category: Option<&String>, name: Option<&str>, value: f64, fmt: format::Format) -> String {
     let v = format::render(value, fmt);
     match (category.map(String::as_str), name) {

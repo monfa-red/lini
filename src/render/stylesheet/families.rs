@@ -12,7 +12,7 @@ use crate::layout::LaidOut;
 use crate::resolve::{AttrMap, NodeKind, ResolvedValue, VarTable};
 use std::collections::{BTreeSet, HashMap};
 
-/// Emit a generated class's default paint [SPEC 17] — the look for a class the
+/// Emit a generated class's default paint [SPEC 18] — the look for a class the
 /// engine synthesises (the projection line, the crossing halo and its white
 /// ground, the dimension chrome, the drafting heads) with no desugar-visible
 /// instance to fold a bundle into. One guard for all six: emit only when the
@@ -78,7 +78,7 @@ pub(super) fn build_frame_rules(
 
     // The scene background plate: `.lini-canvas` fills with `--lini-bg`, stated as
     // a CSS rule (not a presentation attr, where `var()` is invalid) so it switches
-    // live and bakes to a literal for resvg/email [SPEC 17].
+    // live and bakes to a literal for resvg/email [SPEC 18].
     rules.push(Rule {
         class: "lini-canvas".into(),
         props: vec![("fill".into(), live("bg", vars, opts))],
@@ -181,7 +181,7 @@ pub(super) fn build_shape_rules(
         ],
     );
     if present.contains("text") {
-        // A bare `<text class="lini-text">` [SPEC 17]. `fill: currentColor` ties
+        // A bare `<text class="lini-text">` [SPEC 18]. `fill: currentColor` ties
         // the glyph colour to the inherited `color`; `stroke: none` keeps a
         // container's stroke off the glyphs; `text-anchor: middle` centres it
         // on x. Vertical centring is a baked `dy` on the element — cap-height
@@ -428,7 +428,7 @@ pub(super) fn build_link_label_rules(
     }
     // The label cut's mask rects state their fill/stroke as CSS, not inline — so
     // the link's own `stroke` can't bleed into the luminance mask, and the SVG
-    // stays free of per-label paint attrs [SPEC 17]. White shows the link, a black
+    // stays free of per-label paint attrs [SPEC 18]. White shows the link, a black
     // box per label punches the hole. When labels exist the white ground seats
     // here beside `.lini-cut` (the halo path defers it via its `present` flag).
     emit_generated_default(rules, laid, "lini-cut-bg", has_labels, cut_bg_props());
@@ -444,7 +444,7 @@ pub(super) fn build_link_label_rules(
     );
 }
 
-/// The knockout mask's white ground paint [SPEC 17] — one home for the `.lini-cut-bg`
+/// The knockout mask's white ground paint [SPEC 18] — one home for the `.lini-cut-bg`
 /// props, shared by the label-cut and crossing-halo consumers.
 fn cut_bg_props() -> Vec<(String, String)> {
     vec![
@@ -545,7 +545,7 @@ pub(super) fn build_style_class_rules(
         }
         // One paint vocabulary: a `.style` class states `stroke` whether it dresses a
         // node's outline or a link's wire, so its `.lini-style-*` rule paints both
-        // with no per-link inline [SPEC 17].
+        // with no per-link inline [SPEC 18].
         rules.push(Rule {
             class: format!("lini-style-{}", name),
             props: paint_props(attrs, vars, opts),
@@ -598,7 +598,7 @@ fn live(name: &str, vars: &VarTable, opts: &Options) -> String {
 
 /// Two-class descendant rules (the generated mindmap garnish and scoped
 /// engine rules among them), stated as real CSS so a reused look never
-/// inlines on every wearer [SPEC 17]. Node `<g>`s nest as the scene tree, so
+/// inlines on every wearer [SPEC 18]. Node `<g>`s nest as the scene tree, so
 /// `.outer .inner` matches them natively; wires render flat under the
 /// `.lini-links` layer, so a rule whose inner class a link wears also emits a
 /// `.lini-links .inner` companion (resolve already enforced the outer scoping

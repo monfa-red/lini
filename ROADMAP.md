@@ -44,7 +44,7 @@ diagnostics together. Removed spellings are not kept as aliases.
   routing, nicer chrome) in minors — pinned snapshots are a per-version tool, not a
   cross-version promise.
 - **The theming surface is API.** `--lini-*` variable names, the `.lini-*` class
-  scheme, and the SVG top-level structure (SPEC 17) are stable; hosts may build on
+  scheme, and the SVG top-level structure (SPEC 18) are stable; hosts may build on
   them.
 - **Diagnostics codes are stable** once assigned (beta); messages may improve.
 
@@ -151,7 +151,7 @@ built (see 3.4); and four local fixes:
 - **`|page|` direction follows orientation**: landscape defaults
   `direction: row`, portrait `direction: column`.
 - **`stroke-style: wavy` is link-only, by design.** The closed-primitive/drawing
-  deferral is dropped from SPEC 23 entirely — it will never be built.
+  deferral is dropped from SPEC 24 entirely — it will never be built.
 - **`fmt` preserves a table cell's style block** (`"Apple" { color: --red-ink }`
   is legal and renders, but fmt silently deletes the block today — data loss). A
   row containing a styled cell leaves the aligned-columns grid; unstyled rows
@@ -396,6 +396,7 @@ plan, then code + samples + snapshots + visual review together.
 | **1.0.0-alpha.4** (releases as `1.0.0-alpha.3` — the renumber above) | Drafting symbols (`GDT-alpha4.md`) | glyph registry, `|surface-finish|`, `|feature-control|` + `|control|`, `|datum|`, `||` annotation seating, annotation nodes in link `[ ]` (`format:` on dimensions shipped with alpha.3). |
 | **1.0.0-alpha.5** ✓ (2026-07-19, released as `v1.0.0-alpha.4`) (releases as `1.0.0-alpha.4` — the renumber above) | Sheet & views (`SHEET-alpha5.md`) | local images, title-block finish, projection construction links (view arrows → section 6). |
 | **1.0.0-beta.1** | Tooling & docs (`BETA-tooling.md`) | audit consumption + ledger reconciliation, generated schema + compact reference (CI drift-checked), structured diagnostics with stable codes, editor grammars, README/docs refresh, `fmt` canon. Feature-complete. |
+| **1.0.0-beta.2** | Schematics (`PLAN-SCHEMATICS.md`) | SPEC 16 (landed with the plan): fixed-port routing (ROUTING.md extension), capsule endpoints + typed auto-create (core), `layout: schematic` — components/pins/discretes/labels, anchor + satellite placement, junction/square-corner dress, the schematic look, samples. |
 | **1.0.0-rc.x** | Stabilize | bug fixes only; every sample re-verified visually; the stability contract (section 2) goes into SPEC. |
 | **1.0.0** | Release | — |
 

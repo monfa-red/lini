@@ -4,7 +4,7 @@
 //! material and ordered modifiers, then the datum references — every cell
 //! bordered at annotation-linework weight. The ISO 1101 validity table is
 //! enforced here: a frame renders semantically valid or errors with a
-//! correction, never plausible-looking and wrong ([SPEC 20]).
+//! correction, never plausible-looking and wrong ([SPEC 21]).
 
 use super::super::ir::{Bbox, PlacedNode};
 use super::super::{approx_width, prim};
@@ -738,7 +738,7 @@ mod tests {
         assert_eq!(glyphs(by_id(&out.nodes, "f")), ["position"]);
     }
 
-    // ── The SPEC 20 validity rows — a frame is semantically valid or an
+    // ── The SPEC 21 validity rows — a frame is semantically valid or an
     //    error, never plausible-wrong. ──
 
     #[test]

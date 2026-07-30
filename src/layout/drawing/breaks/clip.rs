@@ -28,7 +28,7 @@ pub(super) fn clip_out(
         let mut any_dropped = false;
         for seg in &sub.segs {
             // A cubic never splits — its hull must clear both station lines
-            // (cutting through a `curve()` is deferred, [SPEC 23]).
+            // (cutting through a `curve()` is deferred, [SPEC 24]).
             if let PathSeg::Cubic { from, c1, c2, to } = seg {
                 let ts = [t(*from), t(*c1), t(*c2), t(*to)];
                 let (lo, hi) = ts
@@ -212,7 +212,7 @@ fn split_seg(seg: PathSeg, vertical: bool, a: f64, b: f64) -> Vec<PathSeg> {
                 .collect()
         }
         // The advanced 10 % — kept whole when its hull clears the band; a
-        // cut through a curve is deferred [SPEC 23].
+        // cut through a curve is deferred [SPEC 24].
         PathSeg::Cubic { .. } => vec![seg],
     }
 }

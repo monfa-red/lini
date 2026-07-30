@@ -3,7 +3,7 @@
 
 /// The chart title.
 // `pub(crate)`: the `.lini-chart-title` rule derives its px from this, the
-// same one-source pattern as `messages::LABEL_SIZE` [SPEC 17].
+// same one-source pattern as `messages::LABEL_SIZE` [SPEC 18].
 pub(crate) const TITLE_SIZE: f64 = 14.0;
 /// An axis title — a step under the chart title.
 pub(super) const AXIS_TITLE_SIZE: f64 = 11.0;

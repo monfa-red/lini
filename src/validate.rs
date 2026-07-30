@@ -1,4 +1,4 @@
-//! The owner-aware property validation pass [SPEC 16/20], reading the ledger.
+//! The owner-aware property validation pass [SPEC 18/21], reading the ledger.
 //! Strict where the wearer is statically known, lenient where a class is
 //! polymorphic:
 //!
@@ -305,7 +305,7 @@ impl<'a> Ctx<'a> {
             );
             return;
         }
-        // `wavy` is link-only by design [SPEC 16] — a wire waves, an outline
+        // `wavy` is link-only by design [SPEC 17] — a wire waves, an outline
         // never does. A value check, wearer-independent; not a context gate.
         // (The async sequence message's wavy |line| is engine-lowered at
         // layout, never authored, so it never passes here.)
@@ -321,7 +321,7 @@ impl<'a> Ctx<'a> {
             );
         }
         // Layout-owned placement props hard-error out of context only where the
-        // ledger marks a hard gate [SPEC 16, decision 10] — otherwise inert. The
+        // ledger marks a hard gate [SPEC 17, decision 10] — otherwise inert. The
         // statically-judgeable gates read the known container context here;
         // `tol`/`project` gate later, at drawing layout.
         if !matches!(prop.gate, Gate::Hard) {
@@ -401,7 +401,7 @@ impl<'a> Ctx<'a> {
         }
     }
 
-    // ── Value shapes the ledger can judge statically [SPEC 20] ──
+    // ── Value shapes the ledger can judge statically [SPEC 21] ──
 
     fn check_value(&self, d: &Decl, prop: &Property, wearer: &Wearer, out: &mut Vec<Diagnostic>) {
         if matches!(prop.shape, Shape::One(_)) && d.groups.len() > 1 {
@@ -476,7 +476,7 @@ impl<'a> Ctx<'a> {
         }
     }
 
-    // ── Class rules: wearer-set-wide judgment [SPEC 16] ──
+    // ── Class rules: wearer-set-wide judgment [SPEC 17] ──
 
     fn check_unworn_classes(&self, file: &File, out: &mut Vec<Diagnostic>) {
         let mut node_wearers: HashMap<&str, Vec<(String, Vec<String>)>> = HashMap::new();
@@ -574,7 +574,7 @@ fn container_layout(t: &str) -> Option<&'static str> {
     })
 }
 
-/// Whether a node wearer can use the property at all [SPEC 16].
+/// Whether a node wearer can use the property at all [SPEC 17].
 fn node_accepts(prop: &Property, kind: &str, chain: &[String], own_layout: Option<&str>) -> bool {
     // The inheriting channels reach every node — text props cascade to every
     // node, pure scene config (`clearance`/`routing`) is valid on any
@@ -632,7 +632,7 @@ fn role_accepts(role: &str, kind: &str, chain: &[String]) -> bool {
     }
 }
 
-/// The contextual correction for a misused property [SPEC 20]: where it *does*
+/// The contextual correction for a misused property [SPEC 21]: where it *does*
 /// read, phrased per owner kind.
 fn misuse_message(name: &str, wearer: &str, prop: &Property) -> String {
     if name == "density" {

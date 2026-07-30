@@ -10,7 +10,7 @@ use crate::error::Code;
 /// cross-view anchor form. Returns `None` for any ordinary link (drawing-scope,
 /// or a sheet link whose ends stay outside every view), which the caller then
 /// resolves the normal way; `Some` for a projection line built here, or an error
-/// for a misused cross-view statement ([SPEC 20]). A link **touches a view** when
+/// for a misused cross-view statement ([SPEC 21]). A link **touches a view** when
 /// an endpoint dot-paths *inside* a drawing (a strict descendant) — the sealed
 /// body's one crack; anchoring a view's own bbox side (`side:top`) does not.
 pub(super) fn try_projection(

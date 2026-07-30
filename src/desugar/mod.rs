@@ -204,7 +204,7 @@ pub fn desugar(file: &File) -> Result<File, Error> {
     }
     // The chart / sequence engines synthesize `|line|` / `|block|` shapes at layout
     // (with no source node), so their primitive class rules must exist even unworn —
-    // a plain scene synthesizes nothing and skips them [SPEC 17].
+    // a plain scene synthesizes nothing and skips them [SPEC 18].
     let synthesizes_shapes = ["chart", "pie", "sequence"]
         .iter()
         .any(|t| present.contains(*t))
@@ -309,7 +309,7 @@ fn lower_node(
         && node.classes.iter().any(|c| *c == lini_class(kind.as_str()));
 
     // An authored id may not begin `lini-` — the prefix is reserved for
-    // generated names [SPEC 20/22], mirroring the `.lini-*` class reservation.
+    // generated names [SPEC 21/22], mirroring the `.lini-*` class reservation.
     // Only first-lowering nodes are checked: a re-desugared node (`already`)
     // carries the compiler's own minted `lini-topic-N` ids, which must round-trip.
     if !already

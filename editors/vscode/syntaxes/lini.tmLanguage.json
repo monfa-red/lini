@@ -264,7 +264,7 @@
       "name": "entity.other.attribute-name.class.lini"
     },
     "side": {
-      "comment": "A forced side on a link endpoint (a:left); sides are free as ids elsewhere (SPEC 18).",
+      "comment": "A forced side on a link endpoint (a:left); sides are free as ids elsewhere (SPEC 19).",
       "match": "(:)(top|bottom|left|right)(?![\\w-])",
       "captures": {
         "1": {

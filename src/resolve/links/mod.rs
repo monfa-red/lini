@@ -391,7 +391,7 @@ fn validate_statement(w: &Link, scope: &LinkScope) -> Result<(), Error> {
     }
     // `&` fans one-ended leaders (one note, a leg per feature) and the core
     // two-ended wire ops [SPEC 9, 15.7]; a measure or mate never fans — a
-    // span chain is the drafting form [SPEC 20].
+    // span chain is the drafting form [SPEC 21].
     if matches!(w.op(), ChainOp::Measure(_) | ChainOp::Mate)
         && w.chain.iter().any(|g| g.endpoints.len() > 1)
     {
@@ -523,7 +523,7 @@ fn inject_line_style(attrs: &mut AttrMap, line: LineStyle) {
 }
 
 /// The resolved wiring strategy [SPEC 9]: `orthogonal` (the default),
-/// `natural`, and `straight`; `curved` was replaced by `natural` [SPEC 20].
+/// `natural`, and `straight`; `curved` was replaced by `natural` [SPEC 21].
 fn parse_routing(attrs: &AttrMap, span: crate::span::Span) -> Result<Strategy, Error> {
     match attrs.get("routing") {
         None => Ok(Strategy::Orthogonal),

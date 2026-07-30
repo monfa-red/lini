@@ -55,7 +55,7 @@ pub fn desugar_source(src: &str) -> Result<String, Error> {
 pub use routing::{Rule, Severity, Violation};
 
 /// Whether the bundled font subsets were compiled in (the default-on `font`
-/// feature) — the gate for `--embed-font` / `--static` outlining [SPEC 19].
+/// feature) — the gate for `--embed-font` / `--static` outlining [SPEC 20].
 pub fn font_support() -> bool {
     font::ENABLED
 }
@@ -75,7 +75,7 @@ pub struct Options {
     /// needs the default-on `font` feature; without it the vars still bake
     /// and text stays name-only `<text>`.
     pub static_mode: bool,
-    /// `--embed-font` [SPEC 17]: inline a base64 `@font-face` per bundled
+    /// `--embed-font` [SPEC 18]: inline a base64 `@font-face` per bundled
     /// family × weight actually used, under Lini-scoped family names.
     /// Browser-only by design (resvg/librsvg ignore `@font-face`); needs the
     /// `font` feature.
@@ -88,7 +88,7 @@ pub struct Options {
     /// The source file's directory — where a local `|image| src:` path
     /// resolves [SPEC 7]. `None` (stdin) resolves paths as written.
     pub base_dir: Option<std::path::PathBuf>,
-    /// The serve traversal boundary [SPEC 19]: asset reads are confined to
+    /// The serve traversal boundary [SPEC 20]: asset reads are confined to
     /// this root — an escape is a compile error. `None` (the plain CLI) is
     /// unbounded: you compile your own file.
     pub asset_root: Option<std::path::PathBuf>,
@@ -135,7 +135,7 @@ pub fn diagnostics_json(src: &str, opts: &Options, filename: &str) -> (String, b
     let mut items = Vec::new();
     let mut had_error = false;
 
-    // The property/lint pass [SPEC 16/20] — surfaces on the raw parse. A parse
+    // The property/lint pass [SPEC 18/21] — surfaces on the raw parse. A parse
     // or lex error here is fatal and stops the pipeline, exactly as the default
     // CLI path returns early.
     match lint_str(src) {
@@ -151,7 +151,7 @@ pub fn diagnostics_json(src: &str, opts: &Options, filename: &str) -> (String, b
         }
     }
 
-    // Validation errors stop the compile [SPEC 19] — mirror that: only route on
+    // Validation errors stop the compile [SPEC 20] — mirror that: only route on
     // a clean validation, so layout never runs on a rejected file.
     if !had_error {
         match compile_str_checked(src, opts) {
@@ -245,7 +245,7 @@ fn routing_diagnostics_of(violations: Vec<Violation>) -> Vec<Diagnostic> {
 
 fn resolve_pipeline(src: &str, opts: &Options) -> Result<resolve::Program, Error> {
     let file = parse_stage(src)?;
-    // Tree structure errors [SPEC 20] read the still-nested AST — before desugar
+    // Tree structure errors [SPEC 21] read the still-nested AST — before desugar
     // flattens each `layout: tree` scope's topic hierarchy [SPEC 12].
     desugar::tree::validate(&file).map_err(|e| e.in_phase(Phase::Resolve))?;
     let lowered = desugar::desugar(&file).map_err(|e| e.in_phase(Phase::Resolve))?;

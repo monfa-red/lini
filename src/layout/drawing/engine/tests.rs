@@ -372,7 +372,7 @@ fn rotate_then_mate_seats_the_rotated_anchor() {
     );
 }
 
-// ── Mate errors [SPEC 20] ──
+// ── Mate errors [SPEC 21] ──
 
 #[test]
 fn mate_errors_speak_spec() {

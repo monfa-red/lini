@@ -18,9 +18,9 @@ impl<'a> Parser<'a> {
             // `(-) { … }` is the dimension selector [SPEC 4, 15.6] — the `|-|` subtype;
             // an operator only appears after endpoints, so a leading `(-)` is a rule.
             Some(TokKind::DrawOp(DrawOp::Linear)) => Ok(Kind::Rule),
-            // Per-kind dimension selectors `(o) { }` / `(<) { }` are deferred [SPEC 23].
+            // Per-kind dimension selectors `(o) { }` / `(<) { }` are deferred [SPEC 24].
             Some(TokKind::DrawOp(_)) => Err(self.err(
-                "'(-)' selects every dimension — per-kind '(o)' / '(<)' selectors are deferred (SPEC 23)",
+                "'(-)' selects every dimension — per-kind '(o)' / '(<)' selectors are deferred (SPEC 24)",
             )),
             Some(TokKind::Pipe) => Ok(
                 // `|name::base|` is a define; any other `|…|` is a rule selector.

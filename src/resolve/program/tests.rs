@@ -239,7 +239,7 @@ fn clearance_cascades_from_a_container_block() {
 
 #[test]
 fn removed_routing_is_rejected() {
-    // `curved` was replaced by `natural`, not aliased — SPEC 20's exact row.
+    // `curved` was replaced by `natural`, not aliased — SPEC 21's exact row.
     assert_eq!(
         rv4_err("{ routing: curved }\na -> b\n"),
         "routing takes orthogonal, natural, or straight — 'curved' was replaced by 'natural'"
@@ -302,7 +302,7 @@ fn internal_link_resolves_with_scoped_paths() {
     assert_eq!(w.endpoints[1].path, "r.outlet");
 }
 
-// ── Errors [SPEC 20] ──
+// ── Errors [SPEC 21] ──
 
 #[test]
 fn unknown_type_errors() {
@@ -321,7 +321,7 @@ fn duplicate_id_errors() {
 
 #[test]
 fn side_names_are_free_ids() {
-    // [SPEC 22]: sides are keywords only after an endpoint `:`, so a node may be
+    // [SPEC 23]: sides are keywords only after an endpoint `:`, so a node may be
     // named `|box#top|` — no longer a reserved-id error.
     let p = rv4("|box#top|\n");
     assert_eq!(p.scene.nodes[0].id.as_deref(), Some("top"));
@@ -341,7 +341,7 @@ fn a_copy_index_leaks_no_ids_and_needs_a_drawing() {
         "{ layout: drawing }\n|rect#plate| { width: 120; height: 60 } [\n  |hole#bolt| { width: 10; translate: -35 0; pattern: grid(2, 2, 70, 30) }\n]\nplate:left (-) bolt.2\n",
     );
     assert!(e.contains("endpoint 'bolt.2' not found"), "got: {e}");
-    // The numeric segment is drawing grammar [SPEC 21].
+    // The numeric segment is drawing grammar [SPEC 22].
     let e = rv4_err("|box#a|\n|box#b|\na.2 -> b\n");
     assert_eq!(
         e,
@@ -366,7 +366,7 @@ fn a_duplicate_datum_letter_errors_per_drawing_scope() {
 #[test]
 fn a_one_ended_fan_stays_one_link_and_measures_never_fan() {
     // `&` on a one-ended leader keeps one link — one text, every endpoint
-    // [SPEC 15.7]; on a measure or mate it errors [SPEC 20].
+    // [SPEC 15.7]; on a measure or mate it errors [SPEC 21].
     let geometry = "|rect#a| { width: 40; height: 20 }\n|rect#b| { width: 40; height: 20 }\n";
     let p = rv4(&format!(
         "{{ layout: drawing }}\n{geometry}a & b <- \"2× R5\"\n"

@@ -292,7 +292,7 @@ fn drawing_ops_need_a_drawing_scope() {
         "'||' belongs in a 'layout: drawing'",
     );
     // Inside a layout-owning child of a drawing the flow already decided every
-    // position — the gate names the container [SPEC 20].
+    // position — the gate names the container [SPEC 21].
     assert_resolve_error(
         "{ layout: drawing }\n|rect#part| { width: 20; height: 20 }\n|row#r| [\n  |box#a|\n  |box#b|\n  a || b\n]\n",
         "a '|row|' places its own children — mates seat a drawing's",
@@ -356,7 +356,7 @@ fn drawing_statement_shapes_are_gated() {
 }
 
 /// The sheet-scope **projection construction link** [SPEC 15.8]: the one
-/// legalized cross-view anchor form, and each misuse row [SPEC 20].
+/// legalized cross-view anchor form, and each misuse row [SPEC 21].
 #[test]
 fn projection_link_classification_and_error_rows() {
     // Two views on a sheet plus an off-view note; the trailing statement varies.
@@ -377,7 +377,7 @@ fn projection_link_classification_and_error_rows() {
     // the full anchor vocabulary (a bbox side and a `center`) outside a drawing.
     lini::check(&sheet("a.c:top - b.d:top")).expect("projection link resolves");
     lini::check(&sheet("a.c:center - b.d:center")).expect("center anchor legal on a projection");
-    // The four SPEC 20 rows.
+    // The four SPEC 21 rows.
     assert_resolve_error(
         &sheet("a.c:top <-> b.d:top"),
         "a projection line is unmarked",

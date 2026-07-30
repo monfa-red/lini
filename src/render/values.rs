@@ -85,7 +85,7 @@ pub fn css_value(prop: &str, value: &ResolvedValue, vars: &VarTable, opts: &Opti
             _ => format_value(value, vars, opts),
         },
         // Under `--embed-font`, a bundled family leads with its embedded
-        // Lini-scoped twin; the authored name stays as the fallback [SPEC 17].
+        // Lini-scoped twin; the authored name stays as the fallback [SPEC 18].
         "font-family" if opts.embed_font => {
             super::fonts::lead_with_scoped(&format_value(value, vars, opts))
         }
@@ -161,7 +161,7 @@ pub fn attr_points(attrs: &AttrMap, name: &str) -> Option<Vec<(f64, f64)>> {
 /// The `stroke-dasharray` pattern for `stroke-style: dashed|dotted` (sized
 /// against `stroke-width`), or empty for solid. `wavy` also returns empty — its
 /// stroke is solid, the wave living in the link geometry ([`super::wavy`]); on a
-/// shape it stays solid (deferred, [SPEC 23]). Shared by shapes, links, and the
+/// shape it stays solid (deferred, [SPEC 24]). Shared by shapes, links, and the
 /// rules builder.
 pub fn dasharray_value(attrs: &AttrMap, width: f64) -> String {
     match attrs.get("stroke-style") {

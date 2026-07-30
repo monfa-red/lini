@@ -1,4 +1,4 @@
-//! Bundled-font emission [SPEC 17]: `--embed-font` inlines a base64
+//! Bundled-font emission [SPEC 18]: `--embed-font` inlines a base64
 //! `@font-face` per family × weight actually used (Lini-scoped names, so an
 //! installed Google Sans never collides), and `--static` outlines text to
 //! deduped glyph paths (`<defs>`/`<use>`) so the SVG is faithful in renderers
@@ -15,7 +15,7 @@
 use crate::font::{Font, Kind};
 use crate::layout::LaidOut;
 
-/// The Lini-scoped `@font-face` family names [SPEC 17].
+/// The Lini-scoped `@font-face` family names [SPEC 18].
 pub fn scoped_name(kind: Kind) -> &'static str {
     match kind {
         Kind::Mono => "Lini Sans Code",
@@ -193,7 +193,7 @@ mod enabled {
     }
 
     /// `--embed-font`: one `@font-face` per used face, Lini-scoped names,
-    /// base64 subset bytes. Browser-only by design [SPEC 17].
+    /// base64 subset bytes. Browser-only by design [SPEC 18].
     pub fn emit_font_faces(out: &mut String, sink: &FontSink) {
         let mut seen = std::collections::BTreeSet::new();
         for &(k, w, _) in sink.used.borrow().iter() {
@@ -235,7 +235,7 @@ mod enabled {
     }
 
     // Base64 is the asset embedder's (`resolve::assets::base64`) — the one
-    // encoder for every data: URL [SPEC 17].
+    // encoder for every data: URL [SPEC 18].
     use crate::resolve::assets::base64;
 
     /// The advance-scaled `x` positions each glyph of `line` starts at, when

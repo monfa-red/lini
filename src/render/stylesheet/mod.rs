@@ -1,4 +1,4 @@
-//! The output stylesheet's structural rules [SPEC 17]: paint defaults stated
+//! The output stylesheet's structural rules [SPEC 18]: paint defaults stated
 //! once as class rules — paint rides CSS, geometry bakes. Rules are unlayered
 //! so non-browser renderers (which skip `@layer`) parse them, and scoped under
 //! `.lini` so an SVG inlined into a host document restyles nothing else.

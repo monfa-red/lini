@@ -63,7 +63,7 @@ pub fn lay_out(plot: &Plot, chart: &Chart, out: &mut Vec<PlacedNode>, reqs: &mut
 }
 
 /// A bubble's `<title>` — its name and value (the area metric) under the
-/// chart's `format:` [SPEC 16].
+/// chart's `format:` [SPEC 17].
 fn bubble_title(b: &Bubble, fmt: format::Format) -> String {
     let v = format::render(b.value, fmt);
     match &b.label {

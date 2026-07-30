@@ -145,7 +145,7 @@ fn the_palette_walk_tints_cards_and_wires_and_leaves_root_and_cross_links_neutra
         assert!(a.contains(want), "{want}: {a}");
     }
     // The tint rides the emitted CSS rule, never inline on each wearer
-    // [SPEC 17] — the card's `<g>` carries the classes and no hue paint.
+    // [SPEC 18] — the card's `<g>` carries the classes and no hue paint.
     assert!(!a.contains("style="), "card free of inline paint: {a}");
     assert!(
         svg.contains(

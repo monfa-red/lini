@@ -128,7 +128,7 @@ pub(super) fn read_cal_step(inst: &ResolvedInst) -> Result<Option<(scale::CalUni
     }
 }
 
-/// A quoted date literal to epoch seconds, with the SPEC 20 message.
+/// A quoted date literal to epoch seconds, with the SPEC 21 message.
 fn date_secs(text: &str, span: Span) -> Result<f64, Error> {
     date::parse(text).ok_or_else(|| {
         Error::at(
@@ -164,7 +164,7 @@ pub(super) fn resolve_domain(
     }
 }
 
-/// A numeric consumer's `format:` [SPEC 16]: its own (a date preset authored
+/// A numeric consumer's `format:` [SPEC 17]: its own (a date preset authored
 /// here errors — it reads a time axis), else the chart's numeric reading.
 pub(crate) fn numeric_fmt(inst: &ResolvedInst, chart_fmt: Format) -> Result<Format, Error> {
     let f = format::read_or(&inst.attrs, format::numeric(chart_fmt), inst.span)?;

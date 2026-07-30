@@ -23,7 +23,7 @@ pub struct Error {
     pub message: String,
     pub span: Span,
     /// A secondary span rendered inline as `(previously at L:C)` — used for
-    /// duplicate-definition diagnostics [SPEC 20]. Only shown with source.
+    /// duplicate-definition diagnostics [SPEC 21]. Only shown with source.
     pub related: Option<Span>,
     /// The stable diagnostic code [decision 7]. `Code::UNSPECIFIED` until a
     /// phase boundary ([`Error::in_phase`]) stamps the phase.
@@ -142,7 +142,7 @@ pub struct Diagnostic {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Level {
-    /// A hard diagnostic [SPEC 16/20] — the CLI fails on it like a compile error.
+    /// A hard diagnostic [SPEC 18/21] — the CLI fails on it like a compile error.
     Error,
     Warning,
 }

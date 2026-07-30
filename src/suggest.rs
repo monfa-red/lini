@@ -1,4 +1,4 @@
-//! Fuzzy "did you mean …?" suggestions [SPEC 20]: one Levenshtein and one
+//! Fuzzy "did you mean …?" suggestions [SPEC 21]: one Levenshtein and one
 //! message shape for every error path that proposes a nearby name.
 
 /// Levenshtein edit distance (two-row DP). Only ranks suggestions on the error

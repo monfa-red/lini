@@ -104,7 +104,7 @@ impl RuleSet {
     /// link `<g>` — as the **difference** from what its classes already provide:
     /// each `PAINT_PROPS` entry, then the joint `stroke-style → stroke-dasharray`
     /// pair, kept only when it differs from the class rule (so inline beats the
-    /// rule, [SPEC 17]). The one place that diff lives, shared by both renderers:
+    /// rule, [SPEC 18]). The one place that diff lives, shared by both renderers:
     /// `value_of` resolves a prop to its value (a node aliases text `color`→`fill`),
     /// `fmt` formats it (a node's `css_value` adds `px` to `font-size`; a link's
     /// `format_value` does not).

@@ -183,7 +183,7 @@ fn a_wire_chain_expands_to_one_link_per_hop() {
 #[test]
 fn chain_hops_keep_their_own_operators() {
     // The bare-first-hop spelling [SPEC 9]: `a - b -> c` — and a fan hop
-    // stays a fan (`&` is routing geometry, not sugar [SPEC 18]).
+    // stays a fan (`&` is routing geometry, not sugar [SPEC 19]).
     let out = desugar_source("|box#a|\n|box#b|\n|box#c|\na - b <-> c\n").unwrap();
     assert!(out.contains("a - b\n"), "{out}");
     assert!(out.contains("b <-> c\n"), "{out}");
@@ -194,7 +194,7 @@ fn chain_hops_keep_their_own_operators() {
 
 #[test]
 fn a_chain_auto_creates_every_hops_endpoints_once() {
-    // Auto-created ids ride the expansion [SPEC 18]: the shared middle id is
+    // Auto-created ids ride the expansion [SPEC 19]: the shared middle id is
     // created once, at the root.
     let out = desugar_source("x -> y -> z\n").unwrap();
     for id in ["x", "y", "z"] {

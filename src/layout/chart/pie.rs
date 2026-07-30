@@ -97,7 +97,7 @@ fn legend_entries(slices: &[Slice]) -> Vec<super::LegendEntry> {
 }
 
 /// A slice's `<title>` [SPEC 14.8]: its name, value (under the pie's
-/// `format:` [SPEC 16]), and percent of the total (always the auto reading —
+/// `format:` [SPEC 17]), and percent of the total (always the auto reading —
 /// the share is chart chrome, not the value).
 fn slice_title(s: &Slice, total: f64, fmt: format::Format) -> String {
     let pct = format::auto((s.value / total * 100.0).round());
@@ -108,7 +108,7 @@ fn slice_title(s: &Slice, total: f64, fmt: format::Format) -> String {
     }
 }
 
-/// Parse a `layout: pie` into its slices [SPEC 14.7]. All pie validation [SPEC 20]
+/// Parse a `layout: pie` into its slices [SPEC 14.7]. All pie validation [SPEC 21]
 /// lives here; the wedge geometry is the renderer's job. Reuses the chart's `tag`,
 /// `label_of`, the `fill:` / `outline:` paint readers, and the palette walk (per
 /// slice — [SPEC 14.6]).
@@ -158,7 +158,7 @@ pub fn build_pie(inst: &ResolvedInst) -> Result<Pie, Error> {
     if slices.iter().map(|s| s.value).sum::<f64>() <= 0.0 {
         return Err(Error::at(span, "a pie's slice values sum to zero"));
     }
-    // A pie has no time axis, so an authored date preset errors [SPEC 16].
+    // A pie has no time axis, so an authored date preset errors [SPEC 17].
     let fmt = format::read_or(&inst.attrs, format::Format::Auto, span)?;
     format::reject_date(fmt, span)?;
     Ok(Pie {

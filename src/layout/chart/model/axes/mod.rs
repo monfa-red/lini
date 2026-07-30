@@ -9,7 +9,7 @@ use read::*;
 pub(crate) use read::{numeric_fmt, read_side};
 
 /// Bind a series to a value axis by its `axis:` id, defaulting to the first value
-/// axis. An unknown id reports the chart's own axis ids [SPEC 20].
+/// axis. An unknown id reports the chart's own axis ids [SPEC 21].
 pub(super) fn bind_axis(inst: &ResolvedInst, specs: &[AxisSpec]) -> Result<usize, Error> {
     let Some(id) = axis_id(inst) else {
         return Ok(0);
@@ -29,7 +29,7 @@ pub(super) fn axis_id(inst: &ResolvedInst) -> Option<&str> {
     }
 }
 
-/// The "axis 'X' not found; did you mean 'Y'?" error [SPEC 20], shared by
+/// The "axis 'X' not found; did you mean 'Y'?" error [SPEC 21], shared by
 /// series, band, and mark binding. Axes are chart-local (not in the global index),
 /// so the suggestion ranges over the chart's own `|axis|` ids.
 fn no_axis(id: &str, known: &[&str], span: Span) -> Error {

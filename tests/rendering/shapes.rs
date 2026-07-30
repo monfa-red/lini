@@ -311,7 +311,7 @@ fn a_sketch_outside_a_drawing_scope_stays_pixel_space() {
 
 #[test]
 fn an_absurd_drawing_extent_draws_the_ratio_hint() {
-    // A 5 m beam authored at ratio 1 [SPEC 20] — the hint names the fix.
+    // A 5 m beam authored at ratio 1 [SPEC 21] — the hint names the fix.
     let (_, diags) = lini::compile_str_checked(
         "{ layout: drawing; unit: m }\n|rect#beam| { width: 5; height: 0.4 }\n",
         &Options::default(),

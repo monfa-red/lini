@@ -119,7 +119,7 @@ fn emit_shape(
         NodeKind::Diamond => emit_diamond(out, n, &indent, thickness),
         NodeKind::Cyl => emit_cyl(out, n, &indent, thickness),
         NodeKind::Oval => emit_oval(out, n, &indent, thickness),
-        // Text is emitted by `render::render_text` as a bare `<text>` [SPEC 17],
+        // Text is emitted by `render::render_text` as a bare `<text>` [SPEC 18],
         // never as wrapped geometry — so it never reaches this dispatch.
         NodeKind::Text => {}
         NodeKind::Line => emit_line(out, n, &indent, vars, ruleset, opts, thickness),
@@ -600,7 +600,7 @@ fn emit_image(out: &mut String, n: &PlacedNode, indent: &str) {
         _ => "",
     };
     use crate::resolve::ResolvedValue;
-    // An embedded SVG asset [SPEC 17]: resolve already rewrote its ids and
+    // An embedded SVG asset [SPEC 18]: resolve already rewrote its ids and
     // internal references (`lini-aN-`); render maps it into the node box as a
     // nested `<svg>` — its kept root attrs (viewBox, paints) emitted verbatim.
     if let Some(ResolvedValue::String(inner)) = n.attrs.get("embed-svg") {

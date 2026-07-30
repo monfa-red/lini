@@ -22,7 +22,7 @@ pub(super) enum Placement {
 /// The note's placement, read from its `place:` attr (the box carries it
 /// through resolve): a mode ident then its lifeline id(s). `Ok(None)` when
 /// absent — caught as the missing-placement error upstream; a malformed value
-/// errors here [SPEC 20].
+/// errors here [SPEC 21].
 pub(super) fn placement(
     attrs: &AttrMap,
     span: crate::span::Span,

@@ -213,7 +213,7 @@ fn decade_ticks(min: f64, max: f64) -> Vec<f64> {
 }
 
 /// A tick label: the value under its axis's `format:` [SPEC 14.4/16], with an
-/// optional unit suffix appended after (the compose order [SPEC 16]). On a
+/// optional unit suffix appended after (the compose order [SPEC 17]). On a
 /// time scale, `auto` reads at the tick unit's granularity; an explicit date
 /// preset wins; an explicit numeric family renders the epoch number, honestly.
 pub fn label(scale: &Scale, value: f64, fmt: Format, unit: &Option<String>) -> String {

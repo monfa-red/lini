@@ -88,7 +88,7 @@ struct CompileArgs {
 
     /// Emit diagnostics as a JSON document (stable codes, spans, and
     /// machine-applicable fixes) instead of SVG — the tooling/LSP form
-    /// [SPEC 19/20]. Exit 1 if any error-level diagnostic fired.
+    /// [SPEC 20/20]. Exit 1 if any error-level diagnostic fired.
     #[arg(long = "json")]
     json: bool,
 
@@ -145,7 +145,7 @@ fn main() -> ExitCode {
     };
 
     // The two font flags need the subset bytes — the default-on `font`
-    // feature [SPEC 19]. Name-only output never does.
+    // feature [SPEC 20]. Name-only output never does.
     if (cli.static_mode || cli.embed_font) && !lini::font_support() {
         eprintln!(
             "error: --static and --embed-font need the bundled fonts — rebuild with the `font` feature (on by default)"
@@ -172,7 +172,7 @@ fn main() -> ExitCode {
     };
 
     // Local image paths resolve against the source file's directory [SPEC 7];
-    // stdin has none. A plain CLI compile is unbounded — no asset root [SPEC 19].
+    // stdin has none. A plain CLI compile is unbounded — no asset root [SPEC 20].
     let base_dir = (cli.input != "-")
         .then(|| Path::new(&cli.input).parent().map(Path::to_path_buf))
         .flatten();
@@ -241,7 +241,7 @@ fn main() -> ExitCode {
         };
     }
 
-    // Lint + the property validation pass [SPEC 16/20]: error-level
+    // Lint + the property validation pass [SPEC 18/21]: error-level
     // diagnostics always print and fail the compile; warnings print unless
     // `--no-warn` and fail only under `--strict`.
     let mut warnings_were_emitted = false;
@@ -472,7 +472,7 @@ fn theme_names() -> String {
 }
 
 /// `lini theme [NAME]` — list the built-in themes, or print one as `--lini-*`
-/// CSS for a user to copy [SPEC 17].
+/// CSS for a user to copy [SPEC 18].
 fn run_theme(name: Option<&str>) -> ExitCode {
     match name {
         None => {

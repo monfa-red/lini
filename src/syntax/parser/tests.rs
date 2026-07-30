@@ -150,7 +150,7 @@ fn dimension_and_link_selectors() {
     };
     assert!(matches!(rule(0).as_slice(), [SelUnit::Link]));
     assert!(matches!(rule(1).as_slice(), [SelUnit::Dimension]));
-    // Per-kind dimension selectors `(o)` / `(<)` are deferred [SPEC 23].
+    // Per-kind dimension selectors `(o)` / `(<)` are deferred [SPEC 24].
     assert!(parse_err("{\n  (o) { stroke: red; }\n}\n").contains("deferred"));
 }
 
@@ -270,7 +270,7 @@ fn link_two_bracket_labels() {
 
 #[test]
 fn a_label_block_carries_annotation_nodes_beside_texts() {
-    // `label_block = "[" { text | node } "]"` [SPEC 21] — scope-blind; the
+    // `label_block = "[" { text | node } "]"` [SPEC 22] — scope-blind; the
     // node keeps its place in source order and is never a label [SPEC 15.9].
     let f = parse_ok("a (-) b [ \"W\" |feature-control| \"flatness\" { tol: 0.1 } ]\n");
     let w = &f.links[0];

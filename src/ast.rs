@@ -124,7 +124,7 @@ impl DrawOp {
 /// A link statement's operator [SPEC 9, 15]: a core wire op, a measuring op, or
 /// the mate `||`. One statement carries one op; a chain never mixes them. The
 /// mate has no token of its own — the parser reads two **adjacent** pipes at
-/// operator position, so bars stay paired everywhere else [SPEC 21].
+/// operator position, so bars stay paired everywhere else [SPEC 22].
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ChainOp {
     Wire(LinkOp),

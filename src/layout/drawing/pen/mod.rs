@@ -4,7 +4,7 @@
 //! modifiers and `mirror:`, collect the authored `:segment`s, and emit the
 //! SVG `d` + geometry bbox.
 //!
-//! Errors follow SPEC 20 verbatim where a message is specified there.
+//! Errors follow SPEC 21 verbatim where a message is specified there.
 
 use super::super::ir::Bbox;
 use super::Segment;

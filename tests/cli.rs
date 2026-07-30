@@ -149,7 +149,7 @@ fn extract_viewbox_w(svg: &str) -> f64 {
 #[cfg(feature = "font")]
 #[test]
 fn static_output_outlines_text_to_glyph_uses() {
-    // `--static` [SPEC 17/19]: text leaves become `<use>` references to
+    // `--static` [SPEC 18/19]: text leaves become `<use>` references to
     // deduped glyph paths in `<defs>` — no `<text>` element survives, so the
     // file renders identically with no font installed.
     let svg = lini::compile_str_with(
@@ -172,7 +172,7 @@ fn static_output_outlines_text_to_glyph_uses() {
 #[cfg(feature = "font")]
 #[test]
 fn embed_font_inlines_used_faces_under_scoped_names() {
-    // `--embed-font` [SPEC 17]: a base64 @font-face per used face, under the
+    // `--embed-font` [SPEC 18]: a base64 @font-face per used face, under the
     // Lini-scoped family name, and the stack leads with that name so the
     // embedded bytes win over an installed copy.
     let svg = lini::compile_str_with(
@@ -199,7 +199,7 @@ fn embed_font_inlines_used_faces_under_scoped_names() {
 
 #[test]
 fn bake_vars_flag_is_gone_without_alias() {
-    // `--static` renames `--bake-vars` with no alias kept [SPEC 19] — clap
+    // `--static` renames `--bake-vars` with no alias kept [SPEC 20] — clap
     // rejects the old spelling as unknown (exit 3).
     let status = Command::new(env!("CARGO_BIN_EXE_lini"))
         .args(["--bake-vars", "/nonexistent.lini"])

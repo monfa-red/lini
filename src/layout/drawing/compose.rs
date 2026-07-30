@@ -3,7 +3,7 @@
 //! **label** the words (two-ended: replaces the number; one-ended: follows
 //! it), **`tol:`** the tolerance, **`pattern:`** the `N×` count prefix, and
 //! (`unit:` is the semantic quantity only — no per-value suffix; a glyph reading is
-//! symbol-speak — the SPEC 24 dims read `300 mm` but `⌀20 h6`).
+//! symbol-speak — the SPEC 25 dims read `300 mm` but `⌀20 h6`).
 
 use super::super::ir::PlacedNode;
 use super::super::{approx_width, prim};
@@ -60,7 +60,7 @@ pub(super) fn compose(
     span: Span,
 ) -> Result<DimText, Error> {
     let f = format::read_or(attrs, Format::Auto, span)?;
-    // A dimension is never a date — the chart consumers' gate [SPEC 16].
+    // A dimension is never a date — the chart consumers' gate [SPEC 17].
     format::reject_date(f, span)?;
     let mut main = String::new();
     let mut frac = None;

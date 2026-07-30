@@ -1,6 +1,6 @@
 //! Emit the `<style>` block: the `@layer lini.defaults` variable defaults
 //! (host CSS wins automatically per [SPEC 10.1]) plus the unlayered structural
-//! rules ([SPEC 17] — paint rides CSS, geometry bakes; unlayered so renderers
+//! rules ([SPEC 18] — paint rides CSS, geometry bakes; unlayered so renderers
 //! that skip `@layer` still parse them).
 
 use super::fonts::{self, FontSink};
@@ -22,7 +22,7 @@ pub fn emit(
 ) {
     out.push_str("  <style>\n");
 
-    // `--embed-font` [SPEC 17]: the used faces inline first, so the rules
+    // `--embed-font` [SPEC 18]: the used faces inline first, so the rules
     // below can already resolve against them.
     if let Some(sink) = embed {
         fonts::emit_font_faces(out, sink);
@@ -54,7 +54,7 @@ pub fn emit(
                 let value = vars.entries.get(*name).unwrap();
                 let mut css = format_value(value, vars, opts);
                 // Under `--embed-font` the default stack leads with the
-                // embedded face's Lini-scoped name [SPEC 17].
+                // embedded face's Lini-scoped name [SPEC 18].
                 if opts.embed_font && *name == "font-family" {
                     css = fonts::lead_with_scoped(&css);
                 }

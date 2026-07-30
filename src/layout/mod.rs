@@ -416,7 +416,7 @@ fn layout_inst(
         return Ok(drawing::chrome::placeholder(inst));
     }
     // A drafting symbol lowers off the glyph registry [SPEC 15.9] —
-    // drawing-scope only ([SPEC 20]).
+    // drawing-scope only ([SPEC 21]).
     if let Some(ty) = drawing::symbols::drafting_type(&inst.type_chain) {
         if !ctx.drawing {
             return Err(Error::at(

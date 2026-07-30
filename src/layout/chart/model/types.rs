@@ -85,7 +85,7 @@ pub struct Mark {
     pub label: Option<String>,
     /// A point's centred marker [SPEC 14.5]: `dot` by default (the `|mark|`
     /// template), `circle` / `diamond` to enlarge it, `None` (from `marker: none`) for a
-    /// label-only mark. Validated against `arrow` / `crow` at parse ([SPEC 20]).
+    /// label-only mark. Validated against `arrow` / `crow` at parse ([SPEC 21]).
     pub marker: MarkerKind,
     /// The accent for the line / dot / label: an explicit `stroke` / `fill`, else muted.
     pub color: ResolvedValue,
@@ -121,7 +121,7 @@ pub struct Series {
     pub axis: usize,
     /// The centred marker at each vertex [SPEC 14.2]: `None` draws none; `dot` /
     /// `circle` / `diamond` are the centred shapes. A `|dots|` is never `None` (it *is*
-    /// markers). Validated against `arrow` / `crow` at parse ([SPEC 20]).
+    /// markers). Validated against `arrow` / `crow` at parse ([SPEC 21]).
     pub marker: MarkerKind,
     /// Per-datum label text [SPEC 14.3], parallel to the data — one tag per value /
     /// point, or empty. Drawn inline / on hover per [`tooltip`](Self::tooltip).
@@ -146,10 +146,10 @@ pub struct Series {
     pub radius: f64,
     /// A dot's diameter `width` × `height` (default a small circle).
     pub dot: (f64, f64),
-    /// An `|area|`'s fill target [SPEC 16] — the axis zero / range floor by
+    /// An `|area|`'s fill target [SPEC 17] — the axis zero / range floor by
     /// default.
     pub baseline: Option<f64>,
-    /// This series' value presentation [SPEC 16] — its own `format:`, else the
+    /// This series' value presentation [SPEC 17] — its own `format:`, else the
     /// chart's (numeric reading). Formats its hover / `<title>` values.
     pub fmt: Format,
     /// Per-datum paint lists [SPEC 14.6] — resolved one entry per datum on a
@@ -241,7 +241,7 @@ pub struct Chart {
     /// The scope's measurement kind [SPEC 5] — every generated chart text
     /// (ticks, labels, title, legend) measures on it; weight is per-run.
     pub font_kind: crate::font::Kind,
-    /// The chart-level `format:` [SPEC 16] — the axes' and series' fallback,
+    /// The chart-level `format:` [SPEC 17] — the axes' and series' fallback,
     /// and the presentation for marks / bubbles (numeric reading).
     pub fmt: Format,
 }
@@ -268,7 +268,7 @@ pub struct Pie {
     pub gap: f64,
     /// The scope's measurement kind [SPEC 5], as on [`Chart`].
     pub font_kind: crate::font::Kind,
-    /// The pie's `format:` [SPEC 16] — slice-value presentation.
+    /// The pie's `format:` [SPEC 17] — slice-value presentation.
     pub fmt: Format,
 }
 

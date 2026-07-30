@@ -81,7 +81,7 @@ fn field_cell(caption: &str, value: &str, span_cols: Option<usize>, span: Span) 
             span,
         },
         // The internal `field` marker [SPEC 15.8]: the grid names this cell when
-        // an authored `cell:` lands on its slot ([SPEC 20]'s overlap row).
+        // an authored `cell:` lands on its slot ([SPEC 21]'s overlap row).
         Decl {
             name: "field".into(),
             groups: vec![vec![Value::String(caption.into())]],

@@ -58,7 +58,7 @@ pub(in crate::layout) fn layout_node(
         "feature-control" => super::frames::layout_frame(inst, path, program),
         "datum" => super::frames::layout_datum(inst),
         // A row template reaching layout on its own sits outside a frame —
-        // the frame lowering consumes its `|control|` children [SPEC 20].
+        // the frame lowering consumes its `|control|` children [SPEC 21].
         "control" => Err(Error::at(
             inst.span,
             "'|control|' is a '|feature-control|' row",

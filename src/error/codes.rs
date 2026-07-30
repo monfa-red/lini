@@ -151,7 +151,7 @@ catalog! {
     Resolve 14 UNKNOWN_SIDE "unknown-side";
     Resolve 15 UNKNOWN_STRATEGY "unknown-strategy";
 
-    // ── Validate [SPEC 16/20] ──
+    // ── Validate [SPEC 18/21] ──
     Validate 0 VALIDATE "validate";
     Validate 1 UNKNOWN_PROPERTY "unknown-property";
     Validate 2 MISUSED_PROPERTY "misused-property";

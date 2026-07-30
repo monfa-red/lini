@@ -258,7 +258,7 @@ mod tests {
 
     #[test]
     fn resolve_accepts_in_root_files_assets_included() {
-        // The boundary generalized past `.lini` [SPEC 19]: served assets
+        // The boundary generalized past `.lini` [SPEC 20]: served assets
         // (a scene's images) resolve under the same wall.
         assert!(resolve_in_root(Path::new("samples"), "hello.lini").is_some());
         assert!(resolve_in_root(Path::new("samples"), "assets/logo.svg").is_some());

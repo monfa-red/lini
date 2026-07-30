@@ -21,7 +21,7 @@ pub struct Program {
 }
 
 /// The render inputs the rules builder restates as CSS class rules — paint rides
-/// CSS, geometry bakes [SPEC 17]. After desugar every type/template/define lives
+/// CSS, geometry bakes [SPEC 18]. After desugar every type/template/define lives
 /// as a single-class rule, so this is just those rules' resolved attrs (the
 /// generated `.lini-*` type classes and the user `.style` classes, in stylesheet
 /// order), the link defaults, and the root inherited-text baseline. Descendant
@@ -35,7 +35,7 @@ pub struct SheetInputs {
     /// generated mindmap garnish and scoped engine rules among them. Resolve
     /// bakes them into node attrs for layout; render also states their paint as
     /// real CSS and diffs matching elements against it, so a reused look rides
-    /// one rule instead of inlining on every wearer [SPEC 17].
+    /// one rule instead of inlining on every wearer [SPEC 18].
     pub descendant_rules: Vec<(String, String, AttrMap)>,
     /// The link layer's defaults (the `.lini-link` rule).
     pub link_defaults: AttrMap,
@@ -420,7 +420,7 @@ pub struct ResolvedLink {
     pub routing: Strategy,
     pub attrs: AttrMap,
     /// Names of the `.style`s applied to this link, in source order — emitted as
-    /// `lini-style-{name}` classes, exactly like a node's [SPEC 17].
+    /// `lini-style-{name}` classes, exactly like a node's [SPEC 18].
     pub applied_styles: Vec<String>,
     pub markers: Markers,
     /// Link labels (label sugar + body `|text|`s), placed onto the drawn

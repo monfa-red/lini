@@ -155,7 +155,7 @@ pub(super) fn read_series(
 /// whole-domain form: bind `x` at `samples` steps over the numeric domain. A per-band
 /// list samples each expr in band-local `u` (0→1) across its segment's x-span, the
 /// segments connecting end-to-start [SPEC 14.5] — one continuous polyline whose
-/// boundary risers are drawn. A list length ≠ the band count is an error ([SPEC 20]).
+/// boundary risers are drawn. A list length ≠ the band count is an error ([SPEC 21]).
 pub(super) fn sample_formula(
     exprs: &[Expr],
     x: &Scale,
@@ -283,7 +283,7 @@ fn read_data(inst: &ResolvedInst, kind: &SeriesKind) -> Result<(Data, bool), Err
 
 /// Parse a series' `labels:` [SPEC 14.3]: a quoted-string list, one per datum,
 /// validated against the data count. A `fn:` series has no authored points to label, so
-/// `labels:` on one is an error ([SPEC 20]). Reuses [`collect_strings`] (the `categories:`
+/// `labels:` on one is an error ([SPEC 21]). Reuses [`collect_strings`] (the `categories:`
 /// reader), so the list parses exactly like the chart's category list.
 fn read_labels(inst: &ResolvedInst, data: &Data) -> Result<Vec<String>, Error> {
     let Some(v) = inst.attrs.get("labels") else {
@@ -340,7 +340,7 @@ fn read_curve(attrs: &AttrMap) -> Result<Curve, Error> {
 /// (`start`, else `end` — `marker:` sets both; the directional ends have no chart
 /// meaning). `marker: none` resolves to `None`; a `|mark|`'s template default `marker:
 /// dot` separates an explicit `none` (label only) from a plain point (a dot). A chart
-/// marker is centred, so the directional `arrow` / `crow` are rejected here ([SPEC 20]).
+/// marker is centred, so the directional `arrow` / `crow` are rejected here ([SPEC 21]).
 pub(super) fn chart_marker(inst: &ResolvedInst) -> Result<MarkerKind, Error> {
     let kind = if inst.markers.start != MarkerKind::None {
         inst.markers.start

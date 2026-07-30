@@ -107,7 +107,7 @@ impl Half {
 
 // ───────────────────────── structure validation ─────────────────────────
 
-/// Structure errors [SPEC 20], on the parsed (still-nested) AST. Runs
+/// Structure errors [SPEC 21], on the parsed (still-nested) AST. Runs
 /// pre-desugar, the `lint::is_drawing_node` precedent (written type + style, no
 /// cascade).
 pub(crate) fn validate(file: &File) -> Result<(), Error> {
@@ -220,7 +220,7 @@ fn check_side(n: &Node, c: TreeCtx) -> Result<(), Error> {
     }
 }
 
-/// A tree scope holds exactly one root topic [SPEC 20]: none or a second errors.
+/// A tree scope holds exactly one root topic [SPEC 21]: none or a second errors.
 /// Counts *root* topics — direct topic children of the scope.
 fn check_root_count(children: &[Child], scope_span: Span) -> Result<(), Error> {
     let mut roots = children.iter().filter_map(|c| match c {

@@ -1,4 +1,4 @@
-//! One row per property [SPEC 16]: who owns it, its value shape, where its
+//! One row per property [SPEC 17]: who owns it, its value shape, where its
 //! default lives, how it inherits, and how out-of-scope use is gated. The
 //! resolve classifiers read this table; the 0.21 validation pass, schema
 //! generation, and generated SPEC tables come next. The `shape` column states
@@ -8,7 +8,7 @@
 use std::collections::HashMap;
 use std::sync::OnceLock;
 
-/// Where a property is honoured [SPEC 16]. A name may have several owners;
+/// Where a property is honoured [SPEC 17]. A name may have several owners;
 /// homonyms (`sheet` on `|page|` vs the ISO 7200 field) list each. The M2
 /// validation pass ([`crate::validate`]) is the consumer.
 #[derive(Debug)]
@@ -88,8 +88,8 @@ pub enum Inherit {
     Engine,
 }
 
-/// Out-of-scope treatment [SPEC 16]: inert by default; a handful hard-error
-/// ([SPEC 20] — the sequence placement props, the drawing measurements).
+/// Out-of-scope treatment [SPEC 17]: inert by default; a handful hard-error
+/// ([SPEC 21] — the sequence placement props, the drawing measurements).
 #[derive(Debug)]
 pub enum Gate {
     Lenient,
@@ -99,7 +99,7 @@ pub enum Gate {
 /// One property row. `text` marks the subset valid on a bare text leaf's own
 /// `{ }` [SPEC 3]; `baked` the baked-spacing text props that compile into
 /// glyph / line positions and are never live CSS [SPEC 6]; `deferred` a row
-/// honoured only in part — its full reader is deferred ([SPEC 23]), so the
+/// honoured only in part — its full reader is deferred ([SPEC 24]), so the
 /// generated schema surfaces it as a deferred flag.
 // `default` and `gate` are data for schema generation and later validation
 // depth; today the tests pin them.
@@ -148,12 +148,12 @@ impl Property {
         self.baked = true;
         self
     }
-    /// Mark a hard out-of-scope gate [SPEC 16/20].
+    /// Mark a hard out-of-scope gate [SPEC 18/21].
     const fn hard(mut self) -> Self {
         self.gate = Gate::Hard;
         self
     }
-    /// Mark a partly-honoured row whose full reader is deferred [SPEC 23].
+    /// Mark a partly-honoured row whose full reader is deferred [SPEC 24].
     const fn deferred(mut self) -> Self {
         self.deferred = true;
         self
@@ -164,7 +164,7 @@ impl Property {
     /// (chart/axis/series/drawing); pure scene config (`clearance`/`routing`)
     /// does not. Validation reads the owners for the former, so a scope-link
     /// property is not blanket-accepted on every node by its inherit channel
-    /// [SPEC 16].
+    /// [SPEC 17].
     pub fn has_node_owner(&self) -> bool {
         self.owners.iter().any(|o| {
             matches!(o, Owner::Universal | Owner::Type(_))
@@ -180,7 +180,7 @@ use Shape::{List, One};
 
 const UNIVERSAL: &[Owner] = &[Universal];
 
-/// Every property, grouped as in SPEC 16. Row order fixes the derived
+/// Every property, grouped as in SPEC 17. Row order fixes the derived
 /// iterators ([`inherited_text`], [`scope_link_props`]).
 pub static PROPERTIES: &[Property] = &[
     // ── Paint & stroke [SPEC 6] ──
@@ -199,7 +199,7 @@ pub static PROPERTIES: &[Property] = &[
         No,
     ),
     // ── Text [SPEC 6] — the `Inherit::Text` rows, in the channel's order.
-    //    (`text-shadow` rides the Universal Text table in SPEC 16.) ──
+    //    (`text-shadow` rides the Universal Text table in SPEC 17.) ──
     row("font-family", UNIVERSAL, One(Kind::Any), Engine, Text).text(),
     row("font-size", UNIVERSAL, One(Kind::Number), Bundles, Text)
         .text()
@@ -303,7 +303,7 @@ pub static PROPERTIES: &[Property] = &[
         DefaultRef::None,
         No,
     ),
-    // `symbol` is a homonym [SPEC 16]: the icon's Phosphor name, and the
+    // `symbol` is a homonym [SPEC 17]: the icon's Phosphor name, and the
     // finish vee variant on `|surface-finish|` ([SPEC 15.9]).
     row(
         "symbol",
@@ -490,7 +490,7 @@ pub static PROPERTIES: &[Property] = &[
     row("categories", &[Type("chart")], List(Kind::Str), Engine, No),
     row("hole", &[Type("pie")], One(Kind::Number), Engine, No),
     // The auto-legend (≥ 2 entries) is built [SPEC 14.6]; the `legend:`
-    // placement / suppression reader is deferred [SPEC 23], so the row is
+    // placement / suppression reader is deferred [SPEC 24], so the row is
     // marked `deferred` — the schema states it truthfully. Building the reader
     // is a later minor's work.
     row(
@@ -563,7 +563,7 @@ pub static PROPERTIES: &[Property] = &[
         No,
     ),
     row("gridlines", &[Type("axis")], One(Kind::Any), Engine, No),
-    // Value presentation [SPEC 16] — parsed by `ledger::format`. A dual-channel
+    // Value presentation [SPEC 17] — parsed by `ledger::format`. A dual-channel
     // row: two genuinely different cascades over one property.
     //   • chart leg (chart / pie / axis / series): **engine-read** — the chart
     //     threads its own `format:` down as the axes' and series' fallback,
@@ -591,7 +591,7 @@ pub static PROPERTIES: &[Property] = &[
         ScopeLink,
     ),
     // ── Sequence [SPEC 13] — the placement props hard-gate off a sequence
-    //    [SPEC 16/20]. ──
+    //    [SPEC 18/21]. ──
     row(
         "place",
         &[Type("note")],
@@ -609,7 +609,7 @@ pub static PROPERTIES: &[Property] = &[
     )
     .hard(),
     // ── Drawing [SPEC 15] ──
-    // `tol` is a homonym [SPEC 16]: a dimension's tolerance forms, and a
+    // `tol` is a homonym [SPEC 17]: a dimension's tolerance forms, and a
     // control row's zone width (a number > 0) on `|feature-control|` /
     // `|control|` ([SPEC 15.9]).
     row(

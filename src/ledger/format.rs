@@ -1,4 +1,4 @@
-//! The `format:` engine [SPEC 16] — value **presentation**, never measurement.
+//! The `format:` engine [SPEC 17] — value **presentation**, never measurement.
 //! One parse and one renderer shared by every consumer (chart ticks and
 //! tooltip values today, dimension text in the drawing half), so the same
 //! value can never read two ways. Composes before `unit:` suffixes, `tol:`,
@@ -8,7 +8,7 @@ use crate::error::Error;
 use crate::resolve::{AttrMap, ResolvedValue};
 use crate::span::Span;
 
-/// A parsed `format:` [SPEC 16], default `auto`.
+/// A parsed `format:` [SPEC 17], default `auto`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 pub enum Format {
     /// Integers stay integers; decimals trim trailing zeros (≤ 4 places).
@@ -42,7 +42,7 @@ pub enum DateUnit {
     Minute,
 }
 
-/// The SPEC 20 usage row, verbatim.
+/// The SPEC 21 usage row, verbatim.
 const USAGE: &str = "'format' takes auto, decimal N, significant N, scientific N, \
                      engineering N, percent N, fraction D, or a date preset";
 
@@ -65,7 +65,7 @@ pub fn numeric(f: Format) -> Format {
     }
 }
 
-/// The date-preset gate [SPEC 16]: a date preset speaks only to a time axis, so
+/// The date-preset gate [SPEC 17]: a date preset speaks only to a time axis, so
 /// authored on a numeric consumer it errors. Shared by the chart's numeric axes,
 /// `pie`, and the drawing's dimension text.
 pub fn reject_date(f: Format, span: Span) -> Result<(), Error> {
@@ -75,7 +75,7 @@ pub fn reject_date(f: Format, span: Span) -> Result<(), Error> {
     Ok(())
 }
 
-/// The SPEC 20 message when a one-shape series (`|line|` / `|area|`) carries a
+/// The SPEC 21 message when a one-shape series (`|line|` / `|area|`) carries a
 /// per-datum paint list. Shared by the validator (lint) and the model (the
 /// semantic authority), so a library compile can't slip past a matching text.
 pub fn one_shape_paint(shape: &str) -> String {
@@ -201,7 +201,7 @@ fn exponential(n: f64, d: u8, eng: bool) -> String {
     format!("{}e{exp}", no_neg_zero(format!("{:.*}", d as usize, mant)))
 }
 
-/// A fraction's parts [SPEC 16]: the nearest multiple of `1/den`, reduced —
+/// A fraction's parts [SPEC 17]: the nearest multiple of `1/den`, reduced —
 /// `(negative, whole, numerator, denominator)`; a zero numerator is a whole
 /// reading. The dimension typography arranges these; [`render`] flattens them.
 pub fn fraction_parts(n: f64, den: u32) -> (bool, u64, u32, u32) {

@@ -1,6 +1,6 @@
 //! First-appearance-ordered interning: dedup a value under a key, handing back a
 //! stable index — the order `<defs>` ids get assigned, so output stays
-//! deterministic [SPEC 17]. Shared by the paint tables (`gradient` / `hatch`)
+//! deterministic [SPEC 18]. Shared by the paint tables (`gradient` / `hatch`)
 //! and the filter table (`shadow`).
 
 /// A keyed set of distinct values, in first-appearance order.

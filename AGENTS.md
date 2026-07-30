@@ -37,7 +37,7 @@ How to work in this repo.
   worn many times — a generated class (hue walk, depth ramp), engine
   chrome, a template look — emits **one CSS rule** and a class on each
   wearer; `style=` is only ever the *diff* an element authors against its
-  rules ([SPEC 17]'s class-diff). A dead class on an element whose look
+  rules ([SPEC 18]'s class-diff). A dead class on an element whose look
   was inlined is the smell: the rule exists, emit it.
 - **Trust a correct model.** Don't special-case a principled formula's output to nudge one case to taste — fix the model, or accept the result.
 - Nothing beyond the task — no extra features, validation, or comments (comments only for the non-obvious *why*).

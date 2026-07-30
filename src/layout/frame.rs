@@ -93,7 +93,7 @@ pub(super) fn finish(
         h: bbox.h() + pad.top + pad.bottom,
     };
 
-    // A root `fill:` overrides the canvas colour inline [SPEC 17]; the default
+    // A root `fill:` overrides the canvas colour inline [SPEC 18]; the default
     // comes from the `.lini-canvas` rule (`--lini-bg`). `none` → transparent.
     let canvas_fill = program.scene.attrs.get("fill").cloned();
 

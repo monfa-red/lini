@@ -1,6 +1,6 @@
 //! Parse a chart's resolved children into a typed model: the x (domain) axis, the
 //! value axes, and the series bound to them [SPEC 14.2]. All chart-shape
-//! validation [SPEC 20] lives here; the geometry is the renderers' job.
+//! validation [SPEC 21] lives here; the geometry is the renderers' job.
 
 use super::palette;
 use super::project::Dir;

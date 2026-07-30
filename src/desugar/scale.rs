@@ -16,7 +16,7 @@ use crate::error::Error;
 use crate::span::Span;
 use crate::syntax::ast::{Child, Decl, Node, Value};
 
-/// The generated internal attr name [SPEC 18] — whitelisted in validation.
+/// The generated internal attr name [SPEC 19] — whitelisted in validation.
 pub(crate) const PX_PER_UNIT: &str = "px-per-unit";
 
 /// The unit / density context carried down the lowered tree.

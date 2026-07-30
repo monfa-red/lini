@@ -189,7 +189,7 @@ pub struct Link {
     pub span: Span,
 }
 
-/// One `[ ]` item on a link [SPEC 21]: a styleable text label, or an
+/// One `[ ]` item on a link [SPEC 22]: a styleable text label, or an
 /// annotation **node** — parsed everywhere, meaningful only on a drawing's
 /// dimensions and leaders (a node is never a label, [SPEC 15.9]).
 #[derive(Debug, Clone)]

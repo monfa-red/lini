@@ -98,7 +98,7 @@ pub fn build(inst: &ResolvedInst, funcs: &FuncTable) -> Result<Chart, Error> {
     // Bands and marks bind to an axis by id (the x axis or a value axis), so resolve
     // them while both id sources are in scope. A radial chart draws neither —
     // the flip is never silently lossy [SPEC 14.5/14.7/20], so it errors here
-    // rather than vanish (building them is deferred, [SPEC 23]).
+    // rather than vanish (building them is deferred, [SPEC 24]).
     if dir == Dir::Radial
         && let Some(inst) = band_insts.iter().chain(&mark_insts).next()
     {
@@ -212,7 +212,7 @@ fn read_direction(attrs: &AttrMap) -> Result<Dir, Error> {
 }
 
 /// Split children into series, axes, bands, marks, and the harvested title; reject
-/// non-chart children and the constructs that arrive in later steps [SPEC 20].
+/// non-chart children and the constructs that arrive in later steps [SPEC 21].
 fn partition(inst: &ResolvedInst) -> Result<Split<'_>, Error> {
     let mut series = Vec::new();
     let mut axes = Vec::new();

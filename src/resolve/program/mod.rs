@@ -1,5 +1,5 @@
 //! The resolve orchestrator: variables → stylesheet → scene tree → links →
-//! render inputs, assembled into a [`Program`] [SPEC 18]. Types, templates,
+//! render inputs, assembled into a [`Program`] [SPEC 19]. Types, templates,
 //! defines, labels, and auto-create are lowered upstream by `desugar`, so resolve
 //! only ever sees primitives and `.lini-*` classes.
 //!
@@ -79,7 +79,7 @@ pub fn resolve_with_env(
     // ── Scene tree (types/templates/defines, labels, and auto-create were all
     //    lowered by desugar — resolve only sees primitives + classes) ──
     // Image assets read at resolve — the one read [SPEC 7]; the counter
-    // numbers embedded assets in document order for the id prefix [SPEC 17].
+    // numbers embedded assets in document order for the id prefix [SPEC 18].
     let assets = super::assets::AssetState::new(env);
     let ctx = SceneCtx {
         sheet: &sheet,
@@ -279,7 +279,7 @@ fn collect_datum_nodes(
 /// through the ordinary node path — the same cascade, template classes, and
 /// text inheritance a scene child gets, in the link's written scope. Only a
 /// drawing's dimensions and leaders may carry nodes: outside a drawing scope a
-/// node label errors ([SPEC 20]), and a carried node must be a drafting
+/// node label errors ([SPEC 21]), and a carried node must be a drafting
 /// annotation type.
 fn resolve_carried(
     w: &crate::syntax::ast::Link,

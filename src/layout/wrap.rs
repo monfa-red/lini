@@ -5,7 +5,7 @@
 //! wrapped size **is** the measured size — it feeds auto-sizing, grid tracks,
 //! gutters, and routing obstacles with no further plumbing. Only text wraps:
 //! a non-text in-flow child wider than the cap is an error, as is a `width:`
-//! floor above it and `nowrap` text that cannot fit ([SPEC 20]).
+//! floor above it and `nowrap` text that cannot fit ([SPEC 21]).
 
 use super::ir::{Bbox, PlacedNode};
 use super::{anchors, primitives, text};
@@ -25,7 +25,7 @@ pub(super) fn apply_max_width(
     let Some(max_w) = inst.attrs.number("max-width") else {
         return Ok(());
     };
-    // A `width:` floor above the cap is a contradiction [SPEC 20].
+    // A `width:` floor above the cap is a contradiction [SPEC 21].
     if let Some(w) = inst.attrs.number("width")
         && w > max_w
     {

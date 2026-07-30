@@ -1,4 +1,4 @@
-//! The luminance knockout mask [SPEC 17] — **the** mechanism for breaking a
+//! The luminance knockout mask [SPEC 18] — **the** mechanism for breaking a
 //! stroked path under something else: a link label's cut box, a drawing
 //! halo's crossing break [SPEC 15.7]. White (`.lini-cut-bg`) shows the path
 //! over its padded region; black cut shapes punch the holes. Mask-based, not

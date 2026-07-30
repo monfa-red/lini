@@ -68,7 +68,7 @@ pub fn lay_out_grid(
             ));
         }
         // An authored `cell:` landing on a generated title-block field's slot
-        // errors, naming the field [SPEC 15.8 / SPEC 20]. Only generated field
+        // errors, naming the field [SPEC 15.8 / SPEC 21]. Only generated field
         // cells carry the internal `field` marker, so plain grids keep their
         // silent-overlap freedom.
         if pinned.is_some()

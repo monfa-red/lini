@@ -38,7 +38,7 @@ pub fn render(laid_out: &LaidOut, opts: &Options) -> String {
     // The scene + link body renders first, into its own buffer: the one text
     // emitter registers every face (and, under `--static`, glyph) it uses in
     // the sink, and the `<style>` / `<defs>` blocks below then carry exactly
-    // that set [SPEC 17].
+    // that set [SPEC 18].
     let sink = fonts::FontSink::new(laid_out);
     let mut body = String::with_capacity(2048);
     body.push_str("  <g class=\"lini-scene\">\n");
@@ -215,7 +215,7 @@ fn render_node(
         return;
     }
     // Text renders as a bare `<text class="lini-text">` at its placed position —
-    // no wrapping `<g>` [SPEC 17]. Font and colour inherit from the enclosing box.
+    // no wrapping `<g>` [SPEC 18]. Font and colour inherit from the enclosing box.
     if n.kind == NodeKind::Text {
         render_text(out, n, depth, ancestors, ruleset, vars, opts, sink);
         return;
@@ -285,7 +285,7 @@ fn render_node(
     .unwrap();
 
     // `hint:` emits a `<title>` as the group's first child — an SVG tooltip
-    // and the accessible name [SPEC 17].
+    // and the accessible name [SPEC 18].
     if let Some(crate::resolve::ResolvedValue::String(hint)) = n.attrs.get("hint") {
         writeln!(out, "{}  <title>{}</title>", indent, escape_xml(hint)).unwrap();
     }
@@ -335,7 +335,7 @@ fn render_text(
     let label = n.label.as_deref().unwrap_or("");
     // A text node's `type_chain` carries any extra class (e.g. a chart's `.lini-chart-label`
     // inline labels, [SPEC 14.8]); plain text has none, so this stays `lini-text`.
-    // A worn user class joins as `lini-style-*` [SPEC 17], its live declarations
+    // A worn user class joins as `lini-style-*` [SPEC 18], its live declarations
     // riding the stylesheet rule exactly as a node's do.
     let mut classes = vec!["lini-text".to_string()];
     classes.extend(n.type_chain.iter().map(|t| format!("lini-{t}")));
@@ -356,7 +356,7 @@ fn render_text(
 }
 
 /// The inline `style=` for a text leaf — a node's `<text>` or a link label — as
-/// the class-diff of its paint [SPEC 17], the same chokepoint a node `<g>` uses
+/// the class-diff of its paint [SPEC 18], the same chokepoint a node `<g>` uses
 /// ([`node_style_attr`]). This is the **one** place text paint inlines, so no
 /// font/paint prop is ever hand-dropped (link labels used to silently lose
 /// `text-shadow` on their own hand-rolled path). `color` aliases `fill`

@@ -179,7 +179,7 @@ fn labels_is_the_series_per_datum_text() {
 }
 
 /// Beta Stage 0 reconciliation: the `legend` row is marked deferred (its
-/// placement/suppression reader is [SPEC 23], only the auto-legend is
+/// placement/suppression reader is [SPEC 24], only the auto-legend is
 /// built); nothing else is.
 #[test]
 fn legend_is_the_only_deferred_row() {

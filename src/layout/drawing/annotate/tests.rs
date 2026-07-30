@@ -412,7 +412,7 @@ fn project_overrides_the_point_readings() {
 
 #[test]
 fn project_and_axis_errors_speak_spec() {
-    // `project:` must agree with a directed anchor [SPEC 20].
+    // `project:` must agree with a directed anchor [SPEC 21].
     assert_eq!(
         layout_err(
             "{ layout: drawing; density: 1 }\n|rect#a| { width: 40; height: 20 }\na:left (-) a:right { project: vertical }\n"
@@ -958,7 +958,7 @@ fn a_dim_row_clears_leader_texts() {
     );
 }
 
-// ── The anatomy's class hooks [SPEC 17] ──
+// ── The anatomy's class hooks [SPEC 18] ──
 
 #[test]
 fn dimension_anatomy_wears_its_classes() {
