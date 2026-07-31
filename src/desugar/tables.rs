@@ -84,14 +84,10 @@ fn block_cell(text: &TextNode) -> Node {
 /// [SPEC 8], the box that carries the cell padding. Header/footer/box cells are
 /// already boxes and pass through; re-desugar is a fixed point (a wrapped cell is a
 /// box, not text, so it is never re-wrapped).
-pub(super) fn wrap_body_cells(
-    children: &mut [Child],
-    types: &Types,
-    bodies: &Bodies,
-) -> Result<(), Error> {
+pub(super) fn wrap_body_cells(cx: &super::Lower, children: &mut [Child]) -> Result<(), Error> {
     for c in children.iter_mut() {
         if let Child::Text(t) = c {
-            *c = Child::Box(lower_node(&block_cell(t), types, bodies, false)?);
+            *c = Child::Box(lower_node(cx, &block_cell(t), false)?);
         }
     }
     Ok(())
@@ -170,10 +166,9 @@ fn per_column(style: &[Decl], name: &str, cols: usize) -> Result<Option<Vec<Stri
 /// `|header|` cells when they are all bare text. A first row holding a box or an
 /// explicit `cell:` is left alone — that is a custom layout, not a header.
 pub(super) fn wrap_header_row(
+    cx: &super::Lower,
     children: &mut [Child],
     cols: usize,
-    types: &Types,
-    bodies: &Bodies,
 ) -> Result<(), Error> {
     let row_end = cols.min(children.len());
     if row_end == 0
@@ -185,7 +180,7 @@ pub(super) fn wrap_header_row(
     }
     for c in &mut children[..row_end] {
         if let Child::Text(t) = c {
-            *c = Child::Box(lower_node(&header_node(t, None), types, bodies, false)?);
+            *c = Child::Box(lower_node(cx, &header_node(t, None), false)?);
         }
     }
     Ok(())

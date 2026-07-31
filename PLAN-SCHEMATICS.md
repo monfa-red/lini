@@ -618,6 +618,16 @@ arm → `ledger/properties/mod.rs::PROPERTIES` rows (new props only) →
 - **Ledger**: `number:`, `prefix:`, `shape:`, `pins:`, `corner-radius`
   (Phase 5 consumes it; the row can land here) — owners, shapes, gates per
   the ledger's style.
+- **Style rides classes, never inline `style=`** (user directive, 2026-07-31
+  — AGENTS.md's class-diff rule, restated for this phase's chrome): every
+  generated schematic feature with a shared look (pin names/numbers, ref
+  readouts, tag outlines, symbol bodies, stubs) wears a generated class
+  whose paint states **once** as a CSS rule; the emitted SVG carries
+  `style=` only for an element's authored *diff* against its rules. Lower
+  chrome as typed/classed children riding rules (the `|caption|` pattern),
+  never as per-node inline decls that render as `style=`. Desugar lowers
+  **as much as can be lowered** — anything expressible as generated
+  nodes/classes/rules lands in desugar, not later phases.
 
 **Files**: `src/desugar/{types.rs,schematic.rs(new)}`,
 `src/ledger/{defaults,properties/mod,consts,examples}.rs`,
@@ -627,25 +637,129 @@ arm → `ledger/properties/mod.rs::PROPERTIES` rows (new props only) →
 `src/error/codes.rs`, regen.
 
 **Tasks**
-- [ ] Six-item checklist per type; regen guards green.
-- [ ] Component/pin desugar with bilateral split; rails scope-transparency
-      test; pin `translate:` slide.
-- [ ] Registry entries (bodies + label symbols + connection points); three
+- [x] Six-item checklist per type; regen guards green.
+- [x] Component/pin desugar with bilateral split; rails scope-transparency
+      test; pin `translate:` slide (deferred to Phase 4 — see log).
+- [x] Registry entries (bodies + label symbols + connection points); three
       invariants; unknown-symbol error consumes `suggest()`.
-- [ ] Discrete generated pins incl. polar variants; `|J| { pins: 4 }`;
-      opamp pin set + hidden power pins.
-- [ ] Ref readout chrome + placement + minted display refs (never
+- [x] Discrete generated pins incl. polar variants; `|J| { pins: 4 }`;
+      opamp pin set + hidden power pins (hidden = not generated; see log).
+- [x] Ref readout chrome + placement + minted display refs (never
       endpoints — test).
-- [ ] `|label|` text/symbol/shape lowering.
-- [ ] fmt for the new type names; define-shadowing / reserved-word tests
+- [x] `|label|` text/symbol/shape lowering.
+- [x] fmt for the new type names; define-shadowing / reserved-word tests
       (SPEC 23's protection rule).
-- [ ] Unit snapshots per type (desugar + render); visual PNG contact sheet
-      of every symbol, light + dark.
-- [ ] `cargo fmt && cargo test && cargo clippy` green.
+- [x] Unit tests per type (desugar + resolve); visual PNG contact sheet of
+      every symbol, light + dark.
+- [x] `cargo fmt && cargo test && cargo clippy` green.
 
 ### Execution log
 
+- 2026-07-31 — Phase 3 executed (branch `worktree-schematic-types`, rebased
+  onto Phase 2). **User directive recorded this session**: desugar lowers as
+  much as possible, and every shared look rides a generated class + one CSS
+  rule — no inline `style=` in the SVG beyond an element's authored diff
+  (AGENTS.md's class-diff law, restated in this phase's Design). Decisions:
+  - **All 23 types registered** through the six-item checklist:
+    TEMPLATES rows (`schematic`·`component`·`pin`·`label`·`junction`·`J`·
+    `opamp`·`gnd`·`nc` + 13 discretes — `DISCRETES` const exported beside
+    TEMPLATES, the one list validation/lowering key off), bundles
+    (component pale-yellow/dark-red per SPEC 8; `pin` height = PIN_PITCH 20
+    so gap-0 rows stack on exact pitch centres; `junction` diameter from
+    JUNCTION_RADIUS), PROPERTIES rows (`number`/`prefix`/`shape`/`pins` +
+    `corner-radius` on Link for Phase 5; `symbol` gains Type("label") +
+    Role("discrete"); `side` gains Type("pin")), examples, validation role
+    `discrete`, schema + grammar regen. `|schematic|` stays a plain block
+    until Phase 4's engine (no `layout: schematic` value yet).
+  - **Role vars** wired in `resolve/defaults.rs` (`wire`, `component-fill`,
+    `component-stroke`, `label-ink`, `pin-number`, `sheet` — SPEC 10.1
+    values, tree-shaken like every var). Constants in `ledger/consts.rs`
+    (`// schematic` section): PIN_PITCH 20, PIN_STUB 12, JUNCTION_RADIUS 3,
+    SCH_STROKE_WIDTH 1.5, PIN_NUMBER_FONT 9, REF_FONT 11.
+  - **Symbols live in the `glyphs!` registry**, extended: `Glyph` gains
+    `height` and `ports` (connection points, **in pin order** — the settled
+    connection-point decision). 30 `sch-*` glyphs (13 discrete families ×
+    variants + opamp + 6 label symbols), authored at **real sheet size**
+    (pitch constants — the explicit not-font-coupled law), one `Line`
+    fragment each; drafting glyphs keep GRID sizing and empty ports. New
+    invariant test: every `sch-` port inside its box, exactly one Line frag.
+  - **The `Lower` context** (`desugar/mod.rs`): `lower_node` &co. now
+    thread one `Lower { types, bodies, rules }` — `chain_ident/number/str`
+    give desugar its slice of the cascade (own style → element rules →
+    template bundles, derived-first), so `symbol:`/`prefix:`/`pins:` read
+    through defines (`|vm::label| { symbol: power }` works). Descendant /
+    class-rule values are invisible to desugar — accepted stage boundary.
+  - **`desugar/schematic.rs`** (new, ~470 LOC): `sch_kind` dispatch
+    (Component / Opamp / Discrete / Label); bilateral split into anonymous
+    `|row|`/`|column|` rails (top/(left·right)/bottom, autos ⌈n/2⌉ left,
+    explicit `side:` excluded from the count); per-pin chrome (stub `|line|`
+    pinned outward past the body padding, `number:` readout, id-as-name
+    text); `|J| { pins: N }` generation; symbol bodies = the glyph's one
+    fragment as a `|path|` + zero-size **port nodes** (`p1`, `a`/`k`,
+    `b c e`/`g d s` per variant, `plus`/`minus`, opamp `out inp inn`) pinned
+    at the glyph's ports; label symbol drawing + `shape:` outline classes
+    (`round` = stadium; `left`/`right`/`both` draw the plain outline until
+    Phase 5's marker-driven tag path); per-scope display-ref minting
+    (id verbatim, else prefix+N skipping taken, `prefix:` through the
+    chain, discrete type name as fallback prefix).
+  - **The class-diff law implemented via `lowered_chrome`**: every
+    generated chrome child lowers through the one node path then seats its
+    chrome class **first** (most-derived), so the class rule wins the
+    type-tier fold and the emitted SVG carries **zero** `style=` (verified
+    by test `a_schematic_scene_emits_no_inline_style` and by hand on the
+    contact sheet). Chrome classes: `lini-sch-line`, `lini-sch-tag-line`,
+    `lini-pin-stub`, `lini-pin-number`, `lini-ref`, `lini-part-value`,
+    `lini-tag-outline`, `lini-tag-round` — looks in `SchChrome` +
+    `sch_chrome_decls` (ledger/defaults.rs, the one tuning home), emitted
+    when worn, regenerated per pass (`is_align_class` generalized to
+    `is_generated_class`, which drops incoming copies — same fix shape as
+    Phase 2's align-class bug).
+  - **Anonymous parts generate no port nodes** — found by the contact
+    sheet: an anonymous part is scope-transparent, so two anonymous |R|s'
+    generated `p1` ids collide in the parent scope; they are also unwirable
+    (no dot-path). Only id'd parts get terminals (`symbol_body`'s `wired`).
+  - **Opamp power pins**: "present but hidden" = **not generated** in beta
+    2 — no reveal knob; the deferred ANSI-knob row is the natural home if
+    one emerges. Logged as the decision the plan asked for.
+  - **Pin `translate:` slide + cross-axis error deferred to Phase 4** —
+    the slide is placement semantics (re-siding under rotation), dead code
+    until the engine reads pin geometry; Phase 4 must build both.
+  - Contact sheet (30 symbols, light + dark PNG) reviewed: family reads at
+    even weight, refs/values/net-symbols correct in both themes. Constants
+    untouched — Phase 6 tunes against the reference PDF.
+  - Tests: +10 desugar (split/rails, J pins, discrete variants + suggest,
+    labels, power-flag define, ref minting, fixed points, anonymous-part
+    ports), +5 resolution (rail scope-transparency incl. semantic pin ids,
+    minted-ref-never-endpoint, shadow protection, no-inline-style), glyph
+    invariants. Suite 1167 green; fmt + clippy clean.
+
 ### Carry-over notes
+
+- **Phase 5 must gate schematic types out of non-schematic scopes** — today
+  `|R|` renders anywhere (deliberately: no engine exists). The
+  `layout/mod.rs:420` family arm is the deferral this phase's goal
+  statement promised.
+- **Phase 4 reads pin geometry from what desugar built**: a component pin's
+  fixed port = its rail row's stub tip (PIN_STUB past the body edge on the
+  pin's side); a symbol part's = its port node's `translate` (the glyph
+  port, bit-exact — one computation, reused per wire, per Phase 1's
+  carry-over). The zero-size port nodes are scope-level **children** of the
+  part; the settled obstacle-identity decision (pins fold into the part's
+  rect) is Phase 4's to implement in `SceneIndex`.
+- **Pin `translate:` slide + cross-axis error and `rotate:` re-siding are
+  unbuilt** — Phase 4 owns both (log said so above).
+- `|label|` `shape: left|right|both` draw the plain outline; Phase 5's
+  label-wire marker mapping should land the pointed tag geometry (a
+  `|path|` outline like the symbols, or a clip — decide there).
+- The value readout anchors (`component`: above under the ref at −16/−30;
+  discrete: below at +12) are provisional chrome geometry — Phase 4's
+  seat/cluster pass may re-anchor them (SPEC says component-above,
+  discrete-beside; "beside" needs cluster knowledge desugar lacks).
+- `|junction|` is registered + bundled but never generated — Phase 5 reads
+  routed geometry for ≥3-way meets.
+- `corner-radius` row exists, no consumer — Phase 5 wires `radius_cap`.
+- `desugar/mod.rs` is now ~780 LOC (over the split rule) — Phase 4/5
+  touching it should split the smart-label lowering out (log the split).
 
 ---
 

@@ -93,7 +93,27 @@ pub fn class_defs(
             rules.push(align_class_rule(name, prop, value));
         }
     }
+    // The schematic chrome classes [SPEC 16/18]: each shared look — stubs,
+    // symbol linework, readouts, tag outlines — states **once** as a rule and
+    // is worn by every generated wearer; an element's `style=` stays the
+    // authored diff. Emitted when worn, regenerated every pass (the incoming
+    // copy is dropped by the stylesheet walk).
+    for (name, decls) in sch_chrome_classes() {
+        if present.contains(name) {
+            rules.push(class_rule(name, decls));
+        }
+    }
     rules
+}
+
+/// The generated schematic chrome classes and their one-rule looks
+/// [SPEC 16.6]: paint rides the role variables so a theme retunes the family.
+fn sch_chrome_classes() -> Vec<(&'static str, Vec<Decl>)> {
+    use crate::ledger::defaults::{SchChrome, sch_chrome_decls};
+    SchChrome::ALL
+        .iter()
+        .map(|c| (c.class_name(), sch_chrome_decls(*c)))
+        .collect()
 }
 
 /// The cell-alignment classes and the single declaration each carries.
@@ -104,14 +124,17 @@ pub(super) const ALIGN_CLASSES: [(&str, &str, &str); 4] = [
     ("justify-end", "justify", "end"),
 ];
 
-/// Whether a `.lini-*` class is one of the generated cell-alignment classes
-/// [SPEC 8] — their rules regenerate from the worn set, so the stylesheet walk
-/// drops an incoming copy instead of folding it (which would double it on
-/// re-desugar).
-pub(super) fn is_align_class(class: &str) -> bool {
-    class
-        .strip_prefix("lini-")
-        .is_some_and(|x| ALIGN_CLASSES.iter().any(|(n, ..)| *n == x))
+/// Whether a `.lini-*` class is a generated utility class — cell alignment
+/// [SPEC 8] or schematic chrome [SPEC 16]. Their rules regenerate from the
+/// worn set, so the stylesheet walk drops an incoming copy instead of folding
+/// it (which would double it on re-desugar).
+pub(super) fn is_generated_class(class: &str) -> bool {
+    class.strip_prefix("lini-").is_some_and(|x| {
+        ALIGN_CLASSES.iter().any(|(n, ..)| *n == x)
+            || crate::ledger::defaults::SchChrome::ALL
+                .iter()
+                .any(|c| c.class_name() == x)
+    })
 }
 
 fn align_class_rule(name: &str, prop: &str, value: &str) -> Rule {

@@ -105,12 +105,7 @@ pub(super) fn split_chain(w: &Link) -> Vec<Link> {
         .collect()
 }
 
-pub(super) fn lower_link(
-    w: &Link,
-    types: &super::Types,
-    bodies: &super::Bodies,
-    in_drawing: bool,
-) -> Result<Link, Error> {
+pub(super) fn lower_link(w: &Link, cx: &super::Lower, in_drawing: bool) -> Result<Link, Error> {
     let mut labels = Vec::new();
     if let Some(head) = &w.label {
         labels.push(LabelItem::Text(head.clone()));
@@ -120,7 +115,7 @@ pub(super) fn lower_link(
     for item in &w.labels {
         labels.push(match item {
             LabelItem::Text(t) => LabelItem::Text(t.clone()),
-            LabelItem::Node(n) => LabelItem::Node(super::lower_node(n, types, bodies, in_drawing)?),
+            LabelItem::Node(n) => LabelItem::Node(super::lower_node(cx, n, in_drawing)?),
         });
     }
 

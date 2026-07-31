@@ -626,6 +626,8 @@ fn role_accepts(role: &str, kind: &str, chain: &[String]) -> bool {
         "title-block" => in_chain(&["title-block"]),
         // Closed shapes [SPEC 7]: everything that has a body to duplicate.
         "closed" => !in_chain(&["line", "image"]),
+        // The discrete part family [SPEC 16.3] — one list, in the type table.
+        "discrete" => in_chain(types::DISCRETES),
         // Dimensions and mates are links, never nodes.
         "dimension" | "mate" => false,
         _ => false,
@@ -647,6 +649,7 @@ fn misuse_message(name: &str, wearer: &str, prop: &Property) -> String {
             Owner::Role("mate") => "a '||' mate".to_string(),
             Owner::Role("title-block") => "the '|title-block|' fields".to_string(),
             Owner::Role("closed") => "closed shapes".to_string(),
+            Owner::Role("discrete") => "the discrete parts ('|R|', '|C|', …)".to_string(),
             Owner::Role(r) => format!("'{r}'"),
             Owner::Link => "links".to_string(),
             Owner::Layout(l) => format!("a 'layout: {l}'"),

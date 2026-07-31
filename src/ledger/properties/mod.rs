@@ -303,11 +303,17 @@ pub static PROPERTIES: &[Property] = &[
         DefaultRef::None,
         No,
     ),
-    // `symbol` is a homonym [SPEC 17]: the icon's Phosphor name, and the
-    // finish vee variant on `|surface-finish|` ([SPEC 15.9]).
+    // `symbol` is a homonym [SPEC 17]: the icon's Phosphor name, the finish
+    // vee variant on `|surface-finish|` ([SPEC 15.9]), a `|label|`'s schematic
+    // symbol, and a discrete's variant ([SPEC 16.3/16.4]).
     row(
         "symbol",
-        &[Type("icon"), Type("surface-finish")],
+        &[
+            Type("icon"),
+            Type("surface-finish"),
+            Type("label"),
+            Role("discrete"),
+        ],
         One(Kind::Ident),
         DefaultRef::None,
         No,
@@ -523,10 +529,11 @@ pub static PROPERTIES: &[Property] = &[
         No,
     ),
     // Homonym: an `|axis|`'s side [SPEC 14.4], a dimension's / callout's seat
-    // [SPEC 15.6], and a first-level `|topic|`'s bilateral half [SPEC 12].
+    // [SPEC 15.6], a first-level `|topic|`'s bilateral half [SPEC 12], and a
+    // `|pin|`'s component side [SPEC 16.2].
     row(
         "side",
-        &[Type("axis"), Type("topic"), Role("dimension")],
+        &[Type("axis"), Type("topic"), Type("pin"), Role("dimension")],
         One(Kind::Ident),
         Engine,
         No,
@@ -756,6 +763,35 @@ pub static PROPERTIES: &[Property] = &[
     ),
     // The root's px-per-mm for sheets [SPEC 15.1] — scene config only.
     row("density", &[Root], One(Kind::Number), Engine, No),
+    // ── Schematic [SPEC 16] ──
+    // A pin's number, drawn outside beside the stub [SPEC 16.2].
+    row(
+        "number",
+        &[Type("pin")],
+        One(Kind::Number),
+        DefaultRef::None,
+        No,
+    ),
+    // The minted display ref's prefix [SPEC 16.2] — `|component|` lineage
+    // (incl. `|J|` / `|opamp|`) and the discretes; defaults to the type name.
+    row(
+        "prefix",
+        &[Type("component"), Role("discrete")],
+        One(Kind::Str),
+        Bundles,
+        No,
+    ),
+    // A `|label|`'s tag outline [SPEC 16.4] — visual, not semantic; a label
+    // wire's marker sets it [SPEC 16.5].
+    row("shape", &[Type("label")], One(Kind::Ident), Bundles, No),
+    // A `|J|` connector's generated pin count [SPEC 16.2].
+    row(
+        "pins",
+        &[Type("J")],
+        One(Kind::Number),
+        DefaultRef::None,
+        No,
+    ),
     // ── Links [SPEC 9] — clearance before routing (the scope-config order).
     //    On a dimension, `clearance` is the packing stand-off minimum
     //    [SPEC 15.6]. ──
@@ -774,6 +810,10 @@ pub static PROPERTIES: &[Property] = &[
         ScopeLink,
     ),
     row("along", &[Link], List(Kind::Number), Engine, No),
+    // A wire's corner rounding radius [SPEC 16.5/17]: `auto` (the default) is
+    // today's clearance-derived cap; a schematic scope's link default sets 0.
+    // Phase 5 wires the render consumer; the row lands with the family.
+    row("corner-radius", &[Link], One(Kind::Any), Engine, No),
 ];
 
 /// The value **builders** [SPEC 10.3, 12]: calls that stay a typed value (a

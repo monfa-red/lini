@@ -120,6 +120,16 @@ pub fn built_in_defaults() -> VarTable {
         "shadow-color",
         light_dark(rgba(0.0, 0.0, 0.0, 0.2), rgba(0.0, 0.0, 0.0, 0.5)),
     );
+    // The schematic role set [SPEC 10.1/16.6] — the classic sheet: wires
+    // green, part bodies pale yellow with dark-red outlines, net tags teal,
+    // pin numbers muted, the scene beige. Placeholder values from SPEC 10.1;
+    // Phase 6's visual pass tunes them. Tree-shaken like every role var.
+    t.set("wire", light_dark(hex("0a7a2f"), hex("4cc472")));
+    t.set("component-fill", light_dark(hex("fdf6d8"), hex("3a3626")));
+    t.set("component-stroke", light_dark(hex("8a1c1c"), hex("d98f8f")));
+    t.set("label-ink", light_dark(hex("0e6a6a"), hex("57c4c4")));
+    t.set("pin-number", light_dark(hex("00000073"), hex("ffffff80")));
+    t.set("sheet", light_dark(hex("faf5e6"), hex("23221c")));
 
     // Layout constants (radius, padding, font-size, clearance, …) are no longer
     // here: desugar materializes every one into the `.lini-*` class defs, the

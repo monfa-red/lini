@@ -569,3 +569,124 @@ fn a_capsule_id_never_reauto_creates_elsewhere() {
     assert_eq!(out.matches("|cyl#db|").count(), 1, "{out}");
     assert!(!out.contains("|block#db|"), "no auto-created twin: {out}");
 }
+
+// ── Schematic types [SPEC 16] ──
+
+#[test]
+fn a_component_splits_pins_bilaterally_into_anonymous_rails() {
+    // 3 auto pins: ⌈3/2⌉ = 2 left, 1 right; an explicit `side:` is excluded
+    // from the count [SPEC 16.2]. Rails are anonymous — scope-transparent.
+    let out = desugar_source(
+        "|component#U7| \"IC\" [\n  |pin#a| { number: 1 }\n  |pin#b| { number: 2 }\n  |pin#c| { number: 3 }\n  |pin#d| { number: 4; side: right }\n]\n",
+    )
+    .unwrap();
+    let left = out.split("align: start").nth(1).expect("left rail");
+    assert!(
+        left.contains("|block#a|") && left.contains("|block#b|"),
+        "{out}"
+    );
+    let right = out.split("align: end").nth(1).expect("right rail");
+    assert!(
+        right.contains("|block#c|") && right.contains("|block#d|"),
+        "{out}"
+    );
+    // Pin chrome: stubs and number readouts wear the one class each.
+    assert!(out.contains(".lini-pin-stub {"), "{out}");
+    assert!(out.contains(".lini-pin-number {"), "{out}");
+    // The unlabelled pin displays its id; the value readout sits above.
+    assert!(out.contains("[ \"a\" ") || out.contains("\"a\"\n"), "{out}");
+    assert!(out.contains(".lini-part-value {"), "{out}");
+}
+
+#[test]
+fn a_connector_generates_numbered_nameless_pins() {
+    let out = desugar_source("|J#J3| \"header\" { pins: 3 }\n").unwrap();
+    for p in ["|block#p1|", "|block#p2|", "|block#p3|"] {
+        assert!(out.contains(p), "{p}: {out}");
+    }
+    assert!(out.contains("number: 3"), "{out}");
+}
+
+#[test]
+fn a_discrete_lowers_its_symbol_ports_and_readouts() {
+    let out = desugar_source("|R#R5| \"470\"\n").unwrap();
+    assert!(out.contains(".lini-sch-line {"), "one symbol rule: {out}");
+    assert!(out.contains("|path| .lini-sch-line.lini-path"), "{out}");
+    assert!(
+        out.contains("|block#p1|") && out.contains("|block#p2|"),
+        "{out}"
+    );
+    assert!(out.contains("[ \"R5\" ]"), "id as the drawn ref: {out}");
+    assert!(out.contains("\"470\""), "value readout: {out}");
+}
+
+#[test]
+fn discrete_variants_pick_glyph_and_pin_ids() {
+    let out = desugar_source("|Q#q1| { symbol: nfet }\n").unwrap();
+    for p in ["|block#g|", "|block#d|", "|block#s|"] {
+        assert!(out.contains(p), "{p}: {out}");
+    }
+    let err = desugar_source("|D#d1| { symbol: zenr }\n").expect_err("unknown variant");
+    assert!(err.to_string().contains("unknown symbol 'zenr'"), "{err}");
+    assert!(err.to_string().contains("zener"), "{err}");
+}
+
+#[test]
+fn labels_lower_text_symbol_and_shape() {
+    let out = desugar_source("|gnd|\n").unwrap();
+    assert!(out.contains(".lini-sch-tag-line {"), "{out}");
+    let out = desugar_source("|label#run| \"RUN\" { shape: round }\n").unwrap();
+    assert!(
+        out.contains(".lini-tag-outline.lini-tag-round.lini-label.lini-block"),
+        "shape classes lead the chain: {out}"
+    );
+    let err = desugar_source("|label#x| \"X\" { symbol: gnb }\n").expect_err("unknown symbol");
+    assert!(err.to_string().contains("did you mean 'gnd'?"), "{err}");
+}
+
+#[test]
+fn a_power_flag_define_reads_its_symbol_through_the_chain() {
+    // [SPEC 16.4]: a power net is a one-line define with intrinsic text.
+    let out = desugar_source("{ |vm::label| { symbol: power } [ \"VM\" ] }\n|vm#v1|\n").unwrap();
+    assert!(
+        out.contains("M 8 14 L 8 5"),
+        "the power glyph lowered: {out}"
+    );
+}
+
+#[test]
+fn anonymous_parts_mint_display_refs_skipping_taken_ids() {
+    let out = desugar_source("|R#R2| \"a\"\n|R| \"b\"\n|R| \"c\"\n").unwrap();
+    // R2 authored; anonymous parts mint R1 then R3.
+    assert!(out.contains("[ \"R1\" ]"), "{out}");
+    assert!(out.contains("[ \"R3\" ]"), "{out}");
+    // `prefix:` overrides.
+    let out = desugar_source("|component| \"x\" { prefix: \"IC\" }\n").unwrap();
+    assert!(out.contains("[ \"IC1\" ]"), "{out}");
+}
+
+#[test]
+fn schematic_lowerings_are_byte_fixed_points() {
+    for src in [
+        "|component#U7| \"IC\" [\n  |pin#a| { number: 1 }\n  |pin#b| { number: 2 }\n]\n",
+        "|R#R5| \"470\"\n|R| \"1k\"\n",
+        "|J#J3| { pins: 2 }\n",
+        "|gnd|\n|label#run| \"RUN\" { shape: round }\n",
+        "|opamp#u1|\n",
+    ] {
+        let once = desugar_source(src).unwrap();
+        let twice = desugar_source(&once).unwrap();
+        assert_eq!(once, twice, "not a fixed point for: {src}");
+    }
+}
+
+#[test]
+fn anonymous_parts_generate_no_pin_terminals() {
+    // An anonymous part is scope-transparent [SPEC 9] — generated `p1` ids
+    // would collide across two anonymous |R|s — and unwirable (no dot-path),
+    // so only an id'd part generates its port nodes.
+    let out = desugar_source("|R| \"a\"\n|R| \"b\"\n").unwrap();
+    assert!(!out.contains("|block#p1|"), "{out}");
+    let out = desugar_source("|R#r1| \"a\"\n").unwrap();
+    assert!(out.contains("|block#p1|"), "{out}");
+}

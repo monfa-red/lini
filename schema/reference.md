@@ -66,6 +66,28 @@ Generated from the property ledger by `cargo xtask gen-schema` — **do not edit
 | `frame` | `block` | `box` → `rect` → `frame` |
 | `zone` | `block` | `zone` |
 | `tick` | `line` | `tick` |
+| `schematic` | `block` | `schematic` |
+| `component` | `block` | `component` |
+| `pin` | `block` | `pin` |
+| `label` | `block` | `label` |
+| `junction` | `oval` | `junction` |
+| `J` | `block` | `component` → `J` |
+| `opamp` | `block` | `component` → `opamp` |
+| `gnd` | `block` | `label` → `gnd` |
+| `nc` | `block` | `label` → `nc` |
+| `R` | `block` | `R` |
+| `C` | `block` | `C` |
+| `L` | `block` | `L` |
+| `D` | `block` | `D` |
+| `LED` | `block` | `LED` |
+| `Q` | `block` | `Q` |
+| `Y` | `block` | `Y` |
+| `F` | `block` | `F` |
+| `FB` | `block` | `FB` |
+| `SW` | `block` | `SW` |
+| `BT` | `block` | `BT` |
+| `V` | `block` | `V` |
+| `I` | `block` | `I` |
 
 ## Layout engines
 
@@ -73,7 +95,7 @@ Generated from the property ledger by `cargo xtask gen-schema` — **do not edit
 
 ## Roles
 
-`closed` `series` `mate` `dimension` `title-block`
+`discrete` `closed` `series` `mate` `dimension` `title-block`
 
 ## Value builders
 
@@ -120,7 +142,7 @@ Shape is `form:kind` (see `enums` in the JSON). Flags: `text` valid on a bare te
 | `samples` | \|line\|, \|poly\|, \|chart\| | `one:number` | `engine` | — | — |
 | `path` | \|path\| | `one:string` | `none` | — | — |
 | `src` | \|image\| | `one:string` | `none` | — | — |
-| `symbol` | \|icon\|, \|surface-finish\| | `one:ident` | `none` | — | — |
+| `symbol` | \|icon\|, \|surface-finish\|, \|label\|, discrete (role) | `one:ident` | `none` | — | — |
 | `fit` | \|icon\|, \|image\| | `one:ident` | `bundles` | — | — |
 | `skew` | \|slant\| | `one:number` | `bundles` | — | — |
 | `stack` | closed (role) | `one:number` | `none` | — | — |
@@ -155,7 +177,7 @@ Shape is `form:kind` (see `enums` in the JSON). Flags: `text` valid on a bare te
 | `tooltip` | \|chart\|, \|pie\|, series (role) | `one:any` | `engine` | — | — |
 | `value` | \|slice\|, \|bubble\| | `one:number` | `none` | — | — |
 | `at` | \|mark\|, \|bubble\|, \|plane\| | `one:any` | `none` | — | — |
-| `side` | \|axis\|, \|topic\|, dimension (role) | `one:ident` | `engine` | — | — |
+| `side` | \|axis\|, \|topic\|, \|pin\|, dimension (role) | `one:ident` | `engine` | — | — |
 | `range` | \|axis\| | `one:number` | `none` | — | — |
 | `step` | \|axis\| | `one:number` | `none` | — | — |
 | `ticks` | \|axis\| | `list:number` | `none` | — | — |
@@ -185,6 +207,11 @@ Shape is `form:kind` (see `enums` in the JSON). Flags: `text` valid on a bare te
 | `document-type` | title-block (role) | `one:string` | `none` | — | — |
 | `status` | title-block (role) | `one:string` | `none` | — | — |
 | `density` | root | `one:number` | `engine` | — | — |
+| `number` | \|pin\| | `one:number` | `none` | — | — |
+| `prefix` | \|component\|, discrete (role) | `one:string` | `bundles` | — | — |
+| `shape` | \|label\| | `one:ident` | `bundles` | — | — |
+| `pins` | \|J\| | `one:number` | `none` | — | — |
 | `clearance` | link, root, dimension (role) | `one:number` | `bundles` | scope-link | — |
 | `routing` | link, root | `one:ident` | `engine` | scope-link | — |
 | `along` | link | `list:number` | `engine` | — | — |
+| `corner-radius` | link | `one:any` | `engine` | — | — |

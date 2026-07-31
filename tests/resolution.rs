@@ -534,3 +534,41 @@ fn a_capsule_composes_with_a_side() {
 fn err_authored_reserved_capsule_id() {
     assert_resolve_error("a -> |box#lini-x|\n", "an id may not begin 'lini-'");
 }
+
+// ─────────────────────────── Schematic types [SPEC 16] ───────────────────────────
+
+#[test]
+fn pin_rails_are_scope_transparent() {
+    // `U7.VS` resolves with no rail in the path [SPEC 16.2]; a discrete's
+    // generated `p1`/`p2` resolve the same way.
+    lini::check(
+        "|component#U7| \"IC\" [\n  |pin#VS| { number: 1 }\n  |pin#EN| { number: 2 }\n]\n|R#r1| \"1k\"\nU7.VS - r1.p1\n",
+    )
+    .expect("pin paths resolve through the rails");
+    lini::check("|Q#q1| { symbol: npn }\n|box#x|\nq1.b - x\n").expect("semantic pin ids");
+}
+
+#[test]
+fn a_minted_display_ref_is_never_an_endpoint() {
+    // [SPEC 16.2/21]: the anonymous |R| displays R1, but R1 names nothing —
+    // a path through it is an unknown endpoint. (The bare-id form auto-creates
+    // an unrelated box outside a schematic scope; Phase 5's scope kills that.)
+    assert_resolve_error("|R| \"470\"\n|box#x|\nR1.p1 - x\n", "'R1.p1' not found");
+}
+
+#[test]
+fn schematic_type_names_are_shadow_protected() {
+    assert_resolve_error("{ |R::box| { } }\n", "'R' shadows a built-in type");
+    assert_resolve_error("{ |label::box| { } }\n", "shadows a built-in type");
+}
+
+#[test]
+fn a_schematic_scene_emits_no_inline_style() {
+    // The class-diff law [SPEC 18]: every generated schematic look rides a
+    // class rule; elements carry `style=` only for an authored diff.
+    let svg = lini::compile_str(
+        "|R#R5| \"470\"\n|component#U7| \"IC\" [\n  |pin#a| { number: 1 }\n  |pin#b| { number: 2 }\n]\n|gnd|\n",
+    )
+    .expect("compiles");
+    assert!(!svg.contains("style=\""), "no inline style: {svg}");
+}

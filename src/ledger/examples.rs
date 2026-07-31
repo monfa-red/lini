@@ -335,6 +335,14 @@ pub const EXAMPLES: &[(&str, &str)] = &[
         "density",
         "{ density: 4; }\n\n|drawing| [\n  |rect| { width: 40; height: 20; }\n]",
     ),
+    // ── Schematic ──
+    (
+        "number",
+        "|component#u1| \"IC\" [\n  |pin#en| { number: 3; }\n]",
+    ),
+    ("prefix", "|component| \"driver\" { prefix: \"IC\"; }"),
+    ("shape", "|label#run| \"RUN\" { shape: round; }"),
+    ("pins", "|J#j1| \"header\" { pins: 4; }"),
     // ── Links ──
     (
         "clearance",
@@ -347,5 +355,9 @@ pub const EXAMPLES: &[(&str, &str)] = &[
     (
         "along",
         "|box#a| \"A\"\n|box#b| \"B\"\na -> b \"mid\" { along: 0.35; }",
+    ),
+    (
+        "corner-radius",
+        "|box#a| \"A\"\n|box#b| \"B\"\na -> b { corner-radius: 0; }",
     ),
 ];

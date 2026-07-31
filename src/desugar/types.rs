@@ -103,6 +103,41 @@ pub const TEMPLATES: &[(&str, &str)] = &[
     ("frame", "rect"),
     ("zone", "block"),
     ("tick", "line"),
+    // Schematics [SPEC 16]: the scope, the pin-bearing part and its terminal,
+    // the net tag and its built-in defines, the junction dot, the connector /
+    // amplifier presets, and the discrete family (the type is the ref family,
+    // [SPEC 16.3]). All protected from define shadowing via this table
+    // [SPEC 23]. (`|schematic|` gains its `layout: schematic` bundle with the
+    // Phase 4 engine — until then it is a plain block scope.)
+    ("schematic", "block"),
+    ("component", "block"),
+    ("pin", "block"),
+    ("label", "block"),
+    ("junction", "oval"),
+    ("J", "component"),
+    ("opamp", "component"),
+    ("gnd", "label"),
+    ("nc", "label"),
+    ("R", "block"),
+    ("C", "block"),
+    ("L", "block"),
+    ("D", "block"),
+    ("LED", "block"),
+    ("Q", "block"),
+    ("Y", "block"),
+    ("F", "block"),
+    ("FB", "block"),
+    ("SW", "block"),
+    ("BT", "block"),
+    ("V", "block"),
+    ("I", "block"),
+];
+
+/// The discrete two/three-terminal part types [SPEC 16.3] — the type name is
+/// the ref family. One list; the symbol/pin tables in
+/// [`crate::desugar::schematic`] and the validation role key off it.
+pub const DISCRETES: &[&str] = &[
+    "R", "C", "L", "D", "LED", "Q", "Y", "F", "FB", "SW", "BT", "V", "I",
 ];
 
 pub fn is_template(name: &str) -> bool {

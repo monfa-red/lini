@@ -103,6 +103,23 @@ pub(crate) const NOTE_FOLD_MAX: f64 = 15.0;
 pub(crate) const SHEET_MARGIN: f64 = 10.0;
 pub(crate) const SHEET_FILING: f64 = 20.0;
 
+// ── The schematic chrome [SPEC 10.5/16] — sheet-space baked constants;
+// Phase 6's visual pass tunes them against the reference sheet.
+/// Pin centre-to-centre spacing — a pin row's height, so rows stacking at
+/// gap 0 land on exact pitch centres. Must stay ≥ the router's min pitch at
+/// the scope's clearance [SPEC 16.5].
+pub(crate) const PIN_PITCH: f64 = 20.0;
+/// The stub — the short lead a pin extends outward; the wire lands on its tip.
+pub(crate) const PIN_STUB: f64 = 12.0;
+/// The junction dot's radius [SPEC 16.5].
+pub(crate) const JUNCTION_RADIUS: f64 = 3.0;
+/// Part linework weight — symbol bodies, stubs, tag outlines [SPEC 16.6].
+pub(crate) const SCH_STROKE_WIDTH: f64 = 1.5;
+/// The pin-number readout, outside beside the stub [SPEC 16.2].
+pub(crate) const PIN_NUMBER_FONT: f64 = 9.0;
+/// The ref / value readout text size [SPEC 16.2].
+pub(crate) const REF_FONT: f64 = 11.0;
+
 /// The absurd-rendered-extent hint threshold [SPEC 21]: a drawing wider or
 /// taller than this many px almost certainly authored a magnitude into
 /// `scale:` — the hint names the ratio fix.

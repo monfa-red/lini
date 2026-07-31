@@ -380,6 +380,54 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             n("stroke-width", 1.0),
             id("fill", "none"),
         ],
+        // ── Schematics [SPEC 8/16] — the classic sheet's part looks, each a
+        // `light-dark()` role variable so a theme retunes the whole family.
+        // The generic pin-bearing part: an IC / module / relay body — pale
+        // yellow, dark-red outline, sharp corners, ref prefix U.
+        "component" => vec![
+            var("fill", "component-fill"),
+            var("stroke", "component-stroke"),
+            n("stroke-width", 1.5),
+            n("radius", 0.0),
+            n("padding", 8.0),
+            decl("prefix", vec![Value::String("U".into())]),
+        ],
+        // A component terminal [SPEC 16.2]: one pin row — its height IS the
+        // pin pitch (rows stack at gap 0 → exact 20-centre spacing), its text
+        // the pin name inside the body. No `side:` default — the bilateral
+        // split reads its *absence* [SPEC 16.2].
+        "pin" => vec![
+            n("height", consts::PIN_PITCH),
+            n("padding", 0.0),
+            n("font-size", 11.0),
+            n("gap", 0.0),
+        ],
+        // The net tag [SPEC 16.4]: teal ink, small text; `shape:` picks the
+        // outline (`plain` draws none).
+        "label" => vec![
+            id("shape", "plain"),
+            n("font-size", 11.0),
+            var("color", "label-ink"),
+        ],
+        // The connection dot [SPEC 16.5] — generated chrome at ≥3-way meets;
+        // diameter = 2 × the junction radius constant.
+        "junction" => vec![
+            var("fill", "wire"),
+            id("stroke", "none"),
+            n("width", consts::JUNCTION_RADIUS * 2.0),
+        ],
+        // The connector: numbered nameless pins (`pins: N` generates them).
+        "J" => vec![decl("prefix", vec![Value::String("J".into())])],
+        // The amplifier triangle keeps the component's U prefix but a
+        // symbol body (no box paint) — the discrete look.
+        "opamp" => vec![
+            id("fill", "none"),
+            id("stroke", "none"),
+            decl("prefix", vec![Value::String("U".into())]),
+        ],
+        // The built-in ground / no-connect defines [SPEC 16.4].
+        "gnd" => vec![id("symbol", "gnd")],
+        "nc" => vec![id("symbol", "nc")],
         // A frame: a dashed, rounded rectangle around a span of messages. `padding` insets
         // the border from the messages it spans (vertical) and the lifelines (horizontal).
         "loop" | "opt" | "alt" => vec![
@@ -495,6 +543,88 @@ pub fn projection_default_attrs() -> AttrMap {
         attrs.insert(name, value);
     }
     attrs
+}
+
+/// The generated schematic chrome classes [SPEC 16/18] — each a shared look
+/// stated once as a CSS rule, worn by desugar's generated children (stubs,
+/// symbol linework, readouts, tag outlines). The looks live here, in the one
+/// tuning home, riding the role variables so a theme retunes the family.
+#[derive(Clone, Copy)]
+pub enum SchChrome {
+    /// Part symbol linework — discrete bodies, the opamp triangle.
+    SymbolLine,
+    /// A label's symbol linework (gnd, power, …) — the tag ink.
+    TagLine,
+    /// A pin's stub lead.
+    PinStub,
+    /// The pin-number readout, outside beside the stub.
+    PinNumber,
+    /// The ref readout (U7, R1…) — chrome, so it reads semibold.
+    Ref,
+    /// The part name / value readout.
+    PartValue,
+    /// A shaped tag's outline (`shape:` ≠ `plain`).
+    TagOutline,
+    /// The `round` tag — a stadium (radius caps at half-height).
+    TagRound,
+}
+
+impl SchChrome {
+    pub const ALL: &'static [SchChrome] = &[
+        SchChrome::SymbolLine,
+        SchChrome::TagLine,
+        SchChrome::PinStub,
+        SchChrome::PinNumber,
+        SchChrome::Ref,
+        SchChrome::PartValue,
+        SchChrome::TagOutline,
+        SchChrome::TagRound,
+    ];
+
+    /// The bare class name (worn as `lini-<name>`).
+    pub fn class_name(self) -> &'static str {
+        match self {
+            SchChrome::SymbolLine => "sch-line",
+            SchChrome::TagLine => "sch-tag-line",
+            SchChrome::PinStub => "pin-stub",
+            SchChrome::PinNumber => "pin-number",
+            SchChrome::Ref => "ref",
+            SchChrome::PartValue => "part-value",
+            SchChrome::TagOutline => "tag-outline",
+            SchChrome::TagRound => "tag-round",
+        }
+    }
+}
+
+/// One chrome class's rule body [SPEC 16.6].
+pub fn sch_chrome_decls(chrome: SchChrome) -> Vec<Decl> {
+    match chrome {
+        SchChrome::SymbolLine | SchChrome::PinStub => vec![
+            id("fill", "none"),
+            var("stroke", "component-stroke"),
+            n("stroke-width", consts::SCH_STROKE_WIDTH),
+        ],
+        SchChrome::TagLine => vec![
+            id("fill", "none"),
+            var("stroke", "label-ink"),
+            n("stroke-width", consts::SCH_STROKE_WIDTH),
+        ],
+        SchChrome::PinNumber => vec![
+            var("color", "pin-number"),
+            n("font-size", consts::PIN_NUMBER_FONT),
+        ],
+        SchChrome::Ref => vec![
+            n("font-size", consts::REF_FONT),
+            id("font-weight", "semibold"),
+        ],
+        SchChrome::PartValue => vec![n("font-size", consts::REF_FONT)],
+        SchChrome::TagOutline => vec![
+            var("stroke", "label-ink"),
+            n("stroke-width", consts::SCH_STROKE_WIDTH),
+            pair("padding", 2.0, 6.0),
+        ],
+        SchChrome::TagRound => vec![n("radius", 99.0)],
+    }
 }
 
 /// Scene/root config defaults — prepended to the global block (user decls override).

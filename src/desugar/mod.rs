@@ -17,6 +17,7 @@ mod labels;
 mod page;
 mod scale;
 pub(crate) mod scene;
+mod schematic;
 mod tables;
 mod titleblock;
 pub(crate) mod tree;
@@ -37,6 +38,78 @@ use tables::{
 use types::{Types, is_template};
 
 type Bodies = HashMap<String, (Vec<Child>, Vec<Link>)>;
+
+/// The lowering context threaded through the walk: the type table, the
+/// define bodies, and the element-rule decls (define styles + `|type| { }`
+/// rules) — the tiers a desugar-time property read (`symbol:`, `prefix:`,
+/// `pins:`) can see [SPEC 16]. Descendant / class rules are resolve's; a
+/// schematic default reached only through one is out of desugar's sight.
+pub(crate) struct Lower<'a> {
+    types: &'a Types,
+    bodies: &'a Bodies,
+    rules: &'a HashMap<String, Vec<Decl>>,
+}
+
+impl Lower<'_> {
+    /// The effective declaration for `name`: the instance's own style (last
+    /// wins), else the chain's element rules / template bundles, derived
+    /// first — desugar's slice of the cascade.
+    fn chain_decl(&self, chain: &[String], style: &[Decl], name: &str) -> Option<Decl> {
+        if let Some(d) = style.iter().rev().find(|d| d.name == name) {
+            return Some(d.clone());
+        }
+        for t in chain.iter().rev() {
+            if let Some(d) = self
+                .rules
+                .get(t)
+                .and_then(|ds| ds.iter().rev().find(|d| d.name == name))
+            {
+                return Some(d.clone());
+            }
+            if let Some(d) = crate::ledger::defaults::template_bundle(t)
+                .into_iter()
+                .rev()
+                .find(|d| d.name == name)
+            {
+                return Some(d);
+            }
+        }
+        None
+    }
+    fn chain_ident(&self, chain: &[String], style: &[Decl], name: &str) -> Option<String> {
+        match self
+            .chain_decl(chain, style, name)?
+            .groups
+            .first()?
+            .first()?
+        {
+            Value::Ident(s) => Some(s.clone()),
+            _ => None,
+        }
+    }
+    fn chain_number(&self, chain: &[String], style: &[Decl], name: &str) -> Option<f64> {
+        match self
+            .chain_decl(chain, style, name)?
+            .groups
+            .first()?
+            .first()?
+        {
+            Value::Number(v) => Some(*v),
+            _ => None,
+        }
+    }
+    fn chain_str(&self, chain: &[String], style: &[Decl], name: &str) -> Option<String> {
+        match self
+            .chain_decl(chain, style, name)?
+            .groups
+            .first()?
+            .first()?
+        {
+            Value::String(s) => Some(s.clone()),
+            _ => None,
+        }
+    }
+}
 
 /// Lower a parsed file to primitives + `.lini-*` classes.
 pub fn desugar(file: &File) -> Result<File, Error> {
@@ -86,10 +159,11 @@ pub fn desugar(file: &File) -> Result<File, Error> {
                 {
                     user_rules.push(rewrite_selector(r, &types)?)
                 }
-                // The generated cell-alignment classes regenerate from the worn
-                // set [SPEC 8] — drop the incoming copy (folding it back would
-                // emit it twice on re-desugar).
-                [SelUnit::Class(c)] if classes::is_align_class(c) => {}
+                // Generated utility classes (cell alignment, the schematic
+                // chrome looks) regenerate from the worn set [SPEC 8/16] —
+                // drop the incoming copy (folding it back would emit it twice
+                // on re-desugar).
+                [SelUnit::Class(c)] if classes::is_generated_class(c) => {}
                 // A pre-lowered type class (`.lini-X`, on re-desugar): fold it back
                 // as an element rule so the regenerated class is byte-identical.
                 [SelUnit::Class(c)] if is_lini_class(c) => {
@@ -112,9 +186,14 @@ pub fn desugar(file: &File) -> Result<File, Error> {
     //    messages inside any root-sequence frame, since a frame opens no scope and its
     //    endpoints resolve against the scene's participants [SPEC 13]. ──
     let root_drawing = root_layout(&user_root) == Some("drawing");
+    let cx = Lower {
+        types: &types,
+        bodies: &bodies,
+        rules: &element_rules,
+    };
     let mut instances = Vec::new();
     for child in &file.instances {
-        instances.push(lower_child(child, &types, &bodies, root_drawing)?);
+        instances.push(lower_child(&cx, child, root_drawing)?);
     }
     // A scene owned by a stand-alone `|mindmap|` seats it first [SPEC 8]: the
     // root decls become its generated tree scope (`layout: tree; direction:
@@ -148,13 +227,16 @@ pub fn desugar(file: &File) -> Result<File, Error> {
     {
         let declared = scene::declared_ids(&instances);
         for h in capsule::hoist(&mut root_links, &declared, root_drawing)? {
-            let mut lowered = lower_node(&h.node, &types, &bodies, root_drawing)?;
+            let mut lowered = lower_node(&cx, &h.node, root_drawing)?;
             if let Some(id) = h.minted_id {
                 lowered.id = Some(id);
             }
             instances.push(Child::Box(lowered));
         }
     }
+    // Display refs [SPEC 16.2]: parts read their id as the drawn ref;
+    // anonymous ones mint prefix + N, per scope.
+    schematic::mint_refs(&cx, &mut instances);
     // A drawing scope never auto-creates [SPEC 15]: an annotation must point at
     // real geometry, so an unknown endpoint stays unknown and errors at resolve.
     if !root_drawing {
@@ -163,9 +245,8 @@ pub fn desugar(file: &File) -> Result<File, Error> {
         root_msgs.extend(gather_frame_messages(&instances));
         for (id, span) in scene::auto_created_ids(&root_msgs, &declared) {
             instances.push(Child::Box(lower_node(
+                &cx,
                 &scene::auto_box(&id, span),
-                &types,
-                &bodies,
                 false,
             )?));
         }
@@ -181,7 +262,7 @@ pub fn desugar(file: &File) -> Result<File, Error> {
     let mut links = Vec::new();
     for w in root_links.iter().chain(&root_branch_links) {
         for hop in labels::split_chain(w) {
-            links.push(labels::lower_link(&hop, &types, &bodies, root_drawing)?);
+            links.push(labels::lower_link(&hop, &cx, root_drawing)?);
         }
     }
 
@@ -284,14 +365,9 @@ fn gather_frame_messages(children: &[Child]) -> Vec<&Link> {
 /// gate for the generated chrome. Class-detected, like frames: a container
 /// made a drawing only by an element rule is not seen here (the accepted
 /// stage-1 edge; resolve's gates still hold).
-fn lower_child(
-    child: &Child,
-    types: &Types,
-    bodies: &Bodies,
-    in_drawing: bool,
-) -> Result<Child, Error> {
+fn lower_child(cx: &Lower, child: &Child, in_drawing: bool) -> Result<Child, Error> {
     match child {
-        Child::Box(n) => Ok(Child::Box(lower_node(n, types, bodies, in_drawing)?)),
+        Child::Box(n) => Ok(Child::Box(lower_node(cx, n, in_drawing)?)),
         Child::Text(t) => Ok(Child::Text(t.clone())),
     }
 }
@@ -304,12 +380,8 @@ fn decl(name: &str, values: Vec<Value>) -> Decl {
     }
 }
 
-fn lower_node(
-    node: &Node,
-    types: &Types,
-    bodies: &Bodies,
-    in_drawing: bool,
-) -> Result<Node, Error> {
+fn lower_node(cx: &Lower, node: &Node, in_drawing: bool) -> Result<Node, Error> {
+    let (types, bodies) = (cx.types, cx.bodies);
     let ty = node.ty.as_deref().unwrap_or("box");
     let info = types.resolve(ty, node.span)?;
     let kind = info.kind;
@@ -343,7 +415,7 @@ fn lower_node(
         .code(Code::RESERVED_ID));
     }
 
-    let classes = if already {
+    let mut classes = if already {
         node.classes.clone()
     } else {
         let mut cs = worn_classes(&info);
@@ -363,20 +435,37 @@ fn lower_node(
         for name in &info.chain {
             if let Some((body, _)) = bodies.get(name) {
                 for c in body {
-                    children.push(lower_child(c, types, bodies, child_in_drawing)?);
+                    children.push(lower_child(cx, c, child_in_drawing)?);
                 }
             }
         }
     }
     for c in &node.children {
-        children.push(lower_child(c, types, bodies, child_in_drawing)?);
+        children.push(lower_child(cx, c, child_in_drawing)?);
+    }
+    // A schematic part [SPEC 16] lowers structurally here — rails, symbol
+    // bodies, readouts — dispatched on the chain; Phase 4 adds placement.
+    let sch = if already {
+        None
+    } else {
+        schematic::sch_kind(&info.chain)
+    };
+    // `|J| { pins: N }` [SPEC 16.2]: the generated numbered pins lead the
+    // authored children.
+    if sch == Some(schematic::SchKind::Component) {
+        for (i, pin) in schematic::expand_connector_pins(cx, &info.chain, &node.style)
+            .into_iter()
+            .enumerate()
+        {
+            children.insert(i, Child::Box(lower_node(cx, &pin, false)?));
+        }
     }
     // The generated chrome [SPEC 15.7] — real children, so the cascade styles
     // or removes them. Only for a node in a drawing scope, and only on first
     // lowering (re-desugar keeps the ones already there).
     if !already && in_drawing {
         for ch in drawing::chrome_children(node, kind, &info.chain) {
-            children.push(Child::Box(lower_node(&ch, types, bodies, false)?));
+            children.push(Child::Box(lower_node(cx, &ch, false)?));
         }
     }
     // The sheet's furniture [SPEC 15.8]: `sheet:` desugars in place to
@@ -395,7 +484,7 @@ fn lower_node(
     }
     if !already && is_page {
         for ch in page::chrome_children(page_style.as_deref().expect("a page"), node.span) {
-            children.push(Child::Box(lower_node(&ch, types, bodies, false)?));
+            children.push(Child::Box(lower_node(cx, &ch, false)?));
         }
     }
     if is_page {
@@ -419,13 +508,13 @@ fn lower_node(
     let is_table = !is_entity && info.chain.iter().any(|n| n == "table");
     let cols = column_count(&node.style, &info.chain);
     if is_table && let Some(cols) = cols {
-        wrap_header_row(&mut children, cols, types, bodies)?;
+        wrap_header_row(cx, &mut children, cols)?;
     }
     // Wrap every remaining bare-text body cell in a `|cell|` (the box that carries
     // the cell padding, [SPEC 8]). The entity title (a spanning header) is inserted
     // after this, already a box.
     if is_table || is_entity {
-        wrap_body_cells(&mut children, types, bodies)?;
+        wrap_body_cells(cx, &mut children)?;
     }
     // Distribute the table's per-column `align`/`justify` onto its cells [SPEC 8]:
     // every cell fills its track (the |table| bundle forces `stretch`), so the
@@ -495,7 +584,7 @@ fn lower_node(
             .into_iter()
             .enumerate()
         {
-            children.insert(i, Child::Box(lower_node(&cell, types, bodies, false)?));
+            children.insert(i, Child::Box(lower_node(cx, &cell, false)?));
         }
     }
     let mut kept_label = None;
@@ -511,14 +600,23 @@ fn lower_node(
         } else if is_entity {
             // An entity's label is its title: a `|header|` spanning every column [SPEC 8].
             let title = header_node(label, Some(cols.unwrap_or(2)));
-            children.insert(0, Child::Box(lower_node(&title, types, bodies, false)?));
+            children.insert(0, Child::Box(lower_node(cx, &title, false)?));
         } else if is_drawing {
             // A drawing's smart label is its title, lowered to a |footnote|
             // under the view [SPEC 15.8].
-            let title = lower_node(&labels::footnote_node(label), types, bodies, false)?;
+            let title = lower_node(cx, &labels::footnote_node(label), false)?;
             children.insert(0, Child::Box(title));
+        } else if let Some(kind) = sch.filter(|k| *k != schematic::SchKind::Label) {
+            // A part's smart label is its name / value [SPEC 16.2/16.3],
+            // drawn as readout chrome: above a component (under its ref),
+            // below a symbol-bodied part.
+            let (anchor, dy) = match kind {
+                schematic::SchKind::Component => ("top", -16.0),
+                _ => ("bottom", 12.0),
+            };
+            children.push(schematic::value_readout(cx, &label.text, anchor, dy)?);
         } else if is_container {
-            let caption = lower_node(&labels::caption_node(label), types, bodies, false)?;
+            let caption = lower_node(cx, &labels::caption_node(label), false)?;
             children.insert(0, Child::Box(caption));
         } else if text_capable {
             children.insert(0, Child::Text(label.clone()));
@@ -538,7 +636,38 @@ fn lower_node(
         && node.label.as_ref().filter(|l| !l.text.is_empty()).is_none()
     {
         let foot = labels::of_footnote(node.span);
-        children.insert(0, Child::Box(lower_node(&foot, types, bodies, false)?));
+        children.insert(0, Child::Box(lower_node(cx, &foot, false)?));
+    }
+
+    // The schematic bodies [SPEC 16]: rails + per-pin chrome for a
+    // component, the registry symbol + wirable ports for a symbol-bodied
+    // part, the tag drawing / outline classes for a label.
+    match sch {
+        Some(schematic::SchKind::Component) => {
+            schematic::assemble_component(cx, &mut style, &mut children)?;
+        }
+        Some(k @ (schematic::SchKind::Opamp | schematic::SchKind::Discrete(_))) => {
+            schematic::symbol_body(
+                cx,
+                k,
+                &info.chain,
+                &node.style,
+                node.span,
+                node.id.is_some(),
+                &mut children,
+            )?;
+        }
+        Some(schematic::SchKind::Label) => {
+            schematic::label_body(
+                cx,
+                &info.chain,
+                &node.style,
+                node.span,
+                &mut classes,
+                &mut children,
+            )?;
+        }
+        None => {}
     }
 
     // In an entity, header / footer cells span every column [SPEC 8]: the title above
@@ -573,17 +702,20 @@ fn lower_node(
     {
         let declared = scene::declared_ids(&children);
         for h in capsule::hoist(&mut raw_links, &declared, child_in_drawing)? {
-            let mut lowered = lower_node(&h.node, types, bodies, child_in_drawing)?;
+            let mut lowered = lower_node(cx, &h.node, child_in_drawing)?;
             if let Some(id) = h.minted_id {
                 lowered.id = Some(id);
             }
             children.push(Child::Box(lowered));
         }
     }
+    // Display refs [SPEC 16.2], per scope — after the hoist so a capsule
+    // part reads its declaration.
+    schematic::mint_refs(cx, &mut children);
     let mut links = Vec::new();
     for w in &raw_links {
         for hop in labels::split_chain(w) {
-            links.push(labels::lower_link(&hop, types, bodies, child_in_drawing)?);
+            links.push(labels::lower_link(&hop, cx, child_in_drawing)?);
         }
     }
 
@@ -619,7 +751,7 @@ fn lower_node(
             scene::auto_created_ids(&msgs, &declared)
         };
         for (auto_id, auto_span) in to_create {
-            let created = lower_node(&scene::auto_box(&auto_id, auto_span), types, bodies, false)?;
+            let created = lower_node(cx, &scene::auto_box(&auto_id, auto_span), false)?;
             children.push(Child::Box(created));
         }
     }
