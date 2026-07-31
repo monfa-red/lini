@@ -589,6 +589,8 @@ fn branch_fan(parent: &str, children: &[String], g: Growth, span: Span) -> Link 
 
 fn endpoint(path: Vec<String>, side: &str) -> Endpoint {
     Endpoint {
+        capsule: None,
+        from_capsule: None,
         path,
         copy: None,
         point: Some(PointRef {
@@ -600,14 +602,18 @@ fn endpoint(path: Vec<String>, side: &str) -> Endpoint {
 }
 
 /// Structural equality of two links — the fixed-point guard: same ops, same
-/// endpoint paths and `:point` names.
+/// endpoint paths and `:point` names. A capsule endpoint [SPEC 9] never equals
+/// anything here — generated branch links carry none, and an unhoisted
+/// capsule's path alone underdetermines it.
 fn same_link(a: &Link, b: &Link) -> bool {
     a.ops == b.ops
         && a.chain.len() == b.chain.len()
         && a.chain.iter().zip(&b.chain).all(|(x, y)| {
             x.endpoints.len() == y.endpoints.len()
                 && x.endpoints.iter().zip(&y.endpoints).all(|(p, q)| {
-                    p.path == q.path
+                    p.capsule.is_none()
+                        && q.capsule.is_none()
+                        && p.path == q.path
                         && p.point.as_ref().map(|r| &r.name) == q.point.as_ref().map(|r| &r.name)
                 })
         })

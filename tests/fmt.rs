@@ -133,3 +133,33 @@ fn fmt_normalizes_value_group_spacing() {
         formatted
     );
 }
+
+// ─────────────────────────── Capsule endpoints [SPEC 9] ───────────────────────────
+
+#[test]
+fn fmt_round_trips_capsule_endpoints() {
+    // The canonical spellings survive fmt byte-for-byte.
+    for src in [
+        "cat -> |cyl#db|\n",
+        "|cyl#db| -> cat\n",
+        "a -> |box| -> c\n",
+        "a & b -> |gnd|\n",
+        "a - |gnd| - b\n",
+        "x - |component#U9|.p4\n",
+        "|cyl#db|:left -> x\n",
+        "a -> |#cat|\n",
+        "a -> |cyl#db| \"watches\" { stroke: red; }\n",
+    ] {
+        let once = lini::format_source(src).expect("fmt");
+        assert_eq!(once, src, "canonical form changed");
+        let twice = lini::format_source(&once).expect("fmt twice");
+        assert_eq!(twice, once, "not idempotent");
+    }
+}
+
+#[test]
+fn fmt_spaces_a_glued_capsule_op() {
+    // `a -|gnd|- b` canonicalizes to spaced ops, like every link op.
+    let out = lini::format_source("a -|gnd|- b\n").expect("fmt");
+    assert_eq!(out, "a - |gnd| - b\n");
+}

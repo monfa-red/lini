@@ -42,6 +42,11 @@ fn lint_pinned_mates(file: &File, out: &mut Vec<Diagnostic>) {
             .collect();
         for w in links.iter().filter(|w| matches!(w.op(), ChainOp::Mate)) {
             for ep in w.chain.iter().flat_map(|g| &g.endpoints) {
+                // A capsule endpoint's path segments are children of the
+                // capsule [SPEC 9], never scope-level ids.
+                if ep.capsule.is_some() {
+                    continue;
+                }
                 if let [first, ..] = ep.path.as_slice()
                     && pinned.contains(&first.as_str())
                 {

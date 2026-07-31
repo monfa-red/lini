@@ -12,9 +12,10 @@ impl<'a> Parser<'a> {
         let op = self.expect_chain_op()?;
         let mut ops = vec![op];
         // A statement may be one-ended — a leader or a unary measure toward its
-        // text [SPEC 15.6/21]: after the op, an ident is an endpoint; anything
-        // else is the tail. Which ops (and scopes) allow it is resolve's call.
-        if matches!(self.kind(), Some(TokKind::Ident(_))) {
+        // text [SPEC 15.6/21]: after the op, an ident or a `|` (bars: a capsule,
+        // [SPEC 9/22]) opens an endpoint; anything else is the tail. Which ops
+        // (and scopes) allow it is resolve's call.
+        if matches!(self.kind(), Some(TokKind::Ident(_)) | Some(TokKind::Pipe)) {
             chain.push(self.parse_endpoint_group()?);
             while let Some((next, width)) = self.peek_chain_op() {
                 // Wire hops may each carry their own op — `a - b -> c` is the
@@ -32,7 +33,7 @@ impl<'a> Parser<'a> {
                     )));
                 }
                 self.pos += width;
-                if !matches!(self.kind(), Some(TokKind::Ident(_))) {
+                if !matches!(self.kind(), Some(TokKind::Ident(_)) | Some(TokKind::Pipe)) {
                     return Err(self.err("a text callout ends its statement — chain before it"));
                 }
                 ops.push(next);
@@ -74,9 +75,19 @@ impl<'a> Parser<'a> {
     }
 
     pub(super) fn parse_endpoint(&mut self) -> Result<Endpoint, Error> {
-        let (first, first_span) = self.expect_ident()?;
-        let mut path = vec![first];
-        let mut end = first_span;
+        // An endpoint opens with a bare id or an identity capsule [SPEC 9]:
+        // `|type#id|` bars, exactly as a declaration writes them — desugar
+        // hoists the declaration and rewrites the reference. The rest of the
+        // anatomy (`.path`, `.index`, `:point`) composes after either head.
+        let start = self.span();
+        let (capsule, mut path, mut end) = if matches!(self.kind(), Some(TokKind::Pipe)) {
+            let (ty, id) = self.parse_identity(BarsCtx::Instance)?;
+            let span = self.span_from(start);
+            (Some(Capsule { ty, id, span }), Vec::new(), span)
+        } else {
+            let (first, first_span) = self.expect_ident()?;
+            (None, vec![first], first_span)
+        };
         let mut copy = None;
         while matches!(self.kind(), Some(TokKind::Dot)) && self.glued_at(0) {
             self.pos += 1; // '.'
@@ -114,10 +125,12 @@ impl<'a> Parser<'a> {
             None
         };
         Ok(Endpoint {
+            capsule,
+            from_capsule: None,
             path,
             copy,
             point,
-            span: Span::new(first_span.start, end.end),
+            span: Span::new(start.start, end.end),
         })
     }
 

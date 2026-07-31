@@ -598,6 +598,21 @@ fn endpoint_error(
     op: ChainOp,
     drawing: bool,
 ) -> Error {
+    // A capsule-declared endpoint whose trailing path fails [SPEC 9/21]: the
+    // statement itself declared the node, so the path walked into a body the
+    // inline form never authored — say that, not the generic walk error.
+    // (`from_capsule` is the desugar hoist's hint; an inline define's
+    // intrinsic children resolve normally and never reach here.)
+    if let Some(ty) = &ep.from_capsule
+        && ep.path.len() > 1
+    {
+        let (id, rest) = (&ep.path[0], ep.path[1..].join("."));
+        return Error::at(
+            ep.span,
+            format!("'|{ty}#{id}|.{rest}' — an inline {ty} has no authored pins"),
+        )
+        .code(Code::UNKNOWN_ENDPOINT);
+    }
     let where_ = if scope.is_empty() {
         "at scene root".to_string()
     } else {

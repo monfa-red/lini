@@ -36,17 +36,29 @@ fn collect_ids(children: &[Child], out: &mut HashSet<String>) {
 /// The ids to auto-create: each single-segment link endpoint absent from `declared`, in
 /// first-seen order, deduped. Multi-segment paths navigate and never create. Takes links by
 /// reference so a scope can pool its own with messages gathered from its frames [SPEC 13].
+/// A **capsule** endpoint never auto-creates — it *declares* [SPEC 9] — and its id counts
+/// as declared here, so the pre-hoist view (the lint's) matches the real lowering.
 pub fn auto_created_ids(links: &[&Link], declared: &HashSet<String>) -> Vec<(String, Span)> {
+    let mut capsule_ids = HashSet::new();
+    for w in links {
+        for ep in w.chain.iter().flat_map(|g| &g.endpoints) {
+            if let Some(c) = &ep.capsule
+                && let Some(id) = &c.id
+            {
+                capsule_ids.insert(id.clone());
+            }
+        }
+    }
     let mut seen = HashSet::new();
     let mut out = Vec::new();
     for w in links {
         for group in &w.chain {
             for ep in &group.endpoints {
-                if ep.path.len() != 1 {
-                    continue; // multi-segment paths navigate, never create
+                if ep.capsule.is_some() || ep.path.len() != 1 {
+                    continue; // capsules declare; multi-segment paths navigate
                 }
                 let id = &ep.path[0];
-                if declared.contains(id) || !seen.insert(id.clone()) {
+                if declared.contains(id) || capsule_ids.contains(id) || !seen.insert(id.clone()) {
                     continue;
                 }
                 out.push((id.clone(), ep.span));

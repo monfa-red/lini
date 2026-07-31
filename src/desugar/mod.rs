@@ -9,6 +9,7 @@
 //! generated class defs. The pass is **idempotent**: every injection is an
 //! override-in-place merge, and an already-lowered node is passed through.
 
+mod capsule;
 mod chrome;
 mod classes;
 mod drawing;
@@ -85,6 +86,10 @@ pub fn desugar(file: &File) -> Result<File, Error> {
                 {
                     user_rules.push(rewrite_selector(r, &types)?)
                 }
+                // The generated cell-alignment classes regenerate from the worn
+                // set [SPEC 8] — drop the incoming copy (folding it back would
+                // emit it twice on re-desugar).
+                [SelUnit::Class(c)] if classes::is_align_class(c) => {}
                 // A pre-lowered type class (`.lini-X`, on re-desugar): fold it back
                 // as an element rule so the regenerated class is byte-identical.
                 [SelUnit::Class(c)] if is_lini_class(c) => {
@@ -135,11 +140,26 @@ pub fn desugar(file: &File) -> Result<File, Error> {
             }
         }
     }
+    // Capsule hoisting [SPEC 9/19]: each root-link capsule becomes a
+    // declaration at its statement's position (span-seated at the capsule)
+    // and the endpoint is rewritten to the id — before auto-create, so the
+    // declared set includes the hoisted ids.
+    let mut root_links: Vec<Link> = file.links.clone();
+    {
+        let declared = scene::declared_ids(&instances);
+        for h in capsule::hoist(&mut root_links, &declared, root_drawing)? {
+            let mut lowered = lower_node(&h.node, &types, &bodies, root_drawing)?;
+            if let Some(id) = h.minted_id {
+                lowered.id = Some(id);
+            }
+            instances.push(Child::Box(lowered));
+        }
+    }
     // A drawing scope never auto-creates [SPEC 15]: an annotation must point at
     // real geometry, so an unknown endpoint stays unknown and errors at resolve.
     if !root_drawing {
         let declared = scene::declared_ids(&instances);
-        let mut root_msgs: Vec<&Link> = file.links.iter().collect();
+        let mut root_msgs: Vec<&Link> = root_links.iter().collect();
         root_msgs.extend(gather_frame_messages(&instances));
         for (id, span) in scene::auto_created_ids(&root_msgs, &declared) {
             instances.push(Child::Box(lower_node(
@@ -159,7 +179,7 @@ pub fn desugar(file: &File) -> Result<File, Error> {
     //    annotation node [SPEC 15.9] wears its `.lini-*` chain like any child
     //    and its class defs must emit. ──
     let mut links = Vec::new();
-    for w in file.links.iter().chain(&root_branch_links) {
+    for w in root_links.iter().chain(&root_branch_links) {
         for hop in labels::split_chain(w) {
             links.push(labels::lower_link(&hop, &types, &bodies, root_drawing)?);
         }
@@ -536,21 +556,32 @@ fn lower_node(
         }
     }
 
-    // Links: define-body links (base→derived) then the node's own, each lowered
-    // (head label folded into the label list, auto-`along:` filled).
-    let mut links = Vec::new();
+    // Links: define-body links (base→derived) then the node's own — assembled
+    // raw first, so capsule endpoints hoist their declarations into this body
+    // [SPEC 9] before the hops lower; then each lowers as before (head label
+    // folded into the label list, auto-`along:` filled).
+    let mut raw_links: Vec<Link> = Vec::new();
     if !already {
         for name in &info.chain {
             if let Some((_, body)) = bodies.get(name) {
-                for w in body {
-                    for hop in labels::split_chain(w) {
-                        links.push(labels::lower_link(&hop, types, bodies, child_in_drawing)?);
-                    }
-                }
+                raw_links.extend(body.iter().cloned());
             }
         }
     }
-    for w in &node.links {
+    let own_links_at = raw_links.len();
+    raw_links.extend(node.links.iter().cloned());
+    {
+        let declared = scene::declared_ids(&children);
+        for h in capsule::hoist(&mut raw_links, &declared, child_in_drawing)? {
+            let mut lowered = lower_node(&h.node, types, bodies, child_in_drawing)?;
+            if let Some(id) = h.minted_id {
+                lowered.id = Some(id);
+            }
+            children.push(Child::Box(lowered));
+        }
+    }
+    let mut links = Vec::new();
+    for w in &raw_links {
         for hop in labels::split_chain(w) {
             links.push(labels::lower_link(&hop, types, bodies, child_in_drawing)?);
         }
@@ -580,8 +611,10 @@ fn lower_node(
     if !already && !is_frame_classes(&classes) && !is_drawing_body(&info.chain, &node.style) {
         let declared = scene::declared_ids(&children);
         // Scope the message borrows of `children` so the auto-create push below is free.
+        // The node's **own** links, post-hoist — define-body links stay out,
+        // as before (their ids are the define's own affair).
         let to_create = {
-            let mut msgs: Vec<&Link> = node.links.iter().collect();
+            let mut msgs: Vec<&Link> = raw_links[own_links_at..].iter().collect();
             msgs.extend(gather_frame_messages(&children));
             scene::auto_created_ids(&msgs, &declared)
         };

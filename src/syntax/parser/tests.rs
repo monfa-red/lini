@@ -660,3 +660,131 @@ fn a_declaration_value_spans_lines_until_semicolon() {
         .unwrap();
     assert_eq!(points.groups.len(), 3);
 }
+
+// ── Capsule endpoints [SPEC 9] ──
+
+/// The single endpoint of hop group `i` of the first link.
+fn ep(f: &File, i: usize) -> &Endpoint {
+    &f.links[0].chain[i].endpoints[0]
+}
+
+fn capsule(e: &Endpoint) -> &Capsule {
+    e.capsule.as_ref().expect("a capsule endpoint")
+}
+
+#[test]
+fn a_capsule_endpoint_declares_at_the_link_end() {
+    let f = parse_ok("cat -> |cyl#db|\n");
+    let c = capsule(ep(&f, 1));
+    assert_eq!(c.ty.as_deref(), Some("cyl"));
+    assert_eq!(c.id.as_deref(), Some("db"));
+    assert!(ep(&f, 1).path.is_empty());
+}
+
+#[test]
+fn a_statement_head_capsule_opens_a_link() {
+    let f = parse_ok("|cyl#db| -> cat\n");
+    assert!(f.instances.is_empty());
+    assert_eq!(capsule(ep(&f, 0)).id.as_deref(), Some("db"));
+    assert_eq!(ep(&f, 1).path, vec!["cat"]);
+}
+
+#[test]
+fn a_statement_head_capsule_with_a_tail_stays_a_node() {
+    // Followed by anything but an op / `&` / mate, the bars are the node
+    // declaration they always were [SPEC 1].
+    let f = parse_ok("|cyl#db| \"Postgres\" .hot { fill: red }\n");
+    assert!(f.links.is_empty());
+    assert_eq!(instance(&f, 0).id.as_deref(), Some("db"));
+}
+
+#[test]
+fn a_capsule_takes_no_tail_the_links_is_the_links() {
+    // Everything after the capsule belongs to the link [SPEC 9].
+    let f = parse_ok("a -> |cyl#db| \"watches\" { stroke: red }\n");
+    let w = &f.links[0];
+    assert_eq!(w.label.as_ref().map(|t| t.text.as_str()), Some("watches"));
+    assert_eq!(w.style.len(), 1);
+    assert!(capsule(ep(&f, 1)).id.as_deref() == Some("db"));
+}
+
+#[test]
+fn an_anonymous_capsule_mid_chain() {
+    let f = parse_ok("a -> |box| -> c\n");
+    let c = capsule(ep(&f, 1));
+    assert_eq!(c.ty.as_deref(), Some("box"));
+    assert_eq!(c.id, None);
+    assert_eq!(f.links[0].chain.len(), 3);
+}
+
+#[test]
+fn a_capsule_mid_chain_between_bare_ops() {
+    let f = parse_ok("a - |gnd| - b\n");
+    assert_eq!(f.links[0].chain.len(), 3);
+    assert_eq!(capsule(ep(&f, 1)).ty.as_deref(), Some("gnd"));
+}
+
+#[test]
+fn a_capsule_glued_to_its_op_parses() {
+    let f = parse_ok("a -|gnd|\n");
+    assert_eq!(capsule(ep(&f, 1)).ty.as_deref(), Some("gnd"));
+    let f = parse_ok("a -|gnd|- b\n");
+    assert_eq!(f.links[0].chain.len(), 3);
+}
+
+#[test]
+fn a_fan_into_a_capsule_is_one_endpoint() {
+    let f = parse_ok("a & b -> |gnd|\n");
+    assert_eq!(f.links[0].chain[0].endpoints.len(), 2);
+    assert_eq!(f.links[0].chain[1].endpoints.len(), 1);
+    assert!(f.links[0].chain[1].endpoints[0].capsule.is_some());
+}
+
+#[test]
+fn a_capsule_inside_a_fan_group() {
+    let f = parse_ok("a & |cyl#db| -> c\n");
+    assert!(f.links[0].chain[0].endpoints[1].capsule.is_some());
+}
+
+#[test]
+fn a_capsule_composes_with_path_index_and_side() {
+    let f = parse_ok("x - |component#U9|.p4\n");
+    let e = ep(&f, 1);
+    assert_eq!(capsule(e).id.as_deref(), Some("U9"));
+    assert_eq!(e.path, vec!["p4"]);
+
+    let f = parse_ok("x - |plate#p|.bolt.2\n");
+    let e = ep(&f, 1);
+    assert_eq!(e.path, vec!["bolt"]);
+    assert_eq!(e.copy, Some(2));
+
+    let f = parse_ok("|cyl#db|:left -> x\n");
+    let e = ep(&f, 0);
+    assert_eq!(e.point.as_ref().map(|p| p.name.as_str()), Some("left"));
+}
+
+#[test]
+fn a_capsule_headed_mate_parses() {
+    // `|a| || |b|` must parse (the drawing scope rejects it at resolve).
+    let f = parse_ok("|a| || |b|\n");
+    assert!(matches!(f.links[0].op(), ChainOp::Mate));
+    assert!(ep(&f, 0).capsule.is_some() && ep(&f, 1).capsule.is_some());
+}
+
+#[test]
+fn an_id_only_capsule_endpoint() {
+    let f = parse_ok("a -> |#cat|\n");
+    let c = capsule(ep(&f, 1));
+    assert_eq!(c.ty, None);
+    assert_eq!(c.id.as_deref(), Some("cat"));
+}
+
+#[test]
+fn link_bars_as_an_endpoint_error() {
+    assert!(parse_err("a -> |-|\n").contains("drawn by an operator"));
+}
+
+#[test]
+fn a_define_capsule_errors() {
+    assert!(parse_err("a -> |x::box|\n").contains("a define belongs in the stylesheet"));
+}

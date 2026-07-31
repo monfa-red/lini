@@ -666,7 +666,25 @@ impl Emitter<'_> {
     }
 
     fn emit_endpoint(&mut self, ep: &Endpoint) {
-        self.out.push_str(&ep.path.join("."));
+        // A capsule endpoint prints its bars, then the trailing path glued to
+        // them [SPEC 9]: `|cyl#db|`, `|component#U9|.p4`.
+        if let Some(c) = &ep.capsule {
+            self.out.push('|');
+            if let Some(ty) = &c.ty {
+                self.out.push_str(ty);
+            }
+            if let Some(id) = &c.id {
+                self.out.push('#');
+                self.out.push_str(id);
+            }
+            self.out.push('|');
+            for seg in &ep.path {
+                self.out.push('.');
+                self.out.push_str(seg);
+            }
+        } else {
+            self.out.push_str(&ep.path.join("."));
+        }
         if let Some(copy) = ep.copy {
             self.out.push('.');
             self.out.push_str(&copy.to_string());

@@ -1,6 +1,5 @@
 ---
 source: src/error/tests.rs
-assertion_line: 56
 expression: dump
 ---
 L000 lex
@@ -30,6 +29,7 @@ R012 projection-link
 R013 legacy-space-list
 R014 unknown-side
 R015 unknown-strategy
+R016 capsule-in-drawing
 V000 validate
 V001 unknown-property
 V002 misused-property

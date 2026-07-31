@@ -97,3 +97,22 @@ fn fan_out_with_ampersand_parses() {
     lini::check_parse("fox & owl -> mouse\n").expect("fan-in");
     lini::check_parse("a & b -> c & d\n").expect("cartesian fan");
 }
+
+#[test]
+fn capsule_endpoints_parse_in_every_position() {
+    // [SPEC 9/22]: bars open an endpoint after an op, at statement head, in
+    // fans, mid-chain, and glued to the op; a statement-head capsule with a
+    // tail stays the node it always was.
+    for src in [
+        "cat -> |cyl#db|\n",
+        "|cyl#db| -> cat\n",
+        "a -> |box| -> c\n",
+        "a & b -> |gnd|\n",
+        "a - |gnd| - b\n",
+        "a -|gnd|- b\n",
+        "x - |component#U9|.p4\n",
+        "|a| || |b|\n",
+    ] {
+        lini::check_parse(src).unwrap_or_else(|e| panic!("{src:?}: {e}"));
+    }
+}

@@ -150,6 +150,7 @@ catalog! {
     Resolve 13 LEGACY_LIST "legacy-space-list";
     Resolve 14 UNKNOWN_SIDE "unknown-side";
     Resolve 15 UNKNOWN_STRATEGY "unknown-strategy";
+    Resolve 16 CAPSULE_IN_DRAWING "capsule-in-drawing";
 
     // ── Validate [SPEC 17/21] ──
     Validate 0 VALIDATE "validate";

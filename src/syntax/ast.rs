@@ -231,6 +231,19 @@ impl Link {
 
 #[derive(Debug, Clone)]
 pub struct Endpoint {
+    /// The identity capsule opening the endpoint [SPEC 9] — `a -> |cyl#db|`:
+    /// bars exactly as a declaration writes them, declaring and linking in one
+    /// statement. Parse-time only: desugar hoists it to a declaration at the
+    /// statement's position and rewrites the endpoint to the (minted) id,
+    /// clearing this. When set, `path` holds the segments **after** the bars
+    /// (`|component#U9|.p4` → `["p4"]`) and may be empty.
+    pub capsule: Option<Capsule>,
+    /// The desugar hoist's residue [SPEC 19]: the capsule's written type name,
+    /// kept on the rewritten endpoint so resolve can word the
+    /// inline-declaration error (`'|component#U9|.p4'` — [SPEC 21]). Never
+    /// printed, so it does not survive a print/re-parse round trip — an
+    /// error-message hint only.
+    pub from_capsule: Option<String>,
     pub path: Vec<String>,
     /// A trailing 1-based pattern-copy index [SPEC 15.4/21] —
     /// `plate.bolt.2` picks the second placed copy; drawing scope only.
@@ -238,6 +251,16 @@ pub struct Endpoint {
     /// The `:point` after the path [SPEC 9, 15.2] — raw at parse: a side, a
     /// corner, `center`, or an authored name; resolve validates it per scope.
     pub point: Option<PointRef>,
+    pub span: Span,
+}
+
+/// An endpoint's `|type#id|` bars [SPEC 9] — the same identity a declaration
+/// writes (`|type|`, `|type#id|`, or `|#id|`); at least one of the two is
+/// present (the parser enforces it).
+#[derive(Debug, Clone)]
+pub struct Capsule {
+    pub ty: Option<String>,
+    pub id: Option<String>,
     pub span: Span,
 }
 

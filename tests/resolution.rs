@@ -469,3 +469,68 @@ fn err_legacy_space_along() {
         "{err}"
     );
 }
+
+// ─────────────────────────── Capsule endpoints [SPEC 9] ───────────────────────────
+
+#[test]
+fn a_capsule_link_resolves_and_compiles() {
+    // Declared at the endpoint, referenced by the link — end to end.
+    lini::check("cat -> |cyl#db| \"watches\" { stroke: red }\n").expect("capsule resolves");
+    lini::compile_str("a -> |box| -> c\n").expect("anonymous mid-chain compiles");
+    lini::check("a & b -> |cyl#store|\n").expect("fan into one instance");
+}
+
+#[test]
+fn a_capsule_with_intrinsic_children_resolves_its_path() {
+    // A define's intrinsic children materialize per instance [SPEC 9] — an
+    // inline-declared instance's dot-path into one resolves.
+    lini::check("{ |room::group| [ |box#inlet| ] }\nx -> |room#r2|.inlet\n")
+        .expect("intrinsic child resolves");
+}
+
+#[test]
+fn err_capsule_path_into_a_childless_inline_declaration() {
+    // [SPEC 21]: a capsule + dot-path into a child that doesn't exist — the
+    // inline declaration authored no body.
+    assert_resolve_error(
+        "x -> |cyl#u9|.p4\n",
+        "'|cyl#u9|.p4' — an inline cyl has no authored pins",
+    );
+}
+
+#[test]
+fn err_capsule_declared_twice_is_a_duplicate_id() {
+    assert_resolve_error("a -> |cyl#db|\nb -> |cyl#db|\n", "duplicate id 'db'");
+    // Declared form + capsule form collide the same way.
+    assert_resolve_error("|cyl#db|\na -> |cyl#db|\n", "duplicate id 'db'");
+}
+
+#[test]
+fn err_capsule_in_a_drawing_scope() {
+    assert_resolve_error(
+        "{ layout: drawing }\n|rect#r| { width: 4; height: 2 }\nr -> |box|\n",
+        "a drawing never invents an endpoint",
+    );
+    // A nested drawing rejects them too.
+    assert_resolve_error(
+        "|drawing#v| [\n  |rect#r| { width: 4; height: 2 }\n  r -> |box|\n]\n",
+        "a drawing never invents an endpoint",
+    );
+}
+
+#[test]
+fn a_sequence_accepts_a_capsule_participant() {
+    // A typed participant, declared at first use [SPEC 9/13].
+    lini::compile_str("{ layout: sequence }\nuser -> |cyl#db| \"query\"\ndb --> user \"row\"\n")
+        .expect("capsule participant");
+}
+
+#[test]
+fn a_capsule_composes_with_a_side() {
+    lini::check("|cyl#db|:left -> x\n").expect("sided capsule endpoint");
+}
+
+#[test]
+fn err_authored_reserved_capsule_id() {
+    assert_resolve_error("a -> |box#lini-x|\n", "an id may not begin 'lini-'");
+}

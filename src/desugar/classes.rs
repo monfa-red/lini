@@ -104,6 +104,16 @@ pub(super) const ALIGN_CLASSES: [(&str, &str, &str); 4] = [
     ("justify-end", "justify", "end"),
 ];
 
+/// Whether a `.lini-*` class is one of the generated cell-alignment classes
+/// [SPEC 8] — their rules regenerate from the worn set, so the stylesheet walk
+/// drops an incoming copy instead of folding it (which would double it on
+/// re-desugar).
+pub(super) fn is_align_class(class: &str) -> bool {
+    class
+        .strip_prefix("lini-")
+        .is_some_and(|x| ALIGN_CLASSES.iter().any(|(n, ..)| *n == x))
+}
+
 fn align_class_rule(name: &str, prop: &str, value: &str) -> Rule {
     Rule {
         selector: Selector {

@@ -116,6 +116,30 @@ fn desugar_is_idempotent() {
 }
 
 #[test]
+fn every_sample_is_a_byte_identical_desugar_fixed_point() {
+    // The source fixed point, swept over the showroom [SPEC 19]: for every
+    // sample, re-desugaring the lowered text reproduces it byte for byte — the
+    // guard that every generated node/link is idempotently detected and
+    // span-seated so `lini desugar` output is stable.
+    let dir = concat!(env!("CARGO_MANIFEST_DIR"), "/samples");
+    let mut swept = 0;
+    for entry in std::fs::read_dir(dir).expect("samples dir") {
+        let path = entry.expect("entry").path();
+        if path.extension().and_then(|e| e.to_str()) != Some("lini") {
+            continue;
+        }
+        let name = path.file_name().unwrap().to_string_lossy().into_owned();
+        let src = std::fs::read_to_string(&path).expect("read sample");
+        let once = desugar_source(&src).unwrap_or_else(|e| panic!("{name}: desugar failed: {e}"));
+        let twice =
+            desugar_source(&once).unwrap_or_else(|e| panic!("{name}: re-desugar failed: {e}"));
+        assert_eq!(once, twice, "{name}: desugar is not a fixed point");
+        swept += 1;
+    }
+    assert!(swept > 20, "the sweep found only {swept} samples");
+}
+
+#[test]
 fn the_scale_fold_stamps_px_per_unit() {
     // ratio × unit-mm × density → the engine's one internal number [SPEC 15.1/18].
     let out = desugar_source("{ layout: drawing }\n|rect#r| { width: 10; height: 5 }\n").unwrap();
@@ -441,4 +465,107 @@ fn a_mindmap_hoists_its_own_direction_to_the_scope() {
         out.contains("m:right - m.a:left .lini-hue-rose"),
         "a row mindmap fans rightward, arm tinted: {out}"
     );
+}
+
+// ── Capsule endpoints [SPEC 9/19] ──
+
+#[test]
+fn a_capsule_endpoint_hoists_a_declaration_and_references_it() {
+    let out = desugar_source("cat -> |cyl#db| \"watches\" { stroke: red }\n").unwrap();
+    // The declaration, at the statement's position; the tail is the LINK's.
+    assert!(out.contains("|cyl#db| .lini-cyl"), "{out}");
+    assert!(out.contains("cat -> db"), "{out}");
+    assert!(out.contains("stroke: red"), "{out}");
+    assert!(
+        out.contains("[ \"watches\" ]"),
+        "label is the link's: {out}"
+    );
+}
+
+#[test]
+fn a_statement_head_capsule_hoists_too() {
+    let out = desugar_source("|cyl#db| -> cat\n").unwrap();
+    assert!(out.contains("|cyl#db| .lini-cyl"), "{out}");
+    assert!(out.contains("db -> cat"), "{out}");
+}
+
+#[test]
+fn an_anonymous_capsule_mints_a_reserved_id_once_per_chain() {
+    let out = desugar_source("a -> |box| -> c\n").unwrap();
+    assert!(out.contains("a -> lini-cap-1"), "{out}");
+    assert!(out.contains("lini-cap-1 -> c"), "{out}");
+    assert_eq!(
+        out.matches("|block#lini-cap-1| ").count(),
+        1,
+        "one instance for the mid-chain capsule: {out}"
+    );
+}
+
+#[test]
+fn a_fan_into_a_capsule_is_one_instance() {
+    let out = desugar_source("a & b -> |cyl#store|\n").unwrap();
+    assert!(out.contains("a & b -> store"), "{out}");
+    assert_eq!(out.matches("|cyl#store|").count(), 1, "{out}");
+}
+
+#[test]
+fn minting_skips_taken_names() {
+    // A lowered scope already holding lini-cap-1 gains a new anonymous
+    // capsule: the mint skips to lini-cap-2 instead of colliding.
+    let src = "|block#lini-cap-1| .lini-box.lini-block\nx -> |box|\n";
+    let out = desugar_source(src).unwrap();
+    assert!(out.contains("x -> lini-cap-2"), "{out}");
+}
+
+#[test]
+fn a_capsule_statement_is_a_byte_fixed_point() {
+    for src in [
+        "cat -> |cyl#db|\n",
+        "a -> |box| -> c\n",
+        "a & b -> |cyl#store| \"s\"\n",
+        "|group#g| [\n  a -> |cyl#db|\n]\n",
+    ] {
+        let once = desugar_source(src).unwrap();
+        let twice = desugar_source(&once).unwrap();
+        assert_eq!(once, twice, "not a fixed point for: {src}");
+    }
+}
+
+#[test]
+fn a_body_capsule_declares_inside_its_scope() {
+    let out = desugar_source("|group#g| [\n  a -> |cyl#db|\n]\n").unwrap();
+    // The declaration and the auto-created `a` both live in g's body.
+    let body = out.split("|block#g|").nth(1).expect("g's body");
+    assert!(body.contains("|cyl#db| .lini-cyl"), "{out}");
+    assert!(body.contains("a -> db"), "{out}");
+}
+
+#[test]
+fn a_define_body_capsule_materializes_per_instance() {
+    let src = "{ |room::group| [ a -> |cyl#db| ] }\n|room#r1|\n|room#r2|\n";
+    let out = desugar_source(src).unwrap();
+    assert_eq!(
+        out.matches("|cyl#db| .lini-cyl").count(),
+        2,
+        "one declaration per materialized body: {out}"
+    );
+}
+
+#[test]
+fn a_capsule_in_a_drawing_scope_errors() {
+    let err = desugar_source("{ layout: drawing }\n|rect#r| { width: 4; height: 2 }\nr -> |box|\n")
+        .expect_err("drawing capsule");
+    assert!(
+        err.to_string()
+            .contains("a drawing never invents an endpoint"),
+        "{err}"
+    );
+}
+
+#[test]
+fn a_capsule_id_never_reauto_creates_elsewhere() {
+    // A later bare reference to a capsule-declared id uses the declaration.
+    let out = desugar_source("a -> |cyl#db|\ndb -> c\n").unwrap();
+    assert_eq!(out.matches("|cyl#db|").count(), 1, "{out}");
+    assert!(!out.contains("|block#db|"), "no auto-created twin: {out}");
 }
