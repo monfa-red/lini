@@ -2,7 +2,9 @@
 //! geometry assertions over routed polylines — turn counts, ordinates,
 //! crossings — never images. The Consequences table pins one test per row.
 
-use lini::testing::{node_rect, route_sample, routes_str};
+use lini::testing::{
+    LaidOut, drawn_edges, laws, node_rect, route_sample, route_sample_with_ports, routes_str,
+};
 use lini::{Rule, Severity};
 
 const PCB: &str = include_str!("../samples/pcb.lini");
@@ -981,4 +983,279 @@ fn natural_routes_inside_an_anonymous_container() {
         laid.links.iter().any(|l| !l.curve.is_empty()),
         "branch wire drawn as a curve"
     );
+}
+
+// ── Fixed ports (ROUTING.md Fixed ports) ──
+
+/// The validator's verdict above counted output and honest strays.
+fn law_breaches(laid: &LaidOut) -> Vec<lini::Violation> {
+    laws(laid)
+        .into_iter()
+        .filter(|v| v.severity != Severity::Info && v.rule != Rule::Impossible)
+        .collect()
+}
+
+fn stray_details(laid: &LaidOut) -> Vec<String> {
+    laid.link_report
+        .iter()
+        .filter(|v| v.rule == Rule::Impossible)
+        .map(|v| v.detail.clone())
+        .collect()
+}
+
+fn drawn_paths<'a>(laid: &'a LaidOut, from: &str, to: &str) -> Vec<&'a [(f64, f64)]> {
+    laid.links
+        .iter()
+        .filter(|l| l.seg_from == from && l.seg_to == to)
+        .map(|l| l.path.as_slice())
+        .collect()
+}
+
+const EPS: f64 = 1e-9;
+
+#[test]
+fn a_fixed_port_lands_exactly() {
+    let src = "{ direction: row; gap: 120; clearance: 8 }\n\
+               |box#a| { width: 60; height: 60 }\n\
+               |box#b| { width: 60; height: 60 }\n\
+               a -> b\n";
+    let a = node_rect(&route_sample(src, 8.0), "a").expect("a placed");
+    let port = a.1 + 10.0; // off-centre, near the corner — the waiver's row
+    let laid = route_sample_with_ports(src, 8.0, &[("a", "b", "a", "right", port)]);
+    let p = &drawn_paths(&laid, "a", "b")[0];
+    assert!(
+        (p[0].0 - a.2).abs() <= EPS && (p[0].1 - port).abs() <= EPS,
+        "{p:?}"
+    );
+    let breaches = law_breaches(&laid);
+    assert!(breaches.is_empty(), "{breaches:?}");
+}
+
+/// The two-source, one-target scene the fixed-port suite reuses: sources on
+/// the left column, `t` spanning the right.
+const TWO_ONTO_T: &str = "{ layout: grid; columns: 60, 200, 60; rows: 60, 60; gap: 20; clearance: 8 }\n\
+     |box#s1| { cell: 1 1; width: 60; height: 40 }\n\
+     |box#s2| { cell: 1 2; width: 60; height: 40 }\n\
+     |box#t| { cell: 3 1; span: 1 2; width: 60; height: 100 }\n\
+     s1 -> t\n\
+     s2 -> t\n";
+
+#[test]
+fn two_fixed_ports_on_one_side_take_their_own_wires() {
+    let t = node_rect(&route_sample(TWO_ONTO_T, 8.0), "t").expect("t placed");
+    let cy = (t.1 + t.3) / 2.0;
+    let (p1, p2) = (cy - 10.0, cy + 10.0);
+    let laid = route_sample_with_ports(
+        TWO_ONTO_T,
+        8.0,
+        &[("s1", "t", "t", "left", p1), ("s2", "t", "t", "left", p2)],
+    );
+    let w1 = drawn_paths(&laid, "s1", "t")[0]
+        .last()
+        .copied()
+        .expect("end");
+    let w2 = drawn_paths(&laid, "s2", "t")[0]
+        .last()
+        .copied()
+        .expect("end");
+    assert!(
+        (w1.0 - t.0).abs() <= EPS && (w1.1 - p1).abs() <= EPS,
+        "{w1:?}"
+    );
+    assert!(
+        (w2.0 - t.0).abs() <= EPS && (w2.1 - p2).abs() <= EPS,
+        "{w2:?}"
+    );
+    let breaches = law_breaches(&laid);
+    assert!(breaches.is_empty(), "{breaches:?}");
+}
+
+/// Three sources onto one side: the middle wire pinned to the side centre,
+/// the outer two free — they ladder around the fixed one at ≥ the pitch
+/// floor, and every law holds.
+const MIX_ONTO_T: &str = "{ layout: grid; columns: 60, 200, 60; rows: 40, 40, 40; gap: 16; clearance: 8 }\n\
+     |box#s1| { cell: 1 1; width: 60; height: 30 }\n\
+     |box#s2| { cell: 1 2; width: 60; height: 30 }\n\
+     |box#s3| { cell: 1 3; width: 60; height: 30 }\n\
+     |box#t| { cell: 3 2; width: 60; height: 60 }\n\
+     s1 -> t:left\n\
+     s2 -> t\n\
+     s3 -> t:left\n";
+
+fn mix_port(clearance: f64) -> (f64, Vec<(f64, f64)>) {
+    let t = node_rect(&route_sample(MIX_ONTO_T, clearance), "t").expect("t placed");
+    (((t.1 + t.3) / 2.0), vec![(t.0, t.1), (t.2, t.3)])
+}
+
+#[test]
+fn a_free_wire_ladders_around_a_fixed_port() {
+    let (cy, t) = mix_port(8.0);
+    let laid = route_sample_with_ports(MIX_ONTO_T, 8.0, &[("s2", "t", "t", "left", cy)]);
+    let ends: Vec<(String, (f64, f64))> = laid
+        .links
+        .iter()
+        .map(|l| (l.seg_from.clone(), *l.path.last().expect("end")))
+        .collect();
+    assert_eq!(ends.len(), 3, "{ends:?}");
+    for (_, e) in &ends {
+        assert!(
+            (e.0 - t[0].0).abs() <= EPS,
+            "all land on t's left: {ends:?}"
+        );
+    }
+    let pinned = ends.iter().find(|(f, _)| f == "s2").expect("s2 drawn").1;
+    assert!(
+        (pinned.1 - cy).abs() <= EPS,
+        "s2 lands on its port: {pinned:?}"
+    );
+    for (f, e) in &ends {
+        if f != "s2" {
+            assert!(
+                (e.1 - cy).abs() >= 4.0 - EPS,
+                "{f} keeps the floor: {ends:?}"
+            );
+        }
+    }
+    let breaches = law_breaches(&laid);
+    assert!(breaches.is_empty(), "{breaches:?}");
+}
+
+#[test]
+fn same_point_landings_merge_into_one_implicit_fan() {
+    let src = "{ layout: grid; columns: 60, 160, 40; rows: 50, 50; gap: 20; clearance: 8 }\n\
+               |box#a| { cell: 1 1; width: 60; height: 40 }\n\
+               |box#b| { cell: 1 2; width: 60; height: 40 }\n\
+               |box#p| { cell: 3 1; span: 1 2; width: 40; height: 40 }\n\
+               a - p\n\
+               b - p\n";
+    let p = node_rect(&route_sample(src, 8.0), "p").expect("p placed");
+    let cy = (p.1 + p.3) / 2.0;
+    let ports = [("a", "p", "p", "left", cy), ("b", "p", "p", "left", cy)];
+    let laid = route_sample_with_ports(src, 8.0, &ports);
+    let wa = drawn_paths(&laid, "a", "p")[0]
+        .last()
+        .copied()
+        .expect("end");
+    let wb = drawn_paths(&laid, "b", "p")[0]
+        .last()
+        .copied()
+        .expect("end");
+    assert_eq!(wa, wb, "one shared fixed port");
+    assert!((wa.1 - cy).abs() <= EPS, "{wa:?}");
+    let fans: Vec<Option<u32>> = laid.links.iter().map(|l| l.fan_to).collect();
+    assert_eq!(fans[0], fans[1], "one fan group: {fans:?}");
+    assert!(fans[0].is_some(), "the merge is a fan, not a coincidence");
+    let breaches = law_breaches(&laid);
+    assert!(breaches.is_empty(), "shared lead is a trunk: {breaches:?}");
+}
+
+#[test]
+fn a_fan_across_two_different_fixed_ports_strays_named() {
+    let src = "{ layout: grid; columns: 60, 160, 60; rows: 50, 50; gap: 20; clearance: 8 }\n\
+               |box#x| { cell: 1 1; span: 1 2; width: 60; height: 40 }\n\
+               |box#a| { cell: 3 1; width: 60; height: 40 }\n\
+               |box#b| { cell: 3 2; width: 60; height: 40 }\n\
+               x -> a & b\n";
+    let x = node_rect(&route_sample(src, 8.0), "x").expect("x placed");
+    let cy = (x.1 + x.3) / 2.0;
+    let ports = [
+        ("x", "a", "x", "right", cy - 8.0),
+        ("x", "b", "x", "right", cy + 8.0),
+    ];
+    let laid = route_sample_with_ports(src, 8.0, &ports);
+    assert!(drawn_paths(&laid, "x", "a").is_empty());
+    assert!(drawn_paths(&laid, "x", "b").is_empty());
+    let details = stray_details(&laid);
+    assert_eq!(details.len(), 2, "{details:?}");
+    for d in &details {
+        assert!(d.contains("two different fixed ports"), "{d}");
+    }
+}
+
+#[test]
+fn fixed_ports_closer_than_min_pitch_stray_the_later_wire() {
+    let t = node_rect(&route_sample(TWO_ONTO_T, 8.0), "t").expect("t placed");
+    let cy = (t.1 + t.3) / 2.0;
+    let laid = route_sample_with_ports(
+        TWO_ONTO_T,
+        8.0,
+        &[
+            ("s1", "t", "t", "left", cy),
+            ("s2", "t", "t", "left", cy + 2.0),
+        ],
+    );
+    let first = drawn_paths(&laid, "s1", "t");
+    assert_eq!(first.len(), 1, "the earlier landing stands");
+    let end = first[0].last().expect("end");
+    assert!((end.1 - cy).abs() <= EPS, "{end:?}");
+    assert!(drawn_paths(&laid, "s2", "t").is_empty(), "the later strays");
+    let details = stray_details(&laid);
+    assert_eq!(details.len(), 1, "{details:?}");
+    assert!(
+        details[0].contains("closer than the minimum pitch"),
+        "{details:?}"
+    );
+    let breaches = law_breaches(&laid);
+    assert!(breaches.is_empty(), "{breaches:?}");
+}
+
+#[test]
+fn a_blocked_fixed_port_strays_named() {
+    // `w` sits tight against `a`'s right flank, covering the pinned row;
+    // the free centre row routes fine, the pinned landing cannot exist.
+    let src = "{ layout: grid; columns: 60, 20, 60; gap: 4; clearance: 8 }\n\
+               |box#a| { cell: 1 1; width: 60; height: 100 }\n\
+               |box#w| { cell: 2 1; width: 20; height: 40; translate: 0 24 }\n\
+               |box#b| { cell: 3 1; width: 60; height: 100 }\n\
+               a -> b\n";
+    let plain = route_sample(src, 8.0);
+    assert!(stray_details(&plain).is_empty(), "the free wire routes");
+    let w = node_rect(&plain, "w").expect("w placed");
+    let port = (w.1 + w.3) / 2.0; // squarely behind the blocker
+    let laid = route_sample_with_ports(src, 8.0, &[("a", "b", "a", "right", port)]);
+    assert!(drawn_paths(&laid, "a", "b").is_empty(), "no lawful landing");
+    let details = stray_details(&laid);
+    assert_eq!(details.len(), 1, "{details:?}");
+    assert!(details[0].contains("fixed port blocked"), "{details:?}");
+}
+
+#[test]
+fn fixed_port_routing_is_deterministic() {
+    let (cy, _) = mix_port(8.0);
+    let ports = [("s2", "t", "t", "left", cy)];
+    let run = || {
+        route_sample_with_ports(MIX_ONTO_T, 8.0, &ports)
+            .links
+            .iter()
+            .map(|l| l.path.clone())
+            .collect::<Vec<_>>()
+    };
+    let baseline = run();
+    for _ in 0..25 {
+        assert_eq!(run(), baseline);
+    }
+}
+
+/// The laws sweep with fixed ports in play, down to the low-clearance end:
+/// at every knob value the validator stays silent above counted output, and
+/// every declared edge is drawn or honestly reported.
+#[test]
+fn fixed_ports_hold_the_laws_across_the_clearance_sweep() {
+    let (cy, _) = mix_port(8.0);
+    let ports = [("s2", "t", "t", "left", cy)];
+    for c in [6.0, 8.0, 9.0, 10.0, 12.0, 13.0, 16.0] {
+        let laid = route_sample_with_ports(MIX_ONTO_T, c, &ports);
+        let breaches = law_breaches(&laid);
+        assert!(breaches.is_empty(), "clearance {c}: {breaches:?}");
+        let impossible = laid
+            .link_report
+            .iter()
+            .filter(|v| v.rule == Rule::Impossible)
+            .count();
+        assert_eq!(
+            drawn_edges(&laid) + impossible,
+            3,
+            "clearance {c}: every edge drawn or reported"
+        );
+    }
 }

@@ -3,6 +3,7 @@
 //! Each step decides once; none revisits an earlier step's answer.
 
 pub(crate) mod admit;
+pub(crate) mod cluster;
 pub(crate) mod cost;
 pub(crate) mod entry;
 pub(crate) mod geometry;
@@ -24,6 +25,7 @@ use crate::layout::ir::{RoutedLink, Stray};
 use crate::resolve::Strategy;
 use crate::routing::{Routing, Rule, Severity, Violation};
 
+use cost::min_pitch;
 use entry::Entry;
 use graph::{Axis, ChannelGraph};
 use ledger::Ledger;
@@ -92,6 +94,10 @@ impl EndInfo {
 /// ROUTING.md Impossible layouts — the stray reasons, one per failure shape.
 const NO_ROUTE: &str = "no legal route: every side entry or channel is closed at this layout";
 const ONE_SIDE_LOOP: &str = "self-loop with both ends forced onto one side";
+/// ROUTING.md Fixed ports — infeasibility is loud, never a clamp.
+const FIXED_PORT_BLOCKED: &str = "fixed port blocked: a body covers the port's landing";
+const FIXED_PORTS_TOO_CLOSE: &str = "fixed ports closer than the minimum pitch on one side";
+const FAN_PORT_CONFLICT: &str = "fan ends carry two different fixed ports";
 
 /// Self-loop side resolution (ROUTING.md Special nodes): defaults
 /// right → top; a forced side wins and its free partner takes the default
@@ -154,11 +160,57 @@ pub(crate) fn route(index: &SceneIndex, reqs: &[EdgeReq]) -> (Routing, Vec<usize
     chains.resize_with(reqs.len(), || None);
     let mut reasons: Vec<Option<&'static str>> = vec![None; reqs.len()];
 
+    // A fan whose shared end carries two different fixed ports is impossible
+    // by construction (ROUTING.md Fixed ports): every member strays, named.
+    for (g, members) in fans.groups.iter().enumerate() {
+        let mut ports = members.iter().filter_map(|&i| {
+            fans.of[i]
+                .iter()
+                .find(|(og, _)| *og == g)
+                .and_then(|&(_, end)| reqs[i].port(end))
+        });
+        let Some(first) = ports.next() else { continue };
+        if ports.any(|p| p != first) {
+            for &m in members {
+                reasons[m] = Some(FAN_PORT_CONFLICT);
+            }
+        }
+    }
+    // Committed fixed-port landings per (path, side): the too-close check
+    // below judges a later fixed port against them by ordinate — ports come
+    // from one connection-geometry computation, so equality is exact and
+    // means the shared-port fan, never a collision.
+    let mut landed_ports: Vec<(String, u8, f64)> = Vec::new();
+
     for bundle in &bundles {
+        if bundle.members.iter().any(|&m| reasons[m].is_some()) {
+            continue;
+        }
         let m0 = bundle.members[0];
         let rep = &reqs[m0];
         let k = bundle.members.len();
         let self_loop = rep.a_path == rep.b_path;
+
+        // The later of two fixed ports closer than the minimum pitch strays,
+        // named (ROUTING.md Fixed ports) — the earlier landing stands.
+        let ends_fixed = [
+            (rep.side_a, rep.port_a, &rep.a_path),
+            (rep.side_b, rep.port_b, &rep.b_path),
+        ];
+        let too_close = ends_fixed.iter().any(|(side, port, path)| {
+            let (Some(side), Some(p)) = (side, port) else {
+                return false;
+            };
+            landed_ports.iter().any(|(lp, ls, lo)| {
+                lp == *path && *ls == side.index() && *lo != *p && (*lo - *p).abs() < min_pitch(c)
+            })
+        });
+        if too_close {
+            for &m in &bundle.members {
+                reasons[m] = Some(FIXED_PORTS_TOO_CLOSE);
+            }
+            continue;
+        }
 
         let forced = if self_loop {
             match self_loop_sides(rep.side_a, rep.side_b) {
@@ -192,6 +244,7 @@ pub(crate) fn route(index: &SceneIndex, reqs: &[EdgeReq]) -> (Routing, Vec<usize
         // Innermost world first; a transparent ancestor lets the link route
         // one world up when the inner one has no legal route.
         let mut picked = None;
+        let mut fixed_blocked = false;
         for wkey in world_ladder(index, &rep.a_path, &rep.b_path) {
             let w = worlds
                 .iter()
@@ -204,7 +257,8 @@ pub(crate) fn route(index: &SceneIndex, reqs: &[EdgeReq]) -> (Routing, Vec<usize
                                inward: bool,
                                partner: (Rect, bool),
                                fan: Option<usize>,
-                               forced: Option<Side>| {
+                               forced: Option<Side>,
+                               fixed: Option<f64>| {
                 let mut blockers = base.clone();
                 if !partner.1 && !self_loop {
                     blockers.push(partner.0.inflate(c));
@@ -217,13 +271,16 @@ pub(crate) fn route(index: &SceneIndex, reqs: &[EdgeReq]) -> (Routing, Vec<usize
                     Some(g) => usize::from(fan_pick[g].is_none()),
                     None => k,
                 };
-                let offered = entry::entries(graph, rect, stub, c, forced, &blockers, inward);
-                offered
+                let offered =
+                    entry::entries(graph, rect, stub, c, forced, fixed, &blockers, inward);
+                let any = !offered.is_empty();
+                let kept = offered
                     .into_iter()
                     .filter(|e| need == 0 || ledger.side_free(path, e.side, rect) >= need)
-                    .collect::<Vec<Entry>>()
+                    .collect::<Vec<Entry>>();
+                (kept, any)
             };
-            let starts = end_entries(
+            let (starts, starts_any) = end_entries(
                 &rep.a_path,
                 rep.a_rect,
                 rep.stub_a,
@@ -231,8 +288,9 @@ pub(crate) fn route(index: &SceneIndex, reqs: &[EdgeReq]) -> (Routing, Vec<usize
                 (rep.b_rect, b_contains_a),
                 fan_a,
                 forced[0],
+                rep.port_a,
             );
-            let goals = end_entries(
+            let (goals, goals_any) = end_entries(
                 &rep.b_path,
                 rep.b_rect,
                 rep.stub_b,
@@ -240,8 +298,14 @@ pub(crate) fn route(index: &SceneIndex, reqs: &[EdgeReq]) -> (Routing, Vec<usize
                 (rep.a_rect, a_contains_b),
                 fan_b,
                 forced[1],
+                rep.port_b,
             );
             if starts.is_empty() || goals.is_empty() {
+                // A fixed port whose landing no punch can reach — covered by
+                // a keep-out, or off its side — is a named failure, not a
+                // generic closure (ROUTING.md Fixed ports).
+                fixed_blocked |=
+                    (rep.port_a.is_some() && !starts_any) || (rep.port_b.is_some() && !goals_any);
                 continue;
             }
             // Admission runs whole-span: the search prices edge by edge, but
@@ -295,16 +359,28 @@ pub(crate) fn route(index: &SceneIndex, reqs: &[EdgeReq]) -> (Routing, Vec<usize
             }
         }
         let Some((w, route, starts, goals)) = picked else {
+            let why = if fixed_blocked {
+                FIXED_PORT_BLOCKED
+            } else {
+                NO_ROUTE
+            };
             for &m in &bundle.members {
-                reasons[m] = Some(NO_ROUTE);
+                reasons[m] = Some(why);
             }
             continue;
         };
 
         // Commit the landing sides: a fan group's shared port counts once,
-        // when its first sibling routes.
+        // when its first sibling routes. A fixed landing also records its
+        // ordinate for the too-close check above.
         let (se, ge) = (&starts[route.start], &goals[route.goal]);
-        for (entry, fan, path) in [(se, fan_a, &rep.a_path), (ge, fan_b, &rep.b_path)] {
+        for (entry, fan, path, port) in [
+            (se, fan_a, &rep.a_path, rep.port_a),
+            (ge, fan_b, &rep.b_path, rep.port_b),
+        ] {
+            if let Some(p) = port {
+                landed_ports.push((path.to_string(), entry.side.index(), p));
+            }
             match fan {
                 Some(g) if fan_pick[g].is_some() => {}
                 Some(g) => {
@@ -394,6 +470,8 @@ pub(crate) fn route(index: &SceneIndex, reqs: &[EdgeReq]) -> (Routing, Vec<usize
             decl_span: req.span,
             fan_from: fans.group_at(i, End::A).map(|g| g as u32),
             fan_to: fans.group_at(i, End::B).map(|g| g as u32),
+            port_from: req.port_a.map(|p| (chain.ends[0].side, p)),
+            port_to: req.port_b.map(|p| (chain.ends[1].side, p)),
         });
     }
 

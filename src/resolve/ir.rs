@@ -456,6 +456,10 @@ pub struct ResolvedEndpoint {
     /// `center`, or a sketch-authored segment; `None` everywhere else (the router
     /// vocabulary is `side`).
     pub point: Option<String>,
+    /// A **fixed port** (ROUTING.md Fixed ports): the exact landing ordinate
+    /// on the forced side — `Some` requires `side`. Nothing sets it yet but
+    /// the testing hooks; schematic pins will [SPEC 16.5].
+    pub port: Option<f64>,
     pub span: Span,
 }
 

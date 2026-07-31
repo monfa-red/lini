@@ -119,6 +119,7 @@ pub(super) fn try_projection(
             copy: ep.copy,
             side,
             point,
+            port: None,
             span: ep.span,
         })
     };

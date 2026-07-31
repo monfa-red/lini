@@ -4,9 +4,9 @@
 //! each contending pair owes its pitch directly, and the ordinates are the
 //! least-squares projection of the preferences onto the feasible set.
 
+use super::cluster::{Item, owed};
 use super::cost::min_pitch;
 use super::graph::Corridor;
-use super::place::{Item, owed};
 
 /// The general settle for clusters the chain cannot express: each
 /// contending pair — and only those — owes its pitch ([`owed`]: the

@@ -56,6 +56,8 @@ pub(crate) fn wire(
         decl_span: span,
         fan_from: None,
         fan_to: None,
+        port_from: None,
+        port_to: None,
     }
 }
 

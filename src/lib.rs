@@ -333,6 +333,40 @@ pub mod testing {
         layout::layout(&prog).expect("layout")
     }
 
+    /// One fixed-port injection for [`route_sample_with_ports`]: on the link
+    /// statement running `from … to`, the end whose resolved path is `at`
+    /// takes the forced side (`"left"` · `"right"` · `"top"` · `"bottom"`)
+    /// and the exact landing ordinate (ROUTING.md Fixed ports).
+    pub type FixedPort<'a> = (&'a str, &'a str, &'a str, &'a str, f64);
+
+    /// [`route_sample`] with fixed ports injected onto resolved endpoints —
+    /// the Phase-1 probe until schematic pins set them [SPEC 16.5].
+    pub fn route_sample_with_ports(src: &str, clearance: f64, ports: &[FixedPort]) -> LaidOut {
+        let side = |name: &str| match name {
+            "left" => crate::ast::Side::Left,
+            "right" => crate::ast::Side::Right,
+            "top" => crate::ast::Side::Top,
+            "bottom" => crate::ast::Side::Bottom,
+            _ => panic!("unknown side '{name}'"),
+        };
+        let mut prog = super::resolve_pipeline(src, &Options::default()).expect("resolve");
+        for w in &mut prog.links {
+            w.attrs
+                .insert("clearance", ResolvedValue::Number(clearance));
+            let first = w.endpoints.first().expect("endpoint").path.clone();
+            let last = w.endpoints.last().expect("endpoint").path.clone();
+            for e in &mut w.endpoints {
+                for &(from, to, at, s, ord) in ports {
+                    if first == from && last == to && e.path == at {
+                        e.side = Some(side(s));
+                        e.port = Some(ord);
+                    }
+                }
+            }
+        }
+        layout::layout(&prog).expect("layout")
+    }
+
     /// The number of routable corridor edges (orthogonal and natural) the source
     /// declares (fans/chains already expanded at resolve into one `ResolvedLink`
     /// per edge-chain). Sequence-scope messages are

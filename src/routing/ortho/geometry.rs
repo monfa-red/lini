@@ -361,8 +361,8 @@ mod tests {
         keepouts.extend_from_slice(extra);
         let graph = ChannelGraph::build(BOUNDS, &keepouts, false);
         let ledger = Ledger::new(C);
-        let starts = entries(&graph, a, C, C, None, extra, false);
-        let goals = entries(&graph, b, C, C, None, extra, false);
+        let starts = entries(&graph, a, C, C, None, None, extra, false);
+        let goals = entries(&graph, b, C, C, None, None, extra, false);
         let r = cheapest(&graph, 0, &starts, &goals, &ledger, &[], 1, C).expect("route");
         let (se, ge) = (&starts[r.start], &goals[r.goal]);
         let ends = [end_of(se, a), end_of(ge, b)];

@@ -110,8 +110,17 @@ fn breach(rule: Rule, w: &RoutedLink, detail: String) -> Violation {
 }
 
 /// Which side the port lands on — or why the landing is illegal (Law 2:
-/// on a side, perpendicular, ≥ clearance from the corners).
-fn landing(rect: Rect, port: (f64, f64), inward: (f64, f64), c: f64) -> Result<Side, String> {
+/// on a side, perpendicular, ≥ clearance from the corners). A **fixed**
+/// port (ROUTING.md Fixed ports) is judged against its pinned side and
+/// ordinate exactly, and the corner-margin rule is waived for it — the
+/// caller owns the landing.
+fn landing(
+    rect: Rect,
+    port: (f64, f64),
+    inward: (f64, f64),
+    c: f64,
+    fixed: Option<(Side, f64)>,
+) -> Result<Side, String> {
     let (x, y) = port;
     let on_x = x > rect.x0 + EPS && x < rect.x1 - EPS;
     let on_y = y > rect.y0 + EPS && y < rect.y1 - EPS;
@@ -138,7 +147,17 @@ fn landing(rect: Rect, port: (f64, f64), inward: (f64, f64), c: f64) -> Result<S
             (inward.1 - y).abs() <= EPS,
         ),
     };
-    if margin < c.min(len / 2.0) - EPS {
+    if let Some((fside, ford)) = fixed {
+        let ord = match side {
+            Side::Top | Side::Bottom => x,
+            _ => y,
+        };
+        if side != fside || (ord - ford).abs() > EPS {
+            return Err(format!(
+                "end at {port:?} misses its fixed port ({ford} on the {fside:?} side)"
+            ));
+        }
+    } else if margin < c.min(len / 2.0) - EPS {
         return Err(format!("end {margin} from a corner, needs ≥ {c}"));
     }
     if !perpendicular {
@@ -182,7 +201,7 @@ fn contact(index: &SceneIndex, links: &[&RoutedLink], c: f64, out: &mut Vec<Viol
 /// The two landings of one drawn wire — the contact judgment both arms
 /// share (the natural arm skips only the orthogonal-polyline scan above).
 fn contact_ends(index: &SceneIndex, w: &RoutedLink, c: f64, out: &mut Vec<Violation>) {
-    for (path, port, inward) in ends(w) {
+    for ((path, port, inward), fixed) in ends(w).into_iter().zip([w.port_from, w.port_to]) {
         let Some(rect) = index.rect(path) else {
             out.push(breach(
                 Rule::Contact,
@@ -191,7 +210,7 @@ fn contact_ends(index: &SceneIndex, w: &RoutedLink, c: f64, out: &mut Vec<Violat
             ));
             continue;
         };
-        if let Err(why) = landing(rect, port, inward, c) {
+        if let Err(why) = landing(rect, port, inward, c, fixed) {
             out.push(breach(
                 Rule::Contact,
                 w,
@@ -505,6 +524,8 @@ mod tests {
             decl_span: Span::empty(),
             fan_from: None,
             fan_to: None,
+            port_from: None,
+            port_to: None,
         }
     }
 
@@ -593,6 +614,50 @@ mod tests {
             let out = check(&pair(), &[w], &[]);
             assert!(rules(&out).contains(&Rule::Contact), "{out:?}");
         }
+    }
+
+    #[test]
+    fn a_fixed_port_lands_exactly_and_waives_the_corner_margin() {
+        // Ports 4 from the corner of a 40-tall body: a free end breaches
+        // the corner margin (clearance 8); a fixed port owns its landing.
+        let free = link("a", "b", vec![(20.0, -16.0), (180.0, -16.0)]);
+        let out = check(&pair(), &[free], &[]);
+        assert!(rules(&out).contains(&Rule::Contact), "{out:?}");
+        let mut pinned = link("a", "b", vec![(20.0, -16.0), (180.0, -16.0)]);
+        pinned.port_from = Some((Side::Right, -16.0));
+        pinned.port_to = Some((Side::Left, -16.0));
+        let out = check(&pair(), &[pinned], &[]);
+        assert_eq!(out.len(), 0, "{out:?}");
+        // An end drawn off its fixed port is a contact breach, exactly.
+        let mut off = link("a", "b", vec![(20.0, 0.0), (180.0, 0.0)]);
+        off.port_from = Some((Side::Right, -2.0));
+        let out = check(&pair(), &[off], &[]);
+        assert!(
+            out.iter()
+                .any(|v| v.detail.contains("misses its fixed port")),
+            "{out:?}"
+        );
+    }
+
+    #[test]
+    fn pinned_ports_excuse_a_sub_clearance_hug_free_ones_do_not() {
+        // Two straights 5 apart (clearance 8, floor 4) between 100-tall
+        // bodies: free ends had room to spread — a breach; ends pinned to
+        // fixed ports 5 apart cannot — scarcity, excused.
+        let nodes = vec![
+            sized("a", 0.0, 0.0, 40.0, 100.0),
+            sized("b", 200.0, 0.0, 40.0, 100.0),
+        ];
+        let mk = |y: f64| link("a", "b", vec![(20.0, y), (180.0, y)]);
+        let (mut w1, mut w2) = (mk(0.0), mk(5.0));
+        let out = check(&nodes, &[w1.clone(), w2.clone()], &[]);
+        assert!(rules(&out).contains(&Rule::Separation), "{out:?}");
+        w1.port_from = Some((Side::Right, 0.0));
+        w1.port_to = Some((Side::Left, 0.0));
+        w2.port_from = Some((Side::Right, 5.0));
+        w2.port_to = Some((Side::Left, 5.0));
+        let out = check(&nodes, &[w1, w2], &[]);
+        assert_eq!(out.len(), 0, "{out:?}");
     }
 
     #[test]

@@ -112,6 +112,8 @@ pub(crate) fn route(
             decl_span: req.span,
             fan_from: fans.group_at(i, End::A).map(|g| g as u32),
             fan_to: fans.group_at(i, End::B).map(|g| g as u32),
+            port_from: None,
+            port_to: None,
         });
         req_of.push(i);
     }

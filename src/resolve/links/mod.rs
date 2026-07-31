@@ -276,6 +276,7 @@ pub fn resolve_link(
                 copy: ep.copy,
                 side,
                 point,
+                port: None,
                 span: ep.span,
             });
         }

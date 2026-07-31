@@ -4,58 +4,31 @@
 //! Runs whose spans come within a clearance of one another **and share
 //! ordinate space** — one channel, fragments of one corridor
 //! ([`ChannelGraph::corridor`]), or, across worlds, one landing side — form
-//! a cluster. Within a cluster runs order so wires leave in the order they
-//! arrive — nested, never braided — by the outward-walk order
-//! ([`super::order`]) — and take the order-preserving ordinates nearest
-//! their preferences at the pitch each pair genuinely owes ([`owed`] — the
-//! distance model: full clearance alongside, the diagonal remainder past
-//! each other): the exact chain ([`ladder`]) when the cluster's contention
-//! is a chain, the pairwise projection ([`super::pairwise`]) when an
-//! under-sized bridge leaves debt the chain cannot express. The relief
-//! valve compresses only what a stretch's hard boxes genuinely cannot
-//! hold, never below half the clearance. Preferences are
-//! the aesthetic law: interior runs want their corridor's anchor (the
-//! midline between two nodes, the keep-out wall at the canvas edge); end
-//! runs want the straightest lawful line to their port. Ports *are* end-run
-//! ordinates — fan siblings merge into one item and share one port — so a
-//! port can never disagree with the wire it serves.
+//! a cluster ([`super::cluster`], the shared contention model). Within a
+//! cluster runs order so wires leave in the order they arrive — nested,
+//! never braided — by the outward-walk order ([`super::order`]) — and take
+//! the order-preserving ordinates nearest their preferences at the pitch
+//! each pair genuinely owes ([`cluster::owed`] — the distance model: full
+//! clearance alongside, the diagonal remainder past each other): the exact
+//! chain ([`ladder`]) when the cluster's contention is a chain, the
+//! pairwise projection ([`super::pairwise`]) when an under-sized bridge
+//! leaves debt the chain cannot express. The relief valve compresses only
+//! what a stretch's hard boxes genuinely cannot hold, never below half the
+//! clearance. Preferences are the aesthetic law: interior runs want their
+//! corridor's anchor (the midline between two nodes, the keep-out wall at
+//! the canvas edge); end runs want the straightest lawful line to their
+//! port. Ports *are* end-run ordinates — fan siblings merge into one item
+//! and share one port — so a port can never disagree with the wire it
+//! serves.
 
 use std::collections::BTreeMap;
 
+use super::cluster::{Item, clusters_of, merge_fans, owed};
 use super::cost::min_pitch;
 use super::graph::{Axis, Corridor};
 use super::ladder::ladder;
 use super::order;
-use super::rect::Rect;
 use super::{Chain, Run, World};
-use crate::ast::Side;
-
-/// One ladder item: a run (or a fan's merged end runs) awaiting its
-/// ordinate.
-pub(super) struct Item {
-    /// `(chain index, run index)` of every run taking this ordinate.
-    pub(super) members: Vec<(usize, usize)>,
-    pub(super) span: (f64, f64),
-    /// The corner clamp ([`corner_clamp`]) — hard bounds keeping every
-    /// corner inside both of its runs' channels.
-    clamp: (f64, f64),
-    pref: f64,
-    /// Hard bounds from the port window; `None` for interior runs (the
-    /// corridor's usable range applies alone).
-    pub(super) window: Option<(f64, f64)>,
-    /// Declaration-order key for span ties.
-    link: usize,
-    /// The world whose channel graph this run rides in.
-    world: usize,
-    /// The channel the run rides — fragments of one corridor cluster across
-    /// channels.
-    pub(super) chan: usize,
-    /// The physical sides an end run lands on (both for a single-run wire).
-    /// Worlds share these: an inner wire's port and an outer wire's punch
-    /// meet on the same body side, so same-landing items cluster across
-    /// worlds — the one place two worlds' wires lawfully share space.
-    landings: Vec<(Side, Rect)>,
-}
 
 /// A run's ordinate preference and its hard port window, if any.
 type Pref = (f64, Option<(f64, f64)>);
@@ -212,76 +185,6 @@ pub(super) fn collect(
     (ests, by_axis)
 }
 
-/// Group one axis's items into contention clusters: spans within a
-/// clearance of each other, in one channel or across fragments of one
-/// corridor — or, across worlds, landing on one physical side.
-pub(super) fn clusters_of(
-    axis: Axis,
-    mut items: Vec<Item>,
-    worlds: &[World],
-    clearance: f64,
-) -> Vec<Vec<(Item, Corridor)>> {
-    items.sort_by(|a, b| {
-        a.span
-            .0
-            .total_cmp(&b.span.0)
-            .then(a.link.cmp(&b.link))
-            .then(a.world.cmp(&b.world))
-            .then(a.chan.cmp(&b.chan))
-    });
-    let corridors: Vec<Corridor> = items
-        .iter()
-        .map(|i| {
-            worlds[i.world]
-                .graph
-                .corridor(axis, i.chan, i.span.0, i.span.1)
-        })
-        .collect();
-
-    let n = items.len();
-    let mut parent: Vec<usize> = (0..n).collect();
-    fn root(parent: &mut [usize], mut i: usize) -> usize {
-        while parent[i] != i {
-            parent[i] = parent[parent[i]];
-            i = parent[i];
-        }
-        i
-    }
-    for i in 0..n {
-        for j in i + 1..n {
-            let near = near(items[i].span, items[j].span, clearance);
-            // Corridors meeting at a shared boundary couple too: their
-            // walls charge no margin, so near runs on the two sides owe
-            // their pitch through the one ladder — placement owns
-            // cross-boundary separation (wall coordinates come from one
-            // sweep-edge list, so the abutting test is exact equality).
-            let abuts = corridors[i].walls.1 == corridors[j].walls.0
-                || corridors[j].walls.1 == corridors[i].walls.0;
-            let shared = (items[i].world == items[j].world
-                && (items[i].chan == items[j].chan
-                    || corridors[i].chans.contains(&items[j].chan)
-                    || corridors[j].chans.contains(&items[i].chan)
-                    || abuts))
-                || items[i]
-                    .landings
-                    .iter()
-                    .any(|l| items[j].landings.contains(l));
-            if near && shared {
-                let (a, b) = (root(&mut parent, i), root(&mut parent, j));
-                parent[a.max(b)] = a.min(b);
-            }
-        }
-    }
-    let mut clusters: BTreeMap<usize, Vec<(Item, Corridor)>> = BTreeMap::new();
-    for (i, (item, corr)) in items.into_iter().zip(corridors).enumerate() {
-        clusters
-            .entry(root(&mut parent, i))
-            .or_default()
-            .push((item, corr));
-    }
-    clusters.into_values().collect()
-}
-
 /// Per-run `(preference, port window)` for one chain (ROUTING.md step 5):
 /// a single run serving both ports prefers the straightest lawful line —
 /// the two side centres' midpoint clamped into the shared window; an end
@@ -323,53 +226,6 @@ fn chain_prefs(chain: &Chain, worlds: &[World]) -> Vec<Pref> {
             }
         })
         .collect()
-}
-
-/// Fan siblings' end runs share one port: merge same-group items into one,
-/// spans united, windows intersected.
-pub(super) fn merge_fans(items: &mut Vec<Item>, chains: &[Option<Chain>]) {
-    let mut merged: Vec<Item> = Vec::new();
-    for item in items.drain(..) {
-        let (ci, ri) = item.members[0];
-        let chain = chains[ci].as_ref().expect("placed chain");
-        let fan = fan_of(chain, ri);
-        let twin = fan.and_then(|f| {
-            merged.iter_mut().find(|m| {
-                let (mc, mr) = m.members[0];
-                fan_of(chains[mc].as_ref().expect("placed chain"), mr) == Some(f)
-            })
-        });
-        match twin {
-            Some(m) => {
-                m.span = (m.span.0.min(item.span.0), m.span.1.max(item.span.1));
-                m.clamp = (m.clamp.0.max(item.clamp.0), m.clamp.1.min(item.clamp.1));
-                m.window = match (m.window, item.window) {
-                    (Some(a), Some(b)) => Some((a.0.max(b.0), a.1.min(b.1))),
-                    (w, None) | (None, w) => w,
-                };
-                m.link = m.link.min(item.link);
-                m.members.extend(item.members);
-                for l in item.landings {
-                    if !m.landings.contains(&l) {
-                        m.landings.push(l);
-                    }
-                }
-            }
-            None => merged.push(item),
-        }
-    }
-    *items = std::mem::take(&mut merged);
-}
-
-/// The fan group of an **end** run, if any — interior runs never merge.
-fn fan_of(chain: &Chain, ri: usize) -> Option<usize> {
-    let last = chain.runs.len() - 1;
-    match (ri == 0, ri == last) {
-        (true, true) => chain.ends[0].fan.or(chain.ends[1].fan),
-        (true, false) => chain.ends[0].fan,
-        (false, true) => chain.ends[1].fan,
-        _ => None,
-    }
 }
 
 /// A run's lawful bounds: law range ∩ corner clamp. The corner clamp binds
@@ -510,58 +366,17 @@ fn settle(
     // A chain the floors cannot make feasible — the admission's
     // cross-window blind spot — settles through the pairwise solver, whose
     // final clamp keeps windows and walls absolute and lets the gaps carry
-    // the visible debt.
-    let ords = if feasible {
-        ladder(&prefs, &bounds, &seps)
-    } else {
-        super::pairwise::pairwise(&cluster, &prefs, &bounds, clearance)
-    };
+    // the visible debt. The ladder reports its own infeasibility the same
+    // way (crossed boxes — fixed ports leave it no slack to clamp into).
+    let ords = feasible
+        .then(|| ladder(&prefs, &bounds, &seps))
+        .flatten()
+        .unwrap_or_else(|| super::pairwise::pairwise(&cluster, &prefs, &bounds, clearance));
     for ((item, _), ord) in cluster.iter().zip(&ords) {
         for &(ci, ri) in &item.members {
             chains[ci].as_mut().expect("placed chain").runs[ri].ord = Some(*ord);
         }
     }
-}
-
-/// Whether two items owe each other pitch: spans that overlap, or end
-/// within a clearance of one another (their tips flank). Two pieces of one
-/// wire owe each other nothing unless their spans overlap (a U's
-/// doubled-back legs; a Z's jog collapses to zero and the legs weld).
-pub(super) fn contend(a: &Item, b: &Item, clearance: f64) -> bool {
-    let same_wire = a
-        .members
-        .iter()
-        .any(|(c0, _)| b.members.iter().any(|(c1, _)| c0 == c1));
-    let overlap = a.span.0.max(b.span.0) < a.span.1.min(b.span.1);
-    overlap || (near(a.span, b.span, clearance) && !same_wire)
-}
-
-/// The ordinate pitch two items genuinely owe, at separation `pitch`
-/// (the clearance for placement, its floor for the admission probe).
-/// Law 1 is a **distance**: runs alongside (spans overlapping) owe the
-/// full pitch across; runs past each other owe only what the diagonal
-/// needs — tips `g` apart along travel are lawful at ordinate offset `d`
-/// once `g² + d² ≥ pitch²`, so a pair whose travel gap alone reaches the
-/// pitch may share an ordinate (two collinear segments a clearance
-/// apart), and the flat charge that laddered such pairs apart — stage 6's
-/// recorded conservatism — is spent. The pair still couples ([`contend`]
-/// stays inclusive at exactly a clearance), so round two never forgets
-/// the contention; it just owes the truth.
-pub(super) fn owed(a: &Item, b: &Item, clearance: f64, pitch: f64) -> f64 {
-    if !contend(a, b, clearance) {
-        return 0.0;
-    }
-    let gap = (b.span.0 - a.span.1).max(a.span.0 - b.span.1).max(0.0);
-    (pitch * pitch - gap * gap).max(0.0).sqrt()
-}
-
-/// Whether two spans come within a clearance of one another — inclusive at
-/// exactly a clearance: round one separates contenders by precisely the
-/// pitch they owe, so the refreshed spans of a settled pair sit exactly a
-/// clearance apart, and a strict test would let round two forget the
-/// contention and collapse the pair back together.
-fn near(a: (f64, f64), b: (f64, f64), clearance: f64) -> bool {
-    b.0 <= a.1 + clearance + 1e-6 && a.0 <= b.1 + clearance + 1e-6
 }
 
 #[cfg(test)]

@@ -197,7 +197,8 @@ Checkable on the output with no knowledge of the router:
    body. Ports sharing a side sit ≥ pitch apart, in the same order as their
    wires (no braiding at the mouth), each as close to where its wire runs
    straightest as its neighbours allow — a lone aligned pair connects dead
-   straight; a crowded side ladders around the contested spot.
+   straight; a crowded side ladders around the contested spot. (A **fixed
+   port** amends this law — §Fixed ports.)
 
 3. **Economy.** Each link takes the cheapest legal route, where
    **cost = length + 2·clearance per turn + 4·clearance per crossing**, given
@@ -291,7 +292,8 @@ Six steps. Each decides once; none revisits an earlier step's answer.
 
 The report counts every drawn crossing with its link pair, and names every
 stray with its source span and reason — a blocked endpoint (no side reaches
-free space), a closed graph (no path at minimum pitch), or a full side.
+free space), a closed graph (no path at minimum pitch), a full side, or a
+fixed port the layout cannot honour (§Fixed ports).
 
 ---
 
@@ -331,6 +333,43 @@ them:
   not path ancestry: everywhere but a tree, nesting implies enclosure, but a
   tree's branch child is a path-descendant placed *beside* its parent, so it is
   an ordinary side-by-side wire, not a containment link.
+
+---
+
+## Fixed ports
+
+A caller may **fix** a link end's port: a scope that owns its connection
+geometry — a schematic pin's stub tip, a label's connection point
+([SPEC 16](SPEC.md#16-schematic)) — supplies the exact landing ordinate on a
+**forced side**, and the wire lands there, not near there. A fixed port
+always rides a forced side, and the endpoint's **body rect stays the
+obstacle** (a pin folds into its component's rect; the port sits on that
+rect's side). Everything else in this contract — worlds, channels, search,
+placement, geometry — is unchanged: a fixed port only collapses the end's
+lawful port window to a point. It is an `orthogonal` capability; the drawn
+wire **carries its fixed ports**, so the checker still judges output alone.
+
+- **Law 2, amended.** A fixed-port end lands **at its port**, exactly,
+  perpendicular — and the corner-margin rule is waived for it: the caller
+  owns the landing, corners included. Free ends sharing the side ladder
+  around a fixed port as around any neighbour — no braiding, unchanged.
+- **Law 1, one new scarcity.** An end segment pinned to its port cannot
+  spread, so sub-clearance spacing against it is excused exactly as a full
+  side excuses its compressed ports — and the half-clearance floor still
+  binds. The caller keeps its ports ≥ minimum pitch apart, or loses the
+  later wire (below).
+- **Fans.** Landings on one shared fixed port — same endpoint, same side,
+  same ordinate — merge into one implicit fan, **across statements**: one
+  port slot, one drawn lead until the split; duplicates ride one line the
+  whole way. A fan whose shared end carries two **different** fixed ports
+  is impossible by construction — every member strays, named.
+- **Infeasibility is loud, never a clamp.** A wire is never drawn *near*
+  its fixed port. A port whose landing a keep-out covers strays with
+  "fixed port blocked"; the later of two fixed ports closer than the
+  minimum pitch strays, named; a conflicted fan strays whole. Strays, the
+  report, and `--strict` behave exactly as in §Impossible layouts.
+- **Determinism unchanged.** Fixed ports remove freedom and add none:
+  every tie breaks as before, and the same input renders byte-identically.
 
 ---
 

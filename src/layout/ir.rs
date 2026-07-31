@@ -121,6 +121,11 @@ pub struct RoutedLink {
     /// validator exempts it from link–link separation.
     pub fan_from: Option<u32>,
     pub fan_to: Option<u32>,
+    /// Fixed ports the ends were pinned to (ROUTING.md Fixed ports) — the
+    /// forced side and exact ordinate, carried on the drawn output so the
+    /// independent checker judges the landing without router state.
+    pub port_from: Option<(crate::ast::Side, f64)>,
+    pub port_to: Option<(crate::ast::Side, f64)>,
 }
 
 #[derive(Clone)]

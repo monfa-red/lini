@@ -16,14 +16,15 @@
 /// Deterministic, unique, order-preserving ladder. `seps[i]` is the minimum
 /// gap between items i and i+1 — a cluster's pitch between different wires,
 /// zero between two pieces of one wire (a jog may collapse; its legs owe
-/// each other nothing). The caller guarantees feasibility (the search's
-/// capacity closure); an infeasible call is a routing bug, caught in debug
-/// builds.
-pub(crate) fn ladder(prefs: &[f64], bounds: &[(f64, f64)], seps: &[f64]) -> Vec<f64> {
+/// each other nothing). An infeasible system — an item's box crossed by its
+/// separations, or pooled boxes with no intersection — returns `None`:
+/// never a silent clamp off a hard bound (ROUTING.md Fixed ports), the
+/// caller falls back or fails loudly.
+pub(crate) fn ladder(prefs: &[f64], bounds: &[(f64, f64)], seps: &[f64]) -> Option<Vec<f64>> {
     let n = prefs.len();
     debug_assert_eq!(n, bounds.len());
     if n == 0 {
-        return Vec::new();
+        return Some(Vec::new());
     }
     debug_assert_eq!(seps.len(), n - 1);
     let cum: Vec<f64> = std::iter::once(0.0)
@@ -49,10 +50,9 @@ pub(crate) fn ladder(prefs: &[f64], bounds: &[(f64, f64)], seps: &[f64]) -> Vec<
     let mut blocks: Vec<Block> = Vec::with_capacity(n);
     for i in 0..n {
         let (lo, hi) = (shift(bounds[i].0, i), shift(bounds[i].1, i));
-        debug_assert!(
-            lo <= hi + 1e-9,
-            "infeasible ladder: item {i} box crosses ({lo} > {hi})"
-        );
+        if lo > hi + 1e-9 {
+            return None; // the item's box is crossed by its separations
+        }
         blocks.push(Block {
             sum: shift(prefs[i], i),
             count: 1,
@@ -68,12 +68,9 @@ pub(crate) fn ladder(prefs: &[f64], bounds: &[(f64, f64)], seps: &[f64]) -> Vec<
             a.count += b.count;
             a.lo = a.lo.max(b.lo);
             a.hi = a.hi.min(b.hi);
-            debug_assert!(
-                a.lo <= a.hi + 1e-9,
-                "infeasible ladder: pooled boxes cross ({} > {})",
-                a.lo,
-                a.hi
-            );
+            if a.lo > a.hi + 1e-9 {
+                return None; // pooled boxes share no lawful ordinate
+            }
         }
     }
 
@@ -86,7 +83,7 @@ pub(crate) fn ladder(prefs: &[f64], bounds: &[(f64, f64)], seps: &[f64]) -> Vec<
             i += 1;
         }
     }
-    out
+    Some(out)
 }
 
 #[cfg(test)]
@@ -148,7 +145,7 @@ mod tests {
     fn equal_prefs_spread_centred_on_the_shared_spot() {
         // The bus ladder: four rails wanting one midline take pitch steps
         // centred on it — the median lands on the preference.
-        let got = ladder(&[100.0; 4], &[(0.0, 200.0); 4], &[10.0; 3]);
+        let got = ladder(&[100.0; 4], &[(0.0, 200.0); 4], &[10.0; 3]).unwrap();
         assert_eq!(got, vec![85.0, 95.0, 105.0, 115.0]);
     }
 
@@ -158,7 +155,8 @@ mod tests {
             &[285.0, 295.0, 305.0, 315.0],
             &[(225.0, 385.0); 4],
             &[10.0; 3],
-        );
+        )
+        .unwrap();
         assert_eq!(got, vec![285.0, 295.0, 305.0, 315.0]);
     }
 
@@ -170,7 +168,7 @@ mod tests {
         // pulls, order and pitch intact.
         let prefs = [300.0, 300.0, 285.0, 295.0];
         let bounds = [(260.0, 340.0); 4];
-        let got = ladder(&prefs, &bounds, &[10.0; 3]);
+        let got = ladder(&prefs, &bounds, &[10.0; 3]).unwrap();
         assert_eq!(got, vec![280.0, 290.0, 300.0, 310.0]);
         let expected = brute(&prefs, &bounds, &[10.0; 3], 5.0);
         assert!(close(&got, &expected), "got {got:?} vs brute {expected:?}");
@@ -195,7 +193,7 @@ mod tests {
         ];
         for (prefs, bounds, pitch) in cases {
             let seps = vec![*pitch; prefs.len().saturating_sub(1)];
-            let got = ladder(prefs, bounds, &seps);
+            let got = ladder(prefs, bounds, &seps).unwrap();
             let expected = brute(prefs, bounds, &seps, 0.5);
             assert!(
                 close(&got, &expected),
@@ -208,9 +206,9 @@ mod tests {
     fn bounds_and_pitch_hold_at_the_walls() {
         // Three rails in a corridor exactly three-pitches wide sit at the
         // walls and centre, whatever they preferred.
-        let got = ladder(&[0.0, 0.0, 0.0], &[(40.0, 56.0); 3], &[8.0; 2]);
+        let got = ladder(&[0.0, 0.0, 0.0], &[(40.0, 56.0); 3], &[8.0; 2]).unwrap();
         assert_eq!(got, vec![40.0, 48.0, 56.0]);
-        let got = ladder(&[99.0, 99.0, 99.0], &[(40.0, 56.0); 3], &[8.0; 2]);
+        let got = ladder(&[99.0, 99.0, 99.0], &[(40.0, 56.0); 3], &[8.0; 2]).unwrap();
         assert_eq!(got, vec![40.0, 48.0, 56.0]);
     }
 
@@ -218,19 +216,31 @@ mod tests {
     fn zero_separation_lets_one_wires_pieces_meet() {
         // A Z's two legs (sep 0) share their preferred track — the jog
         // collapses — while a stranger before them still keeps pitch.
-        let got = ladder(&[50.0, 50.0], &[(28.0, 72.0); 2], &[0.0]);
+        let got = ladder(&[50.0, 50.0], &[(28.0, 72.0); 2], &[0.0]).unwrap();
         assert_eq!(got, vec![50.0, 50.0]);
         // The stranger and the welded pair balance around 50, pitch held
         // once: one pooled block at mean(50, 42, 42) = 134/3, shifted back.
-        let got = ladder(&[50.0, 50.0, 50.0], &[(0.0, 100.0); 3], &[8.0, 0.0]);
+        let got = ladder(&[50.0, 50.0, 50.0], &[(0.0, 100.0); 3], &[8.0, 0.0]).unwrap();
         let expected = [134.0 / 3.0, 134.0 / 3.0 + 8.0, 134.0 / 3.0 + 8.0];
         assert!(close(&got, &expected), "got {got:?} vs {expected:?}");
     }
 
     #[test]
+    fn an_infeasible_system_reports_none_never_a_clamp() {
+        // Two point boxes (fixed ports) owing a pitch their gap cannot
+        // hold: no lawful ladder exists, and no ordinate leaves its box.
+        assert_eq!(
+            ladder(&[20.0, 22.0], &[(20.0, 20.0), (22.0, 22.0)], &[8.0]),
+            None
+        );
+        // A single crossed box is the same answer.
+        assert_eq!(ladder(&[0.0], &[(10.0, 5.0)], &[]), None);
+    }
+
+    #[test]
     fn empty_and_single_inputs_are_trivial() {
-        assert_eq!(ladder(&[], &[], &[]), Vec::<f64>::new());
-        assert_eq!(ladder(&[25.0], &[(0.0, 100.0)], &[]), vec![25.0]);
-        assert_eq!(ladder(&[125.0], &[(0.0, 100.0)], &[]), vec![100.0]);
+        assert_eq!(ladder(&[], &[], &[]), Some(Vec::<f64>::new()));
+        assert_eq!(ladder(&[25.0], &[(0.0, 100.0)], &[]), Some(vec![25.0]));
+        assert_eq!(ladder(&[125.0], &[(0.0, 100.0)], &[]), Some(vec![100.0]));
     }
 }

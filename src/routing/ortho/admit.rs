@@ -19,6 +19,7 @@
 //! a learned closure ([`super::search::Deny`]) and the world searches
 //! again around it — the same loop the ledger's own denials ride.
 
+use super::cluster;
 use super::cost::min_pitch;
 use super::graph::Axis;
 use super::place;
@@ -46,18 +47,18 @@ pub(crate) fn admits(
             .ord
             .expect("simulation placed every run")
     };
-    let of_candidate = |i: &place::Item| i.members.iter().any(|&(ci, _)| ci >= base);
+    let of_candidate = |i: &cluster::Item| i.members.iter().any(|&(ci, _)| ci >= base);
     let (_, by_axis) = place::collect(worlds, &all);
     for (axis, mut items) in by_axis {
         let axis = [Axis::H, Axis::V][axis as usize];
-        place::merge_fans(&mut items, &all);
-        for cluster in place::clusters_of(axis, items, worlds, clearance) {
+        cluster::merge_fans(&mut items, &all);
+        for cluster in cluster::clusters_of(axis, items, worlds, clearance) {
             let broken = (0..cluster.len()).find_map(|i| {
                 (i + 1..cluster.len()).find_map(|j| {
                     let (a, b) = (&cluster[i].0, &cluster[j].0);
                     // The floor of the distance model: what the pair's
                     // diagonal needs at half-clearance separation.
-                    let floor = place::owed(a, b, clearance, min_pitch(clearance));
+                    let floor = cluster::owed(a, b, clearance, min_pitch(clearance));
                     let short = (ord(a.members[0]) - ord(b.members[0])).abs() + 1e-6 < floor;
                     short.then_some((i, j))
                 })

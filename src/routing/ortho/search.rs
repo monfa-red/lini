@@ -416,8 +416,8 @@ mod tests {
         k: usize,
         forced: (Option<Side>, Option<Side>),
     ) -> Option<Route> {
-        let starts = entries(g, a, C, C, forced.0, &[], false);
-        let goals = entries(g, b, C, C, forced.1, &[], false);
+        let starts = entries(g, a, C, C, forced.0, None, &[], false);
+        let goals = entries(g, b, C, C, forced.1, None, &[], false);
         cheapest(g, 0, &starts, &goals, ledger, &[], k, C)
     }
 
@@ -428,8 +428,8 @@ mod tests {
         let g = ChannelGraph::build(BOUNDS, &[a.inflate(C), b.inflate(C)], false);
         let ledger = Ledger::new(C);
         let r = route(&g, a, b, &ledger, 1, (None, None)).expect("route");
-        let starts = entries(&g, a, C, C, None, &[], false);
-        let goals = entries(&g, b, C, C, None, &[], false);
+        let starts = entries(&g, a, C, C, None, None, &[], false);
+        let goals = entries(&g, b, C, C, None, None, &[], false);
         let picked = (starts[r.start].side, goals[r.goal].side);
         assert!(
             picked == (Side::Right, Side::Top) || picked == (Side::Bottom, Side::Left),
@@ -442,8 +442,8 @@ mod tests {
         let (g, a, b) = facing();
         let ledger = Ledger::new(C);
         let r = route(&g, a, b, &ledger, 1, (None, None)).expect("route");
-        let starts = entries(&g, a, C, C, None, &[], false);
-        let goals = entries(&g, b, C, C, None, &[], false);
+        let starts = entries(&g, a, C, C, None, None, &[], false);
+        let goals = entries(&g, b, C, C, None, None, &[], false);
         assert_eq!(starts[r.start].side, Side::Right);
         assert_eq!(goals[r.goal].side, Side::Left);
         // Aligned windows: pure length, no turn or crossing surcharge.

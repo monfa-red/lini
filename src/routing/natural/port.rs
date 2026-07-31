@@ -240,7 +240,9 @@ pub(crate) fn landings(
         let prefs = vec![centre; n];
         let bounds: Vec<(f64, f64)> = vec![win; n];
         let seps = vec![pitch; n.saturating_sub(1)];
-        for (&s, ord) in group.iter().zip(ladder(&prefs, &bounds, &seps)) {
+        let ords_of = ladder(&prefs, &bounds, &seps)
+            .expect("port ladder feasible: the pitch derives from the window");
+        for (&s, ord) in group.iter().zip(ords_of) {
             ords[s] = ord;
         }
     }
@@ -276,6 +278,8 @@ mod tests {
             b_rect: rb,
             side_a: None,
             side_b: None,
+            port_a: None,
+            port_b: None,
             routing: Strategy::Natural,
             clearance: 12.0,
             stub_a: 12.0,

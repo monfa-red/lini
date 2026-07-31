@@ -23,6 +23,10 @@ pub struct EdgeReq {
     pub b_rect: Rect,
     pub side_a: Option<Side>,
     pub side_b: Option<Side>,
+    /// Fixed-port ordinates (ROUTING.md Fixed ports): the exact landing on
+    /// the end's forced side — `Some` requires the matching `side_*`.
+    pub port_a: Option<f64>,
+    pub port_b: Option<f64>,
     /// The wiring strategy drawing this edge [SPEC 9]: `routing:` cascades
     /// per scope and per link, so one expansion serves every strategy.
     pub routing: Strategy,
@@ -74,6 +78,14 @@ impl EdgeReq {
         match end {
             End::A => self.side_a,
             End::B => self.side_b,
+        }
+    }
+
+    /// The end's fixed-port ordinate, if the caller pinned one.
+    pub fn port(&self, end: End) -> Option<f64> {
+        match end {
+            End::A => self.port_a,
+            End::B => self.port_b,
         }
     }
 }
@@ -141,6 +153,10 @@ pub fn requests(program: &Program, index: &SceneIndex) -> Result<Vec<EdgeReq>, E
                 };
                 clearance.max(run_up)
             };
+            debug_assert!(
+                (a.port.is_none() || a.side.is_some()) && (b.port.is_none() || b.side.is_some()),
+                "a fixed port rides a forced side (ROUTING.md Fixed ports)"
+            );
             out.push(EdgeReq {
                 a_path: a.path.clone(),
                 b_path: b.path.clone(),
@@ -148,6 +164,8 @@ pub fn requests(program: &Program, index: &SceneIndex) -> Result<Vec<EdgeReq>, E
                 b_rect: rect_of(b)?,
                 side_a: a.side,
                 side_b: b.side,
+                port_a: a.port,
+                port_b: b.port,
                 routing: w.routing,
                 clearance,
                 stub_a: stub(start),
@@ -288,14 +306,43 @@ pub fn fan_groups(reqs: &[EdgeReq], strategy: Strategy) -> Fans {
         }
         let (host, rest) = gs.split_first().expect("non-empty bucket");
         for &g in rest {
-            for i in std::mem::take(&mut groups[g]) {
-                groups[*host].push(i);
-                let slot = of[i]
-                    .iter_mut()
-                    .find(|(og, oe)| *og == g && *oe == end)
-                    .expect("end registered");
-                slot.0 = *host;
-            }
+            absorb(&mut groups, &mut of, *host, g, end);
+        }
+    }
+    // Landings on one shared fixed port merge into one implicit fan across
+    // statements — and across ends (ROUTING.md Fixed ports; the schematic's
+    // same-pin law [SPEC 16.5]): same endpoint, same side, same ordinate is
+    // one landing, one drawn lead until the split. Ordinates come from one
+    // connection-geometry computation, so equality is exact; a group whose
+    // own members disagree stays split and strays at routing.
+    type PortKey = (String, u8, u64);
+    let mut pinned: Vec<(PortKey, Vec<(usize, End)>)> = Vec::new();
+    for (g, key) in keys.iter().enumerate() {
+        if groups[g].is_empty() {
+            continue; // absorbed above
+        }
+        let (_, _, end, ref path, side) = *key;
+        let Some(side) = side else { continue };
+        let mut ports = groups[g].iter().map(|&i| reqs[i].port(end));
+        let Some(Some(first)) = ports.next() else {
+            continue;
+        };
+        if ports.any(|p| p != Some(first)) {
+            continue;
+        }
+        let bkey = (path.clone(), side.index(), first.to_bits());
+        match pinned.iter_mut().find(|(k, _)| *k == bkey) {
+            Some((_, gs)) => gs.push((g, end)),
+            None => pinned.push((bkey, vec![(g, end)])),
+        }
+    }
+    for (_, gs) in pinned {
+        if gs.len() < 2 {
+            continue;
+        }
+        let (&(host, _), rest) = gs.split_first().expect("non-empty bucket");
+        for &(g, end) in rest {
+            absorb(&mut groups, &mut of, host, g, end);
         }
     }
     // Only shared ends are fans; singleton "groups" dissolve.
@@ -321,6 +368,25 @@ pub fn fan_groups(reqs: &[EdgeReq], strategy: Strategy) -> Fans {
     Fans { groups: kept, of }
 }
 
+/// Move every member of group `g` (fanned at `end`) into `host` — the fan
+/// passes' one merge primitive.
+fn absorb(
+    groups: &mut [Vec<usize>],
+    of: &mut [Vec<(usize, End)>],
+    host: usize,
+    g: usize,
+    end: End,
+) {
+    for i in std::mem::take(&mut groups[g]) {
+        groups[host].push(i);
+        let slot = of[i]
+            .iter_mut()
+            .find(|(og, oe)| *og == g && *oe == end)
+            .expect("end registered");
+        slot.0 = host;
+    }
+}
+
 /// The one clearance number (ROUTING Vocabulary): the link's merged attrs,
 /// already carrying the cascaded link default.
 pub fn link_clearance(attrs: &AttrMap) -> f64 {
@@ -339,6 +405,8 @@ mod tests {
             b_rect: Rect::new(40.0, 0.0, 50.0, 10.0),
             side_a: None,
             side_b: None,
+            port_a: None,
+            port_b: None,
             routing: Strategy::Orthogonal,
             clearance: 8.0,
             stub_a: 8.0,
@@ -427,6 +495,31 @@ mod tests {
         assert!(fan_groups(&reqs, Strategy::Orthogonal).groups.is_empty());
         // An unforced end never fans across statements.
         let reqs = vec![req(0, 0, 0, "r", "r.a"), req(1, 0, 0, "r", "r.b")];
+        assert!(fan_groups(&reqs, Strategy::Orthogonal).groups.is_empty());
+    }
+
+    #[test]
+    fn same_fixed_port_landings_fan_across_statements_and_ends() {
+        // a - p and p - b land on p's one fixed port: one implicit fan,
+        // across statements and across ends (ROUTING.md Fixed ports).
+        let pinned = |stmt: usize, from: &str, to: &str, ord: f64| {
+            let mut r = req(stmt, 0, 0, from, to);
+            if from == "p" {
+                r.side_a = Some(Side::Left);
+                r.port_a = Some(ord);
+            } else {
+                r.side_b = Some(Side::Left);
+                r.port_b = Some(ord);
+            }
+            r
+        };
+        let reqs = vec![pinned(0, "a", "p", 20.0), pinned(1, "p", "b", 20.0)];
+        let fans = fan_groups(&reqs, Strategy::Orthogonal);
+        assert_eq!(fans.groups.len(), 1);
+        assert_eq!(fans.group_at(0, End::B), Some(0));
+        assert_eq!(fans.group_at(1, End::A), Some(0));
+        // A different ordinate on the same side is another landing — no fan.
+        let reqs = vec![pinned(0, "a", "p", 20.0), pinned(1, "p", "b", 28.0)];
         assert!(fan_groups(&reqs, Strategy::Orthogonal).groups.is_empty());
     }
 

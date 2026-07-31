@@ -26,19 +26,27 @@ pub(crate) struct Entry {
 }
 
 /// The graph entries of a node — one per side whose punch reaches a world
-/// cell without crossing a blocker. `forced` prunes to that side; `inward`
-/// flips the punch into the body (containment ends). `clearance` sets the
-/// window's corner margins; a side too short for margins still offers its
-/// centre point.
+/// cell without crossing a blocker. `forced` prunes to that side; `fixed`
+/// pins the port to an exact ordinate on it and collapses the window to
+/// that point (ROUTING.md Fixed ports — a fixed port rides a forced side);
+/// `inward` flips the punch into the body (containment ends). `clearance`
+/// sets the window's corner margins; a side too short for margins still
+/// offers its centre point.
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn entries(
     graph: &ChannelGraph,
     body: Rect,
     stub: f64,
     clearance: f64,
     forced: Option<Side>,
+    fixed: Option<f64>,
     blockers: &[Rect],
     inward: bool,
 ) -> Vec<Entry> {
+    debug_assert!(
+        fixed.is_none() || forced.is_some(),
+        "a fixed port rides a forced side (ROUTING.md Fixed ports)"
+    );
     let cx = (body.x0 + body.x1) / 2.0;
     let cy = (body.y0 + body.y1) / 2.0;
     let window = |lo: f64, hi: f64, centre: f64| {
@@ -60,20 +68,33 @@ pub(crate) fn entries(
         .filter(|(s, ..)| forced.is_none_or(|f| f == *s))
         .filter_map(|(side, port, dir, axis)| {
             let dir = if inward { opposite(dir) } else { dir };
-            punch(graph, port, DIRS[dir], stub, blockers).map(|(tip, cell)| {
-                let win = match axis {
-                    Axis::H => window(body.y0, body.y1, cy),
-                    Axis::V => window(body.x0, body.x1, cx),
-                };
-                Entry {
-                    side,
-                    port,
-                    window: clip_window(win, port, tip, axis, blockers),
-                    tip,
-                    axis,
-                    dir,
-                    cell,
+            let (lo, hi, centre) = match axis {
+                Axis::H => (body.y0, body.y1, cy),
+                Axis::V => (body.x0, body.x1, cx),
+            };
+            let (port, win) = match fixed {
+                Some(f) => {
+                    // A port off its own side has no lawful landing — no
+                    // entry, and the route loop strays it, named.
+                    if f < lo || f > hi {
+                        return None;
+                    }
+                    let port = match axis {
+                        Axis::H => (port.0, f),
+                        Axis::V => (f, port.1),
+                    };
+                    (port, (f, f))
                 }
+                None => (port, window(lo, hi, centre)),
+            };
+            punch(graph, port, DIRS[dir], stub, blockers).map(|(tip, cell)| Entry {
+                side,
+                port,
+                window: clip_window(win, port, tip, axis, blockers),
+                tip,
+                axis,
+                dir,
+                cell,
             })
         })
         .filter(|e| e.window.0 <= e.window.1)
@@ -202,7 +223,7 @@ mod tests {
     #[test]
     fn entries_offer_each_clear_side_in_rank_order() {
         let (g, a, _) = facing();
-        let es = entries(&g, a, C, C, None, &[], false);
+        let es = entries(&g, a, C, C, None, None, &[], false);
         let sides: Vec<Side> = es.iter().map(|e| e.side).collect();
         assert_eq!(sides, [Side::Right, Side::Bottom, Side::Left, Side::Top]);
         // Right-side port sits mid-side, tip one stub out, window inside the
@@ -225,7 +246,7 @@ mod tests {
     fn a_short_side_offers_its_centre_point_window() {
         let (g, ..) = facing();
         let tiny = body(90.0, 40.0, 102.0, 60.0); // width 12 < 2·clearance
-        let es = entries(&g, tiny, C, C, Some(Side::Top), &[], false);
+        let es = entries(&g, tiny, C, C, Some(Side::Top), None, &[], false);
         assert_eq!(es.len(), 1);
         assert_eq!(es[0].window, (96.0, 96.0));
     }
@@ -235,7 +256,7 @@ mod tests {
         let a = body(20.0, 40.0, 40.0, 60.0);
         let wall = Rect::new(0.0, 0.0, 12.0, 100.0); // flush against a's left keep-out
         let g = ChannelGraph::build(BOUNDS, &[a.inflate(C), wall], false);
-        let es = entries(&g, a, C, C, None, &[wall], false);
+        let es = entries(&g, a, C, C, None, None, &[wall], false);
         assert!(es.iter().all(|e| e.side != Side::Left));
         assert_eq!(es.len(), 3);
     }
@@ -243,7 +264,7 @@ mod tests {
     #[test]
     fn forced_side_prunes_to_one_entry() {
         let (g, a, _) = facing();
-        let es = entries(&g, a, C, C, Some(Side::Top), &[], false);
+        let es = entries(&g, a, C, C, Some(Side::Top), None, &[], false);
         assert_eq!(es.len(), 1);
         assert_eq!(es[0].side, Side::Top);
     }
@@ -255,20 +276,53 @@ mod tests {
         let group = Rect::new(60.0, 20.0, 120.0, 80.0);
         let g = ChannelGraph::build(BOUNDS, &[group.inflate(C)], false);
         let inner = body(70.0, 40.0, 90.0, 60.0);
-        let es = entries(&g, inner, C, C, Some(Side::Right), &[], false);
+        let es = entries(&g, inner, C, C, Some(Side::Right), None, &[], false);
         assert_eq!(es.len(), 1);
         assert_eq!(es[0].port, (90.0, 50.0));
         assert_eq!(es[0].tip, (128.0, 50.0));
         let sibling = Rect::new(95.0, 30.0, 115.0, 70.0);
-        let blocked = entries(&g, inner, C, C, Some(Side::Right), &[sibling], false);
+        let blocked = entries(&g, inner, C, C, Some(Side::Right), None, &[sibling], false);
         assert!(blocked.is_empty());
+    }
+
+    #[test]
+    fn a_fixed_port_collapses_the_window_to_its_point() {
+        let (g, a, _) = facing();
+        let es = entries(&g, a, C, C, Some(Side::Right), Some(44.0), &[], false);
+        assert_eq!(es.len(), 1);
+        assert_eq!(es[0].port, (40.0, 44.0));
+        assert_eq!(es[0].window, (44.0, 44.0));
+        assert_eq!(es[0].tip, (48.0, 44.0));
+        // An ordinate off the side has no lawful landing: no entry.
+        assert!(entries(&g, a, C, C, Some(Side::Right), Some(70.0), &[], false).is_empty());
+    }
+
+    #[test]
+    fn a_blocked_fixed_port_offers_no_entry() {
+        // A sibling covers the port's punch row; the side centre stays
+        // clear, so only the pinned landing dies.
+        let (g, a, _) = facing();
+        let sibling = Rect::new(42.0, 42.0, 46.0, 46.0);
+        let free = entries(&g, a, C, C, Some(Side::Right), None, &[sibling], false);
+        assert_eq!(free.len(), 1, "the centre punch clears the sibling");
+        let pinned = entries(
+            &g,
+            a,
+            C,
+            C,
+            Some(Side::Right),
+            Some(44.0),
+            &[sibling],
+            false,
+        );
+        assert!(pinned.is_empty(), "the pinned landing is covered");
     }
 
     #[test]
     fn inner_entries_point_into_the_body() {
         let parent = body(40.0, 20.0, 160.0, 80.0);
         let g = ChannelGraph::build(parent, &[Rect::new(90.0, 45.0, 110.0, 55.0)], false);
-        let es = entries(&g, parent, C, C, None, &[], true);
+        let es = entries(&g, parent, C, C, None, None, &[], true);
         let right = es.iter().find(|e| e.side == Side::Right).expect("right");
         assert_eq!(right.port, (160.0, 50.0));
         assert_eq!(right.tip, (152.0, 50.0));

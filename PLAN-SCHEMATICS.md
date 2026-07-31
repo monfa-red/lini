@@ -286,27 +286,113 @@ mod}.rs`; `src/routing/validate.rs`; `src/lib.rs` testing hooks if a new
 probe is needed. `place.rs` (844) — split it.
 
 **Tasks**
-- [ ] ROUTING.md: "Fixed ports" section — vocabulary, Law 2 amendment,
+- [x] ROUTING.md: "Fixed ports" section — vocabulary, Law 2 amendment,
       fan-at-fixed-port law, infeasibility-is-loud contract, determinism
       unchanged. Tight, lawful prose in the document's voice.
-- [ ] `EdgeReq` fixed-port field + plumbing (nothing sets it yet except
+- [x] `EdgeReq` fixed-port field + plumbing (nothing sets it yet except
       tests).
-- [ ] `entries` point-window path incl. blocked-port stray; `chain_prefs`
+- [x] `entries` point-window path incl. blocked-port stray; `chain_prefs`
       fixed prefs; both-end/pooling infeasibility errors (no release
       clamps); `merge_fans` conflict error; capacity adjustment.
-- [ ] Validator: `landing()` fixed-port waiver + exact-port check; carrier
+- [x] Validator: `landing()` fixed-port waiver + exact-port check; carrier
       for the ordinate.
-- [ ] Tests in `tests/routing.rs`: fixed port lands exactly (± ε); two
+- [x] Tests in `tests/routing.rs`: fixed port lands exactly (± ε); two
       fixed ports on one side don't braid; fixed + free mix ladders around
       the fixed one; same-point fan merges; conflicting fan errors; fixed
       ports closer than min pitch error; blocked fixed port → named stray;
       determinism (byte-identical rerun). `tests/laws.rs` sweep green
       including the low-clearance end (6.0) with fixed ports in play.
-- [ ] `cargo fmt && cargo test && cargo clippy` green.
+- [x] `cargo fmt && cargo test && cargo clippy` green.
 
 ### Execution log
 
+- 2026-07-31 — Phase 1 executed (branch `worktree-fixed-port-routing`).
+  ROUTING.md gained **"Fixed ports"** (between Special nodes and Impossible
+  layouts) + a Law-2 pointer and a stray-reason row. Decisions:
+  - **Plumbing**: `ResolvedEndpoint.port: Option<f64>` (port ⇒ forced side,
+    debug-asserted at request build) → `EdgeReq.port_a/port_b` (+`port(end)`
+    accessor). Test surface: `testing::route_sample_with_ports(src,
+    clearance, &[(from, to, at_path, side_str, ordinate)])` injects onto
+    resolved endpoints — Phase 4 replaces the injection, not the plumbing.
+  - **Entries**: the fixed ordinate moves the punch to the pinned point and
+    collapses the window to `(f, f)`; an ordinate off the side yields no
+    entry. `entry.rs:76`'s inverted-window drop now ends in a named stray:
+    the route loop tracks pre-filter emptiness per fixed end and, when every
+    world fails, strays "fixed port blocked: a body covers the port's
+    landing" instead of the generic NO_ROUTE.
+  - **Fans**: `request::fan_groups` gained a second bucket pass keyed
+    `(path, side, port.to_bits())` — same-point landings merge into one
+    implicit fan **across statements and across ends** (`a - p` B-end and
+    `p - b` A-end are one landing; duplicates ride one line). The
+    member-move is one helper (`absorb`), shared with the containment-arms
+    pass. Equality is bit-exact by design (ports come from one
+    connection-geometry computation). A fan whose members disagree strays
+    whole ("fan ends carry two different fixed ports") via a pre-pass in
+    `ortho::route` — chose **stray over compile error**: routing never
+    errors on geometry (the stray contract), and the surface syntax can't
+    author the conflict once pins exist.
+  - **Too-close**: a per-bundle pre-check in `ortho::route` against a local
+    `landed_ports` record — the later of two fixed ports under min pitch on
+    one `(path, side)` strays "fixed ports closer than the minimum pitch on
+    one side"; equal ordinates are the fan, never a collision. The **ledger
+    needed no capacity change** (verified: pins are their own endpoint
+    paths, and shared-port landings fan and count once); `admit` needed
+    nothing — point windows ride `Item.window` into the probe's real
+    placement.
+  - **Clamps closed**: `ladder()` → `Option<Vec<f64>>` (None on a crossed or
+    pooled-crossed box — was a debug_assert + release clamp to `hi`);
+    `settle` falls through to the pairwise solver, whose bounds-win behavior
+    keeps windows absolute. `natural`'s port ladder `expect`s feasibility
+    (its pitch derives from the window). `merge_fans` debug-asserts window
+    intersection (conflicts stray upstream). `chain_prefs`'s shared-window
+    assert stands — the search's `fits` jogs unequal fixed pairs, so the
+    single-run branch never sees them.
+  - **Validator carrier**: `RoutedLink.port_from/port_to:
+    Option<(Side, f64)>`, filled by ortho from the chain ends, `None` in
+    every other strategy. `landing()` gained the fixed parameter: exact
+    side + ordinate check (EPS 1e-6), corner-margin rule waived. `excuse.rs`
+    reads the carried port as the end run's lawful range `(f, f)`, so pinned
+    pairs between min pitch and clearance are excused by the *existing*
+    scarcity walk — no second excuse mechanism.
+  - **Split** (the plan's `place.rs` order): the contention model — `Item`,
+    `clusters_of`, `merge_fans`, `contend`/`owed`/`near` — moved to
+    `ortho/cluster.rs` (201 lines); `place.rs` 848 → 659 (≈380 sans tests)
+    keeps prefs, bounds, relief, and the settle dispatch; `admit`/`pairwise`
+    import the model from `cluster`.
+  - Tests: entry point-window + blocked (unit), fan-merge unit, ladder
+    infeasibility unit, validator waiver/exact/excuse units, and 9
+    integration tests in `tests/routing.rs` (exact landing, two ports one
+    side, fixed+free ladder ≥ floor, same-point fan with shared `fan_to`,
+    conflicted fan strays ×2 named, too-close strays the later wire, blocked
+    port named, determinism ×25, laws sweep [6, 8, 9, 10, 12, 13, 16] with
+    every edge drawn-or-reported). Full suite 1117 green; fmt + clippy
+    clean.
+
 ### Carry-over notes
+
+- **The fixed-port ordinate is an absolute scene coordinate** on the forced
+  side, and merging is **bit-exact**: Phase 4 must compute each pin's
+  stub-tip ordinate **once** and reuse that value for every wire touching
+  the pin (never recompute per wire — float drift would split the fan).
+- **Phase 4's seam is the request builder**: `Program` is immutable at
+  layout, so the pin pass cannot write `ResolvedEndpoint.port`. Derive the
+  endpoint's `(obstacle rect = component body, forced side, stub-tip
+  ordinate)` in **one** place feeding `request::requests()` (it already
+  reads the `SceneIndex`), and keep `ResolvedEndpoint.port` as the carrier
+  the testing hook uses. Don't build a second path — extend `requests()`.
+- Two fixed ports **between min pitch and clearance** apart draw lawfully
+  (validator excuses via the point windows); only sub-min-pitch strays. The
+  schematic constants (pin pitch 20 ≥ min pitch at clearance 8) keep real
+  sheets clear of both edges — Phase 6 tunes.
+- A self-loop on one pin needs no new code: port ⇒ forced side puts both
+  ends on one side → the existing ONE_SIDE_LOOP stray.
+- `Severity` for all three new failure shapes is the standard
+  `Rule::Impossible` warning — `--strict` escalates as usual; no new error
+  codes were needed (routing reports, resolve errors — Phase 5's scope
+  errors will use `src/error/codes.rs`).
+- `validate.rs` is now 868 lines (was 803) — over the split rule; Phase 5
+  touches the validator's neighbourhood (junction chrome, corner-radius):
+  split it there if it grows again.
 
 ---
 

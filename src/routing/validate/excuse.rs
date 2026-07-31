@@ -116,16 +116,22 @@ pub(super) fn excused(
             let mut window: Option<(f64, f64)> = None;
             let mut ends = Vec::new();
             if k == 0 {
-                ends.push((w.seg_from.as_str(), w.path[0], w.path[1]));
+                ends.push((w.seg_from.as_str(), w.path[0], w.path[1], w.port_from));
             }
             if k == last {
-                ends.push((w.seg_to.as_str(), w.path[last + 1], w.path[last]));
+                ends.push((w.seg_to.as_str(), w.path[last + 1], w.path[last], w.port_to));
             }
-            for (path, port, inward) in ends {
+            for (path, port, inward, fixed) in ends {
                 if let Some(rect) = index.rect(path)
-                    && let Ok(side) = landing(rect, port, inward, c)
+                    && let Ok(side) = landing(rect, port, inward, c, fixed)
                 {
-                    let win = port_window(rect, side, c);
+                    // A fixed port grants no freedom: the end run's lawful
+                    // range is the port itself (ROUTING.md Fixed ports), so
+                    // a neighbour pinned nearby is excused by scarcity.
+                    let win = match fixed {
+                        Some((_, f)) => (f, f),
+                        None => port_window(rect, side, c),
+                    };
                     window = Some(match window {
                         Some(w) => (w.0.max(win.0), w.1.min(win.1)),
                         None => win,
