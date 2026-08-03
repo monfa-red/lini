@@ -40,6 +40,10 @@ use frame::{accumulate_extent, finish};
 /// drawn lawfully is reported and rendered as a stray.
 pub fn layout(program: &Program) -> Result<LaidOut, Error> {
     sequence::validate(program)?;
+    // A schematic type belongs in a schematic scope [SPEC 16/21] — the
+    // drafting symbol's law, one family over, and the gate every later
+    // schematic law leans on ([`schematic::check_types`]).
+    schematic::check_types(program)?;
 
     // A root drawing (`{ layout: drawing }`, [SPEC 15]) owns the whole scene:
     // its children datum-place, mates seat them, and its drawing-scope links

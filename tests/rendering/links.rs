@@ -266,3 +266,211 @@ fn mindmap_root_arms_share_one_trunk_port_per_side() {
         "one shared port per side, not one per arm: {starts:?}"
     );
 }
+
+// ── The schematic's wire dress [SPEC 16.5/16.6] ──
+
+/// A sheet whose one fan is dotted, with `extra` rules in the root block and
+/// `tail` appended to the statements.
+fn sch_sheet(extra: &str, tail: &str) -> String {
+    format!(
+        "{{ layout: schematic; {extra} }}\n\
+         |component#u1| [\n|pin#a|; |pin#b|; |pin#c|\n]\n\
+         |component#u2| [\n|pin#a|; |pin#b|; |pin#c|\n]\n\
+         u1.c - u2.a{tail}\nu1.c - u2.b\n"
+    )
+}
+
+/// Every drawn wire `d=` of an SVG.
+fn wire_ds(svg: &str) -> Vec<String> {
+    svg.lines()
+        .filter_map(|l| l.trim_start().strip_prefix("<path d=\""))
+        .map(|d| d[..d.find('"').unwrap()].to_string())
+        .collect()
+}
+
+#[test]
+fn a_schematic_wire_bends_square_and_every_other_wire_still_rounds() {
+    // `corner-radius: 0` is the scope's own link default [SPEC 16.5], so the
+    // fillet pass draws no arc at a bend — the `d` is lines end to end.
+    let sch = wire_ds(&render_live(&sch_sheet("", "")));
+    assert!(sch.len() >= 2, "the sheet drew: {sch:?}");
+    assert!(
+        sch.iter().all(|d| !d.contains(" A ")),
+        "square corners: {sch:?}"
+    );
+    assert!(sch.iter().any(|d| d.matches(" L ").count() >= 3), "{sch:?}");
+    // …and `auto` is untouched everywhere else: an ordinary scene's dogleg still
+    // rounds at the clearance-derived cap.
+    let flow =
+        render_live("{ direction: row; gap: 100 }\n|box#a|\n|box#b| { translate: 0 60 }\na -> b\n");
+    assert!(
+        wire_ds(&flow).iter().any(|d| d.contains(" A ")),
+        "{:?}",
+        wire_ds(&flow)
+    );
+}
+
+#[test]
+fn an_authored_corner_radius_beats_the_scopes_square_default() {
+    // The scope default rides the link **base layer**, below every rule and
+    // block [SPEC 17], so both spellings of an authored radius win it back.
+    for src in [
+        sch_sheet("|-| { corner-radius: 6 }", ""),
+        sch_sheet("", " { corner-radius: 6 }"),
+    ] {
+        let ds = wire_ds(&render_live(&src));
+        assert!(ds.iter().any(|d| d.contains(" A ")), "{ds:?}");
+    }
+}
+
+#[test]
+fn the_junction_dot_paints_through_one_rule_and_a_rule_removes_it() {
+    // The dot authors no `style=` of its own [SPEC 18]: its whole look is the
+    // single `.lini-junction` rule, which is exactly why overriding that rule
+    // reaches every dot on the sheet.
+    let svg = render_live(&sch_sheet("", ""));
+    let dot = svg
+        .lines()
+        .find(|l| l.contains("lini-junction"))
+        .expect("a junction dot");
+    assert!(!dot.contains("style="), "no inline diff: {dot}");
+    assert!(
+        svg.contains(".lini .lini-junction { fill: var(--lini-wire); stroke: none; }"),
+        "one rule states the look"
+    );
+    // The dot is wire chrome: it draws inside the wiring group, over the lines.
+    let (links_at, dot_at) = (
+        svg.find("<g class=\"lini-links\">")
+            .expect("the wiring group"),
+        svg.find("lini-junction lini-oval").expect("the dot"),
+    );
+    assert!(dot_at > links_at, "the dot draws over the wires");
+    // Hidden by a rule — and nothing else on the sheet changes.
+    let hidden = render_live(&sch_sheet("|junction| { fill: none; stroke: none }", ""));
+    assert!(hidden.contains(".lini .lini-junction { fill: none; stroke: none; }"));
+    assert_eq!(wire_ds(&svg), wire_ds(&hidden), "the wires are untouched");
+    // `--lini-wire` stays in the block: the wires wear the same role, so the
+    // shake keeps it for them (the unit test walks all four directions).
+    assert!(hidden.contains("--lini-wire:"), "the wires still wear it");
+}
+
+#[test]
+fn the_scopes_wires_wear_the_wire_role_through_one_rule() {
+    // [SPEC 16.6] The classic dress rides the schematic scope's **link base
+    // layer**, so a root sheet states it exactly once — `.lini-link` — and no
+    // wire authors a `style=` diff against it.
+    let svg = render_live(&sch_sheet("", ""));
+    assert!(
+        svg.contains(
+            ".lini .lini-link { fill: none; stroke: var(--lini-wire); stroke-width: 1.5; \
+             stroke-dasharray: none; }"
+        ),
+        "one rule states the wire look: {svg}"
+    );
+    for line in svg.lines().filter(|l| l.contains(r#"class="lini-link"#)) {
+        assert!(!line.contains("style="), "no inline diff: {line}");
+    }
+    // …and an ordinary scene is untouched: the base layer is the scope's, not
+    // every link's.
+    let flow = render_live("{ direction: row }\n|box#a|\n|box#b|\na - b\n");
+    assert!(
+        flow.contains(
+            ".lini .lini-link { fill: none; stroke: var(--lini-stroke); stroke-width: 2;"
+        ),
+        "{flow}"
+    );
+}
+
+#[test]
+fn an_authored_wire_paint_beats_the_scopes_dress() {
+    // The base layer sits below every rule and block [SPEC 17] — which is why
+    // the dress is a scope default and not a class: a class would out-specify
+    // the author. A root `|-|` rule replaces it wholesale…
+    let ruled = render_live(&sch_sheet("|-| { stroke: --accent; stroke-width: 3 }", ""));
+    assert!(
+        ruled.contains(
+            ".lini .lini-link { fill: none; stroke: var(--lini-accent); stroke-width: 3;"
+        ),
+        "the rule wins the whole sheet: {ruled}"
+    );
+    // …and one wire's own block inlines its diff, leaving its neighbour dressed.
+    let blocked = render_live(&sch_sheet("", " { stroke: --accent; stroke-width: 3 }"));
+    assert!(
+        blocked.contains(
+            ".lini .lini-link { fill: none; stroke: var(--lini-wire); stroke-width: 1.5;"
+        ),
+        "the scope still dresses the rest: {blocked}"
+    );
+    let wire = blocked
+        .lines()
+        .find(|l| l.contains(r#"data-from="u1.c" data-to="u2.a""#))
+        .expect("the authored wire");
+    assert!(
+        wire.contains(r#"style="stroke: var(--lini-accent); stroke-width: 3""#),
+        "the block wins its own wire: {wire}"
+    );
+}
+
+#[test]
+fn the_sheet_wash_rides_a_rule_at_the_root_and_on_a_nested_scope() {
+    // [SPEC 16.6] The scene takes `--lini-sheet`: a root sheet through the
+    // backing plate's own rule, a nested `|schematic|` through its type rule.
+    // Neither inlines — the wash is stated once per scope shape.
+    let root = render_live(&sch_sheet("", ""));
+    assert!(
+        root.contains(".lini .lini-canvas { fill: var(--lini-sheet); }"),
+        "{root}"
+    );
+    assert!(
+        root.contains(r#"<rect class="lini-canvas" x="#) && !root.contains("--lini-sheet)\""),
+        "the plate inlines nothing: {root}"
+    );
+    let nested = render_live(
+        "|box#note| \"n\"\n|schematic#s| [\n|component#u1| [\n|pin#a|; |pin#b|; |pin#c|\n]\n]\n",
+    );
+    assert!(
+        nested.contains(".lini .lini-schematic { fill: var(--lini-sheet); }"),
+        "{nested}"
+    );
+    // …and the page behind a nested sheet is still the ordinary background.
+    assert!(
+        nested.contains(".lini .lini-canvas { fill: var(--lini-bg); }"),
+        "{nested}"
+    );
+}
+
+#[test]
+fn a_theme_retunes_the_whole_schematic_family_from_one_place() {
+    // [SPEC 10.1/16.6] Every part of the classic look is a `--lini-*` role, so
+    // one theme file re-dresses the sheet — the KiCad-esque alternative needs no
+    // built-in, and no colour is restated anywhere in the engine.
+    let theme = "\
+        :root, .lini { --lini-wire: #008484; --lini-sheet: #fffef0; \
+        --lini-component-fill: #ffffc2; --lini-component-stroke: #840000; \
+        --lini-label-ink: #006464; --lini-pin-number: #840000; }";
+    // A sheet wearing all six roles: parts, numbered pins, wires, a net tag.
+    let sheet = "{ layout: schematic }\n\
+         |component#u1| [\n|pin#a| { number: 1 }; |pin#b| { number: 2 }; |pin#c| { number: 3 }\n]\n\
+         |gnd#g1|\nu1.c - g1\n";
+    let svg = lini::compile_str_with(
+        sheet,
+        &lini::Options {
+            theme_css: Some(theme.to_string()),
+            ..Default::default()
+        },
+    )
+    .expect("compile");
+    for (role, value) in [
+        ("wire", "#008484"),
+        ("sheet", "#fffef0"),
+        ("component-fill", "#ffffc2"),
+        ("component-stroke", "#840000"),
+        ("label-ink", "#006464"),
+        ("pin-number", "#840000"),
+    ] {
+        assert!(
+            svg.contains(&format!("--lini-{role}: {value};")),
+            "{role} retunes: {svg}"
+        );
+    }
+}

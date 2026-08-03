@@ -124,13 +124,6 @@ pub fn requests(program: &Program, index: &SceneIndex) -> Result<Vec<EdgeReq>, E
             .rev()
             .find(|r: &&EdgeReq| r.stmt == stmt)
             .map_or(0, |r| r.expansion + 1);
-        // The sheet's terminal law is the **scope's**, not the type's
-        // [SPEC 16]: a schematic family renders anywhere (Phase 3's
-        // deliberate deferral), but only inside a schematic scope does a
-        // part's pin become a fixed port and refuse a `:side`. Asked once per
-        // link, off the scope the wire is written in — the same shape
-        // `is_routed` asks the sequence and the drawing.
-        let schematic = crate::layout::schematic::is_schematic_scope(program, &w.scope);
         let clearance = link_clearance(&w.attrs);
         let thickness = w.attrs.number("stroke-width").unwrap_or(0.0);
         let eps = &w.endpoints;
@@ -160,8 +153,8 @@ pub fn requests(program: &Program, index: &SceneIndex) -> Result<Vec<EdgeReq>, E
                 };
                 clearance.max(run_up)
             };
-            let (side_a, port_a) = fixed(index, a, schematic)?;
-            let (side_b, port_b) = fixed(index, b, schematic)?;
+            let (side_a, port_a) = fixed(index, a)?;
+            let (side_b, port_b) = fixed(index, b)?;
             debug_assert!(
                 (port_a.is_none() || side_a.is_some()) && (port_b.is_none() || side_b.is_some()),
                 "a fixed port rides a forced side (ROUTING.md Fixed ports)"
@@ -215,17 +208,18 @@ pub fn requests(program: &Program, index: &SceneIndex) -> Result<Vec<EdgeReq>, E
 /// - otherwise the scene's landing, else whatever resolve put on the endpoint
 ///   (the fixed-port testing hook).
 ///
-/// Outside a schematic scope none of it applies: a part is an ordinary box
-/// there, `:side` is legal on it, and the endpoint answers exactly as it did
-/// before the family existed.
+/// **The endpoint's own scope answers, not the wire's** [SPEC 16]: a pin is a
+/// pin whoever wires it, so a root wire reaching into a nested sheet
+/// (`s.u1.a`) lands on that pin's fixed port and refuses a `:side` there,
+/// while the same wire's other end — an ordinary box out in the flow — keeps
+/// forced sides. It needs no scope test at all to say so: the sheet's tables
+/// only ever hold parts, and the layout gate has already refused a schematic
+/// type outside a schematic scope ([`crate::layout`]), so *being* a terminal
+/// **is** being in the scope. One gate, asked once, upstream.
 fn fixed(
     index: &SceneIndex,
     e: &crate::resolve::ResolvedEndpoint,
-    schematic: bool,
 ) -> Result<(Option<Side>, Option<f64>), Error> {
-    if !schematic {
-        return Ok((e.side, e.port));
-    }
     if index.is_terminal(&e.path) && e.side.is_some() {
         return Err(Error::at(
             e.span,

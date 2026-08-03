@@ -4,6 +4,7 @@
 //! through (`projection_attrs`).
 
 use super::*;
+use crate::ast::LinkMarker;
 use crate::error::Code;
 
 /// Classify a **projection construction link** [SPEC 15.8] — the one legalized

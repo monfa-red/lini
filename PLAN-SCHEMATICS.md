@@ -1024,21 +1024,120 @@ split it), `src/render/{links,markers}.rs`, `src/layout/schematic/`,
 `src/fmt.rs`.
 
 **Tasks**
-- [ ] Label-wire desugar (pre-resolve interception) + shape-from-marker +
+- [x] Label-wire desugar (pre-resolve interception) + shape-from-marker +
       marker gate + fmt + errors.
-- [ ] No-auto-create + quote suggestion.
-- [ ] Arity + dangling + pass-through + duplicates + same-pin merge
+- [x] No-auto-create + quote suggestion.
+- [x] Arity + dangling + pass-through + duplicates + same-pin merge
       (resolve tests).
-- [ ] Junction chrome (+ tree-shake-safe removal test) + `corner-radius`
+- [x] Junction chrome (+ tree-shake-safe removal test) + `corner-radius`
       + laws sweep green.
-- [ ] Roles/defaults/scoped rules/theme; light + dark PNG review.
-- [ ] Out-of-scope type gates; nested-scope reinterpretation carrier +
+- [x] Roles/defaults/scoped rules/theme; light + dark PNG review.
+- [x] Out-of-scope type gates; nested-scope reinterpretation carrier +
       boundary tests; `--strict` clean on the working sample.
-- [ ] `cargo fmt && cargo test && cargo clippy` green.
+- [x] `cargo fmt && cargo test && cargo clippy` green.
 
 ### Execution log
 
+- 2026-08-03 — Phase 5 executed (branch `worktree-schematic-wiring`,
+  3bffec2 → abdc0bd, 16 commits) as five reviewed tasks + a whole-branch
+  audit and one fix wave. Decisions and surprises:
+  - **Label wires (5.1)**: `desugar/labelwire.rs` mints through the one
+    per-scope gather (`desugar/gather.rs`: hoist → mint → land → pose →
+    lower — the order is stated once at its top); capsules hoist BEFORE
+    minting, so the marker law is one law across all three tag spellings
+    (minted text, declared tag, text-form capsule); `settled_shape` skips
+    generated restatements of the bundle default; two markers on one tag =
+    first-wins (pinned). R019 schematic-marker. The hoist-then-pose reorder
+    closed Phase 4's capsule-satellite gap (`u1.a - |gnd|` poses by
+    decision).
+  - **The carrier (5.2, revised by the fix wave)**: scope-chain law carried
+    down each stage's own walk — final form `statement_owner` (one walk,
+    three answers: Sheet / Engine / Plain) feeding both the link dress and
+    the wire laws; `is_schematic_scope` and `scope_is_schematic` deleted
+    (zero survivors — a dot-path predicate cannot see anonymous
+    containers). The carrier SEALS at another engine's body
+    (`seals_schematic_scope` beside `seals_drawing_scope` — disjoint keys:
+    placement vs statement-reading; the |mindmap| chain clause is
+    test-pinned). No-implicit-auto-create with the quote suggestion;
+    schematic types gated out of foreign scopes (family arm); cross-scope
+    semantics = **the endpoint decides** (the router's ports and resolve's
+    laws now agree — a wire written outside a sheet lands on pins, reserves,
+    and duplicates like any wire; being an addressed part IS the proof of
+    scope).
+  - **Arity (5.3 — four fix rounds, the phase's hard seam)**: resolution
+    moved to desugar (the gather lands every endpoint the scope can answer,
+    writing pins into the lowered source); resolve keeps cross-scope
+    landings through the SAME law module (`Wired`/`choose`/`other`) and
+    reads an uncut chain as a chain; final ordering **land → cut → fan**
+    with the fan outermost (`Drawn` keyed scope × statement × endpoint
+    spans). A schematic scope skips the generic `split_chain` — SPEC 9/16.5/
+    19 gained the carve-out (a chain through a 2-pin part is a series
+    circuit; two statements are a junction — the equivalence SPEC 9 grants
+    everywhere else is false here). En route: anonymous containers defer to
+    resolve's single table (a gather lands only the parts it declares);
+    R020/R021/R022 with endpoint-precise spans.
+  - **Junctions + corners (5.4)**: dots read the router's OWN fan carrier
+    (`fan_from`/`fan_to` keyed by (Strategy, id), pass gated Orthogonal —
+    the gate is load-bearing, the key is defence in depth, documented);
+    they ride a new `LaidOut.junctions` channel (a dot must draw over wires
+    and never be an obstacle — `src/routing/` untouched at zero lines);
+    `corner-radius` consumed by `radius_cap` (`auto` = the clearance cap),
+    scope default 0. The carried satellite-stray closed via `holder()` (two
+    ends on one anchor are a fan, not a span).
+  - **The look (5.5)**: six roles, one CSS rule each, dress on the link
+    base layer (NOT mindmap_rules — a class would out-specify the author;
+    authored paint beats the dress, test-pinned); root sheets emit ZERO
+    inline style document-wide; canvas plate joined the class-diff law
+    (pcb.lini's gradient came along — the only non-schematic snapshot
+    delta, rendering-identical). Theme skipped (ratified: premature before
+    Phase 6's reference-PDF tuning). The nested-margin carry-over was
+    re-measured honestly: a **band** of straying gaps (width exactly
+    2×clearance; position shape-dependent; non-monotone; cause
+    unidentified — characterization tests pin both edges); the |page| case
+    is the generated ISO |frame| child covering the interior (mechanism
+    identified, unfixed).
+  - Audit + fix wave: cross-scope wire laws (C1, above), `own_links_at`
+    carried through the cut, `resolve/links/gates.rs` and
+    `desugar/nest.rs` split out, showroom comments told the truth.
+  - Suite 1254 → 1325; full-corpus byte-identity outside the two schematic
+    samples verified twice (A/B binaries over all 34 files).
+
 ### Carry-over notes
+
+- **Sequence the nested-sheet margin work FIRST in Phase 6** — the C1
+  cross-scope payoff is invisible while every wire into a nested sheet
+  strays ("fixed port blocked"). Two characterizations pin it: the band
+  test (`route_tests.rs` — width 2×clearance, shape-dependent position,
+  cause unidentified) and the |page| test (the generated ISO `|frame|`
+  child is a full-sheet body covering the interior — the concrete lead).
+- **The tag flag geometry** (`shape: left|right|both` — the pointed tag
+  path) is still the plain outline; 5.1's marker→shape law is unobservable
+  in output until it lands. Phase 6's tag-anatomy visual pass owns it; the
+  hero sample must not ship a false comment.
+- **Parked with ruling**: `layout/schematic/mod.rs:61-67` doc sentence
+  falsified by C1 ("a part inside a sealed engine is simply never a
+  landing" — it now lands, consistently endpoint-decided; correct the
+  sentence + pin the corner with a test). `Owner::Plain` wires into
+  sealed-engine parts land on pins — defensible, untested.
+- **Visual pass backlog** (all model-correct, all read as bugs): the
+  `pwr → u1.vin` wire nearly occluded by its "5V" label cut-out; two gnd
+  symbols at different orientations in one sheet (pass-through vs capsule);
+  stubs cross body outlines ~4px; pin numbers seat inside the body;
+  same-pin chains stack collinearly; spanning chains don't pack against
+  same-pin stacks; value readout anchors provisional.
+- **Split-rule debt**: `desugar/mod.rs` 854 (needs a lower_node/desugar
+  refactor, not a move); `ledger/defaults.rs` 844 (take the
+  `templates.rs` cut); `validate.rs` 798; `layout/mod.rs` 629;
+  `ledger/properties/mod.rs` 900.
+- **Deferred smalls**: all-anonymous 3+-pin part silently accepts a bare
+  wire (wants "give its pins ids"); `:side` landing spends no pin so
+  r1:bottom + r1:top false-duplicates; invent suggestion is fixed text
+  (wants the real path + near-miss arm); authored |junction| instance
+  places a real dot silently (lint); mixed-driver same-pin fans under-dot;
+  |junction| width row declared-but-unread; stage pin-order divergence
+  under explicit side:; linear-scan ledgers (Wired/Landed/Drawn/Declared)
+  + the whole-tree parts() walk + router superlinearity → one Phase 6
+  profiling pass.
 
 ---
 

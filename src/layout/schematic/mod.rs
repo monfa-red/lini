@@ -9,48 +9,82 @@
 //! sequence's or the drawing's.
 //!
 //! Placement does **not** cascade [SPEC 16]: a nested `|row|` / `|grid|` inside
-//! a schematic places its own children, exactly as in a drawing — only the
-//! scope's link laws reach nested ordinary scopes, which is what
-//! [`is_schematic_scope`] answers.
+//! a schematic places its own children, exactly as in a drawing. The scope's
+//! **laws** do reach them, and reaching is carried, never read back off a path
+//! — [`check_types`] is the one place that says so on this side of resolve.
 
 use super::ir::{Bbox, PlacedNode};
 use super::{Ctx, child_path, layout_inst, prim, primitives};
 use crate::error::Error;
-use crate::resolve::{AttrMap, Program, ResolvedInst, ResolvedValue};
+use crate::resolve::{AttrMap, Program, ResolvedInst};
 use crate::span::Span;
 
 mod hints;
+mod junction;
 mod place;
 mod ports;
 mod seat;
 mod terminal;
 
 pub(super) use hints::seat_hints;
+/// The generated connection dots [SPEC 16.5], read off the routed geometry.
+pub(crate) use junction::junctions;
 /// The router's view of a placed part [SPEC 16.5] — the scene index folds a
 /// part's anatomy into this one obstacle and reads its fixed ports off it.
 pub(crate) use ports::{PartPorts, part_ports};
 
 /// Is this node a schematic scope [SPEC 16]? Detected by its `layout:` attr —
 /// the same key the tree / sequence / drawing dispatch reads, so it is
-/// intercepted before the generic container path.
-pub(super) fn is_schematic(attrs: &AttrMap) -> bool {
-    matches!(attrs.get("layout"), Some(ResolvedValue::Ident(s)) if s == "schematic")
+/// intercepted before the generic container path. It lives beside its drawing
+/// twin in [`crate::resolve`], because the link pass carries the same reading
+/// down the scope chain one stage earlier [SPEC 16.5].
+pub(super) use crate::resolve::is_schematic;
+
+/// **The out-of-scope type gate** [SPEC 16/21]: a schematic type belongs in a
+/// `layout: schematic`, and this is the one place that says so — swept once
+/// over the resolved tree before anything places, beside the sequence's own
+/// pre-layout check.
+///
+/// The scope is **carried down the walk**, not read back off a dot-path: an
+/// anonymous container contributes no path segment [SPEC 9], so an anonymous
+/// `|schematic|` — or an anonymous part inside one — is invisible to a path
+/// predicate and plain to this. Desugar carries the same law the same way
+/// ([`crate::desugar::Nest`]), which is what makes the two stages agree.
+///
+/// Placement still does not cascade — a nested `|row|` runs its own engine —
+/// but the *laws* reach it, so `|R|` inside a row inside a sheet is legal.
+///
+/// **This walk is not sealed, and the statement laws are** — deliberately.
+/// A nested `|sequence|` or `|drawing|` stops the *reading of statements*
+/// (`desugar::seals_schematic_scope`, `link_scope::statement_owner`),
+/// because that engine already owns its body's links: a leader stays a leader,
+/// and a pinless landing there is not the sheet's to resolve. **Existence** is
+/// a different question: a part is drawn by the family wherever it sits, and
+/// what SPEC 21 forbids is a schematic type *outside the scope* — a `|R|`
+/// participating in a sequence drawn on a sheet is still on the sheet. Sealing
+/// this walk too would make it an error, which is a language change no law
+/// asks for; leaving it open costs nothing, because a part inside a sealed
+/// engine is simply never a landing.
+///
+/// Everything downstream trusts this gate: past it a schematic part exists
+/// only inside a schematic scope, so the router's fixed ports and `:side` ban
+/// key on the **part** and never re-ask the scope
+/// ([`crate::routing::ortho::request`]).
+pub(super) fn check_types(program: &Program) -> Result<(), Error> {
+    walk_types(&program.scene.nodes, is_schematic(&program.scene.attrs))
 }
 
-/// Whether the scope at `scope` has a schematic **ancestor** — itself, any
-/// enclosing container, or the scene root [SPEC 16]. Unlike the sequence's and
-/// the drawing's immediate-scope predicates, this one reaches: the schematic
-/// link laws apply to a wire written in a nested ordinary container (a `|row|`
-/// of parts), even though that container places its own children.
-/// The router asks it per link ([`crate::routing::ortho::request`]): a part's
-/// pin is a fixed port, and refuses a `:side`, only inside the scope — the
-/// family renders anywhere [SPEC 16.7], but the sheet's laws are the scope's.
-/// (The rest of the link laws land in Phase 5.)
-pub(crate) fn is_schematic_scope(program: &Program, scope: &str) -> bool {
-    std::iter::once("")
-        .chain(scope.match_indices('.').map(|(i, _)| &scope[..i]))
-        .chain(std::iter::once(scope))
-        .any(|p| super::scope_attrs(program, p).is_some_and(is_schematic))
+fn walk_types(nodes: &[ResolvedInst], schematic: bool) -> Result<(), Error> {
+    for n in nodes {
+        if !schematic && let Some(ty) = crate::desugar::schematic::schematic_type(&n.type_chain) {
+            return Err(
+                Error::at(n.span, format!("'|{ty}|' belongs in a 'layout: schematic'"))
+                    .code(crate::error::Code::SCHEMATIC_TYPE),
+            );
+        }
+        walk_types(&n.children, schematic || is_schematic(&n.attrs))?;
+    }
+    Ok(())
 }
 
 /// A `|schematic|` **node** [SPEC 16]: place its children and return the

@@ -656,7 +656,7 @@ fn a_symbol_part_lowers_its_glyph_ahead_of_authored_text() {
     // opamp — seat it through the one `seat_glyph`, so all three are pinned
     // here. (`tests/oracle.rs` sweeps the same property over the samples; the
     // `[ ]` content form no sample uses is why the discretes escaped it.)
-    for (src, class, text) in [
+    for (part, class, text) in [
         (
             "|label#pwr| { symbol: power } [ \"5V\" ]\n",
             "sch-tag-line",
@@ -665,6 +665,9 @@ fn a_symbol_part_lowers_its_glyph_ahead_of_authored_text() {
         ("|R#r1| [ \"1k\" ]\n", "sch-line", "1k"),
         ("|opamp#o1| [ \"amp\" ]\n", "sch-line", "amp"),
     ] {
+        // The part lives in its scope — a schematic type outside one is the
+        // out-of-scope gate [SPEC 21], not a lowering.
+        let src = &format!("{{ layout: schematic }}\n{part}");
         let out = desugar_source(src).unwrap();
         let glyph = out
             .find(&format!("lini-{class}.lini-path"))
@@ -714,12 +717,100 @@ fn schematic_lowerings_are_byte_fixed_points() {
         "|component#U7| { rotate: 90 } [\n  |pin#a|; |pin#b|; |pin#c|\n]\n",
         "|R#r5| \"470\" { rotate: 270 }\n|gnd#g1| { rotate: 180 }\n",
         "{ |vert::R| { rotate: 90 } }\n|vert#r9|\n",
+        // A posed sheet whose tags and grounds are all minted at desugar — the
+        // label wire, its shaping marker, and the capsule form [SPEC 16.5].
+        "|schematic#s| [\n  |component#U7| [ |pin#a| { side: left }; |pin#b|; |pin#c| ]\n  U7.a -> \"NSTDBY\"\n  U7.b - |gnd|\n]\n",
         "{ |sig::pin| { translate: 6 0; side: top } }\n|component#U7| { rotate: 90 } [ |sig#a| ]\n",
+        // The **carrier**: a tag minted in a nested ordinary container inside a
+        // sheet must re-lower unchanged, which is only true if the lowered
+        // sheet still answers "schematic" — a nested one states it as a class,
+        // not as its type [SPEC 16].
+        "|schematic#s| [\n  |row#r| [\n    |component#U7| [ |pin#a| ]\n    U7.a -> \"NET\"\n  ]\n]\n",
+        "{ layout: schematic; }\n|group#g| [\n  |component#U8| [ |pin#z| ]\n  U8.z - \"NET\"\n]\n",
+        // The **landings** [SPEC 16.5]: a resolved pin prints as an ordinary
+        // named one, so re-lowering has nothing left to resolve.
+        "{ layout: schematic; }\n|component#u1| [ |pin#a| ]\n|D#d1|\n|gnd#g1|\nu1 - d1.k - g1\n",
+        "{ layout: schematic; }\n|R#r1|\n|gnd#g1|\nr1 - r1 - g1\n",
+        "{ layout: schematic; }\n|component#a1| { cell: 1 1 } [ |pin#p1| { side: left }; |pin#p2| { side: right } ]\n|gnd#g0|\n|C#c1|\na1.p1 - g0\na1 - c1\n",
+        // …and one the sheet cannot resolve — a part inside a nested container
+        // is resolve's to land, so the lowered form still says `r.r1`.
+        "{ layout: schematic; }\n|component#u1| [ |pin#a|; |pin#b|; |pin#c| ]\n|row#r| [ |R#r1| ]\nu1.a - r.r1\nu1.b - r.r1\n",
     ] {
         let once = desugar_source(src).unwrap();
         let twice = desugar_source(&once).unwrap();
         assert_eq!(once, twice, "not a fixed point for: {src}");
+        // …and the lowering itself is deterministic.
+        assert_eq!(once, desugar_source(src).unwrap(), "unstable: {src}");
     }
+}
+
+#[test]
+fn a_resolved_landing_means_the_same_program_after_lowering() {
+    // [SPEC 16.5, tests/oracle.rs] **The** reason the arity law resolves at
+    // desugar: `split_chain` states a chain as one link per hop, and a hop is
+    // exactly the statement a pass-through is defined over. Byte-stability
+    // cannot catch this on its own — the lowered text was stable all along, it
+    // simply meant a different circuit — so each form is *compiled* and
+    // compared.
+    for src in [
+        // SPEC 16.5's own example: enters the cathode, leaves by the anode.
+        "{ layout: schematic }\n|component#u1| [ |pin#a| ]\n|D#d1|\n|gnd#g1|\nu1 - d1.k - g1\n",
+        // The degenerate chain: it compiled from source and failed (R021) from
+        // its own lowered form.
+        "{ layout: schematic }\n|R#r1|\n|gnd#g1|\nr1 - r1 - g1\n",
+        // A series run through two parts, and a reserved pin pushing a pinless
+        // landing onto p2.
+        "{ layout: schematic }\n|component#u1| [ |pin#a| ]\n|R#r1|\n|LED#d1|\n|gnd#g1|\nu1 - r1 - d1 - g1\n",
+        "{ layout: schematic }\n|component#u1| [ |pin#a|; |pin#b|; |pin#c| ]\n|R#r1|\n|gnd#g1|\nu1.a - r1.p2\nu1.b - r1\n",
+        // A landing only resolve can make (into a nested container) — named,
+        // and through an **anonymous** one, which is scope-transparent to a
+        // path but still runs its own gather.
+        "{ layout: schematic }\n|component#u1| [ |pin#a|; |pin#b|; |pin#c| ]\n|row#r| [ |R#r1| ]\nu1.a - r.r1\nu1.b - r.r1\n",
+        "{ layout: schematic }\n|group| [\n  |R#r1|\n  |gnd#gi|\n  r1 - gi\n]\n|gnd#go|\ngo - r1\n",
+        // …and a chain **through** such a part — both container shapes, both
+        // spellings. Desugar cannot resolve the landing, so it must leave the
+        // chain whole: hops would say "a junction at that pin" instead, which
+        // is a different circuit.
+        "{ layout: schematic }\n|component#u1| [ |pin#a|; |pin#b|; |pin#c| ]\n|group| [ |R#r1| ]\n|gnd#g1|\nu1.a - r1 - g1\n",
+        "{ layout: schematic }\n|component#u1| [ |pin#a|; |pin#b|; |pin#c| ]\n|group#gp| [ |R#r1| ]\n|gnd#g1|\nu1.a - gp.r1 - g1\n",
+        "{ layout: schematic }\n|component#u1| [ |pin#a|; |pin#b|; |pin#c| ]\n|group| [ |D#d1| ]\n|gnd#g1|\nu1.a - d1.k - g1\n",
+        "{ layout: schematic }\n|component#u1| [ |pin#a|; |pin#b|; |pin#c| ]\n|group#gp| [ |D#d1| ]\n|gnd#g1|\nu1.a - gp.d1.k - g1\n",
+        // …and an `&` fan in such a chain [SPEC 9]: the legs share an end, so
+        // the hops away from the fan are one wire each, at both stages.
+        "{ layout: schematic }\n|box#a|\n|box#b|\n|box#x|\n|box#c|\na & b - x - c\n",
+        "{ layout: schematic }\n|component#u1| [ |pin#a|; |pin#b|; |pin#c| ]\n|group| [ |R#r1| ]\n|gnd#g1|\nu1.a & u1.b - r1 - g1\n",
+        "{ layout: schematic }\n|component#u1| [ |pin#a|; |pin#b|; |pin#c| ]\n|group| [ |R#r1| ]\nu1.a - r1 - u1.b & u1.c\n",
+    ] {
+        let lowered = desugar_source(src).unwrap();
+        assert_eq!(
+            lini::compile_str(src).expect("source compiles"),
+            lini::compile_str(&lowered).expect("its lowered form compiles"),
+            "compile(src) != compile(desugar(src)) for: {src}"
+        );
+    }
+}
+
+#[test]
+fn a_pinless_landing_poses_the_satellite_it_actually_reaches() {
+    // [SPEC 16.5/16.1] The landing resolves *before* the pose chooser reads
+    // it, so how the author spelled it cannot change which pin a satellite is
+    // turned to face: `a1 - c1` (p1 already taken, so the cap lands on p2) is
+    // the same program as writing `a1.p2 - c1` by hand.
+    let sheet = |wire: &str| {
+        format!(
+            "{{ layout: schematic }}\n\
+             |component#a1| {{ cell: 1 1 }} [ |pin#p1| {{ side: left }}; |pin#p2| {{ side: right }} ]\n\
+             |gnd#g0|\n|C#c1|\na1.p1 - g0\n{wire}\n"
+        )
+    };
+    assert_eq!(
+        desugar_source(&sheet("a1 - c1")).unwrap(),
+        desugar_source(&sheet("a1.p2 - c1")).unwrap(),
+        "the pinless spelling lowers to the pin-named one"
+    );
+    // …and the pin it names is the free one, stated in the lowered source.
+    let out = desugar_source(&sheet("a1 - c1")).unwrap();
+    assert!(out.contains("a1.p2 - c1.p1"), "{out}");
 }
 
 #[test]
@@ -1010,15 +1101,444 @@ fn a_define_carried_layout_is_a_schematic_scope_too() {
 }
 
 #[test]
-fn a_satellite_in_a_define_body_is_not_posed_yet() {
-    // **A known seam limit** [Phase 5]: the pose chooser runs on a scope's
-    // *authored* children, and a define body materializes after — so a
-    // satellite contributed by one reaches lowering unposed. Pinning it so the
-    // day it changes is a deliberate day.
+fn a_define_body_contributes_satellites_the_pose_chooser_sees() {
+    // Hoist-then-pose [SPEC 16.1/19]: a `define` body's children and links
+    // reach the scope only when the instance expands, and the gather does that
+    // **before** the chooser runs — so a satellite written in a define poses
+    // exactly like one written in the sheet.
+    let body = "[\n  |component#U7| [ |pin#a| { side: left }; |pin#b|; |pin#c| ]\n  |gnd#g1|\n  U7.a - g1\n]";
+    let from_define = desugar_source(&format!(
+        "{{\n  |sheet::group| {{ layout: schematic; }} {body}\n}}\n|sheet#s|\n"
+    ))
+    .unwrap();
+    let written = desugar_source(&format!("|schematic#s| {body}\n")).unwrap();
+    assert!(from_define.contains("lini-pose-90"), "{from_define}");
+    assert!(written.contains("lini-pose-90"), "{written}");
+}
+
+// ── Label wires [SPEC 16.5] ──
+
+/// A one-part schematic sheet carrying `wires` — the shape every label-wire
+/// test is written over. `u7` has a pin on three sides, so a tag can be seated
+/// anywhere.
+fn sheet(wires: &str) -> String {
+    format!(
+        "{{ layout: schematic; }}\n\
+         |component#u7| [\n  |pin#a| {{ side: right }}\n  |pin#b| {{ side: left }}\n  |pin#c| {{ side: bottom }}\n]\n\
+         {wires}\n"
+    )
+}
+
+/// The first minted tag's declaration head and `{ }` style (everything before
+/// its `[ ]` body) — the one place a minted `shape:` can show, since the
+/// `.lini-label` class def carries the built-in `shape: plain` too.
+fn tag_line(out: &str) -> String {
+    let at = out.find("|block#lini-label-1|").expect("a minted tag");
+    let rest = &out[at..];
+    rest[..rest.find('[').unwrap_or(rest.len())].to_string()
+}
+
+#[test]
+fn a_label_wire_mints_its_tag_and_wires_to_it() {
+    // The one-ended statement is read here, before the resolve gates that
+    // reject the shape from either side [SPEC 16.5].
+    let out = desugar_source(&sheet("u7.a - \"NSTDBY\"")).unwrap();
+    assert!(out.contains("u7.a - lini-label-1"), "{out}");
+    assert!(
+        out.contains("|block#lini-label-1| .lini-label.lini-block [ \"NSTDBY\" ]"),
+        "the tag carries the net text as its smart label: {out}"
+    );
+    // The text moved onto the tag — the wire keeps no label of its own.
+    assert!(!out.contains("[ \"NSTDBY\" ]\n\n"), "{out}");
+}
+
+#[test]
+fn a_label_wires_end_marker_shapes_the_tag() {
+    for (op, shape) in [
+        ("->", "right"),
+        ("-<", "left"),
+        ("-<>", "both"),
+        ("-*", "round"),
+    ] {
+        let out = desugar_source(&sheet(&format!("u7.a {op} \"N\""))).unwrap();
+        assert!(
+            tag_line(&out).contains(&format!("shape: {shape};")),
+            "'{op}' shapes '{shape}': {out}"
+        );
+        // Consumed off the wire — a tag is drawn, never an arrowhead.
+        assert!(out.contains("u7.a - lini-label-1"), "{out}");
+    }
+    // The bare `-` leaves the tag its default; nothing is written on it.
+    let out = desugar_source(&sheet("u7.a - \"N\"")).unwrap();
+    assert!(!tag_line(&out).contains("shape:"), "{out}");
+}
+
+#[test]
+fn a_label_wires_line_part_stays_free() {
+    // The op's *line* means what it always means [SPEC 9] — only the marker is
+    // the scope's tag sugar.
+    let out = desugar_source(&sheet("u7.a -- \"N\"")).unwrap();
+    assert!(out.contains("u7.a -- lini-label-1"), "a dashed wire: {out}");
+    assert!(!tag_line(&out).contains("shape:"), "{out}");
+}
+
+#[test]
+fn an_authored_shape_outranks_the_markers() {
+    // The marker fills the built-in default; an element rule (or the tag's own
+    // style) wins [SPEC 16.5].
+    let out = desugar_source(&sheet("u7.a -> \"N\"").replace(
+        "layout: schematic;",
+        "layout: schematic; |label| { shape: round; }",
+    ))
+    .unwrap();
+    assert!(!tag_line(&out).contains("shape: right"), "{out}");
+    assert!(
+        out.contains("lini-tag-round"),
+        "the rule's shape stands: {out}"
+    );
+}
+
+#[test]
+fn a_marker_shapes_a_tag_however_it_was_written() {
+    // "Markers shape labels" [SPEC 16.5] is one law, not three: a net tag can
+    // be minted from text, referenced, or declared inline as a capsule, and the
+    // end marker shapes it the same way in each. The gather hoists capsules
+    // before the mint runs, so all three arrive as one lookup.
+    for wires in [
+        "u7.a -> \"N\"",
+        "|label#n1| \"N\"\nu7.a -> n1",
+        "u7.a -> |label#n1|",
+    ] {
+        let out = desugar_source(&sheet(wires)).unwrap();
+        assert!(
+            out.contains(".lini-tag-outline.lini-label.lini-block { shape: right; }"),
+            "'{wires}' shapes its tag: {out}"
+        );
+        assert!(
+            !out.contains("-> lini-label") && !out.contains("-> n1"),
+            "the marker is consumed: {out}"
+        );
+    }
+}
+
+#[test]
+fn the_first_statement_to_shape_a_tag_wins() {
+    // A tag's shape is settled once [SPEC 16.5]: an authored `shape:` outranks
+    // every marker, and among markers the first to land holds — a later hop
+    // reads the shape already there and leaves it. Pinned so the rule is a
+    // decision, not an accident.
+    let out = desugar_source(&sheet("|label#n1| \"N\"\nu7.a -> n1\nu7.b -* n1")).unwrap();
+    assert!(out.contains("{ shape: right; }"), "the first marker: {out}");
+    assert!(!out.contains("shape: round"), "{out}");
+}
+
+#[test]
+fn a_marker_still_shapes_in_a_lowered_file() {
+    // `lini desugar` emits `.lini-label { shape: plain; … }` — the compiler's
+    // own echo of the bundle default, folded back as an element rule on
+    // re-desugar. It must not read as an authored choice, or every marker in a
+    // lowered file would be silently inert.
+    let lowered = desugar_source(&sheet("u7.a -> \"N\"")).unwrap();
+    assert!(lowered.contains(".lini-label { shape: plain;"), "{lowered}");
+    let grown = desugar_source(&format!("{lowered}u7.b -* \"Q\"\n")).unwrap();
+    assert!(
+        grown.contains("lini-tag-round"),
+        "the marker still bites: {grown}"
+    );
+    // A rule stating anything *other* than the default is the author's —
+    // `an_authored_shape_outranks_the_markers` holds that half.
+}
+
+#[test]
+fn a_marked_part_to_part_wire_errors() {
+    let err = lini::check(&sheet("u7.a -> u7.b")).expect_err("a marked wire");
+    assert!(
+        err.to_string().contains("a schematic wire is plain"),
+        "{err}"
+    );
+    assert!(err.to_string().contains("write 'a - b'"), "{err}");
+    // A start marker shapes nothing either.
+    let err = lini::check(&sheet("u7.a <- \"N\"")).expect_err("a start marker");
+    assert!(
+        err.to_string().contains("a schematic wire is plain"),
+        "{err}"
+    );
+    // A marked statement with no far end at all wanted a label wire — the
+    // suggestion points at that, not at a plain part-to-part wire.
+    let err = lini::check(&sheet("u7.a ->")).expect_err("a marker with no tag");
+    assert!(err.to_string().contains("write 'a -> \"NET\"'"), "{err}");
+}
+
+#[test]
+fn a_marker_at_a_symbol_form_label_errors() {
+    // `- |gnd|` is the symbol form of the same statement — the symbol *is* the
+    // drawing, so there is no tag for a marker to shape [SPEC 16.5].
+    let err = lini::check(&sheet("u7.a -> |gnd|")).expect_err("a marked symbol tag");
+    assert!(
+        err.to_string()
+            .contains("'|gnd|' draws its symbol — there is no tag to shape"),
+        "{err}"
+    );
+    // …and an authored id is part of that spelling — the message names what the
+    // author wrote, not the head of the rewritten path.
+    let named = lini::check(&sheet("u7.a -> |gnd#g1|")).expect_err("a marked symbol tag");
+    assert!(
+        named
+            .to_string()
+            .contains("'|gnd#g1|' draws its symbol — there is no tag to shape"),
+        "{named}"
+    );
+}
+
+#[test]
+fn the_capsule_form_poses_like_the_declared_one() {
+    // Hoist-then-pose [SPEC 16.1]: `u7.a - |gnd|` reaches the chooser as a
+    // child with its minted id and a wire rewritten to it, so it turns exactly
+    // as the two-statement spelling does.
+    let capsule = desugar_source(&sheet("u7.a - |gnd|")).unwrap();
+    let declared = desugar_source(&sheet("|gnd#gx|\nu7.a - gx")).unwrap();
+    let pose = |out: &str| {
+        out.lines()
+            .find(|l| l.contains(".lini-gnd."))
+            .unwrap_or_default()
+            .to_string()
+    };
+    assert!(pose(&capsule).contains("lini-pose-270"), "{capsule}");
+    assert_eq!(
+        pose(&capsule).replace("lini-cap-1", "gx"),
+        pose(&declared),
+        "the two spellings lower alike"
+    );
+}
+
+#[test]
+fn label_wire_lowering_is_a_byte_fixed_point_and_the_mint_skips_taken_names() {
+    let once = desugar_source(&sheet("u7.a -> \"N\"\nu7.c -* \"P\"")).unwrap();
+    assert_eq!(desugar_source(&once).unwrap(), once, "a fixed point");
+    // A lowered sheet gaining a wire mints past the ids already there — the
+    // `lini-cap-N` discipline [SPEC 9].
+    let grown = desugar_source(&format!("{once}u7.b - \"Q\"\n")).unwrap();
+    assert!(grown.contains("u7.b - lini-label-3"), "{grown}");
+}
+
+#[test]
+fn only_a_schematic_scope_reads_a_one_ended_wire_as_a_label() {
+    // Elsewhere the statement means nothing and resolve says so, unchanged.
+    let err = lini::check("a -> b\nb - \"N\"\n").expect_err("no scope reads it");
+    assert!(err.to_string().contains("at least two endpoints"), "{err}");
+    // A sibling scope beside a schematic is untouched — the carrier reaches
+    // *inside*, never across.
+    let beside = "|schematic#s| [\n  |component#u8| [ |pin#z| ]\n]\n|group#g| [\n  |box#b|\n  b - \"N\"\n]\n";
+    let err = lini::check(beside).expect_err("a sibling scope reads nothing");
+    assert!(err.to_string().contains("at least two endpoints"), "{err}");
+}
+
+#[test]
+fn the_scopes_link_laws_reach_a_nested_ordinary_container() {
+    // [SPEC 16] **the carrier**: placement never cascades, but the scope's
+    // *reading of a statement* does. A `|group|` inside a schematic places its
+    // own children and still mints the label wire written in it — the boundary
+    // Task 5.1 pinned as an error, flipped here deliberately.
+    let nested =
+        "{ layout: schematic; }\n|group#g| [\n  |component#u8| [ |pin#z| ]\n  u8.z - \"NET\"\n]\n";
+    let out = desugar_source(nested).unwrap();
+    assert!(
+        out.contains("|block#lini-label-1| .lini-label.lini-block"),
+        "the nested group mints its tag: {out}"
+    );
+    assert!(out.contains("u8.z - lini-label-1"), "{out}");
+    assert!(lini::check(nested).is_ok(), "and the sheet compiles");
+    // The same statement one container deeper, and inside an anonymous one.
+    for body in [
+        "|group#g| [\n  |row#r| [\n    |component#u8| [ |pin#z| ]\n    u8.z - \"NET\"\n  ]\n]\n",
+        "|group| [\n  |component#u8| [ |pin#z| ]\n  u8.z - \"NET\"\n]\n",
+    ] {
+        let out = desugar_source(&format!("{{ layout: schematic; }}\n{body}")).unwrap();
+        assert!(out.contains("u8.z - lini-label-1"), "{body}: {out}");
+    }
+}
+
+#[test]
+fn a_nested_container_poses_nothing_though_its_wires_are_the_scopes() {
+    // The other half of the split [SPEC 16]: a pose is **placement**, so the
+    // chooser answers off the immediate container. The same two statements
+    // written directly in the sheet turn the ground to face the pin; written
+    // inside a `|row|` — which runs its own engine and seats nothing — they
+    // must not.
+    let sheet = |body: &str| format!("{{ layout: schematic }}\n{body}");
+    let direct = desugar_source(&sheet(
+        "|component#u1| [ |pin#a|; |pin#b|; |pin#c| ]\n|gnd#g1|\nu1.c - g1\n",
+    ))
+    .unwrap();
+    assert!(
+        direct.contains("lini-pose-"),
+        "the sheet poses (the turn is consumed into its class): {direct}"
+    );
+    let nested = desugar_source(&sheet(
+        "|row#r| [\n  |component#u1| [ |pin#a|; |pin#b|; |pin#c| ]\n  |gnd#g1|\n  u1.c - g1\n]\n",
+    ))
+    .unwrap();
+    assert!(
+        !nested.contains("lini-pose-"),
+        "a nested row seats nothing, so it turns nothing: {nested}"
+    );
+}
+
+#[test]
+fn a_schematic_scope_never_invents_a_box() {
+    // [SPEC 16.5/21] auto-create is off inside the scope, and the message
+    // names the net label the bare id most likely meant.
+    let err = lini::check("{ layout: schematic }\n|component#u7| [ |pin#a| ]\nu7.a - NSTDBY\n")
+        .expect_err("no invented box");
+    assert_eq!(
+        err.message,
+        "'NSTDBY' is unknown — a schematic never invents a box; \
+         did you mean '- \"NSTDBY\"' (a net label)?"
+    );
+    // The carrier again: a nested ordinary container refuses too.
+    let nested = lini::check(
+        "|schematic#s| [\n  |group#g| [\n    |component#u7| [ |pin#a| ]\n    u7.a - NSTDBY\n  ]\n]\n",
+    )
+    .expect_err("the law reaches the nested group");
+    assert!(
+        nested.to_string().contains("never invents a box"),
+        "{nested}"
+    );
+    // The suggested spelling is the one that works.
+    assert!(
+        lini::check("{ layout: schematic }\n|component#u7| [ |pin#a| ]\nu7.a - \"NSTDBY\"\n")
+            .is_ok()
+    );
+}
+
+#[test]
+fn a_mindmap_inside_a_sheet_seals_the_carrier_by_its_type() {
+    // [SPEC 8/16] A `|mindmap|` declares no `layout:` of its own — the tree
+    // seat stamps `layout: tree` on its scope *after* this body lowers — so
+    // it is the one engine `seals_schematic_scope` has to name by type.
+    // Without that clause the sheet's reading reaches into the mindmap's body
+    // and its cross-link's unknown id becomes the invent refusal instead of an
+    // ordinary auto-created topic.
     let out = desugar_source(
-        "{ |rail::group| [ |gnd#g1| ] }\n\
-         |schematic#s| [\n  |component#U7| [ |pin#a|; |pin#b|; |pin#c| ]\n  |rail#k|\n]\n",
+        "|schematic#s| [\n  |mindmap#m| [\n    |topic#a| [ |topic#b| ]\n    a - c\n  ]\n]\n",
+    )
+    .expect("the mindmap reads its own body");
+    assert!(
+        out.contains("|block#c| .lini-box.lini-block [ \"c\" ]"),
+        "the cross-link's endpoint auto-created inside the mindmap: {out}"
+    );
+}
+
+#[test]
+fn a_define_bodys_links_stay_out_of_the_hosts_own_slice_however_they_land() {
+    // Auto-create reads the host body's **own** statements — a define's ids
+    // are the define's affair — and the boundary between the two used to be an
+    // index taken before the schematic landing step, which cuts a chain into
+    // hops and moves it. So an unrelated statement decided the diagnostic: the
+    // `- r1 -` row leaked the next define link into the host's slice and made
+    // its unknown `x` the sheet's invent refusal, while the `- g1` row left it
+    // for resolve. Same semantics, two answers; now one.
+    let body = |wire: &str| {
+        format!(
+            "{{\n  layout: schematic;\n  |blk::group| {{ layout: schematic; }} [\n    \
+             |component#u1| [ |pin#a| ]\n    |R#r1|\n    |gnd#g1|\n    {wire}\n    x - g1\n  ]\n}}\n\
+             |blk#c1|\n"
+        )
+    };
+    for wire in ["u1.a - r1 - g1", "u1.a - g1"] {
+        let err = lini::check(&body(wire)).expect_err("the define's own unknown id");
+        assert_eq!(
+            err.message, "link endpoint 'x' not found in 'c1'",
+            "the cut moved the boundary: {wire}"
+        );
+    }
+}
+
+#[test]
+fn a_lowered_nested_sheet_is_still_a_sheet_to_the_carrier() {
+    // A **nested** scope states itself as a class after lowering
+    // (`|block#s| .lini-schematic`), never as its type — so a carrier reading
+    // only the written chain would answer `false` on `lini desugar`'s own
+    // output, where the layout gate answers `true`. Two stages, one law: a
+    // statement hand-added to a lowered sheet reads exactly as it did in the
+    // source.
+    let lowered = desugar_source(
+        "|schematic#s| [\n  |component#u7| [ |pin#a|\n |pin#b| ]\n  u7.a - \"N\"\n]\n",
     )
     .unwrap();
-    assert!(!out.contains("lini-pose-"), "unposed, for now: {out}");
+    let grown = lowered.replace(
+        "  u7.a - lini-label-1",
+        "  u7.a - lini-label-1\n  u7.b - \"Q\"",
+    );
+    let out = desugar_source(&grown).unwrap();
+    assert!(
+        out.contains("u7.b - lini-label-2"),
+        "the lowered sheet still mints: {out}"
+    );
+}
+
+#[test]
+fn auto_create_is_untouched_outside_a_schematic_scope() {
+    // [SPEC 3] every other scope still invents its box — flow, grid, tree,
+    // sequence, and a plain container beside a schematic.
+    for src in [
+        "a -> b\n",
+        "{ layout: grid; cols: 2 }\na -> b\n",
+        "{ layout: tree }\n|topic#t| \"T\"\n",
+        "{ layout: sequence }\na -> b \"hi\"\n",
+        "|schematic#s| [\n  |component#u7| [ |pin#a| ]\n]\n|group#g| [\n  x -> y\n]\n",
+    ] {
+        lini::check(src).unwrap_or_else(|e| panic!("{src}: {e}"));
+    }
+    let out = desugar_source("|group#g| [\n  x -> y\n]\n").unwrap();
+    assert!(out.contains("|block#x| .lini-box.lini-block"), "{out}");
+}
+
+/// A sheet holding `body`, with an anchor so the scope has something to seat.
+fn sheet_holding(body: &str) -> String {
+    format!("{{ layout: schematic }}\n|component#u1| [\n  |pin#a|; |pin#b|; |pin#c|\n]\n{body}")
+}
+
+#[test]
+fn another_engine_nested_in_a_sheet_seals_the_carrier() {
+    // [SPEC 16] the carrier reaches a container that reads no statement of its
+    // own (`|row|`, `|group|`, anonymous) and **stops** at one that reads its
+    // own — otherwise the sheet silently rewrites another engine's statements.
+    // The axis the flow/grid/tree root sweep above cannot test: here every
+    // case is genuinely *inside* a schematic scope.
+
+    // A nested drawing's leader stays a leader [SPEC 15.7] — it must not mint
+    // a net tag, and its own direction law must still be the one that speaks.
+    let drawing = "|drawing#d| [\n  |rect#r1| { width: 40; height: 20 }\n  r1 <- \"a note\"\n]\n";
+    let out = desugar_source(&sheet_holding(drawing)).unwrap();
+    assert!(
+        !out.contains("lini-label-"),
+        "a leader is not a label wire: {out}"
+    );
+    assert!(out.contains("[ \"a note\" ]"), "it stays the leader's text");
+    lini::check(&sheet_holding(drawing)).expect("a drawing nested in a sheet compiles");
+    let wrong = sheet_holding(&drawing.replace("r1 <- ", "r1 -> "));
+    let err = lini::check(&wrong).expect_err("the drawing's own direction law speaks");
+    assert!(err.to_string().contains("a leader points back"), "{err}");
+
+    // A nested sequence still declares its participants: the marker gate never
+    // sees `->`, and no-auto-create never sees `x`.
+    let seq = "|sequence#q| [\n  x -> y \"hi\"\n]\n";
+    let out = desugar_source(&sheet_holding(seq)).unwrap();
+    assert!(out.contains("|block#x| .lini-box.lini-block"), "{out}");
+    assert!(out.contains("|block#y| .lini-box.lini-block"), "{out}");
+    lini::check(&sheet_holding(seq)).expect("a sequence nested in a sheet compiles");
+
+    // A nested tree still builds its branches from its topics.
+    let tree =
+        "|box#t| { layout: tree } [\n  |topic#root| \"R\" [\n    |topic#kid| \"K\"\n  ]\n]\n";
+    lini::check(&sheet_holding(tree)).expect("a tree nested in a sheet compiles");
+
+    // …and the seal is not one grain too wide: a flow wrapper still reaches.
+    let row = "|row#r| [\n  |gnd#g1|\n  u1.c - g1\n  u1.b - \"NET\"\n]\n";
+    let out = desugar_source(&sheet_holding(row)).unwrap();
+    assert!(
+        out.contains("u1.b - lini-label-1"),
+        "the row still mints: {out}"
+    );
 }

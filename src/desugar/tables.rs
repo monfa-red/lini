@@ -87,7 +87,7 @@ fn block_cell(text: &TextNode) -> Node {
 pub(super) fn wrap_body_cells(cx: &super::Lower, children: &mut [Child]) -> Result<(), Error> {
     for c in children.iter_mut() {
         if let Child::Text(t) = c {
-            *c = Child::Box(lower_node(cx, &block_cell(t), false)?);
+            *c = Child::Box(lower_node(cx, &block_cell(t), Nest::NONE)?);
         }
     }
     Ok(())
@@ -180,7 +180,7 @@ pub(super) fn wrap_header_row(
     }
     for c in &mut children[..row_end] {
         if let Child::Text(t) = c {
-            *c = Child::Box(lower_node(cx, &header_node(t, None), false)?);
+            *c = Child::Box(lower_node(cx, &header_node(t, None), Nest::NONE)?);
         }
     }
     Ok(())

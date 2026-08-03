@@ -48,6 +48,26 @@ pub(crate) fn sch_kind<S: AsRef<str>>(chain: &[S]) -> Option<SchKind> {
     None
 }
 
+/// The schematic types no *family* answers for [SPEC 16.2/16.6]: a component's
+/// terminal and the generated junction dot. Every other schematic type carries
+/// `component`, `label` or a discrete in its chain, so [`sch_kind`] already
+/// names it — `|J|`, `|opamp|`, `|gnd|` and `|nc|` included.
+const BARE_TYPES: &[&str] = &["pin", "junction"];
+
+/// The schematic type a chain wears, as the **author** spelled it — the
+/// out-of-scope gate's subject [SPEC 21]. `None` outside the family; the
+/// most-derived name for the message, so a `|gnd|` says `'|gnd|'` and a
+/// `|myres::R|` says `'|myres|'`. `|schematic|` is deliberately not a member:
+/// it *creates* the scope.
+///
+/// Takes the chain **most-derived first** — a lowered node's `type_chain`, the
+/// order the layout gate reads it in.
+pub(crate) fn schematic_type<S: AsRef<str>>(chain: &[S]) -> Option<&str> {
+    let member = |t: &str| sch_kind(&[t]).is_some() || BARE_TYPES.contains(&t);
+    let written = chain.first()?.as_ref();
+    chain.iter().any(|t| member(t.as_ref())).then_some(written)
+}
+
 /// A schematic scope child's role [SPEC 16.1] — **the** rule, in one place:
 /// the schematic engine classifies a placed child through it and the pose
 /// chooser an authored one, so a part cannot be posed as a satellite and then
@@ -95,6 +115,63 @@ pub(crate) fn part_pin_ids<S: AsRef<str>>(
         Some(SchKind::Opamp) => OPAMP_PINS,
         Some(SchKind::Discrete(ty)) => variant(ty, symbol).map_or(&[][..], |v| v.pins),
         _ => &[],
+    }
+}
+
+/// A lowered part as the **pin walk** sees it — the one shape the two trees a
+/// part lives in after desugar both offer: resolve's `ResolvedInst` (where
+/// arity resolves a pinless landing, [SPEC 16.5]) and layout's `PlacedNode`
+/// (where the ports and the role classifier read it). It exists so
+/// [`terminal_ids`] is written **once**: a component's terminals are read off
+/// its lowered children, and a second copy of that descent would let one stage
+/// count a part's pins differently from another.
+pub(crate) trait PartNode {
+    fn type_chain(&self) -> &[String];
+    fn attrs(&self) -> &crate::resolve::AttrMap;
+    fn node_id(&self) -> Option<&str>;
+    fn kids(&self) -> &[Self]
+    where
+        Self: Sized;
+}
+
+/// The terminals a part offers, **in pin order** [SPEC 16.2/16.3] — `None` for
+/// an anonymous one, which shapes the part but can never be named [SPEC 9].
+///
+/// **The one pin walk.** A `|component|`'s pins are its authored `|pin|`
+/// children, found through the anonymous rails desugar wrapped them in; every
+/// other part's are its variant's glyph ports, straight off the table above —
+/// an **anonymous** symbol part generates no port nodes at all, so the table is
+/// the only source that can answer for it. Empty outside the family, and for a
+/// `|label|` (its one connection point is the part itself).
+pub(crate) fn terminal_ids<P: PartNode>(part: &P) -> Vec<Option<String>> {
+    match sch_kind(part.type_chain()) {
+        Some(SchKind::Component) => {
+            let mut out = Vec::new();
+            walk_pins(part.kids(), &mut out);
+            out
+        }
+        Some(_) => part_pin_ids(part.type_chain(), symbol_of(part).as_deref())
+            .iter()
+            .map(|p| Some((*p).to_string()))
+            .collect(),
+        None => Vec::new(),
+    }
+}
+
+fn walk_pins<P: PartNode>(nodes: &[P], out: &mut Vec<Option<String>>) {
+    for n in nodes {
+        if n.type_chain().iter().any(|t| t == "pin") {
+            out.push(n.node_id().map(str::to_string));
+        }
+        walk_pins(n.kids(), out);
+    }
+}
+
+/// The `symbol:` variant a part wears, off its resolved attrs.
+fn symbol_of<P: PartNode>(part: &P) -> Option<String> {
+    match part.attrs().get("symbol") {
+        Some(crate::resolve::ResolvedValue::Ident(s)) => Some(s.clone()),
+        _ => None,
     }
 }
 

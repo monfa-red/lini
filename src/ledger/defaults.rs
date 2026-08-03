@@ -69,7 +69,14 @@ pub(crate) fn root_layout_defaults(layout: Option<&str>) -> Vec<Decl> {
     match layout {
         Some("sequence") => vec![pair("gap", SEQ_GAP_ROW, SEQ_GAP_COL)],
         Some("tree") => vec![pair("gap", TREE_GAP_GEN, TREE_GAP_SIB)],
-        Some("schematic") => vec![n("gap", SCH_GAP), n("clearance", consts::SCH_CLEARANCE)],
+        // A root sheet **is** a `|schematic|` scope [SPEC 16.6] — same track
+        // spacing, same clearance, same `--lini-sheet` wash — so it takes that
+        // bundle rather than restating it; only `layout:`, which the root
+        // already carries, drops out. The user's own decls still win.
+        Some("schematic") => template_bundle("schematic")
+            .into_iter()
+            .filter(|d| d.name != "layout")
+            .collect(),
         // A drawing root's px-per-unit is the desugar scale fold's job
         // [SPEC 15.1/18] — ratio × unit × density, stamped per scope.
         _ => Vec::new(),
@@ -394,7 +401,7 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
         "component" => vec![
             var("fill", "component-fill"),
             var("stroke", "component-stroke"),
-            n("stroke-width", 1.5),
+            n("stroke-width", consts::SCH_STROKE_WIDTH),
             n("radius", 0.0),
             n("padding", 8.0),
             decl("prefix", vec![Value::String("U".into())]),
@@ -530,13 +537,15 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             span: Span::empty(),
         }],
         // The schematic scope [SPEC 16.6]: `|block|` + the engine, at the track
-        // spacing. (A root `{ layout: schematic }` picks up the same `gap`
-        // default in `root_layout_defaults`.) The parts' own looks ride their
-        // type bundles and the generated chrome classes.
+        // spacing, on the sheet wash — and the one statement of it, which
+        // `root_layout_defaults` takes for a root `{ layout: schematic }` rather
+        // than restating. The parts' own looks ride their type bundles and the
+        // generated chrome classes.
         "schematic" => vec![
             id("layout", "schematic"),
             n("gap", SCH_GAP),
             n("clearance", consts::SCH_CLEARANCE),
+            var("fill", "sheet"),
         ],
         _ => Vec::new(),
     }
@@ -661,6 +670,21 @@ pub fn link_defaults() -> Vec<Decl> {
         n("stroke-width", 2.0),
         n("clearance", consts::DEFAULT_CLEARANCE),
         n("font-size", 11.0),
+    ]
+}
+
+/// The schematic scope's link base [SPEC 16.5/16.6] — the wire's classic dress,
+/// layered over [`link_defaults`] on that same lowest layer, so every user rule
+/// (`|-| { … }`, a class, the link's own block) still wins it back. A **scope
+/// default, not a class rule**, for that reason: a class would out-specify the
+/// author. `clearance` is not here — it is the scope's own config, and rides the
+/// container's block (`template_bundle("schematic")` / `root_layout_defaults`)
+/// with every other `scope_link_props` entry.
+pub fn schematic_link_defaults() -> Vec<Decl> {
+    vec![
+        var("stroke", "wire"),
+        n("stroke-width", consts::SCH_STROKE_WIDTH),
+        n("corner-radius", 0.0),
     ]
 }
 

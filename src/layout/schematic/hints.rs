@@ -3,7 +3,8 @@
 //!
 //! - **none**: nothing to grow from, so it falls back to the flow;
 //! - **more than two**: the distribution runs between two, so every further
-//!   end is dropped.
+//!   end is dropped — unless one part holds them all ([`holder`]), in which case
+//!   the chain grows off that part and leaves nothing behind to name.
 //!
 //! Either way the sheet says so rather than moving a part in silence.
 //!
@@ -15,7 +16,7 @@
 use super::super::ir::PlacedNode;
 use super::place::role;
 use crate::desugar::schematic::Role;
-use crate::desugar::schematic::chain::{End, chains, placed_ends};
+use crate::desugar::schematic::chain::{End, chains, holder, placed_ends};
 use crate::error::Diagnostic;
 use crate::layout::ir::LaidOut;
 use crate::resolve::Program;
@@ -82,8 +83,14 @@ fn report(children: &[PlacedNode], scope: &str, program: &Program, out: &mut Vec
         // A chain distributes between **two** pins [SPEC 16.1] — the first two
         // it is held at, in statement order. A third holds nothing, so the
         // sheet names it rather than drawing a wire to a part seated as if it
-        // were not there. (Junctions are Phase 5's; distribution stays
-        // two-ended.)
+        // were not there. (A junction dot marks where such ends *meet*
+        // [SPEC 16.5]; it does not seat them — distribution stays two-ended.)
+        // …but only a chain that really does distribute can drop one. A chain
+        // one anchor holds grows off it instead ([`holder`]) and every end of
+        // it reaches that same part, so nothing is left behind to name.
+        if holder(&held).is_some() {
+            continue;
+        }
         for end in held.iter().skip(2) {
             let (pin, chain_name) = (address(children, end), name(chain.members[0]));
             warn(

@@ -692,6 +692,25 @@ fn final_segment(path: &str) -> &str {
     path.rsplit('.').next().unwrap_or(path)
 }
 
+/// A scene-rooted path as a **scope** addresses it [SPEC 9] — resolve
+/// qualifies every endpoint under its scope, so the prefix is exact (`""` is
+/// the root, which addresses everything as written). `None` when the path
+/// names nothing inside `scope`.
+pub(crate) fn within_scope<'a>(path: &'a str, scope: &str) -> Option<&'a str> {
+    if scope.is_empty() {
+        return Some(path);
+    }
+    path.strip_prefix(scope)?.strip_prefix('.')
+}
+
+/// The same, spelled for a **message**: a path outside the scope keeps its
+/// full form, because that is what an author would have to write to name it.
+/// The drawing's anchor walk and mate errors and the schematic's wire laws
+/// all say a path this one way.
+pub(crate) fn rel_path<'a>(path: &'a str, scope: &str) -> &'a str {
+    within_scope(path, scope).unwrap_or(path)
+}
+
 /// Find the node a path segment names at this level — or inside an
 /// **anonymous** container here, which is scope-transparent [SPEC 9]: its
 /// children address as the parent's, exactly as this module's path prefixes

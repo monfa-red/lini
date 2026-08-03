@@ -5,7 +5,6 @@
 //! [`super::place_tests`], the seats [`super::seat_tests`], the router
 //! [`super::route_tests`].
 
-use super::is_schematic_scope;
 use crate::layout::PlacedNode;
 use crate::ledger::defaults::SCH_GAP;
 use crate::resolve::Program;
@@ -246,11 +245,14 @@ fn a_nested_row_places_its_own_children_though_the_scope_still_reaches_them() {
     // and the two-pin `|R|` inside it are ordinary row children in declaration
     // order at the *row's* gap — never the schematic's satellites, even with a
     // wire from an outer pin reaching one of them (it seats nothing, and raises
-    // no adrift warning: only a direct child has a role here). **Link scope
-    // does cascade**: `is_schematic_scope` still answers true inside the row —
-    // the carrier Phase 5's link laws walk.
+    // no adrift warning: only a direct child has a role here). **The laws do
+    // cascade**: the `|R|` inside the row is legal there, which is the type
+    // gate's half of the same split.
+    // The wire names the row's child by its path — a named container opens a
+    // scope [SPEC 9], and the sheet no longer invents the box a bare `g1`
+    // would have asked for (Task 5.2's no-auto-create law).
     let row = "  |row#r| { gap: 12 } [\n    |gnd#g1|\n    |R#r1| \"1k\"\n  ]\n";
-    let src = scope("", &(anchor("u1", "") + row + "  u1.a - g1\n"));
+    let src = scope("", &(anchor("u1", "") + row + "  u1.a - r.g1\n"));
     let nodes = laid(&src);
 
     let ((gx, gy), (rx, ry)) = (at(&nodes, "g1"), at(&nodes, "r1"));
@@ -281,9 +283,6 @@ fn a_nested_row_places_its_own_children_though_the_scope_still_reaches_them() {
         seat_warnings(&src).is_empty(),
         "nor does it call one adrift"
     );
-
-    let p = program(&src);
-    assert!(is_schematic_scope(&p, "s.r"), "the link laws reach inside");
 }
 
 #[test]
@@ -314,25 +313,89 @@ fn a_schematic_wire_stays_the_routers_link() {
 }
 
 #[test]
-fn is_schematic_scope_answers_the_nearest_ancestor() {
-    // The link laws reach a wire written in a nested ordinary container, so the
-    // predicate walks the scope chain — unlike the sequence's and drawing's
-    // immediate-scope tests.
-    let p = program(
-        "|schematic#s| [\n  |row#r| [\n    |R#r1| \"1k\"\n  ]\n]\n|box#o| [\n  |box#c| \"c\"\n]\n",
-    );
-    assert!(is_schematic_scope(&p, "s"), "the scope itself");
-    assert!(is_schematic_scope(&p, "s.r"), "a nested ordinary scope");
-    assert!(!is_schematic_scope(&p, ""), "the root is not schematic");
-    assert!(!is_schematic_scope(&p, "o"), "a sibling scope");
-    assert!(!is_schematic_scope(&p, "o.c"), "a sibling's child");
+fn the_type_gate_reaches_every_nesting_the_scope_encloses() {
+    // [SPEC 16/21] `|R|` belongs in a `layout: schematic` — and the scope
+    // *reaches*, unlike the sequence's and drawing's immediate-scope tests.
+    // Every shape that encloses a part legally, and the two that do not.
+    for (what, src) in [
+        ("the scope itself", "|schematic#s| [\n  |R#r1| \"1k\"\n]\n"),
+        (
+            "a nested ordinary container",
+            "|schematic#s| [\n  |row#r| [\n    |R#r1| \"1k\"\n  ]\n]\n",
+        ),
+        (
+            "an anonymous container, which owns no path segment",
+            "|schematic#s| [\n  |row| [\n    |R| \"1k\"\n  ]\n]\n",
+        ),
+        ("an anonymous scope", "|schematic| [\n  |R| \"1k\"\n]\n"),
+        (
+            "the root scope",
+            "{ layout: schematic }\n|row#r| [\n  |R#r1| \"1k\"\n]\n",
+        ),
+        (
+            "a define that carries the layout",
+            "{ |sheet::group| { layout: schematic } }\n|sheet#s| [\n  |R#r1| \"1k\"\n]\n",
+        ),
+    ] {
+        crate::layout::layout(&program(src)).unwrap_or_else(|e| panic!("{what}: {}", e.message));
+    }
+    for (what, src) in [
+        ("the bare root", "|R#r1| \"1k\"\n"),
+        (
+            "a sibling scope",
+            "|schematic#s| [\n  |R#r1| \"1k\"\n]\n|box#o| [\n  |R#r2| \"2k\"\n]\n",
+        ),
+    ] {
+        assert_eq!(
+            layout_err(src),
+            "'|R|' belongs in a 'layout: schematic'",
+            "{what}"
+        );
+    }
 }
 
 #[test]
-fn a_root_schematic_makes_every_scope_schematic() {
-    let p = program("{ layout: schematic }\n\n|row#r| [\n  |R#r1| \"1k\"\n]\n");
-    assert!(is_schematic_scope(&p, ""), "the root scope");
-    assert!(is_schematic_scope(&p, "r"), "a nested ordinary scope");
+fn every_schematic_type_is_gated_and_named_as_written() {
+    // The whole family [SPEC 21], each reported by the type the author wrote —
+    // a `|gnd|` says `'|gnd|'`, not the `|label|` it defines over.
+    let mut cases: Vec<(String, String, String)> = vec![
+        (
+            String::new(),
+            "|component#u1| [\n    |pin#a|\n  ]\n".into(),
+            "component".into(),
+        ),
+        (String::new(), "|pin#a|\n".into(), "pin".into()),
+        (String::new(), "|label#n1| \"N\"\n".into(), "label".into()),
+        (String::new(), "|junction#j|\n".into(), "junction".into()),
+        (String::new(), "|J#j1| { pins: 2 }\n".into(), "J".into()),
+        (String::new(), "|opamp#o1|\n".into(), "opamp".into()),
+        (String::new(), "|gnd#g1|\n".into(), "gnd".into()),
+        (String::new(), "|nc#n|\n".into(), "nc".into()),
+        (
+            "{ |vm::label| { symbol: power } }\n".into(),
+            "|vm#v1|\n".into(),
+            "vm".into(),
+        ),
+    ];
+    cases.extend(
+        crate::desugar::types::DISCRETES
+            .iter()
+            .map(|t| (String::new(), format!("|{t}#x1|\n"), (*t).to_string())),
+    );
+    for (prelude, part, ty) in cases {
+        let outside = format!("{prelude}{part}");
+        assert_eq!(
+            layout_err(&outside),
+            format!("'|{ty}|' belongs in a 'layout: schematic'"),
+            "{outside}"
+        );
+        // …and legal the moment the scope encloses it.
+        let inside = format!("{prelude}|schematic#s| [\n  {part}]\n");
+        crate::layout::layout(&program(&inside))
+            .unwrap_or_else(|e| panic!("{inside}: {}", e.message));
+    }
+    // `|schematic|` itself is exempt — it *creates* the scope.
+    crate::layout::layout(&program("|schematic#s| [\n  |box#a|\n]\n")).expect("the scope");
 }
 
 #[test]

@@ -387,3 +387,44 @@ fn a_seat_rides_its_anchor() {
         extent(&nudged)
     );
 }
+
+#[test]
+fn two_ends_on_one_anchor_grow_off_it_instead_of_spanning_it() {
+    // The regression carried into Phase 5: `u1.a & u1.b - r1` is a fan onto one
+    // part, not a span between two. Distributing it struck the midpoint of a
+    // line running down u1's own side, so the resistor seated **inside** the
+    // component and every wire strayed ("fixed port blocked" — the port's
+    // landing was under a body). It grows off the first pin instead
+    // ([`holder`]), and the router fans the rest onto the shared landing.
+    let src = crate::layout::schematic::tests::scope(
+        "",
+        &(anchor("u1", " { cell: 1 1 }") + "  |R#r1|\n  u1.a & u1.b - r1\n"),
+    );
+    let laid =
+        crate::layout::layout(&crate::layout::schematic::tests::program(&src)).expect("layout");
+    let (u1, ux, _) = placed(&laid.nodes, "u1");
+    let (r1, rx, _) = placed(&laid.nodes, "r1");
+    assert!(
+        rx + r1.bbox.max_x < ux + u1.bbox.min_x,
+        "clear of the anchor it hangs off: r1 at {rx}, u1 at {ux}"
+    );
+    assert_eq!(laid.links.len(), 2, "both wires exist");
+    assert!(
+        laid.strays.is_empty(),
+        "and both draw: {:?}",
+        laid.link_report
+    );
+    assert!(seat_warnings(&src).is_empty(), "{:?}", seat_warnings(&src));
+    // …and the meet the fan makes is dotted [SPEC 16.5].
+    assert_eq!(laid.junctions.len(), 1);
+    // A third end on the same anchor is no more a dropped end than the second.
+    let three = crate::layout::schematic::tests::scope(
+        "",
+        &(anchor("u1", " { cell: 1 1 }") + "  |R#r1|\n  u1.a & u1.b & u1.c - r1\n"),
+    );
+    assert!(
+        seat_warnings(&three).is_empty(),
+        "{:?}",
+        seat_warnings(&three)
+    );
+}

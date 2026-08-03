@@ -14,7 +14,7 @@ use super::super::flex::Axis;
 use super::super::ir::{Bbox, PlacedNode};
 use super::super::{anchors, flex, grid, primitives};
 use super::seat::Seats;
-use crate::desugar::schematic::{Role, SchKind, part_pin_ids, role as schematic_role, sch_kind};
+use crate::desugar::schematic::{Role, role as schematic_role, sch_kind, terminal_ids};
 use crate::error::{Code, Error};
 use crate::resolve::{AttrMap, ResolvedLink, ResolvedValue};
 use crate::span::Span;
@@ -32,29 +32,13 @@ pub(super) fn role(node: &PlacedNode) -> Role {
         anchors::is_pinned(&node.attrs),
         node.attrs.get("cell").is_some(),
         kind,
-        kind.map_or(0, |k| pin_count(node, k)),
+        // How many wirable terminals the part carries [SPEC 16.2/16.3] — its
+        // own, never its descendants': a container holding a two-pin part is
+        // not itself a jumper. The one pin walk, which the router's ports and
+        // resolve's arity read too, so no two stages can count a part's pins
+        // differently.
+        terminal_ids(node).len(),
     )
-}
-
-/// How many wirable terminals a part carries [SPEC 16.2/16.3]. Its own — never
-/// its descendants': a container holding a two-pin part is not itself a jumper.
-fn pin_count(node: &PlacedNode, kind: SchKind) -> usize {
-    match kind {
-        // A component's pins are authored `|pin|` children, lowered into
-        // anonymous side rails — the same descent the router's port reader
-        // walks, so arity and ports can never disagree.
-        SchKind::Component => super::ports::authored_pins(node).len(),
-        // A symbol-bodied part's terminals are its variant's glyph ports. An
-        // **anonymous** part generates no port nodes at all, so the count comes
-        // from the shared variant table, never from the lowered tree.
-        _ => {
-            let symbol = match node.attrs.get("symbol") {
-                Some(ResolvedValue::Ident(s)) => Some(s.as_str()),
-                _ => None,
-            };
-            part_pin_ids(&node.type_chain, symbol).len()
-        }
-    }
 }
 
 /// A place on the ordinal grid, 1-indexed as authored.

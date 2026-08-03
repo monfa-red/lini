@@ -822,8 +822,8 @@ pub static PROPERTIES: &[Property] = &[
     ),
     row("along", &[Link], List(Kind::Number), Engine, No),
     // A wire's corner rounding radius [SPEC 16.5/17]: `auto` (the default) is
-    // today's clearance-derived cap; a schematic scope's link default sets 0.
-    // Phase 5 wires the render consumer; the row lands with the family.
+    // the clearance-derived cap; a schematic scope's link default sets 0. Read
+    // by the one rounding authority, `render::links::radius_cap`.
     row("corner-radius", &[Link], One(Kind::Any), Engine, No),
 ];
 

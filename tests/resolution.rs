@@ -567,7 +567,7 @@ fn a_schematic_scene_emits_no_inline_style() {
     // The class-diff law [SPEC 18]: every generated schematic look rides a
     // class rule; elements carry `style=` only for an authored diff.
     let svg = lini::compile_str(
-        "|R#R5| \"470\"\n|component#U7| \"IC\" [\n  |pin#a| { number: 1 }\n  |pin#b| { number: 2 }\n]\n|gnd|\n",
+        "{ layout: schematic }\n|R#R5| \"470\"\n|component#U7| \"IC\" [\n  |pin#a| { number: 1 }\n  |pin#b| { number: 2 }\n]\n|gnd|\n",
     )
     .expect("compiles");
     assert!(!svg.contains("style=\""), "no inline style: {svg}");

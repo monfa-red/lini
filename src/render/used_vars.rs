@@ -27,7 +27,7 @@ pub fn referenced(laid: &LaidOut, ruleset: &RuleSet) -> BTreeSet<String> {
         }
     }
 
-    for n in &laid.nodes {
+    for n in laid.nodes.iter().chain(&laid.junctions) {
         walk_node(n, &mut names);
     }
     for w in &laid.links {
@@ -152,6 +152,38 @@ mod tests {
         let names = used("|box#x| { fill: --teal }\n");
         assert!(names.contains("teal"), "{names:?}");
         assert!(!names.contains("rose"), "{names:?}");
+    }
+
+    /// A sheet whose one fan is dotted [SPEC 16.5], with `extra` rules in the
+    /// root block.
+    fn sheet(extra: &str) -> String {
+        format!(
+            "{{ layout: schematic; {extra} }}\n\
+             |component#u1| [\n|pin#a|; |pin#b|; |pin#c|\n]\n\
+             |component#u2| [\n|pin#a|; |pin#b|; |pin#c|\n]\n\
+             u1.c - u2.a\nu1.c - u2.b\n"
+        )
+    }
+
+    #[test]
+    fn the_wire_role_shakes_by_reachability_not_by_any_one_wearer() {
+        // A sheet has **two** wearers of `--lini-wire`: the `.lini-link` rule
+        // (the scope's own link base) and the junction dot's rule. The literal
+        // scan (`scan_css`) is by reachability, so all four directions matter:
+        // …by default both state it, so the var survives;
+        assert!(used(&sheet("")).contains("wire"), "both wearers");
+        // …with the dots hidden the wires still wear it;
+        let no_dot = "|junction| { fill: none; stroke: none }";
+        assert!(
+            used(&sheet(no_dot)).contains("wire"),
+            "the wires still wear it"
+        );
+        // …with neither wearing it, nothing names it and it goes;
+        let neither = format!("{no_dot}; |-| {{ stroke: --stroke }}");
+        assert!(!used(&sheet(&neither)).contains("wire"), "neither");
+        // …and any other wearer keeps it alive regardless.
+        let also = format!("{neither}; |component| {{ stroke: --wire }}");
+        assert!(used(&sheet(&also)).contains("wire"), "another wearer");
     }
 
     #[test]

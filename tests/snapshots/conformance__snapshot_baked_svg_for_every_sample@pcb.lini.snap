@@ -6,7 +6,7 @@ input_file: samples/pcb.lini
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-294 -245 588 490" width="588" height="490" class="lini">
   <style>
     .lini { font-family: "Google Sans Code", ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 12px; font-weight: 500; color: black; }
-    .lini .lini-canvas { fill: white; }
+    .lini .lini-canvas { fill: url(#lini-gradient-2); }
     .lini .lini-block { fill: none; stroke: none; stroke-width: 2; stroke-dasharray: none; }
     .lini .lini-text { fill: currentColor; stroke: none; text-anchor: middle; }
     .lini .lini-box { fill: white; stroke: #444; stroke-width: 2; }
@@ -40,7 +40,7 @@ input_file: samples/pcb.lini
     <path id="lg0500-57" d="M353 28.5Q247 90 188 199.5Q129 309 129 453L129 1432L355 1432L355 463Q355 333 420.5 257Q486 181 600 181Q715 181 780 257Q845 333 845 463L845 1432L1071 1432L1071 453Q1071 309 1012 199.5Q953 90 847.5 28.5Q742 -33 600.5 -33Q459 -33 353 28.5Z"/>
     <path id="lg0500-59" d="M218 0L28 1432L244 1432L350 354L356 354L407 641L524 1150L676 1150L793 641L844 354L850 354L952 1432L1172 1432L983 0L790 0L642 627L603 845L597 845L558 627L411 0L218 0Z"/>
   </defs>
-  <rect class="lini-canvas" x="-294" y="-245" width="588" height="490" style="fill: url(#lini-gradient-2)"/>
+  <rect class="lini-canvas" x="-294" y="-245" width="588" height="490"/>
   <g class="lini-scene">
     <g class="lini-node lini-chip lini-box lini-block" data-id="mcu" style="fill: url(#lini-gradient-1); font-size: 24px" transform="translate(0,0)">
       <rect x="-90" y="-90" width="180" height="180" rx="5" ry="5"/>

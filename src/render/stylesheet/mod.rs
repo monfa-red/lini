@@ -35,7 +35,10 @@ pub fn build(laid: &LaidOut, opts: &Options) -> RuleSet {
     let mut has_markers = false;
     let mut has_open = false;
     let mut has_gutters = false;
-    for node in &laid.nodes {
+    // The junction dots ride with the wires rather than in the scene tree
+    // [SPEC 16.5], and they wear the classes whose rules paint them — so the
+    // presence walk reads both, or `.lini-junction` would never emit.
+    for node in laid.nodes.iter().chain(&laid.junctions) {
         collect(
             node,
             &mut present,

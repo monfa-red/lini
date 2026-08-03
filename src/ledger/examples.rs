@@ -335,14 +335,21 @@ pub const EXAMPLES: &[(&str, &str)] = &[
         "density",
         "{ density: 4; }\n\n|drawing| [\n  |rect| { width: 40; height: 20; }\n]",
     ),
-    // ── Schematic ──
+    // ── Schematic ── every one inside its scope: a schematic type outside a
+    // `layout: schematic` is an error [SPEC 16/21].
     (
         "number",
-        "|component#u1| \"IC\" [\n  |pin#en| { number: 3; }\n]",
+        "|schematic| [\n  |component#u1| \"IC\" [\n    |pin#en| { number: 3; }\n  ]\n]",
     ),
-    ("prefix", "|component| \"driver\" { prefix: \"IC\"; }"),
-    ("shape", "|label#run| \"RUN\" { shape: round; }"),
-    ("pins", "|J#j1| \"header\" { pins: 4; }"),
+    (
+        "prefix",
+        "|schematic| [\n  |component| \"driver\" { prefix: \"IC\"; }\n]",
+    ),
+    (
+        "shape",
+        "|schematic| [\n  |label#run| \"RUN\" { shape: round; }\n]",
+    ),
+    ("pins", "|schematic| [\n  |J#j1| \"header\" { pins: 4; }\n]"),
     // ── Links ──
     (
         "clearance",

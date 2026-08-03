@@ -15,9 +15,9 @@
 //! through the scene index's overflow, never through the frame.
 
 use super::super::ir::{Bbox, PlacedNode};
-use super::terminal::{Terminal, ident, terminal};
+use super::terminal::{Terminal, terminal};
 use crate::desugar::pose::Side;
-use crate::desugar::schematic::{SchKind, part_pin_ids, sch_kind};
+use crate::desugar::schematic::{PartNode, SchKind, sch_kind, terminal_ids};
 
 /// A placed schematic part, as the router sees it — in the part's **own**
 /// coordinates (the scene index shifts it). Addresses are the id an endpoint
@@ -50,7 +50,7 @@ pub(crate) fn part_ports(node: &PlacedNode) -> Option<PartPorts> {
     let mut terms: Vec<Terminal> = Vec::new();
     let mut terminals = Vec::new();
     let mut ports = Vec::new();
-    for id in terminal_ids(node, kind) {
+    for id in terminal_ids(node) {
         let t = terminal(node, id.as_deref());
         // An **anonymous** pin shapes the frame like any other but is neither
         // terminal nor port: it has no address to name it by [SPEC 9].
@@ -82,34 +82,22 @@ pub(crate) fn part_ports(node: &PlacedNode) -> Option<PartPorts> {
     })
 }
 
-/// The named terminals a part carries, by the name an endpoint uses.
-fn terminal_ids(node: &PlacedNode, kind: SchKind) -> Vec<Option<String>> {
-    match kind {
-        // A component's pins are authored `|pin|` children, lowered into
-        // anonymous side rails — so they are read off the placed tree.
-        SchKind::Component => authored_pins(node),
-        // A symbol-bodied part's are its variant's, in glyph-port order.
-        _ => part_pin_ids(&node.type_chain, ident(&node.attrs, "symbol").as_deref())
-            .iter()
-            .map(|p| Some((*p).to_string()))
-            .collect(),
+/// The placed tree's adapter onto the one pin walk
+/// ([`crate::desugar::schematic::terminal_ids`]) — the resolved tree wears the
+/// twin of it where arity resolves a pinless landing [SPEC 16.5].
+impl PartNode for PlacedNode {
+    fn type_chain(&self) -> &[String] {
+        &self.type_chain
     }
-}
-
-/// The ids of a component's authored pins, in lowered document order — the
-/// rails are anonymous and scope-transparent, hence the descent [SPEC 16.2].
-pub(super) fn authored_pins(node: &PlacedNode) -> Vec<Option<String>> {
-    let mut out = Vec::new();
-    fn walk(nodes: &[PlacedNode], out: &mut Vec<Option<String>>) {
-        for n in nodes {
-            if n.type_chain.iter().any(|t| t == "pin") {
-                out.push(n.id.clone());
-            }
-            walk(&n.children, out);
-        }
+    fn attrs(&self) -> &crate::resolve::AttrMap {
+        &self.attrs
     }
-    walk(&node.children, &mut out);
-    out
+    fn node_id(&self) -> Option<&str> {
+        self.id.as_deref()
+    }
+    fn kids(&self) -> &[Self] {
+        &self.children
+    }
 }
 
 /// The connection frame: the part's box with every side that carries

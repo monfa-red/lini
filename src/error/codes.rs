@@ -153,6 +153,10 @@ catalog! {
     Resolve 16 CAPSULE_IN_DRAWING "capsule-in-drawing";
     Resolve 17 SCHEMATIC_POSE "schematic-pose";
     Resolve 18 PIN_SLIDE "pin-slide";
+    Resolve 19 SCHEMATIC_MARKER "schematic-marker";
+    Resolve 20 SCHEMATIC_INVENT "schematic-invent";
+    Resolve 21 SCHEMATIC_ARITY "schematic-arity";
+    Resolve 22 DUPLICATE_WIRE "duplicate-wire";
 
     // ── Validate [SPEC 17/21] ──
     Validate 0 VALIDATE "validate";
@@ -175,6 +179,7 @@ catalog! {
     Layout 5 SCHEMATIC_TRACKS "schematic-tracks";
     Layout 6 SIDE_ON_TERMINAL "side-on-terminal";
     Layout 7 SCHEMATIC_SEAT "schematic-seat";
+    Layout 8 SCHEMATIC_TYPE "schematic-type";
 
     // ── Route [ROUTING] — the routing engine's own law checker. ──
     Route 0 ROUTE "route";

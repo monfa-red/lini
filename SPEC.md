@@ -1037,7 +1037,9 @@ class, and `{ }` apply to every link the statement expands to.
 expands the chain ([SPEC 19](#19-compile-pipeline)), so each hop carries the
 operator's full markers and `lini desugar` shows the two links. A bare first hop
 is spelled with the bare line op: `a - b -> c`. (Fan-out `&` is not sugar — its
-shared trunk is routing geometry, [ROUTING.md](ROUTING.md).)
+shared trunk is routing geometry, [ROUTING.md](ROUTING.md).) A **schematic
+scope** is the one carve-out, where a chain through a 2-pin part is a series
+circuit rather than two statements ([SPEC 16.5](#165-wires)).
 
 ### Styling
 
@@ -3345,7 +3347,12 @@ laws:
 - **A chain passes through a 2-pin part**: the named (or next-free) pin is
   the entry, the *other* pin the exit — `vm - |R| - |LED| - |gnd|` is a
   series circuit in one line; `vm - |D|.k - x` enters at the cathode and
-  exits at the anode.
+  exits at the anode. This law is the one **carve-out from the chain
+  equivalence** ([SPEC 9](#9-links), [SPEC 19](#19-compile-pipeline)): two
+  statements naming one pin are a junction there, not a pass, so a schematic
+  chain lowers cut **only where the pass-through resolved** (both pins
+  written down) and one whose landing the scope cannot see stays a chain —
+  only the chain itself still says what it means.
 - **Duplicates error** — a repeated endpoint pair means nothing on a sheet;
   and **same-pin landings merge** into one implicit fan at the shared port,
   drawn as one lead until the split, dotted there.
@@ -3722,7 +3729,8 @@ per instance; the scene defaults (`layout`, `padding`, `gap`, `font-size`, `clea
 ([SPEC 15.1](#151-the-container-the-datum--the-scale)); the per-type smart label (text / caption / symbol / link
 label / chart title …), auto-`along:`, chain expansion (`a -> b -> c` →
 `a -> b; b -> c`, auto-created ids included — fan-out `&` stays a resolve / routing
-concept), a tree's branch links, `.lini-level-N` classes, and a mindmap's
+concept; a schematic chain is the carve-out, cut only where its pass-through
+resolved, [SPEC 16.5](#165-wires)), a tree's branch links, `.lini-level-N` classes, and a mindmap's
 palette-walk rules ([SPEC 12](#12-flow-grid--tree)), link auto-create (an
 undeclared endpoint `x` → `|box#x| "x"`), **capsule hoisting** (an endpoint
 capsule → a declaration at the statement's position + a reference,

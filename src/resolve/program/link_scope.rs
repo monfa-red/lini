@@ -6,21 +6,39 @@ use scene::ScopeStep;
 
 // ─────────────────────────── Render inputs ───────────────────────────
 
-/// The baked link base [SPEC 10.5] — a link's lowest-specificity layer, below
+/// A link's baked base layers [SPEC 10.5] — the lowest-specificity layer, below
 /// the scope cascade, class rules, and its own block. The values live in the one
-/// tuning home (`ledger::defaults`).
-pub(super) fn baked_link_defaults(
+/// tuning home (`ledger::defaults`); resolved once per file, then layered per
+/// link by [`link_scope`].
+pub(super) struct LinkBases {
+    /// Every link's base.
+    every: Vec<(String, ResolvedValue)>,
+    /// …plus this, for a link a schematic scope's laws reach.
+    schematic: Vec<(String, ResolvedValue)>,
+}
+
+pub(super) fn baked_link_defaults(vars: &VarTable, funcs: &FuncTable) -> Result<LinkBases, Error> {
+    use crate::ledger::defaults;
+    Ok(LinkBases {
+        every: bake(&defaults::link_defaults(), vars, funcs)?,
+        schematic: bake(&defaults::schematic_link_defaults(), vars, funcs)?,
+    })
+}
+
+fn bake(
+    decls: &[crate::syntax::ast::Decl],
     vars: &VarTable,
     funcs: &FuncTable,
 ) -> Result<Vec<(String, ResolvedValue)>, Error> {
-    let mut out = Vec::new();
-    for d in crate::ledger::defaults::link_defaults() {
-        out.push((
-            d.name.clone(),
-            resolve_groups(&d.groups, d.span, vars, funcs)?,
-        ));
-    }
-    Ok(out)
+    decls
+        .iter()
+        .map(|d| {
+            Ok((
+                d.name.clone(),
+                resolve_groups(&d.groups, d.span, vars, funcs)?,
+            ))
+        })
+        .collect()
 }
 
 /// The container chain from the scene root down to `scope` (each segment an
@@ -68,6 +86,49 @@ fn inst_facts(inst: &ResolvedInst) -> NodeFacts {
 fn scope_is_drawing(chain: &[ScopeStep], root_attrs: &AttrMap) -> bool {
     let attrs = chain.last().map_or(root_attrs, |s| &s.attrs);
     is_drawing(attrs)
+}
+
+/// **Who owns this link statement's reading** [SPEC 16.5] — resolve's carrier
+/// for what desugar carries as `Nest::schematic`, and the one scope question
+/// the wire laws and the schematic dress both ask.
+///
+/// Stated once, as the walk: each container answers for itself if it can — a
+/// schematic scope claims the statements written inside it, another **engine
+/// that reads its own body's statements**
+/// ([`crate::desugar::STATEMENT_ENGINES`]) claims them back — and anything
+/// else passes its enclosing answer straight through, so a `|row|` inside a
+/// sheet (which reads no statement of its own) is transparent to the laws.
+/// Unlike desugar's twin this needs no `|mindmap|` clause: by resolve the
+/// mindmap seat has stamped its `layout: tree` on the scope, so the ident read
+/// sees it.
+///
+/// `Engine` and `Plain` were one answer until the fix wave, and telling them
+/// apart is what closes the cross-scope short: a statement no engine owns is
+/// read by the sheet's laws exactly where it reaches into one, while a sealed
+/// engine's body is nobody's to re-read ([`links::Owner`]).
+pub(super) fn statement_owner(chain: &[ScopeStep], root_attrs: &AttrMap) -> links::Owner {
+    let step = |prev, attrs: &AttrMap| {
+        if is_schematic(attrs) {
+            links::Owner::Sheet
+        } else if seals_schematic(attrs) {
+            links::Owner::Engine
+        } else {
+            prev
+        }
+    };
+    let mut owner = step(links::Owner::Plain, root_attrs);
+    for s in chain {
+        owner = step(owner, &s.attrs);
+    }
+    owner
+}
+
+/// Whether a container's own engine owns the reading of its body's statements
+/// — the resolved-attrs twin of `desugar::seals_schematic_scope`, over the one
+/// engine list.
+fn seals_schematic(attrs: &AttrMap) -> bool {
+    matches!(attrs.get("layout"), Some(ResolvedValue::Ident(l))
+        if crate::desugar::STATEMENT_ENGINES.contains(&l.as_str()))
 }
 
 /// A link scope's drawing classification [SPEC 15/20]: whether the immediate
@@ -124,11 +185,12 @@ fn is_magnifier(nodes: &[ResolvedInst], id: &str) -> bool {
 /// a bare `|column|` cascades exactly as on a named one. A root-scope link
 /// passes an empty chain.
 pub(super) fn link_scope(
-    baked: &[(String, ResolvedValue)],
+    baked: &LinkBases,
     root_attrs: &AttrMap,
     chain: &[ScopeStep],
+    owner: links::Owner,
 ) -> (Vec<(String, ResolvedValue)>, Vec<NodeFacts>) {
-    let mut base = baked.to_vec();
+    let mut base = baked.every.clone();
     // The drafting line-weight contrast [SPEC 15.1]: geometry keeps stroke 2,
     // a drawing's links thin to 1. A **scope default**, not a rule — it rides
     // the base layer below every user rule, so a plain `|-| { stroke-width: … }`
@@ -152,6 +214,14 @@ pub(super) fn link_scope(
             "clearance".to_string(),
             ResolvedValue::Number(consts::DIM_CLEARANCE),
         ));
+    }
+    // A schematic wire wears the classic dress [SPEC 16.5/16.6] — green, thin,
+    // and bending **square** — seated on the same base layer as the drawing's
+    // line weight above, so `|-| { stroke: … }` or a per-wire block still wins.
+    // The reaching carrier, not the immediate scope: the sheet's laws already
+    // reach a `|row|` nested in it, and its wires are the same wires.
+    if owner == links::Owner::Sheet {
+        base.extend(baked.schematic.iter().cloned());
     }
     for prop in properties::scope_link_props() {
         let nearest = chain

@@ -20,30 +20,26 @@
 //! at all (a symbol-less `|label|`, a port at the box centre), and then no
 //! candidate matches and the part stays unrotated.
 //!
-//! **What this pass cannot see.** It runs on the scope's *authored* children
-//! and links, before the rest of lowering builds the scope out, so three
-//! constructs are invisible to it and their parts stay unposed:
+//! **What this pass sees.** It runs over the scope's **gathered** statements
+//! ([`super::gather`]) and nothing lowers before it, so every way a part can
+//! reach the scope is in hand: its declared children, the children and links a
+//! `define` body contributes, the declarations capsule hoisting lifts out
+//! (`u1.gnd - |gnd|`), and the tags a label wire mints — each already a child,
+//! each wire already rewritten to the id the chooser matches against.
 //!
-//! - **capsule-hoisted declarations** (`u1.gnd - |gnd|`) — [`super::capsule`]
-//!   hoists the inline part into a child *after* this runs, so the chooser
-//!   sees neither the child nor the rewritten endpoint;
-//! - **links written inside a `define` body**, which reach the scope only when
-//!   the instance expands;
-//! - **children a `define` body contributes**, for the same reason.
-//!
-//! None of this is a seat bug — the layout-side seat pass reads the *resolved*
-//! tree and grows those chains correctly; they simply grow unturned. Closing it
-//! is a pass reordering (hoist and expand, *then* pose), which Phase 5 owns.
+//! What it still declines to turn is a matter of the rule, not of order: a part
+//! with an authored `rotate:`, a chain with no placed end or two, and a
+//! terminal with no facing at all (a symbol-less `|label|`).
 
 use super::Lower;
 use super::pose::{self, Pose, Side};
 use super::schematic::{
     self, Role, SchKind,
-    chain::{End, placed_ends},
+    chain::{End, holder, placed_ends},
     pins_of,
 };
 use crate::ast::ChainOp;
-use crate::syntax::ast::{Child, Decl, Link, Node};
+use crate::syntax::ast::{Child, Link, Node};
 use std::borrow::Cow;
 
 /// One direct child of the scope, surveyed once: everything the decision
@@ -82,10 +78,9 @@ impl<'a> Part<'a> {
             .chain_number(&chain, &node.style, "rotate")
             .and_then(|deg| Pose::from_degrees(deg, node.span).ok())
             .unwrap_or(Pose::NONE);
-        let pins = match kind {
-            Some(SchKind::Component) => pins_of(cx, node, &chain).len(),
-            _ => schematic::part_pin_ids(&chain, symbol.as_deref()).len(),
-        };
+        // The one authored pin reader — the same list the landings resolve
+        // against, so a part's arity is one answer at this stage too.
+        let pins = schematic::authored_terminal_ids(cx, node, &chain).len();
         Part {
             node: Some(node),
             // `cell:` is the only promoter [SPEC 16.1] — the same argument the
@@ -126,19 +121,15 @@ impl<'a> Part<'a> {
     }
 }
 
-/// Whether a lowering scope is a schematic — the desugar-side twin of
-/// `layout::schematic::is_schematic`. One read of desugar's cascade slice
-/// answers every form: `|schematic|` (whose template bundle sets the attr), an
-/// explicit `layout: schematic` on any container, and a define that carries
-/// one (`{ |sheet::group| { layout: schematic } }`).
-pub(super) fn scope_is_schematic(cx: &Lower, chain: &[String], style: &[Decl]) -> bool {
-    cx.chain_ident(chain, style, "layout").as_deref() == Some("schematic")
-}
-
 /// Pose the satellites of a schematic scope's authored `children` against its
 /// `links`. `Cow::Borrowed` whenever nothing is decided, so a non-schematic
 /// scope — and a schematic one whose satellites are all forced or unwired —
 /// costs nothing.
+///
+/// `schematic` is the **immediate** container's reading
+/// ([`super::is_schematic_body`]), never the carrier: a pose is placement, and
+/// placement does not cascade [SPEC 16] — a nested `|row|` inside a sheet runs
+/// its own engine, so a part it holds has no pin to face and must not turn.
 pub(super) fn choose<'a>(
     cx: &Lower,
     children: &'a [Child],
@@ -170,7 +161,7 @@ pub(super) fn choose<'a>(
         // seat pass judges by, so the two passes cannot disagree about which
         // chain is held (a `pin:` overlay end holds nothing, either side).
         let ends = placed_ends(&chain, &roles);
-        let [anchor] = ends.as_slice() else {
+        let Some(anchor) = holder(&ends) else {
             continue;
         };
         let held = &parts[anchor.child];

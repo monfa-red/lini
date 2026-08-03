@@ -158,6 +158,26 @@ fn fmt_round_trips_capsule_endpoints() {
 }
 
 #[test]
+fn fmt_round_trips_one_ended_label_wires() {
+    // The schematic scope's one-ended statement [SPEC 16.5/22]: the op trails
+    // its single endpoint, the net text trails the op, and every marker
+    // spelling survives byte-for-byte.
+    for src in [
+        "u7.diag - \"NSTDBY\"\n",
+        "u7.diag -> \"NSTDBY\"\n",
+        "u7.diag -< \"NSTDBY\"\n",
+        "u7.diag -<> \"NSTDBY\"\n",
+        "u7.diag -* \"NSTDBY\"\n",
+        "u7.diag -- \"NSTDBY\"\n",
+        "u7.diag - \"NSTDBY\" { stroke: red; }\n",
+    ] {
+        let once = lini::format_source(src).expect("fmt");
+        assert_eq!(once, src, "canonical form changed");
+        assert_eq!(lini::format_source(&once).expect("fmt twice"), once);
+    }
+}
+
+#[test]
 fn fmt_spaces_a_glued_capsule_op() {
     // `a -|gnd|- b` canonicalizes to spaced ops, like every link op.
     let out = lini::format_source("a -|gnd|- b\n").expect("fmt");

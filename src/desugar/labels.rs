@@ -3,7 +3,7 @@
 //! link's auto-distributed `along:` fractions are each a small, reusable
 //! transform [SPEC 3, 7, 9, 16].
 
-use super::{Lower, header_node, lower_node, schematic};
+use super::{Lower, Nest, header_node, lower_node, schematic};
 use crate::ast::ChainOp;
 use crate::error::Error;
 use crate::resolve::NodeKind;
@@ -75,11 +75,11 @@ pub(super) fn lower_smart(
         } else if what.is_entity {
             // An entity's label is its title: a `|header|` spanning every column [SPEC 8].
             let title = header_node(label, Some(what.cols.unwrap_or(2)));
-            children.insert(0, Child::Box(lower_node(cx, &title, false)?));
+            children.insert(0, Child::Box(lower_node(cx, &title, Nest::NONE)?));
         } else if what.is_drawing {
             // A drawing's smart label is its title, lowered to a |footnote|
             // under the view [SPEC 15.8].
-            let title = lower_node(cx, &footnote_node(label), false)?;
+            let title = lower_node(cx, &footnote_node(label), Nest::NONE)?;
             children.insert(0, Child::Box(title));
         } else if let Some(kind) = what.sch.filter(|k| *k != schematic::SchKind::Label) {
             // A part's smart label is its name / value [SPEC 16.2/16.3],
@@ -91,7 +91,7 @@ pub(super) fn lower_smart(
             };
             children.push(schematic::value_readout(cx, &label.text, anchor, dy)?);
         } else if what.is_container {
-            let caption = lower_node(cx, &caption_node(label), false)?;
+            let caption = lower_node(cx, &caption_node(label), Nest::NONE)?;
             children.insert(0, Child::Box(caption));
         } else if what.text_capable {
             children.insert(0, Child::Text(label.clone()));
@@ -111,7 +111,7 @@ pub(super) fn lower_smart(
         && node.label.as_ref().filter(|l| !l.text.is_empty()).is_none()
     {
         let foot = of_footnote(node.span);
-        children.insert(0, Child::Box(lower_node(cx, &foot, false)?));
+        children.insert(0, Child::Box(lower_node(cx, &foot, Nest::NONE)?));
     }
     Ok(kept_label)
 }
@@ -213,7 +213,7 @@ pub(super) fn split_chain(w: &Link) -> Vec<Link> {
         .collect()
 }
 
-pub(super) fn lower_link(w: &Link, cx: &super::Lower, in_drawing: bool) -> Result<Link, Error> {
+pub(super) fn lower_link(w: &Link, cx: &super::Lower, nest: Nest) -> Result<Link, Error> {
     let mut labels = Vec::new();
     if let Some(head) = &w.label {
         labels.push(LabelItem::Text(head.clone()));
@@ -223,7 +223,7 @@ pub(super) fn lower_link(w: &Link, cx: &super::Lower, in_drawing: bool) -> Resul
     for item in &w.labels {
         labels.push(match item {
             LabelItem::Text(t) => LabelItem::Text(t.clone()),
-            LabelItem::Node(n) => LabelItem::Node(super::lower_node(cx, n, in_drawing)?),
+            LabelItem::Node(n) => LabelItem::Node(super::lower_node(cx, n, nest)?),
         });
     }
 

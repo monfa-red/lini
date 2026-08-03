@@ -115,6 +115,19 @@ pub fn dim_marker(variant: &str, points: Vec<(f64, f64)>, fill: ResolvedValue) -
     n
 }
 
+/// The schematic connection dot [SPEC 16.5] — generated `|junction|` chrome at
+/// a wire meet, `radius` in sheet space. It sets **no** paint: the shared
+/// `.lini-junction` rule states its whole look (fill = the wire role, stroke
+/// off), so the element authors no `style=` diff at all and a `|junction| { … }`
+/// rule can restyle or remove every dot on the sheet [SPEC 18].
+pub fn junction_dot(cx: f64, cy: f64, radius: f64) -> PlacedNode {
+    let mut n = node(NodeKind::Oval, Bbox::centered(radius * 2.0, radius * 2.0));
+    n.cx = cx;
+    n.cy = cy;
+    n.type_chain = vec!["junction".into()];
+    n
+}
+
 /// A filled polygon (an area's body) through `points`. Stroke off; `opacity` lets
 /// overlapping areas read through.
 pub fn poly(points: Vec<(f64, f64)>, fill: ResolvedValue, opacity: f64) -> PlacedNode {

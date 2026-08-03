@@ -3,6 +3,7 @@
 //! declared ids and the to-create ids; the caller lowers each created box through
 //! the same path as a written one (so it gains its `.lini-box` class and id label).
 
+use crate::error::{Code, Error};
 use crate::span::Span;
 use crate::syntax::ast::{Child, Link, Node, TextNode};
 use std::collections::HashSet;
@@ -38,6 +39,10 @@ fn collect_ids(children: &[Child], out: &mut HashSet<String>) {
 /// reference so a scope can pool its own with messages gathered from its frames [SPEC 13].
 /// A **capsule** endpoint never auto-creates — it *declares* [SPEC 9] — and its id counts
 /// as declared here, so the pre-hoist view (the lint's) matches the real lowering.
+///
+/// The pure query — what a scope *would* create. The lint asks it, to name the
+/// ids it must check for shadowing; the lowering asks [`to_create`], which is
+/// this plus the scope's own answer about whether creating is allowed at all.
 pub fn auto_created_ids(links: &[&Link], declared: &HashSet<String>) -> Vec<(String, Span)> {
     let mut capsule_ids = HashSet::new();
     for w in links {
@@ -66,6 +71,30 @@ pub fn auto_created_ids(links: &[&Link], declared: &HashSet<String>) -> Vec<(Str
         }
     }
     out
+}
+
+/// What this scope actually creates. `schematic` is the scope's carrier reading
+/// ([`super::Nest`]): **a schematic never invents a box** [SPEC 16.5] — a bare
+/// unknown id there is a typo or a net name, so the first would-be creation is
+/// an error naming the quoted form it most likely meant. The refusal lives here,
+/// beside the creation it refuses, so the root walk and every body ask it once.
+pub fn to_create(
+    links: &[&Link],
+    declared: &HashSet<String>,
+    schematic: bool,
+) -> Result<Vec<(String, Span)>, Error> {
+    let out = auto_created_ids(links, declared);
+    match (schematic, out.first()) {
+        (true, Some((id, span))) => Err(Error::at(
+            *span,
+            format!(
+                "'{id}' is unknown — a schematic never invents a box; \
+                 did you mean '- \"{id}\"' (a net label)?"
+            ),
+        )
+        .code(Code::SCHEMATIC_INVENT)),
+        _ => Ok(out),
+    }
 }
 
 /// A labelled `|box#id| "id"` for an auto-created endpoint [SPEC 3]; the caller

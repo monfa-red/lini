@@ -108,14 +108,11 @@ pub(crate) fn project_anchor(
     Ok(anchors::resolve(nodes, "", ep, "projection")?.point())
 }
 
-/// A scene-rooted endpoint path relative to its drawing scope (`""` = root).
-/// Resolve always qualifies endpoints under their scope, so the prefix is
-/// exact — shared by the anchor walk and the mate error spellings.
-pub(super) fn rel_path<'a>(path: &'a str, scope: &str) -> &'a str {
-    path.strip_prefix(scope)
-        .map(|p| p.trim_start_matches('.'))
-        .unwrap_or(path)
-}
+/// A scene-rooted endpoint path relative to its drawing scope (`""` = root) —
+/// the anchor walk's reader and the mate error spellings. One definition, in
+/// the module that owns the path vocabulary; the schematic wire laws spell a
+/// path with the same one.
+pub(super) use crate::resolve::scene::rel_path;
 
 /// Sheet content [SPEC 15]: placed and styled per its own type, never a part —
 /// text, notes, balloons, drafting symbols, the title footnote (tables seal

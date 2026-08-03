@@ -9,7 +9,7 @@ use super::cascade::{NodeFacts, Stylesheet};
 use super::defaults;
 use super::ir::{
     AttrMap, Program, ResolvedCall, ResolvedInst, ResolvedScene, ResolvedValue, SheetInputs,
-    VarTable, is_drawing,
+    VarTable, is_drawing, is_schematic,
 };
 use super::links;
 use super::merge::collapse;
@@ -124,7 +124,11 @@ pub fn resolve_with_env(
         }
         None
     };
-    let mut link_list = Vec::new();
+    let mut link_list: Vec<crate::resolve::ResolvedLink> = Vec::new();
+    // Who owns each resolved link's reading [SPEC 16.5] — read on the
+    // statement's own scope chain as it resolves, never reconstructed from a
+    // path afterwards; the wire laws below are gated on it.
+    let mut owners: Vec<links::Owner> = Vec::new();
     let mut datums = DatumTable::default();
     // `|datum|` nodes join the identity set first [SPEC 15.9] — one alphabet
     // per drawing scope, shared with the `>-` leader form below.
@@ -135,12 +139,13 @@ pub fn resolve_with_env(
         &mut datums,
     )?;
     for w in &file.links {
-        let (base, ancestors) = link_scope::link_scope(&baked, &root_attrs, &[]);
+        let owner = link_scope::statement_owner(&[], &root_attrs);
+        let (base, ancestors) = link_scope::link_scope(&baked, &root_attrs, &[], owner);
         let kind = link_scope_kind(&nodes, &root_attrs, &[]);
         collect_datum_letter(w, &[], &kind, &mut datums)?;
         let carried = resolve_carried(w, &ctx, &kind, &ancestors, &[], &root_text_ctx, &[])?;
         collect_datum_nodes(&carried, "", kind.drawing.then_some(""), &mut datums)?;
-        link_list.extend(links::resolve_link(
+        let resolved = links::resolve_link(
             w,
             &ctx,
             &index,
@@ -151,10 +156,13 @@ pub fn resolve_with_env(
             &ancestors_for,
             &enclosing_view,
             carried,
-        )?);
+        )?;
+        owners.resize(owners.len() + resolved.len(), owner);
+        link_list.extend(resolved);
     }
     for lw in &lifted {
-        let (base, ancestors) = link_scope::link_scope(&baked, &root_attrs, &lw.chain);
+        let owner = link_scope::statement_owner(&lw.chain, &root_attrs);
+        let (base, ancestors) = link_scope::link_scope(&baked, &root_attrs, &lw.chain, owner);
         let kind = link_scope_kind(&nodes, &root_attrs, &lw.chain);
         collect_datum_letter(&lw.link, &lw.prefix, &kind, &mut datums)?;
         let carried = resolve_carried(
@@ -173,7 +181,7 @@ pub fn resolve_with_env(
             kind.drawing.then_some(scope.as_str()),
             &mut datums,
         )?;
-        link_list.extend(links::resolve_link(
+        let resolved = links::resolve_link(
             &lw.link,
             &ctx,
             &index,
@@ -184,8 +192,14 @@ pub fn resolve_with_env(
             &ancestors_for,
             &enclosing_view,
             carried,
-        )?);
+        )?;
+        owners.resize(owners.len() + resolved.len(), owner);
+        link_list.extend(resolved);
     }
+    // The scope's wire laws [SPEC 16.5]: pinless landings resolve onto pins,
+    // a chain through a two-pin part cuts into a wire per hop, and a repeated
+    // pair errors. One pass, after every statement has an endpoint.
+    let link_list = links::wire_laws(link_list, &owners, &nodes)?;
 
     let sheet_inputs = build_sheet_inputs(file, &vars, &funcs, &root_attrs, &baked, &sheet)?;
 
@@ -390,7 +404,7 @@ fn build_sheet_inputs(
     vars: &VarTable,
     funcs: &FuncTable,
     root_attrs: &AttrMap,
-    baked: &[(String, ResolvedValue)],
+    baked: &link_scope::LinkBases,
     sheet: &Stylesheet,
 ) -> Result<SheetInputs, Error> {
     let mut class_rules = Vec::new();
@@ -415,7 +429,12 @@ fn build_sheet_inputs(
     // The `.lini-link` rule's defaults: a root-scope link — the baked base plus the
     // scope config, then the root `|-|` element rule [SPEC 9, 16]. Its paint states
     // the `.lini-link` CSS rule; a link that differs inlines the difference.
-    let (base, _) = link_scope::link_scope(baked, root_attrs, &[]);
+    let (base, _) = link_scope::link_scope(
+        baked,
+        root_attrs,
+        &[],
+        link_scope::statement_owner(&[], root_attrs),
+    );
     let mut link_defaults = base;
     link_defaults.extend(sheet.class_decls(links::LINK_CLASS));
     let link_defaults = collapse(&link_defaults);

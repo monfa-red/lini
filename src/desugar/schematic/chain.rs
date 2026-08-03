@@ -53,6 +53,30 @@ pub(crate) fn placed_ends(chain: &Chain, roles: &[Role]) -> Vec<End> {
         .collect()
 }
 
+/// The one end a chain **grows from** [SPEC 16.1], if any: its lone placed
+/// end — or, when every placed end is a terminal of the *same* part, that
+/// part's first.
+///
+/// **Two ends on one anchor are a fan, not a span.** `u1.a & u1.b - r1` (and a
+/// chain that loops back to its own component) names a line running down that
+/// anchor's own side, so distributing along it seats the satellite *inside* the
+/// anchor — and no track pair can ever widen it, because both pins ride one
+/// track. It hangs off the anchor like any one-end chain instead, and the
+/// router fans the remaining wires onto the shared landing [SPEC 16.5].
+///
+/// **The one rule**, beside [`placed_ends`] and asked by both passes that
+/// decide off a chain's ends — the pose chooser and the seat pass — because a
+/// part the seat pass grows is a part the chooser must turn to face.
+pub(crate) fn holder(ends: &[End]) -> Option<&End> {
+    match ends {
+        [one] => Some(one),
+        [first, rest @ ..] if !rest.is_empty() && rest.iter().all(|e| e.child == first.child) => {
+            Some(first)
+        }
+        _ => None,
+    }
+}
+
 /// Every satellite chain in a scope. `satellite[i]` classifies child `i`
 /// (see [`super::role`]); `edges` are the scope's wires, one per hop, in
 /// statement order. Deterministic throughout: components are discovered in

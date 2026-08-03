@@ -203,6 +203,14 @@ pub fn is_drawing(attrs: &AttrMap) -> bool {
     matches!(attrs.get("layout"), Some(ResolvedValue::Ident(l)) if l == "drawing")
 }
 
+/// Whether resolved `attrs` set `layout: schematic` [SPEC 16] — the one
+/// resolved-attrs container test, beside its drawing twin: the layout dispatch
+/// and type gate ask it of a container, and the link pass carries it down the
+/// scope chain to know which statements the sheet's laws read [SPEC 16.5].
+pub fn is_schematic(attrs: &AttrMap) -> bool {
+    matches!(attrs.get("layout"), Some(ResolvedValue::Ident(l)) if l == "schematic")
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum ResolvedValue {
     Number(f64),
@@ -373,7 +381,7 @@ impl MarkerKind {
 /// A link's wiring strategy ([SPEC 9], ROUTING.md Strategies): `routing:`
 /// cascades from the scope like `clearance`. `curved` was removed, replaced
 /// by `natural` — smooth curves over the shared corridor search.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Strategy {
     Orthogonal,
     Natural,
@@ -401,6 +409,10 @@ pub enum MeasureOp {
     Angle,
 }
 
+/// `Clone` for one reason [SPEC 16.5]: a schematic chain that reaches resolve
+/// whole is cut into a link per hop there — a threaded part leaves by its other
+/// pin, which one endpoint list cannot spell.
+#[derive(Clone)]
 pub struct ResolvedLink {
     pub endpoints: Vec<ResolvedEndpoint>,
     /// Wire, measure, or mate — a drawing scope's layout consumes the non-wire
@@ -445,6 +457,7 @@ pub struct ResolvedLink {
     pub span: Span,
 }
 
+#[derive(Clone)]
 pub struct ResolvedEndpoint {
     /// Fully-qualified dot-path from scene root (e.g. `garden.outlet`).
     pub path: String,

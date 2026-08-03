@@ -11,8 +11,10 @@
 //!   so for an unforced chain that direction *is* the pin's outward normal;
 //!   an authored `rotate:` forces the pose and the seat follows the turned
 //!   connection point instead.
-//! - **two placed ends** — its satellites distribute along the straight line
-//!   between the two pins, at even fractions.
+//! - **two placed ends, on two anchors** — its satellites distribute along the
+//!   straight line between the two pins, at even fractions. Two ends on **one**
+//!   anchor are a fan, not a span, and grow like a one-end chain — the rule is
+//!   [`crate::desugar::schematic::chain::holder`]'s, shared with the chooser.
 //! - **no placed end** — nothing to seat against: the flow fallback, and a
 //!   warning [SPEC 21].
 //!
@@ -42,7 +44,7 @@ use super::super::stack::{Band, SeatLine, Stack};
 use super::terminal::{Terminal, terminal};
 use crate::desugar::pose::Side;
 use crate::desugar::schematic::Role;
-use crate::desugar::schematic::chain::{Chain, End, chains, placed_ends};
+use crate::desugar::schematic::chain::{Chain, End, chains, holder, placed_ends};
 use crate::ledger::consts::LABEL_SEAT;
 use crate::resolve::{LinkKind, ResolvedLink};
 
@@ -97,10 +99,14 @@ impl Seats {
             packers[i].obstruct(c.bbox);
         }
         for chain in chains(&satellite, &edges(children, links, scope)) {
-            match placed_ends(&chain, roles).as_slice() {
-                [] => out.floating.extend(chain.members),
-                [one] => out.grow(children, &chain, one, &mut packers[one.child]),
-                [a, b, ..] => out.distribute(children, chain, a, b),
+            let ends = placed_ends(&chain, roles);
+            // One anchor holds it → grow off that pin; two → span between them;
+            // none → the flow fallback. Which of the first two a chain is, is
+            // [`holder`]'s single answer, shared with the pose chooser.
+            match (holder(&ends), ends.as_slice()) {
+                (Some(one), _) => out.grow(children, &chain, one, &mut packers[one.child]),
+                (None, [a, b, ..]) => out.distribute(children, chain, a, b),
+                (None, _) => out.floating.extend(chain.members),
             }
         }
         out
@@ -303,11 +309,7 @@ pub(super) fn edges(
     // An endpoint dot-paths from the scene root; a child of this scope is
     // everything after the scope's own prefix [SPEC 9].
     let end = |path: &str| {
-        let local = if scope.is_empty() {
-            path
-        } else {
-            path.strip_prefix(scope)?.strip_prefix('.')?
-        };
+        let local = crate::resolve::scene::within_scope(path, scope)?;
         let (head, terminal) = match local.split_once('.') {
             Some((head, rest)) => (head, Some(rest.to_string())),
             None => (local, None),

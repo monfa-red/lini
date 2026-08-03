@@ -26,8 +26,13 @@
 
 // ── wires ── a net name is the wire's own label
 pwr - u1.vin "5V"
-u1.vout - c1.p1
-c1.p2 - g1
+// a chain **passes through** the cap: it enters on p1 and leaves by p2, so
+// the output rail, the decoupling cap and its ground are one series statement
+u1.vout - c1 - g1
 u1.vout - j1.p3 "3V3"
 // the capsule form — a label declared where it is wired
 u1.gnd - |gnd|
+// a label wire — the one-ended statement mints the net tag it points at, and
+// the op's end marker sets its `shape:` (`->` sets `right`; the pointed
+// geometry that shape names lands in Phase 6, so it draws as a plain outline)
+j1.p1 -> "NSTDBY"

@@ -12,6 +12,13 @@ pub struct LaidOut {
     /// carried beside the links, never as one, so the validator never sees
     /// them.
     pub strays: Vec<Stray>,
+    /// The schematic's connection dots [SPEC 16.5], generated from the drawn
+    /// wires ([`crate::layout::schematic::junctions`]). They are **wire
+    /// chrome**, so they ride here and not in `nodes`: a dot sits on a point
+    /// the router already drew through, so it is no obstacle and no landing
+    /// (the scene index must see the scene that was routed), and it draws
+    /// *above* the wires, where a junction dot belongs.
+    pub junctions: Vec<PlacedNode>,
     /// Resolved CSS variables — carried through to render so the `<style>`
     /// block and `--static` mode can both read them.
     pub vars: VarTable,

@@ -76,12 +76,20 @@ pub(super) fn build_frame_rules(
         props: root_props,
     });
 
-    // The scene background plate: `.lini-canvas` fills with `--lini-bg`, stated as
-    // a CSS rule (not a presentation attr, where `var()` is invalid) so it switches
-    // live and bakes to a literal for resvg/email [SPEC 18].
+    // The scene background plate: `.lini-canvas` fills with `--lini-bg`, or with
+    // the root's own `fill:` when it sets one — a schematic root's `--lini-sheet`
+    // wash rides exactly this. Stated as a CSS rule (not a presentation attr,
+    // where `var()` is invalid) so it switches live and bakes to a literal for
+    // resvg/email [SPEC 18]. The plate is class-styled like every other element,
+    // and there is one of it, so its rule states the whole paint and the rect
+    // inlines nothing (the class-diff law).
+    let canvas_fill = match &laid.canvas_fill {
+        Some(v) => css_value("fill", v, vars, opts),
+        None => live("bg", vars, opts),
+    };
     rules.push(Rule {
         class: "lini-canvas".into(),
-        props: vec![("fill".into(), live("bg", vars, opts))],
+        props: vec![("fill".into(), canvas_fill)],
     });
 }
 

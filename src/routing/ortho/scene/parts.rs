@@ -23,14 +23,13 @@
 //! on a pin carry the identical `f64` and ROUTING.md's implicit fan merges
 //! bit-exactly.
 //!
-//! The tables say what a part **offers**; whether the sheet's law applies is
-//! the **scope's** question, and it is asked once, where both are read — the
-//! request builder's [`crate::routing::ortho::request`], which holds the
-//! `Program` these do not. A schematic type renders anywhere [SPEC 16.7], so
-//! outside a schematic scope a part is an ordinary box: no forced side, no
-//! terminal, `:side` legal. Only the **fold** is unconditional — a part's
-//! anatomy is one obstacle wherever it is drawn, so the router and the
-//! validator judge one geometry.
+//! The tables say what a part **offers**, and that is the whole answer: a
+//! schematic type may only exist inside a schematic scope [SPEC 16/21] — the
+//! layout gate refuses it anywhere else — so an address in these tables is by
+//! construction an address in the scope, and neither table needs a scope test
+//! of its own. That is also what makes the sheet's law reach a wire written
+//! **outside** it: a root wire to `s.u1.a` finds the pin here and lands on it,
+//! because a pin is a pin whoever wires it.
 
 use super::{SceneIndex, abs_rect, inside};
 use crate::ast::Side;

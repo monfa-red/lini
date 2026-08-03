@@ -32,6 +32,10 @@ R015 unknown-strategy
 R016 capsule-in-drawing
 R017 schematic-pose
 R018 pin-slide
+R019 schematic-marker
+R020 schematic-invent
+R021 schematic-arity
+R022 duplicate-wire
 V000 validate
 V001 unknown-property
 V002 misused-property
@@ -50,6 +54,7 @@ Y004 drawing-measure
 Y005 schematic-tracks
 Y006 side-on-terminal
 Y007 schematic-seat
+Y008 schematic-type
 T000 route
 T001 impossible-link
 T002 law-breach

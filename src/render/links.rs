@@ -26,10 +26,16 @@ fn is_wavy(attrs: &AttrMap) -> bool {
 const LABEL_CUT_PAD_H: f64 = 0.3;
 const LABEL_CUT_PAD_V: f64 = 0.15;
 
-/// The link's corner-radius cap (ROUTING Model step 7): the link's resolved
-/// `clearance` (its cascaded default).
+/// The link's corner-radius cap (ROUTING Model step 7) — **the** one corner-
+/// rounding authority: the link's resolved `corner-radius` [SPEC 17], and at
+/// `auto` (the property's default, and anything not a number) the
+/// clearance-derived value the pass has always used. A schematic wire bends
+/// square because its scope seats `corner-radius: 0` on the link base layer
+/// [SPEC 16.5], never because this pass knows about schematics.
 pub fn radius_cap(w: &RoutedLink) -> f64 {
-    w.attrs.number("clearance").unwrap_or(DEFAULT_CLEARANCE)
+    w.attrs
+        .number("corner-radius")
+        .unwrap_or_else(|| w.attrs.number("clearance").unwrap_or(DEFAULT_CLEARANCE))
 }
 
 #[allow(clippy::too_many_arguments)] // one link's full emission context

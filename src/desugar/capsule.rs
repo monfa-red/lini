@@ -10,10 +10,10 @@ use crate::error::{Code, Error};
 use crate::syntax::ast::{Link, Node};
 use std::collections::HashSet;
 
-/// A declaration hoisted out of a capsule endpoint. The caller lowers `node`
-/// through the one node path, then stamps `minted_id` onto the lowered box —
-/// the topic-minting pattern [SPEC 12]: minting *after* lowering keeps the
-/// reserved-prefix check honest for authored `lini-` ids.
+/// A declaration hoisted out of a capsule endpoint. The caller stamps
+/// `minted_id` onto `node` and lowers it through the one node path — riding the
+/// generated id **around** that call ([`super::gather`]), so the reserved-prefix
+/// check stays honest for authored `lini-` ids.
 pub(super) struct Hoisted {
     pub node: Node,
     pub minted_id: Option<String>,

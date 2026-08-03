@@ -22,7 +22,7 @@ use crate::resolve::{AttrMap, NodeKind, VarTable};
 use filters::FilterTable;
 pub(crate) use paints::lower as lower_paints;
 use rules::RuleSet;
-use values::{escape_xml, format_value, num};
+use values::{escape_xml, num};
 
 pub fn render(laid_out: &LaidOut, opts: &Options) -> String {
     let vb = &laid_out.viewbox;
@@ -57,7 +57,7 @@ pub fn render(laid_out: &LaidOut, opts: &Options) -> String {
     }
     body.push_str("  </g>\n");
 
-    if laid_out.links.is_empty() && laid_out.strays.is_empty() {
+    if laid_out.links.is_empty() && laid_out.strays.is_empty() && laid_out.junctions.is_empty() {
         body.push_str("  <g class=\"lini-links\"/>\n");
     } else {
         body.push_str("  <g class=\"lini-links\">\n");
@@ -95,6 +95,24 @@ pub fn render(laid_out: &LaidOut, opts: &Options) -> String {
         }
         for air in &laid_out.strays {
             links::render_stray(&mut body, air, &laid_out.vars, opts);
+        }
+        // The connection dots close the wiring group [SPEC 16.5]: they are the
+        // wires' own chrome, and a junction dot is drawn **over** the lines it
+        // marks. Ordinary nodes through the ordinary walk — their look is the
+        // one `.lini-junction` rule, reached through the same `.lini-links`
+        // ancestor a wire's descendant rules are.
+        for dot in &laid_out.junctions {
+            render_node(
+                &mut body,
+                dot,
+                2,
+                &["lini-links".to_string()],
+                &laid_out.vars,
+                &ruleset,
+                &filters,
+                opts,
+                &sink,
+            );
         }
         body.push_str("  </g>\n");
     }
@@ -153,23 +171,15 @@ pub fn render(laid_out: &LaidOut, opts: &Options) -> String {
     }
 
     // The backing rect paints the scene background over the whole viewBox
-    // [SPEC 13]; its fill comes from the `.lini-canvas` rule (`--lini-bg`), unless the
-    // root set an explicit `fill:`, which overrides it inline.
-    let canvas_style = match &laid_out.canvas_fill {
-        Some(fill) => format!(
-            r#" style="fill: {}""#,
-            format_value(fill, &laid_out.vars, opts)
-        ),
-        None => String::new(),
-    };
+    // [SPEC 13]; its whole fill — `--lini-bg`, or the root's own `fill:` — is
+    // stated by the `.lini-canvas` rule, so the rect carries no `style=`.
     writeln!(
         out,
-        r#"  <rect class="lini-canvas" x="{}" y="{}" width="{}" height="{}"{}/>"#,
+        r#"  <rect class="lini-canvas" x="{}" y="{}" width="{}" height="{}"/>"#,
         num(vb.x),
         num(vb.y),
         num(vb.w),
         num(vb.h),
-        canvas_style,
     )
     .unwrap();
 
@@ -456,11 +466,19 @@ mod tests {
     }
 
     #[test]
-    fn root_fill_overrides_the_canvas_inline() {
+    fn root_fill_states_the_canvas_rule_and_inlines_nothing() {
+        // The class-diff law [SPEC 18]: the plate's whole paint is its rule, so
+        // a root `fill:` (a schematic root's sheet wash included) replaces the
+        // rule's `--lini-bg` rather than overriding it on the element.
         let svg = svg_for("{ fill: #eef; }\n|box#x|\n");
         assert!(
-            svg.contains(r#"class="lini-canvas""#) && svg.contains(r##"style="fill: #eef""##),
-            "{svg}"
+            svg.contains(".lini .lini-canvas { fill: #eef; }"),
+            "the rule states it: {svg}"
+        );
+        assert!(
+            svg.contains(r#"<rect class="lini-canvas" x="#)
+                && !svg.contains(r##"style="fill: #eef""##),
+            "and the rect inlines nothing: {svg}"
         );
     }
 

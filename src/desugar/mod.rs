@@ -14,7 +14,10 @@ mod capsule;
 mod chrome;
 mod classes;
 mod drawing;
+mod gather;
 mod labels;
+mod labelwire;
+mod nest;
 mod page;
 pub(crate) mod pose;
 mod scale;
@@ -33,6 +36,10 @@ use crate::syntax::ast::{
     Child, Decl, File, Link, Node, Rule, SelUnit, Selector, StyleItem, Value,
 };
 use classes::{class_defs, is_lini_class, lini_class, merge_decls, worn_classes};
+pub(crate) use nest::{Nest, STATEMENT_ENGINES};
+use nest::{
+    is_drawing_body, is_schematic_body, root_layout, seals_drawing_scope, seals_schematic_scope,
+};
 use std::collections::{BTreeSet, HashMap};
 use tables::{
     column_count, distribute_cell_alignment, header_node, wrap_body_cells, wrap_header_row,
@@ -196,25 +203,29 @@ pub fn desugar(file: &File) -> Result<File, Error> {
     // ── Lower instances, then auto-create root boxes for undeclared link ids — counting
     //    messages inside any root-sequence frame, since a frame opens no scope and its
     //    endpoints resolve against the scene's participants [SPEC 13]. ──
-    let root_drawing = root_layout(&user_root) == Some("drawing");
+    let root_nest = Nest {
+        drawing: root_layout(&user_root) == Some("drawing"),
+        schematic: root_layout(&user_root) == Some("schematic"),
+    };
     let cx = Lower {
         types: &types,
         bodies: &bodies,
         rules: &element_rules,
     };
-    let mut instances = Vec::new();
-    // A schematic scope poses its satellites **before** its children lower
-    // [SPEC 16.1] — see `autopose::choose`; the root scope is one like any
-    // other.
-    let root_kids = autopose::choose(
+    // The scene's statements settle before any of them lower [SPEC 19] — label
+    // wires mint their tags, capsules hoist their declarations, and only then
+    // does the pose chooser turn the satellites it can now see (`gather`). The
+    // root scope is one like any other.
+    let root = gather::Scope::gather(
         &cx,
-        &file.instances,
-        &file.links,
-        root_layout(&user_root) == Some("schematic"),
-    );
-    for child in root_kids.iter() {
-        instances.push(lower_child(&cx, child, root_drawing)?);
-    }
+        file.instances.clone(),
+        file.links.clone(),
+        0,
+        root_nest,
+        root_nest.schematic,
+    )?;
+    let mut instances = root.lower(&cx)?;
+    let root_links = root.links;
     // A scene owned by a stand-alone `|mindmap|` seats it first [SPEC 8]: the
     // root decls become its generated tree scope (`layout: tree; direction:
     // bilateral; routing: natural`, authored decls winning), so the tree build
@@ -239,50 +250,35 @@ pub fn desugar(file: &File) -> Result<File, Error> {
             }
         }
     }
-    // Capsule hoisting [SPEC 9/19]: each root-link capsule becomes a
-    // declaration at its statement's position (span-seated at the capsule)
-    // and the endpoint is rewritten to the id — before auto-create, so the
-    // declared set includes the hoisted ids.
-    let mut root_links: Vec<Link> = file.links.clone();
-    {
-        let declared = scene::declared_ids(&instances);
-        for h in capsule::hoist(&mut root_links, &declared, root_drawing)? {
-            let mut lowered = lower_node(&cx, &h.node, root_drawing)?;
-            if let Some(id) = h.minted_id {
-                lowered.id = Some(id);
-            }
-            instances.push(Child::Box(lowered));
-        }
-    }
     // Display refs [SPEC 16.2]: parts read their id as the drawn ref;
     // anonymous ones mint prefix + N, per scope.
     schematic::mint_refs(&cx, &mut instances);
     // A drawing scope never auto-creates [SPEC 15]: an annotation must point at
     // real geometry, so an unknown endpoint stays unknown and errors at resolve.
-    if !root_drawing {
+    if !root_nest.drawing {
         let declared = scene::declared_ids(&instances);
         let mut root_msgs: Vec<&Link> = root_links.iter().collect();
         root_msgs.extend(gather_frame_messages(&instances));
-        for (id, span) in scene::auto_created_ids(&root_msgs, &declared) {
+        for (id, span) in scene::to_create(&root_msgs, &declared, root_nest.schematic)? {
             instances.push(Child::Box(lower_node(
                 &cx,
                 &scene::auto_box(&id, span),
-                false,
+                Nest::NONE,
             )?));
         }
     }
 
     // ── The scale fold [SPEC 15.1/18]: drawing scopes and pages gain their
     //    generated internal `px-per-unit:` from ratio × unit × density. ──
-    scale::fold(&mut instances, &mut user_root, root_drawing)?;
+    scale::fold(&mut instances, &mut user_root, root_nest.drawing)?;
 
     // ── Root links, lowered before the present walk: a carried `[ ]`
     //    annotation node [SPEC 15.9] wears its `.lini-*` chain like any child
     //    and its class defs must emit. ──
     let mut links = Vec::new();
     for w in root_links.iter().chain(&root_branch_links) {
-        for hop in labels::split_chain(w) {
-            links.push(labels::lower_link(&hop, &cx, root_drawing)?);
+        for hop in split_statement(w, root_nest) {
+            links.push(labels::lower_link(&hop, &cx, root_nest)?);
         }
     }
 
@@ -293,6 +289,17 @@ pub fn desugar(file: &File) -> Result<File, Error> {
     }
     for w in &links {
         mark_present_link(w, &mut present);
+    }
+    // The junction dot is generated at layout from the routed geometry
+    // [SPEC 16.5], so no source node ever wears `.lini-junction` — but its one
+    // rule must exist for the dots to paint through (and for `|junction| { … }`
+    // to reach them). A sheet's *parts* are what makes it live: a meet is only
+    // ever at a part's landing, so wherever a dot can appear, a part is present.
+    if present
+        .iter()
+        .any(|t| schematic::schematic_type(std::slice::from_ref(t)).is_some())
+    {
+        present.insert("junction".to_string());
     }
 
     // ── Assemble the new stylesheet (a canonical order, so re-desugar is stable):
@@ -381,13 +388,9 @@ fn gather_frame_messages(children: &[Child]) -> Vec<&Link> {
     out
 }
 
-/// `in_drawing`: whether this child sits in a drawing scope [SPEC 15] — the
-/// gate for the generated chrome. Class-detected, like frames: a container
-/// made a drawing only by an element rule is not seen here (the accepted
-/// stage-1 edge; resolve's gates still hold).
-fn lower_child(cx: &Lower, child: &Child, in_drawing: bool) -> Result<Child, Error> {
+fn lower_child(cx: &Lower, child: &Child, nest: Nest) -> Result<Child, Error> {
     match child {
-        Child::Box(n) => Ok(Child::Box(lower_node(cx, n, in_drawing)?)),
+        Child::Box(n) => Ok(Child::Box(lower_node(cx, n, nest)?)),
         Child::Text(t) => Ok(Child::Text(t.clone())),
     }
 }
@@ -400,18 +403,11 @@ fn decl(name: &str, values: Vec<Value>) -> Decl {
     }
 }
 
-fn lower_node(cx: &Lower, node: &Node, in_drawing: bool) -> Result<Node, Error> {
+fn lower_node(cx: &Lower, node: &Node, nest: Nest) -> Result<Node, Error> {
     let (types, bodies) = (cx.types, cx.bodies);
     let ty = node.ty.as_deref().unwrap_or("box");
     let info = types.resolve(ty, node.span)?;
     let kind = info.kind;
-
-    // The drawing scope [SPEC 15]: opened by a drawing node, carried through
-    // its parts and their features, sealed by a child that owns its own layout
-    // (a |row|, a |table|, a chart — it "lays out as one box", [SPEC 15.1]).
-    let is_drawing = is_drawing_body(&info.chain, &node.style);
-    let child_in_drawing =
-        is_drawing || (in_drawing && !seals_drawing_scope(&info.chain, &node.style));
 
     // Idempotency: a node already at a primitive type and wearing its `.lini-<kind>`
     // class is already lowered — keep its classes and type verbatim (re-prepending
@@ -435,6 +431,31 @@ fn lower_node(cx: &Lower, node: &Node, in_drawing: bool) -> Result<Node, Error> 
         .code(Code::RESERVED_ID));
     }
 
+    // The two nested scopes this body opens or inherits. A **lowered** node
+    // states its type as a class, not as its `ty` (`|block| .lini-schematic`),
+    // so the scope read walks that chain instead — otherwise a re-desugared
+    // sheet would answer `false` where the resolve-side gate answers `true`,
+    // and the two stages' laws would disagree on the compiler's own output.
+    let scope_chain = if already {
+        schematic::lowered_chain(node)
+    } else {
+        info.chain.clone()
+    };
+    // The drawing scope [SPEC 15]: opened by a drawing node, carried through
+    // its parts and their features, sealed by a child that owns its own layout
+    // (a |row|, a |table|, a chart — it "lays out as one box", [SPEC 15.1]).
+    let is_drawing = is_drawing_body(&info.chain, &node.style);
+    // The schematic scope [SPEC 16]: opened by any container the cascade makes
+    // one, and sealed one grain later than the drawing — a flow wrapper reads
+    // no statement of its own, so the laws reach through it; another engine
+    // that reads its own body's statements stops them dead.
+    let is_schematic = is_schematic_body(cx, &scope_chain, &node.style);
+    let child_nest = Nest {
+        drawing: is_drawing || (nest.drawing && !seals_drawing_scope(&info.chain, &node.style)),
+        schematic: is_schematic
+            || (nest.schematic && !seals_schematic_scope(cx, &scope_chain, &node.style)),
+    };
+
     let mut classes = if already {
         node.classes.clone()
     } else {
@@ -448,30 +469,39 @@ fn lower_node(cx: &Lower, node: &Node, in_drawing: bool) -> Result<Node, Error> 
         Some(kind.as_str().to_string())
     };
 
-    // Define bodies (base→derived) materialize ahead of the node's own children;
-    // an already-lowered node has no define in its chain, so this is a no-op there.
-    let mut children = Vec::new();
+    // This body's statements, gathered raw: the define bodies in the type chain
+    // (base→derived) ahead of the node's own children and links — an
+    // already-lowered node has no define in its chain, so that half is a no-op
+    // there. `gather` then mints, hoists, poses and lowers, in that order
+    // [SPEC 16.1/19].
+    let mut raw_kids: Vec<Child> = Vec::new();
+    let mut raw_links: Vec<Link> = Vec::new();
     if !already {
         for name in &info.chain {
-            if let Some((body, _)) = bodies.get(name) {
-                for c in body {
-                    children.push(lower_child(cx, c, child_in_drawing)?);
-                }
+            if let Some((body, body_links)) = bodies.get(name) {
+                raw_kids.extend(body.iter().cloned());
+                raw_links.extend(body_links.iter().cloned());
             }
         }
     }
-    // A schematic scope poses its satellites **before** its children lower
-    // [SPEC 16.1] — the pose is structural, so it is applied where the
-    // structure is built; see `autopose::choose`.
-    let kids = autopose::choose(
+    // Where this body's **own** statements begin — the gather hands the index
+    // back, because its landing step cuts a chain into hops and moves it.
+    let own_links_at = raw_links.len();
+    raw_kids.extend(node.children.iter().cloned());
+    raw_links.extend(node.links.iter().cloned());
+    // The gather takes both readings: the **carrier** (`child_nest`, which
+    // reaches) mints this scope's label wires, while the pose chooser turns
+    // satellites only when this very container is the schematic — placement
+    // never cascades [SPEC 16].
+    let scope = gather::Scope::gather(
         cx,
-        &node.children,
-        &node.links,
-        autopose::scope_is_schematic(cx, &info.chain, &node.style),
-    );
-    for c in kids.iter() {
-        children.push(lower_child(cx, c, child_in_drawing)?);
-    }
+        raw_kids,
+        raw_links,
+        own_links_at,
+        child_nest,
+        is_schematic,
+    )?;
+    let mut children = scope.lower(cx)?;
     // A schematic part [SPEC 16] lowers structurally here — rails, symbol
     // bodies, readouts — dispatched on the chain; Phase 4 adds placement.
     let sch = if already {
@@ -486,15 +516,21 @@ fn lower_node(cx: &Lower, node: &Node, in_drawing: bool) -> Result<Node, Error> 
             .into_iter()
             .enumerate()
         {
-            children.insert(i, Child::Box(lower_node(cx, &pin, false)?));
+            // A generated pin is inside the part, so inside the scope — but
+            // never in the drawing one (it grows no chrome of its own).
+            let pin_nest = Nest {
+                drawing: false,
+                schematic: child_nest.schematic,
+            };
+            children.insert(i, Child::Box(lower_node(cx, &pin, pin_nest)?));
         }
     }
     // The generated chrome [SPEC 15.7] — real children, so the cascade styles
     // or removes them. Only for a node in a drawing scope, and only on first
     // lowering (re-desugar keeps the ones already there).
-    if !already && in_drawing {
+    if !already && nest.drawing {
         for ch in drawing::chrome_children(node, kind, &info.chain) {
-            children.push(Child::Box(lower_node(cx, &ch, false)?));
+            children.push(Child::Box(lower_node(cx, &ch, Nest::NONE)?));
         }
     }
     // The sheet's furniture [SPEC 15.8]: `sheet:` desugars in place to
@@ -513,7 +549,7 @@ fn lower_node(cx: &Lower, node: &Node, in_drawing: bool) -> Result<Node, Error> 
     }
     if !already && is_page {
         for ch in page::chrome_children(page_style.as_deref().expect("a page"), node.span) {
-            children.push(Child::Box(lower_node(cx, &ch, false)?));
+            children.push(Child::Box(lower_node(cx, &ch, Nest::NONE)?));
         }
     }
     if is_page {
@@ -574,7 +610,7 @@ fn lower_node(cx: &Lower, node: &Node, in_drawing: bool) -> Result<Node, Error> 
     // ISO anatomy — thick ends, viewing arrows, the letter — fills from the
     // view's extent at layout, so mark it and layout intercepts it as a
     // placeholder (like the generated chrome types).
-    if in_drawing && info.chain.iter().any(|t| t == "plane") {
+    if nest.drawing && info.chain.iter().any(|t| t == "plane") {
         style.push(decl("chrome", vec![Value::Ident("plane".into())]));
     }
     // A `|title-block|`'s smart label is its `title` field [SPEC 15.8]: a
@@ -602,7 +638,7 @@ fn lower_node(cx: &Lower, node: &Node, in_drawing: bool) -> Result<Node, Error> 
             .into_iter()
             .enumerate()
         {
-            children.insert(i, Child::Box(lower_node(cx, &cell, false)?));
+            children.insert(i, Child::Box(lower_node(cx, &cell, Nest::NONE)?));
         }
     }
     let kept_label = labels::lower_smart(
@@ -651,37 +687,16 @@ fn lower_node(cx: &Lower, node: &Node, in_drawing: bool) -> Result<Node, Error> 
         }
     }
 
-    // Links: define-body links (base→derived) then the node's own — assembled
-    // raw first, so capsule endpoints hoist their declarations into this body
-    // [SPEC 9] before the hops lower; then each lowers as before (head label
-    // folded into the label list, auto-`along:` filled).
-    let mut raw_links: Vec<Link> = Vec::new();
-    if !already {
-        for name in &info.chain {
-            if let Some((_, body)) = bodies.get(name) {
-                raw_links.extend(body.iter().cloned());
-            }
-        }
-    }
-    let own_links_at = raw_links.len();
-    raw_links.extend(node.links.iter().cloned());
-    {
-        let declared = scene::declared_ids(&children);
-        for h in capsule::hoist(&mut raw_links, &declared, child_in_drawing)? {
-            let mut lowered = lower_node(cx, &h.node, child_in_drawing)?;
-            if let Some(id) = h.minted_id {
-                lowered.id = Some(id);
-            }
-            children.push(Child::Box(lowered));
-        }
-    }
-    // Display refs [SPEC 16.2], per scope — after the hoist so a capsule
+    // Display refs [SPEC 16.2], per scope — after the gather, so a capsule
     // part reads its declaration.
     schematic::mint_refs(cx, &mut children);
+    // The body's links, rewritten by the gather (capsules hoisted, label wires
+    // minted), each lowering as before: head label folded into the label list,
+    // auto-`along:` filled.
     let mut links = Vec::new();
-    for w in &raw_links {
-        for hop in labels::split_chain(w) {
-            links.push(labels::lower_link(&hop, cx, child_in_drawing)?);
+    for w in &scope.links {
+        for hop in split_statement(w, child_nest) {
+            links.push(labels::lower_link(&hop, cx, child_nest)?);
         }
     }
 
@@ -706,18 +721,19 @@ fn lower_node(cx: &Lower, node: &Node, in_drawing: bool) -> Result<Node, Error> 
     // frame. A frame (`loop`/`opt`/`alt`/`else`) opens no scope, so it never auto-creates —
     // its endpoints resolve against the enclosing sequence's participants [SPEC 13]. A
     // drawing body never auto-creates either [SPEC 15]: its links point at real geometry.
+    // A schematic scope does not decline but **refuses** — see [`scene::to_create`].
     if !already && !is_frame_classes(&classes) && !is_drawing_body(&info.chain, &node.style) {
         let declared = scene::declared_ids(&children);
         // Scope the message borrows of `children` so the auto-create push below is free.
         // The node's **own** links, post-hoist — define-body links stay out,
         // as before (their ids are the define's own affair).
         let to_create = {
-            let mut msgs: Vec<&Link> = raw_links[own_links_at..].iter().collect();
+            let mut msgs: Vec<&Link> = scope.own_links().iter().collect();
             msgs.extend(gather_frame_messages(&children));
-            scene::auto_created_ids(&msgs, &declared)
+            scene::to_create(&msgs, &declared, child_nest.schematic)?
         };
         for (auto_id, auto_span) in to_create {
-            let created = lower_node(cx, &scene::auto_box(&auto_id, auto_span), false)?;
+            let created = lower_node(cx, &scene::auto_box(&auto_id, auto_span), Nest::NONE)?;
             children.push(Child::Box(created));
         }
     }
@@ -815,48 +831,20 @@ fn mark_present_link(w: &Link, present: &mut BTreeSet<String>) {
     }
 }
 
-/// The `layout:` ident set on the root, if any — picks the root-engine defaults.
-/// A drawing scope, detected as frames are — by type chain (`|drawing|` or a
-/// define over it) or an explicit `layout: drawing` on the instance [SPEC 15].
-fn is_drawing_body(chain: &[String], style: &[Decl]) -> bool {
-    chain.iter().any(|t| t == "drawing") || root_layout(style) == Some("drawing")
-}
-
-/// Whether a node **seals** an enclosing drawing scope [SPEC 15.1]: it owns a
-/// layout (a flow wrapper, a grid, an engine) and arranges its interior as
-/// usual — its children are not the drawing's features. The layout-side twin
-/// is `layout::owns_layout` (attr-based, post-cascade).
-fn seals_drawing_scope(chain: &[String], style: &[Decl]) -> bool {
-    chain.iter().any(|t| {
-        matches!(
-            t.as_str(),
-            "row"
-                | "column"
-                | "grid"
-                | "table"
-                | "entity"
-                | "chart"
-                | "pie"
-                | "sequence"
-                | "schematic"
-        )
-    }) || style
-        .iter()
-        .any(|d| d.name == "layout" || d.name == "direction")
-}
-
-fn root_layout(user_root: &[Decl]) -> Option<&str> {
-    user_root
-        .iter()
-        .rev()
-        .find(|d| d.name == "layout")
-        .and_then(|d| match d.groups.as_slice() {
-            [group] => match group.as_slice() {
-                [Value::Ident(s)] => Some(s.as_str()),
-                _ => None,
-            },
-            _ => None,
-        })
+/// A statement, as the scope states its wires [SPEC 9/18] — `a -> b -> c` is
+/// exactly `a -> b; b -> c`, so an ordinary chain lowers as one link per hop.
+///
+/// **A schematic scope states its own** [SPEC 16.5]: a chain through a two-pin
+/// part is a *series circuit*, not two statements, so the equivalence does not
+/// hold there — `schematic::arity` has already cut the chain wherever it
+/// resolved that reading (writing the entry and exit pins), and what it left
+/// whole it left whole on purpose: only the chain itself still says what a
+/// landing it could not resolve means, and that has to survive printing.
+fn split_statement(w: &Link, nest: Nest) -> Vec<Link> {
+    if nest.schematic {
+        return vec![w.clone()];
+    }
+    labels::split_chain(w)
 }
 
 fn push_unique(v: &mut Vec<String>, name: &str) {

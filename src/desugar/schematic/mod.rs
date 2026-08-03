@@ -7,13 +7,18 @@
 //! look states once as a CSS rule ([SPEC 18]'s class-diff law); the Phase 4
 //! engine adds placement, never structure.
 
+pub(crate) mod arity;
 pub(crate) mod chain;
 mod family;
 mod pins;
 
+pub(crate) use arity::authored_terminal_ids;
 pub(crate) use chain::chains;
 use family::{LABEL_SYMBOLS, variant_names};
-pub(crate) use family::{Role, SchKind, part_glyph, part_pin_ids, role, sch_kind, terminal_facing};
+pub(crate) use family::{
+    PartNode, Role, SchKind, part_glyph, part_pin_ids, role, sch_kind, schematic_type,
+    terminal_facing, terminal_ids,
+};
 pub(super) use pins::{
     assemble_component, authored_side, expand_connector_pins, pin_sides, pins_of,
 };
@@ -99,14 +104,14 @@ fn readout(s: &str, pin: &str, dx: f64, dy: f64) -> Node {
 /// inline `style=` diff [SPEC 18]. Idempotent: the node round-trips as
 /// already-lowered with the order intact.
 fn lowered_chrome(cx: &Lower, node: &Node, class: &str) -> Result<Child, Error> {
-    let mut n = super::lower_node(cx, node, false)?;
+    let mut n = super::lower_node(cx, node, super::Nest::NONE)?;
     n.classes.insert(0, class.into());
     Ok(Child::Box(n))
 }
 
 /// Lower a generated node through the one node path (no chrome class).
 fn lowered(cx: &Lower, node: &Node) -> Result<Child, Error> {
-    Ok(Child::Box(super::lower_node(cx, node, false)?))
+    Ok(Child::Box(super::lower_node(cx, node, super::Nest::NONE)?))
 }
 
 /// A part's value readout [SPEC 16.2/16.3] — the smart label as chrome.
@@ -253,8 +258,10 @@ pub(super) fn label_body(
             classes.insert(0, "lini-tag-round".into());
             classes.insert(0, "lini-tag-outline".into());
         }
-        // The pointed flag ends (`left` / `right` / `both`) draw as the plain
-        // outline until Phase 5's marker-driven shapes land the tag path.
+        // **Deferred to Phase 6**: the pointed flag ends (`left` / `right` /
+        // `both`) are accepted, and the op's marker sets them, but the tag path
+        // that would draw the point does not exist — they render as the plain
+        // outline `round` already does.
         "left" | "right" | "both" => classes.insert(0, "lini-tag-outline".into()),
         other => {
             return Err(Error::at(

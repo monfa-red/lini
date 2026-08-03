@@ -53,6 +53,11 @@ pub(super) fn finish(
     scene_bbox: Bbox,
     routing: routing::Routing,
 ) -> Result<LaidOut, Error> {
+    // The schematic's connection dots [SPEC 16.5] are the one chrome read off
+    // the *drawn* wires, so they are generated here — the one seam every engine's
+    // routing passes through, root sheet and nested `|schematic|` alike. A scene
+    // that placed no part gets none, so this costs everyone else one walk.
+    let junctions = schematic::junctions(&nodes, &routing.links);
     // Viewbox = the whole drawn extent (scene bbox + link paths, labels, strays,
     // overlays) framed by the scene's `padding` on every side — the margin between
     // the diagram and the SVG edge.
@@ -61,7 +66,7 @@ pub(super) fn finish(
     // miss one that overflows; the canvas must still include every drawn node,
     // so take the true visual extent of the whole tree.
     let mut bbox = scene_bbox;
-    for n in &nodes {
+    for n in nodes.iter().chain(&junctions) {
         accumulate_extent(n, 0.0, 0.0, 0.0, &mut bbox);
     }
     let link_points = routing.links.iter().flat_map(|w| &w.path);
@@ -109,6 +114,7 @@ pub(super) fn finish(
         links: routing.links,
         link_report: routing.report,
         strays: routing.strays,
+        junctions,
         vars: program.vars.clone(),
         sheet: program.sheet.clone(),
         canvas_fill,
