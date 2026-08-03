@@ -107,8 +107,8 @@ pub const TEMPLATES: &[(&str, &str)] = &[
     // the net tag and its built-in defines, the junction dot, the connector /
     // amplifier presets, and the discrete family (the type is the ref family,
     // [SPEC 16.3]). All protected from define shadowing via this table
-    // [SPEC 23]. (`|schematic|` gains its `layout: schematic` bundle with the
-    // Phase 4 engine — until then it is a plain block scope.)
+    // [SPEC 23]. `|schematic|` is `|block|` + `layout: schematic` — the scope
+    // the engine dispatches on ([`crate::layout::schematic`]).
     ("schematic", "block"),
     ("component", "block"),
     ("pin", "block"),

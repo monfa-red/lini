@@ -61,7 +61,7 @@ pub(in crate::layout) fn layout_node(
     }
     let bbox = primitives::closed_bbox(inst, extent, own)?;
     let half = super::half_stroke(&inst.attrs);
-    place_pinned(&mut children, bbox.inflate(-half))?;
+    anchors::place_pinned(&mut children, bbox.inflate(-half))?;
     let mut placed = prim::container(inst, bbox, children);
     // The recentre moved the datum off the node's local zero — record where
     // it landed, so `align/justify: origin` can line views up datum-to-datum
@@ -76,7 +76,7 @@ pub(in crate::layout) fn layout_root(program: &Program) -> Result<(Vec<PlacedNod
     let own = effective_scale(&program.scene.attrs, 1.0, Span::empty())?;
     let mut children = lay_out(&program.scene.nodes, "", program, own, Span::empty(), true)?;
     let extent = flow_extent(&children);
-    place_pinned(&mut children, extent)?;
+    anchors::place_pinned(&mut children, extent)?;
     Ok((children, extent))
 }
 
@@ -156,25 +156,6 @@ fn ratio_of(attrs: &crate::resolve::AttrMap) -> f64 {
 /// parent — the core law; the canvas still includes them via `finish`).
 fn flow_extent(kids: &[PlacedNode]) -> Bbox {
     Bbox::extent_of(kids, |k| !anchors::is_pinned(&k.attrs))
-}
-
-/// Pin sheet chrome onto the finished box — the title `|footnote|` under the
-/// view [SPEC 15.8] — flush per the core pin law, `translate:` after. A pinned
-/// overlay's nudge is chrome **anatomy** (the title's 17 px gap), sheet-space
-/// like every drafting constant — never the view scale [SPEC 15.1].
-fn place_pinned(kids: &mut [PlacedNode], anchor_box: Bbox) -> Result<(), Error> {
-    for k in kids.iter_mut().filter(|k| anchors::is_pinned(&k.attrs)) {
-        if let Some(pin) = anchors::read_pin(&k.attrs, k.span)? {
-            let (cx, cy) = pin.target(anchor_box, k.bbox);
-            k.cx = cx;
-            k.cy = cy;
-        }
-        if let Some((dx, dy)) = anchors::translate(&k.attrs, k.span)? {
-            k.cx += dx;
-            k.cy += dy;
-        }
-    }
-    Ok(())
 }
 
 #[cfg(test)]

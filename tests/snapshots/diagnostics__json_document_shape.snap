@@ -50,7 +50,7 @@ expression: json(src)
       "code": "V006",
       "family": "off-grid-placement",
       "severity": "error",
-      "message": "'cell' places a grid child — this box sits in a 'layout: flow'",
+      "message": "'cell' places a grid or schematic child — this box sits in a 'layout: flow'",
       "span": {
         "start": 55,
         "end": 62,

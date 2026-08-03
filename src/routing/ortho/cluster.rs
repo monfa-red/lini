@@ -127,13 +127,9 @@ pub(super) fn merge_fans(items: &mut Vec<Item>, chains: &[Option<Chain>]) {
                 m.span = (m.span.0.min(item.span.0), m.span.1.max(item.span.1));
                 m.clamp = (m.clamp.0.max(item.clamp.0), m.clamp.1.min(item.clamp.1));
                 m.window = match (m.window, item.window) {
-                    (Some(a), Some(b)) => Some((a.0.max(b.0), a.1.min(b.1))),
+                    (Some(a), Some(b)) => Some(meet(a, b)),
                     (w, None) | (None, w) => w,
                 };
-                debug_assert!(
-                    m.window.is_none_or(|w| w.0 <= w.1),
-                    "fan windows must intersect — conflicting fixed ports stray upstream"
-                );
                 m.link = m.link.min(item.link);
                 m.members.extend(item.members);
                 for l in item.landings {
@@ -146,6 +142,33 @@ pub(super) fn merge_fans(items: &mut Vec<Item>, chains: &[Option<Chain>]) {
         }
     }
     *items = std::mem::take(&mut merged);
+}
+
+/// Where two fan siblings' windows agree — their intersection, and the
+/// **first** of them when they do not meet.
+///
+/// They usually do: siblings share a port, so an end run of each carries the
+/// same side's window. Two things break that, and neither is a bug:
+///
+/// - a **single-run** sibling carries the pair of *its own* two ends' windows
+///   ([`super::place`]'s `chain_prefs`), so a fan of two straight legs to far
+///   ends at opposite extremes offers two disjoint slices of the shared side;
+/// - a free window is clipped per link by the blockers that link's punch
+///   crosses ([`super::entry`]), and a blocker splitting the side keeps the
+///   wider shore — which can be a different shore for each sibling, since a
+///   link's own endpoints are passable to it alone.
+///
+/// Only a **fixed** port makes the intersection a guarantee: it collapses the
+/// window to its point, and a fan whose shared end carries two different fixed
+/// ports strays whole before it ever reaches placement (ROUTING.md Fixed
+/// ports). So an empty meet is a real layout, not a broken invariant — and the
+/// merged item still owes the ladder one valid interval. The first window
+/// stands, in item order, which is the same repair `place::law_range` and
+/// `place::bound` make when a tightening inverts: keep the bound you had, let
+/// the later leg jog to reach the shared landing.
+fn meet(a: (f64, f64), b: (f64, f64)) -> (f64, f64) {
+    let both = (a.0.max(b.0), a.1.min(b.1));
+    if both.0 <= both.1 { both } else { a }
 }
 
 /// The fan group of an **end** run, if any — interior runs never merge.

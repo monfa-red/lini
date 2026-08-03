@@ -1,8 +1,14 @@
-//! Bounding box of an SVG `<path>` `d` string. `|path|` draws in native
-//! coordinates [SPEC 7], so to size it in flow we walk the command stream and
-//! accumulate a tight extent — every on-curve point, the analytic extrema of
-//! each bézier, and sampled points along each elliptical arc. Layout only;
-//! rendering emits the raw `d` untouched.
+//! SVG `<path>` `d` data — the one command-stream reader the compiler owns.
+//! [`extent_points`] measures a path (`|path|` draws in native coordinates
+//! [SPEC 7], so to size it in flow we walk the stream and accumulate a tight
+//! extent — every on-curve point, the analytic extrema of each bézier, and
+//! sampled points along each elliptical arc); [`rotated`] turns one a quarter
+//! turn at a time (a schematic part's re-laid symbol, [SPEC 16.1]). Both ride
+//! the one [`Scanner`]; rendering emits the raw `d` untouched.
+
+mod rotate;
+
+pub(crate) use rotate::{point, rotated};
 
 type P = (f64, f64);
 

@@ -300,7 +300,7 @@
     },
     "value-keyword": {
       "comment": "Enum value idents + the layout names (generated tail).",
-      "match": "(?<![\\w-])(flow|row|column|radial|bilateral|start|center|end|stretch|evenly|between|around|rows|columns|all|true|false|none|auto|solid|dashed|dotted|wavy|arrow|dot|circle|crow|many|datum|one|exactly-one|zero-or-one|one-or-many|zero-or-many|outlined|filled|rounded|sharp|log|linear|hover|always|top|bottom|left|right|over|chart|grid|pie|sequence|tree)(?![\\w-])",
+      "match": "(?<![\\w-])(flow|row|column|radial|bilateral|start|center|end|stretch|evenly|between|around|rows|columns|all|true|false|none|auto|solid|dashed|dotted|wavy|arrow|dot|circle|crow|many|datum|one|exactly-one|zero-or-one|one-or-many|zero-or-many|outlined|filled|rounded|sharp|log|linear|hover|always|top|bottom|left|right|over|chart|grid|pie|schematic|sequence|tree)(?![\\w-])",
       "name": "support.constant.lini"
     },
     "color-name": {

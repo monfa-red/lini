@@ -277,12 +277,23 @@ fn track_sizes(
     sizes
 }
 
-fn cumulative(sizes: &[f64], gap: f64) -> Vec<f64> {
+/// Track offsets: the cumulative start of each track plus one entry past the
+/// end, each track separated by `gap`. Shared with the schematic engine's own
+/// ordinal track list [SPEC 16.1].
+pub(super) fn cumulative(sizes: &[f64], gap: f64) -> Vec<f64> {
+    cumulative_gaps(sizes, |_| gap)
+}
+
+/// The same offsets with the gap **after each track** stated one at a time —
+/// what a schematic's tracks need ([`super::schematic`]): a chain distributed
+/// between two anchors lives in the space between their tracks, so that one gap
+/// parts further while the rest keep the scope's own.
+pub(super) fn cumulative_gaps(sizes: &[f64], gap: impl Fn(usize) -> f64) -> Vec<f64> {
     let mut out = Vec::with_capacity(sizes.len() + 1);
     let mut acc = 0.0;
     out.push(acc);
-    for s in sizes {
-        acc += s + gap;
+    for (i, s) in sizes.iter().enumerate() {
+        acc += s + gap(i);
         out.push(acc);
     }
     out
@@ -463,7 +474,9 @@ impl Occupancy {
     }
 }
 
-fn read_cell(attrs: &AttrMap, span: Span) -> Result<Option<(usize, usize)>, Error> {
+/// An explicit `cell: c r`, 1-indexed [SPEC 12] — shape and range checked.
+/// Shared with the schematic engine, whose ordinals read the same way.
+pub(super) fn read_cell(attrs: &AttrMap, span: Span) -> Result<Option<(usize, usize)>, Error> {
     match attrs.get("cell") {
         None => Ok(None),
         Some(v) => {

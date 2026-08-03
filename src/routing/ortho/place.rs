@@ -454,6 +454,45 @@ mod tests {
     }
 
     #[test]
+    fn a_fan_whose_legs_windows_cannot_meet_still_places() {
+        // [ROUTING.md step 5] `cluster::merge_fans` intersects fan siblings'
+        // port windows, and the intersection can be **empty** without anything
+        // being wrong: a straight leg carries the pair of its own two ends'
+        // windows, so a tall node fanning to two far nodes at opposite
+        // extremes offers two disjoint slices of the one shared side. Only a
+        // fixed port guarantees the meet (a fan over two different ones strays
+        // whole, upstream); a free window never did. The merged item must
+        // still hand the ladder one valid interval — the first window — rather
+        // than an inverted one no corridor can satisfy.
+        let a = Rect::new(20.0, 10.0, 40.0, 90.0);
+        let (top, bot) = (
+            Rect::new(160.0, 10.0, 180.0, 30.0),
+            Rect::new(160.0, 70.0, 180.0, 90.0),
+        );
+        let w = world(
+            Rect::new(0.0, 0.0, 200.0, 100.0),
+            &[a.inflate(C), top.inflate(C), bot.inflate(C)],
+        );
+        let leg = |link: usize, far: Rect, y: f64| {
+            let mut chain = straight(link, a, far, h_chan(&w, 100.0, y));
+            chain.ends[0].fan = Some(0);
+            Some(chain)
+        };
+        // Windows: a's side is (18, 82); the two far sides (18, 22) and
+        // (78, 82) — disjoint, so the legs share no lawful ordinate.
+        let mut chains = vec![leg(0, top, 20.0), leg(1, bot, 80.0)];
+        place(&[w], &mut chains, C);
+        let ords: Vec<f64> = chains
+            .iter()
+            .map(|c| c.as_ref().unwrap().runs[0].ord.unwrap())
+            .collect();
+        assert!(
+            ords.iter().all(|o| (18.0..=22.0).contains(o)),
+            "the first leg's window stands for the merged fan: {ords:?}"
+        );
+    }
+
+    #[test]
     fn a_bundle_ladders_centred_on_the_shared_centre() {
         let (w, a, b) = facing();
         let chan = h_chan(&w, 100.0, 50.0);

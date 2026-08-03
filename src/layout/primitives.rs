@@ -71,7 +71,7 @@ pub fn leaf_bbox(inst: &ResolvedInst, scale: f64) -> Result<Bbox, Error> {
                     Error::at(inst.span, "'|path|' requires 'path'").code(Code::MISSING_REQUIRED)
                 );
             };
-            let pts = super::path_bbox::extent_points(d);
+            let pts = crate::path_data::extent_points(d);
             if pts.is_empty() {
                 return Ok(Bbox::empty());
             }

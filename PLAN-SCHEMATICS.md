@@ -792,7 +792,10 @@ scope's *link semantics* arrive in Phase 5.
   `resolve/program/link_scope.rs:127-165`) or a scope-chain predicate;
   decide the carrier in Phase 5, but build `is_schematic_scope` here to
   answer "nearest schematic ancestor" either way. Test the boundary.
-- **Anchors**: 3+-pin parts and anything with `cell:`/`translate:` —
+- **Anchors**: 3+-pin parts and anything with `cell:` (**corrected in
+  execution** — SPEC 16.1's body sentence is normative: `cell:` promotes,
+  `translate:` only nudges from the seat; the role table's
+  "`cell:`/`translate:`" is its loose summary) —
   default one row, declaration order; `columns:` wraps; `cell:` with
   ordinal collapsing indices via the engine's **own track list** (the
   settled decision — grid's placement helpers reused, grid's semantics
@@ -830,27 +833,127 @@ scope's *link semantics* arrive in Phase 5.
 `src/ledger/*`.
 
 **Tasks**
-- [ ] Engine dispatch + root defaults + `is_schematic_scope`; sweep the 29
+- [x] Engine dispatch + root defaults + `is_schematic_scope`; sweep the 29
       predicate call sites + near-name family; `read_layout_mode` message +
       snapshot updated.
-- [ ] Anchor tracks: one-row default, `columns:`, ordinal `cell:` (+
+- [x] Anchor tracks: one-row default, `columns:`, ordinal `cell:` (+
       errors), determinism tests; `container_layout` arm.
-- [ ] Stacking-core extraction (both engines green afterwards — drawing's
+- [x] Stacking-core extraction (both engines green afterwards — drawing's
       1206-line annotate tests are the regression net).
-- [ ] Satellite seat pass (one-end, two-end, no-end chains); stacking
+- [x] Satellite seat pass (one-end, two-end, no-end chains); stacking
       order; cluster extents.
-- [ ] Auto-pose + `rotate:` 90° lowering (pins re-side; upright text);
+- [x] Auto-pose + `rotate:` 90° lowering (pins re-side; upright text);
       non-90° error.
-- [ ] Pins/labels → fixed ports; `:side`-on-terminal errors.
-- [ ] Nested `|row|` boundary test (places its own children).
-- [ ] Layout tests in the `tree.rs`/`drawing/engine/tests.rs` style; a
+- [x] Pins/labels → fixed ports; `:side`-on-terminal errors.
+- [x] Nested `|row|` boundary test (places its own children).
+- [x] Layout tests in the `tree.rs`/`drawing/engine/tests.rs` style; a
       minimal end-to-end sample compiles and routes; laws sweep green;
       visual PNG check.
-- [ ] `cargo fmt && cargo test && cargo clippy` green.
+- [x] `cargo fmt && cargo test && cargo clippy` green.
 
 ### Execution log
 
+- 2026-07-31/08-03 — Phase 4 executed (branch `worktree-schematic-engine`,
+  ff25fd7 → b16c78a + close-out, 19 commits) as seven reviewed tasks, each
+  with an adversarial task review and scoped re-review, then a whole-branch
+  final review + one fix wave. Decisions and surprises:
+  - **Engine shape as planned**: `layout/schematic/{mod,place,seat,hints,
+    terminal,ports}.rs` + tests split three ways; tree-style root intercept
+    before the generic loop; dispatch in `layout_inst`; 29-site predicate
+    sweep executed with per-site rationale (task-1 report). `read_layout_mode`
+    message now names the six engines (fix wave M1).
+  - **Stacking core**: the smaller primitive, not `Rows` whole —
+    `layout/stack.rs` (`Stack`/`SeatLine`/`Band`) + `layout/geom.rs`
+    (`P`/`Frame`/`project`), drawing keeps extent/paint/away wording;
+    `path_bbox.rs` → `path_data/` with an exact quarter-turn shared by
+    desugar and layout.
+  - **Tracks**: engine-own ordinal list (sort+dedup collapse, binary-search
+    index); grid's `cumulative`/`read_cell` reused via visibility only —
+    grid semantics untouched. `cumulative_gaps` added by the fix wave so
+    spanning chains size the space between their anchors' tracks (C2).
+  - **Role law adjudicated**: `cell:` promotes a satellite to an anchor;
+    `translate:` only nudges (SPEC 16.1 body sentence normative — reviewer-
+    adjudicated; the design bullet above is corrected). One `family::role`
+    with three readers; one `chain::placed_ends` filter for pose chooser,
+    seat pass, and hints (fix wave C1 closed the third divergent reader).
+  - **Rotation at desugar**: `desugar/pose.rs` (`Pose`, exact quarter-turns,
+    swap-and-negate — byte-stable); pins re-side via the reading-vector flip
+    law; texts stay upright structurally; landed `side:` rewritten onto the
+    pin; pin `translate:` slide reads the same cascade slice the pose reads
+    (R017 schematic-pose, R018 pin-slide). **Auto-pose decides at desugar**
+    (Program is immutable at layout — no second applier can exist):
+    `autopose::choose` writes `rotate:` before lowering through the one
+    take/apply path; `Pose::ALL` is the tie-break; byte-equality with an
+    authored `rotate:` is test-pinned.
+  - **Seat pass order as planned**: classify → seat pin-relative (grow by
+    the terminator's connection geometry through `Stack`) → cluster extents
+    → tracks (+ spanning demands) → place anchors → nudge anchors → 
+    absolutize satellites → satellites' own nudge → flow fallback +
+    Y007-named warnings.
+  - **Fixed ports**: ports computed once per part in the scene walk
+    (`scene/parts.rs` bridge; obstacle folding = descendant paths alias the
+    part's rect; stubs/chrome extend the frame) — bit-exact by construction,
+    selected not recomputed per wire; `request::fixed` consumes them,
+    Phase 1's injection hook untouched. Terminal law (`:side` errors) keys
+    on *scope* + address, not type (fix wave I2). Self-loop on one pin =
+    the existing ONE_SIDE_LOOP stray, test-pinned.
+  - **Two SPEC-side corrections landed**: `label-seat` 10 → **20**
+    (SPEC 10.5 edited — a seat is a routing corridor; free width is
+    `gap − 2 × clearance`, so 10 at clearance 8 could never route; 20 is
+    the one unjustified constant moved). `excuse.rs` fan-sibling contention
+    exemption removed (monotonically permissive; trunk still guarded by
+    `separation`'s fan_pair; both directions pinned — a still-breaching
+    synthetic case and the actually-flipped EXPECTED-EXCUSED case with its
+    measured cost).
+  - **Pre-existing Phase 1 defect fixed en route** (found by the final
+    review "beyond the plan"): `cluster.rs` `merge_fans` debug_assert
+    ("fan windows must intersect") was over-asserted for free-window fans —
+    replaced by a total merge (valid intervals, deterministic first-window
+    order); no surface repro existed (1500+ scene sweep) but the mutation
+    test pins it.
+  - `samples/schematic.lini` (root sheet: LDO with a `rotate: 180` header,
+    auto-posed power flag/cap/grounds, capsule ground, net-name wire
+    labels) — fmt-idempotent, `--strict` clean, in the desugar fixed-point
+    sweep and the laws-at-every-clearance sweep; visual PNG verified light
+    + dark by two independent agents. `label_body`/`symbol_body` glyph
+    seating unified (`seat_glyph`, glyph ahead of authored text — the
+    span-order transparency bug).
+  - Suite grew 1117 → 1254; insta run log (`.pending-snap`) untracked and
+    gitignored.
+
 ### Carry-over notes
+
+- **Phase 5 must re-order hoist-then-pose**: `autopose::choose` runs before
+  `capsule::hoist`, so capsule-hoisted satellites (`u1.a - |gnd|` — SPEC 16's
+  own idiom) and define-body links/children are never auto-posed; the
+  sample's capsule ground is right only because a bottom pin suits the
+  default pose. The autopose module doc names the gaps precisely.
+- **Cross-scope wires into a nested sheet don't see pins**: the terminal/
+  fixed-port gate keys on the *wire's* scope (fix wave I2); a root wire into
+  a nested schematic lands on the part's box (pre-fix it strayed). Phase 5's
+  link-law carrier (`is_schematic_scope` is built and tested for it) should
+  settle cross-scope semantics deliberately.
+- **A nested `|schematic|` node's interior has no routing margin** — wires
+  that must leave the parts' bbox stray; root sheets are fine. Phase 5/6:
+  give the scope's container a padding/clearance answer.
+- **Seat-model residuals for Phase 5/6**: same-pin chains stack collinearly
+  (a decoupling cap sits behind a power flag); spanning chains still don't
+  pack against same-pin stacks; a third placed end on one chain warns (Y007)
+  and drops; vertical spans between stacked components can still stray at
+  defaults (wants the router's own diagnosis); `Seats::cluster` measures raw
+  bbox while grow/step measure `drawn()` — unify the extent notion.
+- **Phase 5 gate reminders**: schematic types outside the scope still render
+  (Phase 3's deliberate behaviour — the `layout/mod.rs` family arm is
+  Phase 5's); `- u1` on a component gets NO fixed port (not "first pin") —
+  arity work builds on that; `pin:`+`cell:` silently drops the cell (Y005 in
+  hand); junction chrome reads routed geometry; `corner-radius` row exists
+  unconsumed (`radius_cap`).
+- **Perf note for Phase 6**: the router is superlinear on sheet size
+  (10/20/40 parts → 0.24/1.98/7.4 s release); the hero sample will feel it —
+  budget a profiling pass. Debug-build sweeps of big sheets are slow.
+- Oversized files still over the ~500 rule: `desugar/mod.rs` ~866,
+  `validate.rs` 798, `layout/mod.rs` 629, `ledger/defaults.rs` 820,
+  `ledger/properties/mod.rs` 900 — split when a phase next grows them.
 
 ---
 

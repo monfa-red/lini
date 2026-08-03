@@ -6,7 +6,7 @@
 //! compound anchor names and no numeric coordinate property: a corner falls out
 //! of the two-word value, and exact coords are `pin: center` + `translate: x y`.
 
-use super::ir::Bbox;
+use super::ir::{Bbox, PlacedNode};
 use super::values::as_pair;
 use crate::error::Error;
 use crate::resolve::{AttrMap, ResolvedValue};
@@ -105,6 +105,28 @@ pub fn child_role(attrs: &AttrMap, span: Span) -> Result<Role, Error> {
         None => Role::Flow,
         Some(_) => Role::Pinned,
     })
+}
+
+/// Seat an engine scope's out-of-flow overlays onto `anchor_box` [SPEC 5]: each
+/// pinned child lands flush on its named anchor point, then takes its own
+/// `translate:` nudge. The scope never grows for them (the caller sizes to its
+/// flow content; `finish` still includes the overlay in the canvas), and the
+/// nudge is chrome **anatomy** — sheet-space, never a view scale [SPEC 15.1].
+/// The one seat for every engine that arranges its own children: a drawing's
+/// title footnote, a schematic's sheet notes.
+pub fn place_pinned(kids: &mut [PlacedNode], anchor_box: Bbox) -> Result<(), Error> {
+    for k in kids.iter_mut().filter(|k| is_pinned(&k.attrs)) {
+        if let Some(pin) = read_pin(&k.attrs, k.span)? {
+            let (cx, cy) = pin.target(anchor_box, k.bbox);
+            k.cx = cx;
+            k.cy = cy;
+        }
+        if let Some((dx, dy)) = translate(&k.attrs, k.span)? {
+            k.cx += dx;
+            k.cy += dy;
+        }
+    }
+    Ok(())
 }
 
 /// `translate: x y` — a post-placement shift of the node, or `None` if unset.

@@ -91,7 +91,7 @@ Generated from the property ledger by `cargo xtask gen-schema` — **do not edit
 
 ## Layout engines
 
-`flow` `grid` `sequence` `chart` `tree` `pie`
+`flow` `grid` `sequence` `chart` `tree` `pie` `schematic`
 
 ## Roles
 
@@ -157,12 +157,12 @@ Shape is `form:kind` (see `enums` in the JSON). Flags: `text` valid on a bare te
 | `break` | \|sketch\| | `list:any` | `none` | — | — |
 | `layout` | universal | `one:ident` | `bundles` | — | — |
 | `direction` | flow (layout), chart (layout), tree (layout) | `one:ident` | `engine` | — | — |
-| `gap` | flow (layout), grid (layout), sequence (layout), chart (layout), pie (layout), tree (layout), mate (role) | `one:number` | `bundles` | — | — |
+| `gap` | flow (layout), grid (layout), sequence (layout), chart (layout), pie (layout), tree (layout), schematic (layout), mate (role) | `one:number` | `bundles` | — | — |
 | `align` | flow (layout), grid (layout) | `list:ident` | `bundles` | — | — |
 | `justify` | flow (layout), grid (layout) | `list:ident` | `bundles` | — | — |
-| `columns` | grid (layout) | `list:track` | `bundles` | — | — |
+| `columns` | grid (layout), schematic (layout) | `list:track` | `bundles` | — | — |
 | `rows` | grid (layout) | `list:track` | `none` | — | — |
-| `cell` | grid (layout) | `one:number` | `none` | — | hard-gate |
+| `cell` | grid (layout), schematic (layout) | `one:number` | `none` | — | hard-gate |
 | `span` | grid (layout), \|band\| | `one:number` | `none` | — | hard-gate |
 | `data` | series (role) | `list:number` | `none` | — | — |
 | `fn` | series (role) | `list:any` | `none` | — | — |

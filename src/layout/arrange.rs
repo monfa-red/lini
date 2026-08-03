@@ -227,12 +227,27 @@ fn read_layout_mode(attrs: &crate::resolve::AttrMap, span: Span) -> Result<Layou
                     "'layout: {dir}' is not a layout — flow is the default; set 'direction: {dir}'"
                 ),
             )),
+            // A chart owns its whole subtree, so it is intercepted in
+            // `layout_inst` — but the **scene root** never passes through
+            // there, and a root `{ layout: chart }` lands here instead. Say so
+            // rather than pretending the name is unknown.
+            engine @ ("chart" | "pie") => Err(Error::at(
+                span,
+                format!(
+                    "'layout: {engine}' belongs to a '|{engine}|' node — a scene root cannot be one"
+                ),
+            )),
             other => Err(Error::at(
                 span,
-                format!("unknown layout '{other}' — expected flow or grid"),
+                format!(
+                    "unknown layout '{other}' — expected flow, grid, tree, sequence, drawing or schematic"
+                ),
             )),
         },
-        Some(_) => Err(Error::at(span, "'layout' expects flow or grid")),
+        Some(_) => Err(Error::at(
+            span,
+            "'layout' expects an engine name — flow, grid, tree, sequence, drawing or schematic",
+        )),
     }
 }
 

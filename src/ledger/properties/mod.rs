@@ -407,6 +407,7 @@ pub static PROPERTIES: &[Property] = &[
             Layout("chart"),
             Layout("pie"),
             Layout("tree"),
+            Layout("schematic"),
             Role("mate"),
         ],
         One(Kind::Number),
@@ -427,7 +428,15 @@ pub static PROPERTIES: &[Property] = &[
         Bundles,
         No,
     ),
-    row("columns", &[Layout("grid")], List(Kind::Track), Bundles, No),
+    // A grid's `columns` is a track list; a schematic's is the wrap count of
+    // its own ordinal track grid [SPEC 16.1] — one property, two engines.
+    row(
+        "columns",
+        &[Layout("grid"), Layout("schematic")],
+        List(Kind::Track),
+        Bundles,
+        No,
+    ),
     row(
         "rows",
         &[Layout("grid")],
@@ -437,9 +446,11 @@ pub static PROPERTIES: &[Property] = &[
     ),
     // `cell`/`span` hard-gate off a grid [SPEC 12/16, decision 3] — off-grid is
     // an error, not silently inert (the `span`-on-a-`|band|` exception aside).
+    // `cell` also places a schematic anchor [SPEC 16.1]; `span` does not — the
+    // ordinal tracks have no spans.
     row(
         "cell",
-        &[Layout("grid")],
+        &[Layout("grid"), Layout("schematic")],
         One(Kind::Number),
         DefaultRef::None,
         No,

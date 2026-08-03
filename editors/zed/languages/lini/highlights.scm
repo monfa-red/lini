@@ -34,7 +34,7 @@
 
 ;; Enum value idents + layout names.
 ((value_ident) @constant.builtin
-  (#match? @constant.builtin "^(flow|row|column|radial|bilateral|start|center|end|stretch|evenly|between|around|rows|columns|all|true|false|none|auto|solid|dashed|dotted|wavy|arrow|dot|circle|crow|many|datum|one|exactly-one|zero-or-one|one-or-many|zero-or-many|outlined|filled|rounded|sharp|log|linear|hover|always|top|bottom|left|right|over|chart|grid|pie|sequence|tree)$"))
+  (#match? @constant.builtin "^(flow|row|column|radial|bilateral|start|center|end|stretch|evenly|between|around|rows|columns|all|true|false|none|auto|solid|dashed|dotted|wavy|arrow|dot|circle|crow|many|datum|one|exactly-one|zero-or-one|one-or-many|zero-or-many|outlined|filled|rounded|sharp|log|linear|hover|always|top|bottom|left|right|over|chart|grid|pie|schematic|sequence|tree)$"))
 
 ;; Colour names.
 ((value_ident) @constant.builtin

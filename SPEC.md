@@ -1402,7 +1402,7 @@ center-mark-overhang 4    drawing link stroke-width 1   drawing link font-size 1
 The schematic chrome ([SPEC 16](#16-schematic)) — sheet-space:
 
 ```
-pin-pitch 20    pin-stub 12    label-seat 10    junction 3 (radius)
+pin-pitch 20    pin-stub 12    label-seat 20 (a seat is a routing corridor — stays > 2 × clearance)    junction 3 (radius)
 schematic clearance 8 (the scope's link default — pin-pitch stays ≥ min pitch)
 schematic link stroke-width 1.5    corner-radius 0 (the scope's link default)
 ```

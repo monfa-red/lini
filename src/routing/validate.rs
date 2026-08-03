@@ -865,4 +865,79 @@ mod tests {
         let out = check(&nodes, &[w1, w2], &[]);
         assert_eq!(out.len(), 0, "{out:?}");
     }
+
+    #[test]
+    fn pinned_fan_legs_that_cannot_spread_are_excused() {
+        // The case the fan-sibling relaxation actually flipped [Phase 4.6]:
+        // the branch's own sheet fans one pin onto two pins of a header, and
+        // the legs sit a **pin pitch** apart — 20 — which at clearance 24 is a
+        // sub-clearance hug. They cannot spread: a fixed port grants no
+        // freedom (ROUTING.md Fixed ports). While fan siblings skipped
+        // contention edges the pair was unconnected in the feasibility walk,
+        // so each leg "fitted" at its own pinned ordinate and the group read
+        // as a breach; sharing the trunk is what made them siblings, and past
+        // the split they owe pitch like any wires. EXPECTED-EXCUSED.
+        //
+        // The measured cost: this excuses a drawn gap of 20 where the law
+        // charges 24 — the pin pitch itself — and only where **both** ends are
+        // pinned. The same fan with free ends is still a breach, below.
+        let nodes = vec![
+            sized("a", 0.0, 0.0, 40.0, 100.0),
+            sized("b", 200.0, 0.0, 40.0, 100.0),
+        ];
+        let fan = |split: bool| {
+            let path = if split {
+                vec![(20.0, 0.0), (100.0, 0.0), (100.0, 20.0), (180.0, 20.0)]
+            } else {
+                vec![(20.0, 0.0), (180.0, 0.0)]
+            };
+            let mut w = link("a", "b", path);
+            w.attrs
+                .insert("clearance", crate::resolve::ResolvedValue::Number(24.0));
+            w.fan_from = Some(0);
+            w
+        };
+        let (mut w1, mut w2) = (fan(false), fan(true));
+        // Free ends: either leg had room to spread on b's 100-tall side.
+        let out = check(&nodes, &[w1.clone(), w2.clone()], &[]);
+        assert!(rules(&out).contains(&Rule::Separation), "{out:?}");
+        // Pinned to two ports a pin pitch apart, neither can move.
+        w1.port_from = Some((Side::Right, 0.0));
+        w1.port_to = Some((Side::Left, 0.0));
+        w2.port_from = Some((Side::Right, 0.0));
+        w2.port_to = Some((Side::Left, 20.0));
+        let out = check(&nodes, &[w1, w2], &[]);
+        assert_eq!(out.len(), 0, "{out:?}");
+    }
+
+    #[test]
+    fn fan_legs_past_the_split_owe_pitch_like_any_wires() {
+        // The sanctioned contact is the **trunk**, not the fan. Past the
+        // split these legs run 5 apart in wide-open space, where either could
+        // have spread to the full 8 — a breach, siblings or not. (Only a leg
+        // that genuinely cannot spread — one pinned to a fixed port —
+        // earns Law 1's scarcity excuse, ROUTING.md Fixed ports.)
+        let nodes = vec![
+            body("a", 0.0, 0.0),
+            body("b", 300.0, 0.0),
+            body("c", 300.0, 300.0),
+        ];
+        let mut w1 = link("a", "b", vec![(20.0, 0.0), (280.0, 0.0)]);
+        let mut w2 = link(
+            "a",
+            "c",
+            vec![
+                (20.0, 0.0),
+                (150.0, 0.0),
+                (150.0, 5.0),
+                (200.0, 5.0),
+                (200.0, 300.0),
+                (280.0, 300.0),
+            ],
+        );
+        w1.fan_from = Some(0);
+        w2.fan_from = Some(0);
+        let out = check(&nodes, &[w1, w2], &[]);
+        assert_eq!(rules(&out), vec![Rule::Separation], "{out:?}");
+    }
 }

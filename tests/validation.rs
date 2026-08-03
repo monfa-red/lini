@@ -65,13 +65,29 @@ fn series_data_off_a_series_errors() {
 fn cell_off_a_grid_errors_with_the_context() {
     insta::assert_snapshot!(
         diags("|row#r| [ |box#a| { cell: 2 1; } ]\n"),
-        @"test.lini:1:21: error: 'cell' places a grid child — this box sits in a 'layout: flow'"
+        @"test.lini:1:21: error: 'cell' places a grid or schematic child — this box sits in a 'layout: flow'"
     );
 }
 
 #[test]
 fn cell_in_a_grid_is_silent() {
     assert_silent("{ layout: grid; columns: 80, 80; }\n|box#a| { cell: 2 1; }\n");
+}
+
+#[test]
+fn cell_in_a_schematic_is_silent() {
+    // [SPEC 16.1] `cell:` also places on the schematic engine's own ordinal
+    // track grid — and promotes a satellite to an anchor.
+    assert_silent("|schematic#s| [ |R#r1| \"1k\" { cell: 2 1; } ]\n");
+}
+
+#[test]
+fn span_in_a_schematic_still_errors() {
+    // Schematic tracks have no spans — the gate stays grid-only.
+    insta::assert_snapshot!(
+        diags("|schematic#s| [ |R#r1| \"1k\" { span: 2; } ]\n"),
+        @"test.lini:1:31: error: 'span' spans grid tracks — this box sits in a 'layout: schematic'"
+    );
 }
 
 #[test]

@@ -148,6 +148,30 @@ fn layout_row_and_column_are_removed() {
 }
 
 #[test]
+fn an_unarrangeable_layout_names_the_engines_that_exist() {
+    // The box arranger is the **last** reader of `layout:` — every scope
+    // engine is intercepted before it — so what it says about a name it cannot
+    // use has to be true of the whole set, not of its own two modes.
+    let err = lay_out_err("{ layout: bogus }\n|box#a| \"A\"\n");
+    assert_eq!(
+        err.message,
+        "unknown layout 'bogus' — expected flow, grid, tree, sequence, drawing or schematic"
+    );
+    // A chart owns its subtree and is intercepted at a **node**; the scene root
+    // is no node, so a root `{ layout: chart }` reaches here — a real engine in
+    // the wrong place, and it says so rather than calling the name unknown.
+    for engine in ["chart", "pie"] {
+        let err = lay_out_err(&format!("{{ layout: {engine} }}\n|box#a| \"A\"\n"));
+        assert_eq!(
+            err.message,
+            format!(
+                "'layout: {engine}' belongs to a '|{engine}|' node — a scene root cannot be one"
+            )
+        );
+    }
+}
+
+#[test]
 fn direction_radial_is_rejected_in_a_flow() {
     let err = lay_out_err("{ direction: radial; }\n|box|\n|box|\n");
     assert!(err.message.contains("chart"), "msg={}", err.message);

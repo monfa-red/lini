@@ -20,7 +20,7 @@ mod rows;
 #[cfg(test)]
 mod tests;
 
-pub(super) use rows::{Rows, SeatLine, corner_pull, stack_side};
+pub(super) use rows::{Rows, SeatLine, away, corner_pull, stack_side};
 
 /// A dimension's row axis [SPEC 15.6] — an aligned dim's frame carries its
 /// own axes instead ([`crate::layout::drawing::dims::Frame`]).

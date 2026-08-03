@@ -24,6 +24,12 @@ pub(crate) const SEQ_GAP_COL: f64 = 32.0;
 pub(crate) const TREE_GAP_GEN: f64 = 64.0;
 pub(crate) const TREE_GAP_SIB: f64 = 48.0;
 
+/// A schematic's default `gap` [SPEC 16.1] — the spacing between the scope's
+/// tracks. Wider than the generic `20`: a part's stubs, its seated satellites,
+/// and the wires running between two tracks all live in that space. Shared by
+/// the `|schematic|` template and the root `{ layout: schematic }` form.
+pub(crate) const SCH_GAP: f64 = 48.0;
+
 /// The `|mindmap|` depth ramp + wrap cap [SPEC 8] — one obvious table, retuned
 /// by eye. The root tier rides the `.lini-mindmap` bundle (the node *is* the
 /// root topic); levels 1 and 2+ ride the generated `.lini-mindmap .lini-level-N`
@@ -63,6 +69,7 @@ pub(crate) fn root_layout_defaults(layout: Option<&str>) -> Vec<Decl> {
     match layout {
         Some("sequence") => vec![pair("gap", SEQ_GAP_ROW, SEQ_GAP_COL)],
         Some("tree") => vec![pair("gap", TREE_GAP_GEN, TREE_GAP_SIB)],
+        Some("schematic") => vec![n("gap", SCH_GAP), n("clearance", consts::SCH_CLEARANCE)],
         // A drawing root's px-per-unit is the desugar scale fold's job
         // [SPEC 15.1/18] — ratio × unit × density, stamped per scope.
         _ => Vec::new(),
@@ -522,6 +529,15 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
             ],
             span: Span::empty(),
         }],
+        // The schematic scope [SPEC 16.6]: `|block|` + the engine, at the track
+        // spacing. (A root `{ layout: schematic }` picks up the same `gap`
+        // default in `root_layout_defaults`.) The parts' own looks ride their
+        // type bundles and the generated chrome classes.
+        "schematic" => vec![
+            id("layout", "schematic"),
+            n("gap", SCH_GAP),
+            n("clearance", consts::SCH_CLEARANCE),
+        ],
         _ => Vec::new(),
     }
 }
@@ -742,6 +758,23 @@ mod tests {
             .iter()
             .any(|d| d.name == "layout"
                 && matches!(d.groups.first().and_then(|g| g.first()), Some(Value::Ident(s)) if s == "grid")));
+    }
+
+    #[test]
+    fn schematic_template_and_root_share_the_engine_and_gap() {
+        // [SPEC 16.6] `|schematic|` is `|block|` + the engine; a root
+        // `{ layout: schematic }` picks up the same track spacing.
+        let sch = template_bundle("schematic");
+        assert_eq!(ident(&sch, "layout").as_deref(), Some("schematic"));
+        assert_eq!(num(&sch, "gap"), Some(SCH_GAP));
+        assert_eq!(
+            num(&root_layout_defaults(Some("schematic")), "gap"),
+            Some(SCH_GAP)
+        );
+        assert_eq!(
+            crate::desugar::types::template_base("schematic"),
+            Some("block")
+        );
     }
 
     #[test]

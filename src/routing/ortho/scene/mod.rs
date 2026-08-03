@@ -5,10 +5,19 @@
 //! are **bodies** (addressable, endpoint-able); anonymous children — labels
 //! first among them — are **labels** (obstacles owned by their enclosing body,
 //! never endpoints).
+//!
+//! A **schematic part** [SPEC 16.2] is the one exception, and it is an
+//! identity, not a special case: a part is a scene **leaf**, folded with its
+//! pins, its chrome and its fixed ports by [`parts`].
 
 use super::rect::Rect;
 use crate::layout::ir::PlacedNode;
+use parts::Parts;
 use std::collections::BTreeMap;
+
+mod parts;
+#[cfg(test)]
+mod tests;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum NodeKind {
@@ -18,7 +27,6 @@ pub enum NodeKind {
 
 #[derive(Clone, Debug)]
 pub struct SceneNode {
-    pub path: String,
     pub rect: Rect,
     /// Descendant rects poking out of `rect` — a group's caption, an
     /// absolute overlay. A collapsed keep-out is `rect` plus these: what is
@@ -42,6 +50,8 @@ pub struct SceneIndex {
     nodes: Vec<SceneNode>,
     roots: Vec<usize>,
     by_path: BTreeMap<String, usize>,
+    /// The sheet's fixed ports and terminal addresses ([`parts`]).
+    parts: Parts,
 }
 
 impl SceneIndex {
@@ -50,6 +60,7 @@ impl SceneIndex {
             nodes: Vec::new(),
             roots: Vec::new(),
             by_path: BTreeMap::new(),
+            parts: Parts::default(),
         };
         for r in roots {
             let i = idx.walk(r, "", None, 0.0, 0.0);
@@ -67,11 +78,15 @@ impl SceneIndex {
         oy: f64,
     ) -> usize {
         let (cx, cy) = (ox + n.cx, oy + n.cy);
+        // A schematic part is a leaf whose rect is its connection frame
+        // [SPEC 16.2]; everything inside it addresses the part.
+        let part = crate::layout::schematic::part_ports(n);
+        let box_ = part.as_ref().map_or(n.bbox, |p| p.frame);
         let rect = Rect::new(
-            n.bbox.min_x + cx,
-            n.bbox.min_y + cy,
-            n.bbox.max_x + cx,
-            n.bbox.max_y + cy,
+            box_.min_x + cx,
+            box_.min_y + cy,
+            box_.max_x + cx,
+            box_.max_y + cy,
         );
         let (path, kind) = match &n.id {
             Some(id) if prefix.is_empty() => (id.clone(), NodeKind::Body),
@@ -80,7 +95,6 @@ impl SceneIndex {
         };
         let i = self.nodes.len();
         self.nodes.push(SceneNode {
-            path: path.clone(),
             rect,
             overflow: Vec::new(),
             kind,
@@ -90,9 +104,10 @@ impl SceneIndex {
         if kind == NodeKind::Body {
             self.by_path.insert(path.clone(), i);
         }
-        let inside = |outer: Rect, r: Rect| {
-            r.x0 >= outer.x0 && r.y0 >= outer.y0 && r.x1 <= outer.x1 && r.y1 <= outer.y1
-        };
+        if let Some(part) = part {
+            self.fold_part(part, n, &path, i, cx, cy);
+            return i;
+        }
         for c in &n.children {
             let ci = self.walk(c, &path, Some(i), cx, cy);
             self.nodes[i].children.push(ci);
@@ -110,9 +125,15 @@ impl SceneIndex {
         self.by_path.get(path).map(|&i| self.nodes[i].rect)
     }
 
-    /// The union of every node's rect — the scene extent.
+    /// The union of every node's rect and its drawn overflow — the scene
+    /// extent. Overflow counts because a folded part's chrome is no longer a
+    /// node of its own; for every other node its poking descendants are nodes
+    /// already, so this changes nothing there.
     pub fn bounds(&self) -> Rect {
-        let mut rects = self.nodes.iter().map(|n| n.rect);
+        let mut rects = self
+            .nodes
+            .iter()
+            .flat_map(|n| std::iter::once(n.rect).chain(n.overflow.iter().copied()));
         let first = rects.next().unwrap_or(Rect::new(0.0, 0.0, 0.0, 0.0));
         rects.fold(first, |a, r| {
             Rect::new(
@@ -274,8 +295,12 @@ impl SceneIndex {
     /// subtree swallowed. A label inside an endpoint's own body is exempt.
     pub fn solid_rects_for(&self, endpoints: [&str; 2]) -> Vec<Rect> {
         let mut out = Vec::new();
+        // Scene-node identity, not the path string: a folded part answers to
+        // every address inside it, so a wire off `u7.vs` sees its own
+        // component as passable [SPEC 16.2].
+        let ends = endpoints.map(|p| self.node_of(p));
         for &r in &self.roots {
-            self.gather(r, endpoints, false, &mut out);
+            self.gather(r, ends, false, &mut out);
         }
         out
     }
@@ -285,13 +310,12 @@ impl SceneIndex {
     fn gather(
         &self,
         i: usize,
-        endpoints: [&str; 2],
+        endpoints: [Option<usize>; 2],
         inside_endpoint: bool,
         out: &mut Vec<Rect>,
     ) -> bool {
         let n = &self.nodes[i];
-        let is_endpoint =
-            n.kind == NodeKind::Body && (n.path == endpoints[0] || n.path == endpoints[1]);
+        let is_endpoint = endpoints[0] == Some(i) || endpoints[1] == Some(i);
         let mut inner = Vec::new();
         let mut any_passable = false;
         for &c in &n.children {
@@ -309,203 +333,17 @@ impl SceneIndex {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::layout::ir::{Bbox, PlacedNode};
-    use crate::resolve::{AttrMap, Markers, NodeKind};
-    use crate::span::Span;
+/// A placed node's absolute rect, given its accumulated centre.
+pub(super) fn abs_rect(n: &PlacedNode, cx: f64, cy: f64) -> Rect {
+    Rect::new(
+        n.bbox.min_x + cx,
+        n.bbox.min_y + cy,
+        n.bbox.max_x + cx,
+        n.bbox.max_y + cy,
+    )
+}
 
-    fn node(
-        id: Option<&str>,
-        kind: NodeKind,
-        cx: f64,
-        cy: f64,
-        w: f64,
-        h: f64,
-        children: Vec<PlacedNode>,
-    ) -> PlacedNode {
-        PlacedNode {
-            id: id.map(String::from),
-            kind,
-            type_chain: Vec::new(),
-            applied_styles: Vec::new(),
-            label: None,
-            attrs: AttrMap::default(),
-            own_style: AttrMap::default(),
-            markers: Markers::default(),
-            cx,
-            cy,
-            bbox: Bbox::centered(w, h),
-            rotation: 0.0,
-            children,
-            gutters: Vec::new(),
-            links: Vec::new(),
-            sketch: None,
-            origin: (0.0, 0.0),
-            span: Span::empty(),
-        }
-    }
-
-    fn rect_node(id: &str, cx: f64, cy: f64, w: f64, h: f64) -> PlacedNode {
-        node(Some(id), NodeKind::Block, cx, cy, w, h, Vec::new())
-    }
-
-    /// cat at (0,0) 40×20; garden at (100,50) 80×60 containing dog at (10,5) 30×10.
-    fn scene() -> Vec<PlacedNode> {
-        let dog = rect_node("dog", 10.0, 5.0, 30.0, 10.0);
-        let garden = node(
-            Some("garden"),
-            NodeKind::Block,
-            100.0,
-            50.0,
-            80.0,
-            60.0,
-            vec![dog],
-        );
-        vec![rect_node("cat", 0.0, 0.0, 40.0, 20.0), garden]
-    }
-
-    #[test]
-    fn absolute_rects_accumulate_nested_offsets() {
-        let idx = SceneIndex::build(&scene());
-        assert_eq!(idx.rect("cat"), Some(Rect::new(-20.0, -10.0, 20.0, 10.0)));
-        assert_eq!(idx.rect("garden"), Some(Rect::new(60.0, 20.0, 140.0, 80.0)));
-        // dog: offset garden(100,50) + own(10,5), bbox 30×10 centred.
-        assert_eq!(
-            idx.rect("garden.dog"),
-            Some(Rect::new(95.0, 50.0, 125.0, 60.0))
-        );
-        assert_eq!(idx.rect("dog"), None);
-    }
-
-    #[test]
-    fn world_is_the_innermost_shared_container() {
-        // garden{dog} + bird added beside dog for the sibling case.
-        let mut roots = scene();
-        roots[1]
-            .children
-            .push(rect_node("bird", -20.0, 5.0, 20.0, 10.0));
-        let idx = SceneIndex::build(&roots);
-        let key = |p: &str| idx.node_of(p);
-        assert_eq!(idx.world_of("cat", "garden.dog"), None);
-        assert_eq!(
-            idx.world_of("garden.dog", "garden.bird"),
-            key("garden"),
-            "siblings route in their parent's interior"
-        );
-        // Containment: the container endpoint's own interior, both ways.
-        assert_eq!(idx.world_of("garden", "garden.dog"), key("garden"));
-        assert_eq!(idx.world_of("garden.dog", "garden"), key("garden"));
-        // The shared-ancestor pick the validator uses.
-        assert_eq!(idx.common_ancestor_world(key("garden"), None), None);
-        assert_eq!(
-            idx.common_ancestor_world(key("garden"), key("garden")),
-            key("garden")
-        );
-    }
-
-    #[test]
-    fn an_anonymous_container_is_a_world_like_a_named_one() {
-        // column{ a, b } with no id: a and b keep root-level paths, yet their
-        // common world is the column's interior — structure, not strings.
-        let a = rect_node("a", -15.0, 0.0, 20.0, 10.0);
-        let b = rect_node("b", 15.0, 0.0, 20.0, 10.0);
-        let column = node(None, NodeKind::Block, 0.0, 0.0, 80.0, 40.0, vec![a, b]);
-        let idx = SceneIndex::build(&[column]);
-        let world = idx.common_world("a", "b");
-        assert!(world.is_some(), "the anonymous interior is a world");
-        assert_eq!(
-            idx.world_rect(world),
-            Some(Rect::new(-40.0, -20.0, 40.0, 20.0))
-        );
-        assert_eq!(idx.child_rects(world).len(), 2);
-        // The ladder above it is the scene root.
-        assert_eq!(idx.parent_world(world), Some(None));
-        // geo_contains sees through the anonymous level too: the column is
-        // nobody's endpoint, but a's world chain still reaches the root.
-        assert!(!idx.geo_contains("a", "b"));
-    }
-
-    #[test]
-    fn child_rects_lists_one_collapsed_rect_per_direct_child() {
-        let idx = SceneIndex::build(&scene());
-        assert_eq!(
-            idx.child_rects(None),
-            vec![
-                Rect::new(-20.0, -10.0, 20.0, 10.0),
-                Rect::new(60.0, 20.0, 140.0, 80.0),
-            ]
-        );
-        assert_eq!(
-            idx.child_rects(idx.node_of("garden")),
-            vec![Rect::new(95.0, 50.0, 125.0, 60.0)]
-        );
-        assert_eq!(idx.child_rects(idx.node_of("garden.dog")), Vec::new());
-    }
-
-    #[test]
-    fn solid_rects_collapse_non_endpoint_subtrees() {
-        let idx = SceneIndex::build(&scene());
-        // cat → garden.dog: both passable, garden is an ancestor (transparent);
-        // nothing else exists, so nothing is solid.
-        assert_eq!(idx.solid_rects_for(["cat", "garden.dog"]), Vec::new());
-        // cat → cat: garden is solid and collapses to one rect, dog swallowed.
-        assert_eq!(
-            idx.solid_rects_for(["cat", "cat"]),
-            vec![Rect::new(60.0, 20.0, 140.0, 80.0)]
-        );
-    }
-
-    #[test]
-    fn labels_block_inside_transparent_ancestors_but_not_inside_endpoints() {
-        // garden{ label, dog, bird } — routing dog→bird must avoid the label;
-        // routing garden→garden must not see its own inner label.
-        let label = node(None, NodeKind::Text, 0.0, -25.0, 40.0, 10.0, Vec::new());
-        let dog = rect_node("dog", -15.0, 5.0, 20.0, 10.0);
-        let bird = rect_node("bird", 15.0, 5.0, 20.0, 10.0);
-        let garden = node(
-            Some("garden"),
-            NodeKind::Block,
-            0.0,
-            0.0,
-            80.0,
-            70.0,
-            vec![label, dog, bird],
-        );
-        let idx = SceneIndex::build(&[garden]);
-        assert_eq!(
-            idx.solid_rects_for(["garden.dog", "garden.bird"]),
-            vec![Rect::new(-20.0, -30.0, 20.0, -20.0)]
-        );
-        // Self-loop on the group: its own label is exempt; the child bodies stay
-        // solid (harmless — they sit inside the endpoint's body).
-        assert_eq!(
-            idx.solid_rects_for(["garden", "garden"]),
-            vec![
-                Rect::new(-25.0, 0.0, -5.0, 10.0),
-                Rect::new(5.0, 0.0, 25.0, 10.0)
-            ]
-        );
-    }
-
-    #[test]
-    fn idd_text_is_a_body_not_a_label() {
-        let title = node(
-            Some("title"),
-            NodeKind::Text,
-            0.0,
-            0.0,
-            30.0,
-            10.0,
-            Vec::new(),
-        );
-        let idx = SceneIndex::build(&[title, rect_node("cat", 50.0, 0.0, 20.0, 10.0)]);
-        assert_eq!(idx.rect("title"), Some(Rect::new(-15.0, -5.0, 15.0, 5.0)));
-        // As a non-endpoint it is solid like any body.
-        assert_eq!(
-            idx.solid_rects_for(["cat", "cat"]),
-            vec![Rect::new(-15.0, -5.0, 15.0, 5.0)]
-        );
-    }
+/// Whether `r` sits wholly within `outer`.
+pub(super) fn inside(outer: Rect, r: Rect) -> bool {
+    r.x0 >= outer.x0 && r.y0 >= outer.y0 && r.x1 <= outer.x1 && r.y1 <= outer.y1
 }

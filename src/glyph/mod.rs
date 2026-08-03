@@ -44,8 +44,8 @@ pub const FINISH_APEX_X: f64 = 87.7;
 pub struct Glyph {
     pub width: f64,
     /// The glyph box height — `GRID` for drafting glyphs (the emitter scales
-    /// by it), real sheet px for schematic ones (Phase 4's port math reads it).
-    #[cfg_attr(not(test), allow(dead_code))]
+    /// by it), real sheet px for schematic ones (the pose's port math reads
+    /// it, [SPEC 16.1]).
     pub height: f64,
     pub ports: &'static [(f64, f64)],
     pub frags: &'static [(Role, &'static str)],

@@ -9,15 +9,17 @@
 //! generated class defs. The pass is **idempotent**: every injection is an
 //! override-in-place merge, and an already-lowered node is passed through.
 
+mod autopose;
 mod capsule;
 mod chrome;
 mod classes;
 mod drawing;
 mod labels;
 mod page;
+pub(crate) mod pose;
 mod scale;
 pub(crate) mod scene;
-mod schematic;
+pub(crate) mod schematic;
 mod tables;
 mod titleblock;
 pub(crate) mod tree;
@@ -75,6 +77,15 @@ impl Lower<'_> {
             }
         }
         None
+    }
+    /// An **authored** node's type chain, base→derived — the argument every
+    /// reader above takes. An unresolvable type carries none: the error is
+    /// [`lower_node`]'s to raise.
+    fn authored_chain(&self, node: &Node) -> Vec<String> {
+        self.types
+            .resolve(node.ty.as_deref().unwrap_or("box"), node.span)
+            .map(|i| i.chain)
+            .unwrap_or_default()
     }
     fn chain_ident(&self, chain: &[String], style: &[Decl], name: &str) -> Option<String> {
         match self
@@ -192,7 +203,16 @@ pub fn desugar(file: &File) -> Result<File, Error> {
         rules: &element_rules,
     };
     let mut instances = Vec::new();
-    for child in &file.instances {
+    // A schematic scope poses its satellites **before** its children lower
+    // [SPEC 16.1] — see `autopose::choose`; the root scope is one like any
+    // other.
+    let root_kids = autopose::choose(
+        &cx,
+        &file.instances,
+        &file.links,
+        root_layout(&user_root) == Some("schematic"),
+    );
+    for child in root_kids.iter() {
         instances.push(lower_child(&cx, child, root_drawing)?);
     }
     // A scene owned by a stand-alone `|mindmap|` seats it first [SPEC 8]: the
@@ -440,7 +460,16 @@ fn lower_node(cx: &Lower, node: &Node, in_drawing: bool) -> Result<Node, Error> 
             }
         }
     }
-    for c in &node.children {
+    // A schematic scope poses its satellites **before** its children lower
+    // [SPEC 16.1] — the pose is structural, so it is applied where the
+    // structure is built; see `autopose::choose`.
+    let kids = autopose::choose(
+        cx,
+        &node.children,
+        &node.links,
+        autopose::scope_is_schematic(cx, &info.chain, &node.style),
+    );
+    for c in kids.iter() {
         children.push(lower_child(cx, c, child_in_drawing)?);
     }
     // A schematic part [SPEC 16] lowers structurally here — rails, symbol
@@ -528,17 +557,6 @@ fn lower_node(cx: &Lower, node: &Node, in_drawing: bool) -> Result<Node, Error> 
         distribute_cell_alignment(&mut children, &node.style, cols, is_entity)?;
     }
 
-    // The smart label, lowered per type [SPEC 3/7] — the single shared lowering
-    // for a node's text (a link's labels go through the same `TextNode`). A box-like
-    // type → centred text prepended; a group/table → a `|caption|` child; an
-    // icon/sign → the `symbol`. An empty `""` lowers to nothing. Geometry-only
-    // shapes (line/poly/path/image) hold no text.
-    let text_capable = !matches!(
-        kind,
-        NodeKind::Line | NodeKind::Poly | NodeKind::Path | NodeKind::Image
-    );
-    let is_icon = kind == NodeKind::Icon;
-    let is_container = info.chain.iter().any(|n| n == "group");
     // A table/entity's own `align`/`justify` are consumed above (distributed to its
     // cells), so drop them here — the bundle's `stretch` fills the cells.
     let mut style: Vec<Decl> = if is_table || is_entity {
@@ -587,87 +605,35 @@ fn lower_node(cx: &Lower, node: &Node, in_drawing: bool) -> Result<Node, Error> 
             children.insert(i, Child::Box(lower_node(cx, &cell, false)?));
         }
     }
-    let mut kept_label = None;
-    if let Some(label) = label {
-        if is_icon {
-            if style.iter().any(|d| d.name == "symbol") {
-                return Err(Error::at(
-                    node.span,
-                    "an icon's symbol is its label or 'symbol:', not both",
-                ));
-            }
-            style.push(labels::symbol_decl(&label.text, node.span));
-        } else if is_entity {
-            // An entity's label is its title: a `|header|` spanning every column [SPEC 8].
-            let title = header_node(label, Some(cols.unwrap_or(2)));
-            children.insert(0, Child::Box(lower_node(cx, &title, false)?));
-        } else if is_drawing {
-            // A drawing's smart label is its title, lowered to a |footnote|
-            // under the view [SPEC 15.8].
-            let title = lower_node(cx, &labels::footnote_node(label), false)?;
-            children.insert(0, Child::Box(title));
-        } else if let Some(kind) = sch.filter(|k| *k != schematic::SchKind::Label) {
-            // A part's smart label is its name / value [SPEC 16.2/16.3],
-            // drawn as readout chrome: above a component (under its ref),
-            // below a symbol-bodied part.
-            let (anchor, dy) = match kind {
-                schematic::SchKind::Component => ("top", -16.0),
-                _ => ("bottom", 12.0),
-            };
-            children.push(schematic::value_readout(cx, &label.text, anchor, dy)?);
-        } else if is_container {
-            let caption = lower_node(cx, &labels::caption_node(label), false)?;
-            children.insert(0, Child::Box(caption));
-        } else if text_capable {
-            children.insert(0, Child::Text(label.clone()));
-        } else {
-            // Geometry primitives (line/poly/path/image) draw no text, but a label
-            // still *names* the node — keep it so a chart can read a `|line|` series'
-            // legend name. Inert for a standalone primitive (render ignores it).
-            kept_label = Some(label.clone());
-        }
-    }
-    // A view sourced from a marker (`of:`) with no authored label composes its
-    // title [SPEC 15.8]: seed a placeholder |footnote| the engine fills where it
-    // pins the title — the marker (a `|plane|` → `A-A`, a `|magnifier|` → `C`)
-    // and the scale ratio are both known there.
-    if is_drawing
-        && node.style.iter().any(|d| d.name == "of")
-        && node.label.as_ref().filter(|l| !l.text.is_empty()).is_none()
-    {
-        let foot = labels::of_footnote(node.span);
-        children.insert(0, Child::Box(lower_node(cx, &foot, false)?));
-    }
+    let kept_label = labels::lower_smart(
+        cx,
+        node,
+        label,
+        &labels::Smart::read(kind, &info.chain, is_entity, is_drawing, sch, cols),
+        &mut style,
+        &mut children,
+    )?;
 
     // The schematic bodies [SPEC 16]: rails + per-pin chrome for a
     // component, the registry symbol + wirable ports for a symbol-bodied
-    // part, the tag drawing / outline classes for a label.
-    match sch {
-        Some(schematic::SchKind::Component) => {
-            schematic::assemble_component(cx, &mut style, &mut children)?;
+    // part, the tag drawing / outline classes for a label — every one built
+    // in the part's **pose** [SPEC 16.1], which the turn consumes here so no
+    // text ever rides a paint transform.
+    if sch.is_some() {
+        let pose = pose::take(cx, &info.chain, &mut style, node.span)?;
+        pose::mark(pose, &mut classes);
+        match sch {
+            Some(schematic::SchKind::Component) => {
+                schematic::assemble_component(cx, pose, &mut style, &mut children)?;
+            }
+            Some(k @ (schematic::SchKind::Opamp | schematic::SchKind::Discrete(_))) => {
+                schematic::symbol_body(cx, k, pose, &info.chain, node, &mut children)?;
+            }
+            Some(schematic::SchKind::Label) => {
+                schematic::label_body(cx, pose, &info.chain, node, &mut classes, &mut children)?;
+            }
+            None => {}
         }
-        Some(k @ (schematic::SchKind::Opamp | schematic::SchKind::Discrete(_))) => {
-            schematic::symbol_body(
-                cx,
-                k,
-                &info.chain,
-                &node.style,
-                node.span,
-                node.id.is_some(),
-                &mut children,
-            )?;
-        }
-        Some(schematic::SchKind::Label) => {
-            schematic::label_body(
-                cx,
-                &info.chain,
-                &node.style,
-                node.span,
-                &mut classes,
-                &mut children,
-            )?;
-        }
-        None => {}
     }
 
     // In an entity, header / footer cells span every column [SPEC 8]: the title above
@@ -864,7 +830,15 @@ fn seals_drawing_scope(chain: &[String], style: &[Decl]) -> bool {
     chain.iter().any(|t| {
         matches!(
             t.as_str(),
-            "row" | "column" | "grid" | "table" | "entity" | "chart" | "pie" | "sequence"
+            "row"
+                | "column"
+                | "grid"
+                | "table"
+                | "entity"
+                | "chart"
+                | "pie"
+                | "sequence"
+                | "schematic"
         )
     }) || style
         .iter()

@@ -113,6 +113,21 @@ pub(crate) const PIN_PITCH: f64 = 20.0;
 pub(crate) const PIN_STUB: f64 = 12.0;
 /// The junction dot's radius [SPEC 16.5].
 pub(crate) const JUNCTION_RADIUS: f64 = 3.0;
+/// The satellite seat gap [SPEC 16.1/10.5] — the clear run between a pin's
+/// stub tip and the satellite seated off it, and between stacked satellites.
+///
+/// It is a **routing corridor**, not just daylight: the lead between a pin
+/// and its satellite is an ordinary routed wire, and the channel model gives
+/// it a cell only where the two keep-outs do not overlap — so the seat must
+/// clear `2 × SCH_CLEARANCE`. SPEC 10.5's 10 leaves no channel at the
+/// schematic's own clearance 8 and every lead strays; one pin pitch does,
+/// which also puts satellites on the sheet grid. (The same reasoning
+/// widened the tree's `gap` past SPEC's plain 20.)
+pub(crate) const LABEL_SEAT: f64 = 20.0;
+/// The schematic scope's link `clearance` [SPEC 10.5/16.6] — tighter than the
+/// routing 16, so a sheet's short leads and pin pitch have room. Cascades
+/// from the scope's own block, so a user's `clearance:` still wins.
+pub(crate) const SCH_CLEARANCE: f64 = 8.0;
 /// Part linework weight — symbol bodies, stubs, tag outlines [SPEC 16.6].
 pub(crate) const SCH_STROKE_WIDTH: f64 = 1.5;
 /// The pin-number readout, outside beside the stub [SPEC 16.2].

@@ -151,6 +151,8 @@ catalog! {
     Resolve 14 UNKNOWN_SIDE "unknown-side";
     Resolve 15 UNKNOWN_STRATEGY "unknown-strategy";
     Resolve 16 CAPSULE_IN_DRAWING "capsule-in-drawing";
+    Resolve 17 SCHEMATIC_POSE "schematic-pose";
+    Resolve 18 PIN_SLIDE "pin-slide";
 
     // ── Validate [SPEC 17/21] ──
     Validate 0 VALIDATE "validate";
@@ -170,6 +172,9 @@ catalog! {
     Layout 2 CHART_DATA "chart-data";
     Layout 3 PROJECT_AXIS "project-axis-mismatch";
     Layout 4 DRAWING_MEASURE "drawing-measure";
+    Layout 5 SCHEMATIC_TRACKS "schematic-tracks";
+    Layout 6 SIDE_ON_TERMINAL "side-on-terminal";
+    Layout 7 SCHEMATIC_SEAT "schematic-seat";
 
     // ── Route [ROUTING] — the routing engine's own law checker. ──
     Route 0 ROUTE "route";

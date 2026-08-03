@@ -645,6 +645,43 @@ fn labels_lower_text_symbol_and_shape() {
 }
 
 #[test]
+fn a_symbol_part_lowers_its_glyph_ahead_of_authored_text() {
+    // [SPEC 16.3/16.4] "text beside it like an icon's": the glyph leads,
+    // authored content follows — and unlike a part's readouts (`pin:`
+    // overlays), both are **in flow**, so their order is layout. A generated
+    // node carries an empty span and `fmt` emits a body in span order, so the
+    // glyph must be *inserted* ahead of the authored text, not appended:
+    // appending printed it first and made the lowered source a different
+    // program from its source. All three symbol lowerings — label, discrete,
+    // opamp — seat it through the one `seat_glyph`, so all three are pinned
+    // here. (`tests/oracle.rs` sweeps the same property over the samples; the
+    // `[ ]` content form no sample uses is why the discretes escaped it.)
+    for (src, class, text) in [
+        (
+            "|label#pwr| { symbol: power } [ \"5V\" ]\n",
+            "sch-tag-line",
+            "5V",
+        ),
+        ("|R#r1| [ \"1k\" ]\n", "sch-line", "1k"),
+        ("|opamp#o1| [ \"amp\" ]\n", "sch-line", "amp"),
+    ] {
+        let out = desugar_source(src).unwrap();
+        let glyph = out
+            .find(&format!("lini-{class}.lini-path"))
+            .unwrap_or_else(|| panic!("no glyph in: {out}"));
+        let text = out
+            .find(&format!("\"{text}\""))
+            .unwrap_or_else(|| panic!("no authored text in: {out}"));
+        assert!(glyph < text, "the glyph leads the text: {out}");
+        assert_eq!(
+            lini::compile_str(src).unwrap(),
+            lini::compile_str(&out).unwrap(),
+            "the lowered part renders identically: {src}"
+        );
+    }
+}
+
+#[test]
 fn a_power_flag_define_reads_its_symbol_through_the_chain() {
     // [SPEC 16.4]: a power net is a one-line define with intrinsic text.
     let out = desugar_source("{ |vm::label| { symbol: power } [ \"VM\" ] }\n|vm#v1|\n").unwrap();
@@ -673,6 +710,11 @@ fn schematic_lowerings_are_byte_fixed_points() {
         "|J#J3| { pins: 2 }\n",
         "|gnd|\n|label#run| \"RUN\" { shape: round }\n",
         "|opamp#u1|\n",
+        // Posed parts: the turn is consumed, so re-lowering must not turn again.
+        "|component#U7| { rotate: 90 } [\n  |pin#a|; |pin#b|; |pin#c|\n]\n",
+        "|R#r5| \"470\" { rotate: 270 }\n|gnd#g1| { rotate: 180 }\n",
+        "{ |vert::R| { rotate: 90 } }\n|vert#r9|\n",
+        "{ |sig::pin| { translate: 6 0; side: top } }\n|component#U7| { rotate: 90 } [ |sig#a| ]\n",
     ] {
         let once = desugar_source(src).unwrap();
         let twice = desugar_source(&once).unwrap();
@@ -689,4 +731,294 @@ fn anonymous_parts_generate_no_pin_terminals() {
     assert!(!out.contains("|block#p1|"), "{out}");
     let out = desugar_source("|R#r1| \"a\"\n").unwrap();
     assert!(out.contains("|block#p1|"), "{out}");
+}
+
+// ── Pose [SPEC 16.1] — `rotate:` is read at lowering, never painted ──
+
+/// Each pin's id paired with the side its stub points out of, in lowered
+/// document order — a pin's landed side, read the way the router will read it.
+fn pin_sides(out: &str) -> Vec<(String, String)> {
+    let mut seen: Vec<(String, String)> = Vec::new();
+    let mut id = String::new();
+    for line in out.lines() {
+        if let Some(rest) = line.split("|block#").nth(1)
+            && line.contains(".lini-pin.")
+        {
+            id = rest.split('|').next().unwrap_or_default().to_string();
+        }
+        if line.contains("points: 0 0")
+            && let Some(side) = line.split("pin: ").nth(1).and_then(|l| l.split(';').next())
+        {
+            seen.push((id.clone(), side.to_string()));
+        }
+    }
+    seen
+}
+
+/// `pin_sides` as `id:side` strings, for a compact expectation.
+fn sided(out: &str) -> Vec<String> {
+    pin_sides(out)
+        .into_iter()
+        .map(|(i, s)| format!("{i}:{s}"))
+        .collect()
+}
+
+#[test]
+fn a_pose_re_sides_a_components_pins_rigidly() {
+    let src = |deg: &str| {
+        format!("|component#U7| {{ rotate: {deg} }} [\n  |pin#a|; |pin#b|; |pin#c|; |pin#d|\n]\n")
+    };
+    // Unposed: the bilateral split — a, b left; c, d right, each rail read
+    // top-to-bottom.
+    let out = desugar_source(&src("0")).unwrap();
+    assert_eq!(
+        sided(&out),
+        ["a:left", "b:left", "c:right", "d:right"],
+        "{out}"
+    );
+    // A quarter turn clockwise: the left column swings to the top row, the
+    // right column to the bottom — and each reads backwards, because the
+    // topmost left pin lands rightmost (a rigid turn, not a re-split).
+    let out = desugar_source(&src("90")).unwrap();
+    assert_eq!(
+        sided(&out),
+        ["b:top", "a:top", "d:bottom", "c:bottom"],
+        "{out}"
+    );
+    // A half turn swaps every side and reverses every rail.
+    let out = desugar_source(&src("180")).unwrap();
+    assert_eq!(
+        sided(&out),
+        ["d:left", "c:left", "b:right", "a:right"],
+        "{out}"
+    );
+    // Three quarters: the left column swings down, keeping its reading order.
+    let out = desugar_source(&src("270")).unwrap();
+    assert_eq!(
+        sided(&out),
+        ["c:top", "d:top", "a:bottom", "b:bottom"],
+        "{out}"
+    );
+}
+
+#[test]
+fn an_explicitly_sided_pin_rides_the_turn_too() {
+    let out =
+        desugar_source("|component#U7| { rotate: 90 } [\n  |pin#a| { side: top }\n]\n").unwrap();
+    assert_eq!(sided(&out), ["a:right"], "{out}");
+}
+
+#[test]
+fn a_pose_re_lays_a_symbol_and_its_ports() {
+    // The 64×12 resistor stands up: its `d` is turned geometry (no transform)
+    // and its ports move by the same map — p1 to the top, p2 to the bottom.
+    let out = desugar_source("|R#r1| \"1k\" { rotate: 90 }\n").unwrap();
+    assert!(
+        out.contains(r#"path: "M 6 0 L 6 12 M 12 12 L 12 52 L 0 52 L 0 12 Z M 6 52 L 6 64""#),
+        "{out}"
+    );
+    assert!(
+        out.contains("|block#p1| .lini-block { pin: top left; translate: 6 0; }"),
+        "{out}"
+    );
+    assert!(
+        out.contains("|block#p2| .lini-block { pin: top left; translate: 6 64; }"),
+        "{out}"
+    );
+    // A label's symbol turns the same way — the gnd's connection point (its
+    // stem, at the top) swings to the bottom.
+    let out = desugar_source("|gnd#g1| { rotate: 180 }\n").unwrap();
+    assert!(out.contains(r#"path: "M 8 14 L 8 8"#), "{out}");
+}
+
+#[test]
+fn a_turn_never_reaches_the_paint() {
+    // [SPEC 16.1]: rotation is structural, so every text — pin names and
+    // numbers, ref, value, net text — stands upright. Nothing in the lowered
+    // scene carries a `rotate:` at all.
+    let out = desugar_source(
+        "|component#U7| \"IC\" { rotate: 90 } [ |pin#a| { number: 1 } ]\n|R#r1| \"1k\" { rotate: 270 }\n|label#n| \"NET\" { rotate: 180 }\n",
+    )
+    .unwrap();
+    assert!(!out.contains("rotate"), "{out}");
+    // The pose rides a class instead, so the engine can read it back.
+    assert!(out.contains(".lini-pose-90"), "{out}");
+    assert!(out.contains(".lini-pose-270"), "{out}");
+    assert!(out.contains(".lini-pose-180"), "{out}");
+}
+
+#[test]
+fn a_pose_off_the_chain_is_consumed_too() {
+    // A define (or element rule) can pose a part; the turn is still structural,
+    // and the class rule it came from is neutralized on the instance.
+    let out = desugar_source("{ |vert::R| { rotate: 90 } }\n|vert#r1|\n").unwrap();
+    assert!(out.contains(".lini-pose-90"), "{out}");
+    assert!(out.contains("translate: 6 64"), "the ports turned: {out}");
+    assert!(
+        out.contains("|block#r1| .lini-vert.lini-R.lini-block.lini-pose-90 { rotate: 0; }"),
+        "the class's turn is cancelled on the instance: {out}"
+    );
+    // The instance restating the rule's turn must cancel it just the same —
+    // dropping its own decl would leave the rule standing.
+    let out = desugar_source("{ |vert::R| { rotate: 90 } }\n|vert#r1| { rotate: 90 }\n").unwrap();
+    assert!(
+        out.contains("|block#r1| .lini-vert.lini-R.lini-block.lini-pose-90 { rotate: 0; }"),
+        "{out}"
+    );
+}
+
+#[test]
+fn only_a_right_angle_poses_a_part() {
+    let err = desugar_source("|R#r1| { rotate: 45 }\n").expect_err("a non-90° pose");
+    assert!(
+        err.to_string()
+            .ends_with("a schematic part rotates in 90° steps — 0, 90, 180, or 270"),
+        "{err}"
+    );
+    // A plain box is not connection-bearing — it turns as paint, as ever.
+    let out = desugar_source("|box#b| { rotate: 45 }\n").unwrap();
+    assert!(out.contains("rotate: 45"), "{out}");
+}
+
+#[test]
+fn a_pin_translate_slides_along_its_side() {
+    // [SPEC 16.2] the along-side component moves the pin — chrome and all,
+    // since the stub / name / number are its children.
+    let out = desugar_source("|component#U7| [ |pin#a| { translate: 0 6 } ]\n").unwrap();
+    assert!(out.contains("translate: 0 6"), "{out}");
+    // Under a turn the slide turns with the pin: down the left edge becomes
+    // leftward along the top edge.
+    let out =
+        desugar_source("|component#U7| { rotate: 90 } [ |pin#a| { translate: 0 6 } ]\n").unwrap();
+    assert!(out.contains("translate: -6 0"), "{out}");
+    assert_eq!(sided(&out), ["a:top"], "{out}");
+}
+
+#[test]
+fn a_cross_axis_pin_translate_errors() {
+    let err = desugar_source("|component#U7| [ |pin#a| { translate: 4 0 } ]\n")
+        .expect_err("a cross-axis slide");
+    assert!(
+        err.to_string().ends_with(
+            "a pin lives on its side — 'translate' slides it along the left edge; drop the x component"
+        ),
+        "{err}"
+    );
+    // The axis is read on the side the pin **landed** on.
+    let err = desugar_source("|component#U7| { rotate: 90 } [ |pin#a| { translate: 4 0 } ]\n")
+        .expect_err("a cross-axis slide");
+    assert!(
+        err.to_string()
+            .contains("along the top edge; drop the y component"),
+        "{err}"
+    );
+}
+
+#[test]
+fn a_pins_side_and_slide_read_the_same_cascade_the_pose_does() {
+    // [SPEC 16.2] a `side:` / `translate:` off a define is a pin's side and a
+    // pin's slide exactly as an authored one is — otherwise the turn misses it
+    // and the cross-axis gate never fires.
+    let sheet = "{ |sig::pin| { translate: 0 6 } }\n";
+    let out = desugar_source(&format!("{sheet}|component#U7| [ |sig#a|; |pin#b| ]\n")).unwrap();
+    assert!(
+        out.contains("translate: 0 6"),
+        "the rule still states it: {out}"
+    );
+    // Under a turn the slide turns with the pin and lands **on** it, beating
+    // the rule it came from.
+    let out = desugar_source(&format!(
+        "{sheet}|component#U7| {{ rotate: 90 }} [ |sig#a|; |pin#b| ]\n"
+    ))
+    .unwrap();
+    assert!(
+        out.contains("|block#a| .lini-sig.lini-pin.lini-block { translate: -6 0; }"),
+        "{out}"
+    );
+    // And a cross-axis one errors wherever it was stated, in either frame.
+    let cross = "{ |sig::pin| { translate: 4 0 } }\n";
+    for src in [
+        format!("{cross}|component#U7| [ |sig#a| ]\n"),
+        format!("{cross}|component#U7| {{ rotate: 90 }} [ |sig#a| ]\n"),
+    ] {
+        let err = desugar_source(&src).expect_err("a cross-axis slide");
+        assert!(
+            err.to_string().contains("a pin lives on its side"),
+            "{err} for {src}"
+        );
+    }
+}
+
+#[test]
+fn a_re_sided_pin_says_where_it_landed() {
+    // The lowered tree is what the engine reads a forced side back off
+    // [SPEC 16.7]: a turned pin's `side:` must agree with its rail and stub.
+    let out = desugar_source("|component#U7| { rotate: 90 } [ |pin#a| { side: top } ]\n").unwrap();
+    assert!(out.contains("side: right"), "{out}");
+    assert!(!out.contains("side: top"), "no stale ident: {out}");
+    assert_eq!(sided(&out), ["a:right"], "{out}");
+    // A side stated by a rule is answered the same way — on the pin, where it
+    // beats the rule.
+    let out =
+        desugar_source("{ |up::pin| { side: top } }\n|component#U7| { rotate: 180 } [ |up#a| ]\n")
+            .unwrap();
+    assert!(
+        out.contains("|block#a| .lini-up.lini-pin.lini-block { side: bottom; }"),
+        "{out}"
+    );
+    // Unturned, nothing is rewritten — the pin keeps exactly what it stated.
+    let out = desugar_source("|component#U7| [ |pin#a| { side: top } ]\n").unwrap();
+    assert!(out.contains("side: top"), "{out}");
+}
+
+#[test]
+fn a_lowered_chain_reads_derived_first_like_the_authored_one() {
+    // The cascade's tiers: a define's own decl beats the base it derives
+    // from, whether the reader walks the *authored* chain or a lowered node's
+    // classes. The classes are worn most-derived first, so the read must
+    // reverse them — un-reversed, a define lost every property to its base.
+    let out = desugar_source(
+        "{\n  |up::pin| { side: top }\n  |down::up| { side: bottom }\n}\n|component#U7| [ |down#a| ]\n",
+    )
+    .unwrap();
+    assert_eq!(sided(&out), ["a:bottom"], "the derived tier wins: {out}");
+    // The same read mints a display ref [SPEC 16.2] — a define's `prefix:`
+    // beats the family default its base carries.
+    let out =
+        desugar_source("{ |amp::opamp| { prefix: \"A\" } }\n|schematic#s| [ |amp| ]\n").unwrap();
+    assert!(
+        out.contains("[ \"A1\" ]"),
+        "the define's prefix mints: {out}"
+    );
+}
+
+#[test]
+fn a_define_carried_layout_is_a_schematic_scope_too() {
+    // The pose chooser asks desugar's cascade slice, not the written type, so
+    // `{ |sheet::group| { layout: schematic } }` seats and poses its
+    // satellites exactly as a `|schematic|` does [SPEC 16.1].
+    let body = "[\n  |component#U7| [ |pin#a|; |pin#b|; |pin#c| ]\n  |gnd#g1|\n  U7.a - g1\n]\n";
+    let posed = |scope: &str| {
+        desugar_source(&format!(
+            "{{ |sheet::group| {{ layout: schematic }} }}\n|{scope}#s| {body}"
+        ))
+        .unwrap()
+        .contains("lini-pose-90")
+    };
+    assert!(posed("sheet"), "a define carrying `layout: schematic`");
+    assert!(posed("schematic"), "and the written type, unchanged");
+}
+
+#[test]
+fn a_satellite_in_a_define_body_is_not_posed_yet() {
+    // **A known seam limit** [Phase 5]: the pose chooser runs on a scope's
+    // *authored* children, and a define body materializes after — so a
+    // satellite contributed by one reaches lowering unposed. Pinning it so the
+    // day it changes is a deliberate day.
+    let out = desugar_source(
+        "{ |rail::group| [ |gnd#g1| ] }\n\
+         |schematic#s| [\n  |component#U7| [ |pin#a|; |pin#b|; |pin#c| ]\n  |rail#k|\n]\n",
+    )
+    .unwrap();
+    assert!(!out.contains("lini-pose-"), "unposed, for now: {out}");
 }

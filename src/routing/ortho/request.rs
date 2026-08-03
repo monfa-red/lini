@@ -10,7 +10,7 @@
 use super::rect::Rect;
 use super::scene::SceneIndex;
 use crate::ast::Side;
-use crate::error::Error;
+use crate::error::{Code, Error};
 use crate::ledger::consts::DEFAULT_CLEARANCE;
 use crate::render::markers::marker_size;
 use crate::resolve::{AttrMap, MarkerKind, Markers, Program, Strategy};
@@ -124,6 +124,13 @@ pub fn requests(program: &Program, index: &SceneIndex) -> Result<Vec<EdgeReq>, E
             .rev()
             .find(|r: &&EdgeReq| r.stmt == stmt)
             .map_or(0, |r| r.expansion + 1);
+        // The sheet's terminal law is the **scope's**, not the type's
+        // [SPEC 16]: a schematic family renders anywhere (Phase 3's
+        // deliberate deferral), but only inside a schematic scope does a
+        // part's pin become a fixed port and refuse a `:side`. Asked once per
+        // link, off the scope the wire is written in — the same shape
+        // `is_routed` asks the sequence and the drawing.
+        let schematic = crate::layout::schematic::is_schematic_scope(program, &w.scope);
         let clearance = link_clearance(&w.attrs);
         let thickness = w.attrs.number("stroke-width").unwrap_or(0.0);
         let eps = &w.endpoints;
@@ -153,8 +160,10 @@ pub fn requests(program: &Program, index: &SceneIndex) -> Result<Vec<EdgeReq>, E
                 };
                 clearance.max(run_up)
             };
+            let (side_a, port_a) = fixed(index, a, schematic)?;
+            let (side_b, port_b) = fixed(index, b, schematic)?;
             debug_assert!(
-                (a.port.is_none() || a.side.is_some()) && (b.port.is_none() || b.side.is_some()),
+                (port_a.is_none() || side_a.is_some()) && (port_b.is_none() || side_b.is_some()),
                 "a fixed port rides a forced side (ROUTING.md Fixed ports)"
             );
             out.push(EdgeReq {
@@ -162,10 +171,10 @@ pub fn requests(program: &Program, index: &SceneIndex) -> Result<Vec<EdgeReq>, E
                 b_path: b.path.clone(),
                 a_rect: rect_of(a)?,
                 b_rect: rect_of(b)?,
-                side_a: a.side,
-                side_b: b.side,
-                port_a: a.port,
-                port_b: b.port,
+                side_a,
+                side_b,
+                port_a,
+                port_b,
                 routing: w.routing,
                 clearance,
                 stub_a: stub(start),
@@ -183,6 +192,52 @@ pub fn requests(program: &Program, index: &SceneIndex) -> Result<Vec<EdgeReq>, E
         }
     }
     Ok(out)
+}
+
+/// An endpoint's forced side and fixed-port ordinate (ROUTING.md Fixed
+/// ports) — **the** derivation, the one place a schematic terminal reaches
+/// the router. The scene index computed each landing once when it folded the
+/// part [SPEC 16.2/16.5], so every wire on a pin reads the same `f64` and the
+/// implicit fan merges bit-exactly.
+///
+/// Three answers, in order:
+///
+/// - a **terminal** — a pin, or a `|label|`, which is its own — owns its
+///   connection geometry, so an authored `:side` on one is an error
+///   [SPEC 16.4/21]. That verdict asks the scene's terminal set, never the
+///   port map: a terminal whose drawing gives it no facing (a symbol-less
+///   `|label|`, an `|L|` whose glyph ports tie at a corner) is still a
+///   terminal, and a *part* that takes a bare landing (`- r1`) is still not
+///   one.
+/// - an authored `:side` on anything else wins outright — it is a forced side
+///   on a part, and the convenience landing a bare wire would have taken
+///   yields to it.
+/// - otherwise the scene's landing, else whatever resolve put on the endpoint
+///   (the fixed-port testing hook).
+///
+/// Outside a schematic scope none of it applies: a part is an ordinary box
+/// there, `:side` is legal on it, and the endpoint answers exactly as it did
+/// before the family existed.
+fn fixed(
+    index: &SceneIndex,
+    e: &crate::resolve::ResolvedEndpoint,
+    schematic: bool,
+) -> Result<(Option<Side>, Option<f64>), Error> {
+    if !schematic {
+        return Ok((e.side, e.port));
+    }
+    if index.is_terminal(&e.path) && e.side.is_some() {
+        return Err(Error::at(
+            e.span,
+            "a terminal owns its connection — a pin or label takes no ':side'".to_string(),
+        )
+        .code(Code::SIDE_ON_TERMINAL));
+    }
+    match (e.side, index.fixed_port(&e.path)) {
+        (Some(side), _) => Ok((Some(side), e.port)),
+        (None, Some((side, ord))) => Ok((Some(side), Some(ord))),
+        (None, None) => Ok((None, e.port)),
+    }
 }
 
 /// One bundle: requests with the same unordered `(path, side)` endpoint pair.

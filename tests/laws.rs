@@ -147,6 +147,55 @@ fn every_sample_holds_the_laws_at_every_clearance() {
     }
 }
 
+/// A schematic sheet is judged like any other scene [SPEC 16.5]: its wires
+/// land on fixed ports (pin stub tips, a label's connection point) and its
+/// parts are single obstacles, so the four laws must hold on it — at its own
+/// clearance and across the knob, where a tighter sheet may only trade wires
+/// for honest strays. It lives here as a source until a schematic sample
+/// ships.
+#[test]
+fn a_schematic_sheet_holds_the_laws_at_every_clearance() {
+    const SHEET: &str = "{ layout: schematic }\n\
+        |component#u1| \"REG\" [ |pin#vin|; |pin#gnd|; |pin#vout| ]\n\
+        |component#u2| \"MCU\" [ |pin#vdd|; |pin#vss|; |pin#io| ]\n\
+        |gnd#g1|\n\
+        |R#r1|\n\
+        u1.gnd - g1\n\
+        u1.vout - u2.vdd\n\
+        u1.vout - u2.vss\n\
+        u2.io - r1.p1\n";
+    let opts = Options::default();
+    let report = lini::validate_str_with(SHEET, &opts).expect("validate the sheet");
+    let strays = report.iter().filter(|v| v.rule == Rule::Impossible).count();
+    assert_eq!(strays, 0, "a seated sheet routes whole: {report:?}");
+    let found = breaches(report);
+    assert!(found.is_empty(), "the four laws hold on a sheet: {found:?}");
+
+    let svg = lini::compile_str_with(SHEET, &opts).expect("compile the sheet");
+    let routes = routes_str_with(SHEET, &opts).expect("routes");
+    for _ in 0..2 {
+        assert_eq!(
+            lini::compile_str_with(SHEET, &opts).expect("recompile"),
+            svg
+        );
+        assert_eq!(routes_str_with(SHEET, &opts).expect("reroute"), routes);
+    }
+
+    let declared = declared_edges_with(SHEET, &opts);
+    for c in CLEARANCES {
+        let laid = route_sample_with(SHEET, &opts, c);
+        let report = laws(&laid);
+        let impossible = report.iter().filter(|v| v.rule == Rule::Impossible).count();
+        let found = breaches(report);
+        assert!(found.is_empty(), "the sheet at clearance {c}: {found:?}");
+        assert_eq!(
+            drawn_edges(&laid) + impossible,
+            declared,
+            "the sheet at clearance {c}: every wire drawn or reported"
+        );
+    }
+}
+
 /// The perf tripwire: routing stays a counting problem — one Dijkstra per
 /// bundle over tens of cells, one placement sweep per channel. Ten debug
 /// compiles of the busiest sample run a few seconds on a dev laptop and

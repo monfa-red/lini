@@ -3,10 +3,118 @@
 //! link's auto-distributed `along:` fractions are each a small, reusable
 //! transform [SPEC 3, 7, 9, 16].
 
+use super::{Lower, header_node, lower_node, schematic};
 use crate::ast::ChainOp;
 use crate::error::Error;
+use crate::resolve::NodeKind;
 use crate::span::Span;
-use crate::syntax::ast::{Decl, LabelItem, Link, Node, TextNode, Value};
+use crate::syntax::ast::{Child, Decl, LabelItem, Link, Node, TextNode, Value};
+
+/// What a node is, as the smart label reads it — the one dispatch behind
+/// [`lower_smart`], gathered where the node's chain is known.
+pub(super) struct Smart {
+    is_icon: bool,
+    is_entity: bool,
+    is_drawing: bool,
+    is_container: bool,
+    /// Geometry-only shapes (line/poly/path/image) hold no text.
+    text_capable: bool,
+    sch: Option<schematic::SchKind>,
+    /// A table/entity's column count — an entity's title spans them.
+    cols: Option<usize>,
+}
+
+impl Smart {
+    pub(super) fn read(
+        kind: NodeKind,
+        chain: &[String],
+        is_entity: bool,
+        is_drawing: bool,
+        sch: Option<schematic::SchKind>,
+        cols: Option<usize>,
+    ) -> Smart {
+        Smart {
+            is_icon: kind == NodeKind::Icon,
+            is_entity,
+            is_drawing,
+            is_container: chain.iter().any(|n| n == "group"),
+            text_capable: !matches!(
+                kind,
+                NodeKind::Line | NodeKind::Poly | NodeKind::Path | NodeKind::Image
+            ),
+            sch,
+            cols,
+        }
+    }
+}
+
+/// The smart label, lowered per type [SPEC 3/7] — the single shared lowering
+/// for a node's text (a link's labels go through the same [`TextNode`]). A
+/// box-like type → centred text prepended; a group/table → a `|caption|`
+/// child; an icon/sign → the `symbol`; a drawing → a `|footnote|` title; a
+/// schematic part → its name/value readout [SPEC 16.2]. An empty `""` lowers
+/// to nothing. Returns the label a geometry primitive keeps as its *name*.
+pub(super) fn lower_smart(
+    cx: &Lower,
+    node: &Node,
+    label: Option<&TextNode>,
+    what: &Smart,
+    style: &mut Vec<Decl>,
+    children: &mut Vec<Child>,
+) -> Result<Option<TextNode>, Error> {
+    let mut kept_label = None;
+    if let Some(label) = label {
+        if what.is_icon {
+            if style.iter().any(|d| d.name == "symbol") {
+                return Err(Error::at(
+                    node.span,
+                    "an icon's symbol is its label or 'symbol:', not both",
+                ));
+            }
+            style.push(symbol_decl(&label.text, node.span));
+        } else if what.is_entity {
+            // An entity's label is its title: a `|header|` spanning every column [SPEC 8].
+            let title = header_node(label, Some(what.cols.unwrap_or(2)));
+            children.insert(0, Child::Box(lower_node(cx, &title, false)?));
+        } else if what.is_drawing {
+            // A drawing's smart label is its title, lowered to a |footnote|
+            // under the view [SPEC 15.8].
+            let title = lower_node(cx, &footnote_node(label), false)?;
+            children.insert(0, Child::Box(title));
+        } else if let Some(kind) = what.sch.filter(|k| *k != schematic::SchKind::Label) {
+            // A part's smart label is its name / value [SPEC 16.2/16.3],
+            // drawn as readout chrome: above a component (under its ref),
+            // below a symbol-bodied part.
+            let (anchor, dy) = match kind {
+                schematic::SchKind::Component => ("top", -16.0),
+                _ => ("bottom", 12.0),
+            };
+            children.push(schematic::value_readout(cx, &label.text, anchor, dy)?);
+        } else if what.is_container {
+            let caption = lower_node(cx, &caption_node(label), false)?;
+            children.insert(0, Child::Box(caption));
+        } else if what.text_capable {
+            children.insert(0, Child::Text(label.clone()));
+        } else {
+            // Geometry primitives (line/poly/path/image) draw no text, but a label
+            // still *names* the node — keep it so a chart can read a `|line|` series'
+            // legend name. Inert for a standalone primitive (render ignores it).
+            kept_label = Some(label.clone());
+        }
+    }
+    // A view sourced from a marker (`of:`) with no authored label composes its
+    // title [SPEC 15.8]: seed a placeholder |footnote| the engine fills where it
+    // pins the title — the marker (a `|plane|` → `A-A`, a `|magnifier|` → `C`)
+    // and the scale ratio are both known there.
+    if what.is_drawing
+        && node.style.iter().any(|d| d.name == "of")
+        && node.label.as_ref().filter(|l| !l.text.is_empty()).is_none()
+    {
+        let foot = of_footnote(node.span);
+        children.insert(0, Child::Box(lower_node(cx, &foot, false)?));
+    }
+    Ok(kept_label)
+}
 
 /// A `|caption|` node carrying a group/table's smart-label text [SPEC 3/8]: the
 /// container's label lowers to this, then through the normal node path (so it

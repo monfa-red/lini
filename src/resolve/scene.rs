@@ -82,15 +82,18 @@ pub fn resolve_instances(
 }
 
 /// The synthetic cascade identity of a `{ layout: sequence }` / `{ layout:
-/// drawing }` root — the engines whose scoped rules select by container type.
-/// Links share it: a root drawing's `|-|`s match `|drawing| |-|` exactly as a
-/// `|drawing#x|`'s do.
+/// drawing }` / `{ layout: schematic }` root — the engines whose scoped rules
+/// select by container type. Links share it: a root drawing's `|-|`s match
+/// `|drawing| |-|` exactly as a `|drawing#x|`'s do, and a root schematic's
+/// wires match `|schematic| |-|` [SPEC 16.6].
 pub(super) fn root_facts(root_attrs: &AttrMap) -> Option<NodeFacts> {
     match root_attrs.get("layout") {
-        Some(ResolvedValue::Ident(l)) if l == "sequence" || l == "drawing" => Some(NodeFacts {
-            classes: vec![format!("lini-{l}")],
-            id: None,
-        }),
+        Some(ResolvedValue::Ident(l)) if l == "sequence" || l == "drawing" || l == "schematic" => {
+            Some(NodeFacts {
+                classes: vec![format!("lini-{l}")],
+                id: None,
+            })
+        }
         _ => None,
     }
 }

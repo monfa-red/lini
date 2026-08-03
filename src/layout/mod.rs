@@ -4,15 +4,17 @@ pub(crate) mod chart;
 pub(crate) mod drawing;
 mod flex;
 mod frame;
+mod geom;
 mod grid;
 pub(crate) mod ir;
 mod note;
 mod page;
-pub(crate) mod path_bbox; // glyph-extent computation also serves `render::icon_fit`
 mod pattern;
 mod prim; // PlacedNode *builders* for lowered primitives (charts, sequences)
 mod primitives; // primitive *sizing* (leaf/closed bbox) — distinct from `prim`
+pub(crate) mod schematic;
 pub(crate) mod sequence;
+mod stack;
 mod text;
 pub(crate) mod tree;
 mod values;
@@ -59,6 +61,16 @@ pub fn layout(program: &Program) -> Result<LaidOut, Error> {
     // topic's branches into its own box.
     if tree::is_tree(&program.scene.attrs) {
         let (top_nodes, bbox) = tree::layout_root(program)?;
+        let routed = routing::route(program, &top_nodes)?;
+        return finish(program, top_nodes, bbox, routed);
+    }
+
+    // A root `{ layout: schematic }` scene ([SPEC 16]) is the schematic scope:
+    // it places its parts on the track grid, then the router draws its wires
+    // like any links — intercepted before the generic per-child layout, which
+    // would flow-arrange the parts instead.
+    if schematic::is_schematic(&program.scene.attrs) {
+        let (top_nodes, bbox) = schematic::layout_root(program)?;
         let routed = routing::route(program, &top_nodes)?;
         return finish(program, top_nodes, bbox, routed);
     }
@@ -285,7 +297,13 @@ fn child_path(parent: &str, inst: &ResolvedInst) -> String {
 /// taller than the threshold almost certainly authored a magnitude into
 /// `scale:` (a ratio) — say so, with the likely fix. Pages are bounded by
 /// their sheet and never hint.
-pub fn extent_hints(laid: &LaidOut, program: &Program) -> Vec<crate::error::Diagnostic> {
+pub fn layout_hints(laid: &LaidOut, program: &Program) -> Vec<crate::error::Diagnostic> {
+    let mut out = extent_hints(laid, program);
+    out.extend(schematic::seat_hints(laid, program));
+    out
+}
+
+fn extent_hints(laid: &LaidOut, program: &Program) -> Vec<crate::error::Diagnostic> {
     fn walk(nodes: &[PlacedNode], out: &mut Vec<crate::error::Diagnostic>) {
         for n in nodes {
             let is_drawing =
@@ -385,7 +403,8 @@ fn layout_inst(
             }
         }
     }
-    // A layout-owning engine (chart / pie / sequence / drawing) owns its whole
+    // A layout-owning engine (chart / pie / sequence / tree / schematic /
+    // drawing) owns its whole
     // subtree and emits primitive PlacedNodes itself — intercepted before the
     // child recursion (which would run `leaf_bbox` on a series with no
     // `points:`) and before the flow/grid path. `pattern:` still applies to
@@ -398,6 +417,8 @@ fn layout_inst(
         Some(sequence::layout_node(inst, path, program)?)
     } else if tree::is_tree(&inst.attrs) {
         Some(tree::layout_node(inst, path, program)?)
+    } else if schematic::is_schematic(&inst.attrs) {
+        Some(schematic::layout_node(inst, path, program)?)
     } else if crate::resolve::is_drawing(&inst.attrs) {
         Some(drawing::layout_node(inst, path, program, ctx)?)
     } else {

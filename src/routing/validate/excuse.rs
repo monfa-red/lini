@@ -173,22 +173,16 @@ pub(super) fn excused(
 
     // Contention edges, exactly the pitch the law charges: overlapping
     // travel, or tips flanking within a clearance — same-wire pieces only
-    // when they overlap, fan siblings never (the trunk is one line), and
-    // wires already glued below the pitch floor never (they are their own
-    // breach, not an excuse for the neighbours').
-    let fan_pair = |x: &RoutedLink, y: &RoutedLink| {
-        [x.fan_from, x.fan_to]
-            .iter()
-            .flatten()
-            .any(|g| [y.fan_from, y.fan_to].contains(&Some(*g)))
-    };
+    // when they overlap, and wires already glued below the pitch floor never
+    // (they are their own breach, not an excuse for the neighbours'). Fan
+    // siblings need no rule of their own: their shared trunk is one line, so
+    // the pitch floor drops it, and past the split each leg owes pitch like
+    // any wire — which is how two legs pinned to fixed ports a pin pitch
+    // apart earn Law 1's fixed-port scarcity (ROUTING.md Fixed ports).
     let m = wires.len();
     let edge = |i: usize, j: usize| -> bool {
         let (x, y) = (&wires[i], &wires[j]);
         if (y.ord - x.ord).abs() < min_pitch(c) - EPS {
-            return false;
-        }
-        if x.link != y.link && fan_pair(links[x.link], links[y.link]) {
             return false;
         }
         let overlap = x.ext.0.max(y.ext.0) < x.ext.1.min(y.ext.1);

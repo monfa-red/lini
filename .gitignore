@@ -4,3 +4,6 @@
 *.swo
 *.snap.new
 *.vsix
+
+# insta run logs — a test-run artifact, never source
+*.pending-snap

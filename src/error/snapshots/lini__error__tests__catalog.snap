@@ -30,6 +30,8 @@ R013 legacy-space-list
 R014 unknown-side
 R015 unknown-strategy
 R016 capsule-in-drawing
+R017 schematic-pose
+R018 pin-slide
 V000 validate
 V001 unknown-property
 V002 misused-property
@@ -45,6 +47,9 @@ Y001 missing-required-property
 Y002 chart-data
 Y003 project-axis-mismatch
 Y004 drawing-measure
+Y005 schematic-tracks
+Y006 side-on-terminal
+Y007 schematic-seat
 T000 route
 T001 impossible-link
 T002 law-breach

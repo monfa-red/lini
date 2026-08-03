@@ -45,7 +45,8 @@
     "sequence",
     "chart",
     "tree",
-    "pie"
+    "pie",
+    "schematic"
   ],
   "roles": [
     "discrete",
@@ -929,7 +930,11 @@
       "chain": [
         "schematic"
       ],
-      "defaults": {}
+      "defaults": {
+        "layout": "schematic",
+        "gap": "48",
+        "clearance": "8"
+      }
     },
     {
       "name": "component",
@@ -2200,6 +2205,10 @@
           "name": "tree"
         },
         {
+          "kind": "layout",
+          "name": "schematic"
+        },
+        {
           "kind": "role",
           "name": "mate"
         }
@@ -2267,6 +2276,10 @@
         {
           "kind": "layout",
           "name": "grid"
+        },
+        {
+          "kind": "layout",
+          "name": "schematic"
         }
       ],
       "shape": "list",
@@ -2305,6 +2318,10 @@
         {
           "kind": "layout",
           "name": "grid"
+        },
+        {
+          "kind": "layout",
+          "name": "schematic"
         }
       ],
       "shape": "one",

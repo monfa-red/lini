@@ -13,6 +13,7 @@ mod ledger;
 mod lexer;
 mod lint;
 mod palette;
+mod path_data;
 mod render;
 mod resolve;
 mod routing;
@@ -119,7 +120,7 @@ pub fn compile_str_checked(src: &str, opts: &Options) -> Result<(String, Vec<Dia
     let program = resolve_pipeline(src, opts)?;
     let mut laid_out = layout_stage(&program)?;
     render::lower_paints(&mut laid_out);
-    let mut diags = error::stamp_phase(layout::extent_hints(&laid_out, &program), Phase::Layout);
+    let mut diags = error::stamp_phase(layout::layout_hints(&laid_out, &program), Phase::Layout);
     diags.extend(routing_diagnostics_of(layout::validate_routing(&laid_out)));
     Ok((finish_svg(&laid_out, opts), diags))
 }

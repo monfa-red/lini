@@ -1,0 +1,33 @@
+// A 3.3 V rail — the smallest honest sheet: a linear regulator, its output
+// cap, and the header it feeds. `layout: schematic` splits the children by
+// role — 3+-pin parts are **anchors** and ride the scope's track row; labels
+// and 1–2-pin parts are **satellites**, seated at the pin their wire touches
+// and auto-posed to face it. The wires stay the router's, landing on fixed
+// ports: a pin's stub tip, a label's connection point.
+{
+  layout: schematic;
+}
+
+// ── anchors ──
+|component#u1| "AMS1117-3.3" [
+  |pin#vin| { side: left; number: 3; }
+  |pin#gnd| { side: bottom; number: 1; }
+  |pin#vout| { side: right; number: 2; }
+]
+// `pins: 3` generates p1–p3, split bilaterally; `rotate:` is read at lowering
+// — the pins re-side (and their rail reverses) while every text stays upright,
+// so the header's own pins face back at the regulator.
+|J#j1| "3V3 OUT" { pins: 3; rotate: 180; }
+
+// ── satellites ──
+|label#pwr| { symbol: power; }
+|C#c1| "22u"
+|gnd#g1|
+
+// ── wires ── a net name is the wire's own label
+pwr - u1.vin "5V"
+u1.vout - c1.p1
+c1.p2 - g1
+u1.vout - j1.p3 "3V3"
+// the capsule form — a label declared where it is wired
+u1.gnd - |gnd|

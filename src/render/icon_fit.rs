@@ -9,7 +9,7 @@
 //! `translate … rotate` transform (the only forms the set carries).
 
 use crate::icon::Role;
-use crate::layout::path_bbox::extent_points;
+use crate::path_data::extent_points;
 use crate::resolve::{AttrMap, ResolvedValue};
 
 /// How content maps into its box. Default [`Fit::Auto`]; the value is validated at

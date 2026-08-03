@@ -9,7 +9,7 @@
 
 use super::super::ir::{Bbox, PlacedNode};
 use super::anchors;
-use super::annotate::{Axis, Ctx, Paint, Rows, SeatLine, corner_pull, stack_side};
+use super::annotate::{Axis, Ctx, Paint, Rows, SeatLine, away, corner_pull, stack_side};
 use super::compose::{self, DimText, Glyph};
 use super::geometry::{Frame, P, dist, unit};
 use super::symbols::CarriedStack;
@@ -131,7 +131,7 @@ pub(super) fn linear(
             }
             None => {
                 let frame = Frame::of(u);
-                let away_pos = SeatLine::away(
+                let away_pos = away(
                     &w.attrs,
                     span_dir.unwrap_or(u),
                     ((pa.0 + pb.0) / 2.0, (pa.1 + pb.1) / 2.0),

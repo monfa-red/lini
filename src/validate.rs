@@ -330,12 +330,21 @@ impl<'a> Ctx<'a> {
         match d.name.as_str() {
             "cell" | "span" => {
                 let is_band = chain.iter().any(|c| c == "band");
+                // `cell:` places on a grid *and* on a schematic's own ordinal
+                // track grid [SPEC 16.1], where it also promotes a satellite to
+                // an anchor. `span:` stays grid-only — schematic tracks have no
+                // spans (the `|band|` exception aside).
+                let host = if d.name == "cell" {
+                    &["grid", "schematic"][..]
+                } else {
+                    &["grid"][..]
+                };
                 if let Some(parent) = parent_layout
-                    && *parent != "grid"
+                    && !host.contains(parent)
                     && !(d.name == "span" && is_band)
                 {
                     let verb = if d.name == "cell" {
-                        "places a grid child"
+                        "places a grid or schematic child"
                     } else {
                         "spans grid tracks"
                     };
@@ -569,6 +578,7 @@ fn container_layout(t: &str) -> Option<&'static str> {
         "chart" => "chart",
         "pie" => "pie",
         "sequence" => "sequence",
+        "schematic" => "schematic",
         "table" | "entity" | "title-block" | "grid" => "grid",
         _ => return None,
     })

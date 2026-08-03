@@ -3,10 +3,12 @@
 //! down, the core orientation — and bearings are visual: 0 = up, clockwise.
 
 use super::super::ir::Bbox;
-use super::super::path_bbox;
 use super::annotate::Axis;
+use crate::path_data;
 
-pub type P = (f64, f64);
+/// The plane primitives are layout-level — the schematic engine's stacking
+/// shares them [SPEC 16]; the drawing's own conventions extend them below.
+pub use crate::layout::geom::{Frame, P, project};
 
 /// One drawn segment. `from`/`to` chain through a subpath; an arc is circular
 /// (SVG `A r r 0 large sweep`), `sweep: true` = clockwise on screen.
@@ -359,40 +361,12 @@ pub fn to_d(subs: &[Subpath]) -> String {
 /// The drawn geometry's bbox — the path extent, **stroke excluded** (the
 /// measurement box, [SPEC 15.1]); layout inflates it for paint.
 pub fn geometry_bbox(d: &str) -> Bbox {
-    Bbox::from_points(&path_bbox::extent_points(d))
+    Bbox::from_points(&path_data::extent_points(d))
 }
 
-/// The `[min, max]` projection of a point set onto a unit direction.
-pub fn proj(pts: &[P], dir: P) -> (f64, f64) {
-    pts.iter()
-        .fold((f64::INFINITY, f64::NEG_INFINITY), |(lo, hi), c| {
-            let t = c.0 * dir.0 + c.1 * dir.1;
-            (lo.min(t), hi.max(t))
-        })
-}
-
-/// The `[min, max]` projection of a box's corners onto a unit direction.
-pub fn project(geo: Bbox, dir: P) -> (f64, f64) {
-    proj(
-        &[
-            (geo.min_x, geo.min_y),
-            (geo.max_x, geo.min_y),
-            (geo.min_x, geo.max_y),
-            (geo.max_x, geo.max_y),
-        ],
-        dir,
-    )
-}
-
-/// The dim's measure frame [SPEC 15.6]: `u` runs along the dim line (the
-/// measure direction), `n` across it — oriented so **−n is the ISO reading's
+/// The drawing's own frames [SPEC 15.6]: the dim's measure frame is
+/// [`crate::layout::geom::Frame`] oriented so **−n is the ISO reading's
 /// "above the line"** (text lifts toward −n, whatever the angle).
-#[derive(Clone, Copy, PartialEq)]
-pub struct Frame {
-    pub u: P,
-    pub n: P,
-}
-
 impl Frame {
     /// The two row axes — exact unit vectors, so the packed paths stay
     /// byte-identical to the axis-matched arithmetic.
@@ -418,21 +392,6 @@ impl Frame {
             u: (c, s),
             n: (-s, c),
         }
-    }
-
-    /// The coordinate along the dim line.
-    pub fn u(&self, p: P) -> f64 {
-        p.0 * self.u.0 + p.1 * self.u.1
-    }
-
-    /// The coordinate across the dim line.
-    pub fn cross(&self, p: P) -> f64 {
-        p.0 * self.n.0 + p.1 * self.n.1
-    }
-
-    /// Frame coordinates back to the drawing plane.
-    pub fn pt(&self, u: f64, c: f64) -> P {
-        (u * self.u.0 + c * self.n.0, u * self.u.1 + c * self.n.1)
     }
 
     /// The ISO text seat above a point on a line along `u` [SPEC 15.6]: the
