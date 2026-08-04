@@ -66,16 +66,31 @@ pub(super) fn at(nodes: &[PlacedNode], id: &str) -> (f64, f64) {
     (x, y)
 }
 
-/// The clear space between two placed nodes along x, in scene coordinates.
-pub(super) fn x_gap(nodes: &[PlacedNode], left: &str, right: &str) -> f64 {
-    let (l, lx, _) = placed(nodes, left);
-    let (r, rx, _) = placed(nodes, right);
-    (rx + r.bbox.min_x) - (lx + l.bbox.max_x)
+/// A placed node's **drawn** extent in scene coordinates — the engine's one
+/// extent notion ([`super::seat::drawn`]), so a test measures the ink the
+/// tracks reserved and never the box inside it.
+pub(super) fn ink(nodes: &[PlacedNode], id: &str) -> crate::layout::ir::Bbox {
+    let (n, x, y) = placed(nodes, id);
+    super::seat::drawn(n).shifted(x, y)
 }
 
-/// A placed node's bbox **centre** in scene coords plus its extent — the cell
-/// geometry the tracks size against — what a cluster is measured from.
+/// The clear space between two placed nodes along x, in scene coordinates.
+pub(super) fn x_gap(nodes: &[PlacedNode], left: &str, right: &str) -> f64 {
+    ink(nodes, right).min_x - ink(nodes, left).max_x
+}
+
+/// A placed node's drawn **centre** in scene coords plus its extent — the cell
+/// geometry the tracks size against, which is what a cluster is measured from.
 pub(super) fn cell(nodes: &[PlacedNode], id: &str) -> (f64, f64, f64, f64) {
+    let b = ink(nodes, id);
+    let (bx, by) = b.center();
+    (bx, by, b.w(), b.h())
+}
+
+/// A placed node's **own box** in scene coords — its drawing without the
+/// readout chrome hanging off it, for the assertions that are about where the
+/// part itself landed.
+pub(super) fn body(nodes: &[PlacedNode], id: &str) -> (f64, f64, f64, f64) {
     let (n, x, y) = placed(nodes, id);
     let (bx, by) = n.bbox.center();
     (x + bx, y + by, n.bbox.w(), n.bbox.h())
@@ -83,9 +98,7 @@ pub(super) fn cell(nodes: &[PlacedNode], id: &str) -> (f64, f64, f64, f64) {
 
 /// The clear space between two placed nodes along y.
 pub(super) fn y_gap(nodes: &[PlacedNode], top: &str, bottom: &str) -> f64 {
-    let (t, _, ty) = placed(nodes, top);
-    let (b, _, by) = placed(nodes, bottom);
-    (by + b.bbox.min_y) - (ty + t.bbox.max_y)
+    ink(nodes, bottom).min_y - ink(nodes, top).max_y
 }
 
 pub(super) fn close(a: f64, b: f64) -> bool {
@@ -141,6 +154,45 @@ pub(super) fn seat_warnings(src: &str) -> Vec<String> {
         .filter(|d| d.code == crate::error::Code::SCHEMATIC_SEAT)
         .map(|d| d.message.clone())
         .collect()
+}
+
+// ───────────────────────── the shaped tag ─────────────────────────
+
+#[test]
+fn a_shaped_tag_draws_its_flag_over_the_sized_label() {
+    // [SPEC 16.4] `shape:` picks the outline, and the op's end marker sets it
+    // [SPEC 16.5]. `plain` draws none; `round` is the label's own stadium; the
+    // three flags lower as a chrome `|path|` the layout fills from the finished
+    // box — so the point's *span* is the tag's, and its depth the constant.
+    let tag_path = |op: &str| -> Option<String> {
+        let src =
+            format!("{{ layout: schematic }}\n|component#u1| [ |pin#a| ]\nu1.a {op} \"NET\"\n");
+        let nodes = laid(&src);
+        let (label, ..) = placed(&nodes, "lini-label-1");
+        label.children.iter().find_map(|c| {
+            (c.kind == crate::resolve::NodeKind::Path)
+                .then(|| match c.attrs.get("path") {
+                    Some(crate::resolve::ResolvedValue::String(d)) => Some(d.clone()),
+                    _ => None,
+                })
+                .flatten()
+        })
+    };
+    assert_eq!(tag_path("-"), None, "a plain tag is bare text");
+    assert_eq!(tag_path("-*"), None, "a round tag is the label's own box");
+    // A flag turns the box's corners into a point: five or six vertices, and
+    // the tip sits on the box edge the padding already reserved.
+    for (op, tips) in [("->", 1), ("-<", 1), ("-<>", 2)] {
+        let d = tag_path(op).unwrap_or_else(|| panic!("{op} draws a flag"));
+        // A rectangle is three drawn edges plus the closing one; each point
+        // adds a vertex.
+        assert_eq!(
+            d.matches('L').count(),
+            3 + tips,
+            "{op} cuts {tips} end(s): {d}"
+        );
+        assert!(d.ends_with('Z'), "and closes: {d}");
+    }
 }
 
 // ───────────────────────── errors & determinism ─────────────────────────
@@ -265,9 +317,10 @@ fn a_nested_row_places_its_own_children_though_the_scope_still_reaches_them() {
     );
 
     // The row itself is the anchor — one child of the scope, on its track row.
-    let ((ux, uy), (wx, wy)) = (at(&nodes, "u1"), at(&nodes, "r"));
-    assert!(wx > ux, "the row rides the scope's track row: {ux} {wx}");
-    assert!(close(uy, wy), "beside the anchor, not seated below it");
+    let ((ux, uy, ..), (cwx, cwy, ..)) = (cell(&nodes, "u1"), cell(&nodes, "r"));
+    assert!(cwx > ux, "the row rides the scope's track row: {ux} {cwx}");
+    assert!(close(uy, cwy), "beside the anchor, not seated below it");
+    let (wx, wy) = at(&nodes, "r");
 
     // The wire moved nothing: g1 sits exactly where the bare row put it.
     let bare = laid(&scope("", &(anchor("u1", "") + row)));

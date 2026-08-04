@@ -1088,13 +1088,13 @@ fn a_define_carried_layout_is_a_schematic_scope_too() {
     // The pose chooser asks desugar's cascade slice, not the written type, so
     // `{ |sheet::group| { layout: schematic } }` seats and poses its
     // satellites exactly as a `|schematic|` does [SPEC 16.1].
-    let body = "[\n  |component#U7| [ |pin#a|; |pin#b|; |pin#c| ]\n  |gnd#g1|\n  U7.a - g1\n]\n";
+    let body = "[\n  |component#U7| [ |pin#a|; |pin#b|; |pin#c| ]\n  |R#r1|\n  U7.a - r1.p1\n]\n";
     let posed = |scope: &str| {
         desugar_source(&format!(
             "{{ |sheet::group| {{ layout: schematic }} }}\n|{scope}#s| {body}"
         ))
         .unwrap()
-        .contains("lini-pose-90")
+        .contains("lini-pose-180")
     };
     assert!(posed("sheet"), "a define carrying `layout: schematic`");
     assert!(posed("schematic"), "and the written type, unchanged");
@@ -1106,14 +1106,14 @@ fn a_define_body_contributes_satellites_the_pose_chooser_sees() {
     // reach the scope only when the instance expands, and the gather does that
     // **before** the chooser runs — so a satellite written in a define poses
     // exactly like one written in the sheet.
-    let body = "[\n  |component#U7| [ |pin#a| { side: left }; |pin#b|; |pin#c| ]\n  |gnd#g1|\n  U7.a - g1\n]";
+    let body = "[\n  |component#U7| [ |pin#a| { side: left }; |pin#b|; |pin#c| ]\n  |R#r1|\n  U7.a - r1.p1\n]";
     let from_define = desugar_source(&format!(
         "{{\n  |sheet::group| {{ layout: schematic; }} {body}\n}}\n|sheet#s|\n"
     ))
     .unwrap();
     let written = desugar_source(&format!("|schematic#s| {body}\n")).unwrap();
-    assert!(from_define.contains("lini-pose-90"), "{from_define}");
-    assert!(written.contains("lini-pose-90"), "{written}");
+    assert!(from_define.contains("lini-pose-180"), "{from_define}");
+    assert!(written.contains("lini-pose-180"), "{written}");
 }
 
 // ── Label wires [SPEC 16.5] ──
@@ -1211,7 +1211,7 @@ fn a_marker_shapes_a_tag_however_it_was_written() {
     ] {
         let out = desugar_source(&sheet(wires)).unwrap();
         assert!(
-            out.contains(".lini-tag-outline.lini-label.lini-block { shape: right; }"),
+            out.contains(".lini-tag-flag.lini-label.lini-block { shape: right; }"),
             "'{wires}' shapes its tag: {out}"
         );
         assert!(
@@ -1292,18 +1292,18 @@ fn a_marker_at_a_symbol_form_label_errors() {
 
 #[test]
 fn the_capsule_form_poses_like_the_declared_one() {
-    // Hoist-then-pose [SPEC 16.1]: `u7.a - |gnd|` reaches the chooser as a
+    // Hoist-then-pose [SPEC 16.1]: `u7.b - |R#rx|` reaches the chooser as a
     // child with its minted id and a wire rewritten to it, so it turns exactly
     // as the two-statement spelling does.
-    let capsule = desugar_source(&sheet("u7.a - |gnd|")).unwrap();
-    let declared = desugar_source(&sheet("|gnd#gx|\nu7.a - gx")).unwrap();
+    let capsule = desugar_source(&sheet("u7.b - |R#rx|")).unwrap();
+    let declared = desugar_source(&sheet("|R#rx|\nu7.b - rx")).unwrap();
     let pose = |out: &str| {
         out.lines()
-            .find(|l| l.contains(".lini-gnd."))
+            .find(|l| l.contains(".lini-R."))
             .unwrap_or_default()
             .to_string()
     };
-    assert!(pose(&capsule).contains("lini-pose-270"), "{capsule}");
+    assert!(pose(&capsule).contains("lini-pose-180"), "{capsule}");
     assert_eq!(
         pose(&capsule).replace("lini-cap-1", "gx"),
         pose(&declared),
@@ -1367,7 +1367,7 @@ fn a_nested_container_poses_nothing_though_its_wires_are_the_scopes() {
     // must not.
     let sheet = |body: &str| format!("{{ layout: schematic }}\n{body}");
     let direct = desugar_source(&sheet(
-        "|component#u1| [ |pin#a|; |pin#b|; |pin#c| ]\n|gnd#g1|\nu1.c - g1\n",
+        "|component#u1| [ |pin#a|; |pin#b|; |pin#c| ]\n|R#r1|\nu1.a - r1.p1\n",
     ))
     .unwrap();
     assert!(
@@ -1375,7 +1375,7 @@ fn a_nested_container_poses_nothing_though_its_wires_are_the_scopes() {
         "the sheet poses (the turn is consumed into its class): {direct}"
     );
     let nested = desugar_source(&sheet(
-        "|row#r| [\n  |component#u1| [ |pin#a|; |pin#b|; |pin#c| ]\n  |gnd#g1|\n  u1.c - g1\n]\n",
+        "|row#r| [\n  |component#u1| [ |pin#a|; |pin#b|; |pin#c| ]\n  |R#r1|\n  u1.a - r1.p1\n]\n",
     ))
     .unwrap();
     assert!(

@@ -113,6 +113,9 @@ pub(crate) const PIN_PITCH: f64 = 20.0;
 pub(crate) const PIN_STUB: f64 = 12.0;
 /// The junction dot's radius [SPEC 16.5].
 pub(crate) const JUNCTION_RADIUS: f64 = 3.0;
+/// How deep a shaped tag's point is cut back from its box [SPEC 16.4] — the
+/// flag's nose. The tag's own padding holds it, so the text never rides it.
+pub(crate) const TAG_POINT: f64 = 8.0;
 /// The satellite seat gap [SPEC 16.1/10.5] — the clear run between a pin's
 /// stub tip and the satellite seated off it, and between stacked satellites.
 ///
@@ -132,8 +135,16 @@ pub(crate) const SCH_CLEARANCE: f64 = 8.0;
 pub(crate) const SCH_STROKE_WIDTH: f64 = 1.5;
 /// The pin-number readout, outside beside the stub [SPEC 16.2].
 pub(crate) const PIN_NUMBER_FONT: f64 = 9.0;
+/// How far the pin number sits off its lead, across the stub: above a
+/// horizontal one, beside a vertical one [SPEC 16.2].
+pub(crate) const PIN_NUMBER_OFFSET: f64 = 7.0;
 /// The ref / value readout text size [SPEC 16.2].
 pub(crate) const REF_FONT: f64 = 11.0;
+/// How far a **turned** part's ref / value readouts sit beside its axis
+/// [SPEC 16.2] — clear of the symbol *and* of the wire's own corridor running
+/// down through it, so a typical value (up to ~5 characters) never blocks a
+/// landing. A longer one is `translate:`'s to move.
+pub(crate) const READOUT_OFFSET: f64 = 30.0;
 
 /// The absurd-rendered-extent hint threshold [SPEC 21]: a drawing wider or
 /// taller than this many px almost certainly authored a magnitude into

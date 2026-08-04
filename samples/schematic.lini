@@ -2,10 +2,17 @@
 // cap, and the header it feeds. `layout: schematic` splits the children by
 // role — 3+-pin parts are **anchors** and ride the scope's track row; labels
 // and 1–2-pin parts are **satellites**, seated at the pin their wire touches
-// and auto-posed to face it. The wires stay the router's, landing on fixed
-// ports: a pin's stub tip, a label's connection point.
+// and auto-posed to face back up the chain. The wires stay the router's,
+// landing on fixed ports: a pin's stub tip, a label's connection point.
 {
   layout: schematic;
+
+  // A power flag is a define with intrinsic text [SPEC 8/16.4]: the symbol is
+  // drawn with its connection point at the bottom, so a chain ending in one
+  // grows **up** out of the pin it feeds.
+  |v5::label| { symbol: power; } [
+    "5V"
+  ]
 }
 
 // ── anchors ──
@@ -20,19 +27,19 @@
 |J#j1| "3V3 OUT" { pins: 3; rotate: 180; }
 
 // ── satellites ──
-|label#pwr| { symbol: power; }
 |C#c1| "22u"
 |gnd#g1|
 
-// ── wires ── a net name is the wire's own label
-pwr - u1.vin "5V"
-// a chain **passes through** the cap: it enters on p1 and leaves by p2, so
-// the output rail, the decoupling cap and its ground are one series statement
+// ── wires ──
+u1.vin - |v5|
+// a chain **passes through** the cap: it enters on p1 and leaves by p2, so the
+// output rail, the decoupling cap and its ground are one series statement,
+// hanging off the wire that leaves `vout`
 u1.vout - c1 - g1
+// a net name is the wire's own label, placed along the route
 u1.vout - j1.p3 "3V3"
 // the capsule form — a label declared where it is wired
 u1.gnd - |gnd|
 // a label wire — the one-ended statement mints the net tag it points at, and
-// the op's end marker sets its `shape:` (`->` sets `right`; the pointed
-// geometry that shape names lands in Phase 6, so it draws as a plain outline)
+// the op's end marker shapes it (`->` sets `right`, the flag drawn to a point)
 j1.p1 -> "NSTDBY"

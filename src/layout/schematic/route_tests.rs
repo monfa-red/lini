@@ -142,18 +142,19 @@ fn a_wire_to_a_label_lands_on_its_connection_point() {
     let src = sheet(&(anchor("u1", "") + "|gnd#g1|\nu1.a - g1\n"));
     let laid = routed(&src);
     let path = wire(&laid, "u1.a", "g1");
-    // The ground seats out along the pin's own axis — a left pin, so the tag
-    // faces right and the lead is straight.
+    // A ground is drawn with its point at the top, so its chain grows **down**
+    // [SPEC 16.1]: off a left pin the lead leaves west, turns, and lands on the
+    // tag's top edge.
     assert!(
         near(path[0], stub_tip(&laid.nodes, "u1", "a")),
         "off the stub tip"
     );
     assert!(
-        near(path[path.len() - 1], tag_edge(&laid.nodes, "g1", "right")),
+        near(path[path.len() - 1], tag_edge(&laid.nodes, "g1", "top")),
         "on the symbol's connection point, drew {:?}",
         path[path.len() - 1]
     );
-    assert_eq!(path.len(), 2, "a straight lead: {path:?}");
+    assert_eq!(path.len(), 3, "out along the pin, then down: {path:?}");
 }
 
 #[test]
@@ -213,8 +214,8 @@ fn a_pin_is_never_an_obstacle_of_its_own() {
     );
     // A label's frame edge is its own symbol's connection point.
     assert!(close(
-        index.rect("g1").expect("placed").x1,
-        tag_edge(&laid.nodes, "g1", "right").0
+        index.rect("g1").expect("placed").y0,
+        tag_edge(&laid.nodes, "g1", "top").1
     ));
 }
 
@@ -406,6 +407,26 @@ fn a_wire_from_outside_lands_on_a_nested_sheets_pin() {
     assert_eq!(err.code, Code::SIDE_ON_TERMINAL);
 }
 
+#[test]
+fn a_wire_from_outside_lands_on_a_sealed_engines_pin() {
+    // The corner the type gate's doc rules on ([`super::check_types`]): a
+    // nested `|sequence|` seals the *reading of statements*, never the address.
+    // A part drawn inside one is still an addressed part, so a wire written on
+    // the sheet lands on its pin like any other — the endpoint decides.
+    let src = sheet(
+        &(anchor("u1", "") + "|sequence#seq| [\n" + &anchor("u2", "") + "]\nu1.c - seq.u2.a\n"),
+    );
+    let laid = routed(&src);
+    assert!(laid.strays.is_empty(), "it draws: {:?}", laid.link_report);
+    let path = wire(&laid, "u1.c", "seq.u2.a");
+    let tip = stub_tip(&laid.nodes, "u2", "a");
+    assert!(
+        near(path[path.len() - 1], tip),
+        "on the sealed part's stub tip: {:?} vs {tip:?}",
+        path[path.len() - 1]
+    );
+}
+
 // ───────────────────────── arity's landings [SPEC 16.5] ─────────────────────────
 
 /// The oracle for a symbol part's pin: the placed zero-size port node desugar
@@ -521,23 +542,13 @@ fn a_nested_sheet_routes_its_own_interior_with_no_margin_at_all() {
 }
 
 #[test]
-fn a_wire_into_a_sheet_strays_in_a_band_no_scope_padding_can_close() {
-    // The carry-over's other half is the **router's**, not the scope's
-    // [ROUTING.md Fixed ports]. What is measured, and only measured — this is a
-    // characterization, not a law, and Phase 6 must not design to a number:
-    //
-    // - a cross-scope wire into a sheet's pin strays over a **band** of outer
-    //   `gap`, whose width scales with `2 × clearance`;
-    // - the band's position is a function of the **part's own geometry** — at
-    //   this shape (`|component|` at its default `padding: 8`) it is
-    //   `9 ..= 2c + 8`, at `padding: 0` it is `17 ..= 2c + 16`;
-    // - so the relation is **non-monotone in gap**: a gap below the band draws,
-    //   the band strays, and a gap above it draws again;
-    // - the sheet's *own* `clearance` moves nothing (a wire carries its writing
-    //   scope's), and no interior `padding:` closes the band, because padding
-    //   grows the frame and the flow moves the neighbour out with it.
-    //
-    // The cause is unidentified. Every assert below is a measured point.
+fn a_wire_into_a_sheet_needs_a_corridor_and_the_gap_is_the_whole_rule() {
+    // The carry-over's other half, closed. A sheet's box now holds its parts'
+    // **ink** ([`super::seat::drawn`]), so a part's stub tips can no longer
+    // poke out of the scope and eat the neighbouring gap from the outside: the
+    // old non-monotone "band" collapses into ROUTING.md's own rule — a wire
+    // needs a corridor, so the free space in front of a fixed port has to
+    // exceed `2 × clearance`, and nothing else moves the answer.
     let sheet = |gap: f64, clearance: f64, pad: &str| {
         format!(
             "{{ direction: row; gap: {gap}; clearance: {clearance} }}\n\
@@ -551,32 +562,30 @@ fn a_wire_into_a_sheet_strays_in_a_band_no_scope_padding_can_close() {
             .strays
             .len()
     };
-    // The band at clearance 16, bracketed on both edges…
-    assert_eq!(strays(&sheet(20.0, 16.0, "")), 1, "inside the band");
-    assert_eq!(strays(&sheet(40.0, 16.0, "")), 1, "its last straying gap");
-    assert_eq!(strays(&sheet(41.0, 16.0, "")), 0, "one past it draws");
-    // …a narrower band at a tighter clearance…
-    assert_eq!(strays(&sheet(24.0, 8.0, "")), 1, "still inside at 8");
-    assert_eq!(strays(&sheet(25.0, 8.0, "")), 0, "one past it draws");
-    // …and the non-monotone edge: *below* the band it draws again, which is why
-    // there is no "minimum gap" to state.
-    assert_eq!(strays(&sheet(8.0, 16.0, "")), 0, "below the band draws");
-    // No amount of interior padding closes it.
+    // Monotone in `gap`, and the threshold is exactly the corridor's:
+    for (c, tight, wide) in [(16.0, 32.0, 33.0), (8.0, 16.0, 17.0)] {
+        assert_eq!(strays(&sheet(tight, c, "")), 1, "no corridor at 2×{c}");
+        assert_eq!(strays(&sheet(wide, c, "")), 0, "one past it draws");
+        assert_eq!(strays(&sheet(tight / 4.0, c, "")), 1, "and below it too");
+    }
+    // Interior padding buys nothing — it grows the sheet, and the flow moves
+    // the neighbour out with it — but the scope's own gap is the honest lever.
     for pad in [" { padding: 30 }", " { padding: 120 }"] {
         assert_eq!(
             strays(&sheet(20.0, 16.0, pad)),
             1,
-            "padding cannot buy the landing: {pad}"
+            "padding is not the corridor: {pad}"
         );
     }
 }
 
 #[test]
-fn a_sheet_inside_a_page_cannot_wire_its_own_interior_yet() {
-    // **A characterization of a defect, not a law** — pre-existing (nothing in
-    // `src/routing/` was touched to produce it) and unclosed. A `|schematic|`
-    // nested in a `|page|` strays on its *own* interior wire, the one shape the
-    // seat pass otherwise always draws:
+fn a_sheet_inside_a_page_wires_its_own_interior() {
+    // A `|schematic|` nested in a `|page|` used to stray on its *own* interior
+    // wire: the sheet's generated `|frame|` is a full-page `|rect|` sibling,
+    // and reading it as a body walled in everything inside it. Chrome is drawn,
+    // never solid ([`crate::routing::ortho::scene`]), so a page now hosts a
+    // sheet exactly as any other container does.
     let sheet = |wrapper: &str, style: &str| {
         format!(
             "|{wrapper}#p|{style} [\n|schematic#s| [\n{}  |gnd#g1|\n  u1.c - g1\n]\n]\n",
@@ -589,25 +598,15 @@ fn a_sheet_inside_a_page_cannot_wire_its_own_interior_yet() {
             .strays
             .len()
     };
-    assert_eq!(strays(&sheet("page", "")), 1, "the page case still strays");
-    // …and it is the `|page|` itself, not the sheet's own configuration: no
-    // padding, gap, clearance or page size moves it,
+    for wrapper in ["page", "group", "box", "column", "row", "block"] {
+        assert_eq!(strays(&sheet(wrapper, "")), 0, "a |{wrapper}| is clean");
+    }
     for style in [
         " { padding: 60 }",
         " { gap: 80 }",
         " { clearance: 2 }",
         " { width: 2000; height: 1500 }",
     ] {
-        assert_eq!(strays(&sheet("page", style)), 1, "unmoved by {style}");
+        assert_eq!(strays(&sheet("page", style)), 0, "and stays clean: {style}");
     }
-    // …while every other wrapper — including a `|box|` sized like a page —
-    // draws the identical sheet.
-    for wrapper in ["group", "box", "column", "row", "block"] {
-        assert_eq!(strays(&sheet(wrapper, "")), 0, "a |{wrapper}| is clean");
-    }
-    assert_eq!(
-        strays(&sheet("box", " { width: 595; height: 842 }")),
-        0,
-        "so is a box at A4 — the page's size is not the cause"
-    );
 }

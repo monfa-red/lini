@@ -9,6 +9,14 @@
 //! A **schematic part** [SPEC 16.2] is the one exception, and it is an
 //! identity, not a special case: a part is a scene **leaf**, folded with its
 //! pins, its chrome and its fixed ports by [`parts`].
+//!
+//! **Generated chrome is drawn, never solid.** A `|page|`'s `|frame|`,
+//! `|zone|` and `|tick|` furniture, a `|centerline|`, a `|pitch-circle|` — the
+//! lines a standard always draws [SPEC 15.7] — are scaffolding *over* the
+//! sheet, not bodies on it: the frame is a border the content sits inside, so
+//! reading it as an obstacle would wall in every wire on the page. They still
+//! count toward [`SceneIndex::bounds`] (ink the canvas must hold); they are
+//! never a keep-out, a blocker, or a label's dodge.
 
 use super::rect::Rect;
 use crate::layout::ir::PlacedNode;
@@ -34,6 +42,9 @@ pub struct SceneNode {
     /// would wall off free space beside a narrow caption).
     pub overflow: Vec<Rect>,
     pub kind: NodeKind,
+    /// Generated chrome [SPEC 15.7] — drawn, never solid (see the module
+    /// header). Its subtree is invisible to every solidity question.
+    chrome: bool,
     /// The enclosing scene node (`None` for a top-level node). Containment
     /// and worlds walk this chain — **structure, not paths** — so an
     /// anonymous container is as real a container as a named one.
@@ -98,6 +109,7 @@ impl SceneIndex {
             rect,
             overflow: Vec::new(),
             kind,
+            chrome: crate::layout::drawing::chrome::is_chrome(&n.attrs),
             parent,
             children: Vec::new(),
         });
@@ -111,6 +123,9 @@ impl SceneIndex {
         for c in &n.children {
             let ci = self.walk(c, &path, Some(i), cx, cy);
             self.nodes[i].children.push(ci);
+            if self.nodes[ci].chrome {
+                continue;
+            }
             let pokes: Vec<Rect> = std::iter::once(self.nodes[ci].rect)
                 .chain(self.nodes[ci].overflow.iter().copied())
                 .filter(|&r| !inside(rect, r))
@@ -260,9 +275,11 @@ impl SceneIndex {
         self.nodes
             .iter()
             .filter(|n| {
-                !n.children
-                    .iter()
-                    .any(|&c| self.nodes[c].kind == NodeKind::Body)
+                !n.chrome
+                    && !n
+                        .children
+                        .iter()
+                        .any(|&c| self.nodes[c].kind == NodeKind::Body)
             })
             .map(|n| n.rect)
             .collect()
@@ -283,6 +300,7 @@ impl SceneIndex {
             Some(i) => &self.nodes[i].children,
         };
         ids.iter()
+            .filter(|&&i| !self.nodes[i].chrome)
             .flat_map(|&i| {
                 std::iter::once(self.nodes[i].rect).chain(self.nodes[i].overflow.iter().copied())
             })
@@ -315,6 +333,9 @@ impl SceneIndex {
         out: &mut Vec<Rect>,
     ) -> bool {
         let n = &self.nodes[i];
+        if n.chrome {
+            return false;
+        }
         let is_endpoint = endpoints[0] == Some(i) || endpoints[1] == Some(i);
         let mut inner = Vec::new();
         let mut any_passable = false;

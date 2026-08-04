@@ -38,14 +38,14 @@
 //! *after* the tracks place — a pass reordering, deliberately not built here;
 //! Phase 6 owns it.
 
-use super::super::geom::Frame;
+use super::super::geom::{Frame, project};
 use super::super::ir::{Bbox, PlacedNode};
 use super::super::stack::{Band, SeatLine, Stack};
 use super::terminal::{Terminal, terminal};
 use crate::desugar::pose::Side;
 use crate::desugar::schematic::Role;
 use crate::desugar::schematic::chain::{Chain, End, chains, holder, placed_ends};
-use crate::ledger::consts::LABEL_SEAT;
+use crate::ledger::consts::{DEFAULT_CLEARANCE, LABEL_SEAT};
 use crate::resolve::{LinkKind, ResolvedLink};
 
 /// A satellite's seat off the anchor that holds its chain: an offset from
@@ -69,6 +69,23 @@ pub(super) struct Seats {
     spanning: Vec<Spanning>,
     /// Satellites with no placed end — the flow fallback [SPEC 16.1].
     floating: Vec<usize>,
+    /// The scope's seat gap ([`seat_gap`]) — every distance this pass leaves.
+    seat: f64,
+}
+
+/// The scope's **seat gap** [SPEC 16.1/10.5]: the clear run a satellite is set
+/// off the pin it hangs from, and off the satellite before it.
+///
+/// It is a routing corridor, not just daylight — the lead between them is an
+/// ordinary routed wire, and the channel model gives it a cell only where the
+/// two keep-outs do not overlap. So the gap is read off the scope's own
+/// `clearance`, never assumed: `2 × clearance` for the two keep-outs plus the
+/// half-clearance a run needs to sit in. At the schematic scope's own
+/// clearance that is exactly [`LABEL_SEAT`], which is the floor — a *tighter*
+/// clearance still puts satellites on the sheet's own pitch.
+pub(super) fn seat_gap(attrs: &crate::resolve::AttrMap) -> f64 {
+    let c = attrs.number("clearance").unwrap_or(DEFAULT_CLEARANCE);
+    LABEL_SEAT.max(2.5 * c)
 }
 
 impl Seats {
@@ -78,12 +95,14 @@ impl Seats {
         roles: &[Role],
         links: &[&ResolvedLink],
         scope: &str,
+        seat: f64,
     ) -> Seats {
         let satellite: Vec<bool> = roles.iter().map(|r| *r == Role::Satellite).collect();
         let mut out = Seats {
             seats: (0..children.len()).map(|_| None).collect(),
             spanning: Vec::new(),
             floating: Vec::new(),
+            seat,
         };
         if !satellite.contains(&true) {
             return out;
@@ -120,17 +139,49 @@ impl Seats {
         // The direction the chain grows: away from the terminator's own
         // connection geometry, else straight out along the pin [SPEC 16.1].
         let last = *chain.members.last().expect("a chain has a member");
-        let out = terminal(
+        let out = tag_facing(
             &children[last],
             chain.inbound.last().and_then(|t| t.as_deref()),
         )
-        // A text label carries no connection geometry, so it grows along the
-        // pin's own outward normal; with neither (a wire to a plain box) the
-        // chain hangs below, the one direction a sheet always has room in.
-        .facing
+        // A part terminator has no drawn convention to read — its pins are just
+        // pins — so its chain runs along the pin's own outward normal; a text
+        // label carries no connection geometry either. With neither (a wire to
+        // a plain box) the chain hangs below, the one direction a sheet always
+        // has room in.
         .map_or_else(|| pin.facing.unwrap_or(Side::Bottom), Side::opposite);
         let frame = Frame::outward(out.normal());
-        let (along, base) = (frame.u(pin.at), frame.cross(pin.at));
+        // The chain hangs off the wire's **first leg** — one seat out along the
+        // pin — and grows from there in its terminator's direction [SPEC 16.1]:
+        // a cap under a side pin sits below the wire leaving it, not inside the
+        // component's own column. When the ray is the pin's own normal the leg
+        // has no cross component and this is exactly the pin.
+        // The leg runs **as long as the chain needs** to stand clear of the
+        // part it hangs from: a satellite's own ink — its symbol, its ref and
+        // value readouts — must never reach back over the body, and pushing it
+        // farther *along* the ray instead would drop it past the whole
+        // component.
+        let lead = frame.u(pin.facing.map_or((0.0, 0.0), Side::normal));
+        let base = frame.cross(pin.at);
+        let mut along = frame.u(pin.at) + lead * self.seat;
+        if lead != 0.0 {
+            let wall = {
+                let (lo, hi) = project(anchor.bbox, frame.u);
+                if lead > 0.0 { hi } else { lo }
+            };
+            for (&member, inbound) in chain.members.iter().zip(&chain.inbound) {
+                let box_ = drawn(&children[member]);
+                let (u0, u1) = (frame.u(corner(box_, false)), frame.u(corner(box_, true)));
+                let u = frame.u(terminal(&children[member], inbound.as_deref()).at);
+                // The member's edge facing the body, relative to the leg.
+                let near = if lead > 0.0 { u0.min(u1) } else { u0.max(u1) } - u;
+                let want = wall + lead * self.seat - near;
+                along = if lead > 0.0 {
+                    along.max(want)
+                } else {
+                    along.min(want)
+                };
+            }
+        }
         for (&member, inbound) in chain.members.iter().zip(&chain.inbound) {
             let sat = &children[member];
             let point = terminal(sat, inbound.as_deref()).at;
@@ -149,12 +200,7 @@ impl Seats {
             let (u0, u1) = (frame.u(corner(box_, false)), frame.u(corner(box_, true)));
             let u = frame.u(point);
             let interval = (along + u0.min(u1) - u, along + u0.max(u1) - u);
-            let line = stack.seat(
-                SeatLine::new(frame, true, base),
-                interval,
-                LABEL_SEAT,
-                &band,
-            );
+            let line = stack.seat(SeatLine::new(frame, true, base), interval, self.seat, &band);
             let target = frame.pt(along, line);
             self.seats[member] = Some(Seat {
                 anchor: held.child,
@@ -178,14 +224,18 @@ impl Seats {
 
     /// One anchor's **cluster** extent [SPEC 16.1]: the anchor plus the
     /// satellites seated on it, so they consume space without consuming
-    /// cells. In the anchor's own coordinates, like its bbox.
+    /// cells. In the anchor's own coordinates, like its bbox — and measured
+    /// as [`drawn`], the one extent notion the seat pass grows and steps by,
+    /// so a track holds its parts' **ink**: a stub tip, a ref readout and a
+    /// tag outline all sit inside the scope's own box, and the sheet a
+    /// container places is the sheet the router sees.
     pub(super) fn cluster(&self, children: &[PlacedNode], anchor: usize) -> Bbox {
         self.seats
             .iter()
             .enumerate()
             .filter_map(|(i, s)| s.as_ref().filter(|s| s.anchor == anchor).map(|s| (i, s)))
-            .fold(children[anchor].bbox, |b, (i, s)| {
-                b.union(children[i].bbox.shifted(s.dx, s.dy))
+            .fold(drawn(&children[anchor]), |b, (i, s)| {
+                b.union(drawn(&children[i]).shifted(s.dx, s.dy))
             })
     }
 
@@ -223,6 +273,17 @@ impl Seats {
         &self.floating
     }
 
+    /// The placed extent of everything seated **between** two anchors — the
+    /// spanning chains, which ride no cluster and so no track. The caller
+    /// unions it into the scope's box, so the sheet still holds all its ink.
+    pub(super) fn spanning_extent(&self, children: &[PlacedNode]) -> Option<Bbox> {
+        self.spanning
+            .iter()
+            .flat_map(|s| &s.members)
+            .map(|&m| drawn(&children[m]).shifted(children[m].cx, children[m].cy))
+            .reduce(|a, b| a.union(b))
+    }
+
     /// What the spanning chains ask of the tracks [SPEC 16.1], one [`Demand`]
     /// each, in chain order.
     pub(super) fn demands(&self, children: &[PlacedNode]) -> Vec<Demand> {
@@ -231,8 +292,8 @@ impl Seats {
             .map(|s| Demand {
                 ends: [(s.ends[0].0, s.ends[0].1.at), (s.ends[1].0, s.ends[1].1.at)],
                 need: (
-                    step(&s.members, children, Bbox::w),
-                    step(&s.members, children, Bbox::h),
+                    step(&s.members, children, Bbox::w, self.seat),
+                    step(&s.members, children, Bbox::h, self.seat),
                 ),
             })
             .collect()
@@ -255,7 +316,12 @@ pub(super) struct Demand {
 /// step apart, and the step is set by the greediest neighbouring pair — half of
 /// each extent, plus the seat gap. The end steps answer to one half extent
 /// only, the pin being a point.
-fn step(members: &[usize], children: &[PlacedNode], extent: impl Fn(&Bbox) -> f64) -> f64 {
+fn step(
+    members: &[usize],
+    children: &[PlacedNode],
+    extent: impl Fn(&Bbox) -> f64,
+    seat: f64,
+) -> f64 {
     let e: Vec<f64> = members
         .iter()
         .map(|&m| extent(&drawn(&children[m])))
@@ -267,7 +333,23 @@ fn step(members: &[usize], children: &[PlacedNode], extent: impl Fn(&Bbox) -> f6
     for pair in e.windows(2) {
         step = step.max((pair[0] + pair[1]) / 2.0);
     }
-    (e.len() + 1) as f64 * (step + LABEL_SEAT)
+    (e.len() + 1) as f64 * (step + seat)
+}
+
+/// The direction a chain's **terminator** sets [SPEC 16.1] — the way its own
+/// drawing points. Only a `|label|` carries that convention: a ground is drawn
+/// with its point at the top, a power flag with its at the bottom, and the
+/// sheet reads the symbol rather than a table of names. A part's pins are just
+/// pins, so a part-terminated chain has nothing to say here and its caller
+/// falls back to the pin's own normal.
+///
+/// Shared with the pose chooser, which decides the same ray one stage earlier
+/// ([`crate::desugar::autopose`]).
+fn tag_facing(node: &PlacedNode, inbound: Option<&str>) -> Option<Side> {
+    (crate::desugar::schematic::sch_kind(&node.type_chain)
+        == Some(crate::desugar::schematic::SchKind::Label))
+    .then(|| terminal(node, inbound).facing)
+    .flatten()
 }
 
 /// A part's **drawn** extent: its box unioned with every descendant, so the
@@ -276,7 +358,7 @@ fn step(members: &[usize], children: &[PlacedNode], extent: impl Fn(&Bbox) -> f6
 /// obstacle to the router all the same (the scene index carries it as the
 /// part's `overflow`). Seating measures this, or a chain clears a part's box
 /// and lands on its readout.
-fn drawn(node: &PlacedNode) -> Bbox {
+pub(super) fn drawn(node: &PlacedNode) -> Bbox {
     fn walk(n: &PlacedNode, ox: f64, oy: f64, out: &mut Bbox) {
         for c in &n.children {
             let (cx, cy) = (ox + c.cx, oy + c.cy);

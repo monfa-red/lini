@@ -26,6 +26,7 @@ pub(super) use pins::{
 use super::Lower;
 use super::pose::Pose;
 use crate::error::Error;
+use crate::ledger::consts;
 use crate::span::Span;
 use crate::syntax::ast::{Child, Decl, Node, TextNode, Value};
 
@@ -114,9 +115,41 @@ fn lowered(cx: &Lower, node: &Node) -> Result<Child, Error> {
     Ok(Child::Box(super::lower_node(cx, node, super::Nest::NONE)?))
 }
 
-/// A part's value readout [SPEC 16.2/16.3] — the smart label as chrome.
-pub(super) fn value_readout(cx: &Lower, s: &str, pin: &str, dy: f64) -> Result<Child, Error> {
-    lowered_chrome(cx, &readout(s, pin, 0.0, dy), "lini-part-value")
+/// A part's value readout [SPEC 16.2/16.3] — the smart label as chrome, at the
+/// seat [`readout_at`] gives its family.
+pub(super) fn value_readout(
+    cx: &Lower,
+    s: &str,
+    kind: SchKind,
+    pose: Pose,
+) -> Result<Child, Error> {
+    let (pin, dx, dy) = readout_at(kind, pose, true);
+    lowered_chrome(cx, &readout(s, pin, dx, dy), "lini-part-value")
+}
+
+/// Where a part's **ref** and **value** readouts sit [SPEC 16.2]: above a
+/// component — the ref on top, the value under it — and beside a symbol-bodied
+/// part's drawing, ref above and value below. The one seat table, so the two
+/// readouts of one part can never drift apart.
+///
+/// A **turned** part stands on its wire, which runs straight down the column
+/// above and below it: the pair moves **beside** the symbol instead, stacked
+/// about its middle [`consts::READOUT_OFFSET`] off the axis — far enough that
+/// the wire's own corridor stays clear. `translate:` on the styled label
+/// overrides either, as ever.
+fn readout_at(kind: SchKind, pose: Pose, value: bool) -> (&'static str, f64, f64) {
+    match kind {
+        // A component is a box whichever way its pins landed: its readouts
+        // stack above it, the ref clear of the value.
+        SchKind::Component => ("top", 0.0, if value { -16.0 } else { -30.0 }),
+        _ if pose.is_turned() => (
+            "center",
+            consts::READOUT_OFFSET,
+            if value { 7.0 } else { -7.0 },
+        ),
+        _ if value => ("bottom", 0.0, 12.0),
+        _ => ("top", 0.0, -12.0),
+    }
 }
 
 /// The one `Line` fragment of a schematic glyph as a `|path|` node wearing
@@ -234,6 +267,7 @@ pub(super) fn label_body(
     pose: Pose,
     chain: &[String],
     node: &Node,
+    style_out: &mut Vec<Decl>,
     classes: &mut Vec<String>,
     children: &mut Vec<Child>,
 ) -> Result<(), Error> {
@@ -247,6 +281,13 @@ pub(super) fn label_body(
         }
         let glyph = part_glyph(chain, Some(&sym)).expect("a label symbol");
         seat_glyph(cx, children, glyph, pose, "lini-sch-tag-line")?;
+        // The text stands **beside** the drawing, never under it [SPEC 16.4]:
+        // the symbol's own edge is the label's connection point, so text below
+        // it would sit on the wire arriving there. The author's own
+        // `direction:` still wins.
+        if !style_out.iter().any(|d| d.name == "direction") {
+            style_out.insert(0, id("direction", "row"));
+        }
     }
     match cx
         .chain_ident(chain, style, "shape")
@@ -258,11 +299,15 @@ pub(super) fn label_body(
             classes.insert(0, "lini-tag-round".into());
             classes.insert(0, "lini-tag-outline".into());
         }
-        // **Deferred to Phase 6**: the pointed flag ends (`left` / `right` /
-        // `both`) are accepted, and the op's marker sets them, but the tag path
-        // that would draw the point does not exist — they render as the plain
-        // outline `round` already does.
-        "left" | "right" | "both" => classes.insert(0, "lini-tag-outline".into()),
+        // A **flag** — one or both ends drawn to a point [SPEC 16.4]. The
+        // point's span is the tag's own box, which nothing knows until the
+        // text is measured, so the outline lowers as a `|path|` placeholder
+        // and the layout fills it ([`crate::layout::schematic::tag`]); the
+        // class here only buys the room the point sits in.
+        shape @ ("left" | "right" | "both") => {
+            classes.insert(0, "lini-tag-flag".into());
+            children.push(lowered_chrome(cx, &tag_flag(shape), "lini-sch-tag-line")?);
+        }
         other => {
             return Err(Error::at(
                 span,
@@ -271,6 +316,26 @@ pub(super) fn label_body(
         }
     }
     Ok(())
+}
+
+/// A shaped tag's outline as a chrome placeholder [SPEC 16.4]: an out-of-flow
+/// `|path|` the layout redraws from the sized label. Its `path:` is a stub —
+/// a `|path|` needs one to lay out at all, exactly as a page's `|tick|` needs
+/// its `points:`.
+fn tag_flag(shape: &str) -> Node {
+    bare_node(
+        "path",
+        Vec::new(),
+        vec![
+            decl(
+                "chrome",
+                vec![Value::Ident("tag".into()), Value::Ident(shape.into())],
+            ),
+            id("pin", "center"),
+            decl("path", vec![Value::String("M 0 0".into())]),
+        ],
+        Vec::new(),
+    )
 }
 
 // ───────────────────────── display refs ─────────────────────────
@@ -302,10 +367,7 @@ pub(super) fn mint_refs(cx: &Lower, children: &mut [Child]) {
         if has_ref(part) {
             continue;
         }
-        let (anchor, dy) = match kind {
-            SchKind::Component => ("top", -30.0),
-            _ => ("top", -12.0),
-        };
+        let (anchor, dx, dy) = readout_at(kind, Pose::of_chain(&chain), false);
         let text = match &part.id {
             Some(pid) => pid.clone(),
             None => {
@@ -326,7 +388,7 @@ pub(super) fn mint_refs(cx: &Lower, children: &mut [Child]) {
                 }
             }
         };
-        let readout = readout(&text, anchor, 0.0, dy);
+        let readout = readout(&text, anchor, dx, dy);
         if let Ok(child) = lowered_chrome(cx, &readout, "lini-ref") {
             part.children.push(child);
         }

@@ -13,7 +13,7 @@
 use super::super::flex::Axis;
 use super::super::ir::{Bbox, PlacedNode};
 use super::super::{anchors, flex, grid, primitives};
-use super::seat::Seats;
+use super::seat::{Seats, seat_gap};
 use crate::desugar::schematic::{Role, role as schematic_role, sch_kind, terminal_ids};
 use crate::error::{Code, Error};
 use crate::resolve::{AttrMap, ResolvedLink, ResolvedValue};
@@ -156,7 +156,7 @@ pub(super) fn arrange(
     let anchored: Vec<usize> = (0..children.len())
         .filter(|&i| roles[i] == Role::Anchor)
         .collect();
-    let seats = Seats::build(children, &roles, links, scope);
+    let seats = Seats::build(children, &roles, links, scope, seat_gap(attrs));
 
     let slots = slots(children, &anchored, read_columns(attrs, span)?)?;
     let cols = collapse(slots.iter().map(|s| s.col));
@@ -235,6 +235,11 @@ pub(super) fn arrange(
     }
     let mut body = Bbox::centered(total_w, total_h);
     seats.absolutize(children);
+    // Every anchor's ink is already in its cluster, and so in a track; a
+    // spanning chain rides neither, so its parts join the box here.
+    if let Some(span) = seats.spanning_extent(children) {
+        body = body.union(span);
+    }
 
     // A satellite no wire holds has nothing to seat against [SPEC 16.1]: it
     // falls back to the flow — one trailing row under the grid, declaration

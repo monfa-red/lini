@@ -84,16 +84,35 @@ impl Scope {
             }
         }
         // Statement order, which for span-seated declarations is span order —
-        // the order `lini desugar` prints them in, so re-parsing its output
-        // rebuilds this very child list [SPEC 19].
+        // the order `lini desugar` prints them in. Every generated declaration
+        // is **merged in at its own statement's position**, not appended: the
+        // printer emits a body in span order, so an appended one would print
+        // ahead of an authored node declared after its wire and the two
+        // programs would differ by that much [SPEC 19]. A tie keeps the
+        // authored child first.
         let mut tail: Vec<(Child, bool)> =
             kids.split_off(base).into_iter().zip(generated).collect();
         tail.sort_by_key(|(c, _)| c.span().start);
-        let mut minted = vec![false; base];
-        for (child, is_generated) in tail {
-            kids.push(child);
-            minted.push(is_generated);
+        let mut minted = Vec::with_capacity(kids.len() + tail.len());
+        let mut merged = Vec::with_capacity(kids.len() + tail.len());
+        let mut pending = tail.into_iter().peekable();
+        for child in kids {
+            while pending
+                .peek()
+                .is_some_and(|(t, _)| t.span().start < child.span().start)
+            {
+                let (t, g) = pending.next().expect("peeked");
+                merged.push(t);
+                minted.push(g);
+            }
+            merged.push(child);
+            minted.push(false);
         }
+        for (t, g) in pending {
+            merged.push(t);
+            minted.push(g);
+        }
+        let kids = merged;
         // Step 3 — with every part and wire of the scope in hand, its
         // **landings** resolve [SPEC 16.5]: a pinless wire takes a pin, a chain
         // threading a two-pin part states its two hops.

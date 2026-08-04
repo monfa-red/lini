@@ -1,0 +1,80 @@
+// A stepper-driver page, the way a sheet is really drawn: an ISO page, a
+// captioned region per block, and — inside each — `layout: schematic`, so the
+// parts ride the scope's track row while their passives seat at the pins they
+// serve. Nothing crosses a region boundary: the nets that leave one arrive at
+// the other as **net labels**, exactly as on a real sheet.
+{
+  // The sheet is A5 at 5 px per millimetre — `density:` is screen resolution
+  // alone, so the paper stays true-scale in print [SPEC 15.1].
+  density: 5;
+
+  // A power flag is a one-line define with intrinsic text [SPEC 8/16.4].
+  |vm::label| { symbol: power; } [
+    "VM"
+  ]
+  |vio::label| { symbol: power; } [
+    "VIO"
+  ]
+
+  // The captioned region: a `|group|` that is its own schematic scope, so one
+  // node both frames the block and seats what is inside it.
+  |region::group| { layout: schematic; padding: 26; gap: 56; }
+}
+
+|page| { sheet: a5 landscape; gap: 40; } [
+
+  |region#drv| "Stepper driver" [
+    |component#U7| "TMC2300-LA-T" [
+      // Power on the left, signals on the right — a pin says which side it
+      // lands on, and the rest split bilaterally [SPEC 16.2].
+      |pin#VS| { side: left; number: 18; }
+      |pin#VIO| { side: left; number: 11; }
+      |pin#EN| { side: right; number: 5; }
+      |pin#STEP| { side: right; number: 4; }
+      |pin#DIR| { side: right; number: 3; }
+      |pin#OA1| { side: right; number: 21; }
+      |pin#OA2| { side: right; number: 23; }
+      |pin#OB1| { side: right; number: 26; }
+      |pin#OB2| { side: right; number: 28; }
+      |pin#GND| { side: bottom; number: 1; }
+    ]
+    |C#C24| "100n"
+
+    // The cap hangs off the pin it decouples with its ground below it: the
+    // chain passes **through** the two-pin part and grows the way its
+    // terminator is drawn [SPEC 16.1/16.5].
+    U7.VS - |vm|
+    U7.VIO - |vio|
+    U7.VIO - C24 - |gnd|
+    U7.GND - |gnd|
+
+    // A one-ended wire mints the tag it points at [SPEC 16.5].
+    U7.EN - "EN"
+    U7.STEP - "STEP"
+    U7.DIR - "DIR"
+    U7.OA1 - "OA1"
+    U7.OA2 - "OA2"
+    U7.OB1 - "OB1"
+    U7.OB2 - "OB2"
+  ]
+
+  |region#mot| "Motor & supply" [
+    // A connector turned a half-turn faces its pins back at the sheet; its
+    // generated pins show numbers only [SPEC 16.2].
+    |J#J3| "JST S4B-ZR" { pins: 4; rotate: 180; }
+    J3.p1 - "OA1"
+    J3.p2 - "OA2"
+    J3.p3 - "OB1"
+    J3.p4 - "OB2"
+
+    // The supply arrives on its own connector, its rails standing on the same
+    // flags the driver reads.
+    |J#J1| "Power in" { pins: 2; cell: 2 1; }
+    J1.p1 - |vm|
+    J1.p2 - |gnd|
+  ]
+
+  |title-block| {
+    title: "TMC2300 driver"; drawing-number: "LN-0042"; revision: "B"; sheet-number: "1/1"; date: "2026-08-04"; author: "AM";
+  }
+]

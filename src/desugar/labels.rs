@@ -3,6 +3,7 @@
 //! link's auto-distributed `along:` fractions are each a small, reusable
 //! transform [SPEC 3, 7, 9, 16].
 
+use super::pose::Pose;
 use super::{Lower, Nest, header_node, lower_node, schematic};
 use crate::ast::ChainOp;
 use crate::error::Error;
@@ -20,6 +21,9 @@ pub(super) struct Smart {
     /// Geometry-only shapes (line/poly/path/image) hold no text.
     text_capable: bool,
     sch: Option<schematic::SchKind>,
+    /// A schematic part's pose [SPEC 16.1] — its value readout seats off the
+    /// axis a turned part's wire runs down.
+    pose: Pose,
     /// A table/entity's column count — an entity's title spans them.
     cols: Option<usize>,
 }
@@ -31,6 +35,7 @@ impl Smart {
         is_entity: bool,
         is_drawing: bool,
         sch: Option<schematic::SchKind>,
+        pose: Pose,
         cols: Option<usize>,
     ) -> Smart {
         Smart {
@@ -43,6 +48,7 @@ impl Smart {
                 NodeKind::Line | NodeKind::Poly | NodeKind::Path | NodeKind::Image
             ),
             sch,
+            pose,
             cols,
         }
     }
@@ -82,14 +88,9 @@ pub(super) fn lower_smart(
             let title = lower_node(cx, &footnote_node(label), Nest::NONE)?;
             children.insert(0, Child::Box(title));
         } else if let Some(kind) = what.sch.filter(|k| *k != schematic::SchKind::Label) {
-            // A part's smart label is its name / value [SPEC 16.2/16.3],
-            // drawn as readout chrome: above a component (under its ref),
-            // below a symbol-bodied part.
-            let (anchor, dy) = match kind {
-                schematic::SchKind::Component => ("top", -16.0),
-                _ => ("bottom", 12.0),
-            };
-            children.push(schematic::value_readout(cx, &label.text, anchor, dy)?);
+            // A part's smart label is its name / value [SPEC 16.2/16.3], drawn
+            // as readout chrome at the seat its family and pose give it.
+            children.push(schematic::value_readout(cx, &label.text, kind, what.pose)?);
         } else if what.is_container {
             let caption = lower_node(cx, &caption_node(label), Nest::NONE)?;
             children.insert(0, Child::Box(caption));

@@ -573,6 +573,13 @@ fn layout_inst(
     if page::is_page(&inst.type_chain) {
         page::finish(&mut children, bbox, own);
     }
+    // A shaped net tag draws its pointed outline over its finished box
+    // [SPEC 16.4] — the same fill-once-sized step as the two above.
+    if crate::desugar::schematic::sch_kind(&inst.type_chain)
+        == Some(crate::desugar::schematic::SchKind::Label)
+    {
+        schematic::fill_tag(&mut children, bbox);
+    }
 
     let rotation = inst.attrs.number("rotate").unwrap_or(0.0);
 

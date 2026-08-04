@@ -1,0 +1,61 @@
+// The schematic part family, at one glance — every discrete, every `symbol:`
+// variant, every net-tag shape. Nothing is wired: a schematic scope places
+// anchors on its own **track grid**, so `cell: c r` (ordinal, empty tracks
+// collapsing) lays the catalogue out row by row. The smart label is a part's
+// **value**; its id is drawn verbatim as the reference designator, and an
+// anonymous part mints a display-only one from its type — R1, C1, D1…
+{
+  layout: schematic; gap: 40 34;
+  // A row header is an ordinary box on the track grid — a `|caption|` would
+  // pin itself out of the flow and take no cell [SPEC 5].
+  |head::block| { font-size: 13; color: --muted; padding: 0 8; }
+}
+
+|head| "Passives" { cell: 1 1; }
+|R#R1| "10k" { cell: 2 1; }
+|C#C1| "100n" { cell: 3 1; }
+|C#C2| "47u" { cell: 4 1; symbol: polarized; }
+|L#L1| "4u7" { cell: 5 1; }
+|FB#FB1| "600R" { cell: 6 1; }
+|F#F1| "1A" { cell: 7 1; }
+|Y#Y1| "16M" { cell: 8 1; }
+
+|head| "Diodes" { cell: 1 2; }
+|D#D1| "1N4148" { cell: 2 2; }
+|D#D2| "5V1" { cell: 3 2; symbol: zener; }
+|D#D3| "SS34" { cell: 4 2; symbol: schottky; }
+|D#D4| "SMAJ24" { cell: 5 2; symbol: tvs; }
+|LED#D5| "green" { cell: 6 2; }
+
+|head| "Transistors" { cell: 1 3; }
+|Q#Q1| "BC847" { cell: 2 3; }
+|Q#Q2| "BC857" { cell: 3 3; symbol: pnp; }
+|Q#Q3| "2N7002" { cell: 4 3; symbol: nfet; }
+|Q#Q4| "DMP2" { cell: 5 3; symbol: pfet; }
+|opamp#U1| "TLV9061" { cell: 6 3; }
+
+|head| "Sources & switches" { cell: 1 4; }
+|V#V1| "5V" { cell: 2 4; }
+|V#V2| "230V" { cell: 3 4; symbol: ac; }
+|I#I1| "20m" { cell: 4 4; }
+|BT#BT1| "3V" { cell: 5 4; }
+|BT#BT2| "12V" { cell: 6 4; symbol: battery; }
+|SW#SW1| "ON" { cell: 7 4; }
+|SW#SW2| "RST" { cell: 8 4; symbol: push; }
+
+// A `|label|` is its own terminal — the net tag. `symbol:` swaps in a drawing
+// from the schematic set; `shape:` picks the outline the text rides in.
+|head| "Net tags" { cell: 1 5; }
+|label| "NRST" { cell: 2 5; }
+|label| "TX" { cell: 3 5; shape: right; }
+|label| "RX" { cell: 4 5; shape: left; }
+|label| "SDA" { cell: 5 5; shape: both; }
+|label| "CLK" { cell: 6 5; shape: round; }
+|label| "VBUS" { cell: 7 5; symbol: power; }
+|label| "RF" { cell: 8 5; symbol: antenna; }
+
+|head| "Grounds" { cell: 1 6; }
+|gnd| { cell: 2 6; }
+|label| { cell: 3 6; symbol: earth; }
+|label| { cell: 4 6; symbol: chassis; }
+|nc| { cell: 5 6; }

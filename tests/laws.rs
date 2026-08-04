@@ -151,8 +151,9 @@ fn every_sample_holds_the_laws_at_every_clearance() {
 /// land on fixed ports (pin stub tips, a label's connection point) and its
 /// parts are single obstacles, so the four laws must hold on it — at its own
 /// clearance and across the knob, where a tighter sheet may only trade wires
-/// for honest strays. It lives here as a source until a schematic sample
-/// ships.
+/// for honest strays. The samples sweep above judges the shipped sheets; this
+/// one pins the shapes they do not carry — a same-pin fan into a facing part,
+/// and a series chain ending in a ground.
 #[test]
 fn a_schematic_sheet_holds_the_laws_at_every_clearance() {
     const SHEET: &str = "{ layout: schematic }\n\
@@ -160,10 +161,12 @@ fn a_schematic_sheet_holds_the_laws_at_every_clearance() {
         |component#u2| \"MCU\" [ |pin#vdd|; |pin#vss|; |pin#io| ]\n\
         |gnd#g1|\n\
         |R#r1|\n\
+        |gnd#g2|\n\
         u1.gnd - g1\n\
         u1.vout - u2.vdd\n\
         u1.vout - u2.vss\n\
-        u2.io - r1.p1\n";
+        u2.io - r1.p1\n\
+        r1.p2 - g2\n";
     let opts = Options::default();
     let report = lini::validate_str_with(SHEET, &opts).expect("validate the sheet");
     let strays = report.iter().filter(|v| v.rule == Rule::Impossible).count();

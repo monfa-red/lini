@@ -3,8 +3,8 @@
 //! no placed end flows with a warning; and every seat rides its anchor.
 
 use super::tests::{
-    anchor, at, cell, close, laid, placed, pose_of, scope, seat_warnings, sided, sided_with, tip,
-    y_gap,
+    anchor, at, body, cell, close, laid, placed, pose_of, scope, seat_warnings, sided, sided_with,
+    tip, y_gap,
 };
 use crate::layout::PlacedNode;
 use crate::ledger::consts::LABEL_SEAT;
@@ -12,16 +12,15 @@ use crate::ledger::defaults::SCH_GAP;
 
 #[test]
 fn a_chain_grows_the_way_its_terminator_faces() {
-    // [SPEC 16.1] a `|gnd|` is drawn with its connection point at its top, so
-    // a chain ending in one grows **down** from a bottom-facing pin — and out
-    // along whichever side the pin actually points, the ground turning to
-    // meet it. Either way it stands on the pin's own axis.
+    // [SPEC 16.1] the ray is the **terminator's** own connection geometry: a
+    // `|gnd|` is drawn with its point at the top, so a chain ending in one
+    // grows **down** — off a bottom pin straight down its axis, and off a side
+    // pin one seat out along the wire's first leg and then down.
     let nodes = laid(&scope("", &(sided("u1") + "  |gnd#g1|\n  u1.c - g1\n")));
     let (px, py, ..) = cell(&nodes, "c");
     let (gx, gy, ..) = cell(&nodes, "g1");
     assert!(gy > py, "below the bottom pin: {gy} vs {py}");
     assert!(close(gx, px), "and centred on it: {gx} vs {px}");
-    assert_eq!(pose_of(&nodes, "g1"), 0, "already facing up — no turn");
 
     for (pin, dir) in [("a", -1.0), ("b", 1.0)] {
         let nodes = laid(&scope(
@@ -32,25 +31,32 @@ fn a_chain_grows_the_way_its_terminator_faces() {
         let (gx, gy, ..) = cell(&nodes, "g1");
         assert!(
             (gx - px) * dir > 0.0,
-            "pin {pin} grows its chain sideways: {gx} vs {px}"
+            "pin {pin} hangs its chain off the wire's leg: {gx} vs {px}"
         );
-        assert!(close(gy, py), "on the pin's own axis: {gy} vs {py}");
+        assert!(gy > py, "and the ground still hangs below: {gy} vs {py}");
     }
 }
 
 #[test]
-fn auto_pose_turns_a_satellite_to_face_its_pin() {
-    // The chooser walks `Pose::ALL` for the first pose whose connection point
-    // faces the anchor: a `|gnd|`'s point is at its top, so it turns a quarter
-    // clockwise to answer a left pin (point to its right) and three to answer
-    // a right one.
-    for (pin, want) in [("a", 90), ("b", 270), ("c", 0)] {
+fn auto_pose_turns_a_satellite_to_face_back_up_the_ray() {
+    // The chooser walks `Pose::ALL` for the first pose presenting the
+    // satellite's terminal back along the growth ray [SPEC 16.1]. The
+    // terminator sets that ray from its **own** drawing, so a `|gnd|` — point
+    // at the top, chain growing down — never turns, whichever pin holds it.
+    for pin in ["a", "b", "c"] {
         let nodes = laid(&scope(
             "",
             &(sided("u1") + "  |gnd#g1|\n  u1." + pin + " - g1\n"),
         ));
-        assert_eq!(pose_of(&nodes, "g1"), want, "the pose facing pin {pin}");
+        assert_eq!(pose_of(&nodes, "g1"), 0, "a ground hangs upright off {pin}");
     }
+    // A part *inside* the chain does turn: the resistor's `p1` is drawn at its
+    // left end, and the ray runs down, so it stands a quarter clockwise.
+    let nodes = laid(&scope(
+        "",
+        &(sided("u1") + "  |R#r1| \"1k\"\n  |gnd#g1|\n  u1.a - r1.p1\n  r1.p2 - g1\n"),
+    ));
+    assert_eq!(pose_of(&nodes, "r1"), 90, "p1 turned up, into the wire");
 }
 
 #[test]
@@ -70,27 +76,30 @@ fn an_authored_rotate_forces_the_pose_and_the_seat_follows_it() {
 
 #[test]
 fn a_chain_grows_link_by_link() {
-    // Each link seats farther out along the same ray, in wire order — and
-    // every part on it faces back: the resistor's `p1` is drawn at its left
-    // end, so answering a **left**-facing pin turns it a half turn.
-    let nodes = laid(&scope(
-        "",
-        &(sided("u1") + "  |R#r1| \"1k\"\n  |gnd#g1|\n  u1.a - r1.p1\n  r1.p2 - g1\n"),
-    ));
-    let [(ux, _), (rx, _), (gx, _)] = ["u1", "r1", "g1"].map(|id| at(&nodes, id));
-    assert!(gx < rx && rx < ux, "u1 → r1 → g1 leftward: {ux} {rx} {gx}");
-    assert_eq!(pose_of(&nodes, "r1"), 180, "p1 turned back toward the pin");
-    // The same chain off the right-facing pin needs no turn at all.
-    let flat = laid(&scope(
-        "",
-        &(sided("u1") + "  |R#r1| \"1k\"\n  |gnd#g1|\n  u1.b - r1.p1\n  r1.p2 - g1\n"),
-    ));
-    assert_eq!(pose_of(&flat, "r1"), 0, "p1 already faces the pin");
-    let [(ux, _), (rx, _), (gx, _)] = ["u1", "r1", "g1"].map(|id| at(&flat, id));
-    assert!(
-        ux < rx && rx < gx,
-        "and it grows the other way: {ux} {rx} {gx}"
-    );
+    // Each link seats farther out along the same ray, in wire order: the
+    // grounded chain runs **down** past the pin it leaves, the resistor above
+    // its ground, and the whole column stands off to the pin's own side.
+    let column = |pin: &str, dir: f64| {
+        let nodes = laid(&scope(
+            "",
+            &(sided("u1")
+                + "  |R#r1| \"1k\"\n  |gnd#g1|\n  u1."
+                + pin
+                + " - r1.p1\n  r1.p2 - g1\n"),
+        ));
+        let [(ux, uy), (rx, ry), (gx, gy)] = ["u1", "r1", "g1"].map(|id| at(&nodes, id));
+        assert!(uy < ry && ry < gy, "u1 → r1 → g1 downward: {uy} {ry} {gy}");
+        assert!(
+            (rx - gx).abs() < 1.0,
+            "one column, to a half-stroke: {rx} vs {gx}"
+        );
+        assert!(
+            (rx - ux) * dir > 0.0,
+            "off the {pin} side of the part: {rx} vs {ux}"
+        );
+    };
+    column("a", -1.0);
+    column("b", 1.0);
 }
 
 #[test]
@@ -134,7 +143,7 @@ fn two_placed_ends_distribute_at_even_fractions() {
         &(ends.to_string() + "  |R#r1| \"1k\"\n  u1.l - r1.p1\n  r1.p2 - u2.r\n"),
     ));
     let (a, b) = (tip(&one, "l", true), tip(&one, "r", false));
-    let (x1, ..) = cell(&one, "r1");
+    let (x1, ..) = body(&one, "r1");
     assert!(
         close(x1, (a + b) / 2.0),
         "one satellite halves the span: {x1} vs {}",
@@ -147,8 +156,8 @@ fn two_placed_ends_distribute_at_even_fractions() {
             + "  u1.l - r1.p1\n  r1.p2 - r2.p1\n  r2.p2 - u2.r\n"),
     ));
     let (a, b) = (tip(&two, "l", true), tip(&two, "r", false));
-    let (x1, ..) = cell(&two, "r1");
-    let (x2, ..) = cell(&two, "r2");
+    let (x1, ..) = body(&two, "r1");
+    let (x2, ..) = body(&two, "r2");
     let third = (b - a) / 3.0;
     assert!(
         close(x1, a + third) && close(x2, a + 2.0 * third),
@@ -173,7 +182,7 @@ fn a_spanning_chain_sizes_the_space_it_lands_in() {
     };
     let narrow = span("  |R#r1| \"1k\" { rotate: 90 }\n", "r1");
     let (a, b) = (tip(&narrow, "l", true), tip(&narrow, "r", false));
-    let (x, _, w, _) = cell(&narrow, "r1");
+    let (x, _, w, _) = body(&narrow, "r1");
     assert!(
         x - w / 2.0 - a >= LABEL_SEAT - 1e-6 && b - (x + w / 2.0) >= LABEL_SEAT - 1e-6,
         "a seat gap clear of each pin: [{a}, {b}] holds {x} ± {}",
@@ -189,7 +198,7 @@ fn a_spanning_chain_sizes_the_space_it_lands_in() {
         room(&wide),
         room(&narrow)
     );
-    let (x, _, w, _) = cell(&wide, "r1");
+    let (x, _, w, _) = body(&wide, "r1");
     let (a, b) = (tip(&wide, "l", true), tip(&wide, "r", false));
     assert!(
         x - w / 2.0 - a >= LABEL_SEAT - 1e-6 && b - (x + w / 2.0) >= LABEL_SEAT - 1e-6,
@@ -283,8 +292,8 @@ fn an_overlay_end_holds_nothing_for_the_pose_chooser_either() {
     );
     assert_eq!(
         pose_of(&laid(&held), "g1"),
-        90,
-        "the left pin still turns it"
+        0,
+        "the left pin still holds it, upright"
     );
     assert!(
         seat_warnings(&held).is_empty(),
@@ -352,9 +361,9 @@ fn a_seat_rides_its_anchor() {
         (gx - ux, gy - uy)
     };
     let plain = laid(&scope("", &body("", "")));
-    assert_eq!(pose_of(&plain, "g1"), 90, "seated beside the left pin");
+    assert_eq!(pose_of(&plain, "g1"), 0, "a ground hangs upright");
     let base = offset(&plain);
-    assert!(base.0 < 0.0, "and to its left: {base:?}");
+    assert!(base.0 < 0.0, "off the left pin it hangs from: {base:?}");
 
     // The anchor's neighbour grows, pushing u1 along its row.
     let pushed = laid(&scope("", &body("", " { width: 300 }")));

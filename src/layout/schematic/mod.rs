@@ -24,6 +24,7 @@ mod junction;
 mod place;
 mod ports;
 mod seat;
+mod tag;
 mod terminal;
 
 pub(super) use hints::seat_hints;
@@ -32,6 +33,8 @@ pub(crate) use junction::junctions;
 /// The router's view of a placed part [SPEC 16.5] — the scene index folds a
 /// part's anatomy into this one obstacle and reads its fixed ports off it.
 pub(crate) use ports::{PartPorts, part_ports};
+/// A shaped net tag's outline, drawn once its label is sized [SPEC 16.4].
+pub(in crate::layout) use tag::fill as fill_tag;
 
 /// Is this node a schematic scope [SPEC 16]? Detected by its `layout:` attr —
 /// the same key the tree / sequence / drawing dispatch reads, so it is
@@ -63,8 +66,13 @@ pub(super) use crate::resolve::is_schematic;
 /// what SPEC 21 forbids is a schematic type *outside the scope* — a `|R|`
 /// participating in a sequence drawn on a sheet is still on the sheet. Sealing
 /// this walk too would make it an error, which is a language change no law
-/// asks for; leaving it open costs nothing, because a part inside a sealed
-/// engine is simply never a landing.
+/// asks for.
+///
+/// A part inside a sealed engine is still a **landing**, for the same reason
+/// the sheet's own laws are endpoint-decided: being an addressed part is the
+/// proof of scope, so a wire written outside the sheet lands on its pins like
+/// any wire (`a_wire_from_outside_lands_on_a_sealed_engines_pin`). What the
+/// seal stops is the *reading* of the statement, never the address.
 ///
 /// Everything downstream trusts this gate: past it a schematic part exists
 /// only inside a schematic scope, so the router's fixed ports and `:side` ban

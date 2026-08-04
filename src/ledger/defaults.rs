@@ -77,6 +77,8 @@ pub(crate) fn root_layout_defaults(layout: Option<&str>) -> Vec<Decl> {
             .into_iter()
             .filter(|d| d.name != "layout")
             .collect(),
+        // (Any *other* container that opts into the engine takes
+        // [`schematic_scope_config`] alone — its own paint is its own.)
         // A drawing root's px-per-unit is the desugar scale fold's job
         // [SPEC 15.1/18] — ratio × unit × density, stamped per scope.
         _ => Vec::new(),
@@ -541,12 +543,12 @@ pub fn template_bundle(name: &str) -> Vec<Decl> {
         // `root_layout_defaults` takes for a root `{ layout: schematic }` rather
         // than restating. The parts' own looks ride their type bundles and the
         // generated chrome classes.
-        "schematic" => vec![
-            id("layout", "schematic"),
-            n("gap", SCH_GAP),
-            n("clearance", consts::SCH_CLEARANCE),
-            var("fill", "sheet"),
-        ],
+        "schematic" => {
+            let mut v = vec![id("layout", "schematic")];
+            v.extend(schematic_scope_config());
+            v.push(var("fill", "sheet"));
+            v
+        }
         _ => Vec::new(),
     }
 }
@@ -592,6 +594,9 @@ pub enum SchChrome {
     TagOutline,
     /// The `round` tag — a stadium (radius caps at half-height).
     TagRound,
+    /// A **flag** tag (`shape: left | right | both`) — the room its drawn
+    /// point sits in; the outline itself is chrome the layout fills.
+    TagFlag,
 }
 
 impl SchChrome {
@@ -604,6 +609,7 @@ impl SchChrome {
         SchChrome::PartValue,
         SchChrome::TagOutline,
         SchChrome::TagRound,
+        SchChrome::TagFlag,
     ];
 
     /// The bare class name (worn as `lini-<name>`).
@@ -617,6 +623,7 @@ impl SchChrome {
             SchChrome::PartValue => "part-value",
             SchChrome::TagOutline => "tag-outline",
             SchChrome::TagRound => "tag-round",
+            SchChrome::TagFlag => "tag-flag",
         }
     }
 }
@@ -649,6 +656,7 @@ pub fn sch_chrome_decls(chrome: SchChrome) -> Vec<Decl> {
             pair("padding", 2.0, 6.0),
         ],
         SchChrome::TagRound => vec![n("radius", 99.0)],
+        SchChrome::TagFlag => vec![pair("padding", 2.0, 6.0 + consts::TAG_POINT)],
     }
 }
 
@@ -671,6 +679,17 @@ pub fn link_defaults() -> Vec<Decl> {
         n("clearance", consts::DEFAULT_CLEARANCE),
         n("font-size", 11.0),
     ]
+}
+
+/// The engine config a `layout: schematic` scope needs **wherever it is
+/// written** [SPEC 16.6]: the track spacing, and the tighter `clearance` the
+/// sheet's baked constants (pin pitch, stub, seat gap) are tuned to. The
+/// `|schematic|` template states it as part of its bundle and a root
+/// `{ layout: schematic }` through [`root_layout_defaults`]; desugar hands it
+/// to any other container that declares the layout, so opting into the engine
+/// is one decision, never two.
+pub(crate) fn schematic_scope_config() -> Vec<Decl> {
+    vec![n("gap", SCH_GAP), n("clearance", consts::SCH_CLEARANCE)]
 }
 
 /// The schematic scope's link base [SPEC 16.5/16.6] — the wire's classic dress,

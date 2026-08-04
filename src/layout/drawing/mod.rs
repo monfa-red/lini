@@ -185,7 +185,7 @@ pub(in crate::layout) fn sheet_node<T: SheetView>(n: &T) -> bool {
 /// sizes as a leaf: a part's features never grow it, they overhang.
 /// Half a node's stroke width — the paint reach either side of its drawn
 /// geometry.
-fn half_stroke(attrs: &crate::resolve::AttrMap) -> f64 {
+pub(in crate::layout) fn half_stroke(attrs: &crate::resolve::AttrMap) -> f64 {
     attrs.number("stroke-width").unwrap_or(0.0) / 2.0
 }
 

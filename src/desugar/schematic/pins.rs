@@ -50,9 +50,14 @@ pub(in crate::desugar) fn expand_connector_pins(
 pub(in crate::desugar) fn assemble_component(
     cx: &Lower,
     pose: Pose,
+    chain: &[String],
     style: &mut Vec<Decl>,
     children: &mut Vec<Child>,
 ) -> Result<(), Error> {
+    // The connector's pins **show numbers only** [SPEC 16.2] — a `|J|` is a
+    // row of terminals, not a named interface, so `p1`'s generated id never
+    // reaches the body.
+    let named = !chain.iter().any(|t| t == "J");
     // Rails read as rows; the body arranges [top / (left · right) / bottom].
     if !style.iter().any(|d| d.name == "direction") {
         style.push(id("direction", "column"));
@@ -80,7 +85,7 @@ pub(in crate::desugar) fn assemble_component(
             set_own(&mut pin, id("side", landed.as_str()));
         }
         slide_pin(cx, &mut pin, landed, pose)?;
-        dress_pin(cx, &mut pin, landed)?;
+        dress_pin(cx, &mut pin, landed, named)?;
         rails[landed.index()].push(Child::Box(pin));
     }
     for side in Side::ALL {
@@ -264,16 +269,22 @@ fn slide_pin(cx: &Lower, pin: &mut Node, landed: Side, pose: Pose) -> Result<(),
 }
 
 /// One pin's chrome [SPEC 16.2]: the displayed name (its label, already a
-/// text child — or its id), the outward stub, and the `number:` readout
-/// beside it. The stub/number are overlays anchored on the pin's side,
-/// shifted past the component padding so the stub spans body edge → tip.
-fn dress_pin(cx: &Lower, pin: &mut Node, side: Side) -> Result<(), Error> {
+/// text child — or its id, unless the family is nameless), the outward stub,
+/// and the `number:` readout beside it. The stub and the number are overlays
+/// anchored on the pin's side, shifted past the component padding so both span
+/// exactly **body edge → tip**: the number is sized to the stub, so its text
+/// centres over the lead on every side and never straddles the outline.
+fn dress_pin(cx: &Lower, pin: &mut Node, side: Side, named: bool) -> Result<(), Error> {
     let has_name = pin.children.iter().any(|c| matches!(c, Child::Text(_)));
-    if !has_name && let Some(pid) = &pin.id {
+    if named
+        && !has_name
+        && let Some(pid) = &pin.id
+    {
         pin.children.insert(0, text(&pid.clone()));
     }
     let pad = 8.0; // the component's body padding [SPEC 8]
     let reach = pad + consts::PIN_STUB;
+    let out = consts::PIN_NUMBER_OFFSET;
     let stub_pts = |horiz: bool| {
         let (x, y) = if horiz {
             (consts::PIN_STUB, 0.0)
@@ -289,6 +300,9 @@ fn dress_pin(cx: &Lower, pin: &mut Node, side: Side) -> Result<(), Error> {
             span: Span::empty(),
         }
     };
+    // The number's box spans the lead — `width` on a horizontal side, `height`
+    // on a vertical one — so its text centres over the stub whatever it reads.
+    let along = |horiz: bool| n(if horiz { "width" } else { "height" }, consts::PIN_STUB);
     let (stub_style, num_at) = match side {
         Side::Right => (
             vec![
@@ -296,7 +310,7 @@ fn dress_pin(cx: &Lower, pin: &mut Node, side: Side) -> Result<(), Error> {
                 id("pin", "right"),
                 pair("translate", reach, 0.0),
             ],
-            ("right", consts::PIN_STUB, -7.0),
+            ("right", (reach, -out), along(true)),
         ),
         Side::Top => (
             vec![
@@ -304,7 +318,7 @@ fn dress_pin(cx: &Lower, pin: &mut Node, side: Side) -> Result<(), Error> {
                 id("pin", "top"),
                 pair("translate", 0.0, -reach),
             ],
-            ("top", 8.0, -consts::PIN_STUB),
+            ("top", (out, -reach), along(false)),
         ),
         Side::Bottom => (
             vec![
@@ -312,7 +326,7 @@ fn dress_pin(cx: &Lower, pin: &mut Node, side: Side) -> Result<(), Error> {
                 id("pin", "bottom"),
                 pair("translate", 0.0, reach),
             ],
-            ("bottom", 8.0, consts::PIN_STUB),
+            ("bottom", (out, reach), along(false)),
         ),
         Side::Left => (
             vec![
@@ -320,7 +334,7 @@ fn dress_pin(cx: &Lower, pin: &mut Node, side: Side) -> Result<(), Error> {
                 id("pin", "left"),
                 pair("translate", -reach, 0.0),
             ],
-            ("left", -consts::PIN_STUB, -7.0),
+            ("left", (-reach, -out), along(true)),
         ),
     };
     pin.children.push(lowered_chrome(
@@ -329,12 +343,11 @@ fn dress_pin(cx: &Lower, pin: &mut Node, side: Side) -> Result<(), Error> {
         "lini-pin-stub",
     )?);
     if let Some(num) = style_number(&pin.style, "number") {
-        let (anchor, dx, dy) = num_at;
-        pin.children.push(lowered_chrome(
-            cx,
-            &readout(&trim_number(num), anchor, dx, dy),
-            "lini-pin-number",
-        )?);
+        let (anchor, (dx, dy), span) = num_at;
+        let mut node = readout(&trim_number(num), anchor, dx, dy);
+        node.style.push(span);
+        pin.children
+            .push(lowered_chrome(cx, &node, "lini-pin-number")?);
     }
     Ok(())
 }

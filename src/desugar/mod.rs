@@ -606,6 +606,22 @@ fn lower_node(cx: &Lower, node: &Node, nest: Nest) -> Result<Node, Error> {
     } else {
         node.style.clone()
     };
+    // Opting into the engine is **one** decision [SPEC 16.6]: a container the
+    // cascade makes a schematic scope takes the sheet's own track spacing and
+    // clearance, whether it wrote `layout: schematic` itself or wears
+    // `|schematic|` (whose bundle already states them). The engine's baked
+    // constants — pin pitch, stub, seat gap — are tuned to that clearance, so a
+    // scope routing at the diagram's 16 would stray every lead it seats. Its
+    // own decls lead, so anything authored still wins; already-lowered sources
+    // carry the decls and skip.
+    if is_schematic && !scope_chain.iter().any(|t| t == "schematic") {
+        let owned = |name: &str| style.iter().any(|d| d.name == name);
+        let add: Vec<Decl> = crate::ledger::defaults::schematic_scope_config()
+            .into_iter()
+            .filter(|d| !owned(&d.name))
+            .collect();
+        style.splice(0..0, add);
+    }
     // An authored |plane| in a drawing scope is chrome [SPEC 15.8]: its
     // ISO anatomy — thick ends, viewing arrows, the letter — fills from the
     // view's extent at layout, so mark it and layout intercepts it as a
@@ -641,32 +657,46 @@ fn lower_node(cx: &Lower, node: &Node, nest: Nest) -> Result<Node, Error> {
             children.insert(i, Child::Box(lower_node(cx, &cell, Nest::NONE)?));
         }
     }
+    // The part's **pose** [SPEC 16.1] — consumed here, before anything it
+    // shapes: the value readout reads it for its seat, and the bodies below
+    // are built turned, so no text ever rides a paint transform.
+    let pose = if sch.is_some() {
+        let p = pose::take(cx, &info.chain, &mut style, node.span)?;
+        pose::mark(p, &mut classes);
+        p
+    } else {
+        pose::Pose::NONE
+    };
     let kept_label = labels::lower_smart(
         cx,
         node,
         label,
-        &labels::Smart::read(kind, &info.chain, is_entity, is_drawing, sch, cols),
+        &labels::Smart::read(kind, &info.chain, is_entity, is_drawing, sch, pose, cols),
         &mut style,
         &mut children,
     )?;
 
     // The schematic bodies [SPEC 16]: rails + per-pin chrome for a
     // component, the registry symbol + wirable ports for a symbol-bodied
-    // part, the tag drawing / outline classes for a label — every one built
-    // in the part's **pose** [SPEC 16.1], which the turn consumes here so no
-    // text ever rides a paint transform.
+    // part, the tag drawing / outline classes for a label.
     if sch.is_some() {
-        let pose = pose::take(cx, &info.chain, &mut style, node.span)?;
-        pose::mark(pose, &mut classes);
         match sch {
             Some(schematic::SchKind::Component) => {
-                schematic::assemble_component(cx, pose, &mut style, &mut children)?;
+                schematic::assemble_component(cx, pose, &info.chain, &mut style, &mut children)?;
             }
             Some(k @ (schematic::SchKind::Opamp | schematic::SchKind::Discrete(_))) => {
                 schematic::symbol_body(cx, k, pose, &info.chain, node, &mut children)?;
             }
             Some(schematic::SchKind::Label) => {
-                schematic::label_body(cx, pose, &info.chain, node, &mut classes, &mut children)?;
+                schematic::label_body(
+                    cx,
+                    pose,
+                    &info.chain,
+                    node,
+                    &mut style,
+                    &mut classes,
+                    &mut children,
+                )?;
             }
             None => {}
         }

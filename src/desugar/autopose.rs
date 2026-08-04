@@ -1,5 +1,5 @@
 //! **Auto-pose** [SPEC 16.1]: a schematic scope's satellites are turned to
-//! face the pin they hang off, *before* any of its children lower.
+//! face back up the chain that holds them, *before* any of its children lower.
 //!
 //! **Why here and nowhere else.** A pose is structural — pins re-side, the
 //! symbol's `d` and its ports re-lay ([`super::pose`]) — so it can only be
@@ -11,14 +11,21 @@
 //! explicit `rotate:` — the part's own or its define's — is a *forced* pose
 //! and is left alone.
 //!
-//! **The rule.** A satellite chain's placed end is an anchor pin pointing
-//! outward along its own side; the satellite sits out there, so the terminal
-//! it wires back through must face the **opposite** way. Walk [`Pose::ALL`] —
-//! `0 → 90 → 180 → 270`, the unrotated pose then clockwise — and take the
-//! first pose that lands the terminal on that side. That order *is* the
-//! deterministic tie-break; it only ever bites when a terminal has no facing
-//! at all (a symbol-less `|label|`, a port at the box centre), and then no
-//! candidate matches and the part stays unrotated.
+//! **The rule.** A satellite chain runs along a **ray**, and every part on it
+//! must present the terminal it wires back through facing *up* that ray. The
+//! ray is the terminator's own drawing [SPEC 16.1] — a `|gnd|`'s point is at
+//! its top, so a chain ending in one grows down, and a power flag's is at its
+//! bottom, so up — and only a `|label|` carries that convention: a part's pins
+//! are just pins, so a part-terminated chain runs out along the pin's own
+//! normal. Then walk [`Pose::ALL`] — `0 → 90 → 180 → 270`, the unrotated pose
+//! then clockwise — and take the first pose that lands the terminal facing
+//! back. That order *is* the deterministic tie-break; it only ever bites when a
+//! terminal has no facing at all (a symbol-less `|label|`, a port at the box
+//! centre), and then no candidate matches and the part stays unrotated.
+//!
+//! The seat pass reads the same two answers off the lowered tree
+//! ([`crate::layout::schematic`]), so a satellite is never posed one way and
+//! seated another.
 //!
 //! **What this pass sees.** It runs over the scope's **gathered** statements
 //! ([`super::gather`]) and nothing lowers before it, so every way a part can
@@ -168,9 +175,31 @@ pub(super) fn choose<'a>(
         let Some(base) = held.terminal_side(cx, anchor.terminal.as_deref()) else {
             continue;
         };
-        // The pin points out along the side it landed on; the satellite sits
-        // out there, so it must present its terminal facing back.
-        let want = held.pose.side(base).opposite();
+        // Which way the chain grows [SPEC 16.1]: away from its **terminator's**
+        // own drawing — a `|gnd|` is drawn with its point at the top, so a
+        // chain ending in one grows *down*; a power flag's sits at its bottom,
+        // so up. Only a `|label|` carries that convention (a part's pins are
+        // just pins), and a forced terminator poses first; with neither the ray
+        // is the pin's own outward normal. Every member then presents its
+        // terminal back up that ray — the same ray the seat pass reads off the
+        // lowered tree ([`crate::layout::schematic`]), so the two agree.
+        let ray = chain
+            .members
+            .last()
+            .map(|&m| &parts[m])
+            .filter(|term| term.kind == Some(SchKind::Label))
+            .zip(chain.inbound.last())
+            .and_then(|(term, inbound)| {
+                let side = term.terminal_side(cx, inbound.as_deref())?;
+                let side = if term.forced {
+                    term.pose.side(side)
+                } else {
+                    side
+                };
+                Some(side.opposite())
+            })
+            .unwrap_or_else(|| held.pose.side(base));
+        let want = ray.opposite();
         for (&member, inbound) in chain.members.iter().zip(&chain.inbound) {
             let part = &parts[member];
             if part.forced {

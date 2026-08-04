@@ -191,7 +191,12 @@ fn an_anonymous_parts_pins_still_count() {
     // an unnamed three-pin `|Q|` anchors, an unnamed `|R|` still seats.
     let nodes = laid(&scope("", &(anchor("u1", "") + "  |Q|\n  |R| \"1k\"\n")));
     let (s, _, _) = placed(&nodes, "s");
-    let [u1, q, r] = [0, 1, 2].map(|i| s.children[i].cy);
+    // Anonymous, so measured off the scope's own children: each part's drawn
+    // centre, which is what a track holds [SPEC 16.1].
+    let [u1, q, r] = [0, 1, 2].map(|i| {
+        let c = &s.children[i];
+        super::seat::drawn(c).shifted(c.cx, c.cy).center().1
+    });
     assert!(close(u1, q), "the 3-pin |Q| rides the track row: {u1} {q}");
     assert!(r > q, "the 2-pin |R| seats below: {r} vs {q}");
 }
@@ -208,8 +213,8 @@ fn a_label_is_a_satellite_and_a_cell_promotes_it() {
         "",
         &(anchor("u1", " { cell: 1 1 }") + "  |gnd#g1| { cell: 2 1 }\n"),
     ));
-    let (ux, uy) = at(&promoted, "u1");
-    let (gx, gy) = at(&promoted, "g1");
+    let (ux, uy, ..) = cell(&promoted, "u1");
+    let (gx, gy, ..) = cell(&promoted, "g1");
     assert!(
         close(uy, gy),
         "the promoted label shares the row: {uy} {gy}"
@@ -235,10 +240,10 @@ fn only_cell_promotes_a_satellite_translate_just_nudges_it() {
     let (bx, by) = at(&bare, "g1");
     let moved = seated(" { translate: 7 13 }");
     let (mx, my) = at(&moved, "g1");
-    assert_eq!(pose_of(&bare, "g1"), 90, "the left pin's facing pose");
+    assert_eq!(pose_of(&bare, "g1"), 0, "the pose its own drawing asks for");
     assert_eq!(
         pose_of(&moved, "g1"),
-        90,
+        0,
         "a nudge is no promotion — the pose stands"
     );
     assert!(
@@ -255,9 +260,13 @@ fn only_cell_promotes_a_satellite_translate_just_nudges_it() {
         "",
         &(sided("u1") + "  |gnd#g1| { cell: 2 1 }\n  u1.a - g1\n"),
     ));
-    let ((ux, uy), (gx, gy)) = (at(&celled, "u1"), at(&celled, "g1"));
-    assert!(close(uy, gy) && gx > ux, "`cell:` puts it on the track row");
+    let ((ux, uy, ..), (cgx, cgy, ..)) = (cell(&celled, "u1"), cell(&celled, "g1"));
+    assert!(
+        close(uy, cgy) && cgx > ux,
+        "`cell:` puts it on the track row"
+    );
     assert_eq!(pose_of(&celled, "g1"), 0, "and an anchor is never posed");
+    let (gx, gy) = at(&celled, "g1");
     let nudged = laid(&scope(
         "",
         &(sided("u1") + "  |gnd#g1| { cell: 2 1; translate: 7 13 }\n  u1.a - g1\n"),
