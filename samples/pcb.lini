@@ -1,5 +1,7 @@
 // A cute, unreal little PCB: a central MCU, peripherals, dark passives, and lots
 // of parallel copper traces. Not functional — a pretty demo of parallel routing.
+// It is a **routing** showcase of plain boxes on a grid, not a schematic: the
+// circuit family is `layout: schematic` [SPEC 16] — see `schematic*.lini`.
 {
   // the board — soft-tier surfaces flip with the theme (light mint / dark green)
   fill: gradient(--green-soft, --teal-soft); layout: grid; columns: repeat(5, 80); rows: repeat(5, 60); gap: 30; padding: 34; font-size: 12;

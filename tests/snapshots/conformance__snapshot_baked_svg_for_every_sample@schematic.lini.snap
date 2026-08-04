@@ -163,7 +163,6 @@ input_file: samples/schematic.lini
         <g class="lini-node lini-column lini-block" transform="translate(-14,0)">
           <rect x="-1" y="-11" width="2" height="22" rx="0" ry="0"/>
           <g class="lini-node lini-pin lini-block" data-id="p3" transform="translate(0,0)">
-            <rect x="0" y="-10" width="0" height="20" rx="0" ry="0"/>
             <g class="lini-node lini-pin-stub lini-line" transform="translate(-19.25,0)">
               <line x1="0" y1="0" x2="12" y2="0"/>
             </g>
@@ -178,7 +177,6 @@ input_file: samples/schematic.lini
         <g class="lini-node lini-column lini-block" transform="translate(14,0)">
           <rect x="-1" y="-22" width="2" height="44" rx="0" ry="0"/>
           <g class="lini-node lini-pin lini-block" data-id="p2" transform="translate(0,-11)">
-            <rect x="0" y="-10" width="0" height="20" rx="0" ry="0"/>
             <g class="lini-node lini-pin-stub lini-line" transform="translate(7.25,0)">
               <line x1="0" y1="0" x2="12" y2="0"/>
             </g>
@@ -190,7 +188,6 @@ input_file: samples/schematic.lini
             </g>
           </g>
           <g class="lini-node lini-pin lini-block" data-id="p1" transform="translate(0,11)">
-            <rect x="0" y="-10" width="0" height="20" rx="0" ry="0"/>
             <g class="lini-node lini-pin-stub lini-line" transform="translate(7.25,0)">
               <line x1="0" y1="0" x2="12" y2="0"/>
             </g>

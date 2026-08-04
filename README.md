@@ -220,6 +220,31 @@ Parts *mate* against each other, holes and patterns punch through, a half-profil
 
 ---
 
+## Schematics
+
+<p align="center"><img src="https://raw.githubusercontent.com/monfa-red/lini/main/assets/schematic.png" alt="A Lini schematic sheet: an ISO A5 page with two captioned regions, a TMC2300 driver with pins, a decoupling capacitor and ground, net labels, connectors, and a title block" width="760"></p>
+
+`layout: schematic` reads a diagram as a **circuit sheet**. It places the parts and lets the ordinary router draw the wires — landing them on **fixed ports** (a pin's stub tip, a label's connection point), bending square, and dotting the junctions.
+
+```
+{ layout: schematic }
+
+|component#u1| "AMS1117-3.3" [
+  |pin#vin| { side: left; number: 3 }
+  |pin#vout| { side: right; number: 2 }
+  |pin#gnd| { side: bottom; number: 1 }
+]
+|C#c1| "22u"
+
+u1.vout - c1 - |gnd|      // a chain passes *through* the cap: p1 in, p2 out
+u1.gnd  - |gnd|           // a capsule declares where it is wired
+u1.vin  -> "5V"           // a one-ended wire mints the tag it points at
+```
+
+Parts split by role: a 3+-pin part is an **anchor** on the scope's own track grid (`cell:` places it, ordinal, empty tracks collapsing), and a label or unplaced 1–2-pin part is a **satellite** — seated at the pin its wire touches, hanging off that wire's first leg and growing the way its terminator is *drawn*, so a ground always points down and a power flag always up. Uppercase types are the discretes (`|R| |C| |L| |D| |LED| |Q| |Y| |F| |FB| |SW| |BT| |V| |I|`, plus `|opamp|` and `|J|`), each with generated pins and `symbol:` variants; the type is the reference family, so an anonymous one mints R1, C1, D1… `|label|` is the net tag — text, a symbol (`gnd`, `power`, `earth`, `antenna`, …), or both, its `shape:` drawn plain, pointed, or round. Wire it all on an ISO `|page|` with a `|title-block|`. [`SPEC.md` §16](https://github.com/monfa-red/lini/blob/main/SPEC.md#16-schematic)
+
+---
+
 ## Colour & theming
 
 <p align="center">

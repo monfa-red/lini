@@ -157,8 +157,10 @@ fn dim_excluding_stroke(n: &PlacedNode, thickness: f64) -> (f64, f64) {
 
 fn emit_rect(out: &mut String, n: &PlacedNode, indent: &str, thickness: f64) {
     let (w, h) = dim_excluding_stroke(n, thickness);
-    // An empty box draws nothing — no degenerate `<rect width="0" height="0"/>`.
-    if w == 0.0 && h == 0.0 {
+    // An empty box draws nothing — a rect with no area paints nothing, and a
+    // renderer is entitled to reject one (resvg warns and skips). A nameless
+    // pin is exactly that box [SPEC 16.2].
+    if w == 0.0 || h == 0.0 {
         return;
     }
     let radius = n.attrs.number("radius").unwrap_or(0.0);

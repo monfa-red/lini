@@ -1404,8 +1404,11 @@ center-mark-overhang 4    drawing link stroke-width 1   drawing link font-size 1
 The schematic chrome ([SPEC 16](#16-schematic)) — sheet-space:
 
 ```
-pin-pitch 20    pin-stub 12    label-seat 20 (a seat is a routing corridor — stays > 2 × clearance)    junction 3 (radius)
-schematic clearance 8 (the scope's link default — pin-pitch stays ≥ min pitch)
+pin-pitch 20    pin-stub 12    junction 3 (radius)    tag-point 8 (a flag's nose)
+label-seat max(20, 2.5 × clearance) — a seat is a routing corridor, so it is
+  derived from the scope's own clearance, floored at one pin pitch
+pin-number offset 7 (across the lead)    readout offset 30 (beside a turned part's axis)
+schematic clearance 8 (the scope's config — pin-pitch stays ≥ min pitch)
 schematic link stroke-width 1.5    corner-radius 0 (the scope's link default)
 ```
 
@@ -3203,11 +3206,13 @@ consume space, never cells.
 
 **Satellites seat at pins.** A satellite chain reads its wire:
 
-- **one placed end** — the chain grows outward from that pin, link by link,
-  in the direction of its **terminator's** connection geometry (a `|gnd|` is
-  drawn with its connection point at its top, so the chain grows down; a
-  power flag's sits at its bottom, so up; a text label grows along the pin's
-  outward normal);
+- **one placed end** — the chain hangs off the wire's first leg (one seat out
+  along the pin, and as much farther as it needs to stand clear of the part it
+  hangs from) and grows from there, link by link, in the direction of its
+  **terminator's** connection geometry. Only a `|label|` carries that
+  convention — a `|gnd|` is drawn with its connection point at its top, so the
+  chain grows down; a power flag's sits at its bottom, so up; a text label, and
+  any chain a *part* terminates, runs along the pin's outward normal;
 - **two placed ends** — the chain's satellites distribute along the straight
   line between the two pins at even fractions;
 - **no placed end** — the parts fall back to the flow with a warning.
@@ -3219,9 +3224,11 @@ the component and the nudge travels along, [SPEC 5](#5-the-box-model)).
 
 **Pose is rotation.** Every schematic part has authored connection geometry
 — pins on parts, one connection point on a label symbol. A satellite
-**auto-poses**: the seat pass picks the 90°-step pose whose connection
-geometry faces its anchor (deterministic tie-break: the unrotated pose, then
-clockwise). An explicit **`rotate: 0 | 90 | 180 | 270`** forces the pose;
+**auto-poses**: the seat pass picks the 90°-step pose that presents its
+terminal back up the chain's own growth ray (deterministic tie-break: the
+unrotated pose, then clockwise) — so a ground, which sets that ray from its
+own drawing, is never turned, and a part in the middle of the chain stands to
+meet it. An explicit **`rotate: 0 | 90 | 180 | 270`** forces the pose;
 the seat direction derives from the rotated connection point. Rotation on a
 connection-bearing part is read **at lowering** — pins re-side, the symbol
 re-lays, and every text (net text, ref, value, pin names) stays upright —
@@ -3268,8 +3275,10 @@ overriding (`|ic::component| { prefix: "IC" }` mints IC1…), declaration
 order, skipping authored names. A minted ref is **display-only, never an
 endpoint** — wiring `R1.p1` to a minted ref is an unknown endpoint
 ([SPEC 21](#21-errors)): don't care → free numbering; wire it → name it.
-Ref/value text places deterministically — above a component, beside a
-discrete — and `translate:` on the styled-label form nudges it.
+Ref/value text places deterministically — above a component (the ref over the
+value), across a discrete's symbol: above and below an upright one, **beside**
+a turned one, whose own wire runs down the column those seats would take.
+`translate:` on the styled-label form nudges either.
 
 `|J|` is the **connector** — a `|component|` define, prefix J, whose pins
 show numbers only; **`pins: N`** generates N numbered, nameless pins
@@ -3308,12 +3317,14 @@ wire is a pin path (`vm - |D|.k - x` — cathode first). Orientation is
 
 **Components have pins; a label is its own terminal.** `|label|` is the net
 tag: its smart label is the **net text**, drawn in the tag outline;
-**`shape:`** picks the outline — `plain` *(default)* · `left` · `right` ·
-`both` · `round` — the shapes are **visual, not semantic** (the conventional
-readings — output, input, bidirectional — are the reader's, as a sequence's
-`->` vs `-->` are); **`symbol:`** swaps in a drawing from the **schematic
-symbol set** — `gnd` · `earth` · `chassis` · `power` · `nc` · `antenna` —
-text beside it like an icon's. Text alone is a net label, a symbol alone a
+**`shape:`** picks the outline — `plain` *(default, no outline at all)* ·
+`left` · `right` · `both` (a **flag**, one or both ends drawn to a point) ·
+`round` (a stadium) — the shapes are **visual, not semantic** (the
+conventional readings — output, input, bidirectional — are the reader's, as a
+sequence's `->` vs `-->` are); **`symbol:`** swaps in a drawing from the
+**schematic symbol set** — `gnd` · `earth` · `chassis` · `power` · `nc` ·
+`antenna` — text beside it like an icon's, never under it: the symbol's own
+edge is the label's connection point, and the wire arrives there. Text alone is a net label, a symbol alone a
 ground, symbol + text a power flag. `|gnd|` and `|nc|` ship as built-in
 defines; a power net is a one-line define with intrinsic text
 ([SPEC 8](#8-templates)):
@@ -3382,10 +3393,17 @@ The classic sheet is the default *inside the scope*, riding role variables
 green, part bodies pale yellow with dark-red outlines, labels teal, pin
 numbers muted, the scene beige — each a `light-dark()` pair. The scope's
 generated link defaults ([SPEC 17](#17-property-ledger--support)): a thinner
-wire, a tighter `clearance`, `corner-radius: 0`. `|schematic|` is the
-template (`|block|` + `layout: schematic`); a root
-`{ layout: schematic }` works like every root engine. Groups, pages, and
-title blocks are the core types, restyled by scoped rules.
+wire, a tighter `clearance`, `corner-radius: 0`.
+
+**Opting into the engine is one decision.** `layout: schematic` carries the
+scope's own config — the track `gap` and that tighter `clearance` — wherever
+it is written: the sheet's baked constants ([SPEC 10.5](#105-layout-constants-baked))
+are tuned to it, so a scope routing at the diagram's default would stray the
+leads it seats. `|schematic|` is the template (`|block|` + the layout, plus
+the sheet wash); a root `{ layout: schematic }` works like every root engine;
+and `|region::group| { layout: schematic }` is a captioned block that seats
+its own parts, keeping its own paint. Groups, pages, and title blocks are the
+core types, restyled by scoped rules.
 
 ### 16.7 Lowering
 
