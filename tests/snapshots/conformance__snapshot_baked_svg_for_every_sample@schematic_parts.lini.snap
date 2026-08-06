@@ -110,7 +110,7 @@ input_file: samples/schematic_parts.lini
     <g class="lini-node lini-R lini-block" data-id="R1" transform="translate(-222.05,-223.25)">
       <rect x="-32.75" y="-6.75" width="65.5" height="13.5" rx="0" ry="0"/>
       <g class="lini-node lini-sch-line lini-path" transform="translate(-32,-6)">
-        <path d="M 0 0 M 64 12 M 0 6 L 12 6 M 12 0 L 52 0 L 52 12 L 12 12 Z M 52 6 L 64 6"/>
+        <path d="M 0 0 M 64 12 M 0 6 L 16 6 M 16 0 L 48 0 L 48 12 L 16 12 Z M 48 6 L 64 6"/>
       </g>
       <g class="lini-node lini-part-value lini-block" transform="translate(0,17.25)">
         <rect x="-9.9" y="-5.5" width="19.8" height="11" rx="0" ry="0"/>

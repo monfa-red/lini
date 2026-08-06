@@ -909,7 +909,7 @@ fn a_pose_re_lays_a_symbol_and_its_ports() {
     let out = desugar_source("|R#r1| \"1k\" { rotate: 90 }\n").unwrap();
     assert!(
         out.contains(
-            r#"path: "M 12 0 M 0 64 M 6 0 L 6 12 M 12 12 L 12 52 L 0 52 L 0 12 Z M 6 52 L 6 64""#
+            r#"path: "M 12 0 M 0 64 M 6 0 L 6 16 M 12 16 L 12 48 L 0 48 L 0 16 Z M 6 48 L 6 64""#
         ),
         "{out}"
     );
