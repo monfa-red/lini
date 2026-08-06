@@ -689,7 +689,7 @@ fn a_power_flag_define_reads_its_symbol_through_the_chain() {
     // [SPEC 16.4]: a power net is a one-line define with intrinsic text.
     let out = desugar_source("{ |vm::label| { symbol: power } [ \"VM\" ] }\n|vm#v1|\n").unwrap();
     assert!(
-        out.contains("M 8 14 L 8 5"),
+        out.contains("M 8 14 L 8 0 M 2 6 L 8 0 L 14 6"),
         "the power glyph lowered: {out}"
     );
 }
