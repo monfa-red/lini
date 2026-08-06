@@ -580,8 +580,13 @@ pub fn projection_default_attrs() -> AttrMap {
 pub enum SchChrome {
     /// Part symbol linework — discrete bodies, the opamp triangle.
     SymbolLine,
+    /// A part symbol's **solid** detail — a capacitor's plates, a transistor's
+    /// base bar and arrowhead: filled in the linework's own ink [SPEC 16.3].
+    SymbolSolid,
     /// A label's symbol linework (gnd, power, …) — the tag ink.
     TagLine,
+    /// A label symbol's solid detail, in the tag ink.
+    TagSolid,
     /// A pin's stub lead.
     PinStub,
     /// The pin-number readout, outside beside the stub.
@@ -602,7 +607,9 @@ pub enum SchChrome {
 impl SchChrome {
     pub const ALL: &'static [SchChrome] = &[
         SchChrome::SymbolLine,
+        SchChrome::SymbolSolid,
         SchChrome::TagLine,
+        SchChrome::TagSolid,
         SchChrome::PinStub,
         SchChrome::PinNumber,
         SchChrome::Ref,
@@ -616,7 +623,9 @@ impl SchChrome {
     pub fn class_name(self) -> &'static str {
         match self {
             SchChrome::SymbolLine => "sch-line",
+            SchChrome::SymbolSolid => "sch-solid",
             SchChrome::TagLine => "sch-tag-line",
+            SchChrome::TagSolid => "sch-tag-solid",
             SchChrome::PinStub => "pin-stub",
             SchChrome::PinNumber => "pin-number",
             SchChrome::Ref => "ref",
@@ -641,6 +650,10 @@ pub fn sch_chrome_decls(chrome: SchChrome) -> Vec<Decl> {
             var("stroke", "label-ink"),
             n("stroke-width", consts::SCH_STROKE_WIDTH),
         ],
+        // The solid detail is the same ink, filled: no outline of its own, or
+        // a plate would draw half a stroke wider than it is.
+        SchChrome::SymbolSolid => vec![var("fill", "component-stroke"), id("stroke", "none")],
+        SchChrome::TagSolid => vec![var("fill", "label-ink"), id("stroke", "none")],
         SchChrome::PinNumber => vec![
             var("color", "pin-number"),
             n("font-size", consts::PIN_NUMBER_FONT),

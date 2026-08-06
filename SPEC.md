@@ -3300,7 +3300,7 @@ type name:
 | `\|L\|` | L1… | p1 p2 | — |
 | `\|D\|` | D1… | a k | `zener` · `tvs` · `schottky` |
 | `\|LED\|` | LED1… | a k | — |
-| `\|Q\|` | Q1… | b c e / g d s | `npn` *(default)* · `pnp` · `nfet` · `pfet` |
+| `\|Q\|` | Q1… | b c e / g d s | `npn` *(default)* · `pnp` · `nfet` · `pfet` · `nfet-circled` · `pfet-circled` (the ringed FET) |
 | `\|Y\|` | Y1… | p1 p2 | — |
 | `\|F\|` | F1… | p1 p2 | — |
 | `\|FB\|` | FB1… | p1 p2 | — |

@@ -168,33 +168,45 @@ fn readout_at(kind: SchKind, pose: Pose, value: bool) -> (&'static str, f64, f64
     }
 }
 
-/// The one `Line` fragment of a schematic glyph as a `|path|` node wearing
-/// `class` — the registry invariant pins the `<path d="…"/>` shape. The pose
-/// **re-lays** it [SPEC 16.1]: the turned `d` is real geometry, so the part
-/// sizes, obstructs and renders turned with no transform in sight.
-fn symbol_path(glyph: &crate::glyph::Glyph, pose: Pose) -> Node {
-    let frag = glyph.frags[0].1;
+/// One fragment of a schematic glyph as a `|path|` node. The pose **re-lays**
+/// it [SPEC 16.1]: the turned `d` is real geometry, so the part sizes,
+/// obstructs and renders turned with no transform in sight.
+///
+/// Every fragment is drawn **over the glyph's own box**, not over its ink: the
+/// data is prefixed with the box's two corners (moves, which draw nothing but
+/// bound the path), so the linework and the solid detail lay out as one
+/// rectangle each, exactly on top of one another, and a fragment carrying only
+/// the leads still sizes the part. It is the registry's `width`/`height` that
+/// says how big a symbol is, and this is where that is enforced.
+fn symbol_path(glyph: &crate::glyph::Glyph, frag: &str, pose: Pose, overlay: bool) -> Node {
     let d = frag
         .strip_prefix(r#"<path d=""#)
         .and_then(|f| f.strip_suffix(r#""/>"#))
         .expect("a schematic glyph fragment is one <path d=…/>");
-    let d = pose.path(d, glyph.width, glyph.height);
-    bare_node(
-        "path",
-        Vec::new(),
-        vec![decl("path", vec![Value::String(d)])],
-        Vec::new(),
-    )
+    let (w, h) = (glyph.width, glyph.height);
+    let d = pose.path(&format!("M 0 0 M {w} {h} {d}"), w, h);
+    let mut style = vec![decl("path", vec![Value::String(d)])];
+    if overlay {
+        style.push(id("pin", "center"));
+    }
+    bare_node("path", Vec::new(), style, Vec::new())
 }
 
 /// Seat a part's glyph **ahead of** everything the author wrote — the one
 /// place either symbol lowering ([`symbol_body`], [`label_body`]) adds it, so
 /// a discrete, an opamp and a label can never drift apart on the rule below.
 ///
-/// It must be **inserted, never appended**. A part's readouts (the ref, the
-/// value, the ports) are `pin:` overlays, so their position in the body is
-/// free; the glyph is **in flow**, and so is any text the author wrote as
-/// content (`|R#r1| [ "1k" ]`), so *their* order is layout. A generated node
+/// A glyph is one stroked `Line` fragment and, where its drawing has filled
+/// detail — a capacitor's plates, a transistor's base bar and arrowhead — one
+/// `Solid` fragment beside it [SPEC 16.3]. The linework lays out in flow and
+/// gives the part its box; the solid rides as a `pin: center` **overlay** over
+/// the same box, so it never stacks under the linework and never grows the
+/// part.
+///
+/// The linework must be **inserted, never appended**. A part's readouts (the
+/// ref, the value, the ports) are `pin:` overlays, so their position in the
+/// body is free; the glyph is **in flow**, and so is any text the author wrote
+/// as content (`|R#r1| [ "1k" ]`), so *their* order is layout. A generated node
 /// carries an empty span and `fmt` emits a body in span order, which puts the
 /// glyph first no matter where it sits in the tree — so appending made the AST
 /// stack the text over the glyph while the lowered source stacked the glyph
@@ -204,9 +216,14 @@ fn seat_glyph(
     children: &mut Vec<Child>,
     glyph: &crate::glyph::Glyph,
     pose: Pose,
-    class: &str,
+    classes: (&str, &str),
 ) -> Result<(), Error> {
-    children.insert(0, lowered_chrome(cx, &symbol_path(glyph, pose), class)?);
+    for (role, frag) in glyph.frags.iter().rev() {
+        let solid = *role == crate::icon::Role::Solid;
+        let class = if solid { classes.1 } else { classes.0 };
+        let node = symbol_path(glyph, frag, pose, solid);
+        children.insert(0, lowered_chrome(cx, &node, class)?);
+    }
     Ok(())
 }
 
@@ -265,7 +282,13 @@ pub(super) fn symbol_body(
         )
     })?;
     let pin_ids = part_pin_ids(chain, want.as_deref());
-    seat_glyph(cx, children, glyph, pose, "lini-sch-line")?;
+    seat_glyph(
+        cx,
+        children,
+        glyph,
+        pose,
+        ("lini-sch-line", "lini-sch-solid"),
+    )?;
     if wired {
         for (pid, port) in pin_ids.iter().zip(glyph.ports) {
             let port = pose.point(*port, glyph.width, glyph.height);
@@ -296,7 +319,13 @@ pub(super) fn label_body(
             return Err(Error::at(span, msg));
         }
         let glyph = part_glyph(chain, Some(&sym)).expect("a label symbol");
-        seat_glyph(cx, children, glyph, pose, "lini-sch-tag-line")?;
+        seat_glyph(
+            cx,
+            children,
+            glyph,
+            pose,
+            ("lini-sch-tag-line", "lini-sch-tag-solid"),
+        )?;
         // The text stands **beside** the drawing, never under it [SPEC 16.4]:
         // the symbol's own edge is the label's connection point, so text below
         // it would sit on the wire arriving there. The author's own

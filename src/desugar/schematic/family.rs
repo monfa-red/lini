@@ -263,6 +263,8 @@ fn variants(ty: &str) -> &'static [Variant] {
             "pnp" "sch-q-pnp" &["b", "c", "e"],
             "nfet" "sch-q-nfet" &["g", "d", "s"],
             "pfet" "sch-q-pfet" &["g", "d", "s"],
+            "nfet-circled" "sch-q-nfet-circled" &["g", "d", "s"],
+            "pfet-circled" "sch-q-pfet-circled" &["g", "d", "s"],
         ),
         "Y" => v!("plain" "sch-y" P12),
         "F" => v!("plain" "sch-f" P12),

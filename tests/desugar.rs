@@ -903,9 +903,14 @@ fn an_explicitly_sided_pin_rides_the_turn_too() {
 fn a_pose_re_lays_a_symbol_and_its_ports() {
     // The 64×12 resistor stands up: its `d` is turned geometry (no transform)
     // and its ports move by the same map — p1 to the top, p2 to the bottom.
+    // The two leading moves are the glyph's own box, which every fragment
+    // carries so the linework and any solid detail lay out as one rectangle
+    // ([`crate::desugar::schematic`]); they turn with the rest.
     let out = desugar_source("|R#r1| \"1k\" { rotate: 90 }\n").unwrap();
     assert!(
-        out.contains(r#"path: "M 6 0 L 6 12 M 12 12 L 12 52 L 0 52 L 0 12 Z M 6 52 L 6 64""#),
+        out.contains(
+            r#"path: "M 12 0 M 0 64 M 6 0 L 6 12 M 12 12 L 12 52 L 0 52 L 0 12 Z M 6 52 L 6 64""#
+        ),
         "{out}"
     );
     assert!(
@@ -919,7 +924,7 @@ fn a_pose_re_lays_a_symbol_and_its_ports() {
     // A label's symbol turns the same way — the gnd's connection point (its
     // stem, at the top) swings to the bottom.
     let out = desugar_source("|gnd#g1| { rotate: 180 }\n").unwrap();
-    assert!(out.contains(r#"path: "M 8 14 L 8 8"#), "{out}");
+    assert!(out.contains(r#"M 8 15 L 8 10"#), "{out}");
 }
 
 #[test]
