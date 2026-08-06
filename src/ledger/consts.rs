@@ -138,8 +138,14 @@ pub(crate) const PIN_NUMBER_FONT: f64 = 9.0;
 /// How far the pin number sits off its lead, across the stub: above a
 /// horizontal one, beside a vertical one [SPEC 16.2].
 pub(crate) const PIN_NUMBER_OFFSET: f64 = 7.0;
-/// The ref / value readout text size [SPEC 16.2].
+/// The ref / value readout text size [SPEC 16.2] — also the line height a
+/// readout's seat adds back, since `pin:` aligns edges (a single line measures
+/// one em, [`crate::layout::text::approx_height`]).
 pub(crate) const REF_FONT: f64 = 11.0;
+/// The clear gap between a part's drawing and the readout naming it, and
+/// between the two readouts where they stack [SPEC 16.2].
+pub(crate) const READOUT_GAP: f64 = 6.0;
+pub(crate) const READOUT_STACK: f64 = 3.0;
 /// How far a **turned** part's ref / value readouts sit beside its axis
 /// [SPEC 16.2] — clear of the symbol *and* of the wire's own corridor running
 /// down through it, so a typical value (up to ~5 characters) never blocks a

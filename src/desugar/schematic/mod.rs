@@ -137,18 +137,34 @@ pub(super) fn value_readout(
 /// about its middle [`consts::READOUT_OFFSET`] off the axis — far enough that
 /// the wire's own corridor stays clear. `translate:` on the styled label
 /// overrides either, as ever.
+///
+/// **The offsets carry the text's own height.** `pin:` aligns *edges*, so a
+/// readout pinned to the part's top edge and nudged by `d` stands `d − line`
+/// clear of it: the seats below add the line back, and the gap that remains is
+/// [`consts::READOUT_GAP`] off the part and [`consts::READOUT_STACK`] between
+/// the two readouts — the numbers the eye actually reads.
 fn readout_at(kind: SchKind, pose: Pose, value: bool) -> (&'static str, f64, f64) {
+    let line = consts::REF_FONT;
+    let out = line + consts::READOUT_GAP;
     match kind {
         // A component is a box whichever way its pins landed: its readouts
-        // stack above it, the ref clear of the value.
-        SchKind::Component => ("top", 0.0, if value { -16.0 } else { -30.0 }),
+        // stack above it, the ref one line clear of the value.
+        SchKind::Component => (
+            "top",
+            0.0,
+            if value {
+                -out
+            } else {
+                -(out + line + consts::READOUT_STACK)
+            },
+        ),
         _ if pose.is_turned() => (
             "center",
             consts::READOUT_OFFSET,
-            if value { 7.0 } else { -7.0 },
+            (line + consts::READOUT_STACK) / 2.0 * if value { 1.0 } else { -1.0 },
         ),
-        _ if value => ("bottom", 0.0, 12.0),
-        _ => ("top", 0.0, -12.0),
+        _ if value => ("bottom", 0.0, out),
+        _ => ("top", 0.0, -out),
     }
 }
 

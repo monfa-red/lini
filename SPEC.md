@@ -1408,6 +1408,7 @@ pin-pitch 20    pin-stub 12    junction 3 (radius)    tag-point 8 (a flag's nose
 label-seat max(20, 2.5 × clearance) — a seat is a routing corridor, so it is
   derived from the scope's own clearance, floored at one pin pitch
 pin-number offset 7 (across the lead)    readout offset 30 (beside a turned part's axis)
+readout gap 6 (part edge → its ref / value)    readout stack 3 (between the two)
 schematic clearance 8 (the scope's config — pin-pitch stays ≥ min pitch)
 schematic link stroke-width 1.5    corner-radius 0 (the scope's link default)
 ```
